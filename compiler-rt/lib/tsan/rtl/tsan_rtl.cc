@@ -68,7 +68,13 @@ static ThreadContextBase *CreateThreadContext(u32 tid) {
   // Map thread trace when context is created.
   MapThreadTrace(GetThreadTrace(tid), TraceSize() * sizeof(Event));
   MapThreadTrace(GetThreadTraceHeader(tid), sizeof(Trace));
+#if SANITIZER_DEBUG
+  // We are going to use only a small part of the trace with the default
+  // value of history_size. However, the constructor writes to the whole trace.
+  // It writes mostly zeros, so freshly mmaped memory will do.
+  // The only non-zero field if mutex type used for debugging.
   new(ThreadTrace(tid)) Trace();
+#endif
   void *mem = internal_alloc(MBlockThreadContex, sizeof(ThreadContext));
   return new(mem) ThreadContext(tid);
 }
