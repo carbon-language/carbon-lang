@@ -21,6 +21,7 @@ class LaunchWithGlobTestCase(TestBase):
         self.do_test ()
 
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
     def test_with_dwarf (self):
         self.buildDwarf()
