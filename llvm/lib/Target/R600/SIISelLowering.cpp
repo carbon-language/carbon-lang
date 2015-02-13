@@ -1734,13 +1734,11 @@ int32_t SITargetLowering::analyzeImmediate(const SDNode *N) const {
       static_cast<const SIInstrInfo *>(Subtarget->getInstrInfo());
 
   if (const ConstantSDNode *Node = dyn_cast<ConstantSDNode>(N)) {
-    if (Node->getZExtValue() >> 32)
-      return -1;
-
     if (TII->isInlineConstant(Node->getAPIntValue()))
       return 0;
 
-    return Node->getZExtValue();
+    uint64_t Val = Node->getZExtValue();
+    return isUInt<32>(Val) ? Val : -1;
   }
 
   if (const ConstantFPSDNode *Node = dyn_cast<ConstantFPSDNode>(N)) {

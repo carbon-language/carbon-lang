@@ -33,8 +33,8 @@ namespace {
 
 /// \brief Helper type used in encoding
 typedef union {
-  int32_t I;
-  float F;
+  int64_t I;
+  double F;
 } IntFloatUnion;
 
 class SIMCCodeEmitter : public  AMDGPUMCCodeEmitter {
@@ -48,7 +48,7 @@ class SIMCCodeEmitter : public  AMDGPUMCCodeEmitter {
   bool isSrcOperand(const MCInstrDesc &Desc, unsigned OpNo) const;
 
   /// \brief Encode an fp or int literal
-  uint32_t getLitEncoding(const MCOperand &MO) const;
+  uint32_t getLitEncoding(const MCOperand &MO, unsigned OpSize) const;
 
 public:
   SIMCCodeEmitter(const MCInstrInfo &mcii, const MCRegisterInfo &mri,
@@ -91,49 +91,99 @@ bool SIMCCodeEmitter::isSrcOperand(const MCInstrDesc &Desc,
          OpType == AMDGPU::OPERAND_REG_INLINE_C;
 }
 
-uint32_t SIMCCodeEmitter::getLitEncoding(const MCOperand &MO) const {
+// Returns the encoding value to use if the given integer is an integer inline
+// immediate value, or 0 if it is not.
+template <typename IntTy>
+static uint32_t getIntInlineImmEncoding(IntTy Imm) {
+  if (Imm >= 0 && Imm <= 64)
+    return 128 + Imm;
 
-  IntFloatUnion Imm;
-  if (MO.isImm())
-    Imm.I = MO.getImm();
-  else if (MO.isFPImm())
-    Imm.F = MO.getFPImm();
-  else if (MO.isExpr())
-    return 255;
-  else
-    return ~0;
+  if (Imm >= -16 && Imm <= -1)
+    return 192 + std::abs(Imm);
 
-  if (Imm.I >= 0 && Imm.I <= 64)
-    return 128 + Imm.I;
+  return 0;
+}
 
-  if (Imm.I >= -16 && Imm.I <= -1)
-    return 192 + abs(Imm.I);
+static uint32_t getLit32Encoding(uint32_t Val) {
+  uint32_t IntImm = getIntInlineImmEncoding(static_cast<int32_t>(Val));
+  if (IntImm != 0)
+    return IntImm;
 
-  if (Imm.F == 0.5f)
+  if (Val == FloatToBits(0.5f))
     return 240;
 
-  if (Imm.F == -0.5f)
+  if (Val == FloatToBits(-0.5f))
     return 241;
 
-  if (Imm.F == 1.0f)
+  if (Val == FloatToBits(1.0f))
     return 242;
 
-  if (Imm.F == -1.0f)
+  if (Val == FloatToBits(-1.0f))
     return 243;
 
-  if (Imm.F == 2.0f)
+  if (Val == FloatToBits(2.0f))
     return 244;
 
-  if (Imm.F == -2.0f)
+  if (Val == FloatToBits(-2.0f))
     return 245;
 
-  if (Imm.F == 4.0f)
+  if (Val == FloatToBits(4.0f))
     return 246;
 
-  if (Imm.F == -4.0f)
+  if (Val == FloatToBits(-4.0f))
     return 247;
 
   return 255;
+}
+
+static uint32_t getLit64Encoding(uint64_t Val) {
+  uint32_t IntImm = getIntInlineImmEncoding(static_cast<int64_t>(Val));
+  if (IntImm != 0)
+    return IntImm;
+
+  if (Val == DoubleToBits(0.5))
+    return 240;
+
+  if (Val == DoubleToBits(-0.5))
+    return 241;
+
+  if (Val == DoubleToBits(1.0))
+    return 242;
+
+  if (Val == DoubleToBits(-1.0))
+    return 243;
+
+  if (Val == DoubleToBits(2.0))
+    return 244;
+
+  if (Val == DoubleToBits(-2.0))
+    return 245;
+
+  if (Val == DoubleToBits(4.0))
+    return 246;
+
+  if (Val == DoubleToBits(-4.0))
+    return 247;
+
+  return 255;
+}
+
+uint32_t SIMCCodeEmitter::getLitEncoding(const MCOperand &MO,
+                                         unsigned OpSize) const {
+  if (MO.isExpr())
+    return 255;
+
+  assert(!MO.isFPImm());
+
+  if (!MO.isImm())
+    return ~0;
+
+  if (OpSize == 4)
+    return getLit32Encoding(static_cast<uint32_t>(MO.getImm()));
+
+  assert(OpSize == 8);
+
+  return getLit64Encoding(static_cast<uint64_t>(MO.getImm()));
 }
 
 void SIMCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
@@ -158,9 +208,12 @@ void SIMCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     if (!isSrcOperand(Desc, i))
       continue;
 
+    int RCID = Desc.OpInfo[i].RegClass;
+    const MCRegisterClass &RC = MRI.getRegClass(RCID);
+
     // Is this operand a literal immediate?
     const MCOperand &Op = MI.getOperand(i);
-    if (getLitEncoding(Op) != 255)
+    if (getLitEncoding(Op, RC.getSize()) != 255)
       continue;
 
     // Yes! Encode it
@@ -231,7 +284,10 @@ uint64_t SIMCCodeEmitter::getMachineOpValue(const MCInst &MI,
 
   const MCInstrDesc &Desc = MCII.get(MI.getOpcode());
   if (isSrcOperand(Desc, OpNo)) {
-    uint32_t Enc = getLitEncoding(MO);
+    int RCID = Desc.OpInfo[OpNo].RegClass;
+    const MCRegisterClass &RC = MRI.getRegClass(RCID);
+
+    uint32_t Enc = getLitEncoding(MO, RC.getSize());
     if (Enc != ~0U && (Enc != 255 || Desc.getSize() == 4))
       return Enc;
 

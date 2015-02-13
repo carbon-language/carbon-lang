@@ -172,6 +172,7 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
       if (!isSafeToFold(MI.getOpcode()))
         continue;
 
+      unsigned OpSize = TII->getOpSize(MI, 1);
       MachineOperand &OpToFold = MI.getOperand(1);
       bool FoldingImm = OpToFold.isImm();
 
@@ -183,7 +184,7 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
       // Folding immediates with more than one use will increase program size.
       // FIXME: This will also reduce register usage, which may be better
       // in some cases.  A better heuristic is needed.
-      if (FoldingImm && !TII->isInlineConstant(OpToFold) &&
+      if (FoldingImm && !TII->isInlineConstant(OpToFold, OpSize) &&
           !MRI.hasOneUse(MI.getOperand(0).getReg()))
         continue;
 
