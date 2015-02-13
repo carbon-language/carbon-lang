@@ -556,7 +556,7 @@ void *MCJITHelper::getPointerToFunction(Function *F) {
     }
 
     // Create a function pass manager for this engine
-    FunctionPassManager *FPM = new FunctionPassManager(OpenModule);
+    auto *FPM = new legacy::FunctionPassManager(OpenModule);
 
     // Set up the optimizer pipeline.  Start with registering info about how the
     // target lays out data structures.

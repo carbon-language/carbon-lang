@@ -665,7 +665,7 @@ static PrototypeAST *ParseExtern() {
 static Module *TheModule;
 static IRBuilder<> Builder(getGlobalContext());
 static std::map<std::string, AllocaInst *> NamedValues;
-static FunctionPassManager *TheFPM;
+static legacy::FunctionPassManager *TheFPM;
 
 Value *ErrorV(const char *Str) {
   Error(Str);
@@ -1203,7 +1203,7 @@ int main() {
     exit(1);
   }
 
-  FunctionPassManager OurFPM(TheModule);
+  legacy::FunctionPassManager OurFPM(TheModule);
 
   // Set up the optimizer pipeline.  Start with registering info about how the
   // target lays out data structures.

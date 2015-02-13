@@ -1122,14 +1122,11 @@ static llvm::BasicBlock *createCatchBlock(llvm::LLVMContext &context,
 /// @param numExceptionsToCatch length of exceptionTypesToCatch array
 /// @param exceptionTypesToCatch array of type info types to "catch"
 /// @returns generated function
-static
-llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
-                                             llvm::IRBuilder<> &builder,
-                                             llvm::FunctionPassManager &fpm,
-                                             llvm::Function &toInvoke,
-                                             std::string ourId,
-                                             unsigned numExceptionsToCatch,
-                                             unsigned exceptionTypesToCatch[]) {
+static llvm::Function *createCatchWrappedInvokeFunction(
+    llvm::Module &module, llvm::IRBuilder<> &builder,
+    llvm::legacy::FunctionPassManager &fpm, llvm::Function &toInvoke,
+    std::string ourId, unsigned numExceptionsToCatch,
+    unsigned exceptionTypesToCatch[]) {
 
   llvm::LLVMContext &context = module.getContext();
   llvm::Function *toPrint32Int = module.getFunction("print32Int");
@@ -1389,13 +1386,11 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
 /// @param nativeThrowFunct function which will throw a foreign exception
 ///        if the above nativeThrowType matches generated function's arg.
 /// @returns generated function
-static
-llvm::Function *createThrowExceptionFunction(llvm::Module &module,
-                                             llvm::IRBuilder<> &builder,
-                                             llvm::FunctionPassManager &fpm,
-                                             std::string ourId,
-                                             int32_t nativeThrowType,
-                                             llvm::Function &nativeThrowFunct) {
+static llvm::Function *
+createThrowExceptionFunction(llvm::Module &module, llvm::IRBuilder<> &builder,
+                             llvm::legacy::FunctionPassManager &fpm,
+                             std::string ourId, int32_t nativeThrowType,
+                             llvm::Function &nativeThrowFunct) {
   llvm::LLVMContext &context = module.getContext();
   namedValues.clear();
   ArgTypes unwindArgTypes;
@@ -1508,10 +1503,10 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
 /// @param nativeThrowFunctName name of external function which will throw
 ///        a foreign exception
 /// @returns outermost generated test function.
-llvm::Function *createUnwindExceptionTest(llvm::Module &module,
-                                          llvm::IRBuilder<> &builder,
-                                          llvm::FunctionPassManager &fpm,
-                                          std::string nativeThrowFunctName) {
+llvm::Function *
+createUnwindExceptionTest(llvm::Module &module, llvm::IRBuilder<> &builder,
+                          llvm::legacy::FunctionPassManager &fpm,
+                          std::string nativeThrowFunctName) {
   // Number of type infos to generate
   unsigned numTypeInfos = 6;
 
@@ -1971,7 +1966,7 @@ int main(int argc, char *argv[]) {
   llvm::ExecutionEngine *executionEngine = factory.create();
 
   {
-    llvm::FunctionPassManager fpm(module);
+    llvm::legacy::FunctionPassManager fpm(module);
 
     // Set up the optimizer pipeline.
     // Start with registering info about how the
