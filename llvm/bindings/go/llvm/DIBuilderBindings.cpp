@@ -12,11 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "DIBuilderBindings.h"
-
 #include "IRBindings.h"
+#include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/DIBuilder.h"
 
 using namespace llvm;
 

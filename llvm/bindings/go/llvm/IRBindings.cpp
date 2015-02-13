@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "IRBindings.h"
-
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Function.h"

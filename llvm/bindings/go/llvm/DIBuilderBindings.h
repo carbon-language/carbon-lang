@@ -14,8 +14,8 @@
 #ifndef LLVM_BINDINGS_GO_LLVM_DIBUILDERBINDINGS_H
 #define LLVM_BINDINGS_GO_LLVM_DIBUILDERBINDINGS_H
 
-#include "llvm-c/Core.h"
 #include "IRBindings.h"
+#include "llvm-c/Core.h"
 
 #ifdef __cplusplus
 extern "C" {
