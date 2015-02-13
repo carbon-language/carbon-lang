@@ -32,6 +32,9 @@
 
 ; Also, we should unroll if the 'unroll-threshold' is big enough:
 ; TEST4-NOT: %array_const_idx = getelementptr inbounds [9 x i32]* @known_constant, i64 0, i64 %iv
+
+; And check that we don't crash when we're not allowed to do any analysis.
+; RUN: opt < %s -loop-unroll -unroll-max-iteration-count-to-analyze=0 -disable-output
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 
 @known_constant = internal unnamed_addr constant [9 x i32] [i32 0, i32 -1, i32 0, i32 -1, i32 5, i32 -1, i32 0, i32 -1, i32 0], align 16
