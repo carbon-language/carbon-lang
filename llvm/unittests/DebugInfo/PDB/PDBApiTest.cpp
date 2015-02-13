@@ -272,6 +272,9 @@ public:
   MOCK_SYMBOL_ACCESSOR(isVirtualBaseClass)
   MOCK_SYMBOL_ACCESSOR(isVirtualInheritance)
   MOCK_SYMBOL_ACCESSOR(isVolatileType)
+  MOCK_SYMBOL_ACCESSOR(getValue)
+  MOCK_SYMBOL_ACCESSOR(wasInlined)
+  MOCK_SYMBOL_ACCESSOR(getUnused)
 
 private:
   PDB_SymType Type;
