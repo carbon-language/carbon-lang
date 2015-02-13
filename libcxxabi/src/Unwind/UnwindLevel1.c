@@ -63,8 +63,9 @@ unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
       char functionBuf[512];
       const char *functionName = functionBuf;
       unw_word_t offset;
-      if ((unw_get_proc_name(&cursor1, functionBuf, 512, &offset) !=
-           UNW_ESUCCESS) || (frameInfo.start_ip + offset > frameInfo.end_ip))
+      if ((unw_get_proc_name(&cursor1, functionBuf, sizeof(functionBuf),
+                             &offset) != UNW_ESUCCESS) ||
+          (frameInfo.start_ip + offset > frameInfo.end_ip))
         functionName = ".anonymous.";
       unw_word_t pc;
       unw_get_reg(&cursor1, UNW_REG_IP, &pc);
@@ -160,8 +161,9 @@ unwind_phase2(unw_context_t *uc, _Unwind_Exception *exception_object) {
       char functionBuf[512];
       const char *functionName = functionBuf;
       unw_word_t offset;
-      if ((unw_get_proc_name(&cursor2, functionBuf, 512, &offset) !=
-           UNW_ESUCCESS) || (frameInfo.start_ip + offset > frameInfo.end_ip))
+      if ((unw_get_proc_name(&cursor2, functionBuf, sizeof(functionBuf),
+                             &offset) != UNW_ESUCCESS) ||
+          (frameInfo.start_ip + offset > frameInfo.end_ip))
         functionName = ".anonymous.";
       _LIBUNWIND_TRACE_UNWINDING("unwind_phase2(ex_ojb=%p): start_ip=0x%" PRIx64
                                  ", func=%s, sp=0x%" PRIx64 ", lsda=0x%" PRIx64
@@ -251,8 +253,9 @@ unwind_phase2_forced(unw_context_t *uc,
       char functionBuf[512];
       const char *functionName = functionBuf;
       unw_word_t offset;
-      if ((unw_get_proc_name(&cursor2, functionBuf, 512, &offset) !=
-           UNW_ESUCCESS) || (frameInfo.start_ip + offset > frameInfo.end_ip))
+      if ((unw_get_proc_name(&cursor2, functionBuf, sizeof(functionBuf),
+                             &offset) != UNW_ESUCCESS) ||
+          (frameInfo.start_ip + offset > frameInfo.end_ip))
         functionName = ".anonymous.";
       _LIBUNWIND_TRACE_UNWINDING(
           "unwind_phase2_forced(ex_ojb=%p): start_ip=0x%" PRIx64
