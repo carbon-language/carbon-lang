@@ -709,12 +709,11 @@ int main(int Argc, const char **Argv) {
   // Get header file names and dependencies.
   SmallVector<std::string, 32> Headers;
   DependencyMap Dependencies;
-  typedef std::vector<std::string>::iterator Iter;
-  for (Iter I = ListFileNames.begin(), E = ListFileNames.end(); I != E; ++I) {
-    if (std::error_code EC = getHeaderFileNames(Headers, Dependencies,
-      *I, HeaderPrefix)) {
-      errs() << Argv[0] << ": error: Unable to get header list '" << *I
-        << "': " << EC.message() << '\n';
+  for (auto I : ListFileNames) {
+    if (std::error_code EC =
+            getHeaderFileNames(Headers, Dependencies, I, HeaderPrefix)) {
+      errs() << Argv[0] << ": error: Unable to get header list '" << I
+             << "': " << EC.message() << '\n';
       return 1;
     }
   }
