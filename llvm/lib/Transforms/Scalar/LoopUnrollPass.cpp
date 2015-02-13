@@ -519,7 +519,8 @@ public:
     auto EnqueueOperands = [&](Instruction &I) {
       for (auto *Op : I.operand_values())
         if (auto *OpI = dyn_cast<Instruction>(Op))
-          Worklist.insert(OpI);
+          if (!OpI->use_empty())
+            Worklist.insert(OpI);
     };
 
     // Start by initializing worklist with simplified instructions.
@@ -540,8 +541,6 @@ public:
       if (!L->contains(I))
         continue;
       if (DeadInstructions.count(I))
-        continue;
-      if (I->getNumUses() == 0)
         continue;
       bool AllUsersFolded = true;
       for (User *U : I->users()) {
