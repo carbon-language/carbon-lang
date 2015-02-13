@@ -21,7 +21,7 @@ def VCC_LO : SIReg<"vcc_lo", 106>;
 def VCC_HI : SIReg<"vcc_hi", 107>;
 
 // VCC for 64-bit instructions
-def VCC : RegisterWithSubRegs<"VCC", [VCC_LO, VCC_HI]> {
+def VCC : RegisterWithSubRegs<"vcc", [VCC_LO, VCC_HI]> {
   let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1];
   let HWEncoding = 106;
@@ -36,14 +36,14 @@ def EXEC : RegisterWithSubRegs<"EXEC", [EXEC_LO, EXEC_HI]> {
   let HWEncoding = 126;
 }
 
-def SCC : SIReg<"SCC", 253>;
-def M0 : SIReg <"M0", 124>;
+def SCC : SIReg<"scc", 253>;
+def M0 : SIReg <"m0", 124>;
 
 def FLAT_SCR_LO : SIReg<"flat_scr_lo", 104>; // Offset in units of 256-bytes.
 def FLAT_SCR_HI : SIReg<"flat_scr_hi", 105>; // Size is the per-thread scratch size, in bytes.
 
 // Pair to indicate location of scratch space for flat accesses.
-def FLAT_SCR : RegisterWithSubRegs <"FLAT_SCR", [FLAT_SCR_LO, FLAT_SCR_HI]> {
+def FLAT_SCR : RegisterWithSubRegs <"flat_scr", [FLAT_SCR_LO, FLAT_SCR_HI]> {
   let Namespace = "AMDGPU";
   let SubRegIndices = [sub0, sub1];
   let HWEncoding = 104;
