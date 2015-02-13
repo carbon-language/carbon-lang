@@ -32,12 +32,6 @@ if (NOT LLVM_ENABLE_THREADS)
   add_definitions( -DGTEST_HAS_PTHREAD=0 )
 endif()
 
-# Visual Studio 2012 only supports up to 8 template parameters in
-# std::tr1::tuple by default, but gtest requires 10
-if(MSVC AND MSVC_VERSION EQUAL 1700)
-  add_definitions(-D_VARIADIC_MAX=10)
-endif ()
-
 set(LIBS
   LLVMSupport # Depends on llvm::raw_ostream
 )
