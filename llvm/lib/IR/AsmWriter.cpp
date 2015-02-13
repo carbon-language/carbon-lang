@@ -1484,10 +1484,16 @@ static void writeMDCompositeType(raw_ostream &Out, const MDCompositeType *N,
   Out << ")";
 }
 
-static void writeMDSubroutineType(raw_ostream &, const MDSubroutineType *,
-                                  TypePrinting *, SlotTracker *,
-                                  const Module *) {
-  llvm_unreachable("write not implemented");
+static void writeMDSubroutineType(raw_ostream &Out, const MDSubroutineType *N,
+                                  TypePrinting *TypePrinter,
+                                  SlotTracker *Machine, const Module *Context) {
+  Out << "!MDSubroutineType(";
+  FieldSeparator FS;
+  if (N->getFlags())
+    Out << FS << "flags: " << N->getFlags();
+  Out << FS << "types: ";
+  writeMetadataAsOperand(Out, N->getTypeArray(), TypePrinter, Machine, Context);
+  Out << ")";
 }
 
 static void writeMDFile(raw_ostream &Out, const MDFile *N, TypePrinting *,

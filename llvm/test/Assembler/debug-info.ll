@@ -1,8 +1,8 @@
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis | FileCheck %s
 ; RUN: verify-uselistorder %s
 
-; CHECK: !named = !{!0, !0, !1, !2, !3, !4, !5, !6, !7, !8, !8, !9, !10, !11, !12, !13, !14, !15, !16, !17, !18, !19, !20, !21, !22, !23, !24}
-!named = !{!0, !1, !2, !3, !4, !5, !6, !7, !8, !9, !10, !11, !12, !13, !14, !15, !16, !17, !18, !19, !20, !21, !22, !23, !24, !25, !26}
+; CHECK: !named = !{!0, !0, !1, !2, !3, !4, !5, !6, !7, !8, !8, !9, !10, !11, !12, !13, !14, !15, !16, !17, !18, !19, !20, !21, !22, !23, !24, !25, !26, !27, !27}
+!named = !{!0, !1, !2, !3, !4, !5, !6, !7, !8, !9, !10, !11, !12, !13, !14, !15, !16, !17, !18, !19, !20, !21, !22, !23, !24, !25, !26, !27, !28, !29, !30}
 
 ; CHECK:      !0 = !MDSubrange(count: 3)
 ; CHECK-NEXT: !1 = !MDSubrange(count: 3, lowerBound: 4)
@@ -62,3 +62,11 @@
 !24 = !MDDerivedType(tag: DW_TAG_ptr_to_member_type, baseType: !7, size: 32, align: 32, extraData: !17)
 !25 = !MDCompositeType(tag: DW_TAG_structure_type)
 !26 = !MDCompositeType(tag: DW_TAG_structure_type, runtimeLang: 6)
+
+; !25 = !{!7, !7}
+; !26 = !MDSubroutineType(flags: 7, types: !25)
+; !27 = !MDSubroutineType(types: !25)
+!27 = !{!7, !7}
+!28 = !MDSubroutineType(flags: 7, types: !27)
+!29 = !MDSubroutineType(flags: 0, types: !27)
+!30 = !MDSubroutineType(types: !27)

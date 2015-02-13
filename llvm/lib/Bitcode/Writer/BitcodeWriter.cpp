@@ -901,10 +901,17 @@ static void WriteMDCompositeType(const MDCompositeType *N,
   Record.clear();
 }
 
-static void WriteMDSubroutineType(const MDSubroutineType *,
-                                  const ValueEnumerator &, BitstreamWriter &,
-                                  SmallVectorImpl<uint64_t> &, unsigned) {
-  llvm_unreachable("write not implemented");
+static void WriteMDSubroutineType(const MDSubroutineType *N,
+                                  const ValueEnumerator &VE,
+                                  BitstreamWriter &Stream,
+                                  SmallVectorImpl<uint64_t> &Record,
+                                  unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  Record.push_back(N->getFlags());
+  Record.push_back(VE.getMetadataOrNullID(N->getTypeArray()));
+
+  Stream.EmitRecord(bitc::METADATA_SUBROUTINE_TYPE, Record, Abbrev);
+  Record.clear();
 }
 
 static void WriteMDFile(const MDFile *N, const ValueEnumerator &VE,

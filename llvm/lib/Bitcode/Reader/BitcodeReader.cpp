@@ -1417,6 +1417,16 @@ std::error_code BitcodeReader::ParseMetadata() {
           NextMDValueNo++);
       break;
     }
+    case bitc::METADATA_SUBROUTINE_TYPE: {
+      if (Record.size() != 3)
+        return Error("Invalid record");
+
+      MDValueList.AssignValue(
+          GET_OR_DISTINCT(MDSubroutineType, Record[0],
+                          (Context, Record[1], getMDOrNull(Record[2]))),
+          NextMDValueNo++);
+      break;
+    }
     case bitc::METADATA_FILE: {
       if (Record.size() != 3)
         return Error("Invalid record");

@@ -153,7 +153,8 @@ namespace bitc {
     METADATA_BASIC_TYPE    = 15,  // [distinct, tag, name, size, align, enc]
     METADATA_FILE          = 16,  // [distinct, filename, directory]
     METADATA_DERIVED_TYPE  = 17,  // [distinct, ...]
-    METADATA_COMPOSITE_TYPE= 18   // [distinct, ...]
+    METADATA_COMPOSITE_TYPE= 18,  // [distinct, ...]
+    METADATA_SUBROUTINE_TYPE= 19  // [distinct, flags, types]
   };
 
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each

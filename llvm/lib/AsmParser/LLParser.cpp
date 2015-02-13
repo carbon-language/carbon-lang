@@ -3329,7 +3329,14 @@ bool LLParser::ParseMDCompositeType(MDNode *&Result, bool IsDistinct) {
 }
 
 bool LLParser::ParseMDSubroutineType(MDNode *&Result, bool IsDistinct) {
-  return TokError("unimplemented parser");
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  OPTIONAL(flags, MDUnsignedField, (0, UINT32_MAX));                           \
+  REQUIRED(types, MDField, );
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
+
+  Result = GET_OR_DISTINCT(MDSubroutineType, (Context, flags.Val, types.Val));
+  return false;
 }
 
 /// ParseMDFileType:
