@@ -101,6 +101,9 @@ public:
 
   Option *ConsumeAfterOpt; // The ConsumeAfter option if it exists.
 
+  // This collects the different option categories that have been registered.
+  SmallPtrSet<OptionCategory *, 16> RegisteredOptionCategories;
+
   CommandLineParser() : ProgramOverview(nullptr), ConsumeAfterOpt(nullptr) {}
 
   void ParseCommandLineOptions(int argc, const char *const *argv,
@@ -191,6 +194,17 @@ public:
 
   void printOptionValues();
 
+  void registerCategory(OptionCategory *cat) {
+    assert(std::count_if(RegisteredOptionCategories.begin(),
+                         RegisteredOptionCategories.end(),
+                         [cat](const OptionCategory *Category) {
+                           return getName() == Category->getName();
+                         }) == 0 &&
+           "Duplicate option categories");
+
+    RegisteredOptionCategories.insert(cat);
+  }
+
 private:
   Option *LookupOption(StringRef &Arg, StringRef &Value);
 };
@@ -220,22 +234,11 @@ void Option::setArgStr(const char *S) {
   ArgStr = S;
 }
 
-// This collects the different option categories that have been registered.
-typedef SmallPtrSet<OptionCategory *, 16> OptionCatSet;
-static ManagedStatic<OptionCatSet> RegisteredOptionCategories;
-
 // Initialise the general option category.
 OptionCategory llvm::cl::GeneralCategory("General options");
 
 void OptionCategory::registerCategory() {
-  assert(std::count_if(RegisteredOptionCategories->begin(),
-                       RegisteredOptionCategories->end(),
-                       [this](const OptionCategory *Category) {
-                         return getName() == Category->getName();
-                       }) == 0 &&
-         "Duplicate option categories");
-
-  RegisteredOptionCategories->insert(this);
+  GlobalParser->registerCategory(this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1577,8 +1580,8 @@ protected:
 
     // Collect registered option categories into vector in preparation for
     // sorting.
-    for (OptionCatSet::const_iterator I = RegisteredOptionCategories->begin(),
-                                      E = RegisteredOptionCategories->end();
+    for (auto I = GlobalParser->RegisteredOptionCategories.begin(),
+              E = GlobalParser->RegisteredOptionCategories.end();
          I != E; ++I) {
       SortedCategories.push_back(*I);
     }
@@ -1721,7 +1724,7 @@ void HelpPrinterWrapper::operator=(bool Value) {
   // Decide which printer to invoke. If more than one option category is
   // registered then it is useful to show the categorized help instead of
   // uncategorized help.
-  if (RegisteredOptionCategories->size() > 1) {
+  if (GlobalParser->RegisteredOptionCategories.size() > 1) {
     // unhide -help-list option so user can have uncategorized output if they
     // want it.
     HLOp.setHiddenFlag(NotHidden);
