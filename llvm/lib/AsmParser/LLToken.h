@@ -200,6 +200,7 @@ namespace lltok {
     StringConstant,    // "foo"
     DwarfTag,          // DW_TAG_foo (includes "DW_TAG_")
     DwarfAttEncoding,  // DW_ATE_foo (includes "DW_ATE_")
+    DwarfLang,         // DW_LANG_foo (includes "DW_LANG_")
 
     // Type valued tokens (TyVal).
     Type,

@@ -2949,6 +2949,9 @@ struct DwarfTagField : public MDUnsignedField {
 struct DwarfAttEncodingField : public MDUnsignedField {
   DwarfAttEncodingField() : MDUnsignedField(0, dwarf::DW_ATE_hi_user) {}
 };
+struct DwarfLangField : public MDUnsignedField {
+  DwarfLangField() : MDUnsignedField(0, dwarf::DW_LANG_hi_user) {}
+};
 
 struct MDSignedField : public MDFieldImpl<int64_t> {
   int64_t Min;
@@ -2960,6 +2963,9 @@ struct MDSignedField : public MDFieldImpl<int64_t> {
       : ImplTy(Default), Min(Min), Max(Max) {}
 };
 
+struct MDBoolField : public MDFieldImpl<bool> {
+  MDBoolField(bool Default = false) : ImplTy(Default) {}
+};
 struct MDField : public MDFieldImpl<Metadata *> {
   MDField() : ImplTy(nullptr) {}
 };
@@ -3018,6 +3024,24 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, DwarfTagField &Result) {
 }
 
 template <>
+bool LLParser::ParseMDField(LocTy Loc, StringRef Name, DwarfLangField &Result) {
+  if (Lex.getKind() == lltok::APSInt)
+    return ParseMDField(Loc, Name, static_cast<MDUnsignedField &>(Result));
+
+  if (Lex.getKind() != lltok::DwarfLang)
+    return TokError("expected DWARF language");
+
+  unsigned Lang = dwarf::getLanguage(Lex.getStrVal());
+  if (!Lang)
+    return TokError("invalid DWARF language" + Twine(" '") + Lex.getStrVal() +
+                    "'");
+  assert(Lang <= Result.Max && "Expected valid DWARF language");
+  Result.assign(Lang);
+  Lex.Lex();
+  return false;
+}
+
+template <>
 bool LLParser::ParseMDField(LocTy Loc, StringRef Name,
                             DwarfAttEncodingField &Result) {
   if (Lex.getKind() == lltok::APSInt)
@@ -3052,6 +3076,22 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name,
   Result.assign(S.getExtValue());
   assert(Result.Val >= Result.Min && "Expected value in range");
   assert(Result.Val <= Result.Max && "Expected value in range");
+  Lex.Lex();
+  return false;
+}
+
+template <>
+bool LLParser::ParseMDField(LocTy Loc, StringRef Name, MDBoolField &Result) {
+  switch (Lex.getKind()) {
+  default:
+    return TokError("expected 'true' or 'false'");
+  case lltok::kw_true:
+    Result.assign(true);
+    break;
+  case lltok::kw_false:
+    Result.assign(false);
+    break;
+  }
   Lex.Lex();
   return false;
 }
@@ -3273,7 +3313,7 @@ bool LLParser::ParseMDCompositeType(MDNode *&Result, bool IsDistinct) {
   OPTIONAL(offset, MDUnsignedField, (0, UINT32_MAX));                          \
   OPTIONAL(flags, MDUnsignedField, (0, UINT32_MAX));                           \
   OPTIONAL(elements, MDField, );                                               \
-  OPTIONAL(runtimeLang, MDUnsignedField, (0, UINT32_MAX));                     \
+  OPTIONAL(runtimeLang, DwarfLangField, );                                     \
   OPTIONAL(vtableHolder, MDField, );                                           \
   OPTIONAL(templateParams, MDField, );                                         \
   OPTIONAL(identifier, MDStringField, );

@@ -1461,8 +1461,14 @@ static void writeMDCompositeType(raw_ostream &Out, const MDCompositeType *N,
     writeMetadataAsOperand(Out, N->getElements(), TypePrinter, Machine,
                            Context);
   }
-  if (N->getRuntimeLang())
-    Out << FS << "runtimeLang: " << N->getRuntimeLang();
+  if (unsigned Lang = N->getRuntimeLang()) {
+    Out << FS << "runtimeLang: ";
+    if (const char *S = dwarf::LanguageString(Lang))
+      Out << S;
+    else
+      Out << Lang;
+  }
+
   if (N->getVTableHolder()) {
     Out << FS << "vtableHolder: ";
     writeMetadataAsOperand(Out, N->getVTableHolder(), TypePrinter, Machine,
