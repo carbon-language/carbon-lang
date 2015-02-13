@@ -1642,11 +1642,24 @@ static void writeMDLexicalBlock(raw_ostream &Out, const MDLexicalBlock *N,
   Out << ")";
 }
 
-static void writeMDLexicalBlockFile(raw_ostream &, const MDLexicalBlockFile *,
-                                    TypePrinting *, SlotTracker *,
-                                    const Module *) {
-  llvm_unreachable("write not implemented");
+static void writeMDLexicalBlockFile(raw_ostream &Out,
+                                    const MDLexicalBlockFile *N,
+                                    TypePrinting *TypePrinter,
+                                    SlotTracker *Machine,
+                                    const Module *Context) {
+  Out << "!MDLexicalBlockFile(";
+  FieldSeparator FS;
+  Out << FS << "scope: ";
+  writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
+  if (N->getFile()) {
+    Out << FS << "file: ";
+    writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
+                           Context);
+  }
+  Out << FS << "discriminator: " << N->getDiscriminator();
+  Out << ")";
 }
+
 static void writeMDNamespace(raw_ostream &, const MDNamespace *, TypePrinting *,
                              SlotTracker *, const Module *) {
   llvm_unreachable("write not implemented");

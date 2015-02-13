@@ -1,8 +1,8 @@
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis | FileCheck %s
 ; RUN: verify-uselistorder %s
 
-; CHECK: !named = !{!0, !1, !2, !3, !4, !4}
-!named = !{!0, !1, !2, !3, !4, !5}
+; CHECK: !named = !{!0, !1, !2, !3, !4, !4, !5, !6, !7, !7}
+!named = !{!0, !1, !2, !3, !4, !5, !6, !7, !8, !9}
 
 !0 = distinct !{}
 !1 = !{!"path/to/file", !"/path/to/dir"}
@@ -14,3 +14,12 @@
 ; CHECK: !4 = !MDLexicalBlock(scope: !0)
 !4 = !MDLexicalBlock(scope: !0)
 !5 = !MDLexicalBlock(scope: !0, file: null, line: 0, column: 0)
+
+; CHECK: !5 = !MDLexicalBlockFile(scope: !3, file: !2, discriminator: 0)
+; CHECK: !6 = !MDLexicalBlockFile(scope: !3, file: !2, discriminator: 1)
+!6 = !MDLexicalBlockFile(scope: !3, file: !2, discriminator: 0)
+!7 = !MDLexicalBlockFile(scope: !3, file: !2, discriminator: 1)
+
+; CHECK: !7 = !MDLexicalBlockFile(scope: !3, discriminator: 7)
+!8 = !MDLexicalBlockFile(scope: !3, discriminator: 7)
+!9 = !MDLexicalBlockFile(scope: !3, file: null, discriminator: 7)
