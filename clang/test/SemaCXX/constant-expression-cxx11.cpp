@@ -1984,3 +1984,13 @@ struct InvalidRedef {
   int f; // expected-note{{previous definition is here}}
   constexpr int f(void); // expected-error{{redefinition of 'f'}} expected-warning{{will not be implicitly 'const'}}
 };
+
+namespace PR17938 {
+  template <typename T> constexpr T const &f(T const &x) { return x; }
+
+  struct X {};
+  struct Y : X {};
+  struct Z : Y { constexpr Z() {} };
+
+  static constexpr auto z = f(Z());
+}
