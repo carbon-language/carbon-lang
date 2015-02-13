@@ -59,6 +59,36 @@ We use here the command-line, non-interactive CMake interface.
    environment variable, for instance. You can force CMake to use a given build
    tool, see the `Usage`_ section.
 
+#. After CMake has finished running, proceed to use IDE project files or start
+   the build from the build directory:
+
+   .. code-block:: console
+
+     $ cmake --build .
+
+   The ``--build`` option tells ``cmake`` to invoke the underlying build
+   tool (``make``, ``ninja``, ``xcodebuild``, ``msbuild``, etc).
+
+   The underlying build tool can be invoked directly either of course, but
+   the ``--build`` option is portable.
+
+#. After LLVM has finished building, install it from the build directory:
+
+   .. code-block:: console
+
+     $ cmake --build . --target install
+
+   The ``--target`` option with ``install`` parameter in addition to
+   the ``--build`` option tells ``cmake`` to build the ``install`` target.
+
+   It is possible to set a different install prefix at installation time
+   by invoking the ``cmake_install.cmake`` script generated in the
+   build directory:
+
+   .. code-block:: console
+
+     $ cmake -DCMAKE_INSTALL_PREFIX=/tmp/llvm -P cmake_install.cmake
+
 .. _Basic CMake usage:
 .. _Usage:
 
