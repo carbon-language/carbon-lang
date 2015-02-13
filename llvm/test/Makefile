@@ -85,13 +85,13 @@ endif
 # just removing them here won't work.
 # Solaris does not have the -m flag for ulimit
 ifeq ($(HOST_OS),SunOS)
-ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -v 512000 ;
+ULIMIT=ulimit -t 1200 ; ulimit -d 512000 ; ulimit -v 512000 ;
 else # !SunOS
 # Newer versions of python try to allocate an insane amount of address space for
 # its thread-local storage, don't set a limit here.
 # When -v is not used, then -s has to be used to limit the stack size.
 # FIXME: Those limits should be enforced by lit instead of globally.
-ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -m 512000 ; ulimit -s 8192 ;
+ULIMIT=ulimit -t 1200 ; ulimit -d 512000 ; ulimit -m 512000 ; ulimit -s 8192 ;
 endif # SunOS
 
 check-local:: lit.site.cfg Unit/lit.site.cfg
