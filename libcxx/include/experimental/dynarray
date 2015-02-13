@@ -104,6 +104,8 @@ public:
 #include <new>
 #include <algorithm>
 
+#include <__undef___deallocate>
+
 #if defined(_LIBCPP_NO_EXCEPTIONS)
     #include <cassert>
 #endif

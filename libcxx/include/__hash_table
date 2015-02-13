@@ -19,6 +19,7 @@
 #include <cmath>
 
 #include <__undef_min_max>
+#include <__undef___deallocate>
 
 #include <__debug>
 

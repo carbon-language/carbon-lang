@@ -348,6 +348,7 @@ template <class T> unspecified2 end(const valarray<T>& v);
 #include <new>
 
 #include <__undef_min_max>
+#include <__undef___deallocate>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header

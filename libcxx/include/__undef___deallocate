@@ -1,0 +1,18 @@
+// -*- C++ -*-
+//===----------------------------------------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifdef __deallocate
+#if defined(_MSC_VER) && !defined(__clang__)
+_LIBCPP_WARNING("macro __deallocate is incompatible with C++.  #undefining __deallocate")
+#else
+#warning: macro __deallocate is incompatible with C++.  #undefining __deallocate
+#endif
+#undef __deallocate
+#endif
