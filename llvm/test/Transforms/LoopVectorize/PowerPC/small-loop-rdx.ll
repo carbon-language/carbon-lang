@@ -1,4 +1,5 @@
 ; RUN: opt < %s -loop-vectorize -S -debug < %s 2>&1 | FileCheck %s
+; REQUIRES: asserts
 
 ; CHECK: LV: Unroll Factor is 12
 
