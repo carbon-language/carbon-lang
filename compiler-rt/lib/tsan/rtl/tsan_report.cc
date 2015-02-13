@@ -356,8 +356,9 @@ void PrintStack(const ReportStack *ent) {
   SymbolizedStack *frame = ent->frames;
   for (int i = 0; frame; frame = frame->next, i++) {
     const AddressInfo &info = frame->info;
-    Printf("  %s()\n      %s:%d +0x%zx\n", info.function, info.file, info.line,
-           (void *)info.module_offset);
+    Printf("  %s()\n      %s:%d +0x%zx\n", info.function,
+        StripPathPrefix(info.file, common_flags()->strip_path_prefix),
+        info.line, (void *)info.module_offset);
   }
 }
 
