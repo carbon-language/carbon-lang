@@ -7,7 +7,6 @@ package runtime
 #include "arch.h"
 #include "malloc.h"
 #include "go-string.h"
-#include "race.h"
 
 #define charntorune(pv, str, len) __go_get_rune(str, len, pv)
 

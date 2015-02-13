@@ -57,7 +57,6 @@
 #include "malloc.h"
 #include "mgc0.h"
 #include "chan.h"
-#include "race.h"
 #include "go-type.h"
 
 // Map gccgo field names to gc field names.
@@ -2507,8 +2506,6 @@ runfinq(void* dummy __attribute__ ((unused)))
 			continue;
 		}
 		runtime_unlock(&finlock);
-		if(raceenabled)
-			runtime_racefingo();
 		for(; fb; fb=next) {
 			next = fb->next;
 			for(i=0; i<(uint32)fb->cnt; i++) {

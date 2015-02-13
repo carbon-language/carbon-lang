@@ -268,6 +268,8 @@ var cgoEnabled = map[string]bool{
 	"linux/386":       true,
 	"linux/amd64":     true,
 	"linux/arm":       true,
+	"linux/ppc64":     true,
+	"linux/ppc64le":   true,
 	"linux/s390":      true,
 	"linux/s390x":     true,
 	"netbsd/386":      true,
@@ -1196,8 +1198,15 @@ func init() {
 	}
 }
 
-// ToolDir is the directory containing build tools.
-var ToolDir = filepath.Join(runtime.GOROOT(), "pkg/tool/"+runtime.GOOS+"_"+runtime.GOARCH)
+func getToolDir() string {
+	if runtime.Compiler == "gccgo" {
+		return runtime.GCCGOTOOLDIR
+	} else {
+		return filepath.Join(runtime.GOROOT(), "pkg/tool/"+runtime.GOOS+"_"+runtime.GOARCH)
+	}
+}
+
+var ToolDir = getToolDir()
 
 // IsLocalImport reports whether the import path is
 // a local import path, like ".", "..", "./foo", or "../foo".
@@ -1218,6 +1227,8 @@ func ArchChar(goarch string) (string, error) {
 		return "5", nil
 	case "arm64":
 		return "7", nil
+	case "ppc64", "ppc64le":
+		return "9", nil
 	}
 	return "", errors.New("unsupported GOARCH " + goarch)
 }

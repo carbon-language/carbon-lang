@@ -163,6 +163,36 @@ done
   done
 done
 
+cmdlist="cgo go gofmt"
+for c in $cmdlist; do
+  (cd ${NEWDIR}/src/cmd/$c && find . -name '*.go' -print) | while read f; do
+    oldfile=${OLDDIR}/src/cmd/$c/$f
+    newfile=${NEWDIR}/src/cmd/$c/$f
+    libgofile=go/cmd/$c/$f
+    merge $f ${oldfile} ${newfile} ${libgofile}
+  done
+
+  (cd ${NEWDIR}/src/cmd/$c && find . -name testdata -print) | while read d; do
+    oldtd=${OLDDIR}/src/cmd/$c/$d
+    newtd=${NEWDIR}/src/cmd/$c/$d
+    libgotd=go/cmd/$c/$d
+    if ! test -d ${oldtd}; then
+      continue
+    fi
+    (cd ${oldtd} && hg status -A .) | while read f; do
+      if test "`basename $f`" = ".hgignore"; then
+        continue
+      fi
+      f=`echo $f | sed -e 's/^..//'`
+      name=$d/$f
+      oldfile=${oldtd}/$f
+      newfile=${newtd}/$f
+      libgofile=${libgotd}/$f
+      merge ${name} ${oldfile} ${newfile} ${libgofile}
+    done
+  done
+done
+
 runtime="chan.goc chan.h cpuprof.goc env_posix.c heapdump.c lock_futex.c lfstack.goc lock_sema.c mcache.c mcentral.c mfixalloc.c mgc0.c mgc0.h mheap.c msize.c netpoll.goc netpoll_epoll.c netpoll_kqueue.c netpoll_stub.c panic.c print.c proc.c race.h rdebug.goc runtime.c runtime.h signal_unix.c signal_unix.h malloc.h malloc.goc mprof.goc parfor.c runtime1.goc sema.goc sigqueue.goc string.goc time.goc"
 for f in $runtime; do
   merge_c $f $f

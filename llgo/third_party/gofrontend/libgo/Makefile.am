@@ -26,6 +26,7 @@ STAMP = echo timestamp >
 toolexecdir = $(glibgo_toolexecdir)
 toolexeclibdir = $(glibgo_toolexeclibdir)
 toolexeclibgodir = $(nover_glibgo_toolexeclibdir)/go/$(gcc_version)/$(target_alias)
+libexecsubdir = $(libexecdir)/gcc/$(target_alias)/$(gcc_version)
 
 LIBFFI = @LIBFFI@
 LIBFFIINCS = @LIBFFIINCS@
@@ -1007,6 +1008,7 @@ s-version: Makefile
 	echo 'const theVersion = "'`$(GOC) --version | sed 1q`'"' >> version.go.tmp
 	echo 'const theGoarch = "'$(GOARCH)'"' >> version.go.tmp
 	echo 'const theGoos = "'$(GOOS)'"' >> version.go.tmp
+	echo 'const theGccgoToolDir = "$(libexecsubdir)"' >> version.go.tmp
 	$(SHELL) $(srcdir)/mvifdiff.sh version.go.tmp version.go
 	$(STAMP) $@
 
@@ -1812,7 +1814,7 @@ s-syscall_arch: Makefile
 
 sysinfo.go: s-sysinfo; @true
 s-sysinfo: $(srcdir)/mksysinfo.sh config.h
-	CC="$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(OSCFLAGS)" $(SHELL) $(srcdir)/mksysinfo.sh
+	CC="$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(OSCFLAGS) -O" $(SHELL) $(srcdir)/mksysinfo.sh
 	$(SHELL) $(srcdir)/mvifdiff.sh tmp-sysinfo.go sysinfo.go
 	$(STAMP) $@
 

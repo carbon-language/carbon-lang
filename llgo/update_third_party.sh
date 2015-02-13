@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 gofrontendrepo=https://code.google.com/p/gofrontend
-gofrontendrev=2a85649c19e1
+gofrontendrev=0fde0b6a7eb2
 
 gccrepo=svn://gcc.gnu.org/svn/gcc/trunk
 gccrev=216268
@@ -25,7 +25,7 @@ cp -r $gofrontenddir/LICENSE $gofrontenddir/libgo third_party/gofrontend
 # Apply a diff that eliminates use of the unnamed struct extension beyond what
 # -fms-extensions supports.
 (cd third_party/gofrontend && patch -p1) < libgo-noext.diff
-find third_party/gofrontend -name '*.orig' | xargs rm
+find third_party/gofrontend -name '*.orig' -exec rm \{\} \;
 
 # Remove GPL licensed files.
 rm \

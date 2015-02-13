@@ -16,7 +16,6 @@ package runtime
 #include "malloc.h"
 #include "interface.h"
 #include "go-type.h"
-#include "race.h"
 
 // Map gccgo field names to gc field names.
 // Eface aka __go_empty_interface.
@@ -248,9 +247,6 @@ runtime_mallocgc(uintptr size, uintptr typ, uint32 flag)
 	// heap profiling/tracing.
 	if(UseSpanType && !(flag & FlagNoScan) && typ != 0)
 		settype(s, v, typ);
-
-	if(raceenabled)
-		runtime_racemalloc(v, size);
 
 	if(runtime_debug.allocfreetrace)
 		runtime_tracealloc(v, size, typ);
@@ -697,8 +693,6 @@ runtime_MHeap_SysAlloc(MHeap *h, uintptr n)
 		h->arena_used += n;
 		runtime_MHeap_MapBits(h);
 		runtime_MHeap_MapSpans(h);
-		if(raceenabled)
-			runtime_racemapshadow(p, n);
 		
 		if(((uintptr)p & (PageSize-1)) != 0)
 			runtime_throw("misrounded allocation in MHeap_SysAlloc");
@@ -732,8 +726,6 @@ runtime_MHeap_SysAlloc(MHeap *h, uintptr n)
 			h->arena_end = p_end;
 		runtime_MHeap_MapBits(h);
 		runtime_MHeap_MapSpans(h);
-		if(raceenabled)
-			runtime_racemapshadow(p, n);
 	}
 	
 	if(((uintptr)p & (PageSize-1)) != 0)

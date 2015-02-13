@@ -12,7 +12,6 @@ package time
 #include "defs.h"
 #include "arch.h"
 #include "malloc.h"
-#include "race.h"
 
 enum {
 	debug = 0,
@@ -42,8 +41,6 @@ func Sleep(ns int64) {
 
 // startTimer adds t to the timer heap.
 func startTimer(t *Timer) {
-	if(raceenabled)
-		runtime_racerelease(t);
 	runtime_addtimer(t);
 }
 
@@ -237,8 +234,6 @@ timerproc(void* dummy __attribute__ ((unused)))
 			f = (void*)t->fv->fn;
 			arg = t->arg;
 			runtime_unlock(&timers.lock);
-			if(raceenabled)
-				runtime_raceacquire(t);
 			__go_set_closure(fv);
 			f(now, arg);
 

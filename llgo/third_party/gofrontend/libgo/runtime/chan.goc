@@ -6,7 +6,6 @@ package runtime
 #include "runtime.h"
 #include "arch.h"
 #include "go-type.h"
-#include "race.h"
 #include "malloc.h"
 #include "chan.h"
 
@@ -15,7 +14,6 @@ uint32 runtime_Hchansize = sizeof(Hchan);
 static	void	dequeueg(WaitQ*);
 static	SudoG*	dequeue(WaitQ*);
 static	void	enqueue(WaitQ*, SudoG*);
-static	void	racesync(Hchan*, SudoG*);
 
 static Hchan*
 makechan(ChanType *t, int64 hint)
@@ -82,6 +80,7 @@ __go_new_channel_big(ChanType *t, uint64 hint)
 static bool
 chansend(ChanType *t, Hchan *c, byte *ep, bool block, void *pc)
 {
+	USED(pc);
 	SudoG *sg;
 	SudoG mysg;
 	G* gp;
@@ -89,9 +88,6 @@ chansend(ChanType *t, Hchan *c, byte *ep, bool block, void *pc)
 	G* g;
 
 	g = runtime_g();
-
-	if(raceenabled)
-		runtime_racereadobjectpc(ep, t->__element_type, runtime_getcallerpc(&t), chansend);
 
 	if(c == nil) {
 		USED(t);
@@ -116,8 +112,6 @@ chansend(ChanType *t, Hchan *c, byte *ep, bool block, void *pc)
 	}
 
 	runtime_lock(&c->lock);
-	if(raceenabled)
-		runtime_racereadpc(c, pc, chansend);
 	if(c->closed)
 		goto closed;
 
@@ -126,8 +120,6 @@ chansend(ChanType *t, Hchan *c, byte *ep, bool block, void *pc)
 
 	sg = dequeue(&c->recvq);
 	if(sg != nil) {
-		if(raceenabled)
-			racesync(c, sg);
 		runtime_unlock(&c->lock);
 
 		gp = sg->g;
@@ -183,11 +175,6 @@ asynch:
 		goto asynch;
 	}
 
-	if(raceenabled) {
-		runtime_raceacquire(chanbuf(c, c->sendx));
-		runtime_racerelease(chanbuf(c, c->sendx));
-	}
-
 	runtime_memmove(chanbuf(c, c->sendx), ep, c->elemsize);
 	if(++c->sendx == c->dataqsiz)
 		c->sendx = 0;
@@ -225,8 +212,6 @@ chanrecv(ChanType *t, Hchan* c, byte *ep, bool block, bool *received)
 	if(runtime_gcwaiting())
 		runtime_gosched();
 
-	// raceenabled: don't need to check ep, as it is always on the stack.
-
 	if(debug)
 		runtime_printf("chanrecv: chan=%p\n", c);
 
@@ -256,8 +241,6 @@ chanrecv(ChanType *t, Hchan* c, byte *ep, bool block, bool *received)
 
 	sg = dequeue(&c->sendq);
 	if(sg != nil) {
-		if(raceenabled)
-			racesync(c, sg);
 		runtime_unlock(&c->lock);
 
 		if(ep != nil)
@@ -319,11 +302,6 @@ asynch:
 		goto asynch;
 	}
 
-	if(raceenabled) {
-		runtime_raceacquire(chanbuf(c, c->recvx));
-		runtime_racerelease(chanbuf(c, c->recvx));
-	}
-
 	if(ep != nil)
 		runtime_memmove(ep, chanbuf(c, c->recvx), c->elemsize);
 	runtime_memclr(chanbuf(c, c->recvx), c->elemsize);
@@ -352,8 +330,6 @@ closed:
 		runtime_memclr(ep, c->elemsize);
 	if(received != nil)
 		*received = false;
-	if(raceenabled)
-		runtime_raceacquire(c);
 	runtime_unlock(&c->lock);
 	if(mysg.releasetime > 0)
 		runtime_blockevent(mysg.releasetime - t0, 2);
@@ -789,8 +765,6 @@ loop:
 			break;
 
 		case CaseSend:
-			if(raceenabled)
-				runtime_racereadpc(c, runtime_selectgo, chansend);
 			if(c->closed)
 				goto sclose;
 			if(c->dataqsiz > 0) {
@@ -874,24 +848,11 @@ loop:
 			*cas->receivedp = true;
 	}
 
-	if(raceenabled) {
-		if(cas->kind == CaseRecv && cas->sg.elem != nil)
-			runtime_racewriteobjectpc(cas->sg.elem, c->elemtype, selectgo, chanrecv);
-		else if(cas->kind == CaseSend)
-			runtime_racereadobjectpc(cas->sg.elem, c->elemtype, selectgo, chansend);
-	}
-
 	selunlock(sel);
 	goto retc;
 
 asyncrecv:
 	// can receive from buffer
-	if(raceenabled) {
-		if(cas->sg.elem != nil)
-			runtime_racewriteobjectpc(cas->sg.elem, c->elemtype, selectgo, chanrecv);
-		runtime_raceacquire(chanbuf(c, c->recvx));
-		runtime_racerelease(chanbuf(c, c->recvx));
-	}
 	if(cas->receivedp != nil)
 		*cas->receivedp = true;
 	if(cas->sg.elem != nil)
@@ -914,11 +875,6 @@ asyncrecv:
 
 asyncsend:
 	// can send to buffer
-	if(raceenabled) {
-		runtime_raceacquire(chanbuf(c, c->sendx));
-		runtime_racerelease(chanbuf(c, c->sendx));
-		runtime_racereadobjectpc(cas->sg.elem, c->elemtype, selectgo, chansend);
-	}
 	runtime_memmove(chanbuf(c, c->sendx), cas->sg.elem, c->elemsize);
 	if(++c->sendx == c->dataqsiz)
 		c->sendx = 0;
@@ -937,11 +893,6 @@ asyncsend:
 
 syncrecv:
 	// can receive from sleeping sender (sg)
-	if(raceenabled) {
-		if(cas->sg.elem != nil)
-			runtime_racewriteobjectpc(cas->sg.elem, c->elemtype, selectgo, chanrecv);
-		racesync(c, sg);
-	}
 	selunlock(sel);
 	if(debug)
 		runtime_printf("syncrecv: sel=%p c=%p o=%d\n", sel, c, o);
@@ -963,16 +914,10 @@ rclose:
 		*cas->receivedp = false;
 	if(cas->sg.elem != nil)
 		runtime_memclr(cas->sg.elem, c->elemsize);
-	if(raceenabled)
-		runtime_raceacquire(c);
 	goto retc;
 
 syncsend:
 	// can send to sleeping receiver (sg)
-	if(raceenabled) {
-		runtime_racereadobjectpc(cas->sg.elem, c->elemtype, selectgo, chansend);
-		racesync(c, sg);
-	}
 	selunlock(sel);
 	if(debug)
 		runtime_printf("syncsend: sel=%p c=%p o=%d\n", sel, c, o);
@@ -1062,6 +1007,7 @@ func reflect.chanclose(c *Hchan) {
 static void
 closechan(Hchan *c, void *pc)
 {
+	USED(pc);
 	SudoG *sg;
 	G* gp;
 
@@ -1076,12 +1022,6 @@ closechan(Hchan *c, void *pc)
 		runtime_unlock(&c->lock);
 		runtime_panicstring("close of closed channel");
 	}
-
-	if(raceenabled) {
-		runtime_racewritepc(c, pc, runtime_closechan);
-		runtime_racerelease(c);
-	}
-
 	c->closed = true;
 
 	// release all readers
@@ -1193,13 +1133,4 @@ enqueue(WaitQ *q, SudoG *sgp)
 	}
 	q->last->link = sgp;
 	q->last = sgp;
-}
-
-static void
-racesync(Hchan *c, SudoG *sg)
-{
-	runtime_racerelease(chanbuf(c, 0));
-	runtime_raceacquireg(sg->g, chanbuf(c, 0));
-	runtime_racereleaseg(sg->g, chanbuf(c, 0));
-	runtime_raceacquire(chanbuf(c, 0));
 }

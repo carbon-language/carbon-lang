@@ -18,7 +18,6 @@
 #include "arch.h"
 #include "defs.h"
 #include "malloc.h"
-#include "race.h"
 #include "go-type.h"
 #include "go-defer.h"
 
@@ -51,7 +50,7 @@ extern void __splitstack_block_signals_context (void *context[10], int *,
 #if defined(USING_SPLIT_STACK) && defined(LINKER_SUPPORTS_SPLIT_STACK)
 # define StackMin PTHREAD_STACK_MIN
 #else
-# define StackMin 2 * 1024 * 1024
+# define StackMin ((sizeof(char *) < 8) ? 2 * 1024 * 1024 : 4 * 1024 * 1024)
 #endif
 
 uintptr runtime_stacks_sys;
@@ -462,9 +461,6 @@ runtime_schedinit(void)
 
 	// Can not enable GC until all roots are registered.
 	// mstats.enablegc = 1;
-
-	// if(raceenabled)
-	//	g->racectx = runtime_raceinit();
 }
 
 extern void main_init(void) __asm__ (GOSYM_PREFIX "__go_init_main");
@@ -528,8 +524,6 @@ runtime_main(void* dummy __attribute__((unused)))
 	mstats.enablegc = 1;
 
 	main_main();
-	if(raceenabled)
-		runtime_racefini();
 
 	// Make racy client program work: if panicking on
 	// another goroutine at the same time as main returns,
@@ -1150,6 +1144,7 @@ runtime_needm(void)
 	__splitstack_getcontext(&g->stack_context[0]);
 #else
 	g->gcinitial_sp = &mp;
+	g->gcstack = nil;
 	g->gcstack_size = 0;
 	g->gcnext_sp = &mp;
 #endif
@@ -1251,6 +1246,8 @@ runtime_dropm(void)
 	runtime_setmg(nil, nil);
 
 	mp->curg->status = Gdead;
+	mp->curg->gcstack = nil;
+	mp->curg->gcnext_sp = nil;
 
 	mnext = lockextra(true);
 	mp->schedlink = mnext;
@@ -1845,8 +1842,6 @@ runtime_goexit(void)
 {
 	if(g->status != Grunning)
 		runtime_throw("bad g status");
-	if(raceenabled)
-		runtime_racegoend();
 	runtime_mcall(goexit0);
 }
 
