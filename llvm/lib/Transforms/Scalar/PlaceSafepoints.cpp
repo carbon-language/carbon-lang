@@ -49,7 +49,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Pass.h"
-#include "llvm/PassManager.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -539,7 +539,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     // need the pass manager to handle scheduling all the loop passes
     // appropriately.  Doing this by hand is painful and just not worth messing
     // with for the moment.
-    FunctionPassManager FPM(F.getParent());
+    legacy::FunctionPassManager FPM(F.getParent());
     bool CanAssumeCallSafepoints = EnableCallSafepoints;
     PlaceBackedgeSafepointsImpl *PBS =
       new PlaceBackedgeSafepointsImpl(CanAssumeCallSafepoints);

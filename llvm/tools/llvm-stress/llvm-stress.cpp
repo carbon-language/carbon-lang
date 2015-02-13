@@ -20,7 +20,7 @@
 #include "llvm/IR/LegacyPassNameParser.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/PassManager.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -711,7 +711,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  PassManager Passes;
+  legacy::PassManager Passes;
   Passes.add(createVerifierPass());
   Passes.add(createDebugInfoVerifierPass());
   Passes.add(createPrintModulePass(Out->os()));

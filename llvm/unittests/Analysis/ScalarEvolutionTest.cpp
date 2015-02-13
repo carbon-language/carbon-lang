@@ -14,7 +14,7 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/PassManager.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "gtest/gtest.h"
 
 namespace llvm {
@@ -32,7 +32,7 @@ protected:
   }
   LLVMContext Context;
   Module M;
-  PassManager PM;
+  legacy::PassManager PM;
   ScalarEvolution &SE;
 };
 

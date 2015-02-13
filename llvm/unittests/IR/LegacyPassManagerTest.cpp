@@ -8,13 +8,12 @@
 //===----------------------------------------------------------------------===//
 //
 // This unit test exercises the legacy pass manager infrastructure. We use the
-// old names as well to ensure that the source-level compatibility wrapper
-// works for out-of-tree code that expects to include llvm/PassManager.h and
-// subclass the core pass classes.
+// old names as well to ensure that the source-level compatibility is preserved
+// where possible.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/PassManager.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -302,7 +301,7 @@ namespace llvm {
 
       mNDM->run = mNDNM->run = mDNM->run = mNDM2->run = 0;
 
-      PassManager Passes;
+      legacy::PassManager Passes;
       Passes.add(new DataLayoutPass());
       Passes.add(mNDM2);
       Passes.add(mNDM);
@@ -326,7 +325,7 @@ namespace llvm {
 
       mNDM->run = mNDNM->run = mDNM->run = mNDM2->run = 0;
 
-      PassManager Passes;
+      legacy::PassManager Passes;
       Passes.add(new DataLayoutPass());
       Passes.add(mNDM);
       Passes.add(mNDNM);
@@ -348,7 +347,7 @@ namespace llvm {
     void MemoryTestHelper(int run) {
       std::unique_ptr<Module> M(makeLLVMModule());
       T *P = new T();
-      PassManager Passes;
+      legacy::PassManager Passes;
       Passes.add(new DataLayoutPass());
       Passes.add(P);
       Passes.run(*M);
@@ -359,7 +358,7 @@ namespace llvm {
     void MemoryTestHelper(int run, int N) {
       Module *M = makeLLVMModule();
       T *P = new T();
-      PassManager Passes;
+      legacy::PassManager Passes;
       Passes.add(new DataLayoutPass());
       Passes.add(P);
       Passes.run(*M);
@@ -397,7 +396,7 @@ namespace llvm {
       {
         SCOPED_TRACE("Running OnTheFlyTest");
         struct OnTheFlyTest *O = new OnTheFlyTest();
-        PassManager Passes;
+        legacy::PassManager Passes;
         Passes.add(new DataLayoutPass());
         Passes.add(O);
         Passes.run(*M);

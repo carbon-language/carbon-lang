@@ -16,7 +16,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/PassManager.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
@@ -107,7 +107,7 @@ protected:
 
     IsPotentiallyReachableTestPass *P =
         new IsPotentiallyReachableTestPass(ExpectedResult, A, B);
-    PassManager PM;
+    legacy::PassManager PM;
     PM.add(P);
     PM.run(*M);
   }

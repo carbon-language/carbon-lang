@@ -19,11 +19,11 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Pass.h"
-#include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Transforms/Scalar.h"
@@ -407,7 +407,7 @@ bool ReduceCrashingInstructions::TestInsts(std::vector<const Instruction*>
       }
 
   // Verify that this is still valid.
-  PassManager Passes;
+  legacy::PassManager Passes;
   Passes.add(createVerifierPass());
   Passes.add(createDebugInfoVerifierPass());
   Passes.run(*M);

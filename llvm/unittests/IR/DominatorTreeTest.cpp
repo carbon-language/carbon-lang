@@ -13,7 +13,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/PassManager.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
 
@@ -218,7 +218,7 @@ namespace llvm {
     TEST(DominatorTree, Unreachable) {
       DPass *P = new DPass();
       std::unique_ptr<Module> M = makeLLVMModule(P);
-      PassManager Passes;
+      legacy::PassManager Passes;
       Passes.add(P);
       Passes.run(*M);
     }

@@ -16,10 +16,10 @@
 #include "BugDriver.h"
 #include "ToolRunner.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/LegacyPassNameParser.h"
 #include "llvm/LinkAllIR.h"
 #include "llvm/LinkAllPasses.h"
-#include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PluginLoader.h"
@@ -92,7 +92,7 @@ static void BugpointInterruptFunction() {
 
 // Hack to capture a pass list.
 namespace {
-  class AddToDriver : public FunctionPassManager {
+  class AddToDriver : public legacy::FunctionPassManager {
     BugDriver &D;
   public:
     AddToDriver(BugDriver &_D) : FunctionPassManager(nullptr), D(_D) {}

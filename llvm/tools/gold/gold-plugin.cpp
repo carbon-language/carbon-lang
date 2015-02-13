@@ -24,12 +24,12 @@
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Linker/Linker.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Object/IRObjectFile.h"
-#include "llvm/PassManager.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -693,11 +693,11 @@ getModuleForFile(LLVMContext &Context, claimed_file &F,
 }
 
 static void runLTOPasses(Module &M, TargetMachine &TM) {
-  PassManager passes;
+  legacy::PassManager passes;
   passes.add(new DataLayoutPass());
   passes.add(createTargetTransformInfoWrapperPass(TM.getTargetIRAnalysis()));
 
-  PassManagerBuilder PMB;
+  legacy::PassManagerBuilder PMB;
   PMB.LibraryInfo = new TargetLibraryInfoImpl(Triple(TM.getTargetTriple()));
   PMB.Inliner = createFunctionInliningPass();
   PMB.VerifyInput = true;
@@ -743,7 +743,7 @@ static void codegen(Module &M) {
   if (options::TheOutputType == options::OT_SAVE_TEMPS)
     saveBCFile(output_name + ".opt.bc", M);
 
-  PassManager CodeGenPasses;
+  legacy::PassManager CodeGenPasses;
   CodeGenPasses.add(new DataLayoutPass());
 
   SmallString<128> Filename;

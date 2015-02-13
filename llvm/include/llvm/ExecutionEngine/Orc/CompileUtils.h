@@ -15,9 +15,9 @@
 #define LLVM_EXECUTIONENGINE_ORC_COMPILEUTILS_H
 
 #include "llvm/ExecutionEngine/ObjectMemoryBuffer.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/PassManager.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -34,7 +34,7 @@ public:
     SmallVector<char, 0> ObjBufferSV;
     raw_svector_ostream ObjStream(ObjBufferSV);
 
-    PassManager PM;
+    legacy::PassManager PM;
     MCContext *Ctx;
     if (TM.addPassesToEmitMC(PM, Ctx, ObjStream))
       llvm_unreachable("Target does not support MC emission.");

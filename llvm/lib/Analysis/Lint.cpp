@@ -51,8 +51,8 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Pass.h"
-#include "llvm/PassManager.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -903,7 +903,7 @@ void llvm::lintFunction(const Function &f) {
   Function &F = const_cast<Function&>(f);
   assert(!F.isDeclaration() && "Cannot lint external functions");
 
-  FunctionPassManager FPM(F.getParent());
+  legacy::FunctionPassManager FPM(F.getParent());
   Lint *V = new Lint();
   FPM.add(V);
   FPM.run(F);
@@ -912,7 +912,7 @@ void llvm::lintFunction(const Function &f) {
 /// lintModule - Check a module for errors, printing messages on stderr.
 ///
 void llvm::lintModule(const Module &M) {
-  PassManager PM;
+  legacy::PassManager PM;
   Lint *V = new Lint();
   PM.add(V);
   PM.run(const_cast<Module&>(M));

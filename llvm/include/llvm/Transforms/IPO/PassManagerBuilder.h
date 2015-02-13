@@ -27,8 +27,6 @@ namespace legacy {
 class FunctionPassManager;
 class PassManagerBase;
 }
-using legacy::FunctionPassManager;
-using legacy::PassManagerBase;
 
 /// PassManagerBuilder - This class is used to set up a standard optimization
 /// sequence for languages like C and C++, allowing some APIs to customize the
@@ -59,7 +57,7 @@ public:
   /// Extensions are passed the builder itself (so they can see how it is
   /// configured) as well as the pass manager to add stuff to.
   typedef void (*ExtensionFn)(const PassManagerBuilder &Builder,
-                              PassManagerBase &PM);
+                              legacy::PassManagerBase &PM);
   enum ExtensionPointTy {
     /// EP_EarlyAsPossible - This extension point allows adding passes before
     /// any other transformations, allowing them to see the code as it is coming
@@ -139,19 +137,20 @@ public:
   void addExtension(ExtensionPointTy Ty, ExtensionFn Fn);
 
 private:
-  void addExtensionsToPM(ExtensionPointTy ETy, PassManagerBase &PM) const;
-  void addInitialAliasAnalysisPasses(PassManagerBase &PM) const;
-  void addLTOOptimizationPasses(PassManagerBase &PM);
+  void addExtensionsToPM(ExtensionPointTy ETy,
+                         legacy::PassManagerBase &PM) const;
+  void addInitialAliasAnalysisPasses(legacy::PassManagerBase &PM) const;
+  void addLTOOptimizationPasses(legacy::PassManagerBase &PM);
 
 public:
   /// populateFunctionPassManager - This fills in the function pass manager,
   /// which is expected to be run on each function immediately as it is
   /// generated.  The idea is to reduce the size of the IR in memory.
-  void populateFunctionPassManager(FunctionPassManager &FPM);
+  void populateFunctionPassManager(legacy::FunctionPassManager &FPM);
 
   /// populateModulePassManager - This sets up the primary pass manager.
-  void populateModulePassManager(PassManagerBase &MPM);
-  void populateLTOPassManager(PassManagerBase &PM);
+  void populateModulePassManager(legacy::PassManagerBase &MPM);
+  void populateLTOPassManager(legacy::PassManagerBase &PM);
 };
 
 /// Registers a function for adding a standard set of passes.  This should be

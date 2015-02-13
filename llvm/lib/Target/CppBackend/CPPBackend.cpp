@@ -22,12 +22,12 @@
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Pass.h"
-#include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
@@ -1942,7 +1942,6 @@ void CppWriter::printModuleBody() {
 void CppWriter::printProgram(const std::string& fname,
                              const std::string& mName) {
   Out << "#include <llvm/Pass.h>\n";
-  Out << "#include <llvm/PassManager.h>\n";
 
   Out << "#include <llvm/ADT/SmallVector.h>\n";
   Out << "#include <llvm/Analysis/Verifier.h>\n";
@@ -1956,6 +1955,7 @@ void CppWriter::printProgram(const std::string& fname,
   Out << "#include <llvm/IR/InlineAsm.h>\n";
   Out << "#include <llvm/IR/Instructions.h>\n";
   Out << "#include <llvm/IR/LLVMContext.h>\n";
+  Out << "#include <llvm/IR/LegacyPassManager.h>\n";
   Out << "#include <llvm/IR/Module.h>\n";
   Out << "#include <llvm/Support/FormattedStream.h>\n";
   Out << "#include <llvm/Support/MathExtras.h>\n";

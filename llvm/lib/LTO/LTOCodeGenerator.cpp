@@ -26,6 +26,7 @@
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
@@ -35,7 +36,6 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/SubtargetFeature.h"
-#include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormattedStream.h"
@@ -428,7 +428,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   Module *mergedModule = IRLinker.getModule();
 
   // Start off with a verification pass.
-  PassManager passes;
+  legacy::PassManager passes;
   passes.add(createVerifierPass());
   passes.add(createDebugInfoVerifierPass());
 
@@ -499,7 +499,7 @@ bool LTOCodeGenerator::optimize(bool DisableOpt,
   this->applyScopeRestrictions();
 
   // Instantiate the pass manager to organize the passes.
-  PassManager passes;
+  legacy::PassManager passes;
 
   // Add an appropriate DataLayout instance for this module...
   mergedModule->setDataLayout(TargetMach->getDataLayout());
@@ -538,7 +538,7 @@ bool LTOCodeGenerator::compileOptimized(raw_ostream &out, std::string &errMsg) {
   // Mark which symbols can not be internalized
   this->applyScopeRestrictions();
 
-  PassManager codeGenPasses;
+  legacy::PassManager codeGenPasses;
 
   codeGenPasses.add(new DataLayoutPass());
 
