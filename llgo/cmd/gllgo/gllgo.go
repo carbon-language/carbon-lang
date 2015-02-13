@@ -124,7 +124,7 @@ func (san *sanitizerOptions) addPasses(mpm, fpm llvm.PassManager) {
 		if blacklist == "" {
 			blacklist = filepath.Join(san.resourcePath(), "dfsan_abilist.txt")
 		}
-		mpm.AddDataFlowSanitizerPass(blacklist)
+		mpm.AddDataFlowSanitizerPass([]string{blacklist})
 	}
 }
 
