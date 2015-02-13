@@ -901,7 +901,7 @@ public:
                               int DirectiveColumn, llvm::StringRef TargetPath) {
     // If it's not a header in the header list, ignore it with respect to
     // the check.
-    if (BlockCheckHeaderListOnly && !isHeaderListHeader(DirectivePath))
+    if (BlockCheckHeaderListOnly && !isHeaderListHeader(TargetPath))
       return;
     HeaderHandle CurrentHeaderHandle = findHeaderHandle(DirectivePath);
     StringHandle IncludeHeaderHandle = addString(TargetPath);
