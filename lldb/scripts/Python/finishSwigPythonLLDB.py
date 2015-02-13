@@ -391,7 +391,7 @@ def make_symlink_darwin_debug( vDictArgs, vstrFrameworkPythonDir, vstrDarwinDebu
 	else:
 		strSrc = "bin/lldb-launcher";
 
-	bOk, strErrMsg = make_symlink( strSrc, strTarget );
+	bOk, strErrMsg = make_symlink( vDictArgs, vstrFrameworkPythonDir, strSrc, strTarget );
 
 	return (bOk, strErrMsg);
 
