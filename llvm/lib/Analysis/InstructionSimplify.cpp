@@ -3052,57 +3052,56 @@ static Value *SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   }
 
   // Handle fcmp with constant RHS
-  if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
+  if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHS)) {
     // If the constant is a nan, see if we can fold the comparison based on it.
-    if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHSC)) {
-      if (CFP->getValueAPF().isNaN()) {
-        if (FCmpInst::isOrdered(Pred))   // True "if ordered and foo"
-          return ConstantInt::getFalse(CFP->getContext());
-        assert(FCmpInst::isUnordered(Pred) &&
-               "Comparison must be either ordered or unordered!");
-        // True if unordered.
-        return ConstantInt::getTrue(CFP->getContext());
-      }
-      // Check whether the constant is an infinity.
-      if (CFP->getValueAPF().isInfinity()) {
-        if (CFP->getValueAPF().isNegative()) {
-          switch (Pred) {
-          case FCmpInst::FCMP_OLT:
-            // No value is ordered and less than negative infinity.
-            return ConstantInt::getFalse(CFP->getContext());
-          case FCmpInst::FCMP_UGE:
-            // All values are unordered with or at least negative infinity.
-            return ConstantInt::getTrue(CFP->getContext());
-          default:
-            break;
-          }
-        } else {
-          switch (Pred) {
-          case FCmpInst::FCMP_OGT:
-            // No value is ordered and greater than infinity.
-            return ConstantInt::getFalse(CFP->getContext());
-          case FCmpInst::FCMP_ULE:
-            // All values are unordered with and at most infinity.
-            return ConstantInt::getTrue(CFP->getContext());
-          default:
-            break;
-          }
-        }
-      }
-      if (CFP->getValueAPF().isZero()) {
+    if (CFP->getValueAPF().isNaN()) {
+      if (FCmpInst::isOrdered(Pred)) // True "if ordered and foo"
+        return ConstantInt::getFalse(CFP->getContext());
+      assert(FCmpInst::isUnordered(Pred) &&
+             "Comparison must be either ordered or unordered!");
+      // True if unordered.
+      return ConstantInt::getTrue(CFP->getContext());
+    }
+    // Check whether the constant is an infinity.
+    if (CFP->getValueAPF().isInfinity()) {
+      if (CFP->getValueAPF().isNegative()) {
         switch (Pred) {
-        case FCmpInst::FCMP_UGE:
-          if (CannotBeOrderedLessThanZero(LHS)) 
-            return ConstantInt::getTrue(CFP->getContext());
-          break;
         case FCmpInst::FCMP_OLT:
-          if (CannotBeOrderedLessThanZero(LHS)) 
-            return ConstantInt::getFalse(CFP->getContext());
-          break;
+          // No value is ordered and less than negative infinity.
+          return ConstantInt::getFalse(CFP->getContext());
+        case FCmpInst::FCMP_UGE:
+          // All values are unordered with or at least negative infinity.
+          return ConstantInt::getTrue(CFP->getContext());
         default:
           break;
         }
-     }
+      } else {
+        switch (Pred) {
+        case FCmpInst::FCMP_OGT:
+          // No value is ordered and greater than infinity.
+          return ConstantInt::getFalse(CFP->getContext());
+        case FCmpInst::FCMP_ULE:
+          // All values are unordered with and at most infinity.
+          return ConstantInt::getTrue(CFP->getContext());
+        default:
+          break;
+        }
+      }
+    }
+    if (CFP->getValueAPF().isZero()) {
+      switch (Pred) {
+      case FCmpInst::FCMP_UGE:
+        if (CannotBeOrderedLessThanZero(LHS))
+          return ConstantInt::getTrue(CFP->getContext());
+        break;
+      case FCmpInst::FCMP_OLT:
+        // X < 0
+        if (CannotBeOrderedLessThanZero(LHS))
+          return ConstantInt::getFalse(CFP->getContext());
+        break;
+      default:
+        break;
+      }
     }
   }
 
