@@ -43,10 +43,15 @@ static unsigned computeReturnSaveOffset(const PPCSubtarget &STI) {
   return STI.isPPC64() ? 16 : 4;
 }
 
+static unsigned computeTOCSaveOffset(const PPCSubtarget &STI) {
+  return STI.isELFv2ABI() ? 24 : 40;
+}
+
 PPCFrameLowering::PPCFrameLowering(const PPCSubtarget &STI)
     : TargetFrameLowering(TargetFrameLowering::StackGrowsDown,
                           (STI.hasQPX() || STI.isBGQ()) ? 32 : 16, 0),
-      Subtarget(STI), ReturnSaveOffset(computeReturnSaveOffset(Subtarget)) {}
+      Subtarget(STI), ReturnSaveOffset(computeReturnSaveOffset(Subtarget)),
+      TOCSaveOffset(computeTOCSaveOffset(Subtarget)) {}
 
 // With the SVR4 ABI, callee-saved registers have fixed offsets on the stack.
 const PPCFrameLowering::SpillSlot *PPCFrameLowering::getCalleeSavedSpillSlots(

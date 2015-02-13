@@ -24,6 +24,7 @@ class PPCSubtarget;
 class PPCFrameLowering: public TargetFrameLowering {
   const PPCSubtarget &Subtarget;
   const unsigned ReturnSaveOffset;
+  const unsigned TOCSaveOffset;
 
 public:
   PPCFrameLowering(const PPCSubtarget &STI);
@@ -72,9 +73,7 @@ public:
 
   /// getTOCSaveOffset - Return the previous frame offset to save the
   /// TOC register -- 64-bit SVR4 ABI only.
-  static unsigned getTOCSaveOffset(bool isELFv2ABI) {
-    return isELFv2ABI ? 24 : 40;
-  }
+  unsigned getTOCSaveOffset() const { return TOCSaveOffset; }
 
   /// getFramePointerSaveOffset - Return the previous frame offset to save the
   /// frame pointer.
