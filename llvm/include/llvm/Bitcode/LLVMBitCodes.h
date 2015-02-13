@@ -163,7 +163,8 @@ namespace bitc {
     METADATA_TEMPLATE_TYPE = 25,  // [distinct, scope, name, type, ...]
     METADATA_TEMPLATE_VALUE= 26,  // [distinct, scope, name, type, value, ...]
     METADATA_GLOBAL_VAR    = 27,  // [distinct, ...]
-    METADATA_LOCAL_VAR     = 28   // [distinct, ...]
+    METADATA_LOCAL_VAR     = 28,  // [distinct, ...]
+    METADATA_EXPRESSION    = 29   // [distinct, n x element]
   };
 
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each

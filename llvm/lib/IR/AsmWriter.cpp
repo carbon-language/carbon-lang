@@ -1781,10 +1781,27 @@ static void writeMDLocalVariable(raw_ostream &Out, const MDLocalVariable *N,
   Out << ")";
 }
 
-static void writeMDExpression(raw_ostream &, const MDExpression *,
-                              TypePrinting *, SlotTracker *, const Module *) {
-  llvm_unreachable("write not implemented");
+static void writeMDExpression(raw_ostream &Out, const MDExpression *N,
+                              TypePrinting *TypePrinter, SlotTracker *Machine,
+                              const Module *Context) {
+  Out << "!MDExpression(";
+  FieldSeparator FS;
+  if (N->isValid()) {
+    for (auto I = N->expr_op_begin(), E = N->expr_op_end(); I != E; ++I) {
+      const char *OpStr = dwarf::OperationEncodingString(I->getOp());
+      assert(OpStr && "Expected valid opcode");
+
+      Out << FS << OpStr;
+      for (unsigned A = 0, AE = I->getNumArgs(); A != AE; ++A)
+        Out << FS << I->getArg(A);
+    }
+  } else {
+    for (const auto &I : N->getElements())
+      Out << FS << I;
+  }
+  Out << ")";
 }
+
 static void writeMDObjCProperty(raw_ostream &, const MDObjCProperty *,
                                 TypePrinting *, SlotTracker *, const Module *) {
   llvm_unreachable("write not implemented");

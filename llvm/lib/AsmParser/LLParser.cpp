@@ -3599,9 +3599,44 @@ bool LLParser::ParseMDLocalVariable(MDNode *&Result, bool IsDistinct) {
   return false;
 }
 
+/// ParseMDExpression:
+///   ::= !MDExpression(0, 7, -1)
 bool LLParser::ParseMDExpression(MDNode *&Result, bool IsDistinct) {
-  return TokError("unimplemented parser");
+  assert(Lex.getKind() == lltok::MetadataVar && "Expected metadata type name");
+  Lex.Lex();
+
+  if (ParseToken(lltok::lparen, "expected '(' here"))
+    return true;
+
+  SmallVector<uint64_t, 8> Elements;
+  if (Lex.getKind() != lltok::rparen)
+    do {
+      if (Lex.getKind() == lltok::DwarfOp) {
+        if (unsigned Op = dwarf::getOperationEncoding(Lex.getStrVal())) {
+          Lex.Lex();
+          Elements.push_back(Op);
+          continue;
+        }
+        return TokError(Twine("invalid DWARF op '") + Lex.getStrVal() + "'");
+      }
+
+      if (Lex.getKind() != lltok::APSInt || Lex.getAPSIntVal().isSigned())
+        return TokError("expected unsigned integer");
+
+      auto &U = Lex.getAPSIntVal();
+      if (U.ugt(UINT64_MAX))
+        return TokError("element too large, limit is " + Twine(UINT64_MAX));
+      Elements.push_back(U.getZExtValue());
+      Lex.Lex();
+    } while (EatIfPresent(lltok::comma));
+
+  if (ParseToken(lltok::rparen, "expected ')' here"))
+    return true;
+
+  Result = GET_OR_DISTINCT(MDExpression, (Context, Elements));
+  return false;
 }
+
 bool LLParser::ParseMDObjCProperty(MDNode *&Result, bool IsDistinct) {
   return TokError("unimplemented parser");
 }

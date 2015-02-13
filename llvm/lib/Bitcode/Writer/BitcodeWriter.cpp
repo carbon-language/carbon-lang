@@ -1092,11 +1092,20 @@ static void WriteMDLocalVariable(const MDLocalVariable *N,
   Record.clear();
 }
 
-static void WriteMDExpression(const MDExpression *, const ValueEnumerator &,
-                              BitstreamWriter &, SmallVectorImpl<uint64_t> &,
-                              unsigned) {
-  llvm_unreachable("write not implemented");
+static void WriteMDExpression(const MDExpression *N, const ValueEnumerator &,
+                              BitstreamWriter &Stream,
+                              SmallVectorImpl<uint64_t> &Record,
+                              unsigned Abbrev) {
+  Record.reserve(N->getElements().size() + 1);
+
+  Record.push_back(N->isDistinct());
+  for (uint64_t I : N->getElements())
+    Record.push_back(I);
+
+  Stream.EmitRecord(bitc::METADATA_EXPRESSION, Record, Abbrev);
+  Record.clear();
 }
+
 static void WriteMDObjCProperty(const MDObjCProperty *, const ValueEnumerator &,
                                 BitstreamWriter &, SmallVectorImpl<uint64_t> &,
                                 unsigned) {
