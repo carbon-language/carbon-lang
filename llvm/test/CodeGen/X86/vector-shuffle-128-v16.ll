@@ -737,7 +737,7 @@ define <16 x i8> @shuffle_v16i8_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_zz_16_uu_18_uu(
 ; AVX:       # BB#0:
 ; AVX-NEXT:    vpslldq {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,xmm0[0,1,2,3]
 ; AVX-NEXT:    retq
-  %shuffle = shufflevector <16 x i8> zeroinitializer, <16 x i8> %a, <16 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 09, i32 0, i32 0, i32 0, i32 0, i32 0, i32 16, i32 undef, i32 18, i32 undef>
+  %shuffle = shufflevector <16 x i8> zeroinitializer, <16 x i8> %a, <16 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 16, i32 undef, i32 18, i32 undef>
   ret <16 x i8> %shuffle
 }
 
