@@ -10065,7 +10065,7 @@ static bool canWidenShuffleElements(ArrayRef<int> Mask,
   return true;
 }
 
-/// \brief Generic routine to split ector shuffle into half-sized shuffles.
+/// \brief Generic routine to split vector shuffle into half-sized shuffles.
 ///
 /// This routine just extracts two subvectors, shuffles them independently, and
 /// then concatenates them back together. This should work effectively with all
