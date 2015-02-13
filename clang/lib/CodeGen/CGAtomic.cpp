@@ -1006,45 +1006,9 @@ RValue AtomicInfo::convertIntToValue(llvm::Value *IntVal,
   return convertTempToRValue(Temp, ResultSlot, Loc);
 }
 
-/// An LValue is a candidate for having its loads and stores be made atomic if
-/// we are operating under /volatile:ms *and* the LValue itself is volatile and
-/// performing such an operation can be performed without a libcall.
-bool CodeGenFunction::LValueIsSuitableForInlineAtomic(LValue LV) {
-  AtomicInfo AI(*this, LV);
-  bool IsVolatile = LV.isVolatile() || hasVolatileMember(LV.getType());
-  // An atomic is inline if we don't need to use a libcall.
-  bool AtomicIsInline = !AI.shouldUseLibcall();
-  return CGM.getCodeGenOpts().MSVolatile && IsVolatile && AtomicIsInline;
-}
-
-/// An type is a candidate for having its loads and stores be made atomic if
-/// we are operating under /volatile:ms *and* we know the access is volatile and
-/// performing such an operation can be performed without a libcall.
-bool CodeGenFunction::typeIsSuitableForInlineAtomic(QualType Ty,
-                                                    bool IsVolatile) const {
-  // An atomic is inline if we don't need to use a libcall (e.g. it is builtin).
-  bool AtomicIsInline = getContext().getTargetInfo().hasBuiltinAtomic(
-      getContext().getTypeSize(Ty), getContext().getTypeAlign(Ty));
-  return CGM.getCodeGenOpts().MSVolatile && IsVolatile && AtomicIsInline;
-}
-
-RValue CodeGenFunction::EmitAtomicLoad(LValue LV, SourceLocation SL,
-                                       AggValueSlot Slot) {
-  llvm::AtomicOrdering AO;
-  bool IsVolatile = LV.isVolatileQualified();
-  if (LV.getType()->isAtomicType()) {
-    AO = llvm::SequentiallyConsistent;
-  } else {
-    AO = llvm::Acquire;
-    IsVolatile = true;
-  }
-  return EmitAtomicLoad(LV, SL, AO, IsVolatile, Slot);
-}
-
 /// Emit a load from an l-value of atomic type.  Note that the r-value
 /// we produce is an r-value of the atomic *value* type.
 RValue CodeGenFunction::EmitAtomicLoad(LValue src, SourceLocation loc,
-                                       llvm::AtomicOrdering AO, bool IsVolatile,
                                        AggValueSlot resultSlot) {
   AtomicInfo atomics(*this, src);
   LValue LVal = atomics.getAtomicLValue();
@@ -1096,11 +1060,11 @@ RValue CodeGenFunction::EmitAtomicLoad(LValue src, SourceLocation loc,
   // Okay, we're doing this natively.
   llvm::Value *addr = atomics.emitCastToAtomicIntPointer(SrcAddr);
   llvm::LoadInst *load = Builder.CreateLoad(addr, "atomic-load");
-  load->setAtomic(AO);
+  load->setAtomic(llvm::SequentiallyConsistent);
 
   // Other decoration.
   load->setAlignment(src.getAlignment().getQuantity());
-  if (IsVolatile)
+  if (src.isVolatileQualified())
     load->setVolatile(true);
   if (src.getTBAAInfo())
     CGM.DecorateInstruction(load, src.getTBAAInfo());
@@ -1197,27 +1161,12 @@ llvm::Value *AtomicInfo::convertRValueToInt(RValue RVal) const {
                                        getAtomicAlignment().getQuantity());
 }
 
-void CodeGenFunction::EmitAtomicStore(RValue rvalue, LValue lvalue,
-                                      bool isInit) {
-  bool IsVolatile = lvalue.isVolatileQualified();
-  llvm::AtomicOrdering AO;
-  if (lvalue.getType()->isAtomicType()) {
-    AO = llvm::SequentiallyConsistent;
-  } else {
-    AO = llvm::Release;
-    IsVolatile = true;
-  }
-  return EmitAtomicStore(rvalue, lvalue, AO, IsVolatile, isInit);
-}
-
 /// Emit a store to an l-value of atomic type.
 ///
 /// Note that the r-value is expected to be an r-value *of the atomic
 /// type*; this means that for aggregate r-values, it should include
 /// storage for any padding that was necessary.
-void CodeGenFunction::EmitAtomicStore(RValue rvalue, LValue dest,
-                                      llvm::AtomicOrdering AO, bool IsVolatile,
-                                      bool isInit) {
+void CodeGenFunction::EmitAtomicStore(RValue rvalue, LValue dest, bool isInit) {
   // If this is an aggregate r-value, it should agree in type except
   // maybe for address-space qualification.
   assert(!rvalue.isAggregate() ||
@@ -1260,11 +1209,11 @@ void CodeGenFunction::EmitAtomicStore(RValue rvalue, LValue dest,
   llvm::StoreInst *store = Builder.CreateStore(intValue, addr);
 
   // Initializations don't need to be atomic.
-  if (!isInit) store->setAtomic(AO);
+  if (!isInit) store->setAtomic(llvm::SequentiallyConsistent);
 
   // Other decoration.
   store->setAlignment(dest.getAlignment().getQuantity());
-  if (IsVolatile)
+  if (dest.isVolatileQualified())
     store->setVolatile(true);
   if (dest.getTBAAInfo())
     CGM.DecorateInstruction(store, dest.getTBAAInfo());

@@ -336,8 +336,7 @@ ComplexPairTy ComplexExprEmitter::EmitLoadOfLValue(LValue lvalue,
 /// specified value pointer.
 void ComplexExprEmitter::EmitStoreOfComplex(ComplexPairTy Val, LValue lvalue,
                                             bool isInit) {
-  if (lvalue.getType()->isAtomicType() ||
-      (!isInit && CGF.LValueIsSuitableForInlineAtomic(lvalue)))
+  if (lvalue.getType()->isAtomicType())
     return CGF.EmitAtomicStore(RValue::getComplex(Val), lvalue, isInit);
 
   llvm::Value *Ptr = lvalue.getAddress();

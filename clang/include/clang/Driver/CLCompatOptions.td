@@ -157,7 +157,6 @@ def _SLASH_arch : CLCompileJoined<"arch:">,
   HelpText<"Set architecture for code generation">;
 
 def _SLASH_M_Group : OptionGroup<"</M group>">, Group<cl_compile_Group>;
-def _SLASH_volatile_Group : OptionGroup<"</volatile group>">, Group<cl_compile_Group>;
 
 def _SLASH_EH : CLJoined<"EH">, HelpText<"Exception handling model">;
 def _SLASH_EP : CLFlag<"EP">,
@@ -202,10 +201,7 @@ def _SLASH_TC : CLCompileFlag<"TC">, HelpText<"Treat all source files as C">;
 def _SLASH_Tp : CLCompileJoinedOrSeparate<"Tp">,
   HelpText<"Specify a C++ source file">, MetaVarName<"<filename>">;
 def _SLASH_TP : CLCompileFlag<"TP">, HelpText<"Treat all source files as C++">;
-def _SLASH_volatile_iso : Option<["/", "-"], "volatile:iso", KIND_FLAG>, Group<_SLASH_volatile_Group>,
-  Flags<[CLOption, DriverOption]>, HelpText<"Volatile loads and stores have standard semantics">;
-def _SLASH_volatile_ms  : Option<["/", "-"], "volatile:ms", KIND_FLAG>, Group<_SLASH_volatile_Group>,
-  Flags<[CLOption, DriverOption]>, HelpText<"Volatile loads and stores have acquire and release semantics">;
+
 
 // Ignored:
 
@@ -224,6 +220,7 @@ def _SLASH_Ob2 : CLIgnoredFlag<"Ob2">;
 def _SLASH_RTC : CLIgnoredJoined<"RTC">;
 def _SLASH_sdl : CLIgnoredFlag<"sdl">;
 def _SLASH_sdl_ : CLIgnoredFlag<"sdl-">;
+def _SLASH_volatile_iso : CLIgnoredFlag<"volatile:iso">;
 def _SLASH_w : CLIgnoredJoined<"w">;
 def _SLASH_Zc_auto : CLIgnoredFlag<"Zc:auto">;
 def _SLASH_Zc_forScope : CLIgnoredFlag<"Zc:forScope">;
@@ -284,6 +281,7 @@ def _SLASH_Qpar : CLFlag<"Qpar">;
 def _SLASH_Qvec_report : CLJoined<"Qvec-report">;
 def _SLASH_u : CLFlag<"u">;
 def _SLASH_V : CLFlag<"V">;
+def _SLASH_volatile_ms : CLFlag<"volatile:ms">;
 def _SLASH_WL : CLFlag<"WL">;
 def _SLASH_Wp64 : CLFlag<"Wp64">;
 def _SLASH_X : CLFlag<"X">;
