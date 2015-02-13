@@ -156,7 +156,8 @@ namespace bitc {
     METADATA_COMPOSITE_TYPE= 18,  // [distinct, ...]
     METADATA_SUBROUTINE_TYPE=19,  // [distinct, flags, types]
     METADATA_COMPILE_UNIT  = 20,  // [distinct, ...]
-    METADATA_SUBPROGRAM    = 21   // [distinct, ...]
+    METADATA_SUBPROGRAM    = 21,  // [distinct, ...]
+    METADATA_LEXICAL_BLOCK = 22   // [distinct, scope, file, line, column]
   };
 
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each

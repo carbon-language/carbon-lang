@@ -1623,10 +1623,25 @@ static void writeMDSubprogram(raw_ostream &Out, const MDSubprogram *N,
   Out << ")";
 }
 
-static void writeMDLexicalBlock(raw_ostream &, const MDLexicalBlock *,
-                                TypePrinting *, SlotTracker *, const Module *) {
-  llvm_unreachable("write not implemented");
+static void writeMDLexicalBlock(raw_ostream &Out, const MDLexicalBlock *N,
+                              TypePrinting *TypePrinter, SlotTracker *Machine,
+                              const Module *Context) {
+  Out << "!MDLexicalBlock(";
+  FieldSeparator FS;
+  Out << FS << "scope: ";
+  writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
+  if (N->getFile()) {
+    Out << FS << "file: ";
+    writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
+                           Context);
+  }
+  if (N->getLine())
+    Out << FS << "line: " << N->getLine();
+  if (N->getColumn())
+    Out << FS << "column: " << N->getColumn();
+  Out << ")";
 }
+
 static void writeMDLexicalBlockFile(raw_ostream &, const MDLexicalBlockFile *,
                                     TypePrinting *, SlotTracker *,
                                     const Module *) {

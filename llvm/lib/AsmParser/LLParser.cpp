@@ -3466,9 +3466,22 @@ bool LLParser::ParseMDSubprogram(MDNode *&Result, bool IsDistinct) {
   return false;
 }
 
+/// ParseMDLexicalBlock:
+///   ::= !MDLexicalBlock(scope: !0, file: !2, line: 7, column: 9)
 bool LLParser::ParseMDLexicalBlock(MDNode *&Result, bool IsDistinct) {
-  return TokError("unimplemented parser");
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  REQUIRED(scope, MDField, );                                                  \
+  OPTIONAL(file, MDField, );                                                   \
+  OPTIONAL(line, LineField, );                                                 \
+  OPTIONAL(column, ColumnField, );
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
+
+  Result = GET_OR_DISTINCT(
+      MDLexicalBlock, (Context, scope.Val, file.Val, line.Val, column.Val));
+  return false;
 }
+
 bool LLParser::ParseMDLexicalBlockFile(MDNode *&Result, bool IsDistinct) {
   return TokError("unimplemented parser");
 }
