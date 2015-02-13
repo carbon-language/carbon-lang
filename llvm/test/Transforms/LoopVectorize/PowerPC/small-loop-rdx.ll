@@ -1,7 +1,18 @@
-; RUN: opt < %s -loop-vectorize -S -debug < %s 2>&1 | FileCheck %s
-; REQUIRES: asserts
+; RUN: opt < %s -loop-vectorize -S | FileCheck %s
 
-; CHECK: LV: Unroll Factor is 12
+; CHECK: fadd
+; CHECK-NEXT: fadd
+; CHECK-NEXT: fadd
+; CHECK-NEXT: fadd
+; CHECK-NEXT: fadd
+; CHECK-NEXT: fadd
+; CHECK-NEXT: fadd
+; CHECK-NEXT: fadd
+; CHECK-NEXT: fadd
+; CHECK-NEXT: fadd
+; CHECK-NEXT: fadd
+; CHECK-NEXT: fadd
+; CHECK-NEXT-NOT: fadd
 
 target datalayout = "e-m:e-i64:64-n32:64"
 target triple = "powerpc64le-ibm-linux-gnu"
