@@ -509,6 +509,15 @@ public:
     // worklist.
     SmallPtrSet<Instruction *, 4> OperandSet;
 
+    // Lambda to enque operands onto the worklist.
+    auto EnqueueOperands = [&](Instruction &I) {
+      OperandSet.clear();
+      for (auto *Op : I.operand_values())
+        if (auto *OpI = dyn_cast<Instruction>(Op))
+          if (OperandSet.insert(OpI).second)
+            Worklist.push_back(OpI);
+    };
+
     // Start by initializing worklist with simplified instructions.
     for (auto &FoldedKeyValue : SimplifiedValues)
       if (auto *FoldedInst = dyn_cast<Instruction>(FoldedKeyValue.first)) {
@@ -516,11 +525,7 @@ public:
 
         // Add each instruction operand of this dead instruction to the
         // worklist.
-        OperandSet.clear();
-        for (auto *Op : FoldedInst->operand_values())
-          if (auto *OpI = dyn_cast<Instruction>(Op))
-            if (OperandSet.insert(OpI).second)
-              Worklist.push_back(OpI);
+        EnqueueOperands(*FoldedInst);
       }
 
     // If a definition of an insn is only used by simplified or dead
@@ -545,11 +550,7 @@ public:
       if (AllUsersFolded) {
         NumberOfOptimizedInstructions += TTI.getUserCost(I);
         DeadInstructions.insert(I);
-        OperandSet.clear();
-        for (auto *Op : I->operand_values())
-          if (auto *OpI = dyn_cast<Instruction>(Op))
-            if (OperandSet.insert(OpI).second)
-              Worklist.push_back(OpI);
+        EnqueueOperands(*I);
       }
     }
     return NumberOfOptimizedInstructions;
