@@ -24,8 +24,9 @@ entry:
 }
 
 ; SI-LABEL: {{^}}s_sext_i1_to_i64:
-; SI: v_cndmask_b32_e64
-; SI: v_cndmask_b32_e64
+; SI: v_cndmask_b32_e64 v[[LOREG:[0-9]+]], 0, -1, vcc
+; SI: v_mov_b32_e32 v[[HIREG:[0-9]+]], v[[LOREG]]
+; SI: buffer_store_dwordx2 v{{\[}}[[LOREG]]:[[HIREG]]{{\]}}
 ; SI: s_endpgm
 define void @s_sext_i1_to_i64(i64 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
   %cmp = icmp eq i32 %a, %b

@@ -15,16 +15,16 @@ define void @round_f64(double addrspace(1)* %out, double %x) #0 {
 ; SI: buffer_load_dwordx2
 ; SI: v_bfe_u32 [[EXP:v[0-9]+]], v{{[0-9]+}}, 20, 11
 
-; SI: v_not_b32_e32
-; SI: v_not_b32_e32
+; SI-DAG: v_not_b32_e32
+; SI-DAG: v_not_b32_e32
 
-; SI: v_cmp_eq_i32
+; SI-DAG: v_cmp_eq_i32
 
-; SI: s_mov_b32 [[BFIMASK:s[0-9]+]], 0x7fffffff
-; SI: v_cmp_lt_i32_e64
-; SI: v_bfi_b32 [[COPYSIGN:v[0-9]+]], [[BFIMASK]]
+; SI-DAG: s_mov_b32 [[BFIMASK:s[0-9]+]], 0x7fffffff
+; SI-DAG: v_cmp_lt_i32_e64
+; SI-DAG: v_bfi_b32 [[COPYSIGN:v[0-9]+]], [[BFIMASK]]
 
-; SI: v_cmp_gt_i32_e64
+; SI-DAG: v_cmp_gt_i32_e64
 
 
 ; SI: buffer_store_dwordx2
