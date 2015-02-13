@@ -1,5 +1,7 @@
 ; RUN: opt -instcombine -S < %s | FileCheck %s
 
+target datalayout = "e-m:e-p:64:64:64-i64:64-f80:128-n8:16:32:64-S128"
+
 define i32 @test_load_cast_combine_tbaa(float* %ptr) {
 ; Ensure (cast (load (...))) -> (load (cast (...))) preserves TBAA.
 ; CHECK-LABEL: @test_load_cast_combine_tbaa(
@@ -75,6 +77,23 @@ loop:
   br i1 %cmp, label %loop, label %exit, !llvm.loop !1
 
 exit:
+  ret void
+}
+
+define void @test_load_cast_combine_nonnull(float** %ptr) {
+; We can't preserve nonnull metadata when converting a load of a pointer to
+; a load of an integer.
+; FIXME: We should really transform this into range metadata and vice versa.
+;
+; CHECK-LABEL: @test_load_cast_combine_nonnull(
+; CHECK: %[[V:.*]] = load i64* %{{.*}}
+; CHECK-NOT: !nonnull
+; CHECK: store i64 %[[V]], i64*
+entry:
+  %p = load float** %ptr, !nonnull !3
+  %gep = getelementptr float** %ptr, i32 42
+  store float* %p, float** %gep
+
   ret void
 }
 
