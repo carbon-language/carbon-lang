@@ -257,9 +257,6 @@ public:
     assert(RS >= this->RS && "A node's reduction state can not be downgraded");
     this->RS = RS;
   }
-  bool isSpillable() const {
-    return RS == NotProvablyAllocatable || RS == OptimallyReducible;
-  }
 
   void handleAddEdge(const MatrixMetadata& MD, bool Transpose) {
     DeniedOpts += Transpose ? MD.getWorstRow() : MD.getWorstCol();

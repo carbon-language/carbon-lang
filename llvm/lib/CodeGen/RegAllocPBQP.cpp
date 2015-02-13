@@ -621,8 +621,6 @@ bool RegAllocPBQP::mapPBQPToRegAlloc(const PBQPRAGraph &G,
       assert(PReg != 0 && "Invalid preg selected.");
       VRM.assignVirt2Phys(VReg, PReg);
     } else {
-      assert(G.getNodeMetadata(NId).isSpillable() &&
-             "Spilling a node which can not be spilled.");
       // Spill VReg. If this introduces new intervals we'll need another round
       // of allocation.
       SmallVector<unsigned, 8> NewVRegs;
