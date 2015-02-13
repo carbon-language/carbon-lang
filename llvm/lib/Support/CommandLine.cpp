@@ -698,8 +698,7 @@ void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
 // It is called byte order marker but the UTF-8 BOM is actually not affected
 // by the host system's endianness.
 static bool hasUTF8ByteOrderMark(ArrayRef<char> S) {
-  return (S.size() >= 3 &&
-          S[0] == '\xef' && S[1] == '\xbb' && S[2] == '\xbf');
+  return (S.size() >= 3 && S[0] == '\xef' && S[1] == '\xbb' && S[2] == '\xbf');
 }
 
 static bool ExpandResponseFile(const char *FName, StringSaver &Saver,
