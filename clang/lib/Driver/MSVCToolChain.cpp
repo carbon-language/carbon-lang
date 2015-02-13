@@ -21,7 +21,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Process.h"
-
 #include <cstdio>
 
 // Include the necessary headers to interface with the Windows registry and
