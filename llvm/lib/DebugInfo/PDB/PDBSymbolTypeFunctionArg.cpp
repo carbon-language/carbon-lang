@@ -9,6 +9,7 @@
 
 #include <utility>
 
+#include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeFunctionArg.h"
 
@@ -19,4 +20,10 @@ PDBSymbolTypeFunctionArg::PDBSymbolTypeFunctionArg(
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolTypeFunctionArg::dump(raw_ostream &OS, int Indent,
-                                    PDB_DumpLevel Level) const {}
+                                    PDB_DumpLevel Level) const {
+  OS << stream_indent(Indent);
+  uint32_t TypeId = getTypeId();
+  if (auto Type = Session.getSymbolById(TypeId)) {
+    Type->dump(OS, 0, Level);
+  }
+}

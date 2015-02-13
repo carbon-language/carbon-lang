@@ -30,6 +30,19 @@ public:
   virtual std::unique_ptr<PDBSymbolExe> getGlobalScope() const = 0;
   virtual std::unique_ptr<PDBSymbol> getSymbolById(uint32_t SymbolId) const = 0;
 
+  template <typename T>
+  std::unique_ptr<T> getConcreteSymbolById(uint32_t SymbolId) const {
+    auto Symbol(getSymbolById(SymbolId));
+    if (!Symbol)
+      return nullptr;
+
+    T *ConcreteSymbol = dyn_cast<T>(Symbol.get());
+    if (!ConcreteSymbol)
+      return nullptr;
+    Symbol.release();
+    return std::unique_ptr<T>(ConcreteSymbol);
+  }
+
   virtual std::unique_ptr<IPDBEnumSourceFiles> getAllSourceFiles() const = 0;
   virtual std::unique_ptr<IPDBEnumSourceFiles>
   getSourceFilesForCompiland(const PDBSymbolCompiland &Compiland) const = 0;

@@ -26,7 +26,7 @@ void PDBSymbolData::dump(raw_ostream &OS, int Indent,
   OS << stream_indent(Indent);
   PDB_LocType Loc = getLocationType();
   PDB_DataKind Kind = getDataKind();
-  if (Level == PDB_DumpLevel::Compact) {
+  if (Level >= PDB_DumpLevel::Normal) {
     switch (Loc) {
     case PDB_LocType::Static: {
       uint32_t RVA = getRelativeVirtualAddress();
@@ -75,6 +75,7 @@ void PDBSymbolData::dump(raw_ostream &OS, int Indent,
       OS << "???";
     }
   }
+
   OS << "] ";
   if (Kind == PDB_DataKind::Member || Kind == PDB_DataKind::StaticMember) {
     uint32_t ClassId = getClassParentId();
@@ -86,6 +87,5 @@ void PDBSymbolData::dump(raw_ostream &OS, int Indent,
       OS << "::";
     }
   }
-  OS << getName() << "\n";
-  OS.flush();
+  OS << getName();
 }

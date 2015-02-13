@@ -190,7 +190,7 @@ void DIARawSymbol::dump(raw_ostream &OS, int Indent,
   RAW_METHOD_DUMP(OS, get_baseDataOffset)
   RAW_METHOD_DUMP(OS, get_baseDataSlot)
   RAW_METHOD_DUMP(OS, get_baseSymbolId)
-  RAW_METHOD_DUMP(OS, get_builtInKind)
+  RAW_METHOD_DUMP(OS, get_baseType)
   RAW_METHOD_DUMP(OS, get_bitPosition)
   RAW_METHOD_DUMP(OS, get_callingConvention)
   RAW_METHOD_DUMP(OS, get_classParentId)
@@ -457,8 +457,8 @@ uint32_t DIARawSymbol::getBaseSymbolId() const {
 }
 
 PDB_BuiltinType DIARawSymbol::getBuiltinType() const {
-  return PrivateGetDIAValue<DWORD, PDB_BuiltinType>(
-      Symbol, &IDiaSymbol::get_builtInKind);
+  return PrivateGetDIAValue<DWORD, PDB_BuiltinType>(Symbol,
+                                                    &IDiaSymbol::get_baseType);
 }
 
 uint32_t DIARawSymbol::getBitPosition() const {

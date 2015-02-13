@@ -15,6 +15,7 @@
 #include "llvm/DebugInfo/PDB/PDBSymbolFunc.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolFuncDebugEnd.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolFuncDebugStart.h"
+#include "llvm/DebugInfo/PDB/PDBSymbolTypeFunctionSig.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeUDT.h"
 
 #include "llvm/Support/Format.h"
@@ -26,9 +27,8 @@ PDBSymbolFunc::PDBSymbolFunc(const IPDBSession &PDBSession,
 
 void PDBSymbolFunc::dump(raw_ostream &OS, int Indent,
                          PDB_DumpLevel Level) const {
-  if (Level == PDB_DumpLevel::Compact) {
-    OS << stream_indent(Indent);
-
+  OS << stream_indent(Indent);
+  if (Level >= PDB_DumpLevel::Normal) {
     uint32_t FuncStart = getRelativeVirtualAddress();
     uint32_t FuncEnd = FuncStart + getLength();
     if (FuncStart == 0 && FuncEnd == 0) {
@@ -53,6 +53,12 @@ void PDBSymbolFunc::dump(raw_ostream &OS, int Indent,
       OS << "(FPO)";
 
     OS << " ";
+    uint32_t FuncSigId = getTypeId();
+    if (auto FuncSig = Session.getConcreteSymbolById<PDBSymbolTypeFunctionSig>(
+            FuncSigId)) {
+      OS << "(" << FuncSig->getCallingConvention() << ") ";
+    }
+
     uint32_t ClassId = getClassParentId();
     if (ClassId != 0) {
       if (auto Class = Session.getSymbolById(ClassId)) {
@@ -63,6 +69,7 @@ void PDBSymbolFunc::dump(raw_ostream &OS, int Indent,
       }
     }
     OS << getName();
-    OS << "\n";
+  } else {
+    OS << getName();
   }
 }

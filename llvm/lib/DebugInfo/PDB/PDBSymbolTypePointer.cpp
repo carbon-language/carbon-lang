@@ -10,6 +10,7 @@
 
 #include <utility>
 
+#include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypePointer.h"
 
@@ -20,4 +21,14 @@ PDBSymbolTypePointer::PDBSymbolTypePointer(
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolTypePointer::dump(raw_ostream &OS, int Indent,
-                                PDB_DumpLevel Level) const {}
+                                PDB_DumpLevel Level) const {
+  OS << stream_indent(Indent);
+  if (isConstType())
+    OS << "const ";
+  if (isVolatileType())
+    OS << "volatile ";
+  uint32_t PointeeId = getTypeId();
+  if (auto PointeeType = Session.getSymbolById(PointeeId))
+    PointeeType->dump(OS, 0, PDB_DumpLevel::Compact);
+  OS << ((isReference()) ? "&" : "*");
+}

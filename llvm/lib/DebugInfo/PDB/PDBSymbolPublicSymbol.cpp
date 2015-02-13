@@ -19,4 +19,7 @@ PDBSymbolPublicSymbol::PDBSymbolPublicSymbol(
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolPublicSymbol::dump(raw_ostream &OS, int Indent,
-                                 PDB_DumpLevel Level) const {}
+                                 PDB_DumpLevel Level) const {
+  OS << stream_indent(Indent);
+  OS << "public symbol: " << getName();
+}

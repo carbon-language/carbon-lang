@@ -11,7 +11,6 @@
 #define LLVM_DEBUGINFO_PDB_PDBSYMBOLUNKNOWN_H
 
 #include "PDBSymbol.h"
-#include "PDBTypes.h"
 
 namespace llvm {
 

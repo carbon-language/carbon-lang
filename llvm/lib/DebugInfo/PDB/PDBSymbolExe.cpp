@@ -27,17 +27,17 @@ void PDBSymbolExe::dump(raw_ostream &OS, int Indent,
                         PDB_DumpLevel Level) const {
   std::string FileName(getSymbolsFileName());
 
-  OS << "Summary for " << FileName << "\n";
+  OS << stream_indent(Indent) << "Summary for " << FileName << "\n";
 
   uint64_t FileSize = 0;
   if (!llvm::sys::fs::file_size(FileName, FileSize))
-    OS << "  Size: " << FileSize << " bytes\n";
+    OS << stream_indent(Indent + 2) << "Size: " << FileSize << " bytes\n";
   else
-    OS << "  Size: (Unable to obtain file size)\n";
+    OS << stream_indent(Indent + 2) << "Size: (Unable to obtain file size)\n";
   PDB_UniqueId Guid = getGuid();
-  OS << "  Guid: " << Guid << "\n";
-  OS << "  Age: " << getAge() << "\n";
-  OS << "  Attributes: ";
+  OS << stream_indent(Indent + 2) << "Guid: " << Guid << "\n";
+  OS << stream_indent(Indent + 2) << "Age: " << getAge() << "\n";
+  OS << stream_indent(Indent + 2) << "Attributes: ";
   if (hasCTypes())
     OS << "HasCTypes ";
   if (hasPrivateSymbols())
@@ -48,6 +48,7 @@ void PDBSymbolExe::dump(raw_ostream &OS, int Indent,
   auto ChildrenEnum = getChildStats(Stats);
   OS << stream_indent(Indent + 2) << "Children: " << Stats << "\n";
   while (auto Child = ChildrenEnum->getNext()) {
-    Child->dump(OS, Indent+2, PDB_DumpLevel::Compact);
+    Child->dump(OS, Indent + 4, PDB_DumpLevel::Normal);
+    OS << "\n";
   }
 }
