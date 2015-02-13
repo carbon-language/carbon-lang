@@ -4142,7 +4142,7 @@ static bool isSHUFPMask(ArrayRef<int> Mask, MVT VT, bool Commuted = false) {
     return false;
 
   unsigned EltSize = VT.getVectorElementType().getSizeInBits();
-  bool symetricMaskRequired =
+  bool symmetricMaskRequired =
     (VT.getSizeInBits() >= 256) && (EltSize == 32);
 
   // VSHUFPSY divides the resulting vector into 4 chunks.
@@ -4175,7 +4175,7 @@ static bool isSHUFPMask(ArrayRef<int> Mask, MVT VT, bool Commuted = false) {
       // For VSHUFPSY, the mask of the second half must be the same as the
       // first but with the appropriate offsets. This works in the same way as
       // VPERMILPS works with masks.
-      if (!symetricMaskRequired || Idx < 0)
+      if (!symmetricMaskRequired || Idx < 0)
         continue;
       if (MaskVal[i] < 0) {
         MaskVal[i] = Idx - l;
@@ -4603,7 +4603,7 @@ static unsigned getShuffleVPERM2X128Immediate(ShuffleVectorSDNode *SVOp) {
   return (FstHalf | (SndHalf << 4));
 }
 
-// Symetric in-lane mask. Each lane has 4 elements (for imm8)
+// Symmetric in-lane mask. Each lane has 4 elements (for imm8)
 static bool isPermImmMask(ArrayRef<int> Mask, MVT VT, unsigned& Imm8) {
   unsigned EltSize = VT.getVectorElementType().getSizeInBits();
   if (EltSize < 32)
@@ -4652,7 +4652,7 @@ static bool isVPERMILPMask(ArrayRef<int> Mask, MVT VT) {
   unsigned EltSize = VT.getVectorElementType().getSizeInBits();
   if (VT.getSizeInBits() < 256 || EltSize < 32)
     return false;
-  bool symetricMaskRequired = (EltSize == 32);
+  bool symmetricMaskRequired = (EltSize == 32);
   unsigned NumElts = VT.getVectorNumElements();
 
   unsigned NumLanes = VT.getSizeInBits()/128;
@@ -4664,7 +4664,7 @@ static bool isVPERMILPMask(ArrayRef<int> Mask, MVT VT) {
     for (unsigned i = 0; i != LaneSize; ++i) {
       if (!isUndefOrInRange(Mask[i+l], l, l+LaneSize))
         return false;
-      if (symetricMaskRequired) {
+      if (symmetricMaskRequired) {
         if (ExpectedMaskVal[i] < 0 && Mask[i+l] >= 0) {
           ExpectedMaskVal[i] = Mask[i+l] - l;
           continue;
