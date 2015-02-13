@@ -120,7 +120,6 @@ HostInfoLinux::GetDistributionId()
 {
     // Try to run 'lbs_release -i', and use that response
     // for the distribution id.
-    static bool success = false;
     static std::once_flag g_once_flag;
     std::call_once(g_once_flag,  []() {
 
