@@ -825,30 +825,25 @@ _mm_xor_si128(__m128i __a, __m128i __b)
   return __a ^ __b;
 }
 
-#define _mm_slli_si128(a, imm) __extension__({                                 \
-    _Pragma("clang diagnostic push")                                           \
-        _Pragma("clang diagnostic ignored \"-Wshadow\"");                      \
-    __m128i __a = (a);                                                         \
-    _Pragma("clang diagnostic pop");                                           \
-    (__m128i)                                                                  \
-        __builtin_shufflevector((__v16qi)_mm_setzero_si128(), (__v16qi)__a,    \
-                                ((imm)&0xF0) ? 0 : 16 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 17 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 18 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 19 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 20 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 21 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 22 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 23 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 24 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 25 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 26 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 27 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 28 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 29 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 30 - ((imm)&0xF),           \
-                                ((imm)&0xF0) ? 0 : 31 - ((imm)&0xF));          \
-  })
+#define _mm_slli_si128(a, imm) __extension__ ({                         \
+  (__m128i)__builtin_shufflevector((__v16qi)_mm_setzero_si128(),        \
+                                   (__v16qi)(__m128i)(a),               \
+                                   ((imm)&0xF0) ? 0 : 16 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 17 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 18 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 19 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 20 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 21 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 22 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 23 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 24 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 25 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 26 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 27 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 28 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 29 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 30 - ((imm)&0xF), \
+                                   ((imm)&0xF0) ? 0 : 31 - ((imm)&0xF)); })
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_slli_epi16(__m128i __a, int __count)
@@ -910,30 +905,25 @@ _mm_sra_epi32(__m128i __a, __m128i __count)
   return (__m128i)__builtin_ia32_psrad128((__v4si)__a, (__v4si)__count);
 }
 
-#define _mm_srli_si128(a, imm) __extension__({                                 \
-    _Pragma("clang diagnostic push")                                           \
-        _Pragma("clang diagnostic ignored \"-Wshadow\"");                      \
-    __m128i __a = (a);                                                         \
-    _Pragma("clang diagnostic pop");                                           \
-    (__m128i)                                                                  \
-        __builtin_shufflevector((__v16qi)__a, (__v16qi)_mm_setzero_si128(),    \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 0,           \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 1,           \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 2,           \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 3,           \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 4,           \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 5,           \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 6,           \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 7,           \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 8,           \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 9,           \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 10,          \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 11,          \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 12,          \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 13,          \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 14,          \
-                                ((imm)&0xF0) ? 16 : ((imm)&0xF) + 15);         \
-  })
+#define _mm_srli_si128(a, imm) __extension__ ({                          \
+  (__m128i)__builtin_shufflevector((__v16qi)(__m128i)(a),                \
+                                   (__v16qi)_mm_setzero_si128(),         \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 0,  \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 1,  \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 2,  \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 3,  \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 4,  \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 5,  \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 6,  \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 7,  \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 8,  \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 9,  \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 10, \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 11, \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 12, \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 13, \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 14, \
+                                   ((imm)&0xF0) ? 16 : ((imm)&0xF) + 15); })
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_srli_epi16(__m128i __a, int __count)
@@ -1321,27 +1311,21 @@ _mm_movemask_epi8(__m128i __a)
 }
 
 #define _mm_shuffle_epi32(a, imm) __extension__ ({ \
-  _Pragma("clang diagnostic push") _Pragma("clang diagnostic ignored \"-Wshadow\""); \
-  __m128i __a = (a); \
-  _Pragma("clang diagnostic pop"); \
-  (__m128i)__builtin_shufflevector((__v4si)__a, (__v4si) _mm_set1_epi32(0), \
+  (__m128i)__builtin_shufflevector((__v4si)(__m128i)(a), \
+                                   (__v4si)_mm_set1_epi32(0), \
                                    (imm) & 0x3, ((imm) & 0xc) >> 2, \
                                    ((imm) & 0x30) >> 4, ((imm) & 0xc0) >> 6); })
 
 #define _mm_shufflelo_epi16(a, imm) __extension__ ({ \
-  _Pragma("clang diagnostic push") _Pragma("clang diagnostic ignored \"-Wshadow\""); \
-  __m128i __a = (a); \
-  _Pragma("clang diagnostic pop"); \
-  (__m128i)__builtin_shufflevector((__v8hi)__a, (__v8hi) _mm_set1_epi16(0), \
+  (__m128i)__builtin_shufflevector((__v8hi)(__m128i)(a), \
+                                   (__v8hi)_mm_set1_epi16(0), \
                                    (imm) & 0x3, ((imm) & 0xc) >> 2, \
                                    ((imm) & 0x30) >> 4, ((imm) & 0xc0) >> 6, \
                                    4, 5, 6, 7); })
 
 #define _mm_shufflehi_epi16(a, imm) __extension__ ({ \
-  _Pragma("clang diagnostic push") _Pragma("clang diagnostic ignored \"-Wshadow\""); \
-  __m128i __a = (a); \
-  _Pragma("clang diagnostic pop"); \
-  (__m128i)__builtin_shufflevector((__v8hi)__a, (__v8hi) _mm_set1_epi16(0), \
+  (__m128i)__builtin_shufflevector((__v8hi)(__m128i)(a), \
+                                   (__v8hi)_mm_set1_epi16(0), \
                                    0, 1, 2, 3, \
                                    4 + (((imm) & 0x03) >> 0), \
                                    4 + (((imm) & 0x0c) >> 2), \
@@ -1433,11 +1417,8 @@ _mm_movemask_pd(__m128d __a)
 }
 
 #define _mm_shuffle_pd(a, b, i) __extension__ ({ \
-  _Pragma("clang diagnostic push") _Pragma("clang diagnostic ignored \"-Wshadow\""); \
-  __m128d __a = (a); \
-  __m128d __b = (b); \
-  _Pragma("clang diagnostic pop"); \
-  __builtin_shufflevector(__a, __b, (i) & 1, (((i) & 2) >> 1) + 2); })
+  __builtin_shufflevector((__m128d)(a), (__m128d)(b), \
+                          (i) & 1, (((i) & 2) >> 1) + 2); })
 
 static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
 _mm_castpd_ps(__m128d __a)
