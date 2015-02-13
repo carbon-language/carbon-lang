@@ -103,22 +103,30 @@ class ProcessIOTestCase(TestBase):
         self.output_file = os.path.join(self.get_process_working_directory(), "output.txt")
         self.error_file  = os.path.join(self.get_process_working_directory(), "error.txt")
         self.lines = ["Line 1", "Line 2", "Line 3"]
-    
-    def read_output_file_and_delete (self):
-        self.assertTrue(os.path.exists(self.output_file), "Make sure output.txt file exists")
-        f = open(self.output_file, 'r')
+
+    # target_file - path on local file system or remote file system if running remote
+    # local_file - path on local system
+    def read_file_and_delete(self, target_file, local_file):
+        if lldb.remote_platform:
+            self.runCmd('platform get-file "{remote}" "{local}"'.format(
+                remote=target_file, local=local_file))
+
+        self.assertTrue(os.path.exists(local_file), 'Make sure "{local}" file exists'.format(local=local_file))
+        f = open(local_file, 'r')
         contents = f.read()
         f.close()
-        os.unlink(self.output_file)
+
+        #TODO: add 'platform delete-file' file command
+        #if lldb.remote_platform:
+        #    self.runCmd('platform delete-file "{remote}"'.format(remote=target_file))
+        os.unlink(local_file)
         return contents
 
+    def read_output_file_and_delete(self):
+        return self.read_file_and_delete(self.output_file, self.local_output_file)
+
     def read_error_file_and_delete(self):
-        self.assertTrue(os.path.exists(self.error_file), "Make sure error.txt file exists")
-        f = open(self.error_file, 'r')
-        contents = f.read()
-        f.close()
-        os.unlink(self.error_file)
-        return contents
+        return self.read_file_and_delete(self.error_file, self.local_error_file)
 
     def create_target(self):
         '''Create the target and launch info that will be used by all tests'''
@@ -145,10 +153,9 @@ class ProcessIOTestCase(TestBase):
         # clean slate for the next test case.
         def cleanup():
             os.unlink(self.local_input_file)
-            # if lldb.remote_platform:
-                # TODO: add delete file command
-                # self.runCmd('platform delete-file "{local}" "{remote}"'.format(
-                #    local=self.local_input_file, remote=self.input_file))'''
+            #TODO: add 'platform delete-file' file command
+            #if lldb.remote_platform:
+            #    self.runCmd('platform delete-file "{remote}"'.format(remote=self.input_file))
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)

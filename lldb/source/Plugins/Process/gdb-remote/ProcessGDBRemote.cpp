@@ -784,7 +784,7 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
     if (log)
     {
         if (stdin_path || stdout_path || stderr_path)
-            log->Printf ("ProcessGDBRemote::%s provided with STDIO paths via launch_info: stdin=%s, stdout=%s, stdout=%s",
+            log->Printf ("ProcessGDBRemote::%s provided with STDIO paths via launch_info: stdin=%s, stdout=%s, stderr=%s",
                          __FUNCTION__,
                          stdin_path ? stdin_path : "<null>",
                          stdout_path ? stdout_path : "<null>",
@@ -856,7 +856,7 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
                     stderr_path = slave_name;
 
                 if (log)
-                    log->Printf ("ProcessGDBRemote::%s adjusted STDIO paths for local platform (IsHost() is true) using slave: stdin=%s, stdout=%s, stdout=%s",
+                    log->Printf ("ProcessGDBRemote::%s adjusted STDIO paths for local platform (IsHost() is true) using slave: stdin=%s, stdout=%s, stderr=%s",
                                  __FUNCTION__,
                                  stdin_path ? stdin_path : "<null>",
                                  stdout_path ? stdout_path : "<null>",
@@ -864,7 +864,7 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
             }
 
             if (log)
-                log->Printf ("ProcessGDBRemote::%s final STDIO paths after all adjustments: stdin=%s, stdout=%s, stdout=%s",
+                log->Printf ("ProcessGDBRemote::%s final STDIO paths after all adjustments: stdin=%s, stdout=%s, stderr=%s",
                              __FUNCTION__,
                              stdin_path ? stdin_path : "<null>",
                              stdout_path ? stdout_path : "<null>",

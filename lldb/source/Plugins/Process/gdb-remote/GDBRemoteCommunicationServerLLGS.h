@@ -284,9 +284,6 @@ private:
     void
     ClearProcessSpecificData ();
 
-    bool
-    ShouldRedirectInferiorOutputOverGdbRemote (const lldb_private::ProcessLaunchInfo &launch_info) const;
-
     void
     RegisterPacketHandlers ();
 

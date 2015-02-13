@@ -223,11 +223,21 @@ GDBRemoteCommunicationServerLLGS::LaunchProcess ()
         return error;
     }
 
-    // Handle mirroring of inferior stdout/stderr over the gdb-remote protocol as needed.
-    // llgs local-process debugging may specify PTYs, which will eliminate the need to reflect inferior
-    // stdout/stderr over the gdb-remote protocol.
-    if (ShouldRedirectInferiorOutputOverGdbRemote (m_process_launch_info))
+    // Handle mirroring of inferior stdout/stderr over the gdb-remote protocol
+    // as needed.
+    // llgs local-process debugging may specify PTY paths, which will make these
+    // file actions non-null
+    // process launch -i/e/o will also make these file actions non-null
+    // nullptr means that the traffic is expected to flow over gdb-remote protocol
+    if (
+        m_process_launch_info.GetFileActionForFD(STDIN_FILENO) == nullptr  ||
+        m_process_launch_info.GetFileActionForFD(STDOUT_FILENO) == nullptr  ||
+        m_process_launch_info.GetFileActionForFD(STDERR_FILENO) == nullptr
+        )
     {
+        // nullptr means it's not redirected to file or pty (in case of LLGS local)
+        // at least one of stdio will be transferred pty<->gdb-remote
+        // we need to give the pty master handle to this object to read and/or write
         if (log)
             log->Printf ("GDBRemoteCommunicationServerLLGS::%s pid %" PRIu64 " setting up stdout/stderr redirection via $O gdb-remote commands", __FUNCTION__, m_debugged_process_sp->GetID ());
 
@@ -267,27 +277,6 @@ GDBRemoteCommunicationServerLLGS::LaunchProcess ()
     }
 
     return error;
-}
-
-bool
-GDBRemoteCommunicationServerLLGS::ShouldRedirectInferiorOutputOverGdbRemote (const lldb_private::ProcessLaunchInfo &launch_info) const
-{
-    // Retrieve the file actions specified for stdout and stderr.
-    auto stdout_file_action = launch_info.GetFileActionForFD (STDOUT_FILENO);
-    auto stderr_file_action = launch_info.GetFileActionForFD (STDERR_FILENO);
-
-    // If neither stdout and stderr file actions are specified, we're not doing anything special, so
-    // assume we want to redirect stdout/stderr over gdb-remote $O messages.
-    if ((stdout_file_action == nullptr) && (stderr_file_action == nullptr))
-    {
-        // Send stdout/stderr over the gdb-remote protocol.
-        return true;
-    }
-
-    // Any other setting for either stdout or stderr implies we are either suppressing
-    // it (with /dev/null) or we've got it set to a PTY.  Either way, we don't want the
-    // output over gdb-remote.
-    return false;
 }
 
 lldb_private::Error
@@ -831,8 +820,20 @@ GDBRemoteCommunicationServerLLGS::SetSTDIOFileDescriptor (int fd)
         return error;
     }
 
-    m_stdio_communication.SetReadThreadBytesReceivedCallback (STDIOReadThreadBytesReceived, this);
-    m_stdio_communication.StartReadThread();
+    // llgs local-process debugging may specify PTY paths, which will make these
+    // file actions non-null
+    // process launch -e/o will also make these file actions non-null
+    // nullptr means that the traffic is expected to flow over gdb-remote protocol
+    if (
+        m_process_launch_info.GetFileActionForFD(STDOUT_FILENO) == nullptr ||
+        m_process_launch_info.GetFileActionForFD(STDERR_FILENO) == nullptr
+        )
+    {
+        // output from the process must be forwarded over gdb-remote
+        // create a thread to read the handle and send the data
+        m_stdio_communication.SetReadThreadBytesReceivedCallback (STDIOReadThreadBytesReceived, this);
+        m_stdio_communication.StartReadThread();
+    }
 
     return error;
 }
