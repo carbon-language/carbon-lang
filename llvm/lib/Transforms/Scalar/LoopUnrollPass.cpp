@@ -506,37 +506,40 @@ public:
     // Start by initializing worklist with simplified instructions.
     for (auto &FoldedKeyValue : SimplifiedValues)
       if (auto *FoldedInst = dyn_cast<Instruction>(FoldedKeyValue.first)) {
-        Worklist.push_back(FoldedInst);
         DeadInstructions.insert(FoldedInst);
+
+        // Add each instruction operand of this dead instruction to the
+        // worklist.
+        for (auto *Op : FoldedInst->operand_values())
+          if (auto *OpI = dyn_cast<Instruction>(Op))
+            Worklist.push_back(OpI);
       }
 
     // If a definition of an insn is only used by simplified or dead
     // instructions, it's also dead. Check defs of all instructions from the
     // worklist.
     while (!Worklist.empty()) {
-      Instruction *FoldedInst = Worklist.pop_back_val();
-      for (Value *Op : FoldedInst->operands()) {
-        if (auto *I = dyn_cast<Instruction>(Op)) {
-          if (!L->contains(I))
-            continue;
-          if (SimplifiedValues[I])
-            continue; // This insn has been counted already.
-          if (I->getNumUses() == 0)
-            continue;
-          bool AllUsersFolded = true;
-          for (User *U : I->users()) {
-            Instruction *UI = dyn_cast<Instruction>(U);
-            if (!SimplifiedValues[UI] && !DeadInstructions.count(UI)) {
-              AllUsersFolded = false;
-              break;
-            }
-          }
-          if (AllUsersFolded) {
-            NumberOfOptimizedInstructions += TTI.getUserCost(I);
-            Worklist.push_back(I);
-            DeadInstructions.insert(I);
-          }
+      Instruction *I = Worklist.pop_back_val();
+      if (!L->contains(I))
+        continue;
+      if (DeadInstructions.count(I))
+        continue;
+      if (I->getNumUses() == 0)
+        continue;
+      bool AllUsersFolded = true;
+      for (User *U : I->users()) {
+        Instruction *UI = dyn_cast<Instruction>(U);
+        if (!SimplifiedValues[UI] && !DeadInstructions.count(UI)) {
+          AllUsersFolded = false;
+          break;
         }
+      }
+      if (AllUsersFolded) {
+        NumberOfOptimizedInstructions += TTI.getUserCost(I);
+        DeadInstructions.insert(I);
+        for (auto *Op : I->operand_values())
+          if (auto *OpI = dyn_cast<Instruction>(Op))
+            Worklist.push_back(OpI);
       }
     }
     return NumberOfOptimizedInstructions;
