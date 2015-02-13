@@ -1357,10 +1357,15 @@ static void writeMDSubrange(raw_ostream &Out, const MDSubrange *N,
   Out << ")";
 }
 
-static void writeMDEnumerator(raw_ostream &, const MDEnumerator *,
+static void writeMDEnumerator(raw_ostream &Out, const MDEnumerator *N,
                               TypePrinting *, SlotTracker *, const Module *) {
-  llvm_unreachable("write not implemented");
+  Out << "!MDEnumerator(";
+  FieldSeparator FS;
+  Out << FS << "value: " << N->getValue();
+  Out << FS << "name: \"" << N->getName() << "\"";
+  Out << ")";
 }
+
 static void writeMDBasicType(raw_ostream &, const MDBasicType *, TypePrinting *,
                              SlotTracker *, const Module *) {
   llvm_unreachable("write not implemented");

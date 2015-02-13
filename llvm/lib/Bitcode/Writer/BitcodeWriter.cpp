@@ -826,11 +826,18 @@ static void WriteMDSubrange(const MDSubrange *N, const ValueEnumerator &,
   Record.clear();
 }
 
-static void WriteMDEnumerator(const MDEnumerator *, const ValueEnumerator &,
-                              BitstreamWriter &, SmallVectorImpl<uint64_t> &,
-                              unsigned) {
-  llvm_unreachable("write not implemented");
+static void WriteMDEnumerator(const MDEnumerator *N, const ValueEnumerator &VE,
+                              BitstreamWriter &Stream,
+                              SmallVectorImpl<uint64_t> &Record,
+                              unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  Record.push_back(rotateSign(N->getValue()));
+  Record.push_back(VE.getMetadataOrNullID(N->getRawName()));
+
+  Stream.EmitRecord(bitc::METADATA_ENUMERATOR, Record, Abbrev);
+  Record.clear();
 }
+
 static void WriteMDBasicType(const MDBasicType *, const ValueEnumerator &,
                              BitstreamWriter &, SmallVectorImpl<uint64_t> &,
                              unsigned) {

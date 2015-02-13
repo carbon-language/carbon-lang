@@ -309,6 +309,8 @@ public:
   int64_t getValue() const { return Value; }
   StringRef getName() const { return getStringOperand(0); }
 
+  MDString *getRawName() const { return getOperandAs<MDString>(0); }
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDEnumeratorKind;
   }

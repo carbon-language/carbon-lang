@@ -3181,9 +3181,19 @@ bool LLParser::ParseMDSubrange(MDNode *&Result, bool IsDistinct) {
   return false;
 }
 
+/// ParseMDEnumerator:
+///   ::= !MDEnumerator(value: 30, name: "SomeKind")
 bool LLParser::ParseMDEnumerator(MDNode *&Result, bool IsDistinct) {
-  return TokError("unimplemented parser");
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  REQUIRED(value, MDSignedField, );                                            \
+  REQUIRED(name, MDStringField, );
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
+
+  Result = GET_OR_DISTINCT(MDEnumerator, (Context, value.Val, name.Val));
+  return false;
 }
+
 bool LLParser::ParseMDBasicType(MDNode *&Result, bool IsDistinct) {
   return TokError("unimplemented parser");
 }
