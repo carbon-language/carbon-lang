@@ -367,7 +367,9 @@ struct ThreadState {
   const uptr tls_size;
   ThreadContext *tctx;
 
+#if SANITIZER_DEBUG && !SANITIZER_GO
   InternalDeadlockDetector internal_deadlock_detector;
+#endif
   DDPhysicalThread *dd_pt;
   DDLogicalThread *dd_lt;
 
