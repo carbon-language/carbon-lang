@@ -746,6 +746,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   }
   DWKEYWORD(TAG, DwarfTag);
   DWKEYWORD(ATE, DwarfAttEncoding);
+  DWKEYWORD(VIRTUALITY, DwarfVirtuality);
   DWKEYWORD(LANG, DwarfLang);
 #undef DWKEYWORD
 

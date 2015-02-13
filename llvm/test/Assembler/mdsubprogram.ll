@@ -15,12 +15,12 @@ declare void @_Z3foov()
 !6 = distinct !{}
 !7 = distinct !{}
 
-; CHECK: !8 = !MDSubprogram(scope: !0, name: "foo", linkageName: "_Zfoov", file: !2, line: 7, type: !3, isLocal: true, isDefinition: false, scopeLine: 8, containingType: !4, virtuality: 2, virtualIndex: 10, flags: 11, isOptimized: true, function: void ()* @_Z3foov, templateParams: !5, declaration: !6, variables: !7)
+; CHECK: !8 = !MDSubprogram(scope: !0, name: "foo", linkageName: "_Zfoov", file: !2, line: 7, type: !3, isLocal: true, isDefinition: false, scopeLine: 8, containingType: !4, virtuality: DW_VIRTUALITY_pure_virtual, virtualIndex: 10, flags: 11, isOptimized: true, function: void ()* @_Z3foov, templateParams: !5, declaration: !6, variables: !7)
 !8 = !MDSubprogram(scope: !0, name: "foo", linkageName: "_Zfoov",
                    file: !2, line: 7, type: !3, isLocal: true,
                    isDefinition: false, scopeLine: 8, containingType: !4,
-                   virtuality: 2, virtualIndex: 10, flags: 11,
-                   isOptimized: true, function: void ()* @_Z3foov,
+                   virtuality: DW_VIRTUALITY_pure_virtual, virtualIndex: 10,
+                   flags: 11, isOptimized: true, function: void ()* @_Z3foov,
                    templateParams: !5, declaration: !6, variables: !7)
 
 ; CHECK: !9 = !MDSubprogram(scope: null, name: "bar", isLocal: false, isDefinition: true, isOptimized: false)

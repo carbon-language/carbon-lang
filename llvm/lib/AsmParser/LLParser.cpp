@@ -2949,6 +2949,9 @@ struct DwarfTagField : public MDUnsignedField {
 struct DwarfAttEncodingField : public MDUnsignedField {
   DwarfAttEncodingField() : MDUnsignedField(0, dwarf::DW_ATE_hi_user) {}
 };
+struct DwarfVirtualityField : public MDUnsignedField {
+  DwarfVirtualityField() : MDUnsignedField(0, dwarf::DW_VIRTUALITY_max) {}
+};
 struct DwarfLangField : public MDUnsignedField {
   DwarfLangField() : MDUnsignedField(0, dwarf::DW_LANG_hi_user) {}
 };
@@ -3022,6 +3025,25 @@ bool LLParser::ParseMDField(LocTy Loc, StringRef Name, DwarfTagField &Result) {
   assert(Tag <= Result.Max && "Expected valid DWARF tag");
 
   Result.assign(Tag);
+  Lex.Lex();
+  return false;
+}
+
+template <>
+bool LLParser::ParseMDField(LocTy Loc, StringRef Name,
+                            DwarfVirtualityField &Result) {
+  if (Lex.getKind() == lltok::APSInt)
+    return ParseMDField(Loc, Name, static_cast<MDUnsignedField &>(Result));
+
+  if (Lex.getKind() != lltok::DwarfVirtuality)
+    return TokError("expected DWARF virtuality code");
+
+  unsigned Virtuality = dwarf::getVirtuality(Lex.getStrVal());
+  if (!Virtuality)
+    return TokError("invalid DWARF virtuality code" + Twine(" '") +
+                    Lex.getStrVal() + "'");
+  assert(Virtuality <= Result.Max && "Expected valid DWARF virtuality code");
+  Result.assign(Virtuality);
   Lex.Lex();
   return false;
 }
@@ -3408,7 +3430,8 @@ bool LLParser::ParseMDCompileUnit(MDNode *&Result, bool IsDistinct) {
 ///   ::= !MDSubprogram(scope: !0, name: "foo", linkageName: "_Zfoo",
 ///                     file: !1, line: 7, type: !2, isLocal: false,
 ///                     isDefinition: true, scopeLine: 8, containingType: !3,
-///                     virtuality: 2, virtualIndex: 10, flags: 11,
+///                     virtuality: DW_VIRTUALTIY_pure_virtual,
+///                     virtualIndex: 10, flags: 11,
 ///                     isOptimized: false, function: void ()* @_Z3foov,
 ///                     templateParams: !4, declaration: !5, variables: !6)
 bool LLParser::ParseMDSubprogram(MDNode *&Result, bool IsDistinct) {
@@ -3423,7 +3446,7 @@ bool LLParser::ParseMDSubprogram(MDNode *&Result, bool IsDistinct) {
   OPTIONAL(isDefinition, MDBoolField, (true));                                 \
   OPTIONAL(scopeLine, LineField, );                                            \
   OPTIONAL(containingType, MDField, );                                         \
-  OPTIONAL(virtuality, MDUnsignedField, (0, dwarf::DW_VIRTUALITY_max));        \
+  OPTIONAL(virtuality, DwarfVirtualityField, );                                \
   OPTIONAL(virtualIndex, MDUnsignedField, (0, UINT32_MAX));                    \
   OPTIONAL(flags, MDUnsignedField, (0, UINT32_MAX));                           \
   OPTIONAL(isOptimized, MDBoolField, );                                        \

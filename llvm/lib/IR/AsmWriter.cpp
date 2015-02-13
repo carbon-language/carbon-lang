@@ -1588,8 +1588,13 @@ static void writeMDSubprogram(raw_ostream &Out, const MDSubprogram *N,
     writeMetadataAsOperand(Out, N->getContainingType(), TypePrinter, Machine,
                            Context);
   }
-  if (N->getVirtuality())
-    Out << FS << "virtuality: " << N->getVirtuality();
+  if (unsigned V = N->getVirtuality()) {
+    Out << FS << "virtuality: ";
+    if (const char *S = dwarf::VirtualityString(V))
+      Out << S;
+    else
+      Out << V;
+  }
   if (N->getVirtualIndex())
     Out << FS << "virtualIndex: " << N->getVirtualIndex();
   if (N->getFlags())
