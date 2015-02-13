@@ -78,8 +78,8 @@ namespace llvm {
           EnableFastISel(false), PositionIndependentExecutable(false),
           UseInitArray(false), DisableIntegratedAS(false),
           CompressDebugSections(false), FunctionSections(false),
-          DataSections(false), UniqueSectionNames(true), TrapUnreachable(false),
-          TrapFuncName(), FloatABIType(FloatABI::Default),
+          DataSections(false), TrapUnreachable(false), TrapFuncName(),
+          FloatABIType(FloatABI::Default),
           AllowFPOpFusion(FPOpFusion::Standard), JTType(JumpTable::Single),
           FCFI(false), ThreadModel(ThreadModel::POSIX),
           CFIType(CFIntegrity::Sub), CFIEnforcing(false), CFIFuncName() {}
@@ -197,8 +197,6 @@ namespace llvm {
 
     /// Emit data into separate sections.
     unsigned DataSections : 1;
-
-    unsigned UniqueSectionNames : 1;
 
     /// Emit target-specific trap instruction for 'unreachable' IR instructions.
     unsigned TrapUnreachable : 1;
