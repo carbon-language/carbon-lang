@@ -56,16 +56,7 @@ public:
   void setKindNamespace(KindNamespace ns) { _kindNamespace = (uint8_t)ns; }
 
   // Which architecture the kind value is for.
-  enum class KindArch {
-    all     = 0,
-    x86_64  = 1,
-    x86     = 2,
-    ARM     = 3,
-    PowerPC = 4,
-    Hexagon = 5,
-    Mips    = 6,
-    AArch64 = 7
-  };
+  enum class KindArch { all, AArch64, ARM, Hexagon, Mips, x86, x86_64 };
 
   KindArch kindArch() const { return (KindArch)_kindArch; }
   void setKindArch(KindArch a) { _kindArch = (uint8_t)a; }
