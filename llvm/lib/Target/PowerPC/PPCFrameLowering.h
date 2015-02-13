@@ -27,6 +27,7 @@ class PPCFrameLowering: public TargetFrameLowering {
   const unsigned TOCSaveOffset;
   const unsigned FramePointerSaveOffset;
   const unsigned LinkageSize;
+  const unsigned BasePointerSaveOffset;
 
 public:
   PPCFrameLowering(const PPCSubtarget &STI);
@@ -83,15 +84,7 @@ public:
 
   /// getBasePointerSaveOffset - Return the previous frame offset to save the
   /// base pointer.
-  static unsigned getBasePointerSaveOffset(bool isPPC64,
-                                           bool isDarwinABI,
-                                           bool isPIC) {
-    if (isDarwinABI)
-      return isPPC64 ? -16U : -8U;
-
-    // SVR4 ABI: First slot in the general register save area.
-    return isPPC64 ? -16U : isPIC ? -12U : -8U;
-  }
+  unsigned getBasePointerSaveOffset() const { return BasePointerSaveOffset; }
 
   /// getLinkageSize - Return the size of the PowerPC ABI linkage area.
   ///

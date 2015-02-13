@@ -16,6 +16,7 @@
 #include "PPCInstrInfo.h"
 #include "PPCMachineFunctionInfo.h"
 #include "PPCSubtarget.h"
+#include "PPCTargetMachine.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -68,13 +69,26 @@ static unsigned computeLinkageSize(const PPCSubtarget &STI) {
   return 8;
 }
 
+static unsigned computeBasePointerSaveOffset(const PPCSubtarget &STI) {
+  if (STI.isDarwinABI())
+    return STI.isPPC64() ? -16U : -8U;
+
+  // SVR4 ABI: First slot in the general register save area.
+  return STI.isPPC64()
+             ? -16U
+             : (STI.getTargetMachine().getRelocationModel() == Reloc::PIC_)
+                   ? -12U
+                   : -8U;
+}
+
 PPCFrameLowering::PPCFrameLowering(const PPCSubtarget &STI)
     : TargetFrameLowering(TargetFrameLowering::StackGrowsDown,
                           (STI.hasQPX() || STI.isBGQ()) ? 32 : 16, 0),
       Subtarget(STI), ReturnSaveOffset(computeReturnSaveOffset(Subtarget)),
       TOCSaveOffset(computeTOCSaveOffset(Subtarget)),
       FramePointerSaveOffset(computeFramePointerSaveOffset(Subtarget)),
-      LinkageSize(computeLinkageSize(Subtarget)) {}
+      LinkageSize(computeLinkageSize(Subtarget)),
+      BasePointerSaveOffset(computeBasePointerSaveOffset(STI)) {}
 
 // With the SVR4 ABI, callee-saved registers have fixed offsets on the stack.
 const PPCFrameLowering::SpillSlot *PPCFrameLowering::getCalleeSavedSpillSlots(
@@ -557,7 +571,6 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   DebugLoc dl;
   bool needsCFI = MMI.hasDebugInfo() ||
     MF.getFunction()->needsUnwindTableEntry();
-  bool isPIC = MF.getTarget().getRelocationModel() == Reloc::PIC_;
 
   // Get processor type.
   bool isPPC64 = Subtarget.isPPC64();
@@ -653,10 +666,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       assert(BPIndex && "No Base Pointer Save Slot!");
       BPOffset = FFI->getObjectOffset(BPIndex);
     } else {
-      BPOffset =
-        PPCFrameLowering::getBasePointerSaveOffset(isPPC64,
-                                                   isDarwinABI,
-                                                   isPIC);
+      BPOffset = getBasePointerSaveOffset();
     }
   }
 
@@ -938,9 +948,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
   // Get processor type.
   bool isPPC64 = Subtarget.isPPC64();
   // Get the ABI.
-  bool isDarwinABI = Subtarget.isDarwinABI();
   bool isSVR4ABI = Subtarget.isSVR4ABI();
-  bool isPIC = MF.getTarget().getRelocationModel() == Reloc::PIC_;
 
   // Check if the link register (LR) has been saved.
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
@@ -990,10 +998,7 @@ void PPCFrameLowering::emitEpilogue(MachineFunction &MF,
       assert(BPIndex && "No Base Pointer Save Slot!");
       BPOffset = FFI->getObjectOffset(BPIndex);
     } else {
-      BPOffset =
-        PPCFrameLowering::getBasePointerSaveOffset(isPPC64,
-                                                   isDarwinABI,
-                                                   isPIC);
+      BPOffset = getBasePointerSaveOffset();
     }
   }
 
@@ -1172,7 +1177,6 @@ PPCFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   int FPSI = FI->getFramePointerSaveIndex();
   bool isPPC64 = Subtarget.isPPC64();
   bool isDarwinABI  = Subtarget.isDarwinABI();
-  bool isPIC = MF.getTarget().getRelocationModel() == Reloc::PIC_;
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // If the frame pointer save index hasn't been defined yet.
@@ -1187,7 +1191,7 @@ PPCFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   int BPSI = FI->getBasePointerSaveIndex();
   if (!BPSI && RegInfo->hasBasePointer(MF)) {
-    int BPOffset = getBasePointerSaveOffset(isPPC64, isDarwinABI, isPIC);
+    int BPOffset = getBasePointerSaveOffset();
     // Allocate the frame index for the base pointer save area.
     BPSI = MFI->CreateFixedObject(isPPC64? 8 : 4, BPOffset, true);
     // Save the result.
