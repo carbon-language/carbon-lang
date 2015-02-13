@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/MipsBaseInfo.h"
-#include "MipsMachineFunction.h"
 #include "MipsInstrInfo.h"
+#include "MipsMachineFunction.h"
 #include "MipsSubtarget.h"
 #include "MipsTargetMachine.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

@@ -16,10 +16,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/BasicTTIImpl.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/TargetTransformInfoImpl.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/CommandLine.h"
 #include <utility>
 using namespace llvm;

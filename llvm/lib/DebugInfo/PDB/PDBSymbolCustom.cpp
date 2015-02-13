@@ -7,11 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <utility>
-
 #include "llvm/DebugInfo/PDB/IPDBRawSymbol.h"
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolCustom.h"
+#include <utility>
 
 using namespace llvm;
 

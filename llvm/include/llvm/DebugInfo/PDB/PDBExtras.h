@@ -10,11 +10,9 @@
 #ifndef LLVM_DEBUGINFO_PDB_PDBEXTRAS_H
 #define LLVM_DEBUGINFO_PDB_PDBEXTRAS_H
 
-#include <unordered_map>
-
 #include "PDBTypes.h"
-
 #include "llvm/Support/raw_ostream.h"
+#include <unordered_map>
 
 namespace llvm {
 typedef std::unordered_map<PDB_SymType, int> TagStats;

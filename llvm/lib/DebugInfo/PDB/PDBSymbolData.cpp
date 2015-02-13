@@ -7,13 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <utility>
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBExtras.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolData.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeUDT.h"
-
 #include "llvm/Support/Format.h"
+#include <utility>
 
 using namespace llvm;
 

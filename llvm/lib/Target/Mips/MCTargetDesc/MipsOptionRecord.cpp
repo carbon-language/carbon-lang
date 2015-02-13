@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsOptionRecord.h"
-#include "MipsTargetStreamer.h"
 #include "MipsELFStreamer.h"
+#include "MipsTargetStreamer.h"
 #include "llvm/MC/MCSectionELF.h"
 
 using namespace llvm;

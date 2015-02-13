@@ -10,10 +10,9 @@
 #ifndef LLVM_DEBUGINFO_PDB_IPDBDATASTREAM_H
 #define LLVM_DEBUGINFO_PDB_IPDBDATASTREAM_H
 
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/Optional.h"
-
 #include "PDBTypes.h"
+#include "llvm/ADT/Optional.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 

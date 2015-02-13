@@ -9,10 +9,9 @@
 #ifndef LLVM_DEBUGINFO_PDB_PDBSYMBOLBLOCK_H
 #define LLVM_DEBUGINFO_PDB_PDBSYMBOLBLOCK_H
 
-#include <string>
-
 #include "PDBSymbol.h"
 #include "PDBTypes.h"
+#include <string>
 
 namespace llvm {
 

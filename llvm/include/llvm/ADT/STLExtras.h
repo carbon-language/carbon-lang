@@ -18,13 +18,13 @@
 #define LLVM_ADT_STLEXTRAS_H
 
 #include "llvm/Support/Compiler.h"
+#include <cassert>
 #include <cstddef> // for std::size_t
 #include <cstdlib> // for qsort
 #include <functional>
 #include <iterator>
 #include <memory>
 #include <utility> // for std::pair
-#include <cassert>
 
 namespace llvm {
 

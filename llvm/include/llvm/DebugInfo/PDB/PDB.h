@@ -10,9 +10,8 @@
 #ifndef LLVM_DEBUGINFO_PDB_PDB_H
 #define LLVM_DEBUGINFO_PDB_PDB_H
 
-#include <memory>
-
 #include "PDBTypes.h"
+#include <memory>
 
 namespace llvm {
 class StringRef;

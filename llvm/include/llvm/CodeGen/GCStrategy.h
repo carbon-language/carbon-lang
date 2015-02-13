@@ -51,9 +51,9 @@
 #define LLVM_IR_GCSTRATEGY_H
 
 #include "llvm/ADT/Optional.h"
-#include "llvm/IR/Value.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Value.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Registry.h"
 #include <string>

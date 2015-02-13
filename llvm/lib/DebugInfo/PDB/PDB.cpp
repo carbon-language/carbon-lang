@@ -8,11 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
-
 #include "llvm/ADT/StringRef.h"
-
-#include "llvm/DebugInfo/PDB/PDB.h"
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
+#include "llvm/DebugInfo/PDB/PDB.h"
 #if HAVE_DIA_SDK
 #include "llvm/DebugInfo/PDB/DIA/DIASession.h"
 #endif

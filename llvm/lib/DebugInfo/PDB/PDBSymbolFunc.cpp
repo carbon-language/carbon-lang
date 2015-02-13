@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <utility>
-
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
@@ -17,8 +15,8 @@
 #include "llvm/DebugInfo/PDB/PDBSymbolFuncDebugStart.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeFunctionSig.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeUDT.h"
-
 #include "llvm/Support/Format.h"
+#include <utility>
 
 using namespace llvm;
 PDBSymbolFunc::PDBSymbolFunc(const IPDBSession &PDBSession,

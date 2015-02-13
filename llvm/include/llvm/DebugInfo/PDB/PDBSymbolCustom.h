@@ -10,10 +10,9 @@
 #ifndef LLVM_DEBUGINFO_PDB_PDBSYMBOLCUSTOM_H
 #define LLVM_DEBUGINFO_PDB_PDBSYMBOLCUSTOM_H
 
-#include "llvm/ADT/SmallVector.h"
-
 #include "PDBSymbol.h"
 #include "PDBTypes.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
 

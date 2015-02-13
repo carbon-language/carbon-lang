@@ -10,11 +10,10 @@
 #ifndef LLVM_DEBUGINFO_PDB_IPDBRAWSYMBOL_H
 #define LLVM_DEBUGINFO_PDB_IPDBRAWSYMBOL_H
 
-#include <memory>
-
+#include "PDBTypes.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "PDBTypes.h"
+#include <memory>
 
 namespace llvm {
 

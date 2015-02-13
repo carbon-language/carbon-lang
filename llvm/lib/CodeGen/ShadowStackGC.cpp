@@ -26,8 +26,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/GCs.h"
-#include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/IntrinsicInst.h"

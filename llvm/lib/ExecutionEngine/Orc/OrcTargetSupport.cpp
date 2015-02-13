@@ -1,6 +1,5 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/ExecutionEngine/Orc/IndirectionUtils.h"
-
 #include <array>
 
 using namespace llvm;

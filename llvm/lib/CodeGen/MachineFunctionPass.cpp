@@ -16,7 +16,6 @@
 #include "llvm/Analysis/DominanceFrontier.h"
 #include "llvm/Analysis/IVUsers.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"

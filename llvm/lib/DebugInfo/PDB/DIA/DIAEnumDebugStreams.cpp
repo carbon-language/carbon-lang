@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
-#include "llvm/DebugInfo/PDB/DIA/DIAEnumDebugStreams.h"
 #include "llvm/DebugInfo/PDB/DIA/DIADataStream.h"
+#include "llvm/DebugInfo/PDB/DIA/DIAEnumDebugStreams.h"
 
 using namespace llvm;
 

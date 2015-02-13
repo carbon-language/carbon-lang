@@ -10,10 +10,9 @@
 #ifndef LLVM_DEBUGINFO_PDB_IPDBSESSION_H
 #define LLVM_DEBUGINFO_PDB_IPDBSESSION_H
 
-#include <memory>
-
 #include "PDBTypes.h"
 #include "llvm/Support/Casting.h"
+#include <memory>
 
 namespace llvm {
 

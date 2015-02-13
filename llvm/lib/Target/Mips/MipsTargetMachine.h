@@ -14,13 +14,13 @@
 #ifndef LLVM_LIB_TARGET_MIPS_MIPSTARGETMACHINE_H
 #define LLVM_LIB_TARGET_MIPS_MIPSTARGETMACHINE_H
 
+#include "MCTargetDesc/MipsABIInfo.h"
 #include "MipsSubtarget.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
-#include "MCTargetDesc/MipsABIInfo.h"
 
 namespace llvm {
 class formatted_raw_ostream;

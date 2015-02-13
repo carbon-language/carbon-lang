@@ -10,9 +10,9 @@
 #ifndef LLVM_DEBUGINFO_PDB_PDBTYPES_H
 #define LLVM_DEBUGINFO_PDB_PDBTYPES_H
 
-#include <stdint.h>
-#include <functional>
 #include "llvm/Config/llvm-config.h"
+#include <functional>
+#include <stdint.h>
 
 namespace llvm {
 

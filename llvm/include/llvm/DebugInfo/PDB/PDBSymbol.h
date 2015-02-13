@@ -10,16 +10,14 @@
 #ifndef LLVM_DEBUGINFO_PDB_IPDBSYMBOL_H
 #define LLVM_DEBUGINFO_PDB_IPDBSYMBOL_H
 
-#include <unordered_map>
-
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Support/Casting.h"
-
 #include "ConcreteSymbolEnumerator.h"
 #include "IPDBRawSymbol.h"
 #include "PDBExtras.h"
 #include "PDBTypes.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Casting.h"
+#include <unordered_map>
 
 #define FORWARD_SYMBOL_METHOD(MethodName)                                      \
   auto MethodName() const->decltype(RawSymbol->MethodName()) {                 \
