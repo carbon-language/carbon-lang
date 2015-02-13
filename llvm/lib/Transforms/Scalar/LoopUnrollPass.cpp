@@ -252,7 +252,7 @@ Pass *llvm::createSimpleLoopUnrollPass() {
   return llvm::createLoopUnrollPass(-1, -1, 0, 0);
 }
 
-static bool IsLoadFromConstantInitializer(Value *V) {
+static bool isLoadFromConstantInitializer(Value *V) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
     if (GV->isConstant() && GV->hasDefinitiveInitializer())
       return GV->getInitializer();
@@ -277,7 +277,7 @@ struct FindConstantPointers {
       // global (in which case we can eliminate the load), or not.
       BaseAddress = SC->getValue();
       LoadCanBeConstantFolded =
-          IndexIsConstant && IsLoadFromConstantInitializer(BaseAddress);
+          IndexIsConstant && isLoadFromConstantInitializer(BaseAddress);
       return false;
     }
     if (isa<SCEVConstant>(S))
@@ -429,7 +429,7 @@ public:
   // unrolling, would have a constant address and it will point to a known
   // constant initializer, record its base address for future use.  It is used
   // when we estimate number of potentially simplified instructions.
-  void FindConstFoldableLoads() {
+  void findConstFoldableLoads() {
     for (auto BB : L->getBlocks()) {
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
         if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
@@ -452,7 +452,7 @@ public:
   // estimate number of optimized instructions after substituting the concrete
   // values for the given Iteration.
   // Fill in SimplifiedInsns map for future use in DCE-estimation.
-  unsigned EstimateNumberOfSimplifiedInsns(unsigned Iteration) {
+  unsigned estimateNumberOfSimplifiedInsns(unsigned Iteration) {
     SmallVector<Instruction *, 8> Worklist;
     SimplifiedValues.clear();
     CountedInsns.clear();
@@ -496,7 +496,7 @@ public:
 
   // Given a list of potentially simplifed instructions, estimate number of
   // instructions that would become dead if we do perform the simplification.
-  unsigned EstimateNumberOfDeadInsns() {
+  unsigned estimateNumberOfDeadInsns() {
     NumberOfOptimizedInstructions = 0;
     SmallVector<Instruction *, 8> Worklist;
     DenseMap<Instruction *, bool> DeadInstructions;
@@ -545,14 +545,14 @@ public:
 // This routine estimates this optimization effect and returns the number of
 // instructions, that potentially might be optimized away.
 static unsigned
-ApproximateNumberOfOptimizedInstructions(const Loop *L, ScalarEvolution &SE,
+approximateNumberOfOptimizedInstructions(const Loop *L, ScalarEvolution &SE,
                                          unsigned TripCount,
                                          const TargetTransformInfo &TTI) {
   if (!TripCount)
     return 0;
 
   UnrollAnalyzer UA(L, TripCount, SE, TTI);
-  UA.FindConstFoldableLoads();
+  UA.findConstFoldableLoads();
 
   // Estimate number of instructions, that could be simplified if we replace a
   // load with the corresponding constant. Since the same load will take
@@ -563,8 +563,8 @@ ApproximateNumberOfOptimizedInstructions(const Loop *L, ScalarEvolution &SE,
       std::min<unsigned>(UnrollMaxIterationsCountToAnalyze, TripCount);
   unsigned NumberOfOptimizedInstructions = 0;
   for (unsigned i = 0; i < IterationsNumberForEstimate; ++i) {
-    NumberOfOptimizedInstructions += UA.EstimateNumberOfSimplifiedInsns(i);
-    NumberOfOptimizedInstructions += UA.EstimateNumberOfDeadInsns();
+    NumberOfOptimizedInstructions += UA.estimateNumberOfSimplifiedInsns(i);
+    NumberOfOptimizedInstructions += UA.estimateNumberOfDeadInsns();
   }
   NumberOfOptimizedInstructions *= TripCount / IterationsNumberForEstimate;
 
@@ -776,7 +776,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   }
 
   unsigned NumberOfOptimizedInstructions =
-      ApproximateNumberOfOptimizedInstructions(L, *SE, TripCount, TTI);
+      approximateNumberOfOptimizedInstructions(L, *SE, TripCount, TTI);
   DEBUG(dbgs() << "  Complete unrolling could save: "
                << NumberOfOptimizedInstructions << "\n");
 
