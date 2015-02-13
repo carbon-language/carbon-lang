@@ -198,7 +198,7 @@ public:
     assert(std::count_if(RegisteredOptionCategories.begin(),
                          RegisteredOptionCategories.end(),
                          [cat](const OptionCategory *Category) {
-                           return getName() == Category->getName();
+                           return cat->getName() == Category->getName();
                          }) == 0 &&
            "Duplicate option categories");
 
