@@ -410,18 +410,15 @@ bool MipsSEDAGToDAGISel::selectIntAddrMM(SDValue Addr, SDValue &Base,
 bool MipsSEDAGToDAGISel::selectIntAddrLSL2MM(SDValue Addr, SDValue &Base,
                                              SDValue &Offset) const {
   if (selectAddrFrameIndexOffset(Addr, Base, Offset, 7)) {
-    if (dyn_cast<FrameIndexSDNode>(Base))
+    if (isa<FrameIndexSDNode>(Base))
       return false;
-    else {
-      ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Offset);
-      if (CN) {
-        unsigned CnstOff = CN->getZExtValue();
-        if (CnstOff == (CnstOff & 0x3c))
-          return true;
-      }
 
-      return false;
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Offset)) {
+      unsigned CnstOff = CN->getZExtValue();
+      return (CnstOff == (CnstOff & 0x3c));
     }
+
+    return false;
   }
 
   // For all other cases where "lw" would be selected, don't select "lw16"
