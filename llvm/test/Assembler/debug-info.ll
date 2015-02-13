@@ -20,10 +20,10 @@
 !5 = !MDEnumerator(value: -8, name: "negeight")
 !6 = !MDEnumerator(value: 0, name: "")
 
-; CHECK-NEXT: !6 = !MDBasicType(tag: DW_TAG_base_type, name: "name", size: 1, align: 2, encoding: 3)
+; CHECK-NEXT: !6 = !MDBasicType(tag: DW_TAG_base_type, name: "name", size: 1, align: 2, encoding: DW_ATE_unsigned_char)
 ; CHECK-NEXT: !7 = !MDBasicType(tag: DW_TAG_unspecified_type, name: "decltype(nullptr)")
 ; CHECK-NEXT: !8 = !MDBasicType(tag: DW_TAG_base_type)
-!7 = !MDBasicType(tag: DW_TAG_base_type, name: "name", size: 1, align: 2, encoding: 3)
+!7 = !MDBasicType(tag: DW_TAG_base_type, name: "name", size: 1, align: 2, encoding: DW_ATE_unsigned_char)
 !8 = !MDBasicType(tag: DW_TAG_unspecified_type, name: "decltype(nullptr)")
 !9 = !MDBasicType(tag: DW_TAG_base_type)
 !10 = !MDBasicType(tag: DW_TAG_base_type, name: "", size: 0, align: 0, encoding: 0)

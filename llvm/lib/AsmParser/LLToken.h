@@ -199,6 +199,7 @@ namespace lltok {
     MetadataVar,       // !foo
     StringConstant,    // "foo"
     DwarfTag,          // DW_TAG_foo (includes "DW_TAG_")
+    DwarfAttEncoding,  // DW_ATE_foo (includes "DW_ATE_")
 
     // Type valued tokens (TyVal).
     Type,

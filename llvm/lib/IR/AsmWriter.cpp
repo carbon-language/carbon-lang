@@ -1377,8 +1377,13 @@ static void writeMDBasicType(raw_ostream &Out, const MDBasicType *N,
     Out << FS << "size: " << N->getSizeInBits();
   if (N->getAlignInBits())
     Out << FS << "align: " << N->getAlignInBits();
-  if (N->getEncoding())
-    Out << FS << "encoding: " << N->getEncoding();
+  if (unsigned Encoding = N->getEncoding()) {
+    Out << FS << "encoding: ";
+    if (const char *S = dwarf::AttributeEncodingString(Encoding))
+      Out << S;
+    else
+      Out << Encoding;
+  }
   Out << ")";
 }
 

@@ -78,6 +78,7 @@ syn match   llvmIdentifier /![-a-zA-Z$._][-a-zA-Z$._0-9]*\ze\s*$/
 syn match   llvmIdentifier /![-a-zA-Z$._][-a-zA-Z$._0-9]*\ze\s*[=!]/
 syn match   llvmType /!\zs\a\+\ze\s*(/
 syn match   llvmConstant /\<DW_TAG_[a-z_]\+\>/
+syn match   llvmConstant /\<DW_ATE_[a-zA-Z_]\+\>/
 
 " Syntax-highlight dejagnu test commands.
 syn match  llvmSpecialComment /;\s*RUN:.*$/
