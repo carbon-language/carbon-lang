@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "PDBTypes.h"
+#include "llvm/Support/Casting.h"
 
 namespace llvm {
 
