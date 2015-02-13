@@ -12,6 +12,7 @@
 
 #include <memory>
 #include "IPDBEnumChildren.h"
+#include "llvm/Support/Casting.h"
 
 namespace llvm {
 
