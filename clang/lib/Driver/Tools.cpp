@@ -4888,6 +4888,19 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
     CmdArgs.push_back("-P");
   }
 
+  unsigned VolatileOptionID;
+  if (getToolChain().getTriple().getArch() == llvm::Triple::x86_64 ||
+      getToolChain().getTriple().getArch() == llvm::Triple::x86)
+    VolatileOptionID = options::OPT__SLASH_volatile_ms;
+  else
+    VolatileOptionID = options::OPT__SLASH_volatile_iso;
+
+  if (Arg *A = Args.getLastArg(options::OPT__SLASH_volatile_Group))
+    VolatileOptionID = A->getOption().getID();
+
+  if (VolatileOptionID == options::OPT__SLASH_volatile_ms)
+    CmdArgs.push_back("-fms-volatile");
+
   Arg *MostGeneralArg = Args.getLastArg(options::OPT__SLASH_vmg);
   Arg *BestCaseArg = Args.getLastArg(options::OPT__SLASH_vmb);
   if (MostGeneralArg && BestCaseArg)

@@ -2147,10 +2147,20 @@ public:
 
   void EmitAtomicInit(Expr *E, LValue lvalue);
 
+  bool LValueIsSuitableForInlineAtomic(LValue Src);
+  bool typeIsSuitableForInlineAtomic(QualType Ty, bool IsVolatile) const;
+
+  RValue EmitAtomicLoad(LValue LV, SourceLocation SL,
+                        AggValueSlot Slot = AggValueSlot::ignored());
+
   RValue EmitAtomicLoad(LValue lvalue, SourceLocation loc,
+                        llvm::AtomicOrdering AO, bool IsVolatile = false,
                         AggValueSlot slot = AggValueSlot::ignored());
 
   void EmitAtomicStore(RValue rvalue, LValue lvalue, bool isInit);
+
+  void EmitAtomicStore(RValue rvalue, LValue lvalue, llvm::AtomicOrdering AO,
+                       bool IsVolatile, bool isInit);
 
   std::pair<RValue, RValue> EmitAtomicCompareExchange(
       LValue Obj, RValue Expected, RValue Desired, SourceLocation Loc,
