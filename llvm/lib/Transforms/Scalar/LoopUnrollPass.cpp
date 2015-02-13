@@ -456,7 +456,7 @@ public:
   // values for the given Iteration.
   // Fill in SimplifiedValues map for future use in DCE-estimation.
   unsigned estimateNumberOfSimplifiedInstructions(unsigned Iteration) {
-    SmallVector<Instruction *, 8> Worklist;
+    SmallSetVector<Instruction *, 8> Worklist;
     SimplifiedValues.clear();
     CountedInstructions.clear();
     NumberOfOptimizedInstructions = 0;
@@ -474,7 +474,7 @@ public:
           continue;
         if (!L->contains(UI))
           continue;
-        Worklist.push_back(UI);
+        Worklist.insert(UI);
       }
     }
 
@@ -491,7 +491,7 @@ public:
           continue;
         if (!L->contains(UI))
           continue;
-        Worklist.push_back(UI);
+        Worklist.insert(UI);
       }
     }
     return NumberOfOptimizedInstructions;
