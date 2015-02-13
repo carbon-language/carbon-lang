@@ -4367,20 +4367,16 @@ defm VPSRAD : PDI_binop_rmi<0xE2, 0x72, MRM4r, "vpsrad", X86vsra, X86vsrai,
                             VR128, v4i32, v4i32, bc_v4i32, loadv2i64,
                             SSE_INTSHIFT_ITINS_P, 0>, VEX_4V;
 
-let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift] in {
+let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift], hasSideEffects = 0 in {
   // 128-bit logical shifts.
   def VPSLLDQri : PDIi8<0x73, MRM7r,
                     (outs VR128:$dst), (ins VR128:$src1, i32u8imm:$src2),
                     "vpslldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst,
-                      (int_x86_sse2_psll_dq_bs VR128:$src1, imm:$src2))]>,
-                    VEX_4V;
+                    []>, VEX_4V;
   def VPSRLDQri : PDIi8<0x73, MRM3r,
                     (outs VR128:$dst), (ins VR128:$src1, i32u8imm:$src2),
                     "vpsrldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR128:$dst,
-                      (int_x86_sse2_psrl_dq_bs VR128:$src1, imm:$src2))]>,
-                    VEX_4V;
+                    []>, VEX_4V;
   // PSRADQri doesn't exist in SSE[1-3].
 }
 } // Predicates = [HasAVX]
@@ -4459,20 +4455,16 @@ defm PSRAD : PDI_binop_rmi<0xE2, 0x72, MRM4r, "psrad", X86vsra, X86vsrai,
                            VR128, v4i32, v4i32, bc_v4i32, memopv2i64,
                            SSE_INTSHIFT_ITINS_P>;
 
-let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift] in {
+let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift], hasSideEffects = 0 in {
   // 128-bit logical shifts.
   def PSLLDQri : PDIi8<0x73, MRM7r,
                        (outs VR128:$dst), (ins VR128:$src1, i32u8imm:$src2),
                        "pslldq\t{$src2, $dst|$dst, $src2}",
-                       [(set VR128:$dst,
-                         (int_x86_sse2_psll_dq_bs VR128:$src1, imm:$src2))],
-                         IIC_SSE_INTSHDQ_P_RI>;
+                       [], IIC_SSE_INTSHDQ_P_RI>;
   def PSRLDQri : PDIi8<0x73, MRM3r,
                        (outs VR128:$dst), (ins VR128:$src1, i32u8imm:$src2),
                        "psrldq\t{$src2, $dst|$dst, $src2}",
-                       [(set VR128:$dst,
-                         (int_x86_sse2_psrl_dq_bs VR128:$src1, imm:$src2))],
-                         IIC_SSE_INTSHDQ_P_RI>;
+                       [], IIC_SSE_INTSHDQ_P_RI>;
   // PSRADQri doesn't exist in SSE[1-3].
 }
 } // Constraints = "$src1 = $dst"
