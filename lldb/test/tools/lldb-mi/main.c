@@ -11,9 +11,11 @@
 extern int a_MyFunction();
 extern int b_MyFunction();
 extern int infloop();
+extern int local_test();
 int doloop, dosegfault;
 int g_MyVar = 3;
 static int s_MyVar = 4;
+
 int main (int argc, char const *argv[])
 {
     int a, b;
@@ -31,5 +33,6 @@ int main (int argc, char const *argv[])
         printf("a=%d, argv[1]=%s\n", a, argv[1]); //BP_argtest
     }
     s_MyVar = a + b;
+    local_test();
     return a + b - s_MyVar; //BP_source
 }

@@ -465,7 +465,7 @@ CMICmdCmdStackListArguments::Execute(void)
         lldb::SBFrame frame = thread.GetFrameAtIndex(i);
         CMICmnMIValueList miValueList(true);
         const MIuint maskVarTypes = CMICmnLLDBDebugSessionInfo::eVariableType_Arguments;
-        if (!rSessionInfo.MIResponseFormVariableInfo3(frame, maskVarTypes, eVarInfoFormat, miValueList))
+        if (!rSessionInfo.MIResponseFormVariableInfo(frame, maskVarTypes, eVarInfoFormat, miValueList))
             return MIstatus::failure;
         const CMICmnMIValueConst miValueConst(CMIUtilString::Format("%d", i));
         const CMICmnMIValueResult miValueResult("level", miValueConst);

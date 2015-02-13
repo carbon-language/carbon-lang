@@ -705,58 +705,45 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo(const lldb::SBFrame &vrFr
     const bool bStatics = (vMaskVarTypes & eVariableType_Statics);
     const bool bInScopeOnly = (vMaskVarTypes & eVariableType_InScope);
     const MIuint nMaxRecusiveDepth = 10;
-    MIuint nCurrentRecursiveDepth = 0;
+    const MIuint nCurrentRecursiveDepth = 0;
     lldb::SBValueList listArg = rFrame.GetVariables(bArg, bLocals, bStatics, bInScopeOnly);
     const MIuint nArgs = listArg.GetSize();
     for (MIuint i = 0; bOk && (i < nArgs); i++)
     {
+        CMICmnMIValueTuple miValueTuple;
         lldb::SBValue value = listArg.GetValueAtIndex(i);
-        bOk = GetVariableInfo(nMaxRecusiveDepth, value, false, veVarInfoFormat, vwrMiValueList, nCurrentRecursiveDepth);
+        const CMICmnMIValueConst miValueConst(value.GetName());
+        const CMICmnMIValueResult miValueResultName("name", miValueConst);
+        if (veVarInfoFormat != eVariableInfoFormat_NoValues)
+        {
+            const MIuint nChildren = value.GetNumChildren();
+            const bool bIsPointerType = value.GetType().IsPointerType();
+            if (nChildren == 0 || // no children
+                    (bIsPointerType && nChildren == 1) || // pointers
+                     veVarInfoFormat == eVariableInfoFormat_AllValues) // show all values
+            {
+                CMICmnMIValueList miValueList(true);
+                if (GetVariableInfo(nMaxRecusiveDepth, value, false, nCurrentRecursiveDepth, miValueList))
+                {
+                    CMIUtilString valueStr = miValueList.ExtractContentNoBrackets();
+                    // Surround by {} if there is , inside indicating multiple values.
+                    if (valueStr.find (',') != CMIUtilString::npos)
+                        valueStr = CMIUtilString::Format("{%s}", valueStr.c_str());
+                    const CMICmnMIValueConst miValueConst2(valueStr);
+                    const CMICmnMIValueResult miValueResult2("value", miValueConst2);
+                    miValueTuple.Add(miValueResultName); // name
+                    miValueTuple.Add(miValueResult2);
+                    vwrMiValueList.Add(miValueTuple);
+                    continue;
+                }
+            }
+        }
+        // If we are printing name only then no need to put it in the tuple.
+        vwrMiValueList.Add(miValueResultName);
     }
-
     return bOk;
 }
 
-// *** Do not refactor this function to be one function with same name as it can break more than
-// *** than one stack type command
-//++ ------------------------------------------------------------------------------------
-// Details: Form MI partial response by appending more MI value type objects to the
-//          tuple type object past in.
-// Type:    Method.
-// Args:    vrFrame         - (R)   LLDB thread object.
-//          vMaskVarTypes   - (R)   Construed according to VariableType_e.
-//          veVarInfoFormat - (R)   The type of variable info that should be shown.
-//          vwrMIValueList  - (W)   MI value list object.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo3(const lldb::SBFrame &vrFrame, const MIuint vMaskVarTypes,
-                                                        const VariableInfoFormat_e veVarInfoFormat, CMICmnMIValueList &vwrMiValueList)
-{
-    bool bOk = MIstatus::success;
-    lldb::SBFrame &rFrame = const_cast<lldb::SBFrame &>(vrFrame);
-
-    const bool bArg = (vMaskVarTypes & eVariableType_Arguments);
-    const bool bLocals = (vMaskVarTypes & eVariableType_Locals);
-    const bool bStatics = (vMaskVarTypes & eVariableType_Statics);
-    const bool bInScopeOnly = (vMaskVarTypes & eVariableType_InScope);
-    const MIuint nMaxRecusiveDepth = 10;
-    MIuint nCurrentRecursiveDepth = 0;
-    lldb::SBValueList listArg = rFrame.GetVariables(bArg, bLocals, bStatics, bInScopeOnly);
-    const MIuint nArgs = listArg.GetSize();
-    for (MIuint i = 0; bOk && (i < nArgs); i++)
-    {
-        lldb::SBValue value = listArg.GetValueAtIndex(i);
-        bOk = GetVariableInfo2(nMaxRecusiveDepth, value, false, veVarInfoFormat, vwrMiValueList, nCurrentRecursiveDepth);
-    }
-
-    return bOk;
-}
-
-// *** Do not refactor this function to be one function with same name as it can break more than
-// *** than one stack type command
 //++ ------------------------------------------------------------------------------------
 // Details: Extract the value's name and value or recurse into child value object.
 // Type:    Method.
@@ -764,7 +751,6 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo3(const lldb::SBFrame &vrF
 //          vrValue         - (R)  LLDB value object.
 //          vbIsChildValue  - (R)  True = Value object is a child of a higher Value object,
 //                          -      False =  Value object not a child.
-//          veVarInfoFormat - (R)  The type of variable info that should be shown.
 //          vwrMIValueList  - (W)  MI value list object.
 //          vnDepth         - (RW) The current recursive depth of this function.
 // Return:  MIstatus::success - Functional succeeded.
@@ -773,19 +759,15 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormVariableInfo3(const lldb::SBFrame &vrF
 //--
 bool
 CMICmnLLDBDebugSessionInfo::GetVariableInfo(const MIuint vnMaxDepth, const lldb::SBValue &vrValue, const bool vbIsChildValue,
-                                            const VariableInfoFormat_e veVarInfoFormat, CMICmnMIValueList &vwrMiValueList,
-                                            MIuint &vrwnDepth)
+                                            const MIuint vnDepth, CMICmnMIValueList &vwrMiValueList)
 {
-    // *** Update GetVariableInfo2() with any code changes here ***
-
     // Check recursive depth
-    if (vrwnDepth >= vnMaxDepth)
+    if (vnDepth >= vnMaxDepth)
         return MIstatus::success;
 
     bool bOk = MIstatus::success;
     lldb::SBValue &rValue = const_cast<lldb::SBValue &>(vrValue);
     const CMICmnLLDBUtilSBValue utilValue(vrValue, true);
-    CMICmnMIValueTuple miValueTuple;
     const MIchar *pName = rValue.GetName();
     MIunused(pName);
     const bool bIsPointerType = rValue.GetType().IsPointerType();
@@ -794,98 +776,43 @@ CMICmnLLDBDebugSessionInfo::GetVariableInfo(const MIuint vnMaxDepth, const lldb:
     {
         if (vbIsChildValue)
         {
-            if (utilValue.IsCharType())
-            {
-                // For char types and try to form text string
-                const CMICmnMIValueConst miValueConst(utilValue.GetValue().c_str(), true);
-                miValueTuple.Add(miValueConst, true);
-            }
-            else
-            {
-                // For composite types
-                const CMICmnMIValueConst miValueConst(
+            // For composite types
+            const CMICmnMIValueConst miValueConst(
                     CMIUtilString::Format("%s = %s", utilValue.GetName().c_str(), utilValue.GetValue().c_str()), true);
-                miValueTuple.Add(miValueConst, true);
-            }
-            return vwrMiValueList.Add(CMICmnMIValueConst(miValueTuple.ExtractContentNoBrackets(), true));
+            return vwrMiValueList.Add(miValueConst);
         }
         else
         {
             // Basic types
-            switch (veVarInfoFormat)
-            {
-                case eVariableInfoFormat_NoValues:
-                {
-                    const CMICmnMIValueConst miValueConst(utilValue.GetName());
-                    const CMICmnMIValueResult miValueResult("name", miValueConst);
-                    return vwrMiValueList.Add(miValueResult);
-                }
-                case eVariableInfoFormat_AllValues:
-                case eVariableInfoFormat_SimpleValues:
-                {
-                    const CMICmnMIValueConst miValueConst(utilValue.GetName());
-                    const CMICmnMIValueResult miValueResult("name", miValueConst);
-                    miValueTuple.Add(miValueResult);
-                    const CMICmnMIValueConst miValueConst2(utilValue.GetValue());
-                    const CMICmnMIValueResult miValueResult2("value", miValueConst2);
-                    miValueTuple.Add(miValueResult2);
-                    break;
-                }
-                default:
-                    break;
-            }
-            return vwrMiValueList.Add(miValueTuple);
+            const CMICmnMIValueConst miValueConst(utilValue.GetValue(), true);
+            return vwrMiValueList.Add(miValueConst);
         }
     }
     else if (bIsPointerType && utilValue.IsChildCharType())
     {
-        switch (veVarInfoFormat)
+        const CMIUtilString &rText(utilValue.GetChildValueCString());
+        if (rText.empty())
         {
-            case eVariableInfoFormat_NoValues:
-            {
-                const CMICmnMIValueConst miValueConst(utilValue.GetName());
-                const CMICmnMIValueResult miValueResult("name", miValueConst);
-                return vwrMiValueList.Add(miValueResult);
-            }
-            case eVariableInfoFormat_AllValues:
-            case eVariableInfoFormat_SimpleValues:
-            {
-                // Append string text to the parent value information
-                const CMICmnMIValueConst miValueConst(utilValue.GetName());
-                const CMICmnMIValueResult miValueResult("name", miValueConst);
-                miValueTuple.Add(miValueResult);
-
-                const CMIUtilString &rText(utilValue.GetChildValueCString());
-                if (rText.empty())
-                {
-                    const CMICmnMIValueConst miValueConst(utilValue.GetValue());
-                    const CMICmnMIValueResult miValueResult("value", miValueConst);
-                    miValueTuple.Add(miValueResult);
-                }
-                else
-                {
-                    if (utilValue.IsValueUnknown())
-                    {
-                        const CMICmnMIValueConst miValueConst(rText);
-                        const CMICmnMIValueResult miValueResult("value", miValueConst);
-                        miValueTuple.Add(miValueResult);
-                    }
-                    else
-                    {
-                        // Note code that has const in will not show the text suffix to the string pointer
-                        // i.e. const char * pMyStr = "blah"; ==> "0x00007000"" <-- Eclipse shows this
-                        // but        char * pMyStr = "blah"; ==> "0x00007000" "blah"" <-- Eclipse shows this
-                        const CMICmnMIValueConst miValueConst(CMIUtilString::Format("%s %s", utilValue.GetValue().c_str(), rText.c_str()));
-                        const CMICmnMIValueResult miValueResult("value", miValueConst);
-                        miValueTuple.Add(miValueResult);
-                    }
-                }
-                break;
-            }
-            default:
-                break;
+            const CMICmnMIValueConst miValueConst(utilValue.GetValue(), true);
+            bOk = vwrMiValueList.Add(miValueConst);
         }
-        return vwrMiValueList.Add(miValueTuple);
+        else
+        {
+            if (utilValue.IsValueUnknown())
+            {
+                const CMICmnMIValueConst miValueConst(rText, true);
+                bOk = vwrMiValueList.Add(miValueConst);
+            }
+            else
+            {
+                // Note code that has const in will not show the text suffix to the string pointer
+                // i.e. const char * pMyStr = "blah"; ==> "0x00007000"" <-- Eclipse shows this
+                // but        char * pMyStr = "blah"; ==> "0x00007000" "blah"" <-- Eclipse shows this
+                const CMICmnMIValueConst miValueConst(CMIUtilString::Format("%s %s", utilValue.GetValue().c_str(), rText.c_str()), true);
+                bOk = vwrMiValueList.Add(miValueConst);
+            }
+        }
+        return bOk;
     }
     else if (bIsPointerType)
     {
@@ -893,226 +820,44 @@ CMICmnLLDBDebugSessionInfo::GetVariableInfo(const MIuint vnMaxDepth, const lldb:
         {
             // For composite types
             const CMICmnMIValueConst miValueConst(
-                CMIUtilString::Format("%s = %s", utilValue.GetName().c_str(), utilValue.GetValue().c_str()), true);
-            miValueTuple.Add(miValueConst, true);
-            return vwrMiValueList.Add(CMICmnMIValueConst(miValueTuple.ExtractContentNoBrackets(), true));
+                    CMIUtilString::Format("%s = %s", utilValue.GetName().c_str(), utilValue.GetValue().c_str()), true);
+            return vwrMiValueList.Add(miValueConst);
         }
         else
         {
             // Basic types
-            switch (veVarInfoFormat)
-            {
-                case eVariableInfoFormat_NoValues:
-                {
-                    const CMICmnMIValueConst miValueConst(utilValue.GetName());
-                    const CMICmnMIValueResult miValueResult("name", miValueConst);
-                    return vwrMiValueList.Add(miValueResult);
-                }
-                case eVariableInfoFormat_AllValues:
-                case eVariableInfoFormat_SimpleValues:
-                {
-                    const CMICmnMIValueConst miValueConst(utilValue.GetName());
-                    const CMICmnMIValueResult miValueResult("name", miValueConst);
-                    miValueTuple.Add(miValueResult);
-                    const CMICmnMIValueConst miValueConst2(utilValue.GetValue());
-                    const CMICmnMIValueResult miValueResult2("value", miValueConst2);
-                    miValueTuple.Add(miValueResult2);
-                    break;
-                }
-                default:
-                    break;
-            }
-            return vwrMiValueList.Add(miValueTuple);
+            const CMICmnMIValueConst miValueConst(utilValue.GetValue(), true);
+            return vwrMiValueList.Add(miValueConst);
         }
     }
     else
     {
-        switch (veVarInfoFormat)
+        CMICmnMIValueList miValueList2(true);
+        // Build parent child composite types
+        for (MIuint i = 0; bOk && (i < nChildren); i++)
         {
-            case eVariableInfoFormat_NoValues:
-            {
-                const CMICmnMIValueConst miValueConst(utilValue.GetName());
-                const CMICmnMIValueResult miValueResult("name", miValueConst);
-                return vwrMiValueList.Add(miValueResult);
-            }
-            case eVariableInfoFormat_AllValues:
-            case eVariableInfoFormat_SimpleValues:
-            {
-                // Build parent child composite types
-                CMICmnMIValueList miValueList(true);
-                for (MIuint i = 0; bOk && (i < nChildren); i++)
-                {
-                    lldb::SBValue member = rValue.GetChildAtIndex(i);
-                    bOk = GetVariableInfo(vnMaxDepth, member, true, veVarInfoFormat, miValueList, ++vrwnDepth);
-                }
-                const CMICmnMIValueConst miValueConst(utilValue.GetName());
-                const CMICmnMIValueResult miValueResult("name", miValueConst);
-                miValueTuple.Add(miValueResult);
-                const CMICmnMIValueConst miValueConst2(CMIUtilString::Format("{%s}", miValueList.ExtractContentNoBrackets().c_str()));
-                const CMICmnMIValueResult miValueResult2("value", miValueConst2);
-                miValueTuple.Add(miValueResult2);
-                break;
-            }
-            default:
-                break;
+            lldb::SBValue member = rValue.GetChildAtIndex(i);
+            bOk = GetVariableInfo(vnMaxDepth, member, true, vnDepth + 1, miValueList2);
         }
-        return vwrMiValueList.Add(miValueTuple);
-    }
-}
-
-// *** Do not refactor this function to be one function with same name as it can break more than
-// *** than one stack type command
-//++ ------------------------------------------------------------------------------------
-// Details: Extract the value's name and value or recurse into child value object.
-// Type:    Method.
-// Args:    vnMaxDepth      - (R)  The max recursive depth for this function.
-//          vrValue         - (R)  LLDB value object.
-//          vbIsChildValue  - (R)  True = Value object is a child of a higher Value object,
-//                          -      False =  Value object not a child.
-//          veVarInfoFormat - (R)  The type of variable info that should be shown.
-//          vwrMIValueList  - (W)  MI value list object.
-//          vnDepth         - (RW) The current recursive depth of this function.
-//          // Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMICmnLLDBDebugSessionInfo::GetVariableInfo2(const MIuint vnMaxDepth, const lldb::SBValue &vrValue, const bool vbIsChildValue,
-                                             const VariableInfoFormat_e veVarInfoFormat, CMICmnMIValueList &vwrMiValueList,
-                                             MIuint &vrwnDepth)
-{
-    // *** Update GetVariableInfo() with any code changes here ***
-
-    // Check recursive depth
-    if (vrwnDepth >= vnMaxDepth)
-        return MIstatus::success;
-
-    bool bOk = MIstatus::success;
-    lldb::SBValue &rValue = const_cast<lldb::SBValue &>(vrValue);
-    const CMICmnLLDBUtilSBValue utilValue(vrValue, true);
-    CMICmnMIValueTuple miValueTuple;
-    const MIchar *pName = rValue.GetName();
-    MIunused(pName);
-    const MIuint nChildren = rValue.GetNumChildren();
-    if (nChildren == 0)
-    {
-        if (vbIsChildValue && utilValue.IsCharType())
+        if (bOk)
         {
-            // For char types and try to form text string
-            const CMICmnMIValueConst miValueConst(utilValue.GetValue().c_str(), true);
-            miValueTuple.Add(miValueConst, true);
-            return vwrMiValueList.Add(CMICmnMIValueConst(miValueTuple.ExtractContentNoBrackets(), true));
+            CMIUtilString valueStr = miValueList2.ExtractContentNoBrackets();
+            // This is to handle case when a child has further children. For example,
+            // a struct containing another struct member
+            // value="{var_a = 10,var_b = 97 'a',inner_ = { var_d = 30 }}
+            if(vbIsChildValue)
+            {
+                const CMICmnMIValueConst miValueConst(
+                            CMIUtilString::Format("%s = { %s }", utilValue.GetName().c_str (), valueStr.c_str()), true);
+                return vwrMiValueList.Add(miValueConst);
+            }
+            else
+            {
+                const CMICmnMIValueConst miValueConst(valueStr, true);
+                return vwrMiValueList.Add(miValueConst);
+            }
         }
-        else
-        {
-            // Basic types
-            switch (veVarInfoFormat)
-            {
-                case eVariableInfoFormat_NoValues:
-                {
-                    const CMICmnMIValueConst miValueConst(utilValue.GetName());
-                    const CMICmnMIValueResult miValueResult("name", miValueConst);
-                    return vwrMiValueList.Add(miValueResult);
-                }
-                case eVariableInfoFormat_AllValues:
-                case eVariableInfoFormat_SimpleValues:
-                {
-                    const CMICmnMIValueConst miValueConst(utilValue.GetName());
-                    const CMICmnMIValueResult miValueResult("name", miValueConst);
-                    miValueTuple.Add(miValueResult);
-                    const CMICmnMIValueConst miValueConst2(utilValue.GetValue());
-                    const CMICmnMIValueResult miValueResult2("value", miValueConst2);
-                    miValueTuple.Add(miValueResult2);
-                    break;
-                }
-                default:
-                    break;
-            }
-            return vwrMiValueList.Add(miValueTuple);
-        }
-    }
-    else if (utilValue.IsChildCharType())
-    {
-        switch (veVarInfoFormat)
-        {
-            case eVariableInfoFormat_NoValues:
-            {
-                const CMICmnMIValueConst miValueConst(utilValue.GetName());
-                const CMICmnMIValueResult miValueResult("name", miValueConst);
-                return vwrMiValueList.Add(miValueResult);
-            }
-            case eVariableInfoFormat_AllValues:
-            case eVariableInfoFormat_SimpleValues:
-            {
-                // Append string text to the parent value information
-                const CMICmnMIValueConst miValueConst(utilValue.GetName());
-                const CMICmnMIValueResult miValueResult("name", miValueConst);
-                miValueTuple.Add(miValueResult);
-
-                const CMIUtilString &rText(utilValue.GetChildValueCString());
-                if (rText.empty())
-                {
-                    const CMICmnMIValueConst miValueConst(utilValue.GetValue());
-                    const CMICmnMIValueResult miValueResult("value", miValueConst);
-                    miValueTuple.Add(miValueResult);
-                }
-                else
-                {
-                    if (utilValue.IsValueUnknown())
-                    {
-                        const CMICmnMIValueConst miValueConst(rText);
-                        const CMICmnMIValueResult miValueResult("value", miValueConst);
-                        miValueTuple.Add(miValueResult);
-                    }
-                    else
-                    {
-                        // Note code that has const in will not show the text suffix to the string pointer
-                        // i.e. const char * pMyStr = "blah"; ==> "0x00007000"" <-- Eclipse shows this
-                        // but        char * pMyStr = "blah"; ==> "0x00007000" "blah"" <-- Eclipse shows this
-                        const CMICmnMIValueConst miValueConst(CMIUtilString::Format("%s %s", utilValue.GetValue().c_str(), rText.c_str()));
-                        const CMICmnMIValueResult miValueResult("value", miValueConst);
-                        miValueTuple.Add(miValueResult);
-                    }
-                }
-                break;
-            }
-            default:
-                break;
-        }
-        return vwrMiValueList.Add(miValueTuple);
-    }
-    else
-    {
-        switch (veVarInfoFormat)
-        {
-            case eVariableInfoFormat_NoValues:
-            {
-                const CMICmnMIValueConst miValueConst(utilValue.GetName());
-                const CMICmnMIValueResult miValueResult("name", miValueConst);
-                return vwrMiValueList.Add(miValueResult);
-            }
-            case eVariableInfoFormat_AllValues:
-            case eVariableInfoFormat_SimpleValues:
-            {
-                // Build parent child composite types
-                CMICmnMIValueList miValueList(true);
-                for (MIuint i = 0; bOk && (i < nChildren); i++)
-                {
-                    lldb::SBValue member = rValue.GetChildAtIndex(i);
-                    bOk = GetVariableInfo(vnMaxDepth, member, true, veVarInfoFormat, miValueList, ++vrwnDepth);
-                }
-                const CMICmnMIValueConst miValueConst(utilValue.GetName());
-                const CMICmnMIValueResult miValueResult("name", miValueConst);
-                miValueTuple.Add(miValueResult);
-                const CMICmnMIValueConst miValueConst2(CMIUtilString::Format("{%s}", miValueList.ExtractContentNoBrackets().c_str()));
-                const CMICmnMIValueResult miValueResult2("value", miValueConst2);
-                miValueTuple.Add(miValueResult2);
-                break;
-            }
-            default:
-                break;
-        }
-        return vwrMiValueList.Add(miValueTuple);
+        return bOk;
     }
 }
 

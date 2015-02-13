@@ -85,11 +85,8 @@ CMICmnLLDBUtilSBValue::GetValue(void) const
 
     if (m_bHandleCharType && IsCharType())
     {
-        const lldb::addr_t addr = m_rValue.GetLoadAddress();
-        text = CMIUtilString::Format("0x%08x", addr);
-        const CMIUtilString cString(GetValueCString());
-        if (!cString.empty())
-            text += CMIUtilString::Format(" %s", cString.c_str());
+        uint8_t val = (uint8_t)m_rValue.GetValueAsUnsigned ();
+        text += CMIUtilString::Format("%d '%c'", val, (char)val);
     }
     else
     {
@@ -133,8 +130,6 @@ CMICmnLLDBUtilSBValue::GetValueCString(void) const
 bool
 CMICmnLLDBUtilSBValue::IsCharType(void) const
 {
-    const MIchar *pName = m_rValue.GetName();
-    MIunused(pName);
     const lldb::BasicType eType = m_rValue.GetType().GetBasicType();
     return ((eType == lldb::eBasicTypeChar) || (eType == lldb::eBasicTypeSignedChar) || (eType == lldb::eBasicTypeUnsignedChar));
 }
