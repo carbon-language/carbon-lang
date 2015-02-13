@@ -17,6 +17,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Object/ObjectFile.h"
@@ -763,18 +764,19 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtomsFromContext() {
   // c) All references to the symbol specified by wrap should point to
   // __wrap_<symbolname>
   // d) All references to __real_symbol should point to the <symbol>
-  for (auto wrapsym : _ctx.wrapCalls()) {
+  for (auto &wrapsym : _ctx.wrapCalls()) {
+    StringRef wrapStr = wrapsym.getKey();
     // Create a undefined symbol fror the wrap symbol.
     UndefinedAtom *wrapSymAtom =
-        new (_readerStorage) SimpleUndefinedAtom(*this, wrapsym);
+        new (_readerStorage) SimpleUndefinedAtom(*this, wrapStr);
     StringRef wrapCallSym =
-        _ctx.allocateString((llvm::Twine("__wrap_") + wrapsym).str());
+        _ctx.allocateString((llvm::Twine("__wrap_") + wrapStr).str());
     StringRef realCallSym =
-        _ctx.allocateString((llvm::Twine("__real_") + wrapsym).str());
+        _ctx.allocateString((llvm::Twine("__real_") + wrapStr).str());
     UndefinedAtom *wrapCallAtom =
         new (_readerStorage) SimpleUndefinedAtom(*this, wrapCallSym);
     // Create maps, when there is call to sym, it should point to wrapCallSym.
-    _wrapSymbolMap.insert(std::make_pair(wrapsym, wrapCallAtom));
+    _wrapSymbolMap.insert(std::make_pair(wrapStr, wrapCallAtom));
     // Whenever there is a reference to realCall it should point to the symbol
     // created for each wrap usage.
     _wrapSymbolMap.insert(std::make_pair(realCallSym, wrapSymAtom));

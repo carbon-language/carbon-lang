@@ -48,8 +48,6 @@ public:
 
 class ELFLinkingContext : public LinkingContext {
 public:
-  typedef std::set<StringRef>::iterator StringRefSetIterT;
-
   /// \brief The type of ELF executable that the linker
   /// creates.
   enum class OutputMagic : uint8_t {
@@ -300,9 +298,9 @@ public:
   }
 
   // --wrap option.
-  void addWrapForSymbol(StringRef);
+  void addWrapForSymbol(StringRef sym) { _wrapCalls.insert(sym); }
 
-  range<std::set<StringRef>::iterator> wrapCalls() const;
+  const llvm::StringSet<> &wrapCalls() const { return _wrapCalls; }
 
 private:
   ELFLinkingContext() LLVM_DELETED_FUNCTION;
@@ -343,7 +341,7 @@ protected:
   StringRef _soname;
   StringRefVector _rpathList;
   StringRefVector _rpathLinkList;
-  std::set<StringRef> _wrapCalls;
+  llvm::StringSet<> _wrapCalls;
   std::map<std::string, uint64_t> _absoluteSymbols;
   llvm::StringSet<> _dynamicallyExportedSymbols;
   std::vector<std::unique_ptr<script::Parser>> _scripts;

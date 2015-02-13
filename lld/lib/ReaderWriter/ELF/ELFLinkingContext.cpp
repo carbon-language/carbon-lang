@@ -256,14 +256,4 @@ std::string ELFLinkingContext::demangle(StringRef symbolName) const {
   return symbolName;
 }
 
-// Support --wrap option.
-void ELFLinkingContext::addWrapForSymbol(StringRef symbol) {
-  _wrapCalls.insert(symbol);
-}
-
-range<ELFLinkingContext::StringRefSetIterT>
-ELFLinkingContext::wrapCalls() const {
-  return _wrapCalls;
-}
-
 } // end namespace lld
