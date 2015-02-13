@@ -253,7 +253,7 @@ void BitstreamCursor::ReadAbbrevRecord() {
 
     BitCodeAbbrevOp::Encoding E = (BitCodeAbbrevOp::Encoding)Read(3);
     if (BitCodeAbbrevOp::hasEncodingData(E)) {
-      unsigned Data = ReadVBR64(5);
+      uint64_t Data = ReadVBR64(5);
 
       // As a special case, handle fixed(0) (i.e., a fixed field with zero bits)
       // and vbr(0) as a literal zero.  This is decoded the same way, and avoids
