@@ -1105,7 +1105,7 @@ void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
         const Atom* targ = ref->target();
         if (_archHandler.isPointer(*ref)) {
           // A pointer to a DefinedAtom requires rebasing.
-          if (dyn_cast<DefinedAtom>(targ)) {
+          if (isa<DefinedAtom>(targ)) {
             RebaseLocation rebase;
             rebase.segIndex = segmentIndex;
             rebase.segOffset = segmentOffset;
