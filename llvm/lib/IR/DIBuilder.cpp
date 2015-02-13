@@ -505,55 +505,50 @@ DIBuilder::createObjCProperty(StringRef Name, DIFile File, unsigned LineNumber,
 
 DITemplateTypeParameter
 DIBuilder::createTemplateTypeParameter(DIDescriptor Context, StringRef Name,
-                                       DIType Ty, MDNode *File, unsigned LineNo,
-                                       unsigned ColumnNo) {
+                                       DIType Ty) {
   Metadata *Elts[] = {HeaderBuilder::get(dwarf::DW_TAG_template_type_parameter)
                           .concat(Name)
-                          .concat(LineNo)
-                          .concat(ColumnNo)
+                          .concat(0)
+                          .concat(0)
                           .get(VMContext),
                       DIScope(getNonCompileUnitScope(Context)).getRef(),
-                      Ty.getRef(), File};
+                      Ty.getRef(), nullptr};
   return DITemplateTypeParameter(MDNode::get(VMContext, Elts));
 }
 
-static DITemplateValueParameter createTemplateValueParameterHelper(
-    LLVMContext &VMContext, unsigned Tag, DIDescriptor Context, StringRef Name,
-    DIType Ty, Metadata *MD, MDNode *File, unsigned LineNo, unsigned ColumnNo) {
+static DITemplateValueParameter
+createTemplateValueParameterHelper(LLVMContext &VMContext, unsigned Tag,
+                                   DIDescriptor Context, StringRef Name,
+                                   DIType Ty, Metadata *MD) {
   Metadata *Elts[] = {
-      HeaderBuilder::get(Tag).concat(Name).concat(LineNo).concat(ColumnNo).get(
-          VMContext),
-      DIScope(getNonCompileUnitScope(Context)).getRef(), Ty.getRef(), MD, File};
+      HeaderBuilder::get(Tag).concat(Name).concat(0).concat(0).get(VMContext),
+      DIScope(getNonCompileUnitScope(Context)).getRef(), Ty.getRef(), MD,
+      nullptr};
   return DITemplateValueParameter(MDNode::get(VMContext, Elts));
 }
 
 DITemplateValueParameter
 DIBuilder::createTemplateValueParameter(DIDescriptor Context, StringRef Name,
-                                        DIType Ty, Constant *Val, MDNode *File,
-                                        unsigned LineNo, unsigned ColumnNo) {
+                                        DIType Ty, Constant *Val) {
   return createTemplateValueParameterHelper(
       VMContext, dwarf::DW_TAG_template_value_parameter, Context, Name, Ty,
-      getConstantOrNull(Val), File, LineNo, ColumnNo);
+      getConstantOrNull(Val));
 }
 
 DITemplateValueParameter
 DIBuilder::createTemplateTemplateParameter(DIDescriptor Context, StringRef Name,
-                                           DIType Ty, StringRef Val,
-                                           MDNode *File, unsigned LineNo,
-                                           unsigned ColumnNo) {
+                                           DIType Ty, StringRef Val) {
   return createTemplateValueParameterHelper(
       VMContext, dwarf::DW_TAG_GNU_template_template_param, Context, Name, Ty,
-      MDString::get(VMContext, Val), File, LineNo, ColumnNo);
+      MDString::get(VMContext, Val));
 }
 
 DITemplateValueParameter
 DIBuilder::createTemplateParameterPack(DIDescriptor Context, StringRef Name,
-                                       DIType Ty, DIArray Val,
-                                       MDNode *File, unsigned LineNo,
-                                       unsigned ColumnNo) {
+                                       DIType Ty, DIArray Val) {
   return createTemplateValueParameterHelper(
       VMContext, dwarf::DW_TAG_GNU_template_parameter_pack, Context, Name, Ty,
-      Val, File, LineNo, ColumnNo);
+      Val);
 }
 
 DICompositeType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,

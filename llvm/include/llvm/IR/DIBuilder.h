@@ -333,13 +333,8 @@ namespace llvm {
     /// @param Scope        Scope in which this type is defined.
     /// @param Name         Type parameter name.
     /// @param Ty           Parameter type.
-    /// @param File         File where this type parameter is defined.
-    /// @param LineNo       Line number.
-    /// @param ColumnNo     Column Number.
     DITemplateTypeParameter
-    createTemplateTypeParameter(DIDescriptor Scope, StringRef Name, DIType Ty,
-                                MDNode *File = nullptr, unsigned LineNo = 0,
-                                unsigned ColumnNo = 0);
+    createTemplateTypeParameter(DIDescriptor Scope, StringRef Name, DIType Ty);
 
     /// createTemplateValueParameter - Create debugging information for template
     /// value parameter.
@@ -347,40 +342,30 @@ namespace llvm {
     /// @param Name         Value parameter name.
     /// @param Ty           Parameter type.
     /// @param Val          Constant parameter value.
-    /// @param File         File where this type parameter is defined.
-    /// @param LineNo       Line number.
-    /// @param ColumnNo     Column Number.
-    DITemplateValueParameter
-    createTemplateValueParameter(DIDescriptor Scope, StringRef Name, DIType Ty,
-                                 Constant *Val, MDNode *File = nullptr,
-                                 unsigned LineNo = 0, unsigned ColumnNo = 0);
+    DITemplateValueParameter createTemplateValueParameter(DIDescriptor Scope,
+                                                          StringRef Name,
+                                                          DIType Ty,
+                                                          Constant *Val);
 
     /// \brief Create debugging information for a template template parameter.
     /// @param Scope        Scope in which this type is defined.
     /// @param Name         Value parameter name.
     /// @param Ty           Parameter type.
     /// @param Val          The fully qualified name of the template.
-    /// @param File         File where this type parameter is defined.
-    /// @param LineNo       Line number.
-    /// @param ColumnNo     Column Number.
-    DITemplateValueParameter
-    createTemplateTemplateParameter(DIDescriptor Scope, StringRef Name,
-                                    DIType Ty, StringRef Val,
-                                    MDNode *File = nullptr, unsigned LineNo = 0,
-                                    unsigned ColumnNo = 0);
+    DITemplateValueParameter createTemplateTemplateParameter(DIDescriptor Scope,
+                                                             StringRef Name,
+                                                             DIType Ty,
+                                                             StringRef Val);
 
     /// \brief Create debugging information for a template parameter pack.
     /// @param Scope        Scope in which this type is defined.
     /// @param Name         Value parameter name.
     /// @param Ty           Parameter type.
     /// @param Val          An array of types in the pack.
-    /// @param File         File where this type parameter is defined.
-    /// @param LineNo       Line number.
-    /// @param ColumnNo     Column Number.
-    DITemplateValueParameter
-    createTemplateParameterPack(DIDescriptor Scope, StringRef Name,
-                                DIType Ty, DIArray Val, MDNode *File = nullptr,
-                                unsigned LineNo = 0, unsigned ColumnNo = 0);
+    DITemplateValueParameter createTemplateParameterPack(DIDescriptor Scope,
+                                                         StringRef Name,
+                                                         DIType Ty,
+                                                         DIArray Val);
 
     /// createArrayType - Create debugging information entry for an array.
     /// @param Size         Array size.
