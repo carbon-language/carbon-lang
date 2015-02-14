@@ -112,16 +112,10 @@ static ReportStack *SymbolizeStack(StackTrace trace) {
   for (uptr si = 0; si < trace.size; si++) {
     const uptr pc = trace.trace[si];
     uptr pc1 = pc;
-#ifndef SANITIZER_GO
     // We obtain the return address, but we're interested in the previous
     // instruction.
     if ((pc & kExternalPCBit) == 0)
       pc1 = StackTrace::GetPreviousInstructionPc(pc);
-#else
-    // FIXME(dvyukov): Go sometimes uses address of a function as top pc.
-    if (si != trace.size - 1)
-      pc1 -= 1;
-#endif
     SymbolizedStack *ent = SymbolizeCode(pc1);
     CHECK_NE(ent, 0);
     SymbolizedStack *last = ent;
