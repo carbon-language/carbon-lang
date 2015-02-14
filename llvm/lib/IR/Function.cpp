@@ -343,6 +343,12 @@ void Function::removeAttributes(unsigned i, AttributeSet attrs) {
   setAttributes(PAL);
 }
 
+void Function::addDereferenceableAttr(unsigned i, uint64_t Bytes) {
+  AttributeSet PAL = getAttributes();
+  PAL = PAL.addDereferenceableAttr(getContext(), i, Bytes);
+  setAttributes(PAL);
+}
+
 // Maintain the GC name for each function in an on-the-side table. This saves
 // allocating an additional word in Function for programs which do not use GC
 // (i.e., most programs) at the cost of increased overhead for clients which do

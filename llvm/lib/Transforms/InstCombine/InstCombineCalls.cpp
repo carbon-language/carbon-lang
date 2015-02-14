@@ -1127,11 +1127,17 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (isKnownNonNull(DerivedPtr))
       II->addAttribute(AttributeSet::ReturnIndex, Attribute::NonNull);
 
-    // TODO: dereferenceable -> deref attribute
+    // isDereferenceablePointer -> deref attribute
+    if (DerivedPtr->isDereferenceablePointer(DL)) {
+      if (Argument *A = dyn_cast<Argument>(DerivedPtr)) {
+        uint64_t Bytes = A->getDereferenceableBytes();
+        II->addDereferenceableAttr(AttributeSet::ReturnIndex, Bytes);
+      }
+    }
 
     // TODO: bitcast(relocate(p)) -> relocate(bitcast(p))
     // Canonicalize on the type from the uses to the defs
-    
+
     // TODO: relocate((gep p, C, C2, ...)) -> gep(relocate(p), C, C2, ...)
   }
   }

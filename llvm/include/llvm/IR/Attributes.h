@@ -282,6 +282,11 @@ public:
   AttributeSet removeAttributes(LLVMContext &C, unsigned Index, 
                                 AttributeSet Attrs) const;
 
+  /// \brief Add the dereferenceable attribute to the attribute set at the given
+  /// index. Since attribute sets are immutable, this returns a new set.
+  AttributeSet addDereferenceableAttr(LLVMContext &C, unsigned Index,
+                                      uint64_t Bytes) const;
+
   //===--------------------------------------------------------------------===//
   // AttributeSet Accessors
   //===--------------------------------------------------------------------===//
