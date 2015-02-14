@@ -15,9 +15,7 @@ AMDGPUMachineFunction::AMDGPUMachineFunction(const MachineFunction &MF) :
   LDSSize(0),
   ScratchSize(0),
   IsKernel(true) {
-  AttributeSet Set = MF.getFunction()->getAttributes();
-  Attribute A = Set.getAttribute(AttributeSet::FunctionIndex,
-                                 ShaderTypeAttribute);
+  Attribute A = MF.getFunction()->getFnAttribute(ShaderTypeAttribute);
 
   if (A.isStringAttribute()) {
     StringRef Str = A.getValueAsString();
