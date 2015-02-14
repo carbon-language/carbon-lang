@@ -1467,8 +1467,7 @@ static void checkNumAlignedDPRCS2Regs(MachineFunction &MF) {
     return;
 
   // Naked functions don't spill callee-saved registers.
-  if (MF.getFunction()->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                                     Attribute::Naked))
+  if (MF.getFunction()->hasFnAttribute(Attribute::Naked))
     return;
 
   // We are planning to use NEON instructions vst1 / vld1.

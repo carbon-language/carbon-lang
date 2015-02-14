@@ -1005,11 +1005,8 @@ bool Thumb2SizeReduce::runOnMachineFunction(MachineFunction &MF) {
   TII = static_cast<const Thumb2InstrInfo *>(STI->getInstrInfo());
 
   // Optimizing / minimizing size?
-  AttributeSet FnAttrs = MF.getFunction()->getAttributes();
-  OptimizeSize = FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
-                                      Attribute::OptimizeForSize);
-  MinimizeSize =
-      FnAttrs.hasAttribute(AttributeSet::FunctionIndex, Attribute::MinSize);
+  OptimizeSize = MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize);
+  MinimizeSize = MF.getFunction()->hasFnAttribute(Attribute::MinSize);
 
   BlockInfo.clear();
   BlockInfo.resize(MF.getNumBlockIDs());

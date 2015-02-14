@@ -1991,8 +1991,7 @@ bool llvm::tryFoldSPUpdateIntoPushPop(const ARMSubtarget &Subtarget,
                                       unsigned NumBytes) {
   // This optimisation potentially adds lots of load and store
   // micro-operations, it's only really a great benefit to code-size.
-  if (!MF.getFunction()->getAttributes().hasAttribute(
-          AttributeSet::FunctionIndex, Attribute::MinSize))
+  if (!MF.getFunction()->hasFnAttribute(Attribute::MinSize))
     return false;
 
   // If only one register is pushed/popped, LLVM can use an LDR/STR
@@ -3665,9 +3664,7 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
     // instructions).
     if (Latency > 0 && Subtarget.isThumb2()) {
       const MachineFunction *MF = DefMI->getParent()->getParent();
-      if (MF->getFunction()->getAttributes().
-            hasAttribute(AttributeSet::FunctionIndex,
-                         Attribute::OptimizeForSize))
+      if (MF->getFunction()->hasFnAttribute(Attribute::OptimizeForSize))
         --Latency;
     }
     return Latency;
