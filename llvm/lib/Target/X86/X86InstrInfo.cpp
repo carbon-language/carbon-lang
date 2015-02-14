@@ -2906,6 +2906,32 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
       return nullptr;
     }
   }
+  case X86::VPCOMBri: case X86::VPCOMUBri:
+  case X86::VPCOMDri: case X86::VPCOMUDri:
+  case X86::VPCOMQri: case X86::VPCOMUQri:
+  case X86::VPCOMWri: case X86::VPCOMUWri: {
+    // Flip comparison mode immediate (if necessary).
+    unsigned Imm = MI->getOperand(3).getImm() & 0x7;
+    switch (Imm) {
+    case 0x00: Imm = 0x02; break; // LT -> GT
+    case 0x01: Imm = 0x03; break; // LE -> GE
+    case 0x02: Imm = 0x00; break; // GT -> LT
+    case 0x03: Imm = 0x01; break; // GE -> LE
+    case 0x04: // EQ
+    case 0x05: // NE
+    case 0x06: // FALSE
+    case 0x07: // TRUE
+    default:
+      break;
+    }
+    if (NewMI) {
+      MachineFunction &MF = *MI->getParent()->getParent();
+      MI = MF.CloneMachineInstr(MI);
+      NewMI = false;
+    }
+    MI->getOperand(3).setImm(Imm);
+    return TargetInstrInfo::commuteInstruction(MI, NewMI);
+  }
   case X86::CMOVB16rr:  case X86::CMOVB32rr:  case X86::CMOVB64rr:
   case X86::CMOVAE16rr: case X86::CMOVAE32rr: case X86::CMOVAE64rr:
   case X86::CMOVE16rr:  case X86::CMOVE32rr:  case X86::CMOVE64rr:
