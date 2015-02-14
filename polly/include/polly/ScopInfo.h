@@ -855,6 +855,9 @@ public:
   /// @brief Return the stmt for the given @p BB or nullptr if none.
   ScopStmt *getStmtForBasicBlock(BasicBlock *BB) const;
 
+  /// @brief Return the number of statements in the SCoP.
+  size_t getSize() const { return Stmts.size(); }
+
   /// @name Statements Iterators
   ///
   /// These iterators iterate over all statements of this Scop.
