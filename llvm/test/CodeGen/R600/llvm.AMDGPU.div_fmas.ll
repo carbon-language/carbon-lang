@@ -27,6 +27,48 @@ define void @test_div_fmas_f32(float addrspace(1)* %out, float %a, float %b, flo
   ret void
 }
 
+; GCN-LABEL: {{^}}test_div_fmas_f32_inline_imm_0:
+; SI-DAG: s_load_dword [[SC:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xd
+; SI-DAG: s_load_dword [[SB:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc
+; SI-DAG: v_mov_b32_e32 [[VC:v[0-9]+]], [[SC]]
+; SI-DAG: v_mov_b32_e32 [[VB:v[0-9]+]], [[SB]]
+; SI: v_div_fmas_f32 [[RESULT:v[0-9]+]], 1.0, [[VB]], [[VC]]
+; SI: buffer_store_dword [[RESULT]],
+; SI: s_endpgm
+define void @test_div_fmas_f32_inline_imm_0(float addrspace(1)* %out, float %a, float %b, float %c, i1 %d) nounwind {
+  %result = call float @llvm.AMDGPU.div.fmas.f32(float 1.0, float %b, float %c, i1 %d) nounwind readnone
+  store float %result, float addrspace(1)* %out, align 4
+  ret void
+}
+
+; GCN-LABEL: {{^}}test_div_fmas_f32_inline_imm_1:
+; SI-DAG: s_load_dword [[SA:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
+; SI-DAG: s_load_dword [[SC:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xd
+; SI-DAG: v_mov_b32_e32 [[VC:v[0-9]+]], [[SC]]
+; SI-DAG: v_mov_b32_e32 [[VA:v[0-9]+]], [[SA]]
+; SI: v_div_fmas_f32 [[RESULT:v[0-9]+]], 1.0, [[VA]], [[VC]]
+; SI: buffer_store_dword [[RESULT]],
+; SI: s_endpgm
+define void @test_div_fmas_f32_inline_imm_1(float addrspace(1)* %out, float %a, float %b, float %c, i1 %d) nounwind {
+  %result = call float @llvm.AMDGPU.div.fmas.f32(float %a, float 1.0, float %c, i1 %d) nounwind readnone
+  store float %result, float addrspace(1)* %out, align 4
+  ret void
+}
+
+; GCN-LABEL: {{^}}test_div_fmas_f32_inline_imm_2:
+; SI-DAG: s_load_dword [[SA:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
+; SI-DAG: s_load_dword [[SB:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc
+; SI-DAG: v_mov_b32_e32 [[VA:v[0-9]+]], [[SA]]
+; SI-DAG: v_mov_b32_e32 [[VB:v[0-9]+]], [[SB]]
+; SI: v_div_fmas_f32 [[RESULT:v[0-9]+]], [[VB]], [[VA]], 1.0
+; SI: buffer_store_dword [[RESULT]],
+; SI: s_endpgm
+define void @test_div_fmas_f32_inline_imm_2(float addrspace(1)* %out, float %a, float %b, float %c, i1 %d) nounwind {
+  %result = call float @llvm.AMDGPU.div.fmas.f32(float %a, float %b, float 1.0, i1 %d) nounwind readnone
+  store float %result, float addrspace(1)* %out, align 4
+  ret void
+}
+
 ; GCN-LABEL: {{^}}test_div_fmas_f64:
 ; GCN: v_div_fmas_f64
 define void @test_div_fmas_f64(double addrspace(1)* %out, double %a, double %b, double %c, i1 %d) nounwind {
@@ -103,7 +145,7 @@ define void @test_div_fmas_f32_logical_cond_to_vcc(float addrspace(1)* %out, flo
 ; SI: v_cndmask_b32_e64 {{v[0-9]+}}, 0, -1, [[CMPLOAD]]
 
 
-; SI: BB6_2:
+; SI: BB9_2:
 ; SI: s_or_b64 exec, exec, [[CMPTID]]
 ; SI: v_cmp_ne_i32_e32 vcc, 0, v0
 ; SI: v_div_fmas_f32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}
