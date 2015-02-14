@@ -16,7 +16,6 @@
 #include "RenderingSupport.h"
 #include "CoverageFilters.h"
 #include "CoverageReport.h"
-#include "CoverageSummary.h"
 #include "CoverageViewOptions.h"
 #include "SourceCoverageView.h"
 #include "llvm/ADT/SmallString.h"
@@ -459,9 +458,7 @@ int CodeCoverageTool::report(int argc, const char **argv,
   if (!Coverage)
     return 1;
 
-  CoverageSummary Summarizer;
-  Summarizer.createSummaries(*Coverage);
-  CoverageReport Report(ViewOpts, Summarizer);
+  CoverageReport Report(ViewOpts, std::move(Coverage));
   if (SourceFiles.empty() && Filters.empty()) {
     Report.renderFileReports(llvm::outs());
     return 0;
