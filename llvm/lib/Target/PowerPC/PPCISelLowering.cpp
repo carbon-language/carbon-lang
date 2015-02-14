@@ -7181,8 +7181,7 @@ PPCTargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
   // Naked functions never have a base pointer, and so we use r1. For all
   // other functions, this decision must be delayed until during PEI.
   unsigned BaseReg;
-  if (MF->getFunction()->getAttributes().hasAttribute(
-          AttributeSet::FunctionIndex, Attribute::Naked))
+  if (MF->getFunction()->hasFnAttribute(Attribute::Naked))
     BaseReg = Subtarget.isPPC64() ? PPC::X1 : PPC::R1;
   else
     BaseReg = Subtarget.isPPC64() ? PPC::BP8 : PPC::BP;
@@ -9721,8 +9720,7 @@ SDValue PPCTargetLowering::LowerFRAMEADDR(SDValue Op,
   // Naked functions never have a frame pointer, and so we use r1. For all
   // other functions, this decision must be delayed until during PEI.
   unsigned FrameReg;
-  if (MF.getFunction()->getAttributes().hasAttribute(
-        AttributeSet::FunctionIndex, Attribute::Naked))
+  if (MF.getFunction()->hasFnAttribute(Attribute::Naked))
     FrameReg = isPPC64 ? PPC::X1 : PPC::R1;
   else
     FrameReg = isPPC64 ? PPC::FP8 : PPC::FP;
