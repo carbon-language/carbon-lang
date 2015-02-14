@@ -54,13 +54,15 @@ struct TraceHeader {
 };
 
 struct Trace {
-  TraceHeader headers[kTraceParts];
   Mutex mtx;
 #ifndef SANITIZER_GO
   // Must be last to catch overflow as paging fault.
   // Go shadow stack is dynamically allocated.
   uptr shadow_stack[kShadowStackSize];
 #endif
+  // Must be the last field, because we unmap the unused part in
+  // CreateThreadContext.
+  TraceHeader headers[kTraceParts];
 
   Trace()
     : mtx(MutexTypeTrace, StatMtxTrace) {
