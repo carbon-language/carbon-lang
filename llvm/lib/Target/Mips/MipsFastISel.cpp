@@ -158,8 +158,7 @@ public:
   explicit MipsFastISel(FunctionLoweringInfo &funcInfo,
                         const TargetLibraryInfo *libInfo)
       : FastISel(funcInfo, libInfo), TM(funcInfo.MF->getTarget()),
-        Subtarget(
-            &static_cast<const MipsSubtarget &>(funcInfo.MF->getSubtarget())),
+        Subtarget(&funcInfo.MF->getSubtarget<MipsSubtarget>()),
         TII(*Subtarget->getInstrInfo()), TLI(*Subtarget->getTargetLowering()) {
     MFI = funcInfo.MF->getInfo<MipsFunctionInfo>();
     Context = &funcInfo.Fn->getContext();
