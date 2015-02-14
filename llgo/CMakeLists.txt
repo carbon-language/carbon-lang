@@ -40,17 +40,82 @@ llvm_add_go_executable(llgo llvm.org/llgo/cmd/gllgo ALL DEPENDS
   ssaopt/esc.go
 )
 
+string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" LLGO_VERSION
+  ${PACKAGE_VERSION})
+
+configure_file(
+  cmd/go/zdefaultcc.go.in
+  ${CMAKE_CURRENT_BINARY_DIR}/cmd/go/zdefaultcc.go)
+
+set(LLGO_GO_SOURCES
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/build.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/clean.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/context.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/discovery.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/doc.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/env.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/fix.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/fmt.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/get.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/go11.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/help.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/http.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/list.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/main.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/pkg.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/run.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/signal.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/signal_unix.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/testflag.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/test.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/tool.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/vcs.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/version.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/go/vet.go
+  ${CMAKE_CURRENT_BINARY_DIR}/cmd/go/zdefaultcc.go
+)
+
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/bin/llgo-go
+  COMMAND ${CMAKE_BINARY_DIR}/bin/llgo -static-libgo -o ${CMAKE_BINARY_DIR}/bin/llgo-go
+          ${LLGO_GO_SOURCES}
+  DEPENDS llgo libgo ${LLGO_GO_SOURCES}
+  COMMENT "Building Go executable llgo-go"
+  VERBATIM)
+add_custom_target(llgo-go ALL DEPENDS ${CMAKE_BINARY_DIR}/bin/llgo-go)
+
+set(LLGO_CGO_SOURCES
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/cgo/ast.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/cgo/doc.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/cgo/gcc.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/cgo/godefs.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/cgo/main.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/cgo/out.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/gofrontend/libgo/go/cmd/cgo/util.go
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmd/cgo/zdefaultcc.go
+)
+
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/lib/go/llgo-${LLGO_VERSION}/cgo
+  COMMAND ${CMAKE_BINARY_DIR}/bin/llgo -static-libgo
+          -o ${CMAKE_BINARY_DIR}/lib/go/llgo-${LLGO_VERSION}/cgo
+          ${LLGO_CGO_SOURCES}
+  DEPENDS llgo libgo ${LLGO_CGO_SOURCES}
+  COMMENT "Building Go executable cgo"
+  VERBATIM)
+add_custom_target(cgo ALL DEPENDS ${CMAKE_BINARY_DIR}/lib/go/llgo-${LLGO_VERSION}/cgo)
+
 llvm_add_go_executable(llgo-stage2 llvm.org/llgo/cmd/gllgo
   DEPENDS libgo ${CMAKE_BINARY_DIR}/bin/llgo${CMAKE_EXECUTABLE_SUFFIX}
+          ${CMAKE_BINARY_DIR}/bin/llgo-go${CMAKE_EXECUTABLE_SUFFIX}
   GOFLAGS "cc=${CMAKE_BINARY_DIR}/bin/clang"
           "cxx=${CMAKE_BINARY_DIR}/bin/clang++"
-          "llgo=${CMAKE_BINARY_DIR}/bin/llgo${CMAKE_EXECUTABLE_SUFFIX}"
+          "go=${CMAKE_BINARY_DIR}/bin/llgo-go"
 )
 
 llvm_add_go_executable(llgo-stage3 llvm.org/llgo/cmd/gllgo
   DEPENDS libgo ${CMAKE_BINARY_DIR}/bin/llgo-stage2${CMAKE_EXECUTABLE_SUFFIX}
   GOFLAGS "cc=${CMAKE_BINARY_DIR}/bin/clang"
           "cxx=${CMAKE_BINARY_DIR}/bin/clang++"
+          "go=${CMAKE_BINARY_DIR}/bin/llgo-go"
           "llgo=${CMAKE_BINARY_DIR}/bin/llgo-stage2${CMAKE_EXECUTABLE_SUFFIX}"
 )
 
@@ -60,11 +125,12 @@ llvm_add_go_executable(cc-wrapper llvm.org/llgo/cmd/cc-wrapper DEPENDS
 
 llvm_add_go_executable(llgoi llvm.org/llgo/cmd/llgoi
   DEPENDS libgo ${CMAKE_BINARY_DIR}/bin/llgo${CMAKE_EXECUTABLE_SUFFIX}
+          ${CMAKE_BINARY_DIR}/bin/llgo-go${CMAKE_EXECUTABLE_SUFFIX}
           cmd/llgoi/isatty_posix.go
           cmd/llgoi/llgoi.go
   GOFLAGS "cc=${CMAKE_BINARY_DIR}/bin/clang"
           "cxx=${CMAKE_BINARY_DIR}/bin/clang++"
-          "llgo=${CMAKE_BINARY_DIR}/bin/llgo${CMAKE_EXECUTABLE_SUFFIX}"
+          "go=${CMAKE_BINARY_DIR}/bin/llgo-go"
 )
 
 install(FILES ${CMAKE_BINARY_DIR}/bin/llgo${CMAKE_EXECUTABLE_SUFFIX}
