@@ -53,11 +53,9 @@ public:
   }
 
   bool runOnMachineFunction(MachineFunction &MF) override {
-    AttributeSet FnAttrs = MF.getFunction()->getAttributes();
     ForCodeSize =
-        FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
-                             Attribute::OptimizeForSize) ||
-        FnAttrs.hasAttribute(AttributeSet::FunctionIndex, Attribute::MinSize);
+        MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize) ||
+        MF.getFunction()->hasFnAttribute(Attribute::MinSize);
     Subtarget = &MF.getSubtarget<AArch64Subtarget>();
     return SelectionDAGISel::runOnMachineFunction(MF);
   }

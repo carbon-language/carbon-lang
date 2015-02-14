@@ -64,8 +64,7 @@ bool AArch64FrameLowering::canUseRedZone(const MachineFunction &MF) const {
     return false;
   // Don't use the red zone if the function explicitly asks us not to.
   // This is typically used for kernel code.
-  if (MF.getFunction()->getAttributes().hasAttribute(
-          AttributeSet::FunctionIndex, Attribute::NoRedZone))
+  if (MF.getFunction()->hasFnAttribute(Attribute::NoRedZone))
     return false;
 
   const MachineFrameInfo *MFI = MF.getFrameInfo();
