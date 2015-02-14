@@ -54,10 +54,8 @@ TargetMachine::~TargetMachine() {
 void TargetMachine::resetTargetOptions(const Function &F) const {
 #define RESET_OPTION(X, Y)                                                     \
   do {                                                                         \
-    if (F.hasFnAttribute(Y))                                                  \
-      Options.X = (F.getAttributes()                                          \
-                       .getAttribute(AttributeSet::FunctionIndex, Y)           \
-                       .getValueAsString() == "true");                         \
+    if (F.hasFnAttribute(Y))                                                   \
+      Options.X = (F.getFnAttribute(Y).getValueAsString() == "true");          \
   } while (0)
 
   RESET_OPTION(NoFramePointerElim, "no-frame-pointer-elim");
