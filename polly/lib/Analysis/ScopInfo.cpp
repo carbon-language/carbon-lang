@@ -1307,6 +1307,8 @@ static int buildMinMaxAccess(__isl_take isl_set *Set, void *User) {
     }
   }
 
+  Set = isl_set_remove_divs(Set);
+
   MinPMA = isl_set_lexmin_pw_multi_aff(isl_set_copy(Set));
   MaxPMA = isl_set_lexmax_pw_multi_aff(isl_set_copy(Set));
 
