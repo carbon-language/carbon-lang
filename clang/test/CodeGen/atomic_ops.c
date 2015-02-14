@@ -16,3 +16,13 @@ void foo(int x)
   // CHECK: {{(cmpxchg i16*|i1 @__atomic_compare_exchange\(i32 2, )}}
 
 }
+
+extern _Atomic _Bool b;
+
+_Bool bar() {
+// CHECK-LABEL: @bar
+// CHECK: %[[load:.*]] = load atomic i8* @b seq_cst, align 1
+// CHECK: %[[tobool:.*]] = trunc i8 %[[load]] to i1
+// CHECK: ret i1 %[[tobool]]
+  return b;
+}
