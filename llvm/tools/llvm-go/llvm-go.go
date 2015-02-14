@@ -137,7 +137,7 @@ type (run_build_sh int)
 `, flags.cpp, flags.cxx, flags.ld)
 }
 
-func runGoWithLLVMEnv(args []string, cc, cxx, llgo, cppflags, cxxflags, ldflags string) {
+func runGoWithLLVMEnv(args []string, cc, cxx, gocmd, llgo, cppflags, cxxflags, ldflags string) {
 	args = addTag(args, "byollvm")
 
 	srcdir := llvmConfig("--src-root")
@@ -209,12 +209,12 @@ func runGoWithLLVMEnv(args []string, cc, cxx, llgo, cppflags, cxxflags, ldflags 
 		}
 	}
 
-	gocmdpath, err := exec.LookPath("go")
+	gocmdpath, err := exec.LookPath(gocmd)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	proc, err := os.StartProcess(gocmdpath, append([]string{"go"}, args...),
+	proc, err := os.StartProcess(gocmdpath, append([]string{gocmd}, args...),
 		&os.ProcAttr{
 			Env:   newenv,
 			Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
@@ -247,6 +247,7 @@ func main() {
 	cppflags := os.Getenv("CGO_CPPFLAGS")
 	cxxflags := os.Getenv("CGO_CXXFLAGS")
 	ldflags := os.Getenv("CGO_LDFLAGS")
+	gocmd := "go"
 	llgo := ""
 
 	args := os.Args[1:]
@@ -259,6 +260,9 @@ func main() {
 			args = args[1:]
 		case strings.HasPrefix(args[0], "cxx="):
 			cxx = args[0][4:]
+			args = args[1:]
+		case strings.HasPrefix(args[0], "go="):
+			gocmd = args[0][3:]
 			args = args[1:]
 		case strings.HasPrefix(args[0], "llgo="):
 			llgo = args[0][5:]
@@ -279,7 +283,7 @@ func main() {
 
 	switch args[0] {
 	case "build", "get", "install", "run", "test":
-		runGoWithLLVMEnv(args, cc, cxx, llgo, cppflags, cxxflags, ldflags)
+		runGoWithLLVMEnv(args, cc, cxx, gocmd, llgo, cppflags, cxxflags, ldflags)
 	case "print-components":
 		printComponents()
 	case "print-config":
