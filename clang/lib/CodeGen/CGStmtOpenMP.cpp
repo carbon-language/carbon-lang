@@ -829,8 +829,11 @@ static void EmitOMPAtomicReadExpr(CodeGenFunction &CGF, bool IsSeqCst,
   assert(X->isLValue() && "X of 'omp atomic read' is not lvalue");
   LValue XLValue = CGF.EmitLValue(X);
   LValue VLValue = CGF.EmitLValue(V);
-  RValue Res = XLValue.isGlobalReg() ? CGF.EmitLoadOfLValue(XLValue, Loc)
-                                     : CGF.EmitAtomicLoad(XLValue, Loc);
+  RValue Res = XLValue.isGlobalReg()
+                   ? CGF.EmitLoadOfLValue(XLValue, Loc)
+                   : CGF.EmitAtomicLoad(XLValue, Loc,
+                                        IsSeqCst ? llvm::SequentiallyConsistent
+                                                 : llvm::Monotonic);
   // OpenMP, 2.12.6, atomic Construct
   // Any atomic construct with a seq_cst clause forces the atomically
   // performed operation to include an implicit flush operation without a
