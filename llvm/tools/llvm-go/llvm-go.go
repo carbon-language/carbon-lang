@@ -162,26 +162,6 @@ func runGoWithLLVMEnv(args []string, cc, cxx, gocmd, llgo, cppflags, cxxflags, l
 
 	newpath := os.Getenv("PATH")
 
-	if llgo != "" {
-		bindir := filepath.Join(tmpgopath, "bin")
-
-		err = os.MkdirAll(bindir, os.ModePerm)
-		if err != nil {
-			panic(err.Error())
-		}
-
-		err = os.Symlink(llgo, filepath.Join(bindir, "gccgo"))
-		if err != nil {
-			panic(err.Error())
-		}
-
-		newpathlist := []string{bindir}
-		newpathlist = append(newpathlist, filepath.SplitList(newpath)...)
-		newpath = strings.Join(newpathlist, string(filepath.ListSeparator))
-
-		args = append([]string{args[0], "-compiler", "gccgo"}, args[1:]...)
-	}
-
 	newgopathlist := []string{tmpgopath}
 	newgopathlist = append(newgopathlist, filepath.SplitList(os.Getenv("GOPATH"))...)
 	newgopath := strings.Join(newgopathlist, string(filepath.ListSeparator))
@@ -197,12 +177,17 @@ func runGoWithLLVMEnv(args []string, cc, cxx, gocmd, llgo, cppflags, cxxflags, l
 		"GOPATH=" + newgopath,
 		"PATH=" + newpath,
 	}
+	if llgo != "" {
+		newenv = append(newenv, "GCCGO=" + llgo)
+	}
+
 	for _, v := range os.Environ() {
 		if !strings.HasPrefix(v, "CC=") &&
 			!strings.HasPrefix(v, "CXX=") &&
 			!strings.HasPrefix(v, "CGO_CPPFLAGS=") &&
 			!strings.HasPrefix(v, "CGO_CXXFLAGS=") &&
 			!strings.HasPrefix(v, "CGO_LDFLAGS=") &&
+			!strings.HasPrefix(v, "GCCGO=") &&
 			!strings.HasPrefix(v, "GOPATH=") &&
 			!strings.HasPrefix(v, "PATH=") {
 			newenv = append(newenv, v)
