@@ -42,18 +42,16 @@ define void @unsafe_frem_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
    ret void
 }
 
-
 ; FUNC-LABEL: {{^}}frem_f64:
 ; GCN: buffer_load_dwordx2 [[Y:v\[[0-9]+:[0-9]+\]]], {{.*}}, 0
 ; GCN: buffer_load_dwordx2 [[X:v\[[0-9]+:[0-9]+\]]], {{.*}}, 0
-; TODO: Check SI.
-; CI: v_rcp_f64_e32 [[INVY:v\[[0-9]+:[0-9]+\]]], [[Y]]
-; CI: v_mul_f64 [[DIV:v\[[0-9]+:[0-9]+\]]], [[X]], [[INVY]]
-; CI: v_trunc_f64_e32 [[TRUNC:v\[[0-9]+:[0-9]+\]]], [[DIV]]
-; CI: v_mul_f64 [[RESULTM:v\[[0-9]+:[0-9]+\]]], [[TRUNC]], [[Y]]
-; SI: v_mul_f64 [[RESULTM:v\[[0-9]+:[0-9]+\]]], {{v\[[0-9]+:[0-9]+\]}}, [[Y]]
-; GCN: v_add_f64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[X]], -[[RESULTM]]
-; GCN: buffer_store_dwordx2 [[RESULT]], {{.*}}, 0
+; GCN-DAG: v_div_fmas_f64
+; GCN-DAG: v_div_scale_f64
+; GCN-DAG: v_mul_f64
+; CI: v_trunc_f64_e32
+; CI: v_mul_f64
+; GCN: v_add_f64
+; GCN: buffer_store_dwordx2
 ; GCN: s_endpgm
 define void @frem_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                       double addrspace(1)* %in2) #0 {
