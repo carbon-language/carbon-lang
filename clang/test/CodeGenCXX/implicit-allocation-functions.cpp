@@ -1,7 +1,9 @@
 // RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++11 %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK11
 // RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++11 -fvisibility hidden %s 2>&1 | FileCheck %s -check-prefix=CHECKHID -check-prefix=CHECK11
-// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK14
-// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -fvisibility hidden %s 2>&1 | FileCheck %s -check-prefix=CHECKHID -check-prefix=CHECK14
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK14 -check-prefix=CHECK14UND
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -fvisibility hidden %s 2>&1 | FileCheck %s -check-prefix=CHECKHID -check-prefix=CHECK14 -check-prefix=CHECK14UND
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -fdef-sized-delete %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK14 -check-prefix=CHECK14DEF
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -fdef-sized-delete -fvisibility hidden %s 2>&1 | FileCheck %s -check-prefix=CHECKHID -check-prefix=CHECK14 -check-prefix=CHECK14DEF
 
 // PR22419: Implicit sized deallocation functions always have default visibility.
 //   Generalized to all implicit allocation functions.
@@ -27,8 +29,9 @@ void foo(A* is) {
 // CHECK11-DAG: declare void @_ZdlPv(i8*)
 
 // CHECK14-DAG: declare noalias i8* @_Znwm(i64)
-// CHECK14-DAG: define linkonce void @_ZdlPvm(i8*, i64)
-// CHECK14-DAG: declare void @_ZdlPv(i8*)
+// CHECK14UND-DAG: declare void @_ZdlPvm(i8*, i64)
+// CHECK14DEF-DAG: define linkonce void @_ZdlPvm(i8*, i64)
+// CHECK14DEF-DAG: declare void @_ZdlPv(i8*)
 
 // CHECK14-DAG: %struct.B = type { i8 }
 struct B { ~B() { }};
@@ -50,5 +53,6 @@ void f(B *p) {
 // CHECK11-DAG: declare void @_ZdaPv(i8*)
 
 // CHECK14-DAG: declare noalias i8* @_Znam(i64)
-// CHECK14-DAG: define linkonce void @_ZdaPvm(i8*, i64)
-// CHECK14-DAG: declare void @_ZdaPv(i8*)
+// CHECK14UND-DAG: declare void @_ZdaPvm(i8*, i64)
+// CHECK14DEF-DAG: define linkonce void @_ZdaPvm(i8*, i64)
+// CHECK14DEF-DAG: declare void @_ZdaPv(i8*)

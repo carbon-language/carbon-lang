@@ -4243,6 +4243,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasFlag(options::OPT_fassume_sane_operator_new,
                     options::OPT_fno_assume_sane_operator_new))
     CmdArgs.push_back("-fno-assume-sane-operator-new");
+  
+  // -def-sized-delete: default implementation of sized delete as a
+  // weak definition.
+  if (Args.hasArg(options::OPT_fdef_sized_delete))
+    CmdArgs.push_back("-fdef-sized-delete");
 
   // -fconstant-cfstrings is default, and may be subject to argument translation
   // on Darwin.

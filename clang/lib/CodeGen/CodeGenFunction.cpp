@@ -891,8 +891,11 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   } else if (FunctionDecl *UnsizedDealloc =
                  FD->getCorrespondingUnsizedGlobalDeallocationFunction()) {
     // Global sized deallocation functions get an implicit weak definition if
-    // they don't have an explicit definition.
+    // they don't have an explicit definition, if allowed.
+    assert(getLangOpts().DefaultSizedDelete &&
+           "Can't emit unallowed definition.");
     EmitSizedDeallocationFunction(*this, UnsizedDealloc);
+
   } else
     llvm_unreachable("no definition for emitted function");
 
