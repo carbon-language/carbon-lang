@@ -133,7 +133,7 @@ private:
   static const Registry::KindStrings _sKindStrings[];
   static const StubInfo              _sStubInfo;
 
-  enum : Reference::KindValue {
+  enum X86_Kinds : Reference::KindValue {
     invalid,               /// for error condition
 
     modeCode,              /// Content starting at this offset is code.
@@ -441,38 +441,39 @@ void ArchHandler_x86::applyFixupFinal(const Reference &ref, uint8_t *loc,
     return;
   assert(ref.kindArch() == Reference::KindArch::x86);
   ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
-  switch (ref.kindValue()) {
+  switch (static_cast<X86_Kinds>(ref.kindValue())) {
   case branch32:
     *loc32 = (targetAddress - (fixupAddress + 4)) + ref.addend();
-    break;
+    return;
   case branch16:
     *loc32 = (targetAddress - (fixupAddress + 2)) + ref.addend();
-    break;
+    return;
   case pointer32:
   case abs32:
     *loc32 = targetAddress + ref.addend();
-    break;
+    return;
   case funcRel32:
     *loc32 = targetAddress - inAtomAddress + ref.addend();
-    break;
+    return;
   case delta32:
     *loc32 = targetAddress - fixupAddress + ref.addend();
-    break;
+    return;
   case negDelta32:
     *loc32 = fixupAddress - targetAddress + ref.addend();
-    break;
+    return;
   case modeCode:
   case modeData:
   case lazyPointer:
     // do nothing
-    break;
+    return;
   case lazyImmediateLocation:
     *loc32 = ref.addend();
-    break;
-  default:
-    llvm_unreachable("invalid x86 Reference Kind");
+    return;
+  case invalid:
+    // Fall into llvm_unreachable().
     break;
   }
+  llvm_unreachable("invalid x86 Reference Kind");
 }
 
 void ArchHandler_x86::applyFixupRelocatable(const Reference &ref,
@@ -483,42 +484,43 @@ void ArchHandler_x86::applyFixupRelocatable(const Reference &ref,
   bool useExternalReloc = useExternalRelocationTo(*ref.target());
   ulittle16_t *loc16 = reinterpret_cast<ulittle16_t *>(loc);
   ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
-  switch (ref.kindValue()) {
+  switch (static_cast<X86_Kinds>(ref.kindValue())) {
   case branch32:
     if (useExternalReloc)
       *loc32 = ref.addend() - (fixupAddress + 4);
     else
       *loc32  =(targetAddress - (fixupAddress+4)) + ref.addend();
-    break;
+    return;
   case branch16:
     if (useExternalReloc)
       *loc16 = ref.addend() - (fixupAddress + 2);
     else
       *loc16 = (targetAddress - (fixupAddress+2)) + ref.addend();
-    break;
+    return;
   case pointer32:
   case abs32:
     *loc32 = targetAddress + ref.addend();
-    break;
+    return;
   case funcRel32:
     *loc32 = targetAddress - inAtomAddress + ref.addend(); // FIXME
-    break;
+    return;
   case delta32:
     *loc32 = targetAddress - fixupAddress + ref.addend();
-    break;
+    return;
   case negDelta32:
     *loc32 = fixupAddress - targetAddress + ref.addend();
-    break;
+    return;
   case modeCode:
   case modeData:
   case lazyPointer:
   case lazyImmediateLocation:
     // do nothing
-    break;
-  default:
-    llvm_unreachable("invalid x86 Reference Kind");
+    return;
+  case invalid:
+    // Fall into llvm_unreachable().
     break;
   }
+  llvm_unreachable("invalid x86 Reference Kind");
 }
 
 bool ArchHandler_x86::useExternalRelocationTo(const Atom &target) {
@@ -556,7 +558,7 @@ void ArchHandler_x86::appendSectionRelocations(
   assert(ref.kindArch() == Reference::KindArch::x86);
   uint32_t sectionOffset = atomSectionOffset + ref.offsetInAtom();
   bool useExternalReloc = useExternalRelocationTo(*ref.target());
-  switch (ref.kindValue()) {
+  switch (static_cast<X86_Kinds>(ref.kindValue())) {
   case modeCode:
   case modeData:
     break;
@@ -572,7 +574,7 @@ void ArchHandler_x86::appendSectionRelocations(
         appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()),0,
                   GENERIC_RELOC_VANILLA |              rPcRel | rLength4);
     }
-    break;
+    return;
   case branch16:
     if (useExternalReloc) {
       appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
@@ -585,7 +587,7 @@ void ArchHandler_x86::appendSectionRelocations(
         appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()),0,
                   GENERIC_RELOC_VANILLA |              rPcRel | rLength2);
     }
-    break;
+    return;
   case pointer32:
   case abs32:
     if (useExternalReloc)
@@ -599,36 +601,36 @@ void ArchHandler_x86::appendSectionRelocations(
         appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
                 GENERIC_RELOC_VANILLA |                   rLength4);
     }
-    break;
+    return;
   case funcRel32:
     appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
               GENERIC_RELOC_SECTDIFF |  rScattered    | rLength4);
     appendReloc(relocs, sectionOffset, 0, addressForAtom(atom) - ref.addend(),
               GENERIC_RELOC_PAIR     |  rScattered    | rLength4);
-    break;
+    return;
   case delta32:
     appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
               GENERIC_RELOC_SECTDIFF |  rScattered    | rLength4);
     appendReloc(relocs, sectionOffset, 0, addressForAtom(atom) +
                                                            ref.offsetInAtom(),
               GENERIC_RELOC_PAIR     |  rScattered    | rLength4);
-    break;
+    return;
   case negDelta32:
     appendReloc(relocs, sectionOffset, 0, addressForAtom(atom) +
                                                            ref.offsetInAtom(),
               GENERIC_RELOC_SECTDIFF |  rScattered    | rLength4);
     appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
               GENERIC_RELOC_PAIR     |  rScattered    | rLength4);
-    break;
+    return;
   case lazyPointer:
   case lazyImmediateLocation:
     llvm_unreachable("lazy reference kind implies Stubs pass was run");
+    return;
+  case invalid:
+    // Fall into llvm_unreachable().
     break;
-  default:
-    llvm_unreachable("unknown x86 Reference Kind");
-    break;
-
   }
+  llvm_unreachable("unknown x86 Reference Kind");
 }
 
 
