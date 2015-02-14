@@ -473,6 +473,14 @@ bool IslScheduleOptimizer::isProfitableSchedule(
 }
 
 bool IslScheduleOptimizer::runOnScop(Scop &S) {
+
+  // Skip empty SCoPs but still allow code generation as it will delete the
+  // loops present but not needed.
+  if (S.getSize() == 0) {
+    S.markAsOptimized();
+    return false;
+  }
+
   Dependences *D = &getAnalysis<Dependences>();
 
   if (!D->hasValidDependences())
