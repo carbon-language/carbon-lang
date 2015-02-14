@@ -719,8 +719,7 @@ bool CallAnalyzer::simplifyCallSite(Function *F, CallSite CS) {
 
 bool CallAnalyzer::visitCallSite(CallSite CS) {
   if (CS.hasFnAttr(Attribute::ReturnsTwice) &&
-      !F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                      Attribute::ReturnsTwice)) {
+      !F.hasFnAttribute(Attribute::ReturnsTwice)) {
     // This aborts the entire analysis.
     ExposesReturnsTwice = true;
     return false;
@@ -1350,9 +1349,7 @@ InlineCost InlineCostAnalysis::getInlineCost(CallSite CS, Function *Callee,
 }
 
 bool InlineCostAnalysis::isInlineViable(Function &F) {
-  bool ReturnsTwice =
-    F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                   Attribute::ReturnsTwice);
+  bool ReturnsTwice = F.hasFnAttribute(Attribute::ReturnsTwice);
   for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
     // Disallow inlining of functions which contain indirect branches or
     // blockaddresses.
