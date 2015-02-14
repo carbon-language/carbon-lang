@@ -1144,7 +1144,7 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
     LValue lvalue = LValue::MakeAddr(Addr, Ty,
                                      CharUnits::fromQuantity(Alignment),
                                      getContext(), TBAAInfo);
-    return EmitFromMemory(EmitAtomicLoad(lvalue, Loc).getScalarVal(), Ty);
+    return EmitAtomicLoad(lvalue, Loc).getScalarVal();
   }
 
   llvm::LoadInst *Load = Builder.CreateLoad(Addr);

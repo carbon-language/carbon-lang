@@ -976,7 +976,7 @@ RValue AtomicInfo::convertIntToValue(llvm::Value *IntVal,
     auto *ValTy = CGF.ConvertTypeForMem(ValueTy);
     if (ValTy->isIntegerTy()) {
       assert(IntVal->getType() == ValTy && "Different integer types.");
-      return RValue::get(IntVal);
+      return RValue::get(CGF.EmitFromMemory(IntVal, ValueTy));
     } else if (ValTy->isPointerTy())
       return RValue::get(CGF.Builder.CreateIntToPtr(IntVal, ValTy));
     else if (llvm::CastInst::isBitCastable(IntVal->getType(), ValTy))
