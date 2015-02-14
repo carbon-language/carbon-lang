@@ -40,7 +40,30 @@ module LLVM_Backend {
 
 module LLVM_Bitcode { requires cplusplus umbrella "Bitcode" module * { export * } }
 module LLVM_Config { requires cplusplus umbrella "Config" module * { export * } }
-module LLVM_DebugInfo { requires cplusplus umbrella "DebugInfo" module * { export * } }
+
+module LLVM_DebugInfo_DWARF {
+  requires cplusplus
+
+  umbrella "DebugInfo/DWARF"
+  module * { export * }
+}
+
+module LLVM_DebugInfo_PDB {
+  requires cplusplus
+
+  umbrella "DebugInfo/PDB"
+  module * { export * }
+}
+
+// Separate out this subdirectory; it's an optional component that depends on
+// a separate library which might not be available.
+module LLVM_DebugInfo_PDB_DIA {
+  requires cplusplus
+
+  umbrella "DebugInfo/PDB/DIA"
+  module * { export * }
+}
+
 module LLVM_ExecutionEngine {
   requires cplusplus
 
