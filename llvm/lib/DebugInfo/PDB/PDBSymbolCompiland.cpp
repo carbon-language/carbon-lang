@@ -7,16 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/DebugInfo/PDB/PDBSymbolCompiland.h"
+
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/IPDBSourceFile.h"
 #include "llvm/DebugInfo/PDB/PDBExtras.h"
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
-#include "llvm/DebugInfo/PDB/PDBSymbolCompiland.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolCompilandDetails.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolCompilandEnv.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
+
 #include <utility>
 #include <vector>
 

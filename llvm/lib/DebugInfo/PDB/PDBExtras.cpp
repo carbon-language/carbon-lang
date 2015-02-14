@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DebugInfo/PDB/PDBExtras.h"
+
 #include "llvm/ADT/ArrayRef.h"
 
 using namespace llvm;

@@ -7,9 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/DebugInfo/PDB/PDBSymbolTypeArray.h"
+
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
-#include "llvm/DebugInfo/PDB/PDBSymbolTypeArray.h"
+
 #include <utility>
 
 using namespace llvm;

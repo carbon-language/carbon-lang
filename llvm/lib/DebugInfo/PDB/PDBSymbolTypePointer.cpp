@@ -1,5 +1,4 @@
-//===- PDBSymbolTypePointer.cpp - --------------------------------*- C++
-//-*-===//
+//===- PDBSymbolTypePointer.cpp -----------------------------------*- C++ -===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,10 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/DebugInfo/PDB/PDBSymbolTypePointer.h"
+
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeFunctionSig.h"
-#include "llvm/DebugInfo/PDB/PDBSymbolTypePointer.h"
+
 #include <utility>
 
 using namespace llvm;

@@ -7,8 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/PDB/PDBSymbol.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeBaseClass.h"
+
+#include "llvm/DebugInfo/PDB/PDBSymbol.h"
+
 #include <utility>
 
 using namespace llvm;
