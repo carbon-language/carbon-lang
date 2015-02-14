@@ -1058,8 +1058,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
   // exclusively on the loop info here so that we can align backedges in
   // unnatural CFGs and backedges that were introduced purely because of the
   // loop rotations done during this layout pass.
-  if (F.getFunction()->getAttributes().
-        hasAttribute(AttributeSet::FunctionIndex, Attribute::OptimizeForSize))
+  if (F.getFunction()->hasFnAttribute(Attribute::OptimizeForSize))
     return;
   if (FunctionChain.begin() == FunctionChain.end())
     return;  // Empty chain.

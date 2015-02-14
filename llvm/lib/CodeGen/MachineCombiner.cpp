@@ -413,8 +413,7 @@ bool MachineCombiner::runOnMachineFunction(MachineFunction &MF) {
   Traces = &getAnalysis<MachineTraceMetrics>();
   MinInstr = 0;
 
-  OptSize = MF.getFunction()->getAttributes().hasAttribute(
-      AttributeSet::FunctionIndex, Attribute::OptimizeForSize);
+  OptSize = MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize);
 
   DEBUG(dbgs() << getPassName() << ": " << MF.getName() << '\n');
   if (!TII->useMachineCombiner()) {

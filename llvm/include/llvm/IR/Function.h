@@ -218,6 +218,11 @@ public:
     return AttributeSets.getAttribute(AttributeSet::FunctionIndex, Kind);
   }
 
+  /// \brief Return the stack alignment for the function.
+  unsigned getFnStackAlignment() const {
+    return AttributeSets.getStackAlignment(AttributeSet::FunctionIndex);
+  }
+
   /// hasGC/getGC/setGC/clearGC - The name of the garbage collection algorithm
   ///                             to use during code generation.
   bool hasGC() const;
