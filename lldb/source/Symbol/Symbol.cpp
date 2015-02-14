@@ -209,18 +209,13 @@ Symbol::GetReExportedSymbolSharedLibrary() const
     return FileSpec();
 }
 
-bool
+void
 Symbol::SetReExportedSymbolName(const ConstString &name)
 {
-    if (m_type == eSymbolTypeReExported)
-    {
-        // For eSymbolTypeReExported, the "const char *" from a ConstString
-        // is used as the offset in the address range base address.
-        m_addr_range.GetBaseAddress().SetOffset((intptr_t)name.GetCString());
-        return true;
-    }
-    return false;
-    
+    SetType (eSymbolTypeReExported);
+    // For eSymbolTypeReExported, the "const char *" from a ConstString
+    // is used as the offset in the address range base address.
+    m_addr_range.GetBaseAddress().SetOffset((uintptr_t)name.GetCString());
 }
 
 bool
@@ -230,7 +225,7 @@ Symbol::SetReExportedSymbolSharedLibrary(const FileSpec &fspec)
     {
         // For eSymbolTypeReExported, the "const char *" from a ConstString
         // is used as the offset in the address range base address.
-        m_addr_range.SetByteSize((intptr_t)ConstString(fspec.GetPath().c_str()).GetCString());
+        m_addr_range.SetByteSize((uintptr_t)ConstString(fspec.GetPath().c_str()).GetCString());
         return true;
     }
     return false;

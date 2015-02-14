@@ -131,7 +131,7 @@ public:
     FileSpec
     GetReExportedSymbolSharedLibrary () const;
     
-    bool
+    void
     SetReExportedSymbolName(const ConstString &name);
 
     bool

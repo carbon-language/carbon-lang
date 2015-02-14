@@ -2751,6 +2751,11 @@ ObjectFileMachO::ParseSymtab ()
                                     nlist_data_offset = local_symbols_info.nlistOffset + (nlist_byte_size * local_symbols_entry.nlistStartIndex);
                                     uint32_t string_table_offset = local_symbols_info.stringsOffset;
 
+                                    typedef std::map<ConstString, uint16_t> UndefinedNameToDescMap;
+                                    typedef std::map<uint32_t, ConstString> SymbolIndexToName;
+                                    UndefinedNameToDescMap undefined_name_to_desc;
+                                    SymbolIndexToName reexport_shlib_needs_fixup;
+
                                     for (uint32_t nlist_index = 0; nlist_index < local_symbols_entry.nlistCount; nlist_index++)
                                     {
                                         /////////////////////////////
@@ -2791,6 +2796,7 @@ ObjectFileMachO::ParseSymtab ()
                                             bool is_debug = ((nlist.n_type & N_STAB) != 0);
                                             bool demangled_is_synthesized = false;
                                             bool is_gsym = false;
+                                            bool set_value = true;
 
                                             assert (sym_idx < num_syms);
 
@@ -3147,9 +3153,30 @@ ObjectFileMachO::ParseSymtab ()
 
                                                 switch (n_type)
                                                 {
-                                                    case N_INDR: // Fall through
-                                                    case N_PBUD: // Fall through
+                                                    case N_INDR:
+                                                        {
+                                                            const char *reexport_name_cstr = strtab_data.PeekCStr(nlist.n_value);
+                                                            if (reexport_name_cstr && reexport_name_cstr[0])
+                                                            {
+                                                                type = eSymbolTypeReExported;
+                                                                ConstString reexport_name(reexport_name_cstr + ((reexport_name_cstr[0] == '_') ? 1 : 0));
+                                                                sym[sym_idx].SetReExportedSymbolName(reexport_name);
+                                                                set_value = false;
+                                                                reexport_shlib_needs_fixup[sym_idx] = reexport_name;
+                                                                indirect_symbol_names.insert(ConstString(symbol_name + ((symbol_name[0] == '_') ? 1 : 0)));
+                                                            }
+                                                            else
+                                                                type = eSymbolTypeUndefined;
+                                                        }
+                                                        break;
+                                                        
                                                     case N_UNDF:
+                                                        {
+                                                            ConstString undefined_name(symbol_name + ((symbol_name[0] == '_') ? 1 : 0));
+                                                            undefined_name_to_desc[undefined_name] = nlist.n_desc;
+                                                        }
+                                                        // Fall through
+                                                    case N_PBUD:
                                                         type = eSymbolTypeUndefined;
                                                         break;
 
@@ -3467,8 +3494,11 @@ ObjectFileMachO::ParseSymtab ()
 
                                                 sym[sym_idx].SetID (nlist_idx);
                                                 sym[sym_idx].SetType (type);
-                                                sym[sym_idx].GetAddress().SetSection (symbol_section);
-                                                sym[sym_idx].GetAddress().SetOffset (symbol_value);
+                                                if (set_value)
+                                                {
+                                                    sym[sym_idx].GetAddress().SetSection (symbol_section);
+                                                    sym[sym_idx].GetAddress().SetOffset (symbol_value);
+                                                }
                                                 sym[sym_idx].SetFlags (nlist.n_type << 16 | nlist.n_desc);
 
                                                 if (symbol_byte_size > 0)
@@ -3489,6 +3519,17 @@ ObjectFileMachO::ParseSymtab ()
                                     break; // No more entries to consider
                                 }
                             }
+
+                            for (const auto &pos :reexport_shlib_needs_fixup)
+                            {
+                                const auto undef_pos = undefined_name_to_desc.find(pos.second);
+                                if (undef_pos != undefined_name_to_desc.end())
+                                {
+                                    const uint8_t dylib_ordinal = llvm::MachO::GET_LIBRARY_ORDINAL(undef_pos->second);
+                                    if (dylib_ordinal > 0 && dylib_ordinal < dylib_files.GetSize())
+                                        sym[pos.first].SetReExportedSymbolSharedLibrary(dylib_files.GetFileSpecAtIndex(dylib_ordinal-1));
+                                }
+                            }
                         }
                     }
                 }
@@ -3498,6 +3539,8 @@ ObjectFileMachO::ParseSymtab ()
         // Must reset this in case it was mutated above!
         nlist_data_offset = 0;
 #endif
+        typedef std::set<ConstString> IndirectSymbols;
+        IndirectSymbols indirect_symbol_names;
 
         if (nlist_data.GetByteSize() > 0)
         {
@@ -3521,6 +3564,10 @@ ObjectFileMachO::ParseSymtab ()
                 nlist_idx = 0;
             }
 
+            typedef std::map<ConstString, uint16_t> UndefinedNameToDescMap;
+            typedef std::map<uint32_t, ConstString> SymbolIndexToName;
+            UndefinedNameToDescMap undefined_name_to_desc;
+            SymbolIndexToName reexport_shlib_needs_fixup;
             for (; nlist_idx < symtab_load_command.nsyms; ++nlist_idx)
             {
                 struct nlist_64 nlist;
@@ -3570,7 +3617,7 @@ ObjectFileMachO::ParseSymtab ()
                 bool is_gsym = false;
                 bool is_debug = ((nlist.n_type & N_STAB) != 0);
                 bool demangled_is_synthesized = false;
-
+                bool set_value = true;
                 assert (sym_idx < num_syms);
 
                 sym[sym_idx].SetDebug (is_debug);
@@ -3927,9 +3974,30 @@ ObjectFileMachO::ParseSymtab ()
 
                     switch (n_type)
                     {
-                    case N_INDR:// Fall through
-                    case N_PBUD:// Fall through
+                    case N_INDR:
+                        {
+                            const char *reexport_name_cstr = strtab_data.PeekCStr(nlist.n_value);
+                            if (reexport_name_cstr && reexport_name_cstr[0])
+                            {
+                                type = eSymbolTypeReExported;
+                                ConstString reexport_name(reexport_name_cstr + ((reexport_name_cstr[0] == '_') ? 1 : 0));
+                                sym[sym_idx].SetReExportedSymbolName(reexport_name);
+                                set_value = false;
+                                reexport_shlib_needs_fixup[sym_idx] = reexport_name;
+                                indirect_symbol_names.insert(ConstString(symbol_name + ((symbol_name[0] == '_') ? 1 : 0)));
+                            }
+                            else
+                                type = eSymbolTypeUndefined;
+                        }
+                        break;
+
                     case N_UNDF:
+                        {
+                            ConstString undefined_name(symbol_name + ((symbol_name[0] == '_') ? 1 : 0));
+                            undefined_name_to_desc[undefined_name] = nlist.n_desc;
+                        }
+                        // Fall through
+                    case N_PBUD:
                         type = eSymbolTypeUndefined;
                         break;
 
@@ -4249,8 +4317,11 @@ ObjectFileMachO::ParseSymtab ()
 
                     sym[sym_idx].SetID (nlist_idx);
                     sym[sym_idx].SetType (type);
-                    sym[sym_idx].GetAddress().SetSection (symbol_section);
-                    sym[sym_idx].GetAddress().SetOffset (symbol_value);
+                    if (set_value)
+                    {
+                        sym[sym_idx].GetAddress().SetSection (symbol_section);
+                        sym[sym_idx].GetAddress().SetOffset (symbol_value);
+                    }
                     sym[sym_idx].SetFlags (nlist.n_type << 16 | nlist.n_desc);
 
                     if (symbol_byte_size > 0)
@@ -4266,6 +4337,18 @@ ObjectFileMachO::ParseSymtab ()
                     sym[sym_idx].Clear();
                 }
             }
+
+            for (const auto &pos :reexport_shlib_needs_fixup)
+            {
+                const auto undef_pos = undefined_name_to_desc.find(pos.second);
+                if (undef_pos != undefined_name_to_desc.end())
+                {
+                    const uint8_t dylib_ordinal = llvm::MachO::GET_LIBRARY_ORDINAL(undef_pos->second);
+                    if (dylib_ordinal > 0 && dylib_ordinal < dylib_files.GetSize())
+                        sym[pos.first].SetReExportedSymbolSharedLibrary(dylib_files.GetFileSpecAtIndex(dylib_ordinal-1));
+                }
+            }
+
         }
 
         uint32_t synthetic_sym_id = symtab_load_command.nsyms;
@@ -4458,19 +4541,24 @@ ObjectFileMachO::ParseSymtab ()
             {
                 if (e.entry.import_name)
                 {
-                    // Make a synthetic symbol to describe re-exported symbol.
-                    if (sym_idx >= num_syms)
-                        sym = symtab->Resize (++num_syms);
-                    sym[sym_idx].SetID (synthetic_sym_id++);
-                    sym[sym_idx].GetMangled() = Mangled(e.entry.name);
-                    sym[sym_idx].SetType (eSymbolTypeReExported);
-                    sym[sym_idx].SetIsSynthetic (true);
-                    sym[sym_idx].SetReExportedSymbolName(e.entry.import_name);
-                    if (e.entry.other > 0 && e.entry.other <= dylib_files.GetSize())
+                    // Only add indirect symbols from the Trie entries if we
+                    // didn't have a N_INDR nlist entry for this already
+                    if (indirect_symbol_names.find(e.entry.name) == indirect_symbol_names.end())
                     {
-                        sym[sym_idx].SetReExportedSymbolSharedLibrary(dylib_files.GetFileSpecAtIndex(e.entry.other-1));
+                        // Make a synthetic symbol to describe re-exported symbol.
+                        if (sym_idx >= num_syms)
+                            sym = symtab->Resize (++num_syms);
+                        sym[sym_idx].SetID (synthetic_sym_id++);
+                        sym[sym_idx].GetMangled() = Mangled(e.entry.name);
+                        sym[sym_idx].SetType (eSymbolTypeReExported);
+                        sym[sym_idx].SetIsSynthetic (true);
+                        sym[sym_idx].SetReExportedSymbolName(e.entry.import_name);
+                        if (e.entry.other > 0 && e.entry.other <= dylib_files.GetSize())
+                        {
+                            sym[sym_idx].SetReExportedSymbolSharedLibrary(dylib_files.GetFileSpecAtIndex(e.entry.other-1));
+                        }
+                        ++sym_idx;
                     }
-                    ++sym_idx;
                 }
             }
         }
