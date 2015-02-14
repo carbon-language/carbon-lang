@@ -26,3 +26,11 @@ _Bool bar() {
 // CHECK: ret i1 %[[tobool]]
   return b;
 }
+
+extern _Atomic(_Complex int) x;
+
+void baz(int y) {
+// CHECK-LABEL: @baz
+// CHECK: store atomic
+  x += y;
+}

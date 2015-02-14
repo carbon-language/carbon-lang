@@ -820,6 +820,8 @@ EmitCompoundAssignLValue(const CompoundAssignOperator *E,
   TestAndClearIgnoreReal();
   TestAndClearIgnoreImag();
   QualType LHSTy = E->getLHS()->getType();
+  if (const AtomicType *AT = LHSTy->getAs<AtomicType>())
+    LHSTy = AT->getValueType();
 
   BinOpInfo OpInfo;
 

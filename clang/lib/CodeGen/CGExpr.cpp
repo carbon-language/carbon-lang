@@ -820,10 +820,14 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitObjCIsaExpr(cast<ObjCIsaExpr>(E));
   case Expr::BinaryOperatorClass:
     return EmitBinaryOperatorLValue(cast<BinaryOperator>(E));
-  case Expr::CompoundAssignOperatorClass:
-    if (!E->getType()->isAnyComplexType())
+  case Expr::CompoundAssignOperatorClass: {
+    QualType Ty = E->getType();
+    if (const AtomicType *AT = Ty->getAs<AtomicType>())
+      Ty = AT->getValueType();
+    if (!Ty->isAnyComplexType())
       return EmitCompoundAssignmentLValue(cast<CompoundAssignOperator>(E));
     return EmitComplexCompoundAssignmentLValue(cast<CompoundAssignOperator>(E));
+  }
   case Expr::CallExprClass:
   case Expr::CXXMemberCallExprClass:
   case Expr::CXXOperatorCallExprClass:
