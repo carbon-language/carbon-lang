@@ -177,7 +177,7 @@ class InvokeInst;
   /// \brief See if the given exception handling personality function is one
   /// that we understand.  If so, return a description of it; otherwise return
   /// Unknown.
-  EHPersonality classifyEHPersonality(Value *Pers);
+  EHPersonality classifyEHPersonality(const Value *Pers);
 
   /// \brief Returns true if this personality function catches asynchronous
   /// exceptions.

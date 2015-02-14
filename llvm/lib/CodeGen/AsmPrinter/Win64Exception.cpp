@@ -106,7 +106,7 @@ void Win64Exception::endFunction(const MachineFunction *) {
     // Emit the tables appropriate to the personality function in use. If we
     // don't recognize the personality, assume it uses an Itanium-style LSDA.
     EHPersonality Per = MMI->getPersonalityType();
-    if (Per == EHPersonality::Win64SEH)
+    if (Per == EHPersonality::MSVC_Win64SEH)
       emitCSpecificHandlerTable();
     else
       emitExceptionTable();

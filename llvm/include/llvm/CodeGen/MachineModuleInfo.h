@@ -35,6 +35,7 @@
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/LibCallSemantics.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/ValueHandle.h"
@@ -45,13 +46,6 @@
 #include "llvm/Support/Dwarf.h"
 
 namespace llvm {
-
-/// Different personality functions used by a function.
-enum class EHPersonality {
-  None,     /// No exception handling
-  Itanium,  /// An Itanium C++ EH personality like __gxx_personality_seh0
-  Win64SEH, /// x86_64 SEH, uses __C_specific_handler
-};
 
 //===----------------------------------------------------------------------===//
 // Forward declarations.
@@ -177,8 +171,6 @@ class MachineModuleInfo : public ImmutablePass {
   bool UsesMorestackAddr;
 
   EHPersonality PersonalityTypeCache;
-
-  EHPersonality getPersonalityTypeSlow();
 
 public:
   static char ID; // Pass identification, replacement for typeid
@@ -425,11 +417,7 @@ public:
   const Function *getPersonality() const;
 
   /// Classify the personality function amongst known EH styles.
-  EHPersonality getPersonalityType() {
-    if (PersonalityTypeCache != EHPersonality::None)
-      return PersonalityTypeCache;
-    return getPersonalityTypeSlow();
-  }
+  EHPersonality getPersonalityType();
 
   /// setVariableDbgInfo - Collect information used to emit debugging
   /// information of a variable.

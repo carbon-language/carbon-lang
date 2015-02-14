@@ -64,8 +64,8 @@ LibCallInfo::getFunctionInfo(const Function *F) const {
 
 /// See if the given exception handling personality function is one that we
 /// understand.  If so, return a description of it; otherwise return Unknown.
-EHPersonality llvm::classifyEHPersonality(Value *Pers) {
-  Function *F = dyn_cast<Function>(Pers->stripPointerCasts());
+EHPersonality llvm::classifyEHPersonality(const Value *Pers) {
+  const Function *F = dyn_cast<Function>(Pers->stripPointerCasts());
   if (!F)
     return EHPersonality::Unknown;
   return StringSwitch<EHPersonality>(F->getName())

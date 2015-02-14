@@ -930,7 +930,7 @@ void SelectionDAGISel::PrepareEHLandingPad() {
   const LandingPadInst *LPadInst = LLVMBB->getLandingPadInst();
   MF->getMMI().addPersonality(
       MBB, cast<Function>(LPadInst->getPersonalityFn()->stripPointerCasts()));
-  if (MF->getMMI().getPersonalityType() == EHPersonality::Win64SEH) {
+  if (MF->getMMI().getPersonalityType() == EHPersonality::MSVC_Win64SEH) {
     // Make virtual registers and a series of labels that fill in values for the
     // clauses.
     auto &RI = MF->getRegInfo();

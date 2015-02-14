@@ -9,6 +9,7 @@
 
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/Analysis/LibCallSemantics.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -276,7 +277,7 @@ bool MachineModuleInfo::doInitialization(Module &M) {
   DbgInfoAvailable = UsesVAFloatArgument = UsesMorestackAddr = false;
   // Always emit some info, by default "no personality" info.
   Personalities.push_back(nullptr);
-  PersonalityTypeCache = EHPersonality::None;
+  PersonalityTypeCache = EHPersonality::Unknown;
   AddrLabelSymbols = nullptr;
   TheModule = nullptr;
 
@@ -561,17 +562,11 @@ const Function *MachineModuleInfo::getPersonality() const {
   return nullptr;
 }
 
-EHPersonality MachineModuleInfo::getPersonalityTypeSlow() {
-  const Function *Per = getPersonality();
-  if (!Per)
-    PersonalityTypeCache = EHPersonality::None;
-  else if (Per->getName() == "__C_specific_handler")
-    PersonalityTypeCache = EHPersonality::Win64SEH;
-  else // Assume everything else is Itanium.
-    PersonalityTypeCache = EHPersonality::Itanium;
+EHPersonality MachineModuleInfo::getPersonalityType() {
+  if (PersonalityTypeCache == EHPersonality::Unknown)
+    PersonalityTypeCache = classifyEHPersonality(getPersonality());
   return PersonalityTypeCache;
 }
-
 /// getPersonalityIndex - Return unique index for current personality
 /// function. NULL/first personality function should always get zero index.
 unsigned MachineModuleInfo::getPersonalityIndex() const {
