@@ -573,10 +573,9 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   // Get processor type.
   bool isPPC64 = Subtarget.isPPC64();
   // Get the ABI.
-  bool isDarwinABI = Subtarget.isDarwinABI();
   bool isSVR4ABI = Subtarget.isSVR4ABI();
   bool isELFv2ABI = Subtarget.isELFv2ABI();
-  assert((isDarwinABI || isSVR4ABI) &&
+  assert((Subtarget.isDarwinABI() || isSVR4ABI) &&
          "Currently only Darwin and SVR4 ABIs are supported for PowerPC.");
 
   // Scan the prolog, looking for an UPDATE_VRSAVE instruction.  If we find it,
