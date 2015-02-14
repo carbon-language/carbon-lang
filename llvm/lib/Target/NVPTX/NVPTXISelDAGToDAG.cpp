@@ -93,9 +93,7 @@ bool NVPTXDAGToDAGISel::useF32FTZ() const {
     const Function *F = MF->getFunction();
     // Otherwise, check for an nvptx-f32ftz attribute on the function
     if (F->hasFnAttribute("nvptx-f32ftz"))
-      return (F->getAttributes().getAttribute(AttributeSet::FunctionIndex,
-                                              "nvptx-f32ftz")
-                                              .getValueAsString() == "true");
+      return F->getFnAttribute("nvptx-f32ftz").getValueAsString() == "true";
     else
       return false;
   }
