@@ -538,6 +538,12 @@ else()
   endif()
 endif()
 
+find_program(GOLD_EXECUTABLE NAMES ld.gold ld DOC "The gold linker")
+if(GOLD_EXECUTABLE)
+	set(LLVM_BINUTILS_INCDIR "" CACHE PATH
+		"PATH to binutils/include containing plugin-api.h for gold plugin.")
+endif()
+
 include(FindOCaml)
 include(AddOCaml)
 if(WIN32)

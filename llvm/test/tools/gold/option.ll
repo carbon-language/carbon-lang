@@ -1,5 +1,5 @@
 ; RUN: llvm-as %s -o %t.o
-; RUN: ld -plugin %llvmshlibdir/LLVMgold.so -m elf_x86_64 \
+; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so -m elf_x86_64 \
 ; RUN:    --plugin-opt=-jump-table-type=arity \
 ; RUN:    --plugin-opt=-mattr=+aes \
 ; RUN:    --plugin-opt=mcpu=core-avx2 \

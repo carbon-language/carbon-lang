@@ -1,20 +1,20 @@
 ; RUN: llvm-as %s -o %t.o
 
-; RUN: ld -plugin %llvmshlibdir/LLVMgold.so \
+; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so \
 ; RUN:    --plugin-opt=emit-llvm \
 ; RUN:    --plugin-opt=generate-api-file \
 ; RUN:    -shared %t.o -o %t2.o
 ; RUN: llvm-dis %t2.o -o - | FileCheck %s
 ; RUN: FileCheck --check-prefix=API %s < %T/../apifile.txt
 
-; RUN: ld -plugin %llvmshlibdir/LLVMgold.so \
+; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so \
 ; RUN:     -m elf_x86_64 --plugin-opt=save-temps \
 ; RUN:    -shared %t.o -o %t3.o
 ; RUN: llvm-dis %t3.o.bc -o - | FileCheck %s
 ; RUN: llvm-dis %t3.o.opt.bc -o - | FileCheck --check-prefix=OPT %s
 
 ; RUN: rm -f %t4.o
-; RUN: ld -plugin %llvmshlibdir/LLVMgold.so \
+; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so \
 ; RUN:     -m elf_x86_64 --plugin-opt=disable-output \
 ; RUN:    -shared %t.o -o %t4.o
 ; RUN: not test -a %t4.o

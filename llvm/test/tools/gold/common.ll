@@ -1,7 +1,7 @@
 ; RUN: llvm-as %s -o %t1.o
 ; RUN: llvm-as %p/Inputs/common.ll -o %t2.o
 
-; RUN: ld -plugin %llvmshlibdir/LLVMgold.so \
+; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so \
 ; RUN:    --plugin-opt=emit-llvm \
 ; RUN:    -shared %t1.o %t2.o -o %t3.o
 ; RUN: llvm-dis %t3.o -o - | FileCheck %s
@@ -11,7 +11,7 @@
 ; Shared library case, we merge @a as common and keep it for the symbol table.
 ; CHECK: @a = common global i16 0, align 8
 
-; RUN: ld -plugin %llvmshlibdir/LLVMgold.so \
+; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so \
 ; RUN:    --plugin-opt=emit-llvm \
 ; RUN:    %t1.o %t2.o -o %t3.o
 ; RUN: llvm-dis %t3.o -o - | FileCheck --check-prefix=EXEC %s
@@ -20,7 +20,7 @@
 ; EXEC: @a = internal global i16 0, align 8
 
 ; RUN: llc %p/Inputs/common.ll -o %t2.o -filetype=obj
-; RUN: ld -plugin %llvmshlibdir/LLVMgold.so \
+; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so \
 ; RUN:    --plugin-opt=emit-llvm \
 ; RUN:    %t1.o %t2.o -o %t3.o
 ; RUN: llvm-dis %t3.o -o - | FileCheck --check-prefix=MIXED %s
