@@ -584,6 +584,12 @@ function(add_unittest test_suite test_name)
     set(EXCLUDE_FROM_ALL ON)
   endif()
 
+  # Visual Studio 2012 only supports up to 8 template parameters in
+  # std::tr1::tuple by default, but gtest requires 10
+  if (MSVC AND MSVC_VERSION EQUAL 1700)
+    list(APPEND LLVM_COMPILE_DEFINITIONS _VARIADIC_MAX=10)
+  endif ()
+
   include_directories(${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest/include)
   if (NOT LLVM_ENABLE_THREADS)
     list(APPEND LLVM_COMPILE_DEFINITIONS GTEST_HAS_PTHREAD=0)

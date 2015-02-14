@@ -24,10 +24,6 @@ endif()
 
 project(LLVM)
 
-if (MSVC AND MSVC_VERSION LESS 1800)
-  message(FATAL_ERROR "Minimum required MSVC version is 2013!")
-endif ()
-
 # The following only works with the Ninja generator in CMake >= 3.0.
 set(LLVM_PARALLEL_COMPILE_JOBS "" CACHE STRING
   "Define the maximum number of concurrent compilation jobs.")
