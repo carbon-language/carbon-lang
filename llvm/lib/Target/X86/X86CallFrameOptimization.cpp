@@ -163,11 +163,9 @@ bool X86CallFrameOptimization::isProfitable(MachineFunction &MF,
     return true;
 
   // Don't do this when not optimizing for size.
-  AttributeSet FnAttrs = MF.getFunction()->getAttributes();
   bool OptForSize =
-      FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
-                           Attribute::OptimizeForSize) ||
-      FnAttrs.hasAttribute(AttributeSet::FunctionIndex, Attribute::MinSize);
+      MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize) ||
+      MF.getFunction()->hasFnAttribute(Attribute::MinSize);
 
   if (!OptForSize)
     return false;

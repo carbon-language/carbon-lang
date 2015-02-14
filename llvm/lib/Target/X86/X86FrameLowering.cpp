@@ -654,14 +654,13 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   // pointer, calls, or dynamic alloca then we do not need to adjust the
   // stack pointer (we fit in the Red Zone). We also check that we don't
   // push and pop from the stack.
-  if (Is64Bit && !Fn->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                                   Attribute::NoRedZone) &&
+  if (Is64Bit && !Fn->hasFnAttribute(Attribute::NoRedZone) &&
       !RegInfo->needsStackRealignment(MF) &&
-      !MFI->hasVarSizedObjects() &&                     // No dynamic alloca.
-      !MFI->adjustsStack() &&                           // No calls.
-      !IsWin64 &&                                       // Win64 has no Red Zone
-      !usesTheStack(MF) &&                              // Don't push and pop.
-      !MF.shouldSplitStack()) {                         // Regular stack
+      !MFI->hasVarSizedObjects() && // No dynamic alloca.
+      !MFI->adjustsStack() &&       // No calls.
+      !IsWin64 &&                   // Win64 has no Red Zone
+      !usesTheStack(MF) &&          // Don't push and pop.
+      !MF.shouldSplitStack()) {     // Regular stack
     uint64_t MinSize = X86FI->getCalleeSavedFrameSize();
     if (HasFP) MinSize += SlotSize;
     StackSize = std::max(MinSize, StackSize > 128 ? StackSize - 128 : 0);

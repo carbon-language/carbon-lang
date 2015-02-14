@@ -93,11 +93,8 @@ FunctionPass *llvm::createX86PadShortFunctions() {
 /// runOnMachineFunction - Loop over all of the basic blocks, inserting
 /// NOOP instructions before early exits.
 bool PadShortFunc::runOnMachineFunction(MachineFunction &MF) {
-  const AttributeSet &FnAttrs = MF.getFunction()->getAttributes();
-  if (FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
-                           Attribute::OptimizeForSize) ||
-      FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
-                           Attribute::MinSize)) {
+  if (MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize) ||
+      MF.getFunction()->hasFnAttribute(Attribute::MinSize)) {
     return false;
   }
 
