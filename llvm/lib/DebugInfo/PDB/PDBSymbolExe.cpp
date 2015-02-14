@@ -46,31 +46,34 @@ void PDBSymbolExe::dump(raw_ostream &OS, int Indent,
     OS << "HasPrivateSymbols ";
   OS << "\n";
 
-  TagStats Stats;
-  auto ChildrenEnum = getChildStats(Stats);
-  OS << stream_indent(Indent + 2) << "Children: " << Stats << "\n";
+  auto ChildrenEnum = findAllChildren();
+  OS << stream_indent(Indent + 2) << ChildrenEnum->getChildCount()
+     << " children\n";
+#if 0
+  dumpChildren(OS, PDB_SymType::None, Indent+4);
+#else
+  dumpChildren(OS, "Compilands", PDB_SymType::Compiland, Indent + 4);
+  dumpChildren(OS, "Functions", PDB_SymType::Function, Indent + 4);
+  dumpChildren(OS, "Blocks", PDB_SymType::Block, Indent + 4);
+  dumpChildren(OS, "Data", PDB_SymType::Data, Indent + 4);
+  dumpChildren(OS, "Labels", PDB_SymType::Label, Indent + 4);
+  dumpChildren(OS, "Public Symbols", PDB_SymType::PublicSymbol, Indent + 4);
+  dumpChildren(OS, "UDTs", PDB_SymType::UDT, Indent + 4);
+  dumpChildren(OS, "Enums", PDB_SymType::Enum, Indent + 4);
+  dumpChildren(OS, "Function Signatures", PDB_SymType::FunctionSig, Indent + 4);
+  dumpChildren(OS, "Typedefs", PDB_SymType::Typedef, Indent + 4);
+  dumpChildren(OS, "VTables", PDB_SymType::VTable, Indent + 4);
+  dumpChildren(OS, "Thunks", PDB_SymType::Thunk, Indent + 4);
+#endif
+}
+
+void PDBSymbolExe::dumpChildren(raw_ostream &OS, StringRef Label,
+                                PDB_SymType ChildType, int Indent) const {
+  auto ChildrenEnum = findAllChildren(ChildType);
+  OS << stream_indent(Indent) << Label << ": (" << ChildrenEnum->getChildCount()
+     << " items)\n";
   while (auto Child = ChildrenEnum->getNext()) {
-    // Skip uninteresting types.  These are useful to print as part of type
-    // hierarchies, but as general children of the global scope, they are
-    // not very interesting.
-    switch (Child->getSymTag()) {
-    case PDB_SymType::ArrayType:
-    case PDB_SymType::BaseClass:
-    case PDB_SymType::BuiltinType:
-    case PDB_SymType::CompilandEnv:
-    case PDB_SymType::CustomType:
-    case PDB_SymType::Dimension:
-    case PDB_SymType::Friend:
-    case PDB_SymType::ManagedType:
-    case PDB_SymType::VTableShape:
-    case PDB_SymType::PointerType:
-    case PDB_SymType::FunctionSig:
-    case PDB_SymType::FunctionArg:
-      continue;
-    default:
-      break;
-    }
-    Child->dump(OS, Indent + 4, PDB_DumpLevel::Normal);
+    Child->dump(OS, Indent + 2, PDB_DumpLevel::Normal);
     OS << "\n";
   }
 }

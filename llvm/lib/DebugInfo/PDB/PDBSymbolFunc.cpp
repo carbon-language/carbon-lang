@@ -31,6 +31,10 @@ std::unique_ptr<PDBSymbolTypeFunctionSig> PDBSymbolFunc::getSignature() const {
 void PDBSymbolFunc::dump(raw_ostream &OS, int Indent,
                          PDB_DumpLevel Level) const {
   OS << stream_indent(Indent);
+  // if (getName() == "__crtCreateThreadpoolWait") {
+  //  RawSymbol->dump(OS, Indent+2, Level);
+  //  OS.flush();
+  //}
   if (Level >= PDB_DumpLevel::Normal) {
     uint32_t FuncStart = getRelativeVirtualAddress();
     uint32_t FuncEnd = FuncStart + getLength();

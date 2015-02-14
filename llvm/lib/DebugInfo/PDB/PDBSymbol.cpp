@@ -108,7 +108,12 @@ void PDBSymbol::defaultDump(raw_ostream &OS, int Indent,
 PDB_SymType PDBSymbol::getSymTag() const { return RawSymbol->getSymTag(); }
 
 std::unique_ptr<IPDBEnumSymbols> PDBSymbol::findAllChildren() const {
-  return RawSymbol->findChildren(PDB_SymType::None);
+  return findAllChildren(PDB_SymType::None);
+}
+
+std::unique_ptr<IPDBEnumSymbols>
+PDBSymbol::findAllChildren(PDB_SymType Type) const {
+  return RawSymbol->findChildren(Type);
 }
 
 std::unique_ptr<IPDBEnumSymbols>
