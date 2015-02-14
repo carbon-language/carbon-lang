@@ -289,35 +289,35 @@ cmovnae	%bx,%bx
 
 // Check matching of instructions which embed the SSE comparison code.
 
-// CHECK: cmpps $0, %xmm0, %xmm1
+// CHECK: cmpeqps %xmm0, %xmm1
 // CHECK: encoding: [0x0f,0xc2,0xc8,0x00]
         cmpeqps %xmm0, %xmm1
 
-// CHECK: cmppd $1, %xmm0, %xmm1
+// CHECK: cmpltpd %xmm0, %xmm1
 // CHECK: encoding: [0x66,0x0f,0xc2,0xc8,0x01]
         cmpltpd %xmm0, %xmm1
 
-// CHECK: cmpss $2, %xmm0, %xmm1
+// CHECK: cmpless %xmm0, %xmm1
 // CHECK: encoding: [0xf3,0x0f,0xc2,0xc8,0x02]
         cmpless %xmm0, %xmm1
 
-// CHECK: cmppd $3, %xmm0, %xmm1
+// CHECK: cmpunordpd %xmm0, %xmm1
 // CHECK: encoding: [0x66,0x0f,0xc2,0xc8,0x03]
         cmpunordpd %xmm0, %xmm1
 
-// CHECK: cmpps $4, %xmm0, %xmm1
+// CHECK: cmpneqps %xmm0, %xmm1
 // CHECK: encoding: [0x0f,0xc2,0xc8,0x04]
         cmpneqps %xmm0, %xmm1
 
-// CHECK: cmppd $5, %xmm0, %xmm1
+// CHECK: cmpnltpd %xmm0, %xmm1
 // CHECK: encoding: [0x66,0x0f,0xc2,0xc8,0x05]
         cmpnltpd %xmm0, %xmm1
 
-// CHECK: cmpss $6, %xmm0, %xmm1
+// CHECK: cmpnless %xmm0, %xmm1
 // CHECK: encoding: [0xf3,0x0f,0xc2,0xc8,0x06]
         cmpnless %xmm0, %xmm1
 
-// CHECK: cmpsd $7, %xmm0, %xmm1
+// CHECK: cmpordsd %xmm0, %xmm1
 // CHECK: encoding: [0xf2,0x0f,0xc2,0xc8,0x07]
         cmpordsd %xmm0, %xmm1
 
