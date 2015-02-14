@@ -113,7 +113,7 @@ inline void *operator new(decltype(sizeof(1)), void *p) noexcept { return p; }
 // CHECK-LABEL: define
 void f10() {
   void *void_src();
-  ( // CHECK: icmp {{.*}} !dbg [[DBG_F10_ICMP:.*]]
+  (
     // CHECK: store {{.*}} !dbg [[DBG_F10_STORE:!.*]]
 #line 1100
       new (void_src()) int(src()));
@@ -305,7 +305,6 @@ void f24() {
 // CHECK: [[DBG_F7]] = !MDLocation(line: 800,
 // CHECK: [[DBG_F8]] = !MDLocation(line: 900,
 // CHECK: [[DBG_F9]] = !MDLocation(line: 1000,
-// CHECK: [[DBG_F10_ICMP]] = !MDLocation(line: 1100,
 // CHECK: [[DBG_F10_STORE]] = !MDLocation(line: 1100,
 // CHECK: [[DBG_GLBL_CTOR_B]] = !MDLocation(line: 1200,
 // CHECK: [[DBG_GLBL_DTOR_B]] = !MDLocation(line: 1200,

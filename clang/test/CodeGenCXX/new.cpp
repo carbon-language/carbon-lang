@@ -36,6 +36,10 @@ void *operator new[](size_t, const std::nothrow_t &) throw();
 void operator delete(void *, const std::nothrow_t &) throw();
 void operator delete[](void *, const std::nothrow_t &) throw();
 
+// Declare some other placemenet operators.
+void *operator new(size_t, void*, bool) throw();
+void *operator new[](size_t, void*, bool) throw();
+
 void t2(int* a) {
   int* b = new (a) int;
 }
@@ -191,20 +195,31 @@ void f() {
 namespace test15 {
   struct A { A(); ~A(); };
 
-  // CHECK-LABEL:    define void @_ZN6test155test0EPv(
+  // CHECK-LABEL:    define void @_ZN6test156test0aEPv(
   // CHECK:      [[P:%.*]] = load i8*
+  // CHECK-NOT:  icmp eq i8* [[P]], null
+  // CHECK-NOT:  br i1
+  // CHECK:      [[T0:%.*]] = bitcast i8* [[P]] to [[A:%.*]]*
+  // CHECK-NEXT: call void @_ZN6test151AC1Ev([[A]]* [[T0]])
+  void test0a(void *p) {
+    new (p) A();
+  }
+
+  // CHECK-LABEL:    define void @_ZN6test156test0bEPv(
+  // CHECK:      [[P0:%.*]] = load i8*
+  // CHECK:      [[P:%.*]] = call i8* @_ZnwmPvb(i64 1, i8* [[P0]]
   // CHECK-NEXT: icmp eq i8* [[P]], null
   // CHECK-NEXT: br i1
   // CHECK:      [[T0:%.*]] = bitcast i8* [[P]] to [[A:%.*]]*
   // CHECK-NEXT: call void @_ZN6test151AC1Ev([[A]]* [[T0]])
-  void test0(void *p) {
-    new (p) A();
+  void test0b(void *p) {
+    new (p, true) A();
   }
 
-  // CHECK-LABEL:    define void @_ZN6test155test1EPv(
+  // CHECK-LABEL:    define void @_ZN6test156test1aEPv(
   // CHECK:      [[P:%.*]] = load i8**
-  // CHECK-NEXT: icmp eq i8* [[P]], null
-  // CHECK-NEXT: br i1
+  // CHECK-NOT:  icmp eq i8* [[P]], null
+  // CHECK-NOT:  br i1
   // CHECK:      [[BEGIN:%.*]] = bitcast i8* [[P]] to [[A:%.*]]*
   // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [[A]]* [[BEGIN]], i64 5
   // CHECK-NEXT: br label
@@ -213,8 +228,26 @@ namespace test15 {
   // CHECK-NEXT: [[NEXT]] = getelementptr inbounds [[A]]* [[CUR]], i64 1
   // CHECK-NEXT: [[DONE:%.*]] = icmp eq [[A]]* [[NEXT]], [[END]]
   // CHECK-NEXT: br i1 [[DONE]]
-  void test1(void *p) {
+  void test1a(void *p) {
     new (p) A[5];
+  }
+
+  // CHECK-LABEL:    define void @_ZN6test156test1bEPv(
+  // CHECK:      [[P0:%.*]] = load i8**
+  // CHECK:      [[P:%.*]] = call i8* @_ZnamPvb(i64 13, i8* [[P0]]
+  // CHECK-NEXT: icmp eq i8* [[P]], null
+  // CHECK-NEXT: br i1
+  // CHECK:      [[AFTER_COOKIE:%.*]] = getelementptr inbounds i8* [[P]], i64 8
+  // CHECK:      [[BEGIN:%.*]] = bitcast i8* [[AFTER_COOKIE]] to [[A:%.*]]*
+  // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [[A]]* [[BEGIN]], i64 5
+  // CHECK-NEXT: br label
+  // CHECK:      [[CUR:%.*]] = phi [[A]]* [ [[BEGIN]], {{%.*}} ], [ [[NEXT:%.*]], {{%.*}} ]
+  // CHECK-NEXT: call void @_ZN6test151AC1Ev([[A]]* [[CUR]])
+  // CHECK-NEXT: [[NEXT]] = getelementptr inbounds [[A]]* [[CUR]], i64 1
+  // CHECK-NEXT: [[DONE:%.*]] = icmp eq [[A]]* [[NEXT]], [[END]]
+  // CHECK-NEXT: br i1 [[DONE]]
+  void test1b(void *p) {
+    new (p, true) A[5];
   }
 
   // TODO: it's okay if all these size calculations get dropped.
@@ -225,8 +258,6 @@ namespace test15 {
   // CHECK-NEXT: [[T1:%.*]] = icmp slt i64 [[T0]], 0
   // CHECK-NEXT: [[T2:%.*]] = select i1 [[T1]], i64 -1, i64 [[T0]]
   // CHECK-NEXT: [[P:%.*]] = load i8*
-  // CHECK-NEXT: icmp eq i8* [[P]], null
-  // CHECK-NEXT: br i1
   // CHECK:      [[BEGIN:%.*]] = bitcast i8* [[P]] to [[A:%.*]]*
   // CHECK-NEXT: [[ISEMPTY:%.*]] = icmp eq i64 [[T0]], 0
   // CHECK-NEXT: br i1 [[ISEMPTY]],

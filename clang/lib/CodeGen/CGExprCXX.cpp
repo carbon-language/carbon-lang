@@ -1279,10 +1279,9 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
 
   // Emit a null check on the allocation result if the allocation
   // function is allowed to return null (because it has a non-throwing
-  // exception spec; for this part, we inline
-  // CXXNewExpr::shouldNullCheckAllocation()) and we have an
+  // exception spec or is the reserved placement new) and we have an
   // interesting initializer.
-  bool nullCheck = allocatorType->isNothrow(getContext()) &&
+  bool nullCheck = E->shouldNullCheckAllocation(getContext()) &&
     (!allocType.isPODType(getContext()) || E->hasInitializer());
 
   llvm::BasicBlock *nullCheckBB = nullptr;

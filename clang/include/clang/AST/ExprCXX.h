@@ -1692,6 +1692,10 @@ public:
   ///   not be done, the deallocation function shall not be called,
   ///   and the value of the new-expression shall be null.
   ///
+  /// C++ DR1748:
+  ///   If the allocation function is a reserved placement allocation
+  ///   function that returns null, the behavior is undefined.
+  ///
   /// An allocation function is not allowed to return null unless it
   /// has a non-throwing exception-specification.  The '03 rule is
   /// identical except that the definition of a non-throwing
