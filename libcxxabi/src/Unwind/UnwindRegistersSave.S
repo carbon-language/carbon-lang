@@ -316,7 +316,7 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   str lr, [r0, #56]
   str lr, [r0, #60]  @ store return address as pc
 #endif
-#if __ARM_ARCH_ISA_THUMB1 == 1
+#if __ARM_ARCH_ISA_THUMB == 1
   @ T1 does not have a non-cpsr-clobbering register-zeroing instruction.
   @ It is safe to use here though because we are about to return, and cpsr is
   @ not expected to be preserved.
