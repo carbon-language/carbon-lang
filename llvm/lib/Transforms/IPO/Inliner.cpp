@@ -97,25 +97,17 @@ static void AdjustCallerSSPLevel(Function *Caller, Function *Callee) {
   AttributeSet OldSSPAttr = AttributeSet::get(Caller->getContext(),
                                               AttributeSet::FunctionIndex,
                                               B);
-  AttributeSet CallerAttr = Caller->getAttributes(),
-               CalleeAttr = Callee->getAttributes();
 
-  if (CalleeAttr.hasAttribute(AttributeSet::FunctionIndex,
-                              Attribute::StackProtectReq)) {
+  if (Callee->hasFnAttribute(Attribute::StackProtectReq)) {
     Caller->removeAttributes(AttributeSet::FunctionIndex, OldSSPAttr);
     Caller->addFnAttr(Attribute::StackProtectReq);
-  } else if (CalleeAttr.hasAttribute(AttributeSet::FunctionIndex,
-                                     Attribute::StackProtectStrong) &&
-             !CallerAttr.hasAttribute(AttributeSet::FunctionIndex,
-                                      Attribute::StackProtectReq)) {
+  } else if (Callee->hasFnAttribute(Attribute::StackProtectStrong) &&
+             !Caller->hasFnAttribute(Attribute::StackProtectReq)) {
     Caller->removeAttributes(AttributeSet::FunctionIndex, OldSSPAttr);
     Caller->addFnAttr(Attribute::StackProtectStrong);
-  } else if (CalleeAttr.hasAttribute(AttributeSet::FunctionIndex,
-                                     Attribute::StackProtect) &&
-           !CallerAttr.hasAttribute(AttributeSet::FunctionIndex,
-                                    Attribute::StackProtectReq) &&
-           !CallerAttr.hasAttribute(AttributeSet::FunctionIndex,
-                                    Attribute::StackProtectStrong))
+  } else if (Callee->hasFnAttribute(Attribute::StackProtect) &&
+             !Caller->hasFnAttribute(Attribute::StackProtectReq) &&
+             !Caller->hasFnAttribute(Attribute::StackProtectStrong))
     Caller->addFnAttr(Attribute::StackProtect);
 }
 
@@ -273,8 +265,7 @@ unsigned Inliner::getInlineThreshold(CallSite CS) const {
   // would decrease the threshold.
   Function *Caller = CS.getCaller();
   bool OptSize = Caller && !Caller->isDeclaration() &&
-    Caller->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                         Attribute::OptimizeForSize);
+                 Caller->hasFnAttribute(Attribute::OptimizeForSize);
   if (!(InlineLimit.getNumOccurrences() > 0) && OptSize &&
       OptSizeThreshold < thres)
     thres = OptSizeThreshold;
@@ -283,17 +274,14 @@ unsigned Inliner::getInlineThreshold(CallSite CS) const {
   // and the caller does not need to minimize its size.
   Function *Callee = CS.getCalledFunction();
   bool InlineHint = Callee && !Callee->isDeclaration() &&
-    Callee->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                         Attribute::InlineHint);
-  if (InlineHint && HintThreshold > thres
-      && !Caller->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                               Attribute::MinSize))
+                    Callee->hasFnAttribute(Attribute::InlineHint);
+  if (InlineHint && HintThreshold > thres &&
+      !Caller->hasFnAttribute(Attribute::MinSize))
     thres = HintThreshold;
 
   // Listen to the cold attribute when it would decrease the threshold.
   bool ColdCallee = Callee && !Callee->isDeclaration() &&
-    Callee->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                         Attribute::Cold);
+                    Callee->hasFnAttribute(Attribute::Cold);
   // Command line argument for InlineLimit will override the default
   // ColdThreshold. If we have -inline-threshold but no -inlinecold-threshold,
   // do not use the default cold threshold even if it is smaller.
@@ -659,9 +647,7 @@ bool Inliner::removeDeadFunctions(CallGraph &CG, bool AlwaysInlineOnly) {
     // Handle the case when this function is called and we only want to care
     // about always-inline functions. This is a bit of a hack to share code
     // between here and the InlineAlways pass.
-    if (AlwaysInlineOnly &&
-        !F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                         Attribute::AlwaysInline))
+    if (AlwaysInlineOnly && !F->hasFnAttribute(Attribute::AlwaysInline))
       continue;
 
     // If the only remaining users of the function are dead constants, remove

@@ -3454,9 +3454,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
   // Look for the attribute signaling the absence of NaNs.
   Function &F = *Header->getParent();
   if (F.hasFnAttribute("no-nans-fp-math"))
-    HasFunNoNaNAttr = F.getAttributes().getAttribute(
-      AttributeSet::FunctionIndex,
-      "no-nans-fp-math").getValueAsString() == "true";
+    HasFunNoNaNAttr =
+        F.getFnAttribute("no-nans-fp-math").getValueAsString() == "true";
 
   // For each block in the loop.
   for (Loop::block_iterator bb = TheLoop->block_begin(),

@@ -213,9 +213,8 @@ namespace {
 
       PartialThreshold = UserThreshold ? CurrentThreshold : UP.PartialThreshold;
       if (!UserThreshold &&
-          L->getHeader()->getParent()->getAttributes().
-              hasAttribute(AttributeSet::FunctionIndex,
-                           Attribute::OptimizeForSize)) {
+          L->getHeader()->getParent()->hasFnAttribute(
+              Attribute::OptimizeForSize)) {
         Threshold = UP.OptSizeThreshold;
         PartialThreshold = UP.PartialOptSizeThreshold;
       }

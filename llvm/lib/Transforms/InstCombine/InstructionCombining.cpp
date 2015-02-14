@@ -2915,8 +2915,7 @@ static bool combineInstructionsOverFunction(
     TargetLibraryInfo &TLI, DominatorTree &DT, const DataLayout *DL = nullptr,
     LoopInfo *LI = nullptr) {
   // Minimizing size?
-  bool MinimizeSize = F.getAttributes().hasAttribute(
-      AttributeSet::FunctionIndex, Attribute::MinSize);
+  bool MinimizeSize = F.hasFnAttribute(Attribute::MinSize);
 
   /// Builder - This is an IRBuilder that automatically inserts new
   /// instructions into the worklist when they are created.
