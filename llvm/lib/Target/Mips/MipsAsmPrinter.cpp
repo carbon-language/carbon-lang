@@ -358,10 +358,7 @@ void MipsAsmPrinter::EmitFunctionBodyStart() {
 
   MCInstLowering.Initialize(&MF->getContext());
 
-  bool IsNakedFunction =
-    MF->getFunction()->
-      getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                   Attribute::Naked);
+  bool IsNakedFunction = MF->getFunction()->hasFnAttribute(Attribute::Naked);
   if (!IsNakedFunction)
     emitFrameDirective();
 

@@ -121,11 +121,8 @@ MipselTargetMachine(const Target &T, StringRef TT,
 
 const MipsSubtarget *
 MipsTargetMachine::getSubtargetImpl(const Function &F) const {
-  AttributeSet FnAttrs = F.getAttributes();
-  Attribute CPUAttr =
-      FnAttrs.getAttribute(AttributeSet::FunctionIndex, "target-cpu");
-  Attribute FSAttr =
-      FnAttrs.getAttribute(AttributeSet::FunctionIndex, "target-features");
+  Attribute CPUAttr = F.getFnAttribute("target-cpu");
+  Attribute FSAttr = F.getFnAttribute("target-features");
 
   std::string CPU = !CPUAttr.hasAttribute(Attribute::None)
                         ? CPUAttr.getValueAsString().str()
@@ -134,19 +131,16 @@ MipsTargetMachine::getSubtargetImpl(const Function &F) const {
                        ? FSAttr.getValueAsString().str()
                        : TargetFS;
   bool hasMips16Attr =
-      !FnAttrs.getAttribute(AttributeSet::FunctionIndex, "mips16")
-           .hasAttribute(Attribute::None);
+      !F.getFnAttribute("mips16").hasAttribute(Attribute::None);
   bool hasNoMips16Attr =
-      !FnAttrs.getAttribute(AttributeSet::FunctionIndex, "nomips16")
-           .hasAttribute(Attribute::None);
+      !F.getFnAttribute("nomips16").hasAttribute(Attribute::None);
 
   // FIXME: This is related to the code below to reset the target options,
   // we need to know whether or not the soft float flag is set on the
   // function before we can generate a subtarget. We also need to use
   // it as a key for the subtarget since that can be the only difference
   // between two functions.
-  Attribute SFAttr =
-      FnAttrs.getAttribute(AttributeSet::FunctionIndex, "use-soft-float");
+  Attribute SFAttr = F.getFnAttribute("use-soft-float");
   bool softFloat = !SFAttr.hasAttribute(Attribute::None)
                        ? SFAttr.getValueAsString() == "true"
                        : Options.UseSoftFloat;
