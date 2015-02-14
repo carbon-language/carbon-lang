@@ -155,9 +155,10 @@ void CoverageReport::render(const FunctionCoverageSummary &Function,
   OS << "\n";
 }
 
-void CoverageReport::renderFunctionReports(raw_ostream &OS) {
+void CoverageReport::renderFunctionReports(ArrayRef<std::string> Files,
+                                           raw_ostream &OS) {
   bool isFirst = true;
-  for (StringRef Filename : Coverage->getUniqueSourceFiles()) {
+  for (StringRef Filename : Files) {
     if (isFirst)
       isFirst = false;
     else
