@@ -67,15 +67,19 @@ define <4 x i32> @stack_fold_movd_load(i32 %a0) {
   ;CHECK:       movd {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}} {{.*#+}} 4-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{rax},~{rbx},~{rcx},~{rdx},~{rsi},~{rdi},~{rbp},~{r8},~{r9},~{r10},~{r11},~{r12},~{r13},~{r14},~{r15}"()
   %2 = insertelement <4 x i32> zeroinitializer, i32 %a0, i32 0
-  ret <4 x i32> %2
+  ; add forces execution domain
+  %3 = add <4 x i32> %2, <i32 1, i32 1, i32 1, i32 1>
+  ret <4 x i32> %3
 }
 
 define i32 @stack_fold_movd_store(<4 x i32> %a0) {
   ;CHECK-LABEL: stack_fold_movd_store
   ;CHECK:       movd {{%xmm[0-9][0-9]*}}, {{-?[0-9]*}}(%rsp) {{.*#+}} 4-byte Folded Spill
-  %1 = extractelement <4 x i32> %a0, i32 0
-  %2 = tail call <2 x i64> asm sideeffect "nop", "=x,~{rax},~{rbx},~{rcx},~{rdx},~{rsi},~{rdi},~{rbp},~{r8},~{r9},~{r10},~{r11},~{r12},~{r13},~{r14},~{r15}"()
-  ret i32 %1
+  ; add forces execution domain
+  %1 = add <4 x i32> %a0, <i32 1, i32 1, i32 1, i32 1>
+  %2 = extractelement <4 x i32> %1, i32 0
+  %3 = tail call <2 x i64> asm sideeffect "nop", "=x,~{rax},~{rbx},~{rcx},~{rdx},~{rsi},~{rdi},~{rbp},~{r8},~{r9},~{r10},~{r11},~{r12},~{r13},~{r14},~{r15}"()
+  ret i32 %2
 }
 
 define <2 x i64> @stack_fold_movq_load(<2 x i64> %a0) {
