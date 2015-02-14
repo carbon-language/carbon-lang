@@ -577,10 +577,10 @@ namespace test18 {
   template <typename T> void f(S<&T::operator&>) {}
   template void f<A>(S<&A::operator&>);
 
-  // CHECK-LABEL: define weak_odr void @_ZN6test181fINS_1AEEEvNS_1SIXadsrT_plEEE
-  // CHECK-LABEL: define weak_odr void @_ZN6test181fINS_1AEEEvNS_1SIXadsrT_miEEE
-  // CHECK-LABEL: define weak_odr void @_ZN6test181fINS_1AEEEvNS_1SIXadsrT_mlEEE
-  // CHECK-LABEL: define weak_odr void @_ZN6test181fINS_1AEEEvNS_1SIXadsrT_anEEE
+  // CHECK-LABEL: define weak_odr void @_ZN6test181fINS_1AEEEvNS_1SIXadsrT_onplEEE
+  // CHECK-LABEL: define weak_odr void @_ZN6test181fINS_1AEEEvNS_1SIXadsrT_onmiEEE
+  // CHECK-LABEL: define weak_odr void @_ZN6test181fINS_1AEEEvNS_1SIXadsrT_onmlEEE
+  // CHECK-LABEL: define weak_odr void @_ZN6test181fINS_1AEEEvNS_1SIXadsrT_onanEEE
 }
 
 // rdar://problem/8332117
@@ -601,11 +601,11 @@ namespace test19 {
 
   // CHECK-LABEL: define weak_odr void @_ZN6test191gINS_1AEEEvNS_1SIXadsrT_1fIiEEEE(
   template void g<A>(S<&A::f<int> >);
-  // CHECK-LABEL: define weak_odr void @_ZN6test191gINS_1AEEEvNS_1SIXadsrT_plEEE(
+  // CHECK-LABEL: define weak_odr void @_ZN6test191gINS_1AEEEvNS_1SIXadsrT_onplEEE(
   template void g<A>(S<&A::operator+>);
-  // CHECK-LABEL: define weak_odr void @_ZN6test191gINS_1AEEEvNS_1SIXadsrT_cviEEE(
+  // CHECK-LABEL: define weak_odr void @_ZN6test191gINS_1AEEEvNS_1SIXadsrT_oncviEEE(
   template void g<A>(S<&A::operator int>);
-  // CHECK-LABEL: define weak_odr void @_ZN6test191gINS_1AEEEvNS_1SIXadsrT_miIdEEEE(
+  // CHECK-LABEL: define weak_odr void @_ZN6test191gINS_1AEEEvNS_1SIXadsrT_onmiIdEEEE(
   template void g<A>(S<&A::operator-<double> >);
 }
 
@@ -839,7 +839,7 @@ namespace test35 {
   template<typename T>
   void f1(decltype(sizeof(&T::template operator+<int>))) {}
 
-  // CHECK-LABEL: define weak_odr void @_ZN6test352f1INS_1AEEEvDTszadsrT_plIiEE
+  // CHECK-LABEL: define weak_odr void @_ZN6test352f1INS_1AEEEvDTszadsrT_onplIiEE
   template void f1<A>(__SIZE_TYPE__);
 }
 
@@ -1012,4 +1012,28 @@ namespace test50 {
 
   auto v = fin<S>;
   // CHECK-LABEL: declare void @_ZN6test503finINS_1SEEET_ILi3EES2_ILi4EE()
+}
+
+namespace test51 {
+  template <typename T>
+  decltype(T().~T()) fun() {}
+  template void fun<int>();
+  // CHECK-LABEL: @_ZN6test513funIiEEDTcldtcvT__EdnS1_EEv
+  template void fun<X>();
+  // CHECK-LABEL: @_ZN6test513funI1XEEDTcldtcvT__EdnS2_EEv
+  template void fun<S1<int> >();
+  // CHECK-LABEL: @_ZN6test513funI2S1IiEEEDTcldtcvT__EdnS3_EEv
+
+  template <typename T>
+  decltype(S1<T>().~S1<T>()) fun1() {};
+  template <typename U, typename T>
+  decltype(U().~S1<T>()) fun2() {}
+  template <typename U, typename T>
+  decltype(S1<T>().~U()) fun3() {}
+  template void fun1<int>();
+  // CHECK-LABEL: @_ZN6test514fun1IiEEDTcldtcv2S1IT_E_Edn2S1IS2_EEEv
+  template void fun2<S1<int>, int>();
+  // CHECK-LABEL: @_ZN6test514fun2I2S1IiEiEEDTcldtcvT__Edn2S1IT0_EEEv
+  template void fun3<S1<int>, int>();
+  // CHECK-LABEL: @_ZN6test514fun3I2S1IiEiEEDTcldtcvS1_IT0_E_EdnT_EEv
 }

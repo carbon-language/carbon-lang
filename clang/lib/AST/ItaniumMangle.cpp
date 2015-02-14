@@ -372,6 +372,7 @@ private:
   void mangleAArch64NeonVectorType(const VectorType *T);
 
   void mangleIntegerLiteral(QualType T, const llvm::APSInt &Value);
+  void mangleMemberExprBase(const Expr *base, bool isArrow);
   void mangleMemberExpr(const Expr *base, bool isArrow,
                         NestedNameSpecifier *qualifier,
                         NamedDecl *firstQualifierLookup,
@@ -1050,6 +1051,27 @@ void CXXNameMangler::mangleUnresolvedName(NestedNameSpecifier *qualifier,
                                           DeclarationName name,
                                           unsigned knownArity) {
   if (qualifier) mangleUnresolvedPrefix(qualifier, firstQualifierLookup);
+  switch (name.getNameKind()) {
+    // <base-unresolved-name> ::= <simple-id>
+    case DeclarationName::Identifier:
+      break;
+    // <base-unresolved-name> ::= on <operator-name>
+    case DeclarationName::CXXConversionFunctionName:
+    case DeclarationName::CXXLiteralOperatorName:
+    case DeclarationName::CXXOperatorName:
+      Out << "on";
+      break;
+    case DeclarationName::CXXDestructorName:
+      llvm_unreachable("Can't mangle a constructor name!");
+    case DeclarationName::CXXConstructorName:
+      llvm_unreachable("Can't mangle a constructor name!");
+    case DeclarationName::CXXUsingDirective:
+      llvm_unreachable("Can't mangle a using directive name!");
+    case DeclarationName::ObjCMultiArgSelector:
+    case DeclarationName::ObjCOneArgSelector:
+    case DeclarationName::ObjCZeroArgSelector:
+      llvm_unreachable("Can't mangle Objective-C selector names here!");
+  }
   mangleUnqualifiedName(nullptr, name, knownArity);
 }
 
@@ -1532,7 +1554,8 @@ void CXXNameMangler::mangleTemplatePrefix(TemplateName Template) {
    
   DependentTemplateName *Dependent = Template.getAsDependentTemplateName();
   assert(Dependent && "Unknown template name kind?");
-  manglePrefix(Dependent->getQualifier());
+  if (NestedNameSpecifier *Qualifier = Dependent->getQualifier())
+    manglePrefix(Qualifier);
   mangleUnscopedTemplateName(Template);
 }
 
@@ -2522,6 +2545,29 @@ void CXXNameMangler::mangleIntegerLiteral(QualType T,
 
 }
 
+void CXXNameMangler::mangleMemberExprBase(const Expr *Base, bool IsArrow) {
+  // Ignore member expressions involving anonymous unions.
+  while (const auto *RT = Base->getType()->getAs<RecordType>()) {
+    if (!RT->getDecl()->isAnonymousStructOrUnion())
+      break;
+    const auto *ME = dyn_cast<MemberExpr>(Base);
+    if (!ME)
+      break;
+    Base = ME->getBase();
+    IsArrow = ME->isArrow();
+  }
+
+  if (Base->isImplicitCXXThis()) {
+    // Note: GCC mangles member expressions to the implicit 'this' as
+    // *this., whereas we represent them as this->. The Itanium C++ ABI
+    // does not specify anything here, so we follow GCC.
+    Out << "dtdefpT";
+  } else {
+    Out << (IsArrow ? "pt" : "dt");
+    mangleExpression(Base);
+  }
+}
+
 /// Mangles a member expression.
 void CXXNameMangler::mangleMemberExpr(const Expr *base,
                                       bool isArrow,
@@ -2531,29 +2577,8 @@ void CXXNameMangler::mangleMemberExpr(const Expr *base,
                                       unsigned arity) {
   // <expression> ::= dt <expression> <unresolved-name>
   //              ::= pt <expression> <unresolved-name>
-  if (base) {
-
-    // Ignore member expressions involving anonymous unions.
-    while (const auto *RT = base->getType()->getAs<RecordType>()) {
-      if (!RT->getDecl()->isAnonymousStructOrUnion())
-        break;
-      const auto *ME = dyn_cast<MemberExpr>(base);
-      if (!ME)
-        break;
-      base = ME->getBase();
-      isArrow = ME->isArrow();
-    }
-
-    if (base->isImplicitCXXThis()) {
-      // Note: GCC mangles member expressions to the implicit 'this' as
-      // *this., whereas we represent them as this->. The Itanium C++ ABI
-      // does not specify anything here, so we follow GCC.
-      Out << "dtdefpT";
-    } else {
-      Out << (isArrow ? "pt" : "dt");
-      mangleExpression(base);
-    }
-  }
+  if (base)
+    mangleMemberExprBase(base, isArrow);
   mangleUnresolvedName(qualifier, firstQualifierLookup, member, arity);
 }
 
@@ -2651,7 +2676,6 @@ recurse:
 
   // FIXME: invent manglings for all these.
   case Expr::BlockExprClass:
-  case Expr::CXXPseudoDestructorExprClass:
   case Expr::ChooseExprClass:
   case Expr::CompoundLiteralExprClass:
   case Expr::ExtVectorElementExprClass:
@@ -2806,6 +2830,20 @@ recurse:
         mangleExpression(Init);
     }
     Out << 'E';
+    break;
+  }
+
+  case Expr::CXXPseudoDestructorExprClass: {
+    const auto *PDE = cast<CXXPseudoDestructorExpr>(E);
+    if (const Expr *Base = PDE->getBase())
+      mangleMemberExprBase(Base, PDE->isArrow());
+    if (NestedNameSpecifier *Qualifier = PDE->getQualifier())
+      mangleUnresolvedPrefix(Qualifier, /*FirstQualifierLookup=*/nullptr);
+    // <base-unresolved-name> ::= dn <destructor-name>
+    Out << "dn";
+    // <destructor-name> ::= <unresolved-type>
+    //                   ::= <simple-id>
+    manglePrefix(PDE->getDestroyedType());
     break;
   }
 
