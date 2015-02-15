@@ -26,8 +26,8 @@ public:
   typedef DominanceFrontierBase<MachineBasicBlock>::iterator iterator;
   typedef DominanceFrontierBase<MachineBasicBlock>::const_iterator const_iterator;
 
-  void operator=(const MachineDominanceFrontier &) LLVM_DELETED_FUNCTION;
-  MachineDominanceFrontier(const MachineDominanceFrontier &) LLVM_DELETED_FUNCTION;
+  void operator=(const MachineDominanceFrontier &) = delete;
+  MachineDominanceFrontier(const MachineDominanceFrontier &) = delete;
 
   static char ID;
 

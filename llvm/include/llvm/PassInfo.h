@@ -138,8 +138,8 @@ public:
   }
 
 private:
-  void operator=(const PassInfo &) LLVM_DELETED_FUNCTION;
-  PassInfo(const PassInfo &) LLVM_DELETED_FUNCTION;
+  void operator=(const PassInfo &) = delete;
+  PassInfo(const PassInfo &) = delete;
 };
 
 }

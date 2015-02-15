@@ -113,8 +113,8 @@ private:
   }
   void BuildLazyArguments() const;
 
-  Function(const Function&) LLVM_DELETED_FUNCTION;
-  void operator=(const Function&) LLVM_DELETED_FUNCTION;
+  Function(const Function&) = delete;
+  void operator=(const Function&) = delete;
 
   /// Do the actual lookup of an intrinsic ID when the query could not be
   /// answered from the cache.

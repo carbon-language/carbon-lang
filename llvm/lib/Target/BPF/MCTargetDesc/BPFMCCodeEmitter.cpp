@@ -27,8 +27,8 @@ using namespace llvm;
 
 namespace {
 class BPFMCCodeEmitter : public MCCodeEmitter {
-  BPFMCCodeEmitter(const BPFMCCodeEmitter &) LLVM_DELETED_FUNCTION;
-  void operator=(const BPFMCCodeEmitter &) LLVM_DELETED_FUNCTION;
+  BPFMCCodeEmitter(const BPFMCCodeEmitter &) = delete;
+  void operator=(const BPFMCCodeEmitter &) = delete;
   const MCRegisterInfo &MRI;
 
 public:

@@ -26,8 +26,8 @@ namespace llvm {
   /// @brief Guard a section of code with a Mutex.
   class MutexGuard {
     sys::Mutex &M;
-    MutexGuard(const MutexGuard &) LLVM_DELETED_FUNCTION;
-    void operator=(const MutexGuard &) LLVM_DELETED_FUNCTION;
+    MutexGuard(const MutexGuard &) = delete;
+    void operator=(const MutexGuard &) = delete;
   public:
     MutexGuard(sys::Mutex &m) : M(m) { M.lock(); }
     ~MutexGuard() { M.unlock(); }

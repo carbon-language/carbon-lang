@@ -45,8 +45,8 @@ private:
     return static_cast<std::ptrdiff_t>(address) < LastChar - FirstChar;
   }
 
-  RawMemoryObject(const RawMemoryObject&) LLVM_DELETED_FUNCTION;
-  void operator=(const RawMemoryObject&) LLVM_DELETED_FUNCTION;
+  RawMemoryObject(const RawMemoryObject&) = delete;
+  void operator=(const RawMemoryObject&) = delete;
 };
 
 uint64_t RawMemoryObject::readBytes(uint8_t *Buf, uint64_t Size,

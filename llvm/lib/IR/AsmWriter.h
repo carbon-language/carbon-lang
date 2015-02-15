@@ -42,8 +42,8 @@ SlotTracker *createSlotTracker(const Module *M);
 //===----------------------------------------------------------------------===//
 
 class TypePrinting {
-  TypePrinting(const TypePrinting &) LLVM_DELETED_FUNCTION;
-  void operator=(const TypePrinting&) LLVM_DELETED_FUNCTION;
+  TypePrinting(const TypePrinting &) = delete;
+  void operator=(const TypePrinting&) = delete;
 public:
 
   /// NamedTypes - The named types that are used by the current module.

@@ -60,10 +60,10 @@ namespace SymbolRewriter {
 /// select the symbols to rewrite.  This descriptor list is passed to the
 /// SymbolRewriter pass.
 class RewriteDescriptor : public ilist_node<RewriteDescriptor> {
-  RewriteDescriptor(const RewriteDescriptor &) LLVM_DELETED_FUNCTION;
+  RewriteDescriptor(const RewriteDescriptor &) = delete;
 
   const RewriteDescriptor &
-  operator=(const RewriteDescriptor &) LLVM_DELETED_FUNCTION;
+  operator=(const RewriteDescriptor &) = delete;
 
 public:
   enum class Type {

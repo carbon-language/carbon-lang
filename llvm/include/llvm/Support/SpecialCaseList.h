@@ -83,8 +83,8 @@ public:
                  StringRef Category = StringRef()) const;
 
 private:
-  SpecialCaseList(SpecialCaseList const &) LLVM_DELETED_FUNCTION;
-  SpecialCaseList &operator=(SpecialCaseList const &) LLVM_DELETED_FUNCTION;
+  SpecialCaseList(SpecialCaseList const &) = delete;
+  SpecialCaseList &operator=(SpecialCaseList const &) = delete;
 
   struct Entry;
   StringMap<StringMap<Entry>> Entries;

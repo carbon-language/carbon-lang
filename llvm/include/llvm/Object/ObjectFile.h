@@ -180,8 +180,8 @@ public:
 /// figures out which type to create.
 class ObjectFile : public SymbolicFile {
   virtual void anchor();
-  ObjectFile() LLVM_DELETED_FUNCTION;
-  ObjectFile(const ObjectFile &other) LLVM_DELETED_FUNCTION;
+  ObjectFile() = delete;
+  ObjectFile(const ObjectFile &other) = delete;
 
 protected:
   ObjectFile(unsigned int Type, MemoryBufferRef Source);

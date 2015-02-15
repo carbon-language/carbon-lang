@@ -454,8 +454,8 @@ protected:
 
 private:
   const InitKind Kind;
-  Init(const Init &) LLVM_DELETED_FUNCTION;
-  Init &operator=(const Init &) LLVM_DELETED_FUNCTION;
+  Init(const Init &) = delete;
+  Init &operator=(const Init &) = delete;
   virtual void anchor();
 
 public:
@@ -561,8 +561,8 @@ inline raw_ostream &operator<<(raw_ostream &OS, const Init &I) {
 class TypedInit : public Init {
   RecTy *Ty;
 
-  TypedInit(const TypedInit &Other) LLVM_DELETED_FUNCTION;
-  TypedInit &operator=(const TypedInit &Other) LLVM_DELETED_FUNCTION;
+  TypedInit(const TypedInit &Other) = delete;
+  TypedInit &operator=(const TypedInit &Other) = delete;
 
 protected:
   explicit TypedInit(InitKind K, RecTy *T) : Init(K), Ty(T) {}
@@ -596,8 +596,8 @@ public:
 ///
 class UnsetInit : public Init {
   UnsetInit() : Init(IK_UnsetInit) {}
-  UnsetInit(const UnsetInit &) LLVM_DELETED_FUNCTION;
-  UnsetInit &operator=(const UnsetInit &Other) LLVM_DELETED_FUNCTION;
+  UnsetInit(const UnsetInit &) = delete;
+  UnsetInit &operator=(const UnsetInit &Other) = delete;
   void anchor() override;
 
 public:
@@ -624,8 +624,8 @@ class BitInit : public Init {
   bool Value;
 
   explicit BitInit(bool V) : Init(IK_BitInit), Value(V) {}
-  BitInit(const BitInit &Other) LLVM_DELETED_FUNCTION;
-  BitInit &operator=(BitInit &Other) LLVM_DELETED_FUNCTION;
+  BitInit(const BitInit &Other) = delete;
+  BitInit &operator=(BitInit &Other) = delete;
   void anchor() override;
 
 public:
@@ -658,8 +658,8 @@ class BitsInit : public TypedInit, public FoldingSetNode {
     : TypedInit(IK_BitsInit, BitsRecTy::get(Range.size())),
       Bits(Range.begin(), Range.end()) {}
 
-  BitsInit(const BitsInit &Other) LLVM_DELETED_FUNCTION;
-  BitsInit &operator=(const BitsInit &Other) LLVM_DELETED_FUNCTION;
+  BitsInit(const BitsInit &Other) = delete;
+  BitsInit &operator=(const BitsInit &Other) = delete;
 
 public:
   static bool classof(const Init *I) {
@@ -713,8 +713,8 @@ class IntInit : public TypedInit {
   explicit IntInit(int64_t V)
     : TypedInit(IK_IntInit, IntRecTy::get()), Value(V) {}
 
-  IntInit(const IntInit &Other) LLVM_DELETED_FUNCTION;
-  IntInit &operator=(const IntInit &Other) LLVM_DELETED_FUNCTION;
+  IntInit(const IntInit &Other) = delete;
+  IntInit &operator=(const IntInit &Other) = delete;
 
 public:
   static bool classof(const Init *I) {
@@ -753,8 +753,8 @@ class StringInit : public TypedInit {
   explicit StringInit(const std::string &V)
     : TypedInit(IK_StringInit, StringRecTy::get()), Value(V) {}
 
-  StringInit(const StringInit &Other) LLVM_DELETED_FUNCTION;
-  StringInit &operator=(const StringInit &Other) LLVM_DELETED_FUNCTION;
+  StringInit(const StringInit &Other) = delete;
+  StringInit &operator=(const StringInit &Other) = delete;
   void anchor() override;
 
 public:
@@ -798,8 +798,8 @@ private:
     : TypedInit(IK_ListInit, ListRecTy::get(EltTy)),
       Values(Range.begin(), Range.end()) {}
 
-  ListInit(const ListInit &Other) LLVM_DELETED_FUNCTION;
-  ListInit &operator=(const ListInit &Other) LLVM_DELETED_FUNCTION;
+  ListInit(const ListInit &Other) = delete;
+  ListInit &operator=(const ListInit &Other) = delete;
 
 public:
   static bool classof(const Init *I) {
@@ -855,8 +855,8 @@ public:
 /// OpInit - Base class for operators
 ///
 class OpInit : public TypedInit {
-  OpInit(const OpInit &Other) LLVM_DELETED_FUNCTION;
-  OpInit &operator=(OpInit &Other) LLVM_DELETED_FUNCTION;
+  OpInit(const OpInit &Other) = delete;
+  OpInit &operator=(OpInit &Other) = delete;
 
 protected:
   explicit OpInit(InitKind K, RecTy *Type) : TypedInit(K, Type) {}
@@ -899,8 +899,8 @@ private:
   UnOpInit(UnaryOp opc, Init *lhs, RecTy *Type)
     : OpInit(IK_UnOpInit, Type), Opc(opc), LHS(lhs) {}
 
-  UnOpInit(const UnOpInit &Other) LLVM_DELETED_FUNCTION;
-  UnOpInit &operator=(const UnOpInit &Other) LLVM_DELETED_FUNCTION;
+  UnOpInit(const UnOpInit &Other) = delete;
+  UnOpInit &operator=(const UnOpInit &Other) = delete;
 
 public:
   static bool classof(const Init *I) {
@@ -946,8 +946,8 @@ private:
   BinOpInit(BinaryOp opc, Init *lhs, Init *rhs, RecTy *Type) :
       OpInit(IK_BinOpInit, Type), Opc(opc), LHS(lhs), RHS(rhs) {}
 
-  BinOpInit(const BinOpInit &Other) LLVM_DELETED_FUNCTION;
-  BinOpInit &operator=(const BinOpInit &Other) LLVM_DELETED_FUNCTION;
+  BinOpInit(const BinOpInit &Other) = delete;
+  BinOpInit &operator=(const BinOpInit &Other) = delete;
 
 public:
   static bool classof(const Init *I) {
@@ -1000,8 +1000,8 @@ private:
              RecTy *Type) :
       OpInit(IK_TernOpInit, Type), Opc(opc), LHS(lhs), MHS(mhs), RHS(rhs) {}
 
-  TernOpInit(const TernOpInit &Other) LLVM_DELETED_FUNCTION;
-  TernOpInit &operator=(const TernOpInit &Other) LLVM_DELETED_FUNCTION;
+  TernOpInit(const TernOpInit &Other) = delete;
+  TernOpInit &operator=(const TernOpInit &Other) = delete;
 
 public:
   static bool classof(const Init *I) {
@@ -1058,8 +1058,8 @@ class VarInit : public TypedInit {
   explicit VarInit(Init *VN, RecTy *T)
       : TypedInit(IK_VarInit, T), VarName(VN) {}
 
-  VarInit(const VarInit &Other) LLVM_DELETED_FUNCTION;
-  VarInit &operator=(const VarInit &Other) LLVM_DELETED_FUNCTION;
+  VarInit(const VarInit &Other) = delete;
+  VarInit &operator=(const VarInit &Other) = delete;
 
 public:
   static bool classof(const Init *I) {
@@ -1111,8 +1111,8 @@ class VarBitInit : public Init {
            "Illegal VarBitInit expression!");
   }
 
-  VarBitInit(const VarBitInit &Other) LLVM_DELETED_FUNCTION;
-  VarBitInit &operator=(const VarBitInit &Other) LLVM_DELETED_FUNCTION;
+  VarBitInit(const VarBitInit &Other) = delete;
+  VarBitInit &operator=(const VarBitInit &Other) = delete;
 
 public:
   static bool classof(const Init *I) {
@@ -1150,8 +1150,8 @@ class VarListElementInit : public TypedInit {
            "Illegal VarBitInit expression!");
   }
 
-  VarListElementInit(const VarListElementInit &Other) LLVM_DELETED_FUNCTION;
-  void operator=(const VarListElementInit &Other) LLVM_DELETED_FUNCTION;
+  VarListElementInit(const VarListElementInit &Other) = delete;
+  void operator=(const VarListElementInit &Other) = delete;
 
 public:
   static bool classof(const Init *I) {
@@ -1186,8 +1186,8 @@ class DefInit : public TypedInit {
   DefInit(Record *D, RecordRecTy *T) : TypedInit(IK_DefInit, T), Def(D) {}
   friend class Record;
 
-  DefInit(const DefInit &Other) LLVM_DELETED_FUNCTION;
-  DefInit &operator=(const DefInit &Other) LLVM_DELETED_FUNCTION;
+  DefInit(const DefInit &Other) = delete;
+  DefInit &operator=(const DefInit &Other) = delete;
 
 public:
   static bool classof(const Init *I) {
@@ -1233,8 +1233,8 @@ class FieldInit : public TypedInit {
     assert(getType() && "FieldInit with non-record type!");
   }
 
-  FieldInit(const FieldInit &Other) LLVM_DELETED_FUNCTION;
-  FieldInit &operator=(const FieldInit &Other) LLVM_DELETED_FUNCTION;
+  FieldInit(const FieldInit &Other) = delete;
+  FieldInit &operator=(const FieldInit &Other) = delete;
 
 public:
   static bool classof(const Init *I) {
@@ -1276,8 +1276,8 @@ class DagInit : public TypedInit, public FoldingSetNode {
           Args(ArgRange.begin(), ArgRange.end()),
           ArgNames(NameRange.begin(), NameRange.end()) {}
 
-  DagInit(const DagInit &Other) LLVM_DELETED_FUNCTION;
-  DagInit &operator=(const DagInit &Other) LLVM_DELETED_FUNCTION;
+  DagInit(const DagInit &Other) = delete;
+  DagInit &operator=(const DagInit &Other) = delete;
 
 public:
   static bool classof(const Init *I) {

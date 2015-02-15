@@ -179,8 +179,8 @@ public:
     }
 
   private:
-    Query(const Query&) LLVM_DELETED_FUNCTION;
-    void operator=(const Query&) LLVM_DELETED_FUNCTION;
+    Query(const Query&) = delete;
+    void operator=(const Query&) = delete;
   };
 
   // Array of LiveIntervalUnions.

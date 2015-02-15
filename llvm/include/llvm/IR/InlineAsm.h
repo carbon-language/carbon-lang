@@ -40,8 +40,8 @@ private:
   friend struct InlineAsmKeyType;
   friend class ConstantUniqueMap<InlineAsm>;
 
-  InlineAsm(const InlineAsm &) LLVM_DELETED_FUNCTION;
-  void operator=(const InlineAsm&) LLVM_DELETED_FUNCTION;
+  InlineAsm(const InlineAsm &) = delete;
+  void operator=(const InlineAsm&) = delete;
 
   std::string AsmString, Constraints;
   bool HasSideEffects;

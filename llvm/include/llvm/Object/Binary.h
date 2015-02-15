@@ -28,8 +28,8 @@ namespace object {
 
 class Binary {
 private:
-  Binary() LLVM_DELETED_FUNCTION;
-  Binary(const Binary &other) LLVM_DELETED_FUNCTION;
+  Binary() = delete;
+  Binary(const Binary &other) = delete;
 
   unsigned int TypeID;
 

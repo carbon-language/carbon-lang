@@ -328,8 +328,8 @@ private:
           CallScope(AvailableCalls) {}
 
   private:
-    NodeScope(const NodeScope &) LLVM_DELETED_FUNCTION;
-    void operator=(const NodeScope &) LLVM_DELETED_FUNCTION;
+    NodeScope(const NodeScope &) = delete;
+    void operator=(const NodeScope &) = delete;
 
     ScopedHTType::ScopeTy Scope;
     LoadHTType::ScopeTy LoadScope;
@@ -365,8 +365,8 @@ private:
     void process() { Processed = true; }
 
   private:
-    StackNode(const StackNode &) LLVM_DELETED_FUNCTION;
-    void operator=(const StackNode &) LLVM_DELETED_FUNCTION;
+    StackNode(const StackNode &) = delete;
+    void operator=(const StackNode &) = delete;
 
     // Members.
     unsigned CurrentGeneration;

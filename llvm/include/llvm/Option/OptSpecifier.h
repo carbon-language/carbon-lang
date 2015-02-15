@@ -21,7 +21,7 @@ namespace opt {
     unsigned ID;
 
   private:
-    explicit OptSpecifier(bool) LLVM_DELETED_FUNCTION;
+    explicit OptSpecifier(bool) = delete;
 
   public:
     OptSpecifier() : ID(0) {}

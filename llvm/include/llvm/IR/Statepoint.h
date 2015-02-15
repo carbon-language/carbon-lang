@@ -45,8 +45,8 @@ bool isGCResult(const ImmutableCallSite &CS);
 template <typename InstructionTy, typename ValueTy, typename CallSiteTy>
 class StatepointBase {
   CallSiteTy StatepointCS;
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
-  void *operator new(size_t s) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
+  void *operator new(size_t s) = delete;
 
  protected:
   explicit StatepointBase(InstructionTy *I) : StatepointCS(I) {

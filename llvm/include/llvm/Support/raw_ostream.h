@@ -38,8 +38,8 @@ namespace llvm {
 /// a chunk at a time.
 class raw_ostream {
 private:
-  void operator=(const raw_ostream &) LLVM_DELETED_FUNCTION;
-  raw_ostream(const raw_ostream &) LLVM_DELETED_FUNCTION;
+  void operator=(const raw_ostream &) = delete;
+  raw_ostream(const raw_ostream &) = delete;
 
   /// The buffer is handled in such a way that the buffer is
   /// uninitialized, unbuffered, or out of space when OutBufCur >=

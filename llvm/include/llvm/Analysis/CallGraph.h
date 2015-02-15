@@ -273,8 +273,8 @@ private:
   /// CalledFunctions array of this or other CallGraphNodes.
   unsigned NumReferences;
 
-  CallGraphNode(const CallGraphNode &) LLVM_DELETED_FUNCTION;
-  void operator=(const CallGraphNode &) LLVM_DELETED_FUNCTION;
+  CallGraphNode(const CallGraphNode &) = delete;
+  void operator=(const CallGraphNode &) = delete;
 
   void DropRef() { --NumReferences; }
   void AddRef() { ++NumReferences; }

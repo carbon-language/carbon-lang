@@ -22,8 +22,8 @@ template<typename T> class SmallVectorImpl;
 /// MCCodeEmitter - Generic instruction encoding interface.
 class MCCodeEmitter {
 private:
-  MCCodeEmitter(const MCCodeEmitter &) LLVM_DELETED_FUNCTION;
-  void operator=(const MCCodeEmitter &) LLVM_DELETED_FUNCTION;
+  MCCodeEmitter(const MCCodeEmitter &) = delete;
+  void operator=(const MCCodeEmitter &) = delete;
 protected: // Can only create subclasses.
   MCCodeEmitter();
 

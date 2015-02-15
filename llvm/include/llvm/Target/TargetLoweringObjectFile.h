@@ -38,8 +38,8 @@ class TargetLoweringObjectFile : public MCObjectFileInfo {
   const DataLayout *DL;
 
   TargetLoweringObjectFile(
-    const TargetLoweringObjectFile&) LLVM_DELETED_FUNCTION;
-  void operator=(const TargetLoweringObjectFile&) LLVM_DELETED_FUNCTION;
+    const TargetLoweringObjectFile&) = delete;
+  void operator=(const TargetLoweringObjectFile&) = delete;
 
 public:
   MCContext &getContext() const { return *Ctx; }

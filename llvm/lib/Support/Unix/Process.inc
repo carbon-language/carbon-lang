@@ -191,8 +191,8 @@ public:
   }
 
 private:
-  FDCloser(const FDCloser &) LLVM_DELETED_FUNCTION;
-  void operator=(const FDCloser &) LLVM_DELETED_FUNCTION;
+  FDCloser(const FDCloser &) = delete;
+  void operator=(const FDCloser &) = delete;
 
   int &FD;
   bool KeepOpen;

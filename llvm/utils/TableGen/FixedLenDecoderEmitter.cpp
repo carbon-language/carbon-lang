@@ -333,8 +333,8 @@ protected:
   // Parent emitter
   const FixedLenDecoderEmitter *Emitter;
 
-  FilterChooser(const FilterChooser &) LLVM_DELETED_FUNCTION;
-  void operator=(const FilterChooser &) LLVM_DELETED_FUNCTION;
+  FilterChooser(const FilterChooser &) = delete;
+  void operator=(const FilterChooser &) = delete;
 public:
 
   FilterChooser(const std::vector<const CodeGenInstruction*> &Insts,

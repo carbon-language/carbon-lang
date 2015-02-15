@@ -81,8 +81,8 @@ private:
     return Pos < BytesRead;
   }
 
-  StreamingMemoryObject(const StreamingMemoryObject&) LLVM_DELETED_FUNCTION;
-  void operator=(const StreamingMemoryObject&) LLVM_DELETED_FUNCTION;
+  StreamingMemoryObject(const StreamingMemoryObject&) = delete;
+  void operator=(const StreamingMemoryObject&) = delete;
 };
 
 MemoryObject *getNonStreamedMemoryObject(

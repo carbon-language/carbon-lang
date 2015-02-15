@@ -118,8 +118,8 @@ public:
 private:
   Value *GetValueAtEndOfBlockInternal(BasicBlock *BB);
 
-  void operator=(const SSAUpdater&) LLVM_DELETED_FUNCTION;
-  SSAUpdater(const SSAUpdater&) LLVM_DELETED_FUNCTION;
+  void operator=(const SSAUpdater&) = delete;
+  SSAUpdater(const SSAUpdater&) = delete;
 };
 
 /// \brief Helper class for promoting a collection of loads and stores into SSA

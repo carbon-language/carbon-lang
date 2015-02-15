@@ -66,8 +66,8 @@ namespace llvm {
       : Name(name), Section(nullptr), Value(nullptr),
         IsTemporary(isTemporary), IsRedefinable(false), IsUsed(false) {}
 
-    MCSymbol(const MCSymbol&) LLVM_DELETED_FUNCTION;
-    void operator=(const MCSymbol&) LLVM_DELETED_FUNCTION;
+    MCSymbol(const MCSymbol&) = delete;
+    void operator=(const MCSymbol&) = delete;
   public:
     /// getName - Get the symbol name.
     StringRef getName() const { return Name; }

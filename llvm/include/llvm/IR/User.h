@@ -33,8 +33,8 @@ template <class>
 struct OperandTraits;
 
 class User : public Value {
-  User(const User &) LLVM_DELETED_FUNCTION;
-  void *operator new(size_t) LLVM_DELETED_FUNCTION;
+  User(const User &) = delete;
+  void *operator new(size_t) = delete;
   template <unsigned>
   friend struct HungoffOperandTraits;
   virtual void anchor();

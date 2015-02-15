@@ -1201,8 +1201,8 @@ class opt : public Option,
   }
 
   // Command line options should not be copyable
-  opt(const opt &) LLVM_DELETED_FUNCTION;
-  opt &operator=(const opt &) LLVM_DELETED_FUNCTION;
+  opt(const opt &) = delete;
+  opt &operator=(const opt &) = delete;
 
 public:
   // setInitialValue - Used by the cl::init modifier...
@@ -1315,8 +1315,8 @@ class list : public Option, public list_storage<DataType, Storage> {
   }
 
   // Command line options should not be copyable
-  list(const list &) LLVM_DELETED_FUNCTION;
-  list &operator=(const list &) LLVM_DELETED_FUNCTION;
+  list(const list &) = delete;
+  list &operator=(const list &) = delete;
 
 public:
   ParserClass &getParser() { return Parser; }
@@ -1455,8 +1455,8 @@ class bits : public Option, public bits_storage<DataType, Storage> {
   }
 
   // Command line options should not be copyable
-  bits(const bits &) LLVM_DELETED_FUNCTION;
-  bits &operator=(const bits &) LLVM_DELETED_FUNCTION;
+  bits(const bits &) = delete;
+  bits &operator=(const bits &) = delete;
 
 public:
   ParserClass &getParser() { return Parser; }
@@ -1509,8 +1509,8 @@ class alias : public Option {
   }
 
   // Command line options should not be copyable
-  alias(const alias &) LLVM_DELETED_FUNCTION;
-  alias &operator=(const alias &) LLVM_DELETED_FUNCTION;
+  alias(const alias &) = delete;
+  alias &operator=(const alias &) = delete;
 
 public:
   void setAliasFor(Option &O) {

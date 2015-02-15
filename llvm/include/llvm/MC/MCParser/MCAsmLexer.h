@@ -124,8 +124,8 @@ class MCAsmLexer {
   SMLoc ErrLoc;
   std::string Err;
 
-  MCAsmLexer(const MCAsmLexer &) LLVM_DELETED_FUNCTION;
-  void operator=(const MCAsmLexer &) LLVM_DELETED_FUNCTION;
+  MCAsmLexer(const MCAsmLexer &) = delete;
+  void operator=(const MCAsmLexer &) = delete;
 protected: // Can only create subclasses.
   const char *TokStart;
   bool SkipSpace;

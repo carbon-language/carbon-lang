@@ -340,7 +340,7 @@ make_unique(size_t n) {
 /// This function isn't used and is only here to provide better compile errors.
 template <class T, class... Args>
 typename std::enable_if<std::extent<T>::value != 0>::type
-make_unique(Args &&...) LLVM_DELETED_FUNCTION;
+make_unique(Args &&...) = delete;
 
 struct FreeDeleter {
   void operator()(void* v) {

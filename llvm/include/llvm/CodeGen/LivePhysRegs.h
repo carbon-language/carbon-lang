@@ -44,8 +44,8 @@ class LivePhysRegs {
   const TargetRegisterInfo *TRI;
   SparseSet<unsigned> LiveRegs;
 
-  LivePhysRegs(const LivePhysRegs&) LLVM_DELETED_FUNCTION;
-  LivePhysRegs &operator=(const LivePhysRegs&) LLVM_DELETED_FUNCTION;
+  LivePhysRegs(const LivePhysRegs&) = delete;
+  LivePhysRegs &operator=(const LivePhysRegs&) = delete;
 public:
   /// \brief Constructs a new empty LivePhysRegs set.
   LivePhysRegs() : TRI(nullptr), LiveRegs() {}

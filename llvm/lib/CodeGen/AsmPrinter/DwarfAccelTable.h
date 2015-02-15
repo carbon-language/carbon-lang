@@ -215,8 +215,8 @@ private:
 #endif
   };
 
-  DwarfAccelTable(const DwarfAccelTable &) LLVM_DELETED_FUNCTION;
-  void operator=(const DwarfAccelTable &) LLVM_DELETED_FUNCTION;
+  DwarfAccelTable(const DwarfAccelTable &) = delete;
+  void operator=(const DwarfAccelTable &) = delete;
 
   // Internal Functions
   void EmitHeader(AsmPrinter *);

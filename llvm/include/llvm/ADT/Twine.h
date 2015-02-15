@@ -182,7 +182,7 @@ namespace llvm {
 
     /// Since the intended use of twines is as temporary objects, assignments
     /// when concatenating might cause undefined behavior or stack corruptions
-    Twine &operator=(const Twine &Other) LLVM_DELETED_FUNCTION;
+    Twine &operator=(const Twine &Other) = delete;
 
     /// isNull - Check for the null twine.
     bool isNull() const {

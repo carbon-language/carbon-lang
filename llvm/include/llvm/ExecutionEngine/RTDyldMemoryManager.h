@@ -34,8 +34,8 @@ class ExecutionEngine;
 // FIXME: As the RuntimeDyld fills out, additional routines will be needed
 //        for the varying types of objects to be allocated.
 class RTDyldMemoryManager {
-  RTDyldMemoryManager(const RTDyldMemoryManager&) LLVM_DELETED_FUNCTION;
-  void operator=(const RTDyldMemoryManager&) LLVM_DELETED_FUNCTION;
+  RTDyldMemoryManager(const RTDyldMemoryManager&) = delete;
+  void operator=(const RTDyldMemoryManager&) = delete;
 public:
   RTDyldMemoryManager() {}
   virtual ~RTDyldMemoryManager();

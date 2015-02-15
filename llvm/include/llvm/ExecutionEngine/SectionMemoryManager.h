@@ -35,8 +35,8 @@ namespace llvm {
 /// MCJIT::finalizeObject or by calling SectionMemoryManager::finalizeMemory
 /// directly.  Clients of MCJIT should call MCJIT::finalizeObject.
 class SectionMemoryManager : public RTDyldMemoryManager {
-  SectionMemoryManager(const SectionMemoryManager&) LLVM_DELETED_FUNCTION;
-  void operator=(const SectionMemoryManager&) LLVM_DELETED_FUNCTION;
+  SectionMemoryManager(const SectionMemoryManager&) = delete;
+  void operator=(const SectionMemoryManager&) = delete;
 
 public:
   SectionMemoryManager() { }

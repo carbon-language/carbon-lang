@@ -34,7 +34,7 @@ namespace llvm {
 /// behind the scenes to implement unary constant exprs.
 class UnaryConstantExpr : public ConstantExpr {
   void anchor() override;
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
 public:
   // allocate space for exactly one operand
   void *operator new(size_t s) {
@@ -51,7 +51,7 @@ public:
 /// behind the scenes to implement binary constant exprs.
 class BinaryConstantExpr : public ConstantExpr {
   void anchor() override;
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
 public:
   // allocate space for exactly two operands
   void *operator new(size_t s) {
@@ -72,7 +72,7 @@ public:
 /// behind the scenes to implement select constant exprs.
 class SelectConstantExpr : public ConstantExpr {
   void anchor() override;
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
 public:
   // allocate space for exactly three operands
   void *operator new(size_t s) {
@@ -93,7 +93,7 @@ public:
 /// extractelement constant exprs.
 class ExtractElementConstantExpr : public ConstantExpr {
   void anchor() override;
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
 public:
   // allocate space for exactly two operands
   void *operator new(size_t s) {
@@ -114,7 +114,7 @@ public:
 /// insertelement constant exprs.
 class InsertElementConstantExpr : public ConstantExpr {
   void anchor() override;
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
 public:
   // allocate space for exactly three operands
   void *operator new(size_t s) {
@@ -136,7 +136,7 @@ public:
 /// shufflevector constant exprs.
 class ShuffleVectorConstantExpr : public ConstantExpr {
   void anchor() override;
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
 public:
   // allocate space for exactly three operands
   void *operator new(size_t s) {
@@ -161,7 +161,7 @@ public:
 /// extractvalue constant exprs.
 class ExtractValueConstantExpr : public ConstantExpr {
   void anchor() override;
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
 public:
   // allocate space for exactly one operand
   void *operator new(size_t s) {
@@ -186,7 +186,7 @@ public:
 /// insertvalue constant exprs.
 class InsertValueConstantExpr : public ConstantExpr {
   void anchor() override;
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
 public:
   // allocate space for exactly one operand
   void *operator new(size_t s) {
@@ -233,7 +233,7 @@ public:
 // needed in order to store the predicate value for these instructions.
 class CompareConstantExpr : public ConstantExpr {
   void anchor() override;
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
 public:
   // allocate space for exactly two operands
   void *operator new(size_t s) {

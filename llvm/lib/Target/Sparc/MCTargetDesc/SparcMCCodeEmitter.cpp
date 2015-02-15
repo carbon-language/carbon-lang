@@ -31,8 +31,8 @@ STATISTIC(MCNumEmitted, "Number of MC instructions emitted");
 
 namespace {
 class SparcMCCodeEmitter : public MCCodeEmitter {
-  SparcMCCodeEmitter(const SparcMCCodeEmitter &) LLVM_DELETED_FUNCTION;
-  void operator=(const SparcMCCodeEmitter &) LLVM_DELETED_FUNCTION;
+  SparcMCCodeEmitter(const SparcMCCodeEmitter &) = delete;
+  void operator=(const SparcMCCodeEmitter &) = delete;
   MCContext &Ctx;
 
 public:

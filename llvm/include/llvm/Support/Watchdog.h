@@ -29,8 +29,8 @@ namespace llvm {
       ~Watchdog();
     private:
       // Noncopyable.
-      Watchdog(const Watchdog &other) LLVM_DELETED_FUNCTION;
-      Watchdog &operator=(const Watchdog &other) LLVM_DELETED_FUNCTION;
+      Watchdog(const Watchdog &other) = delete;
+      Watchdog &operator=(const Watchdog &other) = delete;
     };
   }
 }

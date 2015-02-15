@@ -183,10 +183,10 @@ struct MultiArgConstructor {
   explicit MultiArgConstructor(int x, bool positive)
     : x(x), y(positive ? x : -x) {}
 
-  MultiArgConstructor(const MultiArgConstructor &) LLVM_DELETED_FUNCTION;
-  MultiArgConstructor(MultiArgConstructor &&) LLVM_DELETED_FUNCTION;
-  MultiArgConstructor &operator=(const MultiArgConstructor &) LLVM_DELETED_FUNCTION;
-  MultiArgConstructor &operator=(MultiArgConstructor &&) LLVM_DELETED_FUNCTION;
+  MultiArgConstructor(const MultiArgConstructor &) = delete;
+  MultiArgConstructor(MultiArgConstructor &&) = delete;
+  MultiArgConstructor &operator=(const MultiArgConstructor &) = delete;
+  MultiArgConstructor &operator=(MultiArgConstructor &&) = delete;
 
   static unsigned Destructions;
   ~MultiArgConstructor() {
@@ -340,7 +340,7 @@ struct Immovable {
   }
 private:
   // This should disable all move/copy operations.
-  Immovable(Immovable&& other) LLVM_DELETED_FUNCTION;
+  Immovable(Immovable&& other) = delete;
 };
 
 unsigned Immovable::Constructions = 0;

@@ -59,8 +59,8 @@ using legacy::PassManagerBase;
 /// through this interface.
 ///
 class TargetMachine {
-  TargetMachine(const TargetMachine &) LLVM_DELETED_FUNCTION;
-  void operator=(const TargetMachine &) LLVM_DELETED_FUNCTION;
+  TargetMachine(const TargetMachine &) = delete;
+  void operator=(const TargetMachine &) = delete;
 protected: // Can only create subclasses.
   TargetMachine(const Target &T, StringRef TargetTriple,
                 StringRef CPU, StringRef FS, const TargetOptions &Options);

@@ -27,8 +27,8 @@ class InstCombineWorklist {
   SmallVector<Instruction*, 256> Worklist;
   DenseMap<Instruction*, unsigned> WorklistMap;
 
-  void operator=(const InstCombineWorklist&RHS) LLVM_DELETED_FUNCTION;
-  InstCombineWorklist(const InstCombineWorklist&) LLVM_DELETED_FUNCTION;
+  void operator=(const InstCombineWorklist&RHS) = delete;
+  InstCombineWorklist(const InstCombineWorklist&) = delete;
 public:
   InstCombineWorklist() {}
 

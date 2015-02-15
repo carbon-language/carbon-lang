@@ -176,8 +176,8 @@ public:
   }
 
 private:
-  LLVMContext(LLVMContext&) LLVM_DELETED_FUNCTION;
-  void operator=(LLVMContext&) LLVM_DELETED_FUNCTION;
+  LLVMContext(LLVMContext&) = delete;
+  void operator=(LLVMContext&) = delete;
 
   /// addModule - Register a module as being instantiated in this context.  If
   /// the context is deleted, the module will be deleted as well.

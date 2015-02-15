@@ -180,8 +180,8 @@ private:
     Use &getUse() const { return *UI; }
   };
 
-  void operator=(const Value &) LLVM_DELETED_FUNCTION;
-  Value(const Value &) LLVM_DELETED_FUNCTION;
+  void operator=(const Value &) = delete;
+  Value(const Value &) = delete;
 
 protected:
   Value(Type *Ty, unsigned scid);

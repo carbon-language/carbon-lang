@@ -74,8 +74,8 @@ public:
   ~FileOutputBuffer();
 
 private:
-  FileOutputBuffer(const FileOutputBuffer &) LLVM_DELETED_FUNCTION;
-  FileOutputBuffer &operator=(const FileOutputBuffer &) LLVM_DELETED_FUNCTION;
+  FileOutputBuffer(const FileOutputBuffer &) = delete;
+  FileOutputBuffer &operator=(const FileOutputBuffer &) = delete;
 
   FileOutputBuffer(std::unique_ptr<llvm::sys::fs::mapped_file_region> R,
                    StringRef Path, StringRef TempPath);

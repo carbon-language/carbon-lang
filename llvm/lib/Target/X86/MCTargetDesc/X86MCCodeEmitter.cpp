@@ -30,8 +30,8 @@ using namespace llvm;
 
 namespace {
 class X86MCCodeEmitter : public MCCodeEmitter {
-  X86MCCodeEmitter(const X86MCCodeEmitter &) LLVM_DELETED_FUNCTION;
-  void operator=(const X86MCCodeEmitter &) LLVM_DELETED_FUNCTION;
+  X86MCCodeEmitter(const X86MCCodeEmitter &) = delete;
+  void operator=(const X86MCCodeEmitter &) = delete;
   const MCInstrInfo &MCII;
   MCContext &Ctx;
 public:

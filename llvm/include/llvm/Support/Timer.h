@@ -126,7 +126,7 @@ private:
 ///
 class TimeRegion {
   Timer *T;
-  TimeRegion(const TimeRegion &) LLVM_DELETED_FUNCTION;
+  TimeRegion(const TimeRegion &) = delete;
 public:
   explicit TimeRegion(Timer &t) : T(&t) {
     T->startTimer();
@@ -164,8 +164,8 @@ class TimerGroup {
   std::vector<std::pair<TimeRecord, std::string> > TimersToPrint;
   
   TimerGroup **Prev, *Next; // Doubly linked list of TimerGroup's.
-  TimerGroup(const TimerGroup &TG) LLVM_DELETED_FUNCTION;
-  void operator=(const TimerGroup &TG) LLVM_DELETED_FUNCTION;
+  TimerGroup(const TimerGroup &TG) = delete;
+  void operator=(const TimerGroup &TG) = delete;
 public:
   explicit TimerGroup(StringRef name);
   ~TimerGroup();

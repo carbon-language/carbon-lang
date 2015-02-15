@@ -83,8 +83,8 @@ class Pass {
   AnalysisResolver *Resolver;  // Used to resolve analysis
   const void *PassID;
   PassKind Kind;
-  void operator=(const Pass&) LLVM_DELETED_FUNCTION;
-  Pass(const Pass &) LLVM_DELETED_FUNCTION;
+  void operator=(const Pass&) = delete;
+  Pass(const Pass &) = delete;
 
 public:
   explicit Pass(PassKind K, char &pid)

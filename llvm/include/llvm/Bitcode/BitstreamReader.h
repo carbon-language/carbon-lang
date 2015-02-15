@@ -50,8 +50,8 @@ private:
   /// information in the BlockInfo block. Only llvm-bcanalyzer uses this.
   bool IgnoreBlockInfoNames;
 
-  BitstreamReader(const BitstreamReader&) LLVM_DELETED_FUNCTION;
-  void operator=(const BitstreamReader&) LLVM_DELETED_FUNCTION;
+  BitstreamReader(const BitstreamReader&) = delete;
+  void operator=(const BitstreamReader&) = delete;
 public:
   BitstreamReader() : IgnoreBlockInfoNames(true) {
   }

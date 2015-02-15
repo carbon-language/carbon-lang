@@ -241,8 +241,8 @@ public:
 private:
   typedef detail::PassConcept<IRUnitT> PassConceptT;
 
-  PassManager(const PassManager &) LLVM_DELETED_FUNCTION;
-  PassManager &operator=(const PassManager &) LLVM_DELETED_FUNCTION;
+  PassManager(const PassManager &) = delete;
+  PassManager &operator=(const PassManager &) = delete;
 
   std::vector<std::unique_ptr<PassConceptT>> Passes;
 
@@ -281,9 +281,9 @@ template <typename DerivedT, typename IRUnitT> class AnalysisManagerBase {
     return static_cast<const DerivedT *>(this);
   }
 
-  AnalysisManagerBase(const AnalysisManagerBase &) LLVM_DELETED_FUNCTION;
+  AnalysisManagerBase(const AnalysisManagerBase &) = delete;
   AnalysisManagerBase &
-  operator=(const AnalysisManagerBase &) LLVM_DELETED_FUNCTION;
+  operator=(const AnalysisManagerBase &) = delete;
 
 protected:
   typedef detail::AnalysisResultConcept<IRUnitT> ResultConceptT;
@@ -453,8 +453,8 @@ public:
   }
 
 private:
-  AnalysisManager(const AnalysisManager &) LLVM_DELETED_FUNCTION;
-  AnalysisManager &operator=(const AnalysisManager &) LLVM_DELETED_FUNCTION;
+  AnalysisManager(const AnalysisManager &) = delete;
+  AnalysisManager &operator=(const AnalysisManager &) = delete;
 
   /// \brief Get an analysis result, running the pass if necessary.
   ResultConceptT &getResultImpl(void *PassID, IRUnitT &IR) {

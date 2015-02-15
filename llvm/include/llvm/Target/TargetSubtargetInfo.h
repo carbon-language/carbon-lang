@@ -42,8 +42,8 @@ template <typename T> class SmallVectorImpl;
 /// be exposed through a TargetSubtargetInfo-derived class.
 ///
 class TargetSubtargetInfo : public MCSubtargetInfo {
-  TargetSubtargetInfo(const TargetSubtargetInfo&) LLVM_DELETED_FUNCTION;
-  void operator=(const TargetSubtargetInfo&) LLVM_DELETED_FUNCTION;
+  TargetSubtargetInfo(const TargetSubtargetInfo&) = delete;
+  void operator=(const TargetSubtargetInfo&) = delete;
 protected: // Can only create subclasses...
   TargetSubtargetInfo();
 public:

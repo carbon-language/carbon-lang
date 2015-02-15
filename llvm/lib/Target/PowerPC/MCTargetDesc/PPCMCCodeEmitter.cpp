@@ -31,8 +31,8 @@ STATISTIC(MCNumEmitted, "Number of MC instructions emitted");
 
 namespace {
 class PPCMCCodeEmitter : public MCCodeEmitter {
-  PPCMCCodeEmitter(const PPCMCCodeEmitter &) LLVM_DELETED_FUNCTION;
-  void operator=(const PPCMCCodeEmitter &) LLVM_DELETED_FUNCTION;
+  PPCMCCodeEmitter(const PPCMCCodeEmitter &) = delete;
+  void operator=(const PPCMCCodeEmitter &) = delete;
 
   const MCInstrInfo &MCII;
   const MCContext &CTX;

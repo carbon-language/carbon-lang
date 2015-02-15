@@ -76,8 +76,8 @@ namespace llvm
     /// @name Do Not Implement
     /// @{
     private:
-      MutexImpl(const MutexImpl &) LLVM_DELETED_FUNCTION;
-      void operator=(const MutexImpl &) LLVM_DELETED_FUNCTION;
+      MutexImpl(const MutexImpl &) = delete;
+      void operator=(const MutexImpl &) = delete;
     /// @}
     };
 

@@ -32,8 +32,8 @@ using namespace llvm;
 namespace {
 
 class SIMCCodeEmitter : public  AMDGPUMCCodeEmitter {
-  SIMCCodeEmitter(const SIMCCodeEmitter &) LLVM_DELETED_FUNCTION;
-  void operator=(const SIMCCodeEmitter &) LLVM_DELETED_FUNCTION;
+  SIMCCodeEmitter(const SIMCCodeEmitter &) = delete;
+  void operator=(const SIMCCodeEmitter &) = delete;
   const MCInstrInfo &MCII;
   const MCRegisterInfo &MRI;
   MCContext &Ctx;

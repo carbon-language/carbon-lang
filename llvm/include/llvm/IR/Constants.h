@@ -46,8 +46,8 @@ template <class ConstantClass> struct ConstantAggrKeyType;
 /// @brief Class for constant integers.
 class ConstantInt : public Constant {
   void anchor() override;
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
-  ConstantInt(const ConstantInt &) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
+  ConstantInt(const ConstantInt &) = delete;
   ConstantInt(IntegerType *Ty, const APInt& V);
   APInt Val;
 protected:
@@ -228,8 +228,8 @@ public:
 class ConstantFP : public Constant {
   APFloat Val;
   void anchor() override;
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
-  ConstantFP(const ConstantFP &) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
+  ConstantFP(const ConstantFP &) = delete;
   friend class LLVMContextImpl;
 protected:
   ConstantFP(Type *Ty, const APFloat& V);
@@ -294,8 +294,8 @@ public:
 /// ConstantAggregateZero - All zero aggregate value
 ///
 class ConstantAggregateZero : public Constant {
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
-  ConstantAggregateZero(const ConstantAggregateZero &) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
+  ConstantAggregateZero(const ConstantAggregateZero &) = delete;
 protected:
   explicit ConstantAggregateZero(Type *ty)
     : Constant(ty, ConstantAggregateZeroVal, nullptr, 0) {}
@@ -338,7 +338,7 @@ public:
 ///
 class ConstantArray : public Constant {
   friend struct ConstantAggrKeyType<ConstantArray>;
-  ConstantArray(const ConstantArray &) LLVM_DELETED_FUNCTION;
+  ConstantArray(const ConstantArray &) = delete;
 protected:
   ConstantArray(ArrayType *T, ArrayRef<Constant *> Val);
 public:
@@ -380,7 +380,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantArray, Constant)
 //
 class ConstantStruct : public Constant {
   friend struct ConstantAggrKeyType<ConstantStruct>;
-  ConstantStruct(const ConstantStruct &) LLVM_DELETED_FUNCTION;
+  ConstantStruct(const ConstantStruct &) = delete;
 protected:
   ConstantStruct(StructType *T, ArrayRef<Constant *> Val);
 public:
@@ -439,7 +439,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantStruct, Constant)
 ///
 class ConstantVector : public Constant {
   friend struct ConstantAggrKeyType<ConstantVector>;
-  ConstantVector(const ConstantVector &) LLVM_DELETED_FUNCTION;
+  ConstantVector(const ConstantVector &) = delete;
 protected:
   ConstantVector(VectorType *T, ArrayRef<Constant *> Val);
 public:
@@ -488,8 +488,8 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantVector, Constant)
 /// ConstantPointerNull - a constant pointer value that points to null
 ///
 class ConstantPointerNull : public Constant {
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
-  ConstantPointerNull(const ConstantPointerNull &) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
+  ConstantPointerNull(const ConstantPointerNull &) = delete;
 protected:
   explicit ConstantPointerNull(PointerType *T)
     : Constant(T,
@@ -539,8 +539,8 @@ class ConstantDataSequential : public Constant {
   /// element array of i8, or a 1-element array of i32.  They'll both end up in
   /// the same StringMap bucket, linked up.
   ConstantDataSequential *Next;
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
-  ConstantDataSequential(const ConstantDataSequential &) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
+  ConstantDataSequential(const ConstantDataSequential &) = delete;
 protected:
   explicit ConstantDataSequential(Type *ty, ValueTy VT, const char *Data)
     : Constant(ty, VT, nullptr, 0), DataElements(Data), Next(nullptr) {}
@@ -650,8 +650,8 @@ private:
 /// operands because it stores all of the elements of the constant as densely
 /// packed data, instead of as Value*'s.
 class ConstantDataArray : public ConstantDataSequential {
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
-  ConstantDataArray(const ConstantDataArray &) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
+  ConstantDataArray(const ConstantDataArray &) = delete;
   void anchor() override;
   friend class ConstantDataSequential;
   explicit ConstantDataArray(Type *ty, const char *Data)
@@ -702,8 +702,8 @@ public:
 /// operands because it stores all of the elements of the constant as densely
 /// packed data, instead of as Value*'s.
 class ConstantDataVector : public ConstantDataSequential {
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
-  ConstantDataVector(const ConstantDataVector &) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
+  ConstantDataVector(const ConstantDataVector &) = delete;
   void anchor() override;
   friend class ConstantDataSequential;
   explicit ConstantDataVector(Type *ty, const char *Data)
@@ -753,7 +753,7 @@ public:
 /// BlockAddress - The address of a basic block.
 ///
 class BlockAddress : public Constant {
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
   void *operator new(size_t s) { return User::operator new(s, 2); }
   BlockAddress(Function *F, BasicBlock *BB);
 public:
@@ -1165,8 +1165,8 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantExpr, Constant)
 /// LangRef.html#undefvalues for details.
 ///
 class UndefValue : public Constant {
-  void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
-  UndefValue(const UndefValue &) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t, unsigned) = delete;
+  UndefValue(const UndefValue &) = delete;
 protected:
   explicit UndefValue(Type *T) : Constant(T, UndefValueVal, nullptr, 0) {}
 protected:

@@ -359,10 +359,9 @@ struct ConstantComparesGatherer {
   }
 
   /// Prevent copy
-  ConstantComparesGatherer(const ConstantComparesGatherer &)
-      LLVM_DELETED_FUNCTION;
+  ConstantComparesGatherer(const ConstantComparesGatherer &) = delete;
   ConstantComparesGatherer &
-  operator=(const ConstantComparesGatherer &) LLVM_DELETED_FUNCTION;
+  operator=(const ConstantComparesGatherer &) = delete;
 
 private:
 

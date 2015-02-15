@@ -447,8 +447,8 @@ private:
 };
 
 class HelpingMemoryManager : public SectionMemoryManager {
-  HelpingMemoryManager(const HelpingMemoryManager &) LLVM_DELETED_FUNCTION;
-  void operator=(const HelpingMemoryManager &) LLVM_DELETED_FUNCTION;
+  HelpingMemoryManager(const HelpingMemoryManager &) = delete;
+  void operator=(const HelpingMemoryManager &) = delete;
 
 public:
   HelpingMemoryManager(MCJITHelper *Helper) : MasterHelper(Helper) {}

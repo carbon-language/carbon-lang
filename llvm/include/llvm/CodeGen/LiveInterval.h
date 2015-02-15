@@ -745,7 +745,7 @@ namespace llvm {
 #endif
 
   private:
-    LiveInterval& operator=(const LiveInterval& rhs) LLVM_DELETED_FUNCTION;
+    LiveInterval& operator=(const LiveInterval& rhs) = delete;
 
     /// Appends @p Range to SubRanges list.
     void appendSubRange(SubRange *Range) {

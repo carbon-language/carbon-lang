@@ -49,7 +49,7 @@ private:
   friend class Module;
   Comdat();
   Comdat(SelectionKind SK, StringMapEntry<Comdat> *Name);
-  Comdat(const Comdat &) LLVM_DELETED_FUNCTION;
+  Comdat(const Comdat &) = delete;
 
   // Points to the map in Module.
   StringMapEntry<Comdat> *Name;

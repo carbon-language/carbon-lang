@@ -34,8 +34,8 @@ protected:
   /// had been provided by this instance. Higher level layers are responsible
   /// for taking any action required to handle the missing symbols.
   class LinkedObjectSet {
-    LinkedObjectSet(const LinkedObjectSet&) LLVM_DELETED_FUNCTION;
-    void operator=(const LinkedObjectSet&) LLVM_DELETED_FUNCTION;
+    LinkedObjectSet(const LinkedObjectSet&) = delete;
+    void operator=(const LinkedObjectSet&) = delete;
   public:
     LinkedObjectSet(std::unique_ptr<RTDyldMemoryManager> MM)
         : MM(std::move(MM)), RTDyld(llvm::make_unique<RuntimeDyld>(&*this->MM)),

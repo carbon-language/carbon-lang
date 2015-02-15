@@ -71,8 +71,8 @@ namespace llvm {
     unsigned short SubclassData;
 
   private:
-    SCEV(const SCEV &) LLVM_DELETED_FUNCTION;
-    void operator=(const SCEV &) LLVM_DELETED_FUNCTION;
+    SCEV(const SCEV &) = delete;
+    void operator=(const SCEV &) = delete;
 
   public:
     /// NoWrapFlags are bitfield indices into SubclassData.

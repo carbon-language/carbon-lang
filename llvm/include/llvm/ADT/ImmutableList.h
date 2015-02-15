@@ -33,8 +33,8 @@ class ImmutableListImpl : public FoldingSetNode {
 
   friend class ImmutableListFactory<T>;
 
-  void operator=(const ImmutableListImpl&) LLVM_DELETED_FUNCTION;
-  ImmutableListImpl(const ImmutableListImpl&) LLVM_DELETED_FUNCTION;
+  void operator=(const ImmutableListImpl&) = delete;
+  ImmutableListImpl(const ImmutableListImpl&) = delete;
 
 public:
   const T& getHead() const { return Head; }

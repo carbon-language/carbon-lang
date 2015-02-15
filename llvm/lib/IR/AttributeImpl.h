@@ -33,8 +33,8 @@ class AttributeImpl : public FoldingSetNode {
   unsigned char KindID; ///< Holds the AttrEntryKind of the attribute
 
   // AttributesImpl is uniqued, these should not be publicly available.
-  void operator=(const AttributeImpl &) LLVM_DELETED_FUNCTION;
-  AttributeImpl(const AttributeImpl &) LLVM_DELETED_FUNCTION;
+  void operator=(const AttributeImpl &) = delete;
+  AttributeImpl(const AttributeImpl &) = delete;
 
 protected:
   enum AttrEntryKind {
@@ -151,8 +151,8 @@ class AttributeSetNode : public FoldingSetNode {
   }
 
   // AttributesSetNode is uniqued, these should not be publicly available.
-  void operator=(const AttributeSetNode &) LLVM_DELETED_FUNCTION;
-  AttributeSetNode(const AttributeSetNode &) LLVM_DELETED_FUNCTION;
+  void operator=(const AttributeSetNode &) = delete;
+  AttributeSetNode(const AttributeSetNode &) = delete;
 public:
   static AttributeSetNode *get(LLVMContext &C, ArrayRef<Attribute> Attrs);
 
@@ -199,8 +199,8 @@ class AttributeSetImpl : public FoldingSetNode {
   }
 
   // AttributesSet is uniqued, these should not be publicly available.
-  void operator=(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
-  AttributeSetImpl(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
+  void operator=(const AttributeSetImpl &) = delete;
+  AttributeSetImpl(const AttributeSetImpl &) = delete;
 public:
   AttributeSetImpl(LLVMContext &C,
                    ArrayRef<std::pair<unsigned, AttributeSetNode *> > Attrs)

@@ -278,8 +278,8 @@ namespace llvm {
   /// DependenceAnalysis - This class is the main dependence-analysis driver.
   ///
   class DependenceAnalysis : public FunctionPass {
-    void operator=(const DependenceAnalysis &) LLVM_DELETED_FUNCTION;
-    DependenceAnalysis(const DependenceAnalysis &) LLVM_DELETED_FUNCTION;
+    void operator=(const DependenceAnalysis &) = delete;
+    DependenceAnalysis(const DependenceAnalysis &) = delete;
   public:
     /// depends - Tests for a dependence between the Src and Dst instructions.
     /// Returns NULL if no dependence; otherwise, returns a Dependence (or a

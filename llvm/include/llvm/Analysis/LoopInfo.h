@@ -79,9 +79,9 @@ class LoopBase {
 
   SmallPtrSet<const BlockT*, 8> DenseBlockSet;
 
-  LoopBase(const LoopBase<BlockT, LoopT> &) LLVM_DELETED_FUNCTION;
+  LoopBase(const LoopBase<BlockT, LoopT> &) = delete;
   const LoopBase<BlockT, LoopT>&
-    operator=(const LoopBase<BlockT, LoopT> &) LLVM_DELETED_FUNCTION;
+    operator=(const LoopBase<BlockT, LoopT> &) = delete;
 public:
   /// Loop ctor - This creates an empty loop.
   LoopBase() : ParentLoop(nullptr) {}
@@ -501,8 +501,8 @@ class LoopInfoBase {
   friend class LoopBase<BlockT, LoopT>;
   friend class LoopInfo;
 
-  void operator=(const LoopInfoBase &) LLVM_DELETED_FUNCTION;
-  LoopInfoBase(const LoopInfoBase &) LLVM_DELETED_FUNCTION;
+  void operator=(const LoopInfoBase &) = delete;
+  LoopInfoBase(const LoopInfoBase &) = delete;
 public:
   LoopInfoBase() { }
   ~LoopInfoBase() { releaseMemory(); }
@@ -651,8 +651,8 @@ class LoopInfo : public LoopInfoBase<BasicBlock, Loop> {
 
   friend class LoopBase<BasicBlock, Loop>;
 
-  void operator=(const LoopInfo &) LLVM_DELETED_FUNCTION;
-  LoopInfo(const LoopInfo &) LLVM_DELETED_FUNCTION;
+  void operator=(const LoopInfo &) = delete;
+  LoopInfo(const LoopInfo &) = delete;
 public:
   LoopInfo() {}
 

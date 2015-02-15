@@ -37,7 +37,7 @@ namespace {
               cl::value_desc("input IR file name"));
 
   cl::opt<bool>
-  VerboseOutput("verbose", 
+  VerboseOutput("verbose",
                 cl::desc("Enable verbose output (results, IR, etc.) to stderr"),
                 cl::init(false));
 
@@ -830,8 +830,8 @@ private:
 
 class HelpingMemoryManager : public SectionMemoryManager
 {
-  HelpingMemoryManager(const HelpingMemoryManager&) LLVM_DELETED_FUNCTION;
-  void operator=(const HelpingMemoryManager&) LLVM_DELETED_FUNCTION;
+  HelpingMemoryManager(const HelpingMemoryManager&) = delete;
+  void operator=(const HelpingMemoryManager&) = delete;
 
 public:
   HelpingMemoryManager(MCJITHelper *Helper) : MasterHelper(Helper) {}

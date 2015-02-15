@@ -38,8 +38,8 @@ class raw_ostream;
 /// operands are actually symbolizable, and in what way. I don't think this
 /// information exists right now.
 class MCSymbolizer {
-  MCSymbolizer(const MCSymbolizer &) LLVM_DELETED_FUNCTION;
-  void operator=(const MCSymbolizer &) LLVM_DELETED_FUNCTION;
+  MCSymbolizer(const MCSymbolizer &) = delete;
+  void operator=(const MCSymbolizer &) = delete;
 
 protected:
   MCContext &Ctx;

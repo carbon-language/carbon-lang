@@ -244,7 +244,7 @@ TEST_F(StringMapTest, InsertRehashingPairTest) {
 // Create a non-default constructable value
 struct StringMapTestStruct {
   StringMapTestStruct(int i) : i(i) {}
-  StringMapTestStruct() LLVM_DELETED_FUNCTION;
+  StringMapTestStruct() = delete;
   int i;
 };
 
@@ -258,7 +258,7 @@ TEST_F(StringMapTest, NonDefaultConstructable) {
 
 struct Immovable {
   Immovable() {}
-  Immovable(Immovable&&) LLVM_DELETED_FUNCTION; // will disable the other special members
+  Immovable(Immovable&&) = delete; // will disable the other special members
 };
 
 struct MoveOnly {
@@ -272,8 +272,8 @@ struct MoveOnly {
   }
 
 private:
-  MoveOnly(const MoveOnly &) LLVM_DELETED_FUNCTION;
-  MoveOnly &operator=(const MoveOnly &) LLVM_DELETED_FUNCTION;
+  MoveOnly(const MoveOnly &) = delete;
+  MoveOnly &operator=(const MoveOnly &) = delete;
 };
 
 TEST_F(StringMapTest, MoveOnly) {

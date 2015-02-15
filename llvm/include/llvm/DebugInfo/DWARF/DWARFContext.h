@@ -44,8 +44,8 @@ class DWARFContext : public DIContext {
   std::unique_ptr<DWARFDebugAbbrev> AbbrevDWO;
   std::unique_ptr<DWARFDebugLocDWO> LocDWO;
 
-  DWARFContext(DWARFContext &) LLVM_DELETED_FUNCTION;
-  DWARFContext &operator=(DWARFContext &) LLVM_DELETED_FUNCTION;
+  DWARFContext(DWARFContext &) = delete;
+  DWARFContext &operator=(DWARFContext &) = delete;
 
   /// Read compile units from the debug_info section (if necessary)
   /// and store them in CUs.

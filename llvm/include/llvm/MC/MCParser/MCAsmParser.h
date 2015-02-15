@@ -68,8 +68,8 @@ public:
     ExtensionDirectiveHandler;
 
 private:
-  MCAsmParser(const MCAsmParser &) LLVM_DELETED_FUNCTION;
-  void operator=(const MCAsmParser &) LLVM_DELETED_FUNCTION;
+  MCAsmParser(const MCAsmParser &) = delete;
+  void operator=(const MCAsmParser &) = delete;
 
   MCTargetAsmParser *TargetParser;
 

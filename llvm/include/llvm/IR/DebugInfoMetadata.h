@@ -63,7 +63,7 @@ class MDLocation : public MDNode {
   }
 
   // Disallow replacing operands.
-  void replaceOperandWith(unsigned I, Metadata *New) LLVM_DELETED_FUNCTION;
+  void replaceOperandWith(unsigned I, Metadata *New) = delete;
 
 public:
   DEFINE_MDNODE_GET(MDLocation,

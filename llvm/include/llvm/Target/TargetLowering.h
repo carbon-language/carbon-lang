@@ -77,8 +77,8 @@ namespace llvm {
 /// This base class for TargetLowering contains the SelectionDAG-independent
 /// parts that can be used from the rest of CodeGen.
 class TargetLoweringBase {
-  TargetLoweringBase(const TargetLoweringBase&) LLVM_DELETED_FUNCTION;
-  void operator=(const TargetLoweringBase&) LLVM_DELETED_FUNCTION;
+  TargetLoweringBase(const TargetLoweringBase&) = delete;
+  void operator=(const TargetLoweringBase&) = delete;
 
 public:
   /// This enum indicates whether operations are valid for a target, and if not,
@@ -2024,8 +2024,8 @@ protected:
 /// This class also defines callbacks that targets must implement to lower
 /// target-specific constructs to SelectionDAG operators.
 class TargetLowering : public TargetLoweringBase {
-  TargetLowering(const TargetLowering&) LLVM_DELETED_FUNCTION;
-  void operator=(const TargetLowering&) LLVM_DELETED_FUNCTION;
+  TargetLowering(const TargetLowering&) = delete;
+  void operator=(const TargetLowering&) = delete;
 
 public:
   /// NOTE: The TargetMachine owns TLOF.

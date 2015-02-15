@@ -32,8 +32,8 @@ class raw_ostream;
 
 /// MCAsmBackend - Generic interface to target specific assembler backends.
 class MCAsmBackend {
-  MCAsmBackend(const MCAsmBackend &) LLVM_DELETED_FUNCTION;
-  void operator=(const MCAsmBackend &) LLVM_DELETED_FUNCTION;
+  MCAsmBackend(const MCAsmBackend &) = delete;
+  void operator=(const MCAsmBackend &) = delete;
 
 protected: // Can only create subclasses.
   MCAsmBackend();

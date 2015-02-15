@@ -90,8 +90,8 @@ class ScopedHashTableScope {
   /// LastValInScope - This is the last value that was inserted for this scope
   /// or null if none have been inserted yet.
   ScopedHashTableVal<K, V> *LastValInScope;
-  void operator=(ScopedHashTableScope&) LLVM_DELETED_FUNCTION;
-  ScopedHashTableScope(ScopedHashTableScope&) LLVM_DELETED_FUNCTION;
+  void operator=(ScopedHashTableScope&) = delete;
+  ScopedHashTableScope(ScopedHashTableScope&) = delete;
 public:
   ScopedHashTableScope(ScopedHashTable<K, V, KInfo, AllocatorTy> &HT);
   ~ScopedHashTableScope();

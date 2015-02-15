@@ -82,8 +82,8 @@ private:
   void setParent(Function *parent);
   friend class SymbolTableListTraits<BasicBlock, Function>;
 
-  BasicBlock(const BasicBlock &) LLVM_DELETED_FUNCTION;
-  void operator=(const BasicBlock &) LLVM_DELETED_FUNCTION;
+  BasicBlock(const BasicBlock &) = delete;
+  void operator=(const BasicBlock &) = delete;
 
   /// \brief Constructor.
   ///

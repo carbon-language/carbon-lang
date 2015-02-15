@@ -86,8 +86,8 @@ class ValueMap {
   MapT Map;
   std::unique_ptr<MDMapT> MDMap;
   ExtraData Data;
-  ValueMap(const ValueMap&) LLVM_DELETED_FUNCTION;
-  ValueMap& operator=(const ValueMap&) LLVM_DELETED_FUNCTION;
+  ValueMap(const ValueMap&) = delete;
+  ValueMap& operator=(const ValueMap&) = delete;
 public:
   typedef KeyT key_type;
   typedef ValueT mapped_type;

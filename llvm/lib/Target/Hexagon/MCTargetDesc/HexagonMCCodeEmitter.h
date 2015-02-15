@@ -51,8 +51,8 @@ public:
                              MCSubtargetInfo const &STI) const;
 
 private:
-  HexagonMCCodeEmitter(HexagonMCCodeEmitter const &) LLVM_DELETED_FUNCTION;
-  void operator=(HexagonMCCodeEmitter const &) LLVM_DELETED_FUNCTION;
+  HexagonMCCodeEmitter(HexagonMCCodeEmitter const &) = delete;
+  void operator=(HexagonMCCodeEmitter const &) = delete;
 }; // class HexagonMCCodeEmitter
 
 } // namespace llvm

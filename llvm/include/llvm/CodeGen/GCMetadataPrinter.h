@@ -44,8 +44,8 @@ protected:
   GCMetadataPrinter();
 
 private:
-  GCMetadataPrinter(const GCMetadataPrinter &) LLVM_DELETED_FUNCTION;
-  GCMetadataPrinter &operator=(const GCMetadataPrinter &) LLVM_DELETED_FUNCTION;
+  GCMetadataPrinter(const GCMetadataPrinter &) = delete;
+  GCMetadataPrinter &operator=(const GCMetadataPrinter &) = delete;
 
 public:
   GCStrategy &getStrategy() { return *S; }

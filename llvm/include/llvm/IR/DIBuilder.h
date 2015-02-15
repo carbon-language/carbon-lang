@@ -80,8 +80,8 @@ namespace llvm {
     /// Each subprogram's preserved local variables.
     DenseMap<MDNode *, std::vector<TrackingMDNodeRef>> PreservedVariables;
 
-    DIBuilder(const DIBuilder &) LLVM_DELETED_FUNCTION;
-    void operator=(const DIBuilder &) LLVM_DELETED_FUNCTION;
+    DIBuilder(const DIBuilder &) = delete;
+    void operator=(const DIBuilder &) = delete;
 
     /// \brief Create a temporary.
     ///

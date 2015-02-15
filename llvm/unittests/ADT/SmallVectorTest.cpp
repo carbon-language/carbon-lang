@@ -144,8 +144,8 @@ struct NonCopyable {
   NonCopyable(NonCopyable &&) {}
   NonCopyable &operator=(NonCopyable &&) { return *this; }
 private:
-  NonCopyable(const NonCopyable &) LLVM_DELETED_FUNCTION;
-  NonCopyable &operator=(const NonCopyable &) LLVM_DELETED_FUNCTION;
+  NonCopyable(const NonCopyable &) = delete;
+  NonCopyable &operator=(const NonCopyable &) = delete;
 };
 
 LLVM_ATTRIBUTE_USED void CompileTest() {
@@ -786,8 +786,8 @@ template <int I> struct EmplaceableArg {
   explicit EmplaceableArg(bool) : State(EAS_Arg) {}
 
 private:
-  EmplaceableArg &operator=(EmplaceableArg &&) LLVM_DELETED_FUNCTION;
-  EmplaceableArg &operator=(const EmplaceableArg &) LLVM_DELETED_FUNCTION;
+  EmplaceableArg &operator=(EmplaceableArg &&) = delete;
+  EmplaceableArg &operator=(const EmplaceableArg &) = delete;
 };
 
 enum EmplaceableState { ES_Emplaced, ES_Moved };
@@ -827,8 +827,8 @@ struct Emplaceable {
   }
 
 private:
-  Emplaceable(const Emplaceable &) LLVM_DELETED_FUNCTION;
-  Emplaceable &operator=(const Emplaceable &) LLVM_DELETED_FUNCTION;
+  Emplaceable(const Emplaceable &) = delete;
+  Emplaceable &operator=(const Emplaceable &) = delete;
 };
 
 TEST(SmallVectorTest, EmplaceBack) {

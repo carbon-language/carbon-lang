@@ -47,8 +47,8 @@ class MCAsmBackend;
 class MCFragment : public ilist_node<MCFragment> {
   friend class MCAsmLayout;
 
-  MCFragment(const MCFragment&) LLVM_DELETED_FUNCTION;
-  void operator=(const MCFragment&) LLVM_DELETED_FUNCTION;
+  MCFragment(const MCFragment&) = delete;
+  void operator=(const MCFragment&) = delete;
 
 public:
   enum FragmentType {
@@ -563,8 +563,8 @@ public:
 class MCSectionData : public ilist_node<MCSectionData> {
   friend class MCAsmLayout;
 
-  MCSectionData(const MCSectionData&) LLVM_DELETED_FUNCTION;
-  void operator=(const MCSectionData&) LLVM_DELETED_FUNCTION;
+  MCSectionData(const MCSectionData&) = delete;
+  void operator=(const MCSectionData&) = delete;
 
 public:
   typedef iplist<MCFragment> FragmentListType;
@@ -865,8 +865,8 @@ public:
     unsigned Update;
   } VersionMinInfoType;
 private:
-  MCAssembler(const MCAssembler&) LLVM_DELETED_FUNCTION;
-  void operator=(const MCAssembler&) LLVM_DELETED_FUNCTION;
+  MCAssembler(const MCAssembler&) = delete;
+  void operator=(const MCAssembler&) = delete;
 
   MCContext &Context;
 

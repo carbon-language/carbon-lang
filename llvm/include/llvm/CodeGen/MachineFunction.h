@@ -145,8 +145,8 @@ class MachineFunction {
   /// True if the function includes any inline assembly.
   bool HasInlineAsm;
 
-  MachineFunction(const MachineFunction &) LLVM_DELETED_FUNCTION;
-  void operator=(const MachineFunction&) LLVM_DELETED_FUNCTION;
+  MachineFunction(const MachineFunction &) = delete;
+  void operator=(const MachineFunction&) = delete;
 public:
   MachineFunction(const Function *Fn, const TargetMachine &TM,
                   unsigned FunctionNum, MachineModuleInfo &MMI);

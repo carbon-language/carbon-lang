@@ -624,9 +624,9 @@ std::error_code getUniqueID(const Twine Path, UniqueID &Result);
 /// This class represents a memory mapped file. It is based on
 /// boost::iostreams::mapped_file.
 class mapped_file_region {
-  mapped_file_region() LLVM_DELETED_FUNCTION;
-  mapped_file_region(mapped_file_region&) LLVM_DELETED_FUNCTION;
-  mapped_file_region &operator =(mapped_file_region&) LLVM_DELETED_FUNCTION;
+  mapped_file_region() = delete;
+  mapped_file_region(mapped_file_region&) = delete;
+  mapped_file_region &operator =(mapped_file_region&) = delete;
 
 public:
   enum mapmode {

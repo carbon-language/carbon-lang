@@ -46,7 +46,7 @@ namespace llvm {
 
     /// Compiles the given regular expression \p Regex.
     Regex(StringRef Regex, unsigned Flags = NoFlags);
-    Regex(const Regex &) LLVM_DELETED_FUNCTION;
+    Regex(const Regex &) = delete;
     Regex &operator=(Regex regex) {
       std::swap(preg, regex.preg);
       std::swap(error, regex.error);

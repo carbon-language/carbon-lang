@@ -40,8 +40,8 @@ class MemoryBuffer {
   const char *BufferStart; // Start of the buffer.
   const char *BufferEnd;   // End of the buffer.
 
-  MemoryBuffer(const MemoryBuffer &) LLVM_DELETED_FUNCTION;
-  MemoryBuffer &operator=(const MemoryBuffer &) LLVM_DELETED_FUNCTION;
+  MemoryBuffer(const MemoryBuffer &) = delete;
+  MemoryBuffer &operator=(const MemoryBuffer &) = delete;
 protected:
   MemoryBuffer() {}
   void init(const char *BufStart, const char *BufEnd,

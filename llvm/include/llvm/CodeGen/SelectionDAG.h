@@ -115,8 +115,8 @@ class SDDbgInfo {
   typedef DenseMap<const SDNode*, SmallVector<SDDbgValue*, 2> > DbgValMapType;
   DbgValMapType DbgValMap;
 
-  void operator=(const SDDbgInfo&) LLVM_DELETED_FUNCTION;
-  SDDbgInfo(const SDDbgInfo&) LLVM_DELETED_FUNCTION;
+  void operator=(const SDDbgInfo&) = delete;
+  SDDbgInfo(const SDDbgInfo&) = delete;
 public:
   SDDbgInfo() {}
 
@@ -262,8 +262,8 @@ private:
                               DenseSet<SDNode *> &visited,
                               int level, bool &printed);
 
-  void operator=(const SelectionDAG&) LLVM_DELETED_FUNCTION;
-  SelectionDAG(const SelectionDAG&) LLVM_DELETED_FUNCTION;
+  void operator=(const SelectionDAG&) = delete;
+  SelectionDAG(const SelectionDAG&) = delete;
 
 public:
   explicit SelectionDAG(const TargetMachine &TM, llvm::CodeGenOpt::Level);

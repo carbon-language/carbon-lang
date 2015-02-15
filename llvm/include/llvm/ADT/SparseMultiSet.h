@@ -133,8 +133,8 @@ class SparseMultiSet {
 
   // Disable copy construction and assignment.
   // This data structure is not meant to be used that way.
-  SparseMultiSet(const SparseMultiSet&) LLVM_DELETED_FUNCTION;
-  SparseMultiSet &operator=(const SparseMultiSet&) LLVM_DELETED_FUNCTION;
+  SparseMultiSet(const SparseMultiSet&) = delete;
+  SparseMultiSet &operator=(const SparseMultiSet&) = delete;
 
   /// Whether the given entry is the head of the list. List heads's previous
   /// pointers are to the tail of the list, allowing for efficient access to the

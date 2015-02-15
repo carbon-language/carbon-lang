@@ -18,7 +18,7 @@ namespace llvm {
 /// \brief A helper class that resets the output stream's color if needed
 /// when destroyed.
 class ColoredRawOstream {
-  ColoredRawOstream(const ColoredRawOstream &OS) LLVM_DELETED_FUNCTION;
+  ColoredRawOstream(const ColoredRawOstream &OS) = delete;
 
 public:
   raw_ostream &OS;

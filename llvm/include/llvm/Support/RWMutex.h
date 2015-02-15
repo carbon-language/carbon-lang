@@ -76,8 +76,8 @@ namespace llvm
     /// @name Do Not Implement
     /// @{
     private:
-      RWMutexImpl(const RWMutexImpl & original) LLVM_DELETED_FUNCTION;
-      void operator=(const RWMutexImpl &) LLVM_DELETED_FUNCTION;
+      RWMutexImpl(const RWMutexImpl & original) = delete;
+      void operator=(const RWMutexImpl &) = delete;
     /// @}
     };
 

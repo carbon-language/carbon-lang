@@ -37,8 +37,8 @@ class MCValue;
 /// The object writer also contains a number of helper methods for writing
 /// binary data to the output stream.
 class MCObjectWriter {
-  MCObjectWriter(const MCObjectWriter &) LLVM_DELETED_FUNCTION;
-  void operator=(const MCObjectWriter &) LLVM_DELETED_FUNCTION;
+  MCObjectWriter(const MCObjectWriter &) = delete;
+  void operator=(const MCObjectWriter &) = delete;
 
 protected:
   raw_ostream &OS;
