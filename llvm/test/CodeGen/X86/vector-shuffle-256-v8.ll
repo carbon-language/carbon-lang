@@ -954,8 +954,8 @@ define <8 x i32> @shuffle_v8i32_01014545(<8 x i32> %a, <8 x i32> %b) {
 define <8 x i32> @shuffle_v8i32_00112233(<8 x i32> %a, <8 x i32> %b) {
 ; AVX1-LABEL: shuffle_v8i32_00112233:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vunpcklps {{.*#+}} xmm1 = xmm0[0,0,1,1]
-; AVX1-NEXT:    vunpckhps {{.*#+}} xmm0 = xmm0[2,2,3,3]
+; AVX1-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[0,0,1,1]
+; AVX1-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[2,2,3,3]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX1-NEXT:    retq
 ;

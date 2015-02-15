@@ -10139,14 +10139,43 @@ static SDValue splitAndLowerVectorShuffle(SDLoc DL, MVT VT, SDValue V1,
   MVT ScalarVT = VT.getScalarType();
   MVT SplitVT = MVT::getVectorVT(ScalarVT, NumElements / 2);
 
-  SDValue LoV1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SplitVT, V1,
-                             DAG.getIntPtrConstant(0));
-  SDValue HiV1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SplitVT, V1,
-                             DAG.getIntPtrConstant(SplitNumElements));
-  SDValue LoV2 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SplitVT, V2,
-                             DAG.getIntPtrConstant(0));
-  SDValue HiV2 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SplitVT, V2,
-                             DAG.getIntPtrConstant(SplitNumElements));
+  // Rather than splitting build-vectors, just build two narrower build
+  // vectors. This helps shuffling with splats and zeros.
+  auto SplitVector = [&](SDValue V) {
+    while (V.getOpcode() == ISD::BITCAST)
+      V = V->getOperand(0);
+
+    MVT OrigVT = V.getSimpleValueType();
+    int OrigNumElements = OrigVT.getVectorNumElements();
+    int OrigSplitNumElements = OrigNumElements / 2;
+    MVT OrigScalarVT = OrigVT.getScalarType();
+    MVT OrigSplitVT = MVT::getVectorVT(OrigScalarVT, OrigNumElements / 2);
+
+    SDValue LoV, HiV;
+
+    auto *BV = dyn_cast<BuildVectorSDNode>(V);
+    if (!BV) {
+      LoV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, OrigSplitVT, V,
+                        DAG.getIntPtrConstant(0));
+      HiV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, OrigSplitVT, V,
+                        DAG.getIntPtrConstant(OrigSplitNumElements));
+    } else {
+
+      SmallVector<SDValue, 16> LoOps, HiOps;
+      for (int i = 0; i < OrigSplitNumElements; ++i) {
+        LoOps.push_back(BV->getOperand(i));
+        HiOps.push_back(BV->getOperand(i + OrigSplitNumElements));
+      }
+      LoV = DAG.getNode(ISD::BUILD_VECTOR, DL, OrigSplitVT, LoOps);
+      HiV = DAG.getNode(ISD::BUILD_VECTOR, DL, OrigSplitVT, HiOps);
+    }
+    return std::make_pair(DAG.getNode(ISD::BITCAST, DL, SplitVT, LoV),
+                          DAG.getNode(ISD::BITCAST, DL, SplitVT, HiV));
+  };
+
+  SDValue LoV1, HiV1, LoV2, HiV2;
+  std::tie(LoV1, HiV1) = SplitVector(V1);
+  std::tie(LoV2, HiV2) = SplitVector(V2);
 
   // Now create two 4-way blends of these half-width vectors.
   auto HalfBlend = [&](ArrayRef<int> HalfMask) {
