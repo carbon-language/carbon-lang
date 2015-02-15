@@ -8599,9 +8599,9 @@ static bool isSingleSHUFPSMask(ArrayRef<int> Mask) {
 
   // To lower with a single SHUFPS we need to have the low half and high half
   // each requiring a single input.
-  if (Mask[0] != -1 && Mask[1] != -1 && (Mask[0] < 4 != Mask[1] < 4))
+  if (Mask[0] != -1 && Mask[1] != -1 && (Mask[0] < 4) != (Mask[1] < 4))
     return false;
-  if (Mask[2] != -1 && Mask[3] != -1 && (Mask[2] < 4 != Mask[3] < 4))
+  if (Mask[2] != -1 && Mask[3] != -1 && (Mask[2] < 4) != (Mask[3] < 4))
     return false;
 
   return true;
