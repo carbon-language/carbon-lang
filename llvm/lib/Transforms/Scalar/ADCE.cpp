@@ -69,11 +69,11 @@ bool ADCE::runOnFunction(Function& F) {
   // Propagate liveness backwards to operands.
   while (!Worklist.empty()) {
     Instruction *Curr = Worklist.pop_back_val();
-    for (Instruction::op_iterator OI = Curr->op_begin(), OE = Curr->op_end();
-         OI != OE; ++OI)
+    for (Use &OI : Curr->operands()) {
       if (Instruction *Inst = dyn_cast<Instruction>(OI))
         if (Alive.insert(Inst).second)
           Worklist.push_back(Inst);
+    }
   }
 
   // The inverse of the live set is the dead set.  These are those instructions
