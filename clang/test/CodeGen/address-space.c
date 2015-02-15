@@ -20,7 +20,7 @@ __attribute__((address_space(2))) int *A, *B;
 
 // CHECK-LABEL: define void @test3()
 // CHECK: load i32 addrspace(2)** @B
-// CHECK: load i32 addrspace(2)* 
+// CHECK: load i32 addrspace(2)*
 // CHECK: load i32 addrspace(2)** @A
 // CHECK: store i32 {{.*}}, i32 addrspace(2)*
 void test3() {
