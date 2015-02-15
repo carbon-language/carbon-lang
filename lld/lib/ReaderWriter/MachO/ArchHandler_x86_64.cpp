@@ -475,11 +475,11 @@ void ArchHandler_x86_64::applyFixupFinal(
     const Reference &ref, uint8_t *loc, uint64_t fixupAddress,
     uint64_t targetAddress, uint64_t inAtomAddress, uint64_t imageBaseAddress,
     FindAddressForAtom findSectionAddress) {
-  ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
-  ulittle64_t *loc64 = reinterpret_cast<ulittle64_t *>(loc);
   if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return;
   assert(ref.kindArch() == Reference::KindArch::x86_64);
+  ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
+  ulittle64_t *loc64 = reinterpret_cast<ulittle64_t *>(loc);
   switch (static_cast<X86_64_Kinds>(ref.kindValue())) {
   case branch32:
   case ripRel32:
@@ -548,6 +548,9 @@ void ArchHandler_x86_64::applyFixupRelocatable(const Reference &ref,
                                                uint64_t fixupAddress,
                                                uint64_t targetAddress,
                                                uint64_t inAtomAddress)  {
+  if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
+    return;
+  assert(ref.kindArch() == Reference::KindArch::x86_64);
   ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
   ulittle64_t *loc64 = reinterpret_cast<ulittle64_t *>(loc);
   switch (static_cast<X86_64_Kinds>(ref.kindValue())) {

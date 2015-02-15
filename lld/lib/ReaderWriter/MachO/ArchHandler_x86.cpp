@@ -133,7 +133,7 @@ private:
   static const Registry::KindStrings _sKindStrings[];
   static const StubInfo              _sStubInfo;
 
-  enum : Reference::KindValue {
+  enum X86_Kinds : Reference::KindValue {
     invalid,               /// for error condition
 
     modeCode,              /// Content starting at this offset is code.
@@ -441,7 +441,7 @@ void ArchHandler_x86::applyFixupFinal(const Reference &ref, uint8_t *loc,
     return;
   assert(ref.kindArch() == Reference::KindArch::x86);
   ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
-  switch (ref.kindValue()) {
+  switch (static_cast<X86_Kinds>(ref.kindValue())) {
   case branch32:
     *loc32 = (targetAddress - (fixupAddress + 4)) + ref.addend();
     break;
@@ -469,7 +469,7 @@ void ArchHandler_x86::applyFixupFinal(const Reference &ref, uint8_t *loc,
   case lazyImmediateLocation:
     *loc32 = ref.addend();
     break;
-  default:
+  case invalid:
     llvm_unreachable("invalid x86 Reference Kind");
     break;
   }
@@ -480,10 +480,13 @@ void ArchHandler_x86::applyFixupRelocatable(const Reference &ref,
                                                uint64_t fixupAddress,
                                                uint64_t targetAddress,
                                                uint64_t inAtomAddress) {
+  if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
+    return;
+  assert(ref.kindArch() == Reference::KindArch::x86);
   bool useExternalReloc = useExternalRelocationTo(*ref.target());
   ulittle16_t *loc16 = reinterpret_cast<ulittle16_t *>(loc);
   ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
-  switch (ref.kindValue()) {
+  switch (static_cast<X86_Kinds>(ref.kindValue())) {
   case branch32:
     if (useExternalReloc)
       *loc32 = ref.addend() - (fixupAddress + 4);
@@ -515,7 +518,7 @@ void ArchHandler_x86::applyFixupRelocatable(const Reference &ref,
   case lazyImmediateLocation:
     // do nothing
     break;
-  default:
+  case invalid:
     llvm_unreachable("invalid x86 Reference Kind");
     break;
   }
@@ -556,7 +559,7 @@ void ArchHandler_x86::appendSectionRelocations(
   assert(ref.kindArch() == Reference::KindArch::x86);
   uint32_t sectionOffset = atomSectionOffset + ref.offsetInAtom();
   bool useExternalReloc = useExternalRelocationTo(*ref.target());
-  switch (ref.kindValue()) {
+  switch (static_cast<X86_Kinds>(ref.kindValue())) {
   case modeCode:
   case modeData:
     break;
@@ -624,10 +627,9 @@ void ArchHandler_x86::appendSectionRelocations(
   case lazyImmediateLocation:
     llvm_unreachable("lazy reference kind implies Stubs pass was run");
     break;
-  default:
+  case invalid:
     llvm_unreachable("unknown x86 Reference Kind");
     break;
-
   }
 }
 
