@@ -2537,3 +2537,28 @@ define <4 x float> @combine_insertps4(<4 x float> %a, <4 x float> %b) {
   %d = shufflevector <4 x float> %a, <4 x float> %c, <4 x i32><i32 4, i32 1, i32 6, i32 5>
   ret <4 x float> %d
 }
+
+define <4 x float> @PR22377(<4 x float> %a, <4 x float> %b) #0 {
+; SSE-LABEL: PR22377:
+; SSE:       # BB#0: # %entry
+; SSE-NEXT:    movaps %xmm0, %xmm1
+; SSE-NEXT:    shufps {{.*#+}} xmm1 = xmm1[1,3,1,3]
+; SSE-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2,0,2]
+; SSE-NEXT:    addps %xmm0, %xmm1
+; SSE-NEXT:    unpcklps {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: PR22377:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[1,3,1,3]
+; AVX-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,2,0,2]
+; AVX-NEXT:    vaddps %xmm0, %xmm1, %xmm1
+; AVX-NEXT:    vunpcklps {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+; AVX-NEXT:    retq
+entry:
+  %s1 = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 1, i32 3, i32 1, i32 3>
+  %s2 = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 0, i32 2, i32 0, i32 2>
+  %r2 = fadd <4 x float> %s1, %s2
+  %s3 = shufflevector <4 x float> %s2, <4 x float> %r2, <4 x i32> <i32 0, i32 4, i32 1, i32 5>
+  ret <4 x float> %s3
+}
