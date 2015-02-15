@@ -309,50 +309,9 @@ public:
   // Variadic templates would make this not terrible.
 
   /// Push a lazily-created cleanup on the stack.
-  template <class T>
-  void pushCleanup(CleanupKind Kind) {
+  template <class T, class... As> void pushCleanup(CleanupKind Kind, As... A) {
     void *Buffer = pushCleanup(Kind, sizeof(T));
-    Cleanup *Obj = new(Buffer) T();
-    (void) Obj;
-  }
-
-  /// Push a lazily-created cleanup on the stack.
-  template <class T, class A0>
-  void pushCleanup(CleanupKind Kind, A0 a0) {
-    void *Buffer = pushCleanup(Kind, sizeof(T));
-    Cleanup *Obj = new(Buffer) T(a0);
-    (void) Obj;
-  }
-
-  /// Push a lazily-created cleanup on the stack.
-  template <class T, class A0, class A1>
-  void pushCleanup(CleanupKind Kind, A0 a0, A1 a1) {
-    void *Buffer = pushCleanup(Kind, sizeof(T));
-    Cleanup *Obj = new(Buffer) T(a0, a1);
-    (void) Obj;
-  }
-
-  /// Push a lazily-created cleanup on the stack.
-  template <class T, class A0, class A1, class A2>
-  void pushCleanup(CleanupKind Kind, A0 a0, A1 a1, A2 a2) {
-    void *Buffer = pushCleanup(Kind, sizeof(T));
-    Cleanup *Obj = new(Buffer) T(a0, a1, a2);
-    (void) Obj;
-  }
-
-  /// Push a lazily-created cleanup on the stack.
-  template <class T, class A0, class A1, class A2, class A3>
-  void pushCleanup(CleanupKind Kind, A0 a0, A1 a1, A2 a2, A3 a3) {
-    void *Buffer = pushCleanup(Kind, sizeof(T));
-    Cleanup *Obj = new(Buffer) T(a0, a1, a2, a3);
-    (void) Obj;
-  }
-
-  /// Push a lazily-created cleanup on the stack.
-  template <class T, class A0, class A1, class A2, class A3, class A4>
-  void pushCleanup(CleanupKind Kind, A0 a0, A1 a1, A2 a2, A3 a3, A4 a4) {
-    void *Buffer = pushCleanup(Kind, sizeof(T));
-    Cleanup *Obj = new(Buffer) T(a0, a1, a2, a3, a4);
+    Cleanup *Obj = new (Buffer) T(A...);
     (void) Obj;
   }
 
@@ -369,10 +328,10 @@ public:
   ///
   /// The pointer returned from this method is valid until the cleanup
   /// stack is modified.
-  template <class T, class A0, class A1, class A2>
-  T *pushCleanupWithExtra(CleanupKind Kind, size_t N, A0 a0, A1 a1, A2 a2) {
+  template <class T, class... As>
+  T *pushCleanupWithExtra(CleanupKind Kind, size_t N, As A) {
     void *Buffer = pushCleanup(Kind, sizeof(T) + T::getExtraSize(N));
-    return new (Buffer) T(N, a0, a1, a2);
+    return new (Buffer) T(N, A...);
   }
 
   void pushCopyOfCleanup(CleanupKind Kind, const void *Cleanup, size_t Size) {
