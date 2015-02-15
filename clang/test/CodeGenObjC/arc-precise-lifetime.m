@@ -110,7 +110,7 @@ void test1d(void) {
   // CHECK-NEXT: [[EIGHT:%.*]] = bitcast [[TEST1]]* [[SIX]] to i8*
   // CHECK-NEXT: [[CALL1:%.*]] = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* [[EIGHT]], i8* [[SEVEN]])
   // CHECK-NEXT: store i8* [[CALL1]], i8**
-  // CHECK-NEXT: [[NINE:%.*]] = load [[TEST1]]** 
+  // CHECK-NEXT: [[NINE:%.*]] = load [[TEST1]]**
   // CHECK-NEXT: [[TEN:%.*]] = bitcast [[TEST1]]* [[NINE]] to i8*
   // CHECK-NEXT: call void @objc_release(i8* [[TEN]])
   // CHECK-NEXT: ret void
