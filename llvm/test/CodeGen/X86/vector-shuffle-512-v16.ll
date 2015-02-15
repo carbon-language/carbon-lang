@@ -1,5 +1,5 @@
-; RUN: llc < %s -mcpu=x86-64 -mattr=+avx512f -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=AVX512 --check-prefix=AVX512F
-; RUN: llc < %s -mcpu=x86-64 -mattr=+avx512bw -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=ALL --check-prefix=AVX512 --check-prefix=AVX512BW
+; RUN: llc < %s -mcpu=x86-64 -mattr=+avx512f | FileCheck %s --check-prefix=ALL --check-prefix=AVX512 --check-prefix=AVX512F
+; RUN: llc < %s -mcpu=x86-64 -mattr=+avx512bw | FileCheck %s --check-prefix=ALL --check-prefix=AVX512 --check-prefix=AVX512BW
 
 target triple = "x86_64-unknown-unknown"
 
