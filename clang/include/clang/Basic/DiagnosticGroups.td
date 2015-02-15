@@ -106,8 +106,6 @@ def Documentation : DiagGroup<"documentation",
                                DocumentationDeprecatedSync]>;
 
 def EmptyBody : DiagGroup<"empty-body">;
-def Exceptions : DiagGroup<"exceptions">;
-
 def GNUEmptyInitializer : DiagGroup<"gnu-empty-initializer">;
 def GNUEmptyStruct : DiagGroup<"gnu-empty-struct">;
 def ExtraTokens : DiagGroup<"extra-tokens">;

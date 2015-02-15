@@ -15,7 +15,6 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/CharUnits.h"
-#include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/EvaluatedExprVisitor.h"
 #include "clang/AST/ExprCXX.h"
@@ -24,14 +23,12 @@
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/AST/TypeLoc.h"
-#include "clang/AST/TypeOrdering.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
@@ -3262,81 +3259,36 @@ Sema::ActOnObjCAutoreleasePoolStmt(SourceLocation AtLoc, Stmt *Body) {
   return new (Context) ObjCAutoreleasePoolStmt(AtLoc, Body);
 }
 
-class QualTypeExt {
-  QualType QT;
-  unsigned IsPointer : 1;
+namespace {
 
-  // This is a special constructor to be used only with DenseMapInfo's
-  // getEmptyKey() and getTombstoneKey() functions.
-  friend struct llvm::DenseMapInfo<QualTypeExt>;
-  enum Unique { ForDenseMap };
-  QualTypeExt(QualType QT, Unique) : QT(QT), IsPointer(false) {}
-
+class TypeWithHandler {
+  QualType t;
+  CXXCatchStmt *stmt;
 public:
-  /// Used when creating a QualTypeExt from a handler type; will determine
-  /// whether the type is a pointer or reference and will strip off the the top
-  /// level pointer and cv-qualifiers.
-  QualTypeExt(QualType Q) : QT(Q), IsPointer(false) {
-    if (QT->isPointerType())
-      IsPointer = true;
+  TypeWithHandler(const QualType &type, CXXCatchStmt *statement)
+  : t(type), stmt(statement) {}
 
-    if (IsPointer || QT->isReferenceType())
-      QT = QT->getPointeeType();
-    QT = QT.getUnqualifiedType();
-  }
-
-  /// Used when creating a QualTypeExt from a base class type; pretends the type
-  /// passed in had the pointer qualifier, does not need to get an unqualified
-  /// type.
-  QualTypeExt(QualType QT, bool IsPointer)
-    : QT(QT), IsPointer(IsPointer) {}
-
-  QualType underlying() const { return QT; }
-  bool isPointer() const { return IsPointer; }
-
-  friend bool operator==(const QualTypeExt &LHS, const QualTypeExt &RHS) {
-    // If the pointer qualification does not match, we can return early.
-    if (LHS.IsPointer != RHS.IsPointer)
+  // An arbitrary order is fine as long as it places identical
+  // types next to each other.
+  bool operator<(const TypeWithHandler &y) const {
+    if (t.getAsOpaquePtr() < y.t.getAsOpaquePtr())
+      return true;
+    if (t.getAsOpaquePtr() > y.t.getAsOpaquePtr())
       return false;
-    // Otherwise, check the underlying type without cv-qualifiers.
-    return LHS.QT == RHS.QT;
+    else
+      return getTypeSpecStartLoc() < y.getTypeSpecStartLoc();
+  }
+
+  bool operator==(const TypeWithHandler& other) const {
+    return t == other.t;
+  }
+
+  CXXCatchStmt *getCatchStmt() const { return stmt; }
+  SourceLocation getTypeSpecStartLoc() const {
+    return stmt->getExceptionDecl()->getTypeSpecStartLoc();
   }
 };
 
-namespace llvm {
-template <> struct DenseMapInfo<QualTypeExt> {
-  static QualTypeExt getEmptyKey() {
-    return QualTypeExt(DenseMapInfo<QualType>::getEmptyKey(),
-                       QualTypeExt::ForDenseMap);
-  }
-
-  static QualTypeExt getTombstoneKey() {
-    return QualTypeExt(DenseMapInfo<QualType>::getTombstoneKey(),
-                       QualTypeExt::ForDenseMap);
-  }
-
-  static unsigned getHashValue(const QualTypeExt &Base) {
-    return DenseMapInfo<QualType>::getHashValue(Base.underlying());
-  }
-
-  static bool isEqual(const QualTypeExt &LHS, const QualTypeExt &RHS) {
-    return LHS == RHS;
-  }
-};
-
-// It's OK to treat QualTypeExt as a POD type.
-template <> struct isPodLike<QualTypeExt> { static const bool value = true; };
-}
-
-static bool Frobble(const CXXBaseSpecifier *, CXXBasePath &Path, void *User) {
-  auto *Paths = reinterpret_cast<CXXBasePaths *>(User);
-  if (Path.Access == AccessSpecifier::AS_public) {
-    if (auto *BRD = Path.back().Base->getType()->getAsCXXRecordDecl()) {
-      BRD->lookupInBases(Frobble, User, *Paths);
-    }
-    return true;
-  }
-  return false;
 }
 
 /// ActOnCXXTryBlock - Takes a try compound-statement and a number of
@@ -3360,79 +3312,54 @@ StmtResult Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
   }
 
   const unsigned NumHandlers = Handlers.size();
-  assert(!Handlers.empty() &&
+  assert(NumHandlers > 0 &&
          "The parser shouldn't call this if there are no handlers.");
 
-  llvm::DenseMap<QualTypeExt, CXXCatchStmt *> HandledTypes;
+  SmallVector<TypeWithHandler, 8> TypesWithHandlers;
+
   for (unsigned i = 0; i < NumHandlers; ++i) {
     CXXCatchStmt *Handler = cast<CXXCatchStmt>(Handlers[i]);
-
-    // Diagnose when the handler is a catch-all handler, but it isn't the last
-    // handler for the try block. [except.handle]p5. Also, skip exception
-    // declarations that are invalid, since we can't usefully report on them.
     if (!Handler->getExceptionDecl()) {
       if (i < NumHandlers - 1)
-        return StmtError(
-            Diag(Handler->getLocStart(), diag::err_early_catch_all));
+        return StmtError(Diag(Handler->getLocStart(),
+                              diag::err_early_catch_all));
 
       continue;
-    } else if (Handler->getExceptionDecl()->isInvalidDecl())
-      continue;
-
-    // Walk the type hierarchy to diagnose when this type has already been
-    // handled (duplication), or cannot be handled (derivation inversion). We
-    // ignore top-level cv-qualifiers, per [except.handle]p3
-    QualTypeExt HandlerQTE = Context.getCanonicalType(Handler->getCaughtType());
-
-    // We can ignore whether the type is a reference or a pointer; we need the
-    // underlying declaration type in order to get at the underlying record
-    // decl, if there is one.
-    QualType Underlying = HandlerQTE.underlying();
-    if (auto *RD = Underlying->getAsCXXRecordDecl()) {
-      if (!RD->hasDefinition())
-        continue;
-      // Check that none of the public, unambiguous base classes are in the
-      // map ([except.handle]p1). Give the base classes the same pointer
-      // qualification as the original type we are basing off of. This allows
-      // comparison against the handler type using the same top-level pointer
-      // as the original type.
-      CXXBasePaths Paths;
-      Paths.setOrigin(RD);
-      if (RD->lookupInBases(Frobble, &Paths, Paths)) {
-        for (const auto &B : Paths.front()) {
-          QualType BaseTy = B.Base->getType();
-          if (!Paths.isAmbiguous(Context.getCanonicalType(BaseTy))) {
-            QualTypeExt Check(BaseTy, HandlerQTE.isPointer());
-            auto I = HandledTypes.find(Check);
-            if (I != HandledTypes.end()) {
-              const CXXCatchStmt *Problem = I->second;
-              Diag(Handler->getExceptionDecl()->getTypeSpecStartLoc(),
-                   diag::warn_exception_caught_by_earlier_handler)
-                   << Handler->getCaughtType();
-              Diag(Problem->getExceptionDecl()->getTypeSpecStartLoc(),
-                   diag::note_previous_exception_handler)
-                   << Problem->getCaughtType();
-            }
-          }
-        }
-      }
     }
 
-    // Add the type the list of ones we have handled; diagnose if we've already
-    // handled it.
-    auto R = HandledTypes.insert(std::make_pair(HandlerQTE, Handler));
-    if (!R.second) {
-      const CXXCatchStmt *Problem = R.first->second;
-      Diag(Handler->getExceptionDecl()->getTypeSpecStartLoc(),
-           diag::warn_exception_caught_by_earlier_handler)
-           << Handler->getCaughtType();
-      Diag(Problem->getExceptionDecl()->getTypeSpecStartLoc(),
-           diag::note_previous_exception_handler)
-           << Problem->getCaughtType();
+    const QualType CaughtType = Handler->getCaughtType();
+    const QualType CanonicalCaughtType = Context.getCanonicalType(CaughtType);
+    TypesWithHandlers.push_back(TypeWithHandler(CanonicalCaughtType, Handler));
+  }
+
+  // Detect handlers for the same type as an earlier one.
+  if (NumHandlers > 1) {
+    llvm::array_pod_sort(TypesWithHandlers.begin(), TypesWithHandlers.end());
+
+    TypeWithHandler prev = TypesWithHandlers[0];
+    for (unsigned i = 1; i < TypesWithHandlers.size(); ++i) {
+      TypeWithHandler curr = TypesWithHandlers[i];
+
+      if (curr == prev) {
+        Diag(curr.getTypeSpecStartLoc(),
+             diag::warn_exception_caught_by_earlier_handler)
+          << curr.getCatchStmt()->getCaughtType().getAsString();
+        Diag(prev.getTypeSpecStartLoc(),
+             diag::note_previous_exception_handler)
+          << prev.getCatchStmt()->getCaughtType().getAsString();
+      }
+
+      prev = curr;
     }
   }
 
   FSI->setHasCXXTry(TryLoc);
+
+  // FIXME: We should detect handlers that cannot catch anything because an
+  // earlier handler catches a superclass. Need to find a method that is not
+  // quadratic for this.
+  // Neither of these are explicitly forbidden, but every compiler detects them
+  // and warns.
 
   return CXXTryStmt::Create(Context, TryLoc, TryBlock, Handlers);
 }
