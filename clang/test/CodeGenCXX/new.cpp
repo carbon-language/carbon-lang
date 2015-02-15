@@ -196,7 +196,7 @@ namespace test15 {
   struct A { A(); ~A(); };
 
   // CHECK-LABEL:    define void @_ZN6test156test0aEPv(
-  // CHECK:      [[P:%.*]] = load i8*
+  // CHECK:      [[P:%.*]] = load i8**
   // CHECK-NOT:  icmp eq i8* [[P]], null
   // CHECK-NOT:  br i1
   // CHECK:      [[T0:%.*]] = bitcast i8* [[P]] to [[A:%.*]]*
@@ -206,7 +206,7 @@ namespace test15 {
   }
 
   // CHECK-LABEL:    define void @_ZN6test156test0bEPv(
-  // CHECK:      [[P0:%.*]] = load i8*
+  // CHECK:      [[P0:%.*]] = load i8**
   // CHECK:      [[P:%.*]] = call i8* @_ZnwmPvb(i64 1, i8* [[P0]]
   // CHECK-NEXT: icmp eq i8* [[P]], null
   // CHECK-NEXT: br i1
@@ -257,7 +257,7 @@ namespace test15 {
   // CHECK-NEXT: [[T0:%.*]] = sext i32 [[N]] to i64
   // CHECK-NEXT: [[T1:%.*]] = icmp slt i64 [[T0]], 0
   // CHECK-NEXT: [[T2:%.*]] = select i1 [[T1]], i64 -1, i64 [[T0]]
-  // CHECK-NEXT: [[P:%.*]] = load i8*
+  // CHECK-NEXT: [[P:%.*]] = load i8**
   // CHECK:      [[BEGIN:%.*]] = bitcast i8* [[P]] to [[A:%.*]]*
   // CHECK-NEXT: [[ISEMPTY:%.*]] = icmp eq i64 [[T0]], 0
   // CHECK-NEXT: br i1 [[ISEMPTY]],
