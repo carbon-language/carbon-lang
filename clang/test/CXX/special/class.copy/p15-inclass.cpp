@@ -34,7 +34,7 @@ namespace PR11418 {
   // CHECK-NOT: 17
   // CHECK: call void @_ZN7PR114186NonPODC1EOS0_
   // CHECK-NOT: 17
-  // CHECK: load i32* 
+  // CHECK: load i32*
   // CHECK-NOT: 17
   // CHECK: store i32
   // CHECK-NOT: 17
