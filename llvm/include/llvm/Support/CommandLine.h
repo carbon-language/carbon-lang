@@ -1040,8 +1040,14 @@ template <> struct applicator<MiscFlags> {
   static void opt(MiscFlags MF, Option &O) { O.setMiscFlag(MF); }
 };
 
-// apply method - Apply a modifier to an option in a type safe way.
-template <class Mod, class Opt> void apply(const Mod &M, Opt *O) {
+// apply method - Apply modifiers to an option in a type safe way.
+template <class Opt, class Mod, class... Mods>
+void apply(Opt *O, const Mod &M, const Mods &... Ms) {
+  applicator<Mod>::opt(M, *O);
+  apply(O, Ms...);
+}
+
+template <class Opt, class Mod> void apply(Opt *O, const Mod &M) {
   applicator<Mod>::opt(M, *O);
 }
 
@@ -1209,95 +1215,10 @@ public:
     return this->getValue();
   }
 
-  // One option...
-  template <class M0t>
-  explicit opt(const M0t &M0)
+  template <class... Mods>
+  explicit opt(const Mods &... Ms)
       : Option(Optional, NotHidden), Parser(*this) {
-    apply(M0, this);
-    done();
-  }
-
-  // Two options...
-  template <class M0t, class M1t>
-  opt(const M0t &M0, const M1t &M1)
-      : Option(Optional, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    done();
-  }
-
-  // Three options...
-  template <class M0t, class M1t, class M2t>
-  opt(const M0t &M0, const M1t &M1, const M2t &M2)
-      : Option(Optional, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    done();
-  }
-  // Four options...
-  template <class M0t, class M1t, class M2t, class M3t>
-  opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
-      : Option(Optional, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    done();
-  }
-  // Five options...
-  template <class M0t, class M1t, class M2t, class M3t, class M4t>
-  opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3, const M4t &M4)
-      : Option(Optional, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    apply(M4, this);
-    done();
-  }
-  // Six options...
-  template <class M0t, class M1t, class M2t, class M3t, class M4t, class M5t>
-  opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3, const M4t &M4,
-      const M5t &M5)
-      : Option(Optional, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    apply(M4, this);
-    apply(M5, this);
-    done();
-  }
-  // Seven options...
-  template <class M0t, class M1t, class M2t, class M3t, class M4t, class M5t,
-            class M6t>
-  opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3, const M4t &M4,
-      const M5t &M5, const M6t &M6)
-      : Option(Optional, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    apply(M4, this);
-    apply(M5, this);
-    apply(M6, this);
-    done();
-  }
-  // Eight options...
-  template <class M0t, class M1t, class M2t, class M3t, class M4t, class M5t,
-            class M6t, class M7t>
-  opt(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3, const M4t &M4,
-      const M5t &M5, const M6t &M6, const M7t &M7)
-      : Option(Optional, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    apply(M4, this);
-    apply(M5, this);
-    apply(M6, this);
-    apply(M7, this);
+    apply(this, Ms...);
     done();
   }
 };
@@ -1407,94 +1328,10 @@ public:
 
   void setNumAdditionalVals(unsigned n) { Option::setNumAdditionalVals(n); }
 
-  // One option...
-  template <class M0t>
-  explicit list(const M0t &M0)
+  template <class... Mods>
+  explicit list(const Mods &... Ms)
       : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    done();
-  }
-  // Two options...
-  template <class M0t, class M1t>
-  list(const M0t &M0, const M1t &M1)
-      : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    done();
-  }
-  // Three options...
-  template <class M0t, class M1t, class M2t>
-  list(const M0t &M0, const M1t &M1, const M2t &M2)
-      : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    done();
-  }
-  // Four options...
-  template <class M0t, class M1t, class M2t, class M3t>
-  list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
-      : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    done();
-  }
-  // Five options...
-  template <class M0t, class M1t, class M2t, class M3t, class M4t>
-  list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4)
-      : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    apply(M4, this);
-    done();
-  }
-  // Six options...
-  template <class M0t, class M1t, class M2t, class M3t, class M4t, class M5t>
-  list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4, const M5t &M5)
-      : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    apply(M4, this);
-    apply(M5, this);
-    done();
-  }
-  // Seven options...
-  template <class M0t, class M1t, class M2t, class M3t, class M4t, class M5t,
-            class M6t>
-  list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4, const M5t &M5, const M6t &M6)
-      : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    apply(M4, this);
-    apply(M5, this);
-    apply(M6, this);
-    done();
-  }
-  // Eight options...
-  template <class M0t, class M1t, class M2t, class M3t, class M4t, class M5t,
-            class M6t, class M7t>
-  list(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4, const M5t &M5, const M6t &M6, const M7t &M7)
-      : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    apply(M4, this);
-    apply(M5, this);
-    apply(M6, this);
-    apply(M7, this);
+    apply(this, Ms...);
     done();
   }
 };
@@ -1629,94 +1466,10 @@ public:
     return Positions[optnum];
   }
 
-  // One option...
-  template <class M0t>
-  explicit bits(const M0t &M0)
+  template <class... Mods>
+  explicit bits(const Mods &... Ms)
       : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    done();
-  }
-  // Two options...
-  template <class M0t, class M1t>
-  bits(const M0t &M0, const M1t &M1)
-      : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    done();
-  }
-  // Three options...
-  template <class M0t, class M1t, class M2t>
-  bits(const M0t &M0, const M1t &M1, const M2t &M2)
-      : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    done();
-  }
-  // Four options...
-  template <class M0t, class M1t, class M2t, class M3t>
-  bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
-      : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    done();
-  }
-  // Five options...
-  template <class M0t, class M1t, class M2t, class M3t, class M4t>
-  bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4)
-      : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    apply(M4, this);
-    done();
-  }
-  // Six options...
-  template <class M0t, class M1t, class M2t, class M3t, class M4t, class M5t>
-  bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4, const M5t &M5)
-      : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    apply(M4, this);
-    apply(M5, this);
-    done();
-  }
-  // Seven options...
-  template <class M0t, class M1t, class M2t, class M3t, class M4t, class M5t,
-            class M6t>
-  bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4, const M5t &M5, const M6t &M6)
-      : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    apply(M4, this);
-    apply(M5, this);
-    apply(M6, this);
-    done();
-  }
-  // Eight options...
-  template <class M0t, class M1t, class M2t, class M3t, class M4t, class M5t,
-            class M6t, class M7t>
-  bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-       const M4t &M4, const M5t &M5, const M6t &M6, const M7t &M7)
-      : Option(ZeroOrMore, NotHidden), Parser(*this) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
-    apply(M4, this);
-    apply(M5, this);
-    apply(M6, this);
-    apply(M7, this);
+    apply(this, Ms...);
     done();
   }
 };
@@ -1766,38 +1519,10 @@ public:
     AliasFor = &O;
   }
 
-  // One option...
-  template <class M0t>
-  explicit alias(const M0t &M0)
+  template <class... Mods>
+  explicit alias(const Mods &... Ms)
       : Option(Optional, Hidden), AliasFor(nullptr) {
-    apply(M0, this);
-    done();
-  }
-  // Two options...
-  template <class M0t, class M1t>
-  alias(const M0t &M0, const M1t &M1)
-      : Option(Optional, Hidden), AliasFor(nullptr) {
-    apply(M0, this);
-    apply(M1, this);
-    done();
-  }
-  // Three options...
-  template <class M0t, class M1t, class M2t>
-  alias(const M0t &M0, const M1t &M1, const M2t &M2)
-      : Option(Optional, Hidden), AliasFor(nullptr) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    done();
-  }
-  // Four options...
-  template <class M0t, class M1t, class M2t, class M3t>
-  alias(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
-      : Option(Optional, Hidden), AliasFor(nullptr) {
-    apply(M0, this);
-    apply(M1, this);
-    apply(M2, this);
-    apply(M3, this);
+    apply(this, Ms...);
     done();
   }
 };
