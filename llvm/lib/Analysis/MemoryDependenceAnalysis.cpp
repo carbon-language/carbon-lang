@@ -422,9 +422,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
   }
 
   // Walk backwards through the basic block, looking for dependencies.
-  // We can stop before processing PHIs or dbg intrinsics.
-  const BasicBlock::iterator Begin(BB->getFirstNonPHIOrDbg());
-  while (ScanIt != Begin) {
+  while (ScanIt != BB->begin()) {
     Instruction *Inst = --ScanIt;
 
     if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst))
