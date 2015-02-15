@@ -429,6 +429,18 @@ def get_config_build_dir( vDictArgs, vstrFrameworkPythonDir ):
 	
 	return (bOk, strConfigBldDir, strErrMsg);
 
+"""
+Removes given file, ignoring error if it doesn't exist.
+"""
+def remove_ignore_enoent(filename):
+	try:
+		os.remove( strSwigOutputFile );
+	except OSError as e:
+		import errno
+		if e.errno != errno.ENOENT:
+			raise
+		pass
+
 #++---------------------------------------------------------------------------
 # Details:	Do a SWIG code rebuild. Any number returned by SWIG which is not
 #			zero is treated as an error. The generate dependencies flag decides
@@ -685,7 +697,7 @@ def main( vDictArgs ):
     # iOS be sure to set LLDB_DISABLE_PYTHON to 1.
 	if (strEnvVarLLDBDisablePython != None) and \
 	   (strEnvVarLLDBDisablePython == "1"):
-		os.remove( strSwigOutputFile );
+		remove_ignore_enoent( strSwigOutputFile )
 		open( strSwigOutputFile, 'w' ).close(); # Touch the file
 		if bDebug:
 			strMsg = strMsgLldbDisablePython;
@@ -698,7 +710,7 @@ def main( vDictArgs ):
 											None );
 	if (strEnvVarGccPreprocessDefs != None) or \
 	   (strEnvVarLLDBDisablePython != None):
-		os.remove( strSwigOutputFile );
+		remove_ignore_enoent( strSwigOutputFile )
 		open( strSwigOutputFile, 'w' ).close(); # Touch the file
 		if bDebug:
 			strMsg = strMsgLldbDisableGccEnv;
