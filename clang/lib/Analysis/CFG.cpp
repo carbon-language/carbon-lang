@@ -156,7 +156,7 @@ public:
       return !(*this == rhs);
     }
 
-    LLVM_EXPLICIT operator bool() const {
+    explicit operator bool() const {
       return *this != const_iterator();
     }
 

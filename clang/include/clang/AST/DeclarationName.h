@@ -184,7 +184,7 @@ public:
 
   // operator bool() - Evaluates true when this declaration name is
   // non-empty.
-  LLVM_EXPLICIT operator bool() const {
+  explicit operator bool() const {
     return ((Ptr & PtrMask) != 0) ||
            (reinterpret_cast<IdentifierInfo *>(Ptr & ~PtrMask));
   }

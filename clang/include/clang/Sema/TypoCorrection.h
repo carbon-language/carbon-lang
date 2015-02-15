@@ -165,7 +165,7 @@ public:
   }
 
   /// \brief Returns whether this TypoCorrection has a non-empty DeclarationName
-  LLVM_EXPLICIT operator bool() const { return bool(CorrectionName); }
+  explicit operator bool() const { return bool(CorrectionName); }
 
   /// \brief Mark this TypoCorrection as being a keyword.
   /// Since addCorrectionDeclsand setCorrectionDecl don't allow NULL to be

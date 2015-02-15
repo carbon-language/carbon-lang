@@ -245,7 +245,7 @@ public:
 
   /// \brief Evalutes true when this nested-name-specifier location is
   /// non-empty.
-  LLVM_EXPLICIT operator bool() const { return Qualifier; }
+  explicit operator bool() const { return Qualifier; }
 
   /// \brief Evalutes true when this nested-name-specifier location is
   /// empty.

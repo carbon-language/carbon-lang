@@ -921,7 +921,7 @@ public:
   void setSequenceKind(enum SequenceKind SK) { SequenceKind = SK; }
   
   /// \brief Determine whether the initialization sequence is valid.
-  LLVM_EXPLICIT operator bool() const { return !Failed(); }
+  explicit operator bool() const { return !Failed(); }
 
   /// \brief Determine whether the initialization sequence is invalid.
   bool Failed() const { return SequenceKind == FailedSequence; }

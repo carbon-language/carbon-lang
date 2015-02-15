@@ -456,7 +456,7 @@ public:
   bool operator==(Qualifiers Other) const { return Mask == Other.Mask; }
   bool operator!=(Qualifiers Other) const { return Mask != Other.Mask; }
 
-  LLVM_EXPLICIT operator bool() const { return hasQualifiers(); }
+  explicit operator bool() const { return hasQualifiers(); }
 
   Qualifiers &operator+=(Qualifiers R) {
     addQualifiers(R);

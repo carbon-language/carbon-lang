@@ -258,7 +258,7 @@ public:
   VariantValue(const VariantMatcher &Matchers);
 
   /// \brief Returns true iff this is not an empty value.
-  LLVM_EXPLICIT operator bool() const { return hasValue(); }
+  explicit operator bool() const { return hasValue(); }
   bool hasValue() const { return Type != VT_Nothing; }
 
   /// \brief Unsigned value functions.

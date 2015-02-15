@@ -225,7 +225,7 @@ public:
 
     bool HandleBinding(StoreManager& SMgr, Store store, const MemRegion* R,
                        SVal val) override;
-    LLVM_EXPLICIT operator bool() { return First && Binding; }
+    explicit operator bool() { return First && Binding; }
     const MemRegion *getRegion() { return Binding; }
   };
 

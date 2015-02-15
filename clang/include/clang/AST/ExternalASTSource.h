@@ -344,7 +344,7 @@ public:
   /// \brief Whether this pointer is non-NULL.
   ///
   /// This operation does not require the AST node to be deserialized.
-  LLVM_EXPLICIT operator bool() const { return Ptr != 0; }
+  explicit operator bool() const { return Ptr != 0; }
 
   /// \brief Whether this pointer is non-NULL.
   ///

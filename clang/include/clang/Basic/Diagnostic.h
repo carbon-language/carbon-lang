@@ -1260,7 +1260,7 @@ public:
   ~StoredDiagnostic();
 
   /// \brief Evaluates true when this object stores a diagnostic.
-  LLVM_EXPLICIT operator bool() const { return Message.size() > 0; }
+  explicit operator bool() const { return Message.size() > 0; }
 
   unsigned getID() const { return ID; }
   DiagnosticsEngine::Level getLevel() const { return Level; }

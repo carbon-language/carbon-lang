@@ -444,7 +444,7 @@ public:
     bool isValid() const { return DefDirective != nullptr; }
     bool isInvalid() const { return !isValid(); }
 
-    LLVM_EXPLICIT operator bool() const { return isValid(); }
+    explicit operator bool() const { return isValid(); }
 
     inline DefInfo getPreviousDefinition();
     const DefInfo getPreviousDefinition() const {
