@@ -65,9 +65,9 @@ static void DemotePHI(
 /// @brief Prepare the IR for the scop detection.
 ///
 class CodePreparation : public FunctionPass {
-  CodePreparation(const CodePreparation &) LLVM_DELETED_FUNCTION;
+  CodePreparation(const CodePreparation &) = delete;
   const CodePreparation &
-  operator=(const CodePreparation &) LLVM_DELETED_FUNCTION;
+  operator=(const CodePreparation &) = delete;
 
   LoopInfo *LI;
   ScalarEvolution *SE;

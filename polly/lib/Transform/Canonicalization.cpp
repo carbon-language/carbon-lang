@@ -34,9 +34,9 @@ void polly::registerCanonicalicationPasses(llvm::legacy::PassManagerBase &PM) {
 
 namespace {
 class PollyCanonicalize : public ModulePass {
-  PollyCanonicalize(const PollyCanonicalize &) LLVM_DELETED_FUNCTION;
+  PollyCanonicalize(const PollyCanonicalize &) = delete;
   const PollyCanonicalize &
-  operator=(const PollyCanonicalize &) LLVM_DELETED_FUNCTION;
+  operator=(const PollyCanonicalize &) = delete;
 
 public:
   static char ID;

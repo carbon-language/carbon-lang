@@ -125,8 +125,8 @@ public:
 
 private:
   //===--------------------------------------------------------------------===//
-  ScopDetection(const ScopDetection &) LLVM_DELETED_FUNCTION;
-  const ScopDetection &operator=(const ScopDetection &) LLVM_DELETED_FUNCTION;
+  ScopDetection(const ScopDetection &) = delete;
+  const ScopDetection &operator=(const ScopDetection &) = delete;
 
   /// @brief Analysis passes used.
   //@{
