@@ -20,7 +20,7 @@ PDBSymbolTypeBuiltin::PDBSymbolTypeBuiltin(
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolTypeBuiltin::dump(raw_ostream &OS, int Indent,
-                                PDB_DumpLevel Level) const {
+                                PDB_DumpLevel Level, PDB_DumpFlags Flags) const {
   OS << stream_indent(Indent);
   PDB_BuiltinType Type = getBuiltinType();
   OS << Type;

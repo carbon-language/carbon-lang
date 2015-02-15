@@ -20,4 +20,4 @@ PDBSymbolTypeFriend::PDBSymbolTypeFriend(const IPDBSession &PDBSession,
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolTypeFriend::dump(raw_ostream &OS, int Indent,
-                               PDB_DumpLevel Level) const {}
+                               PDB_DumpLevel Level, PDB_DumpFlags Flags) const {}

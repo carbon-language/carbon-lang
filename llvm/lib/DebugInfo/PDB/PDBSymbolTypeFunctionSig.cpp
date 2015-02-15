@@ -87,7 +87,7 @@ void PDBSymbolTypeFunctionSig::dumpArgList(raw_ostream &OS) const {
   if (auto ChildEnum = getArguments()) {
     uint32_t Index = 0;
     while (auto Arg = ChildEnum->getNext()) {
-      Arg->dump(OS, 0, PDB_DumpLevel::Compact);
+      Arg->dump(OS, 0, PDB_DumpLevel::Compact, PDB_DF_Children);
       if (++Index < ChildEnum->getChildCount())
         OS << ", ";
     }
@@ -100,18 +100,18 @@ void PDBSymbolTypeFunctionSig::dumpArgList(raw_ostream &OS) const {
 }
 
 void PDBSymbolTypeFunctionSig::dump(raw_ostream &OS, int Indent,
-                                    PDB_DumpLevel Level) const {
+                                    PDB_DumpLevel Level, PDB_DumpFlags Flags) const {
   OS << stream_indent(Indent);
 
   if (auto ReturnType = getReturnType()) {
-    ReturnType->dump(OS, 0, PDB_DumpLevel::Compact);
+    ReturnType->dump(OS, 0, PDB_DumpLevel::Compact, PDB_DF_Children);
     OS << " ";
   }
 
   OS << getCallingConvention() << " ";
   if (auto ClassParent = getClassParent()) {
     OS << "(";
-    ClassParent->dump(OS, 0, PDB_DumpLevel::Compact);
+    ClassParent->dump(OS, 0, PDB_DumpLevel::Compact, PDB_DF_Children);
     OS << "::*)";
   }
 

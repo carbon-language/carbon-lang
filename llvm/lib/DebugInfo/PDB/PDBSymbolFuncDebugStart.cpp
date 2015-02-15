@@ -20,4 +20,4 @@ PDBSymbolFuncDebugStart::PDBSymbolFuncDebugStart(
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolFuncDebugStart::dump(raw_ostream &OS, int Indent,
-                                   PDB_DumpLevel Level) const {}
+                                   PDB_DumpLevel Level, PDB_DumpFlags Flags) const {}

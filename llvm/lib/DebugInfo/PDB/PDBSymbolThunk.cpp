@@ -21,7 +21,7 @@ PDBSymbolThunk::PDBSymbolThunk(const IPDBSession &PDBSession,
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolThunk::dump(raw_ostream &OS, int Indent,
-                          PDB_DumpLevel Level) const {
+                          PDB_DumpLevel Level, PDB_DumpFlags Flags) const {
   OS.indent(Indent);
   OS << "thunk ";
   PDB_ThunkOrdinal Ordinal = getThunkOrdinal();

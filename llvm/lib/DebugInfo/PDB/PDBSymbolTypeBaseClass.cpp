@@ -20,7 +20,7 @@ PDBSymbolTypeBaseClass::PDBSymbolTypeBaseClass(
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolTypeBaseClass::dump(raw_ostream &OS, int Indent,
-                                  PDB_DumpLevel Level) const {
+                                  PDB_DumpLevel Level, PDB_DumpFlags Flags) const {
   OS << stream_indent(Indent);
   OS << "<base class> " << getName();
 }

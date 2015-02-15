@@ -23,11 +23,11 @@ PDBSymbolTypeVTable::PDBSymbolTypeVTable(const IPDBSession &PDBSession,
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolTypeVTable::dump(raw_ostream &OS, int Indent,
-                               PDB_DumpLevel Level) const {
+                               PDB_DumpLevel Level, PDB_DumpFlags Flags) const {
   OS << stream_indent(Indent);
   uint32_t ClassId = getClassParentId();
   if (auto ClassParent = Session.getSymbolById(ClassId)) {
-    ClassParent->dump(OS, 0, PDB_DumpLevel::Compact);
+    ClassParent->dump(OS, 0, PDB_DumpLevel::Compact, PDB_DF_Children);
     OS << "::";
   }
   OS << "<vtbl> ";
@@ -38,5 +38,4 @@ void PDBSymbolTypeVTable::dump(raw_ostream &OS, int Indent,
                 VtblPointer->getTypeId()))
       OS << "(" << VtblShape->getCount() << " entries)";
   }
-  OS.flush();
 }

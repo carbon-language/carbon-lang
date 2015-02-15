@@ -22,7 +22,7 @@ PDBSymbolTypeTypedef::PDBSymbolTypeTypedef(
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolTypeTypedef::dump(raw_ostream &OS, int Indent,
-                                PDB_DumpLevel Level) const {
+                                PDB_DumpLevel Level, PDB_DumpFlags Flags) const {
   OS.indent(Indent);
   if (Level >= PDB_DumpLevel::Normal) {
     std::string Name = getName();
@@ -30,7 +30,7 @@ void PDBSymbolTypeTypedef::dump(raw_ostream &OS, int Indent,
     std::string TargetTypeName;
     uint32_t TargetId = getTypeId();
     if (auto TypeSymbol = Session.getSymbolById(TargetId)) {
-      TypeSymbol->dump(OS, 0, PDB_DumpLevel::Compact);
+      TypeSymbol->dump(OS, 0, PDB_DumpLevel::Compact, PDB_DF_Children);
     }
     OS << TargetTypeName;
   } else {

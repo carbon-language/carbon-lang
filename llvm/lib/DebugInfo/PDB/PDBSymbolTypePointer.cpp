@@ -22,7 +22,7 @@ PDBSymbolTypePointer::PDBSymbolTypePointer(
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolTypePointer::dump(raw_ostream &OS, int Indent,
-                                PDB_DumpLevel Level) const {
+                                PDB_DumpLevel Level, PDB_DumpFlags Flags) const {
   OS << stream_indent(Indent);
   if (isConstType())
     OS << "const ";
@@ -34,12 +34,12 @@ void PDBSymbolTypePointer::dump(raw_ostream &OS, int Indent,
     // the middle of the signature.
     if (auto FuncSig = dyn_cast<PDBSymbolTypeFunctionSig>(PointeeType.get())) {
       if (auto ReturnType = FuncSig->getReturnType())
-        ReturnType->dump(OS, 0, PDB_DumpLevel::Compact);
+        ReturnType->dump(OS, 0, PDB_DumpLevel::Compact, PDB_DF_Children);
       OS << " (" << FuncSig->getCallingConvention() << " ";
       OS << ((isReference()) ? "&" : "*") << ")";
       FuncSig->dumpArgList(OS);
     } else {
-      PointeeType->dump(OS, 0, PDB_DumpLevel::Compact);
+      PointeeType->dump(OS, 0, PDB_DumpLevel::Compact, PDB_DF_Children);
       OS << ((isReference()) ? "&" : "*");
     }
   }

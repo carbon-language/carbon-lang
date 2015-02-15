@@ -21,10 +21,10 @@ PDBSymbolTypeArray::PDBSymbolTypeArray(const IPDBSession &PDBSession,
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolTypeArray::dump(raw_ostream &OS, int Indent,
-                              PDB_DumpLevel Level) const {
+                              PDB_DumpLevel Level, PDB_DumpFlags Flags) const {
   OS << stream_indent(Indent);
   if (auto ElementType = Session.getSymbolById(getTypeId()))
-    ElementType->dump(OS, 0, PDB_DumpLevel::Compact);
+    ElementType->dump(OS, 0, PDB_DumpLevel::Compact, PDB_DF_Children);
   else
     OS << "<unknown-element-type>";
   OS << "[" << getLength() << "]";
