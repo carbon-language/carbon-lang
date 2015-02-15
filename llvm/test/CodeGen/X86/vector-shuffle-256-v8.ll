@@ -772,6 +772,29 @@ define <8 x float> @shuffle_v8f32_fedc7654(<8 x float> %a, <8 x float> %b) {
   ret <8 x float> %shuffle
 }
 
+define <8 x float> @PR21138(<8 x float> %truc, <8 x float> %tchose) {
+; AVX1-LABEL: PR21138:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm2
+; AVX1-NEXT:    vshufps {{.*#+}} xmm1 = xmm1[1,3],xmm2[1,3]
+; AVX1-NEXT:    vinsertf128	$1, %xmm1, %ymm0, %ymm1
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX1-NEXT:    vshufps {{.*#+}} xmm0 = xmm0[1,3],xmm2[1,3]
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: PR21138:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vmovaps {{.*#+}} ymm2 = <u,u,u,u,1,3,5,7>
+; AVX2-NEXT:    vpermps %ymm1, %ymm2, %ymm1
+; AVX2-NEXT:    vmovaps {{.*#+}} ymm2 = <1,3,5,7,u,u,u,u>
+; AVX2-NEXT:    vpermps %ymm0, %ymm2, %ymm0
+; AVX2-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3]
+; AVX2-NEXT:    retq
+  %shuffle = shufflevector <8 x float> %truc, <8 x float> %tchose, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  ret <8 x float> %shuffle
+}
+
 define <8 x float> @shuffle_v8f32_ba987654(<8 x float> %a, <8 x float> %b) {
 ; ALL-LABEL: shuffle_v8f32_ba987654:
 ; ALL:       # BB#0:
