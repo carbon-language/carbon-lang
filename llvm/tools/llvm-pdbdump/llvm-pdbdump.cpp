@@ -81,9 +81,9 @@ static cl::opt<PDB_DumpType> DumpMode(
         clEnumValN(PDB_DumpType::ByObjFile, "compiland",
                    "Display symbols grouped under their containing object "
                    "file."),
-        clEnumValN(
-            PDB_DumpType::Both, "both",
-            "Display symbols grouped by type, and then by object file.")));
+        clEnumValN(PDB_DumpType::Both, "both",
+                   "Display symbols grouped by type, and then by object file."),
+        clEnumValEnd));
 }
 
 #define SET_DUMP_FLAG_FROM_OPT(Var, Flag, Opt) \
