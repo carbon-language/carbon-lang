@@ -230,7 +230,7 @@ our build systems:
 
 * Clang 3.1
 * GCC 4.7
-* Visual Studio 2012
+* Visual Studio 2013
 
 Anything older than these toolchains *may* work, but will require forcing the
 build system with a special option and is not really a supported host platform.
@@ -280,7 +280,7 @@ Getting a Modern Host C++ Toolchain
 
 This section mostly applies to Linux and older BSDs. On Mac OS X, you should
 have a sufficiently modern Xcode, or you will likely need to upgrade until you
-do. On Windows, just use Visual Studio 2012 as the host compiler, it is
+do. On Windows, just use Visual Studio 2013 as the host compiler, it is
 explicitly supported and widely available. FreeBSD 10.0 and newer have a modern
 Clang as the system compiler.
 

@@ -52,14 +52,14 @@
 /// \macro LLVM_MSC_PREREQ
 /// \brief Is the compiler MSVC of at least the specified version?
 /// The common \param version values to check for are:
-///  * 1700: Microsoft Visual Studio 2012 / 11.0
 ///  * 1800: Microsoft Visual Studio 2013 / 12.0
+///  * 1900: Microsoft Visual Studio 2015 / 14.0
 #ifdef _MSC_VER
 #define LLVM_MSC_PREREQ(version) (_MSC_VER >= (version))
 
-// We require at least MSVC 2012.
-#if !LLVM_MSC_PREREQ(1700)
-#error LLVM requires at least MSVC 2012.
+// We require at least MSVC 2013.
+#if !LLVM_MSC_PREREQ(1800)
+#error LLVM requires at least MSVC 2013.
 #endif
 
 #else
