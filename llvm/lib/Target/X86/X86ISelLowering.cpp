@@ -11285,6 +11285,13 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
         return DAG.getVectorShuffle(VT, dl, V1, V2, NewMask);
       }
 
+  // We actually see shuffles that are entirely re-arrangements of a set of
+  // zero inputs. This mostly happens while decomposing complex shuffles into
+  // simple ones. Directly lower these as a buildvector of zeros.
+  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
+  if (Zeroable.all())
+    return getZeroVector(VT, Subtarget, DAG, dl);
+
   // Try to collapse shuffles into using a vector type with fewer elements but
   // wider element types. We cap this to not form integers or floating point
   // elements wider than 64 bits, but it might be interesting to form i128
