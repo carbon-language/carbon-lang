@@ -47,69 +47,16 @@ namespace ento {
 
 template <typename T> class CheckerFn;
 
-template <typename RET, typename P1, typename P2, typename P3, typename P4,
-          typename P5>
-class CheckerFn<RET(P1, P2, P3, P4, P5)> {
-  typedef RET (*Func)(void *, P1, P2, P3, P4, P5);
+template <typename RET, typename... Ps>
+class CheckerFn<RET(Ps...)> {
+  typedef RET (*Func)(void *, Ps...);
   Func Fn;
 public:
   CheckerBase *Checker;
   CheckerFn(CheckerBase *checker, Func fn) : Fn(fn), Checker(checker) { }
-  RET operator()(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) const {
-    return Fn(Checker, p1, p2, p3, p4, p5);
+  RET operator()(Ps... ps) const {
+    return Fn(Checker, ps...);
   }
-};
-
-template <typename RET, typename P1, typename P2, typename P3, typename P4>
-class CheckerFn<RET(P1, P2, P3, P4)> {
-  typedef RET (*Func)(void *, P1, P2, P3, P4);
-  Func Fn;
-public:
-  CheckerBase *Checker;
-  CheckerFn(CheckerBase *checker, Func fn) : Fn(fn), Checker(checker) { }
-  RET operator()(P1 p1, P2 p2, P3 p3, P4 p4) const { 
-    return Fn(Checker, p1, p2, p3, p4);
-  } 
-};
-
-template <typename RET, typename P1, typename P2, typename P3>
-class CheckerFn<RET(P1, P2, P3)> {
-  typedef RET (*Func)(void *, P1, P2, P3);
-  Func Fn;
-public:
-  CheckerBase *Checker;
-  CheckerFn(CheckerBase *checker, Func fn) : Fn(fn), Checker(checker) { }
-  RET operator()(P1 p1, P2 p2, P3 p3) const { return Fn(Checker, p1, p2, p3); } 
-};
-
-template <typename RET, typename P1, typename P2>
-class CheckerFn<RET(P1, P2)> {
-  typedef RET (*Func)(void *, P1, P2);
-  Func Fn;
-public:
-  CheckerBase *Checker;
-  CheckerFn(CheckerBase *checker, Func fn) : Fn(fn), Checker(checker) { }
-  RET operator()(P1 p1, P2 p2) const { return Fn(Checker, p1, p2); } 
-};
-
-template <typename RET, typename P1>
-class CheckerFn<RET(P1)> {
-  typedef RET (*Func)(void *, P1);
-  Func Fn;
-public:
-  CheckerBase *Checker;
-  CheckerFn(CheckerBase *checker, Func fn) : Fn(fn), Checker(checker) { }
-  RET operator()(P1 p1) const { return Fn(Checker, p1); } 
-};
-
-template <typename RET>
-class CheckerFn<RET()> {
-  typedef RET (*Func)(void *);
-  Func Fn;
-public:
-  CheckerBase *Checker;
-  CheckerFn(CheckerBase *checker, Func fn) : Fn(fn), Checker(checker) { }
-  RET operator()() const { return Fn(Checker); } 
 };
 
 /// \brief Describes the different reasons a pointer escapes

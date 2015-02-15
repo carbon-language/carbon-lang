@@ -36,11 +36,3 @@ raw_ostream& clang::ento::operator<<(raw_ostream &Out,
   Out << Checker.getCheckName().getName();
   return Out;
 }
-
-void Checker<check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
-             check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
-             check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
-             check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
-             check::_VoidCheck, check::_VoidCheck, check::_VoidCheck,
-             check::_VoidCheck, check::_VoidCheck, check::_VoidCheck
-             >::anchor() { }
