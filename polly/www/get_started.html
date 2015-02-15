@@ -30,7 +30,80 @@ chmod +x polly.sh
 ./polly.sh
 </pre>
 
-<h2> Manual </h2>
+<h2> Manual [after 3.6]</h2>
+<h3 id="source"> Get the code </h3>
+
+The Polly source code is available in the LLVM SVN repository as well as through
+an official git mirror. It is added to the <em>tools</em>
+directory of the llvm sources.
+<b>Polly and LLVM need to be checked out at the same time. Checkouts
+   from different dates may not work!</b>
+<h4>Set the directory layout:</h4>
+<pre>
+export BASE=`pwd`
+export LLVM_SRC=${BASE}/llvm
+export POLLY_SRC=${LLVM_SRC}/tools/polly
+
+# Also build the matching clang-version (optional)
+export CLANG_SRC=${LLVM_SRC}/tools/clang
+</pre>
+
+<h4>SVN</h4>
+<pre>
+svn checkout http://llvm.org/svn/llvm-project/llvm/trunk ${LLVM_SRC}
+svn checkout http://llvm.org/svn/llvm-project/polly/trunk ${POLLY_SRC}
+
+# Also build the matching clang-version (optional)
+svn checkout http://llvm.org/svn/llvm-project/cfe/trunk ${CLANG_SRC}
+</pre>
+<h4>GIT</h4>
+<pre>
+git clone http://llvm.org/git/llvm.git ${LLVM_SRC}
+git clone http://llvm.org/git/polly.git ${POLLY_SRC}
+
+# Also build the matching clang-version (optional)
+git clone http://llvm.org/git/clang.git ${CLANG_SRC}
+</pre>
+<h3 id="build">Build Polly</h3>
+
+To build Polly you can either use the autoconf or the cmake build system. At the
+moment only the autoconf build system allows to run the llvm test-suite and only
+the cmake build system allows to run 'make check-polly'.
+
+<h4>Set the directory layout:</h4>
+<pre>
+export LLVM_BUILD=${BASE}/llvm_build
+mkdir ${LLVM_BUILD}
+cd ${LLVM_BUILD}
+</pre>
+
+<h4>CMake</h4>
+
+<pre>
+cmake ${LLVM_SRC} && make
+</pre>
+
+<h4> Autoconf </h4>
+
+<pre>
+${LLVM_SRC}/configure && make
+</pre>
+
+<h3> Test Polly</h3>
+
+<p>To check if Polly works correctly you can run <em>make check-polly</em> for the
+cmake build or <em>make check-polly -C tools/polly/test/</em> for the autoconf
+build.
+
+<p>If you get an error in one of the python files, your system probably uses python3
+as default python interpreter. This is the case, for instance, under Arch Linux.
+To solve this issue, run <code>cmake</code> again, but with the added argument:
+<code>-DPYTHON_EXECUTABLE=/usr/bin/python2</code> (replace <code>/usr/bin/python2</code>
+with the location of the python2 interpreter under your system).
+
+<pre>cmake -DCMAKE_PREFIX_PATH=${ISL_INSTALL} -DPYTHON_EXECUTABLE=/usr/bin/python2 ${LLVM_SRC}</pre>
+
+<h2> Manual [before and including 3.6]</h2>
 <h3 id="source"> Get the code </h3>
 
 The Polly source code is available in the LLVM SVN repository as well as through
