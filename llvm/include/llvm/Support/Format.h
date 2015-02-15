@@ -84,7 +84,7 @@ class format_object final : public format_object_base {
 #ifdef _MSC_VER
     return _snprintf(Buffer, BufferSize, Fmt, std::get<Is>(Vals)...);
 #else
-    return std::snprintf(Buffer, BufferSize, Fmt, std::get<Is>(Vals)...);
+    return snprintf(Buffer, BufferSize, Fmt, std::get<Is>(Vals)...);
 #endif
   }
 
