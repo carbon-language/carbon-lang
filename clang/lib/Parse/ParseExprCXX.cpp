@@ -659,7 +659,8 @@ ExprResult Parser::ParseCXXIdExpression(bool isAddressOfOperand) {
   ParseOptionalCXXScopeSpecifier(SS, ParsedType(), /*EnteringContext=*/false);
 
   Token Replacement;
-  ExprResult Result = tryParseCXXIdExpression(SS, isAddressOfOperand, Replacement);
+  ExprResult Result =
+      tryParseCXXIdExpression(SS, isAddressOfOperand, Replacement);
   if (Result.isUnset()) {
     // If the ExprResult is valid but null, then typo correction suggested a
     // keyword replacement that needs to be reparsed.
