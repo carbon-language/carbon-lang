@@ -7735,6 +7735,11 @@ static SmallBitVector computeZeroableShuffleElements(ArrayRef<int> Mask,
                                                      SDValue V1, SDValue V2) {
   SmallBitVector Zeroable(Mask.size(), false);
 
+  while (V1.getOpcode() == ISD::BITCAST)
+    V1 = V1->getOperand(0);
+  while (V2.getOpcode() == ISD::BITCAST)
+    V2 = V2->getOperand(0);
+
   bool V1IsZero = ISD::isBuildVectorAllZeros(V1.getNode());
   bool V2IsZero = ISD::isBuildVectorAllZeros(V2.getNode());
 
@@ -7746,10 +7751,10 @@ static SmallBitVector computeZeroableShuffleElements(ArrayRef<int> Mask,
       continue;
     }
 
-    // If this is an index into a build_vector node, dig out the input value and
-    // use it.
+    // If this is an index into a build_vector node (which has the same number
+    // of elements), dig out the input value and use it.
     SDValue V = M < Size ? V1 : V2;
-    if (V.getOpcode() != ISD::BUILD_VECTOR)
+    if (V.getOpcode() != ISD::BUILD_VECTOR || Size != (int)V.getNumOperands())
       continue;
 
     SDValue Input = V.getOperand(M % Size);
