@@ -20,7 +20,10 @@ entry:
   br i1 %cmp88, label %for.body.lr.ph, label %for.end
 
 for.body.lr.ph:
-  %0 = load i32** @b, align 8  %1 = load i32** @a, align 8  %2 = load i32** @c, align 8  br label %for.body
+  %0 = load i32** @b, align 8
+  %1 = load i32** @a, align 8
+  %2 = load i32** @c, align 8
+  br label %for.body
 
 for.body:
   %indvars.iv = phi i64 [ 0, %for.body.lr.ph ], [ %indvars.iv.next, %_ZL3fn3ii.exit58 ]
