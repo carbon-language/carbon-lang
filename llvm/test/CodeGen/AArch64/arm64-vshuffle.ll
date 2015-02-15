@@ -29,14 +29,14 @@ entry:
 }
 
 ; CHECK: lCPI1_0:
-; CHECK:          .byte   2                       ; 0x2
+; CHECK:          .byte   0                       ; 0x0
 ; CHECK:          .byte   255                     ; 0xff
-; CHECK:          .byte   6                       ; 0x6
+; CHECK:          .byte   2                       ; 0x2
 ; CHECK:          .byte   255                     ; 0xff
 ; CHECK:          .byte   10                      ; 0xa
 ; CHECK:          .byte   12                      ; 0xc
 ; CHECK:          .byte   14                      ; 0xe
-; CHECK:          .byte   0                       ; 0x0
+; CHECK:          .byte   7                       ; 0x7
 ; CHECK: test2
 ; CHECK: ldr     d[[REG0:[0-9]+]], [{{.*}}, lCPI1_0@PAGEOFF]
 ; CHECK: adrp    x[[REG2:[0-9]+]], lCPI1_1@PAGE
@@ -82,22 +82,22 @@ bb:
   ret <16 x i1> %Shuff
 }
 ; CHECK: lCPI3_1:
-; CHECK:         .byte   2                       ; 0x2
+; CHECK:         .byte   0                       ; 0x0
 ; CHECK:         .byte   1                       ; 0x1
-; CHECK:         .byte   6                       ; 0x6
-; CHECK:         .byte   18                      ; 0x12
-; CHECK:         .byte   10                      ; 0xa
-; CHECK:         .byte   12                      ; 0xc
-; CHECK:         .byte   14                      ; 0xe
-; CHECK:         .byte   0                       ; 0x0
 ; CHECK:         .byte   2                       ; 0x2
-; CHECK:         .byte   31                      ; 0x1f
+; CHECK:         .byte   18                      ; 0x12
+; CHECK:         .byte   4                       ; 0x4
+; CHECK:         .byte   5                       ; 0x5
 ; CHECK:         .byte   6                       ; 0x6
-; CHECK:         .byte   30                      ; 0x1e
+; CHECK:         .byte   7                       ; 0x7
+; CHECK:         .byte   8                       ; 0x8
+; CHECK:         .byte   31                      ; 0x1f
 ; CHECK:         .byte   10                      ; 0xa
+; CHECK:         .byte   30                      ; 0x1e
 ; CHECK:         .byte   12                      ; 0xc
+; CHECK:         .byte   13                      ; 0xd
 ; CHECK:         .byte   14                      ; 0xe
-; CHECK:         .byte   0                       ; 0x0
+; CHECK:         .byte   15                      ; 0xf
 ; CHECK: _test4:
 ; CHECK:         ldr     q[[REG1:[0-9]+]]
 ; CHECK:         movi.2d v[[REG0:[0-9]+]], #0000000000000000

@@ -237,7 +237,7 @@ define <4 x i32> @test19(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: test19:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    xorps %xmm2, %xmm2
-; CHECK-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,0],xmm0[0,3]
+; CHECK-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2],xmm0[0,3]
 ; CHECK-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,2,1,3]
 ; CHECK-NEXT:    insertps {{.*#+}} xmm1 = xmm1[0],zero,xmm1[2,2]
 ; CHECK-NEXT:    orps %xmm1, %xmm2

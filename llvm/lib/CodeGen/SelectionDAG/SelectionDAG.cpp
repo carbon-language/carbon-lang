@@ -1484,6 +1484,34 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, SDLoc dl, SDValue N1,
   if (N1.getOpcode() == ISD::UNDEF)
     commuteShuffle(N1, N2, MaskVec);
 
+  // If shuffling a splat, try to blend the splat instead. We do this here so
+  // that even when this arises during lowering we don't have to re-handle it.
+  auto BlendSplat = [&](BuildVectorSDNode *BV, int Offset) {
+    BitVector UndefElements;
+    SDValue Splat = BV->getSplatValue(&UndefElements);
+    if (!Splat)
+      return;
+
+    for (int i = 0; i < (int)NElts; ++i) {
+      if (MaskVec[i] < Offset || MaskVec[i] >= (Offset + (int)NElts))
+        continue;
+
+      // If this input comes from undef, mark it as such.
+      if (UndefElements[MaskVec[i] - Offset]) {
+        MaskVec[i] = -1;
+        continue;
+      }
+
+      // If we can blend a non-undef lane, use that instead.
+      if (!UndefElements[i])
+        MaskVec[i] = i + Offset;
+    }
+  };
+  if (auto *N1BV = dyn_cast<BuildVectorSDNode>(N1))
+    BlendSplat(N1BV, 0);
+  if (auto *N2BV = dyn_cast<BuildVectorSDNode>(N2))
+    BlendSplat(N2BV, NElts);
+
   // Canonicalize all index into lhs, -> shuffle lhs, undef
   // Canonicalize all index into rhs, -> shuffle rhs, undef
   bool AllLHS = true, AllRHS = true;
