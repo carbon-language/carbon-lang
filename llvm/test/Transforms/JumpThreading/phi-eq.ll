@@ -101,7 +101,7 @@ get_filter_list.exit6:                            ; preds = %sw.bb3.i4, %sw.bb2.
   %2 = load %struct._GList** %1, align 8
 ; We should have jump-threading insert an additional load here for the value
 ; coming out of the first switch, which is picked up by a subsequent phi
-; CHECK: {{%\.pr = load %[^%]* %0}}
+; CHECK: %.pr = load %struct._GList** %0
 ; CHECK-NEXT:  br label %while.cond
   br label %while.cond
 
