@@ -9,7 +9,7 @@
 ; CHECK-NEXT:    Size:
 ; CHECK-NEXT:    Binding: Local
 ; CHECK-NEXT:    Type: Function
-; CHECK-NEXT:    Other: 2
+; CHECK-NEXT:    Other: {{2|0}}
 ; CHECK-NEXT:    Section: .text
 ; CHECK-NEXT:  }
 
