@@ -7588,12 +7588,13 @@ static SDValue lowerVectorShuffleAsBlendAndPermute(SDLoc DL, MVT VT, SDValue V1,
   return DAG.getVectorShuffle(VT, DL, V, DAG.getUNDEF(VT), PermuteMask);
 }
 
-/// \brief Generic routine to lower a shuffle and blend as a decomposed set of
-/// unblended shuffles followed by an unshuffled blend.
+/// \brief Generic routine to decompose a shuffle and blend into indepndent
+/// blends and permutes.
 ///
 /// This matches the extremely common pattern for handling combined
 /// shuffle+blend operations on newer X86 ISAs where we have very fast blend
-/// operations.
+/// operations. It will try to pick the best arrangement of shuffles and
+/// blends.
 static SDValue lowerVectorShuffleAsDecomposedShuffleBlend(SDLoc DL, MVT VT,
                                                           SDValue V1,
                                                           SDValue V2,
@@ -7612,6 +7613,16 @@ static SDValue lowerVectorShuffleAsDecomposedShuffleBlend(SDLoc DL, MVT VT,
       V2Mask[i] = Mask[i] - Size;
       BlendMask[i] = i + Size;
     }
+
+  // Try to lower with the simpler initial blend strategy unless one of the
+  // input shuffles would be a no-op. We prefer to shuffle inputs as the
+  // shuffle may be able to fold with a load or other benefit. However, when
+  // we'll have to do 2x as many shuffles in order to achieve this, blending
+  // first is a better strategy.
+  if (!isNoopShuffleMask(V1Mask) && !isNoopShuffleMask(V2Mask))
+    if (SDValue BlendPerm =
+            lowerVectorShuffleAsBlendAndPermute(DL, VT, V1, V2, Mask, DAG))
+      return BlendPerm;
 
   V1 = DAG.getVectorShuffle(VT, DL, V1, DAG.getUNDEF(VT), V1Mask);
   V2 = DAG.getVectorShuffle(VT, DL, V2, DAG.getUNDEF(VT), V2Mask);
