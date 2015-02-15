@@ -69,7 +69,7 @@ def main():
   asm_function_re = re.compile(
       r'^_?(?P<f>[^:]+):[ \t]*#+[ \t]*@(?P=f)\n[^:]*?'
       r'(?P<body>^##?[ \t]+[^:]+:.*?)\s*'
-      r'^\s*(?:[^:\n]+?:\s*\n\s*\.size|\.cfi_endproc|\.globl|\.(?:sub)?section)',
+      r'^\s*(?:[^:\n]+?:\s*\n\s*\.size|\.cfi_endproc|\.globl|\.comm|\.(?:sub)?section)',
       flags=(re.M | re.S))
   check_prefix_re = re.compile('--check-prefix=(\S+)')
   check_re = re.compile(r'^\s*;\s*([^:]+?)(?:-NEXT|-NOT|-DAG|-LABEL)?:')
