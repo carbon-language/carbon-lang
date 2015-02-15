@@ -1,4 +1,4 @@
-// RUN: not llvm-mc -triple x86_64-unknown-unknown -mcpu=knl --show-encoding %s 2> %t.err | FileCheck %s
+// RUN: not llvm-mc -triple x86_64-unknown-unknown -mcpu=knl -mattr=+avx512dq --show-encoding %s 2> %t.err | FileCheck %s
 // RUN: FileCheck --check-prefix=ERR < %t.err %s
 
 // CHECK: vaddpd %zmm6, %zmm27, %zmm8
