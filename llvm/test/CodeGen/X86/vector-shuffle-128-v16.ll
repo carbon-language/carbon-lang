@@ -1,8 +1,8 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE2
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+ssse3 | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSSE3
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse4.1 | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE41
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX1
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx2 | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX2
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -x86-experimental-vector-shuffle-legality | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE2
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+ssse3 -x86-experimental-vector-shuffle-legality | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSSE3
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+sse4.1 -x86-experimental-vector-shuffle-legality | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE41
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx -x86-experimental-vector-shuffle-legality | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX1
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx2 -x86-experimental-vector-shuffle-legality | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX2
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-unknown"
@@ -593,26 +593,26 @@ define <16 x i8> @PR20540(<8 x i8> %a) {
 ; SSE2-LABEL: PR20540:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    pand {{.*}}(%rip), %xmm0
-; SSE2-NEXT:    packuswb %xmm0, %xmm0
-; SSE2-NEXT:    movq {{.*#+}} xmm0 = xmm0[0],zero
+; SSE2-NEXT:    pxor %xmm1, %xmm1
+; SSE2-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[0,1,0,3]
+; SSE2-NEXT:    pshuflw {{.*#+}} xmm1 = xmm1[0,0,0,0,4,5,6,7]
+; SSE2-NEXT:    pshufhw {{.*#+}} xmm1 = xmm1[0,1,2,3,4,4,4,4]
+; SSE2-NEXT:    packuswb %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; SSSE3-LABEL: PR20540:
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u]
-; SSSE3-NEXT:    movq {{.*#+}} xmm0 = xmm0[0],zero
+; SSSE3-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: PR20540:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u]
-; SSE41-NEXT:    movq {{.*#+}} xmm0 = xmm0[0],zero
+; SSE41-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: PR20540:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u]
-; AVX-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
+; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
 ; AVX-NEXT:    retq
   %shuffle = shufflevector <8 x i8> %a, <8 x i8> zeroinitializer, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 8, i32 8, i32 8, i32 8, i32 8, i32 8, i32 8>
   ret <16 x i8> %shuffle
