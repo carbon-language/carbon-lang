@@ -6651,7 +6651,7 @@ static SDValue matchAddSub(const BuildVectorSDNode *BV, SelectionDAG &DAG,
   bool AddFound = false;
   bool SubFound = false;
 
-  for (unsigned i = 0, e = NumElts; i != e; i++) {
+  for (unsigned i = 0, e = NumElts; i != e; ++i) {
     SDValue Op = BV->getOperand(i);
 
     // Skip 'undef' values.
@@ -7926,10 +7926,10 @@ static SDValue lowerVectorShuffleAsBitShift(SDLoc DL, MVT VT, SDValue V1,
 
     bool MatchLeft = true, MatchRight = true;
     for (int i = 0; i != Size; i += Scale) {
-      for (int j = 0; j != Shift; j++) {
+      for (int j = 0; j != Shift; ++j) {
         MatchLeft &= Zeroable[i + j];
       }
-      for (int j = Scale - Shift; j != Scale; j++) {
+      for (int j = Scale - Shift; j != Scale; ++j) {
         MatchRight &= Zeroable[i + j];
       }
     }
@@ -7963,7 +7963,7 @@ static SDValue lowerVectorShuffleAsBitShift(SDLoc DL, MVT VT, SDValue V1,
   // multiple to see if we can find a match with the moved element indices
   // and that the shifted in elements are all zeroable.
   for (int Scale = 2; Scale * VT.getScalarSizeInBits() <= 64; Scale *= 2)
-    for (int Shift = 1; Shift != Scale; Shift++)
+    for (int Shift = 1; Shift != Scale; ++Shift)
       if (SDValue BitShift = MatchBitShift(Shift, Scale))
         return BitShift;
 
@@ -8132,7 +8132,7 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
   // Returns one of the source operands if the shuffle can be reduced to a
   // MOVQ, copying the lower 64-bits and zero-extending to the upper 64-bits.
   auto CanZExtLowHalf = [&]() {
-    for (int i = NumElements / 2; i != NumElements; i++)
+    for (int i = NumElements / 2; i != NumElements; ++i)
       if (!Zeroable[i])
         return SDValue();
     if (isSequentialOrUndefInRange(Mask, 0, NumElements / 2, 0))
@@ -8385,7 +8385,7 @@ static SDValue lowerVectorShuffleAsInsertPS(SDValue Op, SDValue V1, SDValue V2,
   int V2DstIndex = -1;
   bool V1UsedInPlace = false;
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 4; ++i) {
     // Synthesize a zero mask from the zeroable elements (includes undefs).
     if (Zeroable[i]) {
       ZMask |= 1 << i;
