@@ -54,8 +54,8 @@ bool ADCE::runOnFunction(Function& F) {
   if (skipOptnoneFunction(F))
     return false;
 
-  SmallPtrSet<Instruction*, 128> alive;
-  SmallVector<Instruction*, 128> worklist;
+  SmallPtrSet<Instruction*, 128> Alive;
+  SmallVector<Instruction*, 128> Worklist;
 
   // Collect the set of "root" instructions that are known live.
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
@@ -63,37 +63,37 @@ bool ADCE::runOnFunction(Function& F) {
         isa<DbgInfoIntrinsic>(I.getInstructionIterator()) ||
         isa<LandingPadInst>(I.getInstructionIterator()) ||
         I->mayHaveSideEffects()) {
-      alive.insert(I.getInstructionIterator());
-      worklist.push_back(I.getInstructionIterator());
+      Alive.insert(I.getInstructionIterator());
+      Worklist.push_back(I.getInstructionIterator());
     }
 
   // Propagate liveness backwards to operands.
-  while (!worklist.empty()) {
-    Instruction* curr = worklist.pop_back_val();
+  while (!Worklist.empty()) {
+    Instruction* curr = Worklist.pop_back_val();
     for (Instruction::op_iterator OI = curr->op_begin(), OE = curr->op_end();
          OI != OE; ++OI)
       if (Instruction* Inst = dyn_cast<Instruction>(OI))
-        if (alive.insert(Inst).second)
-          worklist.push_back(Inst);
+        if (Alive.insert(Inst).second)
+          Worklist.push_back(Inst);
   }
 
   // The inverse of the live set is the dead set.  These are those instructions
   // which have no side effects and do not influence the control flow or return
   // value of the function, and may therefore be deleted safely.
-  // NOTE: We reuse the worklist vector here for memory efficiency.
+  // NOTE: We reuse the Worklist vector here for memory efficiency.
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
-    if (!alive.count(I.getInstructionIterator())) {
-      worklist.push_back(I.getInstructionIterator());
+    if (!Alive.count(I.getInstructionIterator())) {
+      Worklist.push_back(I.getInstructionIterator());
       I->dropAllReferences();
     }
 
-  for (SmallVectorImpl<Instruction *>::iterator I = worklist.begin(),
-       E = worklist.end(); I != E; ++I) {
+  for (SmallVectorImpl<Instruction *>::iterator I = Worklist.begin(),
+       E = Worklist.end(); I != E; ++I) {
     ++NumRemoved;
     (*I)->eraseFromParent();
   }
 
-  return !worklist.empty();
+  return !Worklist.empty();
 }
 
 FunctionPass *llvm::createAggressiveDCEPass() {
