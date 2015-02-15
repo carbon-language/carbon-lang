@@ -4296,6 +4296,12 @@ let Predicates = [HasAVX2] in {
             (VPSLLDQYri VR256:$src1, (BYTE_imm imm:$src2))>;
   def : Pat<(int_x86_avx2_psrl_dq VR256:$src1, imm:$src2),
             (VPSRLDQYri VR256:$src1, (BYTE_imm imm:$src2))>;
+
+  // Shift up / down and insert zero's.
+  def : Pat<(v4i64 (X86vshldq VR256:$src, (i8 imm:$amt))),
+            (VPSLLDQYri VR256:$src, (BYTE_imm imm:$amt))>;
+  def : Pat<(v4i64 (X86vshrdq VR256:$src, (i8 imm:$amt))),
+            (VPSRLDQYri VR256:$src, (BYTE_imm imm:$amt))>;
 }
 
 let Predicates = [UseSSE2] in {
