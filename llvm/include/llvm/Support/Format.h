@@ -23,18 +23,12 @@
 #ifndef LLVM_SUPPORT_FORMAT_H
 #define LLVM_SUPPORT_FORMAT_H
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 #include <cstdio>
-#ifdef _MSC_VER
-// FIXME: This define is wrong:
-//  - _snprintf does not guarantee that trailing null is always added - if
-//    there is no space for null, it does not report any error.
-//  - According to C++ standard, snprintf should be visible in the 'std' 
-//    namespace - this define makes this impossible.
-#define snprintf _snprintf
-#endif
+#include <tuple>
 
 namespace llvm {
 
@@ -80,101 +74,26 @@ public:
 /// printed, this synthesizes the string into a temporary buffer provided and
 /// returns whether or not it is big enough.
 
-template <typename T>
-class format_object1 final : public format_object_base {
-  T Val;
-public:
-  format_object1(const char *fmt, const T &val)
-    : format_object_base(fmt), Val(val) {
+template <typename... Ts>
+class format_object final : public format_object_base {
+  std::tuple<Ts...> Vals;
+
+  template <std::size_t... Is>
+  int snprint_tuple(char *Buffer, unsigned BufferSize,
+                    index_sequence<Is...>) const {
+#ifdef _MSC_VER
+    return _snprintf(Buffer, BufferSize, Fmt, std::get<Is>(Vals)...);
+#else
+    return std::snprintf(Buffer, BufferSize, Fmt, std::get<Is>(Vals)...);
+#endif
   }
+
+public:
+  format_object(const char *fmt, const Ts &... vals)
+      : format_object_base(fmt), Vals(vals...) {}
 
   int snprint(char *Buffer, unsigned BufferSize) const override {
-    return snprintf(Buffer, BufferSize, Fmt, Val);
-  }
-};
-
-template <typename T1, typename T2>
-class format_object2 final : public format_object_base {
-  T1 Val1;
-  T2 Val2;
-public:
-  format_object2(const char *fmt, const T1 &val1, const T2 &val2)
-  : format_object_base(fmt), Val1(val1), Val2(val2) {
-  }
-
-  int snprint(char *Buffer, unsigned BufferSize) const override {
-    return snprintf(Buffer, BufferSize, Fmt, Val1, Val2);
-  }
-};
-
-template <typename T1, typename T2, typename T3>
-class format_object3 final : public format_object_base {
-  T1 Val1;
-  T2 Val2;
-  T3 Val3;
-public:
-  format_object3(const char *fmt, const T1 &val1, const T2 &val2,const T3 &val3)
-    : format_object_base(fmt), Val1(val1), Val2(val2), Val3(val3) {
-  }
-
-  int snprint(char *Buffer, unsigned BufferSize) const override {
-    return snprintf(Buffer, BufferSize, Fmt, Val1, Val2, Val3);
-  }
-};
-
-template <typename T1, typename T2, typename T3, typename T4>
-class format_object4 final : public format_object_base {
-  T1 Val1;
-  T2 Val2;
-  T3 Val3;
-  T4 Val4;
-public:
-  format_object4(const char *fmt, const T1 &val1, const T2 &val2,
-                 const T3 &val3, const T4 &val4)
-    : format_object_base(fmt), Val1(val1), Val2(val2), Val3(val3), Val4(val4) {
-  }
-
-  int snprint(char *Buffer, unsigned BufferSize) const override {
-    return snprintf(Buffer, BufferSize, Fmt, Val1, Val2, Val3, Val4);
-  }
-};
-
-template <typename T1, typename T2, typename T3, typename T4, typename T5>
-class format_object5 final : public format_object_base {
-  T1 Val1;
-  T2 Val2;
-  T3 Val3;
-  T4 Val4;
-  T5 Val5;
-public:
-  format_object5(const char *fmt, const T1 &val1, const T2 &val2,
-                 const T3 &val3, const T4 &val4, const T5 &val5)
-    : format_object_base(fmt), Val1(val1), Val2(val2), Val3(val3), Val4(val4),
-      Val5(val5) {
-  }
-
-  int snprint(char *Buffer, unsigned BufferSize) const override {
-    return snprintf(Buffer, BufferSize, Fmt, Val1, Val2, Val3, Val4, Val5);
-  }
-};
-
-template <typename T1, typename T2, typename T3, typename T4, typename T5,
-          typename T6>
-class format_object6 final : public format_object_base {
-  T1 Val1;
-  T2 Val2;
-  T3 Val3;
-  T4 Val4;
-  T5 Val5;
-  T6 Val6;
-public:
-  format_object6(const char *Fmt, const T1 &Val1, const T2 &Val2,
-                 const T3 &Val3, const T4 &Val4, const T5 &Val5, const T6 &Val6)
-    : format_object_base(Fmt), Val1(Val1), Val2(Val2), Val3(Val3), Val4(Val4),
-      Val5(Val5), Val6(Val6) { }
-
-  int snprint(char *Buffer, unsigned BufferSize) const override {
-    return snprintf(Buffer, BufferSize, Fmt, Val1, Val2, Val3, Val4, Val5, Val6);
+    return snprint_tuple(Buffer, BufferSize, index_sequence_for<Ts...>());
   }
 };
 
@@ -187,44 +106,9 @@ public:
 ///   OS << format("%0.4f", myfloat) << '\n';
 /// \endcode
 
-template <typename T>
-inline format_object1<T> format(const char *Fmt, const T &Val) {
-  return format_object1<T>(Fmt, Val);
-}
-
-template <typename T1, typename T2>
-inline format_object2<T1, T2> format(const char *Fmt, const T1 &Val1,
-                                     const T2 &Val2) {
-  return format_object2<T1, T2>(Fmt, Val1, Val2);
-}
-
-template <typename T1, typename T2, typename T3>
-  inline format_object3<T1, T2, T3> format(const char *Fmt, const T1 &Val1,
-                                           const T2 &Val2, const T3 &Val3) {
-  return format_object3<T1, T2, T3>(Fmt, Val1, Val2, Val3);
-}
-
-template <typename T1, typename T2, typename T3, typename T4>
-inline format_object4<T1, T2, T3, T4> format(const char *Fmt, const T1 &Val1,
-                                             const T2 &Val2, const T3 &Val3,
-                                             const T4 &Val4) {
-  return format_object4<T1, T2, T3, T4>(Fmt, Val1, Val2, Val3, Val4);
-}
-
-template <typename T1, typename T2, typename T3, typename T4, typename T5>
-inline format_object5<T1, T2, T3, T4, T5> format(const char *Fmt,const T1 &Val1,
-                                             const T2 &Val2, const T3 &Val3,
-                                             const T4 &Val4, const T5 &Val5) {
-  return format_object5<T1, T2, T3, T4, T5>(Fmt, Val1, Val2, Val3, Val4, Val5);
-}
-
-template <typename T1, typename T2, typename T3, typename T4, typename T5,
-          typename T6>
-inline format_object6<T1, T2, T3, T4, T5, T6>
-format(const char *Fmt, const T1 &Val1, const T2 &Val2, const T3 &Val3,
-       const T4 &Val4, const T5 &Val5, const T6 &Val6) {
-  return format_object6<T1, T2, T3, T4, T5, T6>(Fmt, Val1, Val2, Val3, Val4,
-                                                Val5, Val6);
+template <typename... Ts>
+inline format_object<Ts...> format(const char *Fmt, const Ts &... Vals) {
+  return format_object<Ts...>(Fmt, Vals...);
 }
 
 /// This is a helper class used for left_justify() and right_justify().

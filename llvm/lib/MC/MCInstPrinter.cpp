@@ -69,11 +69,11 @@ static bool needsLeadingZero(uint64_t Value)
   return false;
 }
 
-format_object1<int64_t> MCInstPrinter::formatDec(const int64_t Value) const {
+format_object<int64_t> MCInstPrinter::formatDec(int64_t Value) const {
   return format("%" PRId64, Value);
 }
 
-format_object1<int64_t> MCInstPrinter::formatHex(const int64_t Value) const {
+format_object<int64_t> MCInstPrinter::formatHex(int64_t Value) const {
   switch(PrintHexStyle) {
   case HexStyle::C:
     if (Value < 0)
@@ -96,7 +96,7 @@ format_object1<int64_t> MCInstPrinter::formatHex(const int64_t Value) const {
   llvm_unreachable("unsupported print style");
 }
 
-format_object1<uint64_t> MCInstPrinter::formatHex(const uint64_t Value) const {
+format_object<uint64_t> MCInstPrinter::formatHex(uint64_t Value) const {
   switch(PrintHexStyle) {
   case HexStyle::C:
      return format("0x%" PRIx64, Value);

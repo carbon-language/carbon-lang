@@ -242,7 +242,7 @@ raw_ostream &raw_ostream::operator<<(double N) {
 
   char buf[16];
   unsigned len;
-  len = snprintf(buf, sizeof(buf), "%e", N);
+  len = format("%e", N).snprint(buf, sizeof(buf));
   if (len <= sizeof(buf) - 2) {
     if (len >= 5 && buf[len - 5] == 'e' && buf[len - 3] == '0') {
       int cs = buf[len - 4];
