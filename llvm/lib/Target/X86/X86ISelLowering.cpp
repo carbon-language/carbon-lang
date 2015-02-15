@@ -7543,6 +7543,38 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
   }
 }
 
+/// \brief Try to lower as a blend of elements from two inputs followed by
+/// a single-input permutation.
+///
+/// This matches the pattern where we can blend elements from two inputs and
+/// then reduce the shuffle to a single-input permutation.
+static SDValue lowerVectorShuffleAsBlendAndPermute(SDLoc DL, MVT VT, SDValue V1,
+                                                   SDValue V2,
+                                                   ArrayRef<int> Mask,
+                                                   SelectionDAG &DAG) {
+  // We build up the blend mask while checking whether a blend is a viable way
+  // to reduce the shuffle.
+  SmallVector<int, 32> BlendMask(Mask.size(), -1);
+  SmallVector<int, 32> PermuteMask(Mask.size(), -1);
+
+  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
+    if (Mask[i] < 0)
+      continue;
+
+    assert(Mask[i] < Size * 2 && "Shuffle input is out of bounds.");
+
+    if (BlendMask[Mask[i] % Size] == -1)
+      BlendMask[Mask[i] % Size] = Mask[i];
+    else if (BlendMask[Mask[i] % Size] != Mask[i])
+      return SDValue(); // Can't blend in the needed input!
+
+    PermuteMask[i] = Mask[i] % Size;
+  }
+
+  SDValue V = DAG.getVectorShuffle(VT, DL, V1, V2, BlendMask);
+  return DAG.getVectorShuffle(VT, DL, V, DAG.getUNDEF(VT), PermuteMask);
+}
+
 /// \brief Generic routine to lower a shuffle and blend as a decomposed set of
 /// unblended shuffles followed by an unshuffled blend.
 ///
@@ -8552,6 +8584,24 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                      DAG.getVectorShuffle(MVT::v2f64, DL, V1, V2, Mask));
 }
 
+/// \brief Test whether this can be lowered with a single SHUFPS instruction.
+///
+/// This is used to disable more specialized lowerings when the shufps lowering
+/// will happen to be efficient.
+static bool isSingleSHUFPSMask(ArrayRef<int> Mask) {
+  // This routine only handles 128-bit shufps.
+  assert(Mask.size() == 4 && "Unsupported mask size!");
+
+  // To lower with a single SHUFPS we need to have the low half and high half
+  // each requiring a single input.
+  if (Mask[0] != -1 && Mask[1] != -1 && (Mask[0] < 4 != Mask[1] < 4))
+    return false;
+  if (Mask[2] != -1 && Mask[3] != -1 && (Mask[2] < 4 != Mask[3] < 4))
+    return false;
+
+  return true;
+}
+
 /// \brief Lower a vector shuffle using the SHUFPS instruction.
 ///
 /// This is a helper routine dedicated to lowering vector shuffles using SHUFPS.
@@ -8712,6 +8762,11 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     // Use INSERTPS if we can complete the shuffle efficiently.
     if (SDValue V = lowerVectorShuffleAsInsertPS(Op, V1, V2, Mask, DAG))
       return V;
+
+    if (!isSingleSHUFPSMask(Mask))
+      if (SDValue BlendPerm = lowerVectorShuffleAsBlendAndPermute(
+              DL, MVT::v4f32, V1, V2, Mask, DAG))
+        return BlendPerm;
   }
 
   // Otherwise fall back to a SHUFPS lowering strategy.
