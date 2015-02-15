@@ -28,54 +28,65 @@ using namespace llvm;
   MAP(C2, 34)           \
   MAP(C3, 35)           \
   MAP(C4, 36)           \
-  MAP(C8, 37)           \
-  MAP(C9, 38)           \
-  MAP(CA, 39)           \
-  MAP(CB, 40)           \
-  MAP(CF, 41)           \
-  MAP(D0, 42)           \
-  MAP(D1, 43)           \
-  MAP(D4, 44)           \
-  MAP(D5, 45)           \
-  MAP(D6, 46)           \
-  MAP(D7, 47)           \
-  MAP(D8, 48)           \
-  MAP(D9, 49)           \
-  MAP(DA, 50)           \
-  MAP(DB, 51)           \
-  MAP(DC, 52)           \
-  MAP(DD, 53)           \
-  MAP(DE, 54)           \
-  MAP(DF, 55)           \
-  MAP(E0, 56)           \
-  MAP(E1, 57)           \
-  MAP(E2, 58)           \
-  MAP(E3, 59)           \
-  MAP(E4, 60)           \
-  MAP(E5, 61)           \
-  MAP(E8, 62)           \
-  MAP(E9, 63)           \
-  MAP(EA, 64)           \
-  MAP(EB, 65)           \
-  MAP(EC, 66)           \
-  MAP(ED, 67)           \
-  MAP(EE, 68)           \
-  MAP(F0, 69)           \
-  MAP(F1, 70)           \
-  MAP(F2, 71)           \
-  MAP(F3, 72)           \
-  MAP(F4, 73)           \
-  MAP(F5, 74)           \
-  MAP(F6, 75)           \
-  MAP(F7, 76)           \
-  MAP(F8, 77)           \
-  MAP(F9, 78)           \
-  MAP(FA, 79)           \
-  MAP(FB, 80)           \
-  MAP(FC, 81)           \
-  MAP(FD, 82)           \
-  MAP(FE, 83)           \
-  MAP(FF, 84)
+  MAP(C5, 37)           \
+  MAP(C6, 38)           \
+  MAP(C7, 39)           \
+  MAP(C8, 40)           \
+  MAP(C9, 41)           \
+  MAP(CA, 42)           \
+  MAP(CB, 43)           \
+  MAP(CC, 44)           \
+  MAP(CD, 45)           \
+  MAP(CE, 46)           \
+  MAP(CF, 47)           \
+  MAP(D0, 48)           \
+  MAP(D1, 49)           \
+  MAP(D2, 50)           \
+  MAP(D3, 51)           \
+  MAP(D4, 52)           \
+  MAP(D5, 53)           \
+  MAP(D6, 54)           \
+  MAP(D7, 55)           \
+  MAP(D8, 56)           \
+  MAP(D9, 57)           \
+  MAP(DA, 58)           \
+  MAP(DB, 59)           \
+  MAP(DC, 60)           \
+  MAP(DD, 61)           \
+  MAP(DE, 62)           \
+  MAP(DF, 63)           \
+  MAP(E0, 64)           \
+  MAP(E1, 65)           \
+  MAP(E2, 66)           \
+  MAP(E3, 67)           \
+  MAP(E4, 68)           \
+  MAP(E5, 69)           \
+  MAP(E6, 70)           \
+  MAP(E7, 71)           \
+  MAP(E8, 72)           \
+  MAP(E9, 73)           \
+  MAP(EA, 74)           \
+  MAP(EB, 75)           \
+  MAP(EC, 76)           \
+  MAP(ED, 77)           \
+  MAP(EE, 78)           \
+  MAP(EF, 79)           \
+  MAP(F0, 80)           \
+  MAP(F1, 81)           \
+  MAP(F2, 82)           \
+  MAP(F3, 83)           \
+  MAP(F4, 84)           \
+  MAP(F5, 85)           \
+  MAP(F6, 86)           \
+  MAP(F7, 87)           \
+  MAP(F8, 88)           \
+  MAP(F9, 89)           \
+  MAP(FA, 90)           \
+  MAP(FB, 91)           \
+  MAP(FC, 92)           \
+  MAP(FD, 93)           \
+  MAP(FE, 94)           \
+  MAP(FF, 95)
 
 // A clone of X86 since we can't depend on something that is generated.
 namespace X86Local {
@@ -803,9 +814,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
   // Special cases where the LLVM tables are not complete
 
 #define MAP(from, to)                     \
-  case X86Local::MRM_##from:              \
-    filter = new ExactFilter(0x##from);   \
-    break;
+  case X86Local::MRM_##from:
 
   OpcodeType    opcodeType  = (OpcodeType)-1;
 
@@ -854,6 +863,8 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
       filter = new ExtendedFilter(false, Form - X86Local::MRM0m);
       break;
     MRM_MAPPING
+      filter = new ExactFilter(0xC0 + Form - X86Local::MRM_C0);   \
+      break;
     } // switch (Form)
 
     opcodeToSet = Opcode;
