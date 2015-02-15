@@ -144,6 +144,23 @@ namespace PBQP {
     // TODO: Try to normalize newly added/modified edge.
   }
 
+  // Does this Cost vector have any register options ?
+  template <typename VectorT>
+  bool hasRegisterOptions(const VectorT &V) {
+    unsigned VL = V.getLength();
+
+    // An empty or spill only cost vector does not provide any register option.
+    if (VL <= 1)
+      return false;
+
+    // If there are registers in the cost vector, but all of them have infinite
+    // costs, then ... there is no available register.
+    for (unsigned i = 1; i < VL; ++i)
+      if (V[i] != std::numeric_limits<PBQP::PBQPNum>::infinity())
+        return true;
+
+    return false;
+  }
 
   // \brief Find a solution to a fully reduced graph by backpropagation.
   //
@@ -169,6 +186,13 @@ namespace PBQP {
       stack.pop_back();
 
       RawVector v = G.getNodeCosts(NId);
+
+      // Although a conservatively allocatable node can be allocated to a register,
+      // spilling it may provide a lower cost solution. Assert here that spilling
+      // is done by choice, not because there were no register available.
+      if (G.getNodeMetadata(NId).isConservativelyAllocatable())
+        assert(hasRegisterOptions(v) && "A conservatively allocatable node "
+                                        "must have available register options");
 
       for (auto EId : G.adjEdgeIds(NId)) {
         const Matrix& edgeCosts = G.getEdgeCosts(EId);
