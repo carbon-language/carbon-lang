@@ -1622,7 +1622,7 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
     } else if (D &&
                cast<FunctionDecl>(D)
                   ->getCorrespondingUnsizedGlobalDeallocationFunction() &&
-               !getLangOpts().DefaultSizedDelete &&
+               getLangOpts().DefaultSizedDelete &&
                !D->hasAttr<AliasAttr>()) {
       addDeferredDeclToEmit(F, GD);
 
