@@ -47,7 +47,7 @@ protected:
                    raw_ostream &diag = llvm::errs());
 
 private:
-  Driver() LLVM_DELETED_FUNCTION;
+  Driver() = delete;
 };
 
 /// Driver for "universal" lld tool which can mimic any linker command line
@@ -59,7 +59,7 @@ public:
                    raw_ostream &diag = llvm::errs());
 
 private:
-  UniversalDriver() LLVM_DELETED_FUNCTION;
+  UniversalDriver() = delete;
 };
 
 /// Driver for gnu/binutil 'ld' command line options.
@@ -95,7 +95,7 @@ private:
                                     llvm::Triple &triple,
                                     llvm::Triple &baseTriple);
 
-  GnuLdDriver() LLVM_DELETED_FUNCTION;
+  GnuLdDriver() = delete;
 };
 
 /// Driver for darwin/ld64 'ld' command line options.
@@ -112,7 +112,7 @@ public:
                     raw_ostream &diag = llvm::errs());
 
 private:
-  DarwinLdDriver() LLVM_DELETED_FUNCTION;
+  DarwinLdDriver() = delete;
 };
 
 /// Driver for Windows 'link.exe' command line options
@@ -139,7 +139,7 @@ public:
   }
 
 private:
-  WinLinkDriver() LLVM_DELETED_FUNCTION;
+  WinLinkDriver() = delete;
 };
 
 /// Driver for lld unit tests
@@ -156,7 +156,7 @@ public:
                     raw_ostream &diag = llvm::errs());
 
 private:
-  CoreDriver() LLVM_DELETED_FUNCTION;
+  CoreDriver() = delete;
 };
 
 } // end namespace lld

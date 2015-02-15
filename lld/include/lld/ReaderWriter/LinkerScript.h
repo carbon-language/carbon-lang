@@ -762,7 +762,7 @@ public:
 
   /// Let's not allow copying of Parser class because it would be expensive
   /// to update all the AST pointers to a new buffer.
-  Parser(const Parser &instance) LLVM_DELETED_FUNCTION;
+  Parser(const Parser &instance) = delete;
 
   /// Lex and parse the current memory buffer to create a linker script AST.
   std::error_code parse();

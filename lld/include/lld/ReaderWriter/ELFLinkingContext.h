@@ -303,7 +303,7 @@ public:
   const llvm::StringSet<> &wrapCalls() const { return _wrapCalls; }
 
 private:
-  ELFLinkingContext() LLVM_DELETED_FUNCTION;
+  ELFLinkingContext() = delete;
 
 protected:
   ELFLinkingContext(llvm::Triple, std::unique_ptr<TargetHandlerBase>);
