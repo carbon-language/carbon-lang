@@ -1617,11 +1617,14 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
       DeferredDecls.erase(DDI);
       
       // Otherwise, if this is a sized deallocation function, emit a weak
-      // definition for it at the end of the translation unit.
-    } else if (D && cast<FunctionDecl>(D)
-                        ->getCorrespondingUnsizedGlobalDeallocationFunction()) {
-      if (getLangOpts().DefaultSizedDelete)
-        addDeferredDeclToEmit(F, GD);
+      // definition for it at the end of the translation unit (if allowed),
+      // unless the sized deallocation function is aliased.
+    } else if (D &&
+               cast<FunctionDecl>(D)
+                  ->getCorrespondingUnsizedGlobalDeallocationFunction() &&
+               !getLangOpts().DefaultSizedDelete &&
+               !D->hasAttr<AliasAttr>()) {
+      addDeferredDeclToEmit(F, GD);
 
       // Otherwise, there are cases we have to worry about where we're
       // using a declaration for which we must emit a definition but where
