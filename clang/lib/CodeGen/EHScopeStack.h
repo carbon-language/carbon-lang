@@ -329,7 +329,7 @@ public:
   /// The pointer returned from this method is valid until the cleanup
   /// stack is modified.
   template <class T, class... As>
-  T *pushCleanupWithExtra(CleanupKind Kind, size_t N, As A) {
+  T *pushCleanupWithExtra(CleanupKind Kind, size_t N, As... A) {
     void *Buffer = pushCleanup(Kind, sizeof(T) + T::getExtraSize(N));
     return new (Buffer) T(N, A...);
   }
