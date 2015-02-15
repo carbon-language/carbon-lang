@@ -695,31 +695,9 @@ template <typename T>
 class FoldingSetNodeWrapper : public FoldingSetNode {
   T data;
 public:
-  explicit FoldingSetNodeWrapper(const T &x) : data(x) {}
-  virtual ~FoldingSetNodeWrapper() {}
-
-  template<typename A1>
-  explicit FoldingSetNodeWrapper(const A1 &a1)
-    : data(a1) {}
-
-  template <typename A1, typename A2>
-  explicit FoldingSetNodeWrapper(const A1 &a1, const A2 &a2)
-    : data(a1,a2) {}
-
-  template <typename A1, typename A2, typename A3>
-  explicit FoldingSetNodeWrapper(const A1 &a1, const A2 &a2, const A3 &a3)
-    : data(a1,a2,a3) {}
-
-  template <typename A1, typename A2, typename A3, typename A4>
-  explicit FoldingSetNodeWrapper(const A1 &a1, const A2 &a2, const A3 &a3,
-                                 const A4 &a4)
-    : data(a1,a2,a3,a4) {}
-
-  template <typename A1, typename A2, typename A3, typename A4, typename A5>
-  explicit FoldingSetNodeWrapper(const A1 &a1, const A2 &a2, const A3 &a3,
-                                 const A4 &a4, const A5 &a5)
-  : data(a1,a2,a3,a4,a5) {}
-
+  template <typename... Ts>
+  explicit FoldingSetNodeWrapper(Ts &&... Args)
+      : data(std::forward<Ts>(Args)...) {}
 
   void Profile(FoldingSetNodeID &ID) { FoldingSetTrait<T>::Profile(data, ID); }
 
