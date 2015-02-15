@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -std=c++11 %s
+// RUN: %clang_cc1 -verify -std=c++11 -fms-extensions %s
 
 8gi///===--- recovery.cpp ---===// // expected-error {{unqualified-id}}
 namespace Std { // expected-note {{here}}
@@ -201,4 +201,12 @@ namespace pr15133 {
 
   struct S2 :: S3 :: public S2 {  // expected-error{{'public' cannot be a part of nested name specifier; did you mean ':'?}}
   };
+}
+
+namespace InvalidEmptyNames {
+// These shouldn't crash, the diagnostics aren't important.
+struct ::, struct ::; // expected-error 2 {{expected identifier}} expected-error 2 {{declaration of anonymous struct must be a definition}} expected-warning {{declaration does not declare anything}}
+enum ::, enum ::; // expected-error 2 {{expected identifier}} expected-warning {{declaration does not declare anything}}
+struct ::__super, struct ::__super; // expected-error 2 {{expected identifier}} expected-error 2 {{expected '::' after '__super'}}
+struct ::template foo, struct ::template bar; // expected-error 2 {{expected identifier}} expected-error 2 {{declaration of anonymous struct must be a definition}} expected-warning {{declaration does not declare anything}}
 }
