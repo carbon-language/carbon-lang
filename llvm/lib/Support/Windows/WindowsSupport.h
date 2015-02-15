@@ -92,7 +92,7 @@ public:
   }
 
   // True if Handle is valid.
-  LLVM_EXPLICIT operator bool() const {
+  explicit operator bool() const {
     return HandleTraits::IsValid(Handle) ? true : false;
   }
 

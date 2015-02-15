@@ -186,7 +186,7 @@ public:
   // FIXME: This operator bool isn't actually protecting anything at the
   // moment due to the conversion operator above making DIDescriptor nodes
   // implicitly convertable to bool.
-  LLVM_EXPLICIT operator bool() const { return DbgNode != nullptr; }
+  explicit operator bool() const { return DbgNode != nullptr; }
 
   bool operator==(DIDescriptor Other) const { return DbgNode == Other.DbgNode; }
   bool operator!=(DIDescriptor Other) const { return !operator==(Other); }

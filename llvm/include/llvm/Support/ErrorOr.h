@@ -168,7 +168,7 @@ public:
   }
 
   /// \brief Return false if there is an error.
-  LLVM_EXPLICIT operator bool() const {
+  explicit operator bool() const {
     return !HasError;
   }
 

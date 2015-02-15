@@ -47,7 +47,7 @@ struct Reference {
     return *this;
   }
 
-  LLVM_EXPLICIT operator bool() const { return Def || Use; }
+  explicit operator bool() const { return Def || Use; }
 
   // True if the register is defined or used in some form, either directly or
   // via a sub- or super-register.

@@ -496,7 +496,7 @@ public:
   NodeRef() {}
 
   /// operator bool - Detect a null ref.
-  LLVM_EXPLICIT operator bool() const { return pip.getOpaqueValue(); }
+  explicit operator bool() const { return pip.getOpaqueValue(); }
 
   /// NodeRef - Create a reference to the node p with n elements.
   template <typename NodeT>

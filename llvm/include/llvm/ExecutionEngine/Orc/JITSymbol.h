@@ -34,7 +34,7 @@ public:
       : CachedAddr(0), GetAddress(std::move(GetAddress)) {}
 
   /// @brief Returns true if the symbol exists, false otherwise.
-  LLVM_EXPLICIT operator bool() const { return CachedAddr || GetAddress; }
+  explicit operator bool() const { return CachedAddr || GetAddress; }
 
   /// @brief Get the address of the symbol in the target address space. Returns
   ///        '0' if the symbol does not exist.

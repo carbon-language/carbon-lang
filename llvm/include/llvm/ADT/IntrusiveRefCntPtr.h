@@ -84,7 +84,7 @@ namespace llvm {
     friend struct IntrusiveRefCntPtrInfo;
   };
 
-  
+
   template <typename T> struct IntrusiveRefCntPtrInfo {
     static void retain(T *obj) { obj->Retain(); }
     static void release(T *obj) { obj->Release(); }
@@ -114,7 +114,7 @@ public:
       delete static_cast<const Derived*>(this);
   }
 };
-  
+
 //===----------------------------------------------------------------------===//
 /// IntrusiveRefCntPtr - A template class that implements a "smart pointer"
 ///  that assumes the wrapped object has a reference count associated
@@ -177,7 +177,7 @@ public:
 
     T* get() const { return Obj; }
 
-    LLVM_EXPLICIT operator bool() const { return Obj; }
+    explicit operator bool() const { return Obj; }
 
     void swap(IntrusiveRefCntPtr& other) {
       T* tmp = other.Obj;

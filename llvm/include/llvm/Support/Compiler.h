@@ -339,16 +339,6 @@
 # define LLVM_IS_UNALIGNED_ACCESS_FAST 0
 #endif
 
-/// \macro LLVM_EXPLICIT
-/// \brief Expands to explicit on compilers which support explicit conversion
-/// operators. Otherwise expands to nothing.
-#if __has_feature(cxx_explicit_conversions) || \
-    defined(__GXX_EXPERIMENTAL_CXX0X__)
-#define LLVM_EXPLICIT explicit
-#else
-#define LLVM_EXPLICIT
-#endif
-
 /// \brief Does the compiler support generalized initializers (using braced
 /// lists and std::initializer_list).  While clang may claim it supports general
 /// initializers, if we're using MSVC's headers, we might not have a usable

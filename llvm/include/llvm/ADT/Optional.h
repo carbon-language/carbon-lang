@@ -121,7 +121,7 @@ public:
   const T& getValue() const LLVM_LVALUE_FUNCTION { assert(hasVal); return *getPointer(); }
   T& getValue() LLVM_LVALUE_FUNCTION { assert(hasVal); return *getPointer(); }
 
-  LLVM_EXPLICIT operator bool() const { return hasVal; }
+  explicit operator bool() const { return hasVal; }
   bool hasValue() const { return hasVal; }
   const T* operator->() const { return getPointer(); }
   T* operator->() { return getPointer(); }

@@ -512,7 +512,7 @@ struct AAMDNodes {
 
   bool operator!=(const AAMDNodes &A) const { return !(*this == A); }
 
-  LLVM_EXPLICIT operator bool() const { return TBAA || Scope || NoAlias; }
+  explicit operator bool() const { return TBAA || Scope || NoAlias; }
 
   /// \brief The tag for type-based alias analysis.
   MDNode *TBAA;
