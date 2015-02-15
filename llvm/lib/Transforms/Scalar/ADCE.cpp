@@ -58,14 +58,13 @@ bool ADCE::runOnFunction(Function& F) {
   SmallVector<Instruction*, 128> Worklist;
 
   // Collect the set of "root" instructions that are known live.
-  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
-    if (isa<TerminatorInst>(I.getInstructionIterator()) ||
-        isa<DbgInfoIntrinsic>(I.getInstructionIterator()) ||
-        isa<LandingPadInst>(I.getInstructionIterator()) ||
-        I->mayHaveSideEffects()) {
-      Alive.insert(I.getInstructionIterator());
-      Worklist.push_back(I.getInstructionIterator());
+  for (Instruction &I : inst_range(F)) {
+    if (isa<TerminatorInst>(I) || isa<DbgInfoIntrinsic>(I) ||
+        isa<LandingPadInst>(I) || I.mayHaveSideEffects()) {
+      Alive.insert(&I);
+      Worklist.push_back(&I);
     }
+  }
 
   // Propagate liveness backwards to operands.
   while (!Worklist.empty()) {
@@ -81,16 +80,16 @@ bool ADCE::runOnFunction(Function& F) {
   // which have no side effects and do not influence the control flow or return
   // value of the function, and may therefore be deleted safely.
   // NOTE: We reuse the Worklist vector here for memory efficiency.
-  for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
-    if (!Alive.count(I.getInstructionIterator())) {
-      Worklist.push_back(I.getInstructionIterator());
-      I->dropAllReferences();
+  for (Instruction &I : inst_range(F)) {
+    if (!Alive.count(&I)) {
+      Worklist.push_back(&I);
+      I.dropAllReferences();
     }
+  }
 
-  for (SmallVectorImpl<Instruction *>::iterator I = Worklist.begin(),
-       E = Worklist.end(); I != E; ++I) {
+  for (Instruction *&I : Worklist) {
     ++NumRemoved;
-    (*I)->eraseFromParent();
+    I->eraseFromParent();
   }
 
   return !Worklist.empty();
