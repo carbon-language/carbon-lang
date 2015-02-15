@@ -44,8 +44,8 @@ class TemplateDeductionInfo {
   /// SFINAE while performing template argument deduction.
   SmallVector<PartialDiagnosticAt, 4> SuppressedDiagnostics;
 
-  TemplateDeductionInfo(const TemplateDeductionInfo &) LLVM_DELETED_FUNCTION;
-  void operator=(const TemplateDeductionInfo &) LLVM_DELETED_FUNCTION;
+  TemplateDeductionInfo(const TemplateDeductionInfo &) = delete;
+  void operator=(const TemplateDeductionInfo &) = delete;
 
 public:
   TemplateDeductionInfo(SourceLocation Loc)
@@ -252,8 +252,8 @@ class TemplateSpecCandidateSet {
   SourceLocation Loc;
 
   TemplateSpecCandidateSet(
-      const TemplateSpecCandidateSet &) LLVM_DELETED_FUNCTION;
-  void operator=(const TemplateSpecCandidateSet &) LLVM_DELETED_FUNCTION;
+      const TemplateSpecCandidateSet &) = delete;
+  void operator=(const TemplateSpecCandidateSet &) = delete;
 
   void destroyCandidates();
 

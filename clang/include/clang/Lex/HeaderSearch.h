@@ -255,8 +255,8 @@ class HeaderSearch {
   const LangOptions &LangOpts;
 
   // HeaderSearch doesn't support default or copy construction.
-  HeaderSearch(const HeaderSearch&) LLVM_DELETED_FUNCTION;
-  void operator=(const HeaderSearch&) LLVM_DELETED_FUNCTION;
+  HeaderSearch(const HeaderSearch&) = delete;
+  void operator=(const HeaderSearch&) = delete;
 
   friend class DirectoryLookup;
   

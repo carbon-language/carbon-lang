@@ -33,7 +33,7 @@ protected:
                     llvm::BasicBlock *BB,
                     llvm::BasicBlock::iterator InsertPt) const;
 private:
-  void operator=(const CGBuilderInserter &) LLVM_DELETED_FUNCTION;
+  void operator=(const CGBuilderInserter &) = delete;
 
   CodeGenFunction *CGF;
 };

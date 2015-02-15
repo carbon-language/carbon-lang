@@ -136,7 +136,7 @@ namespace clang {
 
   class RopePieceBTree {
     void /*RopePieceBTreeNode*/ *Root;
-    void operator=(const RopePieceBTree &) LLVM_DELETED_FUNCTION;
+    void operator=(const RopePieceBTree &) = delete;
   public:
     RopePieceBTree();
     RopePieceBTree(const RopePieceBTree &RHS);

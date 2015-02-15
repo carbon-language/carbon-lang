@@ -226,7 +226,7 @@ private:
 
   static const size_t InitialCapacity = 4;
 
-  SimpleArray(const SimpleArray<T> &A) LLVM_DELETED_FUNCTION;
+  SimpleArray(const SimpleArray<T> &A) = delete;
 
   T *Data;
   size_t Size;
@@ -255,8 +255,8 @@ class CopyOnWriteVector {
   };
 
   // No copy constructor or copy assignment.  Use clone() with move assignment.
-  CopyOnWriteVector(const CopyOnWriteVector &V) LLVM_DELETED_FUNCTION;
-  void operator=(const CopyOnWriteVector &V) LLVM_DELETED_FUNCTION;
+  CopyOnWriteVector(const CopyOnWriteVector &V) = delete;
+  void operator=(const CopyOnWriteVector &V) = delete;
 
 public:
   CopyOnWriteVector() : Data(nullptr) {}

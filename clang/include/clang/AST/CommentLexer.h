@@ -221,8 +221,8 @@ public:
 /// \brief Comment lexer.
 class Lexer {
 private:
-  Lexer(const Lexer &) LLVM_DELETED_FUNCTION;
-  void operator=(const Lexer &) LLVM_DELETED_FUNCTION;
+  Lexer(const Lexer &) = delete;
+  void operator=(const Lexer &) = delete;
 
   /// Allocator for strings that are semantic values of tokens and have to be
   /// computed (for example, resolved decimal character references).

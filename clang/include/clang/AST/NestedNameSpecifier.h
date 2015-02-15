@@ -102,7 +102,7 @@ private:
       Specifier(Other.Specifier) {
   }
 
-  void operator=(const NestedNameSpecifier &) LLVM_DELETED_FUNCTION;
+  void operator=(const NestedNameSpecifier &) = delete;
 
   /// \brief Either find or insert the given nested name specifier
   /// mockup in the given context.

@@ -282,7 +282,7 @@ public:
   /// SExpr objects cannot be deleted.
   // This declaration is public to workaround a gcc bug that breaks building
   // with REQUIRES_EH=1.
-  void operator delete(void *) LLVM_DELETED_FUNCTION;
+  void operator delete(void *) = delete;
 
   /// Returns the instruction ID for this expression.
   /// All basic block instructions have a unique ID (i.e. virtual register).
@@ -309,10 +309,10 @@ protected:
   BasicBlock* Block;
 
 private:
-  SExpr() LLVM_DELETED_FUNCTION;
+  SExpr() = delete;
 
   /// SExpr objects must be created in an arena.
-  void *operator new(size_t) LLVM_DELETED_FUNCTION;
+  void *operator new(size_t) = delete;
 };
 
 
@@ -424,7 +424,7 @@ public:
   Future() : SExpr(COP_Future), Status(FS_pending), Result(nullptr) {}
 
 private:
-  virtual ~Future() LLVM_DELETED_FUNCTION;
+  virtual ~Future() = delete;
 
 public:
   // A lazy rewriting strategy should subclass Future and override this method.

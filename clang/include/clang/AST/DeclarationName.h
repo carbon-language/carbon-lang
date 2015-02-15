@@ -344,8 +344,8 @@ class DeclarationNameTable {
   CXXOperatorIdName *CXXOperatorNames; // Operator names
   void *CXXLiteralOperatorNames; // Actually a CXXOperatorIdName*
 
-  DeclarationNameTable(const DeclarationNameTable&) LLVM_DELETED_FUNCTION;
-  void operator=(const DeclarationNameTable&) LLVM_DELETED_FUNCTION;
+  DeclarationNameTable(const DeclarationNameTable&) = delete;
+  void operator=(const DeclarationNameTable&) = delete;
 
 public:
   DeclarationNameTable(const ASTContext &C);

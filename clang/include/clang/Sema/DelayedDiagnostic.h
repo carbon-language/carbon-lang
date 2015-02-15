@@ -240,8 +240,8 @@ class DelayedDiagnosticPool {
   const DelayedDiagnosticPool *Parent;
   SmallVector<DelayedDiagnostic, 4> Diagnostics;
 
-  DelayedDiagnosticPool(const DelayedDiagnosticPool &) LLVM_DELETED_FUNCTION;
-  void operator=(const DelayedDiagnosticPool &) LLVM_DELETED_FUNCTION;
+  DelayedDiagnosticPool(const DelayedDiagnosticPool &) = delete;
+  void operator=(const DelayedDiagnosticPool &) = delete;
 public:
   DelayedDiagnosticPool(const DelayedDiagnosticPool *parent) : Parent(parent) {}
   ~DelayedDiagnosticPool() {

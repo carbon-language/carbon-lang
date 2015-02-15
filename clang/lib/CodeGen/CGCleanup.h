@@ -284,7 +284,7 @@ public:
     delete ExtInfo;
   }
   // Objects of EHCleanupScope are not destructed. Use Destroy().
-  ~EHCleanupScope() LLVM_DELETED_FUNCTION;
+  ~EHCleanupScope() = delete;
 
   bool isNormalCleanup() const { return CleanupBits.IsNormalCleanup; }
   llvm::BasicBlock *getNormalBlock() const { return NormalBlock; }

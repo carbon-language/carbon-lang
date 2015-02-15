@@ -132,8 +132,8 @@ public:
 /// the user. DiagnosticsEngine is tied to one translation unit and one
 /// SourceManager.
 class DiagnosticsEngine : public RefCountedBase<DiagnosticsEngine> {
-  DiagnosticsEngine(const DiagnosticsEngine &) LLVM_DELETED_FUNCTION;
-  void operator=(const DiagnosticsEngine &) LLVM_DELETED_FUNCTION;
+  DiagnosticsEngine(const DiagnosticsEngine &) = delete;
+  void operator=(const DiagnosticsEngine &) = delete;
 
 public:
   /// \brief The level of the diagnostic, after it has been through mapping.
@@ -877,7 +877,7 @@ class DiagnosticBuilder {
   /// call to ForceEmit.
   mutable bool IsForceEmit;
 
-  void operator=(const DiagnosticBuilder &) LLVM_DELETED_FUNCTION;
+  void operator=(const DiagnosticBuilder &) = delete;
   friend class DiagnosticsEngine;
 
   DiagnosticBuilder()

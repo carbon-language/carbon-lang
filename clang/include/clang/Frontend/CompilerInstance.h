@@ -157,8 +157,8 @@ class CompilerInstance : public ModuleLoader {
   /// The list of active output files.
   std::list<OutputFile> OutputFiles;
 
-  CompilerInstance(const CompilerInstance &) LLVM_DELETED_FUNCTION;
-  void operator=(const CompilerInstance &) LLVM_DELETED_FUNCTION;
+  CompilerInstance(const CompilerInstance &) = delete;
+  void operator=(const CompilerInstance &) = delete;
 public:
   explicit CompilerInstance(bool BuildingModule = false);
   ~CompilerInstance();

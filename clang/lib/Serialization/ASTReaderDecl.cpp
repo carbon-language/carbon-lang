@@ -128,7 +128,7 @@ namespace clang {
       mutable bool Owning;
       Decl::Kind DeclKind;
       
-      void operator=(RedeclarableResult &) LLVM_DELETED_FUNCTION;
+      void operator=(RedeclarableResult &) = delete;
       
     public:
       RedeclarableResult(ASTReader &Reader, GlobalDeclID FirstID,
@@ -177,7 +177,7 @@ namespace clang {
       unsigned AnonymousDeclNumber;
       IdentifierInfo *TypedefNameForLinkage;
 
-      void operator=(FindExistingResult&) LLVM_DELETED_FUNCTION;
+      void operator=(FindExistingResult&) = delete;
 
     public:
       FindExistingResult(ASTReader &Reader)

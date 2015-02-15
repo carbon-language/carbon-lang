@@ -31,8 +31,8 @@ namespace comments {
 class CommandTraits;
 
 class Sema {
-  Sema(const Sema &) LLVM_DELETED_FUNCTION;
-  void operator=(const Sema &) LLVM_DELETED_FUNCTION;
+  Sema(const Sema &) = delete;
+  void operator=(const Sema &) = delete;
 
   /// Allocator for AST nodes.
   llvm::BumpPtrAllocator &Allocator;

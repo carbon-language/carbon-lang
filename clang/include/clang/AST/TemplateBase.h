@@ -114,7 +114,7 @@ private:
     struct TV TypeOrValue;
   };
 
-  TemplateArgument(TemplateName, bool) LLVM_DELETED_FUNCTION;
+  TemplateArgument(TemplateName, bool) = delete;
   
 public:
   /// \brief Construct an empty, invalid template argument.

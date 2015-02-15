@@ -123,7 +123,7 @@ public:
                                               Diagnostics *Error);
 
 private:
-  Registry() LLVM_DELETED_FUNCTION;
+  Registry() = delete;
 };
 
 }  // namespace dynamic

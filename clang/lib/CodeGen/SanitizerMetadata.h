@@ -31,8 +31,8 @@ namespace CodeGen {
 class CodeGenModule;
 
 class SanitizerMetadata {
-  SanitizerMetadata(const SanitizerMetadata &) LLVM_DELETED_FUNCTION;
-  void operator=(const SanitizerMetadata &) LLVM_DELETED_FUNCTION;
+  SanitizerMetadata(const SanitizerMetadata &) = delete;
+  void operator=(const SanitizerMetadata &) = delete;
 
   CodeGenModule &CGM;
 public:

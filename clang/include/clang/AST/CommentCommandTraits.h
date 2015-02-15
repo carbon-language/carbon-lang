@@ -166,8 +166,8 @@ public:
   static const CommandInfo *getBuiltinCommandInfo(unsigned CommandID);
 
 private:
-  CommandTraits(const CommandTraits &) LLVM_DELETED_FUNCTION;
-  void operator=(const CommandTraits &) LLVM_DELETED_FUNCTION;
+  CommandTraits(const CommandTraits &) = delete;
+  void operator=(const CommandTraits &) = delete;
 
   const CommandInfo *getRegisteredCommandInfo(StringRef Name) const;
   const CommandInfo *getRegisteredCommandInfo(unsigned CommandID) const;

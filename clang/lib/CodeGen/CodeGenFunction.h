@@ -97,8 +97,8 @@ enum TypeEvaluationKind {
 /// CodeGenFunction - This class organizes the per-function state that is used
 /// while generating LLVM code.
 class CodeGenFunction : public CodeGenTypeCache {
-  CodeGenFunction(const CodeGenFunction &) LLVM_DELETED_FUNCTION;
-  void operator=(const CodeGenFunction &) LLVM_DELETED_FUNCTION;
+  CodeGenFunction(const CodeGenFunction &) = delete;
+  void operator=(const CodeGenFunction &) = delete;
 
   friend class CGCXXABI;
 public:
@@ -510,8 +510,8 @@ public:
     bool PerformCleanup;
   private:
 
-    RunCleanupsScope(const RunCleanupsScope &) LLVM_DELETED_FUNCTION;
-    void operator=(const RunCleanupsScope &) LLVM_DELETED_FUNCTION;
+    RunCleanupsScope(const RunCleanupsScope &) = delete;
+    void operator=(const RunCleanupsScope &) = delete;
 
   protected:
     CodeGenFunction& CGF;
@@ -559,8 +559,8 @@ public:
     SmallVector<const LabelDecl*, 4> Labels;
     LexicalScope *ParentScope;
 
-    LexicalScope(const LexicalScope &) LLVM_DELETED_FUNCTION;
-    void operator=(const LexicalScope &) LLVM_DELETED_FUNCTION;
+    LexicalScope(const LexicalScope &) = delete;
+    void operator=(const LexicalScope &) = delete;
 
   public:
     /// \brief Enter a new cleanup scope.
@@ -612,8 +612,8 @@ public:
     VarDeclMapTy SavedPrivates;
 
   private:
-    OMPPrivateScope(const OMPPrivateScope &) LLVM_DELETED_FUNCTION;
-    void operator=(const OMPPrivateScope &) LLVM_DELETED_FUNCTION;
+    OMPPrivateScope(const OMPPrivateScope &) = delete;
+    void operator=(const OMPPrivateScope &) = delete;
 
   public:
     /// \brief Enter a new OpenMP private scope.

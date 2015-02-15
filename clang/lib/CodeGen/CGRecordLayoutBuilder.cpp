@@ -198,8 +198,8 @@ struct CGRecordLowering {
   bool IsZeroInitializableAsBase : 1;
   bool Packed : 1;
 private:
-  CGRecordLowering(const CGRecordLowering &) LLVM_DELETED_FUNCTION;
-  void operator =(const CGRecordLowering &) LLVM_DELETED_FUNCTION;
+  CGRecordLowering(const CGRecordLowering &) = delete;
+  void operator =(const CGRecordLowering &) = delete;
 };
 } // namespace {
 

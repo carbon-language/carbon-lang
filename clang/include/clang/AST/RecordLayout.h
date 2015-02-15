@@ -163,8 +163,8 @@ private:
 
   void Destroy(ASTContext &Ctx);
   
-  ASTRecordLayout(const ASTRecordLayout &) LLVM_DELETED_FUNCTION;
-  void operator=(const ASTRecordLayout &) LLVM_DELETED_FUNCTION;
+  ASTRecordLayout(const ASTRecordLayout &) = delete;
+  void operator=(const ASTRecordLayout &) = delete;
 public:
 
   /// getAlignment - Get the record alignment in characters.

@@ -118,8 +118,8 @@ class GlobalModuleIndex {
   explicit GlobalModuleIndex(std::unique_ptr<llvm::MemoryBuffer> Buffer,
                              llvm::BitstreamCursor Cursor);
 
-  GlobalModuleIndex(const GlobalModuleIndex &) LLVM_DELETED_FUNCTION;
-  GlobalModuleIndex &operator=(const GlobalModuleIndex &) LLVM_DELETED_FUNCTION;
+  GlobalModuleIndex(const GlobalModuleIndex &) = delete;
+  GlobalModuleIndex &operator=(const GlobalModuleIndex &) = delete;
 
 public:
   ~GlobalModuleIndex();

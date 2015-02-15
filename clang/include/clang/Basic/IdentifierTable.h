@@ -73,8 +73,8 @@ class IdentifierInfo {
   void *FETokenInfo;               // Managed by the language front-end.
   llvm::StringMapEntry<IdentifierInfo*> *Entry;
 
-  IdentifierInfo(const IdentifierInfo&) LLVM_DELETED_FUNCTION;
-  void operator=(const IdentifierInfo&) LLVM_DELETED_FUNCTION;
+  IdentifierInfo(const IdentifierInfo&) = delete;
+  void operator=(const IdentifierInfo&) = delete;
 
   friend class IdentifierTable;
   
@@ -356,8 +356,8 @@ public:
 /// actual functionality.
 class IdentifierIterator {
 private:
-  IdentifierIterator(const IdentifierIterator &) LLVM_DELETED_FUNCTION;
-  void operator=(const IdentifierIterator &) LLVM_DELETED_FUNCTION;
+  IdentifierIterator(const IdentifierIterator &) = delete;
+  void operator=(const IdentifierIterator &) = delete;
 
 protected:
   IdentifierIterator() { }
@@ -727,8 +727,8 @@ public:
 /// multi-keyword caching.
 class SelectorTable {
   void *Impl;  // Actually a SelectorTableImpl
-  SelectorTable(const SelectorTable &) LLVM_DELETED_FUNCTION;
-  void operator=(const SelectorTable &) LLVM_DELETED_FUNCTION;
+  SelectorTable(const SelectorTable &) = delete;
+  void operator=(const SelectorTable &) = delete;
 public:
   SelectorTable();
   ~SelectorTable();

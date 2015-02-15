@@ -416,8 +416,8 @@ private:
   /// \brief Clear out and deallocate 
   void ClearCachedCompletionResults();
   
-  ASTUnit(const ASTUnit &) LLVM_DELETED_FUNCTION;
-  void operator=(const ASTUnit &) LLVM_DELETED_FUNCTION;
+  ASTUnit(const ASTUnit &) = delete;
+  void operator=(const ASTUnit &) = delete;
   
   explicit ASTUnit(bool MainFileIsAST);
 

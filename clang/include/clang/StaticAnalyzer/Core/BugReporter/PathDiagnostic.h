@@ -352,9 +352,9 @@ private:
 
   std::vector<SourceRange> ranges;
 
-  PathDiagnosticPiece() LLVM_DELETED_FUNCTION;
-  PathDiagnosticPiece(const PathDiagnosticPiece &P) LLVM_DELETED_FUNCTION;
-  void operator=(const PathDiagnosticPiece &P) LLVM_DELETED_FUNCTION;
+  PathDiagnosticPiece() = delete;
+  PathDiagnosticPiece(const PathDiagnosticPiece &P) = delete;
+  void operator=(const PathDiagnosticPiece &P) = delete;
 
 protected:
   PathDiagnosticPiece(StringRef s, Kind k, DisplayHint hint = Below);
@@ -730,7 +730,7 @@ class PathDiagnostic : public llvm::FoldingSetNode {
   PathDiagnosticLocation UniqueingLoc;
   const Decl *UniqueingDecl;
 
-  PathDiagnostic() LLVM_DELETED_FUNCTION;
+  PathDiagnostic() = delete;
 public:
   PathDiagnostic(StringRef CheckName, const Decl *DeclWithIssue,
                  StringRef bugtype, StringRef verboseDesc, StringRef shortDesc,

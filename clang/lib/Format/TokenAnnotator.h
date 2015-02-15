@@ -104,8 +104,8 @@ public:
 
 private:
   // Disallow copying.
-  AnnotatedLine(const AnnotatedLine &) LLVM_DELETED_FUNCTION;
-  void operator=(const AnnotatedLine &) LLVM_DELETED_FUNCTION;
+  AnnotatedLine(const AnnotatedLine &) = delete;
+  void operator=(const AnnotatedLine &) = delete;
 };
 
 /// \brief Determines extra information about the tokens comprising an

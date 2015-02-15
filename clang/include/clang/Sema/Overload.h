@@ -718,8 +718,8 @@ namespace clang {
     llvm::AlignedCharArray<llvm::AlignOf<ImplicitConversionSequence>::Alignment,
                            16 * sizeof(ImplicitConversionSequence)> InlineSpace;
 
-    OverloadCandidateSet(const OverloadCandidateSet &) LLVM_DELETED_FUNCTION;
-    void operator=(const OverloadCandidateSet &) LLVM_DELETED_FUNCTION;
+    OverloadCandidateSet(const OverloadCandidateSet &) = delete;
+    void operator=(const OverloadCandidateSet &) = delete;
 
     void destroyCandidates();
 

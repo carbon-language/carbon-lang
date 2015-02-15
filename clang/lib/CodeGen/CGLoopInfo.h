@@ -78,8 +78,8 @@ private:
 /// This stack can be used to prepare attributes which are applied when a loop
 /// is emitted.
 class LoopInfoStack {
-  LoopInfoStack(const LoopInfoStack &) LLVM_DELETED_FUNCTION;
-  void operator=(const LoopInfoStack &) LLVM_DELETED_FUNCTION;
+  LoopInfoStack(const LoopInfoStack &) = delete;
+  void operator=(const LoopInfoStack &) = delete;
 
 public:
   LoopInfoStack() {}

@@ -158,8 +158,8 @@ class TemplateArgumentList {
   /// argument list.
   unsigned NumArguments;
 
-  TemplateArgumentList(const TemplateArgumentList &Other) LLVM_DELETED_FUNCTION;
-  void operator=(const TemplateArgumentList &Other) LLVM_DELETED_FUNCTION;
+  TemplateArgumentList(const TemplateArgumentList &Other) = delete;
+  void operator=(const TemplateArgumentList &Other) = delete;
 
   TemplateArgumentList(const TemplateArgument *Args, unsigned NumArgs,
                        bool Owned)
@@ -885,7 +885,7 @@ public:
 /// This class is inheritedly privately by different kinds of template
 /// parameters and is not part of the Decl hierarchy. Just a facility.
 class TemplateParmPosition {
-  TemplateParmPosition() LLVM_DELETED_FUNCTION;
+  TemplateParmPosition() = delete;
 
 protected:
   TemplateParmPosition(unsigned D, unsigned P)

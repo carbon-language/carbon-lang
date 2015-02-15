@@ -73,7 +73,7 @@ class FileEntry {
   mutable std::unique_ptr<vfs::File> File;
   friend class FileManager;
 
-  void operator=(const FileEntry &) LLVM_DELETED_FUNCTION;
+  void operator=(const FileEntry &) = delete;
 
 public:
   FileEntry()

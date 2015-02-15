@@ -63,7 +63,7 @@ CXString createDup(StringRef String);
 // In this case, call \c createRef(String.c_str()).
 //
 // If you need to make a copy, call \c createDup(StringRef(String)).
-CXString createRef(std::string String) LLVM_DELETED_FUNCTION;
+CXString createRef(std::string String) = delete;
 
 /// \brief Create a CXString object that is backed by a string buffer.
 CXString createCXString(CXStringBuf *buf);

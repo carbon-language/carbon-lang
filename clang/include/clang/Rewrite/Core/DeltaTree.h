@@ -27,7 +27,7 @@ namespace clang {
   /// as well, without traversing the whole tree.
   class DeltaTree {
     void *Root;    // "DeltaTreeNode *"
-    void operator=(const DeltaTree &) LLVM_DELETED_FUNCTION;
+    void operator=(const DeltaTree &) = delete;
   public:
     DeltaTree();
 

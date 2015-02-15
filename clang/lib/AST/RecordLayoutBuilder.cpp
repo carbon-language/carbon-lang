@@ -748,8 +748,8 @@ protected:
   void setDataSize(CharUnits NewSize) { DataSize = Context.toBits(NewSize); }
   void setDataSize(uint64_t NewSize) { DataSize = NewSize; }
 
-  RecordLayoutBuilder(const RecordLayoutBuilder &) LLVM_DELETED_FUNCTION;
-  void operator=(const RecordLayoutBuilder &) LLVM_DELETED_FUNCTION;
+  RecordLayoutBuilder(const RecordLayoutBuilder &) = delete;
+  void operator=(const RecordLayoutBuilder &) = delete;
 };
 } // end anonymous namespace
 
@@ -2152,9 +2152,8 @@ struct MicrosoftRecordLayoutBuilder {
   typedef llvm::DenseMap<const CXXRecordDecl *, CharUnits> BaseOffsetsMapTy;
   MicrosoftRecordLayoutBuilder(const ASTContext &Context) : Context(Context) {}
 private:
-  MicrosoftRecordLayoutBuilder(const MicrosoftRecordLayoutBuilder &)
-  LLVM_DELETED_FUNCTION;
-  void operator=(const MicrosoftRecordLayoutBuilder &) LLVM_DELETED_FUNCTION;
+  MicrosoftRecordLayoutBuilder(const MicrosoftRecordLayoutBuilder &) = delete;
+  void operator=(const MicrosoftRecordLayoutBuilder &) = delete;
 public:
   void layout(const RecordDecl *RD);
   void cxxLayout(const CXXRecordDecl *RD);

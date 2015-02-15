@@ -1239,8 +1239,8 @@ class APNumericStorage {
 
   bool hasAllocation() const { return llvm::APInt::getNumWords(BitWidth) > 1; }
 
-  APNumericStorage(const APNumericStorage &) LLVM_DELETED_FUNCTION;
-  void operator=(const APNumericStorage &) LLVM_DELETED_FUNCTION;
+  APNumericStorage(const APNumericStorage &) = delete;
+  void operator=(const APNumericStorage &) = delete;
 
 protected:
   APNumericStorage() : VAL(0), BitWidth(0) { }

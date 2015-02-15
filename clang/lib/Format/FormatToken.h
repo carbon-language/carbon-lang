@@ -419,8 +419,8 @@ struct FormatToken {
 
 private:
   // Disallow copying.
-  FormatToken(const FormatToken &) LLVM_DELETED_FUNCTION;
-  void operator=(const FormatToken &) LLVM_DELETED_FUNCTION;
+  FormatToken(const FormatToken &) = delete;
+  void operator=(const FormatToken &) = delete;
 };
 
 class ContinuationIndenter;
