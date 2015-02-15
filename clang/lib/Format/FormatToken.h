@@ -278,27 +278,10 @@ struct FormatToken {
   template <typename A, typename B> bool isOneOf(A K1, B K2) const {
     return is(K1) || is(K2);
   }
-  template <typename A, typename B, typename C>
-  bool isOneOf(A K1, B K2, C K3) const {
-    return is(K1) || is(K2) || is(K3);
+  template <typename A, typename B, typename... Ts>
+  bool isOneOf(A K1, B K2, Ts... Ks) const {
+    return is(K1) || isOneOf(K2, Ks...);
   }
-  template <typename A, typename B, typename C, typename D>
-  bool isOneOf(A K1, B K2, C K3, D K4) const {
-    return is(K1) || is(K2) || is(K3) || is(K4);
-  }
-  template <typename A, typename B, typename C, typename D, typename E>
-  bool isOneOf(A K1, B K2, C K3, D K4, E K5) const {
-    return is(K1) || is(K2) || is(K3) || is(K4) || is(K5);
-  }
-  template <typename T>
-  bool isOneOf(T K1, T K2, T K3, T K4, T K5, T K6, T K7 = tok::NUM_TOKENS,
-               T K8 = tok::NUM_TOKENS, T K9 = tok::NUM_TOKENS,
-               T K10 = tok::NUM_TOKENS, T K11 = tok::NUM_TOKENS,
-               T K12 = tok::NUM_TOKENS) const {
-    return is(K1) || is(K2) || is(K3) || is(K4) || is(K5) || is(K6) || is(K7) ||
-           is(K8) || is(K9) || is(K10) || is(K11) || is(K12);
-  }
-
   template <typename T> bool isNot(T Kind) const { return !is(Kind); }
 
   bool isStringLiteral() const { return tok::isStringLiteral(Tok.getKind()); }
