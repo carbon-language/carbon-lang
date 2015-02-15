@@ -123,6 +123,7 @@ unlikely to be supported by our host compilers.
 
 * ``override`` and ``final``: N2928_, N3206_, N3272_
 * Atomic operations and the C++11 memory model: N2429_
+* Variadic templates: N2242_
 
 .. _N2118: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2118.html
 .. _N2439: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2439.htm
@@ -143,6 +144,7 @@ unlikely to be supported by our host compilers.
 .. _N3206: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3206.htm
 .. _N3272: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3272.htm
 .. _N2429: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2429.htm
+.. _N2242: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2242.pdf
 .. _MSVC-compatible RTTI: http://llvm.org/PR18951
 
 The supported features in the C++11 standard libraries are less well tracked,

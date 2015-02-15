@@ -82,16 +82,6 @@
 #define LLVM_HAS_RVALUE_REFERENCE_THIS 0
 #endif
 
-/// \macro LLVM_HAS_VARIADIC_TEMPLATES
-/// \brief Does this compiler support variadic templates.
-///
-/// Implies LLVM_HAS_RVALUE_REFERENCES and the existence of std::forward.
-#if __has_feature(cxx_variadic_templates) || LLVM_MSC_PREREQ(1800)
-# define LLVM_HAS_VARIADIC_TEMPLATES 1
-#else
-# define LLVM_HAS_VARIADIC_TEMPLATES 0
-#endif
-
 /// Expands to '&' if r-value references are supported.
 ///
 /// This can be used to provide l-value/r-value overrides of member functions.
