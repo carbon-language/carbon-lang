@@ -887,7 +887,7 @@ define <8 x i32> @test9(<8 x i32> %a) {
 ; SSE41-NEXT:    movdqa %xmm1, %xmm2
 ; SSE41-NEXT:    movdqa %xmm0, %xmm3
 ; SSE41-NEXT:    movdqa {{.*#+}} xmm1 = [2454267027,2454267027,2454267027,2454267027]
-; SSE41-NEXT:   # kill: XMM0<def> XMM3<kill>
+; SSE41-NEXT:    # kill: XMM0<def> XMM3<kill>
 ; SSE41-NEXT:    pmuldq %xmm1, %xmm0
 ; SSE41-NEXT:    pshufd {{.*#+}} xmm4 = xmm1[1,1,3,3]
 ; SSE41-NEXT:    pshufd {{.*#+}} xmm5 = xmm3[1,1,3,3]
