@@ -738,15 +738,14 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
       continue;
     DEBUG(dbgs() << "\t\tnoop: " << DefIdx << '\t' << *UseMI);
     assert(DVNI->def == DefIdx);
-    BValNo = IntB.MergeValueNumberInto(BValNo, DVNI);
+    BValNo = IntB.MergeValueNumberInto(DVNI, BValNo);
     for (LiveInterval::SubRange &S : IntB.subranges()) {
       VNInfo *SubDVNI = S.getVNInfoAt(DefIdx);
       if (!SubDVNI)
         continue;
       VNInfo *SubBValNo = S.getVNInfoAt(CopyIdx);
       assert(SubBValNo->def == CopyIdx);
-      VNInfo *Merged = S.MergeValueNumberInto(SubBValNo, SubDVNI);
-      Merged->def = CopyIdx;
+      S.MergeValueNumberInto(SubDVNI, SubBValNo);
     }
 
     ErasedInstrs.insert(UseMI);
