@@ -577,6 +577,8 @@ def detailed_preprocessing_record : Flag<["-"], "detailed-preprocessing-record">
 
 def cl_opt_disable : Flag<["-"], "cl-opt-disable">,
   HelpText<"OpenCL only. This option disables all optimizations. The default is optimizations are enabled.">;
+def cl_strict_aliasing : Flag<["-"], "cl-strict-aliasing">,
+  HelpText<"OpenCL only. This option does nothing and is for compatibility with OpenCL 1.0">;
 def cl_single_precision_constant : Flag<["-"], "cl-single-precision-constant">,
   HelpText<"OpenCL only. Treat double precision floating-point constant as single precision constant.">;
 def cl_finite_math_only : Flag<["-"], "cl-finite-math-only">,
