@@ -312,9 +312,6 @@ void DataLayout::parseSpecifier(StringRef Desc) {
         PrefAlign = inBytes(getInt(Tok));
       }
 
-      if (ABIAlign > PrefAlign)
-        report_fatal_error(
-            "Preferred alignment cannot be less than the ABI alignment");
       setAlignment(AlignType, ABIAlign, PrefAlign, Size);
 
       break;
@@ -391,9 +388,17 @@ bool DataLayout::operator==(const DataLayout &Other) const {
 void
 DataLayout::setAlignment(AlignTypeEnum align_type, unsigned abi_align,
                          unsigned pref_align, uint32_t bit_width) {
-  assert(abi_align <= pref_align && "Preferred alignment worse than ABI!");
-  assert(pref_align < (1 << 16) && "Alignment doesn't fit in bitfield");
-  assert(bit_width < (1 << 24) && "Bit width doesn't fit in bitfield");
+  if (!isUInt<24>(bit_width))
+    report_fatal_error("Invalid bit width, must be a 24bit integer");
+  if (!isUInt<16>(abi_align))
+    report_fatal_error("Invalid ABI alignment, must be a 16bit integer");
+  if (!isUInt<16>(pref_align))
+    report_fatal_error("Invalid preferred alignment, must be a 16bit integer");
+
+  if (pref_align < abi_align)
+    report_fatal_error(
+        "Preferred alignment cannot be less than the ABI alignment");
+
   for (LayoutAlignElem &Elem : Alignments) {
     if (Elem.AlignType == (unsigned)align_type &&
         Elem.TypeBitWidth == bit_width) {
