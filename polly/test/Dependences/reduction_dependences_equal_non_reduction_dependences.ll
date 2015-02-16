@@ -8,7 +8,7 @@
 ; CHECK: WAR dependences:
 ; CHECK:   {  }
 ; CHECK: WAW dependences:
-; CHECK:   { Stmt_for_body[i0] -> Stmt_for_body[1 + i0] : i0 >= 0 and i0 <= 1022 }
+; CHECK:   { Stmt_for_body[i0] -> Stmt_for_body[1 + i0] : i0 <= 1022 and i0 >= 0 }
 ; CHECK: Reduction dependences:
 ; CHECK:   { Stmt_for_body[i0] -> Stmt_for_body[1 + i0] : i0 <= 1022 and i0 >= 0 }
 ;

@@ -141,6 +141,8 @@ void isl_seq_preimage(isl_int *dst, isl_int *src,
 	int n_div_ma, int n_div_bmap,
 	isl_int f, isl_int c1, isl_int c2, isl_int g, int has_denom);
 
+__isl_give isl_aff *isl_aff_substitute_equalities(__isl_take isl_aff *aff,
+	__isl_take isl_basic_set *eq);
 __isl_give isl_pw_multi_aff *isl_pw_multi_aff_substitute(
 	__isl_take isl_pw_multi_aff *pma, enum isl_dim_type type, unsigned pos,
 	__isl_keep isl_pw_aff *subs);
@@ -154,5 +156,20 @@ int isl_pw_aff_check_match_domain_space(__isl_keep isl_pw_aff *pa,
 #define BASE pw_aff
 
 #include <isl_multi_templ.h>
+
+#undef EL
+#define EL isl_union_pw_aff
+
+#include <isl_list_templ.h>
+
+#undef BASE
+#define BASE union_pw_aff
+
+#include <isl_multi_templ.h>
+
+#undef EL
+#define EL isl_union_pw_multi_aff
+
+#include <isl_list_templ.h>
 
 #endif

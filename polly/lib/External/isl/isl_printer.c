@@ -118,6 +118,7 @@ static __isl_give isl_printer *str_end_line(__isl_take isl_printer *p)
 static __isl_give isl_printer *str_flush(__isl_take isl_printer *p)
 {
 	p->buf_n = 0;
+	p->buf[p->buf_n] = '\0';
 	return p;
 }
 
@@ -212,7 +213,7 @@ static struct isl_printer_ops str_ops = {
 
 __isl_give isl_printer *isl_printer_to_file(isl_ctx *ctx, FILE *file)
 {
-	struct isl_printer *p = isl_alloc_type(ctx, struct isl_printer);
+	struct isl_printer *p = isl_calloc_type(ctx, struct isl_printer);
 	if (!p)
 		return NULL;
 	p->ctx = ctx;
@@ -228,6 +229,7 @@ __isl_give isl_printer *isl_printer_to_file(isl_ctx *ctx, FILE *file)
 	p->prefix = NULL;
 	p->suffix = NULL;
 	p->width = 0;
+	p->yaml_style = ISL_YAML_STYLE_FLOW;
 
 	return p;
 }
@@ -253,6 +255,7 @@ __isl_give isl_printer *isl_printer_to_str(isl_ctx *ctx)
 	p->prefix = NULL;
 	p->suffix = NULL;
 	p->width = 0;
+	p->yaml_style = ISL_YAML_STYLE_FLOW;
 
 	return p;
 error:
@@ -268,6 +271,7 @@ __isl_null isl_printer *isl_printer_free(__isl_take isl_printer *p)
 	free(p->indent_prefix);
 	free(p->prefix);
 	free(p->suffix);
+	free(p->yaml_state);
 	isl_ctx_deref(p->ctx);
 	free(p);
 
@@ -380,6 +384,161 @@ int isl_printer_get_output_format(__isl_keep isl_printer *p)
 	return p->output_format;
 }
 
+/* Set the YAML style of "p" to "yaml_style" and return the updated printer.
+ */
+__isl_give isl_printer *isl_printer_set_yaml_style(__isl_take isl_printer *p,
+	int yaml_style)
+{
+	if (!p)
+		return NULL;
+
+	p->yaml_style = yaml_style;
+
+	return p;
+}
+
+/* Return the YAML style of "p" or -1 on error.
+ */
+int isl_printer_get_yaml_style(__isl_keep isl_printer *p)
+{
+	if (!p)
+		return -1;
+	return p->yaml_style;
+}
+
+/* Push "state" onto the stack of currently active YAML elements and
+ * return the updated printer.
+ */
+static __isl_give isl_printer *push_state(__isl_take isl_printer *p,
+	enum isl_yaml_state state)
+{
+	if (!p)
+		return NULL;
+
+	if (p->yaml_size < p->yaml_depth + 1) {
+		enum isl_yaml_state *state;
+		state = isl_realloc_array(p->ctx, p->yaml_state,
+					enum isl_yaml_state, p->yaml_depth + 1);
+		if (!state)
+			return isl_printer_free(p);
+		p->yaml_state = state;
+		p->yaml_size = p->yaml_depth + 1;
+	}
+
+	p->yaml_state[p->yaml_depth] = state;
+	p->yaml_depth++;
+
+	return p;
+}
+
+/* Remove the innermost active YAML element from the stack and
+ * return the updated printer.
+ */
+static __isl_give isl_printer *pop_state(__isl_take isl_printer *p)
+{
+	if (!p)
+		return NULL;
+	p->yaml_depth--;
+	return p;
+}
+
+/* Set the state of the innermost active YAML element to "state" and
+ * return the updated printer.
+ */
+static __isl_give isl_printer *update_state(__isl_take isl_printer *p,
+	enum isl_yaml_state state)
+{
+	if (!p)
+		return NULL;
+	if (p->yaml_depth < 1)
+		isl_die(isl_printer_get_ctx(p), isl_error_invalid,
+			"not in YAML construct", return isl_printer_free(p));
+
+	p->yaml_state[p->yaml_depth - 1] = state;
+
+	return p;
+}
+
+/* Return the state of the innermost active YAML element.
+ * Return isl_yaml_none if we are not inside any YAML element.
+ */
+static enum isl_yaml_state current_state(__isl_keep isl_printer *p)
+{
+	if (!p)
+		return isl_yaml_none;
+	if (p->yaml_depth < 1)
+		return isl_yaml_none;
+	return p->yaml_state[p->yaml_depth - 1];
+}
+
+/* If we are printing a YAML document and we are at the start of an element,
+ * print whatever is needed before we can print the actual element and
+ * keep track of the fact that we are now printing the element.
+ * If "eol" is set, then whatever we print is going to be the last
+ * thing that gets printed on this line.
+ *
+ * If we are about the print the first key of a mapping, then nothing
+ * extra needs to be printed.  For any other key, however, we need
+ * to either move to the next line (in block format) or print a comma
+ * (in flow format).
+ * Before printing a value in a mapping, we need to print a colon.
+ *
+ * For sequences, in flow format, we only need to print a comma
+ * for each element except the first.
+ * In block format, before the first element in the sequence,
+ * we move to a new line, print a dash and increase the indentation.
+ * Before any other element, we print a dash on a new line,
+ * temporarily moving the indentation back.
+ */
+static __isl_give isl_printer *enter_state(__isl_take isl_printer *p,
+	int eol)
+{
+	enum isl_yaml_state state;
+
+	if (!p)
+		return NULL;
+
+	state = current_state(p);
+	if (state == isl_yaml_mapping_val_start) {
+		if (eol)
+			p = p->ops->print_str(p, ":");
+		else
+			p = p->ops->print_str(p, ": ");
+		p = update_state(p, isl_yaml_mapping_val);
+	} else if (state == isl_yaml_mapping_first_key_start) {
+		p = update_state(p, isl_yaml_mapping_key);
+	} else if (state == isl_yaml_mapping_key_start) {
+		if (p->yaml_style == ISL_YAML_STYLE_FLOW)
+			p = p->ops->print_str(p, ", ");
+		else {
+			p = p->ops->end_line(p);
+			p = p->ops->start_line(p);
+		}
+		p = update_state(p, isl_yaml_mapping_key);
+	} else if (state == isl_yaml_sequence_first_start) {
+		if (p->yaml_style != ISL_YAML_STYLE_FLOW) {
+			p = p->ops->end_line(p);
+			p = p->ops->start_line(p);
+			p = p->ops->print_str(p, "- ");
+			p = isl_printer_indent(p, 2);
+		}
+		p = update_state(p, isl_yaml_sequence);
+	} else if (state == isl_yaml_sequence_start) {
+		if (p->yaml_style == ISL_YAML_STYLE_FLOW)
+			p = p->ops->print_str(p, ", ");
+		else {
+			p = p->ops->end_line(p);
+			p = isl_printer_indent(p, -2);
+			p = p->ops->start_line(p);
+			p = p->ops->print_str(p, "- ");
+			p = isl_printer_indent(p, 2);
+		}
+		p = update_state(p, isl_yaml_sequence);
+	}
+
+	return p;
+}
+
 __isl_give isl_printer *isl_printer_print_str(__isl_take isl_printer *p,
 	const char *s)
 {
@@ -387,13 +546,16 @@ __isl_give isl_printer *isl_printer_print_str(__isl_take isl_printer *p,
 		return NULL;
 	if (!s)
 		return isl_printer_free(p);
-
+	p = enter_state(p, 0);
+	if (!p)
+		return NULL;
 	return p->ops->print_str(p, s);
 }
 
 __isl_give isl_printer *isl_printer_print_double(__isl_take isl_printer *p,
 	double d)
 {
+	p = enter_state(p, 0);
 	if (!p)
 		return NULL;
 
@@ -402,6 +564,7 @@ __isl_give isl_printer *isl_printer_print_double(__isl_take isl_printer *p,
 
 __isl_give isl_printer *isl_printer_print_int(__isl_take isl_printer *p, int i)
 {
+	p = enter_state(p, 0);
 	if (!p)
 		return NULL;
 
@@ -411,6 +574,7 @@ __isl_give isl_printer *isl_printer_print_int(__isl_take isl_printer *p, int i)
 __isl_give isl_printer *isl_printer_print_isl_int(__isl_take isl_printer *p,
 	isl_int i)
 {
+	p = enter_state(p, 0);
 	if (!p)
 		return NULL;
 
@@ -446,4 +610,155 @@ __isl_give isl_printer *isl_printer_flush(__isl_take isl_printer *p)
 		return NULL;
 
 	return p->ops->flush(p);
+}
+
+/* Start a YAML mapping and push a new state to reflect that we
+ * are about to print the first key in a mapping.
+ *
+ * In flow style, print the opening brace.
+ * In block style, move to the next line with an increased indentation,
+ * except if this is the outer mapping or if we are inside a sequence
+ * (in which case we have already increased the indentation and we want
+ * to print the first key on the same line as the dash).
+ */
+__isl_give isl_printer *isl_printer_yaml_start_mapping(
+	__isl_take isl_printer *p)
+{
+	enum isl_yaml_state state;
+
+	p = enter_state(p, p->yaml_style == ISL_YAML_STYLE_BLOCK);
+	if (!p)
+		return NULL;
+	state = current_state(p);
+	if (p->yaml_style == ISL_YAML_STYLE_FLOW)
+		p = p->ops->print_str(p, "{ ");
+	else if (state != isl_yaml_none && state != isl_yaml_sequence) {
+		p = p->ops->end_line(p);
+		p = isl_printer_indent(p, 2);
+		p = p->ops->start_line(p);
+	}
+	p = push_state(p, isl_yaml_mapping_first_key_start);
+	return p;
+}
+
+/* Finish a YAML mapping and pop it from the state stack.
+ *
+ * In flow style, print the closing brace.
+ *
+ * In block style, first check if we are still in the
+ * isl_yaml_mapping_first_key_start state.  If so, we have not printed
+ * anything yet, so print "{}" to indicate an empty mapping.
+ * If we increased the indentation in isl_printer_yaml_start_mapping,
+ * then decrease it again.
+ * If this is the outer mapping then print a newline.
+ */
+__isl_give isl_printer *isl_printer_yaml_end_mapping(
+	__isl_take isl_printer *p)
+{
+	enum isl_yaml_state state;
+
+	state = current_state(p);
+	p = pop_state(p);
+	if (!p)
+		return NULL;
+	if (p->yaml_style == ISL_YAML_STYLE_FLOW)
+		return p->ops->print_str(p, " }");
+	if (state == isl_yaml_mapping_first_key_start)
+		p = p->ops->print_str(p, "{}");
+	if (!p)
+		return NULL;
+	state = current_state(p);
+	if (state != isl_yaml_none && state != isl_yaml_sequence)
+		p = isl_printer_indent(p, -2);
+	if (state == isl_yaml_none)
+		p = p->ops->end_line(p);
+	return p;
+}
+
+/* Start a YAML sequence and push a new state to reflect that we
+ * are about to print the first element in a sequence.
+ *
+ * In flow style, print the opening bracket.
+ */
+__isl_give isl_printer *isl_printer_yaml_start_sequence(
+	__isl_take isl_printer *p)
+{
+	p = enter_state(p, p->yaml_style == ISL_YAML_STYLE_BLOCK);
+	p = push_state(p, isl_yaml_sequence_first_start);
+	if (!p)
+		return NULL;
+	if (p->yaml_style == ISL_YAML_STYLE_FLOW)
+		p = p->ops->print_str(p, "[ ");
+	return p;
+}
+
+/* Finish a YAML sequence and pop it from the state stack.
+ *
+ * In flow style, print the closing bracket.
+ *
+ * In block style, check if we are still in the
+ * isl_yaml_sequence_first_start state.  If so, we have not printed
+ * anything yet, so print "[]" or " []" to indicate an empty sequence.
+ * We print the extra space when we instructed enter_state not
+ * to print a space at the end of the line.
+ * Otherwise, undo the increase in indentation performed by
+ * enter_state when moving away from the isl_yaml_sequence_first_start
+ * state.
+ * If this is the outer sequence then print a newline.
+ */
+__isl_give isl_printer *isl_printer_yaml_end_sequence(
+	__isl_take isl_printer *p)
+{
+	enum isl_yaml_state state, up;
+
+	state = current_state(p);
+	p = pop_state(p);
+	if (!p)
+		return NULL;
+	if (p->yaml_style == ISL_YAML_STYLE_FLOW)
+		return p->ops->print_str(p, " ]");
+	up = current_state(p);
+	if (state == isl_yaml_sequence_first_start) {
+		if (up == isl_yaml_mapping_val)
+			p = p->ops->print_str(p, " []");
+		else
+			p = p->ops->print_str(p, "[]");
+	} else {
+		p = isl_printer_indent(p, -2);
+	}
+	if (!p)
+		return NULL;
+	state = current_state(p);
+	if (state == isl_yaml_none)
+		p = p->ops->end_line(p);
+	return p;
+}
+
+/* Mark the fact that the current element is finished and that
+ * the next output belongs to the next element.
+ * In particular, if we are printing a key, then prepare for
+ * printing the subsequent value.  If we are printing a value,
+ * prepare for printing the next key.  If we are printing an
+ * element in a sequence, prepare for printing the next element.
+ */
+__isl_give isl_printer *isl_printer_yaml_next(__isl_take isl_printer *p)
+{
+	enum isl_yaml_state state;
+
+	if (!p)
+		return NULL;
+	if (p->yaml_depth < 1)
+		isl_die(isl_printer_get_ctx(p), isl_error_invalid,
+			"not in YAML construct", return isl_printer_free(p));
+
+	state = current_state(p);
+	if (state == isl_yaml_mapping_key)
+		state = isl_yaml_mapping_val_start;
+	else if (state == isl_yaml_mapping_val)
+		state = isl_yaml_mapping_key_start;
+	else if (state == isl_yaml_sequence)
+		state = isl_yaml_sequence_start;
+	p = update_state(p, state);
+
+	return p;
 }

@@ -1807,7 +1807,7 @@ __isl_give isl_aff *isl_ast_build_get_offset(
  * value that, moreover, can be described by a single affine expression
  * in terms of the outer dimensions and parameters?
  *
- * If not, then the correponding affine expression in build->values
+ * If not, then the corresponding affine expression in build->values
  * is set to be equal to the same input dimension.
  * Otherwise, it is set to the requested expression in terms of
  * outer dimensions and parameters.

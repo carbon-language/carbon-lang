@@ -1,6 +1,7 @@
 /*
  * Copyright 2010      INRIA Saclay
  * Copyright 2014      Ecole Normale Superieure
+ * Copyright 2014      INRIA Rocquencourt
  *
  * Use of this software is governed by the MIT license
  *
@@ -8,12 +9,15 @@
  * Parc Club Orsay Universite, ZAC des vignes, 4 rue Jacques Monod,
  * 91893 Orsay, France 
  * and Ecole Normale Superieure, 45 rue d'Ulm, 75230 Paris, France
+ * and Inria Paris - Rocquencourt, Domaine de Voluceau - Rocquencourt,
+ * B.P. 105 - 78153 Le Chesnay, France
  */
 
 #include <isl/aff.h>
 #include <isl/set.h>
 #include <isl/map.h>
 #include <isl/polynomial.h>
+#include <isl/schedule.h>
 #include <isl/obj.h>
 
 static void *isl_obj_val_copy(void *v)
@@ -332,4 +336,27 @@ struct isl_obj_vtable isl_obj_union_pw_qpolynomial_fold_vtable = {
 	isl_obj_union_pw_qpf_add,
 	isl_obj_union_pw_qpf_print,
 	isl_obj_union_pw_qpf_free
+};
+
+static void *isl_obj_schedule_copy(void *v)
+{
+	return isl_schedule_copy((isl_schedule *) v);
+}
+
+static void isl_obj_schedule_free(void *v)
+{
+	isl_schedule_free((isl_schedule *) v);
+}
+
+static __isl_give isl_printer *isl_obj_schedule_print(
+	__isl_take isl_printer *p, void *v)
+{
+	return isl_printer_print_schedule(p, (isl_schedule *) v);
+}
+
+struct isl_obj_vtable isl_obj_schedule_vtable = {
+	isl_obj_schedule_copy,
+	NULL,
+	isl_obj_schedule_print,
+	isl_obj_schedule_free
 };

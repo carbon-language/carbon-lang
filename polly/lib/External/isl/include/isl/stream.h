@@ -15,6 +15,7 @@
 #include <isl/aff_type.h>
 #include <isl/obj.h>
 #include <isl/val.h>
+#include <isl/schedule_type.h>
 
 #if defined(__cplusplus)
 extern "C" {
@@ -46,55 +47,47 @@ __isl_give char *isl_token_get_str(isl_ctx *ctx, struct isl_token *tok);
 int isl_token_get_type(struct isl_token *tok);
 void isl_token_free(struct isl_token *tok);
 
-struct isl_stream {
-	struct isl_ctx	*ctx;
-	FILE        	*file;
-	const char  	*str;
-	int	    	line;
-	int	    	col;
-	int	    	eof;
+struct isl_stream;
+typedef struct isl_stream isl_stream;
 
-	char	    	*buffer;
-	size_t	    	size;
-	size_t	    	len;
-	int	    	c;
-	int		un[5];
-	int		n_un;
+__isl_give isl_stream *isl_stream_new_file(isl_ctx *ctx, FILE *file);
+__isl_give isl_stream *isl_stream_new_str(isl_ctx *ctx, const char *str);
+void isl_stream_free(__isl_take isl_stream *s);
 
-	struct isl_token	*tokens[5];
-	int	    	n_token;
+isl_ctx *isl_stream_get_ctx(__isl_keep isl_stream *s);
 
-	struct isl_hash_table	*keywords;
-	enum isl_token_type	 next_type;
-};
+void isl_stream_error(__isl_keep isl_stream *s, struct isl_token *tok,
+	char *msg);
 
-struct isl_stream* isl_stream_new_file(struct isl_ctx *ctx, FILE *file);
-struct isl_stream* isl_stream_new_str(struct isl_ctx *ctx, const char *str);
-void isl_stream_free(struct isl_stream *s);
+struct isl_token *isl_stream_next_token(__isl_keep isl_stream *s);
+struct isl_token *isl_stream_next_token_on_same_line(__isl_keep isl_stream *s);
+int isl_stream_next_token_is(__isl_keep isl_stream *s, int type);
+void isl_stream_push_token(__isl_keep isl_stream *s, struct isl_token *tok);
+void isl_stream_flush_tokens(__isl_keep isl_stream *s);
+int isl_stream_eat_if_available(__isl_keep isl_stream *s, int type);
+char *isl_stream_read_ident_if_available(__isl_keep isl_stream *s);
+int isl_stream_eat(__isl_keep isl_stream *s, int type);
+int isl_stream_is_empty(__isl_keep isl_stream *s);
+int isl_stream_skip_line(__isl_keep isl_stream *s);
 
-void isl_stream_error(struct isl_stream *s, struct isl_token *tok, char *msg);
-
-struct isl_token *isl_stream_next_token(struct isl_stream *s);
-struct isl_token *isl_stream_next_token_on_same_line(struct isl_stream *s);
-int isl_stream_next_token_is(struct isl_stream *s, int type);
-void isl_stream_push_token(struct isl_stream *s, struct isl_token *tok);
-void isl_stream_flush_tokens(struct isl_stream *s);
-int isl_stream_eat_if_available(struct isl_stream *s, int type);
-char *isl_stream_read_ident_if_available(struct isl_stream *s);
-int isl_stream_eat(struct isl_stream *s, int type);
-int isl_stream_is_empty(struct isl_stream *s);
-int isl_stream_skip_line(struct isl_stream *s);
-
-enum isl_token_type isl_stream_register_keyword(struct isl_stream *s,
+enum isl_token_type isl_stream_register_keyword(__isl_keep isl_stream *s,
 	const char *name);
 
-struct isl_obj isl_stream_read_obj(struct isl_stream *s);
-__isl_give isl_multi_aff *isl_stream_read_multi_aff(struct isl_stream *s);
-__isl_give isl_map *isl_stream_read_map(struct isl_stream *s);
-__isl_give isl_set *isl_stream_read_set(struct isl_stream *s);
+struct isl_obj isl_stream_read_obj(__isl_keep isl_stream *s);
+__isl_give isl_val *isl_stream_read_val(__isl_keep isl_stream *s);
+__isl_give isl_multi_aff *isl_stream_read_multi_aff(__isl_keep isl_stream *s);
+__isl_give isl_map *isl_stream_read_map(__isl_keep isl_stream *s);
+__isl_give isl_set *isl_stream_read_set(__isl_keep isl_stream *s);
 __isl_give isl_pw_qpolynomial *isl_stream_read_pw_qpolynomial(
-	struct isl_stream *s);
-__isl_give isl_union_map *isl_stream_read_union_map(struct isl_stream *s);
+	__isl_keep isl_stream *s);
+__isl_give isl_union_map *isl_stream_read_union_map(__isl_keep isl_stream *s);
+__isl_give isl_schedule *isl_stream_read_schedule(isl_stream *s);
+
+int isl_stream_yaml_read_start_mapping(__isl_keep isl_stream *s);
+int isl_stream_yaml_read_end_mapping(__isl_keep isl_stream *s);
+int isl_stream_yaml_read_start_sequence(__isl_keep isl_stream *s);
+int isl_stream_yaml_read_end_sequence(__isl_keep isl_stream *s);
+int isl_stream_yaml_next(__isl_keep isl_stream *s);
 
 #if defined(__cplusplus)
 }

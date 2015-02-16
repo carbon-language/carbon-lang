@@ -174,6 +174,14 @@ static Driver *construct_driver(const char *binary, DiagnosticsEngine &Diags)
 }
 #endif
 
+/* Clang changed its API from 3.5 to 3.6, we fix this with a simple overloaded
+ * function here.
+ */
+struct ClangAPI {
+	static Job *command(Job *J) { return J; }
+	static Job *command(Job &J) { return &J; }
+};
+
 /* Create a CompilerInvocation object that stores the command line
  * arguments constructed by the driver.
  * The arguments are mainly useful for setting up the system include
@@ -191,7 +199,7 @@ static CompilerInvocation *construct_invocation(const char *filename,
 		driver->BuildCompilation(llvm::ArrayRef<const char *>(Argv)));
 	JobList &Jobs = compilation->getJobs();
 
-	Command *cmd = cast<Command>(*Jobs.begin());
+	Command *cmd = cast<Command>(ClangAPI::command(*Jobs.begin()));
 	if (strcmp(cmd->getCreator().getName(), "clang"))
 		return NULL;
 

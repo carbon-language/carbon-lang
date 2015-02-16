@@ -1626,8 +1626,10 @@ struct isl_basic_map *isl_basic_map_cow(struct isl_basic_map *bmap)
 		bmap->ref--;
 		bmap = isl_basic_map_dup(bmap);
 	}
-	if (bmap)
+	if (bmap) {
 		ISL_F_CLR(bmap, ISL_BASIC_SET_FINAL);
+		ISL_F_CLR(bmap, ISL_BASIC_MAP_REDUCED_COEFFICIENTS);
+	}
 	return bmap;
 }
 
@@ -4553,22 +4555,23 @@ __isl_give isl_basic_set *isl_basic_set_underlying_set(
 }
 
 /* Replace each element in "list" by the result of applying
- * isl_basic_set_underlying_set to the element.
+ * isl_basic_map_underlying_set to the element.
  */
-__isl_give isl_basic_set_list *isl_basic_set_list_underlying_set(
-	__isl_take isl_basic_set_list *list)
+__isl_give isl_basic_set_list *isl_basic_map_list_underlying_set(
+	__isl_take isl_basic_map_list *list)
 {
 	int i, n;
 
 	if (!list)
 		return NULL;
 
-	n = isl_basic_set_list_n_basic_set(list);
+	n = isl_basic_map_list_n_basic_map(list);
 	for (i = 0; i < n; ++i) {
+		isl_basic_map *bmap;
 		isl_basic_set *bset;
 
-		bset = isl_basic_set_list_get_basic_set(list, i);
-		bset = isl_basic_set_underlying_set(bset);
+		bmap = isl_basic_map_list_get_basic_map(list, i);
+		bset = isl_basic_set_underlying_set(bmap);
 		list = isl_basic_set_list_set_basic_set(list, i, bset);
 	}
 
@@ -8405,54 +8408,54 @@ struct isl_set *isl_set_align_divs(struct isl_set *set)
 	return (struct isl_set *)isl_map_align_divs((struct isl_map *)set);
 }
 
-/* Align the divs of the basic sets in "set" to those
- * of the basic sets in "list", as well as to the other basic sets in "set".
+/* Align the divs of the basic maps in "map" to those
+ * of the basic maps in "list", as well as to the other basic maps in "map".
  * The elements in "list" are assumed to have known divs.
  */
-__isl_give isl_set *isl_set_align_divs_to_basic_set_list(
-	__isl_take isl_set *set, __isl_keep isl_basic_set_list *list)
+__isl_give isl_map *isl_map_align_divs_to_basic_map_list(
+	__isl_take isl_map *map, __isl_keep isl_basic_map_list *list)
 {
 	int i, n;
 
-	set = isl_set_compute_divs(set);
-	set = isl_set_cow(set);
-	if (!set || !list)
-		return isl_set_free(set);
-	if (set->n == 0)
-		return set;
+	map = isl_map_compute_divs(map);
+	map = isl_map_cow(map);
+	if (!map || !list)
+		return isl_map_free(map);
+	if (map->n == 0)
+		return map;
 
-	n = isl_basic_set_list_n_basic_set(list);
+	n = isl_basic_map_list_n_basic_map(list);
 	for (i = 0; i < n; ++i) {
-		isl_basic_set *bset;
+		isl_basic_map *bmap;
 
-		bset = isl_basic_set_list_get_basic_set(list, i);
-		set->p[0] = isl_basic_set_align_divs(set->p[0], bset);
-		isl_basic_set_free(bset);
+		bmap = isl_basic_map_list_get_basic_map(list, i);
+		map->p[0] = isl_basic_map_align_divs(map->p[0], bmap);
+		isl_basic_map_free(bmap);
 	}
-	if (!set->p[0])
-		return isl_set_free(set);
+	if (!map->p[0])
+		return isl_map_free(map);
 
-	return isl_set_align_divs(set);
+	return isl_map_align_divs(map);
 }
 
-/* Align the divs of each element of "list" to those of "bset".
- * Both "bset" and the elements of "list" are assumed to have known divs.
+/* Align the divs of each element of "list" to those of "bmap".
+ * Both "bmap" and the elements of "list" are assumed to have known divs.
  */
-__isl_give isl_basic_set_list *isl_basic_set_list_align_divs_to_basic_set(
-	__isl_take isl_basic_set_list *list, __isl_keep isl_basic_set *bset)
+__isl_give isl_basic_map_list *isl_basic_map_list_align_divs_to_basic_map(
+	__isl_take isl_basic_map_list *list, __isl_keep isl_basic_map *bmap)
 {
 	int i, n;
 
-	if (!list || !bset)
-		return isl_basic_set_list_free(list);
+	if (!list || !bmap)
+		return isl_basic_map_list_free(list);
 
-	n = isl_basic_set_list_n_basic_set(list);
+	n = isl_basic_map_list_n_basic_map(list);
 	for (i = 0; i < n; ++i) {
-		isl_basic_set *bset_i;
+		isl_basic_map *bmap_i;
 
-		bset_i = isl_basic_set_list_get_basic_set(list, i);
-		bset_i = isl_basic_set_align_divs(bset_i, bset);
-		list = isl_basic_set_list_set_basic_set(list, i, bset_i);
+		bmap_i = isl_basic_map_list_get_basic_map(list, i);
+		bmap_i = isl_basic_map_align_divs(bmap_i, bmap);
+		list = isl_basic_map_list_set_basic_map(list, i, bmap_i);
 	}
 
 	return list;
@@ -9326,25 +9329,25 @@ error:
 	return NULL;
 }
 
-/* Return the basic sets in "set" as a list.
+/* Return the basic maps in "map" as a list.
  */
-__isl_give isl_basic_set_list *isl_set_get_basic_set_list(
-	__isl_keep isl_set *set)
+__isl_give isl_basic_map_list *isl_map_get_basic_map_list(
+	__isl_keep isl_map *map)
 {
 	int i;
 	isl_ctx *ctx;
-	isl_basic_set_list *list;
+	isl_basic_map_list *list;
 
-	if (!set)
+	if (!map)
 		return NULL;
-	ctx = isl_set_get_ctx(set);
-	list = isl_basic_set_list_alloc(ctx, set->n);
+	ctx = isl_map_get_ctx(map);
+	list = isl_basic_map_list_alloc(ctx, map->n);
 
-	for (i = 0; i < set->n; ++i) {
-		isl_basic_set *bset;
+	for (i = 0; i < map->n; ++i) {
+		isl_basic_map *bmap;
 
-		bset = isl_basic_set_copy(set->p[i]);
-		list = isl_basic_set_list_add(list, bset);
+		bmap = isl_basic_map_copy(map->p[i]);
+		list = isl_basic_map_list_add(list, bmap);
 	}
 
 	return list;
@@ -9353,32 +9356,41 @@ __isl_give isl_basic_set_list *isl_set_get_basic_set_list(
 /* Return the intersection of the elements in the non-empty list "list".
  * All elements are assumed to live in the same space.
  */
-__isl_give isl_basic_set *isl_basic_set_list_intersect(
-	__isl_take struct isl_basic_set_list *list)
+__isl_give isl_basic_map *isl_basic_map_list_intersect(
+	__isl_take isl_basic_map_list *list)
 {
 	int i, n;
-	isl_basic_set *bset;
+	isl_basic_map *bmap;
 
 	if (!list)
 		return NULL;
-	n = isl_basic_set_list_n_basic_set(list);
+	n = isl_basic_map_list_n_basic_map(list);
 	if (n < 1)
-		isl_die(isl_basic_set_list_get_ctx(list), isl_error_invalid,
+		isl_die(isl_basic_map_list_get_ctx(list), isl_error_invalid,
 			"expecting non-empty list", goto error);
-	
-	bset = isl_basic_set_list_get_basic_set(list, 0);
-	for (i = 1; i < n; ++i) {
-		isl_basic_set *bset_i;
 
-		bset_i = isl_basic_set_list_get_basic_set(list, i);
-		bset = isl_basic_set_intersect(bset, bset_i);
+	bmap = isl_basic_map_list_get_basic_map(list, 0);
+	for (i = 1; i < n; ++i) {
+		isl_basic_map *bmap_i;
+
+		bmap_i = isl_basic_map_list_get_basic_map(list, i);
+		bmap = isl_basic_map_intersect(bmap, bmap_i);
 	}
 
-	isl_basic_set_list_free(list);
-	return bset;
+	isl_basic_map_list_free(list);
+	return bmap;
 error:
-	isl_basic_set_list_free(list);
+	isl_basic_map_list_free(list);
 	return NULL;
+}
+
+/* Return the intersection of the elements in the non-empty list "list".
+ * All elements are assumed to live in the same space.
+ */
+__isl_give isl_basic_set *isl_basic_set_list_intersect(
+	__isl_take isl_basic_set_list *list)
+{
+	return isl_basic_map_list_intersect(list);
 }
 
 /* Return the Cartesian product of the basic sets in list (in the given order).

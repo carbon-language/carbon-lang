@@ -43,6 +43,8 @@ extern struct isl_obj_vtable isl_obj_pw_qpolynomial_fold_vtable;
 #define isl_obj_pw_qpolynomial_fold	(&isl_obj_pw_qpolynomial_fold_vtable)
 extern struct isl_obj_vtable isl_obj_union_pw_qpolynomial_fold_vtable;
 #define isl_obj_union_pw_qpolynomial_fold	(&isl_obj_union_pw_qpolynomial_fold_vtable)
+extern struct isl_obj_vtable isl_obj_schedule_vtable;
+#define isl_obj_schedule	(&isl_obj_schedule_vtable)
 struct isl_obj {
 	isl_obj_type	type;
 	void		*v;

@@ -304,8 +304,8 @@ void isl_morph_print_internal(__isl_take isl_morph *morph, FILE *out)
 	if (!morph)
 		return;
 
-	isl_basic_set_print(morph->dom, out, 0, "", "", ISL_FORMAT_ISL);
-	isl_basic_set_print(morph->ran, out, 0, "", "", ISL_FORMAT_ISL);
+	isl_basic_set_dump(morph->dom);
+	isl_basic_set_dump(morph->ran);
 	isl_mat_print_internal(morph->map, out, 4);
 	isl_mat_print_internal(morph->inv, out, 4);
 }

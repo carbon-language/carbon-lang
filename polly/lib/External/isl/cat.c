@@ -13,15 +13,24 @@ struct isl_arg_choice cat_format[] = {
 	{0}
 };
 
+struct isl_arg_choice cat_yaml_style[] = {
+	{ "block",	ISL_YAML_STYLE_BLOCK },
+	{ "flow",	ISL_YAML_STYLE_FLOW },
+	{ 0 }
+};
+
 struct cat_options {
 	struct isl_options	*isl;
 	unsigned		 format;
+	unsigned		 yaml_style;
 };
 
 ISL_ARGS_START(struct cat_options, cat_options_args)
 ISL_ARG_CHILD(struct cat_options, isl, "isl", &isl_options_args, "isl options")
 ISL_ARG_CHOICE(struct cat_options, format, 0, "format", \
 	cat_format,	ISL_FORMAT_ISL, "output format")
+ISL_ARG_CHOICE(struct cat_options, yaml_style, 0, "yaml-style", \
+	cat_yaml_style, ISL_YAML_STYLE_BLOCK, "output YAML style")
 ISL_ARGS_END
 
 ISL_ARG_DEF(cat_options, struct cat_options, cat_options_args)
@@ -29,7 +38,7 @@ ISL_ARG_DEF(cat_options, struct cat_options, cat_options_args)
 int main(int argc, char **argv)
 {
 	struct isl_ctx *ctx;
-	struct isl_stream *s;
+	isl_stream *s;
 	struct isl_obj obj;
 	struct cat_options *options;
 	isl_printer *p;
@@ -46,6 +55,7 @@ int main(int argc, char **argv)
 
 	p = isl_printer_to_file(ctx, stdout);
 	p = isl_printer_set_output_format(p, options->format);
+	p = isl_printer_set_yaml_style(p, options->yaml_style);
 	p = obj.type->print(p, obj.v);
 	p = isl_printer_end_line(p);
 	isl_printer_free(p);

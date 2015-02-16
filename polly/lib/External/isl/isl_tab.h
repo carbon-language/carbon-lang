@@ -29,6 +29,7 @@ struct isl_tab_var {
 
 enum isl_tab_undo_type {
 	isl_tab_undo_bottom,
+	isl_tab_undo_rational,
 	isl_tab_undo_empty,
 	isl_tab_undo_nonneg,
 	isl_tab_undo_redundant,
@@ -235,7 +236,7 @@ enum isl_ineq_type isl_tab_ineq_type(struct isl_tab *tab, isl_int *ineq);
 struct isl_tab_undo *isl_tab_snap(struct isl_tab *tab);
 int isl_tab_rollback(struct isl_tab *tab, struct isl_tab_undo *snap) WARN_UNUSED;
 
-struct isl_tab *isl_tab_relax(struct isl_tab *tab, int con) WARN_UNUSED;
+int isl_tab_relax(struct isl_tab *tab, int con) WARN_UNUSED;
 int isl_tab_select_facet(struct isl_tab *tab, int con) WARN_UNUSED;
 int isl_tab_unrestrict(struct isl_tab *tab, int con) WARN_UNUSED;
 
@@ -267,6 +268,7 @@ __isl_give isl_vec *isl_tab_basic_set_non_neg_lexmin(
 
 struct isl_tab_var *isl_tab_var_from_row(struct isl_tab *tab, int i);
 int isl_tab_mark_redundant(struct isl_tab *tab, int row) WARN_UNUSED;
+int isl_tab_mark_rational(struct isl_tab *tab) WARN_UNUSED;
 int isl_tab_mark_empty(struct isl_tab *tab) WARN_UNUSED;
 struct isl_tab *isl_tab_dup(struct isl_tab *tab);
 struct isl_tab *isl_tab_product(struct isl_tab *tab1, struct isl_tab *tab2);
@@ -274,6 +276,7 @@ int isl_tab_extend_cons(struct isl_tab *tab, unsigned n_new) WARN_UNUSED;
 int isl_tab_allocate_con(struct isl_tab *tab) WARN_UNUSED;
 int isl_tab_extend_vars(struct isl_tab *tab, unsigned n_new) WARN_UNUSED;
 int isl_tab_allocate_var(struct isl_tab *tab) WARN_UNUSED;
+int isl_tab_insert_var(struct isl_tab *tab, int pos) WARN_UNUSED;
 int isl_tab_pivot(struct isl_tab *tab, int row, int col) WARN_UNUSED;
 int isl_tab_add_row(struct isl_tab *tab, isl_int *line) WARN_UNUSED;
 int isl_tab_row_is_redundant(struct isl_tab *tab, int row);
@@ -300,5 +303,7 @@ int isl_tab_push_callback(struct isl_tab *tab,
 
 int isl_tab_add_div(struct isl_tab *tab, __isl_keep isl_vec *div,
 	int (*add_ineq)(void *user, isl_int *), void *user);
+
+int isl_tab_shift_var(struct isl_tab *tab, int pos, isl_int shift) WARN_UNUSED;
 
 #endif

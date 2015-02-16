@@ -14,34 +14,219 @@
 #include <isl_aff_private.h>
 #include <isl/map.h>
 #include <isl/set.h>
+#include <isl/schedule.h>
+#include <isl/schedule_node.h>
 #include <isl_sort.h>
 #include <isl_schedule_private.h>
+#include <isl_schedule_tree.h>
+#include <isl_schedule_node_private.h>
 #include <isl_band_private.h>
+
+/* Return a schedule encapsulating the given schedule tree.
+ *
+ * We currently only allow schedule trees with a domain as root.
+ *
+ * The leaf field is initialized as a leaf node so that it can be
+ * used to represent leaves in the constructed schedule.
+ * The reference count is set to -1 since the isl_schedule_tree
+ * should never be freed.  It is up to the (internal) users of
+ * these leaves to ensure that they are only used while the schedule
+ * is still alive.
+ */
+__isl_give isl_schedule *isl_schedule_from_schedule_tree(isl_ctx *ctx,
+	__isl_take isl_schedule_tree *tree)
+{
+	isl_schedule *schedule;
+
+	if (!tree)
+		return NULL;
+	if (isl_schedule_tree_get_type(tree) != isl_schedule_node_domain)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_unsupported,
+			"root of schedule tree should be a domain",
+			goto error);
+
+	schedule = isl_calloc_type(ctx, isl_schedule);
+	if (!schedule)
+		goto error;
+
+	schedule->leaf.ctx = ctx;
+	isl_ctx_ref(ctx);
+	schedule->ref = 1;
+	schedule->root = tree;
+	schedule->leaf.ref = -1;
+	schedule->leaf.type = isl_schedule_node_leaf;
+
+	return schedule;
+error:
+	isl_schedule_tree_free(tree);
+	return NULL;
+}
+
+/* Return a pointer to a schedule with as single node
+ * a domain node with the given domain.
+ */
+__isl_give isl_schedule *isl_schedule_from_domain(
+	__isl_take isl_union_set *domain)
+{
+	isl_ctx *ctx;
+	isl_schedule_tree *tree;
+
+	ctx = isl_union_set_get_ctx(domain);
+	tree = isl_schedule_tree_from_domain(domain);
+	return isl_schedule_from_schedule_tree(ctx, tree);
+}
+
+/* Return a pointer to a schedule with as single node
+ * a domain node with an empty domain.
+ */
+__isl_give isl_schedule *isl_schedule_empty(__isl_take isl_space *space)
+{
+	return isl_schedule_from_domain(isl_union_set_empty(space));
+}
+
+/* Return a new reference to "sched".
+ */
+__isl_give isl_schedule *isl_schedule_copy(__isl_keep isl_schedule *sched)
+{
+	if (!sched)
+		return NULL;
+
+	sched->ref++;
+	return sched;
+}
+
+/* Return an isl_schedule that is equal to "schedule" and that has only
+ * a single reference.
+ *
+ * We only need and support this function when the schedule is represented
+ * as a schedule tree.
+ */
+__isl_give isl_schedule *isl_schedule_cow(__isl_take isl_schedule *schedule)
+{
+	isl_ctx *ctx;
+	isl_schedule_tree *tree;
+
+	if (!schedule)
+		return NULL;
+	if (schedule->ref == 1)
+		return schedule;
+
+	ctx = isl_schedule_get_ctx(schedule);
+	if (!schedule->root)
+		isl_die(ctx, isl_error_internal,
+			"only for schedule tree based schedules",
+			return isl_schedule_free(schedule));
+	schedule->ref--;
+	tree = isl_schedule_tree_copy(schedule->root);
+	return isl_schedule_from_schedule_tree(ctx, tree);
+}
 
 __isl_null isl_schedule *isl_schedule_free(__isl_take isl_schedule *sched)
 {
-	int i;
 	if (!sched)
 		return NULL;
 
 	if (--sched->ref > 0)
 		return NULL;
 
-	for (i = 0; i < sched->n; ++i) {
-		isl_multi_aff_free(sched->node[i].sched);
-		free(sched->node[i].band_end);
-		free(sched->node[i].band_id);
-		free(sched->node[i].coincident);
-	}
-	isl_space_free(sched->dim);
 	isl_band_list_free(sched->band_forest);
+	isl_schedule_tree_free(sched->root);
+	isl_ctx_deref(sched->leaf.ctx);
 	free(sched);
+	return NULL;
+}
+
+/* Replace the root of "schedule" by "tree".
+ */
+__isl_give isl_schedule *isl_schedule_set_root(
+	__isl_take isl_schedule *schedule, __isl_take isl_schedule_tree *tree)
+{
+	if (!schedule || !tree)
+		goto error;
+	if (schedule->root == tree) {
+		isl_schedule_tree_free(tree);
+		return schedule;
+	}
+
+	schedule = isl_schedule_cow(schedule);
+	if (!schedule)
+		goto error;
+	isl_schedule_tree_free(schedule->root);
+	schedule->root = tree;
+
+	return schedule;
+error:
+	isl_schedule_free(schedule);
+	isl_schedule_tree_free(tree);
 	return NULL;
 }
 
 isl_ctx *isl_schedule_get_ctx(__isl_keep isl_schedule *schedule)
 {
-	return schedule ? isl_space_get_ctx(schedule->dim) : NULL;
+	return schedule ? schedule->leaf.ctx : NULL;
+}
+
+/* Return a pointer to the leaf of "schedule".
+ *
+ * Even though these leaves are not reference counted, we still
+ * indicate that this function does not return a copy.
+ */
+__isl_keep isl_schedule_tree *isl_schedule_peek_leaf(
+	__isl_keep isl_schedule *schedule)
+{
+	return schedule ? &schedule->leaf : NULL;
+}
+
+/* Return the (parameter) space of the schedule, i.e., the space
+ * of the root domain.
+ */
+__isl_give isl_space *isl_schedule_get_space(
+	__isl_keep isl_schedule *schedule)
+{
+	enum isl_schedule_node_type type;
+	isl_space *space;
+	isl_union_set *domain;
+
+	if (!schedule)
+		return NULL;
+	if (!schedule->root)
+		isl_die(isl_schedule_get_ctx(schedule), isl_error_invalid,
+			"schedule tree representation not available",
+			return NULL);
+	type = isl_schedule_tree_get_type(schedule->root);
+	if (type != isl_schedule_node_domain)
+		isl_die(isl_schedule_get_ctx(schedule), isl_error_internal,
+			"root node not a domain node", return NULL);
+
+	domain = isl_schedule_tree_domain_get_domain(schedule->root);
+	space = isl_union_set_get_space(domain);
+	isl_union_set_free(domain);
+
+	return space;
+}
+
+/* Return a pointer to the root of "schedule".
+ */
+__isl_give isl_schedule_node *isl_schedule_get_root(
+	__isl_keep isl_schedule *schedule)
+{
+	isl_ctx *ctx;
+	isl_schedule_tree *tree;
+	isl_schedule_tree_list *ancestors;
+
+	if (!schedule)
+		return NULL;
+
+	if (!schedule->root)
+		isl_die(isl_schedule_get_ctx(schedule), isl_error_invalid,
+			"schedule tree representation not available",
+			return NULL);
+
+	ctx = isl_schedule_get_ctx(schedule);
+	tree = isl_schedule_tree_copy(schedule->root);
+	schedule = isl_schedule_copy(schedule);
+	ancestors = isl_schedule_tree_list_alloc(ctx, 0);
+	return isl_schedule_node_alloc(schedule, tree, ancestors, NULL);
 }
 
 /* Set max_out to the maximal number of output dimensions over
@@ -114,473 +299,382 @@ static __isl_give isl_union_map *pad_schedule_map(
 	return data.res;
 }
 
-/* Return an isl_union_map of the schedule.  If we have already constructed
- * a band forest, then this band forest may have been modified so we need
- * to extract the isl_union_map from the forest rather than from
- * the originally computed schedule.  This reconstructed schedule map
+/* Return the domain of the root domain node of "schedule".
+ */
+__isl_give isl_union_set *isl_schedule_get_domain(
+	__isl_keep isl_schedule *schedule)
+{
+	if (!schedule)
+		return NULL;
+	if (!schedule->root)
+		isl_die(isl_schedule_get_ctx(schedule), isl_error_invalid,
+			"schedule tree representation not available",
+			return NULL);
+	return isl_schedule_tree_domain_get_domain(schedule->root);
+}
+
+/* Traverse all nodes of "sched" in depth first preorder.
+ *
+ * If "fn" returns -1 on any of the nodes, then the traversal is aborted.
+ * If "fn" returns 0 on any of the nodes, then the subtree rooted
+ * at that node is skipped.
+ *
+ * Return 0 on success and -1 on failure.
+ */
+int isl_schedule_foreach_schedule_node(__isl_keep isl_schedule *sched,
+	int (*fn)(__isl_keep isl_schedule_node *node, void *user), void *user)
+{
+	isl_schedule_node *node;
+	int r;
+
+	if (!sched)
+		return -1;
+
+	node = isl_schedule_get_root(sched);
+	r = isl_schedule_node_foreach_descendant(node, fn, user);
+	isl_schedule_node_free(node);
+
+	return r;
+}
+
+/* Traverse the node of "sched" in depth first postorder,
+ * allowing the user to modify the visited node.
+ * The traversal continues from the node returned by the callback function.
+ * It is the responsibility of the user to ensure that this does not
+ * lead to an infinite loop.  It is safest to always return a pointer
+ * to the same position (same ancestors and child positions) as the input node.
+ */
+__isl_give isl_schedule *isl_schedule_map_schedule_node(
+	__isl_take isl_schedule *schedule,
+	__isl_give isl_schedule_node *(*fn)(
+		__isl_take isl_schedule_node *node, void *user), void *user)
+{
+	isl_schedule_node *node;
+
+	node = isl_schedule_get_root(schedule);
+	isl_schedule_free(schedule);
+
+	node = isl_schedule_node_map_descendant(node, fn, user);
+	schedule = isl_schedule_node_get_schedule(node);
+	isl_schedule_node_free(node);
+
+	return schedule;
+}
+
+/* Return an isl_union_map representation of the schedule.
+ * If we still have access to the schedule tree, then we return
+ * an isl_union_map corresponding to the subtree schedule of the child
+ * of the root domain node.  That is, we do not intersect the domain
+ * of the returned isl_union_map with the domain constraints.
+ * Otherwise, we must have removed it because we created a band forest.
+ * If so, we extract the isl_union_map from the forest.
+ * This reconstructed schedule map
  * then needs to be padded with zeros to unify the schedule space
  * since the result of isl_band_list_get_suffix_schedule may not have
  * a unified schedule space.
  */
 __isl_give isl_union_map *isl_schedule_get_map(__isl_keep isl_schedule *sched)
 {
-	int i;
+	enum isl_schedule_node_type type;
+	isl_schedule_node *node;
 	isl_union_map *umap;
 
 	if (!sched)
 		return NULL;
 
-	if (sched->band_forest) {
-		umap = isl_band_list_get_suffix_schedule(sched->band_forest);
-		return pad_schedule_map(umap);
+	if (sched->root) {
+		type = isl_schedule_tree_get_type(sched->root);
+		if (type != isl_schedule_node_domain)
+			isl_die(isl_schedule_get_ctx(sched), isl_error_internal,
+				"root node not a domain node", return NULL);
+
+		node = isl_schedule_get_root(sched);
+		node = isl_schedule_node_child(node, 0);
+		umap = isl_schedule_node_get_subtree_schedule_union_map(node);
+		isl_schedule_node_free(node);
+
+		return umap;
 	}
 
-	umap = isl_union_map_empty(isl_space_copy(sched->dim));
-	for (i = 0; i < sched->n; ++i) {
-		isl_multi_aff *ma;
-
-		ma = isl_multi_aff_copy(sched->node[i].sched);
-		umap = isl_union_map_add_map(umap, isl_map_from_multi_aff(ma));
-	}
-
-	return umap;
+	umap = isl_band_list_get_suffix_schedule(sched->band_forest);
+	return pad_schedule_map(umap);
 }
 
 static __isl_give isl_band_list *construct_band_list(
-	__isl_keep isl_schedule *schedule, __isl_keep isl_band *parent,
-	int band_nr, int *parent_active, int n_active);
+	__isl_take isl_schedule_node *node, __isl_take isl_union_set *domain,
+	__isl_keep isl_band *parent);
 
-/* Construct an isl_band structure for the band in the given schedule
- * with sequence number band_nr for the n_active nodes marked by active.
- * If the nodes don't have a band with the given sequence number,
- * then a band without members is created.
+/* Construct an isl_band structure from the given schedule tree node,
+ * which may be either a band node or a leaf node.
+ * In the latter case, construct a zero-dimensional band.
+ * "domain" is the universe set of the domain elements that reach "node".
+ * "parent" is the parent isl_band of the isl_band constructed
+ * by this function.
  *
- * Because of the way the schedule is constructed, we know that
- * the position of the band inside the schedule of a node is the same
- * for all active nodes.
- *
- * The partial schedule for the band is created before the children
- * are created to that construct_band_list can refer to the partial
- * schedule of the parent.
+ * In case of a band node, we copy the properties (except tilability,
+ * which is implicit in an isl_band) to the isl_band.
+ * We assume that the band node is not zero-dimensional.
+ * If the child of the band node is not a leaf node,
+ * then we extract the children of the isl_band from this child.
  */
-static __isl_give isl_band *construct_band(__isl_keep isl_schedule *schedule,
-	__isl_keep isl_band *parent,
-	int band_nr, int *active, int n_active)
+static __isl_give isl_band *construct_band(__isl_take isl_schedule_node *node,
+	__isl_take isl_union_set *domain, __isl_keep isl_band *parent)
 {
-	int i, j;
-	isl_ctx *ctx = isl_schedule_get_ctx(schedule);
-	isl_band *band;
-	unsigned start, end;
+	int i;
+	isl_ctx *ctx;
+	isl_band *band = NULL;
+	isl_multi_union_pw_aff *mupa;
 
+	if (!node || !domain)
+		goto error;
+
+	ctx = isl_schedule_node_get_ctx(node);
 	band = isl_band_alloc(ctx);
 	if (!band)
-		return NULL;
+		goto error;
 
-	band->schedule = schedule;
+	band->schedule = node->schedule;
 	band->parent = parent;
 
-	for (i = 0; i < schedule->n; ++i)
-		if (active[i])
-			break;
+	if (isl_schedule_node_get_type(node) == isl_schedule_node_leaf) {
+		band->n = 0;
+		band->pma = isl_union_pw_multi_aff_from_domain(domain);
+		isl_schedule_node_free(node);
+		return band;
+	}
 
-	if (i >= schedule->n)
-		isl_die(ctx, isl_error_internal,
-			"band without active statements", goto error);
-
-	start = band_nr ? schedule->node[i].band_end[band_nr - 1] : 0;
-	end = band_nr < schedule->node[i].n_band ?
-		schedule->node[i].band_end[band_nr] : start;
-	band->n = end - start;
-
+	band->n = isl_schedule_node_band_n_member(node);
+	if (band->n == 0)
+		isl_die(ctx, isl_error_unsupported,
+			"zero-dimensional band nodes not supported",
+			goto error);
 	band->coincident = isl_alloc_array(ctx, int, band->n);
 	if (band->n && !band->coincident)
 		goto error;
-
-	for (j = 0; j < band->n; ++j)
-		band->coincident[j] = schedule->node[i].coincident[start + j];
-
-	band->pma = isl_union_pw_multi_aff_empty(isl_space_copy(schedule->dim));
-	for (i = 0; i < schedule->n; ++i) {
-		isl_multi_aff *ma;
-		isl_pw_multi_aff *pma;
-		unsigned n_out;
-
-		if (!active[i])
-			continue;
-
-		ma = isl_multi_aff_copy(schedule->node[i].sched);
-		n_out = isl_multi_aff_dim(ma, isl_dim_out);
-		ma = isl_multi_aff_drop_dims(ma, isl_dim_out, end, n_out - end);
-		ma = isl_multi_aff_drop_dims(ma, isl_dim_out, 0, start);
-		pma = isl_pw_multi_aff_from_multi_aff(ma);
-		band->pma = isl_union_pw_multi_aff_add_pw_multi_aff(band->pma,
-								    pma);
-	}
+	for (i = 0; i < band->n; ++i)
+		band->coincident[i] =
+			isl_schedule_node_band_member_get_coincident(node, i);
+	mupa = isl_schedule_node_band_get_partial_schedule(node);
+	band->pma = isl_union_pw_multi_aff_from_multi_union_pw_aff(mupa);
 	if (!band->pma)
 		goto error;
 
-	for (i = 0; i < schedule->n; ++i)
-		if (active[i] && schedule->node[i].n_band > band_nr + 1)
-			break;
-
-	if (i < schedule->n) {
-		band->children = construct_band_list(schedule, band,
-						band_nr + 1, active, n_active);
-		if (!band->children)
-			goto error;
+	node = isl_schedule_node_child(node, 0);
+	if (isl_schedule_node_get_type(node) == isl_schedule_node_leaf) {
+		isl_schedule_node_free(node);
+		isl_union_set_free(domain);
+		return band;
 	}
+
+	band->children = construct_band_list(node, domain, band);
+	if (!band->children)
+		return isl_band_free(band);
 
 	return band;
 error:
+	isl_union_set_free(domain);
+	isl_schedule_node_free(node);
 	isl_band_free(band);
 	return NULL;
 }
 
-/* Internal data structure used inside cmp_band and pw_multi_aff_extract_int.
- *
- * r is set to a negative value if anything goes wrong.
- *
- * c1 stores the result of extract_int.
- * c2 is a temporary value used inside cmp_band_in_ancestor.
- * t is a temporary value used inside extract_int.
- *
- * first and equal are used inside extract_int.
- * first is set if we are looking at the first isl_multi_aff inside
- * the isl_union_pw_multi_aff.
- * equal is set if all the isl_multi_affs have been equal so far.
+/* Construct a list of isl_band structures from the children of "node".
+ * "node" itself is a sequence or set node, so that each of the child nodes
+ * is a filter node and the list returned by node_construct_band_list
+ * consists of a single element.
+ * "domain" is the universe set of the domain elements that reach "node".
+ * "parent" is the parent isl_band of the isl_band structures constructed
+ * by this function.
  */
-struct isl_cmp_band_data {
-	int r;
-
-	int first;
-	int equal;
-
-	isl_int t;
-	isl_int c1;
-	isl_int c2;
-};
-
-/* Check if "ma" assigns a constant value.
- * Note that this function is only called on isl_multi_affs
- * with a single output dimension.
- *
- * If "ma" assigns a constant value then we compare it to data->c1
- * or assign it to data->c1 if this is the first isl_multi_aff we consider.
- * If "ma" does not assign a constant value or if it assigns a value
- * that is different from data->c1, then we set data->equal to zero
- * and terminate the check.
- */
-static int multi_aff_extract_int(__isl_take isl_set *set,
-	__isl_take isl_multi_aff *ma, void *user)
-{
-	isl_aff *aff;
-	struct isl_cmp_band_data *data = user;
-
-	aff = isl_multi_aff_get_aff(ma, 0);
-	data->r = isl_aff_is_cst(aff);
-	if (data->r >= 0 && data->r) {
-		isl_aff_get_constant(aff, &data->t);
-		if (data->first) {
-			isl_int_set(data->c1, data->t);
-			data->first = 0;
-		} else if (!isl_int_eq(data->c1, data->t))
-			data->equal = 0;
-	} else if (data->r >= 0 && !data->r)
-		data->equal = 0;
-
-	isl_aff_free(aff);
-	isl_set_free(set);
-	isl_multi_aff_free(ma);
-
-	if (data->r < 0)
-		return -1;
-	if (!data->equal)
-		return -1;
-	return 0;
-}
-
-/* This function is called for each isl_pw_multi_aff in
- * the isl_union_pw_multi_aff checked by extract_int.
- * Check all the isl_multi_affs inside "pma".
- */
-static int pw_multi_aff_extract_int(__isl_take isl_pw_multi_aff *pma,
-	void *user)
-{
-	int r;
-
-	r = isl_pw_multi_aff_foreach_piece(pma, &multi_aff_extract_int, user);
-	isl_pw_multi_aff_free(pma);
-
-	return r;
-}
-
-/* Check if "upma" assigns a single constant value to its domain.
- * If so, return 1 and store the result in data->c1.
- * If not, return 0.
- *
- * A negative return value from isl_union_pw_multi_aff_foreach_pw_multi_aff
- * means that either an error occurred or that we have broken off the check
- * because we already know the result is going to be negative.
- * In the latter case, data->equal is set to zero.
- */
-static int extract_int(__isl_keep isl_union_pw_multi_aff *upma,
-	struct isl_cmp_band_data *data)
-{
-	data->first = 1;
-	data->equal = 1;
-
-	if (isl_union_pw_multi_aff_foreach_pw_multi_aff(upma,
-					&pw_multi_aff_extract_int, data) < 0) {
-		if (!data->equal)
-			return 0;
-		return -1;
-	}
-
-	return !data->first && data->equal;
-}
-
-/* Compare "b1" and "b2" based on the parent schedule of their ancestor
- * "ancestor".
- *
- * If the parent of "ancestor" also has a single member, then we
- * first try to compare the two band based on the partial schedule
- * of this parent.
- *
- * Otherwise, or if the result is inconclusive, we look at the partial schedule
- * of "ancestor" itself.
- * In particular, we specialize the parent schedule based
- * on the domains of the child schedules, check if both assign
- * a single constant value and, if so, compare the two constant values.
- * If the specialized parent schedules do not assign a constant value,
- * then they cannot be used to order the two bands and so in this case
- * we return 0.
- */
-static int cmp_band_in_ancestor(__isl_keep isl_band *b1,
-	__isl_keep isl_band *b2, struct isl_cmp_band_data *data,
-	__isl_keep isl_band *ancestor)
-{
-	isl_union_pw_multi_aff *upma;
-	isl_union_set *domain;
-	int r;
-
-	if (data->r < 0)
-		return 0;
-
-	if (ancestor->parent && ancestor->parent->n == 1) {
-		r = cmp_band_in_ancestor(b1, b2, data, ancestor->parent);
-		if (data->r < 0)
-			return 0;
-		if (r)
-			return r;
-	}
-
-	upma = isl_union_pw_multi_aff_copy(b1->pma);
-	domain = isl_union_pw_multi_aff_domain(upma);
-	upma = isl_union_pw_multi_aff_copy(ancestor->pma);
-	upma = isl_union_pw_multi_aff_intersect_domain(upma, domain);
-	r = extract_int(upma, data);
-	isl_union_pw_multi_aff_free(upma);
-
-	if (r < 0)
-		data->r = -1;
-	if (r < 0 || !r)
-		return 0;
-
-	isl_int_set(data->c2, data->c1);
-
-	upma = isl_union_pw_multi_aff_copy(b2->pma);
-	domain = isl_union_pw_multi_aff_domain(upma);
-	upma = isl_union_pw_multi_aff_copy(ancestor->pma);
-	upma = isl_union_pw_multi_aff_intersect_domain(upma, domain);
-	r = extract_int(upma, data);
-	isl_union_pw_multi_aff_free(upma);
-
-	if (r < 0)
-		data->r = -1;
-	if (r < 0 || !r)
-		return 0;
-
-	return isl_int_cmp(data->c2, data->c1);
-}
-
-/* Compare "a" and "b" based on the parent schedule of their parent.
- */
-static int cmp_band(const void *a, const void *b, void *user)
-{
-	isl_band *b1 = *(isl_band * const *) a;
-	isl_band *b2 = *(isl_band * const *) b;
-	struct isl_cmp_band_data *data = user;
-
-	return cmp_band_in_ancestor(b1, b2, data, b1->parent);
-}
-
-/* Sort the elements in "list" based on the partial schedules of its parent
- * (and ancestors).  In particular if the parent assigns constant values
- * to the domains of the bands in "list", then the elements are sorted
- * according to that order.
- * This order should be a more "natural" order for the user, but otherwise
- * shouldn't have any effect.
- * If we would be constructing an isl_band forest directly in
- * isl_schedule_constraints_compute_schedule then there wouldn't be any need
- * for a reordering, since the children would be added to the list
- * in their natural order automatically.
- *
- * If there is only one element in the list, then there is no need to sort
- * anything.
- * If the partial schedule of the parent has more than one member
- * (or if there is no parent), then it's
- * defnitely not assigning constant values to the different children in
- * the list and so we wouldn't be able to use it to sort the list.
- */
-static __isl_give isl_band_list *sort_band_list(__isl_take isl_band_list *list,
+static __isl_give isl_band_list *construct_band_list_from_children(
+	__isl_take isl_schedule_node *node, __isl_take isl_union_set *domain,
 	__isl_keep isl_band *parent)
 {
-	struct isl_cmp_band_data data;
-
-	if (!list)
-		return NULL;
-	if (list->n <= 1)
-		return list;
-	if (!parent || parent->n != 1)
-		return list;
-
-	data.r = 0;
-	isl_int_init(data.c1);
-	isl_int_init(data.c2);
-	isl_int_init(data.t);
-	isl_sort(list->p, list->n, sizeof(list->p[0]), &cmp_band, &data);
-	if (data.r < 0)
-		list = isl_band_list_free(list);
-	isl_int_clear(data.c1);
-	isl_int_clear(data.c2);
-	isl_int_clear(data.t);
-
-	return list;
-}
-
-/* Construct a list of bands that start at the same position (with
- * sequence number band_nr) in the schedules of the nodes that
- * were active in the parent band.
- *
- * A separate isl_band structure is created for each band_id
- * and for each node that does not have a band with sequence
- * number band_nr.  In the latter case, a band without members
- * is created.
- * This ensures that if a band has any children, then each node
- * that was active in the band is active in exactly one of the children.
- */
-static __isl_give isl_band_list *construct_band_list(
-	__isl_keep isl_schedule *schedule, __isl_keep isl_band *parent,
-	int band_nr, int *parent_active, int n_active)
-{
-	int i, j;
-	isl_ctx *ctx = isl_schedule_get_ctx(schedule);
-	int *active;
-	int n_band;
+	int i, n;
+	isl_ctx *ctx;
 	isl_band_list *list;
 
-	n_band = 0;
-	for (i = 0; i < n_active; ++i) {
-		for (j = 0; j < schedule->n; ++j) {
-			if (!parent_active[j])
-				continue;
-			if (schedule->node[j].n_band <= band_nr)
-				continue;
-			if (schedule->node[j].band_id[band_nr] == i) {
-				n_band++;
-				break;
-			}
-		}
-	}
-	for (j = 0; j < schedule->n; ++j)
-		if (schedule->node[j].n_band <= band_nr)
-			n_band++;
+	n = isl_schedule_node_n_children(node);
 
-	if (n_band == 1) {
-		isl_band *band;
-		list = isl_band_list_alloc(ctx, n_band);
-		band = construct_band(schedule, parent, band_nr,
-					parent_active, n_active);
-		return isl_band_list_add(list, band);
+	ctx = isl_schedule_node_get_ctx(node);
+	list = isl_band_list_alloc(ctx, 0);
+	for (i = 0; i < n; ++i) {
+		isl_schedule_node *child;
+		isl_band_list *list_i;
+
+		child = isl_schedule_node_get_child(node, i);
+		list_i = construct_band_list(child, isl_union_set_copy(domain),
+						parent);
+		list = isl_band_list_concat(list, list_i);
 	}
 
-	active = isl_alloc_array(ctx, int, schedule->n);
-	if (schedule->n && !active)
-		return NULL;
-
-	list = isl_band_list_alloc(ctx, n_band);
-
-	for (i = 0; i < n_active; ++i) {
-		int n = 0;
-		isl_band *band;
-
-		for (j = 0; j < schedule->n; ++j) {
-			active[j] = parent_active[j] &&
-					schedule->node[j].n_band > band_nr &&
-					schedule->node[j].band_id[band_nr] == i;
-			if (active[j])
-				n++;
-		}
-		if (n == 0)
-			continue;
-
-		band = construct_band(schedule, parent, band_nr, active, n);
-
-		list = isl_band_list_add(list, band);
-	}
-	for (i = 0; i < schedule->n; ++i) {
-		isl_band *band;
-		if (!parent_active[i])
-			continue;
-		if (schedule->node[i].n_band > band_nr)
-			continue;
-		for (j = 0; j < schedule->n; ++j)
-			active[j] = j == i;
-		band = construct_band(schedule, parent, band_nr, active, 1);
-		list = isl_band_list_add(list, band);
-	}
-
-	free(active);
-
-	list = sort_band_list(list, parent);
+	isl_union_set_free(domain);
+	isl_schedule_node_free(node);
 
 	return list;
 }
 
-/* Construct a band forest representation of the schedule and
- * return the list of roots.
+/* Construct an isl_band structure from the given sequence node
+ * (or set node that is treated as a sequence node).
+ * A single-dimensional band is created with as schedule for each of
+ * filters of the children, the corresponding child position.
+ * "domain" is the universe set of the domain elements that reach "node".
+ * "parent" is the parent isl_band of the isl_band constructed
+ * by this function.
  */
-static __isl_give isl_band_list *construct_forest(
-	__isl_keep isl_schedule *schedule)
+static __isl_give isl_band_list *construct_band_list_sequence(
+	__isl_take isl_schedule_node *node, __isl_take isl_union_set *domain,
+	__isl_keep isl_band *parent)
 {
-	int i;
-	isl_ctx *ctx = isl_schedule_get_ctx(schedule);
-	isl_band_list *forest;
-	int *active;
+	int i, n;
+	isl_ctx *ctx;
+	isl_band *band = NULL;
+	isl_space *space;
+	isl_union_pw_multi_aff *upma;
 
-	active = isl_alloc_array(ctx, int, schedule->n);
-	if (schedule->n && !active)
-		return NULL;
+	if (!node || !domain)
+		goto error;
 
-	for (i = 0; i < schedule->n; ++i)
-		active[i] = 1;
+	ctx = isl_schedule_node_get_ctx(node);
+	band = isl_band_alloc(ctx);
+	if (!band)
+		goto error;
 
-	forest = construct_band_list(schedule, NULL, 0, active, schedule->n);
+	band->schedule = node->schedule;
+	band->parent = parent;
+	band->n = 1;
+	band->coincident = isl_calloc_array(ctx, int, band->n);
+	if (!band->coincident)
+		goto error;
 
-	free(active);
+	n = isl_schedule_node_n_children(node);
+	space = isl_union_set_get_space(domain);
+	upma = isl_union_pw_multi_aff_empty(isl_space_copy(space));
 
-	return forest;
+	space = isl_space_set_from_params(space);
+	space = isl_space_add_dims(space, isl_dim_set, 1);
+
+	for (i = 0; i < n; ++i) {
+		isl_schedule_node *child;
+		isl_union_set *filter;
+		isl_val *v;
+		isl_val_list *vl;
+		isl_multi_val *mv;
+		isl_union_pw_multi_aff *upma_i;
+
+		child = isl_schedule_node_get_child(node, i);
+		filter = isl_schedule_node_filter_get_filter(child);
+		isl_schedule_node_free(child);
+		filter = isl_union_set_intersect(filter,
+						isl_union_set_copy(domain));
+		v = isl_val_int_from_si(ctx, i);
+		vl = isl_val_list_from_val(v);
+		mv = isl_multi_val_from_val_list(isl_space_copy(space), vl);
+		upma_i = isl_union_pw_multi_aff_multi_val_on_domain(filter, mv);
+		upma = isl_union_pw_multi_aff_union_add(upma, upma_i);
+	}
+
+	isl_space_free(space);
+
+	band->pma = upma;
+	if (!band->pma)
+		goto error;
+
+	band->children = construct_band_list_from_children(node, domain, band);
+	if (!band->children)
+		band = isl_band_free(band);
+	return isl_band_list_from_band(band);
+error:
+	isl_union_set_free(domain);
+	isl_schedule_node_free(node);
+	isl_band_free(band);
+	return NULL;
+}
+
+/* Construct a list of isl_band structures from "node" depending
+ * on the type of "node".
+ * "domain" is the universe set of the domain elements that reach "node".
+ * "parent" is the parent isl_band of the isl_band structures constructed
+ * by this function.
+ *
+ * If schedule_separate_components is set then set nodes are treated
+ * as sequence nodes.  Otherwise, we directly extract an (implicitly
+ * parallel) list of isl_band structures.
+ *
+ * If "node" is a filter, then "domain" is updated by the filter.
+ */
+static __isl_give isl_band_list *construct_band_list(
+	__isl_take isl_schedule_node *node, __isl_take isl_union_set *domain,
+	__isl_keep isl_band *parent)
+{
+	enum isl_schedule_node_type type;
+	isl_ctx *ctx;
+	isl_band *band;
+	isl_band_list *list;
+	isl_union_set *filter;
+
+	if (!node || !domain)
+		goto error;
+
+	type = isl_schedule_node_get_type(node);
+	switch (type) {
+	case isl_schedule_node_error:
+		goto error;
+	case isl_schedule_node_domain:
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_invalid,
+			"internal domain nodes not allowed", goto error);
+	case isl_schedule_node_filter:
+		filter = isl_schedule_node_filter_get_filter(node);
+		domain = isl_union_set_intersect(domain, filter);
+		node = isl_schedule_node_child(node, 0);
+		return construct_band_list(node, domain, parent);
+	case isl_schedule_node_set:
+		ctx = isl_schedule_node_get_ctx(node);
+		if (isl_options_get_schedule_separate_components(ctx))
+			return construct_band_list_sequence(node, domain,
+							    parent);
+		else
+			return construct_band_list_from_children(node, domain,
+							    parent);
+	case isl_schedule_node_sequence:
+		return construct_band_list_sequence(node, domain, parent);
+	case isl_schedule_node_leaf:
+	case isl_schedule_node_band:
+		band = construct_band(node, domain, parent);
+		list = isl_band_list_from_band(band);
+		break;
+	}
+
+	return list;
+error:
+	isl_union_set_free(domain);
+	isl_schedule_node_free(node);
+	return NULL;
 }
 
 /* Return the roots of a band forest representation of the schedule.
+ * The band forest is constructed from the schedule tree,
+ * but once such a band forest is
+ * constructed, we forget about the original schedule tree since
+ * the user may modify the schedule through the band forest.
  */
 __isl_give isl_band_list *isl_schedule_get_band_forest(
 	__isl_keep isl_schedule *schedule)
 {
+	isl_schedule_node *node;
+	isl_union_set *domain;
+
 	if (!schedule)
 		return NULL;
-	if (!schedule->band_forest)
-		schedule->band_forest = construct_forest(schedule);
+	if (schedule->root) {
+		node = isl_schedule_get_root(schedule);
+		domain = isl_schedule_node_domain_get_domain(node);
+		domain = isl_union_set_universe(domain);
+		node = isl_schedule_node_child(node, 0);
+
+		schedule->band_forest = construct_band_list(node, domain, NULL);
+		schedule->root = isl_schedule_tree_free(schedule->root);
+	}
 	return isl_band_list_dup(schedule->band_forest);
 }
 
@@ -644,10 +738,22 @@ static __isl_give isl_printer *print_band_list(__isl_take isl_printer *p,
 	return p;
 }
 
+/* Print "schedule" to "p".
+ *
+ * If "schedule" was created from a schedule tree, then we print
+ * the schedule tree representation.  Otherwise, we print
+ * the band forest representation.
+ */
 __isl_give isl_printer *isl_printer_print_schedule(__isl_take isl_printer *p,
 	__isl_keep isl_schedule *schedule)
 {
 	isl_band_list *forest;
+
+	if (!schedule)
+		return isl_printer_free(p);
+
+	if (schedule->root)
+		return isl_printer_print_schedule_tree(p, schedule->root);
 
 	forest = isl_schedule_get_band_forest(schedule);
 
@@ -666,6 +772,7 @@ void isl_schedule_dump(__isl_keep isl_schedule *schedule)
 		return;
 
 	printer = isl_printer_to_file(isl_schedule_get_ctx(schedule), stderr);
+	printer = isl_printer_set_yaml_style(printer, ISL_YAML_STYLE_BLOCK);
 	printer = isl_printer_print_schedule(printer, schedule);
 
 	isl_printer_free(printer);

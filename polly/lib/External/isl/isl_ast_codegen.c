@@ -665,35 +665,42 @@ error:
  * If we have generated a degenerate loop, then add the guard
  * implied by "bounds" on the outer dimensions, i.e., the guard
  * that ensures that the single value actually exists.
+ * Since there may also be guards implied by a combination
+ * of these constraints, we first combine them before
+ * deriving the implied constraints.
  */
 static __isl_give isl_set *add_implied_guards(__isl_take isl_set *guard,
 	int degenerate, __isl_keep isl_basic_set *bounds,
 	__isl_keep isl_ast_build *build)
 {
 	int depth, has_stride;
-	isl_set *dom;
+	isl_space *space;
+	isl_set *dom, *set;
 
 	depth = isl_ast_build_get_depth(build);
 	has_stride = isl_ast_build_has_stride(build, depth);
 	if (!has_stride && !degenerate)
 		return guard;
 
+	space = isl_basic_set_get_space(bounds);
+	dom = isl_set_universe(space);
+
 	if (degenerate) {
 		bounds = isl_basic_set_copy(bounds);
 		bounds = isl_basic_set_drop_constraints_not_involving_dims(
 					bounds, isl_dim_set, depth, 1);
-		dom = isl_set_from_basic_set(bounds);
-		dom = isl_set_eliminate(dom, isl_dim_set, depth, 1);
-		dom = isl_ast_build_compute_gist(build, dom);
-		guard = isl_set_intersect(guard, dom);
+		set = isl_set_from_basic_set(bounds);
+		dom = isl_set_intersect(dom, set);
 	}
 
 	if (has_stride) {
-		dom = isl_ast_build_get_stride_constraint(build);
-		dom = isl_set_eliminate(dom, isl_dim_set, depth, 1);
-		dom = isl_ast_build_compute_gist(build, dom);
-		guard = isl_set_intersect(guard, dom);
+		set = isl_ast_build_get_stride_constraint(build);
+		dom = isl_set_intersect(dom, set);
 	}
+
+	dom = isl_set_eliminate(dom, isl_dim_set, depth, 1);
+	dom = isl_ast_build_compute_gist(build, dom);
+	guard = isl_set_intersect(guard, dom);
 
 	return guard;
 }
@@ -2228,21 +2235,142 @@ static __isl_give isl_set *separate_schedule_domains(
 
 /* Temporary data used during the search for a lower bound for unrolling.
  *
+ * "build" is the build in which the unrolling will be performed
  * "domain" is the original set for which to find a lower bound
  * "depth" is the dimension for which to find a lower boudn
+ * "expansion" is the expansion that needs to be applied to "domain"
+ * in the unrolling that will be performed
  *
  * "lower" is the best lower bound found so far.  It is NULL if we have not
  * found any yet.
  * "n" is the corresponding size.  If lower is NULL, then the value of n
  * is undefined.
+ * "n_div" is the maximal number of integer divisions in the first
+ * unrolled iteration (after expansion).  It is set to -1 if it hasn't
+ * been computed yet.
  */
 struct isl_find_unroll_data {
+	isl_ast_build *build;
 	isl_set *domain;
 	int depth;
+	isl_basic_map *expansion;
 
 	isl_aff *lower;
 	int *n;
+	int n_div;
 };
+
+/* Return the constraint
+ *
+ *	i_"depth" = aff + offset
+ */
+static __isl_give isl_constraint *at_offset(int depth, __isl_keep isl_aff *aff,
+	int offset)
+{
+	aff = isl_aff_copy(aff);
+	aff = isl_aff_add_coefficient_si(aff, isl_dim_in, depth, -1);
+	aff = isl_aff_add_constant_si(aff, offset);
+	return isl_equality_from_aff(aff);
+}
+
+/* Update *user to the number of integer divsions in the first element
+ * of "ma", if it is larger than the current value.
+ */
+static int update_n_div(__isl_take isl_set *set, __isl_take isl_multi_aff *ma,
+	void *user)
+{
+	isl_aff *aff;
+	int *n = user;
+	int n_div;
+
+	aff = isl_multi_aff_get_aff(ma, 0);
+	n_div = isl_aff_dim(aff, isl_dim_div);
+	isl_aff_free(aff);
+	isl_multi_aff_free(ma);
+	isl_set_free(set);
+
+	if (n_div > *n)
+		*n = n_div;
+
+	return aff ? 0 : -1;
+}
+
+/* Get the number of integer divisions in the expression for the iterator
+ * value at the first slice in the unrolling based on lower bound "lower",
+ * taking into account the expansion that needs to be performed on this slice.
+ */
+static int get_expanded_n_div(struct isl_find_unroll_data *data,
+	__isl_keep isl_aff *lower)
+{
+	isl_constraint *c;
+	isl_set *set;
+	isl_map *it_map, *expansion;
+	isl_pw_multi_aff *pma;
+	int n;
+
+	c = at_offset(data->depth, lower, 0);
+	set = isl_set_copy(data->domain);
+	set = isl_set_add_constraint(set, c);
+	expansion = isl_map_from_basic_map(isl_basic_map_copy(data->expansion));
+	set = isl_set_apply(set, expansion);
+	it_map = isl_ast_build_map_to_iterator(data->build, set);
+	pma = isl_pw_multi_aff_from_map(it_map);
+	n = 0;
+	if (isl_pw_multi_aff_foreach_piece(pma, &update_n_div, &n) < 0)
+		n = -1;
+	isl_pw_multi_aff_free(pma);
+
+	return n;
+}
+
+/* Is the lower bound "lower" with corresponding iteration count "n"
+ * better than the one stored in "data"?
+ * If there is no upper bound on the iteration count ("n" is infinity) or
+ * if the count is too large, then we cannot use this lower bound.
+ * Otherwise, if there was no previous lower bound or
+ * if the iteration count of the new lower bound is smaller than
+ * the iteration count of the previous lower bound, then we consider
+ * the new lower bound to be better.
+ * If the iteration count is the same, then compare the number
+ * of integer divisions that would be needed to express
+ * the iterator value at the first slice in the unrolling
+ * according to the lower bound.  If we end up computing this
+ * number, then store the lowest value in data->n_div.
+ */
+static int is_better_lower_bound(struct isl_find_unroll_data *data,
+	__isl_keep isl_aff *lower, __isl_keep isl_val *n)
+{
+	int cmp;
+	int n_div;
+
+	if (!n)
+		return -1;
+	if (isl_val_is_infty(n))
+		return 0;
+	if (isl_val_cmp_si(n, INT_MAX) > 0)
+		return 0;
+	if (!data->lower)
+		return 1;
+	cmp = isl_val_cmp_si(n, *data->n);
+	if (cmp < 0)
+		return 1;
+	if (cmp > 0)
+		return 0;
+	if (data->n_div < 0)
+		data->n_div = get_expanded_n_div(data, data->lower);
+	if (data->n_div < 0)
+		return -1;
+	if (data->n_div == 0)
+		return 0;
+	n_div = get_expanded_n_div(data, lower);
+	if (n_div < 0)
+		return -1;
+	if (n_div >= data->n_div)
+		return 0;
+	data->n_div = n_div;
+
+	return 1;
+}
 
 /* Check if we can use "c" as a lower bound and if it is better than
  * any previously found lower bound.
@@ -2267,14 +2395,15 @@ struct isl_find_unroll_data {
  *
  * meaning that we can use ceil(f(j)/a)) as a lower bound for unrolling.
  * We just need to check if we have found any lower bound before and
- * if the new lower bound is better (smaller n) than the previously found
- * lower bounds.
+ * if the new lower bound is better (smaller n or fewer integer divisions)
+ * than the previously found lower bounds.
  */
 static int update_unrolling_lower_bound(struct isl_find_unroll_data *data,
 	__isl_keep isl_constraint *c)
 {
 	isl_aff *aff, *lower;
 	isl_val *max;
+	int better;
 
 	if (!isl_constraint_is_lower_bound(c, isl_dim_set, data->depth))
 		return 0;
@@ -2288,27 +2417,19 @@ static int update_unrolling_lower_bound(struct isl_find_unroll_data *data,
 	max = isl_set_max_val(data->domain, aff);
 	isl_aff_free(aff);
 
-	if (!max)
-		goto error;
-	if (isl_val_is_infty(max)) {
+	better = is_better_lower_bound(data, lower, max);
+	if (better < 0 || !better) {
 		isl_val_free(max);
 		isl_aff_free(lower);
-		return 0;
+		return better < 0 ? -1 : 0;
 	}
 
-	if (isl_val_cmp_si(max, INT_MAX) <= 0 &&
-	    (!data->lower || isl_val_cmp_si(max, *data->n) < 0)) {
-		isl_aff_free(data->lower);
-		data->lower = lower;
-		*data->n = isl_val_get_num_si(max);
-	} else
-		isl_aff_free(lower);
+	isl_aff_free(data->lower);
+	data->lower = lower;
+	*data->n = isl_val_get_num_si(max);
 	isl_val_free(max);
 
 	return 1;
-error:
-	isl_aff_free(lower);
-	return -1;
 }
 
 /* Check if we can use "c" as a lower bound and if it is better than
@@ -2334,6 +2455,9 @@ static int constraint_find_unroll(__isl_take isl_constraint *c, void *user)
  * where d is "depth" and l(i) depends only on earlier dimensions.
  * Furthermore, try and find a lower bound such that n is as small as possible.
  * In particular, "n" needs to be finite.
+ * "build" is the build in which the unrolling will be performed.
+ * "expansion" is the expansion that needs to be applied to "domain"
+ * in the unrolling that will be performed.
  *
  * Inner dimensions have been eliminated from "domain" by the caller.
  *
@@ -2347,10 +2471,12 @@ static int constraint_find_unroll(__isl_take isl_constraint *c, void *user)
  * If we cannot find a suitable lower bound, then we consider that
  * to be an error.
  */
-static __isl_give isl_aff *find_unroll_lower_bound(__isl_keep isl_set *domain,
-	int depth, int *n)
+static __isl_give isl_aff *find_unroll_lower_bound(
+	__isl_keep isl_ast_build *build, __isl_keep isl_set *domain,
+	int depth, __isl_keep isl_basic_map *expansion, int *n)
 {
-	struct isl_find_unroll_data data = { domain, depth, NULL, n };
+	struct isl_find_unroll_data data =
+			{ build, domain, depth, expansion, NULL, n, -1 };
 	isl_basic_set *hull;
 
 	hull = isl_set_simple_hull(isl_set_copy(domain));
@@ -2369,19 +2495,6 @@ static __isl_give isl_aff *find_unroll_lower_bound(__isl_keep isl_set *domain,
 error:
 	isl_basic_set_free(hull);
 	return isl_aff_free(data.lower);
-}
-
-/* Return the constraint
- *
- *	i_"depth" = aff + offset
- */
-static __isl_give isl_constraint *at_offset(int depth, __isl_keep isl_aff *aff,
-	int offset)
-{
-	aff = isl_aff_copy(aff);
-	aff = isl_aff_add_coefficient_si(aff, isl_dim_in, depth, -1);
-	aff = isl_aff_add_constant_si(aff, offset);
-	return isl_equality_from_aff(aff);
 }
 
 /* Data structure for storing the results and the intermediate objects
@@ -2482,11 +2595,12 @@ static __isl_give isl_set *do_unroll(struct isl_codegen_domains *domains,
 
 	isl_ast_build_free(build);
 
-	lower = find_unroll_lower_bound(domain, depth, &n);
+	bmap = isl_basic_map_from_multi_aff(expansion);
+
+	lower = find_unroll_lower_bound(domains->build, domain, depth, bmap,
+					&n);
 	if (!lower)
 		class_domain = isl_set_free(class_domain);
-
-	bmap = isl_basic_map_from_multi_aff(expansion);
 
 	unroll_domain = isl_set_empty(isl_set_get_space(domain));
 
@@ -3912,6 +4026,7 @@ __isl_give isl_ast_node *isl_ast_build_ast_from_schedule(
 	build = isl_ast_build_copy(build);
 	build = isl_ast_build_set_single_valued(build, 0);
 	schedule = isl_union_map_coalesce(schedule);
+	schedule = isl_union_map_remove_redundancies(schedule);
 	executed = isl_union_map_reverse(schedule);
 	list = generate_code(executed, isl_ast_build_copy(build), 0);
 	node = isl_ast_node_from_graft_list(list, build);

@@ -15,12 +15,11 @@
 #define isl_basic_set_list	isl_basic_map_list
 #define isl_set_list	isl_map_list
 #include <isl/list.h>
-ISL_DECLARE_LIST(basic_map)
-ISL_DECLARE_LIST(map)
 #include <isl/set.h>
 #include <isl/map.h>
 #include <isl_reordering.h>
 #include <isl/vec.h>
+#include <isl/hash.h>
 #include <isl_blk.h>
 
 /* A "basic map" is a relation between two sets of variables,
@@ -43,6 +42,7 @@ struct isl_basic_map {
 #define ISL_BASIC_MAP_NORMALIZED	(1 << 5)
 #define ISL_BASIC_MAP_NORMALIZED_DIVS	(1 << 6)
 #define ISL_BASIC_MAP_ALL_EQUALITIES	(1 << 7)
+#define ISL_BASIC_MAP_REDUCED_COEFFICIENTS	(1 << 8)
 #define ISL_BASIC_SET_FINAL		(1 << 0)
 #define ISL_BASIC_SET_EMPTY		(1 << 1)
 #define ISL_BASIC_SET_NO_IMPLICIT	(1 << 2)
@@ -51,6 +51,7 @@ struct isl_basic_map {
 #define ISL_BASIC_SET_NORMALIZED	(1 << 5)
 #define ISL_BASIC_SET_NORMALIZED_DIVS	(1 << 6)
 #define ISL_BASIC_SET_ALL_EQUALITIES	(1 << 7)
+#define ISL_BASIC_SET_REDUCED_COEFFICIENTS	(1 << 8)
 	unsigned flags;
 
 	struct isl_ctx *ctx;
@@ -198,6 +199,8 @@ struct isl_basic_map *isl_basic_map_cow(struct isl_basic_map *bmap);
 struct isl_set *isl_set_cow(struct isl_set *set);
 struct isl_map *isl_map_cow(struct isl_map *map);
 
+uint32_t isl_basic_map_get_hash(__isl_keep isl_basic_map *bmap);
+
 struct isl_basic_map *isl_basic_map_set_to_empty(struct isl_basic_map *bmap);
 struct isl_basic_set *isl_basic_set_set_to_empty(struct isl_basic_set *bset);
 struct isl_basic_set *isl_basic_set_order_divs(struct isl_basic_set *bset);
@@ -208,10 +211,10 @@ struct isl_basic_map *isl_basic_map_align_divs(
 		struct isl_basic_map *dst, struct isl_basic_map *src);
 struct isl_basic_set *isl_basic_set_align_divs(
 		struct isl_basic_set *dst, struct isl_basic_set *src);
-__isl_give isl_set *isl_set_align_divs_to_basic_set_list(
-	__isl_take isl_set *set, __isl_keep isl_basic_set_list *list);
-__isl_give isl_basic_set_list *isl_basic_set_list_align_divs_to_basic_set(
-	__isl_take isl_basic_set_list *list, __isl_keep isl_basic_set *bset);
+__isl_give isl_map *isl_map_align_divs_to_basic_map_list(
+	__isl_take isl_map *map, __isl_keep isl_basic_map_list *list);
+__isl_give isl_basic_map_list *isl_basic_map_list_align_divs_to_basic_map(
+	__isl_take isl_basic_map_list *list, __isl_keep isl_basic_map *bmap);
 __isl_give isl_basic_map *isl_basic_map_sort_divs(
 	__isl_take isl_basic_map *bmap);
 __isl_give isl_map *isl_map_sort_divs(__isl_take isl_map *map);
@@ -234,8 +237,8 @@ struct isl_basic_map *isl_basic_map_implicit_equalities(
 struct isl_basic_set *isl_basic_map_underlying_set(struct isl_basic_map *bmap);
 __isl_give isl_basic_set *isl_basic_set_underlying_set(
 		__isl_take isl_basic_set *bset);
-__isl_give isl_basic_set_list *isl_basic_set_list_underlying_set(
-	__isl_take isl_basic_set_list *list);
+__isl_give isl_basic_set_list *isl_basic_map_list_underlying_set(
+	__isl_take isl_basic_map_list *list);
 struct isl_set *isl_map_underlying_set(struct isl_map *map);
 struct isl_basic_map *isl_basic_map_overlying_set(struct isl_basic_set *bset,
 	struct isl_basic_map *like);
@@ -258,6 +261,8 @@ struct isl_map *isl_map_drop(struct isl_map *map,
 
 __isl_give isl_basic_map *isl_basic_map_remove_duplicate_constraints(
 	__isl_take isl_basic_map *bmap, int *progress, int detect_divs);
+__isl_give isl_basic_map *isl_basic_map_detect_inequality_pairs(
+	__isl_take isl_basic_map *bmap, int *progress);
 
 struct isl_map *isl_map_remove_empty_parts(struct isl_map *map);
 struct isl_set *isl_set_remove_empty_parts(struct isl_set *set);
@@ -381,6 +386,9 @@ int isl_map_is_set(__isl_keep isl_map *map);
 int isl_basic_set_plain_dim_is_fixed(__isl_keep isl_basic_set *bset,
 	unsigned dim, isl_int *val);
 
+__isl_give isl_basic_map *isl_basic_map_plain_affine_hull(
+	__isl_take isl_basic_map *bmap);
+
 int isl_basic_set_dim_residue_class(struct isl_basic_set *bset,
 	int pos, isl_int *modulo, isl_int *residue);
 int isl_set_dim_residue_class(struct isl_set *set,
@@ -396,8 +404,14 @@ int isl_map_plain_is_fixed(__isl_keep isl_map *map,
 int isl_basic_map_output_defining_equality(__isl_keep isl_basic_map *bmap,
 	int pos);
 
-__isl_give isl_basic_set_list *isl_set_get_basic_set_list(
-	__isl_keep isl_set *set);
+__isl_give isl_basic_map *isl_basic_map_reduce_coefficients(
+	__isl_take isl_basic_map *bmap);
+
+__isl_give isl_basic_map *isl_basic_map_shift_div(
+	__isl_take isl_basic_map *bmap, int div, isl_int shift);
+
+__isl_give isl_basic_map_list *isl_map_get_basic_map_list(
+	__isl_keep isl_map *map);
 
 __isl_give isl_map *isl_map_fixed_power(__isl_take isl_map *map, isl_int exp);
 

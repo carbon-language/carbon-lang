@@ -1,11 +1,6 @@
 #include <isl/space.h>
 
-#define xCAT(A,B) A ## B
-#define CAT(A,B) xCAT(A,B)
-#undef EL
-#define EL CAT(isl_,BASE)
-#define xMULTI(BASE) isl_multi_ ## BASE
-#define MULTI(BASE) xMULTI(BASE)
+#include <isl_multi_macro.h>
 
 struct MULTI(BASE) {
 	int ref;

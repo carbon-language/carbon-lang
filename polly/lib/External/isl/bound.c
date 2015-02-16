@@ -242,7 +242,7 @@ int main(int argc, char **argv)
 	isl_ctx *ctx;
 	isl_pw_qpolynomial_fold *copy;
 	isl_pw_qpolynomial_fold *pwf;
-	struct isl_stream *s;
+	isl_stream *s;
 	struct isl_obj obj;
 	struct bound_options *options;
 	int exact;

@@ -1,10 +1,13 @@
 /*
  * Copyright 2012-2014 Ecole Normale Superieure
+ * Copyright 2014      INRIA Rocquencourt
  *
  * Use of this software is governed by the MIT license
  *
  * Written by Sven Verdoolaege,
  * Ecole Normale Superieure, 45 rue d’Ulm, 75230 Paris, France
+ * and Inria Paris - Rocquencourt, Domaine de Voluceau - Rocquencourt,
+ * B.P. 105 - 78153 Le Chesnay, France
  */
 
 #include <isl/ilp.h>
@@ -29,11 +32,120 @@ static __isl_give isl_aff *oppose_div_arg(__isl_take isl_aff *aff,
 	return aff;
 }
 
-/* Create an isl_ast_expr evaluating the div at position "pos" in "ls".
- * The result is simplified in terms of build->domain.
+/* Internal data structure used inside isl_ast_expr_add_term.
+ * The domain of "build" is used to simplify the expressions.
+ * "build" needs to be set by the caller of isl_ast_expr_add_term.
+ * "cst" is the constant term of the expression in which the added term
+ * appears.  It may be modified by isl_ast_expr_add_term.
  *
- * *change_sign is set by this function if the sign of
- * the expression has changed.
+ * "v" is the coefficient of the term that is being constructed and
+ * is set internally by isl_ast_expr_add_term.
+ */
+struct isl_ast_add_term_data {
+	isl_ast_build *build;
+	isl_val *cst;
+	isl_val *v;
+};
+
+/* Given the numerator "aff" of the argument of an integer division
+ * with denominator "d", check if it can be made non-negative over
+ * data->build->domain by stealing part of the constant term of
+ * the expression in which the integer division appears.
+ *
+ * In particular, the outer expression is of the form
+ *
+ *	v * floor(aff/d) + cst
+ *
+ * We already know that "aff" itself may attain negative values.
+ * Here we check if aff + d*floor(cst/v) is non-negative, such
+ * that we could rewrite the expression to
+ *
+ *	v * floor((aff + d*floor(cst/v))/d) + cst - v*floor(cst/v)
+ *
+ * Note that aff + d*floor(cst/v) can only possibly be non-negative
+ * if data->cst and data->v have the same sign.
+ * Similarly, if floor(cst/v) is zero, then there is no point in
+ * checking again.
+ */
+static int is_non_neg_after_stealing(__isl_keep isl_aff *aff,
+	__isl_keep isl_val *d, struct isl_ast_add_term_data *data)
+{
+	isl_aff *shifted;
+	isl_val *shift;
+	int is_zero;
+	int non_neg;
+
+	if (isl_val_sgn(data->cst) != isl_val_sgn(data->v))
+		return 0;
+
+	shift = isl_val_div(isl_val_copy(data->cst), isl_val_copy(data->v));
+	shift = isl_val_floor(shift);
+	is_zero = isl_val_is_zero(shift);
+	if (is_zero < 0 || is_zero) {
+		isl_val_free(shift);
+		return is_zero < 0 ? -1 : 0;
+	}
+	shift = isl_val_mul(shift, isl_val_copy(d));
+	shifted = isl_aff_copy(aff);
+	shifted = isl_aff_add_constant_val(shifted, shift);
+	non_neg = isl_ast_build_aff_is_nonneg(data->build, shifted);
+	isl_aff_free(shifted);
+
+	return non_neg;
+}
+
+/* Given the numerator "aff' of the argument of an integer division
+ * with denominator "d", steal part of the constant term of
+ * the expression in which the integer division appears to make it
+ * non-negative over data->build->domain.
+ *
+ * In particular, the outer expression is of the form
+ *
+ *	v * floor(aff/d) + cst
+ *
+ * We know that "aff" itself may attain negative values,
+ * but that aff + d*floor(cst/v) is non-negative.
+ * Find the minimal positive value that we need to add to "aff"
+ * to make it positive and adjust data->cst accordingly.
+ * That is, compute the minimal value "m" of "aff" over
+ * data->build->domain and take
+ *
+ *	s = ceil(m/d)
+ *
+ * such that
+ *
+ *	aff + d * s >= 0
+ *
+ * and rewrite the expression to
+ *
+ *	v * floor((aff + s*d)/d) + (cst - v*s)
+ */
+static __isl_give isl_aff *steal_from_cst(__isl_take isl_aff *aff,
+	__isl_keep isl_val *d, struct isl_ast_add_term_data *data)
+{
+	isl_set *domain;
+	isl_val *shift, *t;
+
+	domain = isl_ast_build_get_domain(data->build);
+	shift = isl_set_min_val(domain, aff);
+	isl_set_free(domain);
+
+	shift = isl_val_neg(shift);
+	shift = isl_val_div(shift, isl_val_copy(d));
+	shift = isl_val_ceil(shift);
+
+	t = isl_val_copy(shift);
+	t = isl_val_mul(t, isl_val_copy(data->v));
+	data->cst = isl_val_sub(data->cst, t);
+
+	shift = isl_val_mul(shift, isl_val_copy(d));
+	return isl_aff_add_constant_val(aff, shift);
+}
+
+/* Create an isl_ast_expr evaluating the div at position "pos" in "ls".
+ * The result is simplified in terms of data->build->domain.
+ * This function may change (the sign of) data->v.
+ *
  * "ls" is known to be non-NULL.
  *
  * Let the div be of the form floor(e/d).
@@ -52,11 +164,20 @@ static __isl_give isl_aff *oppose_div_arg(__isl_take isl_aff *aff,
  *
  *	floor(e/d) = -ceil(-e/d) = -floor((-e + d - 1)/d)
  *
- * and still use pdiv_q.
+ * and still use pdiv_q, while changing the sign of data->v.
+ *
+ * Otherwise, we check if
+ *
+ *	e + d*floor(cst/v)
+ *
+ * is non-negative and if so, replace floor(e/d) by
+ *
+ *	floor((e + s*d)/d) - s
+ *
+ * with s the minimal shift that makes the argument non-negative.
  */
-static __isl_give isl_ast_expr *var_div(int *change_sign,
-	__isl_keep isl_local_space *ls,
-	int pos, __isl_keep isl_ast_build *build)
+static __isl_give isl_ast_expr *var_div(struct isl_ast_add_term_data *data,
+	__isl_keep isl_local_space *ls, int pos)
 {
 	isl_ctx *ctx = isl_local_space_get_ctx(ls);
 	isl_aff *aff;
@@ -71,17 +192,22 @@ static __isl_give isl_ast_expr *var_div(int *change_sign,
 
 	type = isl_ast_op_fdiv_q;
 	if (isl_options_get_ast_build_prefer_pdiv(ctx)) {
-		int non_neg = isl_ast_build_aff_is_nonneg(build, aff);
+		int non_neg = isl_ast_build_aff_is_nonneg(data->build, aff);
 		if (non_neg >= 0 && !non_neg) {
 			isl_aff *opp = oppose_div_arg(isl_aff_copy(aff),
 							isl_val_copy(d));
-			non_neg = isl_ast_build_aff_is_nonneg(build, opp);
+			non_neg = isl_ast_build_aff_is_nonneg(data->build, opp);
 			if (non_neg >= 0 && non_neg) {
-				*change_sign = 1;
+				data->v = isl_val_neg(data->v);
 				isl_aff_free(aff);
 				aff = opp;
 			} else
 				isl_aff_free(opp);
+		}
+		if (non_neg >= 0 && !non_neg) {
+			non_neg = is_non_neg_after_stealing(aff, d, data);
+			if (non_neg >= 0 && non_neg)
+				aff = steal_from_cst(aff, d, data);
 		}
 		if (non_neg < 0)
 			aff = isl_aff_free(aff);
@@ -90,33 +216,30 @@ static __isl_give isl_ast_expr *var_div(int *change_sign,
 	}
 
 	isl_val_free(d);
-	num = isl_ast_expr_from_aff(aff, build);
+	num = isl_ast_expr_from_aff(aff, data->build);
 	return isl_ast_expr_alloc_binary(type, num, den);
 }
 
 /* Create an isl_ast_expr evaluating the specified dimension of "ls".
- * The result is simplified in terms of build->domain.
- *
- * *change_sign is set by this function if the sign of
- * the expression has changed.
+ * The result is simplified in terms of data->build->domain.
+ * This function may change (the sign of) data->v.
  *
  * The isl_ast_expr is constructed based on the type of the dimension.
  * - divs are constructed by var_div
- * - set variables are constructed from the iterator isl_ids in "build"
+ * - set variables are constructed from the iterator isl_ids in data->build
  * - parameters are constructed from the isl_ids in "ls"
  */
-static __isl_give isl_ast_expr *var(int *change_sign,
-	__isl_keep isl_local_space *ls,
-	enum isl_dim_type type, int pos, __isl_keep isl_ast_build *build)
+static __isl_give isl_ast_expr *var(struct isl_ast_add_term_data *data,
+	__isl_keep isl_local_space *ls, enum isl_dim_type type, int pos)
 {
 	isl_ctx *ctx = isl_local_space_get_ctx(ls);
 	isl_id *id;
 
 	if (type == isl_dim_div)
-		return var_div(change_sign, ls, pos, build);
+		return var_div(data, ls, pos);
 
 	if (type == isl_dim_set) {
-		id = isl_ast_build_get_iterator_id(build, pos);
+		id = isl_ast_build_get_iterator_id(data->build, pos);
 		return isl_ast_expr_from_id(id);
 	}
 
@@ -270,6 +393,9 @@ error:
 
 /* Add an expression for "*v" times the specified dimension of "ls"
  * to expr.
+ * If the dimension is an integer division, then this function
+ * may modify data->cst in order to make the numerator non-negative.
+ * The result is simplified in terms of data->build->domain.
  *
  * Let e be the expression for the specified dimension,
  * multiplied by the absolute value of "*v".
@@ -291,18 +417,16 @@ error:
 static __isl_give isl_ast_expr *isl_ast_expr_add_term(
 	__isl_take isl_ast_expr *expr,
 	__isl_keep isl_local_space *ls, enum isl_dim_type type, int pos,
-	__isl_take isl_val *v, __isl_keep isl_ast_build *build)
+	__isl_take isl_val *v, struct isl_ast_add_term_data *data)
 {
 	isl_ast_expr *term;
-	int change_sign;
 
 	if (!expr)
 		return NULL;
 
-	change_sign = 0;
-	term = var(&change_sign, ls, type, pos, build);
-	if (change_sign)
-		v = isl_val_neg(v);
+	data->v = v;
+	term = var(data, ls, type, pos);
+	v = data->v;
 
 	if (isl_val_is_neg(v) && !ast_expr_is_zero(expr)) {
 		v = isl_val_neg(v);
@@ -683,12 +807,12 @@ static int try_extract_mod(struct isl_extract_mod_data *data)
 {
 	isl_basic_set *hull;
 	isl_val *v1, *v2;
-	int r;
+	int r, n;
 
 	if (!data->build)
 		goto error;
 
-	int n = isl_aff_dim(data->div, isl_dim_div);
+	n = isl_aff_dim(data->div, isl_dim_div);
 
 	if (isl_aff_involves_dims(data->div, isl_dim_div, 0, n))
 		return extract_nonneg_mod(data);
@@ -948,6 +1072,7 @@ __isl_give isl_ast_expr *isl_ast_expr_from_aff(__isl_take isl_aff *aff,
 	enum isl_dim_type t[] = { isl_dim_param, isl_dim_in, isl_dim_div };
 	enum isl_dim_type l[] = { isl_dim_param, isl_dim_set, isl_dim_div };
 	isl_local_space *ls;
+	struct isl_ast_add_term_data data;
 
 	if (!aff)
 		return NULL;
@@ -962,6 +1087,8 @@ __isl_give isl_ast_expr *isl_ast_expr_from_aff(__isl_take isl_aff *aff,
 
 	ls = isl_aff_get_domain_local_space(aff);
 
+	data.build = build;
+	data.cst = isl_aff_get_constant_val(aff);
 	for (i = 0; i < 3; ++i) {
 		n = isl_aff_dim(aff, t[i]);
 		for (j = 0; j < n; ++j) {
@@ -973,12 +1100,11 @@ __isl_give isl_ast_expr *isl_ast_expr_from_aff(__isl_take isl_aff *aff,
 				continue;
 			}
 			expr = isl_ast_expr_add_term(expr,
-							ls, l[i], j, v, build);
+							ls, l[i], j, v, &data);
 		}
 	}
 
-	v = isl_aff_get_constant_val(aff);
-	expr = isl_ast_expr_add_int(expr, v);
+	expr = isl_ast_expr_add_int(expr, data.cst);
 
 	isl_local_space_free(ls);
 	isl_aff_free(aff);
@@ -987,10 +1113,10 @@ __isl_give isl_ast_expr *isl_ast_expr_from_aff(__isl_take isl_aff *aff,
 
 /* Add terms to "expr" for each variable in "aff" with a coefficient
  * with sign equal to "sign".
- * The result is simplified in terms of build->domain.
+ * The result is simplified in terms of data->build->domain.
  */
 static __isl_give isl_ast_expr *add_signed_terms(__isl_take isl_ast_expr *expr,
-	__isl_keep isl_aff *aff, int sign, __isl_keep isl_ast_build *build)
+	__isl_keep isl_aff *aff, int sign, struct isl_ast_add_term_data *data)
 {
 	int i, j;
 	isl_val *v;
@@ -1010,7 +1136,7 @@ static __isl_give isl_ast_expr *add_signed_terms(__isl_take isl_ast_expr *expr,
 			}
 			v = isl_val_abs(v);
 			expr = isl_ast_expr_add_term(expr,
-						ls, l[i], j, v, build);
+						ls, l[i], j, v, data);
 		}
 	}
 
@@ -1204,9 +1330,9 @@ static __isl_give isl_ast_expr *isl_ast_expr_from_constraint(
 	isl_ast_expr *expr_neg;
 	isl_ast_expr *expr;
 	isl_aff *aff;
-	isl_val *v;
 	int eq;
 	enum isl_ast_op_type type;
+	struct isl_ast_add_term_data data;
 
 	if (!constraint)
 		return NULL;
@@ -1232,15 +1358,18 @@ static __isl_give isl_ast_expr *isl_ast_expr_from_constraint(
 
 	aff = extract_modulos(aff, &expr_pos, &expr_neg, build);
 
-	expr_pos = add_signed_terms(expr_pos, aff, 1, build);
-	expr_neg = add_signed_terms(expr_neg, aff, -1, build);
+	data.build = build;
+	data.cst = isl_aff_get_constant_val(aff);
+	expr_pos = add_signed_terms(expr_pos, aff, 1, &data);
+	data.cst = isl_val_neg(data.cst);
+	expr_neg = add_signed_terms(expr_neg, aff, -1, &data);
+	data.cst = isl_val_neg(data.cst);
 
-	v = isl_aff_get_constant_val(aff);
-	if (constant_is_considered_positive(v, expr_pos, expr_neg)) {
-		expr_pos = isl_ast_expr_add_int(expr_pos, v);
+	if (constant_is_considered_positive(data.cst, expr_pos, expr_neg)) {
+		expr_pos = isl_ast_expr_add_int(expr_pos, data.cst);
 	} else {
-		v = isl_val_neg(v);
-		expr_neg = isl_ast_expr_add_int(expr_neg, v);
+		data.cst = isl_val_neg(data.cst);
+		expr_neg = isl_ast_expr_add_int(expr_neg, data.cst);
 	}
 
 	if (isl_ast_expr_get_type(expr_pos) == isl_ast_expr_int &&
@@ -1406,7 +1535,7 @@ struct isl_from_pw_aff_data {
  * If this is the last pair, then data->next is set to evaluate aff
  * and the domain is ignored.
  * Otherwise, data->next is set to a select operation that selects
- * an isl_ast_expr correponding to "aff" on "set" and to an expression
+ * an isl_ast_expr corresponding to "aff" on "set" and to an expression
  * that will be filled in by later calls otherwise.
  *
  * In both cases, the constraints of "set" are added to the generated

@@ -1147,6 +1147,19 @@ __isl_give isl_set *isl_set_detect_equalities(__isl_take isl_set *set)
 	return (isl_set *)isl_map_detect_equalities((isl_map *)set);
 }
 
+/* Return the superset of "bmap" described by the equalities
+ * satisfied by "bmap" that are already known.
+ */
+__isl_give isl_basic_map *isl_basic_map_plain_affine_hull(
+	__isl_take isl_basic_map *bmap)
+{
+	bmap = isl_basic_map_cow(bmap);
+	if (bmap)
+		isl_basic_map_free_inequality(bmap, bmap->n_ineq);
+	bmap = isl_basic_map_finalize(bmap);
+	return bmap;
+}
+
 /* After computing the rational affine hull (by detecting the implicit
  * equalities), we compute the additional equalities satisfied by
  * the integer points (if any) and add the original equalities back in.
@@ -1154,10 +1167,7 @@ __isl_give isl_set *isl_set_detect_equalities(__isl_take isl_set *set)
 struct isl_basic_map *isl_basic_map_affine_hull(struct isl_basic_map *bmap)
 {
 	bmap = isl_basic_map_detect_equalities(bmap);
-	bmap = isl_basic_map_cow(bmap);
-	if (bmap)
-		isl_basic_map_free_inequality(bmap, bmap->n_ineq);
-	bmap = isl_basic_map_finalize(bmap);
+	bmap = isl_basic_map_plain_affine_hull(bmap);
 	return bmap;
 }
 

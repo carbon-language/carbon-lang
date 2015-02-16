@@ -107,6 +107,7 @@ libisl_la_SOURCES = \
 	isl_lp.c \
 	isl_lp_private.h \
 	isl_map.c \
+	isl_map_list.c \
 	isl_map_simplify.c \
 	isl_map_subtract.c \
 	isl_map_private.h \
@@ -137,6 +138,13 @@ libisl_la_SOURCES = \
 	isl_scan.c \
 	isl_scan.h \
 	isl_schedule.c \
+	isl_schedule_band.c \
+	isl_schedule_band.h \
+	isl_schedule_node.c \
+	isl_schedule_node_private.h \
+	isl_schedule_read.c \
+	isl_schedule_tree.c \
+	isl_schedule_tree.h \
 	isl_schedule_private.h \
 	isl_scheduler.c \
 	isl_set_list.c \
@@ -162,7 +170,8 @@ libisl_la_SOURCES = \
 	isl_vec.c \
 	isl_version.c \
 	isl_vertices_private.h \
-	isl_vertices.c
+	isl_vertices.c \
+	isl_yaml.h
 libisl_la_LIBADD = @MP_LIBS@
 libisl_la_LDFLAGS = -version-info @versioninfo@ \
 	@MP_LDFLAGS@
@@ -246,6 +255,8 @@ pkginclude_HEADERS = \
 	include/isl/polynomial_type.h \
 	include/isl/printer.h \
 	include/isl/schedule.h \
+	include/isl/schedule_node.h \
+	include/isl/schedule_type.h \
 	include/isl/set.h \
 	include/isl/set_type.h \
 	include/isl/space.h \
@@ -282,8 +293,15 @@ EXTRA_DIST = \
 	isl_list_templ.c \
 	isl_list_templ.h \
 	isl_map_lexopt_templ.c \
+	isl_multi_macro.h \
 	isl_multi_templ.c \
 	isl_multi_templ.h \
+	isl_multi_apply_templ.c \
+	isl_multi_apply_set.c \
+	isl_multi_apply_union_set.c \
+	isl_multi_floor.c \
+	isl_multi_gist.c \
+	isl_multi_intersect.c \
 	print_templ.c \
 	isl_power_templ.c \
 	isl_pw_templ.c \

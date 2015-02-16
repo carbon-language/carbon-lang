@@ -145,7 +145,7 @@ static int vars_add_anon(struct vars *v)
  * In particular, evaluate expressions of the form x^y,
  * with x and y values.
  */
-static struct isl_token *next_token(struct isl_stream *s)
+static struct isl_token *next_token(__isl_keep isl_stream *s)
 {
 	struct isl_token *tok, *tok2;
 
@@ -182,7 +182,7 @@ error:
  *
  * where n, d and v are integer constants.
  */
-__isl_give isl_val *isl_stream_read_val(struct isl_stream *s)
+__isl_give isl_val *isl_stream_read_val(__isl_keep isl_stream *s)
 {
 	struct isl_token *tok = NULL;
 	struct isl_token *tok2 = NULL;
@@ -242,7 +242,7 @@ struct isl_val *isl_val_read_from_str(struct isl_ctx *ctx,
 	const char *str)
 {
 	isl_val *val;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	val = isl_stream_read_val(s);
@@ -250,7 +250,7 @@ struct isl_val *isl_val_read_from_str(struct isl_ctx *ctx,
 	return val;
 }
 
-static int accept_cst_factor(struct isl_stream *s, isl_int *f)
+static int accept_cst_factor(__isl_keep isl_stream *s, isl_int *f)
 {
 	struct isl_token *tok;
 
@@ -280,7 +280,7 @@ error:
  * We introduce an integer division q = [aff/d] and the result
  * is set to aff - d q.
  */
-static __isl_give isl_pw_aff *affine_mod(struct isl_stream *s,
+static __isl_give isl_pw_aff *affine_mod(__isl_keep isl_stream *s,
 	struct vars *v, __isl_take isl_pw_aff *aff)
 {
 	struct isl_token *tok;
@@ -307,12 +307,12 @@ error:
 	return NULL;
 }
 
-static __isl_give isl_pw_aff *accept_affine(struct isl_stream *s,
+static __isl_give isl_pw_aff *accept_affine(__isl_keep isl_stream *s,
 	__isl_take isl_space *space, struct vars *v);
-static __isl_give isl_pw_aff_list *accept_affine_list(struct isl_stream *s,
+static __isl_give isl_pw_aff_list *accept_affine_list(__isl_keep isl_stream *s,
 	__isl_take isl_space *dim, struct vars *v);
 
-static __isl_give isl_pw_aff *accept_minmax(struct isl_stream *s,
+static __isl_give isl_pw_aff *accept_minmax(__isl_keep isl_stream *s,
 	__isl_take isl_space *dim, struct vars *v)
 {
 	struct isl_token *tok;
@@ -372,7 +372,7 @@ static int is_start_of_div(struct isl_token *tok)
  *	floord(<affine expression>,<denominator>)
  *	ceild(<affine expression>,<denominator>)
  */
-static __isl_give isl_pw_aff *accept_div(struct isl_stream *s,
+static __isl_give isl_pw_aff *accept_div(__isl_keep isl_stream *s,
 	__isl_take isl_space *dim, struct vars *v)
 {
 	struct isl_token *tok;
@@ -436,7 +436,7 @@ error:
 	return NULL;
 }
 
-static __isl_give isl_pw_aff *accept_affine_factor(struct isl_stream *s,
+static __isl_give isl_pw_aff *accept_affine_factor(__isl_keep isl_stream *s,
 	__isl_take isl_space *dim, struct vars *v)
 {
 	struct isl_token *tok = NULL;
@@ -564,7 +564,7 @@ static __isl_give isl_pw_aff *nan_on_domain(__isl_keep isl_space *space)
 	return isl_pw_aff_nan_on_domain(ls);
 }
 
-static __isl_give isl_pw_aff *accept_affine(struct isl_stream *s,
+static __isl_give isl_pw_aff *accept_affine(__isl_keep isl_stream *s,
 	__isl_take isl_space *space, struct vars *v)
 {
 	struct isl_token *tok = NULL;
@@ -675,14 +675,14 @@ static int is_comparator(struct isl_token *tok)
 	}
 }
 
-static __isl_give isl_map *read_formula(struct isl_stream *s,
+static __isl_give isl_map *read_formula(__isl_keep isl_stream *s,
 	struct vars *v, __isl_take isl_map *map, int rational);
-static __isl_give isl_pw_aff *accept_extended_affine(struct isl_stream *s,
+static __isl_give isl_pw_aff *accept_extended_affine(__isl_keep isl_stream *s,
 	__isl_take isl_space *dim, struct vars *v, int rational);
 
 /* Accept a ternary operator, given the first argument.
  */
-static __isl_give isl_pw_aff *accept_ternary(struct isl_stream *s,
+static __isl_give isl_pw_aff *accept_ternary(__isl_keep isl_stream *s,
 	__isl_take isl_map *cond, struct vars *v, int rational)
 {
 	isl_space *dim;
@@ -718,7 +718,7 @@ error:
 
 /* Set *line and *col to those of the next token, if any.
  */
-static void set_current_line_col(struct isl_stream *s, int *line, int *col)
+static void set_current_line_col(__isl_keep isl_stream *s, int *line, int *col)
 {
 	struct isl_token *tok;
 
@@ -734,7 +734,7 @@ static void set_current_line_col(struct isl_stream *s, int *line, int *col)
 /* Push a token encapsulating "pa" onto "s", with the given
  * line and column.
  */
-static int push_aff(struct isl_stream *s, int line, int col,
+static int push_aff(__isl_keep isl_stream *s, int line, int col,
 	__isl_take isl_pw_aff *pa)
 {
 	struct isl_token *tok;
@@ -758,7 +758,7 @@ error:
  * Otherwise, we assume the affine expression is part of the first
  * argument of a ternary operator and try to parse that.
  */
-static __isl_give isl_pw_aff *accept_extended_affine(struct isl_stream *s,
+static __isl_give isl_pw_aff *accept_extended_affine(__isl_keep isl_stream *s,
 	__isl_take isl_space *dim, struct vars *v, int rational)
 {
 	isl_space *space;
@@ -798,7 +798,7 @@ static __isl_give isl_pw_aff *accept_extended_affine(struct isl_stream *s,
 	return accept_ternary(s, cond, v, rational);
 }
 
-static __isl_give isl_map *read_var_def(struct isl_stream *s,
+static __isl_give isl_map *read_var_def(__isl_keep isl_stream *s,
 	__isl_take isl_map *map, enum isl_dim_type type, struct vars *v,
 	int rational)
 {
@@ -827,7 +827,7 @@ static __isl_give isl_map *read_var_def(struct isl_stream *s,
 	return map;
 }
 
-static __isl_give isl_pw_aff_list *accept_affine_list(struct isl_stream *s,
+static __isl_give isl_pw_aff_list *accept_affine_list(__isl_keep isl_stream *s,
 	__isl_take isl_space *dim, struct vars *v)
 {
 	isl_pw_aff *pwaff;
@@ -866,7 +866,7 @@ error:
 	return NULL;
 }
 
-static __isl_give isl_map *read_defined_var_list(struct isl_stream *s,
+static __isl_give isl_map *read_defined_var_list(__isl_keep isl_stream *s,
 	struct vars *v, __isl_take isl_map *map, int rational)
 {
 	struct isl_token *tok;
@@ -911,7 +911,7 @@ error:
 	return NULL;
 }
 
-static int next_is_tuple(struct isl_stream *s)
+static int next_is_tuple(__isl_keep isl_stream *s)
 {
 	struct isl_token *tok;
 	int is_tuple;
@@ -933,21 +933,6 @@ static int next_is_tuple(struct isl_stream *s)
 	isl_stream_push_token(s, tok);
 
 	return is_tuple;
-}
-
-/* Allocate an initial tuple with zero dimensions and an anonymous,
- * unstructured space.
- * A tuple is represented as an isl_multi_pw_aff.
- * The range space is the space of the tuple.
- * The domain space is an anonymous space
- * with a dimension for each variable in the set of variables in "v".
- * If a given dimension is not defined in terms of earlier dimensions in
- * the input, then the corresponding isl_pw_aff is set equal to one time
- * the variable corresponding to the dimension being defined.
- */
-static __isl_give isl_multi_pw_aff *tuple_alloc(struct vars *v)
-{
-	return isl_multi_pw_aff_alloc(isl_space_alloc(v->ctx, 0, v->n, 0));
 }
 
 /* Is "pa" an expression in term of earlier dimensions?
@@ -997,49 +982,27 @@ static int tuple_has_expr(__isl_keep isl_multi_pw_aff *tuple)
 	return has_expr;
 }
 
-/* Add a dimension to the given tuple.
- * The dimension is initially undefined, so it is encoded
- * as one times itself.
- */
-static __isl_give isl_multi_pw_aff *tuple_add_dim(
-	__isl_take isl_multi_pw_aff *tuple, struct vars *v)
-{
-	isl_space *space;
-	isl_aff *aff;
-	isl_pw_aff *pa;
-
-	tuple = isl_multi_pw_aff_add_dims(tuple, isl_dim_in, 1);
-	space = isl_multi_pw_aff_get_domain_space(tuple);
-	aff = isl_aff_zero_on_domain(isl_local_space_from_space(space));
-	aff = isl_aff_add_coefficient_si(aff, isl_dim_in, v->n, 1);
-	pa = isl_pw_aff_from_aff(aff);
-	tuple = isl_multi_pw_aff_flat_range_product(tuple,
-					    isl_multi_pw_aff_from_pw_aff(pa));
-
-	return tuple;
-}
-
-/* Set the name of dimension "pos" in "tuple" to "name".
+/* Set the name of dimension "pos" in "space" to "name".
  * During printing, we add primes if the same name appears more than once
  * to distinguish the occurrences.  Here, we remove those primes from "name"
  * before setting the name of the dimension.
  */
-static __isl_give isl_multi_pw_aff *tuple_set_dim_name(
-	__isl_take isl_multi_pw_aff *tuple, int pos, char *name)
+static __isl_give isl_space *space_set_dim_name(__isl_take isl_space *space,
+	int pos, char *name)
 {
 	char *prime;
 
 	if (!name)
-		return tuple;
+		return space;
 
 	prime = strchr(name, '\'');
 	if (prime)
 		*prime = '\0';
-	tuple = isl_multi_pw_aff_set_dim_name(tuple, isl_dim_set, pos, name);
+	space = isl_space_set_dim_name(space, isl_dim_out, pos, name);
 	if (prime)
 		*prime = '\'';
 
-	return tuple;
+	return space;
 }
 
 /* Accept a piecewise affine expression.
@@ -1063,7 +1026,7 @@ static __isl_give isl_multi_pw_aff *tuple_set_dim_name(
  * expression, we push the parsed expression onto the stream and parse
  * again in case the parentheses enclose some subexpression of "aff1".
  */
-static __isl_give isl_pw_aff *accept_piecewise_affine(struct isl_stream *s,
+static __isl_give isl_pw_aff *accept_piecewise_affine(__isl_keep isl_stream *s,
 	__isl_take isl_space *space, struct vars *v, int rational)
 {
 	isl_pw_aff *res;
@@ -1116,17 +1079,15 @@ error:
 	return isl_pw_aff_free(res);
 }
 
-/* Read an affine expression from "s" and replace the definition
- * of dimension "pos" in "tuple" by this expression.
+/* Read an affine expression from "s" for use in read_tuple.
  *
  * accept_extended_affine requires a wrapped space as input.
- * The domain space of "tuple", on the other hand is an anonymous space,
- * so we have to adjust the space of the isl_pw_aff before adding it
- * to "tuple".
+ * read_tuple on the other hand expects each isl_pw_aff
+ * to have an anonymous space.  We therefore adjust the space
+ * of the isl_pw_aff before returning it.
  */
-static __isl_give isl_multi_pw_aff *read_tuple_var_def(struct isl_stream *s,
-	__isl_take isl_multi_pw_aff *tuple, int pos, struct vars *v,
-	int rational)
+static __isl_give isl_pw_aff *read_tuple_var_def(__isl_keep isl_stream *s,
+	struct vars *v, int rational)
 {
 	isl_space *space;
 	isl_pw_aff *def;
@@ -1137,87 +1098,70 @@ static __isl_give isl_multi_pw_aff *read_tuple_var_def(struct isl_stream *s,
 
 	space = isl_space_set_alloc(s->ctx, 0, v->n);
 	def = isl_pw_aff_reset_domain_space(def, space);
-	tuple = isl_multi_pw_aff_set_pw_aff(tuple, pos, def);
 
-	return tuple;
+	return def;
 }
 
-/* Read a list of variables and/or affine expressions and return the list
- * as an isl_multi_pw_aff.
+/* Read a list of tuple elements by calling "read_el" on each of them and
+ * return a space with the same number of set dimensions derived from
+ * the parameter space "space" and possibly updated by "read_el".
  * The elements in the list are separated by either "," or "][".
  * If "comma" is set then only "," is allowed.
  */
-static __isl_give isl_multi_pw_aff *read_tuple_var_list(struct isl_stream *s,
-	struct vars *v, int rational, int comma)
+static __isl_give isl_space *read_tuple_list(__isl_keep isl_stream *s,
+	struct vars *v, __isl_take isl_space *space, int rational, int comma,
+	__isl_give isl_space *(*read_el)(__isl_keep isl_stream *s,
+		struct vars *v, __isl_take isl_space *space, int rational,
+		void *user),
+	void *user)
 {
-	int i = 0;
-	struct isl_token *tok;
-	isl_multi_pw_aff *res;
+	if (!space)
+		return NULL;
 
-	res = tuple_alloc(v);
+	space = isl_space_set_from_params(space);
 
 	if (isl_stream_next_token_is(s, ']'))
-		return res;
+		return space;
 
-	while ((tok = next_token(s)) != NULL) {
-		int new_name = 0;
+	for (;;) {
+		struct isl_token *tok;
 
-		res = tuple_add_dim(res, v);
+		space = isl_space_add_dims(space, isl_dim_set, 1);
 
-		if (tok->type == ISL_TOKEN_IDENT) {
-			int n = v->n;
-			int p = vars_pos(v, tok->u.s, -1);
-			if (p < 0)
-				goto error;
-			new_name = p >= n;
-		}
-
-		if (tok->type == '*') {
-			if (vars_add_anon(v) < 0)
-				goto error;
-			isl_token_free(tok);
-		} else if (new_name) {
-			res = tuple_set_dim_name(res, i, v->v->name);
-			isl_token_free(tok);
-			if (isl_stream_eat_if_available(s, '='))
-				res = read_tuple_var_def(s, res, i, v,
-							rational);
-		} else {
-			isl_stream_push_token(s, tok);
-			tok = NULL;
-			if (vars_add_anon(v) < 0)
-				goto error;
-			res = read_tuple_var_def(s, res, i, v, rational);
-		}
+		space = read_el(s, v, space, rational, user);
+		if (!space)
+			return NULL;
 
 		tok = isl_stream_next_token(s);
 		if (!comma && tok && tok->type == ']' &&
 		    isl_stream_next_token_is(s, '[')) {
 			isl_token_free(tok);
 			tok = isl_stream_next_token(s);
-		} else if (!tok || tok->type != ',')
+		} else if (!tok || tok->type != ',') {
+			if (tok)
+				isl_stream_push_token(s, tok);
 			break;
+		}
 
 		isl_token_free(tok);
-		i++;
 	}
-	if (tok)
-		isl_stream_push_token(s, tok);
 
-	return res;
-error:
-	isl_token_free(tok);
-	return isl_multi_pw_aff_free(res);
+	return space;
 }
 
-/* Read a tuple and represent it as an isl_multi_pw_aff.  See tuple_alloc.
+/* Read a tuple space from "s" derived from the parameter space "space".
+ * Call "read_el" on each element in the tuples.
  */
-static __isl_give isl_multi_pw_aff *read_tuple(struct isl_stream *s,
-	struct vars *v, int rational, int comma)
+static __isl_give isl_space *read_tuple_space(__isl_keep isl_stream *s,
+	struct vars *v, __isl_take isl_space *space, int rational, int comma,
+	__isl_give isl_space *(*read_el)(__isl_keep isl_stream *s,
+		struct vars *v, __isl_take isl_space *space, int rational,
+		void *user),
+	void *user)
 {
 	struct isl_token *tok;
 	char *name = NULL;
-	isl_multi_pw_aff *res = NULL;
+	isl_space *res = NULL;
 
 	tok = isl_stream_next_token(s);
 	if (!tok)
@@ -1232,29 +1176,149 @@ static __isl_give isl_multi_pw_aff *read_tuple(struct isl_stream *s,
 	if (isl_stream_eat(s, '['))
 		goto error;
 	if (next_is_tuple(s)) {
-		isl_multi_pw_aff *out;
-		int n;
-		res = read_tuple(s, v, rational, comma);
+		isl_space *out;
+		res = read_tuple_space(s, v, isl_space_copy(space),
+					rational, comma, read_el, user);
 		if (isl_stream_eat(s, ISL_TOKEN_TO))
 			goto error;
-		out = read_tuple(s, v, rational, comma);
-		n = isl_multi_pw_aff_dim(out, isl_dim_out);
-		res = isl_multi_pw_aff_add_dims(res, isl_dim_in, n);
-		res = isl_multi_pw_aff_range_product(res, out);
+		out = read_tuple_space(s, v, isl_space_copy(space),
+					rational, comma, read_el, user);
+		res = isl_space_range_product(res, out);
 	} else
-		res = read_tuple_var_list(s, v, rational, comma);
+		res = read_tuple_list(s, v, isl_space_copy(space),
+					rational, comma, read_el, user);
 	if (isl_stream_eat(s, ']'))
 		goto error;
 
 	if (name) {
-		res = isl_multi_pw_aff_set_tuple_name(res, isl_dim_out, name);
+		res = isl_space_set_tuple_name(res, isl_dim_set, name);
 		free(name);
 	}
 
+	isl_space_free(space);
 	return res;
 error:
 	free(name);
-	return isl_multi_pw_aff_free(res);
+	isl_space_free(res);
+	isl_space_free(space);
+	return NULL;
+}
+
+/* Construct an isl_pw_aff defined on a space with v->n variables
+ * that is equal to the last of those variables.
+ */
+static __isl_give isl_pw_aff *identity_tuple_el(struct vars *v)
+{
+	isl_space *space;
+	isl_aff *aff;
+
+	space = isl_space_set_alloc(v->ctx, 0, v->n);
+	aff = isl_aff_zero_on_domain(isl_local_space_from_space(space));
+	aff = isl_aff_add_coefficient_si(aff, isl_dim_in, v->n - 1, 1);
+	return isl_pw_aff_from_aff(aff);
+}
+
+/* This function is called for each element in a tuple inside read_tuple.
+ * Add a new variable to "v" and construct a corresponding isl_pw_aff defined
+ * over a space containing all variables in "v" defined so far.
+ * The isl_pw_aff expresses the new variable in terms of earlier variables
+ * if a definition is provided.  Otherwise, it is represented as being
+ * equal to itself.
+ * Add the isl_pw_aff to *list.
+ * If the new variable was named, then adjust "space" accordingly and
+ * return the updated space.
+ */
+static __isl_give isl_space *read_tuple_pw_aff_el(__isl_keep isl_stream *s,
+	struct vars *v, __isl_take isl_space *space, int rational, void *user)
+{
+	isl_pw_aff_list **list = (isl_pw_aff_list **) user;
+	isl_pw_aff *pa;
+	struct isl_token *tok;
+	int new_name = 0;
+
+	tok = next_token(s);
+	if (!tok) {
+		isl_stream_error(s, NULL, "unexpected EOF");
+		return isl_space_free(space);
+	}
+
+	if (tok->type == ISL_TOKEN_IDENT) {
+		int n = v->n;
+		int p = vars_pos(v, tok->u.s, -1);
+		if (p < 0)
+			goto error;
+		new_name = p >= n;
+	}
+
+	if (tok->type == '*') {
+		if (vars_add_anon(v) < 0)
+			goto error;
+		isl_token_free(tok);
+		pa = identity_tuple_el(v);
+	} else if (new_name) {
+		int pos = isl_space_dim(space, isl_dim_out) - 1;
+		space = space_set_dim_name(space, pos, v->v->name);
+		isl_token_free(tok);
+		if (isl_stream_eat_if_available(s, '='))
+			pa = read_tuple_var_def(s, v, rational);
+		else
+			pa = identity_tuple_el(v);
+	} else {
+		isl_stream_push_token(s, tok);
+		tok = NULL;
+		if (vars_add_anon(v) < 0)
+			goto error;
+		pa = read_tuple_var_def(s, v, rational);
+	}
+
+	*list = isl_pw_aff_list_add(*list, pa);
+	if (!*list)
+		return isl_space_free(space);
+
+	return space;
+error:
+	isl_token_free(tok);
+	return isl_space_free(space);
+}
+
+/* Read a tuple and represent it as an isl_multi_pw_aff.
+ * The range space of the isl_multi_pw_aff is the space of the tuple.
+ * The domain space is an anonymous space
+ * with a dimension for each variable in the set of variables in "v",
+ * including the variables in the range.
+ * If a given dimension is not defined in terms of earlier dimensions in
+ * the input, then the corresponding isl_pw_aff is set equal to one time
+ * the variable corresponding to the dimension being defined.
+ *
+ * The elements in the tuple are collected in a list by read_tuple_pw_aff_el.
+ * Each element in this list is defined over a space representing
+ * the variables defined so far.  We need to adjust the earlier
+ * elements to have as many variables in the domain as the final
+ * element in the list.
+ */
+static __isl_give isl_multi_pw_aff *read_tuple(__isl_keep isl_stream *s,
+	struct vars *v, int rational, int comma)
+{
+	int i, n;
+	isl_space *space;
+	isl_pw_aff_list *list;
+
+	space = isl_space_params_alloc(v->ctx, 0);
+	list = isl_pw_aff_list_alloc(s->ctx, 0);
+	space = read_tuple_space(s, v, space, rational, comma,
+				&read_tuple_pw_aff_el, &list);
+	n = isl_space_dim(space, isl_dim_set);
+	for (i = 0; i + 1 < n; ++i) {
+		isl_pw_aff *pa;
+
+		pa = isl_pw_aff_list_get_pw_aff(list, i);
+		pa = isl_pw_aff_add_dims(pa, isl_dim_in, n - (i + 1));
+		list = isl_pw_aff_list_set_pw_aff(list, i, pa);
+	}
+
+	space = isl_space_from_range(space);
+	space = isl_space_add_dims(space, isl_dim_in, v->n);
+	return isl_multi_pw_aff_from_pw_aff_list(space, list);
 }
 
 /* Add the tuple represented by the isl_multi_pw_aff "tuple" to "map".
@@ -1348,7 +1412,7 @@ error:
  * The tuple is initially represented as an isl_multi_pw_aff and
  * then added to "map".
  */
-static __isl_give isl_map *read_map_tuple(struct isl_stream *s,
+static __isl_give isl_map *read_map_tuple(__isl_keep isl_stream *s,
 	__isl_take isl_map *map, enum isl_dim_type type, struct vars *v,
 	int rational, int comma)
 {
@@ -1390,7 +1454,7 @@ static __isl_give isl_set *construct_constraints(
 	return isl_set_intersect(set, cond);
 }
 
-static __isl_give isl_map *add_constraint(struct isl_stream *s,
+static __isl_give isl_map *add_constraint(__isl_keep isl_stream *s,
 	struct vars *v, __isl_take isl_map *map, int rational)
 {
 	struct isl_token *tok = NULL;
@@ -1439,7 +1503,7 @@ error:
 	return NULL;
 }
 
-static __isl_give isl_map *read_exists(struct isl_stream *s,
+static __isl_give isl_map *read_exists(__isl_keep isl_stream *s,
 	struct vars *v, __isl_take isl_map *map, int rational)
 {
 	int n = v->n;
@@ -1479,7 +1543,7 @@ error:
  * Otherwise, we assume that the affine expression is the
  * start of a condition and continue parsing.
  */
-static int resolve_paren_expr(struct isl_stream *s,
+static int resolve_paren_expr(__isl_keep isl_stream *s,
 	struct vars *v, __isl_take isl_map *map, int rational)
 {
 	struct isl_token *tok, *tok2;
@@ -1551,7 +1615,7 @@ error:
 	return -1;
 }
 
-static __isl_give isl_map *read_conjunct(struct isl_stream *s,
+static __isl_give isl_map *read_conjunct(__isl_keep isl_stream *s,
 	struct vars *v, __isl_take isl_map *map, int rational)
 {
 	if (isl_stream_next_token_is(s, '('))
@@ -1587,7 +1651,7 @@ error:
 	return NULL;
 }
 
-static __isl_give isl_map *read_conjuncts(struct isl_stream *s,
+static __isl_give isl_map *read_conjuncts(__isl_keep isl_stream *s,
 	struct vars *v, __isl_take isl_map *map, int rational)
 {
 	isl_map *res;
@@ -1613,7 +1677,7 @@ static __isl_give isl_map *read_conjuncts(struct isl_stream *s,
 	return res;
 }
 
-static struct isl_map *read_disjuncts(struct isl_stream *s,
+static struct isl_map *read_disjuncts(__isl_keep isl_stream *s,
 	struct vars *v, __isl_take isl_map *map, int rational)
 {
 	isl_map *res;
@@ -1657,7 +1721,7 @@ static struct isl_map *read_disjuncts(struct isl_stream *s,
  *
  *	(map \setminus { [..] : a}) \cup (map \cap { [..] : b })
  */
-static __isl_give isl_map *read_formula(struct isl_stream *s,
+static __isl_give isl_map *read_formula(__isl_keep isl_stream *s,
 	struct vars *v, __isl_take isl_map *map, int rational)
 {
 	isl_map *res;
@@ -1700,7 +1764,7 @@ static int polylib_pos_to_isl_pos(__isl_keep isl_basic_map *bmap, int pos)
 }
 
 static __isl_give isl_basic_map *basic_map_read_polylib_constraint(
-	struct isl_stream *s, __isl_take isl_basic_map *bmap)
+	__isl_keep isl_stream *s, __isl_take isl_basic_map *bmap)
 {
 	int j;
 	struct isl_token *tok;
@@ -1769,7 +1833,8 @@ error:
 	return NULL;
 }
 
-static __isl_give isl_basic_map *basic_map_read_polylib(struct isl_stream *s)
+static __isl_give isl_basic_map *basic_map_read_polylib(
+	__isl_keep isl_stream *s)
 {
 	int i;
 	struct isl_token *tok;
@@ -1885,7 +1950,7 @@ error:
 	return NULL;
 }
 
-static struct isl_map *map_read_polylib(struct isl_stream *s)
+static struct isl_map *map_read_polylib(__isl_keep isl_stream *s)
 {
 	struct isl_token *tok;
 	struct isl_token *tok2;
@@ -1923,7 +1988,7 @@ static struct isl_map *map_read_polylib(struct isl_stream *s)
 	return map;
 }
 
-static int optional_power(struct isl_stream *s)
+static int optional_power(__isl_keep isl_stream *s)
 {
 	int pow;
 	struct isl_token *tok;
@@ -1948,10 +2013,10 @@ static int optional_power(struct isl_stream *s)
 	return pow;
 }
 
-static __isl_give isl_pw_qpolynomial *read_term(struct isl_stream *s,
+static __isl_give isl_pw_qpolynomial *read_term(__isl_keep isl_stream *s,
 	__isl_keep isl_map *map, struct vars *v);
 
-static __isl_give isl_pw_qpolynomial *read_factor(struct isl_stream *s,
+static __isl_give isl_pw_qpolynomial *read_factor(__isl_keep isl_stream *s,
 	__isl_keep isl_map *map, struct vars *v)
 {
 	isl_pw_qpolynomial *pwqp;
@@ -2059,7 +2124,7 @@ error:
 	return NULL;
 }
 
-static __isl_give isl_pw_qpolynomial *read_term(struct isl_stream *s,
+static __isl_give isl_pw_qpolynomial *read_term(__isl_keep isl_stream *s,
 	__isl_keep isl_map *map, struct vars *v)
 {
 	struct isl_token *tok;
@@ -2100,7 +2165,7 @@ static __isl_give isl_pw_qpolynomial *read_term(struct isl_stream *s,
 	return pwqp;
 }
 
-static __isl_give isl_map *read_optional_formula(struct isl_stream *s,
+static __isl_give isl_map *read_optional_formula(__isl_keep isl_stream *s,
 	__isl_take isl_map *map, struct vars *v, int rational)
 {
 	struct isl_token *tok;
@@ -2123,7 +2188,7 @@ error:
 	return NULL;
 }
 
-static struct isl_obj obj_read_poly(struct isl_stream *s,
+static struct isl_obj obj_read_poly(__isl_keep isl_stream *s,
 	__isl_take isl_map *map, struct vars *v, int n)
 {
 	struct isl_obj obj = { isl_obj_pw_qpolynomial, NULL };
@@ -2142,7 +2207,7 @@ static struct isl_obj obj_read_poly(struct isl_stream *s,
 	return obj;
 }
 
-static struct isl_obj obj_read_poly_or_fold(struct isl_stream *s,
+static struct isl_obj obj_read_poly_or_fold(__isl_keep isl_stream *s,
 	__isl_take isl_set *set, struct vars *v, int n)
 {
 	struct isl_obj obj = { isl_obj_pw_qpolynomial_fold, NULL };
@@ -2183,7 +2248,7 @@ error:
 	return obj;
 }
 
-static int is_rational(struct isl_stream *s)
+static int is_rational(__isl_keep isl_stream *s)
 {
 	struct isl_token *tok;
 
@@ -2201,7 +2266,7 @@ static int is_rational(struct isl_stream *s)
 	return 0;
 }
 
-static struct isl_obj obj_read_body(struct isl_stream *s,
+static struct isl_obj obj_read_body(__isl_keep isl_stream *s,
 	__isl_take isl_map *map, struct vars *v)
 {
 	struct isl_token *tok;
@@ -2278,47 +2343,54 @@ error:
 	return obj;
 }
 
-static struct isl_obj obj_add(struct isl_ctx *ctx,
+static struct isl_obj obj_add(__isl_keep isl_stream *s,
 	struct isl_obj obj1, struct isl_obj obj2)
 {
 	if (obj1.type == isl_obj_set && obj2.type == isl_obj_union_set)
-		obj1 = to_union(ctx, obj1);
+		obj1 = to_union(s->ctx, obj1);
 	if (obj1.type == isl_obj_union_set && obj2.type == isl_obj_set)
-		obj2 = to_union(ctx, obj2);
+		obj2 = to_union(s->ctx, obj2);
 	if (obj1.type == isl_obj_map && obj2.type == isl_obj_union_map)
-		obj1 = to_union(ctx, obj1);
+		obj1 = to_union(s->ctx, obj1);
 	if (obj1.type == isl_obj_union_map && obj2.type == isl_obj_map)
-		obj2 = to_union(ctx, obj2);
+		obj2 = to_union(s->ctx, obj2);
 	if (obj1.type == isl_obj_pw_qpolynomial &&
 	    obj2.type == isl_obj_union_pw_qpolynomial)
-		obj1 = to_union(ctx, obj1);
+		obj1 = to_union(s->ctx, obj1);
 	if (obj1.type == isl_obj_union_pw_qpolynomial &&
 	    obj2.type == isl_obj_pw_qpolynomial)
-		obj2 = to_union(ctx, obj2);
+		obj2 = to_union(s->ctx, obj2);
 	if (obj1.type == isl_obj_pw_qpolynomial_fold &&
 	    obj2.type == isl_obj_union_pw_qpolynomial_fold)
-		obj1 = to_union(ctx, obj1);
+		obj1 = to_union(s->ctx, obj1);
 	if (obj1.type == isl_obj_union_pw_qpolynomial_fold &&
 	    obj2.type == isl_obj_pw_qpolynomial_fold)
-		obj2 = to_union(ctx, obj2);
-	isl_assert(ctx, obj1.type == obj2.type, goto error);
+		obj2 = to_union(s->ctx, obj2);
+	if (obj1.type != obj2.type) {
+		isl_stream_error(s, NULL,
+				"attempt to combine incompatible objects");
+		goto error;
+	}
+	if (!obj1.type->add)
+		isl_die(s->ctx, isl_error_internal,
+			"combination not supported on object type", goto error);
 	if (obj1.type == isl_obj_map && !isl_map_has_equal_space(obj1.v, obj2.v)) {
-		obj1 = to_union(ctx, obj1);
-		obj2 = to_union(ctx, obj2);
+		obj1 = to_union(s->ctx, obj1);
+		obj2 = to_union(s->ctx, obj2);
 	}
 	if (obj1.type == isl_obj_set && !isl_set_has_equal_space(obj1.v, obj2.v)) {
-		obj1 = to_union(ctx, obj1);
-		obj2 = to_union(ctx, obj2);
+		obj1 = to_union(s->ctx, obj1);
+		obj2 = to_union(s->ctx, obj2);
 	}
 	if (obj1.type == isl_obj_pw_qpolynomial &&
 	    !isl_pw_qpolynomial_has_equal_space(obj1.v, obj2.v)) {
-		obj1 = to_union(ctx, obj1);
-		obj2 = to_union(ctx, obj2);
+		obj1 = to_union(s->ctx, obj1);
+		obj2 = to_union(s->ctx, obj2);
 	}
 	if (obj1.type == isl_obj_pw_qpolynomial_fold &&
 	    !isl_pw_qpolynomial_fold_has_equal_space(obj1.v, obj2.v)) {
-		obj1 = to_union(ctx, obj1);
-		obj2 = to_union(ctx, obj2);
+		obj1 = to_union(s->ctx, obj1);
+		obj2 = to_union(s->ctx, obj2);
 	}
 	obj1.v = obj1.type->add(obj1.v, obj2.v);
 	return obj1;
@@ -2330,12 +2402,79 @@ error:
 	return obj1;
 }
 
-static struct isl_obj obj_read(struct isl_stream *s)
+/* Are the first two tokens on "s", "domain" (either as a string
+ * or as an identifier) followed by ":"?
+ */
+static int next_is_domain_colon(__isl_keep isl_stream *s)
+{
+	struct isl_token *tok;
+	char *name;
+	int res;
+
+	tok = isl_stream_next_token(s);
+	if (!tok)
+		return 0;
+	if (tok->type != ISL_TOKEN_IDENT && tok->type != ISL_TOKEN_STRING) {
+		isl_stream_push_token(s, tok);
+		return 0;
+	}
+
+	name = isl_token_get_str(s->ctx, tok);
+	res = !strcmp(name, "domain") && isl_stream_next_token_is(s, ':');
+	free(name);
+
+	isl_stream_push_token(s, tok);
+
+	return res;
+}
+
+/* Do the first tokens on "s" look like a schedule?
+ *
+ * The root of a schedule is always a domain node, so the first thing
+ * we expect in the stream is a domain key, i.e., "domain" followed
+ * by ":".  If the schedule was printed in YAML flow style, then
+ * we additionally expect a "{" to open the outer mapping.
+ */
+static int next_is_schedule(__isl_keep isl_stream *s)
+{
+	struct isl_token *tok;
+	int is_schedule;
+
+	tok = isl_stream_next_token(s);
+	if (!tok)
+		return 0;
+	if (tok->type != '{') {
+		isl_stream_push_token(s, tok);
+		return next_is_domain_colon(s);
+	}
+
+	is_schedule = next_is_domain_colon(s);
+	isl_stream_push_token(s, tok);
+
+	return is_schedule;
+}
+
+/* Read an isl_schedule from "s" and store it in an isl_obj.
+ */
+static struct isl_obj schedule_read(__isl_keep isl_stream *s)
+{
+	struct isl_obj obj;
+
+	obj.type = isl_obj_schedule;
+	obj.v = isl_stream_read_schedule(s);
+
+	return obj;
+}
+
+static struct isl_obj obj_read(__isl_keep isl_stream *s)
 {
 	isl_map *map = NULL;
 	struct isl_token *tok;
 	struct vars *v = NULL;
 	struct isl_obj obj = { isl_obj_set, NULL };
+
+	if (next_is_schedule(s))
+		return schedule_read(s);
 
 	tok = next_token(s);
 	if (!tok) {
@@ -2425,7 +2564,7 @@ static struct isl_obj obj_read(struct isl_stream *s)
 		if (!obj.v)
 			obj = o;
 		else {
-			obj = obj_add(s->ctx, obj, o);
+			obj = obj_add(s, obj, o);
 			if (obj.type == isl_obj_none || !obj.v)
 				goto error;
 		}
@@ -2461,12 +2600,12 @@ error:
 	return obj;
 }
 
-struct isl_obj isl_stream_read_obj(struct isl_stream *s)
+struct isl_obj isl_stream_read_obj(__isl_keep isl_stream *s)
 {
 	return obj_read(s);
 }
 
-__isl_give isl_map *isl_stream_read_map(struct isl_stream *s)
+__isl_give isl_map *isl_stream_read_map(__isl_keep isl_stream *s)
 {
 	struct isl_obj obj;
 
@@ -2484,7 +2623,7 @@ error:
 	return NULL;
 }
 
-__isl_give isl_set *isl_stream_read_set(struct isl_stream *s)
+__isl_give isl_set *isl_stream_read_set(__isl_keep isl_stream *s)
 {
 	struct isl_obj obj;
 
@@ -2503,7 +2642,7 @@ error:
 	return NULL;
 }
 
-__isl_give isl_union_map *isl_stream_read_union_map(struct isl_stream *s)
+__isl_give isl_union_map *isl_stream_read_union_map(__isl_keep isl_stream *s)
 {
 	struct isl_obj obj;
 
@@ -2528,7 +2667,7 @@ error:
 	return NULL;
 }
 
-__isl_give isl_union_set *isl_stream_read_union_set(struct isl_stream *s)
+__isl_give isl_union_set *isl_stream_read_union_set(__isl_keep isl_stream *s)
 {
 	struct isl_obj obj;
 
@@ -2546,7 +2685,7 @@ error:
 	return NULL;
 }
 
-static __isl_give isl_basic_map *basic_map_read(struct isl_stream *s)
+static __isl_give isl_basic_map *basic_map_read(__isl_keep isl_stream *s)
 {
 	struct isl_obj obj;
 	struct isl_map *map;
@@ -2578,7 +2717,7 @@ error:
 	return NULL;
 }
 
-static __isl_give isl_basic_set *basic_set_read(struct isl_stream *s)
+static __isl_give isl_basic_set *basic_set_read(__isl_keep isl_stream *s)
 {
 	isl_basic_map *bmap;
 	bmap = basic_map_read(s);
@@ -2597,7 +2736,7 @@ __isl_give isl_basic_map *isl_basic_map_read_from_file(isl_ctx *ctx,
 	FILE *input)
 {
 	struct isl_basic_map *bmap;
-	struct isl_stream *s = isl_stream_new_file(ctx, input);
+	isl_stream *s = isl_stream_new_file(ctx, input);
 	if (!s)
 		return NULL;
 	bmap = basic_map_read(s);
@@ -2609,7 +2748,7 @@ __isl_give isl_basic_set *isl_basic_set_read_from_file(isl_ctx *ctx,
 	FILE *input)
 {
 	isl_basic_set *bset;
-	struct isl_stream *s = isl_stream_new_file(ctx, input);
+	isl_stream *s = isl_stream_new_file(ctx, input);
 	if (!s)
 		return NULL;
 	bset = basic_set_read(s);
@@ -2621,7 +2760,7 @@ struct isl_basic_map *isl_basic_map_read_from_str(struct isl_ctx *ctx,
 	const char *str)
 {
 	struct isl_basic_map *bmap;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	bmap = basic_map_read(s);
@@ -2633,7 +2772,7 @@ struct isl_basic_set *isl_basic_set_read_from_str(struct isl_ctx *ctx,
 	const char *str)
 {
 	isl_basic_set *bset;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	bset = basic_set_read(s);
@@ -2645,7 +2784,7 @@ __isl_give isl_map *isl_map_read_from_file(struct isl_ctx *ctx,
 	FILE *input)
 {
 	struct isl_map *map;
-	struct isl_stream *s = isl_stream_new_file(ctx, input);
+	isl_stream *s = isl_stream_new_file(ctx, input);
 	if (!s)
 		return NULL;
 	map = isl_stream_read_map(s);
@@ -2657,7 +2796,7 @@ __isl_give isl_map *isl_map_read_from_str(struct isl_ctx *ctx,
 	const char *str)
 {
 	struct isl_map *map;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	map = isl_stream_read_map(s);
@@ -2669,7 +2808,7 @@ __isl_give isl_set *isl_set_read_from_file(struct isl_ctx *ctx,
 	FILE *input)
 {
 	isl_set *set;
-	struct isl_stream *s = isl_stream_new_file(ctx, input);
+	isl_stream *s = isl_stream_new_file(ctx, input);
 	if (!s)
 		return NULL;
 	set = isl_stream_read_set(s);
@@ -2681,7 +2820,7 @@ struct isl_set *isl_set_read_from_str(struct isl_ctx *ctx,
 	const char *str)
 {
 	isl_set *set;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	set = isl_stream_read_set(s);
@@ -2693,7 +2832,7 @@ __isl_give isl_union_map *isl_union_map_read_from_file(isl_ctx *ctx,
 	FILE *input)
 {
 	isl_union_map *umap;
-	struct isl_stream *s = isl_stream_new_file(ctx, input);
+	isl_stream *s = isl_stream_new_file(ctx, input);
 	if (!s)
 		return NULL;
 	umap = isl_stream_read_union_map(s);
@@ -2705,7 +2844,7 @@ __isl_give isl_union_map *isl_union_map_read_from_str(struct isl_ctx *ctx,
 		const char *str)
 {
 	isl_union_map *umap;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	umap = isl_stream_read_union_map(s);
@@ -2717,7 +2856,7 @@ __isl_give isl_union_set *isl_union_set_read_from_file(isl_ctx *ctx,
 	FILE *input)
 {
 	isl_union_set *uset;
-	struct isl_stream *s = isl_stream_new_file(ctx, input);
+	isl_stream *s = isl_stream_new_file(ctx, input);
 	if (!s)
 		return NULL;
 	uset = isl_stream_read_union_set(s);
@@ -2729,7 +2868,7 @@ __isl_give isl_union_set *isl_union_set_read_from_str(struct isl_ctx *ctx,
 		const char *str)
 {
 	isl_union_set *uset;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	uset = isl_stream_read_union_set(s);
@@ -2737,7 +2876,7 @@ __isl_give isl_union_set *isl_union_set_read_from_str(struct isl_ctx *ctx,
 	return uset;
 }
 
-static __isl_give isl_vec *isl_vec_read_polylib(struct isl_stream *s)
+static __isl_give isl_vec *isl_vec_read_polylib(__isl_keep isl_stream *s)
 {
 	struct isl_vec *vec = NULL;
 	struct isl_token *tok;
@@ -2772,7 +2911,7 @@ error:
 	return NULL;
 }
 
-static __isl_give isl_vec *vec_read(struct isl_stream *s)
+static __isl_give isl_vec *vec_read(__isl_keep isl_stream *s)
 {
 	return isl_vec_read_polylib(s);
 }
@@ -2780,7 +2919,7 @@ static __isl_give isl_vec *vec_read(struct isl_stream *s)
 __isl_give isl_vec *isl_vec_read_from_file(isl_ctx *ctx, FILE *input)
 {
 	isl_vec *v;
-	struct isl_stream *s = isl_stream_new_file(ctx, input);
+	isl_stream *s = isl_stream_new_file(ctx, input);
 	if (!s)
 		return NULL;
 	v = vec_read(s);
@@ -2789,7 +2928,7 @@ __isl_give isl_vec *isl_vec_read_from_file(isl_ctx *ctx, FILE *input)
 }
 
 __isl_give isl_pw_qpolynomial *isl_stream_read_pw_qpolynomial(
-	struct isl_stream *s)
+	__isl_keep isl_stream *s)
 {
 	struct isl_obj obj;
 
@@ -2808,7 +2947,7 @@ __isl_give isl_pw_qpolynomial *isl_pw_qpolynomial_read_from_str(isl_ctx *ctx,
 		const char *str)
 {
 	isl_pw_qpolynomial *pwqp;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	pwqp = isl_stream_read_pw_qpolynomial(s);
@@ -2820,7 +2959,7 @@ __isl_give isl_pw_qpolynomial *isl_pw_qpolynomial_read_from_file(isl_ctx *ctx,
 		FILE *input)
 {
 	isl_pw_qpolynomial *pwqp;
-	struct isl_stream *s = isl_stream_new_file(ctx, input);
+	isl_stream *s = isl_stream_new_file(ctx, input);
 	if (!s)
 		return NULL;
 	pwqp = isl_stream_read_pw_qpolynomial(s);
@@ -2830,7 +2969,7 @@ __isl_give isl_pw_qpolynomial *isl_pw_qpolynomial_read_from_file(isl_ctx *ctx,
 
 /* Is the next token an identifer not in "v"?
  */
-static int next_is_fresh_ident(struct isl_stream *s, struct vars *v)
+static int next_is_fresh_ident(__isl_keep isl_stream *s, struct vars *v)
 {
 	int n = v->n;
 	int fresh;
@@ -2857,7 +2996,7 @@ static int next_is_fresh_ident(struct isl_stream *s, struct vars *v)
  * or a new identifier, we again assume it's the domain.
  * Otherwise, we assume we are reading an affine expression.
  */
-static __isl_give isl_set *read_aff_domain(struct isl_stream *s,
+static __isl_give isl_set *read_aff_domain(__isl_keep isl_stream *s,
 	__isl_take isl_set *dom, struct vars *v)
 {
 	struct isl_token *tok;
@@ -2887,7 +3026,7 @@ error:
 
 /* Read an affine expression from "s".
  */
-__isl_give isl_aff *isl_stream_read_aff(struct isl_stream *s)
+__isl_give isl_aff *isl_stream_read_aff(__isl_keep isl_stream *s)
 {
 	isl_aff *aff;
 	isl_multi_aff *ma;
@@ -2910,7 +3049,7 @@ error:
 
 /* Read a piecewise affine expression from "s" with domain (space) "dom".
  */
-static __isl_give isl_pw_aff *read_pw_aff_with_dom(struct isl_stream *s,
+static __isl_give isl_pw_aff *read_pw_aff_with_dom(__isl_keep isl_stream *s,
 	__isl_take isl_set *dom, struct vars *v)
 {
 	isl_pw_aff *pwaff = NULL;
@@ -2936,7 +3075,7 @@ error:
 	return NULL;
 }
 
-__isl_give isl_pw_aff *isl_stream_read_pw_aff(struct isl_stream *s)
+__isl_give isl_pw_aff *isl_stream_read_pw_aff(__isl_keep isl_stream *s)
 {
 	struct vars *v;
 	isl_set *dom = NULL;
@@ -2989,7 +3128,7 @@ error:
 __isl_give isl_aff *isl_aff_read_from_str(isl_ctx *ctx, const char *str)
 {
 	isl_aff *aff;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	aff = isl_stream_read_aff(s);
@@ -3000,7 +3139,7 @@ __isl_give isl_aff *isl_aff_read_from_str(isl_ctx *ctx, const char *str)
 __isl_give isl_pw_aff *isl_pw_aff_read_from_str(isl_ctx *ctx, const char *str)
 {
 	isl_pw_aff *pa;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	pa = isl_stream_read_pw_aff(s);
@@ -3014,7 +3153,8 @@ __isl_give isl_pw_aff *isl_pw_aff_read_from_str(isl_ctx *ctx, const char *str)
  * It would be more efficient if we were to construct the isl_pw_multi_aff
  * directly.
  */
-__isl_give isl_pw_multi_aff *isl_stream_read_pw_multi_aff(struct isl_stream *s)
+__isl_give isl_pw_multi_aff *isl_stream_read_pw_multi_aff(
+	__isl_keep isl_stream *s)
 {
 	struct isl_obj obj;
 
@@ -3036,7 +3176,7 @@ __isl_give isl_pw_multi_aff *isl_pw_multi_aff_read_from_str(isl_ctx *ctx,
 	const char *str)
 {
 	isl_pw_multi_aff *pma;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	pma = isl_stream_read_pw_multi_aff(s);
@@ -3051,7 +3191,7 @@ __isl_give isl_pw_multi_aff *isl_pw_multi_aff_read_from_str(isl_ctx *ctx,
  * the isl_union_pw_multi_aff directly.
  */
 __isl_give isl_union_pw_multi_aff *isl_stream_read_union_pw_multi_aff(
-	struct isl_stream *s)
+	__isl_keep isl_stream *s)
 {
 	struct isl_obj obj;
 
@@ -3077,7 +3217,7 @@ __isl_give isl_union_pw_multi_aff *isl_union_pw_multi_aff_read_from_str(
 	isl_ctx *ctx, const char *str)
 {
 	isl_union_pw_multi_aff *upma;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	upma = isl_stream_read_union_pw_multi_aff(s);
@@ -3111,6 +3251,86 @@ error:
 	return NULL;
 }
 
+/* This function is called for each element in a tuple inside
+ * isl_stream_read_multi_val.
+ * Read an isl_val from "s" and add it to *list.
+ */
+static __isl_give isl_space *read_val_el(__isl_keep isl_stream *s,
+	struct vars *v, __isl_take isl_space *space, int rational, void *user)
+{
+	isl_val_list **list = (isl_val_list **) user;
+	isl_val *val;
+
+	val = isl_stream_read_val(s);
+	*list = isl_val_list_add(*list, val);
+	if (!*list)
+		return isl_space_free(space);
+
+	return space;
+}
+
+/* Read an isl_multi_val from "s".
+ *
+ * We first read a tuple space, collecting the element values in a list.
+ * Then we create an isl_multi_val from the space and the isl_val_list.
+ */
+__isl_give isl_multi_val *isl_stream_read_multi_val(__isl_keep isl_stream *s)
+{
+	struct vars *v;
+	isl_set *dom = NULL;
+	isl_space *space;
+	isl_multi_val *mv = NULL;
+	isl_val_list *list;
+
+	v = vars_new(s->ctx);
+	if (!v)
+		return NULL;
+
+	dom = isl_set_universe(isl_space_params_alloc(s->ctx, 0));
+	if (next_is_tuple(s)) {
+		dom = read_map_tuple(s, dom, isl_dim_param, v, 1, 0);
+		if (isl_stream_eat(s, ISL_TOKEN_TO))
+			goto error;
+	}
+	if (!isl_set_plain_is_universe(dom))
+		isl_die(s->ctx, isl_error_invalid,
+			"expecting universe parameter domain", goto error);
+	if (isl_stream_eat(s, '{'))
+		goto error;
+
+	space = isl_set_get_space(dom);
+
+	list = isl_val_list_alloc(s->ctx, 0);
+	space = read_tuple_space(s, v, space, 1, 0, &read_val_el, &list);
+	mv = isl_multi_val_from_val_list(space, list);
+
+	if (isl_stream_eat(s, '}'))
+		goto error;
+
+	vars_free(v);
+	isl_set_free(dom);
+	return mv;
+error:
+	vars_free(v);
+	isl_set_free(dom);
+	isl_multi_val_free(mv);
+	return NULL;
+}
+
+/* Read an isl_multi_val from "str".
+ */
+__isl_give isl_multi_val *isl_multi_val_read_from_str(isl_ctx *ctx,
+	const char *str)
+{
+	isl_multi_val *mv;
+	isl_stream *s = isl_stream_new_str(ctx, str);
+	if (!s)
+		return NULL;
+	mv = isl_stream_read_multi_val(s);
+	isl_stream_free(s);
+	return mv;
+}
+
 /* Read a multi-affine expression from "s".
  * If the multi-affine expression has a domain, then the tuple
  * representing this domain cannot involve any affine expressions.
@@ -3119,7 +3339,7 @@ error:
  * only depend on parameters and input dimensions and not on other
  * output dimensions.
  */
-__isl_give isl_multi_aff *isl_stream_read_multi_aff(struct isl_stream *s)
+__isl_give isl_multi_aff *isl_stream_read_multi_aff(__isl_keep isl_stream *s)
 {
 	struct vars *v;
 	isl_set *dom = NULL;
@@ -3215,7 +3435,7 @@ __isl_give isl_multi_aff *isl_multi_aff_read_from_str(isl_ctx *ctx,
 	const char *str)
 {
 	isl_multi_aff *maff;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	maff = isl_stream_read_multi_aff(s);
@@ -3248,7 +3468,8 @@ __isl_give isl_multi_aff *isl_multi_aff_read_from_str(isl_ctx *ctx,
  * of read_tuple (which is of the form [input, output] -> [output],
  * with anonymous domain) and reset the space.
  */
-__isl_give isl_multi_pw_aff *isl_stream_read_multi_pw_aff(struct isl_stream *s)
+__isl_give isl_multi_pw_aff *isl_stream_read_multi_pw_aff(
+	__isl_keep isl_stream *s)
 {
 	struct vars *v;
 	isl_set *dom = NULL;
@@ -3329,7 +3550,7 @@ __isl_give isl_multi_pw_aff *isl_multi_pw_aff_read_from_str(isl_ctx *ctx,
 	const char *str)
 {
 	isl_multi_pw_aff *mpa;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	mpa = isl_stream_read_multi_pw_aff(s);
@@ -3337,8 +3558,202 @@ __isl_give isl_multi_pw_aff *isl_multi_pw_aff_read_from_str(isl_ctx *ctx,
 	return mpa;
 }
 
+/* Read the body of an isl_union_pw_aff from "s" with parameter domain "dom".
+ */
+static __isl_give isl_union_pw_aff *read_union_pw_aff_with_dom(
+	__isl_keep isl_stream *s, __isl_take isl_set *dom, struct vars *v)
+{
+	isl_pw_aff *pa;
+	isl_union_pw_aff *upa = NULL;
+	isl_set *aff_dom;
+	int n;
+
+	n = v->n;
+	aff_dom = read_aff_domain(s, isl_set_copy(dom), v);
+	pa = read_pw_aff_with_dom(s, aff_dom, v);
+	vars_drop(v, v->n - n);
+
+	upa = isl_union_pw_aff_from_pw_aff(pa);
+
+	while (isl_stream_eat_if_available(s, ';')) {
+		isl_pw_aff *pa_i;
+		isl_union_pw_aff *upa_i;
+
+		n = v->n;
+		aff_dom = read_aff_domain(s, isl_set_copy(dom), v);
+		pa_i = read_pw_aff_with_dom(s, aff_dom, v);
+		vars_drop(v, v->n - n);
+
+		upa_i = isl_union_pw_aff_from_pw_aff(pa_i);
+		upa = isl_union_pw_aff_union_add(upa, upa_i);
+	}
+
+	isl_set_free(dom);
+	return upa;
+}
+
+/* This function is called for each element in a tuple inside
+ * isl_stream_read_multi_union_pw_aff.
+ *
+ * Read a '{', the union piecewise affine expression body and a '}' and
+ * add the isl_union_pw_aff to *list.
+ */
+static __isl_give isl_space *read_union_pw_aff_el(__isl_keep isl_stream *s,
+	struct vars *v, __isl_take isl_space *space, int rational, void *user)
+{
+	isl_set *dom;
+	isl_union_pw_aff *upa;
+	isl_union_pw_aff_list **list = (isl_union_pw_aff_list **) user;
+
+	dom = isl_set_universe(isl_space_params(isl_space_copy(space)));
+	if (isl_stream_eat(s, '{'))
+		goto error;
+	upa = read_union_pw_aff_with_dom(s, dom, v);
+	*list = isl_union_pw_aff_list_add(*list, upa);
+	if (isl_stream_eat(s, '}'))
+		return isl_space_free(space);
+	if (!*list)
+		return isl_space_free(space);
+	return space;
+error:
+	isl_set_free(dom);
+	return isl_space_free(space);
+}
+
+/* Do the next tokens in "s" correspond to an empty tuple?
+ * In particular, does the stream start with a '[', followed by a ']',
+ * not followed by a "->"?
+ */
+static int next_is_empty_tuple(__isl_keep isl_stream *s)
+{
+	struct isl_token *tok, *tok2, *tok3;
+	int is_empty_tuple = 0;
+
+	tok = isl_stream_next_token(s);
+	if (!tok)
+		return 0;
+	if (tok->type != '[') {
+		isl_stream_push_token(s, tok);
+		return 0;
+	}
+
+	tok2 = isl_stream_next_token(s);
+	if (tok2 && tok2->type == ']') {
+		tok3 = isl_stream_next_token(s);
+		is_empty_tuple = !tok || tok->type != ISL_TOKEN_TO;
+		if (tok3)
+			isl_stream_push_token(s, tok3);
+	}
+	if (tok2)
+		isl_stream_push_token(s, tok2);
+	isl_stream_push_token(s, tok);
+
+	return is_empty_tuple;
+}
+
+/* Do the next tokens in "s" correspond to a tuple of parameters?
+ * In particular, does the stream start with a '[' that is not
+ * followed by a '{' or a nested tuple?
+ */
+static int next_is_param_tuple(__isl_keep isl_stream *s)
+{
+	struct isl_token *tok, *tok2;
+	int is_tuple;
+
+	tok = isl_stream_next_token(s);
+	if (!tok)
+		return 0;
+	if (tok->type != '[' || next_is_tuple(s)) {
+		isl_stream_push_token(s, tok);
+		return 0;
+	}
+
+	tok2 = isl_stream_next_token(s);
+	is_tuple = tok2 && tok2->type != '{';
+	if (tok2)
+		isl_stream_push_token(s, tok2);
+	isl_stream_push_token(s, tok);
+
+	return is_tuple;
+}
+
+/* Read an isl_multi_union_pw_aff from "s".
+ *
+ * The input has the form
+ *
+ *	[{ [..] : ... ; [..] : ... }, { [..] : ... ; [..] : ... }]
+ *
+ * or
+ *
+ *	[..] -> [{ [..] : ... ; [..] : ... }, { [..] : ... ; [..] : ... }]
+ *
+ * We first check for the special case of an empty tuple "[]".
+ * Then we check if there are any parameters.
+ * Finally, we read the tuple, collecting the individual isl_union_pw_aff
+ * elements in a list and construct the result from the tuple space and
+ * the list.
+ */
+__isl_give isl_multi_union_pw_aff *isl_stream_read_multi_union_pw_aff(
+	__isl_keep isl_stream *s)
+{
+	struct vars *v;
+	isl_set *dom = NULL;
+	isl_space *space;
+	isl_multi_union_pw_aff *mupa = NULL;
+	isl_union_pw_aff_list *list;
+
+	if (next_is_empty_tuple(s)) {
+		if (isl_stream_eat(s, '['))
+			return NULL;
+		if (isl_stream_eat(s, ']'))
+			return NULL;
+		space = isl_space_set_alloc(s->ctx, 0, 0);
+		return isl_multi_union_pw_aff_zero(space);
+	}
+
+	v = vars_new(s->ctx);
+	if (!v)
+		return NULL;
+
+	dom = isl_set_universe(isl_space_params_alloc(s->ctx, 0));
+	if (next_is_param_tuple(s)) {
+		dom = read_map_tuple(s, dom, isl_dim_param, v, 1, 0);
+		if (isl_stream_eat(s, ISL_TOKEN_TO))
+			goto error;
+	}
+	space = isl_set_get_space(dom);
+	isl_set_free(dom);
+	list = isl_union_pw_aff_list_alloc(s->ctx, 0);
+	space = read_tuple_space(s, v, space, 1, 0,
+				&read_union_pw_aff_el, &list);
+	mupa = isl_multi_union_pw_aff_from_union_pw_aff_list(space, list);
+
+	vars_free(v);
+
+	return mupa;
+error:
+	vars_free(v);
+	isl_set_free(dom);
+	isl_multi_union_pw_aff_free(mupa);
+	return NULL;
+}
+
+/* Read an isl_multi_union_pw_aff from "str".
+ */
+__isl_give isl_multi_union_pw_aff *isl_multi_union_pw_aff_read_from_str(
+	isl_ctx *ctx, const char *str)
+{
+	isl_multi_union_pw_aff *mupa;
+	isl_stream *s = isl_stream_new_str(ctx, str);
+	if (!s)
+		return NULL;
+	mupa = isl_stream_read_multi_union_pw_aff(s);
+	isl_stream_free(s);
+	return mupa;
+}
+
 __isl_give isl_union_pw_qpolynomial *isl_stream_read_union_pw_qpolynomial(
-	struct isl_stream *s)
+	__isl_keep isl_stream *s)
 {
 	struct isl_obj obj;
 
@@ -3361,7 +3776,7 @@ __isl_give isl_union_pw_qpolynomial *isl_union_pw_qpolynomial_read_from_str(
 	isl_ctx *ctx, const char *str)
 {
 	isl_union_pw_qpolynomial *upwqp;
-	struct isl_stream *s = isl_stream_new_str(ctx, str);
+	isl_stream *s = isl_stream_new_str(ctx, str);
 	if (!s)
 		return NULL;
 	upwqp = isl_stream_read_union_pw_qpolynomial(s);

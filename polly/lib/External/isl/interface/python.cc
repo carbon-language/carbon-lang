@@ -220,8 +220,8 @@ static void print_callback(QualType type, int arg)
 	for (int i = 0; i < n_arg - 1; ++i) {
 		string arg_type;
 		arg_type = type2python(extract_type(fn->getArgType(i)));
-		printf("            cb_arg%d = %s(ctx=arg0.ctx, ptr=cb_arg%d)\n",
-			i, arg_type.c_str(), i);
+		printf("            cb_arg%d = %s(ctx=arg0.ctx, "
+			"ptr=cb_arg%d)\n", i, arg_type.c_str(), i);
 	}
 	printf("            try:\n");
 	printf("                arg%d(", arg);
@@ -446,7 +446,8 @@ void isl_class::print(map<string, isl_class> &classes, set<string> &done)
 	printf("        libc.free(ptr)\n");
 	printf("        return res\n");
 	printf("    def __repr__(self):\n");
-	printf("        return 'isl.%s(\"%%s\")' %% str(self)\n", p_name.c_str());
+	printf("        return 'isl.%s(\"%%s\")' %% str(self)\n",
+		p_name.c_str());
 
 	for (in = methods.begin(); in != methods.end(); ++in)
 		print_method(*in, subclass, super);

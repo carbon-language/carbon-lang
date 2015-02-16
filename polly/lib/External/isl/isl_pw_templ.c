@@ -644,7 +644,9 @@ __isl_give PW *FN(PW,neg)(__isl_take PW *pw)
 
 	return pw;
 }
+#endif
 
+#ifndef NO_SUB
 __isl_give PW *FN(PW,sub)(__isl_take PW *pw1, __isl_take PW *pw2)
 {
 	return FN(PW,add)(pw1, FN(PW,neg)(pw2));
@@ -802,9 +804,9 @@ __isl_give PW *FN(PW,fix_si)(__isl_take PW *pw, enum isl_dim_type type,
 
 /* Restrict the domain of "pw" by combining each cell
  * with "set" through a call to "fn", where "fn" may be
- * isl_set_intersect or isl_set_intersect_params.
+ * isl_set_intersect, isl_set_intersect_params or isl_set_subtract.
  */
-static __isl_give PW *FN(PW,intersect_aligned)(__isl_take PW *pw,
+static __isl_give PW *FN(PW,restrict_domain_aligned)(__isl_take PW *pw,
 	__isl_take isl_set *set,
 	__isl_give isl_set *(*fn)(__isl_take isl_set *set1,
 				    __isl_take isl_set *set2))
@@ -840,7 +842,7 @@ error:
 static __isl_give PW *FN(PW,intersect_domain_aligned)(__isl_take PW *pw,
 	__isl_take isl_set *set)
 {
-	return FN(PW,intersect_aligned)(pw, set, &isl_set_intersect);
+	return FN(PW,restrict_domain_aligned)(pw, set, &isl_set_intersect);
 }
 
 __isl_give PW *FN(PW,intersect_domain)(__isl_take PW *pw,
@@ -853,7 +855,8 @@ __isl_give PW *FN(PW,intersect_domain)(__isl_take PW *pw,
 static __isl_give PW *FN(PW,intersect_params_aligned)(__isl_take PW *pw,
 	__isl_take isl_set *set)
 {
-	return FN(PW,intersect_aligned)(pw, set, &isl_set_intersect_params);
+	return FN(PW,restrict_domain_aligned)(pw, set,
+					&isl_set_intersect_params);
 }
 
 /* Intersect the domain of "pw" with the parameter domain "context".
@@ -863,6 +866,24 @@ __isl_give PW *FN(PW,intersect_params)(__isl_take PW *pw,
 {
 	return FN(PW,align_params_pw_set_and)(pw, context,
 					&FN(PW,intersect_params_aligned));
+}
+
+/* Subtract "domain' from the domain of "pw", assuming their
+ * parameters have been aligned.
+ */
+static __isl_give PW *FN(PW,subtract_domain_aligned)(__isl_take PW *pw,
+	__isl_take isl_set *domain)
+{
+	return FN(PW,restrict_domain_aligned)(pw, domain, &isl_set_subtract);
+}
+
+/* Subtract "domain' from the domain of "pw".
+ */
+__isl_give PW *FN(PW,subtract_domain)(__isl_take PW *pw,
+	__isl_take isl_set *domain)
+{
+	return FN(PW,align_params_pw_set_and)(pw, domain,
+					&FN(PW,subtract_domain_aligned));
 }
 
 /* Compute the gist of "pw" with respect to the domain constraints
@@ -1513,6 +1534,19 @@ error:
 	return FN(PW,free)(pw);
 }
 #endif
+
+/* Reset the user pointer on all identifiers of parameters and tuples
+ * of the space of "pw".
+ */
+__isl_give PW *FN(PW,reset_user)(__isl_take PW *pw)
+{
+	isl_space *space;
+
+	space = FN(PW,get_space)(pw);
+	space = isl_space_reset_user(space);
+
+	return FN(PW,reset_space)(pw, space);
+}
 
 int FN(PW,has_equal_space)(__isl_keep PW *pw1, __isl_keep PW *pw2)
 {

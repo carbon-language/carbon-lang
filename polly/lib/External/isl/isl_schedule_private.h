@@ -3,42 +3,39 @@
 
 #include <isl/aff.h>
 #include <isl/schedule.h>
+#include <isl_schedule_tree.h>
 
-/* The schedule for an individual domain, plus information about the bands
- * and scheduling dimensions.
- * In particular, we keep track of the number of bands and for each
- * band, the starting position of the next band.  The first band starts at
- * position 0.
- * For each scheduling dimension, we keep track of whether it satisfies
- * the coincidence constraints (within its band).
- */
-struct isl_schedule_node {
-	isl_multi_aff *sched;
-	int	 n_band;
-	int	*band_end;
-	int	*band_id;
-	int	*coincident;
-};
-
-/* Information about the computed schedule.
- * n is the number of nodes/domains/statements.
- * n_band is the maximal number of bands.
- * n_total_row is the number of coordinates of the schedule.
- * dim contains a description of the parameters.
+/* A complete schedule tree.
+ *
  * band_forest points to a band forest representation of the schedule
  * and may be NULL if the forest hasn't been created yet.
+ *
+ * "root" is the root of the schedule tree and may be NULL if we
+ * have created a band forest corresponding to the schedule.
+ *
+ * A pointer to "leaf" may be used to represent a leaf of the schedule.
+ * It should not appear as a child to any other isl_schedule_tree objects,
+ * but an isl_schedule_node may point to "leaf" if it refers to
+ * a leaf of this schedule tree.
  */
 struct isl_schedule {
 	int ref;
 
-	int n;
-	int n_band;
-	int n_total_row;
-	isl_space *dim;
-
 	isl_band_list *band_forest;
+	isl_schedule_tree *root;
 
-	struct isl_schedule_node node[1];
+	struct isl_schedule_tree leaf;
 };
+
+__isl_give isl_schedule *isl_schedule_from_schedule_tree(isl_ctx *ctx,
+	__isl_take isl_schedule_tree *tree);
+__isl_give isl_schedule *isl_schedule_set_root(
+	__isl_take isl_schedule *schedule, __isl_take isl_schedule_tree *tree);
+__isl_give isl_space *isl_schedule_get_space(
+	__isl_keep isl_schedule *schedule);
+__isl_give isl_union_set *isl_schedule_get_domain(
+	__isl_keep isl_schedule *schedule);
+__isl_keep isl_schedule_tree *isl_schedule_peek_leaf(
+	__isl_keep isl_schedule *schedule);
 
 #endif

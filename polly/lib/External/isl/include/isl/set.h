@@ -158,10 +158,6 @@ __isl_give isl_printer *isl_printer_print_basic_set(
 	__isl_take isl_printer *printer, __isl_keep isl_basic_set *bset);
 __isl_give isl_printer *isl_printer_print_set(__isl_take isl_printer *printer,
 	__isl_keep isl_set *map);
-void isl_basic_set_print(__isl_keep isl_basic_set *bset, FILE *out, int indent,
-	const char *prefix, const char *suffix, unsigned output_format);
-void isl_set_print(__isl_keep struct isl_set *set, FILE *out, int indent,
-	unsigned output_format);
 __isl_give isl_basic_set *isl_basic_set_fix_si(__isl_take isl_basic_set *bset,
 		enum isl_dim_type type, unsigned pos, int value);
 __isl_give isl_basic_set *isl_basic_set_fix_val(__isl_take isl_basic_set *bset,

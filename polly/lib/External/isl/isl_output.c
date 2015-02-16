@@ -1008,24 +1008,6 @@ error:
 	return NULL;
 }
 
-void isl_basic_map_print(__isl_keep isl_basic_map *bmap, FILE *out, int indent,
-	const char *prefix, const char *suffix, unsigned output_format)
-{
-	isl_printer *printer;
-
-	if (!bmap)
-		return;
-
-	printer = isl_printer_to_file(bmap->ctx, out);
-	printer = isl_printer_set_indent(printer, indent);
-	printer = isl_printer_set_prefix(printer, prefix);
-	printer = isl_printer_set_suffix(printer, suffix);
-	printer = isl_printer_set_output_format(printer, output_format);
-	isl_printer_print_basic_map(printer, bmap);
-
-	isl_printer_free(printer);
-}
-
 __isl_give isl_printer *isl_printer_print_basic_set(__isl_take isl_printer *p,
 	__isl_keep isl_basic_set *bset)
 {
@@ -1048,24 +1030,6 @@ error:
 	return NULL;
 }
 
-void isl_basic_set_print(struct isl_basic_set *bset, FILE *out, int indent,
-	const char *prefix, const char *suffix, unsigned output_format)
-{
-	isl_printer *printer;
-
-	if (!bset)
-		return;
-
-	printer = isl_printer_to_file(bset->ctx, out);
-	printer = isl_printer_set_indent(printer, indent);
-	printer = isl_printer_set_prefix(printer, prefix);
-	printer = isl_printer_set_suffix(printer, suffix);
-	printer = isl_printer_set_output_format(printer, output_format);
-	isl_printer_print_basic_set(printer, bset);
-
-	isl_printer_free(printer);
-}
-
 __isl_give isl_printer *isl_printer_print_set(__isl_take isl_printer *p,
 	__isl_keep isl_set *set)
 {
@@ -1085,22 +1049,6 @@ __isl_give isl_printer *isl_printer_print_set(__isl_take isl_printer *p,
 error:
 	isl_printer_free(p);
 	return NULL;
-}
-
-void isl_set_print(struct isl_set *set, FILE *out, int indent,
-	unsigned output_format)
-{
-	isl_printer *printer;
-
-	if (!set)
-		return;
-
-	printer = isl_printer_to_file(set->ctx, out);
-	printer = isl_printer_set_indent(printer, indent);
-	printer = isl_printer_set_output_format(printer, output_format);
-	printer = isl_printer_print_set(printer, set);
-
-	isl_printer_free(printer);
 }
 
 __isl_give isl_printer *isl_printer_print_map(__isl_take isl_printer *p,
@@ -1223,22 +1171,6 @@ __isl_give isl_printer *isl_printer_print_union_set(__isl_take isl_printer *p,
 error:
 	isl_printer_free(p);
 	return NULL;
-}
-
-void isl_map_print(__isl_keep isl_map *map, FILE *out, int indent,
-	unsigned output_format)
-{
-	isl_printer *printer;
-
-	if (!map)
-		return;
-
-	printer = isl_printer_to_file(map->ctx, out);
-	printer = isl_printer_set_indent(printer, indent);
-	printer = isl_printer_set_output_format(printer, output_format);
-	printer = isl_printer_print_map(printer, map);
-
-	isl_printer_free(printer);
 }
 
 static int upoly_rec_n_non_zero(__isl_keep struct isl_upoly_rec *rec)
@@ -2161,11 +2093,31 @@ error:
 	return NULL;
 }
 
+/* Print the body of an isl_pw_aff, i.e., a semicolon delimited
+ * sequence of affine expressions, each followed by constraints.
+ */
+static __isl_give isl_printer *print_pw_aff_body(
+	__isl_take isl_printer *p, __isl_keep isl_pw_aff *pa)
+{
+	int i;
+
+	if (!pa)
+		return isl_printer_free(p);
+
+	for (i = 0; i < pa->n; ++i) {
+		if (i)
+			p = isl_printer_print_str(p, "; ");
+		p = print_aff(p, pa->p[i].aff);
+		p = print_disjuncts((isl_map *)pa->p[i].set, p, 0);
+	}
+
+	return p;
+}
+
 static __isl_give isl_printer *print_pw_aff_isl(__isl_take isl_printer *p,
 	__isl_keep isl_pw_aff *pwaff)
 {
 	struct isl_print_space_data data = { 0 };
-	int i;
 
 	if (!pwaff)
 		goto error;
@@ -2175,12 +2127,7 @@ static __isl_give isl_printer *print_pw_aff_isl(__isl_take isl_printer *p,
 		p = isl_printer_print_str(p, " -> ");
 	}
 	p = isl_printer_print_str(p, "{ ");
-	for (i = 0; i < pwaff->n; ++i) {
-		if (i)
-			p = isl_printer_print_str(p, "; ");
-		p = print_aff(p, pwaff->p[i].aff);
-		p = print_disjuncts((isl_map *)pwaff->p[i].set, p, 0);
-	}
+	p = print_pw_aff_body(p, pwaff);
 	p = isl_printer_print_str(p, " }");
 	return p;
 error:
@@ -2343,6 +2290,84 @@ __isl_give isl_printer *isl_printer_print_pw_aff(__isl_take isl_printer *p,
 error:
 	isl_printer_free(p);
 	return NULL;
+}
+
+/* Print "pa" in a sequence of isl_pw_affs delimited by semicolons.
+ * Each isl_pw_aff itself is also printed as semicolon delimited
+ * sequence of pieces.
+ * If data->first = 1, then this is the first in the sequence.
+ * Update data->first to tell the next element that it is not the first.
+ */
+static int print_pw_aff_body_wrap(__isl_take isl_pw_aff *pa,
+	void *user)
+{
+	struct isl_union_print_data *data;
+	data = (struct isl_union_print_data *) user;
+
+	if (!data->first)
+		data->p = isl_printer_print_str(data->p, "; ");
+	data->first = 0;
+
+	data->p = print_pw_aff_body(data->p, pa);
+	isl_pw_aff_free(pa);
+
+	return data->p ? 0 : -1;
+}
+
+/* Print the body of an isl_union_pw_aff, i.e., a semicolon delimited
+ * sequence of affine expressions, each followed by constraints,
+ * with the sequence enclosed in braces.
+ */
+static __isl_give isl_printer *print_union_pw_aff_body(
+	__isl_take isl_printer *p, __isl_keep isl_union_pw_aff *upa)
+{
+	struct isl_union_print_data data = { p, 1 };
+
+	p = isl_printer_print_str(p, s_open_set[0]);
+	data.p = p;
+	if (isl_union_pw_aff_foreach_pw_aff(upa,
+					    &print_pw_aff_body_wrap, &data) < 0)
+		data.p = isl_printer_free(p);
+	p = data.p;
+	p = isl_printer_print_str(p, s_close_set[0]);
+
+	return p;
+}
+
+/* Print the isl_union_pw_aff "upa" to "p" in isl format.
+ *
+ * The individual isl_pw_affs are delimited by a semicolon.
+ */
+static __isl_give isl_printer *print_union_pw_aff_isl(
+	__isl_take isl_printer *p, __isl_keep isl_union_pw_aff *upa)
+{
+	struct isl_print_space_data data = { 0 };
+	isl_space *space;
+
+	space = isl_union_pw_aff_get_space(upa);
+	if (isl_space_dim(space, isl_dim_param) > 0) {
+		p = print_tuple(space, p, isl_dim_param, &data);
+		p = isl_printer_print_str(p, s_to[0]);
+	}
+	isl_space_free(space);
+	p = print_union_pw_aff_body(p, upa);
+	return p;
+}
+
+/* Print the isl_union_pw_aff "upa" to "p".
+ *
+ * We currently only support an isl format.
+ */
+__isl_give isl_printer *isl_printer_print_union_pw_aff(
+	__isl_take isl_printer *p, __isl_keep isl_union_pw_aff *upa)
+{
+	if (!p || !upa)
+		return isl_printer_free(p);
+
+	if (p->output_format == ISL_FORMAT_ISL)
+		return print_union_pw_aff_isl(p, upa);
+	isl_die(isl_printer_get_ctx(p), isl_error_unsupported,
+		"unsupported output format", return isl_printer_free(p));
 }
 
 /* Print dimension "pos" of data->space to "p".
@@ -2695,4 +2720,65 @@ __isl_give isl_printer *isl_printer_print_multi_val(
 		return print_multi_val_isl(p, mv);
 	isl_die(p->ctx, isl_error_unsupported, "unsupported output format",
 		return isl_printer_free(p));
+}
+
+/* Print dimension "pos" of data->space to "p".
+ *
+ * data->user is assumed to be an isl_multi_union_pw_aff.
+ *
+ * The current dimension is necessarily a set dimension, so
+ * we print the corresponding isl_union_pw_aff, including
+ * the braces.
+ */
+static __isl_give isl_printer *print_union_pw_aff_dim(__isl_take isl_printer *p,
+	struct isl_print_space_data *data, unsigned pos)
+{
+	isl_multi_union_pw_aff *mupa = data->user;
+	isl_union_pw_aff *upa;
+
+	upa = isl_multi_union_pw_aff_get_union_pw_aff(mupa, pos);
+	p = print_union_pw_aff_body(p, upa);
+	isl_union_pw_aff_free(upa);
+
+	return p;
+}
+
+/* Print the isl_multi_union_pw_aff "mupa" to "p" in isl format.
+ */
+static __isl_give isl_printer *print_multi_union_pw_aff_isl(
+	__isl_take isl_printer *p, __isl_keep isl_multi_union_pw_aff *mupa)
+{
+	struct isl_print_space_data data = { 0 };
+	isl_space *space;
+
+	space = isl_multi_union_pw_aff_get_space(mupa);
+	if (isl_space_dim(space, isl_dim_param) > 0) {
+		struct isl_print_space_data space_data = { 0 };
+		p = print_tuple(space, p, isl_dim_param, &space_data);
+		p = isl_printer_print_str(p, s_to[0]);
+	}
+
+	data.print_dim = &print_union_pw_aff_dim;
+	data.user = mupa;
+
+	p = print_space(space, p, 0, &data);
+	isl_space_free(space);
+
+	return p;
+}
+
+/* Print the isl_multi_union_pw_aff "mupa" to "p" in isl format.
+ *
+ * We currently only support an isl format.
+ */
+__isl_give isl_printer *isl_printer_print_multi_union_pw_aff(
+	__isl_take isl_printer *p, __isl_keep isl_multi_union_pw_aff *mupa)
+{
+	if (!p || !mupa)
+		return isl_printer_free(p);
+
+	if (p->output_format == ISL_FORMAT_ISL)
+		return print_multi_union_pw_aff_isl(p, mupa);
+	isl_die(isl_printer_get_ctx(p), isl_error_unsupported,
+		"unsupported output format", return isl_printer_free(p));
 }

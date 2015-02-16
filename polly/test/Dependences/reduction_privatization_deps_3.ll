@@ -1,15 +1,13 @@
 ; RUN: opt %loadPolly -polly-dependences -analyze < %s | FileCheck %s
 ;
 ;  CHECK: RAW dependences:
-;  CHECK-DAG:  Stmt_S2[0, 0] -> Stmt_S3[1]
-;  CHECK-DAG:  Stmt_S2[i0, 1 - i0] -> Stmt_S3[i0] : i0 <= 1 and i0 >= 0
+;  CHECK-DAG:  Stmt_S2[i0, i1] -> Stmt_S3[o0] : o0 <= 1 and i1 <= 1 - i0 and o0 <= 1 + i0 - i1 and o0 >= 1 - i1
 ;  CHECK-DAG:  Stmt_S3[i0] -> Stmt_S2[o0, 1 - i0] : i0 <= 1 and i0 >= 0 and o0 >= 1 + i0 and o0 <= 98
 ;  CHECK-DAG:  Stmt_S1[i0] -> Stmt_S3[2 + i0] : i0 >= 0 and i0 <= 96
 ;  CHECK: WAR dependences:
 ;  CHECK:   {  }
 ;  CHECK: WAW dependences:
-;  CHECK-DAG:  Stmt_S2[0, 0] -> Stmt_S3[1]
-;  CHECK-DAG:  Stmt_S2[i0, 1 - i0] -> Stmt_S3[i0] : i0 <= 1 and i0 >= 0
+;  CHECK-DAG:  Stmt_S2[i0, i1] -> Stmt_S3[o0] : o0 <= 1 and i1 <= 1 - i0 and o0 <= 1 + i0 - i1 and o0 >= 1 - i1
 ;  CHECK-DAG:  Stmt_S3[i0] -> Stmt_S2[o0, 1 - i0] : i0 <= 1 and i0 >= 0 and o0 >= 1 + i0 and o0 <= 98
 ;  CHECK-DAG:  Stmt_S1[i0] -> Stmt_S3[2 + i0] : i0 >= 0 and i0 <= 96
 ;  CHECK: Reduction dependences:

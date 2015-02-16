@@ -70,6 +70,9 @@ __isl_give isl_local_space *isl_local_space_insert_dims(
 __isl_give isl_local_space *isl_local_space_intersect(
 	__isl_take isl_local_space *ls1, __isl_take isl_local_space *ls2);
 
+__isl_give isl_local_space *isl_local_space_wrap(
+	__isl_take isl_local_space *ls);
+
 int isl_local_space_is_equal(__isl_keep isl_local_space *ls1,
 	__isl_keep isl_local_space *ls2);
 

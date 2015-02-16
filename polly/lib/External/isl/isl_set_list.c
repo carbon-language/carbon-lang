@@ -10,6 +10,11 @@
 
 #include <isl_list_templ.h>
 
+#undef EL
+#define EL isl_union_set
+
+#include <isl_list_templ.h>
+
 #undef BASE
 #define BASE basic_set
 
@@ -17,5 +22,10 @@
 
 #undef BASE
 #define BASE set
+
+#include <isl_list_templ.c>
+
+#undef BASE
+#define BASE union_set
 
 #include <isl_list_templ.c>

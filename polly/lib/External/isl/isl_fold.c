@@ -641,6 +641,7 @@ __isl_give isl_qpolynomial_fold *isl_qpolynomial_fold_gist_params(
 #define DEFAULT_IS_ZERO 1
 
 #define NO_NEG
+#define NO_SUB
 #define NO_PULLBACK
 
 #include <isl_pw_templ.c>
@@ -651,7 +652,6 @@ __isl_give isl_qpolynomial_fold *isl_qpolynomial_fold_gist_params(
 #define PART isl_pw_qpolynomial_fold
 #undef PARTS
 #define PARTS pw_qpolynomial_fold
-#define ALIGN_DOMAIN
 
 #define NO_SUB
 
@@ -901,7 +901,8 @@ __isl_give isl_union_pw_qpolynomial_fold *isl_union_pw_qpolynomial_fold_fold_pw_
 
 	hash = isl_space_get_hash(part->dim);
 	entry = isl_hash_table_find(u->space->ctx, &u->table, hash,
-				    &has_same_domain_space, part->dim, 1);
+			&isl_union_pw_qpolynomial_fold_has_same_domain_space,
+			part->dim, 1);
 	if (!entry)
 		goto error;
 
@@ -1366,7 +1367,8 @@ static int add_pwqp(__isl_take isl_pw_qpolynomial *pwqp, void *user)
 	ctx = pwqp->dim->ctx;
 	hash = isl_space_get_hash(pwqp->dim);
 	entry = isl_hash_table_find(ctx, &(*upwf)->table, hash,
-				     &has_same_domain_space, pwqp->dim, 1);
+			 &isl_union_pw_qpolynomial_fold_has_same_domain_space,
+			 pwqp->dim, 1);
 	if (!entry)
 		goto error;
 

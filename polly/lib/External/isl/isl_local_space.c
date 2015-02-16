@@ -1361,3 +1361,20 @@ __isl_give isl_local_space *isl_local_space_flatten_range(
 
 	return ls;
 }
+
+/* Given the local space "ls" of a map, return the local space of a set
+ * that lives in a space that wraps the space of "ls" and that has
+ * the same divs.
+ */
+__isl_give isl_local_space *isl_local_space_wrap(__isl_take isl_local_space *ls)
+{
+	ls = isl_local_space_cow(ls);
+	if (!ls)
+		return NULL;
+
+	ls->dim = isl_space_wrap(ls->dim);
+	if (!ls->dim)
+		return isl_local_space_free(ls);
+
+	return ls;
+}

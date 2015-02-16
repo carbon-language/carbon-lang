@@ -1,8 +1,7 @@
 ; RUN: opt %loadPolly -polly-dependences -analyze < %s | FileCheck %s
 ;
 ; CHECK: RAW dependences:
-; CHECK-DAG: Stmt_for_body3[i0, 1] -> Stmt_for_body3[1 + i0, o1] : i0 <= 1022 and i0 >= 0 and o1 <= 511 and o1 >= 1
-; CHECK-DAG: Stmt_for_body3[i0, 0] -> Stmt_for_body3[i0, o1] : i0 <= 1023 and i0 >= 0 and o1 <= 511 and o1 >= 1
+; CHECK-DAG: Stmt_for_body3[i0, i1] -> Stmt_for_body3[i0 + i1, o1] : i1 <= 1023 - i0 and i1 >= 0 and i1 <= 1 and i0 >= 0 and o1 <= 511 and o1 >= 1 
 ; CHECK: WAR dependences:
 ; CHECK:   {  }
 ; CHECK: WAW dependences:

@@ -7,8 +7,7 @@
 ; CHECK: WAW dependences:
 ; CHECK:   {  }
 ; CHECK: Reduction dependences:
-; CHECK-DAG: Stmt_for_body3[i0, i1] -> Stmt_for_body3[i0, 1 + i1] : i0 <= 1023 and i0 >= 0 and i1 <= 1022 and i1 >= 0
-; CHECK-DAG: Stmt_for_body3[i0, i1] -> Stmt_for_body3[1 + i0, i1] : i0 <= 1022 and i0 >= 0 and i1 <= 1023 and i1 >= 0
+; CHECK-DAG: Stmt_for_body3[i0, i1] -> Stmt_for_body3[o0, 1 + i0 + i1 - o0] : o0 <= 1 + i0 and o0 >= i0 and o0 <= 1023 and i0 >= 0 and i1 >= 0 and o0 >= -1022 + i0 + i1
 ;
 ; void f(int *restrict A, int *restrict B, int *restrict Values) {
 ;   for (int i = 0; i < 1024; i++) {
