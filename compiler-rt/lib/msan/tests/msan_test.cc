@@ -80,6 +80,12 @@ int shmdt(const void *);
 # include <net/ethernet.h>
 # define f_namelen f_namemax  // FreeBSD names this statfs field so.
 # define cpu_set_t cpuset_t
+extern "C" {
+// FreeBSD's <ssp/string.h> defines mempcpy() to be a macro expanding into
+// a __builtin___mempcpy_chk() call, but since Msan RTL defines it as an
+// ordinary function, we can declare it here to complete the tests.
+void *mempcpy(void *dest, const void *src, size_t n);
+}
 #endif
 
 #if defined(__i386__) || defined(__x86_64__)
