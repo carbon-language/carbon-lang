@@ -252,12 +252,7 @@ class RegisterCommandsTestCase(TestBase):
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Spawn a new process
-        pid = 0
-        if sys.platform.startswith('linux'):
-            pid = self.forkSubprocess(exe, ['wait_for_attach'])
-        else:
-            proc = self.spawnSubprocess(exe, ['wait_for_attach'])
-            pid = proc.pid
+        pid = self.spawnSubprocess(exe, ['wait_for_attach']).pid
         self.addTearDownHook(self.cleanupSubprocesses)
 
         if self.TraceOn():
