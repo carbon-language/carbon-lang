@@ -815,6 +815,22 @@ bool RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
   return true;
 }
 
+/// Returns true if @p MI defines the full vreg @p Reg, as opposed to just
+/// defining a subregister.
+static bool definesFullReg(const MachineInstr &MI, unsigned Reg) {
+  assert(!TargetRegisterInfo::isPhysicalRegister(Reg) &&
+         "This code cannot handle physreg aliasing");
+  for (const MachineOperand &Op : MI.operands()) {
+    if (!Op.isReg() || !Op.isDef() || Op.getReg() != Reg)
+      continue;
+    // Return true if we define the full register or don't care about the value
+    // inside other subregisters.
+    if (Op.getSubReg() == 0 || Op.isUndef())
+      return true;
+  }
+  return false;
+}
+
 bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
                                                 MachineInstr *CopyMI,
                                                 bool &IsDefCopy) {
@@ -842,6 +858,8 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
   if (!TII->isAsCheapAsAMove(DefMI))
     return false;
   if (!TII->isTriviallyReMaterializable(DefMI, AA))
+    return false;
+  if (!definesFullReg(*DefMI, SrcReg))
     return false;
   bool SawStore = false;
   if (!DefMI->isSafeToMove(TII, AA, SawStore))
