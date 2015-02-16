@@ -653,13 +653,8 @@ std::error_code FileCOFF::AtomizeDefinedSymbolsInSection(
   // Sort symbols by position.
   std::stable_sort(
       symbols.begin(), symbols.end(),
-      // For some reason MSVC fails to allow the lambda in this context with a
-      // "illegal use of local type in type instantiation". MSVC is clearly
-      // wrong here. Force a conversion to function pointer to work around.
-      static_cast<bool (*)(llvm::object::COFFSymbolRef,
-                           llvm::object::COFFSymbolRef)>(
-          [](llvm::object::COFFSymbolRef a, llvm::object::COFFSymbolRef b)
-              -> bool { return a.getValue() < b.getValue(); }));
+      [](llvm::object::COFFSymbolRef a, llvm::object::COFFSymbolRef b)
+          -> bool { return a.getValue() < b.getValue(); });
 
   StringRef sectionName;
   if (std::error_code ec = _obj->getSectionName(section, sectionName))
