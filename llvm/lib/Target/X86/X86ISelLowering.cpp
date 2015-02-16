@@ -7645,14 +7645,16 @@ static SDValue lowerVectorShuffleAsDecomposedShuffleBlend(SDLoc DL, MVT VT,
 /// elements, and takes the low elements as the result. Note that while this is
 /// specified as a *right shift* because x86 is little-endian, it is a *left
 /// rotate* of the vector lanes.
-///
-/// Note that this only handles 128-bit vector widths currently.
 static SDValue lowerVectorShuffleAsByteRotate(SDLoc DL, MVT VT, SDValue V1,
                                               SDValue V2,
                                               ArrayRef<int> Mask,
                                               const X86Subtarget *Subtarget,
                                               SelectionDAG &DAG) {
   assert(!isNoopShuffleMask(Mask) && "We shouldn't lower no-op shuffles!");
+
+  int NumElts = Mask.size();
+  int NumLanes = VT.getSizeInBits() / 128;
+  int NumLaneElts = NumElts / NumLanes;
 
   // We need to detect various ways of spelling a rotation:
   //   [11, 12, 13, 14, 15,  0,  1,  2]
@@ -7663,44 +7665,52 @@ static SDValue lowerVectorShuffleAsByteRotate(SDLoc DL, MVT VT, SDValue V1,
   //   [-1,  4,  5,  6, -1, -1, -1, -1]
   int Rotation = 0;
   SDValue Lo, Hi;
-  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
-    if (Mask[i] == -1)
-      continue;
-    assert(Mask[i] >= 0 && "Only -1 is a valid negative mask element!");
+  for (int l = 0; l < NumElts; l += NumLaneElts) {
+    for (int i = 0; i < NumLaneElts; ++i) {
+      if (Mask[l + i] == -1)
+        continue;
+      assert(Mask[l + i] >= 0 && "Only -1 is a valid negative mask element!");
 
-    // Based on the mod-Size value of this mask element determine where
-    // a rotated vector would have started.
-    int StartIdx = i - (Mask[i] % Size);
-    if (StartIdx == 0)
-      // The identity rotation isn't interesting, stop.
-      return SDValue();
+      // Get the mod-Size index and lane correct it.
+      int LaneIdx = (Mask[l + i] % NumElts) - l;
+      // Make sure it was in this lane.
+      if (LaneIdx < 0 || LaneIdx >= NumLaneElts)
+        return SDValue();
 
-    // If we found the tail of a vector the rotation must be the missing
-    // front. If we found the head of a vector, it must be how much of the head.
-    int CandidateRotation = StartIdx < 0 ? -StartIdx : Size - StartIdx;
+      // Determine where a rotated vector would have started.
+      int StartIdx = i - LaneIdx;
+      if (StartIdx == 0)
+        // The identity rotation isn't interesting, stop.
+        return SDValue();
 
-    if (Rotation == 0)
-      Rotation = CandidateRotation;
-    else if (Rotation != CandidateRotation)
-      // The rotations don't match, so we can't match this mask.
-      return SDValue();
+      // If we found the tail of a vector the rotation must be the missing
+      // front. If we found the head of a vector, it must be how much of the
+      // head.
+      int CandidateRotation = StartIdx < 0 ? -StartIdx : NumLaneElts - StartIdx;
 
-    // Compute which value this mask is pointing at.
-    SDValue MaskV = Mask[i] < Size ? V1 : V2;
+      if (Rotation == 0)
+        Rotation = CandidateRotation;
+      else if (Rotation != CandidateRotation)
+        // The rotations don't match, so we can't match this mask.
+        return SDValue();
 
-    // Compute which of the two target values this index should be assigned to.
-    // This reflects whether the high elements are remaining or the low elements
-    // are remaining.
-    SDValue &TargetV = StartIdx < 0 ? Hi : Lo;
+      // Compute which value this mask is pointing at.
+      SDValue MaskV = Mask[l + i] < NumElts ? V1 : V2;
 
-    // Either set up this value if we've not encountered it before, or check
-    // that it remains consistent.
-    if (!TargetV)
-      TargetV = MaskV;
-    else if (TargetV != MaskV)
-      // This may be a rotation, but it pulls from the inputs in some
-      // unsupported interleaving.
-      return SDValue();
+      // Compute which of the two target values this index should be assigned
+      // to. This reflects whether the high elements are remaining or the low
+      // elements are remaining.
+      SDValue &TargetV = StartIdx < 0 ? Hi : Lo;
+
+      // Either set up this value if we've not encountered it before, or check
+      // that it remains consistent.
+      if (!TargetV)
+        TargetV = MaskV;
+      else if (TargetV != MaskV)
+        // This may be a rotation, but it pulls from the inputs in some
+        // unsupported interleaving.
+        return SDValue();
+    }
   }
 
   // Check that we successfully analyzed the mask, and normalize the results.
@@ -7711,25 +7721,26 @@ static SDValue lowerVectorShuffleAsByteRotate(SDLoc DL, MVT VT, SDValue V1,
   else if (!Hi)
     Hi = Lo;
 
+  // The actual rotate instruction rotates bytes, so we need to scale the
+  // rotation based on how many bytes are in the vector lane.
+  int Scale = 16 / NumLaneElts;
+
+  // SSSE3 targets can use the palignr instruction.
+  if (Subtarget->hasSSSE3()) {
+    // Cast the inputs to i8 vector of correct length to match PALIGNR.
+    MVT AlignVT = MVT::getVectorVT(MVT::i8, 16 * NumLanes);
+    Lo = DAG.getNode(ISD::BITCAST, DL, AlignVT, Lo);
+    Hi = DAG.getNode(ISD::BITCAST, DL, AlignVT, Hi);
+
+    return DAG.getNode(ISD::BITCAST, DL, VT,
+                       DAG.getNode(X86ISD::PALIGNR, DL, AlignVT, Hi, Lo,
+                                   DAG.getConstant(Rotation * Scale, MVT::i8)));
+  }
+
   assert(VT.getSizeInBits() == 128 &&
          "Rotate-based lowering only supports 128-bit lowering!");
   assert(Mask.size() <= 16 &&
          "Can shuffle at most 16 bytes in a 128-bit vector!");
-
-  // The actual rotate instruction rotates bytes, so we need to scale the
-  // rotation based on how many bytes are in the vector.
-  int Scale = 16 / Mask.size();
-
-  // SSSE3 targets can use the palignr instruction
-  if (Subtarget->hasSSSE3()) {
-    // Cast the inputs to v16i8 to match PALIGNR.
-    Lo = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Lo);
-    Hi = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Hi);
-
-    return DAG.getNode(ISD::BITCAST, DL, VT,
-                       DAG.getNode(X86ISD::PALIGNR, DL, MVT::v16i8, Hi, Lo,
-                                   DAG.getConstant(Rotation * Scale, MVT::i8)));
-  }
 
   // Default SSE2 implementation
   int LoByteShift = 16 - Rotation * Scale;
@@ -10869,6 +10880,20 @@ static SDValue lowerV8I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8i32, V1, V2);
   }
 
+  // Try to use bit shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsBitShift(
+          DL, MVT::v8i32, V1, V2, Mask, DAG))
+    return Shift;
+
+  // Try to use byte shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsByteShift(
+          DL, MVT::v8i32, V1, V2, Mask, DAG))
+    return Shift;
+
+  if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
+          DL, MVT::v8i32, V1, V2, Mask, Subtarget, DAG))
+    return Rotate;
+
   // If the shuffle patterns aren't repeated but it is a single input, directly
   // generate a cross-lane VPERMD instruction.
   if (isSingleInputShuffleMask(Mask)) {
@@ -10880,16 +10905,6 @@ static SDValue lowerV8I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
         X86ISD::VPERMV, DL, MVT::v8i32,
         DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i32, VPermMask), V1);
   }
-
-  // Try to use bit shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsBitShift(
-          DL, MVT::v8i32, V1, V2, Mask, DAG))
-    return Shift;
-
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v8i32, V1, V2, Mask, DAG))
-    return Shift;
 
   // Try to simplify this by merging 128-bit lanes to enable a lane-based
   // shuffle.
@@ -10947,6 +10962,21 @@ static SDValue lowerV16I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                           12, 28, 13, 29, 14, 30, 15, 31))
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i16, V1, V2);
 
+  // Try to use bit shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsBitShift(
+          DL, MVT::v16i16, V1, V2, Mask, DAG))
+    return Shift;
+
+  // Try to use byte shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsByteShift(
+          DL, MVT::v16i16, V1, V2, Mask, DAG))
+    return Shift;
+
+  // Try to use byte rotation instructions.
+  if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
+          DL, MVT::v16i16, V1, V2, Mask, Subtarget, DAG))
+    return Rotate;
+
   if (isSingleInputShuffleMask(Mask)) {
     // There are no generalized cross-lane shuffle operations available on i16
     // element types.
@@ -10973,16 +11003,6 @@ static SDValue lowerV16I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
             DAG.getNode(ISD::BITCAST, DL, MVT::v32i8, V1),
             DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v32i8, PSHUFBMask)));
   }
-
-  // Try to use bit shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsBitShift(
-          DL, MVT::v16i16, V1, V2, Mask, DAG))
-    return Shift;
-
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v16i16, V1, V2, Mask, DAG))
-    return Shift;
 
   // Try to simplify this by merging 128-bit lanes to enable a lane-based
   // shuffle.
@@ -11043,6 +11063,21 @@ static SDValue lowerV32I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
           24, 56, 25, 57, 26, 58, 27, 59, 28, 60, 29, 61, 30, 62, 31, 63))
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v32i8, V1, V2);
 
+  // Try to use bit shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsBitShift(
+          DL, MVT::v32i8, V1, V2, Mask, DAG))
+    return Shift;
+
+  // Try to use byte shift instructions.
+  if (SDValue Shift = lowerVectorShuffleAsByteShift(
+          DL, MVT::v32i8, V1, V2, Mask, DAG))
+    return Shift;
+
+  // Try to use byte rotation instructions.
+  if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
+          DL, MVT::v32i8, V1, V2, Mask, Subtarget, DAG))
+    return Rotate;
+
   if (isSingleInputShuffleMask(Mask)) {
     // There are no generalized cross-lane shuffle operations available on i8
     // element types.
@@ -11061,16 +11096,6 @@ static SDValue lowerV32I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
         X86ISD::PSHUFB, DL, MVT::v32i8, V1,
         DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v32i8, PSHUFBMask));
   }
-
-  // Try to use bit shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsBitShift(
-          DL, MVT::v32i8, V1, V2, Mask, DAG))
-    return Shift;
-
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v32i8, V1, V2, Mask, DAG))
-    return Shift;
 
   // Try to simplify this by merging 128-bit lanes to enable a lane-based
   // shuffle.

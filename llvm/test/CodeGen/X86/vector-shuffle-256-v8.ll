@@ -1957,6 +1957,94 @@ define <8 x i32> @shuffle_v8i32_1U3z5zUU(<8 x i32> %a) {
   ret <8 x i32> %shuffle
 }
 
+define <8 x i32> @shuffle_v8i32_B012F456(<8 x i32> %a, <8 x i32> %b) {
+; AVX1-LABEL: shuffle_v8i32_B012F456:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vshufps {{.*#+}} ymm1 = ymm1[3,0],ymm0[0,0],ymm1[7,4],ymm0[4,4]
+; AVX1-NEXT:    vshufps {{.*#+}} ymm0 = ymm1[0,2],ymm0[1,2],ymm1[4,6],ymm0[5,6]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: shuffle_v8i32_B012F456:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpalignr {{.*#+}} ymm0 = ymm1[12,13,14,15],ymm0[0,1,2,3,4,5,6,7,8,9,10,11],ymm1[28,29,30,31],ymm0[16,17,18,19,20,21,22,23,24,25,26,27]
+; AVX2-NEXT:    retq
+  %shuffle = shufflevector <8 x i32> %a, <8 x i32> %b, <8 x i32> <i32 11, i32 0, i32 1, i32 2, i32 15, i32 4, i32 5, i32 6>
+  ret <8 x i32> %shuffle
+}
+
+define <8 x i32> @shuffle_v8i32_1238567C(<8 x i32> %a, <8 x i32> %b) {
+; AVX1-LABEL: shuffle_v8i32_1238567C:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vshufps {{.*#+}} ymm1 = ymm1[0,0],ymm0[3,0],ymm1[4,4],ymm0[7,4]
+; AVX1-NEXT:    vshufps {{.*#+}} ymm0 = ymm0[1,2],ymm1[2,0],ymm0[5,6],ymm1[6,4]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: shuffle_v8i32_1238567C:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpalignr {{.*#+}} ymm0 = ymm0[4,5,6,7,8,9,10,11,12,13,14,15],ymm1[0,1,2,3],ymm0[20,21,22,23,24,25,26,27,28,29,30,31],ymm1[16,17,18,19]
+; AVX2-NEXT:    retq
+  %shuffle = shufflevector <8 x i32> %a, <8 x i32> %b, <8 x i32> <i32 1, i32 2, i32 3, i32 8, i32 5, i32 6, i32 7, i32 12>
+  ret <8 x i32> %shuffle
+}
+
+define <8 x i32> @shuffle_v8i32_9AB0DEF4(<8 x i32> %a, <8 x i32> %b) {
+; AVX1-LABEL: shuffle_v8i32_9AB0DEF4:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vshufps {{.*#+}} ymm0 = ymm0[0,0],ymm1[3,0],ymm0[4,4],ymm1[7,4]
+; AVX1-NEXT:    vshufps {{.*#+}} ymm0 = ymm1[1,2],ymm0[2,0],ymm1[5,6],ymm0[6,4]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: shuffle_v8i32_9AB0DEF4:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpalignr {{.*#+}} ymm0 = ymm1[4,5,6,7,8,9,10,11,12,13,14,15],ymm0[0,1,2,3],ymm1[20,21,22,23,24,25,26,27,28,29,30,31],ymm0[16,17,18,19]
+; AVX2-NEXT:    retq
+  %shuffle = shufflevector <8 x i32> %a, <8 x i32> %b, <8 x i32> <i32 9, i32 10, i32 11, i32 0, i32 13, i32 14, i32 15, i32 4>
+  ret <8 x i32> %shuffle
+}
+
+define <8 x i32> @shuffle_v8i32_389A7CDE(<8 x i32> %a, <8 x i32> %b) {
+; AVX1-LABEL: shuffle_v8i32_389A7CDE:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vshufps {{.*#+}} ymm0 = ymm0[3,0],ymm1[0,0],ymm0[7,4],ymm1[4,4]
+; AVX1-NEXT:    vshufps {{.*#+}} ymm0 = ymm0[0,2],ymm1[1,2],ymm0[4,6],ymm1[5,6]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: shuffle_v8i32_389A7CDE:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpalignr {{.*#+}} ymm0 = ymm0[12,13,14,15],ymm1[0,1,2,3,4,5,6,7,8,9,10,11],ymm0[28,29,30,31],ymm1[16,17,18,19,20,21,22,23,24,25,26,27]
+; AVX2-NEXT:    retq
+  %shuffle = shufflevector <8 x i32> %a, <8 x i32> %b, <8 x i32> <i32 3, i32 8, i32 9, i32 10, i32 7, i32 12, i32 13, i32 14>
+  ret <8 x i32> %shuffle
+}
+
+define <8 x i32> @shuffle_v8i32_30127456(<8 x i32> %a, <8 x i32> %b) {
+; AVX1-LABEL: shuffle_v8i32_30127456:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vpermilps {{.*#+}} ymm0 = ymm0[3,0,1,2,7,4,5,6]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: shuffle_v8i32_30127456:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[3,0,1,2,7,4,5,6]
+; AVX2-NEXT:    retq
+  %shuffle = shufflevector <8 x i32> %a, <8 x i32> %b, <8 x i32> <i32 3, i32 0, i32 1, i32 2, i32 7, i32 4, i32 5, i32 6>
+  ret <8 x i32> %shuffle
+}
+
+define <8 x i32> @shuffle_v8i32_12305674(<8 x i32> %a, <8 x i32> %b) {
+; AVX1-LABEL: shuffle_v8i32_12305674:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vpermilps {{.*#+}} ymm0 = ymm0[1,2,3,0,5,6,7,4]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: shuffle_v8i32_12305674:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[1,2,3,0,5,6,7,4]
+; AVX2-NEXT:    retq
+  %shuffle = shufflevector <8 x i32> %a, <8 x i32> %b, <8 x i32> <i32 1, i32 2, i32 3, i32 0, i32 5, i32 6, i32 7, i32 4>
+  ret <8 x i32> %shuffle
+}
+
 define <8x float> @concat_v2f32_1(<2 x float>* %tmp64, <2 x float>* %tmp65) {
 ; ALL-LABEL: concat_v2f32_1:
 ; ALL:       # BB#0: # %entry
