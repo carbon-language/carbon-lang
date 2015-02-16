@@ -473,7 +473,7 @@ public:
 };
 
 template <typename CHECK1, typename... CHECKs>
-class Checker : public CHECK1, public Checker<CHECKs...> {
+class Checker : public CHECK1, public CHECKs..., public CheckerBase {
 public:
   template <typename CHECKER>
   static void _register(CHECKER *checker, CheckerManager &mgr) {
