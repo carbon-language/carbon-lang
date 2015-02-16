@@ -72,6 +72,7 @@ int shmdt(const void *);
 # include <mntent.h>
 # include <netinet/ether.h>
 #else
+# include <signal.h>
 # include <netinet/in.h>
 # include <pthread_np.h>
 # include <sys/uio.h>
