@@ -424,7 +424,10 @@ DataLayout::findPointerLowerBound(uint32_t AddressSpace) {
 void DataLayout::setPointerAlignment(uint32_t AddrSpace, unsigned ABIAlign,
                                      unsigned PrefAlign,
                                      uint32_t TypeByteWidth) {
-  assert(ABIAlign <= PrefAlign && "Preferred alignment worse than ABI!");
+  if (PrefAlign < ABIAlign)
+    report_fatal_error(
+        "Preferred alignment cannot be less than the ABI alignment");
+
   PointersTy::iterator I = findPointerLowerBound(AddrSpace);
   if (I == Pointers.end() || I->AddressSpace != AddrSpace) {
     Pointers.insert(I, PointerAlignElem::get(AddrSpace, ABIAlign, PrefAlign,
