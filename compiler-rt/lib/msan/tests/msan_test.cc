@@ -2170,6 +2170,8 @@ TEST(MemorySanitizer, mmap) {
   }
 }
 
+// There's no fcvt() on FreeBSD.
+#if !defined(__FreeBSD__)
 // FIXME: enable and add ecvt.
 // FIXME: check why msandr does nt handle fcvt.
 TEST(MemorySanitizer, fcvt) {
@@ -2185,7 +2187,10 @@ TEST(MemorySanitizer, fcvt) {
   EXPECT_NOT_POISONED(str[0]);
   ASSERT_NE(0U, strlen(str));
 }
+#endif
 
+// There's no fcvt_long() on FreeBSD.
+#if !defined(__FreeBSD__)
 TEST(MemorySanitizer, fcvt_long) {
   int a, b;
   break_optimization(&a);
@@ -2199,7 +2204,7 @@ TEST(MemorySanitizer, fcvt_long) {
   EXPECT_NOT_POISONED(str[0]);
   ASSERT_NE(0U, strlen(str));
 }
-
+#endif
 
 TEST(MemorySanitizer, memchr) {
   char x[10];
