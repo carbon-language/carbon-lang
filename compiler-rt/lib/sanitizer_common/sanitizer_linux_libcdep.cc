@@ -298,6 +298,7 @@ static void GetTls(uptr *addr, uptr *size) {
 }
 #endif
 
+#if !SANITIZER_GO
 uptr GetTlsSize() {
 #if SANITIZER_FREEBSD
   uptr addr, size;
@@ -307,6 +308,7 @@ uptr GetTlsSize() {
   return g_tls_size;
 #endif
 }
+#endif
 
 void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
                           uptr *tls_addr, uptr *tls_size) {
