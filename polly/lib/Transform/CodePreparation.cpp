@@ -66,8 +66,7 @@ static void DemotePHI(
 ///
 class CodePreparation : public FunctionPass {
   CodePreparation(const CodePreparation &) = delete;
-  const CodePreparation &
-  operator=(const CodePreparation &) = delete;
+  const CodePreparation &operator=(const CodePreparation &) = delete;
 
   LoopInfo *LI;
   ScalarEvolution *SE;
