@@ -8,6 +8,12 @@
 @C = global i32* getelementptr ([2 x [3 x [5 x [7 x i32]]]]* @A, i64 3, i64 2, i64 0, i64 0, i64 7523)
 ; CHECK: @C = global i32* getelementptr ([2 x [3 x [5 x [7 x i32]]]]* @A, i64 39, i64 1, i64 1, i64 4, i64 5)
 
+; Verify that constant expression GEPs work with i84 indices.
+@D = external global [1 x i32]
+
+@E = global i32* getelementptr inbounds ([1 x i32]* @D, i84 0, i64 1)
+; CHECK: @E = global i32* getelementptr inbounds ([1 x i32]* @D, i84 1, i64 0)
+
 ; Verify that i16 indices work.
 @x = external global {i32, i32}
 @y = global i32* getelementptr ({ i32, i32 }* @x, i16 42, i32 0)
