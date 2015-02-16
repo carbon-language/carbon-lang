@@ -117,6 +117,7 @@ static void CheckUnreachable(Sema &S, AnalysisDeclContext &AC) {
   reachable_code::FindUnreachableCode(AC, S.getPreprocessor(), UC);
 }
 
+namespace {
 /// \brief Warn on logical operator errors in CFGBuilder
 class LogicalErrorHandler : public CFGCallback {
   Sema &S;
@@ -156,7 +157,7 @@ public:
         << DiagRange << isAlwaysTrue;
   }
 };
-
+} // namespace
 
 //===----------------------------------------------------------------------===//
 // Check for infinite self-recursion in functions
