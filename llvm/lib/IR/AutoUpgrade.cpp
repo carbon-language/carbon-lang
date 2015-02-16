@@ -538,10 +538,10 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
 
       if (Shift < 16) {
         SmallVector<Constant*, 32> Idxs;
-        for (unsigned l = 0; l < 32; l += 16)
+        for (unsigned l = 0; l != 32; l += 16)
           for (unsigned i = 0; i != 16; ++i) {
-            unsigned Idx = i + Shift;
-            if (Idx >= 16) Idx += 16; // end of lane, switch operand.
+            unsigned Idx = 32 + i - Shift;
+            if (Idx < 32) Idx -= 16; // end of lane, switch operand.
             Idxs.push_back(Builder.getInt32(Idx + l));
           }
 
@@ -561,10 +561,10 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
 
       if (Shift < 16) {
         SmallVector<Constant*, 32> Idxs;
-        for (unsigned l = 0; l < 32; l += 16)
+        for (unsigned l = 0; l != 32; l += 16)
           for (unsigned i = 0; i != 16; ++i) {
-            unsigned Idx = 32 + i - Shift;
-            if (Idx < 32) Idx -= 16; // end of lane, switch operand.
+            unsigned Idx = i + Shift;
+            if (Idx >= 16) Idx += 16; // end of lane, switch operand.
             Idxs.push_back(Builder.getInt32(Idx + l));
           }
 
