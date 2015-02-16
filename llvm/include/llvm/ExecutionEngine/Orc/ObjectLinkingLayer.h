@@ -178,12 +178,6 @@ public:
     return Handle;
   }
 
-  /// @brief Map section addresses for the objects associated with the handle H.
-  void mapSectionAddress(ObjSetHandleT H, const void *LocalAddress,
-                         TargetAddress TargetAddr) {
-    H->mapSectionAddress(LocalAddress, TargetAddr);
-  }
-
   /// @brief Remove the set of objects associated with handle H.
   ///
   ///   All memory allocated for the objects will be freed, and the sections and
@@ -231,6 +225,21 @@ public:
         });
 
     return nullptr;
+  }
+
+  /// @brief Map section addresses for the objects associated with the handle H.
+  void mapSectionAddress(ObjSetHandleT H, const void *LocalAddress,
+                         TargetAddress TargetAddr) {
+    H->mapSectionAddress(LocalAddress, TargetAddr);
+  }
+
+  /// @brief Immediately emit and finalize the object set represented by the
+  ///        given handle.
+  /// @param H Handle for object set to emit/finalize.
+  void emitAndFinalize(ObjSetHandleT H) {
+    H->Finalize();
+    if (NotifyFinalized)
+      NotifyFinalized(H);
   }
 
 private:
