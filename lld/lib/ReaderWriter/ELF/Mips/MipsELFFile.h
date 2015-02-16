@@ -158,10 +158,10 @@ private:
         return ec;
 
       ArrayRef<uint8_t> raw = contents.get();
+      if (raw.size() != sizeof(Elf_RegInfo))
+        return make_dynamic_error_code(
+            StringRef("Invalid size of MIPS_REGINFO section"));
 
-      // FIXME (simon): Show error in case of invalid section size.
-      assert(raw.size() == sizeof(Elf_RegInfo) &&
-             "Invalid size of RegInfo section");
       _gp0 = reinterpret_cast<const Elf_RegInfo *>(raw.data())->ri_gp_value;
     }
     return std::error_code();
