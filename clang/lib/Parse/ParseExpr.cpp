@@ -1524,14 +1524,14 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
         cutOffParsing();
         return ExprError();
       }
-      
+
       if (MayBePseudoDestructor && !LHS.isInvalid()) {
         LHS = ParseCXXPseudoDestructor(LHS.get(), OpLoc, OpKind, SS, 
                                        ObjectType);
         break;
       }
 
-      // Either the action has told is that this cannot be a
+      // Either the action has told us that this cannot be a
       // pseudo-destructor expression (based on the type of base
       // expression), or we didn't see a '~' in the right place. We
       // can still parse a destructor name here, but in that case it
