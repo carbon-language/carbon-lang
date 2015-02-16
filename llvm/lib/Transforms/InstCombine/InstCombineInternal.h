@@ -245,6 +245,7 @@ public:
   Instruction *FoldSPFofSPF(Instruction *Inner, SelectPatternFlavor SPF1,
                             Value *A, Value *B, Instruction &Outer,
                             SelectPatternFlavor SPF2, Value *C);
+  Instruction *FoldItoFPtoI(Instruction &FI);
   Instruction *visitSelectInst(SelectInst &SI);
   Instruction *visitSelectInstWithICmp(SelectInst &SI, ICmpInst *ICI);
   Instruction *visitCallInst(CallInst &CI);

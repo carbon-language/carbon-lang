@@ -1341,22 +1341,57 @@ Instruction *InstCombiner::visitFPExt(CastInst &CI) {
   return commonCastTransforms(CI);
 }
 
+// fpto{s/u}i({u/s}itofp(X)) --> X or zext(X) or sext(X) or trunc(X)
+// This is safe if the intermediate type has enough bits in its mantissa to
+// accurately represent all values of X.  For example, this won't work with
+// i64 -> float -> i64.
+Instruction *InstCombiner::FoldItoFPtoI(Instruction &FI) {
+  if (!isa<UIToFPInst>(FI.getOperand(0)) && !isa<SIToFPInst>(FI.getOperand(0)))
+    return nullptr;
+  Instruction *OpI = cast<Instruction>(FI.getOperand(0));
+
+  Value *SrcI = OpI->getOperand(0);
+  Type *FITy = FI.getType();
+  Type *OpITy = OpI->getType();
+  Type *SrcTy = SrcI->getType();
+  bool IsInputSigned = isa<SIToFPInst>(OpI);
+  bool IsOutputSigned = isa<FPToSIInst>(FI);
+
+  // We can safely assume the conversion won't overflow the output range,
+  // because (for example) (uint8_t)18293.f is undefined behavior.
+
+  // Since we can assume the conversion won't overflow, our decision as to
+  // whether the input will fit in the float should depend on the minimum
+  // of the input range and output range.
+
+  // This means this is also safe for a signed input and unsigned output, since
+  // a negative input would lead to undefined behavior.
+  int InputSize = (int)SrcTy->getScalarSizeInBits() - IsInputSigned;
+  int OutputSize = (int)FITy->getScalarSizeInBits() - IsOutputSigned;
+  int ActualSize = std::min(InputSize, OutputSize);
+
+  if (ActualSize <= OpITy->getFPMantissaWidth()) {
+    if (FITy->getScalarSizeInBits() > SrcTy->getScalarSizeInBits()) {
+      if (IsInputSigned && IsOutputSigned)
+        return new SExtInst(SrcI, FITy);
+      return new ZExtInst(SrcI, FITy);
+    }
+    if (FITy->getScalarSizeInBits() < SrcTy->getScalarSizeInBits())
+      return new TruncInst(SrcI, FITy);
+    if (SrcTy == FITy)
+      return ReplaceInstUsesWith(FI, SrcI);
+    return new BitCastInst(SrcI, FITy);
+  }
+  return nullptr;
+}
+
 Instruction *InstCombiner::visitFPToUI(FPToUIInst &FI) {
   Instruction *OpI = dyn_cast<Instruction>(FI.getOperand(0));
   if (!OpI)
     return commonCastTransforms(FI);
 
-  // fptoui(uitofp(X)) --> X
-  // fptoui(sitofp(X)) --> X
-  // This is safe if the intermediate type has enough bits in its mantissa to
-  // accurately represent all values of X.  For example, do not do this with
-  // i64->float->i64.  This is also safe for sitofp case, because any negative
-  // 'X' value would cause an undefined result for the fptoui.
-  if ((isa<UIToFPInst>(OpI) || isa<SIToFPInst>(OpI)) &&
-      OpI->getOperand(0)->getType() == FI.getType() &&
-      (int)FI.getType()->getScalarSizeInBits() < /*extra bit for sign */
-                    OpI->getType()->getFPMantissaWidth())
-    return ReplaceInstUsesWith(FI, OpI->getOperand(0));
+  if (Instruction *I = FoldItoFPtoI(FI))
+    return I;
 
   return commonCastTransforms(FI);
 }
@@ -1366,17 +1401,8 @@ Instruction *InstCombiner::visitFPToSI(FPToSIInst &FI) {
   if (!OpI)
     return commonCastTransforms(FI);
 
-  // fptosi(sitofp(X)) --> X
-  // fptosi(uitofp(X)) --> X
-  // This is safe if the intermediate type has enough bits in its mantissa to
-  // accurately represent all values of X.  For example, do not do this with
-  // i64->float->i64.  This is also safe for sitofp case, because any negative
-  // 'X' value would cause an undefined result for the fptoui.
-  if ((isa<UIToFPInst>(OpI) || isa<SIToFPInst>(OpI)) &&
-      OpI->getOperand(0)->getType() == FI.getType() &&
-      (int)FI.getType()->getScalarSizeInBits() <=
-                    OpI->getType()->getFPMantissaWidth())
-    return ReplaceInstUsesWith(FI, OpI->getOperand(0));
+  if (Instruction *I = FoldItoFPtoI(FI))
+    return I;
 
   return commonCastTransforms(FI);
 }
