@@ -315,10 +315,11 @@ define <4 x i32> @test_mul(<4 x i32> %x, <4 x i32> %y) {
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    pshufd {{.*#+}} xmm2 = xmm0[1,1,3,3]
 ; CHECK-NEXT:    pmuludq %xmm1, %xmm0
+; CHECK-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
 ; CHECK-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[1,1,3,3]
 ; CHECK-NEXT:    pmuludq %xmm2, %xmm1
-; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2],xmm1[0,2]
-; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2,1,3]
+; CHECK-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[0,2,2,3]
+; CHECK-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; CHECK-NEXT:    retl
   %m = mul <4 x i32> %x, %y
   ret <4 x i32> %m
