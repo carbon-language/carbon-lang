@@ -877,7 +877,7 @@ Verifier::visitModuleFlag(const MDNode *Op,
             "invalid behavior operand in module flag (unexpected constant)",
             Op->getOperand(0));
   }
-  MDString *ID = dyn_cast<MDString>(Op->getOperand(1));
+  MDString *ID = dyn_cast_or_null<MDString>(Op->getOperand(1));
   Assert1(ID,
           "invalid ID operand in module flag (expected metadata string)",
           Op->getOperand(1));
