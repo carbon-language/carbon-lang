@@ -178,7 +178,7 @@ private:
               StringRef("Invalid size of MIPS_OPTIONS section"));
 
         const auto *opt = reinterpret_cast<const Elf_Mips_Options *>(raw.data());
-        if (opt->kind == 1/*ODK_REGINFO*/) {
+        if (opt->kind == ODK_REGINFO) {
           _gp0 = reinterpret_cast<const Elf_RegInfo *>(opt + 1)->ri_gp_value;
           break;
         }
