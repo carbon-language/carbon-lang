@@ -5214,10 +5214,11 @@ static void noteOperatorArrows(Sema &S,
   }
 }
 
-ExprResult
-Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base, SourceLocation OpLoc,
-                                   tok::TokenKind OpKind, ParsedType &ObjectType,
-                                   bool &MayBePseudoDestructor) {
+ExprResult Sema::ActOnStartCXXMemberReference(Scope *S, Expr *Base,
+                                              SourceLocation OpLoc,
+                                              tok::TokenKind OpKind,
+                                              ParsedType &ObjectType,
+                                              bool &MayBePseudoDestructor) {
   // Since this might be a postfix expression, get rid of ParenListExprs.
   ExprResult Result = MaybeConvertParenListExprToParenExpr(S, Base);
   if (Result.isInvalid()) return ExprError();
