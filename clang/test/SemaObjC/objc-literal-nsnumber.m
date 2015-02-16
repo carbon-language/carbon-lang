@@ -9,6 +9,24 @@ typedef unsigned int NSUInteger;
 typedef int NSInteger;
 #endif
 
+void checkNSNumberUnavailableDiagnostic() {
+  id num = @1000; // expected-error {{NSNumber must be available to use Objective-C literals}}
+
+  int x = 1000;
+  id num1 = @(x); // expected-error {{NSNumber must be available to use Objective-C literals}}\
+                  // expected-error {{illegal type 'int' used in a boxed expression}}
+}
+
+@class NSNumber;
+
+void checkNSNumberFDDiagnostic() {
+  id num = @1000; // expected-error {{NSNumber must be available to use Objective-C literals}}
+
+  int x = 1000;
+  id num1 = @(x); // expected-error {{declaration of 'numberWithInt:' is missing in NSNumber class}}\
+                  // expected-error {{illegal type 'int' used in a boxed expression}}
+}
+
 @interface NSObject
 + (NSObject*)nsobject;
 @end
