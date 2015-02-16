@@ -54,7 +54,7 @@ define void @test1() {
 ;
 ; X64-LABEL: test1:
 ; X64:       ## BB#0: ## %entry
-; X64-NEXT:    xorps %xmm0, %xmm0
+; X64-NEXT:    pxor %xmm0, %xmm0
 ; X64-NEXT:    movq %xmm0, -{{[0-9]+}}(%rsp)
 ; X64-NEXT:    movq -{{[0-9]+}}(%rsp), %mm0
 ; X64-NEXT:    pshuflw {{.*#+}} xmm0 = mem[0,2,2,3,4,5,6,7]

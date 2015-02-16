@@ -255,7 +255,7 @@ define <4 x i32> @test19(<4 x i32> %a, <4 x i32> %b) {
 define <2 x i64> @test20(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK-LABEL: test20:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    orps %xmm1, %xmm0
+; CHECK-NEXT:    por %xmm1, %xmm0
 ; CHECK-NEXT:    movq {{.*#+}} xmm0 = xmm0[0],zero
 ; CHECK-NEXT:    retq
   %shuf1 = shufflevector <2 x i64> %a, <2 x i64> zeroinitializer, <2 x i32><i32 0, i32 2>
