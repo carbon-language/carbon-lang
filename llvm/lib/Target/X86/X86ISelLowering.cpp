@@ -7361,37 +7361,33 @@ is128BitLaneRepeatedShuffleMask(MVT VT, ArrayRef<int> Mask,
   return true;
 }
 
-// Hide this symbol with an anonymous namespace instead of 'static' so that MSVC
-// 2013 will allow us to use it as a non-type template parameter.
-namespace {
-
-/// \brief Implementation of the \c isShuffleEquivalent variadic functor.
-///
-/// See its documentation for details.
-bool isShuffleEquivalentImpl(SDValue V1, SDValue V2, ArrayRef<int> Mask,
-                             ArrayRef<const int *> Args) {
-  if (Mask.size() != Args.size())
-    return false;
-
-  // If the values are build vectors, we can look through them to find
-  // equivalent inputs that make the shuffles equivalent.
-  auto *BV1 = dyn_cast<BuildVectorSDNode>(V1);
-  auto *BV2 = dyn_cast<BuildVectorSDNode>(V2);
-
-  for (int i = 0, e = Mask.size(); i < e; ++i) {
-    assert(*Args[i] >= 0 && "Arguments must be positive integers!");
-    if (Mask[i] != -1 && Mask[i] != *Args[i]) {
-      auto *MaskBV = Mask[i] < e ? BV1 : BV2;
-      auto *ArgsBV = *Args[i] < e ? BV1 : BV2;
-      if (!MaskBV || !ArgsBV ||
-          MaskBV->getOperand(Mask[i] % e) != ArgsBV->getOperand(*Args[i] % e))
-        return false;
-    }
+/// \brief Base case helper for testing a single mask element.
+static bool isShuffleEquivalentImpl(SDValue V1, SDValue V2,
+                                    BuildVectorSDNode *BV1,
+                                    BuildVectorSDNode *BV2, ArrayRef<int> Mask,
+                                    int i, int Arg) {
+  int Size = Mask.size();
+  if (Mask[i] != -1 && Mask[i] != Arg) {
+    auto *MaskBV = Mask[i] < Size ? BV1 : BV2;
+    auto *ArgsBV = Arg < Size ? BV1 : BV2;
+    if (!MaskBV || !ArgsBV ||
+        MaskBV->getOperand(Mask[i] % Size) != ArgsBV->getOperand(Arg % Size))
+      return false;
   }
   return true;
 }
 
-} // namespace
+/// \brief Recursive helper to peel off and test each mask element.
+template <typename... Ts>
+static bool isShuffleEquivalentImpl(SDValue V1, SDValue V2,
+                                    BuildVectorSDNode *BV1,
+                                    BuildVectorSDNode *BV2, ArrayRef<int> Mask,
+                                    int i, int Arg, Ts... Args) {
+  if (!isShuffleEquivalentImpl(V1, V2, BV1, BV2, Mask, i, Arg))
+    return false;
+
+  return isShuffleEquivalentImpl(V1, V2, BV1, BV2, Mask, i + 1, Args...);
+}
 
 /// \brief Checks whether a shuffle mask is equivalent to an explicit list of
 /// arguments.
@@ -7403,9 +7399,20 @@ bool isShuffleEquivalentImpl(SDValue V1, SDValue V2, ArrayRef<int> Mask,
 /// It returns true if the mask is exactly as wide as the argument list, and
 /// each element of the mask is either -1 (signifying undef) or the value given
 /// in the argument.
-static const VariadicFunction3<bool, SDValue, SDValue, ArrayRef<int>, int,
-                               isShuffleEquivalentImpl> isShuffleEquivalent =
-    {};
+template <typename... Ts>
+static bool isShuffleEquivalent(SDValue V1, SDValue V2, ArrayRef<int> Mask,
+                                Ts... Args) {
+  if (Mask.size() != sizeof...(Args))
+    return false;
+
+  // If the values are build vectors, we can look through them to find
+  // equivalent inputs that make the shuffles equivalent.
+  auto *BV1 = dyn_cast<BuildVectorSDNode>(V1);
+  auto *BV2 = dyn_cast<BuildVectorSDNode>(V2);
+
+  // Recursively peel off arguments and test them against the mask.
+  return isShuffleEquivalentImpl(V1, V2, BV1, BV2, Mask, 0, Args...);
+}
 
 /// \brief Get a 4-lane 8-bit shuffle immediate for a mask.
 ///
