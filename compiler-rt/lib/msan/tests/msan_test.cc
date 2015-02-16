@@ -3371,6 +3371,8 @@ TEST(MemorySanitizer, getgrent_r) {
   EXPECT_NOT_POISONED(grpres);
 }
 
+// There's no fgetgrent_r() on FreeBSD.
+#if !defined(__FreeBSD__)
 TEST(MemorySanitizer, fgetgrent_r) {
   FILE *fp = fopen("/etc/group", "r");
   struct group grp;
@@ -3386,6 +3388,7 @@ TEST(MemorySanitizer, fgetgrent_r) {
   EXPECT_NOT_POISONED(grpres);
   fclose(fp);
 }
+#endif
 
 TEST(MemorySanitizer, getgroups) {
   int n = getgroups(0, 0);
