@@ -699,7 +699,7 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   // legalization. Promote them here.
   const TargetRegisterInfo *TRI = &getRegisterInfo();
   if (PPC::F8RCRegClass.contains(DestReg) &&
-      PPC::VSLRCRegClass.contains(SrcReg)) {
+      PPC::VSRCRegClass.contains(SrcReg)) {
     unsigned SuperReg =
       TRI->getMatchingSuperReg(DestReg, PPC::sub_64, &PPC::VSRCRegClass);
 
@@ -708,7 +708,7 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
     DestReg = SuperReg;
   } else if (PPC::VRRCRegClass.contains(DestReg) &&
-             PPC::VSHRCRegClass.contains(SrcReg)) {
+             PPC::VSRCRegClass.contains(SrcReg)) {
     unsigned SuperReg =
       TRI->getMatchingSuperReg(DestReg, PPC::sub_128, &PPC::VSRCRegClass);
 
@@ -717,7 +717,7 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
     DestReg = SuperReg;
   } else if (PPC::F8RCRegClass.contains(SrcReg) &&
-             PPC::VSLRCRegClass.contains(DestReg)) {
+             PPC::VSRCRegClass.contains(DestReg)) {
     unsigned SuperReg =
       TRI->getMatchingSuperReg(SrcReg, PPC::sub_64, &PPC::VSRCRegClass);
 
@@ -726,7 +726,7 @@ void PPCInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
     SrcReg = SuperReg;
   } else if (PPC::VRRCRegClass.contains(SrcReg) &&
-             PPC::VSHRCRegClass.contains(DestReg)) {
+             PPC::VSRCRegClass.contains(DestReg)) {
     unsigned SuperReg =
       TRI->getMatchingSuperReg(SrcReg, PPC::sub_128, &PPC::VSRCRegClass);
 
