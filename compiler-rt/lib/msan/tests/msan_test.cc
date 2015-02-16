@@ -99,11 +99,13 @@ int shmdt(const void *);
 # define DIR_TO_READ "/bin"
 # define SUBFILE_TO_READ "cat"
 # define SYMLINK_TO_READ "/usr/bin/tar"
+# define SUPERUSER_GROUP "wheel"
 #else
 # define FILE_TO_READ "/proc/self/stat"
 # define DIR_TO_READ "/proc/self"
 # define SUBFILE_TO_READ "stat"
 # define SYMLINK_TO_READ "/proc/self/exe"
+# define SUPERUSER_GROUP "root"
 #endif
 
 static const size_t kPageSize = 4096;
@@ -3273,8 +3275,10 @@ TEST(MemorySanitizer, getgrnam_r) {
   struct group grp;
   struct group *grpres;
   char buf[10000];
-  int res = getgrnam_r("root", &grp, buf, sizeof(buf), &grpres);
+  int res = getgrnam_r(SUPERUSER_GROUP, &grp, buf, sizeof(buf), &grpres);
   ASSERT_EQ(0, res);
+  // Note that getgrnam_r() returns 0 if the matching group is not found.
+  ASSERT_NE(nullptr, grpres);
   EXPECT_NOT_POISONED(grp.gr_name);
   ASSERT_TRUE(grp.gr_name != NULL);
   EXPECT_NOT_POISONED(grp.gr_name[0]);
