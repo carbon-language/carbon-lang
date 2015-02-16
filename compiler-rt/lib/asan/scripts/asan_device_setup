@@ -18,6 +18,7 @@ revert=no
 extra_options=
 device=
 lib=
+use_su=0
 
 function usage {
     echo "usage: $0 [--revert] [--device device-id] [--lib path] [--extra-options options]"
@@ -26,13 +27,70 @@ function usage {
     echo "  --extra-options: Extra ASAN_OPTIONS."
     echo "  --device: Install to the given device. Use 'adb devices' to find"
     echo "            device-id."
+    echo "  --use-su: Use 'su -c' prefix for every adb command instead of using"
+    echo "            'adb root' once."
     echo
     exit 1
 }
 
+function adb_push {
+  if [ $use_su -eq 0 ]; then
+    $ADB push "$1" "$2"
+  else
+    local FILENAME=$(basename $1)
+    $ADB push "$1" "/data/local/tmp/$FILENAME"
+    $ADB shell su -c "rm \\\"$2/$FILENAME\\\"" >&/dev/null
+    $ADB shell su -c "cat \\\"/data/local/tmp/$FILENAME\\\" > \\\"$2/$FILENAME\\\""
+    $ADB shell su -c "rm \\\"/data/local/tmp/$FILENAME\\\""
+  fi
+}
+
+function adb_remount {
+  if [ $use_su -eq 0 ]; then
+    $ADB remount
+  else
+    local STORAGE=`$ADB shell mount | grep /system | cut -d ' ' -f1`
+    if [ "$STORAGE" != "" ]; then
+      echo Remounting $STORAGE at /system
+      $ADB shell su -c "mount -o remount,rw $STORAGE /system"
+    else
+      echo Failed to get storage device name for "/system" mount point
+    fi
+  fi
+}
+
+function adb_shell {
+  if [ $use_su -eq 0 ]; then
+    $ADB shell $@
+  else
+    $ADB shell su -c "$*"
+  fi
+}
+
+function adb_root {
+  if [ $use_su -eq 0 ]; then
+    $ADB root
+  fi
+}
+
+function adb_wait_for_device {
+  $ADB wait-for-device
+}
+
+function adb_pull {
+  if [ $use_su -eq 0 ]; then
+    $ADB pull "$1" "$2"
+  else
+    local FILENAME=$(basename $1)
+    $ADB shell rm "/data/local/tmp/$FILENAME" >&/dev/null
+    $ADB shell su -c "[ -f \\\"$1\\\" ] && cat \\\"$1\\\" > \\\"/data/local/tmp/$FILENAME\\\" && chown root.shell \\\"/data/local/tmp/$FILENAME\\\" && chmod 755 \\\"/data/local/tmp/$FILENAME\\\"" &&
+    $ADB pull "/data/local/tmp/$FILENAME" "$2" >&/dev/null && $ADB shell "rm \"/data/local/tmp/$FILENAME\""
+  fi
+}
+
 function get_device_arch { # OUTVAR
     local _outvar=$1
-    local _ABI=$($ADB shell getprop ro.product.cpu.abi)
+    local _ABI=$(adb_shell getprop ro.product.cpu.abi)
     local _ARCH=
     if [[ $_ABI == x86* ]]; then
         _ARCH=i686
@@ -74,6 +132,9 @@ while [[ $# > 0 ]]; do
       fi
       device="$1"
       ;;
+    --use-su)
+      use_su=1
+      ;;
     *)
       usage
       ;;
@@ -86,12 +147,25 @@ if [[ x$device != x ]]; then
     ADB="$ADB -s $device"
 fi
 
+if [ $use_su -eq 1 ]; then
+  # Test if 'su' is present on the device
+  SU_TEST_OUT=`$ADB shell su -c "echo foo" 2>&1 | sed 's/\r$//'`
+  if [ $? != 0 -o "$SU_TEST_OUT" != "foo" ]; then
+    echo "ERROR: Cannot use 'su -c':"
+    echo "$ adb shell su -c \"echo foo\""
+    echo $SU_TEST_OUT
+    echo "Check that 'su' binary is correctly installed on the device or omit"
+    echo "            --use-su flag"
+    exit 1
+  fi
+fi
+
 echo '>> Remounting /system rw'
-$ADB wait-for-device
-$ADB root
-$ADB wait-for-device
-$ADB remount
-$ADB wait-for-device
+adb_wait_for_device
+adb_root
+adb_wait_for_device
+adb_remount
+adb_wait_for_device
 
 get_device_arch ARCH
 echo "Target architecture: $ARCH"
@@ -100,22 +174,24 @@ ASAN_RT="libclang_rt.asan-$ARCH-android.so"
 if [[ x$revert == xyes ]]; then
     echo '>> Uninstalling ASan'
 
-    if ! $ADB shell readlink /system/bin/app_process | grep 'app_process' >&/dev/null; then
+    if ! adb_shell ls -l /system/bin/app_process | grep -o '\->.*app_process' >&/dev/null; then
         echo '>> Pre-L device detected.'
-        $ADB shell mv /system/bin/app_process.real /system/bin/app_process
-        $ADB shell rm /system/bin/asanwrapper
-        $ADB shell rm /system/lib/$ASAN_RT
+        adb_shell mv /system/bin/app_process.real /system/bin/app_process
+        adb_shell rm /system/bin/asanwrapper
     else
-        $ADB shell rm /system/bin/app_process.wrap
-        $ADB shell rm /system/bin/asanwrapper
-        $ADB shell rm /system/lib/$ASAN_RT
-        $ADB shell rm /system/bin/app_process
-        $ADB shell ln -s /system/bin/app_process32 /system/bin/app_process
+        adb_shell rm /system/bin/app_process.wrap
+        adb_shell rm /system/bin/asanwrapper
+        adb_shell rm /system/bin/app_process
+        adb_shell ln -s /system/bin/app_process32 /system/bin/app_process
     fi
 
     echo '>> Restarting shell'
-    $ADB shell stop
-    $ADB shell start
+    adb_shell stop
+    adb_shell start
+
+    # Remove the library on the last step to give a chance to the 'su' binary to
+    # be executed without problem.
+    adb_shell rm /system/lib/$ASAN_RT
 
     echo '>> Done'
     exit 0
@@ -146,28 +222,28 @@ TMPDIROLD="$TMPDIRBASE/old"
 TMPDIR="$TMPDIRBASE/new"
 mkdir "$TMPDIROLD"
 
-RELEASE=$($ADB shell getprop ro.build.version.release)
+RELEASE=$(adb_shell getprop ro.build.version.release)
 PRE_L=0
 if echo "$RELEASE" | grep '^4\.' >&/dev/null; then
     PRE_L=1
 fi
 
-if ! $ADB shell readlink /system/bin/app_process | grep 'app_process' >&/dev/null; then
+if ! adb_shell ls -l /system/bin/app_process | grep -o '\->.*app_process' >&/dev/null; then
 
-    if $ADB pull /system/bin/app_process.real /dev/null >&/dev/null; then
+    if adb_pull /system/bin/app_process.real /dev/null >&/dev/null; then
         echo '>> Old-style ASan installation detected. Reverting.'
-        $ADB shell mv /system/bin/app_process.real /system/bin/app_process
+        adb_shell mv /system/bin/app_process.real /system/bin/app_process
     fi
 
     echo '>> Pre-L device detected. Setting up app_process symlink.'
-    $ADB shell mv /system/bin/app_process /system/bin/app_process32
-    $ADB shell ln -s /system/bin/app_process32 /system/bin/app_process
+    adb_shell mv /system/bin/app_process /system/bin/app_process32
+    adb_shell ln -s /system/bin/app_process32 /system/bin/app_process
 fi
 
 echo '>> Copying files from the device'
-$ADB pull /system/bin/app_process.wrap "$TMPDIROLD" || true
-$ADB pull /system/bin/asanwrapper "$TMPDIROLD" || true
-$ADB pull /system/lib/"$ASAN_RT" "$TMPDIROLD" || true
+adb_pull /system/bin/app_process.wrap "$TMPDIROLD" || true
+adb_pull /system/bin/asanwrapper "$TMPDIROLD" || true
+adb_pull /system/lib/"$ASAN_RT" "$TMPDIROLD" || true
 cp -r "$TMPDIROLD" "$TMPDIR"
 
 if [[ -f "$TMPDIR/app_process.wrap" ]]; then
@@ -213,52 +289,52 @@ EOF
 
 if ! ( cd "$TMPDIRBASE" && diff -qr old/ new/ ) ; then
     echo '>> Pushing files to the device'
-    $ADB push "$TMPDIR/$ASAN_RT" /system/lib/
-    $ADB push "$TMPDIR/app_process.wrap" /system/bin/app_process.wrap
-    $ADB push "$TMPDIR/asanwrapper" /system/bin/asanwrapper
+    adb_push "$TMPDIR/$ASAN_RT" /system/lib/
+    adb_push "$TMPDIR/app_process.wrap" /system/bin
+    adb_push "$TMPDIR/asanwrapper" /system/bin
 
-    $ADB shell rm /system/bin/app_process
-    $ADB shell ln -s /system/bin/app_process.wrap /system/bin/app_process
+    adb_shell rm /system/bin/app_process
+    adb_shell ln -s /system/bin/app_process.wrap /system/bin/app_process
 
-    $ADB shell chown root.shell \
+    adb_shell chown root.shell \
         /system/lib/"$ASAN_RT" \
         /system/bin/app_process.wrap \
         /system/bin/asanwrapper
-    $ADB shell chmod 644 \
+    adb_shell chmod 644 \
         /system/lib/"$ASAN_RT"
-    $ADB shell chmod 755 \
+    adb_shell chmod 755 \
         /system/bin/app_process.wrap \
         /system/bin/asanwrapper
 
     # Make SELinux happy by keeping app_process wrapper and the shell
     # it runs on in zygote domain.
     ENFORCING=0
-    if $ADB shell getenforce | grep Enforcing >/dev/null; then
+    if adb_shell getenforce | grep Enforcing >/dev/null; then
         # Sometimes shell is not allowed to change file contexts.
         # Temporarily switch to permissive.
         ENFORCING=1
-        $ADB shell setenforce 0
+        adb_shell setenforce 0
     fi
 
-    $ADB shell cp /system/bin/sh /system/bin/sh-from-zygote
+    adb_shell cp /system/bin/sh /system/bin/sh-from-zygote
 
     if [[ PRE_L -eq 1 ]]; then
         CTX=u:object_r:system_file:s0
     else
         CTX=u:object_r:zygote_exec:s0
     fi
-    $ADB shell chcon $CTX \
+    adb_shell chcon $CTX \
         /system/bin/sh-from-zygote \
         /system/bin/app_process.wrap \
         /system/bin/app_process32
 
     if [ $ENFORCING == 1 ]; then
-        $ADB shell setenforce 1
+        adb_shell setenforce 1
     fi
 
     echo '>> Restarting shell (asynchronous)'
-    $ADB shell stop
-    $ADB shell start
+    adb_shell stop
+    adb_shell start
 
     echo '>> Please wait until the device restarts'
 else
