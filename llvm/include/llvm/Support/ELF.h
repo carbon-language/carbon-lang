@@ -475,6 +475,22 @@ enum {
   STO_MIPS_MIPS16          = 0xf0   // MIPS Specific ISA for Mips16
 };
 
+// .MIPS.options section descriptor kinds
+enum {
+  ODK_NULL       = 0,   // Undefined
+  ODK_REGINFO    = 1,   // Register usage information
+  ODK_EXCEPTIONS = 2,   // Exception processing options
+  ODK_PAD        = 3,   // Section padding options
+  ODK_HWPATCH    = 4,   // Hardware patches applied
+  ODK_FILL       = 5,   // Linker fill value
+  ODK_TAGS       = 6,   // Space for tool identification
+  ODK_HWAND      = 7,   // Hardware AND patches applied
+  ODK_HWOR       = 8,   // Hardware OR patches applied
+  ODK_GP_GROUP   = 9,   // GP group to use for text/data sections
+  ODK_IDENT      = 10,  // ID information
+  ODK_PAGESIZE   = 11   // Page size information
+};
+
 // Hexagon Specific e_flags
 // Release 5 ABI
 enum {
