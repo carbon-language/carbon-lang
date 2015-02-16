@@ -511,6 +511,8 @@ void LoopReroll::SimpleLoopReduction::add(Loop *L) {
   // (including the PHI), except for the last value (which is used by the PHI
   // and also outside the loop).
   Instruction *C = Instructions.front();
+  if (C->user_empty())
+    return;
 
   do {
     C = cast<Instruction>(*C->user_begin());
