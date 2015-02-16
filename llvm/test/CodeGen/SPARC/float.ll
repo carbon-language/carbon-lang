@@ -154,11 +154,11 @@ entry:
 ; SPARC64:          fitod
 ; SPARC64:          fdtoi
 
-define void @test_itod_dtoi(i32 %a, i32* %ptr0, double* %ptr1) {
+define void @test_itod_dtoi(i32 %a, double %b, i32* %ptr0, double* %ptr1) {
 entry:
   %0 = sitofp i32 %a to double
   store double %0, double* %ptr1, align 8
-  %1 = fptosi double %0 to i32
+  %1 = fptosi double %b to i32
   store i32 %1, i32* %ptr0, align 8
   ret void
 }

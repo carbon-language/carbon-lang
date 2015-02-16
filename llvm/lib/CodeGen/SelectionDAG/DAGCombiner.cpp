@@ -7845,6 +7845,50 @@ SDValue DAGCombiner::visitUINT_TO_FP(SDNode *N) {
   return SDValue();
 }
 
+// Fold (fp_to_{s/u}int ({s/u}int_to_fpx)) -> zext x, sext x, trunc x, or x
+static SDValue FoldIntToFPToInt(SDNode *N, SelectionDAG &DAG) {
+  SDValue N0 = N->getOperand(0);
+  EVT VT = N->getValueType(0);
+
+  if (N0.getOpcode() != ISD::UINT_TO_FP && N0.getOpcode() != ISD::SINT_TO_FP)
+    return SDValue();
+
+  SDValue Src = N0.getOperand(0);
+  EVT SrcVT = Src.getValueType();
+  bool IsInputSigned = N0.getOpcode() == ISD::SINT_TO_FP;
+  bool IsOutputSigned = N->getOpcode() == ISD::FP_TO_SINT;
+
+  // We can safely assume the conversion won't overflow the output range,
+  // because (for example) (uint8_t)18293.f is undefined behavior.
+
+  // Since we can assume the conversion won't overflow, our decision as to
+  // whether the input will fit in the float should depend on the minimum
+  // of the input range and output range.
+
+  // This means this is also safe for a signed input and unsigned output, since
+  // a negative input would lead to undefined behavior.
+  unsigned InputSize = (int)SrcVT.getScalarSizeInBits() - IsInputSigned;
+  unsigned OutputSize = (int)VT.getScalarSizeInBits() - IsOutputSigned;
+  unsigned ActualSize = std::min(InputSize, OutputSize);
+  const fltSemantics &sem = DAG.EVTToAPFloatSemantics(N0.getValueType());
+
+  // We can only fold away the float conversion if the input range can be
+  // represented exactly in the float range.
+  if (APFloat::semanticsPrecision(sem) >= ActualSize) {
+    if (VT.getScalarSizeInBits() > SrcVT.getScalarSizeInBits()) {
+      unsigned ExtOp = IsInputSigned && IsOutputSigned ? ISD::SIGN_EXTEND
+                                                       : ISD::ZERO_EXTEND;
+      return DAG.getNode(ExtOp, SDLoc(N), VT, Src);
+    }
+    if (VT.getScalarSizeInBits() < SrcVT.getScalarSizeInBits())
+      return DAG.getNode(ISD::TRUNCATE, SDLoc(N), VT, Src);
+    if (SrcVT == VT)
+      return Src;
+    return DAG.getNode(ISD::BITCAST, SDLoc(N), VT, Src);
+  }
+  return SDValue();
+}
+
 SDValue DAGCombiner::visitFP_TO_SINT(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
@@ -7854,7 +7898,7 @@ SDValue DAGCombiner::visitFP_TO_SINT(SDNode *N) {
   if (N0CFP)
     return DAG.getNode(ISD::FP_TO_SINT, SDLoc(N), VT, N0);
 
-  return SDValue();
+  return FoldIntToFPToInt(N, DAG);
 }
 
 SDValue DAGCombiner::visitFP_TO_UINT(SDNode *N) {
@@ -7866,7 +7910,7 @@ SDValue DAGCombiner::visitFP_TO_UINT(SDNode *N) {
   if (N0CFP)
     return DAG.getNode(ISD::FP_TO_UINT, SDLoc(N), VT, N0);
 
-  return SDValue();
+  return FoldIntToFPToInt(N, DAG);
 }
 
 SDValue DAGCombiner::visitFP_ROUND(SDNode *N) {

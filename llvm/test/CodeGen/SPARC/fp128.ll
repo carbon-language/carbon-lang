@@ -182,26 +182,28 @@ entry:
 }
 
 ; HARD-LABEL:    test_itoq_qtoi
-; HARD:          call _Q_lltoq
-; HARD:          call _Q_qtoll
-; HARD:          fitoq
-; HARD:          fqtoi
+; HARD-DAG:      call _Q_lltoq
+; HARD-DAG:      call _Q_qtoll
+; HARD-DAG:      fitoq
+; HARD-DAG:      fqtoi
 
 ; SOFT-LABEL:    test_itoq_qtoi
-; SOFT:          call _Q_lltoq
-; SOFT:          call _Q_qtoll
-; SOFT:          call _Q_itoq
-; SOFT:          call _Q_qtoi
+; SOFT-DAG:      call _Q_lltoq
+; SOFT-DAG:      call _Q_qtoll
+; SOFT-DAG:      call _Q_itoq
+; SOFT-DAG:      call _Q_qtoi
 
-define void @test_itoq_qtoi(i64 %a, i32 %b, i64* %ptr0, fp128* %ptr1) {
+define void @test_itoq_qtoi(i64 %a, i32 %b, fp128* %c, fp128* %d, i64* %ptr0, fp128* %ptr1) {
 entry:
   %0 = sitofp i64 %a to fp128
   store  fp128 %0, fp128* %ptr1, align 8
-  %1 = fptosi fp128 %0 to i64
+  %cval = load fp128* %c, align 8
+  %1 = fptosi fp128 %cval to i64
   store  i64 %1, i64* %ptr0, align 8
   %2 = sitofp i32 %b to fp128
   store  fp128 %2, fp128* %ptr1, align 8
-  %3 = fptosi fp128 %2 to i32
+  %dval = load fp128* %d, align 8
+  %3 = fptosi fp128 %dval to i32
   %4 = bitcast i64* %ptr0 to i32*
   store  i32 %3, i32* %4, align 8
   ret void
@@ -219,15 +221,17 @@ entry:
 ; SOFT-DAG:      call _Q_utoq
 ; SOFT-DAG:      call _Q_qtou
 
-define void @test_utoq_qtou(i64 %a, i32 %b, i64* %ptr0, fp128* %ptr1) {
+define void @test_utoq_qtou(i64 %a, i32 %b, fp128* %c, fp128* %d, i64* %ptr0, fp128* %ptr1) {
 entry:
   %0 = uitofp i64 %a to fp128
   store  fp128 %0, fp128* %ptr1, align 8
-  %1 = fptoui fp128 %0 to i64
+  %cval = load fp128* %c, align 8
+  %1 = fptoui fp128 %cval to i64
   store  i64 %1, i64* %ptr0, align 8
   %2 = uitofp i32 %b to fp128
   store  fp128 %2, fp128* %ptr1, align 8
-  %3 = fptoui fp128 %2 to i32
+  %dval = load fp128* %d, align 8
+  %3 = fptoui fp128 %dval to i32
   %4 = bitcast i64* %ptr0 to i32*
   store  i32 %3, i32* %4, align 8
   ret void
