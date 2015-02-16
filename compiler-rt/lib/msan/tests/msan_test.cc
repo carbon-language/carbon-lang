@@ -76,6 +76,7 @@ int shmdt(const void *);
 # include <pthread_np.h>
 # include <sys/uio.h>
 # include <sys/mount.h>
+# include <net/ethernet.h>
 # define f_namelen f_namemax  // FreeBSD names this statfs field so.
 # define cpu_set_t cpuset_t
 #endif
