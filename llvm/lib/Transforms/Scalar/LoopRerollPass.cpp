@@ -719,14 +719,17 @@ collectPossibleRoots(Instruction *Base, std::map<int64_t,Instruction*> &Roots) {
 
   if (Roots.empty())
     return false;
-  
-  assert(Roots.find(0) == Roots.end() && "Didn't expect a zero index!");
 
   // If we found non-loop-inc, non-root users of Base, assume they are
   // for the zeroth root index. This is because "add %a, 0" gets optimized
   // away.
-  if (BaseUsers.size())
+  if (BaseUsers.size()) {
+    if (Roots.find(0) != Roots.end()) {
+      DEBUG(dbgs() << "LRR: Multiple roots found for base - aborting!\n");
+      return false;
+    }
     Roots[0] = Base;
+  }
 
   // Calculate the number of users of the base, or lowest indexed, iteration.
   unsigned NumBaseUses = BaseUsers.size();

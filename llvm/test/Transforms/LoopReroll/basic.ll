@@ -545,6 +545,36 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 
+%struct.s = type { i32, i32 }
+
+; Function Attrs: nounwind uwtable
+define void @gep1(%struct.s* nocapture %x) #0 {
+entry:
+  %call = tail call i32 @foo(i32 0) #1
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+  %0 = mul nsw i64 %indvars.iv, 3
+  %arrayidx = getelementptr inbounds %struct.s* %x, i64 %0, i32 0
+  store i32 %call, i32* %arrayidx, align 4
+  %1 = add nsw i64 %0, 1
+  %arrayidx4 = getelementptr inbounds %struct.s* %x, i64 %1, i32 0
+  store i32 %call, i32* %arrayidx4, align 4
+  %2 = add nsw i64 %0, 2
+  %arrayidx9 = getelementptr inbounds %struct.s* %x, i64 %2, i32 0
+  store i32 %call, i32* %arrayidx9, align 4
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %exitcond = icmp eq i64 %indvars.iv.next, 500
+  br i1 %exitcond, label %for.end, label %for.body
+
+; CHECK-LABEL: @gep1
+; This test is a crash test only.
+; CHECK: ret
+for.end:                                          ; preds = %for.body
+  ret void
+}
+
 
 attributes #0 = { nounwind uwtable }
 attributes #1 = { nounwind }
