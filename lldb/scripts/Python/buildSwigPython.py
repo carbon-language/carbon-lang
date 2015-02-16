@@ -81,6 +81,7 @@ def get_header_files( vDictArgs ):
 						"/include/lldb/lldb-forward-rtti.h",
 						"/include/lldb/lldb-types.h",
 						"/include/lldb/API/SBAddress.h",
+            "/include/lldb/API/SBAttachInfo.h",
 						"/include/lldb/API/SBBlock.h",
 						"/include/lldb/API/SBBreakpoint.h",
 						"/include/lldb/API/SBBreakpointLocation.h",
@@ -157,6 +158,7 @@ def get_header_files( vDictArgs ):
 def get_interface_files( vDictArgs ):
 	dbg = utilsDebug.CDebugFnVerbose( "Python script get_interface_files()" );
 	listIFaceFiles = [ 	"/scripts/Python/interface/SBAddress.i",
+            "/scripts/Python/interface/SBAttachInfo.i",
 						"/scripts/Python/interface/SBBlock.i",
 						"/scripts/Python/interface/SBBreakpoint.i",
 						"/scripts/Python/interface/SBBreakpointLocation.i",

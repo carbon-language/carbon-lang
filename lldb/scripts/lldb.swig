@@ -53,6 +53,7 @@ import os
 %{
 #include "lldb/lldb-public.h"
 #include "lldb/API/SBAddress.h"
+#include "lldb/API/SBAttachInfo.h"
 #include "lldb/API/SBBlock.h"
 #include "lldb/API/SBBreakpoint.h"
 #include "lldb/API/SBBreakpointLocation.h"
@@ -129,6 +130,7 @@ import os
 
 /* Python interface files with docstrings. */
 %include "./Python/interface/SBAddress.i"
+%include "./Python/interface/SBAttachInfo.i"
 %include "./Python/interface/SBBlock.i"
 %include "./Python/interface/SBBreakpoint.i"
 %include "./Python/interface/SBBreakpointLocation.i"
