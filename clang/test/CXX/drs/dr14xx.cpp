@@ -327,6 +327,13 @@ namespace dr1467 {  // dr1467: 3.7 c++11
 
   struct NestedInit { int a, b, c; };
   NestedInit ni[1] = {{NestedInit{1, 2, 3}}};
+
+  namespace NestedInit2 {
+    struct Pair { int a, b; };
+    struct TwoPairs { TwoPairs(Pair, Pair); };
+    struct Value { Value(Pair); Value(TwoPairs); };
+    void f() { Value{{{1,2},{3,4}}}; }
+  }
 } // dr1467
 
 namespace dr1490 {  // dr1490: 3.7 c++11

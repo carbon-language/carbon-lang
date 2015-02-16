@@ -1015,7 +1015,8 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
 
         UpdateStructuredListElement(StructuredList, StructuredIndex,
                                     Result.getAs<Expr>());
-      }
+      } else if (!Seq)
+        hadError = true;
       ++Index;
       return;
     }
