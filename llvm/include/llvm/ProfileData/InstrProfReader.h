@@ -292,8 +292,8 @@ public:
   uint64_t getMaximumFunctionCount() { return MaxFunctionCount; }
 
   /// Factory method to create an indexed reader.
-  static std::error_code
-  create(std::string Path, std::unique_ptr<IndexedInstrProfReader> &Result);
+  static ErrorOr<std::unique_ptr<IndexedInstrProfReader>>
+  create(std::string Path);
 };
 
 } // end namespace llvm

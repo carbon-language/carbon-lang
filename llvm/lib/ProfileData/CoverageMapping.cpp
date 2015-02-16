@@ -223,9 +223,10 @@ CoverageMapping::load(StringRef ObjectFilename, StringRef ProfileFilename) {
   ObjectFileCoverageMappingReader CoverageReader(CounterMappingBuff.get());
   if (auto EC = CoverageReader.readHeader())
     return EC;
-  std::unique_ptr<IndexedInstrProfReader> ProfileReader;
-  if (auto EC = IndexedInstrProfReader::create(ProfileFilename, ProfileReader))
+  auto ProfileReaderOrErr = IndexedInstrProfReader::create(ProfileFilename);
+  if (auto EC = ProfileReaderOrErr.getError())
     return EC;
+  auto ProfileReader = std::move(ProfileReaderOrErr.get());
   return load(CoverageReader, *ProfileReader);
 }
 

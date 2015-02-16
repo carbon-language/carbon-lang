@@ -64,21 +64,26 @@ InstrProfReader::create(std::string Path) {
   return std::move(Result);
 }
 
-std::error_code IndexedInstrProfReader::create(
-    std::string Path, std::unique_ptr<IndexedInstrProfReader> &Result) {
+ErrorOr<std::unique_ptr<IndexedInstrProfReader>>
+IndexedInstrProfReader::create(std::string Path) {
   // Set up the buffer to read.
   auto BufferOrError = setupMemoryBuffer(Path);
   if (std::error_code EC = BufferOrError.getError())
     return EC;
 
   auto Buffer = std::move(BufferOrError.get());
+  std::unique_ptr<IndexedInstrProfReader> Result;
+
   // Create the reader.
   if (!IndexedInstrProfReader::hasFormat(*Buffer))
     return instrprof_error::bad_magic;
   Result.reset(new IndexedInstrProfReader(std::move(Buffer)));
 
   // Initialize the reader and return the result.
-  return initializeReader(*Result);
+  if (std::error_code EC = initializeReader(*Result))
+    return EC;
+
+  return std::move(Result);
 }
 
 void InstrProfIterator::Increment() {
