@@ -57,24 +57,25 @@ OptionValueString::SetValueFromCString (const char *value_cstr,
     Error error;
 
     std::string value_str_no_quotes;
-    if (value_cstr)
+    llvm::StringRef trimmed = value_cstr ? llvm::StringRef(value_cstr).trim() : llvm::StringRef();
+    if (trimmed.size() > 0)
     {
-        switch (value_cstr[0])
+        switch (trimmed.front())
         {
         case '"':
         case '\'':
             {
-                size_t len = strlen(value_cstr);
-                if (len <= 1 || value_cstr[len-1] != value_cstr[0])
+                if (trimmed.size() <= 1 || trimmed.back() != trimmed.front())
                 {
                     error.SetErrorString("mismatched quotes");
                     return error;
                 }
-                value_str_no_quotes.assign (value_cstr + 1, len - 2);
-                value_cstr = value_str_no_quotes.c_str();
+                trimmed = trimmed.drop_front().drop_back().str();
             }
             break;
         }
+        value_str_no_quotes = trimmed.str();
+        value_cstr = value_str_no_quotes.c_str();
     }
 
     switch (op)

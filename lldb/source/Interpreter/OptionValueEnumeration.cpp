@@ -69,7 +69,7 @@ OptionValueEnumeration::SetValueFromCString (const char *value, VarSetOperationT
         case eVarSetOperationAssign:
             if (value && value[0])
             {
-                ConstString const_enumerator_name(value);
+                ConstString const_enumerator_name(llvm::StringRef(value).trim());
                 const EnumerationMapEntry *enumerator_entry = m_enumerations.FindFirstValueForName (const_enumerator_name.GetCString());
                 if (enumerator_entry)
                 {

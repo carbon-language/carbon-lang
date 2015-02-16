@@ -58,7 +58,8 @@ OptionValueUInt64::SetValueFromCString (const char *value_cstr, VarSetOperationT
         case eVarSetOperationAssign:
         {
             bool success = false;
-            uint64_t value = StringConvert::ToUInt64 (value_cstr, 0, 0, &success);
+            std::string value_str = llvm::StringRef(value_cstr).trim().str();
+            uint64_t value = StringConvert::ToUInt64 (value_str.c_str(), 0, 0, &success);
             if (success)
             {
                 m_value_was_set = true;

@@ -51,7 +51,8 @@ OptionValueSInt64::SetValueFromCString (const char *value_cstr, VarSetOperationT
         case eVarSetOperationAssign:
             {
                 bool success = false;
-                int64_t value = StringConvert::ToSInt64 (value_cstr, 0, 0, &success);
+                std::string value_str = llvm::StringRef(value_cstr).trim().str();
+                int64_t value = StringConvert::ToSInt64 (value_str.c_str(), 0, 0, &success);
                 if (success)
                 {
                     if (value >= m_min_value && value <= m_max_value)

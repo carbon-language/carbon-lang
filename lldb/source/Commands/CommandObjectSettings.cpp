@@ -243,7 +243,7 @@ protected:
         // Split the raw command into var_name and value pair.
         llvm::StringRef raw_str(command);
         std::string var_value_string = raw_str.split(var_name).second.str();
-        const char *var_value_cstr = Args::StripSpaces(var_value_string, true, true, false);
+        const char *var_value_cstr = Args::StripSpaces(var_value_string, true, false, false);
 
         Error error;
         if (m_options.m_global)

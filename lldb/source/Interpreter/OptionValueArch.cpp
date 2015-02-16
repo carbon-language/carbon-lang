@@ -55,8 +55,10 @@ OptionValueArch::SetValueFromCString (const char *value_cstr, VarSetOperationTyp
         
     case eVarSetOperationReplace:
     case eVarSetOperationAssign:
-        if (value_cstr && value_cstr[0])
+        if (value_cstr)
         {
+            std::string value = llvm::StringRef(value_cstr).trim().str();
+            value_cstr = value.c_str();
             if (m_current_value.SetTriple (value_cstr))
             {
                 m_value_was_set = true;

@@ -870,26 +870,24 @@ Args::StripSpaces (std::string &s, bool leading, bool trailing, bool return_null
 bool
 Args::StringToBoolean (const char *s, bool fail_value, bool *success_ptr)
 {
-    if (s && s[0])
+    llvm::StringRef ref = llvm::StringRef(s).trim();
+    if (ref.equals_lower("false") ||
+        ref.equals_lower("off") ||
+        ref.equals_lower("no") ||
+        ref.equals_lower("0"))
     {
-        if (::strcasecmp (s, "false") == 0 ||
-            ::strcasecmp (s, "off") == 0 ||
-            ::strcasecmp (s, "no") == 0 ||
-                ::strcmp (s, "0") == 0)
-        {
-            if (success_ptr)
-                *success_ptr = true;
-            return false;
-        }
-        else
-        if (::strcasecmp (s, "true") == 0 ||
-            ::strcasecmp (s, "on") == 0 ||
-            ::strcasecmp (s, "yes") == 0 ||
-                ::strcmp (s, "1") == 0)
-        {
-            if (success_ptr) *success_ptr = true;
-            return true;
-        }
+        if (success_ptr)
+            *success_ptr = true;
+        return false;
+    }
+    else
+    if (ref.equals_lower("true") ||
+        ref.equals_lower("on") ||
+        ref.equals_lower("yes") ||
+        ref.equals_lower("1"))
+    {
+        if (success_ptr) *success_ptr = true;
+        return true;
     }
     if (success_ptr) *success_ptr = false;
     return fail_value;
