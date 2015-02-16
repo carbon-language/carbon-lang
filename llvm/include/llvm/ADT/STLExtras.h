@@ -203,18 +203,18 @@ template <class T, T... I> struct integer_sequence {
   static LLVM_CONSTEXPR size_t size() { return sizeof...(I); }
 };
 
+/// \brief Alias for the common case of a sequence of size_ts.
+template <size_t... I>
+struct index_sequence : integer_sequence<std::size_t, I...> {};
+
 template <std::size_t N, std::size_t... I>
 struct build_index_impl : build_index_impl<N - 1, N - 1, I...> {};
 template <std::size_t... I>
-struct build_index_impl<0, I...> : integer_sequence<std::size_t, I...> {};
-
-/// \brief Alias for the common case of a sequence of size_ts.
-template <size_t... I>
-using index_sequence = integer_sequence<std::size_t, I...>;
+struct build_index_impl<0, I...> : index_sequence<I...> {};
 
 /// \brief Creates a compile-time integer sequence for a parameter pack.
 template <class... Ts>
-using index_sequence_for = build_index_impl<sizeof...(Ts)>;
+struct index_sequence_for : build_index_impl<sizeof...(Ts)> {};
 
 //===----------------------------------------------------------------------===//
 //     Extra additions for arrays
