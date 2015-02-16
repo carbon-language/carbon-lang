@@ -656,9 +656,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   // Rename anonymous register classes.
   if (R->getName().size() > 9 && R->getName()[9] == '.') {
     static unsigned AnonCounter = 0;
-    R->setName("AnonRegClass_" + utostr(AnonCounter));
-    // MSVC2012 ICEs if AnonCounter++ is directly passed to utostr.
-    ++AnonCounter;
+    R->setName("AnonRegClass_" + utostr(AnonCounter++));
   }
 
   std::vector<Record*> TypeList = R->getValueAsListOfDefs("RegTypes");
