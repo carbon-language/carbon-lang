@@ -10,7 +10,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    def test_lldbmi_stackargs(self):
+    def test_lldbmi_stack_list_arguments(self):
         """Test that 'lldb-mi --interpreter' can shows arguments."""
 
         self.spawnLldbMi(args = None)
@@ -46,7 +46,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    def test_lldbmi_locals(self):
+    def test_lldbmi_stack_list_locals(self):
         """Test that 'lldb-mi --interpreter' can shows local variables."""
 
         self.spawnLldbMi(args = None)
@@ -164,7 +164,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    def test_lldbmi_stackdepth(self):
+    def test_lldbmi_stack_info_depth(self):
         """Test that 'lldb-mi --interpreter' can shows depth of the stack."""
 
         self.spawnLldbMi(args = None)
@@ -186,7 +186,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    def test_lldbmi_stackframes(self):
+    def test_lldbmi_stack_list_frames(self):
         """Test that 'lldb-mi --interpreter' can lists the frames on the stack."""
 
         self.spawnLldbMi(args = None)
