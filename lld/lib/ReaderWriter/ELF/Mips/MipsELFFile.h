@@ -131,25 +131,38 @@ private:
         referenceStart, referenceEnd, referenceList);
   }
 
+  const Elf_Shdr *findSectionByType(uint64_t type) {
+    for (const Elf_Shdr &section : this->_objFile->sections())
+      if (section.sh_type == type)
+        return &section;
+    return nullptr;
+  }
+
+  const Elf_Shdr *findSectionByFlags(uint64_t flags) {
+    for (const Elf_Shdr &section : this->_objFile->sections())
+      if (section.sh_flags & flags)
+        return &section;
+    return nullptr;
+  }
+
   std::error_code readAuxData() {
-    typedef llvm::object::Elf_RegInfo<ELFT> Elf_RegInfo;
+    if (const Elf_Shdr *sec = findSectionByFlags(llvm::ELF::SHF_TLS)) {
+      _tpOff = sec->sh_addr + TP_OFFSET;
+      _dtpOff = sec->sh_addr + DTP_OFFSET;
+    }
+    if (const Elf_Shdr *sec = findSectionByType(llvm::ELF::SHT_MIPS_REGINFO)) {
+      typedef llvm::object::Elf_RegInfo<ELFT> Elf_RegInfo;
 
-    for (const Elf_Shdr &section : this->_objFile->sections()) {
-      if (!_gp0.hasValue() && section.sh_type == llvm::ELF::SHT_MIPS_REGINFO) {
-        auto contents = this->getSectionContents(&section);
-        if (std::error_code ec = contents.getError())
-          return ec;
+      auto contents = this->getSectionContents(sec);
+      if (std::error_code ec = contents.getError())
+        return ec;
 
-        ArrayRef<uint8_t> raw = contents.get();
+      ArrayRef<uint8_t> raw = contents.get();
 
-        // FIXME (simon): Show error in case of invalid section size.
-        assert(raw.size() == sizeof(Elf_RegInfo) &&
-               "Invalid size of RegInfo section");
-        _gp0 = reinterpret_cast<const Elf_RegInfo *>(raw.data())->ri_gp_value;
-      } else if (!_tpOff.hasValue() && section.sh_flags & llvm::ELF::SHF_TLS) {
-        _tpOff = section.sh_addr + TP_OFFSET;
-        _dtpOff = section.sh_addr + DTP_OFFSET;
-      }
+      // FIXME (simon): Show error in case of invalid section size.
+      assert(raw.size() == sizeof(Elf_RegInfo) &&
+             "Invalid size of RegInfo section");
+      _gp0 = reinterpret_cast<const Elf_RegInfo *>(raw.data())->ri_gp_value;
     }
     return std::error_code();
   }
