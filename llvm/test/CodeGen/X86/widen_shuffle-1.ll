@@ -68,10 +68,9 @@ entry:
 define <8 x i8> @shuf4(<4 x i8> %a, <4 x i8> %b) nounwind readnone {
 ; CHECK-LABEL: shuf4:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    movdqa {{.*#+}} xmm2 = [0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
-; CHECK-NEXT:    pshufb %xmm2, %xmm1
-; CHECK-NEXT:    pshufb %xmm2, %xmm0
-; CHECK-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; CHECK-NEXT:    pshufb {{.*#+}} xmm1 = xmm1[0,1,4,5,4,5,6,7,0,1,4,5,8,9,12,13]
+; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
+; CHECK-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5,6,7]
 ; CHECK-NEXT:    retl
   %vshuf = shufflevector <4 x i8> %a, <4 x i8> %b, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
   ret <8 x i8> %vshuf

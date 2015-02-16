@@ -150,7 +150,8 @@ define void @test13(<16 x i32> %trigger, <16 x float>* %addr, <16 x float> %val)
 }
 
 ; AVX2-LABEL: test14
-; AVX2: vinsertps {{.*#+}} xmm0 = xmm0[0,2],zero,zero
+; AVX2: vpshufd
+; AVX2: vmovq
 ; AVX2: vmaskmovps
 define void @test14(<2 x i32> %trigger, <2 x float>* %addr, <2 x float> %val) {
   %mask = icmp eq <2 x i32> %trigger, zeroinitializer

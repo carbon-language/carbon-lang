@@ -4,14 +4,28 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx | FileCheck %s --check-prefix=AVX --check-prefix=AVX1
 
 define <4 x i32> @trunc2x2i64(<2 x i64> %a, <2 x i64> %b) {
-; SSE-LABEL: trunc2x2i64:
-; SSE:       # BB#0: # %entry
-; SSE-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2],xmm1[0,2]
-; SSE-NEXT:    retq
+; SSE2-LABEL: trunc2x2i64:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2],xmm1[0,2]
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: trunc2x2i64:
+; SSSE3:       # BB#0: # %entry
+; SSSE3-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2],xmm1[0,2]
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: trunc2x2i64:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[0,1,0,2]
+; SSE41-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5,6,7]
+; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: trunc2x2i64:
 ; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vshufps {{.*#+}} xmm0 = xmm0[0,2],xmm1[0,2]
+; AVX-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[0,1,0,2]
+; AVX-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,2,2,3]
+; AVX-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5,6,7]
 ; AVX-NEXT:    retq
 
 
@@ -64,18 +78,16 @@ define <8 x i16> @trunc2x4i32(<4 x i32> %a, <4 x i32> %b) {
 ;
 ; SSE41-LABEL: trunc2x4i32:
 ; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    movdqa {{.*#+}} xmm2 = [0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
-; SSE41-NEXT:    pshufb %xmm2, %xmm1
-; SSE41-NEXT:    pshufb %xmm2, %xmm0
-; SSE41-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE41-NEXT:    pshufb {{.*#+}} xmm1 = xmm1[0,1,4,5,4,5,6,7,0,1,4,5,8,9,12,13]
+; SSE41-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5,6,7]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: trunc2x4i32:
 ; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vmovdqa {{.*#+}} xmm2 = [0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
-; AVX-NEXT:    vpshufb %xmm2, %xmm1, %xmm1
-; AVX-NEXT:    vpshufb %xmm2, %xmm0, %xmm0
-; AVX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; AVX-NEXT:    vpshufb {{.*#+}} xmm1 = xmm1[0,1,4,5,4,5,6,7,0,1,4,5,8,9,12,13]
+; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
+; AVX-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5,6,7]
 ; AVX-NEXT:    retq
 
 

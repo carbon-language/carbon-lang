@@ -2,9 +2,9 @@
 
 define <4 x i32> @trunc_64_32(<4 x i64> %A) nounwind uwtable readnone ssp{
 ; CHECK-LABEL: trunc_64_32
-; CHECK: shufps
-; CHECK-NOT: pshufd
-; CHECK-NOT: movlhps 
+; CHECK: pshufd
+; CHECK: pshufd
+; CHECK: pblendw
   %B = trunc <4 x i64> %A to <4 x i32>
   ret <4 x i32>%B
 }

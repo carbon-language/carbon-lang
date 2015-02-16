@@ -356,12 +356,14 @@ define <4 x i32> @pinsrd_from_shufflevector_i32(<4 x i32> %a, <4 x i32>* nocaptu
 ; X32-LABEL: pinsrd_from_shufflevector_i32:
 ; X32:       ## BB#0: ## %entry
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1,2],mem[0]
+; X32-NEXT:    pshufd {{.*#+}} xmm1 = mem[0,1,2,0]
+; X32-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5],xmm1[6,7]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: pinsrd_from_shufflevector_i32:
 ; X64:       ## BB#0: ## %entry
-; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1,2],mem[0]
+; X64-NEXT:    pshufd {{.*#+}} xmm1 = mem[0,1,2,0]
+; X64-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5],xmm1[6,7]
 ; X64-NEXT:    retq
 entry:
   %0 = load <4 x i32>* %pb, align 16
@@ -372,12 +374,14 @@ entry:
 define <4 x i32> @insertps_from_shufflevector_i32_2(<4 x i32> %a, <4 x i32> %b) {
 ; X32-LABEL: insertps_from_shufflevector_i32_2:
 ; X32:       ## BB#0: ## %entry
-; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],xmm1[3],xmm0[2,3]
+; X32-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[2,3,0,1]
+; X32-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3],xmm0[4,5,6,7]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: insertps_from_shufflevector_i32_2:
 ; X64:       ## BB#0: ## %entry
-; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],xmm1[3],xmm0[2,3]
+; X64-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[2,3,0,1]
+; X64-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3],xmm0[4,5,6,7]
 ; X64-NEXT:    retq
 entry:
   %vecinit6 = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 7, i32 2, i32 3>
@@ -407,13 +411,15 @@ define <4 x i32> @insertps_from_load_ins_elt_undef_i32(<4 x i32> %a, i32* %b) {
 ; X32:       ## BB#0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    movd {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1],xmm1[0],xmm0[3]
+; X32-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[0,1,0,1]
+; X32-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5],xmm0[6,7]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: insertps_from_load_ins_elt_undef_i32:
 ; X64:       ## BB#0:
 ; X64-NEXT:    movd {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1],xmm1[0],xmm0[3]
+; X64-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[0,1,0,1]
+; X64-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5],xmm0[6,7]
 ; X64-NEXT:    retq
   %1 = load i32* %b, align 4
   %2 = insertelement <4 x i32> undef, i32 %1, i32 0
@@ -695,14 +701,16 @@ define <4 x i32> @i32_shuf_X00A(<4 x i32> %x, <4 x i32> %a) {
 ; X32:       ## BB#0:
 ; X32-NEXT:    pxor %xmm2, %xmm2
 ; X32-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm2[2,3,4,5,6,7]
-; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1,2],xmm1[0]
+; X32-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[0,1,2,0]
+; X32-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5],xmm1[6,7]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: i32_shuf_X00A:
 ; X64:       ## BB#0:
 ; X64-NEXT:    pxor %xmm2, %xmm2
 ; X64-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm2[2,3,4,5,6,7]
-; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0,1,2],xmm1[0]
+; X64-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[0,1,2,0]
+; X64-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5],xmm1[6,7]
 ; X64-NEXT:    retq
   %vecext = extractelement <4 x i32> %x, i32 0
   %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
@@ -717,16 +725,16 @@ define <4 x i32> @i32_shuf_X00X(<4 x i32> %x, <4 x i32> %a) {
 ; X32:       ## BB#0:
 ; X32-NEXT:    pxor %xmm1, %xmm1
 ; X32-NEXT:    pblendw {{.*#+}} xmm1 = xmm0[0,1],xmm1[2,3,4,5,6,7]
-; X32-NEXT:    insertps {{.*#+}} xmm1 = xmm1[0,1,2],xmm0[0]
-; X32-NEXT:    movaps %xmm1, %xmm0
+; X32-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,1,2,0]
+; X32-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1,2,3,4,5],xmm0[6,7]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: i32_shuf_X00X:
 ; X64:       ## BB#0:
 ; X64-NEXT:    pxor %xmm1, %xmm1
 ; X64-NEXT:    pblendw {{.*#+}} xmm1 = xmm0[0,1],xmm1[2,3,4,5,6,7]
-; X64-NEXT:    insertps {{.*#+}} xmm1 = xmm1[0,1,2],xmm0[0]
-; X64-NEXT:    movaps %xmm1, %xmm0
+; X64-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,1,2,0]
+; X64-NEXT:    pblendw {{.*#+}} xmm0 = xmm1[0,1,2,3,4,5],xmm0[6,7]
 ; X64-NEXT:    retq
   %vecext = extractelement <4 x i32> %x, i32 0
   %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
@@ -740,17 +748,17 @@ define <4 x i32> @i32_shuf_X0YC(<4 x i32> %x, <4 x i32> %a) {
 ; X32-LABEL: i32_shuf_X0YC:
 ; X32:       ## BB#0:
 ; X32-NEXT:    pmovzxdq {{.*#+}} xmm2 = xmm0[0],zero,xmm0[1],zero
-; X32-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1],xmm0[1],zero
-; X32-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1,2],xmm1[2]
-; X32-NEXT:    movaps %xmm2, %xmm0
+; X32-NEXT:    pblendw {{.*#+}} xmm2 = xmm2[0,1,2,3,4,5,6,7]
+; X32-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[0,1,2,2]
+; X32-NEXT:    pblendw {{.*#+}} xmm0 = xmm2[0,1,2,3,4,5],xmm0[6,7]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: i32_shuf_X0YC:
 ; X64:       ## BB#0:
 ; X64-NEXT:    pmovzxdq {{.*#+}} xmm2 = xmm0[0],zero,xmm0[1],zero
-; X64-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1],xmm0[1],zero
-; X64-NEXT:    insertps {{.*#+}} xmm2 = xmm2[0,1,2],xmm1[2]
-; X64-NEXT:    movaps %xmm2, %xmm0
+; X64-NEXT:    pblendw {{.*#+}} xmm2 = xmm2[0,1,2,3,4,5,6,7]
+; X64-NEXT:    pshufd {{.*#+}} xmm0 = xmm1[0,1,2,2]
+; X64-NEXT:    pblendw {{.*#+}} xmm0 = xmm2[0,1,2,3,4,5],xmm0[6,7]
 ; X64-NEXT:    retq
   %vecext = extractelement <4 x i32> %x, i32 0
   %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
@@ -1003,16 +1011,16 @@ define void @insertps_pr20411(i32* noalias nocapture %RET) #1 {
 ; X32-LABEL: insertps_pr20411:
 ; X32:       ## BB#0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movaps {{.*#+}} xmm0 = [3,3,3,3]
-; X32-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],mem[3],zero,zero
-; X32-NEXT:    movups %xmm0, (%eax)
+; X32-NEXT:    pshufd {{.*#+}} xmm0 = mem[2,3,0,1]
+; X32-NEXT:    pblendw {{.*#+}} xmm0 = mem[0,1],xmm0[2,3],mem[4,5,6,7]
+; X32-NEXT:    movdqu %xmm0, (%eax)
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: insertps_pr20411:
 ; X64:       ## BB#0:
-; X64-NEXT:    movaps {{.*#+}} xmm0 = [3,3,3,3]
-; X64-NEXT:    insertps {{.*#+}} xmm0 = xmm0[0],mem[3],zero,zero
-; X64-NEXT:    movups %xmm0, (%rdi)
+; X64-NEXT:    pshufd {{.*#+}} xmm0 = mem[2,3,0,1]
+; X64-NEXT:    pblendw {{.*#+}} xmm0 = mem[0,1],xmm0[2,3],mem[4,5,6,7]
+; X64-NEXT:    movdqu %xmm0, (%rdi)
 ; X64-NEXT:    retq
   %gather_load = shufflevector <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>, <8 x i32> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
   %shuffle109 = shufflevector <4 x i32> <i32 4, i32 5, i32 6, i32 7>, <4 x i32> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>  ; 4 5 6 7

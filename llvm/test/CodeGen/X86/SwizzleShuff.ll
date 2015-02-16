@@ -14,11 +14,12 @@ define void @pull_bitcast (<4 x i8>* %pA, <4 x i8>* %pB) {
 }
 
 ; CHECK: multi_use_swizzle
-; CHECK: mov
-; CHECK-NEXT: shuf
-; CHECK-NEXT: shuf
-; CHECK-NEXT: shuf
-; CHECK-NEXT: xor
+; CHECK: pshufd
+; CHECK-NEXT: pshufd
+; CHECK-NEXT: pblendw
+; CHECK-NEXT: pshufd
+; CHECK-NEXT: pshufd
+; CHECK-NEXT: pxor
 ; CHECK-NEXT: ret
 define <4 x i32> @multi_use_swizzle (<4 x i32>* %pA, <4 x i32>* %pB) {
   %A = load <4 x i32>* %pA
@@ -45,7 +46,7 @@ define <4 x i8> @pull_bitcast2 (<4 x i8>* %pA, <4 x i8>* %pB, <4 x i8>* %pC) {
 
 
 ; CHECK: reverse_1
-; CHECK-NOT: shuf
+; CHECK-NOT: pshufd
 ; CHECK: ret
 define <4 x i32> @reverse_1 (<4 x i32>* %pA, <4 x i32>* %pB) {
   %A = load <4 x i32>* %pA
@@ -57,7 +58,7 @@ define <4 x i32> @reverse_1 (<4 x i32>* %pA, <4 x i32>* %pB) {
 
 
 ; CHECK: no_reverse_shuff
-; CHECK: shuf
+; CHECK: pshufd
 ; CHECK: ret
 define <4 x i32> @no_reverse_shuff (<4 x i32>* %pA, <4 x i32>* %pB) {
   %A = load <4 x i32>* %pA
