@@ -124,6 +124,11 @@ unlikely to be supported by our host compilers.
 * ``override`` and ``final``: N2928_, N3206_, N3272_
 * Atomic operations and the C++11 memory model: N2429_
 * Variadic templates: N2242_
+* Explicit conversion operators: N2437_
+* Defaulted and deleted functions: N2346_
+
+  * But not defaulted move constructors or move assignment operators, MSVC 2013
+    cannot synthesize them.
 
 .. _N2118: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2006/n2118.html
 .. _N2439: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2439.htm
@@ -145,6 +150,8 @@ unlikely to be supported by our host compilers.
 .. _N3272: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3272.htm
 .. _N2429: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2429.htm
 .. _N2242: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2242.pdf
+.. _N2437: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2437.pdf
+.. _N2346: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2007/n2346.htm
 .. _MSVC-compatible RTTI: http://llvm.org/PR18951
 
 The supported features in the C++11 standard libraries are less well tracked,
