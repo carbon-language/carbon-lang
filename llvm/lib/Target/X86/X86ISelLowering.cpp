@@ -1475,6 +1475,17 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v8i16, Custom);
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v16i16, Custom);
 
+    setOperationAction(ISD::FFLOOR,             MVT::v16f32, Legal);
+    setOperationAction(ISD::FFLOOR,             MVT::v8f64, Legal);
+    setOperationAction(ISD::FCEIL,              MVT::v16f32, Legal);
+    setOperationAction(ISD::FCEIL,              MVT::v8f64, Legal);
+    setOperationAction(ISD::FTRUNC,             MVT::v16f32, Legal);
+    setOperationAction(ISD::FTRUNC,             MVT::v8f64, Legal);
+    setOperationAction(ISD::FRINT,              MVT::v16f32, Legal);
+    setOperationAction(ISD::FRINT,              MVT::v8f64, Legal);
+    setOperationAction(ISD::FNEARBYINT,         MVT::v16f32, Legal);
+    setOperationAction(ISD::FNEARBYINT,         MVT::v8f64, Legal);
+
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8f64,  Custom);
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v8i64,  Custom);
     setOperationAction(ISD::CONCAT_VECTORS,     MVT::v16f32,  Custom);
