@@ -4,6 +4,6 @@
 
 define void @test() {
 entry:
-  alloca metadata !{null}
+  alloca i32 (i32)
   ret void
 }
