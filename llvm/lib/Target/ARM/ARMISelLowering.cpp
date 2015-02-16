@@ -3084,8 +3084,11 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
-    std::advance(CurOrigArg, Ins[VA.getValNo()].OrigArgIndex - CurArgIdx);
-    CurArgIdx = Ins[VA.getValNo()].OrigArgIndex;
+    if (Ins[VA.getValNo()].isOrigArg()) {
+      std::advance(CurOrigArg,
+                   Ins[VA.getValNo()].getOrigArgIndex() - CurArgIdx);
+      CurArgIdx = Ins[VA.getValNo()].getOrigArgIndex();
+    }
     // Arguments stored in registers.
     if (VA.isRegLoc()) {
       EVT RegVT = VA.getLocVT();
@@ -3165,7 +3168,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
       assert(VA.isMemLoc());
       assert(VA.getValVT() != MVT::i64 && "i64 should already be lowered");
 
-      int index = ArgLocs[i].getValNo();
+      int index = VA.getValNo();
 
       // Some Ins[] entries become multiple ArgLoc[] entries.
       // Process them only once.
@@ -3178,6 +3181,8 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
           // Since they could be overwritten by lowering of arguments in case of
           // a tail call.
           if (Flags.isByVal()) {
+            assert(Ins[index].isOrigArg() &&
+                   "Byval arguments cannot be implicit");
             unsigned CurByValIndex = CCInfo.getInRegsParamsProcessed();
 
             ByValStoreOffset = RoundUpToAlignment(ByValStoreOffset, Flags.getByValAlign());
