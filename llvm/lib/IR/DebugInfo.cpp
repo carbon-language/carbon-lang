@@ -1537,7 +1537,7 @@ bool llvm::StripDebugInfo(Module &M) {
 }
 
 unsigned llvm::getDebugMetadataVersionFromModule(const Module &M) {
-  if (auto *Val = mdconst::extract_or_null<ConstantInt>(
+  if (auto *Val = mdconst::dyn_extract_or_null<ConstantInt>(
           M.getModuleFlag("Debug Info Version")))
     return Val->getZExtValue();
   return 0;
