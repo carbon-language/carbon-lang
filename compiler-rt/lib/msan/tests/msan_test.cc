@@ -3522,7 +3522,7 @@ TEST(MemorySanitizer, VolatileBitfield) {
 }
 
 TEST(MemorySanitizer, UnalignedLoad) {
-  char x[32];
+  char x[32] __attribute__((aligned(8)));
   U4 origin = __LINE__;
   for (unsigned i = 0; i < sizeof(x) / 4; ++i)
     __msan_set_origin(x + 4 * i, 4, origin + i);
@@ -3556,7 +3556,7 @@ TEST(MemorySanitizer, UnalignedLoad) {
 }
 
 TEST(MemorySanitizer, UnalignedStore16) {
-  char x[5];
+  char x[5] __attribute__((aligned(4)));
   U2 y2 = 0;
   U4 origin = __LINE__;
   __msan_poison(&y2, 1);
@@ -3567,11 +3567,10 @@ TEST(MemorySanitizer, UnalignedStore16) {
   EXPECT_POISONED_O(x[1], origin);
   EXPECT_NOT_POISONED(x[2]);
   EXPECT_POISONED_O(x[3], origin);
-  EXPECT_POISONED_O(x[4], origin);
 }
 
 TEST(MemorySanitizer, UnalignedStore32) {
-  char x[8];
+  char x[8] __attribute__((aligned(4)));
   U4 y4 = 0;
   U4 origin = __LINE__;
   __msan_poison(&y4, 2);
@@ -3589,7 +3588,7 @@ TEST(MemorySanitizer, UnalignedStore32) {
 }
 
 TEST(MemorySanitizer, UnalignedStore64) {
-  char x[16];
+  char x[16] __attribute__((aligned(8)));
   U8 y8 = 0;
   U4 origin = __LINE__;
   __msan_poison(&y8, 3);
@@ -3612,7 +3611,7 @@ TEST(MemorySanitizer, UnalignedStore64) {
 }
 
 TEST(MemorySanitizer, UnalignedStore16_precise) {
-  char x[8];
+  char x[8] __attribute__((aligned(4)));
   U2 y = 0;
   U4 originx1 = __LINE__;
   U4 originx2 = __LINE__;
@@ -3635,7 +3634,7 @@ TEST(MemorySanitizer, UnalignedStore16_precise) {
 }
 
 TEST(MemorySanitizer, UnalignedStore16_precise2) {
-  char x[8];
+  char x[8] __attribute__((aligned(4)));
   U2 y = 0;
   U4 originx1 = __LINE__;
   U4 originx2 = __LINE__;
@@ -3658,7 +3657,7 @@ TEST(MemorySanitizer, UnalignedStore16_precise2) {
 }
 
 TEST(MemorySanitizer, UnalignedStore64_precise) {
-  char x[12];
+  char x[12] __attribute__((aligned(8)));
   U8 y = 0;
   U4 originx1 = __LINE__;
   U4 originx2 = __LINE__;
@@ -3690,7 +3689,7 @@ TEST(MemorySanitizer, UnalignedStore64_precise) {
 }
 
 TEST(MemorySanitizer, UnalignedStore64_precise2) {
-  char x[12];
+  char x[12] __attribute__((aligned(8)));
   U8 y = 0;
   U4 originx1 = __LINE__;
   U4 originx2 = __LINE__;
