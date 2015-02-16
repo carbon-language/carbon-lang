@@ -103,14 +103,11 @@ TEST(Range, passing) {
   std::iota(v.begin(), v.end(), 0);
   takes_range(make_range(v));
   takes_range(make_range(implicit_cast<const std::vector<int> &>(v)));
-  // MSVC Can't compile make_ptr_range.
-#ifndef _MSC_VER
   static_assert(
       std::is_same<decltype(make_ptr_range(v)), lld::range<int *>>::value,
       "make_ptr_range should return a range of pointers");
   takes_range(make_ptr_range(v));
   takes_range(make_ptr_range(implicit_cast<const std::vector<int> &>(v)));
-#endif
   int arr[] = { 0, 1, 2, 3, 4 };
   takes_range(make_range(arr));
   const int carr[] = { 0, 1, 2, 3, 4 };
