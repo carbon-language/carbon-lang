@@ -1132,7 +1132,8 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       // Add the source operands (D subregs).
       unsigned D0 = TRI->getSubReg(SrcReg, ARM::dsub_0);
       unsigned D1 = TRI->getSubReg(SrcReg, ARM::dsub_1);
-      MIB.addReg(D0).addReg(D1);
+      MIB.addReg(D0, SrcIsKill ? RegState::Kill : 0)
+         .addReg(D1, SrcIsKill ? RegState::Kill : 0);
 
       if (SrcIsKill)      // Add an implicit kill for the Q register.
         MIB->addRegisterKilled(SrcReg, TRI, true);
