@@ -13,6 +13,7 @@
 #include "llvm/Transforms/Utils/ASanStackFrameLayout.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/MathExtras.h"
 #include <algorithm>
 
 namespace llvm {
@@ -33,11 +34,6 @@ static inline bool CompareVars(const ASanStackVariableDescription &a,
 // with e.g. alignment 1 and alignment 16 do not get reordered by CompareVars.
 static const size_t kMinAlignment = 16;
 
-static size_t RoundUpTo(size_t X, size_t RoundTo) {
-  assert((RoundTo & (RoundTo - 1)) == 0);
-  return (X + RoundTo - 1) & ~(RoundTo - 1);
-}
-
 // The larger the variable Size the larger is the redzone.
 // The resulting frame size is a multiple of Alignment.
 static size_t VarAndRedzoneSize(size_t Size, size_t Alignment) {
@@ -48,7 +44,7 @@ static size_t VarAndRedzoneSize(size_t Size, size_t Alignment) {
   else if (Size <= 512) Res = Size + 64;
   else if (Size <= 4096) Res = Size + 128;
   else                   Res = Size + 256;
-  return RoundUpTo(Res, Alignment);
+  return RoundUpToAlignment(Res, Alignment);
 }
 
 void
