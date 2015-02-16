@@ -3065,12 +3065,27 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
         return Error("Invalid record");
 
       SmallVector<unsigned, 4> EXTRACTVALIdx;
+      Type *CurTy = Agg->getType();
       for (unsigned RecSize = Record.size();
            OpNum != RecSize; ++OpNum) {
+        bool IsArray = CurTy->isArrayTy();
+        bool IsStruct = CurTy->isStructTy();
         uint64_t Index = Record[OpNum];
+
+        if (!IsStruct && !IsArray)
+          return Error("EXTRACTVAL: Invalid type");
         if ((unsigned)Index != Index)
           return Error("Invalid value");
+        if (IsStruct && Index >= CurTy->subtypes().size())
+          return Error("EXTRACTVAL: Invalid struct index");
+        if (IsArray && Index >= CurTy->getArrayNumElements())
+          return Error("EXTRACTVAL: Invalid array index");
         EXTRACTVALIdx.push_back((unsigned)Index);
+
+        if (IsStruct)
+          CurTy = CurTy->subtypes()[Index];
+        else
+          CurTy = CurTy->subtypes()[0];
       }
 
       I = ExtractValueInst::Create(Agg, EXTRACTVALIdx);
@@ -3089,12 +3104,29 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
         return Error("Invalid record");
 
       SmallVector<unsigned, 4> INSERTVALIdx;
+      Type *CurTy = Agg->getType();
       for (unsigned RecSize = Record.size();
            OpNum != RecSize; ++OpNum) {
+        bool IsArray = CurTy->isArrayTy();
+        bool IsStruct = CurTy->isStructTy();
         uint64_t Index = Record[OpNum];
+
+        if (!IsStruct && !IsArray)
+          return Error("INSERTVAL: Invalid type");
+        if (!CurTy->isStructTy() && !CurTy->isArrayTy())
+          return Error("Invalid type");
         if ((unsigned)Index != Index)
           return Error("Invalid value");
+        if (IsStruct && Index >= CurTy->subtypes().size())
+          return Error("INSERTVAL: Invalid struct index");
+        if (IsArray && Index >= CurTy->getArrayNumElements())
+          return Error("INSERTVAL: Invalid array index");
+
         INSERTVALIdx.push_back((unsigned)Index);
+        if (IsStruct)
+          CurTy = CurTy->subtypes()[Index];
+        else
+          CurTy = CurTy->subtypes()[0];
       }
 
       I = InsertValueInst::Create(Agg, Val, INSERTVALIdx);

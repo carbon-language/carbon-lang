@@ -17,3 +17,24 @@ UNEXPECTED-EOF: Unexpected end of file
 BAD-ABBREV-NUMBER: Invalid abbrev number
 BAD-TYPE-TABLE-FORWARD-REF: Invalid TYPE table: Only named structs can be forward referenced
 BAD-BITWIDTH: Bitwidth for integer type out of range
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-extractval-array-idx.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=EXTRACT-ARRAY %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-extractval-struct-idx.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=EXTRACT-STRUCT %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-extractval-too-many-idxs.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=EXTRACT-IDXS %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-insertval-array-idx.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=INSERT-ARRAY %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-insertval-struct-idx.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=INSERT-STRUCT %s
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-insertval-too-many-idxs.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=INSERT-IDXS %s
+
+
+EXTRACT-ARRAY: EXTRACTVAL: Invalid array index
+EXTRACT-STRUCT: EXTRACTVAL: Invalid struct index
+EXTRACT-IDXS: EXTRACTVAL: Invalid type
+INSERT-ARRAY: INSERTVAL: Invalid array index
+INSERT-STRUCT: INSERTVAL: Invalid struct index
+INSERT-IDXS: INSERTVAL: Invalid type
