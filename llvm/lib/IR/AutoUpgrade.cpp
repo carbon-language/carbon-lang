@@ -165,6 +165,8 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name == "x86.avx.vbroadcast.sd.256" ||
         Name == "x86.sse2.psll.dq.bs" ||
         Name == "x86.sse2.psrl.dq.bs" ||
+        Name == "x86.avx2.psll.dq.bs" ||
+        Name == "x86.avx2.psrl.dq.bs" ||
         (Name.startswith("x86.xop.vpcom") && F->arg_size() == 2)) {
       NewFn = nullptr;
       return true;
@@ -525,6 +527,52 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       }
       Rep = Builder.CreateBitCast(Op1,
                                   VectorType::get(Type::getInt64Ty(C), 2),
+                                  "cast");
+    } else if (Name == "llvm.x86.avx2.psll.dq.bs") {
+      Value *Op0 = ConstantVector::getSplat(32, Builder.getInt8(0));
+      Value *Op1 = Builder.CreateBitCast(CI->getArgOperand(0),
+                                         VectorType::get(Type::getInt8Ty(C),32),
+                                         "cast");
+
+      unsigned Shift = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
+
+      if (Shift < 16) {
+        SmallVector<Constant*, 32> Idxs;
+        for (unsigned l = 0; l < 32; l += 16)
+          for (unsigned i = 0; i != 16; ++i) {
+            unsigned Idx = i + Shift;
+            if (Idx >= 16) Idx += 16; // end of lane, switch operand.
+            Idxs.push_back(Builder.getInt32(Idx + l));
+          }
+
+        Op1 = Builder.CreateShuffleVector(Op0, Op1, ConstantVector::get(Idxs));
+      }
+
+      Rep = Builder.CreateBitCast(Op1,
+                                  VectorType::get(Type::getInt64Ty(C), 4),
+                                  "cast");
+    } else if (Name == "llvm.x86.avx2.psrl.dq.bs") {
+      Value *Op0 = Builder.CreateBitCast(CI->getArgOperand(0),
+                                         VectorType::get(Type::getInt8Ty(C),32),
+                                         "cast");
+      Value *Op1 = ConstantVector::getSplat(32, Builder.getInt8(0));
+
+      unsigned Shift = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
+
+      if (Shift < 16) {
+        SmallVector<Constant*, 32> Idxs;
+        for (unsigned l = 0; l < 32; l += 16)
+          for (unsigned i = 0; i != 16; ++i) {
+            unsigned Idx = 32 + i - Shift;
+            if (Idx < 32) Idx -= 16; // end of lane, switch operand.
+            Idxs.push_back(Builder.getInt32(Idx + l));
+          }
+
+        Op0 = Builder.CreateShuffleVector(Op0, Op1, ConstantVector::get(Idxs));
+      }
+
+      Rep = Builder.CreateBitCast(Op0,
+                                  VectorType::get(Type::getInt64Ty(C), 4),
                                   "cast");
     } else {
       bool PD128 = false, PD256 = false, PS128 = false, PS256 = false;

@@ -4216,20 +4216,16 @@ defm VPSRADY : PDI_binop_rmi<0xE2, 0x72, MRM4r, "vpsrad", X86vsra, X86vsrai,
                              VR256, v8i32, v4i32, bc_v4i32, loadv2i64,
                              SSE_INTSHIFT_ITINS_P, 0>, VEX_4V, VEX_L;
 
-let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift] in {
+let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift], hasSideEffects = 0 in {
   // 256-bit logical shifts.
   def VPSLLDQYri : PDIi8<0x73, MRM7r,
                     (outs VR256:$dst), (ins VR256:$src1, i32u8imm:$src2),
                     "vpslldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR256:$dst,
-                      (int_x86_avx2_psll_dq_bs VR256:$src1, imm:$src2))]>,
-                    VEX_4V, VEX_L;
+                    []>, VEX_4V, VEX_L;
   def VPSRLDQYri : PDIi8<0x73, MRM3r,
                     (outs VR256:$dst), (ins VR256:$src1, i32u8imm:$src2),
                     "vpsrldq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                    [(set VR256:$dst,
-                      (int_x86_avx2_psrl_dq_bs VR256:$src1, imm:$src2))]>,
-                    VEX_4V, VEX_L;
+                    []>, VEX_4V, VEX_L;
   // PSRADQYri doesn't exist in SSE[1-3].
 }
 } // Predicates = [HasAVX2]
