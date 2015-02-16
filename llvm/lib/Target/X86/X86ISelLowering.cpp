@@ -7525,11 +7525,14 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
     }
   }
     // FALLTHROUGH
+  case MVT::v16i8:
   case MVT::v32i8: {
-    assert(Subtarget->hasAVX2() && "256-bit integer blends require AVX2!");
     // Scale the blend by the number of bytes per element.
-    int Scale =  VT.getScalarSizeInBits() / 8;
-    assert(Mask.size() * Scale == 32 && "Not a 256-bit vector!");
+    int Scale = VT.getScalarSizeInBits() / 8;
+
+    // This form of blend is always done on bytes. Compute the byte vector
+    // type.
+    MVT BlendVT = MVT::getVectorVT(MVT::i8, VT.getSizeInBits() / 8);
 
     // Compute the VSELECT mask. Note that VSELECT is really confusing in the
     // mix of LLVM's code generator and the x86 backend. We tell the code
@@ -7542,19 +7545,19 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
     // the LLVM model for boolean values in vector elements gets the relevant
     // bit set, it is set backwards and over constrained relative to x86's
     // actual model.
-    SDValue VSELECTMask[32];
+    SmallVector<SDValue, 32> VSELECTMask;
     for (int i = 0, Size = Mask.size(); i < Size; ++i)
       for (int j = 0; j < Scale; ++j)
-        VSELECTMask[Scale * i + j] =
+        VSELECTMask.push_back(
             Mask[i] < 0 ? DAG.getUNDEF(MVT::i8)
-                        : DAG.getConstant(Mask[i] < Size ? -1 : 0, MVT::i8);
+                        : DAG.getConstant(Mask[i] < Size ? -1 : 0, MVT::i8));
 
-    V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v32i8, V1);
-    V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v32i8, V2);
+    V1 = DAG.getNode(ISD::BITCAST, DL, BlendVT, V1);
+    V2 = DAG.getNode(ISD::BITCAST, DL, BlendVT, V2);
     return DAG.getNode(
         ISD::BITCAST, DL, VT,
-        DAG.getNode(ISD::VSELECT, DL, MVT::v32i8,
-                    DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v32i8, VSELECTMask),
+        DAG.getNode(ISD::VSELECT, DL, BlendVT,
+                    DAG.getNode(ISD::BUILD_VECTOR, DL, BlendVT, VSELECTMask),
                     V1, V2));
   }
 
@@ -9968,6 +9971,15 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
         V2InUse |= (ZeroMask != V2Idx);
       }
     }
+
+    // If both V1 and V2 are in use and we can use a direct blend, do so. This
+    // avoids using blends to handle blends-with-zero which is important as
+    // a single pshufb is significantly faster for that.
+    if (V1InUse && V2InUse && Subtarget->hasSSE41())
+      if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v16i8, V1, V2, Mask,
+                                                    Subtarget, DAG))
+        return Blend;
+
 
     if (V1InUse)
       V1 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V1,
