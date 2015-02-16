@@ -349,3 +349,17 @@ void file_scope_friend() {
   (void)a.p;
 }
 }
+
+template<typename T>
+struct X_pr6954 {
+  operator int();
+  friend void f_pr6954(int x);
+};
+
+int array0_pr6954[sizeof(X_pr6954<int>)];
+int array1_pr6954[sizeof(X_pr6954<float>)];
+
+void g_pr6954() {
+  f_pr6954(5); // expected-error{{undeclared identifier 'f_pr6954'}}
+}
+
