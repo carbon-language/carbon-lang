@@ -171,8 +171,8 @@ static USED uptr UserRegions[] = {
 0000 1000 0000 - 00f8 0000 0000: -
 00c0 0000 0000 - 00e0 0000 0000: heap
 00e0 0000 0000 - 0100 0000 0000: -
-0100 0000 0000 - 0380 0000 0000: shadow
-0380 0000 0000 - 0560 0000 0000: -
+0100 0000 0000 - 0500 0000 0000: shadow
+0500 0000 0000 - 0560 0000 0000: -
 0560 0000 0000 - 0760 0000 0000: traces
 0760 0000 0000 - 07d0 0000 0000: metainfo (memory blocks and sync objects)
 07d0 0000 0000 - 8000 0000 0000: -
@@ -183,7 +183,7 @@ const uptr kMetaShadowEnd = 0x07d000000000ull;
 const uptr kTraceMemBeg   = 0x056000000000ull;
 const uptr kTraceMemEnd   = 0x076000000000ull;
 const uptr kShadowBeg     = 0x010000000000ull;
-const uptr kShadowEnd     = 0x038000000000ull;
+const uptr kShadowEnd     = 0x050000000000ull;
 const uptr kAppMemBeg     = 0x000000001000ull;
 const uptr kAppMemEnd     = 0x00e000000000ull;
 
@@ -205,21 +205,21 @@ bool IsMetaMem(uptr mem) {
 ALWAYS_INLINE
 uptr MemToShadow(uptr x) {
   DCHECK(IsAppMem(x));
-  return ((x & ~(kShadowCell - 1)) * kShadowCnt) | kShadowBeg;
+  return ((x & ~(kShadowCell - 1)) * kShadowCnt) + kShadowBeg;
 }
 
 ALWAYS_INLINE
 u32 *MemToMeta(uptr x) {
   DCHECK(IsAppMem(x));
   return (u32*)(((x & ~(kMetaShadowCell - 1)) / \
-      kMetaShadowCell * kMetaShadowSize) | kMetaShadowEnd);
+      kMetaShadowCell * kMetaShadowSize) | kMetaShadowBeg);
 }
 
 ALWAYS_INLINE
 uptr ShadowToMem(uptr s) {
   CHECK(IsShadowMem(s));
   // FIXME(dvyukov): this is most likely wrong as the mapping is not bijection.
-  return (x & ~kShadowBeg) / kShadowCnt;
+  return (s - kShadowBeg) / kShadowCnt;
 }
 
 static USED uptr UserRegions[] = {

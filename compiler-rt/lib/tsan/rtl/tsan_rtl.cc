@@ -291,11 +291,11 @@ static void CheckShadowMapping() {
         if (p < beg || p >= end)
           continue;
         const uptr s = MemToShadow(p);
-        VPrintf(3, "  checking pointer %p -> %p\n", p, s);
+        const uptr m = (uptr)MemToMeta(p);
+        VPrintf(3, "  checking pointer %p: shadow=%p meta=%p\n", p, s, m);
         CHECK(IsAppMem(p));
         CHECK(IsShadowMem(s));
         CHECK_EQ(p & ~(kShadowCell - 1), ShadowToMem(s));
-        const uptr m = (uptr)MemToMeta(p);
         CHECK(IsMetaMem(m));
       }
     }
