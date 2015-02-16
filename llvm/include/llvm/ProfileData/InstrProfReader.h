@@ -95,6 +95,9 @@ public:
   /// Factory method to create an appropriately typed reader for the given
   /// instrprof file.
   static ErrorOr<std::unique_ptr<InstrProfReader>> create(std::string Path);
+
+  static ErrorOr<std::unique_ptr<InstrProfReader>>
+  create(std::unique_ptr<MemoryBuffer> Buffer);
 };
 
 /// Reader for the simple text based instrprof format.
@@ -294,6 +297,9 @@ public:
   /// Factory method to create an indexed reader.
   static ErrorOr<std::unique_ptr<IndexedInstrProfReader>>
   create(std::string Path);
+
+  static ErrorOr<std::unique_ptr<IndexedInstrProfReader>>
+  create(std::unique_ptr<MemoryBuffer> Buffer);
 };
 
 } // end namespace llvm
