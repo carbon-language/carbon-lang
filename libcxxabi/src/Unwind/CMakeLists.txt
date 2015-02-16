@@ -70,9 +70,16 @@ append_if(LIBCXXABI_COMPILE_FLAGS LIBCXXABI_HAS_FPIC_FLAG -fPIC)
 append_if(LIBCXXABI_LINK_FLAGS LIBCXXABI_HAS_NODEFAULTLIBS_FLAG -nodefaultlibs)
 
 set(LIBUNWIND_COMPILE_FLAGS)
-append_if(LIBUNWIND_COMPILE_FLAGS LIBCXXABI_HAS_NO_EXCEPTIONS_FLAG -fno-exceptions)
 append_if(LIBUNWIND_COMPILE_FLAGS LIBCXXABI_HAS_NO_RTTI_FLAG -fno-rtti)
-append_if(LIBUNWIND_COMPILE_FLAGS LIBCXXABI_HAS_FUNWIND_TABLES -funwind-tables)
+if ( LIBCXXABI_HAS_NO_EXCEPTIONS_FLAG AND LIBCXXABI_HAS_FUNWIND_TABLES )
+  list(APPEND LIBUNWIND_COMPILE_FLAGS -fno-exceptions)
+  list(APPEND LIBUNWIND_COMPILE_FLAGS -funwind-tables)
+elseif( LIBUNWIND_ENABLE_SHARED )
+  message(FATAL_ERROR "Compiler doesn't support generation of unwind tables "
+                      "if exception support is disabled.  Building libunwind "
+                      "DSO with runtime dependency on libcxxabi is not "
+                      "supported.")
+endif()
 
 set(LIBCXXABI_UNWINDER_NAME "unwind")
 
