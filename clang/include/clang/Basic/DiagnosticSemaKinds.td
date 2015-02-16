@@ -7233,9 +7233,8 @@ def err_asm_naked_this_ref : Error<
 def err_asm_naked_parm_ref : Error<
   "parameter references not allowed in naked functions">;
 
-def ext_use_of_attribute_is_a_cxx14_extension
-    : ExtWarn<"use of the %0 attribute is a C++14 extension">,
-      InGroup<CXX14>;
+def ext_use_of_attribute_is_a_cxx14_extension : ExtWarn<
+  "use of the %0 attribute is a C++14 extension">, InGroup<CXX14>;
 
 // OpenCL warnings and errors.
 def err_invalid_astype_of_different_size : Error<

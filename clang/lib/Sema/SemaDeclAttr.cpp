@@ -4259,7 +4259,7 @@ static void handleDeprecatedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     if (Attr.isCXX11Attribute() &&
         !(Attr.hasScope() && Attr.getScopeName()->isStr("gnu")))
       S.Diag(Attr.getLoc(), diag::ext_use_of_attribute_is_a_cxx14_extension)
-          << Attr.getName()->getNameStart();
+          << Attr.getName();
 
   handleAttrWithMessage<DeprecatedAttr>(S, D, Attr);
 }

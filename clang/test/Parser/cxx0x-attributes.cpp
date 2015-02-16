@@ -288,7 +288,7 @@ namespace arguments {
   void f[[gnu::format(printf, 1, 2)]](const char*, ...);
   void g() [[unknown::foo(ignore arguments for unknown attributes, even with symbols!)]]; // expected-warning {{unknown attribute 'foo' ignored}}
   [[deprecated("with argument")]] int i;
-  // expected-warning@-1 {{use of the deprecated attribute is a C++14 extension}}
+  // expected-warning@-1 {{use of the 'deprecated' attribute is a C++14 extension}}
 }
 
 // Forbid attributes on decl specifiers.
@@ -331,12 +331,12 @@ namespace GccASan {
 
 namespace {
   [[deprecated]] void bar();
-  // expected-warning@-1 {{use of the deprecated attribute is a C++14 extension}}
+  // expected-warning@-1 {{use of the 'deprecated' attribute is a C++14 extension}}
   [[deprecated("hello")]] void baz();
-  // expected-warning@-1 {{use of the deprecated attribute is a C++14 extension}}
+  // expected-warning@-1 {{use of the 'deprecated' attribute is a C++14 extension}}
   [[deprecated()]] void foo();
   // expected-error@-1 {{parentheses must be omitted if 'deprecated' attribute's argument list is empty}}
-  // expected-warning@-2 {{use of the deprecated attribute is a C++14 extension}}
+  // expected-warning@-2 {{use of the 'deprecated' attribute is a C++14 extension}}
   [[gnu::deprecated()]] void quux();
 }
 

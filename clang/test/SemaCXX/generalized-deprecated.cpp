@@ -4,7 +4,7 @@
 // warnings
 
 [[deprecated("1")]] int function_1();
-// expected-warning@-1 {{use of the deprecated attribute is a C++14 extension}}
+// expected-warning@-1 {{use of the 'deprecated' attribute is a C++14 extension}}
 
 [[gnu::deprecated("3")]] int function_3();
 
