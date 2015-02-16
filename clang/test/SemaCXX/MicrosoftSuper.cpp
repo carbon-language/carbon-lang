@@ -147,3 +147,12 @@ void instantiate() {
   DerivedFromTemplateParameter<Base1> t;
   t.foo();
 }
+
+namespace {
+struct B { int a; };
+template <class C>
+struct A : B {
+  // Don't crash on dependent_type_var '->' '__super'
+  void f() { int a = this->__super::a; }
+};
+}
