@@ -913,12 +913,13 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
     const TargetRegisterClass *NewRC = CP.getNewRC();
     unsigned NewIdx = NewMI->getOperand(0).getSubReg();
 
-    if (NewIdx)
-      NewRC = TRI->getMatchingSuperRegClass(NewRC, DefRC, NewIdx);
-    else
-      NewRC = TRI->getCommonSubClass(NewRC, DefRC);
-
-    assert(NewRC && "subreg chosen for remat incompatible with instruction");
+    if (DefRC != nullptr) {
+      if (NewIdx)
+        NewRC = TRI->getMatchingSuperRegClass(NewRC, DefRC, NewIdx);
+      else
+        NewRC = TRI->getCommonSubClass(NewRC, DefRC);
+      assert(NewRC && "subreg chosen for remat incompatible with instruction");
+    }
     MRI->setRegClass(DstReg, NewRC);
 
     updateRegDefsUses(DstReg, DstReg, DstIdx);
