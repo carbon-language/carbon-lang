@@ -198,9 +198,8 @@ NativeThreadLinux::GetRegisterContext ()
             break;
         }
 #endif
-#if 0
+
         case llvm::Triple::x86:
-#endif
         case llvm::Triple::x86_64:
         {
             const uint32_t concrete_frame_idx = 0;

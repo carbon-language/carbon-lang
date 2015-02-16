@@ -26,8 +26,8 @@ namespace lldb_private {
 
         static void
         Terminate ();
-        
-        PlatformAndroid ();
+
+        PlatformAndroid (bool is_host);
 
         virtual
         ~PlatformAndroid();
@@ -39,10 +39,10 @@ namespace lldb_private {
         CreateInstance (bool force, const lldb_private::ArchSpec *arch);
 
         static lldb_private::ConstString
-        GetPluginNameStatic ();
+        GetPluginNameStatic (bool is_host);
 
         static const char *
-        GetPluginDescriptionStatic ();
+        GetPluginDescriptionStatic (bool is_host);
 
         lldb_private::ConstString
         GetPluginName() override;

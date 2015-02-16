@@ -12,6 +12,7 @@
 // Other libraries and framework includes
 #include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
+#include "lldb/Host/HostInfo.h"
 
 // Project includes
 #include "PlatformAndroid.h"
@@ -29,8 +30,13 @@ PlatformAndroid::Initialize ()
 
     if (g_initialize_count++ == 0)
     {
-        PluginManager::RegisterPlugin (PlatformAndroid::GetPluginNameStatic(),
-                                       PlatformAndroid::GetPluginDescriptionStatic(),
+#if defined(__ANDROID__)
+        PlatformSP default_platform_sp (new PlatformAndroid(true));
+        default_platform_sp->SetSystemArchitecture(HostInfo::GetArchitecture());
+        Platform::SetHostPlatform (default_platform_sp);
+#endif
+        PluginManager::RegisterPlugin (PlatformAndroid::GetPluginNameStatic(false),
+                                       PlatformAndroid::GetPluginDescriptionStatic(false),
                                        PlatformAndroid::CreateInstance);
     }
 }
@@ -92,9 +98,9 @@ PlatformAndroid::CreateInstance (bool force, const ArchSpec *arch)
         {
             switch (triple.getOS())
             {
-                case llvm::Triple::Linux:
+                case llvm::Triple::Android:
                     break;
-                    
+
 #if defined(__ANDROID__)
                 // Only accept "unknown" for the OS if the host is android and
                 // it "unknown" wasn't specified (it was just returned because it
@@ -114,7 +120,7 @@ PlatformAndroid::CreateInstance (bool force, const ArchSpec *arch)
     {
         if (log)
             log->Printf ("PlatformAndroid::%s() creating remote-android platform", __FUNCTION__);
-        return PlatformSP(new PlatformAndroid());
+        return PlatformSP(new PlatformAndroid(false));
     }
 
     if (log)
@@ -123,8 +129,8 @@ PlatformAndroid::CreateInstance (bool force, const ArchSpec *arch)
     return PlatformSP();
 }
 
-PlatformAndroid::PlatformAndroid () :
-    PlatformLinux(false)  // Platform android is always a remote target
+PlatformAndroid::PlatformAndroid (bool is_host) :
+    PlatformLinux(is_host)
 {
 }
 
@@ -133,27 +139,43 @@ PlatformAndroid::~PlatformAndroid()
 }
 
 lldb_private::ConstString
-PlatformAndroid::GetPluginNameStatic ()
+PlatformAndroid::GetPluginNameStatic (bool is_host)
 {
-    static ConstString g_remote_name("remote-android");
-    return g_remote_name;
+    if (is_host)
+    {
+        static ConstString g_host_name(Platform::GetHostPlatformName ());
+        return g_host_name;
+    }
+    else
+    {
+        static ConstString g_remote_name("remote-android");
+        return g_remote_name;
+    }
 }
 
 const char *
-PlatformAndroid::GetPluginDescriptionStatic ()
+PlatformAndroid::GetPluginDescriptionStatic (bool is_host)
 {
-    return "Remote Android user platform plug-in.";
+    if (is_host)
+        return "Local Android user platform plug-in.";
+    else
+        return "Remote Android user platform plug-in.";
 }
 
 lldb_private::ConstString
 PlatformAndroid::GetPluginName()
 {
-    return GetPluginNameStatic();
+    return GetPluginNameStatic(IsHost());
 }
 
 Error
 PlatformAndroid::ConnectRemote (Args& args)
 {
+    if (IsHost())
+    {
+        return Error ("can't connect to the host platform '%s', always connected", GetPluginName().GetCString());
+    }
+
     if (!m_remote_platform_sp)
         m_remote_platform_sp = PlatformSP(new PlatformAndroidRemoteGDBServer());
     return PlatformLinux::ConnectRemote (args);
