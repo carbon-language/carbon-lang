@@ -32,19 +32,18 @@ using namespace llvm;
 STATISTIC(NumRemoved, "Number of instructions removed");
 
 namespace {
-  struct ADCE : public FunctionPass {
-    static char ID; // Pass identification, replacement for typeid
-    ADCE() : FunctionPass(ID) {
-      initializeADCEPass(*PassRegistry::getPassRegistry());
-    }
+struct ADCE : public FunctionPass {
+  static char ID; // Pass identification, replacement for typeid
+  ADCE() : FunctionPass(ID) {
+    initializeADCEPass(*PassRegistry::getPassRegistry());
+  }
 
-    bool runOnFunction(Function& F) override;
+  bool runOnFunction(Function& F) override;
 
-    void getAnalysisUsage(AnalysisUsage& AU) const override {
-      AU.setPreservesCFG();
-    }
-
-  };
+  void getAnalysisUsage(AnalysisUsage& AU) const override {
+    AU.setPreservesCFG();
+  }
+};
 }
 
 char ADCE::ID = 0;
