@@ -219,6 +219,7 @@ int CompareModulesBase(const void *pl, const void *pr) {
 }
 }  // namespace
 
+#ifndef SANITIZER_GO
 void DumpProcessMap() {
   Report("Dumping process modules:\n");
   HANDLE cur_process = GetCurrentProcess();
@@ -276,6 +277,7 @@ void DumpProcessMap() {
   }
   UnmapOrDie(modules, num_modules * sizeof(ModuleInfo));
 }
+#endif
 
 void DisableCoreDumperIfNecessary() {
   // Do nothing.
