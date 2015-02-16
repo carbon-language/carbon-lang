@@ -933,21 +933,10 @@ emitModuleFlags(MCStreamer &Streamer,
     MDNode *MDOptions = cast<MDNode>(LinkerOptions->getOperand(i));
     for (unsigned ii = 0, ie = MDOptions->getNumOperands(); ii != ie; ++ii) {
       MDString *MDOption = cast<MDString>(MDOptions->getOperand(ii));
-      StringRef Op = MDOption->getString();
       // Lead with a space for consistency with our dllexport implementation.
-      std::string Escaped(" ");
-      if (!Op.startswith("\"") && (Op.find(" ") != StringRef::npos)) {
-        // The PE-COFF spec says args with spaces must be quoted.  It doesn't say
-        // how to escape quotes, but it probably uses this algorithm:
-        // http://msdn.microsoft.com/en-us/library/17w5ykft(v=vs.85).aspx
-        // FIXME: Reuse escaping code from Support/Windows/Program.inc
-        Escaped.push_back('\"');
-        Escaped.append(Op);
-        Escaped.push_back('\"');
-      } else {
-        Escaped.append(Op);
-      }
-      Streamer.EmitBytes(Escaped);
+      std::string Directive(" ");
+      Directive.append(MDOption->getString());
+      Streamer.EmitBytes(Directive);
     }
   }
 }
