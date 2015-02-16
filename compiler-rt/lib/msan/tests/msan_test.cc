@@ -168,11 +168,11 @@ void ExpectPoisonedWithOrigin(const T& t, unsigned origin) {
     EXPECT_EQ(origin, __msan_get_origin((void*)&t));
 }
 
-#define EXPECT_NOT_POISONED(x) ExpectNotPoisoned(x)
+#define EXPECT_NOT_POISONED(x) EXPECT_EQ(true, TestForNotPoisoned((x)))
 
 template<typename T>
-void ExpectNotPoisoned(const T& t) {
-  EXPECT_EQ(-1, __msan_test_shadow((void*)&t, sizeof(t)));
+bool TestForNotPoisoned(const T& t) {
+  return __msan_test_shadow((void*)&t, sizeof(t)) == -1;
 }
 
 static U8 poisoned_array[100];
