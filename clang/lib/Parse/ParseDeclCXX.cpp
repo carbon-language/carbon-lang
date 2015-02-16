@@ -3472,7 +3472,6 @@ bool Parser::ParseCXX11AttributeArgs(IdentifierInfo *AttrName,
         // The attribute was allowed to have arguments, but none were provided
         // even though the attribute parsed successfully. This is an error.
         Diag(LParenLoc, diag::err_attribute_requires_arguments) << AttrName;
-        return false;
       } else if (!Attr->getMaxArgs()) {
         // The attribute parsed successfully, but was not allowed to have any
         // arguments. It doesn't matter whether any were provided -- the
@@ -3480,7 +3479,6 @@ bool Parser::ParseCXX11AttributeArgs(IdentifierInfo *AttrName,
         Diag(LParenLoc, diag::err_cxx11_attribute_forbids_arguments)
             << AttrName
             << FixItHint::CreateRemoval(SourceRange(LParenLoc, *EndLoc));
-        return false;
       }
     }
   }
