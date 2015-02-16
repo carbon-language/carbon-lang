@@ -192,7 +192,7 @@ public:
 
   NodeMetadata()
     : RS(Unprocessed), NumOpts(0), DeniedOpts(0), OptUnsafeEdges(nullptr),
-      VReg(0) {}
+      VReg(0), everConservativelyAllocatable(false) {}
 
   // FIXME: Re-implementing default behavior to work around MSVC. Remove once
   // MSVC synthesizes move constructors properly.
@@ -256,7 +256,13 @@ public:
   void setReductionState(ReductionState RS) {
     assert(RS >= this->RS && "A node's reduction state can not be downgraded");
     this->RS = RS;
+
+    // Remember this state to assert later that a non-infinite register
+    // option was available.
+    if (RS == ConservativelyAllocatable)
+      everConservativelyAllocatable = true;
   }
+
 
   void handleAddEdge(const MatrixMetadata& MD, bool Transpose) {
     DeniedOpts += Transpose ? MD.getWorstRow() : MD.getWorstCol();
@@ -280,6 +286,10 @@ public:
        &OptUnsafeEdges[NumOpts]);
   }
 
+  bool wasConservativelyAllocatable() const {
+    return everConservativelyAllocatable;
+  }
+
 private:
   ReductionState RS;
   unsigned NumOpts;
@@ -287,6 +297,7 @@ private:
   std::unique_ptr<unsigned[]> OptUnsafeEdges;
   unsigned VReg;
   GraphMetadata::AllowedRegVecRef AllowedRegs;
+  bool everConservativelyAllocatable;
 };
 
 class RegAllocSolverImpl {
