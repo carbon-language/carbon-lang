@@ -265,10 +265,6 @@ void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
         Diag(Loc, diag::warn_unused_result) << R1 << R2;
         return;
       }
-      if (MD->isPropertyAccessor()) {
-        Diag(Loc, diag::warn_unused_property_expr);
-        return;
-      }
     }
   } else if (const PseudoObjectExpr *POE = dyn_cast<PseudoObjectExpr>(E)) {
     const Expr *Source = POE->getSyntacticForm();

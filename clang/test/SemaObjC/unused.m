@@ -91,8 +91,7 @@ void rdar15596883(id x) {
 
 void test3(PropertyObject *o)
 {
-  [o length]; // expected-warning {{property access result unused - getters should not be used for side effects}}
-  (void)[o length];
+  [o length]; // No warning. property name used in direct method call.
 }
 
 void test4(id o)
@@ -102,5 +101,30 @@ void test4(id o)
 
 void test5(id <P> p)
 {
-    [p property]; // expected-warning {{property access result unused - getters should not be used for side effects}}
+    [p property]; // No warning. property name used in direct method call.
 }
+
+// rdar://19773512
+@interface Model
+@property (nonatomic, retain, setter=setOrCreateGroup:, getter=getOrCreateGroup) id group;
+@end
+
+@implementation Model {
+    id _group;
+}
+- (void)method {
+    [self getOrCreateGroup];
+    self.getOrCreateGroup; // expected-warning {{property access result unused - getters should not be used for side effects}}
+    self.group; // expected-warning {{property access result unused - getters should not be used for side effects}}
+    self.group = (void*)0;
+    [self setOrCreateGroup : ((void*)0)];
+    
+}
+- (id)getOrCreateGroup {
+    if (!_group) {
+        _group = @"group";
+    }
+    return _group;
+}
+@end
+

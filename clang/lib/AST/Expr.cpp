@@ -2238,9 +2238,7 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
     }
 
     if (const ObjCMethodDecl *MD = ME->getMethodDecl())
-      if (MD->hasAttr<WarnUnusedResultAttr>() ||
-          (MD->isPropertyAccessor() && !MD->getReturnType()->isVoidType() &&
-           !ME->getReceiverType()->isObjCIdType())) {
+      if (MD->hasAttr<WarnUnusedResultAttr>()) {
         WarnE = this;
         Loc = getExprLoc();
         return true;
