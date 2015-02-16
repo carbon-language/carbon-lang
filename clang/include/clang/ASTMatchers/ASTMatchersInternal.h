@@ -847,19 +847,11 @@ protected:
 
 /// \brief A type-list implementation.
 ///
-/// A list is declared as a tree of type list nodes, where the leafs are the
-/// types.
-/// However, it is used as a "linked list" of types, by using the ::head and
-/// ::tail typedefs.
-/// Each node supports up to 4 children (instead of just 2) to reduce the
-/// nesting required by large lists.
-template <typename T1 = void, typename T2 = void, typename T3 = void,
-          typename T4 = void>
-struct TypeList {
-  /// \brief Implementation detail. Combined with the specializations below,
-  ///   this typedef allows for flattening of nested structures.
-  typedef TypeList<T1, T2, T3, T4> self;
+/// A "linked list" of types, accessible by using the ::head and ::tail
+/// typedefs.
+template <typename... Ts> struct TypeList {}; // Empty sentinel type list.
 
+template <typename T1, typename... Ts> struct TypeList<T1, Ts...> {
   /// \brief The first type on the list.
   typedef T1 head;
 
@@ -867,24 +859,7 @@ struct TypeList {
   ///
   /// This type is used to do recursion. TypeList<>/EmptyTypeList indicates the
   /// end of the list.
-  typedef typename TypeList<T2, T3, T4>::self tail;
-};
-
-/// \brief Template specialization to allow nested lists.
-///
-/// First element is a typelist. Pop its first element.
-template <typename Sub1, typename Sub2, typename Sub3, typename Sub4,
-          typename T2, typename T3, typename T4>
-struct TypeList<TypeList<Sub1, Sub2, Sub3, Sub4>, T2, T3,
-                T4> : public TypeList<Sub1,
-                                      typename TypeList<Sub2, Sub3, Sub4>::self,
-                                      typename TypeList<T2, T3, T4>::self> {};
-
-/// \brief Template specialization to allow nested lists.
-///
-/// First element is an empty typelist. Skip it.
-template <typename T2, typename T3, typename T4>
-struct TypeList<TypeList<>, T2, T3, T4> : public TypeList<T2, T3, T4> {
+  typedef TypeList<Ts...> tail;
 };
 
 /// \brief The empty type list.
@@ -906,9 +881,8 @@ struct TypeListContainsSuperOf<EmptyTypeList, T> {
 /// \brief A "type list" that contains all types.
 ///
 /// Useful for matchers like \c anything and \c unless.
-typedef TypeList<
-    TypeList<Decl, Stmt, NestedNameSpecifier, NestedNameSpecifierLoc>,
-    TypeList<QualType, Type, TypeLoc, CXXCtorInitializer> > AllNodeBaseTypes;
+typedef TypeList<Decl, Stmt, NestedNameSpecifier, NestedNameSpecifierLoc,
+                 QualType, Type, TypeLoc, CXXCtorInitializer> AllNodeBaseTypes;
 
 /// \brief Helper meta-function to extract the argument out of a function of
 ///   type void(Arg).
@@ -921,17 +895,15 @@ template <class T> struct ExtractFunctionArgMeta<void(T)> {
 
 /// \brief Default type lists for ArgumentAdaptingMatcher matchers.
 typedef AllNodeBaseTypes AdaptativeDefaultFromTypes;
-typedef TypeList<TypeList<Decl, Stmt, NestedNameSpecifier>,
-                 TypeList<NestedNameSpecifierLoc, TypeLoc, QualType> >
-AdaptativeDefaultToTypes;
+typedef TypeList<Decl, Stmt, NestedNameSpecifier, NestedNameSpecifierLoc,
+                 TypeLoc, QualType> AdaptativeDefaultToTypes;
 
 /// \brief All types that are supported by HasDeclarationMatcher above.
-typedef TypeList<TypeList<CallExpr, CXXConstructExpr, DeclRefExpr, EnumType>,
-                 TypeList<InjectedClassNameType, LabelStmt, MemberExpr>,
-                 TypeList<QualType, RecordType, TagType>,
-                 TypeList<TemplateSpecializationType, TemplateTypeParmType,
-                          TypedefType, UnresolvedUsingType> >
-HasDeclarationSupportedTypes;
+typedef TypeList<CallExpr, CXXConstructExpr, DeclRefExpr, EnumType,
+                 InjectedClassNameType, LabelStmt, MemberExpr, QualType,
+                 RecordType, TagType, TemplateSpecializationType,
+                 TemplateTypeParmType, TypedefType,
+                 UnresolvedUsingType> HasDeclarationSupportedTypes;
 
 /// \brief Converts a \c Matcher<T> to a matcher of desired type \c To by
 /// "adapting" a \c To into a \c T.
