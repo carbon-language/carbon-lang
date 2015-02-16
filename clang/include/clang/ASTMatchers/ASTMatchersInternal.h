@@ -1178,14 +1178,10 @@ template <unsigned MinCount, unsigned MaxCount>
 struct VariadicOperatorMatcherFunc {
   DynTypedMatcher::VariadicOperator Op;
 
-  template <unsigned Count, typename T>
-  struct EnableIfValidArity
-      : public std::enable_if<MinCount <= Count && Count <= MaxCount, T> {};
-
   template <typename... Ms>
-  typename EnableIfValidArity<sizeof...(Ms),
-                              VariadicOperatorMatcher<Ms...>>::type
-  operator()(Ms &&... Ps) const {
+  VariadicOperatorMatcher<Ms...> operator()(Ms &&... Ps) const {
+    static_assert(MinCount <= sizeof...(Ms) && sizeof...(Ms) <= MaxCount,
+                  "invalid number of parameters for variadic matcher");
     return VariadicOperatorMatcher<Ms...>(Op, std::forward<Ms>(Ps)...);
   }
 };
