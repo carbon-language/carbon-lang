@@ -106,7 +106,7 @@ InstrProfWriter::addFunctionCounts(StringRef FunctionName,
   return instrprof_error::success;
 }
 
-std::pair<uint64_t, uint64_t> InstrProfWriter::writeImpl(raw_ostream &OS) {
+void InstrProfWriter::write(raw_fd_ostream &OS) {
   OnDiskChainedHashTableGenerator<InstrProfRecordTrait> Generator;
 
   // Populate the hash table generator.
@@ -128,31 +128,7 @@ std::pair<uint64_t, uint64_t> InstrProfWriter::writeImpl(raw_ostream &OS) {
   // Write the hash table.
   uint64_t HashTableStart = Generator.Emit(OS);
 
-  return std::make_pair(HashTableStartLoc, HashTableStart);
-}
-
-void InstrProfWriter::write(raw_fd_ostream &OS) {
-  // Write the hash table.
-  auto TableStart = writeImpl(OS);
-
   // Go back and fill in the hash table start.
-  using namespace support;
-  OS.seek(TableStart.first);
-  endian::Writer<little>(OS).write<uint64_t>(TableStart.second);
-}
-
-std::string InstrProfWriter::writeString() {
-  std::string Result;
-  llvm::raw_string_ostream OS(Result);
-  // Write the hash table.
-  auto TableStart = writeImpl(OS);
-  OS.flush();
-
-  // Go back and fill in the hash table start.
-  using namespace support;
-  uint64_t Bytes = endian::byte_swap<uint64_t, little>(TableStart.second);
-  Result.replace(TableStart.first, sizeof(uint64_t), (const char *)&Bytes,
-                 sizeof(uint64_t));
-
-  return Result;
+  OS.seek(HashTableStartLoc);
+  LE.write<uint64_t>(HashTableStart);
 }
