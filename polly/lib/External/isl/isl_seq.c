@@ -107,6 +107,14 @@ void isl_seq_combine(isl_int *dst, isl_int m1, isl_int *src1,
 	int i;
 	isl_int tmp;
 
+	if (dst == src1 && isl_int_is_one(m1)) {
+		if (isl_int_is_zero(m2))
+			return;
+		for (i = 0; i < len; ++i)
+			isl_int_addmul(src1[i], m2, src2[i]);
+		return;
+	}
+
 	isl_int_init(tmp);
 	for (i = 0; i < len; ++i) {
 		isl_int_mul(tmp, m1, src1[i]);
