@@ -122,9 +122,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
   PP.getDiagnostics().SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
                                        &Context);
 
-  ExprEvalContexts.push_back(
-        ExpressionEvaluationContextRecord(PotentiallyEvaluated, 0,
-                                          false, nullptr, false));
+  ExprEvalContexts.emplace_back(PotentiallyEvaluated, 0, false, nullptr, false);
 
   FunctionScopes.push_back(new FunctionScopeInfo(Diags));
 

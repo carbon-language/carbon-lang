@@ -8118,7 +8118,7 @@ void Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
   bool HasArithmeticOrEnumeralCandidateType = false;
   SmallVector<BuiltinCandidateTypeSet, 2> CandidateTypes;
   for (unsigned ArgIdx = 0, N = Args.size(); ArgIdx != N; ++ArgIdx) {
-    CandidateTypes.push_back(BuiltinCandidateTypeSet(*this));
+    CandidateTypes.emplace_back(*this);
     CandidateTypes[ArgIdx].AddTypesConvertedFrom(Args[ArgIdx]->getType(),
                                                  OpLoc,
                                                  true,

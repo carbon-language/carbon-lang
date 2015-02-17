@@ -91,9 +91,7 @@ public:
     if (HasSFINAEDiagnostic)
       return;
     SuppressedDiagnostics.clear();
-    SuppressedDiagnostics.push_back(
-        std::make_pair(Loc, PartialDiagnostic::NullDiagnostic()));
-    SuppressedDiagnostics.back().second.swap(PD);
+    SuppressedDiagnostics.emplace_back(Loc, std::move(PD));
     HasSFINAEDiagnostic = true;
   }
 
@@ -102,9 +100,7 @@ public:
                                PartialDiagnostic PD) {
     if (HasSFINAEDiagnostic)
       return;
-    SuppressedDiagnostics.push_back(
-        std::make_pair(Loc, PartialDiagnostic::NullDiagnostic()));
-    SuppressedDiagnostics.back().second.swap(PD);
+    SuppressedDiagnostics.emplace_back(Loc, std::move(PD));
   }
 
   /// \brief Iterator over the set of suppressed diagnostics.
@@ -277,7 +273,7 @@ public:
   /// \brief Add a new candidate with NumConversions conversion sequence slots
   /// to the overload set.
   TemplateSpecCandidate &addCandidate() {
-    Candidates.push_back(TemplateSpecCandidate());
+    Candidates.emplace_back();
     return Candidates.back();
   }
 

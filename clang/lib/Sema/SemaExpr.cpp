@@ -11606,12 +11606,9 @@ void
 Sema::PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext,
                                       Decl *LambdaContextDecl,
                                       bool IsDecltype) {
-  ExprEvalContexts.push_back(
-             ExpressionEvaluationContextRecord(NewContext,
-                                               ExprCleanupObjects.size(),
-                                               ExprNeedsCleanups,
-                                               LambdaContextDecl,
-                                               IsDecltype));
+  ExprEvalContexts.emplace_back(NewContext, ExprCleanupObjects.size(),
+                                ExprNeedsCleanups, LambdaContextDecl,
+                                IsDecltype);
   ExprNeedsCleanups = false;
   if (!MaybeODRUseExprs.empty())
     std::swap(MaybeODRUseExprs, ExprEvalContexts.back().SavedMaybeODRUseExprs);
