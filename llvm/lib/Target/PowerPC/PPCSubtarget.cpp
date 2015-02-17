@@ -130,6 +130,7 @@ void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
     StackAlignment = 32;
 
   // Determine endianness.
+  // FIXME: Part of the TargetMachine.
   IsLittleEndian = (TargetTriple.getArch() == Triple::ppc64le);
 }
 
