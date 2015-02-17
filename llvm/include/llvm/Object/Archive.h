@@ -178,6 +178,7 @@ public:
 
   enum Kind {
     K_GNU,
+    K_MIPS64,
     K_BSD,
     K_COFF
   };
