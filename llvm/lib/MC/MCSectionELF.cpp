@@ -24,6 +24,9 @@ MCSectionELF::~MCSectionELF() {} // anchor.
 bool MCSectionELF::ShouldOmitSectionDirective(StringRef Name,
                                               const MCAsmInfo &MAI) const {
 
+  if (Unique)
+    return false;
+
   // FIXME: Does .section .bss/.data/.text work everywhere??
   if (Name == ".text" || Name == ".data" ||
       (Name == ".bss" && !MAI.usesELFSectionDirectiveForBSS()))
@@ -144,6 +147,10 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
     printName(OS, Group->getName());
     OS << ",comdat";
   }
+
+  if (Unique)
+    OS << ",unique";
+
   OS << '\n';
 
   if (Subsection)

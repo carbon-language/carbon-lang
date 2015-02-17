@@ -1151,7 +1151,7 @@ ELFObjectWriter::createRelocationSection(MCAssembler &Asm,
 
   const MCSectionELF *RelaSection = Ctx.getELFSection(
       RelaSectionName, hasRelocationAddend() ? ELF::SHT_RELA : ELF::SHT_REL,
-      Flags, EntrySize, Group);
+      Flags, EntrySize, Group, true);
   return &Asm.getOrCreateSectionData(*RelaSection);
 }
 
