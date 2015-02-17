@@ -134,6 +134,9 @@ public:
     lldb_private::Error
     LaunchProcess (lldb_private::ProcessLaunchInfo &launch_info) override;
 
+    lldb_private::Error
+    KillProcess (const lldb::pid_t pid) override;
+
     lldb::ProcessSP
     Attach (lldb_private::ProcessAttachInfo &attach_info,
             lldb_private::Debugger &debugger,

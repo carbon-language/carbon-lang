@@ -714,6 +714,18 @@ PlatformPOSIX::LaunchProcess (ProcessLaunchInfo &launch_info)
     return error;
 }
 
+lldb_private::Error
+PlatformPOSIX::KillProcess (const lldb::pid_t pid)
+{
+    if (IsHost())
+        return Platform::KillProcess (pid);
+
+    if (m_remote_platform_sp)
+        return m_remote_platform_sp->KillProcess (pid);
+
+    return Error ("the platform is not currently connected");
+}
+
 lldb::ProcessSP
 PlatformPOSIX::Attach (ProcessAttachInfo &attach_info,
                        Debugger &debugger,
