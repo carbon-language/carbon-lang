@@ -1099,8 +1099,7 @@ static void WriteMDExpression(const MDExpression *N, const ValueEnumerator &,
   Record.reserve(N->getElements().size() + 1);
 
   Record.push_back(N->isDistinct());
-  for (uint64_t I : N->getElements())
-    Record.push_back(I);
+  Record.append(N->elements_begin(), N->elements_end());
 
   Stream.EmitRecord(bitc::METADATA_EXPRESSION, Record, Abbrev);
   Record.clear();
@@ -1395,14 +1394,12 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
       // Add the asm string.
       const std::string &AsmStr = IA->getAsmString();
       Record.push_back(AsmStr.size());
-      for (unsigned i = 0, e = AsmStr.size(); i != e; ++i)
-        Record.push_back(AsmStr[i]);
+      Record.append(AsmStr.begin(), AsmStr.end());
 
       // Add the constraint string.
       const std::string &ConstraintStr = IA->getConstraintString();
       Record.push_back(ConstraintStr.size());
-      for (unsigned i = 0, e = ConstraintStr.size(); i != e; ++i)
-        Record.push_back(ConstraintStr[i]);
+      Record.append(ConstraintStr.begin(), ConstraintStr.end());
       Stream.EmitRecord(bitc::CST_CODE_INLINEASM, Record);
       Record.clear();
       continue;
@@ -1691,8 +1688,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     Code = bitc::FUNC_CODE_INST_EXTRACTVAL;
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);
     const ExtractValueInst *EVI = cast<ExtractValueInst>(&I);
-    for (const unsigned *i = EVI->idx_begin(), *e = EVI->idx_end(); i != e; ++i)
-      Vals.push_back(*i);
+    Vals.append(EVI->idx_begin(), EVI->idx_end());
     break;
   }
   case Instruction::InsertValue: {
@@ -1700,8 +1696,7 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);
     PushValueAndType(I.getOperand(1), InstID, Vals, VE);
     const InsertValueInst *IVI = cast<InsertValueInst>(&I);
-    for (const unsigned *i = IVI->idx_begin(), *e = IVI->idx_end(); i != e; ++i)
-      Vals.push_back(*i);
+    Vals.append(IVI->idx_begin(), IVI->idx_end());
     break;
   }
   case Instruction::Select:
@@ -2037,9 +2032,7 @@ static void WriteUseList(ValueEnumerator &VE, UseListOrder &&Order,
   else
     Code = bitc::USELIST_CODE_DEFAULT;
 
-  SmallVector<uint64_t, 64> Record;
-  for (unsigned I : Order.Shuffle)
-    Record.push_back(I);
+  SmallVector<uint64_t, 64> Record(Order.Shuffle.begin(), Order.Shuffle.end());
   Record.push_back(VE.getValueID(Order.V));
   Stream.EmitRecord(Code, Record);
 }

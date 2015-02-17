@@ -726,8 +726,7 @@ bool llvm::simplifyLoop(Loop *L, DominatorTree *DT, LoopInfo *LI, Pass *PP,
   // order. We can use this simple process because loops form a tree.
   for (unsigned Idx = 0; Idx != Worklist.size(); ++Idx) {
     Loop *L2 = Worklist[Idx];
-    for (Loop::iterator I = L2->begin(), E = L2->end(); I != E; ++I)
-      Worklist.push_back(*I);
+    Worklist.append(L2->begin(), L2->end());
   }
 
   while (!Worklist.empty())

@@ -333,8 +333,8 @@ public:
 std::vector<StringRef> CoverageMapping::getUniqueSourceFiles() const {
   std::vector<StringRef> Filenames;
   for (const auto &Function : getCoveredFunctions())
-    for (const auto &Filename : Function.Filenames)
-      Filenames.push_back(Filename);
+    Filenames.insert(Filenames.end(), Function.Filenames.begin(),
+                     Function.Filenames.end());
   std::sort(Filenames.begin(), Filenames.end());
   auto Last = std::unique(Filenames.begin(), Filenames.end());
   Filenames.erase(Last, Filenames.end());
@@ -425,8 +425,8 @@ CoverageMapping::getInstantiations(StringRef Filename) {
   for (const auto &InstantiationSet : InstantiationSetCollector) {
     if (InstantiationSet.second.size() < 2)
       continue;
-    for (auto Function : InstantiationSet.second)
-      Result.push_back(Function);
+    Result.insert(Result.end(), InstantiationSet.second.begin(),
+                  InstantiationSet.second.end());
   }
   return Result;
 }

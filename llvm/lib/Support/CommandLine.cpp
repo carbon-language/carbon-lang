@@ -840,9 +840,7 @@ void CommandLineParser::ParseCommandLineOptions(int argc,
   assert(hasOptions() && "No options specified!");
 
   // Expand response files.
-  SmallVector<const char *, 20> newArgv;
-  for (int i = 0; i != argc; ++i)
-    newArgv.push_back(argv[i]);
+  SmallVector<const char *, 20> newArgv(argv, argv + argc);
   StrDupSaver Saver;
   ExpandResponseFiles(Saver, TokenizeGNUCommandLine, newArgv);
   argv = &newArgv[0];

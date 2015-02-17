@@ -344,9 +344,7 @@ void DIDescriptor::replaceAllUsesWith(LLVMContext &VMContext, DIDescriptor D) {
   // itself.
   const MDNode *DN = D;
   if (DbgNode == DN) {
-    SmallVector<Metadata *, 10> Ops(DbgNode->getNumOperands());
-    for (size_t i = 0; i != Ops.size(); ++i)
-      Ops[i] = DbgNode->getOperand(i);
+    SmallVector<Metadata *, 10> Ops(DbgNode->op_begin(), DbgNode->op_end());
     DN = MDNode::get(VMContext, Ops);
   }
 
@@ -884,9 +882,8 @@ DIVariable llvm::createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
     return cleanseInlinedVariable(DV, VMContext);
 
   // Insert inlined scope.
-  SmallVector<Metadata *, 8> Elts;
-  for (unsigned I = 0, E = DIVariableInlinedAtIndex; I != E; ++I)
-    Elts.push_back(DV->getOperand(I));
+  SmallVector<Metadata *, 8> Elts(DV->op_begin(),
+                                  DV->op_begin() + DIVariableInlinedAtIndex);
   Elts.push_back(InlinedScope);
 
   DIVariable Inlined(MDNode::get(VMContext, Elts));
@@ -900,9 +897,8 @@ DIVariable llvm::cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext) {
     return DIVariable(DV);
 
   // Remove inlined scope.
-  SmallVector<Metadata *, 8> Elts;
-  for (unsigned I = 0, E = DIVariableInlinedAtIndex; I != E; ++I)
-    Elts.push_back(DV->getOperand(I));
+  SmallVector<Metadata *, 8> Elts(DV->op_begin(),
+                                  DV->op_begin() + DIVariableInlinedAtIndex);
 
   DIVariable Cleansed(MDNode::get(VMContext, Elts));
   assert(Cleansed.Verify() && "Expected to create a DIVariable");

@@ -3017,17 +3017,13 @@ SDValue DAGTypeLegalizer::PromoteIntRes_VECTOR_SHUFFLE(SDNode *N) {
   EVT VT = N->getValueType(0);
   SDLoc dl(N);
 
-  unsigned NumElts = VT.getVectorNumElements();
-  SmallVector<int, 8> NewMask;
-  for (unsigned i = 0; i != NumElts; ++i) {
-    NewMask.push_back(SV->getMaskElt(i));
-  }
+  ArrayRef<int> NewMask = SV->getMask().slice(0, VT.getVectorNumElements());
 
   SDValue V0 = GetPromotedInteger(N->getOperand(0));
   SDValue V1 = GetPromotedInteger(N->getOperand(1));
   EVT OutVT = V0.getValueType();
 
-  return DAG.getVectorShuffle(OutVT, dl, V0, V1, &NewMask[0]);
+  return DAG.getVectorShuffle(OutVT, dl, V0, V1, NewMask);
 }
 
 

@@ -2183,9 +2183,7 @@ SDNode *R600TargetLowering::PostISelFolding(MachineSDNode *Node,
   unsigned Opcode = Node->getMachineOpcode();
   SDValue FakeOp;
 
-  std::vector<SDValue> Ops;
-  for (const SDUse &I : Node->ops())
-    Ops.push_back(I);
+  std::vector<SDValue> Ops(Node->op_begin(), Node->op_end());
 
   if (Opcode == AMDGPU::DOT_4) {
     int OperandIdx[] = {
@@ -2247,10 +2245,7 @@ SDNode *R600TargetLowering::PostISelFolding(MachineSDNode *Node,
         AMDGPU::OpName::clamp);
     if (ClampIdx < 0)
       return Node;
-    std::vector<SDValue> Ops;
-    unsigned NumOp = Src.getNumOperands();
-    for(unsigned i = 0; i < NumOp; ++i)
-          Ops.push_back(Src.getOperand(i));
+    std::vector<SDValue> Ops(Src->op_begin(), Src->op_end());
     Ops[ClampIdx - 1] = DAG.getTargetConstant(1, MVT::i32);
     return DAG.getMachineNode(Src.getMachineOpcode(), SDLoc(Node),
         Node->getVTList(), Ops);

@@ -1586,9 +1586,7 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, SDLoc dl, SDValue N1,
       if (AllSame && SameNumElts) {
          const SDValue &Splatted = BV->getOperand(MaskVec[0]);
          if (isa<ConstantSDNode>(Splatted) || isa<ConstantFPSDNode>(Splatted)) {
-           SmallVector<SDValue, 8> Ops;
-           for (unsigned i = 0; i != NElts; ++i)
-             Ops.push_back(Splatted);
+           SmallVector<SDValue, 8> Ops(NElts, Splatted);
 
            SDValue NewBV =
                getNode(ISD::BUILD_VECTOR, dl, BV->getValueType(0), Ops);

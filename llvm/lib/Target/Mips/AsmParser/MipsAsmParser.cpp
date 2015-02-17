@@ -1053,9 +1053,7 @@ public:
     assert (Regs.size() > 0 && "Empty list not allowed");
 
     auto Op = make_unique<MipsOperand>(k_RegList, Parser);
-    Op->RegList.List = new SmallVector<unsigned, 10>();
-    for (auto Reg : Regs)
-      Op->RegList.List->push_back(Reg);
+    Op->RegList.List = new SmallVector<unsigned, 10>(Regs.begin(), Regs.end());
     Op->StartLoc = StartLoc;
     Op->EndLoc = EndLoc;
     return Op;

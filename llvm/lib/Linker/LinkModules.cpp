@@ -1417,10 +1417,8 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
       MDNode *SrcValue = cast<MDNode>(SrcOp->getOperand(2));
       SmallVector<Metadata *, 8> MDs;
       MDs.reserve(DstValue->getNumOperands() + SrcValue->getNumOperands());
-      for (unsigned i = 0, e = DstValue->getNumOperands(); i != e; ++i)
-        MDs.push_back(DstValue->getOperand(i));
-      for (unsigned i = 0, e = SrcValue->getNumOperands(); i != e; ++i)
-        MDs.push_back(SrcValue->getOperand(i));
+      MDs.append(DstValue->op_begin(), DstValue->op_end());
+      MDs.append(SrcValue->op_begin(), SrcValue->op_end());
 
       replaceDstValue(MDNode::get(DstM->getContext(), MDs));
       break;
@@ -1429,10 +1427,8 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
       SmallSetVector<Metadata *, 16> Elts;
       MDNode *DstValue = cast<MDNode>(DstOp->getOperand(2));
       MDNode *SrcValue = cast<MDNode>(SrcOp->getOperand(2));
-      for (unsigned i = 0, e = DstValue->getNumOperands(); i != e; ++i)
-        Elts.insert(DstValue->getOperand(i));
-      for (unsigned i = 0, e = SrcValue->getNumOperands(); i != e; ++i)
-        Elts.insert(SrcValue->getOperand(i));
+      Elts.insert(DstValue->op_begin(), DstValue->op_end());
+      Elts.insert(SrcValue->op_begin(), SrcValue->op_end());
 
       replaceDstValue(MDNode::get(DstM->getContext(),
                                   makeArrayRef(Elts.begin(), Elts.end())));

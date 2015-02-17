@@ -577,8 +577,7 @@ SDValue SITargetLowering::LowerFormalArguments(
 
       // Fill up the missing vector elements
       NumElements = Arg.VT.getVectorNumElements() - NumElements;
-      for (unsigned j = 0; j != NumElements; ++j)
-        Regs.push_back(DAG.getUNDEF(VT));
+      Regs.append(NumElements, DAG.getUNDEF(VT));
 
       InVals.push_back(DAG.getNode(ISD::BUILD_VECTOR, DL, Arg.VT, Regs));
       continue;
@@ -778,15 +777,12 @@ SDValue SITargetLowering::LowerBRCOND(SDValue BRCOND,
   assert(Intr->getOpcode() == ISD::INTRINSIC_W_CHAIN);
 
   // Build the result and
-  SmallVector<EVT, 4> Res;
-  for (unsigned i = 1, e = Intr->getNumValues(); i != e; ++i)
-    Res.push_back(Intr->getValueType(i));
+  ArrayRef<EVT> Res(Intr->value_begin() + 1, Intr->value_end());
 
   // operands of the new intrinsic call
   SmallVector<SDValue, 4> Ops;
   Ops.push_back(BRCOND.getOperand(0));
-  for (unsigned i = 1, e = Intr->getNumOperands(); i != e; ++i)
-    Ops.push_back(Intr->getOperand(i));
+  Ops.append(Intr->op_begin() + 1, Intr->op_end());
   Ops.push_back(Target);
 
   // build the new intrinsic call
@@ -1758,9 +1754,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     if (Ptr.getOpcode() == ISD::SHL && AS != AMDGPUAS::PRIVATE_ADDRESS) {
       SDValue NewPtr = performSHLPtrCombine(Ptr.getNode(), AS, DCI);
       if (NewPtr) {
-        SmallVector<SDValue, 8> NewOps;
-        for (unsigned I = 0, E = MemNode->getNumOperands(); I != E; ++I)
-          NewOps.push_back(MemNode->getOperand(I));
+        SmallVector<SDValue, 8> NewOps(MemNode->op_begin(), MemNode->op_end());
 
         NewOps[N->getOpcode() == ISD::STORE ? 2 : 1] = NewPtr;
         return SDValue(DAG.UpdateNodeOperands(MemNode, NewOps), 0);
@@ -1938,8 +1932,7 @@ void SITargetLowering::adjustWritemask(MachineSDNode *&Node,
   // Adjust the writemask in the node
   std::vector<SDValue> Ops;
   Ops.push_back(DAG.getTargetConstant(NewDmask, MVT::i32));
-  for (unsigned i = 1, e = Node->getNumOperands(); i != e; ++i)
-    Ops.push_back(Node->getOperand(i));
+  Ops.insert(Ops.end(), Node->op_begin() + 1, Node->op_end());
   Node = (MachineSDNode*)DAG.UpdateNodeOperands(Node, Ops);
 
   // If we only got one lane, replace it with a copy
@@ -2196,8 +2189,7 @@ MachineSDNode *SITargetLowering::AdjustRegClass(MachineSDNode *N,
 
     // Copy remaining operands so we keep any chain and glue nodes that follow
     // the normal operands.
-    for (unsigned I = 2, E = N->getNumOperands(); I != E; ++I)
-      Ops.push_back(N->getOperand(I));
+    Ops.append(N->op_begin() + 2, N->op_end());
 
     return DAG.getMachineNode(NewOpcode, DL, N->getVTList(), Ops);
   }

@@ -518,8 +518,7 @@ void Verifier::visitGlobalVariable(const GlobalVariable &GV) {
       continue;
 
     if (const User *U = dyn_cast<User>(V)) {
-      for (unsigned I = 0, N = U->getNumOperands(); I != N; ++I)
-        WorkStack.push_back(U->getOperand(I));
+      WorkStack.append(U->op_begin(), U->op_end());
     }
 
     if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {

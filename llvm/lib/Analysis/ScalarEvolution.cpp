@@ -2194,8 +2194,7 @@ static bool containsConstantSomewhere(const SCEV *StartExpr) {
 
     if (isa<SCEVAddExpr>(*CurrentExpr) || isa<SCEVMulExpr>(*CurrentExpr)) {
       const auto *CurrentNAry = cast<SCEVNAryExpr>(CurrentExpr);
-      for (const SCEV *Operand : CurrentNAry->operands())
-        Ops.push_back(Operand);
+      Ops.append(CurrentNAry->op_begin(), CurrentNAry->op_end());
     }
   }
   return false;

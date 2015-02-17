@@ -94,9 +94,8 @@ void DIBuilder::finalize() {
   for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
     DISubprogram SP(SPs.getElement(i));
     if (MDNode *Temp = SP.getVariablesNodes()) {
-      SmallVector<Metadata *, 4> Variables;
-      for (Metadata *V : PreservedVariables.lookup(SP))
-        Variables.push_back(V);
+      const auto &PV = PreservedVariables.lookup(SP);
+      SmallVector<Metadata *, 4> Variables(PV.begin(), PV.end());
       DIArray AV = getOrCreateArray(Variables);
       DIType(Temp).replaceAllUsesWith(AV);
     }
@@ -105,9 +104,8 @@ void DIBuilder::finalize() {
   DIArray GVs = getOrCreateArray(AllGVs);
   DIType(TempGVs).replaceAllUsesWith(GVs);
 
-  SmallVector<Metadata *, 16> RetainValuesI;
-  for (unsigned I = 0, E = AllImportedModules.size(); I < E; I++)
-    RetainValuesI.push_back(AllImportedModules[I]);
+  SmallVector<Metadata *, 16> RetainValuesI(AllImportedModules.begin(),
+                                            AllImportedModules.end());
   DIArray IMs = getOrCreateArray(RetainValuesI);
   DIType(TempImportedModules).replaceAllUsesWith(IMs);
 
@@ -758,8 +756,7 @@ static DIType createTypeWithFlags(LLVMContext &Context, DIType Ty,
   assert(N && "Unexpected input DIType!");
   // Update header field.
   Elts.push_back(setTypeFlagsInHeader(Ty.getHeader(), FlagsToSet).get(Context));
-  for (unsigned I = 1, E = N->getNumOperands(); I != E; ++I)
-    Elts.push_back(N->getOperand(I));
+  Elts.append(N->op_begin() + 1, N->op_end());
 
   return DIType(MDNode::get(Context, Elts));
 }

@@ -1337,10 +1337,7 @@ getAArch64XALUOOp(AArch64CC::CondCode &CC, SDValue Op, SelectionDAG &DAG) {
 
 SDValue AArch64TargetLowering::LowerF128Call(SDValue Op, SelectionDAG &DAG,
                                              RTLIB::Libcall Call) const {
-  SmallVector<SDValue, 2> Ops;
-  for (unsigned i = 0, e = Op->getNumOperands(); i != e; ++i)
-    Ops.push_back(Op.getOperand(i));
-
+  SmallVector<SDValue, 2> Ops(Op->op_begin(), Op->op_end());
   return makeLibCall(DAG, Call, MVT::f128, &Ops[0], Ops.size(), false,
                      SDLoc(Op)).first;
 }
@@ -1568,10 +1565,7 @@ SDValue AArch64TargetLowering::LowerFP_TO_INT(SDValue Op,
   else
     LC = RTLIB::getFPTOUINT(Op.getOperand(0).getValueType(), Op.getValueType());
 
-  SmallVector<SDValue, 2> Ops;
-  for (unsigned i = 0, e = Op->getNumOperands(); i != e; ++i)
-    Ops.push_back(Op.getOperand(i));
-
+  SmallVector<SDValue, 2> Ops(Op->op_begin(), Op->op_end());
   return makeLibCall(DAG, LC, Op.getValueType(), &Ops[0], Ops.size(), false,
                      SDLoc(Op)).first;
 }
