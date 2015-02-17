@@ -11,6 +11,8 @@
 #include "llvm/ProfileData/InstrProfWriter.h"
 #include "gtest/gtest.h"
 
+#include <cstdarg>
+
 using namespace llvm;
 
 namespace {
