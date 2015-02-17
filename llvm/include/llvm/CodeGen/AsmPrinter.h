@@ -308,10 +308,10 @@ public:
 public:
   /// Return the MCSymbol corresponding to the assembler temporary label with
   /// the specified stem and unique ID.
-  MCSymbol *GetTempSymbol(Twine Name, unsigned ID) const;
+  MCSymbol *GetTempSymbol(const Twine &Name, unsigned ID) const;
 
   /// Return an assembler temporary label with the specified stem.
-  MCSymbol *GetTempSymbol(Twine Name) const;
+  MCSymbol *GetTempSymbol(const Twine &Name) const;
 
   /// Return the MCSymbol for a private symbol with global value name as its
   /// base, with the specified suffix.
