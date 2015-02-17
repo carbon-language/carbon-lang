@@ -25,7 +25,7 @@
 ; COMMON-DAG: v_fma_f64 [[FMA3:v\[[0-9]+:[0-9]+\]]], [[FMA1]], [[FMA2]], [[FMA1]]
 ; COMMON-DAG: v_mul_f64 [[MUL:v\[[0-9]+:[0-9]+\]]], [[SCALE1]], [[FMA3]]
 ; COMMON-DAG: v_fma_f64 [[FMA4:v\[[0-9]+:[0-9]+\]]], -[[SCALE0]], [[MUL]], [[SCALE1]]
-; COMMON: v_div_fmas_f64 [[FMAS:v\[[0-9]+:[0-9]+\]]], [[FMA3]], [[FMA4]], [[MUL]]
+; COMMON: v_div_fmas_f64 [[FMAS:v\[[0-9]+:[0-9]+\]]], [[FMA4]], [[FMA3]], [[MUL]]
 ; COMMON: v_div_fixup_f64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[FMAS]], [[DEN]], [[NUM]]
 ; COMMON: buffer_store_dwordx2 [[RESULT]]
 ; COMMON: s_endpgm

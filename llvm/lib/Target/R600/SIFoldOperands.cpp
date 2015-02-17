@@ -203,7 +203,8 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
         const MachineOperand &UseOp = UseMI->getOperand(Use.getOperandNo());
 
         // FIXME: Fold operands with subregs.
-        if (UseOp.isReg() && UseOp.getSubReg() && OpToFold.isReg()) {
+        if (UseOp.isReg() && ((UseOp.getSubReg() && OpToFold.isReg()) ||
+            UseOp.isImplicit())) {
           continue;
         }
 
