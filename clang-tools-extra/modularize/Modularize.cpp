@@ -239,7 +239,7 @@ std::string findInputFile(const CommandLineArguments &CLArgs) {
       Opts->ParseArgs(Argv.data(), Argv.data() + Argv.size(), MissingArgIndex,
                       MissingArgCount, IncludedFlagsBitmask));
   std::vector<std::string> Inputs = Args->getAllArgValues(OPT_INPUT);
-  return Inputs.back();
+  return ModularizeUtilities::getCanonicalPath(Inputs.back());
 }
 
 // This arguments adjuster inserts "-include (file)" arguments for header

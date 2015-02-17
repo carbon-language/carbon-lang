@@ -114,11 +114,26 @@ std::error_code ModularizeUtilities::loadSingleHeaderListsAndDependencies(
         llvm::sys::path::append(Dependent, DependentsList[Index]);
       }
       llvm::sys::path::native(Dependent);
-      Dependents.push_back(Dependent.str());
+      Dependents.push_back(getCanonicalPath(Dependent.str()));
     }
+    // Get canonical form.
+    HeaderFileName = getCanonicalPath(HeaderFileName);
     // Save the resulting header file path and dependencies.
     HeaderFileNames.push_back(HeaderFileName.str());
     Dependencies[HeaderFileName.str()] = Dependents;
   }
   return std::error_code();
+}
+
+// Convert header path to canonical form.
+// The canonical form is basically just use forward slashes, and remove "./".
+// \param FilePath The file path, relative to the module map directory.
+// \returns The file path in canonical form.
+std::string ModularizeUtilities::getCanonicalPath(StringRef FilePath) {
+  std::string Tmp(FilePath);
+  std::replace(Tmp.begin(), Tmp.end(), '\\', '/');
+  StringRef Tmp2(Tmp);
+  if (Tmp2.startswith("./"))
+    Tmp = Tmp2.substr(2);
+  return Tmp;
 }

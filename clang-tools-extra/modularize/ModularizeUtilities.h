@@ -67,6 +67,17 @@ protected:
   /// \returns std::error_code.
   std::error_code loadSingleHeaderListsAndDependencies(
       llvm::StringRef InputPath);
+
+public:
+
+  // Utility functions.
+
+  /// Convert header path to canonical form.
+  /// The canonical form is basically just use forward slashes,
+  /// and remove "./".
+  /// \param FilePath The file path.
+  /// \returns The file path in canonical form.
+  static std::string getCanonicalPath(llvm::StringRef FilePath);
 };
 
 } // end namespace Modularize
