@@ -2,8 +2,8 @@
 # RUN: yaml2obj -format=elf %s > %t-obj
 # RUN: not lld -flavor gnu -target arm64 -o %t-exe %t-obj 2>&1 | FileCheck %s
 
-# CHECK: Relocation out of range in file {{.*}}: reference from data1+0 to data2+34359738369 of type 258 (R_AARCH64_ABS32)
-# CHECK: Relocation out of range in file {{.*}}: reference from data2+0 to data1+34359738369 of type 258 (R_AARCH64_ABS32)
+# CHECK-DAG: Relocation out of range in file {{.*}}: reference from data1+0 to data2+34359738369 of type 258 (R_AARCH64_ABS32)
+# CHECK-DAG: Relocation out of range in file {{.*}}: reference from data2+0 to data1+34359738369 of type 258 (R_AARCH64_ABS32)
 
 !ELF
 FileHeader: !FileHeader
