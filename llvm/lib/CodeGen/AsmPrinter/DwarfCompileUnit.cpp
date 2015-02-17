@@ -701,7 +701,7 @@ void DwarfCompileUnit::collectDeadVariables(DISubprogram SP) {
   for (unsigned vi = 0, ve = Variables.getNumElements(); vi != ve; ++vi) {
     DIVariable DV(Variables.getElement(vi));
     assert(DV.isVariable());
-    DbgVariable NewVar(DV, DIExpression(nullptr), DD);
+    DbgVariable NewVar(DV, DIExpression(), DD);
     auto VariableDie = constructVariableDIE(NewVar);
     applyVariableAttributes(NewVar, *VariableDie);
     SPDIE->addChild(std::move(VariableDie));
