@@ -35,6 +35,9 @@ extern "C" {
 /** See llvm::createAggressiveDCEPass function. */
 void LLVMAddAggressiveDCEPass(LLVMPassManagerRef PM);
 
+/** See llvm::createBitTrackingDCEPass function. */
+void LLVMAddBitTrackingDCEPass(LLVMPassManagerRef PM);
+
 /** See llvm::createAlignmentFromAssumptionsPass function. */
 void LLVMAddAlignmentFromAssumptionsPass(LLVMPassManagerRef PM);
 

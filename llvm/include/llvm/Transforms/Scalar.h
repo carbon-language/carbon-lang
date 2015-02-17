@@ -82,6 +82,13 @@ FunctionPass *createAggressiveDCEPass();
 
 //===----------------------------------------------------------------------===//
 //
+// BitTrackingDCE - This pass uses a bit-tracking DCE algorithm in order to
+// remove computations of dead bits.
+//
+FunctionPass *createBitTrackingDCEPass();
+
+//===----------------------------------------------------------------------===//
+//
 // SROA - Replace aggregates or pieces of aggregates with scalar SSA values.
 //
 FunctionPass *createSROAPass(bool RequiresDomTree = true);

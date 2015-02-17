@@ -252,6 +252,11 @@ void PassManagerBuilder::populateModulePassManager(
   MPM.add(createMemCpyOptPass());             // Remove memcpy / form memset
   MPM.add(createSCCPPass());                  // Constant prop with SCCP
 
+  // Delete dead bit computations (instcombine runs after to fold away the dead
+  // computations, and then ADCE will run later to exploit any new DCE
+  // opportunities that creates).
+  MPM.add(createBitTrackingDCEPass());        // Delete dead bit computations
+
   // Run instcombine after redundancy elimination to exploit opportunities
   // opened up by them.
   MPM.add(createInstructionCombiningPass());
