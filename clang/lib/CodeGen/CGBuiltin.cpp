@@ -5936,50 +5936,31 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     unsigned NumLanes = NumElts / 16;
     unsigned NumLaneElts = NumElts / NumLanes;
 
-    // If palignr is shifting the pair of input vectors less than the size of
-    // a lane, emit a shuffle instruction.
-    if (ShiftVal <= NumLaneElts) {
-      SmallVector<llvm::Constant*, 32> Indices;
-      // 256-bit palignr operates on 128-bit lanes so we need to handle that
-      for (unsigned l = 0; l != NumElts; l += NumLaneElts) {
-        for (unsigned i = 0; i != NumLaneElts; ++i) {
-          unsigned Idx = ShiftVal + i;
-          if (Idx >= NumLaneElts)
-            Idx += NumElts - NumLaneElts; // End of lane, switch operand.
-          Indices.push_back(llvm::ConstantInt::get(Int32Ty, Idx + l));
-        }
-      }
-
-      Value* SV = llvm::ConstantVector::get(Indices);
-      return Builder.CreateShuffleVector(Ops[1], Ops[0], SV, "palignr");
-    }
-
     // If palignr is shifting the pair of vectors more than the size of two
     // lanes, emit zero.
     if (ShiftVal >= (2 * NumLaneElts))
       return llvm::Constant::getNullValue(ConvertType(E->getType()));
 
     // If palignr is shifting the pair of input vectors more than one lane,
-    // but less than two lanes, emit a shift.
-    llvm::Type *VecTy = llvm::VectorType::get(Int64Ty, NumElts/8);
-
-    Ops[0] = Builder.CreateBitCast(Ops[0], VecTy, "cast");
-    Ops[1] = llvm::ConstantInt::get(Int32Ty, (ShiftVal-NumLaneElts) * 8);
-
-    Intrinsic::ID ID;
-    switch (BuiltinID) {
-    default: llvm_unreachable("Unsupported intrinsic!");
-    case X86::BI__builtin_ia32_palignr128:
-      ID = Intrinsic::x86_sse2_psrl_dq;
-      break;
-    case X86::BI__builtin_ia32_palignr256:
-      ID = Intrinsic::x86_avx2_psrl_dq;
-      break;
+    // but less than two lanes, convert to shifting in zeroes.
+    if (ShiftVal > NumLaneElts) {
+      ShiftVal -= NumLaneElts;
+      Ops[0] = llvm::Constant::getNullValue(Ops[0]->getType());
     }
 
-    // create i32 constant
-    llvm::Function *F = CGM.getIntrinsic(ID);
-    return Builder.CreateCall(F, makeArrayRef(Ops.data(), 2), "palignr");
+    SmallVector<llvm::Constant*, 32> Indices;
+    // 256-bit palignr operates on 128-bit lanes so we need to handle that
+    for (unsigned l = 0; l != NumElts; l += NumLaneElts) {
+      for (unsigned i = 0; i != NumLaneElts; ++i) {
+        unsigned Idx = ShiftVal + i;
+        if (Idx >= NumLaneElts)
+          Idx += NumElts - NumLaneElts; // End of lane, switch operand.
+        Indices.push_back(llvm::ConstantInt::get(Int32Ty, Idx + l));
+      }
+    }
+
+    Value* SV = llvm::ConstantVector::get(Indices);
+    return Builder.CreateShuffleVector(Ops[1], Ops[0], SV, "palignr");
   }
   case X86::BI__builtin_ia32_pslldqi256: {
     // Shift value is in bits so divide by 8.

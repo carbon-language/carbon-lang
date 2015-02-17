@@ -574,6 +574,6 @@ __m128i test_mm_alignr_epi8(__m128i a, __m128i b) {
 }
 
 __m128i test2_mm_alignr_epi8(__m128i a, __m128i b) {
-  // CHECK: @llvm.x86.sse2.psrl.dq({{.*}}, i32 8)
+  // CHECK: shufflevector <16 x i8> %5, <16 x i8> zeroinitializer, <16 x i32> <i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16>
   return _mm_alignr_epi8(a, b, 17);
 }
