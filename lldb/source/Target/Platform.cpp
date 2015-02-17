@@ -1351,7 +1351,7 @@ Platform::PutFile (const FileSpec& source,
     if (log)
         log->Printf("[PutFile] Using block by block transfer....\n");
 
-    uint32_t source_open_options = File::eOpenOptionRead;
+    uint32_t source_open_options = File::eOpenOptionRead | File::eOpenOptionCloseOnExec;
     if (source.GetFileType() == FileSpec::eFileTypeSymbolicLink)
         source_open_options |= File::eOpenoptionDontFollowSymlinks;
 
@@ -1366,7 +1366,8 @@ Platform::PutFile (const FileSpec& source,
     lldb::user_id_t dest_file = OpenFile (destination,
                                           File::eOpenOptionCanCreate |
                                           File::eOpenOptionWrite |
-                                          File::eOpenOptionTruncate,
+                                          File::eOpenOptionTruncate |
+                                          File::eOpenOptionCloseOnExec,
                                           permissions,
                                           error);
     if (log)
