@@ -2874,21 +2874,19 @@ defm PANDN : PDI_binop_all<0xDF, "pandn", X86andnp, v2i64, v4i64,
 multiclass sse12_fp_packed_scalar_logical_alias<
     bits<8> opc, string OpcodeStr, SDNode OpNode, OpndItins itins> {
   defm V#NAME#PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode,
-              FR32, f32, f128mem, loadf32, SSEPackedSingle, itins, 0>,
-              PS, VEX_4V;
+                FR32, f32, f128mem, loadf32_128, SSEPackedSingle, itins, 0>,
+                PS, VEX_4V;
 
   defm V#NAME#PD : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode,
-        FR64, f64, f128mem, loadf64, SSEPackedDouble, itins, 0>,
-        PD, VEX_4V;
+                FR64, f64, f128mem, loadf64_128, SSEPackedDouble, itins, 0>,
+                PD, VEX_4V;
 
   let Constraints = "$src1 = $dst" in {
     defm PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode, FR32,
-                f32, f128mem, memopfsf32, SSEPackedSingle, itins>,
-                PS;
+                f32, f128mem, memopfsf32_128, SSEPackedSingle, itins>, PS;
 
     defm PD : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode, FR64,
-                f64, f128mem, memopfsf64, SSEPackedDouble, itins>,
-                PD;
+                f64, f128mem, memopfsf64_128, SSEPackedDouble, itins>, PD;
   }
 }
 
