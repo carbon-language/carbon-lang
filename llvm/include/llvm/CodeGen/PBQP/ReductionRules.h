@@ -144,6 +144,7 @@ namespace PBQP {
     // TODO: Try to normalize newly added/modified edge.
   }
 
+#ifndef NDEBUG
   // Does this Cost vector have any register options ?
   template <typename VectorT>
   bool hasRegisterOptions(const VectorT &V) {
@@ -161,6 +162,7 @@ namespace PBQP {
 
     return false;
   }
+#endif
 
   // \brief Find a solution to a fully reduced graph by backpropagation.
   //
@@ -187,12 +189,14 @@ namespace PBQP {
 
       RawVector v = G.getNodeCosts(NId);
 
+#ifndef NDEBUG
       // Although a conservatively allocatable node can be allocated to a register,
       // spilling it may provide a lower cost solution. Assert here that spilling
       // is done by choice, not because there were no register available.
       if (G.getNodeMetadata(NId).wasConservativelyAllocatable())
         assert(hasRegisterOptions(v) && "A conservatively allocatable node "
                                         "must have available register options");
+#endif
 
       for (auto EId : G.adjEdgeIds(NId)) {
         const Matrix& edgeCosts = G.getEdgeCosts(EId);
