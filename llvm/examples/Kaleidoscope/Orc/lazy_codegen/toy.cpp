@@ -1256,16 +1256,16 @@ static void MainLoop() {
   SessionContext S(getGlobalContext());
 
   while (1) {
-#ifndef MINIMAL_STDERR_OUTPUT
-    std::cerr << "ready> ";
-#endif
     switch (CurTok) {
     case tok_eof:    return;
-    case ';':        getNextToken(); break;  // ignore top-level semicolons.
+    case ';':        getNextToken(); continue;  // ignore top-level semicolons.
     case tok_def:    HandleDefinition(S, J); break;
     case tok_extern: HandleExtern(S); break;
     default:         HandleTopLevelExpression(S, J); break;
     }
+#ifndef MINIMAL_STDERR_OUTPUT
+    std::cerr << "ready> ";
+#endif
   }
 }
 
