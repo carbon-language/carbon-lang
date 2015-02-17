@@ -225,10 +225,16 @@ typedef std::map<Module*, DenseSet<const GlobalValue*>> ModulePartitionMap;
 void partition(Module &M, const ModulePartitionMap &PMap);
 
 /// @brief Struct for trivial "complete" partitioning of a module.
-struct FullyPartitionedModule {
+class FullyPartitionedModule {
+public:
   std::unique_ptr<Module> GlobalVars;
   std::unique_ptr<Module> Commons;
   std::vector<std::unique_ptr<Module>> Functions;
+
+  FullyPartitionedModule() = default;
+  FullyPartitionedModule(FullyPartitionedModule &&S)
+      : GlobalVars(std::move(S.GlobalVars)), Commons(std::move(S.Commons)),
+        Functions(std::move(S.Functions)) {}
 };
 
 FullyPartitionedModule fullyPartition(Module &M);
