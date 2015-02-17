@@ -334,9 +334,8 @@ void ObjCInterfaceDecl::mergeClassExtensionProtocolList(
     return;
 
   // Merge ProtocolRefs into class's protocol list;
-  for (auto *P : all_referenced_protocols()) {
-    ProtocolRefs.push_back(P);
-  }
+  ProtocolRefs.append(all_referenced_protocol_begin(),
+                      all_referenced_protocol_end());
 
   data().AllReferencedProtocols.set(ProtocolRefs.data(), ProtocolRefs.size(),C);
 }

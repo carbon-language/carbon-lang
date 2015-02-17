@@ -731,7 +731,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
       }
 
       llvm::BasicBlock *FallthroughDest = nullptr;
-      SmallVector<llvm::Instruction*, 2> InstsToAppend;
+      llvm::BasicBlock::InstListType InstsToAppend;
 
       // If there's exactly one branch-after and no other threads,
       // we can route it without a switch.
@@ -796,8 +796,7 @@ void CodeGenFunction::PopCleanupBlock(bool FallthroughIsBranchThrough) {
 
       // Append the prepared cleanup prologue from above.
       llvm::BasicBlock *NormalExit = Builder.GetInsertBlock();
-      for (unsigned I = 0, E = InstsToAppend.size(); I != E; ++I)
-        NormalExit->getInstList().push_back(InstsToAppend[I]);
+      NormalExit->getInstList().splice(NormalExit->end(), InstsToAppend);
 
       // Optimistically hope that any fixups will continue falling through.
       for (unsigned I = FixupDepth, E = EHStack.getNumBranchFixups();

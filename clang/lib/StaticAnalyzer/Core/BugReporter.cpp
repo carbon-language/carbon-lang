@@ -2763,9 +2763,7 @@ void BugReporter::FlushReports() {
   // warnings and new BugTypes.
   // FIXME: Only NSErrorChecker needs BugType's FlushReports.
   // Turn NSErrorChecker into a proper checker and remove this.
-  SmallVector<const BugType*, 16> bugTypes;
-  for (BugTypesTy::iterator I=BugTypes.begin(), E=BugTypes.end(); I!=E; ++I)
-    bugTypes.push_back(*I);
+  SmallVector<const BugType *, 16> bugTypes(BugTypes.begin(), BugTypes.end());
   for (SmallVectorImpl<const BugType *>::iterator
          I = bugTypes.begin(), E = bugTypes.end(); I != E; ++I)
     const_cast<BugType*>(*I)->FlushReports(*this);
@@ -3055,8 +3053,7 @@ static void CompactPathDiagnostic(PathPieces &path, const SourceManager& SM) {
   // Now take the pieces and construct a new PathDiagnostic.
   path.clear();
 
-  for (PiecesTy::iterator I=Pieces.begin(), E=Pieces.end(); I!=E; ++I)
-    path.push_back(*I);
+  path.insert(path.end(), Pieces.begin(), Pieces.end());
 }
 
 bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,

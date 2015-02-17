@@ -217,8 +217,7 @@ int Command::Execute(const StringRef **Redirects, std::string *ErrMsg,
 
   if (ResponseFile == nullptr) {
     Argv.push_back(Executable);
-    for (size_t i = 0, e = Arguments.size(); i != e; ++i)
-      Argv.push_back(Arguments[i]);
+    Argv.append(Arguments.begin(), Arguments.end());
     Argv.push_back(nullptr);
 
     return llvm::sys::ExecuteAndWait(Executable, Argv.data(), /*env*/ nullptr,

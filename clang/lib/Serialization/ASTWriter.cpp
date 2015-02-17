@@ -2108,8 +2108,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
       if (MD->isImported()) {
         auto Overrides = MD->getOverriddenModules();
         Record.push_back(Overrides.size());
-        for (auto Override : Overrides)
-          Record.push_back(Override);
+        Record.append(Overrides.begin(), Overrides.end());
       }
     }
     if (Record.empty())
