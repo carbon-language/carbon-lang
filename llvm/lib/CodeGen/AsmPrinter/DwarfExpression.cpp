@@ -240,13 +240,14 @@ bool DwarfExpression::AddMachineRegExpression(DIExpression Expr,
     return false;
 
   // Emit remaining elements of the expression.
-  AddExpression(I, PieceOffsetInBits);
+  AddExpression(I, Expr.end(), PieceOffsetInBits);
   return true;
 }
 
 void DwarfExpression::AddExpression(DIExpression::iterator I,
+                                    DIExpression::iterator E,
                                     unsigned PieceOffsetInBits) {
- for (; I != DIExpression::iterator(); ++I) {
+  for (; I != E; ++I) {
     switch (*I) {
     case dwarf::DW_OP_bit_piece: {
       unsigned OffsetInBits = I->getArg(1);

@@ -1725,7 +1725,7 @@ void DwarfDebug::emitDebugLocValue(ByteStreamer &Streamer,
       // Complex address entry.
       if (Loc.getOffset()) {
         DwarfExpr.AddMachineRegIndirect(Loc.getReg(), Loc.getOffset());
-        DwarfExpr.AddExpression(Expr, PieceOffsetInBits);
+        DwarfExpr.AddExpression(Expr.begin(), Expr.end(), PieceOffsetInBits);
       } else
         DwarfExpr.AddMachineRegExpression(Expr, Loc.getReg(),
                                           PieceOffsetInBits);
