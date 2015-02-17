@@ -41,6 +41,45 @@ bb5:
 ; LINUX-SECTIONS-NEXT: .cfi_endproc
 ; LINUX-SECTIONS-NEXT: .section        .rodata.F2,"a",@progbits
 
+declare void @G()
+
+define void @F3(i32 %y) {
+bb0:
+  invoke void @G()
+          to label %bb2 unwind label %bb1
+bb1:
+  landingpad { i8*, i32 } personality i8* bitcast (void ()* @G to i8*)
+          catch i8* null
+  br label %bb2
+bb2:
+
+switch i32 %y, label %bb7 [
+    i32 1, label %bb3
+    i32 2, label %bb4
+    i32 3, label %bb5
+    i32 4, label %bb6
+  ]
+bb3:
+  ret void
+bb4:
+  ret void
+bb5:
+  ret void
+bb6:
+  ret void
+bb7:
+  ret void
+}
+
+; DARWIN64: _F3:
+; DARWIN64: .cfi_endproc
+; DARWIN64-NEXT: Leh_func_end
+; DARWIN64-NEXT: .section        __TEXT,__gcc_except_tab
+; DARWIN64-NOT: .section
+; DARWIN64: .section        __TEXT,__text,regular,pure_instructions
+; DARWIN64-NOT: .section
+; DARWIN64: LJTI{{.*}}:
+
 ; int G1;
 @G1 = common global i32 0
 
