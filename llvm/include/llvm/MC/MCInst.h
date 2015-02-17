@@ -169,7 +169,7 @@ public:
   }
 
   void clear() { Operands.clear(); }
-  size_t size() { return Operands.size(); }
+  size_t size() const { return Operands.size(); }
 
   typedef SmallVectorImpl<MCOperand>::iterator iterator;
   typedef SmallVectorImpl<MCOperand>::const_iterator const_iterator;
