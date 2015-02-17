@@ -414,7 +414,6 @@ DIDerivedType DIBuilder::createInheritance(DIType Ty, DIType BaseTy,
                           .get(VMContext),
                       nullptr, Ty.getRef(), BaseTy.getRef()};
   auto R = DIDerivedType(MDNode::get(VMContext, Elts));
-  trackIfUnresolved(R);
   return R;
 }
 
@@ -581,6 +580,7 @@ DICompositeType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
          "createClassType should return a DICompositeType");
   if (!UniqueIdentifier.empty())
     retainType(R);
+  trackIfUnresolved(R);
   return R;
 }
 
@@ -614,6 +614,7 @@ DICompositeType DIBuilder::createStructType(DIDescriptor Context,
          "createStructType should return a DICompositeType");
   if (!UniqueIdentifier.empty())
     retainType(R);
+  trackIfUnresolved(R);
   return R;
 }
 
@@ -642,6 +643,7 @@ DICompositeType DIBuilder::createUnionType(DIDescriptor Scope, StringRef Name,
   DICompositeType R(MDNode::get(VMContext, Elts));
   if (!UniqueIdentifier.empty())
     retainType(R);
+  trackIfUnresolved(R);
   return R;
 }
 
@@ -688,6 +690,7 @@ DICompositeType DIBuilder::createEnumerationType(
   AllEnumTypes.push_back(CTy);
   if (!UniqueIdentifier.empty())
     retainType(CTy);
+  trackIfUnresolved(CTy);
   return CTy;
 }
 
@@ -709,7 +712,9 @@ DICompositeType DIBuilder::createArrayType(uint64_t Size, uint64_t AlignInBits,
       Ty.getRef(), Subscripts, nullptr, nullptr,
       nullptr // Type Identifer
   };
-  return DICompositeType(MDNode::get(VMContext, Elts));
+  DICompositeType R(MDNode::get(VMContext, Elts));
+  trackIfUnresolved(R);
+  return R;
 }
 
 DICompositeType DIBuilder::createVectorType(uint64_t Size, uint64_t AlignInBits,
@@ -730,7 +735,9 @@ DICompositeType DIBuilder::createVectorType(uint64_t Size, uint64_t AlignInBits,
       Ty.getRef(), Subscripts, nullptr, nullptr,
       nullptr // Type Identifer
   };
-  return DICompositeType(MDNode::get(VMContext, Elts));
+  DICompositeType R(MDNode::get(VMContext, Elts));
+  trackIfUnresolved(R);
+  return R;
 }
 
 static HeaderBuilder setTypeFlagsInHeader(StringRef Header,
@@ -807,6 +814,7 @@ DIBuilder::createForwardDecl(unsigned Tag, StringRef Name, DIDescriptor Scope,
          "createForwardDecl result should be a DIType");
   if (!UniqueIdentifier.empty())
     retainType(RetTy);
+  trackIfUnresolved(RetTy);
   return RetTy;
 }
 
@@ -835,6 +843,7 @@ DICompositeType DIBuilder::createReplaceableCompositeType(
          "createReplaceableForwardDecl result should be a DIType");
   if (!UniqueIdentifier.empty())
     retainType(RetTy);
+  trackIfUnresolved(RetTy);
   return RetTy;
 }
 
@@ -1025,6 +1034,7 @@ DISubprogram DIBuilder::createFunction(DIDescriptor Context, StringRef Name,
     // do not lose this mdnode.
     if (isDefinition)
       AllSubprograms.push_back(Node);
+    trackIfUnresolved(Node);
     return Node;
   });
 }
@@ -1080,6 +1090,7 @@ DISubprogram DIBuilder::createMethod(DIDescriptor Context, StringRef Name,
     AllSubprograms.push_back(Node);
   DISubprogram S(Node);
   assert(S.isSubprogram() && "createMethod should return a valid DISubprogram");
+  trackIfUnresolved(S);
   return S;
 }
 
