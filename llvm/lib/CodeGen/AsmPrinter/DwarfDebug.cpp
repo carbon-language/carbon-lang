@@ -841,7 +841,8 @@ static bool piecesOverlap(DIExpression P1, DIExpression P2) {
 // 1 | |    [x, (reg1, piece 32, 32)] <- IsPieceOfPrevEntry
 // 2 | |    ...
 // 3   |    [clobber reg0]
-// 4        [x, (mem, piece 0, 64)] <- overlapping with both previous pieces of x.
+// 4        [x, (mem, piece 0, 64)] <- overlapping with both previous pieces of
+//                                     x.
 //
 // Output:
 //
@@ -1353,8 +1354,8 @@ void DwarfDebug::emitSectionLabels() {
   if (useSplitDwarf()) {
     DwarfInfoDWOSectionSym =
         emitSectionSym(Asm, TLOF.getDwarfInfoDWOSection(), "section_info_dwo");
-    DwarfTypesDWOSectionSym =
-        emitSectionSym(Asm, TLOF.getDwarfTypesDWOSection(), "section_types_dwo");
+    DwarfTypesDWOSectionSym = emitSectionSym(
+        Asm, TLOF.getDwarfTypesDWOSection(), "section_types_dwo");
   }
   DwarfAbbrevSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfAbbrevSection(), "section_abbrev");

@@ -68,8 +68,8 @@ public:
 //===----------------------------------------------------------------------===//
 /// \brief This class is used to track local variable information.
 ///
-/// - Variables whose location changes over time have a DotDebugLocOffset and the
-///   other fields are not used.
+/// - Variables whose location changes over time have a DotDebugLocOffset and
+///   the other fields are not used.
 ///
 /// - Variables that are described by multiple MMI table entries have multiple
 ///   expressions and frame indices.
@@ -94,8 +94,9 @@ public:
   /// Construct a DbgVariable from a DEBUG_VALUE.
   /// AbstractVar may be NULL.
   DbgVariable(const MachineInstr *DbgValue, DwarfDebug *DD)
-    : Var(DbgValue->getDebugVariable()), Expr(1, DbgValue->getDebugExpression()),
-        TheDIE(nullptr), DotDebugLocOffset(~0U), MInsn(DbgValue), DD(DD) {
+      : Var(DbgValue->getDebugVariable()),
+        Expr(1, DbgValue->getDebugExpression()), TheDIE(nullptr),
+        DotDebugLocOffset(~0U), MInsn(DbgValue), DD(DD) {
     FrameIndex.push_back(~0);
   }
 
@@ -280,7 +281,8 @@ class DwarfDebug : public AsmPrinterHandler {
   // them.
   DenseMap<const MDNode *, const DwarfTypeUnit *> DwarfTypeUnits;
 
-  SmallVector<std::pair<std::unique_ptr<DwarfTypeUnit>, DICompositeType>, 1> TypeUnitsUnderConstruction;
+  SmallVector<std::pair<std::unique_ptr<DwarfTypeUnit>, DICompositeType>, 1>
+      TypeUnitsUnderConstruction;
 
   // Whether to emit the pubnames/pubtypes sections.
   bool HasDwarfPubSections;
