@@ -90,7 +90,6 @@ class LLDB_API SBTypeSynthetic;
 class LLDB_API SBTypeList;
 class LLDB_API SBValue;
 class LLDB_API SBValueList;
-class LLDB_API SBVariablesOptions;
 class LLDB_API SBWatchpoint;
 class LLDB_API SBUnixSignals;
 
