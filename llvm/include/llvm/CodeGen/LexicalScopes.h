@@ -180,9 +180,11 @@ public:
     return I != AbstractScopeMap.end() ? &I->second : nullptr;
   }
 
-  /// findInlinedScope - Find an inlined scope for the given DebugLoc or return
-  /// NULL.
-  LexicalScope *findInlinedScope(DebugLoc DL);
+  /// findInlinedScope - Find an inlined scope for the given scope/inlined-at.
+  LexicalScope *findInlinedScope(const MDNode *N, const MDNode *IA) {
+    auto I = InlinedLexicalScopeMap.find(std::make_pair(N, IA));
+    return I != InlinedLexicalScopeMap.end() ? &I->second : nullptr;
+  }
 
   /// findLexicalScope - Find regular lexical scope or return null.
   LexicalScope *findLexicalScope(const MDNode *N) {

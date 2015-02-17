@@ -104,14 +104,6 @@ void LexicalScopes::extractLexicalScopes(
   }
 }
 
-LexicalScope *LexicalScopes::findInlinedScope(DebugLoc DL) {
-  MDNode *Scope = nullptr;
-  MDNode *IA = nullptr;
-  DL.getScopeAndInlinedAt(Scope, IA, MF->getFunction()->getContext());
-  auto I = InlinedLexicalScopeMap.find(std::make_pair(Scope, IA));
-  return I != InlinedLexicalScopeMap.end() ? &I->second : nullptr;
-}
-
 /// findLexicalScope - Find lexical scope, either regular or inlined, for the
 /// given DebugLoc. Return NULL if not found.
 LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {

@@ -949,11 +949,9 @@ DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
       continue;
 
     LexicalScope *Scope = nullptr;
-    if (MDNode *IA = DV.getInlinedAt()) {
-      DebugLoc DL = DebugLoc::getFromDILocation(IA);
-      Scope = LScopes.findInlinedScope(DebugLoc::get(
-          DL.getLine(), DL.getCol(), DV.getContext(), IA));
-    } else
+    if (MDNode *IA = DV.getInlinedAt())
+      Scope = LScopes.findInlinedScope(DV.getContext(), IA);
+    else
       Scope = LScopes.findLexicalScope(DV.getContext());
     // If variable scope is not found then skip this variable.
     if (!Scope)
