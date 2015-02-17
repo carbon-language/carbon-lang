@@ -203,7 +203,11 @@ public:
   NodeMetadata(const NodeMetadata &Other)
     : RS(Other.RS), NumOpts(Other.NumOpts), DeniedOpts(Other.DeniedOpts),
       OptUnsafeEdges(new unsigned[NumOpts]), VReg(Other.VReg),
-      AllowedRegs(Other.AllowedRegs) {
+      AllowedRegs(Other.AllowedRegs)
+#ifndef NDEBUG
+      , everConservativelyAllocatable(Other.everConservativelyAllocatable)
+#endif
+  {
     if (NumOpts > 0) {
       std::copy(&Other.OptUnsafeEdges[0], &Other.OptUnsafeEdges[NumOpts],
                 &OptUnsafeEdges[0]);
@@ -215,7 +219,11 @@ public:
   NodeMetadata(NodeMetadata &&Other)
     : RS(Other.RS), NumOpts(Other.NumOpts), DeniedOpts(Other.DeniedOpts),
       OptUnsafeEdges(std::move(Other.OptUnsafeEdges)), VReg(Other.VReg),
-      AllowedRegs(std::move(Other.AllowedRegs)) {}
+      AllowedRegs(std::move(Other.AllowedRegs))
+#ifndef NDEBUG
+      , everConservativelyAllocatable(Other.everConservativelyAllocatable)
+#endif
+  {}
 
   // FIXME: Re-implementing default behavior to work around MSVC. Remove once
   // MSVC synthesizes move constructors properly.
@@ -228,6 +236,9 @@ public:
               OptUnsafeEdges.get());
     VReg = Other.VReg;
     AllowedRegs = Other.AllowedRegs;
+#ifndef NDEBUG
+    everConservativelyAllocatable = Other.everConservativelyAllocatable;
+#endif
     return *this;
   }
 
@@ -240,6 +251,9 @@ public:
     OptUnsafeEdges = std::move(Other.OptUnsafeEdges);
     VReg = Other.VReg;
     AllowedRegs = std::move(Other.AllowedRegs);
+#ifndef NDEBUG
+    everConservativelyAllocatable = Other.everConservativelyAllocatable;
+#endif
     return *this;
   }
 
