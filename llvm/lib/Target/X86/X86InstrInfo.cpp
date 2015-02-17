@@ -2001,7 +2001,7 @@ int X86InstrInfo::getSPAdjust(const MachineInstr *MI) const {
   }
 }
 
-/// isFrameOperand - Return true and the FrameIndex if the specified
+/// Return true and the FrameIndex if the specified
 /// operand and follow operands form a reference to the stack frame.
 bool X86InstrInfo::isFrameOperand(const MachineInstr *MI, unsigned int Op,
                                   int &FrameIndex) const {
@@ -2128,8 +2128,7 @@ unsigned X86InstrInfo::isStoreToStackSlotPostFE(const MachineInstr *MI,
   return 0;
 }
 
-/// regIsPICBase - Return true if register is PIC base (i.e.g defined by
-/// X86::MOVPC32r.
+/// Return true if register is PIC base; i.e.g defined by X86::MOVPC32r.
 static bool regIsPICBase(unsigned BaseReg, const MachineRegisterInfo &MRI) {
   // Don't waste compile time scanning use-def chains of physregs.
   if (!TargetRegisterInfo::isVirtualRegister(BaseReg))
@@ -2325,8 +2324,7 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
   NewMI->substituteRegister(Orig->getOperand(0).getReg(), DestReg, SubIdx, TRI);
 }
 
-/// hasLiveCondCodeDef - True if MI has a condition code def, e.g. EFLAGS, that
-/// is not marked dead.
+/// True if MI has a condition code def, e.g. EFLAGS, that is not marked dead.
 static bool hasLiveCondCodeDef(MachineInstr *MI) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
@@ -2338,8 +2336,7 @@ static bool hasLiveCondCodeDef(MachineInstr *MI) {
   return false;
 }
 
-/// getTruncatedShiftCount - check whether the shift count for a machine operand
-/// is non-zero.
+/// Check whether the shift count for a machine operand is non-zero.
 inline static unsigned getTruncatedShiftCount(MachineInstr *MI,
                                               unsigned ShiftAmtOperandIdx) {
   // The shift count is six bits with the REX.W prefix and five bits without.
@@ -2348,7 +2345,7 @@ inline static unsigned getTruncatedShiftCount(MachineInstr *MI,
   return Imm & ShiftCountMask;
 }
 
-/// isTruncatedShiftCountForLEA - check whether the given shift count is appropriate
+/// Check whether the given shift count is appropriate
 /// can be represented by a LEA instruction.
 inline static bool isTruncatedShiftCountForLEA(unsigned ShAmt) {
   // Left shift instructions can be transformed into load-effective-address
@@ -2430,10 +2427,9 @@ bool X86InstrInfo::classifyLEAReg(MachineInstr *MI, const MachineOperand &Src,
   return true;
 }
 
-/// convertToThreeAddressWithLEA - Helper for convertToThreeAddress when
-/// 16-bit LEA is disabled, use 32-bit LEA to form 3-address code by promoting
-/// to a 32-bit superregister and then truncating back down to a 16-bit
-/// subregister.
+/// Helper for convertToThreeAddress when 16-bit LEA is disabled, use 32-bit
+/// LEA to form 3-address code by promoting to a 32-bit superregister and then
+/// truncating back down to a 16-bit subregister.
 MachineInstr *
 X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
                                            MachineFunction::iterator &MFI,
@@ -2540,7 +2536,7 @@ X86InstrInfo::convertToThreeAddressWithLEA(unsigned MIOpc,
   return ExtMI;
 }
 
-/// convertToThreeAddress - This method must be implemented by targets that
+/// This method must be implemented by targets that
 /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
 /// may be able to convert a two-address instruction into a true
 /// three-address instruction on demand.  This allows the X86 target (for
@@ -2815,8 +2811,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   return NewMI;
 }
 
-/// commuteInstruction - We have a few instructions that must be hacked on to
-/// commute them.
+/// We have a few instructions that must be hacked on to commute them.
 ///
 MachineInstr *
 X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
@@ -3107,7 +3102,7 @@ static X86::CondCode getCondFromBranchOpc(unsigned BrOpc) {
   }
 }
 
-/// getCondFromSETOpc - return condition code of a SET opcode.
+/// Return condition code of a SET opcode.
 static X86::CondCode getCondFromSETOpc(unsigned Opc) {
   switch (Opc) {
   default: return X86::COND_INVALID;
@@ -3130,7 +3125,7 @@ static X86::CondCode getCondFromSETOpc(unsigned Opc) {
   }
 }
 
-/// getCondFromCmovOpc - return condition code of a CMov opcode.
+/// Return condition code of a CMov opcode.
 X86::CondCode X86::getCondFromCMovOpc(unsigned Opc) {
   switch (Opc) {
   default: return X86::COND_INVALID;
@@ -3207,7 +3202,7 @@ unsigned X86::GetCondBranchFromCond(X86::CondCode CC) {
   }
 }
 
-/// GetOppositeBranchCondition - Return the inverse of the specified condition,
+/// Return the inverse of the specified condition,
 /// e.g. turning COND_E to COND_NE.
 X86::CondCode X86::GetOppositeBranchCondition(X86::CondCode CC) {
   switch (CC) {
@@ -3231,9 +3226,8 @@ X86::CondCode X86::GetOppositeBranchCondition(X86::CondCode CC) {
   }
 }
 
-/// getSwappedCondition - assume the flags are set by MI(a,b), return
-/// the condition code if we modify the instructions such that flags are
-/// set by MI(b,a).
+/// Assuming the flags are set by MI(a,b), return the condition code if we
+/// modify the instructions such that flags are set by MI(b,a).
 static X86::CondCode getSwappedCondition(X86::CondCode CC) {
   switch (CC) {
   default: return X86::COND_INVALID;
@@ -3250,7 +3244,7 @@ static X86::CondCode getSwappedCondition(X86::CondCode CC) {
   }
 }
 
-/// getSETFromCond - Return a set opcode for the given condition and
+/// Return a set opcode for the given condition and
 /// whether it has memory operand.
 unsigned X86::getSETFromCond(CondCode CC, bool HasMemoryOperand) {
   static const uint16_t Opc[16][2] = {
@@ -3276,7 +3270,7 @@ unsigned X86::getSETFromCond(CondCode CC, bool HasMemoryOperand) {
   return Opc[CC][HasMemoryOperand ? 1 : 0];
 }
 
-/// getCMovFromCond - Return a cmov opcode for the given condition,
+/// Return a cmov opcode for the given condition,
 /// register size in bytes, and operand type.
 unsigned X86::getCMovFromCond(CondCode CC, unsigned RegBytes,
                               bool HasMemoryOperand) {
@@ -3599,7 +3593,7 @@ void X86InstrInfo::insertSelect(MachineBasicBlock &MBB,
    BuildMI(MBB, I, DL, get(Opc), DstReg).addReg(FalseReg).addReg(TrueReg);
 }
 
-/// isHReg - Test if the given register is a physical h register.
+/// Test if the given register is a physical h register.
 static bool isHReg(unsigned Reg) {
   return X86::GR8_ABCD_HRegClass.contains(Reg);
 }
@@ -4006,7 +4000,7 @@ analyzeCompare(const MachineInstr *MI, unsigned &SrcReg, unsigned &SrcReg2,
   return false;
 }
 
-/// isRedundantFlagInstr - check whether the first instruction, whose only
+/// Check whether the first instruction, whose only
 /// purpose is to update flags, can be made redundant.
 /// CMPrr can be made redundant by SUBrr if the operands are the same.
 /// This function can be extended later on.
@@ -4049,7 +4043,7 @@ inline static bool isRedundantFlagInstr(MachineInstr *FlagI, unsigned SrcReg,
   return false;
 }
 
-/// isDefConvertible - check whether the definition can be converted
+/// Check whether the definition can be converted
 /// to remove a comparison against zero.
 inline static bool isDefConvertible(MachineInstr *MI) {
   switch (MI->getOpcode()) {
@@ -4135,8 +4129,7 @@ inline static bool isDefConvertible(MachineInstr *MI) {
   }
 }
 
-/// isUseDefConvertible - check whether the use can be converted
-/// to remove a comparison against zero.
+/// Check whether the use can be converted to remove a comparison against zero.
 static X86::CondCode isUseDefConvertible(MachineInstr *MI) {
   switch (MI->getOpcode()) {
   default: return X86::COND_INVALID;
@@ -4155,7 +4148,7 @@ static X86::CondCode isUseDefConvertible(MachineInstr *MI) {
   }
 }
 
-/// optimizeCompareInstr - Check if there exists an earlier instruction that
+/// Check if there exists an earlier instruction that
 /// operates on the same source operands and sets flags in the same way as
 /// Compare; remove Compare if possible.
 bool X86InstrInfo::
@@ -4446,7 +4439,7 @@ optimizeCompareInstr(MachineInstr *CmpInstr, unsigned SrcReg, unsigned SrcReg2,
   return true;
 }
 
-/// optimizeLoadInstr - Try to remove the load by folding it to a register
+/// Try to remove the load by folding it to a register
 /// operand at the use. We fold the load instructions if load defines a virtual
 /// register, the virtual register is used once in the same BB, and the
 /// instructions in-between do not load or store, and have no side effects.
@@ -4501,9 +4494,9 @@ MachineInstr *X86InstrInfo::optimizeLoadInstr(MachineInstr *MI,
   return nullptr;
 }
 
-/// Expand2AddrUndef - Expand a single-def pseudo instruction to a two-addr
-/// instruction with two undef reads of the register being defined.  This is
-/// used for mapping:
+/// Expand a single-def pseudo instruction to a two-addr
+/// instruction with two undef reads of the register being defined.
+/// This is used for mapping:
 ///   %xmm4 = V_SET0
 /// to:
 ///   %xmm4 = PXORrr %xmm4<undef>, %xmm4<undef>
@@ -4820,7 +4813,7 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
   return nullptr;
 }
 
-/// hasPartialRegUpdate - Return true for all instructions that only update
+/// Return true for all instructions that only update
 /// the first 32 or 64-bits of the destination register and leave the rest
 /// unmodified. This can be used to avoid folding loads if the instructions
 /// only update part of the destination register, and the non-updated part is
@@ -4882,7 +4875,7 @@ static bool hasPartialRegUpdate(unsigned Opcode) {
   return false;
 }
 
-/// getPartialRegUpdateClearance - Inform the ExeDepsFix pass how many idle
+/// Inform the ExeDepsFix pass how many idle
 /// instructions we would like before a partial register update.
 unsigned X86InstrInfo::
 getPartialRegUpdateClearance(const MachineInstr *MI, unsigned OpNum,
@@ -5858,7 +5851,7 @@ isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const {
            RC == &X86::RFP64RegClass || RC == &X86::RFP80RegClass);
 }
 
-/// getGlobalBaseReg - Return a virtual register initialized with the
+/// Return a virtual register initialized with the
 /// the global base register value. Output instructions required to
 /// initialize the register in the function entry block, if necessary.
 ///
@@ -5991,7 +5984,7 @@ void X86InstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
   MI->setDesc(get(table[Domain-1]));
 }
 
-/// getNoopForMachoTarget - Return the noop instruction to use for a noop.
+/// Return the noop instruction to use for a noop.
 void X86InstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
   NopInst.setOpcode(X86::NOOP);
 }
@@ -6108,7 +6101,7 @@ hasHighOperandLatency(const InstrItineraryData *ItinData,
 }
 
 namespace {
-  /// CGBR - Create Global Base Reg pass. This initializes the PIC
+  /// Create Global Base Reg pass. This initializes the PIC
   /// global base register for x86-32.
   struct CGBR : public MachineFunctionPass {
     static char ID;
