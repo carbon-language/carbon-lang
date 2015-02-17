@@ -80,6 +80,7 @@ def _SLASH_I : CLJoinedOrSeparate<"I">,
   Alias<I>;
 def _SLASH_J : CLFlag<"J">, HelpText<"Make char type unsigned">,
   Alias<funsigned_char>;
+def _SLASH_O0 : CLFlag<"O0">, Alias<O0>;
 def _SLASH_O : CLJoined<"O">, HelpText<"Optimization level">,
   MetaVarName<"<n>">, Alias<O>;
 def _SLASH_Ob0 : CLFlag<"Ob0">, HelpText<"Disable inlining">,
