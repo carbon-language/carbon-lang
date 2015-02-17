@@ -1,4 +1,4 @@
 RUN: llvm-objdump -m -section __TEXT,__cstring %p/Inputs/hello.obj.macho-x86_64 | FileCheck %s
 
 CHECK: Contents of (__TEXT,__cstring) section
-CHECK: 0x000000000000003b  Hello world\n
+CHECK: 000000000000003b  Hello world\n
