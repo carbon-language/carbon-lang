@@ -23,6 +23,19 @@ template <typename K, typename Cmp = less<K>> struct set {
   iterator end() const;
 };
 
+struct other_iterator_type {};
+
+template <typename K, typename V, typename Cmp = less<K>> struct map {
+  typedef other_iterator_type iterator;
+  iterator find(const K &k);
+  unsigned count(const K &k);
+
+  iterator begin();
+  iterator end();
+  iterator begin() const;
+  iterator end() const;
+};
+
 template <typename K> struct unordered_set : set<K> {};
 
 template <typename K, typename Cmp = less<K>> struct multiset : set<K, Cmp> {};
@@ -32,15 +45,17 @@ template <typename FwIt, typename K> FwIt find(FwIt, FwIt, const K &);
 template <typename FwIt, typename K, typename Cmp>
 FwIt find(FwIt, FwIt, const K &, Cmp);
 
-template <typename FwIt, typename Pred>
-FwIt find_if(FwIt, FwIt, Pred);
+template <typename FwIt, typename Pred> FwIt find_if(FwIt, FwIt, Pred);
 
 template <typename FwIt, typename K> FwIt count(FwIt, FwIt, const K &);
 
 template <typename FwIt, typename K> FwIt lower_bound(FwIt, FwIt, const K &);
+
+template <typename FwIt, typename K, typename Ord>
+FwIt lower_bound(FwIt, FwIt, const K &, Ord);
 }
 
-#define FIND_IN_SET(x) find(x.begin(), x.end(), 10) 
+#define FIND_IN_SET(x) find(x.begin(), x.end(), 10)
 // CHECK-FIXES: #define FIND_IN_SET(x) find(x.begin(), x.end(), 10)
 
 template <typename T> void f(const T &t) {
@@ -93,4 +108,26 @@ int main() {
   find(us.begin(), us.end(), 10);
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be
   // CHECK-FIXES: {{^  }}us.find(10);{{$}}
+
+  std::map<int, int> intmap;
+  find(intmap.begin(), intmap.end(), 46);
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be
+  // CHECK-FIXES: {{^  }}find(intmap.begin(), intmap.end(), 46);{{$}}
+}
+
+struct Value {
+  int value;
+};
+
+struct Ordering {
+  bool operator()(const Value &lhs, const Value &rhs) const {
+    return lhs.value < rhs.value;
+  }
+  bool operator()(int lhs, const Value &rhs) const { return lhs < rhs.value; }
+};
+
+void g(std::set<Value, Ordering> container, int value) {
+  lower_bound(container.begin(), container.end(), value, Ordering());
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be
+  // CHECK-FIXES: {{^  }}lower_bound(container.begin(), container.end(), value, Ordering());{{$}}
 }

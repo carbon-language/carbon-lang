@@ -17,9 +17,18 @@ using namespace clang::ast_matchers;
 namespace clang {
 namespace tidy {
 
+static bool areTypesCompatible(QualType Left, QualType Right) {
+  if (const auto *LeftRefType = Left->getAs<ReferenceType>())
+    Left = LeftRefType->getPointeeType();
+  if (const auto *RightRefType = Right->getAs<ReferenceType>())
+    Right = RightRefType->getPointeeType();
+  return Left->getCanonicalTypeUnqualified() ==
+         Right->getCanonicalTypeUnqualified();
+}
+
 void InefficientAlgorithmCheck::registerMatchers(MatchFinder *Finder) {
   const std::string Algorithms =
-      "^::std::(find|count|equal_range|lower_blound|upper_bound)$";
+      "^::std::(find|count|equal_range|lower_bound|upper_bound)$";
   const auto ContainerMatcher = classTemplateSpecializationDecl(
       matchesName("^::std::(unordered_)?(multi)?(set|map)$"));
   const auto Matcher =
@@ -57,6 +66,14 @@ void InefficientAlgorithmCheck::check(const MatchFinder::MatchResult &Result) {
   const llvm::StringRef IneffContName = IneffCont->getName();
   const bool Unordered =
       IneffContName.find("unordered") != llvm::StringRef::npos;
+  const bool Maplike = IneffContName.find("map") != llvm::StringRef::npos;
+
+  // Store if the key type of the container is compatible with the value
+  // that is searched for.
+  QualType ValueType = AlgCall->getArg(2)->getType();
+  QualType KeyType =
+      IneffCont->getTemplateArgs()[0].getAsType().getCanonicalType();
+  const bool CompatibleTypes = areTypesCompatible(KeyType, ValueType);
 
   // Check if the comparison type for the algorithm and the container matches.
   if (AlgCall->getNumArgs() == 4 && !Unordered) {
@@ -87,7 +104,7 @@ void InefficientAlgorithmCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *IneffContExpr = Result.Nodes.getNodeAs<Expr>("IneffContExpr");
   FixItHint Hint;
 
-  if (!AlgCall->getLocStart().isMacroID()) {
+  if (!AlgCall->getLocStart().isMacroID() && !Maplike && CompatibleTypes) {
     std::string ReplacementText =
         (llvm::Twine(Lexer::getSourceText(
              CharSourceRange::getTokenRange(IneffContExpr->getSourceRange()),
