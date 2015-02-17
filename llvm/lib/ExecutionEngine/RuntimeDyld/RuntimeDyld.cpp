@@ -214,6 +214,9 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
     StubMap Stubs;
     section_iterator RelocatedSection = SI->getRelocatedSection();
 
+    if (RelocatedSection == SE)
+      continue;
+
     relocation_iterator I = SI->relocation_begin();
     relocation_iterator E = SI->relocation_end();
 
