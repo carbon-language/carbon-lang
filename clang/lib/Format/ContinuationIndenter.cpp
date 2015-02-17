@@ -365,7 +365,7 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
       const FormatToken *Next = Previous.MatchingParen->getNextNonComment();
       HasTrailingCall = Next && Next->isMemberAccess();
     }
-    if (HasTrailingCall &&
+    if (HasTrailingCall && State.Stack.size() > 1 &&
         State.Stack[State.Stack.size() - 2].CallContinuation == 0)
       State.Stack.back().LastSpace = State.Column;
   }
