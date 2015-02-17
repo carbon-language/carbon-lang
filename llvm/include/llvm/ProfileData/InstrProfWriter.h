@@ -41,12 +41,8 @@ public:
   std::error_code addFunctionCounts(StringRef FunctionName,
                                     uint64_t FunctionHash,
                                     ArrayRef<uint64_t> Counters);
-  /// Write the profile to \c OS
+  /// Ensure that all data is written to disk.
   void write(raw_fd_ostream &OS);
-  /// Write the profile, returning the raw data. For testing.
-  std::string writeString();
-private:
-  std::pair<uint64_t, uint64_t> writeImpl(raw_ostream &OS);
 };
 
 } // end namespace llvm
