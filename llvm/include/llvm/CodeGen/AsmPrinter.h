@@ -406,7 +406,7 @@ public:
                          const MCSymbol *SectionLabel) const;
 
   /// Get the value for DW_AT_APPLE_isa. Zero if no isa encoding specified.
-  virtual unsigned getISAEncoding() { return 0; }
+  virtual unsigned getISAEncoding(const Function *) { return 0; }
 
   /// Emit a dwarf register operation for describing
   /// - a small value occupying only part of a register or

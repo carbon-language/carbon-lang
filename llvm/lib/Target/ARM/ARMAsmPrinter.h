@@ -103,12 +103,13 @@ private:
                                    const MachineInstr *MI);
 
 public:
-  unsigned getISAEncoding() override {
+  unsigned getISAEncoding(const Function *F) override {
     // ARM/Darwin adds ISA to the DWARF info for each function.
-    if (!Subtarget->isTargetMachO())
+    Triple TT(TM.getTargetTriple());
+    if (!TT.isOSBinFormatMachO())
       return 0;
-    return Subtarget->isThumb() ?
-      ARM::DW_ISA_ARM_thumb : ARM::DW_ISA_ARM_arm;
+    const ARMSubtarget &STI = TM.getSubtarget<ARMSubtarget>(F);
+    return STI.isThumb() ? ARM::DW_ISA_ARM_thumb : ARM::DW_ISA_ARM_arm;
   }
 
 private:
