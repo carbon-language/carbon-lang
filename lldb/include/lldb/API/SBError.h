@@ -14,7 +14,7 @@
 
 namespace lldb {
 
-class SBError {
+class LLDB_API SBError {
 public:
     SBError ();
 

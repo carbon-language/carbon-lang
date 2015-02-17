@@ -20,7 +20,7 @@ namespace lldb {
 
 class SBEvent;
 
-class SBProcess
+class LLDB_API SBProcess
 {
 public:
     //------------------------------------------------------------------

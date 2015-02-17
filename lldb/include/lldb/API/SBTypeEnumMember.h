@@ -15,7 +15,7 @@
 
 namespace lldb {
 
-class SBTypeEnumMember
+class LLDB_API SBTypeEnumMember
 {
 public:
     SBTypeEnumMember ();

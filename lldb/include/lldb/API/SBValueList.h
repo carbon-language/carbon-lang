@@ -16,7 +16,7 @@ class ValueListImpl;
 
 namespace lldb {
 
-class SBValueList
+class LLDB_API SBValueList
 {
 public:
 

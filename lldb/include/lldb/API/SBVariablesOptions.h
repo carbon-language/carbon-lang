@@ -16,7 +16,7 @@ class VariablesOptionsImpl;
 
 namespace lldb {
 
-class SBVariablesOptions
+class LLDB_API SBVariablesOptions
 {
 public:
     SBVariablesOptions ();

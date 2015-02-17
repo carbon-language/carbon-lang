@@ -14,7 +14,7 @@
 
 namespace lldb {
 
-class SBWatchpoint
+class LLDB_API SBWatchpoint
 {
 public:
 

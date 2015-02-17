@@ -20,7 +20,7 @@
 
 namespace lldb {
 
-class SBSymbolContext
+class LLDB_API SBSymbolContext
 {
 public:
     SBSymbolContext ();

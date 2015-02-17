@@ -15,7 +15,7 @@
 
 namespace lldb {
 
-class SBSection
+class LLDB_API SBSection
 {
 public:
 

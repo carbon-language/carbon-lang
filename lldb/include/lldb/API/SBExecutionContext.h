@@ -18,7 +18,7 @@
 
 namespace lldb {
     
-class SBExecutionContext
+class LLDB_API SBExecutionContext
 {
 friend class SBCommandInterpreter;
 

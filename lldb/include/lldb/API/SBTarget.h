@@ -26,7 +26,7 @@ namespace lldb {
 
 class SBPlatform;
 
-class SBTarget
+class LLDB_API SBTarget
 {
 public:
     //------------------------------------------------------------------

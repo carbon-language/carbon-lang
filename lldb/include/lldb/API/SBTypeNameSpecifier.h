@@ -14,7 +14,7 @@
 
 namespace lldb {
     
-    class SBTypeNameSpecifier
+    class LLDB_API SBTypeNameSpecifier
     {
     public:
         

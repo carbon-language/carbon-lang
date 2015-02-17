@@ -14,7 +14,7 @@
 
 namespace lldb {
 
-class SBUnixSignals {
+class LLDB_API SBUnixSignals {
 public:
     SBUnixSignals ();
 

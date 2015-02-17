@@ -16,7 +16,7 @@
 
 namespace lldb {
 
-class SBCommandReturnObject
+class LLDB_API SBCommandReturnObject
 {
 public:
 

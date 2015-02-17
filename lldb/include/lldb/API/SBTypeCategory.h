@@ -14,7 +14,7 @@
 
 namespace lldb {
     
-    class SBTypeCategory
+    class LLDB_API SBTypeCategory
     {
     public:
         

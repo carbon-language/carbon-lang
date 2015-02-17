@@ -19,7 +19,7 @@ class ValueLocker;
 
 namespace lldb {
 
-class SBValue
+class LLDB_API SBValue
 {
 friend class ValueLocker;
 

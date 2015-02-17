@@ -14,7 +14,7 @@
 
 namespace lldb {
     
-    class SBTypeFilter
+    class LLDB_API SBTypeFilter
     {
     public:
         

@@ -14,7 +14,7 @@
 
 namespace lldb {
 
-class SBListener
+class LLDB_API SBListener
 {
 public:
     SBListener ();

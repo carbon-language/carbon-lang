@@ -17,7 +17,7 @@
 
 namespace lldb {
 
-class SBQueue
+class LLDB_API SBQueue
 {
 public:
     SBQueue ();

@@ -14,7 +14,7 @@
 
 namespace lldb {
 
-class SBBreakpoint
+class LLDB_API SBBreakpoint
 {
 public:
 

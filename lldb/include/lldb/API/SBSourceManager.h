@@ -16,7 +16,7 @@
 
 namespace lldb {
 
-class SBSourceManager
+class LLDB_API SBSourceManager
 {
 public:
     SBSourceManager (const SBDebugger &debugger);

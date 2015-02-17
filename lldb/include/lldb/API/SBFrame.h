@@ -15,7 +15,7 @@
 
 namespace lldb {
 
-class SBFrame
+class LLDB_API SBFrame
 {
 public:
     SBFrame ();
@@ -25,7 +25,7 @@ public:
     const lldb::SBFrame &
     operator =(const lldb::SBFrame &rhs);
 
-   ~SBFrame();
+    ~SBFrame();
 
     bool
     IsEqual (const lldb::SBFrame &that) const;

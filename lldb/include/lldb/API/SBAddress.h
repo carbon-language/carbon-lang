@@ -15,7 +15,7 @@
 
 namespace lldb {
 
-class SBAddress
+class LLDB_API SBAddress
 {
 public:
 

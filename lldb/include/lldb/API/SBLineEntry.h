@@ -16,7 +16,7 @@
 
 namespace lldb {
 
-class SBLineEntry
+class LLDB_API SBLineEntry
 {
 public:
 

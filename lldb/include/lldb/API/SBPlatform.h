@@ -21,7 +21,7 @@ namespace lldb {
 
     class SBLaunchInfo;
 
-    class SBPlatformConnectOptions
+    class LLDB_API SBPlatformConnectOptions
     {
     public:
         SBPlatformConnectOptions (const char *url);

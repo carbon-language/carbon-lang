@@ -17,7 +17,7 @@
 
 namespace lldb {
 
-class SBBlock
+class LLDB_API SBBlock
 {
 public:
 

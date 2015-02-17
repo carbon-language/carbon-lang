@@ -15,7 +15,7 @@
 
 namespace lldb {
 
-class SBHostOS
+class LLDB_API SBHostOS
 {
 public:
 

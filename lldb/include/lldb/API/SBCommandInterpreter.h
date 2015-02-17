@@ -15,7 +15,7 @@
 
 namespace lldb {
 
-class SBCommandInterpreterRunOptions
+class LLDB_API SBCommandInterpreterRunOptions
 {
 friend class SBDebugger;
 friend class SBCommandInterpreter;

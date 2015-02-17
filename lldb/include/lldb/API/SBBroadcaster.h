@@ -14,7 +14,7 @@
 
 namespace lldb {
 
-class SBBroadcaster
+class LLDB_API SBBroadcaster
 {
 public:
     SBBroadcaster ();

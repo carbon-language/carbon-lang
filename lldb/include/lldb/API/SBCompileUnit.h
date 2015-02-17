@@ -15,7 +15,7 @@
 
 namespace lldb {
 
-class SBCompileUnit
+class LLDB_API SBCompileUnit
 {
 public:
 

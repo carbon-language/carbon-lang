@@ -16,7 +16,7 @@ namespace lldb {
 
 class SBTarget;
 
-class SBAttachInfo
+class LLDB_API SBAttachInfo
 {
 public:
     SBAttachInfo ();

@@ -15,7 +15,7 @@
 #ifndef LLDB_DISABLE_PYTHON
 
 namespace lldb {
-    class SBTypeSummaryOptions
+    class LLDB_API SBTypeSummaryOptions
     {
     public:
         SBTypeSummaryOptions();

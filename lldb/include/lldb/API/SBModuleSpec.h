@@ -15,7 +15,7 @@
 
 namespace lldb {
 
-class SBModuleSpec
+class LLDB_API SBModuleSpec
 {
 public:
 

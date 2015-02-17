@@ -14,7 +14,7 @@
 
 namespace lldb {
 
-class SBData
+class LLDB_API SBData
 {
 public:
 

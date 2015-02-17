@@ -16,7 +16,7 @@
 
 namespace lldb {
 
-class SBFunction
+class LLDB_API SBFunction
 {
 public:
 

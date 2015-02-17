@@ -20,7 +20,7 @@ namespace lldb {
 
 class SBBroadcaster;
 
-class SBEvent
+class LLDB_API SBEvent
 {
 public:
     SBEvent();

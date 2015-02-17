@@ -14,7 +14,7 @@
 
 namespace lldb {
 
-class SBFileSpecList
+class LLDB_API SBFileSpecList
 {
 public:
     SBFileSpecList ();

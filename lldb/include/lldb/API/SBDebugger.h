@@ -18,7 +18,7 @@
 namespace lldb {
 
     
-class SBInputReader
+class LLDB_API SBInputReader
 {
 public:
     SBInputReader();
@@ -28,7 +28,7 @@ public:
     bool IsActive() const;
 };
 
-class SBDebugger
+class LLDB_API SBDebugger
 {
 public:
 

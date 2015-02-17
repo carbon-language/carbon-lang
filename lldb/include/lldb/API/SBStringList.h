@@ -14,7 +14,7 @@
 
 namespace lldb {
 
-class SBStringList
+class LLDB_API SBStringList
 {
 public:
 

@@ -16,7 +16,7 @@
 
 namespace lldb {
     
-    class SBTypeSynthetic
+    class LLDB_API SBTypeSynthetic
     {
     public:
         

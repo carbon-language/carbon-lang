@@ -15,7 +15,7 @@
 
 namespace lldb {
 
-class SBSymbolContextList
+class LLDB_API SBSymbolContextList
 {
 public:
     SBSymbolContextList ();

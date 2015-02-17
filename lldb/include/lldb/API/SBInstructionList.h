@@ -16,7 +16,7 @@
 
 namespace lldb {
 
-class SBInstructionList
+class LLDB_API SBInstructionList
 {
 public:
 

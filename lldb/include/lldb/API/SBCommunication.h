@@ -15,7 +15,7 @@
 
 namespace lldb {
 
-class SBCommunication
+class LLDB_API SBCommunication
 {
 public:
     enum {

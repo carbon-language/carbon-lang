@@ -14,7 +14,7 @@
 
 namespace lldb {
 
-class SBTypeFormat
+class LLDB_API SBTypeFormat
 {
 public:
     

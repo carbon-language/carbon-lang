@@ -16,7 +16,7 @@ namespace lldb {
 
 class SBTypeList;    
 
-class SBTypeMember
+class LLDB_API SBTypeMember
 {
 public:
     SBTypeMember ();

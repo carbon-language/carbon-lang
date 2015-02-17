@@ -17,7 +17,7 @@
 namespace lldb {
 
 
-class SBExpressionOptions
+class LLDB_API SBExpressionOptions
 {
 public:
     SBExpressionOptions();

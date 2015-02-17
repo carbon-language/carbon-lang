@@ -17,7 +17,7 @@ namespace lldb {
 class SBPlatform;
 class SBTarget;
 
-class SBLaunchInfo
+class LLDB_API SBLaunchInfo
 {
 public:
     SBLaunchInfo (const char **argv);

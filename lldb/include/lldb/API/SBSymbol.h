@@ -17,7 +17,7 @@
 
 namespace lldb {
 
-class SBSymbol
+class LLDB_API SBSymbol
 {
 public:
 

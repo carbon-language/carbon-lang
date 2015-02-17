@@ -14,7 +14,7 @@
 
 namespace lldb {
     
-class SBThreadCollection
+class LLDB_API SBThreadCollection
 {
 public:
     

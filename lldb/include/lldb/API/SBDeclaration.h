@@ -15,7 +15,7 @@
 
 namespace lldb {
     
-    class SBDeclaration
+    class LLDB_API SBDeclaration
     {
     public:
         

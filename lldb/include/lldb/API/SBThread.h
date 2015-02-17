@@ -18,7 +18,7 @@ namespace lldb {
 
 class SBFrame;
 
-class SBThread
+class LLDB_API SBThread
 {
 public:
     enum
