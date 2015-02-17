@@ -129,6 +129,7 @@ private:
 
   bool X86SelectFPExt(const Instruction *I);
   bool X86SelectFPTrunc(const Instruction *I);
+  bool X86SelectSIToFP(const Instruction *I);
 
   const X86InstrInfo *getInstrInfo() const {
     return Subtarget->getInstrInfo();
@@ -2005,6 +2006,51 @@ bool X86FastISel::X86SelectSelect(const Instruction *I) {
   return false;
 }
 
+bool X86FastISel::X86SelectSIToFP(const Instruction *I) {
+  if (!I->getOperand(0)->getType()->isIntegerTy(32))
+    return false;
+
+  // Select integer to float/double conversion.
+  unsigned OpReg = getRegForValue(I->getOperand(0));
+  if (OpReg == 0)
+    return false;
+
+  bool HasAVX = Subtarget->hasAVX();
+  const TargetRegisterClass *RC = nullptr;
+  unsigned Opcode;
+
+  if (I->getType()->isDoubleTy() && X86ScalarSSEf64) {
+    // sitofp int -> double
+    Opcode = HasAVX ? X86::VCVTSI2SDrr : X86::CVTSI2SDrr;
+    RC = &X86::FR64RegClass;
+  } else if (I->getType()->isFloatTy() && X86ScalarSSEf32) {
+    // sitofp int -> float
+    Opcode = HasAVX ? X86::VCVTSI2SSrr : X86::CVTSI2SSrr;
+    RC = &X86::FR32RegClass;
+  } else
+    return false;
+
+
+  unsigned ImplicitDefReg = 0;
+  if (HasAVX) {
+    ImplicitDefReg = createResultReg(RC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::IMPLICIT_DEF), ImplicitDefReg);
+  }
+
+  const MCInstrDesc &II = TII.get(Opcode);
+  OpReg = constrainOperandRegClass(II, OpReg, (HasAVX ? 2 : 1));
+  
+  unsigned ResultReg = createResultReg(RC);
+  MachineInstrBuilder MIB;
+  MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II, ResultReg);
+  if (ImplicitDefReg)
+    MIB.addReg(ImplicitDefReg, RegState::Kill);
+  MIB.addReg(OpReg);
+  updateValueMap(I, ResultReg);
+  return true;
+}
+
 // Helper method used by X86SelectFPExt and X86SelectFPTrunc.
 bool X86FastISel::X86SelectFPExtOrFPTrunc(const Instruction *I,
                                           unsigned TargetOpc,
@@ -3055,6 +3101,8 @@ X86FastISel::fastSelectInstruction(const Instruction *I)  {
     return X86SelectFPExt(I);
   case Instruction::FPTrunc:
     return X86SelectFPTrunc(I);
+  case Instruction::SIToFP:
+    return X86SelectSIToFP(I);
   case Instruction::IntToPtr: // Deliberate fall-through.
   case Instruction::PtrToInt: {
     EVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
