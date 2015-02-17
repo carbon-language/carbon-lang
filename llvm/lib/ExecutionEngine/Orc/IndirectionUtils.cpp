@@ -9,149 +9,101 @@ using namespace llvm;
 
 namespace llvm {
 
-JITIndirections makeCallsSingleIndirect(
-    Module &M, const std::function<bool(const Function &)> &ShouldIndirect,
-    const char *JITImplSuffix, const char *JITAddrSuffix) {
-  std::vector<Function *> Worklist;
-  std::vector<std::string> FuncNames;
-
-  for (auto &F : M)
-    if (ShouldIndirect(F) && (F.user_begin() != F.user_end())) {
-      Worklist.push_back(&F);
-      FuncNames.push_back(F.getName());
-    }
-
-  for (auto *F : Worklist) {
-    GlobalVariable *FImplAddr = new GlobalVariable(
-        M, F->getType(), false, GlobalValue::ExternalLinkage,
-        Constant::getNullValue(F->getType()), F->getName() + JITAddrSuffix,
-        nullptr, GlobalValue::NotThreadLocal, 0, true);
-    FImplAddr->setVisibility(GlobalValue::HiddenVisibility);
-
-    for (auto *U : F->users()) {
-      assert(isa<Instruction>(U) && "Cannot indirect non-instruction use");
-      IRBuilder<> Builder(cast<Instruction>(U));
-      U->replaceUsesOfWith(F, Builder.CreateLoad(FImplAddr));
-    }
-  }
-
-  return JITIndirections(
-      FuncNames, [=](StringRef S) -> std::string { return std::string(S); },
-      [=](StringRef S)
-          -> std::string { return std::string(S) + JITAddrSuffix; });
+GlobalVariable* createImplPointer(Function &F, const Twine &Name,
+                                  Constant *Initializer) {
+  assert(F.getParent() && "Function isn't in a module.");
+  if (!Initializer)
+    Initializer = Constant::getNullValue(F.getType());
+  Module &M = *F.getParent();
+  return new GlobalVariable(M, F.getType(), false, GlobalValue::ExternalLinkage,
+                            Initializer, Name, nullptr,
+                            GlobalValue::NotThreadLocal, 0, true);
 }
 
-JITIndirections makeCallsDoubleIndirect(
-    Module &M, const std::function<bool(const Function &)> &ShouldIndirect,
-    const char *JITImplSuffix, const char *JITAddrSuffix) {
-
-  std::vector<Function *> Worklist;
-  std::vector<std::string> FuncNames;
-
-  for (auto &F : M)
-    if (!F.isDeclaration() && !F.hasAvailableExternallyLinkage() &&
-        ShouldIndirect(F))
-      Worklist.push_back(&F);
-
-  for (auto *F : Worklist) {
-    std::string OrigName = F->getName();
-    F->setName(OrigName + JITImplSuffix);
-    FuncNames.push_back(OrigName);
-
-    GlobalVariable *FImplAddr = new GlobalVariable(
-        M, F->getType(), false, GlobalValue::ExternalLinkage,
-        Constant::getNullValue(F->getType()), OrigName + JITAddrSuffix, nullptr,
-        GlobalValue::NotThreadLocal, 0, true);
-    FImplAddr->setVisibility(GlobalValue::HiddenVisibility);
-
-    Function *FRedirect =
-        Function::Create(F->getFunctionType(), F->getLinkage(), OrigName, &M);
-
-    F->replaceAllUsesWith(FRedirect);
-
-    BasicBlock *EntryBlock =
-        BasicBlock::Create(M.getContext(), "entry", FRedirect);
-
-    IRBuilder<> Builder(EntryBlock);
-    LoadInst *FImplLoadedAddr = Builder.CreateLoad(FImplAddr);
-
-    std::vector<Value *> CallArgs;
-    for (Value &Arg : FRedirect->args())
-      CallArgs.push_back(&Arg);
-    CallInst *Call = Builder.CreateCall(FImplLoadedAddr, CallArgs);
-    Call->setTailCall();
-    Builder.CreateRet(Call);
-  }
-
-  return JITIndirections(
-      FuncNames, [=](StringRef S)
-                     -> std::string { return std::string(S) + JITImplSuffix; },
-      [=](StringRef S)
-          -> std::string { return std::string(S) + JITAddrSuffix; });
+void makeStub(Function &F, GlobalVariable &ImplPointer) {
+  assert(F.isDeclaration() && "Can't turn a definition into a stub.");
+  assert(F.getParent() && "Function isn't in a module.");
+  Module &M = *F.getParent();
+  BasicBlock *EntryBlock = BasicBlock::Create(M.getContext(), "entry", &F);
+  IRBuilder<> Builder(EntryBlock);
+  LoadInst *ImplAddr = Builder.CreateLoad(&ImplPointer);
+  std::vector<Value*> CallArgs;
+  for (auto &A : F.args())
+    CallArgs.push_back(&A);
+  CallInst *Call = Builder.CreateCall(ImplAddr, CallArgs);
+  Call->setTailCall();
+  Builder.CreateRet(Call);
 }
 
-std::vector<std::unique_ptr<Module>>
-explode(const Module &OrigMod,
-        const std::function<bool(const Function &)> &ShouldExtract) {
+void partition(Module &M, const ModulePartitionMap &PMap) {
 
-  std::vector<std::unique_ptr<Module>> NewModules;
+  for (auto &KVPair : PMap) {
 
-  // Split all the globals, non-indirected functions, etc. into a single module.
-  auto ExtractGlobalVars = [&](GlobalVariable &New, const GlobalVariable &Orig,
-                               ValueToValueMapTy &VMap) {
-    copyGVInitializer(New, Orig, VMap);
-    if (New.getLinkage() == GlobalValue::PrivateLinkage) {
-      New.setLinkage(GlobalValue::ExternalLinkage);
-      New.setVisibility(GlobalValue::HiddenVisibility);
-    }
-  };
-
-  auto ExtractNonImplFunctions =
-      [&](Function &New, const Function &Orig, ValueToValueMapTy &VMap) {
-        if (!ShouldExtract(New))
-          copyFunctionBody(New, Orig, VMap);
+    auto ExtractGlobalVars =
+      [&](GlobalVariable &New, const GlobalVariable &Orig,
+          ValueToValueMapTy &VMap) {
+        if (KVPair.second.count(&Orig)) {
+          copyGVInitializer(New, Orig, VMap);
+        }
+        if (New.getLinkage() == GlobalValue::PrivateLinkage) {
+          New.setLinkage(GlobalValue::ExternalLinkage);
+          New.setVisibility(GlobalValue::HiddenVisibility);
+        }
       };
 
-  NewModules.push_back(CloneSubModule(OrigMod, ExtractGlobalVars,
-                                      ExtractNonImplFunctions, true));
+    auto ExtractFunctions =
+      [&](Function &New, const Function &Orig, ValueToValueMapTy &VMap) {
+        if (KVPair.second.count(&Orig))
+          copyFunctionBody(New, Orig, VMap);
+        if (New.getLinkage() == GlobalValue::InternalLinkage) {
+          New.setLinkage(GlobalValue::ExternalLinkage);
+          New.setVisibility(GlobalValue::HiddenVisibility);
+        }
+      };
 
-  // Preserve initializers for Common linkage vars, and make private linkage
-  // globals external: they are now provided by the globals module extracted
-  // above.
-  auto DropGlobalVars = [&](GlobalVariable &New, const GlobalVariable &Orig,
-                            ValueToValueMapTy &VMap) {
-    if (New.getLinkage() == GlobalValue::CommonLinkage)
-      copyGVInitializer(New, Orig, VMap);
-    else if (New.getLinkage() == GlobalValue::PrivateLinkage)
-      New.setLinkage(GlobalValue::ExternalLinkage);
-  };
+    CloneSubModule(*KVPair.first, M, ExtractGlobalVars, ExtractFunctions,
+                   false);
+  }
+}
 
-  // Split each 'impl' function out in to its own module.
-  for (const auto &Func : OrigMod) {
-    if (Func.isDeclaration() || !ShouldExtract(Func))
+FullyPartitionedModule fullyPartition(Module &M) {
+  FullyPartitionedModule MP;
+
+  ModulePartitionMap PMap;
+
+  for (auto &F : M) {
+
+    if (F.isDeclaration())
       continue;
 
-    auto ExtractNamedFunction =
-        [&](Function &New, const Function &Orig, ValueToValueMapTy &VMap) {
-          if (New.getName() == Func.getName())
-            copyFunctionBody(New, Orig, VMap);
-        };
-
-    NewModules.push_back(
-        CloneSubModule(OrigMod, DropGlobalVars, ExtractNamedFunction, false));
+    std::string NewModuleName = (M.getName() + "." + F.getName()).str();
+    MP.Functions.push_back(
+      llvm::make_unique<Module>(NewModuleName, M.getContext()));
+    MP.Functions.back()->setDataLayout(M.getDataLayout());
+    PMap[MP.Functions.back().get()].insert(&F);
   }
 
-  return NewModules;
+  MP.GlobalVars =
+    llvm::make_unique<Module>((M.getName() + ".globals_and_stubs").str(),
+                              M.getContext());
+  MP.GlobalVars->setDataLayout(M.getDataLayout());
+
+  MP.Commons =
+    llvm::make_unique<Module>((M.getName() + ".commons").str(), M.getContext());
+  MP.Commons->setDataLayout(M.getDataLayout());
+
+  // Make sure there's at least an empty set for the stubs map or we'll fail
+  // to clone anything for it (including the decls).
+  PMap[MP.GlobalVars.get()] = ModulePartitionMap::mapped_type();
+  for (auto &GV : M.globals())
+    if (GV.getLinkage() == GlobalValue::CommonLinkage)
+      PMap[MP.Commons.get()].insert(&GV);
+    else
+      PMap[MP.GlobalVars.get()].insert(&GV);
+
+  partition(M, PMap);
+
+  return MP;
 }
 
-std::vector<std::unique_ptr<Module>>
-explode(const Module &OrigMod, const JITIndirections &Indirections) {
-  std::set<std::string> ImplNames;
-
-  for (const auto &FuncName : Indirections.IndirectedNames)
-    ImplNames.insert(Indirections.GetImplName(FuncName));
-
-  return explode(
-      OrigMod, [&](const Function &F) { return ImplNames.count(F.getName()); });
-}
 }

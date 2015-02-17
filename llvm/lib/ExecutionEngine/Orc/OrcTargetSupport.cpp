@@ -1,13 +1,10 @@
 #include "llvm/ADT/Triple.h"
-#include "llvm/ExecutionEngine/Orc/IndirectionUtils.h"
+#include "llvm/ExecutionEngine/Orc/OrcTargetSupport.h"
 #include <array>
 
 using namespace llvm;
 
 namespace {
-
-const char *JITCallbackFuncName = "call_jit_for_lazy_compile";
-const char *JITCallbackIndexLabelPrefix = "jit_resolve_";
 
 std::array<const char *, 12> X86GPRsToSave = {{
     "rbp", "rbx", "r12", "r13", "r14", "r15", // Callee saved.
@@ -41,61 +38,90 @@ template <typename OStream> void restoreX86Regs(OStream &OS) {
     OS << "  popq    %" << X86GPRsToSave[X86GPRsToSave.size() - i - 1] << "\n";
 }
 
-uint64_t call_jit_for_fn(JITResolveCallbackHandler *J, uint64_t FuncIdx) {
-  return J->resolve(FuncIdx);
+template <typename TargetT>
+uint64_t executeCompileCallback(JITCompileCallbackManagerBase<TargetT> *JCBM,
+                                TargetAddress CallbackID) {
+  return JCBM->executeCompileCallback(CallbackID);
 }
+
 }
 
 namespace llvm {
 
-std::string getJITResolveCallbackIndexLabel(unsigned I) {
-  std::ostringstream LabelStream;
-  LabelStream << JITCallbackIndexLabelPrefix << I;
-  return LabelStream.str();
-}
+const char* OrcX86_64::ResolverBlockName = "orc_resolver_block";
 
-void insertX86CallbackAsm(Module &M, JITResolveCallbackHandler &J) {
+void OrcX86_64::insertResolverBlock(
+                               Module &M,
+                               JITCompileCallbackManagerBase<OrcX86_64> &JCBM) {
   uint64_t CallbackAddr =
-      static_cast<uint64_t>(reinterpret_cast<uintptr_t>(call_jit_for_fn));
+      static_cast<uint64_t>(
+        reinterpret_cast<uintptr_t>(executeCompileCallback<OrcX86_64>));
 
-  std::ostringstream JITCallbackAsm;
+  std::ostringstream AsmStream;
   Triple TT(M.getTargetTriple());
 
   if (TT.getOS() == Triple::Darwin)
-    JITCallbackAsm << ".section __TEXT,__text,regular,pure_instructions\n"
-                   << ".align 4, 0x90\n";
+    AsmStream << ".section __TEXT,__text,regular,pure_instructions\n"
+              << ".align 4, 0x90\n";
   else
-    JITCallbackAsm << ".text\n"
-                   << ".align 16, 0x90\n";
+    AsmStream << ".text\n"
+              << ".align 16, 0x90\n";
 
-  JITCallbackAsm << "jit_object_addr:\n"
-                 << "  .quad " << &J << "\n" << JITCallbackFuncName << ":\n";
+  AsmStream << "jit_callback_manager_addr:\n"
+            << "  .quad " << &JCBM << "\n"
+            << ResolverBlockName << ":\n";
 
-  uint64_t ReturnAddrOffset = saveX86Regs(JITCallbackAsm);
+  uint64_t ReturnAddrOffset = saveX86Regs(AsmStream);
 
   // Compute index, load object address, and call JIT.
-  JITCallbackAsm << "  movq    " << ReturnAddrOffset << "(%rsp), %rax\n"
-                 << "  leaq    (jit_indices_start+5)(%rip), %rbx\n"
-                 << "  subq    %rbx, %rax\n"
-                 << "  xorq    %rdx, %rdx\n"
-                 << "  movq    $5, %rbx\n"
-                 << "  divq    %rbx\n"
-                 << "  movq    %rax, %rsi\n"
-                 << "  leaq    jit_object_addr(%rip), %rdi\n"
-                 << "  movq    (%rdi), %rdi\n"
-                 << "  movabsq $" << CallbackAddr << ", %rax\n"
-                 << "  callq   *%rax\n"
-                 << "  movq    %rax, " << ReturnAddrOffset << "(%rsp)\n";
+  AsmStream << "  leaq    jit_callback_manager_addr(%rip), %rdi\n"
+            << "  movq    (%rdi), %rdi\n"
+            << "  movq    " << ReturnAddrOffset << "(%rsp), %rsi\n"
+            << "  movabsq $" << CallbackAddr << ", %rax\n"
+            << "  callq   *%rax\n"
+            << "  movq    %rax, " << ReturnAddrOffset << "(%rsp)\n";
 
-  restoreX86Regs(JITCallbackAsm);
+  restoreX86Regs(AsmStream);
 
-  JITCallbackAsm << "  retq\n"
-                 << "jit_indices_start:\n";
+  AsmStream << "  retq\n";
 
-  for (JITResolveCallbackHandler::StubIndex I = 0; I < J.getNumFuncs(); ++I)
-    JITCallbackAsm << getJITResolveCallbackIndexLabel(I) << ":\n"
-                   << "  callq " << JITCallbackFuncName << "\n";
-
-  M.appendModuleInlineAsm(JITCallbackAsm.str());
+  M.appendModuleInlineAsm(AsmStream.str());
 }
+
+OrcX86_64::LabelNameFtor
+OrcX86_64::insertCompileCallbackTrampolines(Module &M,
+                                            TargetAddress ResolverBlockAddr,
+                                            unsigned NumCalls,
+                                            unsigned StartIndex) {
+  const char *ResolverBlockPtrName = "Lorc_resolve_block_addr";
+
+  std::ostringstream AsmStream;
+  Triple TT(M.getTargetTriple());
+
+  if (TT.getOS() == Triple::Darwin)
+    AsmStream << ".section __TEXT,__text,regular,pure_instructions\n"
+              << ".align 4, 0x90\n";
+  else
+    AsmStream << ".text\n"
+              << ".align 16, 0x90\n";
+
+  AsmStream << ResolverBlockPtrName << ":\n"
+            << "  .quad " << ResolverBlockAddr << "\n";
+
+  auto GetLabelName =
+    [=](unsigned I) {
+      std::ostringstream LabelStream;
+      LabelStream << "orc_jcc_" << (StartIndex + I);
+      return LabelStream.str();
+  };
+
+  for (unsigned I = 0; I < NumCalls; ++I)
+    AsmStream << GetLabelName(I) << ":\n"
+              << "  callq *" << ResolverBlockPtrName << "(%rip)\n";
+
+  M.appendModuleInlineAsm(AsmStream.str());
+
+  return GetLabelName;
+}
+
 }

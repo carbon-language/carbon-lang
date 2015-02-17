@@ -15,6 +15,7 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_CLONESUBMODULE_H
 #define LLVM_EXECUTIONENGINE_ORC_CLONESUBMODULE_H
 
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <functional>
 
@@ -36,9 +37,9 @@ void copyGVInitializer(GlobalVariable &New, const GlobalVariable &Orig,
 void copyFunctionBody(Function &New, const Function &Orig,
                       ValueToValueMapTy &VMap);
 
-std::unique_ptr<Module>
-CloneSubModule(const Module &M, HandleGlobalVariableFtor HandleGlobalVariable,
-               HandleFunctionFtor HandleFunction, bool KeepInlineAsm);
+void CloneSubModule(Module &Dst, const Module &Src,
+                    HandleGlobalVariableFtor HandleGlobalVariable,
+                    HandleFunctionFtor HandleFunction, bool KeepInlineAsm);
 }
 
 #endif // LLVM_EXECUTIONENGINE_ORC_CLONESUBMODULE_H
