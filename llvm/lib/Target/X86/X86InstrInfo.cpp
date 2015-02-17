@@ -91,7 +91,7 @@ enum {
   TB_ALIGN_MASK  = 0xff << TB_ALIGN_SHIFT
 };
 
-struct X86LoadFoldTableEntry {
+struct X86MemoryFoldTableEntry {
   uint16_t RegOp;
   uint16_t MemOp;
   uint16_t Flags;
@@ -106,7 +106,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
           (STI.isTarget64BitLP64() ? X86::ADJCALLSTACKUP64 : X86::ADJCALLSTACKUP32)),
       Subtarget(STI), RI(STI) {
 
-  static const X86LoadFoldTableEntry LoadFoldTable2Addr[] = {
+  static const X86MemoryFoldTableEntry MemoryFoldTable2Addr[] = {
     { X86::ADC32ri,     X86::ADC32mi,    0 },
     { X86::ADC32ri8,    X86::ADC32mi8,   0 },
     { X86::ADC32rr,     X86::ADC32mr,    0 },
@@ -269,17 +269,17 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::XOR8rr,      X86::XOR8mr,     0 }
   };
 
-  for (unsigned i = 0, e = array_lengthof(LoadFoldTable2Addr); i != e; ++i) {
-    unsigned RegOp = LoadFoldTable2Addr[i].RegOp;
-    unsigned MemOp = LoadFoldTable2Addr[i].MemOp;
-    unsigned Flags = LoadFoldTable2Addr[i].Flags;
+  for (unsigned i = 0, e = array_lengthof(MemoryFoldTable2Addr); i != e; ++i) {
+    unsigned RegOp = MemoryFoldTable2Addr[i].RegOp;
+    unsigned MemOp = MemoryFoldTable2Addr[i].MemOp;
+    unsigned Flags = MemoryFoldTable2Addr[i].Flags;
     AddTableEntry(RegOp2MemOpTable2Addr, MemOp2RegOpTable,
                   RegOp, MemOp,
                   // Index 0, folded load and store, no alignment requirement.
                   Flags | TB_INDEX_0 | TB_FOLDED_LOAD | TB_FOLDED_STORE);
   }
 
-  static const X86LoadFoldTableEntry LoadFoldTable0[] = {
+  static const X86MemoryFoldTableEntry MemoryFoldTable0[] = {
     { X86::BT16ri8,     X86::BT16mi8,       TB_FOLDED_LOAD },
     { X86::BT32ri8,     X86::BT32mi8,       TB_FOLDED_LOAD },
     { X86::BT64ri8,     X86::BT64mi8,       TB_FOLDED_LOAD },
@@ -424,15 +424,15 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VCVTPS2PHYrr,       X86::VCVTPS2PHYmr,     TB_FOLDED_STORE }
   };
 
-  for (unsigned i = 0, e = array_lengthof(LoadFoldTable0); i != e; ++i) {
-    unsigned RegOp      = LoadFoldTable0[i].RegOp;
-    unsigned MemOp      = LoadFoldTable0[i].MemOp;
-    unsigned Flags      = LoadFoldTable0[i].Flags;
+  for (unsigned i = 0, e = array_lengthof(MemoryFoldTable0); i != e; ++i) {
+    unsigned RegOp      = MemoryFoldTable0[i].RegOp;
+    unsigned MemOp      = MemoryFoldTable0[i].MemOp;
+    unsigned Flags      = MemoryFoldTable0[i].Flags;
     AddTableEntry(RegOp2MemOpTable0, MemOp2RegOpTable,
                   RegOp, MemOp, TB_INDEX_0 | Flags);
   }
 
-  static const X86LoadFoldTableEntry LoadFoldTable1[] = {
+  static const X86MemoryFoldTableEntry MemoryFoldTable1[] = {
     { X86::CMP16rr,         X86::CMP16rm,             0 },
     { X86::CMP32rr,         X86::CMP32rm,             0 },
     { X86::CMP64rr,         X86::CMP64rm,             0 },
@@ -839,17 +839,17 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VAESKEYGENASSIST128rr, X86::VAESKEYGENASSIST128rm, 0 }
   };
 
-  for (unsigned i = 0, e = array_lengthof(LoadFoldTable1); i != e; ++i) {
-    unsigned RegOp = LoadFoldTable1[i].RegOp;
-    unsigned MemOp = LoadFoldTable1[i].MemOp;
-    unsigned Flags = LoadFoldTable1[i].Flags;
+  for (unsigned i = 0, e = array_lengthof(MemoryFoldTable1); i != e; ++i) {
+    unsigned RegOp = MemoryFoldTable1[i].RegOp;
+    unsigned MemOp = MemoryFoldTable1[i].MemOp;
+    unsigned Flags = MemoryFoldTable1[i].Flags;
     AddTableEntry(RegOp2MemOpTable1, MemOp2RegOpTable,
                   RegOp, MemOp,
                   // Index 1, folded load
                   Flags | TB_INDEX_1 | TB_FOLDED_LOAD);
   }
 
-  static const X86LoadFoldTableEntry LoadFoldTable2[] = {
+  static const X86MemoryFoldTableEntry MemoryFoldTable2[] = {
     { X86::ADC32rr,         X86::ADC32rm,       0 },
     { X86::ADC64rr,         X86::ADC64rm,       0 },
     { X86::ADD16rr,         X86::ADD16rm,       0 },
@@ -1613,17 +1613,17 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::SHA256RNDS2rr,     X86::SHA256RNDS2rm,       TB_ALIGN_16 }
   };
 
-  for (unsigned i = 0, e = array_lengthof(LoadFoldTable2); i != e; ++i) {
-    unsigned RegOp = LoadFoldTable2[i].RegOp;
-    unsigned MemOp = LoadFoldTable2[i].MemOp;
-    unsigned Flags = LoadFoldTable2[i].Flags;
+  for (unsigned i = 0, e = array_lengthof(MemoryFoldTable2); i != e; ++i) {
+    unsigned RegOp = MemoryFoldTable2[i].RegOp;
+    unsigned MemOp = MemoryFoldTable2[i].MemOp;
+    unsigned Flags = MemoryFoldTable2[i].Flags;
     AddTableEntry(RegOp2MemOpTable2, MemOp2RegOpTable,
                   RegOp, MemOp,
                   // Index 2, folded load
                   Flags | TB_INDEX_2 | TB_FOLDED_LOAD);
   }
 
-  static const X86LoadFoldTableEntry LoadFoldTable3[] = {
+  static const X86MemoryFoldTableEntry MemoryFoldTable3[] = {
     // FMA foldable instructions
     { X86::VFMADDSSr231r,         X86::VFMADDSSr231m,         TB_ALIGN_NONE },
     { X86::VFMADDSDr231r,         X86::VFMADDSDr231m,         TB_ALIGN_NONE },
@@ -1829,17 +1829,17 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VMAXPDZ128rrkz,        X86::VMAXPDZ128rmkz,        0 }
   };
 
-  for (unsigned i = 0, e = array_lengthof(LoadFoldTable3); i != e; ++i) {
-    unsigned RegOp = LoadFoldTable3[i].RegOp;
-    unsigned MemOp = LoadFoldTable3[i].MemOp;
-    unsigned Flags = LoadFoldTable3[i].Flags;
+  for (unsigned i = 0, e = array_lengthof(MemoryFoldTable3); i != e; ++i) {
+    unsigned RegOp = MemoryFoldTable3[i].RegOp;
+    unsigned MemOp = MemoryFoldTable3[i].MemOp;
+    unsigned Flags = MemoryFoldTable3[i].Flags;
     AddTableEntry(RegOp2MemOpTable3, MemOp2RegOpTable,
                   RegOp, MemOp,
                   // Index 3, folded load
                   Flags | TB_INDEX_3 | TB_FOLDED_LOAD);
   }
 
-  static const X86LoadFoldTableEntry LoadFoldTable4[] = {
+  static const X86MemoryFoldTableEntry MemoryFoldTable4[] = {
      // AVX-512 foldable instructions
     { X86::VADDPSZrrk,         X86::VADDPSZrmk,           0 },
     { X86::VADDPDZrrk,         X86::VADDPDZrmk,           0 },
@@ -1881,10 +1881,10 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VMAXPDZ128rrk,      X86::VMAXPDZ128rmk,        0 }
   };
 
-  for (unsigned i = 0, e = array_lengthof(LoadFoldTable4); i != e; ++i) {
-    unsigned RegOp = LoadFoldTable4[i].RegOp;
-    unsigned MemOp = LoadFoldTable4[i].MemOp;
-    unsigned Flags = LoadFoldTable4[i].Flags;
+  for (unsigned i = 0, e = array_lengthof(MemoryFoldTable4); i != e; ++i) {
+    unsigned RegOp = MemoryFoldTable4[i].RegOp;
+    unsigned MemOp = MemoryFoldTable4[i].MemOp;
+    unsigned Flags = MemoryFoldTable4[i].Flags;
     AddTableEntry(RegOp2MemOpTable4, MemOp2RegOpTable,
                   RegOp, MemOp,
                   // Index 4, folded load
