@@ -98,6 +98,9 @@ public:
   getSectionForJumpTable(const Function &F, Mangler &Mang,
                          const TargetMachine &TM) const;
 
+  virtual bool shouldPutJumpTableInFunctionSection(bool UsesLabelDifference,
+                                                   const Function &F) const;
+
   /// Targets should implement this method to assign a section to globals with
   /// an explicit section specfied. The implementation of this method can
   /// assume that GV->hasSection() is true.

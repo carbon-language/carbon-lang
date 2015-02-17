@@ -359,6 +359,13 @@ const MCSection *TargetLoweringObjectFileELF::getSectionForJumpTable(
   return getContext().getELFSection(Name, ELF::SHT_PROGBITS, Flags, 0, Group);
 }
 
+bool TargetLoweringObjectFileELF::shouldPutJumpTableInFunctionSection(
+    bool UsesLabelDifference, const Function &F) const {
+  // We can always create relative relocations, so use another section
+  // that can be marked non-executable.
+  return false;
+}
+
 /// getSectionForConstant - Given a mergeable constant with the
 /// specified size and relocation information, return a section that it
 /// should be placed in.
