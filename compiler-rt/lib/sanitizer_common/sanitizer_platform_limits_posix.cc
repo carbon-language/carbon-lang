@@ -97,7 +97,6 @@
 # include <sys/link_elf.h>
 # include <netinet/ip_mroute.h>
 # include <netinet/in.h>
-# include <netinet/ip_compat.h>
 # include <net/ethernet.h>
 # include <net/ppp_defs.h>
 # include <glob.h>
