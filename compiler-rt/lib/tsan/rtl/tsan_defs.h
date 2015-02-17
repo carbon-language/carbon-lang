@@ -18,6 +18,15 @@
 #include "sanitizer_common/sanitizer_libc.h"
 #include "tsan_stat.h"
 
+// Setup defaults for compile definitions.
+#ifndef TSAN_NO_HISTORY
+# define TSAN_NO_HISTORY 0
+#endif
+
+#ifndef TSAN_COLLECT_STATS
+# define TSAN_COLLECT_STATS 0
+#endif
+
 namespace __tsan {
 
 #ifdef SANITIZER_GO
@@ -63,7 +72,7 @@ const uptr kMetaShadowCell = 8;
 // Size of a single meta shadow value (u32).
 const uptr kMetaShadowSize = 4;
 
-#if defined(TSAN_NO_HISTORY) && TSAN_NO_HISTORY
+#if TSAN_NO_HISTORY
 const bool kCollectHistory = false;
 #else
 const bool kCollectHistory = true;

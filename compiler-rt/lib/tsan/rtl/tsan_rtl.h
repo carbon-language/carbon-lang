@@ -351,7 +351,7 @@ struct ThreadState {
   Vector<JmpBuf> jmp_bufs;
   int ignore_interceptors;
 #endif
-#ifdef TSAN_COLLECT_STATS
+#if TSAN_COLLECT_STATS
   u64 stat[StatCnt];
 #endif
   const int tid;
@@ -543,18 +543,18 @@ void ObtainCurrentStack(ThreadState *thr, uptr toppc, StackTraceTy *stack) {
 }
 
 
-#ifdef TSAN_COLLECT_STATS
+#if TSAN_COLLECT_STATS
 void StatAggregate(u64 *dst, u64 *src);
 void StatOutput(u64 *stat);
 #endif
 
 void ALWAYS_INLINE StatInc(ThreadState *thr, StatType typ, u64 n = 1) {
-#ifdef TSAN_COLLECT_STATS
+#if TSAN_COLLECT_STATS
   thr->stat[typ] += n;
 #endif
 }
 void ALWAYS_INLINE StatSet(ThreadState *thr, StatType typ, u64 n) {
-#ifdef TSAN_COLLECT_STATS
+#if TSAN_COLLECT_STATS
   thr->stat[typ] = n;
 #endif
 }

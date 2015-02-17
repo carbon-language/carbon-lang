@@ -15,7 +15,7 @@
 
 namespace __tsan {
 
-#ifdef TSAN_COLLECT_STATS
+#if TSAN_COLLECT_STATS
 
 void StatAggregate(u64 *dst, u64 *src) {
   for (int i = 0; i < StatCnt; i++)
