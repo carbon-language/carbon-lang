@@ -1217,6 +1217,8 @@ public:
                      Metadata *Type, Metadata *Value),
                     (Tag, Scope, Name, Type, Value))
 
+  TempMDTemplateValueParameter clone() const { return cloneImpl(); }
+
   Metadata *getValue() const { return getOperand(3); }
 
   static bool classof(const Metadata *MD) {
@@ -1310,6 +1312,8 @@ public:
                     (Scope, Name, LinkageName, File, Line, Type, IsLocalToUnit,
                      IsDefinition, Variable, StaticDataMemberDeclaration))
 
+  TempMDGlobalVariable clone() const { return cloneImpl(); }
+
   bool isLocalToUnit() const { return IsLocalToUnit; }
   bool isDefinition() const { return IsDefinition; }
   StringRef getDisplayName() const { return getStringOperand(4); }
@@ -1380,6 +1384,8 @@ public:
                      Metadata *InlinedAt = nullptr),
                     (Tag, Scope, Name, File, Line, Type, Arg, Flags, InlinedAt))
 
+  TempMDLocalVariable clone() const { return cloneImpl(); }
+
   unsigned getArg() const { return Arg; }
   unsigned getFlags() const { return Flags; }
   Metadata *getInlinedAt() const { return getOperand(4); }
@@ -1416,6 +1422,8 @@ class MDExpression : public DebugNode {
 
 public:
   DEFINE_MDNODE_GET(MDExpression, (ArrayRef<uint64_t> Elements), (Elements))
+
+  TempMDExpression clone() const { return cloneImpl(); }
 
   ArrayRef<uint64_t> getElements() const { return Elements; }
 
@@ -1561,6 +1569,8 @@ public:
                      unsigned Attributes, Metadata *Type),
                     (Name, File, Line, GetterName, SetterName, Attributes,
                      Type))
+
+  TempMDObjCProperty clone() const { return cloneImpl(); }
 
   unsigned getLine() const { return Line; }
   unsigned getAttributes() const { return Attributes; }
