@@ -461,12 +461,20 @@ def CC_X86_32_Common : CallingConv<[
                 CCIfSubtarget<"hasFp256()",
                 CCAssignToReg<[YMM0, YMM1, YMM2, YMM3]>>>>,
 
+  // The first 4 AVX 512-bit vector arguments are passed in ZMM registers.
+  CCIfNotVarArg<CCIfType<[v64i8, v32i16, v16i32, v8i64, v16f32, v8f64],
+                CCAssignToReg<[ZMM0, ZMM1, ZMM2, ZMM3]>>>,
+
   // Other SSE vectors get 16-byte stack slots that are 16-byte aligned.
   CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], CCAssignToStack<16, 16>>,
 
   // 256-bit AVX vectors get 32-byte stack slots that are 32-byte aligned.
   CCIfType<[v32i8, v16i16, v8i32, v4i64, v8f32, v4f64],
            CCAssignToStack<32, 32>>,
+
+  // 512-bit AVX 512-bit vectors get 64-byte stack slots that are 64-byte aligned.
+  CCIfType<[v64i8, v32i16, v16i32, v8i64, v16f32, v8f64],
+           CCAssignToStack<64, 64>>,
 
   // __m64 vectors get 8-byte stack slots that are 4-byte aligned. They are
   // passed in the parameter area.
@@ -625,6 +633,9 @@ def CC_Intel_OCL_BI : CallingConv<[
   // The 512-bit vector arguments are passed in ZMM registers.
   CCIfType<[v16f32, v8f64, v16i32, v8i64],
            CCAssignToReg<[ZMM0, ZMM1, ZMM2, ZMM3]>>,
+
+  // Pass masks in mask registers
+  CCIfType<[v16i1, v8i1], CCAssignToReg<[K1]>>,
 
   CCIfSubtarget<"isTargetWin64()", CCDelegateTo<CC_X86_Win64_C>>,
   CCIfSubtarget<"is64Bit()",       CCDelegateTo<CC_X86_64_C>>,
