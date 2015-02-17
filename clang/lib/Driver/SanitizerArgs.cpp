@@ -424,8 +424,13 @@ void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
   if (SanitizeCoverage)
     CmdArgs.push_back(Args.MakeArgString("-fsanitize-coverage=" +
                                          llvm::utostr(SanitizeCoverage)));
-  // Workaround for PR16386.
-  if (Sanitizers.has(SanitizerKind::Memory))
+  // MSan: Workaround for PR16386.
+  // ASan: This is mainly to help LSan with cases such as
+  // https://code.google.com/p/address-sanitizer/issues/detail?id=373
+  // We can't make this conditional on -fsanitize=leak, as that flag shouldn't
+  // affect compilation.
+  if (Sanitizers.has(SanitizerKind::Memory) ||
+      Sanitizers.has(SanitizerKind::Address))
     CmdArgs.push_back(Args.MakeArgString("-fno-assume-sane-operator-new"));
 }
 
