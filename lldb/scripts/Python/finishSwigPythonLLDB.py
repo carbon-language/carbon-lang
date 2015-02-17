@@ -70,8 +70,8 @@ strMsgPyFileLocatedHere = "Python file will be put in '%s'";
 strMsgFrameWkPyExists = "Python output folder '%s' already exists";
 strMsgFrameWkPyMkDir = "Python output folder '%s' will be created";
 strErrMsgCreateFrmWkPyDirFailed = "Unable to create directory '%s' error: %s";
-strMsglldbsoExists = "Symlink '%s' already exists";
-strMsglldbsoMk = "Creating symlink for _lldb.so  (%s -> %s)";
+strMsgSymlinkExists = "Symlink for '%s' already exists";
+strMsgSymlinkMk = "Creating symlink for %s  (%s -> %s)";
 strErrMsgCpLldbpy = "copying lldb to lldb package directory";
 strErrMsgCreatePyPkgMissingSlash = "Parameter 3 fn create_py_pkg() missing slash"; 
 strErrMsgMkLinkExecute = "Command mklink failed: %s";
@@ -218,120 +218,169 @@ def copy_lldbpy_file_to_lldb_pkg_dir( vDictArgs, vstrFrameworkPythonDir, vstrCfg
 		strMsg = strErrMsgUnexpected % sys.exec_info()[ 0 ];
 	
 	return (bOk, strMsg);
-
+	
 #++---------------------------------------------------------------------------
-# Details:	Make the symbolic that the script bridge for Python will need in 
-# 			the Python framework directory. Code for specific to Windows.
-# Args:		vDictArgs				- (R) Program input parameters.
-#			vstrFrameworkPythonDir	- (R) Python framework directory.
-#			vstrDllName				- (R) File name for _lldb.dll.
+# Details:	Make the symbolic link on a Windows platform.
+# Args:		vstrSrcFile				- (R) Source file name.
+#			vstrTargetFile			- (R) Destination file name.
 # Returns:	Bool - True = function success, False = failure.
 #			Str - Error description on task failure.
 # Throws:	None.
 #--
-def make_symlink_windows( vDictArgs, vstrFrameworkPythonDir, vstrDllName ):
+def make_symlink_windows( vstrSrcPath, vstrTargetPath ):
+	print "Making symlink from %s to %s" % (vstrSrcPath, vstrTargetPath);
 	dbg = utilsDebug.CDebugFnVerbose( "Python script make_symlink_windows()" );
 	bOk = True;
-	strMsg = "";
+	strErrMsg = "";
 
-	bDbg = vDictArgs.has_key( "-d" );
-	strTarget = vstrDllName;
-	# When importing an extension module using a debug version of python, you
-	# write, for example, "import foo", but the interpreter searches for
-	# "foo_d.pyd"
-	if vDictArgs["--buildConfig"].lower() == "debug":
-		strTarget += "_d";
-	strTarget += ".pyd";
-	strDLLPath = "%s\\%s" % (vstrFrameworkPythonDir, strTarget);
-	strTarget = os.path.normcase( strDLLPath );
-	strSrc = "";
-
-	os.chdir( vstrFrameworkPythonDir );
-	bMakeFileCalled = vDictArgs.has_key( "-m" );
-	if not bMakeFileCalled:
-		strSrc = os.path.normcase( "../../../LLDB" );
-	else:
-		strLibFileExtn = ".dll";
-		strSrc = os.path.normcase( "../../../bin/liblldb%s" % strLibFileExtn );
-
-	if os.path.isfile( strTarget ):
-		if bDbg:
-			print strMsglldbsoExists % strTarget;
-		return (bOk, strMsg);
-
-	if bDbg:
-		print strMsglldbsoMk % (os.path.abspath(strSrc), os.path.abspath(strTarget));
-		
 	try:
 		csl = ctypes.windll.kernel32.CreateHardLinkW
 		csl.argtypes = (ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint32)
 		csl.restype = ctypes.c_ubyte
-		if csl(strTarget, strSrc, 0) == 0:
+		if csl(vstrTargetPath, vstrSrcPath, 0) == 0:
 			raise ctypes.WinError()
 	except Exception as e:
-		bOk = False;
-		strMsg = "WinError( %d ): %s %s" % (e.errno, e.strerror, strErrMsgMakeSymlink);
-		strMsg += " Src:'%s' Target:'%s'" % (strSrc, strTarget);
+		if e.errno != 17:
+			bOk = False;
+			strErrMsg = "WinError( %d ): %s %s" % (e.errno, e.strerror, strErrMsgMakeSymlink);
+			strErrMsg += " Src:'%s' Target:'%s'" % (vstrSrcPath, vstrTargetPath);
 
-	return (bOk, strMsg);
-	
+	return (bOk, strErrMsg);
+
 #++---------------------------------------------------------------------------
-# Details:	Make the symbolic link that the script bridge for Python will need in 
-# 			the Python framework directory. Code for all platforms apart from
-#			Windows.
-# Args:		vDictArgs				- (R) Program input parameters.
-#			vstrFrameworkPythonDir	- (R) Python framework directory.
-#			vstrSoName				- (R) File name for _lldb.so.
+# Details:	Make the symbolic link on a UNIX style platform.
+# Args:		vstrSrcFile				- (R) Source file name.
+#			vstrTargetFile			- (R) Destination file name.
 # Returns:	Bool - True = function success, False = failure.
 #			Str - Error description on task failure.
 # Throws:	None.
 #--
-def make_symlink_other_platforms( vDictArgs, vstrFrameworkPythonDir, vstrSoPath ):
+def make_symlink_other_platforms( vstrSrcPath, vstrTargetPath ):
 	dbg = utilsDebug.CDebugFnVerbose( "Python script make_symlink_other_platforms()" );
 	bOk = True;
-	strMsg = "";
-	bDbg = vDictArgs.has_key( "-d" );
-	strTarget = vstrSoPath + ".so";
-	strSoPath = "%s/%s" % (vstrFrameworkPythonDir, strTarget);
-	strTarget = os.path.normcase( strSoPath );
-	strSrc = "";
-			
-	os.chdir( vstrFrameworkPythonDir );
-	bMakeFileCalled = vDictArgs.has_key( "-m" );
-	if not bMakeFileCalled:
-		strSrc = os.path.normcase( "../../../LLDB" );
-	else:
-		strLibFileExtn = "";
-		eOSType = utilsOsType.determine_os_type();
-		if eOSType == utilsOsType.EnumOsType.Linux:
-			strLibFileExtn = ".so";
-		elif eOSType == utilsOsType.EnumOsType.Darwin:
-			strLibFileExtn = ".dylib";
-		strSrc = os.path.normcase( "../../../liblldb%s" % strLibFileExtn );
+	strErrMsg = "";
 
-	if os.path.islink( strTarget ):
-		if bDbg:
-			print strMsglldbsoExists % strTarget;
-		return (bOk, strMsg);
-	
-	if bDbg:
-		print strMsglldbsoMk;
-		
 	try:
-		os.symlink( strSrc, strTarget );
+		os.symlink( vstrSrcPath, vstrTargetPath );
 	except OSError as e:
 		bOk = False;
-		strMsg = "OSError( %d ): %s %s" % (e.errno, e.strerror, strErrMsgMakeSymlink);
-		strMsg += " Src:'%s' Target:'%s'" % (strSrc, strTarget);
+		strErrMsg = "OSError( %d ): %s %s" % (e.errno, e.strerror, strErrMsgMakeSymlink);
+		strErrMsg += " Src:'%s' Target:'%s'" % (vstrSrcPath, vstrTargetPath);
 	except:
 		bOk = False;
-		strMsg = strErrMsgUnexpected % sys.exec_info()[ 0 ];
-	
-	return (bOk, strMsg);
-	
+		strErrMsg = strErrMsgUnexpected % sys.exec_info()[ 0 ];
+
+	return (bOk, strErrMsg);
+
 #++---------------------------------------------------------------------------
-# Details:	Make the symbolic link to the darwin-debug. Code for all platforms
-#           apart from Windows.
+# Details:	Make the symbolic link.
+# Args:		vDictArgs				- (R) Program input parameters.
+#			vstrFrameworkPythonDir	- (R) Python framework directory.
+#			vstrSrcFile				- (R) Source file name.
+#			vstrTargetFile			- (R) Destination file name.
+# Returns:	Bool - True = function success, False = failure.
+#			Str - Error description on task failure.
+# Throws:	None.
+#--
+def make_symlink( vDictArgs, vstrFrameworkPythonDir, vstrSrcFile, vstrTargetFile ):
+	dbg = utilsDebug.CDebugFnVerbose( "Python script make_symlink()" );
+	bOk = True;
+	strErrMsg = "";
+	bDbg = vDictArgs.has_key( "-d" );
+	strTarget = "%s/%s" % (vstrFrameworkPythonDir, vstrTargetFile);
+	strTarget = os.path.normcase( strTarget );
+	strSrc = "";
+
+	os.chdir( vstrFrameworkPythonDir );
+	bMakeFileCalled = vDictArgs.has_key( "-m" );
+	eOSType = utilsOsType.determine_os_type();
+	if not bMakeFileCalled:
+		return (bOk, strErrMsg);
+	else:
+		# Resolve vstrSrcFile path relatively the build directory
+		stdBuildDir = "";
+		if eOSType == utilsOsType.EnumOsType.Windows:
+			# On a Windows platform the vstrFrameworkPythonDir looks like:
+			# llvm\\build\\Lib\\site-packages\\lldb
+			strBuildDir = "../../..";
+		else:
+			# On a UNIX style platform the vstrFrameworkPythonDir looks like:
+			# llvm/build/lib/python2.7/site-packages/lldb
+			strBuildDir = "../../../..";
+		strSrc = os.path.normcase( "%s/%s" % (strBuildDir, vstrSrcFile) );
+
+	if eOSType == utilsOsType.EnumOsType.Unknown:
+		bOk = False;
+		strErrMsg = strErrMsgOsTypeUnknown;
+	elif eOSType == utilsOsType.EnumOsType.Windows:
+		if os.path.isfile( strTarget ):
+			if bDbg:
+				print strMsgSymlinkExists % vstrTargetFile;
+		if bDbg:
+			print strMsgSymlinkMk % (vstrTargetFile, strSrc, strTarget);
+		bOk, strErrMsg = make_symlink_windows( strSrc,
+											   strTarget );
+	else:
+		if os.path.islink( strTarget ):
+			if bDbg:
+				print strMsgSymlinkExists % vstrTargetFile;
+		if bDbg:
+			print strMsgSymlinkMk % (vstrTargetFile, strSrc, strTarget);
+		return (bOk, strErrMsg);
+		bOk, strErrMsg = make_symlink_other_platforms( strSrc,
+													   strTarget );		
+
+	return (bOk, strErrMsg);
+
+#++---------------------------------------------------------------------------
+# Details:	Make the symbolic that the script bridge for Python will need in 
+# 			the Python framework directory.
+# Args:		vDictArgs				- (R) Program input parameters.
+#			vstrFrameworkPythonDir	- (R) Python framework directory.
+#			vstrLiblldbName			- (R) File name for _lldb library.
+# Returns:	Bool - True = function success, False = failure.
+#			Str - Error description on task failure.
+# Throws:	None.
+#--
+def make_symlink_liblldb( vDictArgs, vstrFrameworkPythonDir, vstrLiblldbFileName ):
+	dbg = utilsDebug.CDebugFnVerbose( "Python script make_symlink_liblldb()" );
+	bOk = True;
+	strErrMsg = "";
+	strTarget = vstrLiblldbFileName;
+	strSrc = "";
+
+	eOSType = utilsOsType.determine_os_type();
+	if eOSType == utilsOsType.EnumOsType.Windows:
+		# When importing an extension module using a debug version of python, you
+		# write, for example, "import foo", but the interpreter searches for
+		# "foo_d.pyd"
+		if vDictArgs["--buildConfig"].lower() == "debug":
+			strTarget += "_d";
+		strTarget += ".pyd";
+	else:
+		strTarget += ".so";
+
+	bMakeFileCalled = vDictArgs.has_key( "-m" );
+	if not bMakeFileCalled:
+		strSrc = "lib/LLDB";
+	else:
+		strLibFileExtn = "";
+		if eOSType == utilsOsType.EnumOsType.Windows:
+			strLibFileExtn = ".dll";
+			strSrc = "bin/liblldb%s" % strLibFileExtn;
+		else:
+			if eOSType == utilsOsType.EnumOsType.Linux:
+			    strLibFileExtn = ".so";
+			elif eOSType == utilsOsType.EnumOsType.Darwin:
+			    strLibFileExtn = ".dylib";
+			strSrc = "lib/liblldb%s" % strLibFileExtn;
+
+	bOk, strErrMsg = make_symlink( vDictArgs, vstrFrameworkPythonDir, strSrc, strTarget );
+
+	return (bOk, strErrMsg);
+
+#++---------------------------------------------------------------------------
+# Details:	Make the symbolic link to the darwin-debug.
 # Args:		vDictArgs				- (R) Program input parameters.
 #			vstrFrameworkPythonDir	- (R) Python framework directory.
 #			vstrDarwinDebugFileName	- (R) File name for darwin-debug.
@@ -340,41 +389,54 @@ def make_symlink_other_platforms( vDictArgs, vstrFrameworkPythonDir, vstrSoPath 
 # Throws:	None.
 #--
 def make_symlink_darwin_debug( vDictArgs, vstrFrameworkPythonDir, vstrDarwinDebugFileName ):
-	dbg = utilsDebug.CDebugFnVerbose( "Python script make_symlink_other_platforms()" );
+	dbg = utilsDebug.CDebugFnVerbose( "Python script make_symlink_darwin_debug()" );
 	bOk = True;
-	strMsg = "";
-	bDbg = vDictArgs.has_key( "-d" );
-	strTarget = vstrDarwinDebugFileName
-	strDarwinDebugPath = "%s/%s" % (vstrFrameworkPythonDir, strTarget);
-	strTarget = os.path.normcase( strDarwinDebugPath );
+	strErrMsg = "";
+	strTarget = vstrDarwinDebugFileName;
 	strSrc = "";
 			
-	os.chdir( vstrFrameworkPythonDir );
 	bMakeFileCalled = vDictArgs.has_key( "-m" );
 	if not bMakeFileCalled:
-	    return (bOk, strMsg);
+	    return (bOk, strErrMsg);
 	else:
-		strSrc = os.path.normcase( "../../../../bin/lldb-launcher" );
+		strSrc = "bin/lldb-launcher";
 
-	if os.path.islink( strTarget ):
-		if bDbg:
-			print strMsglldbsoExists % strTarget;
-		return (bOk, strMsg);
-	
-	if bDbg:
-		print strMsglldbsoMk;
-		
-	try:
-		os.symlink( strSrc, strTarget );
-	except OSError as e:
-		bOk = False;
-		strMsg = "OSError( %d ): %s %s" % (e.errno, e.strerror, strErrMsgMakeSymlink);
-		strMsg += " Src:'%s' Target:'%s'" % (strSrc, strTarget);
-	except:
-		bOk = False;
-		strMsg = strErrMsgUnexpected % sys.exec_info()[ 0 ];
-	
-	return (bOk, strMsg);
+	bOk, strErrMsg = make_symlink( vDictArgs, vstrFrameworkPythonDir, strSrc, strTarget );
+
+	return (bOk, strErrMsg);
+
+#++---------------------------------------------------------------------------
+# Details:	Make the symbolic link to the argdumper.
+# Args:		vDictArgs				- (R) Program input parameters.
+#			vstrFrameworkPythonDir	- (R) Python framework directory.
+#			vstrArgdumperFileName	- (R) File name for argdumper.
+# Returns:	Bool - True = function success, False = failure.
+#			Str - Error description on task failure.
+# Throws:	None.
+#--
+def make_symlink_argdumper( vDictArgs, vstrFrameworkPythonDir, vstrArgdumperFileName ):
+	dbg = utilsDebug.CDebugFnVerbose( "Python script make_symlink_argdumper()" );
+	bOk = True;
+	strErrMsg = "";
+	strTarget = vstrArgdumperFileName;
+	strSrc = "";
+
+	eOSType = utilsOsType.determine_os_type();
+	if eOSType == utilsOsType.EnumOsType.Windows:
+		strTarget += ".exe";
+
+	bMakeFileCalled = vDictArgs.has_key( "-m" );
+	if not bMakeFileCalled:
+	    return (bOk, strErrMsg);
+	else:
+		strExeFileExtn = "";
+		if eOSType == utilsOsType.EnumOsType.Windows:
+			strExeFileExtn = ".exe";
+		strSrc = "bin/argdumper%s" % strExeFileExtn;
+
+	bOk, strErrMsg = make_symlink( vDictArgs, vstrFrameworkPythonDir, strSrc, strTarget );
+
+	return (bOk, strErrMsg);
 
 #++---------------------------------------------------------------------------
 # Details:	Make the symlink that the script bridge for Python will need in 
@@ -385,33 +447,32 @@ def make_symlink_darwin_debug( vDictArgs, vstrFrameworkPythonDir, vstrDarwinDebu
 #			strErrMsg - Error description on task failure.
 # Throws:	None.
 #--
-def make_symlink( vDictArgs, vstrFrameworkPythonDir ):
-	dbg = utilsDebug.CDebugFnVerbose( "Python script make_symlink()" );
+def create_symlinks( vDictArgs, vstrFrameworkPythonDir ):
+	dbg = utilsDebug.CDebugFnVerbose( "Python script create_symlinks()" );
 	bOk = True;
-	strWkDir = "";
 	strErrMsg = "";
 	eOSType = utilsOsType.determine_os_type();
 
-    # Make symlink for _lldb
-	strSoFileName = "_lldb";
-	if eOSType == utilsOsType.EnumOsType.Unknown:
-		bOk = False;
-		strErrMsg = strErrMsgOsTypeUnknown;
-	elif eOSType == utilsOsType.EnumOsType.Windows:
-		bOk, strErrMsg = make_symlink_windows( vDictArgs, 
+	# Make symlink for _lldb
+	strLibLldbFileName = "_lldb";
+	if bOk:
+		bOk, strErrMsg = make_symlink_liblldb( vDictArgs,
 											   vstrFrameworkPythonDir,
-											   strSoFileName );
-	else:
-		bOk, strErrMsg = make_symlink_other_platforms( vDictArgs, 
-													   vstrFrameworkPythonDir,
-													   strSoFileName );		
+											   strLibLldbFileName );
 
-    # Make symlink for darwin-debug
+	# Make symlink for darwin-debug on Darwin
 	strDarwinDebugFileName = "darwin-debug"
 	if bOk and eOSType == utilsOsType.EnumOsType.Darwin:
 		bOk, strErrMsg = make_symlink_darwin_debug( vDictArgs,
 												    vstrFrameworkPythonDir,
 												    strDarwinDebugFileName );
+
+	# Make symlink for argdumper
+	strArgdumperFileName = "argdumper"
+	if bOk:
+		bOk, strErrMsg = make_symlink_argdumper( vDictArgs,
+												 vstrFrameworkPythonDir,
+												 strArgdumperFileName );
 
 	return (bOk, strErrMsg);
 
@@ -631,7 +692,7 @@ def main( vDictArgs ):
 		bOk, strMsg = find_or_create_python_dir( vDictArgs, strFrameworkPythonDir );
 	
 	if bOk:
-		bOk, strMsg = make_symlink( vDictArgs, strFrameworkPythonDir );
+		bOk, strMsg = create_symlinks( vDictArgs, strFrameworkPythonDir );
 	
 	if bOk:
 		bOk, strMsg = copy_lldbpy_file_to_lldb_pkg_dir( vDictArgs,
