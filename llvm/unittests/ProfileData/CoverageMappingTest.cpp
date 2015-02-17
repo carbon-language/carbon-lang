@@ -33,91 +33,83 @@ void PrintTo(const Counter &C, ::std::ostream *os) {
 
 namespace {
 
-struct CoverageMappingTest : ::testing::Test {
-  StringMap<unsigned> Files;
-  unsigned NextFile;
-  std::vector<CounterMappingRegion> InputCMRs;
+static std::string writeCoverage(MutableArrayRef<CounterMappingRegion> Regions,
+                                 int NumFiles) {
+  SmallVector<unsigned, 8> FileIDs;
+  for (int I = 0; I < NumFiles; ++I)
+    FileIDs.push_back(I);
 
-  std::vector<StringRef> OutputFiles;
-  std::vector<CounterExpression> OutputExpressions;
-  std::vector<CounterMappingRegion> OutputCMRs;
+  std::string Coverage;
+  llvm::raw_string_ostream OS(Coverage);
+  CoverageMappingWriter(FileIDs, None, Regions).write(OS);
+  OS.flush();
 
-  void SetUp() override {
-    NextFile = 0;
+  return Coverage;
+}
+
+static std::vector<CounterMappingRegion>
+readCoverageRegions(std::string Coverage, int NumFiles) {
+  SmallVector<std::string, 8> Filenames;
+  SmallVector<StringRef, 8> FilenameRefs;
+  for (int I = 0; I < NumFiles; ++I) {
+    std::ostringstream S;
+    S << "file" << I;
+    Filenames.push_back(S.str());
+    FilenameRefs.push_back(Filenames.back());
   }
 
-  unsigned getFile(StringRef Name) {
-    auto R = Files.find(Name);
-    if (R != Files.end())
-      return R->second;
-    Files[Name] = NextFile;
-    return NextFile++;
-  }
+  std::vector<StringRef> FuncFiles;
+  std::vector<CounterExpression> Expressions;
+  std::vector<CounterMappingRegion> Regions;
+  RawCoverageMappingReader Reader(Coverage, FilenameRefs, FuncFiles,
+                                  Expressions, Regions);
+  if (Reader.read())
+    // ASSERT doesn't work here, we'll just return an empty vector.
+    Regions.clear();
+  return Regions;
+}
 
-  void addCMR(Counter C, StringRef File, unsigned LS, unsigned CS, unsigned LE,
-              unsigned CE) {
-    InputCMRs.push_back(
-        CounterMappingRegion::makeRegion(C, getFile(File), LS, CS, LE, CE));
-  }
+TEST(CoverageMappingTest, basic_write_read) {
+  int NumFiles = 2;
+  CounterMappingRegion InputRegions[] = {
+      CounterMappingRegion::makeRegion(Counter::getCounter(0), 0, 1, 1, 1, 1),
+      CounterMappingRegion::makeRegion(Counter::getCounter(1), 0, 2, 1, 2, 2),
+      CounterMappingRegion::makeRegion(Counter::getZero(), 0, 3, 1, 3, 4),
+      CounterMappingRegion::makeRegion(Counter::getCounter(2), 0, 4, 1, 4, 8),
+      CounterMappingRegion::makeRegion(Counter::getCounter(3), 1, 1, 2, 3, 4),
+  };
+  std::string Coverage = writeCoverage(InputRegions, NumFiles);
+  std::vector<CounterMappingRegion> OutputRegions =
+      readCoverageRegions(Coverage, NumFiles);
+  ASSERT_FALSE(OutputRegions.empty());
 
-  void addExpansionCMR(StringRef File, StringRef ExpandedFile, unsigned LS,
-                       unsigned CS, unsigned LE, unsigned CE) {
-    InputCMRs.push_back(CounterMappingRegion::makeExpansion(
-        getFile(File), getFile(ExpandedFile), LS, CS, LE, CE));
-  }
-
-  std::string writeCoverageRegions() {
-    SmallVector<unsigned, 8> FileIDs;
-    for (const auto &E : Files)
-      FileIDs.push_back(E.getValue());
-    std::string Coverage;
-    llvm::raw_string_ostream OS(Coverage);
-    CoverageMappingWriter(FileIDs, None, InputCMRs).write(OS);
-    return OS.str();
-  }
-
-  void readCoverageRegions(std::string Coverage) {
-    SmallVector<StringRef, 8> Filenames;
-    for (const auto &E : Files)
-      Filenames.push_back(E.getKey());
-    RawCoverageMappingReader Reader(Coverage, Filenames, OutputFiles,
-                                    OutputExpressions, OutputCMRs);
-    std::error_code EC = Reader.read();
-    ASSERT_EQ(instrprof_error::success, EC);
-  }
-};
-
-TEST_F(CoverageMappingTest, basic_write_read) {
-  addCMR(Counter::getCounter(0), "foo", 1, 1, 1, 1);
-  addCMR(Counter::getCounter(1), "foo", 2, 1, 2, 2);
-  addCMR(Counter::getZero(),     "foo", 3, 1, 3, 4);
-  addCMR(Counter::getCounter(2), "foo", 4, 1, 4, 8);
-  addCMR(Counter::getCounter(3), "bar", 1, 2, 3, 4);
-  std::string Coverage = writeCoverageRegions();
-  readCoverageRegions(Coverage);
-
-  size_t N = makeArrayRef(InputCMRs).size();
-  ASSERT_EQ(N, OutputCMRs.size());
+  size_t N = makeArrayRef(InputRegions).size();
+  ASSERT_EQ(N, OutputRegions.size());
   for (size_t I = 0; I < N; ++I) {
-    ASSERT_EQ(InputCMRs[I].Count,      OutputCMRs[I].Count);
-    ASSERT_EQ(InputCMRs[I].FileID,     OutputCMRs[I].FileID);
-    ASSERT_EQ(InputCMRs[I].startLoc(), OutputCMRs[I].startLoc());
-    ASSERT_EQ(InputCMRs[I].endLoc(),   OutputCMRs[I].endLoc());
-    ASSERT_EQ(InputCMRs[I].Kind,       OutputCMRs[I].Kind);
+    ASSERT_EQ(InputRegions[I].Count, OutputRegions[I].Count);
+    ASSERT_EQ(InputRegions[I].FileID, OutputRegions[I].FileID);
+    ASSERT_EQ(InputRegions[I].startLoc(), OutputRegions[I].startLoc());
+    ASSERT_EQ(InputRegions[I].endLoc(), OutputRegions[I].endLoc());
+    ASSERT_EQ(InputRegions[I].Kind, OutputRegions[I].Kind);
   }
 }
 
-TEST_F(CoverageMappingTest, expansion_gets_first_counter) {
-  addCMR(Counter::getCounter(1), "foo", 10, 1, 10, 2);
-  // This starts earlier in "foo", so the expansion should get its counter.
-  addCMR(Counter::getCounter(2), "foo", 1, 1, 20, 1);
-  addExpansionCMR("bar", "foo", 3, 3, 3, 3);
-  std::string Coverage = writeCoverageRegions();
-  readCoverageRegions(Coverage);
+TEST(CoverageMappingTest, expansion_gets_first_counter) {
+  int NumFiles = 2;
+  CounterMappingRegion InputRegions[] = {
+      CounterMappingRegion::makeRegion(Counter::getCounter(1), 0, 10, 1, 10, 2),
+      // This starts earlier in file 0, so the expansion should get its counter.
+      CounterMappingRegion::makeRegion(Counter::getCounter(2), 0, 1, 1, 20, 1),
+      CounterMappingRegion::makeExpansion(1, 0, 3, 3, 3, 3),
+  };
+  std::string Coverage = writeCoverage(InputRegions, NumFiles);
+  std::vector<CounterMappingRegion> OutputRegions =
+      readCoverageRegions(Coverage, NumFiles);
+  ASSERT_FALSE(OutputRegions.empty());
 
-  ASSERT_EQ(CounterMappingRegion::ExpansionRegion, OutputCMRs[2].Kind);
-  ASSERT_EQ(Counter::getCounter(2), OutputCMRs[2].Count);
-  ASSERT_EQ(3U, OutputCMRs[2].LineStart);
+  ASSERT_EQ(CounterMappingRegion::ExpansionRegion, OutputRegions[2].Kind);
+  ASSERT_EQ(Counter::getCounter(2), OutputRegions[2].Count);
+  ASSERT_EQ(3U, OutputRegions[2].LineStart);
 }
 
 
