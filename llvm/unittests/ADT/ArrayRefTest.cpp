@@ -90,10 +90,23 @@ TEST(ArrayRefTest, ConstConvert) {
   a = ArrayRef<int *>(A);
 }
 
+static ArrayRef<int> ReturnTest12() { return {1, 2}; }
+static void ArgTest12(ArrayRef<int> A) {
+  EXPECT_EQ(2, A.size());
+  EXPECT_EQ(1, A[0]);
+  EXPECT_EQ(2, A[1]);
+}
+
 TEST(ArrayRefTest, InitializerList) {
   ArrayRef<int> A = { 0, 1, 2, 3, 4 };
   for (int i = 0; i < 5; ++i)
     EXPECT_EQ(i, A[i]);
+
+  A = ReturnTest12();
+  EXPECT_EQ(1, A[0]);
+  EXPECT_EQ(2, A[1]);
+
+  ArgTest12({1, 2});
 }
 
 } // end anonymous namespace
