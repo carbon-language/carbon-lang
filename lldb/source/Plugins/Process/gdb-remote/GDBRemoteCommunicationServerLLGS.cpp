@@ -2110,8 +2110,8 @@ GDBRemoteCommunicationServerLLGS::Handle_Z (StringExtractorGDBRemote &packet)
     {
         uint32_t watch_flags =
             stoppoint_type == eWatchpointWrite
-            ? watch_flags = 0x1  // Write
-            : watch_flags = 0x3; // ReadWrite
+            ? 0x1  // Write
+            : 0x3; // ReadWrite
 
         // Try to set the watchpoint.
         const Error error = m_debugged_process_sp->SetWatchpoint (
