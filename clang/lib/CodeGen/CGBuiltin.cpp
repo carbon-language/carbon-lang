@@ -5926,51 +5926,27 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Ops[0] = Builder.CreateBitCast(Ops[0], PtrTy);
     return Builder.CreateStore(Ops[1], Ops[0]);
   }
-  case X86::BI__builtin_ia32_palignr128: {
-    unsigned shiftVal = cast<llvm::ConstantInt>(Ops[2])->getZExtValue();
-
-    // If palignr is shifting the pair of input vectors less than 17 bytes,
-    // emit a shuffle instruction.
-    if (shiftVal <= 16) {
-      SmallVector<llvm::Constant*, 16> Indices;
-      for (unsigned i = 0; i != 16; ++i)
-        Indices.push_back(llvm::ConstantInt::get(Int32Ty, shiftVal + i));
-
-      Value* SV = llvm::ConstantVector::get(Indices);
-      return Builder.CreateShuffleVector(Ops[1], Ops[0], SV, "palignr");
-    }
-
-    // If palignr is shifting the pair of input vectors more than 16 but less
-    // than 32 bytes, emit a logical right shift of the destination.
-    if (shiftVal < 32) {
-      llvm::Type *VecTy = llvm::VectorType::get(Int64Ty, 2);
-
-      Ops[0] = Builder.CreateBitCast(Ops[0], VecTy, "cast");
-      Ops[1] = llvm::ConstantInt::get(Int32Ty, (shiftVal-16) * 8);
-
-      // create i32 constant
-      llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_sse2_psrl_dq);
-      return Builder.CreateCall(F, makeArrayRef(Ops.data(), 2), "palignr");
-    }
-
-    // If palignr is shifting the pair of vectors more than 32 bytes, emit zero.
-    return llvm::Constant::getNullValue(ConvertType(E->getType()));
-  }
+  case X86::BI__builtin_ia32_palignr128:
   case X86::BI__builtin_ia32_palignr256: {
-    unsigned shiftVal = cast<llvm::ConstantInt>(Ops[2])->getZExtValue();
+    unsigned ShiftVal = cast<llvm::ConstantInt>(Ops[2])->getZExtValue();
 
-    // If palignr is shifting the pair of input vectors less than 17 bytes,
-    // emit a shuffle instruction.
-    if (shiftVal <= 16) {
+    unsigned NumElts =
+      cast<llvm::VectorType>(Ops[0]->getType())->getNumElements();
+    assert(NumElts % 16 == 0);
+    unsigned NumLanes = NumElts / 16;
+    unsigned NumLaneElts = NumElts / NumLanes;
+
+    // If palignr is shifting the pair of input vectors less than the size of
+    // a lane, emit a shuffle instruction.
+    if (ShiftVal <= NumLaneElts) {
       SmallVector<llvm::Constant*, 32> Indices;
       // 256-bit palignr operates on 128-bit lanes so we need to handle that
-      for (unsigned l = 0; l != 2; ++l) {
-        unsigned LaneStart = l * 16;
-        unsigned LaneEnd = (l+1) * 16;
-        for (unsigned i = 0; i != 16; ++i) {
-          unsigned Idx = shiftVal + i + LaneStart;
-          if (Idx >= LaneEnd) Idx += 16; // end of lane, switch operand
-          Indices.push_back(llvm::ConstantInt::get(Int32Ty, Idx));
+      for (unsigned l = 0; l != NumElts; l += NumLaneElts) {
+        for (unsigned i = 0; i != NumLaneElts; ++i) {
+          unsigned Idx = ShiftVal + i;
+          if (Idx >= NumLaneElts)
+            Idx += NumElts - NumLaneElts; // End of lane, switch operand.
+          Indices.push_back(llvm::ConstantInt::get(Int32Ty, Idx + l));
         }
       }
 
@@ -5978,21 +5954,32 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
       return Builder.CreateShuffleVector(Ops[1], Ops[0], SV, "palignr");
     }
 
-    // If palignr is shifting the pair of input vectors more than 16 but less
-    // than 32 bytes, emit a logical right shift of the destination.
-    if (shiftVal < 32) {
-      llvm::Type *VecTy = llvm::VectorType::get(Int64Ty, 4);
+    // If palignr is shifting the pair of vectors more than the size of two
+    // lanes, emit zero.
+    if (ShiftVal >= (2 * NumLaneElts))
+      return llvm::Constant::getNullValue(ConvertType(E->getType()));
 
-      Ops[0] = Builder.CreateBitCast(Ops[0], VecTy, "cast");
-      Ops[1] = llvm::ConstantInt::get(Int32Ty, (shiftVal-16) * 8);
+    // If palignr is shifting the pair of input vectors more than one lane,
+    // but less than two lanes, emit a shift.
+    llvm::Type *VecTy = llvm::VectorType::get(Int64Ty, NumElts/8);
 
-      // create i32 constant
-      llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_avx2_psrl_dq);
-      return Builder.CreateCall(F, makeArrayRef(Ops.data(), 2), "palignr");
+    Ops[0] = Builder.CreateBitCast(Ops[0], VecTy, "cast");
+    Ops[1] = llvm::ConstantInt::get(Int32Ty, (ShiftVal-NumLaneElts) * 8);
+
+    Intrinsic::ID ID;
+    switch (BuiltinID) {
+    default: llvm_unreachable("Unsupported intrinsic!");
+    case X86::BI__builtin_ia32_palignr128:
+      ID = Intrinsic::x86_sse2_psrl_dq;
+      break;
+    case X86::BI__builtin_ia32_palignr256:
+      ID = Intrinsic::x86_avx2_psrl_dq;
+      break;
     }
 
-    // If palignr is shifting the pair of vectors more than 32 bytes, emit zero.
-    return llvm::Constant::getNullValue(ConvertType(E->getType()));
+    // create i32 constant
+    llvm::Function *F = CGM.getIntrinsic(ID);
+    return Builder.CreateCall(F, makeArrayRef(Ops.data(), 2), "palignr");
   }
   case X86::BI__builtin_ia32_pslldqi256: {
     // Shift value is in bits so divide by 8.
