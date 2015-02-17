@@ -657,6 +657,12 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VTESTPSYrr,      X86::VTESTPSYrm,          0 },
 
     // AVX2 foldable instructions
+
+    // VBROADCASTS{SD}rr register instructions were an AVX2 addition while the
+    // VBROADCASTS{SD}rm memory instructions were available from AVX1.
+    // TB_NO_REVERSE prevents unfolding from introducing an illegal instruction
+    // on AVX1 targets. The VPBROADCAST instructions are all AVX2 instructions
+    // so they don't need an equivalent limitation.
     { X86::VBROADCASTSSrr,  X86::VBROADCASTSSrm,      TB_NO_REVERSE },
     { X86::VBROADCASTSSYrr, X86::VBROADCASTSSYrm,     TB_NO_REVERSE },
     { X86::VBROADCASTSDYrr, X86::VBROADCASTSDYrm,     TB_NO_REVERSE },
