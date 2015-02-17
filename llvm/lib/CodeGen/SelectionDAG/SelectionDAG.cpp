@@ -1581,22 +1581,19 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, SDLoc dl, SDValue N1,
             return N1;
       }
 
-      // If the shuffle itself creates a constant splat, build the vector
-      // directly.
+      // If the shuffle itself creates a splat, build the vector directly.
       if (AllSame && SameNumElts) {
-         const SDValue &Splatted = BV->getOperand(MaskVec[0]);
-         if (isa<ConstantSDNode>(Splatted) || isa<ConstantFPSDNode>(Splatted)) {
-           SmallVector<SDValue, 8> Ops(NElts, Splatted);
+        const SDValue &Splatted = BV->getOperand(MaskVec[0]);
+        SmallVector<SDValue, 8> Ops(NElts, Splatted);
 
-           SDValue NewBV =
-               getNode(ISD::BUILD_VECTOR, dl, BV->getValueType(0), Ops);
+        EVT BuildVT = BV->getValueType(0);
+        SDValue NewBV = getNode(ISD::BUILD_VECTOR, dl, BuildVT, Ops);
 
-           // We may have jumped through bitcasts, so the type of the
-           // BUILD_VECTOR may not match the type of the shuffle.
-           if (BV->getValueType(0) != VT)
-             NewBV = getNode(ISD::BITCAST, dl, VT, NewBV);
-           return NewBV;
-         }
+        // We may have jumped through bitcasts, so the type of the
+        // BUILD_VECTOR may not match the type of the shuffle.
+        if (BuildVT != VT)
+          NewBV = getNode(ISD::BITCAST, dl, VT, NewBV);
+        return NewBV;
       }
     }
   }

@@ -347,17 +347,17 @@ define <2 x float> @check_spr_splat2(<2 x float> %p, i16 %q) {
 
 define <4 x float> @check_spr_splat4(<4 x float> %p, i16 %q) {
 ;CHECK-LABEL: check_spr_splat4:
-;CHECK: vdup.32 q
+;CHECK: vld1.16
   %conv = sitofp i16 %q to float
   %splat.splatinsert = insertelement <4 x float> undef, float %conv, i32 0
   %splat.splat = shufflevector <4 x float> %splat.splatinsert, <4 x float> undef, <4 x i32> zeroinitializer
   %sub = fsub <4 x float> %splat.splat, %p
   ret <4 x float> %sub
 }
-
+; Same codegen as above test; scalar is splatted using vld1, so shuffle index is irrelevant.
 define <4 x float> @check_spr_splat4_lane1(<4 x float> %p, i16 %q) {
 ;CHECK-LABEL: check_spr_splat4_lane1:
-;CHECK: vdup.32 q{{.*}}, d{{.*}}[1]
+;CHECK: vld1.16
   %conv = sitofp i16 %q to float
   %splat.splatinsert = insertelement <4 x float> undef, float %conv, i32 1
   %splat.splat = shufflevector <4 x float> %splat.splatinsert, <4 x float> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>

@@ -885,8 +885,7 @@ define <4 x double> @splat_mem_v4f64(double* %ptr) {
 define <4 x i64> @splat_mem_v4i64(i64* %ptr) {
 ; AVX1-LABEL: splat_mem_v4i64:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
-; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; AVX1-NEXT:    vbroadcastsd (%rdi), %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: splat_mem_v4i64:
