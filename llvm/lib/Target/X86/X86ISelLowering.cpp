@@ -24946,7 +24946,7 @@ static SDValue VectorZextCombine(SDNode *N, SelectionDAG &DAG,
   unsigned ResSize = N1.getValueType().getScalarSizeInBits();
   // Make sure the splat matches the mask we expect
   if (SplatBitSize > ResSize || 
-      (SplatValue + 1).exactLogBase2() != SrcSize)
+      (SplatValue + 1).exactLogBase2() != (int)SrcSize)
     return SDValue();
 
   // Make sure the input and output size make sense
@@ -24966,7 +24966,7 @@ static SDValue VectorZextCombine(SDNode *N, SelectionDAG &DAG,
         break;
       }
     } else {
-      if (Shuffle->getMaskElt(i) != (i / ZextRatio)) {
+      if (Shuffle->getMaskElt(i) != (int)(i / ZextRatio)) {
         // Expected element number
         IsZext = false;
         break;
