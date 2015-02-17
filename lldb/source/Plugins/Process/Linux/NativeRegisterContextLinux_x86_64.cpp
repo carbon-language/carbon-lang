@@ -1039,7 +1039,7 @@ NativeRegisterContextLinux_x86_64::IsWatchpointHit(uint8_t wp_index)
         return Error ("Watchpoint index out of range");
 
     RegisterValue reg_value;
-    Error error = ReadRegisterRaw(lldb_dr6_x86_64, reg_value);
+    Error error = ReadRegisterRaw(m_reg_info.first_dr + 6, reg_value);
     if (error.Fail()) return error;
 
     uint64_t status_bits = reg_value.GetAsUInt64();
@@ -1058,7 +1058,7 @@ NativeRegisterContextLinux_x86_64::IsWatchpointVacant(uint32_t wp_index)
         return Error ("Watchpoint index out of range");
 
     RegisterValue reg_value;
-    Error error = ReadRegisterRaw(lldb_dr7_x86_64, reg_value);
+    Error error = ReadRegisterRaw(m_reg_info.first_dr + 7, reg_value);
     if (error.Fail()) return error;
 
     uint64_t control_bits = reg_value.GetAsUInt64();
@@ -1087,7 +1087,7 @@ NativeRegisterContextLinux_x86_64::SetHardwareWatchpointWithIndex(
     if (error.Fail()) return error;
 
     RegisterValue reg_value;
-    error = ReadRegisterRaw(lldb_dr7_x86_64, reg_value);
+    error = ReadRegisterRaw(m_reg_info.first_dr + 7, reg_value);
     if (error.Fail()) return error;
 
     // for watchpoints 0, 1, 2, or 3, respectively,
@@ -1112,7 +1112,7 @@ NativeRegisterContextLinux_x86_64::SetHardwareWatchpointWithIndex(
     error = WriteRegister(m_reg_info.first_dr + wp_index, RegisterValue(addr));
     if (error.Fail()) return error;
 
-    error = WriteRegister(lldb_dr7_x86_64, RegisterValue(control_bits));
+    error = WriteRegister(m_reg_info.first_dr + 7, RegisterValue(control_bits));
     if (error.Fail()) return error;
 
     error.Clear();
@@ -1129,21 +1129,21 @@ NativeRegisterContextLinux_x86_64::ClearHardwareWatchpoint(uint32_t wp_index)
 
     // for watchpoints 0, 1, 2, or 3, respectively,
     // clear bits 0, 1, 2, or 3 of the debug status register (DR6)
-    Error error = ReadRegisterRaw(lldb_dr6_x86_64, reg_value);
+    Error error = ReadRegisterRaw(m_reg_info.first_dr + 6, reg_value);
     if (error.Fail()) return false;
     uint64_t bit_mask = 1 << wp_index;
     uint64_t status_bits = reg_value.GetAsUInt64() & ~bit_mask;
-    error = WriteRegister(lldb_dr6_x86_64, RegisterValue(status_bits));
+    error = WriteRegister(m_reg_info.first_dr + 6, RegisterValue(status_bits));
     if (error.Fail()) return false;
 
     // for watchpoints 0, 1, 2, or 3, respectively,
     // clear bits {0-1,16-19}, {2-3,20-23}, {4-5,24-27}, or {6-7,28-31}
     // of the debug control register (DR7)
-    error = ReadRegisterRaw(lldb_dr7_x86_64, reg_value);
+    error = ReadRegisterRaw(m_reg_info.first_dr + 7, reg_value);
     if (error.Fail()) return false;
     bit_mask = (0x3 << (2 * wp_index)) | (0xF << (16 + 4 * wp_index));
     uint64_t control_bits = reg_value.GetAsUInt64() & ~bit_mask;
-    return WriteRegister(lldb_dr7_x86_64, RegisterValue(control_bits)).Success();
+    return WriteRegister(m_reg_info.first_dr + 7, RegisterValue(control_bits)).Success();
 }
 
 Error
@@ -1152,19 +1152,19 @@ NativeRegisterContextLinux_x86_64::ClearAllHardwareWatchpoints()
     RegisterValue reg_value;
 
     // clear bits {0-4} of the debug status register (DR6)
-    Error error = ReadRegisterRaw(lldb_dr6_x86_64, reg_value);
+    Error error = ReadRegisterRaw(m_reg_info.first_dr + 6, reg_value);
     if (error.Fail()) return error;
     uint64_t bit_mask = 0xF;
     uint64_t status_bits = reg_value.GetAsUInt64() & ~bit_mask;
-    error = WriteRegister(lldb_dr6_x86_64, RegisterValue(status_bits));
+    error = WriteRegister(m_reg_info.first_dr + 6, RegisterValue(status_bits));
     if (error.Fail()) return error;
 
     // clear bits {0-7,16-31} of the debug control register (DR7)
-    error = ReadRegisterRaw(lldb_dr7_x86_64, reg_value);
+    error = ReadRegisterRaw(m_reg_info.first_dr + 7, reg_value);
     if (error.Fail()) return error;
     bit_mask = 0xFF | (0xFFFF << 16);
     uint64_t control_bits = reg_value.GetAsUInt64() & ~bit_mask;
-    return WriteRegister(lldb_dr7_x86_64, RegisterValue(control_bits));
+    return WriteRegister(m_reg_info.first_dr + 7, RegisterValue(control_bits));
 }
 
 uint32_t
