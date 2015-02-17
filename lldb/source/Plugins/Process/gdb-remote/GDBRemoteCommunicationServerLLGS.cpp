@@ -446,24 +446,6 @@ WriteRegisterValueInHexFixedWidth (StreamString &response,
     }
 }
 
-static void
-WriteGdbRegnumWithFixedWidthHexRegisterValue (StreamString &response,
-                                              NativeRegisterContextSP &reg_ctx_sp,
-                                              const RegisterInfo &reg_info,
-                                              const RegisterValue &reg_value)
-{
-    // Output the register number as 'NN:VVVVVVVV;' where NN is a 2 bytes HEX
-    // gdb register number, and VVVVVVVV is the correct number of hex bytes
-    // as ASCII for the register value.
-    if (reg_info.kinds[eRegisterKindGDB] == LLDB_INVALID_REGNUM)
-        return;
-
-    response.Printf ("%.02x:", reg_info.kinds[eRegisterKindGDB]);
-    WriteRegisterValueInHexFixedWidth (response, reg_ctx_sp, reg_info, &reg_value);
-    response.PutChar (';');
-}
-
-
 GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServerLLGS::SendStopReplyPacketForThread (lldb::tid_t tid)
 {
@@ -588,7 +570,11 @@ GDBRemoteCommunicationServerLLGS::SendStopReplyPacketForThread (lldb::tid_t tid)
                     RegisterValue reg_value;
                     Error error = reg_ctx_sp->ReadRegister (reg_info_p, reg_value);
                     if (error.Success ())
-                        WriteGdbRegnumWithFixedWidthHexRegisterValue (response, reg_ctx_sp, *reg_info_p, reg_value);
+                    {
+                        response.Printf ("%.02x:", *reg_num_p);
+                        WriteRegisterValueInHexFixedWidth(response, reg_ctx_sp, *reg_info_p, &reg_value);
+                        response.PutChar (';');
+                    }
                     else
                     {
                         if (log)
