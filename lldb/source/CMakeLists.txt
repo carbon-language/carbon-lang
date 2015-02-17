@@ -113,6 +113,7 @@ add_lldb_library(liblldb SHARED
   API/SBUnixSignals.cpp
   API/SBValue.cpp
   API/SBValueList.cpp
+  API/SBVariablesOptions.cpp
   API/SBWatchpoint.cpp
   Host/Windows/getopt/GetOptInc.cpp
   ${LLDB_WRAP_PYTHON}

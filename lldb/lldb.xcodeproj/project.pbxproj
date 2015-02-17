@@ -767,6 +767,8 @@
 		941BCC8014E48C4000BB969C /* SBTypeFormat.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568714E355F2003A195C /* SBTypeFormat.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		941BCC8114E48C4000BB969C /* SBTypeSummary.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568814E355F2003A195C /* SBTypeSummary.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		941BCC8214E48C4000BB969C /* SBTypeSynthetic.h in Headers */ = {isa = PBXBuildFile; fileRef = 9461568914E355F2003A195C /* SBTypeSynthetic.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		94235B9E1A8D667400EB2EED /* SBVariablesOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94235B9B1A8D5FF300EB2EED /* SBVariablesOptions.cpp */; };
+		94235B9F1A8D66D600EB2EED /* SBVariablesOptions.h in Headers */ = {isa = PBXBuildFile; fileRef = 94235B9A1A8D5FD800EB2EED /* SBVariablesOptions.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		942829561A89614C00521B30 /* JSON.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 942829551A89614C00521B30 /* JSON.cpp */; };
 		942829CC1A89839300521B30 /* liblldb-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2689FFCA13353D7A00698AC0 /* liblldb-core.a */; };
 		942AFF0519F84ABF007B43B4 /* LibCxxVector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 942AFF0419F84ABF007B43B4 /* LibCxxVector.cpp */; };
@@ -2405,6 +2407,9 @@
 		940B04DE1A8986070045D5F7 /* libncurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libncurses.dylib; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/usr/lib/libncurses.dylib; sourceTree = DEVELOPER_DIR; };
 		940B04E01A89860E0045D5F7 /* libedit.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libedit.dylib; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/usr/lib/libedit.dylib; sourceTree = DEVELOPER_DIR; };
 		94145430175D7FDE00284436 /* lldb-versioning.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "lldb-versioning.h"; path = "include/lldb/lldb-versioning.h"; sourceTree = "<group>"; };
+		94235B9A1A8D5FD800EB2EED /* SBVariablesOptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBVariablesOptions.h; path = include/lldb/API/SBVariablesOptions.h; sourceTree = "<group>"; };
+		94235B9B1A8D5FF300EB2EED /* SBVariablesOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBVariablesOptions.cpp; path = source/API/SBVariablesOptions.cpp; sourceTree = "<group>"; };
+		94235B9D1A8D601A00EB2EED /* SBVariablesOptions.i */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBVariablesOptions.i; sourceTree = "<group>"; };
 		942829541A89614000521B30 /* JSON.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = JSON.h; path = include/lldb/Utility/JSON.h; sourceTree = "<group>"; };
 		942829551A89614C00521B30 /* JSON.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = JSON.cpp; path = source/Utility/JSON.cpp; sourceTree = "<group>"; };
 		942829C01A89835300521B30 /* argdumper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = argdumper; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -3182,6 +3187,7 @@
 				9461569514E3567F003A195C /* SBTypeSynthetic.i */,
 				2611FF12142D83060017FEA3 /* SBValue.i */,
 				2611FF13142D83060017FEA3 /* SBValueList.i */,
+				94235B9D1A8D601A00EB2EED /* SBVariablesOptions.i */,
 				B2A5872514313B480092BFBA /* SBWatchpoint.i */,
 			);
 			name = interface;
@@ -3200,8 +3206,6 @@
 		262D3190111B4341004E6F88 /* API */ = {
 			isa = PBXGroup;
 			children = (
-				254FBB961A81B03100BD6378 /* SBLaunchInfo.h */,
-				254FBB941A81AA7F00BD6378 /* SBLaunchInfo.cpp */,
 				254FBBA41A91670E00BD6378 /* SBAttachInfo.cpp */,
 				254FBBA21A9166F100BD6378 /* SBAttachInfo.h */,
 				2611FEEE142D83060017FEA3 /* interface */,
@@ -3259,6 +3263,8 @@
 				9AC703AE117675410086C050 /* SBInstruction.cpp */,
 				9AC7038F117675270086C050 /* SBInstructionList.h */,
 				9AC703B0117675490086C050 /* SBInstructionList.cpp */,
+				254FBB961A81B03100BD6378 /* SBLaunchInfo.h */,
+				254FBB941A81AA7F00BD6378 /* SBLaunchInfo.cpp */,
 				26DE205811618FE700A093E2 /* SBLineEntry.h */,
 				26DE20621161904200A093E2 /* SBLineEntry.cpp */,
 				9A9831021125FC5800A56CB0 /* SBListener.h */,
@@ -3319,6 +3325,8 @@
 				9A19A6AD1163BB9800E0D453 /* SBValue.cpp */,
 				9A357582116CFDEE00E8ED2F /* SBValueList.h */,
 				9A35758D116CFE0F00E8ED2F /* SBValueList.cpp */,
+				94235B9A1A8D5FD800EB2EED /* SBVariablesOptions.h */,
+				94235B9B1A8D5FF300EB2EED /* SBVariablesOptions.cpp */,
 				B2A58721143119810092BFBA /* SBWatchpoint.h */,
 				B2A58723143119D50092BFBA /* SBWatchpoint.cpp */,
 			);
@@ -5223,6 +5231,7 @@
 				26D265A2136B40EE002EEE45 /* SharingPtr.h in Headers */,
 				26D265BC136B4269002EEE45 /* lldb-public.h in Headers */,
 				4CE4F673162C971A00F75CB3 /* SBExpressionOptions.h in Headers */,
+				94235B9F1A8D66D600EB2EED /* SBVariablesOptions.h in Headers */,
 				23EFE389193D1ABC00E54E54 /* SBTypeEnumMember.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -5822,6 +5831,7 @@
 				9AC703AF117675410086C050 /* SBInstruction.cpp in Sources */,
 				9AC703B1117675490086C050 /* SBInstructionList.cpp in Sources */,
 				268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */,
+				94235B9E1A8D667400EB2EED /* SBVariablesOptions.cpp in Sources */,
 				26C72C961243229A0068DC16 /* SBStream.cpp in Sources */,
 				9443B122140C18C40013457C /* SBData.cpp in Sources */,
 				4CF52AF8142829390051E832 /* SBFileSpecList.cpp in Sources */,
