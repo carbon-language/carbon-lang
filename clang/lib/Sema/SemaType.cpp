@@ -1810,13 +1810,7 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
   // exception specification.
   if (CheckDistantExceptionSpec(T)) {
     Diag(Loc, diag::err_distant_exception_spec);
-
-    // FIXME: If we're doing this as part of template instantiation,
-    // we should return immediately.
-
-    // Build the type anyway, but use the canonical type so that the
-    // exception specifiers are stripped off.
-    T = Context.getCanonicalType(T);
+    return QualType();
   }
 
   // C++ 8.3.3p3: A pointer to member shall not point to ... a member

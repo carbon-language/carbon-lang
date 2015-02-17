@@ -12,6 +12,7 @@ class H : A {}; // expected-note 2{{implicitly declared private here}}
 int A::*pdi1;
 int (::A::*pdi2);
 int (A::*pfi)(int);
+void (*A::*ppfie)() throw(); // expected-error {{exception specifications are not allowed beyond a single level of indirection}}
 
 int B::*pbi; // expected-warning{{use of enumeration in a nested name specifier is a C++11 extension}} \
              // expected-error {{'pbi' does not point into a class}}
