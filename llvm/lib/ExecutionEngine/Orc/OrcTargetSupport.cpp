@@ -52,8 +52,9 @@ const char* OrcX86_64::ResolverBlockName = "orc_resolver_block";
 
 void OrcX86_64::insertResolverBlock(
     Module &M, JITCompileCallbackManagerBase<OrcX86_64> &JCBM) {
-  uint64_t CallbackAddr = static_cast<uint64_t>(
-      reinterpret_cast<uintptr_t>(executeCompileCallback<OrcX86_64>));
+  auto CallbackPtr = executeCompileCallback<OrcX86_64>;
+  uint64_t CallbackAddr =
+      static_cast<uint64_t>(reinterpret_cast<uintptr_t>(CallbackPtr));
 
   std::ostringstream AsmStream;
   Triple TT(M.getTargetTriple());
