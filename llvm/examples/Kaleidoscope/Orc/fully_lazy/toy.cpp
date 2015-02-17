@@ -1243,17 +1243,17 @@ public:
       CompileCallbacks.getCompileCallback(*F->getFunctionType());
 
     // Step 3) Create a stub that will indirectly call the body of this
-    //         function. Initialize the function pointer for the indirection to
-    //         point at the compile callback.
+    //         function once it is compiled. Initially, set the function
+    //         pointer for the indirection to point at the compile callback.
     std::string BodyPtrName = (F->getName() + "$address").str();
     GlobalVariable *FunctionBodyPointer =
       createImplPointer(*F, BodyPtrName, CallbackInfo.getAddress());
     makeStub(*F, *FunctionBodyPointer);
 
-    // Step 3) Add the module to the JIT.
+    // Step 4) Add the module containing the stub to the JIT.
     auto H = addModule(C.takeM());
 
-    // Step 4) Set the compile and update actions for the callback. The compile
+    // Step 5) Set the compile and update actions for the callback. The compile
     //         action will IRGen and Codegen the function. The update action
     //         will update FunctionBodyPointer to point at the newly compiled
     //         function pointer.
