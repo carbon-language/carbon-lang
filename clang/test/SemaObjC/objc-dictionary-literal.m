@@ -5,6 +5,20 @@
 
 #define nil ((void *)0)
 
+void checkNSDictionaryUnavailableDiagnostic() {
+  id key;
+  id value;
+  id dict = @{ key : value }; // expected-error {{NSDictionary must be available to use Objective-C dictionary literals}}
+}
+
+@class NSDictionary;
+
+void checkNSDictionaryFDDiagnostic() {
+  id key;
+  id value;
+  id dic = @{ key : value }; // expected-error {{declaration of 'dictionaryWithObjects:forKeys:count:' is missing in NSDictionary class}}
+}
+
 @interface NSNumber
 + (NSNumber *)numberWithChar:(char)value;
 + (NSNumber *)numberWithInt:(int)value;
