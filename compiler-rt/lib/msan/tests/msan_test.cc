@@ -77,6 +77,7 @@ int shmdt(const void *);
 # include <pthread_np.h>
 # include <sys/uio.h>
 # include <sys/mount.h>
+# include <sys/sysctl.h>
 # include <net/ethernet.h>
 # define f_namelen f_namemax  // FreeBSD names this statfs field so.
 # define cpu_set_t cpuset_t
@@ -114,7 +115,8 @@ void *mempcpy(void *dest, const void *src, size_t n);
 # define SUPERUSER_GROUP "root"
 #endif
 
-static const size_t kPageSize = 4096;
+const size_t kPageSize = 4096;
+const size_t kMaxPathLength = 4096;
 
 typedef unsigned char      U1;
 typedef unsigned short     U2;  // NOLINT
@@ -2812,9 +2814,20 @@ TEST(MemorySanitizer, getrusage) {
   EXPECT_NOT_POISONED(usage.ru_nivcsw);
 }
 
-#ifdef __GLIBC__
-extern char *program_invocation_name;
-#else  // __GLIBC__
+#if defined(__FreeBSD__)
+static void GetProgramPath(char *buf, size_t sz) {
+  int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+  int res = sysctl(mib, 4, buf, &sz, NULL, 0);
+  ASSERT_EQ(0, res);
+}
+#elif defined(__GLIBC__)
+static void GetProgramPath(char *buf, size_t sz) {
+  extern char *program_invocation_name;
+  int res = snprintf(buf, sz, "%s", program_invocation_name);
+  ASSERT_GE(res, 0);
+  ASSERT_LT((size_t)res, sz);
+}
+#else
 # error "TODO: port this"
 #endif
 
@@ -2849,21 +2862,24 @@ static int dl_phdr_callback(struct dl_phdr_info *info, size_t size, void *data) 
 
 // Compute the path to our loadable DSO.  We assume it's in the same
 // directory.  Only use string routines that we intercept so far to do this.
-static int PathToLoadable(char *buf, size_t sz) {
-  const char *basename = "libmsan_loadable.x86_64.so";
-  char *argv0 = program_invocation_name;
-  char *last_slash = strrchr(argv0, '/');
-  assert(last_slash);
-  int res =
-      snprintf(buf, sz, "%.*s/%s", int(last_slash - argv0), argv0, basename);
-  assert(res >= 0);
-  return (size_t)res < sz ? 0 : res;
+static void GetPathToLoadable(char *buf, size_t sz) {
+  char program_path[kMaxPathLength];
+  GetProgramPath(program_path, sizeof(program_path));
+
+  const char *last_slash = strrchr(program_path, '/');
+  ASSERT_NE(nullptr, last_slash);
+  size_t dir_len = (size_t)(last_slash - program_path);
+
+  static const char basename[] = "libmsan_loadable.x86_64.so";
+  int res = snprintf(buf, sz, "%.*s/%s",
+                     (int)dir_len, program_path, basename);
+  ASSERT_GE(res, 0);
+  ASSERT_LT((size_t)res, sz);
 }
 
 TEST(MemorySanitizer, dl_iterate_phdr) {
-  char path[4096];
-  int res = PathToLoadable(path, sizeof(path));
-  ASSERT_EQ(0, res);
+  char path[kMaxPathLength];
+  GetPathToLoadable(path, sizeof(path));
 
   // Having at least one dlopen'ed library in the process makes this more
   // entertaining.
@@ -2873,15 +2889,13 @@ TEST(MemorySanitizer, dl_iterate_phdr) {
   int count = 0;
   int result = dl_iterate_phdr(dl_phdr_callback, &count);
   ASSERT_GT(count, 0);
-  
+
   dlclose(lib);
 }
 
-
 TEST(MemorySanitizer, dlopen) {
-  char path[4096];
-  int res = PathToLoadable(path, sizeof(path));
-  ASSERT_EQ(0, res);
+  char path[kMaxPathLength];
+  GetPathToLoadable(path, sizeof(path));
 
   // We need to clear shadow for globals when doing dlopen.  In order to test
   // this, we have to poison the shadow for the DSO before we load it.  In
