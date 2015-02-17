@@ -11,6 +11,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
+#include <vector>
 using namespace llvm;
 
 // Check that the ArrayRef-of-pointer converting constructor only allows adding
@@ -90,9 +91,9 @@ TEST(ArrayRefTest, ConstConvert) {
   a = ArrayRef<int *>(A);
 }
 
-static ArrayRef<int> ReturnTest12() { return {1, 2}; }
+static std::vector<int> ReturnTest12() { return {1, 2}; }
 static void ArgTest12(ArrayRef<int> A) {
-  EXPECT_EQ(2, A.size());
+  EXPECT_EQ(2U, A.size());
   EXPECT_EQ(1, A[0]);
   EXPECT_EQ(2, A[1]);
 }
@@ -102,7 +103,8 @@ TEST(ArrayRefTest, InitializerList) {
   for (int i = 0; i < 5; ++i)
     EXPECT_EQ(i, A[i]);
 
-  A = ReturnTest12();
+  std::vector<int> B = ReturnTest12();
+  A = B;
   EXPECT_EQ(1, A[0]);
   EXPECT_EQ(2, A[1]);
 
