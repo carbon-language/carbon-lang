@@ -49,9 +49,8 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
     : PPCGenSubtargetInfo(TT, CPU, FS), TargetTriple(TT),
       IsPPC64(TargetTriple.getArch() == Triple::ppc64 ||
               TargetTriple.getArch() == Triple::ppc64le),
-      TargetABI(PPC_ABI_UNKNOWN), TM(TM),
-      FrameLowering(initializeSubtargetDependencies(CPU, FS)), InstrInfo(*this),
-      TLInfo(TM, *this), TSInfo(TM.getDataLayout()) {}
+      TM(TM), FrameLowering(initializeSubtargetDependencies(CPU, FS)),
+      InstrInfo(*this), TLInfo(TM, *this), TSInfo(TM.getDataLayout()) {}
 
 void PPCSubtarget::initializeEnvironment() {
   StackAlignment = 16;
@@ -132,16 +131,6 @@ void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
 
   // Determine endianness.
   IsLittleEndian = (TargetTriple.getArch() == Triple::ppc64le);
-
-  // Determine default ABI.
-  if (TargetABI == PPC_ABI_UNKNOWN) {
-    if (!isDarwin() && IsPPC64) {
-      if (IsLittleEndian)
-        TargetABI = PPC_ABI_ELFv2;
-      else
-        TargetABI = PPC_ABI_ELFv1;
-    }
-  }
 }
 
 /// hasLazyResolverStub - Return true if accesses to the specified global have
@@ -215,3 +204,5 @@ bool PPCSubtarget::enableSubRegLiveness() const {
   return UseSubRegLiveness;
 }
 
+bool PPCSubtarget::isELFv2ABI() const { return TM.isELFv2ABI(); }
+bool PPCSubtarget::isPPC64() const { return TM.isPPC64(); }

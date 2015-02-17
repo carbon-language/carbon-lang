@@ -123,6 +123,30 @@ static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
   return make_unique<PPC64LinuxTargetObjectFile>();
 }
 
+static PPCTargetMachine::PPCABI computeTargetABI(const Triple &TT,
+                                                 const TargetOptions &Options) {
+  if (Options.MCOptions.getABIName().startswith("elfv1"))
+    return PPCTargetMachine::PPC_ABI_ELFv1;
+  else if (Options.MCOptions.getABIName().startswith("elfv2"))
+    return PPCTargetMachine::PPC_ABI_ELFv2;
+
+  assert(Options.MCOptions.getABIName().empty() &&
+	 "Unknown target-abi option!");
+
+  if (!TT.isMacOSX()) {
+    switch (TT.getArch()) {
+    case Triple::ppc64le:
+      return PPCTargetMachine::PPC_ABI_ELFv2;
+    case Triple::ppc64:
+      return PPCTargetMachine::PPC_ABI_ELFv1;
+    default:
+      // Fallthrough.
+      ;
+    }
+  }
+  return PPCTargetMachine::PPC_ABI_UNKNOWN;
+}
+
 // The FeatureString here is a little subtle. We are modifying the feature string
 // with what are (currently) non-function specific overrides as it goes into the
 // LLVMTargetMachine constructor and then using the stored value in the
@@ -134,6 +158,7 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT, StringRef CPU,
     : LLVMTargetMachine(T, TT, CPU, computeFSAdditions(FS, OL, TT), Options, RM,
                         CM, OL),
       TLOF(createTLOF(Triple(getTargetTriple()))),
+      TargetABI(computeTargetABI(Triple(TT), Options)),
       DL(getDataLayoutString(Triple(TT))), Subtarget(TT, CPU, TargetFS, *this) {
   initAsmInfo();
 }
