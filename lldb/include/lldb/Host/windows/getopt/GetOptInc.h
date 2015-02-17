@@ -21,13 +21,13 @@ struct option
 int getopt( int argc, char * const argv[], const char *optstring );
 
 // from getopt.h
-extern LLDB_API char * optarg;
-extern LLDB_API int    optind;
+extern char * optarg;
+extern int    optind;
 extern int    opterr;
 extern int    optopt;
 
 // defined in unistd.h
-extern LLDB_API int    optreset;
+extern int    optreset;
 
 int getopt_long
 (
@@ -38,7 +38,7 @@ int getopt_long
     int *longindex
 );
 
-LLDB_API int getopt_long_only
+int getopt_long_only
 (
     int argc,
     char * const *argv,

@@ -25,12 +25,7 @@ include_directories(
   )
 endif ()
 
-# Need to export the API in the liblldb.dll for Windows
-# The lldbAPI source files are added directly in liblldb
-if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows" )
-  add_subdirectory(API)
-endif ()
-
+add_subdirectory(API)
 add_subdirectory(Breakpoint)
 add_subdirectory(Commands)
 add_subdirectory(Core)
@@ -45,90 +40,16 @@ add_subdirectory(Utility)
 
 include(../cmake/LLDBDependencies.cmake)
 
-if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
-add_definitions( -DEXPORT_LIBLLDB )
-endif()
-
-# Need to export the API in the liblldb.dll for Windows
-# The lldbAPI source files are added directly in liblldb
-if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
-# On Non-Windows, the corresponding file list is maintained in
-# source\API\CMakeLists.txt.  When editing this list, do not forget to make a
-# corresponding change in that file as well (when appropriate).
-add_lldb_library(liblldb SHARED
-  lldb.cpp
-  lldb-log.cpp
-  API/SBAddress.cpp
-  API/SBAttachInfo.cpp
-  API/SBBlock.cpp
-  API/SBBreakpoint.cpp
-  API/SBBreakpointLocation.cpp
-  API/SBBroadcaster.cpp
-  API/SBCommandInterpreter.cpp
-  API/SBCommandReturnObject.cpp
-  API/SBCommunication.cpp
-  API/SBCompileUnit.cpp
-  API/SBData.cpp
-  API/SBDebugger.cpp
-  API/SBDeclaration.cpp
-  API/SBError.cpp
-  API/SBEvent.cpp
-  API/SBExecutionContext.cpp
-  API/SBExpressionOptions.cpp
-  API/SBFileSpec.cpp
-  API/SBFileSpecList.cpp
-  API/SBFrame.cpp
-  API/SBFunction.cpp
-  API/SBHostOS.cpp
-  API/SBInstruction.cpp
-  API/SBInstructionList.cpp
-  API/SBLaunchInfo.cpp
-  API/SBLineEntry.cpp
-  API/SBListener.cpp
-  API/SBModule.cpp
-  API/SBModuleSpec.cpp
-  API/SBPlatform.cpp
-  API/SBProcess.cpp
-  API/SBQueue.cpp
-  API/SBQueueItem.cpp
-  API/SBSection.cpp
-  API/SBSourceManager.cpp
-  API/SBStream.cpp
-  API/SBStringList.cpp
-  API/SBSymbol.cpp
-  API/SBSymbolContext.cpp
-  API/SBSymbolContextList.cpp
-  API/SBTarget.cpp
-  API/SBThread.cpp
-  API/SBThreadPlan.cpp
-  API/SBThreadCollection.cpp
-  API/SBType.cpp
-  API/SBTypeCategory.cpp
-  API/SBTypeEnumMember.cpp
-  API/SBTypeFilter.cpp
-  API/SBTypeFormat.cpp
-  API/SBTypeNameSpecifier.cpp
-  API/SBTypeSummary.cpp
-  API/SBTypeSynthetic.cpp
-  API/SBUnixSignals.cpp
-  API/SBValue.cpp
-  API/SBValueList.cpp
-  API/SBVariablesOptions.cpp
-  API/SBWatchpoint.cpp
-  Host/Windows/getopt/GetOptInc.cpp
-  ${LLDB_WRAP_PYTHON}
-  ${LLDB_VERS_GENERATED_FILE}
-  )
-else ()
 add_lldb_library(liblldb SHARED
   lldb.cpp
   lldb-log.cpp
   ${LLDB_WRAP_PYTHON}
   ${LLDB_VERS_GENERATED_FILE}
   )
-endif ()
 
 if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
+target_link_libraries(liblldb PRIVATE lldbAPI)
+
 set_target_properties(liblldb
   PROPERTIES
   OUTPUT_NAME liblldb
