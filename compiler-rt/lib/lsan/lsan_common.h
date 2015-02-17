@@ -27,6 +27,10 @@
 #define CAN_SANITIZE_LEAKS 0
 #endif
 
+namespace __sanitizer {
+class FlagParser;
+}
+
 namespace __lsan {
 
 // Chunk tags.
@@ -50,6 +54,7 @@ struct Flags {
 
 extern Flags lsan_flags;
 inline Flags *flags() { return &lsan_flags; }
+void RegisterLsanFlags(FlagParser *parser, Flags *f);
 
 struct Leak {
   u32 id;
@@ -105,7 +110,7 @@ enum IgnoreObjectResult {
 };
 
 // Functions called from the parent tool.
-void InitCommonLsan(bool standalone);
+void InitCommonLsan();
 void DoLeakCheck();
 bool DisabledInThisThread();
 
