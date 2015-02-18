@@ -1077,7 +1077,8 @@ bool LoopAccessInfo::blockNeedsPredication(BasicBlock *BB)  {
 }
 
 void LoopAccessInfo::emitAnalysis(VectorizationReport &Message) {
-  VectorizationReport::emitAnalysis(Message, TheFunction, TheLoop);
+  assert(!Report && "Multiple report generated");
+  Report = Message;
 }
 
 bool LoopAccessInfo::isUniform(Value *V) {

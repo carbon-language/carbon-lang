@@ -16,6 +16,7 @@
 #define LLVM_ANALYSIS_LOOPACCESSANALYSIS_H
 
 #include "llvm/ADT/EquivalenceClasses.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
@@ -129,11 +130,11 @@ public:
     SmallVector<unsigned, 2> AliasSetId;
   };
 
-  LoopAccessInfo(Function *F, Loop *L, ScalarEvolution *SE,
-                 const DataLayout *DL, const TargetLibraryInfo *TLI,
-                 AliasAnalysis *AA, DominatorTree *DT) :
-      TheFunction(F), TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA), DT(DT),
-      NumLoads(0), NumStores(0), MaxSafeDepDistBytes(-1U) {}
+  LoopAccessInfo(Loop *L, ScalarEvolution *SE, const DataLayout *DL,
+                 const TargetLibraryInfo *TLI, AliasAnalysis *AA,
+                 DominatorTree *DT) :
+      TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA), DT(DT), NumLoads(0),
+      NumStores(0), MaxSafeDepDistBytes(-1U) {}
 
   /// Return true we can analyze the memory accesses in the loop and there are
   /// no memory dependence cycles.  Replaces symbolic strides using Strides.
@@ -159,13 +160,16 @@ public:
   /// second value is the final comparator value or NULL if no check is needed.
   std::pair<Instruction *, Instruction *> addRuntimeCheck(Instruction *Loc);
 
+  /// \brief The diagnostics report generated for the analysis.  E.g. why we
+  /// couldn't analyze the loop.
+  Optional<VectorizationReport> &getReport() { return Report; }
+
 private:
   void emitAnalysis(VectorizationReport &Message);
 
   /// We need to check that all of the pointers in this list are disjoint
   /// at runtime.
   RuntimePointerCheck PtrRtCheck;
-  Function *TheFunction;
   Loop *TheLoop;
   ScalarEvolution *SE;
   const DataLayout *DL;
@@ -177,6 +181,10 @@ private:
   unsigned NumStores;
 
   unsigned MaxSafeDepDistBytes;
+
+  /// \brief The diagnostics report generated for the analysis.  E.g. why we
+  /// couldn't analyze the loop.
+  Optional<VectorizationReport> Report;
 };
 
 Value *stripIntegerCast(Value *V);
