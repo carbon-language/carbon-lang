@@ -1266,7 +1266,7 @@ public:
       return findSymbolIn(H, Fn->Proto->Name).getAddress();
     });
     CallbackInfo.setUpdateAction(
-      CompileCallbacks.getLocalFPUpdater(H, BodyPtrName));
+      CompileCallbacks.getLocalFPUpdater(H, Mangle(BodyPtrName)));
   }
 
 private:
