@@ -419,12 +419,12 @@ multiclass SOP1_64_0 <sop1 op, string opName, list<dag> pattern> {
 
   def _si : SOP1_Real_si <op, opName, (outs SReg_64:$dst), (ins),
     opName#" $dst"> {
-    let SSRC0 = 0;
+    let ssrc0 = 0;
   }
 
   def _vi : SOP1_Real_vi <op, opName, (outs SReg_64:$dst), (ins),
     opName#" $dst"> {
-    let SSRC0 = 0;
+    let ssrc0 = 0;
   }
 }
 
@@ -1986,7 +1986,7 @@ class MIMG_NoSampler_Helper <bits<7> op, string asm,
   asm#" $vdata, $dmask, $unorm, $glc, $da, $r128,"
      #" $tfe, $lwe, $slc, $vaddr, $srsrc",
   []> {
-  let SSAMP = 0;
+  let ssamp = 0;
   let mayLoad = 1;
   let mayStore = 0;
   let hasPostISelHook = 1;

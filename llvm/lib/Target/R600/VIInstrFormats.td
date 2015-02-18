@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 class DSe_vi <bits<8> op> : Enc64 {
-
   bits<8> vdst;
   bits<1> gds;
   bits<8> addr;
@@ -33,7 +32,6 @@ class DSe_vi <bits<8> op> : Enc64 {
 }
 
 class MUBUFe_vi <bits<7> op> : Enc64 {
-
   bits<12> offset;
   bits<1> offen;
   bits<1> idxen;
@@ -62,7 +60,6 @@ class MUBUFe_vi <bits<7> op> : Enc64 {
 }
 
 class MTBUFe_vi <bits<4> op> : Enc64 {
-
   bits<12> offset;
   bits<1>  offen;
   bits<1>  idxen;
@@ -93,7 +90,6 @@ class MTBUFe_vi <bits<4> op> : Enc64 {
 }
 
 class SMEMe_vi <bits<8> op, bit imm> : Enc64 {
-
   bits<7>  sbase;
   bits<7>  sdata;
   bits<1>  glc;
@@ -109,7 +105,6 @@ class SMEMe_vi <bits<8> op, bit imm> : Enc64 {
 }
 
 class VOP3e_vi <bits<10> op> : Enc64 {
-
   bits<8> dst;
   bits<2> src0_modifiers;
   bits<9> src0;
