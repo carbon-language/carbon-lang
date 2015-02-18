@@ -10,6 +10,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfoMetadata.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Metadata.h"
@@ -1187,6 +1188,42 @@ TEST_F(MDSubprogramTest, get) {
 
   TempMDSubprogram Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
+}
+
+TEST_F(MDSubprogramTest, replaceFunction) {
+  Metadata *Scope = MDTuple::getDistinct(Context, None);
+  StringRef Name = "name";
+  StringRef LinkageName = "linkage";
+  Metadata *File = MDTuple::getDistinct(Context, None);
+  unsigned Line = 2;
+  Metadata *Type = MDTuple::getDistinct(Context, None);
+  bool IsLocalToUnit = false;
+  bool IsDefinition = true;
+  unsigned ScopeLine = 3;
+  Metadata *ContainingType = MDTuple::getDistinct(Context, None);
+  unsigned Virtuality = 4;
+  unsigned VirtualIndex = 5;
+  unsigned Flags = 6;
+  bool IsOptimized = false;
+  Metadata *TemplateParams = MDTuple::getDistinct(Context, None);
+  Metadata *Declaration = MDTuple::getDistinct(Context, None);
+  Metadata *Variables = MDTuple::getDistinct(Context, None);
+
+  auto *N = MDSubprogram::get(
+      Context, Scope, Name, LinkageName, File, Line, Type, IsLocalToUnit,
+      IsDefinition, ScopeLine, ContainingType, Virtuality, VirtualIndex, Flags,
+      IsOptimized, nullptr, TemplateParams, Declaration, Variables);
+
+  EXPECT_EQ(nullptr, N->getFunction());
+
+  std::unique_ptr<Function> F(
+      Function::Create(FunctionType::get(Type::getVoidTy(Context), false),
+                       GlobalValue::ExternalLinkage));
+  N->replaceFunction(F.get());
+  EXPECT_EQ(ConstantAsMetadata::get(F.get()), N->getFunction());
+
+  N->replaceFunction(nullptr);
+  EXPECT_EQ(nullptr, N->getFunction());
 }
 
 typedef MetadataTest MDLexicalBlockTest;

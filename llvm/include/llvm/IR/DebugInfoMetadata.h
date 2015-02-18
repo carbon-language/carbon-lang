@@ -968,6 +968,17 @@ public:
   Metadata *getDeclaration() const { return getOperand(9); }
   Metadata *getVariables() const { return getOperand(10); }
 
+  /// \brief Replace the function.
+  ///
+  /// If \a isUniqued() and not \a isResolved(), this could node will be
+  /// RAUW'ed and deleted out from under the caller.  Use a \a TrackingMDRef if
+  /// that's a problem.
+  /// @{
+  void replaceFunction(Function *F);
+  void replaceFunction(ConstantAsMetadata *MD) { replaceOperandWith(7, MD); }
+  void replaceFunction(std::nullptr_t) { replaceOperandWith(7, nullptr); }
+  /// @}
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDSubprogramKind;
   }

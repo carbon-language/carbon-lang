@@ -14,6 +14,7 @@
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "LLVMContextImpl.h"
 #include "MetadataImpl.h"
+#include "llvm/IR/Function.h"
 
 using namespace llvm;
 
@@ -262,6 +263,11 @@ MDSubprogram *MDSubprogram::getImpl(
                        (Line, ScopeLine, Virtuality, VirtualIndex, Flags,
                         IsLocalToUnit, IsDefinition, IsOptimized),
                        Ops);
+}
+
+void MDSubprogram::replaceFunction(Function *F) {
+  replaceFunction(F ? ConstantAsMetadata::get(F)
+                    : static_cast<ConstantAsMetadata *>(nullptr));
 }
 
 MDLexicalBlock *MDLexicalBlock::getImpl(LLVMContext &Context, Metadata *Scope,
