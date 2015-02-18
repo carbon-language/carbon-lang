@@ -8,25 +8,40 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements a tool that checks whether a set of headers provides
-// the consistent definitions required to use modules. For example, it detects
-// whether the same entity (say, a NULL macro or size_t typedef) is defined in
-// multiple headers or whether a header produces different definitions under
+// the consistent definitions required to use modules.  It can also check an
+// existing module map for full coverage of the headers in a directory tree.
+//
+// For example, in examining headers, it detects whether the same entity
+// (say, a NULL macro or size_t typedef) is defined in multiple headers
+// or whether a header produces different definitions under
 // different circumstances. These conditions cause modules built from the
 // headers to behave poorly, and should be fixed before introducing a module
 // map.
 //
-// Modularize takes as argument one or more file names for files containing
-// newline-separated lists of headers to check with respect to each other.
+// Modularize takes as input either one or more module maps (by default,
+// "module.modulemap") or one or more text files contatining lists of headers
+// to check.
+//
+// In the case of a module map, the module map must be well-formed in
+// terms of syntax.  Modularize will extract the header file names
+// from the map.  Only normal headers are checked, assuming headers
+// marked "private", "textual", or "exclude" are not to be checked
+// as a top-level include, assuming they either are included by
+// other headers which are checked, or they are not suitable for
+// modules.
+//
+// In the case of a file list, the list is a newline-separated list of headers
+// to check with respect to each other.
 // Lines beginning with '#' and empty lines are ignored.
 // Header file names followed by a colon and other space-separated
 // file names will include those extra files as dependencies.
 // The file names can be relative or full paths, but must be on the
 // same line.
 //
-// Modularize also accepts regular front-end arguments.
+// Modularize also accepts regular clang front-end arguments.
 //
-// Usage:   modularize [-prefix (optional header path prefix)]
-//   (include-files_list)[,(include-files_list)]* [(front-end-options) ...]
+// Usage:   modularize [(modularize options)]
+//   [(include-files_list)|(module map)]+ [(front-end-options) ...]
 //
 // Options:
 //    -prefix (optional header path prefix)

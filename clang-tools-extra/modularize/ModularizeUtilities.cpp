@@ -14,22 +14,48 @@
 //===----------------------------------------------------------------------===//
 
 #include "ModularizeUtilities.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Driver/Options.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/FrontendActions.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
+using namespace clang;
 using namespace llvm;
 using namespace Modularize;
+
+// Subclass TargetOptions so we can construct it inline with
+// the minimal option, the triple.
+class ModuleMapTargetOptions : public clang::TargetOptions {
+public:
+  ModuleMapTargetOptions() { Triple = llvm::sys::getDefaultTargetTriple(); }
+};
 
 // ModularizeUtilities class implementation.
 
 // Constructor.
 ModularizeUtilities::ModularizeUtilities(std::vector<std::string> &InputPaths,
                                          llvm::StringRef Prefix)
-    : InputFilePaths(InputPaths),
-      HeaderPrefix(Prefix) {}
+  : InputFilePaths(InputPaths),
+    HeaderPrefix(Prefix),
+    // Init clang stuff needed for loading the module map and preprocessing.
+    LangOpts(new LangOptions()), DiagIDs(new DiagnosticIDs()),
+    DiagnosticOpts(new DiagnosticOptions()),
+    DC(llvm::errs(), DiagnosticOpts.get()),
+    Diagnostics(
+    new DiagnosticsEngine(DiagIDs, DiagnosticOpts.get(), &DC, false)),
+    TargetOpts(new ModuleMapTargetOptions()),
+    Target(TargetInfo::CreateTargetInfo(*Diagnostics, TargetOpts)),
+    FileMgr(new FileManager(FileSystemOpts)),
+    SourceMgr(new SourceManager(*Diagnostics, *FileMgr, false)),
+    HeaderSearchOpts(new HeaderSearchOptions()),
+    HeaderInfo(new HeaderSearch(HeaderSearchOpts, *SourceMgr, *Diagnostics,
+    *LangOpts, Target.get())) {
+}
 
 // Create instance of ModularizeUtilities, to simplify setting up
 // subordinate objects.
@@ -42,11 +68,22 @@ ModularizeUtilities *ModularizeUtilities::createModularizeUtilities(
 // Load all header lists and dependencies.
 std::error_code ModularizeUtilities::loadAllHeaderListsAndDependencies() {
   typedef std::vector<std::string>::iterator Iter;
+  // For each input file.
   for (Iter I = InputFilePaths.begin(), E = InputFilePaths.end(); I != E; ++I) {
-    if (std::error_code EC = loadSingleHeaderListsAndDependencies(*I)) {
-      errs() << "modularize: error: Unable to get header list '" << *I
-        << "': " << EC.message() << '\n';
-      return EC;
+    llvm::StringRef InputPath = *I;
+    // If it's a module map.
+    if (InputPath.endswith(".modulemap")) {
+      // Load the module map.
+      if (std::error_code EC = loadModuleMap(InputPath))
+        return EC;
+    }
+    else {
+      // Else we assume it's a header list and load it.
+      if (std::error_code EC = loadSingleHeaderListsAndDependencies(InputPath)) {
+        errs() << "modularize: error: Unable to get header list '" << InputPath
+          << "': " << EC.message() << '\n';
+        return EC;
+      }
     }
   }
   return std::error_code();
@@ -125,6 +162,156 @@ std::error_code ModularizeUtilities::loadSingleHeaderListsAndDependencies(
   return std::error_code();
 }
 
+// Load single module map and extract header file list.
+std::error_code ModularizeUtilities::loadModuleMap(
+    llvm::StringRef InputPath) {
+  // Get file entry for module.modulemap file.
+  const FileEntry *ModuleMapEntry =
+    SourceMgr->getFileManager().getFile(InputPath);
+
+  // return error if not found.
+  if (!ModuleMapEntry) {
+    llvm::errs() << "error: File \"" << InputPath << "\" not found.\n";
+    return std::error_code(1, std::generic_category());
+  }
+
+  // Because the module map parser uses a ForwardingDiagnosticConsumer,
+  // which doesn't forward the BeginSourceFile call, we do it explicitly here.
+  DC.BeginSourceFile(*LangOpts, nullptr);
+
+  // Figure out the home directory for the module map file.
+  const DirectoryEntry *Dir = ModuleMapEntry->getDir();
+  StringRef DirName(Dir->getName());
+  if (llvm::sys::path::filename(DirName) == "Modules") {
+    DirName = llvm::sys::path::parent_path(DirName);
+    if (DirName.endswith(".framework"))
+      Dir = FileMgr->getDirectory(DirName);
+    // FIXME: This assert can fail if there's a race between the above check
+    // and the removal of the directory.
+    assert(Dir && "parent must exist");
+  }
+
+  std::unique_ptr<ModuleMap> ModMap;
+  ModMap.reset(new ModuleMap(*SourceMgr, *Diagnostics, *LangOpts,
+    Target.get(), *HeaderInfo));
+
+  // Parse module.modulemap file into module map.
+  if (ModMap->parseModuleMapFile(ModuleMapEntry, false, Dir)) {
+    return std::error_code(1, std::generic_category());
+  }
+
+  // Do matching end call.
+  DC.EndSourceFile();
+
+  if (!collectModuleMapHeaders(ModMap.get()))
+    return std::error_code(1, std::generic_category());
+
+  // Save module map.
+  ModuleMaps.push_back(std::move(ModMap));
+
+  return std::error_code();
+}
+
+// Collect module map headers.
+// Walks the modules and collects referenced headers into
+// ModuleMapHeadersSet.
+bool ModularizeUtilities::collectModuleMapHeaders(clang::ModuleMap *ModMap) {
+  for (ModuleMap::module_iterator I = ModMap->module_begin(),
+    E = ModMap->module_end();
+    I != E; ++I) {
+    if (!collectModuleHeaders(*I->second))
+      return false;
+  }
+  return true;
+}
+
+// Collect referenced headers from one module.
+// Collects the headers referenced in the given module into
+// HeaderFileNames and ModuleMapHeadersSet.
+bool ModularizeUtilities::collectModuleHeaders(const Module &Mod) {
+
+  // Ignore explicit modules because they often have dependencies
+  // we can't know.
+  if (Mod.IsExplicit)
+    return true;
+
+  // Treat headers in umbrella directory as dependencies.
+  DependentsVector UmbrellaDependents;
+
+  // Recursively do submodules.
+  for (Module::submodule_const_iterator MI = Mod.submodule_begin(),
+      MIEnd = Mod.submodule_end();
+      MI != MIEnd; ++MI)
+    collectModuleHeaders(**MI);
+
+  if (const FileEntry *UmbrellaHeader = Mod.getUmbrellaHeader()) {
+    std::string HeaderPath = getCanonicalPath(UmbrellaHeader->getName());
+    // Collect umbrella header.
+    HeaderFileNames.push_back(HeaderPath);
+    ModuleMapHeadersSet.insert(HeaderPath);
+
+    // FUTURE: When needed, umbrella header header collection goes here.
+  }
+  else if (const DirectoryEntry *UmbrellaDir = Mod.getUmbrellaDir()) {
+    // If there normal headers, assume these are umbrellas and skip collection.
+    if (Mod.Headers->size() == 0) {
+      // Collect headers in umbrella directory.
+      if (!collectUmbrellaHeaders(UmbrellaDir->getName(), UmbrellaDependents))
+        return false;
+    }
+  }
+
+  // We ignore HK_Private, HK_Textual, HK_PrivateTextual, and HK_Excluded,
+  // assuming they are marked as such either because of unsuitability for
+  // modules or because they are meant to be included by another header,
+  // and thus should be ignored by modularize.
+
+  int NormalHeaderCount = Mod.Headers[clang::Module::HK_Normal].size();
+
+  for (int Index = 0; Index < NormalHeaderCount; ++Index) {
+    DependentsVector NormalDependents;
+    // Collect normal header.
+    const clang::Module::Header &Header(
+      Mod.Headers[clang::Module::HK_Normal][Index]);
+    std::string HeaderPath = getCanonicalPath(Header.Entry->getName());
+    HeaderFileNames.push_back(HeaderPath);
+  }
+
+  return true;
+}
+
+// Collect headers from an umbrella directory.
+bool ModularizeUtilities::collectUmbrellaHeaders(StringRef UmbrellaDirName,
+  DependentsVector &Dependents) {
+  // Initialize directory name.
+  SmallString<256> Directory(UmbrellaDirName);
+  // Walk the directory.
+  std::error_code EC;
+  llvm::sys::fs::file_status Status;
+  for (llvm::sys::fs::directory_iterator I(Directory.str(), EC), E; I != E;
+    I.increment(EC)) {
+    if (EC)
+      return false;
+    std::string File(I->path());
+    I->status(Status);
+    llvm::sys::fs::file_type Type = Status.type();
+    // If the file is a directory, ignore the name and recurse.
+    if (Type == llvm::sys::fs::file_type::directory_file) {
+      if (!collectUmbrellaHeaders(File, Dependents))
+        return false;
+      continue;
+    }
+    // If the file does not have a common header extension, ignore it.
+    if (!isHeader(File))
+      continue;
+    // Save header name.
+    std::string HeaderPath = getCanonicalPath(File);
+    ModuleMapHeadersSet.insert(HeaderPath);
+    Dependents.push_back(HeaderPath);
+  }
+  return true;
+}
+
 // Convert header path to canonical form.
 // The canonical form is basically just use forward slashes, and remove "./".
 // \param FilePath The file path, relative to the module map directory.
@@ -136,4 +323,20 @@ std::string ModularizeUtilities::getCanonicalPath(StringRef FilePath) {
   if (Tmp2.startswith("./"))
     Tmp = Tmp2.substr(2);
   return Tmp;
+}
+
+// Check for header file extension.
+// If the file extension is .h, .inc, or missing, it's
+// assumed to be a header.
+// \param FileName The file name.  Must not be a directory.
+// \returns true if it has a header extension or no extension.
+bool ModularizeUtilities::isHeader(StringRef FileName) {
+  StringRef Extension = llvm::sys::path::extension(FileName);
+  if (Extension.size() == 0)
+    return false;
+  if (Extension.equals_lower(".h"))
+    return true;
+  if (Extension.equals_lower(".inc"))
+    return true;
+  return false;
 }

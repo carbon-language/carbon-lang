@@ -2,12 +2,21 @@
 Modularize Usage
 ================
 
-``modularize [<modularize-options>] <include-files-list>[,<include-files-list>]*
+``modularize [<modularize-options>] [<module-map>|<include-files-list>]*
 [<front-end-options>...]``
 
 ``<modularize-options>`` is a place-holder for options
 specific to modularize, which are described below in
 `Modularize Command Line Options`.
+
+``<module-map>`` specifies the path of a file name for an
+existing module map.  The module map must be well-formed in
+terms of syntax.  Modularize will extract the header file names
+from the map.  Only normal headers are checked, assuming headers
+marked "private", "textual", or "exclude" are not to be checked
+as a top-level include, assuming they either are included by
+other headers which are checked, or they are not suitable for
+modules.
 
 ``<include-files-list>`` specifies the path of a file name for a
 file containing the newline-separated list of headers to check
