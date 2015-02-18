@@ -7946,39 +7946,34 @@ static SDValue lowerVectorShuffleAsBitShift(SDLoc DL, MVT VT, SDValue V1,
   // PSHL : (little-endian) left bit shift.
   // [ zz, 0, zz,  2 ]
   // [ -1, 4, zz, -1 ]
-  auto MatchBitShift = [&](int Shift, int Scale) -> SDValue {
+
+  auto CheckZeros = [&](int Shift, int Scale, bool Left) {
+    for (int i = 0; i < Size; i += Scale)
+      for (int j = 0; j < Shift; ++j)
+        if (!Zeroable[i + j + (Left ? 0 : (Scale - Shift))])
+          return false;
+
+    return true;
+  };
+
+  auto MatchBitShift = [&](int Shift, int Scale, bool Left, SDValue V) {
     MVT ShiftSVT = MVT::getIntegerVT(VT.getScalarSizeInBits() * Scale);
     MVT ShiftVT = MVT::getVectorVT(ShiftSVT, Size / Scale);
     assert(DAG.getTargetLoweringInfo().isTypeLegal(ShiftVT) &&
            "Illegal integer vector type");
 
-    bool MatchLeft = true, MatchRight = true;
     for (int i = 0; i != Size; i += Scale) {
-      for (int j = 0; j != Shift; ++j) {
-        MatchLeft &= Zeroable[i + j];
-      }
-      for (int j = Scale - Shift; j != Scale; ++j) {
-        MatchRight &= Zeroable[i + j];
-      }
-    }
-    if (!(MatchLeft || MatchRight))
-      return SDValue();
-
-    bool MatchV1 = true, MatchV2 = true;
-    for (int i = 0; i != Size; i += Scale) {
-      unsigned Pos = MatchLeft ? i + Shift : i;
-      unsigned Low = MatchLeft ? i : i + Shift;
+      unsigned Pos = Left ? i + Shift : i;
+      unsigned Low = Left ? i : i + Shift;
       unsigned Len = Scale - Shift;
-      MatchV1 &= isSequentialOrUndefInRange(Mask, Pos, Len, Low);
-      MatchV2 &= isSequentialOrUndefInRange(Mask, Pos, Len, Low + Size);
+      if (!isSequentialOrUndefInRange(Mask, Pos, Len,
+                                      Low + (V == V1 ? 0 : Size)))
+        return SDValue();
     }
-    if (!(MatchV1 || MatchV2))
-      return SDValue();
 
     // Cast the inputs to ShiftVT to match VSRLI/VSHLI and back again.
-    unsigned OpCode = MatchLeft ? X86ISD::VSHLI : X86ISD::VSRLI;
+    unsigned OpCode = Left ? X86ISD::VSHLI : X86ISD::VSRLI;
     int ShiftAmt = Shift * VT.getScalarSizeInBits();
-    SDValue V = MatchV1 ? V1 : V2;
     V = DAG.getNode(ISD::BITCAST, DL, ShiftVT, V);
     V = DAG.getNode(OpCode, DL, ShiftVT, V, DAG.getConstant(ShiftAmt, MVT::i8));
     return DAG.getNode(ISD::BITCAST, DL, VT, V);
@@ -7992,8 +7987,11 @@ static SDValue lowerVectorShuffleAsBitShift(SDLoc DL, MVT VT, SDValue V1,
   // and that the shifted in elements are all zeroable.
   for (int Scale = 2; Scale * VT.getScalarSizeInBits() <= 64; Scale *= 2)
     for (int Shift = 1; Shift != Scale; ++Shift)
-      if (SDValue BitShift = MatchBitShift(Shift, Scale))
-        return BitShift;
+      for (bool Left : {true, false})
+        if (CheckZeros(Shift, Scale, Left))
+          for (SDValue V : {V1, V2})
+            if (SDValue BitShift = MatchBitShift(Shift, Scale, Left, V))
+              return BitShift;
 
   // no match
   return SDValue();
