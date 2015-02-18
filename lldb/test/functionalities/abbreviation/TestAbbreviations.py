@@ -12,6 +12,7 @@ class AbbreviationsTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @expectedFailureFreeBSD("llvm.org/pr22611 thread race condition breaks prompt setting")
     @unittest2.skipIf(sys.platform.startswith("win32"), "one-shot script commands deadlock on Windows.")
     def test_nonrunning_command_abbreviations (self):
         self.expect("ap script",
