@@ -1566,8 +1566,10 @@ multiclass DS_1A2D_NORET_m <bits<8> op, string opName, dag outs, dag ins,
     def "" : DS_Pseudo <opName, outs, ins, pat>,
              AtomicNoRet<noRetOp, 0>;
 
-    def _si : DS_1A_Real_si <op, opName, outs, ins, asm>;
-    def _vi : DS_1A_Real_vi <op, opName, outs, ins, asm>;
+    let vdst = 0 in {
+      def _si : DS_1A_Real_si <op, opName, outs, ins, asm>;
+      def _vi : DS_1A_Real_vi <op, opName, outs, ins, asm>;
+    }
   }
 }
 
@@ -1586,7 +1588,7 @@ multiclass DS_1A1D_NORET_m <bits<8> op, string opName, dag outs, dag ins,
     def "" : DS_Pseudo <opName, outs, ins, pat>,
              AtomicNoRet<noRetOp, 0>;
 
-    let data1 = 0 in {
+    let data1 = 0, vdst = 0 in {
       def _si : DS_1A_Real_si <op, opName, outs, ins, asm>;
       def _vi : DS_1A_Real_vi <op, opName, outs, ins, asm>;
     }
