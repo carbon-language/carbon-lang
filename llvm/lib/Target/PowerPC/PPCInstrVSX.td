@@ -940,3 +940,28 @@ def : Pat<(int_ppc_vsx_xvdivdp v2f64:$A, v2f64:$B),
 } // AddedComplexity
 } // HasVSX
 
+// The following VSX instructions were introduced in Power ISA 2.07
+/* FIXME: if the operands are v2i64, these patterns will not match.
+   we should define new patterns or otherwise match the same patterns
+   when the elements are larger than i32.
+*/
+def HasP8Vector : Predicate<"PPCSubTarget->hasP8Vector()">;
+let Predicates = [HasP8Vector] in {
+let AddedComplexity = 400 in { // Prefer VSX patterns over non-VSX patterns.
+let isCommutable = 1 in {
+  def XXLEQV : XX3Form<60, 186,
+                       (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
+                       "xxleqv $XT, $XA, $XB", IIC_VecGeneral,
+                       [(set v4i32:$XT, (vnot_ppc (xor v4i32:$XA, v4i32:$XB)))]>;
+  def XXLNAND : XX3Form<60, 178,
+                        (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
+                        "xxlnand $XT, $XA, $XB", IIC_VecGeneral,
+                        [(set v4i32:$XT, (vnot_ppc (and v4i32:$XA,
+                                                    v4i32:$XB)))]>;
+  } // isCommutable
+def XXLORC : XX3Form<60, 170,
+                     (outs vsrc:$XT), (ins vsrc:$XA, vsrc:$XB),
+                     "xxlorc $XT, $XA, $XB", IIC_VecGeneral,
+                     [(set v4i32:$XT, (or v4i32:$XA, (vnot_ppc v4i32:$XB)))]>;
+} // AddedComplexity = 500
+} // HasP8Vector

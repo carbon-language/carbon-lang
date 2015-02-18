@@ -403,6 +403,15 @@
 # CHECK-BE: xxland 7, 63, 27                   # encoding: [0xf0,0xff,0xdc,0x14]
 # CHECK-LE: xxland 7, 63, 27                   # encoding: [0x14,0xdc,0xff,0xf0]
             xxland 7, 63, 27
+# CHECK-BE: xxleqv 7, 63, 27                   # encoding: [0xf0,0xff,0xdd,0xd4]
+# CHECK-LE: xxleqv 7, 63, 27                   # encoding: [0xd4,0xdd,0xff,0xf0]
+            xxleqv 7, 63, 27
+# CHECK-BE: xxlnand 7, 63, 27                  # encoding: [0xf0,0xff,0xdd,0x94]
+# CHECK-LE: xxlnand 7, 63, 27                  # encoding: [0x94,0xdd,0xff,0xf0]
+            xxlnand 7, 63, 27
+# CHECK-BE: xxlorc 7, 63, 27                   # encoding: [0xf0,0xff,0xdd,0x54]
+# CHECK-LE: xxlorc 7, 63, 27                   # encoding: [0x54,0xdd,0xff,0xf0]
+            xxlorc 7, 63, 27
 # CHECK-BE: xxlandc 7, 63, 27                  # encoding: [0xf0,0xff,0xdc,0x54]
 # CHECK-LE: xxlandc 7, 63, 27                  # encoding: [0x54,0xdc,0xff,0xf0]
             xxlandc 7, 63, 27
