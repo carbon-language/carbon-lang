@@ -78,6 +78,8 @@ if(NOT DEFINED LLVM_EXPORTED_SYMBOL_FILE)
     DEPENDS ${LLVM_DYLIB_REQUIRED_EXPORTS}
     COMMENT "Generating combined export list...")
 
+  add_custom_target(libLLVMExports DEPENDS ${LLVM_EXPORTED_SYMBOL_FILE})
+
 endif()
 
 add_llvm_library(LLVM SHARED ${SOURCES})
@@ -90,7 +92,7 @@ endif()
 
 target_link_libraries(LLVM ${cmake_2_8_12_PRIVATE} ${LIB_NAMES})
 
-add_dependencies(LLVM ${LLVM_EXPORTED_SYMBOL_FILE})
+add_dependencies(LLVM libLLVMExports)
 
 if (APPLE)
   set_property(TARGET LLVM APPEND_STRING PROPERTY
