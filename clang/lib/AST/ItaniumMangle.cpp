@@ -286,7 +286,7 @@ public:
 #endif
   raw_ostream &getStream() { return Out; }
 
-  void mangle(const NamedDecl *D, StringRef Prefix = "_Z");
+  void mangle(const NamedDecl *D);
   void mangleCallOffset(int64_t NonVirtual, int64_t Virtual);
   void mangleNumber(const llvm::APSInt &I);
   void mangleNumber(int64_t Number);
@@ -445,11 +445,11 @@ bool ItaniumMangleContextImpl::shouldMangleCXXName(const NamedDecl *D) {
   return true;
 }
 
-void CXXNameMangler::mangle(const NamedDecl *D, StringRef Prefix) {
+void CXXNameMangler::mangle(const NamedDecl *D) {
   // <mangled-name> ::= _Z <encoding>
   //            ::= <data name>
   //            ::= <special-name>
-  Out << Prefix;
+  Out << "_Z";
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     mangleFunctionEncoding(FD);
   else if (const VarDecl *VD = dyn_cast<VarDecl>(D))
@@ -3197,7 +3197,7 @@ recurse:
     default:
       //  <expr-primary> ::= L <mangled-name> E # external name
       Out << 'L';
-      mangle(D, "_Z");
+      mangle(D);
       Out << 'E';
       break;
 
@@ -3550,7 +3550,7 @@ void CXXNameMangler::mangleTemplateArg(TemplateArgument A) {
       const ValueDecl *D = DRE->getDecl();
       if (isa<VarDecl>(D) || isa<FunctionDecl>(D)) {
         Out << "L";
-        mangle(D, "_Z");
+        mangle(D);
         Out << 'E';
         break;
       }
@@ -3579,13 +3579,7 @@ void CXXNameMangler::mangleTemplateArg(TemplateArgument A) {
     Out << 'L';
     // References to external entities use the mangled name; if the name would
     // not normally be manged then mangle it as unqualified.
-    //
-    // FIXME: The ABI specifies that external names here should have _Z, but
-    // gcc leaves this off.
-    if (compensateMangling)
-      mangle(D, "_Z");
-    else
-      mangle(D, "Z");
+    mangle(D);
     Out << 'E';
 
     if (compensateMangling)

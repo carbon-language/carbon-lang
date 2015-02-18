@@ -240,7 +240,7 @@ namespace Test7 {
   class B : public A {};
   B b; // top of file
 
-  // CHECK-LABEL: define linkonce_odr hidden void @_ZN5Test74ArefILZNS_1aEEE3fooEv()
+  // CHECK-LABEL: define linkonce_odr hidden void @_ZN5Test74ArefIL_ZNS_1aEEE3fooEv()
   void test() {
     Aref<a>::foo();
   }

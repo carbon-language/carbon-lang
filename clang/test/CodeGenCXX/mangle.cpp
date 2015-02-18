@@ -455,7 +455,7 @@ namespace test7 {
   void g(zed<&foo::bar>*)
   {}
 }
-// CHECK-LABEL: define weak_odr void @_ZN5test81AILZNS_1B5valueEEE3incEv
+// CHECK-LABEL: define weak_odr void @_ZN5test81AIL_ZNS_1B5valueEEE3incEv
 namespace test8 {
   template <int &counter> class A { void inc() { counter++; } };
   class B { public: static int value; };
