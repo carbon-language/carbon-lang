@@ -426,6 +426,15 @@ static bool fieldIsScopeRef(const MDNode *DbgNode, unsigned Elt) {
   return isScopeRef(dyn_cast_or_null<Metadata>(getField(DbgNode, Elt)));
 }
 
+/// \brief Check if a value can be a DescriptorRef.
+static bool isDescriptorRef(const Metadata *MD) {
+  if (!MD)
+    return true;
+  if (auto *S = dyn_cast<MDString>(MD))
+    return !S->getString().empty();
+  return isa<MDNode>(MD);
+}
+
 bool DIType::Verify() const {
   if (!isType())
     return false;
@@ -1463,6 +1472,10 @@ void DIVariable::printExtendedName(raw_ostream &OS) const {
   }
 }
 
+template <> DIRef<DIDescriptor>::DIRef(const Metadata *V) : Val(V) {
+  assert(isDescriptorRef(V) &&
+         "DIDescriptorRef should be a MDString or MDNode");
+}
 template <> DIRef<DIScope>::DIRef(const Metadata *V) : Val(V) {
   assert(isScopeRef(V) && "DIScopeRef should be a MDString or MDNode");
 }
@@ -1470,6 +1483,10 @@ template <> DIRef<DIType>::DIRef(const Metadata *V) : Val(V) {
   assert(isTypeRef(V) && "DITypeRef should be a MDString or MDNode");
 }
 
+template <>
+DIDescriptorRef DIDescriptor::getFieldAs<DIDescriptorRef>(unsigned Elt) const {
+  return DIDescriptorRef(cast_or_null<Metadata>(getField(DbgNode, Elt)));
+}
 template <>
 DIScopeRef DIDescriptor::getFieldAs<DIScopeRef>(unsigned Elt) const {
   return DIScopeRef(cast_or_null<Metadata>(getField(DbgNode, Elt)));
