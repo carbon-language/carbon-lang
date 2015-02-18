@@ -313,7 +313,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         void remove_prefix(size_type __n) _NOEXCEPT
         {
-            _LIBCPP_ASSERT(n <= size(), "remove_prefix() can't remove more than size()");
+            _LIBCPP_ASSERT(__n <= size(), "remove_prefix() can't remove more than size()");
             __data += __n;
             __size -= __n;
         }
@@ -321,7 +321,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         void remove_suffix(size_type __n) _NOEXCEPT
         {
-            _LIBCPP_ASSERT(n <= size(), "remove_suffix() can't remove more than size()");
+            _LIBCPP_ASSERT(__n <= size(), "remove_suffix() can't remove more than size()");
             __size -= __n;
         }
 
