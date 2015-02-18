@@ -38,11 +38,9 @@ class ProcessLaunchTestCase(TestBase):
         self.expect("file " + exe,
                     patterns = [ "Current executable set to .*a.out" ])
 
-
-        in_file = os.path.join (os.getcwd(), "input-file.txt")
-        out_file = os.path.join (os.getcwd(), "output-test.out")
-        err_file = os.path.join (os.getcwd(), "output-test.err")
-
+        in_file = "input-file.txt"
+        out_file = "output-test.out"
+        err_file = "output-test.err"
 
         # Make sure the output files do not exist before launching the process
         try:
@@ -57,9 +55,18 @@ class ProcessLaunchTestCase(TestBase):
 
         launch_command = "process launch -i " + in_file + " -o " + out_file + " -e " + err_file
 
+        if lldb.remote_platform:
+            self.runCmd('platform put-file "{local}" "{remote}"'.format(
+                local=in_file, remote=in_file))
+
         self.expect (launch_command,
                      patterns = [ "Process .* launched: .*a.out" ])
 
+        if lldb.remote_platform:
+            self.runCmd('platform get-file "{remote}" "{local}"'.format(
+                remote=out_file, local=out_file))
+            self.runCmd('platform get-file "{remote}" "{local}"'.format(
+                remote=err_file, local=err_file))
 
         success = True
         err_msg = ""
