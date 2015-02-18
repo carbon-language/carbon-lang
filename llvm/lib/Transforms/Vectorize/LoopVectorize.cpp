@@ -836,7 +836,7 @@ private:
 
   /// Report an analysis message to assist the user in diagnosing loops that are
   /// not vectorized.
-  void emitAnalysis(VectorizationReport &Message) {
+  void emitAnalysis(const VectorizationReport &Message) {
     VectorizationReport::emitAnalysis(Message, TheFunction, TheLoop, LV_NAME);
   }
 
@@ -973,7 +973,7 @@ private:
 
   /// Report an analysis message to assist the user in diagnosing loops that are
   /// not vectorized.
-  void emitAnalysis(VectorizationReport &Message) {
+  void emitAnalysis(const VectorizationReport &Message) {
     VectorizationReport::emitAnalysis(Message, TheFunction, TheLoop, LV_NAME);
   }
 
