@@ -860,11 +860,22 @@ class VOP3DisableFields <bit HasSrc1, bit HasSrc2, bit HasModifiers> {
 
   bits<2> src0_modifiers = !if(HasModifiers, ?, 0);
   bits<2> src1_modifiers = !if(HasModifiers, !if(HasSrc1, ?, 0), 0);
-  bits<2> src2_modifiers = !if(HasModifiers, !if(HasSrc2, ? ,0) ,0);
+  bits<2> src2_modifiers = !if(HasModifiers, !if(HasSrc2, ?, 0), 0);
   bits<2> omod = !if(HasModifiers, ?, 0);
   bits<1> clamp = !if(HasModifiers, ?, 0);
   bits<9> src1 = !if(HasSrc1, ?, 0);
   bits<9> src2 = !if(HasSrc2, ?, 0);
+}
+
+class VOP3DisableModFields <bit HasSrc0Mods,
+                            bit HasSrc1Mods = 0,
+                            bit HasSrc2Mods = 0,
+                            bit HasOutputMods = 0> {
+  bits<2> src0_modifiers = !if(HasSrc0Mods, ?, 0);
+  bits<2> src1_modifiers = !if(HasSrc1Mods, ?, 0);
+  bits<2> src2_modifiers = !if(HasSrc2Mods, ?, 0);
+  bits<2> omod = !if(HasOutputMods, ?, 0);
+  bits<1> clamp = !if(HasOutputMods, ?, 0);
 }
 
 class VOP3_Pseudo <dag outs, dag ins, list<dag> pattern, string opName> :
@@ -1203,6 +1214,19 @@ multiclass VOPC_Helper <vopc op, string opName,
                         opName, HasMods, DefExec>;
 }
 
+// Special case for class instructions which only have modifiers on
+// the 1st source operand.
+multiclass VOPC_Class_Helper <vopc op, string opName,
+                             dag ins32, string asm32, list<dag> pat32,
+                             dag out64, dag ins64, string asm64, list<dag> pat64,
+                             bit HasMods, bit DefExec> {
+  defm _e32 : VOPC_m <op, (outs), ins32, opName#asm32, pat32, opName, DefExec>;
+
+  defm _e64 : VOP3_C_m <op, out64, ins64, opName#"_e64"#asm64, pat64,
+                        opName, HasMods, DefExec>,
+                        VOP3DisableModFields<1, 0, 0>;
+}
+
 multiclass VOPCInst <vopc op, string opName,
                      VOPProfile P, PatLeaf cond = COND_NULL,
                      bit DefExec = 0> : VOPC_Helper <
@@ -1220,7 +1244,7 @@ multiclass VOPCInst <vopc op, string opName,
 >;
 
 multiclass VOPCClassInst <vopc op, string opName, VOPProfile P,
-                     bit DefExec = 0> : VOPC_Helper <
+                     bit DefExec = 0> : VOPC_Class_Helper <
   op, opName,
   P.Ins32, P.Asm32, [],
   (outs SReg_64:$dst), P.Ins64, P.Asm64,
