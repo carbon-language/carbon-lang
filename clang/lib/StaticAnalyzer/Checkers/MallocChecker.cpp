@@ -184,6 +184,7 @@ public:
 
   DefaultBool ChecksEnabled[CK_NumCheckKinds];
   CheckName CheckNames[CK_NumCheckKinds];
+  typedef llvm::SmallVector<CheckKind, CK_NumCheckKinds> CKVecTy;
 
   void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
@@ -327,12 +328,16 @@ private:
 
   ///@{
   /// Tells if a given family/call/symbol is tracked by the current checker.
-  /// Sets CheckKind to the kind of the checker responsible for this
-  /// family/call/symbol.
-  Optional<CheckKind> getCheckIfTracked(AllocationFamily Family) const;
-  Optional<CheckKind> getCheckIfTracked(CheckerContext &C,
+  /// Looks through incoming CheckKind(s) and returns the kind of the checker 
+  /// responsible for this family/call/symbol.
+  Optional<CheckKind> getCheckIfTracked(CheckKind CK,
+                                        AllocationFamily Family) const;
+  Optional<CheckKind> getCheckIfTracked(CKVecTy CKVec, 
+                                        AllocationFamily Family) const;
+  Optional<CheckKind> getCheckIfTracked(CKVecTy CKVec, CheckerContext &C,
                                         const Stmt *AllocDeallocStmt) const;
-  Optional<CheckKind> getCheckIfTracked(CheckerContext &C, SymbolRef Sym) const;
+  Optional<CheckKind> getCheckIfTracked(CKVecTy CKVec, CheckerContext &C,
+                                        SymbolRef Sym) const;
   ///@}
   static bool SummarizeValue(raw_ostream &os, SVal V);
   static bool SummarizeRegion(raw_ostream &os, const MemRegion *MR);
@@ -1310,21 +1315,32 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
 }
 
 Optional<MallocChecker::CheckKind>
-MallocChecker::getCheckIfTracked(AllocationFamily Family) const {
+MallocChecker::getCheckIfTracked(MallocChecker::CheckKind CK,
+                                 AllocationFamily Family) const {
+
+  if (CK == CK_NumCheckKinds || !ChecksEnabled[CK])
+    return Optional<MallocChecker::CheckKind>();
+
+  // C/C++ checkers.
+  if (CK == CK_MismatchedDeallocatorChecker)
+    return CK;
+
   switch (Family) {
   case AF_Malloc:
   case AF_IfNameIndex: {
-    if (ChecksEnabled[CK_MallocOptimistic]) {
-      return CK_MallocOptimistic;
-    } else if (ChecksEnabled[CK_MallocPessimistic]) {
-      return CK_MallocPessimistic;
+    // C checkers.
+    if (CK == CK_MallocOptimistic ||
+        CK == CK_MallocPessimistic) {
+      return CK;
     }
     return Optional<MallocChecker::CheckKind>();
   }
   case AF_CXXNew:
   case AF_CXXNewArray: {
-    if (ChecksEnabled[CK_NewDeleteChecker]) {
-      return CK_NewDeleteChecker;
+    // C++ checkers.
+    if (CK == CK_NewDeleteChecker ||
+        CK == CK_NewDeleteLeaksChecker) {
+      return CK;
     }
     return Optional<MallocChecker::CheckKind>();
   }
@@ -1335,18 +1351,45 @@ MallocChecker::getCheckIfTracked(AllocationFamily Family) const {
   llvm_unreachable("unhandled family");
 }
 
-Optional<MallocChecker::CheckKind>
-MallocChecker::getCheckIfTracked(CheckerContext &C,
-                                 const Stmt *AllocDeallocStmt) const {
-  return getCheckIfTracked(getAllocationFamily(C, AllocDeallocStmt));
+static MallocChecker::CKVecTy MakeVecFromCK(MallocChecker::CheckKind CK1,
+               MallocChecker::CheckKind CK2 = MallocChecker::CK_NumCheckKinds,
+               MallocChecker::CheckKind CK3 = MallocChecker::CK_NumCheckKinds,
+               MallocChecker::CheckKind CK4 = MallocChecker::CK_NumCheckKinds) {
+  MallocChecker::CKVecTy CKVec;
+  CKVec.push_back(CK1);
+  if (CK2 != MallocChecker::CK_NumCheckKinds) {
+    CKVec.push_back(CK2);
+    if (CK3 != MallocChecker::CK_NumCheckKinds) {
+      CKVec.push_back(CK3);
+      if (CK4 != MallocChecker::CK_NumCheckKinds)
+        CKVec.push_back(CK4);
+    }
+  }
+  return CKVec;
 }
 
 Optional<MallocChecker::CheckKind>
-MallocChecker::getCheckIfTracked(CheckerContext &C, SymbolRef Sym) const {
+MallocChecker::getCheckIfTracked(CKVecTy CKVec, AllocationFamily Family) const {
+  for (auto CK: CKVec) {
+    auto RetCK = getCheckIfTracked(CK, Family);
+    if (RetCK.hasValue())
+      return RetCK;
+  }
+  return Optional<MallocChecker::CheckKind>();
+}
 
+Optional<MallocChecker::CheckKind>
+MallocChecker::getCheckIfTracked(CKVecTy CKVec, CheckerContext &C,
+                                 const Stmt *AllocDeallocStmt) const {
+  return getCheckIfTracked(CKVec, getAllocationFamily(C, AllocDeallocStmt));
+}
+
+Optional<MallocChecker::CheckKind>
+MallocChecker::getCheckIfTracked(CKVecTy CKVec, CheckerContext &C,
+                                 SymbolRef Sym) const {
   const RefState *RS = C.getState()->get<RegionState>(Sym);
   assert(RS);
-  return getCheckIfTracked(RS->getAllocationFamily());
+  return getCheckIfTracked(CKVec, RS->getAllocationFamily());
 }
 
 bool MallocChecker::SummarizeValue(raw_ostream &os, SVal V) {
@@ -1440,13 +1483,10 @@ void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
                                   SourceRange Range, 
                                   const Expr *DeallocExpr) const {
 
-  if (!ChecksEnabled[CK_MallocOptimistic] &&
-      !ChecksEnabled[CK_MallocPessimistic] &&
-      !ChecksEnabled[CK_NewDeleteChecker])
-    return;
-
-  Optional<MallocChecker::CheckKind> CheckKind =
-      getCheckIfTracked(C, DeallocExpr);
+  auto CheckKind = getCheckIfTracked(MakeVecFromCK(CK_MallocOptimistic,
+                                                   CK_MallocPessimistic,
+                                                   CK_NewDeleteChecker),
+                                     C, DeallocExpr);
   if (!CheckKind.hasValue())
     return;
 
@@ -1546,13 +1586,11 @@ void MallocChecker::ReportOffsetFree(CheckerContext &C, SVal ArgVal,
                                      SourceRange Range, const Expr *DeallocExpr,
                                      const Expr *AllocExpr) const {
 
-  if (!ChecksEnabled[CK_MallocOptimistic] &&
-      !ChecksEnabled[CK_MallocPessimistic] &&
-      !ChecksEnabled[CK_NewDeleteChecker])
-    return;
 
-  Optional<MallocChecker::CheckKind> CheckKind =
-      getCheckIfTracked(C, AllocExpr);
+  auto CheckKind = getCheckIfTracked(MakeVecFromCK(CK_MallocOptimistic,
+                                                   CK_MallocPessimistic,
+                                                   CK_NewDeleteChecker),
+                                     C, AllocExpr);
   if (!CheckKind.hasValue())
     return;
 
@@ -1602,12 +1640,10 @@ void MallocChecker::ReportOffsetFree(CheckerContext &C, SVal ArgVal,
 void MallocChecker::ReportUseAfterFree(CheckerContext &C, SourceRange Range,
                                        SymbolRef Sym) const {
 
-  if (!ChecksEnabled[CK_MallocOptimistic] &&
-      !ChecksEnabled[CK_MallocPessimistic] &&
-      !ChecksEnabled[CK_NewDeleteChecker])
-    return;
-
-  Optional<MallocChecker::CheckKind> CheckKind = getCheckIfTracked(C, Sym);
+  auto CheckKind = getCheckIfTracked(MakeVecFromCK(CK_MallocOptimistic,
+                                                   CK_MallocPessimistic,
+                                                   CK_NewDeleteChecker),
+                                     C, Sym);
   if (!CheckKind.hasValue())
     return;
 
@@ -1630,12 +1666,10 @@ void MallocChecker::ReportDoubleFree(CheckerContext &C, SourceRange Range,
                                      bool Released, SymbolRef Sym, 
                                      SymbolRef PrevSym) const {
 
-  if (!ChecksEnabled[CK_MallocOptimistic] &&
-      !ChecksEnabled[CK_MallocPessimistic] &&
-      !ChecksEnabled[CK_NewDeleteChecker])
-    return;
-
-  Optional<MallocChecker::CheckKind> CheckKind = getCheckIfTracked(C, Sym);
+  auto CheckKind = getCheckIfTracked(MakeVecFromCK(CK_MallocOptimistic,
+                                                   CK_MallocPessimistic,
+                                                   CK_NewDeleteChecker),
+                                     C, Sym);
   if (!CheckKind.hasValue())
     return;
 
@@ -1660,13 +1694,10 @@ void MallocChecker::ReportDoubleFree(CheckerContext &C, SourceRange Range,
 
 void MallocChecker::ReportDoubleDelete(CheckerContext &C, SymbolRef Sym) const {
 
-  if (!ChecksEnabled[CK_NewDeleteChecker])
-    return;
-
-  Optional<MallocChecker::CheckKind> CheckKind = getCheckIfTracked(C, Sym);
+  auto CheckKind = getCheckIfTracked(MakeVecFromCK(CK_NewDeleteChecker),
+                                     C, Sym);
   if (!CheckKind.hasValue())
     return;
-  assert(*CheckKind == CK_NewDeleteChecker && "invalid check kind");
 
   if (ExplodedNode *N = C.generateSink()) {
     if (!BT_DoubleDelete)
@@ -1851,23 +1882,12 @@ MallocChecker::getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
 void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
                                CheckerContext &C) const {
 
-  if (!ChecksEnabled[CK_MallocOptimistic] &&
-      !ChecksEnabled[CK_MallocPessimistic] &&
-      !ChecksEnabled[CK_NewDeleteLeaksChecker])
-    return;
-
-  const RefState *RS = C.getState()->get<RegionState>(Sym);
-  assert(RS && "cannot leak an untracked symbol");
-  AllocationFamily Family = RS->getAllocationFamily();
-  Optional<MallocChecker::CheckKind> CheckKind = getCheckIfTracked(Family);
+  auto CheckKind = getCheckIfTracked(MakeVecFromCK(CK_MallocOptimistic,
+                                                   CK_MallocPessimistic,
+                                                   CK_NewDeleteLeaksChecker),
+                                     C, Sym);
   if (!CheckKind.hasValue())
     return;
-
-  // Special case for new and new[]; these are controlled by a separate checker
-  // flag so that they can be selectively disabled.
-  if (Family == AF_CXXNew || Family == AF_CXXNewArray)
-    if (!ChecksEnabled[CK_NewDeleteLeaksChecker])
-      return;
 
   assert(N);
   if (!BT_Leak[*CheckKind]) {
@@ -2479,8 +2499,10 @@ void MallocChecker::printState(raw_ostream &Out, ProgramStateRef State,
     for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
       const RefState *RefS = State->get<RegionState>(I.getKey());
       AllocationFamily Family = RefS->getAllocationFamily();
-      Optional<MallocChecker::CheckKind> CheckKind = getCheckIfTracked(Family);
-
+      auto CheckKind = getCheckIfTracked(MakeVecFromCK(CK_MallocOptimistic,
+                                                       CK_MallocPessimistic,
+                                                       CK_NewDeleteChecker),
+                                         Family);
       I.getKey()->dumpToStream(Out);
       Out << " : ";
       I.getData().dump(Out);
