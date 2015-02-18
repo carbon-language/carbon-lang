@@ -134,11 +134,14 @@ public:
                  const TargetLibraryInfo *TLI, AliasAnalysis *AA,
                  DominatorTree *DT) :
       TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA), DT(DT), NumLoads(0),
-      NumStores(0), MaxSafeDepDistBytes(-1U) {}
+      NumStores(0), MaxSafeDepDistBytes(-1U), CanVecMem(false) {}
+
+  /// \brief Analyze the loop.  Replaces symbolic strides using Strides.
+  void analyzeLoop(ValueToValueMap &Strides);
 
   /// Return true we can analyze the memory accesses in the loop and there are
-  /// no memory dependence cycles.  Replaces symbolic strides using Strides.
-  bool canVectorizeMemory(ValueToValueMap &Strides);
+  /// no memory dependence cycles.
+  bool canVectorizeMemory() { return CanVecMem; }
 
   RuntimePointerCheck *getRuntimePointerCheck() { return &PtrRtCheck; }
 
@@ -181,6 +184,9 @@ private:
   unsigned NumStores;
 
   unsigned MaxSafeDepDistBytes;
+
+  /// \brief Cache the result of analyzeLoop.
+  bool CanVecMem;
 
   /// \brief The diagnostics report generated for the analysis.  E.g. why we
   /// couldn't analyze the loop.

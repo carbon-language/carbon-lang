@@ -812,7 +812,7 @@ bool MemoryDepChecker::areDepsSafe(AccessAnalysis::DepCandidates &AccessSets,
   return true;
 }
 
-bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
+void LoopAccessInfo::analyzeLoop(ValueToValueMap &Strides) {
 
   typedef SmallVector<Value*, 16> ValueVector;
   typedef SmallPtrSet<Value*, 16> ValueSet;
@@ -855,7 +855,8 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
           emitAnalysis(VectorizationReport(Ld)
                        << "read with atomic ordering or volatile read");
           DEBUG(dbgs() << "LV: Found a non-simple load.\n");
-          return false;
+          CanVecMem = false;
+          return;
         }
         NumLoads++;
         Loads.push_back(Ld);
@@ -869,13 +870,15 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
         if (!St) {
           emitAnalysis(VectorizationReport(it) <<
                        "instruction cannot be vectorized");
-          return false;
+          CanVecMem = false;
+          return;
         }
         if (!St->isSimple() && !IsAnnotatedParallel) {
           emitAnalysis(VectorizationReport(St)
                        << "write with atomic ordering or volatile write");
           DEBUG(dbgs() << "LV: Found a non-simple store.\n");
-          return false;
+          CanVecMem = false;
+          return;
         }
         NumStores++;
         Stores.push_back(St);
@@ -891,7 +894,8 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
   // care if the pointers are *restrict*.
   if (!Stores.size()) {
     DEBUG(dbgs() << "LV: Found a read-only loop!\n");
-    return true;
+    CanVecMem = true;
+    return;
   }
 
   AccessAnalysis::DepCandidates DependentAccesses;
@@ -914,7 +918,8 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
           VectorizationReport(ST)
           << "write to a loop invariant address could not be vectorized");
       DEBUG(dbgs() << "LV: We don't allow storing to uniform addresses\n");
-      return false;
+      CanVecMem = false;
+      return;
     }
 
     // If we did *not* see this pointer before, insert it to  the read-write
@@ -937,7 +942,8 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
     DEBUG(dbgs()
           << "LV: A loop annotated parallel, ignore memory dependency "
           << "checks.\n");
-    return true;
+    CanVecMem = true;
+    return;
   }
 
   for (I = Loads.begin(), IE = Loads.end(); I != IE; ++I) {
@@ -972,7 +978,8 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
   // other reads in this loop then is it safe to vectorize.
   if (NumReadWrites == 1 && NumReads == 0) {
     DEBUG(dbgs() << "LV: Found a write-only loop!\n");
-    return true;
+    CanVecMem = true;
+    return;
   }
 
   // Build dependence sets and check whether we need a runtime pointer bounds
@@ -1013,12 +1020,13 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
     DEBUG(dbgs() << "LV: We can't vectorize because we can't find " <<
           "the array bounds.\n");
     PtrRtCheck.reset();
-    return false;
+    CanVecMem = false;
+    return;
   }
 
   PtrRtCheck.Need = NeedRTCheck;
 
-  bool CanVecMem = true;
+  CanVecMem = true;
   if (Accesses.isDependencyCheckNeeded()) {
     DEBUG(dbgs() << "LV: Checking memory dependencies\n");
     CanVecMem = DepChecker.areDepsSafe(
@@ -1051,7 +1059,8 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
                        << " dependent memory operations checked at runtime");
         DEBUG(dbgs() << "LV: Can't vectorize with memory checks\n");
         PtrRtCheck.reset();
-        return false;
+        CanVecMem = false;
+        return;
       }
 
       CanVecMem = true;
@@ -1064,8 +1073,6 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
 
   DEBUG(dbgs() << "LV: We" << (NeedRTCheck ? "" : " don't") <<
         " need a runtime memory check.\n");
-
-  return CanVecMem;
 }
 
 bool LoopAccessInfo::blockNeedsPredication(BasicBlock *BB)  {

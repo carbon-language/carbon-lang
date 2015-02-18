@@ -3825,11 +3825,11 @@ void LoopVectorizationLegality::collectLoopUniforms() {
 }
 
 bool LoopVectorizationLegality::canVectorizeMemory() {
-  bool Success = LAI.canVectorizeMemory(Strides);
+  LAI.analyzeLoop(Strides);
   auto &OptionalReport = LAI.getReport();
   if (OptionalReport)
     emitAnalysis(*OptionalReport);
-  return Success;
+  return LAI.canVectorizeMemory();
 }
 
 static bool hasMultipleUsesOf(Instruction *I,
