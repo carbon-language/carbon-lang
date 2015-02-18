@@ -430,9 +430,12 @@ template <class _Tp>            struct _LIBCPP_TYPE_VIS_ONLY is_same<_Tp, _Tp> :
 
 namespace __libcpp_is_function_imp
 {
+struct __dummy_type {};
 template <class _Tp> char  __test(_Tp*);
+template <class _Tp> char __test(__dummy_type);
 template <class _Tp> __two __test(...);
-template <class _Tp> _Tp&  __source();
+template <class _Tp> _Tp&  __source(int);
+template <class _Tp> __dummy_type __source(...);
 }
 
 template <class _Tp, bool = is_class<_Tp>::value ||
@@ -441,7 +444,7 @@ template <class _Tp, bool = is_class<_Tp>::value ||
                             is_reference<_Tp>::value ||
                             __is_nullptr_t<_Tp>::value >
 struct __libcpp_is_function
-    : public integral_constant<bool, sizeof(__libcpp_is_function_imp::__test<_Tp>(__libcpp_is_function_imp::__source<_Tp>())) == 1>
+    : public integral_constant<bool, sizeof(__libcpp_is_function_imp::__test<_Tp>(__libcpp_is_function_imp::__source<_Tp>(0))) == 1>
     {};
 template <class _Tp> struct __libcpp_is_function<_Tp, true> : public false_type {};
 
