@@ -1361,8 +1361,8 @@ static void writeMDEnumerator(raw_ostream &Out, const MDEnumerator *N,
                               TypePrinting *, SlotTracker *, const Module *) {
   Out << "!MDEnumerator(";
   FieldSeparator FS;
-  Out << FS << "value: " << N->getValue();
   Out << FS << "name: \"" << N->getName() << "\"";
+  Out << FS << "value: " << N->getValue();
   Out << ")";
 }
 

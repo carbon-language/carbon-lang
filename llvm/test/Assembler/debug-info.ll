@@ -13,12 +13,12 @@
 !2 = !MDSubrange(count: 3, lowerBound: 4)
 !3 = !MDSubrange(count: 3, lowerBound: -5)
 
-; CHECK-NEXT: !3 = !MDEnumerator(value: 7, name: "seven")
-; CHECK-NEXT: !4 = !MDEnumerator(value: -8, name: "negeight")
-; CHECK-NEXT: !5 = !MDEnumerator(value: 0, name: "")
-!4 = !MDEnumerator(value: 7, name: "seven")
-!5 = !MDEnumerator(value: -8, name: "negeight")
-!6 = !MDEnumerator(value: 0, name: "")
+; CHECK-NEXT: !3 = !MDEnumerator(name: "seven", value: 7)
+; CHECK-NEXT: !4 = !MDEnumerator(name: "negeight", value: -8)
+; CHECK-NEXT: !5 = !MDEnumerator(name: "", value: 0)
+!4 = !MDEnumerator(name: "seven", value: 7)
+!5 = !MDEnumerator(name: "negeight", value: -8)
+!6 = !MDEnumerator(name: "", value: 0)
 
 ; CHECK-NEXT: !6 = !MDBasicType(tag: DW_TAG_base_type, name: "name", size: 1, align: 2, encoding: DW_ATE_unsigned_char)
 ; CHECK-NEXT: !7 = !MDBasicType(tag: DW_TAG_unspecified_type, name: "decltype(nullptr)")

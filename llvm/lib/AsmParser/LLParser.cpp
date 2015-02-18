@@ -3289,8 +3289,8 @@ bool LLParser::ParseMDSubrange(MDNode *&Result, bool IsDistinct) {
 ///   ::= !MDEnumerator(value: 30, name: "SomeKind")
 bool LLParser::ParseMDEnumerator(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
-  REQUIRED(value, MDSignedField, );                                            \
-  REQUIRED(name, MDStringField, );
+  REQUIRED(name, MDStringField, );                                             \
+  REQUIRED(value, MDSignedField, );
   PARSE_MD_FIELDS();
 #undef VISIT_MD_FIELDS
 
