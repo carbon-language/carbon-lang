@@ -43,7 +43,7 @@ using namespace llvm;
 
 /// Select the Mips CPU for the given triple and cpu name.
 /// FIXME: Merge with the copy in MipsSubtarget.cpp
-static inline StringRef selectMipsCPU(StringRef TT, StringRef CPU) {
+StringRef MIPS_MC::selectMipsCPU(StringRef TT, StringRef CPU) {
   if (CPU.empty() || CPU == "generic") {
     Triple TheTriple(TT);
     if (TheTriple.getArch() == Triple::mips ||
@@ -69,7 +69,7 @@ static MCRegisterInfo *createMipsMCRegisterInfo(StringRef TT) {
 
 static MCSubtargetInfo *createMipsMCSubtargetInfo(StringRef TT, StringRef CPU,
                                                   StringRef FS) {
-  CPU = selectMipsCPU(TT, CPU);
+  CPU = MIPS_MC::selectMipsCPU(TT, CPU);
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitMipsMCSubtargetInfo(X, TT, CPU, FS);
   return X;

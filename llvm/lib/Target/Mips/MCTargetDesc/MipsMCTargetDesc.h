@@ -55,10 +55,13 @@ MCAsmBackend *createMipsAsmBackendEL64(const Target &T,
                                        const MCRegisterInfo &MRI, StringRef TT,
                                        StringRef CPU);
 
-MCObjectWriter *createMipsELFObjectWriter(raw_ostream &OS,
-                                          uint8_t OSABI,
-                                          bool IsLittleEndian,
-                                          bool Is64Bit);
+MCObjectWriter *createMipsELFObjectWriter(raw_ostream &OS, uint8_t OSABI,
+                                          bool IsLittleEndian, bool Is64Bit);
+
+namespace MIPS_MC {
+StringRef selectMipsCPU(StringRef TT, StringRef CPU);
+}
+
 } // End llvm namespace
 
 // Defines symbolic names for Mips registers.  This defines a mapping from

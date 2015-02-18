@@ -143,23 +143,11 @@ CodeGenOpt::Level MipsSubtarget::getOptLevelToEnablePostRAScheduler() const {
   return CodeGenOpt::Aggressive;
 }
 
-/// Select the Mips CPU for the given triple and cpu name.
-/// FIXME: Merge with the copy in MipsMCTargetDesc.cpp
-static StringRef selectMipsCPU(Triple TT, StringRef CPU) {
-  if (CPU.empty() || CPU == "generic") {
-    if (TT.getArch() == Triple::mips || TT.getArch() == Triple::mipsel)
-      CPU = "mips32";
-    else
-      CPU = "mips64";
-  }
-  return CPU;
-}
-
 MipsSubtarget &
 MipsSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS,
                                                const TargetMachine &TM) {
-  std::string CPUName = selectMipsCPU(TargetTriple, CPU);
-  
+  std::string CPUName = MIPS_MC::selectMipsCPU(TM.getTargetTriple(), CPU);
+
   // Parse features string.
   ParseSubtargetFeatures(CPUName, FS);
   // Initialize scheduling itinerary for the specified CPU.
