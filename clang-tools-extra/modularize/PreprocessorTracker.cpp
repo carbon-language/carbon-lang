@@ -931,6 +931,9 @@ public:
     clang::FileID FileID = PP.getSourceManager().getFileID(BlockStartLoc);
     std::string SourcePath = getSourceLocationFile(PP, BlockStartLoc);
     HeaderHandle SourceHandle = findHeaderHandle(SourcePath);
+    // FIXME: Go back and fix getSourceLocation to use a canonical form.
+    if (SourceHandle == -1)
+      return true;
     int BlockStartLine, BlockStartColumn, BlockEndLine, BlockEndColumn;
     bool returnValue = true;
     getSourceLocationLineAndColumn(PP, BlockStartLoc, BlockStartLine,
