@@ -1112,8 +1112,6 @@ typename enable_if
 >::type
 __unwrap_iter(__wrap_iter<_Tp*>);
 
-template <class _Tp, class _Alloc> class _LIBCPP_TYPE_VIS_ONLY vector;
-
 template <class _Iter>
 class __wrap_iter
 {
@@ -1243,7 +1241,7 @@ private:
 
     template <class _Up> friend class __wrap_iter;
     template <class _CharT, class _Traits, class _Alloc> friend class basic_string;
-    template <class _Tp, class _Alloc> friend class vector;
+    template <class _Tp, class _Alloc> friend class _LIBCPP_TYPE_VIS_ONLY vector;
 
     template <class _Iter1, class _Iter2>
     friend

@@ -28,14 +28,6 @@ template <class _Tp, class _NodePtr, class _DiffType>
     class _LIBCPP_TYPE_VIS_ONLY __tree_iterator;
 template <class _Tp, class _ConstNodePtr, class _DiffType>
     class _LIBCPP_TYPE_VIS_ONLY __tree_const_iterator;
-template <class _Key, class _Tp, class _Compare, class _Allocator>
-    class _LIBCPP_TYPE_VIS_ONLY map;
-template <class _Key, class _Tp, class _Compare, class _Allocator>
-    class _LIBCPP_TYPE_VIS_ONLY multimap;
-template <class _Key, class _Compare, class _Allocator>
-    class _LIBCPP_TYPE_VIS_ONLY set;
-template <class _Key, class _Compare, class _Allocator>
-    class _LIBCPP_TYPE_VIS_ONLY multiset;
 
 /*
 
