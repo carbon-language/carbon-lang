@@ -1,29 +1,41 @@
-;RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck %s
-;RUN: llc < %s -march=amdgcn -mcpu=tonga -verify-machineinstrs | FileCheck %s
+; RUN: llc -march=amdgcn -mcpu=verde -show-mc-encoding -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -march=amdgcn -mcpu=tonga -show-mc-encoding -verify-machineinstrs < %s | FileCheck %s
 
 ; Example of a simple geometry shader loading vertex attributes from the
 ; ESGS ring buffer
 
-; CHECK-LABEL: {{^}}main:
-; CHECK: buffer_load_dword
-; CHECK: buffer_load_dword
-; CHECK: buffer_load_dword
-; CHECK: buffer_load_dword
+; FIXME: Out of bounds immediate offset crashes
 
-define void @main([17 x <16 x i8>] addrspace(2)* byval, [32 x <16 x i8>] addrspace(2)* byval, [16 x <32 x i8>] addrspace(2)* byval, [2 x <16 x i8>] addrspace(2)* byval, [17 x <16 x i8>] addrspace(2)* inreg, [17 x <16 x i8>] addrspace(2)* inreg, i32, i32, i32, i32) #0 {
+; CHECK-LABEL: {{^}}main:
+; CHECK: buffer_load_dword {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, 0 glc slc
+; CHECK: buffer_load_dword {{v[0-9]+}}, {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, 0 offen glc slc
+; CHECK: buffer_load_dword {{v[0-9]+}}, {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}, 0 idxen glc slc
+; CHECK: buffer_load_dword {{v[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 idxen offen glc slc
+; CHECK: s_movk_i32 [[K:s[0-9]+]], 0x4d2 ; encoding
+; CHECK: buffer_load_dword {{v[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, [[K]] idxen offen offset:65535 glc slc
+
+define void @main([17 x <16 x i8>] addrspace(2)* byval %arg, [32 x <16 x i8>] addrspace(2)* byval %arg1, [16 x <32 x i8>] addrspace(2)* byval %arg2, [2 x <16 x i8>] addrspace(2)* byval %arg3, [17 x <16 x i8>] addrspace(2)* inreg %arg4, [17 x <16 x i8>] addrspace(2)* inreg %arg5, i32 %arg6, i32 %arg7, i32 %arg8, i32 %arg9) #0 {
 main_body:
-  %10 = getelementptr [2 x <16 x i8>] addrspace(2)* %3, i64 0, i32 1
-  %11 = load <16 x i8> addrspace(2)* %10, !tbaa !0
-  %12 = shl i32 %6, 2
-  %13 = call i32 @llvm.SI.buffer.load.dword.i32.i32(<16 x i8> %11, i32 0, i32 0, i32 0, i32 0, i32 0, i32 1, i32 1, i32 0)
-  %14 = bitcast i32 %13 to float
-  %15 = call i32 @llvm.SI.buffer.load.dword.i32.i32(<16 x i8> %11, i32 %12, i32 0, i32 0, i32 1, i32 0, i32 1, i32 1, i32 0)
-  %16 = bitcast i32 %15 to float
-  %17 = call i32 @llvm.SI.buffer.load.dword.i32.i32(<16 x i8> %11, i32 %12, i32 0, i32 0, i32 0, i32 1, i32 1, i32 1, i32 0)
-  %18 = bitcast i32 %17 to float
-  %19 = call i32 @llvm.SI.buffer.load.dword.i32.v2i32(<16 x i8> %11, <2 x i32> <i32 0, i32 0>, i32 0, i32 0, i32 1, i32 1, i32 1, i32 1, i32 0)
-  %20 = bitcast i32 %19 to float
-  call void @llvm.SI.export(i32 15, i32 0, i32 1, i32 12, i32 0, float %14, float %16, float %18, float %20)
+  %tmp = getelementptr [2 x <16 x i8>] addrspace(2)* %arg3, i64 0, i32 1
+  %tmp10 = load <16 x i8> addrspace(2)* %tmp, !tbaa !0
+  %tmp11 = shl i32 %arg6, 2
+  %tmp12 = call i32 @llvm.SI.buffer.load.dword.i32.i32(<16 x i8> %tmp10, i32 0, i32 0, i32 0, i32 0, i32 0, i32 1, i32 1, i32 0)
+  %tmp13 = bitcast i32 %tmp12 to float
+  %tmp14 = call i32 @llvm.SI.buffer.load.dword.i32.i32(<16 x i8> %tmp10, i32 %tmp11, i32 0, i32 0, i32 1, i32 0, i32 1, i32 1, i32 0)
+  %tmp15 = bitcast i32 %tmp14 to float
+  %tmp16 = call i32 @llvm.SI.buffer.load.dword.i32.i32(<16 x i8> %tmp10, i32 %tmp11, i32 0, i32 0, i32 0, i32 1, i32 1, i32 1, i32 0)
+  %tmp17 = bitcast i32 %tmp16 to float
+  %tmp18 = call i32 @llvm.SI.buffer.load.dword.i32.v2i32(<16 x i8> %tmp10, <2 x i32> zeroinitializer, i32 0, i32 0, i32 1, i32 1, i32 1, i32 1, i32 0)
+  %tmp19 = bitcast i32 %tmp18 to float
+
+  %tmp20 = call i32 @llvm.SI.buffer.load.dword.i32.v2i32(<16 x i8> %tmp10, <2 x i32> zeroinitializer, i32 0, i32 123, i32 1, i32 1, i32 1, i32 1, i32 0)
+  %tmp21 = bitcast i32 %tmp20 to float
+
+  %tmp22 = call i32 @llvm.SI.buffer.load.dword.i32.v2i32(<16 x i8> %tmp10, <2 x i32> zeroinitializer, i32 1234, i32 65535, i32 1, i32 1, i32 1, i32 1, i32 0)
+  %tmp23 = bitcast i32 %tmp22 to float
+
+  call void @llvm.SI.export(i32 15, i32 0, i32 1, i32 12, i32 0, float %tmp13, float %tmp15, float %tmp17, float %tmp19)
+  call void @llvm.SI.export(i32 15, i32 0, i32 1, i32 12, i32 0, float %tmp21, float %tmp23, float %tmp23, float %tmp23)
   ret void
 }
 

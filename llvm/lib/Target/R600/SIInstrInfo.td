@@ -1856,8 +1856,8 @@ multiclass MUBUF_Load_Helper <mubuf op, string name, RegisterClass regClass,
     let offen = 1, idxen = 1 in {
       defm _BOTHEN : MUBUF_m <op, name#"_bothen", (outs regClass:$vdata),
                            (ins SReg_128:$srsrc, VReg_64:$vaddr,
-                           SCSrc_32:$soffset, glc:$glc, slc:$slc, tfe:$tfe),
-                           name#" $vdata, $vaddr, $srsrc, $soffset, idxen offen"#"$glc"#"$slc"#"$tfe", []>;
+                           SCSrc_32:$soffset, mbuf_offset:$offset, glc:$glc, slc:$slc, tfe:$tfe),
+                           name#" $vdata, $vaddr, $srsrc, $soffset idxen offen"#"$offset"#"$glc"#"$slc"#"$tfe", []>;
     }
 
     let offen = 0, idxen = 0, glc = 0, slc = 0, tfe = 0 in {
