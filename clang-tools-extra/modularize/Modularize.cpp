@@ -15,8 +15,8 @@
 // headers to behave poorly, and should be fixed before introducing a module
 // map.
 //
-// Modularize takes as argument a file name for a file containing the
-// newline-separated list of headers to check with respect to each other.
+// Modularize takes as argument one or more file names for files containing
+// newline-separated lists of headers to check with respect to each other.
 // Lines beginning with '#' and empty lines are ignored.
 // Header file names followed by a colon and other space-separated
 // file names will include those extra files as dependencies.
@@ -26,7 +26,27 @@
 // Modularize also accepts regular front-end arguments.
 //
 // Usage:   modularize [-prefix (optional header path prefix)]
-//   (include-files_list) [(front-end-options) ...]
+//   (include-files_list)[,(include-files_list)]* [(front-end-options) ...]
+//
+// Options:
+//    -prefix (optional header path prefix)
+//          Note that unless a "-prefix (header path)" option is specified,
+//          non-absolute file paths in the header list file will be relative
+//          to the header list file directory.  Use -prefix to specify a
+//          different directory.
+//    -module-map-path (module map)
+//          Skip the checks, and instead act as a module.map generation
+//          assistant, generating a module map file based on the header list.
+//          An optional "-root-module=(rootName)" argument can specify a root
+//          module to be created in the generated module.map file.  Note that
+//          you will likely need to edit this file to suit the needs of your
+//          headers.
+//    -root-module (root module name)
+//          Specifies a root module to be created in the generated module.map
+//          file.
+//    -block-check-header-list-only
+//          Only warn if #include directives are inside extern or namespace
+//          blocks if the included header is in the header list.
 //
 // Note that unless a "-prefix (header path)" option is specified,
 // non-absolute file paths in the header list file will be relative
