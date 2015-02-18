@@ -2,10 +2,16 @@
 
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 
+; Check that we version this loop with speculating the value 1 for symbolic
+; strides.  This also checks that the symbolic stride information is correctly
+; propagated to the memcheck generation.  Without this the loop wouldn't
+; vectorize because we couldn't determine the array bounds for the required
+; memchecks.
+
 ; CHECK-LABEL: test
-define void @test(i32* noalias %A, i64 %AStride,
-                  i32* noalias %B, i32 %BStride,
-                  i32* noalias %C, i64 %CStride, i32 %N) {
+define void @test(i32*  %A, i64 %AStride,
+                  i32*  %B, i32 %BStride,
+                  i32*  %C, i64 %CStride, i32 %N) {
 entry:
   %cmp13 = icmp eq i32 %N, 0
   br i1 %cmp13, label %for.end, label %for.body.preheader
