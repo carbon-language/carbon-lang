@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple mips-linux-gnu -emit-llvm %s -o - | FileCheck %s
 
 void foo(int x)
 {
@@ -31,6 +32,6 @@ extern _Atomic(_Complex int) x;
 
 void baz(int y) {
 // CHECK-LABEL: @baz
-// CHECK: store atomic
+// CHECK: {{store atomic|call void @__atomic_store}}
   x += y;
 }
