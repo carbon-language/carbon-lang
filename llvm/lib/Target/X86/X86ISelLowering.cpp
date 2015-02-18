@@ -8618,8 +8618,10 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
         DAG.getNode(X86ISD::PSHUFD, SDLoc(Op), MVT::v4i32, V1,
                     getV4X86ShuffleImm8ForMask(WidenedMask, DAG)));
   }
-  assert((Mask[0] >= 2) + (Mask[1] >= 2) == 1 &&
-         "Canonicalization ensures we only see shuffles with two inputs.");
+  assert(Mask[0] != -1 && "No undef lanes in multi-input v2 shuffles!");
+  assert(Mask[1] != -1 && "No undef lanes in multi-input v2 shuffles!");
+  assert(Mask[0] < 2 && "We sort V1 to be the first input.");
+  assert(Mask[1] >= 2 && "We sort V2 to be the second input.");
 
   // Try to use shift instructions.
   if (SDValue Shift =
@@ -8633,8 +8635,7 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return Insertion;
   // Try inverting the insertion since for v2 masks it is easy to do and we
   // can't reliably sort the mask one way or the other.
-  int InverseMask[2] = {Mask[0] < 0 ? -1 : (Mask[0] ^ 2),
-                        Mask[1] < 0 ? -1 : (Mask[1] ^ 2)};
+  int InverseMask[2] = {Mask[0] ^ 2, Mask[1] ^ 2};
   if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
           MVT::v2i64, DL, V2, V1, InverseMask, Subtarget, DAG))
     return Insertion;
