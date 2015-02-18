@@ -64,7 +64,6 @@ public:
       : LPI(LPI), CurrentSelector(Selector->stripPointerCasts()), EHObj(EHObj),
         SelectorIDType(Type::getInt32Ty(LPI->getContext())),
         Int8PtrType(Type::getInt8PtrTy(LPI->getContext())) {}
-  virtual ~WinEHCatchDirector() {}
 
   CloningAction handleInstruction(ValueToValueMapTy &VMap,
                                   const Instruction *Inst,
