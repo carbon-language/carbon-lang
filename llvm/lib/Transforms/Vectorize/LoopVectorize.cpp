@@ -837,7 +837,7 @@ private:
   /// Report an analysis message to assist the user in diagnosing loops that are
   /// not vectorized.
   void emitAnalysis(VectorizationReport &Message) {
-    VectorizationReport::emitAnalysis(Message, TheFunction, TheLoop);
+    VectorizationReport::emitAnalysis(Message, TheFunction, TheLoop, LV_NAME);
   }
 
   unsigned NumPredStores;
@@ -974,7 +974,7 @@ private:
   /// Report an analysis message to assist the user in diagnosing loops that are
   /// not vectorized.
   void emitAnalysis(VectorizationReport &Message) {
-    VectorizationReport::emitAnalysis(Message, TheFunction, TheLoop);
+    VectorizationReport::emitAnalysis(Message, TheFunction, TheLoop, LV_NAME);
   }
 
   /// Values used only by @llvm.assume calls.

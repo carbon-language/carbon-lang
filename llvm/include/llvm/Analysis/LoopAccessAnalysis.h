@@ -55,11 +55,13 @@ public:
   std::string &str() { return Message; }
   operator Twine() { return Message; }
 
-  /// \brief Emit an analysis note with the debug location from the instruction
-  /// in \p Message if available.  Otherwise use the location of \p TheLoop.
+  /// \brief Emit an analysis note for \p PassName with the debug location from
+  /// the instruction in \p Message if available.  Otherwise use the location of
+  /// \p TheLoop.
   static void emitAnalysis(VectorizationReport &Message,
                            const Function *TheFunction,
-                           const Loop *TheLoop);
+                           const Loop *TheLoop,
+                           const char *PassName);
 };
 
 /// \brief Collection of parameters shared beetween the Loop Vectorizer and the
