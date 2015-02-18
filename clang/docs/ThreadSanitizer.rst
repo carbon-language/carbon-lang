@@ -12,8 +12,7 @@ ThreadSanitizer is about **5x-10x**.
 How to build
 ------------
 
-Follow the `Clang build instructions <../get_started.html>`_.  CMake build is
-supported.
+Build LLVM/Clang with `CMake <http://llvm.org/docs/CMake.html>`_.
 
 Supported Platforms
 -------------------
