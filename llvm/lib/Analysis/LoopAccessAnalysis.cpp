@@ -1173,7 +1173,7 @@ void LoopAccessInfo::emitAnalysis(LoopAccessReport &Message) {
   Report = Message;
 }
 
-bool LoopAccessInfo::isUniform(Value *V) {
+bool LoopAccessInfo::isUniform(Value *V) const {
   return (SE->isLoopInvariant(SE->getSCEV(V), TheLoop));
 }
 
@@ -1189,7 +1189,7 @@ static Instruction *getFirstInst(Instruction *FirstInst, Value *V,
 }
 
 std::pair<Instruction *, Instruction *>
-LoopAccessInfo::addRuntimeCheck(Instruction *Loc) {
+LoopAccessInfo::addRuntimeCheck(Instruction *Loc) const {
   Instruction *tnullptr = nullptr;
   if (!PtrRtCheck.Need)
     return std::pair<Instruction *, Instruction *>(tnullptr, tnullptr);
@@ -1301,7 +1301,8 @@ void LoopAccessInfo::print(raw_ostream &OS, unsigned Depth) const {
   OS << "\n";
 }
 
-LoopAccessInfo &LoopAccessAnalysis::getInfo(Loop *L, ValueToValueMap &Strides) {
+const LoopAccessInfo &LoopAccessAnalysis::getInfo(Loop *L,
+                                                  ValueToValueMap &Strides) {
   auto &LAI = LoopAccessInfoMap[L];
 
 #ifndef NDEBUG
