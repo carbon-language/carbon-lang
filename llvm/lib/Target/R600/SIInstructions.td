@@ -133,28 +133,28 @@ defm S_BREV_B32 : SOP1_32 <sop1<0x0b, 0x08>, "s_brev_b32",
 defm S_BREV_B64 : SOP1_64 <sop1<0x0c, 0x09>, "s_brev_b64", []>;
 
 let Defs = [SCC] in {
-  //defm S_BCNT0_I32_B32 : SOP1_BCNT0 <sop1<0x0d, 0x0a>, "s_bcnt0_i32_b32", []>;
-  //defm S_BCNT0_I32_B64 : SOP1_BCNT0 <sop1<0x0e, 0x0b>, "s_bcnt0_i32_b64", []>;
+  defm S_BCNT0_I32_B32 : SOP1_32 <sop1<0x0d, 0x0a>, "s_bcnt0_i32_b32", []>;
+  defm S_BCNT0_I32_B64 : SOP1_32_64 <sop1<0x0e, 0x0b>, "s_bcnt0_i32_b64", []>;
   defm S_BCNT1_I32_B32 : SOP1_32 <sop1<0x0f, 0x0c>, "s_bcnt1_i32_b32",
     [(set i32:$dst, (ctpop i32:$src0))]
   >;
   defm S_BCNT1_I32_B64 : SOP1_32_64 <sop1<0x10, 0x0d>, "s_bcnt1_i32_b64", []>;
 } // End Defs = [SCC]
 
-//defm S_FF0_I32_B32 : SOP1_32 <sop1<0x11, 0x0e>, "s_ff0_i32_b32", []>;
-//defm S_FF0_I32_B64 : SOP1_FF0 <sop1<0x12, 0x0f>, "s_ff0_i32_b64", []>;
+defm S_FF0_I32_B32 : SOP1_32 <sop1<0x11, 0x0e>, "s_ff0_i32_b32", []>;
+defm S_FF0_I32_B64 : SOP1_32_64 <sop1<0x12, 0x0f>, "s_ff0_i32_b64", []>;
 defm S_FF1_I32_B32 : SOP1_32 <sop1<0x13, 0x10>, "s_ff1_i32_b32",
   [(set i32:$dst, (cttz_zero_undef i32:$src0))]
 >;
-////defm S_FF1_I32_B64 : SOP1_FF1 <sop1<0x14, 0x11>, "s_ff1_i32_b64", []>;
+defm S_FF1_I32_B64 : SOP1_32_64 <sop1<0x14, 0x11>, "s_ff1_i32_b64", []>;
 
 defm S_FLBIT_I32_B32 : SOP1_32 <sop1<0x15, 0x12>, "s_flbit_i32_b32",
   [(set i32:$dst, (ctlz_zero_undef i32:$src0))]
 >;
 
-//defm S_FLBIT_I32_B64 : SOP1_32 <sop1<0x16, 0x13>, "s_flbit_i32_b64", []>;
+defm S_FLBIT_I32_B64 : SOP1_32_64 <sop1<0x16, 0x13>, "s_flbit_i32_b64", []>;
 defm S_FLBIT_I32 : SOP1_32 <sop1<0x17, 0x14>, "s_flbit_i32", []>;
-//defm S_FLBIT_I32_I64 : SOP1_32 <sop1<0x18, 0x15>, "s_flbit_i32_i64", []>;
+defm S_FLBIT_I32_I64 : SOP1_32_64 <sop1<0x18, 0x15>, "s_flbit_i32_i64", []>;
 defm S_SEXT_I32_I8 : SOP1_32 <sop1<0x19, 0x16>, "s_sext_i32_i8",
   [(set i32:$dst, (sext_inreg i32:$src0, i8))]
 >;
@@ -162,10 +162,10 @@ defm S_SEXT_I32_I16 : SOP1_32 <sop1<0x1a, 0x17>, "s_sext_i32_i16",
   [(set i32:$dst, (sext_inreg i32:$src0, i16))]
 >;
 
-////defm S_BITSET0_B32 : SOP1_BITSET0 <sop1<0x1b, 0x18>, "s_bitset0_b32", []>;
-////defm S_BITSET0_B64 : SOP1_BITSET0 <sop1<0x1c, 0x19>, "s_bitset0_b64", []>;
-////defm S_BITSET1_B32 : SOP1_BITSET1 <sop1<0x1d, 0x1a>, "s_bitset1_b32", []>;
-////defm S_BITSET1_B64 : SOP1_BITSET1 <sop1<0x1e, 0x1b>, "s_bitset1_b64", []>;
+defm S_BITSET0_B32 : SOP1_32 <sop1<0x1b, 0x18>, "s_bitset0_b32", []>;
+defm S_BITSET0_B64 : SOP1_64 <sop1<0x1c, 0x19>, "s_bitset0_b64", []>;
+defm S_BITSET1_B32 : SOP1_32 <sop1<0x1d, 0x1a>, "s_bitset1_b32", []>;
+defm S_BITSET1_B64 : SOP1_64 <sop1<0x1e, 0x1b>, "s_bitset1_b64", []>;
 defm S_GETPC_B64 : SOP1_64_0 <sop1<0x1f, 0x1c>, "s_getpc_b64", []>;
 defm S_SETPC_B64 : SOP1_64 <sop1<0x20, 0x1d>, "s_setpc_b64", []>;
 defm S_SWAPPC_B64 : SOP1_64 <sop1<0x21, 0x1e>, "s_swappc_b64", []>;
@@ -190,7 +190,7 @@ defm S_MOVRELS_B32 : SOP1_32 <sop1<0x2e, 0x2a>, "s_movrels_b32", []>;
 defm S_MOVRELS_B64 : SOP1_64 <sop1<0x2f, 0x2b>, "s_movrels_b64", []>;
 defm S_MOVRELD_B32 : SOP1_32 <sop1<0x30, 0x2c>, "s_movreld_b32", []>;
 defm S_MOVRELD_B64 : SOP1_64 <sop1<0x31, 0x2d>, "s_movreld_b64", []>;
-//defm S_CBRANCH_JOIN : SOP1_ <sop1<0x32, 0x2e>, "s_cbranch_join", []>;
+defm S_CBRANCH_JOIN : SOP1_1 <sop1<0x32, 0x2e>, "s_cbranch_join", []>;
 defm S_MOV_REGRD_B32 : SOP1_32 <sop1<0x33, 0x2f>, "s_mov_regrd_b32", []>;
 let Defs = [SCC] in {
   defm S_ABS_I32 : SOP1_32 <sop1<0x34, 0x30>, "s_abs_i32", []>;
