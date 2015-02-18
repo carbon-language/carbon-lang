@@ -500,5 +500,15 @@ TEST_F(FormatTestJS, TypeAnnotations) {
   verifyFormat("var x: P<string, (a: number) => string>;");
 }
 
+TEST_F(FormatTestJS, ClassDeclarations) {
+  verifyFormat("class C {\n  x: string = 12;\n}");
+  verifyFormat("class C {\n  x(): string => 12;\n}");
+  verifyFormat("class C {\n  ['x' + 2]: string = 12;\n}");
+  verifyFormat("class C {\n  private x: string = 12;\n}");
+  verifyFormat("class C {\n  private static x: string = 12;\n}");
+  verifyFormat("class C {\n  static x(): string { return 'asd'; }\n}");
+  verifyFormat("class C extends P implements I {}");
+}
+
 } // end namespace tooling
 } // end namespace clang

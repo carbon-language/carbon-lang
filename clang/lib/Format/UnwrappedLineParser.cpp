@@ -693,7 +693,8 @@ void UnwrappedLineParser::parseStructuralElement() {
   case tok::kw_public:
   case tok::kw_protected:
   case tok::kw_private:
-    if (Style.Language == FormatStyle::LK_Java)
+    if (Style.Language == FormatStyle::LK_Java ||
+        Style.Language == FormatStyle::LK_JavaScript)
       nextToken();
     else
       parseAccessSpecifier();
@@ -823,13 +824,17 @@ void UnwrappedLineParser::parseStructuralElement() {
         break;
       }
       nextToken();
-      if (Line->Tokens.size() == 1) {
+      if (Line->Tokens.size() == 1 &&
+          // JS doesn't have macros, and within classes colons indicate fields,
+          // not labels.
+          (Style.Language != FormatStyle::LK_JavaScript ||
+           !Line->MustBeDeclaration)) {
         if (FormatTok->Tok.is(tok::colon)) {
           parseLabel();
           return;
         }
         // Recognize function-like macro usages without trailing semicolon as
-        // well as free-standing macrose like Q_OBJECT.
+        // well as free-standing macros like Q_OBJECT.
         bool FunctionLike = FormatTok->is(tok::l_paren);
         if (FunctionLike)
           parseParens();
