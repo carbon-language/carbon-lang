@@ -985,12 +985,10 @@ std::error_code FileCOFF::maybeCreateSXDataAtoms() {
   if (sxdata.empty())
     return std::error_code();
 
-  std::vector<uint8_t> atomContent =
-      *new (_alloc) std::vector<uint8_t>((size_t)sxdata.size());
   auto *atom = new (_alloc) COFFDefinedAtom(
       *this, "", ".sxdata", Atom::scopeTranslationUnit, DefinedAtom::typeData,
       false /*isComdat*/, DefinedAtom::permR__, DefinedAtom::mergeNo,
-      atomContent, _ordinal++);
+      sxdata, _ordinal++);
 
   const ulittle32_t *symbolIndex =
       reinterpret_cast<const ulittle32_t *>(sxdata.data());
