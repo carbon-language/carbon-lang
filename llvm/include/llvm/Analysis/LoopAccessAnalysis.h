@@ -74,7 +74,7 @@ public:
 /// generates run-time checks to prove independence.  This is done by
 /// AccessAnalysis::canCheckPtrAtRT and the checks are maintained by the
 /// RuntimePointerCheck class.
-class LoopAccessAnalysis {
+class LoopAccessInfo {
 public:
   /// \brief Collection of parameters used from the vectorizer.
   struct VectorizerParams {
@@ -137,10 +137,10 @@ public:
     SmallVector<unsigned, 2> AliasSetId;
   };
 
-  LoopAccessAnalysis(Function *F, Loop *L, ScalarEvolution *SE,
-                     const DataLayout *DL, const TargetLibraryInfo *TLI,
-                     AliasAnalysis *AA, DominatorTree *DT,
-                     const VectorizerParams &VectParams) :
+  LoopAccessInfo(Function *F, Loop *L, ScalarEvolution *SE,
+                 const DataLayout *DL, const TargetLibraryInfo *TLI,
+                 AliasAnalysis *AA, DominatorTree *DT,
+                 const VectorizerParams &VectParams) :
       TheFunction(F), TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA), DT(DT),
       NumLoads(0), NumStores(0), MaxSafeDepDistBytes(-1U),
       VectParams(VectParams) {}

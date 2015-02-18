@@ -551,8 +551,8 @@ public:
       : NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
         TLI(TLI), TheFunction(F), TTI(TTI), Induction(nullptr),
         WidestIndTy(nullptr),
-        LAA(F, L, SE, DL, TLI, AA, DT,
-            LoopAccessAnalysis::VectorizerParams(
+        LAI(F, L, SE, DL, TLI, AA, DT,
+            LoopAccessInfo::VectorizerParams(
                 MaxVectorWidth, VectorizationFactor, VectorizationInterleave,
                 RuntimeMemoryCheckThreshold)),
         HasFunNoNaNAttr(false) {}
@@ -740,19 +740,19 @@ public:
   bool isUniformAfterVectorization(Instruction* I) { return Uniforms.count(I); }
 
   /// Returns the information that we collected about runtime memory check.
-  LoopAccessAnalysis::RuntimePointerCheck *getRuntimePointerCheck() {
-    return LAA.getRuntimePointerCheck();
+  LoopAccessInfo::RuntimePointerCheck *getRuntimePointerCheck() {
+    return LAI.getRuntimePointerCheck();
   }
 
-  LoopAccessAnalysis *getLAA() {
-    return &LAA;
+  LoopAccessInfo *getLAI() {
+    return &LAI;
   }
 
   /// This function returns the identity element (or neutral element) for
   /// the operation K.
   static Constant *getReductionIdentity(ReductionKind K, Type *Tp);
 
-  unsigned getMaxSafeDepDistBytes() { return LAA.getMaxSafeDepDistBytes(); }
+  unsigned getMaxSafeDepDistBytes() { return LAI.getMaxSafeDepDistBytes(); }
 
   bool hasStride(Value *V) { return StrideSet.count(V); }
   bool mustCheckStrides() { return !StrideSet.empty(); }
@@ -777,10 +777,10 @@ public:
     return (MaskedOp.count(I) != 0);
   }
   unsigned getNumStores() const {
-    return LAA.getNumStores();
+    return LAI.getNumStores();
   }
   unsigned getNumLoads() const {
-    return LAA.getNumLoads();
+    return LAI.getNumLoads();
   }
   unsigned getNumPredStores() const {
     return NumPredStores;
@@ -874,7 +874,7 @@ private:
   /// This set holds the variables which are known to be uniform after
   /// vectorization.
   SmallPtrSet<Instruction*, 4> Uniforms;
-  LoopAccessAnalysis LAA;
+  LoopAccessInfo LAI;
   /// Can we assume the absence of NaNs.
   bool HasFunNoNaNAttr;
 
@@ -1658,7 +1658,7 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
 }
 
 bool LoopVectorizationLegality::isUniform(Value *V) {
-  return LAA.isUniform(V);
+  return LAI.isUniform(V);
 }
 
 InnerLoopVectorizer::VectorParts&
@@ -2230,7 +2230,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // faster.
   Instruction *MemRuntimeCheck;
   std::tie(FirstCheckInst, MemRuntimeCheck) =
-    Legal->getLAA()->addRuntimeCheck(LastBypassBlock->getTerminator());
+    Legal->getLAI()->addRuntimeCheck(LastBypassBlock->getTerminator());
   if (MemRuntimeCheck) {
     // Create a new block containing the memory check.
     BasicBlock *CheckBlock =
@@ -3398,7 +3398,7 @@ bool LoopVectorizationLegality::canVectorize() {
   collectLoopUniforms();
 
   DEBUG(dbgs() << "LV: We can vectorize this loop" <<
-        (LAA.getRuntimePointerCheck()->Need ? " (with a runtime bound check)" :
+        (LAI.getRuntimePointerCheck()->Need ? " (with a runtime bound check)" :
          "")
         <<"!\n");
 
@@ -3823,7 +3823,7 @@ void LoopVectorizationLegality::collectLoopUniforms() {
 }
 
 bool LoopVectorizationLegality::canVectorizeMemory() {
-  return LAA.canVectorizeMemory(Strides);
+  return LAI.canVectorizeMemory(Strides);
 }
 
 static bool hasMultipleUsesOf(Instruction *I,
@@ -4167,7 +4167,7 @@ bool LoopVectorizationLegality::isInductionVariable(const Value *V) {
 }
 
 bool LoopVectorizationLegality::blockNeedsPredication(BasicBlock *BB)  {
-  return LAA.blockNeedsPredication(BB);
+  return LAI.blockNeedsPredication(BB);
 }
 
 bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB,

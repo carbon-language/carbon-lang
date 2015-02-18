@@ -73,12 +73,11 @@ const SCEV *llvm::replaceSymbolicStrideSCEV(ScalarEvolution *SE,
   return SE->getSCEV(Ptr);
 }
 
-void LoopAccessAnalysis::RuntimePointerCheck::insert(ScalarEvolution *SE,
-                                                     Loop *Lp, Value *Ptr,
-                                                     bool WritePtr,
-                                                     unsigned DepSetId,
-                                                     unsigned ASId,
-                                                     ValueToValueMap &Strides) {
+void LoopAccessInfo::RuntimePointerCheck::insert(ScalarEvolution *SE, Loop *Lp,
+                                                 Value *Ptr, bool WritePtr,
+                                                 unsigned DepSetId,
+                                                 unsigned ASId,
+                                                 ValueToValueMap &Strides) {
   // Get the stride replaced scev.
   const SCEV *Sc = replaceSymbolicStrideSCEV(SE, Strides, Ptr);
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Sc);
@@ -128,7 +127,7 @@ public:
 
   /// \brief Check whether we can check the pointers at runtime for
   /// non-intersection.
-  bool canCheckPtrAtRT(LoopAccessAnalysis::RuntimePointerCheck &RtCheck,
+  bool canCheckPtrAtRT(LoopAccessInfo::RuntimePointerCheck &RtCheck,
                        unsigned &NumComparisons,
                        ScalarEvolution *SE, Loop *TheLoop,
                        ValueToValueMap &Strides,
@@ -196,7 +195,7 @@ static int isStridedPtr(ScalarEvolution *SE, const DataLayout *DL, Value *Ptr,
                         const Loop *Lp, ValueToValueMap &StridesMap);
 
 bool AccessAnalysis::canCheckPtrAtRT(
-    LoopAccessAnalysis::RuntimePointerCheck &RtCheck,
+    LoopAccessInfo::RuntimePointerCheck &RtCheck,
     unsigned &NumComparisons, ScalarEvolution *SE, Loop *TheLoop,
     ValueToValueMap &StridesMap, bool ShouldCheckStride) {
   // Find pointers with computable bounds. We are going to use this information
@@ -439,7 +438,7 @@ public:
   typedef SmallPtrSet<MemAccessInfo, 8> MemAccessInfoSet;
 
   MemoryDepChecker(ScalarEvolution *Se, const DataLayout *Dl, const Loop *L,
-                   const LoopAccessAnalysis::VectorizerParams &VectParams)
+                   const LoopAccessInfo::VectorizerParams &VectParams)
       : SE(Se), DL(Dl), InnermostLoop(L), AccessIdx(0),
         ShouldRetryWithRuntimeCheck(false), VectParams(VectParams) {}
 
@@ -497,7 +496,7 @@ private:
   bool ShouldRetryWithRuntimeCheck;
 
   /// \brief Vectorizer parameters used by the analysis.
-  LoopAccessAnalysis::VectorizerParams VectParams;
+  LoopAccessInfo::VectorizerParams VectParams;
 
   /// \brief Check whether there is a plausible dependence between the two
   /// accesses.
@@ -815,7 +814,7 @@ bool MemoryDepChecker::areDepsSafe(AccessAnalysis::DepCandidates &AccessSets,
   return true;
 }
 
-bool LoopAccessAnalysis::canVectorizeMemory(ValueToValueMap &Strides) {
+bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
 
   typedef SmallVector<Value*, 16> ValueVector;
   typedef SmallPtrSet<Value*, 16> ValueSet;
@@ -1069,7 +1068,7 @@ bool LoopAccessAnalysis::canVectorizeMemory(ValueToValueMap &Strides) {
   return CanVecMem;
 }
 
-bool LoopAccessAnalysis::blockNeedsPredication(BasicBlock *BB)  {
+bool LoopAccessInfo::blockNeedsPredication(BasicBlock *BB)  {
   assert(TheLoop->contains(BB) && "Unknown block used");
 
   // Blocks that do not dominate the latch need predication.
@@ -1077,11 +1076,11 @@ bool LoopAccessAnalysis::blockNeedsPredication(BasicBlock *BB)  {
   return !DT->dominates(BB, Latch);
 }
 
-void LoopAccessAnalysis::emitAnalysis(VectorizationReport &Message) {
+void LoopAccessInfo::emitAnalysis(VectorizationReport &Message) {
   VectorizationReport::emitAnalysis(Message, TheFunction, TheLoop);
 }
 
-bool LoopAccessAnalysis::isUniform(Value *V) {
+bool LoopAccessInfo::isUniform(Value *V) {
   return (SE->isLoopInvariant(SE->getSCEV(V), TheLoop));
 }
 
@@ -1097,7 +1096,7 @@ static Instruction *getFirstInst(Instruction *FirstInst, Value *V,
 }
 
 std::pair<Instruction *, Instruction *>
-LoopAccessAnalysis::addRuntimeCheck(Instruction *Loc) {
+LoopAccessInfo::addRuntimeCheck(Instruction *Loc) {
   Instruction *tnullptr = nullptr;
   if (!PtrRtCheck.Need)
     return std::pair<Instruction *, Instruction *>(tnullptr, tnullptr);
