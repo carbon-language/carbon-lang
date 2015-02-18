@@ -21,3 +21,5 @@ struct __declspec(aligned) S2 {}; /* expected-warning {{__declspec attribute 'al
 struct __declspec(appdomain) S3 {}; /* expected-warning {{__declspec attribute 'appdomain' is not supported}} */
 
 __declspec(__noreturn__) void f7(void); /* expected-warning {{__declspec attribute '__noreturn__' is not supported}} */
+
+size_t x;
