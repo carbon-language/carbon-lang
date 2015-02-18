@@ -4028,7 +4028,7 @@ public:
       Features["hwdiv-arm"] = true;
       Features["crc"] = true;
       Features["crypto"] = true;
-    } else if (CPU == "cortex-r5" ||
+    } else if (CPU == "cortex-r5" || CPU == "cortex-r7" ||
                // Enable the hwdiv extension for all v8a AArch32 cores by
                // default.
                ArchName == "armv8a" || ArchName == "armv8" ||
@@ -4037,7 +4037,8 @@ public:
                ArchName == "thumbebv8a" || ArchName == "thumbebv8") {
       Features["hwdiv"] = true;
       Features["hwdiv-arm"] = true;
-    } else if (CPU == "cortex-m3" || CPU == "cortex-m4" || CPU == "cortex-m7") {
+    } else if (CPU == "cortex-m3" || CPU == "cortex-m4" || CPU == "cortex-m7" ||
+               CPU == "sc300") {
       Features["hwdiv"] = true;
     }
   }
@@ -4135,12 +4136,12 @@ public:
         .Cases("cortex-a5", "cortex-a7", "cortex-a8", "7A")
         .Cases("cortex-a9", "cortex-a12", "cortex-a15", "cortex-a17", "krait",
                "7A")
-        .Cases("cortex-r4", "cortex-r5", "7R")
+        .Cases("cortex-r4", "cortex-r5", "cortex-r7", "7R")
         .Case("swift", "7S")
         .Case("cyclone", "8A")
-        .Case("cortex-m3", "7M")
+        .Cases("sc300", "cortex-m3", "7M")
         .Cases("cortex-m4", "cortex-m7", "7EM")
-        .Case("cortex-m0", "6M")
+        .Cases("sc000", "cortex-m0", "cortex-m0plus", "cortex-m1", "6M")
         .Cases("cortex-a53", "cortex-a57", "cortex-a72", "8A")
         .Default(nullptr);
   }
@@ -4150,8 +4151,9 @@ public:
         .Cases("cortex-a9", "cortex-a12", "cortex-a15", "cortex-a17", "krait",
                "A")
         .Cases("cortex-a53", "cortex-a57", "cortex-a72", "A")
-        .Cases("cortex-m3", "cortex-m4", "cortex-m0", "cortex-m7", "M")
-        .Cases("cortex-r4", "cortex-r5", "R")
+        .Cases("cortex-m3", "cortex-m4", "cortex-m0", "cortex-m0plus", "M")
+        .Cases("cortex-m1", "cortex-m7", "sc000", "sc300", "M")
+        .Cases("cortex-r4", "cortex-r5", "cortex-r7", "R")
         .Default("");
   }
   bool setCPU(const std::string &Name) override {

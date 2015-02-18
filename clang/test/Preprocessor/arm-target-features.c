@@ -273,13 +273,26 @@
 // R5-THUMB:#define __ARM_ARCH_EXT_IDIV__ 1
 // R5-THUMB:#define __ARM_FEATURE_DSP
 
+// Test whether predefines are as expected when targeting cortex-r7.
+// RUN: %clang -target armv7 -mcpu=cortex-r7 -x c -E -dM %s -o - | FileCheck --check-prefix=R7-ARM %s
+// R7-ARM:#define __ARM_ARCH_EXT_IDIV__ 1
+// R7-ARM:#define __ARM_FEATURE_DSP
+
+// RUN: %clang -target armv7 -mthumb -mcpu=cortex-r7 -x c -E -dM %s -o - | FileCheck --check-prefix=R7-THUMB %s
+// R7-THUMB:#define __ARM_ARCH_EXT_IDIV__ 1
+// R7-THUMB:#define __ARM_FEATURE_DSP
+
 // Test whether predefines are as expected when targeting cortex-m0.
 // RUN: %clang -target armv7 -mthumb -mcpu=cortex-m0 -x c -E -dM %s -o - | FileCheck --check-prefix=M0-THUMB %s
+// RUN: %clang -target armv7 -mthumb -mcpu=cortex-m0plus -x c -E -dM %s -o - | FileCheck --check-prefix=M0-THUMB %s
+// RUN: %clang -target armv7 -mthumb -mcpu=cortex-m1 -x c -E -dM %s -o - | FileCheck --check-prefix=M0-THUMB %s
+// RUN: %clang -target armv7 -mthumb -mcpu=sc000 -x c -E -dM %s -o - | FileCheck --check-prefix=M0-THUMB %s
 // M0-THUMB-NOT:#define __ARM_ARCH_EXT_IDIV__
 // M0-THUMB-NOT:#define __ARM_FEATURE_DSP
 
 // Test whether predefines are as expected when targeting cortex-m3.
 // RUN: %clang -target armv7 -mthumb -mcpu=cortex-m3 -x c -E -dM %s -o - | FileCheck --check-prefix=M3-THUMB %s
+// RUN: %clang -target armv7 -mthumb -mcpu=sc300 -x c -E -dM %s -o - | FileCheck --check-prefix=M3-THUMB %s
 // M3-THUMB:#define __ARM_ARCH_EXT_IDIV__ 1
 // M3-THUMB-NOT:#define __ARM_FEATURE_DSP
 
