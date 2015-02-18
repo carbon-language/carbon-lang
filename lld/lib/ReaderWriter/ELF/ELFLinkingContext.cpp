@@ -232,7 +232,7 @@ void ELFLinkingContext::notifySymbolTableCoalesce(const Atom *existingAtom,
 }
 
 std::string ELFLinkingContext::demangle(StringRef symbolName) const {
-  if (!_demangle)
+  if (!demangleSymbols())
     return symbolName;
 
   // Only try to demangle symbols that look like C++ symbols

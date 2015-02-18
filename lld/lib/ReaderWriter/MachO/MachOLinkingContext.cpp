@@ -791,7 +791,7 @@ bool MachOLinkingContext::exportSymbolNamed(StringRef sym) const {
 
 std::string MachOLinkingContext::demangle(StringRef symbolName) const {
   // Only try to demangle symbols if -demangle on command line
-  if (!_demangle)
+  if (!demangleSymbols())
     return symbolName;
 
   // Only try to demangle symbols that look like C++ symbols
