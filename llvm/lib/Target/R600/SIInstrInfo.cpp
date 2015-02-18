@@ -750,7 +750,7 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
       (!isOperandLegal(MI, Src0Idx, &Src1) ||
        !isOperandLegal(MI, Src1Idx, &Src0))) {
     return nullptr;
-    }
+  }
 
   if (!Src1.isReg()) {
     // Allow commuting instructions with Imm operands.
