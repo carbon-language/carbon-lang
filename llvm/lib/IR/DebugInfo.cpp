@@ -428,6 +428,7 @@ static bool fieldIsScopeRef(const MDNode *DbgNode, unsigned Elt) {
   return isScopeRef(dyn_cast_or_null<Metadata>(getField(DbgNode, Elt)));
 }
 
+#ifndef NDEBUG
 /// \brief Check if a value can be a DescriptorRef.
 static bool isDescriptorRef(const Metadata *MD) {
   if (!MD)
@@ -436,6 +437,7 @@ static bool isDescriptorRef(const Metadata *MD) {
     return !S->getString().empty();
   return isa<MDNode>(MD);
 }
+#endif
 
 bool DIType::Verify() const {
   if (!isType())
