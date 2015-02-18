@@ -418,7 +418,9 @@ static bool isScopeRef(const Metadata *MD) {
     return true;
   if (auto *S = dyn_cast<MDString>(MD))
     return !S->getString().empty();
-  return isa<MDNode>(MD);
+  if (auto *N = dyn_cast<MDNode>(MD))
+    return DIScope(N).isScope();
+  return false;
 }
 
 /// \brief Check if a field at position Elt of a MDNode can be a ScopeRef.
