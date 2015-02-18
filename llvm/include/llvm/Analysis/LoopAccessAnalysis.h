@@ -116,6 +116,10 @@ public:
     void insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr, bool WritePtr,
                 unsigned DepSetId, unsigned ASId, ValueToValueMap &Strides);
 
+    /// \brief Decide whether we need to issue a run-time check for pointer at
+    /// index \p I and \p J to prove their independence.
+    bool needsChecking(unsigned I, unsigned J) const;
+
     /// This flag indicates if we need to add the runtime check.
     bool Need;
     /// Holds the pointers that we need to check.

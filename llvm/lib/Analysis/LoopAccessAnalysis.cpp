@@ -93,6 +93,23 @@ void LoopAccessInfo::RuntimePointerCheck::insert(ScalarEvolution *SE, Loop *Lp,
   AliasSetId.push_back(ASId);
 }
 
+bool LoopAccessInfo::RuntimePointerCheck::needsChecking(unsigned I,
+                                                        unsigned J) const {
+  // No need to check if two readonly pointers intersect.
+  if (!IsWritePtr[I] && !IsWritePtr[J])
+    return false;
+
+  // Only need to check pointers between two different dependency sets.
+  if (DependencySetId[I] == DependencySetId[J])
+    return false;
+
+  // Only need to check pointers in the same alias set.
+  if (AliasSetId[I] != AliasSetId[J])
+    return false;
+
+  return true;
+}
+
 namespace {
 /// \brief Analyses memory accesses in a loop.
 ///
@@ -1147,15 +1164,7 @@ LoopAccessInfo::addRuntimeCheck(Instruction *Loc) {
   Value *MemoryRuntimeCheck = nullptr;
   for (unsigned i = 0; i < NumPointers; ++i) {
     for (unsigned j = i+1; j < NumPointers; ++j) {
-      // No need to check if two readonly pointers intersect.
-      if (!PtrRtCheck.IsWritePtr[i] && !PtrRtCheck.IsWritePtr[j])
-        continue;
-
-      // Only need to check pointers between two different dependency sets.
-      if (PtrRtCheck.DependencySetId[i] == PtrRtCheck.DependencySetId[j])
-       continue;
-      // Only need to check pointers in the same alias set.
-      if (PtrRtCheck.AliasSetId[i] != PtrRtCheck.AliasSetId[j])
+      if (!PtrRtCheck.needsChecking(i, j))
         continue;
 
       unsigned AS0 = Starts[i]->getType()->getPointerAddressSpace();
