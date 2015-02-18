@@ -1253,18 +1253,21 @@ public:
     // Step 4) Add the module containing the stub to the JIT.
     auto H = addModule(C.takeM());
 
-    // Step 5) Set the compile and update actions for the callback. The compile
-    //         action will IRGen and Codegen the function. The update action
-    //         will update FunctionBodyPointer to point at the newly compiled
-    //         function pointer.
+    // Step 5) Set the compile and update actions for the callback.
     //
-    // FIXME: Use generalized capture for FnAST when we get C++14 support.
-    FunctionAST *FnASTPtr = FnAST.release();
-    CallbackInfo.setCompileAction([this,FnASTPtr](){
-      std::unique_ptr<FunctionAST> Fn(FnASTPtr);
-      auto H = addModule(IRGen(Session, *Fn));
-      return findSymbolIn(H, Fn->Proto->Name).getAddress();
-    });
+    //   The compile action will IRGen the function and add it to the JIT, then
+    // request its address, which will trigger codegen. Since we don't need the
+    // AST after this, we pass ownership of the AST into the compile action:
+    // compile actions (and update actions) are deleted after they're run, so
+    // this will free the AST for us.
+    //
+    //   The update action will update FunctionBodyPointer to point at the newly
+    // compiled function.
+    CallbackInfo.setCompileAction(
+      [this,Fn = std::shared_ptr<FunctionAST>(std::move(FnAST))](){
+        auto H = addModule(IRGen(Session, *Fn));
+        return findSymbolIn(H, Fn->Proto->Name).getAddress();
+      });
     CallbackInfo.setUpdateAction(
       CompileCallbacks.getLocalFPUpdater(H, Mangle(BodyPtrName)));
   }
