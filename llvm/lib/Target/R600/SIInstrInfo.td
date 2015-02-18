@@ -1915,12 +1915,13 @@ multiclass MUBUF_Store_Helper <mubuf op, string name, RegisterClass vdataClass,
 }
 
 class FLAT_Load_Helper <bits<7> op, string asm, RegisterClass regClass> :
-      FLAT <op, (outs regClass:$data),
+      FLAT <op, (outs regClass:$vdst),
                 (ins VReg_64:$addr),
-            asm#" $data, $addr, [M0, FLAT_SCRATCH]", []> {
+            asm#" $vdst, $addr, [M0, FLAT_SCRATCH]", []> {
   let glc = 0;
   let slc = 0;
   let tfe = 0;
+  let data = 0;
   let mayLoad = 1;
 }
 
@@ -1936,6 +1937,7 @@ class FLAT_Store_Helper <bits<7> op, string name, RegisterClass vdataClass> :
   let glc = 0;
   let slc = 0;
   let tfe = 0;
+  let vdst = 0;
 }
 
 class MIMG_Mask <string op, int channels> {
