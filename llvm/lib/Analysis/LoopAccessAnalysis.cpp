@@ -830,6 +830,55 @@ bool MemoryDepChecker::areDepsSafe(AccessAnalysis::DepCandidates &AccessSets,
   return true;
 }
 
+bool LoopAccessInfo::canAnalyzeLoop() {
+    // We can only analyze innermost loops.
+  if (!TheLoop->empty()) {
+    emitAnalysis(VectorizationReport() << "loop is not the innermost loop");
+    return false;
+  }
+
+  // We must have a single backedge.
+  if (TheLoop->getNumBackEdges() != 1) {
+    emitAnalysis(
+        VectorizationReport() <<
+        "loop control flow is not understood by analyzer");
+    return false;
+  }
+
+  // We must have a single exiting block.
+  if (!TheLoop->getExitingBlock()) {
+    emitAnalysis(
+        VectorizationReport() <<
+        "loop control flow is not understood by analyzer");
+    return false;
+  }
+
+  // We only handle bottom-tested loops, i.e. loop in which the condition is
+  // checked at the end of each iteration. With that we can assume that all
+  // instructions in the loop are executed the same number of times.
+  if (TheLoop->getExitingBlock() != TheLoop->getLoopLatch()) {
+    emitAnalysis(
+        VectorizationReport() <<
+        "loop control flow is not understood by analyzer");
+    return false;
+  }
+
+  // We need to have a loop header.
+  DEBUG(dbgs() << "LAA: Found a loop: " <<
+        TheLoop->getHeader()->getName() << '\n');
+
+  // ScalarEvolution needs to be able to find the exit count.
+  const SCEV *ExitCount = SE->getBackedgeTakenCount(TheLoop);
+  if (ExitCount == SE->getCouldNotCompute()) {
+    emitAnalysis(VectorizationReport() <<
+                 "could not determine number of loop iterations");
+    DEBUG(dbgs() << "LAA: SCEV could not compute the loop exit count.\n");
+    return false;
+  }
+
+  return true;
+}
+
 void LoopAccessInfo::analyzeLoop(ValueToValueMap &Strides) {
 
   typedef SmallVector<Value*, 16> ValueVector;
@@ -1213,7 +1262,8 @@ LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
                                DominatorTree *DT, ValueToValueMap &Strides)
     : TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA), DT(DT), NumLoads(0),
       NumStores(0), MaxSafeDepDistBytes(-1U), CanVecMem(false) {
-  analyzeLoop(Strides);
+  if (canAnalyzeLoop())
+    analyzeLoop(Strides);
 }
 
 LoopAccessInfo &LoopAccessAnalysis::getInfo(Loop *L, ValueToValueMap &Strides) {
