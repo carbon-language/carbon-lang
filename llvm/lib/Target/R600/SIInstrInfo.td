@@ -821,6 +821,9 @@ class VOP1_Pseudo <dag outs, dag ins, list<dag> pattern, string opName> :
   VOP <opName>,
   SIMCInstr <opName#"_e32", SISubtarget.NONE> {
   let isPseudo = 1;
+
+  field bits<8> vdst;
+  field bits<9> src0;
 }
 
 multiclass VOP1_m <vop1 op, dag outs, dag ins, string asm, list<dag> pattern,

@@ -1186,7 +1186,9 @@ def FLAT_STORE_DWORDX3 : FLAT_Store_Helper <
 // VOP1 Instructions
 //===----------------------------------------------------------------------===//
 
-//def V_NOP : VOP1_ <0x00000000, "v_nop", []>;
+let vdst = 0, src0 = 0 in {
+defm V_NOP : VOP1_m <vop1<0x0>, (outs), (ins), "v_nop", [], "v_nop">;
+}
 
 let isMoveImm = 1 in {
 defm V_MOV_B32 : VOP1Inst <vop1<0x1>, "v_mov_b32", VOP_I32_I32>;
@@ -1237,7 +1239,7 @@ defm V_CVT_RPI_I32_F32 : VOP1Inst <vop1<0xc>, "v_cvt_rpi_i32_f32",
   VOP_I32_F32, cvt_rpi_i32_f32>;
 defm V_CVT_FLR_I32_F32 : VOP1Inst <vop1<0xd>, "v_cvt_flr_i32_f32",
   VOP_I32_F32, cvt_flr_i32_f32>;
-//defm V_CVT_OFF_F32_I4 : VOP1_32 <0x0000000e, "v_cvt_off_f32_i4", []>;
+defm V_CVT_OFF_F32_I4 : VOP1Inst  <vop1<0x0e>, "v_cvt_off_f32_i4", VOP_F32_I32>;
 defm V_CVT_F32_F64 : VOP1Inst <vop1<0xf>, "v_cvt_f32_f64",
   VOP_F32_F64, fround
 >;
@@ -1335,16 +1337,24 @@ defm V_BFREV_B32 : VOP1Inst <vop1<0x38, 0x2c>, "v_bfrev_b32", VOP_I32_I32>;
 defm V_FFBH_U32 : VOP1Inst <vop1<0x39, 0x2d>, "v_ffbh_u32", VOP_I32_I32>;
 defm V_FFBL_B32 : VOP1Inst <vop1<0x3a, 0x2e>, "v_ffbl_b32", VOP_I32_I32>;
 defm V_FFBH_I32 : VOP1Inst <vop1<0x3b, 0x2f>, "v_ffbh_i32", VOP_I32_I32>;
-//defm V_FREXP_EXP_I32_F64 : VOPInst <0x0000003c, "v_frexp_exp_i32_f64", VOP_I32_F32>;
+defm V_FREXP_EXP_I32_F64 : VOP1Inst <vop1<0x3c,0x30>, "v_frexp_exp_i32_f64",
+  VOP_I32_F64
+>;
 defm V_FREXP_MANT_F64 : VOP1Inst <vop1<0x3d, 0x31>, "v_frexp_mant_f64",
   VOP_F64_F64
 >;
 defm V_FRACT_F64 : VOP1Inst <vop1<0x3e, 0x32>, "v_fract_f64", VOP_F64_F64>;
-//defm V_FREXP_EXP_I32_F32 : VOPInst <0x0000003f, "v_frexp_exp_i32_f32", VOP_I32_F32>;
+defm V_FREXP_EXP_I32_F32 : VOP1Inst <vop1<0x3f, 0x33>, "v_frexp_exp_i32_f32",
+  VOP_I32_F32
+>;
 defm V_FREXP_MANT_F32 : VOP1Inst <vop1<0x40, 0x34>, "v_frexp_mant_f32",
   VOP_F32_F32
 >;
-//def V_CLREXCP : VOP1_ <0x00000041, "v_clrexcp", []>;
+let vdst = 0, src0 = 0 in {
+defm V_CLREXCP : VOP1_m <vop1<0x41,0x35>, (outs), (ins), "v_clrexcp", [],
+  "v_clrexcp"
+>;
+}
 defm V_MOVRELD_B32 : VOP1Inst <vop1<0x42, 0x36>, "v_movreld_b32", VOP_I32_I32>;
 defm V_MOVRELS_B32 : VOP1Inst <vop1<0x43, 0x37>, "v_movrels_b32", VOP_I32_I32>;
 defm V_MOVRELSD_B32 : VOP1Inst <vop1<0x44, 0x38>, "v_movrelsd_b32", VOP_I32_I32>;
