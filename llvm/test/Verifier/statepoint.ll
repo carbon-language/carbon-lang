@@ -50,3 +50,4 @@ equal:
 ; CHECK-NEXT: call
 ; CHECK-NEXT: ret voi
 }
+
