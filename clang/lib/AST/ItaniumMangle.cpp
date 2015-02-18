@@ -3557,7 +3557,7 @@ void CXXNameMangler::mangleTemplateArg(TemplateArgument A) {
     if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
       const ValueDecl *D = DRE->getDecl();
       if (isa<VarDecl>(D) || isa<FunctionDecl>(D)) {
-        Out << "L";
+        Out << 'L';
         mangle(D);
         Out << 'E';
         break;
