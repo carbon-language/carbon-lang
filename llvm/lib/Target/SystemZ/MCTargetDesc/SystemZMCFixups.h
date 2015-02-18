@@ -18,8 +18,7 @@ enum FixupKind {
   // These correspond directly to R_390_* relocations.
   FK_390_PC16DBL = FirstTargetFixupKind,
   FK_390_PC32DBL,
-  FK_390_PLT16DBL,
-  FK_390_PLT32DBL,
+  FK_390_TLS_CALL,
 
   // Marker
   LastTargetFixupKind,

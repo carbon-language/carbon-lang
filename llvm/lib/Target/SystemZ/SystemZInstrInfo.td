@@ -251,9 +251,10 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
 
 // Define the general form of the call instructions for the asm parser.
 // These instructions don't hard-code %r14 as the return address register.
-def BRAS  : InstRI<0xA75, (outs), (ins GR64:$R1, brtarget16:$I2),
+// Allow an optional TLS marker symbol to generate TLS call relocations.
+def BRAS  : InstRI<0xA75, (outs), (ins GR64:$R1, brtarget16tls:$I2),
                    "bras\t$R1, $I2", []>;
-def BRASL : InstRIL<0xC05, (outs), (ins GR64:$R1, brtarget32:$I2),
+def BRASL : InstRIL<0xC05, (outs), (ins GR64:$R1, brtarget32tls:$I2),
                     "brasl\t$R1, $I2", []>;
 def BASR  : InstRR<0x0D, (outs), (ins GR64:$R1, ADDR64:$R2),
                    "basr\t$R1, $R2", []>;

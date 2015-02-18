@@ -55,8 +55,6 @@ static unsigned getPCRelReloc(unsigned Kind) {
   case FK_Data_8:                return ELF::R_390_PC64;
   case SystemZ::FK_390_PC16DBL:  return ELF::R_390_PC16DBL;
   case SystemZ::FK_390_PC32DBL:  return ELF::R_390_PC32DBL;
-  case SystemZ::FK_390_PLT16DBL: return ELF::R_390_PLT16DBL;
-  case SystemZ::FK_390_PLT32DBL: return ELF::R_390_PLT32DBL;
   }
   llvm_unreachable("Unsupported PC-relative address");
 }
@@ -66,6 +64,35 @@ static unsigned getTLSLEReloc(unsigned Kind) {
   switch (Kind) {
   case FK_Data_4: return ELF::R_390_TLS_LE32;
   case FK_Data_8: return ELF::R_390_TLS_LE64;
+  }
+  llvm_unreachable("Unsupported absolute address");
+}
+
+// Return the R_390_TLS_LDO* relocation type for MCFixupKind Kind.
+static unsigned getTLSLDOReloc(unsigned Kind) {
+  switch (Kind) {
+  case FK_Data_4: return ELF::R_390_TLS_LDO32;
+  case FK_Data_8: return ELF::R_390_TLS_LDO64;
+  }
+  llvm_unreachable("Unsupported absolute address");
+}
+
+// Return the R_390_TLS_LDM* relocation type for MCFixupKind Kind.
+static unsigned getTLSLDMReloc(unsigned Kind) {
+  switch (Kind) {
+  case FK_Data_4: return ELF::R_390_TLS_LDM32;
+  case FK_Data_8: return ELF::R_390_TLS_LDM64;
+  case SystemZ::FK_390_TLS_CALL: return ELF::R_390_TLS_LDCALL;
+  }
+  llvm_unreachable("Unsupported absolute address");
+}
+
+// Return the R_390_TLS_GD* relocation type for MCFixupKind Kind.
+static unsigned getTLSGDReloc(unsigned Kind) {
+  switch (Kind) {
+  case FK_Data_4: return ELF::R_390_TLS_GD32;
+  case FK_Data_8: return ELF::R_390_TLS_GD64;
+  case SystemZ::FK_390_TLS_CALL: return ELF::R_390_TLS_GDCALL;
   }
   llvm_unreachable("Unsupported absolute address");
 }
@@ -93,6 +120,23 @@ unsigned SystemZObjectWriter::GetRelocType(const MCValue &Target,
   case MCSymbolRefExpr::VK_NTPOFF:
     assert(!IsPCRel && "NTPOFF shouldn't be PC-relative");
     return getTLSLEReloc(Kind);
+
+  case MCSymbolRefExpr::VK_INDNTPOFF:
+    if (IsPCRel && Kind == SystemZ::FK_390_PC32DBL)
+      return ELF::R_390_TLS_IEENT;
+    llvm_unreachable("Only PC-relative INDNTPOFF accesses are supported for now");
+
+  case MCSymbolRefExpr::VK_DTPOFF:
+    assert(!IsPCRel && "DTPOFF shouldn't be PC-relative");
+    return getTLSLDOReloc(Kind);
+
+  case MCSymbolRefExpr::VK_TLSLDM:
+    assert(!IsPCRel && "TLSLDM shouldn't be PC-relative");
+    return getTLSLDMReloc(Kind);
+
+  case MCSymbolRefExpr::VK_TLSGD:
+    assert(!IsPCRel && "TLSGD shouldn't be PC-relative");
+    return getTLSGDReloc(Kind);
 
   case MCSymbolRefExpr::VK_GOT:
     if (IsPCRel && Kind == SystemZ::FK_390_PC32DBL)

@@ -10,6 +10,7 @@
 #include "SystemZInstPrinter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -122,6 +123,29 @@ void SystemZInstPrinter::printPCRelOperand(const MCInst *MI, int OpNum,
     O.write_hex(MO.getImm());
   } else
     O << *MO.getExpr();
+}
+
+void SystemZInstPrinter::printPCRelTLSOperand(const MCInst *MI, int OpNum,
+                                              raw_ostream &O) {
+  // Output the PC-relative operand.
+  printPCRelOperand(MI, OpNum, O);
+
+  // Output the TLS marker if present.
+  if ((unsigned)OpNum + 1 < MI->getNumOperands()) {
+    const MCOperand &MO = MI->getOperand(OpNum + 1);
+    const MCSymbolRefExpr &refExp = cast<MCSymbolRefExpr>(*MO.getExpr());
+    switch (refExp.getKind()) {
+      case MCSymbolRefExpr::VK_TLSGD:
+        O << ":tls_gdcall:";
+        break;
+      case MCSymbolRefExpr::VK_TLSLDM:
+        O << ":tls_ldcall:";
+        break;
+      default:
+        llvm_unreachable("Unexpected symbol kind");
+    }
+    O << refExp.getSymbol().getName();
+  }
 }
 
 void SystemZInstPrinter::printOperand(const MCInst *MI, int OpNum,

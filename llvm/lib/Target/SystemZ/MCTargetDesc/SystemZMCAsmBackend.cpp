@@ -27,9 +27,10 @@ static uint64_t extractBitsForFixup(MCFixupKind Kind, uint64_t Value) {
   switch (unsigned(Kind)) {
   case SystemZ::FK_390_PC16DBL:
   case SystemZ::FK_390_PC32DBL:
-  case SystemZ::FK_390_PLT16DBL:
-  case SystemZ::FK_390_PLT32DBL:
     return (int64_t)Value / 2;
+
+  case SystemZ::FK_390_TLS_CALL:
+    return 0;
   }
 
   llvm_unreachable("Unknown fixup kind!");
@@ -72,8 +73,7 @@ SystemZMCAsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
   const static MCFixupKindInfo Infos[SystemZ::NumTargetFixupKinds] = {
     { "FK_390_PC16DBL",  0, 16, MCFixupKindInfo::FKF_IsPCRel },
     { "FK_390_PC32DBL",  0, 32, MCFixupKindInfo::FKF_IsPCRel },
-    { "FK_390_PLT16DBL", 0, 16, MCFixupKindInfo::FKF_IsPCRel },
-    { "FK_390_PLT32DBL", 0, 32, MCFixupKindInfo::FKF_IsPCRel }
+    { "FK_390_TLS_CALL", 0, 0, 0 }
   };
 
   if (Kind < FirstTargetFixupKind)
