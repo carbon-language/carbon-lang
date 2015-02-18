@@ -1151,6 +1151,8 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
       return false;
     }
 
+    int RegClass = Desc.OpInfo[i].RegClass;
+
     switch (Desc.OpInfo[i].OperandType) {
     case MCOI::OPERAND_REGISTER:
       if (MI->getOperand(i).isImm()) {
@@ -1161,13 +1163,10 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
     case AMDGPU::OPERAND_REG_IMM32:
       break;
     case AMDGPU::OPERAND_REG_INLINE_C:
-      if (MI->getOperand(i).isImm()) {
-        int RegClass = Desc.OpInfo[i].RegClass;
-        const TargetRegisterClass *RC = RI.getRegClass(RegClass);
-        if (!isInlineConstant(MI->getOperand(i), RC->getSize())) {
-          ErrInfo = "Illegal immediate value for operand.";
-          return false;
-        }
+      if (isLiteralConstant(MI->getOperand(i),
+                            RI.getRegClass(RegClass)->getSize())) {
+        ErrInfo = "Illegal immediate value for operand.";
+        return false;
       }
       break;
     case MCOI::OPERAND_IMMEDIATE:
@@ -1186,7 +1185,6 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
     if (!MI->getOperand(i).isReg())
       continue;
 
-    int RegClass = Desc.OpInfo[i].RegClass;
     if (RegClass != -1) {
       unsigned Reg = MI->getOperand(i).getReg();
       if (TargetRegisterInfo::isVirtualRegister(Reg))
