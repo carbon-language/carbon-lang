@@ -123,6 +123,8 @@ class MiInterpreterExecTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_thread_step_in(self):
         """Test that 'lldb-mi --interpreter' can step in by "thread step-in" command."""
 
