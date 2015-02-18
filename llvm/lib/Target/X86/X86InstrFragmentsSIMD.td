@@ -212,6 +212,9 @@ def SDTVBroadcastm : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>]>;
 def SDTBlend : SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisSameAs<0,1>,
                              SDTCisSameAs<1,2>, SDTCisVT<3, i8>]>;
 
+def SDTFPBinOpRound : SDTypeProfile<1, 3, [      // fadd_round, fmul_round, etc.
+  SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisFP<0>, SDTCisInt<3>]>;
+
 def SDTFma : SDTypeProfile<1, 3, [SDTCisSameAs<0,1>,
                            SDTCisSameAs<1,2>, SDTCisSameAs<1,3>]>;
 def SDTFmaRound : SDTypeProfile<1, 4, [SDTCisSameAs<0,1>,
@@ -270,6 +273,11 @@ def X86Vextract   : SDNode<"X86ISD::VEXTRACT",  SDTypeProfile<1, 2,
 def X86Blendi    : SDNode<"X86ISD::BLENDI",   SDTBlend>;
 
 def X86Addsub    : SDNode<"X86ISD::ADDSUB", SDTFPBinOp>;
+
+def X86faddRnd   : SDNode<"X86ISD::FADD_RND",  SDTFPBinOpRound>;
+def X86fsubRnd   : SDNode<"X86ISD::FSUB_RND",  SDTFPBinOpRound>;
+def X86fmulRnd   : SDNode<"X86ISD::FMUL_RND",  SDTFPBinOpRound>;
+def X86fdivRnd   : SDNode<"X86ISD::FDIV_RND",  SDTFPBinOpRound>;
 
 def X86Fmadd     : SDNode<"X86ISD::FMADD",     SDTFma>;
 def X86Fnmadd    : SDNode<"X86ISD::FNMADD",    SDTFma>;

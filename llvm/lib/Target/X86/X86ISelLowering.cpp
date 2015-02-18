@@ -17595,22 +17595,26 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                   Mask, Src0, Subtarget, DAG);
     }
     case INTR_TYPE_2OP_MASK: {
-      SDValue Mask = Op.getOperand(4);
+      SDValue Src1 = Op.getOperand(1);
+      SDValue Src2 = Op.getOperand(2);
       SDValue PassThru = Op.getOperand(3);
+      SDValue Mask = Op.getOperand(4);
+      // We specify 2 possible opcodes for intrinsics with rounding modes.
+      // First, we check if the intrinsic may have non-default rounding mode,
+      // (IntrData->Opc1 != 0), then we check the rounding mode operand.
       unsigned IntrWithRoundingModeOpcode = IntrData->Opc1;
       if (IntrWithRoundingModeOpcode != 0) {
-        unsigned Round = cast<ConstantSDNode>(Op.getOperand(5))->getZExtValue();
+        SDValue Rnd = Op.getOperand(5);
+        unsigned Round = cast<ConstantSDNode>(Rnd)->getZExtValue();
         if (Round != X86::STATIC_ROUNDING::CUR_DIRECTION) {
           return getVectorMaskingNode(DAG.getNode(IntrWithRoundingModeOpcode,
                                       dl, Op.getValueType(),
-                                      Op.getOperand(1), Op.getOperand(2),
-                                      Op.getOperand(3), Op.getOperand(5)),
+                                      Src1, Src2, Rnd),
                                       Mask, PassThru, Subtarget, DAG);
         }
       }
       return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,
-                                              Op.getOperand(1),
-                                              Op.getOperand(2)),
+                                              Src1,Src2),
                                   Mask, PassThru, Subtarget, DAG);
     }
     case FMA_OP_MASK: {
@@ -17618,6 +17622,9 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
       SDValue Src2 = Op.getOperand(2);
       SDValue Src3 = Op.getOperand(3);
       SDValue Mask = Op.getOperand(4);
+      // We specify 2 possible opcodes for intrinsics with rounding modes.
+      // First, we check if the intrinsic may have non-default rounding mode,
+      // (IntrData->Opc1 != 0), then we check the rounding mode operand.
       unsigned IntrWithRoundingModeOpcode = IntrData->Opc1;
       if (IntrWithRoundingModeOpcode != 0) {
         SDValue Rnd = Op.getOperand(5);
@@ -20585,6 +20592,10 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::ADDSUB:             return "X86ISD::ADDSUB";
   case X86ISD::RCP28:              return "X86ISD::RCP28";
   case X86ISD::RSQRT28:            return "X86ISD::RSQRT28";
+  case X86ISD::FADD_RND:           return "X86ISD::FADD_RND";
+  case X86ISD::FSUB_RND:           return "X86ISD::FSUB_RND";
+  case X86ISD::FMUL_RND:           return "X86ISD::FMUL_RND";
+  case X86ISD::FDIV_RND:           return "X86ISD::FDIV_RND";
   }
 }
 

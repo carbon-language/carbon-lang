@@ -201,7 +201,12 @@ namespace llvm {
 
       /// ADDSUB - Combined add and sub on an FP vector.
       ADDSUB,
-
+      //  FADD, FSUB, FMUL, FDIV, FMIN, FMAX - FP vector ops with rounding mode.
+      FADD_RND,
+      FSUB_RND,
+      FMUL_RND,
+      FDIV_RND,
+      
       // SUBUS - Integer sub with unsigned saturation.
       SUBUS,
 

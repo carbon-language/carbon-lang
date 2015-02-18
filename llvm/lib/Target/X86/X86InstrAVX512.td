@@ -3269,7 +3269,16 @@ multiclass avx512_fp_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
   }//let mayLoad = 1
 }
 
-multiclass avx512_fp_binop_p<bits<8> opc, string OpcodeStr, SDNode OpNode,
+multiclass avx512_fp_round_packed<bits<8> opc, string OpcodeStr, SDNode OpNodeRnd,
+                            X86VectorVTInfo _, bit IsCommutable> {
+  defm rb: AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
+                  (ins _.RC:$src1, _.RC:$src2, AVX512RC:$rc), OpcodeStr##_.Suffix,
+                  "$rc, $src2, $src1", "$src1, $src2, $rc",
+                  (_.VT (OpNodeRnd _.RC:$src1, _.RC:$src2, (i32 imm:$rc)))>,
+                  EVEX_4V, EVEX_B, EVEX_RC;
+}
+
+multiclass avx512_fp_binop_p<bits<8> opc, string OpcodeStr, SDNode OpNode, 
                              bit IsCommutable = 0> {
   defm PSZ : avx512_fp_packed<opc, OpcodeStr, OpNode, v16f32_info,
                               IsCommutable>, EVEX_V512, PS,
@@ -3295,12 +3304,23 @@ multiclass avx512_fp_binop_p<bits<8> opc, string OpcodeStr, SDNode OpNode,
   }
 }
 
-defm VADD : avx512_fp_binop_p<0x58, "vadd", fadd, 1>;
-defm VMUL : avx512_fp_binop_p<0x59, "vmul", fmul, 1>;
+multiclass avx512_fp_binop_p_round<bits<8> opc, string OpcodeStr, SDNode OpNodeRnd> {
+  defm PSZ : avx512_fp_round_packed<opc, OpcodeStr, OpNodeRnd, v16f32_info, 0>,
+                              EVEX_V512, PS, EVEX_CD8<32, CD8VF>;
+  defm PDZ : avx512_fp_round_packed<opc, OpcodeStr, OpNodeRnd, v8f64_info, 0>,
+                              EVEX_V512, PD, VEX_W,EVEX_CD8<64, CD8VF>;
+}
+
+defm VADD : avx512_fp_binop_p<0x58, "vadd", fadd, 1>,
+            avx512_fp_binop_p_round<0x58, "vadd", X86faddRnd>;
+defm VMUL : avx512_fp_binop_p<0x59, "vmul", fmul, 1>,
+            avx512_fp_binop_p_round<0x59, "vmul", X86fmulRnd>;
+defm VSUB : avx512_fp_binop_p<0x5C, "vsub", fsub>, 
+            avx512_fp_binop_p_round<0x5C, "vsub", X86fsubRnd>;
+defm VDIV : avx512_fp_binop_p<0x5E, "vdiv", fdiv>,
+            avx512_fp_binop_p_round<0x5E, "vdiv", X86fdivRnd>;
 defm VMIN : avx512_fp_binop_p<0x5D, "vmin", X86fmin, 1>;
 defm VMAX : avx512_fp_binop_p<0x5F, "vmax", X86fmax, 1>;
-defm VSUB : avx512_fp_binop_p<0x5C, "vsub", fsub>;
-defm VDIV : avx512_fp_binop_p<0x5E, "vdiv", fdiv>;
 
 def : Pat<(v16f32 (int_x86_avx512_mask_max_ps_512 (v16f32 VR512:$src1),
                    (v16f32 VR512:$src2), (bc_v16f32 (v16i32 immAllZerosV)),
