@@ -127,9 +127,14 @@ namespace opts {
   cl::opt<bool> ExpandRelocs("expand-relocs",
     cl::desc("Expand each shown relocation to multiple lines"));
 
-  // -codeview-linetables
-  cl::opt<bool> CodeViewLineTables("codeview-linetables",
-    cl::desc("Display CodeView line table information"));
+  // -codeview
+  cl::opt<bool> CodeView("codeview",
+                         cl::desc("Display CodeView debug information"));
+
+  // -codeview-subsection-bytes
+  cl::opt<bool> CodeViewSubsectionBytes(
+      "codeview-subsection-bytes",
+      cl::desc("Dump raw contents of codeview debug sections and records"));
 
   // -arm-attributes, -a
   cl::opt<bool> ARMAttributes("arm-attributes",

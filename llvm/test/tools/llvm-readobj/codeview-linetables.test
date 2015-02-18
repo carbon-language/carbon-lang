@@ -18,16 +18,16 @@
 ;     z();
 ;   }
 ; using 32-/64-bit versions of CL v17.00.61030 and v18.00.21005.1 respectively.
-RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifunction-linetables.obj.coff-2012-i368 \
+RUN: llvm-readobj -s -codeview -section-symbols %p/Inputs/multifunction-linetables.obj.coff-2012-i368 \
 RUN:   | FileCheck %s -check-prefix MFUN32
-RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifunction-linetables.obj.coff-2013-i368 \
+RUN: llvm-readobj -s -codeview -section-symbols %p/Inputs/multifunction-linetables.obj.coff-2013-i368 \
 RUN:   | FileCheck %s -check-prefix MFUN32
-RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifunction-linetables.obj.coff-2012-x86_64 \
+RUN: llvm-readobj -s -codeview -section-symbols %p/Inputs/multifunction-linetables.obj.coff-2012-x86_64 \
 RUN:   | FileCheck %s -check-prefix MFUN64
-RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifunction-linetables.obj.coff-2013-x86_64 \
+RUN: llvm-readobj -s -codeview -section-symbols %p/Inputs/multifunction-linetables.obj.coff-2013-x86_64 \
 RUN:   | FileCheck %s -check-prefix MFUN64
 
-MFUN32:      CodeViewLineTables [
+MFUN32:      CodeViewDebugInfo [
 MFUN32-NEXT:   Magic: 0x4
 MFUN32-NEXT:   Subsection [
 MFUN32-NEXT:     Type: 0xF1
@@ -136,7 +136,7 @@ MFUN32-NEXT:     ]
 MFUN32-NEXT:   ]
 MFUN32-NEXT: ]
 
-MFUN64:      CodeViewLineTables [
+MFUN64:      CodeViewDebugInfo [
 MFUN64-NEXT:   Magic: 0x4
 MFUN64-NEXT:   Subsection [
 MFUN64-NEXT:     Type: 0xF1
@@ -248,16 +248,16 @@ MFUN64-NEXT: ]
 ;     g();
 ;   }
 ; using 32-/64-bit versions of CL v17.00.61030 and v18.00.21005.1 respectively.
-RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifile-linetables.obj.coff-2012-i368 \
+RUN: llvm-readobj -s -codeview -section-symbols %p/Inputs/multifile-linetables.obj.coff-2012-i368 \
 RUN:   | FileCheck %s -check-prefix MFILE32
-RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifile-linetables.obj.coff-2013-i368 \
+RUN: llvm-readobj -s -codeview -section-symbols %p/Inputs/multifile-linetables.obj.coff-2013-i368 \
 RUN:   | FileCheck %s -check-prefix MFILE32
-RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifile-linetables.obj.coff-2012-x86_64 \
+RUN: llvm-readobj -s -codeview -section-symbols %p/Inputs/multifile-linetables.obj.coff-2012-x86_64 \
 RUN:   | FileCheck %s -check-prefix MFILE64
-RUN: llvm-readobj -s -codeview-linetables %p/Inputs/multifile-linetables.obj.coff-2013-x86_64 \
+RUN: llvm-readobj -s -codeview -section-symbols %p/Inputs/multifile-linetables.obj.coff-2013-x86_64 \
 RUN:   | FileCheck %s -check-prefix MFILE64
 
-MFILE32:      CodeViewLineTables [
+MFILE32:      CodeViewDebugInfo [
 MFILE32-NEXT:   Magic: 0x4
 MFILE32-NEXT:   Subsection [
 MFILE32-NEXT:     Type: 0xF1
@@ -317,7 +317,7 @@ MFILE32-NEXT:     ]
 MFILE32-NEXT:   ]
 MFILE32-NEXT: ]
 
-MFILE64:      CodeViewLineTables [
+MFILE64:      CodeViewDebugInfo [
 MFILE64-NEXT:   Magic: 0x4
 MFILE64-NEXT:   Subsection [
 MFILE64-NEXT:     Type: 0xF1
@@ -387,9 +387,9 @@ MFILE64-NEXT: ]
 ;     return 0;
 ;   }
 ; using 32-version of CL v17.00.61030 and v18.00.21005.1 respectively.
-RUN: llvm-readobj -s -codeview-linetables %p/Inputs/comdat-function-linetables.obj.coff-2012-i386 \
+RUN: llvm-readobj -s -codeview -section-symbols %p/Inputs/comdat-function-linetables.obj.coff-2012-i386 \
 RUN:   | FileCheck %s -check-prefix MCOMDAT
-RUN: llvm-readobj -s -codeview-linetables %p/Inputs/comdat-function-linetables.obj.coff-2013-i386 \
+RUN: llvm-readobj -s -codeview -section-symbols %p/Inputs/comdat-function-linetables.obj.coff-2013-i386 \
 RUN:   | FileCheck %s -check-prefix MCOMDAT
 
 MCOMDAT:      ProcStart {
