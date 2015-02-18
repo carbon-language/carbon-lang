@@ -22,9 +22,9 @@ _S_construct(); // expected-error {{requires}}
 };
 
 template<typename _CharT,typename _Traits,typename _Alloc>
-basic_string<_CharT,_Traits,_Alloc>::basic_string(const _CharT*,const _Alloc&)
+basic_string<_CharT,_Traits,_Alloc>::basic_string(const _CharT* c,const _Alloc&)
 :us(_S_construct)
-{string a;}
+{string a(c);}
 
 struct runtime_error{runtime_error(string);};
 

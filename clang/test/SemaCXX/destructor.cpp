@@ -173,6 +173,12 @@ protected:
   ~S7();
 };
 
+struct S8 {} s8;
+
+UnknownType S8::~S8() { // expected-error {{unknown type name 'UnknownType'}}
+  s8.~S8();
+}
+
 template<class T> class TS : public B {
   virtual void m();
 };

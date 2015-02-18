@@ -175,16 +175,16 @@ namespace test3 {
 namespace pr16964 {
   template<typename> struct bs {
     bs();
-    static int* member();
+    static int* member(); // expected-note{{possible target}}
     member();  // expected-error{{C++ requires a type specifier for all declarations}}
     static member();  // expected-error{{C++ requires a type specifier for all declarations}}
-    static int* member(int);
+    static int* member(int); // expected-note{{possible target}}
   };
 
-  template<typename T> bs<T>::bs() { member; }
+  template<typename T> bs<T>::bs() { member; }  // expected-error{{did you mean to call it}}
 
   bs<int> test() {
-    return bs<int>();
+    return bs<int>(); // expected-note{{in instantiation}}
   }
 }
 
@@ -195,7 +195,7 @@ namespace pr12791 {
   struct forward_iterator_tag : public input_iterator_tag {};
 
   template<typename _CharT, typename _Traits, typename _Alloc> struct basic_string {
-    struct _Alloc_hider : _Alloc {};
+    struct _Alloc_hider : _Alloc { _Alloc_hider(_CharT*, const _Alloc&); };
     mutable _Alloc_hider _M_dataplus;
     template<class _InputIterator> basic_string(_InputIterator __beg, _InputIterator __end, const _Alloc& __a = _Alloc());
     template<class _InIterator> static _CharT* _S_construct(_InIterator __beg, _InIterator __end, const _Alloc& __a, input_iterator_tag);
@@ -206,12 +206,11 @@ namespace pr12791 {
   template<typename _CharT, typename _Traits, typename _Alloc>
   template<typename _InputIterator>
   basic_string<_CharT, _Traits, _Alloc>:: basic_string(_InputIterator __beg, _InputIterator __end, const _Alloc& __a)
-  : _M_dataplus(_S_construct(__beg, __end, __a), __a) {}
+  : _M_dataplus(_S_construct(__beg, __end, __a, input_iterator_tag()), __a) {}
 
   template<typename _CharT, typename _Traits = char_traits<_CharT>, typename _Alloc = allocator<_CharT> > struct basic_stringbuf {
     typedef _CharT char_type;
     typedef basic_string<char_type, _Traits, _Alloc> __string_type;
-    typedef typename __string_type::size_type __size_type;
     __string_type str() const {__string_type((char_type*)0,(char_type*)0);}
   };
 
