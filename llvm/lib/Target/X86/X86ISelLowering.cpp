@@ -7861,91 +7861,36 @@ static SDValue lowerVectorShuffleAsBitMask(SDLoc DL, MVT VT, SDValue V1,
   return V;
 }
 
-/// \brief Try to lower a vector shuffle as a byte shift (shifts in zeros).
-///
-/// Attempts to match a shuffle mask against the PSRLDQ and PSLLDQ
-/// byte-shift instructions. The mask must consist of a shifted sequential
-/// shuffle from one of the input vectors and zeroable elements for the
-/// remaining 'shifted in' elements.
-static SDValue lowerVectorShuffleAsByteShift(SDLoc DL, MVT VT, SDValue V1,
-                                             SDValue V2, ArrayRef<int> Mask,
-                                             SelectionDAG &DAG) {
-  assert(!isNoopShuffleMask(Mask) && "We shouldn't lower no-op shuffles!");
-
-  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
-
-  int NumElts = VT.getVectorNumElements();
-  int NumLanes = VT.getSizeInBits() / 128;
-  int NumLaneElts = NumElts / NumLanes;
-  int Scale = 16 / NumLaneElts;
-  MVT ShiftVT = MVT::getVectorVT(MVT::i64, 2 * NumLanes);
-
-  // PSLLDQ : (little-endian) left byte shift
-  // [ zz,  0,  1,  2,  3,  4,  5,  6]
-  // [ zz, zz, -1, -1,  2,  3,  4, -1]
-  // [ zz, zz, zz, zz, zz, zz, -1,  1]
-  // PSRLDQ : (little-endian) right byte shift
-  // [  5, 6,  7, zz, zz, zz, zz, zz]
-  // [ -1, 5,  6,  7, zz, zz, zz, zz]
-  // [  1, 2, -1, -1, -1, -1, zz, zz]
-
-  auto CheckZeros = [&](int Shift, bool LeftShift) {
-    for (int l = 0; l < NumElts; l += NumLaneElts)
-      for (int i = 0; i < Shift; ++i)
-        if (!Zeroable[l + i + (LeftShift ? 0 : (NumLaneElts - Shift))])
-          return false;
-
-    return true;
-  };
-
-  auto MatchByteShift = [&](int Shift, bool LeftShift, SDValue V) {
-    for (int l = 0; l < NumElts; l += NumLaneElts) {
-      unsigned Pos = LeftShift ? Shift + l : l;
-      unsigned Low = LeftShift ? l : Shift + l;
-      unsigned Len = NumLaneElts - Shift;
-      if (!isSequentialOrUndefInRange(Mask, Pos, Len,
-                                      Low + (V == V1 ? 0 : NumElts)))
-        return SDValue();
-    }
-
-    int ByteShift = Shift * Scale;
-    unsigned Op = LeftShift ? X86ISD::VSHLDQ : X86ISD::VSRLDQ;
-    V = DAG.getNode(ISD::BITCAST, DL, ShiftVT, V);
-    V = DAG.getNode(Op, DL, ShiftVT, V, DAG.getConstant(ByteShift, MVT::i8));
-    return DAG.getNode(ISD::BITCAST, DL, VT, V);
-  };
-
-  for (int Shift = 1; Shift < NumLaneElts; ++Shift)
-    for (bool LeftShift : {true, false})
-      if (CheckZeros(Shift, LeftShift))
-        for (SDValue V : {V1, V2})
-          if (SDValue S = MatchByteShift(Shift, LeftShift, V))
-            return S;
-
-  // no match
-  return SDValue();
-}
-
 /// \brief Try to lower a vector shuffle as a bit shift (shifts in zeros).
 ///
-/// Attempts to match a shuffle mask against the PSRL(W/D/Q) and PSLL(W/D/Q)
-/// SSE2 and AVX2 logical bit-shift instructions. The function matches
-/// elements from one of the input vectors shuffled to the left or right
-/// with zeroable elements 'shifted in'.
-static SDValue lowerVectorShuffleAsBitShift(SDLoc DL, MVT VT, SDValue V1,
-                                            SDValue V2, ArrayRef<int> Mask,
-                                            SelectionDAG &DAG) {
+/// Attempts to match a shuffle mask against the PSLL(W/D/Q/DQ) and
+/// PSRL(W/D/Q/DQ) SSE2 and AVX2 logical bit-shift instructions. The function
+/// matches elements from one of the input vectors shuffled to the left or
+/// right with zeroable elements 'shifted in'. It handles both the strictly
+/// bit-wise element shifts and the byte shift across an entire 128-bit double
+/// quad word lane.
+///
+/// PSHL : (little-endian) left bit shift.
+/// [ zz, 0, zz,  2 ]
+/// [ -1, 4, zz, -1 ]
+/// PSRL : (little-endian) right bit shift.
+/// [  1, zz,  3, zz]
+/// [ -1, -1,  7, zz]
+/// PSLLDQ : (little-endian) left byte shift
+/// [ zz,  0,  1,  2,  3,  4,  5,  6]
+/// [ zz, zz, -1, -1,  2,  3,  4, -1]
+/// [ zz, zz, zz, zz, zz, zz, -1,  1]
+/// PSRLDQ : (little-endian) right byte shift
+/// [  5, 6,  7, zz, zz, zz, zz, zz]
+/// [ -1, 5,  6,  7, zz, zz, zz, zz]
+/// [  1, 2, -1, -1, -1, -1, zz, zz]
+static SDValue lowerVectorShuffleAsShift(SDLoc DL, MVT VT, SDValue V1,
+                                         SDValue V2, ArrayRef<int> Mask,
+                                         SelectionDAG &DAG) {
   SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
 
   int Size = Mask.size();
   assert(Size == (int)VT.getVectorNumElements() && "Unexpected mask size");
-
-  // PSRL : (little-endian) right bit shift.
-  // [  1, zz,  3, zz]
-  // [ -1, -1,  7, zz]
-  // PSHL : (little-endian) left bit shift.
-  // [ zz, 0, zz,  2 ]
-  // [ -1, 4, zz, -1 ]
 
   auto CheckZeros = [&](int Shift, int Scale, bool Left) {
     for (int i = 0; i < Size; i += Scale)
@@ -7957,11 +7902,6 @@ static SDValue lowerVectorShuffleAsBitShift(SDLoc DL, MVT VT, SDValue V1,
   };
 
   auto MatchBitShift = [&](int Shift, int Scale, bool Left, SDValue V) {
-    MVT ShiftSVT = MVT::getIntegerVT(VT.getScalarSizeInBits() * Scale);
-    MVT ShiftVT = MVT::getVectorVT(ShiftSVT, Size / Scale);
-    assert(DAG.getTargetLoweringInfo().isTypeLegal(ShiftVT) &&
-           "Illegal integer vector type");
-
     for (int i = 0; i != Size; i += Scale) {
       unsigned Pos = Left ? i + Shift : i;
       unsigned Low = Left ? i : i + Shift;
@@ -7971,10 +7911,23 @@ static SDValue lowerVectorShuffleAsBitShift(SDLoc DL, MVT VT, SDValue V1,
         return SDValue();
     }
 
-    // Cast the inputs to ShiftVT to match VSRLI/VSHLI and back again.
-    unsigned OpCode = Left ? X86ISD::VSHLI : X86ISD::VSRLI;
-    int ShiftAmt = Shift * VT.getScalarSizeInBits();
+    int ShiftEltBits = VT.getScalarSizeInBits() * Scale;
+    bool ByteShift = ShiftEltBits > 64;
+    unsigned OpCode = Left ? (ByteShift ? X86ISD::VSHLDQ : X86ISD::VSHLI)
+                           : (ByteShift ? X86ISD::VSRLDQ : X86ISD::VSRLI);
+    int ShiftAmt = Shift * VT.getScalarSizeInBits() / (ByteShift ? 8 : 1);
+
+    // Normalize the scale for byte shifts to still produce an i64 element
+    // type.
+    Scale = ByteShift ? Scale / 2 : Scale;
+
+    // We need to round trip through the appropriate type for the shift.
+    MVT ShiftSVT = MVT::getIntegerVT(VT.getScalarSizeInBits() * Scale);
+    MVT ShiftVT = MVT::getVectorVT(ShiftSVT, Size / Scale);
+    assert(DAG.getTargetLoweringInfo().isTypeLegal(ShiftVT) &&
+           "Illegal integer vector type");
     V = DAG.getNode(ISD::BITCAST, DL, ShiftVT, V);
+
     V = DAG.getNode(OpCode, DL, ShiftVT, V, DAG.getConstant(ShiftAmt, MVT::i8));
     return DAG.getNode(ISD::BITCAST, DL, VT, V);
   };
@@ -7985,7 +7938,7 @@ static SDValue lowerVectorShuffleAsBitShift(SDLoc DL, MVT VT, SDValue V1,
   // their width within the elements of the larger integer vector. Test each
   // multiple to see if we can find a match with the moved element indices
   // and that the shifted in elements are all zeroable.
-  for (int Scale = 2; Scale * VT.getScalarSizeInBits() <= 64; Scale *= 2)
+  for (int Scale = 2; Scale * VT.getScalarSizeInBits() <= 128; Scale *= 2)
     for (int Shift = 1; Shift != Scale; ++Shift)
       for (bool Left : {true, false})
         if (CheckZeros(Shift, Scale, Left))
@@ -8666,9 +8619,9 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                     getV4X86ShuffleImm8ForMask(WidenedMask, DAG)));
   }
 
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v2i64, V1, V2, Mask, DAG))
+  // Try to use shift instructions.
+  if (SDValue Shift =
+          lowerVectorShuffleAsShift(DL, MVT::v2i64, V1, V2, Mask, DAG))
     return Shift;
 
   // If we have a single input from V2 insert that into V1 if we can do so
@@ -8963,14 +8916,9 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                        getV4X86ShuffleImm8ForMask(Mask, DAG));
   }
 
-  // Try to use bit shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsBitShift(
-          DL, MVT::v4i32, V1, V2, Mask, DAG))
-    return Shift;
-
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v4i32, V1, V2, Mask, DAG))
+  // Try to use shift instructions.
+  if (SDValue Shift =
+          lowerVectorShuffleAsShift(DL, MVT::v4i32, V1, V2, Mask, DAG))
     return Shift;
 
   // There are special ways we can lower some single-element blends.
@@ -9075,14 +9023,9 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
                                                         Mask, Subtarget, DAG))
     return Broadcast;
 
-  // Try to use bit shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsBitShift(
-          DL, MVT::v8i16, V, V, Mask, DAG))
-    return Shift;
-
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v8i16, V, V, Mask, DAG))
+  // Try to use shift instructions.
+  if (SDValue Shift =
+          lowerVectorShuffleAsShift(DL, MVT::v8i16, V, V, Mask, DAG))
     return Shift;
 
   // Use dedicated unpack instructions for masks that match their pattern.
@@ -9697,14 +9640,9 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(NumV1Inputs > 0 && "All single-input shuffles should be canonicalized "
                             "to be V1-input shuffles.");
 
-  // Try to use bit shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsBitShift(
-          DL, MVT::v8i16, V1, V2, Mask, DAG))
-    return Shift;
-
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v8i16, V1, V2, Mask, DAG))
+  // Try to use shift instructions.
+  if (SDValue Shift =
+          lowerVectorShuffleAsShift(DL, MVT::v8i16, V1, V2, Mask, DAG))
     return Shift;
 
   // There are special ways we can lower some single-element blends.
@@ -9876,14 +9814,9 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> OrigMask = SVOp->getMask();
   assert(OrigMask.size() == 16 && "Unexpected mask size for v16 shuffle!");
 
-  // Try to use bit shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsBitShift(
-          DL, MVT::v16i8, V1, V2, OrigMask, DAG))
-    return Shift;
-
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v16i8, V1, V2, OrigMask, DAG))
+  // Try to use shift instructions.
+  if (SDValue Shift =
+          lowerVectorShuffleAsShift(DL, MVT::v16i8, V1, V2, OrigMask, DAG))
     return Shift;
 
   // Try to use byte rotation instructions.
@@ -10837,9 +10770,9 @@ static SDValue lowerV4I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return DAG.getNode(X86ISD::VPERMI, DL, MVT::v4i64, V1,
                        getV4X86ShuffleImm8ForMask(Mask, DAG));
 
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v4i64, V1, V2, Mask, DAG))
+  // Try to use shift instructions.
+  if (SDValue Shift =
+          lowerVectorShuffleAsShift(DL, MVT::v4i64, V1, V2, Mask, DAG))
     return Shift;
 
   // Use dedicated unpack instructions for masks that match their pattern.
@@ -11018,14 +10951,9 @@ static SDValue lowerV8I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8i32, V2, V1);
   }
 
-  // Try to use bit shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsBitShift(
-          DL, MVT::v8i32, V1, V2, Mask, DAG))
-    return Shift;
-
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v8i32, V1, V2, Mask, DAG))
+  // Try to use shift instructions.
+  if (SDValue Shift =
+          lowerVectorShuffleAsShift(DL, MVT::v8i32, V1, V2, Mask, DAG))
     return Shift;
 
   if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
@@ -11100,14 +11028,9 @@ static SDValue lowerV16I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                           12, 28, 13, 29, 14, 30, 15, 31))
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i16, V1, V2);
 
-  // Try to use bit shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsBitShift(
-          DL, MVT::v16i16, V1, V2, Mask, DAG))
-    return Shift;
-
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v16i16, V1, V2, Mask, DAG))
+  // Try to use shift instructions.
+  if (SDValue Shift =
+          lowerVectorShuffleAsShift(DL, MVT::v16i16, V1, V2, Mask, DAG))
     return Shift;
 
   // Try to use byte rotation instructions.
@@ -11201,14 +11124,9 @@ static SDValue lowerV32I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
           24, 56, 25, 57, 26, 58, 27, 59, 28, 60, 29, 61, 30, 62, 31, 63))
     return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v32i8, V1, V2);
 
-  // Try to use bit shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsBitShift(
-          DL, MVT::v32i8, V1, V2, Mask, DAG))
-    return Shift;
-
-  // Try to use byte shift instructions.
-  if (SDValue Shift = lowerVectorShuffleAsByteShift(
-          DL, MVT::v32i8, V1, V2, Mask, DAG))
+  // Try to use shift instructions.
+  if (SDValue Shift =
+          lowerVectorShuffleAsShift(DL, MVT::v32i8, V1, V2, Mask, DAG))
     return Shift;
 
   // Try to use byte rotation instructions.
