@@ -5,7 +5,13 @@
 ; RUN:    -check-prefix=CMOV-32 -check-prefix=CMOV-32R1
 ; RUN: llc < %s -march=mips -mcpu=mips32r2 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=CMOV \
-; RUN:    -check-prefix=CMOV-32 -check-prefix=CMOV-32R2
+; RUN:    -check-prefix=CMOV-32 -check-prefix=CMOV-32R2-R5
+; RUN: llc < %s -march=mips -mcpu=mips32r3 | FileCheck %s \
+; RUN:    -check-prefix=ALL -check-prefix=CMOV \
+; RUN:    -check-prefix=CMOV-32 -check-prefix=CMOV-32R2-R5
+; RUN: llc < %s -march=mips -mcpu=mips32r5 | FileCheck %s \
+; RUN:    -check-prefix=ALL -check-prefix=CMOV \
+; RUN:    -check-prefix=CMOV-32 -check-prefix=CMOV-32R2-R5
 ; RUN: llc < %s -march=mips -mcpu=mips32r6 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=SEL -check-prefix=SEL-32
 ; RUN: llc < %s -march=mips64 -mcpu=mips3 | FileCheck %s \
@@ -15,6 +21,10 @@
 ; RUN: llc < %s -march=mips64 -mcpu=mips64 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=CMOV -check-prefix=CMOV-64
 ; RUN: llc < %s -march=mips64 -mcpu=mips64r2 | FileCheck %s \
+; RUN:    -check-prefix=ALL -check-prefix=CMOV -check-prefix=CMOV-64
+; RUN: llc < %s -march=mips64 -mcpu=mips64r3 | FileCheck %s \
+; RUN:    -check-prefix=ALL -check-prefix=CMOV -check-prefix=CMOV-64
+; RUN: llc < %s -march=mips64 -mcpu=mips64r5 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=CMOV -check-prefix=CMOV-64
 ; RUN: llc < %s -march=mips64 -mcpu=mips64r6 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=SEL -check-prefix=SEL-64
@@ -232,12 +242,12 @@ entry:
   ; M2:         jr      $ra
   ; M2:         mtc1    $6, $f1
 
-  ; CMOV-32:    mtc1    $7, $[[F0:f[0-9]+]]
-  ; CMOV-32R1:  mtc1    $6, $f{{[0-9]+}}
-  ; CMOV-32R2   mthc1   $6, $[[F0]]
-  ; CMOV-32:    andi    $[[T0:[0-9]+]], $4, 1
-  ; CMOV-32:    ldc1    $f0, 16($sp)
-  ; CMOV-32:    movn.d  $f0, $[[F0]], $[[T0]]
+  ; CMOV-32:      mtc1    $7, $[[F0:f[0-9]+]]
+  ; CMOV-32R1:    mtc1    $6, $f{{[0-9]+}}
+  ; CMOV-32R2-R5: mthc1   $6, $[[F0]]
+  ; CMOV-32:      andi    $[[T0:[0-9]+]], $4, 1
+  ; CMOV-32:      ldc1    $f0, 16($sp)
+  ; CMOV-32:      movn.d  $f0, $[[F0]], $[[T0]]
 
   ; SEL-32:     mtc1    $7, $[[F0:f[0-9]+]]
   ; SEL-32:     mthc1   $6, $[[F0]]

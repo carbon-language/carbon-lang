@@ -3,7 +3,11 @@
 ; RUN: llc < %s -march=mips -mcpu=mips32 | FileCheck %s \
 ; RUN:  -check-prefix=GP32 -check-prefix=NOT-R6 -check-prefix=NOT-R2-R6
 ; RUN: llc < %s -march=mips -mcpu=mips32r2 | FileCheck %s -check-prefix=GP32 \
-; RUN:  -check-prefix=R2 -check-prefix=R2-R6 -check-prefix=NOT-R6
+; RUN:  -check-prefix=R2-R5 -check-prefix=R2-R6 -check-prefix=NOT-R6
+; RUN: llc < %s -march=mips -mcpu=mips32r3 | FileCheck %s -check-prefix=GP32 \
+; RUN:  -check-prefix=R2-R5 -check-prefix=R2-R6 -check-prefix=NOT-R6
+; RUN: llc < %s -march=mips -mcpu=mips32r5 | FileCheck %s -check-prefix=GP32 \
+; RUN:  -check-prefix=R2-R5 -check-prefix=R2-R6 -check-prefix=NOT-R6
 ; RUN: llc < %s -march=mips -mcpu=mips32r6 | FileCheck %s \
 ; RUN:   -check-prefix=GP32 -check-prefix=R6 -check-prefix=R2-R6
 ; RUN: llc < %s -march=mips64 -mcpu=mips3 | FileCheck %s \
@@ -13,7 +17,13 @@
 ; RUN: llc < %s -march=mips64 -mcpu=mips64 | FileCheck %s \
 ; RUN:  -check-prefix=GP64-NOT-R6 -check-prefix=NOT-R6 -check-prefix=NOT-R2-R6
 ; RUN: llc < %s -march=mips64 -mcpu=mips64r2 | FileCheck %s \
-; RUN:  -check-prefix=R2 -check-prefix=R2-R6 \
+; RUN:  -check-prefix=R2-R5 -check-prefix=R2-R6 \
+; RUN:  -check-prefix=GP64-NOT-R6 -check-prefix=NOT-R6
+; RUN: llc < %s -march=mips64 -mcpu=mips64r3 | FileCheck %s \
+; RUN:  -check-prefix=R2-R5 -check-prefix=R2-R6 \
+; RUN:  -check-prefix=GP64-NOT-R6 -check-prefix=NOT-R6
+; RUN: llc < %s -march=mips64 -mcpu=mips64r5 | FileCheck %s \
+; RUN:  -check-prefix=R2-R5 -check-prefix=R2-R6 \
 ; RUN:  -check-prefix=GP64-NOT-R6 -check-prefix=NOT-R6
 ; RUN: llc < %s -march=mips64 -mcpu=mips64r6 | FileCheck %s \
 ; RUN:  -check-prefix=64R6 -check-prefix=R6 -check-prefix=R2-R6
@@ -53,12 +63,12 @@ entry:
   ; NOT-R2-R6:    sll     $[[T3:[0-9]+]], $[[T2]], 24
   ; NOT-R2-R6:    sra     $2, $[[T3]], 24
 
-  ; R2:           andi    $[[T0:[0-9]+]], $5, 255
-  ; R2:           andi    $[[T1:[0-9]+]], $4, 255
-  ; R2:           divu    $zero, $[[T1]], $[[T0]]
-  ; R2:           teq     $[[T0]], $zero, 7
-  ; R2:           mfhi    $[[T2:[0-9]+]]
-  ; R2:           seb     $2, $[[T2]]
+  ; R2-R5:        andi    $[[T0:[0-9]+]], $5, 255
+  ; R2-R5:        andi    $[[T1:[0-9]+]], $4, 255
+  ; R2-R5:        divu    $zero, $[[T1]], $[[T0]]
+  ; R2-R5:        teq     $[[T0]], $zero, 7
+  ; R2-R5:        mfhi    $[[T2:[0-9]+]]
+  ; R2-R5:        seb     $2, $[[T2]]
 
   ; R6:           andi    $[[T0:[0-9]+]], $5, 255
   ; R6:           andi    $[[T1:[0-9]+]], $4, 255
@@ -82,12 +92,12 @@ entry:
   ; NOT-R2-R6:    sll     $[[T3:[0-9]+]], $[[T2]], 16
   ; NOT-R2-R6:    sra     $2, $[[T3]], 16
 
-  ; R2:           andi    $[[T0:[0-9]+]], $5, 65535
-  ; R2:           andi    $[[T1:[0-9]+]], $4, 65535
-  ; R2:           divu    $zero, $[[T1]], $[[T0]]
-  ; R2:           teq     $[[T0]], $zero, 7
-  ; R2:           mfhi    $[[T3:[0-9]+]]
-  ; R2:           seh     $2, $[[T2]]
+  ; R2-R5:        andi    $[[T0:[0-9]+]], $5, 65535
+  ; R2-R5:        andi    $[[T1:[0-9]+]], $4, 65535
+  ; R2-R5:        divu    $zero, $[[T1]], $[[T0]]
+  ; R2-R5:        teq     $[[T0]], $zero, 7
+  ; R2-R5:        mfhi    $[[T3:[0-9]+]]
+  ; R2-R5:        seh     $2, $[[T2]]
 
   ; R6:           andi    $[[T0:[0-9]+]], $5, 65535
   ; R6:           andi    $[[T1:[0-9]+]], $4, 65535

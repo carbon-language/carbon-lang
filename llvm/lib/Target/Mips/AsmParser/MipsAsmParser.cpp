@@ -76,9 +76,10 @@ public:
       Mips::FeatureMips3_32 | Mips::FeatureMips3_32r2 | Mips::FeatureMips4 |
       Mips::FeatureMips4_32 | Mips::FeatureMips4_32r2 | Mips::FeatureMips5 |
       Mips::FeatureMips5_32r2 | Mips::FeatureMips32 | Mips::FeatureMips32r2 |
-      Mips::FeatureMips32r6 | Mips::FeatureMips64 | Mips::FeatureMips64r2 |
-      Mips::FeatureMips64r6 | Mips::FeatureCnMips | Mips::FeatureFP64Bit |
-      Mips::FeatureGP64Bit | Mips::FeatureNaN2008;
+      Mips::FeatureMips32r3 | Mips::FeatureMips32r5 | Mips::FeatureMips32r6 |
+      Mips::FeatureMips64 | Mips::FeatureMips64r2 | Mips::FeatureMips64r3 |
+      Mips::FeatureMips64r5 | Mips::FeatureMips64r6 | Mips::FeatureCnMips |
+      Mips::FeatureFP64Bit | Mips::FeatureGP64Bit | Mips::FeatureNaN2008;
 
 private:
   unsigned ATReg;
@@ -385,6 +386,18 @@ public:
   }
   bool hasMips64r2() const {
     return (STI.getFeatureBits() & Mips::FeatureMips64r2);
+  }
+  bool hasMips32r3() const {
+    return (STI.getFeatureBits() & Mips::FeatureMips32r3);
+  }
+  bool hasMips64r3() const {
+    return (STI.getFeatureBits() & Mips::FeatureMips64r3);
+  }
+  bool hasMips32r5() const {
+    return (STI.getFeatureBits() & Mips::FeatureMips32r5);
+  }
+  bool hasMips64r5() const {
+    return (STI.getFeatureBits() & Mips::FeatureMips64r5);
   }
   bool hasMips32r6() const {
     return (STI.getFeatureBits() & Mips::FeatureMips32r6);
@@ -3605,9 +3618,13 @@ bool MipsAsmParser::parseSetArchDirective() {
           .Case("mips5", "mips5")
           .Case("mips32", "mips32")
           .Case("mips32r2", "mips32r2")
+          .Case("mips32r3", "mips32r3")
+          .Case("mips32r5", "mips32r5")
           .Case("mips32r6", "mips32r6")
           .Case("mips64", "mips64")
           .Case("mips64r2", "mips64r2")
+          .Case("mips64r3", "mips64r3")
+          .Case("mips64r5", "mips64r5")
           .Case("mips64r6", "mips64r6")
           .Case("cnmips", "cnmips")
           .Case("r4000", "mips3") // This is an implementation of Mips3.
@@ -3665,6 +3682,14 @@ bool MipsAsmParser::parseSetFeature(uint64_t Feature) {
     selectArch("mips32r2");
     getTargetStreamer().emitDirectiveSetMips32R2();
     break;
+  case Mips::FeatureMips32r3:
+    selectArch("mips32r3");
+    getTargetStreamer().emitDirectiveSetMips32R3();
+    break;
+  case Mips::FeatureMips32r5:
+    selectArch("mips32r5");
+    getTargetStreamer().emitDirectiveSetMips32R5();
+    break;
   case Mips::FeatureMips32r6:
     selectArch("mips32r6");
     getTargetStreamer().emitDirectiveSetMips32R6();
@@ -3676,6 +3701,14 @@ bool MipsAsmParser::parseSetFeature(uint64_t Feature) {
   case Mips::FeatureMips64r2:
     selectArch("mips64r2");
     getTargetStreamer().emitDirectiveSetMips64R2();
+    break;
+  case Mips::FeatureMips64r3:
+    selectArch("mips64r3");
+    getTargetStreamer().emitDirectiveSetMips64R3();
+    break;
+  case Mips::FeatureMips64r5:
+    selectArch("mips64r5");
+    getTargetStreamer().emitDirectiveSetMips64R5();
     break;
   case Mips::FeatureMips64r6:
     selectArch("mips64r6");
@@ -3870,12 +3903,20 @@ bool MipsAsmParser::parseDirectiveSet() {
     return parseSetFeature(Mips::FeatureMips32);
   } else if (Tok.getString() == "mips32r2") {
     return parseSetFeature(Mips::FeatureMips32r2);
+  } else if (Tok.getString() == "mips32r3") {
+    return parseSetFeature(Mips::FeatureMips32r3);
+  } else if (Tok.getString() == "mips32r5") {
+    return parseSetFeature(Mips::FeatureMips32r5);
   } else if (Tok.getString() == "mips32r6") {
     return parseSetFeature(Mips::FeatureMips32r6);
   } else if (Tok.getString() == "mips64") {
     return parseSetFeature(Mips::FeatureMips64);
   } else if (Tok.getString() == "mips64r2") {
     return parseSetFeature(Mips::FeatureMips64r2);
+  } else if (Tok.getString() == "mips64r3") {
+    return parseSetFeature(Mips::FeatureMips64r3);
+  } else if (Tok.getString() == "mips64r5") {
+    return parseSetFeature(Mips::FeatureMips64r5);
   } else if (Tok.getString() == "mips64r6") {
     return parseSetFeature(Mips::FeatureMips64r6);
   } else if (Tok.getString() == "dsp") {

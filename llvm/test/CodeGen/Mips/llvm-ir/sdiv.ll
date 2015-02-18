@@ -3,7 +3,11 @@
 ; RUN: llc < %s -march=mips -mcpu=mips32 | FileCheck %s \
 ; RUN:    -check-prefix=NOT-R6 -check-prefix=NOT-R2-R6 -check-prefix=GP32
 ; RUN: llc < %s -march=mips -mcpu=mips32r2 | FileCheck %s \
-; RUN:    -check-prefix=NOT-R6 -check-prefix=R2 -check-prefix=GP32
+; RUN:    -check-prefix=NOT-R6 -check-prefix=R2-R5 -check-prefix=GP32
+; RUN: llc < %s -march=mips -mcpu=mips32r3 | FileCheck %s \
+; RUN:    -check-prefix=NOT-R6 -check-prefix=R2-R5 -check-prefix=GP32
+; RUN: llc < %s -march=mips -mcpu=mips32r5 | FileCheck %s \
+; RUN:    -check-prefix=NOT-R6 -check-prefix=R2-R5 -check-prefix=GP32
 ; RUN: llc < %s -march=mips -mcpu=mips32r6 | FileCheck %s \
 ; RUN:    -check-prefix=R6 -check-prefix=GP32
 ; RUN: llc < %s -march=mips64 -mcpu=mips3 | FileCheck %s \
@@ -13,7 +17,11 @@
 ; RUN: llc < %s -march=mips64 -mcpu=mips64 | FileCheck %s \
 ; RUN:    -check-prefix=NOT-R6 -check-prefix=NOT-R2-R6 -check-prefix=GP64-NOT-R6
 ; RUN: llc < %s -march=mips64 -mcpu=mips64r2 | FileCheck %s \
-; RUN:    -check-prefix=NOT-R6 -check-prefix=R2 -check-prefix=GP64-NOT-R6
+; RUN:    -check-prefix=NOT-R6 -check-prefix=R2-R5 -check-prefix=GP64-NOT-R6
+; RUN: llc < %s -march=mips64 -mcpu=mips64r3 | FileCheck %s \
+; RUN:    -check-prefix=NOT-R6 -check-prefix=R2-R5 -check-prefix=GP64-NOT-R6
+; RUN: llc < %s -march=mips64 -mcpu=mips64r5 | FileCheck %s \
+; RUN:    -check-prefix=NOT-R6 -check-prefix=R2-R5 -check-prefix=GP64-NOT-R6
 ; RUN: llc < %s -march=mips64 -mcpu=mips64r6 | FileCheck %s \
 ; RUN:    -check-prefix=R6 -check-prefix=64R6
 
@@ -49,11 +57,11 @@ entry:
   ; NOT-R2-R6:    sll     $[[T1:[0-9]+]], $[[T0]], 24
   ; NOT-R2-R6:    sra     $2, $[[T1]], 24
 
-  ; R2:           div     $zero, $4, $5
-  ; R2:           teq     $5, $zero, 7
-  ; R2:           mflo    $[[T0:[0-9]+]]
+  ; R2-R5:        div     $zero, $4, $5
+  ; R2-R5:        teq     $5, $zero, 7
+  ; R2-R5:        mflo    $[[T0:[0-9]+]]
   ; FIXME: This instruction is redundant.
-  ; R2:           seb     $2, $[[T0]]
+  ; R2-R5:        seb     $2, $[[T0]]
 
   ; R6:           div     $[[T0:[0-9]+]], $4, $5
   ; R6:           teq     $5, $zero, 7
@@ -75,11 +83,11 @@ entry:
   ; NOT-R2-R6:    sll     $[[T1:[0-9]+]], $[[T0]], 16
   ; NOT-R2-R6:    sra     $2, $[[T1]], 16
 
-  ; R2:           div     $zero, $4, $5
-  ; R2:           teq     $5, $zero, 7
-  ; R2:           mflo    $[[T0:[0-9]+]]
+  ; R2-R5:        div     $zero, $4, $5
+  ; R2-R5:        teq     $5, $zero, 7
+  ; R2-R5:        mflo    $[[T0:[0-9]+]]
   ; FIXME: This is instruction is redundant since div is signed.
-  ; R2:           seh     $2, $[[T0]]
+  ; R2-R5:        seh     $2, $[[T0]]
 
   ; R6:           div     $[[T0:[0-9]+]], $4, $5
   ; R6:           teq     $5, $zero, 7

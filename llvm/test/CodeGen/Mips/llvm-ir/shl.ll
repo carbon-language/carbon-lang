@@ -3,10 +3,16 @@
 ; RUN:    -check-prefix=M2 -check-prefix=NOT-R2-R6
 ; RUN: llc < %s -march=mips -mcpu=mips32 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=GP32 -check-prefix=NOT-R2-R6 \
-; RUN:    -check-prefix=32R1-R2
+; RUN:    -check-prefix=32R1-R5
 ; RUN: llc < %s -march=mips -mcpu=mips32r2 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=GP32 \
-; RUN:    -check-prefix=32R1-R2 -check-prefix=R2-R6
+; RUN:    -check-prefix=32R1-R5 -check-prefix=R2-R6
+; RUN: llc < %s -march=mips -mcpu=mips32r3 | FileCheck %s \
+; RUN:    -check-prefix=ALL -check-prefix=GP32 \
+; RUN:    -check-prefix=32R1-R5 -check-prefix=R2-R6
+; RUN: llc < %s -march=mips -mcpu=mips32r5 | FileCheck %s \
+; RUN:    -check-prefix=ALL -check-prefix=GP32 \
+; RUN:    -check-prefix=32R1-R5 -check-prefix=R2-R6
 ; RUN: llc < %s -march=mips -mcpu=mips32r6 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=GP32 \
 ; RUN:    -check-prefix=32R6 -check-prefix=R2-R6
@@ -20,6 +26,12 @@
 ; RUN:    -check-prefix=ALL -check-prefix=GP64 \
 ; RUN:    -check-prefix=GP64-NOT-R6 -check-prefix=NOT-R2-R6
 ; RUN: llc < %s -march=mips64 -mcpu=mips64r2 | FileCheck %s \
+; RUN:    -check-prefix=ALL -check-prefix=GP64 \
+; RUN:    -check-prefix=GP64-NOT-R6 -check-prefix R2-R6
+; RUN: llc < %s -march=mips64 -mcpu=mips64r3 | FileCheck %s \
+; RUN:    -check-prefix=ALL -check-prefix=GP64 \
+; RUN:    -check-prefix=GP64-NOT-R6 -check-prefix R2-R6
+; RUN: llc < %s -march=mips64 -mcpu=mips64r5 | FileCheck %s \
 ; RUN:    -check-prefix=ALL -check-prefix=GP64 \
 ; RUN:    -check-prefix=GP64-NOT-R6 -check-prefix R2-R6
 ; RUN: llc < %s -march=mips64 -mcpu=mips64r6 | FileCheck %s \
@@ -101,16 +113,16 @@ entry:
   ; M2:         jr        $ra
   ; M2:         nop
 
-  ; 32R1-R2:    sllv      $[[T0:[0-9]+]], $4, $7
-  ; 32R1-R2:    not       $[[T1:[0-9]+]], $7
-  ; 32R1-R2:    srl       $[[T2:[0-9]+]], $5, 1
-  ; 32R1-R2:    srlv      $[[T3:[0-9]+]], $[[T2]], $[[T1]]
-  ; 32R1-R2:    or        $2, $[[T0]], $[[T3]]
-  ; 32R1-R2:    sllv      $[[T4:[0-9]+]], $5, $7
-  ; 32R1-R2:    andi      $[[T5:[0-9]+]], $7, 32
-  ; 32R1-R2:    movn      $2, $[[T4]], $[[T5]]
-  ; 32R1-R2:    jr        $ra
-  ; 32R1-R2:    movn      $3, $zero, $[[T5]]
+  ; 32R1-R5:    sllv      $[[T0:[0-9]+]], $4, $7
+  ; 32R1-R5:    not       $[[T1:[0-9]+]], $7
+  ; 32R1-R5:    srl       $[[T2:[0-9]+]], $5, 1
+  ; 32R1-R5:    srlv      $[[T3:[0-9]+]], $[[T2]], $[[T1]]
+  ; 32R1-R5:    or        $2, $[[T0]], $[[T3]]
+  ; 32R1-R5:    sllv      $[[T4:[0-9]+]], $5, $7
+  ; 32R1-R5:    andi      $[[T5:[0-9]+]], $7, 32
+  ; 32R1-R5:    movn      $2, $[[T4]], $[[T5]]
+  ; 32R1-R5:    jr        $ra
+  ; 32R1-R5:    movn      $3, $zero, $[[T5]]
 
   ; 32R6:       sllv      $[[T0:[0-9]+]], $4, $7
   ; 32R6:       not       $[[T1:[0-9]+]], $7

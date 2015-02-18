@@ -1,4 +1,4 @@
-# RUN: llvm-mc %s -triple=mips-unknown-linux -disassemble -mcpu=mips32r2 | FileCheck %s
+# RUN: llvm-mc %s -triple=mips-unknown-linux -disassemble -mcpu=mips64r2 | FileCheck %s
 # XFAIL: *
 0x46 0x2f 0x79 0x32 # CHECK: c.eq.d $fcc1, $f15, $f15
 0x46 0x11 0xc5 0x32 # CHECK: c.eq.s $fcc5, $f24, $f17

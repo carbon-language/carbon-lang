@@ -1,17 +1,25 @@
 ; RUN: llc < %s -march=mips -mcpu=mips2 | FileCheck %s -check-prefix=ALL \
 ; RUN:    -check-prefix=M2 -check-prefix=GP32
 ; RUN: llc < %s -march=mips -mcpu=mips32 | FileCheck %s -check-prefix=ALL \
-; RUN:    -check-prefix=32R1-R2 -check-prefix=GP32
+; RUN:    -check-prefix=32R1-R5 -check-prefix=GP32
 ; RUN: llc < %s -march=mips -mcpu=mips32r2 | FileCheck %s -check-prefix=ALL \
-; RUN:    -check-prefix=32R1-R2 -check-prefix=32R2 -check-prefix=GP32
+; RUN:    -check-prefix=32R1-R5 -check-prefix=32R2-R5 -check-prefix=GP32
+; RUN: llc < %s -march=mips -mcpu=mips32r3 | FileCheck %s -check-prefix=ALL \
+; RUN:    -check-prefix=32R1-R5 -check-prefix=32R2-R5 -check-prefix=GP32
+; RUN: llc < %s -march=mips -mcpu=mips32r5 | FileCheck %s -check-prefix=ALL \
+; RUN:    -check-prefix=32R1-R5 -check-prefix=32R2-R5 -check-prefix=GP32
 ; RUN: llc < %s -march=mips -mcpu=mips32r6 | FileCheck %s -check-prefix=ALL \
 ; RUN:    -check-prefix=32R6 -check-prefix=GP32
 ; RUN: llc < %s -march=mips64 -mcpu=mips4 | FileCheck %s -check-prefix=ALL \
 ; RUN:    -check-prefix=M4 -check-prefix=GP64-NOT-R6
 ; RUN: llc < %s -march=mips64 -mcpu=mips64 | FileCheck %s -check-prefix=ALL \
-; RUN:    -check-prefix=64R1-R2 -check-prefix=GP64-NOT-R6
+; RUN:    -check-prefix=64R1-R5 -check-prefix=GP64-NOT-R6
 ; RUN: llc < %s -march=mips64 -mcpu=mips64r2 | FileCheck %s -check-prefix=ALL \
-; RUN:    -check-prefix=64R1-R2 -check-prefix=GP64 -check-prefix=GP64-NOT-R6
+; RUN:    -check-prefix=64R1-R5 -check-prefix=GP64 -check-prefix=GP64-NOT-R6
+; RUN: llc < %s -march=mips64 -mcpu=mips64r3 | FileCheck %s -check-prefix=ALL \
+; RUN:    -check-prefix=64R1-R5 -check-prefix=GP64 -check-prefix=GP64-NOT-R6
+; RUN: llc < %s -march=mips64 -mcpu=mips64r5 | FileCheck %s -check-prefix=ALL \
+; RUN:    -check-prefix=64R1-R5 -check-prefix=GP64 -check-prefix=GP64-NOT-R6
 ; RUN: llc < %s -march=mips64 -mcpu=mips64r6 | FileCheck %s -check-prefix=ALL \
 ; RUN:    -check-prefix=64R6
 
@@ -24,9 +32,9 @@ entry:
   ; M2:         sll     $[[T0]], $[[T0]], 31
   ; M2:         sra     $2, $[[T0]], 31
 
-  ; 32R1-R2:    mul     $[[T0:[0-9]+]], $4, $5
-  ; 32R1-R2:    sll     $[[T0]], $[[T0]], 31
-  ; 32R1-R2:    sra     $2, $[[T0]], 31
+  ; 32R1-R5:    mul     $[[T0:[0-9]+]], $4, $5
+  ; 32R1-R5:    sll     $[[T0]], $[[T0]], 31
+  ; 32R1-R5:    sra     $2, $[[T0]], 31
 
   ; 32R6:       mul     $[[T0:[0-9]+]], $4, $5
   ; 32R6:       sll     $[[T0]], $[[T0]], 31
@@ -37,9 +45,9 @@ entry:
   ; M4:         sll     $[[T0]], $[[T0]], 31
   ; M4:         sra     $2, $[[T0]], 31
 
-  ; 64R1-R2:    mul     $[[T0:[0-9]+]], $4, $5
-  ; 64R1-R2:    sll     $[[T0]], $[[T0]], 31
-  ; 64R1-R2:    sra     $2, $[[T0]], 31
+  ; 64R1-R5:    mul     $[[T0:[0-9]+]], $4, $5
+  ; 64R1-R5:    sll     $[[T0]], $[[T0]], 31
+  ; 64R1-R5:    sra     $2, $[[T0]], 31
 
   ; 64R6:       mul     $[[T0:[0-9]+]], $4, $5
   ; 64R6:       sll     $[[T0]], $[[T0]], 31
@@ -62,8 +70,8 @@ entry:
   ; 32R1:       sll     $[[T0]], $[[T0]], 24
   ; 32R1:       sra     $2, $[[T0]], 24
 
-  ; 32R2:       mul     $[[T0:[0-9]+]], $4, $5
-  ; 32R2:       seb     $2, $[[T0]]
+  ; 32R2-R5:    mul     $[[T0:[0-9]+]], $4, $5
+  ; 32R2-R5:    seb     $2, $[[T0]]
 
   ; 32R6:       mul     $[[T0:[0-9]+]], $4, $5
   ; 32R6:       seb     $2, $[[T0]]
@@ -99,8 +107,8 @@ entry:
   ; 32R1:       sll     $[[T0]], $[[T0]], 16
   ; 32R1:       sra     $2, $[[T0]], 16
 
-  ; 32R2:       mul     $[[T0:[0-9]+]], $4, $5
-  ; 32R2:       seh     $2, $[[T0]]
+  ; 32R2-R5:    mul     $[[T0:[0-9]+]], $4, $5
+  ; 32R2-R5:    seh     $2, $[[T0]]
 
   ; 32R6:       mul     $[[T0:[0-9]+]], $4, $5
   ; 32R6:       seh     $2, $[[T0]]
@@ -130,10 +138,10 @@ entry:
   ; M2:         mult    $4, $5
   ; M2:         mflo    $2
 
-  ; 32R1-R2:    mul     $2, $4, $5
+  ; 32R1-R5:    mul     $2, $4, $5
   ; 32R6:       mul     $2, $4, $5
 
-  ; 64R1-R2:    mul     $2, $4, $5
+  ; 64R1-R5:    mul     $2, $4, $5
   ; 64R6:       mul     $2, $4, $5
   %r = mul i32 %a, %b
   ret i32 %r
@@ -153,13 +161,13 @@ entry:
   ; M2:         addu    $[[T2:[0-9]+]], $4, $[[T1]]
   ; M2:         addu    $2, $[[T2]], $[[T0]]
 
-  ; 32R1-R2:    multu   $5, $7
-  ; 32R1-R2:    mflo    $3
-  ; 32R1-R2:    mfhi    $[[T0:[0-9]+]]
-  ; 32R1-R2:    mul     $[[T1:[0-9]+]], $4, $7
-  ; 32R1-R2:    mul     $[[T2:[0-9]+]], $5, $6
-  ; 32R1-R2:    addu    $[[T0]], $[[T0]], $[[T2:[0-9]+]]
-  ; 32R1-R2:    addu    $2, $[[T0]], $[[T1]]
+  ; 32R1-R5:    multu   $5, $7
+  ; 32R1-R5:    mflo    $3
+  ; 32R1-R5:    mfhi    $[[T0:[0-9]+]]
+  ; 32R1-R5:    mul     $[[T1:[0-9]+]], $4, $7
+  ; 32R1-R5:    mul     $[[T2:[0-9]+]], $5, $6
+  ; 32R1-R5:    addu    $[[T0]], $[[T0]], $[[T2:[0-9]+]]
+  ; 32R1-R5:    addu    $2, $[[T0]], $[[T1]]
 
   ; 32R6:       mul     $[[T0:[0-9]+]], $5, $6
   ; 32R6:       muhu    $[[T1:[0-9]+]], $5, $7
@@ -171,8 +179,8 @@ entry:
   ; M4:         dmult   $4, $5
   ; M4:         mflo    $2
 
-  ; 64R1-R2:    dmult   $4, $5
-  ; 64R1-R2:    mflo    $2
+  ; 64R1-R5:    dmult   $4, $5
+  ; 64R1-R5:    mflo    $2
 
   ; 64R6:       dmul    $2, $4, $5
 

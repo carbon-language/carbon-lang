@@ -16,11 +16,23 @@
     clo         $2, $2
     .set arch=mips32r2
     rotr        $2, $2, 15
+    .set arch=mips32
+    .set arch=mips32r3
+    rotr        $2, $2, 15
+    .set arch=mips32
+    .set arch=mips32r5
+    rotr        $2, $2, 15
     .set arch=mips32r6
     mod         $2, $4, $6
     .set arch=mips64
     daddi       $2, $2, 10
     .set arch=mips64r2
+    drotr32     $1, $14, 15
+    .set arch=mips64
+    .set arch=mips64r3
+    drotr32     $1, $14, 15
+    .set arch=mips64
+    .set arch=mips64r5
     drotr32     $1, $14, 15
     .set arch=mips64r6
     mod         $2, $4, $6

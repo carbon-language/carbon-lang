@@ -8,9 +8,13 @@
 # MIPSEL-MIPS64R6-NAN2008: Flags [ (0xA0000406)
 
 # RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips64r2 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS64R2 %s
+# RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips64r3 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS64R2 %s
+# RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips64r5 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS64R2 %s
 # MIPSEL-MIPS64R2: Flags [ (0x80000006)
 
 # RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips64r2 -mattr=+nan2008 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS64R2-NAN2008 %s
+# RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips64r3 -mattr=+nan2008 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS64R2-NAN2008 %s
+# RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips64r5 -mattr=+nan2008 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS64R2-NAN2008 %s
 # MIPSEL-MIPS64R2-NAN2008: Flags [ (0x80000406)
 
 # RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips64 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS64 %s
@@ -26,9 +30,13 @@
 # MIPSEL-MIPS32R6-NAN2008: Flags [ (0x90001404)
 
 # RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips32r2 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS32R2 %s
+# RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips32r3 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS32R2 %s
+# RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips32r5 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS32R2 %s
 # MIPSEL-MIPS32R2: Flags [ (0x70001004)
 
 # RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips32r2 -mattr=+nan2008 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS32R2-NAN2008 %s
+# RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips32r3 -mattr=+nan2008 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS32R2-NAN2008 %s
+# RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips32r5 -mattr=+nan2008 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS32R2-NAN2008 %s
 # MIPSEL-MIPS32R2-NAN2008: Flags [ (0x70001404)
 
 # RUN: llvm-mc -filetype=obj -triple mipsel-unknown-linux -mcpu=mips32 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPSEL-MIPS32 %s

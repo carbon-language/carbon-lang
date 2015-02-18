@@ -21,10 +21,22 @@
         rotr    $2,15 # CHECK: error: instruction requires a CPU feature not currently enabled
         .set mips32r2
         mod $2, $4, $6 # CHECK: error:instruction requires a CPU feature not currently enabled
+        .set mips64r3
+        .set mips32r3
+        daddi $2, $2, 10 # CHECK: error: instruction requires a CPU feature not currently enabled
+        .set mips64r3
+        .set mips32r5
+        daddi $2, $2, 10 # CHECK: error: instruction requires a CPU feature not currently enabled
         .set mips32r6
         daddi $2, $2, 10 # CHECK: error: instruction requires a CPU feature not currently enabled
         .set mips64
         drotr32 $1,$14,15 # CHECK: error: instruction requires a CPU feature not currently enabled
         .set mips64r2
+        mod $2, $4, $6 # CHECK: error: instruction requires a CPU feature not currently enabled
+        .set mips64r6
+        .set mips64r3
+        mod $2, $4, $6 # CHECK: error: instruction requires a CPU feature not currently enabled
+        .set mips64r6
+        .set mips64r5
         mod $2, $4, $6 # CHECK: error: instruction requires a CPU feature not currently enabled
 

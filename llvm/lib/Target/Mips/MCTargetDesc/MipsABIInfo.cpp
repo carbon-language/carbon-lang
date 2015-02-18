@@ -75,6 +75,8 @@ MipsABIInfo MipsABIInfo::computeTargetABI(Triple TT, StringRef CPU,
       .Case("mips2", MipsABIInfo::O32())
       .Case("mips32", MipsABIInfo::O32())
       .Case("mips32r2", MipsABIInfo::O32())
+      .Case("mips32r3", MipsABIInfo::O32())
+      .Case("mips32r5", MipsABIInfo::O32())
       .Case("mips32r6", MipsABIInfo::O32())
       .Case("mips16", MipsABIInfo::O32())
       .Case("mips3", MipsABIInfo::N64())
@@ -82,6 +84,8 @@ MipsABIInfo MipsABIInfo::computeTargetABI(Triple TT, StringRef CPU,
       .Case("mips5", MipsABIInfo::N64())
       .Case("mips64", MipsABIInfo::N64())
       .Case("mips64r2", MipsABIInfo::N64())
+      .Case("mips64r3", MipsABIInfo::N64())
+      .Case("mips64r5", MipsABIInfo::N64())
       .Case("mips64r6", MipsABIInfo::N64())
       .Case("octeon", MipsABIInfo::N64())
       .Default(MipsABIInfo::Unknown());

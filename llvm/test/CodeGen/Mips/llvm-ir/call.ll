@@ -3,10 +3,14 @@
 ; FIXME: We should remove the need for -enable-mips-tail-calls
 ; RUN: llc -march=mips   -mcpu=mips32   -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=O32
 ; RUN: llc -march=mips   -mcpu=mips32r2 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=O32
+; RUN: llc -march=mips   -mcpu=mips32r3 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=O32
+; RUN: llc -march=mips   -mcpu=mips32r5 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=O32
 ; RUN: llc -march=mips   -mcpu=mips32r6 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=O32
 ; RUN: llc -march=mips64 -mcpu=mips4    -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
 ; RUN: llc -march=mips64 -mcpu=mips64   -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
 ; RUN: llc -march=mips64 -mcpu=mips64r2 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
+; RUN: llc -march=mips64 -mcpu=mips64r3 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
+; RUN: llc -march=mips64 -mcpu=mips64r5 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
 ; RUN: llc -march=mips64 -mcpu=mips64r6 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
 
 declare void @extern_void_void()

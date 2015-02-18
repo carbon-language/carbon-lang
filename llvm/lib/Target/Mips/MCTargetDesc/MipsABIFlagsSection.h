@@ -145,6 +145,10 @@ public:
       ISALevel = 64;
       if (P.hasMips64r6())
         ISARevision = 6;
+      else if (P.hasMips64r5())
+        ISARevision = 5;
+      else if (P.hasMips64r3())
+        ISARevision = 3;
       else if (P.hasMips64r2())
         ISARevision = 2;
       else
@@ -153,6 +157,10 @@ public:
       ISALevel = 32;
       if (P.hasMips32r6())
         ISARevision = 6;
+      else if (P.hasMips32r5())
+        ISARevision = 5;
+      else if (P.hasMips32r3())
+        ISARevision = 3;
       else if (P.hasMips32r2())
         ISARevision = 2;
       else

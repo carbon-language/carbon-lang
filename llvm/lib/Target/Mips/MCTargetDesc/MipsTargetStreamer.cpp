@@ -70,9 +70,13 @@ void MipsTargetStreamer::emitDirectiveSetMips4() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips5() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips32() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips32R2() { forbidModuleDirective(); }
+void MipsTargetStreamer::emitDirectiveSetMips32R3() { forbidModuleDirective(); }
+void MipsTargetStreamer::emitDirectiveSetMips32R5() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips32R6() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips64() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips64R2() { forbidModuleDirective(); }
+void MipsTargetStreamer::emitDirectiveSetMips64R3() { forbidModuleDirective(); }
+void MipsTargetStreamer::emitDirectiveSetMips64R5() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips64R6() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetPop() {}
 void MipsTargetStreamer::emitDirectiveSetPush() {}
@@ -231,6 +235,16 @@ void MipsTargetAsmStreamer::emitDirectiveSetMips32R2() {
   MipsTargetStreamer::emitDirectiveSetMips32R2();
 }
 
+void MipsTargetAsmStreamer::emitDirectiveSetMips32R3() {
+  OS << "\t.set\tmips32r3\n";
+  MipsTargetStreamer::emitDirectiveSetMips32R3();
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetMips32R5() {
+  OS << "\t.set\tmips32r5\n";
+  MipsTargetStreamer::emitDirectiveSetMips32R5();
+}
+
 void MipsTargetAsmStreamer::emitDirectiveSetMips32R6() {
   OS << "\t.set\tmips32r6\n";
   MipsTargetStreamer::emitDirectiveSetMips32R6();
@@ -244,6 +258,16 @@ void MipsTargetAsmStreamer::emitDirectiveSetMips64() {
 void MipsTargetAsmStreamer::emitDirectiveSetMips64R2() {
   OS << "\t.set\tmips64r2\n";
   MipsTargetStreamer::emitDirectiveSetMips64R2();
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetMips64R3() {
+  OS << "\t.set\tmips64r3\n";
+  MipsTargetStreamer::emitDirectiveSetMips64R3();
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetMips64R5() {
+  OS << "\t.set\tmips64r5\n";
+  MipsTargetStreamer::emitDirectiveSetMips64R5();
 }
 
 void MipsTargetAsmStreamer::emitDirectiveSetMips64R6() {
@@ -366,7 +390,9 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
   // Architecture
   if (Features & Mips::FeatureMips64r6)
     EFlags |= ELF::EF_MIPS_ARCH_64R6;
-  else if (Features & Mips::FeatureMips64r2)
+  else if (Features & Mips::FeatureMips64r2 ||
+           Features & Mips::FeatureMips64r3 ||
+           Features & Mips::FeatureMips64r5)
     EFlags |= ELF::EF_MIPS_ARCH_64R2;
   else if (Features & Mips::FeatureMips64)
     EFlags |= ELF::EF_MIPS_ARCH_64;
@@ -378,7 +404,9 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
     EFlags |= ELF::EF_MIPS_ARCH_3;
   else if (Features & Mips::FeatureMips32r6)
     EFlags |= ELF::EF_MIPS_ARCH_32R6;
-  else if (Features & Mips::FeatureMips32r2)
+  else if (Features & Mips::FeatureMips32r2 ||
+           Features & Mips::FeatureMips32r3 ||
+           Features & Mips::FeatureMips32r5)
     EFlags |= ELF::EF_MIPS_ARCH_32R2;
   else if (Features & Mips::FeatureMips32)
     EFlags |= ELF::EF_MIPS_ARCH_32;
