@@ -120,9 +120,15 @@ public:
     void insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr, bool WritePtr,
                 unsigned DepSetId, unsigned ASId, ValueToValueMap &Strides);
 
+    /// \brief No run-time memory checking is necessary.
+    bool empty() const { return Pointers.empty(); }
+
     /// \brief Decide whether we need to issue a run-time check for pointer at
     /// index \p I and \p J to prove their independence.
     bool needsChecking(unsigned I, unsigned J) const;
+
+    /// \brief Print the list run-time memory checks necessary.
+    void print(raw_ostream &OS, unsigned Depth = 0) const;
 
     /// This flag indicates if we need to add the runtime check.
     bool Need;
@@ -173,6 +179,9 @@ public:
   /// \brief The diagnostics report generated for the analysis.  E.g. why we
   /// couldn't analyze the loop.
   Optional<LoopAccessReport> &getReport() { return Report; }
+
+  /// \brief Print the information about the memory accesses in the loop.
+  void print(raw_ostream &OS, unsigned Depth = 0) const;
 
   /// \brief Used to ensure that if the analysis was run with speculating the
   /// value of symbolic strides, the client queries it with the same assumption.
@@ -255,6 +264,9 @@ public:
     // Invalidate the cache when the pass is freed.
     LoopAccessInfoMap.clear();
   }
+
+  /// \brief Print the result of the analysis when invoked with -analyze.
+  void print(raw_ostream &OS, const Module *M = nullptr) const override;
 
 private:
   /// \brief The cache.

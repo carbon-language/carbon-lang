@@ -110,6 +110,23 @@ bool LoopAccessInfo::RuntimePointerCheck::needsChecking(unsigned I,
   return true;
 }
 
+void LoopAccessInfo::RuntimePointerCheck::print(raw_ostream &OS,
+                                                unsigned Depth) const {
+  unsigned NumPointers = Pointers.size();
+  if (NumPointers == 0)
+    return;
+
+  OS.indent(Depth) << "Run-time memory checks:\n";
+  unsigned N = 0;
+  for (unsigned I = 0; I < NumPointers; ++I)
+    for (unsigned J = I + 1; J < NumPointers; ++J)
+      if (needsChecking(I, J)) {
+        OS.indent(Depth) << N++ << ":\n";
+        OS.indent(Depth + 2) << *Pointers[I] << "\n";
+        OS.indent(Depth + 2) << *Pointers[J] << "\n";
+      }
+}
+
 namespace {
 /// \brief Analyses memory accesses in a loop.
 ///
@@ -1266,6 +1283,24 @@ LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
     analyzeLoop(Strides);
 }
 
+void LoopAccessInfo::print(raw_ostream &OS, unsigned Depth) const {
+  if (CanVecMem) {
+    if (PtrRtCheck.empty())
+      OS.indent(Depth) << "Memory dependences are safe\n";
+    else
+      OS.indent(Depth) << "Memory dependences are safe with run-time checks\n";
+  }
+
+  if (Report)
+    OS.indent(Depth) << "Report: " << Report->str() << "\n";
+
+  // FIXME: Print unsafe dependences
+
+  // List the pair of accesses need run-time checks to prove independence.
+  PtrRtCheck.print(OS, Depth);
+  OS << "\n";
+}
+
 LoopAccessInfo &LoopAccessAnalysis::getInfo(Loop *L, ValueToValueMap &Strides) {
   auto &LAI = LoopAccessInfoMap[L];
 
@@ -1283,6 +1318,20 @@ LoopAccessInfo &LoopAccessAnalysis::getInfo(Loop *L, ValueToValueMap &Strides) {
   return *LAI.get();
 }
 
+void LoopAccessAnalysis::print(raw_ostream &OS, const Module *M) const {
+  LoopAccessAnalysis &LAA = *const_cast<LoopAccessAnalysis *>(this);
+
+  LoopInfo *LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+  ValueToValueMap NoSymbolicStrides;
+
+  for (Loop *TopLevelLoop : *LI)
+    for (Loop *L : depth_first(TopLevelLoop)) {
+      OS.indent(2) << L->getHeader()->getName() << ":\n";
+      auto &LAI = LAA.getInfo(L, NoSymbolicStrides);
+      LAI.print(OS, 4);
+    }
+}
+
 bool LoopAccessAnalysis::runOnFunction(Function &F) {
   SE = &getAnalysis<ScalarEvolution>();
   DL = F.getParent()->getDataLayout();
@@ -1298,6 +1347,7 @@ void LoopAccessAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<AliasAnalysis>();
     AU.addRequired<DominatorTreeWrapperPass>();
+    AU.addRequired<LoopInfoWrapperPass>();
 
     AU.setPreservesAll();
 }
@@ -1310,6 +1360,7 @@ INITIALIZE_PASS_BEGIN(LoopAccessAnalysis, LAA_NAME, laa_name, false, true)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_END(LoopAccessAnalysis, LAA_NAME, laa_name, false, true)
 
 namespace llvm {
