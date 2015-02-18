@@ -881,7 +881,9 @@ private:
       // Line.MightBeFunctionDecl can only be true after the parentheses of a
       // function declaration have been found.
       Current.Type = TT_TrailingAnnotation;
-    } else if (Style.Language == FormatStyle::LK_Java && Current.Previous) {
+    } else if ((Style.Language == FormatStyle::LK_Java ||
+                Style.Language == FormatStyle::LK_JavaScript) &&
+               Current.Previous) {
       if (Current.Previous->is(tok::at) &&
           Current.isNot(Keywords.kw_interface)) {
         const FormatToken &AtToken = *Current.Previous;
@@ -1919,6 +1921,10 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
       return true;
     if (Left.is(TT_DictLiteral) && Left.is(tok::l_brace) &&
         Left.NestingLevel == 0)
+      return true;
+    if (Left.is(TT_LeadingJavaAnnotation) &&
+        Right.isNot(TT_LeadingJavaAnnotation) && Right.isNot(tok::l_paren) &&
+        Line.Last->is(tok::l_brace))
       return true;
   } else if (Style.Language == FormatStyle::LK_Java) {
     if (Left.is(TT_LeadingJavaAnnotation) &&

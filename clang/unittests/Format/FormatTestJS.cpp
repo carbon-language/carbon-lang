@@ -510,5 +510,18 @@ TEST_F(FormatTestJS, ClassDeclarations) {
   verifyFormat("class C extends P implements I {}");
 }
 
+TEST_F(FormatTestJS, MetadataAnnotations) {
+  verifyFormat("@A\nclass C {\n}");
+  verifyFormat("@A({arg: 'value'})\nclass C {\n}");
+  verifyFormat("@A\n@B\nclass C {\n}");
+  verifyFormat("class C {\n  @A x: string;\n}");
+  verifyFormat("class C {\n"
+               "  @A\n"
+               "  private x(): string {\n"
+               "    return 'y';\n"
+               "  }\n"
+               "}");
+}
+
 } // end namespace tooling
 } // end namespace clang
