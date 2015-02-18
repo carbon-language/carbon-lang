@@ -106,19 +106,14 @@ using namespace llvm::PatternMatch;
 STATISTIC(LoopsVectorized, "Number of loops vectorized");
 STATISTIC(LoopsAnalyzed, "Number of loops analyzed for vectorization");
 
-static cl::opt<unsigned, true>
-VectorizationFactor("force-vector-width", cl::Hidden,
-                    cl::desc("Sets the SIMD width. Zero is autoselect."),
-                    cl::location(VectorizerParams::VectorizationFactor));
-unsigned VectorizerParams::VectorizationFactor = 0;
+static cl::opt<unsigned>
+VectorizationFactor("force-vector-width", cl::init(0), cl::Hidden,
+                    cl::desc("Sets the SIMD width. Zero is autoselect."));
 
-static cl::opt<unsigned, true>
-VectorizationInterleave("force-vector-interleave", cl::Hidden,
-                        cl::desc("Sets the vectorization interleave count. "
-                                 "Zero is autoselect."),
-                        cl::location(
-                            VectorizerParams::VectorizationInterleave));
-unsigned VectorizerParams::VectorizationInterleave = 0;
+static cl::opt<unsigned>
+VectorizationInterleave("force-vector-interleave", cl::init(0), cl::Hidden,
+                    cl::desc("Sets the vectorization interleave count. "
+                             "Zero is autoselect."));
 
 static cl::opt<bool>
 EnableIfConversion("enable-if-conversion", cl::init(true), cl::Hidden,
@@ -152,10 +147,10 @@ static const unsigned TinyTripCountUnrollThreshold = 128;
 
 /// When performing memory disambiguation checks at runtime do not make more
 /// than this number of comparisons.
-const unsigned VectorizerParams::RuntimeMemoryCheckThreshold = 8;
+static const unsigned RuntimeMemoryCheckThreshold = 8;
 
 /// Maximum simd width.
-const unsigned VectorizerParams::MaxVectorWidth = 64;
+static const unsigned MaxVectorWidth = 64;
 
 static cl::opt<unsigned> ForceTargetNumScalarRegs(
     "force-target-num-scalar-regs", cl::init(0), cl::Hidden,
@@ -223,21 +218,6 @@ namespace {
 class LoopVectorizationLegality;
 class LoopVectorizationCostModel;
 class LoopVectorizeHints;
-
-/// \brief This modifies LoopAccessReport to initialize message with
-/// loop-vectorizer-specific part.
-class VectorizationReport : public LoopAccessReport {
-public:
-  VectorizationReport(Instruction *I = nullptr)
-      : LoopAccessReport("loop not vectorized: ", I) {}
-
-  /// \brief This allows promotion of the loop-access analysis report into the
-  /// loop-vectorizer report.  It modifies the message to add the
-  /// loop-vectorizer-specific part of the message.
-  explicit VectorizationReport(const LoopAccessReport &R)
-      : LoopAccessReport(Twine("loop not vectorized: ") + R.str(),
-                         R.getInstr()) {}
-};
 
 /// InnerLoopVectorizer vectorizes loops which contain only one basic
 /// block to a specified vectorization factor (VF).
@@ -567,11 +547,15 @@ public:
   LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, const DataLayout *DL,
                             DominatorTree *DT, TargetLibraryInfo *TLI,
                             AliasAnalysis *AA, Function *F,
-                            const TargetTransformInfo *TTI,
-                            LoopAccessAnalysis *LAA)
+                            const TargetTransformInfo *TTI)
       : NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
-        TLI(TLI), TheFunction(F), TTI(TTI), DT(DT), LAA(LAA), LAI(nullptr),
-        Induction(nullptr), WidestIndTy(nullptr), HasFunNoNaNAttr(false) {}
+        TLI(TLI), TheFunction(F), TTI(TTI), DT(DT), Induction(nullptr),
+        WidestIndTy(nullptr),
+        LAI(F, L, SE, DL, TLI, AA, DT,
+            LoopAccessInfo::VectorizerParams(
+                MaxVectorWidth, VectorizationFactor, VectorizationInterleave,
+                RuntimeMemoryCheckThreshold)),
+        HasFunNoNaNAttr(false) {}
 
   /// This enum represents the kinds of reductions that we support.
   enum ReductionKind {
@@ -756,19 +740,19 @@ public:
   bool isUniformAfterVectorization(Instruction* I) { return Uniforms.count(I); }
 
   /// Returns the information that we collected about runtime memory check.
-  const LoopAccessInfo::RuntimePointerCheck *getRuntimePointerCheck() const {
-    return LAI->getRuntimePointerCheck();
+  LoopAccessInfo::RuntimePointerCheck *getRuntimePointerCheck() {
+    return LAI.getRuntimePointerCheck();
   }
 
-  const LoopAccessInfo *getLAI() const {
-    return LAI;
+  LoopAccessInfo *getLAI() {
+    return &LAI;
   }
 
   /// This function returns the identity element (or neutral element) for
   /// the operation K.
   static Constant *getReductionIdentity(ReductionKind K, Type *Tp);
 
-  unsigned getMaxSafeDepDistBytes() { return LAI->getMaxSafeDepDistBytes(); }
+  unsigned getMaxSafeDepDistBytes() { return LAI.getMaxSafeDepDistBytes(); }
 
   bool hasStride(Value *V) { return StrideSet.count(V); }
   bool mustCheckStrides() { return !StrideSet.empty(); }
@@ -793,10 +777,10 @@ public:
     return (MaskedOp.count(I) != 0);
   }
   unsigned getNumStores() const {
-    return LAI->getNumStores();
+    return LAI.getNumStores();
   }
   unsigned getNumLoads() const {
-    return LAI->getNumLoads();
+    return LAI.getNumLoads();
   }
   unsigned getNumPredStores() const {
     return NumPredStores;
@@ -850,11 +834,9 @@ private:
   void collectStridedAccess(Value *LoadOrStoreInst);
 
   /// Report an analysis message to assist the user in diagnosing loops that are
-  /// not vectorized.  These are handled as LoopAccessReport rather than
-  /// VectorizationReport because the << operator of VectorizationReport returns
-  /// LoopAccessReport.
-  void emitAnalysis(const LoopAccessReport &Message) {
-    LoopAccessReport::emitAnalysis(Message, TheFunction, TheLoop, LV_NAME);
+  /// not vectorized.
+  void emitAnalysis(VectorizationReport &Message) {
+    VectorizationReport::emitAnalysis(Message, TheFunction, TheLoop);
   }
 
   unsigned NumPredStores;
@@ -873,11 +855,6 @@ private:
   const TargetTransformInfo *TTI;
   /// Dominator Tree.
   DominatorTree *DT;
-  // LoopAccess analysis.
-  LoopAccessAnalysis *LAA;
-  // And the loop-accesses info corresponding to this loop.  This pointer is
-  // null until canVectorizeMemory sets it up.
-  const LoopAccessInfo *LAI;
 
   //  ---  vectorization state --- //
 
@@ -899,7 +876,7 @@ private:
   /// This set holds the variables which are known to be uniform after
   /// vectorization.
   SmallPtrSet<Instruction*, 4> Uniforms;
-
+  LoopAccessInfo LAI;
   /// Can we assume the absence of NaNs.
   bool HasFunNoNaNAttr;
 
@@ -989,11 +966,9 @@ private:
   bool isConsecutiveLoadOrStore(Instruction *I);
 
   /// Report an analysis message to assist the user in diagnosing loops that are
-  /// not vectorized.  These are handled as LoopAccessReport rather than
-  /// VectorizationReport because the << operator of VectorizationReport returns
-  /// LoopAccessReport.
-  void emitAnalysis(const LoopAccessReport &Message) {
-    LoopAccessReport::emitAnalysis(Message, TheFunction, TheLoop, LV_NAME);
+  /// not vectorized.
+  void emitAnalysis(VectorizationReport &Message) {
+    VectorizationReport::emitAnalysis(Message, TheFunction, TheLoop);
   }
 
   /// Values used only by @llvm.assume calls.
@@ -1046,7 +1021,7 @@ class LoopVectorizeHints {
     bool validate(unsigned Val) {
       switch (Kind) {
       case HK_WIDTH:
-        return isPowerOf2_32(Val) && Val <= VectorizerParams::MaxVectorWidth;
+        return isPowerOf2_32(Val) && Val <= MaxVectorWidth;
       case HK_UNROLL:
         return isPowerOf2_32(Val) && Val <= MaxInterleaveFactor;
       case HK_FORCE:
@@ -1282,7 +1257,6 @@ struct LoopVectorize : public FunctionPass {
   TargetLibraryInfo *TLI;
   AliasAnalysis *AA;
   AssumptionCache *AC;
-  LoopAccessAnalysis *LAA;
   bool DisableUnrolling;
   bool AlwaysVectorize;
 
@@ -1300,7 +1274,6 @@ struct LoopVectorize : public FunctionPass {
     TLI = TLIP ? &TLIP->getTLI() : nullptr;
     AA = &getAnalysis<AliasAnalysis>();
     AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
-    LAA = &getAnalysis<LoopAccessAnalysis>();
 
     // Compute some weights outside of the loop over the loops. Compute this
     // using a BranchProbability to re-use its scaling math.
@@ -1411,7 +1384,7 @@ struct LoopVectorize : public FunctionPass {
     }
 
     // Check if it is legal to vectorize the loop.
-    LoopVectorizationLegality LVL(L, SE, DL, DT, TLI, AA, F, TTI, LAA);
+    LoopVectorizationLegality LVL(L, SE, DL, DT, TLI, AA, F, TTI);
     if (!LVL.canVectorize()) {
       DEBUG(dbgs() << "LV: Not vectorizing: Cannot prove legality.\n");
       emitMissedWarning(F, L, Hints);
@@ -1516,7 +1489,6 @@ struct LoopVectorize : public FunctionPass {
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<TargetTransformInfoWrapperPass>();
     AU.addRequired<AliasAnalysis>();
-    AU.addRequired<LoopAccessAnalysis>();
     AU.addPreserved<LoopInfoWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();
     AU.addPreserved<AliasAnalysis>();
@@ -1688,7 +1660,7 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
 }
 
 bool LoopVectorizationLegality::isUniform(Value *V) {
-  return LAI->isUniform(V);
+  return LAI.isUniform(V);
 }
 
 InnerLoopVectorizer::VectorParts&
@@ -3428,7 +3400,7 @@ bool LoopVectorizationLegality::canVectorize() {
   collectLoopUniforms();
 
   DEBUG(dbgs() << "LV: We can vectorize this loop" <<
-        (LAI->getRuntimePointerCheck()->Need ? " (with a runtime bound check)" :
+        (LAI.getRuntimePointerCheck()->Need ? " (with a runtime bound check)" :
          "")
         <<"!\n");
 
@@ -3853,11 +3825,7 @@ void LoopVectorizationLegality::collectLoopUniforms() {
 }
 
 bool LoopVectorizationLegality::canVectorizeMemory() {
-  LAI = &LAA->getInfo(TheLoop, Strides);
-  auto &OptionalReport = LAI->getReport();
-  if (OptionalReport)
-    emitAnalysis(VectorizationReport(*OptionalReport));
-  return LAI->canVectorizeMemory();
+  return LAI.canVectorizeMemory(Strides);
 }
 
 static bool hasMultipleUsesOf(Instruction *I,
@@ -5032,7 +5000,6 @@ INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
-INITIALIZE_PASS_DEPENDENCY(LoopAccessAnalysis)
 INITIALIZE_PASS_END(LoopVectorize, LV_NAME, lv_name, false, false)
 
 namespace llvm {

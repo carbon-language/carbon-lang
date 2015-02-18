@@ -16,13 +16,11 @@
 #define LLVM_ANALYSIS_LOOPACCESSANALYSIS_H
 
 #include "llvm/ADT/EquivalenceClasses.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/IR/ValueHandle.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
@@ -36,52 +34,30 @@ class SCEV;
 
 /// Optimization analysis message produced during vectorization. Messages inform
 /// the user why vectorization did not occur.
-class LoopAccessReport {
+class VectorizationReport {
   std::string Message;
-  const Instruction *Instr;
-
-protected:
-  LoopAccessReport(const Twine &Message, const Instruction *I)
-      : Message(Message.str()), Instr(I) {}
+  Instruction *Instr;
 
 public:
-  LoopAccessReport(const Instruction *I = nullptr) : Instr(I) {}
+  VectorizationReport(Instruction *I = nullptr)
+      : Message("loop not vectorized: "), Instr(I) {}
 
-  template <typename A> LoopAccessReport &operator<<(const A &Value) {
+  template <typename A> VectorizationReport &operator<<(const A &Value) {
     raw_string_ostream Out(Message);
     Out << Value;
     return *this;
   }
 
-  const Instruction *getInstr() const { return Instr; }
+  Instruction *getInstr() { return Instr; }
 
   std::string &str() { return Message; }
-  const std::string &str() const { return Message; }
   operator Twine() { return Message; }
 
-  /// \brief Emit an analysis note for \p PassName with the debug location from
-  /// the instruction in \p Message if available.  Otherwise use the location of
-  /// \p TheLoop.
-  static void emitAnalysis(const LoopAccessReport &Message,
+  /// \brief Emit an analysis note with the debug location from the instruction
+  /// in \p Message if available.  Otherwise use the location of \p TheLoop.
+  static void emitAnalysis(VectorizationReport &Message,
                            const Function *TheFunction,
-                           const Loop *TheLoop,
-                           const char *PassName);
-};
-
-/// \brief Collection of parameters shared beetween the Loop Vectorizer and the
-/// Loop Access Analysis.
-struct VectorizerParams {
-  /// \brief Maximum SIMD width.
-  static const unsigned MaxVectorWidth;
-
-  /// \brief VF as overridden by the user.
-  static unsigned VectorizationFactor;
-  /// \brief Interleave factor as overridden by the user.
-  static unsigned VectorizationInterleave;
-
-  /// \\brief When performing memory disambiguation checks at runtime do not
-  /// make more than this number of comparisons.
-  static const unsigned RuntimeMemoryCheckThreshold;
+                           const Loop *TheLoop);
 };
 
 /// \brief Drive the analysis of memory accesses in the loop
@@ -100,6 +76,30 @@ struct VectorizerParams {
 /// RuntimePointerCheck class.
 class LoopAccessInfo {
 public:
+  /// \brief Collection of parameters used from the vectorizer.
+  struct VectorizerParams {
+    /// \brief Maximum simd width.
+    unsigned MaxVectorWidth;
+
+    /// \brief VF as overridden by the user.
+    unsigned VectorizationFactor;
+    /// \brief Interleave factor as overridden by the user.
+    unsigned VectorizationInterleave;
+
+    /// \\brief When performing memory disambiguation checks at runtime do not
+    /// make more than this number of comparisons.
+    unsigned RuntimeMemoryCheckThreshold;
+
+    VectorizerParams(unsigned MaxVectorWidth,
+                     unsigned VectorizationFactor,
+                     unsigned VectorizationInterleave,
+                     unsigned RuntimeMemoryCheckThreshold) :
+        MaxVectorWidth(MaxVectorWidth),
+        VectorizationFactor(VectorizationFactor),
+        VectorizationInterleave(VectorizationInterleave),
+        RuntimeMemoryCheckThreshold(RuntimeMemoryCheckThreshold) {}
+  };
+
   /// This struct holds information about the memory runtime legality check that
   /// a group of pointers do not overlap.
   struct RuntimePointerCheck {
@@ -120,15 +120,9 @@ public:
     void insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr, bool WritePtr,
                 unsigned DepSetId, unsigned ASId, ValueToValueMap &Strides);
 
-    /// \brief No run-time memory checking is necessary.
-    bool empty() const { return Pointers.empty(); }
-
     /// \brief Decide whether we need to issue a run-time check for pointer at
     /// index \p I and \p J to prove their independence.
     bool needsChecking(unsigned I, unsigned J) const;
-
-    /// \brief Print the list run-time memory checks necessary.
-    void print(raw_ostream &OS, unsigned Depth = 0) const;
 
     /// This flag indicates if we need to add the runtime check.
     bool Need;
@@ -147,17 +141,19 @@ public:
     SmallVector<unsigned, 2> AliasSetId;
   };
 
-  LoopAccessInfo(Loop *L, ScalarEvolution *SE, const DataLayout *DL,
-                 const TargetLibraryInfo *TLI, AliasAnalysis *AA,
-                 DominatorTree *DT, ValueToValueMap &Strides);
+  LoopAccessInfo(Function *F, Loop *L, ScalarEvolution *SE,
+                 const DataLayout *DL, const TargetLibraryInfo *TLI,
+                 AliasAnalysis *AA, DominatorTree *DT,
+                 const VectorizerParams &VectParams) :
+      TheFunction(F), TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA), DT(DT),
+      NumLoads(0), NumStores(0), MaxSafeDepDistBytes(-1U),
+      VectParams(VectParams) {}
 
   /// Return true we can analyze the memory accesses in the loop and there are
-  /// no memory dependence cycles.
-  bool canVectorizeMemory() const { return CanVecMem; }
+  /// no memory dependence cycles.  Replaces symbolic strides using Strides.
+  bool canVectorizeMemory(ValueToValueMap &Strides);
 
-  const RuntimePointerCheck *getRuntimePointerCheck() const {
-    return &PtrRtCheck;
-  }
+  RuntimePointerCheck *getRuntimePointerCheck() { return &PtrRtCheck; }
 
   /// Return true if the block BB needs to be predicated in order for the loop
   /// to be vectorized.
@@ -165,7 +161,7 @@ public:
                                     DominatorTree *DT);
 
   /// Returns true if the value V is uniform within the loop.
-  bool isUniform(Value *V) const;
+  bool isUniform(Value *V);
 
   unsigned getMaxSafeDepDistBytes() const { return MaxSafeDepDistBytes; }
   unsigned getNumStores() const { return NumStores; }
@@ -176,34 +172,15 @@ public:
   /// Returns a pair of instructions where the first element is the first
   /// instruction generated in possibly a sequence of instructions and the
   /// second value is the final comparator value or NULL if no check is needed.
-  std::pair<Instruction *, Instruction *>
-    addRuntimeCheck(Instruction *Loc) const;
-
-  /// \brief The diagnostics report generated for the analysis.  E.g. why we
-  /// couldn't analyze the loop.
-  const Optional<LoopAccessReport> &getReport() const { return Report; }
-
-  /// \brief Print the information about the memory accesses in the loop.
-  void print(raw_ostream &OS, unsigned Depth = 0) const;
-
-  /// \brief Used to ensure that if the analysis was run with speculating the
-  /// value of symbolic strides, the client queries it with the same assumption.
-  /// Only used in DEBUG build but we don't want NDEBUG-depedent ABI.
-  unsigned NumSymbolicStrides;
+  std::pair<Instruction *, Instruction *> addRuntimeCheck(Instruction *Loc);
 
 private:
-  /// \brief Analyze the loop.  Substitute symbolic strides using Strides.
-  void analyzeLoop(ValueToValueMap &Strides);
-
-  /// \brief Check if the structure of the loop allows it to be analyzed by this
-  /// pass.
-  bool canAnalyzeLoop();
-
-  void emitAnalysis(LoopAccessReport &Message);
+  void emitAnalysis(VectorizationReport &Message);
 
   /// We need to check that all of the pointers in this list are disjoint
   /// at runtime.
   RuntimePointerCheck PtrRtCheck;
+  Function *TheFunction;
   Loop *TheLoop;
   ScalarEvolution *SE;
   const DataLayout *DL;
@@ -216,12 +193,8 @@ private:
 
   unsigned MaxSafeDepDistBytes;
 
-  /// \brief Cache the result of analyzeLoop.
-  bool CanVecMem;
-
-  /// \brief The diagnostics report generated for the analysis.  E.g. why we
-  /// couldn't analyze the loop.
-  Optional<LoopAccessReport> Report;
+  /// \brief Vectorizer parameters used by the analysis.
+  VectorizerParams VectParams;
 };
 
 Value *stripIntegerCast(Value *V);
@@ -236,52 +209,6 @@ const SCEV *replaceSymbolicStrideSCEV(ScalarEvolution *SE,
                                       ValueToValueMap &PtrToStride,
                                       Value *Ptr, Value *OrigPtr = nullptr);
 
-/// \brief This analysis provides dependence information for the memory accesses
-/// of a loop.
-///
-/// It runs the analysis for a loop on demand.  This can be initiated by
-/// querying the loop access info via LAA::getInfo.  getInfo return a
-/// LoopAccessInfo object.  See this class for the specifics of what information
-/// is provided.
-class LoopAccessAnalysis : public FunctionPass {
-public:
-  static char ID;
-
-  LoopAccessAnalysis() : FunctionPass(ID) {
-    initializeLoopAccessAnalysisPass(*PassRegistry::getPassRegistry());
-  }
-
-  bool runOnFunction(Function &F) override;
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
-
-  /// \brief Query the result of the loop access information for the loop \p L.
-  ///
-  /// If the client speculates (and then issues run-time checks) for the values
-  /// of symbolic strides, \p Strides provides the mapping (see
-  /// replaceSymbolicStrideSCEV).  If there is no cached result available run
-  /// the analysis.
-  const LoopAccessInfo &getInfo(Loop *L, ValueToValueMap &Strides);
-
-  void releaseMemory() override {
-    // Invalidate the cache when the pass is freed.
-    LoopAccessInfoMap.clear();
-  }
-
-  /// \brief Print the result of the analysis when invoked with -analyze.
-  void print(raw_ostream &OS, const Module *M = nullptr) const override;
-
-private:
-  /// \brief The cache.
-  DenseMap<Loop *, std::unique_ptr<LoopAccessInfo>> LoopAccessInfoMap;
-
-  // The used analysis passes.
-  ScalarEvolution *SE;
-  const DataLayout *DL;
-  const TargetLibraryInfo *TLI;
-  AliasAnalysis *AA;
-  DominatorTree *DT;
-};
 } // End llvm namespace
 
 #endif
