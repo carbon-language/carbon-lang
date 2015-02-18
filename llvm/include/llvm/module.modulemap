@@ -58,16 +58,16 @@ module LLVM_DebugInfo_PDB {
   // a separate library which might not be available.
   //
   // FIXME: There should be a better way to specify this.
-  exclude header "DebugInfo/PDB/DIADataStream.h"
-  exclude header "DebugInfo/PDB/DIAEnumDebugStreams.h"
-  exclude header "DebugInfo/PDB/DIAEnumLineNumbers.h"
-  exclude header "DebugInfo/PDB/DIAEnumSourceFiles.h"
-  exclude header "DebugInfo/PDB/DIAEnumSymbols.h"
-  exclude header "DebugInfo/PDB/DIALineNumber.h"
-  exclude header "DebugInfo/PDB/DIARawSymbol.h"
-  exclude header "DebugInfo/PDB/DIASession.h"
-  exclude header "DebugInfo/PDB/DIASourceFile.h"
-  exclude header "DebugInfo/PDB/DIASupport.h"
+  exclude header "DebugInfo/PDB/DIA/DIADataStream.h"
+  exclude header "DebugInfo/PDB/DIA/DIAEnumDebugStreams.h"
+  exclude header "DebugInfo/PDB/DIA/DIAEnumLineNumbers.h"
+  exclude header "DebugInfo/PDB/DIA/DIAEnumSourceFiles.h"
+  exclude header "DebugInfo/PDB/DIA/DIAEnumSymbols.h"
+  exclude header "DebugInfo/PDB/DIA/DIALineNumber.h"
+  exclude header "DebugInfo/PDB/DIA/DIARawSymbol.h"
+  exclude header "DebugInfo/PDB/DIA/DIASession.h"
+  exclude header "DebugInfo/PDB/DIA/DIASourceFile.h"
+  exclude header "DebugInfo/PDB/DIA/DIASupport.h"
 }
 
 module LLVM_DebugInfo_PDB_DIA {
