@@ -897,6 +897,47 @@ TEST_F(MDCompositeTypeTest, get) {
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
 }
 
+TEST_F(MDCompositeTypeTest, replaceOperands) {
+  unsigned Tag = dwarf::DW_TAG_structure_type;
+  StringRef Name = "some name";
+  Metadata *File = MDTuple::getDistinct(Context, None);
+  unsigned Line = 1;
+  Metadata *Scope = MDTuple::getDistinct(Context, None);
+  Metadata *BaseType = MDTuple::getDistinct(Context, None);
+  unsigned SizeInBits = 2;
+  unsigned AlignInBits = 3;
+  unsigned OffsetInBits = 4;
+  unsigned Flags = 5;
+  unsigned RuntimeLang = 6;
+  StringRef Identifier = "some id";
+
+  auto *N = MDCompositeType::get(Context, Tag, Name, File, Line, Scope,
+                                 BaseType, SizeInBits, AlignInBits,
+                                 OffsetInBits, Flags, nullptr, RuntimeLang,
+                                 nullptr, nullptr, Identifier);
+
+  auto *Elements = MDTuple::getDistinct(Context, None);
+  EXPECT_EQ(nullptr, N->getElements());
+  N->replaceElements(Elements);
+  EXPECT_EQ(Elements, N->getElements());
+  N->replaceElements(nullptr);
+  EXPECT_EQ(nullptr, N->getElements());
+
+  auto *VTableHolder = MDTuple::getDistinct(Context, None);
+  EXPECT_EQ(nullptr, N->getVTableHolder());
+  N->replaceVTableHolder(VTableHolder);
+  EXPECT_EQ(VTableHolder, N->getVTableHolder());
+  N->replaceVTableHolder(nullptr);
+  EXPECT_EQ(nullptr, N->getVTableHolder());
+
+  auto *TemplateParams = MDTuple::getDistinct(Context, None);
+  EXPECT_EQ(nullptr, N->getTemplateParams());
+  N->replaceTemplateParams(TemplateParams);
+  EXPECT_EQ(TemplateParams, N->getTemplateParams());
+  N->replaceTemplateParams(nullptr);
+  EXPECT_EQ(nullptr, N->getTemplateParams());
+}
+
 typedef MetadataTest MDSubroutineTypeTest;
 
 TEST_F(MDSubroutineTypeTest, get) {

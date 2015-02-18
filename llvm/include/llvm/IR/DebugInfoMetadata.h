@@ -576,6 +576,29 @@ public:
 
   MDString *getRawIdentifier() const { return getOperandAs<MDString>(7); }
 
+  /// \brief Replace operands.
+  ///
+  /// If this \a isUniqued() and not \a isResolved(), on a uniquing collision
+  /// this will be RAUW'ed and deleted.  Use a \a TrackingMDRef to keep track
+  /// of its movement if necessary.
+  /// @{
+  void replaceElements(MDTuple *Elements) {
+#ifndef NDEBUG
+    if (auto *Old = cast_or_null<MDTuple>(getElements()))
+      for (const auto &Op : Old->operands())
+        assert(std::find(Elements->op_begin(), Elements->op_end(), Op) &&
+               "Lost a member during member list replacement");
+#endif
+    replaceOperandWith(4, Elements);
+  }
+  void replaceVTableHolder(Metadata *VTableHolder) {
+    replaceOperandWith(5, VTableHolder);
+  }
+  void replaceTemplateParams(MDTuple *TemplateParams) {
+    replaceOperandWith(6, TemplateParams);
+  }
+  /// @}
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDCompositeTypeKind ||
            MD->getMetadataID() == MDSubroutineTypeKind;
