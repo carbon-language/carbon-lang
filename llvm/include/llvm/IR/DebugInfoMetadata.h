@@ -850,6 +850,16 @@ public:
     return getOperandAs<MDString>(3);
   }
 
+  /// \brief Replace arrays.
+  ///
+  /// If this \a isUniqued() and not \a isResolved(), it will be RAUW'ed and
+  /// deleted on a uniquing collision.  In practice, uniquing collisions on \a
+  /// MDCompileUnit should be fairly rare.
+  /// @{
+  void replaceSubprograms(MDTuple *N) { replaceOperandWith(6, N); }
+  void replaceGlobalVariables(MDTuple *N) { replaceOperandWith(7, N); }
+  /// @}
+
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDCompileUnitKind;
   }

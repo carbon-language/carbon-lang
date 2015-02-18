@@ -1043,6 +1043,38 @@ TEST_F(MDCompileUnitTest, get) {
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
 }
 
+TEST_F(MDCompileUnitTest, replaceArrays) {
+  unsigned SourceLanguage = 1;
+  Metadata *File = MDTuple::getDistinct(Context, None);
+  StringRef Producer = "some producer";
+  bool IsOptimized = false;
+  StringRef Flags = "flag after flag";
+  unsigned RuntimeVersion = 2;
+  StringRef SplitDebugFilename = "another/file";
+  unsigned EmissionKind = 3;
+  Metadata *EnumTypes = MDTuple::getDistinct(Context, None);
+  Metadata *RetainedTypes = MDTuple::getDistinct(Context, None);
+  Metadata *ImportedEntities = MDTuple::getDistinct(Context, None);
+  auto *N = MDCompileUnit::get(
+      Context, SourceLanguage, File, Producer, IsOptimized, Flags,
+      RuntimeVersion, SplitDebugFilename, EmissionKind, EnumTypes,
+      RetainedTypes, nullptr, nullptr, ImportedEntities);
+
+  auto *Subprograms = MDTuple::getDistinct(Context, None);
+  EXPECT_EQ(nullptr, N->getSubprograms());
+  N->replaceSubprograms(Subprograms);
+  EXPECT_EQ(Subprograms, N->getSubprograms());
+  N->replaceSubprograms(nullptr);
+  EXPECT_EQ(nullptr, N->getSubprograms());
+
+  auto *GlobalVariables = MDTuple::getDistinct(Context, None);
+  EXPECT_EQ(nullptr, N->getGlobalVariables());
+  N->replaceGlobalVariables(GlobalVariables);
+  EXPECT_EQ(GlobalVariables, N->getGlobalVariables());
+  N->replaceGlobalVariables(nullptr);
+  EXPECT_EQ(nullptr, N->getGlobalVariables());
+}
+
 typedef MetadataTest MDSubprogramTest;
 
 TEST_F(MDSubprogramTest, get) {
