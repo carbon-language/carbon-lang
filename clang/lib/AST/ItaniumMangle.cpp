@@ -352,6 +352,8 @@ private:
   void manglePrefix(QualType type);
   void mangleTemplatePrefix(const TemplateDecl *ND, bool NoFunction=false);
   void mangleTemplatePrefix(TemplateName Template);
+  void mangleDestructorName(QualType DestroyedType);
+  void mangleOperatorName(DeclarationName Name, unsigned Arity);
   void mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity);
   void mangleQualifiers(Qualifiers Quals);
   void mangleRefQualifier(RefQualifierKind RefQualifier);
@@ -752,8 +754,7 @@ void CXXNameMangler::mangleCallOffset(int64_t NonVirtual, int64_t Virtual) {
 }
 
 void CXXNameMangler::manglePrefix(QualType type) {
-  if (const TemplateSpecializationType *TST =
-        type->getAs<TemplateSpecializationType>()) {
+  if (const auto *TST = type->getAs<TemplateSpecializationType>()) {
     if (!mangleSubstitution(QualType(TST, 0))) {
       mangleTemplatePrefix(TST->getTemplateName());
         
@@ -763,17 +764,19 @@ void CXXNameMangler::manglePrefix(QualType type) {
       mangleTemplateArgs(TST->getArgs(), TST->getNumArgs());
       addSubstitution(QualType(TST, 0));
     }
-  } else if (const DependentTemplateSpecializationType *DTST
-               = type->getAs<DependentTemplateSpecializationType>()) {
-    TemplateName Template
-      = getASTContext().getDependentTemplateName(DTST->getQualifier(), 
-                                                 DTST->getIdentifier());
-    mangleTemplatePrefix(Template);
+  } else if (const auto *DTST =
+                 type->getAs<DependentTemplateSpecializationType>()) {
+    if (!mangleSubstitution(QualType(DTST, 0))) {
+      TemplateName Template = getASTContext().getDependentTemplateName(
+          DTST->getQualifier(), DTST->getIdentifier());
+      mangleTemplatePrefix(Template);
 
-    // FIXME: GCC does not appear to mangle the template arguments when
-    // the template in question is a dependent template name. Should we
-    // emulate that badness?
-    mangleTemplateArgs(DTST->getArgs(), DTST->getNumArgs());
+      // FIXME: GCC does not appear to mangle the template arguments when
+      // the template in question is a dependent template name. Should we
+      // emulate that badness?
+      mangleTemplateArgs(DTST->getArgs(), DTST->getNumArgs());
+      addSubstitution(QualType(DTST, 0));
+    }
   } else {
     // We use the QualType mangle type variant here because it handles
     // substitutions.
@@ -1054,15 +1057,20 @@ void CXXNameMangler::mangleUnresolvedName(NestedNameSpecifier *qualifier,
   switch (name.getNameKind()) {
     // <base-unresolved-name> ::= <simple-id>
     case DeclarationName::Identifier:
+      mangleSourceName(name.getAsIdentifierInfo());
+      break;
+    // <base-unresolved-name> ::= dn <destructor-name>
+    case DeclarationName::CXXDestructorName:
+      Out << "dn";
+      mangleDestructorName(name.getCXXNameType());
       break;
     // <base-unresolved-name> ::= on <operator-name>
     case DeclarationName::CXXConversionFunctionName:
     case DeclarationName::CXXLiteralOperatorName:
     case DeclarationName::CXXOperatorName:
       Out << "on";
+      mangleOperatorName(name, knownArity);
       break;
-    case DeclarationName::CXXDestructorName:
-      llvm_unreachable("Can't mangle a constructor name!");
     case DeclarationName::CXXConstructorName:
       llvm_unreachable("Can't mangle a constructor name!");
     case DeclarationName::CXXUsingDirective:
@@ -1072,12 +1080,12 @@ void CXXNameMangler::mangleUnresolvedName(NestedNameSpecifier *qualifier,
     case DeclarationName::ObjCZeroArgSelector:
       llvm_unreachable("Can't mangle Objective-C selector names here!");
   }
-  mangleUnqualifiedName(nullptr, name, knownArity);
 }
 
 void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
                                            DeclarationName Name,
                                            unsigned KnownArity) {
+  unsigned Arity = KnownArity;
   //  <unqualified-name> ::= <operator-name>
   //                     ::= <ctor-dtor-name>
   //                     ::= <source-name>
@@ -1219,33 +1227,19 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       mangleCXXDtorType(Dtor_Complete);
     break;
 
-  case DeclarationName::CXXConversionFunctionName:
-    // <operator-name> ::= cv <type>    # (cast)
-    Out << "cv";
-    mangleType(Name.getCXXNameType());
-    break;
-
-  case DeclarationName::CXXOperatorName: {
-    unsigned Arity;
-    if (ND) {
+  case DeclarationName::CXXOperatorName:
+    if (ND && Arity == UnknownArity) {
       Arity = cast<FunctionDecl>(ND)->getNumParams();
 
-      // If we have a C++ member function, we need to include the 'this' pointer.
-      // FIXME: This does not make sense for operators that are static, but their
-      // names stay the same regardless of the arity (operator new for instance).
-      if (isa<CXXMethodDecl>(ND))
-        Arity++;
-    } else
-      Arity = KnownArity;
-
-    mangleOperatorName(Name.getCXXOverloadedOperator(), Arity);
-    break;
-  }
-
+      // If we have a member function, we need to include the 'this' pointer.
+      if (const auto *MD = dyn_cast<CXXMethodDecl>(ND))
+        if (!MD->isStatic())
+          Arity++;
+    }
+  // FALLTHROUGH
+  case DeclarationName::CXXConversionFunctionName:
   case DeclarationName::CXXLiteralOperatorName:
-    // FIXME: This mangling is not yet official.
-    Out << "li";
-    mangleSourceName(Name.getCXXLiteralIdentifier());
+    mangleOperatorName(Name, Arity);
     break;
 
   case DeclarationName::CXXUsingDirective:
@@ -1645,6 +1639,61 @@ void CXXNameMangler::mangleType(TemplateName TN) {
 
   addSubstitution(TN);
 }
+
+void CXXNameMangler::mangleDestructorName(QualType DestroyedType) {
+  // <destructor-name> ::= <unresolved-type>
+  //                   ::= <simple-id>
+  if (const auto *TST = DestroyedType->getAs<TemplateSpecializationType>()) {
+    TemplateName TN = TST->getTemplateName();
+    const auto *TD = TN.getAsTemplateDecl();
+    if (const auto *TTP = dyn_cast<TemplateTemplateParmDecl>(TD)) {
+      // Proposed to cxx-abi-dev on 2015-02-17.
+      mangleTemplateParameter(TTP->getIndex());
+    } else {
+      mangleUnscopedName(TD->getTemplatedDecl());
+    }
+    mangleTemplateArgs(TST->getArgs(), TST->getNumArgs());
+  } else if (const auto *DTST =
+                 DestroyedType->getAs<DependentTemplateSpecializationType>()) {
+    const IdentifierInfo *II = DTST->getIdentifier();
+    mangleSourceName(II);
+    mangleTemplateArgs(DTST->getArgs(), DTST->getNumArgs());
+  } else {
+    // We use the QualType mangle type variant here because it handles
+    // substitutions.
+    mangleType(DestroyedType);
+  }
+}
+
+void CXXNameMangler::mangleOperatorName(DeclarationName Name, unsigned Arity) {
+  switch (Name.getNameKind()) {
+  case DeclarationName::CXXConstructorName:
+  case DeclarationName::CXXDestructorName:
+  case DeclarationName::CXXUsingDirective:
+  case DeclarationName::Identifier:
+  case DeclarationName::ObjCMultiArgSelector:
+  case DeclarationName::ObjCOneArgSelector:
+  case DeclarationName::ObjCZeroArgSelector:
+    llvm_unreachable("Not an operator name");
+
+  case DeclarationName::CXXConversionFunctionName:
+    // <operator-name> ::= cv <type>    # (cast)
+    Out << "cv";
+    mangleType(Name.getCXXNameType());
+    break;
+
+  case DeclarationName::CXXLiteralOperatorName:
+    Out << "li";
+    mangleSourceName(Name.getCXXLiteralIdentifier());
+    return;
+
+  case DeclarationName::CXXOperatorName:
+    mangleOperatorName(Name.getCXXOverloadedOperator(), Arity);
+    break;
+  }
+}
+
+
 
 void
 CXXNameMangler::mangleOperatorName(OverloadedOperatorKind OO, unsigned Arity) {
@@ -2841,9 +2890,8 @@ recurse:
       mangleUnresolvedPrefix(Qualifier, /*FirstQualifierLookup=*/nullptr);
     // <base-unresolved-name> ::= dn <destructor-name>
     Out << "dn";
-    // <destructor-name> ::= <unresolved-type>
-    //                   ::= <simple-id>
-    manglePrefix(PDE->getDestroyedType());
+    QualType DestroyedType = PDE->getDestroyedType();
+    mangleDestructorName(DestroyedType);
     break;
   }
 

@@ -80,3 +80,19 @@ void f(void (B::*)(), A, A) { }
 void f(void (B::*)(), A, A, void (B::*)(A), void (A::*)()) { }
 
 }
+
+namespace ManglePrefix {
+template <typename>
+struct X {
+  template <typename>
+  struct Y {
+    typedef int type;
+    typedef int type2;
+  };
+};
+template <typename T>
+typename X<T>::template Y<T>::type f(typename X<T>::template Y<T>::type2) { return 0; }
+
+// CHECK: @_ZN12ManglePrefix1fIiEENS_1XIT_E1YIS2_E4typeENS5_5type2E
+template int f<int>(int);
+}
