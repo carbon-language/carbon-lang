@@ -7901,7 +7901,7 @@ static SDValue lowerVectorShuffleAsShift(SDLoc DL, MVT VT, SDValue V1,
     return true;
   };
 
-  auto MatchBitShift = [&](int Shift, int Scale, bool Left, SDValue V) {
+  auto MatchShift = [&](int Shift, int Scale, bool Left, SDValue V) {
     for (int i = 0; i != Size; i += Scale) {
       unsigned Pos = Left ? i + Shift : i;
       unsigned Low = Left ? i : i + Shift;
@@ -7943,8 +7943,8 @@ static SDValue lowerVectorShuffleAsShift(SDLoc DL, MVT VT, SDValue V1,
       for (bool Left : {true, false})
         if (CheckZeros(Shift, Scale, Left))
           for (SDValue V : {V1, V2})
-            if (SDValue BitShift = MatchBitShift(Shift, Scale, Left, V))
-              return BitShift;
+            if (SDValue Match = MatchShift(Shift, Scale, Left, V))
+              return Match;
 
   // no match
   return SDValue();
