@@ -1327,12 +1327,12 @@ static const SCEV *getOverflowLimitForStep(const SCEV *Step,
   return nullptr;
 }
 
-// The recurrence AR has been shown to have no signed wrap. Typically, if we can
-// prove NSW for AR, then we can just as easily prove NSW for its preincrement
-// or postincrement sibling. This allows normalizing a sign extended AddRec as
-// such: {sext(Step + Start),+,Step} => {(Step + sext(Start),+,Step} As a
-// result, the expression "Step + sext(PreIncAR)" is congruent with
-// "sext(PostIncAR)"
+// The recurrence AR has been shown to have no signed wrap or something close to
+// it.  Typically, if we can prove NSW for AR, then we can just as easily prove
+// NSW for its preincrement or postincrement sibling. This allows normalizing a
+// sign extended AddRec as such: {sext(Step + Start),+,Step} => {(Step +
+// sext(Start),+,Step} As a result, the expression "Step + sext(PreIncAR)" is
+// congruent with "sext(PostIncAR)"
 static const SCEV *getPreStartForSignExtend(const SCEVAddRecExpr *AR,
                                             Type *Ty,
                                             ScalarEvolution *SE) {
@@ -1392,7 +1392,7 @@ static const SCEV *getPreStartForSignExtend(const SCEVAddRecExpr *AR,
                    SE->getSignExtendExpr(Step, WideTy));
   if (SE->getSignExtendExpr(Start, WideTy) == OperandExtendedStart) {
     // Cache knowledge of PreAR NSW.
-    if (PreAR)
+    if (PreAR && AR->getNoWrapFlags(SCEV::FlagNSW))
       const_cast<SCEVAddRecExpr *>(PreAR)->setNoWrapFlags(SCEV::FlagNSW);
     // FIXME: this optimization needs a unit test
     DEBUG(dbgs() << "SCEV: untested prestart overflow check\n");
