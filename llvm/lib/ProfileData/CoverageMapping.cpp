@@ -178,7 +178,7 @@ void FunctionRecordIterator::skipOtherFiles() {
 }
 
 ErrorOr<std::unique_ptr<CoverageMapping>>
-CoverageMapping::load(ObjectFileCoverageMappingReader &CoverageReader,
+CoverageMapping::load(CoverageMappingReader &CoverageReader,
                       IndexedInstrProfReader &ProfileReader) {
   auto Coverage = std::unique_ptr<CoverageMapping>(new CoverageMapping());
 

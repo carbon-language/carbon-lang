@@ -10,6 +10,8 @@
 #include "llvm/ProfileData/CoverageMapping.h"
 #include "llvm/ProfileData/CoverageMappingReader.h"
 #include "llvm/ProfileData/CoverageMappingWriter.h"
+#include "llvm/ProfileData/InstrProfReader.h"
+#include "llvm/ProfileData/InstrProfWriter.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 
@@ -35,10 +37,44 @@ void PrintTo(const Counter &C, ::std::ostream *os) {
   else
     *os << "Counter " << C.getCounterID();
 }
+
+void PrintTo(const CoverageSegment &S, ::std::ostream *os) {
+  *os << "CoverageSegment(" << S.Line << ", " << S.Col << ", ";
+  if (S.HasCount)
+    *os << S.Count << ", ";
+  *os << (S.IsRegionEntry ? "true" : "false") << ")";
+}
 }
 }
 
 namespace {
+
+struct OneFunctionCoverageReader : CoverageMappingReader {
+  StringRef Name;
+  uint64_t Hash;
+  std::vector<StringRef> Filenames;
+  ArrayRef<CounterMappingRegion> Regions;
+  bool Done;
+
+  OneFunctionCoverageReader(StringRef Name, uint64_t Hash,
+                            ArrayRef<StringRef> Filenames,
+                            ArrayRef<CounterMappingRegion> Regions)
+      : Name(Name), Hash(Hash), Filenames(Filenames), Regions(Regions),
+        Done(false) {}
+
+  std::error_code readNextRecord(CoverageMappingRecord &Record) override {
+    if (Done)
+      return instrprof_error::eof;
+    Done = true;
+
+    Record.FunctionName = Name;
+    Record.FunctionHash = Hash;
+    Record.Filenames = Filenames;
+    Record.Expressions = {};
+    Record.MappingRegions = Regions;
+    return instrprof_error::success;
+  }
+};
 
 struct CoverageMappingTest : ::testing::Test {
   StringMap<unsigned> Files;
@@ -48,6 +84,11 @@ struct CoverageMappingTest : ::testing::Test {
   std::vector<StringRef> OutputFiles;
   std::vector<CounterExpression> OutputExpressions;
   std::vector<CounterMappingRegion> OutputCMRs;
+
+  InstrProfWriter ProfileWriter;
+  std::unique_ptr<IndexedInstrProfReader> ProfileReader;
+
+  std::unique_ptr<CoverageMapping> LoadedCoverage;
 
   void SetUp() override {
     NextFile = 0;
@@ -91,6 +132,26 @@ struct CoverageMappingTest : ::testing::Test {
                                     OutputExpressions, OutputCMRs);
     ASSERT_TRUE(NoError(Reader.read()));
   }
+
+  void readProfCounts() {
+    auto Profile = ProfileWriter.writeBuffer();
+    auto ReaderOrErr = IndexedInstrProfReader::create(std::move(Profile));
+    ASSERT_TRUE(NoError(ReaderOrErr.getError()));
+    ProfileReader = std::move(ReaderOrErr.get());
+  }
+
+  void loadCoverageMapping(StringRef FuncName, uint64_t Hash) {
+    std::string Regions = writeCoverageRegions();
+    readCoverageRegions(Regions);
+
+    SmallVector<StringRef, 8> Filenames;
+    for (const auto &E : Files)
+      Filenames.push_back(E.getKey());
+    OneFunctionCoverageReader CovReader(FuncName, Hash, Filenames, OutputCMRs);
+    auto CoverageOrErr = CoverageMapping::load(CovReader, *ProfileReader);
+    ASSERT_TRUE(NoError(CoverageOrErr.getError()));
+    LoadedCoverage = std::move(CoverageOrErr.get());
+  }
 };
 
 TEST_F(CoverageMappingTest, basic_write_read) {
@@ -126,5 +187,26 @@ TEST_F(CoverageMappingTest, expansion_gets_first_counter) {
   ASSERT_EQ(3U, OutputCMRs[2].LineStart);
 }
 
+TEST_F(CoverageMappingTest, basic_coverage_iteration) {
+  ProfileWriter.addFunctionCounts("func", 0x1234, {30, 20, 10, 0});
+  readProfCounts();
+
+  addCMR(Counter::getCounter(0), "file1", 1, 1, 9, 9);
+  addCMR(Counter::getCounter(1), "file1", 1, 1, 4, 7);
+  addCMR(Counter::getCounter(2), "file1", 5, 8, 9, 1);
+  addCMR(Counter::getCounter(3), "file1", 10, 10, 11, 11);
+  loadCoverageMapping("func", 0x1234);
+
+  CoverageData Data = LoadedCoverage->getCoverageForFile("file1");
+  std::vector<CoverageSegment> Segments(Data.begin(), Data.end());
+  ASSERT_EQ(7U, Segments.size());
+  ASSERT_EQ(CoverageSegment(1, 1, 20, true),  Segments[0]);
+  ASSERT_EQ(CoverageSegment(4, 7, 30, false), Segments[1]);
+  ASSERT_EQ(CoverageSegment(5, 8, 10, true),  Segments[2]);
+  ASSERT_EQ(CoverageSegment(9, 1, 30, false), Segments[3]);
+  ASSERT_EQ(CoverageSegment(9, 9, false),     Segments[4]);
+  ASSERT_EQ(CoverageSegment(10, 10, 0, true), Segments[5]);
+  ASSERT_EQ(CoverageSegment(11, 11, false),   Segments[6]);
+}
 
 } // end anonymous namespace

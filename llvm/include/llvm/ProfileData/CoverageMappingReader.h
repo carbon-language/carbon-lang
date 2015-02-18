@@ -27,7 +27,7 @@
 namespace llvm {
 namespace coverage {
 
-class ObjectFileCoverageMappingReader;
+class CoverageMappingReader;
 
 /// \brief Coverage mapping information for a single function.
 struct CoverageMappingRecord {
@@ -41,15 +41,14 @@ struct CoverageMappingRecord {
 /// \brief A file format agnostic iterator over coverage mapping data.
 class CoverageMappingIterator
     : public std::iterator<std::input_iterator_tag, CoverageMappingRecord> {
-  ObjectFileCoverageMappingReader *Reader;
+  CoverageMappingReader *Reader;
   CoverageMappingRecord Record;
 
   void increment();
 
 public:
   CoverageMappingIterator() : Reader(nullptr) {}
-  CoverageMappingIterator(ObjectFileCoverageMappingReader *Reader)
-      : Reader(Reader) {
+  CoverageMappingIterator(CoverageMappingReader *Reader) : Reader(Reader) {
     increment();
   }
 
@@ -65,6 +64,14 @@ public:
   }
   CoverageMappingRecord &operator*() { return Record; }
   CoverageMappingRecord *operator->() { return &Record; }
+};
+
+class CoverageMappingReader {
+public:
+  virtual std::error_code readNextRecord(CoverageMappingRecord &Record) = 0;
+  CoverageMappingIterator begin() { return CoverageMappingIterator(this); }
+  CoverageMappingIterator end() { return CoverageMappingIterator(); }
+  virtual ~CoverageMappingReader() {}
 };
 
 /// \brief Base class for the raw coverage mapping and filenames data readers.
@@ -135,7 +142,7 @@ private:
 
 /// \brief Reader for the coverage mapping data that is emitted by the
 /// frontend and stored in an object file.
-class ObjectFileCoverageMappingReader {
+class ObjectFileCoverageMappingReader : public CoverageMappingReader {
 public:
   struct ProfileMappingRecord {
     CoverageMappingVersion Version;
@@ -184,11 +191,7 @@ public:
       sys::fs::file_magic Type = sys::fs::file_magic::unknown);
 
   std::error_code readHeader();
-  std::error_code readNextRecord(CoverageMappingRecord &Record);
-
-  /// Iterator over profile data.
-  CoverageMappingIterator begin() { return CoverageMappingIterator(this); }
-  CoverageMappingIterator end() { return CoverageMappingIterator(); }
+  std::error_code readNextRecord(CoverageMappingRecord &Record) override;
 
   /// \brief Return true if the reader has finished reading the profile data.
   bool isEOF() { return LastError == instrprof_error::eof; }
