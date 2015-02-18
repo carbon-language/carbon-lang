@@ -316,6 +316,7 @@ def make_symlink( vDictArgs, vstrFrameworkPythonDir, vstrSrcFile, vstrTargetFile
 		if os.path.isfile( strTarget ):
 			if bDbg:
 				print strMsgSymlinkExists % vstrTargetFile;
+			return (bOk, strErrMsg);
 		if bDbg:
 			print strMsgSymlinkMk % (vstrTargetFile, strSrc, strTarget);
 		bOk, strErrMsg = make_symlink_windows( strSrc,
@@ -324,6 +325,7 @@ def make_symlink( vDictArgs, vstrFrameworkPythonDir, vstrSrcFile, vstrTargetFile
 		if os.path.islink( strTarget ):
 			if bDbg:
 				print strMsgSymlinkExists % vstrTargetFile;
+			return (bOk, strErrMsg);
 		if bDbg:
 			print strMsgSymlinkMk % (vstrTargetFile, strSrc, strTarget);
 		bOk, strErrMsg = make_symlink_other_platforms( strSrc,
