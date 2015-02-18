@@ -319,7 +319,13 @@ defm S_BFE_U64 : SOP2_64 <sop2<0x29, 0x27>, "s_bfe_u64", []>;
 defm S_BFE_I64 : SOP2_64_32 <sop2<0x2a, 0x28>, "s_bfe_i64", []>;
 } // End Defs = [SCC]
 
-//defm S_CBRANCH_G_FORK : SOP2_ <sop2<0x2b, 0x29>, "s_cbranch_g_fork", []>;
+let sdst = 0 in {
+defm S_CBRANCH_G_FORK : SOP2_m <
+  sop2<0x2b, 0x29>, "s_cbranch_g_fork", (outs),
+  (ins SReg_64:$src0, SReg_64:$src1), "s_cbranch_g_fork $src0, $src1", []
+>;
+}
+
 let Defs = [SCC] in {
 defm S_ABSDIFF_I32 : SOP2_32 <sop2<0x2c, 0x2a>, "s_absdiff_i32", []>;
 } // End Defs = [SCC]

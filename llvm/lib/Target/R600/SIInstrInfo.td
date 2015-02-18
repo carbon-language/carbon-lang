@@ -454,6 +454,12 @@ class SOP2_Pseudo<string opName, dag outs, dag ins, list<dag> pattern> :
   SIMCInstr<opName, SISubtarget.NONE> {
   let isPseudo = 1;
   let Size = 4;
+
+  // Pseudo instructions have no encodings, but adding this field here allows
+  // us to do:
+  // let sdst = xxx in {
+  // for multiclasses that include both real and pseudo instructions.
+  field bits<7> sdst = 0;
 }
 
 class SOP2_Real_si<sop2 op, string opName, dag outs, dag ins, string asm> :
