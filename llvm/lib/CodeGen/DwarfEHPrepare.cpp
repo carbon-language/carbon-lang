@@ -38,6 +38,11 @@ namespace {
 
   public:
     static char ID; // Pass identification, replacement for typeid.
+
+    // INITIALIZE_TM_PASS requires a default constructor, but it isn't used in
+    // practice.
+    DwarfEHPrepare() : FunctionPass(ID), TM(nullptr), RewindFunction(nullptr) {}
+
     DwarfEHPrepare(const TargetMachine *TM)
         : FunctionPass(ID), TM(TM), RewindFunction(nullptr) {}
 
@@ -55,6 +60,8 @@ namespace {
 } // end anonymous namespace
 
 char DwarfEHPrepare::ID = 0;
+INITIALIZE_TM_PASS(DwarfEHPrepare, "dwarfehprepare", "Prepare DWARF exceptions",
+                   false, false)
 
 FunctionPass *llvm::createDwarfEHPass(const TargetMachine *TM) {
   return new DwarfEHPrepare(TM);
@@ -167,6 +174,7 @@ bool DwarfEHPrepare::InsertUnwindResumeCalls(Function &Fn) {
 }
 
 bool DwarfEHPrepare::runOnFunction(Function &Fn) {
+  assert(TM && "DWARF EH preparation requires a target machine");
   bool Changed = InsertUnwindResumeCalls(Fn);
   return Changed;
 }
