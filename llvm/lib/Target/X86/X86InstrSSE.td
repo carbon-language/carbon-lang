@@ -4283,26 +4283,11 @@ let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift], hasSideEffects = 0 in {
 } // Constraints = "$src1 = $dst"
 
 let Predicates = [HasAVX] in {
-  def : Pat<(int_x86_sse2_psll_dq VR128:$src1, imm:$src2),
-            (VPSLLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
-  def : Pat<(int_x86_sse2_psrl_dq VR128:$src1, imm:$src2),
-            (VPSRLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
   def : Pat<(v2f64 (X86fsrl VR128:$src1, i32immSExt8:$src2)),
             (VPSRLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
 }
 
-let Predicates = [HasAVX2] in {
-  def : Pat<(int_x86_avx2_psll_dq VR256:$src1, imm:$src2),
-            (VPSLLDQYri VR256:$src1, (BYTE_imm imm:$src2))>;
-  def : Pat<(int_x86_avx2_psrl_dq VR256:$src1, imm:$src2),
-            (VPSRLDQYri VR256:$src1, (BYTE_imm imm:$src2))>;
-}
-
 let Predicates = [UseSSE2] in {
-  def : Pat<(int_x86_sse2_psll_dq VR128:$src1, imm:$src2),
-            (PSLLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
-  def : Pat<(int_x86_sse2_psrl_dq VR128:$src1, imm:$src2),
-            (PSRLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
   def : Pat<(v2f64 (X86fsrl VR128:$src1, i32immSExt8:$src2)),
             (PSRLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
 }
