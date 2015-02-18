@@ -184,25 +184,26 @@ CoverageMapping::load(CoverageMappingReader &CoverageReader,
 
   std::vector<uint64_t> Counts;
   for (const auto &Record : CoverageReader) {
+    CounterMappingContext Ctx(Record.Expressions);
+
     Counts.clear();
     if (std::error_code EC = ProfileReader.getFunctionCounts(
             Record.FunctionName, Record.FunctionHash, Counts)) {
-      if (EC != instrprof_error::hash_mismatch &&
-          EC != instrprof_error::unknown_function)
+      if (EC == instrprof_error::hash_mismatch) {
+        Coverage->MismatchedFunctionCount++;
+        continue;
+      } else if (EC != instrprof_error::unknown_function)
         return EC;
-      Coverage->MismatchedFunctionCount++;
-      continue;
-    }
+    } else
+      Ctx.setCounts(Counts);
 
-    assert(Counts.size() != 0 && "Function's counts are empty");
-    FunctionRecord Function(Record.FunctionName, Record.Filenames,
-                            Counts.front());
-    CounterMappingContext Ctx(Record.Expressions, Counts);
+    assert(!Record.MappingRegions.empty() && "Function has no regions");
+    FunctionRecord Function(Record.FunctionName, Record.Filenames);
     for (const auto &Region : Record.MappingRegions) {
       ErrorOr<int64_t> ExecutionCount = Ctx.evaluate(Region.Count);
       if (!ExecutionCount)
         break;
-      Function.CountedRegions.push_back(CountedRegion(Region, *ExecutionCount));
+      Function.pushRegion(Region, *ExecutionCount);
     }
     if (Function.CountedRegions.size() != Record.MappingRegions.size()) {
       Coverage->MismatchedFunctionCount++;

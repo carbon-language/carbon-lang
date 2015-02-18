@@ -237,6 +237,8 @@ public:
                         ArrayRef<uint64_t> CounterValues = ArrayRef<uint64_t>())
       : Expressions(Expressions), CounterValues(CounterValues) {}
 
+  void setCounts(ArrayRef<uint64_t> Counts) { CounterValues = Counts; }
+
   void dump(const Counter &C, llvm::raw_ostream &OS) const;
   void dump(const Counter &C) const { dump(C, dbgs()); }
 
@@ -256,10 +258,14 @@ struct FunctionRecord {
   /// \brief The number of times this function was executed.
   uint64_t ExecutionCount;
 
-  FunctionRecord(StringRef Name, ArrayRef<StringRef> Filenames,
-                 uint64_t ExecutionCount)
-      : Name(Name), Filenames(Filenames.begin(), Filenames.end()),
-        ExecutionCount(ExecutionCount) {}
+  FunctionRecord(StringRef Name, ArrayRef<StringRef> Filenames)
+      : Name(Name), Filenames(Filenames.begin(), Filenames.end()) {}
+
+  void pushRegion(CounterMappingRegion Region, uint64_t Count) {
+    if (CountedRegions.empty())
+      ExecutionCount = Count;
+    CountedRegions.emplace_back(Region, Count);
+  }
 };
 
 /// \brief Iterator over Functions, optionally filtered to a single file.

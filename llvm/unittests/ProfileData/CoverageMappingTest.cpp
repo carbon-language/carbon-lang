@@ -209,4 +209,17 @@ TEST_F(CoverageMappingTest, basic_coverage_iteration) {
   ASSERT_EQ(CoverageSegment(11, 11, false),   Segments[6]);
 }
 
+TEST_F(CoverageMappingTest, uncovered_function) {
+  readProfCounts();
+
+  addCMR(Counter::getZero(), "file1", 1, 2, 3, 4);
+  loadCoverageMapping("func", 0x1234);
+
+  CoverageData Data = LoadedCoverage->getCoverageForFile("file1");
+  std::vector<CoverageSegment> Segments(Data.begin(), Data.end());
+  ASSERT_EQ(2U, Segments.size());
+  ASSERT_EQ(CoverageSegment(1, 2, 0, true), Segments[0]);
+  ASSERT_EQ(CoverageSegment(3, 4, false),   Segments[1]);
+}
+
 } // end anonymous namespace
