@@ -1311,7 +1311,7 @@ const LoopAccessInfo &LoopAccessAnalysis::getInfo(Loop *L,
 #endif
 
   if (!LAI) {
-    LAI = make_unique<LoopAccessInfo>(L, SE, DL, TLI, AA, DT, Strides);
+    LAI = llvm::make_unique<LoopAccessInfo>(L, SE, DL, TLI, AA, DT, Strides);
 #ifndef NDEBUG
     LAI->NumSymbolicStrides = Strides.size();
 #endif
