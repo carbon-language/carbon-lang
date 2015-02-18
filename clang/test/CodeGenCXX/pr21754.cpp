@@ -1,7 +1,7 @@
 // RUN: %clang -cc1 -emit-llvm -triple x86_64-unknown-unknown -std=c++1y %s -o -
-// RUN: %clang -cc1 -emit-llvm -triple x86_64-unknown-unknown -std=c++1y %s -fdef-sized-delete -o -
+// RUN: %clang -cc1 -emit-llvm -triple x86_64-unknown-unknown -std=c++1y %s -fdefine-sized-deallocation -o -
 // RUN: %clang -cc1 -emit-llvm -triple x86_64-unknown-unknown -std=c++11 -fsized-deallocation %s -o -
-// RUN: %clang -cc1 -emit-llvm -triple x86_64-unknown-unknown -std=c++11 -fsized-deallocation -fdef-sized-delete %s -o -
+// RUN: %clang -cc1 -emit-llvm -triple x86_64-unknown-unknown -std=c++11 -fsized-deallocation -fdefine-sized-deallocation %s -o -
 // RUN: %clang -cc1 -emit-llvm -triple x86_64-unknown-unknown -std=c++11 %s -o -
 
 // CHECK-UNSIZED-NOT: _ZdlPvm

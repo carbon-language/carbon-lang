@@ -394,7 +394,7 @@ def fasm_blocks : Flag<["-"], "fasm-blocks">, Group<f_Group>, Flags<[CC1Option]>
 def fno_asm_blocks : Flag<["-"], "fno-asm-blocks">, Group<f_Group>;
 
 def fassume_sane_operator_new : Flag<["-"], "fassume-sane-operator-new">, Group<f_Group>;
-def fdef_sized_delete: Flag<["-"], "fdef-sized-delete">, Group<f_Group>,
+def fdefine_sized_deallocation: Flag<["-"], "fdefine-sized-deallocation">, Group<f_Group>,
   HelpText<"Allow compiler-generated definition of sized deallocation function">, Flags<[CC1Option]>;
 def fastcp : Flag<["-"], "fastcp">, Group<f_Group>;
 def fastf : Flag<["-"], "fastf">, Group<f_Group>;
