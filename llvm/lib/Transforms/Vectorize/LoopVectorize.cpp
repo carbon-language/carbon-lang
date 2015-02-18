@@ -554,7 +554,7 @@ public:
                             AliasAnalysis *AA, Function *F,
                             const TargetTransformInfo *TTI)
       : NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
-        TLI(TLI), TheFunction(F), TTI(TTI), Induction(nullptr),
+        TLI(TLI), TheFunction(F), TTI(TTI), DT(DT), Induction(nullptr),
         WidestIndTy(nullptr),
         LAI(L, SE, DL, TLI, AA, DT),
         HasFunNoNaNAttr(false) {}
@@ -855,6 +855,8 @@ private:
   Function *TheFunction;
   /// Target Transform Info
   const TargetTransformInfo *TTI;
+  /// Dominator Tree.
+  DominatorTree *DT;
 
   //  ---  vectorization state --- //
 
@@ -4173,7 +4175,7 @@ bool LoopVectorizationLegality::isInductionVariable(const Value *V) {
 }
 
 bool LoopVectorizationLegality::blockNeedsPredication(BasicBlock *BB)  {
-  return LAI.blockNeedsPredication(BB);
+  return LoopAccessInfo::blockNeedsPredication(BB, TheLoop, DT);
 }
 
 bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB,

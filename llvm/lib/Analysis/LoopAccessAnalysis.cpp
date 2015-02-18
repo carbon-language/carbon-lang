@@ -931,7 +931,7 @@ void LoopAccessInfo::analyzeLoop(ValueToValueMap &Strides) {
       // The TBAA metadata could have a control dependency on the predication
       // condition, so we cannot rely on it when determining whether or not we
       // need runtime pointer checks.
-      if (blockNeedsPredication(ST->getParent()))
+      if (blockNeedsPredication(ST->getParent(), TheLoop, DT))
         Loc.AATags.TBAA = nullptr;
 
       Accesses.addStore(Loc);
@@ -968,7 +968,7 @@ void LoopAccessInfo::analyzeLoop(ValueToValueMap &Strides) {
     // The TBAA metadata could have a control dependency on the predication
     // condition, so we cannot rely on it when determining whether or not we
     // need runtime pointer checks.
-    if (blockNeedsPredication(LD->getParent()))
+    if (blockNeedsPredication(LD->getParent(), TheLoop, DT))
       Loc.AATags.TBAA = nullptr;
 
     Accesses.addLoad(Loc, IsReadOnlyPtr);
@@ -1075,7 +1075,8 @@ void LoopAccessInfo::analyzeLoop(ValueToValueMap &Strides) {
         " need a runtime memory check.\n");
 }
 
-bool LoopAccessInfo::blockNeedsPredication(BasicBlock *BB)  {
+bool LoopAccessInfo::blockNeedsPredication(BasicBlock *BB, Loop *TheLoop,
+                                           DominatorTree *DT)  {
   assert(TheLoop->contains(BB) && "Unknown block used");
 
   // Blocks that do not dominate the latch need predication.
