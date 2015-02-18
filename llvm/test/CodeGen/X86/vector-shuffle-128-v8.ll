@@ -2178,3 +2178,18 @@ define <8 x i16> @shuffle_v8i16_fu3ucc5u(<8 x i16> %a, <8 x i16> %b) {
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 15, i32 undef, i32 3, i32 undef, i32 12, i32 12, i32 5, i32 undef>
   ret <8 x i16> %shuffle
 }
+
+define <8 x i16> @shuffle_v8i16_8012345u(<8 x i16> %a) {
+; SSE-LABEL: shuffle_v8i16_8012345u:
+; SSE:       # BB#0:
+; SSE-NEXT:    pslldq {{.*#+}} xmm0 = zero,zero,xmm0[0,1,2,3,4,5,6,7,8,9,10,11,12,13]
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: shuffle_v8i16_8012345u:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpslldq {{.*#+}} xmm0 = zero,zero,xmm0[0,1,2,3,4,5,6,7,8,9,10,11,12,13]
+; AVX-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> zeroinitializer, <8 x i32> <i32 8, i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 undef>
+
+  ret <8 x i16> %shuffle
+}
