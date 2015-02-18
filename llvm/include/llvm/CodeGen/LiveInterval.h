@@ -454,10 +454,10 @@ namespace llvm {
     /// may have grown since it was inserted).
     iterator addSegment(Segment S);
 
-    /// extendInBlock - If this range is live before Kill in the basic block
-    /// that starts at StartIdx, extend it to be live up to Kill, and return
-    /// the value. If there is no segment before Kill, return NULL.
-    VNInfo *extendInBlock(SlotIndex StartIdx, SlotIndex Kill);
+    /// If this range is live before @p Use in the basic block that starts at
+    /// @p StartIdx, extend it to be live up to @p Use, and return the value. If
+    /// there is no segment before @p Use, return nullptr.
+    VNInfo *extendInBlock(SlotIndex StartIdx, SlotIndex Use);
 
     /// join - Join two live ranges (this, and other) together.  This applies
     /// mappings to the value numbers in the LHS/RHS ranges as specified.  If

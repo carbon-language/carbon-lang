@@ -88,18 +88,18 @@ public:
     return VNI;
   }
 
-  VNInfo *extendInBlock(SlotIndex StartIdx, SlotIndex Kill) {
+  VNInfo *extendInBlock(SlotIndex StartIdx, SlotIndex Use) {
     if (segments().empty())
       return nullptr;
     iterator I =
-        impl().findInsertPos(Segment(Kill.getPrevSlot(), Kill, nullptr));
+        impl().findInsertPos(Segment(Use.getPrevSlot(), Use, nullptr));
     if (I == segments().begin())
       return nullptr;
     --I;
     if (I->end <= StartIdx)
       return nullptr;
-    if (I->end < Kill)
-      extendSegmentEndTo(I, Kill);
+    if (I->end < Use)
+      extendSegmentEndTo(I, Use);
     return I->valno;
   }
 

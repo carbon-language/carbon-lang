@@ -222,23 +222,23 @@ void LiveRangeCalc::updateFromLiveIns() {
 }
 
 
-void LiveRangeCalc::extend(LiveRange &LR, SlotIndex Kill, unsigned PhysReg) {
-  assert(Kill.isValid() && "Invalid SlotIndex");
+void LiveRangeCalc::extend(LiveRange &LR, SlotIndex Use, unsigned PhysReg) {
+  assert(Use.isValid() && "Invalid SlotIndex");
   assert(Indexes && "Missing SlotIndexes");
   assert(DomTree && "Missing dominator tree");
 
-  MachineBasicBlock *KillMBB = Indexes->getMBBFromIndex(Kill.getPrevSlot());
-  assert(KillMBB && "No MBB at Kill");
+  MachineBasicBlock *UseMBB = Indexes->getMBBFromIndex(Use.getPrevSlot());
+  assert(UseMBB && "No MBB at Use");
 
   // Is there a def in the same MBB we can extend?
-  if (LR.extendInBlock(Indexes->getMBBStartIdx(KillMBB), Kill))
+  if (LR.extendInBlock(Indexes->getMBBStartIdx(UseMBB), Use))
     return;
 
-  // Find the single reaching def, or determine if Kill is jointly dominated by
+  // Find the single reaching def, or determine if Use is jointly dominated by
   // multiple values, and we may need to create even more phi-defs to preserve
   // VNInfo SSA form.  Perform a search for all predecessor blocks where we
   // know the dominating VNInfo.
-  if (findReachingDefs(LR, *KillMBB, Kill, PhysReg))
+  if (findReachingDefs(LR, *UseMBB, Use, PhysReg))
     return;
 
   // When there were multiple different values, we may need new PHIs.
@@ -257,12 +257,12 @@ void LiveRangeCalc::calculateValues() {
 }
 
 
-bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
-                                     SlotIndex Kill, unsigned PhysReg) {
-  unsigned KillMBBNum = KillMBB.getNumber();
+bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &UseMBB,
+                                     SlotIndex Use, unsigned PhysReg) {
+  unsigned UseMBBNum = UseMBB.getNumber();
 
   // Block numbers where LR should be live-in.
-  SmallVector<unsigned, 16> WorkList(1, KillMBBNum);
+  SmallVector<unsigned, 16> WorkList(1, UseMBBNum);
 
   // Remember if we have seen more than one value.
   bool UniqueVNI = true;
@@ -316,11 +316,11 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
        }
 
        // No, we need a live-in value for Pred as well
-       if (Pred != &KillMBB)
+       if (Pred != &UseMBB)
           WorkList.push_back(Pred->getNumber());
        else
-          // Loopback to KillMBB, so value is really live through.
-         Kill = SlotIndex();
+          // Loopback to UseMBB, so value is really live through.
+         Use = SlotIndex();
     }
   }
 
@@ -338,9 +338,9 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
          E = WorkList.end(); I != E; ++I) {
        SlotIndex Start, End;
        std::tie(Start, End) = Indexes->getMBBRange(*I);
-       // Trim the live range in KillMBB.
-       if (*I == KillMBBNum && Kill.isValid())
-         End = Kill;
+       // Trim the live range in UseMBB.
+       if (*I == UseMBBNum && Use.isValid())
+         End = Use;
        else
          Map[MF->getBlockNumbered(*I)] = LiveOutPair(TheVNI, nullptr);
        Updater.add(Start, End, TheVNI);
@@ -355,8 +355,8 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
        I = WorkList.begin(), E = WorkList.end(); I != E; ++I) {
     MachineBasicBlock *MBB = MF->getBlockNumbered(*I);
     addLiveInBlock(LR, DomTree->getNode(MBB));
-    if (MBB == &KillMBB)
-      LiveIn.back().Kill = Kill;
+    if (MBB == &UseMBB)
+      LiveIn.back().Kill = Use;
   }
 
   return false;
