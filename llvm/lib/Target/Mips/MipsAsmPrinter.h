@@ -102,8 +102,7 @@ public:
   explicit MipsAsmPrinter(TargetMachine &TM,
                           std::unique_ptr<MCStreamer> Streamer)
       : AsmPrinter(TM, std::move(Streamer)), MCP(nullptr),
-        InConstantPool(false), Subtarget(&TM.getSubtarget<MipsSubtarget>()),
-        MCInstLowering(*this) {}
+        InConstantPool(false), MCInstLowering(*this) {}
 
   const char *getPassName() const override {
     return "Mips Assembly Printer";
