@@ -10,6 +10,8 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_arguments(self):
         """Test that 'lldb-mi --interpreter' can shows arguments."""
 
@@ -46,6 +48,8 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_locals(self):
         """Test that 'lldb-mi --interpreter' can shows local variables."""
 
@@ -164,6 +168,8 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_info_depth(self):
         """Test that 'lldb-mi --interpreter' can shows depth of the stack."""
 
@@ -186,6 +192,8 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_frames(self):
         """Test that 'lldb-mi --interpreter' can lists the frames on the stack."""
 

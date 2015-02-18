@@ -10,6 +10,8 @@ class MiLaunchTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_exe(self):
         """Test that 'lldb-mi --interpreter' works for -file-exec-and-symbols exe."""
 
@@ -25,6 +27,8 @@ class MiLaunchTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_abspathexe(self):
         """Test that 'lldb-mi --interpreter' works for -file-exec-and-symbols fullpath/exe."""
 
@@ -42,6 +46,8 @@ class MiLaunchTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_relpathexe(self):
         """Test that 'lldb-mi --interpreter' works for -file-exec-and-symbols relpath/exe."""
 
@@ -58,6 +64,8 @@ class MiLaunchTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_badpathexe(self):
         """Test that 'lldb-mi --interpreter' works for -file-exec-and-symbols badpath/exe."""
 

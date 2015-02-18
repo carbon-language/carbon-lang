@@ -10,6 +10,8 @@ class MiBreakpointTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_pendbreakonsym(self):
         """Test that 'lldb-mi --interpreter' works for pending symbol breakpoints."""
 
@@ -31,6 +33,8 @@ class MiBreakpointTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_pendbreakonsrc(self):
         """Test that 'lldb-mi --interpreter' works for pending source breakpoints."""
 
@@ -55,6 +59,8 @@ class MiBreakpointTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_breakpoints(self):
         """Test that 'lldb-mi --interpreter' works for breakpoints."""
 

@@ -12,6 +12,8 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_prompt(self):
         """Test that 'lldb-mi --interpreter' echos '(gdb)' after commands and events."""
 
@@ -131,6 +133,8 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stopped_when_segfault_local(self):
         """Test that 'lldb-mi --interpreter' notifies after it was stopped when segfault occurred (local)."""
 
