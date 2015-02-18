@@ -43,9 +43,9 @@ using namespace lldb_private;
 // option descriptors for getopt_long_only()
 //----------------------------------------------------------------------
 
-int g_debug = 0;
-int g_verbose = 0;
-int g_stay_alive = 0;
+static int g_debug = 0;
+static int g_verbose = 0;
+static int g_stay_alive = 0;
 
 static struct option g_long_options[] =
 {
@@ -73,7 +73,7 @@ static struct option g_long_options[] =
 //----------------------------------------------------------------------
 // Watch for signals
 //----------------------------------------------------------------------
-void
+static void
 signal_handler(int signo)
 {
     switch (signo)
@@ -89,9 +89,9 @@ signal_handler(int signo)
 }
 
 static void
-display_usage (const char *progname)
+display_usage (const char *progname, const char *subcommand)
 {
-    fprintf(stderr, "Usage:\n  %s [--log-file log-file-path] [--log-flags flags] --listen port\n", progname);
+    fprintf(stderr, "Usage:\n  %s %s [--log-file log-file-path] [--log-flags flags] --listen port\n", progname, subcommand);
     exit(0);
 }
 
@@ -99,9 +99,12 @@ display_usage (const char *progname)
 // main
 //----------------------------------------------------------------------
 int
-main (int argc, char *argv[])
+main_platform (int argc, char *argv[])
 {
     const char *progname = argv[0];
+    const char *subcommand = argv[1];
+    argc--;
+    argv++;
     signal (SIGPIPE, SIG_IGN);
     signal (SIGHUP, signal_handler);
     int long_option_index = 0;
@@ -230,7 +233,7 @@ main (int argc, char *argv[])
     
     if (show_usage || option_error)
     {
-        display_usage(progname);
+        display_usage(progname, subcommand);
         exit(option_error);
     }
     

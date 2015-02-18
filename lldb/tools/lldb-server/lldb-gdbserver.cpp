@@ -65,8 +65,8 @@ HostThread s_listen_thread;
 // option descriptors for getopt_long_only()
 //----------------------------------------------------------------------
 
-int g_debug = 0;
-int g_verbose = 0;
+static int g_debug = 0;
+static int g_verbose = 0;
 
 static struct option g_long_options[] =
 {
@@ -93,7 +93,7 @@ static int g_sighup_received_count = 0;
 
 #ifndef _WIN32
 
-void
+static void
 signal_handler(int signo)
 {
     Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
@@ -120,10 +120,10 @@ signal_handler(int signo)
 #endif // #ifndef _WIN32
 
 static void
-display_usage (const char *progname)
+display_usage (const char *progname, const char* subcommand)
 {
-    fprintf(stderr, "Usage:\n  %s [--log-file log-file-path] [--log-flags flags] [--lldb-command command]* [--platform platform_name] [--setsid] [--named-pipe named-pipe-path] [--native-regs] [--attach pid] [[HOST]:PORT] "
-            "[-- PROGRAM ARG1 ARG2 ...]\n", progname);
+    fprintf(stderr, "Usage:\n  %s %s [--log-file log-file-path] [--log-flags flags] [--lldb-command command]* [--platform platform_name] [--setsid] [--named-pipe named-pipe-path] [--native-regs] [--attach pid] [[HOST]:PORT] "
+            "[-- PROGRAM ARG1 ARG2 ...]\n", progname, subcommand);
     exit(0);
 }
 
@@ -326,7 +326,7 @@ writePortToPipe (const char *const named_pipe_path, const uint16_t port)
 }
 
 void
-ConnectToRemote (GDBRemoteCommunicationServerLLGS &gdb_server, bool reverse_connect, const char *const host_and_port, const char *const progname, const char *const named_pipe_path)
+ConnectToRemote (GDBRemoteCommunicationServerLLGS &gdb_server, bool reverse_connect, const char *const host_and_port, const char *const progname, const char *const subcommand, const char *const named_pipe_path)
 {
     Error error;
 
@@ -353,7 +353,7 @@ ConnectToRemote (GDBRemoteCommunicationServerLLGS &gdb_server, bool reverse_conn
         else
         {
             fprintf (stderr, "failed to parse host and port from connection string '%s'\n", final_host_and_port.c_str ());
-            display_usage (progname);
+            display_usage (progname, subcommand);
             exit (1);
         }
 
@@ -421,7 +421,7 @@ ConnectToRemote (GDBRemoteCommunicationServerLLGS &gdb_server, bool reverse_conn
             if (!JoinListenThread ())
             {
                 fprintf (stderr, "failed to join the listener thread\n");
-                display_usage (progname);
+                display_usage (progname, subcommand);
                 exit (1);
             }
 
@@ -434,7 +434,7 @@ ConnectToRemote (GDBRemoteCommunicationServerLLGS &gdb_server, bool reverse_conn
             else
             {
                 fprintf (stderr, "failed to connect to '%s': %s\n", final_host_and_port.c_str (), error.AsCString ());
-                display_usage (progname);
+                display_usage (progname, subcommand);
                 exit (1);
             }
         }
@@ -476,7 +476,7 @@ ConnectToRemote (GDBRemoteCommunicationServerLLGS &gdb_server, bool reverse_conn
     else
     {
         fprintf (stderr, "no connection information provided, unable to run\n");
-        display_usage (progname);
+        display_usage (progname, subcommand);
         exit (1);
     }
 }
@@ -485,7 +485,7 @@ ConnectToRemote (GDBRemoteCommunicationServerLLGS &gdb_server, bool reverse_conn
 // main
 //----------------------------------------------------------------------
 int
-main (int argc, char *argv[])
+main_gdbserver (int argc, char *argv[])
 {
 #ifndef _WIN32
     // Setup signal handlers first thing.
@@ -494,6 +494,9 @@ main (int argc, char *argv[])
 #endif
 
     const char *progname = argv[0];
+    const char *subcommand = argv[1];
+    argc--;
+    argv++;
     int long_option_index = 0;
     StreamSP log_stream_sp;
     Args log_args;
@@ -630,7 +633,7 @@ main (int argc, char *argv[])
 
     if (show_usage || option_error)
     {
-        display_usage(progname);
+        display_usage(progname, subcommand);
         exit(option_error);
     }
 
@@ -656,7 +659,7 @@ main (int argc, char *argv[])
 
     if (argc == 0)
     {
-        display_usage(progname);
+        display_usage(progname, subcommand);
         exit(255);
     }
 
@@ -684,7 +687,7 @@ main (int argc, char *argv[])
     // Print version info.
     printf("%s-%s", LLGS_PROGRAM_NAME, LLGS_VERSION_STR);
 
-    ConnectToRemote (gdb_server, reverse_connect, host_and_port, progname, named_pipe_path.c_str ());
+    ConnectToRemote (gdb_server, reverse_connect, host_and_port, progname, subcommand, named_pipe_path.c_str ());
 
     Debugger::Terminate ();
 

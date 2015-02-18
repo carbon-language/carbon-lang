@@ -38,7 +38,7 @@
 #if defined(__APPLE__)
 # define DEBUGSERVER_BASENAME    "debugserver"
 #else
-# define DEBUGSERVER_BASENAME    "lldb-gdbserver"
+# define DEBUGSERVER_BASENAME    "lldb-server"
 #endif
 
 using namespace lldb;
@@ -739,9 +739,14 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
         Args &debugserver_args = launch_info.GetArguments();
         debugserver_args.Clear();
         char arg_cstr[PATH_MAX];
-        
+
         // Start args with "debugserver /file/path -r --"
         debugserver_args.AppendArgument(debugserver_path);
+
+#if !defined(__APPLE__)
+        // First argument to lldb-server must be mode in which to run.
+        debugserver_args.AppendArgument("gdbserver");
+#endif
 
         // If a host and port is supplied then use it
         char host_and_port[128];

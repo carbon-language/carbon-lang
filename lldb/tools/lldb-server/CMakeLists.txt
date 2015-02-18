@@ -13,37 +13,42 @@ include_directories(
   ../../source/Plugins/Process/POSIX
   )
 endif ()
+
 include_directories(../../source)
 
 include(../../cmake/LLDBDependencies.cmake)
 
-if ( BUILD_SHARED_LIBS )
-  add_lldb_executable(lldb-gdbserver
+if (BUILD_SHARED_LIBS )
+  add_lldb_executable(lldb-server
+    lldb-server.cpp
     lldb-gdbserver.cpp
+    lldb-platform.cpp
     )
 
-  target_link_libraries(lldb-gdbserver liblldb)
+  target_link_libraries(lldb-server liblldb)
 else()
-  # have to include lldb and lldb-log files since those are not libraries and llgs depends on them
-  add_lldb_executable(lldb-gdbserver
+  add_lldb_executable(lldb-server
+    lldb-server.cpp
     lldb-gdbserver.cpp
+    lldb-platform.cpp
     ../../source/lldb-log.cpp
     ../../source/lldb.cpp
     )
 
   # The Darwin linker doesn't understand --start-group/--end-group.
   if (LLVM_COMPILER_IS_GCC_COMPATIBLE AND NOT "${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
-    target_link_libraries(lldb-gdbserver
+    target_link_libraries(lldb-server
                           -Wl,--start-group ${LLDB_USED_LIBS} -Wl,--end-group)
   else()
-    target_link_libraries(lldb-gdbserver ${LLDB_USED_LIBS})
+    target_link_libraries(lldb-server ${LLDB_USED_LIBS})
   endif()
-  target_link_libraries(lldb-gdbserver ${CLANG_USED_LIBS})
-  llvm_config(lldb-gdbserver ${LLVM_LINK_COMPONENTS})
+  target_link_libraries(lldb-server ${CLANG_USED_LIBS})
+  llvm_config(lldb-server ${LLVM_LINK_COMPONENTS})
 
-  target_link_libraries(lldb-gdbserver ${LLDB_SYSTEM_LIBS})
+  target_link_libraries(lldb-server ${LLDB_SYSTEM_LIBS})
 endif()
 
-set_target_properties(lldb-gdbserver PROPERTIES VERSION ${LLDB_VERSION})
-install(TARGETS lldb-gdbserver
+set_target_properties(lldb-server PROPERTIES VERSION ${LLDB_VERSION})
+
+install(TARGETS lldb-server
   RUNTIME DESTINATION bin)

@@ -97,9 +97,7 @@
 		254FBBA31A9166F100BD6378 /* SBAttachInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 254FBBA21A9166F100BD6378 /* SBAttachInfo.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		254FBBA51A91670E00BD6378 /* SBAttachInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 254FBBA41A91670E00BD6378 /* SBAttachInfo.cpp */; };
 		260157C61885F51C00F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
-		260157C71885F52500F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
 		260157C81885F53100F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
-		2606EDDE184E68940034641B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 260C876910F538E700BB2B04 /* Foundation.framework */; };
 		2606EDDF184E68A10034641B /* liblldb-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2689FFCA13353D7A00698AC0 /* liblldb-core.a */; };
 		260A248E15D06C50009981B0 /* OptionValues.h in Headers */ = {isa = PBXBuildFile; fileRef = 260A248D15D06C4F009981B0 /* OptionValues.h */; };
 		260A39A619647A3A004B4130 /* Pipe.h in Headers */ = {isa = PBXBuildFile; fileRef = 260A39A519647A3A004B4130 /* Pipe.h */; };
@@ -322,7 +320,6 @@
 		26744EF11338317700EF765A /* GDBRemoteCommunicationClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EED1338317700EF765A /* GDBRemoteCommunicationClient.cpp */; };
 		26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EEF1338317700EF765A /* GDBRemoteCommunicationServer.cpp */; };
 		26780C611867C33D00234593 /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2670F8111862B44A006B332C /* libncurses.dylib */; };
-		26780C651867C34500234593 /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2670F8111862B44A006B332C /* libncurses.dylib */; };
 		267C012B136880DF006E963E /* OptionGroupValueObjectDisplay.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 267C012A136880DF006E963E /* OptionGroupValueObjectDisplay.cpp */; };
 		267C01371368C49C006E963E /* OptionGroupOutputFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BCFC531368B3E4006DC050 /* OptionGroupOutputFile.cpp */; };
 		268648C416531BF800F04704 /* com.apple.debugserver.posix.plist in CopyFiles */ = {isa = PBXBuildFile; fileRef = 268648C116531BF800F04704 /* com.apple.debugserver.posix.plist */; };
@@ -630,7 +627,6 @@
 		26CEB5F318762056008F575A /* CommandObjectGUI.h in Headers */ = {isa = PBXBuildFile; fileRef = 26CEB5F118762056008F575A /* CommandObjectGUI.h */; };
 		26CFDCA11861638D000E63E5 /* Editline.h in Headers */ = {isa = PBXBuildFile; fileRef = 26CFDCA01861638D000E63E5 /* Editline.h */; };
 		26CFDCA3186163A4000E63E5 /* Editline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26CFDCA2186163A4000E63E5 /* Editline.cpp */; };
-		26CFDCA71861646C000E63E5 /* libedit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32A10F3DFDD009D5894 /* libedit.dylib */; };
 		26CFDCA818616473000E63E5 /* libedit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32A10F3DFDD009D5894 /* libedit.dylib */; };
 		26D1803E16CEBFD300EDFB5B /* KQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D1803C16CEBFD300EDFB5B /* KQueue.cpp */; };
 		26D1804216CEDF0700EDFB5B /* TimeSpecTimeout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D1804016CEDF0700EDFB5B /* TimeSpecTimeout.cpp */; };
@@ -641,8 +637,6 @@
 		26D55235159A7DB100708D8D /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26D55234159A7DB100708D8D /* libxml2.dylib */; };
 		26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */; };
 		26D5E163135BB054006EA0A7 /* OptionGroupPlatform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E162135BB054006EA0A7 /* OptionGroupPlatform.cpp */; };
-		26D6F3F6183E7F9300194858 /* lldb-gdbserver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D6F3F4183E7F9300194858 /* lldb-gdbserver.cpp */; };
-		26D6F3FA183E888800194858 /* liblldb-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2689FFCA13353D7A00698AC0 /* liblldb-core.a */; };
 		26D7E45D13D5E30A007FD12B /* SocketAddress.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D7E45C13D5E30A007FD12B /* SocketAddress.cpp */; };
 		26DAED6015D327A200E15819 /* OptionValuePathMappings.h in Headers */ = {isa = PBXBuildFile; fileRef = 26DAED5F15D327A200E15819 /* OptionValuePathMappings.h */; };
 		26DAED6315D327C200E15819 /* OptionValuePathMappings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DAED6215D327C200E15819 /* OptionValuePathMappings.cpp */; };
@@ -822,7 +816,7 @@
 		94D6A0AA16CEB55F00833B6E /* NSArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94D6A0A716CEB55F00833B6E /* NSArray.cpp */; };
 		94D6A0AB16CEB55F00833B6E /* NSDictionary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94D6A0A816CEB55F00833B6E /* NSDictionary.cpp */; };
 		94D6A0AC16CEB55F00833B6E /* NSSet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94D6A0A916CEB55F00833B6E /* NSSet.cpp */; };
-		94E829CA152D33C1006F96A3 /* lldb-platform in Resources */ = {isa = PBXBuildFile; fileRef = 26DC6A101337FE6900FF7998 /* lldb-platform */; };
+		94E829CA152D33C1006F96A3 /* lldb-server in Resources */ = {isa = PBXBuildFile; fileRef = 26DC6A101337FE6900FF7998 /* lldb-server */; };
 		94EA1D5C15E6C9B400D4171A /* PythonDataObjects.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94EA1D5B15E6C9B400D4171A /* PythonDataObjects.cpp */; };
 		94EA27CE17DE91750070F505 /* LibCxxUnorderedMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94EA27CD17DE91750070F505 /* LibCxxUnorderedMap.cpp */; };
 		94F48F251A01C687005C0EC6 /* StringPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94F48F241A01C687005C0EC6 /* StringPrinter.cpp */; };
@@ -831,7 +825,6 @@
 		964463EE1A330C1B00154ED8 /* CompactUnwindInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 964463ED1A330C1B00154ED8 /* CompactUnwindInfo.h */; };
 		966C6B7918E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
 		966C6B7A18E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
-		966C6B7B18E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
 		966C6B7C18E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
@@ -917,6 +910,8 @@
 		B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2A58723143119D50092BFBA /* SBWatchpoint.cpp */; };
 		B2B7CCEB15D1BD6700EEFB57 /* CommandObjectWatchpointCommand.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2B7CCEA15D1BD6600EEFB57 /* CommandObjectWatchpointCommand.cpp */; };
 		B2B7CCF015D1C20F00EEFB57 /* WatchpointOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2B7CCEF15D1C20F00EEFB57 /* WatchpointOptions.cpp */; };
+		E769331C1A94D15400C73337 /* lldb-gdbserver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D6F3F4183E7F9300194858 /* lldb-gdbserver.cpp */; };
+		E769331E1A94D18100C73337 /* lldb-server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E769331D1A94D18100C73337 /* lldb-server.cpp */; };
 		ED4AFF45199C2218004FFDC6 /* com.apple.lldb.launcherRootXPCService.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = EDE274EC14EDCE1F005B0F75 /* com.apple.lldb.launcherRootXPCService.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		ED4AFF46199C2224004FFDC6 /* com.apple.lldb.launcherXPCService.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = EDC6D49914E5C19B001B75F8 /* com.apple.lldb.launcherXPCService.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		ED88244E15114A9200BC98B9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EDB919B414F6F10D008FF64B /* Security.framework */; };
@@ -1046,13 +1041,6 @@
 			remoteGlobalIDString = 26F5C26910F3D9A4009D5894;
 			remoteInfo = "lldb-tool";
 		};
-		26D6F3F8183E80BD00194858 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 2689FFC913353D7A00698AC0;
-			remoteInfo = "lldb-core";
-		};
 		26DC6A151337FE7300FF7998 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
@@ -1086,20 +1074,11 @@
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 26DC6A0F1337FE6900FF7998;
-			remoteInfo = "lldb-platform";
+			remoteInfo = "lldb-server";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		26D6F3E5183E7F4E00194858 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
 		940B04E31A89875C0045D5F7 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -2091,8 +2070,7 @@
 		26D5E160135BAEB0006EA0A7 /* OptionGroupArchitecture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupArchitecture.h; path = include/lldb/Interpreter/OptionGroupArchitecture.h; sourceTree = "<group>"; };
 		26D5E161135BB040006EA0A7 /* OptionGroupPlatform.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupPlatform.h; path = include/lldb/Interpreter/OptionGroupPlatform.h; sourceTree = "<group>"; };
 		26D5E162135BB054006EA0A7 /* OptionGroupPlatform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupPlatform.cpp; path = source/Interpreter/OptionGroupPlatform.cpp; sourceTree = "<group>"; };
-		26D6F3E7183E7F4E00194858 /* lldb-gdbserver */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-gdbserver"; sourceTree = BUILT_PRODUCTS_DIR; };
-		26D6F3F4183E7F9300194858 /* lldb-gdbserver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = "lldb-gdbserver.cpp"; sourceTree = "<group>"; };
+		26D6F3F4183E7F9300194858 /* lldb-gdbserver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "lldb-gdbserver.cpp"; path = "tools/lldb-server/lldb-gdbserver.cpp"; sourceTree = "<group>"; };
 		26D7E45B13D5E2F9007FD12B /* SocketAddress.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SocketAddress.h; path = include/lldb/Host/SocketAddress.h; sourceTree = "<group>"; };
 		26D7E45C13D5E30A007FD12B /* SocketAddress.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SocketAddress.cpp; path = source/Host/common/SocketAddress.cpp; sourceTree = "<group>"; };
 		26D9FDC612F784E60003F2EE /* EmulateInstruction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EmulateInstruction.h; path = include/lldb/Core/EmulateInstruction.h; sourceTree = "<group>"; };
@@ -2108,8 +2086,8 @@
 		26DB3E101379E7AD0080DC73 /* ABIMacOSX_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ABIMacOSX_i386.h; sourceTree = "<group>"; };
 		26DB3E131379E7AD0080DC73 /* ABISysV_x86_64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ABISysV_x86_64.cpp; sourceTree = "<group>"; };
 		26DB3E141379E7AD0080DC73 /* ABISysV_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ABISysV_x86_64.h; sourceTree = "<group>"; };
-		26DC6A101337FE6900FF7998 /* lldb-platform */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-platform"; sourceTree = BUILT_PRODUCTS_DIR; };
-		26DC6A1C1337FECA00FF7998 /* lldb-platform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "lldb-platform.cpp"; path = "tools/lldb-platform/lldb-platform.cpp"; sourceTree = "<group>"; };
+		26DC6A101337FE6900FF7998 /* lldb-server */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "lldb-server"; sourceTree = BUILT_PRODUCTS_DIR; };
+		26DC6A1C1337FECA00FF7998 /* lldb-platform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "lldb-platform.cpp"; path = "tools/lldb-server/lldb-platform.cpp"; sourceTree = "<group>"; };
 		26DE1E6A11616C2E00A093E2 /* lldb-forward.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; name = "lldb-forward.h"; path = "include/lldb/lldb-forward.h"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		26DE204011618AB900A093E2 /* SBSymbolContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBSymbolContext.h; path = include/lldb/API/SBSymbolContext.h; sourceTree = "<group>"; };
 		26DE204211618ACA00A093E2 /* SBAddress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBAddress.h; path = include/lldb/API/SBAddress.h; sourceTree = "<group>"; };
@@ -2671,6 +2649,7 @@
 		B2B7CCED15D1BFB700EEFB57 /* WatchpointOptions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WatchpointOptions.h; path = include/lldb/Breakpoint/WatchpointOptions.h; sourceTree = "<group>"; };
 		B2B7CCEF15D1C20F00EEFB57 /* WatchpointOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WatchpointOptions.cpp; path = source/Breakpoint/WatchpointOptions.cpp; sourceTree = "<group>"; };
 		B2D3033612EFA5C500F84EB3 /* InstructionUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InstructionUtils.h; path = Utility/InstructionUtils.h; sourceTree = "<group>"; };
+		E769331D1A94D18100C73337 /* lldb-server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "lldb-server.cpp"; path = "tools/lldb-server/lldb-server.cpp"; sourceTree = "<group>"; };
 		ED88244F15114CA200BC98B9 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		ED88245215114CFC00BC98B9 /* LauncherRootXPCService.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LauncherRootXPCService.mm; sourceTree = "<group>"; };
 		EDB919B214F6EC85008FF64B /* LauncherXPCService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LauncherXPCService.h; sourceTree = "<group>"; };
@@ -2719,19 +2698,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				2669424D1A6DC32B0063BE93 /* LLDB.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		26D6F3E4183E7F4E00194858 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				260157C71885F52500F875CF /* libpanel.dylib in Frameworks */,
-				26780C651867C34500234593 /* libncurses.dylib in Frameworks */,
-				26CFDCA71861646C000E63E5 /* libedit.dylib in Frameworks */,
-				26D6F3FA183E888800194858 /* liblldb-core.a in Frameworks */,
-				2606EDDE184E68940034641B /* Foundation.framework in Frameworks */,
-				966C6B7B18E6A56A0093F5EC /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2839,10 +2805,9 @@
 				26F5C26A10F3D9A4009D5894 /* lldb */,
 				26680207115FD0ED008E1FE4 /* LLDB.framework */,
 				26579F68126A25920007C5CB /* darwin-debug */,
-				26DC6A101337FE6900FF7998 /* lldb-platform */,
+				26DC6A101337FE6900FF7998 /* lldb-server */,
 				EDC6D49914E5C19B001B75F8 /* com.apple.lldb.launcherXPCService.xpc */,
 				EDE274EC14EDCE1F005B0F75 /* com.apple.lldb.launcherRootXPCService.xpc */,
-				26D6F3E7183E7F4E00194858 /* lldb-gdbserver */,
 				2690CD171A6DC0D000E717C8 /* lldb-mi */,
 				942829C01A89835300521B30 /* argdumper */,
 			);
@@ -4623,15 +4588,6 @@
 			path = MacOSX;
 			sourceTree = "<group>";
 		};
-		26D6F3F2183E7F9300194858 /* lldb-gdbserver */ = {
-			isa = PBXGroup;
-			children = (
-				26D6F3F4183E7F9300194858 /* lldb-gdbserver.cpp */,
-			);
-			name = "lldb-gdbserver";
-			path = "tools/lldb-gdbserver";
-			sourceTree = "<group>";
-		};
 		26D9FDCA12F785120003F2EE /* Instruction */ = {
 			isa = PBXGroup;
 			children = (
@@ -4701,14 +4657,6 @@
 			path = "SysV-x86_64";
 			sourceTree = "<group>";
 		};
-		26DC6A1B1337FEA400FF7998 /* lldb-platform */ = {
-			isa = PBXGroup;
-			children = (
-				26DC6A1C1337FECA00FF7998 /* lldb-platform.cpp */,
-			);
-			name = "lldb-platform";
-			sourceTree = "<group>";
-		};
 		26E152221419CACA007967D0 /* PECOFF */ = {
 			isa = PBXGroup;
 			children = (
@@ -4730,13 +4678,12 @@
 		26F5C22410F3D950009D5894 /* Tools */ = {
 			isa = PBXGroup;
 			children = (
+				E769331B1A94D10E00C73337 /* lldb-server */,
 				942829BA1A89830900521B30 /* argdumper */,
 				26579F55126A255E0007C5CB /* darwin-debug */,
 				265E9BE0115C2B8500D0DCCB /* debugserver */,
 				26F5C22510F3D956009D5894 /* Driver */,
 				2665CD0915080846002C8FAE /* install-headers */,
-				26D6F3F2183E7F9300194858 /* lldb-gdbserver */,
-				26DC6A1B1337FEA400FF7998 /* lldb-platform */,
 			);
 			name = Tools;
 			sourceTree = "<group>";
@@ -5145,6 +5092,16 @@
 			name = "SysV-ppc64";
 			sourceTree = "<group>";
 		};
+		E769331B1A94D10E00C73337 /* lldb-server */ = {
+			isa = PBXGroup;
+			children = (
+				E769331D1A94D18100C73337 /* lldb-server.cpp */,
+				26DC6A1C1337FECA00FF7998 /* lldb-platform.cpp */,
+				26D6F3F4183E7F9300194858 /* lldb-gdbserver.cpp */,
+			);
+			name = "lldb-server";
+			sourceTree = "<group>";
+		};
 		EDC6D49114E5C15C001B75F8 /* launcherXPCService */ = {
 			isa = PBXGroup;
 			children = (
@@ -5458,27 +5415,9 @@
 			productReference = 2690CD171A6DC0D000E717C8 /* lldb-mi */;
 			productType = "com.apple.product-type.tool";
 		};
-		26D6F3E6183E7F4E00194858 /* lldb-gdbserver */ = {
+		26DC6A0F1337FE6900FF7998 /* lldb-server */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 26D6F3F1183E7F4F00194858 /* Build configuration list for PBXNativeTarget "lldb-gdbserver" */;
-			buildPhases = (
-				26D6F3E3183E7F4E00194858 /* Sources */,
-				26D6F3E4183E7F4E00194858 /* Frameworks */,
-				26D6F3E5183E7F4E00194858 /* CopyFiles */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				26D6F3F9183E80BD00194858 /* PBXTargetDependency */,
-			);
-			name = "lldb-gdbserver";
-			productName = "lldb-gdbserver";
-			productReference = 26D6F3E7183E7F4E00194858 /* lldb-gdbserver */;
-			productType = "com.apple.product-type.tool";
-		};
-		26DC6A0F1337FE6900FF7998 /* lldb-platform */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 26DC6A1A1337FE8B00FF7998 /* Build configuration list for PBXNativeTarget "lldb-platform" */;
+			buildConfigurationList = 26DC6A1A1337FE8B00FF7998 /* Build configuration list for PBXNativeTarget "lldb-server" */;
 			buildPhases = (
 				26DC6A0D1337FE6900FF7998 /* Sources */,
 				26DC6A0E1337FE6900FF7998 /* Frameworks */,
@@ -5489,9 +5428,9 @@
 			dependencies = (
 				26DC6A161337FE7300FF7998 /* PBXTargetDependency */,
 			);
-			name = "lldb-platform";
-			productName = "lldb-platform";
-			productReference = 26DC6A101337FE6900FF7998 /* lldb-platform */;
+			name = "lldb-server";
+			productName = "lldb-server";
+			productReference = 26DC6A101337FE6900FF7998 /* lldb-server */;
 			productType = "com.apple.product-type.tool";
 		};
 		26F5C26910F3D9A4009D5894 /* lldb-tool */ = {
@@ -5605,8 +5544,7 @@
 				26680206115FD0ED008E1FE4 /* LLDB */,
 				26579F67126A25920007C5CB /* darwin-debug */,
 				2689FFC913353D7A00698AC0 /* lldb-core */,
-				26D6F3E6183E7F4E00194858 /* lldb-gdbserver */,
-				26DC6A0F1337FE6900FF7998 /* lldb-platform */,
+				26DC6A0F1337FE6900FF7998 /* lldb-server */,
 				EDC6D49814E5C19B001B75F8 /* launcherXPCService */,
 				EDE274E214EDCE1F005B0F75 /* launcherRootXPCService */,
 				2687EAC51508110B00DD8C2E /* install-headers */,
@@ -5633,7 +5571,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				94E829CA152D33C1006F96A3 /* lldb-platform in Resources */,
+				94E829CA152D33C1006F96A3 /* lldb-server in Resources */,
 				262CFC7711A4510000946C6C /* debugserver in Resources */,
 				26368AF7126B960500E8659F /* darwin-debug in Resources */,
 			);
@@ -6443,19 +6381,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		26D6F3E3183E7F4E00194858 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				26D6F3F6183E7F9300194858 /* lldb-gdbserver.cpp in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		26DC6A0D1337FE6900FF7998 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E769331C1A94D15400C73337 /* lldb-gdbserver.cpp in Sources */,
 				26DC6A1D1337FECA00FF7998 /* lldb-platform.cpp in Sources */,
+				E769331E1A94D18100C73337 /* lldb-server.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -6577,11 +6509,6 @@
 			target = 26F5C26910F3D9A4009D5894 /* lldb-tool */;
 			targetProxy = 26CEF3C114FD5973007286B2 /* PBXContainerItemProxy */;
 		};
-		26D6F3F9183E80BD00194858 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 2689FFC913353D7A00698AC0 /* lldb-core */;
-			targetProxy = 26D6F3F8183E80BD00194858 /* PBXContainerItemProxy */;
-		};
 		26DC6A161337FE7300FF7998 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 2689FFC913353D7A00698AC0 /* lldb-core */;
@@ -6604,7 +6531,7 @@
 		};
 		94E829C9152D33B4006F96A3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 26DC6A0F1337FE6900FF7998 /* lldb-platform */;
+			target = 26DC6A0F1337FE6900FF7998 /* lldb-server */;
 			targetProxy = 94E829C8152D33B4006F96A3 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -7654,295 +7581,13 @@
 			};
 			name = BuildAndIntegration;
 		};
-		26D6F3ED183E7F4F00194858 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
-				DEAD_CODE_STRIPPING = YES;
-				EXPORTED_SYMBOLS_FILE = "tools/lldb-gdbserver/exports";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
-				);
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_CPP_RTTI = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
-					"-lobjc",
-					"-lpython",
-					"-framework",
-					DebugSymbols,
-					"-framework",
-					Carbon,
-					"-framework",
-					Foundation,
-					"-framework",
-					AppKit,
-					"-v",
-					"-Wl,-v",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
-					"$(inherited)",
-				);
-				OTHER_LDFLAGS = (
-					"-lllvmclang",
-					"-lpython",
-					"-lxml2",
-					"-framework",
-					DebugSymbols,
-					"-framework",
-					Carbon,
-					"-framework",
-					Foundation,
-					"-framework",
-					Security,
-				);
-				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
-					"-lllvmclang",
-					"-lxml2",
-					"-framework",
-					Foundation,
-					"-framework",
-					UIKit,
-				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
-			};
-			name = Debug;
-		};
-		26D6F3EE183E7F4F00194858 /* DebugClang */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
-				DEAD_CODE_STRIPPING = YES;
-				EXPORTED_SYMBOLS_FILE = "tools/lldb-gdbserver/exports";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
-				);
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_CPP_RTTI = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
-					"-lobjc",
-					"-lpython",
-					"-framework",
-					DebugSymbols,
-					"-framework",
-					Carbon,
-					"-framework",
-					Foundation,
-					"-framework",
-					AppKit,
-					"-v",
-					"-Wl,-v",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
-					"$(inherited)",
-				);
-				OTHER_LDFLAGS = (
-					"-lllvmclang",
-					"-lpython",
-					"-lxml2",
-					"-framework",
-					DebugSymbols,
-					"-framework",
-					Carbon,
-					"-framework",
-					Foundation,
-					"-framework",
-					Security,
-				);
-				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
-					"-lllvmclang",
-					"-lxml2",
-					"-framework",
-					Foundation,
-					"-framework",
-					UIKit,
-				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
-			};
-			name = DebugClang;
-		};
-		26D6F3EF183E7F4F00194858 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = lldb_codesign;
-				COPY_PHASE_STRIP = NO;
-				DEAD_CODE_STRIPPING = YES;
-				ENABLE_NS_ASSERTIONS = NO;
-				EXPORTED_SYMBOLS_FILE = "tools/lldb-gdbserver/exports";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
-				);
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_CPP_RTTI = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
-					"-lobjc",
-					"-lpython",
-					"-framework",
-					DebugSymbols,
-					"-framework",
-					Carbon,
-					"-framework",
-					Foundation,
-					"-framework",
-					AppKit,
-					"-v",
-					"-Wl,-v",
-				);
-				LIBRARY_SEARCH_PATHS = (
-					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
-					"$(inherited)",
-				);
-				OTHER_LDFLAGS = (
-					"-lllvmclang",
-					"-lpython",
-					"-lxml2",
-					"-framework",
-					DebugSymbols,
-					"-framework",
-					Carbon,
-					"-framework",
-					Foundation,
-					"-framework",
-					Security,
-				);
-				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
-					"-lllvmclang",
-					"-lxml2",
-					"-framework",
-					Foundation,
-					"-framework",
-					UIKit,
-				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
-			};
-			name = Release;
-		};
-		26D6F3F0183E7F4F00194858 /* BuildAndIntegration */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				COPY_PHASE_STRIP = YES;
-				DEAD_CODE_STRIPPING = YES;
-				ENABLE_NS_ASSERTIONS = NO;
-				EXPORTED_SYMBOLS_FILE = "tools/lldb-gdbserver/exports";
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
-				);
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_ENABLE_CPP_RTTI = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
-					"-lobjc",
-					"-lpython",
-					"-framework",
-					DebugSymbols,
-					"-framework",
-					Carbon,
-					"-framework",
-					Foundation,
-					"-framework",
-					AppKit,
-					"-v",
-					"-Wl,-v",
-				);
-				INSTALL_PATH = "$(LLDB_FRAMEWORK_INSTALL_DIR)/LLDB.framework/Resources";
-				LIBRARY_SEARCH_PATHS = (
-					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
-					"$(inherited)",
-				);
-				OTHER_LDFLAGS = (
-					"-lllvmclang",
-					"-lpython",
-					"-lxml2",
-					"-framework",
-					DebugSymbols,
-					"-framework",
-					Carbon,
-					"-framework",
-					Foundation,
-					"-framework",
-					Security,
-				);
-				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
-					"-lllvmclang",
-					"-lxml2",
-					"-framework",
-					Foundation,
-					"-framework",
-					UIKit,
-				);
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				STRIP_INSTALLED_PRODUCT = YES;
-				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
-			};
-			name = BuildAndIntegration;
-		};
 		26DC6A121337FE6A00FF7998 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				DEAD_CODE_STRIPPING = YES;
-				EXPORTED_SYMBOLS_FILE = "tools/lldb-platform/exports";
+				EXPORTED_SYMBOLS_FILE = "tools/lldb-server/exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -8003,7 +7648,7 @@
 					"-framework",
 					Foundation,
 				);
-				PRODUCT_NAME = "lldb-platform";
+				PRODUCT_NAME = "lldb-server";
 				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 			};
@@ -8015,7 +7660,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				DEAD_CODE_STRIPPING = YES;
-				EXPORTED_SYMBOLS_FILE = "tools/lldb-platform/exports";
+				EXPORTED_SYMBOLS_FILE = "tools/lldb-server/exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -8074,7 +7719,7 @@
 					"-framework",
 					Foundation,
 				);
-				PRODUCT_NAME = "lldb-platform";
+				PRODUCT_NAME = "lldb-server";
 				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 			};
@@ -8085,7 +7730,7 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
-				EXPORTED_SYMBOLS_FILE = "tools/lldb-platform/exports";
+				EXPORTED_SYMBOLS_FILE = "tools/lldb-server/exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -8145,7 +7790,7 @@
 					"-framework",
 					Foundation,
 				);
-				PRODUCT_NAME = "lldb-platform";
+				PRODUCT_NAME = "lldb-server";
 				SKIP_INSTALL = YES;
 				STRIP_INSTALLED_PRODUCT = YES;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
@@ -8465,7 +8110,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "-";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				DEAD_CODE_STRIPPING = YES;
-				EXPORTED_SYMBOLS_FILE = "tools/lldb-platform/exports";
+				EXPORTED_SYMBOLS_FILE = "tools/lldb-server/exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -8526,7 +8171,7 @@
 					"-framework",
 					Foundation,
 				);
-				PRODUCT_NAME = "lldb-platform";
+				PRODUCT_NAME = "lldb-server";
 				SKIP_INSTALL = YES;
 				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/include $(SRCROOT)/source $(LLVM_SOURCE_DIR)/include $(LLVM_SOURCE_DIR)/tools/clang/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/include $(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)/tools/clang/include";
 			};
@@ -9183,18 +8828,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = BuildAndIntegration;
 		};
-		26D6F3F1183E7F4F00194858 /* Build configuration list for PBXNativeTarget "lldb-gdbserver" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				26D6F3ED183E7F4F00194858 /* Debug */,
-				26D6F3EE183E7F4F00194858 /* DebugClang */,
-				26D6F3EF183E7F4F00194858 /* Release */,
-				26D6F3F0183E7F4F00194858 /* BuildAndIntegration */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = BuildAndIntegration;
-		};
-		26DC6A1A1337FE8B00FF7998 /* Build configuration list for PBXNativeTarget "lldb-platform" */ = {
+		26DC6A1A1337FE8B00FF7998 /* Build configuration list for PBXNativeTarget "lldb-server" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				26DC6A121337FE6A00FF7998 /* Debug */,

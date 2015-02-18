@@ -1,4 +1,4 @@
-##===- tools/lldb-platform/Makefile ------------------------*- Makefile -*-===##
+##===- tools/lldb-server/Makefile ------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LLDB_LEVEL := ../..
 
-TOOLNAME = lldb-gdbserver
+TOOLNAME = lldb-server
 
 LLVMLibsOptions += -llldb -llldbUtility
 
