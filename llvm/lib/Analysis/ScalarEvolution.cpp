@@ -1213,7 +1213,7 @@ struct ExtendOpTraits<SCEVSignExtendExpr> : public ExtendOpTraitsBase {
   }
 };
 
-const ExtendOpTraits<SCEVSignExtendExpr>::GetExtendExprTy ExtendOpTraits<
+const ExtendOpTraitsBase::GetExtendExprTy ExtendOpTraits<
     SCEVSignExtendExpr>::GetExtendExpr = &ScalarEvolution::getSignExtendExpr;
 
 template <>
@@ -1229,7 +1229,7 @@ struct ExtendOpTraits<SCEVZeroExtendExpr> : public ExtendOpTraitsBase {
   }
 };
 
-const ExtendOpTraits<SCEVZeroExtendExpr>::GetExtendExprTy ExtendOpTraits<
+const ExtendOpTraitsBase::GetExtendExprTy ExtendOpTraits<
     SCEVZeroExtendExpr>::GetExtendExpr = &ScalarEvolution::getZeroExtendExpr;
 }
 
