@@ -29,8 +29,7 @@ namespace test3 {
 // CHECK: void @test3_f0
 extern "C" void test3_f0(float) {}
 template<void (&)(float)> struct t1 {};
-// FIXME: Fails because we tack on a namespace.
-// CHECK-FIXME: void @_ZN5test32f1ENS_2t1ILZ8test3_f0EEE(
+// CHECK: void @_ZN5test32f1ENS_2t1IL_Z8test3_f0EEE(
 void f1(t1<test3_f0> a0) {}
 }
 
@@ -38,8 +37,7 @@ namespace test4 {
 // CHECK: void @test4_f0
 extern "C" void test4_f0(float) {}
 template<void (*)(float)> struct t1 {};
-// FIXME: Fails because we don't treat as an expression.
-// CHECK-FIXME: void @_ZN5test42f1ENS_2t1IXadL_Z8test4_f0EEEE(
+// CHECK: void @_ZN5test42f1ENS_2t1IXadL_Z8test4_f0EEEE(
 void f1(t1<test4_f0> a0) {}
 }
 
