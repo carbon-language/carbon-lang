@@ -3254,22 +3254,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                       [IntrNoMem]>;
 }
 
-// Integer shift ops.
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_avx512_psll_dq : GCCBuiltin<"__builtin_ia32_pslldqi512">,
-              Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,
-                         llvm_i32_ty], [IntrNoMem]>;
-  def int_x86_avx512_psrl_dq : GCCBuiltin<"__builtin_ia32_psrldqi512">,
-              Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,
-                         llvm_i32_ty], [IntrNoMem]>;
-  def int_x86_avx512_psll_dq_bs : GCCBuiltin<"__builtin_ia32_pslldqi512_byteshift">,
-              Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,
-                         llvm_i32_ty], [IntrNoMem]>;
-  def int_x86_avx512_psrl_dq_bs : GCCBuiltin<"__builtin_ia32_psrldqi512_byteshift">,
-              Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty,
-                         llvm_i32_ty], [IntrNoMem]>;
-}
-
 // Gather and Scatter ops
 let TargetPrefix = "x86" in {
   def int_x86_avx512_gather_dpd_512  : GCCBuiltin<"__builtin_ia32_gathersiv8df">,

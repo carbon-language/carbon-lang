@@ -2262,8 +2262,6 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     case llvm::Intrinsic::x86_sse_cvttps2pi:
       handleVectorConvertIntrinsic(I, 2);
       break;
-    case llvm::Intrinsic::x86_avx512_psll_dq:
-    case llvm::Intrinsic::x86_avx512_psrl_dq:
     case llvm::Intrinsic::x86_avx2_psll_w:
     case llvm::Intrinsic::x86_avx2_psll_d:
     case llvm::Intrinsic::x86_avx2_psll_q:
@@ -2326,10 +2324,6 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     case llvm::Intrinsic::x86_avx2_psrav_d_256:
       handleVectorShiftIntrinsic(I, /* Variable */ true);
       break;
-
-    // Byte shifts are not implemented.
-    // case llvm::Intrinsic::x86_avx512_psll_dq_bs:
-    // case llvm::Intrinsic::x86_avx512_psrl_dq_bs:
 
     case llvm::Intrinsic::x86_sse2_packsswb_128:
     case llvm::Intrinsic::x86_sse2_packssdw_128:
