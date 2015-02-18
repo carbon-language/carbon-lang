@@ -28,6 +28,11 @@ SystemZConstantPoolValue::Create(const GlobalValue *GV,
 
 unsigned SystemZConstantPoolValue::getRelocationInfo() const {
   switch (Modifier) {
+  case SystemZCP::TLSGD:
+  case SystemZCP::TLSLDM:
+  case SystemZCP::DTPOFF:
+    // May require a dynamic relocation.
+    return 2;
   case SystemZCP::NTPOFF:
     // May require a relocation, but the relocations are always resolved
     // by the static linker.

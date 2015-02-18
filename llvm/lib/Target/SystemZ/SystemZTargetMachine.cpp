@@ -61,6 +61,10 @@ void SystemZPassConfig::addIRPasses() {
 
 bool SystemZPassConfig::addInstSelector() {
   addPass(createSystemZISelDag(getSystemZTargetMachine(), getOptLevel()));
+
+ if (getOptLevel() != CodeGenOpt::None)
+    addPass(createSystemZLDCleanupPass(getSystemZTargetMachine()));
+
   return false;
 }
 

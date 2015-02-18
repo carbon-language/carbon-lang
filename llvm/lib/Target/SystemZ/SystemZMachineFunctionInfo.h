@@ -23,11 +23,13 @@ class SystemZMachineFunctionInfo : public MachineFunctionInfo {
   unsigned VarArgsFrameIndex;
   unsigned RegSaveFrameIndex;
   bool ManipulatesSP;
+  unsigned NumLocalDynamics;
 
 public:
   explicit SystemZMachineFunctionInfo(MachineFunction &MF)
     : LowSavedGPR(0), HighSavedGPR(0), VarArgsFirstGPR(0), VarArgsFirstFPR(0),
-      VarArgsFrameIndex(0), RegSaveFrameIndex(0), ManipulatesSP(false) {}
+      VarArgsFrameIndex(0), RegSaveFrameIndex(0), ManipulatesSP(false),
+      NumLocalDynamics(0) {}
 
   // Get and set the first call-saved GPR that should be saved and restored
   // by this function.  This is 0 if no GPRs need to be saved or restored.
@@ -61,6 +63,10 @@ public:
   // e.g. through STACKSAVE or STACKRESTORE.
   bool getManipulatesSP() const { return ManipulatesSP; }
   void setManipulatesSP(bool MSP) { ManipulatesSP = MSP; }
+
+  // Count number of local-dynamic TLS symbols used.
+  unsigned getNumLocalDynamicTLSAccesses() const { return NumLocalDynamics; }
+  void incNumLocalDynamicTLSAccesses() { ++NumLocalDynamics; }
 };
 
 } // end namespace llvm

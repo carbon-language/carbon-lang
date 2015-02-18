@@ -1830,15 +1830,58 @@ SDValue SystemZTargetLowering::lowerGlobalAddress(GlobalAddressSDNode *Node,
   return Result;
 }
 
+SDValue SystemZTargetLowering::lowerTLSGetOffset(GlobalAddressSDNode *Node,
+                                                 SelectionDAG &DAG,
+                                                 unsigned Opcode,
+                                                 SDValue GOTOffset) const {
+  SDLoc DL(Node);
+  EVT PtrVT = getPointerTy();
+  SDValue Chain = DAG.getEntryNode();
+  SDValue Glue;
+
+  // __tls_get_offset takes the GOT offset in %r2 and the GOT in %r12.
+  SDValue GOT = DAG.getGLOBAL_OFFSET_TABLE(PtrVT);
+  Chain = DAG.getCopyToReg(Chain, DL, SystemZ::R12D, GOT, Glue);
+  Glue = Chain.getValue(1);
+  Chain = DAG.getCopyToReg(Chain, DL, SystemZ::R2D, GOTOffset, Glue);
+  Glue = Chain.getValue(1);
+
+  // The first call operand is the chain and the second is the TLS symbol.
+  SmallVector<SDValue, 8> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(DAG.getTargetGlobalAddress(Node->getGlobal(), DL,
+                                           Node->getValueType(0),
+                                           0, 0));
+
+  // Add argument registers to the end of the list so that they are
+  // known live into the call.
+  Ops.push_back(DAG.getRegister(SystemZ::R2D, PtrVT));
+  Ops.push_back(DAG.getRegister(SystemZ::R12D, PtrVT));
+
+  // Add a register mask operand representing the call-preserved registers.
+  const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
+  const uint32_t *Mask = TRI->getCallPreservedMask(CallingConv::C);
+  assert(Mask && "Missing call preserved mask for calling convention");
+  Ops.push_back(DAG.getRegisterMask(Mask));
+
+  // Glue the call to the argument copies.
+  Ops.push_back(Glue);
+
+  // Emit the call.
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+  Chain = DAG.getNode(Opcode, DL, NodeTys, Ops);
+  Glue = Chain.getValue(1);
+
+  // Copy the return value from %r2.
+  return DAG.getCopyFromReg(Chain, DL, SystemZ::R2D, PtrVT, Glue);
+}
+
 SDValue SystemZTargetLowering::lowerGlobalTLSAddress(GlobalAddressSDNode *Node,
 						     SelectionDAG &DAG) const {
   SDLoc DL(Node);
   const GlobalValue *GV = Node->getGlobal();
   EVT PtrVT = getPointerTy();
   TLSModel::Model model = DAG.getTarget().getTLSModel(GV);
-
-  if (model != TLSModel::LocalExec)
-    llvm_unreachable("only local-exec TLS mode supported");
 
   // The high part of the thread pointer is in access register 0.
   SDValue TPHi = DAG.getNode(SystemZISD::EXTRACT_ACCESS, DL, MVT::i32,
@@ -1855,15 +1898,82 @@ SDValue SystemZTargetLowering::lowerGlobalTLSAddress(GlobalAddressSDNode *Node,
 				    DAG.getConstant(32, PtrVT));
   SDValue TP = DAG.getNode(ISD::OR, DL, PtrVT, TPHiShifted, TPLo);
 
-  // Get the offset of GA from the thread pointer.
-  SystemZConstantPoolValue *CPV =
-    SystemZConstantPoolValue::Create(GV, SystemZCP::NTPOFF);
+  // Get the offset of GA from the thread pointer, based on the TLS model.
+  SDValue Offset;
+  switch (model) {
+    case TLSModel::GeneralDynamic: {
+      // Load the GOT offset of the tls_index (module ID / per-symbol offset).
+      SystemZConstantPoolValue *CPV =
+        SystemZConstantPoolValue::Create(GV, SystemZCP::TLSGD);
 
-  // Force the offset into the constant pool and load it from there.
-  SDValue CPAddr = DAG.getConstantPool(CPV, PtrVT, 8);
-  SDValue Offset = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(),
-			       CPAddr, MachinePointerInfo::getConstantPool(),
-			       false, false, false, 0);
+      Offset = DAG.getConstantPool(CPV, PtrVT, 8);
+      Offset = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(),
+                           Offset, MachinePointerInfo::getConstantPool(),
+                           false, false, false, 0);
+
+      // Call __tls_get_offset to retrieve the offset.
+      Offset = lowerTLSGetOffset(Node, DAG, SystemZISD::TLS_GDCALL, Offset);
+      break;
+    }
+
+    case TLSModel::LocalDynamic: {
+      // Load the GOT offset of the module ID.
+      SystemZConstantPoolValue *CPV =
+        SystemZConstantPoolValue::Create(GV, SystemZCP::TLSLDM);
+
+      Offset = DAG.getConstantPool(CPV, PtrVT, 8);
+      Offset = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(),
+                           Offset, MachinePointerInfo::getConstantPool(),
+                           false, false, false, 0);
+
+      // Call __tls_get_offset to retrieve the module base offset.
+      Offset = lowerTLSGetOffset(Node, DAG, SystemZISD::TLS_LDCALL, Offset);
+
+      // Note: The SystemZLDCleanupPass will remove redundant computations
+      // of the module base offset.  Count total number of local-dynamic
+      // accesses to trigger execution of that pass.
+      SystemZMachineFunctionInfo* MFI =
+        DAG.getMachineFunction().getInfo<SystemZMachineFunctionInfo>();
+      MFI->incNumLocalDynamicTLSAccesses();
+
+      // Add the per-symbol offset.
+      CPV = SystemZConstantPoolValue::Create(GV, SystemZCP::DTPOFF);
+
+      SDValue DTPOffset = DAG.getConstantPool(CPV, PtrVT, 8);
+      DTPOffset = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(),
+                              DTPOffset, MachinePointerInfo::getConstantPool(),
+                              false, false, false, 0);
+
+      Offset = DAG.getNode(ISD::ADD, DL, PtrVT, Offset, DTPOffset);
+      break;
+    }
+
+    case TLSModel::InitialExec: {
+      // Load the offset from the GOT.
+      Offset = DAG.getTargetGlobalAddress(GV, DL, PtrVT, 0,
+                                          SystemZII::MO_INDNTPOFF);
+      Offset = DAG.getNode(SystemZISD::PCREL_WRAPPER, DL, PtrVT, Offset);
+      Offset = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(),
+                           Offset, MachinePointerInfo::getGOT(),
+                           false, false, false, 0);
+      break;
+    }
+
+    case TLSModel::LocalExec: {
+      // Force the offset into the constant pool and load it from there.
+      SystemZConstantPoolValue *CPV =
+        SystemZConstantPoolValue::Create(GV, SystemZCP::NTPOFF);
+
+      Offset = DAG.getConstantPool(CPV, PtrVT, 8);
+      Offset = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(),
+                           Offset, MachinePointerInfo::getConstantPool(),
+                           false, false, false, 0);
+      break;
+   }
+
+    default:
+      llvm_unreachable("Unknown TLS model.");
+  }
 
   // Add the base and offset together.
   return DAG.getNode(ISD::ADD, DL, PtrVT, TP, Offset);

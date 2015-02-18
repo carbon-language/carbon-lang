@@ -249,6 +249,15 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
     def CallBR : Alias<2, (outs), (ins), [(z_sibcall R1D)]>;
 }
 
+// TLS calls.  These will be lowered into a call to __tls_get_offset,
+// with an extra relocation specifying the TLS symbol.
+let isCall = 1, Defs = [R14D, CC] in {
+  def TLS_GDCALL : Alias<6, (outs), (ins tlssym:$I2, variable_ops),
+                         [(z_tls_gdcall tglobaltlsaddr:$I2)]>;
+  def TLS_LDCALL : Alias<6, (outs), (ins tlssym:$I2, variable_ops),
+                         [(z_tls_ldcall tglobaltlsaddr:$I2)]>;
+}
+
 // Define the general form of the call instructions for the asm parser.
 // These instructions don't hard-code %r14 as the return address register.
 // Allow an optional TLS marker symbol to generate TLS call relocations.
@@ -587,6 +596,12 @@ let hasSideEffects = 0, isAsCheapAsAMove = 1, isMoveImm = 1,
                      "larl\t$R1, $I2",
                      [(set GR64:$R1, pcrel32:$I2)]>;
 }
+
+// Load the Global Offset Table address.  This will be lowered into a
+//     larl $R1, _GLOBAL_OFFSET_TABLE_
+// instruction.
+def GOT : Alias<6, (outs GR64:$R1), (ins),
+                [(set GR64:$R1, (global_offset_table))]>;
 
 //===----------------------------------------------------------------------===//
 // Absolute and Negation

@@ -34,6 +34,11 @@ enum {
   CALL,
   SIBCALL,
 
+  // TLS calls.  Like regular calls, except operand 1 is the TLS symbol.
+  // (The call target is implicitly __tls_get_offset.)
+  TLS_GDCALL,
+  TLS_LDCALL,
+
   // Wraps a TargetGlobalAddress that should be loaded using PC-relative
   // accesses (LARL).  Operand 0 is the address.
   PCREL_WRAPPER,
@@ -258,6 +263,9 @@ private:
   SDValue lowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerGlobalAddress(GlobalAddressSDNode *Node,
                              SelectionDAG &DAG) const;
+  SDValue lowerTLSGetOffset(GlobalAddressSDNode *Node,
+                            SelectionDAG &DAG, unsigned Opcode,
+                            SDValue GOTOffset) const;
   SDValue lowerGlobalTLSAddress(GlobalAddressSDNode *Node,
                                 SelectionDAG &DAG) const;
   SDValue lowerBlockAddress(BlockAddressSDNode *Node,

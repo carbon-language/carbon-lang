@@ -90,6 +90,7 @@ def callseq_start       : SDNode<"ISD::CALLSEQ_START", SDT_CallSeqStart,
 def callseq_end         : SDNode<"ISD::CALLSEQ_END",   SDT_CallSeqEnd,
                                  [SDNPHasChain, SDNPSideEffect, SDNPOptInGlue,
                                   SDNPOutGlue]>;
+def global_offset_table : SDNode<"ISD::GLOBAL_OFFSET_TABLE", SDTPtrLeaf>;
 
 // Nodes for SystemZISD::*.  See SystemZISelLowering.h for more details.
 def z_retflag           : SDNode<"SystemZISD::RET_FLAG", SDTNone,
@@ -99,6 +100,12 @@ def z_call              : SDNode<"SystemZISD::CALL", SDT_ZCall,
                                   SDNPVariadic]>;
 def z_sibcall           : SDNode<"SystemZISD::SIBCALL", SDT_ZCall,
                                  [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue,
+                                  SDNPVariadic]>;
+def z_tls_gdcall        : SDNode<"SystemZISD::TLS_GDCALL", SDT_ZCall,
+                                 [SDNPHasChain, SDNPInGlue, SDNPOutGlue,
+                                  SDNPVariadic]>;
+def z_tls_ldcall        : SDNode<"SystemZISD::TLS_LDCALL", SDT_ZCall,
+                                 [SDNPHasChain, SDNPInGlue, SDNPOutGlue,
                                   SDNPVariadic]>;
 def z_pcrel_wrapper     : SDNode<"SystemZISD::PCREL_WRAPPER", SDT_ZWrapPtr, []>;
 def z_pcrel_offset      : SDNode<"SystemZISD::PCREL_OFFSET",

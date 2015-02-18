@@ -1,7 +1,7 @@
-; Test initial-exec TLS accesses.
+; Test local-exec TLS accesses.
 ;
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s -check-prefix=CHECK-MAIN
-; RUN: llc < %s -mtriple=s390x-linux-gnu | FileCheck %s -check-prefix=CHECK-CP
+; RUN: llc < %s -mcpu=z10 -mtriple=s390x-linux-gnu | FileCheck %s -check-prefix=CHECK-MAIN
+; RUN: llc < %s -mcpu=z10 -mtriple=s390x-linux-gnu | FileCheck %s -check-prefix=CHECK-CP
 
 @x = thread_local global i32 0
 

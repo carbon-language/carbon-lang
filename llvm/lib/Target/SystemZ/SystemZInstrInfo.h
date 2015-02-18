@@ -56,10 +56,13 @@ static inline unsigned getCompareZeroCCMask(unsigned int Flags) {
 // SystemZ MachineOperand target flags.
 enum {
   // Masks out the bits for the access model.
-  MO_SYMBOL_MODIFIER = (1 << 0),
+  MO_SYMBOL_MODIFIER = (3 << 0),
 
   // @GOT (aka @GOTENT)
-  MO_GOT = (1 << 0)
+  MO_GOT = (1 << 0),
+
+  // @INDNTPOFF
+  MO_INDNTPOFF = (2 << 0)
 };
 // Classifies a branch.
 enum BranchType {

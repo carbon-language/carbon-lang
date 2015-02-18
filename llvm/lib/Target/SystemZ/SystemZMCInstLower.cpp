@@ -22,6 +22,8 @@ static MCSymbolRefExpr::VariantKind getVariantKind(unsigned Flags) {
       return MCSymbolRefExpr::VK_None;
     case SystemZII::MO_GOT:
       return MCSymbolRefExpr::VK_GOT;
+    case SystemZII::MO_INDNTPOFF:
+      return MCSymbolRefExpr::VK_INDNTPOFF;
   }
   llvm_unreachable("Unrecognised MO_ACCESS_MODEL");
 }
