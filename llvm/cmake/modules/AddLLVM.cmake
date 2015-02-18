@@ -736,17 +736,19 @@ function(add_lit_target target comment)
   foreach(param ${ARG_PARAMS})
     list(APPEND LIT_COMMAND --param ${param})
   endforeach()
-  if( ARG_DEPENDS )
+  if (ARG_DEFAULT_ARGS)
     add_custom_target(${target}
       COMMAND ${LIT_COMMAND} ${ARG_DEFAULT_ARGS}
       COMMENT "${comment}"
       ${cmake_3_2_USES_TERMINAL}
       )
-    add_dependencies(${target} ${ARG_DEPENDS})
   else()
     add_custom_target(${target}
       COMMAND ${CMAKE_COMMAND} -E echo "${target} does nothing, no tools built.")
     message(STATUS "${target} does nothing.")
+  endif()
+  if (ARG_DEPENDS)
+    add_dependencies(${target} ${ARG_DEPENDS})
   endif()
 
   # Tests should be excluded from "Build Solution".
