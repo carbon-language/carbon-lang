@@ -20,7 +20,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @a = common global i32 0, align 4
 
 ; Function Attrs: nounwind uwtable
-define void @fn1() #0 {
+define void @fn1() {
 entry:
   store i32 0, i32* @d, align 4
   br label %for.cond
@@ -84,7 +84,7 @@ for.end10:                                        ; preds = %for.cond
 }
 
 ; Function Attrs: nounwind uwtable
-define i32 @main() #0 {
+define i32 @main() {
 entry:
   %retval = alloca i32, align 4
   store i32 0, i32* %retval
@@ -95,7 +95,7 @@ entry:
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
-  call void @abort() #2
+  call void @abort()
   unreachable
 
 if.end:                                           ; preds = %entry
@@ -103,12 +103,4 @@ if.end:                                           ; preds = %entry
 }
 
 ; Function Attrs: noreturn nounwind
-declare void @abort() #1
-
-attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #1 = { noreturn nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #2 = { noreturn nounwind }
-
-!llvm.ident = !{!0}
-
-!0 = !{!"clang version 3.7.0 (trunk 229288) (llvm/trunk 229286:229290M)"}
+declare void @abort()
