@@ -6628,7 +6628,8 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
       auto Merged = MergedLookups.find(DC);
       if (Merged != MergedLookups.end()) {
         for (unsigned I = 0; I != Merged->second.size(); ++I) {
-          LookUpInContexts(Merged->second[I]);
+          const DeclContext *Context = Merged->second[I];
+          LookUpInContexts(Context);
           // We might have just added some more merged lookups. If so, our
           // iterator is now invalid, so grab a fresh one before continuing.
           Merged = MergedLookups.find(DC);
