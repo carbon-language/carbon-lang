@@ -490,5 +490,15 @@ TEST_F(FormatTestJS, RegexLiteralExamples) {
   verifyFormat("var regex = search.match(/(?:\?|&)times=([^?&]+)/i);");
 }
 
+TEST_F(FormatTestJS, TypeAnnotations) {
+  verifyFormat("var x: string;");
+  verifyFormat("function x(): string {\n  return 'x';\n}");
+  verifyFormat("function x(y: string): string {\n  return 'x';\n}");
+  verifyFormat("for (var y: string in x) {\n  x();\n}");
+  verifyFormat("((a: string, b: number): string => a + b);");
+  verifyFormat("var x: (y: number) => string;");
+  verifyFormat("var x: P<string, (a: number) => string>;");
+}
+
 } // end namespace tooling
 } // end namespace clang

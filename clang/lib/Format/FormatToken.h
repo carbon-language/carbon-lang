@@ -48,6 +48,7 @@ enum TokenType {
   TT_InheritanceColon,
   TT_InlineASMColon,
   TT_JavaAnnotation,
+  TT_JsTypeColon,
   TT_LambdaArrow,
   TT_LambdaLSquare,
   TT_LeadingJavaAnnotation,

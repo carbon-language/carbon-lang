@@ -408,10 +408,7 @@ private:
       if (!Tok->Previous)
         return false;
       // Colons from ?: are handled in parseConditional().
-      if (Tok->Previous->is(tok::r_paren) && Contexts.size() == 1 &&
-          Line.First->isNot(tok::kw_case)) {
-        Tok->Type = TT_CtorInitializerColon;
-      } else if (Contexts.back().ColonIsDictLiteral) {
+      if (Contexts.back().ColonIsDictLiteral) {
         Tok->Type = TT_DictLiteral;
       } else if (Contexts.back().ColonIsObjCMethodExpr ||
                  Line.First->is(TT_ObjCMethodSpecifier)) {
@@ -424,19 +421,28 @@ private:
         if (!Contexts.back().FirstObjCSelectorName)
           Contexts.back().FirstObjCSelectorName = Tok->Previous;
       } else if (Contexts.back().ColonIsForRangeExpr) {
-        Tok->Type = TT_RangeBasedForLoopColon;
+        Tok->Type = Style.Language == FormatStyle::LK_JavaScript
+                        ? TT_JsTypeColon
+                        : TT_RangeBasedForLoopColon;
       } else if (CurrentToken && CurrentToken->is(tok::numeric_constant)) {
         Tok->Type = TT_BitFieldColon;
       } else if (Contexts.size() == 1 &&
                  !Line.First->isOneOf(tok::kw_enum, tok::kw_case)) {
-        Tok->Type = TT_InheritanceColon;
+        if (Style.Language == FormatStyle::LK_JavaScript)
+          Tok->Type = TT_JsTypeColon;
+        else if (Tok->Previous->is(tok::r_paren))
+          Tok->Type = TT_CtorInitializerColon;
+        else
+          Tok->Type = TT_InheritanceColon;
       } else if (Tok->Previous->is(tok::identifier) && Tok->Next &&
                  Tok->Next->isOneOf(tok::r_paren, tok::comma)) {
         // This handles a special macro in ObjC code where selectors including
         // the colon are passed as macro arguments.
         Tok->Type = TT_ObjCMethodExpr;
       } else if (Contexts.back().ContextKind == tok::l_paren) {
-        Tok->Type = TT_InlineASMColon;
+        Tok->Type = Style.Language == FormatStyle::LK_JavaScript
+                        ? TT_JsTypeColon
+                        : TT_InlineASMColon;
       }
       break;
     case tok::kw_if:
@@ -1748,6 +1754,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   } else if (Style.Language == FormatStyle::LK_JavaScript) {
     if (Left.is(Keywords.kw_var))
       return true;
+    if (Right.is(TT_JsTypeColon))
+      return false;
   } else if (Style.Language == FormatStyle::LK_Java) {
     if (Left.is(tok::r_square) && Right.is(tok::l_brace))
       return true;
