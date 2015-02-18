@@ -25,10 +25,10 @@ using namespace llvm;
 
 #define DEBUG_TYPE "loop-accesses"
 
-void VectorizationReport::emitAnalysis(const VectorizationReport &Message,
-                                       const Function *TheFunction,
-                                       const Loop *TheLoop,
-                                       const char *PassName) {
+void LoopAccessReport::emitAnalysis(const LoopAccessReport &Message,
+                                    const Function *TheFunction,
+                                    const Loop *TheLoop,
+                                    const char *PassName) {
   DebugLoc DL = TheLoop->getStartLoc();
   if (const Instruction *I = Message.getInstr())
     DL = I->getDebugLoc();
@@ -833,14 +833,14 @@ bool MemoryDepChecker::areDepsSafe(AccessAnalysis::DepCandidates &AccessSets,
 bool LoopAccessInfo::canAnalyzeLoop() {
     // We can only analyze innermost loops.
   if (!TheLoop->empty()) {
-    emitAnalysis(VectorizationReport() << "loop is not the innermost loop");
+    emitAnalysis(LoopAccessReport() << "loop is not the innermost loop");
     return false;
   }
 
   // We must have a single backedge.
   if (TheLoop->getNumBackEdges() != 1) {
     emitAnalysis(
-        VectorizationReport() <<
+        LoopAccessReport() <<
         "loop control flow is not understood by analyzer");
     return false;
   }
@@ -848,7 +848,7 @@ bool LoopAccessInfo::canAnalyzeLoop() {
   // We must have a single exiting block.
   if (!TheLoop->getExitingBlock()) {
     emitAnalysis(
-        VectorizationReport() <<
+        LoopAccessReport() <<
         "loop control flow is not understood by analyzer");
     return false;
   }
@@ -858,7 +858,7 @@ bool LoopAccessInfo::canAnalyzeLoop() {
   // instructions in the loop are executed the same number of times.
   if (TheLoop->getExitingBlock() != TheLoop->getLoopLatch()) {
     emitAnalysis(
-        VectorizationReport() <<
+        LoopAccessReport() <<
         "loop control flow is not understood by analyzer");
     return false;
   }
@@ -870,7 +870,7 @@ bool LoopAccessInfo::canAnalyzeLoop() {
   // ScalarEvolution needs to be able to find the exit count.
   const SCEV *ExitCount = SE->getBackedgeTakenCount(TheLoop);
   if (ExitCount == SE->getCouldNotCompute()) {
-    emitAnalysis(VectorizationReport() <<
+    emitAnalysis(LoopAccessReport() <<
                  "could not determine number of loop iterations");
     DEBUG(dbgs() << "LAA: SCEV could not compute the loop exit count.\n");
     return false;
@@ -919,7 +919,7 @@ void LoopAccessInfo::analyzeLoop(ValueToValueMap &Strides) {
 
         LoadInst *Ld = dyn_cast<LoadInst>(it);
         if (!Ld || (!Ld->isSimple() && !IsAnnotatedParallel)) {
-          emitAnalysis(VectorizationReport(Ld)
+          emitAnalysis(LoopAccessReport(Ld)
                        << "read with atomic ordering or volatile read");
           DEBUG(dbgs() << "LAA: Found a non-simple load.\n");
           CanVecMem = false;
@@ -935,13 +935,13 @@ void LoopAccessInfo::analyzeLoop(ValueToValueMap &Strides) {
       if (it->mayWriteToMemory()) {
         StoreInst *St = dyn_cast<StoreInst>(it);
         if (!St) {
-          emitAnalysis(VectorizationReport(it) <<
+          emitAnalysis(LoopAccessReport(it) <<
                        "instruction cannot be vectorized");
           CanVecMem = false;
           return;
         }
         if (!St->isSimple() && !IsAnnotatedParallel) {
-          emitAnalysis(VectorizationReport(St)
+          emitAnalysis(LoopAccessReport(St)
                        << "write with atomic ordering or volatile write");
           DEBUG(dbgs() << "LAA: Found a non-simple store.\n");
           CanVecMem = false;
@@ -982,7 +982,7 @@ void LoopAccessInfo::analyzeLoop(ValueToValueMap &Strides) {
 
     if (isUniform(Ptr)) {
       emitAnalysis(
-          VectorizationReport(ST)
+          LoopAccessReport(ST)
           << "write to a loop invariant address could not be vectorized");
       DEBUG(dbgs() << "LAA: We don't allow storing to uniform addresses\n");
       CanVecMem = false;
@@ -1083,7 +1083,7 @@ void LoopAccessInfo::analyzeLoop(ValueToValueMap &Strides) {
   }
 
   if (NeedRTCheck && !CanDoRT) {
-    emitAnalysis(VectorizationReport() << "cannot identify array bounds");
+    emitAnalysis(LoopAccessReport() << "cannot identify array bounds");
     DEBUG(dbgs() << "LAA: We can't vectorize because we can't find " <<
           "the array bounds.\n");
     PtrRtCheck.reset();
@@ -1117,10 +1117,10 @@ void LoopAccessInfo::analyzeLoop(ValueToValueMap &Strides) {
       if (!CanDoRT ||
           NumComparisons > VectorizerParams::RuntimeMemoryCheckThreshold) {
         if (!CanDoRT && NumComparisons > 0)
-          emitAnalysis(VectorizationReport()
+          emitAnalysis(LoopAccessReport()
                        << "cannot check memory dependencies at runtime");
         else
-          emitAnalysis(VectorizationReport()
+          emitAnalysis(LoopAccessReport()
                        << NumComparisons << " exceeds limit of "
                        << VectorizerParams::RuntimeMemoryCheckThreshold
                        << " dependent memory operations checked at runtime");
@@ -1135,7 +1135,7 @@ void LoopAccessInfo::analyzeLoop(ValueToValueMap &Strides) {
   }
 
   if (!CanVecMem)
-    emitAnalysis(VectorizationReport() <<
+    emitAnalysis(LoopAccessReport() <<
                  "unsafe dependent memory operations in loop");
 
   DEBUG(dbgs() << "LAA: We" << (NeedRTCheck ? "" : " don't") <<
@@ -1151,7 +1151,7 @@ bool LoopAccessInfo::blockNeedsPredication(BasicBlock *BB, Loop *TheLoop,
   return !DT->dominates(BB, Latch);
 }
 
-void LoopAccessInfo::emitAnalysis(VectorizationReport &Message) {
+void LoopAccessInfo::emitAnalysis(LoopAccessReport &Message) {
   assert(!Report && "Multiple report generated");
   Report = Message;
 }

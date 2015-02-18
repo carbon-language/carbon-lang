@@ -224,6 +224,21 @@ class LoopVectorizationLegality;
 class LoopVectorizationCostModel;
 class LoopVectorizeHints;
 
+/// \brief This modifies LoopAccessReport to initialize message with
+/// loop-vectorizer-specific part.
+class VectorizationReport : public LoopAccessReport {
+public:
+  VectorizationReport(Instruction *I = nullptr)
+      : LoopAccessReport("loop not vectorized: ", I) {}
+
+  /// \brief This allows promotion of the loop-access analysis report into the
+  /// loop-vectorizer report.  It modifies the message to add the
+  /// loop-vectorizer-specific part of the message.
+  explicit VectorizationReport(const LoopAccessReport &R)
+      : LoopAccessReport(Twine("loop not vectorized: ") + R.str(),
+                         R.getInstr()) {}
+};
+
 /// InnerLoopVectorizer vectorizes loops which contain only one basic
 /// block to a specified vectorization factor (VF).
 /// This class performs the widening of scalars into vectors, or multiple
@@ -835,9 +850,11 @@ private:
   void collectStridedAccess(Value *LoadOrStoreInst);
 
   /// Report an analysis message to assist the user in diagnosing loops that are
-  /// not vectorized.
-  void emitAnalysis(const VectorizationReport &Message) {
-    VectorizationReport::emitAnalysis(Message, TheFunction, TheLoop, LV_NAME);
+  /// not vectorized.  These are handled as LoopAccessReport rather than
+  /// VectorizationReport because the << operator of VectorizationReport returns
+  /// LoopAccessReport.
+  void emitAnalysis(const LoopAccessReport &Message) {
+    LoopAccessReport::emitAnalysis(Message, TheFunction, TheLoop, LV_NAME);
   }
 
   unsigned NumPredStores;
@@ -972,9 +989,11 @@ private:
   bool isConsecutiveLoadOrStore(Instruction *I);
 
   /// Report an analysis message to assist the user in diagnosing loops that are
-  /// not vectorized.
-  void emitAnalysis(const VectorizationReport &Message) {
-    VectorizationReport::emitAnalysis(Message, TheFunction, TheLoop, LV_NAME);
+  /// not vectorized.  These are handled as LoopAccessReport rather than
+  /// VectorizationReport because the << operator of VectorizationReport returns
+  /// LoopAccessReport.
+  void emitAnalysis(const LoopAccessReport &Message) {
+    LoopAccessReport::emitAnalysis(Message, TheFunction, TheLoop, LV_NAME);
   }
 
   /// Values used only by @llvm.assume calls.
@@ -3837,7 +3856,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
   LAI = &LAA->getInfo(TheLoop, Strides);
   auto &OptionalReport = LAI->getReport();
   if (OptionalReport)
-    emitAnalysis(*OptionalReport);
+    emitAnalysis(VectorizationReport(*OptionalReport));
   return LAI->canVectorizeMemory();
 }
 
