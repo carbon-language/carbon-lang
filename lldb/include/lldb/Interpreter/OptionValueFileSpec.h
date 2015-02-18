@@ -22,12 +22,14 @@ namespace lldb_private {
 class OptionValueFileSpec : public OptionValue
 {
 public:
-    OptionValueFileSpec ();
+    OptionValueFileSpec (bool resolve = true);
     
-    OptionValueFileSpec (const FileSpec &value);
+    OptionValueFileSpec (const FileSpec &value,
+                         bool resolve = true);
     
     OptionValueFileSpec (const FileSpec &current_value, 
-                         const FileSpec &default_value);
+                         const FileSpec &default_value,
+                         bool resolve = true);
     
     virtual 
     ~OptionValueFileSpec()
@@ -122,6 +124,7 @@ protected:
     FileSpec m_default_value;
     lldb::DataBufferSP m_data_sp;
     uint32_t m_completion_mask;
+    bool m_resolve;
 };
 
 } // namespace lldb_private

@@ -94,10 +94,13 @@ Property::Property (const PropertyDefinition &definition) :
             break;
             
         case OptionValue::eTypeFileSpec:
+        {
             // "definition.default_uint_value" represents if the "definition.default_cstr_value" should
             // be resolved or not
-            m_value_sp.reset (new OptionValueFileSpec(FileSpec(definition.default_cstr_value, definition.default_uint_value != 0)));
+            const bool resolve = definition.default_uint_value != 0;
+            m_value_sp.reset (new OptionValueFileSpec(FileSpec(definition.default_cstr_value, resolve), resolve));
             break;
+        }
             
         case OptionValue::eTypeFileSpecList:
             // "definition.default_uint_value" is not used for a OptionValue::eTypeFileSpecList

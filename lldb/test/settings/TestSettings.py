@@ -290,13 +290,18 @@ class SettingsCommandTestCase(TestBase):
 
         self.expect("settings show target.error-path",
                     SETTING_MSG("target.error-path"),
-                    substrs = ['target.error-path (file) = ', 'stderr.txt"'])
+                    substrs = ['target.error-path (file) = "stderr.txt"'])
 
         self.expect("settings show target.output-path",
                     SETTING_MSG("target.output-path"),
-                    substrs = ['target.output-path (file) = ', 'stdout.txt"'])
+                    substrs = ['target.output-path (file) = "stdout.txt"'])
 
         self.runCmd("run", RUN_SUCCEEDED)
+
+        if lldb.remote_platform:
+            self.runCmd('platform get-file "stderr.txt" "stderr.txt"')
+            self.runCmd('platform get-file "stdout.txt" "stdout.txt"')
+
 
         # The 'stderr.txt' file should now exist.
         self.assertTrue(os.path.isfile("stderr.txt"),
