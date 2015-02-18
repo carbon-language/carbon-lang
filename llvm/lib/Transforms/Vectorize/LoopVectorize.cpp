@@ -107,13 +107,13 @@ STATISTIC(LoopsVectorized, "Number of loops vectorized");
 STATISTIC(LoopsAnalyzed, "Number of loops analyzed for vectorization");
 
 static cl::opt<unsigned>
-VectorizationFactor("force-vector-width", cl::init(0), cl::Hidden,
-                    cl::desc("Sets the SIMD width. Zero is autoselect."));
+    VectorizationFactor("force-vector-width", cl::init(0), cl::Hidden,
+                        cl::desc("Sets the SIMD width. Zero is autoselect."));
 
 static cl::opt<unsigned>
-VectorizationInterleave("force-vector-interleave", cl::init(0), cl::Hidden,
-                    cl::desc("Sets the vectorization interleave count. "
-                             "Zero is autoselect."));
+    VectorizationInterleave("force-vector-interleave", cl::init(0), cl::Hidden,
+                            cl::desc("Sets the vectorization interleave count. "
+                                     "Zero is autoselect."));
 
 static cl::opt<bool>
 EnableIfConversion("enable-if-conversion", cl::init(true), cl::Hidden,
@@ -548,9 +548,8 @@ public:
                             DominatorTree *DT, TargetLibraryInfo *TLI,
                             AliasAnalysis *AA, Function *F,
                             const TargetTransformInfo *TTI)
-      : NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
-        TLI(TLI), TheFunction(F), TTI(TTI), DT(DT), Induction(nullptr),
-        WidestIndTy(nullptr),
+      : NumPredStores(0), TheLoop(L), SE(SE), DL(DL), TLI(TLI), TheFunction(F),
+        TTI(TTI), DT(DT), Induction(nullptr), WidestIndTy(nullptr),
         LAI(F, L, SE, DL, TLI, AA, DT,
             LoopAccessInfo::VectorizerParams(
                 MaxVectorWidth, VectorizationFactor, VectorizationInterleave,
@@ -744,9 +743,7 @@ public:
     return LAI.getRuntimePointerCheck();
   }
 
-  LoopAccessInfo *getLAI() {
-    return &LAI;
-  }
+  LoopAccessInfo *getLAI() { return &LAI; }
 
   /// This function returns the identity element (or neutral element) for
   /// the operation K.
@@ -773,18 +770,11 @@ public:
   }
   /// Returns true if vector representation of the instruction \p I
   /// requires mask.
-  bool isMaskRequired(const Instruction* I) {
-    return (MaskedOp.count(I) != 0);
-  }
-  unsigned getNumStores() const {
-    return LAI.getNumStores();
-  }
-  unsigned getNumLoads() const {
-    return LAI.getNumLoads();
-  }
-  unsigned getNumPredStores() const {
-    return NumPredStores;
-  }
+  bool isMaskRequired(const Instruction *I) { return (MaskedOp.count(I) != 0); }
+  unsigned getNumStores() const { return LAI.getNumStores(); }
+  unsigned getNumLoads() const { return LAI.getNumLoads(); }
+  unsigned getNumPredStores() const { return NumPredStores; }
+
 private:
   /// Check if a single basic block loop is vectorizable.
   /// At this point we know that this is a loop with a constant trip count
@@ -875,7 +865,7 @@ private:
   SmallPtrSet<Value*, 4> AllowedExit;
   /// This set holds the variables which are known to be uniform after
   /// vectorization.
-  SmallPtrSet<Instruction*, 4> Uniforms;
+  SmallPtrSet<Instruction *, 4> Uniforms;
   LoopAccessInfo LAI;
   /// Can we assume the absence of NaNs.
   bool HasFunNoNaNAttr;
@@ -1659,9 +1649,7 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
   return 0;
 }
 
-bool LoopVectorizationLegality::isUniform(Value *V) {
-  return LAI.isUniform(V);
-}
+bool LoopVectorizationLegality::isUniform(Value *V) { return LAI.isUniform(V); }
 
 InnerLoopVectorizer::VectorParts&
 InnerLoopVectorizer::getVectorValue(Value *V) {
@@ -3399,10 +3387,10 @@ bool LoopVectorizationLegality::canVectorize() {
   // Collect all of the variables that remain uniform after vectorization.
   collectLoopUniforms();
 
-  DEBUG(dbgs() << "LV: We can vectorize this loop" <<
-        (LAI.getRuntimePointerCheck()->Need ? " (with a runtime bound check)" :
-         "")
-        <<"!\n");
+  DEBUG(dbgs() << "LV: We can vectorize this loop"
+               << (LAI.getRuntimePointerCheck()->Need
+                       ? " (with a runtime bound check)"
+                       : "") << "!\n");
 
   // Okay! We can vectorize. At this point we don't have any other mem analysis
   // which may limit our maximum vectorization factor, so just return true with

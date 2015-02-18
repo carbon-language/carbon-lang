@@ -302,7 +302,7 @@ bool AccessAnalysis::canCheckPtrAtRT(
       unsigned ASj = PtrJ->getType()->getPointerAddressSpace();
       if (ASi != ASj) {
         DEBUG(dbgs() << "LV: Runtime check would require comparison between"
-                       " different address spaces\n");
+                        " different address spaces\n");
         return false;
       }
     }
@@ -553,8 +553,8 @@ static int isStridedPtr(ScalarEvolution *SE, const DataLayout *DL, Value *Ptr,
   // Make sure that the pointer does not point to aggregate types.
   const PointerType *PtrTy = cast<PointerType>(Ty);
   if (PtrTy->getElementType()->isAggregateType()) {
-    DEBUG(dbgs() << "LV: Bad stride - Not a pointer to a scalar type" << *Ptr <<
-          "\n");
+    DEBUG(dbgs() << "LV: Bad stride - Not a pointer to a scalar type" << *Ptr
+                 << "\n");
     return 0;
   }
 
@@ -562,15 +562,15 @@ static int isStridedPtr(ScalarEvolution *SE, const DataLayout *DL, Value *Ptr,
 
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(PtrScev);
   if (!AR) {
-    DEBUG(dbgs() << "LV: Bad stride - Not an AddRecExpr pointer "
-          << *Ptr << " SCEV: " << *PtrScev << "\n");
+    DEBUG(dbgs() << "LV: Bad stride - Not an AddRecExpr pointer " << *Ptr
+                 << " SCEV: " << *PtrScev << "\n");
     return 0;
   }
 
   // The accesss function must stride over the innermost loop.
   if (Lp != AR->getLoop()) {
-    DEBUG(dbgs() << "LV: Bad stride - Not striding over innermost loop " <<
-          *Ptr << " SCEV: " << *PtrScev << "\n");
+    DEBUG(dbgs() << "LV: Bad stride - Not striding over innermost loop " << *Ptr
+                 << " SCEV: " << *PtrScev << "\n");
   }
 
   // The address calculation must not wrap. Otherwise, a dependence could be
@@ -585,7 +585,7 @@ static int isStridedPtr(ScalarEvolution *SE, const DataLayout *DL, Value *Ptr,
   bool IsInAddressSpaceZero = PtrTy->getAddressSpace() == 0;
   if (!IsNoWrapAddRec && !IsInBoundsGEP && !IsInAddressSpaceZero) {
     DEBUG(dbgs() << "LV: Bad stride - Pointer may wrap in the address space "
-          << *Ptr << " SCEV: " << *PtrScev << "\n");
+                 << *Ptr << " SCEV: " << *PtrScev << "\n");
     return 0;
   }
 
@@ -595,8 +595,8 @@ static int isStridedPtr(ScalarEvolution *SE, const DataLayout *DL, Value *Ptr,
   // Calculate the pointer stride and check if it is consecutive.
   const SCEVConstant *C = dyn_cast<SCEVConstant>(Step);
   if (!C) {
-    DEBUG(dbgs() << "LV: Bad stride - Not a constant strided " << *Ptr <<
-          " SCEV: " << *PtrScev << "\n");
+    DEBUG(dbgs() << "LV: Bad stride - Not a constant strided " << *Ptr
+                 << " SCEV: " << *PtrScev << "\n");
     return 0;
   }
 
@@ -638,8 +638,9 @@ bool MemoryDepChecker::couldPreventStoreLoadForward(unsigned Distance,
   // Store-load forwarding distance.
   const unsigned NumCyclesForStoreLoadThroughMemory = 8*TypeByteSize;
   // Maximum vector factor.
-  unsigned MaxVFWithoutSLForwardIssues = VectParams.MaxVectorWidth*TypeByteSize;
-  if(MaxSafeDepDistBytes < MaxVFWithoutSLForwardIssues)
+  unsigned MaxVFWithoutSLForwardIssues =
+      VectParams.MaxVectorWidth * TypeByteSize;
+  if (MaxSafeDepDistBytes < MaxVFWithoutSLForwardIssues)
     MaxVFWithoutSLForwardIssues = MaxSafeDepDistBytes;
 
   for (unsigned vf = 2*TypeByteSize; vf <= MaxVFWithoutSLForwardIssues;
@@ -650,14 +651,14 @@ bool MemoryDepChecker::couldPreventStoreLoadForward(unsigned Distance,
     }
   }
 
-  if (MaxVFWithoutSLForwardIssues< 2*TypeByteSize) {
-    DEBUG(dbgs() << "LV: Distance " << Distance <<
-          " that could cause a store-load forwarding conflict\n");
+  if (MaxVFWithoutSLForwardIssues < 2 * TypeByteSize) {
+    DEBUG(dbgs() << "LV: Distance " << Distance
+                 << " that could cause a store-load forwarding conflict\n");
     return true;
   }
 
   if (MaxVFWithoutSLForwardIssues < MaxSafeDepDistBytes &&
-      MaxVFWithoutSLForwardIssues != VectParams.MaxVectorWidth*TypeByteSize)
+      MaxVFWithoutSLForwardIssues != VectParams.MaxVectorWidth * TypeByteSize)
     MaxSafeDepDistBytes = MaxVFWithoutSLForwardIssues;
   return false;
 }
@@ -705,9 +706,9 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
   const SCEV *Dist = SE->getMinusSCEV(Sink, Src);
 
   DEBUG(dbgs() << "LV: Src Scev: " << *Src << "Sink Scev: " << *Sink
-        << "(Induction step: " << StrideAPtr <<  ")\n");
+               << "(Induction step: " << StrideAPtr << ")\n");
   DEBUG(dbgs() << "LV: Distance for " << *InstMap[AIdx] << " to "
-        << *InstMap[BIdx] << ": " << *Dist << "\n");
+               << *InstMap[BIdx] << ": " << *Dist << "\n");
 
   // Need consecutive accesses. We don't want to vectorize
   // "A[B[i]] += ..." and similar code or pointer arithmetic that could wrap in
@@ -754,18 +755,19 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
 
   // Positive distance bigger than max vectorization factor.
   if (ATy != BTy) {
-    DEBUG(dbgs() <<
-          "LV: ReadWrite-Write positive dependency with different types\n");
+    DEBUG(dbgs()
+          << "LV: ReadWrite-Write positive dependency with different types\n");
     return false;
   }
 
   unsigned Distance = (unsigned) Val.getZExtValue();
 
   // Bail out early if passed-in parameters make vectorization not feasible.
-  unsigned ForcedFactor = (VectParams.VectorizationFactor ?
-                           VectParams.VectorizationFactor : 1);
-  unsigned ForcedUnroll = (VectParams.VectorizationInterleave ?
-                           VectParams.VectorizationInterleave : 1);
+  unsigned ForcedFactor =
+      (VectParams.VectorizationFactor ? VectParams.VectorizationFactor : 1);
+  unsigned ForcedUnroll =
+      (VectParams.VectorizationInterleave ? VectParams.VectorizationInterleave
+                                          : 1);
 
   // The distance must be bigger than the size needed for a vectorized version
   // of the operation and the size of the vectorized operation must not be
@@ -774,7 +776,7 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
       2*TypeByteSize > MaxSafeDepDistBytes ||
       Distance < TypeByteSize * ForcedUnroll * ForcedFactor) {
     DEBUG(dbgs() << "LV: Failure because of Positive distance "
-        << Val.getSExtValue() << '\n');
+                 << Val.getSExtValue() << '\n');
     return true;
   }
 
@@ -786,8 +788,9 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
       couldPreventStoreLoadForward(Distance, TypeByteSize))
      return true;
 
-  DEBUG(dbgs() << "LV: Positive distance " << Val.getSExtValue() <<
-        " with max VF = " << MaxSafeDepDistBytes / TypeByteSize << '\n');
+  DEBUG(dbgs() << "LV: Positive distance " << Val.getSExtValue()
+               << " with max VF = " << MaxSafeDepDistBytes / TypeByteSize
+               << '\n');
 
   return false;
 }
@@ -886,8 +889,8 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
       if (it->mayWriteToMemory()) {
         StoreInst *St = dyn_cast<StoreInst>(it);
         if (!St) {
-          emitAnalysis(VectorizationReport(it) <<
-                       "instruction cannot be vectorized");
+          emitAnalysis(VectorizationReport(it)
+                       << "instruction cannot be vectorized");
           return false;
         }
         if (!St->isSimple() && !IsAnnotatedParallel) {
@@ -953,9 +956,8 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
   }
 
   if (IsAnnotatedParallel) {
-    DEBUG(dbgs()
-          << "LV: A loop annotated parallel, ignore memory dependency "
-          << "checks.\n");
+    DEBUG(dbgs() << "LV: A loop annotated parallel, ignore memory dependency "
+                 << "checks.\n");
     return true;
   }
 
@@ -1007,8 +1009,8 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
     CanDoRT = Accesses.canCheckPtrAtRT(PtrRtCheck, NumComparisons, SE, TheLoop,
                                        Strides);
 
-  DEBUG(dbgs() << "LV: We need to do " << NumComparisons <<
-        " pointer comparisons.\n");
+  DEBUG(dbgs() << "LV: We need to do " << NumComparisons
+               << " pointer comparisons.\n");
 
   // If we only have one set of dependences to check pointers among we don't
   // need a runtime check.
@@ -1028,8 +1030,8 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
 
   if (NeedRTCheck && !CanDoRT) {
     emitAnalysis(VectorizationReport() << "cannot identify array bounds");
-    DEBUG(dbgs() << "LV: We can't vectorize because we can't find " <<
-          "the array bounds.\n");
+    DEBUG(dbgs() << "LV: We can't vectorize because we can't find "
+                 << "the array bounds.\n");
     PtrRtCheck.reset();
     return false;
   }
@@ -1076,11 +1078,11 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
   }
 
   if (!CanVecMem)
-    emitAnalysis(VectorizationReport() <<
-                 "unsafe dependent memory operations in loop");
+    emitAnalysis(VectorizationReport()
+                 << "unsafe dependent memory operations in loop");
 
-  DEBUG(dbgs() << "LV: We" << (NeedRTCheck ? "" : " don't") <<
-        " need a runtime memory check.\n");
+  DEBUG(dbgs() << "LV: We" << (NeedRTCheck ? "" : " don't")
+               << " need a runtime memory check.\n");
 
   return CanVecMem;
 }
@@ -1132,8 +1134,8 @@ LoopAccessInfo::addRuntimeCheck(Instruction *Loc) {
     const SCEV *Sc = SE->getSCEV(Ptr);
 
     if (SE->isLoopInvariant(Sc, TheLoop)) {
-      DEBUG(dbgs() << "LV: Adding RT check for a loop invariant ptr:" <<
-            *Ptr <<"\n");
+      DEBUG(dbgs() << "LV: Adding RT check for a loop invariant ptr:" << *Ptr
+                   << "\n");
       Starts.push_back(Ptr);
       Ends.push_back(Ptr);
     } else {
