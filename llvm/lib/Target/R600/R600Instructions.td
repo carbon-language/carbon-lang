@@ -580,6 +580,7 @@ i32imm:$COUNT, i32imm:$Enabled),
   let ALT_CONST = 0;
   let WHOLE_QUAD_MODE = 0;
   let BARRIER = 1;
+  let isCodeGenOnly = 1;
   let UseNamedOperandTable = 1;
 
   let Inst{31-0} = Word0;
@@ -642,6 +643,7 @@ def FETCH_CLAUSE : AMDGPUInst <(outs),
   field bits<8> Inst;
   bits<8> num;
   let Inst = num;
+  let isCodeGenOnly = 1;
 }
 
 def ALU_CLAUSE : AMDGPUInst <(outs),
@@ -649,10 +651,13 @@ def ALU_CLAUSE : AMDGPUInst <(outs),
   field bits<8> Inst;
   bits<8> num;
   let Inst = num;
+  let isCodeGenOnly = 1;
 }
 
 def LITERALS : AMDGPUInst <(outs),
 (ins LITERAL:$literal1, LITERAL:$literal2), "$literal1, $literal2", [] > {
+  let isCodeGenOnly = 1;
+
   field bits<64> Inst;
   bits<32> literal1;
   bits<32> literal2;

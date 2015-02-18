@@ -252,7 +252,6 @@ class SOPP <bits<7> op, dag ins, string asm, list<dag> pattern = []> :
   let mayLoad = 0;
   let mayStore = 0;
   let hasSideEffects = 0;
-  let isCodeGenOnly = 0;
   let SALU = 1;
   let SOPP = 1;
 

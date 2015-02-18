@@ -363,7 +363,7 @@ class EXPCommon : InstSI<
 
 multiclass EXP_m {
 
-  let isPseudo = 1 in {
+  let isPseudo = 1, isCodeGenOnly = 1 in {
     def "" : EXPCommon, SIMCInstr <"exp", SISubtarget.NONE> ;
   }
 
@@ -380,6 +380,7 @@ class SOP1_Pseudo <string opName, dag outs, dag ins, list<dag> pattern> :
   SOP1 <outs, ins, "", pattern>,
   SIMCInstr<opName, SISubtarget.NONE> {
   let isPseudo = 1;
+  let isCodeGenOnly = 1;
 }
 
 class SOP1_Real_si <sop1 op, string opName, dag outs, dag ins, string asm> :
@@ -453,6 +454,7 @@ class SOP2_Pseudo<string opName, dag outs, dag ins, list<dag> pattern> :
   SOP2<outs, ins, "", pattern>,
   SIMCInstr<opName, SISubtarget.NONE> {
   let isPseudo = 1;
+  let isCodeGenOnly = 1;
   let Size = 4;
 
   // Pseudo instructions have no encodings, but adding this field here allows
@@ -526,6 +528,7 @@ class SOPK_Pseudo <string opName, dag outs, dag ins, list<dag> pattern> :
   SOPK <outs, ins, "", pattern>,
   SIMCInstr<opName, SISubtarget.NONE> {
   let isPseudo = 1;
+  let isCodeGenOnly = 1;
 }
 
 class SOPK_Real_si <sopk op, string opName, dag outs, dag ins, string asm> :
@@ -568,6 +571,7 @@ class SMRD_Pseudo <string opName, dag outs, dag ins, list<dag> pattern> :
   SMRD <outs, ins, "", pattern>,
   SIMCInstr<opName, SISubtarget.NONE> {
   let isPseudo = 1;
+  let isCodeGenOnly = 1;
 }
 
 class SMRD_Real_si <bits<5> op, string opName, bit imm, dag outs, dag ins,
@@ -821,6 +825,7 @@ class VOP1_Pseudo <dag outs, dag ins, list<dag> pattern, string opName> :
   VOP <opName>,
   SIMCInstr <opName#"_e32", SISubtarget.NONE> {
   let isPseudo = 1;
+  let isCodeGenOnly = 1;
 
   field bits<8> vdst;
   field bits<9> src0;
@@ -850,6 +855,7 @@ class VOP2_Pseudo <dag outs, dag ins, list<dag> pattern, string opName> :
   VOP <opName>,
   SIMCInstr<opName#"_e32", SISubtarget.NONE> {
   let isPseudo = 1;
+  let isCodeGenOnly = 1;
 }
 
 multiclass VOP2SI_m <vop2 op, dag outs, dag ins, string asm, list<dag> pattern,
@@ -899,6 +905,7 @@ class VOP3_Pseudo <dag outs, dag ins, list<dag> pattern, string opName> :
   VOP <opName>,
   SIMCInstr<opName#"_e64", SISubtarget.NONE> {
   let isPseudo = 1;
+  let isCodeGenOnly = 1;
 }
 
 class VOP3_Real_si <bits<9> op, dag outs, dag ins, string asm, string opName> :
@@ -1054,7 +1061,7 @@ multiclass VOP3_C_m <vop op, dag outs, dag ins, string asm,
 // An instruction that is VOP2 on SI and VOP3 on VI, no modifiers.
 multiclass VOP2SI_3VI_m <vop3 op, string opName, dag outs, dag ins,
                          string asm, list<dag> pattern = []> {
-  let isPseudo = 1 in {
+  let isPseudo = 1, isCodeGenOnly = 1 in {
     def "" : VOPAnyCommon <outs, ins, "", pattern>,
              SIMCInstr<opName, SISubtarget.NONE>;
   }
@@ -1203,6 +1210,7 @@ class VOPC_Pseudo <dag outs, dag ins, list<dag> pattern, string opName> :
   VOP <opName>,
   SIMCInstr<opName#"_e32", SISubtarget.NONE> {
   let isPseudo = 1;
+  let isCodeGenOnly = 1;
 }
 
 multiclass VOPC_m <vopc op, dag outs, dag ins, string asm, list<dag> pattern,
@@ -1405,6 +1413,7 @@ class VINTRP_Pseudo <string opName, dag outs, dag ins, list<dag> pattern> :
   VINTRPCommon <outs, ins, "", pattern>,
   SIMCInstr<opName, SISubtarget.NONE> {
   let isPseudo = 1;
+  let isCodeGenOnly = 1;
 }
 
 class VINTRP_Real_si <bits <2> op, string opName, dag outs, dag ins,
@@ -1440,6 +1449,7 @@ class DS_Pseudo <string opName, dag outs, dag ins, list<dag> pattern> :
   DS <outs, ins, "", pattern>,
   SIMCInstr <opName, SISubtarget.NONE> {
   let isPseudo = 1;
+  let isCodeGenOnly = 1;
 }
 
 class DS_Real_si <bits<8> op, string opName, dag outs, dag ins, string asm> :
@@ -1657,6 +1667,7 @@ class MTBUF_Pseudo <string opName, dag outs, dag ins, list<dag> pattern> :
   MTBUF <outs, ins, "", pattern>,
   SIMCInstr<opName, SISubtarget.NONE> {
   let isPseudo = 1;
+  let isCodeGenOnly = 1;
 }
 
 class MTBUF_Real_si <bits<3> op, string opName, dag outs, dag ins,
@@ -1727,6 +1738,7 @@ class MUBUF_Pseudo <string opName, dag outs, dag ins, list<dag> pattern> :
   MUBUF <outs, ins, "", pattern>,
   SIMCInstr<opName, SISubtarget.NONE> {
   let isPseudo = 1;
+  let isCodeGenOnly = 1;
 
   // dummy fields, so that we can use let statements around multiclasses
   bits<1> offen;
