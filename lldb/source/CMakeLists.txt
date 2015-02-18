@@ -65,7 +65,6 @@ endif()
 
 if (LLDB_WRAP_PYTHON OR LLDB_VERS_GENERATED_FILE)
   add_dependencies(liblldb swig_wrapper)
-  message("Adding dependency on swig_wrapper")
 endif()
 target_link_libraries(liblldb ${cmake_2_8_12_PRIVATE} ${LLDB_SYSTEM_LIBS})
 
