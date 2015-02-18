@@ -503,13 +503,14 @@ DIBuilder::createObjCProperty(StringRef Name, DIFile File, unsigned LineNumber,
 DITemplateTypeParameter
 DIBuilder::createTemplateTypeParameter(DIDescriptor Context, StringRef Name,
                                        DIType Ty) {
+  assert(!DIScope(getNonCompileUnitScope(Context)).getRef() &&
+         "Expected compile unit");
   Metadata *Elts[] = {HeaderBuilder::get(dwarf::DW_TAG_template_type_parameter)
                           .concat(Name)
                           .concat(0)
                           .concat(0)
                           .get(VMContext),
-                      DIScope(getNonCompileUnitScope(Context)).getRef(),
-                      Ty.getRef(), nullptr};
+                      nullptr, Ty.getRef(), nullptr};
   return DITemplateTypeParameter(MDNode::get(VMContext, Elts));
 }
 
@@ -517,10 +518,11 @@ static DITemplateValueParameter
 createTemplateValueParameterHelper(LLVMContext &VMContext, unsigned Tag,
                                    DIDescriptor Context, StringRef Name,
                                    DIType Ty, Metadata *MD) {
+  assert(!DIScope(getNonCompileUnitScope(Context)).getRef() &&
+         "Expected compile unit");
   Metadata *Elts[] = {
       HeaderBuilder::get(Tag).concat(Name).concat(0).concat(0).get(VMContext),
-      DIScope(getNonCompileUnitScope(Context)).getRef(), Ty.getRef(), MD,
-      nullptr};
+      nullptr, Ty.getRef(), MD, nullptr};
   return DITemplateValueParameter(MDNode::get(VMContext, Elts));
 }
 

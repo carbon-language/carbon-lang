@@ -732,7 +732,6 @@ public:
 
   StringRef getName() const { return getHeaderField(1); }
 
-  DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(1); }
   DITypeRef getType() const { return getFieldAs<DITypeRef>(2); }
   bool Verify() const;
 };
@@ -745,7 +744,6 @@ public:
 
   StringRef getName() const { return getHeaderField(1); }
 
-  DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(1); }
   DITypeRef getType() const { return getFieldAs<DITypeRef>(2); }
   Metadata *getValue() const;
   bool Verify() const;
