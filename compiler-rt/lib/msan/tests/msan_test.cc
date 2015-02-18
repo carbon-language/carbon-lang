@@ -2869,8 +2869,13 @@ static void GetPathToLoadable(char *buf, size_t sz) {
   const char *last_slash = strrchr(program_path, '/');
   ASSERT_NE(nullptr, last_slash);
   size_t dir_len = (size_t)(last_slash - program_path);
-
+#if defined(__x86_64__)
   static const char basename[] = "libmsan_loadable.x86_64.so";
+#elif defined(__MIPSEB__) || defined(MIPSEB)
+  static const char basename[] = "libmsan_loadable.mips64.so";
+#elif defined(__mips64)
+  static const char basename[] = "libmsan_loadable.mips64el.so";
+#endif
   int res = snprintf(buf, sz, "%.*s/%s",
                      (int)dir_len, program_path, basename);
   ASSERT_GE(res, 0);
@@ -2920,7 +2925,7 @@ TEST(MemorySanitizer, dlopen) {
 
 // Regression test for a crash in dlopen() interceptor.
 TEST(MemorySanitizer, dlopenFailed) {
-  const char *path = "/libmsan_loadable_does_not_exist.x86_64.so";
+  const char *path = "/libmsan_loadable_does_not_exist.so";
   void *lib = dlopen(path, RTLD_LAZY);
   ASSERT_TRUE(lib == NULL);
 }

@@ -116,6 +116,9 @@
 #if SANITIZER_LINUX || SANITIZER_FREEBSD
 # include <utime.h>
 # include <sys/ptrace.h>
+# if defined(__mips64)
+#  include <asm/ptrace.h>
+# endif
 #endif
 
 #if !SANITIZER_ANDROID
@@ -139,6 +142,9 @@
 #include <sys/shm.h>
 #include <sys/statvfs.h>
 #include <sys/timex.h>
+#if defined(__mips64)
+# include <sys/procfs.h>
+#endif
 #include <sys/user.h>
 #include <sys/ustat.h>
 #include <linux/cyclades.h>
@@ -283,14 +289,19 @@ namespace __sanitizer {
 #endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID && \
-    (defined(__i386) || defined(__x86_64))
+    (defined(__i386) || defined(__x86_64) || defined(__mips64))
+#if defined(__mips64)
+  unsigned struct_user_regs_struct_sz = sizeof(struct pt_regs);
+  unsigned struct_user_fpregs_struct_sz = sizeof(elf_fpregset_t);
+#else
   unsigned struct_user_regs_struct_sz = sizeof(struct user_regs_struct);
   unsigned struct_user_fpregs_struct_sz = sizeof(struct user_fpregs_struct);
-#ifdef __x86_64
+#endif // __mips64
+#if (defined(__x86_64) || defined(__mips64))
   unsigned struct_user_fpxregs_struct_sz = 0;
 #else
   unsigned struct_user_fpxregs_struct_sz = sizeof(struct user_fpxregs_struct);
-#endif
+#endif // __x86_64 || __mips64
 
   int ptrace_peektext = PTRACE_PEEKTEXT;
   int ptrace_peekdata = PTRACE_PEEKDATA;

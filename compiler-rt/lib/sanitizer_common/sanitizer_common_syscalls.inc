@@ -2297,7 +2297,8 @@ PRE_SYSCALL(ni_syscall)() {}
 POST_SYSCALL(ni_syscall)(long res) {}
 
 PRE_SYSCALL(ptrace)(long request, long pid, long addr, long data) {
-#if !SANITIZER_ANDROID && (defined(__i386) || defined (__x86_64))
+#if !SANITIZER_ANDROID && \
+    (defined(__i386) || defined(__x86_64) || defined(__mips64))
   if (data) {
     if (request == ptrace_setregs) {
       PRE_READ((void *)data, struct_user_regs_struct_sz);
@@ -2316,7 +2317,8 @@ PRE_SYSCALL(ptrace)(long request, long pid, long addr, long data) {
 }
 
 POST_SYSCALL(ptrace)(long res, long request, long pid, long addr, long data) {
-#if !SANITIZER_ANDROID && (defined(__i386) || defined (__x86_64))
+#if !SANITIZER_ANDROID && \
+    (defined(__i386) || defined(__x86_64) || defined(__mips64))
   if (res >= 0 && data) {
     // Note that this is different from the interceptor in
     // sanitizer_common_interceptors.inc.

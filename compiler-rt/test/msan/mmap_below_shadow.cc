@@ -15,8 +15,13 @@
 
 int main(void) {
   // Hint address just below shadow.
+#if defined(__x86_64__)
   uintptr_t hint = 0x4f0000000000ULL;
   const uintptr_t app_start = 0x600000000000ULL;
+#elif defined (__mips64)
+  uintptr_t hint = 0x4f00000000ULL;
+  const uintptr_t app_start = 0x6000000000ULL;
+#endif
   uintptr_t p = (uintptr_t)mmap(
       (void *)hint, 4096, PROT_WRITE,
       MAP_PRIVATE | MAP_ANONYMOUS | (FIXED ? MAP_FIXED : 0), -1, 0);

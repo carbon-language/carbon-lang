@@ -9,7 +9,11 @@
 #include <string.h>
 
 const char *mem_to_shadow(const char *p) {
+#if defined(__x86_64__)
   return (char *)((uintptr_t)p & ~0x400000000000ULL);
+#elif defined (__mips64)
+  return (char *)((uintptr_t)p & ~0x4000000000ULL);
+#endif
 }
 
 int main(void) {
