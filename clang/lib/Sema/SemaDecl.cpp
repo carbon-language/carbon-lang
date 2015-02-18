@@ -6912,8 +6912,10 @@ static void checkIsValidOpenCLKernelParameter(
 
       // We have an error, now let's go back up through history and show where
       // the offending field came from
-      for (ArrayRef<const FieldDecl *>::const_iterator I = HistoryStack.begin() + 1,
-             E = HistoryStack.end(); I != E; ++I) {
+      for (ArrayRef<const FieldDecl *>::const_iterator
+               I = HistoryStack.begin() + 1,
+               E = HistoryStack.end();
+           I != E; ++I) {
         const FieldDecl *OuterField = *I;
         S.Diag(OuterField->getLocation(), diag::note_within_field_of_type)
           << OuterField->getType();

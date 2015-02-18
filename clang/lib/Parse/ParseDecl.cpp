@@ -1691,11 +1691,12 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
       }
 
       if (isDeclarationSpecifier()) {
-        // If there is an invalid declaration specifier right after the function
-        // prototype, then we must be in a missing semicolon case where this isn't
-        // actually a body.  Just fall through into the code that handles it as a
-        // prototype, and let the top-level code handle the erroneous declspec
-        // where it would otherwise expect a comma or semicolon.
+        // If there is an invalid declaration specifier right after the
+        // function prototype, then we must be in a missing semicolon case
+        // where this isn't actually a body.  Just fall through into the code
+        // that handles it as a prototype, and let the top-level code handle
+        // the erroneous declspec where it would otherwise expect a comma or
+        // semicolon.
       } else {
         Diag(Tok, diag::err_expected_fn_body);
         SkipUntil(tok::semi);
@@ -2875,9 +2876,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                             Tok.getLocation(), getCurScope());
 
       // MSVC: If we weren't able to parse a default template argument, and it's
-      // just a simple identifier, create a DependentNameType.  This will allow us
-      // to defer the name lookup to template instantiation time, as long we forge a
-      // NestedNameSpecifier for the current context.
+      // just a simple identifier, create a DependentNameType.  This will allow
+      // us to defer the name lookup to template instantiation time, as long we
+      // forge a NestedNameSpecifier for the current context.
       if (!TypeRep && DSContext == DSC_template_type_arg &&
           getLangOpts().MSVCCompat && getCurScope()->isTemplateParamScope()) {
         TypeRep = Actions.ActOnDelayedDefaultTemplateArg(
@@ -5038,7 +5039,8 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
       // If there was an error parsing parenthesized declarator, declarator
       // scope may have been entered before. Don't do it again.
       if (!D.isInvalidType() &&
-          Actions.ShouldEnterDeclaratorScope(getCurScope(), D.getCXXScopeSpec()))
+          Actions.ShouldEnterDeclaratorScope(getCurScope(),
+                                             D.getCXXScopeSpec()))
         // Change the declaration context for name lookup, until this function
         // is exited (and the declarator has been parsed).
         DeclScopeObj.EnterDeclaratorScope();
