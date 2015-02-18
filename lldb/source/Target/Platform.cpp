@@ -1122,7 +1122,11 @@ Platform::LaunchProcess (ProcessLaunchInfo &launch_info)
                 error.SetErrorString("could not find argdumper tool");
                 return error;
             }
+#if defined(_WIN32)
+            glob_tool_spec.AppendPathComponent("argdumper.exe");
+#else
             glob_tool_spec.AppendPathComponent("argdumper");
+#endif
             if (!glob_tool_spec.Exists())
             {
                 error.SetErrorString("could not find argdumper tool");
@@ -1131,7 +1135,9 @@ Platform::LaunchProcess (ProcessLaunchInfo &launch_info)
 
             std::string quoted_cmd_string;
             launch_info.GetArguments().GetQuotedCommandString(quoted_cmd_string);
-            
+#if defined(_WIN32)
+            std::replace(quoted_cmd_string.begin(), quoted_cmd_string.end(), '\\', '/');
+#endif
             StreamString glob_command;
             
             glob_command.Printf("%s %s",
