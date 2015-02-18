@@ -314,7 +314,7 @@ public:
         popRegion();
       if (PrevRegion && PrevRegion->startLoc() == Region.startLoc() &&
           PrevRegion->endLoc() == Region.endLoc()) {
-        if (Region.Kind != coverage::CounterMappingRegion::SkippedRegion)
+        if (Region.Kind == coverage::CounterMappingRegion::CodeRegion)
           Segments.back().addCount(Region.ExecutionCount);
       } else {
         // Add this region to the stack.
