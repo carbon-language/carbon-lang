@@ -21,6 +21,7 @@ class LaunchWithGlobTestCase(TestBase):
         self.do_test ()
 
 
+    @expectedFailureFreeBSD("llvm.org/pr22627 process launch w/ glob not working")
     @dwarf_test
     def test_with_dwarf (self):
         self.buildDwarf()
