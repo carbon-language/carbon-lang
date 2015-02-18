@@ -464,39 +464,31 @@ multiclass SOP2_SELECT_32 <sop2 op, string opName, list<dag> pattern> {
     opName#" $dst, $src0, $src1 [$scc]">;
 }
 
-multiclass SOP2_32 <sop2 op, string opName, list<dag> pattern> {
-  def "" : SOP2_Pseudo <opName, (outs SReg_32:$dst),
-    (ins SSrc_32:$src0, SSrc_32:$src1), pattern>;
+multiclass SOP2_m <sop2 op, string opName, dag outs, dag ins, string asm,
+                   list<dag> pattern> {
 
-  def _si : SOP2_Real_si <op, opName, (outs SReg_32:$dst),
-    (ins SSrc_32:$src0, SSrc_32:$src1), opName#" $dst, $src0, $src1">;
+  def "" : SOP2_Pseudo <opName, outs, ins, pattern>;
 
-  def _vi : SOP2_Real_vi <op, opName, (outs SReg_32:$dst),
-    (ins SSrc_32:$src0, SSrc_32:$src1), opName#" $dst, $src0, $src1">;
+  def _si : SOP2_Real_si <op, opName, outs, ins, asm>;
+
+  def _vi : SOP2_Real_vi <op, opName, outs, ins, asm>;
+
 }
 
-multiclass SOP2_64 <sop2 op, string opName, list<dag> pattern> {
-  def "" : SOP2_Pseudo <opName, (outs SReg_64:$dst),
-    (ins SSrc_64:$src0, SSrc_64:$src1), pattern>;
+multiclass SOP2_32 <sop2 op, string opName, list<dag> pattern> : SOP2_m <
+    op, opName, (outs SReg_32:$dst), (ins SSrc_32:$src0, SSrc_32:$src1),
+    opName#" $dst, $src0, $src1", pattern
+>;
 
-  def _si : SOP2_Real_si <op, opName, (outs SReg_64:$dst),
-    (ins SSrc_64:$src0, SSrc_64:$src1), opName#" $dst, $src0, $src1">;
+multiclass SOP2_64 <sop2 op, string opName, list<dag> pattern> : SOP2_m <
+    op, opName, (outs SReg_64:$dst), (ins SSrc_64:$src0, SSrc_64:$src1),
+    opName#" $dst, $src0, $src1", pattern
+>;
 
-  def _vi : SOP2_Real_vi <op, opName, (outs SReg_64:$dst),
-    (ins SSrc_64:$src0, SSrc_64:$src1), opName#" $dst, $src0, $src1">;
-}
-
-multiclass SOP2_64_32 <sop2 op, string opName, list<dag> pattern> {
-  def "" : SOP2_Pseudo <opName, (outs SReg_64:$dst),
-    (ins SSrc_64:$src0, SSrc_32:$src1), pattern>;
-
-  def _si : SOP2_Real_si <op, opName, (outs SReg_64:$dst),
-    (ins SSrc_64:$src0, SSrc_32:$src1), opName#" $dst, $src0, $src1">;
-
-  def _vi : SOP2_Real_vi <op, opName, (outs SReg_64:$dst),
-    (ins SSrc_64:$src0, SSrc_32:$src1), opName#" $dst, $src0, $src1">;
-}
-
+multiclass SOP2_64_32 <sop2 op, string opName, list<dag> pattern> : SOP2_m <
+    op, opName, (outs SReg_64:$dst), (ins SSrc_64:$src0, SSrc_32:$src1),
+    opName#" $dst, $src0, $src1", pattern
+>;
 
 class SOPC_Helper <bits<7> op, RegisterOperand rc, ValueType vt,
                     string opName, PatLeaf cond> : SOPC <
