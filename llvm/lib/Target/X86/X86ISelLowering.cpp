@@ -5828,13 +5828,12 @@ static SDValue LowerBuildVectorv4x32(SDValue Op, SelectionDAG &DAG,
                                      const X86Subtarget *Subtarget,
                                      const TargetLowering &TLI) {
   // Find all zeroable elements.
-  bool Zeroable[4];
+  std::bitset<4> Zeroable;
   for (int i=0; i < 4; ++i) {
     SDValue Elt = Op->getOperand(i);
     Zeroable[i] = (Elt.getOpcode() == ISD::UNDEF || X86::isZeroNode(Elt));
   }
-  assert(std::count_if(&Zeroable[0], &Zeroable[4],
-                       [](bool M) { return !M; }) > 1 &&
+  assert(Zeroable.size() - Zeroable.count() > 1 &&
          "We expect at least two non-zero elements!");
 
   // We only know how to deal with build_vector nodes where elements are either
@@ -5920,10 +5919,7 @@ static SDValue LowerBuildVectorv4x32(SDValue Op, SelectionDAG &DAG,
     V2 = DAG.getNode(ISD::BITCAST, SDLoc(V2), MVT::v4f32, V2);
 
   // Ok, we can emit an INSERTPS instruction.
-  unsigned ZMask = 0;
-  for (int i = 0; i < 4; ++i)
-    if (Zeroable[i])
-      ZMask |= 1 << i;
+  unsigned ZMask = Zeroable.to_ulong();
 
   unsigned InsertPSMask = EltMaskIdx << 6 | EltIdx << 4 | ZMask;
   assert((InsertPSMask & ~0xFFu) == 0 && "Invalid mask!");
