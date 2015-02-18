@@ -41,8 +41,11 @@ int main() { return (float)x; }"
       set(CMAKE_REQUIRED_LIBRARIES ${OLD_CMAKE_REQUIRED_LIBRARIES})
     endif()
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 18.0.31101)
-      message(FATAL_ERROR "Host Visual Studio must be at least 2013 Update 4 (MSVC 18.0.31101)")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 18.0)
+      message(FATAL_ERROR "Host Visual Studio must be at least 2013")
+    elseif(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 18.0.31101)
+      message(WARNING "Host Visual Studio should at least be 2013 Update 4 (MSVC 18.0.31101)"
+        "  due to miscompiles from earlier versions")
     endif()
   endif()
 endif()
