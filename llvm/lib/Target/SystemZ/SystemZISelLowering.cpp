@@ -1969,10 +1969,7 @@ SDValue SystemZTargetLowering::lowerGlobalTLSAddress(GlobalAddressSDNode *Node,
                            Offset, MachinePointerInfo::getConstantPool(),
                            false, false, false, 0);
       break;
-   }
-
-    default:
-      llvm_unreachable("Unknown TLS model.");
+    }
   }
 
   // Add the base and offset together.
