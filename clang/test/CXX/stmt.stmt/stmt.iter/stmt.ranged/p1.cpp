@@ -50,6 +50,18 @@ namespace X {
   struct NoEndADL {
     null_t alt_begin();
   };
+
+  struct C {
+    C();
+    struct It {
+      int val;
+      operator int &() { return val; }
+    };
+    It begin();
+    It end();
+  };
+
+  constexpr int operator*(const C::It &) { return 0; }
 }
 
 using X::A;
@@ -118,7 +130,7 @@ void g() {
   for (extern int a : A()) {} // expected-error {{loop variable 'a' may not be declared 'extern'}}
   for (static int a : A()) {} // expected-error {{loop variable 'a' may not be declared 'static'}}
   for (register int a : A()) {} // expected-error {{loop variable 'a' may not be declared 'register'}} expected-warning {{deprecated}}
-  for (constexpr int a : A()) {} // expected-error {{loop variable 'a' may not be declared 'constexpr'}}
+  for (constexpr int a : X::C()) {} // OK per CWG issue #1204.
 
   for (auto u : X::NoBeginADL()) { // expected-error {{invalid range expression of type 'X::NoBeginADL'; no viable 'begin' function available}}
   }
