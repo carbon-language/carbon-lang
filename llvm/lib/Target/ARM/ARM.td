@@ -325,6 +325,12 @@ def : Processor<"mpcore",           ARMV6Itineraries, [HasV6Ops, FeatureVFP2,
 // V6M Processors.
 def : Processor<"cortex-m0",        ARMV6Itineraries, [HasV6MOps, FeatureNoARM,
                                                        FeatureDB, FeatureMClass]>;
+def : Processor<"cortex-m0plus",    ARMV6Itineraries, [HasV6MOps, FeatureNoARM,
+                                                       FeatureDB, FeatureMClass]>;
+def : Processor<"cortex-m1",        ARMV6Itineraries, [HasV6MOps, FeatureNoARM,
+                                                       FeatureDB, FeatureMClass]>;
+def : Processor<"sc000",            ARMV6Itineraries, [HasV6MOps, FeatureNoARM,
+                                                       FeatureDB, FeatureMClass]>;
 
 // V6T2 Processors.
 def : Processor<"arm1156t2-s",      ARMV6Itineraries, [HasV6T2Ops,
@@ -384,8 +390,18 @@ def : ProcessorModel<"cortex-r5",   CortexA8Model,
                                      FeatureHasRAS, FeatureVFPOnlySP,
                                      FeatureD16, FeatureRClass]>;
 
+// FIXME: R7 has currently the same ProcessorModel as A8 and is modelled as R5.
+def : ProcessorModel<"cortex-r7",   CortexA8Model,
+                                    [ProcR5, HasV7Ops, FeatureDB,
+                                     FeatureVFP3, FeatureDSPThumb2,
+                                     FeatureHasRAS, FeatureVFPOnlySP,
+                                     FeatureD16, FeatureMP, FeatureRClass]>;
+
 // V7M Processors.
 def : ProcNoItin<"cortex-m3",       [HasV7Ops,
+                                     FeatureThumb2, FeatureNoARM, FeatureDB,
+                                     FeatureHWDiv, FeatureMClass]>;
+def : ProcNoItin<"sc300",           [HasV7Ops,
                                      FeatureThumb2, FeatureNoARM, FeatureDB,
                                      FeatureHWDiv, FeatureMClass]>;
 

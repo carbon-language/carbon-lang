@@ -55,9 +55,21 @@
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0 | FileCheck %s --check-prefix=CORTEX-M0
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-M0-FAST
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
+; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0plus | FileCheck %s --check-prefix=CORTEX-M0PLUS
+; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0plus  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-M0PLUS-FAST
+; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0plus -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
+; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m1 | FileCheck %s --check-prefix=CORTEX-M1
+; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m1  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-M1-FAST
+; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m1 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
+; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=sc000 | FileCheck %s --check-prefix=SC000
+; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=sc000  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=SC000-FAST
+; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=sc000 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m3 | FileCheck %s --check-prefix=CORTEX-M3
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m3  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-M3-FAST
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m3 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
+; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=sc300 | FileCheck %s --check-prefix=SC300
+; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=sc300  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=SC300-FAST
+; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=sc300 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 -float-abi=soft | FileCheck %s --check-prefix=CORTEX-M4-SOFT
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 -float-abi=soft  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-M4-SOFT-FAST
 ; RUN: llc < %s -mtriple=thumbv7m-linux-gnueabi -mcpu=cortex-m4 -float-abi=hard | FileCheck %s --check-prefix=CORTEX-M4-HARD
@@ -72,6 +84,9 @@
 ; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r5 | FileCheck %s --check-prefix=CORTEX-R5
 ; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r5  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-R5-FAST
 ; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r5 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
+; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r7 | FileCheck %s --check-prefix=CORTEX-R7
+; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r7  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-R7-FAST
+; RUN: llc < %s -mtriple=armv7r-linux-gnueabi -mcpu=cortex-r7 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a53 | FileCheck %s --check-prefix=CORTEX-A53
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a53  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-A53-FAST
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a53 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
@@ -733,6 +748,102 @@
 ; CORTEX-M0-FAST-NOT:  .eabi_attribute 22
 ; CORTEX-M0-FAST:  .eabi_attribute 23, 1
 
+; CORTEX-M0PLUS:  .cpu cortex-m0plus
+; CORTEX-M0PLUS:  .eabi_attribute 6, 12
+; CORTEX-M0PLUS-NOT:  .eabi_attribute 7
+; CORTEX-M0PLUS:  .eabi_attribute 8, 0
+; CORTEX-M0PLUS:  .eabi_attribute 9, 1
+; CORTEX-M0PLUS-NOT:   .eabi_attribute 19
+;; We default to IEEE 754 compliance
+; CORTEX-M0PLUS:  .eabi_attribute 20, 1
+; CORTEX-M0PLUS:  .eabi_attribute 21, 1
+; CORTEX-M0PLUS-NOT:  .eabi_attribute 22
+; CORTEX-M0PLUS:  .eabi_attribute 23, 3
+; CORTEX-M0PLUS:  .eabi_attribute 24, 1
+; CORTEX-M0PLUS:  .eabi_attribute 25, 1
+; CORTEX-M0PLUS-NOT:  .eabi_attribute 27
+; CORTEX-M0PLUS-NOT:  .eabi_attribute 28
+; CORTEX-M0PLUS-NOT:  .eabi_attribute 36
+; CORTEX-M0PLUS:  .eabi_attribute 38, 1
+; CORTEX-M0PLUS-NOT:  .eabi_attribute 42
+; CORTEX-M0PLUS-NOT:  .eabi_attribute 44
+; CORTEX-M0PLUS-NOT:  .eabi_attribute 68
+
+; CORTEX-M0PLUS-FAST-NOT:   .eabi_attribute 19
+;; Despite the M0+ CPU having no FPU in this scenario, we chose to
+;; flush to positive zero here. There's no hardware support doing
+;; this, but the fast maths software library might and such behaviour
+;; would match hardware support on this architecture revision if it
+;; existed.
+; CORTEX-M0PLUS-FAST-NOT:  .eabi_attribute 20
+; CORTEX-M0PLUS-FAST-NOT:  .eabi_attribute 21
+; CORTEX-M0PLUS-FAST-NOT:  .eabi_attribute 22
+; CORTEX-M0PLUS-FAST:  .eabi_attribute 23, 1
+
+; CORTEX-M1:  .cpu cortex-m1
+; CORTEX-M1:  .eabi_attribute 6, 12
+; CORTEX-M1-NOT:  .eabi_attribute 7
+; CORTEX-M1:  .eabi_attribute 8, 0
+; CORTEX-M1:  .eabi_attribute 9, 1
+; CORTEX-M1-NOT:   .eabi_attribute 19
+;; We default to IEEE 754 compliance
+; CORTEX-M1:  .eabi_attribute 20, 1
+; CORTEX-M1:  .eabi_attribute 21, 1
+; CORTEX-M1-NOT:  .eabi_attribute 22
+; CORTEX-M1:  .eabi_attribute 23, 3
+; CORTEX-M1:  .eabi_attribute 24, 1
+; CORTEX-M1:  .eabi_attribute 25, 1
+; CORTEX-M1-NOT:  .eabi_attribute 27
+; CORTEX-M1-NOT:  .eabi_attribute 28
+; CORTEX-M1-NOT:  .eabi_attribute 36
+; CORTEX-M1:  .eabi_attribute 38, 1
+; CORTEX-M1-NOT:  .eabi_attribute 42
+; CORTEX-M1-NOT:  .eabi_attribute 44
+; CORTEX-M1-NOT:  .eabi_attribute 68
+
+; CORTEX-M1-FAST-NOT:   .eabi_attribute 19
+;; Despite the M1 CPU having no FPU in this scenario, we chose to
+;; flush to positive zero here. There's no hardware support doing
+;; this, but the fast maths software library might and such behaviour
+;; would match hardware support on this architecture revision if it
+;; existed.
+; CORTEX-M1-FAST-NOT:  .eabi_attribute 20
+; CORTEX-M1-FAST-NOT:  .eabi_attribute 21
+; CORTEX-M1-FAST-NOT:  .eabi_attribute 22
+; CORTEX-M1-FAST:  .eabi_attribute 23, 1
+
+; SC000:  .cpu sc000
+; SC000:  .eabi_attribute 6, 12
+; SC000-NOT:  .eabi_attribute 7
+; SC000:  .eabi_attribute 8, 0
+; SC000:  .eabi_attribute 9, 1
+; SC000-NOT:   .eabi_attribute 19
+;; We default to IEEE 754 compliance
+; SC000:  .eabi_attribute 20, 1
+; SC000:  .eabi_attribute 21, 1
+; SC000-NOT:  .eabi_attribute 22
+; SC000:  .eabi_attribute 23, 3
+; SC000:  .eabi_attribute 24, 1
+; SC000:  .eabi_attribute 25, 1
+; SC000-NOT:  .eabi_attribute 27
+; SC000-NOT:  .eabi_attribute 28
+; SC000-NOT:  .eabi_attribute 36
+; SC000:  .eabi_attribute 38, 1
+; SC000-NOT:  .eabi_attribute 42
+; SC000-NOT:  .eabi_attribute 44
+; SC000-NOT:  .eabi_attribute 68
+
+; SC000-FAST-NOT:   .eabi_attribute 19
+;; Despite the SC000 CPU having no FPU in this scenario, we chose to
+;; flush to positive zero here. There's no hardware support doing
+;; this, but the fast maths software library might and such behaviour
+;; would match hardware support on this architecture revision if it
+;; existed.
+; SC000-FAST-NOT:  .eabi_attribute 20
+; SC000-FAST-NOT:  .eabi_attribute 21
+; SC000-FAST-NOT:  .eabi_attribute 22
+; SC000-FAST:  .eabi_attribute 23, 1
+
 ; CORTEX-M3:  .cpu cortex-m3
 ; CORTEX-M3:  .eabi_attribute 6, 10
 ; CORTEX-M3:  .eabi_attribute 7, 77
@@ -762,6 +873,36 @@
 ; CORTEX-M3-FAST-NOT:  .eabi_attribute 21
 ; CORTEX-M3-FAST-NOT:  .eabi_attribute 22
 ; CORTEX-M3-FAST:  .eabi_attribute 23, 1
+
+; SC300:  .cpu sc300
+; SC300:  .eabi_attribute 6, 10
+; SC300:  .eabi_attribute 7, 77
+; SC300:  .eabi_attribute 8, 0
+; SC300:  .eabi_attribute 9, 2
+; SC300-NOT:   .eabi_attribute 19
+;; We default to IEEE 754 compliance
+; SC300:  .eabi_attribute 20, 1
+; SC300:  .eabi_attribute 21, 1
+; SC300-NOT:  .eabi_attribute 22
+; SC300:  .eabi_attribute 23, 3
+; SC300:  .eabi_attribute 24, 1
+; SC300:  .eabi_attribute 25, 1
+; SC300-NOT:  .eabi_attribute 27
+; SC300-NOT:  .eabi_attribute 28
+; SC300-NOT:  .eabi_attribute 36
+; SC300:  .eabi_attribute 38, 1
+; SC300-NOT:  .eabi_attribute 42
+; SC300-NOT:  .eabi_attribute 44
+; SC300-NOT:  .eabi_attribute 68
+
+; SC300-FAST-NOT:   .eabi_attribute 19
+;; Despite there being no FPU, we chose to flush to zero preserving
+;; sign. This matches what the hardware would do for this architecture
+;; revision.
+; SC300-FAST:  .eabi_attribute 20, 2
+; SC300-FAST-NOT:  .eabi_attribute 21
+; SC300-FAST-NOT:  .eabi_attribute 22
+; SC300-FAST:  .eabi_attribute 23, 1
 
 ; CORTEX-M4-SOFT:  .cpu cortex-m4
 ; CORTEX-M4-SOFT:  .eabi_attribute 6, 13
@@ -887,6 +1028,35 @@
 ; CORTEX-R5-FAST-NOT:  .eabi_attribute 21
 ; CORTEX-R5-FAST-NOT:  .eabi_attribute 22
 ; CORTEX-R5-FAST:  .eabi_attribute 23, 1
+
+; CORTEX-R7:  .cpu cortex-r7
+; CORTEX-R7:  .eabi_attribute 6, 10
+; CORTEX-R7:  .eabi_attribute 7, 82
+; CORTEX-R7:  .eabi_attribute 8, 1
+; CORTEX-R7:  .eabi_attribute 9, 2
+; CORTEX-R7:  .fpu vfpv3-d16
+; CORTEX-R7-NOT:   .eabi_attribute 19
+;; We default to IEEE 754 compliance
+; CORTEX-R7:  .eabi_attribute 20, 1
+; CORTEX-R7:  .eabi_attribute 21, 1
+; CORTEX-R7-NOT:  .eabi_attribute 22
+; CORTEX-R7:  .eabi_attribute 23, 3
+; CORTEX-R7:  .eabi_attribute 24, 1
+; CORTEX-R7:  .eabi_attribute 25, 1
+; CORTEX-R7:  .eabi_attribute 27, 1
+; CORTEX-R7-NOT:  .eabi_attribute 28
+; CORTEX-R7-NOT:  .eabi_attribute 36
+; CORTEX-R7:  .eabi_attribute 38, 1
+; CORTEX-R7:  .eabi_attribute 42, 1
+; CORTEX-R7:  .eabi_attribute 44, 2
+; CORTEX-R7-NOT:  .eabi_attribute 68
+
+; CORTEX-R7-FAST-NOT:   .eabi_attribute 19
+;; The R7 has the VFPv3 FP unit, which always flushes preserving sign.
+; CORTEX-R7-FAST:  .eabi_attribute 20, 2
+; CORTEX-R7-FAST-NOT:  .eabi_attribute 21
+; CORTEX-R7-FAST-NOT:  .eabi_attribute 22
+; CORTEX-R7-FAST:  .eabi_attribute 23, 1
 
 ; CORTEX-A53:  .cpu cortex-a53
 ; CORTEX-A53:  .eabi_attribute 6, 14
