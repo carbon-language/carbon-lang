@@ -10,12 +10,11 @@
 #ifndef lldb_Platform_h_
 #define lldb_Platform_h_
 
-#include "lldb/Host/HostGetOpt.h"
-
 #if defined( _WIN32 )
 
     // this will stop signal.h being included
     #define _INC_SIGNAL
+    #include "lldb/Host/HostGetOpt.h"
     #include <io.h>
 #if defined( _MSC_VER )
     #include <eh.h>
@@ -93,7 +92,7 @@
     extern int  tcgetattr( int fildes, struct termios *termios_p );
 
 #else
-
+    #include "lldb/Host/HostGetOpt.h"
     #include <inttypes.h>
 
     #include <libgen.h>
