@@ -158,6 +158,15 @@ define void @store_sgpr_ptr_large_offset(i32 addrspace(1)* %out) #0 {
   ret void
 }
 
+; CHECK-LABEL: {{^}}store_sgpr_ptr_large_offset_atomic:
+; CHECK: s_mov_b32 [[SOFFSET:s[0-9]+]], 0x20000
+; CHECK: buffer_atomic_add v{{[0-9]+}}, s{{\[[0-9]+:[0-9]+\]}}, [[SOFFSET]]
+define void @store_sgpr_ptr_large_offset_atomic(i32 addrspace(1)* %out) #0 {
+  %gep = getelementptr i32 addrspace(1)* %out, i32 32768
+  %val = atomicrmw volatile add i32 addrspace(1)* %gep, i32 5 seq_cst
+  ret void
+}
+
 ; CHECK-LABEL: {{^}}store_vgpr_ptr:
 ; CHECK: buffer_store_dword v{{[0-9]+}}, v{{\[[0-9]+:[0-9]+\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0 addr64
 define void @store_vgpr_ptr(i32 addrspace(1)* %out) #0 {

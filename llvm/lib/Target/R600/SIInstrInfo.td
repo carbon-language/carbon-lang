@@ -1780,8 +1780,8 @@ multiclass MUBUF_Atomic <mubuf op, string name, RegisterClass rc,
       defm _ADDR64 : MUBUFAtomicAddr64_m <
         op, name#"_addr64", (outs),
         (ins rc:$vdata, SReg_128:$srsrc, VReg_64:$vaddr,
-             mbuf_offset:$offset, slc:$slc),
-        name#" $vdata, $vaddr, $srsrc, 0 addr64"#"$offset"#"$slc", [], 0
+             mbuf_offset:$offset, SCSrc_32:$soffset, slc:$slc),
+        name#" $vdata, $vaddr, $srsrc, $soffset addr64"#"$offset"#"$slc", [], 0
       >;
 
       defm _OFFSET : MUBUFAtomicOffset_m <
