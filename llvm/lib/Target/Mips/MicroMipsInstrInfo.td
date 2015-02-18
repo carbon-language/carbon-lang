@@ -788,6 +788,7 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
     def J_MM        : MMRel, JumpFJ<jmptarget_mm, "j", br, bb, "j">,
                       J_FM_MM<0x35>;
     def JAL_MM      : MMRel, JumpLink<"jal", calltarget_mm>, J_FM_MM<0x3d>;
+    def JALX_MM     : MMRel, JumpLink<"jalx", calltarget>, J_FM_MM<0x3c>;
   }
   def JR_MM   : MMRel, IndirectBranch<"jr", GPR32Opnd>, JR_FM_MM<0x3c>;
   def JALR_MM : JumpLinkReg<"jalr", GPR32Opnd>, JALR_FM_MM<0x03c>;
