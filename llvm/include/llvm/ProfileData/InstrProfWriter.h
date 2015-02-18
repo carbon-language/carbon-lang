@@ -20,6 +20,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ProfileData/InstrProf.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <vector>
 
@@ -41,8 +42,13 @@ public:
   std::error_code addFunctionCounts(StringRef FunctionName,
                                     uint64_t FunctionHash,
                                     ArrayRef<uint64_t> Counters);
-  /// Ensure that all data is written to disk.
+  /// Write the profile to \c OS
   void write(raw_fd_ostream &OS);
+  /// Write the profile, returning the raw data. For testing.
+  std::unique_ptr<MemoryBuffer> writeBuffer();
+
+private:
+  std::pair<uint64_t, uint64_t> writeImpl(raw_ostream &OS);
 };
 
 } // end namespace llvm
