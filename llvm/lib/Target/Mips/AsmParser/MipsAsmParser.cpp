@@ -3781,12 +3781,20 @@ bool MipsAsmParser::parseDirectiveCPSetup() {
   if (!eatComma("unexpected token, expected comma"))
     return true;
 
-  StringRef Name;
-  if (Parser.parseIdentifier(Name))
-    reportParseError("expected identifier");
-  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+  const MCExpr *Expr;
+  if (Parser.parseExpression(Expr)) {
+    reportParseError("expected expression");
+    return false;
+  }
 
-  getTargetStreamer().emitDirectiveCpsetup(FuncReg, Save, *Sym, SaveIsReg);
+  if (Expr->getKind() != MCExpr::SymbolRef) {
+    reportParseError("expected symbol");
+    return false;
+  }
+  const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr *>(Expr);
+
+  getTargetStreamer().emitDirectiveCpsetup(FuncReg, Save, Ref->getSymbol(),
+                                           SaveIsReg);
   return false;
 }
 

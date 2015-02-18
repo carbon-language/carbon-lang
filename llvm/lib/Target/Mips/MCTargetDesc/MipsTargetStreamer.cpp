@@ -706,9 +706,10 @@ void MipsTargetELFStreamer::emitDirectiveCpsetup(unsigned RegNo,
   Inst.clear();
 
   const MCSymbolRefExpr *HiExpr = MCSymbolRefExpr::Create(
-      Sym.getName(), MCSymbolRefExpr::VK_Mips_GPOFF_HI, MCA.getContext());
+      &Sym, MCSymbolRefExpr::VK_Mips_GPOFF_HI, MCA.getContext());
   const MCSymbolRefExpr *LoExpr = MCSymbolRefExpr::Create(
-      Sym.getName(), MCSymbolRefExpr::VK_Mips_GPOFF_LO, MCA.getContext());
+      &Sym, MCSymbolRefExpr::VK_Mips_GPOFF_LO, MCA.getContext());
+
   // lui $gp, %hi(%neg(%gp_rel(funcSym)))
   Inst.setOpcode(Mips::LUi);
   Inst.addOperand(MCOperand::CreateReg(Mips::GP));
