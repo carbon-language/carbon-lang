@@ -670,6 +670,14 @@ TEST_F(MDSubrangeTest, get) {
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
 }
 
+TEST_F(MDSubrangeTest, getEmptyArray) {
+  auto *N = MDSubrange::get(Context, -1, 0);
+  EXPECT_EQ(dwarf::DW_TAG_subrange_type, N->getTag());
+  EXPECT_EQ(-1, N->getCount());
+  EXPECT_EQ(0, N->getLo());
+  EXPECT_EQ(N, MDSubrange::get(Context, -1, 0));
+}
+
 typedef MetadataTest MDEnumeratorTest;
 
 TEST_F(MDEnumeratorTest, get) {

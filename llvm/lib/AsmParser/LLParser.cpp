@@ -3276,7 +3276,7 @@ bool LLParser::ParseGenericDebugNode(MDNode *&Result, bool IsDistinct) {
 ///   ::= !MDSubrange(count: 30, lowerBound: 2)
 bool LLParser::ParseMDSubrange(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
-  REQUIRED(count, MDUnsignedField, (0, UINT64_MAX >> 1));                      \
+  REQUIRED(count, MDSignedField, (-1, -1, INT64_MAX));                         \
   OPTIONAL(lowerBound, MDSignedField, );
   PARSE_MD_FIELDS();
 #undef VISIT_MD_FIELDS
