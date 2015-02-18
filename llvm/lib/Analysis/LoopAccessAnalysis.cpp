@@ -437,10 +437,9 @@ public:
   typedef PointerIntPair<Value *, 1, bool> MemAccessInfo;
   typedef SmallPtrSet<MemAccessInfo, 8> MemAccessInfoSet;
 
-  MemoryDepChecker(ScalarEvolution *Se, const DataLayout *Dl, const Loop *L,
-                   const LoopAccessInfo::VectorizerParams &VectParams)
+  MemoryDepChecker(ScalarEvolution *Se, const DataLayout *Dl, const Loop *L)
       : SE(Se), DL(Dl), InnermostLoop(L), AccessIdx(0),
-        ShouldRetryWithRuntimeCheck(false), VectParams(VectParams) {}
+        ShouldRetryWithRuntimeCheck(false) {}
 
   /// \brief Register the location (instructions are given increasing numbers)
   /// of a write access.
@@ -494,9 +493,6 @@ private:
   /// \brief If we see a non-constant dependence distance we can still try to
   /// vectorize this loop with runtime checks.
   bool ShouldRetryWithRuntimeCheck;
-
-  /// \brief Vectorizer parameters used by the analysis.
-  LoopAccessInfo::VectorizerParams VectParams;
 
   /// \brief Check whether there is a plausible dependence between the two
   /// accesses.
@@ -621,7 +617,8 @@ bool MemoryDepChecker::couldPreventStoreLoadForward(unsigned Distance,
   // Store-load forwarding distance.
   const unsigned NumCyclesForStoreLoadThroughMemory = 8*TypeByteSize;
   // Maximum vector factor.
-  unsigned MaxVFWithoutSLForwardIssues = VectParams.MaxVectorWidth*TypeByteSize;
+  unsigned MaxVFWithoutSLForwardIssues =
+    VectorizerParams::MaxVectorWidth * TypeByteSize;
   if(MaxSafeDepDistBytes < MaxVFWithoutSLForwardIssues)
     MaxVFWithoutSLForwardIssues = MaxSafeDepDistBytes;
 
@@ -640,7 +637,8 @@ bool MemoryDepChecker::couldPreventStoreLoadForward(unsigned Distance,
   }
 
   if (MaxVFWithoutSLForwardIssues < MaxSafeDepDistBytes &&
-      MaxVFWithoutSLForwardIssues != VectParams.MaxVectorWidth*TypeByteSize)
+      MaxVFWithoutSLForwardIssues !=
+      VectorizerParams::MaxVectorWidth * TypeByteSize)
     MaxSafeDepDistBytes = MaxVFWithoutSLForwardIssues;
   return false;
 }
@@ -745,10 +743,10 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
   unsigned Distance = (unsigned) Val.getZExtValue();
 
   // Bail out early if passed-in parameters make vectorization not feasible.
-  unsigned ForcedFactor = (VectParams.VectorizationFactor ?
-                           VectParams.VectorizationFactor : 1);
-  unsigned ForcedUnroll = (VectParams.VectorizationInterleave ?
-                           VectParams.VectorizationInterleave : 1);
+  unsigned ForcedFactor = (VectorizerParams::VectorizationFactor ?
+                           VectorizerParams::VectorizationFactor : 1);
+  unsigned ForcedUnroll = (VectorizerParams::VectorizationInterleave ?
+                           VectorizerParams::VectorizationInterleave : 1);
 
   // The distance must be bigger than the size needed for a vectorized version
   // of the operation and the size of the vectorized operation must not be
@@ -831,7 +829,7 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
   PtrRtCheck.Need = false;
 
   const bool IsAnnotatedParallel = TheLoop->isAnnotatedParallel();
-  MemoryDepChecker DepChecker(SE, DL, TheLoop, VectParams);
+  MemoryDepChecker DepChecker(SE, DL, TheLoop);
 
   // For each block.
   for (Loop::block_iterator bb = TheLoop->block_begin(),
@@ -1000,7 +998,8 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
 
   // Check that we did not collect too many pointers or found an unsizeable
   // pointer.
-  if (!CanDoRT || NumComparisons > VectParams.RuntimeMemoryCheckThreshold) {
+  if (!CanDoRT ||
+      NumComparisons > VectorizerParams::RuntimeMemoryCheckThreshold) {
     PtrRtCheck.reset();
     CanDoRT = false;
   }
@@ -1040,14 +1039,15 @@ bool LoopAccessInfo::canVectorizeMemory(ValueToValueMap &Strides) {
                                          TheLoop, Strides, true);
       // Check that we did not collect too many pointers or found an unsizeable
       // pointer.
-      if (!CanDoRT || NumComparisons > VectParams.RuntimeMemoryCheckThreshold) {
+      if (!CanDoRT ||
+          NumComparisons > VectorizerParams::RuntimeMemoryCheckThreshold) {
         if (!CanDoRT && NumComparisons > 0)
           emitAnalysis(VectorizationReport()
                        << "cannot check memory dependencies at runtime");
         else
           emitAnalysis(VectorizationReport()
                        << NumComparisons << " exceeds limit of "
-                       << VectParams.RuntimeMemoryCheckThreshold
+                       << VectorizerParams::RuntimeMemoryCheckThreshold
                        << " dependent memory operations checked at runtime");
         DEBUG(dbgs() << "LV: Can't vectorize with memory checks\n");
         PtrRtCheck.reset();

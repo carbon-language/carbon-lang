@@ -106,14 +106,19 @@ using namespace llvm::PatternMatch;
 STATISTIC(LoopsVectorized, "Number of loops vectorized");
 STATISTIC(LoopsAnalyzed, "Number of loops analyzed for vectorization");
 
-static cl::opt<unsigned>
-VectorizationFactor("force-vector-width", cl::init(0), cl::Hidden,
-                    cl::desc("Sets the SIMD width. Zero is autoselect."));
+static cl::opt<unsigned, true>
+VectorizationFactor("force-vector-width", cl::Hidden,
+                    cl::desc("Sets the SIMD width. Zero is autoselect."),
+                    cl::location(VectorizerParams::VectorizationFactor));
+unsigned VectorizerParams::VectorizationFactor = 0;
 
-static cl::opt<unsigned>
-VectorizationInterleave("force-vector-interleave", cl::init(0), cl::Hidden,
-                    cl::desc("Sets the vectorization interleave count. "
-                             "Zero is autoselect."));
+static cl::opt<unsigned, true>
+VectorizationInterleave("force-vector-interleave", cl::Hidden,
+                        cl::desc("Sets the vectorization interleave count. "
+                                 "Zero is autoselect."),
+                        cl::location(
+                            VectorizerParams::VectorizationInterleave));
+unsigned VectorizerParams::VectorizationInterleave = 0;
 
 static cl::opt<bool>
 EnableIfConversion("enable-if-conversion", cl::init(true), cl::Hidden,
@@ -147,10 +152,10 @@ static const unsigned TinyTripCountUnrollThreshold = 128;
 
 /// When performing memory disambiguation checks at runtime do not make more
 /// than this number of comparisons.
-static const unsigned RuntimeMemoryCheckThreshold = 8;
+const unsigned VectorizerParams::RuntimeMemoryCheckThreshold = 8;
 
 /// Maximum simd width.
-static const unsigned MaxVectorWidth = 64;
+const unsigned VectorizerParams::MaxVectorWidth = 64;
 
 static cl::opt<unsigned> ForceTargetNumScalarRegs(
     "force-target-num-scalar-regs", cl::init(0), cl::Hidden,
@@ -551,10 +556,7 @@ public:
       : NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
         TLI(TLI), TheFunction(F), TTI(TTI), Induction(nullptr),
         WidestIndTy(nullptr),
-        LAI(F, L, SE, DL, TLI, AA, DT,
-            LoopAccessInfo::VectorizerParams(
-                MaxVectorWidth, VectorizationFactor, VectorizationInterleave,
-                RuntimeMemoryCheckThreshold)),
+        LAI(F, L, SE, DL, TLI, AA, DT),
         HasFunNoNaNAttr(false) {}
 
   /// This enum represents the kinds of reductions that we support.
@@ -1019,7 +1021,7 @@ class LoopVectorizeHints {
     bool validate(unsigned Val) {
       switch (Kind) {
       case HK_WIDTH:
-        return isPowerOf2_32(Val) && Val <= MaxVectorWidth;
+        return isPowerOf2_32(Val) && Val <= VectorizerParams::MaxVectorWidth;
       case HK_UNROLL:
         return isPowerOf2_32(Val) && Val <= MaxInterleaveFactor;
       case HK_FORCE:

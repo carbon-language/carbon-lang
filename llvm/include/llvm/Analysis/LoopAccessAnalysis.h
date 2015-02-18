@@ -60,6 +60,22 @@ public:
                            const Loop *TheLoop);
 };
 
+/// \brief Collection of parameters shared beetween the Loop Vectorizer and the
+/// Loop Access Analysis.
+struct VectorizerParams {
+  /// \brief Maximum SIMD width.
+  static const unsigned MaxVectorWidth;
+
+  /// \brief VF as overridden by the user.
+  static unsigned VectorizationFactor;
+  /// \brief Interleave factor as overridden by the user.
+  static unsigned VectorizationInterleave;
+
+  /// \\brief When performing memory disambiguation checks at runtime do not
+  /// make more than this number of comparisons.
+  static const unsigned RuntimeMemoryCheckThreshold;
+};
+
 /// \brief Drive the analysis of memory accesses in the loop
 ///
 /// This class is responsible for analyzing the memory accesses of a loop.  It
@@ -76,30 +92,6 @@ public:
 /// RuntimePointerCheck class.
 class LoopAccessInfo {
 public:
-  /// \brief Collection of parameters used from the vectorizer.
-  struct VectorizerParams {
-    /// \brief Maximum simd width.
-    unsigned MaxVectorWidth;
-
-    /// \brief VF as overridden by the user.
-    unsigned VectorizationFactor;
-    /// \brief Interleave factor as overridden by the user.
-    unsigned VectorizationInterleave;
-
-    /// \\brief When performing memory disambiguation checks at runtime do not
-    /// make more than this number of comparisons.
-    unsigned RuntimeMemoryCheckThreshold;
-
-    VectorizerParams(unsigned MaxVectorWidth,
-                     unsigned VectorizationFactor,
-                     unsigned VectorizationInterleave,
-                     unsigned RuntimeMemoryCheckThreshold) :
-        MaxVectorWidth(MaxVectorWidth),
-        VectorizationFactor(VectorizationFactor),
-        VectorizationInterleave(VectorizationInterleave),
-        RuntimeMemoryCheckThreshold(RuntimeMemoryCheckThreshold) {}
-  };
-
   /// This struct holds information about the memory runtime legality check that
   /// a group of pointers do not overlap.
   struct RuntimePointerCheck {
@@ -139,11 +131,9 @@ public:
 
   LoopAccessInfo(Function *F, Loop *L, ScalarEvolution *SE,
                  const DataLayout *DL, const TargetLibraryInfo *TLI,
-                 AliasAnalysis *AA, DominatorTree *DT,
-                 const VectorizerParams &VectParams) :
+                 AliasAnalysis *AA, DominatorTree *DT) :
       TheFunction(F), TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA), DT(DT),
-      NumLoads(0), NumStores(0), MaxSafeDepDistBytes(-1U),
-      VectParams(VectParams) {}
+      NumLoads(0), NumStores(0), MaxSafeDepDistBytes(-1U) {}
 
   /// Return true we can analyze the memory accesses in the loop and there are
   /// no memory dependence cycles.  Replaces symbolic strides using Strides.
@@ -187,9 +177,6 @@ private:
   unsigned NumStores;
 
   unsigned MaxSafeDepDistBytes;
-
-  /// \brief Vectorizer parameters used by the analysis.
-  VectorizerParams VectParams;
 };
 
 Value *stripIntegerCast(Value *V);
