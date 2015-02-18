@@ -179,12 +179,9 @@ protected:
                                                 lldb_private::StreamString &response);
 
     template <typename T>
-    using MemberFunctionPacketHandler = PacketResult (T::*) (StringExtractorGDBRemote& packet);
-
-    template <typename T>
     void
-    RegisterMemberFunctionHandler(StringExtractorGDBRemote::ServerPacketType packet_type,
-                                  MemberFunctionPacketHandler<T> handler)
+    RegisterMemberFunctionHandler (StringExtractorGDBRemote::ServerPacketType packet_type,
+                                   PacketResult (T::*handler) (StringExtractorGDBRemote& packet))
     {
         RegisterPacketHandler(packet_type,
                               [this, handler] (StringExtractorGDBRemote packet,
