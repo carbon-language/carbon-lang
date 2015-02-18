@@ -60,10 +60,8 @@ private:
 
 class WinEHCatchDirector : public CloningDirector {
 public:
-  WinEHCatchDirector(LandingPadInst *LPI, Function *CatchFn, Value *Selector,
-                     Value *EHObj)
-      : LPI(LPI), CatchFn(CatchFn),
-        CurrentSelector(Selector->stripPointerCasts()), EHObj(EHObj),
+  WinEHCatchDirector(LandingPadInst *LPI, Value *Selector, Value *EHObj)
+      : LPI(LPI), CurrentSelector(Selector->stripPointerCasts()), EHObj(EHObj),
         SelectorIDType(Type::getInt32Ty(LPI->getContext())),
         Int8PtrType(Type::getInt8PtrTy(LPI->getContext())) {}
   virtual ~WinEHCatchDirector() {}
@@ -74,7 +72,6 @@ public:
 
 private:
   LandingPadInst *LPI;
-  Function *CatchFn;
   Value *CurrentSelector;
   Value *EHObj;
   Type *SelectorIDType;
@@ -84,7 +81,6 @@ private:
   const Value *ExtractedSelector;
   const Value *EHPtrStoreAddr;
   const Value *SelectorStoreAddr;
-  const Value *EHObjStoreAddr;
 };
 } // end anonymous namespace
 
@@ -245,7 +241,7 @@ bool WinEHPrepare::outlineCatchHandler(Function *SrcFn, Constant *SelectorType,
 
   // FIXME: Map other values referenced in the filter handler.
 
-  WinEHCatchDirector Director(LPad, CatchHandler, SelectorType, EHObj);
+  WinEHCatchDirector Director(LPad, SelectorType, EHObj);
 
   SmallVector<ReturnInst *, 8> Returns;
   ClonedCodeInfo InlinedFunctionInfo;
