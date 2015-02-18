@@ -576,7 +576,11 @@ multiclass SMRD_m <bits<5> op, string opName, bit imm, dag outs, dag ins,
 
   def _si : SMRD_Real_si <op, opName, imm, outs, ins, asm>;
 
-  def _vi : SMRD_Real_vi <{0, 0, 0, op}, opName, imm, outs, ins, asm>;
+  // glc is only applicable to scalar stores, which are not yet
+  // implemented.
+  let glc = 0 in {
+    def _vi : SMRD_Real_vi <{0, 0, 0, op}, opName, imm, outs, ins, asm>;
+  }
 }
 
 multiclass SMRD_Helper <bits<5> op, string opName, RegisterClass baseClass,
