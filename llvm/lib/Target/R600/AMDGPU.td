@@ -167,6 +167,7 @@ def FeatureVolcanicIslands : SubtargetFeatureGeneration<"VOLCANIC_ISLANDS",
 
 def AMDGPUInstrInfo : InstrInfo {
   let guessInstructionProperties = 1;
+  let noNamedPositionallyEncodedOperands = 1;
 }
 
 def AMDGPUAsmParser : AsmParser {
