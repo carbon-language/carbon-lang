@@ -910,7 +910,7 @@ private:
       return false;
 
     if (Tok.Previous->is(TT_LeadingJavaAnnotation))
-        return false;
+      return false;
 
     // Skip "const" as it does not have an influence on whether this is a name.
     FormatToken *PreviousNotConst = Tok.Previous;
@@ -2038,8 +2038,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if (Right.is(TT_CtorInitializerComma) &&
       Style.BreakConstructorInitializersBeforeComma)
     return true;
-  if (Left.is(tok::greater) && Right.is(tok::greater) &&
-      Left.isNot(TT_TemplateCloser))
+  if ((Left.is(tok::greater) && Right.is(tok::greater)) ||
+      (Left.is(tok::less) && Right.is(tok::less)))
     return false;
   if (Right.is(TT_BinaryOperator) &&
       Style.BreakBeforeBinaryOperators != FormatStyle::BOS_None &&

@@ -9737,6 +9737,27 @@ TEST_F(FormatTest, SpacesInAngles) {
   verifyFormat("A<A<int>>();", Spaces);
 }
 
+TEST_F(FormatTest, TripleAngleBrackets) {
+  verifyFormat("f<<<1, 1>>>();");
+  verifyFormat("f<<<1, 1, 1, s>>>();");
+  verifyFormat("f<<<a, b, c, d>>>();");
+  EXPECT_EQ("f<<<1, 1>>>();",
+            format("f <<< 1, 1 >>> ();"));
+  verifyFormat("f<param><<<1, 1>>>();");
+  verifyFormat("f<1><<<1, 1>>>();");
+  EXPECT_EQ("f<param><<<1, 1>>>();",
+            format("f< param > <<< 1, 1 >>> ();"));
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+               "aaaaaaaaaaa<<<\n    1, 1>>>();");
+}
+
+TEST_F(FormatTest, MergeLessLessAtEnd) {
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+               "aaallvm::outs() <<");
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+               "aaaallvm::outs()\n    <<");
+}
+
 TEST_F(FormatTest, HandleUnbalancedImplicitBracesAcrossPPBranches) {
   std::string code = "#if A\n"
                      "#if B\n"
