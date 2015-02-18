@@ -793,19 +793,26 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
 
     APInt MsbMask = APInt::getHighBitsSet(BitWidth, 1);
     // If we only care about the highest bit, don't bother shifting right.
-    if (MsbMask == DemandedMask) {
+    if (MsbMask == NewMask) {
       unsigned ShAmt = ExVT.getScalarType().getSizeInBits();
       SDValue InOp = Op.getOperand(0);
+      unsigned VTBits = Op->getValueType(0).getScalarType().getSizeInBits();
+      bool AlreadySignExtended =
+        TLO.DAG.ComputeNumSignBits(InOp) >= VTBits-ShAmt+1;
+      // However if the input is already sign extended we expect the sign
+      // extension to be dropped altogether later and do not simplify.
+      if (!AlreadySignExtended) {
+        // Compute the correct shift amount type, which must be getShiftAmountTy
+        // for scalar types after legalization.
+        EVT ShiftAmtTy = Op.getValueType();
+        if (TLO.LegalTypes() && !ShiftAmtTy.isVector())
+          ShiftAmtTy = getShiftAmountTy(ShiftAmtTy);
 
-      // Compute the correct shift amount type, which must be getShiftAmountTy
-      // for scalar types after legalization.
-      EVT ShiftAmtTy = Op.getValueType();
-      if (TLO.LegalTypes() && !ShiftAmtTy.isVector())
-        ShiftAmtTy = getShiftAmountTy(ShiftAmtTy);
-
-      SDValue ShiftAmt = TLO.DAG.getConstant(BitWidth - ShAmt, ShiftAmtTy);
-      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SHL, dl,
-                                            Op.getValueType(), InOp, ShiftAmt));
+        SDValue ShiftAmt = TLO.DAG.getConstant(BitWidth - ShAmt, ShiftAmtTy);
+        return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SHL, dl,
+                                                 Op.getValueType(), InOp,
+                                                 ShiftAmt));
+      }
     }
 
     // Sign extension.  Compute the demanded bits in the result that are not

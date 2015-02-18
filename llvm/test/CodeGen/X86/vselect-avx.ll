@@ -59,19 +59,15 @@ bb:
 ; 
 ; <rdar://problem/18819506>
 
-; Note: For now, hard code ORIG_MASK and SHRUNK_MASK registers, because we
-; cannot express that ORIG_MASK must not be equal to ORIG_MASK. Otherwise,
-; even a faulty pattern would pass!
-;  
 ; CHECK-LABEL: test3:
-; Compute the original mask.
-;	CHECK: vpcmpeqd {{%xmm[0-9]+}}, {{%xmm[0-9]+}}, [[ORIG_MASK:%xmm0]]
-; Shrink the bit of the mask.
-; CHECK-NEXT: vpslld	$31, [[ORIG_MASK]], [[SHRUNK_MASK:%xmm3]]
-; Use the shrunk mask in the blend.
-; CHECK-NEXT:	vblendvps	[[SHRUNK_MASK]], %xmm{{[0-9]+}}, %xmm{{[0-9]+}}, %xmm{{[0-9]+}}
-; Use the original mask in the and.
-; CHECK-NEXT: vpand LCPI2_2(%rip), [[ORIG_MASK]], {{%xmm[0-9]+}} 
+; Compute the mask.
+;	CHECK: vpcmpeqd {{%xmm[0-9]+}}, {{%xmm[0-9]+}}, [[MASK:%xmm[0-9]+]]
+; Do not shrink the bit of the mask.
+; CHECK-NOT: vpslld	$31, [[MASK]], {{%xmm[0-9]+}}
+; Use the mask in the blend.
+; CHECK-NEXT:	vblendvps	[[MASK]], %xmm{{[0-9]+}}, %xmm{{[0-9]+}}, %xmm{{[0-9]+}}
+; Use the mask in the and.
+; CHECK-NEXT: vpand LCPI2_2(%rip), [[MASK]], {{%xmm[0-9]+}} 
 ; CHECK: retq
 define void @test3(<4 x i32> %induction30, <4 x i16>* %tmp16, <4 x i16>* %tmp17,  <4 x i16> %tmp3, <4 x i16> %tmp12) {
   %tmp6 = srem <4 x i32> %induction30, <i32 3, i32 3, i32 3, i32 3>

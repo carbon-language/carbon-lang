@@ -419,8 +419,8 @@ define <8 x i64> @vsel_i648(<8 x i64> %v1, <8 x i64> %v2) {
 ;
 ; SSE41-LABEL: vsel_i648:
 ; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm4[4,5,6,7]
-; SSE41-NEXT:    pblendw {{.*#+}} xmm2 = xmm2[0,1,2,3],xmm6[4,5,6,7]
+; SSE41-NEXT:    blendpd {{.*#+}} xmm0 = xmm0[0],xmm4[1]
+; SSE41-NEXT:    blendpd {{.*#+}} xmm2 = xmm2[0],xmm6[1]
 ; SSE41-NEXT:    movaps %xmm5, %xmm1
 ; SSE41-NEXT:    movaps %xmm7, %xmm3
 ; SSE41-NEXT:    retq
