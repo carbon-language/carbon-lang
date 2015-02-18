@@ -1238,6 +1238,7 @@ let Predicates = [isR600] in {
   def CF_PUSH_ELSE_R600 : CF_CLAUSE_R600<12, (ins i32imm:$ADDR),
   "PUSH_ELSE @$ADDR"> {
     let CNT = 0;
+    let POP_COUNT = 0; // FIXME?
   }
   def CF_ELSE_R600 : CF_CLAUSE_R600<13, (ins i32imm:$ADDR, i32imm:$POP_COUNT),
   "ELSE @$ADDR POP:$POP_COUNT"> {
