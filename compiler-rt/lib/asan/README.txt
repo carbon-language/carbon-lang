@@ -1,7 +1,6 @@
 AddressSanitizer RT
 ================================
-This directory contains sources of the AddressSanitizer (asan) runtime library.
-We are in the process of integrating AddressSanitizer with LLVM, stay tuned.
+This directory contains sources of the AddressSanitizer (ASan) runtime library.
 
 Directory structure:
 README.txt       : This file.
@@ -13,14 +12,13 @@ tests/*          : ASan unit tests.
 
 Also ASan runtime needs the following libraries:
 lib/interception/      : Machinery used to intercept function calls.
-lib/sanitizer_common/  : Code shared between ASan and TSan.
+lib/sanitizer_common/  : Code shared between various sanitizers.
 
-Currently ASan runtime can be built by both make and cmake build systems.
-(see compiler-rt/make and files Makefile.mk for make-based build and
-files CMakeLists.txt for cmake-based build).
+ASan runtime currently also embeds part of LeakSanitizer runtime for
+leak detection (lib/lsan/lsan_common.{cc,h}).
 
-ASan unit and output tests work only with cmake. You may run this
-command from the root of your cmake build tree:
+ASan runtime can only be built by CMake. You can run ASan tests
+from the root of your CMake build tree:
 
 make check-asan
 
