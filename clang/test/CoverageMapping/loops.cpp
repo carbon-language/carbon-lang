@@ -22,16 +22,16 @@ int main() {                        // CHECK-NEXT: File 0, [[@LINE]]:12 -> [[@LI
   }
   int j = 0;                        // CHECK-NEXT: File 0, [[@LINE+1]]:9 -> [[@LINE+1]]:14 = (#0 + #3)
   while(j < 5) ++j;                 // CHECK-NEXT: File 0, [[@LINE]]:16 -> [[@LINE]]:19 = #3
-  do {                              // CHECK-NEXT: File 0, [[@LINE]]:6 -> [[@LINE+2]]:17 = (#0 + #4)
+  do {                              // CHECK-NEXT: File 0, [[@LINE]]:6 -> [[@LINE+2]]:4 = (#0 + #4)
     ++j;
-  } while(j < 10);
+  } while(j < 10);                  // CHECK-NEXT: File 0, [[@LINE]]:11 -> [[@LINE]]:17 = (#0 + #4)
   j = 0;
   while
    (j < 5)                          // CHECK-NEXT: File 0, [[@LINE]]:5 -> [[@LINE]]:10 = (#0 + #5)
      ++j;                           // CHECK-NEXT: File 0, [[@LINE]]:6 -> [[@LINE]]:9 = #5
   do
-    ++j;                            // CHECK-NEXT: File 0, [[@LINE]]:5 -> [[@LINE+1]]:15 = (#0 + #6)
-  while(j < 10);
+    ++j;                            // CHECK-NEXT: File 0, [[@LINE]]:5 -> [[@LINE]]:8 = (#0 + #6)
+  while(j < 10);                    // CHECK-NEXT: File 0, [[@LINE]]:9 -> [[@LINE]]:15 = (#0 + #6)
   rangedFor();
   return 0;
 }

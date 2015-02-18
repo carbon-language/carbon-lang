@@ -583,6 +583,7 @@ public:
   body_range body() { return body_range(body_begin(), body_end()); }
   body_iterator body_begin() { return Body; }
   body_iterator body_end() { return Body + size(); }
+  Stmt *body_front() { return !body_empty() ? Body[0] : nullptr; }
   Stmt *body_back() { return !body_empty() ? Body[size()-1] : nullptr; }
 
   void setLastStmt(Stmt *S) {
@@ -598,6 +599,9 @@ public:
   }
   const_body_iterator body_begin() const { return Body; }
   const_body_iterator body_end() const { return Body + size(); }
+  const Stmt *body_front() const {
+    return !body_empty() ? Body[0] : nullptr;
+  }
   const Stmt *body_back() const {
     return !body_empty() ? Body[size() - 1] : nullptr;
   }

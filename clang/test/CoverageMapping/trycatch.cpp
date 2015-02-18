@@ -12,9 +12,9 @@ class Warning {
                                       // CHECK: func
 void func(int i) {                    // CHECK-NEXT: File 0, [[@LINE]]:18 -> [[@LINE+5]]:2 = #0
   if(i % 2)
-    throw Error();                    // CHECK-NEXT: File 0, [[@LINE]]:5 -> [[@LINE]]:16 = #1
-  else if(i == 8)                     // CHECK-NEXT: File 0, [[@LINE]]:8 -> [[@LINE]]:17 = (#0 - #1)
-    throw ImportantError();           // CHECK-NEXT: File 0, [[@LINE]]:5 -> [[@LINE]]:25 = #2
+    throw Error();                    // CHECK-NEXT: File 0, [[@LINE]]:5 -> [[@LINE]]:18 = #1
+  else if(i == 8)                     // CHECK-NEXT: File 0, [[@LINE]]:8 -> [[@LINE+1]]:27 = (#0 - #1)
+    throw ImportantError();           // CHECK-NEXT: File 0, [[@LINE]]:5 -> [[@LINE]]:27 = #2
 }
 
                                       // CHECK-NEXT: main
@@ -22,9 +22,9 @@ int main() {                          // CHECK-NEXT: File 0, [[@LINE]]:12 -> [[@
   int j = 0;
   try {
     func(j);
-  } catch(const Error &e) {           // CHECK-NEXT: File 0, [[@LINE]]:27 -> [[@LINE+2]]:10 = #2
+  } catch(const Error &e) {           // CHECK-NEXT: File 0, [[@LINE]]:27 -> [[@LINE+2]]:4 = #2
     j = 1;
-  } catch(const ImportantError &e) {  // CHECK-NEXT: File 0, [[@LINE]]:36 -> [[@LINE+3]]:8 = #3
+  } catch(const ImportantError &e) {  // CHECK-NEXT: File 0, [[@LINE]]:36 -> [[@LINE+2]]:4 = #3
     j = 11;
   }
   catch(const Warning &w) {           // CHECK-NEXT: File 0, [[@LINE]]:27 -> [[@LINE+2]]:4 = #4

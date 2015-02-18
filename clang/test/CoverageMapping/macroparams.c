@@ -1,12 +1,17 @@
 // RUN: %clang_cc1 -fprofile-instr-generate -fcoverage-mapping -dump-coverage-mapping -emit-llvm-only -main-file-name macroparams.c %s | FileCheck %s
 
-#define MACRO2(X2) (X2 + 2) // CHECK-DAG: File 2, [[@LINE]]:20 -> [[@LINE]]:28 = #0
-#define MACRO(X) MACRO2(x)  // CHECK-DAG: File 1, [[@LINE]]:25 -> [[@LINE]]:26 = #0
-                            // CHECK-DAG: Expansion,File 1, [[@LINE-1]]:18 -> [[@LINE-1]]:24 = #0 (Expanded file = 2)
+// CHECK: main
+// CHECK-NEXT: File 0, {{[0-9]+}}:12 -> {{[0-9]+}}:2 = #0
+// CHECK-NEXT: Expansion,File 0, {{[0-9]+}}:3 -> {{[0-9]+}}:8 = #0
 
+// CHECK-NEXT: File 1, [[@LINE+2]]:18 -> [[@LINE+2]]:27 = #0
+// CHECK-NEXT: Expansion,File 1, [[@LINE+1]]:18 -> [[@LINE+1]]:24 = #0
+#define MACRO(X) MACRO2(x)
+// CHECK-NEXT: File 2, [[@LINE+1]]:20 -> [[@LINE+1]]:28 = #0
+#define MACRO2(X2) (X2 + 2)
 
-int main() {                // CHECK-DAG: File 0, [[@LINE]]:12 -> [[@LINE+4]]:2 = #0
+int main() {
   int x = 0;
-  MACRO(x);                 // CHECK-DAG: Expansion,File 0, [[@LINE]]:3 -> [[@LINE]]:8 = #0 (Expanded file = 1)
+  MACRO(x);
   return 0;
 }
