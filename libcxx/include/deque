@@ -168,6 +168,7 @@ template <class T, class Allocator>
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _Tp, class _Allocator> class __deque_base;
+template <class _Tp, class _Allocator = allocator<_Tp> > class _LIBCPP_TYPE_VIS_ONLY deque;
 
 template <class _ValueType, class _Pointer, class _Reference, class _MapPointer,
           class _DiffType, _DiffType _BlockSize>
@@ -1178,7 +1179,7 @@ __deque_base<_Tp, _Allocator>::clear() _NOEXCEPT
     }
 }
 
-template <class _Tp, class _Allocator = allocator<_Tp> >
+template <class _Tp, class _Allocator /*= allocator<_Tp>*/>
 class _LIBCPP_TYPE_VIS_ONLY deque
     : private __deque_base<_Tp, _Allocator>
 {
