@@ -210,6 +210,9 @@
 /* Define if mallinfo() is available on this platform. */
 #undef HAVE_MALLINFO
 
+/* Define if mallctl() is available on this plaform. */
+#undef HAVE_MALLCTL
+
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
 

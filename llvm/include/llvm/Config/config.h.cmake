@@ -222,6 +222,9 @@
 /* Define to 1 if you have the `malloc_zone_statistics' function. */
 #cmakedefine HAVE_MALLOC_ZONE_STATISTICS ${HAVE_MALLOC_ZONE_STATISTICS}
 
+/* Define to 1 if you have the `mallctl` function. */
+#cmakedefine HAVE_MALLCTL ${HAVE_MALLCTL}
+
 /* Define to 1 if you have the `mkdtemp' function. */
 #cmakedefine HAVE_MKDTEMP ${HAVE_MKDTEMP}
 
