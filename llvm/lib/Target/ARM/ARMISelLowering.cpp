@@ -8990,7 +8990,7 @@ static SDValue CombineBaseUpdate(SDNode *N,
                                            MemInt->getMemOperand());
 
     // Update the uses.
-    std::vector<SDValue> NewResults;
+    SmallVector<SDValue, 5> NewResults;
     for (unsigned i = 0; i < NumResultVecs; ++i) {
       NewResults.push_back(SDValue(UpdN.getNode(), i));
     }

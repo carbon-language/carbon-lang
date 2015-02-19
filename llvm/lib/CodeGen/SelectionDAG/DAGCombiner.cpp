@@ -466,7 +466,7 @@ void TargetLowering::DAGCombinerInfo::RemoveFromWorklist(SDNode *N) {
 }
 
 SDValue TargetLowering::DAGCombinerInfo::
-CombineTo(SDNode *N, const std::vector<SDValue> &To, bool AddTo) {
+CombineTo(SDNode *N, ArrayRef<SDValue> To, bool AddTo) {
   return ((DAGCombiner*)DC)->CombineTo(N, &To[0], To.size(), AddTo);
 }
 

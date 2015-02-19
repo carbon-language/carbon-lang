@@ -7973,7 +7973,7 @@ static SDValue performPostLD1Combine(SDNode *N,
                                            LoadSDN->getMemOperand());
 
     // Update the uses.
-    std::vector<SDValue> NewResults;
+    SmallVector<SDValue, 2> NewResults;
     NewResults.push_back(SDValue(LD, 0));             // The result of load
     NewResults.push_back(SDValue(UpdN.getNode(), 2)); // Chain
     DCI.CombineTo(LD, NewResults);
