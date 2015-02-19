@@ -148,11 +148,8 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
   // emitInlineAsmEnd().
   MCSubtargetInfo STIOrig = *STI;
 
-  MCTargetOptions MCOptions;
-  if (MF)
-    MCOptions = MF->getTarget().Options.MCOptions;
-  std::unique_ptr<MCTargetAsmParser> TAP(
-      TM.getTarget().createMCAsmParser(*STI, *Parser, *MII, MCOptions));
+  std::unique_ptr<MCTargetAsmParser> TAP(TM.getTarget().createMCAsmParser(
+      *STI, *Parser, *MII, TM.Options.MCOptions));
   if (!TAP)
     report_fatal_error("Inline asm not supported by this streamer because"
                        " we don't have an asm parser for this target\n");
