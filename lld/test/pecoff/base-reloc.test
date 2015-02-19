@@ -2,22 +2,25 @@
 #
 # RUN: lld -flavor link /out:%t1.exe /subsystem:console /force /opt:noref \
 # RUN:   -- %t.obj
-# RUN: llvm-objdump -s %t1.exe | FileCheck %s --check-prefix=BASEREL-SECTION
+# RUN: llvm-readobj -coff-basereloc %t1.exe | FileCheck %s --check-prefix=BASEREL
 #
 # RUN: lld -flavor link /out:%t2.exe /subsystem:console /force /fixed \
 # RUN:   /opt:noref -- %t.obj
-# RUN: llvm-objdump -s %t2.exe | FileCheck %s --check-prefix=NOBASEREL-SECTION
+# RUN: llvm-readobj -coff-basereloc %t2.exe | FileCheck %s --check-prefix=NOBASEREL
 
-# Because llvm-objdump cannot pretty-print the contents of .reloc section, we
-# have no choice other than comparing the result with this binary blob.
-#
-# TODO: Improve llvm-objdump to pretty print .reloc section as GNU binutil
-# objdump does.
+BASEREL:      BaseReloc [
+BASEREL-NEXT:   Entry {
+BASEREL-NEXT:     Type: HIGHLOW
+BASEREL-NEXT:     Address: 0x2007
+BASEREL-NEXT:   }
+BASEREL-NEXT:   Entry {
+BASEREL-NEXT:     Type: HIGHLOW
+BASEREL-NEXT:     Address: 0x200C
+BASEREL-NEXT:   }
+BASEREL-NEXT: ]
 
-BASEREL-SECTION: Contents of section .reloc:
-BASEREL-SECTION-NEXT:  3000 00200000 0c000000 07300c30
-
-NOBASEREL-SECTION-NOT: Contents of section .reloc:
+NOBASEREL:      BaseReloc [
+NOBASEREL-NEXT: ]
 
 # RUN: lld -flavor link /out:%t3.exe /subsystem:console /force /opt:noref \
 # RUN:   -- %t.obj
