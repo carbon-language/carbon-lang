@@ -2493,6 +2493,7 @@ static FormatAttrKind getFormatAttrKind(StringRef Format) {
     .Cases("scanf", "printf", "printf0", "strfmon", SupportedFormat)
     .Cases("cmn_err", "vcmn_err", "zcmn_err", SupportedFormat)
     .Case("kprintf", SupportedFormat) // OpenBSD.
+    .Case("freebsd_kprintf", SupportedFormat) // FreeBSD.
 
     .Cases("gcc_diag", "gcc_cdiag", "gcc_cxxdiag", "gcc_tdiag", IgnoredFormat)
     .Default(InvalidFormat);

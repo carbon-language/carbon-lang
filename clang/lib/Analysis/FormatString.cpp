@@ -552,6 +552,12 @@ const char *ConversionSpecifier::toString() const {
   // Objective-C specific specifiers.
   case ObjCObjArg: return "@";
 
+  // FreeBSD kernel specific specifiers.
+  case FreeBSDbArg: return "b";
+  case FreeBSDDArg: return "D";
+  case FreeBSDrArg: return "r";
+  case FreeBSDyArg: return "y";
+
   // GlibC specific specifiers.
   case PrintErrno: return "m";
 
@@ -647,6 +653,9 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
         case ConversionSpecifier::XArg:
         case ConversionSpecifier::nArg:
           return true;
+        case ConversionSpecifier::FreeBSDrArg:
+        case ConversionSpecifier::FreeBSDyArg:
+          return Target.getTriple().isOSFreeBSD();
         default:
           return false;
       }
@@ -677,6 +686,9 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
         case ConversionSpecifier::ScanListArg:
         case ConversionSpecifier::ZArg:
           return true;
+        case ConversionSpecifier::FreeBSDrArg:
+        case ConversionSpecifier::FreeBSDyArg:
+          return Target.getTriple().isOSFreeBSD();
         default:
           return false;
       }
@@ -807,6 +819,10 @@ bool FormatSpecifier::hasStandardConversionSpecifier(const LangOptions &LangOpt)
     case ConversionSpecifier::SArg:
       return LangOpt.ObjC1 || LangOpt.ObjC2;
     case ConversionSpecifier::InvalidSpecifier:
+    case ConversionSpecifier::FreeBSDbArg:
+    case ConversionSpecifier::FreeBSDDArg:
+    case ConversionSpecifier::FreeBSDrArg:
+    case ConversionSpecifier::FreeBSDyArg:
     case ConversionSpecifier::PrintErrno:
     case ConversionSpecifier::DArg:
     case ConversionSpecifier::OArg:

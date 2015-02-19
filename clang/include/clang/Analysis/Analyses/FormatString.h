@@ -161,6 +161,12 @@ public:
     ObjCObjArg,  // '@'
     ObjCBeg = ObjCObjArg, ObjCEnd = ObjCObjArg,
 
+    // FreeBSD kernel specific specifiers.
+    FreeBSDbArg,
+    FreeBSDDArg,
+    FreeBSDrArg,
+    FreeBSDyArg,
+
     // GlibC specific specifiers.
     PrintErrno,   // 'm'
 
@@ -204,7 +210,8 @@ public:
     return EndScanList ? EndScanList - Position : 1;
   }
 
-  bool isIntArg() const { return kind >= IntArgBeg && kind <= IntArgEnd; }
+  bool isIntArg() const { return (kind >= IntArgBeg && kind <= IntArgEnd) ||
+    kind == FreeBSDrArg || kind == FreeBSDyArg; }
   bool isUIntArg() const { return kind >= UIntArgBeg && kind <= UIntArgEnd; }
   bool isAnyIntArg() const { return kind >= IntArgBeg && kind <= UIntArgEnd; }
   const char *toString() const;
@@ -646,7 +653,7 @@ public:
 
 bool ParsePrintfString(FormatStringHandler &H,
                        const char *beg, const char *end, const LangOptions &LO,
-                       const TargetInfo &Target);
+                       const TargetInfo &Target, bool isFreeBSDKPrintf);
   
 bool ParseFormatStringHasSArg(const char *beg, const char *end, const LangOptions &LO,
                               const TargetInfo &Target);

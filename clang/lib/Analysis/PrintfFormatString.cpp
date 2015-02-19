@@ -55,7 +55,8 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
                                                   unsigned &argIndex,
                                                   const LangOptions &LO,
                                                   const TargetInfo &Target,
-                                                  bool Warn) {
+                                                  bool Warn,
+                                                  bool isFreeBSDKPrintf) {
 
   using namespace clang::analyze_format_string;
   using namespace clang::analyze_printf;
@@ -206,9 +207,24 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
     case '@': k = ConversionSpecifier::ObjCObjArg; break;
     // Glibc specific.
     case 'm': k = ConversionSpecifier::PrintErrno; break;
+    // FreeBSD kernel specific.
+    case 'b':
+      if (isFreeBSDKPrintf)
+        k = ConversionSpecifier::FreeBSDbArg; // int followed by char *
+      break;
+    case 'r':
+      if (isFreeBSDKPrintf)
+        k = ConversionSpecifier::FreeBSDrArg; // int
+      break;
+    case 'y':
+      if (isFreeBSDKPrintf)
+        k = ConversionSpecifier::FreeBSDyArg; // int
+      break;
     // Apple-specific.
     case 'D':
-      if (Target.getTriple().isOSDarwin())
+      if (isFreeBSDKPrintf)
+        k = ConversionSpecifier::FreeBSDDArg; // void * followed by char *
+      else if (Target.getTriple().isOSDarwin())
         k = ConversionSpecifier::DArg;
       break;
     case 'O':
@@ -228,6 +244,10 @@ static PrintfSpecifierResult ParsePrintfSpecifier(FormatStringHandler &H,
   FS.setConversionSpecifier(CS);
   if (CS.consumesDataArgument() && !FS.usesPositionalArg())
     FS.setArgIndex(argIndex++);
+  // FreeBSD kernel specific.
+  if (k == ConversionSpecifier::FreeBSDbArg ||
+      k == ConversionSpecifier::FreeBSDDArg)
+    argIndex++;
 
   if (k == ConversionSpecifier::InvalidSpecifier) {
     // Assume the conversion takes one argument.
@@ -240,14 +260,16 @@ bool clang::analyze_format_string::ParsePrintfString(FormatStringHandler &H,
                                                      const char *I,
                                                      const char *E,
                                                      const LangOptions &LO,
-                                                     const TargetInfo &Target) {
+                                                     const TargetInfo &Target,
+                                                     bool isFreeBSDKPrintf) {
 
   unsigned argIndex = 0;
 
   // Keep looking for a format specifier until we have exhausted the string.
   while (I != E) {
     const PrintfSpecifierResult &FSR = ParsePrintfSpecifier(H, I, E, argIndex,
-                                                            LO, Target, true);
+                                                            LO, Target, true,
+                                                            isFreeBSDKPrintf);
     // Did a fail-stop error of any kind occur when parsing the specifier?
     // If so, don't do any more processing.
     if (FSR.shouldStop())
@@ -276,7 +298,8 @@ bool clang::analyze_format_string::ParseFormatStringHasSArg(const char *I,
   FormatStringHandler H;
   while (I != E) {
     const PrintfSpecifierResult &FSR = ParsePrintfSpecifier(H, I, E, argIndex,
-                                                            LO, Target, false);
+                                                            LO, Target, false,
+                                                            false);
     // Did a fail-stop error of any kind occur when parsing the specifier?
     // If so, don't do any more processing.
     if (FSR.shouldStop())
@@ -674,6 +697,8 @@ bool PrintfSpecifier::hasValidPlusPrefix() const {
   case ConversionSpecifier::GArg:
   case ConversionSpecifier::aArg:
   case ConversionSpecifier::AArg:
+  case ConversionSpecifier::FreeBSDrArg:
+  case ConversionSpecifier::FreeBSDyArg:
     return true;
 
   default:
@@ -699,6 +724,8 @@ bool PrintfSpecifier::hasValidAlternativeForm() const {
   case ConversionSpecifier::FArg:
   case ConversionSpecifier::gArg:
   case ConversionSpecifier::GArg:
+  case ConversionSpecifier::FreeBSDrArg:
+  case ConversionSpecifier::FreeBSDyArg:
     return true;
 
   default:
@@ -729,6 +756,8 @@ bool PrintfSpecifier::hasValidLeadingZeros() const {
   case ConversionSpecifier::FArg:
   case ConversionSpecifier::gArg:
   case ConversionSpecifier::GArg:
+  case ConversionSpecifier::FreeBSDrArg:
+  case ConversionSpecifier::FreeBSDyArg:
     return true;
 
   default:
@@ -753,6 +782,8 @@ bool PrintfSpecifier::hasValidSpacePrefix() const {
   case ConversionSpecifier::GArg:
   case ConversionSpecifier::aArg:
   case ConversionSpecifier::AArg:
+  case ConversionSpecifier::FreeBSDrArg:
+  case ConversionSpecifier::FreeBSDyArg:
     return true;
 
   default:
@@ -818,6 +849,8 @@ bool PrintfSpecifier::hasValidPrecision() const {
   case ConversionSpecifier::gArg:
   case ConversionSpecifier::GArg:
   case ConversionSpecifier::sArg:
+  case ConversionSpecifier::FreeBSDrArg:
+  case ConversionSpecifier::FreeBSDyArg:
     return true;
 
   default:

@@ -2680,6 +2680,7 @@ Sema::FormatStringType Sema::GetFormatStringType(const FormatAttr *Format) {
   .Case("strftime", FST_Strftime)
   .Case("strfmon", FST_Strfmon)
   .Cases("kprintf", "cmn_err", "vcmn_err", "zcmn_err", FST_Kprintf)
+  .Case("freebsd_kprintf", FST_FreeBSDKPrintf)
   .Default(FST_Unknown);
 }
 
@@ -3461,6 +3462,43 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
     CoveredArgs.set(argIndex);
   }
 
+  // FreeBSD kernel extensions.
+  if (CS.getKind() == ConversionSpecifier::FreeBSDbArg ||
+      CS.getKind() == ConversionSpecifier::FreeBSDDArg) {
+    // We need at least two arguments.
+    if (!CheckNumArgs(FS, CS, startSpecifier, specifierLen, argIndex + 1))
+      return false;
+
+    // Claim the second argument.
+    CoveredArgs.set(argIndex + 1);
+
+    // Type check the first argument (int for %b, pointer for %D)
+    const Expr *Ex = getDataArg(argIndex);
+    const analyze_printf::ArgType &AT =
+      (CS.getKind() == ConversionSpecifier::FreeBSDbArg) ?
+        ArgType(S.Context.IntTy) : ArgType::CPointerTy;
+    if (AT.isValid() && !AT.matchesType(S.Context, Ex->getType()))
+      EmitFormatDiagnostic(
+        S.PDiag(diag::warn_format_conversion_argument_type_mismatch)
+        << AT.getRepresentativeTypeName(S.Context) << Ex->getType()
+        << false << Ex->getSourceRange(),
+        Ex->getLocStart(), /*IsStringLocation*/false,
+        getSpecifierRange(startSpecifier, specifierLen));
+
+    // Type check the second argument (char * for both %b and %D)
+    Ex = getDataArg(argIndex + 1);
+    const analyze_printf::ArgType &AT2 = ArgType::CStrTy;
+    if (AT2.isValid() && !AT2.matchesType(S.Context, Ex->getType()))
+      EmitFormatDiagnostic(
+        S.PDiag(diag::warn_format_conversion_argument_type_mismatch)
+        << AT2.getRepresentativeTypeName(S.Context) << Ex->getType()
+        << false << Ex->getSourceRange(),
+        Ex->getLocStart(), /*IsStringLocation*/false,
+        getSpecifierRange(startSpecifier, specifierLen));
+
+     return true;
+  }
+
   // Check for using an Objective-C specific conversion specifier
   // in a non-ObjC literal.
   if (!ObjCContext && CS.isObjCArg()) {
@@ -4084,7 +4122,8 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
     return;
   }
   
-  if (Type == FST_Printf || Type == FST_NSString) {
+  if (Type == FST_Printf || Type == FST_NSString ||
+      Type == FST_FreeBSDKPrintf) {
     CheckPrintfHandler H(*this, FExpr, OrigFormatExpr, firstDataArg,
                          numDataArgs, (Type == FST_NSString),
                          Str, HasVAListArg, Args, format_idx,
@@ -4092,7 +4131,8 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
   
     if (!analyze_format_string::ParsePrintfString(H, Str, Str + StrLen,
                                                   getLangOpts(),
-                                                  Context.getTargetInfo()))
+                                                  Context.getTargetInfo(),
+                                                  Type == FST_FreeBSDKPrintf))
       H.DoneProcessing();
   } else if (Type == FST_Scanf) {
     CheckScanfHandler H(*this, FExpr, OrigFormatExpr, firstDataArg, numDataArgs,
