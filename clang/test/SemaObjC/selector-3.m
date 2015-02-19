@@ -134,3 +134,24 @@ void test16428638() {
     SEL s = @selector(compare:);
     (void)s;
 }
+
+// rdar://16607480
+@class NSString;
+@interface SELCanary : NSObject
+@property (readonly, nonatomic) NSString *name;
+@property (nonatomic, getter = isHidden) char hidden;
+@property (nonatomic, copy, getter = hasFish, setter = setFish:) NSString *ridiculousFish;
+@end
+
+@implementation SELCanary
+- (void) Meth {
+ SEL properties[] = {
+  @selector(name),
+  @selector(isHidden),
+  @selector(setHidden:),
+  @selector(hasFish),
+  @selector(setFish:)
+ };
+}
+@end
+
