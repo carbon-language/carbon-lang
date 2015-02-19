@@ -3,6 +3,8 @@
 // RUN: %clang_cc1 -std=c++14 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
 // RUN: %clang_cc1 -std=c++1z %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
 
+namespace std { struct type_info; }
+
 namespace dr1902 { // dr1902: 3.7
   struct A {};
   struct B {
@@ -36,3 +38,9 @@ namespace dr1902 { // dr1902: 3.7
   B b({}); // expected-error {{ambiguous}}
 #endif
 }
+
+#if __cplusplus >= 201103L
+namespace dr1968 { // dr1968: yes
+static_assert(&typeid(int) == &typeid(int), ""); // expected-error{{not an integral constant expression}}
+}
+#endif
