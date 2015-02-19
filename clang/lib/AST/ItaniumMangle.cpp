@@ -1449,7 +1449,7 @@ void CXXNameMangler::mangleType(TemplateName TN) {
 
     // <class-enum-type> ::= <name>
     // <name> ::= <nested-name>
-    mangleUnresolvedPrefix(Dependent->getQualifier(), nullptr);
+    mangleUnresolvedPrefix(Dependent->getQualifier());
     mangleSourceName(Dependent->getIdentifier());
     break;
   }
