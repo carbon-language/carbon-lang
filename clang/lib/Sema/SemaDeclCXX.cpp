@@ -4786,9 +4786,9 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
         continue;
       }
 
-      if (MD->isInlined() && ClassImported &&
+      if (MD->isInlined() &&
           !S.Context.getTargetInfo().getCXXABI().isMicrosoft()) {
-        // MinGW does not import inline functions.
+        // MinGW does not import or export inline methods.
         continue;
       }
     }

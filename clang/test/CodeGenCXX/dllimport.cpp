@@ -728,19 +728,22 @@ USEMEMFUNC(ExplicitlyInstantiatedWithDifferentAttr<int>, f);
 //===----------------------------------------------------------------------===//
 
 template <typename T> struct ClassTemplate { void func() {} };
-template <typename T> struct __declspec(dllexport) ExportedClassTemplate { void func() {} };
+template <typename T> struct __declspec(dllexport) ExportedClassTemplate { void func(); };
+template <typename T> void ExportedClassTemplate<T>::func() {}
 template <typename T> struct __declspec(dllimport) ImportedClassTemplate { void func(); };
 
 template <typename T> struct ExplicitlySpecializedTemplate { void func() {} };
 template <> struct ExplicitlySpecializedTemplate<int> { void func() {} };
 template <typename T> struct ExplicitlyExportSpecializedTemplate { void func() {} };
-template <> struct __declspec(dllexport) ExplicitlyExportSpecializedTemplate<int> { void func() {} };
+template <> struct __declspec(dllexport) ExplicitlyExportSpecializedTemplate<int> { void func(); };
+void ExplicitlyExportSpecializedTemplate<int>::func() {}
 template <typename T> struct ExplicitlyImportSpecializedTemplate { void func() {} };
 template <> struct __declspec(dllimport) ExplicitlyImportSpecializedTemplate<int> { void func(); };
 
 template <typename T> struct ExplicitlyInstantiatedTemplate { void func() {} };
 template struct ExplicitlyInstantiatedTemplate<int>;
-template <typename T> struct ExplicitlyExportInstantiatedTemplate { void func() {} };
+template <typename T> struct ExplicitlyExportInstantiatedTemplate { void func(); };
+template <typename T> void ExplicitlyExportInstantiatedTemplate<T>::func() {}
 template struct __declspec(dllexport) ExplicitlyExportInstantiatedTemplate<int>;
 template <typename T> struct ExplicitlyImportInstantiatedTemplate { void func(); };
 template struct __declspec(dllimport) ExplicitlyImportInstantiatedTemplate<int>;
@@ -787,8 +790,8 @@ USEMEMFUNC(ExplicitlySpecializedTemplate<int>, func)
 // Base class alredy specialized with export attribute.
 struct __declspec(dllimport) DerivedFromExplicitlyExportSpecializedTemplate : public ExplicitlyExportSpecializedTemplate<int> {};
 USEMEMFUNC(ExplicitlyExportSpecializedTemplate<int>, func)
-// M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?func@?$ExplicitlyExportSpecializedTemplate@H@@QAEXXZ"
-// G32-DAG: define weak_odr dllexport x86_thiscallcc void @_ZN35ExplicitlyExportSpecializedTemplateIiE4funcEv
+// M32-DAG: define dllexport x86_thiscallcc void @"\01?func@?$ExplicitlyExportSpecializedTemplate@H@@QAEXXZ"
+// G32-DAG: define dllexport x86_thiscallcc void @_ZN35ExplicitlyExportSpecializedTemplateIiE4funcEv
 
 // Base class already specialized with import attribute.
 struct __declspec(dllimport) DerivedFromExplicitlyImportSpecializedTemplate : public ExplicitlyImportSpecializedTemplate<int> {};
