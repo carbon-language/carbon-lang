@@ -120,7 +120,7 @@ ObjCARCAliasAnalysis::getModRefBehavior(const Function *F) {
     return AliasAnalysis::getModRefBehavior(F);
 
   switch (GetFunctionClass(F)) {
-  case IC_NoopCast:
+  case ARCInstKind::NoopCast:
     return DoesNotAccessMemory;
   default:
     break;
@@ -134,15 +134,15 @@ ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS, const Location &Loc) {
   if (!EnableARCOpts)
     return AliasAnalysis::getModRefInfo(CS, Loc);
 
-  switch (GetBasicInstructionClass(CS.getInstruction())) {
-  case IC_Retain:
-  case IC_RetainRV:
-  case IC_Autorelease:
-  case IC_AutoreleaseRV:
-  case IC_NoopCast:
-  case IC_AutoreleasepoolPush:
-  case IC_FusedRetainAutorelease:
-  case IC_FusedRetainAutoreleaseRV:
+  switch (GetBasicARCInstKind(CS.getInstruction())) {
+  case ARCInstKind::Retain:
+  case ARCInstKind::RetainRV:
+  case ARCInstKind::Autorelease:
+  case ARCInstKind::AutoreleaseRV:
+  case ARCInstKind::NoopCast:
+  case ARCInstKind::AutoreleasepoolPush:
+  case ARCInstKind::FusedRetainAutorelease:
+  case ARCInstKind::FusedRetainAutoreleaseRV:
     // These functions don't access any memory visible to the compiler.
     // Note that this doesn't include objc_retainBlock, because it updates
     // pointers when it copies block data.

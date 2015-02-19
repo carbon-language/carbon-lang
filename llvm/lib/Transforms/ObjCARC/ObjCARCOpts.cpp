@@ -153,7 +153,7 @@ static const Value *FindSingleUseIdentifiedObject(const Value *Arg) {
     if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Arg))
       if (GEP->hasAllZeroIndices())
         return FindSingleUseIdentifiedObject(GEP->getPointerOperand());
-    if (IsForwarding(GetBasicInstructionClass(Arg)))
+    if (IsForwarding(GetBasicARCInstKind(Arg)))
       return FindSingleUseIdentifiedObject(
                cast<CallInst>(Arg)->getArgOperand(0));
     if (!IsObjCIdentifiedObject(Arg))
@@ -1096,7 +1096,7 @@ namespace {
 
     bool OptimizeRetainRVCall(Function &F, Instruction *RetainRV);
     void OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
-                                   InstructionClass &Class);
+                                   ARCInstKind &Class);
     void OptimizeIndividualCalls(Function &F);
 
     void CheckForCFGHazards(const BasicBlock *BB,
@@ -1216,7 +1216,7 @@ ObjCARCOpt::OptimizeRetainRVCall(Function &F, Instruction *RetainRV) {
   BasicBlock::iterator I = RetainRV, Begin = RetainRV->getParent()->begin();
   if (I != Begin) {
     do --I; while (I != Begin && IsNoopInstruction(I));
-    if (GetBasicInstructionClass(I) == IC_AutoreleaseRV &&
+    if (GetBasicARCInstKind(I) == ARCInstKind::AutoreleaseRV &&
         GetArgRCIdentityRoot(I) == Arg) {
       Changed = true;
       ++NumPeeps;
@@ -1248,9 +1248,9 @@ ObjCARCOpt::OptimizeRetainRVCall(Function &F, Instruction *RetainRV) {
 
 /// Turn objc_autoreleaseReturnValue into objc_autorelease if the result is not
 /// used as a return value.
-void
-ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
-                                      InstructionClass &Class) {
+void ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F,
+                                           Instruction *AutoreleaseRV,
+                                           ARCInstKind &Class) {
   // Check for a return of the pointer value.
   const Value *Ptr = GetArgRCIdentityRoot(AutoreleaseRV);
   SmallVector<const Value *, 2> Users;
@@ -1258,7 +1258,7 @@ ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
   do {
     Ptr = Users.pop_back_val();
     for (const User *U : Ptr->users()) {
-      if (isa<ReturnInst>(U) || GetBasicInstructionClass(U) == IC_RetainRV)
+      if (isa<ReturnInst>(U) || GetBasicARCInstKind(U) == ARCInstKind::RetainRV)
         return;
       if (isa<BitCastInst>(U))
         Users.push_back(U);
@@ -1277,7 +1277,7 @@ ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
   Constant *NewDecl = EP.get(ARCRuntimeEntryPoints::EPT_Autorelease);
   AutoreleaseRVCI->setCalledFunction(NewDecl);
   AutoreleaseRVCI->setTailCall(false); // Never tail call objc_autorelease.
-  Class = IC_Autorelease;
+  Class = ARCInstKind::Autorelease;
 
   DEBUG(dbgs() << "New: " << *AutoreleaseRV << "\n");
 
@@ -1294,7 +1294,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ) {
     Instruction *Inst = &*I++;
 
-    InstructionClass Class = GetBasicInstructionClass(Inst);
+    ARCInstKind Class = GetBasicARCInstKind(Inst);
 
     DEBUG(dbgs() << "Visiting: Class: " << Class << "; " << *Inst << "\n");
 
@@ -1309,7 +1309,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
     // There are gray areas here, as the ability to cast reference-counted
     // pointers to raw void* and back allows code to break ARC assumptions,
     // however these are currently considered to be unimportant.
-    case IC_NoopCast:
+    case ARCInstKind::NoopCast:
       Changed = true;
       ++NumNoops;
       DEBUG(dbgs() << "Erasing no-op cast: " << *Inst << "\n");
@@ -1317,11 +1317,11 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
       continue;
 
     // If the pointer-to-weak-pointer is null, it's undefined behavior.
-    case IC_StoreWeak:
-    case IC_LoadWeak:
-    case IC_LoadWeakRetained:
-    case IC_InitWeak:
-    case IC_DestroyWeak: {
+    case ARCInstKind::StoreWeak:
+    case ARCInstKind::LoadWeak:
+    case ARCInstKind::LoadWeakRetained:
+    case ARCInstKind::InitWeak:
+    case ARCInstKind::DestroyWeak: {
       CallInst *CI = cast<CallInst>(Inst);
       if (IsNullOrUndef(CI->getArgOperand(0))) {
         Changed = true;
@@ -1338,8 +1338,8 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
       }
       break;
     }
-    case IC_CopyWeak:
-    case IC_MoveWeak: {
+    case ARCInstKind::CopyWeak:
+    case ARCInstKind::MoveWeak: {
       CallInst *CI = cast<CallInst>(Inst);
       if (IsNullOrUndef(CI->getArgOperand(0)) ||
           IsNullOrUndef(CI->getArgOperand(1))) {
@@ -1359,11 +1359,11 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
       }
       break;
     }
-    case IC_RetainRV:
+    case ARCInstKind::RetainRV:
       if (OptimizeRetainRVCall(F, Inst))
         continue;
       break;
-    case IC_AutoreleaseRV:
+    case ARCInstKind::AutoreleaseRV:
       OptimizeAutoreleaseRVCall(F, Inst, Class);
       break;
     }
@@ -1391,7 +1391,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
 
         EraseInstruction(Call);
         Inst = NewCall;
-        Class = IC_Release;
+        Class = ARCInstKind::Release;
       }
     }
 
@@ -1422,7 +1422,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
     }
 
     if (!IsNoopOnNull(Class)) {
-      UsedInThisFunction |= 1 << Class;
+      UsedInThisFunction |= 1 << unsigned(Class);
       continue;
     }
 
@@ -1440,7 +1440,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
 
     // Keep track of which of retain, release, autorelease, and retain_block
     // are actually present in this function.
-    UsedInThisFunction |= 1 << Class;
+    UsedInThisFunction |= 1 << unsigned(Class);
 
     // If Arg is a PHI, and one or more incoming values to the
     // PHI are null, and the call is control-equivalent to the PHI, and there
@@ -1480,25 +1480,25 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
         // Check that there is nothing that cares about the reference
         // count between the call and the phi.
         switch (Class) {
-        case IC_Retain:
-        case IC_RetainBlock:
+        case ARCInstKind::Retain:
+        case ARCInstKind::RetainBlock:
           // These can always be moved up.
           break;
-        case IC_Release:
+        case ARCInstKind::Release:
           // These can't be moved across things that care about the retain
           // count.
           FindDependencies(NeedsPositiveRetainCount, Arg,
                            Inst->getParent(), Inst,
                            DependingInstructions, Visited, PA);
           break;
-        case IC_Autorelease:
+        case ARCInstKind::Autorelease:
           // These can't be moved across autorelease pool scope boundaries.
           FindDependencies(AutoreleasePoolBoundary, Arg,
                            Inst->getParent(), Inst,
                            DependingInstructions, Visited, PA);
           break;
-        case IC_RetainRV:
-        case IC_AutoreleaseRV:
+        case ARCInstKind::RetainRV:
+        case ARCInstKind::AutoreleaseRV:
           // Don't move these; the RV optimization depends on the autoreleaseRV
           // being tail called, and the retainRV being immediately after a call
           // (which might still happen if we get lucky with codegen layout, but
@@ -1711,13 +1711,13 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
                                      MapVector<Value *, RRInfo> &Retains,
                                      BBState &MyStates) {
   bool NestingDetected = false;
-  InstructionClass Class = GetInstructionClass(Inst);
+  ARCInstKind Class = GetARCInstKind(Inst);
   const Value *Arg = nullptr;
 
   DEBUG(dbgs() << "Class: " << Class << "\n");
 
   switch (Class) {
-  case IC_Release: {
+  case ARCInstKind::Release: {
     Arg = GetArgRCIdentityRoot(Inst);
 
     PtrState &S = MyStates.getPtrBottomUpState(Arg);
@@ -1745,13 +1745,13 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     S.SetKnownPositiveRefCount();
     break;
   }
-  case IC_RetainBlock:
+  case ARCInstKind::RetainBlock:
     // In OptimizeIndividualCalls, we have strength reduced all optimizable
     // objc_retainBlocks to objc_retains. Thus at this point any
     // objc_retainBlocks that we see are not optimizable.
     break;
-  case IC_Retain:
-  case IC_RetainRV: {
+  case ARCInstKind::Retain:
+  case ARCInstKind::RetainRV: {
     Arg = GetArgRCIdentityRoot(Inst);
 
     PtrState &S = MyStates.getPtrBottomUpState(Arg);
@@ -1769,9 +1769,10 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
         S.ClearReverseInsertPts();
       // FALL THROUGH
     case S_CanRelease:
-      // Don't do retain+release tracking for IC_RetainRV, because it's
+      // Don't do retain+release tracking for ARCInstKind::RetainRV,
+      // because it's
       // better to let it remain as the first instruction after a call.
-      if (Class != IC_RetainRV)
+      if (Class != ARCInstKind::RetainRV)
         Retains[Inst] = S.GetRRInfo();
       S.ClearSequenceProgress();
       break;
@@ -1784,15 +1785,15 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     // A retain moving bottom up can be a use.
     break;
   }
-  case IC_AutoreleasepoolPop:
+  case ARCInstKind::AutoreleasepoolPop:
     // Conservatively, clear MyStates for all known pointers.
     MyStates.clearBottomUpPointers();
     return NestingDetected;
-  case IC_AutoreleasepoolPush:
-  case IC_None:
+  case ARCInstKind::AutoreleasepoolPush:
+  case ARCInstKind::None:
     // These are irrelevant.
     return NestingDetected;
-  case IC_User:
+  case ARCInstKind::User:
     // If we have a store into an alloca of a pointer we are tracking, the
     // pointer has multiple owners implying that we must be more conservative.
     //
@@ -1967,24 +1968,25 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
                                     DenseMap<Value *, RRInfo> &Releases,
                                     BBState &MyStates) {
   bool NestingDetected = false;
-  InstructionClass Class = GetInstructionClass(Inst);
+  ARCInstKind Class = GetARCInstKind(Inst);
   const Value *Arg = nullptr;
 
   switch (Class) {
-  case IC_RetainBlock:
+  case ARCInstKind::RetainBlock:
     // In OptimizeIndividualCalls, we have strength reduced all optimizable
     // objc_retainBlocks to objc_retains. Thus at this point any
     // objc_retainBlocks that we see are not optimizable.
     break;
-  case IC_Retain:
-  case IC_RetainRV: {
+  case ARCInstKind::Retain:
+  case ARCInstKind::RetainRV: {
     Arg = GetArgRCIdentityRoot(Inst);
 
     PtrState &S = MyStates.getPtrTopDownState(Arg);
 
-    // Don't do retain+release tracking for IC_RetainRV, because it's
+    // Don't do retain+release tracking for ARCInstKind::RetainRV, because
+    // it's
     // better to let it remain as the first instruction after a call.
-    if (Class != IC_RetainRV) {
+    if (Class != ARCInstKind::RetainRV) {
       // If we see two retains in a row on the same pointer. If so, make
       // a note, and we'll cicle back to revisit it after we've
       // hopefully eliminated the second retain, which may allow us to
@@ -2007,7 +2009,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
     // code below.
     break;
   }
-  case IC_Release: {
+  case ARCInstKind::Release: {
     Arg = GetArgRCIdentityRoot(Inst);
 
     PtrState &S = MyStates.getPtrTopDownState(Arg);
@@ -2039,12 +2041,12 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
     }
     break;
   }
-  case IC_AutoreleasepoolPop:
+  case ARCInstKind::AutoreleasepoolPop:
     // Conservatively, clear MyStates for all known pointers.
     MyStates.clearTopDownPointers();
     return NestingDetected;
-  case IC_AutoreleasepoolPush:
-  case IC_None:
+  case ARCInstKind::AutoreleasepoolPush:
+  case ARCInstKind::None:
     // These are irrelevant.
     return NestingDetected;
   default:
@@ -2640,12 +2642,13 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
 
     DEBUG(dbgs() << "Visiting: " << *Inst << "\n");
 
-    InstructionClass Class = GetBasicInstructionClass(Inst);
-    if (Class != IC_LoadWeak && Class != IC_LoadWeakRetained)
+    ARCInstKind Class = GetBasicARCInstKind(Inst);
+    if (Class != ARCInstKind::LoadWeak &&
+        Class != ARCInstKind::LoadWeakRetained)
       continue;
 
     // Delete objc_loadWeak calls with no users.
-    if (Class == IC_LoadWeak && Inst->use_empty()) {
+    if (Class == ARCInstKind::LoadWeak && Inst->use_empty()) {
       Inst->eraseFromParent();
       continue;
     }
@@ -2660,10 +2663,10 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
                               J = Current.getInstructionIterator();
          J != B; --J) {
       Instruction *EarlierInst = &*std::prev(J);
-      InstructionClass EarlierClass = GetInstructionClass(EarlierInst);
+      ARCInstKind EarlierClass = GetARCInstKind(EarlierInst);
       switch (EarlierClass) {
-      case IC_LoadWeak:
-      case IC_LoadWeakRetained: {
+      case ARCInstKind::LoadWeak:
+      case ARCInstKind::LoadWeakRetained: {
         // If this is loading from the same pointer, replace this load's value
         // with that one.
         CallInst *Call = cast<CallInst>(Inst);
@@ -2674,7 +2677,7 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
         case AliasAnalysis::MustAlias:
           Changed = true;
           // If the load has a builtin retain, insert a plain retain for it.
-          if (Class == IC_LoadWeakRetained) {
+          if (Class == ARCInstKind::LoadWeakRetained) {
             Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_Retain);
             CallInst *CI = CallInst::Create(Decl, EarlierCall, "", Call);
             CI->setTailCall();
@@ -2691,8 +2694,8 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
         }
         break;
       }
-      case IC_StoreWeak:
-      case IC_InitWeak: {
+      case ARCInstKind::StoreWeak:
+      case ARCInstKind::InitWeak: {
         // If this is storing to the same pointer and has the same size etc.
         // replace this load's value with the stored value.
         CallInst *Call = cast<CallInst>(Inst);
@@ -2703,7 +2706,7 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
         case AliasAnalysis::MustAlias:
           Changed = true;
           // If the load has a builtin retain, insert a plain retain for it.
-          if (Class == IC_LoadWeakRetained) {
+          if (Class == ARCInstKind::LoadWeakRetained) {
             Constant *Decl = EP.get(ARCRuntimeEntryPoints::EPT_Retain);
             CallInst *CI = CallInst::Create(Decl, EarlierCall, "", Call);
             CI->setTailCall();
@@ -2720,14 +2723,14 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
         }
         break;
       }
-      case IC_MoveWeak:
-      case IC_CopyWeak:
+      case ARCInstKind::MoveWeak:
+      case ARCInstKind::CopyWeak:
         // TOOD: Grab the copied value.
         goto clobbered;
-      case IC_AutoreleasepoolPush:
-      case IC_None:
-      case IC_IntrinsicUser:
-      case IC_User:
+      case ARCInstKind::AutoreleasepoolPush:
+      case ARCInstKind::None:
+      case ARCInstKind::IntrinsicUser:
+      case ARCInstKind::User:
         // Weak pointers are only modified through the weak entry points
         // (and arbitrary calls, which could call the weak entry points).
         break;
@@ -2743,8 +2746,8 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
   // the alloca and all its users can be zapped.
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ) {
     Instruction *Inst = &*I++;
-    InstructionClass Class = GetBasicInstructionClass(Inst);
-    if (Class != IC_DestroyWeak)
+    ARCInstKind Class = GetBasicARCInstKind(Inst);
+    if (Class != ARCInstKind::DestroyWeak)
       continue;
 
     CallInst *Call = cast<CallInst>(Inst);
@@ -2752,10 +2755,10 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
     if (AllocaInst *Alloca = dyn_cast<AllocaInst>(Arg)) {
       for (User *U : Alloca->users()) {
         const Instruction *UserInst = cast<Instruction>(U);
-        switch (GetBasicInstructionClass(UserInst)) {
-        case IC_InitWeak:
-        case IC_StoreWeak:
-        case IC_DestroyWeak:
+        switch (GetBasicARCInstKind(UserInst)) {
+        case ARCInstKind::InitWeak:
+        case ARCInstKind::StoreWeak:
+        case ARCInstKind::DestroyWeak:
           continue;
         default:
           goto done;
@@ -2764,13 +2767,13 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
       Changed = true;
       for (auto UI = Alloca->user_begin(), UE = Alloca->user_end(); UI != UE;) {
         CallInst *UserInst = cast<CallInst>(*UI++);
-        switch (GetBasicInstructionClass(UserInst)) {
-        case IC_InitWeak:
-        case IC_StoreWeak:
+        switch (GetBasicARCInstKind(UserInst)) {
+        case ARCInstKind::InitWeak:
+        case ARCInstKind::StoreWeak:
           // These functions return their second argument.
           UserInst->replaceAllUsesWith(UserInst->getArgOperand(1));
           break;
-        case IC_DestroyWeak:
+        case ARCInstKind::DestroyWeak:
           // No return value.
           break;
         default:
@@ -2833,8 +2836,8 @@ HasSafePathToPredecessorCall(const Value *Arg, Instruction *Retain,
     return false;
 
   // Check that the call is a regular call.
-  InstructionClass Class = GetBasicInstructionClass(Call);
-  if (Class != IC_CallOrUser && Class != IC_Call)
+  ARCInstKind Class = GetBasicARCInstKind(Call);
+  if (Class != ARCInstKind::CallOrUser && Class != ARCInstKind::Call)
     return false;
 
   return true;
@@ -2858,8 +2861,7 @@ FindPredecessorRetainWithSafePath(const Value *Arg, BasicBlock *BB,
     dyn_cast_or_null<CallInst>(*DepInsts.begin());
 
   // Check that we found a retain with the same argument.
-  if (!Retain ||
-      !IsRetain(GetBasicInstructionClass(Retain)) ||
+  if (!Retain || !IsRetain(GetBasicARCInstKind(Retain)) ||
       GetArgRCIdentityRoot(Retain) != Arg) {
     return nullptr;
   }
@@ -2885,7 +2887,7 @@ FindPredecessorAutoreleaseWithSafePath(const Value *Arg, BasicBlock *BB,
     dyn_cast_or_null<CallInst>(*DepInsts.begin());
   if (!Autorelease)
     return nullptr;
-  InstructionClass AutoreleaseClass = GetBasicInstructionClass(Autorelease);
+  ARCInstKind AutoreleaseClass = GetBasicARCInstKind(Autorelease);
   if (!IsAutorelease(AutoreleaseClass))
     return nullptr;
   if (GetArgRCIdentityRoot(Autorelease) != Arg)
@@ -2974,13 +2976,13 @@ ObjCARCOpt::GatherStatistics(Function &F, bool AfterOptimization) {
 
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ) {
     Instruction *Inst = &*I++;
-    switch (GetBasicInstructionClass(Inst)) {
+    switch (GetBasicARCInstKind(Inst)) {
     default:
       break;
-    case IC_Retain:
+    case ARCInstKind::Retain:
       ++NumRetains;
       break;
-    case IC_Release:
+    case ARCInstKind::Release:
       ++NumReleases;
       break;
     }
@@ -3052,27 +3054,27 @@ bool ObjCARCOpt::runOnFunction(Function &F) {
   OptimizeIndividualCalls(F);
 
   // Optimizations for weak pointers.
-  if (UsedInThisFunction & ((1 << IC_LoadWeak) |
-                            (1 << IC_LoadWeakRetained) |
-                            (1 << IC_StoreWeak) |
-                            (1 << IC_InitWeak) |
-                            (1 << IC_CopyWeak) |
-                            (1 << IC_MoveWeak) |
-                            (1 << IC_DestroyWeak)))
+  if (UsedInThisFunction & ((1 << unsigned(ARCInstKind::LoadWeak)) |
+                            (1 << unsigned(ARCInstKind::LoadWeakRetained)) |
+                            (1 << unsigned(ARCInstKind::StoreWeak)) |
+                            (1 << unsigned(ARCInstKind::InitWeak)) |
+                            (1 << unsigned(ARCInstKind::CopyWeak)) |
+                            (1 << unsigned(ARCInstKind::MoveWeak)) |
+                            (1 << unsigned(ARCInstKind::DestroyWeak))))
     OptimizeWeakCalls(F);
 
   // Optimizations for retain+release pairs.
-  if (UsedInThisFunction & ((1 << IC_Retain) |
-                            (1 << IC_RetainRV) |
-                            (1 << IC_RetainBlock)))
-    if (UsedInThisFunction & (1 << IC_Release))
+  if (UsedInThisFunction & ((1 << unsigned(ARCInstKind::Retain)) |
+                            (1 << unsigned(ARCInstKind::RetainRV)) |
+                            (1 << unsigned(ARCInstKind::RetainBlock))))
+    if (UsedInThisFunction & (1 << unsigned(ARCInstKind::Release)))
       // Run OptimizeSequences until it either stops making changes or
       // no retain+release pair nesting is detected.
       while (OptimizeSequences(F)) {}
 
   // Optimizations if objc_autorelease is used.
-  if (UsedInThisFunction & ((1 << IC_Autorelease) |
-                            (1 << IC_AutoreleaseRV)))
+  if (UsedInThisFunction & ((1 << unsigned(ARCInstKind::Autorelease)) |
+                            (1 << unsigned(ARCInstKind::AutoreleaseRV))))
     OptimizeReturns(F);
 
   // Gather statistics after optimization.

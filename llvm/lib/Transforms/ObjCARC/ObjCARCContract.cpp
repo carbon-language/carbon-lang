@@ -83,7 +83,7 @@ namespace {
 
     bool
     contractAutorelease(Function &F, Instruction *Autorelease,
-                        InstructionClass Class,
+                        ARCInstKind Class,
                         SmallPtrSetImpl<Instruction *> &DependingInstructions,
                         SmallPtrSetImpl<const BasicBlock *> &Visited);
 
@@ -143,7 +143,7 @@ bool ObjCARCContract::optimizeRetainCall(Function &F, Instruction *Retain) {
 
 /// Merge an autorelease with a retain into a fused call.
 bool ObjCARCContract::contractAutorelease(
-    Function &F, Instruction *Autorelease, InstructionClass Class,
+    Function &F, Instruction *Autorelease, ARCInstKind Class,
     SmallPtrSetImpl<Instruction *> &DependingInstructions,
     SmallPtrSetImpl<const BasicBlock *> &Visited) {
   const Value *Arg = GetArgRCIdentityRoot(Autorelease);
@@ -151,7 +151,7 @@ bool ObjCARCContract::contractAutorelease(
   // Check that there are no instructions between the retain and the autorelease
   // (such as an autorelease_pop) which may change the count.
   CallInst *Retain = nullptr;
-  if (Class == IC_AutoreleaseRV)
+  if (Class == ARCInstKind::AutoreleaseRV)
     FindDependencies(RetainAutoreleaseRVDep, Arg,
                      Autorelease->getParent(), Autorelease,
                      DependingInstructions, Visited, PA);
@@ -169,8 +169,7 @@ bool ObjCARCContract::contractAutorelease(
   Retain = dyn_cast_or_null<CallInst>(*DependingInstructions.begin());
   DependingInstructions.clear();
 
-  if (!Retain ||
-      GetBasicInstructionClass(Retain) != IC_Retain ||
+  if (!Retain || GetBasicARCInstKind(Retain) != ARCInstKind::Retain ||
       GetArgRCIdentityRoot(Retain) != Arg)
     return false;
 
@@ -181,9 +180,9 @@ bool ObjCARCContract::contractAutorelease(
                   "        Autorelease:" << *Autorelease << "\n"
                   "        Retain: " << *Retain << "\n");
 
-  Constant *Decl = EP.get(Class == IC_AutoreleaseRV ?
-                          ARCRuntimeEntryPoints::EPT_RetainAutoreleaseRV :
-                          ARCRuntimeEntryPoints::EPT_RetainAutorelease);
+  Constant *Decl = EP.get(Class == ARCInstKind::AutoreleaseRV
+                              ? ARCRuntimeEntryPoints::EPT_RetainAutoreleaseRV
+                              : ARCRuntimeEntryPoints::EPT_RetainAutorelease);
   Retain->setCalledFunction(Decl);
 
   DEBUG(dbgs() << "        New RetainAutorelease: " << *Retain << "\n");
@@ -222,7 +221,7 @@ tryToContractReleaseIntoStoreStrong(Instruction *Release, inst_iterator &Iter) {
       continue;
     }
 
-    InstructionClass Class = GetBasicInstructionClass(Inst);
+    ARCInstKind Class = GetBasicARCInstKind(Inst);
 
     // Unrelated retains are harmless.
     if (IsRetain(Class))
@@ -247,10 +246,11 @@ tryToContractReleaseIntoStoreStrong(Instruction *Release, inst_iterator &Iter) {
   // Walk up to find the retain.
   I = Store;
   BasicBlock::iterator Begin = BB->begin();
-  while (I != Begin && GetBasicInstructionClass(I) != IC_Retain)
+  while (I != Begin && GetBasicARCInstKind(I) != ARCInstKind::Retain)
     --I;
   Instruction *Retain = I;
-  if (GetBasicInstructionClass(Retain) != IC_Retain) return;
+  if (GetBasicARCInstKind(Retain) != ARCInstKind::Retain)
+    return;
   if (GetArgRCIdentityRoot(Retain) != New) return;
 
   Changed = true;
@@ -300,22 +300,22 @@ bool ObjCARCContract::tryToPeepholeInstruction(
   bool &TailOkForStoreStrongs) {
     // Only these library routines return their argument. In particular,
     // objc_retainBlock does not necessarily return its argument.
-    InstructionClass Class = GetBasicInstructionClass(Inst);
+  ARCInstKind Class = GetBasicARCInstKind(Inst);
     switch (Class) {
-    case IC_FusedRetainAutorelease:
-    case IC_FusedRetainAutoreleaseRV:
+    case ARCInstKind::FusedRetainAutorelease:
+    case ARCInstKind::FusedRetainAutoreleaseRV:
       return false;
-    case IC_Autorelease:
-    case IC_AutoreleaseRV:
+    case ARCInstKind::Autorelease:
+    case ARCInstKind::AutoreleaseRV:
       return contractAutorelease(F, Inst, Class, DependingInsts, Visited);
-    case IC_Retain:
+    case ARCInstKind::Retain:
       // Attempt to convert retains to retainrvs if they are next to function
       // calls.
       if (!optimizeRetainCall(F, Inst))
         return false;
       // If we succeed in our optimization, fall through.
       // FALLTHROUGH
-    case IC_RetainRV: {
+    case ARCInstKind::RetainRV: {
       // If we're compiling for a target which needs a special inline-asm
       // marker to do the retainAutoreleasedReturnValue optimization,
       // insert it now.
@@ -352,7 +352,7 @@ bool ObjCARCContract::tryToPeepholeInstruction(
     decline_rv_optimization:
       return false;
     }
-    case IC_InitWeak: {
+    case ARCInstKind::InitWeak: {
       // objc_initWeak(p, null) => *p = null
       CallInst *CI = cast<CallInst>(Inst);
       if (IsNullOrUndef(CI->getArgOperand(1))) {
@@ -369,19 +369,19 @@ bool ObjCARCContract::tryToPeepholeInstruction(
       }
       return true;
     }
-    case IC_Release:
+    case ARCInstKind::Release:
       // Try to form an objc store strong from our release. If we fail, there is
       // nothing further to do below, so continue.
       tryToContractReleaseIntoStoreStrong(Inst, Iter);
       return true;
-    case IC_User:
+    case ARCInstKind::User:
       // Be conservative if the function has any alloca instructions.
       // Technically we only care about escaping alloca instructions,
       // but this is sufficient to handle some interesting cases.
       if (isa<AllocaInst>(Inst))
         TailOkForStoreStrongs = false;
       return true;
-    case IC_IntrinsicUser:
+    case ARCInstKind::IntrinsicUser:
       // Remove calls to @clang.arc.use(...).
       Inst->eraseFromParent();
       return true;

@@ -97,11 +97,11 @@ bool ObjCARCAPElim::OptimizeBB(BasicBlock *BB) {
   Instruction *Push = nullptr;
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
     Instruction *Inst = I++;
-    switch (GetBasicInstructionClass(Inst)) {
-    case IC_AutoreleasepoolPush:
+    switch (GetBasicARCInstKind(Inst)) {
+    case ARCInstKind::AutoreleasepoolPush:
       Push = Inst;
       break;
-    case IC_AutoreleasepoolPop:
+    case ARCInstKind::AutoreleasepoolPop:
       // If this pop matches a push and nothing in between can autorelease,
       // zap the pair.
       if (Push && cast<CallInst>(Inst)->getArgOperand(0) == Push) {
@@ -115,7 +115,7 @@ bool ObjCARCAPElim::OptimizeBB(BasicBlock *BB) {
       }
       Push = nullptr;
       break;
-    case IC_CallOrUser:
+    case ARCInstKind::CallOrUser:
       if (MayAutorelease(ImmutableCallSite(Inst)))
         Push = nullptr;
       break;

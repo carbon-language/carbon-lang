@@ -32,15 +32,14 @@ using namespace llvm::objcarc;
 
 /// Test whether the given instruction can result in a reference count
 /// modification (positive or negative) for the pointer's object.
-bool
-llvm::objcarc::CanAlterRefCount(const Instruction *Inst, const Value *Ptr,
-                                ProvenanceAnalysis &PA,
-                                InstructionClass Class) {
+bool llvm::objcarc::CanAlterRefCount(const Instruction *Inst, const Value *Ptr,
+                                     ProvenanceAnalysis &PA,
+                                     ARCInstKind Class) {
   switch (Class) {
-  case IC_Autorelease:
-  case IC_AutoreleaseRV:
-  case IC_IntrinsicUser:
-  case IC_User:
+  case ARCInstKind::Autorelease:
+  case ARCInstKind::AutoreleaseRV:
+  case ARCInstKind::IntrinsicUser:
+  case ARCInstKind::User:
     // These operations never directly modify a reference count.
     return false;
   default: break;
@@ -69,11 +68,11 @@ llvm::objcarc::CanAlterRefCount(const Instruction *Inst, const Value *Ptr,
 
 /// Test whether the given instruction can "use" the given pointer's object in a
 /// way that requires the reference count to be positive.
-bool
-llvm::objcarc::CanUse(const Instruction *Inst, const Value *Ptr,
-                      ProvenanceAnalysis &PA, InstructionClass Class) {
-  // IC_Call operations (as opposed to IC_CallOrUser) never "use" objc pointers.
-  if (Class == IC_Call)
+bool llvm::objcarc::CanUse(const Instruction *Inst, const Value *Ptr,
+                           ProvenanceAnalysis &PA, ARCInstKind Class) {
+  // ARCInstKind::Call operations (as opposed to
+  // ARCInstKind::CallOrUser) never "use" objc pointers.
+  if (Class == ARCInstKind::Call)
     return false;
 
   // Consider various instructions which may have pointer arguments which are
@@ -123,11 +122,11 @@ llvm::objcarc::Depends(DependenceKind Flavor, Instruction *Inst,
 
   switch (Flavor) {
   case NeedsPositiveRetainCount: {
-    InstructionClass Class = GetInstructionClass(Inst);
+    ARCInstKind Class = GetARCInstKind(Inst);
     switch (Class) {
-    case IC_AutoreleasepoolPop:
-    case IC_AutoreleasepoolPush:
-    case IC_None:
+    case ARCInstKind::AutoreleasepoolPop:
+    case ARCInstKind::AutoreleasepoolPush:
+    case ARCInstKind::None:
       return false;
     default:
       return CanUse(Inst, Arg, PA, Class);
@@ -135,10 +134,10 @@ llvm::objcarc::Depends(DependenceKind Flavor, Instruction *Inst,
   }
 
   case AutoreleasePoolBoundary: {
-    InstructionClass Class = GetInstructionClass(Inst);
+    ARCInstKind Class = GetARCInstKind(Inst);
     switch (Class) {
-    case IC_AutoreleasepoolPop:
-    case IC_AutoreleasepoolPush:
+    case ARCInstKind::AutoreleasepoolPop:
+    case ARCInstKind::AutoreleasepoolPush:
       // These mark the end and begin of an autorelease pool scope.
       return true;
     default:
@@ -148,13 +147,13 @@ llvm::objcarc::Depends(DependenceKind Flavor, Instruction *Inst,
   }
 
   case CanChangeRetainCount: {
-    InstructionClass Class = GetInstructionClass(Inst);
+    ARCInstKind Class = GetARCInstKind(Inst);
     switch (Class) {
-    case IC_AutoreleasepoolPop:
+    case ARCInstKind::AutoreleasepoolPop:
       // Conservatively assume this can decrement any count.
       return true;
-    case IC_AutoreleasepoolPush:
-    case IC_None:
+    case ARCInstKind::AutoreleasepoolPush:
+    case ARCInstKind::None:
       return false;
     default:
       return CanAlterRefCount(Inst, Arg, PA, Class);
@@ -162,14 +161,14 @@ llvm::objcarc::Depends(DependenceKind Flavor, Instruction *Inst,
   }
 
   case RetainAutoreleaseDep:
-    switch (GetBasicInstructionClass(Inst)) {
-    case IC_AutoreleasepoolPop:
-    case IC_AutoreleasepoolPush:
+    switch (GetBasicARCInstKind(Inst)) {
+    case ARCInstKind::AutoreleasepoolPop:
+    case ARCInstKind::AutoreleasepoolPush:
       // Don't merge an objc_autorelease with an objc_retain inside a different
       // autoreleasepool scope.
       return true;
-    case IC_Retain:
-    case IC_RetainRV:
+    case ARCInstKind::Retain:
+    case ARCInstKind::RetainRV:
       // Check for a retain of the same pointer for merging.
       return GetArgRCIdentityRoot(Inst) == Arg;
     default:
@@ -178,10 +177,10 @@ llvm::objcarc::Depends(DependenceKind Flavor, Instruction *Inst,
     }
 
   case RetainAutoreleaseRVDep: {
-    InstructionClass Class = GetBasicInstructionClass(Inst);
+    ARCInstKind Class = GetBasicARCInstKind(Inst);
     switch (Class) {
-    case IC_Retain:
-    case IC_RetainRV:
+    case ARCInstKind::Retain:
+    case ARCInstKind::RetainRV:
       // Check for a retain of the same pointer for merging.
       return GetArgRCIdentityRoot(Inst) == Arg;
     default:
@@ -192,7 +191,7 @@ llvm::objcarc::Depends(DependenceKind Flavor, Instruction *Inst,
   }
 
   case RetainRVDep:
-    return CanInterruptRV(GetBasicInstructionClass(Inst));
+    return CanInterruptRV(GetBasicARCInstKind(Inst));
   }
 
   llvm_unreachable("Invalid dependence flavor");

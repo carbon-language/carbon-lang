@@ -63,15 +63,13 @@ Depends(DependenceKind Flavor, Instruction *Inst, const Value *Arg,
 
 /// Test whether the given instruction can "use" the given pointer's object in a
 /// way that requires the reference count to be positive.
-bool
-CanUse(const Instruction *Inst, const Value *Ptr, ProvenanceAnalysis &PA,
-       InstructionClass Class);
+bool CanUse(const Instruction *Inst, const Value *Ptr, ProvenanceAnalysis &PA,
+            ARCInstKind Class);
 
 /// Test whether the given instruction can result in a reference count
 /// modification (positive or negative) for the pointer's object.
-bool
-CanAlterRefCount(const Instruction *Inst, const Value *Ptr,
-                 ProvenanceAnalysis &PA, InstructionClass Class);
+bool CanAlterRefCount(const Instruction *Inst, const Value *Ptr,
+                      ProvenanceAnalysis &PA, ARCInstKind Class);
 
 } // namespace objcarc
 } // namespace llvm
