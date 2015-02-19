@@ -49,7 +49,6 @@ class SanitizerArgs {
   bool needsUbsanRt() const;
   bool needsDfsanRt() const { return Sanitizers.has(SanitizerKind::DataFlow); }
 
-  bool sanitizesVptr() const { return Sanitizers.has(SanitizerKind::Vptr); }
   bool requiresPIE() const;
   bool needsUnwindTables() const;
   bool linkCXXRuntimes() const { return LinkCXXRuntimes; }

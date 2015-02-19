@@ -53,10 +53,20 @@ public:
     RLT_Libgcc
   };
 
+  enum RTTIMode {
+    RM_EnabledExplicitly,
+    RM_EnabledImplicitly,
+    RM_DisabledExplicitly,
+    RM_DisabledImplicitly
+  };
+
 private:
   const Driver &D;
   const llvm::Triple Triple;
   const llvm::opt::ArgList &Args;
+  // We need to initialize CachedRTTIArg before CachedRTTIMode
+  const llvm::opt::Arg *const CachedRTTIArg;
+  const RTTIMode CachedRTTIMode;
 
   /// The list of toolchain specific path prefixes to search for
   /// files.
@@ -133,6 +143,12 @@ public:
   const MultilibSet &getMultilibs() const { return Multilibs; }
 
   const SanitizerArgs& getSanitizerArgs() const;
+
+  // Returns the Arg * that explicitly turned on/off rtti, or nullptr.
+  const llvm::opt::Arg *getRTTIArg() const { return CachedRTTIArg; }
+
+  // Returns the RTTIMode for the toolchain with the current arguments.
+  RTTIMode getRTTIMode() const { return CachedRTTIMode; }
 
   // Tool access.
 

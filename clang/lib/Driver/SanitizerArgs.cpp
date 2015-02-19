@@ -171,6 +171,8 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
                                 // Used to deduplicate diagnostics.
   unsigned Kinds = 0;
   unsigned NotSupported = getToolchainUnsupportedKinds(TC);
+  ToolChain::RTTIMode RTTIMode = TC.getRTTIMode();
+
   const Driver &D = TC.getDriver();
   for (ArgList::const_reverse_iterator I = Args.rbegin(), E = Args.rend();
        I != E; ++I) {
@@ -193,6 +195,28 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       }
       Add &= ~NotSupported;
 
+      // Test for -fno-rtti + explicit -fsanitizer=vptr before expanding groups
+      // so we don't error out if -fno-rtti and -fsanitize=undefined were
+      // passed.
+      if (Add & SanitizeKind::Vptr &&
+          (RTTIMode == ToolChain::RM_DisabledImplicitly ||
+           RTTIMode == ToolChain::RM_DisabledExplicitly)) {
+        if (RTTIMode == ToolChain::RM_DisabledImplicitly)
+          // Warn about not having rtti enabled if the vptr sanitizer is
+          // explicitly enabled
+          D.Diag(diag::warn_drv_disabling_vptr_no_rtti_default);
+        else {
+          const llvm::opt::Arg *NoRTTIArg = TC.getRTTIArg();
+          assert(NoRTTIArg &&
+                 "RTTI disabled explicitly but we have no argument!");
+          D.Diag(diag::err_drv_argument_not_allowed_with)
+              << "-fsanitize=vptr" << NoRTTIArg->getAsString(Args);
+        }
+
+        // Take out the Vptr sanitizer from the enabled sanitizers
+        AllRemove |= SanitizeKind::Vptr;
+      }
+
       Add = expandGroups(Add);
       // Group expansion may have enabled a sanitizer which is disabled later.
       Add &= ~AllRemove;
@@ -208,6 +232,15 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
     }
   }
   addAllOf(Sanitizers, Kinds);
+
+  // We disable the vptr sanitizer if it was enabled by group expansion but RTTI
+  // is disabled.
+  if (Sanitizers.has(SanitizerKind::Vptr) &&
+      (RTTIMode == ToolChain::RM_DisabledImplicitly ||
+       RTTIMode == ToolChain::RM_DisabledExplicitly)) {
+    Kinds &= ~SanitizeKind::Vptr;
+    Sanitizers.set(SanitizerKind::Vptr, 0);
+  }
 
   // Parse -f(no-)?sanitize-recover flags.
   unsigned RecoverableKinds = RecoverableByDefault;

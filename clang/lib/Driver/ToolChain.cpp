@@ -26,14 +26,47 @@ using namespace clang::driver;
 using namespace clang;
 using namespace llvm::opt;
 
+static llvm::opt::Arg *GetRTTIArgument(const ArgList &Args) {
+  return Args.getLastArg(options::OPT_mkernel, options::OPT_fapple_kext,
+                         options::OPT_fno_rtti, options::OPT_frtti);
+}
+
+static ToolChain::RTTIMode CalculateRTTIMode(const ArgList &Args,
+                                             const llvm::Triple &Triple,
+                                             const Arg *CachedRTTIArg) {
+  // Explicit rtti/no-rtti args
+  if (CachedRTTIArg) {
+    if (CachedRTTIArg->getOption().matches(options::OPT_frtti))
+      return ToolChain::RM_EnabledExplicitly;
+    else
+      return ToolChain::RM_DisabledExplicitly;
+  }
+
+  // -frtti is default, except for the PS4 CPU.
+  if (!Triple.isPS4CPU())
+    return ToolChain::RM_EnabledImplicitly;
+
+  // On the PS4, turning on c++ exceptions turns on rtti.
+  // We're assuming that, if we see -fexceptions, rtti gets turned on.
+  Arg *Exceptions = Args.getLastArg(
+      options::OPT_fcxx_exceptions, options::OPT_fno_cxx_exceptions,
+      options::OPT_fexceptions, options::OPT_fno_exceptions);
+  if (Exceptions &&
+      (Exceptions->getOption().matches(options::OPT_fexceptions) ||
+       Exceptions->getOption().matches(options::OPT_fcxx_exceptions)))
+    return ToolChain::RM_EnabledImplicitly;
+
+  return ToolChain::RM_DisabledImplicitly;
+}
+
 ToolChain::ToolChain(const Driver &D, const llvm::Triple &T,
                      const ArgList &Args)
-  : D(D), Triple(T), Args(Args) {
+    : D(D), Triple(T), Args(Args), CachedRTTIArg(GetRTTIArgument(Args)),
+      CachedRTTIMode(CalculateRTTIMode(Args, Triple, CachedRTTIArg)) {
   if (Arg *A = Args.getLastArg(options::OPT_mthread_model))
     if (!isThreadModelSupported(A->getValue()))
       D.Diag(diag::err_drv_invalid_thread_model_for_target)
-          << A->getValue()
-          << A->getAsString(Args);
+          << A->getValue() << A->getAsString(Args);
 }
 
 ToolChain::~ToolChain() {
