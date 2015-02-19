@@ -104,3 +104,9 @@ A.
     more) the speed benefit from the in-process fuzzer is negligible.
   * If the target library runs persistent threads (that outlive
     execution of one test) the fuzzing results will be unreliable.
+
+Q. So, what exactly this Fuzzer is good for?
+A. This Fuzzer might be a good choice for testing libraries that have relatively
+small inputs, each input takes < 1ms to run, and the library code is not expected
+to crash on invalid inputs.
+Examples: regular expression matchers, text or binary format parsers.

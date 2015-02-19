@@ -47,7 +47,7 @@ void Mutate(Unit *U, size_t MaxLen) {
       U->erase(U->begin() + rand() % U->size());
       break;
     }
-    // Fallthrough
+    [[clang::fallthrough]];
   case 1:
     if (U->size() < MaxLen) {
       U->insert(U->begin() + rand() % U->size(), RandCh());
