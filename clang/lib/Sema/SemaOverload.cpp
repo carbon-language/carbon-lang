@@ -286,6 +286,16 @@ StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
   QualType FromType = getToType(0);
   QualType ToType = getToType(1);
   switch (Second) {
+  // 'bool' is an integral type; dispatch to the right place to handle it.
+  case ICK_Boolean_Conversion:
+    if (FromType->isRealFloatingType())
+      goto FloatingIntegralConversion;
+    if (FromType->isIntegralOrUnscopedEnumerationType())
+      goto IntegralConversion;
+    // Boolean conversions can be from pointers and pointers to members
+    // [conv.bool], and those aren't considered narrowing conversions.
+    return NK_Not_Narrowing;
+
   // -- from a floating-point type to an integer type, or
   //
   // -- from an integer type or unscoped enumeration type to a floating-point
@@ -293,6 +303,7 @@ StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
   //    value after conversion will fit into the target type and will produce
   //    the original value when converted back to the original type, or
   case ICK_Floating_Integral:
+  FloatingIntegralConversion:
     if (FromType->isRealFloatingType() && ToType->isIntegralType(Ctx)) {
       return NK_Type_Narrowing;
     } else if (FromType->isIntegralType(Ctx) && ToType->isRealFloatingType()) {
@@ -357,13 +368,8 @@ StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
   //    the source is a constant expression and the actual value after
   //    conversion will fit into the target type and will produce the original
   //    value when converted back to the original type.
-  case ICK_Boolean_Conversion:  // Bools are integers too.
-    if (!FromType->isIntegralOrUnscopedEnumerationType()) {
-      // Boolean conversions can be from pointers and pointers to members
-      // [conv.bool], and those aren't considered narrowing conversions.
-      return NK_Not_Narrowing;
-    }  // Otherwise, fall through to the integral case.
-  case ICK_Integral_Conversion: {
+  case ICK_Integral_Conversion:
+  IntegralConversion: {
     assert(FromType->isIntegralOrUnscopedEnumerationType());
     assert(ToType->isIntegralOrUnscopedEnumerationType());
     const bool FromSigned = FromType->isSignedIntegerOrEnumerationType();
