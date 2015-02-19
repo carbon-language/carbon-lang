@@ -32,7 +32,8 @@ using namespace llvm;
 #include "AMDGPUGenSubtargetInfo.inc"
 
 AMDGPUSubtarget &
-AMDGPUSubtarget::initializeSubtargetDependencies(StringRef TT, StringRef GPU, StringRef FS) {
+AMDGPUSubtarget::initializeSubtargetDependencies(StringRef TT, StringRef GPU,
+                                                 StringRef FS) {
   // Determine default and user-specified characteristics
   // On SI+, we want FP64 denormals to be on by default. FP32 denormals can be
   // enabled, but some instructions do not respect them and they run at the
@@ -65,17 +66,15 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef GPU, StringRef FS,
     : AMDGPUGenSubtargetInfo(TT, GPU, FS), DevName(GPU), Is64bit(false),
       DumpCode(false), R600ALUInst(false), HasVertexCache(false),
       TexVTXClauseSize(0), Gen(AMDGPUSubtarget::R600), FP64(false),
-      FP64Denormals(false), FP32Denormals(false),
-      FastFMAF32(false), CaymanISA(false),
-      FlatAddressSpace(false), EnableIRStructurizer(true),
-      EnablePromoteAlloca(false), EnableIfCvt(true),
-      EnableLoadStoreOpt(false), WavefrontSize(0), CFALUBug(false), LocalMemorySize(0),
+      FP64Denormals(false), FP32Denormals(false), FastFMAF32(false),
+      CaymanISA(false), FlatAddressSpace(false), EnableIRStructurizer(true),
+      EnablePromoteAlloca(false), EnableIfCvt(true), EnableLoadStoreOpt(false),
+      WavefrontSize(0), CFALUBug(false), LocalMemorySize(0),
       EnableVGPRSpilling(false),
       FrameLowering(TargetFrameLowering::StackGrowsUp,
                     64 * 16, // Maximum stack alignment (long16)
                     0),
-      InstrItins(getInstrItineraryForCPU(GPU)),
-      TargetTriple(TT) {
+      InstrItins(getInstrItineraryForCPU(GPU)), TargetTriple(TT) {
 
   initializeSubtargetDependencies(TT, GPU, FS);
 
