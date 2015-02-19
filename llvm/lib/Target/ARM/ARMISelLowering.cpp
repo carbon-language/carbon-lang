@@ -565,6 +565,7 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setTargetDAGCombine(ISD::FP_TO_SINT);
     setTargetDAGCombine(ISD::FP_TO_UINT);
     setTargetDAGCombine(ISD::FDIV);
+    setTargetDAGCombine(ISD::LOAD);
 
     // It is legal to extload from v4i8 to v4i16 or v4i32.
     MVT Tys[6] = {MVT::v8i8, MVT::v4i8, MVT::v2i8,
@@ -8872,17 +8873,18 @@ static SDValue PerformVECTOR_SHUFFLECombine(SDNode *N, SelectionDAG &DAG) {
                               DAG.getUNDEF(VT), NewMask.data());
 }
 
-/// CombineBaseUpdate - Target-specific DAG combine function for VLDDUP and
-/// NEON load/store intrinsics to merge base address updates.
+/// CombineBaseUpdate - Target-specific DAG combine function for VLDDUP,
+/// NEON load/store intrinsics, and generic vector load/stores, to merge
+/// base address updates.
+/// For generic load/stores, the memory type is assumed to be a vector.
+/// The caller is assumed to have checked legality.
 static SDValue CombineBaseUpdate(SDNode *N,
                                  TargetLowering::DAGCombinerInfo &DCI) {
-  if (DCI.isBeforeLegalize() || DCI.isCalledByLegalizer())
-    return SDValue();
-
   SelectionDAG &DAG = DCI.DAG;
   const bool isIntrinsic = (N->getOpcode() == ISD::INTRINSIC_VOID ||
                             N->getOpcode() == ISD::INTRINSIC_W_CHAIN);
-  const unsigned AddrOpIdx = (isIntrinsic ? 2 : 1);
+  const bool isStore = N->getOpcode() == ISD::STORE;
+  const unsigned AddrOpIdx = ((isIntrinsic || isStore) ? 2 : 1);
   SDValue Addr = N->getOperand(AddrOpIdx);
   MemSDNode *MemN = cast<MemSDNode>(N);
 
@@ -8944,15 +8946,24 @@ static SDValue CombineBaseUpdate(SDNode *N,
       case ARMISD::VLD2DUP: NewOpc = ARMISD::VLD2DUP_UPD; NumVecs = 2; break;
       case ARMISD::VLD3DUP: NewOpc = ARMISD::VLD3DUP_UPD; NumVecs = 3; break;
       case ARMISD::VLD4DUP: NewOpc = ARMISD::VLD4DUP_UPD; NumVecs = 4; break;
+      case ISD::LOAD:       NewOpc = ARMISD::VLD1_UPD;
+        NumVecs = 1; isLaneOp = false; break;
+      case ISD::STORE:      NewOpc = ARMISD::VST1_UPD;
+        NumVecs = 1; isLaneOp = false; isLoadOp = false; break;
       }
     }
 
     // Find the size of memory referenced by the load/store.
     EVT VecTy;
-    if (isLoadOp)
+    if (isLoadOp) {
       VecTy = N->getValueType(0);
-    else
+    } else if (isIntrinsic) {
       VecTy = N->getOperand(AddrOpIdx+1).getValueType();
+    } else {
+      assert(isStore && "Node has to be a load, a store, or an intrinsic!");
+      VecTy = N->getOperand(1).getValueType();
+    }
+
     unsigned NumBytes = NumVecs * VecTy.getSizeInBits() / 8;
     if (isLaneOp)
       NumBytes /= VecTy.getVectorNumElements();
@@ -8969,13 +8980,53 @@ static SDValue CombineBaseUpdate(SDNode *N,
       continue;
     }
 
+    // OK, we found an ADD we can fold into the base update.
+    // Now, create a _UPD node, taking care of not breaking alignment.
+
+    EVT AlignedVecTy = VecTy;
+    unsigned Alignment = MemN->getAlignment();
+
+    // If this is a less-than-standard-aligned load/store, change the type to
+    // match the standard alignment.
+    // The alignment is overlooked when selecting _UPD variants; and it's
+    // easier to introduce bitcasts here than fix that.
+    // There are 3 ways to get to this base-update combine:
+    // - intrinsics: they are assumed to be properly aligned (to the standard
+    //   alignment of the memory type), so we don't need to do anything.
+    // - ARMISD::VLDx nodes: they are only generated from the aforementioned
+    //   intrinsics, so, likewise, there's nothing to do.
+    // - generic load/store instructions: the alignment is specified as an
+    //   explicit operand, rather than implicitly as the standard alignment
+    //   of the memory type (like the intrisics).  We need to change the
+    //   memory type to match the explicit alignment.  That way, we don't
+    //   generate non-standard-aligned ARMISD::VLDx nodes.
+    if (isa<LSBaseSDNode>(N)) {
+      if (Alignment == 0)
+        Alignment = 1;
+      if (Alignment < VecTy.getScalarSizeInBits() / 8) {
+        MVT EltTy = MVT::getIntegerVT(Alignment * 8);
+        assert(NumVecs == 1 && "Unexpected multi-element generic load/store.");
+        assert(!isLaneOp && "Unexpected generic load/store lane.");
+        unsigned NumElts = NumBytes / (EltTy.getSizeInBits() / 8);
+        AlignedVecTy = MVT::getVectorVT(EltTy, NumElts);
+      }
+      // Don't set an explicit alignment on regular load/stores that we want
+      // to transform to VLD/VST 1_UPD nodes.
+      // This matches the behavior of regular load/stores, which only get an
+      // explicit alignment if the MMO alignment is larger than the standard
+      // alignment of the memory type.
+      // Intrinsics, however, always get an explicit alignment, set to the
+      // alignment of the MMO.
+      Alignment = 1;
+    }
+
     // Create the new updating load/store node.
     // First, create an SDVTList for the new updating node's results.
     EVT Tys[6];
     unsigned NumResultVecs = (isLoadOp ? NumVecs : 0);
     unsigned n;
     for (n = 0; n < NumResultVecs; ++n)
-      Tys[n] = VecTy;
+      Tys[n] = AlignedVecTy;
     Tys[n++] = MVT::i32;
     Tys[n] = MVT::Other;
     SDVTList SDTys = DAG.getVTList(makeArrayRef(Tys, NumResultVecs+2));
@@ -8985,17 +9036,43 @@ static SDValue CombineBaseUpdate(SDNode *N,
     Ops.push_back(N->getOperand(0)); // incoming chain
     Ops.push_back(N->getOperand(AddrOpIdx));
     Ops.push_back(Inc);
-    for (unsigned i = AddrOpIdx + 1; i < N->getNumOperands(); ++i)
-      Ops.push_back(N->getOperand(i));
+
+    if (StoreSDNode *StN = dyn_cast<StoreSDNode>(N)) {
+      // Try to match the intrinsic's signature
+      Ops.push_back(StN->getValue());
+    } else {
+      // Loads (and of course intrinsics) match the intrinsics' signature,
+      // so just add all but the alignment operand.
+      for (unsigned i = AddrOpIdx + 1; i < N->getNumOperands() - 1; ++i)
+        Ops.push_back(N->getOperand(i));
+    }
+
+    // For all node types, the alignment operand is always the last one.
+    Ops.push_back(DAG.getConstant(Alignment, MVT::i32));
+
+    // If this is a non-standard-aligned STORE, the penultimate operand is the
+    // stored value.  Bitcast it to the aligned type.
+    if (AlignedVecTy != VecTy && N->getOpcode() == ISD::STORE) {
+      SDValue &StVal = Ops[Ops.size()-2];
+      StVal = DAG.getNode(ISD::BITCAST, SDLoc(N), AlignedVecTy, StVal);
+    }
 
     SDValue UpdN = DAG.getMemIntrinsicNode(NewOpc, SDLoc(N), SDTys,
-                                           Ops, MemN->getMemoryVT(),
+                                           Ops, AlignedVecTy,
                                            MemN->getMemOperand());
 
     // Update the uses.
     SmallVector<SDValue, 5> NewResults;
     for (unsigned i = 0; i < NumResultVecs; ++i)
       NewResults.push_back(SDValue(UpdN.getNode(), i));
+
+    // If this is an non-standard-aligned LOAD, the first result is the loaded
+    // value.  Bitcast it to the expected result type.
+    if (AlignedVecTy != VecTy && N->getOpcode() == ISD::LOAD) {
+      SDValue &LdVal = NewResults[0];
+      LdVal = DAG.getNode(ISD::BITCAST, SDLoc(N), VecTy, LdVal);
+    }
+
     NewResults.push_back(SDValue(UpdN.getNode(), NumResultVecs+1)); // chain
     DCI.CombineTo(N, NewResults);
     DCI.CombineTo(User, SDValue(UpdN.getNode(), NumResultVecs));
@@ -9003,6 +9080,14 @@ static SDValue CombineBaseUpdate(SDNode *N,
     break;
   }
   return SDValue();
+}
+
+static SDValue PerformVLDCombine(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI) {
+  if (DCI.isBeforeLegalize() || DCI.isCalledByLegalizer())
+    return SDValue();
+
+  return CombineBaseUpdate(N, DCI);
 }
 
 /// CombineVLDDUP - For a VDUPLANE node N, check if its source operand is a
@@ -9116,6 +9201,18 @@ static SDValue PerformVDUPLANECombine(SDNode *N,
     return SDValue();
 
   return DCI.DAG.getNode(ISD::BITCAST, SDLoc(N), VT, Op);
+}
+
+static SDValue PerformLOADCombine(SDNode *N,
+                                  TargetLowering::DAGCombinerInfo &DCI) {
+  EVT VT = N->getValueType(0);
+
+  // If this is a legal vector load, try to combine it into a VLD1_UPD.
+  if (ISD::isNormalLoad(N) && VT.isVector() &&
+      DCI.DAG.getTargetLoweringInfo().isTypeLegal(VT))
+    return CombineBaseUpdate(N, DCI);
+
+  return SDValue();
 }
 
 /// PerformSTORECombine - Target-specific dag combine xforms for
@@ -9255,6 +9352,11 @@ static SDValue PerformSTORECombine(SDNode *N,
                         St->isNonTemporal(), St->getAlignment(),
                         St->getAAInfo());
   }
+
+  // If this is a legal vector store, try to combine it into a VST1_UPD.
+  if (ISD::isNormalStore(N) && VT.isVector() &&
+      DCI.DAG.getTargetLoweringInfo().isTypeLegal(VT))
+    return CombineBaseUpdate(N, DCI);
 
   return SDValue();
 }
@@ -9849,10 +9951,11 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::ANY_EXTEND: return PerformExtendCombine(N, DCI.DAG, Subtarget);
   case ISD::SELECT_CC:  return PerformSELECT_CCCombine(N, DCI.DAG, Subtarget);
   case ARMISD::CMOV: return PerformCMOVCombine(N, DCI.DAG);
+  case ISD::LOAD:       return PerformLOADCombine(N, DCI);
   case ARMISD::VLD2DUP:
   case ARMISD::VLD3DUP:
   case ARMISD::VLD4DUP:
-    return CombineBaseUpdate(N, DCI);
+    return PerformVLDCombine(N, DCI);
   case ARMISD::BUILD_VECTOR:
     return PerformARMBUILD_VECTORCombine(N, DCI);
   case ISD::INTRINSIC_VOID:
@@ -9872,7 +9975,7 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
     case Intrinsic::arm_neon_vst2lane:
     case Intrinsic::arm_neon_vst3lane:
     case Intrinsic::arm_neon_vst4lane:
-      return CombineBaseUpdate(N, DCI);
+      return PerformVLDCombine(N, DCI);
     default: break;
     }
     break;
