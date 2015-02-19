@@ -55,7 +55,7 @@ public:
     // Moving the trampoline ID back to the available list first means there's at
     // least one available trampoline if the compile action triggers a request for
     // a new one.
-    AvailableTrampolines.push_back(I->first);
+    AvailableTrampolines.push_back(I->first - TargetT::CallSize);
     auto CallbackHandler = std::move(I->second);
     ActiveTrampolines.erase(I);
 
