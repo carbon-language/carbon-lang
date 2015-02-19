@@ -44,6 +44,10 @@ using namespace llvm::objcarc;
 STATISTIC(NumPeeps,       "Number of calls peephole-optimized");
 STATISTIC(NumStoreStrongs, "Number objc_storeStrong calls formed");
 
+//===----------------------------------------------------------------------===//
+//                                Declarations
+//===----------------------------------------------------------------------===//
+
 namespace {
   /// \brief Late ARC optimizations
   ///
@@ -68,17 +72,15 @@ namespace {
     /// "tail".
     SmallPtrSet<CallInst *, 8> StoreStrongCalls;
 
-    bool OptimizeRetainCall(Function &F, Instruction *Retain);
+    bool optimizeRetainCall(Function &F, Instruction *Retain);
 
-    bool ContractAutorelease(Function &F, Instruction *Autorelease,
-                             InstructionClass Class,
-                             SmallPtrSetImpl<Instruction *>
-                               &DependingInstructions,
-                             SmallPtrSetImpl<const BasicBlock *>
-                               &Visited);
+    bool
+    contractAutorelease(Function &F, Instruction *Autorelease,
+                        InstructionClass Class,
+                        SmallPtrSetImpl<Instruction *> &DependingInstructions,
+                        SmallPtrSetImpl<const BasicBlock *> &Visited);
 
-    void ContractRelease(Instruction *Release,
-                         inst_iterator &Iter);
+    void contractRelease(Instruction *Release, inst_iterator &Iter);
 
     void getAnalysisUsage(AnalysisUsage &AU) const override;
     bool doInitialization(Module &M) override;
@@ -92,29 +94,14 @@ namespace {
   };
 }
 
-char ObjCARCContract::ID = 0;
-INITIALIZE_PASS_BEGIN(ObjCARCContract,
-                      "objc-arc-contract", "ObjC ARC contraction", false, false)
-INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_END(ObjCARCContract,
-                    "objc-arc-contract", "ObjC ARC contraction", false, false)
-
-Pass *llvm::createObjCARCContractPass() {
-  return new ObjCARCContract();
-}
-
-void ObjCARCContract::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<AliasAnalysis>();
-  AU.addRequired<DominatorTreeWrapperPass>();
-  AU.setPreservesCFG();
-}
+//===----------------------------------------------------------------------===//
+//                               Implementation
+//===----------------------------------------------------------------------===//
 
 /// Turn objc_retain into objc_retainAutoreleasedReturnValue if the operand is a
 /// return value. We do this late so we do not disrupt the dataflow analysis in
 /// ObjCARCOpt.
-bool
-ObjCARCContract::OptimizeRetainCall(Function &F, Instruction *Retain) {
+bool ObjCARCContract::optimizeRetainCall(Function &F, Instruction *Retain) {
   ImmutableCallSite CS(GetObjCArg(Retain));
   const Instruction *Call = CS.getInstruction();
   if (!Call)
@@ -147,13 +134,10 @@ ObjCARCContract::OptimizeRetainCall(Function &F, Instruction *Retain) {
 }
 
 /// Merge an autorelease with a retain into a fused call.
-bool
-ObjCARCContract::ContractAutorelease(Function &F, Instruction *Autorelease,
-                                     InstructionClass Class,
-                                     SmallPtrSetImpl<Instruction *>
-                                       &DependingInstructions,
-                                     SmallPtrSetImpl<const BasicBlock *>
-                                       &Visited) {
+bool ObjCARCContract::contractAutorelease(
+    Function &F, Instruction *Autorelease, InstructionClass Class,
+    SmallPtrSetImpl<Instruction *> &DependingInstructions,
+    SmallPtrSetImpl<const BasicBlock *> &Visited) {
   const Value *Arg = GetObjCArg(Autorelease);
 
   // Check that there are no instructions between the retain and the autorelease
@@ -206,7 +190,7 @@ ObjCARCContract::ContractAutorelease(Function &F, Instruction *Autorelease,
 /// an objc_storeStrong. This can be a little tricky because the instructions
 /// don't always appear in order, and there may be unrelated intervening
 /// instructions.
-void ObjCARCContract::ContractRelease(Instruction *Release,
+void ObjCARCContract::contractRelease(Instruction *Release,
                                       inst_iterator &Iter) {
   LoadInst *Load = dyn_cast<LoadInst>(GetObjCArg(Release));
   if (!Load || !Load->isSimple()) return;
@@ -292,27 +276,9 @@ void ObjCARCContract::ContractRelease(Instruction *Release,
     Load->eraseFromParent();
 }
 
-bool ObjCARCContract::doInitialization(Module &M) {
-  // If nothing in the Module uses ARC, don't do anything.
-  Run = ModuleHasARC(M);
-  if (!Run)
-    return false;
-
-  EP.Initialize(&M);
-
-  // Initialize RetainRVMarker.
-  RetainRVMarker = nullptr;
-  if (NamedMDNode *NMD =
-        M.getNamedMetadata("clang.arc.retainAutoreleasedReturnValueMarker"))
-    if (NMD->getNumOperands() == 1) {
-      const MDNode *N = NMD->getOperand(0);
-      if (N->getNumOperands() == 1)
-        if (const MDString *S = dyn_cast<MDString>(N->getOperand(0)))
-          RetainRVMarker = S;
-    }
-
-  return false;
-}
+//===----------------------------------------------------------------------===//
+//                              Top Level Driver
+//===----------------------------------------------------------------------===//
 
 bool ObjCARCContract::runOnFunction(Function &F) {
   if (!EnableARCOpts)
@@ -327,6 +293,8 @@ bool ObjCARCContract::runOnFunction(Function &F) {
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
   PA.setAA(&getAnalysis<AliasAnalysis>());
+
+  DEBUG(llvm::dbgs() << "**** ObjCARC Contract ****\n");
 
   // Track whether it's ok to mark objc_storeStrong calls with the "tail"
   // keyword. Be conservative if the function has variadic arguments.
@@ -344,7 +312,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ) {
     Instruction *Inst = &*I++;
 
-    DEBUG(dbgs() << "ObjCARCContract: Visiting: " << *Inst << "\n");
+    DEBUG(dbgs() << "Visiting: " << *Inst << "\n");
 
     // Only these library routines return their argument. In particular,
     // objc_retainBlock does not necessarily return its argument.
@@ -355,13 +323,13 @@ bool ObjCARCContract::runOnFunction(Function &F) {
       break;
     case IC_Autorelease:
     case IC_AutoreleaseRV:
-      if (ContractAutorelease(F, Inst, Class, DependingInstructions, Visited))
+      if (contractAutorelease(F, Inst, Class, DependingInstructions, Visited))
         continue;
       break;
     case IC_Retain:
       // Attempt to convert retains to retainrvs if they are next to function
       // calls.
-      if (!OptimizeRetainCall(F, Inst))
+      if (!optimizeRetainCall(F, Inst))
         break;
       // If we succeed in our optimization, fall through.
       // FALLTHROUGH
@@ -389,7 +357,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
       } while (IsNoopInstruction(BBI));
 
       if (&*BBI == GetObjCArg(Inst)) {
-        DEBUG(dbgs() << "ObjCARCContract: Adding inline asm marker for "
+        DEBUG(dbgs() << "Adding inline asm marker for "
                         "retainAutoreleasedReturnValue optimization.\n");
         Changed = true;
         InlineAsm *IA =
@@ -420,7 +388,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
       continue;
     }
     case IC_Release:
-      ContractRelease(Inst, I);
+      contractRelease(Inst, I);
       continue;
     case IC_User:
       // Be conservative if the function has any alloca instructions.
@@ -437,7 +405,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
       continue;
     }
 
-    DEBUG(dbgs() << "ObjCARCContract: Finished List.\n\n");
+    DEBUG(dbgs() << "Finished List.\n\n");
 
     // Don't use GetObjCArg because we don't want to look through bitcasts
     // and such; to do the replacement, the argument must have type i8*.
@@ -513,4 +481,46 @@ bool ObjCARCContract::runOnFunction(Function &F) {
   StoreStrongCalls.clear();
 
   return Changed;
+}
+
+//===----------------------------------------------------------------------===//
+//                             Misc Pass Manager
+//===----------------------------------------------------------------------===//
+
+char ObjCARCContract::ID = 0;
+INITIALIZE_PASS_BEGIN(ObjCARCContract, "objc-arc-contract",
+                      "ObjC ARC contraction", false, false)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_END(ObjCARCContract, "objc-arc-contract",
+                    "ObjC ARC contraction", false, false)
+
+void ObjCARCContract::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<AliasAnalysis>();
+  AU.addRequired<DominatorTreeWrapperPass>();
+  AU.setPreservesCFG();
+}
+
+Pass *llvm::createObjCARCContractPass() { return new ObjCARCContract(); }
+
+bool ObjCARCContract::doInitialization(Module &M) {
+  // If nothing in the Module uses ARC, don't do anything.
+  Run = ModuleHasARC(M);
+  if (!Run)
+    return false;
+
+  EP.Initialize(&M);
+
+  // Initialize RetainRVMarker.
+  RetainRVMarker = nullptr;
+  if (NamedMDNode *NMD =
+          M.getNamedMetadata("clang.arc.retainAutoreleasedReturnValueMarker"))
+    if (NMD->getNumOperands() == 1) {
+      const MDNode *N = NMD->getOperand(0);
+      if (N->getNumOperands() == 1)
+        if (const MDString *S = dyn_cast<MDString>(N->getOperand(0)))
+          RetainRVMarker = S;
+    }
+
+  return false;
 }
