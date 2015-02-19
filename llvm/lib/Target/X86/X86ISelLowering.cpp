@@ -926,6 +926,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::LOAD,               MVT::v4f32, Legal);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v4f32, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v4f32, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v4f32, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v4f32, Custom);
     setOperationAction(ISD::SELECT,             MVT::v4f32, Custom);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v4i32, Custom);
@@ -994,6 +995,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
         continue;
       setOperationAction(ISD::BUILD_VECTOR,       VT, Custom);
       setOperationAction(ISD::VECTOR_SHUFFLE,     VT, Custom);
+      setOperationAction(ISD::VSELECT,            VT, Custom);
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
     }
 
@@ -1017,6 +1019,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v2i64, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2f64, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2i64, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v2f64, Custom);
+    setOperationAction(ISD::VSELECT,            MVT::v2i64, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v2f64, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f64, Custom);
 
@@ -1098,13 +1102,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     // FIXME: Do we need to handle scalar-to-vector here?
     setOperationAction(ISD::MUL,                MVT::v4i32, Legal);
 
-    setOperationAction(ISD::VSELECT,            MVT::v2f64, Custom);
-    setOperationAction(ISD::VSELECT,            MVT::v2i64, Custom);
-    setOperationAction(ISD::VSELECT,            MVT::v4i32, Custom);
-    setOperationAction(ISD::VSELECT,            MVT::v4f32, Custom);
-    setOperationAction(ISD::VSELECT,            MVT::v8i16, Custom);
-    // There is no BLENDI for byte vectors. We don't need to custom lower
-    // some vselects for now.
+    // We directly match byte blends in the backend as they match the VSELECT
+    // condition form.
     setOperationAction(ISD::VSELECT,            MVT::v16i8, Legal);
 
     // SSE41 brings specific instructions for doing vector sign extend even in
@@ -1245,11 +1244,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SELECT,            MVT::v4i64, Custom);
     setOperationAction(ISD::SELECT,            MVT::v8f32, Custom);
 
-    setOperationAction(ISD::VSELECT,           MVT::v4f64, Custom);
-    setOperationAction(ISD::VSELECT,           MVT::v4i64, Custom);
-    setOperationAction(ISD::VSELECT,           MVT::v8i32, Custom);
-    setOperationAction(ISD::VSELECT,           MVT::v8f32, Custom);
-
     setOperationAction(ISD::SIGN_EXTEND,       MVT::v4i64, Custom);
     setOperationAction(ISD::SIGN_EXTEND,       MVT::v8i32, Custom);
     setOperationAction(ISD::SIGN_EXTEND,       MVT::v16i16, Custom);
@@ -1292,9 +1286,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::SMUL_LOHI,       MVT::v8i32, Custom);
       setOperationAction(ISD::MULHU,           MVT::v16i16, Legal);
       setOperationAction(ISD::MULHS,           MVT::v16i16, Legal);
-
-      setOperationAction(ISD::VSELECT,         MVT::v16i16, Custom);
-      setOperationAction(ISD::VSELECT,         MVT::v32i8, Legal);
 
       // The custom lowering for UINT_TO_FP for v8i32 becomes interesting
       // when we have a 256bit-wide blend with immediate.
@@ -1368,12 +1359,17 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
       setOperationAction(ISD::BUILD_VECTOR,       VT, Custom);
       setOperationAction(ISD::VECTOR_SHUFFLE,     VT, Custom);
+      setOperationAction(ISD::VSELECT,            VT, Custom);
       setOperationAction(ISD::INSERT_VECTOR_ELT,  VT, Custom);
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
       setOperationAction(ISD::SCALAR_TO_VECTOR,   VT, Custom);
       setOperationAction(ISD::INSERT_SUBVECTOR,   VT, Custom);
       setOperationAction(ISD::CONCAT_VECTORS,     VT, Custom);
     }
+
+    if (Subtarget->hasInt256())
+      setOperationAction(ISD::VSELECT,         MVT::v32i8, Legal);
+
 
     // Promote v32i8, v16i16, v8i32 select, and, or, xor to v4i64.
     for (int i = MVT::v32i8; i != MVT::v4i64; ++i) {
@@ -13139,48 +13135,29 @@ static bool BUILD_VECTORtoBlendMask(BuildVectorSDNode *BuildVector,
   return true;
 }
 
-/// \brief Try to lower a VSELECT instruction to an immediate-controlled blend
-/// instruction.
-static SDValue lowerVSELECTtoBLENDI(SDValue Op, const X86Subtarget *Subtarget,
-                                    SelectionDAG &DAG) {
+/// \brief Try to lower a VSELECT instruction to a vector shuffle.
+static SDValue lowerVSELECTtoVectorShuffle(SDValue Op,
+                                           const X86Subtarget *Subtarget,
+                                           SelectionDAG &DAG) {
   SDValue Cond = Op.getOperand(0);
   SDValue LHS = Op.getOperand(1);
   SDValue RHS = Op.getOperand(2);
   SDLoc dl(Op);
   MVT VT = Op.getSimpleValueType();
-  MVT EltVT = VT.getVectorElementType();
-  unsigned NumElems = VT.getVectorNumElements();
-
-  // There is no blend with immediate in AVX-512.
-  if (VT.is512BitVector())
-    return SDValue();
-
-  if (!Subtarget->hasSSE41() || EltVT == MVT::i8)
-    return SDValue();
-  if (!Subtarget->hasInt256() && VT == MVT::v16i16)
-    return SDValue();
 
   if (!ISD::isBuildVectorOfConstantSDNodes(Cond.getNode()))
     return SDValue();
+  auto *CondBV = cast<BuildVectorSDNode>(Cond);
 
-  // Check the mask for BLEND and build the value.
-  unsigned MaskValue = 0;
-  if (!BUILD_VECTORtoBlendMask(cast<BuildVectorSDNode>(Cond), MaskValue))
-    return SDValue();
-
-  // Convert i32 vectors to floating point if it is not AVX2.
-  // AVX2 introduced VPBLENDD instruction for 128 and 256-bit vectors.
-  MVT BlendVT = VT;
-  if (EltVT == MVT::i64 || (EltVT == MVT::i32 && !Subtarget->hasInt256())) {
-    BlendVT = MVT::getVectorVT(MVT::getFloatingPointVT(EltVT.getSizeInBits()),
-                               NumElems);
-    LHS = DAG.getNode(ISD::BITCAST, dl, VT, LHS);
-    RHS = DAG.getNode(ISD::BITCAST, dl, VT, RHS);
+  // Only non-legal VSELECTs reach this lowering, convert those into generic
+  // shuffles and re-use the shuffle lowering path for blends.
+  SmallVector<int, 32> Mask;
+  for (int i = 0, Size = VT.getVectorNumElements(); i < Size; ++i) {
+    SDValue CondElt = CondBV->getOperand(i);
+    Mask.push_back(
+        isa<ConstantSDNode>(CondElt) ? i + (isZero(CondElt) ? Size : 0) : -1);
   }
-
-  SDValue Ret = DAG.getNode(X86ISD::BLENDI, dl, BlendVT, LHS, RHS,
-                            DAG.getConstant(MaskValue, MVT::i32));
-  return DAG.getNode(ISD::BITCAST, dl, VT, Ret);
+  return DAG.getVectorShuffle(VT, dl, LHS, RHS, Mask);
 }
 
 SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
@@ -13191,9 +13168,15 @@ SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
       ISD::isBuildVectorOfConstantSDNodes(Op.getOperand(2).getNode()))
     return SDValue();
 
-  SDValue BlendOp = lowerVSELECTtoBLENDI(Op, Subtarget, DAG);
+  // Try to lower this to a blend-style vector shuffle. This can handle all
+  // constant condition cases.
+  SDValue BlendOp = lowerVSELECTtoVectorShuffle(Op, Subtarget, DAG);
   if (BlendOp.getNode())
     return BlendOp;
+
+  // Variable blends are only legal from SSE4.1 onward.
+  if (!Subtarget->hasSSE41())
+    return SDValue();
 
   // Some types for vselect were previously set to Expand, not Legal or
   // Custom. Return an empty SDValue so we fall-through to Expand, after

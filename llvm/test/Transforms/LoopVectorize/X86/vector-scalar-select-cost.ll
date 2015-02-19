@@ -50,8 +50,8 @@ define void @vectorselect(i1 %cond) {
   %7 = getelementptr inbounds [2048 x i32]* @a, i64 0, i64 %indvars.iv
   %8 = icmp ult i64 %indvars.iv, 8
 
-; A vector select has a cost of 4 on core2
-; CHECK: cost of 4 for VF 2 {{.*}}  select i1 %8, i32 %6, i32 0
+; A vector select has a cost of 1 on core2
+; CHECK: cost of 1 for VF 2 {{.*}}  select i1 %8, i32 %6, i32 0
 
   %sel = select i1 %8, i32 %6, i32 zeroinitializer
   store i32 %sel, i32* %7, align 4

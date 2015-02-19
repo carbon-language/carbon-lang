@@ -11973,9 +11973,11 @@ SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
           return SDValue();
       }
 
-      // Let's see if the target supports this vector_shuffle.
+      // Let's see if the target supports this vector_shuffle and make sure
+      // we're not running after operation legalization where it may have
+      // custom lowered the vector shuffles.
       EVT RVT = RHS.getValueType();
-      if (!TLI.isVectorClearMaskLegal(Indices, RVT))
+      if (LegalOperations || !TLI.isVectorClearMaskLegal(Indices, RVT))
         return SDValue();
 
       // Return the new VECTOR_SHUFFLE node.

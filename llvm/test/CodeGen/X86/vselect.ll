@@ -6,9 +6,8 @@
 define <4 x float> @test1(<4 x float> %a, <4 x float> %b) {
 ; CHECK-LABEL: test1:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    andps {{.*}}(%rip), %xmm1
-; CHECK-NEXT:    andps {{.*}}(%rip), %xmm0
-; CHECK-NEXT:    orps %xmm1, %xmm0
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2],xmm1[1,3]
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2,1,3]
 ; CHECK-NEXT:    retq
   %1 = select <4 x i1> <i1 true, i1 false, i1 true, i1 false>, <4 x float> %a, <4 x float> %b
   ret <4 x float> %1
@@ -53,9 +52,6 @@ define <4 x float> @test5(<4 x float> %a, <4 x float> %b) {
 define <8 x i16> @test6(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-LABEL: test6:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    movaps {{.*#+}} xmm1 = [65535,0,65535,0,65535,0,65535,0]
-; CHECK-NEXT:    orps {{.*}}(%rip), %xmm1
-; CHECK-NEXT:    andps %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %1 = select <8 x i1> <i1 true, i1 false, i1 true, i1 false, i1 true, i1 false, i1 true, i1 false>, <8 x i16> %a, <8 x i16> %a
   ret <8 x i16> %1
@@ -64,9 +60,8 @@ define <8 x i16> @test6(<8 x i16> %a, <8 x i16> %b) {
 define <8 x i16> @test7(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-LABEL: test7:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    andps {{.*}}(%rip), %xmm1
-; CHECK-NEXT:    andps {{.*}}(%rip), %xmm0
-; CHECK-NEXT:    orps %xmm1, %xmm0
+; CHECK-NEXT:    movsd {{.*#+}} xmm1 = xmm0[0],xmm1[1]
+; CHECK-NEXT:    movapd %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %1 = select <8 x i1> <i1 true, i1 true, i1 true, i1 true, i1 false, i1 false, i1 false, i1 false>, <8 x i16> %a, <8 x i16> %b
   ret <8 x i16> %1
@@ -75,9 +70,7 @@ define <8 x i16> @test7(<8 x i16> %a, <8 x i16> %b) {
 define <8 x i16> @test8(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-LABEL: test8:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    andps {{.*}}(%rip), %xmm1
-; CHECK-NEXT:    andps {{.*}}(%rip), %xmm0
-; CHECK-NEXT:    orps %xmm1, %xmm0
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
 ; CHECK-NEXT:    retq
   %1 = select <8 x i1> <i1 false, i1 false, i1 false, i1 false, i1 true, i1 true, i1 true, i1 true>, <8 x i16> %a, <8 x i16> %b
   ret <8 x i16> %1
@@ -103,10 +96,10 @@ define <8 x i16> @test10(<8 x i16> %a, <8 x i16> %b) {
 define <8 x i16> @test11(<8 x i16> %a, <8 x i16> %b) {
 ; CHECK-LABEL: test11:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    movaps {{.*#+}} xmm2 = <0,65535,65535,0,u,65535,65535,u>
-; CHECK-NEXT:    andps %xmm2, %xmm0
-; CHECK-NEXT:    andnps %xmm1, %xmm2
-; CHECK-NEXT:    orps %xmm2, %xmm0
+; CHECK-NEXT:    pshufd {{.*#+}} xmm2 = xmm0[2,3,0,1]
+; CHECK-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; CHECK-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[2,3,4,5,8,9,14,15,8,9,14,15,12,13,14,15]
+; CHECK-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm2[0]
 ; CHECK-NEXT:    retq
   %1 = select <8 x i1> <i1 false, i1 true, i1 true, i1 false, i1 undef, i1 true, i1 true, i1 undef>, <8 x i16> %a, <8 x i16> %b
   ret <8 x i16> %1
