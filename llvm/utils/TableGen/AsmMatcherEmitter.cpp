@@ -2242,7 +2242,7 @@ static void emitComputeAvailableFeatures(AsmMatcherInfo &Info,
     Info.AsmParser->getValueAsString("AsmParserClassName");
 
   OS << "uint64_t " << Info.Target.getName() << ClassName << "::\n"
-     << "ComputeAvailableFeatures(uint64_t FB) const {\n";
+     << "ComputeAvailableFeatures(const FeatureBitset& FB) const {\n";
   OS << "  uint64_t Features = 0;\n";
   for (const auto &SF : Info.SubtargetFeatures) {
     const SubtargetFeatureInfo &SFI = SF.second;
@@ -2264,12 +2264,10 @@ static void emitComputeAvailableFeatures(AsmMatcherInfo &Info,
         Cond = Cond.substr(1);
       }
 
-      OS << "((FB & " << Info.Target.getName() << "::" << Cond << ")";
+      OS << "(";
       if (Neg)
-        OS << " == 0";
-      else
-        OS << " != 0";
-      OS << ")";
+        OS << "!";
+      OS << "FB[" << Info.Target.getName() << "::" << Cond << "])";
 
       if (Comma.second.empty())
         break;
@@ -2639,7 +2637,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "#undef GET_ASSEMBLER_HEADER\n";
   OS << "  // This should be included into the middle of the declaration of\n";
   OS << "  // your subclasses implementation of MCTargetAsmParser.\n";
-  OS << "  uint64_t ComputeAvailableFeatures(uint64_t FeatureBits) const;\n";
+  OS << "  uint64_t ComputeAvailableFeatures(const FeatureBitset& FB) const;\n";
   OS << "  void convertToMCInst(unsigned Kind, MCInst &Inst, "
      << "unsigned Opcode,\n"
      << "                       const OperandVector "

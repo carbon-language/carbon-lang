@@ -36,16 +36,16 @@ class MipsDisassembler : public MCDisassembler {
 public:
   MipsDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx, bool IsBigEndian)
       : MCDisassembler(STI, Ctx),
-        IsMicroMips(STI.getFeatureBits() & Mips::FeatureMicroMips),
+        IsMicroMips(STI.getFeatureBits()[Mips::FeatureMicroMips]),
         IsBigEndian(IsBigEndian) {}
 
-  bool hasMips3() const { return STI.getFeatureBits() & Mips::FeatureMips3; }
-  bool hasMips32() const { return STI.getFeatureBits() & Mips::FeatureMips32; }
+  bool hasMips3() const { return STI.getFeatureBits()[Mips::FeatureMips3]; }
+  bool hasMips32() const { return STI.getFeatureBits()[Mips::FeatureMips32]; }
   bool hasMips32r6() const {
-    return STI.getFeatureBits() & Mips::FeatureMips32r6;
+    return STI.getFeatureBits()[Mips::FeatureMips32r6];
   }
 
-  bool isGP64() const { return STI.getFeatureBits() & Mips::FeatureGP64Bit; }
+  bool isGP64() const { return STI.getFeatureBits()[Mips::FeatureGP64Bit]; }
 
   bool hasCOP3() const {
     // Only present in MIPS-I and MIPS-II
