@@ -82,16 +82,18 @@ define <8 x i16> @trunc2x4i32(<4 x i32> %a, <4 x i32> %b) {
 ;
 ; SSE41-LABEL: trunc2x4i32:
 ; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    pshufb {{.*#+}} xmm1 = xmm1[0,1,4,5,4,5,6,7,0,1,4,5,8,9,12,13]
-; SSE41-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
-; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5,6,7]
+; SSE41-NEXT:    movdqa {{.*#+}} xmm2 = [0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
+; SSE41-NEXT:    pshufb %xmm2, %xmm1
+; SSE41-NEXT:    pshufb %xmm2, %xmm0
+; SSE41-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: trunc2x4i32:
 ; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vpshufb {{.*#+}} xmm1 = xmm1[0,1,4,5,4,5,6,7,0,1,4,5,8,9,12,13]
-; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
-; AVX-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1,2,3],xmm1[4,5,6,7]
+; AVX-NEXT:    vmovdqa {{.*#+}} xmm2 = [0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
+; AVX-NEXT:    vpshufb %xmm2, %xmm1, %xmm1
+; AVX-NEXT:    vpshufb %xmm2, %xmm0, %xmm0
+; AVX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
 
 

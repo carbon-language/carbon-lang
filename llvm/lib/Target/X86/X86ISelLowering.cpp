@@ -9518,44 +9518,6 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
   return V;
 }
 
-/// \brief Detect whether the mask pattern should be lowered through
-/// interleaving.
-///
-/// This essentially tests whether viewing the mask as an interleaving of two
-/// sub-sequences reduces the cross-input traffic of a blend operation. If so,
-/// lowering it through interleaving is a significantly better strategy.
-static bool shouldLowerAsInterleaving(ArrayRef<int> Mask) {
-  int NumEvenInputs[2] = {0, 0};
-  int NumOddInputs[2] = {0, 0};
-  int NumLoInputs[2] = {0, 0};
-  int NumHiInputs[2] = {0, 0};
-  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
-    if (Mask[i] < 0)
-      continue;
-
-    int InputIdx = Mask[i] >= Size;
-
-    if (i < Size / 2)
-      ++NumLoInputs[InputIdx];
-    else
-      ++NumHiInputs[InputIdx];
-
-    if ((i % 2) == 0)
-      ++NumEvenInputs[InputIdx];
-    else
-      ++NumOddInputs[InputIdx];
-  }
-
-  // The minimum number of cross-input results for both the interleaved and
-  // split cases. If interleaving results in fewer cross-input results, return
-  // true.
-  int InterleavedCrosses = std::min(NumEvenInputs[1] + NumOddInputs[0],
-                                    NumEvenInputs[0] + NumOddInputs[1]);
-  int SplitCrosses = std::min(NumLoInputs[1] + NumHiInputs[0],
-                              NumLoInputs[0] + NumHiInputs[1]);
-  return InterleavedCrosses < SplitCrosses;
-}
-
 /// \brief Helper to form a PSHUFB-based shuffle+blend.
 static SDValue lowerVectorShuffleAsPSHUFB(SDLoc DL, MVT VT, SDValue V1,
                                           SDValue V2, ArrayRef<int> Mask,
@@ -9691,43 +9653,16 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
           lowerVectorShuffleAsBitBlend(DL, MVT::v8i16, V1, V2, Mask, DAG))
     return BitBlend;
 
-  // Check whether an interleaving lowering is likely to be more efficient.
-  // This isn't perfect but it is a strong heuristic that tends to work well on
-  // the kinds of shuffles that show up in practice.
-  //
-  // FIXME: Handle 1x, 2x, and 4x interleaving.
-  if (shouldLowerAsInterleaving(Mask)) {
-    // FIXME: Figure out whether we should pack these into the low or high
-    // halves.
+  if (SDValue Unpack =
+          lowerVectorShuffleAsUnpack(MVT::v8i16, DL, V1, V2, Mask, DAG))
+    return Unpack;
 
-    int EMask[8], OMask[8];
-    for (int i = 0; i < 4; ++i) {
-      EMask[i] = Mask[2*i];
-      OMask[i] = Mask[2*i + 1];
-      EMask[i + 4] = -1;
-      OMask[i + 4] = -1;
-    }
-
-    SDValue Evens = DAG.getVectorShuffle(MVT::v8i16, DL, V1, V2, EMask);
-    SDValue Odds = DAG.getVectorShuffle(MVT::v8i16, DL, V1, V2, OMask);
-
-    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8i16, Evens, Odds);
-  }
-
-  // Try to lower by permuting the inputs into an unpack instruction unless we
-  // have direct support for blending.
-  if (!IsBlendSupported) {
-    if (SDValue Unpack =
-            lowerVectorShuffleAsUnpack(MVT::v8i16, DL, V1, V2, Mask, DAG))
-      return Unpack;
-
-    // If we can use PSHUFB, that will be better as it can both shuffle and set
-    // up an efficient blend.
-    if (Subtarget->hasSSSE3()) {
-      bool V1InUse, V2InUse;
-      return lowerVectorShuffleAsPSHUFB(DL, MVT::v8i16, V1, V2, Mask, DAG,
-                                        V1InUse, V2InUse);
-    }
+  // If we can't directly blend but can use PSHUFB, that will be better as it
+  // can both shuffle and set up the inefficient blend.
+  if (!IsBlendSupported && Subtarget->hasSSSE3()) {
+    bool V1InUse, V2InUse;
+    return lowerVectorShuffleAsPSHUFB(DL, MVT::v8i16, V1, V2, Mask, DAG,
+                                      V1InUse, V2InUse);
   }
 
   // We can always bit-blend if we have to so the fallback strategy is to

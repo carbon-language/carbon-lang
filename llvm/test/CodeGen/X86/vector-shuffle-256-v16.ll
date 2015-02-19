@@ -150,12 +150,9 @@ define <16 x i16> @shuffle_v16i16_00_00_00_00_00_00_00_08_00_00_00_00_00_00_00_0
 ; AVX1-LABEL: shuffle_v16i16_00_00_00_00_00_00_00_08_00_00_00_00_00_00_00_00:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX1-NEXT:    vpslldq {{.*#+}} xmm1 = zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,xmm1[0,1]
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,1,0,3]
-; AVX1-NEXT:    vpshuflw {{.*#+}} xmm0 = xmm0[0,0,0,0,4,5,6,7]
-; AVX1-NEXT:    vpshufhw {{.*#+}} xmm2 = xmm0[0,1,2,3,4,4,4,7]
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm1 = xmm2[0,1,2,3,4,5,6],xmm1[7]
-; AVX1-NEXT:    vpshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,4,4,4]
+; AVX1-NEXT:    vpunpcklwd {{.*#+}} xmm1 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; AVX1-NEXT:    vpshufb {{.*#+}} xmm1 = xmm1[0,1,0,1,0,1,0,1,0,1,0,1,0,1,2,3]
+; AVX1-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX1-NEXT:    retq
 ;
@@ -175,8 +172,8 @@ define <16 x i16> @shuffle_v16i16_00_00_00_00_00_00_09_00_00_00_00_00_00_00_00_0
 ; AVX1-LABEL: shuffle_v16i16_00_00_00_00_00_00_09_00_00_00_00_00_00_00_00_00:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm1 = xmm0[0],xmm1[1],xmm0[2,3,4,5,6,7]
-; AVX1-NEXT:    vpshufb {{.*#+}} xmm1 = xmm1[0,1,0,1,0,1,0,1,0,1,0,1,2,3,0,1]
+; AVX1-NEXT:    vpunpcklwd {{.*#+}} xmm1 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; AVX1-NEXT:    vpshufb {{.*#+}} xmm1 = xmm1[0,1,0,1,0,1,0,1,0,1,0,1,6,7,0,1]
 ; AVX1-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX1-NEXT:    retq
@@ -196,8 +193,8 @@ define <16 x i16> @shuffle_v16i16_00_00_00_00_00_10_00_00_00_00_00_00_00_00_00_0
 ; AVX1-LABEL: shuffle_v16i16_00_00_00_00_00_10_00_00_00_00_00_00_00_00_00_00:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm1 = xmm0[0,1],xmm1[2,3],xmm0[4,5,6,7]
-; AVX1-NEXT:    vpshufb {{.*#+}} xmm1 = xmm1[0,1,0,1,0,1,0,1,0,1,4,5,0,1,0,1]
+; AVX1-NEXT:    vpunpcklwd {{.*#+}} xmm1 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; AVX1-NEXT:    vpshufb {{.*#+}} xmm1 = xmm1[0,1,0,1,0,1,0,1,0,1,10,11,0,1,0,1]
 ; AVX1-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX1-NEXT:    retq
@@ -216,8 +213,8 @@ define <16 x i16> @shuffle_v16i16_00_00_00_00_11_00_00_00_00_00_00_00_00_00_00_0
 ; AVX1-LABEL: shuffle_v16i16_00_00_00_00_11_00_00_00_00_00_00_00_00_00_00_00:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm1 = xmm0[0,1],xmm1[2,3],xmm0[4,5,6,7]
-; AVX1-NEXT:    vpshufb {{.*#+}} xmm1 = xmm1[0,1,0,1,0,1,0,1,6,7,0,1,0,1,0,1]
+; AVX1-NEXT:    vpunpcklwd {{.*#+}} xmm1 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; AVX1-NEXT:    vpshufb {{.*#+}} xmm1 = xmm1[0,1,0,1,0,1,0,1,14,15,0,1,0,1,0,1]
 ; AVX1-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX1-NEXT:    retq
@@ -690,9 +687,8 @@ define <16 x i16> @shuffle_v16i16_00_01_18_19_20_21_06_07_08_09_26_27_12_13_30_3
 define <16 x i16> @shuffle_v16i16_00_16_00_16_00_16_00_16_00_16_00_16_00_16_00_16(<16 x i16> %a, <16 x i16> %b) {
 ; AVX1-LABEL: shuffle_v16i16_00_16_00_16_00_16_00_16_00_16_00_16_00_16_00_16:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vpshuflw {{.*#+}} xmm1 = xmm1[0,0,0,0,4,5,6,7]
-; AVX1-NEXT:    vpshuflw {{.*#+}} xmm0 = xmm0[0,0,0,0,4,5,6,7]
 ; AVX1-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,0,0]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
@@ -709,15 +705,13 @@ define <16 x i16> @shuffle_v16i16_00_16_00_16_00_16_00_16_00_16_00_16_00_16_00_1
 define <16 x i16> @shuffle_v16i16_00_16_00_16_00_16_00_16_08_24_08_24_08_24_08_24(<16 x i16> %a, <16 x i16> %b) {
 ; AVX1-LABEL: shuffle_v16i16_00_16_00_16_00_16_00_16_08_24_08_24_08_24_08_24:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm2
-; AVX1-NEXT:    vpshuflw {{.*#+}} xmm2 = xmm2[0,0,0,0,4,5,6,7]
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm3
-; AVX1-NEXT:    vpshuflw {{.*#+}} xmm3 = xmm3[0,0,0,0,4,5,6,7]
-; AVX1-NEXT:    vpunpcklwd {{.*#+}} xmm2 = xmm3[0],xmm2[0],xmm3[1],xmm2[1],xmm3[2],xmm2[2],xmm3[3],xmm2[3]
-; AVX1-NEXT:    vpshuflw {{.*#+}} xmm1 = xmm1[0,0,0,0,4,5,6,7]
-; AVX1-NEXT:    vpshuflw {{.*#+}} xmm0 = xmm0[0,0,0,0,4,5,6,7]
+; AVX1-NEXT:    vpunpcklwd {{.*#+}} xmm2 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm2 = xmm2[0,0,0,0]
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm1
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
 ; AVX1-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
-; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm2, %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: shuffle_v16i16_00_16_00_16_00_16_00_16_08_24_08_24_08_24_08_24:
@@ -734,11 +728,13 @@ define <16 x i16> @shuffle_v16i16_16_16_16_16_04_05_06_07_24_24_24_24_12_13_14_1
 ; AVX1-LABEL: shuffle_v16i16_16_16_16_16_04_05_06_07_24_24_24_24_12_13_14_15:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm2 = xmm2[2,3,0,1]
 ; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm3
 ; AVX1-NEXT:    vpshuflw {{.*#+}} xmm3 = xmm3[0,0,0,0,4,5,6,7]
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm2 = xmm3[0,1,2,3],xmm2[4,5,6,7]
+; AVX1-NEXT:    vpunpcklqdq {{.*#+}} xmm2 = xmm3[0],xmm2[0]
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
 ; AVX1-NEXT:    vpshuflw {{.*#+}} xmm1 = xmm1[0,0,0,0,4,5,6,7]
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
+; AVX1-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm1[0],xmm0[0]
 ; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
@@ -754,15 +750,17 @@ define <16 x i16> @shuffle_v16i16_16_16_16_16_04_05_06_07_24_24_24_24_12_13_14_1
 define <16 x i16> @shuffle_v16i16_19_18_17_16_07_06_05_04_27_26_25_24_15_14_13_12(<16 x i16> %a, <16 x i16> %b) {
 ; AVX1-LABEL: shuffle_v16i16_19_18_17_16_07_06_05_04_27_26_25_24_15_14_13_12:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm2 = xmm1[0,1,2,3],xmm0[4,5,6,7]
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm2
 ; AVX1-NEXT:    vpshuflw {{.*#+}} xmm2 = xmm2[3,2,1,0,4,5,6,7]
-; AVX1-NEXT:    vpshufhw {{.*#+}} xmm2 = xmm2[0,1,2,3,7,6,5,4]
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm1
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm3
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm3 = xmm3[2,3,2,3]
+; AVX1-NEXT:    vpshuflw {{.*#+}} xmm3 = xmm3[3,2,1,0,4,5,6,7]
+; AVX1-NEXT:    vpunpcklqdq {{.*#+}} xmm2 = xmm2[0],xmm3[0]
+; AVX1-NEXT:    vpshuflw {{.*#+}} xmm1 = xmm1[3,2,1,0,4,5,6,7]
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,2,3]
 ; AVX1-NEXT:    vpshuflw {{.*#+}} xmm0 = xmm0[3,2,1,0,4,5,6,7]
-; AVX1-NEXT:    vpshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,7,6,5,4]
-; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm2, %ymm0
+; AVX1-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: shuffle_v16i16_19_18_17_16_07_06_05_04_27_26_25_24_15_14_13_12:
@@ -777,16 +775,13 @@ define <16 x i16> @shuffle_v16i16_19_18_17_16_07_06_05_04_27_26_25_24_15_14_13_1
 define <16 x i16> @shuffle_v16i16_19_18_17_16_03_02_01_00_27_26_25_24_11_10_09_08(<16 x i16> %a, <16 x i16> %b) {
 ; AVX1-LABEL: shuffle_v16i16_19_18_17_16_03_02_01_00_27_26_25_24_11_10_09_08:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm2
-; AVX1-NEXT:    vpshuflw {{.*#+}} xmm2 = xmm2[3,2,1,0,4,5,6,7]
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm3
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm3 = xmm3[0,1,0,1]
-; AVX1-NEXT:    vpshufhw {{.*#+}} xmm3 = xmm3[0,1,2,3,7,6,5,4]
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm2 = xmm2[0,1,2,3],xmm3[4,5,6,7]
-; AVX1-NEXT:    vpshuflw {{.*#+}} xmm1 = xmm1[3,2,1,0,4,5,6,7]
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,1,0,1]
-; AVX1-NEXT:    vpshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,7,6,5,4]
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm0 = xmm1[0,1,2,3],xmm0[4,5,6,7]
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm3
+; AVX1-NEXT:    vpunpcklwd {{.*#+}} xmm2 = xmm3[0],xmm2[0],xmm3[1],xmm2[1],xmm3[2],xmm2[2],xmm3[3],xmm2[3]
+; AVX1-NEXT:    vmovdqa {{.*#+}} xmm3 = [12,13,8,9,4,5,0,1,14,15,10,11,6,7,2,3]
+; AVX1-NEXT:    vpshufb %xmm3, %xmm2, %xmm2
+; AVX1-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3]
+; AVX1-NEXT:    vpshufb %xmm3, %xmm0, %xmm0
 ; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
@@ -1434,12 +1429,11 @@ define <16 x i16> @shuffle_v16i16_02_03_zz_zz_06_07_zz_zz_10_11_zz_zz_14_15_zz_z
 define <16 x i16> @shuffle_v16i16_16_zz_zz_zz_17_zz_zz_zz_18_zz_zz_zz_19_zz_zz_zz(<16 x i16> %a) {
 ; AVX1-LABEL: shuffle_v16i16_16_zz_zz_zz_17_zz_zz_zz_18_zz_zz_zz_19_zz_zz_zz:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vpmovzxwq {{.*#+}} xmm1 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[1,1,2,3]
+; AVX1-NEXT:    vpshufb {{.*#+}} xmm1 = xmm0[4,5,2,3,4,5,6,7,6,7,10,11,4,5,6,7]
 ; AVX1-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; AVX1-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1],xmm0[2],xmm2[2],xmm0[3],xmm2[3]
-; AVX1-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1],xmm0[2],xmm2[2],xmm0[3],xmm2[3]
-; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; AVX1-NEXT:    vpblendw {{.*#+}} xmm1 = xmm1[0],xmm2[1,2,3],xmm1[4],xmm2[5,6,7]
+; AVX1-NEXT:    vpmovzxwq {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero
+; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: shuffle_v16i16_16_zz_zz_zz_17_zz_zz_zz_18_zz_zz_zz_19_zz_zz_zz:
@@ -1453,9 +1447,8 @@ define <16 x i16> @shuffle_v16i16_16_zz_zz_zz_17_zz_zz_zz_18_zz_zz_zz_19_zz_zz_z
 define <16 x i16> @shuffle_v16i16_16_zz_17_zz_18_zz_19_zz_20_zz_21_zz_22_zz_22_zz(<16 x i16> %a) {
 ; AVX1-LABEL: shuffle_v16i16_16_zz_17_zz_18_zz_19_zz_20_zz_21_zz_22_zz_22_zz:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; AVX1-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; AVX1-NEXT:    vpunpcklwd {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1],xmm1[2],xmm2[2],xmm1[3],xmm2[3]
+; AVX1-NEXT:    vpxor %xmm1, %xmm1, %xmm1
+; AVX1-NEXT:    vpunpckhwd {{.*#+}} xmm1 = xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
 ; AVX1-NEXT:    vpmovzxwd {{.*#+}} xmm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero
 ; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
