@@ -8645,6 +8645,25 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(Mask[0] < 2 && "We sort V1 to be the first input.");
   assert(Mask[1] >= 2 && "We sort V2 to be the second input.");
 
+  // If we have a blend of two PACKUS operations an the blend aligns with the
+  // low and half halves, we can just merge the PACKUS operations. This is
+  // particularly important as it lets us merge shuffles that this routine itself
+  // creates.
+  auto GetPackNode = [](SDValue V) {
+    while (V.getOpcode() == ISD::BITCAST)
+      V = V.getOperand(0);
+
+    return V.getOpcode() == X86ISD::PACKUS ? V : SDValue();
+  };
+  if (SDValue V1Pack = GetPackNode(V1))
+    if (SDValue V2Pack = GetPackNode(V2))
+      return DAG.getNode(ISD::BITCAST, DL, MVT::v2i64,
+                         DAG.getNode(X86ISD::PACKUS, DL, MVT::v16i8,
+                                     Mask[0] == 0 ? V1Pack.getOperand(0)
+                                                  : V1Pack.getOperand(1),
+                                     Mask[1] == 2 ? V2Pack.getOperand(0)
+                                                  : V2Pack.getOperand(1)));
+
   // Try to use shift instructions.
   if (SDValue Shift =
           lowerVectorShuffleAsShift(DL, MVT::v2i64, V1, V2, Mask, DAG))
@@ -9838,32 +9857,23 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   assert(V1.getSimpleValueType() == MVT::v16i8 && "Bad operand type!");
   assert(V2.getSimpleValueType() == MVT::v16i8 && "Bad operand type!");
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
-  ArrayRef<int> OrigMask = SVOp->getMask();
-  assert(OrigMask.size() == 16 && "Unexpected mask size for v16 shuffle!");
+  ArrayRef<int> Mask = SVOp->getMask();
+  assert(Mask.size() == 16 && "Unexpected mask size for v16 shuffle!");
 
   // Try to use shift instructions.
   if (SDValue Shift =
-          lowerVectorShuffleAsShift(DL, MVT::v16i8, V1, V2, OrigMask, DAG))
+          lowerVectorShuffleAsShift(DL, MVT::v16i8, V1, V2, Mask, DAG))
     return Shift;
 
   // Try to use byte rotation instructions.
   if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
-          DL, MVT::v16i8, V1, V2, OrigMask, Subtarget, DAG))
+          DL, MVT::v16i8, V1, V2, Mask, Subtarget, DAG))
     return Rotate;
 
   // Try to use a zext lowering.
   if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(
-          DL, MVT::v16i8, V1, V2, OrigMask, Subtarget, DAG))
+          DL, MVT::v16i8, V1, V2, Mask, Subtarget, DAG))
     return ZExt;
-
-  int MaskStorage[16] = {
-      OrigMask[0],  OrigMask[1],  OrigMask[2],  OrigMask[3],
-      OrigMask[4],  OrigMask[5],  OrigMask[6],  OrigMask[7],
-      OrigMask[8],  OrigMask[9],  OrigMask[10], OrigMask[11],
-      OrigMask[12], OrigMask[13], OrigMask[14], OrigMask[15]};
-  MutableArrayRef<int> Mask(MaskStorage);
-  MutableArrayRef<int> LoMask = Mask.slice(0, 8);
-  MutableArrayRef<int> HiMask = Mask.slice(8, 8);
 
   int NumV2Elements =
       std::count_if(Mask.begin(), Mask.end(), [](int M) { return M >= 16; });
@@ -10102,72 +10112,58 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return Result;
   }
 
-  int V1LoBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
-  int V1HiBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
-  int V2LoBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
-  int V2HiBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+  // Handle multi-input cases by blending single-input shuffles.
+  if (NumV2Elements > 0)
+    return lowerVectorShuffleAsDecomposedShuffleBlend(DL, MVT::v16i8, V1, V2,
+                                                      Mask, DAG);
 
-  auto buildBlendMasks = [](MutableArrayRef<int> HalfMask,
-                            MutableArrayRef<int> V1HalfBlendMask,
-                            MutableArrayRef<int> V2HalfBlendMask) {
-    for (int i = 0; i < 8; ++i)
-      if (HalfMask[i] >= 0 && HalfMask[i] < 16) {
-        V1HalfBlendMask[i] = HalfMask[i];
-        HalfMask[i] = i;
-      } else if (HalfMask[i] >= 16) {
-        V2HalfBlendMask[i] = HalfMask[i] - 16;
-        HalfMask[i] = i + 8;
-      }
-  };
-  buildBlendMasks(LoMask, V1LoBlendMask, V2LoBlendMask);
-  buildBlendMasks(HiMask, V1HiBlendMask, V2HiBlendMask);
+  // The fallback path for single-input shuffles widens this into two v8i16
+  // vectors with unpacks, shuffles those, and then pulls them back together
+  // with a pack.
+  SDValue V = V1;
+
+  int LoBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+  int HiBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+  for (int i = 0; i < 16; ++i)
+    if (Mask[i] >= 0)
+      (i < 8 ? LoBlendMask[i] : HiBlendMask[i % 8]) = Mask[i];
 
   SDValue Zero = getZeroVector(MVT::v8i16, Subtarget, DAG, DL);
 
-  auto buildLoAndHiV8s = [&](SDValue V, MutableArrayRef<int> LoBlendMask,
-                             MutableArrayRef<int> HiBlendMask) {
-    SDValue V1, V2;
-    // Check if any of the odd lanes in the v16i8 are used. If not, we can mask
-    // them out and avoid using UNPCK{L,H} to extract the elements of V as
-    // i16s.
-    if (std::none_of(LoBlendMask.begin(), LoBlendMask.end(),
-                     [](int M) { return M >= 0 && M % 2 == 1; }) &&
-        std::none_of(HiBlendMask.begin(), HiBlendMask.end(),
-                     [](int M) { return M >= 0 && M % 2 == 1; })) {
-      // Use a mask to drop the high bytes.
-      V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V);
-      V1 = DAG.getNode(ISD::AND, DL, MVT::v8i16, V1,
-                       DAG.getConstant(0x00FF, MVT::v8i16));
+  SDValue VLoHalf, VHiHalf;
+  // Check if any of the odd lanes in the v16i8 are used. If not, we can mask
+  // them out and avoid using UNPCK{L,H} to extract the elements of V as
+  // i16s.
+  if (std::none_of(std::begin(LoBlendMask), std::end(LoBlendMask),
+                   [](int M) { return M >= 0 && M % 2 == 1; }) &&
+      std::none_of(std::begin(HiBlendMask), std::end(HiBlendMask),
+                   [](int M) { return M >= 0 && M % 2 == 1; })) {
+    // Use a mask to drop the high bytes.
+    VLoHalf = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V);
+    VLoHalf = DAG.getNode(ISD::AND, DL, MVT::v8i16, VLoHalf,
+                     DAG.getConstant(0x00FF, MVT::v8i16));
 
-      // This will be a single vector shuffle instead of a blend so nuke V2.
-      V2 = DAG.getUNDEF(MVT::v8i16);
+    // This will be a single vector shuffle instead of a blend so nuke VHiHalf.
+    VHiHalf = DAG.getUNDEF(MVT::v8i16);
 
-      // Squash the masks to point directly into V1.
-      for (int &M : LoBlendMask)
-        if (M >= 0)
-          M /= 2;
-      for (int &M : HiBlendMask)
-        if (M >= 0)
-          M /= 2;
-    } else {
-      // Otherwise just unpack the low half of V into V1 and the high half into
-      // V2 so that we can blend them as i16s.
-      V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
-                       DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V, Zero));
-      V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
-                       DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i8, V, Zero));
-    }
+    // Squash the masks to point directly into VLoHalf.
+    for (int &M : LoBlendMask)
+      if (M >= 0)
+        M /= 2;
+    for (int &M : HiBlendMask)
+      if (M >= 0)
+        M /= 2;
+  } else {
+    // Otherwise just unpack the low half of V into VLoHalf and the high half into
+    // VHiHalf so that we can blend them as i16s.
+    VLoHalf = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                     DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V, Zero));
+    VHiHalf = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                     DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i8, V, Zero));
+  }
 
-    SDValue BlendedLo = DAG.getVectorShuffle(MVT::v8i16, DL, V1, V2, LoBlendMask);
-    SDValue BlendedHi = DAG.getVectorShuffle(MVT::v8i16, DL, V1, V2, HiBlendMask);
-    return std::make_pair(BlendedLo, BlendedHi);
-  };
-  SDValue V1Lo, V1Hi, V2Lo, V2Hi;
-  std::tie(V1Lo, V1Hi) = buildLoAndHiV8s(V1, V1LoBlendMask, V1HiBlendMask);
-  std::tie(V2Lo, V2Hi) = buildLoAndHiV8s(V2, V2LoBlendMask, V2HiBlendMask);
-
-  SDValue LoV = DAG.getVectorShuffle(MVT::v8i16, DL, V1Lo, V2Lo, LoMask);
-  SDValue HiV = DAG.getVectorShuffle(MVT::v8i16, DL, V1Hi, V2Hi, HiMask);
+  SDValue LoV = DAG.getVectorShuffle(MVT::v8i16, DL, VLoHalf, VHiHalf, LoBlendMask);
+  SDValue HiV = DAG.getVectorShuffle(MVT::v8i16, DL, VLoHalf, VHiHalf, HiBlendMask);
 
   return DAG.getNode(X86ISD::PACKUS, DL, MVT::v16i8, LoV, HiV);
 }
