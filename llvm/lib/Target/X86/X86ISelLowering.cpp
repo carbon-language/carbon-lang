@@ -7438,6 +7438,37 @@ static SDValue getV4X86ShuffleImm8ForMask(ArrayRef<int> Mask,
   return DAG.getConstant(Imm, MVT::i8);
 }
 
+/// \brief Try to emit a blend instruction for a shuffle using bit math.
+///
+/// This is used as a fallback approach when first class blend instructions are
+/// unavailable. Currently it is only suitable for integer vectors, but could
+/// be generalized for floating point vectors if desirable.
+static SDValue lowerVectorShuffleAsBitBlend(SDLoc DL, MVT VT, SDValue V1,
+                                            SDValue V2, ArrayRef<int> Mask,
+                                            SelectionDAG &DAG) {
+  assert(VT.isInteger() && "Only supports integer vector types!");
+  MVT EltVT = VT.getScalarType();
+  int NumEltBits = EltVT.getSizeInBits();
+  SDValue Zero = DAG.getConstant(0, EltVT);
+  SDValue AllOnes = DAG.getConstant(APInt::getAllOnesValue(NumEltBits), EltVT);
+  SmallVector<SDValue, 16> MaskOps;
+  for (int i = 0, Size = Mask.size(); i < Size; ++i) {
+    if (Mask[i] != -1 && Mask[i] != i && Mask[i] != i + Size)
+      return SDValue(); // Shuffled input!
+    MaskOps.push_back(Mask[i] < Size ? AllOnes : Zero);
+  }
+
+  SDValue V1Mask = DAG.getNode(ISD::BUILD_VECTOR, DL, VT, MaskOps);
+  V1 = DAG.getNode(ISD::AND, DL, VT, V1, V1Mask);
+  // We have to cast V2 around.
+  MVT MaskVT = MVT::getVectorVT(MVT::i64, VT.getSizeInBits() / 64);
+  V2 = DAG.getNode(ISD::BITCAST, DL, VT,
+                   DAG.getNode(X86ISD::ANDNP, DL, MaskVT,
+                               DAG.getNode(ISD::BITCAST, DL, MaskVT, V1Mask),
+                               DAG.getNode(ISD::BITCAST, DL, MaskVT, V2)));
+  return DAG.getNode(ISD::OR, DL, VT, V1, V2);
+}
+
 /// \brief Try to emit a blend instruction for a shuffle.
 ///
 /// This doesn't do any checks for the availability of instructions for blending
@@ -7448,7 +7479,6 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
                                          SDValue V2, ArrayRef<int> Mask,
                                          const X86Subtarget *Subtarget,
                                          SelectionDAG &DAG) {
-
   unsigned BlendMask = 0;
   for (int i = 0, Size = Mask.size(); i < Size; ++i) {
     if (Mask[i] >= Size) {
@@ -9667,6 +9697,10 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
           DL, MVT::v8i16, V1, V2, Mask, Subtarget, DAG))
     return Rotate;
 
+  if (SDValue BitBlend =
+          lowerVectorShuffleAsBitBlend(DL, MVT::v8i16, V1, V2, Mask, DAG))
+    return BitBlend;
+
   if (NumV1Inputs + NumV2Inputs <= 4)
     return lowerV8I16BasicBlendVectorShuffle(DL, V1, V2, Mask, Subtarget, DAG);
 
@@ -10033,6 +10067,10 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     if (SDValue V = lowerVectorShuffleAsElementInsertion(MVT::v16i8, DL, V1, V2,
                                                          Mask, Subtarget, DAG))
       return V;
+
+  if (SDValue BitBlend =
+          lowerVectorShuffleAsBitBlend(DL, MVT::v16i8, V1, V2, Mask, DAG))
+    return BitBlend;
 
   // Check whether a compaction lowering can be done. This handles shuffles
   // which take every Nth element for some even N. See the helper function for
