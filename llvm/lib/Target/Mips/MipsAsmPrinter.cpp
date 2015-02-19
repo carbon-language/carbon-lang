@@ -751,8 +751,7 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
                                                     ABI.IsO32());
 }
 
-void MipsAsmPrinter::emitInlineAsmStart(
-    const MCSubtargetInfo &StartInfo) const {
+void MipsAsmPrinter::emitInlineAsmStart() const {
   MipsTargetStreamer &TS = getTargetStreamer();
 
   // GCC's choice of assembler options for inline assembly code ('at', 'macro'
