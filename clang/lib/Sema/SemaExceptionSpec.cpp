@@ -437,7 +437,7 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
       OldNR != FunctionProtoType::NR_NoNoexcept &&
       NewNR != FunctionProtoType::NR_NoNoexcept) {
     Diag(NewLoc, DiagID);
-    if (NoteID.getDiagID() != 0)
+    if (NoteID.getDiagID() != 0 && OldLoc.isValid())
       Diag(OldLoc, NoteID);
     return true;
   }
@@ -518,7 +518,7 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
     }
 
     Diag(NewLoc, DiagID);
-    if (NoteID.getDiagID() != 0)
+    if (NoteID.getDiagID() != 0 && OldLoc.isValid())
       Diag(OldLoc, NoteID);
     return true;
   }
@@ -547,7 +547,7 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
     return false;
   }
   Diag(NewLoc, DiagID);
-  if (NoteID.getDiagID() != 0)
+  if (NoteID.getDiagID() != 0 && OldLoc.isValid())
     Diag(OldLoc, NoteID);
   return true;
 }

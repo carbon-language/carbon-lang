@@ -40,6 +40,12 @@ namespace dr1902 { // dr1902: 3.7
 }
 
 #if __cplusplus >= 201103L
+// dr1948: yes
+// FIXME: This diagnostic could be improved.
+void *operator new(__SIZE_TYPE__) noexcept { return nullptr; } // expected-error{{exception specification in declaration does not match previous declaration}}
+#endif
+
+#if __cplusplus >= 201103L
 namespace dr1968 { // dr1968: yes
 static_assert(&typeid(int) == &typeid(int), ""); // expected-error{{not an integral constant expression}}
 }
