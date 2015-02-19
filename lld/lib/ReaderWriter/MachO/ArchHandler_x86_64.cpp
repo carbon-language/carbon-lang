@@ -158,7 +158,7 @@ private:
   static const Registry::KindStrings _sKindStrings[];
   static const StubInfo              _sStubInfo;
 
-  enum X86_64_Kinds: Reference::KindValue {
+  enum X86_64Kind: Reference::KindValue {
     invalid,               /// for error condition
     
     // Kinds found in mach-o .o files:
@@ -480,7 +480,7 @@ void ArchHandler_x86_64::applyFixupFinal(
   assert(ref.kindArch() == Reference::KindArch::x86_64);
   ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
   ulittle64_t *loc64 = reinterpret_cast<ulittle64_t *>(loc);
-  switch (static_cast<X86_64_Kinds>(ref.kindValue())) {
+  switch (static_cast<X86_64Kind>(ref.kindValue())) {
   case branch32:
   case ripRel32:
   case ripRel32Anon:
@@ -553,7 +553,7 @@ void ArchHandler_x86_64::applyFixupRelocatable(const Reference &ref,
   assert(ref.kindArch() == Reference::KindArch::x86_64);
   ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
   ulittle64_t *loc64 = reinterpret_cast<ulittle64_t *>(loc);
-  switch (static_cast<X86_64_Kinds>(ref.kindValue())) {
+  switch (static_cast<X86_64Kind>(ref.kindValue())) {
   case branch32:
   case ripRel32:
   case ripRel32Got:
@@ -627,7 +627,7 @@ void ArchHandler_x86_64::appendSectionRelocations(
     return;
   assert(ref.kindArch() == Reference::KindArch::x86_64);
   uint32_t sectionOffset = atomSectionOffset + ref.offsetInAtom();
-  switch (static_cast<X86_64_Kinds>(ref.kindValue())) {
+  switch (static_cast<X86_64Kind>(ref.kindValue())) {
   case branch32:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_BRANCH | rPcRel | rExtern | rLength4);

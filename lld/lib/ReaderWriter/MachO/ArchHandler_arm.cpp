@@ -138,7 +138,7 @@ private:
   static const Registry::KindStrings _sKindStrings[];
   static const StubInfo              _sStubInfoArmPIC;
 
-  enum Arm_Kinds : Reference::KindValue {
+  enum ArmKind : Reference::KindValue {
     invalid,               /// for error condition
 
     modeThumbCode,         /// Content starting at this offset is thumb.
@@ -913,7 +913,7 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *loc,
   int32_t displacement;
   uint16_t value16;
   uint32_t value32;
-  switch (static_cast<Arm_Kinds>(ref.kindValue())) {
+  switch (static_cast<ArmKind>(ref.kindValue())) {
   case modeThumbCode:
     thumbMode = true;
     break;
@@ -1078,7 +1078,7 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref, uint8_t *loc,
   uint16_t value16;
   uint32_t value32;
   bool targetIsUndef = isa<UndefinedAtom>(ref.target());
-  switch (static_cast<Arm_Kinds>(ref.kindValue())) {
+  switch (static_cast<ArmKind>(ref.kindValue())) {
   case modeThumbCode:
     thumbMode = true;
     break;
@@ -1194,7 +1194,7 @@ void ArchHandler_arm::appendSectionRelocations(
   uint32_t targetAtomAddress;
   uint32_t fromAtomAddress;
   uint16_t other16;
-  switch (static_cast<Arm_Kinds>(ref.kindValue())) {
+  switch (static_cast<ArmKind>(ref.kindValue())) {
   case modeThumbCode:
   case modeArmCode:
   case modeData:

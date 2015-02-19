@@ -161,7 +161,7 @@ private:
   static const Registry::KindStrings _sKindStrings[];
   static const StubInfo _sStubInfo;
 
-  enum Arm64_Kinds : Reference::KindValue {
+  enum Arm64Kind : Reference::KindValue {
     invalid,               /// for error condition
 
     // Kinds found in mach-o .o files:
@@ -209,7 +209,7 @@ private:
   // Utility functions for inspecting/updating instructions.
   static uint32_t setDisplacementInBranch26(uint32_t instr, int32_t disp);
   static uint32_t setDisplacementInADRP(uint32_t instr, int64_t disp);
-  static Arm64_Kinds offset12KindFromInstruction(uint32_t instr);
+  static Arm64Kind offset12KindFromInstruction(uint32_t instr);
   static uint32_t setImm12(uint32_t instr, uint32_t offset);
 };
 
@@ -328,7 +328,7 @@ uint32_t ArchHandler_arm64::setDisplacementInADRP(uint32_t instruction,
   return (instruction & 0x9F00001F) | immlo | immhi;
 }
 
-ArchHandler_arm64::Arm64_Kinds
+ArchHandler_arm64::Arm64Kind
 ArchHandler_arm64::offset12KindFromInstruction(uint32_t instruction) {
   if (instruction & 0x08000000) {
     switch ((instruction >> 30) & 0x3) {
@@ -537,7 +537,7 @@ void ArchHandler_arm64::applyFixupFinal(const Reference &ref, uint8_t *loc,
   uint32_t instruction;
   uint32_t value32;
   uint32_t value64;
-  switch (static_cast<Arm64_Kinds>(ref.kindValue())) {
+  switch (static_cast<Arm64Kind>(ref.kindValue())) {
   case branch26:
     displacement = (targetAddress - fixupAddress) + ref.addend();
     *loc32 = setDisplacementInBranch26(*loc32, displacement);
@@ -638,7 +638,7 @@ void ArchHandler_arm64::applyFixupRelocatable(const Reference &ref,
   assert(ref.kindArch() == Reference::KindArch::AArch64);
   ulittle32_t *loc32 = reinterpret_cast<ulittle32_t *>(loc);
   ulittle64_t *loc64 = reinterpret_cast<ulittle64_t *>(loc);
-  switch (static_cast<Arm64_Kinds>(ref.kindValue())) {
+  switch (static_cast<Arm64Kind>(ref.kindValue())) {
   case branch26:
     *loc32 = setDisplacementInBranch26(*loc32, 0);
     return;
@@ -706,7 +706,7 @@ void ArchHandler_arm64::appendSectionRelocations(
     return;
   assert(ref.kindArch() == Reference::KindArch::AArch64);
   uint32_t sectionOffset = atomSectionOffset + ref.offsetInAtom();
-  switch (static_cast<Arm64_Kinds>(ref.kindValue())) {
+  switch (static_cast<Arm64Kind>(ref.kindValue())) {
   case branch26:
     if (ref.addend()) {
       appendReloc(relocs, sectionOffset, ref.addend(), 0,
