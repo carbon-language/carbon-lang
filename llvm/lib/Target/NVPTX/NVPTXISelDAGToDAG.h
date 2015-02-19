@@ -26,6 +26,7 @@ using namespace llvm;
 namespace {
 
 class LLVM_LIBRARY_VISIBILITY NVPTXDAGToDAGISel : public SelectionDAGISel {
+  const NVPTXTargetMachine &TM;
 
   // If true, generate mul.wide from sext and mul
   bool doMulWide;

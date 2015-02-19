@@ -88,7 +88,7 @@ NVPTXTargetMachine::NVPTXTargetMachine(const Target &T, StringRef TT,
                                        CodeGenOpt::Level OL, bool is64bit)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL), is64bit(is64bit),
       TLOF(make_unique<NVPTXTargetObjectFile>()),
-      DL(computeDataLayout(is64bit)), Subtarget(TT, CPU, FS, *this, is64bit) {
+      DL(computeDataLayout(is64bit)), Subtarget(TT, CPU, FS, *this) {
   if (Triple(TT).getOS() == Triple::NVCL)
     drvInterface = NVPTX::NVCL;
   else

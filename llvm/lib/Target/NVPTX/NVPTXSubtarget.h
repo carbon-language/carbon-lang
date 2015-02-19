@@ -32,7 +32,6 @@ namespace llvm {
 class NVPTXSubtarget : public NVPTXGenSubtargetInfo {
   virtual void anchor();
   std::string TargetName;
-  bool Is64Bit;
 
   // PTX version x.y is represented as 10*x+y, e.g. 3.1 == 31
   unsigned PTXVersion;
@@ -54,8 +53,7 @@ public:
   /// of the specified module.
   ///
   NVPTXSubtarget(const std::string &TT, const std::string &CPU,
-                 const std::string &FS, const NVPTXTargetMachine &TM,
-                 bool is64Bit);
+                 const std::string &FS, const NVPTXTargetMachine &TM);
 
   const TargetFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
@@ -95,7 +93,6 @@ public:
   inline bool hasROT32() const { return hasHWROT32() || hasSWROT32(); }
   inline bool hasROT64() const { return SmVersion >= 20; }
   bool hasImageHandles() const;
-  bool is64Bit() const { return Is64Bit; }
 
   unsigned int getSmVersion() const { return SmVersion; }
   std::string getTargetName() const { return TargetName; }

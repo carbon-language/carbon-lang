@@ -22,19 +22,13 @@
 #include "NVPTXGenRegisterInfo.inc"
 
 namespace llvm {
-
-// Forward Declarations.
-class TargetInstrInfo;
-class NVPTXSubtarget;
-
 class NVPTXRegisterInfo : public NVPTXGenRegisterInfo {
 private:
-  bool Is64Bit;
   // Hold Strings that can be free'd all together with NVPTXRegisterInfo
   ManagedStringPool ManagedStrPool;
 
 public:
-  NVPTXRegisterInfo(const NVPTXSubtarget &st);
+  NVPTXRegisterInfo();
 
   //------------------------------------------------------
   // Pure virtual functions from TargetRegisterInfo

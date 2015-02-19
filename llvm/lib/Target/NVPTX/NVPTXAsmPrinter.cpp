@@ -819,7 +819,7 @@ bool NVPTXAsmPrinter::doInitialization(Module &M) {
   StringRef CPU = TM.getTargetCPU();
   StringRef FS = TM.getTargetFeatureString();
   const NVPTXTargetMachine &NTM = static_cast<const NVPTXTargetMachine &>(TM);
-  const NVPTXSubtarget STI(TT, CPU, FS, NTM, NTM.is64Bit());
+  const NVPTXSubtarget STI(TT, CPU, FS, NTM);
 
   SmallString<128> Str1;
   raw_svector_ostream OS1(Str1);
@@ -1625,7 +1625,7 @@ void NVPTXAsmPrinter::setAndEmitFunctionVirtualRegisters(
   if (NumBytes) {
     O << "\t.local .align " << MFI->getMaxAlignment() << " .b8 \t" << DEPOTNAME
       << getFunctionNumber() << "[" << NumBytes << "];\n";
-    if (nvptxSubtarget->is64Bit()) {
+    if (static_cast<const NVPTXTargetMachine &>(MF.getTarget()).is64Bit()) {
       O << "\t.reg .b64 \t%SP;\n";
       O << "\t.reg .b64 \t%SPL;\n";
     } else {
