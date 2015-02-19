@@ -513,6 +513,21 @@ void testOpaqueConsistency(OpaqueIntWrapper *w) {
   [_ivarOnly release]; // no-warning
 }
 
+// rdar://problem/19862648
+- (void)establishIvarIsNilDuringLoops {
+  extern id getRandomObject();
+
+  int i = 4; // Must be at least 4 to trigger the bug.
+  while (--i) {
+    id x = 0;
+    if (getRandomObject())
+      x = _ivarOnly;
+    if (!x)
+      x = getRandomObject();
+    [x myMethod];
+  }
+}
+
 @end
 #endif // non-ARC
 
