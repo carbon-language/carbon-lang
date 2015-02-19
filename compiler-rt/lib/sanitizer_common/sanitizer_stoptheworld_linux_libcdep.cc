@@ -89,36 +89,50 @@ class ThreadSuspender {
   bool SuspendThread(SuspendedThreadID thread_id);
 };
 
-bool ThreadSuspender::SuspendThread(SuspendedThreadID thread_id) {
+bool ThreadSuspender::SuspendThread(SuspendedThreadID tid) {
   // Are we already attached to this thread?
   // Currently this check takes linear time, however the number of threads is
   // usually small.
-  if (suspended_threads_list_.Contains(thread_id))
+  if (suspended_threads_list_.Contains(tid))
     return false;
   int pterrno;
-  if (internal_iserror(internal_ptrace(PTRACE_ATTACH, thread_id, NULL, NULL),
+  if (internal_iserror(internal_ptrace(PTRACE_ATTACH, tid, NULL, NULL),
                        &pterrno)) {
     // Either the thread is dead, or something prevented us from attaching.
     // Log this event and move on.
-    VReport(1, "Could not attach to thread %d (errno %d).\n", thread_id,
-            pterrno);
+    VReport(1, "Could not attach to thread %d (errno %d).\n", tid, pterrno);
     return false;
   } else {
-    VReport(1, "Attached to thread %d.\n", thread_id);
+    VReport(1, "Attached to thread %d.\n", tid);
     // The thread is not guaranteed to stop before ptrace returns, so we must
-    // wait on it.
-    uptr waitpid_status;
-    HANDLE_EINTR(waitpid_status, internal_waitpid(thread_id, NULL, __WALL));
-    int wperrno;
-    if (internal_iserror(waitpid_status, &wperrno)) {
-      // Got a ECHILD error. I don't think this situation is possible, but it
-      // doesn't hurt to report it.
-      VReport(1, "Waiting on thread %d failed, detaching (errno %d).\n",
-              thread_id, wperrno);
-      internal_ptrace(PTRACE_DETACH, thread_id, NULL, NULL);
-      return false;
+    // wait on it. Note: if the thread receives a signal concurrently,
+    // we can get notification about the signal before notification about stop.
+    // In such case we need to forward the signal to the thread, otherwise
+    // the signal will be missed (as we do PTRACE_DETACH with arg=0) and
+    // any logic relying on signals will break. After forwarding we need to
+    // continue to wait for stopping, because the thread is not stopped yet.
+    // We do ignore delivery of SIGSTOP, because we want to make stop-the-world
+    // as invisible as possible.
+    for (;;) {
+      int status;
+      uptr waitpid_status;
+      HANDLE_EINTR(waitpid_status, internal_waitpid(tid, &status, __WALL));
+      int wperrno;
+      if (internal_iserror(waitpid_status, &wperrno)) {
+        // Got a ECHILD error. I don't think this situation is possible, but it
+        // doesn't hurt to report it.
+        VReport(1, "Waiting on thread %d failed, detaching (errno %d).\n",
+                tid, wperrno);
+        internal_ptrace(PTRACE_DETACH, tid, NULL, NULL);
+        return false;
+      }
+      if (WIFSTOPPED(status) && WSTOPSIG(status) != SIGSTOP) {
+        internal_ptrace(PTRACE_CONT, tid, 0, (void*)(uptr)WSTOPSIG(status));
+        continue;
+      }
+      break;
     }
-    suspended_threads_list_.Append(thread_id);
+    suspended_threads_list_.Append(tid);
     return true;
   }
 }

@@ -24,9 +24,6 @@ void handler(int signo, siginfo_t *info, void *uctx) {
 }
 
 int main() {
-  // Disabled for now, because there is another issue in ptrace.
-  // It will be addressed in a subsequent change.
-  goto done;
   struct sigaction a;
   a.sa_sigaction = handler;
   a.sa_flags = SA_SIGINFO;
@@ -36,7 +33,6 @@ int main() {
     mprotect(guard, 4096, PROT_NONE);
     *(int*)guard = 1;
   }
- done:
   fprintf(stderr, "DONE\n");
 }
 
