@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "NVPTXSubtarget.h"
+#include "NVPTXTargetMachine.h"
 
 using namespace llvm;
 
@@ -43,17 +44,13 @@ NVPTXSubtarget &NVPTXSubtarget::initializeSubtargetDependencies(StringRef CPU,
 }
 
 NVPTXSubtarget::NVPTXSubtarget(const std::string &TT, const std::string &CPU,
-                               const std::string &FS, const TargetMachine &TM,
-                               bool is64Bit)
+                               const std::string &FS,
+                               const NVPTXTargetMachine &TM, bool is64Bit)
     : NVPTXGenSubtargetInfo(TT, CPU, FS), Is64Bit(is64Bit), PTXVersion(0),
-      SmVersion(20), InstrInfo(initializeSubtargetDependencies(CPU, FS)),
-      TLInfo((const NVPTXTargetMachine &)TM, *this), TSInfo(TM.getDataLayout()),
-      FrameLowering(*this) {
+      SmVersion(20), TM(TM),
+      InstrInfo(initializeSubtargetDependencies(CPU, FS)), TLInfo(TM, *this),
+      TSInfo(TM.getDataLayout()), FrameLowering(*this) {}
 
-  Triple T(TT);
-
-  if (T.getOS() == Triple::NVCL)
-    drvInterface = NVPTX::NVCL;
-  else
-    drvInterface = NVPTX::CUDA;
+NVPTX::DrvInterface NVPTXSubtarget::getDrvInterface() const {
+  return TM.getDrvInterface();
 }

@@ -25,8 +25,10 @@ namespace llvm {
 /// NVPTXTargetMachine
 ///
 class NVPTXTargetMachine : public LLVMTargetMachine {
+  bool is64bit;
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   const DataLayout DL; // Calculates type size & alignment
+  NVPTX::DrvInterface drvInterface;
   NVPTXSubtarget Subtarget;
 
   // Hold Strings that can be free'd all together with NVPTXTargetMachine
@@ -40,7 +42,8 @@ public:
   ~NVPTXTargetMachine() override;
   const DataLayout *getDataLayout() const override { return &DL; }
   const NVPTXSubtarget *getSubtargetImpl() const override { return &Subtarget; }
-
+  bool is64Bit() const { return is64bit; }
+  NVPTX::DrvInterface getDrvInterface() const { return drvInterface; }
   ManagedStringPool *getManagedStrPool() const {
     return const_cast<ManagedStringPool *>(&ManagedStrPool);
   }
