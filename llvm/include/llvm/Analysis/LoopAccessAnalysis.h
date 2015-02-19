@@ -36,15 +36,18 @@ class SCEV;
 
 /// Optimization analysis message produced during vectorization. Messages inform
 /// the user why vectorization did not occur.
-class VectorizationReport {
+class LoopAccessReport {
   std::string Message;
   const Instruction *Instr;
 
-public:
-  VectorizationReport(const Instruction *I = nullptr)
-      : Message("loop not vectorized: "), Instr(I) {}
+protected:
+  LoopAccessReport(const Twine &Message, const Instruction *I)
+      : Message(Message.str()), Instr(I) {}
 
-  template <typename A> VectorizationReport &operator<<(const A &Value) {
+public:
+  LoopAccessReport(const Instruction *I = nullptr) : Instr(I) {}
+
+  template <typename A> LoopAccessReport &operator<<(const A &Value) {
     raw_string_ostream Out(Message);
     Out << Value;
     return *this;
@@ -59,7 +62,7 @@ public:
   /// \brief Emit an analysis note for \p PassName with the debug location from
   /// the instruction in \p Message if available.  Otherwise use the location of
   /// \p TheLoop.
-  static void emitAnalysis(const VectorizationReport &Message,
+  static void emitAnalysis(const LoopAccessReport &Message,
                            const Function *TheFunction,
                            const Loop *TheLoop,
                            const char *PassName);
@@ -171,7 +174,7 @@ public:
 
   /// \brief The diagnostics report generated for the analysis.  E.g. why we
   /// couldn't analyze the loop.
-  Optional<VectorizationReport> &getReport() { return Report; }
+  Optional<LoopAccessReport> &getReport() { return Report; }
 
   /// \brief Used to ensure that if the analysis was run with speculating the
   /// value of symbolic strides, the client queries it with the same assumption.
@@ -186,7 +189,7 @@ private:
   /// pass.
   bool canAnalyzeLoop();
 
-  void emitAnalysis(VectorizationReport &Message);
+  void emitAnalysis(LoopAccessReport &Message);
 
   /// We need to check that all of the pointers in this list are disjoint
   /// at runtime.
@@ -208,7 +211,7 @@ private:
 
   /// \brief The diagnostics report generated for the analysis.  E.g. why we
   /// couldn't analyze the loop.
-  Optional<VectorizationReport> Report;
+  Optional<LoopAccessReport> Report;
 };
 
 Value *stripIntegerCast(Value *V);
