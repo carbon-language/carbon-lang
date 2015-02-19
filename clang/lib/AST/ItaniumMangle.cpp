@@ -2796,9 +2796,14 @@ recurse:
       Out << "cl";
     }
 
-    mangleExpression(CE->getCallee(), CE->getNumArgs());
-    for (unsigned I = 0, N = CE->getNumArgs(); I != N; ++I)
-      mangleExpression(CE->getArg(I));
+    unsigned CallArity = CE->getNumArgs();
+    for (const Expr *Arg : CE->arguments())
+      if (isa<PackExpansionExpr>(Arg))
+        CallArity = UnknownArity;
+
+    mangleExpression(CE->getCallee(), CallArity);
+    for (const Expr *Arg : CE->arguments())
+      mangleExpression(Arg);
     Out << 'E';
     break;
   }

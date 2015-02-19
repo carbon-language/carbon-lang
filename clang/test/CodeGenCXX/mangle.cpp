@@ -1062,3 +1062,12 @@ namespace test51 {
   // CHECK-LABEL: @_ZN6test514fun7INS_1EEEEDTcldtcvS1__Esr1EEdnT_EEv
   template void fun8<X>();
 }
+
+namespace test52 {
+struct X {};
+void operator+(X);
+template <typename... T>
+auto f4(T... x) -> decltype(operator+(x...));
+// CHECK-LABEL: @_ZN6test522f4IJNS_1XEEEEDTclonplspfp_EEDpT_
+void use() { f4(X{}); }
+}
