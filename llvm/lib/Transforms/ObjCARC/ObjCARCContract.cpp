@@ -72,6 +72,13 @@ namespace {
     /// "tail".
     SmallPtrSet<CallInst *, 8> StoreStrongCalls;
 
+    /// Returns true if we eliminated Inst.
+    bool tryToPeepholeInstruction(Function &F, Instruction *Inst,
+                                  inst_iterator &Iter,
+                                  SmallPtrSetImpl<Instruction *> &DepInsts,
+                                  SmallPtrSetImpl<const BasicBlock *> &Visited,
+                                  bool &TailOkForStoreStrong);
+
     bool optimizeRetainCall(Function &F, Instruction *Retain);
 
     bool
@@ -169,18 +176,16 @@ bool ObjCARCContract::contractAutorelease(
   Changed = true;
   ++NumPeeps;
 
-  DEBUG(dbgs() << "ObjCARCContract::ContractAutorelease: Fusing "
-                  "retain/autorelease. Erasing: " << *Autorelease << "\n"
-                  "                                      Old Retain: "
-               << *Retain << "\n");
+  DEBUG(dbgs() << "    Fusing retain/autorelease!\n"
+                  "        Autorelease:" << *Autorelease << "\n"
+                  "        Retain: " << *Retain << "\n");
 
   Constant *Decl = EP.get(Class == IC_AutoreleaseRV ?
                           ARCRuntimeEntryPoints::EPT_RetainAutoreleaseRV :
                           ARCRuntimeEntryPoints::EPT_RetainAutorelease);
   Retain->setCalledFunction(Decl);
 
-  DEBUG(dbgs() << "                                      New Retain: "
-               << *Retain << "\n");
+  DEBUG(dbgs() << "        New RetainAutorelease: " << *Retain << "\n");
 
   EraseInstruction(Autorelease);
   return true;
@@ -249,6 +254,14 @@ void ObjCARCContract::contractRelease(Instruction *Release,
   Changed = true;
   ++NumStoreStrongs;
 
+  DEBUG(
+      llvm::dbgs() << "    Contracting retain, release into objc_storeStrong.\n"
+                   << "        Old:\n"
+                   << "            Store:   " << *Store << "\n"
+                   << "            Release: " << *Release << "\n"
+                   << "            Retain:  " << *Retain << "\n"
+                   << "            Load:    " << *Load << "\n");
+
   LLVMContext &C = Release->getContext();
   Type *I8X = PointerType::getUnqual(Type::getInt8Ty(C));
   Type *I8XX = PointerType::getUnqual(I8X);
@@ -268,6 +281,8 @@ void ObjCARCContract::contractRelease(Instruction *Release,
   // we can set the tail flag once we know it's safe.
   StoreStrongCalls.insert(StoreStrong);
 
+  DEBUG(llvm::dbgs() << "        New Store Strong: " << *StoreStrong << "\n");
+
   if (&*Iter == Store) ++Iter;
   Store->eraseFromParent();
   Release->eraseFromParent();
@@ -276,61 +291,26 @@ void ObjCARCContract::contractRelease(Instruction *Release,
     Load->eraseFromParent();
 }
 
-//===----------------------------------------------------------------------===//
-//                              Top Level Driver
-//===----------------------------------------------------------------------===//
-
-bool ObjCARCContract::runOnFunction(Function &F) {
-  if (!EnableARCOpts)
-    return false;
-
-  // If nothing in the Module uses ARC, don't do anything.
-  if (!Run)
-    return false;
-
-  Changed = false;
-  AA = &getAnalysis<AliasAnalysis>();
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-
-  PA.setAA(&getAnalysis<AliasAnalysis>());
-
-  DEBUG(llvm::dbgs() << "**** ObjCARC Contract ****\n");
-
-  // Track whether it's ok to mark objc_storeStrong calls with the "tail"
-  // keyword. Be conservative if the function has variadic arguments.
-  // It seems that functions which "return twice" are also unsafe for the
-  // "tail" argument, because they are setjmp, which could need to
-  // return to an earlier stack state.
-  bool TailOkForStoreStrongs = !F.isVarArg() &&
-                               !F.callsFunctionThatReturnsTwice();
-
-  // For ObjC library calls which return their argument, replace uses of the
-  // argument with uses of the call return value, if it dominates the use. This
-  // reduces register pressure.
-  SmallPtrSet<Instruction *, 4> DependingInstructions;
-  SmallPtrSet<const BasicBlock *, 4> Visited;
-  for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ) {
-    Instruction *Inst = &*I++;
-
-    DEBUG(dbgs() << "Visiting: " << *Inst << "\n");
-
+bool ObjCARCContract::tryToPeepholeInstruction(
+  Function &F, Instruction *Inst, inst_iterator &Iter,
+  SmallPtrSetImpl<Instruction *> &DependingInsts,
+  SmallPtrSetImpl<const BasicBlock *> &Visited,
+  bool &TailOkForStoreStrongs) {
     // Only these library routines return their argument. In particular,
     // objc_retainBlock does not necessarily return its argument.
     InstructionClass Class = GetBasicInstructionClass(Inst);
     switch (Class) {
     case IC_FusedRetainAutorelease:
     case IC_FusedRetainAutoreleaseRV:
-      break;
+      return false;
     case IC_Autorelease:
     case IC_AutoreleaseRV:
-      if (contractAutorelease(F, Inst, Class, DependingInstructions, Visited))
-        continue;
-      break;
+      return contractAutorelease(F, Inst, Class, DependingInsts, Visited);
     case IC_Retain:
       // Attempt to convert retains to retainrvs if they are next to function
       // calls.
       if (!optimizeRetainCall(F, Inst))
-        break;
+        return false;
       // If we succeed in our optimization, fall through.
       // FALLTHROUGH
     case IC_RetainRV: {
@@ -338,7 +318,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
       // marker to do the retainAutoreleasedReturnValue optimization,
       // insert it now.
       if (!RetainRVMarker)
-        break;
+        return false;
       BasicBlock::iterator BBI = Inst;
       BasicBlock *InstParent = Inst->getParent();
 
@@ -368,7 +348,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
         CallInst::Create(IA, "", Inst);
       }
     decline_rv_optimization:
-      break;
+      return false;
     }
     case IC_InitWeak: {
       // objc_initWeak(p, null) => *p = null
@@ -385,31 +365,78 @@ bool ObjCARCContract::runOnFunction(Function &F) {
         CI->replaceAllUsesWith(Null);
         CI->eraseFromParent();
       }
-      continue;
+      return true;
     }
     case IC_Release:
-      contractRelease(Inst, I);
-      continue;
+      contractRelease(Inst, Iter);
+      return true;
     case IC_User:
       // Be conservative if the function has any alloca instructions.
       // Technically we only care about escaping alloca instructions,
       // but this is sufficient to handle some interesting cases.
       if (isa<AllocaInst>(Inst))
         TailOkForStoreStrongs = false;
-      continue;
+      return true;
     case IC_IntrinsicUser:
       // Remove calls to @clang.arc.use(...).
       Inst->eraseFromParent();
-      continue;
+      return true;
     default:
-      continue;
+      return true;
     }
+}
 
-    DEBUG(dbgs() << "Finished List.\n\n");
+//===----------------------------------------------------------------------===//
+//                              Top Level Driver
+//===----------------------------------------------------------------------===//
+
+bool ObjCARCContract::runOnFunction(Function &F) {
+  if (!EnableARCOpts)
+    return false;
+
+  // If nothing in the Module uses ARC, don't do anything.
+  if (!Run)
+    return false;
+
+  Changed = false;
+  AA = &getAnalysis<AliasAnalysis>();
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+
+  PA.setAA(&getAnalysis<AliasAnalysis>());
+
+  DEBUG(llvm::dbgs() << "**** ObjCARC Contract ****\n");
+
+  // Track whether it's ok to mark objc_storeStrong calls with the "tail"
+  // keyword. Be conservative if the function has variadic arguments.
+  // It seems that functions which "return twice" are also unsafe for the
+  // "tail" argument, because they are setjmp, which could need to
+  // return to an earlier stack state.
+  bool TailOkForStoreStrongs =
+      !F.isVarArg() && !F.callsFunctionThatReturnsTwice();
+
+  // For ObjC library calls which return their argument, replace uses of the
+  // argument with uses of the call return value, if it dominates the use. This
+  // reduces register pressure.
+  SmallPtrSet<Instruction *, 4> DependingInstructions;
+  SmallPtrSet<const BasicBlock *, 4> Visited;
+  for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E;) {
+    Instruction *Inst = &*I++;
+
+    DEBUG(dbgs() << "Visiting: " << *Inst << "\n");
+
+    // First try to peephole Inst. If there is nothing further we can do in
+    // terms of undoing objc-arc-expand, process the next inst.
+    if (tryToPeepholeInstruction(F, Inst, I, DependingInstructions, Visited,
+                                 TailOkForStoreStrongs))
+      continue;
+
+    // Otherwise, try to undo objc-arc-expand.
 
     // Don't use GetObjCArg because we don't want to look through bitcasts
     // and such; to do the replacement, the argument must have type i8*.
     Value *Arg = cast<CallInst>(Inst)->getArgOperand(0);
+
+    // TODO: Change this to a do-while.
     for (;;) {
       // If we're compiling bugpointed code, don't get in trouble.
       if (!isa<Instruction>(Arg) && !isa<Argument>(Arg))
