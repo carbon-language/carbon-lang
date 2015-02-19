@@ -1086,10 +1086,6 @@ std::string ScopStmt::getScatteringStr() const {
 unsigned ScopStmt::getNumParams() const { return Parent.getNumParams(); }
 
 unsigned ScopStmt::getNumIterators() const {
-  // The final read has one dimension with one element.
-  if (!BB)
-    return 1;
-
   return NestLoops.size();
 }
 
