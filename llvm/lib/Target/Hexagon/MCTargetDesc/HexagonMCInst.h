@@ -48,50 +48,6 @@ public:
   bool isPacketEnd() const;
   static const size_t packetEndIndex = 1;
   void resetPacket();
-
-  // Return the Hexagon ISA class for the insn.
-  unsigned getType() const;
-
-  // Return whether the insn is an actual insn.
-  bool isCanon() const;
-
-  // Return whether the insn is a prefix.
-  bool isPrefix() const;
-
-  // Return whether the insn is solo, i.e., cannot be in a packet.
-  bool isSolo() const;
-
-  // Return whether the instruction needs to be constant extended.
-  bool isConstExtended() const;
-
-  // Return constant extended operand number.
-  unsigned short getCExtOpNum(void) const;
-
-  // Return whether the insn is a new-value consumer.
-  bool isNewValue() const;
-
-  // Return whether the instruction is a legal new-value producer.
-  bool hasNewValue() const;
-
-  // Return the operand that consumes or produces a new value.
-  const MCOperand &getNewValue() const;
-
-  // Return number of bits in the constant extended operand.
-  unsigned getBitCount(void) const;
-
-private:
-  // Return whether the instruction must be always extended.
-  bool isExtended() const;
-
-  // Return true if the insn may be extended based on the operand value.
-  bool isExtendable() const;
-
-  // Return true if the operand can be constant extended.
-  bool isOperandExtended(const unsigned short OperandNum) const;
-
-  // Return the min value that a constant extendable operand can have
-  // without being extended.
-  int getMinValue() const;
 };
 }
 
