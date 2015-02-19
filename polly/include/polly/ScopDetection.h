@@ -156,7 +156,10 @@ private:
     SetVector<const SCEVUnknown *> NonAffineAccesses;
     BaseToElSize ElementSize;
 
+    /// @brief The region has at least one load instruction.
     bool hasLoads;
+
+    /// @brief The region has at least one store instruction.
     bool hasStores;
 
     DetectionContext(Region &R, AliasAnalysis &AA, bool Verify)
