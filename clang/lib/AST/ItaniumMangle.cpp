@@ -793,8 +793,6 @@ void CXXNameMangler::manglePrefix(QualType type) {
 
 /// Mangle everything prior to the base-unresolved-name in an unresolved-name.
 ///
-/// \param firstQualifierLookup - the entity found by unqualified lookup
-///   for the first name in the qualifier, if this is for a member expression
 /// \param recursive - true if this is being called recursively,
 ///   i.e. if there is more prefix "to the right".
 void CXXNameMangler::mangleUnresolvedPrefix(NestedNameSpecifier *qualifier,
