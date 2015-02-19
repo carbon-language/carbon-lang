@@ -9521,122 +9521,6 @@ static bool shouldLowerAsInterleaving(ArrayRef<int> Mask) {
   return InterleavedCrosses < SplitCrosses;
 }
 
-/// \brief Blend two v8i16 vectors using a naive unpack strategy.
-///
-/// This strategy only works when the inputs from each vector fit into a single
-/// half of that vector, and generally there are not so many inputs as to leave
-/// the in-place shuffles required highly constrained (and thus expensive). It
-/// shifts all the inputs into a single side of both input vectors and then
-/// uses an unpack to interleave these inputs in a single vector. At that
-/// point, we will fall back on the generic single input shuffle lowering.
-static SDValue lowerV8I16BasicBlendVectorShuffle(SDLoc DL, SDValue V1,
-                                                 SDValue V2,
-                                                 MutableArrayRef<int> Mask,
-                                                 const X86Subtarget *Subtarget,
-                                                 SelectionDAG &DAG) {
-  assert(V1.getSimpleValueType() == MVT::v8i16 && "Bad input type!");
-  assert(V2.getSimpleValueType() == MVT::v8i16 && "Bad input type!");
-  SmallVector<int, 3> LoV1Inputs, HiV1Inputs, LoV2Inputs, HiV2Inputs;
-  for (int i = 0; i < 8; ++i)
-    if (Mask[i] >= 0 && Mask[i] < 4)
-      LoV1Inputs.push_back(i);
-    else if (Mask[i] >= 4 && Mask[i] < 8)
-      HiV1Inputs.push_back(i);
-    else if (Mask[i] >= 8 && Mask[i] < 12)
-      LoV2Inputs.push_back(i);
-    else if (Mask[i] >= 12)
-      HiV2Inputs.push_back(i);
-
-  int NumV1Inputs = LoV1Inputs.size() + HiV1Inputs.size();
-  int NumV2Inputs = LoV2Inputs.size() + HiV2Inputs.size();
-  (void)NumV1Inputs;
-  (void)NumV2Inputs;
-  assert(NumV1Inputs > 0 && NumV1Inputs <= 3 && "At most 3 inputs supported");
-  assert(NumV2Inputs > 0 && NumV2Inputs <= 3 && "At most 3 inputs supported");
-  assert(NumV1Inputs + NumV2Inputs <= 4 && "At most 4 combined inputs");
-
-  bool MergeFromLo = LoV1Inputs.size() + LoV2Inputs.size() >=
-                     HiV1Inputs.size() + HiV2Inputs.size();
-
-  auto moveInputsToHalf = [&](SDValue V, ArrayRef<int> LoInputs,
-                              ArrayRef<int> HiInputs, bool MoveToLo,
-                              int MaskOffset) {
-    ArrayRef<int> GoodInputs = MoveToLo ? LoInputs : HiInputs;
-    ArrayRef<int> BadInputs = MoveToLo ? HiInputs : LoInputs;
-    if (BadInputs.empty())
-      return V;
-
-    int MoveMask[] = {-1, -1, -1, -1, -1, -1, -1, -1};
-    int MoveOffset = MoveToLo ? 0 : 4;
-
-    if (GoodInputs.empty()) {
-      for (int BadInput : BadInputs) {
-        MoveMask[Mask[BadInput] % 4 + MoveOffset] = Mask[BadInput] - MaskOffset;
-        Mask[BadInput] = Mask[BadInput] % 4 + MoveOffset + MaskOffset;
-      }
-    } else {
-      if (GoodInputs.size() == 2) {
-        // If the low inputs are spread across two dwords, pack them into
-        // a single dword.
-        MoveMask[MoveOffset] = Mask[GoodInputs[0]] - MaskOffset;
-        MoveMask[MoveOffset + 1] = Mask[GoodInputs[1]] - MaskOffset;
-        Mask[GoodInputs[0]] = MoveOffset + MaskOffset;
-        Mask[GoodInputs[1]] = MoveOffset + 1 + MaskOffset;
-      } else {
-        // Otherwise pin the good inputs.
-        for (int GoodInput : GoodInputs)
-          MoveMask[Mask[GoodInput] - MaskOffset] = Mask[GoodInput] - MaskOffset;
-      }
-
-      if (BadInputs.size() == 2) {
-        // If we have two bad inputs then there may be either one or two good
-        // inputs fixed in place. Find a fixed input, and then find the *other*
-        // two adjacent indices by using modular arithmetic.
-        int GoodMaskIdx =
-            std::find_if(std::begin(MoveMask) + MoveOffset, std::end(MoveMask),
-                         [](int M) { return M >= 0; }) -
-            std::begin(MoveMask);
-        int MoveMaskIdx =
-            ((((GoodMaskIdx - MoveOffset) & ~1) + 2) % 4) + MoveOffset;
-        assert(MoveMask[MoveMaskIdx] == -1 && "Expected empty slot");
-        assert(MoveMask[MoveMaskIdx + 1] == -1 && "Expected empty slot");
-        MoveMask[MoveMaskIdx] = Mask[BadInputs[0]] - MaskOffset;
-        MoveMask[MoveMaskIdx + 1] = Mask[BadInputs[1]] - MaskOffset;
-        Mask[BadInputs[0]] = MoveMaskIdx + MaskOffset;
-        Mask[BadInputs[1]] = MoveMaskIdx + 1 + MaskOffset;
-      } else {
-        assert(BadInputs.size() == 1 && "All sizes handled");
-        int MoveMaskIdx = std::find(std::begin(MoveMask) + MoveOffset,
-                                    std::end(MoveMask), -1) -
-                          std::begin(MoveMask);
-        MoveMask[MoveMaskIdx] = Mask[BadInputs[0]] - MaskOffset;
-        Mask[BadInputs[0]] = MoveMaskIdx + MaskOffset;
-      }
-    }
-
-    return DAG.getVectorShuffle(MVT::v8i16, DL, V, DAG.getUNDEF(MVT::v8i16),
-                                MoveMask);
-  };
-  V1 = moveInputsToHalf(V1, LoV1Inputs, HiV1Inputs, MergeFromLo,
-                        /*MaskOffset*/ 0);
-  V2 = moveInputsToHalf(V2, LoV2Inputs, HiV2Inputs, MergeFromLo,
-                        /*MaskOffset*/ 8);
-
-  // FIXME: Select an interleaving of the merge of V1 and V2 that minimizes
-  // cross-half traffic in the final shuffle.
-
-  // Munge the mask to be a single-input mask after the unpack merges the
-  // results.
-  for (int &M : Mask)
-    if (M != -1)
-      M = 2 * (M % 4) + (M / 8);
-
-  return DAG.getVectorShuffle(
-      MVT::v8i16, DL, DAG.getNode(MergeFromLo ? X86ISD::UNPCKL : X86ISD::UNPCKH,
-                                  DL, MVT::v8i16, V1, V2),
-      DAG.getUNDEF(MVT::v8i16), Mask);
-}
-
 /// \brief Helper to form a PSHUFB-based shuffle+blend.
 static SDValue lowerVectorShuffleAsPSHUFB(SDLoc DL, MVT VT, SDValue V1,
                                           SDValue V2, ArrayRef<int> Mask,
@@ -9771,9 +9655,6 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   if (SDValue BitBlend =
           lowerVectorShuffleAsBitBlend(DL, MVT::v8i16, V1, V2, Mask, DAG))
     return BitBlend;
-
-  if (NumV1Inputs + NumV2Inputs <= 4)
-    return lowerV8I16BasicBlendVectorShuffle(DL, V1, V2, Mask, Subtarget, DAG);
 
   // Check whether an interleaving lowering is likely to be more efficient.
   // This isn't perfect but it is a strong heuristic that tends to work well on
