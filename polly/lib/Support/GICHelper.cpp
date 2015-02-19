@@ -144,7 +144,8 @@ std::string polly::getIslCompatibleName(const std::string &Prefix,
   return S;
 }
 
-std::string polly::getIslCompatibleName(const std::string &Prefix, const Value *Val,
+std::string polly::getIslCompatibleName(const std::string &Prefix,
+                                        const Value *Val,
                                         const std::string &Suffix) {
   std::string ValStr;
   raw_string_ostream OS(ValStr);

@@ -1085,9 +1085,7 @@ std::string ScopStmt::getScatteringStr() const {
 
 unsigned ScopStmt::getNumParams() const { return Parent.getNumParams(); }
 
-unsigned ScopStmt::getNumIterators() const {
-  return NestLoops.size();
-}
+unsigned ScopStmt::getNumIterators() const { return NestLoops.size(); }
 
 unsigned ScopStmt::getNumScattering() const {
   return isl_map_dim(Scattering, isl_dim_out);
