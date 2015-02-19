@@ -25,10 +25,6 @@ extern "C" void *memset(void *ptr, int value, uptr num);
 
 namespace __lsan {
 
-static const uptr kMaxAllowedMallocSize = 8UL << 30;
-static const uptr kAllocatorSpace = 0x600000000000ULL;
-static const uptr kAllocatorSize  =  0x40000000000ULL;  // 4T.
-
 struct ChunkMetadata {
   bool allocated : 8;  // Must be first.
   ChunkTag tag : 2;
@@ -36,8 +32,22 @@ struct ChunkMetadata {
   u32 stack_trace_id;
 };
 
+#if defined(__mips64)
+static const uptr kMaxAllowedMallocSize = 4UL << 30;
+static const uptr kRegionSizeLog = 20;
+static const uptr kNumRegions = SANITIZER_MMAP_RANGE_SIZE >> kRegionSizeLog;
+typedef TwoLevelByteMap<(kNumRegions >> 12), 1 << 12> ByteMap;
+typedef CompactSizeClassMap SizeClassMap;
+typedef SizeClassAllocator32<0, SANITIZER_MMAP_RANGE_SIZE,
+    sizeof(ChunkMetadata), SizeClassMap, kRegionSizeLog, ByteMap>
+    PrimaryAllocator;
+#else
+static const uptr kMaxAllowedMallocSize = 8UL << 30;
+static const uptr kAllocatorSpace = 0x600000000000ULL;
+static const uptr kAllocatorSize = 0x40000000000ULL; // 4T.
 typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize,
         sizeof(ChunkMetadata), DefaultSizeClassMap> PrimaryAllocator;
+#endif
 typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
 typedef LargeMmapAllocator<> SecondaryAllocator;
 typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,

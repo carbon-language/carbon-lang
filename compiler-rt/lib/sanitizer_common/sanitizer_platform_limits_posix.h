@@ -547,6 +547,10 @@ namespace __sanitizer {
 
 #if SANITIZER_FREEBSD
   typedef __sanitizer_sigset_t __sanitizer_kernel_sigset_t;
+#elif defined(__mips__)
+  struct __sanitizer_kernel_sigset_t {
+    u8 sig[16];
+  };
 #else
   struct __sanitizer_kernel_sigset_t {
     u8 sig[8];

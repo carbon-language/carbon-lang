@@ -860,6 +860,13 @@ uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
                        : "rsp", "memory", "r11", "rcx");
   return res;
 }
+#elif defined(__mips__)
+// TODO(sagarthakur): clone function is to be rewritten in assembly.
+uptr internal_clone(int (*fn)(void *), void *child_stack, int flags, void *arg,
+                    int *parent_tidptr, void *newtls, int *child_tidptr) {
+  return clone(fn, child_stack, flags, arg, parent_tidptr,
+               newtls, child_tidptr);
+}
 #endif  // defined(__x86_64__) && SANITIZER_LINUX
 
 #if SANITIZER_ANDROID

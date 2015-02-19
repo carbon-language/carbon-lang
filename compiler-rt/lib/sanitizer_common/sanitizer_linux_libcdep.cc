@@ -168,6 +168,20 @@ static uptr g_tls_size;
 # define DL_INTERNAL_FUNCTION
 #endif
 
+#if defined(__mips__)
+// TlsPreTcbSize includes size of struct pthread_descr and size of tcb
+// head structure. It lies before the static tls blocks.
+static uptr TlsPreTcbSize() {
+  const uptr kTcbHead = 16;
+  const uptr kTlsAlign = 16;
+  const uptr kTlsPreTcbSize =
+    (ThreadDescriptorSize() + kTcbHead + kTlsAlign - 1) & ~(kTlsAlign - 1);
+  InitTlsSize();
+  g_tls_size = (g_tls_size + kTlsPreTcbSize + kTlsAlign -1) & ~(kTlsAlign - 1);
+  return kTlsPreTcbSize;
+}
+#endif
+
 void InitTlsSize() {
 #if !SANITIZER_FREEBSD && !SANITIZER_ANDROID && !SANITIZER_GO
   typedef void (*get_tls_func)(size_t*, size_t*) DL_INTERNAL_FUNCTION;
@@ -184,7 +198,8 @@ void InitTlsSize() {
 #endif  // !SANITIZER_FREEBSD && !SANITIZER_ANDROID
 }
 
-#if (defined(__x86_64__) || defined(__i386__)) && SANITIZER_LINUX
+#if (defined(__x86_64__) || defined(__i386__) || defined(__mips__)) \
+    && SANITIZER_LINUX
 // sizeof(struct thread) from glibc.
 static atomic_uintptr_t kThreadDescriptorSize;
 
@@ -192,6 +207,7 @@ uptr ThreadDescriptorSize() {
   uptr val = atomic_load(&kThreadDescriptorSize, memory_order_relaxed);
   if (val)
     return val;
+#if defined(__x86_64__) || defined(__i386__)
 #ifdef _CS_GNU_LIBC_VERSION
   char buf[64];
   uptr len = confstr(_CS_GNU_LIBC_VERSION, buf, sizeof(buf));
@@ -224,6 +240,13 @@ uptr ThreadDescriptorSize() {
     return val;
   }
 #endif
+#elif defined(__mips__)
+  // TODO(sagarthakur): add more values as per different glibc versions.
+  val = FIRST_32_SECOND_64(1152, 1776);
+  if (val)
+    atomic_store(&kThreadDescriptorSize, val, memory_order_relaxed);
+  return val;
+#endif
   return 0;
 }
 
@@ -240,12 +263,25 @@ uptr ThreadSelf() {
   asm("mov %%gs:%c1,%0" : "=r"(descr_addr) : "i"(kThreadSelfOffset));
 # elif defined(__x86_64__)
   asm("mov %%fs:%c1,%0" : "=r"(descr_addr) : "i"(kThreadSelfOffset));
+# elif defined(__mips__)
+  // MIPS uses TLS variant I. The thread pointer (in hardware register $29)
+  // points to the end of the TCB + 0x7000. The pthread_descr structure is
+  // immediately in front of the TCB. TlsPreTcbSize() includes the size of the
+  // TCB and the size of pthread_descr.
+  const uptr kTlsTcbOffset = 0x7000;
+  uptr thread_pointer;
+  asm volatile(".set push;\
+                .set mips64r2;\
+                rdhwr %0,$29;\
+                .set pop" : "=r" (thread_pointer));
+  descr_addr = thread_pointer - kTlsTcbOffset - TlsPreTcbSize();
 # else
 #  error "unsupported CPU arch"
 # endif
   return descr_addr;
 }
-#endif  // (defined(__x86_64__) || defined(__i386__)) && SANITIZER_LINUX
+#endif  // (defined(__x86_64__) || defined(__i386__) || defined(__mips__)) \
+        // && SANITIZER_LINUX
 
 #if SANITIZER_FREEBSD
 static void **ThreadSelfSegbase() {
@@ -275,6 +311,9 @@ static void GetTls(uptr *addr, uptr *size) {
   *size = GetTlsSize();
   *addr -= *size;
   *addr += ThreadDescriptorSize();
+# elif defined(__mips__)
+  *addr = ThreadSelf();
+  *size = GetTlsSize();
 # else
   *addr = 0;
   *size = 0;

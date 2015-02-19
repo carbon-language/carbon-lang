@@ -255,6 +255,14 @@ TEST(SanitizerCommon, LibraryNameIs) {
     }
 }
 
+#if defined(__mips64)
+// Effectively, this is a test for ThreadDescriptorSize() which is used to
+// compute ThreadSelf().
+TEST(SanitizerLinux, ThreadSelfTest) {
+  ASSERT_EQ(pthread_self(), ThreadSelf());
+}
+#endif
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_LINUX

@@ -14,7 +14,7 @@
 
 
 #include "sanitizer_platform.h"
-#if SANITIZER_LINUX && defined(__x86_64__)
+#if SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__))
 
 #include "sanitizer_stoptheworld.h"
 
@@ -451,4 +451,4 @@ uptr SuspendedThreadsList::RegisterCount() {
 }
 }  // namespace __sanitizer
 
-#endif  // SANITIZER_LINUX && defined(__x86_64__)
+#endif  // SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__))
