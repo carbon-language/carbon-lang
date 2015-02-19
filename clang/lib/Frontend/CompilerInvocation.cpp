@@ -39,9 +39,6 @@
 #include <memory>
 #include <sys/stat.h>
 #include <system_error>
-#if LLVM_ON_UNIX
-#include <unistd.h> // for gethostname()
-#endif
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -2027,20 +2024,6 @@ std::string CompilerInvocation::getModuleHash() const {
         code = hash_combine(code, statBuf.st_mtime);
     }
   }
-
-#if LLVM_ON_UNIX
-  // The LockFileManager cannot tell when processes from another host are
-  // running, so mangle the hostname in to the module hash to separate them.
-  char hostname[256];
-  hostname[0] = 0;
-  if (gethostname(hostname, 255) == 0) {
-    // Forcibly null-terminate the result, since POSIX doesn't require that
-    // truncation result in an error or that truncated names be null-terminated.
-    hostname[sizeof(hostname)-1] = 0;
-    code = hash_combine(code, StringRef(hostname));
-  }
-  // Ignore failures in gethostname() by not including the hostname in the hash.
-#endif
 
   return llvm::APInt(64, code).toString(36, /*Signed=*/false);
 }
