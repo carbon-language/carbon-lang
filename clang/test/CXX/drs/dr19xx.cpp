@@ -39,6 +39,14 @@ namespace dr1902 { // dr1902: 3.7
 #endif
 }
 
+#if __cplusplus >= 201402L
+namespace dr1947 { // dr1947: yes
+unsigned o = 0'01;  // ok
+unsigned b = 0b'01; // expected-error {{invalid digit 'b' in octal constant}}
+unsigned x = 0x'01; // expected-error {{invalid suffix 'x'01' on integer constant}}
+}
+#endif
+
 #if __cplusplus >= 201103L
 // dr1948: yes
 // FIXME: This diagnostic could be improved.
