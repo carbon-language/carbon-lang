@@ -1896,13 +1896,16 @@ void Parser::HandleMemberFunctionDeclDelays(Declarator& DeclaratorInfo,
   // late parse
   bool NeedLateParse = FTI.getExceptionSpecType() == EST_Unparsed;
 
-  if (!NeedLateParse)
+  if (!NeedLateParse) {
     // Look ahead to see if there are any default args
-    for (unsigned ParamIdx = 0; ParamIdx < FTI.NumParams; ++ParamIdx)
-      if (FTI.Params[ParamIdx].DefaultArgTokens) {
+    for (unsigned ParamIdx = 0; ParamIdx < FTI.NumParams; ++ParamIdx) {
+      auto Param = cast<ParmVarDecl>(FTI.Params[ParamIdx].Param);
+      if (Param->hasUnparsedDefaultArg()) {
         NeedLateParse = true;
         break;
       }
+    }
+  }
 
   if (NeedLateParse) {
     // Push this method onto the stack of late-parsed method

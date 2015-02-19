@@ -306,8 +306,9 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
   ParseScope PrototypeScope(this, Scope::FunctionPrototypeScope |
                             Scope::FunctionDeclarationScope | Scope::DeclScope);
   for (unsigned I = 0, N = LM.DefaultArgs.size(); I != N; ++I) {
-    auto Param = LM.DefaultArgs[I].Param;
+    auto Param = cast<ParmVarDecl>(LM.DefaultArgs[I].Param);
     // Introduce the parameter into scope.
+    bool HasUnparsed = Param->hasUnparsedDefaultArg();
     Actions.ActOnDelayedCXXMethodParameter(getCurScope(), Param);
     if (CachedTokens *Toks = LM.DefaultArgs[I].Toks) {
       // Mark the end of the default argument so that we know when to stop when
@@ -371,6 +372,16 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
 
       delete Toks;
       LM.DefaultArgs[I].Toks = nullptr;
+    } else if (HasUnparsed) {
+      assert(Param->hasInheritedDefaultArg());
+      FunctionDecl *Old = cast<FunctionDecl>(LM.Method)->getPreviousDecl();
+      ParmVarDecl *OldParam = Old->getParamDecl(I);
+      assert (!OldParam->hasUnparsedDefaultArg());
+      if (OldParam->hasUninstantiatedDefaultArg())
+        Param->setUninstantiatedDefaultArg(
+                                      Param->getUninstantiatedDefaultArg());
+      else
+        Param->setDefaultArg(OldParam->getInit());
     }
   }
 
