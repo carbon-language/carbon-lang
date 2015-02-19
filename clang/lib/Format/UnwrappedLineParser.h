@@ -103,7 +103,7 @@ private:
   void parseObjCUntilAtEnd();
   void parseObjCInterfaceOrImplementation();
   void parseObjCProtocol();
-  void parseJavaScriptEs6Import();
+  void parseJavaScriptEs6ImportExport();
   bool tryToParseLambda();
   bool tryToParseLambdaIntroducer();
   void tryToParseJSFunction();

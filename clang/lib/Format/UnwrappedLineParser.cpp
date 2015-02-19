@@ -262,7 +262,7 @@ bool UnwrappedLineParser::parse() {
 void UnwrappedLineParser::parseFile() {
   ScopedDeclarationState DeclarationState(
       *Line, DeclarationScopeStack,
-      /*MustBeDeclaration=*/ !Line->InPPDirective);
+      /*MustBeDeclaration=*/!Line->InPPDirective);
   parseLevel(/*HasOpeningBrace=*/false);
   // Make sure to format the remaining tokens.
   flushComments(true);
@@ -734,6 +734,12 @@ void UnwrappedLineParser::parseStructuralElement() {
       }
     }
     break;
+  case tok::kw_export:
+    if (Style.Language == FormatStyle::LK_JavaScript) {
+      parseJavaScriptEs6ImportExport();
+      return;
+    }
+    break;
   case tok::identifier:
     if (FormatTok->IsForEachMacro) {
       parseForOrWhileLoop();
@@ -741,7 +747,7 @@ void UnwrappedLineParser::parseStructuralElement() {
     }
     if (Style.Language == FormatStyle::LK_JavaScript &&
         FormatTok->is(Keywords.kw_import)) {
-      parseJavaScriptEs6Import();
+      parseJavaScriptEs6ImportExport();
       return;
     }
     // In all other cases, parse the declaration.
@@ -970,7 +976,7 @@ void UnwrappedLineParser::tryToParseJSFunction() {
 
   // Consume function name.
   if (FormatTok->is(tok::identifier))
-      nextToken();
+    nextToken();
 
   if (FormatTok->isNot(tok::l_paren))
     return;
@@ -1604,13 +1610,24 @@ void UnwrappedLineParser::parseObjCProtocol() {
   parseObjCUntilAtEnd();
 }
 
-void UnwrappedLineParser::parseJavaScriptEs6Import() {
-  assert(FormatTok->is(Keywords.kw_import));
+void UnwrappedLineParser::parseJavaScriptEs6ImportExport() {
+  assert(FormatTok->isOneOf(Keywords.kw_import, tok::kw_export));
   nextToken();
+
+  if (FormatTok->isOneOf(tok::kw_const, tok::kw_class, Keywords.kw_function,
+                         Keywords.kw_var))
+    return; // Fall through to parsing the corresponding structure.
+
+  if (FormatTok->is(tok::kw_default)) {
+    nextToken(); // export default ..., fall through after eating 'default'.
+    return;
+  }
+
   if (FormatTok->is(tok::l_brace)) {
     FormatTok->BlockKind = BK_Block;
     parseBracedList();
   }
+
   while (!eof() && FormatTok->isNot(tok::semi) &&
          FormatTok->isNot(tok::l_brace)) {
     nextToken();
