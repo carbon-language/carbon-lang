@@ -57,86 +57,37 @@ enum class ARCInstKind {
 raw_ostream &operator<<(raw_ostream &OS, const ARCInstKind Class);
 
 /// \brief Test if the given class is a kind of user.
-inline static bool IsUser(ARCInstKind Class) {
-  return Class == ARCInstKind::User || Class == ARCInstKind::CallOrUser ||
-         Class == ARCInstKind::IntrinsicUser;
-}
+bool IsUser(ARCInstKind Class);
 
 /// \brief Test if the given class is objc_retain or equivalent.
-static inline bool IsRetain(ARCInstKind Class) {
-  return Class == ARCInstKind::Retain || Class == ARCInstKind::RetainRV;
-}
+bool IsRetain(ARCInstKind Class);
 
 /// \brief Test if the given class is objc_autorelease or equivalent.
-static inline bool IsAutorelease(ARCInstKind Class) {
-  return Class == ARCInstKind::Autorelease ||
-         Class == ARCInstKind::AutoreleaseRV;
-}
+bool IsAutorelease(ARCInstKind Class);
 
 /// \brief Test if the given class represents instructions which return their
 /// argument verbatim.
-static inline bool IsForwarding(ARCInstKind Class) {
-  return Class == ARCInstKind::Retain || Class == ARCInstKind::RetainRV ||
-         Class == ARCInstKind::Autorelease ||
-         Class == ARCInstKind::AutoreleaseRV || Class == ARCInstKind::NoopCast;
-}
+bool IsForwarding(ARCInstKind Class);
 
 /// \brief Test if the given class represents instructions which do nothing if
 /// passed a null pointer.
-static inline bool IsNoopOnNull(ARCInstKind Class) {
-  return Class == ARCInstKind::Retain || Class == ARCInstKind::RetainRV ||
-         Class == ARCInstKind::Release || Class == ARCInstKind::Autorelease ||
-         Class == ARCInstKind::AutoreleaseRV ||
-         Class == ARCInstKind::RetainBlock;
-}
+bool IsNoopOnNull(ARCInstKind Class);
 
 /// \brief Test if the given class represents instructions which are always safe
 /// to mark with the "tail" keyword.
-static inline bool IsAlwaysTail(ARCInstKind Class) {
-  // ARCInstKind::RetainBlock may be given a stack argument.
-  return Class == ARCInstKind::Retain || Class == ARCInstKind::RetainRV ||
-         Class == ARCInstKind::AutoreleaseRV;
-}
+bool IsAlwaysTail(ARCInstKind Class);
 
 /// \brief Test if the given class represents instructions which are never safe
 /// to mark with the "tail" keyword.
-static inline bool IsNeverTail(ARCInstKind Class) {
-  /// It is never safe to tail call objc_autorelease since by tail calling
-  /// objc_autorelease, we also tail call -[NSObject autorelease] which supports
-  /// fast autoreleasing causing our object to be potentially reclaimed from the
-  /// autorelease pool which violates the semantics of __autoreleasing types in
-  /// ARC.
-  return Class == ARCInstKind::Autorelease;
-}
+bool IsNeverTail(ARCInstKind Class);
 
 /// \brief Test if the given class represents instructions which are always safe
 /// to mark with the nounwind attribute.
-static inline bool IsNoThrow(ARCInstKind Class) {
-  // objc_retainBlock is not nounwind because it calls user copy constructors
-  // which could theoretically throw.
-  return Class == ARCInstKind::Retain || Class == ARCInstKind::RetainRV ||
-         Class == ARCInstKind::Release || Class == ARCInstKind::Autorelease ||
-         Class == ARCInstKind::AutoreleaseRV ||
-         Class == ARCInstKind::AutoreleasepoolPush ||
-         Class == ARCInstKind::AutoreleasepoolPop;
-}
+bool IsNoThrow(ARCInstKind Class);
 
 /// Test whether the given instruction can autorelease any pointer or cause an
 /// autoreleasepool pop.
-static inline bool CanInterruptRV(ARCInstKind Class) {
-  switch (Class) {
-  case ARCInstKind::AutoreleasepoolPop:
-  case ARCInstKind::CallOrUser:
-  case ARCInstKind::Call:
-  case ARCInstKind::Autorelease:
-  case ARCInstKind::AutoreleaseRV:
-  case ARCInstKind::FusedRetainAutorelease:
-  case ARCInstKind::FusedRetainAutoreleaseRV:
-    return true;
-  default:
-    return false;
-  }
-}
+bool CanInterruptRV(ARCInstKind Class);
 
 /// \brief Determine if F is one of the special known Functions.  If it isn't,
 /// return ARCInstKind::CallOrUser.

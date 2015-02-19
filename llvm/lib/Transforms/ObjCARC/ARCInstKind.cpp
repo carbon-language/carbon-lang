@@ -291,3 +291,317 @@ ARCInstKind llvm::objcarc::GetARCInstKind(const Value *V) {
   // Otherwise, it's totally inert for ARC purposes.
   return ARCInstKind::None;
 }
+
+/// \brief Test if the given class is a kind of user.
+bool llvm::objcarc::IsUser(ARCInstKind Class) {
+  switch (Class) {
+  case ARCInstKind::User:
+  case ARCInstKind::CallOrUser:
+  case ARCInstKind::IntrinsicUser:
+    return true;
+  case ARCInstKind::Retain:
+  case ARCInstKind::RetainRV:
+  case ARCInstKind::RetainBlock:
+  case ARCInstKind::Release:
+  case ARCInstKind::Autorelease:
+  case ARCInstKind::AutoreleaseRV:
+  case ARCInstKind::AutoreleasepoolPush:
+  case ARCInstKind::AutoreleasepoolPop:
+  case ARCInstKind::NoopCast:
+  case ARCInstKind::FusedRetainAutorelease:
+  case ARCInstKind::FusedRetainAutoreleaseRV:
+  case ARCInstKind::LoadWeakRetained:
+  case ARCInstKind::StoreWeak:
+  case ARCInstKind::InitWeak:
+  case ARCInstKind::LoadWeak:
+  case ARCInstKind::MoveWeak:
+  case ARCInstKind::CopyWeak:
+  case ARCInstKind::DestroyWeak:
+  case ARCInstKind::StoreStrong:
+  case ARCInstKind::Call:
+  case ARCInstKind::None:
+    return false;
+  }
+  llvm_unreachable("covered switch isn't covered?");
+}
+
+/// \brief Test if the given class is objc_retain or equivalent.
+bool llvm::objcarc::IsRetain(ARCInstKind Class) {
+  switch (Class) {
+  case ARCInstKind::Retain:
+  case ARCInstKind::RetainRV:
+    return true;
+  // I believe we treat retain block as not a retain since it can copy its
+  // block.
+  case ARCInstKind::RetainBlock:
+  case ARCInstKind::Release:
+  case ARCInstKind::Autorelease:
+  case ARCInstKind::AutoreleaseRV:
+  case ARCInstKind::AutoreleasepoolPush:
+  case ARCInstKind::AutoreleasepoolPop:
+  case ARCInstKind::NoopCast:
+  case ARCInstKind::FusedRetainAutorelease:
+  case ARCInstKind::FusedRetainAutoreleaseRV:
+  case ARCInstKind::LoadWeakRetained:
+  case ARCInstKind::StoreWeak:
+  case ARCInstKind::InitWeak:
+  case ARCInstKind::LoadWeak:
+  case ARCInstKind::MoveWeak:
+  case ARCInstKind::CopyWeak:
+  case ARCInstKind::DestroyWeak:
+  case ARCInstKind::StoreStrong:
+  case ARCInstKind::IntrinsicUser:
+  case ARCInstKind::CallOrUser:
+  case ARCInstKind::Call:
+  case ARCInstKind::User:
+  case ARCInstKind::None:
+    return false;
+  }
+  llvm_unreachable("covered switch isn't covered?");
+}
+
+/// \brief Test if the given class is objc_autorelease or equivalent.
+bool llvm::objcarc::IsAutorelease(ARCInstKind Class) {
+  switch (Class) {
+  case ARCInstKind::Autorelease:
+  case ARCInstKind::AutoreleaseRV:
+    return true;
+  case ARCInstKind::Retain:
+  case ARCInstKind::RetainRV:
+  case ARCInstKind::RetainBlock:
+  case ARCInstKind::Release:
+  case ARCInstKind::AutoreleasepoolPush:
+  case ARCInstKind::AutoreleasepoolPop:
+  case ARCInstKind::NoopCast:
+  case ARCInstKind::FusedRetainAutorelease:
+  case ARCInstKind::FusedRetainAutoreleaseRV:
+  case ARCInstKind::LoadWeakRetained:
+  case ARCInstKind::StoreWeak:
+  case ARCInstKind::InitWeak:
+  case ARCInstKind::LoadWeak:
+  case ARCInstKind::MoveWeak:
+  case ARCInstKind::CopyWeak:
+  case ARCInstKind::DestroyWeak:
+  case ARCInstKind::StoreStrong:
+  case ARCInstKind::IntrinsicUser:
+  case ARCInstKind::CallOrUser:
+  case ARCInstKind::Call:
+  case ARCInstKind::User:
+  case ARCInstKind::None:
+    return false;
+  }
+  llvm_unreachable("covered switch isn't covered?");
+}
+
+/// \brief Test if the given class represents instructions which return their
+/// argument verbatim.
+bool llvm::objcarc::IsForwarding(ARCInstKind Class) {
+  switch (Class) {
+  case ARCInstKind::Retain:
+  case ARCInstKind::RetainRV:
+  case ARCInstKind::Autorelease:
+  case ARCInstKind::AutoreleaseRV:
+  case ARCInstKind::NoopCast:
+    return true;
+  case ARCInstKind::RetainBlock:
+  case ARCInstKind::Release:
+  case ARCInstKind::AutoreleasepoolPush:
+  case ARCInstKind::AutoreleasepoolPop:
+  case ARCInstKind::FusedRetainAutorelease:
+  case ARCInstKind::FusedRetainAutoreleaseRV:
+  case ARCInstKind::LoadWeakRetained:
+  case ARCInstKind::StoreWeak:
+  case ARCInstKind::InitWeak:
+  case ARCInstKind::LoadWeak:
+  case ARCInstKind::MoveWeak:
+  case ARCInstKind::CopyWeak:
+  case ARCInstKind::DestroyWeak:
+  case ARCInstKind::StoreStrong:
+  case ARCInstKind::IntrinsicUser:
+  case ARCInstKind::CallOrUser:
+  case ARCInstKind::Call:
+  case ARCInstKind::User:
+  case ARCInstKind::None:
+    return false;
+  }
+  llvm_unreachable("covered switch isn't covered?");
+}
+
+/// \brief Test if the given class represents instructions which do nothing if
+/// passed a null pointer.
+bool llvm::objcarc::IsNoopOnNull(ARCInstKind Class) {
+  switch (Class) {
+  case ARCInstKind::Retain:
+  case ARCInstKind::RetainRV:
+  case ARCInstKind::Release:
+  case ARCInstKind::Autorelease:
+  case ARCInstKind::AutoreleaseRV:
+  case ARCInstKind::RetainBlock:
+    return true;
+  case ARCInstKind::AutoreleasepoolPush:
+  case ARCInstKind::AutoreleasepoolPop:
+  case ARCInstKind::FusedRetainAutorelease:
+  case ARCInstKind::FusedRetainAutoreleaseRV:
+  case ARCInstKind::LoadWeakRetained:
+  case ARCInstKind::StoreWeak:
+  case ARCInstKind::InitWeak:
+  case ARCInstKind::LoadWeak:
+  case ARCInstKind::MoveWeak:
+  case ARCInstKind::CopyWeak:
+  case ARCInstKind::DestroyWeak:
+  case ARCInstKind::StoreStrong:
+  case ARCInstKind::IntrinsicUser:
+  case ARCInstKind::CallOrUser:
+  case ARCInstKind::Call:
+  case ARCInstKind::User:
+  case ARCInstKind::None:
+  case ARCInstKind::NoopCast:
+    return false;
+  }
+  llvm_unreachable("covered switch isn't covered?");
+}
+
+/// \brief Test if the given class represents instructions which are always safe
+/// to mark with the "tail" keyword.
+bool llvm::objcarc::IsAlwaysTail(ARCInstKind Class) {
+  // ARCInstKind::RetainBlock may be given a stack argument.
+  switch (Class) {
+  case ARCInstKind::Retain:
+  case ARCInstKind::RetainRV:
+  case ARCInstKind::AutoreleaseRV:
+    return true;
+  case ARCInstKind::Release:
+  case ARCInstKind::Autorelease:
+  case ARCInstKind::RetainBlock:
+  case ARCInstKind::AutoreleasepoolPush:
+  case ARCInstKind::AutoreleasepoolPop:
+  case ARCInstKind::FusedRetainAutorelease:
+  case ARCInstKind::FusedRetainAutoreleaseRV:
+  case ARCInstKind::LoadWeakRetained:
+  case ARCInstKind::StoreWeak:
+  case ARCInstKind::InitWeak:
+  case ARCInstKind::LoadWeak:
+  case ARCInstKind::MoveWeak:
+  case ARCInstKind::CopyWeak:
+  case ARCInstKind::DestroyWeak:
+  case ARCInstKind::StoreStrong:
+  case ARCInstKind::IntrinsicUser:
+  case ARCInstKind::CallOrUser:
+  case ARCInstKind::Call:
+  case ARCInstKind::User:
+  case ARCInstKind::None:
+  case ARCInstKind::NoopCast:
+    return false;
+  }
+  llvm_unreachable("covered switch isn't covered?");
+}
+
+/// \brief Test if the given class represents instructions which are never safe
+/// to mark with the "tail" keyword.
+bool llvm::objcarc::IsNeverTail(ARCInstKind Class) {
+  /// It is never safe to tail call objc_autorelease since by tail calling
+  /// objc_autorelease: fast autoreleasing causing our object to be potentially
+  /// reclaimed from the autorelease pool which violates the semantics of
+  /// __autoreleasing types in ARC.
+  switch (Class) {
+  case ARCInstKind::Autorelease:
+    return true;
+  case ARCInstKind::Retain:
+  case ARCInstKind::RetainRV:
+  case ARCInstKind::AutoreleaseRV:
+  case ARCInstKind::Release:
+  case ARCInstKind::RetainBlock:
+  case ARCInstKind::AutoreleasepoolPush:
+  case ARCInstKind::AutoreleasepoolPop:
+  case ARCInstKind::FusedRetainAutorelease:
+  case ARCInstKind::FusedRetainAutoreleaseRV:
+  case ARCInstKind::LoadWeakRetained:
+  case ARCInstKind::StoreWeak:
+  case ARCInstKind::InitWeak:
+  case ARCInstKind::LoadWeak:
+  case ARCInstKind::MoveWeak:
+  case ARCInstKind::CopyWeak:
+  case ARCInstKind::DestroyWeak:
+  case ARCInstKind::StoreStrong:
+  case ARCInstKind::IntrinsicUser:
+  case ARCInstKind::CallOrUser:
+  case ARCInstKind::Call:
+  case ARCInstKind::User:
+  case ARCInstKind::None:
+  case ARCInstKind::NoopCast:
+    return false;
+  }
+  llvm_unreachable("covered switch isn't covered?");
+}
+
+/// \brief Test if the given class represents instructions which are always safe
+/// to mark with the nounwind attribute.
+bool llvm::objcarc::IsNoThrow(ARCInstKind Class) {
+  // objc_retainBlock is not nounwind because it calls user copy constructors
+  // which could theoretically throw.
+  switch (Class) {
+  case ARCInstKind::Retain:
+  case ARCInstKind::RetainRV:
+  case ARCInstKind::Release:
+  case ARCInstKind::Autorelease:
+  case ARCInstKind::AutoreleaseRV:
+  case ARCInstKind::AutoreleasepoolPush:
+  case ARCInstKind::AutoreleasepoolPop:
+    return true;
+  case ARCInstKind::RetainBlock:
+  case ARCInstKind::FusedRetainAutorelease:
+  case ARCInstKind::FusedRetainAutoreleaseRV:
+  case ARCInstKind::LoadWeakRetained:
+  case ARCInstKind::StoreWeak:
+  case ARCInstKind::InitWeak:
+  case ARCInstKind::LoadWeak:
+  case ARCInstKind::MoveWeak:
+  case ARCInstKind::CopyWeak:
+  case ARCInstKind::DestroyWeak:
+  case ARCInstKind::StoreStrong:
+  case ARCInstKind::IntrinsicUser:
+  case ARCInstKind::CallOrUser:
+  case ARCInstKind::Call:
+  case ARCInstKind::User:
+  case ARCInstKind::None:
+  case ARCInstKind::NoopCast:
+    return false;
+  }
+  llvm_unreachable("covered switch isn't covered?");
+}
+
+/// Test whether the given instruction can autorelease any pointer or cause an
+/// autoreleasepool pop.
+///
+/// This means that it *could* interrupt the RV optimization.
+bool llvm::objcarc::CanInterruptRV(ARCInstKind Class) {
+  switch (Class) {
+  case ARCInstKind::AutoreleasepoolPop:
+  case ARCInstKind::CallOrUser:
+  case ARCInstKind::Call:
+  case ARCInstKind::Autorelease:
+  case ARCInstKind::AutoreleaseRV:
+  case ARCInstKind::FusedRetainAutorelease:
+  case ARCInstKind::FusedRetainAutoreleaseRV:
+    return true;
+  case ARCInstKind::Retain:
+  case ARCInstKind::RetainRV:
+  case ARCInstKind::Release:
+  case ARCInstKind::AutoreleasepoolPush:
+  case ARCInstKind::RetainBlock:
+  case ARCInstKind::LoadWeakRetained:
+  case ARCInstKind::StoreWeak:
+  case ARCInstKind::InitWeak:
+  case ARCInstKind::LoadWeak:
+  case ARCInstKind::MoveWeak:
+  case ARCInstKind::CopyWeak:
+  case ARCInstKind::DestroyWeak:
+  case ARCInstKind::StoreStrong:
+  case ARCInstKind::IntrinsicUser:
+  case ARCInstKind::User:
+  case ARCInstKind::None:
+  case ARCInstKind::NoopCast:
+    return false;
+  }
+  llvm_unreachable("covered switch isn't covered?");
+}
