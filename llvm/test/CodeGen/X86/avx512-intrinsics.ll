@@ -68,6 +68,14 @@ define <8 x double> @test7(<8 x double> %a) {
   ret <8 x double>%res
 }
 
+declare <2 x double> @llvm.x86.avx512.mask.rndscale.sd(<2 x double>, <2 x double>, <2 x double>, i8, i32, i32)
+
+define <2 x double> @test_rndsc_sd(<2 x double> %a, <2 x double> %b, <2 x double> %c) {
+; CHECK: vrndscalesd $11, %xmm{{.*}} {%k1} ## encoding: [0x62,0xf3,0xfd,0x09,0x0b,0xd1,0x0b]
+  %res = call <2 x double> @llvm.x86.avx512.mask.rndscale.sd(<2 x double> %a, <2 x double> %b, <2 x double> %c, i8 5, i32 11, i32 4)
+  ret <2 x double>%res
+}
+
 declare <16 x float> @llvm.x86.avx512.mask.rndscale.ps.512(<16 x float>, i32, <16 x float>, i16, i32)
 
 define <16 x float> @test8(<16 x float> %a) {

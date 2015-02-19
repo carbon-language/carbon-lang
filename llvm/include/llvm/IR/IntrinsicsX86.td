@@ -3193,12 +3193,14 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
           Intrinsic<[llvm_v8f64_ty], [llvm_v8f64_ty, llvm_v8f64_ty,
                      llvm_v8f64_ty, llvm_i8_ty, llvm_i32_ty], [IntrNoMem]>;
 
-  def int_x86_avx512_rndscale_ss        : GCCBuiltin<"__builtin_ia32_rndscaless">,
-              Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty, llvm_v4f32_ty,
-                         llvm_i32_ty], [IntrNoMem]>;
-  def int_x86_avx512_rndscale_sd        : GCCBuiltin<"__builtin_ia32_rndscalesd">,
-              Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty, llvm_v2f64_ty,
-                         llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_avx512_mask_rndscale_ss : GCCBuiltin<"__builtin_ia32_rndscaless_mask">,
+          Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty, llvm_v4f32_ty, llvm_v4f32_ty,
+                                     llvm_i8_ty, llvm_i32_ty, llvm_i32_ty],
+                                     [IntrNoMem]>;
+  def int_x86_avx512_mask_rndscale_sd : GCCBuiltin<"__builtin_ia32_rndscalesd_mask">,
+          Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty, llvm_v2f64_ty, llvm_v2f64_ty,
+                                      llvm_i8_ty, llvm_i32_ty, llvm_i32_ty],
+                                     [IntrNoMem]>;
   def int_x86_avx512_sqrt_ss        : GCCBuiltin<"__builtin_ia32_sqrtrndss">,
               Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty, llvm_v4f32_ty],
                         [IntrNoMem]>;
