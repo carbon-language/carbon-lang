@@ -123,3 +123,27 @@ __m256 test_256_blend_ps(__m256 __a, __m256 __b) {
   // CHECK: shufflevector <8 x float> %{{.*}}, <8 x float> %{{.*}}, <8 x i32> <i32 8, i32 1, i32 10, i32 3, i32 12, i32 13, i32 6, i32 7>
   return _mm256_blend_ps(__a, __b, 0x35);
 }
+
+__m256i test_256_insert_epi8(__m256i __a) {
+  // CHECK-LABEL: @test_256_insert_epi8
+  // CHECK: insertelement <32 x i8> {{.*}}, i8 {{.*}}, i32 {{.*}}
+  return _mm256_insert_epi8(__a, 42, 3);
+}
+
+__m256i test_256_insert_epi16(__m256i __a) {
+  // CHECK-LABEL: @test_256_insert_epi16
+  // CHECK: insertelement <16 x i16> {{.*}}, i16 {{.*}}, i32 {{.*}}
+  return _mm256_insert_epi16(__a, 42, 3);
+}
+
+__m256i test_256_insert_epi32(__m256i __a) {
+  // CHECK-LABEL: @test_256_insert_epi32
+  // CHECK: insertelement <8 x i32> {{.*}}, i32 {{.*}}, i32 {{.*}}
+  return _mm256_insert_epi32(__a, 42, 3);
+}
+
+__m256i test_256_insert_epi64(__m256i __a) {
+  // CHECK-LABEL: @test_256_insert_epi64
+  // CHECK: insertelement <4 x i64> {{.*}}, i64 {{.*}}, i32 {{.*}}
+  return _mm256_insert_epi64(__a, 42, 3);
+}
