@@ -41,11 +41,11 @@ define <8 x i16> @t1(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 define <8 x i16> @t2(<8 x i16> %A, <8 x i16> %B) nounwind {
 ; X64-LABEL: t2:
 ; X64:       ## BB#0:
-; X64-NEXT:    pshufd {{.*#+}} xmm2 = xmm0[2,3,0,1]
-; X64-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
-; X64-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[2,1,2,3]
-; X64-NEXT:    pshuflw {{.*#+}} xmm0 = xmm0[3,2,0,3,4,5,6,7]
-; X64-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm2[0]
+; X64-NEXT:    movdqa {{.*#+}} xmm2 = [0,65535,65535,0,65535,65535,65535,65535]
+; X64-NEXT:    pand %xmm2, %xmm0
+; X64-NEXT:    pshuflw {{.*#+}} xmm1 = xmm1[1,1,2,1,4,5,6,7]
+; X64-NEXT:    pandn %xmm1, %xmm2
+; X64-NEXT:    por %xmm2, %xmm0
 ; X64-NEXT:    retq
 	%tmp = shufflevector <8 x i16> %A, <8 x i16> %B, <8 x i32> < i32 9, i32 1, i32 2, i32 9, i32 4, i32 5, i32 6, i32 7 >
 	ret <8 x i16> %tmp

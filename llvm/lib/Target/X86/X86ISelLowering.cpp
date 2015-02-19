@@ -9637,6 +9637,58 @@ static SDValue lowerV8I16BasicBlendVectorShuffle(SDLoc DL, SDValue V1,
       DAG.getUNDEF(MVT::v8i16), Mask);
 }
 
+/// \brief Helper to form a PSHUFB-based shuffle+blend.
+static SDValue lowerVectorShuffleAsPSHUFB(SDLoc DL, MVT VT, SDValue V1,
+                                          SDValue V2, ArrayRef<int> Mask,
+                                          SelectionDAG &DAG, bool &V1InUse,
+                                          bool &V2InUse) {
+  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
+  SDValue V1Mask[16];
+  SDValue V2Mask[16];
+  V1InUse = false;
+  V2InUse = false;
+
+  int Size = Mask.size();
+  int Scale = 16 / Size;
+  for (int i = 0; i < 16; ++i) {
+    if (Mask[i / Scale] == -1) {
+      V1Mask[i] = V2Mask[i] = DAG.getUNDEF(MVT::i8);
+    } else {
+      const int ZeroMask = 0x80;
+      int V1Idx = Mask[i / Scale] < Size ? Mask[i / Scale] * Scale + i % Scale
+                                          : ZeroMask;
+      int V2Idx = Mask[i / Scale] < Size
+                      ? ZeroMask
+                      : (Mask[i / Scale] - Size) * Scale + i % Scale;
+      if (Zeroable[i / Scale])
+        V1Idx = V2Idx = ZeroMask;
+      V1Mask[i] = DAG.getConstant(V1Idx, MVT::i8);
+      V2Mask[i] = DAG.getConstant(V2Idx, MVT::i8);
+      V1InUse |= (ZeroMask != V1Idx);
+      V2InUse |= (ZeroMask != V2Idx);
+    }
+  }
+
+  if (V1InUse)
+    V1 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8,
+                     DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, V1),
+                     DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V1Mask));
+  if (V2InUse)
+    V2 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8,
+                     DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, V2),
+                     DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V2Mask));
+
+  // If we need shuffled inputs from both, blend the two.
+  SDValue V;
+  if (V1InUse && V2InUse)
+    V = DAG.getNode(ISD::OR, DL, MVT::v16i8, V1, V2);
+  else
+    V = V1InUse ? V1 : V2;
+
+  // Cast the result back to the correct type.
+  return DAG.getNode(ISD::BITCAST, DL, VT, V);
+}
+
 /// \brief Generic lowering of 8-lane i16 shuffles.
 ///
 /// This handles both single-input shuffles and combined shuffle/blends with
@@ -9746,32 +9798,26 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8i16, Evens, Odds);
   }
 
-  // If we have direct support for blends, we should lower by decomposing into
-  // a permute.
-  if (IsBlendSupported)
-    return lowerVectorShuffleAsDecomposedShuffleBlend(DL, MVT::v8i16, V1, V2,
-                                                      Mask, DAG);
+  // Try to lower by permuting the inputs into an unpack instruction unless we
+  // have direct support for blending.
+  if (!IsBlendSupported) {
+    if (SDValue Unpack =
+            lowerVectorShuffleAsUnpack(MVT::v8i16, DL, V1, V2, Mask, DAG))
+      return Unpack;
 
-  // Try to lower by permuting the inputs into an unpack instruction.
-  if (SDValue Unpack =
-          lowerVectorShuffleAsUnpack(MVT::v8i16, DL, V1, V2, Mask, DAG))
-    return Unpack;
-
-  int LoBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
-  int HiBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
-
-  for (int i = 0; i < 4; ++i) {
-    LoBlendMask[i] = Mask[i];
-    HiBlendMask[i] = Mask[i + 4];
+    // If we can use PSHUFB, that will be better as it can both shuffle and set
+    // up an efficient blend.
+    if (Subtarget->hasSSSE3()) {
+      bool V1InUse, V2InUse;
+      return lowerVectorShuffleAsPSHUFB(DL, MVT::v8i16, V1, V2, Mask, DAG,
+                                        V1InUse, V2InUse);
+    }
   }
 
-  SDValue LoV = DAG.getVectorShuffle(MVT::v8i16, DL, V1, V2, LoBlendMask);
-  SDValue HiV = DAG.getVectorShuffle(MVT::v8i16, DL, V1, V2, HiBlendMask);
-  LoV = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, LoV);
-  HiV = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64, HiV);
-
-  return DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
-                     DAG.getNode(X86ISD::UNPCKL, DL, MVT::v2i64, LoV, HiV));
+  // We can always bit-blend if we have to so the fallback strategy is to
+  // decompose into single-input permutes and blends.
+  return lowerVectorShuffleAsDecomposedShuffleBlend(DL, MVT::v8i16, V1, V2,
+                                                      Mask, DAG);
 }
 
 /// \brief Check whether a compaction lowering can be done by dropping even
@@ -10002,27 +10048,11 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // interleavings with direct instructions supporting them. We currently don't
   // handle those well here.
   if (Subtarget->hasSSSE3()) {
-    SDValue V1Mask[16];
-    SDValue V2Mask[16];
     bool V1InUse = false;
     bool V2InUse = false;
-    SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
 
-    for (int i = 0; i < 16; ++i) {
-      if (Mask[i] == -1) {
-        V1Mask[i] = V2Mask[i] = DAG.getUNDEF(MVT::i8);
-      } else {
-        const int ZeroMask = 0x80;
-        int V1Idx = (Mask[i] < 16 ? Mask[i] : ZeroMask);
-        int V2Idx = (Mask[i] < 16 ? ZeroMask : Mask[i] - 16);
-        if (Zeroable[i])
-          V1Idx = V2Idx = ZeroMask;
-        V1Mask[i] = DAG.getConstant(V1Idx, MVT::i8);
-        V2Mask[i] = DAG.getConstant(V2Idx, MVT::i8);
-        V1InUse |= (ZeroMask != V1Idx);
-        V2InUse |= (ZeroMask != V2Idx);
-      }
-    }
+    SDValue PSHUFB = lowerVectorShuffleAsPSHUFB(DL, MVT::v16i8, V1, V2, Mask,
+                                                DAG, V1InUse, V2InUse);
 
     // If both V1 and V2 are in use and we can use a direct blend or an unpack,
     // do so. This avoids using them to handle blends-with-zero which is
@@ -10046,22 +10076,7 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
         return Unpack;
     }
 
-    if (V1InUse)
-      V1 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V1,
-                       DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V1Mask));
-    if (V2InUse)
-      V2 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V2,
-                       DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V2Mask));
-
-    // If we need shuffled inputs from both, blend the two.
-    if (V1InUse && V2InUse)
-      return DAG.getNode(ISD::OR, DL, MVT::v16i8, V1, V2);
-    if (V1InUse)
-      return V1; // Single inputs are easy.
-    if (V2InUse)
-      return V2; // Single inputs are easy.
-    // Shuffling to a zeroable vector.
-    return getZeroVector(MVT::v16i8, Subtarget, DAG, DL);
+    return PSHUFB;
   }
 
   // There are special ways we can lower some single-element blends.
