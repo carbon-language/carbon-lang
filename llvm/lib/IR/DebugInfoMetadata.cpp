@@ -200,7 +200,7 @@ MDSubroutineType *MDSubroutineType::getImpl(LLVMContext &Context,
                                             bool ShouldCreate) {
   DEFINE_GETIMPL_LOOKUP(MDSubroutineType, (Flags, TypeArray));
   Metadata *Ops[] = {nullptr,   nullptr, nullptr, nullptr,
-                     TypeArray, nullptr, nullptr};
+                     TypeArray, nullptr, nullptr, nullptr};
   DEFINE_GETIMPL_STORE(MDSubroutineType, (Flags), Ops);
 }
 

@@ -964,6 +964,15 @@ TEST_F(MDSubroutineTypeTest, get) {
 
   TempMDSubroutineType Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
+
+  // Test always-empty operands.
+  EXPECT_EQ(nullptr, N->getScope());
+  EXPECT_EQ(nullptr, N->getFile());
+  EXPECT_EQ("", N->getName());
+  EXPECT_EQ(nullptr, N->getBaseType());
+  EXPECT_EQ(nullptr, N->getVTableHolder());
+  EXPECT_EQ(nullptr, N->getTemplateParams());
+  EXPECT_EQ("", N->getIdentifier());
 }
 
 typedef MetadataTest MDFileTest;
