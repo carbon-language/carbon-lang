@@ -1180,7 +1180,7 @@ static bool EvaluateHasIncludeNext(Token &Tok,
   // __has_include_next is like __has_include, except that we start
   // searching after the current found directory.  If we can't do this,
   // issue a diagnostic.
-  // FIXME: Factor out duplication wiht
+  // FIXME: Factor out duplication with 
   // Preprocessor::HandleIncludeNextDirective.
   const DirectoryLookup *Lookup = PP.GetCurDirLookup();
   const FileEntry *LookupFromFile = nullptr;
