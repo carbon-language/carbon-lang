@@ -6,7 +6,7 @@
 ; terminator.
 ;
 ; CHECK-LABEL: test:
-; CHECK: ##DEBUG_VALUE: i
+; CHECK: ##DEBUG_VALUE: foo:i
 %a = type { i32, i32 }
 
 define hidden fastcc %a* @test() #1 {
@@ -114,7 +114,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.module.flags = !{!22}
 
 !0 = !{!"0x11\0012\00Apple clang version\001\00\000\00\001", !20, !21, !21, !18, null,  null} ; [ DW_TAG_compile_unit ]
-!1 = !{!"0x2e\00foo\00\00\002\000\001\000\006\00256\001\000", !20, !2, !3, null, %a* ()* @test, null, null, !19} ; [ DW_TAG_subprogram ] [line 2] [def] [scope 0] [foo]
+!1 = !{!"0x2e\00foo\00foo\00\002\000\001\000\006\00256\001\000", !20, !2, !3, null, %a* ()* @test, null, null, !19} ; [ DW_TAG_subprogram ] [line 2] [def] [scope 0] [foo]
 !2 = !{!"0x29", !20} ; [ DW_TAG_file_type ]
 !3 = !{!"0x15\00\000\000\000\000\000\000", !20, !2, null, !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = !{!5}
