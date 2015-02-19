@@ -44,6 +44,7 @@ AppleObjCTypeEncodingParser::ReadQuotedString(lldb_utility::StringLexer& type)
     while (type.HasAtLeast(1) && type.Peek() != '"')
         buffer.Printf("%c",type.Next());
     StringLexer::Character next = type.Next();
+    (void) next; // Avoid warnings when assertions are off.
     assert (next == '"');
     return buffer.GetString();
 }
