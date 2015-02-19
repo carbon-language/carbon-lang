@@ -625,9 +625,10 @@ def warn_uncovered_module_header : Warning<
   InGroup<IncompleteUmbrella>;
 def err_expected_id_building_module : Error<
   "expected a module name in '__building_module' expression">;
-def error_use_of_private_header_outside_module : Error<
-  "use of private header from outside its module: '%0'">;
-def error_undeclared_use_of_module : Error<
+def warn_use_of_private_header_outside_module : Warning<
+  "use of private header from outside its module: '%0'">,
+  InGroup<DiagGroup<"private-header">>, DefaultError;
+def err_undeclared_use_of_module : Error<
   "module %0 does not depend on a module exporting '%1'">;
 def warn_non_modular_include_in_framework_module : Warning<
   "include of non-modular header inside framework module '%0'">,

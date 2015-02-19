@@ -288,14 +288,14 @@ void ModuleMap::diagnoseHeaderInclusion(Module *RequestingModule,
 
   // We have found a header, but it is private.
   if (Private) {
-    Diags.Report(FilenameLoc, diag::error_use_of_private_header_outside_module)
+    Diags.Report(FilenameLoc, diag::warn_use_of_private_header_outside_module)
         << Filename;
     return;
   }
 
   // We have found a module, but we don't use it.
   if (NotUsed) {
-    Diags.Report(FilenameLoc, diag::error_undeclared_use_of_module)
+    Diags.Report(FilenameLoc, diag::err_undeclared_use_of_module)
         << RequestingModule->getFullModuleName() << Filename;
     return;
   }
@@ -306,7 +306,7 @@ void ModuleMap::diagnoseHeaderInclusion(Module *RequestingModule,
   // At this point, only non-modular includes remain.
 
   if (LangOpts.ModulesStrictDeclUse) {
-    Diags.Report(FilenameLoc, diag::error_undeclared_use_of_module)
+    Diags.Report(FilenameLoc, diag::err_undeclared_use_of_module)
         << RequestingModule->getFullModuleName() << Filename;
   } else if (RequestingModule) {
     diag::kind DiagID = RequestingModule->getTopLevelModule()->IsFramework ?
