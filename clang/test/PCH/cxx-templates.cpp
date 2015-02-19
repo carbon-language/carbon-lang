@@ -10,7 +10,7 @@
 // Test with modules.
 // RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fexceptions -fmodules -x c++-header -emit-pch -o %t %S/cxx-templates.h
 // RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fexceptions -fmodules -include-pch %t -verify %s -ast-dump  -o -
-// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fexceptions -fmodules -include-pch %t %s -emit-llvm -o - -error-on-deserialized-decl doNotDeserialize -DNO_ERRORS | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fexceptions -fmodules -include-pch %t %s -emit-llvm -o - -error-on-deserialized-decl doNotDeserialize -DNO_ERRORS -fmodules-ignore-macro=NO_ERRORS | FileCheck %s
 
 // Test with pch and delayed template parsing.
 // RUN: %clang_cc1 -std=c++11 -triple %itanium_abi_triple -fcxx-exceptions -fdelayed-template-parsing -fexceptions -x c++-header -emit-pch -o %t %S/cxx-templates.h

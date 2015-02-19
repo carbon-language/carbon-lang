@@ -1344,6 +1344,8 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
   Record.push_back(HSOpts.UseStandardSystemIncludes);
   Record.push_back(HSOpts.UseStandardCXXIncludes);
   Record.push_back(HSOpts.UseLibcxx);
+  // Write out the specific module cache path that contains the module files.
+  AddString(PP.getHeaderSearchInfo().getModuleCachePath(), Record);
   Stream.EmitRecord(HEADER_SEARCH_OPTIONS, Record);
 
   // Preprocessor options.

@@ -575,6 +575,8 @@ public:
   /// and replace any existing one with it.
   void createPreprocessor(TranslationUnitKind TUKind);
 
+  std::string getSpecificModuleCachePath();
+
   /// Create the AST context.
   void createASTContext();
 

@@ -16,7 +16,7 @@
 // RUN: %clang_cc1 -x objective-c-header -fmodules -fmodules-cache-path=%t -w -Werror=auto-import %s -I %S/Inputs \
 // RUN:     -fmodule-implementation-of category_right -emit-pch -o %t.pch
 // RUN: %clang_cc1 -x objective-c-header -fmodules -fmodules-cache-path=%t -w -Werror=auto-import %s -I %S/Inputs \
-// RUN:     -DWITH_PREFIX -include-pch %t.pch -fmodule-implementation-of category_right
+// RUN:     -DWITH_PREFIX -fmodules-ignore-macro=WITH_PREFIX -include-pch %t.pch -fmodule-implementation-of category_right
 
 #ifndef WITH_PREFIX
 

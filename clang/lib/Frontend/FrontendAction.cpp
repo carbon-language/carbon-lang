@@ -262,6 +262,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     FileManager &FileMgr = CI.getFileManager();
     PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
     StringRef PCHInclude = PPOpts.ImplicitPCHInclude;
+    std::string SpecificModuleCachePath = CI.getSpecificModuleCachePath();
     if (const DirectoryEntry *PCHDir = FileMgr.getDirectory(PCHInclude)) {
       std::error_code EC;
       SmallString<128> DirNative;
@@ -273,7 +274,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
         if (ASTReader::isAcceptableASTFile(Dir->path(), FileMgr,
                                            CI.getLangOpts(),
                                            CI.getTargetOpts(),
-                                           CI.getPreprocessorOpts())) {
+                                           CI.getPreprocessorOpts(),
+                                           SpecificModuleCachePath)) {
           PPOpts.ImplicitPCHInclude = Dir->path();
           Found = true;
           break;

@@ -501,9 +501,11 @@ namespace {
     }
 
     bool ReadHeaderSearchOptions(const HeaderSearchOptions &HSOpts,
+                                 StringRef SpecificModuleCachePath,
                                  bool Complain) override {
       Out.indent(2) << "Header search options:\n";
       Out.indent(4) << "System root [-isysroot=]: '" << HSOpts.Sysroot << "'\n";
+      Out.indent(4) << "Module Cache: '" << SpecificModuleCachePath << "'\n";
       DUMP_BOOLEAN(HSOpts.UseBuiltinIncludes,
                    "Use builtin include directories [-nobuiltininc]");
       DUMP_BOOLEAN(HSOpts.UseStandardSystemIncludes,
