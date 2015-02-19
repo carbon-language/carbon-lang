@@ -10,10 +10,11 @@ class Warning {
 };
 
                                       // CHECK: func
-void func(int i) {                    // CHECK-NEXT: File 0, [[@LINE]]:18 -> [[@LINE+5]]:2 = #0
-  if(i % 2)
+void func(int i) {                    // CHECK-NEXT: File 0, [[@LINE]]:18 -> [[@LINE+6]]:2 = #0
+  if(i % 2)                           // CHECK-NEXT: File 0, [[@LINE]]:6 -> [[@LINE]]:11 = #0
     throw Error();                    // CHECK-NEXT: File 0, [[@LINE]]:5 -> [[@LINE]]:18 = #1
-  else if(i == 8)                     // CHECK-NEXT: File 0, [[@LINE]]:8 -> [[@LINE+1]]:27 = (#0 - #1)
+                                      // CHECK-NEXT: File 0, [[@LINE+1]]:8 -> [[@LINE+2]]:27 = (#0 - #1)
+  else if(i == 8)                     // CHECK-NEXT: File 0, [[@LINE]]:11 -> [[@LINE]]:17 = (#0 - #1)
     throw ImportantError();           // CHECK-NEXT: File 0, [[@LINE]]:5 -> [[@LINE]]:27 = #2
 }
 

@@ -787,10 +787,13 @@ struct CounterCoverageMappingBuilder
 
   void VisitIfStmt(const IfStmt *S) {
     extendRegion(S);
-    Visit(S->getCond());
 
     Counter ParentCount = getRegion().getCounter();
     Counter ThenCount = getRegionCounter(S);
+
+    // Emitting a counter for the condition makes it easier to interpret the
+    // counter for the body when looking at the coverage.
+    propagateCounts(ParentCount, S->getCond());
 
     extendRegion(S->getThen());
     Counter OutCount = propagateCounts(ThenCount, S->getThen());

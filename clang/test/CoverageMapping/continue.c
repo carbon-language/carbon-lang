@@ -4,15 +4,15 @@ int main() {                    // CHECK: File 0, [[@LINE]]:12 -> [[@LINE+21]]:2
   int j = 0;                    // CHECK-NEXT: File 0, [[@LINE+2]]:18 -> [[@LINE+2]]:24 = (#0 + #1)
                                 // CHECK-NEXT: File 0, [[@LINE+1]]:26 -> [[@LINE+1]]:29 = #1
   for(int i = 0; i < 20; ++i) { // CHECK-NEXT: File 0, [[@LINE]]:31 -> [[@LINE+17]]:4 = #1
-    if(i < 10) {                // CHECK-NEXT: File 0, [[@LINE]]:16 -> [[@LINE+13]]:6 = #2
-      if(i < 5) {               // CHECK-NEXT: File 0, [[@LINE]]:17 -> [[@LINE+3]]:8 = #3
+    if(i < 10) {                // CHECK: File 0, [[@LINE]]:16 -> [[@LINE+13]]:6 = #2
+      if(i < 5) {               // CHECK: File 0, [[@LINE]]:17 -> [[@LINE+3]]:8 = #3
         continue;
         j = 1;                   // CHECK-NEXT: File 0, [[@LINE]]:9 -> [[@LINE+1]]:8 = 0
       } else {                   // CHECK-NEXT: File 0, [[@LINE]]:14 -> [[@LINE+2]]:8 = (#2 - #3)
         j = 2;
       }
       j = 3;                     // CHECK-NEXT: File 0, [[@LINE]]:7 -> [[@LINE+6]]:6 = (#2 - #3)
-      if(i < 7) {                // CHECK-NEXT: File 0, [[@LINE]]:17 -> [[@LINE+3]]:8 = #4
+      if(i < 7) {                // CHECK: File 0, [[@LINE]]:17 -> [[@LINE+3]]:8 = #4
         continue;
         j = 4;                   // CHECK-NEXT: File 0, [[@LINE]]:9 -> [[@LINE+1]]:8 = 0
       } else j = 5;              // CHECK-NEXT: File 0, [[@LINE]]:14 -> [[@LINE]]:19 = ((#2 - #3) - #4)

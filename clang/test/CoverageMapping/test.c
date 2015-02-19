@@ -14,7 +14,8 @@ int main() {                     // CHECK-NEXT: File 0, [[@LINE]]:12 -> [[@LINE+
 }
 
                                  // CHECK-NEXT: foo
-void foo() {                     // CHECK-NEXT: File 0, [[@LINE]]:12 -> [[@LINE+4]]:2 = #0
+void foo() {                     // CHECK-NEXT: File 0, [[@LINE]]:12 -> [[@LINE+5]]:2 = #0
+                                 // CHECK-NEXT: File 0, [[@LINE+1]]:6 -> [[@LINE+1]]:7 = #0
   if(1) {                        // CHECK-NEXT: File 0, [[@LINE]]:9 -> [[@LINE+2]]:4 = #1
     int i = 0;
   }

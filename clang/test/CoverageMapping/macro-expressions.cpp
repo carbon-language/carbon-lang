@@ -15,6 +15,7 @@
 // CHECK: foo
 // CHECK-NEXT: File 0, [[@LINE+1]]:17 -> {{[0-9]+}}:2 = #0
 void foo(int i) {
+  // CHECK-NEXT: File 0, [[@LINE+2]]:7 -> [[@LINE+2]]:8 = #0
   // CHECK-NEXT: File 0, [[@LINE+1]]:10 -> [[@LINE+1]]:12 = #1
   if (0) {}
 
