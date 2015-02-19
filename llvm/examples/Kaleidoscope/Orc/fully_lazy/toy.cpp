@@ -1280,11 +1280,11 @@ private:
     //
     //   The update action will update FunctionBodyPointer to point at the newly
     // compiled function.
-    CallbackInfo.setCompileAction(
-      [this, Fn = std::shared_ptr<FunctionAST>(std::move(FnAST))](){
-        auto H = addModule(IRGen(Session, *Fn));
-        return findSymbolIn(H, Fn->Proto->Name).getAddress();
-      });
+    std::shared_ptr<FunctionAST> Fn = std::move(FnAST);
+    CallbackInfo.setCompileAction([this, Fn]() {
+      auto H = addModule(IRGen(Session, *Fn));
+      return findSymbolIn(H, Fn->Proto->Name).getAddress();
+    });
     CallbackInfo.setUpdateAction(
       CompileCallbacks.getLocalFPUpdater(H, Mangle(BodyPtrName)));
 
