@@ -171,7 +171,7 @@ llvm::objcarc::Depends(DependenceKind Flavor, Instruction *Inst,
     case IC_Retain:
     case IC_RetainRV:
       // Check for a retain of the same pointer for merging.
-      return GetObjCArg(Inst) == Arg;
+      return GetArgRCIdentityRoot(Inst) == Arg;
     default:
       // Nothing else matters for objc_retainAutorelease formation.
       return false;
@@ -183,7 +183,7 @@ llvm::objcarc::Depends(DependenceKind Flavor, Instruction *Inst,
     case IC_Retain:
     case IC_RetainRV:
       // Check for a retain of the same pointer for merging.
-      return GetObjCArg(Inst) == Arg;
+      return GetArgRCIdentityRoot(Inst) == Arg;
     default:
       // Anything that can autorelease interrupts
       // retainAutoreleaseReturnValue formation.

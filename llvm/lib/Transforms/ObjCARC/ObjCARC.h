@@ -229,10 +229,22 @@ static inline const Value *GetUnderlyingObjCPtr(const Value *V) {
   return V;
 }
 
-/// \brief This is a wrapper around Value::stripPointerCasts which also knows
-/// how to look through objc_retain and objc_autorelease calls, which we know to
-/// return their argument verbatim.
-static inline const Value *StripPointerCastsAndObjCCalls(const Value *V) {
+/// The RCIdentity root of a value \p V is a dominating value U for which
+/// retaining or releasing U is equivalent to retaining or releasing V. In other
+/// words, ARC operations on \p V are equivalent to ARC operations on \p U.
+///
+/// We use this in the ARC optimizer to make it easier to match up ARC
+/// operations by always mapping ARC operations to RCIdentityRoots instead of
+/// pointers themselves.
+///
+/// The two ways that we see RCIdentical values in ObjC are via:
+///
+///   1. PointerCasts
+///   2. Forwarding Calls that return their argument verbatim.
+///
+/// Thus this function strips off pointer casts and forwarding calls. *NOTE*
+/// This implies that two RCIdentical values must alias.
+static inline const Value *GetRCIdentityRoot(const Value *V) {
   for (;;) {
     V = V->stripPointerCasts();
     if (!IsForwarding(GetBasicInstructionClass(V)))
@@ -242,24 +254,19 @@ static inline const Value *StripPointerCastsAndObjCCalls(const Value *V) {
   return V;
 }
 
-/// \brief This is a wrapper around Value::stripPointerCasts which also knows
-/// how to look through objc_retain and objc_autorelease calls, which we know to
-/// return their argument verbatim.
-static inline Value *StripPointerCastsAndObjCCalls(Value *V) {
-  for (;;) {
-    V = V->stripPointerCasts();
-    if (!IsForwarding(GetBasicInstructionClass(V)))
-      break;
-    V = cast<CallInst>(V)->getArgOperand(0);
-  }
-  return V;
+/// Helper which calls const Value *GetRCIdentityRoot(const Value *V) and just
+/// casts away the const of the result. For documentation about what an
+/// RCIdentityRoot (and by extension GetRCIdentityRoot is) look at that
+/// function.
+static inline Value *GetRCIdentityRoot(Value *V) {
+  return const_cast<Value *>(GetRCIdentityRoot((const Value *)V));
 }
 
 /// \brief Assuming the given instruction is one of the special calls such as
-/// objc_retain or objc_release, return the argument value, stripped of no-op
-/// casts and forwarding calls.
-static inline Value *GetObjCArg(Value *Inst) {
-  return StripPointerCastsAndObjCCalls(cast<CallInst>(Inst)->getArgOperand(0));
+/// objc_retain or objc_release, return the RCIdentity root of the argument of
+/// the call.
+static inline Value *GetArgRCIdentityRoot(Value *Inst) {
+  return GetRCIdentityRoot(cast<CallInst>(Inst)->getArgOperand(0));
 }
 
 static inline bool IsNullOrUndef(const Value *V) {
@@ -371,7 +378,7 @@ static inline bool IsObjCIdentifiedObject(const Value *V) {
 
   if (const LoadInst *LI = dyn_cast<LoadInst>(V)) {
     const Value *Pointer =
-      StripPointerCastsAndObjCCalls(LI->getPointerOperand());
+      GetRCIdentityRoot(LI->getPointerOperand());
     if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Pointer)) {
       // A constant pointer can't be pointing to an object on the heap. It may
       // be reference-counted, but it won't be deleted.

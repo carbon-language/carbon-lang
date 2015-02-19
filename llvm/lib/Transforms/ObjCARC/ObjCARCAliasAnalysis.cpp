@@ -59,8 +59,8 @@ ObjCARCAliasAnalysis::alias(const Location &LocA, const Location &LocB) {
 
   // First, strip off no-ops, including ObjC-specific no-ops, and try making a
   // precise alias query.
-  const Value *SA = StripPointerCastsAndObjCCalls(LocA.Ptr);
-  const Value *SB = StripPointerCastsAndObjCCalls(LocB.Ptr);
+  const Value *SA = GetRCIdentityRoot(LocA.Ptr);
+  const Value *SB = GetRCIdentityRoot(LocB.Ptr);
   AliasResult Result =
     AliasAnalysis::alias(Location(SA, LocA.Size, LocA.AATags),
                          Location(SB, LocB.Size, LocB.AATags));
@@ -92,7 +92,7 @@ ObjCARCAliasAnalysis::pointsToConstantMemory(const Location &Loc,
 
   // First, strip off no-ops, including ObjC-specific no-ops, and try making
   // a precise alias query.
-  const Value *S = StripPointerCastsAndObjCCalls(Loc.Ptr);
+  const Value *S = GetRCIdentityRoot(Loc.Ptr);
   if (AliasAnalysis::pointsToConstantMemory(Location(S, Loc.Size, Loc.AATags),
                                             OrLocal))
     return true;

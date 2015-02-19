@@ -144,7 +144,7 @@ namespace {
 /// \defgroup ARCUtilities Utility declarations/definitions specific to ARC.
 /// @{
 
-/// \brief This is similar to StripPointerCastsAndObjCCalls but it stops as soon
+/// \brief This is similar to GetRCIdentityRoot but it stops as soon
 /// as it finds a value with multiple uses.
 static const Value *FindSingleUseIdentifiedObject(const Value *Arg) {
   if (Arg->hasOneUse()) {
@@ -165,7 +165,7 @@ static const Value *FindSingleUseIdentifiedObject(const Value *Arg) {
   // trivial uses, we can still consider this to be a single-use value.
   if (IsObjCIdentifiedObject(Arg)) {
     for (const User *U : Arg->users())
-      if (!U->use_empty() || StripPointerCastsAndObjCCalls(U) != Arg)
+      if (!U->use_empty() || GetRCIdentityRoot(U) != Arg)
          return nullptr;
 
     return Arg;
@@ -1191,7 +1191,7 @@ void ObjCARCOpt::getAnalysisUsage(AnalysisUsage &AU) const {
 bool
 ObjCARCOpt::OptimizeRetainRVCall(Function &F, Instruction *RetainRV) {
   // Check for the argument being from an immediately preceding call or invoke.
-  const Value *Arg = GetObjCArg(RetainRV);
+  const Value *Arg = GetArgRCIdentityRoot(RetainRV);
   ImmutableCallSite CS(Arg);
   if (const Instruction *Call = CS.getInstruction()) {
     if (Call->getParent() == RetainRV->getParent()) {
@@ -1217,7 +1217,7 @@ ObjCARCOpt::OptimizeRetainRVCall(Function &F, Instruction *RetainRV) {
   if (I != Begin) {
     do --I; while (I != Begin && IsNoopInstruction(I));
     if (GetBasicInstructionClass(I) == IC_AutoreleaseRV &&
-        GetObjCArg(I) == Arg) {
+        GetArgRCIdentityRoot(I) == Arg) {
       Changed = true;
       ++NumPeeps;
 
@@ -1252,7 +1252,7 @@ void
 ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
                                       InstructionClass &Class) {
   // Check for a return of the pointer value.
-  const Value *Ptr = GetObjCArg(AutoreleaseRV);
+  const Value *Ptr = GetArgRCIdentityRoot(AutoreleaseRV);
   SmallVector<const Value *, 2> Users;
   Users.push_back(Ptr);
   do {
@@ -1426,7 +1426,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
       continue;
     }
 
-    const Value *Arg = GetObjCArg(Inst);
+    const Value *Arg = GetArgRCIdentityRoot(Inst);
 
     // ARC calls with null are no-ops. Delete them.
     if (IsNullOrUndef(Arg)) {
@@ -1463,7 +1463,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
       bool HasCriticalEdges = false;
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
         Value *Incoming =
-          StripPointerCastsAndObjCCalls(PN->getIncomingValue(i));
+          GetRCIdentityRoot(PN->getIncomingValue(i));
         if (IsNullOrUndef(Incoming))
           HasNull = true;
         else if (cast<TerminatorInst>(PN->getIncomingBlock(i)->back())
@@ -1517,7 +1517,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
           Type *ParamTy = CInst->getArgOperand(0)->getType();
           for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
             Value *Incoming =
-              StripPointerCastsAndObjCCalls(PN->getIncomingValue(i));
+              GetRCIdentityRoot(PN->getIncomingValue(i));
             if (!IsNullOrUndef(Incoming)) {
               CallInst *Clone = cast<CallInst>(CInst->clone());
               Value *Op = PN->getIncomingValue(i);
@@ -1718,7 +1718,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
 
   switch (Class) {
   case IC_Release: {
-    Arg = GetObjCArg(Inst);
+    Arg = GetArgRCIdentityRoot(Inst);
 
     PtrState &S = MyStates.getPtrBottomUpState(Arg);
 
@@ -1752,7 +1752,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     break;
   case IC_Retain:
   case IC_RetainRV: {
-    Arg = GetObjCArg(Inst);
+    Arg = GetArgRCIdentityRoot(Inst);
 
     PtrState &S = MyStates.getPtrBottomUpState(Arg);
     S.SetKnownPositiveRefCount();
@@ -1808,7 +1808,7 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       if (AreAnyUnderlyingObjectsAnAlloca(SI->getPointerOperand())) {
         BBState::ptr_iterator I = MyStates.findPtrBottomUpState(
-          StripPointerCastsAndObjCCalls(SI->getValueOperand()));
+          GetRCIdentityRoot(SI->getValueOperand()));
         if (I != MyStates.bottom_up_ptr_end())
           MultiOwnersSet.insert(I->first);
       }
@@ -1978,7 +1978,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
     break;
   case IC_Retain:
   case IC_RetainRV: {
-    Arg = GetObjCArg(Inst);
+    Arg = GetArgRCIdentityRoot(Inst);
 
     PtrState &S = MyStates.getPtrTopDownState(Arg);
 
@@ -2008,7 +2008,7 @@ ObjCARCOpt::VisitInstructionTopDown(Instruction *Inst,
     break;
   }
   case IC_Release: {
-    Arg = GetObjCArg(Inst);
+    Arg = GetArgRCIdentityRoot(Inst);
 
     PtrState &S = MyStates.getPtrTopDownState(Arg);
     S.ClearKnownPositiveRefCount();
@@ -2372,7 +2372,7 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
       const RRInfo &NewRetainRRI = It->second;
       KnownSafeTD &= NewRetainRRI.KnownSafe;
       MultipleOwners =
-        MultipleOwners || MultiOwnersSet.count(GetObjCArg(NewRetain));
+        MultipleOwners || MultiOwnersSet.count(GetArgRCIdentityRoot(NewRetain));
       for (Instruction *NewRetainRelease : NewRetainRRI.Calls) {
         DenseMap<Value *, RRInfo>::const_iterator Jt =
           Releases.find(NewRetainRelease);
@@ -2581,7 +2581,7 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
 
     DEBUG(dbgs() << "Visiting: " << *Retain << "\n");
 
-    Value *Arg = GetObjCArg(Retain);
+    Value *Arg = GetArgRCIdentityRoot(Retain);
 
     // If the object being released is in static or stack storage, we know it's
     // not being managed by ObjC reference counting, so we can delete pairs
@@ -2593,7 +2593,7 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
     if (const LoadInst *LI = dyn_cast<LoadInst>(Arg))
       if (const GlobalVariable *GV =
             dyn_cast<GlobalVariable>(
-              StripPointerCastsAndObjCCalls(LI->getPointerOperand())))
+              GetRCIdentityRoot(LI->getPointerOperand())))
         if (GV->isConstant())
           KnownSafe = true;
 
@@ -2860,7 +2860,7 @@ FindPredecessorRetainWithSafePath(const Value *Arg, BasicBlock *BB,
   // Check that we found a retain with the same argument.
   if (!Retain ||
       !IsRetain(GetBasicInstructionClass(Retain)) ||
-      GetObjCArg(Retain) != Arg) {
+      GetArgRCIdentityRoot(Retain) != Arg) {
     return nullptr;
   }
 
@@ -2888,7 +2888,7 @@ FindPredecessorAutoreleaseWithSafePath(const Value *Arg, BasicBlock *BB,
   InstructionClass AutoreleaseClass = GetBasicInstructionClass(Autorelease);
   if (!IsAutorelease(AutoreleaseClass))
     return nullptr;
-  if (GetObjCArg(Autorelease) != Arg)
+  if (GetArgRCIdentityRoot(Autorelease) != Arg)
     return nullptr;
 
   return Autorelease;
@@ -2919,7 +2919,7 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
     if (!Ret)
       continue;
 
-    const Value *Arg = StripPointerCastsAndObjCCalls(Ret->getOperand(0));
+    const Value *Arg = GetRCIdentityRoot(Ret->getOperand(0));
 
     // Look for an ``autorelease'' instruction that is a predecessor of Ret and
     // dependent on Arg such that there are no instructions dependent on Arg

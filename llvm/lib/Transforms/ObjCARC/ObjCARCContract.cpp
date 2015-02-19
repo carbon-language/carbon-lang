@@ -110,7 +110,7 @@ namespace {
 /// return value. We do this late so we do not disrupt the dataflow analysis in
 /// ObjCARCOpt.
 bool ObjCARCContract::optimizeRetainCall(Function &F, Instruction *Retain) {
-  ImmutableCallSite CS(GetObjCArg(Retain));
+  ImmutableCallSite CS(GetArgRCIdentityRoot(Retain));
   const Instruction *Call = CS.getInstruction();
   if (!Call)
     return false;
@@ -146,7 +146,7 @@ bool ObjCARCContract::contractAutorelease(
     Function &F, Instruction *Autorelease, InstructionClass Class,
     SmallPtrSetImpl<Instruction *> &DependingInstructions,
     SmallPtrSetImpl<const BasicBlock *> &Visited) {
-  const Value *Arg = GetObjCArg(Autorelease);
+  const Value *Arg = GetArgRCIdentityRoot(Autorelease);
 
   // Check that there are no instructions between the retain and the autorelease
   // (such as an autorelease_pop) which may change the count.
@@ -171,7 +171,7 @@ bool ObjCARCContract::contractAutorelease(
 
   if (!Retain ||
       GetBasicInstructionClass(Retain) != IC_Retain ||
-      GetObjCArg(Retain) != Arg)
+      GetArgRCIdentityRoot(Retain) != Arg)
     return false;
 
   Changed = true;
@@ -199,7 +199,7 @@ bool ObjCARCContract::contractAutorelease(
 void
 ObjCARCContract::
 tryToContractReleaseIntoStoreStrong(Instruction *Release, inst_iterator &Iter) {
-  LoadInst *Load = dyn_cast<LoadInst>(GetObjCArg(Release));
+  LoadInst *Load = dyn_cast<LoadInst>(GetArgRCIdentityRoot(Release));
   if (!Load || !Load->isSimple()) return;
 
   // For now, require everything to be in one basic block.
@@ -242,7 +242,7 @@ tryToContractReleaseIntoStoreStrong(Instruction *Release, inst_iterator &Iter) {
     }
   }
 
-  Value *New = StripPointerCastsAndObjCCalls(Store->getValueOperand());
+  Value *New = GetRCIdentityRoot(Store->getValueOperand());
 
   // Walk up to find the retain.
   I = Store;
@@ -251,7 +251,7 @@ tryToContractReleaseIntoStoreStrong(Instruction *Release, inst_iterator &Iter) {
     --I;
   Instruction *Retain = I;
   if (GetBasicInstructionClass(Retain) != IC_Retain) return;
-  if (GetObjCArg(Retain) != New) return;
+  if (GetArgRCIdentityRoot(Retain) != New) return;
 
   Changed = true;
   ++NumStoreStrongs;
@@ -338,7 +338,7 @@ bool ObjCARCContract::tryToPeepholeInstruction(
         --BBI;
       } while (IsNoopInstruction(BBI));
 
-      if (&*BBI == GetObjCArg(Inst)) {
+      if (&*BBI == GetArgRCIdentityRoot(Inst)) {
         DEBUG(dbgs() << "Adding inline asm marker for "
                         "retainAutoreleasedReturnValue optimization.\n");
         Changed = true;
@@ -436,7 +436,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
 
     // Otherwise, try to undo objc-arc-expand.
 
-    // Don't use GetObjCArg because we don't want to look through bitcasts
+    // Don't use GetArgRCIdentityRoot because we don't want to look through bitcasts
     // and such; to do the replacement, the argument must have type i8*.
     Value *Arg = cast<CallInst>(Inst)->getArgOperand(0);
 
@@ -457,7 +457,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
         // reachability here because an unreachable call is considered to
         // trivially dominate itself, which would lead us to rewriting its
         // argument in terms of its return value, which would lead to
-        // infinite loops in GetObjCArg.
+        // infinite loops in GetArgRCIdentityRoot.
         if (DT->isReachableFromEntry(U) && DT->dominates(Inst, U)) {
           Changed = true;
           Instruction *Replacement = Inst;
