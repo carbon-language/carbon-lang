@@ -41,6 +41,10 @@ Note that by default, the underlying Clang front end assumes .h files
 contain C source, so you might need to specify the ``-x c++`` Clang option
 to tell Clang that the header contains C++ definitions.
 
+Note also that because modularize does not use the clang driver,
+you will likely need to pass in additional compiler front-end
+arguments to match those passed in by default by the driver.
+
 Modularize Command Line Options
 ===============================
 
@@ -66,3 +70,11 @@ Modularize Command Line Options
   check to only those headers explicitly listed in the header list.
   This is a work-around for avoiding error messages for private includes that
   purposefully get included inside blocks.
+
+.. option:: -no-coverage-check
+
+  Don't do the coverage check for a module map.
+
+.. option:: -coverage-check-only
+
+  Only do the coverage check for a module map.

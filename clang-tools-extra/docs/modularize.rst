@@ -56,6 +56,8 @@ Modularize will check for the following:
 * Macro instances, 'defined(macro)', or #if, #elif, #ifdef, #ifndef conditions
   that evaluate differently in a header
 * #include directives inside 'extern "C/C++" {}' or 'namespace (name) {}' blocks
+* Module map header coverage completeness (in the case of a module map input
+  only)
 
 Modularize will do normal C/C++ parsing, reporting normal errors and warnings,
 but will also report special error messages like the following::
@@ -106,6 +108,44 @@ and can produce error message like the following::
   extern "C" {
   ^
   The "extern "C" {}" block is here.
+
+.. _module-map-coverage:
+
+Module Map Coverage Check
+=========================
+
+The coverage check uses the Clang library to read and parse the
+module map file.  Starting at the module map file directory, or just the
+include paths, if specified, it will collect the names of all the files it
+considers headers (no extension, .h, or .inc--if you need more, modify the
+isHeader function).  It then compares the headers against those referenced
+in the module map, either explicitly named, or implicitly named via an
+umbrella directory or umbrella file, as parsed by the ModuleMap object.
+If headers are found which are not referenced or covered by an umbrella
+directory or file, warning messages will be produced, and this program
+will return an error code of 1. If no problems are found, an error code of
+0 is returned.
+
+Note that in the case of umbrella headers, this tool invokes the compiler
+to preprocess the file, and uses a callback to collect the header files
+included by the umbrella header or any of its nested includes.  If any
+front end options are needed for these compiler invocations, these
+can be included on the command line after the module map file argument.
+
+Warning message have the form:
+
+  warning: module.modulemap does not account for file: Level3A.h
+
+Note that for the case of the module map referencing a file that does
+not exist, the module map parser in Clang will (at the time of this
+writing) display an error message.
+
+To limit the checks :program:`modularize` does to just the module
+map coverage check, use the ``-coverage-check-only option``.
+
+For example::
+
+  modularize -coverage-check-only module.modulemap
 
 .. _module-map-generation:
 

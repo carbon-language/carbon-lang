@@ -50,6 +50,8 @@ public:
   llvm::SmallVector<std::string, 32> HeaderFileNames;
   /// Map of top-level header file dependencies.
   DependencyMap Dependencies;
+  /// True if we have module maps.
+  bool HasModuleMap;
 
   // Functions.
 
@@ -67,11 +69,29 @@ public:
   /// \returns Initialized ModularizeUtilities object.
   static ModularizeUtilities *createModularizeUtilities(
       std::vector<std::string> &InputPaths,
-                  llvm::StringRef Prefix);
+      llvm::StringRef Prefix);
 
   /// Load header list and dependencies.
   /// \returns std::error_code.
   std::error_code loadAllHeaderListsAndDependencies();
+
+  /// Do coverage checks.
+  /// For each loaded module map, do header coverage check.
+  /// Starting from the directory of the module.map file,
+  /// Find all header files, optionally looking only at files
+  /// covered by the include path options, and compare against
+  /// the headers referenced by the module.map file.
+  /// Display warnings for unaccounted-for header files.
+  /// \param IncludePaths The include paths to check for files.
+  ///   (Note that other directories above these paths are ignored.
+  ///   To expect all files to be accounted for from the module.modulemap
+  ///   file directory on down, leave this empty.)
+  /// \param CommandLine Compile command line arguments.
+  /// \returns 0 if there were no errors or warnings, 1 if there
+  ///   were warnings, 2 if any other problem, such as a bad
+  ///   module map path argument was specified.
+  std::error_code doCoverageCheck(std::vector<std::string> &IncludePaths,
+                                  llvm::ArrayRef<std::string> CommandLine);
 
   // Internal.
 
@@ -126,6 +146,13 @@ public:
   /// \param FileName The file name.  Must not be a directory.
   /// \returns true if it has a header extension or no extension.
   static bool isHeader(llvm::StringRef FileName);
+
+  /// Get directory path component from file path.
+  /// \returns the component of the given path, which will be
+  /// relative if the given path is relative, absolute if the
+  /// given path is absolute, or "." if the path has no leading
+  /// path component.
+  static std::string getDirectoryFromPath(llvm::StringRef Path);
 
   // Internal data.
 

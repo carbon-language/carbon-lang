@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// Introduction
+//
 // This file implements a tool that checks whether a set of headers provides
 // the consistent definitions required to use modules.  It can also check an
 // existing module map for full coverage of the headers in a directory tree.
@@ -62,17 +64,23 @@
 //    -block-check-header-list-only
 //          Only warn if #include directives are inside extern or namespace
 //          blocks if the included header is in the header list.
+//    -no-coverage-check
+//          Don't do the coverage check.
+//    -coverage-check-only
+//          Only do the coverage check.
 //
-// Note that unless a "-prefix (header path)" option is specified,
-// non-absolute file paths in the header list file will be relative
-// to the header list file directory.  Use -prefix to specify a different
-// directory.
+// Note that because modularize does not use the clang driver,
+// you will likely need to pass in additional compiler front-end
+// arguments to match those passed in by default by the driver.
 //
 // Note that by default, the underlying Clang front end assumes .h files
 // contain C source.  If your .h files in the file list contain C++ source,
 // you should append the following to your command lines: -x c++
 //
-// Modularize will do normal parsing, reporting normal errors and warnings,
+// Modularization Issue Checks
+//
+// In the process of checking headers for modularization issues, modularize
+// will do normal parsing, reporting normal errors and warnings,
 // but will also report special error messages like the following:
 //
 //   error: '(symbol)' defined at multiple locations:
@@ -124,6 +132,36 @@
 // The "extern "C" {}" block is here.
 //
 // See PreprocessorTracker.cpp for additional details.
+//
+// Module Map Coverage Check
+//
+// The coverage check uses the Clang ModuleMap class to read and parse the
+// module map file.  Starting at the module map file directory, or just the
+// include paths, if specified, it will collect the names of all the files it
+// considers headers (no extension, .h, or .inc--if you need more, modify the
+// isHeader function).  It then compares the headers against those referenced
+// in the module map, either explicitly named, or implicitly named via an
+// umbrella directory or umbrella file, as parsed by the ModuleMap object.
+// If headers are found which are not referenced or covered by an umbrella
+// directory or file, warning messages will be produced, and this program
+// will return an error code of 1.  Other errors result in an error code of 2.
+// If no problems are found, an error code of 0 is returned.
+//
+// Note that in the case of umbrella headers, this tool invokes the compiler
+// to preprocess the file, and uses a callback to collect the header files
+// included by the umbrella header or any of its nested includes.  If any
+// front end options are needed for these compiler invocations, these
+// can be included on the command line after the module map file argument.
+//
+// Warning message have the form:
+//
+//  warning: module.modulemap does not account for file: Level3A.h
+//
+// Note that for the case of the module map referencing a file that does
+// not exist, the module map parser in Clang will (at the time of this
+// writing) display an error message.
+//
+// Module Map Assistant - Module Map Generation
 //
 // Modularize also has an option ("-module-map-path=module.modulemap") that will
 // skip the checks, and instead act as a module.modulemap generation assistant,
@@ -254,6 +292,21 @@ static cl::opt<bool>
 BlockCheckHeaderListOnly("block-check-header-list-only", cl::init(false),
 cl::desc("Only warn if #include directives are inside extern or namespace"
   " blocks if the included header is in the header list."));
+
+// Option for include paths for coverage check.
+static cl::list<std::string>
+IncludePaths("I", cl::desc("Include path for coverage check."),
+cl::ZeroOrMore, cl::value_desc("path"));
+
+// Option for just doing the coverage check.
+static cl::opt<bool>
+NoCoverageCheck("no-coverage-check", cl::init(false),
+cl::desc("Don't do the coverage check."));
+
+// Option for just doing the coverage check.
+static cl::opt<bool>
+CoverageCheckOnly("coverage-check-only", cl::init(false),
+cl::desc("Only do the coverage check."));
 
 // Save the program name for error messages.
 const char *Argv0;
@@ -669,7 +722,8 @@ int main(int Argc, const char **Argv) {
   }
 
   std::unique_ptr<ModularizeUtilities> ModUtil;
-  
+  int HadErrors = 0;
+
   ModUtil.reset(
     ModularizeUtilities::createModularizeUtilities(
       ListFileNames, HeaderPrefix));
@@ -685,6 +739,17 @@ int main(int Argc, const char **Argv) {
       return 1; // Failed.
     return 0;   // Success - Skip checks in assistant mode.
   }
+
+  // If we're doing module maps.
+  if (!NoCoverageCheck && ModUtil->HasModuleMap) {
+    // Do coverage check.
+    if (ModUtil->doCoverageCheck(IncludePaths, CommandLine))
+      HadErrors = 1;
+  }
+
+  // Bail early if only doing the coverage check.
+  if (CoverageCheckOnly)
+    return HadErrors;
 
   // Create the compilation database.
   SmallString<256> PathBuf;
@@ -702,7 +767,6 @@ int main(int Argc, const char **Argv) {
   EntityMap Entities;
   ClangTool Tool(*Compilations, ModUtil->HeaderFileNames);
   Tool.appendArgumentsAdjuster(getAddDependenciesAdjuster(ModUtil->Dependencies));
-  int HadErrors = 0;
   ModularizeFrontendActionFactory Factory(Entities, *PPTracker, HadErrors);
   HadErrors |= Tool.run(&Factory);
 
@@ -737,7 +801,7 @@ int main(int Argc, const char **Argv) {
     for (EntryBinArray::iterator DI = EntryBins.begin(), DE = EntryBins.end();
          DI != DE; ++DI, ++KindIndex) {
       int ECount = DI->size();
-      // If only 1 occurrence of this entity, skip it, as we only report duplicates.
+      // If only 1 occurrence of this entity, skip it, we only report duplicates.
       if (ECount <= 1)
         continue;
       LocationArray::iterator FI = DI->begin();
