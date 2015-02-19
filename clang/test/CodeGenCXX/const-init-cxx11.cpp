@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -w -triple x86_64-apple-darwin -emit-llvm -o - %s -std=c++11 | FileCheck %s
+// RUN: %clang_cc1 -w -triple x86_64-elf-gnu -emit-llvm -o - %s -std=c++11 | FileCheck %s
 
 // FIXME: The padding in all these objects should be zero-initialized.
 namespace StructUnion {
@@ -402,11 +402,11 @@ namespace UnemittedTemporaryDecl {
 // CHECK: @_ZZN12LocalVarInit3aggEvE1a = internal constant {{.*}} i32 101
 // CHECK: @_ZZN12LocalVarInit4ctorEvE1a = internal constant {{.*}} i32 102
 // CHECK: @_ZZN12LocalVarInit8mutable_EvE1a = private unnamed_addr constant {{.*}} i32 103
-// CHECK: @_ZGRN33ClassTemplateWithStaticDataMember1SIvE1aE_ = linkonce_odr constant i32 5
+// CHECK: @_ZGRN33ClassTemplateWithStaticDataMember1SIvE1aE_ = linkonce_odr constant i32 5, comdat
 // CHECK: @_ZN33ClassTemplateWithStaticDataMember3useE = constant i32* @_ZGRN33ClassTemplateWithStaticDataMember1SIvE1aE_
-// CHECK: @_ZGRN39ClassTemplateWithHiddenStaticDataMember1SIvE1aE_ = linkonce_odr hidden constant i32 5
+// CHECK: @_ZGRN39ClassTemplateWithHiddenStaticDataMember1SIvE1aE_ = linkonce_odr hidden constant i32 5, comdat
 // CHECK: @_ZN39ClassTemplateWithHiddenStaticDataMember3useE = constant i32* @_ZGRN39ClassTemplateWithHiddenStaticDataMember1SIvE1aE_
-// CHECK: @_ZGRZN20InlineStaticConstRef3funEvE1i_ = linkonce_odr constant i32 10
+// CHECK: @_ZGRZN20InlineStaticConstRef3funEvE1i_ = linkonce_odr constant i32 10, comdat
 
 // Constant initialization tests go before this point,
 // dynamic initialization tests go after.
