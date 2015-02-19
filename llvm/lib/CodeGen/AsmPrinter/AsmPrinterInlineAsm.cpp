@@ -92,7 +92,17 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
       !OutStreamer.isIntegratedAssemblerRequired()) {
     emitInlineAsmStart();
     OutStreamer.EmitRawText(Str);
-    emitInlineAsmEnd(TM.getSubtarget<MCSubtargetInfo>(), nullptr);
+    // If we have a machine function then grab the MCSubtarget off of that,
+    // otherwise we're at the module level and want to construct one from
+    // the default CPU and target triple.
+    if (MF) {
+      emitInlineAsmEnd(MF->getSubtarget<MCSubtargetInfo>(), nullptr);
+    } else {
+      std::unique_ptr<MCSubtargetInfo> STI(TM.getTarget().createMCSubtargetInfo(
+          TM.getTargetTriple(), TM.getTargetCPU(),
+          TM.getTargetFeatureString()));
+      emitInlineAsmEnd(*STI, nullptr);
+    }
     return;
   }
 
