@@ -908,8 +908,8 @@ void NVPTXAsmPrinter::emitHeader(Module &M, raw_ostream &O,
   O << ".target ";
   O << STI.getTargetName();
 
-  const NVPTXTargetMachine &TM = static_cast<const NVPTXTargetMachine &>(TM);
-  if (TM.getDrvInterface() == NVPTX::NVCL)
+  const NVPTXTargetMachine &NTM = static_cast<const NVPTXTargetMachine &>(TM);
+  if (NTM.getDrvInterface() == NVPTX::NVCL)
     O << ", texmode_independent";
   else {
     if (!STI.hasDouble())
@@ -922,7 +922,7 @@ void NVPTXAsmPrinter::emitHeader(Module &M, raw_ostream &O,
   O << "\n";
 
   O << ".address_size ";
-  if (TM.is64Bit())
+  if (NTM.is64Bit())
     O << "64";
   else
     O << "32";
