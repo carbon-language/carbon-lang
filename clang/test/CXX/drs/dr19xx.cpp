@@ -39,6 +39,15 @@ namespace dr1902 { // dr1902: 3.7
 #endif
 }
 
+#if __cplusplus >= 201103L
+namespace dr1940 { // dr1940: yes
+static union {
+  static_assert(true, "");  // ok
+  static_assert(false, ""); // expected-error {{static_assert failed}}
+};
+}
+#endif
+
 #if __cplusplus >= 201402L
 namespace dr1947 { // dr1947: yes
 unsigned o = 0'01;  // ok
