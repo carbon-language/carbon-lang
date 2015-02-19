@@ -2517,17 +2517,15 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
     // The weight to CommonDest should be PredCommon * SuccTotal +
     //                                    PredOther * SuccCommon.
     // The weight to OtherDest should be PredOther * SuccOther.
-    SmallVector<uint64_t, 2> NewWeights;
-    NewWeights.push_back(PredCommon * (SuccCommon + SuccOther) +
-                         PredOther * SuccCommon);
-    NewWeights.push_back(PredOther * SuccOther);
+    uint64_t NewWeights[2] = {PredCommon * (SuccCommon + SuccOther) +
+                                  PredOther * SuccCommon,
+                              PredOther * SuccOther};
     // Halve the weights if any of them cannot fit in an uint32_t
     FitWeights(NewWeights);
 
-    SmallVector<uint32_t, 2> MDWeights(NewWeights.begin(),NewWeights.end());
     PBI->setMetadata(LLVMContext::MD_prof,
-                     MDBuilder(BI->getContext()).
-                     createBranchWeights(MDWeights));
+                     MDBuilder(BI->getContext())
+                         .createBranchWeights(NewWeights[0], NewWeights[1]));
   }
 
   // OtherDest may have phi nodes.  If so, add an entry from PBI's

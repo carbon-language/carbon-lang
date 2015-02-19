@@ -1474,11 +1474,8 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
           LoadRetVTs.push_back(EltVT);
         LoadRetVTs.push_back(MVT::Other);
         LoadRetVTs.push_back(MVT::Glue);
-        SmallVector<SDValue, 4> LoadRetOps;
-        LoadRetOps.push_back(Chain);
-        LoadRetOps.push_back(DAG.getConstant(1, MVT::i32));
-        LoadRetOps.push_back(DAG.getConstant(0, MVT::i32));
-        LoadRetOps.push_back(InFlag);
+        SDValue LoadRetOps[] = {Chain, DAG.getConstant(1, MVT::i32),
+                                DAG.getConstant(0, MVT::i32), InFlag};
         SDValue retval = DAG.getMemIntrinsicNode(
             NVPTXISD::LoadParam, dl,
             DAG.getVTList(LoadRetVTs), LoadRetOps, EltVT, MachinePointerInfo());
@@ -1504,11 +1501,8 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         }
         LoadRetVTs.push_back(MVT::Other);
         LoadRetVTs.push_back(MVT::Glue);
-        SmallVector<SDValue, 4> LoadRetOps;
-        LoadRetOps.push_back(Chain);
-        LoadRetOps.push_back(DAG.getConstant(1, MVT::i32));
-        LoadRetOps.push_back(DAG.getConstant(0, MVT::i32));
-        LoadRetOps.push_back(InFlag);
+        SDValue LoadRetOps[] = {Chain, DAG.getConstant(1, MVT::i32),
+                                DAG.getConstant(0, MVT::i32), InFlag};
         SDValue retval = DAG.getMemIntrinsicNode(
             NVPTXISD::LoadParamV2, dl,
             DAG.getVTList(LoadRetVTs), LoadRetOps, EltVT, MachinePointerInfo());
@@ -1550,11 +1544,8 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
           }
           LoadRetVTs.push_back(MVT::Other);
           LoadRetVTs.push_back(MVT::Glue);
-          SmallVector<SDValue, 4> LoadRetOps;
-          LoadRetOps.push_back(Chain);
-          LoadRetOps.push_back(DAG.getConstant(1, MVT::i32));
-          LoadRetOps.push_back(DAG.getConstant(Ofst, MVT::i32));
-          LoadRetOps.push_back(InFlag);
+          SDValue LoadRetOps[] = {Chain, DAG.getConstant(1, MVT::i32),
+                                  DAG.getConstant(Ofst, MVT::i32), InFlag};
           SDValue retval = DAG.getMemIntrinsicNode(
               Opc, dl, DAG.getVTList(LoadRetVTs),
               LoadRetOps, EltVT, MachinePointerInfo());
@@ -1608,11 +1599,8 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         LoadRetVTs.push_back(MVT::Other);
         LoadRetVTs.push_back(MVT::Glue);
 
-        SmallVector<SDValue, 4> LoadRetOps;
-        LoadRetOps.push_back(Chain);
-        LoadRetOps.push_back(DAG.getConstant(1, MVT::i32));
-        LoadRetOps.push_back(DAG.getConstant(Offsets[i], MVT::i32));
-        LoadRetOps.push_back(InFlag);
+        SDValue LoadRetOps[] = {Chain, DAG.getConstant(1, MVT::i32),
+                                DAG.getConstant(Offsets[i], MVT::i32), InFlag};
         SDValue retval = DAG.getMemIntrinsicNode(
             NVPTXISD::LoadParam, dl,
             DAG.getVTList(LoadRetVTs), LoadRetOps,
@@ -4302,11 +4290,8 @@ static void ReplaceLoadVector(SDNode *N, SelectionDAG &DAG,
   }
   }
 
-  SmallVector<SDValue, 8> OtherOps;
-
   // Copy regular operands
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-    OtherOps.push_back(N->getOperand(i));
+  SmallVector<SDValue, 8> OtherOps(N->op_begin(), N->op_end());
 
   // The select routine does not have access to the LoadSDNode instance, so
   // pass along the extension information
@@ -4419,8 +4404,7 @@ static void ReplaceINTRINSIC_W_CHAIN(SDNode *N, SelectionDAG &DAG,
       OtherOps.push_back(Chain); // Chain
                                  // Skip operand 1 (intrinsic ID)
       // Others
-      for (unsigned i = 2, e = N->getNumOperands(); i != e; ++i)
-        OtherOps.push_back(N->getOperand(i));
+      OtherOps.append(N->op_begin() + 2, N->op_end());
 
       MemIntrinsicSDNode *MemSD = cast<MemIntrinsicSDNode>(N);
 
@@ -4451,9 +4435,7 @@ static void ReplaceINTRINSIC_W_CHAIN(SDNode *N, SelectionDAG &DAG,
              "Custom handling of non-i8 ldu/ldg?");
 
       // Just copy all operands as-is
-      SmallVector<SDValue, 4> Ops;
-      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-        Ops.push_back(N->getOperand(i));
+      SmallVector<SDValue, 4> Ops(N->op_begin(), N->op_end());
 
       // Force output to i16
       SDVTList LdResVTs = DAG.getVTList(MVT::i16, MVT::Other);

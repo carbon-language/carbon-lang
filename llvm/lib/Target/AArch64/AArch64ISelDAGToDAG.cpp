@@ -132,8 +132,8 @@ public:
 
   /// Generic helper for the createDTuple/createQTuple
   /// functions. Those should almost always be called instead.
-  SDValue createTuple(ArrayRef<SDValue> Vecs, unsigned RegClassIDs[],
-                      unsigned SubRegs[]);
+  SDValue createTuple(ArrayRef<SDValue> Vecs, const unsigned RegClassIDs[],
+                      const unsigned SubRegs[]);
 
   SDNode *SelectTable(SDNode *N, unsigned NumVecs, unsigned Opc, bool isExt);
 
@@ -888,26 +888,26 @@ bool AArch64DAGToDAGISel::SelectAddrModeXRO(SDValue N, unsigned Size,
 }
 
 SDValue AArch64DAGToDAGISel::createDTuple(ArrayRef<SDValue> Regs) {
-  static unsigned RegClassIDs[] = {
+  static const unsigned RegClassIDs[] = {
       AArch64::DDRegClassID, AArch64::DDDRegClassID, AArch64::DDDDRegClassID};
-  static unsigned SubRegs[] = { AArch64::dsub0, AArch64::dsub1,
-                                AArch64::dsub2, AArch64::dsub3 };
+  static const unsigned SubRegs[] = {AArch64::dsub0, AArch64::dsub1,
+                                     AArch64::dsub2, AArch64::dsub3};
 
   return createTuple(Regs, RegClassIDs, SubRegs);
 }
 
 SDValue AArch64DAGToDAGISel::createQTuple(ArrayRef<SDValue> Regs) {
-  static unsigned RegClassIDs[] = {
+  static const unsigned RegClassIDs[] = {
       AArch64::QQRegClassID, AArch64::QQQRegClassID, AArch64::QQQQRegClassID};
-  static unsigned SubRegs[] = { AArch64::qsub0, AArch64::qsub1,
-                                AArch64::qsub2, AArch64::qsub3 };
+  static const unsigned SubRegs[] = {AArch64::qsub0, AArch64::qsub1,
+                                     AArch64::qsub2, AArch64::qsub3};
 
   return createTuple(Regs, RegClassIDs, SubRegs);
 }
 
 SDValue AArch64DAGToDAGISel::createTuple(ArrayRef<SDValue> Regs,
-                                         unsigned RegClassIDs[],
-                                         unsigned SubRegs[]) {
+                                         const unsigned RegClassIDs[],
+                                         const unsigned SubRegs[]) {
   // There's no special register-class for a vector-list of 1 element: it's just
   // a vector.
   if (Regs.size() == 1)
@@ -1052,13 +1052,10 @@ SDNode *AArch64DAGToDAGISel::SelectLoad(SDNode *N, unsigned NumVecs,
   EVT VT = N->getValueType(0);
   SDValue Chain = N->getOperand(0);
 
-  SmallVector<SDValue, 6> Ops;
-  Ops.push_back(N->getOperand(2)); // Mem operand;
-  Ops.push_back(Chain);
+  SDValue Ops[] = {N->getOperand(2), // Mem operand;
+                   Chain};
 
-  std::vector<EVT> ResTys;
-  ResTys.push_back(MVT::Untyped);
-  ResTys.push_back(MVT::Other);
+  EVT ResTys[] = {MVT::Untyped, MVT::Other};
 
   SDNode *Ld = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
   SDValue SuperReg = SDValue(Ld, 0);
@@ -1076,15 +1073,12 @@ SDNode *AArch64DAGToDAGISel::SelectPostLoad(SDNode *N, unsigned NumVecs,
   EVT VT = N->getValueType(0);
   SDValue Chain = N->getOperand(0);
 
-  SmallVector<SDValue, 6> Ops;
-  Ops.push_back(N->getOperand(1)); // Mem operand
-  Ops.push_back(N->getOperand(2)); // Incremental
-  Ops.push_back(Chain);
+  SDValue Ops[] = {N->getOperand(1), // Mem operand
+                   N->getOperand(2), // Incremental
+                   Chain};
 
-  std::vector<EVT> ResTys;
-  ResTys.push_back(MVT::i64); // Type of the write back register
-  ResTys.push_back(MVT::Untyped);
-  ResTys.push_back(MVT::Other);
+  EVT ResTys[] = {MVT::i64, // Type of the write back register
+                  MVT::Untyped, MVT::Other};
 
   SDNode *Ld = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
 
@@ -1115,10 +1109,7 @@ SDNode *AArch64DAGToDAGISel::SelectStore(SDNode *N, unsigned NumVecs,
   SmallVector<SDValue, 4> Regs(N->op_begin() + 2, N->op_begin() + 2 + NumVecs);
   SDValue RegSeq = Is128Bit ? createQTuple(Regs) : createDTuple(Regs);
 
-  SmallVector<SDValue, 6> Ops;
-  Ops.push_back(RegSeq);
-  Ops.push_back(N->getOperand(NumVecs + 2));
-  Ops.push_back(N->getOperand(0));
+  SDValue Ops[] = {RegSeq, N->getOperand(NumVecs + 2), N->getOperand(0)};
   SDNode *St = CurDAG->getMachineNode(Opc, dl, N->getValueType(0), Ops);
 
   return St;
@@ -1128,20 +1119,18 @@ SDNode *AArch64DAGToDAGISel::SelectPostStore(SDNode *N, unsigned NumVecs,
                                              unsigned Opc) {
   SDLoc dl(N);
   EVT VT = N->getOperand(2)->getValueType(0);
-  SmallVector<EVT, 2> ResTys;
-  ResTys.push_back(MVT::i64);   // Type of the write back register
-  ResTys.push_back(MVT::Other); // Type for the Chain
+  EVT ResTys[] = {MVT::i64,    // Type of the write back register
+                  MVT::Other}; // Type for the Chain
 
   // Form a REG_SEQUENCE to force register allocation.
   bool Is128Bit = VT.getSizeInBits() == 128;
   SmallVector<SDValue, 4> Regs(N->op_begin() + 1, N->op_begin() + 1 + NumVecs);
   SDValue RegSeq = Is128Bit ? createQTuple(Regs) : createDTuple(Regs);
 
-  SmallVector<SDValue, 6> Ops;
-  Ops.push_back(RegSeq);
-  Ops.push_back(N->getOperand(NumVecs + 1)); // base register
-  Ops.push_back(N->getOperand(NumVecs + 2)); // Incremental
-  Ops.push_back(N->getOperand(0)); // Chain
+  SDValue Ops[] = {RegSeq,
+                   N->getOperand(NumVecs + 1), // base register
+                   N->getOperand(NumVecs + 2), // Incremental
+                   N->getOperand(0)};          // Chain
   SDNode *St = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
 
   return St;
@@ -1195,18 +1184,13 @@ SDNode *AArch64DAGToDAGISel::SelectLoadLane(SDNode *N, unsigned NumVecs,
 
   SDValue RegSeq = createQTuple(Regs);
 
-  std::vector<EVT> ResTys;
-  ResTys.push_back(MVT::Untyped);
-  ResTys.push_back(MVT::Other);
+  EVT ResTys[] = {MVT::Untyped, MVT::Other};
 
   unsigned LaneNo =
       cast<ConstantSDNode>(N->getOperand(NumVecs + 2))->getZExtValue();
 
-  SmallVector<SDValue, 6> Ops;
-  Ops.push_back(RegSeq);
-  Ops.push_back(CurDAG->getTargetConstant(LaneNo, MVT::i64));
-  Ops.push_back(N->getOperand(NumVecs + 3));
-  Ops.push_back(N->getOperand(0));
+  SDValue Ops[] = {RegSeq, CurDAG->getTargetConstant(LaneNo, MVT::i64),
+                   N->getOperand(NumVecs + 3), N->getOperand(0)};
   SDNode *Ld = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
   SDValue SuperReg = SDValue(Ld, 0);
 
@@ -1240,20 +1224,17 @@ SDNode *AArch64DAGToDAGISel::SelectPostLoadLane(SDNode *N, unsigned NumVecs,
 
   SDValue RegSeq = createQTuple(Regs);
 
-  std::vector<EVT> ResTys;
-  ResTys.push_back(MVT::i64); // Type of the write back register
-  ResTys.push_back(MVT::Untyped);
-  ResTys.push_back(MVT::Other);
+  EVT ResTys[] = {MVT::i64, // Type of the write back register
+                  MVT::Untyped, MVT::Other};
 
   unsigned LaneNo =
       cast<ConstantSDNode>(N->getOperand(NumVecs + 1))->getZExtValue();
 
-  SmallVector<SDValue, 6> Ops;
-  Ops.push_back(RegSeq);
-  Ops.push_back(CurDAG->getTargetConstant(LaneNo, MVT::i64)); // Lane Number
-  Ops.push_back(N->getOperand(NumVecs + 2)); // Base register
-  Ops.push_back(N->getOperand(NumVecs + 3)); // Incremental
-  Ops.push_back(N->getOperand(0));
+  SDValue Ops[] = {RegSeq,
+                   CurDAG->getTargetConstant(LaneNo, MVT::i64), // Lane Number
+                   N->getOperand(NumVecs + 2),                  // Base register
+                   N->getOperand(NumVecs + 3),                  // Incremental
+                   N->getOperand(0)};
   SDNode *Ld = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
 
   // Update uses of the write back register
@@ -1301,11 +1282,8 @@ SDNode *AArch64DAGToDAGISel::SelectStoreLane(SDNode *N, unsigned NumVecs,
   unsigned LaneNo =
       cast<ConstantSDNode>(N->getOperand(NumVecs + 2))->getZExtValue();
 
-  SmallVector<SDValue, 6> Ops;
-  Ops.push_back(RegSeq);
-  Ops.push_back(CurDAG->getTargetConstant(LaneNo, MVT::i64));
-  Ops.push_back(N->getOperand(NumVecs + 3));
-  Ops.push_back(N->getOperand(0));
+  SDValue Ops[] = {RegSeq, CurDAG->getTargetConstant(LaneNo, MVT::i64),
+                   N->getOperand(NumVecs + 3), N->getOperand(0)};
   SDNode *St = CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops);
 
   // Transfer memoperands.
@@ -1331,19 +1309,16 @@ SDNode *AArch64DAGToDAGISel::SelectPostStoreLane(SDNode *N, unsigned NumVecs,
 
   SDValue RegSeq = createQTuple(Regs);
 
-  SmallVector<EVT, 2> ResTys;
-  ResTys.push_back(MVT::i64);   // Type of the write back register
-  ResTys.push_back(MVT::Other);
+  EVT ResTys[] = {MVT::i64, // Type of the write back register
+                  MVT::Other};
 
   unsigned LaneNo =
       cast<ConstantSDNode>(N->getOperand(NumVecs + 1))->getZExtValue();
 
-  SmallVector<SDValue, 6> Ops;
-  Ops.push_back(RegSeq);
-  Ops.push_back(CurDAG->getTargetConstant(LaneNo, MVT::i64));
-  Ops.push_back(N->getOperand(NumVecs + 2)); // Base Register
-  Ops.push_back(N->getOperand(NumVecs + 3)); // Incremental
-  Ops.push_back(N->getOperand(0));
+  SDValue Ops[] = {RegSeq, CurDAG->getTargetConstant(LaneNo, MVT::i64),
+                   N->getOperand(NumVecs + 2), // Base Register
+                   N->getOperand(NumVecs + 3), // Incremental
+                   N->getOperand(0)};
   SDNode *St = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
 
   // Transfer memoperands.
@@ -2248,11 +2223,7 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
       SDValue MemAddr = Node->getOperand(4);
 
       // Place arguments in the right order.
-      SmallVector<SDValue, 7> Ops;
-      Ops.push_back(ValLo);
-      Ops.push_back(ValHi);
-      Ops.push_back(MemAddr);
-      Ops.push_back(Chain);
+      SDValue Ops[] = {ValLo, ValHi, MemAddr, Chain};
 
       SDNode *St = CurDAG->getMachineNode(Op, DL, MVT::i32, MVT::Other, Ops);
       // Transfer memoperands.

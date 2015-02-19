@@ -979,11 +979,7 @@ SDValue MSP430TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   } else {
     SDValue Zero = DAG.getConstant(0, VT);
     SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
-    SmallVector<SDValue, 4> Ops;
-    Ops.push_back(One);
-    Ops.push_back(Zero);
-    Ops.push_back(TargetCC);
-    Ops.push_back(Flag);
+    SDValue Ops[] = {One, Zero, TargetCC, Flag};
     return DAG.getNode(MSP430ISD::SELECT_CC, dl, VTs, Ops);
   }
 }
@@ -1001,11 +997,7 @@ SDValue MSP430TargetLowering::LowerSELECT_CC(SDValue Op,
   SDValue Flag = EmitCMP(LHS, RHS, TargetCC, CC, dl, DAG);
 
   SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
-  SmallVector<SDValue, 4> Ops;
-  Ops.push_back(TrueV);
-  Ops.push_back(FalseV);
-  Ops.push_back(TargetCC);
-  Ops.push_back(Flag);
+  SDValue Ops[] = {TrueV, FalseV, TargetCC, Flag};
 
   return DAG.getNode(MSP430ISD::SELECT_CC, dl, VTs, Ops);
 }

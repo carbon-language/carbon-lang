@@ -17115,12 +17115,9 @@ SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
 
   // Insert VAARG_64 node into the DAG
   // VAARG_64 returns two values: Variable Argument Address, Chain
-  SmallVector<SDValue, 11> InstOps;
-  InstOps.push_back(Chain);
-  InstOps.push_back(SrcPtr);
-  InstOps.push_back(DAG.getConstant(ArgSize, MVT::i32));
-  InstOps.push_back(DAG.getConstant(ArgMode, MVT::i8));
-  InstOps.push_back(DAG.getConstant(Align, MVT::i32));
+  SDValue InstOps[] = {Chain, SrcPtr, DAG.getConstant(ArgSize, MVT::i32),
+                       DAG.getConstant(ArgMode, MVT::i8),
+                       DAG.getConstant(Align, MVT::i32)};
   SDVTList VTs = DAG.getVTList(getPointerTy(), MVT::Other);
   SDValue VAARG = DAG.getMemIntrinsicNode(X86ISD::VAARG_64, dl,
                                           VTs, InstOps, MVT::i64,
@@ -18039,10 +18036,9 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
     SDValue DataToExpand = DAG.getLoad(VT, dl, Chain, Addr, MachinePointerInfo(),
                                    false, false, false, 0);
 
-    SmallVector<SDValue, 2> Results;
-    Results.push_back(DAG.getNode(IntrData->Opc0, dl, VT, VMask, DataToExpand,
-                                  PathThru));
-    Results.push_back(Chain);
+    SDValue Results[] = {
+        DAG.getNode(IntrData->Opc0, dl, VT, VMask, DataToExpand, PathThru),
+        Chain};
     return DAG.getMergeValues(Results, dl);
   }
   }

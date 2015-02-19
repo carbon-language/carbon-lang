@@ -1780,12 +1780,8 @@ SDValue SystemZTargetLowering::lowerSELECT_CC(SDValue Op,
     }
   }
 
-  SmallVector<SDValue, 5> Ops;
-  Ops.push_back(TrueOp);
-  Ops.push_back(FalseOp);
-  Ops.push_back(DAG.getConstant(C.CCValid, MVT::i32));
-  Ops.push_back(DAG.getConstant(C.CCMask, MVT::i32));
-  Ops.push_back(Glue);
+  SDValue Ops[] = {TrueOp, FalseOp, DAG.getConstant(C.CCValid, MVT::i32),
+                   DAG.getConstant(C.CCMask, MVT::i32), Glue};
 
   SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
   return DAG.getNode(SystemZISD::SELECT_CCMASK, DL, VTs, Ops);
