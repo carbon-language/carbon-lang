@@ -1519,7 +1519,8 @@ void UnwrappedLineParser::parseRecord() {
   // class A {} n, m;
   // will end up in one unwrapped line.
   // This does not apply for Java.
-  if (Style.Language == FormatStyle::LK_Java)
+  if (Style.Language == FormatStyle::LK_Java ||
+      Style.Language == FormatStyle::LK_JavaScript)
     addUnwrappedLine();
 }
 

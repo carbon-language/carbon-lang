@@ -521,6 +521,8 @@ TEST_F(FormatTestJS, MetadataAnnotations) {
                "    return 'y';\n"
                "  }\n"
                "}");
+  verifyFormat("class X {}\n"
+               "class Y {}");
 }
 
 } // end namespace tooling
