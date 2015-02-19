@@ -105,8 +105,8 @@ CMICmdCmdThreadInfo::Execute(void)
     if (m_bSingleThread)
     {
         thread = sbProcess.GetThreadByIndexID(nThreadId);
-        m_bThreadInvalid = thread.IsValid();
-        if (!m_bThreadInvalid)
+        m_bThreadInvalid = !thread.IsValid();
+        if (m_bThreadInvalid)
             return MIstatus::success;
 
         CMICmnMIValueTuple miTuple;
@@ -151,7 +151,7 @@ CMICmdCmdThreadInfo::Acknowledge(void)
 {
     if (m_bSingleThread)
     {
-        if (!m_bThreadInvalid)
+        if (m_bThreadInvalid)
         {
             const CMICmnMIValueConst miValueConst("invalid thread id");
             const CMICmnMIValueResult miValueResult("msg", miValueConst);
