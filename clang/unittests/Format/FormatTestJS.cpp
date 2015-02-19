@@ -525,5 +525,31 @@ TEST_F(FormatTestJS, MetadataAnnotations) {
                "class Y {}");
 }
 
+TEST_F(FormatTestJS, Modules) {
+  verifyFormat("import SomeThing from 'some/module.js';");
+  verifyFormat("import {X, Y} from 'some/module.js';");
+  verifyFormat("import {\n"
+               "  VeryLongImportsAreAnnoying,\n"
+               "  VeryLongImportsAreAnnoying,\n"
+               "  VeryLongImportsAreAnnoying,\n"
+               "  VeryLongImportsAreAnnoying\n"
+               "} from 'some/module.js';");
+  verifyFormat("import {\n"
+               "  X,\n"
+               "  Y,\n"
+               "} from 'some/module.js';");
+  verifyFormat("import {\n"
+               "  X,\n"
+               "  Y,\n"
+               "} from 'some/long/module.js';",
+               getGoogleJSStyleWithColumns(20));
+  verifyFormat("import {X as myLocalX, Y as myLocalY} from 'some/module.js';");
+  verifyFormat("import * as lib from 'some/module.js';");
+  verifyFormat("var x = {\n  import: 1\n};\nx.import = 2;");
+  verifyFormat("export function fn() {\n  return 'fn';\n}");
+  verifyFormat("export const x = 12;");
+  verifyFormat("export default class X {}");
+}
+
 } // end namespace tooling
 } // end namespace clang

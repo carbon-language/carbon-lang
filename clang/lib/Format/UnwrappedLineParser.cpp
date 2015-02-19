@@ -739,6 +739,11 @@ void UnwrappedLineParser::parseStructuralElement() {
       parseForOrWhileLoop();
       return;
     }
+    if (Style.Language == FormatStyle::LK_JavaScript &&
+        FormatTok->is(Keywords.kw_import)) {
+      parseJavaScriptEs6Import();
+      return;
+    }
     // In all other cases, parse the declaration.
     break;
   default:
@@ -1597,6 +1602,19 @@ void UnwrappedLineParser::parseObjCProtocol() {
 
   addUnwrappedLine();
   parseObjCUntilAtEnd();
+}
+
+void UnwrappedLineParser::parseJavaScriptEs6Import() {
+  assert(FormatTok->is(Keywords.kw_import));
+  nextToken();
+  if (FormatTok->is(tok::l_brace)) {
+    FormatTok->BlockKind = BK_Block;
+    parseBracedList();
+  }
+  while (!eof() && FormatTok->isNot(tok::semi) &&
+         FormatTok->isNot(tok::l_brace)) {
+    nextToken();
+  }
 }
 
 LLVM_ATTRIBUTE_UNUSED static void printDebugInfo(const UnwrappedLine &Line,

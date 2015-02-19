@@ -1758,6 +1758,9 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
       return true;
     if (Right.is(TT_JsTypeColon))
       return false;
+    if ((Left.is(tok::l_brace) || Right.is(tok::r_brace)) &&
+        Line.First->is(Keywords.kw_import))
+      return false;
   } else if (Style.Language == FormatStyle::LK_Java) {
     if (Left.is(tok::r_square) && Right.is(tok::l_brace))
       return true;
@@ -1914,6 +1917,13 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
   if (Left.is(TT_ObjCBlockLBrace) && !Style.AllowShortBlocksOnASingleLine)
     return true;
 
+  if ((Style.Language == FormatStyle::LK_Java ||
+       Style.Language == FormatStyle::LK_JavaScript) &&
+      Left.is(TT_LeadingJavaAnnotation) &&
+      Right.isNot(TT_LeadingJavaAnnotation) && Right.isNot(tok::l_paren) &&
+      Line.Last->is(tok::l_brace))
+    return true;
+
   if (Style.Language == FormatStyle::LK_JavaScript) {
     // FIXME: This might apply to other languages and token kinds.
     if (Right.is(tok::char_constant) && Left.is(tok::plus) && Left.Previous &&
@@ -1922,15 +1932,7 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
     if (Left.is(TT_DictLiteral) && Left.is(tok::l_brace) &&
         Left.NestingLevel == 0)
       return true;
-    if (Left.is(TT_LeadingJavaAnnotation) &&
-        Right.isNot(TT_LeadingJavaAnnotation) && Right.isNot(tok::l_paren) &&
-        Line.Last->is(tok::l_brace))
-      return true;
   } else if (Style.Language == FormatStyle::LK_Java) {
-    if (Left.is(TT_LeadingJavaAnnotation) &&
-        Right.isNot(TT_LeadingJavaAnnotation) && Right.isNot(tok::l_paren) &&
-        Line.Last->is(tok::l_brace))
-      return true;
     if (Right.is(tok::plus) && Left.is(tok::string_literal) && Right.Next &&
         Right.Next->is(tok::string_literal))
       return true;
