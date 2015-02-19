@@ -152,23 +152,26 @@ define <16 x i8> @trunc2x8i16(<8 x i16> %a, <8 x i16> %b) {
 ;
 ; SSSE3-LABEL: trunc2x8i16:
 ; SSSE3:       # BB#0: # %entry
-; SSSE3-NEXT:    pshufb {{.*#+}} xmm1 = zero,zero,zero,zero,zero,zero,zero,zero,xmm1[0,2,4,6,8,10,12,14]
-; SSSE3-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
-; SSSE3-NEXT:    por %xmm1, %xmm0
+; SSSE3-NEXT:    movdqa {{.*#+}} xmm2 = <0,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u>
+; SSSE3-NEXT:    pshufb %xmm2, %xmm1
+; SSSE3-NEXT:    pshufb %xmm2, %xmm0
+; SSSE3-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: trunc2x8i16:
 ; SSE41:       # BB#0: # %entry
-; SSE41-NEXT:    pshufb {{.*#+}} xmm1 = zero,zero,zero,zero,zero,zero,zero,zero,xmm1[0,2,4,6,8,10,12,14]
-; SSE41-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
-; SSE41-NEXT:    por %xmm1, %xmm0
+; SSE41-NEXT:    movdqa {{.*#+}} xmm2 = <0,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u>
+; SSE41-NEXT:    pshufb %xmm2, %xmm1
+; SSE41-NEXT:    pshufb %xmm2, %xmm0
+; SSE41-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; SSE41-NEXT:    retq
 ;
 ; AVX-LABEL: trunc2x8i16:
 ; AVX:       # BB#0: # %entry
-; AVX-NEXT:    vpshufb {{.*#+}} xmm1 = zero,zero,zero,zero,zero,zero,zero,zero,xmm1[0,2,4,6,8,10,12,14]
-; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
-; AVX-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vmovdqa {{.*#+}} xmm2 = <0,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u>
+; AVX-NEXT:    vpshufb %xmm2, %xmm1, %xmm1
+; AVX-NEXT:    vpshufb %xmm2, %xmm0, %xmm0
+; AVX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
 
 

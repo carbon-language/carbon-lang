@@ -9968,36 +9968,15 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       return V;
   }
 
-  // Check whether an interleaving lowering is likely to be more efficient.
-  // This isn't perfect but it is a strong heuristic that tends to work well on
-  // the kinds of shuffles that show up in practice.
-  //
-  // FIXME: We need to handle other interleaving widths (i16, i32, ...).
-  if (shouldLowerAsInterleaving(Mask)) {
-    int NumLoHalf = std::count_if(Mask.begin(), Mask.end(), [](int M) {
-      return (M >= 0 && M < 8) || (M >= 16 && M < 24);
-    });
-    int NumHiHalf = std::count_if(Mask.begin(), Mask.end(), [](int M) {
-      return (M >= 8 && M < 16) || M >= 24;
-    });
-    int EMask[16] = {-1, -1, -1, -1, -1, -1, -1, -1,
-                     -1, -1, -1, -1, -1, -1, -1, -1};
-    int OMask[16] = {-1, -1, -1, -1, -1, -1, -1, -1,
-                     -1, -1, -1, -1, -1, -1, -1, -1};
-    bool UnpackLo = NumLoHalf >= NumHiHalf;
-    MutableArrayRef<int> TargetEMask(UnpackLo ? EMask : EMask + 8, 8);
-    MutableArrayRef<int> TargetOMask(UnpackLo ? OMask : OMask + 8, 8);
-    for (int i = 0; i < 8; ++i) {
-      TargetEMask[i] = Mask[2 * i];
-      TargetOMask[i] = Mask[2 * i + 1];
-    }
-
-    SDValue Evens = DAG.getVectorShuffle(MVT::v16i8, DL, V1, V2, EMask);
-    SDValue Odds = DAG.getVectorShuffle(MVT::v16i8, DL, V1, V2, OMask);
-
-    return DAG.getNode(UnpackLo ? X86ISD::UNPCKL : X86ISD::UNPCKH, DL,
-                       MVT::v16i8, Evens, Odds);
-  }
+  // Use dedicated unpack instructions for masks that match their pattern.
+  if (isShuffleEquivalent(V1, V2, Mask,
+                          0,  16,  1, 17,  2, 18,  3, 19,
+                          4,  20,  5, 21,  6, 22,  7, 23))
+    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V1, V2);
+  if (isShuffleEquivalent(V1, V2, Mask,
+                          8,  24,  9, 25, 10, 26, 11, 27,
+                          12, 28, 13, 29, 14, 30, 15, 31))
+    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i8, V1, V2);
 
   // Check for SSSE3 which lets us lower all v16i8 shuffles much more directly
   // with PSHUFB. It is important to do this before we attempt to generate any
@@ -10035,14 +10014,27 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       }
     }
 
-    // If both V1 and V2 are in use and we can use a direct blend, do so. This
-    // avoids using blends to handle blends-with-zero which is important as
-    // a single pshufb is significantly faster for that.
-    if (V1InUse && V2InUse && Subtarget->hasSSE41())
-      if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v16i8, V1, V2, Mask,
-                                                    Subtarget, DAG))
-        return Blend;
+    // If both V1 and V2 are in use and we can use a direct blend or an unpack,
+    // do so. This avoids using them to handle blends-with-zero which is
+    // important as a single pshufb is significantly faster for that.
+    if (V1InUse && V2InUse) {
+      if (Subtarget->hasSSE41())
+        if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v16i8, V1, V2,
+                                                      Mask, Subtarget, DAG))
+          return Blend;
 
+      // We can use an unpack to do the blending rather than an or in some
+      // cases. Even though the or may be (very minorly) more efficient, we
+      // preference this lowering because there are common cases where part of
+      // the complexity of the shuffles goes away when we do the final blend as
+      // an unpack.
+      // FIXME: It might be worth trying to detect if the unpack-feeding
+      // shuffles will both be pshufb, in which case we shouldn't bother with
+      // this.
+      if (SDValue Unpack =
+              lowerVectorShuffleAsUnpack(MVT::v16i8, DL, V1, V2, Mask, DAG))
+        return Unpack;
+    }
 
     if (V1InUse)
       V1 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V1,

@@ -84,7 +84,7 @@ define <16 x i16> @sext_16i8_16i16(<16 x i8> %z) {
 ; CHECK-LABEL: trunc_16i16_16i8:
 ; CHECK: vpshufb
 ; CHECK: vpshufb
-; CHECK: vpor
+; CHECK: vpunpcklqdq
 ; CHECK: ret
 define <16 x i8> @trunc_16i16_16i8(<16 x i16> %z) {
   %t = trunc <16 x i16> %z to <16 x i8>
