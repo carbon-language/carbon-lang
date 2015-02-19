@@ -535,7 +535,7 @@ public:
       : NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
         TLI(TLI), TheFunction(F), TTI(TTI), DT(DT), Induction(nullptr),
         WidestIndTy(nullptr),
-        LAI(F, L, SE, DL, TLI, AA, DT),
+        LAI(L, SE, DL, TLI, AA, DT),
         HasFunNoNaNAttr(false) {}
 
   /// This enum represents the kinds of reductions that we support.
@@ -3807,7 +3807,11 @@ void LoopVectorizationLegality::collectLoopUniforms() {
 }
 
 bool LoopVectorizationLegality::canVectorizeMemory() {
-  return LAI.canVectorizeMemory(Strides);
+  bool Success = LAI.canVectorizeMemory(Strides);
+  auto &OptionalReport = LAI.getReport();
+  if (OptionalReport)
+    emitAnalysis(*OptionalReport);
+  return Success;
 }
 
 static bool hasMultipleUsesOf(Instruction *I,
