@@ -14,12 +14,18 @@
 #ifndef LLVM_LIB_TARGET_HEXAGON_MCTARGETDESC_HEXAGONMCINSTRINFO_H
 #define LLVM_LIB_TARGET_HEXAGON_MCTARGETDESC_HEXAGONMCINSTRINFO_H
 
+#include "llvm/MC/MCInstrInfo.h"
+
+#include <bitset>
+
 namespace llvm {
 class MCInstrDesc;
 class MCInstrInfo;
 class MCInst;
 class MCOperand;
 namespace HexagonMCInstrInfo {
+void AppendImplicitOperands(MCInst &MCI);
+
 // Return number of bits in the constant extended operand.
 unsigned getBitCount(MCInstrInfo const &MCII, MCInst const &MCI);
 
@@ -27,6 +33,8 @@ unsigned getBitCount(MCInstrInfo const &MCII, MCInst const &MCI);
 unsigned short getCExtOpNum(MCInstrInfo const &MCII, MCInst const &MCI);
 
 MCInstrDesc const &getDesc(MCInstrInfo const &MCII, MCInst const &MCI);
+
+std::bitset<16> GetImplicitBits(MCInst const &MCI);
 
 // Return the max value that a constant extendable operand can have
 // without being extended.
@@ -64,11 +72,34 @@ bool isNewValue(MCInstrInfo const &MCII, MCInst const &MCI);
 bool isOperandExtended(MCInstrInfo const &MCII, MCInst const &MCI,
                        unsigned short OperandNum);
 
+bool isPacketBegin(MCInst const &MCI);
+
+bool isPacketEnd(MCInst const &MCI);
+
 // Return whether the insn is a prefix.
 bool isPrefix(MCInstrInfo const &MCII, MCInst const &MCI);
 
 // Return whether the insn is solo, i.e., cannot be in a packet.
 bool isSolo(MCInstrInfo const &MCII, MCInst const &MCI);
+
+static const size_t packetBeginIndex = 0;
+static const size_t packetEndIndex = 1;
+
+void resetPacket(MCInst &MCI);
+
+inline void SanityCheckImplicitOperands(MCInst const &MCI) {
+  assert(MCI.getNumOperands() >= 2 && "At least the two implicit operands");
+  assert(MCI.getOperand(MCI.getNumOperands() - 1).isInst() &&
+          "Implicit bits and flags");
+  assert(MCI.getOperand(MCI.getNumOperands() - 2).isImm() &&
+          "Parent pointer");
+}
+
+void SetImplicitBits(MCInst &MCI, std::bitset<16> Bits);
+
+void setPacketBegin(MCInst &MCI, bool Y);
+
+void setPacketEnd(MCInst &MCI, bool Y);
 }
 }
 

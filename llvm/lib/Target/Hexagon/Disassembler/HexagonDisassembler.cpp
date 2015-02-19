@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/HexagonBaseInfo.h"
-#include "MCTargetDesc/HexagonMCInst.h"
+#include "MCTargetDesc/HexagonMCInstrInfo.h"
 #include "MCTargetDesc/HexagonMCTargetDesc.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
@@ -202,6 +202,6 @@ DecodeStatus HexagonDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   // Remove parse bits.
   insn &= ~static_cast<uint32_t>(HexagonII::InstParseBits::INST_PARSE_MASK);
   DecodeStatus Result = decodeInstruction(DecoderTable32, MI, insn, Address, this, STI);
-  HexagonMCInst::AppendImplicitOperands(MI);
+  HexagonMCInstrInfo::AppendImplicitOperands(MI);
   return Result;
 }

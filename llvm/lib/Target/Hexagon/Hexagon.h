@@ -21,13 +21,13 @@
 
 namespace llvm {
   class FunctionPass;
-  class ModulePass;
-  class TargetMachine;
-  class MachineInstr;
-  class HexagonMCInst;
   class HexagonAsmPrinter;
   class HexagonTargetMachine;
+  class MachineInstr;
+  class MCInst;
+  class ModulePass;
   class raw_ostream;
+  class TargetMachine;
 
   FunctionPass *createHexagonISelDag(HexagonTargetMachine &TM,
                                      CodeGenOpt::Level OptLevel);
@@ -56,7 +56,7 @@ namespace llvm {
   TargetAsmBackend *createHexagonAsmBackend(const Target &,
                                                   const std::string &);
 */
-  void HexagonLowerToMC(const MachineInstr *MI, HexagonMCInst &MCI,
+  void HexagonLowerToMC(MachineInstr const *MI, MCInst &MCI,
                         HexagonAsmPrinter &AP);
 } // end namespace llvm;
 

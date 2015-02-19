@@ -19,7 +19,7 @@
 #include "HexagonSubtarget.h"
 #include "HexagonTargetMachine.h"
 #include "MCTargetDesc/HexagonInstPrinter.h"
-#include "MCTargetDesc/HexagonMCInst.h"
+#include "MCTargetDesc/HexagonMCInstrInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -199,22 +199,22 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     unsigned Size = BundleMIs.size();
     assert((Size + IgnoreCount) == MI->getBundleSize() && "Corrupt Bundle!");
     for (unsigned Index = 0; Index < Size; Index++) {
-      HexagonMCInst MCI;
+      MCInst MCI;
 
       HexagonLowerToMC(BundleMIs[Index], MCI, *this);
-      HexagonMCInst::AppendImplicitOperands(MCI);
-      MCI.setPacketBegin(Index == 0);
-      MCI.setPacketEnd(Index == (Size - 1));
+      HexagonMCInstrInfo::AppendImplicitOperands(MCI);
+      HexagonMCInstrInfo::setPacketBegin(MCI, Index == 0);
+      HexagonMCInstrInfo::setPacketEnd(MCI, Index == (Size - 1));
       EmitToStreamer(OutStreamer, MCI);
     }
   }
   else {
-    HexagonMCInst MCI;
+    MCInst MCI;
     HexagonLowerToMC(MI, MCI, *this);
-    HexagonMCInst::AppendImplicitOperands(MCI);
+    HexagonMCInstrInfo::AppendImplicitOperands(MCI);
     if (MI->getOpcode() == Hexagon::ENDLOOP0) {
-      MCI.setPacketBegin(true);
-      MCI.setPacketEnd(true);
+      HexagonMCInstrInfo::setPacketBegin(MCI, true);
+      HexagonMCInstrInfo::setPacketEnd(MCI, true);
     }
     EmitToStreamer(OutStreamer, MCI);
   }

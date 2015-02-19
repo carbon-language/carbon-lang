@@ -14,7 +14,6 @@
 #include "HexagonMCTargetDesc.h"
 #include "HexagonMCAsmInfo.h"
 #include "MCTargetDesc/HexagonInstPrinter.h"
-#include "MCTargetDesc/HexagonMCInst.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInstrInfo.h"

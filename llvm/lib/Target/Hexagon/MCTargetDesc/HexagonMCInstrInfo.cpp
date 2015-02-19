@@ -13,18 +13,17 @@
 
 #include "HexagonMCInstrInfo.h"
 #include "HexagonBaseInfo.h"
-#include "llvm/MC/MCInstrInfo.h"
 
 namespace llvm {
+void HexagonMCInstrInfo::AppendImplicitOperands(MCInst &MCI) {
+  MCI.addOperand(MCOperand::CreateImm(0));
+  MCI.addOperand(MCOperand::CreateInst(nullptr));
+}
+
 unsigned HexagonMCInstrInfo::getBitCount(MCInstrInfo const &MCII,
                                          MCInst const &MCI) {
   uint64_t const F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
   return ((F >> HexagonII::ExtentBitsPos) & HexagonII::ExtentBitsMask);
-}
-
-MCInstrDesc const &HexagonMCInstrInfo::getDesc(MCInstrInfo const &MCII,
-                                               MCInst const &MCI) {
-  return (MCII.get(MCI.getOpcode()));
 }
 
 // Return constant extended operand number.
@@ -32,6 +31,17 @@ unsigned short HexagonMCInstrInfo::getCExtOpNum(MCInstrInfo const &MCII,
                                                 MCInst const &MCI) {
   const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
   return ((F >> HexagonII::ExtendableOpPos) & HexagonII::ExtendableOpMask);
+}
+
+MCInstrDesc const &HexagonMCInstrInfo::getDesc(MCInstrInfo const &MCII,
+                                               MCInst const &MCI) {
+  return (MCII.get(MCI.getOpcode()));
+}
+
+std::bitset<16> HexagonMCInstrInfo::GetImplicitBits(MCInst const &MCI) {
+  SanityCheckImplicitOperands(MCI);
+  std::bitset<16> Bits(MCI.getOperand(MCI.getNumOperands() - 2).getImm());
+  return Bits;
 }
 
 // Return the max value that a constant extendable operand can have
@@ -168,6 +178,16 @@ bool HexagonMCInstrInfo::isOperandExtended(MCInstrInfo const &MCII,
          OperandNum;
 }
 
+bool HexagonMCInstrInfo::isPacketBegin(MCInst const &MCI) {
+  std::bitset<16> Bits(GetImplicitBits(MCI));
+  return Bits.test(packetBeginIndex);
+}
+
+bool HexagonMCInstrInfo::isPacketEnd(MCInst const &MCI) {
+  std::bitset<16> Bits(GetImplicitBits(MCI));
+  return Bits.test(packetEndIndex);
+}
+
 // Return whether the insn is a prefix.
 bool HexagonMCInstrInfo::isPrefix(MCInstrInfo const &MCII, MCInst const &MCI) {
   return (HexagonMCInstrInfo::getType(MCII, MCI) == HexagonII::TypePREFIX);
@@ -177,5 +197,27 @@ bool HexagonMCInstrInfo::isPrefix(MCInstrInfo const &MCII, MCInst const &MCI) {
 bool HexagonMCInstrInfo::isSolo(MCInstrInfo const &MCII, MCInst const &MCI) {
   const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
   return ((F >> HexagonII::SoloPos) & HexagonII::SoloMask);
+}
+
+void HexagonMCInstrInfo::resetPacket(MCInst &MCI) {
+  setPacketBegin(MCI, false);
+  setPacketEnd(MCI, false);
+}
+
+void HexagonMCInstrInfo::SetImplicitBits(MCInst &MCI, std::bitset<16> Bits) {
+  SanityCheckImplicitOperands(MCI);
+  MCI.getOperand(MCI.getNumOperands() - 2).setImm(Bits.to_ulong());
+}
+
+void HexagonMCInstrInfo::setPacketBegin(MCInst &MCI, bool f) {
+  std::bitset<16> Bits(GetImplicitBits(MCI));
+  Bits.set(packetBeginIndex, f);
+  SetImplicitBits(MCI, Bits);
+}
+
+void HexagonMCInstrInfo::setPacketEnd(MCInst &MCI, bool f) {
+  std::bitset<16> Bits(GetImplicitBits(MCI));
+  Bits.set(packetEndIndex, f);
+  SetImplicitBits(MCI, Bits);
 }
 }

@@ -10,7 +10,6 @@
 #include "Hexagon.h"
 #include "MCTargetDesc/HexagonBaseInfo.h"
 #include "MCTargetDesc/HexagonMCCodeEmitter.h"
-#include "MCTargetDesc/HexagonMCInst.h"
 #include "MCTargetDesc/HexagonMCInstrInfo.h"
 #include "MCTargetDesc/HexagonMCTargetDesc.h"
 #include "llvm/ADT/Statistic.h"
@@ -36,9 +35,9 @@ namespace {
 /// Possible values for instruction packet parse field.
 enum class ParseField { duplex = 0x0, last0 = 0x1, last1 = 0x2, end = 0x3 };
 /// \brief Returns the packet bits based on instruction position.
-uint32_t getPacketBits(HexagonMCInst const &HMI) {
+uint32_t getPacketBits(MCInst const &HMI) {
   unsigned const ParseFieldOffset = 14;
-  ParseField Field = HMI.isPacketEnd() ? ParseField::end : ParseField::last0;
+  ParseField Field = HexagonMCInstrInfo::isPacketEnd(HMI) ? ParseField::end : ParseField::last0;
   return static_cast <uint32_t> (Field) << ParseFieldOffset;
 }
 void emitLittleEndian(uint64_t Binary, raw_ostream &OS) {
@@ -57,9 +56,8 @@ HexagonMCCodeEmitter::HexagonMCCodeEmitter(MCInstrInfo const &aMII,
 void HexagonMCCodeEmitter::EncodeInstruction(MCInst const &MI, raw_ostream &OS,
                                              SmallVectorImpl<MCFixup> &Fixups,
                                              MCSubtargetInfo const &STI) const {
-  HexagonMCInst const &HMB = static_cast<HexagonMCInst const &>(MI);
-  uint64_t Binary = getBinaryCodeForInstr(HMB, Fixups, STI) | getPacketBits(HMB);
-  assert(HexagonMCInstrInfo::getDesc(MCII, HMB).getSize() == 4 &&
+  uint64_t Binary = getBinaryCodeForInstr(MI, Fixups, STI) | getPacketBits(MI);
+  assert(HexagonMCInstrInfo::getDesc(MCII, MI).getSize() == 4 &&
          "All instructions should be 32bit");
   emitLittleEndian(Binary, OS);
   ++MCNumEmitted;

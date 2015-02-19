@@ -18,17 +18,14 @@
 #include "llvm/MC/MCInstrInfo.h"
 
 namespace llvm {
-  class HexagonMCInst;
-
   class HexagonInstPrinter : public MCInstPrinter {
   public:
-    explicit HexagonInstPrinter(const MCAsmInfo &MAI,
-                                const MCInstrInfo &MII,
-                                const MCRegisterInfo &MRI)
+    explicit HexagonInstPrinter(MCAsmInfo const &MAI,
+                                MCInstrInfo const &MII,
+                                MCRegisterInfo const &MRI)
       : MCInstPrinter(MAI, MII, MRI), MII(MII) {}
 
-    void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot) override;
-    void printInst(const HexagonMCInst *MI, raw_ostream &O, StringRef Annot);
+    void printInst(MCInst const *MI, raw_ostream &O, StringRef Annot) override;
     virtual StringRef getOpcodeName(unsigned Opcode) const;
     void printInstruction(const MCInst *MI, raw_ostream &O);
     StringRef getRegName(unsigned RegNo) const;
