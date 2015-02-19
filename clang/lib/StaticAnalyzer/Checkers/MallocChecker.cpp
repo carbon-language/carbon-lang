@@ -43,7 +43,8 @@ enum AllocationFamily {
   AF_Malloc,
   AF_CXXNew,
   AF_CXXNewArray,
-  AF_IfNameIndex
+  AF_IfNameIndex,
+  AF_Alloca
 };
 
 class RefState {
@@ -160,10 +161,11 @@ class MallocChecker : public Checker<check::DeadSymbols,
 {
 public:
   MallocChecker()
-      : II_malloc(nullptr), II_free(nullptr), II_realloc(nullptr),
-        II_calloc(nullptr), II_valloc(nullptr), II_reallocf(nullptr),
-        II_strndup(nullptr), II_strdup(nullptr), II_kmalloc(nullptr),
-        II_if_nameindex(nullptr), II_if_freenameindex(nullptr) {}
+      : II_alloca(nullptr), II_alloca_builtin(nullptr), II_malloc(nullptr),
+        II_free(nullptr), II_realloc(nullptr), II_calloc(nullptr),
+        II_valloc(nullptr), II_reallocf(nullptr), II_strndup(nullptr),
+        II_strdup(nullptr), II_kmalloc(nullptr), II_if_nameindex(nullptr),
+        II_if_freenameindex(nullptr) {}
 
   /// In pessimistic mode, the checker assumes that it does not know which
   /// functions might free the memory.
@@ -217,11 +219,13 @@ private:
   mutable std::unique_ptr<BugType> BT_Leak[CK_NumCheckKinds];
   mutable std::unique_ptr<BugType> BT_UseFree[CK_NumCheckKinds];
   mutable std::unique_ptr<BugType> BT_BadFree[CK_NumCheckKinds];
+  mutable std::unique_ptr<BugType> BT_FreeAlloca[CK_NumCheckKinds];
   mutable std::unique_ptr<BugType> BT_MismatchedDealloc;
   mutable std::unique_ptr<BugType> BT_OffsetFree[CK_NumCheckKinds];
-  mutable IdentifierInfo *II_malloc, *II_free, *II_realloc, *II_calloc,
-                         *II_valloc, *II_reallocf, *II_strndup, *II_strdup,
-                         *II_kmalloc, *II_if_nameindex, *II_if_freenameindex;
+  mutable IdentifierInfo *II_alloca, *II_alloca_builtin, *II_malloc, *II_free,
+                         *II_realloc, *II_calloc, *II_valloc, *II_reallocf,
+                         *II_strndup, *II_strdup, *II_kmalloc, *II_if_nameindex,
+                         *II_if_freenameindex;
   mutable Optional<uint64_t> KernelZeroFlagVal;
 
   void initIdentifierInfo(ASTContext &C) const;
@@ -343,6 +347,8 @@ private:
   static bool SummarizeRegion(raw_ostream &os, const MemRegion *MR);
   void ReportBadFree(CheckerContext &C, SVal ArgVal, SourceRange Range, 
                      const Expr *DeallocExpr) const;
+  void ReportFreeAlloca(CheckerContext &C, SVal ArgVal,
+                        SourceRange Range) const;
   void ReportMismatchedDealloc(CheckerContext &C, SourceRange Range,
                                const Expr *DeallocExpr, const RefState *RS,
                                SymbolRef Sym, bool OwnershipTransferred) const;
@@ -501,6 +507,8 @@ public:
 void MallocChecker::initIdentifierInfo(ASTContext &Ctx) const {
   if (II_malloc)
     return;
+  II_alloca = &Ctx.Idents.get("alloca");
+  II_alloca_builtin = &Ctx.Idents.get("__builtin_alloca");
   II_malloc = &Ctx.Idents.get("malloc");
   II_free = &Ctx.Idents.get("free");
   II_realloc = &Ctx.Idents.get("realloc");
@@ -519,6 +527,9 @@ bool MallocChecker::isMemFunction(const FunctionDecl *FD, ASTContext &C) const {
     return true;
 
   if (isCMemFunction(FD, C, AF_IfNameIndex, MemoryOperationKind::MOK_Any))
+    return true;
+
+  if (isCMemFunction(FD, C, AF_Alloca, MemoryOperationKind::MOK_Any))
     return true;
 
   if (isStandardNewDelete(FD, C))
@@ -562,6 +573,11 @@ bool MallocChecker::isCMemFunction(const FunctionDecl *FD,
 
     if (Family == AF_IfNameIndex && CheckAlloc) {
       if (FunI == II_if_nameindex)
+        return true;
+    }
+
+    if (Family == AF_Alloca && CheckAlloc) {
+      if (FunI == II_alloca || FunI == II_alloca_builtin)
         return true;
     }
   }
@@ -747,8 +763,10 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
       State = MallocUpdateRefState(C, CE, State);
     } else if (FunI == II_strndup) {
       State = MallocUpdateRefState(C, CE, State);
-    }
-    else if (isStandardNewDelete(FD, C.getASTContext())) {
+    } else if (FunI == II_alloca || FunI == II_alloca_builtin) {
+      State = MallocMemAux(C, CE, CE->getArg(0), UndefinedVal(), State,
+                           AF_Alloca);
+    } else if (isStandardNewDelete(FD, C.getASTContext())) {
       // Process direct calls to operator new/new[]/delete/delete[] functions
       // as distinct from new/new[]/delete/delete[] expressions that are 
       // processed by the checkPostStmt callbacks for CXXNewExpr and 
@@ -1096,6 +1114,9 @@ AllocationFamily MallocChecker::getAllocationFamily(CheckerContext &C,
     if (isCMemFunction(FD, Ctx, AF_IfNameIndex, MemoryOperationKind::MOK_Any))
       return AF_IfNameIndex;
 
+    if (isCMemFunction(FD, Ctx, AF_Alloca, MemoryOperationKind::MOK_Any))
+      return AF_Alloca;
+
     return AF_None;
   }
 
@@ -1160,6 +1181,7 @@ void MallocChecker::printExpectedAllocName(raw_ostream &os, CheckerContext &C,
     case AF_CXXNew: os << "'new'"; return;
     case AF_CXXNewArray: os << "'new[]'"; return;
     case AF_IfNameIndex: os << "'if_nameindex()'"; return;
+    case AF_Alloca:
     case AF_None: llvm_unreachable("not a deallocation expression");
   }
 }
@@ -1171,7 +1193,8 @@ void MallocChecker::printExpectedDeallocName(raw_ostream &os,
     case AF_CXXNew: os << "'delete'"; return;
     case AF_CXXNewArray: os << "'delete[]'"; return;
     case AF_IfNameIndex: os << "'if_freenameindex()'"; return;
-    case AF_None: llvm_unreachable("suspicious AF_None argument");
+    case AF_Alloca:
+    case AF_None: llvm_unreachable("suspicious argument");
   }
 }
 
@@ -1225,8 +1248,7 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
   
   const MemSpaceRegion *MS = R->getMemorySpace();
   
-  // Parameters, locals, statics, globals, and memory returned by alloca() 
-  // shouldn't be freed.
+  // Parameters, locals, statics and globals shouldn't be freed.
   if (!(isa<UnknownSpaceRegion>(MS) || isa<HeapSpaceRegion>(MS))) {
     // FIXME: at the time this code was written, malloc() regions were
     // represented by conjured symbols, which are all in UnknownSpaceRegion.
@@ -1251,6 +1273,12 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
   SymbolRef PreviousRetStatusSymbol = nullptr;
 
   if (RsBase) {
+
+    // Memory returned by alloca() shouldn't be freed.
+    if (RsBase->getAllocationFamily() == AF_Alloca) {
+      ReportFreeAlloca(C, ArgVal, ArgExpr->getSourceRange());
+      return nullptr;
+    }
 
     // Check for double free first.
     if ((RsBase->isReleased() || RsBase->isRelinquished()) &&
@@ -1327,7 +1355,8 @@ MallocChecker::getCheckIfTracked(MallocChecker::CheckKind CK,
 
   switch (Family) {
   case AF_Malloc:
-  case AF_IfNameIndex: {
+  case AF_IfNameIndex:
+  case AF_Alloca: {
     // C checkers.
     if (CK == CK_MallocOptimistic ||
         CK == CK_MallocPessimistic) {
@@ -1502,26 +1531,45 @@ void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
     while (const ElementRegion *ER = dyn_cast_or_null<ElementRegion>(MR))
       MR = ER->getSuperRegion();
 
-    if (MR && isa<AllocaRegion>(MR))
-      os << "Memory allocated by alloca() should not be deallocated";
-    else {
-      os << "Argument to ";
-      if (!printAllocDeallocName(os, C, DeallocExpr))
-        os << "deallocator";
+    os << "Argument to ";
+    if (!printAllocDeallocName(os, C, DeallocExpr))
+      os << "deallocator";
 
-      os << " is ";
-      bool Summarized = MR ? SummarizeRegion(os, MR) 
-                           : SummarizeValue(os, ArgVal);
-      if (Summarized)
-        os << ", which is not memory allocated by ";
-      else
-        os << "not memory allocated by ";
+    os << " is ";
+    bool Summarized = MR ? SummarizeRegion(os, MR) 
+                         : SummarizeValue(os, ArgVal);
+    if (Summarized)
+      os << ", which is not memory allocated by ";
+    else
+      os << "not memory allocated by ";
 
-      printExpectedAllocName(os, C, DeallocExpr);
-    }
+    printExpectedAllocName(os, C, DeallocExpr);
 
     BugReport *R = new BugReport(*BT_BadFree[*CheckKind], os.str(), N);
     R->markInteresting(MR);
+    R->addRange(Range);
+    C.emitReport(R);
+  }
+}
+
+void MallocChecker::ReportFreeAlloca(CheckerContext &C, SVal ArgVal, 
+                                     SourceRange Range) const {
+
+  auto CheckKind = getCheckIfTracked(MakeVecFromCK(CK_MallocOptimistic,
+                                               CK_MallocPessimistic,
+                                               CK_MismatchedDeallocatorChecker),
+                                     AF_Alloca);
+  if (!CheckKind.hasValue())
+    return;
+
+  if (ExplodedNode *N = C.generateSink()) {
+    if (!BT_FreeAlloca[*CheckKind])
+      BT_FreeAlloca[*CheckKind].reset(
+          new BugType(CheckNames[*CheckKind], "Free alloca()", "Memory Error"));
+
+    BugReport *R = new BugReport(*BT_FreeAlloca[*CheckKind], 
+                 "Memory allocated by alloca() should not be deallocated", N);
+    R->markInteresting(ArgVal.getAsRegion());
     R->addRange(Range);
     C.emitReport(R);
   }

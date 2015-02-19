@@ -144,11 +144,6 @@ void testUseThisAfterDelete() {
   c->f(0); // expected-warning{{Use of memory after it is freed}}
 }
 
-void testDeleteAlloca() {
-  int *p = (int *)__builtin_alloca(sizeof(int));
-  delete p; // expected-warning{{Memory allocated by alloca() should not be deallocated}}
-}
-
 void testDoubleDelete() {
   int *p = new int;
   delete p;

@@ -5,6 +5,7 @@
 
 typedef __typeof__(sizeof(int)) size_t;
 extern "C" void *malloc(size_t);
+extern "C" void *alloca(size_t);
 extern "C" void free(void *);
 
 //----------------------------------------------------------------------------
@@ -29,11 +30,17 @@ void testMallocFreeNoWarn() {
   int *p4 = (int *)malloc(sizeof(int));
   free(p4);
   int j = *p4; // no warn
+
+  int *p5 = (int *)alloca(sizeof(int));
+  free(p5); // no warn
 }
 
 void testDeleteMalloced() {
-  int *p = (int *)malloc(sizeof(int));
-  delete p; // no warn
+  int *p1 = (int *)malloc(sizeof(int));
+  delete p1; // no warn
+
+  int *p2 = (int *)__builtin_alloca(sizeof(int));
+  delete p2; // no warn
 } 
 
 //----- Test free standard new

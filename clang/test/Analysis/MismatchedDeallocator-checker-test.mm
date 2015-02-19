@@ -59,6 +59,11 @@ void testMalloc8() {
   operator delete[](p); // expected-warning{{Memory allocated by malloc() should be deallocated by free(), not operator delete[]}}
 }
 
+void testAlloca() {
+  int *p = (int *)__builtin_alloca(sizeof(int));
+  delete p; // expected-warning{{Memory allocated by alloca() should not be deallocated}}
+}
+
 //--------------- test new family
 void testNew1() {
   int *p = new int;
