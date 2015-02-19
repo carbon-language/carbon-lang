@@ -723,6 +723,13 @@ TEST_F(MDBasicTypeTest, get) {
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
 }
 
+TEST_F(MDBasicTypeTest, getWithLargeValues) {
+  auto *N = MDBasicType::get(Context, dwarf::DW_TAG_base_type, "special",
+                             UINT64_MAX, UINT64_MAX - 1, 7);
+  EXPECT_EQ(UINT64_MAX, N->getSizeInBits());
+  EXPECT_EQ(UINT64_MAX - 1, N->getAlignInBits());
+}
+
 typedef MetadataTest MDDerivedTypeTest;
 
 TEST_F(MDDerivedTypeTest, get) {
@@ -786,6 +793,20 @@ TEST_F(MDDerivedTypeTest, get) {
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
 }
 
+TEST_F(MDDerivedTypeTest, getWithLargeValues) {
+  Metadata *File = MDTuple::getDistinct(Context, None);
+  Metadata *Scope = MDTuple::getDistinct(Context, None);
+  Metadata *BaseType = MDTuple::getDistinct(Context, None);
+  Metadata *ExtraData = MDTuple::getDistinct(Context, None);
+
+  auto *N = MDDerivedType::get(Context, dwarf::DW_TAG_pointer_type, "something",
+                               File, 1, Scope, BaseType, UINT64_MAX,
+                               UINT64_MAX - 1, UINT64_MAX - 2, 5, ExtraData);
+  EXPECT_EQ(UINT64_MAX, N->getSizeInBits());
+  EXPECT_EQ(UINT64_MAX - 1, N->getAlignInBits());
+  EXPECT_EQ(UINT64_MAX - 2, N->getOffsetInBits());
+}
+
 typedef MetadataTest MDCompositeTypeTest;
 
 TEST_F(MDCompositeTypeTest, get) {
@@ -795,9 +816,9 @@ TEST_F(MDCompositeTypeTest, get) {
   unsigned Line = 1;
   Metadata *Scope = MDTuple::getDistinct(Context, None);
   Metadata *BaseType = MDTuple::getDistinct(Context, None);
-  unsigned SizeInBits = 2;
-  unsigned AlignInBits = 3;
-  unsigned OffsetInBits = 4;
+  uint64_t SizeInBits = 2;
+  uint64_t AlignInBits = 3;
+  uint64_t OffsetInBits = 4;
   unsigned Flags = 5;
   Metadata *Elements = MDTuple::getDistinct(Context, None);
   unsigned RuntimeLang = 6;
@@ -905,6 +926,32 @@ TEST_F(MDCompositeTypeTest, get) {
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
 }
 
+TEST_F(MDCompositeTypeTest, getWithLargeValues) {
+  unsigned Tag = dwarf::DW_TAG_structure_type;
+  StringRef Name = "some name";
+  Metadata *File = MDTuple::getDistinct(Context, None);
+  unsigned Line = 1;
+  Metadata *Scope = MDTuple::getDistinct(Context, None);
+  Metadata *BaseType = MDTuple::getDistinct(Context, None);
+  uint64_t SizeInBits = UINT64_MAX;
+  uint64_t AlignInBits = UINT64_MAX - 1;
+  uint64_t OffsetInBits = UINT64_MAX - 2;
+  unsigned Flags = 5;
+  Metadata *Elements = MDTuple::getDistinct(Context, None);
+  unsigned RuntimeLang = 6;
+  Metadata *VTableHolder = MDTuple::getDistinct(Context, None);
+  Metadata *TemplateParams = MDTuple::getDistinct(Context, None);
+  StringRef Identifier = "some id";
+
+  auto *N = MDCompositeType::get(Context, Tag, Name, File, Line, Scope,
+                                 BaseType, SizeInBits, AlignInBits,
+                                 OffsetInBits, Flags, Elements, RuntimeLang,
+                                 VTableHolder, TemplateParams, Identifier);
+  EXPECT_EQ(SizeInBits, N->getSizeInBits());
+  EXPECT_EQ(AlignInBits, N->getAlignInBits());
+  EXPECT_EQ(OffsetInBits, N->getOffsetInBits());
+}
+
 TEST_F(MDCompositeTypeTest, replaceOperands) {
   unsigned Tag = dwarf::DW_TAG_structure_type;
   StringRef Name = "some name";
@@ -912,9 +959,9 @@ TEST_F(MDCompositeTypeTest, replaceOperands) {
   unsigned Line = 1;
   Metadata *Scope = MDTuple::getDistinct(Context, None);
   Metadata *BaseType = MDTuple::getDistinct(Context, None);
-  unsigned SizeInBits = 2;
-  unsigned AlignInBits = 3;
-  unsigned OffsetInBits = 4;
+  uint64_t SizeInBits = 2;
+  uint64_t AlignInBits = 3;
+  uint64_t OffsetInBits = 4;
   unsigned Flags = 5;
   unsigned RuntimeLang = 6;
   StringRef Identifier = "some id";

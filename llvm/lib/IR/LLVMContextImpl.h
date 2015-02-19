@@ -303,12 +303,12 @@ template <> struct MDNodeKeyImpl<MDEnumerator> {
 template <> struct MDNodeKeyImpl<MDBasicType> {
   unsigned Tag;
   StringRef Name;
-  unsigned SizeInBits;
-  unsigned AlignInBits;
+  uint64_t SizeInBits;
+  uint64_t AlignInBits;
   unsigned Encoding;
 
-  MDNodeKeyImpl(unsigned Tag, StringRef Name, unsigned SizeInBits,
-                unsigned AlignInBits, unsigned Encoding)
+  MDNodeKeyImpl(unsigned Tag, StringRef Name, uint64_t SizeInBits,
+                uint64_t AlignInBits, unsigned Encoding)
       : Tag(Tag), Name(Name), SizeInBits(SizeInBits), AlignInBits(AlignInBits),
         Encoding(Encoding) {}
   MDNodeKeyImpl(const MDBasicType *N)
@@ -333,15 +333,15 @@ template <> struct MDNodeKeyImpl<MDDerivedType> {
   unsigned Line;
   Metadata *Scope;
   Metadata *BaseType;
-  unsigned SizeInBits;
-  unsigned AlignInBits;
-  unsigned OffsetInBits;
+  uint64_t SizeInBits;
+  uint64_t AlignInBits;
+  uint64_t OffsetInBits;
   unsigned Flags;
   Metadata *ExtraData;
 
   MDNodeKeyImpl(unsigned Tag, StringRef Name, Metadata *File, unsigned Line,
-                Metadata *Scope, Metadata *BaseType, unsigned SizeInBits,
-                unsigned AlignInBits, unsigned OffsetInBits, unsigned Flags,
+                Metadata *Scope, Metadata *BaseType, uint64_t SizeInBits,
+                uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags,
                 Metadata *ExtraData)
       : Tag(Tag), Name(Name), File(File), Line(Line), Scope(Scope),
         BaseType(BaseType), SizeInBits(SizeInBits), AlignInBits(AlignInBits),
@@ -375,9 +375,9 @@ template <> struct MDNodeKeyImpl<MDCompositeType> {
   unsigned Line;
   Metadata *Scope;
   Metadata *BaseType;
-  unsigned SizeInBits;
-  unsigned AlignInBits;
-  unsigned OffsetInBits;
+  uint64_t SizeInBits;
+  uint64_t AlignInBits;
+  uint64_t OffsetInBits;
   unsigned Flags;
   Metadata *Elements;
   unsigned RuntimeLang;
@@ -386,8 +386,8 @@ template <> struct MDNodeKeyImpl<MDCompositeType> {
   StringRef Identifier;
 
   MDNodeKeyImpl(unsigned Tag, StringRef Name, Metadata *File, unsigned Line,
-                Metadata *Scope, Metadata *BaseType, unsigned SizeInBits,
-                unsigned AlignInBits, unsigned OffsetInBits, unsigned Flags,
+                Metadata *Scope, Metadata *BaseType, uint64_t SizeInBits,
+                uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags,
                 Metadata *Elements, unsigned RuntimeLang,
                 Metadata *VTableHolder, Metadata *TemplateParams,
                 StringRef Identifier)
