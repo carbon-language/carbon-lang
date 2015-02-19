@@ -735,11 +735,11 @@ public:
   bool isUniformAfterVectorization(Instruction* I) { return Uniforms.count(I); }
 
   /// Returns the information that we collected about runtime memory check.
-  LoopAccessInfo::RuntimePointerCheck *getRuntimePointerCheck() {
+  const LoopAccessInfo::RuntimePointerCheck *getRuntimePointerCheck() const {
     return LAI->getRuntimePointerCheck();
   }
 
-  LoopAccessInfo *getLAI() {
+  const LoopAccessInfo *getLAI() const {
     return LAI;
   }
 
@@ -856,7 +856,7 @@ private:
   LoopAccessAnalysis *LAA;
   // And the loop-accesses info corresponding to this loop.  This pointer is
   // null until canVectorizeMemory sets it up.
-  LoopAccessInfo *LAI;
+  const LoopAccessInfo *LAI;
 
   //  ---  vectorization state --- //
 

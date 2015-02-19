@@ -155,9 +155,11 @@ public:
 
   /// Return true we can analyze the memory accesses in the loop and there are
   /// no memory dependence cycles.
-  bool canVectorizeMemory() { return CanVecMem; }
+  bool canVectorizeMemory() const { return CanVecMem; }
 
-  RuntimePointerCheck *getRuntimePointerCheck() { return &PtrRtCheck; }
+  const RuntimePointerCheck *getRuntimePointerCheck() const {
+    return &PtrRtCheck;
+  }
 
   /// Return true if the block BB needs to be predicated in order for the loop
   /// to be vectorized.
@@ -165,7 +167,7 @@ public:
                                     DominatorTree *DT);
 
   /// Returns true if the value V is uniform within the loop.
-  bool isUniform(Value *V);
+  bool isUniform(Value *V) const;
 
   unsigned getMaxSafeDepDistBytes() const { return MaxSafeDepDistBytes; }
   unsigned getNumStores() const { return NumStores; }
@@ -176,11 +178,12 @@ public:
   /// Returns a pair of instructions where the first element is the first
   /// instruction generated in possibly a sequence of instructions and the
   /// second value is the final comparator value or NULL if no check is needed.
-  std::pair<Instruction *, Instruction *> addRuntimeCheck(Instruction *Loc);
+  std::pair<Instruction *, Instruction *>
+    addRuntimeCheck(Instruction *Loc) const;
 
   /// \brief The diagnostics report generated for the analysis.  E.g. why we
   /// couldn't analyze the loop.
-  Optional<LoopAccessReport> &getReport() { return Report; }
+  const Optional<LoopAccessReport> &getReport() const { return Report; }
 
   /// \brief Print the information about the memory accesses in the loop.
   void print(raw_ostream &OS, unsigned Depth = 0) const;
@@ -260,7 +263,7 @@ public:
   /// of symbolic strides, \p Strides provides the mapping (see
   /// replaceSymbolicStrideSCEV).  If there is no cached result available run
   /// the analysis.
-  LoopAccessInfo &getInfo(Loop *L, ValueToValueMap &Strides);
+  const LoopAccessInfo &getInfo(Loop *L, ValueToValueMap &Strides);
 
   void releaseMemory() override {
     // Invalidate the cache when the pass is freed.
