@@ -66,9 +66,6 @@ def err_imported_module_relocated : Error<
 def err_module_different_modmap : Error<
     "module '%0' %select{uses|does not use}1 additional module map '%2'"
     "%select{| not}1 used when the module was built">;
-def err_module_system_change : Error<
-    "module '%0' %select{is|is not}1 a 'system' module, but "
-    "%select{was not|was}1 when the module was built">;
 def warn_module_conflict : Warning<
     "module '%0' conflicts with already-imported module '%1': %2">, 
     InGroup<ModuleConflict>;

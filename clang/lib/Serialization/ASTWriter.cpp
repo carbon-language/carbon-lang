@@ -1216,7 +1216,6 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
       Record.push_back(0);
     }
 
-    Record.push_back(WritingModule->IsSystem);
     Stream.EmitRecord(MODULE_MAP_FILE, Record);
   }
 

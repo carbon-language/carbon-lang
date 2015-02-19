@@ -115,13 +115,11 @@ const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE) {
 std::string HeaderSearch::getModuleFileName(Module *Module) {
   const FileEntry *ModuleMap =
       getModuleMap().getModuleMapFileForUniquing(Module);
-  return getModuleFileName(Module->Name, ModuleMap->getName(),
-                           Module->IsSystem);
+  return getModuleFileName(Module->Name, ModuleMap->getName());
 }
 
 std::string HeaderSearch::getModuleFileName(StringRef ModuleName,
-                                            StringRef ModuleMapPath,
-                                            bool IsSystem) {
+                                            StringRef ModuleMapPath) {
   // If we don't have a module cache path, we can't do anything.
   if (ModuleCachePath.empty()) 
     return std::string();
@@ -148,10 +146,6 @@ std::string HeaderSearch::getModuleFileName(StringRef ModuleName,
 
     llvm::hash_code Hash =
         llvm::hash_combine(DirName.lower(), FileName.lower());
-
-    // Hash the IsSystem bit, since changing search paths can change whether a
-    // module is considered 'system' or not.
-    Hash = llvm::hash_combine(Hash, IsSystem);
 
     SmallString<128> HashStr;
     llvm::APInt(64, size_t(Hash)).toStringUnsigned(HashStr, /*Radix*/36);
