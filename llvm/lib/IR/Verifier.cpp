@@ -1987,6 +1987,13 @@ void Verifier::visitInvokeInst(InvokeInst &II) {
   Assert1(II.getUnwindDest()->isLandingPad(),
           "The unwind destination does not have a landingpad instruction!",&II);
 
+  if (Function *F = II.getCalledFunction())
+    // TODO: Ideally we should use visitIntrinsicFunction here. But it uses
+    //       CallInst as an input parameter. It not woth updating this whole
+    //       function only to support statepoint verification.
+    if (F->getIntrinsicID() == Intrinsic::experimental_gc_statepoint)
+      VerifyStatepoint(ImmutableCallSite(&II));
+
   visitTerminatorInst(II);
 }
 
@@ -2486,7 +2493,8 @@ void Verifier::visitInstruction(Instruction &I) {
       Assert1(!F->isIntrinsic() || isa<CallInst>(I) ||
               F->getIntrinsicID() == Intrinsic::donothing ||
               F->getIntrinsicID() == Intrinsic::experimental_patchpoint_void ||
-              F->getIntrinsicID() == Intrinsic::experimental_patchpoint_i64,
+              F->getIntrinsicID() == Intrinsic::experimental_patchpoint_i64 ||
+              F->getIntrinsicID() == Intrinsic::experimental_gc_statepoint,
               "Cannot invoke an intrinsinc other than"
               " donothing or patchpoint", &I);
       Assert1(F->getParent() == M, "Referencing function in another module!",
@@ -2901,14 +2909,46 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     break;
   }
   case Intrinsic::experimental_gc_relocate: {
-    // Are we tied to a statepoint properly?
-    CallSite StatepointCS(CI.getArgOperand(0));
-    const Function *StatepointFn =
-        StatepointCS.getInstruction() ? StatepointCS.getCalledFunction() : nullptr;
-    Assert2(StatepointFn && StatepointFn->isDeclaration() &&
-            StatepointFn->getIntrinsicID() == Intrinsic::experimental_gc_statepoint,
-            "gc.relocate operand #1 must be from a statepoint",
-	    &CI, CI.getArgOperand(0));
+    Assert1(CI.getNumArgOperands() == 3, "wrong number of arguments", &CI);
+
+    // Check that this relocate is correctly tied to the statepoint
+
+    // This is case for relocate on the unwinding path of an invoke statepoint
+    if (ExtractValueInst *ExtractValue =
+          dyn_cast<ExtractValueInst>(CI.getArgOperand(0))) {
+      Assert1(isa<LandingPadInst>(ExtractValue->getAggregateOperand()),
+              "gc relocate on unwind path incorrectly linked to the statepoint",
+              &CI);
+
+      const BasicBlock *invokeBB =
+        ExtractValue->getParent()->getUniquePredecessor();
+
+      // Landingpad relocates should have only one predecessor with invoke
+      // statepoint terminator
+      Assert1(invokeBB,
+              "safepoints should have unique landingpads",
+              ExtractValue->getParent());
+      Assert1(invokeBB->getTerminator(),
+              "safepoint block should be well formed",
+              invokeBB);
+      Assert1(isStatepoint(invokeBB->getTerminator()),
+              "gc relocate should be linked to a statepoint",
+              invokeBB);
+    }
+    else {
+      // In all other cases relocate should be tied to the statepoint directly.
+      // This covers relocates on a normal return path of invoke statepoint and
+      // relocates of a call statepoint
+      auto Token = CI.getArgOperand(0);
+      Assert2(isa<Instruction>(Token) && isStatepoint(cast<Instruction>(Token)),
+              "gc relocate is incorrectly tied to the statepoint",
+              &CI, Token);
+    }
+
+    // Verify rest of the relocate arguments
+
+    GCRelocateOperands ops(&CI);
+    ImmutableCallSite StatepointCS(ops.statepoint());
 
     // Both the base and derived must be piped through the safepoint
     Value* Base = CI.getArgOperand(1);
