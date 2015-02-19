@@ -87,7 +87,8 @@ namespace {
                         SmallPtrSetImpl<Instruction *> &DependingInstructions,
                         SmallPtrSetImpl<const BasicBlock *> &Visited);
 
-    void contractRelease(Instruction *Release, inst_iterator &Iter);
+    void tryToContractReleaseIntoStoreStrong(Instruction *Release,
+                                             inst_iterator &Iter);
 
     void getAnalysisUsage(AnalysisUsage &AU) const override;
     bool doInitialization(Module &M) override;
@@ -195,8 +196,9 @@ bool ObjCARCContract::contractAutorelease(
 /// an objc_storeStrong. This can be a little tricky because the instructions
 /// don't always appear in order, and there may be unrelated intervening
 /// instructions.
-void ObjCARCContract::contractRelease(Instruction *Release,
-                                      inst_iterator &Iter) {
+void
+ObjCARCContract::
+tryToContractReleaseIntoStoreStrong(Instruction *Release, inst_iterator &Iter) {
   LoadInst *Load = dyn_cast<LoadInst>(GetObjCArg(Release));
   if (!Load || !Load->isSimple()) return;
 
@@ -368,7 +370,9 @@ bool ObjCARCContract::tryToPeepholeInstruction(
       return true;
     }
     case IC_Release:
-      contractRelease(Inst, Iter);
+      // Try to form an objc store strong from our release. If we fail, there is
+      // nothing further to do below, so continue.
+      tryToContractReleaseIntoStoreStrong(Inst, Iter);
       return true;
     case IC_User:
       // Be conservative if the function has any alloca instructions.
