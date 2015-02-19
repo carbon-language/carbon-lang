@@ -911,23 +911,25 @@ Constant *ConstantArray::getImpl(ArrayType *Ty, ArrayRef<Constant*> V) {
 
     if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       if (CFP->getType()->isFloatTy()) {
-        SmallVector<float, 16> Elts;
+        SmallVector<uint32_t, 16> Elts;
         for (unsigned i = 0, e = V.size(); i != e; ++i)
           if (ConstantFP *CFP = dyn_cast<ConstantFP>(V[i]))
-            Elts.push_back(CFP->getValueAPF().convertToFloat());
+            Elts.push_back(
+                CFP->getValueAPF().bitcastToAPInt().getLimitedValue());
           else
             break;
         if (Elts.size() == V.size())
-          return ConstantDataArray::get(C->getContext(), Elts);
+          return ConstantDataArray::getFP(C->getContext(), Elts);
       } else if (CFP->getType()->isDoubleTy()) {
-        SmallVector<double, 16> Elts;
+        SmallVector<uint64_t, 16> Elts;
         for (unsigned i = 0, e = V.size(); i != e; ++i)
           if (ConstantFP *CFP = dyn_cast<ConstantFP>(V[i]))
-            Elts.push_back(CFP->getValueAPF().convertToDouble());
+            Elts.push_back(
+                CFP->getValueAPF().bitcastToAPInt().getLimitedValue());
           else
             break;
         if (Elts.size() == V.size())
-          return ConstantDataArray::get(C->getContext(), Elts);
+          return ConstantDataArray::getFP(C->getContext(), Elts);
       }
     }
   }
@@ -1097,23 +1099,25 @@ Constant *ConstantVector::getImpl(ArrayRef<Constant*> V) {
 
     if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
       if (CFP->getType()->isFloatTy()) {
-        SmallVector<float, 16> Elts;
+        SmallVector<uint32_t, 16> Elts;
         for (unsigned i = 0, e = V.size(); i != e; ++i)
           if (ConstantFP *CFP = dyn_cast<ConstantFP>(V[i]))
-            Elts.push_back(CFP->getValueAPF().convertToFloat());
+            Elts.push_back(
+                CFP->getValueAPF().bitcastToAPInt().getLimitedValue());
           else
             break;
         if (Elts.size() == V.size())
-          return ConstantDataVector::get(C->getContext(), Elts);
+          return ConstantDataVector::getFP(C->getContext(), Elts);
       } else if (CFP->getType()->isDoubleTy()) {
-        SmallVector<double, 16> Elts;
+        SmallVector<uint64_t, 16> Elts;
         for (unsigned i = 0, e = V.size(); i != e; ++i)
           if (ConstantFP *CFP = dyn_cast<ConstantFP>(V[i]))
-            Elts.push_back(CFP->getValueAPF().convertToDouble());
+            Elts.push_back(
+                CFP->getValueAPF().bitcastToAPInt().getLimitedValue());
           else
             break;
         if (Elts.size() == V.size())
-          return ConstantDataVector::get(C->getContext(), Elts);
+          return ConstantDataVector::getFP(C->getContext(), Elts);
       }
     }
   }
@@ -2544,7 +2548,31 @@ Constant *ConstantDataArray::get(LLVMContext &Context, ArrayRef<float> Elts) {
 Constant *ConstantDataArray::get(LLVMContext &Context, ArrayRef<double> Elts) {
   Type *Ty = ArrayType::get(Type::getDoubleTy(Context), Elts.size());
   const char *Data = reinterpret_cast<const char *>(Elts.data());
-  return getImpl(StringRef(const_cast<char *>(Data), Elts.size()*8), Ty);
+  return getImpl(StringRef(const_cast<char *>(Data), Elts.size() * 8), Ty);
+}
+
+/// getFP() constructors - Return a constant with array type with an element
+/// count and element type of float with precision matching the number of
+/// bits in the ArrayRef passed in. (i.e. half for 16bits, float for 32bits,
+/// double for 64bits) Note that this can return a ConstantAggregateZero
+/// object.
+Constant *ConstantDataArray::getFP(LLVMContext &Context,
+                                   ArrayRef<uint16_t> Elts) {
+  Type *Ty = VectorType::get(Type::getHalfTy(Context), Elts.size());
+  const char *Data = reinterpret_cast<const char *>(Elts.data());
+  return getImpl(StringRef(const_cast<char *>(Data), Elts.size() * 2), Ty);
+}
+Constant *ConstantDataArray::getFP(LLVMContext &Context,
+                                   ArrayRef<uint32_t> Elts) {
+  Type *Ty = ArrayType::get(Type::getFloatTy(Context), Elts.size());
+  const char *Data = reinterpret_cast<const char *>(Elts.data());
+  return getImpl(StringRef(const_cast<char *>(Data), Elts.size() * 4), Ty);
+}
+Constant *ConstantDataArray::getFP(LLVMContext &Context,
+                                   ArrayRef<uint64_t> Elts) {
+  Type *Ty = ArrayType::get(Type::getDoubleTy(Context), Elts.size());
+  const char *Data = reinterpret_cast<const char *>(Elts.data());
+  return getImpl(StringRef(const_cast<char *>(Data), Elts.size() * 8), Ty);
 }
 
 /// getString - This method constructs a CDS and initializes it with a text
@@ -2597,7 +2625,31 @@ Constant *ConstantDataVector::get(LLVMContext &Context, ArrayRef<float> Elts) {
 Constant *ConstantDataVector::get(LLVMContext &Context, ArrayRef<double> Elts) {
   Type *Ty = VectorType::get(Type::getDoubleTy(Context), Elts.size());
   const char *Data = reinterpret_cast<const char *>(Elts.data());
-  return getImpl(StringRef(const_cast<char *>(Data), Elts.size()*8), Ty);
+  return getImpl(StringRef(const_cast<char *>(Data), Elts.size() * 8), Ty);
+}
+
+/// getFP() constructors - Return a constant with vector type with an element
+/// count and element type of float with the precision matching the number of
+/// bits in the ArrayRef passed in.  (i.e. half for 16bits, float for 32bits,
+/// double for 64bits) Note that this can return a ConstantAggregateZero
+/// object.
+Constant *ConstantDataVector::getFP(LLVMContext &Context,
+                                    ArrayRef<uint16_t> Elts) {
+  Type *Ty = VectorType::get(Type::getHalfTy(Context), Elts.size());
+  const char *Data = reinterpret_cast<const char *>(Elts.data());
+  return getImpl(StringRef(const_cast<char *>(Data), Elts.size() * 2), Ty);
+}
+Constant *ConstantDataVector::getFP(LLVMContext &Context,
+                                    ArrayRef<uint32_t> Elts) {
+  Type *Ty = VectorType::get(Type::getFloatTy(Context), Elts.size());
+  const char *Data = reinterpret_cast<const char *>(Elts.data());
+  return getImpl(StringRef(const_cast<char *>(Data), Elts.size() * 4), Ty);
+}
+Constant *ConstantDataVector::getFP(LLVMContext &Context,
+                                    ArrayRef<uint64_t> Elts) {
+  Type *Ty = VectorType::get(Type::getDoubleTy(Context), Elts.size());
+  const char *Data = reinterpret_cast<const char *>(Elts.data());
+  return getImpl(StringRef(const_cast<char *>(Data), Elts.size() * 8), Ty);
 }
 
 Constant *ConstantDataVector::getSplat(unsigned NumElts, Constant *V) {
@@ -2623,13 +2675,14 @@ Constant *ConstantDataVector::getSplat(unsigned NumElts, Constant *V) {
 
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(V)) {
     if (CFP->getType()->isFloatTy()) {
-      SmallVector<float, 16> Elts(NumElts, CFP->getValueAPF().convertToFloat());
-      return get(V->getContext(), Elts);
+      SmallVector<uint32_t, 16> Elts(
+          NumElts, CFP->getValueAPF().bitcastToAPInt().getLimitedValue());
+      return getFP(V->getContext(), Elts);
     }
     if (CFP->getType()->isDoubleTy()) {
-      SmallVector<double, 16> Elts(NumElts,
-                                   CFP->getValueAPF().convertToDouble());
-      return get(V->getContext(), Elts);
+      SmallVector<uint64_t, 16> Elts(
+          NumElts, CFP->getValueAPF().bitcastToAPInt().getLimitedValue());
+      return getFP(V->getContext(), Elts);
     }
   }
   return ConstantVector::getSplat(NumElts, V);

@@ -676,6 +676,15 @@ public:
   static Constant *get(LLVMContext &Context, ArrayRef<float> Elts);
   static Constant *get(LLVMContext &Context, ArrayRef<double> Elts);
 
+  /// getFP() constructors - Return a constant with array type with an element
+  /// count and element type of float with precision matching the number of
+  /// bits in the ArrayRef passed in. (i.e. half for 16bits, float for 32bits,
+  /// double for 64bits) Note that this can return a ConstantAggregateZero
+  /// object.
+  static Constant *getFP(LLVMContext &Context, ArrayRef<uint16_t> Elts);
+  static Constant *getFP(LLVMContext &Context, ArrayRef<uint32_t> Elts);
+  static Constant *getFP(LLVMContext &Context, ArrayRef<uint64_t> Elts);
+
   /// getString - This method constructs a CDS and initializes it with a text
   /// string. The default behavior (AddNull==true) causes a null terminator to
   /// be placed at the end of the array (increasing the length of the string by
@@ -727,6 +736,15 @@ public:
   static Constant *get(LLVMContext &Context, ArrayRef<uint64_t> Elts);
   static Constant *get(LLVMContext &Context, ArrayRef<float> Elts);
   static Constant *get(LLVMContext &Context, ArrayRef<double> Elts);
+
+  /// getFP() constructors - Return a constant with vector type with an element
+  /// count and element type of float with the precision matching the number of
+  /// bits in the ArrayRef passed in.  (i.e. half for 16bits, float for 32bits,
+  /// double for 64bits) Note that this can return a ConstantAggregateZero
+  /// object.
+  static Constant *getFP(LLVMContext &Context, ArrayRef<uint16_t> Elts);
+  static Constant *getFP(LLVMContext &Context, ArrayRef<uint32_t> Elts);
+  static Constant *getFP(LLVMContext &Context, ArrayRef<uint64_t> Elts);
 
   /// getSplat - Return a ConstantVector with the specified constant in each
   /// element.  The specified constant has to be a of a compatible type (i8/i16/
