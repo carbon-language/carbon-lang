@@ -8467,7 +8467,7 @@ static SDValue lowerVectorShuffleAsUnpack(MVT VT, SDLoc DL, SDValue V1,
     return M >= 0 && M % Size < Size / 2;
   });
   int NumHiInputs = std::count_if(
-      Mask.begin(), Mask.end(), [Size](int M) { return M % Size > Size / 2; });
+      Mask.begin(), Mask.end(), [Size](int M) { return M % Size >= Size / 2; });
 
   bool UnpackLo = NumLoInputs >= NumHiInputs;
 
@@ -8494,6 +8494,12 @@ static SDValue lowerVectorShuffleAsUnpack(MVT VT, SDLoc DL, SDValue V1,
           Mask[i] % Size;
     }
 
+    // If we will have to shuffle both inputs to use the unpack, check whether
+    // we can just unpack first and shuffle the result. If so, skip this unpack.
+    if ((NumLoInputs == 0 || NumHiInputs == 0) && !isNoopShuffleMask(V1Mask) &&
+        !isNoopShuffleMask(V2Mask))
+      return SDValue();
+
     // Shuffle the inputs into place.
     V1 = DAG.getVectorShuffle(VT, DL, V1, DAG.getUNDEF(VT), V1Mask);
     V2 = DAG.getVectorShuffle(VT, DL, V2, DAG.getUNDEF(VT), V2Mask);
@@ -8518,6 +8524,35 @@ static SDValue lowerVectorShuffleAsUnpack(MVT VT, SDLoc DL, SDValue V1,
     MVT UnpackVT = MVT::getVectorVT(MVT::getIntegerVT(ScalarSize), NumElements);
     if (SDValue Unpack = TryUnpack(UnpackVT, Scale))
       return Unpack;
+  }
+
+  // If none of the unpack-rooted lowerings worked (or were profitable) try an
+  // initial unpack.
+  if (NumLoInputs == 0 || NumHiInputs == 0) {
+    assert((NumLoInputs > 0 || NumHiInputs > 0) &&
+           "We have to have *some* inputs!");
+    int HalfOffset = NumLoInputs == 0 ? Size / 2 : 0;
+
+    // FIXME: We could consider the total complexity of the permute of each
+    // possible unpacking. Or at the least we should consider how many
+    // half-crossings are created.
+    // FIXME: We could consider commuting the unpacks.
+
+    SmallVector<int, 32> PermMask;
+    PermMask.assign(Size, -1);
+    for (int i = 0; i < Size; ++i) {
+      if (Mask[i] < 0)
+        continue;
+
+      assert(Mask[i] % Size >= HalfOffset && "Found input from wrong half!");
+
+      PermMask[i] =
+          2 * ((Mask[i] % Size) - HalfOffset) + (Mask[i] < Size ? 0 : 1);
+    }
+    return DAG.getVectorShuffle(
+        VT, DL, DAG.getNode(NumLoInputs == 0 ? X86ISD::UNPCKH : X86ISD::UNPCKL,
+                            DL, VT, V1, V2),
+        DAG.getUNDEF(VT), PermMask);
   }
 
   return SDValue();

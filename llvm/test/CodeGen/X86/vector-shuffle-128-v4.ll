@@ -485,20 +485,20 @@ define <4 x i32> @shuffle_v4i32_0145(<4 x i32> %a, <4 x i32> %b) {
 define <4 x i32> @shuffle_v4i32_0451(<4 x i32> %a, <4 x i32> %b) {
 ; SSE2-LABEL: shuffle_v4i32_0451:
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[0,1]
-; SSE2-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2,3,1]
+; SSE2-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,1,3,2]
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: shuffle_v4i32_0451:
 ; SSE3:       # BB#0:
-; SSE3-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[0,1]
-; SSE3-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2,3,1]
+; SSE3-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+; SSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,1,3,2]
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_v4i32_0451:
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[0,1]
-; SSSE3-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2,3,1]
+; SSSE3-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+; SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,1,3,2]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: shuffle_v4i32_0451:
@@ -541,20 +541,20 @@ define <4 x i32> @shuffle_v4i32_4501(<4 x i32> %a, <4 x i32> %b) {
 define <4 x i32> @shuffle_v4i32_4015(<4 x i32> %a, <4 x i32> %b) {
 ; SSE2-LABEL: shuffle_v4i32_4015:
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[0,1]
-; SSE2-NEXT:    shufps {{.*#+}} xmm0 = xmm0[2,0,1,3]
+; SSE2-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,0,2,3]
 ; SSE2-NEXT:    retq
 ;
 ; SSE3-LABEL: shuffle_v4i32_4015:
 ; SSE3:       # BB#0:
-; SSE3-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[0,1]
-; SSE3-NEXT:    shufps {{.*#+}} xmm0 = xmm0[2,0,1,3]
+; SSE3-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+; SSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,0,2,3]
 ; SSE3-NEXT:    retq
 ;
 ; SSSE3-LABEL: shuffle_v4i32_4015:
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,1],xmm1[0,1]
-; SSSE3-NEXT:    shufps {{.*#+}} xmm0 = xmm0[2,0,1,3]
+; SSSE3-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
+; SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,0,2,3]
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: shuffle_v4i32_4015:
