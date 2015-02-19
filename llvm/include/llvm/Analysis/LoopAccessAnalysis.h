@@ -56,7 +56,8 @@ public:
   /// \brief Emit an analysis note with the debug location from the instruction
   /// in \p Message if available.  Otherwise use the location of \p TheLoop.
   static void emitAnalysis(VectorizationReport &Message,
-                           const Function *TheFunction, const Loop *TheLoop);
+                           const Function *TheFunction,
+                           const Loop *TheLoop);
 };
 
 /// \brief Drive the analysis of memory accesses in the loop
@@ -89,13 +90,14 @@ public:
     /// make more than this number of comparisons.
     unsigned RuntimeMemoryCheckThreshold;
 
-    VectorizerParams(unsigned MaxVectorWidth, unsigned VectorizationFactor,
+    VectorizerParams(unsigned MaxVectorWidth,
+                     unsigned VectorizationFactor,
                      unsigned VectorizationInterleave,
-                     unsigned RuntimeMemoryCheckThreshold)
-        : MaxVectorWidth(MaxVectorWidth),
-          VectorizationFactor(VectorizationFactor),
-          VectorizationInterleave(VectorizationInterleave),
-          RuntimeMemoryCheckThreshold(RuntimeMemoryCheckThreshold) {}
+                     unsigned RuntimeMemoryCheckThreshold) :
+        MaxVectorWidth(MaxVectorWidth),
+        VectorizationFactor(VectorizationFactor),
+        VectorizationInterleave(VectorizationInterleave),
+        RuntimeMemoryCheckThreshold(RuntimeMemoryCheckThreshold) {}
   };
 
   /// This struct holds information about the memory runtime legality check that
@@ -142,10 +144,10 @@ public:
   LoopAccessInfo(Function *F, Loop *L, ScalarEvolution *SE,
                  const DataLayout *DL, const TargetLibraryInfo *TLI,
                  AliasAnalysis *AA, DominatorTree *DT,
-                 const VectorizerParams &VectParams)
-      : TheFunction(F), TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA), DT(DT),
-        NumLoads(0), NumStores(0), MaxSafeDepDistBytes(-1U),
-        VectParams(VectParams) {}
+                 const VectorizerParams &VectParams) :
+      TheFunction(F), TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA), DT(DT),
+      NumLoads(0), NumStores(0), MaxSafeDepDistBytes(-1U),
+      VectParams(VectParams) {}
 
   /// Return true we can analyze the memory accesses in the loop and there are
   /// no memory dependence cycles.  Replaces symbolic strides using Strides.
