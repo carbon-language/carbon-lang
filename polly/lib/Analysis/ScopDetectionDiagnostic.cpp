@@ -591,4 +591,16 @@ const DebugLoc &ReportEntry::getDebugLoc() const {
 bool ReportEntry::classof(const RejectReason *RR) {
   return RR->getKind() == rrkEntry;
 }
+
+//===----------------------------------------------------------------------===//
+// ReportUnprofitable.
+ReportUnprofitable::ReportUnprofitable() : ReportOther(rrkUnprofitable) {}
+
+std::string ReportUnprofitable::getMessage() const {
+  return "Region can not profitably be optimized!";
+}
+
+bool ReportUnprofitable::classof(const RejectReason *RR) {
+  return RR->getKind() == rrkUnprofitable;
+}
 } // namespace polly

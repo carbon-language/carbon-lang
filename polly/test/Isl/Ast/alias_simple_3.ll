@@ -1,8 +1,8 @@
-; RUN: opt %loadPolly -polly-code-generator=isl -polly-ast -analyze -polly-no-early-exit < %s | FileCheck %s --check-prefix=NOAA
-; RUN: opt %loadPolly -polly-code-generator=isl -polly-ast -analyze -polly-no-early-exit -basicaa < %s | FileCheck %s --check-prefix=BASI
-; RUN: opt %loadPolly -polly-code-generator=isl -polly-ast -analyze -polly-no-early-exit -tbaa < %s | FileCheck %s --check-prefix=TBAA
-; RUN: opt %loadPolly -polly-code-generator=isl -polly-ast -analyze -polly-no-early-exit -scev-aa < %s | FileCheck %s --check-prefix=SCEV
-; RUN: opt %loadPolly -polly-code-generator=isl -polly-ast -analyze -polly-no-early-exit -globalsmodref-aa < %s | FileCheck %s --check-prefix=GLOB
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-code-generator=isl -polly-ast -analyze -polly-no-early-exit < %s | FileCheck %s --check-prefix=NOAA
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-code-generator=isl -polly-ast -analyze -polly-no-early-exit -basicaa < %s | FileCheck %s --check-prefix=BASI
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-code-generator=isl -polly-ast -analyze -polly-no-early-exit -tbaa < %s | FileCheck %s --check-prefix=TBAA
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-code-generator=isl -polly-ast -analyze -polly-no-early-exit -scev-aa < %s | FileCheck %s --check-prefix=SCEV
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-code-generator=isl -polly-ast -analyze -polly-no-early-exit -globalsmodref-aa < %s | FileCheck %s --check-prefix=GLOB
 ;
 ;    int A[1024];
 ;    float B[1024];

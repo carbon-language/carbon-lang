@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze < %s | FileCheck %s
 ;
 ; CHECK: ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; CHECK:   [N] -> { Stmt_for_body[i0] -> MemRef_A[o0] : (N >= 0 and 5o0 >= -4 + N + 5i0 and 5o0 <= N + 5i0) or (N <= -1 and 5o0 >= N + 5i0 and 5o0 <= 4 + N + 5i0) };

@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-detect-scops-in-regions-without-loops -polly-detect-scops-in-functions-without-loops -polly-detect -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-scops-in-regions-without-loops -polly-detect-scops-in-functions-without-loops -polly-detect -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect-scops-in-regions-without-loops -polly-detect-scops-in-functions-without-loops -polly-detect -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect-scops-in-regions-without-loops -polly-detect-scops-in-functions-without-loops -polly-detect -analyze < %s | FileCheck %s
 
 
 ;  foo(float *A, long n, long k) {

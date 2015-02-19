@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-dependences -analyze -debug-only=polly-dependence 2>&1 < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-dependences -analyze -debug-only=polly-dependence 2>&1 < %s | FileCheck %s
 ;
 ; REQUIRES: asserts
 ;

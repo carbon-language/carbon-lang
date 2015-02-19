@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -basicaa -polly-detect -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-detect -analyze < %s | FileCheck %s
 ;
 ; Verify that we allow the misc intrinsics.
 ;

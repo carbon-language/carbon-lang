@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-dependences -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-dependences -analyze < %s | FileCheck %s
 ;
 ; CHECK: RAW dependences:
 ; CHECK-DAG: Stmt_for_body3[i0, i1] -> Stmt_for_body3[i0 + i1, o1] : i1 <= 1023 - i0 and i1 >= 0 and i1 <= 1 and i0 >= 0 and o1 <= 511 and o1 >= 1 

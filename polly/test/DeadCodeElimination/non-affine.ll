@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-allow-nonaffine -polly-dce -polly-ast -analyze -polly-no-early-exit < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-allow-nonaffine -polly-dce -polly-ast -analyze -polly-no-early-exit < %s | FileCheck %s
 ;
 ; CHECK: for (int c0 = 0; c0 <= 1023; c0 += 1)
 ;

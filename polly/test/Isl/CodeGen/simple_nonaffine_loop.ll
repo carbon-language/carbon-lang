@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-no-early-exit -polly-ast -polly-allow-nonaffine -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-ast -polly-allow-nonaffine -analyze < %s | FileCheck %s
 
 ;#include <stdio.h>
 ;#include <stdlib.h>

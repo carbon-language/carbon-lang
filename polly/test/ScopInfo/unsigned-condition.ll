@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-scops -analyze -polly-allow-unsigned < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze -polly-allow-unsigned < %s | FileCheck %s
 
 ; void f(int a[], int N, unsigned P) {
 ;   int i;

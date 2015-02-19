@@ -84,6 +84,11 @@ static cl::opt<bool>
                               cl::Hidden, cl::init(false), cl::ZeroOrMore,
                               cl::cat(PollyCategory));
 
+static cl::opt<bool> DetectUnprofitable("polly-detect-unprofitable",
+                                        cl::desc("Detect unprofitable scops"),
+                                        cl::Hidden, cl::init(false),
+                                        cl::ZeroOrMore, cl::cat(PollyCategory));
+
 static cl::opt<std::string> OnlyFunction(
     "polly-only-func",
     cl::desc("Only run on functions that contain a certain string"),
@@ -623,8 +628,11 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
   }
 
   // Check the access function.
-  if (isa<LoadInst>(Inst) || isa<StoreInst>(Inst))
+  if (isa<LoadInst>(Inst) || isa<StoreInst>(Inst)) {
+    Context.hasStores |= isa<StoreInst>(Inst);
+    Context.hasLoads |= isa<LoadInst>(Inst);
     return isValidMemoryAccess(Inst, Context);
+  }
 
   // We do not know this instruction, therefore we assume it is invalid.
   return invalid<ReportUnknownInst>(Context, /*Assert=*/true, &Inst);
@@ -867,6 +875,11 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
 
   if (!allBlocksValid(Context))
     return false;
+
+  // We can probably not do a lot on scops that only write or only read
+  // data.
+  if (!DetectUnprofitable && (!Context.hasStores || !Context.hasLoads))
+    invalid<ReportUnprofitable>(Context, /*Assert=*/true);
 
   DEBUG(dbgs() << "OK\n");
   return true;

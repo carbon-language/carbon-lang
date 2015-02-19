@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-analyze-ir  -analyze < %s | not FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-analyze-ir  -analyze < %s | not FileCheck %s
 
 ;void f(long a[], long N, long M) {
 ;  long i, j, k;

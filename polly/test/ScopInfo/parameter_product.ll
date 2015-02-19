@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-scops -analyze -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze -S < %s | FileCheck %s
 ;
 ; int n, m;
 ; void foo(char* __restrict a)

@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze < %s | FileCheck %s
 ;
 ; FIXME: We cannot detect this SCoP yet but as soon as we can we should check
 ;        that the reduction is detected!

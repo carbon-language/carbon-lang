@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-ast -analyze  -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-ast -analyze  -S < %s | FileCheck %s
 
 ;#define N 20
 ;

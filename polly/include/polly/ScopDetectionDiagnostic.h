@@ -111,6 +111,7 @@ enum RejectReasonKind {
   rrkUnknownInst,
   rrkPHIinExit,
   rrkEntry,
+  rrkUnprofitable,
   rrkLastOther
 };
 
@@ -827,6 +828,24 @@ public:
   //@{
   virtual std::string getMessage() const override;
   virtual const DebugLoc &getDebugLoc() const override;
+  //@}
+};
+
+//===----------------------------------------------------------------------===//
+/// @brief Report regions that seem not profitable to be optimized.
+class ReportUnprofitable : public ReportOther {
+  //===--------------------------------------------------------------------===//
+public:
+  ReportUnprofitable();
+
+  /// @name LLVM-RTTI interface
+  //@{
+  static bool classof(const RejectReason *RR);
+  //@}
+
+  /// @name RejectReason interface
+  //@{
+  virtual std::string getMessage() const override;
   //@}
 };
 

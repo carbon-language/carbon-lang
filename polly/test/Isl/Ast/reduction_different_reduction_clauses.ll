@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -basicaa -polly-ast -polly-ast-detect-parallel -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-ast -polly-ast-detect-parallel -analyze < %s | FileCheck %s
 ;
 ; CHECK: #pragma simd reduction (+ : sum{{[1,2]}}, sum{{[1,2]}}) reduction (* : prod) reduction (| : or) reduction (& : and)
 ; CHECK: #pragma known-parallel reduction (+ : sum{{[1,2]}}, sum{{[1,2]}}) reduction (* : prod) reduction (| : or) reduction (& : and)

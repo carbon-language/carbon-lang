@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-code-generator=isl -polly-codegen-isl -S < %s | FileCheck %s --check-prefix=SCOPES
-; RUN: opt %loadPolly -polly-code-generator=isl -polly-codegen-isl -polly-annotate-alias-scopes=false -S < %s | FileCheck %s --check-prefix=NOSCOPES
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-code-generator=isl -polly-codegen-isl -S < %s | FileCheck %s --check-prefix=SCOPES
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-code-generator=isl -polly-codegen-isl -polly-annotate-alias-scopes=false -S < %s | FileCheck %s --check-prefix=NOSCOPES
 ;
 ; Check that we create alias scopes that indicate the accesses to A, B and C cannot alias in any way.
 ;

@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect -analyze  < %s | FileCheck %s -check-prefix=CHECK
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -analyze  < %s | FileCheck %s -check-prefix=CHECK
 
 ; void f(long A[], long N) {
 ;   long i;

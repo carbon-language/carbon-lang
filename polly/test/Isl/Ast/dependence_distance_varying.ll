@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-ast -polly-ast-detect-parallel -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-ast -polly-ast-detect-parallel -analyze < %s | FileCheck %s
 ;
 ;         void f(int *A, int N) {
 ; CHECK:    #pragma minimal dependence distance: ((N - 1) % 2) + 1

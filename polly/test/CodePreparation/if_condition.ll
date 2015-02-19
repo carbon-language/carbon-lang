@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-prepare -S < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-prepare -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-prepare -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-prepare -S < %s | FileCheck %s
 
 ; void f(long A[], long N) {
 ;   long i;

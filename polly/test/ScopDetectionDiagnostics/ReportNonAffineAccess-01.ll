@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -pass-remarks-missed="polly-detect" -polly-detect-track-failures -polly-detect -analyze < %s 2>&1| FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -pass-remarks-missed="polly-detect" -polly-detect-track-failures -polly-detect -analyze < %s 2>&1| FileCheck %s
 
 ; void f(int A[]) {
 ;   for(int i=0; i<42; ++i)

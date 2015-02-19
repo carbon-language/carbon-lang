@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -basicaa -polly-dependences -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-dependences -analyze < %s | FileCheck %s
 ;
 ; Verify we do not have dependences between the if and the else clause
 ;

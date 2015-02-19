@@ -1,4 +1,4 @@
-; RUN: opt -basicaa %loadPolly -polly-dependences -analyze < %s | FileCheck %s
+; RUN: opt -basicaa %loadPolly -polly-detect-unprofitable -polly-dependences -analyze < %s | FileCheck %s
 ;
 ; Verify that only the inner reduction like accesses cause reduction dependences
 ;

@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-ast -polly-parallel -polly-parallel-force -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-ast -polly-parallel -polly-parallel-force -analyze < %s | FileCheck %s
 ;
 ;       void jd(int *A) {
 ; CHECK:  #pragma omp parallel for

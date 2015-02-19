@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-dependences -analyze -basicaa < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-dependences -analyze -basicaa < %s | FileCheck %s
 ;
 ; CHECK: Reduction dependences:
 ; CHECK:   [N] -> { Stmt_for_body3[i0, i1] -> Stmt_for_body3[i0, 1 + i1] : i0 <= 1023 and i0 >= 0 and i1 <= 1022 and i1 >= 0 and i1 >= 1024 - N + i0 }

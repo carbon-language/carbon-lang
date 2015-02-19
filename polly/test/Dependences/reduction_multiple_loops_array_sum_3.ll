@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-dependences -analyze -basicaa < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-dependences -analyze -basicaa < %s | FileCheck %s
 ;
 ; CHECK: Reduction dependences:
 ; CHECK:   { Stmt_for_inc[i0, i1] -> Stmt_for_inc[i0, 1 + i1] : i0 <= 99 and i0 >= 0 and i1 <= 98 and i1 >= 0 }

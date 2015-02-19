@@ -156,8 +156,12 @@ private:
     SetVector<const SCEVUnknown *> NonAffineAccesses;
     BaseToElSize ElementSize;
 
+    bool hasLoads;
+    bool hasStores;
+
     DetectionContext(Region &R, AliasAnalysis &AA, bool Verify)
-        : CurRegion(R), AST(AA), Verifying(Verify), Log(&R) {}
+        : CurRegion(R), AST(AA), Verifying(Verify), Log(&R), hasLoads(false),
+          hasStores(false) {}
   };
 
   // Remember the valid regions

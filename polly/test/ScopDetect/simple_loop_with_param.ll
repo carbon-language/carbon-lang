@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -basicaa -polly-detect -analyze  < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-detect -analyze  < %s | FileCheck %s
 
 ; void f(long A[], long N, long *init_ptr) {
 ;   long i, j;

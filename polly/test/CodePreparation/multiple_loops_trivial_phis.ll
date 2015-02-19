@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -S -polly-prepare < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -S -polly-prepare < %s | FileCheck %s
 ; ModuleID = 'multiple_loops_trivial_phis.ll'
 ;
 ; int f(int * __restrict__ A) {

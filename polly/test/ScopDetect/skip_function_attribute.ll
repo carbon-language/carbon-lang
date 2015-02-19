@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -analyze < %s | FileCheck %s
 ;
 ; Verify polly skips this function
 ;

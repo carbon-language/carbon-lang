@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -basicaa -polly-dependences -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-dependences -analyze < %s | FileCheck %s
 ;
 ; CHECK:      RAW dependences:
 ; CHECK-DAG:    Stmt_S0[i0] -> Stmt_S1[o0, i0 - o0] : i0 <= 1023 and o0 >= 0 and o0 <= i0

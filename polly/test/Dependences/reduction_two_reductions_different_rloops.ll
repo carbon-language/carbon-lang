@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -basicaa -polly-dependences -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-dependences -analyze < %s | FileCheck %s
 ;
 ; CHECK: RAW dependences:
 ; CHECK:   {  }

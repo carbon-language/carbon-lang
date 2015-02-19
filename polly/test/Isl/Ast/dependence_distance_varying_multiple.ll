@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -basicaa -polly-ast -polly-ast-detect-parallel -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-ast -polly-ast-detect-parallel -analyze < %s | FileCheck %s
 ;
 ;        void f(int *restrict A, int *restrict B, int *restrict C, int *restrict D,
 ;               int *restrict E, int N) {

@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-ast -polly-ast-detect-parallel -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-ast -polly-ast-detect-parallel -analyze < %s | FileCheck %s
 ;
 ; Verify that we won't privatize anything in the outer dimension
 ;

@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -S -polly-prepare < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -S -polly-prepare < %s | FileCheck %s
 ; ModuleID = 'single_loop_trivial_phi.ll'
 ;
 ; int f(int *A, int N) {
