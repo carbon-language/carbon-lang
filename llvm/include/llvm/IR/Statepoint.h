@@ -24,14 +24,17 @@
 
 namespace llvm {
 
-bool isStatepoint(const ImmutableCallSite &CS);
-bool isStatepoint(const Instruction *inst);
-bool isStatepoint(const Instruction &inst);
+class GCRelocateOperands;
+class ImmutableStatepoint;
 
-bool isGCRelocate(const Instruction *inst);
+bool isStatepoint(const ImmutableCallSite &CS);
+bool isStatepoint(const Value *inst);
+bool isStatepoint(const Value &inst);
+
+bool isGCRelocate(const Value *inst);
 bool isGCRelocate(const ImmutableCallSite &CS);
 
-bool isGCResult(const Instruction *inst);
+bool isGCResult(const Value *inst);
 bool isGCResult(const ImmutableCallSite &CS);
 
 /// Analogous to CallSiteBase, this provides most of the actual
@@ -127,6 +130,11 @@ class StatepointBase {
     return iterator_range<arg_iterator>(gc_args_begin(), gc_args_end());
   }
 
+  /// Get list of all gc reloactes linked to this statepoint
+  /// May contain several relocations for the same base/derived pair.
+  /// For example this could happen due to relocations on unwinding
+  /// path of invoke.
+  std::vector<GCRelocateOperands> getRelocates(ImmutableStatepoint &IS);
 
 #ifndef NDEBUG
   /// Asserts if this statepoint is malformed.  Common cases for failure
@@ -187,9 +195,39 @@ class GCRelocateOperands {
     assert(isGCRelocate(CS));
   }
 
+  /// Return true if this relocate is tied to the invoke statepoint.
+  /// This includes relocates which are on the unwinding path.
+  bool isTiedToInvoke() const {
+    const Value *Token = RelocateCS.getArgument(0);
+
+    return isa<ExtractValueInst>(Token) ||
+      isa<InvokeInst>(Token);
+  }
+
+  /// Get enclosed relocate intrinsic
+  ImmutableCallSite getUnderlyingCallSite() {
+    return RelocateCS;
+  }
+
   /// The statepoint with which this gc.relocate is associated.
   const Instruction *statepoint() {
-    return cast<Instruction>(RelocateCS.getArgument(0));
+    const Value *token = RelocateCS.getArgument(0);
+
+    // This takes care both of relocates for call statepoints and relocates
+    // on normal path of invoke statepoint.
+    if (!isa<ExtractValueInst>(token)) {
+      return cast<Instruction>(token);
+    }
+
+    // This relocate is on exceptional path of an invoke statepoint
+    const BasicBlock *invokeBB =
+      cast<Instruction>(token)->getParent()->getUniquePredecessor();
+
+    assert(invokeBB && "safepoints should have unique landingpads");
+    assert(invokeBB->getTerminator() && "safepoint block should be well formed");
+    assert(isStatepoint(invokeBB->getTerminator()));
+
+    return invokeBB->getTerminator();
   }
   /// The index into the associate statepoint's argument list
   /// which contains the base pointer of the pointer whose
@@ -211,5 +249,49 @@ class GCRelocateOperands {
     return *(CS.arg_begin() + derivedPtrIndex());
   }
 };
+
+template <typename InstructionTy, typename ValueTy, typename CallSiteTy>
+std::vector<GCRelocateOperands>
+  StatepointBase<InstructionTy, ValueTy, CallSiteTy>::
+    getRelocates(ImmutableStatepoint &IS) {
+
+  std::vector<GCRelocateOperands> res;
+
+  ImmutableCallSite StatepointCS = IS.getCallSite();
+
+  // Search for relocated pointers.  Note that working backwards from the
+  // gc_relocates ensures that we only get pairs which are actually relocated
+  // and used after the statepoint.
+  for (const User *U : StatepointCS.getInstruction()->users()) {
+    if (isGCRelocate(U)) {
+      res.push_back(GCRelocateOperands(U));
+    }
+  }
+
+  if (!StatepointCS.isInvoke()) {
+    return res;
+  }
+
+  // We need to scan thorough exceptional relocations if it is invoke statepoint
+  LandingPadInst *LandingPad =
+    cast<InvokeInst>(StatepointCS.getInstruction())->getLandingPadInst();
+
+  // Search for extract value from landingpad instruction to which
+  // gc relocates will be attached
+  for (const User *LandingPadUser : LandingPad->users()) {
+    if (!isa<ExtractValueInst>(LandingPadUser)) {
+      continue;
+    }
+
+    // gc relocates should be attached to this extract value
+    for (const User *U : LandingPadUser->users()) {
+      if (isGCRelocate(U)) {
+        res.push_back(GCRelocateOperands(U));
+      }
+    }
+  }
+  return res;
+}
+
 }
 #endif
