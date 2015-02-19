@@ -8880,10 +8880,11 @@ static SDValue CombineBaseUpdate(SDNode *N,
     return SDValue();
 
   SelectionDAG &DAG = DCI.DAG;
-  bool isIntrinsic = (N->getOpcode() == ISD::INTRINSIC_VOID ||
-                      N->getOpcode() == ISD::INTRINSIC_W_CHAIN);
-  unsigned AddrOpIdx = (isIntrinsic ? 2 : 1);
+  const bool isIntrinsic = (N->getOpcode() == ISD::INTRINSIC_VOID ||
+                            N->getOpcode() == ISD::INTRINSIC_W_CHAIN);
+  const unsigned AddrOpIdx = (isIntrinsic ? 2 : 1);
   SDValue Addr = N->getOperand(AddrOpIdx);
+  MemSDNode *MemN = cast<MemSDNode>(N);
 
   // Search for a use of the address operand that is an increment.
   for (SDNode::use_iterator UI = Addr.getNode()->use_begin(),
@@ -8899,7 +8900,7 @@ static SDValue CombineBaseUpdate(SDNode *N,
       continue;
 
     // Find the new opcode for the updating load/store.
-    bool isLoad = true;
+    bool isLoadOp = true;
     bool isLaneOp = false;
     unsigned NewOpc = 0;
     unsigned NumVecs = 0;
@@ -8922,19 +8923,19 @@ static SDValue CombineBaseUpdate(SDNode *N,
       case Intrinsic::arm_neon_vld4lane: NewOpc = ARMISD::VLD4LN_UPD;
         NumVecs = 4; isLaneOp = true; break;
       case Intrinsic::arm_neon_vst1:     NewOpc = ARMISD::VST1_UPD;
-        NumVecs = 1; isLoad = false; break;
+        NumVecs = 1; isLoadOp = false; break;
       case Intrinsic::arm_neon_vst2:     NewOpc = ARMISD::VST2_UPD;
-        NumVecs = 2; isLoad = false; break;
+        NumVecs = 2; isLoadOp = false; break;
       case Intrinsic::arm_neon_vst3:     NewOpc = ARMISD::VST3_UPD;
-        NumVecs = 3; isLoad = false; break;
+        NumVecs = 3; isLoadOp = false; break;
       case Intrinsic::arm_neon_vst4:     NewOpc = ARMISD::VST4_UPD;
-        NumVecs = 4; isLoad = false; break;
+        NumVecs = 4; isLoadOp = false; break;
       case Intrinsic::arm_neon_vst2lane: NewOpc = ARMISD::VST2LN_UPD;
-        NumVecs = 2; isLoad = false; isLaneOp = true; break;
+        NumVecs = 2; isLoadOp = false; isLaneOp = true; break;
       case Intrinsic::arm_neon_vst3lane: NewOpc = ARMISD::VST3LN_UPD;
-        NumVecs = 3; isLoad = false; isLaneOp = true; break;
+        NumVecs = 3; isLoadOp = false; isLaneOp = true; break;
       case Intrinsic::arm_neon_vst4lane: NewOpc = ARMISD::VST4LN_UPD;
-        NumVecs = 4; isLoad = false; isLaneOp = true; break;
+        NumVecs = 4; isLoadOp = false; isLaneOp = true; break;
       }
     } else {
       isLaneOp = true;
@@ -8948,7 +8949,7 @@ static SDValue CombineBaseUpdate(SDNode *N,
 
     // Find the size of memory referenced by the load/store.
     EVT VecTy;
-    if (isLoad)
+    if (isLoadOp)
       VecTy = N->getValueType(0);
     else
       VecTy = N->getOperand(AddrOpIdx+1).getValueType();
@@ -8969,31 +8970,32 @@ static SDValue CombineBaseUpdate(SDNode *N,
     }
 
     // Create the new updating load/store node.
+    // First, create an SDVTList for the new updating node's results.
     EVT Tys[6];
-    unsigned NumResultVecs = (isLoad ? NumVecs : 0);
+    unsigned NumResultVecs = (isLoadOp ? NumVecs : 0);
     unsigned n;
     for (n = 0; n < NumResultVecs; ++n)
       Tys[n] = VecTy;
     Tys[n++] = MVT::i32;
     Tys[n] = MVT::Other;
     SDVTList SDTys = DAG.getVTList(makeArrayRef(Tys, NumResultVecs+2));
+
+    // Then, gather the new node's operands.
     SmallVector<SDValue, 8> Ops;
     Ops.push_back(N->getOperand(0)); // incoming chain
     Ops.push_back(N->getOperand(AddrOpIdx));
     Ops.push_back(Inc);
-    for (unsigned i = AddrOpIdx + 1; i < N->getNumOperands(); ++i) {
+    for (unsigned i = AddrOpIdx + 1; i < N->getNumOperands(); ++i)
       Ops.push_back(N->getOperand(i));
-    }
-    MemIntrinsicSDNode *MemInt = cast<MemIntrinsicSDNode>(N);
+
     SDValue UpdN = DAG.getMemIntrinsicNode(NewOpc, SDLoc(N), SDTys,
-                                           Ops, MemInt->getMemoryVT(),
-                                           MemInt->getMemOperand());
+                                           Ops, MemN->getMemoryVT(),
+                                           MemN->getMemOperand());
 
     // Update the uses.
     SmallVector<SDValue, 5> NewResults;
-    for (unsigned i = 0; i < NumResultVecs; ++i) {
+    for (unsigned i = 0; i < NumResultVecs; ++i)
       NewResults.push_back(SDValue(UpdN.getNode(), i));
-    }
     NewResults.push_back(SDValue(UpdN.getNode(), NumResultVecs+1)); // chain
     DCI.CombineTo(N, NewResults);
     DCI.CombineTo(User, SDValue(UpdN.getNode(), NumResultVecs));
