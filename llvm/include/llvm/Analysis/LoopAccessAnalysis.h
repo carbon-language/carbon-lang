@@ -38,10 +38,10 @@ class SCEV;
 /// the user why vectorization did not occur.
 class VectorizationReport {
   std::string Message;
-  Instruction *Instr;
+  const Instruction *Instr;
 
 public:
-  VectorizationReport(Instruction *I = nullptr)
+  VectorizationReport(const Instruction *I = nullptr)
       : Message("loop not vectorized: "), Instr(I) {}
 
   template <typename A> VectorizationReport &operator<<(const A &Value) {
@@ -50,15 +50,16 @@ public:
     return *this;
   }
 
-  Instruction *getInstr() { return Instr; }
+  const Instruction *getInstr() const { return Instr; }
 
   std::string &str() { return Message; }
+  const std::string &str() const { return Message; }
   operator Twine() { return Message; }
 
   /// \brief Emit an analysis note for \p PassName with the debug location from
   /// the instruction in \p Message if available.  Otherwise use the location of
   /// \p TheLoop.
-  static void emitAnalysis(VectorizationReport &Message,
+  static void emitAnalysis(const VectorizationReport &Message,
                            const Function *TheFunction,
                            const Loop *TheLoop,
                            const char *PassName);

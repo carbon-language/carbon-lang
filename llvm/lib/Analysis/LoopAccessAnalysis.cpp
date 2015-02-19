@@ -50,12 +50,12 @@ bool VectorizerParams::isInterleaveForced() {
   return ::VectorizationInterleave.getNumOccurrences() > 0;
 }
 
-void VectorizationReport::emitAnalysis(VectorizationReport &Message,
+void VectorizationReport::emitAnalysis(const VectorizationReport &Message,
                                        const Function *TheFunction,
                                        const Loop *TheLoop,
                                        const char *PassName) {
   DebugLoc DL = TheLoop->getStartLoc();
-  if (Instruction *I = Message.getInstr())
+  if (const Instruction *I = Message.getInstr())
     DL = I->getDebugLoc();
   emitOptimizationRemarkAnalysis(TheFunction->getContext(), PassName,
                                  *TheFunction, DL, Message.str());
