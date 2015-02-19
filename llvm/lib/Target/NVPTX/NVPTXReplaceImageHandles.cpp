@@ -16,6 +16,7 @@
 #include "NVPTX.h"
 #include "NVPTXMachineFunctionInfo.h"
 #include "NVPTXSubtarget.h"
+#include "NVPTXTargetMachine.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -142,8 +143,9 @@ findIndexForHandle(MachineOperand &Op, MachineFunction &MF, unsigned &Idx) {
   case NVPTX::LD_i64_avar: {
     // The handle is a parameter value being loaded, replace with the
     // parameter symbol
-    const NVPTXSubtarget &ST = MF.getTarget().getSubtarget<NVPTXSubtarget>();
-    if (ST.getDrvInterface() == NVPTX::CUDA) {
+    const NVPTXTargetMachine &TM =
+        static_cast<const NVPTXTargetMachine &>(MF.getTarget());
+    if (TM.getDrvInterface() == NVPTX::CUDA) {
       // For CUDA, we preserve the param loads coming from function arguments
       return false;
     }

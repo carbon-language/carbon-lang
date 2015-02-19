@@ -51,6 +51,12 @@ NVPTXSubtarget::NVPTXSubtarget(const std::string &TT, const std::string &CPU,
       InstrInfo(initializeSubtargetDependencies(CPU, FS)), TLInfo(TM, *this),
       TSInfo(TM.getDataLayout()), FrameLowering(*this) {}
 
-NVPTX::DrvInterface NVPTXSubtarget::getDrvInterface() const {
-  return TM.getDrvInterface();
+bool NVPTXSubtarget::hasImageHandles() const {
+  // Enable handles for Kepler+, where CUDA supports indirect surfaces and
+  // textures
+  if (TM.getDrvInterface() == NVPTX::CUDA)
+    return (SmVersion >= 30);
+
+  // Disabled, otherwise
+  return false;
 }

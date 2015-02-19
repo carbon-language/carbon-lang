@@ -94,20 +94,10 @@ public:
   }
   inline bool hasROT32() const { return hasHWROT32() || hasSWROT32(); }
   inline bool hasROT64() const { return SmVersion >= 20; }
-
-  bool hasImageHandles() const {
-    // Enable handles for Kepler+, where CUDA supports indirect surfaces and
-    // textures
-    if (getDrvInterface() == NVPTX::CUDA)
-      return (SmVersion >= 30);
-
-    // Disabled, otherwise
-    return false;
-  }
+  bool hasImageHandles() const;
   bool is64Bit() const { return Is64Bit; }
 
   unsigned int getSmVersion() const { return SmVersion; }
-  NVPTX::DrvInterface getDrvInterface() const;
   std::string getTargetName() const { return TargetName; }
 
   unsigned getPTXVersion() const { return PTXVersion; }

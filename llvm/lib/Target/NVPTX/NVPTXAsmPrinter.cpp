@@ -164,7 +164,7 @@ void NVPTXAsmPrinter::emitLineNumberAsDotLoc(const MachineInstr &MI) {
 void NVPTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   SmallString<128> Str;
   raw_svector_ostream OS(Str);
-  if (nvptxSubtarget->getDrvInterface() == NVPTX::CUDA)
+  if (static_cast<NVPTXTargetMachine &>(TM).getDrvInterface() == NVPTX::CUDA)
     emitLineNumberAsDotLoc(*MI);
 
   MCInst Inst;
@@ -908,9 +908,10 @@ void NVPTXAsmPrinter::emitHeader(Module &M, raw_ostream &O,
   O << ".target ";
   O << STI.getTargetName();
 
-  if (STI.getDrvInterface() == NVPTX::NVCL)
+  const NVPTXTargetMachine &TM = static_cast<const NVPTXTargetMachine &>(TM);
+  if (TM.getDrvInterface() == NVPTX::NVCL)
     O << ", texmode_independent";
-  if (STI.getDrvInterface() == NVPTX::CUDA) {
+  else {
     if (!STI.hasDouble())
       O << ", map_f64_to_f32";
   }
@@ -921,7 +922,7 @@ void NVPTXAsmPrinter::emitHeader(Module &M, raw_ostream &O,
   O << "\n";
 
   O << ".address_size ";
-  if (static_cast<const NVPTXTargetMachine &>(TM).is64Bit())
+  if (TM.is64Bit())
     O << "64";
   else
     O << "32";
@@ -992,7 +993,7 @@ bool NVPTXAsmPrinter::doFinalization(Module &M) {
 
 void NVPTXAsmPrinter::emitLinkageDirective(const GlobalValue *V,
                                            raw_ostream &O) {
-  if (nvptxSubtarget->getDrvInterface() == NVPTX::CUDA) {
+  if (static_cast<NVPTXTargetMachine &>(TM).getDrvInterface() == NVPTX::CUDA) {
     if (V->hasExternalLinkage()) {
       if (isa<GlobalVariable>(V)) {
         const GlobalVariable *GVar = cast<GlobalVariable>(V);
@@ -1413,39 +1414,11 @@ static unsigned int getOpenCLAlignment(const DataLayout *TD, Type *Ty) {
 
 void NVPTXAsmPrinter::printParamName(Function::const_arg_iterator I,
                                      int paramIndex, raw_ostream &O) {
-  if ((nvptxSubtarget->getDrvInterface() == NVPTX::NVCL) ||
-      (nvptxSubtarget->getDrvInterface() == NVPTX::CUDA))
-    O << *getSymbol(I->getParent()) << "_param_" << paramIndex;
-  else {
-    std::string argName = I->getName();
-    const char *p = argName.c_str();
-    while (*p) {
-      if (*p == '.')
-        O << "_";
-      else
-        O << *p;
-      p++;
-    }
-  }
+  O << *getSymbol(I->getParent()) << "_param_" << paramIndex;
 }
 
 void NVPTXAsmPrinter::printParamName(int paramIndex, raw_ostream &O) {
-  Function::const_arg_iterator I, E;
-  int i = 0;
-
-  if ((nvptxSubtarget->getDrvInterface() == NVPTX::NVCL) ||
-      (nvptxSubtarget->getDrvInterface() == NVPTX::CUDA)) {
-    O << *CurrentFnSym << "_param_" << paramIndex;
-    return;
-  }
-
-  for (I = F->arg_begin(), E = F->arg_end(); I != E; ++I, i++) {
-    if (i == paramIndex) {
-      printParamName(I, paramIndex, O);
-      return;
-    }
-  }
-  llvm_unreachable("paramIndex out of bound");
+  O << *CurrentFnSym << "_param_" << paramIndex;
 }
 
 void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
@@ -1522,7 +1495,8 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
           // Special handling for pointer arguments to kernel
           O << "\t.param .u" << thePointerTy.getSizeInBits() << " ";
 
-          if (nvptxSubtarget->getDrvInterface() != NVPTX::CUDA) {
+          if (static_cast<NVPTXTargetMachine &>(TM).getDrvInterface() !=
+              NVPTX::CUDA) {
             Type *ETy = PTy->getElementType();
             int addrSpace = PTy->getAddressSpace();
             switch (addrSpace) {
