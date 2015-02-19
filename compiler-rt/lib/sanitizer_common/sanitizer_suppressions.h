@@ -68,8 +68,6 @@ class SuppressionContext {
 
 const char *SuppressionTypeString(SuppressionType t);
 
-bool TemplateMatch(char *templ, const char *str);
-
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_SUPPRESSIONS_H

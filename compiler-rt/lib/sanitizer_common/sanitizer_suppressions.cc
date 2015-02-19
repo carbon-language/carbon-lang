@@ -26,48 +26,6 @@ static const char *const kTypeStrings[SuppressionTypeCount] = {
     "deadlock", "vptr_check", "interceptor_name", "interceptor_via_fun",
     "interceptor_via_lib"};
 
-bool TemplateMatch(char *templ, const char *str) {
-  if (str == 0 || str[0] == 0)
-    return false;
-  bool start = false;
-  if (templ && templ[0] == '^') {
-    start = true;
-    templ++;
-  }
-  bool asterisk = false;
-  while (templ && templ[0]) {
-    if (templ[0] == '*') {
-      templ++;
-      start = false;
-      asterisk = true;
-      continue;
-    }
-    if (templ[0] == '$')
-      return str[0] == 0 || asterisk;
-    if (str[0] == 0)
-      return false;
-    char *tpos = (char*)internal_strchr(templ, '*');
-    char *tpos1 = (char*)internal_strchr(templ, '$');
-    if (tpos == 0 || (tpos1 && tpos1 < tpos))
-      tpos = tpos1;
-    if (tpos != 0)
-      tpos[0] = 0;
-    const char *str0 = str;
-    const char *spos = internal_strstr(str, templ);
-    str = spos + internal_strlen(templ);
-    templ = tpos;
-    if (tpos)
-      tpos[0] = tpos == tpos1 ? '$' : '*';
-    if (spos == 0)
-      return false;
-    if (start && spos != str0)
-      return false;
-    start = false;
-    asterisk = false;
-  }
-  return true;
-}
-
 ALIGNED(64) static char placeholder[sizeof(SuppressionContext)];
 static SuppressionContext *suppression_ctx = 0;
 
