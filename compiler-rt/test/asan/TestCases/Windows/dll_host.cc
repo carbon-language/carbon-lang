@@ -6,11 +6,14 @@
 //
 // Get the list of ASan wrappers exported by the main module RTL:
 // RUN: dumpbin /EXPORTS %t | grep -o "__asan_wrap[^ ]*" | grep -v @ | sort | uniq > %t.exported_wrappers
+// FIXME: we should really check the other __asan exports too.
+// RUN: dumpbin /EXPORTS %t | grep -o "__sanitizer_[^ ]*" | grep -v @ | sort | uniq >> %t.exported_wrappers
 //
 // Get the list of ASan wrappers imported by the DLL RTL:
 // [BEWARE: be really careful with the sed commands, as this test can be run
 //  from different environemnts with different shells and seds]
 // RUN: grep INTERCEPT_LIBRARY_FUNCTION %p/../../../../lib/asan/asan_win_dll_thunk.cc | grep -v define | sed -e s/.*(/__asan_wrap_/ | sed -e s/).*// | sort | uniq > %t.dll_imports
+// RUN: grep "^INTERFACE_FUNCTION.*sanitizer" %p/../../../../lib/asan/asan_win_dll_thunk.cc | grep -v define | sed -e s/.*(// | sed -e s/).*// | sort | uniq >> %t.dll_imports
 //
 // Now make sure the DLL thunk imports everything:
 // RUN: echo
