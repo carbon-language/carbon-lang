@@ -139,7 +139,6 @@ namespace llvm {
                                              MCCodeEmitter *CE,
                                              MCAsmBackend *TAB,
                                              bool ShowInst);
-    typedef MCStreamer *(*NullStreamerCtorTy)(MCContext &Ctx);
     typedef MCTargetStreamer *(*NullTargetStreamerCtorTy)(MCStreamer &S);
     typedef MCRelocationInfo *(*MCRelocationInfoCtorTy)(StringRef TT,
                                                         MCContext &Ctx);
@@ -225,10 +224,6 @@ namespace llvm {
     /// AsmStreamer, if registered (default = llvm::createAsmStreamer).
     AsmStreamerCtorTy AsmStreamerCtorFn;
 
-    /// Construction function for this target's NullStreamer, if registered
-    /// (default = llvm::createNullStreamer).
-    NullStreamerCtorTy NullStreamerCtorFn;
-
     /// Construction function for this target's null TargetStreamer, if
     /// registered (default = nullptr).
     NullTargetStreamerCtorTy NullTargetStreamerCtorFn;
@@ -243,8 +238,8 @@ namespace llvm {
 
   public:
     Target()
-        : AsmStreamerCtorFn(nullptr), NullStreamerCtorFn(nullptr),
-          MCRelocationInfoCtorFn(nullptr), MCSymbolizerCtorFn(nullptr) {}
+        : AsmStreamerCtorFn(nullptr), MCRelocationInfoCtorFn(nullptr),
+          MCSymbolizerCtorFn(nullptr) {}
 
     /// @name Target Information
     /// @{
@@ -454,9 +449,9 @@ namespace llvm {
     }
 
     MCStreamer *createNullStreamer(MCContext &Ctx) const {
-      if (NullStreamerCtorFn)
-        return NullStreamerCtorFn(Ctx);
-      return llvm::createNullStreamer(Ctx);
+      MCStreamer *S = llvm::createNullStreamer(Ctx);
+      createNullTargetStreamer(*S);
+      return S;
     }
 
     MCTargetStreamer *createNullTargetStreamer(MCStreamer &S) const {
@@ -789,10 +784,6 @@ namespace llvm {
     /// @param Fn - A function to construct an MCStreamer for the target.
     static void RegisterAsmStreamer(Target &T, Target::AsmStreamerCtorTy Fn) {
       T.AsmStreamerCtorFn = Fn;
-    }
-
-    static void RegisterNullStreamer(Target &T, Target::NullStreamerCtorTy Fn) {
-      T.NullStreamerCtorFn = Fn;
     }
 
     static void

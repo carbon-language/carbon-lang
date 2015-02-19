@@ -1354,12 +1354,6 @@ MCStreamer *createMCAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
   return S;
 }
 
-MCStreamer *createARMNullStreamer(MCContext &Ctx) {
-  MCStreamer *S = llvm::createNullStreamer(Ctx);
-  new ARMTargetStreamer(*S);
-  return S;
-}
-
 MCTargetStreamer *createARMNullTargetStreamer(MCStreamer &S) {
   return new ARMTargetStreamer(S);
 }
