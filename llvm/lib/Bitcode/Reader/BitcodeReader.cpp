@@ -1515,25 +1515,24 @@ std::error_code BitcodeReader::ParseMetadata() {
       break;
     }
     case bitc::METADATA_TEMPLATE_TYPE: {
-      if (Record.size() != 4)
+      if (Record.size() != 3)
         return Error("Invalid record");
 
-      MDValueList.AssignValue(
-          GET_OR_DISTINCT(MDTemplateTypeParameter, Record[0],
-                          (Context, getMDOrNull(Record[1]),
-                           getMDString(Record[2]), getMDOrNull(Record[3]))),
-          NextMDValueNo++);
+      MDValueList.AssignValue(GET_OR_DISTINCT(MDTemplateTypeParameter,
+                                              Record[0],
+                                              (Context, getMDString(Record[1]),
+                                               getMDOrNull(Record[2]))),
+                              NextMDValueNo++);
       break;
     }
     case bitc::METADATA_TEMPLATE_VALUE: {
-      if (Record.size() != 6)
+      if (Record.size() != 5)
         return Error("Invalid record");
 
       MDValueList.AssignValue(
           GET_OR_DISTINCT(MDTemplateValueParameter, Record[0],
-                          (Context, Record[1], getMDOrNull(Record[2]),
-                           getMDString(Record[3]), getMDOrNull(Record[4]),
-                           getMDOrNull(Record[5]))),
+                          (Context, Record[1], getMDString(Record[2]),
+                           getMDOrNull(Record[3]), getMDOrNull(Record[4]))),
           NextMDValueNo++);
       break;
     }

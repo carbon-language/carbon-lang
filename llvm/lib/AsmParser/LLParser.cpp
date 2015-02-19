@@ -3515,37 +3515,33 @@ bool LLParser::ParseMDNamespace(MDNode *&Result, bool IsDistinct) {
 }
 
 /// ParseMDTemplateTypeParameter:
-///   ::= !MDTemplateTypeParameter(scope: !0, name: "Ty", type: !1)
+///   ::= !MDTemplateTypeParameter(name: "Ty", type: !1)
 bool LLParser::ParseMDTemplateTypeParameter(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
-  REQUIRED(scope, MDField, );                                                  \
   OPTIONAL(name, MDStringField, );                                             \
   REQUIRED(type, MDField, );
   PARSE_MD_FIELDS();
 #undef VISIT_MD_FIELDS
 
-  Result = GET_OR_DISTINCT(MDTemplateTypeParameter,
-                           (Context, scope.Val, name.Val, type.Val));
+  Result =
+      GET_OR_DISTINCT(MDTemplateTypeParameter, (Context, name.Val, type.Val));
   return false;
 }
 
 /// ParseMDTemplateValueParameter:
 ///   ::= !MDTemplateValueParameter(tag: DW_TAG_template_value_parameter,
-///                                 scope: !0, name: "V", type: !1,
-///                                 value: i32 7)
+///                                 name: "V", type: !1, value: i32 7)
 bool LLParser::ParseMDTemplateValueParameter(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
   REQUIRED(tag, DwarfTagField, );                                              \
-  REQUIRED(scope, MDField, );                                                  \
   OPTIONAL(name, MDStringField, );                                             \
   REQUIRED(type, MDField, );                                                   \
   REQUIRED(value, MDField, );
   PARSE_MD_FIELDS();
 #undef VISIT_MD_FIELDS
 
-  Result = GET_OR_DISTINCT(
-      MDTemplateValueParameter,
-      (Context, tag.Val, scope.Val, name.Val, type.Val, value.Val));
+  Result = GET_OR_DISTINCT(MDTemplateValueParameter,
+                           (Context, tag.Val, name.Val, type.Val, value.Val));
   return false;
 }
 

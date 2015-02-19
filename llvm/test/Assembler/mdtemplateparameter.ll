@@ -8,17 +8,17 @@
 !1 = distinct !{}
 ; CHECK: !1 = distinct !{}
 
-; CHECK-NEXT: !2 = !MDTemplateTypeParameter(scope: !0, name: "Ty", type: !1)
-; CHECK-NEXT: !3 = !MDTemplateTypeParameter(scope: !0, name: "", type: !1)
-!2 = !MDTemplateTypeParameter(scope: !0, name: "Ty", type: !1)
-!3 = !MDTemplateTypeParameter(scope: !0, type: !1)
-!4 = !MDTemplateTypeParameter(scope: !0, name: "", type: !1)
+; CHECK-NEXT: !2 = !MDTemplateTypeParameter(name: "Ty", type: !1)
+; CHECK-NEXT: !3 = !MDTemplateTypeParameter(name: "", type: !1)
+!2 = !MDTemplateTypeParameter(name: "Ty", type: !1)
+!3 = !MDTemplateTypeParameter(type: !1)
+!4 = !MDTemplateTypeParameter(name: "", type: !1)
 
-; CHECK-NEXT: !4 = !MDTemplateValueParameter(tag: DW_TAG_template_value_parameter, scope: !0, name: "V", type: !1, value: i32 7)
-; CHECK-NEXT: !5 = !MDTemplateValueParameter(tag: DW_TAG_template_value_parameter, scope: !0, name: "", type: !1, value: i32 7)
+; CHECK-NEXT: !4 = !MDTemplateValueParameter(tag: DW_TAG_template_value_parameter, name: "V", type: !1, value: i32 7)
+; CHECK-NEXT: !5 = !MDTemplateValueParameter(tag: DW_TAG_template_value_parameter, name: "", type: !1, value: i32 7)
 !5 = !MDTemplateValueParameter(tag: DW_TAG_template_value_parameter,
-                               scope: !0, name: "V", type: !1, value: i32 7)
+                               name: "V", type: !1, value: i32 7)
 !6 = !MDTemplateValueParameter(tag: DW_TAG_template_value_parameter,
-                               scope: !0, type: !1, value: i32 7)
+                               type: !1, value: i32 7)
 !7 = !MDTemplateValueParameter(tag: DW_TAG_template_value_parameter,
-                               scope: !0, name: "", type: !1, value: i32 7)
+                               name: "", type: !1, value: i32 7)

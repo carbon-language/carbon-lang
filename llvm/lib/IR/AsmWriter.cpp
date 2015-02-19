@@ -1685,8 +1685,6 @@ static void writeMDTemplateTypeParameter(raw_ostream &Out,
                                          const Module *Context) {
   Out << "!MDTemplateTypeParameter(";
   FieldSeparator FS;
-  Out << FS << "scope: ";
-  writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
   Out << FS << "name: \"" << N->getName() << "\"";
   Out << FS << "type: ";
   writeMetadataAsOperand(Out, N->getType(), TypePrinter, Machine, Context);
@@ -1701,8 +1699,6 @@ static void writeMDTemplateValueParameter(raw_ostream &Out,
   Out << "!MDTemplateValueParameter(";
   FieldSeparator FS;
   writeTag(Out, FS, N);
-  Out << FS << "scope: ";
-  writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
   Out << FS << "name: \"" << N->getName() << "\"";
   Out << FS << "type: ";
   writeMetadataAsOperand(Out, N->getType(), TypePrinter, Machine, Context);

@@ -646,44 +646,36 @@ template <> struct MDNodeKeyImpl<MDNamespace> {
 };
 
 template <> struct MDNodeKeyImpl<MDTemplateTypeParameter> {
-  Metadata *Scope;
   StringRef Name;
   Metadata *Type;
 
-  MDNodeKeyImpl(Metadata *Scope, StringRef Name, Metadata *Type)
-      : Scope(Scope), Name(Name), Type(Type) {}
+  MDNodeKeyImpl(StringRef Name, Metadata *Type) : Name(Name), Type(Type) {}
   MDNodeKeyImpl(const MDTemplateTypeParameter *N)
-      : Scope(N->getScope()), Name(N->getName()), Type(N->getType()) {}
+      : Name(N->getName()), Type(N->getType()) {}
 
   bool isKeyOf(const MDTemplateTypeParameter *RHS) const {
-    return Scope == RHS->getScope() && Name == RHS->getName() &&
-           Type == RHS->getType();
+    return Name == RHS->getName() && Type == RHS->getType();
   }
-  unsigned getHashValue() const { return hash_combine(Scope, Name, Type); }
+  unsigned getHashValue() const { return hash_combine(Name, Type); }
 };
 
 template <> struct MDNodeKeyImpl<MDTemplateValueParameter> {
   unsigned Tag;
-  Metadata *Scope;
   StringRef Name;
   Metadata *Type;
   Metadata *Value;
 
-  MDNodeKeyImpl(unsigned Tag, Metadata *Scope, StringRef Name, Metadata *Type,
-                Metadata *Value)
-      : Tag(Tag), Scope(Scope), Name(Name), Type(Type), Value(Value) {}
+  MDNodeKeyImpl(unsigned Tag, StringRef Name, Metadata *Type, Metadata *Value)
+      : Tag(Tag), Name(Name), Type(Type), Value(Value) {}
   MDNodeKeyImpl(const MDTemplateValueParameter *N)
-      : Tag(N->getTag()), Scope(N->getScope()), Name(N->getName()),
-        Type(N->getType()), Value(N->getValue()) {}
+      : Tag(N->getTag()), Name(N->getName()), Type(N->getType()),
+        Value(N->getValue()) {}
 
   bool isKeyOf(const MDTemplateValueParameter *RHS) const {
-    return Tag == RHS->getTag() && Scope == RHS->getScope() &&
-           Name == RHS->getName() && Type == RHS->getType() &&
-           Value == RHS->getValue();
+    return Tag == RHS->getTag() && Name == RHS->getName() &&
+           Type == RHS->getType() && Value == RHS->getValue();
   }
-  unsigned getHashValue() const {
-    return hash_combine(Tag, Scope, Name, Type, Value);
-  }
+  unsigned getHashValue() const { return hash_combine(Tag, Name, Type, Value); }
 };
 
 template <> struct MDNodeKeyImpl<MDGlobalVariable> {

@@ -1386,21 +1386,19 @@ TEST_F(MDNamespaceTest, get) {
 typedef MetadataTest MDTemplateTypeParameterTest;
 
 TEST_F(MDTemplateTypeParameterTest, get) {
-  Metadata *Scope = MDTuple::getDistinct(Context, None);
   StringRef Name = "template";
   Metadata *Type = MDTuple::getDistinct(Context, None);
+  Metadata *Other = MDTuple::getDistinct(Context, None);
 
-  auto *N = MDTemplateTypeParameter::get(Context, Scope, Name, Type);
+  auto *N = MDTemplateTypeParameter::get(Context, Name, Type);
 
   EXPECT_EQ(dwarf::DW_TAG_template_type_parameter, N->getTag());
-  EXPECT_EQ(Scope, N->getScope());
   EXPECT_EQ(Name, N->getName());
   EXPECT_EQ(Type, N->getType());
-  EXPECT_EQ(N, MDTemplateTypeParameter::get(Context, Scope, Name, Type));
+  EXPECT_EQ(N, MDTemplateTypeParameter::get(Context, Name, Type));
 
-  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, Type, Name, Type));
-  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, Scope, "other", Type));
-  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, Scope, Name, Scope));
+  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, "other", Type));
+  EXPECT_NE(N, MDTemplateTypeParameter::get(Context, Name, Other));
 
   TempMDTemplateTypeParameter Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
@@ -1410,32 +1408,26 @@ typedef MetadataTest MDTemplateValueParameterTest;
 
 TEST_F(MDTemplateValueParameterTest, get) {
   unsigned Tag = dwarf::DW_TAG_template_value_parameter;
-  Metadata *Scope = MDTuple::getDistinct(Context, None);
   StringRef Name = "template";
   Metadata *Type = MDTuple::getDistinct(Context, None);
   Metadata *Value = MDTuple::getDistinct(Context, None);
+  Metadata *Other = MDTuple::getDistinct(Context, None);
 
-  auto *N =
-      MDTemplateValueParameter::get(Context, Tag, Scope, Name, Type, Value);
+  auto *N = MDTemplateValueParameter::get(Context, Tag, Name, Type, Value);
   EXPECT_EQ(Tag, N->getTag());
-  EXPECT_EQ(Scope, N->getScope());
   EXPECT_EQ(Name, N->getName());
   EXPECT_EQ(Type, N->getType());
   EXPECT_EQ(Value, N->getValue());
-  EXPECT_EQ(
-      N, MDTemplateValueParameter::get(Context, Tag, Scope, Name, Type, Value));
+  EXPECT_EQ(N, MDTemplateValueParameter::get(Context, Tag, Name, Type, Value));
 
   EXPECT_NE(N, MDTemplateValueParameter::get(
-                   Context, dwarf::DW_TAG_GNU_template_template_param, Scope,
-                   Name, Type, Value));
-  EXPECT_NE(
-      N, MDTemplateValueParameter::get(Context, Tag, Type, Name, Type, Value));
-  EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag, Scope, "other", Type,
+                   Context, dwarf::DW_TAG_GNU_template_template_param, Name,
+                   Type, Value));
+  EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag,  "other", Type,
                                              Value));
-  EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag, Scope, Name, Scope,
+  EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag,  Name, Other,
                                              Value));
-  EXPECT_NE(
-      N, MDTemplateValueParameter::get(Context, Tag, Scope, Name, Type, Scope));
+  EXPECT_NE(N, MDTemplateValueParameter::get(Context, Tag, Name, Type, Other));
 
   TempMDTemplateValueParameter Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
