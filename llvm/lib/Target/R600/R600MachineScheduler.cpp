@@ -26,7 +26,7 @@ using namespace llvm;
 void R600SchedStrategy::initialize(ScheduleDAGMI *dag) {
   assert(dag->hasVRegLiveness() && "R600SchedStrategy needs vreg liveness");
   DAG = static_cast<ScheduleDAGMILive*>(dag);
-  const AMDGPUSubtarget &ST = DAG->TM.getSubtarget<AMDGPUSubtarget>();
+  const AMDGPUSubtarget &ST = DAG->MF.getSubtarget<AMDGPUSubtarget>();
   TII = static_cast<const R600InstrInfo*>(DAG->TII);
   TRI = static_cast<const R600RegisterInfo*>(DAG->TRI);
   VLIW5 = !ST.hasCaymanISA();

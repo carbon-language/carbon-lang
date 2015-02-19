@@ -39,8 +39,8 @@ SIMachineFunctionInfo::SpilledReg SIMachineFunctionInfo::getSpilledReg(
                                                        unsigned FrameIndex,
                                                        unsigned SubIdx) {
   const MachineFrameInfo *FrameInfo = MF->getFrameInfo();
-  const SIRegisterInfo *TRI = static_cast<const SIRegisterInfo*>(
-      MF->getTarget().getSubtarget<AMDGPUSubtarget>().getRegisterInfo());
+  const SIRegisterInfo *TRI = static_cast<const SIRegisterInfo *>(
+      MF->getSubtarget<AMDGPUSubtarget>().getRegisterInfo());
   MachineRegisterInfo &MRI = MF->getRegInfo();
   int64_t Offset = FrameInfo->getObjectOffset(FrameIndex);
   Offset += SubIdx * 4;
@@ -70,7 +70,7 @@ SIMachineFunctionInfo::SpilledReg SIMachineFunctionInfo::getSpilledReg(
 
 unsigned SIMachineFunctionInfo::getMaximumWorkGroupSize(
                                               const MachineFunction &MF) const {
-  const AMDGPUSubtarget &ST = MF.getTarget().getSubtarget<AMDGPUSubtarget>();
+  const AMDGPUSubtarget &ST = MF.getSubtarget<AMDGPUSubtarget>();
   // FIXME: We should get this information from kernel attributes if it
   // is available.
   return getShaderType() == ShaderType::COMPUTE ? 256 : ST.getWavefrontSize();
