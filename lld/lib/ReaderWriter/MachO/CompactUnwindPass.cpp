@@ -411,6 +411,9 @@ private:
       }
     }
 
+    if (atom->rawContent().size() < 4 * sizeof(uint32_t))
+      return entry;
+
     using normalized::read32;
     entry.rangeLength =
         read32(atom->rawContent().data() + 2 * sizeof(uint32_t), _isBig);

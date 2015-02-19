@@ -142,6 +142,8 @@ uint32_t ArchHandler::readU32(const uint8_t *addr, bool isBig) {
 
 bool ArchHandler::isDwarfCIE(bool isBig, const DefinedAtom *atom) {
   assert(atom->contentType() == DefinedAtom::typeCFI);
+  if (atom->rawContent().size() < sizeof(uint32_t))
+    return false;
   uint32_t size = read32(atom->rawContent().data(), isBig);
 
   uint32_t idOffset = sizeof(uint32_t);
