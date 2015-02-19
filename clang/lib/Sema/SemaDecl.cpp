@@ -128,45 +128,85 @@ bool Sema::isSimpleTypeSpecifier(tok::TokenKind Kind) const {
   return false;
 }
 
+namespace {
+enum class UnqualifiedTypeNameLookupResult {
+  NotFound,
+  FoundNonType,
+  FoundType
+};
+} // namespace
+
+/// \brief Tries to perform unqualified lookup of the type decls in bases for
+/// dependent class.
+/// \return \a NotFound if no any decls is found, \a FoundNotType if found not a
+/// type decl, \a FoundType if only type decls are found.
+static UnqualifiedTypeNameLookupResult
+lookupUnqualifiedTypeNameInBase(Sema &S, const IdentifierInfo &II,
+                                SourceLocation NameLoc,
+                                const CXXRecordDecl *RD) {
+  if (!RD->hasDefinition())
+    return UnqualifiedTypeNameLookupResult::NotFound;
+  // Look for type decls in base classes.
+  UnqualifiedTypeNameLookupResult FoundTypeDecl =
+      UnqualifiedTypeNameLookupResult::NotFound;
+  for (const auto &Base : RD->bases()) {
+    const CXXRecordDecl *BaseRD = nullptr;
+    if (auto *BaseTT = Base.getType()->getAs<TagType>())
+      BaseRD = BaseTT->getAsCXXRecordDecl();
+    else if (auto *TST = Base.getType()->getAs<TemplateSpecializationType>()) {
+      // Look for type decls in dependent base classes that have known primary
+      // templates.
+      if (!TST || !TST->isDependentType())
+        continue;
+      auto *TD = TST->getTemplateName().getAsTemplateDecl();
+      if (!TD)
+        continue;
+      auto *BasePrimaryTemplate =
+          dyn_cast_or_null<CXXRecordDecl>(TD->getTemplatedDecl());
+      if (!BasePrimaryTemplate)
+        continue;
+      BaseRD = BasePrimaryTemplate;
+    }
+    if (BaseRD) {
+      for (NamedDecl *ND : BaseRD->lookup(&II)) {
+        if (!isa<TypeDecl>(ND))
+          return UnqualifiedTypeNameLookupResult::FoundNonType;
+        FoundTypeDecl = UnqualifiedTypeNameLookupResult::FoundType;
+      }
+      if (FoundTypeDecl == UnqualifiedTypeNameLookupResult::NotFound) {
+        switch (lookupUnqualifiedTypeNameInBase(S, II, NameLoc, BaseRD)) {
+        case UnqualifiedTypeNameLookupResult::FoundNonType:
+          return UnqualifiedTypeNameLookupResult::FoundNonType;
+        case UnqualifiedTypeNameLookupResult::FoundType:
+          FoundTypeDecl = UnqualifiedTypeNameLookupResult::FoundType;
+          break;
+        case UnqualifiedTypeNameLookupResult::NotFound:
+          break;
+        }
+      }
+    }
+  }
+
+  return FoundTypeDecl;
+}
+
 static ParsedType recoverFromTypeInKnownDependentBase(Sema &S,
                                                       const IdentifierInfo &II,
                                                       SourceLocation NameLoc) {
-  // Find the first parent class template context, if any.
-  // FIXME: Perform the lookup in all enclosing class templates.
+  // Lookup in the parent class template context, if any.
   const CXXRecordDecl *RD = nullptr;
-  for (DeclContext *DC = S.CurContext; DC; DC = DC->getParent()) {
+  UnqualifiedTypeNameLookupResult FoundTypeDecl =
+      UnqualifiedTypeNameLookupResult::NotFound;
+  for (DeclContext *DC = S.CurContext;
+       DC && FoundTypeDecl == UnqualifiedTypeNameLookupResult::NotFound;
+       DC = DC->getParent()) {
+    // Look for type decls in dependent base classes that have known primary
+    // templates.
     RD = dyn_cast<CXXRecordDecl>(DC);
     if (RD && RD->getDescribedClassTemplate())
-      break;
+      FoundTypeDecl = lookupUnqualifiedTypeNameInBase(S, II, NameLoc, RD);
   }
-  if (!RD)
-    return ParsedType();
-
-  // Look for type decls in dependent base classes that have known primary
-  // templates.
-  bool FoundTypeDecl = false;
-  for (const auto &Base : RD->bases()) {
-    auto *TST = Base.getType()->getAs<TemplateSpecializationType>();
-    if (!TST || !TST->isDependentType())
-      continue;
-    auto *TD = TST->getTemplateName().getAsTemplateDecl();
-    if (!TD)
-      continue;
-    auto *BasePrimaryTemplate =
-        dyn_cast_or_null<CXXRecordDecl>(TD->getTemplatedDecl());
-    if (!BasePrimaryTemplate)
-      continue;
-    // FIXME: Allow lookup into non-dependent bases of dependent bases, possibly
-    // by calling or integrating with the main LookupQualifiedName mechanism.
-    for (NamedDecl *ND : BasePrimaryTemplate->lookup(&II)) {
-      if (FoundTypeDecl)
-        return ParsedType();
-      FoundTypeDecl = isa<TypeDecl>(ND);
-      if (!FoundTypeDecl)
-        return ParsedType();
-    }
-  }
-  if (!FoundTypeDecl)
+  if (FoundTypeDecl != UnqualifiedTypeNameLookupResult::FoundType)
     return ParsedType();
 
   // We found some types in dependent base classes.  Recover as if the user
