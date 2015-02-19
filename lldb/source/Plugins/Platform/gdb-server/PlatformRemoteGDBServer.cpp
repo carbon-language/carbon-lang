@@ -37,6 +37,18 @@ using namespace lldb_private;
 
 static bool g_initialized = false;
 
+static std::string MakeGdbServerUrl (const std::string &platform_hostname, uint16_t port)
+{
+    const char *override_hostname = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_HOSTNAME");
+    const char *port_offset_c_str = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_PORT_OFFSET");
+    int port_offset = port_offset_c_str ? ::atoi(port_offset_c_str) : 0;
+    lldb_private::StreamString result;
+    result.Printf("connect://%s:%u",
+            override_hostname ? override_hostname : platform_hostname.c_str(),
+            port + port_offset);
+    return result.GetString();
+}
+
 void
 PlatformRemoteGDBServer::Initialize ()
 {
@@ -576,20 +588,11 @@ PlatformRemoteGDBServer::DebugProcess (lldb_private::ProcessLaunchInfo &launch_i
                     
                     if (process_sp)
                     {
-                        char connect_url[256];
-                        const char *override_hostname = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_HOSTNAME");
-                        const char *port_offset_c_str = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_PORT_OFFSET");
-                        int port_offset = port_offset_c_str ? ::atoi(port_offset_c_str) : 0;
-                        const int connect_url_len = ::snprintf (connect_url,
-                                                                sizeof(connect_url),
-                                                                "connect://%s:%u",
-                                                                override_hostname ? override_hostname : m_platform_hostname.c_str(),
-                                                                port + port_offset);
-                        assert (connect_url_len < (int)sizeof(connect_url));
-                        error = process_sp->ConnectRemote (NULL, connect_url);
+                        std::string connect_url = MakeGdbServerUrl(m_platform_hostname, port);
+                        error = process_sp->ConnectRemote (nullptr, connect_url.c_str());
                         // Retry the connect remote one time...
                         if (error.Fail())
-                            error = process_sp->ConnectRemote (NULL, connect_url);
+                            error = process_sp->ConnectRemote (nullptr, connect_url.c_str());
                         if (error.Success())
                             error = process_sp->Launch(launch_info);
                         else if (debugserver_pid != LLDB_INVALID_PROCESS_ID)
@@ -680,17 +683,8 @@ PlatformRemoteGDBServer::Attach (lldb_private::ProcessAttachInfo &attach_info,
                     
                     if (process_sp)
                     {
-                        char connect_url[256];
-                        const char *override_hostname = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_HOSTNAME");
-                        const char *port_offset_c_str = getenv("LLDB_PLATFORM_REMOTE_GDB_SERVER_PORT_OFFSET");
-                        int port_offset = port_offset_c_str ? ::atoi(port_offset_c_str) : 0;
-                        const int connect_url_len = ::snprintf (connect_url, 
-                                                                sizeof(connect_url), 
-                                                                "connect://%s:%u", 
-                                                                override_hostname ? override_hostname : m_platform_hostname.c_str(),
-                                                                port + port_offset);
-                        assert (connect_url_len < (int)sizeof(connect_url));
-                        error = process_sp->ConnectRemote(nullptr, connect_url);
+                        std::string connect_url = MakeGdbServerUrl(m_platform_hostname, port);
+                        error = process_sp->ConnectRemote(nullptr, connect_url.c_str());
                         if (error.Success())
                         {
                             auto listener = attach_info.GetHijackListener();
