@@ -14,9 +14,6 @@
 #include <algorithm>
 #include <iostream>
 
-// This function should be defined by the user.
-extern "C" void TestOneInput(const uint8_t *Data, size_t Size);
-
 namespace fuzzer {
 
 // static
@@ -107,7 +104,7 @@ static uintptr_t HashOfArrayOfPCs(uintptr_t *PCs, uintptr_t NumPCs) {
 // e.g. test/FullCoverageSetTest.cpp. FIXME: make it scale.
 size_t Fuzzer::RunOneMaximizeFullCoverageSet(const Unit &U) {
   __sanitizer_reset_coverage();
-  TestOneInput(U.data(), U.size());
+  Callback(U.data(), U.size());
   uintptr_t *PCs;
   uintptr_t NumPCs =__sanitizer_get_coverage_guards(&PCs);
   if (FullCoverageSets.insert(HashOfArrayOfPCs(PCs, NumPCs)).second)
@@ -117,7 +114,7 @@ size_t Fuzzer::RunOneMaximizeFullCoverageSet(const Unit &U) {
 
 size_t Fuzzer::RunOneMaximizeTotalCoverage(const Unit &U) {
   size_t OldCoverage = __sanitizer_get_total_unique_coverage();
-  TestOneInput(U.data(), U.size());
+  Callback(U.data(), U.size());
   size_t NewCoverage = __sanitizer_get_total_unique_coverage();
   if (!(TotalNumberOfRuns & (TotalNumberOfRuns - 1)) && Options.Verbosity) {
     size_t Seconds = secondsSinceProcessStartUp();

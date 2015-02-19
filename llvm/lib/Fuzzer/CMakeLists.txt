@@ -3,6 +3,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -fsanitize-coverage=
 if( LLVM_USE_SANITIZE_COVERAGE  )
   add_library(LLVMFuzzerNoMain OBJECT
     FuzzerCrossOver.cpp
+    FuzzerDriver.cpp
     FuzzerIO.cpp
     FuzzerLoop.cpp
     FuzzerMutate.cpp

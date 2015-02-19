@@ -17,6 +17,8 @@
 #include <vector>
 #include <unordered_set>
 
+#include "FuzzerInterface.h"
+
 namespace fuzzer {
 typedef std::vector<uint8_t> Unit;
 using namespace std::chrono;
@@ -51,7 +53,8 @@ class Fuzzer {
     size_t MaxNumberOfRuns = ULONG_MAX;
     std::string OutputCorpus;
   };
-  Fuzzer(FuzzingOptions Options) : Options(Options) {
+  Fuzzer(UserCallback Callback, FuzzingOptions Options)
+      : Callback(Callback), Options(Options) {
     SetDeathCallback();
   }
   void AddToCorpus(const Unit &U) { Corpus.push_back(U); }
@@ -89,6 +92,7 @@ class Fuzzer {
 
   std::vector<Unit> Corpus;
   std::unordered_set<uintptr_t> FullCoverageSets;
+  UserCallback Callback;
   FuzzingOptions Options;
   system_clock::time_point ProcessStartTime = system_clock::now();
   static system_clock::time_point UnitStartTime;
