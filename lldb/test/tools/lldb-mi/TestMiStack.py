@@ -194,6 +194,34 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
+    def test_lldbmi_stack_info_frame(self):
+        """Test that 'lldb-mi --interpreter' can show information about current frame."""
+
+        self.spawnLldbMi(args = None)
+
+        # Test that -stack-info-frame fails when program isn't running
+        self.runCmd("-stack-info-frame")
+        self.expect("\^error,msg=\"Command 'stack-info-frame'. Invalid process during debug session\"")
+
+        # Load executable
+        self.runCmd("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        # Run to main
+        self.runCmd("-break-insert -f main")
+        self.expect("\^done,bkpt={number=\"1\"")
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Test that -stack-info-frame works when program is running
+        self.runCmd("-stack-info-frame")
+        self.expect("\^done,frame=\{level=\"0\",addr=\".+\",func=\"main\",file=\"main\.c\",fullname=\".*main\.c\",line=\"\d+\"\}")
+
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stack_list_frames(self):
         """Test that 'lldb-mi --interpreter' can lists the frames on the stack."""
 

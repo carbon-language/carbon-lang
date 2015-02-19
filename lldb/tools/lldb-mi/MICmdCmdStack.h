@@ -11,6 +11,7 @@
 // File:        MICmdCmdStack.h
 //
 // Overview:    CMICmdCmdStackInfoDepth         interface.
+//              CMICmdCmdStackInfoFrame         interface.
 //              CMICmdCmdStackListFrames        interface.
 //              CMICmdCmdStackListArguments     interface.
 //              CMICmdCmdStackListLocals        interface.
@@ -36,6 +37,7 @@
 // In-house headers:
 #include "MICmdBase.h"
 #include "MICmnMIValueList.h"
+#include "MICmnMIValueTuple.h"
 
 //++ ============================================================================
 // Details: MI command class. MI commands derived from the command base class.
@@ -69,6 +71,35 @@ class CMICmdCmdStackInfoDepth : public CMICmdBase
     MIuint m_nThreadFrames;
     const CMIUtilString m_constStrArgThread;   // Not specified in MI spec but Eclipse gives this option
     const CMIUtilString m_constStrArgMaxDepth; // Not handled by *this command
+};
+
+//++ ============================================================================
+// Details: MI command class. MI commands derived from the command base class.
+//          *this class implements MI command "stack-info-frame".
+//--
+class CMICmdCmdStackInfoFrame : public CMICmdBase
+{
+    // Statics:
+  public:
+    // Required by the CMICmdFactory when registering *this command
+    static CMICmdBase *CreateSelf(void);
+
+    // Methods:
+  public:
+    /* ctor */ CMICmdCmdStackInfoFrame(void);
+
+    // Overridden:
+  public:
+    // From CMICmdInvoker::ICmd
+    virtual bool Execute(void);
+    virtual bool Acknowledge(void);
+    virtual bool ParseArgs(void);
+    // From CMICmnBase
+    /* dtor */ virtual ~CMICmdCmdStackInfoFrame(void);
+
+    // Attributes:
+  private:
+    CMICmnMIValueTuple m_miValueTuple;
 };
 
 //++ ============================================================================
