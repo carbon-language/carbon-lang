@@ -19,24 +19,18 @@ namespace __sanitizer {
 LibIgnore::LibIgnore(LinkerInitialized) {
 }
 
-void LibIgnore::Init(const SuppressionContext &supp) {
+void LibIgnore::AddIgnoredLibrary(const char *name_templ) {
   BlockingMutexLock lock(&mutex_);
-  CHECK_EQ(count_, 0);
-  const uptr n = supp.SuppressionCount();
-  for (uptr i = 0; i < n; i++) {
-    const Suppression *s = supp.SuppressionAt(i);
-    if (s->type != SuppressionLib)
-      continue;
-    if (count_ >= kMaxLibs) {
-      Report("%s: too many called_from_lib suppressions (max: %d)\n",
-             SanitizerToolName, kMaxLibs);
-      Die();
-    }
-    Lib *lib = &libs_[count_++];
-    lib->templ = internal_strdup(s->templ);
-    lib->name = 0;
-    lib->loaded = false;
+  if (count_ >= kMaxLibs) {
+    Report("%s: too many ignored libraries (max: %d)\n", SanitizerToolName,
+           kMaxLibs);
+    Die();
   }
+  Lib *lib = &libs_[count_++];
+  lib->templ = internal_strdup(name_templ);
+  lib->name = nullptr;
+  lib->real_name = nullptr;
+  lib->loaded = false;
 }
 
 void LibIgnore::OnLibraryLoaded(const char *name) {

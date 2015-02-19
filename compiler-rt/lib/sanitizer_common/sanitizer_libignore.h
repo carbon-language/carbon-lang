@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 // LibIgnore allows to ignore all interceptors called from a particular set
-// of dynamic libraries. LibIgnore remembers all "called_from_lib" suppressions
-// from the provided SuppressionContext; finds code ranges for the libraries;
+// of dynamic libraries. LibIgnore can be initialized with several templates
+// of names of libraries to be ignored. It finds code ranges for the libraries;
 // and checks whether the provided PC value belongs to the code ranges.
 //
 //===----------------------------------------------------------------------===//
@@ -19,7 +19,6 @@
 
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_common.h"
-#include "sanitizer_suppressions.h"
 #include "sanitizer_atomic.h"
 #include "sanitizer_mutex.h"
 
@@ -29,8 +28,8 @@ class LibIgnore {
  public:
   explicit LibIgnore(LinkerInitialized);
 
-  // Fetches all "called_from_lib" suppressions from the SuppressionContext.
-  void Init(const SuppressionContext &supp);
+  // Must be called during initialization.
+  void AddIgnoredLibrary(const char *name_templ);
 
   // Must be called after a new dynamic library is loaded.
   void OnLibraryLoaded(const char *name);
