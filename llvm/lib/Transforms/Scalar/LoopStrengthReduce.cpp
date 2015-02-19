@@ -1327,11 +1327,9 @@ void LSRUse::DeleteFormula(Formula &F) {
 /// RecomputeRegs - Recompute the Regs field, and update RegUses.
 void LSRUse::RecomputeRegs(size_t LUIdx, RegUseTracker &RegUses) {
   // Now that we've filtered out some formulae, recompute the Regs set.
-  SmallPtrSet<const SCEV *, 4> OldRegs = Regs;
+  SmallPtrSet<const SCEV *, 4> OldRegs = std::move(Regs);
   Regs.clear();
-  for (SmallVectorImpl<Formula>::const_iterator I = Formulae.begin(),
-       E = Formulae.end(); I != E; ++I) {
-    const Formula &F = *I;
+  for (const Formula &F : Formulae) {
     if (F.ScaledReg) Regs.insert(F.ScaledReg);
     Regs.insert(F.BaseRegs.begin(), F.BaseRegs.end());
   }
