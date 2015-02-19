@@ -465,7 +465,7 @@ int main(int argc, char **argv) {
                                            MAB, ShowInst));
 
   } else if (FileType == OFT_Null) {
-    Str.reset(createNullStreamer(Ctx));
+    Str.reset(TheTarget->createNullStreamer(Ctx));
   } else {
     assert(FileType == OFT_ObjectFile && "Invalid file type!");
     MCCodeEmitter *CE = TheTarget->createMCCodeEmitter(*MCII, *MRI, *STI, Ctx);
