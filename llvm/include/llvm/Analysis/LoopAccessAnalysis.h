@@ -181,6 +181,10 @@ private:
   /// \brief Analyze the loop.  Substitute symbolic strides using Strides.
   void analyzeLoop(ValueToValueMap &Strides);
 
+  /// \brief Check if the structure of the loop allows it to be analyzed by this
+  /// pass.
+  bool canAnalyzeLoop();
+
   void emitAnalysis(VectorizationReport &Message);
 
   /// We need to check that all of the pointers in this list are disjoint
