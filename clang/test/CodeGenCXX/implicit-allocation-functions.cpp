@@ -30,7 +30,7 @@ void foo(A* is) {
 
 // CHECK14-DAG: declare noalias i8* @_Znwm(i64)
 // CHECK14UND-DAG: declare void @_ZdlPvm(i8*, i64)
-// CHECK14DEF-DAG: define linkonce void @_ZdlPvm(i8*, i64)
+// CHECK14DEF-DAG: define linkonce void @_ZdlPvm(i8*, i64) #{{[0-9]+}} comdat
 // CHECK14DEF-DAG: declare void @_ZdlPv(i8*)
 
 // CHECK14-DAG: %struct.B = type { i8 }
@@ -54,5 +54,5 @@ void f(B *p) {
 
 // CHECK14-DAG: declare noalias i8* @_Znam(i64)
 // CHECK14UND-DAG: declare void @_ZdaPvm(i8*, i64)
-// CHECK14DEF-DAG: define linkonce void @_ZdaPvm(i8*, i64)
+// CHECK14DEF-DAG: define linkonce void @_ZdaPvm(i8*, i64) #{{[0-9]+}} comdat
 // CHECK14DEF-DAG: declare void @_ZdaPv(i8*)

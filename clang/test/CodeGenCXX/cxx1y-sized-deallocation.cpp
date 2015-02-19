@@ -52,7 +52,7 @@ D::D() {}
 // CHECK: call void @_ZdlPvm(i8* %{{[^ ]*}}, i64 4)
 // CHECK: call void @_ZdaPv(i8* %{{[^ ]*}})
 
-// CHECKDEF-LABEL: define linkonce void @_ZdlPvm(i8*
+// CHECKDEF-LABEL: define linkonce void @_ZdlPvm(i8*, i64) #{{[0-9]+}} comdat
 // CHECKDEF: call void @_ZdlPv(i8* %0)
 // CHECKUND-LABEL: declare void @_ZdlPvm(i8*
 
@@ -74,7 +74,7 @@ D::D() {}
 // CHECK: add i64 %{{[^ ]*}}, 8
 // CHECK: call void @_ZdaPvm(i8* %{{[^ ]*}}, i64 %{{[^ ]*}})
 
-// CHECKDEF-LABEL: define linkonce void @_ZdaPvm(i8*
+// CHECKDEF-LABEL: define linkonce void @_ZdaPvm(i8*, i64) #{{[0-9]+}} comdat
 // CHECKDEF: call void @_ZdaPv(i8* %0)
 // CHECKUND-LABEL: declare void @_ZdaPvm(i8*
 
