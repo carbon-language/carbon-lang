@@ -44,3 +44,5 @@ namespace dr1968 { // dr1968: yes
 static_assert(&typeid(int) == &typeid(int), ""); // expected-error{{not an integral constant expression}}
 }
 #endif
+
+// dr1994: dup 529
