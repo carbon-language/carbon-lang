@@ -99,6 +99,13 @@ GDBRemoteCommunicationServerLLGS::GDBRemoteCommunicationServerLLGS(
 //----------------------------------------------------------------------
 GDBRemoteCommunicationServerLLGS::~GDBRemoteCommunicationServerLLGS()
 {
+    Mutex::Locker locker (m_debugged_process_mutex);
+
+    if (m_debugged_process_sp)
+    {
+        m_debugged_process_sp->Terminate ();
+        m_debugged_process_sp.reset ();
+    }
 }
 
 void

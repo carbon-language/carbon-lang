@@ -1453,7 +1453,8 @@ WAIT_AGAIN:
     }
 }
 
-NativeProcessLinux::~NativeProcessLinux()
+void
+NativeProcessLinux::Terminate ()
 {
     StopMonitor();
 }
@@ -3637,6 +3638,7 @@ NativeProcessLinux::StopCoordinatorThread()
     // Tell the coordinator we're done.  This will cause the coordinator
     // run loop thread to exit when the processing queue hits this message.
     m_coordinator_up->StopCoordinator ();
+    m_coordinator_thread.Join (nullptr);
 }
 
 bool

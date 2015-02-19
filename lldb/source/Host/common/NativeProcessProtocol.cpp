@@ -435,3 +435,9 @@ NativeProcessProtocol::DoStopIDBumped (uint32_t /* newBumpId */)
 {
     // Default implementation does nothing.
 }
+
+void
+NativeProcessProtocol::Terminate ()
+{
+    // Default implementation does nothing.
+}

@@ -283,6 +283,10 @@ namespace lldb_private
         bool
         UnregisterNativeDelegate (NativeDelegate &native_delegate);
 
+        // Called before termination of NativeProcessProtocol's instance.
+        virtual void
+        Terminate ();
+
     protected:
         lldb::pid_t m_pid;
 

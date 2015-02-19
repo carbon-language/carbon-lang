@@ -62,12 +62,6 @@ namespace lldb_private
             NativeProcessProtocolSP &native_process_sp);
 
         // ---------------------------------------------------------------------
-        // Public Instance Methods
-        // ---------------------------------------------------------------------
-
-        ~NativeProcessLinux() override;
-
-        // ---------------------------------------------------------------------
         // NativeProcessProtocol Interface
         // ---------------------------------------------------------------------
         Error
@@ -117,6 +111,9 @@ namespace lldb_private
 
         void
         DoStopIDBumped (uint32_t newBumpId) override;
+
+        void
+        Terminate () override;
 
         // ---------------------------------------------------------------------
         // Interface used by NativeRegisterContext-derived classes.
