@@ -3,7 +3,7 @@
 namespace PR16263 {
   const unsigned int n = 1234;
   extern const int &r = (const int&)n;
-  // CHECK: @_ZGRN7PR162631rE_ = private constant i32 1234,
+  // CHECK: @_ZGRN7PR162631rE_ = internal constant i32 1234,
   // CHECK: @_ZN7PR162631rE = constant i32* @_ZGRN7PR162631rE_,
 
   extern const int &s = reinterpret_cast<const int&>(n);
@@ -14,16 +14,16 @@ namespace PR16263 {
   struct B { int n; };
   struct C : A, B {};
   extern const A &&a = (A&&)(A&&)(C&&)(C{});
-  // CHECK: @_ZGRN7PR162631aE_ = private global {{.*}} zeroinitializer,
+  // CHECK: @_ZGRN7PR162631aE_ = internal global {{.*}} zeroinitializer,
   // CHECK: @_ZN7PR162631aE = constant {{.*}} bitcast ({{.*}}* @_ZGRN7PR162631aE_ to
 
   extern const int &&t = ((B&&)C{}).n;
-  // CHECK: @_ZGRN7PR162631tE_ = private global {{.*}} zeroinitializer,
+  // CHECK: @_ZGRN7PR162631tE_ = internal global {{.*}} zeroinitializer,
   // CHECK: @_ZN7PR162631tE = constant i32* {{.*}}* @_ZGRN7PR162631tE_ {{.*}} 4
 
   struct D { double d; C c; };
   extern const int &&u = (123, static_cast<B&&>(0, ((D&&)D{}).*&D::c).n);
-  // CHECK: @_ZGRN7PR162631uE_ = private global {{.*}} zeroinitializer
+  // CHECK: @_ZGRN7PR162631uE_ = internal global {{.*}} zeroinitializer
   // CHECK: @_ZN7PR162631uE = constant i32* {{.*}} @_ZGRN7PR162631uE_ {{.*}} 12
 }
 
@@ -33,19 +33,19 @@ namespace PR20227 {
   struct C : B {};
 
   A &&a = dynamic_cast<A&&>(A{});
-  // CHECK: @_ZGRN7PR202271aE_ = private global
+  // CHECK: @_ZGRN7PR202271aE_ = internal global
 
   B &&b = dynamic_cast<C&&>(dynamic_cast<B&&>(C{}));
-  // CHECK: @_ZGRN7PR202271bE_ = private global
+  // CHECK: @_ZGRN7PR202271bE_ = internal global
 
   B &&c = static_cast<C&&>(static_cast<B&&>(C{}));
-  // CHECK: @_ZGRN7PR202271cE_ = private global
+  // CHECK: @_ZGRN7PR202271cE_ = internal global
 }
 
 namespace BraceInit {
   typedef const int &CIR;
   CIR x = CIR{3};
-  // CHECK: @_ZGRN9BraceInit1xE_ = private constant i32 3
+  // CHECK: @_ZGRN9BraceInit1xE_ = internal constant i32 3
   // CHECK: @_ZN9BraceInit1xE = constant i32* @_ZGRN9BraceInit1xE_
 }
 

@@ -226,30 +226,30 @@ namespace LiteralReference {
   };
 
   // This creates a non-const temporary and binds a reference to it.
-  // CHECK: @[[TEMP:.*]] = private global {{.*}} { i32 5 }, align 4
+  // CHECK: @[[TEMP:.*]] = internal global {{.*}} { i32 5 }, align 4
   // CHECK: @_ZN16LiteralReference3litE = constant {{.*}} @[[TEMP]], align 8
   const Lit &lit = Lit();
 
   // This creates a const temporary as part of the reference initialization.
-  // CHECK: @[[TEMP:.*]] = private constant {{.*}} { i32 5 }, align 4
+  // CHECK: @[[TEMP:.*]] = internal constant {{.*}} { i32 5 }, align 4
   // CHECK: @_ZN16LiteralReference4lit2E = constant {{.*}} @[[TEMP]], align 8
   const Lit &lit2 = {};
 
   struct A { int &&r1; const int &&r2; };
   struct B { A &&a1; const A &&a2; };
   B b = { { 0, 1 }, { 2, 3 } };
-  // CHECK: @[[TEMP0:.*]] = private global i32 0, align 4
-  // CHECK: @[[TEMP1:.*]] = private constant i32 1, align 4
-  // CHECK: @[[TEMPA1:.*]] = private global {{.*}} { i32* @[[TEMP0]], i32* @[[TEMP1]] }, align 8
-  // CHECK: @[[TEMP2:.*]] = private global i32 2, align 4
-  // CHECK: @[[TEMP3:.*]] = private constant i32 3, align 4
-  // CHECK: @[[TEMPA2:.*]] = private constant {{.*}} { i32* @[[TEMP2]], i32* @[[TEMP3]] }, align 8
+  // CHECK: @[[TEMP0:.*]] = internal global i32 0, align 4
+  // CHECK: @[[TEMP1:.*]] = internal constant i32 1, align 4
+  // CHECK: @[[TEMPA1:.*]] = internal global {{.*}} { i32* @[[TEMP0]], i32* @[[TEMP1]] }, align 8
+  // CHECK: @[[TEMP2:.*]] = internal global i32 2, align 4
+  // CHECK: @[[TEMP3:.*]] = internal constant i32 3, align 4
+  // CHECK: @[[TEMPA2:.*]] = internal constant {{.*}} { i32* @[[TEMP2]], i32* @[[TEMP3]] }, align 8
   // CHECK: @_ZN16LiteralReference1bE = global {{.*}} { {{.*}}* @[[TEMPA1]], {{.*}}* @[[TEMPA2]] }, align 8
 
   struct Subobj {
     int a, b, c;
   };
-  // CHECK: @[[TEMP:.*]] = private global {{.*}} { i32 1, i32 2, i32 3 }, align 4
+  // CHECK: @[[TEMP:.*]] = internal global {{.*}} { i32 1, i32 2, i32 3 }, align 4
   // CHECK: @_ZN16LiteralReference2soE = constant {{.*}} (i8* getelementptr {{.*}} @[[TEMP]]{{.*}}, i64 4)
   constexpr int &&so = Subobj{ 1, 2, 3 }.b;
 
@@ -258,11 +258,11 @@ namespace LiteralReference {
     constexpr Derived() : Dummy{200}, Subobj{4, 5, 6} {}
   };
   using ConstDerived = const Derived;
-  // CHECK: @[[TEMPCOMMA:.*]] = private constant {{.*}} { i32 200, i32 4, i32 5, i32 6 }
+  // CHECK: @[[TEMPCOMMA:.*]] = internal constant {{.*}} { i32 200, i32 4, i32 5, i32 6 }
   // CHECK: @_ZN16LiteralReference5commaE = constant {{.*}} getelementptr {{.*}} @[[TEMPCOMMA]]{{.*}}, i64 8)
   constexpr const int &comma = (1, (2, ConstDerived{}).b);
 
-  // CHECK: @[[TEMPDERIVED:.*]] = private global {{.*}} { i32 200, i32 4, i32 5, i32 6 }
+  // CHECK: @[[TEMPDERIVED:.*]] = internal global {{.*}} { i32 200, i32 4, i32 5, i32 6 }
   // CHECK: @_ZN16LiteralReference4baseE = constant {{.*}} getelementptr {{.*}} @[[TEMPDERIVED]]{{.*}}, i64 4)
   constexpr Subobj &&base = Derived{};
 
@@ -380,10 +380,10 @@ namespace PR13273 {
 namespace ArrayTemporary {
   struct A { const int (&x)[3]; };
   struct B { const A (&x)[2]; };
-  // CHECK: @[[A1:_ZGRN14ArrayTemporary1bE.*]] = private constant [3 x i32] [i32 1, i32 2, i32 3]
-  // CHECK: @[[A2:_ZGRN14ArrayTemporary1bE.*]] = private constant [3 x i32] [i32 4, i32 5, i32 6]
-  // CHECK: @[[ARR:_ZGRN14ArrayTemporary1bE.*]] = private constant [2 x {{.*}}] [{{.*}} { [3 x i32]* @[[A1]] }, {{.*}} { [3 x i32]* @[[A2]] }]
-  // CHECK: @[[B:_ZGRN14ArrayTemporary1bE.*]] = private global {{.*}} { [2 x {{.*}}]* @[[ARR]] }
+  // CHECK: @[[A1:_ZGRN14ArrayTemporary1bE.*]] = internal constant [3 x i32] [i32 1, i32 2, i32 3]
+  // CHECK: @[[A2:_ZGRN14ArrayTemporary1bE.*]] = internal constant [3 x i32] [i32 4, i32 5, i32 6]
+  // CHECK: @[[ARR:_ZGRN14ArrayTemporary1bE.*]] = internal constant [2 x {{.*}}] [{{.*}} { [3 x i32]* @[[A1]] }, {{.*}} { [3 x i32]* @[[A2]] }]
+  // CHECK: @[[B:_ZGRN14ArrayTemporary1bE.*]] = internal global {{.*}} { [2 x {{.*}}]* @[[ARR]] }
   // CHECK: @_ZN14ArrayTemporary1bE = constant {{.*}}* @[[B]]
   B &&b = { { { { 1, 2, 3 } }, { { 4, 5, 6 } } } };
 }
@@ -391,7 +391,7 @@ namespace ArrayTemporary {
 namespace UnemittedTemporaryDecl {
   constexpr int &&ref = 0;
   extern constexpr int &ref2 = ref;
-  // CHECK: @_ZGRN22UnemittedTemporaryDecl3refE_ = private global i32 0
+  // CHECK: @_ZGRN22UnemittedTemporaryDecl3refE_ = internal global i32 0
 
   // FIXME: This declaration should not be emitted -- it isn't odr-used.
   // CHECK: @_ZN22UnemittedTemporaryDecl3refE
@@ -594,6 +594,15 @@ namespace ClassTemplateWithHiddenStaticDataMember {
   template <typename T>
   const int &S<T>::a = 5;
   const int &use = S<void>::a;
+}
+
+namespace ClassWithStaticConstexprDataMember {
+struct X {
+  static constexpr const char &p = 'c';
+};
+
+// CHECK: @_ZGRN34ClassWithStaticConstexprDataMember1X1pE_
+const char *f() { return &X::p; }
 }
 
 // VirtualMembers::TemplateClass::templateMethod() must be defined in this TU,

@@ -23,18 +23,18 @@ namespace ModifyStaticTemporary {
   struct A { int &&temporary; int x; };
   constexpr int f(int &r) { r *= 9; return r - 12; }
   A a = { 6, f(a.temporary) };
-  // CHECK: @_ZGRN21ModifyStaticTemporary1aE_ = private global i32 54
+  // CHECK: @_ZGRN21ModifyStaticTemporary1aE_ = internal global i32 54
   // CHECK: @_ZN21ModifyStaticTemporary1aE = global {{.*}} i32* @_ZGRN21ModifyStaticTemporary1aE_, i32 42
 
   A b = { 7, ++b.temporary };
-  // CHECK: @_ZGRN21ModifyStaticTemporary1bE_ = private global i32 8
+  // CHECK: @_ZGRN21ModifyStaticTemporary1bE_ = internal global i32 8
   // CHECK: @_ZN21ModifyStaticTemporary1bE = global {{.*}} i32* @_ZGRN21ModifyStaticTemporary1bE_, i32 8
 
   // Can't emit all of 'c' as a constant here, so emit the initial value of
   // 'c.temporary', not the value as modified by the partial evaluation within
   // the initialization of 'c.x'.
   A c = { 10, (++c.temporary, b.x) };
-  // CHECK: @_ZGRN21ModifyStaticTemporary1cE_ = private global i32 10
+  // CHECK: @_ZGRN21ModifyStaticTemporary1cE_ = internal global i32 10
   // CHECK: @_ZN21ModifyStaticTemporary1cE = global {{.*}} zeroinitializer
 }
 

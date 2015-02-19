@@ -47,7 +47,7 @@ struct wantslist1 {
   ~wantslist1();
 };
 
-// CHECK: @_ZGR15globalInitList1_ = private constant [3 x i32] [i32 1, i32 2, i32 3]
+// CHECK: @_ZGR15globalInitList1_ = internal constant [3 x i32] [i32 1, i32 2, i32 3]
 // CHECK: @globalInitList1 = global %{{[^ ]+}} { i32* getelementptr inbounds ([3 x i32]* @_ZGR15globalInitList1_, i32 0, i32 0), i{{32|64}} 3 }
 std::initializer_list<int> globalInitList1 = {1, 2, 3};
 
@@ -57,20 +57,20 @@ namespace thread_local_global_array {
   // objects aren't really a problem).
   //
   // CHECK: @_ZN25thread_local_global_array1xE = thread_local global
-  // CHECK: @_ZGRN25thread_local_global_array1xE_ = private thread_local constant [4 x i32] [i32 1, i32 2, i32 3, i32 4]
+  // CHECK: @_ZGRN25thread_local_global_array1xE_ = internal thread_local constant [4 x i32] [i32 1, i32 2, i32 3, i32 4]
   std::initializer_list<int> thread_local x = { 1, 2, 3, 4 };
 }
 
 // CHECK: @globalInitList2 = global %{{[^ ]+}} zeroinitializer
-// CHECK: @_ZGR15globalInitList2_ = private global [2 x %[[WITHARG:[^ ]*]]] zeroinitializer
+// CHECK: @_ZGR15globalInitList2_ = internal global [2 x %[[WITHARG:[^ ]*]]] zeroinitializer
 
 // CHECK: @_ZN15partly_constant1kE = global i32 0, align 4
 // CHECK: @_ZN15partly_constant2ilE = global {{.*}} null, align 8
-// CHECK: @[[PARTLY_CONSTANT_OUTER:_ZGRN15partly_constant2ilE.*]] = private global {{.*}} zeroinitializer, align 8
-// CHECK: @[[PARTLY_CONSTANT_INNER:_ZGRN15partly_constant2ilE.*]] = private global [3 x {{.*}}] zeroinitializer, align 8
-// CHECK: @[[PARTLY_CONSTANT_FIRST:_ZGRN15partly_constant2ilE.*]] = private constant [3 x i32] [i32 1, i32 2, i32 3], align 4
-// CHECK: @[[PARTLY_CONSTANT_SECOND:_ZGRN15partly_constant2ilE.*]] = private global [2 x i32] zeroinitializer, align 4
-// CHECK: @[[PARTLY_CONSTANT_THIRD:_ZGRN15partly_constant2ilE.*]] = private constant [4 x i32] [i32 5, i32 6, i32 7, i32 8], align 4
+// CHECK: @[[PARTLY_CONSTANT_OUTER:_ZGRN15partly_constant2ilE.*]] = internal global {{.*}} zeroinitializer, align 8
+// CHECK: @[[PARTLY_CONSTANT_INNER:_ZGRN15partly_constant2ilE.*]] = internal global [3 x {{.*}}] zeroinitializer, align 8
+// CHECK: @[[PARTLY_CONSTANT_FIRST:_ZGRN15partly_constant2ilE.*]] = internal constant [3 x i32] [i32 1, i32 2, i32 3], align 4
+// CHECK: @[[PARTLY_CONSTANT_SECOND:_ZGRN15partly_constant2ilE.*]] = internal global [2 x i32] zeroinitializer, align 4
+// CHECK: @[[PARTLY_CONSTANT_THIRD:_ZGRN15partly_constant2ilE.*]] = internal constant [4 x i32] [i32 5, i32 6, i32 7, i32 8], align 4
 
 // CHECK: appending global
 

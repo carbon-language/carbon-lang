@@ -3082,10 +3082,19 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalTemporary(
   // Create a global variable for this lifetime-extended temporary.
   llvm::GlobalValue::LinkageTypes Linkage =
       getLLVMLinkageVarDefinition(VD, Constant);
-  // There is no need for this temporary to have global linkage if the global
-  // variable has external linkage.
-  if (Linkage == llvm::GlobalVariable::ExternalLinkage)
-    Linkage = llvm::GlobalVariable::PrivateLinkage;
+  if (Linkage == llvm::GlobalVariable::ExternalLinkage) {
+    const VarDecl *InitVD;
+    if (VD->isStaticDataMember() && VD->getAnyInitializer(InitVD) &&
+        isa<CXXRecordDecl>(InitVD->getLexicalDeclContext())) {
+      // Temporaries defined inside a class get linkonce_odr linkage because the
+      // class can be defined in multipe translation units.
+      Linkage = llvm::GlobalVariable::LinkOnceODRLinkage;
+    } else {
+      // There is no need for this temporary to have external linkage if the
+      // VarDecl has external linkage.
+      Linkage = llvm::GlobalVariable::InternalLinkage;
+    }
+  }
   unsigned AddrSpace = GetGlobalVarAddressSpace(
       VD, getContext().getTargetAddressSpace(MaterializedType));
   auto *GV = new llvm::GlobalVariable(
