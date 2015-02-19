@@ -52,8 +52,6 @@ public:
   // Return the Hexagon ISA class for the insn.
   unsigned getType() const;
 
-  MCInstrDesc const &getDesc() const;
-
   // Return whether the insn is an actual insn.
   bool isCanon() const;
 
@@ -94,10 +92,6 @@ private:
   // Return the min value that a constant extendable operand can have
   // without being extended.
   int getMinValue() const;
-
-  // Return the max value that a constant extendable operand can have
-  // without being extended.
-  int getMaxValue() const;
 };
 }
 

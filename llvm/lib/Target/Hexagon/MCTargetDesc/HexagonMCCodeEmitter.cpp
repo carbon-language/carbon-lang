@@ -11,6 +11,7 @@
 #include "MCTargetDesc/HexagonBaseInfo.h"
 #include "MCTargetDesc/HexagonMCCodeEmitter.h"
 #include "MCTargetDesc/HexagonMCInst.h"
+#include "MCTargetDesc/HexagonMCInstrInfo.h"
 #include "MCTargetDesc/HexagonMCTargetDesc.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/MC/MCCodeEmitter.h"
@@ -51,14 +52,15 @@ void emitLittleEndian(uint64_t Binary, raw_ostream &OS) {
 HexagonMCCodeEmitter::HexagonMCCodeEmitter(MCInstrInfo const &aMII,
                                            MCSubtargetInfo const &aMST,
                                            MCContext &aMCT)
-    : MST(aMST), MCT(aMCT) {}
+    : MST(aMST), MCT(aMCT), MCII (aMII) {}
 
 void HexagonMCCodeEmitter::EncodeInstruction(MCInst const &MI, raw_ostream &OS,
                                              SmallVectorImpl<MCFixup> &Fixups,
                                              MCSubtargetInfo const &STI) const {
   HexagonMCInst const &HMB = static_cast<HexagonMCInst const &>(MI);
   uint64_t Binary = getBinaryCodeForInstr(HMB, Fixups, STI) | getPacketBits(HMB);
-  assert(HMB.getDesc().getSize() == 4 && "All instructions should be 32bit");
+  assert(HexagonMCInstrInfo::getDesc(MCII, HMB).getSize() == 4 &&
+         "All instructions should be 32bit");
   emitLittleEndian(Binary, OS);
   ++MCNumEmitted;
 }

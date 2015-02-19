@@ -28,6 +28,7 @@ namespace llvm {
 class HexagonMCCodeEmitter : public MCCodeEmitter {
   MCSubtargetInfo const &MST;
   MCContext &MCT;
+  MCInstrInfo const &MCII;
 
 public:
   HexagonMCCodeEmitter(MCInstrInfo const &aMII, MCSubtargetInfo const &aMST,
