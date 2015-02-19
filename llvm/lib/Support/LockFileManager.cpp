@@ -187,8 +187,7 @@ LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
   Interval.tv_nsec = 1000000;
 #endif
   // Don't wait more than one minute for the file to appear.
-  unsigned MaxSeconds = 60;
-  bool LockFileGone = false;
+  const unsigned MaxSeconds = 60;
   do {
     // Sleep for the designated interval, to allow the owning process time to
     // finish up and remove the lock file.
@@ -199,47 +198,18 @@ LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
 #else
     nanosleep(&Interval, nullptr);
 #endif
-    bool LockFileJustDisappeared = false;
 
-    // If the lock file is still expected to be there, check whether it still
-    // is.
-    if (!LockFileGone) {
-      if (sys::fs::access(LockFileName.c_str(), sys::fs::AccessMode::Exist) ==
-          errc::no_such_file_or_directory) {
-        LockFileGone = true;
-        LockFileJustDisappeared = true;
-      }
+    if (sys::fs::access(LockFileName.c_str(), sys::fs::AccessMode::Exist) ==
+        errc::no_such_file_or_directory) {
+      // If the original file wasn't created, somone thought the lock was dead.
+      if (!sys::fs::exists(FileName.str()))
+        return Res_OwnerDied;
+      return Res_Success;
     }
 
-    // If the lock file is no longer there, check if the original file is
-    // available now.
-    if (LockFileGone) {
-      if (sys::fs::exists(FileName.str())) {
-        return Res_Success;
-      }
-
-      // The lock file is gone, so now we're waiting for the original file to
-      // show up. If this just happened, reset our waiting intervals and keep
-      // waiting.
-      if (LockFileJustDisappeared) {
-        MaxSeconds = 5;
-
-#if LLVM_ON_WIN32
-        Interval = 1;
-#else
-        Interval.tv_sec = 0;
-        Interval.tv_nsec = 1000000;
-#endif
-        continue;
-      }
-    }
-
-    // If we're looking for the lock file to disappear, but the process
-    // owning the lock died without cleaning up, just bail out.
-    if (!LockFileGone &&
-        !processStillExecuting((*Owner).first, (*Owner).second)) {
+    // If the process owning the lock died without cleaning up, just bail out.
+    if (!processStillExecuting((*Owner).first, (*Owner).second))
       return Res_OwnerDied;
-    }
 
     // Exponentially increase the time we wait for the lock to be removed.
 #if LLVM_ON_WIN32
