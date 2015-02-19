@@ -514,7 +514,7 @@ _mm256_insert_epi8(__m256i __a, int __b, int const __imm)
 
 #ifdef __x86_64__
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
-_mm256_insert_epi64(__m256i __a, long __b, int const __imm)
+_mm256_insert_epi64(__m256i __a, long long __b, int const __imm)
 {
   __v4di __c = (__v4di)__a;
   __c[__imm & 3] = __b;
