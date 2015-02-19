@@ -536,12 +536,23 @@ basic_streambuf<_CharT, _Traits>::xsputn(const char_type* __s, streamsize __n)
 {
     streamsize __i = 0;
     int_type __eof = traits_type::eof();
-    for (; __i < __n; ++__s, ++__i)
+    while( __i < __n)
     {
-        if (__nout_ < __eout_)
-            *__nout_++ = *__s;
-        else if (overflow(traits_type::to_int_type(*__s)) == __eof)
-            break;
+        if (__nout_ >= __eout_)
+        {
+            if (overflow(traits_type::to_int_type(*__s)) == __eof)
+                break;
+            ++__s;
+            ++__i;
+        }
+        else
+        {
+            streamsize __chunk_size = _VSTD::min(__eout_ - __nout_, __n - __i);
+            traits_type::copy(__nout_, __s, __chunk_size);
+            __nout_ += __chunk_size;
+            __s     += __chunk_size;
+            __i     += __chunk_size;
+        }
     }
     return __i;
 }
