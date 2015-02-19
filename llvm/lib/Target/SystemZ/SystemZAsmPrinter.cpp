@@ -186,7 +186,7 @@ void SystemZAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 #undef LOWER_HIGH
 
   case SystemZ::Serialize:
-    if (Subtarget->hasFastSerialization())
+    if (MF->getSubtarget<SystemZSubtarget>().hasFastSerialization())
       LoweredMI = MCInstBuilder(SystemZ::AsmBCR)
         .addImm(14).addReg(SystemZ::R0D);
     else
@@ -256,7 +256,7 @@ bool SystemZAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 }
 
 void SystemZAsmPrinter::EmitEndOfAsmFile(Module &M) {
-  if (Subtarget->isTargetELF()) {
+  if (Triple(TM.getTargetTriple()).isOSBinFormatELF()) {
     auto &TLOFELF =
       static_cast<const TargetLoweringObjectFileELF &>(getObjFileLowering());
 
