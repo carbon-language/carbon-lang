@@ -67,6 +67,7 @@ set(SANITIZER_HEADERS
   sanitizer_flag_parser.h
   sanitizer_flags.h
   sanitizer_flags.inc
+  sanitizer_interface_internal.h
   sanitizer_internal_defs.h
   sanitizer_lfstack.h
   sanitizer_libc.h

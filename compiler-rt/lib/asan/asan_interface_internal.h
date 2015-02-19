@@ -9,8 +9,11 @@
 //
 // This file is a part of AddressSanitizer, an address sanity checker.
 //
-// This header can be included by the instrumented program to fetch
-// data (mostly allocator statistics) from ASan runtime library.
+// This header declares the AddressSanitizer runtime interface functions.
+// The runtime library has to define these functions so the instrumented program
+// could call them.
+//
+// See also include/sanitizer/asan_interface.h
 //===----------------------------------------------------------------------===//
 #ifndef ASAN_INTERFACE_INTERNAL_H
 #define ASAN_INTERFACE_INTERNAL_H
