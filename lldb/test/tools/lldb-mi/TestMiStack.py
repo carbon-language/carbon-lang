@@ -242,5 +242,61 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.runCmd("-stack-list-frames 0 0")
         self.expect("\^done,stack=\[frame=\{level=\"0\",addr=\".+\",func=\"main\",file=\"main\.c\",fullname=\".*main\.c\",line=\".+\"\}\]")
 
+    @lldbmi_test
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
+    def test_lldbmi_stack_select_frame(self):
+        """Test that 'lldb-mi --interpreter' can choose current frame."""
+
+        self.spawnLldbMi(args = None)
+
+        # Load executable
+        self.runCmd("-file-exec-and-symbols %s" % self.myexe)
+        self.expect("\^done")
+
+        # Run to main
+        self.runCmd("-break-insert -f main")
+        self.expect("\^done,bkpt={number=\"1\"")
+        self.runCmd("-exec-run")
+        self.expect("\^running")
+        self.expect("\*stopped,reason=\"breakpoint-hit\"")
+
+        # Test that -stack-select-frame requires 1 mandatory argument
+        self.runCmd("-stack-select-frame")
+        self.expect("\^error,msg=\"Command 'stack-select-frame'. Command Args. Missing options, 1 or more required\"")
+
+        # Test that -stack-select-frame fails on invalid frame number
+        self.runCmd("-stack-select-frame 99")
+        self.expect("\^error,msg=\"Command 'stack-select-frame'. Frame ID invalid\"")
+
+        # Test that current frame is #0
+        self.runCmd("-stack-info-frame")
+        self.expect("\^done,frame=\{level=\"0\",addr=\".+\",func=\"main\",file=\"main\.c\",fullname=\".*main\.c\",line=\"\d+\"\}")
+
+        # Test that -stack-select-frame can select the selected frame
+        self.runCmd("-stack-select-frame 0")
+        self.expect("\^done")
+
+        # Test that current frame is still #0
+        self.runCmd("-stack-info-frame")
+        self.expect("\^done,frame=\{level=\"0\",addr=\".+\",func=\"main\",file=\"main\.c\",fullname=\".*main\.c\",line=\"\d+\"\}")
+
+        # Test that -stack-select-frame can select frame #1 (parent frame)
+        self.runCmd("-stack-select-frame 1")
+        self.expect("\^done")
+
+        # Test that current frame is #1
+        self.runCmd("-stack-info-frame")
+        self.expect("\^done,frame=\{level=\"1\",addr=\".+\",func=\".+\",file=\"\?\?\",fullname=\"\?\?\",line=\"-1\"\}")
+
+        # Test that -stack-select-frame can select frame #0 (child frame)
+        self.runCmd("-stack-select-frame 0")
+        self.expect("\^done")
+
+        # Test that current frame is #0 and it has the same information
+        self.runCmd("-stack-info-frame")
+        self.expect("\^done,frame=\{level=\"0\",addr=\".+\",func=\"main\",file=\"main\.c\",fullname=\".*main\.c\",line=\"\d+\"\}")
+
 if __name__ == '__main__':
     unittest2.main()

@@ -15,6 +15,7 @@
 //              CMICmdCmdStackListFrames        implementation.
 //              CMICmdCmdStackListArguments     implementation.
 //              CMICmdCmdStackListLocals        implementation.
+//              CMICmdCmdStackSelectFrame       implementation.
 //
 // Environment: Compilers:  Visual C++ 12.
 //                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
@@ -824,4 +825,125 @@ CMICmdBase *
 CMICmdCmdStackListLocals::CreateSelf(void)
 {
     return new CMICmdCmdStackListLocals();
+}
+
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+
+//++ ------------------------------------------------------------------------------------
+// Details: CMICmdCmdStackSelectFrame constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+CMICmdCmdStackSelectFrame::CMICmdCmdStackSelectFrame(void)
+    : m_bFrameInvalid(false)
+    , m_constStrArgFrame("frame")
+{
+    // Command factory matches this name with that received from the stdin stream
+    m_strMiCmd = "stack-select-frame";
+
+    // Required by the CMICmdFactory when registering *this command
+    m_pSelfCreatorFn = &CMICmdCmdStackSelectFrame::CreateSelf;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: CMICmdCmdStackSelectFrame destructor.
+// Type:    Overrideable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+CMICmdCmdStackSelectFrame::~CMICmdCmdStackSelectFrame(void)
+{
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The parses the command line options
+//          arguments to extract values for each of those arguments.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdStackSelectFrame::ParseArgs(void)
+{
+    bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgFrame, true, false)));
+    return (bOk && ParseValidateCmdOptions());
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The command does work in this function.
+//          The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdStackSelectFrame::Execute(void)
+{
+    CMICMDBASE_GETOPTION(pArgFrame, Number, m_constStrArgFrame);
+
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    lldb::SBThread sbThread = rSessionInfo.GetProcess().GetSelectedThread();
+
+    const MIuint nFrameId = pArgFrame->GetValue();
+    m_bFrameInvalid = (nFrameId >= sbThread.GetNumFrames());
+    if (m_bFrameInvalid)
+        return MIstatus::success;
+
+    lldb::SBFrame sbFrame = sbThread.SetSelectedFrame(nFrameId);
+    m_bFrameInvalid = !sbFrame.IsValid();
+
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The command prepares a MI Record Result
+//          for the work carried out in the Execute().
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdStackSelectFrame::Acknowledge(void)
+{
+    if (m_bFrameInvalid)
+    {
+        // MI print "%s^error,msg=\"Command '-stack-select-frame'. Frame ID invalid\""
+        const CMICmnMIValueConst miValueConst(
+                CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_FRAME_INVALID), m_cmdData.strMiCmd.c_str()));
+        const CMICmnMIValueResult miValueResult("msg", miValueConst);
+        const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult);
+        m_miResultRecord = miRecordResult;
+
+        return MIstatus::success;
+    }
+
+    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
+    m_miResultRecord = miRecordResult;
+
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Required by the CMICmdFactory when registering *this command. The factory
+//          calls this function to create an instance of *this command.
+// Type:    Static method.
+// Args:    None.
+// Return:  CMICmdBase * - Pointer to a new command.
+// Throws:  None.
+//--
+CMICmdBase *
+CMICmdCmdStackSelectFrame::CreateSelf(void)
+{
+    return new CMICmdCmdStackSelectFrame();
 }

@@ -15,6 +15,7 @@
 //              CMICmdCmdStackListFrames        interface.
 //              CMICmdCmdStackListArguments     interface.
 //              CMICmdCmdStackListLocals        interface.
+//              CMICmdCmdStackSelectFrame       interface.
 //
 //              To implement new MI commands derive a new command class from the command base
 //              class. To enable the new command for interpretation add the new command class
@@ -178,6 +179,36 @@ class CMICmdCmdStackListArguments : public CMICmdBase
     const CMIUtilString m_constStrArgNoValues;
     const CMIUtilString m_constStrArgAllValues;
     const CMIUtilString m_constStrArgSimpleValues;
+};
+
+//++ ============================================================================
+// Details: MI command class. MI commands derived from the command base class.
+//          *this class implements MI command "stack-select-frame".
+//--
+class CMICmdCmdStackSelectFrame : public CMICmdBase
+{
+    // Statics:
+  public:
+    // Required by the CMICmdFactory when registering *this command
+    static CMICmdBase *CreateSelf(void);
+
+    // Methods:
+  public:
+    /* ctor */ CMICmdCmdStackSelectFrame(void);
+
+    // Overridden:
+  public:
+    // From CMICmdInvoker::ICmd
+    virtual bool Execute(void);
+    virtual bool Acknowledge(void);
+    virtual bool ParseArgs(void);
+    // From CMICmnBase
+    /* dtor */ virtual ~CMICmdCmdStackSelectFrame(void);
+
+    // Attributes:
+  private:
+    bool m_bFrameInvalid; // True = yes invalid frame, false = ok
+    const CMIUtilString m_constStrArgFrame;
 };
 
 //++ ============================================================================
