@@ -17,10 +17,9 @@
 
 using namespace llvm;
 
-std::unique_ptr <MCInstrInfo const> HexagonMCInst::MCII;
-
-HexagonMCInst::HexagonMCInst() : MCInst() {}
-HexagonMCInst::HexagonMCInst(MCInstrDesc const &mcid) : MCInst() {}
+HexagonMCInst::HexagonMCInst() : MCII (createHexagonMCInstrInfo ()) {}
+HexagonMCInst::HexagonMCInst(MCInstrDesc const &mcid) :
+  MCII (createHexagonMCInstrInfo ()){}
 
 void HexagonMCInst::AppendImplicitOperands(MCInst &MCI) {
   MCI.addOperand(MCOperand::CreateImm(0));

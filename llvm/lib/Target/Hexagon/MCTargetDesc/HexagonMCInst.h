@@ -23,9 +23,8 @@ namespace llvm {
 class MCOperand;
 
 class HexagonMCInst : public MCInst {
-  friend void ::LLVMInitializeHexagonTargetMC();
   // Used to access TSFlags
-  static std::unique_ptr <MCInstrInfo const> MCII;
+  std::unique_ptr <MCInstrInfo const> MCII;
 
 public:
   explicit HexagonMCInst();

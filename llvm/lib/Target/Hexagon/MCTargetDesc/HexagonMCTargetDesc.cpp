@@ -36,7 +36,7 @@ using namespace llvm;
 #define GET_REGINFO_MC_DESC
 #include "HexagonGenRegisterInfo.inc"
 
-static MCInstrInfo *createHexagonMCInstrInfo() {
+MCInstrInfo *llvm::createHexagonMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();
   InitHexagonMCInstrInfo(X);
   return X;
@@ -116,7 +116,6 @@ extern "C" void LLVMInitializeHexagonTargetMC() {
   // Register the MC instruction info.
   TargetRegistry::RegisterMCInstrInfo(TheHexagonTarget,
                                       createHexagonMCInstrInfo);
-  HexagonMCInst::MCII.reset (createHexagonMCInstrInfo());
 
   // Register the MC register info.
   TargetRegistry::RegisterMCRegInfo(TheHexagonTarget,
