@@ -50,8 +50,6 @@ public:
   llvm::SmallVector<std::string, 32> HeaderFileNames;
   /// Map of top-level header file dependencies.
   DependencyMap Dependencies;
-  /// Set of all the headers found in the module map.
-  llvm::StringSet<llvm::MallocAllocator> ModuleMapHeadersSet;
 
   // Functions.
 
@@ -93,14 +91,14 @@ protected:
 
   /// Collect module Map headers.
   /// Walks the modules and collects referenced headers into
-  /// ModuleMapHeadersSet.
+  /// HeaderFileNames.
   /// \param ModMap A loaded module map object.
   /// \return True if no errors.
   bool collectModuleMapHeaders(clang::ModuleMap *ModMap);
 
   /// Collect referenced headers from one module.
   /// Collects the headers referenced in the given module into
-  /// HeaderFileNames and ModuleMapHeadersSet.
+  /// HeaderFileNames.
   /// \param Mod The module reference.
   /// \return True if no errors.
   bool collectModuleHeaders(const clang::Module &Mod);

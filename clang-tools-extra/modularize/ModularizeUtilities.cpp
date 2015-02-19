@@ -214,7 +214,7 @@ std::error_code ModularizeUtilities::loadModuleMap(
 
 // Collect module map headers.
 // Walks the modules and collects referenced headers into
-// ModuleMapHeadersSet.
+// HeaderFileNames.
 bool ModularizeUtilities::collectModuleMapHeaders(clang::ModuleMap *ModMap) {
   for (ModuleMap::module_iterator I = ModMap->module_begin(),
     E = ModMap->module_end();
@@ -227,7 +227,7 @@ bool ModularizeUtilities::collectModuleMapHeaders(clang::ModuleMap *ModMap) {
 
 // Collect referenced headers from one module.
 // Collects the headers referenced in the given module into
-// HeaderFileNames and ModuleMapHeadersSet.
+// HeaderFileNames.
 bool ModularizeUtilities::collectModuleHeaders(const Module &Mod) {
 
   // Ignore explicit modules because they often have dependencies
@@ -248,7 +248,6 @@ bool ModularizeUtilities::collectModuleHeaders(const Module &Mod) {
     std::string HeaderPath = getCanonicalPath(UmbrellaHeader->getName());
     // Collect umbrella header.
     HeaderFileNames.push_back(HeaderPath);
-    ModuleMapHeadersSet.insert(HeaderPath);
 
     // FUTURE: When needed, umbrella header header collection goes here.
   }
@@ -306,7 +305,6 @@ bool ModularizeUtilities::collectUmbrellaHeaders(StringRef UmbrellaDirName,
       continue;
     // Save header name.
     std::string HeaderPath = getCanonicalPath(File);
-    ModuleMapHeadersSet.insert(HeaderPath);
     Dependents.push_back(HeaderPath);
   }
   return true;
