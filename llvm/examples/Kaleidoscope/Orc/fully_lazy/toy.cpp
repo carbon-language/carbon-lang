@@ -1243,7 +1243,7 @@ private:
   }
 
   // This method will take the AST for a function definition and IR-gen a stub
-  // for that function that will, on first call, IR-gen the action body of the
+  // for that function that will, on first call, IR-gen the actual body of the
   // function.
   ModuleHandleT irGenStub(std::unique_ptr<FunctionAST> FnAST) {
     // Step 1) IRGen a prototype for the stub. This will have the same type as
