@@ -24015,12 +24015,12 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
   // to simplify previous instructions.
   if (N->getOpcode() == ISD::VSELECT && DCI.isBeforeLegalizeOps() &&
       !DCI.isBeforeLegalize() &&
-      // We explicitly check against v8i16 and v16i16 because, although
-      // they're marked as Custom, they might only be legal when Cond is a
-      // build_vector of constants. This will be taken care in a later
-      // condition.
-      (TLI.isOperationLegalOrCustom(ISD::VSELECT, VT) && VT != MVT::v16i16 &&
-       VT != MVT::v8i16) &&
+      // We explicitly check against SSE4.1, v8i16 and v16i16 because, although
+      // vselect nodes may be marked as Custom, they might only be legal when
+      // Cond is a build_vector of constants. This will be taken care in
+      // a later condition.
+      (TLI.isOperationLegalOrCustom(ISD::VSELECT, VT) &&
+       Subtarget->hasSSE41() && VT != MVT::v16i16 && VT != MVT::v8i16) &&
       // Don't optimize vector of constants. Those are handled by
       // the generic code and all the bits must be properly set for
       // the generic optimizer.
