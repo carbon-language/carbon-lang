@@ -14,6 +14,8 @@
 // template <class Alloc, class U1, class U2>
 //   tuple(allocator_arg_t, const Alloc& a, pair<U1, U2>&&);
 
+// UNSUPPORTED: c++98, c++03
+
 #include <tuple>
 #include <utility>
 #include <memory>

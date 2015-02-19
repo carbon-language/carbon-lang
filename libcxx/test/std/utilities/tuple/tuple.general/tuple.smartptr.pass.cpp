@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
+
+// UNSUPPORTED: c++98, c++03
+
 //  Tuples of smart pointers; based on bug #18350
 //  auto_ptr doesn't have a copy constructor that takes a const &, but tuple does.
 

@@ -11,6 +11,8 @@
 
 // template <class... Types> class tuple;
 
+// UNSUPPORTED: c++98, c++03
+
 // This is not a portable test
 
 #include <tuple>

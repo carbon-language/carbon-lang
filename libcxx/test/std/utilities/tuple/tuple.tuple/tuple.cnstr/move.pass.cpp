@@ -13,6 +13,8 @@
 
 // tuple(tuple&& u);
 
+// UNSUPPORTED: c++98, c++03
+
 #include <tuple>
 #include <utility>
 #include <cassert>

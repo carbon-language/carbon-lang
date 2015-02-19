@@ -13,6 +13,8 @@
 
 // tuple& operator=(const tuple& u);
 
+// UNSUPPORTED: c++98, c++03
+
 #include <tuple>
 #include <string>
 #include <cassert>

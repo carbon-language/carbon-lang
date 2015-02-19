@@ -27,6 +27,8 @@
 //   bool
 //   operator>=(const tuple<TTypes...>& t, const tuple<UTypes...>& u);
 
+// UNSUPPORTED: c++98, c++03
+
 #include <tuple>
 #include <string>
 #include <cassert>
