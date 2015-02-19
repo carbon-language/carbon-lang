@@ -368,7 +368,7 @@ added in the future:
 
     The idea behind this convention is to support calls to runtime functions
     that have a hot path and a cold path. The hot path is usually a small piece
-    of code that doesn't many registers. The cold path might need to call out to
+    of code that doesn't use many registers. The cold path might need to call out to
     another function and therefore only needs to preserve the caller-saved
     registers, which haven't already been saved by the caller. The
     `PreserveMost` calling convention is very similar to the `cold` calling
@@ -521,7 +521,7 @@ Global Variables
 Global variables define regions of memory allocated at compilation time
 instead of run-time.
 
-Global variables definitions must be initialized.
+Global variable definitions must be initialized.
 
 Global variables in other translation units can also be declared, in which
 case they don't have an initializer.
@@ -666,7 +666,7 @@ predecessors, it also cannot have any :ref:`PHI nodes <i_phi>`.
 
 LLVM allows an explicit section to be specified for functions. If the
 target supports it, it will emit functions to the section specified.
-Additionally, the function can placed in a COMDAT.
+Additionally, the function can be placed in a COMDAT.
 
 An explicit alignment may be specified for a function. If not present,
 or if the alignment is set to zero, the alignment of the function is set
@@ -674,7 +674,7 @@ by the target to whatever it feels convenient. If an explicit alignment
 is specified, the function is forced to have at least that much
 alignment. All alignments must be a power of 2.
 
-If the ``unnamed_addr`` attribute is given, the address is know to not
+If the ``unnamed_addr`` attribute is given, the address is known to not
 be significant and two identical functions can be merged.
 
 Syntax::
@@ -716,7 +716,7 @@ The linkage must be one of ``private``, ``internal``, ``linkonce``, ``weak``,
 ``linkonce_odr``, ``weak_odr``, ``external``. Note that some system linkers
 might not correctly handle dropping a weak symbol that is aliased.
 
-Alias that are not ``unnamed_addr`` are guaranteed to have the same address as
+Aliases that are not ``unnamed_addr`` are guaranteed to have the same address as
 the aliasee expression. ``unnamed_addr`` ones are only guaranteed to point
 to the same content.
 
@@ -1782,7 +1782,7 @@ Fast-Math Flags
 
 LLVM IR floating-point binary ops (:ref:`fadd <i_fadd>`,
 :ref:`fsub <i_fsub>`, :ref:`fmul <i_fmul>`, :ref:`fdiv <i_fdiv>`,
-:ref:`frem <i_frem>`) have the following flags that can set to enable
+:ref:`frem <i_frem>`) have the following flags that can be set to enable
 otherwise unsafe floating point operations
 
 ``nnan``
