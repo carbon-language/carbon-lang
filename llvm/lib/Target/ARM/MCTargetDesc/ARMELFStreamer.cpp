@@ -1360,6 +1360,10 @@ MCStreamer *createARMNullStreamer(MCContext &Ctx) {
   return S;
 }
 
+MCTargetStreamer *createARMNullTargetStreamer(MCStreamer &S) {
+  return new ARMTargetStreamer(S);
+}
+
 MCELFStreamer *createARMELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                                     raw_ostream &OS, MCCodeEmitter *Emitter,
                                     bool RelaxAll, bool IsThumb) {
