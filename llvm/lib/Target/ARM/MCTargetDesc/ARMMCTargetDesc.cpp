@@ -33,7 +33,7 @@ using namespace llvm;
 
 static bool getMCRDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
                                   std::string &Info) {
-  if (STI.getFeatureBits()[llvm::ARM::HasV7Ops] &&
+  if (STI.getFeatureBits() & llvm::ARM::HasV7Ops &&
       (MI.getOperand(0).isImm() && MI.getOperand(0).getImm() == 15) &&
       (MI.getOperand(1).isImm() && MI.getOperand(1).getImm() == 0) &&
       // Checks for the deprecated CP15ISB encoding:
@@ -65,7 +65,7 @@ static bool getMCRDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
 
 static bool getITDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
                                  std::string &Info) {
-  if (STI.getFeatureBits()[llvm::ARM::HasV8Ops] && MI.getOperand(1).isImm() &&
+  if (STI.getFeatureBits() & llvm::ARM::HasV8Ops && MI.getOperand(1).isImm() &&
       MI.getOperand(1).getImm() != 8) {
     Info = "applying IT instruction to more than one subsequent instruction is "
            "deprecated";
@@ -77,7 +77,7 @@ static bool getITDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
 
 static bool getARMStoreDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
                                        std::string &Info) {
-  assert(!STI.getFeatureBits()[llvm::ARM::ModeThumb] &&
+  assert((~STI.getFeatureBits() & llvm::ARM::ModeThumb) &&
          "cannot predicate thumb instructions");
 
   assert(MI.getNumOperands() >= 4 && "expected >= 4 arguments");
@@ -94,7 +94,7 @@ static bool getARMStoreDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
 
 static bool getARMLoadDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
                                       std::string &Info) {
-  assert(!STI.getFeatureBits()[llvm::ARM::ModeThumb] &&
+  assert((~STI.getFeatureBits() & llvm::ARM::ModeThumb) &&
          "cannot predicate thumb instructions");
 
   assert(MI.getNumOperands() >= 4 && "expected >= 4 arguments");

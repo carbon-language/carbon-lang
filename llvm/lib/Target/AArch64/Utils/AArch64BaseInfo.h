@@ -26,8 +26,6 @@
 
 namespace llvm {
 
-class FeatureBitset;
-
 inline static unsigned getWRegFromXReg(unsigned Reg) {
   switch (Reg) {
   case AArch64::X0: return AArch64::W0;
@@ -1141,21 +1139,21 @@ namespace AArch64SysReg {
 
     const AArch64NamedImmMapper::Mapping *InstPairs;
     size_t NumInstPairs;
-    const FeatureBitset &FeatureBits;
+    uint64_t FeatureBits;
 
-    SysRegMapper(const FeatureBitset &FeatureBits) : FeatureBits(FeatureBits) { }
+    SysRegMapper(uint64_t FeatureBits) : FeatureBits(FeatureBits) { }
     uint32_t fromString(StringRef Name, bool &Valid) const;
     std::string toString(uint32_t Bits) const;
   };
 
   struct MSRMapper : SysRegMapper {
     static const AArch64NamedImmMapper::Mapping MSRPairs[];
-    MSRMapper(const FeatureBitset &FeatureBits);
+    MSRMapper(uint64_t FeatureBits);
   };
 
   struct MRSMapper : SysRegMapper {
     static const AArch64NamedImmMapper::Mapping MRSPairs[];
-    MRSMapper(const FeatureBitset &FeatureBits);
+    MRSMapper(uint64_t FeatureBits);
   };
 
   uint32_t ParseGenericRegister(StringRef Name, bool &Valid);

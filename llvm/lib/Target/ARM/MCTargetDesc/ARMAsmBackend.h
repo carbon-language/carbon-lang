@@ -33,7 +33,7 @@ public:
     return ARM::NumTargetFixupKinds;
   }
 
-  bool hasNOP() const { return STI->getFeatureBits()[ARM::HasV6T2Ops]; }
+  bool hasNOP() const { return (STI->getFeatureBits() & ARM::HasV6T2Ops) != 0; }
 
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override;
 
