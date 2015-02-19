@@ -86,9 +86,7 @@ extern "C" void LLVMInitializeR600AsmPrinter() {
 
 AMDGPUAsmPrinter::AMDGPUAsmPrinter(TargetMachine &TM,
                                    std::unique_ptr<MCStreamer> Streamer)
-    : AsmPrinter(TM, std::move(Streamer)) {
-  DisasmEnabled = TM.getSubtarget<AMDGPUSubtarget>().dumpCode();
-}
+    : AsmPrinter(TM, std::move(Streamer)) {}
 
 void AMDGPUAsmPrinter::EmitEndOfAsmFile(Module &M) {
 
@@ -160,7 +158,7 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  if (STM.dumpCode() && DisasmEnabled) {
+  if (STM.dumpCode()) {
 
     OutStreamer.SwitchSection(
         Context.getELFSection(".AMDGPU.disasm", ELF::SHT_NOTE, 0));

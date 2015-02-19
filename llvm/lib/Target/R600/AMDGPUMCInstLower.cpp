@@ -116,7 +116,7 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     MCInstLowering.lower(MI, TmpInst);
     EmitToStreamer(OutStreamer, TmpInst);
 
-    if (DisasmEnabled) {
+    if (MF->getSubtarget<AMDGPUSubtarget>().dumpCode()) {
       // Disassemble instruction/operands to text.
       DisasmLines.resize(DisasmLines.size() + 1);
       std::string &DisasmLine = DisasmLines.back();

@@ -100,7 +100,6 @@ public:
   void EmitEndOfAsmFile(Module &M) override;
 
 protected:
-  bool DisasmEnabled;
   std::vector<std::string> DisasmLines, HexLines;
   size_t DisasmLineMaxLen;
 };
