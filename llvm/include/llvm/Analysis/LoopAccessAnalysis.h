@@ -22,6 +22,7 @@
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/IR/ValueHandle.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
@@ -138,12 +139,7 @@ public:
 
   LoopAccessInfo(Loop *L, ScalarEvolution *SE, const DataLayout *DL,
                  const TargetLibraryInfo *TLI, AliasAnalysis *AA,
-                 DominatorTree *DT) :
-      TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA), DT(DT), NumLoads(0),
-      NumStores(0), MaxSafeDepDistBytes(-1U), CanVecMem(false) {}
-
-  /// \brief Analyze the loop.  Replaces symbolic strides using Strides.
-  void analyzeLoop(ValueToValueMap &Strides);
+                 DominatorTree *DT, ValueToValueMap &Strides);
 
   /// Return true we can analyze the memory accesses in the loop and there are
   /// no memory dependence cycles.
@@ -174,7 +170,15 @@ public:
   /// couldn't analyze the loop.
   Optional<VectorizationReport> &getReport() { return Report; }
 
+  /// \brief Used to ensure that if the analysis was run with speculating the
+  /// value of symbolic strides, the client queries it with the same assumption.
+  /// Only used in DEBUG build but we don't want NDEBUG-depedent ABI.
+  unsigned NumSymbolicStrides;
+
 private:
+  /// \brief Analyze the loop.  Substitute symbolic strides using Strides.
+  void analyzeLoop(ValueToValueMap &Strides);
+
   void emitAnalysis(VectorizationReport &Message);
 
   /// We need to check that all of the pointers in this list are disjoint
@@ -212,6 +216,49 @@ const SCEV *replaceSymbolicStrideSCEV(ScalarEvolution *SE,
                                       ValueToValueMap &PtrToStride,
                                       Value *Ptr, Value *OrigPtr = nullptr);
 
+/// \brief This analysis provides dependence information for the memory accesses
+/// of a loop.
+///
+/// It runs the analysis for a loop on demand.  This can be initiated by
+/// querying the loop access info via LAA::getInfo.  getInfo return a
+/// LoopAccessInfo object.  See this class for the specifics of what information
+/// is provided.
+class LoopAccessAnalysis : public FunctionPass {
+public:
+  static char ID;
+
+  LoopAccessAnalysis() : FunctionPass(ID) {
+    initializeLoopAccessAnalysisPass(*PassRegistry::getPassRegistry());
+  }
+
+  bool runOnFunction(Function &F) override;
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+
+  /// \brief Query the result of the loop access information for the loop \p L.
+  ///
+  /// If the client speculates (and then issues run-time checks) for the values
+  /// of symbolic strides, \p Strides provides the mapping (see
+  /// replaceSymbolicStrideSCEV).  If there is no cached result available run
+  /// the analysis.
+  LoopAccessInfo &getInfo(Loop *L, ValueToValueMap &Strides);
+
+  void releaseMemory() override {
+    // Invalidate the cache when the pass is freed.
+    LoopAccessInfoMap.clear();
+  }
+
+private:
+  /// \brief The cache.
+  DenseMap<Loop *, std::unique_ptr<LoopAccessInfo>> LoopAccessInfoMap;
+
+  // The used analysis passes.
+  ScalarEvolution *SE;
+  const DataLayout *DL;
+  const TargetLibraryInfo *TLI;
+  AliasAnalysis *AA;
+  DominatorTree *DT;
+};
 } // End llvm namespace
 
 #endif

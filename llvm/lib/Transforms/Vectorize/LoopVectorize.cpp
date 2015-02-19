@@ -531,12 +531,11 @@ public:
   LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, const DataLayout *DL,
                             DominatorTree *DT, TargetLibraryInfo *TLI,
                             AliasAnalysis *AA, Function *F,
-                            const TargetTransformInfo *TTI)
+                            const TargetTransformInfo *TTI,
+                            LoopAccessAnalysis *LAA)
       : NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
-        TLI(TLI), TheFunction(F), TTI(TTI), DT(DT), Induction(nullptr),
-        WidestIndTy(nullptr),
-        LAI(L, SE, DL, TLI, AA, DT),
-        HasFunNoNaNAttr(false) {}
+        TLI(TLI), TheFunction(F), TTI(TTI), DT(DT), LAA(LAA), LAI(nullptr),
+        Induction(nullptr), WidestIndTy(nullptr), HasFunNoNaNAttr(false) {}
 
   /// This enum represents the kinds of reductions that we support.
   enum ReductionKind {
@@ -722,18 +721,18 @@ public:
 
   /// Returns the information that we collected about runtime memory check.
   LoopAccessInfo::RuntimePointerCheck *getRuntimePointerCheck() {
-    return LAI.getRuntimePointerCheck();
+    return LAI->getRuntimePointerCheck();
   }
 
   LoopAccessInfo *getLAI() {
-    return &LAI;
+    return LAI;
   }
 
   /// This function returns the identity element (or neutral element) for
   /// the operation K.
   static Constant *getReductionIdentity(ReductionKind K, Type *Tp);
 
-  unsigned getMaxSafeDepDistBytes() { return LAI.getMaxSafeDepDistBytes(); }
+  unsigned getMaxSafeDepDistBytes() { return LAI->getMaxSafeDepDistBytes(); }
 
   bool hasStride(Value *V) { return StrideSet.count(V); }
   bool mustCheckStrides() { return !StrideSet.empty(); }
@@ -758,10 +757,10 @@ public:
     return (MaskedOp.count(I) != 0);
   }
   unsigned getNumStores() const {
-    return LAI.getNumStores();
+    return LAI->getNumStores();
   }
   unsigned getNumLoads() const {
-    return LAI.getNumLoads();
+    return LAI->getNumLoads();
   }
   unsigned getNumPredStores() const {
     return NumPredStores;
@@ -836,6 +835,11 @@ private:
   const TargetTransformInfo *TTI;
   /// Dominator Tree.
   DominatorTree *DT;
+  // LoopAccess analysis.
+  LoopAccessAnalysis *LAA;
+  // And the loop-accesses info corresponding to this loop.  This pointer is
+  // null until canVectorizeMemory sets it up.
+  LoopAccessInfo *LAI;
 
   //  ---  vectorization state --- //
 
@@ -857,7 +861,7 @@ private:
   /// This set holds the variables which are known to be uniform after
   /// vectorization.
   SmallPtrSet<Instruction*, 4> Uniforms;
-  LoopAccessInfo LAI;
+
   /// Can we assume the absence of NaNs.
   bool HasFunNoNaNAttr;
 
@@ -1239,6 +1243,7 @@ struct LoopVectorize : public FunctionPass {
   TargetLibraryInfo *TLI;
   AliasAnalysis *AA;
   AssumptionCache *AC;
+  LoopAccessAnalysis *LAA;
   bool DisableUnrolling;
   bool AlwaysVectorize;
 
@@ -1256,6 +1261,7 @@ struct LoopVectorize : public FunctionPass {
     TLI = TLIP ? &TLIP->getTLI() : nullptr;
     AA = &getAnalysis<AliasAnalysis>();
     AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
+    LAA = &getAnalysis<LoopAccessAnalysis>();
 
     // Compute some weights outside of the loop over the loops. Compute this
     // using a BranchProbability to re-use its scaling math.
@@ -1366,7 +1372,7 @@ struct LoopVectorize : public FunctionPass {
     }
 
     // Check if it is legal to vectorize the loop.
-    LoopVectorizationLegality LVL(L, SE, DL, DT, TLI, AA, F, TTI);
+    LoopVectorizationLegality LVL(L, SE, DL, DT, TLI, AA, F, TTI, LAA);
     if (!LVL.canVectorize()) {
       DEBUG(dbgs() << "LV: Not vectorizing: Cannot prove legality.\n");
       emitMissedWarning(F, L, Hints);
@@ -1471,6 +1477,7 @@ struct LoopVectorize : public FunctionPass {
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<TargetTransformInfoWrapperPass>();
     AU.addRequired<AliasAnalysis>();
+    AU.addRequired<LoopAccessAnalysis>();
     AU.addPreserved<LoopInfoWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();
     AU.addPreserved<AliasAnalysis>();
@@ -1642,7 +1649,7 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
 }
 
 bool LoopVectorizationLegality::isUniform(Value *V) {
-  return LAI.isUniform(V);
+  return LAI->isUniform(V);
 }
 
 InnerLoopVectorizer::VectorParts&
@@ -3382,7 +3389,7 @@ bool LoopVectorizationLegality::canVectorize() {
   collectLoopUniforms();
 
   DEBUG(dbgs() << "LV: We can vectorize this loop" <<
-        (LAI.getRuntimePointerCheck()->Need ? " (with a runtime bound check)" :
+        (LAI->getRuntimePointerCheck()->Need ? " (with a runtime bound check)" :
          "")
         <<"!\n");
 
@@ -3807,11 +3814,11 @@ void LoopVectorizationLegality::collectLoopUniforms() {
 }
 
 bool LoopVectorizationLegality::canVectorizeMemory() {
-  LAI.analyzeLoop(Strides);
-  auto &OptionalReport = LAI.getReport();
+  LAI = &LAA->getInfo(TheLoop, Strides);
+  auto &OptionalReport = LAI->getReport();
   if (OptionalReport)
     emitAnalysis(*OptionalReport);
-  return LAI.canVectorizeMemory();
+  return LAI->canVectorizeMemory();
 }
 
 static bool hasMultipleUsesOf(Instruction *I,
@@ -4986,6 +4993,7 @@ INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
+INITIALIZE_PASS_DEPENDENCY(LoopAccessAnalysis)
 INITIALIZE_PASS_END(LoopVectorize, LV_NAME, lv_name, false, false)
 
 namespace llvm {

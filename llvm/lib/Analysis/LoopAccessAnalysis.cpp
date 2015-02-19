@@ -1230,3 +1230,64 @@ LoopAccessInfo::addRuntimeCheck(Instruction *Loc) {
   FirstInst = getFirstInst(FirstInst, Check, Loc);
   return std::make_pair(FirstInst, Check);
 }
+
+LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
+                               const DataLayout *DL,
+                               const TargetLibraryInfo *TLI, AliasAnalysis *AA,
+                               DominatorTree *DT, ValueToValueMap &Strides)
+    : TheLoop(L), SE(SE), DL(DL), TLI(TLI), AA(AA), DT(DT), NumLoads(0),
+      NumStores(0), MaxSafeDepDistBytes(-1U), CanVecMem(false) {
+  analyzeLoop(Strides);
+}
+
+LoopAccessInfo &LoopAccessAnalysis::getInfo(Loop *L, ValueToValueMap &Strides) {
+  auto &LAI = LoopAccessInfoMap[L];
+
+#ifndef NDEBUG
+  assert((!LAI || LAI->NumSymbolicStrides == Strides.size()) &&
+         "Symbolic strides changed for loop");
+#endif
+
+  if (!LAI) {
+    LAI = llvm::make_unique<LoopAccessInfo>(L, SE, DL, TLI, AA, DT, Strides);
+#ifndef NDEBUG
+    LAI->NumSymbolicStrides = Strides.size();
+#endif
+  }
+  return *LAI.get();
+}
+
+bool LoopAccessAnalysis::runOnFunction(Function &F) {
+  SE = &getAnalysis<ScalarEvolution>();
+  DL = F.getParent()->getDataLayout();
+  auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
+  TLI = TLIP ? &TLIP->getTLI() : nullptr;
+  AA = &getAnalysis<AliasAnalysis>();
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+
+  return false;
+}
+
+void LoopAccessAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.addRequired<ScalarEvolution>();
+    AU.addRequired<AliasAnalysis>();
+    AU.addRequired<DominatorTreeWrapperPass>();
+
+    AU.setPreservesAll();
+}
+
+char LoopAccessAnalysis::ID = 0;
+static const char laa_name[] = "Loop Access Analysis";
+#define LAA_NAME "loop-accesses"
+
+INITIALIZE_PASS_BEGIN(LoopAccessAnalysis, LAA_NAME, laa_name, false, true)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
+INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
+INITIALIZE_PASS_END(LoopAccessAnalysis, LAA_NAME, laa_name, false, true)
+
+namespace llvm {
+  Pass *createLAAPass() {
+    return new LoopAccessAnalysis();
+  }
+}
