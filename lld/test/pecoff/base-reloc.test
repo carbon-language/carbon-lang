@@ -1,8 +1,8 @@
-# RUN: yaml2obj %p/Inputs/hello.obj.yaml > %t.obj
+# RUN: yaml2obj %p/Inputs/basereloc.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t1.exe /subsystem:console /force /opt:noref \
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /force /opt:noref \
 # RUN:   -- %t.obj
-# RUN: llvm-readobj -coff-basereloc %t1.exe | FileCheck %s --check-prefix=BASEREL
+# RUN: llvm-readobj -coff-basereloc %t.exe | FileCheck %s --check-prefix=BASEREL
 #
 # RUN: lld -flavor link /out:%t2.exe /subsystem:console /force /fixed \
 # RUN:   /opt:noref -- %t.obj

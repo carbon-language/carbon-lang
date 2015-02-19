@@ -784,6 +784,8 @@ void AtomChunk::addBaseRelocations(BaseRelocationList &relocSites) const {
     for (const Reference *ref : *atom) {
       if (ref->kindNamespace() != Reference::KindNamespace::COFF)
         continue;
+      if (isa<AbsoluteAtom>(ref->target()))
+          continue;
 
       uint64_t address = layout->_virtualAddr + ref->offsetInAtom();
       switch (_machineType) {
