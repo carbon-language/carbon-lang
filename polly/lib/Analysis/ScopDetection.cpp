@@ -251,8 +251,10 @@ bool ScopDetection::isMaxRegionInScop(const Region &R, bool Verify) const {
   if (!ValidRegions.count(&R))
     return false;
 
-  if (Verify)
-    return isValidRegion(const_cast<Region &>(R));
+  if (Verify) {
+    DetectionContext Context(const_cast<Region &>(R), *AA, false /*verifying*/);
+    return isValidRegion(Context);
+  }
 
   return true;
 }
@@ -731,10 +733,14 @@ void ScopDetection::findScops(Region &R) {
   if (!DetectRegionsWithoutLoops && regionWithoutLoops(R, LI))
     return;
 
-  bool IsValidRegion = isValidRegion(R);
-  bool HasErrors = RejectLogs.count(&R) > 0;
+  DetectionContext Context(R, *AA, false /*verifying*/);
+  bool RegionIsValid = isValidRegion(Context);
+  bool HasErrors = !RegionIsValid || Context.Log.size() > 0;
 
-  if (IsValidRegion && !HasErrors) {
+  if (PollyTrackFailures && HasErrors)
+    RejectLogs.insert(std::make_pair(&R, Context.Log));
+
+  if (!HasErrors) {
     ++ValidRegion;
     ValidRegions.insert(&R);
     return;
@@ -815,18 +821,6 @@ bool ScopDetection::isValidExit(DetectionContext &Context) const {
   }
 
   return true;
-}
-
-bool ScopDetection::isValidRegion(Region &R) const {
-  DetectionContext Context(R, *AA, false /*verifying*/);
-
-  bool RegionIsValid = isValidRegion(Context);
-  bool HasErrors = !RegionIsValid || Context.Log.size() > 0;
-
-  if (PollyTrackFailures && HasErrors)
-    RejectLogs.insert(std::make_pair(&R, Context.Log));
-
-  return RegionIsValid;
 }
 
 bool ScopDetection::isValidRegion(DetectionContext &Context) const {
