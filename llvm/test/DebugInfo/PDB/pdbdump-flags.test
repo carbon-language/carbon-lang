@@ -1,0 +1,14 @@
+; RUN: llvm-pdbdump %p/Inputs/empty.pdb | FileCheck %s -check-prefix SUMMARY_CHECK
+; RUN: llvm-pdbdump -functions %p/Inputs/empty.pdb | FileCheck %s -check-prefix MAIN_CHECK
+
+; Check PDB file summary information
+; SUMMARY_CHECK: empty.pdb
+; SUMMARY_CHECK: Guid: {0B355641-86A0-A249-896F-9988FAE52FF0}
+; SUMMARY_CHECK: Attributes: HasPrivateSymbols
+
+; Check that running with only -compilands doesn't include unwanted symbol types
+; MAIN_CHECK: (EBP) int32_t __cdecl main()
+; MAIN_CHECK-NOT: vtbl:
+; MAIN_CHECK-NOT: enum:
+; MAIN_CHECK-NOT: class:
+; MAIN_CHECK-NOT: data:
