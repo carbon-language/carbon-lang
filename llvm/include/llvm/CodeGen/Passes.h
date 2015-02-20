@@ -612,13 +612,13 @@ namespace llvm {
   ModulePass *createForwardControlFlowIntegrityPass();
 } // End llvm namespace
 
-/// This initializer registers TargetMachine constructor, so the pass being
-/// initialized can use target dependent interfaces. Please do not move this
-/// macro to be together with INITIALIZE_PASS, which is a complete target
-/// independent initializer, and we don't want to make libScalarOpts depend
-/// on libCodeGen.
-#define INITIALIZE_TM_PASS(passName, arg, name, cfg, analysis) \
-  static void* initialize##passName##PassOnce(PassRegistry &Registry) { \
+/// Target machine pass initializer for passes with dependencies. Use with
+/// INITIALIZE_TM_PASS_END.
+#define INITIALIZE_TM_PASS_BEGIN INITIALIZE_PASS_BEGIN
+
+/// Target machine pass initializer for passes with dependencies. Use with
+/// INITIALIZE_TM_PASS_BEGIN.
+#define INITIALIZE_TM_PASS_END(passName, arg, name, cfg, analysis) \
     PassInfo *PI = new PassInfo(name, arg, & passName ::ID, \
       PassInfo::NormalCtor_t(callDefaultCtor< passName >), cfg, analysis, \
       PassInfo::TargetMachineCtor_t(callTargetMachineCtor< passName >)); \
@@ -628,5 +628,14 @@ namespace llvm {
   void llvm::initialize##passName##Pass(PassRegistry &Registry) { \
     CALL_ONCE_INITIALIZATION(initialize##passName##PassOnce) \
   }
+
+/// This initializer registers TargetMachine constructor, so the pass being
+/// initialized can use target dependent interfaces. Please do not move this
+/// macro to be together with INITIALIZE_PASS, which is a complete target
+/// independent initializer, and we don't want to make libScalarOpts depend
+/// on libCodeGen.
+#define INITIALIZE_TM_PASS(passName, arg, name, cfg, analysis) \
+    INITIALIZE_TM_PASS_BEGIN(passName, arg, name, cfg, analysis) \
+    INITIALIZE_TM_PASS_END(passName, arg, name, cfg, analysis)
 
 #endif

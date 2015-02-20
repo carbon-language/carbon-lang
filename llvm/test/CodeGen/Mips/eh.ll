@@ -27,6 +27,7 @@ lpad:                                             ; preds = %entry
 ; CHECK-EL:  bne $5
 
   %exn.val = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+           cleanup
            catch i8* bitcast (i8** @_ZTId to i8*)
   %exn = extractvalue { i8*, i32 } %exn.val, 0
   %sel = extractvalue { i8*, i32 } %exn.val, 1
