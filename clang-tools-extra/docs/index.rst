@@ -18,7 +18,6 @@ Contents
    clang-modernize
    clang-tidy
    modularize
-   module-map-checker
    pp-trace
 
 

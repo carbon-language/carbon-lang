@@ -41,7 +41,6 @@ set(CLANG_TOOLS_TEST_DEPS
   clang-query
   clang-tidy
   modularize
-  module-map-checker
   pp-trace
   remove-cstr-calls
 

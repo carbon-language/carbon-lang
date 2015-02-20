@@ -1,4 +1,0 @@
-# RUN: not module-map-checker %S/Inputs/main-test/module.modulemap 2>&1 | FileCheck %s
-
-# CHECK: warning: {{.*}}{{[/\\]}}Inputs/main-test/module.modulemap does not account for file: {{.*}}{{[/\\]}}Inputs/main-test/Level3A.h
-# CHECK-NEXT: warning: {{.*}}{{[/\\]}}Inputs/main-test/module.modulemap does not account for file: {{.*}}{{[/\\]}}Inputs/main-test/Sub/Level3B.h
