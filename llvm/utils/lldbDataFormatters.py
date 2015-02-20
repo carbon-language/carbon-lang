@@ -15,6 +15,9 @@ def __lldb_init_module(debugger, internal_dict):
     debugger.HandleCommand('type synthetic add -w llvm '
                            '-l lldbDataFormatters.ArrayRefSynthProvider '
                            '-x "^llvm::ArrayRef<.+>$"')
+    debugger.HandleCommand('type summary add -w llvm '
+                           '-F lldbDataFormatters.OptionalSummaryProvider '
+                           '-x "^llvm::Optional<.+>$"')
 
 # Pretty printer for llvm::SmallVector/llvm::SmallVectorImpl
 class SmallVectorSynthProvider:
@@ -86,3 +89,10 @@ class ArrayRefSynthProvider:
         self.data_type = self.data.GetType().GetPointeeType()
         self.type_size = self.data_type.GetByteSize()
         assert self.type_size != 0
+
+def OptionalSummaryProvider(valobj, internal_dict):
+    if not valobj.GetChildMemberWithName('hasVal').GetValueAsUnsigned(0):
+        return 'None'
+    underlying_type = valobj.GetType().GetTemplateArgumentType(0)
+    storage = valobj.GetChildMemberWithName('storage')
+    return str(storage.Cast(underlying_type))
