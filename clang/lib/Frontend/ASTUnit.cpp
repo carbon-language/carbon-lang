@@ -914,20 +914,13 @@ class PrecompilePreambleConsumer : public PCHGenerator {
   unsigned &Hash;
   std::vector<Decl *> TopLevelDecls;
   PrecompilePreambleAction *Action;
-  raw_ostream *Out;
-  SmallVectorImpl<char> *SerializedASTBuffer;
 
 public:
   PrecompilePreambleConsumer(ASTUnit &Unit, PrecompilePreambleAction *Action,
                              const Preprocessor &PP, StringRef isysroot,
                              raw_ostream *Out)
-    : PCHGenerator(PP, "", nullptr, isysroot, /*AllowASTWithErrors=*/true),
-      Unit(Unit), Hash(Unit.getCurrentTopLevelHashValue()), Action(Action),
-      Out(Out) {
-    RegisterSerializationFinishedCallback(
-      [&](SmallVectorImpl<char> *Buf){
-        SerializedASTBuffer = Buf;
-      });
+    : PCHGenerator(PP, "", nullptr, isysroot, Out, /*AllowASTWithErrors=*/true),
+      Unit(Unit), Hash(Unit.getCurrentTopLevelHashValue()), Action(Action) {
     Hash = 0;
   }
 
@@ -948,13 +941,6 @@ public:
   void HandleTranslationUnit(ASTContext &Ctx) override {
     PCHGenerator::HandleTranslationUnit(Ctx);
     if (hasEmittedPCH()) {
-      // Write the generated bitstream to "Out".
-      Out->write((char *)&SerializedASTBuffer->front(),
-                 SerializedASTBuffer->size());
-      // Make sure it hits disk now.
-      Out->flush();
-      SerializedASTBuffer->clear();
-
       // Translate the top-level declarations we captured during
       // parsing into declaration IDs in the precompiled
       // preamble. This will allow us to deserialize those top-level

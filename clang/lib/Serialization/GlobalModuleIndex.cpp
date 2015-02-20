@@ -15,7 +15,6 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Serialization/ASTBitCodes.h"
-#include "clang/Serialization/ASTReader.h"
 #include "clang/Serialization/GlobalModuleIndex.h"
 #include "clang/Serialization/Module.h"
 #include "llvm/ADT/DenseMap.h"
@@ -502,8 +501,8 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
 
   // Initialize the input stream
   llvm::BitstreamReader InStreamFile;
-  ASTReader::InitStreamFileWithModule((*Buffer)->getMemBufferRef(),
-                                      InStreamFile);
+  InStreamFile.init((const unsigned char *)(*Buffer)->getBufferStart(),
+                    (const unsigned char *)(*Buffer)->getBufferEnd());
   llvm::BitstreamCursor InStream(InStreamFile);
 
   // Sniff for the signature.
