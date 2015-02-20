@@ -141,7 +141,8 @@ const DataLayout &AsmPrinter::getDataLayout() const {
 }
 
 const MCSubtargetInfo &AsmPrinter::getSubtargetInfo() const {
-  return TM.getSubtarget<MCSubtargetInfo>();
+  assert(MF && "getSubtargetInfo requires a valid MachineFunction!");
+  return MF->getSubtarget<MCSubtargetInfo>();
 }
 
 void AsmPrinter::EmitToStreamer(MCStreamer &S, const MCInst &Inst) {
@@ -615,9 +616,8 @@ static void emitComments(const MachineInstr &MI, raw_ostream &CommentOS) {
 /// that is an implicit def.
 void AsmPrinter::emitImplicitDef(const MachineInstr *MI) const {
   unsigned RegNo = MI->getOperand(0).getReg();
-  OutStreamer.AddComment(
-      Twine("implicit-def: ") +
-      TM.getSubtargetImpl()->getRegisterInfo()->getName(RegNo));
+  OutStreamer.AddComment(Twine("implicit-def: ") +
+                         MMI->getContext().getRegisterInfo()->getName(RegNo));
   OutStreamer.AddBlankLine();
 }
 
@@ -627,7 +627,7 @@ static void emitKill(const MachineInstr *MI, AsmPrinter &AP) {
     const MachineOperand &Op = MI->getOperand(i);
     assert(Op.isReg() && "KILL instruction must have only register operands");
     Str += ' ';
-    Str += AP.TM.getSubtargetImpl()->getRegisterInfo()->getName(Op.getReg());
+    Str += AP.MMI->getContext().getRegisterInfo()->getName(Op.getReg());
     Str += (Op.isDef() ? "<def>" : "<kill>");
   }
   AP.OutStreamer.AddComment(Str);
@@ -689,8 +689,7 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
       Reg = MI->getOperand(0).getReg();
     } else {
       assert(MI->getOperand(0).isFI() && "Unknown operand type");
-      const TargetFrameLowering *TFI =
-          AP.TM.getSubtargetImpl()->getFrameLowering();
+      const TargetFrameLowering *TFI = AP.MF->getSubtarget().getFrameLowering();
       Offset += TFI->getFrameIndexReference(*AP.MF,
                                             MI->getOperand(0).getIndex(), Reg);
       Deref = true;
@@ -704,7 +703,7 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
     }
     if (Deref)
       OS << '[';
-    OS << AP.TM.getSubtargetImpl()->getRegisterInfo()->getName(Reg);
+    OS << AP.MMI->getContext().getRegisterInfo()->getName(Reg);
   }
 
   if (Deref)
@@ -1296,7 +1295,7 @@ void AsmPrinter::EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
       break;
     }
     Value = MCSymbolRefExpr::Create(MBB->getSymbol(), OutContext);
-    const TargetLowering *TLI = TM.getSubtargetImpl()->getTargetLowering();
+    const TargetLowering *TLI = MF->getSubtarget().getTargetLowering();
     const MCExpr *Base = TLI->getPICJumpTableRelocBaseExpr(MF, UID, OutContext);
     Value = MCBinaryExpr::CreateSub(Value, Base, OutContext);
     break;
