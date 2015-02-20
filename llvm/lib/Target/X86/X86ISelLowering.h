@@ -393,8 +393,7 @@ namespace llvm {
       FMSUB_RND,
       FNMSUB_RND,
       FMADDSUB_RND,
-      FMSUBADD_RND,
-      RNDSCALE,
+      FMSUBADD_RND,     
 
       // Compress and expand
       COMPRESS,
