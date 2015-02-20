@@ -28,15 +28,14 @@ SDValue AArch64SelectionDAGInfo::EmitTargetCodeForMemset(
   // Check to see if there is a specialized entry-point for memory zeroing.
   ConstantSDNode *V = dyn_cast<ConstantSDNode>(Src);
   ConstantSDNode *SizeValue = dyn_cast<ConstantSDNode>(Size);
+  const AArch64Subtarget &STI =
+      DAG.getMachineFunction().getSubtarget<AArch64Subtarget>();
   const char *bzeroEntry =
-      (V && V->isNullValue())
-          ? DAG.getTarget().getSubtarget<AArch64Subtarget>().getBZeroEntry()
-          : nullptr;
+      (V && V->isNullValue()) ? STI.getBZeroEntry() : nullptr;
   // For small size (< 256), it is not beneficial to use bzero
   // instead of memset.
   if (bzeroEntry && (!SizeValue || SizeValue->getZExtValue() > 256)) {
-    const AArch64TargetLowering &TLI =
-        *DAG.getTarget().getSubtarget<AArch64Subtarget>().getTargetLowering();
+    const AArch64TargetLowering &TLI = *STI.getTargetLowering();
 
     EVT IntPtr = TLI.getPointerTy();
     Type *IntPtrTy = getDataLayout()->getIntPtrType(*DAG.getContext());

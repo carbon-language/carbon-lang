@@ -59,7 +59,7 @@ MipsTargetStreamer &MipsAsmPrinter::getTargetStreamer() const {
 }
 
 bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  Subtarget = &TM.getSubtarget<MipsSubtarget>();
+  Subtarget = &MF.getSubtarget<MipsSubtarget>();
 
   // Initialize TargetLoweringObjectFile.
   const_cast<TargetLoweringObjectFile &>(getObjFileLowering())
