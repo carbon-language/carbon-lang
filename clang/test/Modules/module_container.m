@@ -1,5 +1,5 @@
 @import DependsOnModule;
-
+// REQUIRES: x86-registered-target
 // RUN: rm -rf %t-MachO %t-ELF %t-COFF
 // RUN: %clang_cc1 -triple=x86_64-apple-darwin -fmodules -fdisable-module-hash -fmodules-cache-path=%t-MachO -F %S/Inputs %s
 // RUN: %clang_cc1 -triple=x86_64-linux-elf -fmodules -fdisable-module-hash -fmodules-cache-path=%t-ELF -F %S/Inputs %s
