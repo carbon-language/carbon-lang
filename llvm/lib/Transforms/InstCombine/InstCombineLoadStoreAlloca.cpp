@@ -468,6 +468,181 @@ static Instruction *combineLoadToOperationType(InstCombiner &IC, LoadInst &LI) {
   return nullptr;
 }
 
+// If we can determine that all possible objects pointed to by the provided
+// pointer value are, not only dereferenceable, but also definitively less than
+// or equal to the provided maximum size, then return true. Otherwise, return
+// false (constant global values and allocas fall into this category).
+//
+// FIXME: This should probably live in ValueTracking (or similar).
+static bool isObjectSizeLessThanOrEq(Value *V, uint64_t MaxSize,
+                                     const DataLayout *DL) {
+  SmallPtrSet<Value *, 4> Visited;
+  SmallVector<Value *, 4> Worklist(1, V);
+
+  do {
+    Value *P = Worklist.pop_back_val();
+    P = P->stripPointerCasts();
+
+    if (!Visited.insert(P).second)
+      continue;
+
+    if (SelectInst *SI = dyn_cast<SelectInst>(P)) {
+      Worklist.push_back(SI->getTrueValue());
+      Worklist.push_back(SI->getFalseValue());
+      continue;
+    }
+
+    if (PHINode *PN = dyn_cast<PHINode>(P)) {
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        Worklist.push_back(PN->getIncomingValue(i));
+      continue;
+    }
+
+    if (GlobalAlias *GA = dyn_cast<GlobalAlias>(P)) {
+      if (GA->mayBeOverridden())
+        return false;
+      Worklist.push_back(GA->getAliasee());
+      continue;
+    }
+
+    // If we know how big this object is, and it is less than MaxSize, continue
+    // searching. Otherwise, return false.
+    if (AllocaInst *AI = dyn_cast<AllocaInst>(P)) {
+      if (!AI->getAllocatedType()->isSized())
+        return false;
+
+      ConstantInt *CS = dyn_cast<ConstantInt>(AI->getArraySize());
+      if (!CS)
+        return false;
+
+      uint64_t TypeSize = DL->getTypeAllocSize(AI->getAllocatedType());
+      // Make sure that, even if the multiplication below would wrap as an
+      // uint64_t, we still do the right thing.
+      if ((CS->getValue().zextOrSelf(128)*APInt(128, TypeSize)).ugt(MaxSize))
+        return false;
+      continue;
+    }
+
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(P)) {
+      if (!GV->hasDefinitiveInitializer() || !GV->isConstant())
+        return false;
+
+      uint64_t InitSize = DL->getTypeAllocSize(GV->getType()->getElementType());
+      if (InitSize > MaxSize)
+        return false;
+      continue;
+    }
+
+    return false;
+  } while (!Worklist.empty());
+
+  return true;
+}
+
+// If we're indexing into an object of a known size, and the outer index is
+// not a constant, but having any value but zero would lead to undefined
+// behavior, replace it with zero.
+//
+// For example, if we have:
+// @f.a = private unnamed_addr constant [1 x i32] [i32 12], align 4
+// ...
+// %arrayidx = getelementptr inbounds [1 x i32]* @f.a, i64 0, i64 %x
+// ... = load i32* %arrayidx, align 4
+// Then we know that we can replace %x in the GEP with i64 0.
+//
+// FIXME: We could fold any GEP index to zero that would cause UB if it were
+// not zero. Currently, we only handle the first such index. Also, we could
+// also search through non-zero constant indices if we kept track of the
+// offsets those indices implied.
+static bool canReplaceGEPIdxWithZero(InstCombiner &IC, GetElementPtrInst *GEPI,
+                                     Instruction *MemI, unsigned &Idx) {
+  const DataLayout *DL = IC.getDataLayout();
+  if (GEPI->getNumOperands() < 2 || !DL)
+    return false;
+
+  // Find the first non-zero index of a GEP. If all indices are zero, return
+  // one past the last index.
+  auto FirstNZIdx = [](const GetElementPtrInst *GEPI) {
+    unsigned I = 1;
+    for (unsigned IE = GEPI->getNumOperands(); I != IE; ++I) {
+      Value *V = GEPI->getOperand(I);
+      if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
+        if (CI->isZero())
+          continue;
+
+      break;
+    }
+
+    return I;
+  };
+
+  // Skip through initial 'zero' indices, and find the corresponding pointer
+  // type. See if the next index is not a constant.
+  Idx = FirstNZIdx(GEPI);
+  if (Idx == GEPI->getNumOperands())
+    return false;
+  if (isa<Constant>(GEPI->getOperand(Idx)))
+    return false;
+
+  SmallVector<Value *, 4> Ops(GEPI->idx_begin(), GEPI->idx_begin() + Idx);
+  Type *AllocTy =
+    GetElementPtrInst::getIndexedType(GEPI->getOperand(0)->getType(), Ops);
+  if (!AllocTy || !AllocTy->isSized())
+    return false;
+  uint64_t TyAllocSize = DL->getTypeAllocSize(AllocTy);
+
+  // If there are more indices after the one we might replace with a zero, make
+  // sure they're all non-negative. If any of them are negative, the overall
+  // address being computed might be before the base address determined by the
+  // first non-zero index.
+  auto IsAllNonNegative = [&]() {
+    for (unsigned i = Idx+1, e = GEPI->getNumOperands(); i != e; ++i) {
+      bool KnownNonNegative, KnownNegative;
+      IC.ComputeSignBit(GEPI->getOperand(i), KnownNonNegative,
+                        KnownNegative, 0, MemI);
+      if (KnownNonNegative)
+        continue;
+      return false;
+    }
+
+    return true;
+  };
+
+  // FIXME: If the GEP is not inbounds, and there are extra indices after the
+  // one we'll replace, those could cause the address computation to wrap
+  // (rendering the IsAllNonNegative() check below insufficient). We can do
+  // better, ignoring zero indicies (and other indicies we can prove small
+  // enough not to wrap).
+  if (Idx+1 != GEPI->getNumOperands() && !GEPI->isInBounds())
+    return false;
+
+  // Note that isObjectSizeLessThanOrEq will return true only if the pointer is
+  // also known to be dereferenceable.
+  return isObjectSizeLessThanOrEq(GEPI->getOperand(0), TyAllocSize, DL) &&
+         IsAllNonNegative();
+}
+
+// If we're indexing into an object with a variable index for the memory
+// access, but the object has only one element, we can assume that the index
+// will always be zero. If we replace the GEP, return it.
+template <typename T>
+static Instruction *replaceGEPIdxWithZero(InstCombiner &IC, Value *Ptr,
+                                          T &MemI) {
+  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Ptr)) {
+    unsigned Idx;
+    if (canReplaceGEPIdxWithZero(IC, GEPI, &MemI, Idx)) {
+      Instruction *NewGEPI = GEPI->clone();
+      NewGEPI->setOperand(Idx,
+        ConstantInt::get(GEPI->getOperand(Idx)->getType(), 0));
+      NewGEPI->insertBefore(GEPI);
+      MemI.setOperand(MemI.getPointerOperandIndex(), NewGEPI);
+      return NewGEPI;
+    }
+  }
+
+  return nullptr;
+}
+
 Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
 
@@ -487,6 +662,12 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       LI.setAlignment(KnownAlign);
     else if (LoadAlign == 0)
       LI.setAlignment(EffectiveLoadAlign);
+  }
+
+  // Replace GEP indices if possible.
+  if (Instruction *NewGEPI = replaceGEPIdxWithZero(*this, Op, LI)) {
+      Worklist.Add(NewGEPI);
+      return &LI;
   }
 
   // None of the following transforms are legal for volatile/atomic loads.
@@ -661,6 +842,12 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
       SI.setAlignment(KnownAlign);
     else if (StoreAlign == 0)
       SI.setAlignment(EffectiveStoreAlign);
+  }
+
+  // Replace GEP indices if possible.
+  if (Instruction *NewGEPI = replaceGEPIdxWithZero(*this, Ptr, SI)) {
+      Worklist.Add(NewGEPI);
+      return &SI;
   }
 
   // Don't hack volatile/atomic stores.

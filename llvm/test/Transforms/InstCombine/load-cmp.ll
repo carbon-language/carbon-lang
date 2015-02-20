@@ -230,7 +230,7 @@ define i1 @test10_struct(i32 %x) {
 ; NODL: getelementptr inbounds %Foo* @GS, i32 %x, i32 0
 
 ; P32-LABEL: @test10_struct(
-; P32: getelementptr inbounds %Foo* @GS, i32 %x, i32 0
+; P32: ret i1 false
   %p = getelementptr inbounds %Foo* @GS, i32 %x, i32 0
   %q = load i32* %p
   %r = icmp eq i32 %q, 9
@@ -256,8 +256,7 @@ define i1 @test10_struct_i16(i16 %x){
 ; NODL: getelementptr inbounds %Foo* @GS, i16 %x, i32 0
 
 ; P32-LABEL: @test10_struct_i16(
-; P32: %1 = sext i16 %x to i32
-; P32: getelementptr inbounds %Foo* @GS, i32 %1, i32 0
+; P32: ret i1 false
   %p = getelementptr inbounds %Foo* @GS, i16 %x, i32 0
   %q = load i32* %p
   %r = icmp eq i32 %q, 0
@@ -271,8 +270,7 @@ define i1 @test10_struct_i64(i64 %x){
 ; NODL: getelementptr inbounds %Foo* @GS, i64 %x, i32 0
 
 ; P32-LABEL: @test10_struct_i64(
-; P32: %1 = trunc i64 %x to i32
-; P32: getelementptr inbounds %Foo* @GS, i32 %1, i32 0
+; P32: ret i1 false
   %p = getelementptr inbounds %Foo* @GS, i64 %x, i32 0
   %q = load i32* %p
   %r = icmp eq i32 %q, 0
