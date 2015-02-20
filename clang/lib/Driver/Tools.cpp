@@ -3316,6 +3316,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fdata-sections");
   }
 
+  if (!Args.hasFlag(options::OPT_funique_section_names,
+                    options::OPT_fno_unique_section_names, true))
+    CmdArgs.push_back("-fno-unique-section-names");
+
   Args.AddAllArgs(CmdArgs, options::OPT_finstrument_functions);
 
   if (Args.hasArg(options::OPT_fprofile_instr_generate) &&
