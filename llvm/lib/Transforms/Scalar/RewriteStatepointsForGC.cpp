@@ -96,7 +96,7 @@ namespace {
 // base relation will remain.  Internally, we add a mixture of the two
 // types, then update all the second type to the first type
 typedef DenseMap<Value *, Value *> DefiningValueMapTy;
-typedef std::set<llvm::Value *> StatepointLiveSetTy;
+typedef DenseSet<llvm::Value *> StatepointLiveSetTy;
 
 struct PartiallyConstructedSafepointRecord {
   /// The set of values known to be live accross this safepoint
@@ -177,7 +177,7 @@ static bool isAggWhichContainsGCPtrType(Type *Ty) {
 //  postconditions: populates liveValues as discussed above
 static void findLiveGCValuesAtInst(Instruction *term, BasicBlock *pred,
                                    DominatorTree &DT, LoopInfo *LI,
-                                   std::set<llvm::Value *> &liveValues) {
+                                   StatepointLiveSetTy &liveValues) {
   liveValues.clear();
 
   assert(isa<CallInst>(term) || isa<InvokeInst>(term) || term->isTerminator());
@@ -277,7 +277,7 @@ analyzeParsePointLiveness(DominatorTree &DT, const CallSite &CS,
   Instruction *inst = CS.getInstruction();
 
   BasicBlock *BB = inst->getParent();
-  std::set<Value *> liveset;
+  StatepointLiveSetTy liveset;
   findLiveGCValuesAtInst(inst, BB, DT, nullptr, liveset);
 
   if (PrintLiveSet) {
@@ -976,7 +976,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
 // post condition: PointerToBase contains one (derived, base) pair for every
 // pointer in live.  Note that derived can be equal to base if the original
 // pointer was a base pointer.
-static void findBasePointers(const std::set<llvm::Value *> &live,
+static void findBasePointers(const StatepointLiveSetTy &live,
                              DenseMap<llvm::Value *, llvm::Value *> &PointerToBase,
                              DominatorTree *DT, DefiningValueMapTy &DVCache,
                              DenseSet<llvm::Value *> &NewInsertedDefs) {
@@ -1023,7 +1023,7 @@ static void findBasePointers(DominatorTree &DT, DefiningValueMapTy &DVCache,
 /// Check for liveness of items in the insert defs and add them to the live
 /// and base pointer sets
 static void fixupLiveness(DominatorTree &DT, const CallSite &CS,
-                          const std::set<Value *> &allInsertedDefs,
+                          const DenseSet<Value *> &allInsertedDefs,
                           PartiallyConstructedSafepointRecord &result) {
   Instruction *inst = CS.getInstruction();
 
@@ -1064,7 +1064,7 @@ static void fixupLiveness(DominatorTree &DT, const CallSite &CS,
 
 static void fixupLiveReferences(
     Function &F, DominatorTree &DT, Pass *P,
-    const std::set<llvm::Value *> &allInsertedDefs,
+    const DenseSet<llvm::Value *> &allInsertedDefs,
     ArrayRef<CallSite> toUpdate,
     MutableArrayRef<struct PartiallyConstructedSafepointRecord> records) {
   for (size_t i = 0; i < records.size(); i++) {
@@ -1667,7 +1667,7 @@ static void findLiveReferences(
   }
 }
 
-static void addBasesAsLiveValues(std::set<Value *> &liveset,
+static void addBasesAsLiveValues(StatepointLiveSetTy &liveset,
                                  DenseMap<Value *, Value *> &PointerToBase) {
   // Identify any base pointers which are used in this safepoint, but not
   // themselves relocated.  We need to relocate them so that later inserted
@@ -1767,7 +1767,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
   //   gep a + 1
   //   safepoint 2
   //   br loop
-  std::set<llvm::Value *> allInsertedDefs;
+  DenseSet<llvm::Value *> allInsertedDefs;
   for (size_t i = 0; i < records.size(); i++) {
     struct PartiallyConstructedSafepointRecord &info = records[i];
     allInsertedDefs.insert(info.NewInsertedDefs.begin(),
