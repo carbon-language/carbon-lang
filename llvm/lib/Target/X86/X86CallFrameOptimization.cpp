@@ -117,7 +117,7 @@ bool X86CallFrameOptimization::isLegal(MachineFunction &MF) {
   // No point in running this in 64-bit mode, since some arguments are
   // passed in-register in all common calling conventions, so the pattern
   // we're looking for will never match.
-  const X86Subtarget &STI = MF.getTarget().getSubtarget<X86Subtarget>();
+  const X86Subtarget &STI = MF.getSubtarget<X86Subtarget>();
   if (STI.is64Bit())
     return false;
 
@@ -402,7 +402,7 @@ bool X86CallFrameOptimization::adjustCallSequence(MachineFunction &MF,
 
       // If PUSHrmm is not slow on this target, try to fold the source of the
       // push into the instruction.
-      const X86Subtarget &ST = MF.getTarget().getSubtarget<X86Subtarget>();
+      const X86Subtarget &ST = MF.getSubtarget<X86Subtarget>();
       bool SlowPUSHrmm = ST.isAtom() || ST.isSLM();
 
       // Check that this is legal to fold. Right now, we're extremely

@@ -88,7 +88,6 @@ public:
 
 private:
   MachineFunction *MF;
-  const TargetMachine *TM;
   const X86InstrInfo *TII; // Machine instruction info.
 };
 char FixupLEAPass::ID = 0;
@@ -150,8 +149,7 @@ FunctionPass *llvm::createX86FixupLEAs() { return new FixupLEAPass(); }
 
 bool FixupLEAPass::runOnMachineFunction(MachineFunction &Func) {
   MF = &Func;
-  TM = &Func.getTarget();
-  const X86Subtarget &ST = TM->getSubtarget<X86Subtarget>();
+  const X86Subtarget &ST = Func.getSubtarget<X86Subtarget>();
   if (!ST.LEAusesAG() && !ST.slowLEA())
     return false;
 
@@ -332,7 +330,7 @@ bool FixupLEAPass::processBasicBlock(MachineFunction &MF,
                                      MachineFunction::iterator MFI) {
 
   for (MachineBasicBlock::iterator I = MFI->begin(); I != MFI->end(); ++I) {
-    if (TM->getSubtarget<X86Subtarget>().isSLM())
+    if (MF.getSubtarget<X86Subtarget>().isSLM())
       processInstructionForSLM(I, MFI);
     else
       processInstruction(I, MFI);
