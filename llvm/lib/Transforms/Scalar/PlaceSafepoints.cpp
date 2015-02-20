@@ -91,19 +91,21 @@ using namespace llvm;
 
 // Ignore oppurtunities to avoid placing safepoints on backedges, useful for
 // validation
-static cl::opt<bool> AllBackedges("spp-all-backedges", cl::init(false));
+static cl::opt<bool> AllBackedges("spp-all-backedges", cl::Hidden,
+                                  cl::init(false));
 
 /// If true, do not place backedge safepoints in counted loops.
-static cl::opt<bool> SkipCounted("spp-counted", cl::init(true));
+static cl::opt<bool> SkipCounted("spp-counted", cl::Hidden, cl::init(true));
 
 // If true, split the backedge of a loop when placing the safepoint, otherwise
 // split the latch block itself.  Both are useful to support for
 // experimentation, but in practice, it looks like splitting the backedge
 // optimizes better.
-static cl::opt<bool> SplitBackedge("spp-split-backedge", cl::init(false));
+static cl::opt<bool> SplitBackedge("spp-split-backedge", cl::Hidden,
+                                   cl::init(false));
 
 // Print tracing output
-static cl::opt<bool> TraceLSP("spp-trace", cl::init(false));
+static cl::opt<bool> TraceLSP("spp-trace", cl::Hidden, cl::init(false));
 
 namespace {
 
@@ -140,9 +142,9 @@ struct PlaceBackedgeSafepointsImpl : public LoopPass {
 };
 }
 
-static cl::opt<bool> NoEntry("spp-no-entry", cl::init(false));
-static cl::opt<bool> NoCall("spp-no-call", cl::init(false));
-static cl::opt<bool> NoBackedge("spp-no-backedge", cl::init(false));
+static cl::opt<bool> NoEntry("spp-no-entry", cl::Hidden, cl::init(false));
+static cl::opt<bool> NoCall("spp-no-call", cl::Hidden, cl::init(false));
+static cl::opt<bool> NoBackedge("spp-no-backedge", cl::Hidden, cl::init(false));
 
 namespace {
 struct PlaceSafepoints : public ModulePass {
