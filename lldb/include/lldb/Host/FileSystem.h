@@ -37,6 +37,7 @@ class FileSystem
     static Error Unlink(const char *path);
 
     static bool CalculateMD5(const FileSpec &file_spec, uint64_t &low, uint64_t &high);
+    static bool CalculateMD5AsString(const FileSpec &file_spec, std::string& digest_str);
 };
 }
 

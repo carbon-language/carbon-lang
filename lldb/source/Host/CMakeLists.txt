@@ -8,6 +8,7 @@ add_host_subdirectory(common
   common/File.cpp
   common/FileCache.cpp
   common/FileSpec.cpp
+  common/FileSystem.cpp
   common/Host.cpp
   common/HostInfoBase.cpp
   common/HostNativeThreadBase.cpp

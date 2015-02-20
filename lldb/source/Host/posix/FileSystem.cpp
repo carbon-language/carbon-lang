@@ -172,30 +172,3 @@ FileSystem::Readlink(const char *path, char *buf, size_t buf_len)
         error.SetErrorString("'buf' buffer is too small to contain link contents");
     return error;
 }
-
-bool
-FileSystem::CalculateMD5(const FileSpec &file_spec, uint64_t &low, uint64_t &high)
-{
-#if defined(__APPLE__)
-    StreamString md5_cmd_line;
-    md5_cmd_line.Printf("md5 -q '%s'", file_spec.GetPath().c_str());
-    std::string hash_string;
-    Error err = Host::RunShellCommand(md5_cmd_line.GetData(), NULL, NULL, NULL, &hash_string, 60);
-    if (err.Fail())
-        return false;
-    // a correctly formed MD5 is 16-bytes, that is 32 hex digits
-    // if the output is any other length it is probably wrong
-    if (hash_string.size() != 32)
-        return false;
-    std::string part1(hash_string, 0, 16);
-    std::string part2(hash_string, 16);
-    const char *part1_cstr = part1.c_str();
-    const char *part2_cstr = part2.c_str();
-    high = ::strtoull(part1_cstr, NULL, 16);
-    low = ::strtoull(part2_cstr, NULL, 16);
-    return true;
-#else
-    // your own MD5 implementation here
-    return false;
-#endif
-}

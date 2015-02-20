@@ -138,9 +138,3 @@ FileSystem::Readlink(const char *path, char *buf, size_t buf_len)
     ::CloseHandle(h);
     return error;
 }
-
-bool
-FileSystem::CalculateMD5(const FileSpec &file_spec, uint64_t &low, uint64_t &high)
-{
-    return false;
-}
