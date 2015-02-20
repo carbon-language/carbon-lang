@@ -11,13 +11,14 @@ CLANG_LEVEL = ../../../..
 include $(CLANG_LEVEL)/../../Makefile.config
 
 TESTNAME = ClangApplyReplacementsTests
-LINK_COMPONENTS := asmparser bitreader support mc mcparser option \
-		TransformUtils
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser mcparser bitreader bitwriter \
+                   instrumentation ipo support transformutils mc objcarcopts option
 USEDLIBS = clangApplyReplacements.a clangFormat.a clangTooling.a \
 	   clangToolingCore.a clangFrontend.a \
            clangSerialization.a clangDriver.a clangRewriteFrontend.a \
            clangRewrite.a clangParse.a clangSema.a clangAnalysis.a \
-           clangAST.a clangASTMatchers.a clangEdit.a clangLex.a clangBasic.a
+           clangAST.a clangASTMatchers.a clangEdit.a clangLex.a clangBasic.a \
+           clangCodeGen.a
 
 include $(CLANG_LEVEL)/Makefile
 MAKEFILE_UNITTEST_NO_INCLUDE_COMMON := 1

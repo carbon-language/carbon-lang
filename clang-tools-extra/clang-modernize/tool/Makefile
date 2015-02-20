@@ -35,12 +35,15 @@ BUILT_SOURCES += $(ObjDir)/../PassByValue/.objdir
 SOURCES += $(addprefix ../ReplaceAutoPtr/,$(notdir $(wildcard $(PROJ_SRC_DIR)/../ReplaceAutoPtr/*.cpp)))
 BUILT_SOURCES += $(ObjDir)/../ReplaceAutoPtr/.objdir
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc mcparser option
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter \
+                   instrumentation ipo support mc objcarcopts option
+
 USEDLIBS = modernizeCore.a clangFormat.a \
 	   clangTooling.a clangToolingCore.a clangFrontend.a \
 	   clangSerialization.a clangDriver.a clangRewriteFrontend.a \
 	   clangRewrite.a clangParse.a clangSema.a clangAnalysis.a \
-	   clangAST.a clangASTMatchers.a clangEdit.a clangLex.a clangBasic.a
+	   clangAST.a clangASTMatchers.a clangEdit.a clangLex.a clangBasic.a \
+           clangCodeGen.a
 
 include $(CLANG_LEVEL)/Makefile
 

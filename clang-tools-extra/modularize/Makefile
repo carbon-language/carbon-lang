@@ -15,10 +15,17 @@ NO_INSTALL = 0
 # No plugins, optimize startup time.
 TOOL_NO_EXPORTS = 1
 
-LINK_COMPONENTS := mcparser bitreader support mc option TransformUtils
+# Include this here so we can get the configuration of the targets that have
+# been configured for construction. We have to do this early so we can set up
+# LINK_COMPONENTS before including Makefile.rules
+include $(CLANG_LEVEL)/../../Makefile.config
+
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser mcparser bitreader bitwriter \
+                   instrumentation ipo support transformutils mc objcarcopts option
+
 USEDLIBS = clangFrontend.a clangSerialization.a clangDriver.a \
            clangTooling.a clangParse.a clangSema.a clangAnalysis.a \
-           clangEdit.a clangAST.a clangLex.a clangBasic.a
+           clangEdit.a clangAST.a clangLex.a clangBasic.a clangCodeGen.a
 
 include $(CLANG_LEVEL)/Makefile
 
