@@ -4,7 +4,7 @@
 declare void @foo()
 
 ; Trivial relocation over a single call
-define i8 addrspace(1)* @test1(i8 addrspace(1)* %obj) {
+define i8 addrspace(1)* @test1(i8 addrspace(1)* %obj) gc "statepoint-example" {
 ; CHECK-LABEL: @test1
 ; CHECK-LABEL: entry:
 ; CHECK-NEXT: gc.statepoint
@@ -15,7 +15,7 @@ entry:
 }
 
 ; Two safepoints in a row (i.e. consistent liveness)
-define i8 addrspace(1)* @test2(i8 addrspace(1)* %obj) {
+define i8 addrspace(1)* @test2(i8 addrspace(1)* %obj) gc "statepoint-example" {
 ; CHECK-LABEL: @test2
 ; CHECK-LABEL: entry:
 ; CHECK-NEXT: gc.statepoint
@@ -29,7 +29,7 @@ entry:
 }
 
 ; A simple derived pointer
-define i8 @test3(i8 addrspace(1)* %obj) {
+define i8 @test3(i8 addrspace(1)* %obj) gc "statepoint-example" {
 ; CHECK-LABEL: entry:
 ; CHECK-NEXT: getelementptr
 ; CHECK-NEXT: gc.statepoint
@@ -49,7 +49,7 @@ entry:
 
 ; Tests to make sure we visit both the taken and untaken predeccessor 
 ; of merge.  This was a bug in the dataflow liveness at one point.
-define i8 addrspace(1)* @test4(i1 %cmp, i8 addrspace(1)* %obj) {
+define i8 addrspace(1)* @test4(i1 %cmp, i8 addrspace(1)* %obj) gc "statepoint-example" {
 entry:
   br i1 %cmp, label %taken, label %untaken
 
