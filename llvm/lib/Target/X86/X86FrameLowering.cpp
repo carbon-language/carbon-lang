@@ -312,38 +312,6 @@ void mergeSPUpdatesUp(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
   }
 }
 
-/// mergeSPUpdatesDown - Merge two stack-manipulating instructions lower
-/// iterator.
-static
-void mergeSPUpdatesDown(MachineBasicBlock &MBB,
-                        MachineBasicBlock::iterator &MBBI,
-                        unsigned StackPtr, uint64_t *NumBytes = nullptr) {
-  // FIXME:  THIS ISN'T RUN!!!
-  return;
-
-  if (MBBI == MBB.end()) return;
-
-  MachineBasicBlock::iterator NI = std::next(MBBI);
-  if (NI == MBB.end()) return;
-
-  unsigned Opc = NI->getOpcode();
-  if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
-       Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
-      NI->getOperand(0).getReg() == StackPtr) {
-    if (NumBytes)
-      *NumBytes -= NI->getOperand(2).getImm();
-    MBB.erase(NI);
-    MBBI = NI;
-  } else if ((Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
-              Opc == X86::SUB32ri || Opc == X86::SUB32ri8) &&
-             NI->getOperand(0).getReg() == StackPtr) {
-    if (NumBytes)
-      *NumBytes += NI->getOperand(2).getImm();
-    MBB.erase(NI);
-    MBBI = NI;
-  }
-}
-
 /// mergeSPUpdates - Checks the instruction before/after the passed
 /// instruction. If it is an ADD/SUB/LEA instruction it is deleted argument and
 /// the stack adjustment is returned as a positive value for ADD/LEA and a
@@ -822,10 +790,6 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   // the two. This can be the case when tail call elimination is enabled and
   // the callee has more arguments then the caller.
   NumBytes -= mergeSPUpdates(MBB, MBBI, StackPtr, true);
-
-  // If there is an ADD32ri or SUB32ri of ESP immediately after this
-  // instruction, merge the two instructions.
-  mergeSPUpdatesDown(MBB, MBBI, StackPtr, &NumBytes);
 
   // Adjust stack pointer: ESP -= numbytes.
 
