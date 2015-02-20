@@ -668,9 +668,13 @@ lltok::Kind LLLexer::LexIdentifier() {
 #undef KEYWORD
 
   // Keywords for types.
-#define TYPEKEYWORD(STR, LLVMTY) \
-  if (Len == strlen(STR) && !memcmp(StartChar, STR, strlen(STR))) { \
-    TyVal = LLVMTY; return lltok::Type; }
+#define TYPEKEYWORD(STR, LLVMTY)                                               \
+  do {                                                                         \
+    if (Len == strlen(STR) && !memcmp(StartChar, STR, strlen(STR))) {          \
+      TyVal = LLVMTY;                                                          \
+      return lltok::Type;                                                      \
+    }                                                                          \
+  } while (false)
   TYPEKEYWORD("void",      Type::getVoidTy(Context));
   TYPEKEYWORD("half",      Type::getHalfTy(Context));
   TYPEKEYWORD("float",     Type::getFloatTy(Context));
@@ -684,9 +688,13 @@ lltok::Kind LLLexer::LexIdentifier() {
 #undef TYPEKEYWORD
 
   // Keywords for instructions.
-#define INSTKEYWORD(STR, Enum) \
-  if (Len == strlen(#STR) && !memcmp(StartChar, #STR, strlen(#STR))) { \
-    UIntVal = Instruction::Enum; return lltok::kw_##STR; }
+#define INSTKEYWORD(STR, Enum)                                                 \
+  do {                                                                         \
+    if (Len == strlen(#STR) && !memcmp(StartChar, #STR, strlen(#STR))) {       \
+      UIntVal = Instruction::Enum;                                             \
+      return lltok::kw_##STR;                                                  \
+    }                                                                          \
+  } while (false)
 
   INSTKEYWORD(add,   Add);  INSTKEYWORD(fadd,   FAdd);
   INSTKEYWORD(sub,   Sub);  INSTKEYWORD(fsub,   FSub);
@@ -739,11 +747,13 @@ lltok::Kind LLLexer::LexIdentifier() {
 #undef INSTKEYWORD
 
 #define DWKEYWORD(TYPE, TOKEN)                                                 \
-  if (Len >= strlen("DW_" #TYPE "_") &&                                        \
-      !memcmp(StartChar, "DW_" #TYPE "_", strlen("DW_" #TYPE "_"))) {          \
-    StrVal.assign(StartChar, CurPtr);                                          \
-    return lltok::TOKEN;                                                       \
-  }
+  do {                                                                         \
+    if (Len >= strlen("DW_" #TYPE "_") &&                                      \
+        !memcmp(StartChar, "DW_" #TYPE "_", strlen("DW_" #TYPE "_"))) {        \
+      StrVal.assign(StartChar, CurPtr);                                        \
+      return lltok::TOKEN;                                                     \
+    }                                                                          \
+  } while (false)
   DWKEYWORD(TAG, DwarfTag);
   DWKEYWORD(ATE, DwarfAttEncoding);
   DWKEYWORD(VIRTUALITY, DwarfVirtuality);
