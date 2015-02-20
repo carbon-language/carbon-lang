@@ -152,11 +152,9 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
   // We may create a new MCInstrInfo here since we might be at the module level
   // and not have a MachineFunction to initialize the TargetInstrInfo from and
   // we only need MCInstrInfo for asm parsing.
-  const MCInstrInfo *MII = MF
-                               ? MII = static_cast<const MCInstrInfo *>(
-                                     MF->getSubtarget().getInstrInfo())
-                               : MII = static_cast<const MCInstrInfo *>(
-                                     TM.getTarget().createMCInstrInfo());
+  const MCInstrInfo *MII =
+      MF ? static_cast<const MCInstrInfo *>(MF->getSubtarget().getInstrInfo())
+         : static_cast<const MCInstrInfo *>(TM.getTarget().createMCInstrInfo());
   std::unique_ptr<MCTargetAsmParser> TAP(TM.getTarget().createMCAsmParser(
       *STI, *Parser, *MII, TM.Options.MCOptions));
   if (!TAP)
