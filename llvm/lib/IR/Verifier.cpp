@@ -793,16 +793,9 @@ void Verifier::visitMDImportedEntity(const MDImportedEntity &N) {
 }
 
 void Verifier::visitComdat(const Comdat &C) {
-  // All Comdat::SelectionKind values other than Comdat::Any require a
-  // GlobalValue with the same name as the Comdat.
-  const GlobalValue *GV = M->getNamedValue(C.getName());
-  if (C.getSelectionKind() != Comdat::Any)
-    Assert1(GV,
-            "comdat selection kind requires a global value with the same name",
-            &C);
   // The Module is invalid if the GlobalValue has private linkage.  Entities
   // with private linkage don't have entries in the symbol table.
-  if (GV)
+  if (const GlobalValue *GV = M->getNamedValue(C.getName()))
     Assert1(!GV->hasPrivateLinkage(), "comdat global value has private linkage",
             GV);
 }
