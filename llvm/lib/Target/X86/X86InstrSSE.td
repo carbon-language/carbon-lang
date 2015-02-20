@@ -3161,8 +3161,7 @@ let isCodeGenOnly = 1 in {
 //   addss %xmm1, %xmm0
 
 // TODO: Some canonicalization in lowering would simplify the number of
-// patterns we have to try to match. In particular, the reversed order blends
-// seem unnecessary.
+// patterns we have to try to match.
 multiclass scalar_math_f32_patterns<SDNode Op, string OpcPrefix> {
   let Predicates = [UseSSE1] in {
     // extracted scalar math op with insert via movss
@@ -3263,16 +3262,9 @@ multiclass scalar_math_f64_patterns<SDNode Op, string OpcPrefix> {
     def : Pat<(v2f64 (X86Blendi (v2f64 VR128:$dst),
           (Op (v2f64 VR128:$dst), (v2f64 VR128:$src)), (i8 1))),
       (!cast<I>(OpcPrefix#SDrr_Int) v2f64:$dst, v2f64:$src)>;
-
-    // vector math op with insert via blend (reversed order)
-    def : Pat<(v2f64 (X86Blendi
-          (Op (v2f64 VR128:$dst), (v2f64 VR128:$src)),
-          (v2f64 VR128:$dst), (i8 2))),
-      (!cast<I>(OpcPrefix#SDrr_Int) v2f64:$dst, v2f64:$src)>;
   }
 
-  // Repeat everything for AVX and add one more pattern
-  // (the scalar + blend reversed order) for good measure.
+  // Repeat everything for AVX.
   let Predicates = [HasAVX] in {
     // extracted scalar math op with insert via movsd
     def : Pat<(v2f64 (X86Movsd (v2f64 VR128:$dst), (v2f64 (scalar_to_vector
@@ -3288,13 +3280,6 @@ multiclass scalar_math_f64_patterns<SDNode Op, string OpcPrefix> {
       (!cast<I>("V"#OpcPrefix#SDrr_Int) v2f64:$dst,
           (COPY_TO_REGCLASS FR64:$src, VR128))>;
 
-    // extracted scalar math op with insert via blend (reversed order)
-    def : Pat<(v2f64 (X86Blendi (v2f64 (scalar_to_vector
-          (Op (f64 (vector_extract (v2f64 VR128:$dst), (iPTR 0))),
-          FR64:$src))), (v2f64 VR128:$dst), (i8 2))),
-      (!cast<I>("V"#OpcPrefix#SDrr_Int) v2f64:$dst,
-          (COPY_TO_REGCLASS FR64:$src, VR128))>;
-
     // vector math op with insert via movsd
     def : Pat<(v2f64 (X86Movsd (v2f64 VR128:$dst),
           (Op (v2f64 VR128:$dst), (v2f64 VR128:$src)))),
@@ -3303,12 +3288,6 @@ multiclass scalar_math_f64_patterns<SDNode Op, string OpcPrefix> {
     // vector math op with insert via blend
     def : Pat<(v2f64 (X86Blendi (v2f64 VR128:$dst),
           (Op (v2f64 VR128:$dst), (v2f64 VR128:$src)), (i8 1))),
-      (!cast<I>("V"#OpcPrefix#SDrr_Int) v2f64:$dst, v2f64:$src)>;
-
-    // vector math op with insert via blend (reversed order)
-    def : Pat<(v2f64 (X86Blendi
-          (Op (v2f64 VR128:$dst), (v2f64 VR128:$src)),
-          (v2f64 VR128:$dst), (i8 2))),
       (!cast<I>("V"#OpcPrefix#SDrr_Int) v2f64:$dst, v2f64:$src)>;
   }
 }
