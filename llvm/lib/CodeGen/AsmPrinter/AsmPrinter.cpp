@@ -102,7 +102,6 @@ AsmPrinter::AsmPrinter(TargetMachine &tm, std::unique_ptr<MCStreamer> Streamer)
     : MachineFunctionPass(ID), TM(tm), MAI(tm.getMCAsmInfo()),
       OutContext(Streamer->getContext()), OutStreamer(*Streamer.release()),
       LastMI(nullptr), LastFn(0), Counter(~0U), SetCounter(0) {
-  MII = nullptr;
   DD = nullptr;
   MMI = nullptr;
   LI = nullptr;
@@ -578,7 +577,7 @@ void AsmPrinter::EmitFunctionEntryLabel() {
 /// emitComments - Pretty-print comments for instructions.
 static void emitComments(const MachineInstr &MI, raw_ostream &CommentOS) {
   const MachineFunction *MF = MI.getParent()->getParent();
-  const TargetMachine &TM = MF->getTarget();
+  const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
 
   // Check for spills and reloads
   int FI;
@@ -588,24 +587,20 @@ static void emitComments(const MachineInstr &MI, raw_ostream &CommentOS) {
   // We assume a single instruction only has a spill or reload, not
   // both.
   const MachineMemOperand *MMO;
-  if (TM.getSubtargetImpl()->getInstrInfo()->isLoadFromStackSlotPostFE(&MI,
-                                                                       FI)) {
+  if (TII->isLoadFromStackSlotPostFE(&MI, FI)) {
     if (FrameInfo->isSpillSlotObjectIndex(FI)) {
       MMO = *MI.memoperands_begin();
       CommentOS << MMO->getSize() << "-byte Reload\n";
     }
-  } else if (TM.getSubtargetImpl()->getInstrInfo()->hasLoadFromStackSlot(
-                 &MI, MMO, FI)) {
+  } else if (TII->hasLoadFromStackSlot(&MI, MMO, FI)) {
     if (FrameInfo->isSpillSlotObjectIndex(FI))
       CommentOS << MMO->getSize() << "-byte Folded Reload\n";
-  } else if (TM.getSubtargetImpl()->getInstrInfo()->isStoreToStackSlotPostFE(
-                 &MI, FI)) {
+  } else if (TII->isStoreToStackSlotPostFE(&MI, FI)) {
     if (FrameInfo->isSpillSlotObjectIndex(FI)) {
       MMO = *MI.memoperands_begin();
       CommentOS << MMO->getSize() << "-byte Spill\n";
     }
-  } else if (TM.getSubtargetImpl()->getInstrInfo()->hasStoreToStackSlot(
-                 &MI, MMO, FI)) {
+  } else if (TII->hasStoreToStackSlot(&MI, MMO, FI)) {
     if (FrameInfo->isSpillSlotObjectIndex(FI))
       CommentOS << MMO->getSize() << "-byte Folded Spill\n";
   }
@@ -843,7 +838,7 @@ void AsmPrinter::EmitFunctionBody() {
   // labels from collapsing together.  Just emit a noop.
   if ((MAI->hasSubsectionsViaSymbols() && !HasAnyRealCode)) {
     MCInst Noop;
-    TM.getSubtargetImpl()->getInstrInfo()->getNoopForMachoTarget(Noop);
+    MF->getSubtarget().getInstrInfo()->getNoopForMachoTarget(Noop);
     OutStreamer.AddComment("avoids zero-length function");
 
     // Targets can opt-out of emitting the noop here by leaving the opcode
@@ -1065,7 +1060,6 @@ bool AsmPrinter::doFinalization(Module &M) {
 
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   this->MF = &MF;
-  MII = MF.getSubtarget().getInstrInfo();
   // Get the function symbol.
   CurrentFnSym = getSymbol(MF.getFunction());
   CurrentFnSymForSize = CurrentFnSym;

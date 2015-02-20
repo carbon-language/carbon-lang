@@ -46,7 +46,6 @@ class MCCFIInstruction;
 class MCContext;
 class MCExpr;
 class MCInst;
-class MCInstrInfo;
 class MCSection;
 class MCStreamer;
 class MCSubtargetInfo;
@@ -69,7 +68,6 @@ public:
   ///
   const MCAsmInfo *MAI;
 
-  const MCInstrInfo *MII;
   /// This is the context for the output file that we are streaming. This owns
   /// all of the global MC-related objects for the generated translation unit.
   MCContext &OutContext;

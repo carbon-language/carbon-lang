@@ -32,6 +32,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -151,10 +152,13 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
   // We may create a new MCInstrInfo here since we might be at the module level
   // and not have a MachineFunction to initialize the TargetInstrInfo from and
   // we only need MCInstrInfo for asm parsing.
+  const MCInstrInfo *MII = MF
+                               ? MII = static_cast<const MCInstrInfo *>(
+                                     MF->getSubtarget().getInstrInfo())
+                               : MII = static_cast<const MCInstrInfo *>(
+                                     TM.getTarget().createMCInstrInfo());
   std::unique_ptr<MCTargetAsmParser> TAP(TM.getTarget().createMCAsmParser(
-      *STI, *Parser, MII ? *MII : *static_cast<const MCInstrInfo *>(
-                                      TM.getTarget().createMCInstrInfo()),
-      TM.Options.MCOptions));
+      *STI, *Parser, *MII, TM.Options.MCOptions));
   if (!TAP)
     report_fatal_error("Inline asm not supported by this streamer because"
                        " we don't have an asm parser for this target\n");
