@@ -96,10 +96,11 @@ namespace {
 // base relation will remain.  Internally, we add a mixture of the two
 // types, then update all the second type to the first type
 typedef std::map<Value *, Value *> DefiningValueMapTy;
+typedef std::set<llvm::Value *> StatepointLiveSetTy;
 
 struct PartiallyConstructedSafepointRecord {
   /// The set of values known to be live accross this safepoint
-  std::set<llvm::Value *> liveset;
+  StatepointLiveSetTy liveset;
 
   /// Mapping from live pointers to a base-defining-value
   DenseMap<llvm::Value *, llvm::Value *> PointerToBase;
@@ -283,7 +284,7 @@ analyzeParsePointLiveness(DominatorTree &DT, const CallSite &CS,
     // Note: This output is used by several of the test cases
     // The order of elemtns in a set is not stable, put them in a vec and sort
     // by name
-    std::vector<Value *> temp;
+    SmallVector<Value *, 64> temp;
     temp.insert(temp.end(), liveset.begin(), liveset.end());
     std::sort(temp.begin(), temp.end(), order_by_name);
     errs() << "Live Variables:\n";
@@ -583,13 +584,14 @@ private:
   Value *base; // non null only if status == base
 };
 
+typedef std::map<Value *, PhiState> ConflictStateMapTy;
 // Values of type PhiState form a lattice, and this is a helper
 // class that implementes the meet operation.  The meat of the meet
 // operation is implemented in MeetPhiStates::pureMeet
 class MeetPhiStates {
 public:
   // phiStates is a mapping from PHINodes and SelectInst's to PhiStates.
-  explicit MeetPhiStates(const std::map<Value *, PhiState> &phiStates)
+  explicit MeetPhiStates(const ConflictStateMapTy &phiStates)
       : phiStates(phiStates) {}
 
   // Destructively meet the current result with the base V.  V can
@@ -607,7 +609,7 @@ public:
   PhiState getResult() const { return currentResult; }
 
 private:
-  const std::map<Value *, PhiState> &phiStates;
+  const ConflictStateMapTy &phiStates;
   PhiState currentResult;
 
   /// Return a phi state for a base defining value.  We'll generate a new
@@ -687,7 +689,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
   // analougous to pessimistic data flow and would likely lead to an
   // overall worse solution.
 
-  std::map<Value *, PhiState> states;
+  ConflictStateMapTy states;
   states[def] = PhiState();
   // Recursively fill in all phis & selects reachable from the initial one
   // for which we don't already know a definite base value for
@@ -820,9 +822,8 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
             v->getParent()->getParent()->getParent()->getContext(), MDConst);
         basesel->setMetadata("is_base_value", md);
         states[v] = PhiState(PhiState::Conflict, basesel);
-      } else {
-        assert(false);
-      }
+      } else
+        llvm_unreachable("unknown conflict type");
     }
   }
 
@@ -922,9 +923,8 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
           }
           basesel->setOperand(i, base);
         }
-      } else {
-        assert(false && "unexpected type");
-      }
+      } else
+        llvm_unreachable("unexpected conflict type");
     }
   }
 
@@ -1356,7 +1356,7 @@ static void stablize_order(SmallVectorImpl<Value *> &basevec,
                            SmallVectorImpl<Value *> &livevec) {
   assert(basevec.size() == livevec.size());
 
-  std::vector<name_ordering> temp;
+  SmallVector<name_ordering, 64> temp;
   for (size_t i = 0; i < basevec.size(); i++) {
     name_ordering v;
     v.base = basevec[i];
@@ -1654,9 +1654,8 @@ static void insertUseHolderAfter(CallSite &CS, const ArrayRef<Value *> Values,
         Func, Values, "", invoke->getUnwindDest()->getFirstInsertionPt());
     holders.push_back(normal_holder);
     holders.push_back(unwind_holder);
-  } else {
-    assert(false && "Unsupported");
-  }
+  } else
+    llvm_unreachable("unsupported call type");
 }
 
 static void findLiveReferences(
