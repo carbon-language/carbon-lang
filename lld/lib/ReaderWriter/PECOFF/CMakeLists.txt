@@ -11,7 +11,6 @@ add_llvm_library(lldPECOFF
   WriterPECOFF.cpp
   LINK_LIBS
     lldCore
-    lldPasses
     LLVMObject
     LLVMSupport
   )

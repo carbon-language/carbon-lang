@@ -14,7 +14,6 @@ add_llvm_library(lldReaderWriter
   LinkerScript.cpp
   LINK_LIBS
     lldCore
-    lldPasses
     lldYAML
     LLVMObject
     LLVMSupport

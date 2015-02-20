@@ -4,7 +4,6 @@ add_llvm_library(lldELF
   Writer.cpp
   LINK_LIBS
     lldCore
-    lldPasses
     lldYAML
     LLVMSupport
   )

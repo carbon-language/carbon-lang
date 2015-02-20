@@ -10,7 +10,7 @@
 LLD_LEVEL = ../..
 TESTNAME = DriverTests
 USEDLIBS = lldDriver.a lldConfig.a \
-           lldELF.a lldMachO.a lldPasses.a lldPECOFF.a \
+           lldELF.a lldMachO.a lldPECOFF.a \
            lldCore.a lldNative.a lldReaderWriter.a \
            lldHexagonELFTarget.a lldMipsELFTarget.a \
            lldX86ELFTarget.a lldX86_64ELFTarget.a lldYAML.a \

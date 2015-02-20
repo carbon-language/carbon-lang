@@ -13,7 +13,6 @@
 #include "TargetHandler.h"
 #include "lld/Core/Instrumentation.h"
 #include "lld/Core/SharedLibraryFile.h"
-#include "lld/Passes/RoundTripYAMLPass.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/ELF.h"

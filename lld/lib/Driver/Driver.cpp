@@ -17,8 +17,6 @@
 #include "lld/Core/Resolver.h"
 #include "lld/Core/Writer.h"
 #include "lld/Driver/Driver.h"
-#include "lld/Passes/RoundTripNativePass.h"
-#include "lld/Passes/RoundTripYAMLPass.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
@@ -116,17 +114,6 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   ScopedTask passTask(getDefaultDomain(), "Passes");
   PassManager pm;
   context.addPasses(pm);
-
-#ifndef NDEBUG
-  llvm::Optional<std::string> env =
-      llvm::sys::Process::GetEnv("LLD_RUN_ROUNDTRIP_TEST");
-
-  if (env.hasValue() && !env.getValue().empty()) {
-    pm.add(llvm::make_unique<RoundTripYAMLPass>(context));
-    pm.add(llvm::make_unique<RoundTripNativePass>(context));
-  }
-#endif
-
   pm.runOnFile(merged);
   passTask.end();
 

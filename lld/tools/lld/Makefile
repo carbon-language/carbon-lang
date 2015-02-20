@@ -20,7 +20,7 @@ include $(LEVEL)/Makefile.config
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD)
 USEDLIBS = lldDriver.a lldConfig.a \
-           lldELF.a lldMachO.a lldPasses.a lldPECOFF.a lldYAML.a \
+           lldELF.a lldMachO.a lldPECOFF.a lldYAML.a \
            lldReaderWriter.a lldCore.a lldNative.a \
            lldHexagonELFTarget.a lldMipsELFTarget.a \
            lldX86ELFTarget.a lldX86_64ELFTarget.a lldAArch64ELFTarget.a \

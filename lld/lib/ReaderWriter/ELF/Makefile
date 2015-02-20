@@ -9,7 +9,6 @@
 
 LLD_LEVEL := ../../..
 LIBRARYNAME := lldELF
-USEDLIBS = lldPasses.a
 
 CPP.Flags += -I$(PROJ_SRC_DIR)/$(LLD_LEVEL)/lib/ReaderWriter/ELF
 

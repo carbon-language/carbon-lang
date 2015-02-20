@@ -12,7 +12,6 @@
 #include "lld/Core/Pass.h"
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Simple.h"
-#include "lld/Passes/RoundTripYAMLPass.h"
 #include "lld/ReaderWriter/CoreLinkingContext.h"
 #include "llvm/ADT/ArrayRef.h"
 

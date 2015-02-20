@@ -20,7 +20,6 @@ add_llvm_library(lldDriver
   WinLinkModuleDef.cpp
   LINK_LIBS
     lldConfig
-    lldPasses
     lldMachO
     lldPECOFF
     lldELF

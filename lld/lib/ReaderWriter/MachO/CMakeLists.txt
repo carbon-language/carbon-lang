@@ -18,7 +18,6 @@ add_llvm_library(lldMachO
   WriterMachO.cpp
   LINK_LIBS
     lldCore
-    lldPasses
     lldYAML
     LLVMObject
     LLVMSupport
