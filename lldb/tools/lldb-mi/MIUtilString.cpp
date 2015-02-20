@@ -308,6 +308,19 @@ CMIUtilString::SplitConsiderQuotes(const CMIUtilString &vDelimiter, VecString_t 
 }
 
 //++ ------------------------------------------------------------------------------------
+// Details: Split string into lines using \n and return an array of strings.
+// Type:    Method.
+// Args:    vwVecSplits - (W) Container of splits found in string data.
+// Return:  MIuint - Number of splits found in the string data.
+// Throws:  None.
+//--
+MIuint
+CMIUtilString::SplitLines(VecString_t &vwVecSplits) const
+{
+    return Split("\n", vwVecSplits);
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details: Remove '\n' from the end of string if found. It does not alter
 //          *this string.
 // Type:    Method.

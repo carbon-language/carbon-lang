@@ -19,7 +19,7 @@ static int s_MyVar = 4;
 const char s_RawData[] = "\x12\x34\x56\x78"; //FIXME static const char s_RawData[] = "\x12\x34\x56\x78";
 
 int main (int argc, char const *argv[])
-{
+{ //FUNC_main
     int a, b;
     printf("argc=%d\n", argc);   //BP_printf_call
     //BP_argctest

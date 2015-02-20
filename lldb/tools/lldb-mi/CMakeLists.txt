@@ -30,6 +30,7 @@ add_lldb_executable(lldb-mi
   MICmdCmdStack.cpp
   MICmdCmdSupportInfo.cpp
   MICmdCmdSupportList.cpp
+  MICmdCmdSymbol.cpp
   MICmdCmdTarget.cpp
   MICmdCmdThread.cpp
   MICmdCmdTrace.cpp
@@ -111,6 +112,7 @@ add_lldb_executable(lldb-mi
   MICmdCmdStack.cpp
   MICmdCmdSupportInfo.cpp
   MICmdCmdSupportList.cpp
+  MICmdCmdSymbol.cpp
   MICmdCmdTarget.cpp
   MICmdCmdThread.cpp
   MICmdCmdTrace.cpp

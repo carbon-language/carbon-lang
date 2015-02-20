@@ -42,6 +42,7 @@
 #include "MICmdCmdStack.h"
 #include "MICmdCmdSupportInfo.h"
 #include "MICmdCmdSupportList.h"
+#include "MICmdCmdSymbol.h"
 #include "MICmdCmdTarget.h"
 #include "MICmdCmdThread.h"
 #include "MICmdCmdTrace.h"
@@ -123,6 +124,7 @@ MICmnCommands::RegisterAll(void)
     bOk &= Register<CMICmdCmdStackListLocals>();
     bOk &= Register<CMICmdCmdStackSelectFrame>();
     bOk &= Register<CMICmdCmdSupportListFeatures>();
+    bOk &= Register<CMICmdCmdSymbolListLines>();
     bOk &= Register<CMICmdCmdTargetSelect>();
     bOk &= Register<CMICmdCmdThreadInfo>();
     bOk &= Register<CMICmdCmdVarAssign>();

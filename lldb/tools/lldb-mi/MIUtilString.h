@@ -63,6 +63,7 @@ class CMIUtilString : public std::string
     CMIUtilString RemoveRepeatedCharacters(const MIchar vChar);
     MIuint Split(const CMIUtilString &vDelimiter, VecString_t &vwVecSplits) const;
     MIuint SplitConsiderQuotes(const CMIUtilString &vDelimiter, VecString_t &vwVecSplits) const;
+    MIuint SplitLines(VecString_t &vwVecSplits) const;
     CMIUtilString StripCREndOfLine(void) const;
     CMIUtilString StripCRAll(void) const;
     CMIUtilString Trim(void) const;
