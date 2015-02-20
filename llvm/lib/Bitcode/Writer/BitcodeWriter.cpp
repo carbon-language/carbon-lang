@@ -864,7 +864,7 @@ static void WriteMDDerivedType(const MDDerivedType *N,
   Record.push_back(VE.getMetadataOrNullID(N->getFile()));
   Record.push_back(N->getLine());
   Record.push_back(VE.getMetadataOrNullID(N->getScope()));
-  Record.push_back(VE.getMetadataID(N->getBaseType()));
+  Record.push_back(VE.getMetadataOrNullID(N->getBaseType()));
   Record.push_back(N->getSizeInBits());
   Record.push_back(N->getAlignInBits());
   Record.push_back(N->getOffsetInBits());
@@ -932,7 +932,7 @@ static void WriteMDCompileUnit(const MDCompileUnit *N,
                                unsigned Abbrev) {
   Record.push_back(N->isDistinct());
   Record.push_back(N->getSourceLanguage());
-  Record.push_back(VE.getMetadataID(N->getFile()));
+  Record.push_back(VE.getMetadataOrNullID(N->getFile()));
   Record.push_back(VE.getMetadataOrNullID(N->getRawProducer()));
   Record.push_back(N->isOptimized());
   Record.push_back(VE.getMetadataOrNullID(N->getRawFlags()));

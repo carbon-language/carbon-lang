@@ -1515,11 +1515,8 @@ static void writeMDCompileUnit(raw_ostream &Out, const MDCompileUnit *N,
     Out << Lang;
   else
     Out << N->getSourceLanguage();
-  if (N->getFile()) {
-    Out << FS << "file: ";
-    writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
-                           Context);
-  }
+  Out << FS << "file: ";
+  writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine, Context);
   if (!N->getProducer().empty())
     Out << FS << "producer: \"" << N->getProducer() << "\"";
   Out << FS << "isOptimized: " << (N->isOptimized() ? "true" : "false");
