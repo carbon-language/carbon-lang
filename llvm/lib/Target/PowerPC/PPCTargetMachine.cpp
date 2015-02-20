@@ -43,6 +43,11 @@ EnableGEPOpt("ppc-gep-opt", cl::Hidden,
              cl::desc("Enable optimizations on complex GEPs"),
              cl::init(true));
 
+static cl::opt<bool>
+EnablePrefetch("enable-ppc-prefetching",
+                  cl::desc("disable software prefetching on PPC"),
+                  cl::init(false), cl::Hidden);
+
 extern "C" void LLVMInitializePowerPCTarget() {
   // Register the targets
   RegisterTargetMachine<PPC32TargetMachine> A(ThePPC32Target);
@@ -239,6 +244,16 @@ TargetPassConfig *PPCTargetMachine::createPassConfig(PassManagerBase &PM) {
 
 void PPCPassConfig::addIRPasses() {
   addPass(createAtomicExpandPass(&getPPCTargetMachine()));
+
+  // For the BG/Q (or if explicitly requested), add explicit data prefetch
+  // intrinsics.
+  bool UsePrefetching =
+    Triple(TM->getTargetTriple()).getVendor() == Triple::BGQ &&           
+    getOptLevel() != CodeGenOpt::None;
+  if (EnablePrefetch.getNumOccurrences() > 0)
+    UsePrefetching = EnablePrefetch;
+  if (UsePrefetching)
+    addPass(createPPCLoopDataPrefetchPass());
 
   if (TM->getOptLevel() == CodeGenOpt::Aggressive && EnableGEPOpt) {
     // Call SeparateConstOffsetFromGEP pass to extract constants within indices
