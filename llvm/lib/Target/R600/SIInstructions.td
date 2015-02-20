@@ -1970,17 +1970,6 @@ def SI_INDIRECT_DST_V16 : SI_INDIRECT_DST<VReg_512>;
 
 } // Uses = [EXEC,VCC,M0], Defs = [EXEC,VCC,M0]
 
-let usesCustomInserter = 1 in {
-
-def V_SUB_F64 : InstSI <
-  (outs VReg_64:$dst),
-  (ins VReg_64:$src0, VReg_64:$src1),
-  "v_sub_f64 $dst, $src0, $src1",
-  [(set f64:$dst, (fsub f64:$src0, f64:$src1))]
->;
-
-} // end usesCustomInserter
-
 multiclass SI_SPILL_SGPR <RegisterClass sgpr_class> {
 
   let UseNamedOperandTable = 1 in {

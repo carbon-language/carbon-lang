@@ -604,19 +604,8 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   switch (MI->getOpcode()) {
   default:
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
-  case AMDGPU::BRANCH: return BB;
-  case AMDGPU::V_SUB_F64: {
-    unsigned DestReg = MI->getOperand(0).getReg();
-    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::V_ADD_F64), DestReg)
-      .addImm(0)  // SRC0 modifiers
-      .addReg(MI->getOperand(1).getReg())
-      .addImm(1)  // SRC1 modifiers
-      .addReg(MI->getOperand(2).getReg())
-      .addImm(0)  // CLAMP
-      .addImm(0); // OMOD
-    MI->eraseFromParent();
-    break;
-  }
+  case AMDGPU::BRANCH:
+    return BB;
   case AMDGPU::SI_RegisterStorePseudo: {
     MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
     unsigned Reg = MRI.createVirtualRegister(&AMDGPU::SReg_64RegClass);

@@ -137,6 +137,9 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM,
   if (!Subtarget->hasFP32Denormals())
     setOperationAction(ISD::FMAD, MVT::f32, Legal);
 
+  // Expand to fneg + fadd.
+  setOperationAction(ISD::FSUB, MVT::f64, Expand);
+
   // Lower floating point store/load to integer store/load to reduce the number
   // of patterns in tablegen.
   setOperationAction(ISD::STORE, MVT::f32, Promote);

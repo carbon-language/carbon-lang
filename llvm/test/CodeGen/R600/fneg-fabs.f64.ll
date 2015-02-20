@@ -5,9 +5,7 @@
 ; into 2 modifiers, although theoretically that should work.
 
 ; FUNC-LABEL: {{^}}fneg_fabs_fadd_f64:
-; SI: v_mov_b32_e32 [[IMMREG:v[0-9]+]], 0x7fffffff
-; SI: v_and_b32_e32 v[[FABS:[0-9]+]], {{s[0-9]+}}, [[IMMREG]]
-; SI: v_add_f64 {{v\[[0-9]+:[0-9]+\]}}, {{v\[[0-9]+:[0-9]+\]}}, -v{{\[[0-9]+}}:[[FABS]]{{\]}}
+; SI: v_add_f64 {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, -|v{{\[[0-9]+:[0-9]+\]}}|
 define void @fneg_fabs_fadd_f64(double addrspace(1)* %out, double %x, double %y) {
   %fabs = call double @llvm.fabs.f64(double %x)
   %fsub = fsub double -0.000000e+00, %fabs
