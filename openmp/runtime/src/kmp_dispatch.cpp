@@ -355,7 +355,11 @@ __kmp_dispatch_deo_error( int *gtid_ref, int *cid_ref, ident_t *loc_ref )
         th = __kmp_threads[*gtid_ref];
         if ( th -> th.th_root -> r.r_active
           && ( th -> th.th_dispatch -> th_dispatch_pr_current -> pushed_ws != ct_none ) ) {
+#if KMP_USE_DYNAMIC_LOCK
+            __kmp_push_sync( *gtid_ref, ct_ordered_in_pdo, loc_ref, NULL, 0 );
+#else
             __kmp_push_sync( *gtid_ref, ct_ordered_in_pdo, loc_ref, NULL );
+#endif
         }
     }
 }
@@ -377,7 +381,11 @@ __kmp_dispatch_deo( int *gtid_ref, int *cid_ref, ident_t *loc_ref )
         pr = reinterpret_cast< dispatch_private_info_template< UT >* >
             ( th -> th.th_dispatch -> th_dispatch_pr_current );
         if ( pr -> pushed_ws != ct_none ) {
+#if KMP_USE_DYNAMIC_LOCK
+            __kmp_push_sync( gtid, ct_ordered_in_pdo, loc_ref, NULL, 0 );
+#else
             __kmp_push_sync( gtid, ct_ordered_in_pdo, loc_ref, NULL );
+#endif
         }
     }
 

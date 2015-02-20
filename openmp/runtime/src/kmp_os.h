@@ -815,6 +815,11 @@ typedef void    (*microtask_t)( int *gtid, int *npr, ... );
 # define USE_CMPXCHG_FIX 1
 #endif
 
+// Enable dynamic user lock
+#ifndef KMP_USE_DYNAMIC_LOCK
+# define KMP_USE_DYNAMIC_LOCK 0
+#endif
+
 // Warning levels
 enum kmp_warnings_level {
     kmp_warnings_off = 0,		/* No warnings */

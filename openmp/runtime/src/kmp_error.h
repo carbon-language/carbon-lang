@@ -31,10 +31,18 @@ void                 __kmp_free_cons_stack( void * ptr );
 
 void __kmp_push_parallel( int gtid, ident_t const * ident );
 void __kmp_push_workshare( int gtid, enum cons_type ct, ident_t const * ident );
+#if KMP_USE_DYNAMIC_LOCK
+void __kmp_push_sync( int gtid, enum cons_type ct, ident_t const * ident, kmp_user_lock_p name, kmp_uint32 );
+#else
 void __kmp_push_sync( int gtid, enum cons_type ct, ident_t const * ident, kmp_user_lock_p name );
+#endif
 
 void __kmp_check_workshare( int gtid, enum cons_type ct, ident_t const * ident );
+#if KMP_USE_DYNAMIC_LOCK
+void __kmp_check_sync( int gtid, enum cons_type ct, ident_t const * ident, kmp_user_lock_p name, kmp_uint32 );
+#else
 void __kmp_check_sync( int gtid, enum cons_type ct, ident_t const * ident, kmp_user_lock_p name );
+#endif
 
 void __kmp_pop_parallel( int gtid, ident_t const * ident );
 enum cons_type __kmp_pop_workshare( int gtid, enum cons_type ct, ident_t const * ident );

@@ -79,6 +79,10 @@
     #define FTN_GET_TEAM_NUM                     omp_get_team_num
 #endif
     #define FTN_INIT_LOCK                        omp_init_lock
+#if KMP_USE_DYNAMIC_LOCK
+    #define FTN_INIT_LOCK_HINTED                 kmp_init_lock_hinted
+    #define FTN_INIT_NEST_LOCK_HINTED            kmp_init_nest_lock_hinted
+#endif
     #define FTN_DESTROY_LOCK                     omp_destroy_lock
     #define FTN_SET_LOCK                         omp_set_lock
     #define FTN_UNSET_LOCK                       omp_unset_lock
@@ -171,6 +175,10 @@
     #define FTN_GET_TEAM_NUM                     omp_get_team_num_
 #endif
     #define FTN_INIT_LOCK                        omp_init_lock_
+#if KMP_USE_DYNAMIC_LOCK
+    #define FTN_INIT_LOCK_HINTED                 kmp_init_lock_hinted_
+    #define FTN_INIT_NEST_LOCK_HINTED            kmp_init_nest_lock_hinted_
+#endif
     #define FTN_DESTROY_LOCK                     omp_destroy_lock_
     #define FTN_SET_LOCK                         omp_set_lock_
     #define FTN_UNSET_LOCK                       omp_unset_lock_
@@ -264,6 +272,10 @@
     #define FTN_GET_TEAM_NUM                     OMP_GET_TEAM_NUM
 #endif
     #define FTN_INIT_LOCK                        OMP_INIT_LOCK
+#if KMP_USE_DYNAMIC_LOCK
+    #define FTN_INIT_LOCK_HINTED                 KMP_INIT_LOCK_HINTED
+    #define FTN_INIT_NEST_LOCK_HINTED            KMP_INIT_NEST_LOCK_HINTED
+#endif
     #define FTN_DESTROY_LOCK                     OMP_DESTROY_LOCK
     #define FTN_SET_LOCK                         OMP_SET_LOCK
     #define FTN_UNSET_LOCK                       OMP_UNSET_LOCK
@@ -357,6 +369,10 @@
     #define FTN_GET_TEAM_NUM                     OMP_GET_TEAM_NUM_
 #endif
     #define FTN_INIT_LOCK                        OMP_INIT_LOCK_
+#if KMP_USE_DYNAMIC_LOCK
+    #define FTN_INIT_LOCK_HINTED                 KMP_INIT_LOCK_HINTED_
+    #define FTN_INIT_NEST_LOCK_HINTED            KMP_INIT_NEST_LOCK_HINTED_
+#endif
     #define FTN_DESTROY_LOCK                     OMP_DESTROY_LOCK_
     #define FTN_SET_LOCK                         OMP_SET_LOCK_
     #define FTN_UNSET_LOCK                       OMP_UNSET_LOCK_

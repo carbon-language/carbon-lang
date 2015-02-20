@@ -79,7 +79,9 @@ typedef struct {
     addr_and_size_t  roots;              // Pointer to __kmp_root.
     addr_and_size_t  capacity;           // Pointer to __kmp_threads_capacity.
     addr_and_size_t  monitor;            // Pointer to __kmp_monitor.
+#if ! KMP_USE_DYNAMIC_LOCK
     addr_and_size_t  lock_table;         // Pointer to __kmp_lock_table.
+#endif
     addr_and_size_t  func_microtask;
     addr_and_size_t  func_fork;
     addr_and_size_t  func_fork_teams;
@@ -159,11 +161,13 @@ typedef struct {
     offset_and_size_t  lk_depth_locked;
     offset_and_size_t  lk_lock_flags;
 
+#if ! KMP_USE_DYNAMIC_LOCK
     /* lock_table_t */
     kmp_int32          lt_size_of_struct;    /* Size and layout of kmp_lock_table_t. */
     offset_and_size_t  lt_used;
     offset_and_size_t  lt_allocated;
     offset_and_size_t  lt_table;
+#endif
 
     /* task_team_t */
     kmp_int32          tt_sizeof_struct;

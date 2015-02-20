@@ -802,6 +802,28 @@ xexpand(FTN_IS_INITIAL_DEVICE)( void )
 typedef enum { UNINIT = -1, UNLOCKED, LOCKED } kmp_stub_lock_t;
 #endif /* KMP_STUB */
 
+#if KMP_USE_DYNAMIC_LOCK
+void FTN_STDCALL
+FTN_INIT_LOCK_HINTED( void **user_lock, int KMP_DEREF hint )
+{
+    #ifdef KMP_STUB
+        *((kmp_stub_lock_t *)user_lock) = UNLOCKED;
+    #else
+        __kmp_init_lock_hinted( user_lock, KMP_DEREF hint );
+    #endif
+}
+
+void FTN_STDCALL
+FTN_INIT_NEST_LOCK_HINTED( void **user_lock, int KMP_DEREF hint )
+{
+    #ifdef KMP_STUB
+        *((kmp_stub_lock_t *)user_lock) = UNLOCKED;
+    #else
+        __kmp_init_nest_lock_hinted( user_lock, KMP_DEREF hint );
+    #endif
+}
+#endif
+
 /* initialize the lock */
 void FTN_STDCALL
 xexpand(FTN_INIT_LOCK)( void **user_lock )

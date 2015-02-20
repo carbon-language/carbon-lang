@@ -287,7 +287,11 @@ __kmp_push_workshare( int gtid, enum cons_type ct, ident_t const * ident )
 }
 
 void
+#if KMP_USE_DYNAMIC_LOCK
+__kmp_check_sync( int gtid, enum cons_type ct, ident_t const * ident, kmp_user_lock_p lck, kmp_uint32 seq )
+#else
 __kmp_check_sync( int gtid, enum cons_type ct, ident_t const * ident, kmp_user_lock_p lck )
+#endif
 {
     struct cons_header *p = __kmp_threads[ gtid ]->th.th_cons;
 
@@ -345,7 +349,11 @@ __kmp_check_sync( int gtid, enum cons_type ct, ident_t const * ident, kmp_user_l
             }
         }
     } else if ( ct == ct_critical ) {
+#if KMP_USE_DYNAMIC_LOCK
+        if ( lck != NULL && __kmp_get_user_lock_owner( lck, seq ) == gtid ) {    /* this same thread already has lock for this critical section */
+#else
         if ( lck != NULL && __kmp_get_user_lock_owner( lck ) == gtid ) {    /* this same thread already has lock for this critical section */
+#endif
             int index = p->s_top;
             struct cons_data cons = { NULL, ct_critical, 0, NULL };
             /* walk up construct stack and try to find critical with matching name */
@@ -380,14 +388,22 @@ __kmp_check_sync( int gtid, enum cons_type ct, ident_t const * ident, kmp_user_l
 }
 
 void
+#if KMP_USE_DYNAMIC_LOCK
+__kmp_push_sync( int gtid, enum cons_type ct, ident_t const * ident, kmp_user_lock_p lck, kmp_uint32 seq )
+#else
 __kmp_push_sync( int gtid, enum cons_type ct, ident_t const * ident, kmp_user_lock_p lck )
+#endif
 {
     int         tos;
     struct cons_header *p = __kmp_threads[ gtid ]->th.th_cons;
 
     KMP_ASSERT( gtid == __kmp_get_gtid() );
     KE_TRACE( 10, ("__kmp_push_sync (gtid=%d)\n", gtid ) );
+#if KMP_USE_DYNAMIC_LOCK
+    __kmp_check_sync( gtid, ct, ident, lck, seq );
+#else
     __kmp_check_sync( gtid, ct, ident, lck );
+#endif
     KE_TRACE( 100, ( PUSH_MSG( ct, ident ) ) );
     tos = ++ p->stack_top;
     p->stack_data[ tos ].type  = ct;

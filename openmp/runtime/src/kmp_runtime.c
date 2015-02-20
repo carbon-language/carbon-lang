@@ -716,7 +716,11 @@ __kmp_parallel_deo( int *gtid_ref, int *cid_ref, ident_t *loc_ref )
 
     if( __kmp_env_consistency_check ) {
         if( __kmp_threads[gtid]->th.th_root->r.r_active )
+#if KMP_USE_DYNAMIC_LOCK
+            __kmp_push_sync( gtid, ct_ordered_in_parallel, loc_ref, NULL, 0 );
+#else
             __kmp_push_sync( gtid, ct_ordered_in_parallel, loc_ref, NULL );
+#endif
     }
 #ifdef BUILD_PARALLEL_ORDERED
     if( !team->t.t_serialized ) {
@@ -6735,7 +6739,11 @@ __kmp_cleanup( void )
     __kmp_root    = NULL;
     __kmp_threads_capacity = 0;
 
+#if KMP_USE_DYNAMIC_LOCK
+    __kmp_cleanup_indirect_user_locks();
+#else
     __kmp_cleanup_user_locks();
+#endif
 
     #if KMP_AFFINITY_SUPPORTED
         KMP_INTERNAL_FREE( (void *) __kmp_cpuinfo_file );

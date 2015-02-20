@@ -734,6 +734,21 @@ __kmp_itt_task_finished(
 
 // -------------------------------------------------------------------------------------------------
 
+#if KMP_USE_DYNAMIC_LOCK
+// Takes location information directly
+__kmp_inline
+void
+___kmp_itt_lock_init( kmp_user_lock_p lock, char const *type, const ident_t *loc ) {
+#if USE_ITT_NOTIFY
+    if ( __itt_sync_create_ptr ) {
+        char const *    src = ( loc == NULL ? NULL : loc->psource );
+        KMP_ITT_DEBUG_LOCK();
+        __itt_sync_create( lock, type, src, 0 );
+        KMP_ITT_DEBUG_PRINT( "[lck ini] scre( %p, \"%s\", \"%s\", 0 )\n", lock, type, src );
+    }
+#endif
+}
+#else // KMP_USE_DYNAMIC_LOCK
 // Internal guts -- common code for locks and critical sections, do not call directly.
 __kmp_inline
 void
@@ -750,6 +765,7 @@ ___kmp_itt_lock_init( kmp_user_lock_p lock, char const * type ) {
     }; // if
 #endif
 } // ___kmp_itt_lock_init
+#endif // KMP_USE_DYNAMIC_LOCK
 
 // Internal guts -- common code for locks and critical sections, do not call directly.
 __kmp_inline
@@ -765,29 +781,82 @@ ___kmp_itt_lock_fini( kmp_user_lock_p lock, char const * type ) {
 
 // -------------------------------------------------------------------------------------------------
 
+#if KMP_USE_DYNAMIC_LOCK
+void
+__kmp_itt_lock_creating( kmp_user_lock_p lock, const ident_t *loc ) {
+    ___kmp_itt_lock_init( lock, "OMP Lock", loc );
+}
+#else
 void
 __kmp_itt_lock_creating( kmp_user_lock_p lock ) {
     ___kmp_itt_lock_init( lock, "OMP Lock" );
 } // __kmp_itt_lock_creating
+#endif
 
 void
 __kmp_itt_lock_acquiring( kmp_user_lock_p lock ) {
+#if KMP_USE_DYNAMIC_LOCK && USE_ITT_NOTIFY
+    // postpone lock object access
+    if ( __itt_sync_prepare_ptr ) {
+        if ( DYNA_EXTRACT_D_TAG(lock) == 0 ) {
+            kmp_indirect_lock_t *ilk = DYNA_LOOKUP_I_LOCK(lock);
+            __itt_sync_prepare( ilk->lock );
+        } else {
+            __itt_sync_prepare( lock );
+        }
+    }
+#else
     __itt_sync_prepare( lock );
+#endif
 } // __kmp_itt_lock_acquiring
 
 void
 __kmp_itt_lock_acquired( kmp_user_lock_p lock ) {
+#if KMP_USE_DYNAMIC_LOCK && USE_ITT_NOTIFY
+    // postpone lock object access
+    if ( __itt_sync_acquired_ptr ) {
+        if ( DYNA_EXTRACT_D_TAG(lock) == 0 ) {
+            kmp_indirect_lock_t *ilk = DYNA_LOOKUP_I_LOCK(lock);
+            __itt_sync_acquired( ilk->lock );
+        } else {
+            __itt_sync_acquired( lock );
+        }
+    }
+#else
     __itt_sync_acquired( lock );
+#endif
 } // __kmp_itt_lock_acquired
 
 void
 __kmp_itt_lock_releasing( kmp_user_lock_p lock ) {
+#if KMP_USE_DYNAMIC_LOCK && USE_ITT_NOTIFY
+    if ( __itt_sync_releasing_ptr ) {
+        if ( DYNA_EXTRACT_D_TAG(lock) == 0 ) {
+            kmp_indirect_lock_t *ilk = DYNA_LOOKUP_I_LOCK(lock);
+            __itt_sync_releasing( ilk->lock );
+        } else {
+            __itt_sync_releasing( lock );
+        }
+    }
+#else
     __itt_sync_releasing( lock );
+#endif
 } // __kmp_itt_lock_releasing
 
 void
 __kmp_itt_lock_cancelled( kmp_user_lock_p lock ) {
+#if KMP_USE_DYNAMIC_LOCK && USE_ITT_NOTIFY
+    if ( __itt_sync_cancel_ptr ) {
+        if ( DYNA_EXTRACT_D_TAG(lock) == 0 ) {
+            kmp_indirect_lock_t *ilk = DYNA_LOOKUP_I_LOCK(lock);
+            __itt_sync_cancel( ilk->lock );
+        } else {
+            __itt_sync_cancel( lock );
+        }
+    }
+#else
     __itt_sync_cancel( lock );
+#endif
 } // __kmp_itt_lock_cancelled
 
 void
@@ -802,11 +871,17 @@ __kmp_itt_lock_destroyed( kmp_user_lock_p lock ) {
     Critical sections are treated exactly as locks (but have different object type).
     ------------------------------------------------------------------------------------------------
 */
-
+#if KMP_USE_DYNAMIC_LOCK
+void
+__kmp_itt_critical_creating( kmp_user_lock_p lock, const ident_t *loc ) {
+    ___kmp_itt_lock_init( lock, "OMP Critical", loc);
+}
+#else
 void
 __kmp_itt_critical_creating( kmp_user_lock_p lock ) {
     ___kmp_itt_lock_init( lock, "OMP Critical" );
 } // __kmp_itt_critical_creating
+#endif
 
 void
 __kmp_itt_critical_acquiring( kmp_user_lock_p lock ) {

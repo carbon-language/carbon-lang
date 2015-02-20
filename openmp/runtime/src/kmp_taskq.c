@@ -48,7 +48,11 @@ __kmp_taskq_eo( int *gtid_ref, int *cid_ref, ident_t *loc_ref )
     kmp_taskq_t       *tq   = & __kmp_threads[gtid] -> th.th_team -> t.t_taskq;
 
     if ( __kmp_env_consistency_check )
+#if KMP_USE_DYNAMIC_LOCK
+        __kmp_push_sync( gtid, ct_ordered_in_taskq, loc_ref, NULL, 0 );
+#else
         __kmp_push_sync( gtid, ct_ordered_in_taskq, loc_ref, NULL );
+#endif
 
     if ( ! __kmp_threads[ gtid ]-> th.th_team -> t.t_serialized ) {
         KMP_MB();       /* Flush all pending memory write invalidates.  */

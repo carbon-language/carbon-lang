@@ -1579,10 +1579,12 @@ __kmp_atfork_child (void)
     __kmp_init_common = FALSE;
 
     TCW_4(__kmp_init_user_locks, FALSE);
+#if ! KMP_USE_DYNAMIC_LOCK
     __kmp_user_lock_table.used = 1;
     __kmp_user_lock_table.allocated = 0;
     __kmp_user_lock_table.table = NULL;
     __kmp_lock_blocks = NULL;
+#endif
 
     __kmp_all_nth = 0;
     TCW_4(__kmp_nth, 0);
