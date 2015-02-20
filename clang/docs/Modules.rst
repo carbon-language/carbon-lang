@@ -210,6 +210,12 @@ Command-line parameters
 ``-fno-modules-implicit-maps``
   Suppresses the implicit search for files called ``module.modulemap`` and similar. Instead, module files need to be explicitly specified via ``-fmodule-map-file`` or transitively used.
 
+``-fno-implicit-modules``
+  All modules used by the build must be specified with ``-fmodule-file``.
+
+``-fmodule-file=<file>``
+  Load the given precompiled module file.
+
 Module Semantics
 ================
 

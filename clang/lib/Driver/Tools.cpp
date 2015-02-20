@@ -3925,6 +3925,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fmodules-strict-decluse");
   }
 
+  // -fno-implicit-modules turns off implicitly compiling modules on demand.
+  if (!Args.hasFlag(options::OPT_fimplicit_modules,
+                    options::OPT_fno_implicit_modules)) {
+    CmdArgs.push_back("-fno-implicit-modules");
+  }
+
   // -fmodule-name specifies the module that is currently being built (or
   // used for header checking by -fmodule-maps).
   Args.AddLastArg(CmdArgs, options::OPT_fmodule_name);

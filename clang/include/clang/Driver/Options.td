@@ -705,6 +705,9 @@ def fmodules_implicit_maps :
 def fno_modules_implicit_maps :
   Flag <["-"], "fno-modules-implicit-maps">,
   Group<f_Group>, Flags<[DriverOption, CC1Option]>;
+def fno_implicit_modules :
+  Flag <["-"], "fno-implicit-modules">,
+  Group<f_Group>, Flags<[DriverOption, CC1Option]>;
 def fretain_comments_from_system_headers : Flag<["-"], "fretain-comments-from-system-headers">, Group<f_Group>, Flags<[CC1Option]>;
 
 def fmudflapth : Flag<["-"], "fmudflapth">, Group<f_Group>;
@@ -764,6 +767,8 @@ def fno_module_maps : Flag <["-"], "fno-module-maps">, Group<f_Group>,
 def fno_modules_decluse : Flag <["-"], "fno-modules-decluse">, Group<f_Group>,
   Flags<[DriverOption]>;
 def fno_modules_strict_decluse : Flag <["-"], "fno-strict-modules-decluse">, Group<f_Group>,
+  Flags<[DriverOption]>;
+def fimplicit_modules : Flag <["-"], "fimplicit-modules">, Group<f_Group>,
   Flags<[DriverOption]>;
 def fno_ms_extensions : Flag<["-"], "fno-ms-extensions">, Group<f_Group>;
 def fno_ms_compatibility : Flag<["-"], "fno-ms-compatibility">, Group<f_Group>;
