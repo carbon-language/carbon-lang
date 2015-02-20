@@ -540,17 +540,13 @@ __kmpc_end_serialized_parallel(ident_t *loc, kmp_int32 global_tid)
 /*!
 @ingroup SYNCHRONIZATION
 @param loc  source location information.
-@param ...  pointers to the variables to be synchronized.
 
-Execute <tt>flush</tt>. The pointers to the variables to be flushed
-need not actually be passed, (indeed unless this is a zero terminated
-list they can't be since there's no count here so we don't know how
-many there are!).  This is implemented as a full memory fence. (Though
+Execute <tt>flush</tt>. This is implemented as a full memory fence. (Though
 depending on the memory ordering convention obeyed by the compiler
 even that may not be necessary).
 */
 void
-__kmpc_flush(ident_t *loc, ...)
+__kmpc_flush(ident_t *loc)
 {
     KC_TRACE( 10, ("__kmpc_flush: called\n" ) );
 
