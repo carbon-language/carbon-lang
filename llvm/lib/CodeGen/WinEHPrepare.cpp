@@ -84,13 +84,8 @@ private:
 } // end anonymous namespace
 
 char WinEHPrepare::ID = 0;
-INITIALIZE_TM_PASS_BEGIN(WinEHPrepare, "winehprepare",
-                         "Prepare Windows exceptions", false, false)
-INITIALIZE_PASS_DEPENDENCY(DwarfEHPrepare)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
-INITIALIZE_TM_PASS_END(WinEHPrepare, "winehprepare",
-                       "Prepare Windows exceptions", false, false)
+INITIALIZE_TM_PASS(WinEHPrepare, "winehprepare", "Prepare Windows exceptions",
+                   false, false)
 
 FunctionPass *llvm::createWinEHPass(const TargetMachine *TM) {
   return new WinEHPrepare(TM);
@@ -119,12 +114,8 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
   EHPersonality Pers = classifyEHPersonality(LPads.back()->getPersonalityFn());
 
   // Delegate through to the DWARF pass if this is unrecognized.
-  if (!isMSVCPersonality(Pers)) {
-    // Use the resolver from our pass manager in the dwarf pass.
-    assert(getResolver());
-    DwarfPrepare->setResolver(getResolver());
+  if (!isMSVCPersonality(Pers))
     return DwarfPrepare->runOnFunction(Fn);
-  }
 
   // FIXME: This only returns true if the C++ EH handlers were outlined.
   //        When that code is complete, it should always return whatever
