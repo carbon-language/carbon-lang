@@ -4043,8 +4043,7 @@ __kmp_cleanup_user_locks( void )
               ( ( loc = __kmp_get_user_lock_location( lck ) ) != NULL ) &&
               ( loc->psource != NULL ) ) {
                 kmp_str_loc_t str_loc = __kmp_str_loc_init( loc->psource, 0 );
-                KMP_WARNING( CnsLockNotDestroyed, str_loc.file, str_loc.func,
-                  str_loc.line, str_loc.col );
+                KMP_WARNING( CnsLockNotDestroyed, str_loc.file, str_loc.line );
                 __kmp_str_loc_free( &str_loc);
             }
 

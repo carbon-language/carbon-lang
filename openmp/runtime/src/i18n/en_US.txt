@@ -322,8 +322,8 @@ BarriersInDifferentOrder     "Threads encountered barriers in different order. "
 FunctionError                "Function %1$s failed:"
 TopologyExtra                "%1$s: %2$s packages x %3$d cores/pkg x %4$d threads/core (%5$d total cores)"
 WrongMessageCatalog          "Incompatible message catalog \"%1$s\": Version \"%2$s\" found, version \"%3$s\" expected."
-StgIgnored                   "%1$s: ignored because %3$s has been defined"
-                                 # %1, %2 -- name and value of ignored variable, %3 -- name of variable with higher priority.
+StgIgnored                   "%1$s: ignored because %2$s has been defined"
+                                 # %1, -- name of ignored variable, %2 -- name of variable with higher priority.
 OBSOLETE                     "%1$s: overrides %3$s specified before"
                                  # %1, %2 -- name and value of the overriding variable, %3 -- name of overriden variable.
 
@@ -367,8 +367,8 @@ IncompatibleLibrary          "Incompatible %1$s library with version %2$s found.
 IttFunctionError             "ittnotify: Function %1$s failed:"
 IttUnknownError              "ittnofify: Error #%1$d."
 EnvMiddleWarn                "%1$s must be set prior to first parallel region or certain API calls; ignored."
-CnsLockNotDestroyed          "Lock initialized at %1$s(%3$d) was not destroyed"
-                                 # %1, %2, %3, %4 -- file, func, line, col
+CnsLockNotDestroyed          "Lock initialized at %1$s(%2$d) was not destroyed"
+                                 # %1, %2, %3, %4 -- file, line, func, col
 CantLoadBalUsing             "Cannot determine machine load balance - Using %1$s"
 AffNotCapableUsePthread      "%1$s: Affinity not capable, using pthread info"
 AffUsePthread                "%1$s: Affinity capable, using pthread info"

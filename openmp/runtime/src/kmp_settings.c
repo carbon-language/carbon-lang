@@ -4862,7 +4862,7 @@ __kmp_stg_check_rivals(          // 0 -- Ok, 1 -- errors found.
 #endif
 
         if ( rivals[ i ]->set ) {
-            KMP_WARNING( StgIgnored, name, value, rivals[ i ]->name );
+            KMP_WARNING( StgIgnored, name, rivals[ i ]->name );
             return 1;
         }; // if
     }; // while
