@@ -307,6 +307,10 @@ StringRef getMachineName(llvm::COFF::MachineTypes Type) {
 }
 
 std::error_code FileCOFF::doParse() {
+  // Acquire a recursive lock because COFF file parsing has side effects.
+  // TODO: remove this lock as soon as possible after fixing threading issue.
+  std::lock_guard<std::recursive_mutex> lock(_ctx.getMutex());
+
   auto binaryOrErr = llvm::object::createBinary(_mb->getMemBufferRef());
   if (std::error_code ec = binaryOrErr.getError())
     return ec;
