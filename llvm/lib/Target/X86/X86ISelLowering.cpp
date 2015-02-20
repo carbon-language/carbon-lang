@@ -72,13 +72,6 @@ static cl::opt<bool> ExperimentalVectorShuffleLowering(
     cl::desc("Enable an experimental vector shuffle lowering code path."),
     cl::Hidden);
 
-static cl::opt<bool> ExperimentalVectorShuffleLegality(
-    "x86-experimental-vector-shuffle-legality", cl::init(true),
-    cl::desc("Enable experimental shuffle legality based on the experimental "
-             "shuffle lowering. Should only be used with the experimental "
-             "shuffle lowering."),
-    cl::Hidden);
-
 static cl::opt<int> ReciprocalEstimateRefinementSteps(
     "x86-recip-refinement-steps", cl::init(1),
     cl::desc("Specify the number of Newton-Raphson iterations applied to the "
@@ -20566,85 +20559,20 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
   if (!VT.isSimple())
     return false;
 
-  MVT SVT = VT.getSimpleVT();
-
   // Very little shuffling can be done for 64-bit vectors right now.
   if (VT.getSizeInBits() == 64)
     return false;
 
-  // This is an experimental legality test that is tailored to match the
-  // legality test of the experimental lowering more closely. They are gated
-  // separately to ease testing of performance differences.
-  if (ExperimentalVectorShuffleLegality)
-    // We only care that the types being shuffled are legal. The lowering can
-    // handle any possible shuffle mask that results.
-    return isTypeLegal(SVT);
-
-  // If this is a single-input shuffle with no 128 bit lane crossings we can
-  // lower it into pshufb.
-  if ((SVT.is128BitVector() && Subtarget->hasSSSE3()) ||
-      (SVT.is256BitVector() && Subtarget->hasInt256())) {
-    bool isLegal = true;
-    for (unsigned I = 0, E = M.size(); I != E; ++I) {
-      if (M[I] >= (int)SVT.getVectorNumElements() ||
-          ShuffleCrosses128bitLane(SVT, I, M[I])) {
-        isLegal = false;
-        break;
-      }
-    }
-    if (isLegal)
-      return true;
-  }
-
-  // FIXME: blends, shifts.
-  return (SVT.getVectorNumElements() == 2 ||
-          ShuffleVectorSDNode::isSplatMask(&M[0], VT) ||
-          isMOVLMask(M, SVT) ||
-          isCommutedMOVLMask(M, SVT) ||
-          isMOVHLPSMask(M, SVT) ||
-          isSHUFPMask(M, SVT) ||
-          isSHUFPMask(M, SVT, /* Commuted */ true) ||
-          isPSHUFDMask(M, SVT) ||
-          isPSHUFDMask(M, SVT, /* SecondOperand */ true) ||
-          isPSHUFHWMask(M, SVT, Subtarget->hasInt256()) ||
-          isPSHUFLWMask(M, SVT, Subtarget->hasInt256()) ||
-          isPALIGNRMask(M, SVT, Subtarget) ||
-          isUNPCKLMask(M, SVT, Subtarget->hasInt256()) ||
-          isUNPCKHMask(M, SVT, Subtarget->hasInt256()) ||
-          isUNPCKL_v_undef_Mask(M, SVT, Subtarget->hasInt256()) ||
-          isUNPCKH_v_undef_Mask(M, SVT, Subtarget->hasInt256()) ||
-          isBlendMask(M, SVT, Subtarget->hasSSE41(), Subtarget->hasInt256()) ||
-          (Subtarget->hasSSE41() && isINSERTPSMask(M, SVT)));
+  // We only care that the types being shuffled are legal. The lowering can
+  // handle any possible shuffle mask that results.
+  return isTypeLegal(VT.getSimpleVT());
 }
 
 bool
 X86TargetLowering::isVectorClearMaskLegal(const SmallVectorImpl<int> &Mask,
                                           EVT VT) const {
-  if (!VT.isSimple())
-    return false;
-
-  MVT SVT = VT.getSimpleVT();
-
-  // This is an experimental legality test that is tailored to match the
-  // legality test of the experimental lowering more closely. They are gated
-  // separately to ease testing of performance differences.
-  if (ExperimentalVectorShuffleLegality)
-    // The new vector shuffle lowering is very good at managing zero-inputs.
-    return isShuffleMaskLegal(Mask, VT);
-
-  unsigned NumElts = SVT.getVectorNumElements();
-  // FIXME: This collection of masks seems suspect.
-  if (NumElts == 2)
-    return true;
-  if (NumElts == 4 && SVT.is128BitVector()) {
-    return (isMOVLMask(Mask, SVT)  ||
-            isCommutedMOVLMask(Mask, SVT, true) ||
-            isSHUFPMask(Mask, SVT) ||
-            isSHUFPMask(Mask, SVT, /* Commuted */ true) ||
-            isBlendMask(Mask, SVT, Subtarget->hasSSE41(),
-                        Subtarget->hasInt256()));
-  }
-  return false;
+  // Just delegate to the generic legality, clear masks aren't special.
+  return isShuffleMaskLegal(Mask, VT);
 }
 
 //===----------------------------------------------------------------------===//

@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=i686-darwin -mattr=+mmx,+sse2 -x86-experimental-vector-shuffle-legality | FileCheck --check-prefix=X32 %s
-; RUN: llc < %s -mtriple=x86_64-darwin -mattr=+mmx,+sse2 -x86-experimental-vector-shuffle-legality | FileCheck --check-prefix=X64 %s
+; RUN: llc < %s -mtriple=i686-darwin -mattr=+mmx,+sse2 | FileCheck --check-prefix=X32 %s
+; RUN: llc < %s -mtriple=x86_64-darwin -mattr=+mmx,+sse2 | FileCheck --check-prefix=X64 %s
 
 ; If there is no explicit MMX type usage, always promote to XMM.
 

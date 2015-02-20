@@ -1,4 +1,4 @@
-; RUN: llc < %s -mcpu=x86-64 -mattr=-sse2 -x86-experimental-vector-shuffle-legality | FileCheck %s --check-prefix=SSE1
+; RUN: llc < %s -mcpu=x86-64 -mattr=-sse2 | FileCheck %s --check-prefix=SSE1
 
 target triple = "x86_64-unknown-unknown"
 
