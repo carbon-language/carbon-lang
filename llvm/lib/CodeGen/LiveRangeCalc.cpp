@@ -43,11 +43,8 @@ void LiveRangeCalc::reset(const MachineFunction *mf,
 static void createDeadDef(SlotIndexes &Indexes, VNInfo::Allocator &Alloc,
                           LiveRange &LR, const MachineOperand &MO) {
     const MachineInstr *MI = MO.getParent();
-    SlotIndex DefIdx;
-    if (MI->isPHI())
-      DefIdx = Indexes.getMBBStartIdx(MI->getParent());
-    else
-      DefIdx = Indexes.getInstructionIndex(MI).getRegSlot(MO.isEarlyClobber());
+    SlotIndex DefIdx =
+        Indexes.getInstructionIndex(MI).getRegSlot(MO.isEarlyClobber());
 
     // Create the def in LR. This may find an existing def.
     LR.createDeadDef(DefIdx, Alloc);
