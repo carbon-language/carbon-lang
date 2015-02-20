@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=i386-unknown-linux | FileCheck %s -check-prefix=LINUX
 ; RUN: llc < %s -mtriple=i386-unknown-linux -data-sections -function-sections | FileCheck %s -check-prefix=LINUX-SECTIONS
+; RUN: llc < %s -mtriple=i386-unknown-linux -data-sections -function-sections -unique-section-names=false | FileCheck %s -check-prefix=LINUX-SECTIONS-SHORT
 
 $F1 = comdat any
 define void @F1(i32 %y) comdat {
@@ -32,8 +33,14 @@ bb5:
 ; LINUX-SECTIONS-NEXT: .cfi_endproc
 ; LINUX-SECTIONS-NEXT: .section        .rodata.F1,"aG",@progbits,F1,comdat
 
+; LINUX-SECTIONS-SHORT: .section        .text,"axG",@progbits,F1,comdat
+; LINUX-SECTIONS-SHORT: .size   F1,
+; LINUX-SECTIONS-SHORT-NEXT: .cfi_endproc
+; LINUX-SECTIONS-SHORT-NEXT: .section        .rodata,"aG",@progbits,F1,comdat
+
 $G16 = comdat any
 @G16 = unnamed_addr constant i32 42, comdat
 
 ; LINUX: .section	.rodata.G16,"aG",@progbits,G16,comdat
 ; LINUX-SECTIONS: .section	.rodata.G16,"aG",@progbits,G16,comdat
+; LINUX-SECTIONS-SHORT: .section	.rodata,"aG",@progbits,G16,comdat

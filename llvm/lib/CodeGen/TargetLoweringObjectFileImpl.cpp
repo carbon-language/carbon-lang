@@ -249,6 +249,27 @@ static StringRef getSectionPrefixForGlobal(SectionKind Kind) {
   return ".data.rel.ro";
 }
 
+static const MCSection *
+getUniqueELFSection(MCContext &Ctx, const GlobalValue &GV, SectionKind Kind,
+                    Mangler &Mang, const TargetMachine &TM, unsigned Flags) {
+  StringRef Prefix = getSectionPrefixForGlobal(Kind);
+
+  SmallString<128> Name(Prefix);
+  bool UniqueSectionNames = TM.getUniqueSectionNames();
+  if (UniqueSectionNames) {
+    Name.push_back('.');
+    TM.getNameWithPrefix(Name, &GV, Mang, true);
+  }
+  StringRef Group = "";
+  if (const Comdat *C = getELFComdat(&GV)) {
+    Flags |= ELF::SHF_GROUP;
+    Group = C->getName();
+  }
+
+  return Ctx.getELFSection(Name, getELFSectionType(Name, Kind), Flags, 0, Group,
+                           !UniqueSectionNames);
+}
+
 const MCSection *TargetLoweringObjectFileELF::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler &Mang, const TargetMachine &TM) const {
@@ -264,24 +285,8 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
       EmitUniquedSection = TM.getDataSections();
   }
 
-  if (EmitUniquedSection || GV->hasComdat()) {
-    StringRef Prefix = getSectionPrefixForGlobal(Kind);
-
-    SmallString<128> Name(Prefix);
-    bool UniqueSectionNames = TM.getUniqueSectionNames();
-    if (UniqueSectionNames) {
-      Name.push_back('.');
-      TM.getNameWithPrefix(Name, GV, Mang, true);
-    }
-    StringRef Group = "";
-    if (const Comdat *C = getELFComdat(GV)) {
-      Flags |= ELF::SHF_GROUP;
-      Group = C->getName();
-    }
-
-    return getContext().getELFSection(Name, getELFSectionType(Name, Kind),
-                                      Flags, 0, Group, !UniqueSectionNames);
-  }
+  if (EmitUniquedSection || GV->hasComdat())
+    return getUniqueELFSection(getContext(), *GV, Kind, Mang, TM, Flags);
 
   if (Kind.isText()) return TextSection;
 
@@ -346,17 +351,8 @@ const MCSection *TargetLoweringObjectFileELF::getSectionForJumpTable(
   if (!EmitUniqueSection)
     return ReadOnlySection;
 
-  SmallString<128> Name(".rodata.");
-  TM.getNameWithPrefix(Name, &F, Mang, true);
-
-  unsigned Flags = ELF::SHF_ALLOC;
-  StringRef Group = "";
-  if (C) {
-    Flags |= ELF::SHF_GROUP;
-    Group = C->getName();
-  }
-
-  return getContext().getELFSection(Name, ELF::SHT_PROGBITS, Flags, 0, Group);
+  return getUniqueELFSection(getContext(), F, SectionKind::getReadOnly(), Mang,
+                             TM, ELF::SHF_ALLOC);
 }
 
 bool TargetLoweringObjectFileELF::shouldPutJumpTableInFunctionSection(
