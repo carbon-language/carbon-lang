@@ -29,3 +29,12 @@ void barrier_init(pthread_barrier_t *barrier, unsigned count) {
 // Default instance of the barrier, but a test can declare more manually.
 pthread_barrier_t barrier;
 
+void print_address(void *address) {
+// On FreeBSD, the %p conversion specifier works as 0x%x and thus does not match
+// to the format used in the diagnotic message.
+#ifdef __x86_64__
+  fprintf(stderr, "0x%012lx", (unsigned long) address);
+#elif defined(__mips64)
+  fprintf(stderr, "0x%010lx", (unsigned long) address);
+#endif
+}

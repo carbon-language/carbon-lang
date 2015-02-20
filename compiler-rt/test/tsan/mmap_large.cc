@@ -5,7 +5,11 @@
 #include <sys/mman.h>
 
 int main() {
+#ifdef __x86_64__
   const size_t kLog2Size = 39;
+#elif defined(__mips64)
+  const size_t kLog2Size = 32;
+#endif
   const uintptr_t kLocation = 0x40ULL << kLog2Size;
   void *p = mmap(
       reinterpret_cast<void*>(kLocation),

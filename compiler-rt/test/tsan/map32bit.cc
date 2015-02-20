@@ -7,6 +7,9 @@
 // Test for issue:
 // https://code.google.com/p/thread-sanitizer/issues/detail?id=5
 
+// MAP_32BIT flag for mmap is supported only for x86_64.
+// XFAIL: mips64
+
 void *Thread(void *ptr) {
   *(int*)ptr = 42;
   barrier_wait(&barrier);

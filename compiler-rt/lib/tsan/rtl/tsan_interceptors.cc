@@ -1926,9 +1926,9 @@ static void CallUserSignalHandler(ThreadState *thr, bool sync, bool acquire,
   // signal; and it looks too fragile to intercept all ways to reraise a signal.
   if (flags()->report_bugs && !sync && sig != SIGTERM && errno != 99) {
     VarSizeStackTrace stack;
-    // Add 1 to pc because return address is expected,
-    // OutputReport() will undo this.
-    ObtainCurrentStack(thr, pc + 1, &stack);
+    // StackTrace::GetNestInstructionPc(pc) is used because return address is
+    // expected, OutputReport() will undo this.
+    ObtainCurrentStack(thr, StackTrace::GetNextInstructionPc(pc), &stack);
     ThreadRegistryLock l(ctx->thread_registry);
     ScopedReport rep(ReportTypeErrnoInSignal);
     if (!IsFiredSuppression(ctx, rep, stack)) {
