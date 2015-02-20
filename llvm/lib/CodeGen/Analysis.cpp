@@ -518,8 +518,9 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, const TargetMachine &TM) {
         return false;
     }
 
+  const Function *F = ExitBB->getParent();
   return returnTypeIsEligibleForTailCall(
-      ExitBB->getParent(), I, Ret, *TM.getSubtargetImpl()->getTargetLowering());
+      F, I, Ret, *TM.getSubtargetImpl(*F)->getTargetLowering());
 }
 
 bool llvm::returnTypeIsEligibleForTailCall(const Function *F,
