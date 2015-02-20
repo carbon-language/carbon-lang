@@ -15,7 +15,6 @@
 
 #include "ubsan_value.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
-#include "sanitizer_common/sanitizer_suppressions.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
 namespace __ubsan {
@@ -236,7 +235,8 @@ public:
   ~ScopedReport();
 };
 
-bool MatchSuppression(const char *Str, SuppressionType Type);
+void InitializeSuppressions();
+bool IsVptrCheckSuppressed(const char *TypeName);
 
 } // namespace __ubsan
 

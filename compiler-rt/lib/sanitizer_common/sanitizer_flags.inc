@@ -128,7 +128,6 @@ COMMON_FLAG(const char *, coverage_dir, ".",
 COMMON_FLAG(bool, full_address_space, false,
             "Sanitize complete address space; "
             "by default kernel area on 32-bit platforms will not be sanitized")
-COMMON_FLAG(const char *, suppressions, "", "Suppressions file name.")
 COMMON_FLAG(bool, print_suppressions, true,
             "Print matched suppressions at exit.")
 COMMON_FLAG(

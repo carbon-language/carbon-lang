@@ -14,9 +14,11 @@
 #include "ubsan_diag.h"
 #include "ubsan_init.h"
 #include "ubsan_flags.h"
+#include "sanitizer_common/sanitizer_placement_new.h"
 #include "sanitizer_common/sanitizer_report_decorator.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_stacktrace_printer.h"
+#include "sanitizer_common/sanitizer_suppressions.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 #include <stdio.h>
 
@@ -333,11 +335,24 @@ ScopedReport::~ScopedReport() {
     Die();
 }
 
-bool __ubsan::MatchSuppression(const char *Str, SuppressionType Type) {
-  Suppression *s;
+ALIGNED(64) static char suppression_placeholder[sizeof(SuppressionContext)];
+static SuppressionContext *suppression_ctx = nullptr;
+static const char kVptrCheck[] = "vptr_check";
+static const char *kSuppressionTypes[] = { kVptrCheck };
+
+void __ubsan::InitializeSuppressions() {
+  CHECK_EQ(nullptr, suppression_ctx);
+  suppression_ctx = new (suppression_placeholder) // NOLINT
+      SuppressionContext(kSuppressionTypes, ARRAY_SIZE(kSuppressionTypes));
+  suppression_ctx->ParseFromFile(flags()->suppressions);
+}
+
+bool __ubsan::IsVptrCheckSuppressed(const char *TypeName) {
   // If .preinit_array is not used, it is possible that the UBSan runtime is not
   // initialized.
   if (!SANITIZER_CAN_USE_PREINIT_ARRAY)
     InitIfNecessary();
-  return SuppressionContext::Get()->Match(Str, Type, &s);
+  CHECK(suppression_ctx);
+  Suppression *s;
+  return suppression_ctx->Match(TypeName, kVptrCheck, &s);
 }

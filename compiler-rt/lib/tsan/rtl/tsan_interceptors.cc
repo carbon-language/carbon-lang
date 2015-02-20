@@ -182,11 +182,11 @@ static LibIgnore *libignore() {
 }
 
 void InitializeLibIgnore() {
-  const SuppressionContext &supp = *SuppressionContext::Get();
+  const SuppressionContext &supp = *Suppressions();
   const uptr n = supp.SuppressionCount();
   for (uptr i = 0; i < n; i++) {
     const Suppression *s = supp.SuppressionAt(i);
-    if (s->type == SuppressionLib)
+    if (0 == internal_strcmp(s->type, kSuppressionLib))
       libignore()->AddIgnoredLibrary(s->templ);
   }
   libignore()->OnLibraryLoaded(0);

@@ -36,8 +36,7 @@ static void HandleDynamicTypeCacheMiss(
 
   // Check if error report should be suppressed.
   DynamicTypeInfo DTI = getDynamicTypeInfo((void*)Pointer);
-  if (DTI.isValid() &&
-      MatchSuppression(DTI.getMostDerivedTypeName(), SuppressionVptrCheck))
+  if (DTI.isValid() && IsVptrCheckSuppressed(DTI.getMostDerivedTypeName()))
     return;
 
   SourceLocation Loc = Data->Loc.acquire();

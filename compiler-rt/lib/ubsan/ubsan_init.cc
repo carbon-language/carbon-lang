@@ -11,12 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ubsan_diag.h"
 #include "ubsan_init.h"
 #include "ubsan_flags.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_mutex.h"
-#include "sanitizer_common/sanitizer_suppressions.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
 using namespace __ubsan;
@@ -43,7 +43,7 @@ void __ubsan::InitIfNecessary() {
   }
   // Initialize UBSan-specific flags.
   InitializeFlags(standalone);
-  SuppressionContext::InitIfNecessary();
+  InitializeSuppressions();
   InitializeCoverage(common_flags()->coverage, common_flags()->coverage_dir);
   ubsan_inited = true;
 }

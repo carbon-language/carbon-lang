@@ -58,117 +58,77 @@ TEST(Suppressions, Match) {
   EXPECT_FALSE(MyMatch("foo$^bar", "foobar"));
 }
 
-TEST(Suppressions, TypeStrings) {
-  CHECK(!internal_strcmp(SuppressionTypeString(SuppressionNone), "none"));
-  CHECK(!internal_strcmp(SuppressionTypeString(SuppressionRace), "race"));
-  CHECK(!internal_strcmp(SuppressionTypeString(SuppressionMutex), "mutex"));
-  CHECK(!internal_strcmp(SuppressionTypeString(SuppressionThread), "thread"));
-  CHECK(!internal_strcmp(SuppressionTypeString(SuppressionSignal), "signal"));
-  CHECK(!internal_strcmp(SuppressionTypeString(SuppressionLeak), "leak"));
-  CHECK(!internal_strcmp(SuppressionTypeString(SuppressionLib),
-                         "called_from_lib"));
-  CHECK(
-      !internal_strcmp(SuppressionTypeString(SuppressionDeadlock), "deadlock"));
-  CHECK(!internal_strcmp(SuppressionTypeString(SuppressionVptrCheck),
-                         "vptr_check"));
-  CHECK(!internal_strcmp(SuppressionTypeString(SuppressionInterceptorName),
-                         "interceptor_name"));
-  CHECK(
-      !internal_strcmp(SuppressionTypeString(SuppressionInterceptorViaFunction),
-                       "interceptor_via_fun"));
-  CHECK(
-      !internal_strcmp(SuppressionTypeString(SuppressionInterceptorViaLibrary),
-                       "interceptor_via_lib"));
-  // Ensure this test is up-to-date when suppression types are added.
-  CHECK_EQ(12, SuppressionTypeCount);
-}
+static const char *kTestSuppressionTypes[] = {"race", "thread", "mutex",
+                                              "signal"};
 
 class SuppressionContextTest : public ::testing::Test {
  public:
-  virtual void SetUp() { ctx_ = new(placeholder_) SuppressionContext; }
-  virtual void TearDown() { ctx_->~SuppressionContext(); }
+  SuppressionContextTest()
+      : ctx_(kTestSuppressionTypes, ARRAY_SIZE(kTestSuppressionTypes)) {}
 
  protected:
-  InternalMmapVector<Suppression> *Suppressions() {
-    return &ctx_->suppressions_;
+  SuppressionContext ctx_;
+
+  void CheckSuppressions(unsigned count, std::vector<const char *> types,
+                         std::vector<const char *> templs) const {
+    EXPECT_EQ(count, ctx_.SuppressionCount());
+    for (unsigned i = 0; i < count; i++) {
+      const Suppression *s = ctx_.SuppressionAt(i);
+      EXPECT_STREQ(types[i], s->type);
+      EXPECT_STREQ(templs[i], s->templ);
+    }
   }
-  SuppressionContext *ctx_;
-  ALIGNED(64) char placeholder_[sizeof(SuppressionContext)];
 };
 
 TEST_F(SuppressionContextTest, Parse) {
-  ctx_->Parse(
-    "race:foo\n"
-    " 	race:bar\n"  // NOLINT
-    "race:baz	 \n"  // NOLINT
-    "# a comment\n"
-    "race:quz\n"
-  );  // NOLINT
-  EXPECT_EQ((unsigned)4, ctx_->SuppressionCount());
-  EXPECT_EQ((*Suppressions())[3].type, SuppressionRace);
-  EXPECT_EQ(0, strcmp((*Suppressions())[3].templ, "quz"));
-  EXPECT_EQ((*Suppressions())[2].type, SuppressionRace);
-  EXPECT_EQ(0, strcmp((*Suppressions())[2].templ, "baz"));
-  EXPECT_EQ((*Suppressions())[1].type, SuppressionRace);
-  EXPECT_EQ(0, strcmp((*Suppressions())[1].templ, "bar"));
-  EXPECT_EQ((*Suppressions())[0].type, SuppressionRace);
-  EXPECT_EQ(0, strcmp((*Suppressions())[0].templ, "foo"));
+  ctx_.Parse("race:foo\n"
+             " 	race:bar\n"  // NOLINT
+             "race:baz	 \n" // NOLINT
+             "# a comment\n"
+             "race:quz\n"); // NOLINT
+  CheckSuppressions(4, {"race", "race", "race", "race"},
+                    {"foo", "bar", "baz", "quz"});
 }
 
 TEST_F(SuppressionContextTest, Parse2) {
-  ctx_->Parse(
+  ctx_.Parse(
     "  	# first line comment\n"  // NOLINT
     " 	race:bar 	\n"  // NOLINT
     "race:baz* *baz\n"
     "# a comment\n"
     "# last line comment\n"
   );  // NOLINT
-  EXPECT_EQ((unsigned)2, ctx_->SuppressionCount());
-  EXPECT_EQ((*Suppressions())[1].type, SuppressionRace);
-  EXPECT_EQ(0, strcmp((*Suppressions())[1].templ, "baz* *baz"));
-  EXPECT_EQ((*Suppressions())[0].type, SuppressionRace);
-  EXPECT_EQ(0, strcmp((*Suppressions())[0].templ, "bar"));
+  CheckSuppressions(2, {"race", "race"}, {"bar", "baz* *baz"});
 }
 
 TEST_F(SuppressionContextTest, Parse3) {
-  ctx_->Parse(
+  ctx_.Parse(
     "# last suppression w/o line-feed\n"
     "race:foo\n"
     "race:bar"
   );  // NOLINT
-  EXPECT_EQ((unsigned)2, ctx_->SuppressionCount());
-  EXPECT_EQ((*Suppressions())[1].type, SuppressionRace);
-  EXPECT_EQ(0, strcmp((*Suppressions())[1].templ, "bar"));
-  EXPECT_EQ((*Suppressions())[0].type, SuppressionRace);
-  EXPECT_EQ(0, strcmp((*Suppressions())[0].templ, "foo"));
+  CheckSuppressions(2, {"race", "race"}, {"foo", "bar"});
 }
 
 TEST_F(SuppressionContextTest, ParseType) {
-  ctx_->Parse(
+  ctx_.Parse(
     "race:foo\n"
     "thread:bar\n"
     "mutex:baz\n"
     "signal:quz\n"
   );  // NOLINT
-  EXPECT_EQ((unsigned)4, ctx_->SuppressionCount());
-  EXPECT_EQ((*Suppressions())[3].type, SuppressionSignal);
-  EXPECT_EQ(0, strcmp((*Suppressions())[3].templ, "quz"));
-  EXPECT_EQ((*Suppressions())[2].type, SuppressionMutex);
-  EXPECT_EQ(0, strcmp((*Suppressions())[2].templ, "baz"));
-  EXPECT_EQ((*Suppressions())[1].type, SuppressionThread);
-  EXPECT_EQ(0, strcmp((*Suppressions())[1].templ, "bar"));
-  EXPECT_EQ((*Suppressions())[0].type, SuppressionRace);
-  EXPECT_EQ(0, strcmp((*Suppressions())[0].templ, "foo"));
+  CheckSuppressions(4, {"race", "thread", "mutex", "signal"},
+                    {"foo", "bar", "baz", "quz"});
 }
 
 TEST_F(SuppressionContextTest, HasSuppressionType) {
-  ctx_->Parse(
+  ctx_.Parse(
     "race:foo\n"
     "thread:bar\n");
-  EXPECT_TRUE(ctx_->HasSuppressionType(SuppressionRace));
-  EXPECT_TRUE(ctx_->HasSuppressionType(SuppressionThread));
-  EXPECT_FALSE(ctx_->HasSuppressionType(SuppressionMutex));
-  EXPECT_FALSE(ctx_->HasSuppressionType(SuppressionSignal));
+  EXPECT_TRUE(ctx_.HasSuppressionType("race"));
+  EXPECT_TRUE(ctx_.HasSuppressionType("thread"));
+  EXPECT_FALSE(ctx_.HasSuppressionType("mutex"));
+  EXPECT_FALSE(ctx_.HasSuppressionType("signal"));
 }
 
 }  // namespace __sanitizer

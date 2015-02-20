@@ -15,57 +15,62 @@
 #include "asan_suppressions.h"
 
 #include "asan_stack.h"
+#include "sanitizer_common/sanitizer_placement_new.h"
 #include "sanitizer_common/sanitizer_suppressions.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
 namespace __asan {
 
-static bool suppressions_inited = false;
+ALIGNED(64) static char suppression_placeholder[sizeof(SuppressionContext)];
+static SuppressionContext *suppression_ctx = nullptr;
+static const char kInterceptorName[] = "interceptor_name";
+static const char kInterceptorViaFunction[] = "interceptor_via_fun";
+static const char kInterceptorViaLibrary[] = "interceptor_via_lib";
+static const char *kSuppressionTypes[] = {
+    kInterceptorName, kInterceptorViaFunction, kInterceptorViaLibrary};
 
 void InitializeSuppressions() {
-  CHECK(!suppressions_inited);
-  SuppressionContext::InitIfNecessary();
-  suppressions_inited = true;
+  CHECK_EQ(nullptr, suppression_ctx);
+  suppression_ctx = new (suppression_placeholder)  // NOLINT
+      SuppressionContext(kSuppressionTypes, ARRAY_SIZE(kSuppressionTypes));
+  suppression_ctx->ParseFromFile(flags()->suppressions);
 }
 
 bool IsInterceptorSuppressed(const char *interceptor_name) {
-  CHECK(suppressions_inited);
-  SuppressionContext *ctx = SuppressionContext::Get();
+  CHECK(suppression_ctx);
   Suppression *s;
   // Match "interceptor_name" suppressions.
-  return ctx->Match(interceptor_name, SuppressionInterceptorName, &s);
+  return suppression_ctx->Match(interceptor_name, kInterceptorName, &s);
 }
 
 bool HaveStackTraceBasedSuppressions() {
-  CHECK(suppressions_inited);
-  SuppressionContext *ctx = SuppressionContext::Get();
-  return ctx->HasSuppressionType(SuppressionInterceptorViaFunction) ||
-         ctx->HasSuppressionType(SuppressionInterceptorViaLibrary);
+  CHECK(suppression_ctx);
+  return suppression_ctx->HasSuppressionType(kInterceptorViaFunction) ||
+         suppression_ctx->HasSuppressionType(kInterceptorViaLibrary);
 }
 
 bool IsStackTraceSuppressed(const StackTrace *stack) {
-  CHECK(suppressions_inited);
   if (!HaveStackTraceBasedSuppressions())
     return false;
 
-  SuppressionContext *ctx = SuppressionContext::Get();
+  CHECK(suppression_ctx);
   Symbolizer *symbolizer = Symbolizer::GetOrInit();
   Suppression *s;
   for (uptr i = 0; i < stack->size && stack->trace[i]; i++) {
     uptr addr = stack->trace[i];
 
-    if (ctx->HasSuppressionType(SuppressionInterceptorViaLibrary)) {
+    if (suppression_ctx->HasSuppressionType(kInterceptorViaLibrary)) {
       const char *module_name;
       uptr module_offset;
       // Match "interceptor_via_lib" suppressions.
       if (symbolizer->GetModuleNameAndOffsetForPC(addr, &module_name,
                                                   &module_offset) &&
-          ctx->Match(module_name, SuppressionInterceptorViaLibrary, &s)) {
+          suppression_ctx->Match(module_name, kInterceptorViaLibrary, &s)) {
         return true;
       }
     }
 
-    if (ctx->HasSuppressionType(SuppressionInterceptorViaFunction)) {
+    if (suppression_ctx->HasSuppressionType(kInterceptorViaFunction)) {
       SymbolizedStack *frames = symbolizer->SymbolizePC(addr);
       for (SymbolizedStack *cur = frames; cur; cur = cur->next) {
         const char *function_name = cur->info.function;
@@ -73,7 +78,8 @@ bool IsStackTraceSuppressed(const StackTrace *stack) {
           continue;
         }
         // Match "interceptor_via_fun" suppressions.
-        if (ctx->Match(function_name, SuppressionInterceptorViaFunction, &s)) {
+        if (suppression_ctx->Match(function_name, kInterceptorViaFunction,
+                                   &s)) {
           frames->ClearAll();
           return true;
         }

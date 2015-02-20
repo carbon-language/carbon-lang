@@ -142,3 +142,4 @@ ASAN_FLAG(int, detect_odr_violation, 2,
           "have different sizes")
 ASAN_FLAG(bool, dump_instruction_bytes, false,
           "If true, dump 16 bytes starting at the instruction that caused SEGV")
+ASAN_FLAG(const char *, suppressions, "", "Suppressions file name.")

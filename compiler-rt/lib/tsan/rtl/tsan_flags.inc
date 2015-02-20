@@ -76,3 +76,4 @@ TSAN_FLAG(int, io_sync, 1,
           "2 - global synchronization of all IO operations.")
 TSAN_FLAG(bool, die_after_fork, true,
           "Die after multi-threaded fork if the child creates new threads.")
+TSAN_FLAG(const char *, suppressions, "", "Suppressions file name.")
