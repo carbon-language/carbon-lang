@@ -458,7 +458,7 @@ static bool parseDef(StringRef option, llvm::BumpPtrAllocator &alloc,
                      std::vector<moduledef::Directive *> &result) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> buf = MemoryBuffer::getFile(option);
   if (!buf)
-    return llvm::None;
+    return false;
   moduledef::Lexer lexer(std::move(buf.get()));
   moduledef::Parser parser(lexer, alloc);
   return parser.parse(result);
