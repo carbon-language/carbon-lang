@@ -95,7 +95,7 @@ namespace {
 // Generally, after the execution of a full findBasePointer call, only the
 // base relation will remain.  Internally, we add a mixture of the two
 // types, then update all the second type to the first type
-typedef std::map<Value *, Value *> DefiningValueMapTy;
+typedef DenseMap<Value *, Value *> DefiningValueMapTy;
 typedef std::set<llvm::Value *> StatepointLiveSetTy;
 
 struct PartiallyConstructedSafepointRecord {
@@ -584,7 +584,7 @@ private:
   Value *base; // non null only if status == base
 };
 
-typedef std::map<Value *, PhiState> ConflictStateMapTy;
+typedef DenseMap<Value *, PhiState> ConflictStateMapTy;
 // Values of type PhiState form a lattice, and this is a helper
 // class that implementes the meet operation.  The meat of the meet
 // operation is implemented in MeetPhiStates::pureMeet
