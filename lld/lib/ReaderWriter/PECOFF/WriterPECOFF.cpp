@@ -784,7 +784,13 @@ void AtomChunk::addBaseRelocations(BaseRelocationList &relocSites) const {
     for (const Reference *ref : *atom) {
       if (ref->kindNamespace() != Reference::KindNamespace::COFF)
         continue;
-      if (isa<AbsoluteAtom>(ref->target()))
+
+      // An absolute symbol points to a fixed location in memory. Their
+      // address should not be fixed at load time. One exception is ImageBase
+      // because that's relative to run-time image base address.
+      if (auto *abs = dyn_cast<AbsoluteAtom>(ref->target()))
+        if (!abs->name().equals("__ImageBase") &&
+            !abs->name().equals("___ImageBase"))
           continue;
 
       uint64_t address = layout->_virtualAddr + ref->offsetInAtom();
