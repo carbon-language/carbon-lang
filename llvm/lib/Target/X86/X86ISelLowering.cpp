@@ -8241,6 +8241,7 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return ZExt;
 
   auto isV1 = [](int M) { return M >= 0 && M < 8; };
+  (void)isV1;
   auto isV2 = [](int M) { return M >= 8; };
 
   int NumV2Inputs = std::count_if(Mask.begin(), Mask.end(), isV2);
