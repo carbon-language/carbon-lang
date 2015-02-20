@@ -1,4 +1,4 @@
-##===- unittests/Transforms/Makefile -----------------------*- Makefile -*-===##
+##===- unittests/Transforms/IPO/Makefile -------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,11 +7,9 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
+LEVEL = ../../..
+TESTNAME = IPO
+LINK_COMPONENTS := IPO
 
-PARALLEL_DIRS = IPO Utils
-
-include $(LEVEL)/Makefile.common
-
-clean::
-	$(Verb) $(RM) -f *Tests
+include $(LEVEL)/Makefile.config
+include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest

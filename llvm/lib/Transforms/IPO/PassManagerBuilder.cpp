@@ -474,6 +474,9 @@ void PassManagerBuilder::addLTOOptimizationPasses(legacy::PassManagerBase &PM) {
 
   PM.add(createJumpThreadingPass());
 
+  // Lower bitset metadata to bitsets.
+  PM.add(createLowerBitSetsPass());
+
   // Delete basic blocks, which optimization passes may have killed.
   PM.add(createCFGSimplificationPass());
 

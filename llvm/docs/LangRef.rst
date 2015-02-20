@@ -3308,6 +3308,12 @@ the loop identifier metadata node directly:
    !1 = !{!1} ; an identifier for the inner loop
    !2 = !{!2} ; an identifier for the outer loop
 
+'``llvm.bitsets``'
+^^^^^^^^^^^^^^^^^^
+
+The ``llvm.bitsets`` global metadata is used to implement
+:doc:`bitsets <BitSets>`.
+
 Module Flags Metadata
 =====================
 
@@ -9890,6 +9896,31 @@ sufficient overall improvement in code quality. For this reason,
 ``llvm.assume`` should not be used to document basic mathematical invariants
 that the optimizer can otherwise deduce or facts that are of little use to the
 optimizer.
+
+.. _bitset.test:
+
+'``llvm.bitset.test``' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      declare i1 @llvm.bitset.test(i8* %ptr, metadata %bitset) nounwind readnone
+
+
+Arguments:
+""""""""""
+
+The first argument is a pointer to be tested. The second argument is a
+metadata string containing the name of a :doc:`bitset <BitSets>`.
+
+Overview:
+"""""""""
+
+The ``llvm.bitset.test`` intrinsic tests whether the given pointer is a
+member of the given bitset.
 
 '``llvm.donothing``' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

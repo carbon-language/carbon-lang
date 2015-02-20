@@ -255,7 +255,7 @@ public:
       assert(Node != nullptr && "Dereferencing end()!");
       return Node->getData();
     }
-    reference operator->() const { return operator*(); }
+    pointer operator->() const { return &operator*(); }
 
     member_iterator &operator++() {
       assert(Node != nullptr && "++'d off the end of the list!");

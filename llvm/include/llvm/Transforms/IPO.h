@@ -199,6 +199,10 @@ ModulePass *createMetaRenamerPass();
 /// manager.
 ModulePass *createBarrierNoopPass();
 
+/// \brief This pass lowers bitset metadata and the llvm.bitset.test intrinsic
+/// to bitsets.
+ModulePass *createLowerBitSetsPass();
+
 } // End llvm namespace
 
 #endif
