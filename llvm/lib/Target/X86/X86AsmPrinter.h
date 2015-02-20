@@ -57,6 +57,7 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
     void emitShadowPadding(MCStreamer &OutStreamer, const MCSubtargetInfo &STI);
   private:
     TargetMachine &TM;
+    const MachineFunction *MF;
     std::unique_ptr<MCCodeEmitter> CodeEmitter;
     bool InShadow;
 

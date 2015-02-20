@@ -74,10 +74,11 @@ namespace llvm {
   X86AsmPrinter::StackMapShadowTracker::~StackMapShadowTracker() {}
 
   void
-  X86AsmPrinter::StackMapShadowTracker::startFunction(MachineFunction &MF) {
+  X86AsmPrinter::StackMapShadowTracker::startFunction(MachineFunction &F) {
+    MF = &F;
     CodeEmitter.reset(TM.getTarget().createMCCodeEmitter(
-        *MF.getSubtarget().getInstrInfo(), *MF.getSubtarget().getRegisterInfo(),
-        MF.getSubtarget(), MF.getContext()));
+        *MF->getSubtarget().getInstrInfo(), *MF->getSubtarget().getRegisterInfo(),
+        MF->getSubtarget(), MF->getContext()));
   }
 
   void X86AsmPrinter::StackMapShadowTracker::count(MCInst &Inst,
@@ -99,7 +100,7 @@ namespace llvm {
     if (InShadow && CurrentShadowSize < RequiredShadowSize) {
       InShadow = false;
       EmitNops(OutStreamer, RequiredShadowSize - CurrentShadowSize,
-               TM.getSubtarget<X86Subtarget>().is64Bit(), STI);
+               MF->getSubtarget<X86Subtarget>().is64Bit(), STI);
     }
   }
 
