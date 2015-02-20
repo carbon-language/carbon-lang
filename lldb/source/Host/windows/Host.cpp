@@ -23,6 +23,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Core/StructuredData.h"
 
 // Windows includes
 #include <TlHelp32.h>
