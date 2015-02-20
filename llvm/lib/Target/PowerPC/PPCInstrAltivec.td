@@ -986,9 +986,10 @@ def VEQV  : VXForm_1<1668, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
 def VNAND : VXForm_1<1412, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
                      "vnand $vD, $vA, $vB", IIC_VecGeneral,
                      [(set v4i32:$vD, (vnot_ppc (and v4i32:$vA, v4i32:$vB)))]>;
+} // isCommutable
+
 def VORC : VXForm_1<1348, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
                       "vorc $vD, $vA, $vB", IIC_VecGeneral,
                       [(set v4i32:$vD, (or v4i32:$vA,
                                            (vnot_ppc v4i32:$vB)))]>;
-} // isCommutable
 } // end HasP8Altivec

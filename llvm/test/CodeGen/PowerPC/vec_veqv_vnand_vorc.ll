@@ -17,10 +17,13 @@ define <4 x i32> @test_vnand(<4 x i32> %x, <4 x i32> %y) nounwind {
 ; CHECK: vnand 2, 2, 3
 }
 
-; Test x vorc y
+; Test x vorc y and variants
 define <4 x i32> @test_vorc(<4 x i32> %x, <4 x i32> %y) nounwind {
-       %tmp = xor <4 x i32> %y, <i32 -1, i32 -1, i32 -1, i32 -1>
-       %ret_val = or <4 x i32> %x, %tmp
-       ret <4 x i32> %ret_val
-; CHECK: vorc 2, 2, 3      
+       %tmp1 = xor <4 x i32> %y, <i32 -1, i32 -1, i32 -1, i32 -1>
+       %tmp2 = or <4 x i32> %x, %tmp1
+; CHECK: vorc 3, 2, 3      
+       %tmp3 = xor <4 x i32> %tmp2, <i32 -1, i32 -1, i32 -1, i32 -1>
+       %tmp4 = or <4 x i32> %tmp3, %x
+; CHECK: vorc 2, 2, 3
+       ret <4 x i32> %tmp4
 }
