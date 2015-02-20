@@ -3,6 +3,7 @@
 // RUN: %clang_cc1 -std=c++11 -fsized-deallocation %s -emit-llvm -triple x86_64-linux-gnu -o - | FileCheck %s --check-prefix=CHECK --check-prefix=CHECKUND
 // RUN: %clang_cc1 -std=c++11 -fsized-deallocation -fdefine-sized-deallocation %s -emit-llvm -triple x86_64-linux-gnu -o - | FileCheck %s --check-prefix=CHECK --check-prefix=CHECKDEF
 // RUN: %clang_cc1 -std=c++11 %s -emit-llvm -triple x86_64-linux-gnu -o - | FileCheck %s --check-prefix=CHECK-UNSIZED
+// RUN: %clang_cc1 -std=c++1y %s -emit-llvm -triple x86_64-linux-gnu -fno-sized-deallocation -o - | FileCheck %s --check-prefix=CHECK-UNSIZED
 
 // CHECK-UNSIZED-NOT: _ZdlPvm
 // CHECK-UNSIZED-NOT: _ZdaPvm

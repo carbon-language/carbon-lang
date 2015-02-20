@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++11 %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK11
 // RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++11 -fvisibility hidden %s 2>&1 | FileCheck %s -check-prefix=CHECKHID -check-prefix=CHECK11
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -fno-sized-deallocation %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK11
 // RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK14 -check-prefix=CHECK14UND
 // RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -fvisibility hidden %s 2>&1 | FileCheck %s -check-prefix=CHECKHID -check-prefix=CHECK14 -check-prefix=CHECK14UND
 // RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -fdefine-sized-deallocation %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK14 -check-prefix=CHECK14DEFCOMDAT
