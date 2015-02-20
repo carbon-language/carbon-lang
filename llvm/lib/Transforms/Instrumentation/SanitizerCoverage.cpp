@@ -137,6 +137,7 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
   IntptrTy = Type::getIntNTy(*C, DLP->getDataLayout().getPointerSizeInBits());
   Type *VoidTy = Type::getVoidTy(*C);
   IRBuilder<> IRB(*C);
+  Type *Int8PtrTy = PointerType::getUnqual(IRB.getInt8Ty());
   Type *Int32PtrTy = PointerType::getUnqual(IRB.getInt32Ty());
 
   Function *CtorFunc =
@@ -153,7 +154,7 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
       kSanCovIndirCallName, VoidTy, IntptrTy, IntptrTy, nullptr));
   SanCovModuleInit = checkInterfaceFunction(
       M.getOrInsertFunction(kSanCovModuleInitName, Type::getVoidTy(*C),
-                            Int32PtrTy, IntptrTy, nullptr));
+                            Int32PtrTy, IntptrTy, Int8PtrTy, nullptr));
   SanCovModuleInit->setLinkage(Function::ExternalLinkage);
   // We insert an empty inline asm after cov callbacks to avoid callback merge.
   EmptyAsm = InlineAsm::get(FunctionType::get(IRB.getVoidTy(), false),
@@ -190,11 +191,19 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
       IRB.CreatePointerCast(RealGuardArray, Int32PtrTy));
   GuardArray->eraseFromParent();
 
+  // Create variable for module (compilation unit) name
+  Constant *ModNameStrConst =
+      ConstantDataArray::getString(M.getContext(), M.getName(), true);
+  GlobalVariable *ModuleName =
+      new GlobalVariable(M, ModNameStrConst->getType(), true,
+                         GlobalValue::PrivateLinkage, ModNameStrConst);
+
   // Call __sanitizer_cov_module_init
   IRB.SetInsertPoint(CtorFunc->getEntryBlock().getTerminator());
-  IRB.CreateCall2(SanCovModuleInit,
+  IRB.CreateCall3(SanCovModuleInit,
                   IRB.CreatePointerCast(RealGuardArray, Int32PtrTy),
-                  ConstantInt::get(IntptrTy, SanCovFunction->getNumUses()));
+                  ConstantInt::get(IntptrTy, SanCovFunction->getNumUses()),
+                  IRB.CreatePointerCast(ModuleName, Int8PtrTy));
   return true;
 }
 

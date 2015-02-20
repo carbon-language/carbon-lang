@@ -82,7 +82,7 @@ class CoverageData {
   void TraceBasicBlock(s32 *id);
 
   void InitializeGuardArray(s32 *guards);
-  void InitializeGuards(s32 *guards, uptr n);
+  void InitializeGuards(s32 *guards, uptr n, const char *module_name);
   void ReinitializeGuards();
 
   uptr *data();
@@ -109,6 +109,9 @@ class CoverageData {
 
   // Vector of coverage guard arrays, protected by mu.
   InternalMmapVectorNoCtor<s32*> guard_array_vec;
+
+  // Vector of module (compilation unit) names.
+  InternalMmapVectorNoCtor<const char*> comp_unit_name_vec;
 
   // Caller-Callee (cc) array, size and current index.
   static const uptr kCcArrayMaxSize = FIRST_32_SECOND_64(1 << 18, 1 << 24);
@@ -286,13 +289,15 @@ void CoverageData::Extend(uptr npcs) {
   atomic_store(&pc_array_size, size, memory_order_release);
 }
 
-void CoverageData::InitializeGuards(s32 *guards, uptr n) {
+void CoverageData::InitializeGuards(s32 *guards, uptr n,
+                                    const char *module_name) {
   // The array 'guards' has n+1 elements, we use the element zero
   // to store 'n'.
   CHECK_LT(n, 1 << 30);
   guards[0] = static_cast<s32>(n);
   InitializeGuardArray(guards);
   SpinMutexLock l(&mu);
+  comp_unit_name_vec.push_back(module_name);
   guard_array_vec.push_back(guards);
 }
 
@@ -447,6 +452,14 @@ void CoverageData::DumpTrace() {
   }
   int fd = CovOpenFile(false, "trace-points");
   if (fd < 0) return;
+  internal_write(fd, out.data(), out.length());
+  internal_close(fd);
+
+  fd = CovOpenFile(false, "trace-compunits");
+  if (fd < 0) return;
+  out.clear();
+  for (uptr i = 0; i < comp_unit_name_vec.size(); i++)
+    out.append("%s\n", comp_unit_name_vec[i]);
   internal_write(fd, out.data(), out.length());
   internal_close(fd);
 
@@ -675,9 +688,9 @@ SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_init() {
   coverage_data.Init();
 }
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump() { CovDump(); }
-SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_module_init(s32 *guards,
-                                                               uptr npcs) {
-  coverage_data.InitializeGuards(guards, npcs);
+SANITIZER_INTERFACE_ATTRIBUTE void
+__sanitizer_cov_module_init(s32 *guards, uptr npcs, const char *module_name) {
+  coverage_data.InitializeGuards(guards, npcs, module_name);
   if (!common_flags()->coverage_direct) return;
   if (SANITIZER_ANDROID && coverage_enabled) {
     // dlopen/dlclose interceptors do not work on Android, so we rely on
