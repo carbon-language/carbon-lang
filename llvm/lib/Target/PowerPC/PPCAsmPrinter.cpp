@@ -1303,7 +1303,17 @@ static MCSymbol *GetAnonSym(MCSymbol *Sym, MCContext &Ctx) {
 void PPCDarwinAsmPrinter::
 EmitFunctionStubs(const MachineModuleInfoMachO::SymbolListTy &Stubs) {
   bool isPPC64 = TM.getDataLayout()->getPointerSizeInBits() == 64;
-  
+
+  // Construct a local MCSubtargetInfo and shadow EmitToStreamer here.
+  // This is because the MachineFunction won't exist (but have not yet been
+  // freed) and since we're at the global level we can use the default
+  // constructed subtarget.
+  std::unique_ptr<MCSubtargetInfo> STI(TM.getTarget().createMCSubtargetInfo(
+      TM.getTargetTriple(), TM.getTargetCPU(), TM.getTargetFeatureString()));
+  auto EmitToStreamer = [&STI] (MCStreamer &S, const MCInst &Inst) {
+    S.EmitInstruction(Inst, *STI);
+  };
+
   const TargetLoweringObjectFileMachO &TLOFMacho = 
     static_cast<const TargetLoweringObjectFileMachO &>(getObjFileLowering());
 
