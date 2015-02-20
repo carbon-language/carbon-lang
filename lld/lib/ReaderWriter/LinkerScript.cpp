@@ -712,7 +712,7 @@ void InputSectionName::dump(raw_ostream &os) const {
 
 // InputSectionSortedGroup functions
 static void dumpInputSections(raw_ostream &os,
-                              const std::vector<const InputSection *> &secs) {
+                              llvm::ArrayRef<const InputSection *> secs) {
   bool excludeFile = false;
   bool first = true;
 
@@ -938,7 +938,7 @@ std::error_code Parser::parse() {
 const Expression *Parser::parseFunctionCall() {
   assert((_tok._kind == Token::identifier || _tok._kind == Token::kw_align) &&
          "expected function call first tokens");
-  std::vector<const Expression *> params;
+  SmallVector<const Expression *, 8> params;
   StringRef name = _tok._range;
 
   consumeToken();
@@ -947,7 +947,7 @@ const Expression *Parser::parseFunctionCall() {
 
   if (_tok._kind == Token::r_paren) {
     consumeToken();
-    return new (_alloc) FunctionCall(_tok._range, params);
+    return new (_alloc) FunctionCall(*this, _tok._range, params);
   }
 
   if (const Expression *firstParam = parseExpression())
@@ -965,7 +965,7 @@ const Expression *Parser::parseFunctionCall() {
 
   if (!expectAndConsume(Token::r_paren, "expected )"))
     return nullptr;
-  return new (_alloc) FunctionCall(name, params);
+  return new (_alloc) FunctionCall(*this, name, params);
 }
 
 bool Parser::expectExprOperand() {
@@ -986,7 +986,7 @@ const Expression *Parser::parseExprOperand() {
   case Token::identifier: {
     if (peek()._kind== Token::l_paren)
       return parseFunctionCall();
-    Symbol *sym = new (_alloc) Symbol(_tok._range);
+    Symbol *sym = new (_alloc) Symbol(*this, _tok._range);
     consumeToken();
     return sym;
   }
@@ -994,17 +994,17 @@ const Expression *Parser::parseExprOperand() {
     return parseFunctionCall();
   case Token::minus:
     consumeToken();
-    return new (_alloc) Unary(Unary::Minus, parseExprOperand());
+    return new (_alloc) Unary(*this, Unary::Minus, parseExprOperand());
   case Token::tilde:
     consumeToken();
-    return new (_alloc) Unary(Unary::Not, parseExprOperand());
+    return new (_alloc) Unary(*this, Unary::Not, parseExprOperand());
   case Token::number: {
     auto val = parseNum(_tok._range);
     if (val.getError()) {
       error(_tok, "Unrecognized number constant");
       return nullptr;
     }
-    Constant *c = new (_alloc) Constant(*val);
+    Constant *c = new (_alloc) Constant(*this, *val);
     consumeToken();
     return c;
   }
@@ -1152,7 +1152,7 @@ const Expression *Parser::parseOperatorOperandLoop(const Expression *lhs,
     const Expression *rhs = parseExpression(precedence - 1);
     if (!rhs)
       return nullptr;
-    binOp = new (_alloc) BinOp(lhs, op, rhs);
+    binOp = new (_alloc) BinOp(*this, lhs, op, rhs);
     lhs = binOp;
   }
 }
@@ -1176,7 +1176,7 @@ const Expression *Parser::parseTernaryCondOp(const Expression *lhs) {
   if (!falseExpr)
     return nullptr;
 
-  return new (_alloc) TernaryConditional(lhs, trueExpr, falseExpr);
+  return new (_alloc) TernaryConditional(*this, lhs, trueExpr, falseExpr);
 }
 
 // Parse OUTPUT(ident)
@@ -1191,7 +1191,7 @@ Output *Parser::parseOutput() {
     return nullptr;
   }
 
-  auto ret = new (_alloc) Output(_tok._range);
+  auto ret = new (_alloc) Output(*this, _tok._range);
   consumeToken();
 
   if (!expectAndConsume(Token::r_paren, "expected )"))
@@ -1212,7 +1212,9 @@ OutputFormat *Parser::parseOutputFormat() {
     return nullptr;
   }
 
-  auto ret = new (_alloc) OutputFormat(_tok._range);
+  SmallVector<StringRef, 8> formats;
+  formats.push_back(_tok._range);
+
   consumeToken();
 
   do {
@@ -1224,14 +1226,14 @@ OutputFormat *Parser::parseOutputFormat() {
       error(_tok, "Expected identifier in OUTPUT_FORMAT.");
       return nullptr;
     }
-    ret->addOutputFormat(_tok._range);
+    formats.push_back(_tok._range);
     consumeToken();
   } while (isNextToken(Token::comma));
 
   if (!expectAndConsume(Token::r_paren, "expected )"))
     return nullptr;
 
-  return ret;
+  return new (_alloc) OutputFormat(*this, formats);
 }
 
 // Parse OUTPUT_ARCH(ident)
@@ -1246,7 +1248,7 @@ OutputArch *Parser::parseOutputArch() {
     return nullptr;
   }
 
-  auto ret = new (_alloc) OutputArch(_tok._range);
+  auto ret = new (_alloc) OutputArch(*this, _tok._range);
   consumeToken();
 
   if (!expectAndConsume(Token::r_paren, "expected )"))
@@ -1261,7 +1263,7 @@ template<class T> T *Parser::parsePathList() {
   if (!expectAndConsume(Token::l_paren, "expected ("))
     return nullptr;
 
-  std::vector<Path> paths;
+  SmallVector<Path, 8> paths;
   while (_tok._kind == Token::identifier || _tok._kind == Token::libname ||
          _tok._kind == Token::kw_as_needed) {
     switch (_tok._kind) {
@@ -1283,11 +1285,11 @@ template<class T> T *Parser::parsePathList() {
   }
   if (!expectAndConsume(Token::r_paren, "expected )"))
     return nullptr;
-  return new (_alloc) T(paths);
+  return new (_alloc) T(*this, paths);
 }
 
 // Parse AS_NEEDED(file ...)
-bool Parser::parseAsNeeded(std::vector<Path> &paths) {
+bool Parser::parseAsNeeded(SmallVectorImpl<Path> &paths) {
   assert(_tok._kind == Token::kw_as_needed && "Expected AS_NEEDED!");
   consumeToken();
   if (!expectAndConsume(Token::l_paren, "expected ("))
@@ -1327,7 +1329,7 @@ Entry *Parser::parseEntry() {
   consumeToken();
   if (!expectAndConsume(Token::r_paren, "expected )"))
     return nullptr;
-  return new (_alloc) Entry(entryName);
+  return new (_alloc) Entry(*this, entryName);
 }
 
 // Parse SEARCH_DIR(ident)
@@ -1344,7 +1346,7 @@ SearchDir *Parser::parseSearchDir() {
   consumeToken();
   if (!expectAndConsume(Token::r_paren, "expected )"))
     return nullptr;
-  return new (_alloc) SearchDir(searchPath);
+  return new (_alloc) SearchDir(*this, searchPath);
 }
 
 const SymbolAssignment *Parser::parseSymbolAssignment() {
@@ -1440,7 +1442,7 @@ const SymbolAssignment *Parser::parseSymbolAssignment() {
     if (!expectAndConsume(Token::r_paren, "expected )"))
       return nullptr;
 
-  return new (_alloc) SymbolAssignment(name, expr, kind, visibility);
+  return new (_alloc) SymbolAssignment(*this, name, expr, kind, visibility);
 }
 
 llvm::ErrorOr<InputSectionsCmd::VectorTy> Parser::parseExcludeFile() {
@@ -1453,7 +1455,7 @@ llvm::ErrorOr<InputSectionsCmd::VectorTy> Parser::parseExcludeFile() {
         std::make_error_code(std::errc::io_error));
 
   while (_tok._kind == Token::identifier) {
-    res.push_back(new (_alloc) InputSectionName(_tok._range, true));
+    res.push_back(new (_alloc) InputSectionName(*this, _tok._range, true));
     consumeToken();
   }
 
@@ -1533,10 +1535,11 @@ const InputSection *Parser::parseSortedInputSections() {
   if (numParen == -1)
     return nullptr;
 
-  std::vector<const InputSection *> inputSections;
+  SmallVector<const InputSection *, 8> inputSections;
 
   while (_tok._kind == Token::identifier) {
-    inputSections.push_back(new (_alloc) InputSectionName(_tok._range, false));
+    inputSections.push_back(new (_alloc)
+                                InputSectionName(*this, _tok._range, false));
     consumeToken();
   }
 
@@ -1545,7 +1548,7 @@ const InputSection *Parser::parseSortedInputSections() {
     if (!expectAndConsume(Token::r_paren, "expected )"))
       return nullptr;
 
-  return new (_alloc) InputSectionSortedGroup(sortMode, inputSections);
+  return new (_alloc) InputSectionSortedGroup(*this, sortMode, inputSections);
 }
 
 const InputSectionsCmd *Parser::parseInputSectionsCmd() {
@@ -1602,11 +1605,11 @@ const InputSectionsCmd *Parser::parseInputSectionsCmd() {
     }
   }
 
-  std::vector<const InputSection *> inputSections;
+  SmallVector<const InputSection *, 8> inputSections;
 
   if (_tok._kind != Token::l_paren)
     return new (_alloc)
-        InputSectionsCmd(fileName, archiveName, keep, fileSortMode,
+        InputSectionsCmd(*this, fileName, archiveName, keep, fileSortMode,
                          archiveSortMode, inputSections);
   consumeToken();
 
@@ -1627,7 +1630,7 @@ const InputSectionsCmd *Parser::parseInputSectionsCmd() {
     case Token::star:
     case Token::identifier: {
       inputSections.push_back(new (_alloc)
-                                  InputSectionName(_tok._range, false));
+                                  InputSectionName(*this, _tok._range, false));
       consumeToken();
       break;
     }
@@ -1650,7 +1653,7 @@ const InputSectionsCmd *Parser::parseInputSectionsCmd() {
     if (!expectAndConsume(Token::r_paren, "expected )"))
       return nullptr;
   return new (_alloc)
-      InputSectionsCmd(fileName, archiveName, keep, fileSortMode,
+      InputSectionsCmd(*this, fileName, archiveName, keep, fileSortMode,
                        archiveSortMode, inputSections);
 }
 
@@ -1668,7 +1671,7 @@ const OutputSectionDescription *Parser::parseOutputSectionDescription() {
   bool discard = false;
   OutputSectionDescription::Constraint constraint =
       OutputSectionDescription::C_None;
-  std::vector<const Command *> outputSectionCommands;
+  SmallVector<const Command *, 8> outputSectionCommands;
 
   if (_tok._kind == Token::kw_discard)
     discard = true;
@@ -1805,7 +1808,7 @@ const OutputSectionDescription *Parser::parseOutputSectionDescription() {
   }
 
   return new (_alloc) OutputSectionDescription(
-      sectionName, address, align, subAlign, at, fillExpr, fillStream,
+      *this, sectionName, address, align, subAlign, at, fillExpr, fillStream,
       alignWithInput, discard, constraint, outputSectionCommands);
 }
 
@@ -1820,7 +1823,7 @@ Sections *Parser::parseSections() {
   consumeToken();
   if (!expectAndConsume(Token::l_brace, "expected {"))
     return nullptr;
-  std::vector<const Command *> sectionsCommands;
+  SmallVector<const Command *, 8> sectionsCommands;
 
   bool unrecognizedToken = false;
   // Parse zero or more sections-commands
@@ -1897,7 +1900,7 @@ Sections *Parser::parseSections() {
           "expected symbol assignment, entry, overlay or output section name."))
     return nullptr;
 
-  return new (_alloc) Sections(sectionsCommands);
+  return new (_alloc) Sections(*this, sectionsCommands);
 }
 
 } // end namespace script

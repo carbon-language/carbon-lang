@@ -164,22 +164,24 @@ public:
   };
 
   Kind getKind() const { return _kind; }
+  inline llvm::BumpPtrAllocator &getAllocator() const;
 
   virtual void dump(raw_ostream &os) const = 0;
 
   virtual ~Command() {}
 
 protected:
-  explicit Command(Kind k) : _kind(k) {}
+  explicit Command(class Parser &ctx, Kind k) : _ctx(ctx), _kind(k) {}
 
 private:
+  Parser &_ctx;
   Kind _kind;
 };
 
 class Output : public Command {
 public:
-  explicit Output(StringRef outputFileName)
-      : Command(Kind::Output), _outputFileName(outputFileName) {}
+  explicit Output(Parser &ctx, StringRef outputFileName)
+      : Command(ctx, Kind::Output), _outputFileName(outputFileName) {}
 
   static bool classof(const Command *c) { return c->getKind() == Kind::Output; }
 
@@ -195,8 +197,12 @@ private:
 
 class OutputFormat : public Command {
 public:
-  explicit OutputFormat(StringRef format) : Command(Kind::OutputFormat) {
-    _formats.push_back(format);
+  explicit OutputFormat(Parser &ctx, const SmallVectorImpl<StringRef> &formats)
+      : Command(ctx, Kind::OutputFormat) {
+    size_t numFormats = formats.size();
+    StringRef *formatsStart = getAllocator().Allocate<StringRef>(numFormats);
+    std::copy(std::begin(formats), std::end(formats), formatsStart);
+    _formats = llvm::makeArrayRef(formatsStart, numFormats);
   }
 
   static bool classof(const Command *c) {
@@ -215,18 +221,16 @@ public:
     os << ")\n";
   }
 
-  virtual void addOutputFormat(StringRef format) { _formats.push_back(format); }
-
-  range<StringRef *> getFormats() { return _formats; }
+  llvm::ArrayRef<StringRef> getFormats() { return _formats; }
 
 private:
-  std::vector<StringRef> _formats;
+  llvm::ArrayRef<StringRef> _formats;
 };
 
 class OutputArch : public Command {
 public:
-  explicit OutputArch(StringRef arch)
-      : Command(Kind::OutputArch), _arch(arch) {}
+  explicit OutputArch(Parser &ctx, StringRef arch)
+      : Command(ctx, Kind::OutputArch), _arch(arch) {}
 
   static bool classof(const Command *c) {
     return c->getKind() == Kind::OutputArch;
@@ -255,9 +259,12 @@ struct Path {
 template<Command::Kind K>
 class PathList : public Command {
 public:
-  template <class RangeT> PathList(StringRef name, RangeT range)
-      : Command(K), _name(name) {
-    std::copy(std::begin(range), std::end(range), std::back_inserter(_paths));
+  PathList(Parser &ctx, StringRef name, const SmallVectorImpl<Path> &paths)
+      : Command(ctx, K), _name(name) {
+    size_t numPaths = paths.size();
+    Path *pathsStart = getAllocator().template Allocate<Path>(numPaths);
+    std::copy(std::begin(paths), std::end(paths), pathsStart);
+    _paths = llvm::makeArrayRef(pathsStart, numPaths);
   }
 
   static bool classof(const Command *c) { return c->getKind() == K; }
@@ -280,29 +287,31 @@ public:
     os << ")\n";
   }
 
-  const std::vector<Path> &getPaths() const { return _paths; }
+  llvm::ArrayRef<Path> getPaths() const { return _paths; }
 
 private:
   StringRef _name;
-  std::vector<Path> _paths;
+  llvm::ArrayRef<Path> _paths;
 };
 
 class Group : public PathList<Command::Kind::Group> {
 public:
-  template <class RangeT> Group(RangeT range)
-      : PathList("GROUP", std::move(range)) {}
+  template <class RangeT>
+  Group(Parser &ctx, RangeT range)
+      : PathList(ctx, "GROUP", std::move(range)) {}
 };
 
 class Input : public PathList<Command::Kind::Input> {
 public:
-  template <class RangeT> Input(RangeT range)
-      : PathList("INPUT", std::move(range)) {}
+  template <class RangeT>
+  Input(Parser &ctx, RangeT range)
+      : PathList(ctx, "INPUT", std::move(range)) {}
 };
 
 class Entry : public Command {
 public:
-  explicit Entry(StringRef entryName)
-      : Command(Kind::Entry), _entryName(entryName) {}
+  explicit Entry(Parser &ctx, StringRef entryName)
+      : Command(ctx, Kind::Entry), _entryName(entryName) {}
 
   static bool classof(const Command *c) { return c->getKind() == Kind::Entry; }
 
@@ -318,8 +327,8 @@ private:
 
 class SearchDir : public Command {
 public:
-  explicit SearchDir(StringRef searchPath)
-      : Command(Kind::SearchDir), _searchPath(searchPath) {}
+  explicit SearchDir(Parser &ctx, StringRef searchPath)
+      : Command(ctx, Kind::SearchDir), _searchPath(searchPath) {}
 
   static bool classof(const Command *c) {
     return c->getKind() == Kind::SearchDir;
@@ -354,13 +363,15 @@ public:
   enum class Kind { Constant, Symbol, FunctionCall, Unary, BinOp,
                     TernaryConditional };
   Kind getKind() const { return _kind; }
+  inline llvm::BumpPtrAllocator &getAllocator() const;
   virtual void dump(raw_ostream &os) const = 0;
   virtual ~Expression() {}
 
 protected:
-  explicit Expression(Kind k) : _kind(k) {}
+  explicit Expression(class Parser &ctx, Kind k) : _ctx(ctx), _kind(k) {}
 
 private:
+  Parser &_ctx;
   Kind _kind;
 };
 
@@ -369,7 +380,8 @@ private:
 /// with a constant.
 class Constant : public Expression {
 public:
-  explicit Constant(uint64_t num) : Expression(Kind::Constant), _num(num) {}
+  explicit Constant(Parser &ctx, uint64_t num)
+      : Expression(ctx, Kind::Constant), _num(num) {}
   void dump(raw_ostream &os) const override;
 
   static bool classof(const Expression *c) {
@@ -382,7 +394,8 @@ private:
 
 class Symbol : public Expression {
 public:
-  Symbol(StringRef name) : Expression(Kind::Symbol), _name(name) {}
+  Symbol(Parser &ctx, StringRef name)
+      : Expression(ctx, Kind::Symbol), _name(name) {}
   void dump(raw_ostream &os) const override;
 
   static bool classof(const Expression *c) {
@@ -395,10 +408,14 @@ private:
 
 class FunctionCall : public Expression {
 public:
-  template <class RangeT>
-  FunctionCall(StringRef name, RangeT range)
-      : Expression(Kind::FunctionCall), _name(name) {
-    std::copy(std::begin(range), std::end(range), std::back_inserter(_args));
+  FunctionCall(Parser &ctx, StringRef name,
+               const SmallVectorImpl<const Expression *> &args)
+      : Expression(ctx, Kind::FunctionCall), _name(name) {
+    size_t numArgs = args.size();
+    const Expression **argsStart =
+        getAllocator().Allocate<const Expression *>(numArgs);
+    std::copy(std::begin(args), std::end(args), argsStart);
+    _args = llvm::makeArrayRef(argsStart, numArgs);
   }
 
   void dump(raw_ostream &os) const override;
@@ -409,7 +426,7 @@ public:
 
 private:
   StringRef _name;
-  std::vector<const Expression *> _args;
+  llvm::ArrayRef<const Expression *> _args;
 };
 
 class Unary : public Expression {
@@ -419,8 +436,8 @@ public:
     Not
   };
 
-  Unary(Operation op, const Expression *child) : Expression(Kind::Unary),
-    _op(op), _child(child) {}
+  Unary(Parser &ctx, Operation op, const Expression *child)
+      : Expression(ctx, Kind::Unary), _op(op), _child(child) {}
   void dump(raw_ostream &os) const override;
 
   static bool classof(const Expression *c) {
@@ -451,8 +468,8 @@ public:
     Sum
   };
 
-  BinOp(const Expression *lhs, Operation op, const Expression *rhs)
-      : Expression(Kind::BinOp), _op(op), _lhs(lhs), _rhs(rhs) {}
+  BinOp(Parser &ctx, const Expression *lhs, Operation op, const Expression *rhs)
+      : Expression(ctx, Kind::BinOp), _op(op), _lhs(lhs), _rhs(rhs) {}
 
   void dump(raw_ostream &os) const override;
 
@@ -482,9 +499,9 @@ private:
 ///
 class TernaryConditional : public Expression {
 public:
-  TernaryConditional(const Expression *conditional, const Expression *trueExpr,
-                     const Expression *falseExpr)
-      : Expression(Kind::TernaryConditional), _conditional(conditional),
+  TernaryConditional(Parser &ctx, const Expression *conditional,
+                     const Expression *trueExpr, const Expression *falseExpr)
+      : Expression(ctx, Kind::TernaryConditional), _conditional(conditional),
         _trueExpr(trueExpr), _falseExpr(falseExpr) {}
 
   void dump(raw_ostream &os) const override;
@@ -515,9 +532,9 @@ public:
   enum AssignmentKind { Simple, Sum, Sub, Mul, Div, Shl, Shr, And, Or };
   enum AssignmentVisibility { Normal, Hidden, Provide, ProvideHidden };
 
-  SymbolAssignment(StringRef name, const Expression *expr, AssignmentKind kind,
-                   AssignmentVisibility visibility)
-      : Command(Kind::SymbolAssignment), _expression(expr), _symbol(name),
+  SymbolAssignment(Parser &ctx, StringRef name, const Expression *expr,
+                   AssignmentKind kind, AssignmentVisibility visibility)
+      : Command(ctx, Kind::SymbolAssignment), _expression(expr), _symbol(name),
         _assignmentKind(Simple), _assignmentVisibility(visibility) {}
 
   static bool classof(const Command *c) {
@@ -562,22 +579,24 @@ public:
   enum class Kind { InputSectionName, SortedGroup };
 
   Kind getKind() const { return _kind; }
+  inline llvm::BumpPtrAllocator &getAllocator() const;
 
   virtual void dump(raw_ostream &os) const = 0;
 
   virtual ~InputSection() {}
 
 protected:
-  explicit InputSection(Kind k) : _kind(k) {}
+  explicit InputSection(Parser &ctx, Kind k) : _ctx(ctx), _kind(k) {}
 
 private:
+  Parser &_ctx;
   Kind _kind;
 };
 
 class InputSectionName : public InputSection {
 public:
-  InputSectionName(StringRef name, bool excludeFile)
-      : InputSection(Kind::InputSectionName), _name(name),
+  InputSectionName(Parser &ctx, StringRef name, bool excludeFile)
+      : InputSection(ctx, Kind::InputSectionName), _name(name),
         _excludeFile(excludeFile) {}
 
   void dump(raw_ostream &os) const override;
@@ -594,11 +613,14 @@ private:
 
 class InputSectionSortedGroup : public InputSection {
 public:
-  template <class RangeT>
-  InputSectionSortedGroup(WildcardSortMode sort, RangeT range)
-      : InputSection(Kind::SortedGroup), _sortMode(sort) {
-    std::copy(std::begin(range), std::end(range),
-              std::back_inserter(_sections));
+  InputSectionSortedGroup(Parser &ctx, WildcardSortMode sort,
+                          const SmallVectorImpl<const InputSection *> &sections)
+      : InputSection(ctx, Kind::SortedGroup), _sortMode(sort) {
+    size_t numSections = sections.size();
+    const InputSection **sectionsStart =
+        getAllocator().Allocate<const InputSection *>(numSections);
+    std::copy(std::begin(sections), std::end(sections), sectionsStart);
+    _sections = llvm::makeArrayRef(sectionsStart, numSections);
   }
 
   void dump(raw_ostream &os) const override;
@@ -610,7 +632,7 @@ public:
 
 private:
   WildcardSortMode _sortMode;
-  std::vector<const InputSection *> _sections;
+  llvm::ArrayRef<const InputSection *> _sections;
 };
 
 /// An output-section-command that maps a series of sections inside a given
@@ -627,15 +649,18 @@ class InputSectionsCmd : public Command {
 public:
   typedef std::vector<const InputSection *> VectorTy;
 
-  template <class RangeT>
-  InputSectionsCmd(StringRef fileName, StringRef archiveName, bool keep,
-                   WildcardSortMode fileSortMode,
-                   WildcardSortMode archiveSortMode, RangeT range)
-      : Command(Kind::InputSectionsCmd), _fileName(fileName),
+  InputSectionsCmd(Parser &ctx, StringRef fileName, StringRef archiveName,
+                   bool keep, WildcardSortMode fileSortMode,
+                   WildcardSortMode archiveSortMode,
+                   const SmallVectorImpl<const InputSection *> &sections)
+      : Command(ctx, Kind::InputSectionsCmd), _fileName(fileName),
         _archiveName(archiveName), _keep(keep), _fileSortMode(fileSortMode),
         _archiveSortMode(archiveSortMode) {
-    std::copy(std::begin(range), std::end(range),
-              std::back_inserter(_sections));
+    size_t numSections = sections.size();
+    const InputSection **sectionsStart =
+        getAllocator().Allocate<const InputSection *>(numSections);
+    std::copy(std::begin(sections), std::end(sections), sectionsStart);
+    _sections = llvm::makeArrayRef(sectionsStart, numSections);
   }
 
   void dump(raw_ostream &os) const override;
@@ -650,7 +675,7 @@ private:
   bool _keep;
   WildcardSortMode _fileSortMode;
   WildcardSortMode _archiveSortMode;
-  VectorTy _sections;
+  llvm::ArrayRef<const InputSection *> _sections;
 };
 
 /// A sections-command to specify which input sections and symbols compose a
@@ -669,20 +694,23 @@ class OutputSectionDescription : public Command {
 public:
   enum Constraint { C_None, C_OnlyIfRO, C_OnlyIfRW };
 
-  template <class RangeT>
-  OutputSectionDescription(StringRef sectionName, const Expression *address,
-                           const Expression *align, const Expression *subAlign,
-                           const Expression *at, const Expression *fillExpr,
-                           StringRef fillStream,
-                           bool alignWithInput, bool discard,
-                           Constraint constraint, RangeT range)
-      : Command(Kind::OutputSectionDescription), _sectionName(sectionName),
+  OutputSectionDescription(
+      Parser &ctx, StringRef sectionName, const Expression *address,
+      const Expression *align, const Expression *subAlign, const Expression *at,
+      const Expression *fillExpr, StringRef fillStream, bool alignWithInput,
+      bool discard, Constraint constraint,
+      const SmallVectorImpl<const Command *> &outputSectionCommands)
+      : Command(ctx, Kind::OutputSectionDescription), _sectionName(sectionName),
         _address(address), _align(align), _subAlign(subAlign), _at(at),
         _fillExpr(fillExpr), _fillStream(fillStream),
         _alignWithInput(alignWithInput), _discard(discard),
         _constraint(constraint) {
-    std::copy(std::begin(range), std::end(range),
-              std::back_inserter(_outputSectionCommands));
+    size_t numCommands = outputSectionCommands.size();
+    const Command **commandsStart =
+        getAllocator().Allocate<const Command *>(numCommands);
+    std::copy(std::begin(outputSectionCommands),
+              std::end(outputSectionCommands), commandsStart);
+    _outputSectionCommands = llvm::makeArrayRef(commandsStart, numCommands);
   }
 
   static bool classof(const Command *c) {
@@ -702,14 +730,14 @@ private:
   bool _alignWithInput;
   bool _discard;
   Constraint _constraint;
-  std::vector<const Command *> _outputSectionCommands;
+  llvm::ArrayRef<const Command *> _outputSectionCommands;
 };
 
 /// Represents an Overlay structure as documented in
 /// https://sourceware.org/binutils/docs/ld/Overlay-Description.html#Overlay-Description
 class Overlay : public Command {
 public:
-  Overlay() : Command(Kind::Overlay) {}
+  Overlay(Parser &ctx) : Command(ctx, Kind::Overlay) {}
 
   static bool classof(const Command *c) {
     return c->getKind() == Kind::Overlay;
@@ -721,9 +749,15 @@ public:
 /// Represents all the contents of the SECTIONS {} construct.
 class Sections : public Command {
 public:
-  template <class RangeT> Sections(RangeT range) : Command(Kind::Sections) {
-    std::copy(std::begin(range), std::end(range),
-              std::back_inserter(_sectionsCommands));
+  Sections(Parser &ctx,
+           const SmallVectorImpl<const Command *> &sectionsCommands)
+      : Command(ctx, Kind::Sections) {
+    size_t numCommands = sectionsCommands.size();
+    const Command **commandsStart =
+        getAllocator().Allocate<const Command *>(numCommands);
+    std::copy(std::begin(sectionsCommands), std::end(sectionsCommands),
+              commandsStart);
+    _sectionsCommands = llvm::makeArrayRef(commandsStart, numCommands);
   }
 
   static bool classof(const Command *c) {
@@ -733,7 +767,7 @@ public:
   void dump(raw_ostream &os) const override;
 
 private:
-  std::vector<const Command *> _sectionsCommands;
+  llvm::ArrayRef<const Command *> _sectionsCommands;
 };
 
 /// Stores the parse tree of a linker script.
@@ -769,6 +803,9 @@ public:
 
   /// Returns a reference to the top level node of the linker script AST.
   LinkerScript *get() { return &_script; }
+
+  /// Returns a reference to the underlying allocator.
+  llvm::BumpPtrAllocator &getAllocator() { return _alloc; }
 
 private:
   /// Advances to the next token, either asking the Lexer to lex the next token
@@ -912,7 +949,7 @@ private:
   ///         -lm -l:libgcc.a )
   ///
   template<class T> T *parsePathList();
-  bool parseAsNeeded(std::vector<Path> &paths);
+  bool parseAsNeeded(SmallVectorImpl<Path> &paths);
 
   /// Parse the ENTRY linker script command.
   /// Example:
@@ -1017,6 +1054,16 @@ private:
   bool _peekAvailable;
   Token _bufferedToken;
 };
+
+llvm::BumpPtrAllocator &Command::getAllocator() const {
+  return _ctx.getAllocator();
+}
+llvm::BumpPtrAllocator &Expression::getAllocator() const {
+  return _ctx.getAllocator();
+}
+llvm::BumpPtrAllocator &InputSection::getAllocator() const {
+  return _ctx.getAllocator();
+}
 } // end namespace script
 } // end namespace lld
 
