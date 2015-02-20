@@ -680,8 +680,9 @@ bool SITargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
   case MVT::f32:
     // This is as fast on some subtargets. However, we always have full rate f32
     // mad available which returns the same result as the separate operations
-    // which we should prefer over fma.
-    return false;
+    // which we should prefer over fma. We can't use this if we want to support
+    // denormals, so only report this in these cases.
+    return Subtarget->hasFP32Denormals() && Subtarget->hasFastFMAF32();
   case MVT::f64:
     return true;
   default:
@@ -1642,6 +1643,11 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     if (VT != MVT::f32)
       break;
 
+    // Only do this if we are not trying to support denormals. v_mad_f32 does
+    // not support denormals ever.
+    if (Subtarget->hasFP32Denormals())
+      break;
+
     SDValue LHS = N->getOperand(0);
     SDValue RHS = N->getOperand(1);
 
@@ -1653,7 +1659,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
       SDValue A = LHS.getOperand(0);
       if (A == LHS.getOperand(1)) {
         const SDValue Two = DAG.getConstantFP(2.0, MVT::f32);
-        return DAG.getNode(AMDGPUISD::MAD, DL, VT, Two, A, RHS);
+        return DAG.getNode(ISD::FMAD, DL, VT, Two, A, RHS);
       }
     }
 
@@ -1662,11 +1668,11 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
       SDValue A = RHS.getOperand(0);
       if (A == RHS.getOperand(1)) {
         const SDValue Two = DAG.getConstantFP(2.0, MVT::f32);
-        return DAG.getNode(AMDGPUISD::MAD, DL, VT, Two, A, LHS);
+        return DAG.getNode(ISD::FMAD, DL, VT, Two, A, LHS);
       }
     }
 
-    break;
+    return SDValue();
   }
   case ISD::FSUB: {
     if (DCI.getDAGCombineLevel() < AfterLegalizeDAG)
@@ -1676,30 +1682,13 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
 
     // Try to get the fneg to fold into the source modifier. This undoes generic
     // DAG combines and folds them into the mad.
-    if (VT == MVT::f32) {
+    //
+    // Only do this if we are not trying to support denormals. v_mad_f32 does
+    // not support denormals ever.
+    if (VT == MVT::f32 &&
+        !Subtarget->hasFP32Denormals()) {
       SDValue LHS = N->getOperand(0);
       SDValue RHS = N->getOperand(1);
-
-      if (LHS.getOpcode() == ISD::FMUL) {
-        // (fsub (fmul a, b), c) -> mad a, b, (fneg c)
-
-        SDValue A = LHS.getOperand(0);
-        SDValue B = LHS.getOperand(1);
-        SDValue C = DAG.getNode(ISD::FNEG, DL, VT, RHS);
-
-        return DAG.getNode(AMDGPUISD::MAD, DL, VT, A, B, C);
-      }
-
-      if (RHS.getOpcode() == ISD::FMUL) {
-        // (fsub c, (fmul a, b)) -> mad (fneg a), b, c
-
-        SDValue A = DAG.getNode(ISD::FNEG, DL, VT, RHS.getOperand(0));
-        SDValue B = RHS.getOperand(1);
-        SDValue C = LHS;
-
-        return DAG.getNode(AMDGPUISD::MAD, DL, VT, A, B, C);
-      }
-
       if (LHS.getOpcode() == ISD::FADD) {
         // (fsub (fadd a, a), c) -> mad 2.0, a, (fneg c)
 
@@ -1708,7 +1697,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
           const SDValue Two = DAG.getConstantFP(2.0, MVT::f32);
           SDValue NegRHS = DAG.getNode(ISD::FNEG, DL, VT, RHS);
 
-          return DAG.getNode(AMDGPUISD::MAD, DL, VT, Two, A, NegRHS);
+          return DAG.getNode(ISD::FMAD, DL, VT, Two, A, NegRHS);
         }
       }
 
@@ -1718,9 +1707,11 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
         SDValue A = RHS.getOperand(0);
         if (A == RHS.getOperand(1)) {
           const SDValue NegTwo = DAG.getConstantFP(-2.0, MVT::f32);
-          return DAG.getNode(AMDGPUISD::MAD, DL, VT, NegTwo, A, LHS);
+          return DAG.getNode(ISD::FMAD, DL, VT, NegTwo, A, LHS);
         }
       }
+
+      return SDValue();
     }
 
     break;

@@ -413,11 +413,6 @@ def atomic_xor_global : global_binary_atomic_op<atomic_load_xor>;
 // Misc Pattern Fragments
 //===----------------------------------------------------------------------===//
 
-def fmad : PatFrag <
-  (ops node:$src0, node:$src1, node:$src2),
-  (fadd (fmul node:$src0, node:$src1), node:$src2)
->;
-
 class Constants {
 int TWO_PI = 0x40c90fdb;
 int PI = 0x40490fdb;

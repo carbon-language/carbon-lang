@@ -78,7 +78,6 @@ def AMDGPUfmax_legacy : SDNode<"AMDGPUISD::FMAX_LEGACY", SDTFPBinOp,
 >;
 
 def AMDGPUclamp : SDNode<"AMDGPUISD::CLAMP", SDTFPTernaryOp, []>;
-def AMDGPUmad : SDNode<"AMDGPUISD::MAD", SDTFPTernaryOp, []>;
 
 // out = max(a, b) a and b are signed ints
 def AMDGPUsmax : SDNode<"AMDGPUISD::SMAX", SDTIntBinOp,
