@@ -74,4 +74,15 @@ merge:
   ret i8 addrspace(1)* %obj
 }
 
+; When run over a function which doesn't opt in, should do nothing!
+define i8 addrspace(1)* @test5(i8 addrspace(1)* %obj) {
+; CHECK-LABEL: @test5
+; CHECK-LABEL: entry:
+; CHECK-NEXT: gc.statepoint
+; CHECK-NOT: %obj.relocated = call coldcc i8 addrspace(1)*
+entry:
+  call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
+  ret i8 addrspace(1)* %obj
+}
+
 declare i32 @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()*, i32, i32, ...)

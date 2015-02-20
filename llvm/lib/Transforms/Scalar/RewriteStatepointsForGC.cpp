@@ -1911,8 +1911,11 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
 /// point of this function is as an extension point for custom logic.
 static bool shouldRewriteStatepointsIn(Function &F) {
   // TODO: This should check the GCStrategy
-  const std::string StatepointExampleName("statepoint-example");
-  return StatepointExampleName == F.getGC();
+  if (F.hasGC()) {
+    const std::string StatepointExampleName("statepoint-example");
+    return StatepointExampleName == F.getGC();
+  } else
+    return false;
 }
 
 bool RewriteStatepointsForGC::runOnFunction(Function &F) {
