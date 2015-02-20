@@ -280,8 +280,7 @@ uptr ThreadSelf() {
 # endif
   return descr_addr;
 }
-#endif  // (defined(__x86_64__) || defined(__i386__) || defined(__mips__)) \
-        // && SANITIZER_LINUX
+#endif  // (x86_64 || i386 || MIPS) && SANITIZER_LINUX
 
 #if SANITIZER_FREEBSD
 static void **ThreadSelfSegbase() {
