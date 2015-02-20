@@ -361,7 +361,9 @@ static Optional<unsigned> findMainViewFileID(StringRef SourceFile,
       IsNotExpandedFile[CR.ExpandedFileID] = false;
   IsNotExpandedFile &= FilenameEquivalence;
   int I = IsNotExpandedFile.find_first();
-  return I != -1 ? I : None;
+  if (I == -1)
+    return None;
+  return I;
 }
 
 static Optional<unsigned> findMainViewFileID(const FunctionRecord &Function) {
@@ -370,7 +372,9 @@ static Optional<unsigned> findMainViewFileID(const FunctionRecord &Function) {
     if (CR.Kind == CounterMappingRegion::ExpansionRegion)
       IsNotExpandedFile[CR.ExpandedFileID] = false;
   int I = IsNotExpandedFile.find_first();
-  return I != -1 ? I : None;
+  if (I == -1)
+    return None;
+  return I;
 }
 
 /// Sort a nested sequence of regions from a single file.

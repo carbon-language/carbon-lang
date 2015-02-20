@@ -19,9 +19,8 @@
 namespace llvm {
 /// \brief A simple null object to allow implicit construction of Optional<T>
 /// and similar types without having to spell out the specialization's name.
-enum NoneType {
-  None
-};
+enum class NoneType { None };
+static NoneType None;
 }
 
 #endif
