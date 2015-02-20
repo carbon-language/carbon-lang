@@ -2545,6 +2545,9 @@ ObjectFileMachO::ParseSymtab ()
             }
         }
 
+        typedef std::set<ConstString> IndirectSymbols;
+        IndirectSymbols indirect_symbol_names;
+
 #if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__) || defined (__aarch64__))
 
         // Some recent builds of the dyld_shared_cache (hereafter: DSC) have been optimized by moving LOCAL
@@ -2724,6 +2727,12 @@ ObjectFileMachO::ParseSymtab ()
 
                             offset = 0;
 
+                            typedef std::map<ConstString, uint16_t> UndefinedNameToDescMap;
+                            typedef std::map<uint32_t, ConstString> SymbolIndexToName;
+                            UndefinedNameToDescMap undefined_name_to_desc;
+                            SymbolIndexToName reexport_shlib_needs_fixup;
+
+
                             // Read the local_symbols_infos struct in one shot
                             struct lldb_copy_dyld_cache_local_symbols_info local_symbols_info;
                             dsc_local_symbols_data.GetU32(&offset, &local_symbols_info.nlistOffset, 6);
@@ -2750,11 +2759,6 @@ ObjectFileMachO::ParseSymtab ()
 
                                     nlist_data_offset = local_symbols_info.nlistOffset + (nlist_byte_size * local_symbols_entry.nlistStartIndex);
                                     uint32_t string_table_offset = local_symbols_info.stringsOffset;
-
-                                    typedef std::map<ConstString, uint16_t> UndefinedNameToDescMap;
-                                    typedef std::map<uint32_t, ConstString> SymbolIndexToName;
-                                    UndefinedNameToDescMap undefined_name_to_desc;
-                                    SymbolIndexToName reexport_shlib_needs_fixup;
 
                                     for (uint32_t nlist_index = 0; nlist_index < local_symbols_entry.nlistCount; nlist_index++)
                                     {
@@ -3539,8 +3543,6 @@ ObjectFileMachO::ParseSymtab ()
         // Must reset this in case it was mutated above!
         nlist_data_offset = 0;
 #endif
-        typedef std::set<ConstString> IndirectSymbols;
-        IndirectSymbols indirect_symbol_names;
 
         if (nlist_data.GetByteSize() > 0)
         {
