@@ -66,6 +66,18 @@ bool llvm::objcarc::CanAlterRefCount(const Instruction *Inst, const Value *Ptr,
   return true;
 }
 
+bool llvm::objcarc::CanDecrementRefCount(const Instruction *Inst,
+                                         const Value *Ptr,
+                                         ProvenanceAnalysis &PA,
+                                         ARCInstKind Class) {
+  // First perform a quick check if Class can not touch ref counts.
+  if (!CanDecrementRefCount(Class))
+    return false;
+
+  // Otherwise, just use CanAlterRefCount for now.
+  return CanAlterRefCount(Inst, Ptr, PA, Class);
+}
+
 /// Test whether the given instruction can "use" the given pointer's object in a
 /// way that requires the reference count to be positive.
 bool llvm::objcarc::CanUse(const Instruction *Inst, const Value *Ptr,

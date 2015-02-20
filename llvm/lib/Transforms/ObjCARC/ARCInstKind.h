@@ -51,7 +51,7 @@ enum class ARCInstKind {
   CallOrUser,               ///< could call objc_release and/or "use" pointers
   Call,                     ///< could call objc_release
   User,                     ///< could "use" a pointer
-  None                      ///< anything else
+  None                      ///< anything that is inert from an ARC perspective.
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const ARCInstKind Class);
@@ -110,8 +110,12 @@ static inline ARCInstKind GetBasicARCInstKind(const Value *V) {
   return isa<InvokeInst>(V) ? ARCInstKind::CallOrUser : ARCInstKind::User;
 }
 
-/// \brief Determine what kind of construct V is.
+/// Map V to its ARCInstKind equivalence class.
 ARCInstKind GetARCInstKind(const Value *V);
+
+/// Returns false if conservatively we can prove that any instruction mapped to
+/// this kind can not decrement ref counts. Returns true otherwise.
+bool CanDecrementRefCount(ARCInstKind Kind);
 
 } // end namespace objcarc
 } // end namespace llvm

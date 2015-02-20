@@ -605,3 +605,41 @@ bool llvm::objcarc::CanInterruptRV(ARCInstKind Class) {
   }
   llvm_unreachable("covered switch isn't covered?");
 }
+
+bool llvm::objcarc::CanDecrementRefCount(ARCInstKind Kind) {
+  switch (Kind) {
+  case ARCInstKind::Retain:
+  case ARCInstKind::RetainRV:
+  case ARCInstKind::Autorelease:
+  case ARCInstKind::AutoreleaseRV:
+  case ARCInstKind::NoopCast:
+  case ARCInstKind::FusedRetainAutorelease:
+  case ARCInstKind::FusedRetainAutoreleaseRV:
+  case ARCInstKind::IntrinsicUser:
+  case ARCInstKind::User:
+  case ARCInstKind::None:
+    return false;
+
+  // The cases below are conservative.
+
+  // RetainBlock can result in user defined copy constructors being called
+  // implying releases may occur.
+  case ARCInstKind::RetainBlock:
+  case ARCInstKind::Release:
+  case ARCInstKind::AutoreleasepoolPush:
+  case ARCInstKind::AutoreleasepoolPop:
+  case ARCInstKind::LoadWeakRetained:
+  case ARCInstKind::StoreWeak:
+  case ARCInstKind::InitWeak:
+  case ARCInstKind::LoadWeak:
+  case ARCInstKind::MoveWeak:
+  case ARCInstKind::CopyWeak:
+  case ARCInstKind::DestroyWeak:
+  case ARCInstKind::StoreStrong:
+  case ARCInstKind::CallOrUser:
+  case ARCInstKind::Call:
+    return true;
+  }
+
+  llvm_unreachable("covered switch isn't covered?");
+}
