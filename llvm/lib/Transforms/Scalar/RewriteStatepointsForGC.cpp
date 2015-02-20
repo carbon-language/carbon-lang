@@ -648,7 +648,7 @@ private:
     case PhiState::Conflict:
       return stateA;
     }
-    assert(false && "only three states!");
+    llvm_unreachable("only three states!");
   }
 };
 }
