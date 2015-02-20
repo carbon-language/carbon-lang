@@ -102,21 +102,18 @@ struct PartiallyConstructedSafepointRecord {
   std::set<llvm::Value *> liveset;
 
   /// Mapping from live pointers to a base-defining-value
-  std::map<llvm::Value *, llvm::Value *> base_pairs;
+  DenseMap<llvm::Value *, llvm::Value *> PointerToBase;
 
   /// Any new values which were added to the IR during base pointer analysis
   /// for this safepoint
-  std::set<llvm::Value *> newInsertedDefs;
+  DenseSet<llvm::Value *> NewInsertedDefs;
 
   /// The bounds of the inserted code for the safepoint
-  std::pair<Instruction *, Instruction *> safepoint;
+  std::pair<Instruction *, Instruction *> SafepointBounds;
 
-  // Instruction to which exceptional gc relocates are attached
-  // Makes it easier to iterate through them during relocationViaAlloca.
-  Instruction *exceptional_relocates_token;
-
-  /// The result of the safepointing call (or nullptr)
-  Value *result;
+  /// Instruction to which exceptional gc relocates are attached
+  /// Makes it easier to iterate through them during relocationViaAlloca.
+  Instruction *UnwindToken;
 };
 }
 
@@ -660,7 +657,7 @@ private:
 /// which is the base pointer.  (This is reliable and can be used for
 /// relocation.)  On failure, returns nullptr.
 static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
-                              std::set<llvm::Value *> &newInsertedDefs) {
+                              DenseSet<llvm::Value *> &NewInsertedDefs) {
   Value *def = findBaseOrBDV(I, cache);
 
   if (isKnownBaseResult(def)) {
@@ -795,7 +792,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
             std::distance(pred_begin(v->getParent()), pred_end(v->getParent()));
         assert(num_preds > 0 && "how did we reach here");
         PHINode *phi = PHINode::Create(v->getType(), num_preds, "base_phi", v);
-        newInsertedDefs.insert(phi);
+        NewInsertedDefs.insert(phi);
         // Add metadata marking this as a base value
         auto *const_1 = ConstantInt::get(
             Type::getInt32Ty(
@@ -811,7 +808,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
         UndefValue *undef = UndefValue::get(sel->getType());
         SelectInst *basesel = SelectInst::Create(sel->getCondition(), undef,
                                                  undef, "base_select", sel);
-        newInsertedDefs.insert(basesel);
+        NewInsertedDefs.insert(basesel);
         // Add metadata marking this as a base value
         auto *const_1 = ConstantInt::get(
             Type::getInt32Ty(
@@ -863,7 +860,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
               assert(states.count(base));
               base = states[base].getBase();
               assert(base != nullptr && "unknown PhiState!");
-              assert(newInsertedDefs.count(base) &&
+              assert(NewInsertedDefs.count(base) &&
                      "should have already added this in a prev. iteration!");
             }
 
@@ -895,7 +892,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
           if (base->getType() != basephi->getType()) {
             base = new BitCastInst(base, basephi->getType(), "cast",
                                    InBB->getTerminator());
-            newInsertedDefs.insert(base);
+            NewInsertedDefs.insert(base);
           }
           basephi->addIncoming(base, InBB);
         }
@@ -920,7 +917,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
           // The cast is needed since base traversal may strip away bitcasts
           if (base->getType() != basesel->getType()) {
             base = new BitCastInst(base, basesel->getType(), "cast", basesel);
-            newInsertedDefs.insert(base);
+            NewInsertedDefs.insert(base);
           }
           basesel->setOperand(i, base);
         }
@@ -975,17 +972,17 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
 // side effects: may insert PHI nodes into the existing CFG, will preserve
 // CFG, will not remove or mutate any existing nodes
 //
-// post condition: base_pairs contains one (derived, base) pair for every
+// post condition: PointerToBase contains one (derived, base) pair for every
 // pointer in live.  Note that derived can be equal to base if the original
 // pointer was a base pointer.
 static void findBasePointers(const std::set<llvm::Value *> &live,
-                             std::map<llvm::Value *, llvm::Value *> &base_pairs,
+                             DenseMap<llvm::Value *, llvm::Value *> &PointerToBase,
                              DominatorTree *DT, DefiningValueMapTy &DVCache,
-                             std::set<llvm::Value *> &newInsertedDefs) {
+                             DenseSet<llvm::Value *> &NewInsertedDefs) {
   for (Value *ptr : live) {
-    Value *base = findBasePointer(ptr, DVCache, newInsertedDefs);
+    Value *base = findBasePointer(ptr, DVCache, NewInsertedDefs);
     assert(base && "failed to find base pointer");
-    base_pairs[ptr] = base;
+    PointerToBase[ptr] = base;
     assert((!isa<Instruction>(base) || !isa<Instruction>(ptr) ||
             DT->dominates(cast<Instruction>(base)->getParent(),
                           cast<Instruction>(ptr)->getParent())) &&
@@ -1006,20 +1003,20 @@ static void findBasePointers(const std::set<llvm::Value *> &live,
 static void findBasePointers(DominatorTree &DT, DefiningValueMapTy &DVCache,
                              const CallSite &CS,
                              PartiallyConstructedSafepointRecord &result) {
-  std::map<llvm::Value *, llvm::Value *> base_pairs;
-  std::set<llvm::Value *> newInsertedDefs;
-  findBasePointers(result.liveset, base_pairs, &DT, DVCache, newInsertedDefs);
+  DenseMap<llvm::Value *, llvm::Value *> PointerToBase;
+  DenseSet<llvm::Value *> NewInsertedDefs;
+  findBasePointers(result.liveset, PointerToBase, &DT, DVCache, NewInsertedDefs);
 
   if (PrintBasePointers) {
     errs() << "Base Pairs (w/o Relocation):\n";
-    for (auto Pair : base_pairs) {
+    for (auto Pair : PointerToBase) {
       errs() << " derived %" << Pair.first->getName() << " base %"
              << Pair.second->getName() << "\n";
     }
   }
 
-  result.base_pairs = base_pairs;
-  result.newInsertedDefs = newInsertedDefs;
+  result.PointerToBase = PointerToBase;
+  result.NewInsertedDefs = NewInsertedDefs;
 }
 
 /// Check for liveness of items in the insert defs and add them to the live
@@ -1029,8 +1026,8 @@ static void fixupLiveness(DominatorTree &DT, const CallSite &CS,
                           PartiallyConstructedSafepointRecord &result) {
   Instruction *inst = CS.getInstruction();
 
-  std::set<llvm::Value *> liveset = result.liveset;
-  std::map<llvm::Value *, llvm::Value *> base_pairs = result.base_pairs;
+  auto liveset = result.liveset;
+  auto PointerToBase = result.PointerToBase;
 
   auto is_live_gc_reference =
       [&](Value &V) { return isLiveGCReferenceAt(V, inst, DT, nullptr); };
@@ -1054,14 +1051,14 @@ static void fixupLiveness(DominatorTree &DT, const CallSite &CS,
     }
 
     if (is_live_gc_reference(*newDef)) {
-      // Add the live new defs into liveset and base_pairs
+      // Add the live new defs into liveset and PointerToBase
       liveset.insert(newDef);
-      base_pairs[newDef] = newDef;
+      PointerToBase[newDef] = newDef;
     }
   }
 
   result.liveset = liveset;
-  result.base_pairs = base_pairs;
+  result.PointerToBase = PointerToBase;
 }
 
 static void fixupLiveReferences(
@@ -1317,7 +1314,7 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
     Instruction *exceptional_token =
         cast<Instruction>(Builder.CreateExtractValue(
             unwindBlock->getLandingPadInst(), idx, "relocate_token"));
-    result.exceptional_relocates_token = exceptional_token;
+    result.UnwindToken = exceptional_token;
 
     // Just throw away return value. We will use the one we got for normal
     // block.
@@ -1380,7 +1377,7 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
   // Sanity check our results - this is slightly non-trivial due to invokes
   VerifySafepointBounds(bounds);
 
-  result.safepoint = bounds;
+  result.SafepointBounds = bounds;
 }
 
 namespace {
@@ -1418,8 +1415,8 @@ static void stablize_order(SmallVectorImpl<Value *> &basevec,
 static void
 makeStatepointExplicit(DominatorTree &DT, const CallSite &CS, Pass *P,
                        PartiallyConstructedSafepointRecord &result) {
-  std::set<llvm::Value *> liveset = result.liveset;
-  std::map<llvm::Value *, llvm::Value *> base_pairs = result.base_pairs;
+  auto liveset = result.liveset;
+  auto PointerToBase = result.PointerToBase;
 
   // Convert to vector for efficient cross referencing.
   SmallVector<Value *, 64> basevec, livevec;
@@ -1428,8 +1425,8 @@ makeStatepointExplicit(DominatorTree &DT, const CallSite &CS, Pass *P,
   for (Value *L : liveset) {
     livevec.push_back(L);
 
-    assert(base_pairs.find(L) != base_pairs.end());
-    Value *base = base_pairs[L];
+    assert(PointerToBase.find(L) != PointerToBase.end());
+    Value *base = PointerToBase[L];
     basevec.push_back(base);
   }
   assert(livevec.size() == basevec.size());
@@ -1523,7 +1520,7 @@ static void relocationViaAlloca(
   // otherwise we lose the link between statepoint and old def
   for (size_t i = 0; i < records.size(); i++) {
     const struct PartiallyConstructedSafepointRecord &info = records[i];
-    Value *statepoint = info.safepoint.first;
+    Value *statepoint = info.SafepointBounds.first;
 
     // This will be used for consistency check
     DenseSet<Value *> visitedLiveValues;
@@ -1534,14 +1531,14 @@ static void relocationViaAlloca(
     // In case if it was invoke statepoint
     // we will insert stores for exceptional path gc relocates.
     if (isa<InvokeInst>(statepoint)) {
-      insertRelocationStores(info.exceptional_relocates_token->users(),
+      insertRelocationStores(info.UnwindToken->users(),
                              allocaMap, visitedLiveValues);
     }
 
 #ifndef NDEBUG
-    // For consistency check store null's into allocas for values that are not
-    // relocated
-    // by this statepoint.
+    // As a debuging aid, pretend that an unrelocated pointer becomes null at
+    // the gc.statepoint.  This will turn some subtle GC problems into slightly
+    // easy to debug SEGVs
     for (auto Pair : allocaMap) {
       Value *def = Pair.first;
       Value *alloca = Pair.second;
@@ -1550,15 +1547,11 @@ static void relocationViaAlloca(
       if (visitedLiveValues.count(def)) {
         continue;
       }
-      // Result should not be relocated
-      if (def == info.result) {
-        continue;
-      }
 
-      Constant *CPN =
-          ConstantPointerNull::get(cast<PointerType>(def->getType()));
+      auto PT = cast<PointerType>(def->getType());
+      Constant *CPN = ConstantPointerNull::get(PT);
       StoreInst *store = new StoreInst(CPN, alloca);
-      store->insertBefore(info.safepoint.second);
+      store->insertBefore(info.SafepointBounds.second);
     }
 #endif
   }
@@ -1695,17 +1688,17 @@ static void findLiveReferences(
 }
 
 static void addBasesAsLiveValues(std::set<Value *> &liveset,
-                                 std::map<Value *, Value *> &base_pairs) {
+                                 DenseMap<Value *, Value *> &PointerToBase) {
   // Identify any base pointers which are used in this safepoint, but not
   // themselves relocated.  We need to relocate them so that later inserted
   // safepoints can get the properly relocated base register.
   DenseSet<Value *> missing;
   for (Value *L : liveset) {
-    assert(base_pairs.find(L) != base_pairs.end());
-    Value *base = base_pairs[L];
+    assert(PointerToBase.find(L) != PointerToBase.end());
+    Value *base = PointerToBase[L];
     assert(base);
     if (liveset.find(base) == liveset.end()) {
-      assert(base_pairs.find(base) == base_pairs.end());
+      assert(PointerToBase.find(base) == PointerToBase.end());
       // uniqued by set insert
       missing.insert(base);
     }
@@ -1718,9 +1711,9 @@ static void addBasesAsLiveValues(std::set<Value *> &liveset,
   for (Value *base : missing) {
     assert(base);
     liveset.insert(base);
-    base_pairs[base] = base;
+    PointerToBase[base] = base;
   }
-  assert(liveset.size() == base_pairs.size());
+  assert(liveset.size() == PointerToBase.size());
 }
 
 static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
@@ -1797,8 +1790,8 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
   std::set<llvm::Value *> allInsertedDefs;
   for (size_t i = 0; i < records.size(); i++) {
     struct PartiallyConstructedSafepointRecord &info = records[i];
-    allInsertedDefs.insert(info.newInsertedDefs.begin(),
-                           info.newInsertedDefs.end());
+    allInsertedDefs.insert(info.NewInsertedDefs.begin(),
+                           info.NewInsertedDefs.end());
   }
 
   // We insert some dummy calls after each safepoint to definitely hold live
@@ -1811,7 +1804,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
     CallSite &CS = toUpdate[i];
 
     SmallVector<Value *, 128> Bases;
-    for (auto Pair : info.base_pairs) {
+    for (auto Pair : info.PointerToBase) {
       Bases.push_back(Pair.second);
     }
     insertUseHolderAfter(CS, Bases, holders);
@@ -1825,7 +1818,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
   // given statepoint.
   for (size_t i = 0; i < records.size(); i++) {
     struct PartiallyConstructedSafepointRecord &info = records[i];
-    addBasesAsLiveValues(info.liveset, info.base_pairs);
+    addBasesAsLiveValues(info.liveset, info.PointerToBase);
   }
 
   // If we inserted any new values, we need to adjust our notion of what is
@@ -1837,7 +1830,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
     for (size_t i = 0; i < records.size(); i++) {
       struct PartiallyConstructedSafepointRecord &info = records[i];
       errs() << "Base Pairs: (w/Relocation)\n";
-      for (auto Pair : info.base_pairs) {
+      for (auto Pair : info.PointerToBase) {
         errs() << " derived %" << Pair.first->getName() << " base %"
                << Pair.second->getName() << "\n";
       }
@@ -1870,7 +1863,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
   // nodes have single entry (because of normalizeBBForInvokeSafepoint).
   // Just remove them all here.
   for (size_t i = 0; i < records.size(); i++) {
-    Instruction *I = records[i].safepoint.first;
+    Instruction *I = records[i].SafepointBounds.first;
 
     if (InvokeInst *invoke = dyn_cast<InvokeInst>(I)) {
       FoldSingleEntryPHINodes(invoke->getNormalDest());
@@ -1890,7 +1883,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
     // That Value* no longer exists and we need to use the new gc_result.
     // Thankfully, the liveset is embedded in the statepoint (and updated), so
     // we just grab that.
-    Statepoint statepoint(info.safepoint.first);
+    Statepoint statepoint(info.SafepointBounds.first);
     live.insert(live.end(), statepoint.gc_args_begin(),
                 statepoint.gc_args_end());
   }
