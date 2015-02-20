@@ -662,33 +662,26 @@ private:
 
   bool tryMergeLessLess() {
     // Merge X,less,less,Y into X,lessless,Y unless X or Y is less.
-    if (Tokens.size() < 4) {
-      // Merge <,<,eof to <<,eof
-      if (Tokens.back()->Tok.isNot(tok::eof))
-        return false;
+    if (Tokens.size() < 3)
+      return false;
 
-      auto &eof = Tokens.back();
-      Tokens.pop_back();
-      bool LessLessMerged;
-      if ((LessLessMerged = tryMergeTokens({tok::less, tok::less})))
-        Tokens.back()->Tok.setKind(tok::lessless);
-      Tokens.push_back(eof);
-      return LessLessMerged;
-    }
+    bool FourthTokenIsLess = false;
+    if (Tokens.size() > 3)
+      FourthTokenIsLess = (Tokens.end() - 4)[0]->is(tok::less);
 
-    auto First = Tokens.end() - 4;
-    if (First[3]->is(tok::less) || First[2]->isNot(tok::less) ||
-        First[1]->isNot(tok::less) || First[0]->is(tok::less))
+    auto First = Tokens.end() - 3;
+    if (First[2]->is(tok::less) || First[1]->isNot(tok::less) ||
+        First[0]->isNot(tok::less) || FourthTokenIsLess)
       return false;
 
     // Only merge if there currently is no whitespace between the two "<".
-    if (First[2]->WhitespaceRange.getBegin() !=
-        First[2]->WhitespaceRange.getEnd())
+    if (First[1]->WhitespaceRange.getBegin() !=
+        First[1]->WhitespaceRange.getEnd())
       return false;
 
-    First[1]->Tok.setKind(tok::lessless);
-    First[1]->TokenText = "<<";
-    First[1]->ColumnWidth += 1;
+    First[0]->Tok.setKind(tok::lessless);
+    First[0]->TokenText = "<<";
+    First[0]->ColumnWidth += 1;
     Tokens.erase(Tokens.end() - 2);
     return true;
   }
