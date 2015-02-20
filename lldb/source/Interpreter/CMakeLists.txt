@@ -31,6 +31,7 @@ add_lldb_library(lldbInterpreter
   OptionValueFileSpecLIst.cpp
   OptionValueFormat.cpp
   OptionValueFormatEntity.cpp
+  OptionValueLanguage.cpp
   OptionValuePathMappings.cpp
   OptionValueProperties.cpp
   OptionValueRegex.cpp
