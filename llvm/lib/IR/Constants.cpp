@@ -2715,18 +2715,15 @@ uint64_t ConstantDataSequential::getElementAsInteger(unsigned Elt) const {
 /// type, return the specified element as an APFloat.
 APFloat ConstantDataSequential::getElementAsAPFloat(unsigned Elt) const {
   const char *EltPtr = getElementPointer(Elt);
+  auto EltVal = *reinterpret_cast<const uint64_t *>(EltPtr);
 
   switch (getElementType()->getTypeID()) {
   default:
     llvm_unreachable("Accessor can only be used when element is float/double!");
-  case Type::FloatTyID: {
-      const float *FloatPrt = reinterpret_cast<const float *>(EltPtr);
-      return APFloat(*const_cast<float *>(FloatPrt));
-    }
-  case Type::DoubleTyID: {
-      const double *DoublePtr = reinterpret_cast<const double *>(EltPtr);
-      return APFloat(*const_cast<double *>(DoublePtr));
-    }
+  case Type::FloatTyID:
+    return APFloat(APFloat::IEEEsingle, APInt(32, EltVal));
+  case Type::DoubleTyID:
+    return APFloat(APFloat::IEEEdouble, APInt(64, EltVal));
   }
 }
 
