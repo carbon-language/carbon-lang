@@ -4264,6 +4264,24 @@
 // MIPS-ARCH-32R2:#define __mips_isa_rev 2
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips-none-none \
+// RUN:            -target-cpu mips32r3 < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-ARCH-32R3 %s
+//
+// MIPS-ARCH-32R3:#define _MIPS_ARCH "mips32r3"
+// MIPS-ARCH-32R3:#define _MIPS_ARCH_MIPS32R3 1
+// MIPS-ARCH-32R3:#define _MIPS_ISA _MIPS_ISA_MIPS32
+// MIPS-ARCH-32R3:#define __mips_isa_rev 3
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips-none-none \
+// RUN:            -target-cpu mips32r5 < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-ARCH-32R5 %s
+//
+// MIPS-ARCH-32R5:#define _MIPS_ARCH "mips32r5"
+// MIPS-ARCH-32R5:#define _MIPS_ARCH_MIPS32R5 1
+// MIPS-ARCH-32R5:#define _MIPS_ISA _MIPS_ISA_MIPS32
+// MIPS-ARCH-32R5:#define __mips_isa_rev 5
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips-none-none \
 // RUN:            -target-cpu mips32r6 < /dev/null \
 // RUN:   | FileCheck -check-prefix MIPS-ARCH-32R6 %s
 //
@@ -4298,6 +4316,24 @@
 // MIPS-ARCH-64R2:#define _MIPS_ARCH_MIPS64R2 1
 // MIPS-ARCH-64R2:#define _MIPS_ISA _MIPS_ISA_MIPS64
 // MIPS-ARCH-64R2:#define __mips_isa_rev 2
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips64-none-none \
+// RUN:            -target-cpu mips64r3 < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-ARCH-64R3 %s
+//
+// MIPS-ARCH-64R3:#define _MIPS_ARCH "mips64r3"
+// MIPS-ARCH-64R3:#define _MIPS_ARCH_MIPS64R3 1
+// MIPS-ARCH-64R3:#define _MIPS_ISA _MIPS_ISA_MIPS64
+// MIPS-ARCH-64R3:#define __mips_isa_rev 3
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips64-none-none \
+// RUN:            -target-cpu mips64r5 < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-ARCH-64R5 %s
+//
+// MIPS-ARCH-64R5:#define _MIPS_ARCH "mips64r5"
+// MIPS-ARCH-64R5:#define _MIPS_ARCH_MIPS64R5 1
+// MIPS-ARCH-64R5:#define _MIPS_ISA _MIPS_ISA_MIPS64
+// MIPS-ARCH-64R5:#define __mips_isa_rev 5
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=mips64-none-none \
 // RUN:            -target-cpu mips64r6 < /dev/null \
