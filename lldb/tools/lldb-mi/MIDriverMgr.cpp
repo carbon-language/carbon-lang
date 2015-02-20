@@ -778,3 +778,19 @@ CMIDriverMgr::GetDriver(const CMIUtilString &vrDriverId) const
 
     return pDriver;
 }
+
+
+//++ ------------------------------------------------------------------------------------
+// Details: Gets called when lldb-mi gets a signal. Passed signal to current driver.
+//
+// Type:    Method.
+// Args:    signal that was delivered
+// Return:  None.
+// Throws:  None.
+//--
+void
+CMIDriverMgr::DeliverSignal(int signal)
+{
+    if (m_pDriverCurrent != nullptr)
+        m_pDriverCurrent->DeliverSignal(signal);
+}

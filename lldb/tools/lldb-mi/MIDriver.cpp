@@ -500,42 +500,6 @@ CMIDriver::GetDriverIsGDBMICompatibleDriver(void) const
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Callback function for monitoring stream stdin object. Part of the visitor
-//          pattern.
-//          This function is called by the CMICmnStreamStdin::CThreadStdin
-//          "stdin monitor" thread (ID).
-// Type:    Overridden.
-// Args:    vStdInBuffer    - (R) Copy of the current stdin line data.
-//          vrbYesExit      - (RW) True = yes exit stdin monitoring, false = continue monitor.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMIDriver::ReadLine(const CMIUtilString &vStdInBuffer, bool &vrwbYesExit)
-{
-    // For debugging. Update prompt show stdin is working
-    // printf( "%s\n", vStdInBuffer.c_str() );
-    // fflush( stdout );
-
-    // Special case look for the quit command here so stop monitoring stdin stream
-    // So we do not go back to fgetc() and wait and hang thread on exit
-    if (vStdInBuffer == "quit")
-        vrwbYesExit = true;
-
-    // 1. Put new line in the queue container by stdin monitor thread
-    // 2. Then *this driver calls ReadStdinLineQueue() when ready to read the queue in its
-    // own thread
-    const bool bOk = QueueMICommand(vStdInBuffer);
-
-    // Check to see if the *this driver is shutting down (exit application)
-    if (!vrwbYesExit)
-        vrwbYesExit = m_bDriverIsExiting;
-
-    return bOk;
-}
-
-//++ ------------------------------------------------------------------------------------
 // Details: Start worker threads for the driver.
 // Type:    Method.
 // Args:    None.
@@ -550,16 +514,6 @@ CMIDriver::StartWorkerThreads(void)
 
     // Grab the thread manager
     CMICmnThreadMgrStd &rThreadMgr = CMICmnThreadMgrStd::Instance();
-
-    // Start the stdin thread
-    bOk &= m_rStdin.SetVisitor(*this);
-    if (bOk && !rThreadMgr.ThreadStart<CMICmnStreamStdin>(m_rStdin))
-    {
-        const CMIUtilString errMsg = CMIUtilString::Format(MIRSRC(IDS_THREADMGR_ERR_THREAD_FAIL_CREATE),
-                                                           CMICmnThreadMgrStd::Instance().GetErrorDescription().c_str());
-        SetErrorDescriptionn(errMsg);
-        return MIstatus::failure;
-    }
 
     // Start the event polling thread
     if (bOk && !rThreadMgr.ThreadStart<CMICmnLLDBDebugger>(m_rLldbDebugger))
@@ -627,11 +581,31 @@ CMIDriver::DoMainLoop(void)
     // While the app is active
     while (!m_bExitApp)
     {
-        // Poll stdin queue and dispatch
-        if (!ReadStdinLineQueue())
+        CMIUtilString errorText;
+        const MIchar *pCmd = m_rStdin.ReadLine (errorText);
+        if (pCmd != nullptr)
         {
-            // Something went wrong
-            break;
+            CMIUtilString lineText(pCmd);
+            if (!lineText.empty ())
+            {
+                if (lineText == "quit")
+                {
+                    // We want to be exiting when receiving a quit command
+                    m_bExitApp = true;
+                    break;
+                }
+
+                bool bOk = false;
+                {
+                    // Lock Mutex before processing commands so that we don't disturb an event
+                    // being processed
+                    CMIUtilThreadLock lock(CMICmnLLDBDebugSessionInfo::Instance().GetSessionMutex());
+                    bOk = InterpretCommand(lineText);
+                }
+                // Draw prompt if desired
+                if (bOk && m_rStdin.GetEnablePrompt())
+                    m_rStdOut.WriteMIResponse(m_rStdin.GetPrompt());
+            }
         }
     }
 
@@ -643,72 +617,6 @@ CMIDriver::DoMainLoop(void)
 
     // Ensure that a new line is sent as the last act of the dying driver
     m_rStdOut.WriteMIResponse("\n", false);
-
-    return MIstatus::success;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details: *this driver sits and waits for input to the stdin line queue shared by *this
-//          driver and the stdin monitor thread, it queues, *this reads, interprets and
-//          reacts.
-//          This function is used by the application's main thread.
-// Type:    Method.
-// Args:    None.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMIDriver::ReadStdinLineQueue(void)
-{
-    // True when queue contains input
-    bool bHaveInput = false;
-
-    // Stores the current input line
-    CMIUtilString lineText;
-    {
-        // Lock while we access the queue
-        CMIUtilThreadLock lock(m_threadMutex);
-        if (!m_queueStdinLine.empty())
-        {
-            lineText = m_queueStdinLine.front();
-            m_queueStdinLine.pop();
-            bHaveInput = !lineText.empty();
-        }
-    }
-
-    // Process while we have input
-    if (bHaveInput)
-    {
-        if (lineText == "quit")
-        {
-            // We want to be exiting when receiving a quit command
-            m_bExitApp = true;
-            return MIstatus::success;
-        }
-
-        // Process the command
-        bool bOk = false;
-        {
-            // Lock Mutex before processing commands so that we don't disturb an event
-            // that is being processed.
-            CMIUtilThreadLock lock(CMICmnLLDBDebugSessionInfo::Instance().GetSessionMutex());
-            bOk = InterpretCommand(lineText);
-        }
-
-        // Draw prompt if desired
-        if (bOk && m_rStdin.GetEnablePrompt())
-            m_rStdOut.WriteMIResponse(m_rStdin.GetPrompt());
-
-        // Input has been processed
-        bHaveInput = false;
-    }
-    else
-    {
-        // Give resources back to the OS
-        const std::chrono::milliseconds time(1);
-        std::this_thread::sleep_for(time);
-    }
 
     return MIstatus::success;
 }
@@ -926,42 +834,6 @@ CMIDriver::GetId(void) const
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Inject a command into the command processing system to be interpreted as a
-//          command read from stdin. The text representing the command is also written
-//          out to stdout as the command did not come from via stdin.
-// Type:    Method.
-// Args:    vMICmd  - (R) Text data representing a possible command.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMIDriver::InjectMICommand(const CMIUtilString &vMICmd)
-{
-    const bool bOk = m_rStdOut.WriteMIResponse(vMICmd);
-
-    return bOk && QueueMICommand(vMICmd);
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details: Add a new command candidate to the command queue to be processed by the
-//          command system.
-// Type:    Method.
-// Args:    vMICmd  - (R) Text data representing a possible command.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMIDriver::QueueMICommand(const CMIUtilString &vMICmd)
-{
-    CMIUtilThreadLock lock(m_threadMutex);
-    m_queueStdinLine.push(vMICmd);
-
-    return MIstatus::success;
-}
-
-//++ ------------------------------------------------------------------------------------
 // Details: Interpret the text data and match against current commands to see if there
 //          is a match. If a match then the command is issued and actioned on. The
 //          text data if not understood by *this driver is past on to the Fall Thru
@@ -1093,7 +965,7 @@ CMIDriver::SetExitApplicationFlag(const bool vbForceExit)
     // but halt the inferior program being debugged instead
     if (m_eCurrentDriverState == eDriverState_RunningDebugging)
     {
-        InjectMICommand("-exec-interrupt");
+        InterpretCommand("-exec-interrupt");
         return;
     }
 
@@ -1302,9 +1174,9 @@ CMIDriver::GetExecutableFileNamePathOnCmdLine(void) const
 bool
 CMIDriver::LocalDebugSessionStartupInjectCommands(void)
 {
-    const CMIUtilString strCmd(CMIUtilString::Format("-file-exec-and-symbols %s", m_strCmdLineArgExecuteableFileNamePath.c_str()));
-
-    return InjectMICommand(strCmd);
+    const CMIUtilString strCmd(CMIUtilString::Format("-file-exec-and-symbols \"%s\"", m_strCmdLineArgExecuteableFileNamePath.c_str()));
+    const bool bOk = CMICmnStreamStdout::TextToStdout(strCmd);
+    return (bOk && InterpretCommand(strCmd));
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -1334,4 +1206,19 @@ bool
 CMIDriver::IsDriverDebuggingArgExecutable(void) const
 {
     return m_bDriverDebuggingArgExecutable;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Gets called when lldb-mi gets a signal. Stops the process if it was SIGINT.
+//
+// Type:    Method.
+// Args:    signal that was delivered
+// Return:  None.
+// Throws:  None.
+//--
+void
+CMIDriver::DeliverSignal(int signal)
+{
+    if (signal == SIGINT && (m_eCurrentDriverState == eDriverState_RunningDebugging))
+        InterpretCommand("-exec-interrupt");
 }

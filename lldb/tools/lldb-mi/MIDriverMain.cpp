@@ -132,9 +132,8 @@ sigint_handler(int vSigno)
 
     CMICmnLog::Instance().WriteLog(CMIUtilString::Format(MIRSRC(IDS_PROCESS_SIGNAL_RECEIVED), "SIGINT", vSigno));
 
-    // CODETAG_DEBUG_SESSION_RUNNING_PROG_RECEIVED_SIGINT_PAUSE_PROGRAM
-    // Signal MI to shutdown or halt a running debug session
-    CMICmnStreamStdin::Instance().SetCtrlCHit();
+    // Send signal to driver so that it can take suitable action
+    rDriverMgr.DeliverSignal (vSigno);
 }
 
 // ToDo: Reevaluate if this function needs to be implemented like the UNIX equivalent
@@ -165,8 +164,8 @@ sigtstp_handler(int vSigno)
 
     CMICmnLog::Instance().WriteLog(CMIUtilString::Format(MIRSRC(IDS_PROCESS_SIGNAL_RECEIVED), "SIGTSTP", vSigno));
 
-    // Signal MI to shutdown
-    CMICmnStreamStdin::Instance().SetCtrlCHit();
+    // Send signal to driver so that it can take suitable action
+    rDriverMgr.DeliverSignal (vSigno);
 }
 
 // ToDo: Reevaluate if this function needs to be implemented like the UNIX equivalent
@@ -196,8 +195,8 @@ sigcont_handler(int vSigno)
 
     CMICmnLog::Instance().WriteLog(CMIUtilString::Format(MIRSRC(IDS_PROCESS_SIGNAL_RECEIVED), "SIGCONT", vSigno));
 
-    // Signal MI to shutdown
-    CMICmnStreamStdin::Instance().SetCtrlCHit();
+    // Send signal to driver so that it can take suitable action
+    rDriverMgr.DeliverSignal (vSigno);
 }
 
 //++ ------------------------------------------------------------------------------------

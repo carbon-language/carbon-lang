@@ -33,6 +33,7 @@
 #else
 #include "MICmnStreamStdinLinux.h"
 #endif // defined( _MSC_VER )
+#include <string.h> // For std::strerror()
 
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmnStreamStdin constructor.
@@ -49,6 +50,7 @@ CMICmnStreamStdin::CMICmnStreamStdin(void)
     , m_bShowPrompt(true)
     , m_bRedrawPrompt(true)
     , m_pStdinReadHandler(nullptr)
+    , m_pCmdBuffer(nullptr)
 {
 }
 
@@ -103,6 +105,9 @@ CMICmnStreamStdin::Initialize(void)
         return MIstatus::failure;
     }
 
+    if (bOk)
+        m_pCmdBuffer = new MIchar[m_constBufferSize];
+
     // Other resources required
     if (bOk)
     {
@@ -141,6 +146,12 @@ CMICmnStreamStdin::Shutdown(void)
     m_bInitialized = false;
 
     ClrErrorDescription();
+
+    if (m_pCmdBuffer != nullptr)
+    {
+        delete[] m_pCmdBuffer;
+        m_pCmdBuffer = nullptr;
+    }
 
     bool bOk = MIstatus::success;
     CMIUtilString errMsg;
@@ -355,7 +366,28 @@ CMICmnStreamStdin::MonitorStdin(bool &vrwbYesAlive)
 const MIchar *
 CMICmnStreamStdin::ReadLine(CMIUtilString &vwErrMsg)
 {
-    return m_pStdinReadHandler->ReadLine(vwErrMsg);
+    vwErrMsg.clear();
+
+    // Read user input
+    const MIchar *pText = ::fgets(&m_pCmdBuffer[0], m_constBufferSize, stdin);
+    if (pText == nullptr)
+    {
+        if (::ferror(stdin) != 0)
+            vwErrMsg = ::strerror(errno);
+        return nullptr;
+    }
+
+    // Strip off new line characters
+    for (MIchar *pI = m_pCmdBuffer; *pI != '\0'; pI++)
+    {
+        if ((*pI == '\n') || (*pI == '\r'))
+        {
+            *pI = '\0';
+            break;
+        }
+    }
+
+    return pText;
 }
 
 //++ ------------------------------------------------------------------------------------

@@ -51,7 +51,6 @@ class CMICmnStreamStdout;
 class CMIDriver : public CMICmnBase,
                   public CMIDriverMgr::IDriver,
                   public CMIDriverBase,
-                  public CMICmnStreamStdin::IStreamStdin,
                   public MI::ISingleton<CMIDriver>
 {
     friend class MI::ISingleton<CMIDriver>;
@@ -101,7 +100,6 @@ class CMIDriver : public CMICmnBase,
     bool WriteMessageToLog(const CMIUtilString &vMessage);
     bool SetEnableFallThru(const bool vbYes);
     bool GetEnableFallThru(void) const;
-    bool InjectMICommand(const CMIUtilString &vMICmd);
     bool HaveExecutableFileNamePathOnCmdLine(void) const;
     const CMIUtilString &GetExecutableFileNamePathOnCmdLine(void) const;
 
@@ -128,8 +126,7 @@ class CMIDriver : public CMICmnBase,
     virtual FILE *GetStderr(void) const;
     virtual const CMIUtilString &GetDriverName(void) const;
     virtual const CMIUtilString &GetDriverId(void) const;
-    // From CMICmnStreamStdin
-    virtual bool ReadLine(const CMIUtilString &vStdInBuffer, bool &vrbYesExit);
+    virtual void DeliverSignal(int signal);
 
     // Typedefs:
   private:
@@ -142,7 +139,6 @@ class CMIDriver : public CMICmnBase,
     void operator=(const CMIDriver &);
 
     lldb::SBError ParseArgs(const int argc, const char *argv[], FILE *vpStdOut, bool &vwbExiting);
-    bool ReadStdinLineQueue(void);
     bool DoAppQuit(void);
     bool InterpretCommand(const CMIUtilString &vTextLine);
     bool InterpretCommandThisDriver(const CMIUtilString &vTextLine, bool &vwbCmdYesValid);
@@ -152,7 +148,6 @@ class CMIDriver : public CMICmnBase,
     bool StopWorkerThreads(void);
     bool InitClientIDEToMIDriver(void) const;
     bool InitClientIDEEclipse(void) const;
-    bool QueueMICommand(const CMIUtilString &vMICmd);
     bool LocalDebugSessionStartupInjectCommands(void);
 
     // Overridden:
@@ -168,7 +163,6 @@ class CMIDriver : public CMICmnBase,
     //
     bool m_bFallThruToOtherDriverEnabled; // True = yes fall through, false = do not pass on command
     CMIUtilThreadMutex m_threadMutex;
-    QueueStdinLine_t m_queueStdinLine; // Producer = stdin monitor, consumer = *this driver
     bool m_bDriverIsExiting;           // True = yes, driver told to quit, false = continue working
     void *m_handleMainThread;          // *this driver is run by the main thread
     CMICmnStreamStdin &m_rStdin;

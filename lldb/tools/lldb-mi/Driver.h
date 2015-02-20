@@ -64,6 +64,7 @@ class Driver : public lldb::SBBroadcaster, public CMIDriverBase, public CMIDrive
     virtual bool SetDriverParent(const CMIDriverBase &vrOtherDriver);
     virtual const CMIUtilString &GetDriverName(void) const;
     virtual const CMIUtilString &GetDriverId(void) const;
+    virtual void DeliverSignal(int signal) {}
 
     // Original code:
   public:

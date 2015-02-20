@@ -79,6 +79,7 @@ class CMIDriverMgr : public CMICmnBase, public MI::ISingleton<CMIDriverMgr>
         virtual bool GetDriverIsGDBMICompatibleDriver(void) const = 0;
         virtual bool SetId(const CMIUtilString &vId) = 0;
         virtual const CMIUtilString &GetId(void) const = 0;
+        virtual void DeliverSignal(int signal) = 0;
 
         // Not part of the interface, ignore
         /* dtor */ virtual ~IDriver(void) {}
@@ -106,6 +107,7 @@ class CMIDriverMgr : public CMICmnBase, public MI::ISingleton<CMIDriverMgr>
     CMIUtilString DriverGetError(void) const;
     CMIUtilString DriverGetName(void) const;
     lldb::SBDebugger *DriverGetTheDebugger(void);
+    void DeliverSignal(int signal);
 
     // Typedef:
   private:

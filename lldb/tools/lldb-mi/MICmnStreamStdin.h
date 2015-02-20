@@ -84,6 +84,7 @@ class CMICmnStreamStdin : public CMICmnBase, public CMIUtilThreadActiveObjBase, 
     bool SetVisitor(IStreamStdin &vrVisitor);
     bool SetOSStdinHandler(IOSStdinHandler &vrHandler);
     void OnExitHandler(void);
+    const MIchar *ReadLine(CMIUtilString &vwErrMsg);
 
     // Overridden:
   public:
@@ -104,7 +105,6 @@ class CMICmnStreamStdin : public CMICmnBase, public CMIUtilThreadActiveObjBase, 
     void operator=(const CMICmnStreamStdin &);
 
     bool MonitorStdin(bool &vrwbYesExit);
-    const MIchar *ReadLine(CMIUtilString &vwErrMsg);
     bool
     InputAvailable(bool &vbAvail); // Bytes are available on stdin
 
@@ -122,4 +122,6 @@ class CMICmnStreamStdin : public CMICmnBase, public CMIUtilThreadActiveObjBase, 
     bool m_bShowPrompt;               // True = Yes prompt is shown/output to the user (stdout), false = no prompt
     bool m_bRedrawPrompt;             // True = Prompt needs to be redrawn
     IOSStdinHandler *m_pStdinReadHandler;
+    static const int m_constBufferSize = 2048;
+    MIchar *m_pCmdBuffer;
 };
