@@ -44,6 +44,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -911,6 +912,10 @@ bool AsmPrinter::doFinalization(Module &M) {
   JumpInstrTableInfo *JITI = getAnalysisIfAvailable<JumpInstrTableInfo>();
 
   if (JITI && !JITI->getTables().empty()) {
+    // Since we're at the module level we can't use a function specific
+    // MCSubtargetInfo - instead create one with the module defaults.
+    std::unique_ptr<MCSubtargetInfo> STI(TM.getTarget().createMCSubtargetInfo(
+        TM.getTargetTriple(), TM.getTargetCPU(), TM.getTargetFeatureString()));
     unsigned Arch = Triple(getTargetTriple()).getArch();
     bool IsThumb = (Arch == Triple::thumb || Arch == Triple::thumbeb);
     const TargetInstrInfo *TII = TM.getSubtargetImpl()->getInstrInfo();
@@ -942,7 +947,7 @@ bool AsmPrinter::doFinalization(Module &M) {
           MCSymbolRefExpr::Create(TargetSymbol, MCSymbolRefExpr::VK_PLT,
                                   OutContext);
         TII->getUnconditionalBranch(JumpToFun, TargetSymRef);
-        OutStreamer.EmitInstruction(JumpToFun, getSubtargetInfo());
+        OutStreamer.EmitInstruction(JumpToFun, *STI);
         ++Count;
       }
 
@@ -950,7 +955,7 @@ bool AsmPrinter::doFinalization(Module &M) {
       uint64_t Remaining = NextPowerOf2(Count) - Count;
       for (uint64_t C = 0; C < Remaining; ++C) {
         EmitAlignment(LogAlignment);
-        OutStreamer.EmitInstruction(TrapInst, getSubtargetInfo());
+        OutStreamer.EmitInstruction(TrapInst, *STI);
       }
 
     }
