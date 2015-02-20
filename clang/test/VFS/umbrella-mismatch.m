@@ -4,4 +4,4 @@
 // RUN: %clang_cc1 -Werror -fmodules -fmodules-cache-path=%t -ivfsoverlay %t.yaml -F %S/Inputs -fsyntax-only %s -verify
 // RUN: %clang_cc1 -Werror -fmodules -fmodules-cache-path=%t -F %S/Inputs -fsyntax-only %s -verify
 // expected-no-diagnostics
-@import Foo;
+@import UsesFoo;
