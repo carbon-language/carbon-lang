@@ -928,26 +928,28 @@ public:
 ///
 /// This object is not associated with any DWARF tag.
 class DILocation : public DIDescriptor {
+  MDLocation *getRaw() const { return dyn_cast_or_null<MDLocation>(get()); }
+
 public:
   explicit DILocation(const MDNode *N) : DIDescriptor(N) {}
 
   unsigned getLineNumber() const {
-    if (auto *L = dyn_cast_or_null<MDLocation>(DbgNode))
+    if (auto *L = getRaw())
       return L->getLine();
     return 0;
   }
   unsigned getColumnNumber() const {
-    if (auto *L = dyn_cast_or_null<MDLocation>(DbgNode))
+    if (auto *L = getRaw())
       return L->getColumn();
     return 0;
   }
   DIScope getScope() const {
-    if (auto *L = dyn_cast_or_null<MDLocation>(DbgNode))
+    if (auto *L = getRaw())
       return DIScope(dyn_cast_or_null<MDNode>(L->getScope()));
     return DIScope(nullptr);
   }
   DILocation getOrigLocation() const {
-    if (auto *L = dyn_cast_or_null<MDLocation>(DbgNode))
+    if (auto *L = getRaw())
       return DILocation(dyn_cast_or_null<MDNode>(L->getInlinedAt()));
     return DILocation(nullptr);
   }
