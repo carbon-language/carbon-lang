@@ -3519,6 +3519,9 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
                                       RTLIB::FMA_F80, RTLIB::FMA_F128,
                                       RTLIB::FMA_PPCF128));
     break;
+  case ISD::FMAD:
+    llvm_unreachable("Illegal fmad should never be formed");
+
   case ISD::FADD:
     Results.push_back(ExpandFPLibCall(Node, RTLIB::ADD_F32, RTLIB::ADD_F64,
                                       RTLIB::ADD_F80, RTLIB::ADD_F128,

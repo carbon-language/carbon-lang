@@ -765,6 +765,7 @@ void TargetLoweringBase::initActions() {
     setOperationAction(ISD::CONCAT_VECTORS, VT, Expand);
     setOperationAction(ISD::FMINNUM, VT, Expand);
     setOperationAction(ISD::FMAXNUM, VT, Expand);
+    setOperationAction(ISD::FMAD, VT, Expand);
 
     // These library functions default to expand.
     setOperationAction(ISD::FROUND, VT, Expand);

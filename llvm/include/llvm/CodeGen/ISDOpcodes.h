@@ -229,7 +229,14 @@ namespace ISD {
     SMULO, UMULO,
 
     /// Simple binary floating point operators.
-    FADD, FSUB, FMUL, FMA, FDIV, FREM,
+    FADD, FSUB, FMUL, FDIV, FREM,
+
+    /// FMA - Perform a * b + c with no intermediate rounding step.
+    FMA,
+
+    /// FMAD - Perform a * b + c, while getting the same result as the
+    /// separately rounded operations.
+    FMAD,
 
     /// FCOPYSIGN(X, Y) - Return the value of X with the sign of Y.  NOTE: This
     /// DAG node does not require that X and Y have the same type, just that the

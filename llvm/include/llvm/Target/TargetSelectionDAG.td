@@ -381,6 +381,7 @@ def fmul       : SDNode<"ISD::FMUL"       , SDTFPBinOp, [SDNPCommutative]>;
 def fdiv       : SDNode<"ISD::FDIV"       , SDTFPBinOp>;
 def frem       : SDNode<"ISD::FREM"       , SDTFPBinOp>;
 def fma        : SDNode<"ISD::FMA"        , SDTFPTernaryOp>;
+def fmad       : SDNode<"ISD::FMAD"       , SDTFPTernaryOp>;
 def fabs       : SDNode<"ISD::FABS"       , SDTFPUnaryOp>;
 def fminnum    : SDNode<"ISD::FMINNUM"    , SDTFPBinOp>;
 def fmaxnum    : SDNode<"ISD::FMAXNUM"    , SDTFPBinOp>;
