@@ -12,5 +12,8 @@ TimeoutTest: CRASHED; file written to timeout
 RUN: not ./LLVMFuzzer-NullDerefTest 2>&1 | FileCheck %s --check-prefix=NullDerefTest
 NullDerefTest: CRASHED; file written to crash-
 
-RUN: not ./LLVMFuzzer-FullCoverageSetTest -timeout=15 -mutate_depth=2 -use_full_coverage_set=1 2>&1 | FileCheck %s --check-prefix=FullCoverageSetTest
+RUN: not ./LLVMFuzzer-FullCoverageSetTest -timeout=15 -seed=1 -mutate_depth=2 -use_full_coverage_set=1 2>&1 | FileCheck %s --check-prefix=FullCoverageSetTest
 FullCoverageSetTest: BINGO
+
+RUN: not ./LLVMFuzzer-FourIndependentBranchesTest -timeout=15 -seed=1 -use_coverage_pairs=1 2>&1 | FileCheck %s --check-prefix=FourIndependentBranchesTest
+FourIndependentBranchesTest: BINGO

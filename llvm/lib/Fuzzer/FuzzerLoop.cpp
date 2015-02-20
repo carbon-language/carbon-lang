@@ -86,6 +86,8 @@ size_t Fuzzer::RunOne(const Unit &U) {
   TotalNumberOfRuns++;
   if (Options.UseFullCoverageSet)
     return RunOneMaximizeFullCoverageSet(U);
+  if (Options.UseCoveragePairs)
+    return RunOneMaximizeCoveragePairs(U);
   return RunOneMaximizeTotalCoverage(U);
 }
 
@@ -97,6 +99,29 @@ static uintptr_t HashOfArrayOfPCs(uintptr_t *PCs, uintptr_t NumPCs) {
   return Res;
 }
 
+// Experimental. Does not yet scale.
+// Fuly reset the current coverage state, run a single unit,
+// collect all coverage pairs and return non-zero if a new pair is observed.
+size_t Fuzzer::RunOneMaximizeCoveragePairs(const Unit &U) {
+  __sanitizer_reset_coverage();
+  Callback(U.data(), U.size());
+  uintptr_t *PCs;
+  uintptr_t NumPCs = __sanitizer_get_coverage_guards(&PCs);
+  bool HasNewPairs = false;
+  for (uintptr_t i = 0; i < NumPCs; i++) {
+    if (!PCs[i]) continue;
+    for (uintptr_t j = 0; j < NumPCs; j++) {
+      if (!PCs[j]) continue;
+      uint64_t Pair = (i << 32) | j;
+      HasNewPairs |= CoveragePairs.insert(Pair).second;
+    }
+  }
+  if (HasNewPairs)
+    return CoveragePairs.size();
+  return 0;
+}
+
+// Experimental.
 // Fuly reset the current coverage state, run a single unit,
 // compute a hash function from the full coverage set,
 // return non-zero if the hash value is new.
