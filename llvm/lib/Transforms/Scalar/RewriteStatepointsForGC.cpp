@@ -389,6 +389,7 @@ static Value *findBaseDefiningValue(Value *I) {
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
     if (LI->getType()->isPointerTy()) {
       Value *Op = LI->getOperand(0);
+      (void)Op;
       // Has to be a pointer to an gc object, or possibly an array of such?
       assert(Op->getType()->isPointerTy());
       return LI; // The value loaded is an gc base itself
@@ -1104,6 +1105,7 @@ VerifySafepointBounds(const std::pair<Instruction *, Instruction *> &bounds) {
   } else {
     // This is an invoke safepoint
     InvokeInst *invoke = dyn_cast<InvokeInst>(bounds.first);
+    (void)invoke;
     assert(invoke && "only continues over invokes!");
     assert(invoke->getNormalDest() == bounds.second->getParent() &&
            "safepoint should continue into normal exit block");
@@ -1221,6 +1223,7 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
   Function *F = BB->getParent();
   assert(F && "must be set");
   Module *M = F->getParent();
+  (void)M;
   assert(M && "must be set");
 
   // We're not changing the function signature of the statepoint since the gc
@@ -1887,10 +1890,12 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
   }
   unique_unsorted(live);
 
+#ifndef NDEBUG
   // sanity check
   for (auto ptr : live) {
     assert(isGCPointerType(ptr->getType()) && "must be a gc pointer type");
   }
+#endif
 
   relocationViaAlloca(F, DT, live, records);
   return !records.empty();
