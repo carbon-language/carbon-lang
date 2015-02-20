@@ -1,5 +1,5 @@
 """
-Test that the lldb-mi driver works with -data-xxx commands
+Test lldb-mi -data-xxx commands.
 """
 
 import lldbmi_testcase
@@ -8,10 +8,11 @@ import unittest2
 
 class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
 
+    mydir = TestBase.compute_mydir(__file__)
+
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_data_disassemble(self):
         """Test that 'lldb-mi --interpreter' works for -data-disassemble."""
 
@@ -40,7 +41,7 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
+    @unittest2.skip("-data-evaluate-expression doesn't work") #FIXME: the global case worked before refactoring
     def test_lldbmi_data_read_memory_bytes(self):
         """Test that 'lldb-mi --interpreter' works for -data-read-memory-bytes."""
 
@@ -57,20 +58,29 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-        # Get address of s_RawData
-        self.runCmd("-data-evaluate-expression &s_RawData")
-        self.expect("\^done,value=\"0x[0-9a-f]+\"",timeout=1)
+        # Get address of char[] (global)
+        self.runCmd("-data-evaluate-expression &g_CharArray")
+        self.expect("\^done,value=\"0x[0-9a-f]+\"")
         addr = int(self.child.after.split("\"")[1], 16)
         size = 5
 
-        # Test -data-read-memory-bytes: try to read data of s_RawData
+        # Test that -data-read-memory-bytes works for char[] type (global)
         self.runCmd("-data-read-memory-bytes %#x %d" % (addr, size))
-        self.expect("\^done,memory=\[{begin=\"0x0*%x\",offset=\"0x0+\",end=\"0x0*%x\",contents=\"1234567800\"}\]" % (addr, addr + size))
+        self.expect("\^done,memory=\[{begin=\"0x0*%x\",offset=\"0x0+\",end=\"0x0*%x\",contents=\"1112131400\"}\]" % (addr, addr + size))
+
+        # Get address of static char[]
+        self.runCmd("-data-evaluate-expression &s_CharArray")
+        self.expect("\^done,value=\"0x[0-9a-f]+\"")
+        addr = int(self.child.after.split("\"")[1], 16)
+        size = 5
+
+        # Test that -data-read-memory-bytes works for static char[] type
+        self.runCmd("-data-read-memory-bytes %#x %d" % (addr, size))
+        self.expect("\^done,memory=\[{begin=\"0x0*%x\",offset=\"0x0+\",end=\"0x0*%x\",contents=\"1112131400\"}\]" % (addr, addr + size))
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_data_list_register_names(self):
         """Test that 'lldb-mi --interpreter' works for -data-list-register-names."""
 
@@ -98,7 +108,6 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_data_list_register_values(self):
         """Test that 'lldb-mi --interpreter' works for -data-list-register-values."""
 

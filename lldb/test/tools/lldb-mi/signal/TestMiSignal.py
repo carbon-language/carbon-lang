@@ -1,64 +1,55 @@
 """
-Test that the lldb-mi driver nofities user properly.
+Test that the lldb-mi handles signals properly.
 """
 
 import lldbmi_testcase
 from lldbtest import *
 import unittest2
 
-class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
+class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
+
+    mydir = TestBase.compute_mydir(__file__)
 
     @lldbmi_test
-    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
-    def test_lldbmi_prompt(self):
-        """Test that 'lldb-mi --interpreter' echos '(gdb)' after commands and events."""
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_lldbmi_stopped_when_interrupt(self):
+        """Test that 'lldb-mi --interpreter' interrupt and resume a looping app."""
 
         self.spawnLldbMi(args = None)
 
-        # Test that lldb-mi is ready after startup
-        self.expect(self.child_prompt, exactly = True)
-
-        # Test that lldb-mi is ready after unknown command
-        self.runCmd("-unknown-command")
-        self.expect("\^error,msg=\"Driver\. Received command '-unknown-command'\. It was not handled\. Command 'unknown-command' not in Command Factory\"")
-        self.expect(self.child_prompt, exactly = True)
-
-        # Test that lldb-mi is ready after -file-exec-and-symbols
+        # Load executable
         self.runCmd("-file-exec-and-symbols %s" % self.myexe)
         self.expect("\^done")
-        self.expect(self.child_prompt, exactly = True)
 
-        # Test that lldb-mi is ready after -break-insert
-        self.runCmd("-break-insert -f b_MyFunction")
+        # Run to main
+        self.runCmd("-break-insert -f main")
         self.expect("\^done,bkpt={number=\"1\"")
-        self.expect(self.child_prompt, exactly = True)
-
-        # Test that lldb-mi is ready after -exec-run
         self.runCmd("-exec-run")
-        self.expect("\*running")
-        self.expect(self.child_prompt, exactly = True)
-
-        # Test that lldb-mi is ready after BP hit
+        self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
-        self.expect(self.child_prompt, exactly = True)
 
-        # Test that lldb-mi is ready after -exec-continue
+        # Set doloop=1 and run (to loop forever)
+        self.runCmd("-data-evaluate-expression \"do_loop=1\"")
+        self.expect("\^done,value=\"1\"")
         self.runCmd("-exec-continue")
         self.expect("\^running")
-        self.expect(self.child_prompt, exactly = True)
 
-        # Test that lldb-mi is ready after program exited
-        self.expect("\*stopped,reason=\"exited-normally\"")
-        self.expect(self.child_prompt, exactly = True)
+        # Test that -exec-interrupt can interrupt an execution
+        self.runCmd("-exec-interrupt")
+        self.expect("\*stopped,reason=\"signal-received\"")
+
+        # Continue (to loop forever)
+        self.runCmd("-exec-continue")
+        self.expect("\^running")
+
+        # Test that Ctrl+C can interrupt an execution
+        self.child.sendintr() #FIXME: here uses self.child directly
+        self.expect("\*stopped,reason=\"signal-received\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Fails on FreeBSD apparently due to thread race conditions
-    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stopped_when_stopatentry_local(self):
         """Test that 'lldb-mi --interpreter' notifies after it was stopped on entry (local)."""
 
@@ -93,7 +84,7 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Prepare debugserver
         import os, sys
-        lldb_gdbserver_folder = os.path.abspath(os.path.join(os.path.dirname(os.getcwd()), "lldb-gdbserver"))
+        lldb_gdbserver_folder = os.path.abspath(os.path.join(os.getcwd(), "../../lldb-gdbserver"))
         sys.path.append(lldb_gdbserver_folder)
         import lldbgdbserverutils
         debugserver_exe = lldbgdbserverutils.get_debugserver_exe()
@@ -134,7 +125,6 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
-    @skipIfLinux # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_stopped_when_segfault_local(self):
         """Test that 'lldb-mi --interpreter' notifies after it was stopped when segfault occurred (local)."""
 
@@ -151,8 +141,8 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-        # Set dosegfault=1 and run (to cause a segfault error)
-        self.runCmd("-data-evaluate-expression \"dosegfault=1\"")
+        # Set do_segfault=1 and run (to cause a segfault error)
+        self.runCmd("-data-evaluate-expression \"do_segfault=1\"")
         self.expect("\^done,value=\"1\"")
         self.runCmd("-exec-continue")
         self.expect("\^running")
@@ -168,7 +158,7 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Prepare debugserver
         import os, sys
-        lldb_gdbserver_folder = os.path.abspath(os.path.join(os.path.dirname(os.getcwd()), "lldb-gdbserver"))
+        lldb_gdbserver_folder = os.path.abspath(os.path.join(os.getcwd(), "../../lldb-gdbserver"))
         sys.path.append(lldb_gdbserver_folder)
         import lldbgdbserverutils
         debugserver_exe = lldbgdbserverutils.get_debugserver_exe()
@@ -199,8 +189,8 @@ class MiNotificationTestCase(lldbmi_testcase.MiTestCaseBase):
             self.expect("\^done")                                       #FIXME: self.expect("\^running")
             self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-            # Set dosegfault=1 and run (to cause a segfault error)
-            self.runCmd("-data-evaluate-expression \"dosegfault=1\"")
+            # Set do_segfault=1 and run (to cause a segfault error)
+            self.runCmd("-data-evaluate-expression \"do_segfault=1\"")
             self.expect("\^done,value=\"1\"")
             self.runCmd("-exec-continue")
             self.expect("\^running")
