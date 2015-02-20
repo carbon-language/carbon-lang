@@ -1114,9 +1114,9 @@ Platform::LaunchProcess (ProcessLaunchInfo &launch_info)
                                                                   num_resumes))
                 return error;
         }
-        else if (launch_info.GetFlags().Test(eLaunchFlagGlobArguments))
+        else if (launch_info.GetFlags().Test(eLaunchFlagShellExpandArguments))
         {
-            error = GlobArguments(launch_info);
+            error = ShellExpandArguments(launch_info);
             if (error.Fail())
                 return error;
         }
@@ -1132,11 +1132,11 @@ Platform::LaunchProcess (ProcessLaunchInfo &launch_info)
 }
 
 Error
-Platform::GlobArguments (ProcessLaunchInfo &launch_info)
+Platform::ShellExpandArguments (ProcessLaunchInfo &launch_info)
 {
     if (IsHost())
-        return Host::GlobArguments(launch_info);
-    return Error("base lldb_private::Platform class can't glob arguments");
+        return Host::ShellExpandArguments(launch_info);
+    return Error("base lldb_private::Platform class can't expand arguments");
 }
 
 Error

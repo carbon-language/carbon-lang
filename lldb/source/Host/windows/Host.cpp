@@ -220,19 +220,19 @@ Host::StartMonitoringChildProcess(Host::MonitorChildProcessCallback callback, vo
 }
 
 Error
-Host::GlobArguments (ProcessLaunchInfo &launch_info)
+Host::ShellExpandArguments (ProcessLaunchInfo &launch_info)
 {
     Error error;
-    if (launch_info.GetFlags().Test(eLaunchFlagGlobArguments))
+    if (launch_info.GetFlags().Test(eLaunchFlagShellExpandArguments))
     {
-        FileSpec glob_tool_spec;
-        if (!HostInfo::GetLLDBPath(lldb::ePathTypeSupportExecutableDir, glob_tool_spec))
+        FileSpec expand_tool_spec;
+        if (!HostInfo::GetLLDBPath(lldb::ePathTypeSupportExecutableDir, expand_tool_spec))
         {
             error.SetErrorString("could not find argdumper tool");
             return error;
         }
-        glob_tool_spec.AppendPathComponent("argdumper.exe");
-        if (!glob_tool_spec.Exists())
+        expand_tool_spec.AppendPathComponent("argdumper.exe");
+        if (!expand_tool_spec.Exists())
         {
             error.SetErrorString("could not find argdumper tool");
             return error;
@@ -241,15 +241,15 @@ Host::GlobArguments (ProcessLaunchInfo &launch_info)
         std::string quoted_cmd_string;
         launch_info.GetArguments().GetQuotedCommandString(quoted_cmd_string);
         std::replace(quoted_cmd_string.begin(), quoted_cmd_string.end(), '\\', '/');
-        StreamString glob_command;
+        StreamString expand_command;
         
-        glob_command.Printf("%s %s",
-                            glob_tool_spec.GetPath().c_str(),
-                            quoted_cmd_string.c_str());
+        expand_command.Printf("%s %s",
+                              expand_tool_spec.GetPath().c_str(),
+                              quoted_cmd_string.c_str());
         
         int status;
         std::string output;
-        RunShellCommand(glob_command.GetData(), launch_info.GetWorkingDirectory(), &status, nullptr, &output, 10);
+        RunShellCommand(expand_command.GetData(), launch_info.GetWorkingDirectory(), &status, nullptr, &output, 10);
         
         if (status != 0)
         {

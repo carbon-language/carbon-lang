@@ -134,13 +134,13 @@ namespace lldb_private
         SetLaunchInSeparateProcessGroup (bool separate);
         
         bool
-        GetGlobArguments () const
+        GetShellExpandArguments () const
         {
-            return m_flags.Test(lldb::eLaunchFlagGlobArguments);
+            return m_flags.Test(lldb::eLaunchFlagShellExpandArguments);
         }
         
         void
-        SetGlobArguments (bool glob);
+        SetShellExpandArguments (bool expand);
 
         void
         Clear ();

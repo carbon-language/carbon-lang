@@ -211,12 +211,12 @@ ProcessLaunchInfo::SetLaunchInSeparateProcessGroup (bool separate)
 }
 
 void
-ProcessLaunchInfo::SetGlobArguments (bool glob)
+ProcessLaunchInfo::SetShellExpandArguments (bool expand)
 {
-    if (glob)
-        m_flags.Set(lldb::eLaunchFlagGlobArguments);
+    if (expand)
+        m_flags.Set(lldb::eLaunchFlagShellExpandArguments);
     else
-        m_flags.Clear(lldb::eLaunchFlagGlobArguments);
+        m_flags.Clear(lldb::eLaunchFlagShellExpandArguments);
 }
 
 void

@@ -9,7 +9,7 @@ import unittest2
 from lldbtest import *
 import lldbutil
 
-class LaunchWithGlobTestCase(TestBase):
+class LaunchWithShellExpandTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
@@ -21,7 +21,7 @@ class LaunchWithGlobTestCase(TestBase):
         self.do_test ()
 
 
-    @expectedFailureFreeBSD("llvm.org/pr22627 process launch w/ glob not working")
+    @expectedFailureFreeBSD("llvm.org/pr22627 process launch w/ shell expansion not working")
     @dwarf_test
     def test_with_dwarf (self):
         self.buildDwarf()
@@ -39,7 +39,7 @@ class LaunchWithGlobTestCase(TestBase):
         breakpoint = target.BreakpointCreateBySourceRegex ('break here', lldb.SBFileSpec ("main.cpp", False))
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
-        self.runCmd("process launch -G true -w %s -- fi*.tx?" % (os.getcwd()))
+        self.runCmd("process launch -X true -w %s -- fi*.tx?" % (os.getcwd()))
 
         process = self.process()
 

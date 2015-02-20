@@ -224,15 +224,15 @@ SBLaunchInfo::SetShell (const char * path)
 }
 
 bool
-SBLaunchInfo::GetGlobArguments ()
+SBLaunchInfo::GetShellExpandArguments ()
 {
-    return m_opaque_sp->GetGlobArguments();
+    return m_opaque_sp->GetShellExpandArguments();
 }
 
 void
-SBLaunchInfo::SetGlobArguments (bool glob)
+SBLaunchInfo::SetShellExpandArguments (bool expand)
 {
-    m_opaque_sp->SetGlobArguments(glob);
+    m_opaque_sp->SetShellExpandArguments(expand);
 }
 
 uint32_t

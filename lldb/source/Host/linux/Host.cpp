@@ -418,7 +418,7 @@ Host::GetUnixSignals ()
 }
 
 Error
-Host::GlobArguments (ProcessLaunchInfo &launch_info)
+Host::ShellExpandArguments (ProcessLaunchInfo &launch_info)
 {
     return Error("unimplemented");
 }

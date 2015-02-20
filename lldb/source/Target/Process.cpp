@@ -491,14 +491,14 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
             break;
         }
 
-        case 'G':   // Glob args.
+        case 'X':   // shell expand args.
         {
             bool success;
-            const bool glob_args = Args::StringToBoolean (option_arg, true, &success);
+            const bool expand_args = Args::StringToBoolean (option_arg, true, &success);
             if (success)
-                launch_info.SetGlobArguments(glob_args);
+                launch_info.SetShellExpandArguments(expand_args);
             else
-                error.SetErrorStringWithFormat ("Invalid boolean value for glob-args option: '%s'", option_arg ? option_arg : "<null>");
+                error.SetErrorStringWithFormat ("Invalid boolean value for shell-expand-args option: '%s'", option_arg ? option_arg : "<null>");
             break;
         }
             
@@ -538,7 +538,7 @@ ProcessLaunchCommandOptions::g_option_table[] =
 { LLDB_OPT_SET_2  , false, "tty",           't', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone,    "Start the process in a terminal (not supported on all platforms)."},
 
 { LLDB_OPT_SET_3  , false, "no-stdio",      'n', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone,    "Do not set up for terminal I/O to go to running process."},
-{ LLDB_OPT_SET_4,   false, "glob-args",       'G', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean,          "Set whether to glob arguments to the process when launching."},
+{ LLDB_OPT_SET_4,   false, "shell-expand-args",       'X', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean,          "Set whether to shell expand arguments to the process when launching."},
 { 0               , false, NULL,             0,  0,                 NULL, NULL, 0, eArgTypeNone,    NULL }
 };
 
