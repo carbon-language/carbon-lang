@@ -65,6 +65,9 @@ be included at the beginning of the translation unit.  The extensions to the
 AST file format required for modules are discussed in the section on
 :ref:`modules <pchinternals-modules>`.
 
+Clang's AST files are Mach-O, ELF, or COFF containers that contain a
+``__clangast`` section which holds the AST bitstream.
+
 Clang's AST files are designed with a compact on-disk representation, which
 minimizes both creation time and the time required to initially load the AST
 file.  The AST file itself contains a serialized representation of Clang's

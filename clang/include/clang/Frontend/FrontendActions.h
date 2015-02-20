@@ -69,6 +69,14 @@ protected:
                                                  StringRef InFile) override;
 };
 
+/// \brief Emits the output of a GeneratePCHAction or GenerateModuleAction into
+/// a Mach-O/ELF/COFF container.
+class GeneratePCMContainerAction : public FrontendAction {
+protected:
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override;
+};
+
 class GeneratePCHAction : public ASTFrontendAction {
 protected:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,

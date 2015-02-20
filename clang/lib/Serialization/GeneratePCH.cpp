@@ -19,7 +19,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/SemaConsumer.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
-#include "llvm/Support/raw_ostream.h"
 #include <string>
 
 using namespace clang;
@@ -28,10 +27,11 @@ PCHGenerator::PCHGenerator(const Preprocessor &PP,
                            StringRef OutputFile,
                            clang::Module *Module,
                            StringRef isysroot,
-                           raw_ostream *OS, bool AllowASTWithErrors)
+                           bool AllowASTWithErrors)
   : PP(PP), OutputFile(OutputFile), Module(Module), 
-    isysroot(isysroot.str()), Out(OS), 
-    SemaPtr(nullptr), Stream(Buffer), Writer(Stream),
+    isysroot(isysroot.str()),
+    SemaPtr(nullptr), Stream(Buffer),
+    Writer(Stream),
     AllowASTWithErrors(AllowASTWithErrors),
     HasEmittedPCH(false) {
 }
@@ -52,14 +52,8 @@ void PCHGenerator::HandleTranslationUnit(ASTContext &Ctx) {
   assert(SemaPtr && "No Sema?");
   Writer.WriteAST(*SemaPtr, OutputFile, Module, isysroot, hasErrors);
 
-  // Write the generated bitstream to "Out".
-  Out->write((char *)&Buffer.front(), Buffer.size());
-
-  // Make sure it hits disk now.
-  Out->flush();
-
-  // Free up some memory, in case the process is kept alive.
-  Buffer.clear();
+  if (SerializationFinishedCallback)
+    SerializationFinishedCallback(&Buffer);
 
   HasEmittedPCH = true;
 }
