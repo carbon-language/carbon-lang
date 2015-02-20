@@ -76,6 +76,12 @@ bool CanAlterRefCount(const Instruction *Inst, const Value *Ptr,
 bool CanDecrementRefCount(const Instruction *Inst, const Value *Ptr,
                           ProvenanceAnalysis &PA, ARCInstKind Class);
 
+static inline bool CanDecrementRefCount(const Instruction *Inst,
+                                        const Value *Ptr,
+                                        ProvenanceAnalysis &PA) {
+  return CanDecrementRefCount(Inst, Ptr, PA, GetARCInstKind(Inst));
+}
+
 } // namespace objcarc
 } // namespace llvm
 

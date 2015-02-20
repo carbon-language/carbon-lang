@@ -191,67 +191,174 @@ bool ObjCARCContract::contractAutorelease(
   return true;
 }
 
-/// Attempt to merge an objc_release with a store, load, and objc_retain to form
-/// an objc_storeStrong. This can be a little tricky because the instructions
-/// don't always appear in order, and there may be unrelated intervening
-/// instructions.
-void
-ObjCARCContract::
-tryToContractReleaseIntoStoreStrong(Instruction *Release, inst_iterator &Iter) {
-  LoadInst *Load = dyn_cast<LoadInst>(GetArgRCIdentityRoot(Release));
-  if (!Load || !Load->isSimple()) return;
-
-  // For now, require everything to be in one basic block.
-  BasicBlock *BB = Release->getParent();
-  if (Load->getParent() != BB) return;
-
-  // Walk down to find the store and the release, which may be in either order.
-  BasicBlock::iterator I = Load, End = BB->end();
-  ++I;
-  AliasAnalysis::Location Loc = AA->getLocation(Load);
+static StoreInst *findSafeStoreForStoreStrongContraction(LoadInst *Load,
+                                                         Instruction *Release,
+                                                         ProvenanceAnalysis &PA,
+                                                         AliasAnalysis *AA) {
   StoreInst *Store = nullptr;
   bool SawRelease = false;
-  for (; !Store || !SawRelease; ++I) {
-    if (I == End)
-      return;
 
-    Instruction *Inst = I;
+  // Get the location associated with Load.
+  AliasAnalysis::Location Loc = AA->getLocation(Load);
+
+  // Walk down to find the store and the release, which may be in either order.
+  for (auto I = std::next(BasicBlock::iterator(Load)),
+            E = Load->getParent()->end();
+       I != E; ++I) {
+    // If we found the store we were looking for and saw the release,
+    // break. There is no more work to be done.
+    if (Store && SawRelease)
+      break;
+
+    // Now we know that we have not seen either the store or the release. If I
+    // is the the release, mark that we saw the release and continue.
+    Instruction *Inst = &*I;
     if (Inst == Release) {
       SawRelease = true;
       continue;
     }
 
+    // Otherwise, we check if Inst is a "good" store. Grab the instruction class
+    // of Inst.
     ARCInstKind Class = GetBasicARCInstKind(Inst);
 
-    // Unrelated retains are harmless.
+    // If Inst is an unrelated retain, we don't care about it.
+    //
+    // TODO: This is one area where the optimization could be made more
+    // aggressive.
     if (IsRetain(Class))
       continue;
 
+    // If we have seen the store, but not the release...
     if (Store) {
-      // The store is the point where we're going to put the objc_storeStrong,
-      // so make sure there are no uses after it.
-      if (CanUse(Inst, Load, PA, Class))
-        return;
-    } else if (AA->getModRefInfo(Inst, Loc) & AliasAnalysis::Mod) {
-      // We are moving the load down to the store, so check for anything
-      // else which writes to the memory between the load and the store.
-      Store = dyn_cast<StoreInst>(Inst);
-      if (!Store || !Store->isSimple()) return;
-      if (Store->getPointerOperand() != Loc.Ptr) return;
+      // We need to make sure that it is safe to move the release from its
+      // current position to the store. This implies proving that any
+      // instruction in between Store and the Release conservatively can not use
+      // the RCIdentityRoot of Release. If we can prove we can ignore Inst, so
+      // continue...
+      if (!CanUse(Inst, Load, PA, Class)) {
+        continue;
+      }
+
+      // Otherwise, be conservative and return nullptr.
+      return nullptr;
     }
+
+    // Ok, now we know we have not seen a store yet. See if Inst can write to
+    // our load location, if it can not, just ignore the instruction.
+    if (!(AA->getModRefInfo(Inst, Loc) & AliasAnalysis::Mod))
+      continue;
+
+    Store = dyn_cast<StoreInst>(Inst);
+
+    // If Inst can, then check if Inst is a simple store. If Inst is not a
+    // store or a store that is not simple, then we have some we do not
+    // understand writing to this memory implying we can not move the load
+    // over the write to any subsequent store that we may find.
+    if (!Store || !Store->isSimple())
+      return nullptr;
+
+    // Then make sure that the pointer we are storing to is Ptr. If so, we
+    // found our Store!
+    if (Store->getPointerOperand() == Loc.Ptr)
+      continue;
+
+    // Otherwise, we have an unknown store to some other ptr that clobbers
+    // Loc.Ptr. Bail!
+    return nullptr;
   }
 
-  Value *New = GetRCIdentityRoot(Store->getValueOperand());
+  // If we did not find the store or did not see the release, fail.
+  if (!Store || !SawRelease)
+    return nullptr;
 
-  // Walk up to find the retain.
-  I = Store;
-  BasicBlock::iterator Begin = BB->begin();
-  while (I != Begin && GetBasicARCInstKind(I) != ARCInstKind::Retain)
+  // We succeeded!
+  return Store;
+}
+
+static Instruction *
+findRetainForStoreStrongContraction(Value *New, StoreInst *Store,
+                                    Instruction *Release,
+                                    ProvenanceAnalysis &PA) {
+  // Walk up from the Store to find the retain.
+  BasicBlock::iterator I = Store;
+  BasicBlock::iterator Begin = Store->getParent()->begin();
+  while (I != Begin && GetBasicARCInstKind(I) != ARCInstKind::Retain) {
+    Instruction *Inst = &*I;
+
+    // It is only safe to move the retain to the store if we can prove
+    // conservatively that nothing besides the release can decrement reference
+    // counts in between the retain and the store.
+    if (CanDecrementRefCount(Inst, New, PA) && Inst != Release)
+      return nullptr;
     --I;
+  }
   Instruction *Retain = I;
   if (GetBasicARCInstKind(Retain) != ARCInstKind::Retain)
+    return nullptr;
+  if (GetArgRCIdentityRoot(Retain) != New)
+    return nullptr;
+  return Retain;
+}
+
+/// Attempt to merge an objc_release with a store, load, and objc_retain to form
+/// an objc_storeStrong. An objc_storeStrong:
+///
+///   objc_storeStrong(i8** %old_ptr, i8* new_value)
+///
+/// is equivalent to the following IR sequence:
+///
+///   ; Load old value.
+///   %old_value = load i8** %old_ptr               (1)
+///
+///   ; Increment the new value and then release the old value. This must occur
+///   ; in order in case old_value releases new_value in its destructor causing
+///   ; us to potentially have a dangling ptr.
+///   tail call i8* @objc_retain(i8* %new_value)    (2)
+///   tail call void @objc_release(i8* %old_value)  (3)
+///
+///   ; Store the new_value into old_ptr
+///   store i8* %new_value, i8** %old_ptr           (4)
+///
+/// The safety of this optimization is based around the following
+/// considerations:
+///
+///  1. We are forming the store strong at the store. Thus to perform this
+///     optimization it must be safe to move the retain, load, and release to
+///     (4).
+///  2. We need to make sure that any re-orderings of (1), (2), (3), (4) are
+///     safe.
+void ObjCARCContract::tryToContractReleaseIntoStoreStrong(Instruction *Release,
+                                                          inst_iterator &Iter) {
+  // See if we are releasing something that we just loaded.
+  auto *Load = dyn_cast<LoadInst>(GetArgRCIdentityRoot(Release));
+  if (!Load || !Load->isSimple())
     return;
-  if (GetArgRCIdentityRoot(Retain) != New) return;
+
+  // For now, require everything to be in one basic block.
+  BasicBlock *BB = Release->getParent();
+  if (Load->getParent() != BB)
+    return;
+
+  // First scan down the BB from Load, looking for a store of the RCIdentityRoot
+  // of Load's
+  StoreInst *Store =
+      findSafeStoreForStoreStrongContraction(Load, Release, PA, AA);
+  // If we fail, bail.
+  if (!Store)
+    return;
+
+  // Then find what new_value's RCIdentity Root is.
+  Value *New = GetRCIdentityRoot(Store->getValueOperand());
+
+  // Then walk up the BB and look for a retain on New without any intervening
+  // instructions which conservatively might decrement ref counts.
+  Instruction *Retain =
+      findRetainForStoreStrongContraction(New, Store, Release, PA);
+
+  // If we fail, bail.
+  if (!Retain)
+    return;
 
   Changed = true;
   ++NumStoreStrongs;

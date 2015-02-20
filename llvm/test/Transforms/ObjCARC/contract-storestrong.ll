@@ -24,7 +24,7 @@ entry:
 
 ; Don't do this if the load is volatile.
 
-;      CHECK: define void @test1(i8* %p) {
+; CHECK-LABEL: define void @test1(i8* %p) {
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %p) [[NUW]]
 ; CHECK-NEXT:   %tmp = load volatile i8** @x, align 8
@@ -43,7 +43,7 @@ entry:
 
 ; Don't do this if the store is volatile.
 
-;      CHECK: define void @test2(i8* %p) {
+; CHECK-LABEL: define void @test2(i8* %p) {
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %p) [[NUW]]
 ; CHECK-NEXT:   %tmp = load i8** @x, align 8
@@ -63,15 +63,15 @@ entry:
 ; Don't do this if there's a use of the old pointer value between the store
 ; and the release.
 
-; CHECK:      define void @test3(i8* %newValue) {
-; CHECK-NEXT: entry:
-; CHECK-NEXT:   %x0 = tail call i8* @objc_retain(i8* %newValue) [[NUW]]
-; CHECK-NEXT:   %x1 = load i8** @x, align 8
-; CHECK-NEXT:   store i8* %x0, i8** @x, align 8
-; CHECK-NEXT:   tail call void @use_pointer(i8* %x1), !clang.arc.no_objc_arc_exceptions !0
-; CHECK-NEXT:   tail call void @objc_release(i8* %x1) [[NUW]], !clang.imprecise_release !0
-; CHECK-NEXT:   ret void
-; CHECK-NEXT: }
+; CHECK-LABEL: define void @test3(i8* %newValue) {
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    %x0 = tail call i8* @objc_retain(i8* %newValue) [[NUW]]
+; CHECK-NEXT:    %x1 = load i8** @x, align 8
+; CHECK-NEXT:    store i8* %x0, i8** @x, align 8
+; CHECK-NEXT:    tail call void @use_pointer(i8* %x1), !clang.arc.no_objc_arc_exceptions !0
+; CHECK-NEXT:    tail call void @objc_release(i8* %x1) [[NUW]], !clang.imprecise_release !0
+; CHECK-NEXT:    ret void
+; CHECK-NEXT:  }
 define void @test3(i8* %newValue) {
 entry:
   %x0 = tail call i8* @objc_retain(i8* %newValue) nounwind
@@ -84,15 +84,15 @@ entry:
 
 ; Like test3, but with an icmp use instead of a call, for good measure.
 
-; CHECK:      define i1 @test4(i8* %newValue, i8* %foo) {
-; CHECK-NEXT: entry:
-; CHECK-NEXT:   %x0 = tail call i8* @objc_retain(i8* %newValue) [[NUW]]
-; CHECK-NEXT:   %x1 = load i8** @x, align 8
-; CHECK-NEXT:   store i8* %x0, i8** @x, align 8
-; CHECK-NEXT:   %t = icmp eq i8* %x1, %foo
-; CHECK-NEXT:   tail call void @objc_release(i8* %x1) [[NUW]], !clang.imprecise_release !0
-; CHECK-NEXT:   ret i1 %t
-; CHECK-NEXT: }
+; CHECK-LABEL:  define i1 @test4(i8* %newValue, i8* %foo) {
+; CHECK-NEXT:   entry:
+; CHECK-NEXT:     %x0 = tail call i8* @objc_retain(i8* %newValue) [[NUW]]
+; CHECK-NEXT:     %x1 = load i8** @x, align 8
+; CHECK-NEXT:     store i8* %x0, i8** @x, align 8
+; CHECK-NEXT:     %t = icmp eq i8* %x1, %foo
+; CHECK-NEXT:     tail call void @objc_release(i8* %x1) [[NUW]], !clang.imprecise_release !0
+; CHECK-NEXT:     ret i1 %t
+; CHECK-NEXT:   }
 define i1 @test4(i8* %newValue, i8* %foo) {
 entry:
   %x0 = tail call i8* @objc_retain(i8* %newValue) nounwind
@@ -105,7 +105,7 @@ entry:
 
 ; Do form an objc_storeStrong here, because the use is before the store.
 
-; CHECK: define i1 @test5(i8* %newValue, i8* %foo) {
+; CHECK-LABEL: define i1 @test5(i8* %newValue, i8* %foo) {
 ; CHECK: %t = icmp eq i8* %x1, %foo
 ; CHECK: tail call void @objc_storeStrong(i8** @x, i8* %newValue) [[NUW]]
 ; CHECK: }
@@ -121,7 +121,7 @@ entry:
 
 ; Like test5, but the release is before the store.
 
-; CHECK: define i1 @test6(i8* %newValue, i8* %foo) {
+; CHECK-LABEL: define i1 @test6(i8* %newValue, i8* %foo) {
 ; CHECK: %t = icmp eq i8* %x1, %foo
 ; CHECK: tail call void @objc_storeStrong(i8** @x, i8* %newValue) [[NUW]]
 ; CHECK: }
@@ -137,7 +137,7 @@ entry:
 
 ; Like test0, but there's no store, so don't form an objc_storeStrong.
 
-;      CHECK-LABEL: define void @test7(
+; CHECK-LABEL: define void @test7(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   %0 = tail call i8* @objc_retain(i8* %p) [[NUW]]
 ; CHECK-NEXT:   %tmp = load i8** @x, align 8
@@ -154,7 +154,7 @@ entry:
 
 ; Like test0, but there's no retain, so don't form an objc_storeStrong.
 
-;      CHECK-LABEL: define void @test8(
+; CHECK-LABEL: define void @test8(
 ; CHECK-NEXT: entry:
 ; CHECK-NEXT:   %tmp = load i8** @x, align 8
 ; CHECK-NEXT:   store i8* %p, i8** @x, align 8
@@ -167,6 +167,54 @@ entry:
   store i8* %p, i8** @x, align 8
   tail call void @objc_release(i8* %tmp) nounwind
   ret void
+}
+
+; Make sure that we properly handle release that *may* release our new
+; value in between the retain and the store. We need to be sure that
+; this we can safely move the retain to the store. This specific test
+; makes sure that we properly handled a release of an unrelated
+; pointer.
+;
+; CHECK-LABEL: define i1 @test9(i8* %newValue, i8* %foo, i8* %unrelated_ptr) {
+; CHECK-NOT: objc_storeStrong
+define i1 @test9(i8* %newValue, i8* %foo, i8* %unrelated_ptr) {
+entry:
+  %x0 = tail call i8* @objc_retain(i8* %newValue) nounwind
+  tail call void @objc_release(i8* %unrelated_ptr) nounwind, !clang.imprecise_release !0
+  %x1 = load i8** @x, align 8
+  tail call void @objc_release(i8* %x1) nounwind, !clang.imprecise_release !0
+  %t = icmp eq i8* %x1, %foo
+  store i8* %newValue, i8** @x, align 8
+  ret i1 %t  
+}
+
+; Make sure that we don't perform the optimization when we just have a call.
+;
+; CHECK-LABEL: define i1 @test10(i8* %newValue, i8* %foo, i8* %unrelated_ptr) {
+; CHECK-NOT: objc_storeStrong
+define i1 @test10(i8* %newValue, i8* %foo, i8* %unrelated_ptr) {
+entry:
+  %x0 = tail call i8* @objc_retain(i8* %newValue) nounwind
+  call void @use_pointer(i8* %unrelated_ptr)
+  %x1 = load i8** @x, align 8
+  tail call void @objc_release(i8* %x1) nounwind, !clang.imprecise_release !0
+  %t = icmp eq i8* %x1, %foo
+  store i8* %newValue, i8** @x, align 8
+  ret i1 %t
+}
+
+; Make sure we form the store strong if the use in between the retain
+; and the store does not touch reference counts.
+; CHECK-LABEL: define i1 @test11(i8* %newValue, i8* %foo, i8* %unrelated_ptr) {
+; CHECK: objc_storeStrong
+define i1 @test11(i8* %newValue, i8* %foo, i8* %unrelated_ptr) {
+entry:
+  %x0 = tail call i8* @objc_retain(i8* %newValue) nounwind
+  %t = icmp eq i8* %newValue, %foo
+  %x1 = load i8** @x, align 8
+  tail call void @objc_release(i8* %x1) nounwind, !clang.imprecise_release !0
+  store i8* %newValue, i8** @x, align 8
+  ret i1 %t
 }
 
 !0 = !{}
