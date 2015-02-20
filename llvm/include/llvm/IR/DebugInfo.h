@@ -252,6 +252,19 @@ public:
   void replaceAllUsesWith(MDNode *D);
 };
 
+#define RETURN_FROM_RAW(VALID, DEFAULT)                                        \
+  do {                                                                         \
+    if (auto *N = getRaw())                                                    \
+      return VALID;                                                            \
+    return DEFAULT;                                                            \
+  } while (false)
+#define RETURN_DESCRIPTOR_FROM_RAW(DESC, VALID)                                \
+  do {                                                                         \
+    if (auto *N = getRaw())                                                    \
+      return DESC(dyn_cast_or_null<MDNode>(VALID));                            \
+    return DESC(static_cast<const MDNode *>(nullptr));                         \
+  } while (false)
+
 /// \brief This is used to represent ranges, for array bounds.
 class DISubrange : public DIDescriptor {
   friend class DIDescriptor;
@@ -933,25 +946,13 @@ class DILocation : public DIDescriptor {
 public:
   explicit DILocation(const MDNode *N) : DIDescriptor(N) {}
 
-  unsigned getLineNumber() const {
-    if (auto *L = getRaw())
-      return L->getLine();
-    return 0;
-  }
-  unsigned getColumnNumber() const {
-    if (auto *L = getRaw())
-      return L->getColumn();
-    return 0;
-  }
+  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
+  unsigned getColumnNumber() const { RETURN_FROM_RAW(N->getColumn(), 0); }
   DIScope getScope() const {
-    if (auto *L = getRaw())
-      return DIScope(dyn_cast_or_null<MDNode>(L->getScope()));
-    return DIScope(nullptr);
+    RETURN_DESCRIPTOR_FROM_RAW(DIScope, N->getScope());
   }
   DILocation getOrigLocation() const {
-    if (auto *L = getRaw())
-      return DILocation(dyn_cast_or_null<MDNode>(L->getInlinedAt()));
-    return DILocation(nullptr);
+    RETURN_DESCRIPTOR_FROM_RAW(DILocation, N->getInlinedAt());
   }
   StringRef getFilename() const { return getScope().getFilename(); }
   StringRef getDirectory() const { return getScope().getDirectory(); }
@@ -1041,6 +1042,9 @@ public:
   StringRef getName() const { return getHeaderField(2); }
   bool Verify() const;
 };
+
+#undef RETURN_FROM_RAW
+#undef RETURN_DESCRIPTOR_FROM_RAW
 
 /// \brief Find subprogram that is enclosing this scope.
 DISubprogram getDISubprogram(const MDNode *Scope);
