@@ -5863,6 +5863,28 @@ __kmp_unregister_library( void ) {
 // End of Library registration stuff.
 // -------------------------------------------------------------------------------------------------
 
+#if KMP_ARCH_X86_64 && (KMP_OS_LINUX || KMP_OS_WINDOWS)
+
+static void __kmp_check_mic_type()
+{
+    kmp_cpuid_t cpuid_state = {0};
+    kmp_cpuid_t * cs_p = &cpuid_state;
+    cs_p->eax=1;
+    cs_p->ecx=0;
+    __asm__ __volatile__("cpuid"
+			 : "+a" (cs_p->eax), "=b" (cs_p->ebx), "+c" (cs_p->ecx), "=d" (cs_p->edx));
+    // We don't support mic1 at the moment
+    if( (cs_p->eax & 0xff0) == 0xB10 ) {
+        __kmp_mic_type = mic2;
+    } else if( (cs_p->eax & 0xf0ff0) == 0x50670 ) {
+        __kmp_mic_type = mic3;
+    } else {
+        __kmp_mic_type = non_mic;
+    }
+}
+
+#endif /* KMP_ARCH_X86_64 && (KMP_OS_LINUX || KMP_OS_WINDOWS) */
+
 static void
 __kmp_do_serial_initialize( void )
 {
@@ -5927,6 +5949,10 @@ __kmp_do_serial_initialize( void )
 
     __kmp_runtime_initialize();
 
+#if KMP_ARCH_X86_64 && (KMP_OS_LINUX || KMP_OS_WINDOWS)
+    __kmp_check_mic_type();
+#endif
+
     // Some global variable initialization moved here from kmp_env_initialize()
 #ifdef KMP_DEBUG
     kmp_diag = 0;
@@ -5983,17 +6009,21 @@ __kmp_do_serial_initialize( void )
         #undef kmp_reduction_barrier_release_bb
         #undef kmp_reduction_barrier_gather_bb
     #endif // KMP_FAST_REDUCTION_BARRIER
-    #if KMP_MIC
-    // AC: plane=3,2, forkjoin=2,1 are optimal for 240 threads on KNC
-    __kmp_barrier_gather_branch_bits [ bs_plain_barrier ] = 3;  // plane gather
-    __kmp_barrier_release_branch_bits[ bs_forkjoin_barrier ] = 1;  // forkjoin release
-    __kmp_barrier_gather_pattern [ bs_forkjoin_barrier ] = bp_hierarchical_bar;
-    __kmp_barrier_release_pattern[ bs_forkjoin_barrier ] = bp_hierarchical_bar;
+#if KMP_ARCH_X86_64 && (KMP_OS_LINUX || KMP_OS_WINDOWS)
+    if( __kmp_mic_type != non_mic ) {
+        // AC: plane=3,2, forkjoin=2,1 are optimal for 240 threads on KNC
+        __kmp_barrier_gather_branch_bits [ bs_plain_barrier ] = 3;  // plane gather
+        __kmp_barrier_release_branch_bits[ bs_forkjoin_barrier ] = 1;  // forkjoin release
+        __kmp_barrier_gather_pattern [ bs_forkjoin_barrier ] = bp_hierarchical_bar;
+        __kmp_barrier_release_pattern[ bs_forkjoin_barrier ] = bp_hierarchical_bar;
+    }
 #if KMP_FAST_REDUCTION_BARRIER
-    __kmp_barrier_gather_pattern [ bs_reduction_barrier ] = bp_hierarchical_bar;
-    __kmp_barrier_release_pattern[ bs_reduction_barrier ] = bp_hierarchical_bar;
+    if( __kmp_mic_type != non_mic ) {
+        __kmp_barrier_gather_pattern [ bs_reduction_barrier ] = bp_hierarchical_bar;
+        __kmp_barrier_release_pattern[ bs_reduction_barrier ] = bp_hierarchical_bar;
+    }
 #endif
-    #endif
+#endif
 
     // From KMP_CHECKS initialization
 #ifdef KMP_DEBUG
@@ -7001,6 +7031,8 @@ __kmp_determine_reduction_method( ident_t *loc, kmp_int32 global_tid,
 
     int team_size;
 
+    int teamsize_cutoff = 4;
+
     KMP_DEBUG_ASSERT( loc );    // it would be nice to test ( loc != 0 )
     KMP_DEBUG_ASSERT( lck );    // it would be nice to test ( lck != 0 )
 
@@ -7023,13 +7055,13 @@ __kmp_determine_reduction_method( ident_t *loc, kmp_int32 global_tid,
         #if KMP_ARCH_X86_64 || KMP_ARCH_PPC64 || KMP_ARCH_AARCH64
 
             #if KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_WINDOWS || KMP_OS_DARWIN
-                #if KMP_MIC
-                    #define REDUCTION_TEAMSIZE_CUTOFF 8
-                #else // KMP_MIC
-                    #define REDUCTION_TEAMSIZE_CUTOFF 4
-                #endif // KMP_MIC
+#if KMP_ARCH_X86_64 && (KMP_OS_LINUX || KMP_OS_WINDOWS)
+                if( __kmp_mic_type != non_mic ) {
+                    teamsize_cutoff = 8;
+                }
+#endif
                 if( tree_available ) {
-                    if( team_size <= REDUCTION_TEAMSIZE_CUTOFF ) {
+                    if( team_size <= teamsize_cutoff ) {
                         if ( atomic_available ) {
                             retval = atomic_reduce_block;
                         }

@@ -392,6 +392,16 @@ enum clock_function_type {
 };
 #endif /* KMP_OS_LINUX */
 
+#if KMP_ARCH_X86_64 && (KMP_OS_LINUX || KMP_OS_WINDOWS)
+enum mic_type {
+    non_mic,
+    mic1,
+    mic2,
+    mic3,
+    dummy
+};
+#endif
+
 /* ------------------------------------------------------------------------ */
 /* -- fast reduction stuff ------------------------------------------------ */
 
@@ -976,12 +986,12 @@ extern unsigned int __kmp_place_core_offset;
 #endif
 
 #if KMP_ARCH_X86 || KMP_ARCH_X86_64
-struct kmp_cpuid {
+typedef struct kmp_cpuid {
     kmp_uint32  eax;
     kmp_uint32  ebx;
     kmp_uint32  ecx;
     kmp_uint32  edx;
-};
+} kmp_cpuid_t;
 extern void __kmp_x86_cpuid( int mode, int mode2, struct kmp_cpuid *p );
 # if KMP_ARCH_X86
   extern void __kmp_x86_pause( void );
@@ -2617,6 +2627,10 @@ extern int        __kmp_hot_teams_max_level;
 extern enum clock_function_type __kmp_clock_function;
 extern int __kmp_clock_function_param;
 # endif /* KMP_OS_LINUX */
+
+#if KMP_ARCH_X86_64 && (KMP_OS_LINUX || KMP_OS_WINDOWS)
+extern enum mic_type __kmp_mic_type;
+#endif
 
 # ifdef USE_LOAD_BALANCE
 extern double      __kmp_load_balance_interval;   /* Interval for the load balance algorithm */
