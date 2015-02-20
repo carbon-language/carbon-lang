@@ -3164,7 +3164,7 @@ Process::LoadCore ()
     if (error.Success())
     {
         Listener listener ("lldb.process.load_core_listener");
-        HijackPrivateProcessEvents(&listener);
+        HijackProcessEvents(&listener);
 
         if (PrivateStateThreadIsValid ())
             ResumePrivateStateThread ();
@@ -3199,7 +3199,7 @@ Process::LoadCore ()
                 log->Printf("Process::Halt() failed to stop, state is: %s", StateAsCString(state));
             error.SetErrorString ("Did not get stopped event after loading the core file.");
         }
-        RestorePrivateProcessEvents ();
+        RestoreProcessEvents ();
     }
     return error;
 }
