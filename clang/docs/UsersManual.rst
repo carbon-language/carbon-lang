@@ -957,6 +957,8 @@ are listed below.
       ``unsigned-integer-overflow`` and ``vptr``.
    -  ``-fsanitize=dataflow``: :doc:`DataFlowSanitizer`, a general data
       flow analysis.
+   -  ``-fsanitize=cfi``: :doc:`control flow integrity <ControlFlowIntegrity>`
+      checks. Implies ``-flto``.
 
    The following more fine-grained checks are also available:
 
@@ -966,6 +968,8 @@ are listed below.
       ``true`` nor ``false``.
    -  ``-fsanitize=bounds``: Out of bounds array indexing, in cases
       where the array bound can be statically determined.
+   -  ``-fsanitize=cfi-vptr``: Use of an object whose vptr is of the
+      wrong dynamic type. Implies ``-flto``.
    -  ``-fsanitize=enum``: Load of a value of an enumerated type which
       is not in the range of representable values for that enumerated
       type.

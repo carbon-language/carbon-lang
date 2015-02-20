@@ -1346,6 +1346,9 @@ public:
   /// to by This.
   llvm::Value *GetVTablePtr(llvm::Value *This, llvm::Type *Ty);
 
+  /// EmitVTablePtrCheckForCall - Virtual method MD is being called via VTable.
+  /// If vptr CFI is enabled, emit a check that VTable is valid.
+  void EmitVTablePtrCheckForCall(const CXXMethodDecl *MD, llvm::Value *VTable);
 
   /// CanDevirtualizeMemberFunctionCalls - Checks whether virtual calls on given
   /// expr can be devirtualized.

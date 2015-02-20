@@ -24,6 +24,7 @@
 #include "clang/Basic/TargetBuiltins.h"
 #include "clang/CodeGen/CGFunctionInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
+#include "llvm/IR/Intrinsics.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -2087,6 +2088,38 @@ llvm::Value *CodeGenFunction::GetVTablePtr(llvm::Value *This,
   return VTable;
 }
 
+void CodeGenFunction::EmitVTablePtrCheckForCall(const CXXMethodDecl *MD,
+                                                llvm::Value *VTable) {
+  if (!SanOpts.has(SanitizerKind::CFIVptr))
+    return;
+
+  const CXXRecordDecl *RD = MD->getParent();
+  // FIXME: Add blacklisting scheme.
+  if (RD->isInStdNamespace())
+    return;
+
+  std::string OutName;
+  llvm::raw_string_ostream Out(OutName);
+  CGM.getCXXABI().getMangleContext().mangleCXXVTableBitSet(RD, Out);
+
+  llvm::Value *BitSetName = llvm::MetadataAsValue::get(
+      getLLVMContext(), llvm::MDString::get(getLLVMContext(), Out.str()));
+
+  llvm::Value *BitSetTest = Builder.CreateCall2(
+      CGM.getIntrinsic(llvm::Intrinsic::bitset_test),
+      Builder.CreateBitCast(VTable, CGM.Int8PtrTy), BitSetName);
+
+  llvm::BasicBlock *ContBlock = createBasicBlock("vtable.check.cont");
+  llvm::BasicBlock *TrapBlock = createBasicBlock("vtable.check.trap");
+
+  Builder.CreateCondBr(BitSetTest, ContBlock, TrapBlock);
+
+  EmitBlock(TrapBlock);
+  Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::trap));
+  Builder.CreateUnreachable();
+
+  EmitBlock(ContBlock);
+}
 
 // FIXME: Ideally Expr::IgnoreParenNoopCasts should do this, but it doesn't do
 // quite what we want.

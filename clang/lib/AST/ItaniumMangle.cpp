@@ -172,6 +172,8 @@ public:
 
   void mangleStringLiteral(const StringLiteral *, raw_ostream &) override;
 
+  void mangleCXXVTableBitSet(const CXXRecordDecl *RD, raw_ostream &) override;
+
   bool getNextDiscriminator(const NamedDecl *ND, unsigned &disc) {
     // Lambda closure types are already numbered.
     if (isLambda(ND))
@@ -4038,6 +4040,22 @@ void ItaniumMangleContextImpl::mangleCXXRTTIName(QualType Ty,
 
 void ItaniumMangleContextImpl::mangleTypeName(QualType Ty, raw_ostream &Out) {
   mangleCXXRTTIName(Ty, Out);
+}
+
+void ItaniumMangleContextImpl::mangleCXXVTableBitSet(const CXXRecordDecl *RD,
+                                                     raw_ostream &Out) {
+  Linkage L = RD->getLinkageInternal();
+  if (L == InternalLinkage || L == UniqueExternalLinkage) {
+    // This part of the identifier needs to be unique across all translation
+    // units in the linked program. The scheme fails if multiple translation
+    // units are compiled using the same relative source file path, or if
+    // multiple translation units are built from the same source file.
+    SourceManager &SM = getASTContext().getSourceManager();
+    Out << "[" << SM.getFileEntryForID(SM.getMainFileID())->getName() << "]";
+  }
+
+  CXXNameMangler Mangler(*this, Out);
+  Mangler.mangleType(QualType(RD->getTypeForDecl(), 0));
 }
 
 void ItaniumMangleContextImpl::mangleStringLiteral(const StringLiteral *, raw_ostream &) {

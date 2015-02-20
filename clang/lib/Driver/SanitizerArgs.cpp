@@ -47,7 +47,8 @@ ID = ALIAS, ID##Group = 1 << SO_##ID##Group,
   SupportsCoverage = Address | Memory | Leak | Undefined | Integer,
   RecoverableByDefault = Undefined | Integer,
   Unrecoverable = Address | Unreachable | Return,
-  LegacyFsanitizeRecoverMask = Undefined | Integer
+  LegacyFsanitizeRecoverMask = Undefined | Integer,
+  NeedsLTO = CFIVptr,
 };
 }
 
@@ -146,6 +147,10 @@ bool SanitizerArgs::requiresPIE() const {
 
 bool SanitizerArgs::needsUnwindTables() const {
   return hasOneOf(Sanitizers, NeedsUnwindTables);
+}
+
+bool SanitizerArgs::needsLTO() const {
+  return hasOneOf(Sanitizers, CFIVptr);
 }
 
 void SanitizerArgs::clear() {

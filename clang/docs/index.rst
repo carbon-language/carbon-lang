@@ -27,6 +27,7 @@ Using Clang as a Compiler
    DataFlowSanitizer
    LeakSanitizer
    SanitizerSpecialCaseList
+   ControlFlowIntegrity
    Modules
    MSVCCompatibility
    FAQ

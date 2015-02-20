@@ -76,6 +76,10 @@ SANITIZER("unsigned-integer-overflow", UnsignedIntegerOverflow)
 // DataFlowSanitizer
 SANITIZER("dataflow", DataFlow)
 
+// Control Flow Integrity
+SANITIZER("cfi-vptr", CFIVptr)
+SANITIZER_GROUP("cfi", CFI, CFIVptr)
+
 // -fsanitize=undefined includes all the sanitizers which have low overhead, no
 // ABI or address space layout implications, and only catch undefined behavior.
 SANITIZER_GROUP("undefined", Undefined,
