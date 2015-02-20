@@ -218,3 +218,89 @@ Host::StartMonitoringChildProcess(Host::MonitorChildProcessCallback callback, vo
 {
     return HostThread();
 }
+
+Error
+Host::GlobArguments (ProcessLaunchInfo &launch_info)
+{
+    Error error;
+    if (launch_info.GetFlags().Test(eLaunchFlagGlobArguments))
+    {
+        FileSpec glob_tool_spec;
+        if (!HostInfo::GetLLDBPath(lldb::ePathTypeSupportExecutableDir, glob_tool_spec))
+        {
+            error.SetErrorString("could not find argdumper tool");
+            return error;
+        }
+        glob_tool_spec.AppendPathComponent("argdumper.exe");
+        if (!glob_tool_spec.Exists())
+        {
+            error.SetErrorString("could not find argdumper tool");
+            return error;
+        }
+        
+        std::string quoted_cmd_string;
+        launch_info.GetArguments().GetQuotedCommandString(quoted_cmd_string);
+        std::replace(quoted_cmd_string.begin(), quoted_cmd_string.end(), '\\', '/');
+        StreamString glob_command;
+        
+        glob_command.Printf("%s %s",
+                            glob_tool_spec.GetPath().c_str(),
+                            quoted_cmd_string.c_str());
+        
+        int status;
+        std::string output;
+        RunShellCommand(glob_command.GetData(), launch_info.GetWorkingDirectory(), &status, nullptr, &output, 10);
+        
+        if (status != 0)
+        {
+            error.SetErrorStringWithFormat("argdumper exited with error %d", status);
+            return error;
+        }
+        
+        auto data_sp = StructuredData::ParseJSON(output);
+        if (!data_sp)
+        {
+            error.SetErrorString("invalid JSON");
+            return error;
+        }
+        
+        auto dict_sp = data_sp->GetAsDictionary();
+        if (!data_sp)
+        {
+            error.SetErrorString("invalid JSON");
+            return error;
+        }
+        
+        auto args_sp = dict_sp->GetObjectForDotSeparatedPath("arguments");
+        if (!args_sp)
+        {
+            error.SetErrorString("invalid JSON");
+            return error;
+        }
+        
+        auto args_array_sp = args_sp->GetAsArray();
+        if (!args_array_sp)
+        {
+            error.SetErrorString("invalid JSON");
+            return error;
+        }
+        
+        launch_info.GetArguments().Clear();
+        
+        for (size_t i = 0;
+             i < args_array_sp->GetSize();
+             i++)
+        {
+            auto item_sp = args_array_sp->GetItemAtIndex(i);
+            if (!item_sp)
+                continue;
+            auto str_sp = item_sp->GetAsString();
+            if (!str_sp)
+                continue;
+            
+            launch_info.GetArguments().AppendArgument(str_sp->GetValue().c_str());
+        }
+    }
+    
+    return error;
+}

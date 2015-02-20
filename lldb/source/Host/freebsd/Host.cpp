@@ -312,3 +312,9 @@ Host::GetUnixSignals ()
     return s_unix_signals_sp;
 }
 
+Error
+Host::GlobArguments (ProcessLaunchInfo &launch_info)
+{
+    return Error("unimplemented");
+}
+

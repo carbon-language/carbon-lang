@@ -386,6 +386,16 @@ namespace lldb_private {
         LaunchProcess (ProcessLaunchInfo &launch_info);
 
         //------------------------------------------------------------------
+        /// Perform globbing of the command-line for this launch info
+        /// This can potentially involve wildcard expansion
+        //  environment variable replacement, and whatever other
+        //  argument magic the platform defines as part of its typical
+        //  user experience
+        //------------------------------------------------------------------
+        virtual Error
+        GlobArguments (ProcessLaunchInfo &launch_info);
+        
+        //------------------------------------------------------------------
         /// Kill process on a platform.
         //------------------------------------------------------------------
         virtual Error

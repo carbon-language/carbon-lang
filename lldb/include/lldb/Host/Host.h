@@ -253,6 +253,16 @@ public:
     static Error
     LaunchProcess (ProcessLaunchInfo &launch_info);
 
+    //------------------------------------------------------------------
+    /// Perform globbing of the command-line for this launch info
+    /// This can potentially involve wildcard expansion
+    //  environment variable replacement, and whatever other
+    //  argument magic the platform defines as part of its typical
+    //  user experience
+    //------------------------------------------------------------------
+    static Error
+    GlobArguments (ProcessLaunchInfo &launch_info);
+    
     static Error
     RunShellCommand (const char *command,           // Shouldn't be NULL
                      const char *working_dir,       // Pass NULL to use the current working directory
