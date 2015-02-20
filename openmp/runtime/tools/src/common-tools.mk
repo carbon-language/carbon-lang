@@ -85,11 +85,9 @@ ifneq "$(filter lin mac,$(os))" ""
     ifneq "$(CPLUSPLUS)" "on"
         c-flags += -std=gnu99
     endif
-    # Generate position-independent code (a must for shared objects).
-    ifeq "$(LINK_TYPE)" "dyna"
-        c-flags   += -fPIC
-        cxx-flags += -fPIC
-    endif
+    # Generate position-independent code (SDL requirements).
+    c-flags   += -fPIC
+    cxx-flags += -fPIC
     # Emit debugging information.
     ifeq "$(DEBUG_INFO)" "on"
         c-flags   += -g
@@ -199,16 +197,28 @@ ifneq "$(arch)" "mic"
             ld-flags += -m elf_x86_64
         endif
         ld-flags     += -x -lc -ldl
+	# SDL (Security Development Lifecycle) flags:
+	# -z noexecstack - Stack execution protection.
+	# -z relro -z now - Data relocation and protection.
+        ld-flags     += -z relro -z now
         ld-flags     += -z noexecstack
         ld-flags-dll += -soname=$(@F)
     endif
     ifeq "$(ld)" "$(c)"
         ld-out    = $(c-out)
+	# SDL (Security Development Lifecycle) flags:
+	# -z noexecstack - Stack execution protection.
+	# -z relro -z now - Data relocation and protection.
+        ld-flags     += -Wl,-z,relro -Wl,-z,now
         ld-flags += -Wl,-z,noexecstack
         ld-flags-dll += -Wl,-soname=$(@F)
     endif
     ifeq "$(ld)" "$(cxx)"
         ld-out    = $(cxx-out)
+	# SDL (Security Development Lifecycle) flags:
+	# -z noexecstack - Stack execution protection.
+	# -z relro -z now - Data relocation and protection.
+        ld-flags     += -Wl,-z,relro -Wl,-z,now
         ld-flags += -Wl,-z,noexecstack
         ld-flags-dll += -Wl,-soname=$(@F)
     endif
@@ -239,6 +249,11 @@ ifeq "$(arch)" "mic"
         ld-out   = -o$(space)
         ld-flags += -m elf_l1om_fbsd
         ld-flags-dll += -shared -x -lc
+	# SDL (Security Development Lifecycle) flags:
+	# -z noexecstack - Stack execution protection.
+	# -z relro -z now - Data relocation and protection.
+        ld-flags     += -z noexecstack
+        ld-flags     += -z relro -z now
         ld-flags-dll += -soname=$(@F)
         # Now find out path to libraries.
             ld-flags-L := $(shell $(c) -Wl,-v -\# 2>&1 | grep -e "-L")
@@ -254,10 +269,20 @@ ifeq "$(arch)" "mic"
     ifeq "$(ld)" "$(c)"
         ld-out        = $(c-out)
         ld-flags-dll += -shared -Wl,-x -Wl,-soname=$(@F)
+	# SDL (Security Development Lifecycle) flags:
+	# -z noexecstack - Stack execution protection.
+	# -z relro -z now - Data relocation and protection.
+        ld-flags     += -Wl,-z,noexecstack
+        ld-flags     += -Wl,-z,relro -Wl,-z,now
     endif
     ifeq "$(ld)" "$(cxx)"
         ld-out        = $(cxx-out)
         ld-flags-dll += -shared -Wl,-x -Wl,-soname=$(@F)
+	# SDL (Security Development Lifecycle) flags:
+	# -z noexecstack - Stack execution protection.
+	# -z relro -z now - Data relocation and protection.
+        ld-flags     += -Wl,-z,noexecstack
+        ld-flags     += -Wl,-z,relro -Wl,-z,now
     endif
 endif
 
