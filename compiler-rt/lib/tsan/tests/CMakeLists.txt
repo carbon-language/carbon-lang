@@ -34,26 +34,28 @@ endmacro()
 
 macro(add_tsan_unittest testname)
   # Build unit tests only for 64-bit Linux.
-  if(UNIX AND NOT APPLE AND CAN_TARGET_x86_64)
-    parse_arguments(TEST "SOURCES;HEADERS" "" ${ARGN})
-    set(TEST_OBJECTS)
-    foreach(SOURCE ${TEST_SOURCES} ${COMPILER_RT_GTEST_SOURCE})
-      tsan_compile(TEST_OBJECTS ${SOURCE} x86_64 ${TEST_HEADERS})
+  if(UNIX AND NOT APPLE)
+    foreach(arch ${TSAN_SUPPORTED_ARCH})
+      parse_arguments(TEST "SOURCES;HEADERS" "" ${ARGN})
+      set(TEST_OBJECTS)
+      foreach(SOURCE ${TEST_SOURCES} ${COMPILER_RT_GTEST_SOURCE})
+        tsan_compile(TEST_OBJECTS ${SOURCE} ${arch} ${TEST_HEADERS})
+      endforeach()
+      get_target_flags_for_arch(${arch} TARGET_LINK_FLAGS)
+      set(TEST_DEPS ${TEST_OBJECTS})
+      if(NOT COMPILER_RT_STANDALONE_BUILD)
+        list(APPEND TEST_DEPS tsan)
+      endif()
+      # FIXME: Looks like we should link TSan with just-built runtime,
+      # and not rely on -fsanitize=thread, as these tests are essentially
+      # unit tests.
+      add_compiler_rt_test(TsanUnitTests ${testname}
+              OBJECTS ${TEST_OBJECTS}
+              DEPS ${TEST_DEPS}
+              LINK_FLAGS ${TARGET_LINK_FLAGS}
+                         -fsanitize=thread
+                         -lstdc++ -lm)
     endforeach()
-    get_target_flags_for_arch(${arch} TARGET_LINK_FLAGS)
-    set(TEST_DEPS ${TEST_OBJECTS})
-    if(NOT COMPILER_RT_STANDALONE_BUILD)
-      list(APPEND TEST_DEPS tsan)
-    endif()
-    # FIXME: Looks like we should link TSan with just-built runtime,
-    # and not rely on -fsanitize=thread, as these tests are essentially
-    # unit tests.
-    add_compiler_rt_test(TsanUnitTests ${testname}
-            OBJECTS ${TEST_OBJECTS}
-            DEPS ${TEST_DEPS}
-            LINK_FLAGS ${TARGET_LINK_FLAGS}
-                       -fsanitize=thread
-                       -lstdc++ -lm)
   endif()
 endmacro()
 

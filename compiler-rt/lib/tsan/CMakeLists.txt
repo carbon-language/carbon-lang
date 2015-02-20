@@ -79,35 +79,40 @@ set(TSAN_HEADERS
 set(TSAN_RUNTIME_LIBRARIES)
 add_custom_target(tsan)
 # TSan is currently supported on 64-bit Linux only.
-if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE)
-  set(TSAN_ASM_SOURCES rtl/tsan_rtl_amd64.S)
-  # Pass ASM file directly to the C++ compiler.
-  set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES
-    LANGUAGE C)
-  set(arch "x86_64")
-  add_compiler_rt_runtime(clang_rt.tsan-${arch} ${arch} STATIC
-    SOURCES ${TSAN_SOURCES} ${TSAN_ASM_SOURCES}
-            $<TARGET_OBJECTS:RTInterception.${arch}>
-            $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
-            $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-    CFLAGS ${TSAN_RTL_CFLAGS}
-    DEFS ${TSAN_COMMON_DEFINITIONS})
-  list(APPEND TSAN_RUNTIME_LIBRARIES clang_rt.tsan-${arch})
-  add_sanitizer_rt_symbols(clang_rt.tsan-${arch} rtl/tsan.syms.extra)
-  add_dependencies(tsan clang_rt.tsan-${arch}
-    clang_rt.tsan-${arch}-symbols)
+if(UNIX AND NOT APPLE)
+  foreach(arch ${TSAN_SUPPORTED_ARCH})
+    if(arch STREQUAL "x86_64")
+      set(TSAN_ASM_SOURCES rtl/tsan_rtl_amd64.S)
+      # Pass ASM file directly to the C++ compiler.
+      set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES
+        LANGUAGE C)
+      # Sanity check for Go runtime.
+      set(BUILDGO_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/go/buildgo.sh)
+      add_custom_target(GotsanRuntimeCheck
+        COMMAND CC=${CMAKE_C_COMPILER} IN_TMPDIR=1 SILENT=1 ${BUILDGO_SCRIPT}
+        DEPENDS clang_rt.tsan-${arch} ${BUILDGO_SCRIPT}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/go
+        COMMENT "Checking TSan Go runtime..."
+        VERBATIM)
+    else()
+      set(TSAN_ASM_SOURCES)
+    endif()
+    add_compiler_rt_runtime(clang_rt.tsan-${arch} ${arch} STATIC
+      SOURCES ${TSAN_SOURCES} ${TSAN_ASM_SOURCES}
+              $<TARGET_OBJECTS:RTInterception.${arch}>
+              $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
+              $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+      CFLAGS ${TSAN_RTL_CFLAGS}
+      DEFS ${TSAN_COMMON_DEFINITIONS})
+    list(APPEND TSAN_RUNTIME_LIBRARIES clang_rt.tsan-${arch})
+    add_sanitizer_rt_symbols(clang_rt.tsan-${arch} rtl/tsan.syms.extra)
+    add_dependencies(tsan clang_rt.tsan-${arch}
+      clang_rt.tsan-${arch}-symbols)
+  endforeach()
 endif()
 
 add_dependencies(compiler-rt tsan)
 
-# Sanity check for Go runtime.
-set(BUILDGO_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/go/buildgo.sh)
-add_custom_target(GotsanRuntimeCheck
-  COMMAND CC=${CMAKE_C_COMPILER} IN_TMPDIR=1 SILENT=1 ${BUILDGO_SCRIPT}
-  DEPENDS clang_rt.tsan-${arch} ${BUILDGO_SCRIPT}
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/go
-  COMMENT "Checking TSan Go runtime..."
-  VERBATIM)
 
 # Build libcxx instrumented with TSan.
 if(TSAN_SUPPORTED_ARCH AND

@@ -26,8 +26,9 @@ namespace __tsan {
 
 #if !defined(SANITIZER_GO)
 
+#if defined(__x86_64__)
 /*
-C/C++ on linux and freebsd
+C/C++ on linux/x86_64 and freebsd/x86_64
 0000 0000 1000 - 0100 0000 0000: main binary and/or MAP_32BIT mappings
 0100 0000 0000 - 0200 0000 0000: -
 0200 0000 0000 - 1000 0000 0000: shadow
@@ -40,7 +41,6 @@ C/C++ on linux and freebsd
 7e00 0000 0000 - 7e80 0000 0000: -
 7e80 0000 0000 - 8000 0000 0000: modules and main thread stack
 */
-
 const uptr kMetaShadowBeg = 0x300000000000ull;
 const uptr kMetaShadowEnd = 0x400000000000ull;
 const uptr kTraceMemBeg   = 0x600000000000ull;
@@ -55,6 +55,38 @@ const uptr kHiAppMemBeg   = 0x7e8000000000ull;
 const uptr kHiAppMemEnd   = 0x800000000000ull;
 const uptr kAppMemMsk     = 0x7c0000000000ull;
 const uptr kAppMemXor     = 0x020000000000ull;
+const uptr kVdsoBeg       = 0xf000000000000000ull;
+#elif defined(__mips64)
+/*
+C/C++ on linux/mips64
+0100 0000 00 - 0200 0000 00: main binary
+0200 0000 00 - 1400 0000 00: -
+1400 0000 00 - 2400 0000 00: shadow
+2400 0000 00 - 3000 0000 00: -
+3000 0000 00 - 4000 0000 00: metainfo (memory blocks and sync objects)
+4000 0000 00 - 6000 0000 00: -
+6000 0000 00 - 6200 0000 00: traces
+6200 0000 00 - fe00 0000 00: -
+fe00 0000 00 - ff00 0000 00: heap
+ff00 0000 00 - ff80 0000 00: -
+ff80 0000 00 - ffff ffff ff: modules and main thread stack
+*/
+const uptr kMetaShadowBeg = 0x3000000000ull;
+const uptr kMetaShadowEnd = 0x4000000000ull;
+const uptr kTraceMemBeg   = 0x6000000000ull;
+const uptr kTraceMemEnd   = 0x6200000000ull;
+const uptr kShadowBeg     = 0x1400000000ull;
+const uptr kShadowEnd     = 0x2400000000ull;
+const uptr kHeapMemBeg    = 0xfe00000000ull;
+const uptr kHeapMemEnd    = 0xff00000000ull;
+const uptr kLoAppMemBeg   = 0x0100000000ull;
+const uptr kLoAppMemEnd   = 0x0200000000ull;
+const uptr kHiAppMemBeg   = 0xff80000000ull;
+const uptr kHiAppMemEnd   = 0xffffffffffull;
+const uptr kAppMemMsk     = 0xfc00000000ull;
+const uptr kAppMemXor     = 0x0400000000ull;
+const uptr kVdsoBeg       = 0xfffff00000ull;
+#endif
 
 ALWAYS_INLINE
 bool IsAppMem(uptr mem) {

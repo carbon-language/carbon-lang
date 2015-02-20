@@ -66,8 +66,6 @@ namespace __tsan {
 static uptr g_data_start;
 static uptr g_data_end;
 
-const uptr kPageSize = 4096;
-
 enum {
   MemTotal  = 0,
   MemShadow = 1,
@@ -173,7 +171,7 @@ static void MapRodata() {
     *p = kShadowRodata;
   internal_write(fd, marker.data(), marker.size());
   // Map the file into memory.
-  uptr page = internal_mmap(0, kPageSize, PROT_READ | PROT_WRITE,
+  uptr page = internal_mmap(0, GetPageSizeCached(), PROT_READ | PROT_WRITE,
                             MAP_PRIVATE | MAP_ANONYMOUS, fd, 0);
   if (internal_iserror(page)) {
     internal_close(fd);
@@ -216,8 +214,15 @@ void InitializeShadowMemory() {
   // a program uses a small part of large mmap. On some programs
   // we see 20% memory usage reduction without huge pages for this range.
   // FIXME: don't use constants here.
-  NoHugePagesInRegion(MemToShadow(0x7f0000000000ULL),
-                      0x10000000000ULL * kShadowMultiplier);
+#if defined(__x86_64__)
+  const uptr kMadviseRangeBeg  = 0x7f0000000000ull;
+  const uptr kMadviseRangeSize = 0x010000000000ull;
+#elif defined(__mips64)
+  const uptr kMadviseRangeBeg  = 0xff00000000ull;
+  const uptr kMadviseRangeSize = 0x0100000000ull;
+#endif
+  NoHugePagesInRegion(MemToShadow(kMadviseRangeBeg),
+                      kMadviseRangeSize * kShadowMultiplier);
   if (common_flags()->use_madv_dontdump)
     DontDumpShadowMemory(kShadowBeg, kShadowEnd - kShadowBeg);
   DPrintf("memory shadow: %zx-%zx (%zuGB)\n",
@@ -289,9 +294,9 @@ static void CheckAndProtect() {
     if (IsAppMem(p))
       continue;
     if (p >= kHeapMemEnd &&
-        p < kHeapMemEnd + PrimaryAllocator::AdditionalSize())
+        p < HeapEnd())
       continue;
-    if (p >= 0xf000000000000000ull)  // vdso
+    if (p >= kVdsoBeg)  // vdso
       break;
     Printf("FATAL: ThreadSanitizer: unexpected memory mapping %p-%p\n", p, end);
     Die();
@@ -304,7 +309,7 @@ static void CheckAndProtect() {
   // Protect the whole range for now, so that user does not map something here.
   ProtectRange(kTraceMemBeg, kTraceMemEnd);
   ProtectRange(kTraceMemEnd, kHeapMemBeg);
-  ProtectRange(kHeapMemEnd + PrimaryAllocator::AdditionalSize(), kHiAppMemBeg);
+  ProtectRange(HeapEnd(), kHiAppMemBeg);
 }
 #endif  // #ifndef SANITIZER_GO
 

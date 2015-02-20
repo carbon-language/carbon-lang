@@ -217,11 +217,13 @@ static void StartBackgroundThread() {
   ctx->background_thread = internal_start_thread(&BackgroundThread, 0);
 }
 
+#ifndef __mips__
 static void StopBackgroundThread() {
   atomic_store(&ctx->stop_background_thread, 1, memory_order_relaxed);
   internal_join_thread(ctx->background_thread);
   ctx->background_thread = 0;
 }
+#endif
 #endif
 
 void DontNeedShadowFor(uptr addr, uptr size) {
@@ -330,8 +332,13 @@ void Initialize(ThreadState *thr) {
 #ifndef SANITIZER_GO
   InitializeLibIgnore();
   Symbolizer::GetOrInit()->AddHooks(EnterSymbolizer, ExitSymbolizer);
+  // On MIPS, TSan initialization is run before
+  // __pthread_initialize_minimal_internal() is finished, so we can not spawn
+  // new threads.
+#ifndef __mips__
   StartBackgroundThread();
   SetSandboxingCallback(StopBackgroundThread);
+#endif
 #endif
   if (common_flags()->detect_deadlocks)
     ctx->dd = DDetector::Create(flags());
@@ -832,7 +839,7 @@ static void MemoryRangeSet(ThreadState *thr, uptr pc, uptr addr, uptr size,
     }
   } else {
     // The region is big, reset only beginning and end.
-    const uptr kPageSize = 4096;
+    const uptr kPageSize = GetPageSizeCached();
     u64 *begin = (u64*)MemToShadow(addr);
     u64 *end = begin + size / kShadowCell * kShadowCnt;
     u64 *p = begin;

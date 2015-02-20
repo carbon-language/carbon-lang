@@ -33,14 +33,14 @@ typedef unsigned short     a16;  // NOLINT
 typedef unsigned int       a32;
 typedef unsigned long long a64;  // NOLINT
 #if !defined(SANITIZER_GO) && (defined(__SIZEOF_INT128__) \
-    || (__clang_major__ * 100 + __clang_minor__ >= 302))
+    || (__clang_major__ * 100 + __clang_minor__ >= 302)) && !defined(__mips64)
 __extension__ typedef __int128 a128;
 # define __TSAN_HAS_INT128 1
 #else
 # define __TSAN_HAS_INT128 0
 #endif
 
-#ifndef SANITIZER_GO
+#if !defined(SANITIZER_GO) && __TSAN_HAS_INT128
 // Protects emulation of 128-bit atomic operations.
 static StaticSpinMutex mutex128;
 #endif
@@ -125,7 +125,8 @@ template<typename T> T func_cas(volatile T *v, T cmp, T xch) {
 // Atomic ops are executed under tsan internal mutex,
 // here we assume that the atomic variables are not accessed
 // from non-instrumented code.
-#if !defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_16) && !defined(SANITIZER_GO)
+#if !defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_16) && !defined(SANITIZER_GO) \
+    && __TSAN_HAS_INT128
 a128 func_xchg(volatile a128 *v, a128 op) {
   SpinMutexLock lock(&mutex128);
   a128 cmp = *v;

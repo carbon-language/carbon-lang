@@ -54,8 +54,21 @@ namespace __tsan {
 
 #ifndef SANITIZER_GO
 struct MapUnmapCallback;
+#ifdef __mips64
+static const uptr kAllocatorSpace = 0;
+static const uptr kAllocatorSize = SANITIZER_MMAP_RANGE_SIZE;
+static const uptr kAllocatorRegionSizeLog = 20;
+static const uptr kAllocatorNumRegions =
+    kAllocatorSize >> kAllocatorRegionSizeLog;
+typedef TwoLevelByteMap<(kAllocatorNumRegions >> 12), 1 << 12,
+    MapUnmapCallback> ByteMap;
+typedef SizeClassAllocator32<kAllocatorSpace, kAllocatorSize, 0,
+    CompactSizeClassMap, kAllocatorRegionSizeLog, ByteMap,
+    MapUnmapCallback> PrimaryAllocator;
+#else
 typedef SizeClassAllocator64<kHeapMemBeg, kHeapMemEnd - kHeapMemBeg, 0,
     DefaultSizeClassMap, MapUnmapCallback> PrimaryAllocator;
+#endif
 typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
 typedef LargeMmapAllocator<MapUnmapCallback> SecondaryAllocator;
 typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
@@ -737,6 +750,16 @@ void ALWAYS_INLINE TraceAddEvent(ThreadState *thr, FastState fs,
   Event ev = (u64)addr | ((u64)typ << 61);
   *evp = ev;
 }
+
+#ifndef SANITIZER_GO
+uptr ALWAYS_INLINE HeapEnd() {
+#if SANITIZER_CAN_USE_ALLOCATOR64
+  return kHeapMemEnd + PrimaryAllocator::AdditionalSize();
+#else
+  return kHeapMemEnd;
+#endif
+}
+#endif
 
 }  // namespace __tsan
 
