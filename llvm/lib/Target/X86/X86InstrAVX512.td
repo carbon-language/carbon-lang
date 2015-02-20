@@ -1,3 +1,18 @@
+//===-- X86InstrAVX512.td - AVX512 Instruction Set ---------*- tablegen -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file describes the X86 AVX512 instruction set, defining the
+// instructions, and properties of the instructions which are needed for code
+// generation, machine code emission, and analysis.
+//
+//===----------------------------------------------------------------------===//
+
 // Group template arguments that can be derived from the vector type (EltNum x
 // EltVT).  These are things like the register class for the writemask, etc.
 // The idea is to pass one of these as the template argument rather than the
