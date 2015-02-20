@@ -146,6 +146,8 @@ static bool isLiveGCReferenceAt(Value &V, Instruction *loc, DominatorTree &DT,
   // Given assumption that V dominates loc, this may be live
   return true;
 }
+
+#ifndef NDEBUG
 static bool isAggWhichContainsGCPtrType(Type *Ty) {
   if (VectorType *VT = dyn_cast<VectorType>(Ty))
     return isGCPointerType(VT->getScalarType());
@@ -155,11 +157,13 @@ static bool isAggWhichContainsGCPtrType(Type *Ty) {
   } else if (StructType *ST = dyn_cast<StructType>(Ty)) {
     bool UnsupportedType = false;
     for (Type *SubType : ST->subtypes())
-      UnsupportedType |= isGCPointerType(SubType) || isAggWhichContainsGCPtrType(SubType);
+      UnsupportedType |=
+          isGCPointerType(SubType) || isAggWhichContainsGCPtrType(SubType);
     return UnsupportedType;
   } else
     return false;
 }
+#endif
 
 // Conservatively identifies any definitions which might be live at the
 // given instruction. The  analysis is performed immediately before the
