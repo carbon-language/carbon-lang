@@ -31,6 +31,7 @@ add_llvm_library(LLVMScalarOpts
   PlaceSafepoints.cpp
   Reassociate.cpp
   Reg2Mem.cpp
+  RewriteStatepointsForGC.cpp
   SCCP.cpp
   SROA.cpp
   SampleProfile.cpp
