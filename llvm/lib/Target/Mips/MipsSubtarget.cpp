@@ -33,34 +33,29 @@ using namespace llvm;
 
 // FIXME: Maybe this should be on by default when Mips16 is specified
 //
-static cl::opt<bool> Mixed16_32(
-  "mips-mixed-16-32",
-  cl::init(false),
-  cl::desc("Allow for a mixture of Mips16 "
-           "and Mips32 code in a single source file"),
-  cl::Hidden);
+static cl::opt<bool>
+    Mixed16_32("mips-mixed-16-32", cl::init(false),
+               cl::desc("Allow for a mixture of Mips16 "
+                        "and Mips32 code in a single output file"),
+               cl::Hidden);
 
-static cl::opt<bool> Mips_Os16(
-  "mips-os16",
-  cl::init(false),
-  cl::desc("Compile all functions that don' use "
-           "floating point as Mips 16"),
-  cl::Hidden);
+static cl::opt<bool> Mips_Os16("mips-os16", cl::init(false),
+                               cl::desc("Compile all functions that don't use "
+                                        "floating point as Mips 16"),
+                               cl::Hidden);
+
+static cl::opt<bool> Mips16HardFloat("mips16-hard-float", cl::NotHidden,
+                                     cl::desc("Enable mips16 hard float."),
+                                     cl::init(false));
 
 static cl::opt<bool>
-Mips16HardFloat("mips16-hard-float", cl::NotHidden,
-                cl::desc("MIPS: mips16 hard float enable."),
-                cl::init(false));
+    Mips16ConstantIslands("mips16-constant-islands", cl::NotHidden,
+                          cl::desc("Enable mips16 constant islands."),
+                          cl::init(true));
 
 static cl::opt<bool>
-Mips16ConstantIslands(
-  "mips16-constant-islands", cl::NotHidden,
-  cl::desc("MIPS: mips16 constant islands enable."),
-  cl::init(true));
-
-static cl::opt<bool>
-GPOpt("mgpopt", cl::Hidden,
-      cl::desc("MIPS: Enable gp-relative addressing of small data items"));
+    GPOpt("mgpopt", cl::Hidden,
+          cl::desc("Enable gp-relative addressing of mips small data items"));
 
 void MipsSubtarget::anchor() { }
 
