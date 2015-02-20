@@ -109,6 +109,9 @@ D: Minor <atomic> fix
 N: Michael van der Westhuizen
 E: r1mikey at gmail dot com
 
+N: Larisse Voufo
+D: Minor patches.
+
 N: Klaas de Vries
 E: klaas at klaasgaaf dot nl
 D: Minor bug fix.
