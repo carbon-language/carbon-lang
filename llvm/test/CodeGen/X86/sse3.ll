@@ -255,13 +255,8 @@ entry:
 define <16 x i8> @t16(<16 x i8> %T0) nounwind readnone {
 ; X64-LABEL: t16:
 ; X64:       ## BB#0: ## %entry
-; X64-NEXT:    movdqa {{.*#+}} xmm2 = [0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0]
-; X64-NEXT:    punpcklwd {{.*#+}} xmm2 = xmm2[0],xmm0[0],xmm2[1],xmm0[1],xmm2[2],xmm0[2],xmm2[3],xmm0[3]
-; X64-NEXT:    pslld $16, %xmm0
-; X64-NEXT:    movdqa {{.*#+}} xmm1 = [255,255,255,0,255,255,255,255,255,255,255,255,255,255,255,255]
-; X64-NEXT:    pand %xmm1, %xmm2
-; X64-NEXT:    pandn %xmm0, %xmm1
-; X64-NEXT:    por %xmm2, %xmm1
+; X64-NEXT:    movdqa {{.*#+}} xmm1 = [0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0]
+; X64-NEXT:    punpcklwd {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3]
 ; X64-NEXT:    movdqa %xmm1, %xmm0
 ; X64-NEXT:    retq
 entry:

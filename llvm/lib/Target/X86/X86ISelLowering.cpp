@@ -73,7 +73,7 @@ static cl::opt<bool> ExperimentalVectorShuffleLowering(
     cl::Hidden);
 
 static cl::opt<bool> ExperimentalVectorShuffleLegality(
-    "x86-experimental-vector-shuffle-legality", cl::init(false),
+    "x86-experimental-vector-shuffle-legality", cl::init(true),
     cl::desc("Enable experimental shuffle legality based on the experimental "
              "shuffle lowering. Should only be used with the experimental "
              "shuffle lowering."),
