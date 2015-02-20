@@ -57,7 +57,6 @@ public:
 /// in the machine code. It inserts labels at safe points and populates a
 /// GCMetadata record for each function.
 class GCMachineCodeAnalysis : public MachineFunctionPass {
-  const TargetMachine *TM;
   GCFunctionInfo *FI;
   MachineModuleInfo *MMI;
   const TargetInstrInfo *TII;
@@ -312,7 +311,7 @@ void GCMachineCodeAnalysis::FindSafePoints(MachineFunction &MF) {
 }
 
 void GCMachineCodeAnalysis::FindStackOffsets(MachineFunction &MF) {
-  const TargetFrameLowering *TFI = TM->getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
   assert(TFI && "TargetRegisterInfo not available!");
 
   for (GCFunctionInfo::roots_iterator RI = FI->roots_begin();
@@ -336,9 +335,8 @@ bool GCMachineCodeAnalysis::runOnMachineFunction(MachineFunction &MF) {
   if (!FI->getStrategy().needsSafePoints())
     return false;
 
-  TM = &MF.getTarget();
   MMI = &getAnalysis<MachineModuleInfo>();
-  TII = TM->getSubtargetImpl()->getInstrInfo();
+  TII = MF.getSubtarget().getInstrInfo();
 
   // Find the size of the stack frame.
   FI->setFrameSize(MF.getFrameInfo()->getStackSize());

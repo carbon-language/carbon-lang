@@ -46,14 +46,13 @@ namespace {
       initializePPCTLSDynamicCallPass(*PassRegistry::getPassRegistry());
     }
 
-    const PPCTargetMachine *TM;
     const PPCInstrInfo *TII;
     LiveIntervals *LIS;
 
 protected:
     bool processBlock(MachineBasicBlock &MBB) {
       bool Changed = false;
-      bool Is64Bit = TM->getSubtargetImpl()->isPPC64();
+      bool Is64Bit = MBB.getParent()->getSubtarget<PPCSubtarget>().isPPC64();
 
       for (MachineBasicBlock::iterator I = MBB.begin(), IE = MBB.end();
            I != IE; ++I) {
@@ -133,8 +132,7 @@ protected:
 
 public:
     bool runOnMachineFunction(MachineFunction &MF) override {
-      TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
-      TII = TM->getSubtargetImpl()->getInstrInfo();
+      TII = MF.getSubtarget<PPCSubtarget>().getInstrInfo();
       LIS = &getAnalysis<LiveIntervals>();
 
       bool Changed = false;
