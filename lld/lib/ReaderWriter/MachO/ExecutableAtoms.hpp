@@ -97,7 +97,7 @@ public:
 
   const File *find(StringRef sym, bool dataSymbolOnly) const override {
     if (sym.equals("___dso_handle") || sym.equals(_machHeaderSymbolName)) {
-      _definedAtoms._atoms.push_back(new (_alloc) MachODefinedAtom(
+      _definedAtoms._atoms.push_back(new (allocator()) MachODefinedAtom(
           *this, sym, DefinedAtom::scopeLinkageUnit,
           DefinedAtom::typeMachHeader, DefinedAtom::mergeNo, false, false,
           ArrayRef<uint8_t>(), DefinedAtom::Alignment(12,0)));
@@ -128,7 +128,6 @@ private:
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
   StringRef _machHeaderSymbolName;
-  mutable llvm::BumpPtrAllocator _alloc;
 };
 
 } // namespace mach_o
