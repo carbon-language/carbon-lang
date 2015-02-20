@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/ModuleMap.h"
+#include "clang/Serialization/ASTReader.h"
 #include "clang/Serialization/GlobalModuleIndex.h"
 #include "clang/Serialization/ModuleManager.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -135,10 +136,10 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
 
       New->Buffer = std::move(*Buf);
     }
-    
-    // Initialize the stream
-    New->StreamFile.init((const unsigned char *)New->Buffer->getBufferStart(),
-                         (const unsigned char *)New->Buffer->getBufferEnd());
+
+    // Initialize the stream.
+    ASTReader::InitStreamFileWithModule(New->Buffer->getMemBufferRef(),
+                                        New->StreamFile);
   }
 
   if (ExpectedSignature) {

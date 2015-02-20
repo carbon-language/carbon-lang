@@ -156,11 +156,13 @@ IntrusiveRefCntPtr<ExternalSemaSource> clang::createChainedIncludesSource(
                                                  &Clang->getPreprocessor());
     Clang->createASTContext();
 
-    SmallVector<char, 256> serialAST;
-    llvm::raw_svector_ostream OS(serialAST);
-    auto consumer =
-        llvm::make_unique<PCHGenerator>(Clang->getPreprocessor(), "-", nullptr,
-                                        /*isysroot=*/"", &OS);
+    auto consumer = llvm::make_unique<PCHGenerator>(Clang->getPreprocessor(),
+                                       "-", nullptr, /*isysroot=*/"");
+    SmallVectorImpl<char> *serialAST;
+    consumer->RegisterSerializationFinishedCallback(
+      [&](SmallVectorImpl<char> *Buf){
+        serialAST = Buf;
+      });
     Clang->getASTContext().setASTMutationListener(
                                             consumer->GetASTMutationListener());
     Clang->setASTConsumer(std::move(consumer));
@@ -197,7 +199,9 @@ IntrusiveRefCntPtr<ExternalSemaSource> clang::createChainedIncludesSource(
 
     ParseAST(Clang->getSema());
     Clang->getDiagnosticClient().EndSourceFile();
-    SerialBufs.push_back(llvm::MemoryBuffer::getMemBufferCopy(OS.str()));
+    SerialBufs.push_back(llvm::MemoryBuffer::
+        getMemBufferCopy(StringRef(serialAST->data(), serialAST->size())));
+    serialAST->clear();
     source->CIs.push_back(Clang.release());
   }
 
