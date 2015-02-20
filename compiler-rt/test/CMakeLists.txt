@@ -57,6 +57,7 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS)
   if(COMPILER_RT_HAS_UBSAN)
     add_subdirectory(ubsan)
   endif()
+  add_subdirectory(cfi)
 endif()
 
 if(COMPILER_RT_STANDALONE_BUILD)
