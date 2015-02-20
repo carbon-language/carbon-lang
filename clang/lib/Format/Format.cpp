@@ -617,7 +617,7 @@ public:
     do {
       Tokens.push_back(getNextToken());
       tryMergePreviousTokens();
-      if (Tokens.back()->NewlinesBefore > 0)
+      if (Tokens.back()->NewlinesBefore > 0 || Tokens.back()->IsMultiline)
         FirstInLineIndex = Tokens.size() - 1;
     } while (Tokens.back()->Tok.isNot(tok::eof));
     return Tokens;
@@ -638,6 +638,8 @@ private:
       if (tryMergeJSRegexLiteral())
         return;
       if (tryMergeEscapeSequence())
+        return;
+      if (tryMergeTemplateString())
         return;
 
       static tok::TokenKind JSIdentity[] = {tok::equalequal, tok::equal};
@@ -779,6 +781,66 @@ private:
     return false;
   }
 
+  bool tryMergeTemplateString() {
+    if (Tokens.size() < 2)
+      return false;
+
+    FormatToken *EndBacktick = Tokens.back();
+    if (!(EndBacktick->is(tok::unknown) && EndBacktick->TokenText == "`"))
+      return false;
+
+    unsigned TokenCount = 0;
+    bool IsMultiline = false;
+    unsigned EndColumnInFirstLine = 0;
+    for (auto I = Tokens.rbegin() + 1, E = Tokens.rend(); I != E; I++) {
+      ++TokenCount;
+      if (I[0]->NewlinesBefore > 0 || I[0]->IsMultiline)
+        IsMultiline = true;
+
+      // If there was a preceding template string, this must be the start of a
+      // template string, not the end.
+      if (I[0]->is(TT_TemplateString))
+        return false;
+
+      if (I[0]->isNot(tok::unknown) || I[0]->TokenText != "`") {
+        // Keep track of the rhs offset of the last token to wrap across lines -
+        // its the rhs offset of the first line of the template string, used to
+        // determine its width.
+        if (I[0]->IsMultiline)
+          EndColumnInFirstLine = I[0]->OriginalColumn + I[0]->ColumnWidth;
+        // If the token has newlines, the token before it (if it exists) is the
+        // rhs end of the previous line.
+        if (I[0]->NewlinesBefore > 0 && (I + 1 != E))
+          EndColumnInFirstLine = I[1]->OriginalColumn + I[1]->ColumnWidth;
+
+        continue;
+      }
+
+      Tokens.resize(Tokens.size() - TokenCount);
+      Tokens.back()->Type = TT_TemplateString;
+      const char *EndOffset = EndBacktick->TokenText.data() + 1;
+      Tokens.back()->TokenText =
+          StringRef(Tokens.back()->TokenText.data(),
+                    EndOffset - Tokens.back()->TokenText.data());
+      if (IsMultiline) {
+        // ColumnWidth is from backtick to last token in line.
+        // LastLineColumnWidth is 0 to backtick.
+        // x = `some content
+        //     until here`;
+        Tokens.back()->ColumnWidth =
+            EndColumnInFirstLine - Tokens.back()->OriginalColumn;
+        Tokens.back()->LastLineColumnWidth = EndBacktick->OriginalColumn;
+        Tokens.back()->IsMultiline = true;
+      } else {
+        // Token simply spans from start to end, +1 for the ` itself.
+        Tokens.back()->ColumnWidth =
+            EndBacktick->OriginalColumn - Tokens.back()->OriginalColumn + 1;
+      }
+      return true;
+    }
+    return false;
+  }
+
   bool tryMerge_TMacro() {
     if (Tokens.size() < 4)
       return false;
@@ -913,6 +975,8 @@ private:
     // Consume and record whitespace until we find a significant token.
     unsigned WhitespaceLength = TrailingWhitespace;
     while (FormatTok->Tok.is(tok::unknown)) {
+      // FIXME: This miscounts tok:unknown tokens that are not just
+      // whitespace, e.g. a '`' character.
       for (int i = 0, e = FormatTok->TokenText.size(); i != e; ++i) {
         switch (FormatTok->TokenText[i]) {
         case '\n':

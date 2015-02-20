@@ -572,5 +572,46 @@ TEST_F(FormatTestJS, Modules) {
                "};");
 }
 
+TEST_F(FormatTestJS, TemplateStrings) {
+  // Keeps any whitespace/indentation within the template string.
+  EXPECT_EQ("var x = `hello\n"
+            "     ${  name    }\n"
+            "  !`;",
+            format("var x    =    `hello\n"
+                   "     ${  name    }\n"
+                   "  !`;"));
+
+  // FIXME: +1 / -1 offsets are to work around clang-format miscalculating
+  // widths for unknown tokens that are not whitespace (e.g. '`'). Remove when
+  // the code is corrected.
+
+  verifyFormat("var x =\n"
+               "    `hello ${world}` >= some();",
+               getGoogleJSStyleWithColumns(34)); // Barely doesn't fit.
+  verifyFormat("var x = `hello ${world}` >= some();",
+               getGoogleJSStyleWithColumns(35 + 1)); // Barely fits.
+  EXPECT_EQ("var x = `hello\n"
+            "  ${world}` >=\n"
+            "        some();",
+            format("var x =\n"
+                   "    `hello\n"
+                   "  ${world}` >= some();",
+                   getGoogleJSStyleWithColumns(21))); // Barely doesn't fit.
+  EXPECT_EQ("var x = `hello\n"
+            "  ${world}` >= some();",
+            format("var x =\n"
+                   "    `hello\n"
+                   "  ${world}` >= some();",
+                   getGoogleJSStyleWithColumns(22))); // Barely fits.
+
+  verifyFormat("var x =\n    `h`;", getGoogleJSStyleWithColumns(13 - 1));
+  EXPECT_EQ(
+      "var x =\n    `multi\n  line`;",
+      format("var x = `multi\n  line`;", getGoogleJSStyleWithColumns(14 - 1)));
+
+  // Two template strings.
+  verifyFormat("var x = `hello` == `hello`;");
+}
+
 } // end namespace tooling
 } // end namespace clang
