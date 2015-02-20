@@ -150,17 +150,16 @@ static bool isLiveGCReferenceAt(Value &V, Instruction *loc, DominatorTree &DT,
 static bool isAggWhichContainsGCPtrType(Type *Ty) {
   if (VectorType *VT = dyn_cast<VectorType>(Ty))
     return isGCPointerType(VT->getScalarType());
-  else if (ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
+  if (ArrayType *AT = dyn_cast<ArrayType>(Ty))
     return isGCPointerType(AT->getElementType()) ||
            isAggWhichContainsGCPtrType(AT->getElementType());
-  } else if (StructType *ST = dyn_cast<StructType>(Ty)) {
-    bool UnsupportedType = false;
-    for (Type *SubType : ST->subtypes())
-      UnsupportedType |=
-          isGCPointerType(SubType) || isAggWhichContainsGCPtrType(SubType);
-    return UnsupportedType;
-  } else
-    return false;
+  if (StructType *ST = dyn_cast<StructType>(Ty))
+    return std::any_of(ST->subtypes().begin(), ST->subtypes().end(),
+                       [](Type *SubType) {
+                         return isGCPointerType(SubType) ||
+                                isAggWhichContainsGCPtrType(SubType);
+                       });
+  return false;
 }
 #endif
 
@@ -379,12 +378,9 @@ static Value *findBaseDefiningValue(Value *I) {
     Value *def = CI->stripPointerCasts();
     assert(def->getType()->isPointerTy() &&
            "Base for pointer must be another pointer");
-    if (isa<CastInst>(def)) {
-      // If we find a cast instruction here, it means we've found a cast
-      // which is not simply a pointer cast (i.e. an inttoptr).  We don't
-      // know how to handle int->ptr conversion.
-      llvm_unreachable("Can not find the base pointers for an inttoptr cast");
-    }
+    // If we find a cast instruction here, it means we've found a cast which is
+    // not simply a pointer cast (i.e. an inttoptr).  We don't know how to
+    // handle int->ptr conversion.
     assert(!isa<CastInst>(def) && "shouldn't find another cast here");
     return findBaseDefiningValue(def);
   }
@@ -492,13 +488,8 @@ static Value *findBaseDefiningValue(Value *I) {
   if (SelectInst *select = dyn_cast<SelectInst>(I)) {
     return select;
   }
-  if (PHINode *phi = dyn_cast<PHINode>(I)) {
-    return phi;
-  }
 
-  errs() << "unknown type: " << *I << "\n";
-  llvm_unreachable("unknown type");
-  return nullptr;
+  return cast<PHINode>(I);
 }
 
 /// Returns the base defining value for this value.
@@ -635,18 +626,18 @@ private:
 
     case PhiState::Base:
       assert(stateA.getBase() && "can't be null");
-      if (stateB.isUnknown()) {
+      if (stateB.isUnknown())
         return stateA;
-      } else if (stateB.isBase()) {
+
+      if (stateB.isBase()) {
         if (stateA.getBase() == stateB.getBase()) {
           assert(stateA == stateB && "equality broken!");
           return stateA;
         }
         return PhiState(PhiState::Conflict);
-      } else {
-        assert(stateB.isConflict() && "only three states!");
-        return PhiState(PhiState::Conflict);
       }
+      assert(stateB.isConflict() && "only three states!");
+      return PhiState(PhiState::Conflict);
 
     case PhiState::Conflict:
       return stateA;
@@ -701,10 +692,9 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
       Value *v = Pair.first;
       assert(!isKnownBaseResult(v) && "why did it get added?");
       if (PHINode *phi = dyn_cast<PHINode>(v)) {
-        unsigned NumPHIValues = phi->getNumIncomingValues();
-        assert(NumPHIValues > 0 && "zero input phis are illegal");
-        for (unsigned i = 0; i != NumPHIValues; ++i) {
-          Value *InVal = phi->getIncomingValue(i);
+        assert(phi->getNumIncomingValues() > 0 &&
+               "zero input phis are illegal");
+        for (Value *InVal : phi->incoming_values()) {
           Value *local = findBaseOrBDV(InVal, cache);
           if (!isKnownBaseResult(local) && states.find(local) == states.end()) {
             states[local] = PhiState();
@@ -748,18 +738,12 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
       MeetPhiStates calculateMeet(states);
       Value *v = Pair.first;
       assert(!isKnownBaseResult(v) && "why did it get added?");
-      assert(isa<SelectInst>(v) || isa<PHINode>(v));
       if (SelectInst *select = dyn_cast<SelectInst>(v)) {
         calculateMeet.meetWith(findBaseOrBDV(select->getTrueValue(), cache));
         calculateMeet.meetWith(findBaseOrBDV(select->getFalseValue(), cache));
-      } else if (PHINode *phi = dyn_cast<PHINode>(v)) {
-        for (unsigned i = 0; i < phi->getNumIncomingValues(); i++) {
-          calculateMeet.meetWith(
-              findBaseOrBDV(phi->getIncomingValue(i), cache));
-        }
-      } else {
-        llvm_unreachable("no such state expected");
-      }
+      } else
+        for (Value *Val : cast<PHINode>(v)->incoming_values())
+          calculateMeet.meetWith(findBaseOrBDV(Val, cache));
 
       PhiState oldState = states[v];
       PhiState newState = calculateMeet.getResult();
@@ -989,13 +973,13 @@ static void findBasePointers(const StatepointLiveSetTy &live,
                           cast<Instruction>(ptr)->getParent())) &&
            "The base we found better dominate the derived pointer");
 
-    if (isNullConstant(base))
-      // If you see this trip and like to live really dangerously, the code
-      // should be correct, just with idioms the verifier can't handle.  You
-      // can try disabling the verifier at your own substaintial risk.
-      llvm_unreachable("the relocation code needs adjustment to handle the"
-                       "relocation of a null pointer constant without causing"
-                       "false positives in the safepoint ir verifier.");
+    // If you see this trip and like to live really dangerously, the code should
+    // be correct, just with idioms the verifier can't handle.  You can try
+    // disabling the verifier at your own substaintial risk.
+    assert(!isNullConstant(base) && "the relocation code needs adjustment to "
+                                    "handle the relocation of a null pointer "
+                                    "constant without causing false positives "
+                                    "in the safepoint ir verifier.");
   }
 }
 
@@ -1258,7 +1242,7 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
     Builder.SetInsertPoint(IP);
     Builder.SetCurrentDebugLocation(IP->getDebugLoc());
 
-  } else if (CS.isInvoke()) {
+  } else {
     InvokeInst *toReplace = cast<InvokeInst>(CS.getInstruction());
 
     // Insert the new invoke into the old block.  We'll remove the old one in a
@@ -1309,8 +1293,6 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
 
     // gc relocates will be generated later as if it were regular call
     // statepoint
-  } else {
-    llvm_unreachable("unexpect type of CallSite");
   }
   assert(token);
 
@@ -1526,12 +1508,11 @@ static void relocationViaAlloca(
     if (auto II = dyn_cast<InvokeInst>(Statepoint)) {
       InsertClobbersAt(II->getNormalDest()->getFirstInsertionPt());
       InsertClobbersAt(II->getUnwindDest()->getFirstInsertionPt());
-    } else if (auto CI = dyn_cast<CallInst>(Statepoint)) {
-      BasicBlock::iterator Next(CI);
+    } else {
+      BasicBlock::iterator Next(cast<CallInst>(Statepoint));
       Next++;
       InsertClobbersAt(Next);
-    } else
-      llvm_unreachable("illegal statepoint instruction type?");
+    }
 #endif
   }
   // update use with load allocas and add store for gc_relocated
