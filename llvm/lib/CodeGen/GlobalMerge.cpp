@@ -144,7 +144,7 @@ INITIALIZE_TM_PASS(GlobalMerge, "global-merge", "Merge global variables",
 bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
                           Module &M, bool isConst, unsigned AddrSpace) const {
   const TargetLowering *TLI = TM->getSubtargetImpl()->getTargetLowering();
-  const DataLayout *DL = TLI->getDataLayout();
+  const DataLayout *DL = TM->getDataLayout();
 
   // FIXME: Infer the maximum possible offset depending on the actual users
   // (these max offsets are different for the users inside Thumb or ARM
@@ -283,7 +283,7 @@ bool GlobalMerge::doInitialization(Module &M) {
   DenseMap<unsigned, SmallVector<GlobalVariable*, 16> > Globals, ConstGlobals,
                                                         BSSGlobals;
   const TargetLowering *TLI = TM->getSubtargetImpl()->getTargetLowering();
-  const DataLayout *DL = TLI->getDataLayout();
+  const DataLayout *DL = TM->getDataLayout();
   unsigned MaxOffset = TLI->getMaximalGlobalOffset();
   bool Changed = false;
   setMustKeepGlobalVariables(M);
