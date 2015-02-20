@@ -90,7 +90,7 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") # FIXME: It should be "GNU ld for el
   set(LIB_NAMES -Wl,--whole-archive ${LIB_NAMES} -Wl,--no-whole-archive)
 endif()
 
-target_link_libraries(LLVM ${cmake_2_8_12_PRIVATE} ${LIB_NAMES})
+target_link_libraries(LLVM PRIVATE ${LIB_NAMES})
 
 add_dependencies(LLVM libLLVMExports)
 
