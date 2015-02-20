@@ -1538,21 +1538,41 @@ static void relocationViaAlloca(
 #ifndef NDEBUG
     // As a debuging aid, pretend that an unrelocated pointer becomes null at
     // the gc.statepoint.  This will turn some subtle GC problems into slightly
-    // easy to debug SEGVs
+    // easier to debug SEGVs
+    SmallVector<AllocaInst *, 64> ToClobber;
     for (auto Pair : allocaMap) {
-      Value *def = Pair.first;
-      Value *alloca = Pair.second;
+      Value *Def = Pair.first;
+      AllocaInst *Alloca = cast<AllocaInst>(Pair.second);
 
       // This value was relocated
-      if (visitedLiveValues.count(def)) {
+      if (visitedLiveValues.count(Def)) {
         continue;
       }
-
-      auto PT = cast<PointerType>(def->getType());
-      Constant *CPN = ConstantPointerNull::get(PT);
-      StoreInst *store = new StoreInst(CPN, alloca);
-      store->insertBefore(info.SafepointBounds.second);
+      ToClobber.push_back(Alloca);
     }
+
+    Instruction *Statepoint = info.SafepointBounds.first;
+    auto InsertClobbersAt = [&](Instruction *IP) {
+      for (auto *AI : ToClobber) {
+        auto AIType = cast<PointerType>(AI->getType());
+        auto PT = cast<PointerType>(AIType->getElementType());
+        Constant *CPN = ConstantPointerNull::get(PT);
+        StoreInst *store = new StoreInst(CPN, AI);
+        store->insertBefore(IP);
+      }
+    };
+
+    // Insert the clobbering stores.  These may get intermixed with the
+    // gc.results and gc.relocates, but that's fine.  
+    if (auto II = dyn_cast<InvokeInst>(Statepoint)) {
+      InsertClobbersAt(II->getNormalDest()->getFirstInsertionPt());
+      InsertClobbersAt(II->getUnwindDest()->getFirstInsertionPt());
+    } else if (auto CI = dyn_cast<CallInst>(Statepoint)) {
+      BasicBlock::iterator Next(CI);
+      Next++;
+      InsertClobbersAt(Next);
+    } else
+      llvm_unreachable("illegal statepoint instruction type?");
 #endif
   }
   // update use with load allocas and add store for gc_relocated
