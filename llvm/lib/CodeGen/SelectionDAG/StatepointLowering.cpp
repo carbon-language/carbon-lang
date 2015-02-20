@@ -223,32 +223,28 @@ static void removeDuplicatesGCPtrs(SmallVectorImpl<const Value *> &Bases,
 /// Extract call from statepoint, lower it and return pointer to the
 /// call node. Also update NodeMap so that getValue(statepoint) will
 /// reference lowered call result
-static SDNode *lowerCallFromStatepoint(const CallInst &CI,
+static SDNode *lowerCallFromStatepoint(ImmutableStatepoint StatepointSite,
                                        SelectionDAGBuilder &Builder) {
 
-  assert(Intrinsic::experimental_gc_statepoint ==
-             dyn_cast<IntrinsicInst>(&CI)->getIntrinsicID() &&
-         "function called must be the statepoint function");
-
-  ImmutableStatepoint StatepointOperands(&CI);
+  ImmutableCallSite CS(StatepointSite.getCallSite());
 
   // Lower the actual call itself - This is a bit of a hack, but we want to
   // avoid modifying the actual lowering code.  This is similiar in intent to
   // the LowerCallOperands mechanism used by PATCHPOINT, but is structured
   // differently.  Hopefully, this is slightly more robust w.r.t. calling
   // convention, return values, and other function attributes.
-  Value *ActualCallee = const_cast<Value *>(StatepointOperands.actualCallee());
+  Value *ActualCallee = const_cast<Value *>(StatepointSite.actualCallee());
 
   std::vector<Value *> Args;
-  CallInst::const_op_iterator arg_begin = StatepointOperands.call_args_begin();
-  CallInst::const_op_iterator arg_end = StatepointOperands.call_args_end();
+  CallInst::const_op_iterator arg_begin = StatepointSite.call_args_begin();
+  CallInst::const_op_iterator arg_end = StatepointSite.call_args_end();
   Args.insert(Args.end(), arg_begin, arg_end);
   // TODO: remove the creation of a new instruction!  We should not be
   // modifying the IR (even temporarily) at this point.
   CallInst *Tmp = CallInst::Create(ActualCallee, Args);
-  Tmp->setTailCall(CI.isTailCall());
-  Tmp->setCallingConv(CI.getCallingConv());
-  Tmp->setAttributes(CI.getAttributes());
+  Tmp->setTailCall(CS.isTailCall());
+  Tmp->setCallingConv(CS.getCallingConv());
+  Tmp->setAttributes(CS.getAttributes());
   Builder.LowerCallTo(Tmp, Builder.getValue(ActualCallee), false);
 
   // Handle the return value of the call iff any.
@@ -257,10 +253,10 @@ static SDNode *lowerCallFromStatepoint(const CallInst &CI,
     // The value of the statepoint itself will be the value of call itself.
     // We'll replace the actually call node shortly.  gc_result will grab
     // this value.
-    Builder.setValue(&CI, Builder.getValue(Tmp));
+    Builder.setValue(CS.getInstruction(), Builder.getValue(Tmp));
   } else {
     // The token value is never used from here on, just generate a poison value
-    Builder.setValue(&CI, Builder.DAG.getIntPtrConstant(-1));
+    Builder.setValue(CS.getInstruction(), Builder.DAG.getIntPtrConstant(-1));
   }
   // Remove the fake entry we created so we don't have a hanging reference
   // after we delete this node.
@@ -305,18 +301,11 @@ static void
 getIncomingStatepointGCValues(SmallVectorImpl<const Value *> &Bases,
                               SmallVectorImpl<const Value *> &Ptrs,
                               SmallVectorImpl<const Value *> &Relocs,
-                              ImmutableCallSite Statepoint,
+                              ImmutableStatepoint StatepointSite,
                               SelectionDAGBuilder &Builder) {
-  // Search for relocated pointers.  Note that working backwards from the
-  // gc_relocates ensures that we only get pairs which are actually relocated
-  // and used after the statepoint.
-  // TODO: This logic should probably become a utility function in Statepoint.h
-  for (const User *U : cast<CallInst>(Statepoint.getInstruction())->users()) {
-    if (!isGCRelocate(U)) {
-      continue;
-    }
-    GCRelocateOperands relocateOpers(U);
-    Relocs.push_back(cast<Value>(U));
+  for (GCRelocateOperands relocateOpers :
+         StatepointSite.getRelocates(StatepointSite)) {
+    Relocs.push_back(relocateOpers.getUnderlyingCallSite().getInstruction());
     Bases.push_back(relocateOpers.basePtr());
     Ptrs.push_back(relocateOpers.derivedPtr());
   }
@@ -409,7 +398,7 @@ static void lowerIncomingStatepointValue(SDValue Incoming,
 /// statepoint. The chain nodes will have already been created and the DAG root
 /// will be set to the last value spilled (if any were).
 static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
-                                    ImmutableStatepoint Statepoint,
+                                    ImmutableStatepoint StatepointSite,
                                     SelectionDAGBuilder &Builder) {
 
   // Lower the deopt and gc arguments for this statepoint.  Layout will
@@ -417,7 +406,7 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
 
   SmallVector<const Value *, 64> Bases, Ptrs, Relocations;
   getIncomingStatepointGCValues(Bases, Ptrs, Relocations,
-                                Statepoint.getCallSite(), Builder);
+                                StatepointSite, Builder);
 
 #ifndef NDEBUG
   // Check that each of the gc pointer and bases we've gotten out of the
@@ -457,7 +446,8 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   // particular value.  This is purely an optimization over the code below and
   // doesn't change semantics at all.  It is important for performance that we
   // reserve slots for both deopt and gc values before lowering either.
-  for (auto I = Statepoint.vm_state_begin() + 1, E = Statepoint.vm_state_end();
+  for (auto I = StatepointSite.vm_state_begin() + 1,
+            E = StatepointSite.vm_state_end();
        I != E; ++I) {
     Value *V = *I;
     SDValue Incoming = Builder.getValue(V);
@@ -473,13 +463,13 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   // First, prefix the list with the number of unique values to be
   // lowered.  Note that this is the number of *Values* not the
   // number of SDValues required to lower them.
-  const int NumVMSArgs = Statepoint.numTotalVMSArgs();
+  const int NumVMSArgs = StatepointSite.numTotalVMSArgs();
   Ops.push_back(
       Builder.DAG.getTargetConstant(StackMaps::ConstantOp, MVT::i64));
   Ops.push_back(Builder.DAG.getTargetConstant(NumVMSArgs, MVT::i64));
 
-  assert(NumVMSArgs + 1 == std::distance(Statepoint.vm_state_begin(),
-                                         Statepoint.vm_state_end()));
+  assert(NumVMSArgs + 1 == std::distance(StatepointSite.vm_state_begin(),
+                                         StatepointSite.vm_state_end()));
 
   // The vm state arguments are lowered in an opaque manner.  We do
   // not know what type of values are contained within.  We skip the
@@ -487,7 +477,8 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   // explicitly just above.  We could have left it in the loop and
   // not done it explicitly, but it's far easier to understand this
   // way.
-  for (auto I = Statepoint.vm_state_begin() + 1, E = Statepoint.vm_state_end();
+  for (auto I = StatepointSite.vm_state_begin() + 1,
+            E = StatepointSite.vm_state_end();
        I != E; ++I) {
     const Value *V = *I;
     SDValue Incoming = Builder.getValue(V);
@@ -506,28 +497,35 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
     lowerIncomingStatepointValue(Incoming, Ops, Builder);
   }
 }
+
 void SelectionDAGBuilder::visitStatepoint(const CallInst &CI) {
+  // Check some preconditions for sanity
+  assert(isStatepoint(&CI) &&
+         "function called must be the statepoint function");
+
+  LowerStatepoint(ImmutableStatepoint(&CI));
+}
+
+void SelectionDAGBuilder::LowerStatepoint(ImmutableStatepoint ISP) {
   // The basic scheme here is that information about both the original call and
   // the safepoint is encoded in the CallInst.  We create a temporary call and
   // lower it, then reverse engineer the calling sequence.
 
-  // Check some preconditions for sanity
-  assert(isStatepoint(&CI) &&
-         "function called must be the statepoint function");
   NumOfStatepoints++;
   // Clear state
   StatepointLowering.startNewStatepoint(*this);
 
+  ImmutableCallSite CS(ISP.getCallSite());
+
 #ifndef NDEBUG
   // Consistency check
-  for (const User *U : CI.users()) {
+  for (const User *U : CS->users()) {
     const CallInst *Call = cast<CallInst>(U);
     if (isGCRelocate(Call))
       StatepointLowering.scheduleRelocCall(*Call);
   }
 #endif
 
-  ImmutableStatepoint ISP(&CI);
 #ifndef NDEBUG
   // If this is a malformed statepoint, report it early to simplify debugging.
   // This should catch any IR level mistake that's made when constructing or
@@ -550,7 +548,7 @@ void SelectionDAGBuilder::visitStatepoint(const CallInst &CI) {
   lowerStatepointMetaArgs(LoweredArgs, ISP, *this);
 
   // Get call node, we will replace it later with statepoint
-  SDNode *CallNode = lowerCallFromStatepoint(CI, *this);
+  SDNode *CallNode = lowerCallFromStatepoint(ISP, *this);
 
   // Construct the actual STATEPOINT node with all the appropriate arguments
   // and return values.
@@ -587,8 +585,8 @@ void SelectionDAGBuilder::visitStatepoint(const CallInst &CI) {
 
   // Add a leading constant argument with the Flags and the calling convention
   // masked together
-  CallingConv::ID CallConv = CI.getCallingConv();
-  int Flags = dyn_cast<ConstantInt>(CI.getArgOperand(2))->getZExtValue();
+  CallingConv::ID CallConv = CS.getCallingConv();
+  int Flags = dyn_cast<ConstantInt>(CS.getArgument(2))->getZExtValue();
   assert(Flags == 0 && "not expected to be used");
   Ops.push_back(DAG.getTargetConstant(StackMaps::ConstantOp, MVT::i64));
   Ops.push_back(

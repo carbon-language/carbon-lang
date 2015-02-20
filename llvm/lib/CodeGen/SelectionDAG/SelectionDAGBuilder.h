@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/IR/CallSite.h"
+#include "llvm/IR/Statepoint.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetLowering.h"
@@ -660,6 +661,8 @@ public:
   /// references that need to refer to the last resulting block.
   void UpdateSplitBlock(MachineBasicBlock *First, MachineBasicBlock *Last);
 
+  // This function is responsible for the whole statepoint lowering process.
+  void LowerStatepoint(ImmutableStatepoint Statepoint);
 private:
   std::pair<SDValue, SDValue> lowerInvokable(
           TargetLowering::CallLoweringInfo &CLI,
