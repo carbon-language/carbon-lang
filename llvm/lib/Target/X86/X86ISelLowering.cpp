@@ -8243,14 +8243,14 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   auto isV1 = [](int M) { return M >= 0 && M < 8; };
   auto isV2 = [](int M) { return M >= 8; };
 
-  int NumV1Inputs = std::count_if(Mask.begin(), Mask.end(), isV1);
   int NumV2Inputs = std::count_if(Mask.begin(), Mask.end(), isV2);
 
   if (NumV2Inputs == 0)
     return lowerV8I16SingleInputVectorShuffle(DL, V1, Mask, Subtarget, DAG);
 
-  assert(NumV1Inputs > 0 && "All single-input shuffles should be canonicalized "
-                            "to be V1-input shuffles.");
+  assert(std::any_of(Mask.begin(), Mask.end(), isV1) &&
+         "All single-input shuffles should be canonicalized to be V1-input "
+         "shuffles.");
 
   // Try to use shift instructions.
   if (SDValue Shift =
