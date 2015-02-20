@@ -292,8 +292,7 @@ DIE &DwarfCompileUnit::updateSubprogramScopeDIE(DISubprogram SP) {
 
   // Only include DW_AT_frame_base in full debug info
   if (!includeMinimalInlineScopes()) {
-    const TargetRegisterInfo *RI =
-        Asm->TM.getSubtargetImpl()->getRegisterInfo();
+    const TargetRegisterInfo *RI = Asm->MF->getSubtarget().getRegisterInfo();
     MachineLocation Location(RI->getFrameRegister(*Asm->MF));
     if (RI->isPhysicalRegister(Location.getReg()))
       addAddress(*SPDie, dwarf::DW_AT_frame_base, Location);
@@ -524,8 +523,7 @@ DwarfCompileUnit::constructVariableDIEImpl(const DbgVariable &DV,
   DIEDwarfExpression DwarfExpr(*Asm, *this, *Loc);
   for (auto FI : DV.getFrameIndex()) {
     unsigned FrameReg = 0;
-    const TargetFrameLowering *TFI =
-        Asm->TM.getSubtargetImpl()->getFrameLowering();
+    const TargetFrameLowering *TFI = Asm->MF->getSubtarget().getFrameLowering();
     int Offset = TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
     assert(Expr != DV.getExpression().end() &&
            "Wrong number of expressions");

@@ -1176,7 +1176,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   Asm->OutStreamer.EmitLabel(FunctionBeginSym);
 
   // Calculate history for local variables.
-  calculateDbgValueHistory(MF, Asm->TM.getSubtargetImpl()->getRegisterInfo(),
+  calculateDbgValueHistory(MF, Asm->MF->getSubtarget().getRegisterInfo(),
                            DbgValues);
 
   // Request labels for the full history.
