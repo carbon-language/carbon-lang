@@ -122,6 +122,21 @@ Property::Property (const PropertyDefinition &definition) :
             }
             break;
             
+        case OptionValue::eTypeLanguage:
+            // "definition.default_uint_value" is the default language enumeration value if
+            // "definition.default_cstr_value" is NULL, otherwise interpret
+            // "definition.default_cstr_value" as a string value that represents the default
+            // value.
+        {
+            LanguageType new_lang = eLanguageTypeUnknown;
+            if (definition.default_cstr_value)
+                LanguageRuntime::GetLanguageTypeFromString(definition.default_cstr_value);
+            else
+                new_lang = (LanguageType)definition.default_uint_value;
+            m_value_sp.reset (new OptionValueLanguage(new_lang));
+        }
+            break;
+            
         case OptionValue::eTypeFormatEntity:
             // "definition.default_cstr_value" as a string value that represents the default
             m_value_sp.reset (new OptionValueFormatEntity(definition.default_cstr_value));

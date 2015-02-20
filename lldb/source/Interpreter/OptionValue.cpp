@@ -222,6 +222,22 @@ OptionValue::GetAsFormat () const
     return nullptr;
 }
 
+OptionValueLanguage *
+OptionValue::GetAsLanguage ()
+{
+    if (GetType () == OptionValue::eTypeLanguage)
+        return static_cast<OptionValueLanguage *>(this);
+    return NULL;
+}
+
+const OptionValueLanguage *
+OptionValue::GetAsLanguage () const
+{
+    if (GetType () == OptionValue::eTypeLanguage)
+        return static_cast<const OptionValueLanguage *>(this);
+    return NULL;
+}
+
 OptionValueFormatEntity *
 OptionValue::GetAsFormatEntity ()
 {
@@ -468,6 +484,27 @@ OptionValue::SetFormatValue (lldb::Format new_value)
     return false;
 }
 
+lldb::LanguageType
+OptionValue::GetLanguageValue (lldb::LanguageType fail_value) const
+{
+    const OptionValueLanguage *option_value = GetAsLanguage ();
+    if (option_value)
+        return option_value->GetCurrentValue();
+    return fail_value;
+}
+
+bool
+OptionValue::SetLanguageValue (lldb::LanguageType new_language)
+{
+    OptionValueLanguage *option_value = GetAsLanguage ();
+    if (option_value)
+    {
+        option_value->SetCurrentValue(new_language);
+        return true;
+    }
+    return false;
+}
+
 const FormatEntity::Entry *
 OptionValue::GetFormatEntity () const
 {
@@ -589,6 +626,7 @@ OptionValue::GetBuiltinTypeAsCString (Type t)
         case eTypeFileSpecList: return "file-list";
         case eTypeFormat:       return "format";
         case eTypeFormatEntity: return "format-string";
+        case eTypeLanguage:     return "language";
         case eTypePathMap:      return "path-map";
         case eTypeProperties:   return "properties";
         case eTypeRegex:        return "regex";
@@ -615,6 +653,7 @@ OptionValue::CreateValueFromCStringForTypeMask (const char *value_cstr, uint32_t
     case 1u << eTypeFileSpec:       value_sp.reset(new OptionValueFileSpec()); break;
     case 1u << eTypeFormat:         value_sp.reset(new OptionValueFormat(eFormatInvalid));    break;
     case 1u << eTypeFormatEntity:   value_sp.reset(new OptionValueFormatEntity(NULL));    break;
+    case 1u << eTypeLanguage:       value_sp.reset(new OptionValueLanguage(eLanguageTypeUnknown));    break;
     case 1u << eTypeSInt64:         value_sp.reset(new OptionValueSInt64()); break;
     case 1u << eTypeString:         value_sp.reset(new OptionValueString()); break;
     case 1u << eTypeUInt64:         value_sp.reset(new OptionValueUInt64()); break;

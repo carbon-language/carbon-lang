@@ -783,6 +783,7 @@
 		9461569B14E358A6003A195C /* SBTypeFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9461568B14E35621003A195C /* SBTypeFormat.cpp */; };
 		9461569C14E358A6003A195C /* SBTypeSummary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9461568C14E35621003A195C /* SBTypeSummary.cpp */; };
 		9461569D14E358A6003A195C /* SBTypeSynthetic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9461568D14E35621003A195C /* SBTypeSynthetic.cpp */; };
+		946216C21A97C080006E19CC /* OptionValueLanguage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 946216C11A97C080006E19CC /* OptionValueLanguage.cpp */; };
 		9463D4CD13B1798800C230D4 /* CommandObjectType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9463D4CC13B1798800C230D4 /* CommandObjectType.cpp */; };
 		9475C18814E5E9FA001BFC6D /* SBTypeCategory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9475C18714E5E9FA001BFC6D /* SBTypeCategory.cpp */; };
 		9475C18914E5EA08001BFC6D /* SBTypeCategory.h in Headers */ = {isa = PBXBuildFile; fileRef = 9475C18514E5E9C5001BFC6D /* SBTypeCategory.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -2424,6 +2425,8 @@
 		9461569314E3567F003A195C /* SBTypeFormat.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBTypeFormat.i; sourceTree = "<group>"; };
 		9461569414E3567F003A195C /* SBTypeSummary.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBTypeSummary.i; sourceTree = "<group>"; };
 		9461569514E3567F003A195C /* SBTypeSynthetic.i */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c.preprocessed; path = SBTypeSynthetic.i; sourceTree = "<group>"; };
+		946216BF1A97C055006E19CC /* OptionValueLanguage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionValueLanguage.h; path = include/lldb/Interpreter/OptionValueLanguage.h; sourceTree = "<group>"; };
+		946216C11A97C080006E19CC /* OptionValueLanguage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionValueLanguage.cpp; path = source/Interpreter/OptionValueLanguage.cpp; sourceTree = "<group>"; };
 		9463D4CC13B1798800C230D4 /* CommandObjectType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = CommandObjectType.cpp; path = source/Commands/CommandObjectType.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
 		9463D4CE13B179A500C230D4 /* CommandObjectType.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CommandObjectType.h; path = source/Commands/CommandObjectType.h; sourceTree = "<group>"; };
 		9475C18514E5E9C5001BFC6D /* SBTypeCategory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBTypeCategory.h; path = include/lldb/API/SBTypeCategory.h; sourceTree = "<group>"; };
@@ -4355,6 +4358,8 @@
 				260CC64315D0440D002BF2E0 /* OptionValueFormat.cpp */,
 				264A58EB1A7DBC8C00A6B1B0 /* OptionValueFormatEntity.h */,
 				264A58ED1A7DBCAD00A6B1B0 /* OptionValueFormatEntity.cpp */,
+				946216BF1A97C055006E19CC /* OptionValueLanguage.h */,
+				946216C11A97C080006E19CC /* OptionValueLanguage.cpp */,
 				26DAED5F15D327A200E15819 /* OptionValuePathMappings.h */,
 				26DAED6215D327C200E15819 /* OptionValuePathMappings.cpp */,
 				260CC62415D04377002BF2E0 /* OptionValueProperties.h */,
@@ -6145,6 +6150,7 @@
 				2671A0D013482601003A87BB /* ConnectionMachPort.cpp in Sources */,
 				4CABA9E0134A8BCD00539BDD /* ValueObjectMemory.cpp in Sources */,
 				4CD0BD0F134BFADF00CB44D4 /* ValueObjectDynamicValue.cpp in Sources */,
+				946216C21A97C080006E19CC /* OptionValueLanguage.cpp in Sources */,
 				AF45FDE518A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp in Sources */,
 				2377C2F819E613C100737875 /* PipePosix.cpp in Sources */,
 				AF77E0931A033C7F0096C0EA /* ABISysV_ppc64.cpp in Sources */,
