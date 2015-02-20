@@ -1065,11 +1065,11 @@ static void fixupLiveness(DominatorTree &DT, const CallSite &CS,
 static void fixupLiveReferences(
     Function &F, DominatorTree &DT, Pass *P,
     const std::set<llvm::Value *> &allInsertedDefs,
-    std::vector<CallSite> &toUpdate,
-    std::vector<struct PartiallyConstructedSafepointRecord> &records) {
+    ArrayRef<CallSite> toUpdate,
+    MutableArrayRef<struct PartiallyConstructedSafepointRecord> records) {
   for (size_t i = 0; i < records.size(); i++) {
     struct PartiallyConstructedSafepointRecord &info = records[i];
-    CallSite &CS = toUpdate[i];
+    const CallSite &CS = toUpdate[i];
     fixupLiveness(DT, CS, allInsertedDefs, info);
   }
 }
@@ -1097,7 +1097,7 @@ static BasicBlock *normalizeBBForInvokeSafepoint(BasicBlock *BB,
   return ret;
 }
 
-static int find_index(const SmallVectorImpl<Value *> &livevec, Value *val) {
+static int find_index(ArrayRef<Value *> livevec, Value *val) {
   auto itr = std::find(livevec.begin(), livevec.end(), val);
   assert(livevec.end() != itr);
   size_t index = std::distance(livevec.begin(), itr);
@@ -1147,14 +1147,13 @@ static AttributeSet legalizeCallAttributes(AttributeSet AS) {
 ///   statepointToken - statepoint instruction to which relocates should be
 ///   bound.
 ///   Builder - Llvm IR builder to be used to construct new calls.
-/// Returns array with newly created relocates.
-static std::vector<llvm::Instruction *>
-CreateGCRelocates(const SmallVectorImpl<llvm::Value *> &liveVariables,
-                  const int liveStart,
-                  const SmallVectorImpl<llvm::Value *> &basePtrs,
-                  Instruction *statepointToken, IRBuilder<> Builder) {
+void CreateGCRelocates(ArrayRef<llvm::Value *> liveVariables,
+                       const int liveStart,
+                       ArrayRef<llvm::Value *> basePtrs,
+                       Instruction *statepointToken, IRBuilder<> Builder) {
 
-  std::vector<llvm::Instruction *> newDefs;
+  SmallVector<Instruction *, 64> NewDefs;
+  NewDefs.reserve(liveVariables.size());
 
   Module *M = statepointToken->getParent()->getParent()->getParent();
 
@@ -1163,7 +1162,7 @@ CreateGCRelocates(const SmallVectorImpl<llvm::Value *> &liveVariables,
     // combination.  This results is some blow up the function declarations in
     // the IR, but removes the need for argument bitcasts which shrinks the IR
     // greatly and makes it much more readable.
-    std::vector<Type *> types;                    // one per 'any' type
+    SmallVector<Type *, 1> types;                    // one per 'any' type
     types.push_back(liveVariables[i]->getType()); // result type
     Value *gc_relocate_decl = Intrinsic::getDeclaration(
         M, Intrinsic::experimental_gc_relocate, types);
@@ -1185,12 +1184,10 @@ CreateGCRelocates(const SmallVectorImpl<llvm::Value *> &liveVariables,
     // fake call.
     cast<CallInst>(reloc)->setCallingConv(CallingConv::Cold);
 
-    newDefs.push_back(cast<Instruction>(reloc));
+    NewDefs.push_back(cast<Instruction>(reloc));
   }
-  assert(newDefs.size() == liveVariables.size() &&
+  assert(NewDefs.size() == liveVariables.size() &&
          "missing or extra redefinition at safepoint");
-
-  return newDefs;
 }
 
 static void
@@ -1223,7 +1220,7 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
   IRBuilder<> Builder(insertBefore);
   // Copy all of the arguments from the original statepoint - this includes the
   // target, call args, and deopt args
-  std::vector<llvm::Value *> args;
+  SmallVector<llvm::Value *, 64> args;
   args.insert(args.end(), CS.arg_begin(), CS.arg_end());
   // TODO: Clear the 'needs rewrite' flag
 
@@ -1444,8 +1441,8 @@ insertRelocationStores(iterator_range<Value::user_iterator> gcRelocs,
 
 /// do all the relocation update via allocas and mem2reg
 static void relocationViaAlloca(
-    Function &F, DominatorTree &DT, const std::vector<Value *> &live,
-    const std::vector<struct PartiallyConstructedSafepointRecord> &records) {
+    Function &F, DominatorTree &DT, ArrayRef<Value *> live,
+    ArrayRef<struct PartiallyConstructedSafepointRecord> records) {
 #ifndef NDEBUG
   int initialAllocaNum = 0;
 
@@ -1613,14 +1610,16 @@ static void relocationViaAlloca(
 /// Implement a unique function which doesn't require we sort the input
 /// vector.  Doing so has the effect of changing the output of a couple of
 /// tests in ways which make them less useful in testing fused safepoints.
-template <typename T> static void unique_unsorted(std::vector<T> &vec) {
-  DenseSet<T> seen;
-  std::vector<T> tmp;
-  vec.reserve(vec.size());
-  std::swap(tmp, vec);
-  for (auto V : tmp) {
-    if (seen.insert(V).second) {
-      vec.push_back(V);
+template <typename T> static void unique_unsorted(SmallVectorImpl<T> &Vec) {
+  DenseSet<T> Seen;
+  SmallVector<T, 128> TempVec;
+  TempVec.reserve(Vec.size());
+  for (auto Element : Vec)
+    TempVec.push_back(Element);
+  Vec.clear();
+  for (auto V : TempVec) {
+    if (Seen.insert(V).second) {
+      Vec.push_back(V);
     }
   }
 }
@@ -1635,7 +1634,7 @@ static Function *getUseHolder(Module &M) {
 /// Insert holders so that each Value is obviously live through the entire
 /// liftetime of the call.
 static void insertUseHolderAfter(CallSite &CS, const ArrayRef<Value *> Values,
-                                 std::vector<CallInst *> &holders) {
+                                 SmallVectorImpl<CallInst *> &holders) {
   Module *M = CS.getInstruction()->getParent()->getParent()->getParent();
   Function *Func = getUseHolder(*M);
   if (CS.isCall()) {
@@ -1659,11 +1658,11 @@ static void insertUseHolderAfter(CallSite &CS, const ArrayRef<Value *> Values,
 }
 
 static void findLiveReferences(
-    Function &F, DominatorTree &DT, Pass *P, std::vector<CallSite> &toUpdate,
-    std::vector<struct PartiallyConstructedSafepointRecord> &records) {
+    Function &F, DominatorTree &DT, Pass *P, ArrayRef<CallSite> toUpdate,
+    MutableArrayRef<struct PartiallyConstructedSafepointRecord> records) {
   for (size_t i = 0; i < records.size(); i++) {
     struct PartiallyConstructedSafepointRecord &info = records[i];
-    CallSite &CS = toUpdate[i];
+    const CallSite &CS = toUpdate[i];
     analyzeParsePointLiveness(DT, CS, info);
   }
 }
@@ -1698,7 +1697,7 @@ static void addBasesAsLiveValues(std::set<Value *> &liveset,
 }
 
 static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
-                              std::vector<CallSite> &toUpdate) {
+                              SmallVectorImpl<CallSite> &toUpdate) {
 #ifndef NDEBUG
   // sanity check the input
   std::set<CallSite> uniqued;
@@ -1714,7 +1713,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
 
   // A list of dummy calls added to the IR to keep various values obviously
   // live in the IR.  We'll remove all of these when done.
-  std::vector<CallInst *> holders;
+  SmallVector<CallInst *, 64> holders;
 
   // Insert a dummy call with all of the arguments to the vm_state we'll need
   // for the actual safepoint insertion.  This ensures reference arguments in
@@ -1733,7 +1732,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
     insertUseHolderAfter(CS, DeoptValues, holders);
   }
 
-  std::vector<struct PartiallyConstructedSafepointRecord> records;
+  SmallVector<struct PartiallyConstructedSafepointRecord, 64> records;
   records.reserve(toUpdate.size());
   for (size_t i = 0; i < toUpdate.size(); i++) {
     struct PartiallyConstructedSafepointRecord info;
@@ -1856,7 +1855,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
   }
 
   // Do all the fixups of the original live variables to their relocated selves
-  std::vector<Value *> live;
+  SmallVector<Value *, 128> live;
   for (size_t i = 0; i < records.size(); i++) {
     struct PartiallyConstructedSafepointRecord &info = records[i];
     // We can't simply save the live set from the original insertion.  One of
@@ -1903,12 +1902,11 @@ bool RewriteStatepointsForGC::runOnFunction(Function &F) {
     return false;
 
   // Gather all the statepoints which need rewritten.
-  std::vector<CallSite> ParsePointNeeded;
-  for (inst_iterator itr = inst_begin(F), end = inst_end(F); itr != end;
-       itr++) {
+  SmallVector<CallSite, 64> ParsePointNeeded;
+  for (Instruction &I : inst_range(F)) {
     // TODO: only the ones with the flag set!
-    if (isStatepoint(*itr))
-      ParsePointNeeded.push_back(CallSite(&*itr));
+    if (isStatepoint(I))
+      ParsePointNeeded.push_back(CallSite(&I));
   }
 
   // Return early if no work to do.
