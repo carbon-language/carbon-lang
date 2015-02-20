@@ -160,7 +160,7 @@ endif
 ifeq "$(os)" "lin"
 ifneq "$(arch)" "mic"
     # --- C/C++ ---
-    # On lin_32, we want to maintain stack alignment to be conpatible with GNU binaries built with
+    # On lin_32, we want to maintain stack alignment to be compatible with GNU binaries built with
     # compiler.
     ifeq "$(c)" "icc"
         ifeq "$(arch)" "32"
