@@ -55,6 +55,7 @@ static cl::opt<bool> PrintLiveSetSize("spp-print-liveset-size",
 static cl::opt<bool> PrintBasePointers("spp-print-base-pointers",
                                        cl::Hidden, cl::init(false));
 
+namespace {
 struct RewriteStatepointsForGC : public FunctionPass {
   static char ID; // Pass identification, replacement for typeid
 
@@ -69,6 +70,7 @@ struct RewriteStatepointsForGC : public FunctionPass {
     AU.addRequired<DominatorTreeWrapperPass>();
   }
 };
+} // namespace
 
 char RewriteStatepointsForGC::ID = 0;
 
@@ -94,9 +96,7 @@ namespace {
 // base relation will remain.  Internally, we add a mixture of the two
 // types, then update all the second type to the first type
 typedef std::map<Value *, Value *> DefiningValueMapTy;
-}
 
-namespace {
 struct PartiallyConstructedSafepointRecord {
   /// The set of values known to be live accross this safepoint
   std::set<llvm::Value *> liveset;
@@ -503,26 +503,28 @@ static Value *findBaseDefiningValue(Value *I) {
 }
 
 /// Returns the base defining value for this value.
-Value *findBaseDefiningValueCached(Value *I, DefiningValueMapTy &cache) {
-  if (cache.find(I) == cache.end()) {
-    cache[I] = findBaseDefiningValue(I);
+static Value *findBaseDefiningValueCached(Value *I, DefiningValueMapTy &cache) {
+  Value *&Cached = cache[I];
+  if (!Cached) {
+    Cached = findBaseDefiningValue(I);
   }
-  assert(cache.find(I) != cache.end());
+  assert(cache[I] != nullptr);
 
   if (TraceLSP) {
-    errs() << "fBDV-cached: " << I->getName() << " -> " << cache[I]->getName()
+    errs() << "fBDV-cached: " << I->getName() << " -> " << Cached->getName()
            << "\n";
   }
-  return cache[I];
+  return Cached;
 }
 
 /// Return a base pointer for this value if known.  Otherwise, return it's
 /// base defining value.
 static Value *findBaseOrBDV(Value *I, DefiningValueMapTy &cache) {
   Value *def = findBaseDefiningValueCached(I, cache);
-  if (cache.count(def)) {
+  auto Found = cache.find(def);
+  if (Found != cache.end()) {
     // Either a base-of relation, or a self reference.  Caller must check.
-    return cache[def];
+    return Found->second;
   }
   // Only a BDV available
   return def;
