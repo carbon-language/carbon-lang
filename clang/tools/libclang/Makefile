@@ -16,13 +16,11 @@ LINK_LIBS_IN_SHARED = 1
 SHARED_LIBRARY = 1
 
 include $(CLANG_LEVEL)/../../Makefile.config
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter core \
-                   instrumentation mc mcparser objcarcopts option support
+LINK_COMPONENTS := AsmParser BitReader Core MC MCParser Option Support
 USEDLIBS = clangIndex.a clangARCMigrate.a \
 	   clangRewriteFrontend.a \
 	   clangFormat.a \
 	   clangTooling.a clangToolingCore.a \
-           clangCodeGen.a \
 	   clangFrontend.a clangDriver.a \
 	   clangSerialization.a \
 	   clangParse.a clangSema.a \

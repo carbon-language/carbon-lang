@@ -823,13 +823,10 @@ class PCHGenerator : public SemaConsumer {
   std::string OutputFile;
   clang::Module *Module;
   std::string isysroot;
+  raw_ostream *Out;
   Sema *SemaPtr;
-  // This buffer is always large, but BitstreamWriter really wants a
-  // SmallVectorImpl<char>.
-  SmallVector<char, 0> Buffer;
+  SmallVector<char, 128> Buffer;
   llvm::BitstreamWriter Stream;
-  std::function<void(SmallVectorImpl<char>*)>
-    SerializationFinishedCallback;
   ASTWriter Writer;
   bool AllowASTWithErrors;
   bool HasEmittedPCH;
@@ -839,21 +836,16 @@ protected:
   const ASTWriter &getWriter() const { return Writer; }
 
 public:
-  PCHGenerator(const Preprocessor &PP,
-               StringRef OutputFile,
+  PCHGenerator(const Preprocessor &PP, StringRef OutputFile,
                clang::Module *Module,
-               StringRef isysroot,
+               StringRef isysroot, raw_ostream *Out,
                bool AllowASTWithErrors = false);
   ~PCHGenerator();
   void InitializeSema(Sema &S) override { SemaPtr = &S; }
   void HandleTranslationUnit(ASTContext &Ctx) override;
   ASTMutationListener *GetASTMutationListener() override;
   ASTDeserializationListener *GetASTDeserializationListener() override;
-  /// \brief Register a callback to be invoked when the serialization is done.
-  void RegisterSerializationFinishedCallback(
-    const std::function<void(SmallVectorImpl<char>*)> Fn) {
-    SerializationFinishedCallback = Fn;
-  }
+
   bool hasEmittedPCH() const { return HasEmittedPCH; }
 };
 
