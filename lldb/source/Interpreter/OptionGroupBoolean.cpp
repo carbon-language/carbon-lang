@@ -56,7 +56,7 @@ OptionGroupBoolean::SetOptionValue (CommandInterpreter &interpreter,
     }
     else
     {
-        error = m_value.SetValueFromCString (option_arg);
+        error = m_value.SetValueFromString (option_arg);
     }
     return error;
 }

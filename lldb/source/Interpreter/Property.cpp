@@ -80,11 +80,11 @@ Property::Property (const PropertyDefinition &definition) :
             m_value_sp.reset (enum_value);
             if (definition.default_cstr_value)
             {
-                if (enum_value->SetValueFromCString(definition.default_cstr_value).Success())
+                if (enum_value->SetValueFromString(definition.default_cstr_value).Success())
                 {
                     enum_value->SetDefaultValue(enum_value->GetCurrentValue());
                     // Call Clear() since we don't want the value to appear as
-                    // having been set since we called SetValueFromCString() above.
+                    // having been set since we called SetValueFromString() above.
                     // Clear will set the current value to the default and clear
                     // the boolean that says that the value has been set.
                     enum_value->Clear();

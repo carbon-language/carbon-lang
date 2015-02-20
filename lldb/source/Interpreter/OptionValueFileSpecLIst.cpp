@@ -42,10 +42,10 @@ OptionValueFileSpecList::DumpValue (const ExecutionContext *exe_ctx, Stream &str
 }
 
 Error
-OptionValueFileSpecList::SetValueFromCString (const char *value, VarSetOperationType op)
+OptionValueFileSpecList::SetValueFromString (llvm::StringRef value, VarSetOperationType op)
 {
     Error error;
-    Args args(value);
+    Args args(value.str().c_str());
     const size_t argc = args.GetArgumentCount();
 
     switch (op)
@@ -174,7 +174,7 @@ OptionValueFileSpecList::SetValueFromCString (const char *value, VarSetOperation
             break;
 
         case eVarSetOperationInvalid:
-            error = OptionValue::SetValueFromCString (value, op);
+            error = OptionValue::SetValueFromString (value, op);
             break;
     }
     return error;

@@ -1950,15 +1950,15 @@ public:
         {
         case 'N':
             if (BreakpointID::StringIsBreakpointName(option_value, error) && error.Success())
-                m_name.SetValueFromCString(option_value);
+                m_name.SetValueFromString(option_value);
             break;
           
         case 'B':
-            if (m_breakpoint.SetValueFromCString(option_value).Fail())
+            if (m_breakpoint.SetValueFromString(option_value).Fail())
                 error.SetErrorStringWithFormat ("unrecognized value \"%s\" for breakpoint", option_value);
             break;
         case 'D':
-            if (m_use_dummy.SetValueFromCString(option_value).Fail())
+            if (m_use_dummy.SetValueFromString(option_value).Fail())
                 error.SetErrorStringWithFormat ("unrecognized value \"%s\" for use-dummy", option_value);
             break;
 

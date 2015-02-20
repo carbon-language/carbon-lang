@@ -622,7 +622,7 @@ OptionValue::CreateValueFromCStringForTypeMask (const char *value_cstr, uint32_t
     }
 
     if (value_sp)
-        error = value_sp->SetValueFromCString (value_cstr, eVarSetOperationAssign);
+        error = value_sp->SetValueFromString (value_cstr, eVarSetOperationAssign);
     else
         error.SetErrorString("unsupported type mask");
     return value_sp;
@@ -664,7 +664,7 @@ OptionValue::AutoComplete (CommandInterpreter &interpreter,
 }
 
 Error
-OptionValue::SetValueFromCString (const char *value, VarSetOperationType op)
+OptionValue::SetValueFromString (llvm::StringRef value, VarSetOperationType op)
 {
     Error error;
     switch (op)

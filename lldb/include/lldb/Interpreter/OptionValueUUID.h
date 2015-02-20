@@ -53,7 +53,7 @@ public:
     DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint32_t dump_mask);
     
     virtual Error
-    SetValueFromCString (const char *value,
+    SetValueFromString (llvm::StringRef value,
                          VarSetOperationType op = eVarSetOperationAssign);
     
     virtual bool

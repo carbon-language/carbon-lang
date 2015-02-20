@@ -36,9 +36,8 @@ OptionValueSInt64::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uin
 }
 
 Error
-OptionValueSInt64::SetValueFromCString (const char *value_cstr, VarSetOperationType op)
+OptionValueSInt64::SetValueFromString (llvm::StringRef value_ref, VarSetOperationType op)
 {
-    //printf ("%p: SetValueFromCString (s=\"%s\", op=%i)\n", this, value_cstr, op);
     Error error;
     switch (op)
     {
@@ -51,7 +50,7 @@ OptionValueSInt64::SetValueFromCString (const char *value_cstr, VarSetOperationT
         case eVarSetOperationAssign:
             {
                 bool success = false;
-                std::string value_str = llvm::StringRef(value_cstr).trim().str();
+                std::string value_str = value_ref.trim().str();
                 int64_t value = StringConvert::ToSInt64 (value_str.c_str(), 0, 0, &success);
                 if (success)
                 {
@@ -69,7 +68,8 @@ OptionValueSInt64::SetValueFromCString (const char *value_cstr, VarSetOperationT
                 }
                 else
                 {
-                    error.SetErrorStringWithFormat ("invalid int64_t string value: '%s'", value_cstr);
+                    error.SetErrorStringWithFormat ("invalid int64_t string value: '%s'",
+                            value_ref.str().c_str());
                 }
             }
             break;
@@ -79,7 +79,7 @@ OptionValueSInt64::SetValueFromCString (const char *value_cstr, VarSetOperationT
         case eVarSetOperationRemove:
         case eVarSetOperationAppend:
         case eVarSetOperationInvalid:
-            error = OptionValue::SetValueFromCString (value_cstr, op);
+            error = OptionValue::SetValueFromString (value_ref, op);
             break;
     }
     return error;

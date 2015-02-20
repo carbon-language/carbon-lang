@@ -34,10 +34,10 @@ OptionValuePathMappings::DumpValue (const ExecutionContext *exe_ctx, Stream &str
 }
 
 Error
-OptionValuePathMappings::SetValueFromCString (const char *value, VarSetOperationType op)
+OptionValuePathMappings::SetValueFromString (llvm::StringRef value, VarSetOperationType op)
 {
     Error error;
-    Args args(value);
+    Args args(value.str().c_str());
     const size_t argc = args.GetArgumentCount();
 
     switch (op)
@@ -175,7 +175,7 @@ OptionValuePathMappings::SetValueFromCString (const char *value, VarSetOperation
             break;
 
         case eVarSetOperationInvalid:
-            error = OptionValue::SetValueFromCString (value, op);
+            error = OptionValue::SetValueFromString (value, op);
             break;
     }
     return error;

@@ -47,7 +47,7 @@ OptionGroupFile::SetOptionValue (CommandInterpreter &interpreter,
                                  uint32_t option_idx,
                                  const char *option_arg)
 {
-    Error error (m_file.SetValueFromCString (option_arg));
+    Error error (m_file.SetValueFromString (option_arg));
     return error;
 }
 
@@ -88,7 +88,7 @@ OptionGroupFileList::SetOptionValue (CommandInterpreter &interpreter,
                                      uint32_t option_idx,
                                      const char *option_arg)
 {
-    Error error (m_file_list.SetValueFromCString (option_arg));
+    Error error (m_file_list.SetValueFromString (option_arg));
     return error;
 }
 

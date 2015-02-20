@@ -85,7 +85,7 @@ protected:
             switch (short_option)
             {
                 case 'c':
-                    error = m_count.SetValueFromCString(option_arg,eVarSetOperationAssign);
+                    error = m_count.SetValueFromString(option_arg,eVarSetOperationAssign);
                     break;
                 case 's':
                     if (option_arg && strcmp("end", option_arg) == 0)
@@ -94,10 +94,10 @@ protected:
                         m_start_idx.SetOptionWasSet();
                     }
                     else
-                        error = m_start_idx.SetValueFromCString(option_arg,eVarSetOperationAssign);
+                        error = m_start_idx.SetValueFromString(option_arg,eVarSetOperationAssign);
                     break;
                 case 'e':
-                    error = m_stop_idx.SetValueFromCString(option_arg,eVarSetOperationAssign);
+                    error = m_stop_idx.SetValueFromString(option_arg,eVarSetOperationAssign);
                     break;
                 case 'C':
                     m_clear.SetCurrentValue(true);
@@ -326,15 +326,15 @@ protected:
             switch (short_option)
             {
                 case 'e':
-                    error = m_stop_on_error.SetValueFromCString(option_arg);
+                    error = m_stop_on_error.SetValueFromString(option_arg);
                     break;
 
                 case 'c':
-                    error = m_stop_on_continue.SetValueFromCString(option_arg);
+                    error = m_stop_on_continue.SetValueFromString(option_arg);
                     break;
 
                 case 's':
-                    error = m_silent_run.SetValueFromCString(option_arg);
+                    error = m_silent_run.SetValueFromString(option_arg);
                     break;
 
                 default:

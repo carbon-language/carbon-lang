@@ -74,9 +74,9 @@ OptionValueArray::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint
 }
 
 Error
-OptionValueArray::SetValueFromCString (const char *value, VarSetOperationType op)
+OptionValueArray::SetValueFromString (llvm::StringRef value, VarSetOperationType op)
 {
-    Args args(value);
+    Args args(value.str().c_str());
     Error error = SetArgs (args, op);
     if (error.Success())
         NotifyValueChanged();

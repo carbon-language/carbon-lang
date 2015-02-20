@@ -61,7 +61,7 @@ public:
     DeepCopy () const;
     
     virtual Error
-    SetValueFromCString (const char *value, VarSetOperationType op = eVarSetOperationAssign);
+    SetValueFromString (llvm::StringRef value, VarSetOperationType op = eVarSetOperationAssign);
 
     virtual void
     DumpValue (const ExecutionContext *exe_ctx,

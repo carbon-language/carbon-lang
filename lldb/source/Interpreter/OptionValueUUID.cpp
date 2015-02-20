@@ -37,7 +37,7 @@ OptionValueUUID::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint3
 }
 
 Error
-OptionValueUUID::SetValueFromCString (const char *value_cstr,
+OptionValueUUID::SetValueFromString (llvm::StringRef value,
                                       VarSetOperationType op)
 {
     Error error;
@@ -51,8 +51,8 @@ OptionValueUUID::SetValueFromCString (const char *value_cstr,
         case eVarSetOperationReplace:
         case eVarSetOperationAssign:
             {
-                if (m_uuid.SetFromCString(value_cstr) == 0)
-                    error.SetErrorStringWithFormat ("invalid uuid string value '%s'", value_cstr);
+                if (m_uuid.SetFromCString(value.str().c_str()) == 0)
+                    error.SetErrorStringWithFormat ("invalid uuid string value '%s'", value.str().c_str());
                 else
                 {
                     m_value_was_set = true;
@@ -66,7 +66,7 @@ OptionValueUUID::SetValueFromCString (const char *value_cstr,
         case eVarSetOperationRemove:
         case eVarSetOperationAppend:
         case eVarSetOperationInvalid:
-            error = OptionValue::SetValueFromCString (value_cstr, op);
+            error = OptionValue::SetValueFromString (value, op);
             break;
     }
     return error;

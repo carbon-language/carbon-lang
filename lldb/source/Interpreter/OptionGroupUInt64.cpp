@@ -48,7 +48,7 @@ OptionGroupUInt64::SetOptionValue (CommandInterpreter &interpreter,
                                    uint32_t option_idx,
                                    const char *option_arg)
 {
-    Error error (m_value.SetValueFromCString (option_arg));
+    Error error (m_value.SetValueFromString (option_arg));
     return error;
 }
 

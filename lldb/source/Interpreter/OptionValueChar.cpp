@@ -39,7 +39,7 @@ OptionValueChar::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint3
 }
 
 Error
-OptionValueChar::SetValueFromCString (const char *value_cstr,
+OptionValueChar::SetValueFromString (llvm::StringRef value,
                                       VarSetOperationType op)
 {
     Error error;
@@ -53,19 +53,19 @@ OptionValueChar::SetValueFromCString (const char *value_cstr,
     case eVarSetOperationAssign:
         {
             bool success = false;
-            char char_value = Args::StringToChar(value_cstr, '\0', &success);
+            char char_value = Args::StringToChar(value.str().c_str(), '\0', &success);
             if (success)
             {
                 m_current_value = char_value;
                 m_value_was_set = true;
             }
             else
-                error.SetErrorStringWithFormat("'%s' cannot be longer than 1 character", value_cstr);
+                error.SetErrorStringWithFormat("'%s' cannot be longer than 1 character", value.str().c_str());
         }
         break;
 
     default:
-        error = OptionValue::SetValueFromCString (value_cstr, op);
+        error = OptionValue::SetValueFromString (value.str().c_str(), op);
         break;
     }
     return error;

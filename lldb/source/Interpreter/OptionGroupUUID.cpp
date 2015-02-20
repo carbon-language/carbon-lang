@@ -56,7 +56,7 @@ OptionGroupUUID::SetOptionValue (CommandInterpreter &interpreter,
     switch (short_option)
     {
         case 'u':
-            error = m_uuid.SetValueFromCString (option_arg);
+            error = m_uuid.SetValueFromString (option_arg);
             if (error.Success())
                 m_uuid.SetOptionWasSet();
             break;

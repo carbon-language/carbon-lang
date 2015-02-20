@@ -43,7 +43,7 @@ OptionValueArch::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint3
 }
 
 Error
-OptionValueArch::SetValueFromCString (const char *value_cstr, VarSetOperationType op)
+OptionValueArch::SetValueFromString (llvm::StringRef value, VarSetOperationType op)
 {
     Error error;
     switch (op)
@@ -55,30 +55,23 @@ OptionValueArch::SetValueFromCString (const char *value_cstr, VarSetOperationTyp
         
     case eVarSetOperationReplace:
     case eVarSetOperationAssign:
-        if (value_cstr)
         {
-            std::string value = llvm::StringRef(value_cstr).trim().str();
-            value_cstr = value.c_str();
-            if (m_current_value.SetTriple (value_cstr))
+            std::string value_str = value.trim().str();
+            if (m_current_value.SetTriple (value_str.c_str()))
             {
                 m_value_was_set = true;
                 NotifyValueChanged();
             }
             else
-                error.SetErrorStringWithFormat("unsupported architecture '%s'", value_cstr);
+                error.SetErrorStringWithFormat("unsupported architecture '%s'", value_str.c_str());
+            break;
         }
-        else
-        {
-            error.SetErrorString("invalid value string");
-        }
-        break;
-        
     case eVarSetOperationInsertBefore:
     case eVarSetOperationInsertAfter:
     case eVarSetOperationRemove:
     case eVarSetOperationAppend:
     case eVarSetOperationInvalid:
-        error = OptionValue::SetValueFromCString (value_cstr, op);
+        error = OptionValue::SetValueFromString (value, op);
         break;
     }
     return error;

@@ -211,16 +211,16 @@ OptionValueDictionary::SetArgs (const Args &args, VarSetOperationType op)
     case eVarSetOperationInsertBefore:
     case eVarSetOperationInsertAfter:
     case eVarSetOperationInvalid:
-        error = OptionValue::SetValueFromCString (nullptr, op);
+        error = OptionValue::SetValueFromString (llvm::StringRef(), op);
         break;
     }
     return error;
 }
 
 Error
-OptionValueDictionary::SetValueFromCString (const char *value_cstr, VarSetOperationType op)
+OptionValueDictionary::SetValueFromString (llvm::StringRef value, VarSetOperationType op)
 {
-    Args args(value_cstr);
+    Args args(value.str().c_str());
     Error error = SetArgs (args, op);
     if (error.Success())
         NotifyValueChanged();
@@ -335,7 +335,7 @@ OptionValueDictionary::SetSubValue (const ExecutionContext *exe_ctx, VarSetOpera
     const bool will_modify = true;
     lldb::OptionValueSP value_sp (GetSubValue (exe_ctx, name, will_modify, error));
     if (value_sp)
-        error = value_sp->SetValueFromCString(value, op);
+        error = value_sp->SetValueFromString(value, op);
     else
     {
         if (error.AsCString() == nullptr)
@@ -381,7 +381,7 @@ OptionValueDictionary::SetStringValueForKey (const ConstString &key,
             return false;
         if (pos->second->GetType() == OptionValue::eTypeString)
         {
-            pos->second->SetValueFromCString(value);
+            pos->second->SetValueFromString(value);
             return true;
         }
     }

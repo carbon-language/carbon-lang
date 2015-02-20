@@ -51,31 +51,30 @@ OptionValueString::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uin
 }
 
 Error
-OptionValueString::SetValueFromCString (const char *value_cstr,
+OptionValueString::SetValueFromString (llvm::StringRef value,
                                         VarSetOperationType op)
 {
     Error error;
 
-    std::string value_str_no_quotes;
-    llvm::StringRef trimmed = value_cstr ? llvm::StringRef(value_cstr).trim() : llvm::StringRef();
-    if (trimmed.size() > 0)
+    std::string value_str = value.str();
+    value = value.trim();
+    if (value.size() > 0)
     {
-        switch (trimmed.front())
+        switch (value.front())
         {
         case '"':
         case '\'':
             {
-                if (trimmed.size() <= 1 || trimmed.back() != trimmed.front())
+                if (value.size() <= 1 || value.back() != value.front())
                 {
                     error.SetErrorString("mismatched quotes");
                     return error;
                 }
-                trimmed = trimmed.drop_front().drop_back().str();
+                value = value.drop_front().drop_back().str();
             }
             break;
         }
-        value_str_no_quotes = trimmed.str();
-        value_cstr = value_str_no_quotes.c_str();
+        value_str = value.str();
     }
 
     switch (op)
@@ -86,26 +85,26 @@ OptionValueString::SetValueFromCString (const char *value_cstr,
     case eVarSetOperationRemove:
         if (m_validator)
         {
-            error = m_validator(value_cstr,m_validator_baton);
+            error = m_validator(value_str.c_str(),m_validator_baton);
             if (error.Fail())
                 return error;
         }
-        error = OptionValue::SetValueFromCString (value_cstr, op);
+        error = OptionValue::SetValueFromString (value, op);
         break;
 
     case eVarSetOperationAppend:
         {
             std::string new_value(m_current_value);
-            if (value_cstr && value_cstr[0])
+            if (value.size() > 0)
             {
                 if (m_options.Test (eOptionEncodeCharacterEscapeSequences))
                 {
                     std::string str;
-                    Args::EncodeEscapeSequences (value_cstr, str);
+                    Args::EncodeEscapeSequences (value_str.c_str(), str);
                     new_value.append(str);
                 }
                 else
-                    new_value.append(value_cstr);
+                    new_value.append(value);
             }
             if (m_validator)
             {
@@ -127,18 +126,18 @@ OptionValueString::SetValueFromCString (const char *value_cstr,
     case eVarSetOperationAssign:
         if (m_validator)
         {
-            error = m_validator(value_cstr,m_validator_baton);
+            error = m_validator(value_str.c_str(), m_validator_baton);
             if (error.Fail())
                 return error;
         }
         m_value_was_set = true;
         if (m_options.Test (eOptionEncodeCharacterEscapeSequences))
         {
-            Args::EncodeEscapeSequences (value_cstr, m_current_value);
+            Args::EncodeEscapeSequences (value_str.c_str(), m_current_value);
         }
         else
         {
-            SetCurrentValue (value_cstr);
+            SetCurrentValue (value_str.c_str());
         }
         NotifyValueChanged();
         break;

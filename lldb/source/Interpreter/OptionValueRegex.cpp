@@ -41,7 +41,7 @@ OptionValueRegex::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint
 }
 
 Error
-OptionValueRegex::SetValueFromCString (const char *value_cstr,
+OptionValueRegex::SetValueFromString (llvm::StringRef value,
                                         VarSetOperationType op)
 {
     Error error;
@@ -52,7 +52,7 @@ OptionValueRegex::SetValueFromCString (const char *value_cstr,
     case eVarSetOperationInsertAfter:
     case eVarSetOperationRemove:
     case eVarSetOperationAppend:
-        error = OptionValue::SetValueFromCString (value_cstr, op);
+        error = OptionValue::SetValueFromString (value, op);
         break;
 
     case eVarSetOperationClear:
@@ -62,7 +62,7 @@ OptionValueRegex::SetValueFromCString (const char *value_cstr,
 
     case eVarSetOperationReplace:
     case eVarSetOperationAssign:
-        if (m_regex.Compile (value_cstr))
+        if (m_regex.Compile (value.str().c_str()))
         {
             m_value_was_set = true;
             NotifyValueChanged();

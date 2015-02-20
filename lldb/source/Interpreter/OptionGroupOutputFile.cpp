@@ -62,7 +62,7 @@ OptionGroupOutputFile::SetOptionValue (CommandInterpreter &interpreter,
     switch (short_option)
     {
         case 'o':
-            error = m_file.SetValueFromCString (option_arg);
+            error = m_file.SetValueFromString (option_arg);
             break;
 
         case SHORT_OPTION_APND:

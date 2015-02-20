@@ -726,7 +726,7 @@ Instruction::ReadArray (FILE *in_file, Stream *out_stream, OptionValue::Type dat
             {
             case OptionValue::eTypeUInt64:
                 data_value_sp.reset (new OptionValueUInt64 (0, 0));
-                data_value_sp->SetValueFromCString (value.c_str());
+                data_value_sp->SetValueFromString (value);
                 break;
             // Other types can be added later as needed.
             default:
@@ -834,7 +834,7 @@ Instruction::ReadDictionary (FILE *in_file, Stream *out_stream)
             else if ((value[0] == '0') && (value[1] == 'x'))
             {
                 value_sp.reset (new OptionValueUInt64 (0, 0));
-                value_sp->SetValueFromCString (value.c_str());
+                value_sp->SetValueFromString (value);
             }
             else
             {

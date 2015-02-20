@@ -95,7 +95,7 @@ public:
         switch (short_option)
         {
             case 'l':
-                error = m_num_per_line.SetValueFromCString (option_arg);
+                error = m_num_per_line.SetValueFromString (option_arg);
                 if (m_num_per_line.GetCurrentValue() == 0)
                     error.SetErrorStringWithFormat("invalid value for --num-per-line option '%s'", option_arg);
                 break;
@@ -105,7 +105,7 @@ public:
                 break;
                 
             case 't':
-                error = m_view_as_type.SetValueFromCString (option_arg);
+                error = m_view_as_type.SetValueFromString (option_arg);
                 break;
             
             case 'r':
@@ -981,20 +981,20 @@ public:
         switch (short_option)
         {
         case 'e':
-              m_expr.SetValueFromCString(option_arg);
+              m_expr.SetValueFromString(option_arg);
               break;
           
         case 's':
-              m_string.SetValueFromCString(option_arg);
+              m_string.SetValueFromString(option_arg);
               break;
           
         case 'c':
-              if (m_count.SetValueFromCString(option_arg).Fail())
+              if (m_count.SetValueFromString(option_arg).Fail())
                   error.SetErrorString("unrecognized value for count");
               break;
                 
         case 'o':
-               if (m_offset.SetValueFromCString(option_arg).Fail())
+               if (m_offset.SetValueFromString(option_arg).Fail())
                    error.SetErrorString("unrecognized value for dump-offset");
                 break;
 

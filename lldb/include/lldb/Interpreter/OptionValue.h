@@ -106,7 +106,7 @@ namespace lldb_private {
         DumpValue (const ExecutionContext *exe_ctx, Stream &strm, uint32_t dump_mask) = 0;
         
         virtual Error
-        SetValueFromCString (const char *value, VarSetOperationType op = eVarSetOperationAssign);
+        SetValueFromString (llvm::StringRef value, VarSetOperationType op = eVarSetOperationAssign);
         
         virtual bool
         Clear () = 0;

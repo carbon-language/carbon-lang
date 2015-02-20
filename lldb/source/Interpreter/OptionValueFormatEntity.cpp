@@ -67,7 +67,7 @@ OptionValueFormatEntity::DumpValue (const ExecutionContext *exe_ctx, Stream &str
 }
 
 Error
-OptionValueFormatEntity::SetValueFromCString (const char *value_cstr,
+OptionValueFormatEntity::SetValueFromString (llvm::StringRef value_str,
                                       VarSetOperationType op)
 {
     Error error;
@@ -82,12 +82,11 @@ OptionValueFormatEntity::SetValueFromCString (const char *value_cstr,
         case eVarSetOperationAssign:
             {
                 FormatEntity::Entry entry;
-                llvm::StringRef value_str(value_cstr);
                 error = FormatEntity::Parse(value_str, entry);
                 if (error.Success())
                 {
                     m_current_entry = std::move(entry);
-                    m_current_format = value_cstr;
+                    m_current_format = value_str;
                     m_value_was_set = true;
                     NotifyValueChanged();
                 }
@@ -99,7 +98,7 @@ OptionValueFormatEntity::SetValueFromCString (const char *value_cstr,
         case eVarSetOperationRemove:
         case eVarSetOperationAppend:
         case eVarSetOperationInvalid:
-            error = OptionValue::SetValueFromCString (value_cstr, op);
+            error = OptionValue::SetValueFromString (value_str, op);
             break;
     }
     return error;

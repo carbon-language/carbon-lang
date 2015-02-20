@@ -78,7 +78,7 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
     switch (short_option)
     {
         case 'f':
-            error = m_format.SetValueFromCString (option_arg);
+            error = m_format.SetValueFromString (option_arg);
             break;
 
         case 'c':
@@ -88,7 +88,7 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
             }
             else
             {
-                error = m_count.SetValueFromCString (option_arg);
+                error = m_count.SetValueFromString (option_arg);
                 if (m_count.GetCurrentValue() == 0)
                     error.SetErrorStringWithFormat("invalid --count option value '%s'", option_arg);
             }
@@ -101,7 +101,7 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
             }
             else
             {
-                error = m_byte_size.SetValueFromCString (option_arg);
+                error = m_byte_size.SetValueFromString (option_arg);
                 if (m_byte_size.GetCurrentValue() == 0)
                     error.SetErrorStringWithFormat("invalid --size option value '%s'", option_arg);
             }

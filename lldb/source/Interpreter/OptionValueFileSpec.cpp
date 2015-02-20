@@ -75,7 +75,7 @@ OptionValueFileSpec::DumpValue (const ExecutionContext *exe_ctx, Stream &strm, u
 }
 
 Error
-OptionValueFileSpec::SetValueFromCString (const char *value_cstr,
+OptionValueFileSpec::SetValueFromString (llvm::StringRef value,
                                           VarSetOperationType op)
 {
     Error error;
@@ -88,23 +88,16 @@ OptionValueFileSpec::SetValueFromCString (const char *value_cstr,
         
     case eVarSetOperationReplace:
     case eVarSetOperationAssign:
-        if (value_cstr && value_cstr[0])
+        if (value.size() > 0)
         {
             // The setting value may have whitespace, double-quotes, or single-quotes around the file
             // path to indicate that internal spaces are not word breaks.  Strip off any ws & quotes
             // from the start and end of the file path - we aren't doing any word // breaking here so 
             // the quoting is unnecessary.  NB this will cause a problem if someone tries to specify
             // a file path that legitimately begins or ends with a " or ' character, or whitespace.
-            std::string filepath(value_cstr);
-            auto prefix_chars_to_trim = filepath.find_first_not_of ("\"' \t");
-            if (prefix_chars_to_trim != std::string::npos && prefix_chars_to_trim > 0)
-                filepath.erase(0, prefix_chars_to_trim);
-            auto suffix_chars_to_trim = filepath.find_last_not_of ("\"' \t");
-            if (suffix_chars_to_trim != std::string::npos && suffix_chars_to_trim < filepath.size())
-                filepath.erase (suffix_chars_to_trim + 1);
-
+            value = value.trim("\"' \t");
             m_value_was_set = true;
-            m_current_value.SetFile(filepath.c_str(), m_resolve);
+            m_current_value.SetFile(value.str().c_str(), m_resolve);
             m_data_sp.reset();
             NotifyValueChanged();
         }
@@ -119,7 +112,7 @@ OptionValueFileSpec::SetValueFromCString (const char *value_cstr,
     case eVarSetOperationRemove:
     case eVarSetOperationAppend:
     case eVarSetOperationInvalid:
-        error = OptionValue::SetValueFromCString (value_cstr, op);
+        error = OptionValue::SetValueFromString (value, op);
         break;
     }
     return error;
