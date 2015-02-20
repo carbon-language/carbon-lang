@@ -13,6 +13,11 @@ import tempfile
 import time
 from lldbtest import *
 
+
+def get_common_stub_args():
+    return [] if 'darwin' in sys.platform else ['g']
+
+
 class TestStubSetSIDTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
     def get_stub_sid(self, extra_stub_args=None):
         # Launch debugserver
@@ -34,11 +39,11 @@ class TestStubSetSIDTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.assertEquals(stub_sid, os.getsid(0))
 
     def sid_is_different_with_setsid(self):
-        stub_sid = self.get_stub_sid(" --setsid")
+        stub_sid = self.get_stub_sid(" %s --setsid" % ' '.join(get_common_stub_args()))
         self.assertNotEquals(stub_sid, os.getsid(0))
 
     def sid_is_different_with_S(self):
-        stub_sid = self.get_stub_sid(" -S")
+        stub_sid = self.get_stub_sid(" %s -S" % ' '.join(get_common_stub_args()))
         self.assertNotEquals(stub_sid, os.getsid(0))
 
     @debugserver_test
