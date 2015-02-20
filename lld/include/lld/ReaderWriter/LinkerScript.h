@@ -171,7 +171,7 @@ public:
   virtual ~Command() {}
 
 protected:
-  explicit Command(class Parser &ctx, Kind k) : _ctx(ctx), _kind(k) {}
+  Command(class Parser &ctx, Kind k) : _ctx(ctx), _kind(k) {}
 
 private:
   Parser &_ctx;
@@ -180,7 +180,7 @@ private:
 
 class Output : public Command {
 public:
-  explicit Output(Parser &ctx, StringRef outputFileName)
+  Output(Parser &ctx, StringRef outputFileName)
       : Command(ctx, Kind::Output), _outputFileName(outputFileName) {}
 
   static bool classof(const Command *c) { return c->getKind() == Kind::Output; }
@@ -197,7 +197,7 @@ private:
 
 class OutputFormat : public Command {
 public:
-  explicit OutputFormat(Parser &ctx, const SmallVectorImpl<StringRef> &formats)
+  OutputFormat(Parser &ctx, const SmallVectorImpl<StringRef> &formats)
       : Command(ctx, Kind::OutputFormat) {
     size_t numFormats = formats.size();
     StringRef *formatsStart = getAllocator().Allocate<StringRef>(numFormats);
@@ -229,7 +229,7 @@ private:
 
 class OutputArch : public Command {
 public:
-  explicit OutputArch(Parser &ctx, StringRef arch)
+  OutputArch(Parser &ctx, StringRef arch)
       : Command(ctx, Kind::OutputArch), _arch(arch) {}
 
   static bool classof(const Command *c) {
@@ -252,7 +252,7 @@ struct Path {
   bool _isDashlPrefix;
 
   Path() : _asNeeded(false), _isDashlPrefix(false) {}
-  explicit Path(StringRef path, bool asNeeded = false, bool isLib = false)
+  Path(StringRef path, bool asNeeded = false, bool isLib = false)
       : _path(path), _asNeeded(asNeeded), _isDashlPrefix(isLib) {}
 };
 
@@ -310,7 +310,7 @@ public:
 
 class Entry : public Command {
 public:
-  explicit Entry(Parser &ctx, StringRef entryName)
+  Entry(Parser &ctx, StringRef entryName)
       : Command(ctx, Kind::Entry), _entryName(entryName) {}
 
   static bool classof(const Command *c) { return c->getKind() == Kind::Entry; }
@@ -327,7 +327,7 @@ private:
 
 class SearchDir : public Command {
 public:
-  explicit SearchDir(Parser &ctx, StringRef searchPath)
+  SearchDir(Parser &ctx, StringRef searchPath)
       : Command(ctx, Kind::SearchDir), _searchPath(searchPath) {}
 
   static bool classof(const Command *c) {
@@ -368,7 +368,7 @@ public:
   virtual ~Expression() {}
 
 protected:
-  explicit Expression(class Parser &ctx, Kind k) : _ctx(ctx), _kind(k) {}
+  Expression(class Parser &ctx, Kind k) : _ctx(ctx), _kind(k) {}
 
 private:
   Parser &_ctx;
@@ -380,7 +380,7 @@ private:
 /// with a constant.
 class Constant : public Expression {
 public:
-  explicit Constant(Parser &ctx, uint64_t num)
+  Constant(Parser &ctx, uint64_t num)
       : Expression(ctx, Kind::Constant), _num(num) {}
   void dump(raw_ostream &os) const override;
 
@@ -586,7 +586,7 @@ public:
   virtual ~InputSection() {}
 
 protected:
-  explicit InputSection(Parser &ctx, Kind k) : _ctx(ctx), _kind(k) {}
+  InputSection(Parser &ctx, Kind k) : _ctx(ctx), _kind(k) {}
 
 private:
   Parser &_ctx;
