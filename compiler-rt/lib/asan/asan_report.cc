@@ -834,6 +834,8 @@ void ReportBadParamsToAnnotateContiguousContainer(uptr beg, uptr end,
          "      old_mid : %p\n"
          "      new_mid : %p\n",
          beg, end, old_mid, new_mid);
+  if (!IsAligned(beg, SHADOW_GRANULARITY))
+    Report("ERROR: beg is not aligned by %d\n", SHADOW_GRANULARITY);
   stack->Print();
   ReportErrorSummary("bad-__sanitizer_annotate_contiguous_container", stack);
 }
