@@ -14,8 +14,8 @@ using namespace llvm;
 void ARMFunctionInfo::anchor() { }
 
 ARMFunctionInfo::ARMFunctionInfo(MachineFunction &MF)
-    : isThumb(MF.getTarget().getSubtarget<ARMSubtarget>().isThumb()),
-      hasThumb2(MF.getTarget().getSubtarget<ARMSubtarget>().hasThumb2()),
+    : isThumb(MF.getSubtarget<ARMSubtarget>().isThumb()),
+      hasThumb2(MF.getSubtarget<ARMSubtarget>().hasThumb2()),
       StByValParamsPadding(0), ArgRegsSaveSize(0), HasStackFrame(false),
       RestoreSPFromFP(false), LRSpilledForFarJump(false),
       FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),

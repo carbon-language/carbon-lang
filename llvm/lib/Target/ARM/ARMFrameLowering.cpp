@@ -1864,7 +1864,7 @@ static const uint64_t kSplitStackAvailable = 256;
 void ARMFrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   unsigned Opcode;
   unsigned CFIIndex;
-  const ARMSubtarget *ST = &MF.getTarget().getSubtarget<ARMSubtarget>();
+  const ARMSubtarget *ST = &MF.getSubtarget<ARMSubtarget>();
   bool Thumb = ST->isThumb();
 
   // Sadly, this currently doesn't support varargs, platforms other than

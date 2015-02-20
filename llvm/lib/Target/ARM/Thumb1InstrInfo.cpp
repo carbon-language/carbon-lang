@@ -44,7 +44,7 @@ void Thumb1InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                   bool KillSrc) const {
   // Need to check the arch.
   MachineFunction &MF = *MBB.getParent();
-  const ARMSubtarget &st = MF.getTarget().getSubtarget<ARMSubtarget>();
+  const ARMSubtarget &st = MF.getSubtarget<ARMSubtarget>();
 
   assert(ARM::GPRRegClass.contains(DestReg, SrcReg) &&
          "Thumb1 can only copy GPR registers");

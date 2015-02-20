@@ -70,7 +70,7 @@ public:
 
   bool runOnMachineFunction(MachineFunction &MF) override {
     // Reset the subtarget each time through.
-    Subtarget = &MF.getTarget().getSubtarget<ARMSubtarget>();
+    Subtarget = &MF.getSubtarget<ARMSubtarget>();
     SelectionDAGISel::runOnMachineFunction(MF);
     return true;
   }

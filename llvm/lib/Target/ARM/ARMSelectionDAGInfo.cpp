@@ -32,7 +32,8 @@ ARMSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
                                              bool isVolatile, bool AlwaysInline,
                                              MachinePointerInfo DstPtrInfo,
                                           MachinePointerInfo SrcPtrInfo) const {
-  const ARMSubtarget &Subtarget = DAG.getTarget().getSubtarget<ARMSubtarget>();
+  const ARMSubtarget &Subtarget =
+      DAG.getMachineFunction().getSubtarget<ARMSubtarget>();
   // Do repeated 4-byte loads and stores. To be improved.
   // This requires 4-byte alignment.
   if ((Align & 3) != 0)
@@ -150,14 +151,14 @@ EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
                         SDValue Src, SDValue Size,
                         unsigned Align, bool isVolatile,
                         MachinePointerInfo DstPtrInfo) const {
-  const ARMSubtarget &Subtarget = DAG.getTarget().getSubtarget<ARMSubtarget>();
+  const ARMSubtarget &Subtarget =
+      DAG.getMachineFunction().getSubtarget<ARMSubtarget>();
   // Use default for non-AAPCS (or MachO) subtargets
   if (!Subtarget.isAAPCS_ABI() || Subtarget.isTargetMachO() ||
       Subtarget.isTargetWindows())
     return SDValue();
 
-  const ARMTargetLowering &TLI =
-      *DAG.getTarget().getSubtarget<ARMSubtarget>().getTargetLowering();
+  const ARMTargetLowering &TLI = *Subtarget.getTargetLowering();
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
 

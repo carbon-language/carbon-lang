@@ -199,7 +199,7 @@ def GPR : RegisterClass<"ARM", [i32], 32, (add (sequence "R%u", 0, 12),
   // Thumb1 instructions that know how to use hi regs.
   let AltOrders = [(add LR, GPR), (trunc GPR, 8)];
   let AltOrderSelect = [{
-      return 1 + MF.getTarget().getSubtarget<ARMSubtarget>().isThumb1Only();
+      return 1 + MF.getSubtarget<ARMSubtarget>().isThumb1Only();
   }];
 }
 
@@ -209,7 +209,7 @@ def GPR : RegisterClass<"ARM", [i32], 32, (add (sequence "R%u", 0, 12),
 def GPRnopc : RegisterClass<"ARM", [i32], 32, (sub GPR, PC)> {
   let AltOrders = [(add LR, GPRnopc), (trunc GPRnopc, 8)];
   let AltOrderSelect = [{
-      return 1 + MF.getTarget().getSubtarget<ARMSubtarget>().isThumb1Only();
+      return 1 + MF.getSubtarget<ARMSubtarget>().isThumb1Only();
   }];
 }
 
@@ -219,7 +219,7 @@ def GPRnopc : RegisterClass<"ARM", [i32], 32, (sub GPR, PC)> {
 def GPRwithAPSR : RegisterClass<"ARM", [i32], 32, (add (sub GPR, PC), APSR_NZCV)> {
   let AltOrders = [(add LR, GPRnopc), (trunc GPRnopc, 8)];
   let AltOrderSelect = [{
-      return 1 + MF.getTarget().getSubtarget<ARMSubtarget>().isThumb1Only();
+      return 1 + MF.getSubtarget<ARMSubtarget>().isThumb1Only();
   }];
 }
 
@@ -237,7 +237,7 @@ def GPRsp : RegisterClass<"ARM", [i32], 32, (add SP)>;
 def rGPR : RegisterClass<"ARM", [i32], 32, (sub GPR, SP, PC)> {
   let AltOrders = [(add LR, rGPR), (trunc rGPR, 8)];
   let AltOrderSelect = [{
-      return 1 + MF.getTarget().getSubtarget<ARMSubtarget>().isThumb1Only();
+      return 1 + MF.getSubtarget<ARMSubtarget>().isThumb1Only();
   }];
 }
 
@@ -255,7 +255,7 @@ def hGPR : RegisterClass<"ARM", [i32], 32, (sub GPR, tGPR)>;
 def tcGPR : RegisterClass<"ARM", [i32], 32, (add R0, R1, R2, R3, R12)> {
   let AltOrders = [(and tcGPR, tGPR)];
   let AltOrderSelect = [{
-      return MF.getTarget().getSubtarget<ARMSubtarget>().isThumb1Only();
+      return MF.getSubtarget<ARMSubtarget>().isThumb1Only();
   }];
 }
 

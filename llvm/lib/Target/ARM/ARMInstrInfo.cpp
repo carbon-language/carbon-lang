@@ -93,7 +93,7 @@ unsigned ARMInstrInfo::getUnindexedOpcode(unsigned Opc) const {
 void ARMInstrInfo::expandLoadStackGuard(MachineBasicBlock::iterator MI,
                                         Reloc::Model RM) const {
   MachineFunction &MF = *MI->getParent()->getParent();
-  const ARMSubtarget &Subtarget = MF.getTarget().getSubtarget<ARMSubtarget>();
+  const ARMSubtarget &Subtarget = MF.getSubtarget<ARMSubtarget>();
 
   if (!Subtarget.useMovt(MF)) {
     if (RM == Reloc::PIC_)
