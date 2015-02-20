@@ -108,8 +108,9 @@ struct PartiallyConstructedSafepointRecord {
   /// for this safepoint
   DenseSet<llvm::Value *> NewInsertedDefs;
 
-  /// The bounds of the inserted code for the safepoint
-  std::pair<Instruction *, Instruction *> SafepointBounds;
+  /// The *new* gc.statepoint instruction itself.  This produces the token
+  /// that normal path gc.relocates and the gc.result are tied to.
+  Instruction *StatepointToken;
 
   /// Instruction to which exceptional gc relocates are attached
   /// Makes it easier to iterate through them during relocationViaAlloca.
@@ -1096,25 +1097,6 @@ static BasicBlock *normalizeBBForInvokeSafepoint(BasicBlock *BB,
   return ret;
 }
 
-static void
-VerifySafepointBounds(const std::pair<Instruction *, Instruction *> &bounds) {
-  assert(bounds.first->getParent() && bounds.second->getParent() &&
-         "both must belong to basic blocks");
-  if (bounds.first->getParent() == bounds.second->getParent()) {
-    // This is a call safepoint
-    // TODO: scan the range to find the statepoint
-    // TODO: check that the following instruction is not a gc_relocate or
-    // gc_result
-  } else {
-    // This is an invoke safepoint
-    InvokeInst *invoke = dyn_cast<InvokeInst>(bounds.first);
-    (void)invoke;
-    assert(invoke && "only continues over invokes!");
-    assert(invoke->getNormalDest() == bounds.second->getParent() &&
-           "safepoint should continue into normal exit block");
-  }
-}
-
 static int find_index(const SmallVectorImpl<Value *> &livevec, Value *val) {
   auto itr = std::find(livevec.begin(), livevec.end(), val);
   assert(livevec.end() != itr);
@@ -1339,7 +1321,6 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
   token->takeName(CS.getInstruction());
 
   // The GCResult is already inserted, we just need to find it
-  Instruction *gc_result = nullptr;
   /* scope */ {
     Instruction *toReplace = CS.getInstruction();
     assert((toReplace->hasNUses(0) || toReplace->hasNUses(1)) &&
@@ -1347,7 +1328,6 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
     if (toReplace->hasOneUse()) {
       Instruction *GCResult = cast<Instruction>(*toReplace->user_begin());
       assert(isGCResult(GCResult));
-      gc_result = GCResult;
     }
   }
 
@@ -1356,28 +1336,11 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
   // considered a live reference.
   CS.getInstruction()->replaceAllUsesWith(token);
 
+  result.StatepointToken = token;
+
   // Second, create a gc.relocate for every live variable
-  std::vector<llvm::Instruction *> newDefs =
-      CreateGCRelocates(liveVariables, live_start, basePtrs, token, Builder);
+  CreateGCRelocates(liveVariables, live_start, basePtrs, token, Builder);
 
-  // Need to pass through the last part of the safepoint block so that we
-  // don't accidentally update uses in a following gc.relocate which is
-  // still conceptually part of the same safepoint.  Gah.
-  Instruction *last = nullptr;
-  if (!newDefs.empty()) {
-    last = newDefs.back();
-  } else if (gc_result) {
-    last = gc_result;
-  } else {
-    last = token;
-  }
-  assert(last && "can't be null");
-  const auto bounds = std::make_pair(token, last);
-
-  // Sanity check our results - this is slightly non-trivial due to invokes
-  VerifySafepointBounds(bounds);
-
-  result.SafepointBounds = bounds;
 }
 
 namespace {
@@ -1520,17 +1483,17 @@ static void relocationViaAlloca(
   // otherwise we lose the link between statepoint and old def
   for (size_t i = 0; i < records.size(); i++) {
     const struct PartiallyConstructedSafepointRecord &info = records[i];
-    Value *statepoint = info.SafepointBounds.first;
+    Value *Statepoint = info.StatepointToken;
 
     // This will be used for consistency check
     DenseSet<Value *> visitedLiveValues;
 
     // Insert stores for normal statepoint gc relocates
-    insertRelocationStores(statepoint->users(), allocaMap, visitedLiveValues);
+    insertRelocationStores(Statepoint->users(), allocaMap, visitedLiveValues);
 
     // In case if it was invoke statepoint
     // we will insert stores for exceptional path gc relocates.
-    if (isa<InvokeInst>(statepoint)) {
+    if (isa<InvokeInst>(Statepoint)) {
       insertRelocationStores(info.UnwindToken->users(),
                              allocaMap, visitedLiveValues);
     }
@@ -1551,7 +1514,6 @@ static void relocationViaAlloca(
       ToClobber.push_back(Alloca);
     }
 
-    Instruction *Statepoint = info.SafepointBounds.first;
     auto InsertClobbersAt = [&](Instruction *IP) {
       for (auto *AI : ToClobber) {
         auto AIType = cast<PointerType>(AI->getType());
@@ -1883,7 +1845,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
   // nodes have single entry (because of normalizeBBForInvokeSafepoint).
   // Just remove them all here.
   for (size_t i = 0; i < records.size(); i++) {
-    Instruction *I = records[i].SafepointBounds.first;
+    Instruction *I = records[i].StatepointToken;
 
     if (InvokeInst *invoke = dyn_cast<InvokeInst>(I)) {
       FoldSingleEntryPHINodes(invoke->getNormalDest());
@@ -1903,7 +1865,7 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
     // That Value* no longer exists and we need to use the new gc_result.
     // Thankfully, the liveset is embedded in the statepoint (and updated), so
     // we just grab that.
-    Statepoint statepoint(info.SafepointBounds.first);
+    Statepoint statepoint(info.StatepointToken);
     live.insert(live.end(), statepoint.gc_args_begin(),
                 statepoint.gc_args_end());
   }
