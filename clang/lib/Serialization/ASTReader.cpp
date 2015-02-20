@@ -46,6 +46,8 @@
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Bitcode/BitstreamReader.h"
+#include "llvm/Object/COFF.h"
+#include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -631,6 +633,27 @@ void PCHValidator::ReadCounter(const ModuleFile &M, unsigned Value) {
 //===----------------------------------------------------------------------===//
 // AST reader implementation
 //===----------------------------------------------------------------------===//
+
+void ASTReader::InitStreamFileWithModule(llvm::MemoryBufferRef Buffer,
+                                         llvm::BitstreamReader &StreamFile) {
+  if (auto OF = llvm::object::ObjectFile::createObjectFile(Buffer)) {
+    bool IsCOFF = isa<llvm::object::COFFObjectFile>(OF.get().get());
+    // Find the clang AST section in the container.
+    for (auto &Section : OF->get()->sections()) {
+      StringRef Name;
+      Section.getName(Name);
+      if ((!IsCOFF && Name == "__clangast") ||
+          ( IsCOFF && Name ==   "clangast")) {
+        StringRef Buf;
+        Section.getContents(Buf);
+        return StreamFile.init((const unsigned char*)Buf.begin(),
+                               (const unsigned char*)Buf.end());
+      }
+    }
+  }
+  StreamFile.init((const unsigned char *)Buffer.getBufferStart(),
+                  (const unsigned char *)Buffer.getBufferEnd());
+}
 
 void ASTReader::setDeserializationListener(ASTDeserializationListener *Listener,
                                            bool TakeOwnership) {
@@ -3883,9 +3906,10 @@ ASTReader::ReadASTCore(StringRef FileName,
 
   ModuleFile &F = *M;
   BitstreamCursor &Stream = F.Stream;
+  InitStreamFileWithModule(F.Buffer->getMemBufferRef(), F.StreamFile);
   Stream.init(&F.StreamFile);
-  F.SizeInBits = F.Buffer->getBufferSize() * 8;
-  
+  F.SizeInBits = F.StreamFile.getBitcodeBytes().getExtent() * 8;
+
   // Sniff for the signature.
   if (Stream.Read(8) != 'C' ||
       Stream.Read(8) != 'P' ||
@@ -4174,8 +4198,7 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
 
   // Initialize the stream
   llvm::BitstreamReader StreamFile;
-  StreamFile.init((const unsigned char *)(*Buffer)->getBufferStart(),
-                  (const unsigned char *)(*Buffer)->getBufferEnd());
+  InitStreamFileWithModule((*Buffer)->getMemBufferRef(), StreamFile);
   BitstreamCursor Stream(StreamFile);
 
   // Sniff for the signature.
@@ -4270,8 +4293,7 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
 
   // Initialize the stream
   llvm::BitstreamReader StreamFile;
-  StreamFile.init((const unsigned char *)(*Buffer)->getBufferStart(),
-                  (const unsigned char *)(*Buffer)->getBufferEnd());
+  InitStreamFileWithModule((*Buffer)->getMemBufferRef(), StreamFile);
   BitstreamCursor Stream(StreamFile);
 
   // Sniff for the signature.

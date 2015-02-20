@@ -45,6 +45,7 @@ add_clang_library(clangFrontend
   LINK_LIBS
   clangAST
   clangBasic
+  clangCodeGen
   clangDriver
   clangEdit
   clangLex
