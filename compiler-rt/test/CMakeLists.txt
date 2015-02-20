@@ -7,6 +7,12 @@ configure_lit_site_cfg(
 # add_subdirectory(builtins)
 
 set(SANITIZER_COMMON_LIT_TEST_DEPS)
+if(COMPILER_RT_STANDALONE_BUILD)
+  add_executable(FileCheck IMPORTED GLOBAL)
+  set_property(TARGET FileCheck PROPERTY IMPORTED_LOCATION ${LLVM_TOOLS_BINARY_DIR}/FileCheck)
+  list(APPEND SANITIZER_COMMON_LIT_TEST_DEPS FileCheck)
+endif()
+
 # When ANDROID, we build tests with the host compiler (i.e. CMAKE_C_COMPILER),
 # and run tests with tools from the host toolchain.
 if(NOT ANDROID)
