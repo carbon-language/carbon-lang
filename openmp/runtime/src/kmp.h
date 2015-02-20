@@ -869,7 +869,11 @@ extern unsigned int __kmp_place_core_offset;
 
 #define KMP_MIN_STKOFFSET       (0)
 #define KMP_MAX_STKOFFSET       KMP_MAX_STKSIZE
-#define KMP_DEFAULT_STKOFFSET   KMP_MIN_STKOFFSET
+#if KMP_OS_DARWIN
+# define KMP_DEFAULT_STKOFFSET  KMP_MIN_STKOFFSET
+#else
+# define KMP_DEFAULT_STKOFFSET  CACHE_LINE
+#endif
 
 #define KMP_MIN_STKPADDING      (0)
 #define KMP_MAX_STKPADDING      (2 * 1024 * 1024)
