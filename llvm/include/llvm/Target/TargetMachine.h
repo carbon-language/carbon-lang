@@ -113,7 +113,7 @@ public:
   template<typename STC> const STC &getSubtarget() const {
     return *static_cast<const STC*>(getSubtargetImpl());
   }
-  template <typename STC> const STC &getSubtarget(const Function *) const {
+  template <typename STC> const STC &getSubtarget(const Function &) const {
     return *static_cast<const STC*>(getSubtargetImpl());
   }
 

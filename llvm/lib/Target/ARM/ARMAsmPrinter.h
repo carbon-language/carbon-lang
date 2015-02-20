@@ -108,7 +108,7 @@ public:
     Triple TT(TM.getTargetTriple());
     if (!TT.isOSBinFormatMachO())
       return 0;
-    const ARMSubtarget &STI = TM.getSubtarget<ARMSubtarget>(F);
+    const ARMSubtarget &STI = TM.getSubtarget<ARMSubtarget>(*F);
     return STI.isThumb() ? ARM::DW_ISA_ARM_thumb : ARM::DW_ISA_ARM_arm;
   }
 

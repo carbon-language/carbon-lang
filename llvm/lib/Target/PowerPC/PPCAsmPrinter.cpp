@@ -1249,7 +1249,7 @@ void PPCDarwinAsmPrinter::EmitStartOfAsmFile(Module &M) {
   // FIXME: How should we merge darwin directives?
   unsigned Directive = PPC::DIR_NONE;
   for (const Function &F : M) {
-    const PPCSubtarget &STI = TM.getSubtarget<PPCSubtarget>(&F);
+    const PPCSubtarget &STI = TM.getSubtarget<PPCSubtarget>(F);
     unsigned FDir = STI.getDarwinDirective();
     Directive = Directive > FDir ? FDir : STI.getDarwinDirective();
     if (STI.hasMFOCRF() && Directive < PPC::DIR_970)
