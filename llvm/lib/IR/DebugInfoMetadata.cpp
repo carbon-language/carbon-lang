@@ -210,11 +210,8 @@ MDFile *MDFile::getImpl(LLVMContext &Context, MDString *Filename,
   assert(isCanonical(Filename) && "Expected canonical MDString");
   assert(isCanonical(Directory) && "Expected canonical MDString");
   DEFINE_GETIMPL_LOOKUP(MDFile, (getString(Filename), getString(Directory)));
-  Metadata *NodeOps[] = {Filename, Directory};
-  Metadata *Ops[] = {MDTuple::get(Context, NodeOps)};
-  return storeImpl(new (ArrayRef<Metadata *>(Ops).size())
-                       MDFile(Context, Storage, Ops),
-                   Storage, Context.pImpl->MDFiles);
+  Metadata *Ops[] = {Filename, Directory};
+  DEFINE_GETIMPL_STORE_NO_CONSTRUCTOR_ARGS(MDFile, Ops);
 }
 
 MDCompileUnit *MDCompileUnit::getImpl(

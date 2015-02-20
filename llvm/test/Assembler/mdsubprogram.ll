@@ -7,7 +7,7 @@ declare void @_Z3foov()
 !named = !{!0, !1, !2, !3, !4, !5, !6, !7, !8, !9}
 
 !0 = distinct !{}
-!1 = !{!"path/to/file", !"/path/to/dir"}
+!1 = distinct !{}
 !2 = !MDFile(filename: "path/to/file", directory: "/path/to/dir")
 !3 = distinct !{}
 !4 = distinct !{}

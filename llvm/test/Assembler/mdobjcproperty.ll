@@ -4,14 +4,14 @@
 ; CHECK: !named = !{!0, !1, !2, !3, !4, !4}
 !named = !{!0, !1, !2, !3, !4, !5}
 
-!0 = !{!"path/to/file", !"/path/to/dir"}
+!0 = distinct !{}
 !1 = !MDFile(filename: "path/to/file", directory: "/path/to/dir")
 !2 = distinct !{}
 
 
 ; CHECK: !2 = distinct !{}
-; CHECK-NEXT: !3 = !MDObjCProperty(name: "foo", file: !0, line: 7, setter: "setFoo", getter: "getFoo", attributes: 7, type: !2)
-!3 = !MDObjCProperty(name: "foo", file: !0, line: 7, setter: "setFoo",
+; CHECK-NEXT: !3 = !MDObjCProperty(name: "foo", file: !1, line: 7, setter: "setFoo", getter: "getFoo", attributes: 7, type: !2)
+!3 = !MDObjCProperty(name: "foo", file: !1, line: 7, setter: "setFoo",
                      getter: "getFoo", attributes: 7, type: !2)
 
 ; CHECK-NEXT: !4 = !MDObjCProperty(name: "foo")

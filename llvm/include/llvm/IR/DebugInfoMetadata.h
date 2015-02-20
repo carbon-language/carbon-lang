@@ -754,25 +754,11 @@ public:
 
   TempMDFile clone() const { return cloneImpl(); }
 
-  MDTuple *getFileNode() const { return cast<MDTuple>(getOperand(0)); }
+  StringRef getFilename() const { return getStringOperand(0); }
+  StringRef getDirectory() const { return getStringOperand(1); }
 
-  StringRef getFilename() const {
-    if (auto *S = getRawFilename())
-      return S->getString();
-    return StringRef();
-  }
-  StringRef getDirectory() const {
-    if (auto *S = getRawDirectory())
-      return S->getString();
-    return StringRef();
-  }
-
-  MDString *getRawFilename() const {
-    return cast_or_null<MDString>(getFileNode()->getOperand(0));
-  }
-  MDString *getRawDirectory() const {
-    return cast_or_null<MDString>(getFileNode()->getOperand(1));
-  }
+  MDString *getRawFilename() const { return getOperandAs<MDString>(0); }
+  MDString *getRawDirectory() const { return getOperandAs<MDString>(1); }
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == MDFileKind;

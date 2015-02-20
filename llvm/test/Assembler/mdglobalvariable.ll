@@ -7,14 +7,14 @@
 !named = !{!0, !1, !2, !3, !4, !5, !6}
 
 !0 = distinct !{}
-!1 = !{!"path/to/file", !"/path/to/dir"}
+!1 = distinct !{}
 !2 = !MDFile(filename: "path/to/file", directory: "/path/to/dir")
 !3 = distinct !{}
 !4 = distinct !{}
 
-; CHECK: !5 = !MDGlobalVariable(scope: !0, name: "foo", linkageName: "foo", file: !1, line: 7, type: !3, isLocal: true, isDefinition: false, variable: i32* @foo, declaration: !4)
+; CHECK: !5 = !MDGlobalVariable(scope: !0, name: "foo", linkageName: "foo", file: !2, line: 7, type: !3, isLocal: true, isDefinition: false, variable: i32* @foo, declaration: !4)
 !5 = !MDGlobalVariable(scope: !0, name: "foo", linkageName: "foo",
-                       file: !1, line: 7, type: !3, isLocal: true,
+                       file: !2, line: 7, type: !3, isLocal: true,
                        isDefinition: false, variable: i32* @foo,
                        declaration: !4)
 
