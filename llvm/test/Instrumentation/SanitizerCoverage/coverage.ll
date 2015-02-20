@@ -47,7 +47,7 @@ entry:
 
 ; CHECK1-LABEL: define internal void @sancov.module_ctor
 ; CHECK1-NOT: ret
-; CHECK1: call void @__sanitizer_cov_module_init({{.*}}, i64 2)
+; CHECK1: call void @__sanitizer_cov_module_init({{.*}}, i64 2,
 ; CHECK1: ret
 
 ; CHECK_WITH_CHECK-LABEL: define void @foo
@@ -66,7 +66,7 @@ entry:
 
 ; CHECK2-LABEL: define internal void @sancov.module_ctor
 ; CHECK2-NOT: ret
-; CHECK2: call void @__sanitizer_cov_module_init({{.*}}, i64 4)
+; CHECK2: call void @__sanitizer_cov_module_init({{.*}}, i64 4,
 ; CHECK2: ret
 
 ; CHECK3-LABEL: define void @foo
