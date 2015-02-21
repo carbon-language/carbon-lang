@@ -91,24 +91,26 @@ public:
   // The sections are created using
   // SectionName, contentPermissions
   struct SectionKey {
-    SectionKey(StringRef name, DefinedAtom::ContentPermissions perm)
-        : _name(name), _perm(perm) {
-    }
+    SectionKey(StringRef name, DefinedAtom::ContentPermissions perm,
+               StringRef path)
+        : _name(name), _perm(perm), _path(path) {}
 
     // Data members
     StringRef _name;
     DefinedAtom::ContentPermissions _perm;
+    StringRef _path;
   };
 
   struct SectionKeyHash {
     int64_t operator()(const SectionKey &k) const {
-      return llvm::hash_combine(k._name, k._perm);
+      return llvm::hash_combine(k._name, k._perm, k._path);
     }
   };
 
   struct SectionKeyEq {
     bool operator()(const SectionKey &lhs, const SectionKey &rhs) const {
-      return ((lhs._name == rhs._name) && (lhs._perm == rhs._perm));
+      return ((lhs._name == rhs._name) && (lhs._perm == rhs._perm) &&
+              (lhs._path == rhs._path));
     }
   };
 
@@ -181,9 +183,10 @@ public:
   virtual StringRef getOutputSectionName(StringRef inputSectionName) const;
 
   /// \brief Gets or creates a section.
-  AtomSection<ELFT> *getSection(
-      StringRef name, int32_t contentType,
-      DefinedAtom::ContentPermissions contentPermissions);
+  AtomSection<ELFT> *
+  getSection(StringRef name, int32_t contentType,
+             DefinedAtom::ContentPermissions contentPermissions,
+             StringRef path);
 
   /// \brief Gets the segment for a output section
   virtual Layout::SegmentType getSegmentType(Section<ELFT> *section) const;
@@ -530,22 +533,19 @@ AtomSection<ELFT> *DefaultLayout<ELFT>::createSection(
 }
 
 template <class ELFT>
-AtomSection<ELFT> *DefaultLayout<ELFT>::getSection(
-    StringRef sectionName, int32_t contentType,
-    DefinedAtom::ContentPermissions permissions) {
-  // FIXME: We really need the file path here in the SectionKey, when that
-  // is available, replace the sectionKey that has outputSectionName to the
-  // inputSectionName.
-  StringRef outputSectionName = getOutputSectionName(sectionName);
-  const SectionKey sectionKey(outputSectionName, permissions);
+AtomSection<ELFT> *
+DefaultLayout<ELFT>::getSection(StringRef sectionName, int32_t contentType,
+                                DefinedAtom::ContentPermissions permissions,
+                                StringRef path) {
+  const SectionKey sectionKey(sectionName, permissions, path);
+  SectionOrder sectionOrder =
+      getSectionOrder(sectionName, contentType, permissions);
   auto sec = _sectionMap.find(sectionKey);
   if (sec != _sectionMap.end())
     return sec->second;
-  SectionOrder sectionOrder =
-      getSectionOrder(sectionName, contentType, permissions);
   AtomSection<ELFT> *newSec =
       createSection(sectionName, contentType, permissions, sectionOrder);
-  newSec->setOutputSectionName(outputSectionName);
+  newSec->setOutputSectionName(getOutputSectionName(sectionName));
   newSec->setOrder(sectionOrder);
   _sections.push_back(newSec);
   _sectionMap.insert(std::make_pair(sectionKey, newSec));
@@ -565,8 +565,8 @@ ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) 
     const DefinedAtom::ContentType contentType = definedAtom->contentType();
 
     StringRef sectionName = getInputSectionName(definedAtom);
-    AtomSection<ELFT> *section =
-        getSection(sectionName, contentType, permissions);
+    AtomSection<ELFT> *section = getSection(
+        sectionName, contentType, permissions, definedAtom->file().path());
 
     // Add runtime relocations to the .rela section.
     for (const auto &reloc : *definedAtom) {
