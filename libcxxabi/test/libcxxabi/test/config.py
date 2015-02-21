@@ -66,6 +66,15 @@ class Configuration(LibcxxConfiguration):
             self.cxx.link_flags += ['-L' + self.libcxxabi_lib_root,
                                     '-Wl,-rpath,' + self.libcxxabi_lib_root]
 
+    # TODO(ericwf): Remove this. This is a hack for OS X.
+    # libc++ *should* export all of the symbols found in libc++abi on OS X.
+    # For this reason LibcxxConfiguration will not link libc++abi in OS X.
+    # However __cxa_throw_bad_new_array_length doesn't get exported into libc++
+    # yet so we still need to explicitly link libc++abi.
+    # See PR22654.
+    def configure_link_flags_abi_library(self):
+        self.cxx.link_flags += ['-lc++abi']
+
     def configure_env(self):
         if sys.platform == 'darwin' and self.libcxxabi_lib_root:
             self.env['DYLD_LIBRARY_PATH'] = self.libcxxabi_lib_root
