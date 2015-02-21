@@ -28,16 +28,18 @@ class FoundationDisassembleTestCase(TestBase):
         self.assertTrue(target, VALID_TARGET)
 
         # Now launch the process, and do not stop at entry point.
-        process = target.LaunchSimple (None, environment, self.get_process_working_directory())
+        process = target.LaunchSimple (None, None, self.get_process_working_directory())
         self.assertTrue(process, PROCESS_IS_VALID)
 
+        foundation_framework = None
         for module in target.modules:
+            print module
             if module.file.basename == "Foundation":
                 foundation_framework = module.file.fullpath
                 break
 
-        self.assertTrue(match, "Foundation.framework path located")
-        self.runCmd("image dump symtab %s" % foundation_framework)
+        self.assertTrue(foundation_framework != None, "Foundation.framework path located")
+        self.runCmd("image dump symtab '%s'" % foundation_framework)
         raw_output = self.res.GetOutput()
         # Now, grab every 'Code' symbol and feed it into the command:
         # 'disassemble -n func'.
