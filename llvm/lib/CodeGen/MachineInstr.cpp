@@ -625,8 +625,8 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
   Operands = MF.allocateOperandArray(CapOperands);
 
   // Copy operands.
-  for (unsigned i = 0; i != MI.getNumOperands(); ++i)
-    addOperand(MF, MI.getOperand(i));
+  for (const MachineOperand &MO : MI.operands())
+    addOperand(MF, MO);
 
   // Copy all the sensible flags.
   setFlags(MI.Flags);
@@ -645,18 +645,18 @@ MachineRegisterInfo *MachineInstr::getRegInfo() {
 /// this instruction from their respective use lists.  This requires that the
 /// operands already be on their use lists.
 void MachineInstr::RemoveRegOperandsFromUseLists(MachineRegisterInfo &MRI) {
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    if (Operands[i].isReg())
-      MRI.removeRegOperandFromUseList(&Operands[i]);
+  for (MachineOperand &MO : operands())
+    if (MO.isReg())
+      MRI.removeRegOperandFromUseList(&MO);
 }
 
 /// AddRegOperandsToUseLists - Add all of the register operands in
 /// this instruction from their respective use lists.  This requires that the
 /// operands not be on their use lists yet.
 void MachineInstr::AddRegOperandsToUseLists(MachineRegisterInfo &MRI) {
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    if (Operands[i].isReg())
-      MRI.addRegOperandToUseList(&Operands[i]);
+  for (MachineOperand &MO : operands())
+    if (MO.isReg())
+      MRI.addRegOperandToUseList(&MO);
 }
 
 void MachineInstr::addOperand(const MachineOperand &Op) {
@@ -920,8 +920,7 @@ void MachineInstr::eraseFromParentAndMarkDBGValuesForRemoval() {
   MachineInstr *MI = (MachineInstr *)this;
   MachineRegisterInfo &MRI = MF->getRegInfo();
 
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
+  for (const MachineOperand &MO : MI->operands()) {
     if (!MO.isReg() || !MO.isDef())
       continue;
     unsigned Reg = MO.getReg();
@@ -1324,8 +1323,7 @@ unsigned MachineInstr::findTiedOperandIdx(unsigned OpIdx) const {
 /// clearKillInfo - Clears kill flags on all operands.
 ///
 void MachineInstr::clearKillInfo() {
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = getOperand(i);
+  for (MachineOperand &MO : operands()) {
     if (MO.isReg() && MO.isUse())
       MO.setIsKill(false);
   }
@@ -1338,15 +1336,13 @@ void MachineInstr::substituteRegister(unsigned FromReg,
   if (TargetRegisterInfo::isPhysicalRegister(ToReg)) {
     if (SubIdx)
       ToReg = RegInfo.getSubReg(ToReg, SubIdx);
-    for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = getOperand(i);
+    for (MachineOperand &MO : operands()) {
       if (!MO.isReg() || MO.getReg() != FromReg)
         continue;
       MO.substPhysReg(ToReg, RegInfo);
     }
   } else {
-    for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-      MachineOperand &MO = getOperand(i);
+    for (MachineOperand &MO : operands()) {
       if (!MO.isReg() || MO.getReg() != FromReg)
         continue;
       MO.substVirtReg(ToReg, SubIdx, RegInfo);
@@ -1489,8 +1485,7 @@ bool MachineInstr::hasUnmodeledSideEffects() const {
 /// allDefsAreDead - Return true if all the defs of this instruction are dead.
 ///
 bool MachineInstr::allDefsAreDead() const {
-  for (unsigned i = 0, e = getNumOperands(); i < e; ++i) {
-    const MachineOperand &MO = getOperand(i);
+  for (const MachineOperand &MO : operands()) {
     if (!MO.isReg() || MO.isUse())
       continue;
     if (!MO.isDead())
@@ -1821,8 +1816,7 @@ void MachineInstr::clearRegisterKills(unsigned Reg,
                                       const TargetRegisterInfo *RegInfo) {
   if (!TargetRegisterInfo::isPhysicalRegister(Reg))
     RegInfo = nullptr;
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = getOperand(i);
+  for (MachineOperand &MO : operands()) {
     if (!MO.isReg() || !MO.isUse() || !MO.isKill())
       continue;
     unsigned OpReg = MO.getReg();
@@ -1906,8 +1900,7 @@ void MachineInstr::addRegisterDefined(unsigned Reg,
     if (MO)
       return;
   } else {
-    for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-      const MachineOperand &MO = getOperand(i);
+    for (const MachineOperand &MO : operands()) {
       if (MO.isReg() && MO.getReg() == Reg && MO.isDef() &&
           MO.getSubReg() == 0)
         return;
@@ -1921,8 +1914,7 @@ void MachineInstr::addRegisterDefined(unsigned Reg,
 void MachineInstr::setPhysRegsDeadExcept(ArrayRef<unsigned> UsedRegs,
                                          const TargetRegisterInfo &TRI) {
   bool HasRegMask = false;
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    MachineOperand &MO = getOperand(i);
+  for (MachineOperand &MO : operands()) {
     if (MO.isRegMask()) {
       HasRegMask = true;
       continue;
@@ -1930,15 +1922,10 @@ void MachineInstr::setPhysRegsDeadExcept(ArrayRef<unsigned> UsedRegs,
     if (!MO.isReg() || !MO.isDef()) continue;
     unsigned Reg = MO.getReg();
     if (!TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
-    bool Dead = true;
-    for (ArrayRef<unsigned>::iterator I = UsedRegs.begin(), E = UsedRegs.end();
-         I != E; ++I)
-      if (TRI.regsOverlap(*I, Reg)) {
-        Dead = false;
-        break;
-      }
     // If there are no uses, including partial uses, the def is dead.
-    if (Dead) MO.setIsDead();
+    if (std::none_of(UsedRegs.begin(), UsedRegs.end(),
+                     [&](unsigned Use) { return TRI.regsOverlap(Use, Reg); }))
+      MO.setIsDead();
   }
 
   // This is a call with a register mask operand.
@@ -1955,8 +1942,7 @@ MachineInstrExpressionTrait::getHashValue(const MachineInstr* const &MI) {
   SmallVector<size_t, 8> HashComponents;
   HashComponents.reserve(MI->getNumOperands() + 1);
   HashComponents.push_back(MI->getOpcode());
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
+  for (const MachineOperand &MO : MI->operands()) {
     if (MO.isReg() && MO.isDef() &&
         TargetRegisterInfo::isVirtualRegister(MO.getReg()))
       continue;  // Skip virtual register defs.
