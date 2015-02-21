@@ -22,6 +22,7 @@
 #include "llvm/Object/Archive.h"
 
 namespace llvm {
+namespace orc {
 
 class OrcMCJITReplacement : public ExecutionEngine {
 
@@ -104,11 +105,12 @@ class OrcMCJITReplacement : public ExecutionEngine {
   };
 
 private:
+
   static ExecutionEngine *
   createOrcMCJITReplacement(std::string *ErrorMsg,
                             std::unique_ptr<RTDyldMemoryManager> OrcJMM,
-                            std::unique_ptr<llvm::TargetMachine> TM) {
-    return new llvm::OrcMCJITReplacement(std::move(OrcJMM), std::move(TM));
+                            std::unique_ptr<TargetMachine> TM) {
+    return new OrcMCJITReplacement(std::move(OrcJMM), std::move(TM));
   }
 
 public:
@@ -323,6 +325,8 @@ private:
 
   std::vector<object::OwningBinary<object::Archive>> Archives;
 };
-}
+
+} // End namespace orc.
+} // End namespace llvm.
 
 #endif // LLVM_LIB_EXECUTIONENGINE_ORC_MCJITREPLACEMENT_H

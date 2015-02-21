@@ -17,6 +17,7 @@
 #include "IndirectionUtils.h"
 
 namespace llvm {
+namespace orc {
 
 class OrcX86_64 {
 public:
@@ -49,6 +50,7 @@ public:
 
 };
 
-}
+} // End namespace orc.
+} // End namespace llvm.
 
 #endif // LLVM_EXECUTIONENGINE_ORC_ORCTARGETSUPPORT_H

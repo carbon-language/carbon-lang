@@ -22,6 +22,7 @@
 #include <list>
 
 namespace llvm {
+namespace orc {
 
 /// @brief Lazy-emitting IR layer.
 ///
@@ -273,6 +274,8 @@ LazyEmittingLayer<BaseLayerT>::EmissionDeferredSet::create(
   return llvm::make_unique<EmissionDeferredSetImpl<ModuleSetT>>(std::move(Ms),
                                                                 std::move(MM));
 }
-}
+
+} // End namespace orc.
+} // End namespace llvm.
 
 #endif // LLVM_EXECUTIONENGINE_ORC_LAZYEMITTINGLAYER_H

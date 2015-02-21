@@ -20,6 +20,7 @@
 #include <vector>
 
 namespace llvm {
+namespace orc {
 
 /// @brief Defines an adapter for RuntimeDyldMM that allows lookups for external
 ///        symbols to go via a functor, before falling back to the lookup logic
@@ -84,6 +85,8 @@ createLookasideRTDyldMM(ExternalLookupFtor &&ExternalLookup,
       std::forward<ExternalLookupFtor>(ExternalLookup),
       std::forward<DylibLookupFtor>(DylibLookup));
 }
-}
+
+} // End namespace orc.
+} // End namespace llvm.
 
 #endif // LLVM_EXECUTIONENGINE_ORC_LOOKASIDERTDYLDMM_H

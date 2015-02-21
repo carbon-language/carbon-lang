@@ -8,6 +8,7 @@
 using namespace llvm;
 
 namespace llvm {
+namespace orc {
 
 GlobalVariable* createImplPointer(Function &F, const Twine &Name,
                                   Constant *Initializer) {
@@ -106,4 +107,5 @@ FullyPartitionedModule fullyPartition(Module &M) {
   return MP;
 }
 
-}
+} // End namespace orc.
+} // End namespace llvm.

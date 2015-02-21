@@ -22,6 +22,7 @@
 #include <memory>
 
 namespace llvm {
+namespace orc {
 
 class ObjectLinkingLayerBase {
 protected:
@@ -260,6 +261,7 @@ private:
   CreateRTDyldMMFtor CreateMemoryManager;
 };
 
-} // end namespace llvm
+} // End namespace orc.
+} // End namespace llvm
 
 #endif // LLVM_EXECUTIONENGINE_ORC_OBJECTLINKINGLAYER_H

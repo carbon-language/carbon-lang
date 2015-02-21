@@ -4,15 +4,16 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
-using namespace llvm;
+namespace llvm {
+namespace orc {
 
-void llvm::copyGVInitializer(GlobalVariable &New, const GlobalVariable &Orig,
+void copyGVInitializer(GlobalVariable &New, const GlobalVariable &Orig,
                              ValueToValueMapTy &VMap) {
   if (Orig.hasInitializer())
     New.setInitializer(MapValue(Orig.getInitializer(), VMap));
 }
 
-void llvm::copyFunctionBody(Function &New, const Function &Orig,
+void copyFunctionBody(Function &New, const Function &Orig,
                             ValueToValueMapTy &VMap) {
   if (!Orig.isDeclaration()) {
     Function::arg_iterator DestI = New.arg_begin();
@@ -27,9 +28,9 @@ void llvm::copyFunctionBody(Function &New, const Function &Orig,
   }
 }
 
-void llvm::CloneSubModule(llvm::Module &Dst, const Module &Src,
-                     HandleGlobalVariableFtor HandleGlobalVariable,
-                     HandleFunctionFtor HandleFunction, bool CloneInlineAsm) {
+void CloneSubModule(llvm::Module &Dst, const Module &Src,
+                    HandleGlobalVariableFtor HandleGlobalVariable,
+                    HandleFunctionFtor HandleFunction, bool CloneInlineAsm) {
 
   ValueToValueMapTy VMap;
 
@@ -102,3 +103,6 @@ void llvm::CloneSubModule(llvm::Module &Dst, const Module &Src,
   }
 
 }
+
+} // End namespace orc.
+} // End namespace llvm.

@@ -22,6 +22,7 @@
 #include <sstream>
 
 namespace llvm {
+namespace orc {
 
 /// @brief Base class for JITLayer independent aspects of
 ///        JITCompileCallbackManager.
@@ -239,6 +240,7 @@ public:
 
 FullyPartitionedModule fullyPartition(Module &M);
 
-}
+} // End namespace orc.
+} // End namespace llvm.
 
 #endif // LLVM_EXECUTIONENGINE_ORC_INDIRECTIONUTILS_H

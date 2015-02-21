@@ -21,6 +21,7 @@
 #include <memory>
 
 namespace llvm {
+namespace orc {
 
 /// @brief Eager IR compiling layer.
 ///
@@ -138,6 +139,8 @@ private:
   CompileFtor Compile;
   ObjectCache *ObjCache;
 };
-}
+
+} // End namespace orc.
+} // End namespace llvm.
 
 #endif // LLVM_EXECUTIONENGINE_ORC_IRCOMPILINGLAYER_H

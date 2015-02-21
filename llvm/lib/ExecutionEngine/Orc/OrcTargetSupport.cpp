@@ -2,7 +2,7 @@
 #include "llvm/ExecutionEngine/Orc/OrcTargetSupport.h"
 #include <array>
 
-using namespace llvm;
+using namespace llvm::orc;
 
 namespace {
 
@@ -47,6 +47,7 @@ uint64_t executeCompileCallback(JITCompileCallbackManagerBase<TargetT> *JCBM,
 }
 
 namespace llvm {
+namespace orc {
 
 const char* OrcX86_64::ResolverBlockName = "orc_resolver_block";
 
@@ -123,4 +124,5 @@ OrcX86_64::insertCompileCallbackTrampolines(Module &M,
   return GetLabelName;
 }
 
-}
+} // End namespace orc.
+} // End namespace llvm.

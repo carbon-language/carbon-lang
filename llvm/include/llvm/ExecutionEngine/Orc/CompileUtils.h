@@ -21,6 +21,7 @@
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
+namespace orc {
 
 /// @brief Simple compile functor: Takes a single IR module and returns an
 ///        ObjectFile.
@@ -54,6 +55,8 @@ public:
 private:
   TargetMachine &TM;
 };
-}
+
+} // End namespace orc.
+} // End namespace llvm.
 
 #endif // LLVM_EXECUTIONENGINE_ORC_COMPILEUTILS_H
