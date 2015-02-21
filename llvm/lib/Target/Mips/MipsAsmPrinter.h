@@ -65,22 +65,26 @@ private:
   void emitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
                         const MCSubtargetInfo *EndInfo) const override;
 
-  void EmitJal(MCSymbol *Symbol);
+  void EmitJal(const MCSubtargetInfo &STI, MCSymbol *Symbol);
 
-  void EmitInstrReg(unsigned Opcode, unsigned Reg);
+  void EmitInstrReg(const MCSubtargetInfo &STI, unsigned Opcode, unsigned Reg);
 
-  void EmitInstrRegReg(unsigned Opcode, unsigned Reg1, unsigned Reg2);
+  void EmitInstrRegReg(const MCSubtargetInfo &STI, unsigned Opcode,
+                       unsigned Reg1, unsigned Reg2);
 
-  void EmitInstrRegRegReg(unsigned Opcode, unsigned Reg1, unsigned Reg2,
-                          unsigned Reg3);
+  void EmitInstrRegRegReg(const MCSubtargetInfo &STI, unsigned Opcode,
+                          unsigned Reg1, unsigned Reg2, unsigned Reg3);
 
-  void EmitMovFPIntPair(unsigned MovOpc, unsigned Reg1, unsigned Reg2,
-                        unsigned FPReg1, unsigned FPReg2, bool LE);
+  void EmitMovFPIntPair(const MCSubtargetInfo &STI, unsigned MovOpc,
+                        unsigned Reg1, unsigned Reg2, unsigned FPReg1,
+                        unsigned FPReg2, bool LE);
 
-  void EmitSwapFPIntParams(Mips16HardFloatInfo::FPParamVariant, bool LE,
+  void EmitSwapFPIntParams(const MCSubtargetInfo &STI,
+                           Mips16HardFloatInfo::FPParamVariant, bool LE,
                            bool ToFP);
 
-  void EmitSwapFPIntRetval(Mips16HardFloatInfo::FPReturnVariant, bool LE);
+  void EmitSwapFPIntRetval(const MCSubtargetInfo &STI,
+                           Mips16HardFloatInfo::FPReturnVariant, bool LE);
 
   void EmitFPCallStub(const char *, const Mips16HardFloatInfo::FuncSignature *);
 
