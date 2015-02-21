@@ -18,6 +18,7 @@
 #include "clang/AST/DeclarationName.h"
 #include "clang/Basic/Specifiers.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -1005,9 +1006,65 @@ public:
   void print(raw_ostream &OS) const override;
 };
 
-typedef MutableArrayRef<NamedDecl *> DeclContextLookupResult;
+/// \brief The results of name lookup within a DeclContext. This is either a
+/// single result (with no stable storage) or a collection of results (with
+/// stable storage provided by the lookup table).
+class DeclContextLookupResult {
+  typedef ArrayRef<NamedDecl *> ResultTy;
+  ResultTy Result;
+  // If there is only one lookup result, it would be invalidated by
+  // reallocations of the name table, so store it separately.
+  NamedDecl *Single;
 
-typedef ArrayRef<NamedDecl *> DeclContextLookupConstResult;
+  static NamedDecl *const SingleElementDummyList;
+
+public:
+  DeclContextLookupResult() : Result(), Single() {}
+  DeclContextLookupResult(ArrayRef<NamedDecl *> Result)
+      : Result(Result), Single() {}
+  DeclContextLookupResult(NamedDecl *Single)
+      : Result(SingleElementDummyList), Single(Single) {}
+
+  class iterator;
+  typedef llvm::iterator_adaptor_base<iterator, ResultTy::iterator,
+                                      std::random_access_iterator_tag,
+                                      NamedDecl *const> IteratorBase;
+  class iterator : public IteratorBase {
+    value_type SingleElement;
+
+  public:
+    iterator() : IteratorBase(), SingleElement() {}
+    explicit iterator(pointer Pos, value_type Single = nullptr)
+        : IteratorBase(Pos), SingleElement(Single) {}
+
+    reference operator*() const {
+      return SingleElement ? SingleElement : IteratorBase::operator*();
+    }
+  };
+  typedef iterator const_iterator;
+  typedef iterator::pointer pointer;
+  typedef iterator::reference reference;
+
+  iterator begin() const { return iterator(Result.begin(), Single); }
+  iterator end() const { return iterator(Result.end(), Single); }
+
+  bool empty() const { return Result.empty(); }
+  pointer data() const { return Single ? &Single : Result.data(); }
+  size_t size() const { return Single ? 1 : Result.size(); }
+  reference front() const { return Single ? Single : Result.front(); }
+  reference back() const { return Single ? Single : Result.back(); }
+  reference operator[](size_t N) const { return Single ? Single : Result[N]; }
+
+  // FIXME: Remove this from the interface
+  DeclContextLookupResult slice(size_t N) const {
+    DeclContextLookupResult Sliced = Result.slice(N);
+    Sliced.Single = Single;
+    return Sliced;
+  }
+};
+
+// FIXME: Remove this.
+typedef DeclContextLookupResult DeclContextLookupConstResult;
 
 /// DeclContext - This is used only as base class of specific decl types that
 /// can act as declaration contexts. These decls are (only the top classes
@@ -1520,26 +1577,19 @@ public:
   /// @brief Checks whether a declaration is in this context.
   bool containsDecl(Decl *D) const;
 
-  /// lookup_iterator - An iterator that provides access to the results
-  /// of looking up a name within this context.
-  typedef NamedDecl **lookup_iterator;
-
-  /// lookup_const_iterator - An iterator that provides non-mutable
-  /// access to the results of lookup up a name within this context.
-  typedef NamedDecl * const * lookup_const_iterator;
-
   typedef DeclContextLookupResult lookup_result;
-  typedef DeclContextLookupConstResult lookup_const_result;
+  typedef lookup_result::iterator lookup_iterator;
+
+  // FIXME: Remove these.
+  typedef lookup_result lookup_const_result;
+  typedef lookup_iterator lookup_const_iterator;
 
   /// lookup - Find the declarations (if any) with the given Name in
   /// this context. Returns a range of iterators that contains all of
   /// the declarations with this name, with object, function, member,
   /// and enumerator names preceding any tag name. Note that this
   /// routine will not look into parent contexts.
-  lookup_result lookup(DeclarationName Name);
-  lookup_const_result lookup(DeclarationName Name) const {
-    return const_cast<DeclContext*>(this)->lookup(Name);
-  }
+  lookup_result lookup(DeclarationName Name) const;
 
   /// \brief Find the declarations with the given name that are visible
   /// within this context; don't attempt to retrieve anything from an
@@ -1593,7 +1643,16 @@ public:
   all_lookups_iterator noload_lookups_begin() const;
   all_lookups_iterator noload_lookups_end() const;
 
-  typedef llvm::iterator_range<UsingDirectiveDecl * const *> udir_range;
+  struct udir_iterator;
+  typedef llvm::iterator_adaptor_base<udir_iterator, lookup_iterator,
+                                      std::random_access_iterator_tag,
+                                      UsingDirectiveDecl *> udir_iterator_base;
+  struct udir_iterator : udir_iterator_base {
+    udir_iterator(lookup_iterator I) : udir_iterator_base(I) {}
+    UsingDirectiveDecl *operator*() const;
+  };
+
+  typedef llvm::iterator_range<udir_iterator> udir_range;
 
   udir_range using_directives() const;
 

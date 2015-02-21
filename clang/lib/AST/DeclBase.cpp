@@ -1297,12 +1297,14 @@ void DeclContext::buildLookupImpl(DeclContext *DCtx, bool Internal) {
   }
 }
 
+NamedDecl *const DeclContextLookupResult::SingleElementDummyList = nullptr;
+
 DeclContext::lookup_result
-DeclContext::lookup(DeclarationName Name) {
+DeclContext::lookup(DeclarationName Name) const {
   assert(DeclKind != Decl::LinkageSpec &&
          "Should not perform lookups into linkage specs!");
 
-  DeclContext *PrimaryContext = getPrimaryContext();
+  const DeclContext *PrimaryContext = getPrimaryContext();
   if (PrimaryContext != this)
     return PrimaryContext->lookup(Name);
 
@@ -1318,7 +1320,8 @@ DeclContext::lookup(DeclarationName Name) {
     StoredDeclsMap *Map = LookupPtr.getPointer();
 
     if (LookupPtr.getInt())
-      Map = buildLookup();
+      // FIXME: Make buildLookup const?
+      Map = const_cast<DeclContext*>(this)->buildLookup();
 
     if (!Map)
       Map = CreateStoredDeclsMap(getParentASTContext());
@@ -1338,19 +1341,19 @@ DeclContext::lookup(DeclarationName Name) {
       }
     }
 
-    return lookup_result(lookup_iterator(nullptr), lookup_iterator(nullptr));
+    return lookup_result();
   }
 
   StoredDeclsMap *Map = LookupPtr.getPointer();
   if (LookupPtr.getInt())
-    Map = buildLookup();
+    Map = const_cast<DeclContext*>(this)->buildLookup();
 
   if (!Map)
-    return lookup_result(lookup_iterator(nullptr), lookup_iterator(nullptr));
+    return lookup_result();
 
   StoredDeclsMap::iterator I = Map->find(Name);
   if (I == Map->end())
-    return lookup_result(lookup_iterator(nullptr), lookup_iterator(nullptr));
+    return lookup_result();
 
   return I->second.getLookupResult();
 }
@@ -1387,12 +1390,11 @@ DeclContext::noload_lookup(DeclarationName Name) {
   }
 
   if (!Map)
-    return lookup_result(lookup_iterator(nullptr), lookup_iterator(nullptr));
+    return lookup_result();
 
   StoredDeclsMap::iterator I = Map->find(Name);
   return I != Map->end() ? I->second.getLookupResult()
-                         : lookup_result(lookup_iterator(nullptr),
-                                         lookup_iterator(nullptr));
+                         : lookup_result();
 }
 
 void DeclContext::localUncachedLookup(DeclarationName Name,
@@ -1574,15 +1576,17 @@ void DeclContext::makeDeclVisibleInContextImpl(NamedDecl *D, bool Internal) {
   DeclNameEntries.AddSubsequentDecl(D);
 }
 
+UsingDirectiveDecl *DeclContext::udir_iterator::operator*() const {
+  return cast<UsingDirectiveDecl>(*I);
+}
+
 /// Returns iterator range [First, Last) of UsingDirectiveDecls stored within
 /// this context.
 DeclContext::udir_range DeclContext::using_directives() const {
   // FIXME: Use something more efficient than normal lookup for using
   // directives. In C++, using directives are looked up more than anything else.
   lookup_const_result Result = lookup(UsingDirectiveDecl::getName());
-  return udir_range(
-      reinterpret_cast<UsingDirectiveDecl *const *>(Result.begin()),
-      reinterpret_cast<UsingDirectiveDecl *const *>(Result.end()));
+  return udir_range(Result.begin(), Result.end());
 }
 
 //===----------------------------------------------------------------------===//
