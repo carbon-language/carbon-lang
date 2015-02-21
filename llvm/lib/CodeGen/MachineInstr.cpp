@@ -674,14 +674,8 @@ static void moveOperands(MachineOperand *Dst, MachineOperand *Src,
   if (MRI)
     return MRI->moveOperands(Dst, Src, NumOps);
 
-  // Here it would be convenient to call memmove, so that isn't allowed because
-  // MachineOperand has a constructor and so isn't a POD type.
-  if (Dst < Src)
-    for (unsigned i = 0; i != NumOps; ++i)
-      new (Dst + i) MachineOperand(Src[i]);
-  else
-    for (unsigned i = NumOps; i ; --i)
-      new (Dst + i - 1) MachineOperand(Src[i - 1]);
+  // MachineOperand is a trivially copyable type so we can just use memmove.
+  std::memmove(Dst, Src, NumOps * sizeof(MachineOperand));
 }
 
 /// addOperand - Add the specified operand to the instruction.  If it is an
