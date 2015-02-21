@@ -65,4 +65,50 @@ TEST(DebugInfoTest, DIHeaderFieldIterator) {
   ASSERT_EQ("stuff", *++MAKE_FIELD_ITERATOR("\0stuff"));
 }
 
+TEST(DIDescriptorTest, getFlag) {
+  // Some valid flags.
+  EXPECT_EQ(DIDescriptor::FlagPublic, DIDescriptor::getFlag("DIFlagPublic"));
+  EXPECT_EQ(DIDescriptor::FlagProtected,
+            DIDescriptor::getFlag("DIFlagProtected"));
+  EXPECT_EQ(DIDescriptor::FlagPrivate, DIDescriptor::getFlag("DIFlagPrivate"));
+  EXPECT_EQ(DIDescriptor::FlagVector, DIDescriptor::getFlag("DIFlagVector"));
+  EXPECT_EQ(DIDescriptor::FlagRValueReference,
+            DIDescriptor::getFlag("DIFlagRValueReference"));
+
+  // FlagAccessibility shouldn't work.
+  EXPECT_EQ(0u, DIDescriptor::getFlag("DIFlagAccessibility"));
+
+  // Some other invalid strings.
+  EXPECT_EQ(0u, DIDescriptor::getFlag("FlagVector"));
+  EXPECT_EQ(0u, DIDescriptor::getFlag("Vector"));
+  EXPECT_EQ(0u, DIDescriptor::getFlag("other things"));
+  EXPECT_EQ(0u, DIDescriptor::getFlag("DIFlagOther"));
+}
+
+TEST(DIDescriptorTest, getFlagString) {
+  // Some valid flags.
+  EXPECT_EQ(StringRef("DIFlagPublic"),
+            DIDescriptor::getFlagString(DIDescriptor::FlagPublic));
+  EXPECT_EQ(StringRef("DIFlagProtected"),
+            DIDescriptor::getFlagString(DIDescriptor::FlagProtected));
+  EXPECT_EQ(StringRef("DIFlagPrivate"),
+            DIDescriptor::getFlagString(DIDescriptor::FlagPrivate));
+  EXPECT_EQ(StringRef("DIFlagVector"),
+            DIDescriptor::getFlagString(DIDescriptor::FlagVector));
+  EXPECT_EQ(StringRef("DIFlagRValueReference"),
+            DIDescriptor::getFlagString(DIDescriptor::FlagRValueReference));
+
+  // FlagAccessibility actually equals FlagPublic.
+  EXPECT_EQ(StringRef("DIFlagPublic"),
+            DIDescriptor::getFlagString(DIDescriptor::FlagAccessibility));
+
+  // Some other invalid flags.
+  EXPECT_EQ(StringRef(), DIDescriptor::getFlagString(DIDescriptor::FlagPublic |
+                                                     DIDescriptor::FlagVector));
+  EXPECT_EQ(StringRef(),
+            DIDescriptor::getFlagString(DIDescriptor::FlagFwdDecl |
+                                        DIDescriptor::FlagArtificial));
+  EXPECT_EQ(StringRef(), DIDescriptor::getFlagString(0xffff));
+}
+
 } // end namespace

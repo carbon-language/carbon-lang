@@ -137,6 +137,9 @@ public:
     FlagAccessibility = FlagPrivate | FlagProtected | FlagPublic
   };
 
+  static unsigned getFlag(StringRef Flag);
+  static const char *getFlagString(unsigned Flag);
+
 protected:
   const MDNode *DbgNode;
 

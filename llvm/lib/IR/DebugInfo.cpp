@@ -17,6 +17,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DIBuilder.h"
@@ -35,6 +36,24 @@ using namespace llvm::dwarf;
 //===----------------------------------------------------------------------===//
 // DIDescriptor
 //===----------------------------------------------------------------------===//
+
+unsigned DIDescriptor::getFlag(StringRef Flag) {
+  return StringSwitch<unsigned>(Flag)
+#define HANDLE_DI_FLAG(ID, NAME) .Case("DIFlag" #NAME, Flag##NAME)
+#include "llvm/IR/DebugInfoFlags.def"
+      .Default(0);
+}
+
+const char *DIDescriptor::getFlagString(unsigned Flag) {
+  switch (Flag) {
+  default:
+    return "";
+#define HANDLE_DI_FLAG(ID, NAME)                                               \
+  case Flag##NAME:                                                             \
+    return "DIFlag" #NAME;
+#include "llvm/IR/DebugInfoFlags.def"
+  }
+}
 
 bool DIDescriptor::Verify() const {
   return DbgNode &&
