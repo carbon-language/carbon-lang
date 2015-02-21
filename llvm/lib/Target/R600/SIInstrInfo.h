@@ -136,6 +136,9 @@ public:
 
   bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const override;
 
+  bool FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
+                     unsigned Reg, MachineRegisterInfo *MRI) const final;
+
   bool isSALU(uint16_t Opcode) const {
     return get(Opcode).TSFlags & SIInstrFlags::SALU;
   }

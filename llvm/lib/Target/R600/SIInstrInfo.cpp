@@ -859,6 +859,84 @@ SIInstrInfo::isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const {
   return RC != &AMDGPU::EXECRegRegClass;
 }
 
+static void removeModOperands(MachineInstr &MI) {
+  unsigned Opc = MI.getOpcode();
+  int Src0ModIdx = AMDGPU::getNamedOperandIdx(Opc,
+                                              AMDGPU::OpName::src0_modifiers);
+  int Src1ModIdx = AMDGPU::getNamedOperandIdx(Opc,
+                                              AMDGPU::OpName::src1_modifiers);
+  int Src2ModIdx = AMDGPU::getNamedOperandIdx(Opc,
+                                              AMDGPU::OpName::src2_modifiers);
+
+  MI.RemoveOperand(Src2ModIdx);
+  MI.RemoveOperand(Src1ModIdx);
+  MI.RemoveOperand(Src0ModIdx);
+}
+
+bool SIInstrInfo::FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
+                                unsigned Reg, MachineRegisterInfo *MRI) const {
+  if (!MRI->hasOneNonDBGUse(Reg))
+    return false;
+
+  unsigned Opc = UseMI->getOpcode();
+  if (Opc == AMDGPU::V_MAD_F32) {
+    // Don't fold if we are using source modifiers. The new VOP2 instructions
+    // don't have them.
+    if (hasModifiersSet(*UseMI, AMDGPU::OpName::src0_modifiers) ||
+        hasModifiersSet(*UseMI, AMDGPU::OpName::src1_modifiers) ||
+        hasModifiersSet(*UseMI, AMDGPU::OpName::src2_modifiers)) {
+      return false;
+    }
+
+    MachineOperand *Src0 = getNamedOperand(*UseMI, AMDGPU::OpName::src0);
+    MachineOperand *Src1 = getNamedOperand(*UseMI, AMDGPU::OpName::src1);
+    MachineOperand *Src2 = getNamedOperand(*UseMI, AMDGPU::OpName::src2);
+
+    // The VOP2 src0 can't be an SGPR since the constant bus use will be the
+    // literal constant.
+    if (Src0->isReg() && RI.isSGPRClass(MRI->getRegClass(Src0->getReg())))
+      return false;
+
+    // Added part is the constant: Use v_madak_f32
+    if (Src2->isReg() && Src2->getReg() == Reg) {
+      // Not allowed to use constant bus for another operand.
+      // We can however allow an inline immediate as src0.
+      if (!Src0->isImm() &&
+          (Src0->isReg() && RI.isSGPRClass(MRI->getRegClass(Src0->getReg()))))
+        return false;
+
+      if (!Src1->isReg() ||
+          (Src1->isReg() && RI.isSGPRClass(MRI->getRegClass(Src1->getReg()))))
+        return false;
+
+      const int64_t Imm = DefMI->getOperand(1).getImm();
+
+      // FIXME: This would be a lot easier if we could return a new instruction
+      // instead of having to modify in place.
+
+      // Remove these first since they are at the end.
+      UseMI->RemoveOperand(AMDGPU::getNamedOperandIdx(AMDGPU::V_MAD_F32,
+                                                      AMDGPU::OpName::omod));
+      UseMI->RemoveOperand(AMDGPU::getNamedOperandIdx(AMDGPU::V_MAD_F32,
+                                                      AMDGPU::OpName::clamp));
+
+      Src2->ChangeToImmediate(Imm);
+
+      // These come before src2.
+      removeModOperands(*UseMI);
+      UseMI->setDesc(get(AMDGPU::V_MADAK_F32));
+
+      bool DeleteDef = MRI->hasOneNonDBGUse(Reg);
+      if (DeleteDef)
+        DefMI->eraseFromParent();
+
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool
 SIInstrInfo::isTriviallyReMaterializable(const MachineInstr *MI,
                                          AliasAnalysis *AA) const {
