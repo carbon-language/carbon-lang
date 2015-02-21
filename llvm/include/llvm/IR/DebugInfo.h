@@ -132,24 +132,9 @@ public:
   /// The three accessibility flags are mutually exclusive and rolled together
   /// in the first two bits.
   enum {
-    FlagAccessibility     = 1 << 0 | 1 << 1,
-    FlagPrivate           = 1,
-    FlagProtected         = 2,
-    FlagPublic            = 3,
-
-    FlagFwdDecl           = 1 << 2,
-    FlagAppleBlock        = 1 << 3,
-    FlagBlockByrefStruct  = 1 << 4,
-    FlagVirtual           = 1 << 5,
-    FlagArtificial        = 1 << 6,
-    FlagExplicit          = 1 << 7,
-    FlagPrototyped        = 1 << 8,
-    FlagObjcClassComplete = 1 << 9,
-    FlagObjectPointer     = 1 << 10,
-    FlagVector            = 1 << 11,
-    FlagStaticMember      = 1 << 12,
-    FlagLValueReference   = 1 << 13,
-    FlagRValueReference   = 1 << 14
+#define HANDLE_DI_FLAG(ID, NAME) Flag##NAME = ID,
+#include "llvm/IR/DebugInfoFlags.def"
+    FlagAccessibility = FlagPrivate | FlagProtected | FlagPublic
   };
 
 protected:
