@@ -486,11 +486,11 @@ lltok::Kind LLLexer::LexIdentifier() {
   if (!KeywordEnd) KeywordEnd = CurPtr;
   CurPtr = KeywordEnd;
   --StartChar;
-  unsigned Len = CurPtr-StartChar;
-#define KEYWORD(STR)                                                    \
-  do {                                                                  \
-    if (Len == strlen(#STR) && !memcmp(StartChar, #STR, strlen(#STR)))  \
-      return lltok::kw_##STR;                                           \
+  StringRef Keyword(StartChar, CurPtr - StartChar);
+#define KEYWORD(STR)                                                           \
+  do {                                                                         \
+    if (Keyword == #STR)                                                       \
+      return lltok::kw_##STR;                                                  \
   } while (0)
 
   KEYWORD(true);    KEYWORD(false);
@@ -670,7 +670,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   // Keywords for types.
 #define TYPEKEYWORD(STR, LLVMTY)                                               \
   do {                                                                         \
-    if (Len == strlen(STR) && !memcmp(StartChar, STR, strlen(STR))) {          \
+    if (Keyword == STR) {                                                      \
       TyVal = LLVMTY;                                                          \
       return lltok::Type;                                                      \
     }                                                                          \
@@ -690,7 +690,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   // Keywords for instructions.
 #define INSTKEYWORD(STR, Enum)                                                 \
   do {                                                                         \
-    if (Len == strlen(#STR) && !memcmp(StartChar, #STR, strlen(#STR))) {       \
+    if (Keyword == #STR) {                                                     \
       UIntVal = Instruction::Enum;                                             \
       return lltok::kw_##STR;                                                  \
     }                                                                          \
@@ -748,9 +748,8 @@ lltok::Kind LLLexer::LexIdentifier() {
 
 #define DWKEYWORD(TYPE, TOKEN)                                                 \
   do {                                                                         \
-    if (Len >= strlen("DW_" #TYPE "_") &&                                      \
-        !memcmp(StartChar, "DW_" #TYPE "_", strlen("DW_" #TYPE "_"))) {        \
-      StrVal.assign(StartChar, CurPtr);                                        \
+    if (Keyword.startswith("DW_" #TYPE "_")) {                                 \
+      StrVal.assign(Keyword.begin(), Keyword.end());                           \
       return lltok::TOKEN;                                                     \
     }                                                                          \
   } while (false)
