@@ -9,10 +9,10 @@ define i32 @f1(i32 %p1, i32 %p2, i32 %p3, i32 %p4, i32 %p5) "no-frame-pointer-el
 define void @f2(i32 %p, ...) "no-frame-pointer-elim"="true" {
   ; CHECK-LABEL: f2:
   ; CHECK:      .seh_stackalloc 8
-  ; CHECK:      leaq    16(%rsp), %rbp
-  ; CHECK:      .seh_setframe 5, 16
-  ; CHECK:      movq    %rdx, 16(%rbp)
-  ; CHECK:      leaq    16(%rbp), %rax
+  ; CHECK:      leaq    (%rsp), %rbp
+  ; CHECK:      .seh_setframe 5, 0
+  ; CHECK:      movq    %rdx, 32(%rbp)
+  ; CHECK:      leaq    32(%rbp), %rax
   %ap = alloca i8, align 8
   call void @llvm.va_start(i8* %ap)
   ret void
@@ -76,20 +76,21 @@ define i32 @f7(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e) "no-frame-pointer-elim"="
   ; CHECK-LABEL: f7:
   ; CHECK:      pushq   %rbp
   ; CHECK:      .seh_pushreg 5
-  ; CHECK:      subq    $320, %rsp
-  ; CHECK:      .seh_stackalloc 320
+  ; CHECK:      subq    $304, %rsp
+  ; CHECK:      .seh_stackalloc 304
   ; CHECK:      leaq    128(%rsp), %rbp
   ; CHECK:      .seh_setframe 5, 128
-  ; CHECK:      movl    240(%rbp), %eax
-  ; CHECK:      leaq    192(%rbp), %rsp
+  ; CHECK:      andq    $-64, %rsp
+  ; CHECK:      movl    224(%rbp), %eax
+  ; CHECK:      leaq    176(%rbp), %rsp
   alloca [300 x i8], align 64
   ret i32 %e
 }
 
 define i32 @f8(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e) "no-frame-pointer-elim"="true" {
   ; CHECK-LABEL: f8:
-  ; CHECK:        subq    $384, %rsp
-  ; CHECK:        .seh_stackalloc 384
+  ; CHECK:        subq    $352, %rsp
+  ; CHECK:        .seh_stackalloc 352
   ; CHECK:        leaq    128(%rsp), %rbp
   ; CHECK:        .seh_setframe 5, 128
 
@@ -113,7 +114,7 @@ define i32 @f8(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e) "no-frame-pointer-elim"="
 
   ret i32 %e
   ; CHECK:        movl    %esi, %eax
-  ; CHECK:        leaq    256(%rbp), %rsp
+  ; CHECK:        leaq    224(%rbp), %rsp
 }
 
 declare i8* @llvm.returnaddress(i32) nounwind readnone

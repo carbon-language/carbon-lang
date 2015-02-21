@@ -150,18 +150,18 @@ entry:
 ; WIN64: .seh_pushreg 7
 ; WIN64: pushq %rbx
 ; WIN64: .seh_pushreg 3
-; WIN64: subq  $128, %rsp
-; WIN64: .seh_stackalloc 128
-; WIN64: leaq  128(%rsp), %rbp
-; WIN64: .seh_setframe 5, 128
-; WIN64: movaps  %xmm7, -32(%rbp)        # 16-byte Spill
-; WIN64: .seh_savexmm 7, 96
-; WIN64: movaps  %xmm6, -48(%rbp)        # 16-byte Spill
-; WIN64: .seh_savexmm 6, 80
+; WIN64: subq  $96, %rsp
+; WIN64: .seh_stackalloc 96
+; WIN64: leaq  96(%rsp), %rbp
+; WIN64: .seh_setframe 5, 96
+; WIN64: movaps  %xmm7, -16(%rbp)        # 16-byte Spill
+; WIN64: .seh_savexmm 7, 80
+; WIN64: movaps  %xmm6, -32(%rbp)        # 16-byte Spill
+; WIN64: .seh_savexmm 6, 64
 ; WIN64: .seh_endprologue
 ; WIN64: andq  $-64, %rsp
-; WIN64: movaps  -48(%rbp), %xmm6        # 16-byte Reload
-; WIN64: movaps  -32(%rbp), %xmm7        # 16-byte Reload
+; WIN64: movaps  -32(%rbp), %xmm6        # 16-byte Reload
+; WIN64: movaps  -16(%rbp), %xmm7        # 16-byte Reload
 ; WIN64: leaq  (%rbp), %rsp
 ; WIN64: popq  %rbx
 ; WIN64: popq  %rdi
