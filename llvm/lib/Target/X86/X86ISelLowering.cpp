@@ -1609,11 +1609,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::XOR,                MVT::v4i32, Legal);
   }
 
-  // SIGN_EXTEND_INREGs are evaluated by the extend type. Handle the expansion
-  // of this type with custom code.
-  for (MVT VT : MVT::vector_valuetypes())
-    setOperationAction(ISD::SIGN_EXTEND_INREG, VT, Custom);
-
   // We want to custom lower some of our intrinsics.
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
   setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
@@ -16336,68 +16331,6 @@ static SDValue LowerXALUO(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::MERGE_VALUES, DL, N->getVTList(), Sum, SetCC);
 }
 
-// Sign extension of the low part of vector elements. This may be used either
-// when sign extend instructions are not available or if the vector element
-// sizes already match the sign-extended size. If the vector elements are in
-// their pre-extended size and sign extend instructions are available, that will
-// be handled by LowerSIGN_EXTEND.
-SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
-                                                  SelectionDAG &DAG) const {
-  SDLoc dl(Op);
-  EVT ExtraVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
-  MVT VT = Op.getSimpleValueType();
-
-  if (!Subtarget->hasSSE2() || !VT.isVector())
-    return SDValue();
-
-  unsigned BitsDiff = VT.getScalarType().getSizeInBits() -
-                      ExtraVT.getScalarType().getSizeInBits();
-
-  switch (VT.SimpleTy) {
-    default: return SDValue();
-    case MVT::v8i32:
-    case MVT::v16i16:
-      if (!Subtarget->hasFp256())
-        return SDValue();
-      if (!Subtarget->hasInt256()) {
-        // needs to be split
-        unsigned NumElems = VT.getVectorNumElements();
-
-        // Extract the LHS vectors
-        SDValue LHS = Op.getOperand(0);
-        SDValue LHS1 = Extract128BitVector(LHS, 0, DAG, dl);
-        SDValue LHS2 = Extract128BitVector(LHS, NumElems/2, DAG, dl);
-
-        MVT EltVT = VT.getVectorElementType();
-        EVT NewVT = MVT::getVectorVT(EltVT, NumElems/2);
-
-        EVT ExtraEltVT = ExtraVT.getVectorElementType();
-        unsigned ExtraNumElems = ExtraVT.getVectorNumElements();
-        ExtraVT = EVT::getVectorVT(*DAG.getContext(), ExtraEltVT,
-                                   ExtraNumElems/2);
-        SDValue Extra = DAG.getValueType(ExtraVT);
-
-        LHS1 = DAG.getNode(Op.getOpcode(), dl, NewVT, LHS1, Extra);
-        LHS2 = DAG.getNode(Op.getOpcode(), dl, NewVT, LHS2, Extra);
-
-        return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, LHS1, LHS2);
-      }
-      // fall through
-    case MVT::v4i32:
-    case MVT::v8i16: {
-      SDValue Op0 = Op.getOperand(0);
-
-      // This is a sign extension of some low part of vector elements without
-      // changing the size of the vector elements themselves:
-      // Shift-Left + Shift-Right-Algebraic.
-      SDValue Shl = getTargetVShiftByConstNode(X86ISD::VSHLI, dl, VT, Op0,
-                                               BitsDiff, DAG);
-      return getTargetVShiftByConstNode(X86ISD::VSRAI, dl, VT, Shl, BitsDiff,
-                                        DAG);
-    }
-  }
-}
-
 /// Returns true if the operand type is exactly twice the native width, and
 /// the corresponding cmpxchg8b or cmpxchg16b instruction is available.
 /// Used to know whether to use cmpxchg8/16b when expanding atomic operations
@@ -16905,7 +16838,6 @@ static SDValue LowerFSINCOS(SDValue Op, const X86Subtarget *Subtarget,
 SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: llvm_unreachable("Should not custom lower this!");
-  case ISD::SIGN_EXTEND_INREG:  return LowerSIGN_EXTEND_INREG(Op,DAG);
   case ISD::ATOMIC_FENCE:       return LowerATOMIC_FENCE(Op, Subtarget, DAG);
   case ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS:
     return LowerCMP_SWAP(Op, Subtarget, DAG);
