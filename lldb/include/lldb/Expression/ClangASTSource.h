@@ -513,7 +513,7 @@ struct NameSearchContext {
     ///     The DeclContextLookupResult, usually returned as the result
     ///     of querying a DeclContext.
     //------------------------------------------------------------------
-    void AddLookupResult (clang::DeclContextLookupConstResult result);
+    void AddLookupResult (clang::DeclContextLookupResult result);
     
     //------------------------------------------------------------------
     /// Add a NamedDecl to the list of results.

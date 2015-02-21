@@ -60,7 +60,7 @@ public:
             if (!m_decl_vendor.FinishDecl(non_const_interface_decl))
                 break;
 
-            clang::DeclContext::lookup_const_result result = non_const_interface_decl->lookup(name);
+            clang::DeclContext::lookup_result result = non_const_interface_decl->lookup(name);
 
             return (result.size() != 0);
         }
@@ -588,7 +588,7 @@ AppleObjCDeclVendor::FindDecls (const ConstString &name,
         clang::IdentifierInfo &identifier_info = ast_ctx->Idents.get(name.GetStringRef());
         clang::DeclarationName decl_name = ast_ctx->DeclarationNames.getIdentifier(&identifier_info);
         
-        clang::DeclContext::lookup_const_result lookup_result = ast_ctx->getTranslationUnitDecl()->lookup(decl_name);
+        clang::DeclContext::lookup_result lookup_result = ast_ctx->getTranslationUnitDecl()->lookup(decl_name);
         
         if (!lookup_result.empty())
         {

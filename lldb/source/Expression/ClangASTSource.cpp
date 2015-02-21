@@ -2008,7 +2008,7 @@ NameSearchContext::AddTypeDecl(const ClangASTType &clang_type)
 }
 
 void
-NameSearchContext::AddLookupResult (clang::DeclContextLookupConstResult result)
+NameSearchContext::AddLookupResult (clang::DeclContextLookupResult result)
 {
     for (clang::NamedDecl *decl : result)
         m_decls.push_back (decl);

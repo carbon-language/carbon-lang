@@ -235,7 +235,7 @@ public:
                 clang::IdentifierInfo &myIdent = ast->Idents.get(type_name.GetCString());
                 clang::DeclarationName myName = ast->DeclarationNames.getIdentifier(&myIdent);
                 
-                clang::DeclContext::lookup_const_result result = ast->getTranslationUnitDecl()->lookup(myName);
+                clang::DeclContext::lookup_result result = ast->getTranslationUnitDecl()->lookup(myName);
                 
                 if (!result.empty())
                 {
