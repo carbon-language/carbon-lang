@@ -412,7 +412,7 @@ bool ScopDetection::isInvariant(const Value &Val, const Region &Reg) const {
   // in the region aliases with the load.
   if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
     AliasAnalysis::Location Loc = AA->getLocation(LI);
-    const Region::const_block_iterator BE = Reg.block_end();
+
     // Check if any basic block in the region can modify the location pointed to
     // by 'Loc'.  If so, 'Val' is (likely) not invariant in the region.
     for (const BasicBlock *BB : Reg.blocks())
