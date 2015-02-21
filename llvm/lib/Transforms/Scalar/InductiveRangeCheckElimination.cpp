@@ -162,9 +162,11 @@ public:
   /// branch to take the hot successor (see (1) above).
   bool getPassingDirection() { return true; }
 
-  /// Computes a range for the induction variable in which the range check is
-  /// redundant and can be constant-folded away.
+  /// Computes a range for the induction variable (IndVar) in which the range
+  /// check is redundant and can be constant-folded away.  The induction
+  /// variable is not required to be the canonical {0,+,1} induction variable.
   Optional<Range> computeSafeIterationSpace(ScalarEvolution &SE,
+                                            const SCEVAddRecExpr *IndVar,
                                             IRBuilder<> &B) const;
 
   /// Create an inductive range check out of BI if possible, else return
@@ -617,10 +619,7 @@ bool LoopConstrainer::recognizeLoop(LoopStructure &LoopStructureOut,
   }
 
   PHINode *CIV = OriginalLoop.getCanonicalInductionVariable();
-  if (!CIV) {
-    FailureReason = "no CIV";
-    return false;
-  }
+  assert(CIV && "precondition");
 
   BasicBlock *Header = OriginalLoop.getHeader();
   BasicBlock *Preheader = OriginalLoop.getLoopPreheader();
@@ -1082,43 +1081,62 @@ bool LoopConstrainer::run() {
   return true;
 }
 
-/// Computes and returns a range of values for the induction variable in which
-/// the range check can be safely elided.  If it cannot compute such a range,
-/// returns None.
+/// Computes and returns a range of values for the induction variable (IndVar)
+/// in which the range check can be safely elided.  If it cannot compute such a
+/// range, returns None.
 Optional<InductiveRangeCheck::Range>
 InductiveRangeCheck::computeSafeIterationSpace(ScalarEvolution &SE,
-                                               IRBuilder<> &B) const {
-
-  // Currently we support inequalities of the form:
+                                               const SCEVAddRecExpr *IndVar,
+                                               IRBuilder<> &) const {
+  // IndVar is of the form "A + B * I" (where "I" is the canonical induction
+  // variable, that may or may not exist as a real llvm::Value in the loop) and
+  // this inductive range check is a range check on the "C + D * I" ("C" is
+  // getOffset() and "D" is getScale()).  We rewrite the value being range
+  // checked to "M + N * IndVar" where "N" = "D * B^(-1)" and "M" = "C - NA".
+  // Currently we support this only for "B" = "D" = { 1 or -1 }, but the code
+  // can be generalized as needed.
   //
-  //   0 <= Offset + 1 * CIV < L given L >= 0
+  // The actual inequalities we solve are of the form
   //
-  // The inequality is satisfied by -Offset <= CIV < (L - Offset) [^1].  All
-  // additions and subtractions are twos-complement wrapping and comparisons are
-  // signed.
+  //   0 <= M + 1 * IndVar < L given L >= 0  (i.e. N == 1)
+  //
+  // The inequality is satisfied by -M <= IndVar < (L - M) [^1].  All additions
+  // and subtractions are twos-complement wrapping and comparisons are signed.
   //
   // Proof:
   //
-  //   If there exists CIV such that -Offset <= CIV < (L - Offset) then it
-  //   follows that -Offset <= (-Offset + L) [== Eq. 1].  Since L >= 0, if
-  //   (-Offset + L) sign-overflows then (-Offset + L) < (-Offset).  Hence by
-  //   [Eq. 1], (-Offset + L) could not have overflown.
+  //   If there exists IndVar such that -M <= IndVar < (L - M) then it follows
+  //   that -M <= (-M + L) [== Eq. 1].  Since L >= 0, if (-M + L) sign-overflows
+  //   then (-M + L) < (-M).  Hence by [Eq. 1], (-M + L) could not have
+  //   overflown.
   //
-  //   This means CIV = t + (-Offset) for t in [0, L).  Hence (CIV + Offset) =
-  //   t.  Hence 0 <= (CIV + Offset) < L
+  //   This means IndVar = t + (-M) for t in [0, L).  Hence (IndVar + M) = t.
+  //   Hence 0 <= (IndVar + M) < L
 
-  // [^1]: Note that the solution does _not_ apply if L < 0; consider values
-  // Offset = 127, CIV = 126 and L = -2 in an i8 world.
+  // [^1]: Note that the solution does _not_ apply if L < 0; consider values M =
+  // 127, IndVar = 126 and L = -2 in an i8 world.
 
-  const SCEVConstant *ScaleC = dyn_cast<SCEVConstant>(getScale());
-  if (!(ScaleC && ScaleC->getValue()->getValue() == 1)) {
-    DEBUG(dbgs() << "irce: could not compute safe iteration space for:\n";
-          print(dbgs()));
+  if (!IndVar->isAffine())
     return None;
-  }
 
-  const SCEV *Begin = SE.getNegativeSCEV(getOffset());
-  const SCEV *End = SE.getMinusSCEV(SE.getSCEV(getLength()), getOffset());
+  const SCEV *A = IndVar->getStart();
+  const SCEVConstant *B = dyn_cast<SCEVConstant>(IndVar->getStepRecurrence(SE));
+  if (!B)
+    return None;
+
+  const SCEV *C = getOffset();
+  const SCEVConstant *D = dyn_cast<SCEVConstant>(getScale());
+  if (D != B)
+    return None;
+
+  ConstantInt *ConstD = D->getValue();
+  if (!(ConstD->isMinusOne() || ConstD->isOne()))
+    return None;
+
+  const SCEV *M = SE.getMinusSCEV(C, A);
+
+  const SCEV *Begin = SE.getNegativeSCEV(M);
+  const SCEV *End = SE.getMinusSCEV(SE.getSCEV(getLength()), M);
 
   return InductiveRangeCheck::Range(Begin, End);
 }
@@ -1160,6 +1178,13 @@ bool InductiveRangeCheckElimination::runOnLoop(Loop *L, LPPassManager &LPM) {
   ScalarEvolution &SE = getAnalysis<ScalarEvolution>();
   BranchProbabilityInfo &BPI = getAnalysis<BranchProbabilityInfo>();
 
+  PHINode *CIV = L->getCanonicalInductionVariable();
+  if (!CIV) {
+    DEBUG(dbgs() << "irce: loop has no canonical induction variable\n");
+    return false;
+  }
+  const SCEVAddRecExpr *IndVar = cast<SCEVAddRecExpr>(SE.getSCEV(CIV));
+
   for (auto BBI : L->getBlocks())
     if (BranchInst *TBI = dyn_cast<BranchInst>(BBI->getTerminator()))
       if (InductiveRangeCheck *IRC =
@@ -1183,7 +1208,7 @@ bool InductiveRangeCheckElimination::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   IRBuilder<> B(ExprInsertPt);
   for (InductiveRangeCheck *IRC : RangeChecks) {
-    auto Result = IRC->computeSafeIterationSpace(SE, B);
+    auto Result = IRC->computeSafeIterationSpace(SE, IndVar, B);
     if (Result.hasValue()) {
       auto MaybeSafeIterRange =
         IntersectRange(SE, SafeIterRange, Result.getValue(), B);
