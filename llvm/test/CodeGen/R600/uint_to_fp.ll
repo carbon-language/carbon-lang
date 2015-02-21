@@ -50,7 +50,7 @@ define void @uint_to_fp_v4i32_to_v4f32(<4 x float> addrspace(1)* %out, <4 x i32>
 ; R600: MULADD_IEEE
 ; SI: v_cvt_f32_u32_e32
 ; SI: v_cvt_f32_u32_e32
-; SI: v_mad_f32
+; SI: v_madmk_f32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}, 0x4f800000
 ; SI: s_endpgm
 define void @uint_to_fp_i64_to_f32(float addrspace(1)* %out, i64 %in) {
 entry:

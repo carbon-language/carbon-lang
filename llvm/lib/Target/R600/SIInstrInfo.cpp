@@ -892,10 +892,57 @@ bool SIInstrInfo::FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
     MachineOperand *Src1 = getNamedOperand(*UseMI, AMDGPU::OpName::src1);
     MachineOperand *Src2 = getNamedOperand(*UseMI, AMDGPU::OpName::src2);
 
-    // The VOP2 src0 can't be an SGPR since the constant bus use will be the
-    // literal constant.
-    if (Src0->isReg() && RI.isSGPRClass(MRI->getRegClass(Src0->getReg())))
-      return false;
+    // Multiplied part is the constant: Use v_madmk_f32
+    // We should only expect these to be on src0 due to canonicalizations.
+    if (Src0->isReg() && Src0->getReg() == Reg) {
+      if (!Src1->isReg() ||
+          (Src1->isReg() && RI.isSGPRClass(MRI->getRegClass(Src1->getReg()))))
+        return false;
+
+      if (!Src2->isReg() ||
+          (Src2->isReg() && RI.isSGPRClass(MRI->getRegClass(Src2->getReg()))))
+        return false;
+
+      // We need to do some weird looking operand shuffling since the madmk
+      // operands are out of the normal expected order with the multiplied
+      // constant as the last operand.
+      //
+      // v_mad_f32 src0, src1, src2 -> v_madmk_f32 src0 * src2K + src1
+      // src0 -> src2 K
+      // src1 -> src0
+      // src2 -> src1
+
+      const int64_t Imm = DefMI->getOperand(1).getImm();
+
+      // FIXME: This would be a lot easier if we could return a new instruction
+      // instead of having to modify in place.
+
+      // Remove these first since they are at the end.
+      UseMI->RemoveOperand(AMDGPU::getNamedOperandIdx(AMDGPU::V_MAD_F32,
+                                                      AMDGPU::OpName::omod));
+      UseMI->RemoveOperand(AMDGPU::getNamedOperandIdx(AMDGPU::V_MAD_F32,
+                                                      AMDGPU::OpName::clamp));
+
+      unsigned Src1Reg = Src1->getReg();
+      unsigned Src1SubReg = Src1->getSubReg();
+      unsigned Src2Reg = Src2->getReg();
+      unsigned Src2SubReg = Src2->getSubReg();
+      Src0->setReg(Src1Reg);
+      Src0->setSubReg(Src1SubReg);
+      Src1->setReg(Src2Reg);
+      Src1->setSubReg(Src2SubReg);
+
+      Src2->ChangeToImmediate(Imm);
+
+      removeModOperands(*UseMI);
+      UseMI->setDesc(get(AMDGPU::V_MADMK_F32));
+
+      bool DeleteDef = MRI->hasOneNonDBGUse(Reg);
+      if (DeleteDef)
+        DefMI->eraseFromParent();
+
+      return true;
+    }
 
     // Added part is the constant: Use v_madak_f32
     if (Src2->isReg() && Src2->getReg() == Reg) {
