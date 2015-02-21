@@ -976,13 +976,10 @@ void MipsAsmPrinter::EmitFPCallStub(
       OutContext.GetOrCreateSymbol("__call_stub_fp_" + Twine(Symbol));
   OutStreamer.EmitSymbolAttribute(MType, MCSA_ELF_TypeFunction);
   OutStreamer.EmitLabel(Stub);
-  //
-  // we just handle non pic for now. these function will not be
-  // called otherwise. when the full stub generation is moved here
-  // we need to deal with pic.
-  //
-  if (TM.getRelocationModel() == Reloc::PIC_)
-    llvm_unreachable("should not be here if we are compiling pic");
+
+  // Only handle non-pic for now.
+  assert(TM.getRelocationModel() != Reloc::PIC_ &&
+         "should not be here if we are compiling pic");
   TS.emitDirectiveSetReorder();
   //
   // We need to add a MipsMCExpr class to MCTargetDesc to fully implement
