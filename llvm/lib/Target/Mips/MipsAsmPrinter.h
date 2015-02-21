@@ -98,11 +98,6 @@ public:
   const MipsFunctionInfo *MipsFI;
   MipsMCInstLower MCInstLowering;
 
-  // We initialize the subtarget here and in runOnMachineFunction
-  // since there are certain target specific flags (ABI) that could
-  // reside on the TargetMachine, but are on the subtarget currently
-  // and we need them for the beginning of file output before we've
-  // seen a single function.
   explicit MipsAsmPrinter(TargetMachine &TM,
                           std::unique_ptr<MCStreamer> Streamer)
       : AsmPrinter(TM, std::move(Streamer)), MCP(nullptr),
