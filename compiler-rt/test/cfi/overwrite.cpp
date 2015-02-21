@@ -1,6 +1,15 @@
 // RUN: %clangxx_cfi -o %t %s
 // RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
 
+// RUN: %clangxx_cfi -DB32 -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
+// RUN: %clangxx_cfi -DB64 -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
+// RUN: %clangxx_cfi -DBM -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
 // RUN: %clangxx -o %t %s
 // RUN: %t 2>&1 | FileCheck --check-prefix=NCFI %s
 
@@ -10,6 +19,7 @@
 // attempting to make a call through it.
 
 #include <stdio.h>
+#include "utils.h"
 
 struct A {
   virtual void f();
@@ -24,8 +34,24 @@ void foo() {
 void *fake_vtable[] = { (void *)&foo };
 
 int main() {
+#ifdef B32
+  break_optimization(new Deriver<A, 0>);
+#endif
+
+#ifdef B64
+  break_optimization(new Deriver<A, 0>);
+  break_optimization(new Deriver<A, 1>);
+#endif
+
+#ifdef BM
+  break_optimization(new Deriver<A, 0>);
+  break_optimization(new Deriver<A, 1>);
+  break_optimization(new Deriver<A, 2>);
+#endif
+
   A *a = new A;
   *((void **)a) = fake_vtable; // UB here
+  break_optimization(a);
 
   // CFI: 1
   // NCFI: 1

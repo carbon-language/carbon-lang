@@ -5,9 +5,7 @@
 // kinds of valid calls involving classes with various different linkages and
 // types of inheritance.
 
-inline void break_optimization(void *arg) {
-  __asm__ __volatile__("" : : "r" (arg) : "memory");
-}
+#include "utils.h"
 
 struct A {
   virtual void f();
