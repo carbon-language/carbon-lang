@@ -2681,6 +2681,7 @@ Sema::FormatStringType Sema::GetFormatStringType(const FormatAttr *Format) {
   .Case("strfmon", FST_Strfmon)
   .Cases("kprintf", "cmn_err", "vcmn_err", "zcmn_err", FST_Kprintf)
   .Case("freebsd_kprintf", FST_FreeBSDKPrintf)
+  .Case("os_trace", FST_OSTrace)
   .Default(FST_Unknown);
 }
 
@@ -4123,9 +4124,9 @@ void Sema::CheckFormatString(const StringLiteral *FExpr,
   }
   
   if (Type == FST_Printf || Type == FST_NSString ||
-      Type == FST_FreeBSDKPrintf) {
+      Type == FST_FreeBSDKPrintf || Type == FST_OSTrace) {
     CheckPrintfHandler H(*this, FExpr, OrigFormatExpr, firstDataArg,
-                         numDataArgs, (Type == FST_NSString),
+                         numDataArgs, (Type == FST_NSString || Type == FST_OSTrace),
                          Str, HasVAListArg, Args, format_idx,
                          inFunctionCall, CallType, CheckedVarArgs);
   
