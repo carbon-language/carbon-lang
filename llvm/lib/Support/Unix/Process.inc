@@ -106,8 +106,7 @@ size_t Process::GetMallocUsage() {
   sz = sizeof(size_t);
   if (mallctl("stats.allocated", &alloc, &sz, NULL, 0) == 0)
     return alloc;
-  else
-    return 0;
+  return 0;
 #elif defined(HAVE_SBRK)
   // Note this is only an approximation and more closely resembles
   // the value returned by mallinfo in the arena field.
@@ -115,8 +114,7 @@ size_t Process::GetMallocUsage() {
   char *EndOfMemory = (char*)sbrk(0);
   if (EndOfMemory != ((char*)-1) && StartOfMemory != ((char*)-1))
     return EndOfMemory - StartOfMemory;
-  else
-    return 0;
+  return 0;
 #else
 #warning Cannot get malloc info on this platform
   return 0;
