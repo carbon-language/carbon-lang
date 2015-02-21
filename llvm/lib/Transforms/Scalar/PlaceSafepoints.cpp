@@ -150,15 +150,8 @@ namespace {
 struct PlaceSafepoints : public ModulePass {
   static char ID; // Pass identification, replacement for typeid
 
-  bool EnableEntrySafepoints;
-  bool EnableBackedgeSafepoints;
-  bool EnableCallSafepoints;
-
   PlaceSafepoints() : ModulePass(ID) {
     initializePlaceSafepointsPass(*PassRegistry::getPassRegistry());
-    EnableEntrySafepoints = !NoEntry;
-    EnableBackedgeSafepoints = !NoBackedge;
-    EnableCallSafepoints = !NoCall;
   }
   bool runOnModule(Module &M) override {
     bool modified = false;
@@ -504,6 +497,25 @@ static bool isGCSafepointPoll(Function &F) {
   return F.getName().equals(GCSafepointPollName);
 }
 
+/// Returns true if this function should be rewritten to include safepoint
+/// polls and parseable call sites.  The main point of this function is to be
+/// an extension point for custom logic. 
+static bool shouldRewriteFunction(Function &F) {
+  // TODO: This should check the GCStrategy
+  if (F.hasGC()) {
+    const std::string StatepointExampleName("statepoint-example");
+    return StatepointExampleName == F.getGC();
+  } else
+    return false;
+}
+
+// TODO: These should become properties of the GCStrategy, possibly with
+// command line overrides.
+static bool enableEntrySafepoints(Function &F) { return !NoEntry; }
+static bool enableBackedgeSafepoints(Function &F) { return !NoBackedge; }
+static bool enableCallSafepoints(Function &F) { return !NoCall; }
+
+
 bool PlaceSafepoints::runOnFunction(Function &F) {
   if (F.isDeclaration() || F.empty()) {
     // This is a declaration, nothing to do.  Must exit early to avoid crash in
@@ -517,6 +529,9 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     // parseable after we inline a poll.  
     return false;
   }
+
+  if (!shouldRewriteFunction(F))
+    return false;
 
   bool modified = false;
 
@@ -536,13 +551,13 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
 
   std::vector<CallSite> ParsePointNeeded;
 
-  if (EnableBackedgeSafepoints) {
+  if (enableBackedgeSafepoints(F)) {
     // Construct a pass manager to run the LoopPass backedge logic.  We
     // need the pass manager to handle scheduling all the loop passes
     // appropriately.  Doing this by hand is painful and just not worth messing
     // with for the moment.
     legacy::FunctionPassManager FPM(F.getParent());
-    bool CanAssumeCallSafepoints = EnableCallSafepoints;
+    bool CanAssumeCallSafepoints = enableCallSafepoints(F);
     PlaceBackedgeSafepointsImpl *PBS =
       new PlaceBackedgeSafepointsImpl(CanAssumeCallSafepoints);
     FPM.add(PBS);
@@ -609,7 +624,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     }
   }
 
-  if (EnableEntrySafepoints) {
+  if (enableEntrySafepoints(F)) {
     DT.recalculate(F);
     Instruction *term = findLocationForEntrySafepoint(F, DT);
     if (!term) {
@@ -624,7 +639,7 @@ bool PlaceSafepoints::runOnFunction(Function &F) {
     }
   }
 
-  if (EnableCallSafepoints) {
+  if (enableCallSafepoints(F)) {
     DT.recalculate(F);
     std::vector<CallSite> Calls;
     findCallSafepoints(F, Calls);

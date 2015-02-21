@@ -1,7 +1,7 @@
 ;; A very basic test to make sure that splitting the backedge keeps working
 ;; RUN: opt -place-safepoints -spp-split-backedge=1 -S %s | FileCheck %s
 
-define void @test(i32, i1 %cond) {
+define void @test(i32, i1 %cond) gc "statepoint-example" {
 ; CHECK-LABEL: @test
 ; CHECK-LABEL: loop.loop_crit_edge
 ; CHECK: gc.statepoint
@@ -20,7 +20,7 @@ exit:
 ; different loop header blocks.  Since we're currently using LoopSimplfy
 ; this doesn't hit the interesting case, but once we remove that, we need
 ; to be sure this keeps working.
-define void @test2(i32, i1 %cond) {
+define void @test2(i32, i1 %cond) gc "statepoint-example" {
 ; CHECK-LABEL: @test2
 ; CHECK-LABE: loop.loopexit.split
 ; CHECK: gc.statepoint

@@ -10,6 +10,14 @@ entry:
   ret void
 }
 
+; On a non-gc function, we should NOT get an entry safepoint
+define void @test_negative() {
+; CHECK-LABEL: @test_negative
+entry:
+; CHECK-NOT: statepoint
+  ret void
+}
+
 ; Do we insert a backedge safepoint in a statically
 ; infinite loop?
 define void @test_backedge() gc "statepoint-example" {

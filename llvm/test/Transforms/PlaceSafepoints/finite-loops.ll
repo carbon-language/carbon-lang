@@ -4,7 +4,7 @@
 
 
 ; A simple counted loop with trivially known range
-define void @test1(i32) {
+define void @test1(i32) gc "statepoint-example" {
 ; CHECK-LABEL: test1
 ; CHECK-LABEL: entry
 ; CHECK: statepoint
@@ -25,7 +25,7 @@ exit:
 }
 
 ; The same counted loop, but with an unknown early exit
-define void @test2(i32) {
+define void @test2(i32) gc "statepoint-example" {
 ; CHECK-LABEL: test2
 ; CHECK-LABEL: entry
 ; CHECK: statepoint
@@ -49,7 +49,7 @@ exit:
 }
 
 ; The range is a 8 bit value and we can't overflow
-define void @test3(i8 %upper) {
+define void @test3(i8 %upper) gc "statepoint-example" {
 ; CHECK-LABEL: test3
 ; CHECK-LABEL: entry
 ; CHECK: statepoint

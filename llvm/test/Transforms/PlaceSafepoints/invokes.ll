@@ -3,7 +3,7 @@
 declare i64 addrspace(1)* @"some_call"(i64 addrspace(1)*)
 declare i32 @"personality_function"()
 
-define i64 addrspace(1)* @test_basic(i64 addrspace(1)* %obj, i64 addrspace(1)* %obj1) {
+define i64 addrspace(1)* @test_basic(i64 addrspace(1)* %obj, i64 addrspace(1)* %obj1) gc "statepoint-example" {
 ; CHECK-LABEL: entry:
 entry:
   ; CHECK: invoke
@@ -29,7 +29,7 @@ exceptional_return:
   ret i64 addrspace(1)* %obj1
 }
 
-define i64 addrspace(1)* @test_two_invokes(i64 addrspace(1)* %obj, i64 addrspace(1)* %obj1) {
+define i64 addrspace(1)* @test_two_invokes(i64 addrspace(1)* %obj, i64 addrspace(1)* %obj1) gc "statepoint-example" {
 ; CHECK-LABEL: entry:
 entry:
   ; CHECK: invoke 
@@ -61,7 +61,7 @@ exceptional_return:
   ret i64 addrspace(1)* %obj1
 }
 
-define i64 addrspace(1)* @test_phi_node(i1 %cond, i64 addrspace(1)* %obj) {
+define i64 addrspace(1)* @test_phi_node(i1 %cond, i64 addrspace(1)* %obj) gc "statepoint-example" {
 ; CHECK-LABEL: entry:
 entry:
   br i1 %cond, label %left, label %right

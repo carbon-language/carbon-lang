@@ -5,7 +5,7 @@
 
 declare void @foo()
 
-define void @test1() {
+define void @test1() gc "statepoint-example" {
 ; CHECK-LABEL: test1
 
 entry:
