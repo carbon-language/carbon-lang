@@ -488,6 +488,9 @@ gathered, use the '``-stats``' option:
   $ opt -stats -mypassname < program.bc > /dev/null
   ... statistics output ...
 
+Note that in order to use the '``-stats``' option, LLVM must be
+compiled with assertions enabled.
+
 When running ``opt`` on a C file from the SPEC benchmark suite, it gives a
 report that looks like this:
 
