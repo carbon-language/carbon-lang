@@ -69,7 +69,7 @@ class StdCXXDisassembleTestCase(TestBase):
         self.expect(lib_stdcxx, "Libraray StdC++ is located", exe=False,
             substrs = ["lib"])
 
-        self.runCmd("image dump symtab %s" % lib_stdcxx)
+        self.runCmd("image dump symtab '%s'" % lib_stdcxx)
         raw_output = self.res.GetOutput()
         # Now, look for every 'Code' symbol and feed its load address into the
         # command: 'disassemble -s load_address -e end_address', where the
