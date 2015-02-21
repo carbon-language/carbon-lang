@@ -10,6 +10,42 @@
 // RUN: %clangxx_cfi -DBM -o %t %s
 // RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
 
+// RUN: %clangxx_cfi -O1 -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
+// RUN: %clangxx_cfi -O1 -DB32 -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
+// RUN: %clangxx_cfi -O1 -DB64 -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
+// RUN: %clangxx_cfi -O1 -DBM -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
+// RUN: %clangxx_cfi -O2 -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
+// RUN: %clangxx_cfi -O2 -DB32 -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
+// RUN: %clangxx_cfi -O2 -DB64 -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
+// RUN: %clangxx_cfi -O2 -DBM -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
+// RUN: %clangxx_cfi -O3 -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
+// RUN: %clangxx_cfi -O3 -DB32 -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
+// RUN: %clangxx_cfi -O3 -DB64 -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
+// RUN: %clangxx_cfi -O3 -DBM -o %t %s
+// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+
 // RUN: %clangxx -o %t %s
 // RUN: %t 2>&1 | FileCheck --check-prefix=NCFI %s
 
