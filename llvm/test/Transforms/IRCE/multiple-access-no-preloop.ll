@@ -37,10 +37,14 @@ define void @multiple_access_no_preloop(
 ; CHECK-LABEL: multiple_access_no_preloop
 
 ; CHECK-LABEL: loop.preheader:
-; CHECK: [[smaller_len_cmp:[^ ]+]] = icmp slt i32 %len.a, %len.b
-; CHECK: [[smaller_len:[^ ]+]] = select i1 [[smaller_len_cmp]], i32 %len.a, i32 %len.b
-; CHECK: [[upper_bound_cmp:[^ ]+]] = icmp slt i32 %n, %3
-; CHECK: [[upper_bound:[^ ]+]] = select i1 %5, i32 %n, i32 %3
+; CHECK: [[not_len_b:[^ ]+]] = sub i32 -1, %len.b
+; CHECK: [[not_len_a:[^ ]+]] = sub i32 -1, %len.a
+; CHECK: [[smax_not_len_cond:[^ ]+]] = icmp sgt i32 [[not_len_b]], [[not_len_a]]
+; CHECK: [[smax_not_len:[^ ]+]] = select i1 [[smax_not_len_cond]], i32 [[not_len_b]], i32 [[not_len_a]]
+; CHECK: [[not_n:[^ ]+]] = sub i32 -1, %n
+; CHECK: [[not_upper_limit_cond:[^ ]+]] = icmp sgt i32 [[smax_not_len]], [[not_n]]
+; CHECK: [[not_upper_limit:[^ ]+]] = select i1 [[not_upper_limit_cond]], i32 [[smax_not_len]], i32 [[not_n]]
+; CHECK: [[upper_limit:[^ ]+]] = sub i32 -1, [[not_upper_limit]]
 
 ; CHECK-LABEL: loop:
 ; CHECK: br i1 true, label %in.bounds.a, label %out.of.bounds
@@ -49,7 +53,7 @@ define void @multiple_access_no_preloop(
 ; CHECK: br i1 true, label %in.bounds.b, label %out.of.bounds
 
 ; CHECK-LABEL: in.bounds.b:
-; CHECK: [[main_loop_cond:[^ ]+]] = icmp slt i32 %idx.next, [[upper_bound]]
+; CHECK: [[main_loop_cond:[^ ]+]] = icmp slt i32 %idx.next, [[upper_limit]]
 ; CHECK: br i1 [[main_loop_cond]], label %loop, label %main.exit.selector
 
 ; CHECK-LABEL: in.bounds.b.postloop:
