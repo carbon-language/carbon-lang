@@ -888,7 +888,7 @@ void MipsAsmPrinter::EmitFPCallStub(
     const char *Symbol, const Mips16HardFloatInfo::FuncSignature *Signature) {
   MCSymbol *MSymbol = OutContext.GetOrCreateSymbol(StringRef(Symbol));
   using namespace Mips16HardFloatInfo;
-  bool LE = Subtarget->isLittle();
+  bool LE = getDataLayout().isLittleEndian();
   //
   // .global xxxx
   //
