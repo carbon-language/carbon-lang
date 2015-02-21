@@ -930,8 +930,8 @@ ELFFile<ELFT>::createSectionAtom(const Elf_Shdr *section, StringRef sectionName,
   sym->st_shndx = 0;
   sym->st_value = 0;
   sym->st_size = 0;
-  auto *newAtom = new (_readerStorage) ELFDefinedAtom<ELFT>(
-      *this, "", sectionName, sym, section, content, 0, 0, _references);
+  auto *newAtom = createDefinedAtomAndAssignRelocations(
+      "", sectionName, sym, section, content, content);
   newAtom->setOrdinal(++_ordinal);
   return newAtom;
 }
