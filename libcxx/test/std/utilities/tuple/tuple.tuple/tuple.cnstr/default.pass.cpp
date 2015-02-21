@@ -35,6 +35,16 @@ struct ThrowingDefault {
     ThrowingDefault() { }
 };
 
+struct IllFormedDefault {
+    IllFormedDefault(int x) : value(x) {}
+    template <bool Pred = false>
+    constexpr IllFormedDefault() {
+        static_assert(Pred,
+            "The default constructor should not be instantiated");
+    }
+    int value;
+};
+
 int main()
 {
     {
@@ -88,6 +98,13 @@ int main()
         constexpr std::tuple<int, char*> t;
         assert(std::get<0>(t) == 0);
         assert(std::get<1>(t) == nullptr);
+    }
+    {
+    // Check that the SFINAE on the default constructor is not evaluted when
+    // it isn't needed. If the default constructor is evaluted then this test
+    // should fail to compile.
+        IllFormedDefault v(0);
+        std::tuple<IllFormedDefault> t(v);
     }
 #endif
 }

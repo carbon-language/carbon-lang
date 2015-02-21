@@ -216,6 +216,9 @@ template <class...>
 struct __void_t { typedef void type; };
 #endif
 
+template <class _Tp, bool>
+struct _LIBCPP_TYPE_VIS_ONLY __dependent_type : public _Tp {};
+
 template <bool _Bp, class _If, class _Then>
     struct _LIBCPP_TYPE_VIS_ONLY conditional {typedef _If type;};
 template <class _If, class _Then>
