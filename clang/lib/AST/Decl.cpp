@@ -2532,8 +2532,8 @@ FunctionDecl::getCorrespondingUnsizedGlobalDeallocationFunction() const {
 
   // This is a sized deallocation function. Find the corresponding unsized
   // deallocation function.
-  lookup_const_result R = getDeclContext()->lookup(getDeclName());
-  for (lookup_const_result::iterator RI = R.begin(), RE = R.end(); RI != RE;
+  lookup_result R = getDeclContext()->lookup(getDeclName());
+  for (lookup_result::iterator RI = R.begin(), RE = R.end(); RI != RE;
        ++RI)
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*RI))
       if (FD->getNumParams() == 1 && !FD->isVariadic())

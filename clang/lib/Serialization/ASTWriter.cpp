@@ -3699,7 +3699,7 @@ void ASTWriter::AddUpdatedDeclContext(const DeclContext *DC) {
     // Ensure we emit all the visible declarations.
     visitLocalLookupResults(DC, DC->NeedToReconcileExternalVisibleStorage,
                             [&](DeclarationName Name,
-                                DeclContext::lookup_const_result Result) {
+                                DeclContext::lookup_result Result) {
       for (auto *Decl : Result)
         GetDeclRef(getDeclForLocalLookup(getLangOpts(), Decl));
     });

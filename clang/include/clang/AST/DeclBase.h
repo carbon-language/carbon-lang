@@ -1063,9 +1063,6 @@ public:
   }
 };
 
-// FIXME: Remove this.
-typedef DeclContextLookupResult DeclContextLookupConstResult;
-
 /// DeclContext - This is used only as base class of specific decl types that
 /// can act as declaration contexts. These decls are (only the top classes
 /// that directly derive from DeclContext are mentioned, not their subclasses):
@@ -1579,10 +1576,6 @@ public:
 
   typedef DeclContextLookupResult lookup_result;
   typedef lookup_result::iterator lookup_iterator;
-
-  // FIXME: Remove these.
-  typedef lookup_result lookup_const_result;
-  typedef lookup_iterator lookup_const_iterator;
 
   /// lookup - Find the declarations (if any) with the given Name in
   /// this context. Returns a range of iterators that contains all of

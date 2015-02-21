@@ -1585,7 +1585,7 @@ UsingDirectiveDecl *DeclContext::udir_iterator::operator*() const {
 DeclContext::udir_range DeclContext::using_directives() const {
   // FIXME: Use something more efficient than normal lookup for using
   // directives. In C++, using directives are looked up more than anything else.
-  lookup_const_result Result = lookup(UsingDirectiveDecl::getName());
+  lookup_result Result = lookup(UsingDirectiveDecl::getName());
   return udir_range(Result.begin(), Result.end());
 }
 
