@@ -124,9 +124,8 @@ public:
 
   StringRef name() const override { return _name; }
 
-  // FIXME: What distinguishes a symbol in ELF that can help decide if the
-  // symbol is undefined only during build and not runtime? This will make us
-  // choose canBeNullAtBuildtime and canBeNullAtRuntime.
+  // A symbol in ELF can be undefined at build time if the symbol is a undefined
+  // weak symbol.
   CanBeNull canBeNull() const override {
     if (_symbol->getBinding() == llvm::ELF::STB_WEAK)
       return CanBeNull::canBeNullAtBuildtime;
@@ -192,7 +191,6 @@ public:
   // FIXME: Need to revisit this in future.
   Interposable interposable() const override { return interposeNo; }
 
-  // FIXME: What ways can we determine this in ELF?
   Merge merge() const override {
     if (_symbol->getBinding() == llvm::ELF::STB_WEAK)
       return mergeAsWeak;
