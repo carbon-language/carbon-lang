@@ -505,12 +505,13 @@ Clang version in which each feature became available.</p>
     </tr>
 </table>
 <p>
-<span id="n3778">(6): As of Clang 3.7, using sized deallocation in C++14 mode requires linking either
-libc++ 3.7 or later, or libstdc++ 5 or later. Alternatively, you can use the 
-<code>-fdefine-sized-deallocation</code> compiler option to enable the implementation under 
-Clang 3.4 through Clang 3.6, where weak definitions of sized deallocation functions are implicitly 
-generated (by the compiler). You can also use the <code>-fno-sized-deallocation</code> option 
-to disable sized deallocation.
+<span id="n3778">(6): In Clang SVN, using sized deallocation in C++14 mode requires linking either
+libc++ 3.7 or later, or libstdc++ 5 or later. Alternatively, you can use the
+<code>-Xclang -fdefine-sized-deallocation</code> compiler option to enable the implementation from
+Clang 3.4 through Clang 3.6, where weak definitions of sized deallocation functions are implicitly
+generated (by the compiler). You can also use the <code>-Xclang -fno-sized-deallocation</code> option 
+to disable sized deallocation. Note that both of these flags arw temporary provisions and may go away
+soon.
 </span>
 </p>
 
