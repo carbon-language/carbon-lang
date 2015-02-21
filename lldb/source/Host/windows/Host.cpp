@@ -20,6 +20,7 @@
 #include "lldb/Target/Process.h"
 
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/StreamFile.h"
