@@ -33,14 +33,11 @@ public:
   void ReaderInitialized(ASTReader *Reader) override;
   void IdentifierRead(serialization::IdentID ID,
                       IdentifierInfo *II) override;
-  void MacroRead(serialization::MacroID ID, MacroInfo *MI) override;
   void TypeRead(serialization::TypeIdx Idx, QualType T) override;
   void DeclRead(serialization::DeclID ID, const Decl *D) override;
   void SelectorRead(serialization::SelectorID iD, Selector Sel) override;
   void MacroDefinitionRead(serialization::PreprocessedEntityID,
                            MacroDefinition *MD) override;
-  void ModuleRead(serialization::SubmoduleID ID, Module *Mod) override;
-
 private:
   std::vector<ASTDeserializationListener*> Listeners;
 };
@@ -60,12 +57,6 @@ void MultiplexASTDeserializationListener::IdentifierRead(
     serialization::IdentID ID, IdentifierInfo *II) {
   for (size_t i = 0, e = Listeners.size(); i != e; ++i)
     Listeners[i]->IdentifierRead(ID, II);
-}
-
-void MultiplexASTDeserializationListener::MacroRead(
-    serialization::MacroID ID, MacroInfo *MI) {
-  for (auto &Listener : Listeners)
-    Listener->MacroRead(ID, MI);
 }
 
 void MultiplexASTDeserializationListener::TypeRead(
@@ -92,12 +83,6 @@ void MultiplexASTDeserializationListener::MacroDefinitionRead(
     Listeners[i]->MacroDefinitionRead(ID, MD);
 }
 
-void MultiplexASTDeserializationListener::ModuleRead(
-    serialization::SubmoduleID ID, Module *Mod) {
-  for (auto &Listener : Listeners)
-    Listener->ModuleRead(ID, Mod);
-}
-
 // This ASTMutationListener forwards its notifications to a set of
 // child listeners.
 class MultiplexASTMutationListener : public ASTMutationListener {
@@ -113,13 +98,11 @@ public:
                                const VarTemplateSpecializationDecl *D) override;
   void AddedCXXTemplateSpecialization(const FunctionTemplateDecl *TD,
                                       const FunctionDecl *D) override;
-  void ResolvedExceptionSpec(const FunctionDecl *FD) override;
   void DeducedReturnType(const FunctionDecl *FD, QualType ReturnType) override;
   void CompletedImplicitDefinition(const FunctionDecl *D) override;
   void StaticDataMemberInstantiated(const VarDecl *D) override;
   void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
                                     const ObjCInterfaceDecl *IFD) override;
-  void FunctionDefinitionInstantiated(const FunctionDecl *D) override;
   void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
                                     const ObjCPropertyDecl *OrigProp,
                                     const ObjCCategoryDecl *ClassExt) override;
@@ -166,11 +149,6 @@ void MultiplexASTMutationListener::AddedCXXTemplateSpecialization(
   for (size_t i = 0, e = Listeners.size(); i != e; ++i)
     Listeners[i]->AddedCXXTemplateSpecialization(TD, D);
 }
-void MultiplexASTMutationListener::ResolvedExceptionSpec(
-    const FunctionDecl *FD) {
-  for (auto &Listener : Listeners)
-    Listener->ResolvedExceptionSpec(FD);
-}
 void MultiplexASTMutationListener::DeducedReturnType(const FunctionDecl *FD,
                                                      QualType ReturnType) {
   for (size_t i = 0, e = Listeners.size(); i != e; ++i)
@@ -192,11 +170,6 @@ void MultiplexASTMutationListener::AddedObjCCategoryToInterface(
   for (size_t i = 0, e = Listeners.size(); i != e; ++i)
     Listeners[i]->AddedObjCCategoryToInterface(CatD, IFD);
 }
-void MultiplexASTMutationListener::FunctionDefinitionInstantiated(
-    const FunctionDecl *D) {
-  for (auto &Listener : Listeners)
-    Listener->FunctionDefinitionInstantiated(D);
-} 
 void MultiplexASTMutationListener::AddedObjCPropertyInClassExtension(
                                              const ObjCPropertyDecl *Prop,
                                              const ObjCPropertyDecl *OrigProp,

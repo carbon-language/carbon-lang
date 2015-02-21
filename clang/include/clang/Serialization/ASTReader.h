@@ -1127,10 +1127,6 @@ private:
 public:
   void ResolveImportedPath(ModuleFile &M, std::string &Filename);
   static void ResolveImportedPath(std::string &Filename, StringRef Prefix);
-  /// \brief Initialize a BitstreamReader with the `__clangast` section from an
-  /// object file container found in Buffer.
-  static void InitStreamFileWithModule(llvm::MemoryBufferRef Buffer,
-                                       llvm::BitstreamReader &StreamFile);
 
 private:
   struct ImportedModule {

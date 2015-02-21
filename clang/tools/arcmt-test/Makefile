@@ -17,11 +17,10 @@ TOOL_NO_EXPORTS = 1
 NO_INSTALL = 1
 
 include $(CLANG_LEVEL)/../../Makefile.config
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter \
-                   instrumentation ipo mc objcarcopts option support
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc option
 USEDLIBS = clangARCMigrate.a clangRewrite.a \
 		 clangFrontend.a clangDriver.a clangSerialization.a clangParse.a \
-		 clangSema.a clangEdit.a clangAnalysis.a clangCodeGen.a clangAST.a \
-                 clangLex.a clangBasic.a
+		 clangSema.a clangEdit.a clangAnalysis.a clangAST.a clangLex.a \
+		 clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
