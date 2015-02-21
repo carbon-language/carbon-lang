@@ -2186,7 +2186,7 @@ bool llvm::CC_PPC32_SVR4_Custom_AlignArgRegs(unsigned &ValNo, MVT &ValVT,
   };
   const unsigned NumArgRegs = array_lengthof(ArgRegs);
 
-  unsigned RegNum = State.getFirstUnallocated(ArgRegs, NumArgRegs);
+  unsigned RegNum = State.getFirstUnallocated(ArgRegs);
 
   // Skip one register if the first unallocated register has an even register
   // number and there are still argument registers available which have not been
@@ -2214,7 +2214,7 @@ bool llvm::CC_PPC32_SVR4_Custom_AlignFPArgRegs(unsigned &ValNo, MVT &ValVT,
 
   const unsigned NumArgRegs = array_lengthof(ArgRegs);
 
-  unsigned RegNum = State.getFirstUnallocated(ArgRegs, NumArgRegs);
+  unsigned RegNum = State.getFirstUnallocated(ArgRegs);
 
   // If there is only one Floating-point register left we need to put both f64
   // values of a split ppc_fp128 value on the stack.
@@ -2541,10 +2541,8 @@ PPCTargetLowering::LowerFormalArguments_32SVR4(
     if (DisablePPCFloatInVariadic)
       NumFPArgRegs = 0;
 
-    FuncInfo->setVarArgsNumGPR(CCInfo.getFirstUnallocated(GPArgRegs,
-                                                          NumGPArgRegs));
-    FuncInfo->setVarArgsNumFPR(CCInfo.getFirstUnallocated(FPArgRegs,
-                                                          NumFPArgRegs));
+    FuncInfo->setVarArgsNumGPR(CCInfo.getFirstUnallocated(GPArgRegs));
+    FuncInfo->setVarArgsNumFPR(CCInfo.getFirstUnallocated(FPArgRegs));
 
     // Make room for NumGPArgRegs and NumFPArgRegs.
     int Depth = NumGPArgRegs * PtrVT.getSizeInBits()/8 +

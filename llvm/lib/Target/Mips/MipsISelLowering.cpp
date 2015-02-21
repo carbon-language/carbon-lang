@@ -2272,11 +2272,9 @@ SDValue MipsTargetLowering::lowerFP_TO_SINT(SDValue Op,
 
 static bool CC_MipsO32(unsigned ValNo, MVT ValVT, MVT LocVT,
                        CCValAssign::LocInfo LocInfo, ISD::ArgFlagsTy ArgFlags,
-                       CCState &State, const MCPhysReg *F64Regs) {
+                       CCState &State, ArrayRef<MCPhysReg> F64Regs) {
   const MipsSubtarget &Subtarget = static_cast<const MipsSubtarget &>(
       State.getMachineFunction().getSubtarget());
-
-  static const unsigned IntRegsSize = 4, FloatRegsSize = 2;
 
   static const MCPhysReg IntRegs[] = { Mips::A0, Mips::A1, Mips::A2, Mips::A3 };
   static const MCPhysReg F32Regs[] = { Mips::F12, Mips::F14 };
@@ -2314,39 +2312,39 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT, MVT LocVT,
   // f32 and f64 are allocated in A0, A1, A2, A3 when either of the following
   // is true: function is vararg, argument is 3rd or higher, there is previous
   // argument which is not f32 or f64.
-  bool AllocateFloatsInIntReg = State.isVarArg() || ValNo > 1
-      || State.getFirstUnallocated(F32Regs, FloatRegsSize) != ValNo;
+  bool AllocateFloatsInIntReg = State.isVarArg() || ValNo > 1 ||
+                                State.getFirstUnallocated(F32Regs) != ValNo;
   unsigned OrigAlign = ArgFlags.getOrigAlign();
   bool isI64 = (ValVT == MVT::i32 && OrigAlign == 8);
 
   if (ValVT == MVT::i32 || (ValVT == MVT::f32 && AllocateFloatsInIntReg)) {
-    Reg = State.AllocateReg(IntRegs, IntRegsSize);
+    Reg = State.AllocateReg(IntRegs);
     // If this is the first part of an i64 arg,
     // the allocated register must be either A0 or A2.
     if (isI64 && (Reg == Mips::A1 || Reg == Mips::A3))
-      Reg = State.AllocateReg(IntRegs, IntRegsSize);
+      Reg = State.AllocateReg(IntRegs);
     LocVT = MVT::i32;
   } else if (ValVT == MVT::f64 && AllocateFloatsInIntReg) {
     // Allocate int register and shadow next int register. If first
     // available register is Mips::A1 or Mips::A3, shadow it too.
-    Reg = State.AllocateReg(IntRegs, IntRegsSize);
+    Reg = State.AllocateReg(IntRegs);
     if (Reg == Mips::A1 || Reg == Mips::A3)
-      Reg = State.AllocateReg(IntRegs, IntRegsSize);
-    State.AllocateReg(IntRegs, IntRegsSize);
+      Reg = State.AllocateReg(IntRegs);
+    State.AllocateReg(IntRegs);
     LocVT = MVT::i32;
   } else if (ValVT.isFloatingPoint() && !AllocateFloatsInIntReg) {
     // we are guaranteed to find an available float register
     if (ValVT == MVT::f32) {
-      Reg = State.AllocateReg(F32Regs, FloatRegsSize);
+      Reg = State.AllocateReg(F32Regs);
       // Shadow int register
-      State.AllocateReg(IntRegs, IntRegsSize);
+      State.AllocateReg(IntRegs);
     } else {
-      Reg = State.AllocateReg(F64Regs, FloatRegsSize);
+      Reg = State.AllocateReg(F64Regs);
       // Shadow int registers
-      unsigned Reg2 = State.AllocateReg(IntRegs, IntRegsSize);
+      unsigned Reg2 = State.AllocateReg(IntRegs);
       if (Reg2 == Mips::A1 || Reg2 == Mips::A3)
-        State.AllocateReg(IntRegs, IntRegsSize);
-      State.AllocateReg(IntRegs, IntRegsSize);
+        State.AllocateReg(IntRegs);
+      State.AllocateReg(IntRegs);
     }
   } else
     llvm_unreachable("Cannot handle this ValVT.");
@@ -3648,7 +3646,7 @@ void MipsTargetLowering::writeVarArgRegs(std::vector<SDValue> &OutChains,
                                          SelectionDAG &DAG,
                                          CCState &State) const {
   const ArrayRef<MCPhysReg> ArgRegs = ABI.GetVarArgRegs();
-  unsigned Idx = State.getFirstUnallocated(ArgRegs.data(), ArgRegs.size());
+  unsigned Idx = State.getFirstUnallocated(ArgRegs);
   unsigned RegSizeInBytes = Subtarget.getGPRSizeInBytes();
   MVT RegTy = MVT::getIntegerVT(RegSizeInBytes * 8);
   const TargetRegisterClass *RC = getRegClassFor(RegTy);
@@ -3715,7 +3713,7 @@ void MipsTargetLowering::HandleByVal(CCState *State, unsigned &Size,
            "Byval argument's alignment should be a multiple of"
            "RegSizeInBytes.");
 
-    FirstReg = State->getFirstUnallocated(IntArgRegs.data(), IntArgRegs.size());
+    FirstReg = State->getFirstUnallocated(IntArgRegs);
 
     // If Align > RegSizeInBytes, the first arg register must be even.
     // FIXME: This condition happens to do the right thing but it's not the

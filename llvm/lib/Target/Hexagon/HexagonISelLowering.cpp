@@ -188,7 +188,7 @@ static bool CC_Hexagon32(unsigned ValNo, MVT ValVT,
     Hexagon::R0, Hexagon::R1, Hexagon::R2, Hexagon::R3, Hexagon::R4,
     Hexagon::R5
   };
-  if (unsigned Reg = State.AllocateReg(RegList, 6)) {
+  if (unsigned Reg = State.AllocateReg(RegList)) {
     State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
     return false;
   }
@@ -213,7 +213,7 @@ static bool CC_Hexagon64(unsigned ValNo, MVT ValVT,
   static const MCPhysReg RegList2[] = {
     Hexagon::R1, Hexagon::R3
   };
-  if (unsigned Reg = State.AllocateReg(RegList1, RegList2, 2)) {
+  if (unsigned Reg = State.AllocateReg(RegList1, RegList2)) {
     State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
     return false;
   }

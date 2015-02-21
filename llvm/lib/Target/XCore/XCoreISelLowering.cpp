@@ -1371,8 +1371,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
       XCore::R0, XCore::R1, XCore::R2, XCore::R3
     };
     XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
-    unsigned FirstVAReg = CCInfo.getFirstUnallocated(ArgRegs,
-                                                     array_lengthof(ArgRegs));
+    unsigned FirstVAReg = CCInfo.getFirstUnallocated(ArgRegs);
     if (FirstVAReg < array_lengthof(ArgRegs)) {
       int offset = 0;
       // Save remaining registers, storing higher register numbers at a higher

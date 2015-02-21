@@ -31,7 +31,7 @@ static bool f64AssignAPCS(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   static const MCPhysReg RegList[] = { ARM::R0, ARM::R1, ARM::R2, ARM::R3 };
 
   // Try to get the first register.
-  if (unsigned Reg = State.AllocateReg(RegList, 4))
+  if (unsigned Reg = State.AllocateReg(RegList))
     State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg, LocVT, LocInfo));
   else {
     // For the 2nd half of a v2f64, do not fail.
@@ -46,7 +46,7 @@ static bool f64AssignAPCS(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   }
 
   // Try to get the second register.
-  if (unsigned Reg = State.AllocateReg(RegList, 4))
+  if (unsigned Reg = State.AllocateReg(RegList))
     State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg, LocVT, LocInfo));
   else
     State.addLoc(CCValAssign::getCustomMem(ValNo, ValVT,
@@ -76,11 +76,11 @@ static bool f64AssignAAPCS(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   static const MCPhysReg ShadowRegList[] = { ARM::R0, ARM::R1 };
   static const MCPhysReg GPRArgRegs[] = { ARM::R0, ARM::R1, ARM::R2, ARM::R3 };
 
-  unsigned Reg = State.AllocateReg(HiRegList, ShadowRegList, 2);
+  unsigned Reg = State.AllocateReg(HiRegList, ShadowRegList);
   if (Reg == 0) {
 
     // If we had R3 unallocated only, now we still must to waste it.
-    Reg = State.AllocateReg(GPRArgRegs, 4);
+    Reg = State.AllocateReg(GPRArgRegs);
     assert((!Reg || Reg == ARM::R3) && "Wrong GPRs usage for f64");
 
     // For the 2nd half of a v2f64, do not just fail.
@@ -126,7 +126,7 @@ static bool f64RetAssign(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   static const MCPhysReg HiRegList[] = { ARM::R0, ARM::R2 };
   static const MCPhysReg LoRegList[] = { ARM::R1, ARM::R3 };
 
-  unsigned Reg = State.AllocateReg(HiRegList, LoRegList, 2);
+  unsigned Reg = State.AllocateReg(HiRegList, LoRegList);
   if (Reg == 0)
     return false; // we didn't handle it
 

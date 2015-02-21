@@ -1865,7 +1865,7 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 void
 ARMTargetLowering::HandleByVal(
     CCState *State, unsigned &size, unsigned Align) const {
-  unsigned reg = State->AllocateReg(GPRArgRegs, 4);
+  unsigned reg = State->AllocateReg(GPRArgRegs);
   assert((State->getCallOrPrologue() == Prologue ||
           State->getCallOrPrologue() == Call) &&
          "unhandled ParmContext");
@@ -1875,7 +1875,7 @@ ARMTargetLowering::HandleByVal(
       unsigned AlignInRegs = Align / 4;
       unsigned Waste = (ARM::R4 - reg) % AlignInRegs;
       for (unsigned i = 0; i < Waste; ++i)
-        reg = State->AllocateReg(GPRArgRegs, 4);
+        reg = State->AllocateReg(GPRArgRegs);
     }
     if (reg != 0) {
       unsigned excess = 4 * (ARM::R4 - reg);
@@ -1886,7 +1886,7 @@ ARMTargetLowering::HandleByVal(
       // remained registers.
       const unsigned NSAAOffset = State->getNextStackOffset();
       if (Subtarget->isAAPCS_ABI() && NSAAOffset != 0 && size > excess) {
-        while (State->AllocateReg(GPRArgRegs, 4))
+        while (State->AllocateReg(GPRArgRegs))
           ;
         return;
       }
@@ -1903,7 +1903,7 @@ ARMTargetLowering::HandleByVal(
       // Note, first register is allocated in the beginning of function already,
       // allocate remained amount of registers we need.
       for (unsigned i = reg+1; i != ByValRegEnd; ++i)
-        State->AllocateReg(GPRArgRegs, 4);
+        State->AllocateReg(GPRArgRegs);
       // A byval parameter that is split between registers and memory needs its
       // size truncated here.
       // In the case where the entire structure fits in registers, we set the
@@ -2838,9 +2838,7 @@ ARMTargetLowering::computeRegArea(CCState &CCInfo, MachineFunction &MF,
     NumGPRs = REnd - RBegin;
   } else {
     unsigned int firstUnalloced;
-    firstUnalloced = CCInfo.getFirstUnallocated(GPRArgRegs,
-                                                sizeof(GPRArgRegs) /
-                                                sizeof(GPRArgRegs[0]));
+    firstUnalloced = CCInfo.getFirstUnallocated(GPRArgRegs);
     NumGPRs = (firstUnalloced <= 3) ? (4 - firstUnalloced) : 0;
   }
 
@@ -2911,8 +2909,7 @@ ARMTargetLowering::StoreByValRegs(CCState &CCInfo, SelectionDAG &DAG,
     firstRegToSaveIndex = RBegin - ARM::R0;
     lastRegToSaveIndex = REnd - ARM::R0;
   } else {
-    firstRegToSaveIndex = CCInfo.getFirstUnallocated
-      (GPRArgRegs, array_lengthof(GPRArgRegs));
+    firstRegToSaveIndex = CCInfo.getFirstUnallocated(GPRArgRegs);
     lastRegToSaveIndex = 4;
   }
 

@@ -587,8 +587,8 @@ SDValue SITargetLowering::LowerFormalArguments(
   }
 
   if (Info->getShaderType() != ShaderType::COMPUTE) {
-    unsigned ScratchIdx = CCInfo.getFirstUnallocated(
-        AMDGPU::SGPR_32RegClass.begin(), AMDGPU::SGPR_32RegClass.getNumRegs());
+    unsigned ScratchIdx = CCInfo.getFirstUnallocated(ArrayRef<MCPhysReg>(
+        AMDGPU::SGPR_32RegClass.begin(), AMDGPU::SGPR_32RegClass.getNumRegs()));
     Info->ScratchOffsetReg = AMDGPU::SGPR_32RegClass.getRegister(ScratchIdx);
   }
   return Chain;

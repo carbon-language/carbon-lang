@@ -124,7 +124,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
         }
         O << "\n" << IndentStr << "};\n";
         O << IndentStr << "if (unsigned Reg = State.AllocateReg(RegList"
-          << Counter << ", " << RegList->getSize() << ")) {\n";
+          << Counter << ")) {\n";
       }
       O << IndentStr << "  State.addLoc(CCValAssign::getReg(ValNo, ValVT, "
         << "Reg, LocVT, LocInfo));\n";
@@ -166,7 +166,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
 
         O << IndentStr << "if (unsigned Reg = State.AllocateReg(RegList"
           << RegListNumber << ", " << "RegList" << ShadowRegListNumber
-          << ", " << RegList->getSize() << ")) {\n";
+          << ")) {\n";
       }
       O << IndentStr << "  State.addLoc(CCValAssign::getReg(ValNo, ValVT, "
         << "Reg, LocVT, LocInfo));\n";
@@ -215,8 +215,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
       O << IndentStr << "unsigned Offset" << ++Counter
         << " = State.AllocateStack("
         << Size << ", " << Align << ", "
-        << "ShadowRegList" << ShadowRegListNumber << ", "
-        << ShadowRegList->getSize() << ");\n";
+        << "ShadowRegList" << ShadowRegListNumber << ");\n";
       O << IndentStr << "State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset"
         << Counter << ", LocVT, LocInfo));\n";
       O << IndentStr << "return false;\n";

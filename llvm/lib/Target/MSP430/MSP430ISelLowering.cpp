@@ -328,7 +328,7 @@ static void AnalyzeArguments(CCState &State,
     if (!UseStack && Parts <= RegsLeft) {
       unsigned FirstVal = ValNo;
       for (unsigned j = 0; j < Parts; j++) {
-        unsigned Reg = State.AllocateReg(RegList, NbRegs);
+        unsigned Reg = State.AllocateReg(RegList);
         State.addLoc(CCValAssign::getReg(ValNo++, ArgVT, Reg, LocVT, LocInfo));
         RegsLeft--;
       }

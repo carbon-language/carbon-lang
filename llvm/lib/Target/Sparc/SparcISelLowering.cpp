@@ -57,7 +57,7 @@ static bool CC_Sparc_Assign_f64(unsigned &ValNo, MVT &ValVT,
     SP::I0, SP::I1, SP::I2, SP::I3, SP::I4, SP::I5
   };
   // Try to get first reg.
-  if (unsigned Reg = State.AllocateReg(RegList, 6)) {
+  if (unsigned Reg = State.AllocateReg(RegList)) {
     State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg, LocVT, LocInfo));
   } else {
     // Assign whole thing in stack.
@@ -68,7 +68,7 @@ static bool CC_Sparc_Assign_f64(unsigned &ValNo, MVT &ValVT,
   }
 
   // Try to get second reg.
-  if (unsigned Reg = State.AllocateReg(RegList, 6))
+  if (unsigned Reg = State.AllocateReg(RegList))
     State.addLoc(CCValAssign::getCustomReg(ValNo, ValVT, Reg, LocVT, LocInfo));
   else
     State.addLoc(CCValAssign::getCustomMem(ValNo, ValVT,
@@ -497,7 +497,7 @@ LowerFormalArguments_32(SDValue Chain,
     static const MCPhysReg ArgRegs[] = {
       SP::I0, SP::I1, SP::I2, SP::I3, SP::I4, SP::I5
     };
-    unsigned NumAllocated = CCInfo.getFirstUnallocated(ArgRegs, 6);
+    unsigned NumAllocated = CCInfo.getFirstUnallocated(ArgRegs);
     const MCPhysReg *CurArgReg = ArgRegs+NumAllocated, *ArgRegEnd = ArgRegs+6;
     unsigned ArgOffset = CCInfo.getNextStackOffset();
     if (NumAllocated == 6)

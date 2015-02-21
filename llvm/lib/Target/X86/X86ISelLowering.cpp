@@ -2573,10 +2573,8 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
     // Find the first unallocated argument registers.
     ArrayRef<MCPhysReg> ArgGPRs = get64BitArgumentGPRs(CallConv, Subtarget);
     ArrayRef<MCPhysReg> ArgXMMs = get64BitArgumentXMMs(MF, CallConv, Subtarget);
-    unsigned NumIntRegs =
-        CCInfo.getFirstUnallocated(ArgGPRs.data(), ArgGPRs.size());
-    unsigned NumXMMRegs =
-        CCInfo.getFirstUnallocated(ArgXMMs.data(), ArgXMMs.size());
+    unsigned NumIntRegs = CCInfo.getFirstUnallocated(ArgGPRs);
+    unsigned NumXMMRegs = CCInfo.getFirstUnallocated(ArgXMMs);
     assert(!(NumXMMRegs && !Subtarget->hasSSE1()) &&
            "SSE register cannot be used when SSE is disabled!");
 
@@ -3002,7 +3000,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
       X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
     };
-    unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs, 8);
+    unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs);
     assert((Subtarget->hasSSE1() || !NumXMMRegs)
            && "SSE registers cannot be used when SSE is disabled");
 

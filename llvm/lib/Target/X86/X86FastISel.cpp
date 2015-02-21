@@ -2989,7 +2989,7 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
       X86::XMM0, X86::XMM1, X86::XMM2, X86::XMM3,
       X86::XMM4, X86::XMM5, X86::XMM6, X86::XMM7
     };
-    unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs, 8);
+    unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs);
     assert((Subtarget->hasSSE1() || !NumXMMRegs)
            && "SSE registers cannot be used when SSE is disabled");
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::MOV8ri),
