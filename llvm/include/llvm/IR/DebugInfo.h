@@ -140,6 +140,13 @@ public:
   static unsigned getFlag(StringRef Flag);
   static const char *getFlagString(unsigned Flag);
 
+  /// \brief Split up a flags bitfield.
+  ///
+  /// Split \c Flags into \c SplitFlags, a vector of its components.  Returns
+  /// any remaining (unrecognized) bits.
+  static unsigned splitFlags(unsigned Flags,
+                             SmallVectorImpl<unsigned> &SplitFlags);
+
 protected:
   const MDNode *DbgNode;
 
