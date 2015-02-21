@@ -31,7 +31,7 @@
 #pragma once
 
 // Third party headers:
-#include <lldb/API/SBCommandReturnObject.h>
+#include "lldb/API/SBCommandReturnObject.h"
 
 // In-house headers:
 #include "MICmdBase.h"

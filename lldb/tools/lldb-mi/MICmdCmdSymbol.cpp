@@ -20,7 +20,7 @@
 //--
 
 // Third Party Headers:
-#include <lldb/API/SBCommandInterpreter.h>
+#include "lldb/API/SBCommandInterpreter.h"
 
 // In-house headers:
 #include "MICmdArgValFile.h"
