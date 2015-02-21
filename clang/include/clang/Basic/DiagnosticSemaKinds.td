@@ -1302,6 +1302,8 @@ def err_missing_default_ctor : Error<
   "%select{|implicit default |inheriting }0constructor for %1 must explicitly "
   "initialize the %select{base class|member}2 %3 which does not have a default "
   "constructor">;
+def note_due_to_dllexported_class : Note<
+  "due to '%0' being dllexported%select{|; try compiling in C++11 mode}1">;
 
 def err_illegal_union_or_anon_struct_member : Error<
   "%select{anonymous struct|union}0 member %1 has a non-trivial "

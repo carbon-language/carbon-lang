@@ -4821,7 +4821,13 @@ static void checkDLLAttribute(Sema &S, CXXRecordDecl *Class) {
         // defaulted methods, and the copy and move assignment operators. The
         // latter are exported even if they are trivial, because the address of
         // an operator can be taken and should compare equal accross libraries.
+        DiagnosticErrorTrap Trap(S.Diags);
         S.MarkFunctionReferenced(Class->getLocation(), MD);
+        if (Trap.hasErrorOccurred()) {
+          S.Diag(ClassAttr->getLocation(), diag::note_due_to_dllexported_class)
+              << Class->getName() << !S.getLangOpts().CPlusPlus11;
+          break;
+        }
 
         // There is no later point when we will see the definition of this
         // function, so pass it to the consumer now.
