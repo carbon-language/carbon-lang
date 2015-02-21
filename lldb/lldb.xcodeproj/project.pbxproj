@@ -635,6 +635,7 @@
 		26D1804716CEE12C00EDFB5B /* TimeSpecTimeout.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D1804616CEE12C00EDFB5B /* TimeSpecTimeout.h */; };
 		26D265A2136B40EE002EEE45 /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26D265BC136B4269002EEE45 /* lldb-public.h in Headers */ = {isa = PBXBuildFile; fileRef = 26651A14133BEC76005B64B7 /* lldb-public.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		26D52C1F1A980FE300E5D2FB /* MICmdCmdSymbol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D52C1D1A980FE300E5D2FB /* MICmdCmdSymbol.cpp */; };
 		26D55235159A7DB100708D8D /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26D55234159A7DB100708D8D /* libxml2.dylib */; };
 		26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */; };
 		26D5E163135BB054006EA0A7 /* OptionGroupPlatform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E162135BB054006EA0A7 /* OptionGroupPlatform.cpp */; };
@@ -2068,6 +2069,8 @@
 		26D1804616CEE12C00EDFB5B /* TimeSpecTimeout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TimeSpecTimeout.h; path = source/Utility/TimeSpecTimeout.h; sourceTree = "<group>"; };
 		26D27C9D11ED3A4E0024D721 /* ELFHeader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ELFHeader.cpp; sourceTree = "<group>"; };
 		26D27C9E11ED3A4E0024D721 /* ELFHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ELFHeader.h; sourceTree = "<group>"; };
+		26D52C1D1A980FE300E5D2FB /* MICmdCmdSymbol.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmdCmdSymbol.cpp; path = "tools/lldb-mi/MICmdCmdSymbol.cpp"; sourceTree = SOURCE_ROOT; };
+		26D52C1E1A980FE300E5D2FB /* MICmdCmdSymbol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmdCmdSymbol.h; path = "tools/lldb-mi/MICmdCmdSymbol.h"; sourceTree = SOURCE_ROOT; };
 		26D55234159A7DB100708D8D /* libxml2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.dylib; path = /usr/lib/libxml2.dylib; sourceTree = "<absolute>"; };
 		26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionGroupArchitecture.cpp; path = source/Interpreter/OptionGroupArchitecture.cpp; sourceTree = "<group>"; };
 		26D5E160135BAEB0006EA0A7 /* OptionGroupArchitecture.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupArchitecture.h; path = include/lldb/Interpreter/OptionGroupArchitecture.h; sourceTree = "<group>"; };
@@ -3553,6 +3556,8 @@
 				266941911A6DC2AC0063BE93 /* MICmdCmdSupportInfo.h */,
 				266941921A6DC2AC0063BE93 /* MICmdCmdSupportList.cpp */,
 				266941931A6DC2AC0063BE93 /* MICmdCmdSupportList.h */,
+				26D52C1D1A980FE300E5D2FB /* MICmdCmdSymbol.cpp */,
+				26D52C1E1A980FE300E5D2FB /* MICmdCmdSymbol.h */,
 				266941941A6DC2AC0063BE93 /* MICmdCmdTarget.cpp */,
 				266941951A6DC2AC0063BE93 /* MICmdCmdTarget.h */,
 				266941961A6DC2AC0063BE93 /* MICmdCmdThread.cpp */,
@@ -6372,6 +6377,7 @@
 				266942091A6DC2AC0063BE93 /* MICmdArgValOptionShort.cpp in Sources */,
 				266942291A6DC2AC0063BE93 /* MICmnLLDBDebugSessionInfo.cpp in Sources */,
 				266942211A6DC2AC0063BE93 /* MICmdInterpreter.cpp in Sources */,
+				26D52C1F1A980FE300E5D2FB /* MICmdCmdSymbol.cpp in Sources */,
 				266942321A6DC2AC0063BE93 /* MICmnMIValueConst.cpp in Sources */,
 				2669423B1A6DC2AC0063BE93 /* MICmnStreamStdout.cpp in Sources */,
 				266942271A6DC2AC0063BE93 /* MICmnLLDBDebugger.cpp in Sources */,
