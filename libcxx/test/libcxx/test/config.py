@@ -439,7 +439,10 @@ class Configuration(object):
         elif cxx_abi == 'libsupc++':
             self.cxx.link_flags += ['-lsupc++']
         elif cxx_abi == 'libcxxabi':
-            self.cxx.link_flags += ['-lc++abi']
+            # Don't link libc++abi explicitly on OS X because the symbols
+            # should be available in libc++ directly.
+            if self.target_info.platform() != 'darwin':
+                self.cxx.link_flags += ['-lc++abi']
         elif cxx_abi == 'libcxxrt':
             self.cxx.link_flags += ['-lcxxrt']
         elif cxx_abi == 'none':
