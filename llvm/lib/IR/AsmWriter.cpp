@@ -1275,14 +1275,15 @@ static void writeMDTuple(raw_ostream &Out, const MDTuple *Node,
 namespace {
 struct FieldSeparator {
   bool Skip;
-  FieldSeparator() : Skip(true) {}
+  const char *Sep;
+  FieldSeparator(const char *Sep = ", ") : Skip(true), Sep(Sep) {}
 };
 raw_ostream &operator<<(raw_ostream &OS, FieldSeparator &FS) {
   if (FS.Skip) {
     FS.Skip = false;
     return OS;
   }
-  return OS << ", ";
+  return OS << FS.Sep;
 }
 } // end namespace
 
@@ -1387,6 +1388,20 @@ static void writeMDBasicType(raw_ostream &Out, const MDBasicType *N,
   Out << ")";
 }
 
+static void writeDIFlags(raw_ostream &Out, unsigned Flags) {
+  SmallVector<unsigned, 8> SplitFlags;
+  unsigned Extra = DIDescriptor::splitFlags(Flags, SplitFlags);
+
+  FieldSeparator FS(" | ");
+  for (unsigned F : SplitFlags) {
+    const char *StringF = DIDescriptor::getFlagString(F);
+    assert(StringF && "Expected valid flag");
+    Out << FS << StringF;
+  }
+  if (Extra || SplitFlags.empty())
+    Out << FS << Extra;
+}
+
 static void writeMDDerivedType(raw_ostream &Out, const MDDerivedType *N,
                                TypePrinting *TypePrinter, SlotTracker *Machine,
                                const Module *Context) {
@@ -1414,8 +1429,10 @@ static void writeMDDerivedType(raw_ostream &Out, const MDDerivedType *N,
     Out << FS << "align: " << N->getAlignInBits();
   if (N->getOffsetInBits())
     Out << FS << "offset: " << N->getOffsetInBits();
-  if (N->getFlags())
-    Out << FS << "flags: " << N->getFlags();
+  if (auto Flags = N->getFlags()) {
+    Out << FS << "flags: ";
+    writeDIFlags(Out, Flags);
+  }
   if (N->getExtraData()) {
     Out << FS << "extraData: ";
     writeMetadataAsOperand(Out, N->getExtraData(), TypePrinter, Machine,
@@ -1454,8 +1471,10 @@ static void writeMDCompositeType(raw_ostream &Out, const MDCompositeType *N,
     Out << FS << "align: " << N->getAlignInBits();
   if (N->getOffsetInBits())
     Out << FS << "offset: " << N->getOffsetInBits();
-  if (N->getFlags())
-    Out << FS << "flags: " << N->getFlags();
+  if (auto Flags = N->getFlags()) {
+    Out << FS << "flags: ";
+    writeDIFlags(Out, Flags);
+  }
   if (N->getElements()) {
     Out << FS << "elements: ";
     writeMetadataAsOperand(Out, N->getElements(), TypePrinter, Machine,
@@ -1489,8 +1508,10 @@ static void writeMDSubroutineType(raw_ostream &Out, const MDSubroutineType *N,
                                   SlotTracker *Machine, const Module *Context) {
   Out << "!MDSubroutineType(";
   FieldSeparator FS;
-  if (N->getFlags())
-    Out << FS << "flags: " << N->getFlags();
+  if (auto Flags = N->getFlags()) {
+    Out << FS << "flags: ";
+    writeDIFlags(Out, Flags);
+  }
   Out << FS << "types: ";
   writeMetadataAsOperand(Out, N->getTypeArray(), TypePrinter, Machine, Context);
   Out << ")";
@@ -1594,8 +1615,10 @@ static void writeMDSubprogram(raw_ostream &Out, const MDSubprogram *N,
   }
   if (N->getVirtualIndex())
     Out << FS << "virtualIndex: " << N->getVirtualIndex();
-  if (N->getFlags())
-    Out << FS << "flags: " << N->getFlags();
+  if (auto Flags = N->getFlags()) {
+    Out << FS << "flags: ";
+    writeDIFlags(Out, Flags);
+  }
   Out << FS << "isOptimized: " << (N->isOptimized() ? "true" : "false");
   if (N->getFunction()) {
     Out << FS << "function: ";
@@ -1764,8 +1787,10 @@ static void writeMDLocalVariable(raw_ostream &Out, const MDLocalVariable *N,
   }
   if (N->getTag() == dwarf::DW_TAG_arg_variable || N->getArg())
     Out << FS << "arg: " << N->getArg();
-  if (N->getFlags())
-    Out << FS << "flags: " << N->getFlags();
+  if (auto Flags = N->getFlags()) {
+    Out << FS << "flags: ";
+    writeDIFlags(Out, Flags);
+  }
   if (N->getInlinedAt()) {
     Out << FS << "inlinedAt: ";
     writeMetadataAsOperand(Out, N->getInlinedAt(), TypePrinter, Machine,

@@ -41,22 +41,22 @@
 !15 = !MDDerivedType(tag: DW_TAG_pointer_type, baseType: !7, size: 32, align: 32)
 
 ; CHECK-NEXT: !14 = !MDCompositeType(tag: DW_TAG_structure_type, name: "MyType", file: !10, line: 2, size: 32, align: 32, identifier: "MangledMyType")
-; CHECK-NEXT: !15 = distinct !MDCompositeType(tag: DW_TAG_structure_type, name: "Base", file: !10, line: 3, scope: !14, size: 128, align: 32, offset: 64, flags: 3, elements: !16, runtimeLang: DW_LANG_C_plus_plus_11, vtableHolder: !15, templateParams: !18, identifier: "MangledBase")
+; CHECK-NEXT: !15 = distinct !MDCompositeType(tag: DW_TAG_structure_type, name: "Base", file: !10, line: 3, scope: !14, size: 128, align: 32, offset: 64, flags: DIFlagPublic, elements: !16, runtimeLang: DW_LANG_C_plus_plus_11, vtableHolder: !15, templateParams: !18, identifier: "MangledBase")
 ; CHECK-NEXT: !16 = !{!17}
-; CHECK-NEXT: !17 = !MDDerivedType(tag: DW_TAG_member, name: "field", file: !10, line: 4, scope: !15, baseType: !6, size: 32, align: 32, offset: 32, flags: 3)
+; CHECK-NEXT: !17 = !MDDerivedType(tag: DW_TAG_member, name: "field", file: !10, line: 4, scope: !15, baseType: !6, size: 32, align: 32, offset: 32, flags: DIFlagPublic)
 ; CHECK-NEXT: !18 = !{!6}
-; CHECK-NEXT: !19 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Derived", file: !10, line: 3, scope: !14, baseType: !15, size: 128, align: 32, offset: 64, flags: 3, elements: !20, runtimeLang: DW_LANG_C_plus_plus_11, vtableHolder: !15, templateParams: !18, identifier: "MangledBase")
+; CHECK-NEXT: !19 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Derived", file: !10, line: 3, scope: !14, baseType: !15, size: 128, align: 32, offset: 64, flags: DIFlagPublic, elements: !20, runtimeLang: DW_LANG_C_plus_plus_11, vtableHolder: !15, templateParams: !18, identifier: "MangledBase")
 ; CHECK-NEXT: !20 = !{!21}
 ; CHECK-NEXT: !21 = !MDDerivedType(tag: DW_TAG_inheritance, scope: !19, baseType: !15)
 ; CHECK-NEXT: !22 = !MDDerivedType(tag: DW_TAG_ptr_to_member_type, baseType: !6, size: 32, align: 32, extraData: !15)
 ; CHECK-NEXT: !23 = !MDCompositeType(tag: DW_TAG_structure_type)
 ; CHECK-NEXT: !24 = !MDCompositeType(tag: DW_TAG_structure_type, runtimeLang: DW_LANG_Cobol85)
 !16 = !MDCompositeType(tag: DW_TAG_structure_type, name: "MyType", file: !12, line: 2, size: 32, align: 32, identifier: "MangledMyType")
-!17 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Base", file: !12, line: 3, scope: !16, size: 128, align: 32, offset: 64, flags: 3, elements: !18, runtimeLang: DW_LANG_C_plus_plus_11, vtableHolder: !17, templateParams: !20, identifier: "MangledBase")
+!17 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Base", file: !12, line: 3, scope: !16, size: 128, align: 32, offset: 64, flags: DIFlagPublic, elements: !18, runtimeLang: DW_LANG_C_plus_plus_11, vtableHolder: !17, templateParams: !20, identifier: "MangledBase")
 !18 = !{!19}
-!19 = !MDDerivedType(tag: DW_TAG_member, name: "field", file: !12, line: 4, scope: !17, baseType: !7, size: 32, align: 32, offset: 32, flags: 3)
+!19 = !MDDerivedType(tag: DW_TAG_member, name: "field", file: !12, line: 4, scope: !17, baseType: !7, size: 32, align: 32, offset: 32, flags: DIFlagPublic)
 !20 = !{!7}
-!21 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Derived", file: !12, line: 3, scope: !16, baseType: !17, size: 128, align: 32, offset: 64, flags: 3, elements: !22, runtimeLang: DW_LANG_C_plus_plus_11, vtableHolder: !17, templateParams: !20, identifier: "MangledBase")
+!21 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Derived", file: !12, line: 3, scope: !16, baseType: !17, size: 128, align: 32, offset: 64, flags: DIFlagPublic, elements: !22, runtimeLang: DW_LANG_C_plus_plus_11, vtableHolder: !17, templateParams: !20, identifier: "MangledBase")
 !22 = !{!23}
 !23 = !MDDerivedType(tag: DW_TAG_inheritance, scope: !21, baseType: !17)
 !24 = !MDDerivedType(tag: DW_TAG_ptr_to_member_type, baseType: !7, size: 32, align: 32, extraData: !17)
@@ -64,9 +64,9 @@
 !26 = !MDCompositeType(tag: DW_TAG_structure_type, runtimeLang: 6)
 
 ; !25 = !{!7, !7}
-; !26 = !MDSubroutineType(flags: 7, types: !25)
+; !26 = !MDSubroutineType(flags: DIFlagPublic | DIFlagStaticMember, types: !25)
 ; !27 = !MDSubroutineType(types: !25)
 !27 = !{!7, !7}
-!28 = !MDSubroutineType(flags: 7, types: !27)
+!28 = !MDSubroutineType(flags: DIFlagPublic | DIFlagStaticMember, types: !27)
 !29 = !MDSubroutineType(flags: 0, types: !27)
 !30 = !MDSubroutineType(types: !27)

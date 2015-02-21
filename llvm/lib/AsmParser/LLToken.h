@@ -29,6 +29,7 @@ namespace lltok {
     less, greater,     // <  >
     lparen, rparen,    // (  )
     exclaim,           // !
+    bar,               // |
 
     kw_x,
     kw_true,    kw_false,
@@ -203,6 +204,7 @@ namespace lltok {
     DwarfVirtuality,   // DW_VIRTUALITY_foo
     DwarfLang,         // DW_LANG_foo
     DwarfOp,           // DW_OP_foo
+    DIFlag,            // DIFlagFoo
 
     // Type valued tokens (TyVal).
     Type,
