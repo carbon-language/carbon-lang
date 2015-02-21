@@ -72,14 +72,20 @@ struct LocalGlobalWeakSymbols {
   std::vector<Symbol> Global;
   std::vector<Symbol> Weak;
 };
+
+struct SectionOrType {
+  StringRef sectionNameOrType;
+};
+
 struct Section {
-  enum class SectionKind { RawContent, Relocation };
+  enum class SectionKind { Group, RawContent, Relocation };
   SectionKind Kind;
   StringRef Name;
   ELF_SHT Type;
   ELF_SHF Flags;
   llvm::yaml::Hex64 Address;
   StringRef Link;
+  StringRef Info;
   llvm::yaml::Hex64 AddressAlign;
   Section(SectionKind Kind) : Kind(Kind) {}
   virtual ~Section();
@@ -92,6 +98,17 @@ struct RawContentSection : Section {
     return S->Kind == SectionKind::RawContent;
   }
 };
+
+struct Group : Section {
+  // Members of a group contain a flag and a list of section indices
+  // that are part of the group.
+  std::vector<SectionOrType> Members;
+  Group() : Section(SectionKind::Group) {}
+  static bool classof(const Section *S) {
+    return S->Kind == SectionKind::Group;
+  }
+};
+
 struct Relocation {
   llvm::yaml::Hex64 Offset;
   int64_t Addend;
@@ -99,7 +116,6 @@ struct Relocation {
   StringRef Symbol;
 };
 struct RelocationSection : Section {
-  StringRef Info;
   std::vector<Relocation> Relocations;
   RelocationSection() : Section(SectionKind::Relocation) {}
   static bool classof(const Section *S) {
@@ -122,6 +138,7 @@ struct Object {
 LLVM_YAML_IS_SEQUENCE_VECTOR(std::unique_ptr<llvm::ELFYAML::Section>)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::ELFYAML::Symbol)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::ELFYAML::Relocation)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::ELFYAML::SectionOrType)
 
 namespace llvm {
 namespace yaml {
@@ -219,6 +236,10 @@ struct MappingTraits<std::unique_ptr<ELFYAML::Section>> {
 template <>
 struct MappingTraits<ELFYAML::Object> {
   static void mapping(IO &IO, ELFYAML::Object &Object);
+};
+
+template <> struct MappingTraits<ELFYAML::SectionOrType> {
+  static void mapping(IO &IO, ELFYAML::SectionOrType &sectionOrType);
 };
 
 } // end namespace yaml

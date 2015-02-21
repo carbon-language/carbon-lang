@@ -506,6 +506,7 @@ static void commonSectionMapping(IO &IO, ELFYAML::Section &Section) {
   IO.mapOptional("Address", Section.Address, Hex64(0));
   IO.mapOptional("Link", Section.Link, StringRef());
   IO.mapOptional("AddressAlign", Section.AddressAlign, Hex64(0));
+  IO.mapOptional("Info", Section.Info, StringRef());
 }
 
 static void sectionMapping(IO &IO, ELFYAML::RawContentSection &Section) {
@@ -516,8 +517,17 @@ static void sectionMapping(IO &IO, ELFYAML::RawContentSection &Section) {
 
 static void sectionMapping(IO &IO, ELFYAML::RelocationSection &Section) {
   commonSectionMapping(IO, Section);
-  IO.mapOptional("Info", Section.Info, StringRef());
   IO.mapOptional("Relocations", Section.Relocations);
+}
+
+static void groupSectionMapping(IO &IO, ELFYAML::Group &group) {
+  commonSectionMapping(IO, group);
+  IO.mapRequired("Members", group.Members);
+}
+
+void MappingTraits<ELFYAML::SectionOrType>::mapping(
+    IO &IO, ELFYAML::SectionOrType &sectionOrType) {
+  IO.mapRequired("SectionOrType", sectionOrType.sectionNameOrType);
 }
 
 void MappingTraits<std::unique_ptr<ELFYAML::Section>>::mapping(
@@ -534,6 +544,11 @@ void MappingTraits<std::unique_ptr<ELFYAML::Section>>::mapping(
     if (!IO.outputting())
       Section.reset(new ELFYAML::RelocationSection());
     sectionMapping(IO, *cast<ELFYAML::RelocationSection>(Section.get()));
+    break;
+  case ELF::SHT_GROUP:
+    if (!IO.outputting())
+      Section.reset(new ELFYAML::Group());
+    groupSectionMapping(IO, *cast<ELFYAML::Group>(Section.get()));
     break;
   default:
     if (!IO.outputting())
