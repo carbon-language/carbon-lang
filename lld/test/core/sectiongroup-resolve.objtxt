@@ -67,27 +67,24 @@ defined-atoms:
 #CHECK:     references:
 #CHECK:       - kind:            group-child
 #CHECK:         offset:          0
-#CHECK:         target:          [[GCHILDONE:[a-zA-Z\.0-9_]+]]
+#CHECK:         target:          f1
 #CHECK:       - kind:            group-child
 #CHECK:         offset:          0
-#CHECK:         target:          [[GCHILDTWO:[a-zA-Z\.0-9_]+]]
+#CHECK:         target:          f2
 #CHECK:       - kind:            group-child
 #CHECK:         offset:          0
-#CHECK:         target:          [[GCHILDTHREE:[a-zA-Z\.0-9_]+]]
+#CHECK:         target:          [[GCHILD:[a-zA-Z\.0-9_]+]]
 #CHECK:       - kind:            group-child
 #CHECK:         offset:          0
-#CHECK:         target:          [[GCHILDFOUR:[a-zA-Z\.0-9_]+]]
+#CHECK:         target:          d1
 #CHECK:   - name:            f1
-#CHECK:     ref-name:        [[GCHILDONE]]
 #CHECK:     scope:           global
 #CHECK:   - name:            f2
-#CHECK:     ref-name:        [[GCHILDTWO]]
 #CHECK:     scope:           global
 #CHECK:   - name:            g1
-#CHECK:     ref-name:        [[GCHILDTHREE]]
+#CHECK:     ref-name:        [[GCHILD]]
 #CHECK:     scope:           global
 #CHECK:   - name:            d1
-#CHECK:     ref-name:        [[GCHILDFOUR]]
 #CHECK:     scope:           global
 #CHECK:     type:            data
 #CHECK: ...

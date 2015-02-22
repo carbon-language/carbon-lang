@@ -67,15 +67,6 @@ public:
       if (!atom->name().empty())
         buildDuplicateNameMap(*atom);
 
-      if (atom->isGroupParent()) {
-        for (const lld::Reference *ref : *atom) {
-          if (ref->kindNamespace() != lld::Reference::KindNamespace::all)
-            continue;
-          if (ref->kindValue() == lld::Reference::kindGroupChild)
-            buildDuplicateNameMap(*ref->target());
-        }
-      }
-
       // Find references to unnamed atoms and create ref-names for them.
       for (const lld::Reference *ref : *atom) {
         // create refname for any unnamed reference target
