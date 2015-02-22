@@ -11,13 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if SANITIZER_FREEBSD
+#if SANITIZER_FREEBSD || SANITIZER_MAC
 # define SYSCALL(name) SYS_ ## name
 #else
 # define SYSCALL(name) __NR_ ## name
 #endif
 
-#if SANITIZER_FREEBSD && defined(__x86_64__)
+#if (SANITIZER_FREEBSD || SANITIZER_MAC) && defined(__x86_64__)
 # define internal_syscall __syscall
 # else
 # define internal_syscall syscall
