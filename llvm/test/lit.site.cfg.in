@@ -34,8 +34,6 @@ config.have_zlib = "@HAVE_LIBZ@"
 config.have_dia_sdk = @HAVE_DIA_SDK@
 config.enable_ffi = "@LLVM_ENABLE_FFI@"
 
-print("lit.site.cfg.in: config.have_dia_sdk set to %s" % config.have_dia_sdk)
-
 # Support substitution of the tools_dir with user parameters. This is
 # used when we can't determine the tool dir at configuration time.
 try:
