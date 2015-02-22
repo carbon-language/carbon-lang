@@ -14,6 +14,7 @@
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeFunctionArg.h"
+#include "llvm/DebugInfo/PDB/PDBSymDumper.h"
 
 #include <utility>
 
@@ -82,38 +83,7 @@ std::unique_ptr<PDBSymbol> PDBSymbolTypeFunctionSig::getClassParent() const {
   return Session.getSymbolById(ClassId);
 }
 
-void PDBSymbolTypeFunctionSig::dumpArgList(raw_ostream &OS) const {
-  OS << "(";
-  if (auto ChildEnum = getArguments()) {
-    uint32_t Index = 0;
-    while (auto Arg = ChildEnum->getNext()) {
-      Arg->dump(OS, 0, PDB_DumpLevel::Compact, PDB_DF_Children);
-      if (++Index < ChildEnum->getChildCount())
-        OS << ", ";
-    }
-  }
-  OS << ")";
-  if (isConstType())
-    OS << " const";
-  if (isVolatileType())
-    OS << " volatile";
-}
-
 void PDBSymbolTypeFunctionSig::dump(raw_ostream &OS, int Indent,
-                                    PDB_DumpLevel Level, PDB_DumpFlags Flags) const {
-  OS << stream_indent(Indent);
-
-  if (auto ReturnType = getReturnType()) {
-    ReturnType->dump(OS, 0, PDB_DumpLevel::Compact, PDB_DF_Children);
-    OS << " ";
-  }
-
-  OS << getCallingConvention() << " ";
-  if (auto ClassParent = getClassParent()) {
-    OS << "(";
-    ClassParent->dump(OS, 0, PDB_DumpLevel::Compact, PDB_DF_Children);
-    OS << "::*)";
-  }
-
-  dumpArgList(OS);
+                                    PDBSymDumper &Dumper) const {
+  Dumper.dump(*this, OS, Indent);
 }

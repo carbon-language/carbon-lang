@@ -13,6 +13,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm-pdbdump.h"
+#include "CompilandDumper.h"
+#include "TypeDumper.h"
+
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
@@ -24,12 +28,13 @@
 #include "llvm/DebugInfo/PDB/PDBSymbolExe.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConvertUTF.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
-#include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Signals.h"
 
 #if defined(HAVE_DIA_SDK)
 #include <Windows.h>
@@ -61,24 +66,36 @@ static void dumpInput(StringRef Path) {
   }
 
   auto GlobalScope(Session->getGlobalScope());
+  std::string FileName(GlobalScope->getSymbolsFileName());
+
+  outs() << "Summary for " << FileName;
+  uint64_t FileSize = 0;
+  if (!llvm::sys::fs::file_size(FileName, FileSize))
+    outs() << newline(2) << "Size: " << FileSize << " bytes";
+  else
+    outs() << newline(2) << "Size: (Unable to obtain file size)";
+
+  outs() << newline(2) << "Guid: " << GlobalScope->getGuid();
+  outs() << newline(2) << "Age: " << GlobalScope->getAge();
+  outs() << newline(2) << "Attributes: ";
+  if (GlobalScope->hasCTypes())
+    outs() << "HasCTypes ";
+  if (GlobalScope->hasPrivateSymbols())
+    outs() << "HasPrivateSymbols ";
+
   PDB_DumpFlags Flags = PDB_DF_None;
-  if (opts::DumpTypes)
-    Flags |= PDB_DF_Children | PDB_DF_Enums | PDB_DF_Funcsigs |
-             PDB_DF_Typedefs | PDB_DF_VTables;
-  GlobalScope->dump(outs(), 0, PDB_DumpLevel::Normal, Flags);
-  outs() << "\n";
+  if (opts::DumpTypes) {
+    outs() << "\nDumping types";
+    TypeDumper Dumper;
+    Dumper.start(*GlobalScope, outs(), 2);
+  }
 
   if (opts::DumpSymbols || opts::DumpCompilands) {
-    outs() << "Dumping compilands\n";
+    outs() << "\nDumping compilands";
     auto Compilands = GlobalScope->findAllChildren<PDBSymbolCompiland>();
-    Flags = PDB_DF_None;
-    if (opts::DumpSymbols)
-      Flags |= PDB_DF_Children | PDB_DF_Data | PDB_DF_Functions |
-               PDB_DF_Thunks | PDB_DF_Labels;
-    while (auto Compiland = Compilands->getNext()) {
-      Compiland->dump(outs(), 2, PDB_DumpLevel::Detailed, Flags);
-      outs() << "\n";
-    }
+    CompilandDumper Dumper;
+    while (auto Compiland = Compilands->getNext())
+      Dumper.start(*Compiland, outs(), 2, opts::DumpSymbols);
   }
   outs().flush();
 }

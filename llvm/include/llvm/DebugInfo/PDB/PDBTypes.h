@@ -16,10 +16,8 @@
 
 namespace llvm {
 
+class PDBSymDumper;
 class PDBSymbol;
-class PDBSymbolCompiland;
-class PDBSymbolFunc;
-class PDBSymbolExe;
 
 class IPDBDataStream;
 template <class T> class IPDBEnumChildren;

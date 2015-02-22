@@ -9,7 +9,7 @@
 
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeBuiltin.h"
 
-#include "llvm/DebugInfo/PDB/PDBSymbol.h"
+#include "llvm/DebugInfo/PDB/PDBSymDumper.h"
 
 #include <utility>
 
@@ -20,10 +20,6 @@ PDBSymbolTypeBuiltin::PDBSymbolTypeBuiltin(
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolTypeBuiltin::dump(raw_ostream &OS, int Indent,
-                                PDB_DumpLevel Level, PDB_DumpFlags Flags) const {
-  OS << stream_indent(Indent);
-  PDB_BuiltinType Type = getBuiltinType();
-  OS << Type;
-  if (Type == PDB_BuiltinType::UInt || Type == PDB_BuiltinType::Int)
-    OS << (8 * getLength()) << "_t";
+                                PDBSymDumper &Dumper) const {
+  Dumper.dump(*this, OS, Indent);
 }

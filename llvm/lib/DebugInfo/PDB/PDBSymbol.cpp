@@ -42,6 +42,7 @@
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeVTableShape.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolUnknown.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolUsingNamespace.h"
+#include "llvm/DebugInfo/PDB/PDBSymDumper.h"
 #include <memory>
 #include <utility>
 
@@ -99,6 +100,12 @@ PDBSymbol::create(const IPDBSession &PDBSession,
         new PDBSymbolUnknown(PDBSession, std::move(Symbol)));
   }
 }
+
+#define TRY_DUMP_TYPE(Type)                                                    \
+  if (const Type *DerivedThis = dyn_cast<Type>(this))                          \
+    Dumper.dump(OS, Indent, *DerivedThis);
+
+#define ELSE_TRY_DUMP_TYPE(Type, Dumper) else TRY_DUMP_TYPE(Type, Dumper)
 
 void PDBSymbol::defaultDump(raw_ostream &OS, int Indent,
                             PDB_DumpLevel Level) const {

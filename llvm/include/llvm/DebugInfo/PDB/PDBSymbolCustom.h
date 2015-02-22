@@ -28,7 +28,7 @@ public:
 
   DECLARE_PDB_SYMBOL_CONCRETE_TYPE(PDB_SymType::Custom)
 
-  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level, PDB_DumpFlags Flags) const override;
+  void dump(raw_ostream &OS, int Indent, PDBSymDumper &Dumper) const override;
 
   void getDataBytes(llvm::SmallVector<uint8_t, 32> &bytes);
   FORWARD_SYMBOL_METHOD(getSymIndexId)

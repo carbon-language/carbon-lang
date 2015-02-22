@@ -24,7 +24,7 @@ public:
 
   DECLARE_PDB_SYMBOL_CONCRETE_TYPE(PDB_SymType::ManagedType)
 
-  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level, PDB_DumpFlags Flags) const override;
+  void dump(raw_ostream &OS, int Indent, PDBSymDumper &Dumper) const override;
 
   FORWARD_SYMBOL_METHOD(getName)
   FORWARD_SYMBOL_METHOD(getSymIndexId)

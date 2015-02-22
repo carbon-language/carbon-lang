@@ -21,11 +21,6 @@ using namespace llvm;
 #define CASE_OUTPUT_ENUM_CLASS_NAME(Class, Value, Stream)                      \
   CASE_OUTPUT_ENUM_CLASS_STR(Class, Value, #Value, Stream)
 
-raw_ostream &llvm::operator<<(raw_ostream &OS, const stream_indent &Indent) {
-  OS.indent(Indent.Width);
-  return OS;
-}
-
 raw_ostream &llvm::operator<<(raw_ostream &OS, const PDB_VariantType &Type) {
   switch (Type) {
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_VariantType, Bool, OS)

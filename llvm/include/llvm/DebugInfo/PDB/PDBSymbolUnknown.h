@@ -21,7 +21,7 @@ public:
   PDBSymbolUnknown(const IPDBSession &PDBSession,
                    std::unique_ptr<IPDBRawSymbol> UnknownSymbol);
 
-  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level, PDB_DumpFlags Flags) const override;
+  void dump(raw_ostream &OS, int Indent, PDBSymDumper &Dumper) const override;
 
   static bool classof(const PDBSymbol *S) {
     return (S->getSymTag() == PDB_SymType::None ||

@@ -17,12 +17,6 @@
 namespace llvm {
 typedef std::unordered_map<PDB_SymType, int> TagStats;
 
-struct stream_indent {
-  stream_indent(int IndentWidth) : Width(IndentWidth) {}
-  int Width;
-};
-raw_ostream &operator<<(raw_ostream &OS, const stream_indent &Indent);
-
 raw_ostream &operator<<(raw_ostream &OS, const PDB_VariantType &Value);
 raw_ostream &operator<<(raw_ostream &OS, const PDB_CallingConv &Conv);
 raw_ostream &operator<<(raw_ostream &OS, const PDB_DataKind &Data);

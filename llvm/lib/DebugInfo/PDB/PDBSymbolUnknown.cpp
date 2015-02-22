@@ -10,6 +10,7 @@
 #include "llvm/DebugInfo/PDB/PDBSymbolUnknown.h"
 
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
+#include "llvm/DebugInfo/PDB/PDBSymDumper.h"
 
 #include <utility>
 
@@ -20,4 +21,6 @@ PDBSymbolUnknown::PDBSymbolUnknown(const IPDBSession &PDBSession,
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
 void PDBSymbolUnknown::dump(raw_ostream &OS, int Indent,
-                            PDB_DumpLevel Level, PDB_DumpFlags Flags) const {}
+                            PDBSymDumper &Dumper) const {
+  Dumper.dump(*this, OS, Indent);
+}
