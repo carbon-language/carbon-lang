@@ -186,8 +186,8 @@ bool LowerBitSets::doInitialization(Module &M) {
   return false;
 }
 
-/// Build a bit set for \param BitSet using the object layouts in
-/// \param GlobalLayout.
+/// Build a bit set for BitSet using the object layouts in
+/// GlobalLayout.
 BitSetInfo LowerBitSets::buildBitSet(
     MDString *BitSet,
     const DenseMap<GlobalVariable *, uint64_t> &GlobalLayout) {
@@ -213,8 +213,8 @@ BitSetInfo LowerBitSets::buildBitSet(
   return BSB.build();
 }
 
-/// Build a test that bit \param BitOffset mod sizeof(Bits)*8 is set in
-/// \param Bits. This pattern matches to the bt instruction on x86.
+/// Build a test that bit BitOffset mod sizeof(Bits)*8 is set in
+/// Bits. This pattern matches to the bt instruction on x86.
 static Value *createMaskedBitTest(IRBuilder<> &B, Value *Bits,
                                   Value *BitOffset) {
   auto BitsType = cast<IntegerType>(Bits->getType());
@@ -228,8 +228,8 @@ static Value *createMaskedBitTest(IRBuilder<> &B, Value *Bits,
   return B.CreateICmpNE(MaskedBits, ConstantInt::get(BitsType, 0));
 }
 
-/// Build a test that bit \param BitOffset is set in \param BSI, where
-/// \param BitSetGlobal is a global containing the bits in \param BSI.
+/// Build a test that bit BitOffset is set in BSI, where
+/// BitSetGlobal is a global containing the bits in BSI.
 Value *LowerBitSets::createBitSetTest(IRBuilder<> &B, const BitSetInfo &BSI,
                                       GlobalVariable *BitSetGlobal,
                                       Value *BitOffset) {
