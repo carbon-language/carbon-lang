@@ -1,14 +1,27 @@
-; RUN: llvm-pdbdump -all -hidden -group-by=compiland %p/Inputs/symbolformat.pdb | FileCheck --check-prefix=FORMAT %s
+; RUN: llvm-pdbdump -symbols %p/Inputs/symbolformat.pdb | FileCheck --check-prefix=SYM_FORMAT %s
+; RUN: llvm-pdbdump -types %p/Inputs/symbolformat.pdb | FileCheck --check-prefix=TYPES_FORMAT %s
 
-; The format here is func [0x<rva_start>+<prologue_length> - 0x<rva_end>-<epilogue_length>]
-; FORMAT: test\DebugInfo\PDB\Inputs\symbolformat-fpo.obj
-; FORMAT-DAG: func [0x001130+0 - 0x001137-1] (VFrame) uint32_t __cdecl fpo_func(uint32_t)
-; FORMAT: d:\src\llvm\test\DebugInfo\PDB\Inputs\symbolformat.obj
-; FORMAT-DAG: func [0x001060+3 - 0x001067-2] (EBP) int32_t __cdecl _purecall()
-; FORMAT-DAG: func [0x001070+6 - 0x001099-4] (EBP) int32_t __cdecl main(int32_t, char**)
-; FORMAT-DAG: func [0x0010b0+7 - 0x0010c7-4] (EBP) void __thiscall A::A()
-; FORMAT-DAG: func [0x0010d0+7 - 0x0010ef-4] (EBP) void __thiscall B::B()
-; FORMAT-DAG: thunk [0x000010f6 - 0x000010fa] (Pcode) B::`vcall'{0}'
-; FORMAT-DAG: func [0x001100+7 - 0x00110b-4] (EBP) virtual void __thiscall B::PureFunc()
-; FORMAT-DAG: func [0x001110+7 - 0x00111b-4] (EBP) void __thiscall A::RegularFunc()
-; FORMAT-DAG: func [0x001120+7 - 0x00112b-4] (EBP) virtual void __thiscall A::VirtualFunc()
+; The format is func [0x<rva_start>+<prologue_length> - 0x<rva_end>-<epilogue_length>]
+; SYM_FORMAT: symbolformat-fpo.obj
+; SYM_FORMAT-DAG: func [0x001130+0 - 0x001137-1] (VFrame) uint32_t __cdecl fpo_func(uint32_t)
+; SYM_FORMAT: symbolformat.obj
+; SYM_FORMAT-DAG: func [0x001060+3 - 0x001067-2] (EBP) int32_t __cdecl _purecall()
+; SYM_FORMAT-DAG: func [0x001070+6 - 0x001099-4] (EBP) int32_t __cdecl main(int32_t, char**)
+; SYM_FORMAT-DAG: func [0x0010b0+7 - 0x0010c7-4] (EBP) void __thiscall A::A()
+; SYM_FORMAT-DAG: func [0x0010d0+7 - 0x0010ef-4] (EBP) void __thiscall B::B()
+; SYM_FORMAT-DAG: thunk [0x000010f6 - 0x000010fa] (Pcode) B::`vcall'{0}'
+; SYM_FORMAT-DAG: func [0x001100+7 - 0x00110b-4] (EBP) virtual void __thiscall B::PureFunc()
+; SYM_FORMAT-DAG: func [0x001110+7 - 0x00111b-4] (EBP) void __thiscall A::RegularFunc()
+; SYM_FORMAT-DAG: func [0x001120+7 - 0x00112b-4] (EBP) virtual void __thiscall A::VirtualFunc()
+
+; TYPES_FORMAT: Function Signatures
+; TYPES_FORMAT-DAG: int32_t __cdecl ()
+; TYPES_FORMAT-DAG: int32_t __cdecl (int32_t, char**)
+; TYPES_FORMAT-DAG: void __thiscall (A::*)()
+; TYPES_FORMAT-DAG: void __thiscall (B::*)()
+; TYPES_FORMAT-DAG: void __thiscall (B::*)(B&)
+; TYPES_FORMAT-DAG: void __thiscall (B::*)()
+; TYPES_FORMAT-DAG: B& __thiscall (B::*)(B&)
+; TYPES_FORMAT-DAG: void __thiscall (A::*)(A&)
+; TYPES_FORMAT-DAG: void __thiscall (A::*)()
+; TYPES_FORMAT-DAG: A& __thiscall (A::*)(A&)

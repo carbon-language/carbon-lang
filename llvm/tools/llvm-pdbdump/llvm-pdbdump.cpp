@@ -45,71 +45,10 @@ cl::list<std::string> InputFilenames(cl::Positional,
                                      cl::desc("<input PDB files>"),
                                      cl::OneOrMore);
 
-cl::opt<bool> DumpHidden(
-    "hidden",
-    cl::desc("Attempt to find hidden symbols.  This can find additional\n"
-             "symbols that cannot be found otherwise.  For example, vtables\n"
-             "can only be found with an exhaustive search such as this.  Be\n"
-             "warned that the performance can be prohibitive on large PDB "
-             "files."));
-
-cl::opt<bool> DumpAll(
-    "all",
-    cl::desc("Specifies all other options except -hidden and -group-by"));
-cl::opt<bool> DumpObjFiles("compilands", cl::desc("Display object files"));
-cl::opt<bool> DumpFuncs("functions", cl::desc("Display function information"));
-cl::opt<bool> DumpData(
-    "data",
-    cl::desc("Display global, class, and constant variable information."));
-cl::opt<bool> DumpLabels("labels", cl::desc("Display labels"));
-cl::opt<bool> DumpPublic("public", cl::desc("Display public symbols"));
-cl::opt<bool> DumpClasses("classes", cl::desc("Display class type information"));
-cl::opt<bool> DumpEnums("enums", cl::desc("Display enum information"));
-cl::opt<bool> DumpFuncsigs("funcsigs",
-                           cl::desc("Display unique function signatures"));
-cl::opt<bool> DumpTypedefs("typedefs", cl::desc("Display typedefs"));
-cl::opt<bool> DumpThunks("thunks", cl::desc("Display thunks"));
-cl::opt<bool> DumpVtables(
-    "vtables",
-    cl::desc("Display virtual function tables (only with --exhaustive)"));
-
-static cl::opt<PDB_DumpType> DumpMode(
-    "group-by", cl::init(PDB_DumpType::ByType), cl::desc("Dump mode:"),
-    cl::values(
-        clEnumValN(PDB_DumpType::ByType, "type",
-                   "(Default) Display symbols grouped by type"),
-        clEnumValN(PDB_DumpType::ByObjFile, "compiland",
-                   "Display symbols grouped under their containing object "
-                   "file."),
-        clEnumValN(PDB_DumpType::Both, "both",
-                   "Display symbols grouped by type, and then by object file."),
-        clEnumValEnd));
-}
-
-#define SET_DUMP_FLAG_FROM_OPT(Var, Flag, Opt) \
-  if (opts::Opt) \
-    Var |= Flag;
-
-PDB_DumpFlags CalculateDumpFlags() {
-  PDB_DumpFlags Flags = PDB_DF_None;
-
-  SET_DUMP_FLAG_FROM_OPT(Flags, PDB_DF_Hidden, DumpHidden)
-
-  if (opts::DumpAll)
-    return Flags | PDB_DF_All;
-
-  SET_DUMP_FLAG_FROM_OPT(Flags, PDB_DF_ObjFiles, DumpObjFiles)
-  SET_DUMP_FLAG_FROM_OPT(Flags, PDB_DF_Functions, DumpFuncs)
-  SET_DUMP_FLAG_FROM_OPT(Flags, PDB_DF_Data, DumpData)
-  SET_DUMP_FLAG_FROM_OPT(Flags, PDB_DF_Labels, DumpLabels)
-  SET_DUMP_FLAG_FROM_OPT(Flags, PDB_DF_PublicSyms, DumpPublic)
-  SET_DUMP_FLAG_FROM_OPT(Flags, PDB_DF_Classes, DumpClasses)
-  SET_DUMP_FLAG_FROM_OPT(Flags, PDB_DF_Enums, DumpEnums)
-  SET_DUMP_FLAG_FROM_OPT(Flags, PDB_DF_Funcsigs, DumpFuncsigs)
-  SET_DUMP_FLAG_FROM_OPT(Flags, PDB_DF_Typedefs, DumpTypedefs)
-  SET_DUMP_FLAG_FROM_OPT(Flags, PDB_DF_Thunks, DumpThunks)
-  SET_DUMP_FLAG_FROM_OPT(Flags, PDB_DF_VTables, DumpVtables)
-  return Flags;
+cl::opt<bool> DumpCompilands("compilands", cl::desc("Display compilands"));
+cl::opt<bool> DumpSymbols("symbols",
+                          cl::desc("Display symbols (implies --compilands"));
+cl::opt<bool> DumpTypes("types", cl::desc("Display types"));
 }
 
 static void dumpInput(StringRef Path) {
@@ -120,19 +59,24 @@ static void dumpInput(StringRef Path) {
     outs() << " is available for your platform.";
     return;
   }
-  PDB_DumpFlags Flags = CalculateDumpFlags();
 
-  if (opts::DumpMode != opts::PDB_DumpType::ByObjFile)
-    Flags |= PDB_DF_Children;
   auto GlobalScope(Session->getGlobalScope());
+  PDB_DumpFlags Flags = PDB_DF_None;
+  if (opts::DumpTypes)
+    Flags |= PDB_DF_Children | PDB_DF_Enums | PDB_DF_Funcsigs |
+             PDB_DF_Typedefs | PDB_DF_VTables;
   GlobalScope->dump(outs(), 0, PDB_DumpLevel::Normal, Flags);
   outs() << "\n";
 
-  if (opts::DumpMode != opts::PDB_DumpType::ByType) {
+  if (opts::DumpSymbols || opts::DumpCompilands) {
+    outs() << "Dumping compilands\n";
     auto Compilands = GlobalScope->findAllChildren<PDBSymbolCompiland>();
+    Flags = PDB_DF_None;
+    if (opts::DumpSymbols)
+      Flags |= PDB_DF_Children | PDB_DF_Data | PDB_DF_Functions |
+               PDB_DF_Thunks | PDB_DF_Labels;
     while (auto Compiland = Compilands->getNext()) {
-      Compiland->dump(outs(), 0, PDB_DumpLevel::Detailed,
-                      Flags | PDB_DF_Children);
+      Compiland->dump(outs(), 2, PDB_DumpLevel::Detailed, Flags);
       outs() << "\n";
     }
   }

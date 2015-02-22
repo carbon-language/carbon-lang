@@ -53,6 +53,7 @@ void PDBSymbolExe::dump(raw_ostream &OS, int Indent,
   OS << "\n";
 
   if (Flags & PDB_DF_Children) {
+    OS << stream_indent(Indent + 2) << "Dumping types\n";
     if (Flags & PDB_DF_Hidden) {
       // For some reason, for each SymTag T, this dumps more items of type T
       // than are dumped by calling dumpChildren(T).  In other words, there are
