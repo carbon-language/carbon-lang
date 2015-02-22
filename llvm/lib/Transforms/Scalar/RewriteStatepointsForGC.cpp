@@ -300,7 +300,7 @@ analyzeParsePointLiveness(DominatorTree &DT, const CallSite &CS,
 }
 
 /// True iff this value is the null pointer constant (of any pointer type)
-static bool isNullConstant(Value *V) {
+static bool LLVM_ATTRIBUTE_UNUSED isNullConstant(Value *V) {
   return isa<Constant>(V) && isa<PointerType>(V->getType()) &&
          cast<Constant>(V)->isNullValue();
 }
