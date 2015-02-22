@@ -1,6 +1,9 @@
 // RUN: %clangxx_asan %s -pthread -o %t
 // RUN: env ASAN_OPTIONS=detect_stack_use_after_return=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK1
 // RUN: env ASAN_OPTIONS=detect_stack_use_after_return=0 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK0
+// RUN: %clangxx_asan -O3 %s -pthread -o %t
+// RUN: env ASAN_OPTIONS=detect_stack_use_after_return=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK1
+// RUN: env ASAN_OPTIONS=detect_stack_use_after_return=0 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK0
 // REQUIRES: stable-runtime
 
 #include <assert.h>
@@ -9,6 +12,7 @@
 #include <sanitizer/asan_interface.h>
 
 static const int kNumThreads = 2;
+static const int kLeftRedzoneSize = sizeof(void *) * 4;
 
 void *Thread(void *unused)  {
   void *fake_stack = __asan_get_current_fake_stack();
@@ -23,7 +27,7 @@ void *Thread(void *unused)  {
     assert(real_stack);
     assert((char*)beg <= (char*)&var[0]);
     assert((char*)end > (char*)&var[0]);
-    for (int i = -32; i < 15; i++) {
+    for (int i = -kLeftRedzoneSize; i < 15; i++) {
       void *beg1, *end1;
       char *ptr = &var[0] + i;
       void *real_stack1 =
