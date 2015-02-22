@@ -28,7 +28,7 @@ void dumpClassParentWithScopeOperator(const T &Symbol, llvm::raw_ostream &OS,
                                       llvm::FunctionDumper &Dumper) {
   uint32_t ClassParentId = Symbol.getClassParentId();
   auto ClassParent =
-      Symbol.getSession().getConcreteSymbolById<PDBSymbolTypeUDT>(
+      Symbol.getSession().template getConcreteSymbolById<PDBSymbolTypeUDT>(
           ClassParentId);
   if (!ClassParent)
     return;
