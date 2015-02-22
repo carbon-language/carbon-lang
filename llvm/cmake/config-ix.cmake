@@ -448,6 +448,8 @@ if( MSVC )
   endif()
 endif( MSVC )
 
+message("CMake set HAVE_DIA_SDK to ${HAVE_DIA_SDK}")
+
 if( PURE_WINDOWS )
   CHECK_CXX_SOURCE_COMPILES("
     #include <windows.h>
