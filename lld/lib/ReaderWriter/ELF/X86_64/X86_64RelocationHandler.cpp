@@ -47,6 +47,15 @@ static void reloc32S(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   // TODO: Make sure that the result sign extends to the 64bit value.
 }
 
+/// \brief R_X86_64_16 - word16:  S + A
+static void reloc16(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
+  uint16_t result = (uint16_t)(S + A);
+  *reinterpret_cast<llvm::support::ulittle16_t *>(location) =
+      result |
+      (uint16_t) * reinterpret_cast<llvm::support::ulittle16_t *>(location);
+  // TODO: Check for overflow.
+}
+
 std::error_code X86_64TargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
@@ -73,6 +82,9 @@ std::error_code X86_64TargetRelocationHandler::applyRelocation(
     break;
   case R_X86_64_32S:
     reloc32S(location, relocVAddress, targetVAddress, ref.addend());
+    break;
+  case R_X86_64_16:
+    reloc16(location, relocVAddress, targetVAddress, ref.addend());
     break;
   case R_X86_64_TPOFF64:
   case R_X86_64_DTPOFF32:

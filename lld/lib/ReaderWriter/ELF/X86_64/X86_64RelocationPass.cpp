@@ -111,6 +111,7 @@ template <class Derived> class RelocationPass : public Pass {
       return;
     assert(ref.kindArch() == Reference::KindArch::x86_64);
     switch (ref.kindValue()) {
+    case R_X86_64_16:
     case R_X86_64_32:
     case R_X86_64_32S:
     case R_X86_64_64:
