@@ -59,6 +59,7 @@ void HexagonMCCodeEmitter::EncodeInstruction(MCInst const &MI, raw_ostream &OS,
   uint64_t Binary = getBinaryCodeForInstr(MI, Fixups, STI) | getPacketBits(MI);
   assert(HexagonMCInstrInfo::getDesc(MCII, MI).getSize() == 4 &&
          "All instructions should be 32bit");
+  (void)&MCII;
   emitLittleEndian(Binary, OS);
   ++MCNumEmitted;
 }
