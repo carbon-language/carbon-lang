@@ -1,3 +1,12 @@
+//===---- IndirectionUtils.cpp - Utilities for call indirection in Orc ----===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
 #include "llvm/ADT/Triple.h"
 #include "llvm/ExecutionEngine/Orc/CloneSubModule.h"
 #include "llvm/ExecutionEngine/Orc/IndirectionUtils.h"
