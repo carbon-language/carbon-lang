@@ -83,7 +83,6 @@ static void dumpInput(StringRef Path) {
   if (GlobalScope->hasPrivateSymbols())
     outs() << "HasPrivateSymbols ";
 
-  PDB_DumpFlags Flags = PDB_DF_None;
   if (opts::DumpTypes) {
     outs() << "\nDumping types";
     TypeDumper Dumper;

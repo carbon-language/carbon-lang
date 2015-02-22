@@ -20,6 +20,8 @@
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeTypedef.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeUDT.h"
 
+using namespace llvm;
+
 namespace {
 template <class T>
 void dumpClassParentWithScopeOperator(const T &Symbol, llvm::raw_ostream &OS,
@@ -34,8 +36,6 @@ void dumpClassParentWithScopeOperator(const T &Symbol, llvm::raw_ostream &OS,
   OS << ClassParent->getName() << "::";
 }
 }
-
-using namespace llvm;
 
 FunctionDumper::FunctionDumper() : PDBSymDumper(true) {}
 
