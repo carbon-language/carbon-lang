@@ -1,15 +1,20 @@
 // RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++11 %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK11
 // RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++11 -fvisibility hidden %s 2>&1 | FileCheck %s -check-prefix=CHECKHID -check-prefix=CHECK11
-// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -fno-sized-deallocation %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK11
-// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK14 -check-prefix=CHECK14UND
-// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -fvisibility hidden %s 2>&1 | FileCheck %s -check-prefix=CHECKHID -check-prefix=CHECK14 -check-prefix=CHECK14UND
-// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -fdefine-sized-deallocation %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK14 -check-prefix=CHECK14DEFCOMDAT
-// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -fdefine-sized-deallocation -fvisibility hidden %s 2>&1 | FileCheck %s -check-prefix=CHECKHID -check-prefix=CHECK14 -check-prefix=CHECK14DEFCOMDAT
-// RUN: %clang_cc1 -emit-llvm -triple x86_64-apple-macosx -o - -std=c++14 -fdefine-sized-deallocation %s | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK14 -check-prefix=CHECK14DEFNOCOMDAT
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -DINLIB -fno-sized-deallocation %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK11
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -DINLIB %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK14 -check-prefix=CHECK14UND
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -DINLIB -fvisibility hidden %s 2>&1 | FileCheck %s -check-prefix=CHECKHID -check-prefix=CHECK14 -check-prefix=CHECK14UND
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -DINLIB -fdefine-sized-deallocation %s 2>&1 | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK14 -check-prefix=CHECK14DEFCOMDAT
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-unknown-unknown -o - -std=c++14 -DINLIB -fdefine-sized-deallocation -fvisibility hidden %s 2>&1 | FileCheck %s -check-prefix=CHECKHID -check-prefix=CHECK14 -check-prefix=CHECK14DEFCOMDAT
+// RUN: %clang_cc1 -emit-llvm -triple x86_64-apple-macosx -o - -std=c++14 -DINLIB -fdefine-sized-deallocation %s | FileCheck %s -check-prefix=CHECKDEF -check-prefix=CHECK14 -check-prefix=CHECK14DEFNOCOMDAT
 
 // PR22419: Implicit sized deallocation functions always have default visibility.
 //   Generalized to all implicit allocation functions.
 
+#ifdef INLIB
+typedef decltype(sizeof(0)) size_t;
+void operator delete(void *, size_t) noexcept;
+void operator delete[](void *, size_t) noexcept;
+#endif
 
 // CHECK14-DAG: %struct.A = type { i8 }
 struct A { };

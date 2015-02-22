@@ -2089,6 +2089,15 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
       }
     }
   }
+  
+  // If the function is sized operator delete and has not already been
+  // declared, and weak definitions have been disabled, do not declare
+  // it implicitly. Instead, let deallocation function lookup pick up
+  // unsized delete.
+  // FIXME: We should remove this guard once backward compatibility is
+  // no longer an issue
+  if (NumParams == 2 && !getLangOpts().DefineSizedDeallocation)
+    return;
 
   FunctionProtoType::ExtProtoInfo EPI;
 
