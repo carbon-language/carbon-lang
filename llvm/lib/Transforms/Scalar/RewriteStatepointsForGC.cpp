@@ -1305,8 +1305,7 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
     assert((toReplace->hasNUses(0) || toReplace->hasNUses(1)) &&
            "only valid use before rewrite is gc.result");
     if (toReplace->hasOneUse()) {
-      Instruction *GCResult = cast<Instruction>(*toReplace->user_begin());
-      assert(isGCResult(GCResult));
+      assert(isGCResult(cast<Instruction>(*toReplace->user_begin())));
     }
   }
 
