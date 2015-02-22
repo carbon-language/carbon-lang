@@ -446,6 +446,8 @@ if( MSVC )
   else()
     set(HAVE_DIA_SDK 0)
   endif()
+else()
+  set(HAVE_DIA_SDK 0)
 endif( MSVC )
 
 message("CMake set HAVE_DIA_SDK to ${HAVE_DIA_SDK}")

@@ -31,7 +31,7 @@ config.host_ldflags = "@HOST_LDFLAGS@"
 config.llvm_use_intel_jitevents = "@LLVM_USE_INTEL_JITEVENTS@"
 config.llvm_use_sanitizer = "@LLVM_USE_SANITIZER@"
 config.have_zlib = "@HAVE_LIBZ@"
-config.have_dia_sdk = "@HAVE_DIA_SDK@"
+config.have_dia_sdk = @HAVE_DIA_SDK@
 config.enable_ffi = "@LLVM_ENABLE_FFI@"
 
 print("lit.site.cfg.in: config.have_dia_sdk set to %s" % config.have_dia_sdk)
