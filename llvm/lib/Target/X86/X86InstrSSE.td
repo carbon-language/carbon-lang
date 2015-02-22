@@ -4734,6 +4734,10 @@ def VMOV64toPQIrr : VRS2I<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR64:$src),
                         [(set VR128:$dst,
                           (v2i64 (scalar_to_vector GR64:$src)))],
                           IIC_SSE_MOVDQ>, VEX, Sched<[WriteMove]>;
+let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0, mayLoad = 1 in
+def VMOV64toPQIrm : VRS2I<0x6E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
+                        "movq\t{$src, $dst|$dst, $src}",
+                        [], IIC_SSE_MOVDQ>, VEX, Sched<[WriteLoad]>;
 let isCodeGenOnly = 1 in
 def VMOV64toSDrr : VRS2I<0x6E, MRMSrcReg, (outs FR64:$dst), (ins GR64:$src),
                        "movq\t{$src, $dst|$dst, $src}",
@@ -4755,6 +4759,10 @@ def MOV64toPQIrr : RS2I<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR64:$src),
                         [(set VR128:$dst,
                           (v2i64 (scalar_to_vector GR64:$src)))],
                           IIC_SSE_MOVDQ>, Sched<[WriteMove]>;
+let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0, mayLoad = 1 in
+def MOV64toPQIrm : RS2I<0x6E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
+                        "mov{d|q}\t{$src, $dst|$dst, $src}",
+                        [], IIC_SSE_MOVDQ>, Sched<[WriteLoad]>;
 let isCodeGenOnly = 1 in
 def MOV64toSDrr : RS2I<0x6E, MRMSrcReg, (outs FR64:$dst), (ins GR64:$src),
                        "mov{d|q}\t{$src, $dst|$dst, $src}",
@@ -4840,6 +4848,15 @@ def MOVPQIto64rr : RS2I<0x7E, MRMDestReg, (outs GR64:$dst), (ins VR128:$src),
                                                          (iPTR 0)))],
                                                          IIC_SSE_MOVD_ToGP>;
 } //SchedRW
+
+let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0, mayStore = 1 in
+def VMOVPQIto64rm : VRS2I<0x7E, MRMDestMem, (outs i64mem:$dst),
+                          (ins VR128:$src), "movq\t{$src, $dst|$dst, $src}",
+                          [], IIC_SSE_MOVDQ>, VEX, Sched<[WriteStore]>;
+let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0, mayStore = 1 in
+def MOVPQIto64rm : RS2I<0x7E, MRMDestMem, (outs i64mem:$dst), (ins VR128:$src),
+                        "mov{d|q}\t{$src, $dst|$dst, $src}",
+                        [], IIC_SSE_MOVDQ>, Sched<[WriteStore]>;
 
 //===---------------------------------------------------------------------===//
 // Bitcast FR64 <-> GR64
