@@ -512,7 +512,8 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
         ScalarLoad = DAG.getLoad(WideVT, dl, Chain, BasePTR,
                                  LD->getPointerInfo().getWithOffset(Offset),
                                  LD->isVolatile(), LD->isNonTemporal(),
-                                 LD->isInvariant(), LD->getAlignment(),
+                                 LD->isInvariant(),
+                                 MinAlign(LD->getAlignment(), Offset),
                                  LD->getAAInfo());
       } else {
         EVT LoadVT = WideVT;
@@ -524,7 +525,8 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
                                     LD->getPointerInfo().getWithOffset(Offset),
                                     LoadVT, LD->isVolatile(),
                                     LD->isNonTemporal(), LD->isInvariant(),
-                                    LD->getAlignment(), LD->getAAInfo());
+                                    MinAlign(LD->getAlignment(), Offset),
+                                    LD->getAAInfo());
       }
 
       RemainingBytes -= LoadBytes;
@@ -595,7 +597,7 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
                 Chain, BasePTR, LD->getPointerInfo().getWithOffset(Idx * Stride),
                 SrcVT.getScalarType(),
                 LD->isVolatile(), LD->isNonTemporal(), LD->isInvariant(),
-                LD->getAlignment(), LD->getAAInfo());
+                MinAlign(LD->getAlignment(), Idx * Stride), LD->getAAInfo());
 
       BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
                          DAG.getConstant(Stride, BasePTR.getValueType()));
@@ -654,7 +656,8 @@ SDValue VectorLegalizer::ExpandStore(SDValue Op) {
     // This scalar TruncStore may be illegal, but we legalize it later.
     SDValue Store = DAG.getTruncStore(Chain, dl, Ex, BasePTR,
                ST->getPointerInfo().getWithOffset(Idx*Stride), MemSclVT,
-               isVolatile, isNonTemporal, Alignment, AAInfo);
+               isVolatile, isNonTemporal, MinAlign(Alignment, Idx*Stride),
+               AAInfo);
 
     BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
                                DAG.getConstant(Stride, BasePTR.getValueType()));
