@@ -1300,14 +1300,13 @@ makeStatepointExplicitImpl(const CallSite &CS, /* to replace */
   token->takeName(CS.getInstruction());
 
   // The GCResult is already inserted, we just need to find it
-  /* scope */ {
-    Instruction *toReplace = CS.getInstruction();
-    assert((toReplace->hasNUses(0) || toReplace->hasNUses(1)) &&
-           "only valid use before rewrite is gc.result");
-    if (toReplace->hasOneUse()) {
-      assert(isGCResult(cast<Instruction>(*toReplace->user_begin())));
-    }
-  }
+#ifndef NDEBUG
+  Instruction *toReplace = CS.getInstruction();
+  assert((toReplace->hasNUses(0) || toReplace->hasNUses(1)) &&
+         "only valid use before rewrite is gc.result");
+  assert(!toReplace->hasOneUse() ||
+         isGCResult(cast<Instruction>(*toReplace->user_begin())));
+#endif
 
   // Update the gc.result of the original statepoint (if any) to use the newly
   // inserted statepoint.  This is safe to do here since the token can't be
