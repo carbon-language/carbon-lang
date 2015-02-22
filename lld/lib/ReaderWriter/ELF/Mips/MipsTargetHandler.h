@@ -68,9 +68,8 @@ public:
   }
 
   /// \brief Return the section order for a input section
-  virtual Layout::SectionOrder getSectionOrder(StringRef name,
-                                               int32_t contentType,
-                                               int32_t contentPermissions) {
+  Layout::SectionOrder getSectionOrder(StringRef name, int32_t contentType,
+                                       int32_t contentPermissions) override {
     if ((contentType == DefinedAtom::typeStub) && (name.startswith(".text")))
       return DefaultLayout<ELFType>::ORDER_TEXT;
 
