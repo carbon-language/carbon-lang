@@ -14,8 +14,6 @@
 #include "llvm/IR/IRBuilder.h"
 #include <set>
 
-using namespace llvm;
-
 namespace llvm {
 namespace orc {
 
