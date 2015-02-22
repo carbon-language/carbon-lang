@@ -2776,11 +2776,33 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
     if (Opc == Instruction::GetElementPtr) {
       if (Elts.size() == 0 ||
           !Elts[0]->getType()->getScalarType()->isPointerTy())
-        return Error(ID.Loc, "getelementptr requires pointer operand");
+        return Error(ID.Loc, "base of getelementptr must be a pointer");
+
+      Type *BaseType = Elts[0]->getType();
+      auto *BasePointerType = cast<PointerType>(BaseType->getScalarType());
 
       ArrayRef<Constant *> Indices(Elts.begin() + 1, Elts.end());
+      for (Constant *Val : Indices) {
+        Type *ValTy = Val->getType();
+        if (!ValTy->getScalarType()->isIntegerTy())
+          return Error(ID.Loc, "getelementptr index must be an integer");
+        if (ValTy->isVectorTy() != BaseType->isVectorTy())
+          return Error(ID.Loc, "getelementptr index type missmatch");
+        if (ValTy->isVectorTy()) {
+          unsigned ValNumEl = cast<VectorType>(ValTy)->getNumElements();
+          unsigned PtrNumEl = cast<VectorType>(BaseType)->getNumElements();
+          if (ValNumEl != PtrNumEl)
+            return Error(
+                ID.Loc,
+                "getelementptr vector index has a wrong number of elements");
+        }
+      }
+
+      if (!Indices.empty() && !BasePointerType->getElementType()->isSized())
+        return Error(ID.Loc, "base element of getelementptr must be sized");
+
       if (!GetElementPtrInst::getIndexedType(Elts[0]->getType(), Indices))
-        return Error(ID.Loc, "invalid indices for getelementptr");
+        return Error(ID.Loc, "invalid getelementptr indices");
       ID.ConstantVal = ConstantExpr::getGetElementPtr(Elts[0], Indices,
                                                       InBounds);
     } else if (Opc == Instruction::Select) {
