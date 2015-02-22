@@ -12,7 +12,7 @@
 #include <sanitizer/asan_interface.h>
 
 static const int kNumThreads = 2;
-static const int kLeftRedzoneSize = sizeof(void *) * 4;
+static const int kLeftRedzoneSize = sizeof(void *) * 4;
 
 void *Thread(void *unused)  {
   void *fake_stack = __asan_get_current_fake_stack();
