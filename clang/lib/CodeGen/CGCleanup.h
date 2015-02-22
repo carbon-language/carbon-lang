@@ -291,8 +291,6 @@ public:
   void setNormalBlock(llvm::BasicBlock *BB) { NormalBlock = BB; }
 
   bool isEHCleanup() const { return CleanupBits.IsEHCleanup; }
-  llvm::BasicBlock *getEHBlock() const { return getCachedEHDispatchBlock(); }
-  void setEHBlock(llvm::BasicBlock *BB) { setCachedEHDispatchBlock(BB); }
 
   bool isActive() const { return CleanupBits.IsActive; }
   void setActive(bool A) { CleanupBits.IsActive = A; }
