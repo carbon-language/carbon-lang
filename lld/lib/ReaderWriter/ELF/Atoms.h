@@ -35,23 +35,27 @@ template <typename ELFT> class ELFFile;
 template <class ELFT> class ELFReference : public Reference {
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
+  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
+
 public:
-  ELFReference(const Elf_Rela *rela, uint64_t off, Reference::KindArch arch,
-               Reference::KindValue relocType, uint32_t idx)
-      : Reference(Reference::KindNamespace::ELF, arch, relocType),
+  ELFReference(const Elf_Sym *sym, const Elf_Rela *rela, uint64_t off,
+               Reference::KindArch arch, Reference::KindValue relocType,
+               uint32_t idx)
+      : Reference(Reference::KindNamespace::ELF, arch, relocType), _sym(sym),
         _target(nullptr), _targetSymbolIndex(idx), _offsetInAtom(off),
         _addend(rela->r_addend) {}
 
-  ELFReference(uint64_t off, Reference::KindArch arch,
+  ELFReference(const Elf_Sym *sym, uint64_t off, Reference::KindArch arch,
                Reference::KindValue relocType, uint32_t idx)
-      : Reference(Reference::KindNamespace::ELF, arch, relocType),
+      : Reference(Reference::KindNamespace::ELF, arch, relocType), _sym(sym),
         _target(nullptr), _targetSymbolIndex(idx), _offsetInAtom(off),
         _addend(0) {}
 
   ELFReference(uint32_t edgeKind)
       : Reference(Reference::KindNamespace::all, Reference::KindArch::all,
                   edgeKind),
-        _target(nullptr), _targetSymbolIndex(0), _offsetInAtom(0), _addend(0) {}
+        _sym(nullptr), _target(nullptr), _targetSymbolIndex(0),
+        _offsetInAtom(0), _addend(0) {}
 
   uint64_t offsetInAtom() const override { return _offsetInAtom; }
 
@@ -70,7 +74,10 @@ public:
 
   void setTarget(const Atom *newAtom) override { _target = newAtom; }
 
+  const Elf_Sym *symbol() const { return _sym; }
+
 private:
+  const Elf_Sym *_sym;
   const Atom *_target;
   uint64_t _targetSymbolIndex;
   uint64_t _offsetInAtom;
