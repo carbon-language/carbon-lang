@@ -291,6 +291,10 @@ public:
   bool stripSymbols() const { return _stripSymbols; }
   void setStripSymbols(bool strip) { _stripSymbols = strip; }
 
+  /// \brief Collect statistics.
+  bool collectStats() const { return _collectStats; }
+  void setCollectStats(bool s) { _collectStats = s; }
+
   // We can parse several linker scripts via command line whose ASTs are stored
   // in the current linking context via addLinkerScript().
   void addLinkerScript(std::unique_ptr<script::Parser> script) {
@@ -329,6 +333,7 @@ protected:
   bool _stripSymbols;
   bool _alignSegments;
   bool _nostdlib;
+  bool _collectStats;
   llvm::Optional<uint64_t> _maxPageSize;
 
   OutputMagic _outputMagic;

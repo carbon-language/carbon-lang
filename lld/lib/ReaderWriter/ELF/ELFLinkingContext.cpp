@@ -60,7 +60,7 @@ ELFLinkingContext::ELFLinkingContext(
       _mergeCommonStrings(false), _useShlibUndefines(true),
       _dynamicLinkerArg(false), _noAllowDynamicLibraries(false),
       _mergeRODataToTextSegment(true), _demangle(true),
-      _stripSymbols(false), _alignSegments(true),
+      _stripSymbols(false), _alignSegments(true), _collectStats(false),
       _outputMagic(OutputMagic::DEFAULT), _initFunction("_init"),
       _finiFunction("_fini"), _sysrootPath("") {}
 

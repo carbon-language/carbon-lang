@@ -277,6 +277,8 @@ def grp_tracingopts : OptionGroup<"opts">,
 def t : Flag<["-"], "t">,
      HelpText<"Print the names of the input files as ld processes them">,
      Group<grp_tracingopts>;
+def stats : Flag<["--"], "stats">,
+     HelpText<"Print time and memory usage stats">, Group<grp_tracingopts>;
 
 //===----------------------------------------------------------------------===//
 /// Extensions
