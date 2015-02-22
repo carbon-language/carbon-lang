@@ -101,7 +101,7 @@ const std::error_category &lld::LinkerScriptReaderCategory() {
 namespace lld {
 
 /// Temporary class to enable make_dynamic_error_code() until
-/// llvm::ErrorOr<> is updated to work with error encapsulations 
+/// llvm::ErrorOr<> is updated to work with error encapsulations
 /// other than error_code.
 class dynamic_error_category : public std::error_category {
 public:

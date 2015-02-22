@@ -572,7 +572,7 @@ void Registry::addSupportMachOObjects(MachOLinkingContext &ctx) {
   MachOLinkingContext::Arch arch = ctx.arch();
   add(std::unique_ptr<Reader>(new mach_o::normalized::MachOObjectReader(ctx)));
   add(std::unique_ptr<Reader>(new mach_o::normalized::MachODylibReader(ctx)));
-  addKindTable(Reference::KindNamespace::mach_o, ctx.archHandler().kindArch(), 
+  addKindTable(Reference::KindNamespace::mach_o, ctx.archHandler().kindArch(),
                ctx.archHandler().kindStrings());
   add(std::unique_ptr<YamlIOTaggedDocumentHandler>(
                            new mach_o::MachOYamlIOTaggedDocumentHandler(arch)));

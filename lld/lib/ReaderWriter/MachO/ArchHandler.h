@@ -29,15 +29,15 @@ namespace mach_o {
 class ArchHandler {
 public:
   virtual ~ArchHandler();
-  
+
   /// There is no public interface to subclasses of ArchHandler, so this
   /// is the only way to instantiate an ArchHandler.
   static std::unique_ptr<ArchHandler> create(MachOLinkingContext::Arch arch);
 
   /// Get (arch specific) kind strings used by Registry.
   virtual const Registry::KindStrings *kindStrings() = 0;
-  
-  /// Convert mach-o Arch to Reference::KindArch. 
+
+  /// Convert mach-o Arch to Reference::KindArch.
   virtual Reference::KindArch kindArch() = 0;
 
   /// Used by StubPass to update References to shared library functions
@@ -88,48 +88,48 @@ public:
 
   virtual const Atom *fdeTargetFunction(const DefinedAtom *fde);
 
-  /// Used by normalizedFromAtoms() to know where to generated rebasing and 
+  /// Used by normalizedFromAtoms() to know where to generated rebasing and
   /// binding info in final executables.
   virtual bool isPointer(const Reference &) = 0;
-  
-  /// Used by normalizedFromAtoms() to know where to generated lazy binding 
+
+  /// Used by normalizedFromAtoms() to know where to generated lazy binding
   /// info in final executables.
   virtual bool isLazyPointer(const Reference &);
 
   /// Returns true if the specified relocation is paired to the next relocation.
   virtual bool isPairedReloc(const normalized::Relocation &) = 0;
 
-  /// Prototype for a helper function.  Given a sectionIndex and address, 
-  /// finds the atom and offset with that atom of that address. 
-  typedef std::function<std::error_code (uint32_t sectionIndex, uint64_t addr, 
-                        const lld::Atom **, Reference::Addend *)> 
+  /// Prototype for a helper function.  Given a sectionIndex and address,
+  /// finds the atom and offset with that atom of that address.
+  typedef std::function<std::error_code (uint32_t sectionIndex, uint64_t addr,
+                        const lld::Atom **, Reference::Addend *)>
                         FindAtomBySectionAndAddress;
-  
+
   /// Prototype for a helper function.  Given a symbolIndex, finds the atom
   /// representing that symbol.
-  typedef std::function<std::error_code (uint32_t symbolIndex, 
+  typedef std::function<std::error_code (uint32_t symbolIndex,
                         const lld::Atom **)> FindAtomBySymbolIndex;
 
   /// Analyzes a relocation from a .o file and returns the info
   /// (kind, target, addend) needed to instantiate a Reference.
   /// Two helper functions are passed as parameters to find the target atom
   /// given a symbol index or address.
-  virtual std::error_code 
+  virtual std::error_code
           getReferenceInfo(const normalized::Relocation &reloc,
                            const DefinedAtom *inAtom,
                            uint32_t offsetInAtom,
                            uint64_t fixupAddress, bool isBigEndian,
                            FindAtomBySectionAndAddress atomFromAddress,
                            FindAtomBySymbolIndex atomFromSymbolIndex,
-                           Reference::KindValue *kind, 
-                           const lld::Atom **target, 
+                           Reference::KindValue *kind,
+                           const lld::Atom **target,
                            Reference::Addend *addend) = 0;
 
   /// Analyzes a pair of relocations from a .o file and returns the info
   /// (kind, target, addend) needed to instantiate a Reference.
   /// Two helper functions are passed as parameters to find the target atom
   /// given a symbol index or address.
-  virtual std::error_code 
+  virtual std::error_code
       getPairReferenceInfo(const normalized::Relocation &reloc1,
                            const normalized::Relocation &reloc2,
                            const DefinedAtom *inAtom,
@@ -137,8 +137,8 @@ public:
                            uint64_t fixupAddress, bool isBig, bool scatterable,
                            FindAtomBySectionAndAddress atomFromAddress,
                            FindAtomBySymbolIndex atomFromSymbolIndex,
-                           Reference::KindValue *kind, 
-                           const lld::Atom **target, 
+                           Reference::KindValue *kind,
+                           const lld::Atom **target,
                            Reference::Addend *addend) = 0;
 
   /// Prototype for a helper function.  Given an atom, finds the symbol table
@@ -234,7 +234,7 @@ public:
     ReferenceInfo   lazyPointerReferenceToFinal;
     ReferenceInfo   nonLazyPointerReferenceToBinder;
     uint8_t         codeAlignment;
-    
+
     uint32_t        stubSize;
     uint8_t         stubBytes[16];
     ReferenceInfo   stubReferenceToLP;

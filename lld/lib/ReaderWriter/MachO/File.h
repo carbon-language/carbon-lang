@@ -115,7 +115,7 @@ public:
     addAtom(*atom);
     _undefAtoms[name] = atom;
   }
-  
+
   /// Search this file for an the atom from 'section' that covers
   /// 'offsetInSect'.  Returns nullptr is no atom found.
   MachODefinedAtom *findAtomCoveringAddress(const Section &section,
@@ -128,7 +128,7 @@ public:
     assert(offsetInSect < section.content.size());
     // Vector of atoms for section are already sorted, so do binary search.
     const auto &atomPos = std::lower_bound(vec.begin(), vec.end(), offsetInSect,
-        [offsetInSect](const SectionOffsetAndAtom &ao, 
+        [offsetInSect](const SectionOffsetAndAtom &ao,
                        uint64_t targetAddr) -> bool {
           // Each atom has a start offset of its slice of the
           // section's content. This compare function must return true
@@ -151,7 +151,7 @@ public:
       return nullptr;
     return pos->second;
   }
-  
+
   typedef std::function<void (MachODefinedAtom* atom)> DefinedAtomVisitor;
 
   void eachDefinedAtom(DefinedAtomVisitor vistor) {
@@ -187,11 +187,11 @@ protected:
       return ec;
     return std::error_code();
   }
-  
+
 private:
   struct SectionOffsetAndAtom { uint64_t offset;  MachODefinedAtom *atom; };
 
-  void addAtomForSection(const Section *inSection, MachODefinedAtom* atom, 
+  void addAtomForSection(const Section *inSection, MachODefinedAtom* atom,
                          uint64_t sectionOffset) {
     SectionOffsetAndAtom offAndAtom;
     offAndAtom.offset = sectionOffset;
@@ -200,8 +200,8 @@ private:
     addAtom(*atom);
   }
 
-  
-  typedef llvm::DenseMap<const normalized::Section *, 
+
+  typedef llvm::DenseMap<const normalized::Section *,
                          std::vector<SectionOffsetAndAtom>>  SectionToAtoms;
   typedef llvm::StringMap<const lld::Atom *> NameToAtom;
 

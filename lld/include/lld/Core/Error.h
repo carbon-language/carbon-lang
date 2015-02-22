@@ -60,9 +60,9 @@ inline std::error_code make_error_code(LinkerScriptReaderError e) {
 
 /// Creates an error_code object that has associated with it an arbitrary
 /// error messsage.  The value() of the error_code will always be non-zero
-/// but its value is meaningless. The messsage() will be (a copy of) the 
+/// but its value is meaningless. The messsage() will be (a copy of) the
 /// supplied error string.
-/// Note:  Once ErrorOr<> is updated to work with errors other than error_code, 
+/// Note:  Once ErrorOr<> is updated to work with errors other than error_code,
 /// this can be updated to return some other kind of error.
 std::error_code make_dynamic_error_code(StringRef msg);
 std::error_code make_dynamic_error_code(const Twine &msg);

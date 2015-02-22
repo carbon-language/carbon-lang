@@ -24,7 +24,7 @@
 #CHECKLAYOUT-NEXT:  AddressAlign:
 #CHECKLAYOUT-NEXT:  Content: 554889E5E8020000005DC3554889E5B8640000005DC3
 #                            ^~~> my_func          ^~~> my_weak_func
-#      
+#
 #
 #
 #Our two input files were produced by the following code:
@@ -43,7 +43,7 @@
 #         retq
 # .Ltmp0:
 #         .size   my_func, .Ltmp0-my_func
-# 
+#
 #         .text
 #         .weak   my_weak_func
 #         .type   my_weak_func,@function
@@ -62,16 +62,16 @@
 # .Ltmp1:
 #         .size   my_weak_func, .Ltmp1-my_weak_func
 #         .size   my_weak_func2, .Ltmp1-my_weak_func2
-#         .size   my_weak_func3, .Ltmp1-my_weak_func3 
-# 
+#         .size   my_weak_func3, .Ltmp1-my_weak_func3
+#
 #Inputs/main-with-global-def.o.yaml:
 #
 # int my_func();
-# 
+#
 # int my_weak_func2() {
 #     return 200;
 # }
-# 
+#
 # int main() {
 #     return my_func();
 # }

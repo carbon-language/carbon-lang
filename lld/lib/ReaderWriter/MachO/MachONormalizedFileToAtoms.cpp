@@ -138,39 +138,39 @@ void sectionParseInfo(DefinedAtom::ContentType atomType,
     {DefinedAtom::type, size, DefinedAtom::scope, DefinedAtom::merge, model }
 
   static const ParseInfo parseInfo[] = {
-    ENTRY(typeCode,              1, scopeGlobal,          mergeNo, 
+    ENTRY(typeCode,              1, scopeGlobal,          mergeNo,
                                                             atomizeAtSymbols),
-    ENTRY(typeData,              1, scopeGlobal,          mergeNo, 
+    ENTRY(typeData,              1, scopeGlobal,          mergeNo,
                                                             atomizeAtSymbols),
-    ENTRY(typeConstData,         1, scopeGlobal,          mergeNo, 
+    ENTRY(typeConstData,         1, scopeGlobal,          mergeNo,
                                                             atomizeAtSymbols),
-    ENTRY(typeZeroFill,          1, scopeGlobal,          mergeNo, 
+    ENTRY(typeZeroFill,          1, scopeGlobal,          mergeNo,
                                                             atomizeAtSymbols),
-    ENTRY(typeConstant,          1, scopeGlobal,          mergeNo, 
+    ENTRY(typeConstant,          1, scopeGlobal,          mergeNo,
                                                             atomizeAtSymbols),
-    ENTRY(typeCString,           1, scopeLinkageUnit,     mergeByContent, 
+    ENTRY(typeCString,           1, scopeLinkageUnit,     mergeByContent,
                                                             atomizeUTF8),
-    ENTRY(typeUTF16String,       1, scopeLinkageUnit,     mergeByContent, 
+    ENTRY(typeUTF16String,       1, scopeLinkageUnit,     mergeByContent,
                                                             atomizeUTF16),
     ENTRY(typeCFI,               4, scopeTranslationUnit, mergeNo,
                                                             atomizeCFI),
-    ENTRY(typeLiteral4,          4, scopeLinkageUnit,     mergeByContent, 
+    ENTRY(typeLiteral4,          4, scopeLinkageUnit,     mergeByContent,
                                                             atomizeFixedSize),
-    ENTRY(typeLiteral8,          8, scopeLinkageUnit,     mergeByContent, 
+    ENTRY(typeLiteral8,          8, scopeLinkageUnit,     mergeByContent,
                                                             atomizeFixedSize),
-    ENTRY(typeLiteral16,        16, scopeLinkageUnit,     mergeByContent, 
+    ENTRY(typeLiteral16,        16, scopeLinkageUnit,     mergeByContent,
                                                             atomizeFixedSize),
-    ENTRY(typeCFString,          4, scopeLinkageUnit,     mergeByContent, 
+    ENTRY(typeCFString,          4, scopeLinkageUnit,     mergeByContent,
                                                             atomizeCFString),
-    ENTRY(typeInitializerPtr,    4, scopeTranslationUnit, mergeNo, 
+    ENTRY(typeInitializerPtr,    4, scopeTranslationUnit, mergeNo,
                                                             atomizePointerSize),
-    ENTRY(typeTerminatorPtr,     4, scopeTranslationUnit, mergeNo, 
+    ENTRY(typeTerminatorPtr,     4, scopeTranslationUnit, mergeNo,
                                                             atomizePointerSize),
-    ENTRY(typeCompactUnwindInfo, 4, scopeTranslationUnit, mergeNo, 
+    ENTRY(typeCompactUnwindInfo, 4, scopeTranslationUnit, mergeNo,
                                                             atomizeCU),
-    ENTRY(typeGOT,               4, scopeLinkageUnit,     mergeByContent, 
+    ENTRY(typeGOT,               4, scopeLinkageUnit,     mergeByContent,
                                                             atomizePointerSize),
-    ENTRY(typeUnknown,           1, scopeGlobal,          mergeNo, 
+    ENTRY(typeUnknown,           1, scopeGlobal,          mergeNo,
                                                             atomizeAtSymbols)
   };
   #undef ENTRY
@@ -300,8 +300,8 @@ std::error_code processSymboledSection(DefinedAtom::ContentType atomType,
 
   // Debug logging of symbols.
   //for (const Symbol *sym : symbols)
-  //  llvm::errs() << "  sym: " 
-  //    << llvm::format("0x%08llx ", (uint64_t)sym->value) 
+  //  llvm::errs() << "  sym: "
+  //    << llvm::format("0x%08llx ", (uint64_t)sym->value)
   //    << ", " << sym->name << "\n";
 
   // If section has no symbols and no content, there are no atoms.
@@ -622,7 +622,7 @@ std::error_code convertRelocs(const Section &section,
          + ")" );
     } else {
       // Instantiate an lld::Reference object and add to its atom.
-      inAtom->addReference(offsetInAtom, kind, target, addend, 
+      inAtom->addReference(offsetInAtom, kind, target, addend,
                            handler.kindArch());
     }
   }

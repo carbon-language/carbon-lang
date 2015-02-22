@@ -521,7 +521,7 @@ CHECK: identifier: .gnu.lto_*
 CHECK: r_paren: )
 CHECK: r_brace: }
 CHECK: r_brace: }
-CHECK: eof: 
+CHECK: eof:
 CHECK: SEARCH_DIR("/usr/x86_64-linux-gnu/lib64")
 CHECK: SEARCH_DIR("=/usr/local/lib/x86_64-linux-gnu")
 CHECK: SECTIONS
@@ -529,52 +529,52 @@ CHECK: {
 CHECK: PROVIDE(__executable_start = SEGMENT_START(text-segment, 4194304))
 CHECK: . = (SEGMENT_START(text-segment, 4194304) + SIZEOF_HEADERS)
 CHECK: .interp :
-CHECK:   { 
+CHECK:   {
 CHECK:     *(.interp)
 CHECK:   }
 CHECK: .note.gnu.build-id :
-CHECK:   { 
+CHECK:   {
 CHECK:     *(.note.gnu.build-id)
 CHECK:   }
 CHECK: .hash :
-CHECK:   { 
+CHECK:   {
 CHECK:     *(.hash)
 CHECK:   }
 CHECK: .rela.dyn :
-CHECK:   { 
+CHECK:   {
 CHECK:     *(.rela.init)
 CHECK:     *(.rela.text .rela.text.* .rela.gnu.linkonce.t.*)
 CHECK:     *(.rela.fini)
 CHECK:     *(.rela.rodata .rela.rodata.* .rela.gnu.linkonce.r.*)
 CHECK:   }
 CHECK: .rela.plt :
-CHECK:   { 
+CHECK:   {
 CHECK:     *(.rela.plt)
 CHECK:     PROVIDE_HIDDEN(__rela_iplt_start = .)
 CHECK:     *(.rela.iplt)
 CHECK:     PROVIDE_HIDDEN(__rela_iplt_end = .)
 CHECK:   }
 CHECK: .init :
-CHECK:   { 
+CHECK:   {
 CHECK:     KEEP(*(SORT_NONE(.init)))
 CHECK:   } =0x909090909090909090909090
 CHECK: PROVIDE(__etext = .)
 CHECK: .eh_frame :
-CHECK: ONLY_IF_RO  { 
+CHECK: ONLY_IF_RO  {
 CHECK:     KEEP(*(.eh_frame))
 CHECK:   }
 CHECK: .exception_ranges :
-CHECK: ONLY_IF_RO  { 
+CHECK: ONLY_IF_RO  {
 CHECK:     *(.exception_ranges .exception_ranges*)
 CHECK:   }
 CHECK: . = (ALIGN(CONSTANT(MAXPAGESIZE)) - ((CONSTANT(MAXPAGESIZE) - .) & (CONSTANT(MAXPAGESIZE) - 1)))
 CHECK: . = DATA_SEGMENT_ALIGN(CONSTANT(MAXPAGESIZE), CONSTANT(COMMONPAGESIZE))
 CHECK: .eh_frame :
-CHECK: ONLY_IF_RW  { 
+CHECK: ONLY_IF_RW  {
 CHECK:     KEEP(*(.eh_frame))
 CHECK:   }
 CHECK: .ctors :
-CHECK:   { 
+CHECK:   {
 CHECK:     KEEP(*crtbegin.o(.ctors))
 CHECK:     KEEP(*crtbegin?.o(.ctors))
 CHECK:     KEEP(*(EXCLUDE_FILE(*crtend.o *crtend?.o ) .ctors))
@@ -582,7 +582,7 @@ CHECK:     KEEP(*(SORT_BY_NAME(.ctors.*)))
 CHECK:     KEEP(*(.ctors))
 CHECK:   }
 CHECK: .dtors :
-CHECK:   { 
+CHECK:   {
 CHECK:     KEEP(*crtbegin.o(.dtors))
 CHECK:     KEEP(*crtbegin?.o(.dtors))
 CHECK:     KEEP(*(EXCLUDE_FILE(*crtend.o *crtend?.o ) .dtors))
@@ -591,16 +591,16 @@ CHECK:     KEEP(*(.dtors))
 CHECK:   }
 CHECK: . = DATA_SEGMENT_RELRO_END((SIZEOF(.got.plt) >= 24) ? 24 : 0, .)
 CHECK: .got.plt :
-CHECK:   { 
+CHECK:   {
 CHECK:     *(.got.plt)
 CHECK:     *(.igot.plt)
 CHECK:   }
 CHECK: .lrodata (ALIGN(CONSTANT(MAXPAGESIZE)) + (. & (CONSTANT(MAXPAGESIZE) - 1))) :
-CHECK:   { 
+CHECK:   {
 CHECK:     *(.lrodata .lrodata.* .gnu.linkonce.lr.*)
 CHECK:   }
 CHECK: .ldata (ALIGN(CONSTANT(MAXPAGESIZE)) + (. & (CONSTANT(MAXPAGESIZE) - 1))) :
-CHECK:   { 
+CHECK:   {
 CHECK:     *(.ldata .ldata.* .gnu.linkonce.l.*)
 CHECK:     . = ALIGN((. != 0) ? (64 / 8) : 1)
 CHECK:   }
@@ -609,7 +609,7 @@ CHECK: _end = .
 CHECK: PROVIDE(end = .)
 CHECK: . = DATA_SEGMENT_END(.)
 CHECK:  :
-CHECK:   { 
+CHECK:   {
 CHECK:     *(.note.GNU-stack)
 CHECK:     *(.gnu_debuglink)
 CHECK:     *(.gnu.lto_*)

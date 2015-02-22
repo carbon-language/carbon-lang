@@ -206,7 +206,7 @@ SectionInfo *Util::getRelocatableSection(DefinedAtom::ContentType type) {
     }
   }
   // Otherwise allocate new SectionInfo object.
-  SectionInfo *sect = new (_allocator) SectionInfo(segmentName, sectionName, 
+  SectionInfo *sect = new (_allocator) SectionInfo(segmentName, sectionName,
                                                    sectionType, _context,
                                                    sectionAttrs);
   _sectionInfos.push_back(sect);

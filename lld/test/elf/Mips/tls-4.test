@@ -28,7 +28,7 @@
 
 # so1.o
 ---
-FileHeader:      
+FileHeader:
   Class:           ELFCLASS32
   Data:            ELFDATA2LSB
   OSABI:           ELFOSABI_GNU
@@ -36,7 +36,7 @@ FileHeader:
   Machine:         EM_MIPS
   Flags:           [ EF_MIPS_NOREORDER, EF_MIPS_PIC, EF_MIPS_CPIC,
                      EF_MIPS_ABI_O32, EF_MIPS_ARCH_32R2 ]
-Sections:        
+Sections:
   - Name:            .text
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
@@ -47,7 +47,7 @@ Sections:
     Link:            .symtab
     AddressAlign:    0x04
     Info:            .text
-    Relocations:     
+    Relocations:
       - Offset:          0x00
         Symbol:          L01
         Type:            R_MIPS_TLS_LDM
@@ -60,13 +60,13 @@ Sections:
     AddressAlign:    0x04
     Size:            0x04
 
-Symbols:         
-  Local:           
+Symbols:
+  Local:
     - Name:            L01
       Type:            STT_TLS
       Section:         .tdata
       Size:            0x04
-  Global:          
+  Global:
     - Name:            T1
       Type:            STT_FUNC
       Section:         .text
@@ -80,7 +80,7 @@ Symbols:
 
 # so2.o
 ---
-FileHeader:      
+FileHeader:
   Class:           ELFCLASS32
   Data:            ELFDATA2LSB
   OSABI:           ELFOSABI_GNU
@@ -88,7 +88,7 @@ FileHeader:
   Machine:         EM_MIPS
   Flags:           [ EF_MIPS_NOREORDER, EF_MIPS_PIC, EF_MIPS_CPIC,
                      EF_MIPS_ABI_O32, EF_MIPS_ARCH_32R2 ]
-Sections:        
+Sections:
   - Name:            .text
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
@@ -99,7 +99,7 @@ Sections:
     Link:            .symtab
     AddressAlign:    0x04
     Info:            .text
-    Relocations:     
+    Relocations:
       - Offset:          0x00
         Symbol:          L02
         Type:            R_MIPS_TLS_LDM
@@ -109,13 +109,13 @@ Sections:
     AddressAlign:    0x04
     Size:            0x04
 
-Symbols:         
-  Local:           
+Symbols:
+  Local:
     - Name:            L02
       Type:            STT_TLS
       Section:         .tdata
       Size:            0x04
-  Global:          
+  Global:
     - Name:            T3
       Type:            STT_FUNC
       Section:         .text

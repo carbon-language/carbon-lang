@@ -13,7 +13,7 @@
 # SEC:      Contents of section .text:
 # SEC-NEXT:  400190 41000000 f08f0000 60001000
 # SEC:      Contents of section .got:
-# SEC-NEXT:  401000 00000000 00000080        
+# SEC-NEXT:  401000 00000000 00000080
 
 # so.o
 ---

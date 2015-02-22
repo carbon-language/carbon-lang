@@ -36,7 +36,7 @@ namespace mach_o {
 //
 class LazyPointerAtom : public SimpleDefinedAtom {
 public:
-  LazyPointerAtom(const File &file, bool is64) 
+  LazyPointerAtom(const File &file, bool is64)
     : SimpleDefinedAtom(file), _is64(is64) { }
 
   ContentType contentType() const override {
@@ -71,7 +71,7 @@ private:
 //
 class NonLazyPointerAtom : public SimpleDefinedAtom {
 public:
-  NonLazyPointerAtom(const File &file, bool is64) 
+  NonLazyPointerAtom(const File &file, bool is64)
     : SimpleDefinedAtom(file), _is64(is64) { }
 
   ContentType contentType() const override {
@@ -160,7 +160,7 @@ public:
   }
 
   ArrayRef<uint8_t> rawContent() const override {
-    return llvm::makeArrayRef(_stubInfo.stubHelperBytes, 
+    return llvm::makeArrayRef(_stubInfo.stubHelperBytes,
                               _stubInfo.stubHelperSize);
   }
 
@@ -194,7 +194,7 @@ public:
   }
 
   ArrayRef<uint8_t> rawContent() const override {
-    return llvm::makeArrayRef(_stubInfo.stubHelperCommonBytes, 
+    return llvm::makeArrayRef(_stubInfo.stubHelperCommonBytes,
                         _stubInfo.stubHelperCommonSize);
   }
 
@@ -214,7 +214,7 @@ public:
     // Skip this pass if output format uses text relocations instead of stubs.
     if (!this->noTextRelocs())
       return;
-    
+
     // Scan all references in all atoms.
     for (const DefinedAtom *atom : mergedFile->defined()) {
       for (const Reference *ref : *atom) {
@@ -329,7 +329,7 @@ private:
   bool isCallSite(const Reference &ref) {
     return _archHandler.isCallSite(ref);
   }
- 
+
   void addReference(SimpleDefinedAtom* atom,
                     const ArchHandler::ReferenceInfo &refInfo,
                     const lld::Atom* target) {

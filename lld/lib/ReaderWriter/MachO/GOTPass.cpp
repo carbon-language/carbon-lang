@@ -88,12 +88,12 @@ private:
 
 
 /// Pass for instantiating and optimizing GOT slots.
-/// 
+///
 class GOTPass : public Pass {
 public:
   GOTPass(const MachOLinkingContext &context)
     : _context(context), _archHandler(_context.archHandler()),
-      _file("<mach-o GOT Pass>") { } 
+      _file("<mach-o GOT Pass>") { }
 
 private:
 
@@ -150,11 +150,11 @@ private:
     // by-passed, do that optimization and don't create GOT entry.
     return !canBypassGOT;
   }
-  
+
   const DefinedAtom *makeGOTEntry(const Atom *target) {
     auto pos = _targetToGOT.find(target);
     if (pos == _targetToGOT.end()) {
-      GOTEntryAtom *gotEntry = new (_file.allocator()) 
+      GOTEntryAtom *gotEntry = new (_file.allocator())
           GOTEntryAtom(_file, _context.is64Bit(), target->name());
       _targetToGOT[target] = gotEntry;
       const ArchHandler::ReferenceInfo &nlInfo = _archHandler.stubInfo().
@@ -166,7 +166,7 @@ private:
     return pos->second;
   }
 
-  
+
   const MachOLinkingContext                       &_context;
   mach_o::ArchHandler                             &_archHandler;
   MachOFile                                        _file;
@@ -179,7 +179,7 @@ void addGOTPass(PassManager &pm, const MachOLinkingContext &ctx) {
   assert(ctx.needsGOTPass());
   pm.add(llvm::make_unique<GOTPass>(ctx));
 }
-  
+
 
 } // end namesapce mach_o
 } // end namesapce lld
