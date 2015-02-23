@@ -87,3 +87,20 @@ entry:
   ret void
 }
 
+define double @nearbyint_f64(double %a) {
+; CHECK-LABEL: nearbyint_f64
+; CHECK: vroundsd $12
+  %res = call double @llvm.nearbyint.f64(double %a)
+  ret double %res
+}
+declare double @llvm.nearbyint.f64(double %p)
+
+define float @floor_f32(float %a) {
+; CHECK-LABEL: floor_f32
+; CHECK: vroundss $1
+  %res = call float @llvm.floor.f32(float %a)
+  ret float %res
+}
+declare float @llvm.floor.f32(float %p)
+
+

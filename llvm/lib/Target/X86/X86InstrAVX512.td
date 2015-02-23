@@ -101,6 +101,8 @@ class X86VectorVTInfo<int numelts, ValueType eltvt, RegisterClass rc,
                      !if (!eq (EltTypeName, "f64"), SSEPackedDouble,
                      SSEPackedInt));
 
+  RegisterClass FRC = !if (!eq (EltTypeName, "f32"), FR32X, FR64X);
+
   // A vector type of the same width with element type i32.  This is used to
   // create the canonical constant zero node ImmAllZerosV.
   ValueType i32VT = !cast<ValueType>("v" # !srl(Size, 5) # "i32");
@@ -4652,7 +4654,6 @@ let ExeDomain = d in {
 } // ExeDomain
 }
 
-
 defm VRNDSCALEPSZ : avx512_rndscale<0x08, "vrndscaleps", f512mem, VR512,
                                 loadv16f32, SSEPackedSingle>, EVEX_V512,
                                 EVEX_CD8<32, CD8VF>;
@@ -4672,52 +4673,72 @@ def : Pat<(v8f64 (int_x86_avx512_mask_rndscale_pd_512 (v8f64 VR512:$src1),
                   FROUND_CURRENT)),
                    (VRNDSCALEPDZr VR512:$src1, imm:$src2)>;
 
-multiclass avx512_rndscale_scalar<bits<8> opc, string OpcodeStr,
-                     Operand x86memop, RegisterClass RC, Domain d> {
-let ExeDomain = d in {
-  def r : AVX512AIi8<opc, MRMSrcReg,
-                    (outs RC:$dst), (ins RC:$src1, RC:$src2, i32u8imm:$src3),
-                    !strconcat(OpcodeStr,
-                    "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    []>, EVEX_4V;
+multiclass
+avx512_rndscale_scalar<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
 
-  def m : AVX512AIi8<opc, MRMSrcMem,
-                    (outs RC:$dst), (ins RC:$src1, x86memop:$src2,  i32u8imm:$src3),
-                    !strconcat(OpcodeStr,
-                    "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                    []>, EVEX_4V;
-} // ExeDomain
+  let ExeDomain = _.ExeDomain in {
+  defm r : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
+                           (ins _.RC:$src1, _.RC:$src2, i32u8imm:$src3), OpcodeStr,
+                           "$src3, $src2, $src1", "$src1, $src2, $src3",
+                           (_.VT (X86RndScale (_.VT _.RC:$src1), (_.VT _.RC:$src2),
+                            (i32 imm:$src3), (i32 FROUND_CURRENT)))>;
+
+  defm rb : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
+                         (ins _.RC:$src1, _.RC:$src2, i32u8imm:$src3), OpcodeStr,
+                         "$src3, $src2, $src1", "$src1, $src2, $src3",
+                         (_.VT (X86RndScale (_.VT _.RC:$src1), (_.VT _.RC:$src2),
+                         (i32 imm:$src3), (i32 FROUND_NO_EXC))), "{sae}">, EVEX_B;
+
+  let mayLoad = 1 in
+  defm m : AVX512_maskable_scalar<opc, MRMSrcMem, _, (outs _.RC:$dst),
+                         (ins _.RC:$src1, _.MemOp:$src2, i32u8imm:$src3), OpcodeStr,
+                         "$src3, $src2, $src1", "$src1, $src2, $src3",
+                         (_.VT (X86RndScale (_.VT _.RC:$src1),
+                          (_.VT (scalar_to_vector (_.ScalarLdFrag addr:$src2))),
+                          (i32 imm:$src3), (i32 FROUND_CURRENT)))>;
+  }
+  let Predicates = [HasAVX512] in {
+  def : Pat<(ffloor _.FRC:$src), (COPY_TO_REGCLASS
+             (_.VT (!cast<Instruction>(NAME##r) (_.VT (IMPLICIT_DEF)),
+             (_.VT (COPY_TO_REGCLASS _.FRC:$src, _.RC)), (i32 0x1))), _.FRC)>;
+  def : Pat<(fceil _.FRC:$src), (COPY_TO_REGCLASS
+             (_.VT (!cast<Instruction>(NAME##r) (_.VT (IMPLICIT_DEF)),
+             (_.VT (COPY_TO_REGCLASS _.FRC:$src, _.RC)), (i32 0x2))), _.FRC)>;
+  def : Pat<(ftrunc _.FRC:$src), (COPY_TO_REGCLASS
+             (_.VT (!cast<Instruction>(NAME##r) (_.VT (IMPLICIT_DEF)),
+             (_.VT (COPY_TO_REGCLASS _.FRC:$src, _.RC)), (i32 0x3))), _.FRC)>;
+  def : Pat<(frint _.FRC:$src), (COPY_TO_REGCLASS
+             (_.VT (!cast<Instruction>(NAME##r) (_.VT (IMPLICIT_DEF)),
+             (_.VT (COPY_TO_REGCLASS _.FRC:$src, _.RC)), (i32 0x4))), _.FRC)>;
+  def : Pat<(fnearbyint _.FRC:$src), (COPY_TO_REGCLASS
+             (_.VT (!cast<Instruction>(NAME##r) (_.VT (IMPLICIT_DEF)),
+             (_.VT (COPY_TO_REGCLASS _.FRC:$src, _.RC)), (i32 0xc))), _.FRC)>;
+
+  def : Pat<(ffloor (_.ScalarLdFrag addr:$src)), (COPY_TO_REGCLASS
+             (_.VT (!cast<Instruction>(NAME##m) (_.VT (IMPLICIT_DEF)),
+             addr:$src, (i32 0x1))), _.FRC)>;
+  def : Pat<(fceil (_.ScalarLdFrag addr:$src)), (COPY_TO_REGCLASS
+             (_.VT (!cast<Instruction>(NAME##m) (_.VT (IMPLICIT_DEF)),
+             addr:$src, (i32 0x2))), _.FRC)>;
+  def : Pat<(ftrunc (_.ScalarLdFrag addr:$src)), (COPY_TO_REGCLASS
+             (_.VT (!cast<Instruction>(NAME##m) (_.VT (IMPLICIT_DEF)),
+             addr:$src, (i32 0x3))), _.FRC)>;
+  def : Pat<(frint (_.ScalarLdFrag addr:$src)), (COPY_TO_REGCLASS
+             (_.VT (!cast<Instruction>(NAME##m) (_.VT (IMPLICIT_DEF)),
+             addr:$src, (i32 0x4))), _.FRC)>;
+  def : Pat<(fnearbyint (_.ScalarLdFrag addr:$src)), (COPY_TO_REGCLASS
+             (_.VT (!cast<Instruction>(NAME##m) (_.VT (IMPLICIT_DEF)),
+             addr:$src, (i32 0xc))), _.FRC)>;
+  }
 }
 
-defm VRNDSCALESS : avx512_rndscale_scalar<0x0A, "vrndscaless", ssmem, FR32X,
-                                SSEPackedSingle>, EVEX_CD8<32, CD8VT1>;
+defm VRNDSCALESS : avx512_rndscale_scalar<0x0A, "vrndscaless", f32x_info>,
+                                AVX512AIi8Base, EVEX_4V, EVEX_CD8<32, CD8VT1>;
 
-defm VRNDSCALESD : avx512_rndscale_scalar<0x0B, "vrndscalesd", sdmem, FR64X,
-                                SSEPackedDouble>, EVEX_CD8<64, CD8VT1>;
+defm VRNDSCALESD : avx512_rndscale_scalar<0x0B, "vrndscalesd", f64x_info>, VEX_W,
+                                AVX512AIi8Base, EVEX_4V, EVEX_CD8<64, CD8VT1>;
 
 let Predicates = [HasAVX512] in {
-  def : Pat<(ffloor FR32X:$src),
-            (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0x1))>;
-  def : Pat<(f64 (ffloor FR64X:$src)),
-            (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0x1))>;
-  def : Pat<(f32 (fnearbyint FR32X:$src)),
-            (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0xC))>;
-  def : Pat<(f64 (fnearbyint FR64X:$src)),
-            (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0xC))>;
-  def : Pat<(f32 (fceil FR32X:$src)),
-            (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0x2))>;
-  def : Pat<(f64 (fceil FR64X:$src)),
-            (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0x2))>;
-  def : Pat<(f32 (frint FR32X:$src)),
-            (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0x4))>;
-  def : Pat<(f64 (frint FR64X:$src)),
-            (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0x4))>;
-  def : Pat<(f32 (ftrunc FR32X:$src)),
-            (VRNDSCALESSr (f32 (IMPLICIT_DEF)), FR32X:$src, (i32 0x3))>;
-  def : Pat<(f64 (ftrunc FR64X:$src)),
-            (VRNDSCALESDr (f64 (IMPLICIT_DEF)), FR64X:$src, (i32 0x3))>;
-}
-
 def : Pat<(v16f32 (ffloor VR512:$src)),
           (VRNDSCALEPSZr VR512:$src, (i32 0x1))>;
 def : Pat<(v16f32 (fnearbyint VR512:$src)),
@@ -4739,7 +4760,7 @@ def : Pat<(v8f64 (frint VR512:$src)),
           (VRNDSCALEPDZr VR512:$src, (i32 0x4))>;
 def : Pat<(v8f64 (ftrunc VR512:$src)),
           (VRNDSCALEPDZr VR512:$src, (i32 0x3))>;
-
+}
 //-------------------------------------------------
 // Integer truncate and extend operations
 //-------------------------------------------------

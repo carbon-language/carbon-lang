@@ -14419,9 +14419,20 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
       SDValue Src2 = Op.getOperand(2);
       SDValue Src0 = Op.getOperand(3);
       SDValue Mask = Op.getOperand(4);
-      SDValue RoundingMode = Op.getOperand(5);
+      // There are 2 kinds of intrinsics in this group:
+      // (1) With supress-all-exceptions (sae) - 6 operands
+      // (2) With rounding mode and sae - 7 operands.
+      if (Op.getNumOperands() == 6) {
+        SDValue Sae  = Op.getOperand(5);
+        return getScalarMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src1, Src2,
+                                                Sae),
+                                    Mask, Src0, Subtarget, DAG);
+      }
+      assert(Op.getNumOperands() == 7 && "Unexpected intrinsic form");
+      SDValue RoundingMode  = Op.getOperand(5);
+      SDValue Sae  = Op.getOperand(6);
       return getScalarMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src1, Src2,
-                                              RoundingMode),
+                                              RoundingMode, Sae),
                                   Mask, Src0, Subtarget, DAG);
     }
     case INTR_TYPE_2OP_MASK: {
