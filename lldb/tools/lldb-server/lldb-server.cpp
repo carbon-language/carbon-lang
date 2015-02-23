@@ -10,13 +10,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-    static void
+static void
 display_usage (const char *progname)
 {
     fprintf(stderr, "Usage:\n"
             "  %s g[dbserver] [options]\n"
             "  %s p[latform] [options]\n"
-            "Invoke subcommand for additional help", progname, progname);
+            "Invoke subcommand for additional help\n", progname, progname);
     exit(0);
 }
 
