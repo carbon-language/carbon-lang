@@ -90,15 +90,14 @@ private:
     bool hasMultipleRegions() const { return RegionCount > 1; }
 
     void addRegionStartCount(uint64_t Count) {
-      Mapped = true;
-      ExecutionCount = Count;
+      // The max of all region starts is the most interesting value.
+      addRegionCount(RegionCount ? std::max(ExecutionCount, Count) : Count);
       ++RegionCount;
     }
 
     void addRegionCount(uint64_t Count) {
       Mapped = true;
-      if (!RegionCount)
-        ExecutionCount = Count;
+      ExecutionCount = Count;
     }
   };
 

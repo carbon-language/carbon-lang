@@ -12,11 +12,11 @@ int main() {                             // CHECK:   1| [[@LINE]]|int main(
     x = 1;                               // CHECK:   1| [[@LINE]]|    x = 1
   }                                      // CHECK:   1| [[@LINE]]|  }
                                          // CHECK:   1| [[@LINE]]|
-  for (int i = 0; i < 100; ++i) {        // CHECK: 100| [[@LINE]]|  for (
+  for (int i = 0; i < 100; ++i) {        // CHECK: 101| [[@LINE]]|  for (
     x = 1;                               // CHECK: 100| [[@LINE]]|    x = 1
   }                                      // CHECK: 100| [[@LINE]]|  }
                                          // CHECK:   1| [[@LINE]]|
-  x = x < 10 ? x + 1 : x - 1;            // CHECK:   0| [[@LINE]]|  x =
+  x = x < 10 ? x + 1 : x - 1;            // CHECK:   1| [[@LINE]]|  x =
   x = x > 10 ?                           // CHECK:   1| [[@LINE]]|  x =
         x - 1:                           // CHECK:   0| [[@LINE]]|        x
         x + 1;                           // CHECK:   1| [[@LINE]]|        x
