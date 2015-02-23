@@ -820,9 +820,19 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     if (Is64Bit) {
       // Handle the 64-bit Windows ABI case where we need to call __chkstk.
       // Function prologue is responsible for adjusting the stack pointer.
-      BuildMI(MBB, MBBI, DL, TII.get(X86::MOV64ri), X86::RAX)
-        .addImm(NumBytes)
-        .setMIFlag(MachineInstr::FrameSetup);
+      if (isUInt<32>(NumBytes)) {
+        BuildMI(MBB, MBBI, DL, TII.get(X86::MOV32ri), X86::EAX)
+            .addImm(NumBytes)
+            .setMIFlag(MachineInstr::FrameSetup);
+      } else if (isInt<32>(NumBytes)) {
+        BuildMI(MBB, MBBI, DL, TII.get(X86::MOV64ri32), X86::RAX)
+            .addImm(NumBytes)
+            .setMIFlag(MachineInstr::FrameSetup);
+      } else {
+        BuildMI(MBB, MBBI, DL, TII.get(X86::MOV64ri), X86::RAX)
+            .addImm(NumBytes)
+            .setMIFlag(MachineInstr::FrameSetup);
+      }
     } else {
       // Allocate NumBytes-4 bytes on stack in case of isEAXAlive.
       // We'll also use 4 already allocated bytes for EAX.

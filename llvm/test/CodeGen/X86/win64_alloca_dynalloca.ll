@@ -14,19 +14,19 @@ entry:
   %buf0 = alloca i8, i64 4096, align 1
 
 ; ___chkstk_ms does not adjust %rsp.
-; M64:       $4096, %rax
+; M64:       $4096, %eax
 ; M64: callq ___chkstk_ms
 ; M64: subq  %rax, %rsp
 ; M64: leaq 128(%rsp), %rbp
 
 ; __chkstk does not adjust %rsp.
-; W64:       $4096, %rax
+; W64:       $4096, %eax
 ; W64: callq __chkstk
 ; W64: subq  %rax, %rsp
 ; W64: leaq 128(%rsp), %rbp
 
 ; Use %r11 for the large model.
-; L64:       $4096, %rax
+; L64:       $4096, %eax
 ; L64: movabsq $__chkstk, %r11
 ; L64: callq *%r11
 ; L64: subq  %rax, %rsp

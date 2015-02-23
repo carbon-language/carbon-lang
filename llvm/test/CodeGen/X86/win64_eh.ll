@@ -35,7 +35,7 @@ entry:
 }
 ; WIN64-LABEL: foo2:
 ; WIN64: .seh_proc foo2
-; WIN64: movabsq $8000, %rax
+; WIN64: movl $8000, %eax
 ; WIN64: callq {{__chkstk|___chkstk_ms}}
 ; WIN64: subq %rax, %rsp
 ; WIN64: .seh_stackalloc 8000
