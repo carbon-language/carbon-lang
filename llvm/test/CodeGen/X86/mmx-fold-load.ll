@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mattr=+mmx,+sse2 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-darwin -mattr=+mmx,+sse2 | FileCheck %s
 
 define i64 @t0(<1 x i64>* %a, i32* %b) {
 ; CHECK-LABEL: t0:
