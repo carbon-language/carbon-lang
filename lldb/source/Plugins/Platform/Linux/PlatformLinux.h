@@ -30,7 +30,7 @@ namespace lldb_private {
 
         static void
         Terminate ();
-        
+
         PlatformLinux (bool is_host);
 
         virtual
@@ -50,7 +50,7 @@ namespace lldb_private {
 
         lldb_private::ConstString
         GetPluginName() override;
-        
+
         uint32_t
         GetPluginVersion() override
         {
@@ -89,7 +89,7 @@ namespace lldb_private {
         GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch) override;
 
         size_t
-        GetSoftwareBreakpointTrapOpcode (Target &target, 
+        GetSoftwareBreakpointTrapOpcode (Target &target,
                                          BreakpointSite *bp_site) override;
 
         int32_t
