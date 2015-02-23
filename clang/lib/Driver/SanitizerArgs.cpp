@@ -128,7 +128,7 @@ static unsigned getToolchainUnsupportedKinds(const ToolChain &TC) {
   if (!(IsLinux && (IsX86_64 || IsMIPS64))) {
     Unsupported |= Memory | DataFlow;
   }
-  if (!((IsLinux || IsFreeBSD) && IsX86_64)) {
+  if (!((IsLinux || IsFreeBSD) && (IsX86_64 || IsMIPS64))) {
     Unsupported |= Thread;
   }
   if (!(IsLinux && (IsX86 || IsX86_64))) {
