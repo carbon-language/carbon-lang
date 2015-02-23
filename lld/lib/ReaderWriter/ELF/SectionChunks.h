@@ -361,6 +361,9 @@ const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
     _atoms.push_back(new (_alloc) lld::AtomLayout(atom, mOffset, 0));
     this->_msize = mOffset + definedAtom->size();
     break;
+  case DefinedAtom::typeGnuLinkOnce:
+    // Discard gnu linkonce atoms as they are just used to identify signature.
+    break;
   default:
     llvm::dbgs() << definedAtom->contentType() << "\n";
     llvm_unreachable("Uexpected content type.");

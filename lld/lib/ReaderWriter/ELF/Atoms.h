@@ -179,14 +179,16 @@ public:
   uint64_t size() const override {
     // Common symbols are not allocated in object files,
     // so use st_size to tell how many bytes are required.
-    if ((_symbol->getType() == llvm::ELF::STT_COMMON) ||
-        _symbol->st_shndx == llvm::ELF::SHN_COMMON)
+    if (_symbol && (_symbol->getType() == llvm::ELF::STT_COMMON ||
+                    _symbol->st_shndx == llvm::ELF::SHN_COMMON))
       return (uint64_t) _symbol->st_size;
 
     return _contentData.size();
   }
 
   Scope scope() const override {
+    if (!_symbol)
+      return scopeGlobal;
     if (_symbol->getVisibility() == llvm::ELF::STV_HIDDEN)
       return scopeLinkageUnit;
     else if (_symbol->getBinding() != llvm::ELF::STB_LOCAL)
@@ -199,6 +201,9 @@ public:
   Interposable interposable() const override { return interposeNo; }
 
   Merge merge() const override {
+    if (!_symbol)
+      return mergeNo;
+
     if (_symbol->getBinding() == llvm::ELF::STB_WEAK)
       return mergeAsWeak;
 
@@ -215,6 +220,9 @@ public:
 
     ContentType ret = typeUnknown;
     uint64_t flags = _section->sh_flags;
+
+    if (!_symbol && _sectionName.startswith(".gnu.linkonce"))
+      return typeGnuLinkOnce;
 
     if (!(flags & llvm::ELF::SHF_ALLOC))
       return _contentType = typeNoAlloc;
@@ -286,6 +294,9 @@ public:
   }
 
   Alignment alignment() const override {
+    if (!_symbol)
+      return Alignment(0);
+
     // Obtain proper value of st_value field.
     const auto symValue = getSymbolValue(_symbol);
 
@@ -323,7 +334,7 @@ public:
 
   StringRef customSectionName() const override {
     if ((contentType() == typeZeroFill) ||
-        (_symbol->st_shndx == llvm::ELF::SHN_COMMON))
+        (_symbol && _symbol->st_shndx == llvm::ELF::SHN_COMMON))
       return ".bss";
     return _sectionName;
   }

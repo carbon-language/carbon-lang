@@ -14,6 +14,4 @@ lib/ReaderWriter/ELF
 
 - Section Groups.
 
-- Gnu linkonce sections.
-
 - Fix section flags as they appear in input (update content permissions)
