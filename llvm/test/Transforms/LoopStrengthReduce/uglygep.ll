@@ -59,7 +59,7 @@ bb:
 ; CHECK: loop0:
 ; Induction variable is initialized to -2.
 ; CHECK-NEXT: [[PHIIV:%[^ ]+]] = phi i32 [ [[IVNEXT:%[^ ]+]], %loop0 ], [ -2, %bb ]
-; CHECK-NEXT: [[IVNEXT]] = add nuw nsw i32 [[PHIIV]], 1
+; CHECK-NEXT: [[IVNEXT]] = add i32 [[PHIIV]], 1
 ; CHECK-NEXT: br i1 false, label %loop0, label %bb0
 loop0:                                            ; preds = %loop0, %bb
   %i0 = phi i32 [ %i0.next, %loop0 ], [ 0, %bb ]  ; <i32> [#uses=2]
