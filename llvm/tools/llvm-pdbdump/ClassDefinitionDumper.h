@@ -54,7 +54,7 @@ private:
     SymbolGroup(const SymbolGroup &other) = delete;
     SymbolGroup &operator=(const SymbolGroup &other) = delete;
   };
-  typedef std::unordered_map<PDB_MemberAccess, SymbolGroup> SymbolGroupByAccess;
+  typedef std::unordered_map<int, SymbolGroup> SymbolGroupByAccess;
 
   int dumpAccessGroup(PDB_MemberAccess Access, const SymbolGroup &Group,
                       raw_ostream &OS, int Indent);

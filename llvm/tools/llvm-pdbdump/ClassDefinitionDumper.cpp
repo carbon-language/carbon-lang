@@ -44,10 +44,11 @@ void ClassDefinitionDumper::start(const PDBSymbolTypeUDT &Class,
   // NOTE: Access level of nested types is not recorded in the PDB, so we have
   // a special case for them.
   SymbolGroupByAccess Groups;
-  Groups.insert(std::make_pair((PDB_MemberAccess)0, SymbolGroup()));
-  Groups.insert(std::make_pair(PDB_MemberAccess::Private, SymbolGroup()));
-  Groups.insert(std::make_pair(PDB_MemberAccess::Protected, SymbolGroup()));
-  Groups.insert(std::make_pair(PDB_MemberAccess::Public, SymbolGroup()));
+  Groups.insert(std::make_pair(0, SymbolGroup()));
+  Groups.insert(std::make_pair((int)PDB_MemberAccess::Private, SymbolGroup()));
+  Groups.insert(
+      std::make_pair((int)PDB_MemberAccess::Protected, SymbolGroup()));
+  Groups.insert(std::make_pair((int)PDB_MemberAccess::Public, SymbolGroup()));
 
   while (auto Child = Children->getNext()) {
     PDB_MemberAccess Access = Child->getRawSymbol().getAccess();
@@ -55,7 +56,7 @@ void ClassDefinitionDumper::start(const PDBSymbolTypeUDT &Class,
       continue;
 
     SymbolGroup *InsertGroup = nullptr;
-    auto &AccessGroup = Groups.find(Access)->second;
+    auto &AccessGroup = Groups.find((int)Access)->second;
 
     if (auto Func = dyn_cast<PDBSymbolFunc>(Child.get())) {
       if (Func->isCompilerGenerated())
@@ -73,14 +74,14 @@ void ClassDefinitionDumper::start(const PDBSymbolTypeUDT &Class,
   }
 
   int Count = 0;
-  Count += dumpAccessGroup((PDB_MemberAccess)0, Groups[(PDB_MemberAccess)0], OS,
-                           Indent);
+  Count += dumpAccessGroup((PDB_MemberAccess)0, Groups[0], OS, Indent);
   Count += dumpAccessGroup(PDB_MemberAccess::Public,
-                           Groups[PDB_MemberAccess::Public], OS, Indent);
-  Count += dumpAccessGroup(PDB_MemberAccess::Protected,
-                           Groups[PDB_MemberAccess::Protected], OS, Indent);
+                           Groups[(int)PDB_MemberAccess::Public], OS, Indent);
+  Count +=
+      dumpAccessGroup(PDB_MemberAccess::Protected,
+                      Groups[(int)PDB_MemberAccess::Protected], OS, Indent);
   Count += dumpAccessGroup(PDB_MemberAccess::Private,
-                           Groups[PDB_MemberAccess::Private], OS, Indent);
+                           Groups[(int)PDB_MemberAccess::Private], OS, Indent);
 
   if (Count > 0)
     OS << newline(Indent);
