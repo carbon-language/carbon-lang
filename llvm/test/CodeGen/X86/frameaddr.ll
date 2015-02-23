@@ -18,7 +18,7 @@ entry:
 ; CHECK-32-NEXT:  ret
 ; CHECK-W64-LABEL: test1
 ; CHECK-W64:       push
-; CHECK-W64-NEXT:  leaq (%rsp), %rbp
+; CHECK-W64-NEXT:  movq %rsp, %rbp
 ; CHECK-W64-NEXT:  leaq (%rbp), %rax
 ; CHECK-W64-NEXT:  pop
 ; CHECK-W64-NEXT:  ret
@@ -53,7 +53,7 @@ entry:
 ; CHECK-32-NEXT:  ret
 ; CHECK-W64-LABEL: test2
 ; CHECK-W64:       push
-; CHECK-W64-NEXT:  leaq (%rsp), %rbp
+; CHECK-W64-NEXT:  movq %rsp, %rbp
 ; CHECK-W64-NEXT:  leaq (%rbp), %rax
 ; CHECK-W64-NEXT:  pop
 ; CHECK-W64-NEXT:  ret

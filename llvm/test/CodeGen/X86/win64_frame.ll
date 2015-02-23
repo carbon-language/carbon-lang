@@ -9,7 +9,7 @@ define i32 @f1(i32 %p1, i32 %p2, i32 %p3, i32 %p4, i32 %p5) "no-frame-pointer-el
 define void @f2(i32 %p, ...) "no-frame-pointer-elim"="true" {
   ; CHECK-LABEL: f2:
   ; CHECK:      .seh_stackalloc 8
-  ; CHECK:      leaq    (%rsp), %rbp
+  ; CHECK:      movq    %rsp, %rbp
   ; CHECK:      .seh_setframe 5, 0
   ; CHECK:      movq    %rdx, 32(%rbp)
   ; CHECK:      leaq    32(%rbp), %rax
@@ -20,7 +20,7 @@ define void @f2(i32 %p, ...) "no-frame-pointer-elim"="true" {
 
 define i8* @f3() "no-frame-pointer-elim"="true" {
   ; CHECK-LABEL: f3:
-  ; CHECK:      leaq    (%rsp), %rbp
+  ; CHECK:      movq    %rsp, %rbp
   ; CHECK:      .seh_setframe 5, 0
   ; CHECK:      movq    8(%rbp), %rax
   %ra = call i8* @llvm.returnaddress(i32 0)

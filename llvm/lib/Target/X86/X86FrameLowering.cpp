@@ -863,8 +863,11 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   int SEHFrameOffset = 0;
   if (IsWinEH && HasFP) {
     SEHFrameOffset = calculateSetFPREG(NumBytes);
-    addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(X86::LEA64r), FramePtr),
-                 StackPtr, false, SEHFrameOffset);
+    if (SEHFrameOffset)
+      addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(X86::LEA64r), FramePtr),
+                   StackPtr, false, SEHFrameOffset);
+    else
+      BuildMI(MBB, MBBI, DL, TII.get(X86::MOV64rr), FramePtr).addReg(StackPtr);
 
     if (NeedsWinEH)
       BuildMI(MBB, MBBI, DL, TII.get(X86::SEH_SetFrame))
