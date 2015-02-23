@@ -23,7 +23,8 @@ define i32 @test0(<1 x i64>* %v4) {
 define i32 @test1(i32* nocapture readonly %ptr) {
 ; CHECK-LABEL: test1:
 ; CHECK:       ## BB#0: ## %entry
-; CHECK-NEXT:    pshufw $232, (%rdi), %mm0
+; CHECK-NEXT:    movd (%rdi), %mm0
+; CHECK-NEXT:    pshufw $232, %mm0, %mm0
 ; CHECK-NEXT:    movd %mm0, %eax
 ; CHECK-NEXT:    emms
 ; CHECK-NEXT:    retq
@@ -48,7 +49,8 @@ entry:
 define i32 @test2(i32* nocapture readonly %ptr) {
 ; CHECK-LABEL: test2:
 ; CHECK:       ## BB#0: ## %entry
-; CHECK-NEXT:    pshufw $232, (%rdi), %mm0
+; CHECK-NEXT:    movq (%rdi), %mm0
+; CHECK-NEXT:    pshufw $232, %mm0, %mm0
 ; CHECK-NEXT:    movd %mm0, %eax
 ; CHECK-NEXT:    emms
 ; CHECK-NEXT:    retq
