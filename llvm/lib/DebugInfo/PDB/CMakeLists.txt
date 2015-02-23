@@ -73,4 +73,4 @@ add_llvm_library(LLVMDebugInfoPDB
   ${LIBPDB_ADDITIONAL_HEADER_DIRS}
   )
 
-target_link_libraries(LLVMDebugInfoPDB ${cmake_2_8_12_INTERFACE} "${LIBPDB_ADDITIONAL_LIBRARIES}")
+target_link_libraries(LLVMDebugInfoPDB INTERFACE "${LIBPDB_ADDITIONAL_LIBRARIES}")
