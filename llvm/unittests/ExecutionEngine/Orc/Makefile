@@ -1,4 +1,4 @@
-##===- unittests/ExecutionEngine/Makefile ------------------*- Makefile -*-===##
+##===- unittests/ExecutionEngine/Orc/Makefile --------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,16 +7,10 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
-TESTNAME = ExecutionEngine
-LINK_COMPONENTS :=interpreter
+LEVEL = ../../..
+TESTNAME = OrcJIT
+LINK_COMPONENTS := core ipo mcjit orcjit native support
 
 include $(LEVEL)/Makefile.config
-
-PARALLEL_DIRS = Orc
-
-ifeq ($(TARGET_HAS_JIT),1)
-  PARALLEL_DIRS = $(PARALLEL_DIRS) MCJIT
-endif
-
 include $(LLVM_SRC_ROOT)/unittests/Makefile.unittest
+
