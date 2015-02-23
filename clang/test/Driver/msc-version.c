@@ -5,8 +5,8 @@
 // RUN: %clang -target i686-windows -fms-compatibility -dM -E - </dev/null -o - | FileCheck %s -check-prefix CHECK-NO-MSC-VERSION
 
 // CHECK-NO-MSC-VERSION: _MSC_BUILD 1
-// CHECK-NO-MSC-VERSION: _MSC_FULL_VER 170000000
-// CHECK-NO-MSC-VERSION: _MSC_VER 1700
+// CHECK-NO-MSC-VERSION: _MSC_FULL_VER 180000000
+// CHECK-NO-MSC-VERSION: _MSC_VER 1800
 
 
 //

@@ -4095,7 +4095,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       Ver = getMSCompatibilityVersion(MSCVersion->getValue());
 
     if (Ver.empty())
-      CmdArgs.push_back("-fms-compatibility-version=17.00");
+      CmdArgs.push_back("-fms-compatibility-version=18.00");
     else
       CmdArgs.push_back(Args.MakeArgString("-fms-compatibility-version=" + Ver));
   }
