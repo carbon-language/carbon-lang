@@ -3101,6 +3101,7 @@ Process::Launch (ProcessLaunchInfo &launch_info)
                     {
                         // We were able to launch the process, but we failed to
                         // catch the initial stop.
+                        error.SetErrorString ("failed to catch stop after launch");
                         SetExitStatus (0, "failed to catch stop after launch");
                         Destroy();
                     }
