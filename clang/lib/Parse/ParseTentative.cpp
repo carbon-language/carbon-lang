@@ -284,7 +284,7 @@ Parser::TPResult Parser::TryParseSimpleDeclaration(bool AllowForRangeDecl) {
 Parser::TPResult Parser::TryParseInitDeclaratorList() {
   while (1) {
     // declarator
-    TPResult TPR = TryParseDeclarator(false/*mayBeAbstract*/);
+    TPResult TPR = TryParseDeclarator(false/*MayBeAbstract*/);
     if (TPR != TPResult::Ambiguous)
       return TPR;
 
@@ -361,7 +361,7 @@ bool Parser::isCXXConditionDeclaration() {
   assert(Tok.is(tok::l_paren) && "Expected '('");
 
   // declarator
-  TPR = TryParseDeclarator(false/*mayBeAbstract*/);
+  TPR = TryParseDeclarator(false/*MayBeAbstract*/);
 
   // In case of an error, let the declaration parsing code handle it.
   if (TPR == TPResult::Error)
@@ -431,7 +431,7 @@ bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context, bool &isAmbiguous) {
   assert(Tok.is(tok::l_paren) && "Expected '('");
 
   // declarator
-  TPR = TryParseDeclarator(true/*mayBeAbstract*/, false/*mayHaveIdentifier*/);
+  TPR = TryParseDeclarator(/*MayBeAbstract*/true, /*MayHaveIdentifier*/false);
 
   // In case of an error, let the declaration parsing code handle it.
   if (TPR == TPResult::Error)
@@ -623,6 +623,7 @@ Parser::isCXX11AttributeSpecifier(bool Disambiguate,
 }
 
 Parser::TPResult Parser::TryParsePtrOperatorSeq() {
+  bool ConsumedAny = false;
   while (true) {
     if (Tok.is(tok::coloncolon) || Tok.is(tok::identifier))
       if (TryAnnotateCXXScopeToken(true))
@@ -637,8 +638,9 @@ Parser::TPResult Parser::TryParsePtrOperatorSeq() {
              Tok.is(tok::kw_volatile) ||
              Tok.is(tok::kw_restrict))
         ConsumeToken();
+      ConsumedAny = true;
     } else {
-      return TPResult::True;
+      return ConsumedAny ? TPResult::True : TPResult::False;
     }
   }
 }
@@ -734,7 +736,8 @@ Parser::TPResult Parser::TryParseOperatorId() {
       return TPResult::Error;
     AnyDeclSpecifiers = true;
   }
-  return TryParsePtrOperatorSeq();
+  return TryParsePtrOperatorSeq() == TPResult::Error ? TPResult::Error
+                                                     : TPResult::True;
 }
 
 ///         declarator:
@@ -790,13 +793,23 @@ Parser::TPResult Parser::TryParseOperatorId() {
 ///           '~' decltype-specifier                                      [TODO]
 ///           template-id                                                 [TODO]
 ///
-Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
-                                            bool mayHaveIdentifier) {
+Parser::TPResult Parser::TryParseDeclarator(bool MayBeAbstract,
+                                            bool MayHaveIdentifier,
+                                            bool VersusExpression) {
   // declarator:
   //   direct-declarator
   //   ptr-operator declarator
-  if (TryParsePtrOperatorSeq() == TPResult::Error)
-    return TPResult::Error;
+  {
+    TPResult TPR = TryParsePtrOperatorSeq();
+    if (TPR == TPResult::Error)
+      return TPResult::Error;
+    // After a ptr-operator, any of ')', ',', ';', and '...' indicates
+    // that this cannot be an expression.
+    if (VersusExpression && TPR == TPResult::True &&
+        (Tok.is(tok::r_paren) || Tok.is(tok::comma) || Tok.is(tok::ellipsis) ||
+         Tok.is(tok::semi)))
+      return TPResult::True;
+  }
 
   // direct-declarator:
   // direct-abstract-declarator:
@@ -806,7 +819,7 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
   if ((Tok.is(tok::identifier) || Tok.is(tok::kw_operator) ||
        (Tok.is(tok::annot_cxxscope) && (NextToken().is(tok::identifier) ||
                                         NextToken().is(tok::kw_operator)))) &&
-      mayHaveIdentifier) {
+      MayHaveIdentifier) {
     // declarator-id
     if (Tok.is(tok::annot_cxxscope))
       ConsumeToken();
@@ -819,14 +832,14 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
       ConsumeToken();
   } else if (Tok.is(tok::l_paren)) {
     ConsumeParen();
-    if (mayBeAbstract &&
+    if (MayBeAbstract &&
         (Tok.is(tok::r_paren) ||       // 'int()' is a function.
          // 'int(...)' is a function.
          (Tok.is(tok::ellipsis) && NextToken().is(tok::r_paren)) ||
          isDeclarationSpecifier())) {   // 'int(int)' is a function.
       // '(' parameter-declaration-clause ')' cv-qualifier-seq[opt]
       //        exception-specification[opt]
-      TPResult TPR = TryParseFunctionDeclarator();
+      TPResult TPR = TryParseFunctionDeclarator(VersusExpression);
       if (TPR != TPResult::Ambiguous)
         return TPR;
     } else {
@@ -842,14 +855,15 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
           Tok.is(tok::kw___vectorcall) ||
           Tok.is(tok::kw___unaligned))
         return TPResult::True; // attributes indicate declaration
-      TPResult TPR = TryParseDeclarator(mayBeAbstract, mayHaveIdentifier);
+      TPResult TPR = TryParseDeclarator(MayBeAbstract, MayHaveIdentifier,
+                                        VersusExpression);
       if (TPR != TPResult::Ambiguous)
         return TPR;
       if (Tok.isNot(tok::r_paren))
         return TPResult::False;
       ConsumeParen();
     }
-  } else if (!mayBeAbstract) {
+  } else if (!MayBeAbstract) {
     return TPResult::False;
   }
 
@@ -865,13 +879,13 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
       // initializer that follows the declarator. Note that ctor-style
       // initializers are not possible in contexts where abstract declarators
       // are allowed.
-      if (!mayBeAbstract && !isCXXFunctionDeclarator())
+      if (!MayBeAbstract && !isCXXFunctionDeclarator())
         break;
 
       // direct-declarator '(' parameter-declaration-clause ')'
       //        cv-qualifier-seq[opt] exception-specification[opt]
       ConsumeParen();
-      TPR = TryParseFunctionDeclarator();
+      TPR = TryParseFunctionDeclarator(VersusExpression);
     } else if (Tok.is(tok::l_square)) {
       // direct-declarator '[' constant-expression[opt] ']'
       // direct-abstract-declarator[opt] '[' constant-expression[opt] ']'
@@ -1710,7 +1724,8 @@ Parser::TryParseParameterDeclarationClause(bool *InvalidAsDeclaration,
 
     // declarator
     // abstract-declarator[opt]
-    TPR = TryParseDeclarator(true/*mayBeAbstract*/);
+    TPR = TryParseDeclarator(/*MayBeAbstract*/true, /*MayHaveIdentifier*/true,
+                             /*VersusExpression*/!VersusTemplateArgument);
     if (TPR != TPResult::Ambiguous)
       return TPR;
 
@@ -1757,9 +1772,15 @@ Parser::TryParseParameterDeclarationClause(bool *InvalidAsDeclaration,
 
 /// TryParseFunctionDeclarator - We parsed a '(' and we want to try to continue
 /// parsing as a function declarator.
+///
 /// If TryParseFunctionDeclarator fully parsed the function declarator, it will
-/// return TPResult::Ambiguous, otherwise it will return either False() or
-/// Error().
+/// return TPResult::Ambiguous.
+///
+/// If \p VersusExpression is true and this cannot be a function-style
+/// cast expression, returns TPResult::True.
+///
+/// Otherwise, returns TPResult::False if this can't be a function declarator
+/// and TPResult::Error if it can't be anything.
 ///
 /// '(' parameter-declaration-clause ')' cv-qualifier-seq[opt]
 ///         exception-specification[opt]
@@ -1767,7 +1788,7 @@ Parser::TryParseParameterDeclarationClause(bool *InvalidAsDeclaration,
 /// exception-specification:
 ///   'throw' '(' type-id-list[opt] ')'
 ///
-Parser::TPResult Parser::TryParseFunctionDeclarator() {
+Parser::TPResult Parser::TryParseFunctionDeclarator(bool VersusExpression) {
 
   // The '(' is already parsed.
 
@@ -1775,8 +1796,9 @@ Parser::TPResult Parser::TryParseFunctionDeclarator() {
   if (TPR == TPResult::Ambiguous && Tok.isNot(tok::r_paren))
     TPR = TPResult::False;
 
-  if (TPR == TPResult::False || TPR == TPResult::Error)
-    return TPR;
+  if (TPR != TPResult::Ambiguous)
+    if (VersusExpression || TPR != TPResult::True)
+      return TPR;
 
   // Parse through the parens.
   if (!SkipUntil(tok::r_paren, StopAtSemi))

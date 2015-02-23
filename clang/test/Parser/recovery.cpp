@@ -203,6 +203,14 @@ namespace pr15133 {
   };
 }
 
+namespace AbstractPtrOperator {
+  // A ptr-operator and no name means we have a declaration and not an
+  // expression.
+  template<typename T> int f(int*, T::type); // expected-error {{missing 'typename'}}
+  template<typename T> int f(int (T::*), T::type); // expected-error {{missing 'typename'}}
+  template<typename T> int f(int (*)(), T::type); // expected-error {{missing 'typename'}}
+}
+
 namespace InvalidEmptyNames {
 // These shouldn't crash, the diagnostics aren't important.
 struct ::, struct ::; // expected-error 2 {{expected identifier}} expected-error 2 {{declaration of anonymous struct must be a definition}} expected-warning {{declaration does not declare anything}}

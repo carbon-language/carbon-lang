@@ -1941,11 +1941,12 @@ private:
   TPResult TryParsePtrOperatorSeq();
   TPResult TryParseOperatorId();
   TPResult TryParseInitDeclaratorList();
-  TPResult TryParseDeclarator(bool mayBeAbstract, bool mayHaveIdentifier=true);
+  TPResult TryParseDeclarator(bool MayBeAbstract, bool MayHaveIdentifier = true,
+                              bool VersusExpression = true);
   TPResult
   TryParseParameterDeclarationClause(bool *InvalidAsDeclaration = nullptr,
                                      bool VersusTemplateArg = false);
-  TPResult TryParseFunctionDeclarator();
+  TPResult TryParseFunctionDeclarator(bool VersusExpression = true);
   TPResult TryParseBracketDeclarator();
   TPResult TryConsumeDeclarationSpecifier();
 
