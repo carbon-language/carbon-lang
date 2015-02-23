@@ -96,6 +96,7 @@ public:
         Materializer(CatchFn, VarInfo),
         SelectorIDType(Type::getInt32Ty(LPI->getContext())),
         Int8PtrType(Type::getInt8PtrTy(LPI->getContext())) {}
+  virtual ~WinEHCatchDirector() = default;
 
   CloningAction handleInstruction(ValueToValueMapTy &VMap,
                                   const Instruction *Inst,
