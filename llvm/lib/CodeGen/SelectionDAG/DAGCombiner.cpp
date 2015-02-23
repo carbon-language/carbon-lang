@@ -11447,10 +11447,11 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
     if (!SVT.isFloatingPoint())
       // If BUILD_VECTOR are from built from integer, they may have different
       // operand types. Get the smaller type and truncate all operands to it.
-      for (const SDValue &Op : N->ops()) {
-        EVT OpSVT = Op.getValueType().getScalarType();
-        MinVT = MinVT.bitsLE(OpSVT) ? MinVT : OpSVT;
-      }
+      for (const SDValue &Op : N->ops())
+        if (ISD::BUILD_VECTOR == Op.getOpcode()) {
+          EVT OpSVT = Op.getOperand(0)->getValueType(0);
+          MinVT = MinVT.bitsLE(OpSVT) ? MinVT : OpSVT;
+        }
 
     for (const SDValue &Op : N->ops()) {
       EVT OpVT = Op.getValueType();
