@@ -981,7 +981,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
   switch (RetOpcode) {
   default:
-    llvm_unreachable("Can only insert epilog into returning blocks");
+    llvm_unreachable("Can only insert epilogue into returning blocks");
   case X86::RETQ:
   case X86::RETL:
   case X86::RETIL:
