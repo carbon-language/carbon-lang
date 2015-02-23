@@ -21,6 +21,11 @@
 using namespace llvm;
 using namespace dwarf;
 
+X86_64MachoTargetObjectFile::X86_64MachoTargetObjectFile()
+  : TargetLoweringObjectFileMachO() {
+  SupportIndirectSymViaGOTPCRel = true;
+}
+
 const MCExpr *X86_64MachoTargetObjectFile::getTTypeGlobalReference(
     const GlobalValue *GV, unsigned Encoding, Mangler &Mang,
     const TargetMachine &TM, MachineModuleInfo *MMI,
@@ -44,6 +49,17 @@ MCSymbol *X86_64MachoTargetObjectFile::getCFIPersonalitySymbol(
     const GlobalValue *GV, Mangler &Mang, const TargetMachine &TM,
     MachineModuleInfo *MMI) const {
   return TM.getSymbol(GV, Mang);
+}
+
+const MCExpr *X86_64MachoTargetObjectFile::getIndirectSymViaGOTPCRel(
+    const MCSymbol *Sym, int64_t Offset) const {
+  // On Darwin/X86-64, we need to use foo@GOTPCREL+4 to access the got entry
+  // from a data section. In case there's an additional offset, then use
+  // foo@GOTPCREL+4+<offset>.
+  const MCExpr *Res =
+    MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOTPCREL, getContext());
+  const MCExpr *Off = MCConstantExpr::Create(Offset+4, getContext());
+  return MCBinaryExpr::CreateAdd(Res, Off, getContext());
 }
 
 void

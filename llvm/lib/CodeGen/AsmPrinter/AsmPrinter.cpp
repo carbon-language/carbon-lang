@@ -41,6 +41,7 @@
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCValue.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MathExtras.h"
@@ -338,6 +339,11 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   if (GV->hasInitializer()) {
     // Check to see if this is a special global used by LLVM, if so, emit it.
     if (EmitSpecialLLVMGlobal(GV))
+      return;
+
+    // Skip the emission of global equivalents. The symbol can be emitted later
+    // on by emitGlobalGOTEquivs in case it turns out to be needed.
+    if (GlobalGOTEquivs.count(getSymbol(GV)))
       return;
 
     if (isVerbose()) {
@@ -890,10 +896,94 @@ void AsmPrinter::EmitFunctionBody() {
   OutStreamer.AddBlankLine();
 }
 
+/// \brief Compute the number of Global Variables that uses a Constant.
+static unsigned getNumGlobalVariableUses(const Constant *C) {
+  if (!C)
+    return 0;
+
+  if (isa<GlobalVariable>(C))
+    return 1;
+
+  unsigned NumUses = 0;
+  for (auto *CU : C->users())
+    NumUses += getNumGlobalVariableUses(dyn_cast<Constant>(CU));
+
+  return NumUses;
+}
+
+/// \brief Only consider global GOT equivalents if at least one user is a
+/// cstexpr inside an initializer of another global variables. Also, don't
+/// handle cstexpr inside instructions. During global variable emission,
+/// candidates are skipped and are emitted later in case at least one cstexpr
+/// isn't replaced by a PC relative GOT entry access.
+static bool isGOTEquivalentCandidate(const GlobalVariable *GV,
+                                     unsigned &NumGOTEquivUsers) {
+  // Global GOT equivalents are unnamed private globals with a constant
+  // pointer initializer to another global symbol. They must point to a
+  // GlobalVariable or Function, i.e., as GlobalValue.
+  if (!GV->hasUnnamedAddr() || !GV->hasInitializer() || !GV->isConstant() ||
+      !GV->isDiscardableIfUnused() || !dyn_cast<GlobalValue>(GV->getOperand(0)))
+    return false;
+
+  // To be a got equivalent, at least one of its users need to be a constant
+  // expression used by another global variable.
+  for (auto *U : GV->users())
+    NumGOTEquivUsers += getNumGlobalVariableUses(cast<Constant>(U));
+
+  return NumGOTEquivUsers > 0;
+}
+
+/// \brief Unnamed constant global variables solely contaning a pointer to
+/// another globals variable is equivalent to a GOT table entry; it contains the
+/// the address of another symbol. Optimize it and replace accesses to these
+/// "GOT equivalents" by using the GOT entry for the final global instead.
+/// Compute GOT equivalent candidates among all global variables to avoid
+/// emitting them if possible later on, after it use is replaced by a GOT entry
+/// access.
+void AsmPrinter::computeGlobalGOTEquivs(Module &M) {
+  if (!getObjFileLowering().supportIndirectSymViaGOTPCRel())
+    return;
+
+  for (const auto &G : M.globals()) {
+    unsigned NumGOTEquivUsers = 0;
+    if (!isGOTEquivalentCandidate(&G, NumGOTEquivUsers))
+      continue;
+
+    const MCSymbol *GOTEquivSym = getSymbol(&G);
+    GlobalGOTEquivs[GOTEquivSym] = std::make_pair(&G, NumGOTEquivUsers);
+  }
+}
+
+/// \brief Constant expressions using GOT equivalent globals may not be eligible
+/// for PC relative GOT entry conversion, in such cases we need to emit such
+/// globals we previously omitted in EmitGlobalVariable.
+void AsmPrinter::emitGlobalGOTEquivs() {
+  if (!getObjFileLowering().supportIndirectSymViaGOTPCRel())
+    return;
+
+  while (!GlobalGOTEquivs.empty()) {
+    DenseMap<const MCSymbol *, GOTEquivUsePair>::iterator I =
+      GlobalGOTEquivs.begin();
+    const MCSymbol *S = I->first;
+    const GlobalVariable *GV = I->second.first;
+    GlobalGOTEquivs.erase(S);
+    EmitGlobalVariable(GV);
+  }
+}
+
 bool AsmPrinter::doFinalization(Module &M) {
+  // Gather all GOT equivalent globals in the module. We really need two
+  // passes over the globals: one to compute and another to avoid its emission
+  // in EmitGlobalVariable, otherwise we would not be able to handle cases
+  // where the got equivalent shows up before its use.
+  computeGlobalGOTEquivs(M);
+
   // Emit global variables.
   for (const auto &G : M.globals())
     EmitGlobalVariable(&G);
+
+  // Emit remaining GOT equivalent globals.
+  emitGlobalGOTEquivs();
 
   // Emit visibility info for declarations
   for (const Function &F : M) {
@@ -1679,7 +1769,9 @@ const MCExpr *AsmPrinter::lowerConstant(const Constant *CV) {
   }
 }
 
-static void emitGlobalConstantImpl(const Constant *C, AsmPrinter &AP);
+static void emitGlobalConstantImpl(const Constant *C, AsmPrinter &AP,
+                                   const Constant *BaseCV = nullptr,
+                                   uint64_t Offset = 0);
 
 /// isRepeatedByteSequence - Determine whether the given value is
 /// composed of a repeated sequence of identical bytes and return the
@@ -1808,20 +1900,22 @@ static void emitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
 
 }
 
-static void emitGlobalConstantArray(const ConstantArray *CA, AsmPrinter &AP) {
+static void emitGlobalConstantArray(const ConstantArray *CA, AsmPrinter &AP,
+                                    const Constant *BaseCV, uint64_t Offset) {
   // See if we can aggregate some values.  Make sure it can be
   // represented as a series of bytes of the constant value.
   int Value = isRepeatedByteSequence(CA, AP.TM);
+  const DataLayout &DL = *AP.TM.getDataLayout();
 
   if (Value != -1) {
-    uint64_t Bytes =
-        AP.TM.getDataLayout()->getTypeAllocSize(
-            CA->getType());
+    uint64_t Bytes = DL.getTypeAllocSize(CA->getType());
     AP.OutStreamer.EmitFill(Bytes, Value);
   }
   else {
-    for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
-      emitGlobalConstantImpl(CA->getOperand(i), AP);
+    for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i) {
+      emitGlobalConstantImpl(CA->getOperand(i), AP, BaseCV, Offset);
+      Offset += DL.getTypeAllocSize(CA->getOperand(i)->getType());
+    }
   }
 }
 
@@ -1837,7 +1931,8 @@ static void emitGlobalConstantVector(const ConstantVector *CV, AsmPrinter &AP) {
     AP.OutStreamer.EmitZeros(Padding);
 }
 
-static void emitGlobalConstantStruct(const ConstantStruct *CS, AsmPrinter &AP) {
+static void emitGlobalConstantStruct(const ConstantStruct *CS, AsmPrinter &AP,
+                                     const Constant *BaseCV, uint64_t Offset) {
   // Print the fields in successive locations. Pad to align if needed!
   const DataLayout *DL = AP.TM.getDataLayout();
   unsigned Size = DL->getTypeAllocSize(CS->getType());
@@ -1846,14 +1941,14 @@ static void emitGlobalConstantStruct(const ConstantStruct *CS, AsmPrinter &AP) {
   for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i) {
     const Constant *Field = CS->getOperand(i);
 
+    // Print the actual field value.
+    emitGlobalConstantImpl(Field, AP, BaseCV, Offset+SizeSoFar);
+
     // Check if padding is needed and insert one or more 0s.
     uint64_t FieldSize = DL->getTypeAllocSize(Field->getType());
     uint64_t PadSize = ((i == e-1 ? Size : Layout->getElementOffset(i+1))
                         - Layout->getElementOffset(i)) - FieldSize;
     SizeSoFar += FieldSize + PadSize;
-
-    // Now print the actual field value.
-    emitGlobalConstantImpl(Field, AP);
 
     // Insert padding - this may include padding to increase the size of the
     // current field up to the ABI size (if the struct is not packed) as well
@@ -1970,9 +2065,100 @@ static void emitGlobalConstantLargeInt(const ConstantInt *CI, AsmPrinter &AP) {
   }
 }
 
-static void emitGlobalConstantImpl(const Constant *CV, AsmPrinter &AP) {
+/// \brief Transform a not absolute MCExpr containing a reference to a GOT
+/// equivalent global, by a target specific GOT pc relative access to the
+/// final symbol.
+static void handleIndirectSymViaGOTPCRel(AsmPrinter &AP, const MCExpr **ME,
+                                         const Constant *BaseCst,
+                                         uint64_t Offset) {
+  // The global @foo below illustrates a global that uses a got equivalent.
+  //
+  //  @bar = global i32 42
+  //  @gotequiv = private unnamed_addr constant i32* @bar
+  //  @foo = i32 trunc (i64 sub (i64 ptrtoint (i32** @gotequiv to i64),
+  //                             i64 ptrtoint (i32* @foo to i64))
+  //                        to i32)
+  //
+  // The cstexpr in @foo is converted into the MCExpr `ME`, where we actually
+  // check whether @foo is suitable to use a GOTPCREL. `ME` is usually in the
+  // form:
+  //
+  //  foo = cstexpr, where
+  //    cstexpr := <gotequiv> - "." + <cst>
+  //    cstexpr := <gotequiv> - (<foo> - <offset from @foo base>) + <cst>
+  //
+  // After canonicalization by EvaluateAsRelocatable `ME` turns into:
+  //
+  //  cstexpr := <gotequiv> - <foo> + gotpcrelcst, where
+  //    gotpcrelcst := <offset from @foo base> + <cst>
+  //
+  MCValue MV;
+  if (!(*ME)->EvaluateAsRelocatable(MV, nullptr, nullptr) || MV.isAbsolute())
+    return;
+
+  const MCSymbol *GOTEquivSym = &MV.getSymA()->getSymbol();
+  if (!AP.GlobalGOTEquivs.count(GOTEquivSym))
+    return;
+
+  const GlobalValue *BaseGV = dyn_cast<GlobalValue>(BaseCst);
+  if (!BaseGV)
+    return;
+
+  const MCSymbol *BaseSym = AP.getSymbol(BaseGV);
+  if (BaseSym != &MV.getSymB()->getSymbol())
+    return;
+
+  // Make sure to match:
+  //
+  //    gotpcrelcst := <offset from @foo base> + <cst>
+  //
+  int64_t GOTPCRelCst = Offset + MV.getConstant();
+  if (GOTPCRelCst < 0)
+    return;
+
+  // Emit the GOT PC relative to replace the got equivalent global, i.e.:
+  //
+  //  bar:
+  //    .long 42
+  //  gotequiv:
+  //    .quad bar
+  //  foo:
+  //    .long gotequiv - "." + <cst>
+  //
+  // is replaced by the target specific equivalent to:
+  //
+  //  bar:
+  //    .long 42
+  //  foo:
+  //    .long bar@GOTPCREL+<gotpcrelcst>
+  //
+  AsmPrinter::GOTEquivUsePair Result = AP.GlobalGOTEquivs[GOTEquivSym];
+  const GlobalVariable *GV = Result.first;
+  unsigned NumUses = Result.second;
+  const GlobalValue *FinalGV = dyn_cast<GlobalValue>(GV->getOperand(0));
+  const MCSymbol *FinalSym = AP.getSymbol(FinalGV);
+  *ME = AP.getObjFileLowering().getIndirectSymViaGOTPCRel(FinalSym,
+                                                          GOTPCRelCst);
+
+  // Update GOT equivalent usage information
+  --NumUses;
+  if (NumUses)
+    AP.GlobalGOTEquivs[GOTEquivSym] = std::make_pair(GV, NumUses);
+  else
+    AP.GlobalGOTEquivs.erase(GOTEquivSym);
+}
+
+static void emitGlobalConstantImpl(const Constant *CV, AsmPrinter &AP,
+                                   const Constant *BaseCV, uint64_t Offset) {
   const DataLayout *DL = AP.TM.getDataLayout();
   uint64_t Size = DL->getTypeAllocSize(CV->getType());
+
+  // Globals with sub-elements such as combinations of arrays and structs
+  // are handled recursively by emitGlobalConstantImpl. Keep track of the
+  // constant symbol base and the current position with BaseCV and Offset.
+  if (!BaseCV && CV->hasOneUse())
+    BaseCV = dyn_cast<Constant>(CV->user_back());
+
   if (isa<ConstantAggregateZero>(CV) || isa<UndefValue>(CV))
     return AP.OutStreamer.EmitZeros(Size);
 
@@ -2005,10 +2191,10 @@ static void emitGlobalConstantImpl(const Constant *CV, AsmPrinter &AP) {
     return emitGlobalConstantDataSequential(CDS, AP);
 
   if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV))
-    return emitGlobalConstantArray(CVA, AP);
+    return emitGlobalConstantArray(CVA, AP, BaseCV, Offset);
 
   if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV))
-    return emitGlobalConstantStruct(CVS, AP);
+    return emitGlobalConstantStruct(CVS, AP, BaseCV, Offset);
 
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     // Look through bitcasts, which might not be able to be MCExpr'ized (e.g. of
@@ -2031,7 +2217,15 @@ static void emitGlobalConstantImpl(const Constant *CV, AsmPrinter &AP) {
 
   // Otherwise, it must be a ConstantExpr.  Lower it to an MCExpr, then emit it
   // thread the streamer with EmitValue.
-  AP.OutStreamer.EmitValue(AP.lowerConstant(CV), Size);
+  const MCExpr *ME = AP.lowerConstant(CV);
+
+  // Since lowerConstant already folded and got rid of all IR pointer and
+  // integer casts, detect GOT equivalent accesses by looking into the MCExpr
+  // directly.
+  if (AP.getObjFileLowering().supportIndirectSymViaGOTPCRel())
+    handleIndirectSymViaGOTPCRel(AP, &ME, BaseCV, Offset);
+
+  AP.OutStreamer.EmitValue(ME, Size);
 }
 
 /// EmitGlobalConstant - Print a general LLVM constant to the .s file.

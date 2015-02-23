@@ -19,6 +19,8 @@ namespace llvm {
   /// x86-64.
   class X86_64MachoTargetObjectFile : public TargetLoweringObjectFileMachO {
   public:
+    X86_64MachoTargetObjectFile();
+
     const MCExpr *
     getTTypeGlobalReference(const GlobalValue *GV, unsigned Encoding,
                             Mangler &Mang, const TargetMachine &TM,
@@ -30,6 +32,10 @@ namespace llvm {
     MCSymbol *getCFIPersonalitySymbol(const GlobalValue *GV, Mangler &Mang,
                                       const TargetMachine &TM,
                                       MachineModuleInfo *MMI) const override;
+
+    const MCExpr *
+      getIndirectSymViaGOTPCRel(const MCSymbol *Sym,
+                                int64_t Offset) const override;
   };
 
   /// X86LinuxTargetObjectFile - This implementation is used for linux x86
