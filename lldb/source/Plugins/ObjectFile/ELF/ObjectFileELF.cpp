@@ -365,7 +365,7 @@ ObjectFileELF::CreateInstance (const lldb::ModuleSP &module_sp,
 {
     if (!data_sp)
     {
-        data_sp = file->MemoryMapFileContents(file_offset, length);
+        data_sp = file->MemoryMapFileContentsIfLocal(file_offset, length);
         data_offset = 0;
     }
 
@@ -376,7 +376,7 @@ ObjectFileELF::CreateInstance (const lldb::ModuleSP &module_sp,
         {
             // Update the data to contain the entire file if it doesn't already
             if (data_sp->GetByteSize() < length) {
-                data_sp = file->MemoryMapFileContents(file_offset, length);
+                data_sp = file->MemoryMapFileContentsIfLocal(file_offset, length);
                 data_offset = 0;
                 magic = data_sp->GetBytes();
             }
@@ -636,7 +636,7 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
                     size_t section_header_end = header.e_shoff + header.e_shnum * header.e_shentsize;
                     if (section_header_end > data_sp->GetByteSize())
                     {
-                        data_sp = file.MemoryMapFileContents (file_offset, section_header_end);
+                        data_sp = file.MemoryMapFileContentsIfLocal (file_offset, section_header_end);
                         data.SetData(data_sp);
                     }
 
@@ -678,7 +678,7 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
                                 size_t program_headers_end = header.e_phoff + header.e_phnum * header.e_phentsize;
                                 if (program_headers_end > data_sp->GetByteSize())
                                 {
-                                    data_sp = file.MemoryMapFileContents(file_offset, program_headers_end);
+                                    data_sp = file.MemoryMapFileContentsIfLocal(file_offset, program_headers_end);
                                     data.SetData(data_sp);
                                 }
                                 ProgramHeaderColl program_headers;
@@ -693,7 +693,7 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
 
                                 if (segment_data_end > data_sp->GetByteSize())
                                 {
-                                    data_sp = file.MemoryMapFileContents(file_offset, segment_data_end);
+                                    data_sp = file.MemoryMapFileContentsIfLocal(file_offset, segment_data_end);
                                     data.SetData(data_sp);
                                 }
 
@@ -702,7 +702,7 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
                             else
                             {
                                 // Need to map entire file into memory to calculate the crc.
-                                data_sp = file.MemoryMapFileContents (file_offset, SIZE_MAX);
+                                data_sp = file.MemoryMapFileContentsIfLocal (file_offset, SIZE_MAX);
                                 data.SetData(data_sp);
                                 gnu_debuglink_crc = calc_gnu_debuglink_crc32 (data.GetDataStart(), data.GetByteSize());
                             }

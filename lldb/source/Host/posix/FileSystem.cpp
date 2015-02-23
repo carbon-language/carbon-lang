@@ -10,6 +10,8 @@
 #include "lldb/Host/FileSystem.h"
 
 // C includes
+#include <sys/mount.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -171,4 +173,14 @@ FileSystem::Readlink(const char *path, char *buf, size_t buf_len)
     else
         error.SetErrorString("'buf' buffer is too small to contain link contents");
     return error;
+}
+
+bool
+FileSystem::IsLocal(const FileSpec &spec)
+{
+    struct statfs statfs_info;
+    std::string path (spec.GetPath());
+    if (statfs(path.c_str(), &statfs_info) == 0)
+        return (statfs_info.f_flags & MNT_LOCAL) != 0;
+    return false;
 }

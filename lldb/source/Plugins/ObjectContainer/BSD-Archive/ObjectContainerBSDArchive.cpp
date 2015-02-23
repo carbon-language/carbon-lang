@@ -364,7 +364,7 @@ ObjectContainerBSDArchive::CreateInstance
 
                 // Map the entire .a file to be sure that we don't lose any data if the file
                 // gets updated by a new build while this .a file is being used for debugging
-                DataBufferSP archive_data_sp (file->MemoryMapFileContents(file_offset, length));
+                DataBufferSP archive_data_sp (file->MemoryMapFileContentsIfLocal(file_offset, length));
                 lldb::offset_t archive_data_offset = 0;
 
                 Archive::shared_ptr archive_sp (Archive::FindCachedArchive (*file,
@@ -570,7 +570,7 @@ ObjectContainerBSDArchive::GetModuleSpecifications (const lldb_private::FileSpec
         if (!archive_sp)
         {
             set_archive_arch = true;
-            DataBufferSP data_sp (file.MemoryMapFileContents(file_offset, file_size));
+            DataBufferSP data_sp (file.MemoryMapFileContentsIfLocal(file_offset, file_size));
             data.SetData (data_sp, 0, data_sp->GetByteSize());
             archive_sp = Archive::ParseAndCacheArchiveForFile(file, ArchSpec(), file_mod_time, file_offset, data);
         }

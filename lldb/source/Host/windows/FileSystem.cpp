@@ -138,3 +138,15 @@ FileSystem::Readlink(const char *path, char *buf, size_t buf_len)
     ::CloseHandle(h);
     return error;
 }
+
+bool
+FileSystem::IsLocal(const FileSpec &spec)
+{
+    if (spec)
+    {
+        // TODO: return true if the file is on a locally mounted file system
+        return true;
+    }
+
+    return false;
+}

@@ -931,7 +931,7 @@ ObjectFileMachO::CreateInstance (const lldb::ModuleSP &module_sp,
 {
     if (!data_sp)
     {
-        data_sp = file->MemoryMapFileContents(file_offset, length);
+        data_sp = file->MemoryMapFileContentsIfLocal(file_offset, length);
         data_offset = 0;
     }
 
@@ -940,7 +940,7 @@ ObjectFileMachO::CreateInstance (const lldb::ModuleSP &module_sp,
         // Update the data to contain the entire file if it doesn't already
         if (data_sp->GetByteSize() < length)
         {
-            data_sp = file->MemoryMapFileContents(file_offset, length);
+            data_sp = file->MemoryMapFileContentsIfLocal(file_offset, length);
             data_offset = 0;
         }
         std::unique_ptr<ObjectFile> objfile_ap(new ObjectFileMachO (module_sp, data_sp, data_offset, file, file_offset, length));
@@ -2650,7 +2650,7 @@ ObjectFileMachO::ParseSymtab ()
             // Save some VM space, do not map the entire cache in one shot.
 
             DataBufferSP dsc_data_sp;
-            dsc_data_sp = dsc_filespec.MemoryMapFileContents(0, sizeof(struct lldb_copy_dyld_cache_header_v1));
+            dsc_data_sp = dsc_filespec.MemoryMapFileContentsIfLocal(0, sizeof(struct lldb_copy_dyld_cache_header_v1));
 
             if (dsc_data_sp)
             {
@@ -2704,7 +2704,7 @@ ObjectFileMachO::ParseSymtab ()
                 if (uuid_match && mappingOffset >= sizeof(struct lldb_copy_dyld_cache_header_v0))
                 {
 
-                    DataBufferSP dsc_mapping_info_data_sp = dsc_filespec.MemoryMapFileContents(mappingOffset, sizeof (struct lldb_copy_dyld_cache_mapping_info));
+                    DataBufferSP dsc_mapping_info_data_sp = dsc_filespec.MemoryMapFileContentsIfLocal(mappingOffset, sizeof (struct lldb_copy_dyld_cache_mapping_info));
                     DataExtractor dsc_mapping_info_data(dsc_mapping_info_data_sp, byte_order, addr_byte_size);
                     offset = 0;
 
@@ -2721,7 +2721,7 @@ ObjectFileMachO::ParseSymtab ()
                     if (localSymbolsOffset && localSymbolsSize)
                     {
                         // Map the local symbols
-                        if (DataBufferSP dsc_local_symbols_data_sp = dsc_filespec.MemoryMapFileContents(localSymbolsOffset, localSymbolsSize))
+                        if (DataBufferSP dsc_local_symbols_data_sp = dsc_filespec.MemoryMapFileContentsIfLocal(localSymbolsOffset, localSymbolsSize))
                         {
                             DataExtractor dsc_local_symbols_data(dsc_local_symbols_data_sp, byte_order, addr_byte_size);
 

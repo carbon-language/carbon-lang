@@ -852,6 +852,15 @@ FileSpec::MemoryMapFileContents(off_t file_offset, size_t file_size) const
     return data_sp;
 }
 
+DataBufferSP
+FileSpec::MemoryMapFileContentsIfLocal(off_t file_offset, size_t file_size) const
+{
+    if (FileSystem::IsLocal(*this))
+        return MemoryMapFileContents(file_offset, file_size);
+    else
+        return ReadFileContents(file_offset, file_size, NULL);
+}
+
 
 //------------------------------------------------------------------
 // Return the size in bytes that this object takes in memory. This

@@ -38,6 +38,9 @@ class FileSystem
 
     static bool CalculateMD5(const FileSpec &file_spec, uint64_t &low, uint64_t &high);
     static bool CalculateMD5AsString(const FileSpec &file_spec, std::string& digest_str);
+
+    /// Return \b true if \a spec is on a locally mounted file system, \b false otherwise.
+    static bool IsLocal(const FileSpec &spec);
 };
 }
 
