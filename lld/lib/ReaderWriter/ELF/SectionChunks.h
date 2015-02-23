@@ -218,7 +218,7 @@ public:
   // \brief Append an atom to a Section. The atom gets pushed into a vector
   // contains the atom, the atom file offset, the atom virtual address
   // the atom file offset is aligned appropriately as set by the Reader
-  virtual const lld::AtomLayout &appendAtom(const Atom *atom);
+  virtual const lld::AtomLayout *appendAtom(const Atom *atom);
 
   /// \brief Set the virtual address of each Atom in the Section. This
   /// routine gets called after the linker fixes up the virtual address
@@ -318,7 +318,7 @@ uint64_t AtomSection<ELFT>::alignOffset(uint64_t offset,
 // contains the atom, the atom file offset, the atom virtual address
 // the atom file offset is aligned appropriately as set by the Reader
 template <class ELFT>
-const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
+const lld::AtomLayout *AtomSection<ELFT>::appendAtom(const Atom *atom) {
   const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
 
   DefinedAtom::Alignment atomAlign = definedAtom->alignment();
@@ -361,9 +361,6 @@ const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
     _atoms.push_back(new (_alloc) lld::AtomLayout(atom, mOffset, 0));
     this->_msize = mOffset + definedAtom->size();
     break;
-  case DefinedAtom::typeGnuLinkOnce:
-    // Discard gnu linkonce atoms as they are just used to identify signature.
-    break;
   default:
     llvm::dbgs() << definedAtom->contentType() << "\n";
     llvm_unreachable("Uexpected content type.");
@@ -373,7 +370,9 @@ const lld::AtomLayout &AtomSection<ELFT>::appendAtom(const Atom *atom) {
   if (this->_alignment < alignment)
     this->_alignment = alignment;
 
-  return *_atoms.back();
+  if (_atoms.size())
+    return _atoms.back();
+  return nullptr;
 }
 
 /// \brief convert the segment type to a String for diagnostics

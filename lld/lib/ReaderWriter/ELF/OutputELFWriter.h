@@ -162,6 +162,13 @@ template <class ELFT>
 void OutputELFWriter<ELFT>::buildChunks(const File &file) {
   ScopedTask task(getDefaultDomain(), "buildChunks");
   for (const DefinedAtom *definedAtom : file.defined()) {
+    DefinedAtom::ContentType contentType = definedAtom->contentType();
+    // Dont add COMDAT group atoms and GNU linkonce atoms, as they are used for
+    // symbol resolution.
+    // TODO: handle partial linking.
+    if (contentType == DefinedAtom::typeGroupComdat ||
+        contentType == DefinedAtom::typeGnuLinkOnce)
+      continue;
     _layout.addAtom(definedAtom);
   }
   for (const AbsoluteAtom *absoluteAtom : file.absolute())

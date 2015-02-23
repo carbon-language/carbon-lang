@@ -196,7 +196,7 @@ public:
   static bool hasOutputSegment(Section<ELFT> *section);
 
   // Adds an atom to the section
-  ErrorOr<const lld::AtomLayout &> addAtom(const Atom *atom) override;
+  ErrorOr<const lld::AtomLayout *> addAtom(const Atom *atom) override;
 
   /// \brief Find an output Section given a section name.
   OutputSection<ELFT> *findOutputSection(StringRef name) {
@@ -553,7 +553,8 @@ DefaultLayout<ELFT>::getSection(StringRef sectionName, int32_t contentType,
 }
 
 template <class ELFT>
-ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) {
+ErrorOr<const lld::AtomLayout *>
+DefaultLayout<ELFT>::addAtom(const Atom *atom) {
   if (const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom)) {
     // HACK: Ignore undefined atoms. We need to adjust the interface so that
     // undefined atoms can still be included in the output symbol table for
@@ -600,7 +601,7 @@ ErrorOr<const lld::AtomLayout &> DefaultLayout<ELFT>::addAtom(const Atom *atom) 
     // link
     _absoluteAtoms.push_back(new (_allocator)
         lld::AtomLayout(absoluteAtom, 0, absoluteAtom->value()));
-    return *_absoluteAtoms.back();
+    return _absoluteAtoms.back();
   } else {
     llvm_unreachable("Only absolute / defined atoms can be added here");
   }

@@ -221,6 +221,9 @@ public:
     ContentType ret = typeUnknown;
     uint64_t flags = _section->sh_flags;
 
+    if (_section->sh_type == llvm::ELF::SHT_GROUP)
+      return typeGroupComdat;
+
     if (!_symbol && _sectionName.startswith(".gnu.linkonce"))
       return typeGnuLinkOnce;
 

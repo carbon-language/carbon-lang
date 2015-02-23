@@ -35,7 +35,7 @@ public:
   /// \brief Does this section have an output segment.
   virtual bool hasOutputSegment() { return true; }
 
-  const lld::AtomLayout &appendAtom(const Atom *atom) {
+  const lld::AtomLayout *appendAtom(const Atom *atom) {
     const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
     DefinedAtom::Alignment atomAlign = definedAtom->alignment();
     uint64_t alignment = 1u << atomAlign.powerOf2;
@@ -44,7 +44,7 @@ public:
     // std::max doesn't support uint64_t
     if (this->_alignment < alignment)
       this->_alignment = alignment;
-    return *(this->_atoms.back());
+    return (this->_atoms.back());
   }
 
 }; // SDataSection

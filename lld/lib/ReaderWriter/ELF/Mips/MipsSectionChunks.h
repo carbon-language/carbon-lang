@@ -49,7 +49,7 @@ public:
     return ia == _posMap.end() && ib != _posMap.end();
   }
 
-  const lld::AtomLayout &appendAtom(const Atom *atom) override {
+  const lld::AtomLayout *appendAtom(const Atom *atom) override {
     const DefinedAtom *da = dyn_cast<DefinedAtom>(atom);
 
     for (const auto &r : *da) {
@@ -105,8 +105,8 @@ public:
     return it != _pltLayoutMap.end() ? it->second : nullptr;
   }
 
-  const lld::AtomLayout &appendAtom(const Atom *atom) override {
-    const auto &layout = AtomSection<ELFType>::appendAtom(atom);
+  const lld::AtomLayout *appendAtom(const Atom *atom) override {
+    const auto *layout = AtomSection<ELFType>::appendAtom(atom);
 
     const DefinedAtom *da = cast<DefinedAtom>(atom);
 
@@ -115,7 +115,7 @@ public:
         continue;
       assert(r->kindArch() == Reference::KindArch::Mips);
       if (r->kindValue() == LLD_R_MIPS_STO_PLT) {
-        _pltLayoutMap[r->target()] = &layout;
+        _pltLayoutMap[r->target()] = layout;
         break;
       }
     }

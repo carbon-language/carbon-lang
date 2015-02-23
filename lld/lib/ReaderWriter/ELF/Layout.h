@@ -40,7 +40,7 @@ public:
   /// \brief Append the Atom to the layout and create appropriate sections.
   /// \returns A reference to the atom layout or an error. The atom layout will
   /// be updated as linking progresses.
-  virtual ErrorOr<const lld::AtomLayout &> addAtom(const Atom *atom) = 0;
+  virtual ErrorOr<const lld::AtomLayout *> addAtom(const Atom *atom) = 0;
   /// find the Atom in the current layout
   virtual const AtomLayout *findAtomLayoutByName(StringRef name) const = 0;
   /// associates a section to a segment
