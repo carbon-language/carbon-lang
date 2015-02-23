@@ -1205,17 +1205,15 @@ public:
     return LazyEmitLayer.findSymbol(Name, true);
   }
 
+  JITSymbol findMangledSymbolIn(ModuleHandleT H, const std::string &Name) {
+    return LazyEmitLayer.findSymbolIn(H, Name, true);
+  }
+
   JITSymbol findSymbol(const std::string &Name) {
     return findMangledSymbol(Mangle(Name));
   }
 
-  JITSymbol findMangledSymbolIn(LazyEmitLayerT::ModuleSetHandleT H,
-                                const std::string &Name) {
-    return LazyEmitLayer.findSymbolIn(H, Name, true);
-  }
-
-  JITSymbol findSymbolIn(LazyEmitLayerT::ModuleSetHandleT H,
-                         const std::string &Name) {
+  JITSymbol findSymbolIn(ModuleHandleT H, const std::string &Name) {
     return findMangledSymbolIn(H, Mangle(Name));
   }
 
@@ -1236,7 +1234,8 @@ private:
     // FIXME: What happens if IRGen fails?
     auto H = irGenStub(std::move(DefI->second));
 
-    // Remove the map entry now that we're done with it.
+    // Remove the function definition's AST now that we're
+    // finished with it.
     FunctionDefs.erase(DefI);
 
     // Return the address of the stub.
@@ -1300,9 +1299,9 @@ private:
   CompileLayerT CompileLayer;
   LazyEmitLayerT LazyEmitLayer;
 
-  JITCompileCallbackManager<LazyEmitLayerT, OrcX86_64> CompileCallbacks;
-
   std::map<std::string, std::unique_ptr<FunctionAST>> FunctionDefs;
+
+  JITCompileCallbackManager<LazyEmitLayerT, OrcX86_64> CompileCallbacks;
 };
 
 static void HandleDefinition(SessionContext &S, KaleidoscopeJIT &J) {

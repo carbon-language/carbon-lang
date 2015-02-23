@@ -6,8 +6,8 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/TargetSelect.h"
@@ -685,7 +685,6 @@ public:
   LLVMContext& getLLVMContext() const { return Context; }
   void addPrototypeAST(std::unique_ptr<PrototypeAST> P);
   PrototypeAST* getPrototypeAST(const std::string &Name);
-  std::map<std::string, std::unique_ptr<FunctionAST>> FunctionDefs; 
 private:
   typedef std::map<std::string, std::unique_ptr<PrototypeAST>> PrototypeMap;
   LLVMContext &Context;
@@ -1174,27 +1173,14 @@ public:
     // We need a memory manager to allocate memory and resolve symbols for this
     // new module. Create one that resolves symbols by looking back into the JIT.
     auto MM = createLookasideRTDyldMM<SectionMemoryManager>(
-                [&](const std::string &Name) -> uint64_t {
+                [&](const std::string &Name) {
                   // First try to find 'Name' within the JIT.
                   if (auto Symbol = findMangledSymbol(Name))
                     return Symbol.getAddress();
 
-                  // If we don't find 'Name' in the JIT, see if we have some AST
-                  // for it.
-                  auto DefI = Session.FunctionDefs.find(Name);
-                  if (DefI == Session.FunctionDefs.end())
-                    return 0;
-
-                  // We have AST for 'Name'. IRGen it, add it to the JIT, and
-                  // return the address for it.
-                  // FIXME: What happens if IRGen fails?
-                  addModule(IRGen(Session, *DefI->second));
-
-                  // Remove the function definition's AST now that we've
-                  // finished with it.
-                  Session.FunctionDefs.erase(DefI);
-
-                  return findMangledSymbol(Name).getAddress();
+                  // If we don't already have a definition of 'Name' then search
+                  // the ASTs.
+                  return searchUncompiledASTs(Name);
                 },
                 [](const std::string &S) { return 0; } );
 
@@ -1204,14 +1190,42 @@ public:
   void removeModule(ModuleHandleT H) { LazyEmitLayer.removeModuleSet(H); }
 
   JITSymbol findMangledSymbol(const std::string &Name) {
-    return LazyEmitLayer.findSymbol(Name, false);
+    return LazyEmitLayer.findSymbol(Name, true);
+  }
+
+  JITSymbol findMangledSymbolIn(ModuleHandleT H, const std::string &Name) {
+    return LazyEmitLayer.findSymbolIn(H, Name, true);
   }
 
   JITSymbol findSymbol(const std::string &Name) {
     return findMangledSymbol(Mangle(Name));
   }
 
+  void addFunctionDefinition(std::unique_ptr<FunctionAST> FnAST) {
+    FunctionDefs[Mangle(FnAST->Proto->Name)] = std::move(FnAST);
+  }
+
 private:
+
+  // This method searches the FunctionDefs map for a definition of 'Name'. If it
+  // finds one it generates a stub for it and returns the address of the stub.
+  TargetAddress searchUncompiledASTs(const std::string &Name) {
+    auto DefI = FunctionDefs.find(Name);
+    if (DefI == FunctionDefs.end())
+      return 0;
+
+    // We have AST for 'Name'. IRGen it, add it to the JIT, and
+    // return the address for it.
+    // FIXME: What happens if IRGen fails?
+    auto H = addModule(IRGen(Session, *DefI->second));
+
+    // Remove the function definition's AST now that we're
+    // finished with it.
+    FunctionDefs.erase(DefI);
+
+    // Return the address of the function.
+    return findMangledSymbolIn(H, Name).getAddress();
+  }
 
   std::unique_ptr<TargetMachine> TM;
   Mangler Mang;
@@ -1220,12 +1234,14 @@ private:
   ObjLayerT ObjectLayer;
   CompileLayerT CompileLayer;
   LazyEmitLayerT LazyEmitLayer;
+
+  std::map<std::string, std::unique_ptr<FunctionAST>> FunctionDefs;
 };
 
 static void HandleDefinition(SessionContext &S, KaleidoscopeJIT &J) {
   if (auto F = ParseDefinition()) {
     S.addPrototypeAST(llvm::make_unique<PrototypeAST>(*F->Proto));
-    S.FunctionDefs[J.Mangle(F->Proto->Name)] = std::move(F);
+    J.addFunctionDefinition(std::move(F));
   } else {
     // Skip token for error recovery.
     getNextToken();
