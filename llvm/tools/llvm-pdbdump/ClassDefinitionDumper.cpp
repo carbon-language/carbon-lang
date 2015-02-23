@@ -55,7 +55,6 @@ void ClassDefinitionDumper::start(const PDBSymbolTypeUDT &Class,
     if (isa<PDBSymbolTypeBaseClass>(*Child))
       continue;
 
-    SymbolGroup *InsertGroup = nullptr;
     auto &AccessGroup = Groups.find((int)Access)->second;
 
     if (auto Func = dyn_cast<PDBSymbolFunc>(Child.get())) {

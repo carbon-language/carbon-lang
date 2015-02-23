@@ -45,12 +45,10 @@ void VariableDumper::start(const PDBSymbolData &Var, raw_ostream &OS,
     dumpSymbolTypeAndName(*VarType, Var.getName(), OS);
     OS << "[" << Var.getValue() << "]";
     break;
-  case PDB_LocType::ThisRel: {
-    int Offset = Var.getOffset();
+  case PDB_LocType::ThisRel:
     OS << "+" << format_hex(Var.getOffset(), 4) << " ";
     dumpSymbolTypeAndName(*VarType, Var.getName(), OS);
     break;
-  }
   default:
     break;
     OS << "unknown(" << LocType << ") " << Var.getName();
@@ -72,7 +70,6 @@ void VariableDumper::dump(const PDBSymbolTypeFunctionSig &Symbol,
 
 void VariableDumper::dump(const PDBSymbolTypePointer &Symbol, raw_ostream &OS,
                           int Indent) {
-  uint32_t PointeeId = Symbol.getTypeId();
   auto PointeeType = Symbol.getPointeeType();
   if (!PointeeType)
     return;
@@ -106,7 +103,6 @@ void VariableDumper::dump(const PDBSymbolTypeUDT &Symbol, raw_ostream &OS,
 void VariableDumper::dumpSymbolTypeAndName(const PDBSymbol &Type,
                                            StringRef Name, raw_ostream &OS) {
   if (auto *ArrayType = dyn_cast<PDBSymbolTypeArray>(&Type)) {
-    bool Done = false;
     std::string IndexSpec;
     raw_string_ostream IndexStream(IndexSpec);
     std::unique_ptr<PDBSymbol> ElementType = ArrayType->getElementType();
