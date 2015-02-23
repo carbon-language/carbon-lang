@@ -2631,22 +2631,22 @@ ObjectFileELF::DumpELFProgramHeader_p_flags(Stream *s, elf_word p_flags)
 void
 ObjectFileELF::DumpELFProgramHeaders(Stream *s)
 {
-    if (ParseProgramHeaders())
-    {
-        s->PutCString("Program Headers\n");
-        s->PutCString("IDX  p_type          p_offset p_vaddr  p_paddr  "
-                      "p_filesz p_memsz  p_flags                   p_align\n");
-        s->PutCString("==== --------------- -------- -------- -------- "
-                      "-------- -------- ------------------------- --------\n");
+    if (!ParseProgramHeaders())
+        return;
 
-        uint32_t idx = 0;
-        for (ProgramHeaderCollConstIter I = m_program_headers.begin();
-             I != m_program_headers.end(); ++I, ++idx)
-        {
-            s->Printf("[%2u] ", idx);
-            ObjectFileELF::DumpELFProgramHeader(s, *I);
-            s->EOL();
-        }
+    s->PutCString("Program Headers\n");
+    s->PutCString("IDX  p_type          p_offset p_vaddr  p_paddr  "
+                  "p_filesz p_memsz  p_flags                   p_align\n");
+    s->PutCString("==== --------------- -------- -------- -------- "
+                  "-------- -------- ------------------------- --------\n");
+
+    uint32_t idx = 0;
+    for (ProgramHeaderCollConstIter I = m_program_headers.begin();
+         I != m_program_headers.end(); ++I, ++idx)
+    {
+        s->Printf("[%2u] ", idx);
+        ObjectFileELF::DumpELFProgramHeader(s, *I);
+        s->EOL();
     }
 }
 
