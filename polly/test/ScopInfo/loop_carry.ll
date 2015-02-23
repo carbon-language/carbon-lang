@@ -47,7 +47,7 @@ bb2:                                              ; preds = %bb, %entry
 }
 
 ; CHECK: Context:
-; CHECK: [n] -> { : n >= -9223372036854775808 and n <= 9223372036854775807 }
+; CHECK: [n] -> { : }
 ; CHECK:     Statements {
 ; CHECK:     	Stmt_bb_nph
 ; CHECK:             Domain :=

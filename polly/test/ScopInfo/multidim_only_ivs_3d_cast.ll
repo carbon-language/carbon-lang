@@ -13,7 +13,10 @@
 ; correctness issue, but could be improved.
 
 ; CHECK: Assumed Context:
-; CHECK:  [n, m, o, p_3, p_4] -> { : p_4 >= o and p_3 >= m }
+; CHECK:  [n, m, o, p_3, p_4] -> { :
+; CHECK-DAG: p_4 >= o
+; CHECK-DAG: p_3 >= m
+; CHECK:  }
 ; CHECK: p0: %n
 ; CHECK: p1: %m
 ; CHECK: p2: %o
