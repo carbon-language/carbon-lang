@@ -77,7 +77,7 @@ representation and a significant restructuring just before code generation.
 
 General information about the Windows x64 exception handling mechanism can be
 found at `MSDN Exception Handling (x64)
-<https://msdn.microsoft.com/en-us/library/1eyas8tf(v=vs.80).aspx>_`.
+<https://msdn.microsoft.com/en-us/library/1eyas8tf(v=vs.80).aspx>`_.
 
 Overview
 --------
