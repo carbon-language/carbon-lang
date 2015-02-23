@@ -7,12 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
 
 namespace llvm {
@@ -345,6 +347,20 @@ TEST(ConstantsTest, GEPReplaceWithConstant) {
   Placeholder->replaceAllUsesWith(Alias);
   ASSERT_EQ(GEP, Ref->getInitializer());
   ASSERT_EQ(GEP->getOperand(0), Alias);
+}
+
+TEST(ConstantsTest, AliasCAPI) {
+  LLVMContext Context;
+  SMDiagnostic Error;
+  std::unique_ptr<Module> M =
+      parseAssemblyString("@g = global i32 42", Error, Context);
+  GlobalVariable *G = M->getGlobalVariable("g");
+  Type *I16Ty = Type::getInt16Ty(Context);
+  Type *I16PTy = PointerType::get(I16Ty, 0);
+  Constant *Aliasee = ConstantExpr::getBitCast(G, I16PTy);
+  LLVMValueRef AliasRef =
+      LLVMAddAlias(wrap(M.get()), wrap(I16PTy), wrap(Aliasee), "a");
+  ASSERT_EQ(unwrap<GlobalAlias>(AliasRef)->getAliasee(), Aliasee);
 }
 
 }  // end anonymous namespace
