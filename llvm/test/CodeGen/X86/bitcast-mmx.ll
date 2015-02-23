@@ -59,8 +59,7 @@ define i64 @t3(<1 x i64>* %y, i32* %n) {
 ; CHECK-LABEL: t3:
 ; CHECK:       ## BB#0: ## %entry
 ; CHECK-NEXT:    movq (%rdi), %mm0
-; CHECK-NEXT:    movd (%rsi), %mm1
-; CHECK-NEXT:    psllq %mm1, %mm0
+; CHECK-NEXT:    psllq (%rsi), %mm0
 ; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
 entry:
