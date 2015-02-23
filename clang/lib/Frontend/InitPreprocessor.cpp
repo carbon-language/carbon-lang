@@ -133,6 +133,7 @@ static void DefineFloatMacros(MacroBuilder &Builder, StringRef Prefix,
                      "4.94065645841246544176568792868221e-324",
                      "6.47517511943802511092443895822764655e-4966");
   int Digits = PickFP(Sem, 6, 15, 18, 31, 33);
+  int DecimalDigits = PickFP(Sem, 9, 17, 21, 33, 36);
   Epsilon = PickFP(Sem, "1.19209290e-7", "2.2204460492503131e-16",
                    "1.08420217248550443401e-19",
                    "4.94065645841246544176568792868221e-324",
@@ -159,6 +160,7 @@ static void DefineFloatMacros(MacroBuilder &Builder, StringRef Prefix,
   Builder.defineMacro(DefPrefix + "DENORM_MIN__", Twine(DenormMin)+Ext);
   Builder.defineMacro(DefPrefix + "HAS_DENORM__");
   Builder.defineMacro(DefPrefix + "DIG__", Twine(Digits));
+  Builder.defineMacro(DefPrefix + "DECIMAL_DIG__", Twine(DecimalDigits));
   Builder.defineMacro(DefPrefix + "EPSILON__", Twine(Epsilon)+Ext);
   Builder.defineMacro(DefPrefix + "HAS_INFINITY__");
   Builder.defineMacro(DefPrefix + "HAS_QUIET_NAN__");
@@ -835,8 +837,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   // Macros to control C99 numerics and <float.h>
   Builder.defineMacro("__FLT_EVAL_METHOD__", Twine(TI.getFloatEvalMethod()));
   Builder.defineMacro("__FLT_RADIX__", "2");
-  int Dig = PickFP(&TI.getLongDoubleFormat(), -1/*FIXME*/, 17, 21, 33, 36);
-  Builder.defineMacro("__DECIMAL_DIG__", Twine(Dig));
+  Builder.defineMacro("__DECIMAL_DIG__", "__LDBL_DECIMAL_DIG__");
 
   if (LangOpts.getStackProtector() == LangOptions::SSPOn)
     Builder.defineMacro("__SSP__");
