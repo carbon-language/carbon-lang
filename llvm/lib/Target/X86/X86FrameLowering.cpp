@@ -1048,6 +1048,12 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     if (RegInfo->needsStackRealignment(MF))
       MBBI = FirstCSPop;
     if (IsWinEH) {
+      // There are only two legal forms of epilogue:
+      // - add SEHAllocationSize, %rsp
+      // - lea SEHAllocationSize(%FramePtr), %rsp
+      //
+      // We are *not* permitted to use 'mov %FramePtr, %rsp' because the Win64
+      // unwinder will not recognize 'mov' as an epilogue instruction.
       unsigned SEHFrameOffset = calculateSetFPREG(SEHStackAllocAmt);
       addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(X86::LEA64r), StackPtr),
                    FramePtr, false, SEHStackAllocAmt - SEHFrameOffset);
