@@ -90,10 +90,16 @@ EnableGlobalMergeOnExternal("global-merge-on-external", cl::Hidden,
      cl::desc("Enable global merge pass on external linkage"),
      cl::init(false));
 
-STATISTIC(NumMerged      , "Number of globals merged");
+STATISTIC(NumMerged, "Number of globals merged");
 namespace {
   class GlobalMerge : public FunctionPass {
     const TargetMachine *TM;
+    const DataLayout *DL;
+    // FIXME: Infer the maximum possible offset depending on the actual users
+    // (these max offsets are different for the users inside Thumb or ARM
+    // functions), see the code that passes in the offset in the ARM backend
+    // for more information.
+    unsigned MaxOffset;
 
     bool doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
                  Module &M, bool isConst, unsigned AddrSpace) const;
@@ -117,8 +123,10 @@ namespace {
 
   public:
     static char ID;             // Pass identification, replacement for typeid.
-    explicit GlobalMerge(const TargetMachine *TM = nullptr)
-      : FunctionPass(ID), TM(TM) {
+    explicit GlobalMerge(const TargetMachine *TM = nullptr,
+                         unsigned MaximalOffset = 0)
+        : FunctionPass(ID), TM(TM), DL(TM->getDataLayout()),
+          MaxOffset(MaximalOffset) {
       initializeGlobalMergePass(*PassRegistry::getPassRegistry());
     }
 
@@ -138,22 +146,16 @@ namespace {
 } // end anonymous namespace
 
 char GlobalMerge::ID = 0;
-INITIALIZE_TM_PASS(GlobalMerge, "global-merge", "Merge global variables",
-                   false, false)
+INITIALIZE_PASS_BEGIN(GlobalMerge, "global-merge", "Merge global variables",
+                      false, false)
+INITIALIZE_PASS_END(GlobalMerge, "global-merge", "Merge global variables",
+                    false, false)
 
 bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
                           Module &M, bool isConst, unsigned AddrSpace) const {
-  const TargetLowering *TLI = TM->getSubtargetImpl()->getTargetLowering();
-  const DataLayout *DL = TM->getDataLayout();
-
-  // FIXME: Infer the maximum possible offset depending on the actual users
-  // (these max offsets are different for the users inside Thumb or ARM
-  // functions)
-  unsigned MaxOffset = TLI->getMaximalGlobalOffset();
-
   // FIXME: Find better heuristics
   std::stable_sort(Globals.begin(), Globals.end(),
-                   [DL](const GlobalVariable *GV1, const GlobalVariable *GV2) {
+                   [this](const GlobalVariable *GV1, const GlobalVariable *GV2) {
     Type *Ty1 = cast<PointerType>(GV1->getType())->getElementType();
     Type *Ty2 = cast<PointerType>(GV2->getType())->getElementType();
 
@@ -282,9 +284,6 @@ bool GlobalMerge::doInitialization(Module &M) {
 
   DenseMap<unsigned, SmallVector<GlobalVariable*, 16> > Globals, ConstGlobals,
                                                         BSSGlobals;
-  const TargetLowering *TLI = TM->getSubtargetImpl()->getTargetLowering();
-  const DataLayout *DL = TM->getDataLayout();
-  unsigned MaxOffset = TLI->getMaximalGlobalOffset();
   bool Changed = false;
   setMustKeepGlobalVariables(M);
 
@@ -357,6 +356,6 @@ bool GlobalMerge::doFinalization(Module &M) {
   return false;
 }
 
-Pass *llvm::createGlobalMergePass(const TargetMachine *TM) {
-  return new GlobalMerge(TM);
+Pass *llvm::createGlobalMergePass(const TargetMachine *TM, unsigned Offset) {
+  return new GlobalMerge(TM, Offset);
 }

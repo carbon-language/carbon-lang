@@ -730,13 +730,6 @@ MVT AArch64TargetLowering::getScalarShiftAmountTy(EVT LHSTy) const {
   return MVT::i64;
 }
 
-unsigned AArch64TargetLowering::getMaximalGlobalOffset() const {
-  // FIXME: On AArch64, this depends on the type.
-  // Basically, the addressable offsets are up to 4095 * Ty.getSizeInBytes().
-  // and the offset has to be a multiple of the related size in bytes.
-  return 4095;
-}
-
 FastISel *
 AArch64TargetLowering::createFastISel(FunctionLoweringInfo &funcInfo,
                                       const TargetLibraryInfo *libInfo) const {

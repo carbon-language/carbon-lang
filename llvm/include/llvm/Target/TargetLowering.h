@@ -959,12 +959,6 @@ public:
     return false;
   }
 
-  /// Returns the maximal possible offset which can be used for loads / stores
-  /// from the global.
-  virtual unsigned getMaximalGlobalOffset() const {
-    return 0;
-  }
-
   /// Returns true if a cast between SrcAS and DestAS is a noop.
   virtual bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const {
     return false;

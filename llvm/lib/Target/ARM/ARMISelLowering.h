@@ -353,10 +353,6 @@ namespace llvm {
     /// specified value type.
     const TargetRegisterClass *getRegClassFor(MVT VT) const override;
 
-    /// getMaximalGlobalOffset - Returns the maximal possible offset which can
-    /// be used for loads / stores from the global.
-    unsigned getMaximalGlobalOffset() const override;
-
     /// Returns true if a cast between SrcAS and DestAS is a noop.
     bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const override {
       // Addrspacecasts are always noops.

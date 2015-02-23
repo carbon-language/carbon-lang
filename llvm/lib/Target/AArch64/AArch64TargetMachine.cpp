@@ -236,8 +236,11 @@ bool AArch64PassConfig::addPreISel() {
   // get a chance to be merged
   if (TM->getOptLevel() != CodeGenOpt::None && EnablePromoteConstant)
     addPass(createAArch64PromoteConstantPass());
+  // FIXME: On AArch64, this depends on the type.
+  // Basically, the addressable offsets are up to 4095 * Ty.getSizeInBytes().
+  // and the offset has to be a multiple of the related size in bytes.
   if (TM->getOptLevel() != CodeGenOpt::None)
-    addPass(createGlobalMergePass(TM));
+    addPass(createGlobalMergePass(TM, 4095));
   if (TM->getOptLevel() != CodeGenOpt::None)
     addPass(createAArch64AddressTypePromotionPass());
 

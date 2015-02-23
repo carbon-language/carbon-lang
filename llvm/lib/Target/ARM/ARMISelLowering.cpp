@@ -1170,12 +1170,6 @@ ARMTargetLowering::createFastISel(FunctionLoweringInfo &funcInfo,
   return ARM::createFastISel(funcInfo, libInfo);
 }
 
-/// getMaximalGlobalOffset - Returns the maximal possible offset which can
-/// be used for loads / stores from the global.
-unsigned ARMTargetLowering::getMaximalGlobalOffset() const {
-  return (Subtarget->isThumb1Only() ? 127 : 4095);
-}
-
 Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
   unsigned NumVals = N->getNumValues();
   if (!NumVals)

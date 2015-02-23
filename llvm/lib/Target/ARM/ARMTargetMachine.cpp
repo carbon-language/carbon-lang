@@ -326,7 +326,12 @@ void ARMPassConfig::addIRPasses() {
 
 bool ARMPassConfig::addPreISel() {
   if (TM->getOptLevel() != CodeGenOpt::None)
-    addPass(createGlobalMergePass(TM));
+    // FIXME: This is using the thumb1 only constant value for
+    // maximal global offset for merging globals. We may want
+    // to look into using the old value for non-thumb1 code of
+    // 4095 based on the TargetMachine, but this starts to become
+    // tricky when doing code gen per function.
+    addPass(createGlobalMergePass(TM, 127));
 
   return false;
 }

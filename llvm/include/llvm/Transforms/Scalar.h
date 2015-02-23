@@ -145,7 +145,7 @@ Pass *createLICMPass();
 //
 Pass *createLoopStrengthReducePass();
 
-Pass *createGlobalMergePass(const TargetMachine *TM = nullptr);
+Pass *createGlobalMergePass(const TargetMachine *TM, unsigned MaximalOffset);
 
 //===----------------------------------------------------------------------===//
 //
