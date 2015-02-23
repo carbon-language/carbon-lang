@@ -277,7 +277,7 @@ bool BDCE::runOnFunction(Function& F) {
     if (!isAlwaysLive(&I))
       continue;
 
-    DEBUG(dbgs() << "BDCE: Root: " << I);
+    DEBUG(dbgs() << "BDCE: Root: " << I << "\n");
     // For integer-valued instructions, set up an initial empty set of alive
     // bits and add the instruction to the work list. For other instructions
     // add their operands to the work list (for integer values operands, mark
