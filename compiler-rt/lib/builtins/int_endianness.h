@@ -16,6 +16,20 @@
 #ifndef INT_ENDIANNESS_H
 #define INT_ENDIANNESS_H
 
+#if defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && \
+    defined(__ORDER_LITTLE_ENDIAN__)
+
+/* Clang and GCC provide built-in endianness definitions. */
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define _YUGA_LITTLE_ENDIAN 0
+#define _YUGA_BIG_ENDIAN    1
+#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define _YUGA_LITTLE_ENDIAN 1
+#define _YUGA_BIG_ENDIAN    0
+#endif /* __BYTE_ORDER__ */
+
+#else /* Compilers other than Clang or GCC. */
+
 #if defined(__SVR4) && defined(__sun)
 #include <sys/byteorder.h>
 
@@ -84,24 +98,14 @@
 
 /* .. */
 
-#if defined(__linux__)
-
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-#define _YUGA_LITTLE_ENDIAN 0
-#define _YUGA_BIG_ENDIAN    1
-#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-#define _YUGA_LITTLE_ENDIAN 1
-#define _YUGA_BIG_ENDIAN    0
-#endif /* __BYTE_ORDER__ */
-
-#endif /* GNU/Linux */
-
 #if defined(_WIN32)
 
 #define _YUGA_LITTLE_ENDIAN 1
 #define _YUGA_BIG_ENDIAN    0
 
 #endif /* Windows */
+
+#endif /* Clang or GCC. */
 
 /* . */
 
