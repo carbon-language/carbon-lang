@@ -21,11 +21,15 @@ if(NOT LLVM_FORCE_USE_OLD_TOOLCHAIN)
       message(FATAL_ERROR "Host Clang version must be at least 3.1!")
     endif()
 
-    # Also test that we aren't using too old of a version of libstdc++ with the
-    # Clang compiler. This is tricky as there is no real way to check the
-    # version of libstdc++ directly. Instead we test for a known bug in
-    # libstdc++4.6 that is fixed in libstdc++4.7.
-    if(NOT LLVM_ENABLE_LIBCXX)
+    if (CMAKE_CXX_SIMULATE_ID MATCHES "MSVC")
+      if (CMAKE_CXX_SIMULATE_VERSION VERSION_LESS 18.0)
+        message(FATAL_ERROR "Host Clang must have at least -fms-compatibility-version=18.0")
+      endif()
+    elseif(NOT LLVM_ENABLE_LIBCXX)
+      # Otherwise, test that we aren't using too old of a version of libstdc++
+      # with the Clang compiler. This is tricky as there is no real way to
+      # check the version of libstdc++ directly. Instead we test for a known
+      # bug in libstdc++4.6 that is fixed in libstdc++4.7.
       set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
       set(OLD_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
       set(CMAKE_REQUIRED_FLAGS "-std=c++0x")
