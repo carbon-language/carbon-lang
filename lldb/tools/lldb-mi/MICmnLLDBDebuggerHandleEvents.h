@@ -92,4 +92,10 @@ class CMICmnLLDBDebuggerHandleEvents : public CMICmnBase, public MI::ISingleton<
   private:
     // From CMICmnBase
     /* dtor */ virtual ~CMICmnLLDBDebuggerHandleEvents(void);
+    void InitializeSignals();
+    bool m_bSignalsInitialized;
+    MIuint64 m_SIGINT;
+    MIuint64 m_SIGSTOP;
+    MIuint64 m_SIGSEGV;
+    MIuint64 m_SIGTRAP;
 };

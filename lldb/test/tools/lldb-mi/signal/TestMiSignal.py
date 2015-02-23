@@ -37,7 +37,7 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that -exec-interrupt can interrupt an execution
         self.runCmd("-exec-interrupt")
-        self.expect("\*stopped,reason=\"signal-received\"")
+        self.expect("\*stopped,reason=\"signal-received\",signal-name=\"SIGINT\",signal-meaning=\"Interrupt\",.*thread-id=\"1\",stopped-threads=\"all\"")
 
         # Continue (to loop forever)
         self.runCmd("-exec-continue")
@@ -45,7 +45,7 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that Ctrl+C can interrupt an execution
         self.child.sendintr() #FIXME: here uses self.child directly
-        self.expect("\*stopped,reason=\"signal-received\"")
+        self.expect("\*stopped,reason=\"signal-received\",signal-name=\"SIGINT\",signal-meaning=\"Interrupt\",.*thread-id=\"1\",stopped-threads=\"all\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
