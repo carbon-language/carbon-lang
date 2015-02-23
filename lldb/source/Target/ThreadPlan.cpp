@@ -156,6 +156,7 @@ ThreadPlan::WillResume (StateType resume_state, bool current_plan)
         if (log)
         {
             RegisterContext *reg_ctx = m_thread.GetRegisterContext().get();
+            assert (reg_ctx);
             addr_t pc = reg_ctx->GetPC();
             addr_t sp = reg_ctx->GetSP();
             addr_t fp = reg_ctx->GetFP();

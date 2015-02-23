@@ -343,6 +343,7 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
                 m_frames.push_back (unwind_frame_sp);
             }
             
+            assert(unwind_frame_sp);
             SymbolContext unwind_sc = unwind_frame_sp->GetSymbolContext (eSymbolContextBlock | eSymbolContextFunction);
             Block *unwind_block = unwind_sc.block;
             if (unwind_block)
