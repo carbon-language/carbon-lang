@@ -6,14 +6,14 @@
 
 static_assert(alignof(char) == 1, "alignof char is wrong");
 
-static_assert(alignof(short) == 2, "sizeof short is wrong");
+static_assert(sizeof(short) == 2, "sizeof short is wrong");
 static_assert(alignof(short) == 2, "alignof short is wrong");
 
-static_assert(alignof(int) == 4, "sizeof int is wrong");
+static_assert(sizeof(int) == 4, "sizeof int is wrong");
 static_assert(alignof(int) == 4, "alignof int is wrong");
 
 static_assert(sizeof(long) == 4, "sizeof long is wrong");
-static_assert(sizeof(long) == 4, "alignof long is wrong");
+static_assert(alignof(long) == 4, "alignof long is wrong");
 
 static_assert(sizeof(long long) == 8, "sizeof long long is wrong wrong");
 static_assert(alignof(long long) == 8, "alignof long long is wrong wrong");
