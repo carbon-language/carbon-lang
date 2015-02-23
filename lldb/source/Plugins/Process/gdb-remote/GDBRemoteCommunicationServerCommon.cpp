@@ -846,10 +846,11 @@ GDBRemoteCommunicationServerCommon::Handle_qPlatform_mkdir (StringExtractorGDBRe
         std::string path;
         packet.GetHexByteString(path);
         Error error = FileSystem::MakeDirectory(path.c_str(), mode);
-        if (error.Success())
-            return SendPacketNoLock ("OK", 2);
-        else
-            return SendErrorResponse(error.GetError());
+        
+        StreamGDBRemote response;
+        response.Printf("F%u", error.GetError());
+
+        return SendPacketNoLock(response.GetData(), response.GetSize());
     }
     return SendErrorResponse(20);
 }
@@ -865,10 +866,11 @@ GDBRemoteCommunicationServerCommon::Handle_qPlatform_chmod (StringExtractorGDBRe
         std::string path;
         packet.GetHexByteString(path);
         Error error = FileSystem::SetFilePermissions(path.c_str(), mode);
-        if (error.Success())
-            return SendPacketNoLock ("OK", 2);
-        else
-            return SendErrorResponse(error.GetError());
+
+        StreamGDBRemote response;
+        response.Printf("F%u", error.GetError());
+
+        return SendPacketNoLock(response.GetData(), response.GetSize());
     }
     return SendErrorResponse(19);
 }

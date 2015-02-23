@@ -3168,12 +3168,14 @@ GDBRemoteCommunicationClient::MakeDirectory (const char *path,
     const char *packet = stream.GetData();
     int packet_len = stream.GetSize();
     StringExtractorGDBRemote response;
-    if (SendPacketAndWaitForResponse(packet, packet_len, response, false) == PacketResult::Success)
-    {
-        return Error(response.GetHexMaxU32(false, UINT32_MAX), eErrorTypePOSIX);
-    }
-    return Error();
 
+    if (SendPacketAndWaitForResponse(packet, packet_len, response, false) != PacketResult::Success)
+        return Error("failed to send '%s' packet", packet);
+
+    if (response.GetChar() != 'F')
+        return Error("invalid response to '%s' packet", packet);
+
+    return Error(response.GetU32(UINT32_MAX), eErrorTypePOSIX);
 }
 
 Error
@@ -3188,12 +3190,14 @@ GDBRemoteCommunicationClient::SetFilePermissions (const char *path,
     const char *packet = stream.GetData();
     int packet_len = stream.GetSize();
     StringExtractorGDBRemote response;
-    if (SendPacketAndWaitForResponse(packet, packet_len, response, false) == PacketResult::Success)
-    {
-        return Error(response.GetHexMaxU32(false, UINT32_MAX), eErrorTypePOSIX);
-    }
-    return Error();
-    
+
+    if (SendPacketAndWaitForResponse(packet, packet_len, response, false) != PacketResult::Success)
+        return Error("failed to send '%s' packet", packet);
+
+    if (response.GetChar() != 'F')
+        return Error("invalid response to '%s' packet", packet);
+
+    return Error(response.GetU32(false, UINT32_MAX), eErrorTypePOSIX);
 }
 
 static uint64_t
