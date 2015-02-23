@@ -148,7 +148,7 @@ public:
 
   // Output Sections contain the map of Sectionnames to a vector of sections,
   // that have been merged to form a single section
-  typedef std::map<StringRef, OutputSection<ELFT> *> OutputSectionMapT;
+  typedef llvm::StringMap<OutputSection<ELFT> *> OutputSectionMapT;
   typedef
       typename std::vector<OutputSection<ELFT> *>::iterator OutputSectionIter;
 
