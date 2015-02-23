@@ -72,15 +72,17 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   include(HandleLLVMOptions)
 
   # Verify that we can find a Python 2 interpreter.  Python 3 is unsupported.
-  set(Python_ADDITIONAL_VERSIONS 2.7 2.6 2.5)
-  include(FindPythonInterp)
-  if( NOT PYTHONINTERP_FOUND )
-    message(FATAL_ERROR
-  "Unable to find Python interpreter, required for builds and testing.
-
-  Please install Python or specify the PYTHON_EXECUTABLE CMake variable.")
+  if (PYTHON_EXECUTABLE STREQUAL "")
+    set(Python_ADDITIONAL_VERSIONS 2.7 2.6 2.5)
+    include(FindPythonInterp)
+    if( NOT PYTHONINTERP_FOUND )
+      message(FATAL_ERROR
+              "Unable to find Python interpreter, required for builds and testing.
+               Please install Python or specify the PYTHON_EXECUTABLE CMake variable.")
+    endif()
+  else()
+    message("-- Found PythonInterp: ${PYTHON_EXECUTABLE}")
   endif()
-
   # Import CMake library targets from LLVM and Clang.
   include("${LLDB_PATH_TO_LLVM_BUILD}/share/llvm/cmake/LLVMConfig.cmake")
   include("${LLDB_PATH_TO_CLANG_BUILD}/share/clang/cmake/ClangConfig.cmake")
@@ -136,8 +138,18 @@ if (NOT LLDB_DISABLE_PYTHON)
       set(CMAKE_LIBRARY_ARCHITECTURE "x86_64-linux-gnu")
     endif()
   endif()
-  find_package(PythonLibs REQUIRED)
-  include_directories(${PYTHON_INCLUDE_DIRS})
+  if (MSVC)
+    if (PYTHON_INCLUDE_DIR STREQUAL "" OR PYTHON_LIBRARY STREQUAL "")
+      message(FATAL_ERROR "Building on MSVC requires manual specification of "
+                          "PYTHON_INCLUDE_DIR and PYTHON_LIBRARY")
+    else()
+      message("-- Found PythonLibs: ${PYTHON_LIBRARY}")
+      include_directories(${PYTHON_INCLUDE_DIR})
+    endif()
+  else()
+    find_package(PythonLibs REQUIRED)
+    include_directories(${PYTHON_INCLUDE_DIRS})
+  endif()
 endif()
 
 include_directories(../clang/include)
