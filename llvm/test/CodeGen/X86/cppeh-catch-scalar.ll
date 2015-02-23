@@ -6,8 +6,8 @@
 ; {
 ;   try {
 ;     may_throw();
-;   } catch (int) {
-;     handle_int();
+;   } catch (int i) {
+;     handle_int(i);
 ;   }
 ; }
 ;
@@ -18,13 +18,27 @@
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-windows-msvc"
 
+; This is the structure that will get created for the frame allocation.
+; CHECK: %struct._Z4testv.ehdata = type { i32, i8*, i32 }
+
 @_ZTIi = external constant i8*
+
+; The function entry will be rewritten like this.
+; CHECK: define void @_Z4testv() #0 {
+; CHECK: entry:
+; CHECK:   %frame.alloc = call i8* @llvm.frameallocate(i32 24)
+; CHECK:   %eh.data = bitcast i8* %frame.alloc to %struct._Z4testv.ehdata*
+; CHECK:   %exn.slot = alloca i8*
+; CHECK:   %ehselector.slot = alloca i32
+; CHECK-NOT:  %i = alloca i32, align 4
+; CHECK:  %i = getelementptr inbounds %struct._Z4testv.ehdata* %eh.data, i32 0, i32 2
 
 ; Function Attrs: uwtable
 define void @_Z4testv() #0 {
 entry:
   %exn.slot = alloca i8*
   %ehselector.slot = alloca i32
+  %i = alloca i32, align 4
   invoke void @_Z9may_throwv()
           to label %invoke.cont unwind label %lpad
 
@@ -50,7 +64,10 @@ catch:                                            ; preds = %catch.dispatch
   %exn11 = load i8** %exn.slot
   %4 = call i8* @llvm.eh.begincatch(i8* %exn11) #3
   %5 = bitcast i8* %4 to i32*
-  call void @_Z10handle_intv()
+  %6 = load i32* %5, align 4
+  store i32 %6, i32* %i, align 4
+  %7 = load i32* %i, align 4
+  call void @_Z10handle_inti(i32 %7)
   br label %invoke.cont2
 
 invoke.cont2:                                     ; preds = %catch
@@ -71,11 +88,15 @@ eh.resume:                                        ; preds = %catch.dispatch
 ; CHECK: define i8* @_Z4testv.catch(i8*, i8*) {
 ; CHECK: catch.entry:
 ; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1)
-; CHECK:   %ehdata = bitcast i8* %eh.alloc to %struct._Z4testv.ehdata*
-; CHECK:   %eh.obj.ptr = getelementptr inbounds %struct._Z4testv.ehdata* %ehdata, i32 0, i32 1
+; CHECK:   %eh.data = bitcast i8* %eh.alloc to %struct._Z4testv.ehdata*
+; CHECK:   %eh.obj.ptr = getelementptr inbounds %struct._Z4testv.ehdata* %eh.data, i32 0, i32 1
 ; CHECK:   %eh.obj = load i8** %eh.obj.ptr
+; CHECK:   %i = getelementptr inbounds %struct._Z4testv.ehdata* %eh.data, i32 0, i32 2
 ; CHECK:   %2 = bitcast i8* %eh.obj to i32*
-; CHECK:   call void @_Z10handle_intv()
+; CHECK:   %3 = load i32* %2, align 4
+; CHECK:   store i32 %3, i32* %i, align 4
+; CHECK:   %4 = load i32* %i, align 4
+; CHECK:   call void @_Z10handle_inti(i32 %4)
 ; CHECK:   ret i8* blockaddress(@_Z4testv, %try.cont)
 ; CHECK: }
 
@@ -90,7 +111,7 @@ declare i8* @llvm.eh.begincatch(i8*)
 
 declare void @llvm.eh.endcatch()
 
-declare void @_Z10handle_intv() #1
+declare void @_Z10handle_inti(i32) #1
 
 attributes #0 = { uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }

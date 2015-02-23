@@ -153,6 +153,9 @@ public:
   virtual CloningAction handleInstruction(ValueToValueMapTy &VMap,
                                           const Instruction *Inst,
                                           BasicBlock *NewBB) = 0;
+
+  virtual ValueMapTypeRemapper *getTypeRemapper() { return nullptr; }
+  virtual ValueMaterializer *getValueMaterializer() { return nullptr; }
 };
 
 void CloneAndPruneIntoFromInst(Function *NewFunc, const Function *OldFunc,

@@ -261,6 +261,8 @@ namespace {
     ClonedCodeInfo *CodeInfo;
     const DataLayout *DL;
     CloningDirector *Director;
+    ValueMapTypeRemapper *TypeMapper;
+    ValueMaterializer *Materializer;
 
   public:
     PruningFunctionCloner(Function *newFunc, const Function *oldFunc,
@@ -274,6 +276,14 @@ namespace {
       VMap(valueMap), ModuleLevelChanges(moduleLevelChanges),
       NameSuffix(nameSuffix), CodeInfo(codeInfo), DL(DL),
       Director(Director) {
+      // These are optional components.  The Director may return null.
+      if (Director) {
+        TypeMapper = Director->getTypeRemapper();
+        Materializer = Director->getValueMaterializer();
+      } else {
+        TypeMapper = nullptr;
+        Materializer = nullptr;
+      }
     }
 
     /// CloneBlock - The specified block is found to be reachable, clone it and
@@ -344,7 +354,8 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
     // nodes for which we defer processing until we update the CFG.
     if (!isa<PHINode>(NewInst)) {
       RemapInstruction(NewInst, VMap,
-                       ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges);
+                       ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges,
+                       TypeMapper, Materializer);
 
       // If we can simplify this instruction to some other value, simply add
       // a mapping to that value rather than inserting a new instruction into
@@ -459,6 +470,14 @@ void llvm::CloneAndPruneIntoFromInst(Function *NewFunc, const Function *OldFunc,
                                      CloningDirector *Director) {
   assert(NameSuffix && "NameSuffix cannot be null!");
 
+  ValueMapTypeRemapper *TypeMapper = nullptr;
+  ValueMaterializer *Materializer = nullptr;
+
+  if (Director) {
+    TypeMapper = Director->getTypeRemapper();
+    Materializer = Director->getValueMaterializer();
+  }
+
 #ifndef NDEBUG
   // If the cloning starts at the begining of the function, verify that
   // the function arguments are mapped.
@@ -513,7 +532,8 @@ void llvm::CloneAndPruneIntoFromInst(Function *NewFunc, const Function *OldFunc,
     // Finally, remap the terminator instructions, as those can't be remapped
     // until all BBs are mapped.
     RemapInstruction(NewBB->getTerminator(), VMap,
-                     ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges);
+                     ModuleLevelChanges ? RF_None : RF_NoModuleLevelChanges,
+                     TypeMapper, Materializer);
   }
   
   // Defer PHI resolution until rest of function is resolved, PHI resolution
