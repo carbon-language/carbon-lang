@@ -1187,33 +1187,29 @@ void Scop::buildContext() {
 }
 
 void Scop::addParameterBounds() {
-  for (unsigned i = 0; i < isl_set_dim(Context, isl_dim_param); ++i) {
+  for (const auto &ParamID : ParameterIds) {
     isl_val *V;
-    isl_id *Id;
-    const SCEV *Scev;
-    const IntegerType *T;
-    int Width;
+    int dim = ParamID.second;
 
-    Id = isl_set_get_dim_id(Context, isl_dim_param, i);
-    Scev = (const SCEV *)isl_id_get_user(Id);
-    isl_id_free(Id);
+    ConstantRange SRange = SE->getSignedRange(ParamID.first);
 
-    T = dyn_cast<IntegerType>(Scev->getType());
-
-    if (!T)
+    // TODO: Find a case where the full set is actually helpful.
+    if (SRange.isFullSet())
       continue;
 
-    Width = T->getBitWidth();
+    V = isl_valFromAPInt(IslCtx, SRange.getLower(), true);
+    isl_set *ContextLB =
+        isl_set_lower_bound_val(isl_set_copy(Context), isl_dim_param, dim, V);
 
-    V = isl_val_int_from_si(IslCtx, Width - 1);
-    V = isl_val_2exp(V);
-    V = isl_val_neg(V);
-    Context = isl_set_lower_bound_val(Context, isl_dim_param, i, V);
-
-    V = isl_val_int_from_si(IslCtx, Width - 1);
-    V = isl_val_2exp(V);
+    V = isl_valFromAPInt(IslCtx, SRange.getUpper(), true);
     V = isl_val_sub_ui(V, 1);
-    Context = isl_set_upper_bound_val(Context, isl_dim_param, i, V);
+    isl_set *ContextUB =
+        isl_set_upper_bound_val(Context, isl_dim_param, dim, V);
+
+    if (SRange.isSignWrappedSet())
+      Context = isl_set_union(ContextLB, ContextUB);
+    else
+      Context = isl_set_intersect(ContextLB, ContextUB);
   }
 }
 
@@ -1265,6 +1261,7 @@ void Scop::simplifyAssumedContext() {
   //   only executed for the case m >= 0, it is sufficient to assume p >= 0.
   AssumedContext =
       isl_set_gist_params(AssumedContext, isl_union_set_params(getDomains()));
+  AssumedContext = isl_set_gist_params(AssumedContext, getContext());
 }
 
 /// @brief Add the minimal/maximal access in @p Set to @p User.
