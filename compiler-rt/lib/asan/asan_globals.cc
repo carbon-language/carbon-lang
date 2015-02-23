@@ -232,7 +232,7 @@ using namespace __asan;  // NOLINT
 // Register an array of globals.
 void __asan_register_globals(__asan_global *globals, uptr n) {
   if (!flags()->report_globals) return;
-  GET_STACK_TRACE_FATAL_HERE;
+  GET_STACK_TRACE_MALLOC;
   u32 stack_id = StackDepotPut(stack);
   BlockingMutexLock lock(&mu_for_globals);
   if (!global_registration_site_vector)
