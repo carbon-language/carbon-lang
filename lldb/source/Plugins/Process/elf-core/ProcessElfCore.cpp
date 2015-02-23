@@ -191,7 +191,7 @@ ProcessElfCore::DoLoadCore ()
     const uint32_t num_segments = core->GetProgramHeaderCount();
     if (num_segments == 0)
     {
-        error.SetErrorString ("core file has no sections");
+        error.SetErrorString ("core file has no segments");
         return error;
     }
 
