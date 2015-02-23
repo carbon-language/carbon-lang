@@ -72,13 +72,12 @@ public:
   /// @param Builder     The LLVM-IR Builder used to generate the statement. The
   ///                    code is generated at the location, the Builder points
   ///                    to.
-  /// @param P           A reference to the pass this function is called from.
-  ///                    The pass is needed to update other analysis.
   /// @param LI          The loop info for the current function
   /// @param SE          The scalar evolution info for the current function
+  /// @param DT          The dominator tree of this function.
   /// @param ExprBuilder An expression builder to generate new access functions.
-  BlockGenerator(PollyIRBuilder &Builder, Pass *P, LoopInfo &LI,
-                 ScalarEvolution &SE, IslExprBuilder *ExprBuilder = nullptr);
+  BlockGenerator(PollyIRBuilder &Builder, LoopInfo &LI, ScalarEvolution &SE,
+                 DominatorTree &DT, IslExprBuilder *ExprBuilder = nullptr);
 
   /// @brief Copy the basic block.
   ///
@@ -94,10 +93,12 @@ public:
 
 protected:
   PollyIRBuilder &Builder;
-  Pass *P;
   LoopInfo &LI;
   ScalarEvolution &SE;
   IslExprBuilder *ExprBuilder;
+
+  /// @brief The dominator tree of this function.
+  DominatorTree &DT;
 
   /// @brief Get the new version of a value.
   ///

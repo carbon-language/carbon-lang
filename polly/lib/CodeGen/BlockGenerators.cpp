@@ -76,9 +76,10 @@ bool polly::isIgnoredIntrinsic(const Value *V) {
   return false;
 }
 
-BlockGenerator::BlockGenerator(PollyIRBuilder &B, Pass *P, LoopInfo &LI,
-                               ScalarEvolution &SE, IslExprBuilder *ExprBuilder)
-    : Builder(B), P(P), LI(LI), SE(SE), ExprBuilder(ExprBuilder) {}
+BlockGenerator::BlockGenerator(PollyIRBuilder &B, LoopInfo &LI,
+                               ScalarEvolution &SE, DominatorTree &DT,
+                               IslExprBuilder *ExprBuilder)
+    : Builder(B), LI(LI), SE(SE), ExprBuilder(ExprBuilder), DT(DT) {}
 
 Value *BlockGenerator::getNewValue(ScopStmt &Stmt, const Value *Old,
                                    ValueMapT &BBMap, ValueMapT &GlobalMap,
@@ -285,12 +286,9 @@ void BlockGenerator::copyInstruction(ScopStmt &Stmt, const Instruction *Inst,
 
 void BlockGenerator::copyBB(ScopStmt &Stmt, ValueMapT &GlobalMap,
                             LoopToScevMapT &LTS) {
-  auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
-  auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
-
   BasicBlock *BB = Stmt.getBasicBlock();
   BasicBlock *CopyBB =
-      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), DT, &LI);
+      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
   CopyBB->setName("polly.stmt." + BB->getName());
   Builder.SetInsertPoint(CopyBB->begin());
 
@@ -623,12 +621,9 @@ void VectorBlockGenerator::copyInstruction(ScopStmt &Stmt,
 }
 
 void VectorBlockGenerator::copyBB(ScopStmt &Stmt) {
-  auto *DTWP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
-  auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
-
   BasicBlock *BB = Stmt.getBasicBlock();
   BasicBlock *CopyBB =
-      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), DT, &LI);
+      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
   CopyBB->setName("polly.stmt." + BB->getName());
   Builder.SetInsertPoint(CopyBB->begin());
 

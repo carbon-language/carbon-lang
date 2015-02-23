@@ -65,7 +65,7 @@ public:
       : S(S), Builder(Builder), Annotator(Annotator),
         Rewriter(new SCEVExpander(SE, "polly")),
         ExprBuilder(Builder, IDToValue, *Rewriter),
-        BlockGen(Builder, P, LI, SE, &ExprBuilder), P(P), DL(DL), LI(LI),
+        BlockGen(Builder, LI, SE, DT, &ExprBuilder), P(P), DL(DL), LI(LI),
         SE(SE), DT(DT) {}
 
   ~IslNodeBuilder() { delete Rewriter; }
