@@ -985,7 +985,7 @@ ABISysV_ppc64::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
     UnwindPlan::RowSP row(new UnwindPlan::Row);
 
     // Our Call Frame Address is the stack pointer value
-    row->SetCFARegister (sp_reg_num);
+    row->GetCFAValue().SetIsRegisterPlusOffset(sp_reg_num, 0);
 
     // The previous PC is in the LR
     row->SetRegisterLocationToRegister(pc_reg_num, lr_reg_num, true);
@@ -1011,8 +1011,7 @@ ABISysV_ppc64::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
     UnwindPlan::RowSP row(new UnwindPlan::Row);
 
     const int32_t ptr_size = 8;
-    row->SetCFARegister (sp_reg_num);
-    row->SetCFAType(lldb_private::UnwindPlan::Row::CFAIsRegisterDereferenced);
+    row->GetCFAValue().SetIsRegisterDereferenced(sp_reg_num);
 
     row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, ptr_size * 2, true);
     row->SetRegisterLocationToIsCFAPlusOffset(sp_reg_num, 0, true);

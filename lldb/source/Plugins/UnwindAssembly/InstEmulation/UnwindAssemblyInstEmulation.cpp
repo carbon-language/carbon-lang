@@ -662,8 +662,8 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
                 m_cfa_reg_info = *reg_info;
                 const uint32_t cfa_reg_num = reg_info->kinds[m_unwind_plan_ptr->GetRegisterKind()];
                 assert (cfa_reg_num != LLDB_INVALID_REGNUM);
-                m_curr_row->SetCFARegister(cfa_reg_num);
-                m_curr_row->SetCFAOffset(m_initial_sp - reg_value.GetAsUInt64());
+                m_curr_row->GetCFAValue().SetIsRegisterPlusOffset(cfa_reg_num, m_initial_sp -
+                        reg_value.GetAsUInt64());
                 m_curr_row_modified = true;
             }
             break;
@@ -673,7 +673,9 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
             // subsequent adjustments to the stack pointer.
             if (!m_fp_is_cfa)
             {
-                m_curr_row->SetCFAOffset (m_initial_sp - reg_value.GetAsUInt64());
+                m_curr_row->GetCFAValue().SetIsRegisterPlusOffset(
+                        m_curr_row->GetCFAValue().GetRegisterNumber(),
+                        m_initial_sp - reg_value.GetAsUInt64());
                 m_curr_row_modified = true;
             }
             break;

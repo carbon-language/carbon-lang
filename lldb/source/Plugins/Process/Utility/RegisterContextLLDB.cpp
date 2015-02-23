@@ -599,7 +599,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
 
     if (!ReadCFAValueForRow (row_register_kind, active_row, m_cfa))
     {
-        UnwindLogMsg ("failed to get cfa reg %d/%d", row_register_kind, active_row->GetCFARegister());
+        UnwindLogMsg ("failed to get cfa");
         m_frame_type = eNotAValidFrame;
         return;
     }
@@ -1577,7 +1577,7 @@ RegisterContextLLDB::TryFallbackUnwindPlan ()
 
     UnwindPlan::RowSP active_row = m_fallback_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
     
-    if (active_row && active_row->GetCFARegister() != LLDB_INVALID_REGNUM)
+    if (active_row && active_row->GetCFAValue().GetValueType() != UnwindPlan::Row::CFAValue::unspecified)
     {
         addr_t new_cfa;
         if (!ReadCFAValueForRow (m_fallback_unwind_plan_sp->GetRegisterKind(), active_row, new_cfa)
@@ -1654,7 +1654,7 @@ RegisterContextLLDB::ForceSwitchToFallbackUnwindPlan ()
 
     UnwindPlan::RowSP active_row = m_fallback_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
     
-    if (active_row && active_row->GetCFARegister() != LLDB_INVALID_REGNUM)
+    if (active_row && active_row->GetCFAValue().GetValueType() != UnwindPlan::Row::CFAValue::unspecified)
     {
         addr_t new_cfa;
         if (!ReadCFAValueForRow (m_fallback_unwind_plan_sp->GetRegisterKind(), active_row, new_cfa)
@@ -1683,57 +1683,69 @@ RegisterContextLLDB::ReadCFAValueForRow (lldb::RegisterKind row_register_kind,
                                          const UnwindPlan::RowSP &row,
                                          addr_t &cfa_value)
 {
-    RegisterNumber cfa_reg (m_thread, row_register_kind, row->GetCFARegister());
     RegisterValue reg_value;
 
     cfa_value = LLDB_INVALID_ADDRESS;
     addr_t cfa_reg_contents;
 
-    if (ReadGPRValue (cfa_reg, cfa_reg_contents))
+    switch (row->GetCFAValue().GetValueType())
     {
-        if (row->GetCFAType() == UnwindPlan::Row::CFAIsRegisterDereferenced)
+    case UnwindPlan::Row::CFAValue::isRegisterDereferenced:
         {
-            const RegisterInfo *reg_info = GetRegisterInfoAtIndex (cfa_reg.GetAsKind (eRegisterKindLLDB));
-            RegisterValue reg_value;
-            if (reg_info)
+            RegisterNumber cfa_reg (m_thread, row_register_kind, row->GetCFAValue().GetRegisterNumber());
+            if (ReadGPRValue (cfa_reg, cfa_reg_contents))
             {
-                Error error = ReadRegisterValueFromMemory(reg_info,
-                                                          cfa_reg_contents,
-                                                          reg_info->byte_size,
-                                                          reg_value);
-                if (error.Success ())
+                const RegisterInfo *reg_info = GetRegisterInfoAtIndex (cfa_reg.GetAsKind (eRegisterKindLLDB));
+                RegisterValue reg_value;
+                if (reg_info)
                 {
-                    cfa_value = reg_value.GetAsUInt64();
-                    UnwindLogMsg ("CFA value via dereferencing reg %s (%d): reg has val 0x%" PRIx64 ", CFA value is 0x%" PRIx64,
-                                  cfa_reg.GetName(), cfa_reg.GetAsKind (eRegisterKindLLDB),
-                                  cfa_reg_contents, cfa_value);
-                    return true;
+                    Error error = ReadRegisterValueFromMemory(reg_info,
+                                                              cfa_reg_contents,
+                                                              reg_info->byte_size,
+                                                              reg_value);
+                    if (error.Success ())
+                    {
+                        cfa_value = reg_value.GetAsUInt64();
+                        UnwindLogMsg ("CFA value via dereferencing reg %s (%d): reg has val 0x%" PRIx64 ", CFA value is 0x%" PRIx64,
+                                      cfa_reg.GetName(), cfa_reg.GetAsKind (eRegisterKindLLDB),
+                                      cfa_reg_contents, cfa_value);
+                        return true;
+                    }
+                    else
+                    {
+                        UnwindLogMsg ("Tried to deref reg %s (%d) [0x%" PRIx64 "] but memory read failed.",
+                                      cfa_reg.GetName(), cfa_reg.GetAsKind (eRegisterKindLLDB),
+                                      cfa_reg_contents);
+                    }
                 }
-                else
+            }
+            break;
+        }
+    case UnwindPlan::Row::CFAValue::isRegisterPlusOffset:
+        {
+            RegisterNumber cfa_reg (m_thread, row_register_kind, row->GetCFAValue().GetRegisterNumber());
+            if (ReadGPRValue (cfa_reg, cfa_reg_contents))
+            {
+                if (cfa_reg_contents == LLDB_INVALID_ADDRESS || cfa_reg_contents == 0 || cfa_reg_contents == 1)
                 {
-                    UnwindLogMsg ("Tried to deref reg %s (%d) [0x%" PRIx64 "] but memory read failed.",
+                    UnwindLogMsg ("Got an invalid CFA register value - reg %s (%d), value 0x%" PRIx64,
                                   cfa_reg.GetName(), cfa_reg.GetAsKind (eRegisterKindLLDB),
                                   cfa_reg_contents);
+                    cfa_reg_contents = LLDB_INVALID_ADDRESS;
+                    return false;
                 }
-            }
-        }
-        else
-        {
-            if (cfa_reg_contents == LLDB_INVALID_ADDRESS || cfa_reg_contents == 0 || cfa_reg_contents == 1)
-            {
-                UnwindLogMsg ("Got an invalid CFA register value - reg %s (%d), value 0x%" PRIx64,
+                cfa_value = cfa_reg_contents + row->GetCFAValue().GetOffset();
+                UnwindLogMsg ("CFA is 0x%" PRIx64 ": Register %s (%d) contents are 0x%" PRIx64 ", offset is %d",
+                              cfa_value,
                               cfa_reg.GetName(), cfa_reg.GetAsKind (eRegisterKindLLDB),
-                              cfa_reg_contents);
-                cfa_reg_contents = LLDB_INVALID_ADDRESS;
-                return false;
+                              cfa_reg_contents, row->GetCFAValue().GetOffset());
+                return true;
             }
-            cfa_value = cfa_reg_contents + row->GetCFAOffset ();
-            UnwindLogMsg ("CFA is 0x%" PRIx64 ": Register %s (%d) contents are 0x%" PRIx64 ", offset is %d",
-                          cfa_value, 
-                          cfa_reg.GetName(), cfa_reg.GetAsKind (eRegisterKindLLDB), 
-                          cfa_reg_contents, row->GetCFAOffset ());
-            return true;
+            break;
         }
+    // TODO: handle isDWARFExpression
+    default:
+        return false;
     }
     return false;
 }

@@ -94,31 +94,7 @@ UnwindPlan::Row::RegisterLocation::Dump (Stream &s, const UnwindPlan* unwind_pla
                 s.PutChar('=');
                 if (m_type == atCFAPlusOffset)
                     s.PutChar('[');
-                if (verbose)
-                    s.Printf ("CFA%+d", m_location.offset);
-
-                if (unwind_plan && row)
-                {
-                    const uint32_t cfa_reg = row->GetCFARegister();
-                    const RegisterInfo *cfa_reg_info = unwind_plan->GetRegisterInfo (thread, cfa_reg);
-                    const int32_t offset = row->GetCFAOffset() + m_location.offset;
-                    if (verbose)
-                    {                        
-                        if (cfa_reg_info)
-                            s.Printf (" (%s%+d)",  cfa_reg_info->name, offset); 
-                        else
-                            s.Printf (" (reg(%u)%+d)",  cfa_reg, offset); 
-                    }
-                    else
-                    {
-                        if (cfa_reg_info)
-                            s.Printf ("%s",  cfa_reg_info->name); 
-                        else
-                            s.Printf ("reg(%u)",  cfa_reg); 
-                        if (offset != 0)
-                            s.Printf ("%+d", offset);
-                    }
-                }
+                s.Printf ("CFA%+d", m_location.offset);
                 if (m_type == atCFAPlusOffset)
                     s.PutChar(']');
             }
@@ -150,38 +126,83 @@ UnwindPlan::Row::RegisterLocation::Dump (Stream &s, const UnwindPlan* unwind_pla
     }
 }
 
+static void
+DumpRegisterName (Stream &s, const UnwindPlan* unwind_plan, Thread *thread, uint32_t reg_num) {
+    const RegisterInfo *reg_info = unwind_plan->GetRegisterInfo (thread, reg_num);
+    if (reg_info)
+        s.PutCString (reg_info->name);
+    else
+        s.Printf ("reg(%u)", reg_num);
+}
+
+bool
+UnwindPlan::Row::CFAValue::operator == (const UnwindPlan::Row::CFAValue& rhs) const
+{
+    if (m_type == rhs.m_type)
+    {
+        switch (m_type)
+        {
+            case unspecified:
+                return true;
+
+            case isRegisterPlusOffset:
+                return m_value.reg.offset == rhs.m_value.reg.offset;
+
+            case isRegisterDereferenced:
+                return m_value.reg.reg_num == rhs.m_value.reg.reg_num;
+
+            case isDWARFExpression:
+                if (m_value.expr.length == rhs.m_value.expr.length)
+                    return !memcmp (m_value.expr.opcodes, rhs.m_value.expr.opcodes, m_value.expr.length);
+                break;
+        }
+    }
+    return false;
+}
+
+void
+UnwindPlan::Row::CFAValue::Dump(Stream &s, const UnwindPlan* unwind_plan, Thread* thread) const
+{
+    switch(m_type) {
+    case isRegisterPlusOffset:
+        DumpRegisterName(s, unwind_plan, thread, m_value.reg.reg_num);
+        s.Printf ("%+3d", m_value.reg.offset);
+        break;
+    case isRegisterDereferenced:
+        s.PutChar ('[');
+        DumpRegisterName(s, unwind_plan, thread, m_value.reg.reg_num);
+        s.PutChar (']');
+        break;
+    case isDWARFExpression:
+        s.PutCString ("dwarf-expr");
+        break;
+    default:
+        s.PutCString ("unspecified");
+        break;
+    }
+}
+
 void
 UnwindPlan::Row::Clear ()
 {
-    m_cfa_type = CFAIsRegisterPlusOffset;
+    m_cfa_value.SetUnspecified();
     m_offset = 0;
-    m_cfa_reg_num = LLDB_INVALID_REGNUM;
-    m_cfa_offset = 0;
     m_register_locations.clear();
 }
 
 void
 UnwindPlan::Row::Dump (Stream& s, const UnwindPlan* unwind_plan, Thread* thread, addr_t base_addr) const
 {
-    const RegisterInfo *reg_info = unwind_plan->GetRegisterInfo (thread, GetCFARegister());
-
     if (base_addr != LLDB_INVALID_ADDRESS)
         s.Printf ("0x%16.16" PRIx64 ": CFA=", base_addr + GetOffset());
     else
         s.Printf ("%4" PRId64 ": CFA=", GetOffset());
             
-    if (reg_info)
-        s.Printf ("%s", reg_info->name);
-    else
-        s.Printf ("reg(%u)", GetCFARegister());
-    s.Printf ("%+3d => ", GetCFAOffset ());
+    m_cfa_value.Dump(s, unwind_plan, thread);
+    s.Printf(" => ");
     for (collection::const_iterator idx = m_register_locations.begin (); idx != m_register_locations.end (); ++idx)
     {
-        reg_info = unwind_plan->GetRegisterInfo (thread, idx->first);
-        if (reg_info)
-            s.Printf ("%s", reg_info->name);
-        else
-            s.Printf ("reg(%u)", idx->first);
+        DumpRegisterName(s, unwind_plan, thread, idx->first);
         const bool verbose = false;
         idx->second.Dump(s, unwind_plan, this, thread, verbose);
         s.PutChar (' ');
@@ -191,9 +212,7 @@ UnwindPlan::Row::Dump (Stream& s, const UnwindPlan* unwind_plan, Thread* thread,
 
 UnwindPlan::Row::Row() :
     m_offset (0),
-    m_cfa_type (CFAIsRegisterPlusOffset),
-    m_cfa_reg_num (LLDB_INVALID_REGNUM),
-    m_cfa_offset (0),
+    m_cfa_value (),
     m_register_locations ()
 {
 }
@@ -302,35 +321,11 @@ UnwindPlan::Row::SetRegisterLocationToSame (uint32_t reg_num, bool must_replace)
     return true;
 }
 
-void
-UnwindPlan::Row::SetCFARegister (uint32_t reg_num)
-{
-    m_cfa_reg_num = reg_num;
-}
-
 bool
 UnwindPlan::Row::operator == (const UnwindPlan::Row& rhs) const
 {
-    if (m_offset != rhs.m_offset || m_cfa_reg_num != rhs.m_cfa_reg_num || m_cfa_offset != rhs.m_cfa_offset)
-        return false;
-
-    if (m_cfa_type != rhs.m_cfa_type)
-        return false;
-
-    if (m_cfa_type == CFAIsRegisterPlusOffset)
-    {
-        if (m_cfa_reg_num != rhs.m_cfa_reg_num)
-            return false;
-        if (m_cfa_offset != rhs.m_cfa_offset)
-            return false;
-    }
-    if (m_cfa_type == CFAIsRegisterDereferenced)
-    {
-        if (m_cfa_reg_num != rhs.m_cfa_reg_num)
-            return false;
-    }
-
-    return m_register_locations == rhs.m_register_locations;
+    return m_offset == rhs.m_offset && m_cfa_value == rhs.m_cfa_value &&
+        m_register_locations == rhs.m_register_locations;
 }
 
 void
@@ -439,7 +434,10 @@ UnwindPlan::PlanValidAtAddress (Address addr)
 
     // If the 0th Row of unwind instructions is missing, or if it doesn't provide
     // a register to use to find the Canonical Frame Address, this is not a valid UnwindPlan.
-    if (GetRowAtIndex(0).get() == nullptr || GetRowAtIndex(0)->GetCFARegister() == LLDB_INVALID_REGNUM)
+    // CFA set by a DWARF expression is not currently supported, so ignore that as well.
+    if (GetRowAtIndex(0).get() == nullptr ||
+            GetRowAtIndex(0)->GetCFAValue().GetValueType() == Row::CFAValue::unspecified ||
+            GetRowAtIndex(0)->GetCFAValue().GetValueType() == Row::CFAValue::isDWARFExpression)
     {
         Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
         if (log)

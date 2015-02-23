@@ -385,8 +385,7 @@ ABISysV_hexagon::CreateFunctionEntryUnwindPlan ( UnwindPlan &unwind_plan )
     UnwindPlan::RowSP row(new UnwindPlan::Row);
 
     // Our Call Frame Address is the stack pointer value
-    row->SetCFARegister(LLDB_REGNUM_GENERIC_SP);
-    row->SetCFAOffset(4);
+    row->GetCFAValue().SetIsRegisterPlusOffset (LLDB_REGNUM_GENERIC_SP, 4);
     row->SetOffset(0);
 
     // The previous PC is in the LR
@@ -410,8 +409,7 @@ ABISysV_hexagon::CreateDefaultUnwindPlan ( UnwindPlan &unwind_plan )
 
     UnwindPlan::RowSP row(new UnwindPlan::Row);
 
-    row->SetCFARegister(LLDB_REGNUM_GENERIC_FP);
-    row->SetCFAOffset(8);
+    row->GetCFAValue().SetIsRegisterPlusOffset (LLDB_REGNUM_GENERIC_FP, 8);
 
     row->SetRegisterLocationToAtCFAPlusOffset(fp_reg_num,-8, true);
     row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num,-4, true);

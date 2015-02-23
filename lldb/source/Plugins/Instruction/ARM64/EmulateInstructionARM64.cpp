@@ -349,7 +349,7 @@ EmulateInstructionARM64::CreateFunctionEntryUnwind (UnwindPlan &unwind_plan)
     const bool can_replace = false;
 
     // Our previous Call Frame Address is the stack pointer
-    row->SetCFARegister (arm64_dwarf::sp);
+    row->GetCFAValue().SetIsRegisterPlusOffset(arm64_dwarf::sp, 0);
     
     // Our previous PC is in the LR
     row->SetRegisterLocationToRegister(arm64_dwarf::pc, arm64_dwarf::lr, can_replace);

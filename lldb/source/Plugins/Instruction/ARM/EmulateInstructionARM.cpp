@@ -13643,7 +13643,7 @@ EmulateInstructionARM::CreateFunctionEntryUnwind (UnwindPlan &unwind_plan)
     UnwindPlan::RowSP row(new UnwindPlan::Row);
 
     // Our previous Call Frame Address is the stack pointer
-    row->SetCFARegister (dwarf_sp);
+    row->GetCFAValue().SetIsRegisterPlusOffset (dwarf_sp, 0);
     
     // Our previous PC is in the LR
     row->SetRegisterLocationToRegister(dwarf_pc, dwarf_lr, true);

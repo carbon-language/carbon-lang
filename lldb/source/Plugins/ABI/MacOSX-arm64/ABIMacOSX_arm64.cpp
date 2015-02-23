@@ -562,7 +562,7 @@ ABIMacOSX_arm64::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
     UnwindPlan::RowSP row(new UnwindPlan::Row);
     
     // Our previous Call Frame Address is the stack pointer
-    row->SetCFARegister (sp_reg_num);
+    row->GetCFAValue().SetIsRegisterPlusOffset (sp_reg_num, 0);
     
     // Our previous PC is in the LR
     row->SetRegisterLocationToRegister(pc_reg_num, lr_reg_num, true);
@@ -589,8 +589,7 @@ ABIMacOSX_arm64::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
     UnwindPlan::RowSP row(new UnwindPlan::Row);    
     const int32_t ptr_size = 8;
     
-    row->SetCFARegister (fp_reg_num);
-    row->SetCFAOffset (2 * ptr_size);
+    row->GetCFAValue().SetIsRegisterPlusOffset (fp_reg_num, 2 * ptr_size);
     row->SetOffset (0);
     
     row->SetRegisterLocationToAtCFAPlusOffset(fp_reg_num, ptr_size * -2, true);

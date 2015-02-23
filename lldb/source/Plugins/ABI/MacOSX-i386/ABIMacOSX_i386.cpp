@@ -746,8 +746,7 @@ ABIMacOSX_i386::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
     uint32_t pc_reg_num = dwarf_eip;
     
     UnwindPlan::RowSP row(new UnwindPlan::Row);
-    row->SetCFARegister (sp_reg_num);
-    row->SetCFAOffset (4);
+    row->GetCFAValue().SetIsRegisterPlusOffset (sp_reg_num, 4);
     row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, -4, false);
     row->SetRegisterLocationToIsCFAPlusOffset(sp_reg_num, 0, true);
     unwind_plan.AppendRow (row);
@@ -774,8 +773,7 @@ ABIMacOSX_i386::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
     UnwindPlan::RowSP row(new UnwindPlan::Row);
     const int32_t ptr_size = 4;
 
-    row->SetCFARegister (fp_reg_num);
-    row->SetCFAOffset (2 * ptr_size);
+    row->GetCFAValue().SetIsRegisterPlusOffset (fp_reg_num, 2 * ptr_size);
     row->SetOffset (0);
     
     row->SetRegisterLocationToAtCFAPlusOffset(fp_reg_num, ptr_size * -2, true);

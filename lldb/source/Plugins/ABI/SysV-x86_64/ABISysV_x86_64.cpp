@@ -1084,8 +1084,7 @@ ABISysV_x86_64::CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan)
     uint32_t pc_reg_num = gcc_dwarf_rip;
     
     UnwindPlan::RowSP row(new UnwindPlan::Row);
-    row->SetCFARegister (sp_reg_num);
-    row->SetCFAOffset (8);
+    row->GetCFAValue().SetIsRegisterPlusOffset(sp_reg_num, 8);
     row->SetRegisterLocationToAtCFAPlusOffset(pc_reg_num, -8, false);
     row->SetRegisterLocationToIsCFAPlusOffset(sp_reg_num, 0, true);
     unwind_plan.AppendRow (row);
@@ -1112,8 +1111,7 @@ ABISysV_x86_64::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
     UnwindPlan::RowSP row(new UnwindPlan::Row);
 
     const int32_t ptr_size = 8;
-    row->SetCFARegister (gcc_dwarf_rbp);
-    row->SetCFAOffset (2 * ptr_size);
+    row->GetCFAValue().SetIsRegisterPlusOffset(gcc_dwarf_rbp, 2 * ptr_size);
     row->SetOffset (0);
     
     row->SetRegisterLocationToAtCFAPlusOffset(fp_reg_num, ptr_size * -2, true);
