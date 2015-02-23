@@ -306,8 +306,6 @@ public:
                    InnermostEHScope(stable_end()) {}
   ~EHScopeStack() { delete[] StartOfBuffer; }
 
-  // Variadic templates would make this not terrible.
-
   /// Push a lazily-created cleanup on the stack.
   template <class T, class... As> void pushCleanup(CleanupKind Kind, As... A) {
     void *Buffer = pushCleanup(Kind, sizeof(T));
