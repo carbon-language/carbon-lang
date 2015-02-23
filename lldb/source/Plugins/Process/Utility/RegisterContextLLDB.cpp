@@ -1743,7 +1743,28 @@ RegisterContextLLDB::ReadCFAValueForRow (lldb::RegisterKind row_register_kind,
             }
             break;
         }
-    // TODO: handle isDWARFExpression
+    case UnwindPlan::Row::CFAValue::isDWARFExpression:
+        {
+            ExecutionContext exe_ctx(m_thread.shared_from_this());
+            Process *process = exe_ctx.GetProcessPtr();
+            DataExtractor dwarfdata (row->GetCFAValue().GetDWARFExpressionBytes(),
+                                     row->GetCFAValue().GetDWARFExpressionLength(),
+                                     process->GetByteOrder(), process->GetAddressByteSize());
+            ModuleSP opcode_ctx;
+            DWARFExpression dwarfexpr (opcode_ctx, dwarfdata, 0, row->GetCFAValue().GetDWARFExpressionLength());
+            dwarfexpr.SetRegisterKind (row_register_kind);
+            Value result;
+            Error error;
+            if (dwarfexpr.Evaluate (&exe_ctx, NULL, NULL, this, 0, NULL, result, &error))
+            {
+                cfa_value = result.GetScalar().ULongLong();
+
+                UnwindLogMsg ("CFA value set by DWARF expression is 0x%" PRIx64, cfa_value);
+                return true;
+            }
+            UnwindLogMsg ("Failed to set CFA value via DWARF expression: %s", error.AsCString());
+            break;
+        }
     default:
         return false;
     }

@@ -434,10 +434,8 @@ UnwindPlan::PlanValidAtAddress (Address addr)
 
     // If the 0th Row of unwind instructions is missing, or if it doesn't provide
     // a register to use to find the Canonical Frame Address, this is not a valid UnwindPlan.
-    // CFA set by a DWARF expression is not currently supported, so ignore that as well.
     if (GetRowAtIndex(0).get() == nullptr ||
-            GetRowAtIndex(0)->GetCFAValue().GetValueType() == Row::CFAValue::unspecified ||
-            GetRowAtIndex(0)->GetCFAValue().GetValueType() == Row::CFAValue::isDWARFExpression)
+            GetRowAtIndex(0)->GetCFAValue().GetValueType() == Row::CFAValue::unspecified)
     {
         Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
         if (log)
