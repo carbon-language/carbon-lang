@@ -22,7 +22,7 @@ for.body:                                         ; preds = %for.body, %entry
   %arrayidx = getelementptr inbounds double* %b, i64 %tmp
   %tmp1 = load double* %arrayidx, align 8
 ; The induction variable should carry the scaling factor: 1.
-; CHECK: [[IVNEXT]] = add nuw i64 [[IV]], 1
+; CHECK: [[IVNEXT]] = add nuw nsw i64 [[IV]], 1
   %indvars.iv.next = add i64 %indvars.iv, 1
   %arrayidx2 = getelementptr inbounds double* %c, i64 %indvars.iv.next
   %tmp2 = load double* %arrayidx2, align 8

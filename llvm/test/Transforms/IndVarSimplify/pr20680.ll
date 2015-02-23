@@ -204,8 +204,8 @@ for.cond2.for.inc13_crit_edge:                    ; preds = %for.cond2.for.inc13
   br label %for.inc13
 
 ; CHECK: [[for_inc13]]:
-; CHECK-NEXT: %[[indvars_iv_next]] = add nuw nsw i32 %[[indvars_iv]], 1
-; CHECK-NEXT: %[[exitcond4:.*]] = icmp ne i32 %[[indvars_iv]], -1
+; CHECK-NEXT: %[[indvars_iv_next]] = add nsw i32 %[[indvars_iv]], 1
+; CHECK-NEXT: %[[exitcond4:.*]] = icmp ne i32 %[[indvars_iv_next]], 0
 ; CHECK-NEXT: br i1 %[[exitcond4]], label %[[for_cond2_preheader]], label %[[for_end15:.*]]
 for.inc13:                                        ; preds = %for.cond2.for.inc13_crit_edge, %for.cond2.preheader
   %inc14 = add i8 %storemerge15, 1
