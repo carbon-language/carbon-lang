@@ -38,24 +38,22 @@ template <class ELFT> class ELFReference : public Reference {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
 public:
-  ELFReference(const Elf_Sym *sym, const Elf_Rela *rela, uint64_t off,
-               Reference::KindArch arch, Reference::KindValue relocType,
-               uint32_t idx)
-      : Reference(Reference::KindNamespace::ELF, arch, relocType), _sym(sym),
+  ELFReference(const Elf_Rela *rela, uint64_t off, Reference::KindArch arch,
+               Reference::KindValue relocType, uint32_t idx)
+      : Reference(Reference::KindNamespace::ELF, arch, relocType),
         _target(nullptr), _targetSymbolIndex(idx), _offsetInAtom(off),
         _addend(rela->r_addend) {}
 
-  ELFReference(const Elf_Sym *sym, uint64_t off, Reference::KindArch arch,
+  ELFReference(uint64_t off, Reference::KindArch arch,
                Reference::KindValue relocType, uint32_t idx)
-      : Reference(Reference::KindNamespace::ELF, arch, relocType), _sym(sym),
+      : Reference(Reference::KindNamespace::ELF, arch, relocType),
         _target(nullptr), _targetSymbolIndex(idx), _offsetInAtom(off),
         _addend(0) {}
 
   ELFReference(uint32_t edgeKind)
       : Reference(Reference::KindNamespace::all, Reference::KindArch::all,
                   edgeKind),
-        _sym(nullptr), _target(nullptr), _targetSymbolIndex(0),
-        _offsetInAtom(0), _addend(0) {}
+        _target(nullptr), _targetSymbolIndex(0), _offsetInAtom(0), _addend(0) {}
 
   uint64_t offsetInAtom() const override { return _offsetInAtom; }
 
@@ -74,12 +72,7 @@ public:
 
   void setTarget(const Atom *newAtom) override { _target = newAtom; }
 
-  /// Is used for lookup the symbol or section that refers is in the same group
-  /// or not in a group.
-  const Elf_Sym *symbol() const { return _sym; }
-
 private:
-  const Elf_Sym *_sym;
   const Atom *_target;
   uint64_t _targetSymbolIndex;
   uint64_t _offsetInAtom;

@@ -208,9 +208,11 @@ private:
           symbol->st_value + symContent.size() <= rit->r_offset)
         continue;
 
-      this->_references.push_back(new (this->_readerStorage) ELFReference<ELFT>(
-          symbol, rit->r_offset - symbol->st_value, this->kindArch(),
-          rit->getType(isMips64EL()), rit->getSymbol(isMips64EL())));
+      auto elfReference = new (this->_readerStorage) ELFReference<ELFT>(
+          rit->r_offset - symbol->st_value, this->kindArch(),
+          rit->getType(isMips64EL()), rit->getSymbol(isMips64EL()));
+      ELFFile<ELFT>::addReferenceToSymbol(elfReference, symbol);
+      this->_references.push_back(elfReference);
 
       auto addend = getAddend(*rit, secContent);
       auto pairRelType = getPairRelocation(*rit);

@@ -388,6 +388,17 @@ protected:
   bool redirectReferenceUsingUndefAtom(const Elf_Sym *sourceSymbol,
                                        const Elf_Sym *targetSymbol) const;
 
+  void addReferenceToSymbol(const ELFReference<ELFT> *r, const Elf_Sym *sym) {
+    _referenceToSymbol[r] = sym;
+  }
+
+  const Elf_Sym *findSymbolForReference(const ELFReference<ELFT> *r) const {
+    auto elfReferenceToSymbol = _referenceToSymbol.find(r);
+    if (elfReferenceToSymbol != _referenceToSymbol.end())
+      return elfReferenceToSymbol->second;
+    return nullptr;
+  }
+
   llvm::BumpPtrAllocator _readerStorage;
   std::unique_ptr<llvm::object::ELFFile<ELFT> > _objFile;
   atom_collection_vector<DefinedAtom> _definedAtoms;
@@ -405,6 +416,8 @@ protected:
   std::unordered_map<StringRef, range<Elf_Rel_Iter>> _relocationReferences;
   std::vector<ELFReference<ELFT> *> _references;
   llvm::DenseMap<const Elf_Sym *, Atom *> _symbolToAtomMapping;
+  llvm::DenseMap<const ELFReference<ELFT> *, const Elf_Sym *>
+  _referenceToSymbol;
   // Group child atoms have a pair corresponding to the signature and the
   // section header of the section that was used for generating the signature.
   llvm::DenseMap<const Elf_Sym *, std::pair<StringRef, const Elf_Shdr *>>
@@ -1016,9 +1029,11 @@ void ELFFile<ELFT>::createRelocationReferences(const Elf_Sym *symbol,
     if (rel.r_offset < symValue ||
         symValue + content.size() <= rel.r_offset)
       continue;
-    _references.push_back(new (_readerStorage) ELFReference<ELFT>(
-        symbol, &rel, rel.r_offset - symValue, kindArch(),
-        rel.getType(isMips64EL), rel.getSymbol(isMips64EL)));
+    auto elfRelocation = new (_readerStorage)
+        ELFReference<ELFT>(&rel, rel.r_offset - symValue, kindArch(),
+                           rel.getType(isMips64EL), rel.getSymbol(isMips64EL));
+    addReferenceToSymbol(elfRelocation, symbol);
+    _references.push_back(elfRelocation);
   }
 }
 
@@ -1033,11 +1048,13 @@ void ELFFile<ELFT>::createRelocationReferences(const Elf_Sym *symbol,
     if (rel.r_offset < symValue ||
         symValue + symContent.size() <= rel.r_offset)
       continue;
-    _references.push_back(new (_readerStorage) ELFReference<ELFT>(
-        symbol, rel.r_offset - symValue, kindArch(), rel.getType(isMips64EL),
-        rel.getSymbol(isMips64EL)));
+    auto elfRelocation = new (_readerStorage)
+        ELFReference<ELFT>(rel.r_offset - symValue, kindArch(),
+                           rel.getType(isMips64EL), rel.getSymbol(isMips64EL));
     int32_t addend = *(symContent.data() + rel.r_offset - symValue);
-    _references.back()->setAddend(addend);
+    elfRelocation->setAddend(addend);
+    addReferenceToSymbol(elfRelocation, symbol);
+    _references.push_back(elfRelocation);
   }
 }
 
@@ -1079,7 +1096,7 @@ template <class ELFT> void ELFFile<ELFT>::updateReferences() {
       // If the atom is not in mergeable string section, the target atom is
       // simply that atom.
       if (!isMergeableStringSection(shdr)) {
-        ri->setTarget(findAtom(ri->symbol(), symbol));
+        ri->setTarget(findAtom(findSymbolForReference(ri), symbol));
         continue;
       }
       updateReferenceForMergeStringAccess(ri, symbol, shdr);
