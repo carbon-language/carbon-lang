@@ -4,8 +4,7 @@ define i64 @t0(<1 x i64>* %a, i32* %b) {
 ; CHECK-LABEL: t0:
 ; CHECK:       ## BB#0: ## %entry
 ; CHECK-NEXT:    movq (%rdi), %mm0
-; CHECK-NEXT:    movd (%rsi), %mm1
-; CHECK-NEXT:    psllq %mm1, %mm0
+; CHECK-NEXT:    psllq (%rsi), %mm0
 ; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
 entry:
@@ -22,8 +21,7 @@ define i64 @t1(<1 x i64>* %a, i32* %b) {
 ; CHECK-LABEL: t1:
 ; CHECK:       ## BB#0: ## %entry
 ; CHECK-NEXT:    movq (%rdi), %mm0
-; CHECK-NEXT:    movd (%rsi), %mm1
-; CHECK-NEXT:    psrlq %mm1, %mm0
+; CHECK-NEXT:    psrlq (%rsi), %mm0
 ; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
 entry:
@@ -40,8 +38,7 @@ define i64 @t2(<1 x i64>* %a, i32* %b) {
 ; CHECK-LABEL: t2:
 ; CHECK:       ## BB#0: ## %entry
 ; CHECK-NEXT:    movq (%rdi), %mm0
-; CHECK-NEXT:    movd (%rsi), %mm1
-; CHECK-NEXT:    psllw %mm1, %mm0
+; CHECK-NEXT:    psllw (%rsi), %mm0
 ; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
 entry:
@@ -58,8 +55,7 @@ define i64 @t3(<1 x i64>* %a, i32* %b) {
 ; CHECK-LABEL: t3:
 ; CHECK:       ## BB#0: ## %entry
 ; CHECK-NEXT:    movq (%rdi), %mm0
-; CHECK-NEXT:    movd (%rsi), %mm1
-; CHECK-NEXT:    psrlw %mm1, %mm0
+; CHECK-NEXT:    psrlw (%rsi), %mm0
 ; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
 entry:
@@ -76,8 +72,7 @@ define i64 @t4(<1 x i64>* %a, i32* %b) {
 ; CHECK-LABEL: t4:
 ; CHECK:       ## BB#0: ## %entry
 ; CHECK-NEXT:    movq (%rdi), %mm0
-; CHECK-NEXT:    movd (%rsi), %mm1
-; CHECK-NEXT:    pslld %mm1, %mm0
+; CHECK-NEXT:    pslld (%rsi), %mm0
 ; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
 entry:
@@ -94,8 +89,7 @@ define i64 @t5(<1 x i64>* %a, i32* %b) {
 ; CHECK-LABEL: t5:
 ; CHECK:       ## BB#0: ## %entry
 ; CHECK-NEXT:    movq (%rdi), %mm0
-; CHECK-NEXT:    movd (%rsi), %mm1
-; CHECK-NEXT:    psrld %mm1, %mm0
+; CHECK-NEXT:    psrld (%rsi), %mm0
 ; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
 entry:
@@ -112,8 +106,7 @@ define i64 @t6(<1 x i64>* %a, i32* %b) {
 ; CHECK-LABEL: t6:
 ; CHECK:       ## BB#0: ## %entry
 ; CHECK-NEXT:    movq (%rdi), %mm0
-; CHECK-NEXT:    movd (%rsi), %mm1
-; CHECK-NEXT:    psraw %mm1, %mm0
+; CHECK-NEXT:    psraw (%rsi), %mm0
 ; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
 entry:
@@ -130,8 +123,7 @@ define i64 @t7(<1 x i64>* %a, i32* %b) {
 ; CHECK-LABEL: t7:
 ; CHECK:       ## BB#0: ## %entry
 ; CHECK-NEXT:    movq (%rdi), %mm0
-; CHECK-NEXT:    movd (%rsi), %mm1
-; CHECK-NEXT:    psrad %mm1, %mm0
+; CHECK-NEXT:    psrad (%rsi), %mm0
 ; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
 entry:
