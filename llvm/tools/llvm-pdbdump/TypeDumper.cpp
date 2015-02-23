@@ -9,6 +9,7 @@
 
 #include "TypeDumper.h"
 
+#include "ClassDefinitionDumper.h"
 #include "FunctionDumper.h"
 #include "llvm-pdbdump.h"
 #include "TypedefDumper.h"
@@ -18,10 +19,12 @@
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeEnum.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeFunctionSig.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeTypedef.h"
+#include "llvm/DebugInfo/PDB/PDBSymbolTypeUDT.h"
 
 using namespace llvm;
 
-TypeDumper::TypeDumper() : PDBSymDumper(true) {}
+TypeDumper::TypeDumper(bool Inline, bool ClassDefs)
+    : PDBSymDumper(true), InlineDump(Inline), FullClassDefs(ClassDefs) {}
 
 void TypeDumper::start(const PDBSymbolExe &Exe, raw_ostream &OS, int Indent) {
   auto Enums = Exe.findAllChildren<PDBSymbolTypeEnum>();
@@ -40,24 +43,55 @@ void TypeDumper::start(const PDBSymbolExe &Exe, raw_ostream &OS, int Indent) {
      << " items)";
   while (auto Typedef = Typedefs->getNext())
     Typedef->dump(OS, Indent + 2, *this);
+
+  auto Classes = Exe.findAllChildren<PDBSymbolTypeUDT>();
+  OS << newline(Indent) << "Classes: (" << Classes->getChildCount()
+     << " items)";
+  while (auto Class = Classes->getNext())
+    Class->dump(OS, Indent + 2, *this);
 }
 
 void TypeDumper::dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
                       int Indent) {
-  OS << newline(Indent) << "enum " << Symbol.getName();
+  if (Symbol.getUnmodifiedTypeId() != 0)
+    return;
+
+  if (!InlineDump)
+    OS << newline(Indent);
+
+  OS << "enum " << Symbol.getName();
 }
 
 void TypeDumper::dump(const PDBSymbolTypeFunctionSig &Symbol, raw_ostream &OS,
                       int Indent) {
-  OS << newline(Indent);
+  if (!InlineDump)
+    OS << newline(Indent);
+
   FunctionDumper Dumper;
   Dumper.start(Symbol, FunctionDumper::PointerType::None, OS);
 }
 
 void TypeDumper::dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
                       int Indent) {
-  OS << newline(Indent);
+  if (!InlineDump)
+    OS << newline(Indent);
+
   TypedefDumper Dumper;
   Dumper.start(Symbol, OS, Indent);
   OS.flush();
+}
+
+void TypeDumper::dump(const PDBSymbolTypeUDT &Symbol, raw_ostream &OS,
+                      int Indent) {
+  if (Symbol.getUnmodifiedTypeId() != 0)
+    return;
+  if (!InlineDump)
+    OS << newline(Indent);
+
+  if (FullClassDefs) {
+    ClassDefinitionDumper Dumper;
+    Dumper.start(Symbol, OS, Indent);
+  } else {
+    OS << "class " << Symbol.getName();
+  }
 }

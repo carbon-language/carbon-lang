@@ -127,8 +127,9 @@ void DumpDIAValue(llvm::raw_ostream &OS, int Indent, StringRef Name,
                   HRESULT (__stdcall IDiaSymbol::*Method)(ArgType *)) {
   ArgType Value;
   if (S_OK == (Symbol->*Method)(&Value)) {
+    OS << "\n";
     OS.indent(Indent);
-    OS << Name << ": " << Value << "\n";
+    OS << Name << ": " << Value;
   }
 }
 
@@ -142,8 +143,9 @@ void DumpDIAValue(llvm::raw_ostream &OS, int Indent, StringRef Name,
   ArrayRef<char> ByteArray(Bytes, ::SysStringByteLen(Value));
   std::string Result;
   if (llvm::convertUTF16ToUTF8String(ByteArray, Result)) {
+    OS << "\n";
     OS.indent(Indent);
-    OS << Name << ": " << Result << "\n";
+    OS << Name << ": " << Result;
   }
   ::SysFreeString(Value);
 }
@@ -155,8 +157,9 @@ void DumpDIAValue(llvm::raw_ostream &OS, int Indent, StringRef Name,
   Value.vt = VT_EMPTY;
   if (S_OK != (Symbol->*Method)(&Value))
     return;
-  Variant V = VariantFromVARIANT(Value);
+  OS << "\n";
   OS.indent(Indent);
+  Variant V = VariantFromVARIANT(Value);
   OS << V;
 }
 }
@@ -201,7 +204,6 @@ void DIARawSymbol::dump(raw_ostream &OS, int Indent,
   RAW_METHOD_DUMP(OS, get_frontEndMinor)
   RAW_METHOD_DUMP(OS, get_frontEndBuild)
   RAW_METHOD_DUMP(OS, get_frontEndQFE)
-  RAW_METHOD_DUMP(OS, get_count)
   RAW_METHOD_DUMP(OS, get_lexicalParentId)
   RAW_METHOD_DUMP(OS, get_libraryName)
   RAW_METHOD_DUMP(OS, get_liveRangeStartAddressOffset)

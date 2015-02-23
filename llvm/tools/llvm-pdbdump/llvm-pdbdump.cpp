@@ -54,6 +54,8 @@ cl::opt<bool> DumpCompilands("compilands", cl::desc("Display compilands"));
 cl::opt<bool> DumpSymbols("symbols",
                           cl::desc("Display symbols (implies --compilands"));
 cl::opt<bool> DumpTypes("types", cl::desc("Display types"));
+cl::opt<bool> DumpClassDefs("class-definitions",
+                            cl::desc("Display full class definitions"));
 }
 
 static void dumpInput(StringRef Path) {
@@ -85,7 +87,7 @@ static void dumpInput(StringRef Path) {
 
   if (opts::DumpTypes) {
     outs() << "\nDumping types";
-    TypeDumper Dumper;
+    TypeDumper Dumper(false, opts::DumpClassDefs);
     Dumper.start(*GlobalScope, outs(), 2);
   }
 

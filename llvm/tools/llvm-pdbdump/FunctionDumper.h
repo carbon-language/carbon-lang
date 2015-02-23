@@ -22,7 +22,8 @@ public:
 
   void start(const PDBSymbolTypeFunctionSig &Symbol, PointerType Pointer,
              raw_ostream &OS);
-  void start(const PDBSymbolFunc &Symbol, raw_ostream &OS);
+  void start(const PDBSymbolFunc &Symbol, PointerType Pointer, raw_ostream &OS,
+             int Indent);
 
   void dump(const PDBSymbolTypeArray &Symbol, raw_ostream &OS,
             int Indent) override;

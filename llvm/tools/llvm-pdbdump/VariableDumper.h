@@ -1,4 +1,4 @@
-//===- TypeDumper.h - PDBSymDumper implementation for types *- C++ ------*-===//
+//===- VariableDumper.h - PDBSymDumper implementation for types -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,22 +7,27 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMPDBDUMP_TYPEDUMPER_H
-#define LLVM_TOOLS_LLVMPDBDUMP_TYPEDUMPER_H
+#ifndef LLVM_TOOLS_LLVMPDBDUMP_VARIABLEDUMPER_H
+#define LLVM_TOOLS_LLVMPDBDUMP_VARIABLEDUMPER_H
 
 #include "llvm/DebugInfo/PDB/PDBSymDumper.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
 
-class TypeDumper : public PDBSymDumper {
+class VariableDumper : public PDBSymDumper {
 public:
-  TypeDumper(bool Inline, bool ClassDefs);
+  VariableDumper();
 
-  void start(const PDBSymbolExe &Exe, raw_ostream &OS, int Indent);
+  void start(const PDBSymbolData &Var, raw_ostream &OS, int Indent);
 
+  void dump(const PDBSymbolTypeBuiltin &Symbol, raw_ostream &OS,
+            int Indent) override;
   void dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
             int Indent) override;
   void dump(const PDBSymbolTypeFunctionSig &Symbol, raw_ostream &OS,
+            int Indent) override;
+  void dump(const PDBSymbolTypePointer &Symbol, raw_ostream &OS,
             int Indent) override;
   void dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
             int Indent) override;
@@ -30,8 +35,8 @@ public:
             int Indent) override;
 
 private:
-  bool InlineDump;
-  bool FullClassDefs;
+  void dumpSymbolTypeAndName(const PDBSymbol &Type, StringRef Name,
+                             raw_ostream &OS);
 };
 }
 

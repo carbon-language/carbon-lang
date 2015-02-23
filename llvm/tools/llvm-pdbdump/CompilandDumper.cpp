@@ -75,26 +75,11 @@ void CompilandDumper::dump(const PDBSymbolData &Symbol, raw_ostream &OS,
 
 void CompilandDumper::dump(const PDBSymbolFunc &Symbol, raw_ostream &OS,
                            int Indent) {
-  uint32_t FuncStart = Symbol.getRelativeVirtualAddress();
-  uint32_t FuncEnd = FuncStart + Symbol.getLength();
-  OS << newline(Indent) << "func [" << format_hex(FuncStart, 8);
-  if (auto DebugStart = Symbol.findOneChild<PDBSymbolFuncDebugStart>())
-    OS << "+" << DebugStart->getRelativeVirtualAddress() - FuncStart;
-  OS << " - " << format_hex(FuncEnd, 8);
-  if (auto DebugEnd = Symbol.findOneChild<PDBSymbolFuncDebugEnd>())
-    OS << "-" << FuncEnd - DebugEnd->getRelativeVirtualAddress();
-  OS << "] ";
-
-  if (Symbol.hasFramePointer())
-    OS << "(" << Symbol.getLocalBasePointerRegisterId() << ")";
-  else
-    OS << "(FPO)";
-
-  OS << " ";
+  if (Symbol.getLength() == 0)
+    return;
 
   FunctionDumper Dumper;
-  Dumper.start(Symbol, OS);
-  OS.flush();
+  Dumper.start(Symbol, FunctionDumper::PointerType::None, OS, Indent);
 }
 
 void CompilandDumper::dump(const PDBSymbolLabel &Symbol, raw_ostream &OS,

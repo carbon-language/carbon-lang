@@ -86,9 +86,9 @@ public:
 
   const IPDBSession &getSession() const { return Session; }
 
-protected:
   std::unique_ptr<IPDBEnumSymbols> getChildStats(TagStats &Stats) const;
 
+protected:
   const IPDBSession &Session;
   const std::unique_ptr<IPDBRawSymbol> RawSymbol;
 };

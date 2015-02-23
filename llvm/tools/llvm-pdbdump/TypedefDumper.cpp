@@ -27,10 +27,11 @@ TypedefDumper::TypedefDumper() : PDBSymDumper(true) {}
 
 void TypedefDumper::start(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
                           int Indent) {
-  OS << "typedef:" << Symbol.getName() << " -> ";
+  OS << "typedef ";
   uint32_t TargetId = Symbol.getTypeId();
   if (auto TypeSymbol = Symbol.getSession().getSymbolById(TargetId))
     TypeSymbol->dump(OS, 0, *this);
+  OS << " " << Symbol.getName();
 }
 
 void TypedefDumper::dump(const PDBSymbolTypeArray &Symbol, raw_ostream &OS,

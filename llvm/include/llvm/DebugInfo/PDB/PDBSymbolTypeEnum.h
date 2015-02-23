@@ -28,6 +28,7 @@ public:
 
   FORWARD_SYMBOL_METHOD(getBuiltinType)
   FORWARD_SYMBOL_METHOD(getClassParentId)
+  FORWARD_SYMBOL_METHOD(getUnmodifiedTypeId)
   FORWARD_SYMBOL_METHOD(hasConstructor)
   FORWARD_SYMBOL_METHOD(isConstType)
   FORWARD_SYMBOL_METHOD(hasAssignmentOperator)

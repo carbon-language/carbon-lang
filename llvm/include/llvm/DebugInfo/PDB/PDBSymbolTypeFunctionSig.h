@@ -33,6 +33,7 @@ public:
 
   FORWARD_SYMBOL_METHOD(getCallingConvention)
   FORWARD_SYMBOL_METHOD(getClassParentId)
+  FORWARD_SYMBOL_METHOD(getUnmodifiedTypeId)
   FORWARD_SYMBOL_METHOD(isConstType)
   FORWARD_SYMBOL_METHOD(getCount)
   FORWARD_SYMBOL_METHOD(getLexicalParentId)
