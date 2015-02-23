@@ -50,11 +50,12 @@ SmallPtrSetImplBase::insert_imp(const void *Ptr) {
     }
     // Otherwise, hit the big set case, which will call grow.
   }
-  
-  if (NumElements*4 >= CurArraySize*3) {
+
+  if (LLVM_UNLIKELY(NumElements * 4 >= CurArraySize * 3)) {
     // If more than 3/4 of the array is full, grow.
     Grow(CurArraySize < 64 ? 128 : CurArraySize*2);
-  } else if (CurArraySize-(NumElements+NumTombstones) < CurArraySize/8) {
+  } else if (LLVM_UNLIKELY(CurArraySize - (NumElements + NumTombstones) <
+                           CurArraySize / 8)) {
     // If fewer of 1/8 of the array is empty (meaning that many are filled with
     // tombstones), rehash.
     Grow(CurArraySize);
@@ -107,16 +108,16 @@ const void * const *SmallPtrSetImplBase::FindBucketFor(const void *Ptr) const {
   const void *const *Array = CurArray;
   const void *const *Tombstone = nullptr;
   while (1) {
-    // Found Ptr's bucket?
-    if (Array[Bucket] == Ptr)
-      return Array+Bucket;
-    
     // If we found an empty bucket, the pointer doesn't exist in the set.
     // Return a tombstone if we've seen one so far, or the empty bucket if
     // not.
-    if (Array[Bucket] == getEmptyMarker())
+    if (LLVM_LIKELY(Array[Bucket] == getEmptyMarker()))
       return Tombstone ? Tombstone : Array+Bucket;
-    
+
+    // Found Ptr's bucket?
+    if (LLVM_LIKELY(Array[Bucket] == Ptr))
+      return Array+Bucket;
+
     // If this is a tombstone, remember it.  If Ptr ends up not in the set, we
     // prefer to return it than something that would require more probing.
     if (Array[Bucket] == getTombstoneMarker() && !Tombstone)

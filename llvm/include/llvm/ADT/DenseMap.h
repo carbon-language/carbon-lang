@@ -442,11 +442,12 @@ private:
     // causing infinite loops in lookup.
     unsigned NewNumEntries = getNumEntries() + 1;
     unsigned NumBuckets = getNumBuckets();
-    if (NewNumEntries*4 >= NumBuckets*3) {
+    if (LLVM_UNLIKELY(NewNumEntries * 4 >= NumBuckets * 3)) {
       this->grow(NumBuckets * 2);
       LookupBucketFor(Key, TheBucket);
       NumBuckets = getNumBuckets();
-    } else if (NumBuckets-(NewNumEntries+getNumTombstones()) <= NumBuckets/8) {
+    } else if (LLVM_UNLIKELY(NumBuckets-(NewNumEntries+getNumTombstones()) <=
+                             NumBuckets/8)) {
       this->grow(NumBuckets);
       LookupBucketFor(Key, TheBucket);
     }
@@ -492,14 +493,14 @@ private:
     while (1) {
       const BucketT *ThisBucket = BucketsPtr + BucketNo;
       // Found Val's bucket?  If so, return it.
-      if (KeyInfoT::isEqual(Val, ThisBucket->getFirst())) {
+      if (LLVM_LIKELY(KeyInfoT::isEqual(Val, ThisBucket->getFirst()))) {
         FoundBucket = ThisBucket;
         return true;
       }
 
       // If we found an empty bucket, the key doesn't exist in the set.
       // Insert it and return the default value.
-      if (KeyInfoT::isEqual(ThisBucket->getFirst(), EmptyKey)) {
+      if (LLVM_LIKELY(KeyInfoT::isEqual(ThisBucket->getFirst(), EmptyKey))) {
         // If we've already seen a tombstone while probing, fill it in instead
         // of the empty bucket we eventually probed to.
         FoundBucket = FoundTombstone ? FoundTombstone : ThisBucket;

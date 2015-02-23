@@ -188,9 +188,10 @@ unsigned StringMapImpl::RehashTable(unsigned BucketNo) {
   // If the hash table is now more than 3/4 full, or if fewer than 1/8 of
   // the buckets are empty (meaning that many are filled with tombstones),
   // grow/rehash the table.
-  if (NumItems*4 > NumBuckets*3) {
+  if (LLVM_UNLIKELY(NumItems * 4 > NumBuckets * 3)) {
     NewSize = NumBuckets*2;
-  } else if (NumBuckets-(NumItems+NumTombstones) <= NumBuckets/8) {
+  } else if (LLVM_UNLIKELY(NumBuckets - (NumItems + NumTombstones) <=
+                           NumBuckets / 8)) {
     NewSize = NumBuckets;
   } else {
     return BucketNo;
