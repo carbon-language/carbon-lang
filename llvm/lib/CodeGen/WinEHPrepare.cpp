@@ -83,7 +83,6 @@ public:
   virtual Value *materializeValueFor(Value *V) override;
 
 private:
-  Function *OutlinedFn;
   FrameVarInfoMap &FrameVarInfo;
   IRBuilder<> Builder;
 };
@@ -582,8 +581,7 @@ CloningDirector::CloningAction WinEHCatchDirector::handleInstruction(
 
 WinEHFrameVariableMaterializer::WinEHFrameVariableMaterializer(
     Function *OutlinedFn, FrameVarInfoMap &FrameVarInfo)
-    : OutlinedFn(OutlinedFn), FrameVarInfo(FrameVarInfo),
-      Builder(OutlinedFn->getContext()) {
+    : FrameVarInfo(FrameVarInfo), Builder(OutlinedFn->getContext()) {
   Builder.SetInsertPoint(&OutlinedFn->getEntryBlock());
   // FIXME: Do something with the FrameVarMapped so that it is shared across the
   // function.
