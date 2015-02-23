@@ -6533,6 +6533,34 @@ bool AArch64TargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
   return NumBits1 > NumBits2;
 }
 
+/// Check if it is profitable to hoist instruction in then/else to if.
+/// Not profitable if I and it's user can form a FMA instruction
+/// because we prefer FMSUB/FMADD.
+bool AArch64TargetLowering::isProfitableToHoist(Instruction *I) const {
+  if (I->getOpcode() != Instruction::FMul)
+    return true;
+
+  if (I->getNumUses() != 1)
+    return true;
+
+  Instruction *User = I->user_back();
+
+  if (User &&
+      !(User->getOpcode() == Instruction::FSub ||
+        User->getOpcode() == Instruction::FAdd))
+    return true;
+
+  const TargetOptions &Options = getTargetMachine().Options;
+  EVT VT = getValueType(User->getOperand(0)->getType());
+
+  if (isFMAFasterThanFMulAndFAdd(VT) &&
+      isOperationLegalOrCustom(ISD::FMA, VT) &&
+      (Options.AllowFPOpFusion == FPOpFusion::Fast || Options.UnsafeFPMath))
+    return false;
+
+  return true;
+}
+
 // All 32-bit GPR operations implicitly zero the high-half of the corresponding
 // 64-bit GPR.
 bool AArch64TargetLowering::isZExtFree(Type *Ty1, Type *Ty2) const {

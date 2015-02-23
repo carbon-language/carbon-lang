@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/IR/CallingConv.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
@@ -285,6 +286,8 @@ public:
 
   bool isTruncateFree(Type *Ty1, Type *Ty2) const override;
   bool isTruncateFree(EVT VT1, EVT VT2) const override;
+
+  bool isProfitableToHoist(Instruction *I) const override;
 
   bool isZExtFree(Type *Ty1, Type *Ty2) const override;
   bool isZExtFree(EVT VT1, EVT VT2) const override;

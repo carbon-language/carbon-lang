@@ -1456,6 +1456,8 @@ public:
     return false;
   }
 
+  virtual bool isProfitableToHoist(Instruction *I) const { return true; }
+
   /// Return true if any actual instruction that defines a value of type Ty1
   /// implicitly zero-extends the value to Ty2 in the result register.
   ///

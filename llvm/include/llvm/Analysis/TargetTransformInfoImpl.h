@@ -225,6 +225,8 @@ public:
 
   bool isTruncateFree(Type *Ty1, Type *Ty2) { return false; }
 
+  bool isProfitableToHoist(Instruction *I) { return true; }
+
   bool isTypeLegal(Type *Ty) { return false; }
 
   unsigned getJumpBufAlignment() { return 0; }

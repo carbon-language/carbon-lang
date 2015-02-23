@@ -313,6 +313,10 @@ public:
   /// by referencing its sub-register AX.
   bool isTruncateFree(Type *Ty1, Type *Ty2) const;
 
+  /// \brief Return true if it is profitable to hoist instruction in the
+  /// then/else to before if.
+  bool isProfitableToHoist(Instruction *I) const;
+
   /// \brief Return true if this type is legal.
   bool isTypeLegal(Type *Ty) const;
 
@@ -521,6 +525,7 @@ public:
                                    int64_t BaseOffset, bool HasBaseReg,
                                    int64_t Scale) = 0;
   virtual bool isTruncateFree(Type *Ty1, Type *Ty2) = 0;
+  virtual bool isProfitableToHoist(Instruction *I) = 0;
   virtual bool isTypeLegal(Type *Ty) = 0;
   virtual unsigned getJumpBufAlignment() = 0;
   virtual unsigned getJumpBufSize() = 0;
@@ -632,6 +637,9 @@ public:
   }
   bool isTruncateFree(Type *Ty1, Type *Ty2) override {
     return Impl.isTruncateFree(Ty1, Ty2);
+  }
+  bool isProfitableToHoist(Instruction *I) override {
+    return Impl.isProfitableToHoist(I);
   }
   bool isTypeLegal(Type *Ty) override { return Impl.isTypeLegal(Ty); }
   unsigned getJumpBufAlignment() override { return Impl.getJumpBufAlignment(); }

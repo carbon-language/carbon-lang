@@ -1053,7 +1053,8 @@ static bool passingValueIsAlwaysUndefined(Value *V, Instruction *I);
 /// HoistThenElseCodeToIf - Given a conditional branch that goes to BB1 and
 /// BB2, hoist any common code in the two blocks up into the branch block.  The
 /// caller of this function guarantees that BI's block dominates BB1 and BB2.
-static bool HoistThenElseCodeToIf(BranchInst *BI, const DataLayout *DL) {
+static bool HoistThenElseCodeToIf(BranchInst *BI, const DataLayout *DL,
+                                  const TargetTransformInfo &TTI) {
   // This does very trivial matching, with limited scanning, to find identical
   // instructions in the two blocks.  In particular, we don't want to get into
   // O(M*N) situations here where M and N are the sizes of BB1 and BB2.  As
@@ -1087,6 +1088,9 @@ static bool HoistThenElseCodeToIf(BranchInst *BI, const DataLayout *DL) {
     // broken BB), instead clone it, and remove BI.
     if (isa<TerminatorInst>(I1))
       goto HoistTerminator;
+
+    if (!TTI.isProfitableToHoist(I1) || !TTI.isProfitableToHoist(I2))
+      return Changed;
 
     // For a normal instruction, we just move one to right before the branch,
     // then replace all uses of the other with the first.  Finally, we remove
@@ -4442,7 +4446,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
   // can hoist it up to the branching block.
   if (BI->getSuccessor(0)->getSinglePredecessor()) {
     if (BI->getSuccessor(1)->getSinglePredecessor()) {
-      if (HoistThenElseCodeToIf(BI, DL))
+      if (HoistThenElseCodeToIf(BI, DL, TTI))
         return SimplifyCFG(BB, TTI, BonusInstThreshold, DL, AC) | true;
     } else {
       // If Successor #1 has multiple preds, we may be able to conditionally

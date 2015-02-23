@@ -145,6 +145,10 @@ public:
     return getTLI()->isTruncateFree(Ty1, Ty2);
   }
 
+  bool isProfitableToHoist(Instruction *I) {
+    return getTLI()->isProfitableToHoist(I);
+  }
+
   bool isTypeLegal(Type *Ty) {
     EVT VT = getTLI()->getValueType(Ty);
     return getTLI()->isTypeLegal(VT);
