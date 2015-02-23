@@ -119,7 +119,7 @@ namespace llvm {
 
   /// SimplifyFDivInst - Given operands for an FDiv, see if we can
   /// fold the result.  If not, this returns null.
-  Value *SimplifyFDivInst(Value *LHS, Value *RHS,
+  Value *SimplifyFDivInst(Value *LHS, Value *RHS, FastMathFlags FMF,
                           const DataLayout *TD = nullptr,
                           const TargetLibraryInfo *TLI = nullptr,
                           const DominatorTree *DT = nullptr,
@@ -146,7 +146,7 @@ namespace llvm {
 
   /// SimplifyFRemInst - Given operands for an FRem, see if we can
   /// fold the result.  If not, this returns null.
-  Value *SimplifyFRemInst(Value *LHS, Value *RHS,
+  Value *SimplifyFRemInst(Value *LHS, Value *RHS, FastMathFlags FMF,
                           const DataLayout *TD = nullptr,
                           const TargetLibraryInfo *TLI = nullptr,
                           const DominatorTree *DT = nullptr,

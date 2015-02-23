@@ -1118,8 +1118,8 @@ Value *llvm::SimplifyUDivInst(Value *Op0, Value *Op1, const DataLayout *DL,
                             RecursionLimit);
 }
 
-static Value *SimplifyFDivInst(Value *Op0, Value *Op1, const Query &Q,
-                               unsigned) {
+static Value *SimplifyFDivInst(Value *Op0, Value *Op1, FastMathFlags FMF,
+                               const Query &Q, unsigned) {
   // undef / X -> undef    (the undef could be a snan).
   if (match(Op0, m_Undef()))
     return Op0;
@@ -1128,14 +1128,21 @@ static Value *SimplifyFDivInst(Value *Op0, Value *Op1, const Query &Q,
   if (match(Op1, m_Undef()))
     return Op1;
 
+  // 0 / X -> 0
+  // Requires that NaNs are off (X could be zero) and signed zeroes are
+  // ignored (X could be positive or negative, so the output sign is unknown).
+  if (FMF.noNaNs() && FMF.noSignedZeros() && match(Op0, m_AnyZero()))
+    return Op0;
+
   return nullptr;
 }
 
-Value *llvm::SimplifyFDivInst(Value *Op0, Value *Op1, const DataLayout *DL,
+Value *llvm::SimplifyFDivInst(Value *Op0, Value *Op1, FastMathFlags FMF,
+                              const DataLayout *DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyFDivInst(Op0, Op1, Query(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyFDivInst(Op0, Op1, FMF, Query(DL, TLI, DT, AC, CxtI),
                             RecursionLimit);
 }
 
@@ -1236,8 +1243,8 @@ Value *llvm::SimplifyURemInst(Value *Op0, Value *Op1, const DataLayout *DL,
                             RecursionLimit);
 }
 
-static Value *SimplifyFRemInst(Value *Op0, Value *Op1, const Query &,
-                               unsigned) {
+static Value *SimplifyFRemInst(Value *Op0, Value *Op1, FastMathFlags FMF,
+                               const Query &, unsigned) {
   // undef % X -> undef    (the undef could be a snan).
   if (match(Op0, m_Undef()))
     return Op0;
@@ -1246,14 +1253,21 @@ static Value *SimplifyFRemInst(Value *Op0, Value *Op1, const Query &,
   if (match(Op1, m_Undef()))
     return Op1;
 
+  // 0 % X -> 0
+  // Requires that NaNs are off (X could be zero) and signed zeroes are
+  // ignored (X could be positive or negative, so the output sign is unknown).
+  if (FMF.noNaNs() && FMF.noSignedZeros() && match(Op0, m_AnyZero()))
+    return Op0;
+
   return nullptr;
 }
 
-Value *llvm::SimplifyFRemInst(Value *Op0, Value *Op1, const DataLayout *DL,
+Value *llvm::SimplifyFRemInst(Value *Op0, Value *Op1, FastMathFlags FMF,
+                              const DataLayout *DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyFRemInst(Op0, Op1, Query(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyFRemInst(Op0, Op1, FMF, Query(DL, TLI, DT, AC, CxtI),
                             RecursionLimit);
 }
 
@@ -3423,10 +3437,12 @@ static Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
     return SimplifyFMulInst (LHS, RHS, FastMathFlags(), Q, MaxRecurse);
   case Instruction::SDiv: return SimplifySDivInst(LHS, RHS, Q, MaxRecurse);
   case Instruction::UDiv: return SimplifyUDivInst(LHS, RHS, Q, MaxRecurse);
-  case Instruction::FDiv: return SimplifyFDivInst(LHS, RHS, Q, MaxRecurse);
+  case Instruction::FDiv:
+      return SimplifyFDivInst(LHS, RHS, FastMathFlags(), Q, MaxRecurse);
   case Instruction::SRem: return SimplifySRemInst(LHS, RHS, Q, MaxRecurse);
   case Instruction::URem: return SimplifyURemInst(LHS, RHS, Q, MaxRecurse);
-  case Instruction::FRem: return SimplifyFRemInst(LHS, RHS, Q, MaxRecurse);
+  case Instruction::FRem:
+      return SimplifyFRemInst(LHS, RHS, FastMathFlags(), Q, MaxRecurse);
   case Instruction::Shl:
     return SimplifyShlInst(LHS, RHS, /*isNSW*/false, /*isNUW*/false,
                            Q, MaxRecurse);
@@ -3651,8 +3667,8 @@ Value *llvm::SimplifyInstruction(Instruction *I, const DataLayout *DL,
                               AC, I);
     break;
   case Instruction::FDiv:
-    Result = SimplifyFDivInst(I->getOperand(0), I->getOperand(1), DL, TLI, DT,
-                              AC, I);
+    Result = SimplifyFDivInst(I->getOperand(0), I->getOperand(1),
+                              I->getFastMathFlags(), DL, TLI, DT, AC, I);
     break;
   case Instruction::SRem:
     Result = SimplifySRemInst(I->getOperand(0), I->getOperand(1), DL, TLI, DT,
@@ -3663,8 +3679,8 @@ Value *llvm::SimplifyInstruction(Instruction *I, const DataLayout *DL,
                               AC, I);
     break;
   case Instruction::FRem:
-    Result = SimplifyFRemInst(I->getOperand(0), I->getOperand(1), DL, TLI, DT,
-                              AC, I);
+    Result = SimplifyFRemInst(I->getOperand(0), I->getOperand(1),
+                              I->getFastMathFlags(), DL, TLI, DT, AC, I);
     break;
   case Instruction::Shl:
     Result = SimplifyShlInst(I->getOperand(0), I->getOperand(1),

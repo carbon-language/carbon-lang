@@ -105,3 +105,12 @@ define float @nofold_fadd_x_0(float %a) {
 ; CHECK: ret float %no_zero
   ret float %no_zero
 }
+
+; fdiv nsz nnan 0, X ==> 0
+define double @fdiv_zero_by_x(double %X) {
+; CHECK-LABEL: @fdiv_zero_by_x(
+; 0 / X -> 0
+  %r = fdiv nnan nsz double 0.0, %X
+  ret double %r
+; CHECK: ret double 0
+}

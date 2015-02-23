@@ -1206,7 +1206,8 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return ReplaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyFDivInst(Op0, Op1, DL, TLI, DT, AC))
+  if (Value *V = SimplifyFDivInst(Op0, Op1, I.getFastMathFlags(),
+                                  DL, TLI, DT, AC))
     return ReplaceInstUsesWith(I, V);
 
   if (isa<Constant>(Op0))
@@ -1481,7 +1482,8 @@ Instruction *InstCombiner::visitFRem(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return ReplaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyFRemInst(Op0, Op1, DL, TLI, DT, AC))
+  if (Value *V = SimplifyFRemInst(Op0, Op1, I.getFastMathFlags(),
+                                  DL, TLI, DT, AC))
     return ReplaceInstUsesWith(I, V);
 
   // Handle cases involving: rem X, (select Cond, Y, Z)
