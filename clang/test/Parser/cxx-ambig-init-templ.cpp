@@ -170,15 +170,6 @@ namespace ElaboratedTypeSpecifiers {
   };
 }
 
-namespace AbstractPtrOperatorDeclarator {
-  template <int, typename> struct X {
-    operator int();
-  };
-  struct Y {
-    void f(int a = X<0, int (*)()>());
-  };
-}
-
 namespace PR20459 {
   template <typename EncTraits> struct A {
      void foo(int = EncTraits::template TypeEnc<int, int>::val); // ok
