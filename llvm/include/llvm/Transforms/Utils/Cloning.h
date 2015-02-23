@@ -147,7 +147,7 @@ public:
     StopCloningBB
   };
 
-  virtual ~CloningDirector() = default;
+  virtual ~CloningDirector() {}
 
   /// Subclasses must override this function to customize cloning behavior.
   virtual CloningAction handleInstruction(ValueToValueMapTy &VMap,
