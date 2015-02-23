@@ -280,11 +280,8 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
         const_reference at(size_type __pos) const
         {
             return __pos >= size()
-                ? throw out_of_range("string_view::at")
+                ? (throw out_of_range("string_view::at"), __data[0])
                 : __data[__pos];
-//             if (__pos >= size())
-//                 throw out_of_range("string_view::at");
-//             return __data[__pos]; 
         }
 
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
