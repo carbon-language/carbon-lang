@@ -163,7 +163,6 @@ void FunctionDumper::start(const PDBSymbolFunc &Symbol, PointerType Pointer,
         OS << ", ";
     }
   }
-  OS.flush();
   OS << ")";
   if (Symbol.isConstType())
     OS << " const";
@@ -202,8 +201,7 @@ void FunctionDumper::dump(const PDBSymbolTypeFunctionArg &Symbol,
                           raw_ostream &OS, int Indent) {
   // PDBSymbolTypeFunctionArg is just a shim over the real argument.  Just drill
   // through to the real thing and dump it.
-  Symbol.defaultDump(OS, Indent, PDB_DumpLevel::Detailed);
-  OS.flush();
+  Symbol.defaultDump(OS, Indent);
   uint32_t TypeId = Symbol.getTypeId();
   auto Type = Symbol.getSession().getSymbolById(TypeId);
   if (!Type)

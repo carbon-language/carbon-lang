@@ -67,50 +67,6 @@ enum class PDB_ReaderType {
   DIA = 0,
 };
 
-enum class PDB_DumpLevel {
-  Compact,
-  Normal,
-  Detailed,
-};
-
-enum PDB_DumpFlags {
-  PDB_DF_None = 0x0,
-  PDB_DF_Functions = 0x1,  // Dump functions
-  PDB_DF_Data = 0x2,       // Dump variables and constants
-  PDB_DF_Labels = 0x4,     // Dump labels
-  PDB_DF_PublicSyms = 0x8, // Dump public symbols
-  PDB_DF_Classes = 0x10,   // Dump class types
-  PDB_DF_Enums = 0x20,     // Dump enums
-  PDB_DF_Funcsigs = 0x40,  // Dump function signatures
-  PDB_DF_VTables = 0x80,   // Dump virtual function tables
-  PDB_DF_Thunks = 0x100,   // Dump thunks
-  PDB_DF_ObjFiles = 0x200, // Dump object files (compilands)
-  PDB_DF_Typedefs = 0x400, // Dump typedefs
-  PDB_DF_Children = 0x800, // Dump children of the current symbol
-  PDB_DF_Hidden = 0x1000,  // Dump everything.  This is not simply a bitwise
-                           // or of the previous flags.  It will find symbols
-                           // that would otherwise be missed, but can lead to
-                           // much slower dumps for large input files.
-  PDB_DF_All = 0x7FF
-};
-inline PDB_DumpFlags operator|(PDB_DumpFlags LHS, PDB_DumpFlags RHS) {
-  return static_cast<PDB_DumpFlags>((int)LHS | (int)RHS);
-}
-
-inline PDB_DumpFlags operator&(PDB_DumpFlags LHS, PDB_DumpFlags RHS) {
-  return static_cast<PDB_DumpFlags>((int)LHS & (int)RHS);
-}
-
-inline PDB_DumpFlags operator~(PDB_DumpFlags LHS) {
-  return static_cast<PDB_DumpFlags>(~(int)LHS);
-}
-inline PDB_DumpFlags &operator|=(PDB_DumpFlags &LHS, PDB_DumpFlags RHS) {
-  return (LHS = (LHS | RHS));
-}
-inline PDB_DumpFlags &operator&=(PDB_DumpFlags &LHS, PDB_DumpFlags RHS) {
-  return (LHS = (LHS & RHS));
-}
-
 /// Defines a 128-bit unique identifier.  This maps to a GUID on Windows, but
 /// is abstracted here for the purposes of non-Windows platforms that don't have
 /// the GUID structure defined.

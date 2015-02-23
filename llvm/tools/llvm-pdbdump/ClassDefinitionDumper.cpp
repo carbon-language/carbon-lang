@@ -85,7 +85,6 @@ void ClassDefinitionDumper::start(const PDBSymbolTypeUDT &Class,
   if (Count > 0)
     OS << newline(Indent);
   OS << "}";
-  OS.flush();
 }
 
 int ClassDefinitionDumper::dumpAccessGroup(PDB_MemberAccess Access,
@@ -147,7 +146,6 @@ void ClassDefinitionDumper::dump(const PDBSymbolTypeTypedef &Symbol,
   OS << newline(Indent);
   TypedefDumper Dumper;
   Dumper.start(Symbol, OS, Indent);
-  OS.flush();
 }
 
 void ClassDefinitionDumper::dump(const PDBSymbolTypeUDT &Symbol,

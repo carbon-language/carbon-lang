@@ -55,7 +55,7 @@ public:
   /// override the behavior to only dump known fields.
   virtual void dump(raw_ostream &OS, int Indent,
                     PDBSymDumper &Dumper) const = 0;
-  void defaultDump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const;
+  void defaultDump(raw_ostream &OS, int Indent) const;
 
   PDB_SymType getSymTag() const;
 

@@ -66,7 +66,6 @@ void TypedefDumper::dump(const PDBSymbolTypePointer &Symbol, raw_ostream &OS,
       Pointer = FunctionDumper::PointerType::Reference;
     FunctionDumper NestedDumper;
     NestedDumper.start(*FuncSig, Pointer, OS);
-    OS.flush();
   } else {
     PointeeType->dump(OS, Indent, *this);
     OS << ((Symbol.isReference()) ? "&" : "*");

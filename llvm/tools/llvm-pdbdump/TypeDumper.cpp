@@ -78,7 +78,6 @@ void TypeDumper::dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
 
   TypedefDumper Dumper;
   Dumper.start(Symbol, OS, Indent);
-  OS.flush();
 }
 
 void TypeDumper::dump(const PDBSymbolTypeUDT &Symbol, raw_ostream &OS,

@@ -19,7 +19,7 @@ class DIARawSymbol : public IPDBRawSymbol {
 public:
   DIARawSymbol(const DIASession &PDBSession, CComPtr<IDiaSymbol> DiaSymbol);
 
-  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override;
+  void dump(raw_ostream &OS, int Indent) const override;
 
   CComPtr<IDiaSymbol> getDiaSymbol() const { return Symbol; }
 

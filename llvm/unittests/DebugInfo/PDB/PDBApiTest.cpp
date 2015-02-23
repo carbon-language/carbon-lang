@@ -90,7 +90,7 @@ public:
   MockRawSymbol(PDB_SymType SymType)
       : Type(SymType) {}
 
-  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const override {}
+  void dump(raw_ostream &OS, int Indent) const override {}
 
   std::unique_ptr<IPDBEnumSymbols>
   findChildren(PDB_SymType Type) const override {

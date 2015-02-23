@@ -17,19 +17,16 @@ using namespace llvm;
 
 IPDBSourceFile::~IPDBSourceFile() {}
 
-void IPDBSourceFile::dump(raw_ostream &OS, int Indent,
-                          PDB_DumpLevel Level) const {
-  if (Level == PDB_DumpLevel::Compact) {
-    OS.indent(Indent);
-    PDB_Checksum ChecksumType = getChecksumType();
-    OS << "[";
-    if (ChecksumType != PDB_Checksum::None) {
-      OS << ChecksumType << ": ";
-      std::string Checksum = getChecksum();
-      for (uint8_t c : Checksum)
-        OS << format_hex_no_prefix(c, 2, true);
-    } else
-      OS << "No checksum";
-    OS << "] " << getFileName() << "\n";
-  }
+void IPDBSourceFile::dump(raw_ostream &OS, int Indent) const {
+  OS.indent(Indent);
+  PDB_Checksum ChecksumType = getChecksumType();
+  OS << "[";
+  if (ChecksumType != PDB_Checksum::None) {
+    OS << ChecksumType << ": ";
+    std::string Checksum = getChecksum();
+    for (uint8_t c : Checksum)
+      OS << format_hex_no_prefix(c, 2, true);
+  } else
+    OS << "No checksum";
+  OS << "] " << getFileName() << "\n";
 }

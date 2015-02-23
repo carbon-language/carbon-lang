@@ -28,7 +28,7 @@ class IPDBRawSymbol {
 public:
   virtual ~IPDBRawSymbol();
 
-  virtual void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const = 0;
+  virtual void dump(raw_ostream &OS, int Indent) const = 0;
 
   virtual std::unique_ptr<IPDBEnumSymbols>
   findChildren(PDB_SymType Type) const = 0;

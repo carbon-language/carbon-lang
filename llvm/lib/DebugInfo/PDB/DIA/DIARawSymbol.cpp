@@ -179,8 +179,7 @@ DIARawSymbol::DIARawSymbol(const DIASession &PDBSession,
 #define RAW_METHOD_DUMP(Stream, Method)                                        \
   DumpDIAValue(Stream, Indent, StringRef(#Method), Symbol, &IDiaSymbol::Method);
 
-void DIARawSymbol::dump(raw_ostream &OS, int Indent,
-                        PDB_DumpLevel Level) const {
+void DIARawSymbol::dump(raw_ostream &OS, int Indent) const {
   RAW_METHOD_DUMP(OS, get_access)
   RAW_METHOD_DUMP(OS, get_addressOffset)
   RAW_METHOD_DUMP(OS, get_addressSection)

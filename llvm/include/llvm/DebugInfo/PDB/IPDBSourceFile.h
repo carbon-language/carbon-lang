@@ -24,7 +24,7 @@ class IPDBSourceFile {
 public:
   virtual ~IPDBSourceFile();
 
-  void dump(raw_ostream &OS, int Indent, PDB_DumpLevel Level) const;
+  void dump(raw_ostream &OS, int Indent) const;
 
   virtual std::string getFileName() const = 0;
   virtual uint32_t getUniqueId() const = 0;

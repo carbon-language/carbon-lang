@@ -48,7 +48,6 @@ void VariableDumper::start(const PDBSymbolData &Var, raw_ostream &OS,
   case PDB_LocType::ThisRel: {
     int Offset = Var.getOffset();
     OS << "+" << format_hex(Var.getOffset(), 4) << " ";
-    OS.flush();
     dumpSymbolTypeAndName(*VarType, Var.getName(), OS);
     break;
   }

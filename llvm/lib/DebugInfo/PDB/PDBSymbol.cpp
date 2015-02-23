@@ -107,9 +107,8 @@ PDBSymbol::create(const IPDBSession &PDBSession,
 
 #define ELSE_TRY_DUMP_TYPE(Type, Dumper) else TRY_DUMP_TYPE(Type, Dumper)
 
-void PDBSymbol::defaultDump(raw_ostream &OS, int Indent,
-                            PDB_DumpLevel Level) const {
-  RawSymbol->dump(OS, Indent, Level);
+void PDBSymbol::defaultDump(raw_ostream &OS, int Indent) const {
+  RawSymbol->dump(OS, Indent);
 }
 
 PDB_SymType PDBSymbol::getSymTag() const { return RawSymbol->getSymTag(); }
