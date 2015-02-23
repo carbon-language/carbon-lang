@@ -12,6 +12,7 @@ lib/ReaderWriter/ELF
 
 - Weak references to symbols defined in a DSO should remain weak.
 
-- Section Groups.
-
 - Fix section flags as they appear in input (update content permissions)
+
+- Check for errors in the ELFReader when creating atoms for LinkOnce
+  sections/Group sections. Add tests to account for the change when it happens.

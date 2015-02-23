@@ -74,6 +74,8 @@ public:
 
   void setTarget(const Atom *newAtom) override { _target = newAtom; }
 
+  /// Is used for lookup the symbol or section that refers is in the same group
+  /// or not in a group.
   const Elf_Sym *symbol() const { return _sym; }
 
 private:

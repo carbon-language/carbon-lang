@@ -180,13 +180,13 @@ public:
       return targetAtom;
     if (!redirectReferenceUsingUndefAtom(sourceSymbol, targetSymbol))
       return targetAtom;
-    auto undefForGroupchild = _undefAtomsForgroupChild.find(targetSymbolName);
-    if (undefForGroupchild != _undefAtomsForgroupChild.end())
+    auto undefForGroupchild = _undefAtomsForGroupChild.find(targetSymbolName);
+    if (undefForGroupchild != _undefAtomsForGroupChild.end())
       return undefForGroupchild->getValue();
     auto undefGroupChildAtom =
         new (_readerStorage) SimpleUndefinedAtom(*this, targetSymbolName);
     _undefinedAtoms._atoms.push_back(undefGroupChildAtom);
-    return (_undefAtomsForgroupChild[targetSymbolName] = undefGroupChildAtom);
+    return (_undefAtomsForGroupChild[targetSymbolName] = undefGroupChildAtom);
   }
 
 protected:
@@ -318,7 +318,7 @@ protected:
 
   /// Returns true if the section is a gnulinkonce section.
   bool isGnuLinkOnceSection(StringRef sectionName) const {
-    return sectionName.startswith(".gnu.linkonce");
+    return sectionName.startswith(".gnu.linkonce.");
   }
 
   /// Returns true if the section is a COMDAT group section.
@@ -378,6 +378,12 @@ protected:
     return mergeAtom;
   }
 
+  /// References to the sections comprising a group, from sections
+  /// outside the group, must be made via global UNDEF symbols,
+  /// referencing global symbols defined as addresses in the group
+  /// sections. They may not reference local symbols for addresses in
+  /// the group's sections, including section symbols.
+  /// ABI Doc : https://mentorembedded.github.io/cxx-abi/abi/prop-72-comdat.html
   /// Does the atom need to be redirected using a separate undefined atom ?
   bool redirectReferenceUsingUndefAtom(const Elf_Sym *sourceSymbol,
                                        const Elf_Sym *targetSymbol) const;
@@ -403,7 +409,7 @@ protected:
   // section header of the section that was used for generating the signature.
   llvm::DenseMap<const Elf_Sym *, std::pair<StringRef, const Elf_Shdr *>>
       _groupChild;
-  llvm::StringMap<Atom *> _undefAtomsForgroupChild;
+  llvm::StringMap<Atom *> _undefAtomsForGroupChild;
 
   /// \brief Atoms that are created for a section that has the merge property
   /// set
@@ -891,6 +897,7 @@ std::error_code ELFFile<ELFT>::handleGnuLinkOnceSection(
     StringRef signature,
     llvm::StringMap<std::vector<ELFDefinedAtom<ELFT> *>> &atomsForSection,
     const Elf_Shdr *shdr) {
+  // TODO: Check for errors.
   unsigned int referenceStart = _references.size();
   std::vector<ELFReference<ELFT> *> refs;
   for (auto ha : atomsForSection[signature]) {
@@ -918,6 +925,7 @@ std::error_code ELFFile<ELFT>::handleSectionGroup(
     llvm::StringMap<std::vector<ELFDefinedAtom<ELFT> *>> &atomsForSection,
     llvm::DenseMap<const Elf_Shdr *, std::vector<StringRef>> &comdatSections,
     const Elf_Shdr *shdr) {
+  // TODO: Check for errors.
   unsigned int referenceStart = _references.size();
   std::vector<ELFReference<ELFT> *> refs;
   auto sectionNamesInGroup = comdatSections[shdr];
