@@ -686,7 +686,6 @@ public:
   LLVMContext& getLLVMContext() const { return Context; }
   void addPrototypeAST(std::unique_ptr<PrototypeAST> P);
   PrototypeAST* getPrototypeAST(const std::string &Name);
-  std::map<std::string, std::unique_ptr<FunctionAST>> FunctionDefs; 
 private:
   typedef std::map<std::string, std::unique_ptr<PrototypeAST>> PrototypeMap;
   LLVMContext &Context;
@@ -1238,7 +1237,7 @@ private:
     auto H = irGenStub(std::move(DefI->second));
 
     // Remove the map entry now that we're done with it.
-    Session.FunctionDefs.erase(DefI);
+    FunctionDefs.erase(DefI);
 
     // Return the address of the stub.
     return findMangledSymbolIn(H, Name).getAddress();
