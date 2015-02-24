@@ -11430,52 +11430,36 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
     }
   }
 
-  // Fold any combination of BUILD_VECTOR or UNDEF nodes into one BUILD_VECTOR.
-  // We have already tested above for an UNDEF only concatenation.
   // fold (concat_vectors (BUILD_VECTOR A, B, ...), (BUILD_VECTOR C, D, ...))
   // -> (BUILD_VECTOR A, B, ..., C, D, ...)
-  auto IsBuildVectorOrUndef = [](const SDValue &Op) {
-    return ISD::UNDEF == Op.getOpcode() || ISD::BUILD_VECTOR == Op.getOpcode();
-  };
-  bool AllBuildVectorsOrUndefs =
-      std::all_of(N->op_begin(), N->op_end(), IsBuildVectorOrUndef);
-  if (AllBuildVectorsOrUndefs) {
+  if (N->getNumOperands() == 2 &&
+      N->getOperand(0).getOpcode() == ISD::BUILD_VECTOR &&
+      N->getOperand(1).getOpcode() == ISD::BUILD_VECTOR) {
+    EVT VT = N->getValueType(0);
+    SDValue N0 = N->getOperand(0);
+    SDValue N1 = N->getOperand(1);
     SmallVector<SDValue, 8> Opnds;
-    EVT SVT = VT.getScalarType();
+    unsigned BuildVecNumElts =  N0.getNumOperands();
 
-    EVT MinVT = SVT;
-    if (!SVT.isFloatingPoint())
+    EVT SclTy0 = N0.getOperand(0)->getValueType(0);
+    EVT SclTy1 = N1.getOperand(0)->getValueType(0);
+    if (SclTy0.isFloatingPoint()) {
+      for (unsigned i = 0; i != BuildVecNumElts; ++i)
+        Opnds.push_back(N0.getOperand(i));
+      for (unsigned i = 0; i != BuildVecNumElts; ++i)
+        Opnds.push_back(N1.getOperand(i));
+    } else {
       // If BUILD_VECTOR are from built from integer, they may have different
       // operand types. Get the smaller type and truncate all operands to it.
-      for (const SDValue &Op : N->ops())
-        if (ISD::BUILD_VECTOR == Op.getOpcode()) {
-          EVT OpSVT = Op.getOperand(0)->getValueType(0);
-          MinVT = MinVT.bitsLE(OpSVT) ? MinVT : OpSVT;
-        }
-
-    for (const SDValue &Op : N->ops()) {
-      EVT OpVT = Op.getValueType();
-      unsigned NumElts = OpVT.getVectorNumElements();
-
-      if (ISD::UNDEF == Op.getOpcode())
-        for (unsigned i = 0; i != NumElts; ++i)
-          Opnds.push_back(DAG.getUNDEF(MinVT));
-
-      if (ISD::BUILD_VECTOR == Op.getOpcode()) {
-        if (SVT.isFloatingPoint()) {
-          assert(SVT == OpVT.getScalarType() && "Concat vector type mismatch");
-          for (unsigned i = 0; i != NumElts; ++i)
-            Opnds.push_back(Op.getOperand(i));
-        } else {
-          for (unsigned i = 0; i != NumElts; ++i)
-            Opnds.push_back(
-                DAG.getNode(ISD::TRUNCATE, SDLoc(N), MinVT, Op.getOperand(i)));
-        }
-      }
+      EVT MinTy = SclTy0.bitsLE(SclTy1) ? SclTy0 : SclTy1;
+      for (unsigned i = 0; i != BuildVecNumElts; ++i)
+        Opnds.push_back(DAG.getNode(ISD::TRUNCATE, SDLoc(N), MinTy,
+                        N0.getOperand(i)));
+      for (unsigned i = 0; i != BuildVecNumElts; ++i)
+        Opnds.push_back(DAG.getNode(ISD::TRUNCATE, SDLoc(N), MinTy,
+                        N1.getOperand(i)));
     }
 
-    assert(VT.getVectorNumElements() == Opnds.size() &&
-           "Concat vector type mismatch");
     return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(N), VT, Opnds);
   }
 
