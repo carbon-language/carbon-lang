@@ -1034,16 +1034,13 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
 
 /// @brief Collect loads which might form a reduction chain with @p StoreMA
 ///
-/// Check if the stored value for @p StoreMA is a binary operator with one
-/// or
-/// two loads as operands. If the binary operand is commutative &
-/// associative,
+/// Check if the stored value for @p StoreMA is a binary operator with one or
+/// two loads as operands. If the binary operand is commutative & associative,
 /// used only once (by @p StoreMA) and its load operands are also used only
 /// once, we have found a possible reduction chain. It starts at an operand
 /// load and includes the binary operator and @p StoreMA.
 ///
-/// Note: We allow only one use to ensure the load and binary operator
-/// cannot
+/// Note: We allow only one use to ensure the load and binary operator cannot
 ///       escape this block or into any other store except @p StoreMA.
 void ScopStmt::collectCandiateReductionLoads(
     MemoryAccess *StoreMA, SmallVectorImpl<MemoryAccess *> &Loads) {
@@ -1060,8 +1057,7 @@ void ScopStmt::collectCandiateReductionLoads(
   if (BinOp->getNumUses() != 1)
     return;
 
-  // Skip if the opcode of the binary operator is not
-  // commutative/associative
+  // Skip if the opcode of the binary operator is not commutative/associative
   if (!BinOp->isCommutative() || !BinOp->isAssociative())
     return;
 
@@ -1092,16 +1088,11 @@ void ScopStmt::collectCandiateReductionLoads(
 
 /// @brief Check for reductions in this ScopStmt
 ///
-/// Iterate over all store memory accesses and check for valid binary
-/// reduction
-/// like chains. For all candidates we check if they have the same base
-/// address
-/// and there are no other accesses which overlap with them. The base
-/// address
-/// check rules out impossible reductions candidates early. The overlap
-/// check,
-/// together with the "only one user" check in
-/// collectCandiateReductionLoads,
+/// Iterate over all store memory accesses and check for valid binary reduction
+/// like chains. For all candidates we check if they have the same base address
+/// and there are no other accesses which overlap with them. The base address
+/// check rules out impossible reductions candidates early. The overlap check,
+/// together with the "only one user" check in collectCandiateReductionLoads,
 /// guarantees that none of the intermediate results will escape during
 /// execution of the loop nest. We basically check here that no other memory
 /// access can access the same memory as the potential reduction.
@@ -1109,8 +1100,7 @@ void ScopStmt::checkForReductions() {
   SmallVector<MemoryAccess *, 2> Loads;
   SmallVector<std::pair<MemoryAccess *, MemoryAccess *>, 4> Candidates;
 
-  // First collect candidate load-store reduction chains by iterating over
-  // all
+  // First collect candidate load-store reduction chains by iterating over all
   // stores and collecting possible reduction loads.
   for (MemoryAccess *StoreMA : MemAccs) {
     if (StoreMA->isRead())
@@ -1323,13 +1313,10 @@ void Scop::simplifyAssumedContext() {
   // WARNING: This only holds if the assumptions we have taken do not reduce
   //          the set of statement instances that are executed. Otherwise we
   //          may run into a case where the iteration domains suggest that
-  //          for a certain set of parameter constraints no code is
-  //          executed,
+  //          for a certain set of parameter constraints no code is executed,
   //          but in the original program some computation would have been
-  //          performed. In such a case, modifying the run-time conditions
-  //          and
-  //          possibly influencing the run-time check may cause certain
-  //          scops
+  //          performed. In such a case, modifying the run-time conditions and
+  //          possibly influencing the run-time check may cause certain scops
   //          to not be executed.
   //
   // Example:
@@ -1341,8 +1328,7 @@ void Scop::simplifyAssumedContext() {
   //         A[i+p][j] = 1.0;
   //
   //   we assume that the condition m <= 0 or (m >= 1 and p >= 0) holds as
-  //   otherwise we would access out of bound data. Now, knowing that code
-  //   is
+  //   otherwise we would access out of bound data. Now, knowing that code is
   //   only executed for the case m >= 0, it is sufficient to assume p >= 0.
   AssumedContext =
       isl_set_gist_params(AssumedContext, isl_union_set_params(getDomains()));
@@ -1419,22 +1405,18 @@ static __isl_give isl_set *getAccessDomain(MemoryAccess *MA) {
 
 bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   // To create sound alias checks we perform the following steps:
-  //   o) Use the alias analysis and an alias set tracker to build alias
-  //   sets
+  //   o) Use the alias analysis and an alias set tracker to build alias sets
   //      for all memory accesses inside the SCoP.
   //   o) For each alias set we then map the aliasing pointers back to the
-  //      memory accesses we know, thus obtain groups of memory accesses
-  //      which
+  //      memory accesses we know, thus obtain groups of memory accesses which
   //      might alias.
   //   o) We divide each group based on the domains of the minimal/maximal
-  //      accesses. That means two minimal/maximal accesses are only in a
-  //      group
+  //      accesses. That means two minimal/maximal accesses are only in a group
   //      if their access domains intersect, otherwise they are in different
   //      ones.
   //   o) We split groups such that they contain at most one read only base
   //      address.
-  //   o) For each group with more than one base pointer we then compute
-  //   minimal
+  //   o) For each group with more than one base pointer we then compute minimal
   //      and maximal accesses to each array in this group.
   using AliasGroupTy = SmallVector<MemoryAccess *, 4>;
 
@@ -1534,8 +1516,7 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     }
 
     // If we have both read only and non read only base pointers we combine
-    // the non read only ones with exactly one read only one at a time into
-    // a
+    // the non read only ones with exactly one read only one at a time into a
     // new alias group and clear the old alias group in the end.
     for (const auto &ReadOnlyPair : ReadOnlyPairs) {
       AliasGroupTy AGNonReadOnly = AG;
@@ -2045,12 +2026,10 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
 
   DEBUG(dbgs()
         << "\n\nNOTE: Run time checks for " << scop->getNameStr()
-        << " could not be created as the number of parameters involved is "
-           "too "
+        << " could not be created as the number of parameters involved is too "
            "high. The SCoP will be "
            "dismissed.\nUse:\n\t--polly-rtc-max-parameters=X\nto adjust the "
-           "maximal number of parameters but be advised that the compile "
-           "time "
+           "maximal number of parameters but be advised that the compile time "
            "might increase exponentially.\n\n");
 
   delete scop;

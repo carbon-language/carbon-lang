@@ -468,7 +468,7 @@ class ScopStmt {
   /// @param Block          The basic block for which accesses should be
   ///                       created.
   /// @param isApproximated Flag to indicate blocks that might not be executed,
-  ///                       hence for which write accesses need to be modelt as
+  ///                       hence for which write accesses need to be modeled as
   ///                       may-write accesses.
   void buildAccesses(TempScop &tempScop, BasicBlock *Block,
                      bool isApproximated = false);
