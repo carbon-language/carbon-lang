@@ -55,14 +55,6 @@ set( LLDB_USED_LIBS
   lldbPluginInstrumentationRuntimeAddressSanitizer
   )
 
-# Need to export the API in the liblldb.dll for Windows
-# The lldbAPI source files are added directly in liblldb
-if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows" )
-  list(APPEND LLDB_USED_LIBS
-    lldbAPI
-    )
-endif ()
-
 # Windows-only libraries
 if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
   list(APPEND LLDB_USED_LIBS
