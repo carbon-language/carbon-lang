@@ -17,8 +17,10 @@ global variable.
 This will cause a link-time optimization pass to generate bitsets from the
 memory addresses referenced from the elements of the bitset metadata. The pass
 will lay out the referenced globals consecutively, so their definitions must
-be available at LTO time. An intrinsic, :ref:`llvm.bitset.test <bitset.test>`,
-generates code to test whether a given pointer is a member of a bitset.
+be available at LTO time. The `GlobalLayoutBuilder`_ class is responsible for
+laying out the globals efficiently to minimize the sizes of the underlying
+bitsets. An intrinsic, :ref:`llvm.bitset.test <bitset.test>`, generates code
+to test whether a given pointer is a member of a bitset.
 
 :Example:
 
@@ -64,3 +66,5 @@ generates code to test whether a given pointer is a member of a bitset.
       %d12 = call i1 @bar(i32* getelementptr ([2 x i32]* @d, i32 0, i32 1)) ; returns 1
       ret void
     }
+
+.. _GlobalLayoutBuilder: http://llvm.org/klaus/llvm/blob/master/include/llvm/Transforms/IPO/LowerBitSets.h

@@ -62,3 +62,30 @@ TEST(LowerBitSets, BitSetBuilder) {
     }
   }
 }
+
+TEST(LowerBitSets, GlobalLayoutBuilder) {
+  struct {
+    uint64_t NumObjects;
+    std::vector<std::set<uint64_t>> Fragments;
+    std::vector<uint64_t> WantLayout;
+  } GLBTests[] = {
+    {0, {}, {}},
+    {4, {{0, 1}, {2, 3}}, {0, 1, 2, 3}},
+    {3, {{0, 1}, {1, 2}}, {0, 1, 2}},
+    {4, {{0, 1}, {1, 2}, {2, 3}}, {0, 1, 2, 3}},
+    {4, {{0, 1}, {2, 3}, {1, 2}}, {0, 1, 2, 3}},
+    {6, {{2, 5}, {0, 1, 2, 3, 4, 5}}, {0, 1, 2, 5, 3, 4}},
+  };
+
+  for (auto &&T : GLBTests) {
+    GlobalLayoutBuilder GLB(T.NumObjects);
+    for (auto &&F : T.Fragments)
+      GLB.addFragment(F);
+
+    std::vector<uint64_t> ComputedLayout;
+    for (auto &&F : GLB.Fragments)
+      ComputedLayout.insert(ComputedLayout.end(), F.begin(), F.end());
+
+    EXPECT_EQ(T.WantLayout, ComputedLayout);
+  }
+}

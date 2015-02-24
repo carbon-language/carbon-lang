@@ -118,6 +118,35 @@ BitSetInfo BitSetBuilder::build() {
   return BSI;
 }
 
+void GlobalLayoutBuilder::addFragment(const std::set<uint64_t> &F) {
+  // Create a new fragment to hold the layout for F.
+  Fragments.emplace_back();
+  std::vector<uint64_t> &Fragment = Fragments.back();
+  uint64_t FragmentIndex = Fragments.size() - 1;
+
+  for (auto ObjIndex : F) {
+    uint64_t OldFragmentIndex = FragmentMap[ObjIndex];
+    if (OldFragmentIndex == 0) {
+      // We haven't seen this object index before, so just add it to the current
+      // fragment.
+      Fragment.push_back(ObjIndex);
+    } else {
+      // This index belongs to an existing fragment. Copy the elements of the
+      // old fragment into this one and clear the old fragment. We don't update
+      // the fragment map just yet, this ensures that any further references to
+      // indices from the old fragment in this fragment do not insert any more
+      // indices.
+      std::vector<uint64_t> &OldFragment = Fragments[OldFragmentIndex];
+      Fragment.insert(Fragment.end(), OldFragment.begin(), OldFragment.end());
+      OldFragment.clear();
+    }
+  }
+
+  // Update the fragment map to point our object indices to this fragment.
+  for (uint64_t ObjIndex : Fragment)
+    FragmentMap[ObjIndex] = FragmentIndex;
+}
+
 namespace {
 
 struct LowerBitSets : public ModulePass {
@@ -485,27 +514,66 @@ bool LowerBitSets::buildBitSets(Module &M) {
     // Build the list of bitsets and referenced globals in this disjoint set.
     std::vector<MDString *> BitSets;
     std::vector<GlobalVariable *> Globals;
+    llvm::DenseMap<MDString *, uint64_t> BitSetIndices;
+    llvm::DenseMap<GlobalVariable *, uint64_t> GlobalIndices;
     for (GlobalClassesTy::member_iterator MI = GlobalClasses.member_begin(I);
          MI != GlobalClasses.member_end(); ++MI) {
-      if ((*MI).is<MDString *>())
+      if ((*MI).is<MDString *>()) {
+        BitSetIndices[MI->get<MDString *>()] = BitSets.size();
         BitSets.push_back(MI->get<MDString *>());
-      else
+      } else {
+        GlobalIndices[MI->get<GlobalVariable *>()] = Globals.size();
         Globals.push_back(MI->get<GlobalVariable *>());
+      }
     }
 
-    // Order bitsets and globals by name for determinism. TODO: We may later
-    // want to use a more sophisticated ordering that lays out globals so as to
-    // minimize the sizes of the bitsets.
+    // For each bitset, build a set of indices that refer to globals referenced
+    // by the bitset.
+    std::vector<std::set<uint64_t>> BitSetMembers(BitSets.size());
+    if (BitSetNM) {
+      for (MDNode *Op : BitSetNM->operands()) {
+        // Op = { bitset name, global, offset }
+        if (!Op->getOperand(1))
+          continue;
+        auto I = BitSetIndices.find(cast<MDString>(Op->getOperand(0)));
+        if (I == BitSetIndices.end())
+          continue;
+
+        auto OpGlobal = cast<GlobalVariable>(
+            cast<ConstantAsMetadata>(Op->getOperand(1))->getValue());
+        BitSetMembers[I->second].insert(GlobalIndices[OpGlobal]);
+      }
+    }
+
+    // Order the sets of indices by size. The GlobalLayoutBuilder works best
+    // when given small index sets first.
+    std::stable_sort(
+        BitSetMembers.begin(), BitSetMembers.end(),
+        [](const std::set<uint64_t> &O1, const std::set<uint64_t> &O2) {
+          return O1.size() < O2.size();
+        });
+
+    // Create a GlobalLayoutBuilder and provide it with index sets as layout
+    // fragments. The GlobalLayoutBuilder tries to lay out members of fragments
+    // as close together as possible.
+    GlobalLayoutBuilder GLB(Globals.size());
+    for (auto &&MemSet : BitSetMembers)
+      GLB.addFragment(MemSet);
+
+    // Build a vector of globals with the computed layout.
+    std::vector<GlobalVariable *> OrderedGlobals(Globals.size());
+    auto OGI = OrderedGlobals.begin();
+    for (auto &&F : GLB.Fragments)
+      for (auto &&Offset : F)
+        *OGI++ = Globals[Offset];
+
+    // Order bitsets by name for determinism.
     std::sort(BitSets.begin(), BitSets.end(), [](MDString *S1, MDString *S2) {
       return S1->getString() < S2->getString();
     });
-    std::sort(Globals.begin(), Globals.end(),
-              [](GlobalVariable *GV1, GlobalVariable *GV2) {
-                return GV1->getName() < GV2->getName();
-              });
 
     // Build the bitsets from this disjoint set.
-    buildBitSetsFromGlobals(M, BitSets, Globals);
+    buildBitSetsFromGlobals(M, BitSets, OrderedGlobals);
   }
 
   return true;
