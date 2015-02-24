@@ -296,10 +296,6 @@ module warn_unused_local_typedef {
   header "warn-unused-local-typedef.h"
 }
 
-module initializer_list {
-  header "initializer_list"
-}
-
 module using_decl {
   module a { header "using-decl-a.h" export * }
   module b { header "using-decl-b.h" export * }
