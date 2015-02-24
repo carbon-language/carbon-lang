@@ -69,6 +69,10 @@ static cl::opt<bool> ListSymbolsOnly(
     "list-symbols-only", cl::init(false),
     cl::desc("Instead of running LTO, list the symbols in each IR file"));
 
+static cl::opt<bool> SetMergedModule(
+    "set-merged-module", cl::init(false),
+    cl::desc("Use the first input module as the merged module"));
+
 namespace {
 struct ModuleInfo {
   std::vector<bool> CanBeHidden;
@@ -194,15 +198,22 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    if (!CodeGen.addModule(Module.get()))
+    LTOModule *LTOMod = Module.get();
+
+    // We use the first input module as the destination module when
+    // SetMergedModule is true.
+    if (SetMergedModule && i == BaseArg) {
+      // Transfer ownership to the code generator.
+      CodeGen.setModule(Module.release());
+    } else if (!CodeGen.addModule(Module.get()))
       return 1;
 
-    unsigned NumSyms = Module->getSymbolCount();
+    unsigned NumSyms = LTOMod->getSymbolCount();
     for (unsigned I = 0; I < NumSyms; ++I) {
-      StringRef Name = Module->getSymbolName(I);
+      StringRef Name = LTOMod->getSymbolName(I);
       if (!DSOSymbolsSet.count(Name))
         continue;
-      lto_symbol_attributes Attrs = Module->getSymbolAttributes(I);
+      lto_symbol_attributes Attrs = LTOMod->getSymbolAttributes(I);
       unsigned Scope = Attrs & LTO_SYMBOL_SCOPE_MASK;
       if (Scope != LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN)
         KeptDSOSyms.push_back(Name);

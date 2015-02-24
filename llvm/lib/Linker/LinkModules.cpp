@@ -1748,6 +1748,10 @@ bool Linker::linkInModule(Module *Src) {
   return RetCode;
 }
 
+void Linker::setModule(Module *Dst) {
+  init(Dst, DiagnosticHandler);
+}
+
 //===----------------------------------------------------------------------===//
 // LinkModules entrypoint.
 //===----------------------------------------------------------------------===//

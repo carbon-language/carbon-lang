@@ -25,6 +25,7 @@ lto_module_dispose
 lto_api_version
 lto_codegen_set_diagnostic_handler
 lto_codegen_add_module
+lto_codegen_set_module
 lto_codegen_add_must_preserve_symbol
 lto_codegen_compile
 lto_codegen_create

@@ -40,7 +40,7 @@ typedef bool lto_bool_t;
  * @{
  */
 
-#define LTO_API_VERSION 12
+#define LTO_API_VERSION 13
 
 /**
  * \since prior to LTO_API_VERSION=3
@@ -394,6 +394,17 @@ lto_codegen_dispose(lto_code_gen_t);
  */
 extern lto_bool_t
 lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod);
+
+/**
+ * Sets the object module for code generation. This will transfer the ownship of
+ * the module to code generator.
+ *
+ * \c cg and \c mod must both be in the same context.
+ *
+ * \since prior to LTO_API_VERSION=13
+ */
+extern void
+lto_codegen_set_module(lto_code_gen_t cg, lto_module_t mod);
 
 /**
  * Sets if debug info should be generated.

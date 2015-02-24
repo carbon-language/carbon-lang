@@ -248,6 +248,10 @@ bool lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod) {
   return !unwrap(cg)->addModule(unwrap(mod));
 }
 
+void lto_codegen_set_module(lto_code_gen_t cg, lto_module_t mod) {
+  unwrap(cg)->setModule(unwrap(mod));
+}
+
 bool lto_codegen_set_debug_model(lto_code_gen_t cg, lto_debug_model debug) {
   unwrap(cg)->setDebugInfo(debug);
   return false;

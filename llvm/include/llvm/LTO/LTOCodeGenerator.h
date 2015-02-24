@@ -67,6 +67,9 @@ struct LTOCodeGenerator {
   // Merge given module, return true on success.
   bool addModule(struct LTOModule *);
 
+  // Set the destination module.
+  void setModule(struct LTOModule *);
+
   void setTargetOptions(TargetOptions options);
   void setDebugInfo(lto_debug_model);
   void setCodePICModel(lto_codegen_model);

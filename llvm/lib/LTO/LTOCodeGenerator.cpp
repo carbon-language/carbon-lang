@@ -141,6 +141,22 @@ bool LTOCodeGenerator::addModule(LTOModule *mod) {
   return !ret;
 }
 
+void LTOCodeGenerator::setModule(LTOModule *Mod) {
+  assert(&Mod->getModule().getContext() == &Context &&
+         "Expected module in same context");
+
+  // Delete the old merged module.
+  if (IRLinker.getModule())
+    IRLinker.deleteModule();
+  AsmUndefinedRefs.clear();
+
+  IRLinker.setModule(&Mod->getModule());
+
+  const std::vector<const char*> &Undefs = Mod->getAsmUndefinedRefs();
+  for (int I = 0, E = Undefs.size(); I != E; ++I)
+    AsmUndefinedRefs[Undefs[I]] = 1;
+}
+
 void LTOCodeGenerator::setTargetOptions(TargetOptions options) {
   Options = options;
 }
