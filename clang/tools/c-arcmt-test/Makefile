@@ -10,9 +10,6 @@ CLANG_LEVEL := ../..
 
 TOOLNAME = c-arcmt-test
 
-# No plugins, optimize startup time.
-TOOL_NO_EXPORTS = 1
-
 # Don't install this. It is used for tests.
 NO_INSTALL = 1
 
@@ -21,7 +18,8 @@ NO_INSTALL = 1
 # LINK_COMPONENTS before including Makefile.rules
 include $(CLANG_LEVEL)/../../Makefile.config
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc option
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter \
+                   instrumentation ipo support mc objcarcopts option
 
 # Note that 'USEDLIBS' must include all of the core clang libraries
 # when -static is given to linker on cygming.
@@ -33,6 +31,7 @@ USEDLIBS = clang.a \
 	   clangToolingCore.a \
 	   clangRewriteFrontend.a \
 	   clangRewrite.a \
+           clangCodeGen.a \
 	   clangFrontend.a clangDriver.a \
 	   clangStaticAnalyzerCheckers.a clangStaticAnalyzerCore.a \
 	   clangSerialization.a clangParse.a clangSema.a \
