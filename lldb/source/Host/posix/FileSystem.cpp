@@ -14,6 +14,11 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#ifdef __linux__
+#include <sys/statfs.h>
+#include <sys/mount.h>
+#include <linux/magic.h>
+#endif
 
 // lldb Includes
 #include "lldb/Core/Error.h"
@@ -175,12 +180,30 @@ FileSystem::Readlink(const char *path, char *buf, size_t buf_len)
     return error;
 }
 
+static bool IsLocal(const struct statfs& info)
+{
+#ifdef __linux__
+    #define CIFS_MAGIC_NUMBER 0xFF534D42
+    switch (info.f_type)
+    {
+    case NFS_SUPER_MAGIC:
+    case SMB_SUPER_MAGIC:
+    case CIFS_MAGIC_NUMBER:
+        return false;
+    default:
+        return true;
+    }
+#else
+    return (info.f_flags & MNT_LOCAL) != 0;
+#endif
+}
+
 bool
 FileSystem::IsLocal(const FileSpec &spec)
 {
     struct statfs statfs_info;
     std::string path (spec.GetPath());
-    if (statfs(path.c_str(), &statfs_info) == 0)
-        return (statfs_info.f_flags & MNT_LOCAL) != 0;
+    if (statfs(path.c_str(), &statfs_info) != 0)
+        return ::IsLocal(statfs_info);
     return false;
 }
