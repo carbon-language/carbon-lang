@@ -1644,10 +1644,13 @@ Value *FunctionStackPoisoner::createAllocaForLayout(
 void FunctionStackPoisoner::poisonStack() {
   assert(AllocaVec.size() > 0 || DynamicAllocaVec.size() > 0);
 
-  if (ClInstrumentAllocas)
+  if (ClInstrumentAllocas) {
     // Handle dynamic allocas.
-    for (auto &AllocaCall : DynamicAllocaVec)
+    for (auto &AllocaCall : DynamicAllocaVec) {
       handleDynamicAllocaCall(AllocaCall);
+      unpoisonDynamicAlloca(AllocaCall);
+    }
+  }
 
   if (AllocaVec.size() == 0) return;
 
@@ -1825,11 +1828,6 @@ void FunctionStackPoisoner::poisonStack() {
       poisonRedZones(L.ShadowBytes, IRBRet, ShadowBase, false);
     }
   }
-
-  if (ClInstrumentAllocas)
-    // Unpoison dynamic allocas.
-    for (auto &AllocaCall : DynamicAllocaVec)
-      unpoisonDynamicAlloca(AllocaCall);
 
   // We are done. Remove the old unused alloca instructions.
   for (auto AI : AllocaVec)
