@@ -66,21 +66,22 @@ X86RegisterInfo::X86RegisterInfo(const X86Subtarget &STI)
   Is64Bit = Subtarget.is64Bit();
   IsWin64 = Subtarget.isTargetWin64();
 
+  // Use a callee-saved register as the base pointer.  These registers must
+  // not conflict with any ABI requirements.  For example, in 32-bit mode PIC
+  // requires GOT in the EBX register before function calls via PLT GOT pointer.
   if (Is64Bit) {
     SlotSize = 8;
-    StackPtr = (Subtarget.isTarget64BitLP64() || Subtarget.isTargetNaCl64()) ?
-        X86::RSP : X86::ESP;
-    FramePtr = (Subtarget.isTarget64BitLP64() || Subtarget.isTargetNaCl64()) ?
-        X86::RBP : X86::EBP;
+    bool Use64BitReg = 
+      Subtarget.isTarget64BitLP64() || Subtarget.isTargetNaCl64();
+    StackPtr = Use64BitReg ? X86::RSP : X86::ESP;
+    FramePtr = Use64BitReg ? X86::RBP : X86::EBP;
+    BasePtr = Use64BitReg ? X86::RBX : X86::EBX;
   } else {
     SlotSize = 4;
     StackPtr = X86::ESP;
     FramePtr = X86::EBP;
+    BasePtr = X86::ESI;
   }
-  // Use a callee-saved register as the base pointer.  These registers must
-  // not conflict with any ABI requirements.  For example, in 32-bit mode PIC
-  // requires GOT in the EBX register before function calls via PLT GOT pointer.
-  BasePtr = Is64Bit ? X86::RBX : X86::ESI;
 }
 
 bool
