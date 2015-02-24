@@ -1639,7 +1639,7 @@ def : MipsInstAlias<"sync",
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//
 
-class LoadImm32< string instr_asm, Operand Od, RegisterOperand RO> :
+class LoadImm32<string instr_asm, Operand Od, RegisterOperand RO> :
   MipsAsmPseudoInst<(outs RO:$rt), (ins Od:$imm32),
                      !strconcat(instr_asm, "\t$rt, $imm32")> ;
 def LoadImm32Reg : LoadImm32<"li", uimm5, GPR32Opnd>;
