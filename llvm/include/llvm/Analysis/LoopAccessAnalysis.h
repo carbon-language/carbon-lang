@@ -120,7 +120,8 @@ public:
 
     /// Insert a pointer and calculate the start and end SCEVs.
     void insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr, bool WritePtr,
-                unsigned DepSetId, unsigned ASId, ValueToValueMap &Strides);
+                unsigned DepSetId, unsigned ASId,
+                const ValueToValueMap &Strides);
 
     /// \brief No run-time memory checking is necessary.
     bool empty() const { return Pointers.empty(); }
@@ -151,7 +152,7 @@ public:
 
   LoopAccessInfo(Loop *L, ScalarEvolution *SE, const DataLayout *DL,
                  const TargetLibraryInfo *TLI, AliasAnalysis *AA,
-                 DominatorTree *DT, ValueToValueMap &Strides);
+                 DominatorTree *DT, const ValueToValueMap &Strides);
 
   /// Return true we can analyze the memory accesses in the loop and there are
   /// no memory dependence cycles.
@@ -195,7 +196,7 @@ public:
 
 private:
   /// \brief Analyze the loop.  Substitute symbolic strides using Strides.
-  void analyzeLoop(ValueToValueMap &Strides);
+  void analyzeLoop(const ValueToValueMap &Strides);
 
   /// \brief Check if the structure of the loop allows it to be analyzed by this
   /// pass.
@@ -235,7 +236,7 @@ Value *stripIntegerCast(Value *V);
 /// Ptr.  \p PtrToStride provides the mapping between the pointer value and its
 /// stride as collected by LoopVectorizationLegality::collectStridedAccess.
 const SCEV *replaceSymbolicStrideSCEV(ScalarEvolution *SE,
-                                      ValueToValueMap &PtrToStride,
+                                      const ValueToValueMap &PtrToStride,
                                       Value *Ptr, Value *OrigPtr = nullptr);
 
 /// \brief This analysis provides dependence information for the memory accesses
@@ -263,7 +264,7 @@ public:
   /// of symbolic strides, \p Strides provides the mapping (see
   /// replaceSymbolicStrideSCEV).  If there is no cached result available run
   /// the analysis.
-  const LoopAccessInfo &getInfo(Loop *L, ValueToValueMap &Strides);
+  const LoopAccessInfo &getInfo(Loop *L, const ValueToValueMap &Strides);
 
   void releaseMemory() override {
     // Invalidate the cache when the pass is freed.
