@@ -135,7 +135,7 @@ public:
                              const MachineFunction &MF,
                              const VirtRegMap *VRM) const override;
 
-  void UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
+  void updateRegAllocHint(unsigned Reg, unsigned NewReg,
                           MachineFunction &MF) const override;
 
   bool avoidWriteAfterWrite(const TargetRegisterClass *RC) const override;

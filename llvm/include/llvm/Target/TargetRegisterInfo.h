@@ -694,13 +694,13 @@ public:
     return false;
   }
 
-  /// UpdateRegAllocHint - A callback to allow target a chance to update
+  /// updateRegAllocHint - A callback to allow target a chance to update
   /// register allocation hints when a register is "changed" (e.g. coalesced)
   /// to another register. e.g. On ARM, some virtual registers should target
   /// register pairs, if one of pair is coalesced to another register, the
   /// allocation hint of the other half of the pair should be changed to point
   /// to the new register.
-  virtual void UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
+  virtual void updateRegAllocHint(unsigned Reg, unsigned NewReg,
                                   MachineFunction &MF) const {
     // Do nothing.
   }

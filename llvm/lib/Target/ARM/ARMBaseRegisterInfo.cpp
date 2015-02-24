@@ -264,7 +264,7 @@ ARMBaseRegisterInfo::getRegAllocationHints(unsigned VirtReg,
 }
 
 void
-ARMBaseRegisterInfo::UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
+ARMBaseRegisterInfo::updateRegAllocHint(unsigned Reg, unsigned NewReg,
                                         MachineFunction &MF) const {
   MachineRegisterInfo *MRI = &MF.getRegInfo();
   std::pair<unsigned, unsigned> Hint = MRI->getRegAllocationHint(Reg);

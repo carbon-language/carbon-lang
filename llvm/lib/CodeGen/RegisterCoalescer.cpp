@@ -1393,7 +1393,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
   LIS->removeInterval(CP.getSrcReg());
 
   // Update regalloc hint.
-  TRI->UpdateRegAllocHint(CP.getSrcReg(), CP.getDstReg(), *MF);
+  TRI->updateRegAllocHint(CP.getSrcReg(), CP.getDstReg(), *MF);
 
   DEBUG({
     dbgs() << "\tSuccess: " << PrintReg(CP.getSrcReg(), TRI, CP.getSrcIdx())
