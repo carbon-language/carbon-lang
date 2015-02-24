@@ -272,7 +272,11 @@ FunctionTemplateDecl::newCommon(ASTContext &C) const {
 }
 
 void FunctionTemplateDecl::LoadLazySpecializations() const {
-  Common *CommonPtr = getCommonPtr();
+  // Grab the most recent declaration to ensure we've loaded any lazy
+  // redeclarations of this template.
+  //
+  // FIXME: Avoid walking the entire redeclaration chain here.
+  Common *CommonPtr = getMostRecentDecl()->getCommonPtr();
   if (CommonPtr->LazySpecializations) {
     ASTContext &Context = getASTContext();
     uint32_t *Specs = CommonPtr->LazySpecializations;
@@ -342,7 +346,11 @@ ClassTemplateDecl *ClassTemplateDecl::CreateDeserialized(ASTContext &C,
 }
 
 void ClassTemplateDecl::LoadLazySpecializations() const {
-  Common *CommonPtr = getCommonPtr();
+  // Grab the most recent declaration to ensure we've loaded any lazy
+  // redeclarations of this template.
+  //
+  // FIXME: Avoid walking the entire redeclaration chain here.
+  Common *CommonPtr = getMostRecentDecl()->getCommonPtr();
   if (CommonPtr->LazySpecializations) {
     ASTContext &Context = getASTContext();
     uint32_t *Specs = CommonPtr->LazySpecializations;
@@ -966,7 +974,11 @@ VarTemplateDecl *VarTemplateDecl::CreateDeserialized(ASTContext &C,
 // TODO: Unify across class, function and variable templates?
 //       May require moving this and Common to RedeclarableTemplateDecl.
 void VarTemplateDecl::LoadLazySpecializations() const {
-  Common *CommonPtr = getCommonPtr();
+  // Grab the most recent declaration to ensure we've loaded any lazy
+  // redeclarations of this template.
+  //
+  // FIXME: Avoid walking the entire redeclaration chain here.
+  Common *CommonPtr = getMostRecentDecl()->getCommonPtr();
   if (CommonPtr->LazySpecializations) {
     ASTContext &Context = getASTContext();
     uint32_t *Specs = CommonPtr->LazySpecializations;

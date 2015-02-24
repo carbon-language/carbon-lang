@@ -835,6 +835,15 @@ public:
        static_cast<const RedeclarableTemplateDecl *>(this)->getPreviousDecl());
   }
 
+  FunctionTemplateDecl *getMostRecentDecl() {
+    return cast<FunctionTemplateDecl>(
+        static_cast<RedeclarableTemplateDecl *>(this)
+            ->getMostRecentDecl());
+  }
+  const FunctionTemplateDecl *getMostRecentDecl() const {
+    return const_cast<FunctionTemplateDecl*>(this)->getMostRecentDecl();
+  }
+
   FunctionTemplateDecl *getInstantiatedFromMemberTemplate() {
     return cast_or_null<FunctionTemplateDecl>(
              RedeclarableTemplateDecl::getInstantiatedFromMemberTemplate());
@@ -2729,6 +2738,14 @@ public:
     return cast_or_null<VarTemplateDecl>(
             static_cast<const RedeclarableTemplateDecl *>(
               this)->getPreviousDecl());
+  }
+
+  VarTemplateDecl *getMostRecentDecl() {
+    return cast<VarTemplateDecl>(
+        static_cast<RedeclarableTemplateDecl *>(this)->getMostRecentDecl());
+  }
+  const VarTemplateDecl *getMostRecentDecl() const {
+    return const_cast<VarTemplateDecl *>(this)->getMostRecentDecl();
   }
 
   VarTemplateDecl *getInstantiatedFromMemberTemplate() {
