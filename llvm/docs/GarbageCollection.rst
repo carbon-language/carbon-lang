@@ -5,8 +5,8 @@ Garbage Collection with LLVM
 .. contents::
    :local:
 
-Introduction
-============
+Abstract
+========
 
 This document covers how to integrate LLVM into a compiler for a language which
 supports garbage collection.  **Note that LLVM itself does not provide a 
@@ -70,8 +70,12 @@ Finally, you need to link your runtime library with the generated program
 executable (for a static compiler) or ensure the appropriate symbols are 
 available for the runtime linker (for a JIT compiler).  
 
+
+Introduction
+============
+
 What is Garbage Collection?
-===========================
+---------------------------
 
 Garbage collection is a widely used technique that frees the programmer from
 having to know the lifetimes of heap objects, making software easier to produce
@@ -124,31 +128,34 @@ instance, the intrinsics permit:
 
 * generational collectors
 
-* reference counting
-
 * incremental collectors
 
 * concurrent collectors
 
 * cooperative collectors
 
-We hope that the primitive support built into the LLVM IR is sufficient to
-support a broad class of garbage collected languages including Scheme, ML, Java,
-C#, Perl, Python, Lua, Ruby, other scripting languages, and more.
+* reference counting
 
-However, LLVM does not itself provide a garbage collector --- this should be
-part of your language's runtime library.  LLVM provides a framework for compile
-time :ref:`code generation plugins <plugin>`.  The role of these plugins is to
+We hope that the support built into the LLVM IR is sufficient to support a 
+broad class of garbage collected languages including Scheme, ML, Java, C#, 
+Perl, Python, Lua, Ruby, other scripting languages, and more.
+
+Note that LLVM **does not itself provide a garbage collector** --- this should
+be part of your language's runtime library.  LLVM provides a framework for
+describing the garbage collectors requirements to the compiler.  In particular,
+LLVM provides support for generating stack maps at call sites, polling for a 
+safepoint, and emitting load and store barriers.  You can also extend LLVM - 
+possibly through a loadable :ref:`code generation plugins <plugin>` - to
 generate code and data structures which conforms to the *binary interface*
 specified by the *runtime library*.  This is similar to the relationship between
 LLVM and DWARF debugging info, for example.  The difference primarily lies in
 the lack of an established standard in the domain of garbage collection --- thus
-the plugins.
+the need for a flexible extension mechanism.
 
 The aspects of the binary interface with which LLVM's GC support is
 concerned are:
 
-* Creation of GC-safe points within code where collection is allowed to execute
+* Creation of GC safepoints within code where collection is allowed to execute
   safely.
 
 * Computation of the stack map.  For each safe point in the code, object
@@ -176,34 +183,13 @@ There are additional areas that LLVM does not directly address:
 In general, LLVM's support for GC does not include features which can be
 adequately addressed with other features of the IR and does not specify a
 particular binary interface.  On the plus side, this means that you should be
-able to integrate LLVM with an existing runtime.  On the other hand, it leaves a
-lot of work for the developer of a novel language.  However, it's easy to get
-started quickly and scale up to a more sophisticated implementation as your
-compiler matures.
-
-Runtime Requirements
-====================
-
-LLVM does not provide a garbage collector.  You should be able to leverage any existing collector library that includes the following elements:
-
-#. A memory allocator which exposes an allocation function your compiled 
-   code can call.
-
-#. A binary format for the stack map.  A stack map describes the location
-   of references at a safepoint and is used by precise collectors to identify
-   references within a stack frame on the machine stack. Note that collectors
-   which conservatively scan the stack don't require such a structure.
-
-#. A stack crawler to discover functions on the call stack, and enumerate the
-   references listed in the stack map for each call site.  
-
-#. A mechanism for identifying references in global locations (e.g. global 
-   variables).
-
-#. If you collector requires them, an LLVM IR implementation of your collectors
-   load and store barriers.  Note that since many collectors don't require 
-   barriers at all, LLVM defaults to lowering such barriers to normal loads 
-   and stores unless you arrange otherwise.
+able to integrate LLVM with an existing runtime.  On the other hand, it can 
+have the effect of leaving a lot of work for the developer of a novel 
+language.  We try to mitigate this by providing built in collector strategy 
+descriptions that can work with many common collector designs and easy 
+extension points.  If you don't already have a specific binary interface 
+you need to support, we recommend trying to use one of these built in collector 
+strategies.
 
 .. _gc_intrinsics:
 
@@ -511,6 +497,30 @@ lowering pass, you will need to build a patched version of LLVM.  If you think
 you need a patched build, please ask for advice on llvm-dev.  There may be an 
 easy way we can extend the support to make it work for your use case without 
 requiring a custom build.  
+
+Collector Requirements
+----------------------
+
+You should be able to leverage any existing collector library that includes the following elements:
+
+#. A memory allocator which exposes an allocation function your compiled 
+   code can call.
+
+#. A binary format for the stack map.  A stack map describes the location
+   of references at a safepoint and is used by precise collectors to identify
+   references within a stack frame on the machine stack. Note that collectors
+   which conservatively scan the stack don't require such a structure.
+
+#. A stack crawler to discover functions on the call stack, and enumerate the
+   references listed in the stack map for each call site.  
+
+#. A mechanism for identifying references in global locations (e.g. global 
+   variables).
+
+#. If you collector requires them, an LLVM IR implementation of your collectors
+   load and store barriers.  Note that since many collectors don't require 
+   barriers at all, LLVM defaults to lowering such barriers to normal loads 
+   and stores unless you arrange otherwise.
 
 
 Implementing a collector plugin
