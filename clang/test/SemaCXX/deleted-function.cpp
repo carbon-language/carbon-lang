@@ -87,3 +87,9 @@ int dc12 = use_dc({0}); // expected-error {{deleted}}
 int use_dcr(const DelCtor &); // expected-note {{here}}
 int dc13 = use_dcr(0); // expected-error {{deleted}}
 int dc14 = use_dcr({0}); // expected-error {{deleted}}
+
+struct DelCtorTemplate {
+  template<typename T> DelCtorTemplate(T) = delete; // expected-note {{deleted}}
+};
+int use_dct(const DelCtorTemplate &);
+int dc15 = use_dct(0); // expected-error {{deleted}}

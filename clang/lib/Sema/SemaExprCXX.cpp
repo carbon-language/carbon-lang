@@ -2591,7 +2591,7 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     S.CheckConstructorAccess(CastLoc, Constructor,
                              InitializedEntity::InitializeTemporary(Ty),
                              Constructor->getAccess());
-    if (S.DiagnoseUseOfDecl(FoundDecl, CastLoc))
+    if (S.DiagnoseUseOfDecl(Method, CastLoc))
       return ExprError();
 
     ExprResult Result = S.BuildCXXConstructExpr(
@@ -2609,7 +2609,7 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     assert(!From->getType()->isPointerType() && "Arg can't have pointer type!");
 
     S.CheckMemberOperatorAccess(CastLoc, From, /*arg*/ nullptr, FoundDecl);
-    if (S.DiagnoseUseOfDecl(FoundDecl, CastLoc))
+    if (S.DiagnoseUseOfDecl(Method, CastLoc))
       return ExprError();
 
     // Create an implicit call expr that calls it.
