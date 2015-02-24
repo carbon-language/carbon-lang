@@ -1,5 +1,5 @@
 =====================================
-Accurate Garbage Collection with LLVM
+Garbage Collection with LLVM
 =====================================
 
 .. contents::
@@ -7,6 +7,153 @@ Accurate Garbage Collection with LLVM
 
 Introduction
 ============
+
+This document covers how to integrate LLVM into a compiler for a language which
+supports garbage collection.  **Note that LLVM itself does not provide a 
+garbage collector.**  You must provide your own.  
+
+Getting started
+===============
+
+Using a GC with LLVM implies many things, for example:
+
+* Write a runtime library or find an existing one which implements a GC heap.
+
+  #. Implement a memory allocator.
+
+  #. Design a binary interface for the stack map, used to identify references
+     within a stack frame on the machine stack.\*
+
+  #. Implement a stack crawler to discover functions on the call stack.\*
+
+  #. Implement a registry for global roots.
+
+  #. Design a binary interface for type maps, used to identify references
+     within heap objects.
+
+  #. Implement a collection routine bringing together all of the above.
+
+* Emit compatible code from your compiler.
+
+  * Initialization in the main function.
+
+  * Use the ``gc "..."`` attribute to enable GC code generation (or
+    ``F.setGC("...")``).
+
+  * Use ``@llvm.gcroot`` to mark stack roots.
+
+  * Use ``@llvm.gcread`` and/or ``@llvm.gcwrite`` to manipulate GC references,
+    if necessary.
+
+  * Allocate memory using the GC allocation routine provided by the runtime
+    library.
+
+  * Generate type maps according to your runtime's binary interface.
+
+* Write a compiler plugin to interface LLVM with the runtime library.\*
+
+  * Lower ``@llvm.gcread`` and ``@llvm.gcwrite`` to appropriate code
+    sequences.\*
+
+  * Compile LLVM's stack map to the binary form expected by the runtime.
+
+* Load the plugin into the compiler.  Use ``llc -load`` or link the plugin
+  statically with your language's compiler.\*
+
+* Link program executables with the runtime.
+
+To help with several of these tasks (those indicated with a \*), LLVM includes a
+highly portable, built-in ShadowStack code generator.  It is compiled into
+``llc`` and works even with the interpreter and C backends.
+
+In your compiler
+----------------
+
+To turn the shadow stack on for your functions, first call:
+
+.. code-block:: c++
+
+  F.setGC(<collector description name>);
+
+for each function your compiler emits. Since the shadow stack is built into
+LLVM, you do not need to load a plugin.
+
+Your compiler must also use ``@llvm.gcroot`` as documented.  Don't forget to
+create a root for each intermediate value that is generated when evaluating an
+expression.  In ``h(f(), g())``, the result of ``f()`` could easily be collected
+if evaluating ``g()`` triggers a collection.
+
+There's no need to use ``@llvm.gcread`` and ``@llvm.gcwrite`` over plain
+``load`` and ``store`` for now.  You will need them when switching to a more
+advanced GC.
+
+In your runtime
+---------------
+
+The shadow stack doesn't imply a memory allocation algorithm.  A semispace
+collector or building atop ``malloc`` are great places to start, and can be
+implemented with very little code.
+
+When it comes time to collect, however, your runtime needs to traverse the stack
+roots, and for this it needs to integrate with the shadow stack.  Luckily, doing
+so is very simple. (This code is heavily commented to help you understand the
+data structure, but there are only 20 lines of meaningful code.)
+
+.. code-block:: c++
+
+  /// @brief The map for a single function's stack frame.  One of these is
+  ///        compiled as constant data into the executable for each function.
+  ///
+  /// Storage of metadata values is elided if the %metadata parameter to
+  /// @llvm.gcroot is null.
+  struct FrameMap {
+    int32_t NumRoots;    //< Number of roots in stack frame.
+    int32_t NumMeta;     //< Number of metadata entries.  May be < NumRoots.
+    const void *Meta[0]; //< Metadata for each root.
+  };
+
+  /// @brief A link in the dynamic shadow stack.  One of these is embedded in
+  ///        the stack frame of each function on the call stack.
+  struct StackEntry {
+    StackEntry *Next;    //< Link to next stack entry (the caller's).
+    const FrameMap *Map; //< Pointer to constant FrameMap.
+    void *Roots[0];      //< Stack roots (in-place array).
+  };
+
+  /// @brief The head of the singly-linked list of StackEntries.  Functions push
+  ///        and pop onto this in their prologue and epilogue.
+  ///
+  /// Since there is only a global list, this technique is not threadsafe.
+  StackEntry *llvm_gc_root_chain;
+
+  /// @brief Calls Visitor(root, meta) for each GC root on the stack.
+  ///        root and meta are exactly the values passed to
+  ///        @llvm.gcroot.
+  ///
+  /// Visitor could be a function to recursively mark live objects.  Or it
+  /// might copy them to another heap or generation.
+  ///
+  /// @param Visitor A function to invoke for every GC root on the stack.
+  void visitGCRoots(void (*Visitor)(void **Root, const void *Meta)) {
+    for (StackEntry *R = llvm_gc_root_chain; R; R = R->Next) {
+      unsigned i = 0;
+
+      // For roots [0, NumMeta), the metadata pointer is in the FrameMap.
+      for (unsigned e = R->Map->NumMeta; i != e; ++i)
+        Visitor(&R->Roots[i], R->Map->Meta[i]);
+
+      // For roots [NumMeta, NumRoots), the metadata pointer is null.
+      for (unsigned e = R->Map->NumRoots; i != e; ++i)
+        Visitor(&R->Roots[i], NULL);
+    }
+  }
+
+
+
+
+
+What is Garbage Collection?
+===========================
 
 Garbage collection is a widely used technique that frees the programmer from
 having to know the lifetimes of heap objects, making software easier to produce
@@ -115,164 +262,6 @@ able to integrate LLVM with an existing runtime.  On the other hand, it leaves a
 lot of work for the developer of a novel language.  However, it's easy to get
 started quickly and scale up to a more sophisticated implementation as your
 compiler matures.
-
-Getting started
-===============
-
-Using a GC with LLVM implies many things, for example:
-
-* Write a runtime library or find an existing one which implements a GC heap.
-
-  #. Implement a memory allocator.
-
-  #. Design a binary interface for the stack map, used to identify references
-     within a stack frame on the machine stack.\*
-
-  #. Implement a stack crawler to discover functions on the call stack.\*
-
-  #. Implement a registry for global roots.
-
-  #. Design a binary interface for type maps, used to identify references
-     within heap objects.
-
-  #. Implement a collection routine bringing together all of the above.
-
-* Emit compatible code from your compiler.
-
-  * Initialization in the main function.
-
-  * Use the ``gc "..."`` attribute to enable GC code generation (or
-    ``F.setGC("...")``).
-
-  * Use ``@llvm.gcroot`` to mark stack roots.
-
-  * Use ``@llvm.gcread`` and/or ``@llvm.gcwrite`` to manipulate GC references,
-    if necessary.
-
-  * Allocate memory using the GC allocation routine provided by the runtime
-    library.
-
-  * Generate type maps according to your runtime's binary interface.
-
-* Write a compiler plugin to interface LLVM with the runtime library.\*
-
-  * Lower ``@llvm.gcread`` and ``@llvm.gcwrite`` to appropriate code
-    sequences.\*
-
-  * Compile LLVM's stack map to the binary form expected by the runtime.
-
-* Load the plugin into the compiler.  Use ``llc -load`` or link the plugin
-  statically with your language's compiler.\*
-
-* Link program executables with the runtime.
-
-To help with several of these tasks (those indicated with a \*), LLVM includes a
-highly portable, built-in ShadowStack code generator.  It is compiled into
-``llc`` and works even with the interpreter and C backends.
-
-In your compiler
-----------------
-
-To turn the shadow stack on for your functions, first call:
-
-.. code-block:: c++
-
-  F.setGC("shadow-stack");
-
-for each function your compiler emits. Since the shadow stack is built into
-LLVM, you do not need to load a plugin.
-
-Your compiler must also use ``@llvm.gcroot`` as documented.  Don't forget to
-create a root for each intermediate value that is generated when evaluating an
-expression.  In ``h(f(), g())``, the result of ``f()`` could easily be collected
-if evaluating ``g()`` triggers a collection.
-
-There's no need to use ``@llvm.gcread`` and ``@llvm.gcwrite`` over plain
-``load`` and ``store`` for now.  You will need them when switching to a more
-advanced GC.
-
-In your runtime
----------------
-
-The shadow stack doesn't imply a memory allocation algorithm.  A semispace
-collector or building atop ``malloc`` are great places to start, and can be
-implemented with very little code.
-
-When it comes time to collect, however, your runtime needs to traverse the stack
-roots, and for this it needs to integrate with the shadow stack.  Luckily, doing
-so is very simple. (This code is heavily commented to help you understand the
-data structure, but there are only 20 lines of meaningful code.)
-
-.. code-block:: c++
-
-  /// @brief The map for a single function's stack frame.  One of these is
-  ///        compiled as constant data into the executable for each function.
-  ///
-  /// Storage of metadata values is elided if the %metadata parameter to
-  /// @llvm.gcroot is null.
-  struct FrameMap {
-    int32_t NumRoots;    //< Number of roots in stack frame.
-    int32_t NumMeta;     //< Number of metadata entries.  May be < NumRoots.
-    const void *Meta[0]; //< Metadata for each root.
-  };
-
-  /// @brief A link in the dynamic shadow stack.  One of these is embedded in
-  ///        the stack frame of each function on the call stack.
-  struct StackEntry {
-    StackEntry *Next;    //< Link to next stack entry (the caller's).
-    const FrameMap *Map; //< Pointer to constant FrameMap.
-    void *Roots[0];      //< Stack roots (in-place array).
-  };
-
-  /// @brief The head of the singly-linked list of StackEntries.  Functions push
-  ///        and pop onto this in their prologue and epilogue.
-  ///
-  /// Since there is only a global list, this technique is not threadsafe.
-  StackEntry *llvm_gc_root_chain;
-
-  /// @brief Calls Visitor(root, meta) for each GC root on the stack.
-  ///        root and meta are exactly the values passed to
-  ///        @llvm.gcroot.
-  ///
-  /// Visitor could be a function to recursively mark live objects.  Or it
-  /// might copy them to another heap or generation.
-  ///
-  /// @param Visitor A function to invoke for every GC root on the stack.
-  void visitGCRoots(void (*Visitor)(void **Root, const void *Meta)) {
-    for (StackEntry *R = llvm_gc_root_chain; R; R = R->Next) {
-      unsigned i = 0;
-
-      // For roots [0, NumMeta), the metadata pointer is in the FrameMap.
-      for (unsigned e = R->Map->NumMeta; i != e; ++i)
-        Visitor(&R->Roots[i], R->Map->Meta[i]);
-
-      // For roots [NumMeta, NumRoots), the metadata pointer is null.
-      for (unsigned e = R->Map->NumRoots; i != e; ++i)
-        Visitor(&R->Roots[i], NULL);
-    }
-  }
-
-About the shadow stack
-----------------------
-
-Unlike many GC algorithms which rely on a cooperative code generator to compile
-stack maps, this algorithm carefully maintains a linked list of stack roots
-[:ref:`Henderson2002 <henderson02>`].  This so-called "shadow stack" mirrors the
-machine stack.  Maintaining this data structure is slower than using a stack map
-compiled into the executable as constant data, but has a significant portability
-advantage because it requires no special support from the target code generator,
-and does not require tricky platform-specific code to crawl the machine stack.
-
-The tradeoff for this simplicity and portability is:
-
-* High overhead per function call.
-
-* Not thread-safe.
-
-Still, it's an easy way to get started.  After your compiler and runtime are up
-and running, writing a :ref:`plugin <plugin>` will allow you to take advantage
-of :ref:`more advanced GC features <collector-algos>` of LLVM in order to
-improve performance.
 
 .. _gc_intrinsics:
 
@@ -446,6 +435,64 @@ Read barriers are needed by fewer algorithms than write barriers, and may have a
 greater performance impact since pointer reads are more frequent than writes.
 
 .. _plugin:
+
+Built In Collectors
+====================
+
+LLVM includes built in support for several varieties of garbage collectors.  
+
+The Shadow Stack GC
+----------------------
+
+To use this collector strategy, mark your functions with:
+
+.. code-block:: c++
+
+  F.setGC("shadow-stack");
+
+Unlike many GC algorithms which rely on a cooperative code generator to compile
+stack maps, this algorithm carefully maintains a linked list of stack roots
+[:ref:`Henderson2002 <henderson02>`].  This so-called "shadow stack" mirrors the
+machine stack.  Maintaining this data structure is slower than using a stack map
+compiled into the executable as constant data, but has a significant portability
+advantage because it requires no special support from the target code generator,
+and does not require tricky platform-specific code to crawl the machine stack.
+
+The tradeoff for this simplicity and portability is:
+
+* High overhead per function call.
+
+* Not thread-safe.
+
+Still, it's an easy way to get started.  After your compiler and runtime are up
+and running, writing a :ref:`plugin <plugin>` will allow you to take advantage
+of :ref:`more advanced GC features <collector-algos>` of LLVM in order to
+improve performance.
+
+The 'Erlang' and 'Ocaml' GCs
+-----------------------------
+
+LLVM ships with two example collectors which leverage the ''gcroot'' 
+mechanisms.  To our knowledge, these are not actually used by any language 
+runtime, but they do provide a reasonable starting point for someone interested 
+in writing an ''gcroot' compatible GC plugin.  In particular, these are the 
+only in tree examples of how to produce a custom binary stack map format using 
+a ''gcroot'' strategy.
+
+As there names imply, the binary format produced is intended to model that 
+used by the Erlang and OCaml compilers respectively.  
+
+
+The Statepoint Example GC
+-------------------------
+
+.. code-block:: c++
+
+  F.setGC("statepoint-example");
+
+This GC provides an example of how one might use the infrastructure provided 
+by ''gc.statepoint''.  
+
 
 Implementing a collector plugin
 ===============================
