@@ -955,7 +955,6 @@ CMIDriver::SetExitApplicationFlag(const bool vbForceExit)
     {
         CMIUtilThreadLock lock(m_threadMutex);
         m_bExitApp = true;
-        m_rStdin.OnExitHandler();
         return;
     }
 
@@ -970,7 +969,6 @@ CMIDriver::SetExitApplicationFlag(const bool vbForceExit)
     }
 
     m_bExitApp = true;
-    m_rStdin.OnExitHandler();
 }
 
 //++ ------------------------------------------------------------------------------------

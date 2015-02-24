@@ -37,39 +37,10 @@
 // Authors: Illya Rudkin 10/02/2014.
 // Changes: Factored out OS specific handling of reading stdin  - IOR 16/06/2014.
 //--
-class CMICmnStreamStdin : public CMICmnBase, public CMIUtilThreadActiveObjBase, public MI::ISingleton<CMICmnStreamStdin>
+class CMICmnStreamStdin : public CMICmnBase, public MI::ISingleton<CMICmnStreamStdin>
 {
     // Give singleton access to private constructors
     friend MI::ISingleton<CMICmnStreamStdin>;
-
-    // Class:
-  public:
-    //++
-    // Description: Visitor pattern. Driver(s) use this interface to get a callback
-    //              on each new line of data received from stdin.
-    //--
-    class IStreamStdin
-    {
-      public:
-        virtual bool ReadLine(const CMIUtilString &vStdInBuffer, bool &vrwbYesExit) = 0;
-
-        /* dtor */ virtual ~IStreamStdin(void){};
-    };
-
-    //++
-    // Description: Specific OS stdin handling implementations are created and used by *this
-    //              class. Seperates out functionality and enables handler to be set
-    //              dynamically depended on the OS detected.
-    //--
-    class IOSStdinHandler
-    {
-      public:
-        virtual bool InputAvailable(bool &vwbAvail) = 0;
-        virtual const MIchar *ReadLine(CMIUtilString &vwErrMsg) = 0;
-        virtual void InterruptReadLine(void){};
-
-        /* dtor */ virtual ~IOSStdinHandler(void){};
-    };
 
     // Methods:
   public:
@@ -80,33 +51,13 @@ class CMICmnStreamStdin : public CMICmnBase, public CMIUtilThreadActiveObjBase, 
     bool SetPrompt(const CMIUtilString &vNewPrompt);
     void SetEnablePrompt(const bool vbYes);
     bool GetEnablePrompt(void) const;
-    void SetCtrlCHit(void);
-    bool SetVisitor(IStreamStdin &vrVisitor);
-    bool SetOSStdinHandler(IOSStdinHandler &vrHandler);
-    void OnExitHandler(void);
     const MIchar *ReadLine(CMIUtilString &vwErrMsg);
-
-    // Overridden:
-  public:
-    // From CMIUtilThreadActiveObjBase
-    virtual const CMIUtilString &ThreadGetName(void) const;
-
-    // Overridden:
-  protected:
-    // From CMIUtilThreadActiveObjBase
-    virtual bool ThreadRun(bool &vrIsAlive);
-    virtual bool
-    ThreadFinish(void); // Let this thread clean up after itself
 
     // Methods:
   private:
     /* ctor */ CMICmnStreamStdin(void);
     /* ctor */ CMICmnStreamStdin(const CMICmnStreamStdin &);
     void operator=(const CMICmnStreamStdin &);
-
-    bool MonitorStdin(bool &vrwbYesExit);
-    bool
-    InputAvailable(bool &vbAvail); // Bytes are available on stdin
 
     // Overridden:
   private:
@@ -115,13 +66,9 @@ class CMICmnStreamStdin : public CMICmnBase, public CMIUtilThreadActiveObjBase, 
 
     // Attributes:
   private:
-    const CMIUtilString m_constStrThisThreadname;
-    IStreamStdin *m_pVisitor;
     CMIUtilString m_strPromptCurrent; // Command line prompt as shown to the user
-    volatile bool m_bKeyCtrlCHit;     // True = User hit Ctrl-C, false = has not yet
     bool m_bShowPrompt;               // True = Yes prompt is shown/output to the user (stdout), false = no prompt
     bool m_bRedrawPrompt;             // True = Prompt needs to be redrawn
-    IOSStdinHandler *m_pStdinReadHandler;
     static const int m_constBufferSize = 2048;
     MIchar *m_pCmdBuffer;
 };

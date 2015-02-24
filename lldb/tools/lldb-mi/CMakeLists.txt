@@ -61,8 +61,6 @@ add_lldb_executable(lldb-mi
   MICmnResources.cpp
   MICmnStreamStderr.cpp
   MICmnStreamStdin.cpp
-  MICmnStreamStdinLinux.cpp
-  MICmnStreamStdinWindows.cpp
   MICmnStreamStdout.cpp
   MICmnThreadMgrStd.cpp
   MIDriver.cpp
@@ -143,8 +141,6 @@ add_lldb_executable(lldb-mi
   MICmnResources.cpp
   MICmnStreamStderr.cpp
   MICmnStreamStdin.cpp
-  MICmnStreamStdinLinux.cpp
-  MICmnStreamStdinWindows.cpp
   MICmnStreamStdout.cpp
   MICmnThreadMgrStd.cpp
   MIDriver.cpp
