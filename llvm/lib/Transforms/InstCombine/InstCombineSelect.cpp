@@ -1145,12 +1145,14 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     if (Instruction *FoldI = FoldSelectIntoOp(SI, TrueVal, FalseVal))
       return FoldI;
 
+    Value *LHS, *RHS, *LHS2, *RHS2;
+    SelectPatternFlavor SPF = MatchSelectPattern(&SI, LHS, RHS);
+
     // MAX(MAX(a, b), a) -> MAX(a, b)
     // MIN(MIN(a, b), a) -> MIN(a, b)
     // MAX(MIN(a, b), a) -> a
     // MIN(MAX(a, b), a) -> a
-    Value *LHS, *RHS, *LHS2, *RHS2;
-    if (SelectPatternFlavor SPF = MatchSelectPattern(&SI, LHS, RHS)) {
+    if (SPF) {
       if (SelectPatternFlavor SPF2 = MatchSelectPattern(LHS, LHS2, RHS2))
         if (Instruction *R = FoldSPFofSPF(cast<Instruction>(LHS),SPF2,LHS2,RHS2,
                                           SI, SPF, RHS))
@@ -1159,6 +1161,33 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
         if (Instruction *R = FoldSPFofSPF(cast<Instruction>(RHS),SPF2,LHS2,RHS2,
                                           SI, SPF, LHS))
           return R;
+    }
+
+    // MAX(~a, ~b) -> ~MIN(a, b)
+    if (SPF == SPF_SMAX || SPF == SPF_UMAX) {
+      if (IsFreeToInvert(LHS, LHS->hasNUses(2)) &&
+          IsFreeToInvert(RHS, RHS->hasNUses(2))) {
+
+        // This transform adds a xor operation and that extra cost needs to be
+        // justified.  We look for simplifications that will result from
+        // applying this rule:
+
+        bool Profitable =
+            (LHS->hasNUses(2) && match(LHS, m_Not(m_Value()))) ||
+            (RHS->hasNUses(2) && match(RHS, m_Not(m_Value()))) ||
+            (SI.hasOneUse() && match(*SI.user_begin(), m_Not(m_Value())));
+
+        if (Profitable) {
+          Value *NewLHS = Builder->CreateNot(LHS);
+          Value *NewRHS = Builder->CreateNot(RHS);
+          Value *NewCmp = SPF == SPF_SMAX
+                              ? Builder->CreateICmpSLT(NewLHS, NewRHS)
+                              : Builder->CreateICmpULT(NewLHS, NewRHS);
+          Value *NewSI =
+              Builder->CreateNot(Builder->CreateSelect(NewCmp, NewLHS, NewRHS));
+          return ReplaceInstUsesWith(SI, NewSI);
+        }
+      }
     }
 
     // TODO.

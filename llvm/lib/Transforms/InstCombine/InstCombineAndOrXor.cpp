@@ -22,30 +22,12 @@ using namespace PatternMatch;
 
 #define DEBUG_TYPE "instcombine"
 
-/// isFreeToInvert - Return true if the specified value is free to invert (apply
-/// ~ to).  This happens in cases where the ~ can be eliminated.
-static inline bool isFreeToInvert(Value *V) {
-  // ~(~(X)) -> X.
-  if (BinaryOperator::isNot(V))
-    return true;
-
-  // Constants can be considered to be not'ed values.
-  if (isa<ConstantInt>(V))
-    return true;
-
-  // Compares can be inverted if they have a single use.
-  if (CmpInst *CI = dyn_cast<CmpInst>(V))
-    return CI->hasOneUse();
-
-  return false;
-}
-
 static inline Value *dyn_castNotVal(Value *V) {
   // If this is not(not(x)) don't return that this is a not: we want the two
   // not's to be folded first.
   if (BinaryOperator::isNot(V)) {
     Value *Operand = BinaryOperator::getNotArgument(V);
-    if (!isFreeToInvert(Operand))
+    if (!IsFreeToInvert(Operand, Operand->hasOneUse()))
       return Operand;
   }
 
@@ -2585,8 +2567,10 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
         // ~(X & Y) --> (~X | ~Y) - De Morgan's Law
         // ~(X | Y) === (~X & ~Y) - De Morgan's Law
-        if (isFreeToInvert(Op0I->getOperand(0)) &&
-            isFreeToInvert(Op0I->getOperand(1))) {
+        if (IsFreeToInvert(Op0I->getOperand(0),
+                           Op0I->getOperand(0)->hasOneUse()) &&
+            IsFreeToInvert(Op0I->getOperand(1),
+                           Op0I->getOperand(1)->hasOneUse())) {
           Value *NotX =
             Builder->CreateNot(Op0I->getOperand(0), "notlhs");
           Value *NotY =

@@ -80,6 +80,36 @@ static inline Constant *SubOne(Constant *C) {
   return ConstantExpr::getSub(C, ConstantInt::get(C->getType(), 1));
 }
 
+/// \brief Return true if the specified value is free to invert (apply ~ to).
+/// This happens in cases where the ~ can be eliminated.  If WillInvertAllUses
+/// is true, work under the assumption that the caller intends to remove all
+/// uses of V and only keep uses of ~V.
+///
+static inline bool IsFreeToInvert(Value *V, bool WillInvertAllUses) {
+  // ~(~(X)) -> X.
+  if (BinaryOperator::isNot(V))
+    return true;
+
+  // Constants can be considered to be not'ed values.
+  if (isa<ConstantInt>(V))
+    return true;
+
+  // Compares can be inverted if all of their uses are being modified to use the
+  // ~V.
+  if (isa<CmpInst>(V))
+    return WillInvertAllUses;
+
+  // If `V` is of the form `A + Constant` then `-1 - V` can be folded into `(-1
+  // - Constant) - A` if we are willing to invert all of the uses.
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(V))
+    if (BO->getOpcode() == Instruction::Add ||
+        BO->getOpcode() == Instruction::Sub)
+      if (isa<Constant>(BO->getOperand(0)) || isa<Constant>(BO->getOperand(1)))
+        return WillInvertAllUses;
+
+  return false;
+}
+
 /// \brief An IRBuilder inserter that adds new instructions to the instcombine
 /// worklist.
 class LLVM_LIBRARY_VISIBILITY InstCombineIRInserter
