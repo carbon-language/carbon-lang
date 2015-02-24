@@ -158,8 +158,8 @@ exactly what to change.
 Intrinsics
 ===========
 
-'''gc.statepoint''' Intrinsic
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'llvm.experimental.gc.statepoint' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
@@ -167,8 +167,9 @@ Syntax:
 ::
 
       declare i32
-        @gc.statepoint(func_type <target>, i64 <#call args>. 
-                       i64 <unused>, ... (call parameters),
+        @llvm.experimental.gc.statepoint(func_type <target>, 
+                       i64 <#call args>. i64 <unused>, 
+                       ... (call parameters),
                        i64 <# deopt args>, ... (deopt parameters),
                        ... (gc parameters))
 
@@ -227,8 +228,8 @@ pointer' argument of the statepoint in a location statically reachable
 from the statepoint.  Instead, the explicitly relocated value (from a
 ''gc.relocate'') must be used.
 
-'''gc.result''' Intrinsic
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+'llvm.experimental.gc.result' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
@@ -236,7 +237,7 @@ Syntax:
 ::
 
       declare type*
-        @gc.result(i32 %statepoint_token)
+        @llvm.experimental.gc.result(i32 %statepoint_token)
 
 Overview:
 """""""""
@@ -267,16 +268,18 @@ A ''gc.result'' is modeled as a 'readnone' pure function.  It has no
 side effects since it is just a projection of the return value of the
 previous call represented by the ''gc.statepoint''.
 
-'''gc.relocate''' Intrinsic
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+'llvm.experimental.gc.relocate' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
 
 ::
 
-      declare <type> addrspace(1)*
-        @gc.relocate(i32 %statepoint_token, i32 %base_offset, i32 %pointer_offset)
+      declare <pointer type>
+        @llvm.experimental.gc.relocate(i32 %statepoint_token, 
+                                       i32 %base_offset, 
+                                       i32 %pointer_offset)
 
 Overview:
 """""""""
