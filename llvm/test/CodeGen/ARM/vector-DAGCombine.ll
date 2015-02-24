@@ -27,6 +27,14 @@ entry:
   ret void
 }
 
+; PR22678
+; Check CONCAT_VECTORS DAG combiner pass doesn't introduce illegal types.
+define void @test_pr22678() {
+  %1 = fptoui <16 x float> undef to <16 x i8>
+  store <16 x i8> %1, <16 x i8>* undef
+  ret void
+}
+
 ; Radar 8407927: Make sure that VMOVRRD gets optimized away when the result is
 ; converted back to be used as a vector type.
 ; CHECK-LABEL: test_vmovrrd_combine:
