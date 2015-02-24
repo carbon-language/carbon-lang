@@ -34,4 +34,4 @@ for.end:
 ; CHECK: ReadAccess
 ; CHECK:   [n] -> { Stmt_for_body[i0] -> MemRef_INDEX[i0] };
 ; CHECK: WriteAccess
-; CHECK:   [n] -> { Stmt_for_body[i0] -> MemRef_A[o0] };
+; CHECK:   [n] -> { Stmt_for_body[i0] -> MemRef_A[o0] : o0 >= -1152921504606846976 and o0 <= 1152921504606846973 };

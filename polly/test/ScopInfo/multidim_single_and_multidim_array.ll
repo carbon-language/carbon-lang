@@ -24,7 +24,7 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 ; NONAFFINE: Statements {
 ; NONAFFINE:   Stmt_for_i_1
 ; NONAFFINE:         MayWriteAccess :=   [Reduction Type: NONE]
-; NONAFFINE:             [n, p_1] -> { Stmt_for_i_1[i0] -> MemRef_X[o0] };
+; NONAFFINE:             [n, p_1] -> { Stmt_for_i_1[i0] -> MemRef_X[o0] : o0 >= -2305843009213693952 and o0 <= 2305843009213693949 };
 ; NONAFFINE:   Stmt_for_i_2
 ; NONAFFINE:         MustWriteAccess :=  [Reduction Type: NONE]
 ; NONAFFINE:             [n, p_1] -> { Stmt_for_i_2[i0] -> MemRef_X[o0] : 4o0 = p_1 + 4i0 };

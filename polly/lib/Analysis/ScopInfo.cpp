@@ -299,6 +299,27 @@ int SCEVAffinator::getLoopDepth(const Loop *L) {
   return L->getLoopDepth() - outerLoop->getLoopDepth();
 }
 
+/// @brief Add the bounds of @p Range to the set @p S for dimension @p dim.
+static __isl_give isl_set *addRangeBoundsToSet(__isl_take isl_set *S,
+                                               const ConstantRange &Range,
+                                               int dim,
+                                               enum isl_dim_type type) {
+  isl_val *V;
+  isl_ctx *ctx = isl_set_get_ctx(S);
+
+  V = isl_valFromAPInt(ctx, Range.getLower(), true);
+  isl_set *SLB = isl_set_lower_bound_val(isl_set_copy(S), type, dim, V);
+
+  V = isl_valFromAPInt(ctx, Range.getUpper(), true);
+  V = isl_val_sub_ui(V, 1);
+  isl_set *SUB = isl_set_upper_bound_val(S, type, dim, V);
+
+  if (Range.isSignWrappedSet())
+    return isl_set_union(SLB, SUB);
+  else
+    return isl_set_intersect(SLB, SUB);
+}
+
 ScopArrayInfo::ScopArrayInfo(Value *BasePtr, Type *AccessType, isl_ctx *Ctx,
                              const SmallVector<const SCEV *, 4> &DimensionSizes)
     : BasePtr(BasePtr), AccessType(AccessType), DimensionSizes(DimensionSizes) {
@@ -510,6 +531,36 @@ void MemoryAccess::assumeNoOutOfBound(const IRAccess &Access) {
   isl_space_free(Space);
 }
 
+void MemoryAccess::computeBoundsOnAccessRelation(unsigned ElementSize) {
+  ScalarEvolution *SE = Statement->getParent()->getSE();
+
+  Value *Ptr = getPointerOperand(*getAccessInstruction());
+  if (!Ptr || !SE->isSCEVable(Ptr->getType()))
+    return;
+
+  auto *PtrSCEV = SE->getSCEV(Ptr);
+  if (isa<SCEVCouldNotCompute>(PtrSCEV))
+    return;
+
+  auto *BasePtrSCEV = SE->getPointerBase(PtrSCEV);
+  if (BasePtrSCEV && !isa<SCEVCouldNotCompute>(BasePtrSCEV))
+    PtrSCEV = SE->getMinusSCEV(PtrSCEV, BasePtrSCEV);
+
+  const ConstantRange &Range = SE->getSignedRange(PtrSCEV);
+  if (Range.isFullSet())
+    return;
+
+  unsigned BW = Range.getBitWidth();
+  auto Min = Range.getSignedMin().sdiv(APInt(BW, ElementSize, false));
+  auto Max = (Range.getSignedMax() - APInt(BW, 1, false))
+                 .sdiv(APInt(BW, ElementSize, false));
+
+  isl_set *AccessRange = isl_map_range(isl_map_copy(AccessRelation));
+  AccessRange =
+      addRangeBoundsToSet(AccessRange, ConstantRange(Min, Max), 0, isl_dim_set);
+  AccessRelation = isl_map_intersect_range(AccessRelation, AccessRange);
+}
+
 MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
                            ScopStmt *Statement, const ScopArrayInfo *SAI)
     : AccType(getMemoryAccessType(Access)), Statement(Statement), Inst(AccInst),
@@ -529,6 +580,8 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
     AccessRelation = isl_map_from_basic_map(createBasicAccessMap(Statement));
     AccessRelation =
         isl_map_set_tuple_id(AccessRelation, isl_dim_out, BaseAddrId);
+
+    computeBoundsOnAccessRelation(Access.getElemSizeInBytes());
     return;
   }
 
@@ -1188,7 +1241,6 @@ void Scop::buildContext() {
 
 void Scop::addParameterBounds() {
   for (const auto &ParamID : ParameterIds) {
-    isl_val *V;
     int dim = ParamID.second;
 
     ConstantRange SRange = SE->getSignedRange(ParamID.first);
@@ -1197,19 +1249,7 @@ void Scop::addParameterBounds() {
     if (SRange.isFullSet())
       continue;
 
-    V = isl_valFromAPInt(IslCtx, SRange.getLower(), true);
-    isl_set *ContextLB =
-        isl_set_lower_bound_val(isl_set_copy(Context), isl_dim_param, dim, V);
-
-    V = isl_valFromAPInt(IslCtx, SRange.getUpper(), true);
-    V = isl_val_sub_ui(V, 1);
-    isl_set *ContextUB =
-        isl_set_upper_bound_val(Context, isl_dim_param, dim, V);
-
-    if (SRange.isSignWrappedSet())
-      Context = isl_set_union(ContextLB, ContextUB);
-    else
-      Context = isl_set_intersect(ContextLB, ContextUB);
+    Context = addRangeBoundsToSet(Context, SRange, dim, isl_dim_param);
   }
 }
 

@@ -209,6 +209,11 @@ private:
 
   void assumeNoOutOfBound(const IRAccess &Access);
 
+  /// @brief Compute bounds on an over approximated  access relation.
+  ///
+  /// @param ElementSize The size of one element accessed.
+  void computeBoundsOnAccessRelation(unsigned ElementSize);
+
   /// @brief Get the original access function as read from IR.
   isl_map *getOriginalAccessRelation() const;
 
