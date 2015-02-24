@@ -731,7 +731,7 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
         }
         case TargetLowering::Custom: {
           SDValue Res = TLI.LowerOperation(SDValue(Node, 0), DAG);
-          if (Res.getNode())
+          if (Res && Res != SDValue(Node, 0))
             ReplaceNode(SDValue(Node, 0), Res);
           return;
         }
@@ -843,7 +843,7 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
         }
         case TargetLowering::Custom: {
           SDValue Res = TLI.LowerOperation(SDValue(Node, 0), DAG);
-          if (Res.getNode())
+          if (Res && Res != SDValue(Node, 0))
             ReplaceNode(SDValue(Node, 0), Res);
           return;
         }

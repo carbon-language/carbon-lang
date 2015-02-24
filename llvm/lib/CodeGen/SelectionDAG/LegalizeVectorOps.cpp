@@ -207,6 +207,8 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
         return TranslateLegalizeResults(Op, Result);
       case TargetLowering::Custom:
         if (SDValue Lowered = TLI.LowerOperation(Result, DAG)) {
+          if (Lowered == Result)
+            return TranslateLegalizeResults(Op, Lowered);
           Changed = true;
           if (Lowered->getNumValues() != Op->getNumValues()) {
             // This expanded to something other than the load. Assume the
@@ -232,9 +234,11 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
       default: llvm_unreachable("This action is not supported yet!");
       case TargetLowering::Legal:
         return TranslateLegalizeResults(Op, Result);
-      case TargetLowering::Custom:
-        Changed = true;
-        return TranslateLegalizeResults(Op, TLI.LowerOperation(Result, DAG));
+      case TargetLowering::Custom: {
+        SDValue Lowered = TLI.LowerOperation(Result, DAG);
+        Changed = Lowered != Result;
+        return TranslateLegalizeResults(Op, Lowered);
+      }
       case TargetLowering::Expand:
         Changed = true;
         return LegalizeOp(ExpandStore(Op));
