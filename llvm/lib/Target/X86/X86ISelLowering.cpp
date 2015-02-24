@@ -22902,7 +22902,7 @@ static SDValue PerformINSERTPSCombine(SDNode *N, SelectionDAG &DAG,
   if (MayFoldLoad(Ld)) {
     // Extract the countS bits from the immediate so we can get the proper
     // address when narrowing the vector load to a specific element.
-    // When the second source op is a memory address, interps doesn't use
+    // When the second source op is a memory address, insertps doesn't use
     // countS and just gets an f32 from that address.
     unsigned DestIndex =
         cast<ConstantSDNode>(N->getOperand(2))->getZExtValue() >> 6;
