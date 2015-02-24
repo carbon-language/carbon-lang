@@ -19,6 +19,7 @@
 //              CMICmdCmdExecFinish             implementation.
 //              CMICmdCmdExecInterrupt          implementation.
 //              CMICmdCmdExecArguments          implementation.
+//              CMICmdCmdExecAbort              implementation.
 //
 // Environment: Compilers:  Visual C++ 12.
 //                          gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
@@ -1135,4 +1136,96 @@ CMICmdBase *
 CMICmdCmdExecArguments::CreateSelf(void)
 {
     return new CMICmdCmdExecArguments();
+}
+
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+
+//++ ------------------------------------------------------------------------------------
+// Details: CMICmdCmdExecAbort constructor.
+// Type:    Method.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+CMICmdCmdExecAbort::CMICmdCmdExecAbort(void)
+{
+    // Command factory matches this name with that received from the stdin stream
+    m_strMiCmd = "exec-abort";
+
+    // Required by the CMICmdFactory when registering *this command
+    m_pSelfCreatorFn = &CMICmdCmdExecAbort::CreateSelf;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: CMICmdCmdExecAbort destructor.
+// Type:    Overrideable.
+// Args:    None.
+// Return:  None.
+// Throws:  None.
+//--
+CMICmdCmdExecAbort::~CMICmdCmdExecAbort(void)
+{
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The command does work in this function.
+//          The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdExecAbort::Execute(void)
+{
+    CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
+    lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
+    if (!sbProcess.IsValid())
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_INVALID_PROCESS), m_cmdData.strMiCmd.c_str()));
+        return MIstatus::failure;
+    }
+
+    lldb::SBError sbError = sbProcess.Destroy();
+    if (sbError.Fail())
+    {
+        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_LLDBPROCESS_DESTROY), m_cmdData.strMiCmd.c_str(), sbError.GetCString()));
+        return MIstatus::failure;
+    }
+
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: The invoker requires this function. The command prepares a MI Record Result
+//          for the work carried out in the Execute().
+// Type:    Overridden.
+// Args:    None.
+// Return:  MIstatus::success - Function succeeded.
+//          MIstatus::failure - Function failed.
+// Throws:  None.
+//--
+bool
+CMICmdCmdExecAbort::Acknowledge(void)
+{
+    const CMICmnMIResultRecord miRecordResult(m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done);
+    m_miResultRecord = miRecordResult;
+    return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Required by the CMICmdFactory when registering *this command. The factory
+//          calls this function to create an instance of *this command.
+// Type:    Static method.
+// Args:    None.
+// Return:  CMICmdBase * - Pointer to a new command.
+// Throws:  None.
+//--
+CMICmdBase *
+CMICmdCmdExecAbort::CreateSelf(void)
+{
+    return new CMICmdCmdExecAbort();
 }

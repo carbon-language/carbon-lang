@@ -663,13 +663,12 @@ CMICmnLLDBDebugger::MonitorSBListenerEvents(bool &vrbIsAlive)
     m_pLog->WriteLog(CMIUtilString::Format("##### An event occurred: %s", event.GetBroadcasterClass()));
 
     bool bHandledEvent = false;
-    bool bExitAppEvent = false;
 
     bool bOk = false;
     {
         // Lock Mutex before handling events so that we don't disturb a running cmd
         CMIUtilThreadLock lock(CMICmnLLDBDebugSessionInfo::Instance().GetSessionMutex());
-        bOk = CMICmnLLDBDebuggerHandleEvents::Instance().HandleEvent(event, bHandledEvent, bExitAppEvent);
+        bOk = CMICmnLLDBDebuggerHandleEvents::Instance().HandleEvent(event, bHandledEvent);
     }
     if (!bHandledEvent)
     {
@@ -679,15 +678,6 @@ CMICmnLLDBDebugger::MonitorSBListenerEvents(bool &vrbIsAlive)
     if (!bOk)
     {
         m_pLog->WriteLog(CMICmnLLDBDebuggerHandleEvents::Instance().GetErrorDescription());
-    }
-
-    if (bExitAppEvent)
-    {
-        // Set the application to shutdown
-        m_pClientDriver->SetExitApplicationFlag(true);
-
-        // Kill *this thread
-        vrbIsAlive = false;
     }
 
     return bOk;

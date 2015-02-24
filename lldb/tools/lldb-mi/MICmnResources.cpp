@@ -225,6 +225,7 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDS_CMD_ERR_FNFAILED, "Command '%s'. Fn '%s' failed"},
     {IDS_CMD_ERR_SHARED_DATA_NOT_FOUND, "Command '%s'. Shared data '%s' not found"},
     {IDS_CMD_ERR_LLDBPROCESS_DETACH, "Command '%s'. Process detach failed. '%s'"},
+    {IDS_CMD_ERR_LLDBPROCESS_DESTROY, "Command '%s'. Process destroy failed. '%s'"},
     {IDS_CMD_ERR_SETWKDIR, "Command '%s'. Failed to set working directory '%s'"},
     {IDS_CMD_ERR_INVALID_TARGET, "Command '%s'. Target binary '%s' is invalid. %s"},
     {IDS_CMD_ERR_INVALID_TARGET_CURRENT, "Command '%s'. Current SBTarget is invalid"},

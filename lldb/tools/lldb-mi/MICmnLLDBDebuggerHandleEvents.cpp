@@ -126,22 +126,20 @@ CMICmnLLDBDebuggerHandleEvents::Shutdown(void)
 // Type:    Method.
 // Args:    vEvent          - (R) An LLDB broadcast event.
 //          vrbHandledEvent - (W) True - event handled, false = not handled.
-//          vrbExitAppEvent - (W) True - Received LLDB exit app event, false = did not.
 // Return:  MIstatus::success - Functionality succeeded.
 //          MIstatus::failure - Functionality failed.
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebuggerHandleEvents::HandleEvent(const lldb::SBEvent &vEvent, bool &vrbHandledEvent, bool &vrbExitAppEvent)
+CMICmnLLDBDebuggerHandleEvents::HandleEvent(const lldb::SBEvent &vEvent, bool &vrbHandledEvent)
 {
     bool bOk = MIstatus::success;
     vrbHandledEvent = false;
-    vrbExitAppEvent = false;
 
     if (lldb::SBProcess::EventIsProcessEvent(vEvent))
     {
         vrbHandledEvent = true;
-        bOk = HandleEventSBProcess(vEvent, vrbExitAppEvent);
+        bOk = HandleEventSBProcess(vEvent);
     }
     else if (lldb::SBBreakpoint::EventIsBreakpointEvent(vEvent))
     {
@@ -161,13 +159,12 @@ CMICmnLLDBDebuggerHandleEvents::HandleEvent(const lldb::SBEvent &vEvent, bool &v
 // Details: Handle a LLDB SBProcess event.
 // Type:    Method.
 // Args:    vEvent          - (R) An LLDB broadcast event.
-//          vrbExitAppEvent - (W) True - Received LLDB exit app event, false = did not.
 // Return:  MIstatus::success - Functionality succeeded.
 //          MIstatus::failure - Functionality failed.
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebuggerHandleEvents::HandleEventSBProcess(const lldb::SBEvent &vEvent, bool &vrbExitAppEvent)
+CMICmnLLDBDebuggerHandleEvents::HandleEventSBProcess(const lldb::SBEvent &vEvent)
 {
     bool bOk = MIstatus::success;
 
@@ -183,7 +180,7 @@ CMICmnLLDBDebuggerHandleEvents::HandleEventSBProcess(const lldb::SBEvent &vEvent
             break;
         case lldb::SBProcess::eBroadcastBitStateChanged:
             pEventType = "eBroadcastBitStateChanged";
-            bOk = HandleProcessEventBroadcastBitStateChanged(vEvent, vrbExitAppEvent);
+            bOk = HandleProcessEventBroadcastBitStateChanged(vEvent);
             break;
         case lldb::SBProcess::eBroadcastBitSTDERR:
             pEventType = "eBroadcastBitSTDERR";
@@ -627,13 +624,12 @@ CMICmnLLDBDebuggerHandleEvents::HandleEventSBCommandInterpreter(const lldb::SBEv
 // Details: Handle SBProcess event eBroadcastBitStateChanged.
 // Type:    Method.
 // Args:    vEvent          - (R) An LLDB event object.
-//          vrbExitAppEvent - (W) True - Received LLDB exit app event, false = did not.
 // Return:  MIstatus::success - Functionality succeeded.
 //          MIstatus::failure - Functionality failed.
 // Throws:  None.
 //--
 bool
-CMICmnLLDBDebuggerHandleEvents::HandleProcessEventBroadcastBitStateChanged(const lldb::SBEvent &vEvent, bool &vrbExitAppEvent)
+CMICmnLLDBDebuggerHandleEvents::HandleProcessEventBroadcastBitStateChanged(const lldb::SBEvent &vEvent)
 {
     bool bOk = ChkForStateChanges();
     bOk = bOk && GetProcessStdout();
@@ -693,8 +689,8 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventBroadcastBitStateChanged(const
             pEventType = "eStateDetached";
             break;
         case lldb::eStateExited:
+            // Don't exit from lldb-mi here. We should be able to re-run target.
             pEventType = "eStateExited";
-            vrbExitAppEvent = true;
             bOk = HandleProcessEventStateExited();
             break;
         default:

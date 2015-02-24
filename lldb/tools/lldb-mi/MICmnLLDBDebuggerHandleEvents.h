@@ -50,7 +50,7 @@ class CMICmnLLDBDebuggerHandleEvents : public CMICmnBase, public MI::ISingleton<
     bool Initialize(void);
     bool Shutdown(void);
     //
-    bool HandleEvent(const lldb::SBEvent &vEvent, bool &vrbHandledEvent, bool &vrbExitAppEvent);
+    bool HandleEvent(const lldb::SBEvent &vEvent, bool &vrbHandledEvent);
 
     // Methods:
   private:
@@ -65,12 +65,12 @@ class CMICmnLLDBDebuggerHandleEvents : public CMICmnBase, public MI::ISingleton<
     bool HandleEventSBBreakpointCmn(const lldb::SBEvent &vEvent);
     bool HandleEventSBBreakpointAdded(const lldb::SBEvent &vEvent);
     bool HandleEventSBBreakpointLocationsAdded(const lldb::SBEvent &vEvent);
-    bool HandleEventSBProcess(const lldb::SBEvent &vEvent, bool &vrbExitAppEvent);
+    bool HandleEventSBProcess(const lldb::SBEvent &vEvent);
     bool HandleEventSBThread(const lldb::SBEvent &vEvent);
     bool HandleEventSBThreadBitStackChanged(const lldb::SBEvent &vEvent);
     bool HandleEventSBThreadSuspended(const lldb::SBEvent &vEvent);
     bool HandleEventSBCommandInterpreter(const lldb::SBEvent &vEvent);
-    bool HandleProcessEventBroadcastBitStateChanged(const lldb::SBEvent &vEvent, bool &vrbExitAppEvent);
+    bool HandleProcessEventBroadcastBitStateChanged(const lldb::SBEvent &vEvent);
     bool HandleProcessEventStateRunning(void);
     bool HandleProcessEventStateExited(void);
     bool HandleProcessEventStateStopped(bool &vwrbShouldBrk);

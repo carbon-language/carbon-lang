@@ -12,7 +12,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skip("-exec-abort isn't implemented")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_exec_abort(self):
         """Test that 'lldb-mi --interpreter' works for -exec-abort."""
 
