@@ -1034,6 +1034,12 @@ FORMAT_INTERCEPTOR_IMPL(__isoc99_snprintf, __isoc99_vsnprintf, str, size,
 #if SANITIZER_INTERCEPT_IOCTL
 #include "sanitizer_common_interceptors_ioctl.inc"
 INTERCEPTOR(int, ioctl, int d, unsigned long request, ...) {
+  // We need a frame pointer, because we call into ioctl_common_[pre|post] which
+  // can trigger a report and we need to be able to unwind through this
+  // function.  On Mac in debug mode we might not have a frame pointer, because
+  // ioctl_common_[pre|post] doesn't get inlined here.
+  ENABLE_FRAME_POINTER;
+
   void *ctx;
   va_list ap;
   va_start(ap, request);
