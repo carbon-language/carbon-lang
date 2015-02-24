@@ -126,19 +126,19 @@ typedef struct { long long x; int y; } struct_long_long_int;
 // CHECK: define arm_aapcs_vfpcc void @test_vfp_stack_gpr_split_1(double %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i, i32 %j, i64 %k, i32 %l)
 void test_vfp_stack_gpr_split_1(double a, double b, double c, double d, double e, double f, double g, double h, double i, int j, long long k, int l) {}
 
-// CHECK: define arm_aapcs_vfpcc void @test_vfp_stack_gpr_split_2(double %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i, i32 %j, [3 x i32], [2 x i64] %k.coerce)
+// CHECK: define arm_aapcs_vfpcc void @test_vfp_stack_gpr_split_2(double %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i, i32 %j, [2 x i64] %k.coerce)
 void test_vfp_stack_gpr_split_2(double a, double b, double c, double d, double e, double f, double g, double h, double i, int j, struct_long_long_int k) {}
 
-// CHECK: define arm_aapcs_vfpcc void @test_vfp_stack_gpr_split_3(%struct.struct_long_long_int* noalias sret %agg.result, double %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i, [3 x i32], [2 x i64] %k.coerce)
+// CHECK: define arm_aapcs_vfpcc void @test_vfp_stack_gpr_split_3(%struct.struct_long_long_int* noalias sret %agg.result, double %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i, [2 x i64] %k.coerce)
 struct_long_long_int test_vfp_stack_gpr_split_3(double a, double b, double c, double d, double e, double f, double g, double h, double i, struct_long_long_int k) {}
 
 typedef struct { int a; int b:4; int c; } struct_int_bitfield_int;
-// CHECK: define arm_aapcs_vfpcc void @test_test_vfp_stack_gpr_split_bitfield(double %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i, i32 %j, i32 %k, [2 x i32], [3 x i32] %l.coerce)
+// CHECK: define arm_aapcs_vfpcc void @test_test_vfp_stack_gpr_split_bitfield(double %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i, i32 %j, i32 %k, [3 x i32] %l.coerce)
 void test_test_vfp_stack_gpr_split_bitfield(double a, double b, double c, double d, double e, double f, double g, double h, double i, int j, int k, struct_int_bitfield_int l) {}
 
 // Note: this struct requires internal padding
 typedef struct { int x; long long y; } struct_int_long_long;
-// CHECK: define arm_aapcs_vfpcc void @test_vfp_stack_gpr_split_4(double %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i, i32 %j, [3 x i32], [2 x i64] %k.coerce)
+// CHECK: define arm_aapcs_vfpcc void @test_vfp_stack_gpr_split_4(double %a, double %b, double %c, double %d, double %e, double %f, double %g, double %h, double %i, i32 %j, [2 x i64] %k.coerce)
 void test_vfp_stack_gpr_split_4(double a, double b, double c, double d, double e, double f, double g, double h, double i, int j, struct_int_long_long k) {}
 
 // This very large struct (passed byval) uses up the GPRs, so no padding is needed
