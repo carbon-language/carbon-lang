@@ -169,10 +169,9 @@ BasicBlock *polly::simplifyRegion(Scop *S, Pass *P) {
 
   // Create single exit edge if the region has multiple exit edges.
   if (!R->getExitingBlock()) {
-    BasicBlock *NewExit = createSingleExitEdge(R, P);
-
-    for (auto &&SubRegion : *R)
-      SubRegion->replaceExitRecursive(NewExit);
+    BasicBlock *NewExiting = createSingleExitEdge(R, P);
+    assert(NewExiting == R->getExitingBlock() &&
+           "Did not create a single exiting block");
   }
 
   return EnteringBB;
