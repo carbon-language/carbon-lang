@@ -926,3 +926,15 @@ GDBRemoteCommunication::DumpHistory(Stream &strm)
 {
     m_history.Dump (strm);
 }
+
+GDBRemoteCommunication::ScopedTimeout::ScopedTimeout (GDBRemoteCommunication& gdb_comm,
+                                                      uint32_t timeout) :
+    m_gdb_comm (gdb_comm)
+{
+    m_saved_timeout = m_gdb_comm.SetPacketTimeout (timeout);
+}
+
+GDBRemoteCommunication::ScopedTimeout::~ScopedTimeout ()
+{
+    m_gdb_comm.SetPacketTimeout (m_saved_timeout);
+}

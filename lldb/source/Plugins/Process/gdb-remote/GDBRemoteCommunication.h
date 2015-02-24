@@ -59,6 +59,20 @@ public:
         ErrorDisconnected,  // We were disconnected
         ErrorNoSequenceLock // We couldn't get the sequence lock for a multi-packet request
     };
+
+    // Class to change the timeout for a given scope and restore it to the original value when the
+    // created ScopedTimeout object got out of scope
+    class ScopedTimeout
+    {
+    public:
+        ScopedTimeout (GDBRemoteCommunication& gdb_comm, uint32_t timeout);
+        ~ScopedTimeout ();
+
+    private:
+        GDBRemoteCommunication& m_gdb_comm;
+        uint32_t m_saved_timeout;
+    };
+
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------

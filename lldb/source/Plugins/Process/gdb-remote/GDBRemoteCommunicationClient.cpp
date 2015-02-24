@@ -234,13 +234,10 @@ GDBRemoteCommunicationClient::QueryNoAckModeSupported ()
 
         const uint32_t minimum_timeout = 6;
         uint32_t old_timeout = GetPacketTimeoutInMicroSeconds() / lldb_private::TimeValue::MicroSecPerSec;
-        SetPacketTimeout (std::max (old_timeout, minimum_timeout));
+        GDBRemoteCommunication::ScopedTimeout timeout (*this, std::max (old_timeout, minimum_timeout));
 
         StringExtractorGDBRemote response;
-        PacketResult packet_send_result = SendPacketAndWaitForResponse("QStartNoAckMode", response, false);
-        SetPacketTimeout (old_timeout);
-
-        if (packet_send_result == PacketResult::Success)
+        if (SendPacketAndWaitForResponse("QStartNoAckMode", response, false) == PacketResult::Success)
         {
             if (response.IsOKResponse())
             {
@@ -2869,10 +2866,9 @@ GDBRemoteCommunicationClient::LaunchGDBserverAndGetPort (lldb::pid_t &pid, const
     int packet_len = stream.GetSize();
 
     // give the process a few seconds to startup
-    const uint32_t old_packet_timeout = SetPacketTimeout (10);
-    auto result = SendPacketAndWaitForResponse(packet, packet_len, response, false);
-    SetPacketTimeout (old_packet_timeout);
-    if (result == PacketResult::Success)
+    GDBRemoteCommunication::ScopedTimeout timeout (*this, 10);
+    
+    if (SendPacketAndWaitForResponse(packet, packet_len, response, false) == PacketResult::Success)
     {
         std::string name;
         std::string value;

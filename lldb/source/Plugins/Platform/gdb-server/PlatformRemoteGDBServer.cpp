@@ -499,9 +499,13 @@ PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
     if (log)
         log->Printf ("PlatformRemoteGDBServer::%s() set launch architecture triple to '%s'", __FUNCTION__, arch_triple ? arch_triple : "<NULL>");
 
-    const uint32_t old_packet_timeout = m_gdb_client.SetPacketTimeout (5);
-    int arg_packet_err = m_gdb_client.SendArgumentsPacket (launch_info);
-    m_gdb_client.SetPacketTimeout (old_packet_timeout);
+    int arg_packet_err;
+    {
+        // Scope for the scoped timeout object
+        GDBRemoteCommunication::ScopedTimeout timeout(m_gdb_client, 5);
+        arg_packet_err = m_gdb_client.SendArgumentsPacket (launch_info);
+    }
+
     if (arg_packet_err == 0)
     {
         std::string error_str;
