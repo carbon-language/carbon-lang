@@ -43,7 +43,7 @@ if.end:                                           ; preds = %if.end, %for.cond1.
   %shl = and i32 %conv7, 510
   store i32 %shl, i32* @c, align 4
 
-; CHECK: %lsr.iv.next = add nsw i32 %lsr.iv, -258
+; CHECK: %lsr.iv.next = add i32 %lsr.iv, -258
   %dec = add i8 %2, -1
 
   %cmp2 = icmp sgt i8 %dec, -1
