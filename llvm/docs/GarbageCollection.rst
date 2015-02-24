@@ -198,27 +198,24 @@ LLVM IR Features
 
 This section describes the garbage collection facilities provided by the
 :doc:`LLVM intermediate representation <LangRef>`.  The exact behavior of these
-IR features is specified by the binary interface implemented by a :ref:`code
-generation plugin <plugin>`, not by this document.
-
-These facilities are limited to those strictly necessary; they are not intended
-to be a complete interface to any garbage collector.  A program will need to
-interface with the GC library using the facilities provided by that program.
+IR features is specified by the selected :ref:`GC strategy description 
+<plugin>`. 
 
 Specifying GC code generation: ``gc "..."``
 -------------------------------------------
 
 .. code-block:: llvm
 
-  define ty @name(...) gc "name" { ...
+  define <returntype> @name(...) gc "name" { ... }
 
-The ``gc`` function attribute is used to specify the desired GC style to the
+The ``gc`` function attribute is used to specify the desired GC strategy to the
 compiler.  Its programmatic equivalent is the ``setGC`` method of ``Function``.
 
-Setting ``gc "name"`` on a function triggers a search for a matching code
-generation plugin "*name*"; it is that plugin which defines the exact nature of
-the code generated to support GC.  If none is found, the compiler will raise an
-error.
+Setting ``gc "name"`` on a function triggers a search for a matching subclass
+of GCStrategy.  Some collector strategies are built in.  You can add others 
+using either the loadable plugin mechanism, or by patching your copy of LLVM.
+It is the selected GC strategy which defines the exact nature of the code 
+generated to support GC.  If none is found, the compiler will raise an error.
 
 Specifying the GC style on a per-function basis allows LLVM to link together
 programs that use different garbage collection algorithms (or none at all).
@@ -324,12 +321,18 @@ pointer:
   %derived = getelementptr %object, i32 0, i32 2, i32 %n
 
 LLVM does not enforce this relationship between the object and derived pointer
-(although a :ref:`plugin <plugin>` might).  However, it would be an unusual
-collector that violated it.
+(although a particular :ref:`collector strategy <plugin>` might).  However, it
+would be an unusual collector that violated it.
 
-The use of these intrinsics is naturally optional if the target GC does require
-the corresponding barrier.  Such a GC plugin will replace the intrinsic calls
-with the corresponding ``load`` or ``store`` instruction if they are used.
+The use of these intrinsics is naturally optional if the target GC does not 
+require the corresponding barrier.  The GC strategy used with such a collector 
+should replace the intrinsic calls with the corresponding ``load`` or 
+``store`` instruction if they are used.
+
+One known deficiency with the current design is that the barrier intrinsics do 
+not include the size or alignment of the underlying operation performed.  It is 
+currently assumed that the operation is of pointer size and the alignment is
+assumed to be the target machine's default alignment.
 
 Write barrier: ``llvm.gcwrite``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -340,8 +343,8 @@ Write barrier: ``llvm.gcwrite``
 
 For write barriers, LLVM provides the ``llvm.gcwrite`` intrinsic function.  It
 has exactly the same semantics as a non-volatile ``store`` to the derived
-pointer (the third argument).  The exact code generated is specified by a
-compiler :ref:`plugin <plugin>`.
+pointer (the third argument).  The exact code generated is specified by the
+Function's selected :ref:`GC strategy <plugin>`.
 
 Many important algorithms require write barriers, including generational and
 concurrent collectors.  Additionally, write barriers could be used to implement
@@ -356,8 +359,8 @@ Read barrier: ``llvm.gcread``
 
 For read barriers, LLVM provides the ``llvm.gcread`` intrinsic function.  It has
 exactly the same semantics as a non-volatile ``load`` from the derived pointer
-(the second argument).  The exact code generated is specified by a
-:ref:`compiler plugin <plugin>`.
+(the second argument).  The exact code generated is specified by the Function's
+selected :ref:`GC strategy <plugin>`.
 
 Read barriers are needed by fewer algorithms than write barriers, and may have a
 greater performance impact since pointer reads are more frequent than writes.
