@@ -175,7 +175,7 @@ def CC_ARM_AAPCS_VFP : CallingConv<[
   CCIfType<[v2i64, v4i32, v8i16, v16i8, v4f32], CCBitConvertToType<v2f64>>,
 
   // HFAs are passed in a contiguous block of registers, or on the stack
-  CCIfConsecutiveRegs<CCCustom<"CC_ARM_AAPCS_Custom_HA">>,
+  CCIfConsecutiveRegs<CCCustom<"CC_ARM_AAPCS_Custom_Aggregate">>,
 
   CCIfType<[v2f64], CCAssignToReg<[Q0, Q1, Q2, Q3]>>,
   CCIfType<[f64], CCAssignToReg<[D0, D1, D2, D3, D4, D5, D6, D7]>>,

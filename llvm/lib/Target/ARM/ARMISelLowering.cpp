@@ -11363,7 +11363,9 @@ static bool isHomogeneousAggregate(Type *Ty, HABaseType &Base,
   return (Members > 0 && Members <= 4);
 }
 
-/// \brief Return true if a type is an AAPCS-VFP homogeneous aggregate.
+/// \brief Return true if a type is an AAPCS-VFP homogeneous aggregate or one of
+/// [N x i32] or [N x i64]. This allows front-ends to skip emitting padding when
+/// passing according to AAPCS rules.
 bool ARMTargetLowering::functionArgumentNeedsConsecutiveRegisters(
     Type *Ty, CallingConv::ID CallConv, bool isVarArg) const {
   if (getEffectiveCallingConv(CallConv, isVarArg) !=
@@ -11372,7 +11374,9 @@ bool ARMTargetLowering::functionArgumentNeedsConsecutiveRegisters(
 
   HABaseType Base = HA_UNKNOWN;
   uint64_t Members = 0;
-  bool result = isHomogeneousAggregate(Ty, Base, Members);
-  DEBUG(dbgs() << "isHA: " << result << " "; Ty->dump());
-  return result;
+  bool IsHA = isHomogeneousAggregate(Ty, Base, Members);
+  DEBUG(dbgs() << "isHA: " << IsHA << " "; Ty->dump());
+
+  bool IsIntArray = Ty->isArrayTy() && Ty->getArrayElementType()->isIntegerTy();
+  return IsHA || IsIntArray;
 }

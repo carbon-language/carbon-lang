@@ -122,8 +122,8 @@ public:
   // There is no need to differentiate between a pending CCValAssign and other
   // kinds, as they are stored in a different list.
   static CCValAssign getPending(unsigned ValNo, MVT ValVT, MVT LocVT,
-                                LocInfo HTP) {
-    return getReg(ValNo, ValVT, 0, LocVT, HTP);
+                                LocInfo HTP, unsigned ExtraInfo = 0) {
+    return getReg(ValNo, ValVT, ExtraInfo, LocVT, HTP);
   }
 
   void convertToReg(unsigned RegNo) {
@@ -146,6 +146,7 @@ public:
 
   unsigned getLocReg() const { assert(isRegLoc()); return Loc; }
   unsigned getLocMemOffset() const { assert(isMemLoc()); return Loc; }
+  unsigned getExtraInfo() const { return Loc; }
   MVT getLocVT() const { return LocVT; }
 
   LocInfo getLocInfo() const { return HTP; }
