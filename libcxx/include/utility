@@ -204,6 +204,7 @@ operator>=(const _Tp& __x, const _Tp& __y)
 
 // forward
 template<class _Tp, size_t _Np>
+inline _LIBCPP_INLINE_VISIBILITY
 void swap(_Tp (&__a)[_Np], _Tp (&__b)[_Np]) _NOEXCEPT_(__is_nothrow_swappable<_Tp>::value);
 
 template <class _ForwardIterator1, class _ForwardIterator2>
