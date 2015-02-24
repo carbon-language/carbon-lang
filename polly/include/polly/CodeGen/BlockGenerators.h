@@ -84,12 +84,12 @@ public:
   /// This copies the entire basic block and updates references to old values
   /// with references to new values, as defined by GlobalMap.
   ///
-  /// @param Stmt      The statement to code generate.
+  /// @param Stmt      The block statement to code generate.
   /// @param GlobalMap A mapping from old values to their new values
   ///                  (for values recalculated in the new ScoP, but not
   ///                  within this basic block).
   /// @param LTS       A map from old loops to new induction variables as SCEVs.
-  void copyBB(ScopStmt &Stmt, ValueMapT &GlobalMap, LoopToScevMapT &LTS);
+  void copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap, LoopToScevMapT &LTS);
 
 protected:
   PollyIRBuilder &Builder;
@@ -99,6 +99,21 @@ protected:
 
   /// @brief The dominator tree of this function.
   DominatorTree &DT;
+
+  /// @brief Copy the given basic block.
+  ///
+  /// @param Stmt      The statement to code generate.
+  /// @param BB        The basic block to code generate.
+  /// @param BBMap     A mapping from old values to their new values in this
+  /// block.
+  /// @param GlobalMap A mapping from old values to their new values
+  ///                  (for values recalculated in the new ScoP, but not
+  ///                  within this basic block).
+  /// @param LTS       A map from old loops to new induction variables as SCEVs.
+  ///
+  /// @returns The copy of the basic block.
+  BasicBlock *copyBB(ScopStmt &Stmt, BasicBlock *BB, ValueMapT &BBMap,
+                     ValueMapT &GlobalMap, LoopToScevMapT &LTS);
 
   /// @brief Get the new version of a value.
   ///
@@ -209,7 +224,7 @@ public:
                        std::vector<LoopToScevMapT> &VLTS,
                        __isl_keep isl_map *Schedule) {
     VectorBlockGenerator Generator(BlockGen, GlobalMaps, VLTS, Schedule);
-    Generator.copyBB(Stmt);
+    Generator.copyStmt(Stmt);
   }
 
 private:
@@ -322,7 +337,29 @@ private:
   void copyInstruction(ScopStmt &Stmt, const Instruction *Inst,
                        ValueMapT &VectorMap, VectorValueMapT &ScalarMaps);
 
-  void copyBB(ScopStmt &Stmt);
+  void copyStmt(ScopStmt &Stmt);
+};
+
+/// @brief Generator for new versions of polyhedral region statements.
+class RegionGenerator : public BlockGenerator {
+public:
+  /// @brief Create a generator for regions.
+  ///
+  /// @param BlockGen A generator for basic blocks.
+  RegionGenerator(BlockGenerator &BlockGen) : BlockGenerator(BlockGen) {}
+
+  /// @brief Copy the region statement @p Stmt.
+  ///
+  /// This copies the entire region represented by @p Stmt and updates
+  /// references to old values with references to new values, as defined by
+  /// GlobalMap.
+  ///
+  /// @param Stmt      The statement to code generate.
+  /// @param GlobalMap A mapping from old values to their new values
+  ///                  (for values recalculated in the new ScoP, but not
+  ///                  within this basic block).
+  /// @param LTS       A map from old loops to new induction variables as SCEVs.
+  void copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap, LoopToScevMapT &LTS);
 };
 }
 #endif

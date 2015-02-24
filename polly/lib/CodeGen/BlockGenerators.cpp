@@ -284,18 +284,29 @@ void BlockGenerator::copyInstruction(ScopStmt &Stmt, const Instruction *Inst,
   copyInstScalar(Stmt, Inst, BBMap, GlobalMap, LTS);
 }
 
-void BlockGenerator::copyBB(ScopStmt &Stmt, ValueMapT &GlobalMap,
-                            LoopToScevMapT &LTS) {
+void BlockGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
+                              LoopToScevMapT &LTS) {
+  assert(Stmt.isBlockStmt() &&
+         "Only block statements can be copied by the block generator");
+
+  ValueMapT BBMap;
+
   BasicBlock *BB = Stmt.getBasicBlock();
+  copyBB(Stmt, BB, BBMap, GlobalMap, LTS);
+}
+
+BasicBlock *BlockGenerator::copyBB(ScopStmt &Stmt, BasicBlock *BB,
+                                   ValueMapT &BBMap, ValueMapT &GlobalMap,
+                                   LoopToScevMapT &LTS) {
   BasicBlock *CopyBB =
       SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
   CopyBB->setName("polly.stmt." + BB->getName());
   Builder.SetInsertPoint(CopyBB->begin());
 
-  ValueMapT BBMap;
-
   for (Instruction &Inst : *BB)
     copyInstruction(Stmt, &Inst, BBMap, GlobalMap, LTS);
+
+  return CopyBB;
 }
 
 VectorBlockGenerator::VectorBlockGenerator(BlockGenerator &BlockGen,
@@ -620,7 +631,10 @@ void VectorBlockGenerator::copyInstruction(ScopStmt &Stmt,
   copyInstScalarized(Stmt, Inst, VectorMap, ScalarMaps);
 }
 
-void VectorBlockGenerator::copyBB(ScopStmt &Stmt) {
+void VectorBlockGenerator::copyStmt(ScopStmt &Stmt) {
+  assert(Stmt.isBlockStmt() && "TODO: Only block statements can be copied by "
+                               "the vector block generator");
+
   BasicBlock *BB = Stmt.getBasicBlock();
   BasicBlock *CopyBB =
       SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
@@ -646,4 +660,61 @@ void VectorBlockGenerator::copyBB(ScopStmt &Stmt) {
 
   for (Instruction &Inst : *BB)
     copyInstruction(Stmt, &Inst, VectorBlockMap, ScalarBlockMap);
+}
+
+void RegionGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
+                               LoopToScevMapT &LTS) {
+  assert(Stmt.isRegionStmt() &&
+         "Only region statements can be copied by the block generator");
+
+  // The region represented by the statement.
+  Region *R = Stmt.getRegion();
+
+  // The "BBMap" for the whole region.
+  ValueMapT RegionMap;
+
+  // Iterate over all blocks in the region in a breadth-first search.
+  std::deque<BasicBlock *> Blocks;
+  SmallPtrSet<BasicBlock *, 8> SeenBlocks;
+  Blocks.push_back(R->getEntry());
+  SeenBlocks.insert(R->getEntry());
+
+  while (!Blocks.empty()) {
+    BasicBlock *BB = Blocks.front();
+    Blocks.pop_front();
+
+    // Copy the block with the BlockGenerator.
+    BasicBlock *BBCopy = copyBB(Stmt, BB, RegionMap, GlobalMap, LTS);
+
+    // And continue with new successors inside the region.
+    for (auto SI = succ_begin(BB), SE = succ_end(BB); SI != SE; SI++)
+      if (R->contains(*SI) && SeenBlocks.insert(*SI).second)
+        Blocks.push_back(*SI);
+
+    // In order to remap PHI nodes we store also basic block mappings.
+    RegionMap[BB] = BBCopy;
+  }
+
+  // Now create a new dedicated region exit block and add it to the region map.
+  BasicBlock *RegionExit =
+      SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
+  RegionExit->setName("polly.stmt." + R->getExit()->getName() + ".pre");
+  RegionMap[R->getExit()] = RegionExit;
+
+  // As the block generator doesn't handle control flow we need to add the
+  // region control flow by hand after all blocks have been copied.
+  for (BasicBlock *BB : SeenBlocks) {
+
+    BranchInst *BI = cast<BranchInst>(BB->getTerminator());
+
+    BasicBlock *BBCopy = cast<BasicBlock>(RegionMap[BB]);
+    Instruction *BICopy = BBCopy->getTerminator();
+
+    Builder.SetInsertPoint(BBCopy);
+    copyInstScalar(Stmt, BI, RegionMap, GlobalMap, LTS);
+    BICopy->eraseFromParent();
+  }
+
+  // Reset the old insert point for the build.
+  Builder.SetInsertPoint(RegionExit->begin());
 }
