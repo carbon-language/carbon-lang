@@ -2,8 +2,11 @@
 // RUN: %clangxx_asan -O2 %s -o %t
 // RUN: %run %t 2>&1 | FileCheck %s
 
+// FIXME: merge this with the common free_hook_realloc test when we can run
+// common tests on Windows.
+
 #include <stdlib.h>
-#include <unistd.h>
+#include <io.h>
 #include <sanitizer/allocator_interface.h>
 
 static void *glob_ptr;

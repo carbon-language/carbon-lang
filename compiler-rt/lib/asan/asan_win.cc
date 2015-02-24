@@ -27,12 +27,25 @@
 #include "sanitizer_common/sanitizer_mutex.h"
 
 extern "C" {
-  SANITIZER_INTERFACE_ATTRIBUTE
-  int __asan_should_detect_stack_use_after_return() {
-    __asan_init();
-    return __asan_option_detect_stack_use_after_return;
-  }
+SANITIZER_INTERFACE_ATTRIBUTE
+int __asan_should_detect_stack_use_after_return() {
+  __asan_init();
+  return __asan_option_detect_stack_use_after_return;
 }
+
+// We don't have a direct equivalent of weak symbols when using MSVC, but we can
+// use the /alternatename directive to tell the linker to default a specific
+// symbol to a specific value, which works nicely for allocator hooks and
+// __asan_default_options().
+void __sanitizer_default_malloc_hook(void *ptr, uptr size) { }
+void __sanitizer_default_free_hook(void *ptr) { }
+const char* __asan_default_default_options() { return ""; }
+void __asan_default_on_error() {}
+#pragma comment(linker, "/alternatename:___sanitizer_malloc_hook=___sanitizer_default_malloc_hook")  // NOLINT
+#pragma comment(linker, "/alternatename:___sanitizer_free_hook=___sanitizer_default_free_hook")      // NOLINT
+#pragma comment(linker, "/alternatename:___asan_default_options=___asan_default_default_options")    // NOLINT
+#pragma comment(linker, "/alternatename:___asan_on_error=___asan_default_on_error")                  // NOLINT
+}  // extern "C"
 
 namespace __asan {
 
