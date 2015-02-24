@@ -11,11 +11,10 @@ CLANG_LEVEL = ../../..
 
 TESTNAME = DynamicASTMatchers
 include $(CLANG_LEVEL)/../../Makefile.config
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter \
-                   instrumentation mc option objcarcopts support
-USEDLIBS = clangTooling.a clangFrontend.a clangSerialization.a clangDriver.a    \
-           clangCodeGen.a clangRewrite.a clangRewriteFrontend.a clangParse.a    \
-           clangSema.a clangAnalysis.a clangEdit.a clangAST.a                   \
-           clangASTMatchers.a clangLex.a clangBasic.a clangDynamicASTMatchers.a
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc option
+USEDLIBS = clangTooling.a clangFrontend.a clangSerialization.a clangDriver.a \
+           clangRewrite.a clangRewriteFrontend.a clangParse.a clangSema.a \
+           clangAnalysis.a clangEdit.a clangAST.a clangASTMatchers.a \
+           clangLex.a clangBasic.a clangDynamicASTMatchers.a
 
 include $(CLANG_LEVEL)/unittests/Makefile
