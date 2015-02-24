@@ -608,6 +608,9 @@ def cl_denorms_are_zero : Flag<["-"], "cl-denorms-are-zero">,
 
 def fcuda_is_device : Flag<["-"], "fcuda-is-device">,
   HelpText<"Generate code for CUDA device">;
+def fcuda_allow_host_calls_from_host_device : Flag<["-"],
+    "fcuda-allow-host-calls-from-host-device">,
+  HelpText<"Allow host device functions to call host functions">;
 
 } // let Flags = [CC1Option]
 

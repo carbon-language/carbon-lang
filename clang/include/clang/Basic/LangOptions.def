@@ -160,6 +160,7 @@ LANGOPT(HalfArgsAndReturns, 1, 0, "half args and returns")
 LANGOPT(CUDA              , 1, 0, "CUDA")
 LANGOPT(OpenMP            , 1, 0, "OpenMP support")
 LANGOPT(CUDAIsDevice      , 1, 0, "Compiling for CUDA device")
+LANGOPT(CUDAAllowHostCallsFromHostDevice, 1, 0, "Allow host device functions to call host functions")
 
 LANGOPT(AssumeSaneOperatorNew , 1, 1, "implicit __attribute__((malloc)) for C++'s new operators")
 LANGOPT(SizedDeallocation , 1, 0, "enable sized deallocation functions")

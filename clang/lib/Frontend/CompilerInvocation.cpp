@@ -253,7 +253,7 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
     for (unsigned i = 0, e = checkers.size(); i != e; ++i)
       Opts.CheckersControlList.push_back(std::make_pair(checkers[i], enable));
   }
-  
+
   // Go through the analyzer configuration options.
   for (arg_iterator it = Args.filtered_begin(OPT_analyzer_config),
        ie = Args.filtered_end(); it != ie; ++it) {
@@ -1392,6 +1392,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
 
   if (Args.hasArg(OPT_fcuda_is_device))
     Opts.CUDAIsDevice = 1;
+
+  if (Args.hasArg(OPT_fcuda_allow_host_calls_from_host_device))
+    Opts.CUDAAllowHostCallsFromHostDevice = 1;
 
   if (Opts.ObjC1) {
     if (Arg *arg = Args.getLastArg(OPT_fobjc_runtime_EQ)) {
