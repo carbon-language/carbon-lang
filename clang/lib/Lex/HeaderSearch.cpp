@@ -1353,8 +1353,10 @@ void HeaderSearch::loadSubdirectoryModuleMaps(DirectoryLookup &SearchDir) {
   llvm::sys::path::native(SearchDir.getDir()->getName(), DirNative);
   for (llvm::sys::fs::directory_iterator Dir(DirNative.str(), EC), DirEnd;
        Dir != DirEnd && !EC; Dir.increment(EC)) {
-    loadModuleMapFile(Dir->path(), SearchDir.isSystemHeaderDirectory(),
-                      SearchDir.isFramework());
+    bool IsFramework = llvm::sys::path::extension(Dir->path()) == ".framework";
+    if (IsFramework == SearchDir.isFramework())
+      loadModuleMapFile(Dir->path(), SearchDir.isSystemHeaderDirectory(),
+                        SearchDir.isFramework());
   }
 
   SearchDir.setSearchedAllModuleMaps(true);
