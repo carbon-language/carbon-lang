@@ -21,6 +21,15 @@ else()
   endif()
 endif()
 
+if (POLICY CMP0051)
+  # CMake 3.1 and higher include generator expressions of the form
+  # $<TARGETLIB:obj> in the SOURCES property.  These need to be
+  # stripped everywhere that access the SOURCES property, so we just
+  # defer to the OLD behavior of not including generator expressions
+  # in the output for now.
+  cmake_policy(SET CMP0051 OLD)
+endif()
+
 if(CMAKE_VERSION VERSION_LESS 3.1.20141117)
   set(cmake_3_2_USES_TERMINAL)
 else()
