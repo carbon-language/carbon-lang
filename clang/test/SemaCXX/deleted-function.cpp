@@ -65,3 +65,25 @@ template void test3<int>();
 
 void test4() {} // expected-note {{previous definition is here}}
 void test4() = delete; // expected-error {{redefinition of 'test4'}}
+
+struct DelCtor { // expected-note 4{{implicit}}
+  DelCtor(int) = delete; // expected-note 13{{deleted}}
+  // ensure the class is not an aggregate
+  DelCtor(int, int, int, int);
+};
+DelCtor dc1 = 0; // expected-error {{deleted}}
+DelCtor dc2(0); // expected-error {{deleted}}
+DelCtor dc3 = {0}; // expected-error {{deleted}}
+DelCtor dc4{0}; // expected-error {{deleted}}
+DelCtor dc5 = (DelCtor)0; // expected-error {{deleted}}
+DelCtor dc6 = DelCtor(0); // expected-error {{deleted}}
+DelCtor dc7 = DelCtor{0}; // expected-error {{deleted}}
+DelCtor *dc8 = new DelCtor(0); // expected-error {{deleted}}
+DelCtor *dc9 = new DelCtor{0}; // expected-error {{deleted}}
+DelCtor dc10[] = {0}; // expected-error {{deleted}}
+int use_dc(DelCtor); // expected-note 2{{here}}
+int dc11 = use_dc(0); // expected-error {{deleted}}
+int dc12 = use_dc({0}); // expected-error {{deleted}}
+int use_dcr(const DelCtor &); // expected-note {{here}}
+int dc13 = use_dcr(0); // FIXME PR22673: should reject this
+int dc14 = use_dcr({0}); // expected-error {{deleted}}
