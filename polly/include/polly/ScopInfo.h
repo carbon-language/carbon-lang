@@ -429,8 +429,20 @@ class ScopStmt {
 
   //@}
 
-  /// The BasicBlock represented by this statement.
+  /// @brief A SCoP statement represents either a basic block (affine/precise
+  ///        case) or a whole region (non-affine case). Only one of the
+  ///        following two members will therefore be set and indicate which
+  ///        kind of statement this is.
+  ///
+  ///{
+
+  /// @brief The BasicBlock represented by this statement (in the affine case).
   BasicBlock *BB;
+
+  /// @brief The region represented by this statement (in the non-affine case).
+  Region *R;
+
+  ///}
 
   /// @brief The isl AST build for the new generated AST.
   isl_ast_build *Build;
@@ -449,7 +461,17 @@ class ScopStmt {
                                             TempScop &tempScop);
   __isl_give isl_set *buildDomain(TempScop &tempScop, const Region &CurRegion);
   void buildScattering(SmallVectorImpl<unsigned> &Scatter);
-  void buildAccesses(TempScop &tempScop);
+
+  /// @brief Create the accesses for instructions in @p Block.
+  ///
+  /// @param tempScop       The template SCoP.
+  /// @param Block          The basic block for which accesses should be
+  ///                       created.
+  /// @param isApproximated Flag to indicate blocks that might not be executed,
+  ///                       hence for which write accesses need to be modelt as
+  ///                       may-write accesses.
+  void buildAccesses(TempScop &tempScop, BasicBlock *Block,
+                     bool isApproximated = false);
 
   /// @brief Detect and mark reductions in the ScopStmt
   void checkForReductions();
@@ -489,12 +511,17 @@ class ScopStmt {
   /// or non-optimal run-time checks.
   void deriveAssumptionsFromGEP(GetElementPtrInst *Inst);
 
-  /// @brief Scan the scop and derive assumptions about parameter values.
-  void deriveAssumptions();
+  /// @brief Scan @p Block and derive assumptions about parameter values.
+  void deriveAssumptions(BasicBlock *Block);
 
   /// Create the ScopStmt from a BasicBlock.
   ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
            BasicBlock &bb, SmallVectorImpl<Loop *> &NestLoops,
+           SmallVectorImpl<unsigned> &Scatter);
+
+  /// Create an overapproximating ScopStmt for the region @p R.
+  ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion, Region &R,
+           SmallVectorImpl<Loop *> &NestLoops,
            SmallVectorImpl<unsigned> &Scatter);
 
   friend class Scop;
@@ -532,10 +559,23 @@ public:
   /// @brief Get an isl string representing this scattering.
   std::string getScatteringStr() const;
 
-  /// @brief Get the BasicBlock represented by this ScopStmt.
+  /// @brief Get the BasicBlock represented by this ScopStmt (if any).
   ///
-  /// @return The BasicBlock represented by this ScopStmt.
+  /// @return The BasicBlock represented by this ScopStmt, or null if the
+  ///         statement represents a region.
   BasicBlock *getBasicBlock() const { return BB; }
+
+  /// @brief Return true if this statement represents a single basic block.
+  bool isBlockStmt() const { return BB != nullptr; }
+
+  /// @brief Get the region represented by this ScopStmt (if any).
+  ///
+  /// @return The region represented by this ScopStmt, or null if the statement
+  ///         represents a basic block.
+  Region *getRegion() const { return R; }
+
+  /// @brief Return true if this statement represents a whole region.
+  bool isRegionStmt() const { return R != nullptr; }
 
   const MemoryAccess &getAccessFor(const Instruction *Inst) const {
     MemoryAccess *A = lookupAccessFor(Inst);
@@ -549,7 +589,12 @@ public:
     return at == InstructionToAccess.end() ? NULL : at->second;
   }
 
-  void setBasicBlock(BasicBlock *Block) { BB = Block; }
+  void setBasicBlock(BasicBlock *Block) {
+    // TODO: Handle the case where the statement is a region statement, thus
+    //       the entry block was split and needs to be changed in the region R.
+    assert(BB && "Cannot set a block for a region statement");
+    BB = Block;
+  }
 
   typedef MemoryAccessVec::iterator iterator;
   typedef MemoryAccessVec::const_iterator const_iterator;
@@ -697,7 +742,8 @@ private:
 
   /// Create the static control part with a region, max loop depth of this
   /// region and parameters used in this region.
-  Scop(TempScop &TempScop, LoopInfo &LI, ScalarEvolution &SE, isl_ctx *ctx);
+  Scop(TempScop &TempScop, LoopInfo &LI, ScalarEvolution &SE, ScopDetection &SD,
+       isl_ctx *ctx);
 
   /// @brief Check if a basic block is trivial.
   ///
@@ -719,12 +765,28 @@ private:
   /// @brief Simplify the assumed context.
   void simplifyAssumedContext();
 
+  /// @brief Create a new SCoP statement for either @p BB or @p R.
+  ///
+  /// Either @p BB or @p R should be non-null. A new statement for the non-null
+  /// argument will be created and added to the statement vector and map.
+  ///
+  /// @param BB         The basic block we build the statement for (or null)
+  /// @param R          The region we build the statement for (or null).
+  /// @param tempScop   The temp SCoP we use as model.
+  /// @param CurRegion  The SCoP region.
+  /// @param NestLoops  A vector of all surrounding loops.
+  /// @param Scatter    The position of the new statement as scattering.
+  void addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
+                   const Region &CurRegion, SmallVectorImpl<Loop *> &NestLoops,
+                   SmallVectorImpl<unsigned> &Scatter);
+
   /// Build the Scop and Statement with precalculated scop information.
   void buildScop(TempScop &TempScop, const Region &CurRegion,
                  // Loops in Scop containing CurRegion
                  SmallVectorImpl<Loop *> &NestLoops,
                  // The scattering numbers
-                 SmallVectorImpl<unsigned> &Scatter, LoopInfo &LI);
+                 SmallVectorImpl<unsigned> &Scatter, LoopInfo &LI,
+                 ScopDetection &SD);
 
   /// @name Helper function for printing the Scop.
   ///

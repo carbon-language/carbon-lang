@@ -797,14 +797,22 @@ void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
   Scattering = isl_map_align_params(Scattering, Parent.getParamSpace());
 }
 
-void ScopStmt::buildAccesses(TempScop &tempScop) {
-  for (const auto &AccessPair : *tempScop.getAccessFunctions(BB)) {
-    const IRAccess &Access = AccessPair.first;
+void ScopStmt::buildAccesses(TempScop &tempScop, BasicBlock *Block,
+                             bool isApproximated) {
+  AccFuncSetType *AFS = tempScop.getAccessFunctions(Block);
+  if (!AFS)
+    return;
+
+  for (auto &AccessPair : *AFS) {
+    IRAccess &Access = AccessPair.first;
     Instruction *AccessInst = AccessPair.second;
 
     Type *AccessType = getAccessInstType(AccessInst)->getPointerTo();
     const ScopArrayInfo *SAI = getParent()->getOrCreateScopArrayInfo(
         Access.getBase(), AccessType, Access.Sizes);
+
+    if (isApproximated && Access.isWrite())
+      Access.setMayWrite();
 
     MemAccs.push_back(new MemoryAccess(Access, AccessInst, this, SAI));
 
@@ -894,7 +902,7 @@ __isl_give isl_set *ScopStmt::addConditionsToDomain(__isl_take isl_set *Domain,
                                                     const Region &CurRegion) {
   const Region *TopRegion = tempScop.getMaxRegion().getParent(),
                *CurrentRegion = &CurRegion;
-  const BasicBlock *BranchingBB = BB;
+  const BasicBlock *BranchingBB = BB ? BB : R->getEntry();
 
   do {
     if (BranchingBB != CurrentRegion->getEntry()) {
@@ -978,16 +986,39 @@ void ScopStmt::deriveAssumptionsFromGEP(GetElementPtrInst *GEP) {
   isl_local_space_free(LSpace);
 }
 
-void ScopStmt::deriveAssumptions() {
-  for (Instruction &Inst : *BB)
+void ScopStmt::deriveAssumptions(BasicBlock *Block) {
+  for (Instruction &Inst : *Block)
     if (auto *GEP = dyn_cast<GetElementPtrInst>(&Inst))
       deriveAssumptionsFromGEP(GEP);
 }
 
 ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
+                   Region &R, SmallVectorImpl<Loop *> &Nest,
+                   SmallVectorImpl<unsigned> &Scatter)
+    : Parent(parent), BB(nullptr), R(&R), Build(nullptr),
+      NestLoops(Nest.size()) {
+  // Setup the induction variables.
+  for (unsigned i = 0, e = Nest.size(); i < e; ++i)
+    NestLoops[i] = Nest[i];
+
+  BaseName = getIslCompatibleName("Stmt_(", R.getNameStr(), ")");
+
+  Domain = buildDomain(tempScop, CurRegion);
+  buildScattering(Scatter);
+
+  BasicBlock *EntryBB = R.getEntry();
+  for (BasicBlock *Block : R.blocks()) {
+    buildAccesses(tempScop, Block, Block != EntryBB);
+    deriveAssumptions(Block);
+  }
+  checkForReductions();
+}
+
+ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
                    BasicBlock &bb, SmallVectorImpl<Loop *> &Nest,
                    SmallVectorImpl<unsigned> &Scatter)
-    : Parent(parent), BB(&bb), Build(nullptr), NestLoops(Nest.size()) {
+    : Parent(parent), BB(&bb), R(nullptr), Build(nullptr),
+      NestLoops(Nest.size()) {
   // Setup the induction variables.
   for (unsigned i = 0, e = Nest.size(); i < e; ++i)
     NestLoops[i] = Nest[i];
@@ -996,20 +1027,23 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
 
   Domain = buildDomain(tempScop, CurRegion);
   buildScattering(Scatter);
-  buildAccesses(tempScop);
+  buildAccesses(tempScop, BB);
+  deriveAssumptions(BB);
   checkForReductions();
-  deriveAssumptions();
 }
 
 /// @brief Collect loads which might form a reduction chain with @p StoreMA
 ///
-/// Check if the stored value for @p StoreMA is a binary operator with one or
-/// two loads as operands. If the binary operand is commutative & associative,
+/// Check if the stored value for @p StoreMA is a binary operator with one
+/// or
+/// two loads as operands. If the binary operand is commutative &
+/// associative,
 /// used only once (by @p StoreMA) and its load operands are also used only
 /// once, we have found a possible reduction chain. It starts at an operand
 /// load and includes the binary operator and @p StoreMA.
 ///
-/// Note: We allow only one use to ensure the load and binary operator cannot
+/// Note: We allow only one use to ensure the load and binary operator
+/// cannot
 ///       escape this block or into any other store except @p StoreMA.
 void ScopStmt::collectCandiateReductionLoads(
     MemoryAccess *StoreMA, SmallVectorImpl<MemoryAccess *> &Loads) {
@@ -1026,7 +1060,8 @@ void ScopStmt::collectCandiateReductionLoads(
   if (BinOp->getNumUses() != 1)
     return;
 
-  // Skip if the opcode of the binary operator is not commutative/associative
+  // Skip if the opcode of the binary operator is not
+  // commutative/associative
   if (!BinOp->isCommutative() || !BinOp->isAssociative())
     return;
 
@@ -1057,11 +1092,16 @@ void ScopStmt::collectCandiateReductionLoads(
 
 /// @brief Check for reductions in this ScopStmt
 ///
-/// Iterate over all store memory accesses and check for valid binary reduction
-/// like chains. For all candidates we check if they have the same base address
-/// and there are no other accesses which overlap with them. The base address
-/// check rules out impossible reductions candidates early. The overlap check,
-/// together with the "only one user" check in collectCandiateReductionLoads,
+/// Iterate over all store memory accesses and check for valid binary
+/// reduction
+/// like chains. For all candidates we check if they have the same base
+/// address
+/// and there are no other accesses which overlap with them. The base
+/// address
+/// check rules out impossible reductions candidates early. The overlap
+/// check,
+/// together with the "only one user" check in
+/// collectCandiateReductionLoads,
 /// guarantees that none of the intermediate results will escape during
 /// execution of the loop nest. We basically check here that no other memory
 /// access can access the same memory as the potential reduction.
@@ -1069,7 +1109,8 @@ void ScopStmt::checkForReductions() {
   SmallVector<MemoryAccess *, 2> Loads;
   SmallVector<std::pair<MemoryAccess *, MemoryAccess *>, 4> Candidates;
 
-  // First collect candidate load-store reduction chains by iterating over all
+  // First collect candidate load-store reduction chains by iterating over
+  // all
   // stores and collecting possible reduction loads.
   for (MemoryAccess *StoreMA : MemAccs) {
     if (StoreMA->isRead())
@@ -1282,10 +1323,13 @@ void Scop::simplifyAssumedContext() {
   // WARNING: This only holds if the assumptions we have taken do not reduce
   //          the set of statement instances that are executed. Otherwise we
   //          may run into a case where the iteration domains suggest that
-  //          for a certain set of parameter constraints no code is executed,
+  //          for a certain set of parameter constraints no code is
+  //          executed,
   //          but in the original program some computation would have been
-  //          performed. In such a case, modifying the run-time conditions and
-  //          possibly influencing the run-time check may cause certain scops
+  //          performed. In such a case, modifying the run-time conditions
+  //          and
+  //          possibly influencing the run-time check may cause certain
+  //          scops
   //          to not be executed.
   //
   // Example:
@@ -1297,7 +1341,8 @@ void Scop::simplifyAssumedContext() {
   //         A[i+p][j] = 1.0;
   //
   //   we assume that the condition m <= 0 or (m >= 1 and p >= 0) holds as
-  //   otherwise we would access out of bound data. Now, knowing that code is
+  //   otherwise we would access out of bound data. Now, knowing that code
+  //   is
   //   only executed for the case m >= 0, it is sufficient to assume p >= 0.
   AssumedContext =
       isl_set_gist_params(AssumedContext, isl_union_set_params(getDomains()));
@@ -1374,18 +1419,22 @@ static __isl_give isl_set *getAccessDomain(MemoryAccess *MA) {
 
 bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   // To create sound alias checks we perform the following steps:
-  //   o) Use the alias analysis and an alias set tracker to build alias sets
+  //   o) Use the alias analysis and an alias set tracker to build alias
+  //   sets
   //      for all memory accesses inside the SCoP.
   //   o) For each alias set we then map the aliasing pointers back to the
-  //      memory accesses we know, thus obtain groups of memory accesses which
+  //      memory accesses we know, thus obtain groups of memory accesses
+  //      which
   //      might alias.
   //   o) We divide each group based on the domains of the minimal/maximal
-  //      accesses. That means two minimal/maximal accesses are only in a group
+  //      accesses. That means two minimal/maximal accesses are only in a
+  //      group
   //      if their access domains intersect, otherwise they are in different
   //      ones.
   //   o) We split groups such that they contain at most one read only base
   //      address.
-  //   o) For each group with more than one base pointer we then compute minimal
+  //   o) For each group with more than one base pointer we then compute
+  //   minimal
   //      and maximal accesses to each array in this group.
   using AliasGroupTy = SmallVector<MemoryAccess *, 4>;
 
@@ -1485,7 +1534,8 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     }
 
     // If we have both read only and non read only base pointers we combine
-    // the non read only ones with exactly one read only one at a time into a
+    // the non read only ones with exactly one read only one at a time into
+    // a
     // new alias group and clear the old alias group in the end.
     for (const auto &ReadOnlyPair : ReadOnlyPairs) {
       AliasGroupTy AGNonReadOnly = AG;
@@ -1582,10 +1632,11 @@ void Scop::dropConstantScheduleDims() {
 }
 
 Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
-           isl_ctx *Context)
+           ScopDetection &SD, isl_ctx *Context)
     : SE(&ScalarEvolution), R(tempScop.getMaxRegion()), IsOptimized(false),
       MaxLoopDepth(getMaxLoopDepthInRegion(tempScop.getMaxRegion(), LI)) {
   IslCtx = Context;
+
   buildContext();
 
   SmallVector<Loop *, 8> NestLoops;
@@ -1595,7 +1646,7 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
 
   // Build the iteration domain, access functions and scattering functions
   // traversing the region tree.
-  buildScop(tempScop, getRegion(), NestLoops, Scatter, LI);
+  buildScop(tempScop, getRegion(), NestLoops, Scatter, LI, SD);
 
   realignParams();
   addParameterBounds();
@@ -1866,9 +1917,39 @@ bool Scop::isTrivialBB(BasicBlock *BB, TempScop &tempScop) {
   return true;
 }
 
+void Scop::addScopStmt(BasicBlock *BB, Region *R, TempScop &tempScop,
+                       const Region &CurRegion,
+                       SmallVectorImpl<Loop *> &NestLoops,
+                       SmallVectorImpl<unsigned> &Scatter) {
+  ScopStmt *Stmt;
+
+  if (BB) {
+    Stmt = new ScopStmt(*this, tempScop, CurRegion, *BB, NestLoops, Scatter);
+    StmtMap[BB] = Stmt;
+  } else {
+    assert(R && "Either a basic block or a region is needed to "
+                "create a new SCoP stmt.");
+    Stmt = new ScopStmt(*this, tempScop, CurRegion, *R, NestLoops, Scatter);
+    for (BasicBlock *BB : R->blocks())
+      StmtMap[BB] = Stmt;
+  }
+
+  // Insert all statements into the statement map and the statement vector.
+  Stmts.push_back(Stmt);
+
+  // Increasing the Scattering function is OK for the moment, because
+  // we are using a depth first iterator and the program is well structured.
+  ++Scatter[NestLoops.size()];
+}
+
 void Scop::buildScop(TempScop &tempScop, const Region &CurRegion,
                      SmallVectorImpl<Loop *> &NestLoops,
-                     SmallVectorImpl<unsigned> &Scatter, LoopInfo &LI) {
+                     SmallVectorImpl<unsigned> &Scatter, LoopInfo &LI,
+                     ScopDetection &SD) {
+  if (SD.isNonAffineSubRegion(&CurRegion, &getRegion()))
+    return addScopStmt(nullptr, const_cast<Region *>(&CurRegion), tempScop,
+                       CurRegion, NestLoops, Scatter);
+
   Loop *L = castToLoop(CurRegion, LI);
 
   if (L)
@@ -1880,24 +1961,15 @@ void Scop::buildScop(TempScop &tempScop, const Region &CurRegion,
   for (Region::const_element_iterator I = CurRegion.element_begin(),
                                       E = CurRegion.element_end();
        I != E; ++I)
-    if (I->isSubRegion())
-      buildScop(tempScop, *(I->getNodeAs<Region>()), NestLoops, Scatter, LI);
-    else {
+    if (I->isSubRegion()) {
+      buildScop(tempScop, *I->getNodeAs<Region>(), NestLoops, Scatter, LI, SD);
+    } else {
       BasicBlock *BB = I->getNodeAs<BasicBlock>();
 
       if (isTrivialBB(BB, tempScop))
         continue;
 
-      ScopStmt *Stmt =
-          new ScopStmt(*this, tempScop, CurRegion, *BB, NestLoops, Scatter);
-
-      // Insert all statements into the statement map and the statement vector.
-      StmtMap[BB] = Stmt;
-      Stmts.push_back(Stmt);
-
-      // Increasing the Scattering function is OK for the moment, because
-      // we are using a depth first iterator and the program is well structured.
-      ++Scatter[loopDepth];
+      addScopStmt(BB, nullptr, tempScop, CurRegion, NestLoops, Scatter);
     }
 
   if (!L)
@@ -1931,6 +2003,7 @@ void ScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addRequired<RegionInfoPass>();
   AU.addRequired<ScalarEvolution>();
+  AU.addRequired<ScopDetection>();
   AU.addRequired<TempScopInfo>();
   AU.addRequired<AliasAnalysis>();
   AU.setPreservesAll();
@@ -1939,6 +2012,7 @@ void ScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
 bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
   LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
+  ScopDetection &SD = getAnalysis<ScopDetection>();
   ScalarEvolution &SE = getAnalysis<ScalarEvolution>();
 
   TempScop *tempScop = getAnalysis<TempScopInfo>().getTempScop(R);
@@ -1949,7 +2023,7 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
     return false;
   }
 
-  scop = new Scop(*tempScop, LI, SE, ctx);
+  scop = new Scop(*tempScop, LI, SE, SD, ctx);
 
   if (!PollyUseRuntimeAliasChecks) {
     // Statistics.
@@ -1971,10 +2045,12 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
 
   DEBUG(dbgs()
         << "\n\nNOTE: Run time checks for " << scop->getNameStr()
-        << " could not be created as the number of parameters involved is too "
+        << " could not be created as the number of parameters involved is "
+           "too "
            "high. The SCoP will be "
            "dismissed.\nUse:\n\t--polly-rtc-max-parameters=X\nto adjust the "
-           "maximal number of parameters but be advised that the compile time "
+           "maximal number of parameters but be advised that the compile "
+           "time "
            "might increase exponentially.\n\n");
 
   delete scop;
@@ -1993,6 +2069,7 @@ INITIALIZE_AG_DEPENDENCY(AliasAnalysis);
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
+INITIALIZE_PASS_DEPENDENCY(ScopDetection);
 INITIALIZE_PASS_DEPENDENCY(TempScopInfo);
 INITIALIZE_PASS_END(ScopInfo, "polly-scops",
                     "Polly - Create polyhedral description of Scops", false,

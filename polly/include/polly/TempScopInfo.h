@@ -80,6 +80,8 @@ public:
 
   bool isWrite() const { return Type == MUST_WRITE; }
 
+  void setMayWrite() { Type = MAY_WRITE; }
+
   bool isMayWrite() const { return Type == MAY_WRITE; }
 
   bool isScalar() const { return Subscripts.size() == 0; }
@@ -136,7 +138,7 @@ class TempScop {
   const BBCondMapType &BBConds;
 
   // Access function of bbs.
-  const AccFuncMapType &AccFuncMap;
+  AccFuncMapType &AccFuncMap;
 
   friend class TempScopInfo;
 
@@ -169,8 +171,8 @@ public:
   ///
   /// @return All access functions in BB
   ///
-  const AccFuncSetType *getAccessFunctions(const BasicBlock *BB) const {
-    AccFuncMapType::const_iterator at = AccFuncMap.find(BB);
+  AccFuncSetType *getAccessFunctions(const BasicBlock *BB) {
+    AccFuncMapType::iterator at = AccFuncMap.find(BB);
     return at != AccFuncMap.end() ? &(at->second) : 0;
   }
   //@}
@@ -239,10 +241,9 @@ class TempScopInfo : public FunctionPass {
 
   /// @brief Build condition constrains to BBs in a valid Scop.
   ///
-  /// @param BB           The BasicBlock to build condition constrains
-  /// @param RegionEntry  The entry block of the Smallest Region that containing
-  ///                     BB
-  void buildCondition(BasicBlock *BB, BasicBlock *RegionEntry);
+  /// @param BB The BasicBlock to build condition constrains
+  /// @param R  The region for the current TempScop.
+  void buildCondition(BasicBlock *BB, Region &R);
 
   // Build the affine function of the given condition
   void buildAffineCondition(Value &V, bool inverted, Comparison **Comp) const;

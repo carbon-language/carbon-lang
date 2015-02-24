@@ -310,15 +310,17 @@ void TempScopInfo::buildAffineCondition(Value &V, bool inverted,
   *Comp = new Comparison(LHS, RHS, Pred);
 }
 
-void TempScopInfo::buildCondition(BasicBlock *BB, BasicBlock *RegionEntry) {
+void TempScopInfo::buildCondition(BasicBlock *BB, Region &R) {
+  BasicBlock *RegionEntry = R.getEntry();
   BBCond Cond;
 
   DomTreeNode *BBNode = DT->getNode(BB), *EntryNode = DT->getNode(RegionEntry);
   assert(BBNode && EntryNode && "Get null node while building condition!");
 
-  // Walk up the dominance tree until reaching the entry node. Add all
-  // conditions on the path to BB except if BB postdominates the block
+  // Walk up the dominance tree until reaching the entry node. Collect all
+  // branching blocks on the path to BB except if BB postdominates the block
   // containing the condition.
+  SmallVector<BasicBlock *, 4> DominatorBrBlocks;
   while (BBNode != EntryNode) {
     BasicBlock *CurBB = BBNode->getBlock();
     BBNode = BBNode->getIDom();
@@ -332,6 +334,24 @@ void TempScopInfo::buildCondition(BasicBlock *BB, BasicBlock *RegionEntry) {
 
     if (Br->isUnconditional())
       continue;
+
+    DominatorBrBlocks.push_back(BBNode->getBlock());
+  }
+
+  RegionInfo *RI = R.getRegionInfo();
+  // Iterate in reverse order over the dominating blocks.  Until a non-affine
+  // branch was encountered add all conditions collected. If a non-affine branch
+  // was encountered, stop as we overapproximate from here on anyway.
+  for (auto BIt = DominatorBrBlocks.rbegin(), BEnd = DominatorBrBlocks.rend();
+       BIt != BEnd; BIt++) {
+
+    BasicBlock *BBNode = *BIt;
+    BranchInst *Br = dyn_cast<BranchInst>(BBNode->getTerminator());
+    assert(Br && "A Valid Scop should only contain branch instruction");
+    assert(Br->isConditional() && "Assumed a conditional branch");
+
+    if (SD->isNonAffineSubRegion(RI->getRegionFor(BBNode), &R))
+      break;
 
     BasicBlock *TrueBB = Br->getSuccessor(0), *FalseBB = Br->getSuccessor(1);
 
@@ -365,7 +385,7 @@ TempScop *TempScopInfo::buildTempScop(Region &R) {
 
   for (const auto &BB : R.blocks()) {
     buildAccessFunctions(R, *BB);
-    buildCondition(BB, R.getEntry());
+    buildCondition(BB, R);
   }
 
   return TScop;
