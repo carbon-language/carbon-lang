@@ -355,7 +355,9 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
         "Stack realignment in presence of dynamic allocas is not supported with"
         "this calling convention.");
 
-    for (MCSubRegIterator I(getBaseRegister(), this, /*IncludeSelf=*/true);
+    unsigned BasePtr = getX86SubSuperRegister(getBaseRegister(), MVT::i64,
+                                              false);
+    for (MCSubRegIterator I(BasePtr, this, /*IncludeSelf=*/true);
          I.isValid(); ++I)
       Reserved.set(*I);
   }
