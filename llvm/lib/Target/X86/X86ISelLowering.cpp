@@ -22906,16 +22906,17 @@ static SDValue PerformINSERTPSCombine(SDNode *N, SelectionDAG &DAG,
     // countS and just gets an f32 from that address.
     unsigned DestIndex =
         cast<ConstantSDNode>(N->getOperand(2))->getZExtValue() >> 6;
+    
     Ld = NarrowVectorLoadToElement(cast<LoadSDNode>(Ld), DestIndex, DAG);
-  } else
-    return SDValue();
 
-  // Create this as a scalar to vector to match the instruction pattern.
-  SDValue LoadScalarToVector = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Ld);
-  // countS bits are ignored when loading from memory on insertps, which
-  // means we don't need to explicitly set them to 0.
-  return DAG.getNode(X86ISD::INSERTPS, dl, VT, N->getOperand(0),
-                     LoadScalarToVector, N->getOperand(2));
+    // Create this as a scalar to vector to match the instruction pattern.
+    SDValue LoadScalarToVector = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, Ld);
+    // countS bits are ignored when loading from memory on insertps, which
+    // means we don't need to explicitly set them to 0.
+    return DAG.getNode(X86ISD::INSERTPS, dl, VT, N->getOperand(0),
+                       LoadScalarToVector, N->getOperand(2));
+  }
+  return SDValue();
 }
 
 static SDValue PerformBLENDICombine(SDNode *N, SelectionDAG &DAG) {
