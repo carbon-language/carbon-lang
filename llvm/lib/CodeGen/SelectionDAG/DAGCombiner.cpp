@@ -385,7 +385,7 @@ namespace {
     bool MergeStoresOfConstantsOrVecElts(SmallVectorImpl<MemOpLink> &StoreNodes,
                                          EVT MemVT, unsigned NumElem,
                                          bool IsConstantSrc, bool UseVector);
-    
+
     /// Merge consecutive store operations into a wide store.
     /// This optimization uses wide integers or vectors when possible.
     /// \return True if some memory operations were changed.
@@ -4913,7 +4913,7 @@ SDValue DAGCombiner::visitMSTORE(SDNode *N) {
     std::tie(DataLo, DataHi) = DAG.SplitVector(Data, DL);
 
     MachineMemOperand *MMO = DAG.getMachineFunction().
-      getMachineMemOperand(MST->getPointerInfo(), 
+      getMachineMemOperand(MST->getPointerInfo(),
                            MachineMemOperand::MOStore,  LoMemVT.getStoreSize(),
                            Alignment, MST->getAAInfo(), MST->getRanges());
 
@@ -4925,7 +4925,7 @@ SDValue DAGCombiner::visitMSTORE(SDNode *N) {
                       DAG.getConstant(IncrementSize, Ptr.getValueType()));
 
     MMO = DAG.getMachineFunction().
-      getMachineMemOperand(MST->getPointerInfo(), 
+      getMachineMemOperand(MST->getPointerInfo(),
                            MachineMemOperand::MOStore,  HiMemVT.getStoreSize(),
                            SecondHalfAlignment, MST->getAAInfo(),
                            MST->getRanges());
@@ -4988,7 +4988,7 @@ SDValue DAGCombiner::visitMLOAD(SDNode *N) {
     std::tie(LoMemVT, HiMemVT) = DAG.GetSplitDestVTs(MemoryVT);
 
     MachineMemOperand *MMO = DAG.getMachineFunction().
-    getMachineMemOperand(MLD->getPointerInfo(), 
+    getMachineMemOperand(MLD->getPointerInfo(),
                          MachineMemOperand::MOLoad,  LoMemVT.getStoreSize(),
                          Alignment, MLD->getAAInfo(), MLD->getRanges());
 
@@ -5000,7 +5000,7 @@ SDValue DAGCombiner::visitMLOAD(SDNode *N) {
                       DAG.getConstant(IncrementSize, Ptr.getValueType()));
 
     MMO = DAG.getMachineFunction().
-    getMachineMemOperand(MLD->getPointerInfo(), 
+    getMachineMemOperand(MLD->getPointerInfo(),
                          MachineMemOperand::MOLoad,  HiMemVT.getStoreSize(),
                          SecondHalfAlignment, MLD->getAAInfo(), MLD->getRanges());
 
@@ -9949,11 +9949,11 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
   // Make sure we have something to merge.
   if (NumElem < 2)
     return false;
-  
+
   int64_t ElementSizeBytes = MemVT.getSizeInBits() / 8;
   LSBaseSDNode *FirstInChain = StoreNodes[0].MemNode;
   unsigned EarliestNodeUsed = 0;
-  
+
   for (unsigned i=0; i < NumElem; ++i) {
     // Find a chain for the new wide-store operand. Notice that some
     // of the store nodes that we found may not be selected for inclusion
@@ -9962,11 +9962,11 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
     if (StoreNodes[i].SequenceNum > StoreNodes[EarliestNodeUsed].SequenceNum)
       EarliestNodeUsed = i;
   }
-  
+
   // The earliest Node in the DAG.
   LSBaseSDNode *EarliestOp = StoreNodes[EarliestNodeUsed].MemNode;
   SDLoc DL(StoreNodes[0].MemNode);
-  
+
   SDValue StoredVal;
   if (UseVector) {
     // Find a legal type for the vector store.
@@ -9989,7 +9989,7 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
           return false;
         Ops.push_back(Val);
       }
-      
+
       // Build the extracted vector elements back into a vector.
       StoredVal = DAG.getNode(ISD::BUILD_VECTOR, DL, Ty, Ops);
     }
@@ -10000,7 +10000,7 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
 
     unsigned StoreBW = NumElem * ElementSizeBytes * 8;
     APInt StoreInt(StoreBW, 0);
-    
+
     // Construct a single integer constant which is made of the smaller
     // constant inputs.
     bool IsLE = TLI.isLittleEndian();
@@ -10017,18 +10017,18 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
         llvm_unreachable("Invalid constant element type");
       }
     }
-    
+
     // Create the new Load and Store operations.
     EVT StoreTy = EVT::getIntegerVT(*DAG.getContext(), StoreBW);
     StoredVal = DAG.getConstant(StoreInt, StoreTy);
   }
-  
+
   SDValue NewStore = DAG.getStore(EarliestOp->getChain(), DL, StoredVal,
                                   FirstInChain->getBasePtr(),
                                   FirstInChain->getPointerInfo(),
                                   false, false,
                                   FirstInChain->getAlignment());
-  
+
   // Replace the first store with the new store
   CombineTo(EarliestOp, NewStore);
   // Erase all other stores.
@@ -10050,7 +10050,7 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
       DAG.ReplaceAllUsesWith(SDValue(St, 0), St->getChain());
     deleteAndRecombine(St);
   }
-  
+
   return true;
 }
 
@@ -10071,7 +10071,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   bool IsConstantSrc = isa<ConstantSDNode>(StoredVal) ||
                        isa<ConstantFPSDNode>(StoredVal);
   bool IsExtractVecEltSrc = (StoredVal.getOpcode() == ISD::EXTRACT_VECTOR_ELT);
-   
+
   if (!IsConstantSrc && !IsLoadSrc && !IsExtractVecEltSrc)
     return false;
 
@@ -10281,7 +10281,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
       // consecutive loads).
       if (StoredVal.getOpcode() != ISD::EXTRACT_VECTOR_ELT)
         return false;
-      
+
       // Find a legal type for the vector store.
       EVT Ty = EVT::getVectorVT(*DAG.getContext(), MemVT, i+1);
       if (TLI.isTypeLegal(Ty))
@@ -11197,7 +11197,7 @@ SDValue DAGCombiner::reduceBuildVecConvertToConvertBuildVec(SDNode *N) {
   // Just because the floating-point vector type is legal does not necessarily
   // mean that the corresponding integer vector type is.
   if (!isTypeLegal(NVT))
-    return SDValue();     
+    return SDValue();
 
   SmallVector<SDValue, 8> Opnds;
   for (unsigned i = 0; i != NumInScalars; ++i) {
@@ -11354,10 +11354,10 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
 
         if (!TLI.isExtractSubvectorCheap(VT, VT.getVectorNumElements()))
           return SDValue();
-        
+
         // Try to replace VecIn1 with two extract_subvectors
         // No need to update the masks, they should still be correct.
-        VecIn2 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, VecIn1, 
+        VecIn2 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, VecIn1,
           DAG.getConstant(VT.getVectorNumElements(), TLI.getVectorIdxTy()));
         VecIn1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, VecIn1,
           DAG.getConstant(0, TLI.getVectorIdxTy()));
@@ -11430,36 +11430,56 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
     }
   }
 
+  // Fold any combination of BUILD_VECTOR or UNDEF nodes into one BUILD_VECTOR.
+  // We have already tested above for an UNDEF only concatenation.
   // fold (concat_vectors (BUILD_VECTOR A, B, ...), (BUILD_VECTOR C, D, ...))
   // -> (BUILD_VECTOR A, B, ..., C, D, ...)
-  if (N->getNumOperands() == 2 &&
-      N->getOperand(0).getOpcode() == ISD::BUILD_VECTOR &&
-      N->getOperand(1).getOpcode() == ISD::BUILD_VECTOR) {
-    EVT VT = N->getValueType(0);
-    SDValue N0 = N->getOperand(0);
-    SDValue N1 = N->getOperand(1);
+  auto IsBuildVectorOrUndef = [](const SDValue &Op) {
+    return ISD::UNDEF == Op.getOpcode() || ISD::BUILD_VECTOR == Op.getOpcode();
+  };
+  bool AllBuildVectorsOrUndefs =
+      std::all_of(N->op_begin(), N->op_end(), IsBuildVectorOrUndef);
+  if (AllBuildVectorsOrUndefs) {
     SmallVector<SDValue, 8> Opnds;
-    unsigned BuildVecNumElts =  N0.getNumOperands();
+    EVT SVT = VT.getScalarType();
 
-    EVT SclTy0 = N0.getOperand(0)->getValueType(0);
-    EVT SclTy1 = N1.getOperand(0)->getValueType(0);
-    if (SclTy0.isFloatingPoint()) {
-      for (unsigned i = 0; i != BuildVecNumElts; ++i)
-        Opnds.push_back(N0.getOperand(i));
-      for (unsigned i = 0; i != BuildVecNumElts; ++i)
-        Opnds.push_back(N1.getOperand(i));
-    } else {
+    EVT MinVT = SVT;
+    if (!SVT.isFloatingPoint()) {
       // If BUILD_VECTOR are from built from integer, they may have different
-      // operand types. Get the smaller type and truncate all operands to it.
-      EVT MinTy = SclTy0.bitsLE(SclTy1) ? SclTy0 : SclTy1;
-      for (unsigned i = 0; i != BuildVecNumElts; ++i)
-        Opnds.push_back(DAG.getNode(ISD::TRUNCATE, SDLoc(N), MinTy,
-                        N0.getOperand(i)));
-      for (unsigned i = 0; i != BuildVecNumElts; ++i)
-        Opnds.push_back(DAG.getNode(ISD::TRUNCATE, SDLoc(N), MinTy,
-                        N1.getOperand(i)));
+      // operand types. Get the smallest type and truncate all operands to it.
+      bool FoundMinVT = false;
+      for (const SDValue &Op : N->ops())
+        if (ISD::BUILD_VECTOR == Op.getOpcode()) {
+          EVT OpSVT = Op.getOperand(0)->getValueType(0);
+          MinVT = (!FoundMinVT || OpSVT.bitsLE(MinVT)) ? OpSVT : MinVT;
+          FoundMinVT = true;
+        }
+      assert(FoundMinVT && "Concat vector type mismatch");
     }
 
+    for (const SDValue &Op : N->ops()) {
+      EVT OpVT = Op.getValueType();
+      unsigned NumElts = OpVT.getVectorNumElements();
+
+      if (ISD::UNDEF == Op.getOpcode())
+        for (unsigned i = 0; i != NumElts; ++i)
+          Opnds.push_back(DAG.getUNDEF(MinVT));
+
+      if (ISD::BUILD_VECTOR == Op.getOpcode()) {
+        if (SVT.isFloatingPoint()) {
+          assert(SVT == OpVT.getScalarType() && "Concat vector type mismatch");
+          for (unsigned i = 0; i != NumElts; ++i)
+            Opnds.push_back(Op.getOperand(i));
+        } else {
+          for (unsigned i = 0; i != NumElts; ++i)
+            Opnds.push_back(
+                DAG.getNode(ISD::TRUNCATE, SDLoc(N), MinVT, Op.getOperand(i)));
+        }
+      }
+    }
+
+    assert(VT.getVectorNumElements() == Opnds.size() &&
+           "Concat vector type mismatch");
     return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(N), VT, Opnds);
   }
 
@@ -11971,7 +11991,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
 
       if (!TLI.isShuffleMaskLegal(Mask, VT))
         return SDValue();
- 
+
       //   shuffle(shuffle(A, B, M0), C, M1) -> shuffle(B, A, M2)
       //   shuffle(shuffle(A, B, M0), C, M1) -> shuffle(C, A, M2)
       //   shuffle(shuffle(A, B, M0), C, M1) -> shuffle(C, B, M2)
