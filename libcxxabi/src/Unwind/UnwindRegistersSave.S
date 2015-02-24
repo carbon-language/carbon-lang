@@ -333,14 +333,9 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
 @  values pointer is in r0
 @
   .p2align 2
+  .fpu vfpv3-d16
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm16saveVFPWithFSTMDEPy)
-#if defined(__ARM_FP)
-#if __ARM_ARCH < 7
-  stc p11, cr0, [r0], {0x20}  @ fstmiad r0, {d0-d15}
-#else
   vstmia r0, {d0-d15}
-#endif
-#endif
   JMP(lr)
 
 @
@@ -350,14 +345,9 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm16saveVFPWithFSTMD
 @  values pointer is in r0
 @
   .p2align 2
+  .fpu vfpv3-d16
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm16saveVFPWithFSTMXEPy)
-#if defined(__ARM_FP)
-#if __ARM_ARCH < 7
-  stc p11, cr0, [r0], {0x21}  @ fstmiax r0, {d0-d15}
-#else
   vstmia r0, {d0-d15} @ fstmiax is deprecated in ARMv7+ and now behaves like vstmia
-#endif
-#endif
   JMP(lr)
 
 @
@@ -367,8 +357,8 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm16saveVFPWithFSTMX
 @  values pointer is in r0
 @
   .p2align 2
+  .fpu vfpv3
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm9saveVFPv3EPy)
-#if defined(__ARM_FP)
   @ VFP and iwMMX instructions are only available when compiling with the flags
   @ that enable them. We do not want to do that in the library (because we do not
   @ want the compiler to generate instructions that access those) but this is
@@ -376,12 +366,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm9saveVFPv3EPy)
   @ these registers implies they are, actually, available on the target, so
   @ it's ok to execute.
   @ So, generate the instructions using the corresponding coprocessor mnemonic.
-#if !defined(__ARM_NEON)
-  stcl p11, cr0, [r0], {0x20}  @ vstm r0, {d16-d31}
-#else
   vstmia r0, {d16-d31}
-#endif
-#endif
   JMP(lr)
 
 @

@@ -347,8 +347,8 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm20restoreCoreAndJu
 @  values pointer is in r0
 @
   .p2align 2
+  .fpu vfpv3-d16
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm19restoreVFPWithFLDMDEPy)
-#if defined(__ARM_FP)
   @ VFP and iwMMX instructions are only available when compiling with the flags
   @ that enable them. We do not want to do that in the library (because we do not
   @ want the compiler to generate instructions that access those) but this is
@@ -356,12 +356,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm19restoreVFPWithFL
   @ these registers implies they are, actually, available on the target, so
   @ it's ok to execute.
   @ So, generate the instruction using the corresponding coprocessor mnemonic.
-#if __ARM_ARCH < 7
-  ldc p11, cr0, [r0], {0x20}  @ fldmiad r0, {d0-d15}
-#else
   vldmia r0, {d0-d15}
-#endif
-#endif
   JMP(lr)
 
 @
@@ -371,14 +366,9 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm19restoreVFPWithFL
 @  values pointer is in r0
 @
   .p2align 2
+  .fpu vfpv3-d16
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm19restoreVFPWithFLDMXEPy)
-#if defined(__ARM_FP)
-#if __ARM_ARCH < 7
-  ldc p11, cr0, [r0], {0x21}  @ fldmiax r0, {d0-d15}
-#else
   vldmia r0, {d0-d15} @ fldmiax is deprecated in ARMv7+ and now behaves like vldmia
-#endif
-#endif
   JMP(lr)
 
 @
@@ -388,14 +378,9 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm19restoreVFPWithFL
 @  values pointer is in r0
 @
   .p2align 2
+  .fpu vfpv3
 DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind13Registers_arm12restoreVFPv3EPy)
-#if defined(__ARM_FP)
-#if !defined(__ARM_NEON)
-  ldcl p11, cr0, [r0], {0x20}  @ vldm r0, {d16-d31}
-#else
   vldmia r0, {d16-d31}
-#endif
-#endif
   JMP(lr)
 
 @
