@@ -876,6 +876,9 @@ void CodeGenModule::EmitVTableBitSetEntries(llvm::GlobalVariable *VTable,
   // Sort the bit set entries for determinism.
   std::sort(BitsetEntries.begin(), BitsetEntries.end(), [](llvm::MDTuple *T1,
                                                            llvm::MDTuple *T2) {
+    if (T1 == T2)
+      return false;
+
     StringRef S1 = cast<llvm::MDString>(T1->getOperand(0))->getString();
     StringRef S2 = cast<llvm::MDString>(T2->getOperand(0))->getString();
     if (S1 < S2)
