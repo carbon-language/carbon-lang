@@ -19,16 +19,16 @@ int main() {
   static int a;
 #pragma omp flush
 #pragma omp flush(a)
-  // CHECK: call void (%{{.+}}*, ...)* @__kmpc_flush(%{{.+}}* {{(@|%).+}}, i32 0)
-  // CHECK: call void (%{{.+}}*, ...)* @__kmpc_flush(%{{.+}}* {{(@|%).+}}, i32 0)
+  // CHECK: call void @__kmpc_flush(%{{.+}}* {{(@|%).+}})
+  // CHECK: call void @__kmpc_flush(%{{.+}}* {{(@|%).+}})
   return tmain(a);
   // CHECK: call {{.*}} [[TMAIN:@.+]](
   // CHECK: ret
 }
 
 // CHECK: [[TMAIN]]
-// CHECK: call void (%{{.+}}*, ...)* @__kmpc_flush(%{{.+}}* {{(@|%).+}}, i32 0)
-// CHECK: call void (%{{.+}}*, ...)* @__kmpc_flush(%{{.+}}* {{(@|%).+}}, i32 0)
+// CHECK: call void @__kmpc_flush(%{{.+}}* {{(@|%).+}})
+// CHECK: call void @__kmpc_flush(%{{.+}}* {{(@|%).+}})
 // CHECK: ret
 
 #endif

@@ -82,7 +82,7 @@ private:
     // Call to void __kmpc_push_num_threads(ident_t *loc, kmp_int32 global_tid,
     // kmp_int32 num_threads);
     OMPRTL__kmpc_push_num_threads,
-    // Call to void __kmpc_flush(ident_t *loc, ...);
+    // Call to void __kmpc_flush(ident_t *loc);
     OMPRTL__kmpc_flush,
     // Call to kmp_int32 __kmpc_master(ident_t *, kmp_int32 global_tid);
     OMPRTL__kmpc_master,
