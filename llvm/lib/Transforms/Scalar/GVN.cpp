@@ -458,7 +458,7 @@ uint32_t ValueTable::lookup_or_add(Value *V) {
   return e;
 }
 
-/// lookup - Returns the value number of the specified value. Fails if
+/// Returns the value number of the specified value. Fails if
 /// the value has not yet been numbered.
 uint32_t ValueTable::lookup(Value *V) const {
   DenseMap<Value*, uint32_t>::const_iterator VI = valueNumbering.find(V);
@@ -466,7 +466,7 @@ uint32_t ValueTable::lookup(Value *V) const {
   return VI->second;
 }
 
-/// lookup_or_add_cmp - Returns the value number of the given comparison,
+/// Returns the value number of the given comparison,
 /// assigning it a new number if it did not have one before.  Useful when
 /// we deduced the result of a comparison, but don't immediately have an
 /// instruction realizing that comparison to hand.
@@ -479,14 +479,14 @@ uint32_t ValueTable::lookup_or_add_cmp(unsigned Opcode,
   return e;
 }
 
-/// clear - Remove all entries from the ValueTable.
+/// Remove all entries from the ValueTable.
 void ValueTable::clear() {
   valueNumbering.clear();
   expressionNumbering.clear();
   nextValueNumber = 1;
 }
 
-/// erase - Remove a value from the value numbering.
+/// Remove a value from the value numbering.
 void ValueTable::erase(Value *V) {
   valueNumbering.erase(V);
 }
@@ -582,8 +582,8 @@ namespace {
       return cast<MemIntrinsic>(Val.getPointer());
     }
   
-    /// MaterializeAdjustedValue - Emit code into this block to adjust the value
-    /// defined here to the specified type.  This handles various coercion cases.
+    /// Emit code into this block to adjust the value defined here to the
+    /// specified type. This handles various coercion cases.
     Value *MaterializeAdjustedValue(Type *LoadTy, GVN &gvn) const;
   };
 
@@ -598,7 +598,7 @@ namespace {
 
     ValueTable VN;
 
-    /// LeaderTable - A mapping from value numbers to lists of Value*'s that
+    /// A mapping from value numbers to lists of Value*'s that
     /// have that value number.  Use findLeader to query it.
     struct LeaderTableEntry {
       Value *Val;
@@ -623,7 +623,7 @@ namespace {
 
     bool runOnFunction(Function &F) override;
 
-    /// markInstructionForDeletion - This removes the specified instruction from
+    /// This removes the specified instruction from
     /// our various maps and marks it for deletion.
     void markInstructionForDeletion(Instruction *I) {
       VN.erase(I);
@@ -635,8 +635,7 @@ namespace {
     AliasAnalysis *getAliasAnalysis() const { return VN.getAliasAnalysis(); }
     MemoryDependenceAnalysis &getMemDep() const { return *MD; }
   private:
-    /// addToLeaderTable - Push a new Value to the LeaderTable onto the list for
-    /// its value number.
+    /// Push a new Value to the LeaderTable onto the list for its value number.
     void addToLeaderTable(uint32_t N, Value *V, const BasicBlock *BB) {
       LeaderTableEntry &Curr = LeaderTable[N];
       if (!Curr.Val) {
@@ -652,7 +651,7 @@ namespace {
       Curr.Next = Node;
     }
 
-    /// removeFromLeaderTable - Scan the list of values corresponding to a given
+    /// Scan the list of values corresponding to a given
     /// value number, and remove the given instruction if encountered.
     void removeFromLeaderTable(uint32_t N, Instruction *I, BasicBlock *BB) {
       LeaderTableEntry* Prev = nullptr;
@@ -729,7 +728,7 @@ namespace {
   char GVN::ID = 0;
 }
 
-// createGVNPass - The public interface to this file...
+// The public interface to this file...
 FunctionPass *llvm::createGVNPass(bool NoLoads) {
   return new GVN(NoLoads);
 }
@@ -754,7 +753,7 @@ void GVN::dump(DenseMap<uint32_t, Value*>& d) {
 }
 #endif
 
-/// IsValueFullyAvailableInBlock - Return true if we can prove that the value
+/// Return true if we can prove that the value
 /// we're analyzing is fully available in the specified block.  As we go, keep
 /// track of which blocks we know are fully alive in FullyAvailableBlocks.  This
 /// map is actually a tri-state map with the following values:
@@ -800,7 +799,7 @@ static bool IsValueFullyAvailableInBlock(BasicBlock *BB,
 
   return true;
 
-// SpeculationFailure - If we get here, we found out that this is not, after
+// If we get here, we found out that this is not, after
 // all, a fully-available block.  We have a problem if we speculated on this and
 // used the speculation to mark other blocks as available.
 SpeculationFailure:
@@ -835,8 +834,7 @@ SpeculationFailure:
 }
 
 
-/// CanCoerceMustAliasedValueToLoad - Return true if
-/// CoerceAvailableValueToLoadType will succeed.
+/// Return true if CoerceAvailableValueToLoadType will succeed.
 static bool CanCoerceMustAliasedValueToLoad(Value *StoredVal,
                                             Type *LoadTy,
                                             const DataLayout &DL) {
@@ -855,7 +853,7 @@ static bool CanCoerceMustAliasedValueToLoad(Value *StoredVal,
   return true;
 }
 
-/// CoerceAvailableValueToLoadType - If we saw a store of a value to memory, and
+/// If we saw a store of a value to memory, and
 /// then a load from a must-aliased pointer of a different type, try to coerce
 /// the stored value.  LoadedTy is the type of the load we want to replace and
 /// InsertPt is the place to insert new instructions.
@@ -940,7 +938,7 @@ static Value *CoerceAvailableValueToLoadType(Value *StoredVal,
   return new BitCastInst(StoredVal, LoadedTy, "bitcast", InsertPt);
 }
 
-/// AnalyzeLoadFromClobberingWrite - This function is called when we have a
+/// This function is called when we have a
 /// memdep query of a load that ends up being a clobbering memory write (store,
 /// memset, memcpy, memmove).  This means that the write *may* provide bits used
 /// by the load but we can't be sure because the pointers don't mustalias.
@@ -1020,7 +1018,7 @@ static int AnalyzeLoadFromClobberingWrite(Type *LoadTy, Value *LoadPtr,
   return LoadOffset-StoreOffset;
 }
 
-/// AnalyzeLoadFromClobberingStore - This function is called when we have a
+/// This function is called when we have a
 /// memdep query of a load that ends up being a clobbering store.
 static int AnalyzeLoadFromClobberingStore(Type *LoadTy, Value *LoadPtr,
                                           StoreInst *DepSI,
@@ -1036,7 +1034,7 @@ static int AnalyzeLoadFromClobberingStore(Type *LoadTy, Value *LoadPtr,
                                         StorePtr, StoreSize, DL);
 }
 
-/// AnalyzeLoadFromClobberingLoad - This function is called when we have a
+/// This function is called when we have a
 /// memdep query of a load that ends up being clobbered by another load.  See if
 /// the other load can feed into the second load.
 static int AnalyzeLoadFromClobberingLoad(Type *LoadTy, Value *LoadPtr,
@@ -1112,7 +1110,7 @@ static int AnalyzeLoadFromClobberingMemInst(Type *LoadTy, Value *LoadPtr,
 }
 
 
-/// GetStoreValueForLoad - This function is called when we have a
+/// This function is called when we have a
 /// memdep query of a load that ends up being a clobbering store.  This means
 /// that the store provides bits used by the load but we the pointers don't
 /// mustalias.  Check this case to see if there is anything more we can do
@@ -1151,7 +1149,7 @@ static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
   return CoerceAvailableValueToLoadType(SrcVal, LoadTy, InsertPt, DL);
 }
 
-/// GetLoadValueForLoad - This function is called when we have a
+/// This function is called when we have a
 /// memdep query of a load that ends up being a clobbering load.  This means
 /// that the load *may* provide bits used by the load but we can't be sure
 /// because the pointers don't mustalias.  Check this case to see if there is
@@ -1214,7 +1212,7 @@ static Value *GetLoadValueForLoad(LoadInst *SrcVal, unsigned Offset,
 }
 
 
-/// GetMemInstValueForLoad - This function is called when we have a
+/// This function is called when we have a
 /// memdep query of a load that ends up being a clobbering mem intrinsic.
 static Value *GetMemInstValueForLoad(MemIntrinsic *SrcInst, unsigned Offset,
                                      Type *LoadTy, Instruction *InsertPt,
@@ -1271,7 +1269,7 @@ static Value *GetMemInstValueForLoad(MemIntrinsic *SrcInst, unsigned Offset,
 }
 
 
-/// ConstructSSAForLoadSet - Given a set of loads specified by ValuesPerBlock,
+/// Given a set of loads specified by ValuesPerBlock,
 /// construct SSA form, allowing us to eliminate LI.  This returns the value
 /// that should be used at LI's definition site.
 static Value *ConstructSSAForLoadSet(LoadInst *LI,
@@ -1706,7 +1704,7 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
   return true;
 }
 
-/// processNonLocalLoad - Attempt to eliminate a load whose dependencies are
+/// Attempt to eliminate a load whose dependencies are
 /// non-local by performing PHI construction.
 bool GVN::processNonLocalLoad(LoadInst *LI) {
   // Step 1: Find the non-local dependencies of the load.
@@ -1819,7 +1817,7 @@ static void patchAndReplaceAllUsesWith(Instruction *I, Value *Repl) {
   I->replaceAllUsesWith(Repl);
 }
 
-/// processLoad - Attempt to eliminate a load, first by eliminating it
+/// Attempt to eliminate a load, first by eliminating it
 /// locally, and then attempting non-local elimination if that fails.
 bool GVN::processLoad(LoadInst *L) {
   if (!MD)
@@ -2018,7 +2016,7 @@ bool GVN::processLoad(LoadInst *L) {
   return false;
 }
 
-// findLeader - In order to find a leader for a given value number at a
+// In order to find a leader for a given value number at a
 // specific basic block, we first obtain the list of all Values for that number,
 // and then scan the list to find one whose block dominates the block in
 // question.  This is fast because dominator tree queries consist of only
@@ -2046,9 +2044,8 @@ Value *GVN::findLeader(const BasicBlock *BB, uint32_t num) {
   return Val;
 }
 
-/// replaceAllDominatedUsesWith - Replace all uses of 'From' with 'To' if the
-/// use is dominated by the given basic block.  Returns the number of uses that
-/// were replaced.
+/// Replace all uses of 'From' with 'To' if the use is dominated by the given
+/// basic block.  Returns the number of uses that were replaced.
 unsigned GVN::replaceAllDominatedUsesWith(Value *From, Value *To,
                                           const BasicBlockEdge &Root) {
   unsigned Count = 0;
@@ -2064,7 +2061,7 @@ unsigned GVN::replaceAllDominatedUsesWith(Value *From, Value *To,
   return Count;
 }
 
-/// isOnlyReachableViaThisEdge - There is an edge from 'Src' to 'Dst'.  Return
+/// There is an edge from 'Src' to 'Dst'.  Return
 /// true if every path from the entry block to 'Dst' passes via this edge.  In
 /// particular 'Dst' must not be reachable via another edge from 'Src'.
 static bool isOnlyReachableViaThisEdge(const BasicBlockEdge &E,
@@ -2081,7 +2078,7 @@ static bool isOnlyReachableViaThisEdge(const BasicBlockEdge &E,
   return Pred != nullptr;
 }
 
-/// propagateEquality - The given values are known to be equal in every block
+/// The given values are known to be equal in every block
 /// dominated by 'Root'.  Exploit this, for example by replacing 'LHS' with
 /// 'RHS' everywhere in the scope.  Returns whether a change was made.
 bool GVN::propagateEquality(Value *LHS, Value *RHS,
@@ -2227,7 +2224,7 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS,
   return Changed;
 }
 
-/// processInstruction - When calculating availability, handle an instruction
+/// When calculating availability, handle an instruction
 /// by inserting it into the appropriate sets
 bool GVN::processInstruction(Instruction *I) {
   // Ignore dbg info intrinsics.
@@ -2636,7 +2633,7 @@ bool GVN::performScalarPRE(Instruction *CurInst) {
   return true;
 }
 
-/// performPRE - Perform a purely local form of PRE that looks for diamond
+/// Perform a purely local form of PRE that looks for diamond
 /// control flow patterns and attempts to perform simple PRE at the join point.
 bool GVN::performPRE(Function &F) {
   bool Changed = false;
@@ -2673,7 +2670,7 @@ BasicBlock *GVN::splitCriticalEdges(BasicBlock *Pred, BasicBlock *Succ) {
   return BB;
 }
 
-/// splitCriticalEdges - Split critical edges found during the previous
+/// Split critical edges found during the previous
 /// iteration that may enable further optimization.
 bool GVN::splitCriticalEdges() {
   if (toSplit.empty())
@@ -2687,7 +2684,7 @@ bool GVN::splitCriticalEdges() {
   return true;
 }
 
-/// iterateOnFunction - Executes one iteration of GVN
+/// Executes one iteration of GVN
 bool GVN::iterateOnFunction(Function &F) {
   cleanupGlobalSets();
 
@@ -2718,7 +2715,7 @@ void GVN::cleanupGlobalSets() {
   TableAllocator.Reset();
 }
 
-/// verifyRemoved - Verify that the specified instruction does not occur in our
+/// Verify that the specified instruction does not occur in our
 /// internal data structures.
 void GVN::verifyRemoved(const Instruction *Inst) const {
   VN.verifyRemoved(Inst);
@@ -2737,11 +2734,10 @@ void GVN::verifyRemoved(const Instruction *Inst) const {
   }
 }
 
-// BB is declared dead, which implied other blocks become dead as well. This
-// function is to add all these blocks to "DeadBlocks". For the dead blocks'
-// live successors, update their phi nodes by replacing the operands
-// corresponding to dead blocks with UndefVal.
-//
+/// BB is declared dead, which implied other blocks become dead as well. This
+/// function is to add all these blocks to "DeadBlocks". For the dead blocks'
+/// live successors, update their phi nodes by replacing the operands
+/// corresponding to dead blocks with UndefVal.
 void GVN::addDeadBlock(BasicBlock *BB) {
   SmallVector<BasicBlock *, 4> NewDead;
   SmallSetVector<BasicBlock *, 4> DF;
