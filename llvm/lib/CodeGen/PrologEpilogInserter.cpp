@@ -495,7 +495,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
       unsigned Align = MFI->getObjectAlignment(i);
       // Adjust to alignment boundary
-      Offset = (Offset+Align-1)/Align*Align;
+      Offset = RoundUpToAlignment(Offset, Align);
 
       MFI->setObjectOffset(i, -Offset);        // Set the computed offset
     }
@@ -504,7 +504,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     for (int i = MaxCSFI; i >= MinCSFI ; --i) {
       unsigned Align = MFI->getObjectAlignment(i);
       // Adjust to alignment boundary
-      Offset = (Offset+Align-1)/Align*Align;
+      Offset = RoundUpToAlignment(Offset, Align);
 
       MFI->setObjectOffset(i, Offset);
       Offset += MFI->getObjectSize(i);
@@ -537,7 +537,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     unsigned Align = MFI->getLocalFrameMaxAlign();
 
     // Adjust to alignment boundary.
-    Offset = (Offset + Align - 1) / Align * Align;
+    Offset = RoundUpToAlignment(Offset, Align);
 
     DEBUG(dbgs() << "Local frame base offset: " << Offset << "\n");
 
@@ -656,8 +656,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     // If the frame pointer is eliminated, all frame offsets will be relative to
     // SP not FP. Align to MaxAlign so this works.
     StackAlign = std::max(StackAlign, MaxAlign);
-    unsigned AlignMask = StackAlign - 1;
-    Offset = (Offset + AlignMask) & ~uint64_t(AlignMask);
+    Offset = RoundUpToAlignment(Offset, StackAlign);
   }
 
   // Update frame info to pretend that this is part of the stack...
