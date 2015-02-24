@@ -265,10 +265,6 @@ struct X86Operand : public MCParsedAsmOperand {
     return isAbsMem() && Mem.ModeSize == 16;
   }
 
-  bool isAbsMem32() const {
-    return isAbsMem() && Mem.ModeSize != 16;
-  }
-
   bool isSrcIdx() const {
     return !getMemIndexReg() && getMemScale() == 1 &&
       (getMemBaseReg() == X86::RSI || getMemBaseReg() == X86::ESI ||

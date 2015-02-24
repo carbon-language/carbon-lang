@@ -383,15 +383,9 @@ def brtarget8 : Operand<OtherVT>;
 
 }
 
-// Special parsers to detect mode to disambiguate.
+// Special parser to detect 16-bit mode to select 16-bit displacement.
 def X86AbsMem16AsmOperand : AsmOperandClass {
   let Name = "AbsMem16";
-  let RenderMethod = "addAbsMemOperands";
-  let SuperClasses = [X86AbsMemAsmOperand];
-}
-
-def X86AbsMem32AsmOperand : AsmOperandClass {
-  let Name = "AbsMem32";
   let RenderMethod = "addAbsMemOperands";
   let SuperClasses = [X86AbsMemAsmOperand];
 }
@@ -401,7 +395,7 @@ let OperandType = "OPERAND_PCREL",
     PrintMethod = "printPCRelImm" in {
 let ParserMatchClass = X86AbsMem16AsmOperand in
   def brtarget16 : Operand<OtherVT>;
-let ParserMatchClass = X86AbsMem32AsmOperand in
+let ParserMatchClass = X86AbsMemAsmOperand in
   def brtarget32 : Operand<OtherVT>;
 }
 
