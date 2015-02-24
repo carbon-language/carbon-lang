@@ -5,7 +5,7 @@ add_lldb_executable(lldb
   )
 
 if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
-  add_definitions( -DIMPORT_LIBLLDB )
+add_definitions( -DIMPORT_LIBLLDB )
 endif()
 
 target_link_libraries(lldb liblldb)
