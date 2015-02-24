@@ -1274,25 +1274,13 @@ static const SCEV *getPreStartForExtend(const SCEVAddRecExpr *AR, Type *Ty,
   const SCEVAddRecExpr *PreAR = dyn_cast<SCEVAddRecExpr>(
       SE->getAddRecExpr(PreStart, Step, L, SCEV::FlagAnyWrap));
 
-  // WARNING: FIXME: the optimization below assumes that a sign/zero-overflowing
-  // nsw/nuw operation is undefined behavior.  This is strictly more aggressive
-  // than the interpretation of nsw in other parts of LLVM (for instance, they
-  // may unconditionally hoist nsw/nuw arithmetic through control flow).  This
-  // logic needs to be revisited once we have a consistent semantics for poison
-  // values.
-  //
-  // "{S,+,X} is <nsw>/<nuw>" and "{S,+,X} is evaluated at least once" implies
-  // "S+X does not sign/unsign-overflow" (we'd have undefined behavior if it
-  // did).  If `L->getExitingBlock() == L->getLoopLatch()` then `PreAR` (=
-  // {S,+,X}<nsw>/<nuw>) is evaluated every-time `AR` (= {S+X,+,X}) is
-  // evaluated, and hence within `AR` we are safe to assume that "S+X" will not
-  // sign/unsign-overflow.
+  // "{S,+,X} is <nsw>/<nuw>" and "the backedge is taken at least once" implies
+  // "S+X does not sign/unsign-overflow".
   //
 
-  BasicBlock *ExitingBlock = L->getExitingBlock();
-  BasicBlock *LatchBlock = L->getLoopLatch();
-  if (PreAR && PreAR->getNoWrapFlags(WrapType) && ExitingBlock != nullptr &&
-      ExitingBlock == LatchBlock)
+  const SCEV *BECount = SE->getBackedgeTakenCount(L);
+  if (PreAR && PreAR->getNoWrapFlags(WrapType) &&
+      !isa<SCEVCouldNotCompute>(BECount) && SE->isKnownPositive(BECount))
     return PreStart;
 
   // 2. Direct overflow check on the step operation's expression.
