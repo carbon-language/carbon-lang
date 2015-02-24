@@ -94,12 +94,10 @@ define void @no_reorder_constant_load_global_store_constant_load(i32 addrspace(1
   ret void
 }
 
-; XXX: Should be able to reorder this, but the laods count as ordered
-
 ; FUNC-LABEL: @reorder_constant_load_local_store_constant_load
 ; CI: buffer_load_dword
-; CI: ds_write_b32
 ; CI: buffer_load_dword
+; CI: ds_write_b32
 ; CI: buffer_store_dword
 define void @reorder_constant_load_local_store_constant_load(i32 addrspace(1)* %out, i32 addrspace(3)* %lptr) #0 {
   %ptr0 = load i32 addrspace(2)* addrspace(3)* @stored_constant_ptr, align 8

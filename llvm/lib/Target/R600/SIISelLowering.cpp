@@ -1752,16 +1752,6 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
   return AMDGPUTargetLowering::PerformDAGCombine(N, DCI);
 }
 
-/// \brief Test if RegClass is one of the VSrc classes
-static bool isVSrc(unsigned RegClass) {
-  switch(RegClass) {
-    default: return false;
-    case AMDGPU::VS_32RegClassID:
-    case AMDGPU::VS_64RegClassID:
-      return true;
-  }
-}
-
 /// \brief Analyze the possible immediate value Op
 ///
 /// Returns -1 if it isn't an immediate, 0 if it's and inline immediate
@@ -1790,69 +1780,6 @@ int32_t SITargetLowering::analyzeImmediate(const SDNode *N) const {
   }
 
   return -1;
-}
-
-const TargetRegisterClass *
-SITargetLowering::getRegClassForNode(SelectionDAG &DAG,
-                                     const SDValue &Op) const {
-  const SIInstrInfo *TII =
-      static_cast<const SIInstrInfo *>(Subtarget->getInstrInfo());
-  const SIRegisterInfo &TRI = TII->getRegisterInfo();
-
-  if (!Op->isMachineOpcode()) {
-    switch(Op->getOpcode()) {
-    case ISD::CopyFromReg: {
-      MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
-      unsigned Reg = cast<RegisterSDNode>(Op->getOperand(1))->getReg();
-      if (TargetRegisterInfo::isVirtualRegister(Reg)) {
-        return MRI.getRegClass(Reg);
-      }
-      return TRI.getPhysRegClass(Reg);
-    }
-    default:  return nullptr;
-    }
-  }
-  const MCInstrDesc &Desc = TII->get(Op->getMachineOpcode());
-  int OpClassID = Desc.OpInfo[Op.getResNo()].RegClass;
-  if (OpClassID != -1) {
-    return TRI.getRegClass(OpClassID);
-  }
-  switch(Op.getMachineOpcode()) {
-  case AMDGPU::COPY_TO_REGCLASS:
-    // Operand 1 is the register class id for COPY_TO_REGCLASS instructions.
-    OpClassID = cast<ConstantSDNode>(Op->getOperand(1))->getZExtValue();
-
-    // If the COPY_TO_REGCLASS instruction is copying to a VSrc register
-    // class, then the register class for the value could be either a
-    // VReg or and SReg.  In order to get a more accurate
-    if (isVSrc(OpClassID))
-      return getRegClassForNode(DAG, Op.getOperand(0));
-
-    return TRI.getRegClass(OpClassID);
-  case AMDGPU::EXTRACT_SUBREG: {
-    int SubIdx = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
-    const TargetRegisterClass *SuperClass =
-      getRegClassForNode(DAG, Op.getOperand(0));
-    return TRI.getSubClassWithSubReg(SuperClass, SubIdx);
-  }
-  case AMDGPU::REG_SEQUENCE:
-    // Operand 0 is the register class id for REG_SEQUENCE instructions.
-    return TRI.getRegClass(
-      cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue());
-  default:
-    return getRegClassFor(Op.getSimpleValueType());
-  }
-}
-
-/// \brief Does "Op" fit into register class "RegClass" ?
-bool SITargetLowering::fitsRegClass(SelectionDAG &DAG, const SDValue &Op,
-                                    unsigned RegClass) const {
-  const TargetRegisterInfo *TRI = Subtarget->getRegisterInfo();
-  const TargetRegisterClass *RC = getRegClassForNode(DAG, Op);
-  if (!RC) {
-    return false;
-  }
-  return TRI->getRegClass(RegClass)->hasSubClassEq(RC);
 }
 
 /// \brief Helper function for adjustWritemask
@@ -1972,7 +1899,6 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
                                           SelectionDAG &DAG) const {
   const SIInstrInfo *TII =
       static_cast<const SIInstrInfo *>(Subtarget->getInstrInfo());
-  Node = AdjustRegClass(Node, DAG);
 
   if (TII->isMIMG(Node->getMachineOpcode()))
     adjustWritemask(Node, DAG);
@@ -2124,56 +2050,6 @@ MachineSDNode *SITargetLowering::buildScratchRSRC(SelectionDAG &DAG,
                   0xffffffff; // Size
 
   return buildRSRC(DAG, DL, Ptr, 0, Rsrc);
-}
-
-MachineSDNode *SITargetLowering::AdjustRegClass(MachineSDNode *N,
-                                                SelectionDAG &DAG) const {
-
-  SDLoc DL(N);
-  unsigned NewOpcode = N->getMachineOpcode();
-
-  switch (N->getMachineOpcode()) {
-  default: return N;
-  case AMDGPU::S_LOAD_DWORD_IMM:
-    NewOpcode = AMDGPU::BUFFER_LOAD_DWORD_ADDR64;
-    // Fall-through
-  case AMDGPU::S_LOAD_DWORDX2_SGPR:
-    if (NewOpcode == N->getMachineOpcode()) {
-      NewOpcode = AMDGPU::BUFFER_LOAD_DWORDX2_ADDR64;
-    }
-    // Fall-through
-  case AMDGPU::S_LOAD_DWORDX4_IMM:
-  case AMDGPU::S_LOAD_DWORDX4_SGPR: {
-    if (NewOpcode == N->getMachineOpcode()) {
-      NewOpcode = AMDGPU::BUFFER_LOAD_DWORDX4_ADDR64;
-    }
-    if (fitsRegClass(DAG, N->getOperand(0), AMDGPU::SReg_64RegClassID)) {
-      return N;
-    }
-    ConstantSDNode *Offset = cast<ConstantSDNode>(N->getOperand(1));
-
-    const SDValue Zero64 = DAG.getTargetConstant(0, MVT::i64);
-    SDValue Ptr(DAG.getMachineNode(AMDGPU::S_MOV_B64, DL, MVT::i64, Zero64), 0);
-    MachineSDNode *RSrc = wrapAddr64Rsrc(DAG, DL, Ptr);
-
-    SmallVector<SDValue, 8> Ops;
-    Ops.push_back(SDValue(RSrc, 0));
-    Ops.push_back(N->getOperand(0));
-    Ops.push_back(DAG.getTargetConstant(0, MVT::i32)); // soffset
-
-    // The immediate offset is in dwords on SI and in bytes on VI.
-    if (Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
-      Ops.push_back(DAG.getTargetConstant(Offset->getSExtValue(), MVT::i32));
-    else
-      Ops.push_back(DAG.getTargetConstant(Offset->getSExtValue() << 2, MVT::i32));
-
-    // Copy remaining operands so we keep any chain and glue nodes that follow
-    // the normal operands.
-    Ops.append(N->op_begin() + 2, N->op_end());
-
-    return DAG.getMachineNode(NewOpcode, DL, N->getVTList(), Ops);
-  }
-  }
 }
 
 SDValue SITargetLowering::CreateLiveInRegister(SelectionDAG &DAG,
