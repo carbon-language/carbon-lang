@@ -551,9 +551,8 @@ void MemoryAccess::computeBoundsOnAccessRelation(unsigned ElementSize) {
     return;
 
   unsigned BW = Range.getBitWidth();
-  auto Min = Range.getSignedMin().sdiv(APInt(BW, ElementSize, false));
-  auto Max = (Range.getSignedMax() - APInt(BW, 1, false))
-                 .sdiv(APInt(BW, ElementSize, false));
+  auto Min = Range.getSignedMin().sdiv(APInt(BW, ElementSize));
+  auto Max = (Range.getSignedMax() - APInt(BW, 1)).sdiv(APInt(BW, ElementSize));
 
   isl_set *AccessRange = isl_map_range(isl_map_copy(AccessRelation));
   AccessRange =
