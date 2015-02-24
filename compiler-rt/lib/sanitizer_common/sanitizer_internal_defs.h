@@ -295,6 +295,7 @@ extern "C" void* _ReturnAddress(void);
   do {                                                             \
     volatile uptr enable_fp;                                       \
     enable_fp = GET_CURRENT_FRAME();                               \
+    (void)enable_fp;                                               \
   } while (0)
 
 #endif  // SANITIZER_DEFS_H
