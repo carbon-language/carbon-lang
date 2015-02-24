@@ -9,7 +9,7 @@
 
 // NOTE: Older versions of clang have a bug where they fail to evalute
 // string_view::at as a constant expression.
-// XFAIL: apple-clang-6.0, clang-3.4, clang-3.3
+// XFAIL: clang-3.4, clang-3.3
 
 // <string_view>
 
