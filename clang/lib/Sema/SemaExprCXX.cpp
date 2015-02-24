@@ -2591,6 +2591,8 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     S.CheckConstructorAccess(CastLoc, Constructor,
                              InitializedEntity::InitializeTemporary(Ty),
                              Constructor->getAccess());
+    if (S.DiagnoseUseOfDecl(FoundDecl, CastLoc))
+      return ExprError();
 
     ExprResult Result = S.BuildCXXConstructExpr(
         CastLoc, Ty, cast<CXXConstructorDecl>(Method),
@@ -2606,6 +2608,10 @@ static ExprResult BuildCXXCastArgument(Sema &S,
   case CK_UserDefinedConversion: {
     assert(!From->getType()->isPointerType() && "Arg can't have pointer type!");
 
+    S.CheckMemberOperatorAccess(CastLoc, From, /*arg*/ nullptr, FoundDecl);
+    if (S.DiagnoseUseOfDecl(FoundDecl, CastLoc))
+      return ExprError();
+
     // Create an implicit call expr that calls it.
     CXXConversionDecl *Conv = cast<CXXConversionDecl>(Method);
     ExprResult Result = S.BuildCXXMemberCallExpr(From, FoundDecl, Conv,
@@ -2616,8 +2622,6 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     Result = ImplicitCastExpr::Create(S.Context, Result.get()->getType(),
                                       CK_UserDefinedConversion, Result.get(),
                                       nullptr, Result.get()->getValueKind());
-
-    S.CheckMemberOperatorAccess(CastLoc, From, /*arg*/ nullptr, FoundDecl);
 
     return S.MaybeBindToTemporary(Result.get());
   }
@@ -2649,7 +2653,7 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
       FunctionDecl *FD = ICS.UserDefined.ConversionFunction;
       CastKind CastKind;
       QualType BeforeToType;
-      assert(FD && "FIXME: aggregate initialization from init list");
+      assert(FD && "no conversion function for user-defined conversion seq");
       if (const CXXConversionDecl *Conv = dyn_cast<CXXConversionDecl>(FD)) {
         CastKind = CK_UserDefinedConversion;
 

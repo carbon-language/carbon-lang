@@ -67,7 +67,7 @@ void test4() {} // expected-note {{previous definition is here}}
 void test4() = delete; // expected-error {{redefinition of 'test4'}}
 
 struct DelCtor { // expected-note 4{{implicit}}
-  DelCtor(int) = delete; // expected-note 13{{deleted}}
+  DelCtor(int) = delete; // expected-note 14{{deleted}}
   // ensure the class is not an aggregate
   DelCtor(int, int, int, int);
 };
@@ -85,5 +85,5 @@ int use_dc(DelCtor); // expected-note 2{{here}}
 int dc11 = use_dc(0); // expected-error {{deleted}}
 int dc12 = use_dc({0}); // expected-error {{deleted}}
 int use_dcr(const DelCtor &); // expected-note {{here}}
-int dc13 = use_dcr(0); // FIXME PR22673: should reject this
+int dc13 = use_dcr(0); // expected-error {{deleted}}
 int dc14 = use_dcr({0}); // expected-error {{deleted}}
