@@ -30,7 +30,7 @@
 #define _LIBCPP_ELAST _sys_nerr
 #else
 // Warn here so that the person doing the libcxx port has an easier time:
-#warning This platform's ELAST hasn't been ported yet
+#warning ELAST for this platform not yet implemented
 #endif
 
 #endif // _LIBCPP_CONFIG_ELAST
