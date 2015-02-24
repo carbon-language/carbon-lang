@@ -295,8 +295,6 @@
 		266942361A6DC2AC0063BE93 /* MICmnResources.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941CD1A6DC2AC0063BE93 /* MICmnResources.cpp */; };
 		266942371A6DC2AC0063BE93 /* MICmnStreamStderr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941CF1A6DC2AC0063BE93 /* MICmnStreamStderr.cpp */; };
 		266942381A6DC2AC0063BE93 /* MICmnStreamStdin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941D11A6DC2AC0063BE93 /* MICmnStreamStdin.cpp */; };
-		266942391A6DC2AC0063BE93 /* MICmnStreamStdinLinux.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941D31A6DC2AC0063BE93 /* MICmnStreamStdinLinux.cpp */; };
-		2669423A1A6DC2AC0063BE93 /* MICmnStreamStdinWindows.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941D51A6DC2AC0063BE93 /* MICmnStreamStdinWindows.cpp */; };
 		2669423B1A6DC2AC0063BE93 /* MICmnStreamStdout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941D71A6DC2AC0063BE93 /* MICmnStreamStdout.cpp */; };
 		2669423C1A6DC2AC0063BE93 /* MICmnThreadMgrStd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941D91A6DC2AC0063BE93 /* MICmnThreadMgrStd.cpp */; };
 		2669423D1A6DC2AC0063BE93 /* MIDriver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266941DC1A6DC2AC0063BE93 /* MIDriver.cpp */; };
@@ -1609,10 +1607,6 @@
 		266941D01A6DC2AC0063BE93 /* MICmnStreamStderr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnStreamStderr.h; path = "tools/lldb-mi/MICmnStreamStderr.h"; sourceTree = SOURCE_ROOT; };
 		266941D11A6DC2AC0063BE93 /* MICmnStreamStdin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnStreamStdin.cpp; path = "tools/lldb-mi/MICmnStreamStdin.cpp"; sourceTree = SOURCE_ROOT; };
 		266941D21A6DC2AC0063BE93 /* MICmnStreamStdin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnStreamStdin.h; path = "tools/lldb-mi/MICmnStreamStdin.h"; sourceTree = SOURCE_ROOT; };
-		266941D31A6DC2AC0063BE93 /* MICmnStreamStdinLinux.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnStreamStdinLinux.cpp; path = "tools/lldb-mi/MICmnStreamStdinLinux.cpp"; sourceTree = SOURCE_ROOT; };
-		266941D41A6DC2AC0063BE93 /* MICmnStreamStdinLinux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnStreamStdinLinux.h; path = "tools/lldb-mi/MICmnStreamStdinLinux.h"; sourceTree = SOURCE_ROOT; };
-		266941D51A6DC2AC0063BE93 /* MICmnStreamStdinWindows.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnStreamStdinWindows.cpp; path = "tools/lldb-mi/MICmnStreamStdinWindows.cpp"; sourceTree = SOURCE_ROOT; };
-		266941D61A6DC2AC0063BE93 /* MICmnStreamStdinWindows.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnStreamStdinWindows.h; path = "tools/lldb-mi/MICmnStreamStdinWindows.h"; sourceTree = SOURCE_ROOT; };
 		266941D71A6DC2AC0063BE93 /* MICmnStreamStdout.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnStreamStdout.cpp; path = "tools/lldb-mi/MICmnStreamStdout.cpp"; sourceTree = SOURCE_ROOT; };
 		266941D81A6DC2AC0063BE93 /* MICmnStreamStdout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MICmnStreamStdout.h; path = "tools/lldb-mi/MICmnStreamStdout.h"; sourceTree = SOURCE_ROOT; };
 		266941D91A6DC2AC0063BE93 /* MICmnThreadMgrStd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MICmnThreadMgrStd.cpp; path = "tools/lldb-mi/MICmnThreadMgrStd.cpp"; sourceTree = SOURCE_ROOT; };
@@ -3622,10 +3616,6 @@
 				266941D01A6DC2AC0063BE93 /* MICmnStreamStderr.h */,
 				266941D11A6DC2AC0063BE93 /* MICmnStreamStdin.cpp */,
 				266941D21A6DC2AC0063BE93 /* MICmnStreamStdin.h */,
-				266941D31A6DC2AC0063BE93 /* MICmnStreamStdinLinux.cpp */,
-				266941D41A6DC2AC0063BE93 /* MICmnStreamStdinLinux.h */,
-				266941D51A6DC2AC0063BE93 /* MICmnStreamStdinWindows.cpp */,
-				266941D61A6DC2AC0063BE93 /* MICmnStreamStdinWindows.h */,
 				266941D71A6DC2AC0063BE93 /* MICmnStreamStdout.cpp */,
 				266941D81A6DC2AC0063BE93 /* MICmnStreamStdout.h */,
 				266941D91A6DC2AC0063BE93 /* MICmnThreadMgrStd.cpp */,
@@ -6338,7 +6328,6 @@
 				2669421B1A6DC2AC0063BE93 /* MICmdCmdThread.cpp in Sources */,
 				266942261A6DC2AC0063BE93 /* MICmnLLDBBroadcaster.cpp in Sources */,
 				266942141A6DC2AC0063BE93 /* MICmdCmdGdbSet.cpp in Sources */,
-				2669423A1A6DC2AC0063BE93 /* MICmnStreamStdinWindows.cpp in Sources */,
 				2669423F1A6DC2AC0063BE93 /* MIDriverMain.cpp in Sources */,
 				266942481A6DC2AC0063BE93 /* MIUtilSystemWindows.cpp in Sources */,
 				266942041A6DC2AC0063BE93 /* MICmdArgValFile.cpp in Sources */,
@@ -6357,7 +6346,6 @@
 				266942191A6DC2AC0063BE93 /* MICmdCmdSupportList.cpp in Sources */,
 				266942441A6DC2AC0063BE93 /* MIUtilMapIdToVariant.cpp in Sources */,
 				266942341A6DC2AC0063BE93 /* MICmnMIValueResult.cpp in Sources */,
-				266942391A6DC2AC0063BE93 /* MICmnStreamStdinLinux.cpp in Sources */,
 				266942181A6DC2AC0063BE93 /* MICmdCmdSupportInfo.cpp in Sources */,
 				266942311A6DC2AC0063BE93 /* MICmnMIValue.cpp in Sources */,
 				266942081A6DC2AC0063BE93 /* MICmdArgValOptionLong.cpp in Sources */,
