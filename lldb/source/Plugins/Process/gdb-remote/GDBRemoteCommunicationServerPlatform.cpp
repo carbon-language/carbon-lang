@@ -84,14 +84,14 @@ GDBRemoteCommunicationServerPlatform::Handle_qLaunchGDBServer (StringExtractorGD
 
     Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
     if (log)
-        log->Printf ("LLGSPacketHandler::%s() called", __FUNCTION__);
+        log->Printf ("GDBRemoteCommunicationServerPlatform::%s() called", __FUNCTION__);
 
     // Sleep and wait a bit for debugserver to start to listen...
     ConnectionFileDescriptor file_conn;
     std::string hostname;
     // TODO: /tmp/ should not be hardcoded. User might want to override /tmp
     // with the TMPDIR environment variable
-    packet.SetFilePos(::strlen ("qLaunchLLGSPacketHandler;"));
+    packet.SetFilePos(::strlen ("qLaunchGDBServer;"));
     std::string name;
     std::string value;
     uint16_t port = UINT16_MAX;
