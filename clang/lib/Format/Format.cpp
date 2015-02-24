@@ -940,11 +940,13 @@ private:
     FormatTok = new (Allocator.Allocate()) FormatToken;
     FormatTok->Tok = Tok;
     SourceLocation TokLocation =
-        FormatTok->Tok.getLocation().getLocWithOffset(1);
+        FormatTok->Tok.getLocation().getLocWithOffset(Tok.getLength() - 1);
+    FormatTok->Tok.setLocation(TokLocation);
     FormatTok->WhitespaceRange = SourceRange(TokLocation, TokLocation);
     FormatTok->TokenText = TokenText;
     FormatTok->ColumnWidth = 1;
-    FormatTok->OriginalColumn = OriginalColumn;
+    FormatTok->OriginalColumn = OriginalColumn + 1;
+
     return FormatTok;
   }
 
