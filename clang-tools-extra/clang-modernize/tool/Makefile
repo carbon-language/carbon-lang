@@ -36,7 +36,7 @@ SOURCES += $(addprefix ../ReplaceAutoPtr/,$(notdir $(wildcard $(PROJ_SRC_DIR)/..
 BUILT_SOURCES += $(ObjDir)/../ReplaceAutoPtr/.objdir
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader ipo objcarcopts \
-                   instrumentation bitcodewriter support mc option
+                   instrumentation bitwriter support mc option
 USEDLIBS = modernizeCore.a clangFormat.a \
 	   clangTooling.a clangToolingCore.a clangFrontend.a clangCodeGen.a \
 	   clangSerialization.a clangDriver.a clangRewriteFrontend.a \
