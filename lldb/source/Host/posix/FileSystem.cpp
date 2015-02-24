@@ -203,7 +203,7 @@ FileSystem::IsLocal(const FileSpec &spec)
 {
     struct statfs statfs_info;
     std::string path (spec.GetPath());
-    if (statfs(path.c_str(), &statfs_info) != 0)
+    if (statfs(path.c_str(), &statfs_info) == 0)
         return ::IsLocal(statfs_info);
     return false;
 }
