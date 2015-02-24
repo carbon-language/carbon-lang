@@ -1,5 +1,6 @@
-; RUN: llc < %s -O0 -mattr=sse2 -mtriple=x86_64-pc-windows-itanium | FileCheck %s -check-prefix=WIN64
-; RUN: llc < %s -O0 -mattr=sse2 -mtriple=x86_64-pc-mingw32 | FileCheck %s -check-prefix=WIN64
+; RUN: llc < %s -O0 -mattr=sse2 -mtriple=x86_64-pc-windows-itanium | FileCheck %s -check-prefix=WIN64 -check-prefix=NORM
+; RUN: llc < %s -O0 -mattr=sse2 -mtriple=x86_64-pc-mingw32 | FileCheck %s -check-prefix=WIN64 -check-prefix=NORM
+; RUN: llc < %s -O0 -mattr=sse2 -mtriple=x86_64-pc-mingw32 -mcpu=atom | FileCheck %s -check-prefix=WIN64 -check-prefix=ATOM
 
 ; Check function without prolog
 define void @foo0() uwtable {
@@ -20,7 +21,8 @@ entry:
 }
 ; WIN64-LABEL: foo1:
 ; WIN64: .seh_proc foo1
-; WIN64: subq $4000, %rsp
+; NORM:  subq $4000, %rsp
+; ATOM:  leaq -4000(%rsp), %rsp
 ; WIN64: .seh_stackalloc 4000
 ; WIN64: .seh_endprologue
 ; WIN64: addq $4000, %rsp
@@ -83,7 +85,8 @@ entry:
 ; WIN64: .seh_proc foo3
 ; WIN64: pushq %rsi
 ; WIN64: .seh_pushreg 6
-; WIN64: subq $24, %rsp
+; NORM:  subq $24, %rsp
+; ATOM:  leaq -24(%rsp), %rsp
 ; WIN64: .seh_stackalloc 24
 ; WIN64: .seh_endprologue
 ; WIN64: addq $24, %rsp
@@ -126,7 +129,8 @@ endtryfinally:
 ; WIN64-LABEL: foo4:
 ; WIN64: .seh_proc foo4
 ; WIN64: .seh_handler _d_eh_personality, @unwind, @except
-; WIN64: subq $56, %rsp
+; NORM:  subq $56, %rsp
+; ATOM:  leaq -56(%rsp), %rsp
 ; WIN64: .seh_stackalloc 56
 ; WIN64: .seh_endprologue
 ; WIN64: addq $56, %rsp
@@ -150,7 +154,8 @@ entry:
 ; WIN64: .seh_pushreg 7
 ; WIN64: pushq %rbx
 ; WIN64: .seh_pushreg 3
-; WIN64: subq  $96, %rsp
+; NORM:  subq  $96, %rsp
+; ATOM:  leaq -96(%rsp), %rsp
 ; WIN64: .seh_stackalloc 96
 ; WIN64: leaq  96(%rsp), %rbp
 ; WIN64: .seh_setframe 5, 96

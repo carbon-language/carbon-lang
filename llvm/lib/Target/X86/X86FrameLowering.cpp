@@ -250,7 +250,7 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
       }
     }
 
-    uint64_t ThisVal = (Offset > Chunk) ? Chunk : Offset;
+    uint64_t ThisVal = std::min(Offset, Chunk);
     if (ThisVal == (Is64BitTarget ? 8 : 4)) {
       // Use push / pop instead.
       unsigned Reg = isSub
@@ -980,8 +980,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   bool Is64Bit = STI.is64Bit();
   // standard x86_64 and NaCl use 64-bit frame/stack pointers, x32 - 32-bit.
   const bool Uses64BitFramePtr = STI.isTarget64BitLP64() || STI.isTargetNaCl64();
+  bool HasFP = hasFP(MF);
   const bool Is64BitILP32 = STI.isTarget64BitILP32();
-  bool UseLEA = STI.useLeaForSP();
   unsigned SlotSize = RegInfo->getSlotSize();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
   unsigned MachineFramePtr =
@@ -991,6 +991,20 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
   bool IsWinEH = MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
   bool NeedsWinEH = IsWinEH && MF.getFunction()->needsUnwindTableEntry();
+  bool UseLEAForSP = false;
+
+  // We can't use LEA instructions for adjusting the stack pointer if this is a
+  // leaf function in the Win64 ABI.  Only ADD instructions may be used to
+  // deallocate the stack.
+  if (STI.useLeaForSP()) {
+    if (!IsWinEH) {
+      // We *aren't* using the Win64 ABI which means we are free to use LEA.
+      UseLEAForSP = true;
+    } else if (HasFP) {
+      // We *have* a frame pointer which means we are permitted to use LEA.
+      UseLEAForSP = true;
+    }
+  }
 
   switch (RetOpcode) {
   default:
@@ -1084,8 +1098,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     }
   } else if (NumBytes) {
     // Adjust stack pointer back: ESP += numbytes.
-    emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, Uses64BitFramePtr, UseLEA,
-                 TII, *RegInfo);
+    emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, Uses64BitFramePtr,
+                 UseLEAForSP, TII, *RegInfo);
     --MBBI;
   }
 
@@ -1131,7 +1145,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
       // Check for possible merge with preceding ADD instruction.
       Offset += mergeSPUpdates(MBB, MBBI, StackPtr, true);
       emitSPUpdate(MBB, MBBI, StackPtr, Offset, Is64Bit, Uses64BitFramePtr,
-                   UseLEA, TII, *RegInfo);
+                   UseLEAForSP, TII, *RegInfo);
     }
 
     // Jump to label or value in register.
@@ -1179,8 +1193,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
     // Check for possible merge with preceding ADD instruction.
     delta += mergeSPUpdates(MBB, MBBI, StackPtr, true);
-    emitSPUpdate(MBB, MBBI, StackPtr, delta, Is64Bit, Uses64BitFramePtr, UseLEA, TII,
-                 *RegInfo);
+    emitSPUpdate(MBB, MBBI, StackPtr, delta, Is64Bit, Uses64BitFramePtr,
+                 UseLEAForSP, TII, *RegInfo);
   }
 }
 
