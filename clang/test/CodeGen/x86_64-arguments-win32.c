@@ -14,3 +14,18 @@ void f3(short a) {}
 
 // CHECK-LABEL: define void @f4(i16 %a)
 void f4(unsigned short a) {}
+
+// For ABI compatibility with ICC, _Complex should be passed/returned
+// as if it were a struct with two elements.
+
+// CHECK-LABEL: define void @f5(i64 %a.coerce)
+void f5(_Complex float a) {}
+
+// CHECK-LABEL: define void @f6({ double, double }* %a)
+void f6(_Complex double a) {}
+
+// CHECK-LABEL: define i64 @f7()
+_Complex float f7() { return 1.0; }
+
+// CHECK-LABEL: define void @f8({ double, double }* noalias sret %agg.result)
+_Complex double f8() { return 1.0; }

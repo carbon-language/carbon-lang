@@ -3041,7 +3041,7 @@ ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty, unsigned &FreeSSERegs,
       return ABIArgInfo::getDirect();
   }
 
-  if (RT || Ty->isMemberPointerType()) {
+  if (RT || Ty->isAnyComplexType() || Ty->isMemberPointerType()) {
     // MS x64 ABI requirement: "Any argument that doesn't fit in 8 bytes, or is
     // not 1, 2, 4, or 8 bytes, must be passed by reference."
     if (Width > 64 || !llvm::isPowerOf2_64(Width))
