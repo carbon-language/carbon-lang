@@ -136,6 +136,12 @@ private:
   AliasAnalysis *AA;
   //@}
 
+  /// @brief Set to remember non-affine branches in regions.
+  using NonAffineSubRegionSetTy = RegionSet;
+  using NonAffineSubRegionMapTy =
+      DenseMap<const Region *, NonAffineSubRegionSetTy>;
+  NonAffineSubRegionMapTy NonAffineSubRegionMap;
+
   /// @brief Context variables for SCoP detection.
   struct DetectionContext {
     Region &CurRegion;   // The region to check.
@@ -162,9 +168,13 @@ private:
     /// @brief The region has at least one store instruction.
     bool hasStores;
 
-    DetectionContext(Region &R, AliasAnalysis &AA, bool Verify)
+    /// @brief The set of non-affine subregions in the region we analyze.
+    NonAffineSubRegionSetTy &NonAffineSubRegionSet;
+
+    DetectionContext(Region &R, AliasAnalysis &AA,
+                     NonAffineSubRegionSetTy &NABS, bool Verify)
         : CurRegion(R), AST(AA), Verifying(Verify), Log(&R), hasLoads(false),
-          hasStores(false) {}
+          hasStores(false), NonAffineSubRegionSet(NABS) {}
   };
 
   // Remember the valid regions
@@ -299,6 +309,9 @@ public:
   ///
   /// @return Return true if R is the maximum Region in a Scop, false otherwise.
   bool isMaxRegionInScop(const Region &R, bool Verify = true) const;
+
+  /// @brief Return true if @p SubR is a non-affine subregion in @p ScopR.
+  bool isNonAffineSubRegion(const Region *SubR, const Region *ScopR) const;
 
   /// @brief Get a message why a region is invalid
   ///

@@ -126,6 +126,11 @@ static cl::opt<bool>
                    cl::Hidden, cl::init(false), cl::ZeroOrMore,
                    cl::cat(PollyCategory));
 
+static cl::opt<bool> AllowNonAffineSubRegions(
+    "polly-allow-nonaffine-branches",
+    cl::desc("Allow non affine conditions for branches"), cl::Hidden,
+    cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+
 static cl::opt<bool> AllowUnsigned("polly-allow-unsigned",
                                    cl::desc("Allow unsigned expressions"),
                                    cl::Hidden, cl::init(false), cl::ZeroOrMore,
@@ -252,7 +257,9 @@ bool ScopDetection::isMaxRegionInScop(const Region &R, bool Verify) const {
     return false;
 
   if (Verify) {
-    DetectionContext Context(const_cast<Region &>(R), *AA, false /*verifying*/);
+    NonAffineSubRegionSetTy DummyNonAffineSubRegionSet;
+    DetectionContext Context(const_cast<Region &>(R), *AA,
+                             DummyNonAffineSubRegionSet, false /*verifying*/);
     return isValidRegion(Context);
   }
 
@@ -274,6 +281,15 @@ std::string ScopDetection::regionIsInvalidBecause(const Region *R) const {
 
   RejectReasonPtr RR = *Errors.begin();
   return RR->getMessage();
+}
+
+static bool containsLoop(Region *R, LoopInfo *LI) {
+  for (BasicBlock *BB : R->blocks()) {
+    Loop *L = LI->getLoopFor(BB);
+    if (R->contains(L))
+      return true;
+  }
+  return false;
 }
 
 bool ScopDetection::isValidCFG(BasicBlock &BB,
@@ -301,8 +317,12 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
     return invalid<ReportUndefCond>(Context, /*Assert=*/true, Br, &BB);
 
   // Only Constant and ICmpInst are allowed as condition.
-  if (!(isa<Constant>(Condition) || isa<ICmpInst>(Condition)))
-    return invalid<ReportInvalidCond>(Context, /*Assert=*/true, Br, &BB);
+  if (!(isa<Constant>(Condition) || isa<ICmpInst>(Condition))) {
+    if (AllowNonAffineSubRegions && !containsLoop(RI->getRegionFor(&BB), LI))
+      Context.NonAffineSubRegionSet.insert(RI->getRegionFor(&BB));
+    else
+      return invalid<ReportInvalidCond>(Context, /*Assert=*/true, Br, &BB);
+  }
 
   // Allow perfectly nested conditions.
   assert(Br->getNumSuccessors() == 2 && "Unexpected number of successors");
@@ -326,9 +346,13 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
     const SCEV *RHS = SE->getSCEVAtScope(ICmp->getOperand(1), L);
 
     if (!isAffineExpr(&CurRegion, LHS, *SE) ||
-        !isAffineExpr(&CurRegion, RHS, *SE))
-      return invalid<ReportNonAffBranch>(Context, /*Assert=*/true, &BB, LHS,
-                                         RHS, ICmp);
+        !isAffineExpr(&CurRegion, RHS, *SE)) {
+      if (AllowNonAffineSubRegions && !containsLoop(RI->getRegionFor(&BB), LI))
+        Context.NonAffineSubRegionSet.insert(RI->getRegionFor(&BB));
+      else
+        return invalid<ReportNonAffBranch>(Context, /*Assert=*/true, &BB, LHS,
+                                           RHS, ICmp);
+    }
   }
 
   // Allow loop exit conditions.
@@ -648,10 +672,10 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
 bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
   // Is the loop count affine?
   const SCEV *LoopCount = SE->getBackedgeTakenCount(L);
-  if (!isAffineExpr(&Context.CurRegion, LoopCount, *SE))
-    return invalid<ReportLoopBound>(Context, /*Assert=*/true, L, LoopCount);
+  if (isAffineExpr(&Context.CurRegion, LoopCount, *SE))
+    return true;
 
-  return true;
+  return invalid<ReportLoopBound>(Context, /*Assert=*/true, L, LoopCount);
 }
 
 Region *ScopDetection::expandRegion(Region &R) {
@@ -662,7 +686,9 @@ Region *ScopDetection::expandRegion(Region &R) {
   DEBUG(dbgs() << "\tExpanding " << R.getNameStr() << "\n");
 
   while (ExpandedRegion) {
-    DetectionContext Context(*ExpandedRegion, *AA, false /* verifying */);
+    DetectionContext Context(*ExpandedRegion, *AA,
+                             NonAffineSubRegionMap[ExpandedRegion],
+                             false /* verifying */);
     DEBUG(dbgs() << "\t\tTrying " << ExpandedRegion->getNameStr() << "\n");
     // Only expand when we did not collect errors.
 
@@ -738,7 +764,8 @@ void ScopDetection::findScops(Region &R) {
   if (!DetectRegionsWithoutLoops && regionWithoutLoops(R, LI))
     return;
 
-  DetectionContext Context(R, *AA, false /*verifying*/);
+  DetectionContext Context(R, *AA, NonAffineSubRegionMap[&R],
+                           false /*verifying*/);
   bool RegionIsValid = isValidRegion(Context);
   bool HasErrors = !RegionIsValid || Context.Log.size() > 0;
 
@@ -965,9 +992,16 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
   return false;
 }
 
+bool ScopDetection::isNonAffineSubRegion(const Region *SubR,
+                                         const Region *ScopR) const {
+  return NonAffineSubRegionMap.lookup(ScopR).count(SubR);
+}
+
 void polly::ScopDetection::verifyRegion(const Region &R) const {
   assert(isMaxRegionInScop(R) && "Expect R is a valid region.");
-  DetectionContext Context(const_cast<Region &>(R), *AA, true /*verifying*/);
+  NonAffineSubRegionSetTy DummyNonAffineSubRegionSet;
+  DetectionContext Context(const_cast<Region &>(R), *AA,
+                           DummyNonAffineSubRegionSet, true /*verifying*/);
   isValidRegion(Context);
 }
 
@@ -1000,6 +1034,7 @@ void ScopDetection::print(raw_ostream &OS, const Module *) const {
 void ScopDetection::releaseMemory() {
   ValidRegions.clear();
   RejectLogs.clear();
+  NonAffineSubRegionMap.clear();
 
   // Do not clear the invalid function set.
 }
