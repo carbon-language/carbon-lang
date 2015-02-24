@@ -64,7 +64,7 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done")
 
         # Test that *stopped is printed
-        self.expect("\*stopped,reason=\"signal-received\",signal-name=\"SIGINT\",signal-meaning=\"Interrupt\",.*thread-id=\"1\",stopped-threads=\"all\"")
+        self.expect("\*stopped,reason=\"(signal-received\",signal-name=\"SIGINT\",signal-meaning=\"Interrupt\",.*)|(end-stepping-range\"),.*thread-id=\"1\",stopped-threads=\"all\"")
 
         # Run to main to make sure we have not exited the application
         self.runCmd("-break-insert -f main")
