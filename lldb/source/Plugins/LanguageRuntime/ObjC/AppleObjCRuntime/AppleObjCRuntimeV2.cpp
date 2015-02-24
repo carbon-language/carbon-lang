@@ -19,12 +19,14 @@
 
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Core/ConstString.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObjectVariable.h"
@@ -158,7 +160,7 @@ extern "C"
     int printf(const char * format, ...);
 }
 
-//#define ENABLE_DEBUG_PRINTF // COMMENT THIS LINE OUT PRIOR TO CHECKIN
+// #define ENABLE_DEBUG_PRINTF // COMMENT THIS LINE OUT PRIOR TO CHECKIN
 #ifdef ENABLE_DEBUG_PRINTF
 #define DEBUG_PRINTF(fmt, ...) printf(fmt, ## __VA_ARGS__)
 #else
@@ -217,12 +219,14 @@ __lldb_apple_objc_v2_get_shared_cache_class_info (void *objc_opt_ro_ptr,
         DEBUG_PRINTF ("objc_opt->selopt_offset = %d\n", objc_opt->selopt_offset);
         DEBUG_PRINTF ("objc_opt->headeropt_offset = %d\n", objc_opt->headeropt_offset);
         DEBUG_PRINTF ("objc_opt->clsopt_offset = %d\n", objc_opt->clsopt_offset);
-        if (objc_opt->version == 12)
+        if (objc_opt->version == 12 || objc_opt->version == 13)
         {
             const objc_clsopt_t* clsopt = (const objc_clsopt_t*)((uint8_t *)objc_opt + objc_opt->clsopt_offset);
             const size_t max_class_infos = class_infos_byte_size/sizeof(ClassInfo);
             ClassInfo *class_infos = (ClassInfo *)class_infos_ptr;
-            int32_t zeroOffset = 16;
+            int32_t invalidEntryOffset = 0;
+            if (objc_opt->version == 12)
+                invalidEntryOffset = 16;
             const uint8_t *checkbytes = &clsopt->tab[clsopt->mask+1];
             const int32_t *offsets = (const int32_t *)(checkbytes + clsopt->capacity);
             const objc_classheader_t *classOffsets = (const objc_classheader_t *)(offsets + clsopt->capacity);
@@ -234,8 +238,8 @@ __lldb_apple_objc_v2_get_shared_cache_class_info (void *objc_opt_ro_ptr,
                 const int32_t clsOffset = classOffsets[i].clsOffset;
                 if (clsOffset & 1)
                     continue; // duplicate
-                else if (clsOffset == zeroOffset)
-                    continue; // zero offset
+                else if (clsOffset == invalidEntryOffset)
+                    continue; // invalid offset
                 
                 if (class_infos && idx < max_class_infos)
                 {
@@ -262,8 +266,8 @@ __lldb_apple_objc_v2_get_shared_cache_class_info (void *objc_opt_ro_ptr,
                 const int32_t clsOffset = duplicateClassOffsets[i].clsOffset;
                 if (clsOffset & 1)
                     continue; // duplicate
-                else if (clsOffset == zeroOffset)
-                    continue; // zero offset
+                else if (clsOffset == invalidEntryOffset)
+                    continue; // invalid offset
                 
                 if (class_infos && idx < max_class_infos)
                 {
@@ -354,7 +358,8 @@ AppleObjCRuntimeV2::AppleObjCRuntimeV2 (Process *process,
     m_loaded_objc_opt (false),
     m_non_pointer_isa_cache_ap(NonPointerISACache::CreateInstance(*this,objc_module_sp)),
     m_tagged_pointer_vendor_ap(TaggedPointerVendor::CreateInstance(*this,objc_module_sp)),
-    m_encoding_to_type_sp()
+    m_encoding_to_type_sp(),
+    m_noclasses_warning_emitted(false)
 {
     static const ConstString g_gdb_object_getClass("gdb_object_getClass");
     m_has_object_getClass = (objc_module_sp->FindFirstSymbolWithNameAndType(g_gdb_object_getClass, eSymbolTypeCode) != NULL);
@@ -1174,7 +1179,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
     return success;
 }
 
-void
+uint32_t
 AppleObjCRuntimeV2::ParseClassInfoArray (const DataExtractor &data, uint32_t num_class_infos)
 {
     // Parses an array of "num_class_infos" packed ClassInfo structures:
@@ -1186,6 +1191,8 @@ AppleObjCRuntimeV2::ParseClassInfoArray (const DataExtractor &data, uint32_t num
     //    } __attribute__((__packed__));
 
     Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+    
+    uint32_t num_parsed = 0;
 
     // Iterate through all ClassInfo structures
     lldb::offset_t offset = 0;
@@ -1211,19 +1218,21 @@ AppleObjCRuntimeV2::ParseClassInfoArray (const DataExtractor &data, uint32_t num
             const uint32_t name_hash = data.GetU32(&offset);
             ClassDescriptorSP descriptor_sp (new ClassDescriptorV2(*this, isa, NULL));
             AddClass (isa, descriptor_sp, name_hash);
+            num_parsed++;
             if (log && log->GetVerbose())
                 log->Printf("AppleObjCRuntimeV2 added isa=0x%" PRIx64 ", hash=0x%8.8x, name=%s", isa, name_hash,descriptor_sp->GetClassName().AsCString("<unknown>"));
         }
     }
+    return num_parsed;
 }
 
-bool
+AppleObjCRuntimeV2::DescriptorMapUpdateResult
 AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
 {
     Process *process = GetProcess();
     
     if (process == NULL)
-        return false;
+        return DescriptorMapUpdateResult::Fail();
     
     Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
     
@@ -1232,13 +1241,13 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
     ThreadSP thread_sp = process->GetThreadList().GetSelectedThread();
     
     if (!thread_sp)
-        return false;
+        return DescriptorMapUpdateResult::Fail();
     
     thread_sp->CalculateExecutionContext(exe_ctx);
     ClangASTContext *ast = process->GetTarget().GetScratchClangASTContext();
     
     if (!ast)
-        return false;
+        return DescriptorMapUpdateResult::Fail();
     
     Address function_address;
     
@@ -1251,7 +1260,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
     const lldb::addr_t objc_opt_ptr = GetSharedCacheReadOnlyAddress();
     
     if (objc_opt_ptr == LLDB_INVALID_ADDRESS)
-        return false;
+        return DescriptorMapUpdateResult::Fail();
     
     // Read the total number of classes from the hash table
     const uint32_t num_classes = 128*1024;
@@ -1259,7 +1268,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
     {
         if (log)
             log->Printf ("No dynamic classes found in gdb_objc_realized_classes_addr.");
-        return false;
+        return DescriptorMapUpdateResult::Fail();
     }
     
     // Make some types for our arguments
@@ -1284,7 +1293,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
     if (m_get_shared_cache_class_info_code.get())
         function_address.SetOffset(m_get_shared_cache_class_info_code->StartAddress());
     else
-        return false;
+        return DescriptorMapUpdateResult::Fail();
     
     ValueList arguments;
     
@@ -1310,7 +1319,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
                                                                         "objc-isa-to-descriptor-shared-cache"));
         
         if (m_get_shared_cache_class_info_function.get() == NULL)
-            return false;
+            return DescriptorMapUpdateResult::Fail();
         
         errors.Clear();
         
@@ -1319,7 +1328,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
         {
             if (log)
                 log->Printf ("Error compiling function: \"%s\".", errors.GetData());
-            return false;
+            return DescriptorMapUpdateResult::Fail();
         }
         
         errors.Clear();
@@ -1328,7 +1337,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
         {
             if (log)
                 log->Printf ("Error Inserting function: \"%s\".", errors.GetData());
-            return false;
+            return DescriptorMapUpdateResult::Fail();
         }
     }
     else
@@ -1343,7 +1352,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
                                                              err);
     
     if (class_infos_addr == LLDB_INVALID_ADDRESS)
-        return false;
+        return DescriptorMapUpdateResult::Fail();
     
     Mutex::Locker locker(m_get_shared_cache_class_info_args_mutex);
     
@@ -1353,6 +1362,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
     arguments.GetValueAtIndex(2)->GetScalar() = class_infos_byte_size;
     
     bool success = false;
+    bool any_found = false;
     
     errors.Clear();
     
@@ -1418,8 +1428,8 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
                                                     buffer.GetByteSize(),
                                                     process->GetByteOrder(),
                                                     addr_size);
-                    
-                    ParseClassInfoArray (class_infos_data, num_class_infos);
+
+                    any_found = (ParseClassInfoArray (class_infos_data, num_class_infos) > 0);
                 }
             }
             else
@@ -1442,7 +1452,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
     // Deallocate the memory we allocated for the ClassInfo array
     process->DeallocateMemory(class_infos_addr);
     
-    return success;
+    return DescriptorMapUpdateResult(success, any_found);
 }
 
 
@@ -1546,7 +1556,12 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
         // in the shared cache, but only once per process as this data never
         // changes
         if (!m_loaded_objc_opt)
-            UpdateISAToDescriptorMapSharedCache();
+        {
+            DescriptorMapUpdateResult shared_cache_update_result = UpdateISAToDescriptorMapSharedCache();
+            if (!shared_cache_update_result.any_found)
+                WarnIfNoClassesCached ();
+        }
+        
     }
     else
     {
@@ -1554,6 +1569,20 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
     }
 }
 
+void
+AppleObjCRuntimeV2::WarnIfNoClassesCached ()
+{
+    if (m_noclasses_warning_emitted)
+        return;
+    
+    Debugger &debugger(GetProcess()->GetTarget().GetDebugger());
+    
+    if (debugger.GetAsyncOutputStream())
+    {
+        debugger.GetAsyncOutputStream()->PutCString("warning: could not load any Objective-C class information from the dyld shared cache. This will signficantly reduce the quality of type information available.\n");
+        m_noclasses_warning_emitted = true;
+    }
+}
 
 // TODO: should we have a transparent_kvo parameter here to say if we
 // want to replace the KVO swizzled class with the actual user-level type?
