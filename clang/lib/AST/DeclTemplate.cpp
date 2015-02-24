@@ -160,17 +160,43 @@ RedeclarableTemplateDecl::CommonBase *RedeclarableTemplateDecl::getCommonPtr() c
   return Common;
 }
 
-template <class EntryType>
-typename RedeclarableTemplateDecl::SpecEntryTraits<EntryType>::DeclType*
+template<class EntryType>
+typename RedeclarableTemplateDecl::SpecEntryTraits<EntryType>::DeclType *
 RedeclarableTemplateDecl::findSpecializationImpl(
-                                 llvm::FoldingSetVector<EntryType> &Specs,
-                                 ArrayRef<TemplateArgument> Args,
-                                 void *&InsertPos) {
+    llvm::FoldingSetVector<EntryType> &Specs, ArrayRef<TemplateArgument> Args,
+    void *&InsertPos) {
   typedef SpecEntryTraits<EntryType> SETraits;
   llvm::FoldingSetNodeID ID;
   EntryType::Profile(ID,Args, getASTContext());
   EntryType *Entry = Specs.FindNodeOrInsertPos(ID, InsertPos);
-  return Entry ? SETraits::getMostRecentDecl(Entry) : nullptr;
+  return Entry ? SETraits::getDecl(Entry)->getMostRecentDecl() : nullptr;
+}
+
+template<class Derived, class EntryType>
+void RedeclarableTemplateDecl::addSpecializationImpl(
+    llvm::FoldingSetVector<EntryType> &Specializations, EntryType *Entry,
+    void *InsertPos) {
+  typedef SpecEntryTraits<EntryType> SETraits;
+  if (InsertPos) {
+#ifndef NDEBUG
+    void *CorrectInsertPos;
+    assert(!findSpecializationImpl(Specializations,
+                                   SETraits::getTemplateArgs(Entry),
+                                   CorrectInsertPos) &&
+           InsertPos == CorrectInsertPos &&
+           "given incorrect InsertPos for specialization");
+#endif
+    Specializations.InsertNode(Entry, InsertPos);
+  } else {
+    EntryType *Existing = Specializations.GetOrInsertNode(Entry);
+    (void)Existing;
+    assert(SETraits::getDecl(Existing)->isCanonicalDecl() &&
+           "non-canonical specialization?");
+  }
+
+  if (ASTMutationListener *L = getASTMutationListener())
+    L->AddedCXXTemplateSpecialization(cast<Derived>(this),
+                                      SETraits::getDecl(Entry));
 }
 
 /// \brief Generate the injected template arguments for the given template
@@ -270,12 +296,8 @@ FunctionTemplateDecl::findSpecialization(ArrayRef<TemplateArgument> Args,
 
 void FunctionTemplateDecl::addSpecialization(
       FunctionTemplateSpecializationInfo *Info, void *InsertPos) {
-  if (InsertPos)
-    getSpecializations().InsertNode(Info, InsertPos);
-  else
-    getSpecializations().GetOrInsertNode(Info);
-  if (ASTMutationListener *L = getASTMutationListener())
-    L->AddedCXXTemplateSpecialization(this, Info->Function);
+  addSpecializationImpl<FunctionTemplateDecl>(getSpecializations(), Info,
+                                              InsertPos);
 }
 
 ArrayRef<TemplateArgument> FunctionTemplateDecl::getInjectedTemplateArgs() {
@@ -357,16 +379,7 @@ ClassTemplateDecl::findSpecialization(ArrayRef<TemplateArgument> Args,
 
 void ClassTemplateDecl::AddSpecialization(ClassTemplateSpecializationDecl *D,
                                           void *InsertPos) {
-  if (InsertPos)
-    getSpecializations().InsertNode(D, InsertPos);
-  else {
-    ClassTemplateSpecializationDecl *Existing 
-      = getSpecializations().GetOrInsertNode(D);
-    (void)Existing;
-    assert(Existing->isCanonicalDecl() && "Non-canonical specialization?");
-  }
-  if (ASTMutationListener *L = getASTMutationListener())
-    L->AddedCXXTemplateSpecialization(this, D);
+  addSpecializationImpl<ClassTemplateDecl>(getSpecializations(), D, InsertPos);
 }
 
 ClassTemplatePartialSpecializationDecl *
@@ -990,16 +1003,7 @@ VarTemplateDecl::findSpecialization(ArrayRef<TemplateArgument> Args,
 
 void VarTemplateDecl::AddSpecialization(VarTemplateSpecializationDecl *D,
                                         void *InsertPos) {
-  if (InsertPos)
-    getSpecializations().InsertNode(D, InsertPos);
-  else {
-    VarTemplateSpecializationDecl *Existing =
-        getSpecializations().GetOrInsertNode(D);
-    (void)Existing;
-    assert(Existing->isCanonicalDecl() && "Non-canonical specialization?");
-  }
-  if (ASTMutationListener *L = getASTMutationListener())
-    L->AddedCXXTemplateSpecialization(this, D);
+  addSpecializationImpl<VarTemplateDecl>(getSpecializations(), D, InsertPos);
 }
 
 VarTemplatePartialSpecializationDecl *

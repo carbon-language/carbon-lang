@@ -545,8 +545,11 @@ protected:
   template <typename EntryType> struct SpecEntryTraits {
     typedef EntryType DeclType;
 
-    static DeclType *getMostRecentDecl(EntryType *D) {
-      return D->getMostRecentDecl();
+    static DeclType *getDecl(EntryType *D) {
+      return D;
+    }
+    static ArrayRef<TemplateArgument> getTemplateArgs(EntryType *D) {
+      return D->getTemplateArgs().asArray();
     }
   };
 
@@ -565,7 +568,7 @@ protected:
         : SpecIterator::iterator_adaptor_base(std::move(SetIter)) {}
 
     DeclType *operator*() const {
-      return SETraits::getMostRecentDecl(&*this->I);
+      return SETraits::getDecl(&*this->I)->getMostRecentDecl();
     }
     DeclType *operator->() const { return **this; }
   };
@@ -579,6 +582,10 @@ protected:
   template <class EntryType> typename SpecEntryTraits<EntryType>::DeclType*
   findSpecializationImpl(llvm::FoldingSetVector<EntryType> &Specs,
                          ArrayRef<TemplateArgument> Args, void *&InsertPos);
+
+  template <class Derived, class EntryType>
+  void addSpecializationImpl(llvm::FoldingSetVector<EntryType> &Specs,
+                             EntryType *Entry, void *InsertPos);
 
   struct CommonBase {
     CommonBase() : InstantiatedFromMember(nullptr, false) { }
@@ -719,9 +726,12 @@ template <> struct RedeclarableTemplateDecl::
 SpecEntryTraits<FunctionTemplateSpecializationInfo> {
   typedef FunctionDecl DeclType;
 
-  static DeclType *
-  getMostRecentDecl(FunctionTemplateSpecializationInfo *I) {
-    return I->Function->getMostRecentDecl();
+  static DeclType *getDecl(FunctionTemplateSpecializationInfo *I) {
+    return I->Function;
+  }
+  static ArrayRef<TemplateArgument>
+  getTemplateArgs(FunctionTemplateSpecializationInfo *I) {
+    return I->TemplateArguments->asArray();
   }
 };
 
