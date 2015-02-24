@@ -344,6 +344,18 @@ struct StructWithUnnamedMember {
   __declspec(property(get=GetV)) int : 10; // expected-error {{anonymous property is not supported}}
 };
 
+struct MSPropertyClass {
+  int get() { return 42; }
+  int __declspec(property(get = get)) n;
+};
+
+int *f(MSPropertyClass &x) {
+  return &x.n; // expected-error {{address of property expression requested}}
+}
+int MSPropertyClass::*g() {
+  return &MSPropertyClass::n; // expected-error {{address of property expression requested}}
+}
+
 namespace rdar14250378 {
   class Bar {};
 
