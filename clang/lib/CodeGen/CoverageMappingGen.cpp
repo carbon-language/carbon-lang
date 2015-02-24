@@ -850,6 +850,11 @@ struct CounterCoverageMappingBuilder
     extendRegion(E->getRHS());
     propagateCounts(getRegionCounter(E), E->getRHS());
   }
+
+  void VisitLambdaExpr(const LambdaExpr *LE) {
+    // Lambdas are treated as their own functions for now, so we shouldn't
+    // propagate counts into them.
+  }
 };
 }
 
