@@ -2142,6 +2142,9 @@ ObjectFileMachO::ParseSymtab ()
     uint32_t i;
     FileSpecList dylib_files;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
+    static const llvm::StringRef g_objc_v2_prefix_class ("_OBJC_CLASS_$_");
+    static const llvm::StringRef g_objc_v2_prefix_metaclass ("_OBJC_METACLASS_$_");
+    static const llvm::StringRef g_objc_v2_prefix_ivar ("_OBJC_IVAR_$_");
 
     for (i=0; i<m_header.ncmds; ++i)
     {
@@ -2821,15 +2824,37 @@ ObjectFileMachO::ParseSymtab ()
                                                         // correctly.  To do this right, we should coalesce all the GSYM & global symbols that have the
                                                         // same address.
 
-                                                        if (symbol_name && symbol_name[0] == '_' && symbol_name[1] ==  'O'
-                                                            && (strncmp (symbol_name, "_OBJC_IVAR_$_", strlen ("_OBJC_IVAR_$_")) == 0
-                                                                || strncmp (symbol_name, "_OBJC_CLASS_$_", strlen ("_OBJC_CLASS_$_")) == 0
-                                                                || strncmp (symbol_name, "_OBJC_METACLASS_$_", strlen ("_OBJC_METACLASS_$_")) == 0))
-                                                            add_nlist = false;
+                                                        is_gsym = true;
+                                                        sym[sym_idx].SetExternal(true);
+
+                                                        if (symbol_name && symbol_name[0] == '_' && symbol_name[1] ==  'O')
+                                                        {
+                                                            llvm::StringRef symbol_name_ref(symbol_name);
+                                                            if (symbol_name_ref.startswith(g_objc_v2_prefix_class))
+                                                            {
+                                                                symbol_name_non_abi_mangled = symbol_name + 1;
+                                                                symbol_name = symbol_name + g_objc_v2_prefix_class.size();
+                                                                type = eSymbolTypeObjCClass;
+                                                                demangled_is_synthesized = true;
+
+                                                            }
+                                                            else if (symbol_name_ref.startswith(g_objc_v2_prefix_metaclass))
+                                                            {
+                                                                symbol_name_non_abi_mangled = symbol_name + 1;
+                                                                symbol_name = symbol_name + g_objc_v2_prefix_metaclass.size();
+                                                                type = eSymbolTypeObjCMetaClass;
+                                                                demangled_is_synthesized = true;
+                                                            }
+                                                            else if (symbol_name_ref.startswith(g_objc_v2_prefix_ivar))
+                                                            {
+                                                                symbol_name_non_abi_mangled = symbol_name + 1;
+                                                                symbol_name = symbol_name + g_objc_v2_prefix_ivar.size();
+                                                                type = eSymbolTypeObjCIVar;
+                                                                demangled_is_synthesized = true;
+                                                            }
+                                                        }
                                                         else
                                                         {
-                                                            is_gsym = true;
-                                                            sym[sym_idx].SetExternal(true);
                                                             if (nlist.n_value != 0)
                                                                 symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
                                                             type = eSymbolTypeData;
@@ -3267,9 +3292,6 @@ ObjectFileMachO::ParseSymtab ()
                                                                                 symbol_name[2] == 'B')
                                                                             {
                                                                                 llvm::StringRef symbol_name_ref(symbol_name);
-                                                                                static const llvm::StringRef g_objc_v2_prefix_class ("_OBJC_CLASS_$_");
-                                                                                static const llvm::StringRef g_objc_v2_prefix_metaclass ("_OBJC_METACLASS_$_");
-                                                                                static const llvm::StringRef g_objc_v2_prefix_ivar ("_OBJC_IVAR_$_");
                                                                                 if (symbol_name_ref.startswith(g_objc_v2_prefix_class))
                                                                                 {
                                                                                     symbol_name_non_abi_mangled = symbol_name + 1;
@@ -3446,7 +3468,10 @@ ObjectFileMachO::ParseSymtab ()
                                                                 type = eSymbolTypeResolver;
                                                         }
                                                     }
-                                                    else if (type == eSymbolTypeData)
+                                                    else if (type == eSymbolTypeData          ||
+                                                             type == eSymbolTypeObjCClass     ||
+                                                             type == eSymbolTypeObjCMetaClass ||
+                                                             type == eSymbolTypeObjCIVar      )
                                                     {
                                                         // See if we can find a N_STSYM entry for any data symbols.
                                                         // If we do find a match, and the name matches, then we
@@ -3487,7 +3512,7 @@ ObjectFileMachO::ParseSymtab ()
                                                                 sym[GSYM_sym_idx].GetAddress().SetSection (symbol_section);
                                                                 sym[GSYM_sym_idx].GetAddress().SetOffset (symbol_value);
                                                                 // We just need the flags from the linker symbol, so put these flags
-                                                                // into the N_STSYM flags to avoid duplicate symbols in the symbol table
+                                                                // into the N_GSYM flags to avoid duplicate symbols in the symbol table
                                                                 sym[GSYM_sym_idx].SetFlags (nlist.n_type << 16 | nlist.n_desc);
                                                                 sym[sym_idx].Clear();
                                                                 continue;
@@ -3638,16 +3663,37 @@ ObjectFileMachO::ParseSymtab ()
                         // symbol type.  This is a temporary hack to make sure the ObjectiveC symbols get treated
                         // correctly.  To do this right, we should coalesce all the GSYM & global symbols that have the
                         // same address.
+                        is_gsym = true;
+                        sym[sym_idx].SetExternal(true);
 
-                        if (symbol_name && symbol_name[0] == '_' && symbol_name[1] ==  'O'
-                            && (strncmp (symbol_name, "_OBJC_IVAR_$_", strlen ("_OBJC_IVAR_$_")) == 0
-                                || strncmp (symbol_name, "_OBJC_CLASS_$_", strlen ("_OBJC_CLASS_$_")) == 0
-                                || strncmp (symbol_name, "_OBJC_METACLASS_$_", strlen ("_OBJC_METACLASS_$_")) == 0))
-                            add_nlist = false;
+                        if (symbol_name && symbol_name[0] == '_' && symbol_name[1] ==  'O')
+                        {
+                            llvm::StringRef symbol_name_ref(symbol_name);
+                            if (symbol_name_ref.startswith(g_objc_v2_prefix_class))
+                            {
+                                symbol_name_non_abi_mangled = symbol_name + 1;
+                                symbol_name = symbol_name + g_objc_v2_prefix_class.size();
+                                type = eSymbolTypeObjCClass;
+                                demangled_is_synthesized = true;
+                                
+                            }
+                            else if (symbol_name_ref.startswith(g_objc_v2_prefix_metaclass))
+                            {
+                                symbol_name_non_abi_mangled = symbol_name + 1;
+                                symbol_name = symbol_name + g_objc_v2_prefix_metaclass.size();
+                                type = eSymbolTypeObjCMetaClass;
+                                demangled_is_synthesized = true;
+                            }
+                            else if (symbol_name_ref.startswith(g_objc_v2_prefix_ivar))
+                            {
+                                symbol_name_non_abi_mangled = symbol_name + 1;
+                                symbol_name = symbol_name + g_objc_v2_prefix_ivar.size();
+                                type = eSymbolTypeObjCIVar;
+                                demangled_is_synthesized = true;
+                            }
+                        }
                         else
                         {
-                            is_gsym = true;
-                            sym[sym_idx].SetExternal(true);
                             if (nlist.n_value != 0)
                                 symbol_section = section_info.GetSection (nlist.n_sect, nlist.n_value);
                             type = eSymbolTypeData;
@@ -4087,9 +4133,6 @@ ObjectFileMachO::ParseSymtab ()
                                                 symbol_name[2] == 'B')
                                             {
                                                 llvm::StringRef symbol_name_ref(symbol_name);
-                                                static const llvm::StringRef g_objc_v2_prefix_class ("_OBJC_CLASS_$_");
-                                                static const llvm::StringRef g_objc_v2_prefix_metaclass ("_OBJC_METACLASS_$_");
-                                                static const llvm::StringRef g_objc_v2_prefix_ivar ("_OBJC_IVAR_$_");
                                                 if (symbol_name_ref.startswith(g_objc_v2_prefix_class))
                                                 {
                                                     symbol_name_non_abi_mangled = symbol_name + 1;
@@ -4175,12 +4218,12 @@ ObjectFileMachO::ParseSymtab ()
                         {
                             ConstString const_symbol_name(symbol_name);
                             sym[sym_idx].GetMangled().SetValue(const_symbol_name, symbol_name_is_mangled);
-                            if (is_gsym && is_debug)
-                            {
-                                N_GSYM_name_to_sym_idx[sym[sym_idx].GetMangled().GetName(Mangled::ePreferMangled).GetCString()] = sym_idx;
-                            }
                         }
                     }
+
+                    if (is_gsym)
+                        N_GSYM_name_to_sym_idx[sym[sym_idx].GetMangled().GetName(Mangled::ePreferMangled).GetCString()] = sym_idx;
+
                     if (symbol_section)
                     {
                         const addr_t section_file_addr = symbol_section->GetFileAddress();
@@ -4267,7 +4310,10 @@ ObjectFileMachO::ParseSymtab ()
                                     type = eSymbolTypeResolver;
                             }
                         }
-                        else if (type == eSymbolTypeData)
+                        else if (type == eSymbolTypeData          ||
+                                 type == eSymbolTypeObjCClass     ||
+                                 type == eSymbolTypeObjCMetaClass ||
+                                 type == eSymbolTypeObjCIVar      )
                         {
                             // See if we can find a N_STSYM entry for any data symbols.
                             // If we do find a match, and the name matches, then we
@@ -4308,7 +4354,7 @@ ObjectFileMachO::ParseSymtab ()
                                     sym[GSYM_sym_idx].GetAddress().SetSection (symbol_section);
                                     sym[GSYM_sym_idx].GetAddress().SetOffset (symbol_value);
                                     // We just need the flags from the linker symbol, so put these flags
-                                    // into the N_STSYM flags to avoid duplicate symbols in the symbol table
+                                    // into the N_GSYM flags to avoid duplicate symbols in the symbol table
                                     sym[GSYM_sym_idx].SetFlags (nlist.n_type << 16 | nlist.n_desc);
                                     sym[sym_idx].Clear();
                                     continue;
