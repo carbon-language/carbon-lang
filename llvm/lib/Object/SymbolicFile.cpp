@@ -53,6 +53,7 @@ ErrorOr<std::unique_ptr<SymbolicFile>> SymbolicFile::createSymbolicFile(
   case sys::fs::file_magic::macho_bundle:
   case sys::fs::file_magic::macho_dynamically_linked_shared_lib_stub:
   case sys::fs::file_magic::macho_dsym_companion:
+  case sys::fs::file_magic::macho_kext_bundle:
   case sys::fs::file_magic::coff_import_library:
   case sys::fs::file_magic::pecoff_executable:
     return ObjectFile::createObjectFile(Object, Type);

@@ -241,6 +241,7 @@ struct file_magic {
     macho_bundle,             ///< Mach-O Bundle file
     macho_dynamically_linked_shared_lib_stub, ///< Mach-O Shared lib stub
     macho_dsym_companion,     ///< Mach-O dSYM companion file
+    macho_kext_bundle,        ///< Mach-O kext bundle file
     macho_universal_binary,   ///< Mach-O universal binary
     coff_object,              ///< COFF object file
     coff_import_library,      ///< COFF import library

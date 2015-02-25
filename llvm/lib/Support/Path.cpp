@@ -1012,6 +1012,7 @@ file_magic identify_magic(StringRef Magic) {
         case 8: return file_magic::macho_bundle;
         case 9: return file_magic::macho_dynamically_linked_shared_lib_stub;
         case 10: return file_magic::macho_dsym_companion;
+        case 11: return file_magic::macho_kext_bundle;
       }
       break;
     }
