@@ -254,9 +254,6 @@ public:
                  (int32_t)LinkedCIEOffset,
                  (uint32_t)InitialLocation,
                  (uint32_t)InitialLocation + (uint32_t)AddressRange);
-    if (LinkedCIE) {
-      OS << format("%p\n", LinkedCIE);
-    }
   }
 
   static bool classof(const FrameEntry *FE) {
