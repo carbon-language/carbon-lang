@@ -7109,12 +7109,15 @@ arbitrarily complex and require, for example, memory allocation.
 Accurate Garbage Collection Intrinsics
 --------------------------------------
 
-LLVM support for `Accurate Garbage Collection <GarbageCollection.html>`_
-(GC) requires the implementation and generation of these intrinsics.
+LLVM's support for `Accurate Garbage Collection <GarbageCollection.html>`_
+(GC) requires the frontend to generate code containing appropriate intrinsic 
+calls and select an appropriate GC strategy which knows how to lower these 
+intrinsics in a manner which is appropriate for the target collector.
+
 These intrinsics allow identification of :ref:`GC roots on the
 stack <int_gcroot>`, as well as garbage collector implementations that
 require :ref:`read <int_gcread>` and :ref:`write <int_gcwrite>` barriers.
-Front-ends for type-safe garbage collected languages should generate
+Frontends for type-safe garbage collected languages should generate
 these intrinsics to make use of the LLVM garbage collectors. For more
 details, see `Garbage Collection with LLVM <GarbageCollection.html>`_.
 
