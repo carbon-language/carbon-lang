@@ -6,22 +6,22 @@
 
 ; FRAMES: 00000000 00000010 ffffffff CIE
 ; FRAMES: Version: 1
-; FRAMES:      DW_CFA_def_cfa
-; FRAMES-NEXT: DW_CFA_offset
-; FRAMES-NEXT: DW_CFA_nop
-; FRAMES-NEXT: DW_CFA_nop
+; FRAMES:      DW_CFA_def_cfa: reg4 +4
+; FRAMES-NEXT: DW_CFA_offset: reg8 -4
+; FRAMES-NEXT: DW_CFA_nop:
+; FRAMES-NEXT: DW_CFA_nop:
 
 ; FRAMES: 00000014 00000010 00000000 FDE cie=00000000 pc=00000000...00000022
-; FRAMES:      DW_CFA_advance_loc
-; FRAMES-NEXT: DW_CFA_def_cfa_offset
-; FRAMES-NEXT: DW_CFA_nop
+; FRAMES:      DW_CFA_advance_loc: 3
+; FRAMES-NEXT: DW_CFA_def_cfa_offset: +12
+; FRAMES-NEXT: DW_CFA_nop:
 
 ; FRAMES: 00000028 00000014 00000000 FDE cie=00000000 pc=00000030...00000080
-; FRAMES:      DW_CFA_advance_loc
-; FRAMES-NEXT: DW_CFA_def_cfa_offset
-; FRAMES-NEXT: DW_CFA_offset
-; FRAMES-NEXT: DW_CFA_advance_loc
-; FRAMES-NEXT: DW_CFA_def_cfa_register
+; FRAMES:      DW_CFA_advance_loc: 1
+; FRAMES-NEXT: DW_CFA_def_cfa_offset: +8
+; FRAMES-NEXT: DW_CFA_offset: reg5 -8
+; FRAMES-NEXT: DW_CFA_advance_loc: 2
+; FRAMES-NEXT: DW_CFA_def_cfa_register: reg5
 
 ; FRAMES-NOT: CIE
 ; FRAMES-NOT: FDE
