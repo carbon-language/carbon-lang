@@ -193,13 +193,14 @@ void PPCTTIImpl::getUnrollingPreferences(Loop *L,
 }
 
 unsigned PPCTTIImpl::getNumberOfRegisters(bool Vector) {
-  if (Vector && !ST->hasAltivec())
+  if (Vector && !ST->hasAltivec() && !ST->hasQPX())
     return 0;
   return ST->hasVSX() ? 64 : 32;
 }
 
 unsigned PPCTTIImpl::getRegisterBitWidth(bool Vector) {
   if (Vector) {
+    if (ST->hasQPX()) return 256;
     if (ST->hasAltivec()) return 128;
     return 0;
   }
@@ -273,6 +274,12 @@ unsigned PPCTTIImpl::getVectorInstrCost(unsigned Opcode, Type *Val,
 
   if (ST->hasVSX() && Val->getScalarType()->isDoubleTy()) {
     // Double-precision scalars are already located in index #0.
+    if (Index == 0)
+      return 0;
+
+    return BaseT::getVectorInstrCost(Opcode, Val, Index);
+  } else if (ST->hasQPX() && Val->getScalarType()->isFloatingPointTy()) {
+    // Floating point scalars are already located in index #0.
     if (Index == 0)
       return 0;
 

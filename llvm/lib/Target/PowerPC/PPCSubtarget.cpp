@@ -37,6 +37,10 @@ using namespace llvm;
 static cl::opt<bool> UseSubRegLiveness("ppc-track-subreg-liveness",
 cl::desc("Enable subregister liveness tracking for PPC"), cl::Hidden);
 
+static cl::opt<bool> QPXStackUnaligned("qpx-stack-unaligned",
+  cl::desc("Even when QPX is enabled the stack is not 32-byte aligned"),
+  cl::Hidden);
+
 PPCSubtarget &PPCSubtarget::initializeSubtargetDependencies(StringRef CPU,
                                                             StringRef FS) {
   initializeEnvironment();
@@ -90,6 +94,7 @@ void PPCSubtarget::initializeEnvironment() {
   HasLazyResolverStubs = false;
   HasICBT = false;
   HasInvariantFunctionDescriptors = false;
+  IsQPXStackUnaligned = false;
 }
 
 void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
@@ -126,8 +131,8 @@ void PPCSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   // QPX requires a 32-byte aligned stack. Note that we need to do this if
   // we're compiling for a BG/Q system regardless of whether or not QPX
   // is enabled because external functions will assume this alignment.
-  if (hasQPX() || isBGQ())
-    StackAlignment = 32;
+  IsQPXStackUnaligned = QPXStackUnaligned;
+  StackAlignment = getPlatformStackAlignment();
 
   // Determine endianness.
   // FIXME: Part of the TargetMachine.

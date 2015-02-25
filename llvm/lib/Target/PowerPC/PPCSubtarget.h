@@ -114,6 +114,11 @@ protected:
   bool HasICBT;
   bool HasInvariantFunctionDescriptors;
 
+  /// When targeting QPX running a stock PPC64 Linux kernel where the stack
+  /// alignment has not been changed, we need to keep the 16-byte alignment
+  /// of the stack.
+  bool IsQPXStackUnaligned;
+
   const PPCTargetMachine &TM;
   PPCFrameLowering FrameLowering;
   PPCInstrInfo InstrInfo;
@@ -228,6 +233,14 @@ public:
   bool hasICBT() const { return HasICBT; }
   bool hasInvariantFunctionDescriptors() const {
     return HasInvariantFunctionDescriptors;
+  }
+
+  bool isQPXStackUnaligned() const { return IsQPXStackUnaligned; }
+  unsigned getPlatformStackAlignment() const {
+    if ((hasQPX() || isBGQ()) && !isQPXStackUnaligned())
+      return 32;
+
+    return 16;
   }
 
   const Triple &getTargetTriple() const { return TargetTriple; }

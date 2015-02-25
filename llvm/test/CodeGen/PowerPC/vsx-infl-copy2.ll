@@ -8,7 +8,6 @@ entry:
   br i1 false, label %loop2_start, label %if.end5
 
 ; CHECK-LABEL: @_Z28test_goto_loop_unroll_factorILi22EiEvPKT0_iPKc
-; CHECK: xxlor
 
 loop2_start:                                      ; preds = %loop2_start, %entry
   br i1 undef, label %loop2_start, label %if.then.i31

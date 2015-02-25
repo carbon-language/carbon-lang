@@ -83,7 +83,7 @@ static unsigned computeBasePointerSaveOffset(const PPCSubtarget &STI) {
 
 PPCFrameLowering::PPCFrameLowering(const PPCSubtarget &STI)
     : TargetFrameLowering(TargetFrameLowering::StackGrowsDown,
-                          (STI.hasQPX() || STI.isBGQ()) ? 32 : 16, 0),
+                          STI.getPlatformStackAlignment(), 0),
       Subtarget(STI), ReturnSaveOffset(computeReturnSaveOffset(Subtarget)),
       TOCSaveOffset(computeTOCSaveOffset(Subtarget)),
       FramePointerSaveOffset(computeFramePointerSaveOffset(Subtarget)),

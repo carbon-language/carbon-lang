@@ -61,6 +61,27 @@ def tocentry32 : Operand<iPTR> {
   let MIOperandInfo = (ops i32imm:$imm);
 }
 
+def SDT_PPCqvfperm   : SDTypeProfile<1, 3, [
+  SDTCisVec<0>, SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisVec<3>
+]>;
+def SDT_PPCqvgpci   : SDTypeProfile<1, 1, [
+  SDTCisVec<0>, SDTCisInt<1>
+]>;
+def SDT_PPCqvaligni   : SDTypeProfile<1, 3, [
+  SDTCisVec<0>, SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisInt<3>
+]>;
+def SDT_PPCqvesplati   : SDTypeProfile<1, 2, [
+  SDTCisVec<0>, SDTCisSameAs<0, 1>, SDTCisInt<2>
+]>;
+
+def SDT_PPCqbflt : SDTypeProfile<1, 1, [
+  SDTCisVec<0>, SDTCisVec<1>
+]>;
+
+def SDT_PPCqvlfsb : SDTypeProfile<1, 1, [
+  SDTCisVec<0>, SDTCisPtrTy<1>
+]>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC specific DAG Nodes.
 //
@@ -126,6 +147,16 @@ def PPCaddisDtprelHA : SDNode<"PPCISD::ADDIS_DTPREL_HA", SDTIntBinOp>;
 def PPCaddiDtprelL   : SDNode<"PPCISD::ADDI_DTPREL_L", SDTIntBinOp>;
 
 def PPCvperm    : SDNode<"PPCISD::VPERM", SDT_PPCvperm, []>;
+
+def PPCqvfperm   : SDNode<"PPCISD::QVFPERM", SDT_PPCqvfperm, []>;
+def PPCqvgpci    : SDNode<"PPCISD::QVGPCI", SDT_PPCqvgpci, []>;
+def PPCqvaligni  : SDNode<"PPCISD::QVALIGNI", SDT_PPCqvaligni, []>;
+def PPCqvesplati : SDNode<"PPCISD::QVESPLATI", SDT_PPCqvesplati, []>;
+
+def PPCqbflt     : SDNode<"PPCISD::QBFLT", SDT_PPCqbflt, []>;
+
+def PPCqvlfsb    : SDNode<"PPCISD::QVLFSb", SDT_PPCqvlfsb,
+                          [SDNPHasChain, SDNPMayLoad]>;
 
 def PPCcmpb     : SDNode<"PPCISD::CMPB", SDTIntBinOp, []>;
 
@@ -464,6 +495,15 @@ def u6imm   : Operand<i32> {
   let ParserMatchClass = PPCU6ImmAsmOperand;
   let DecoderMethod = "decodeUImmOperand<6>";
 }
+def PPCU12ImmAsmOperand : AsmOperandClass {
+  let Name = "U12Imm"; let PredicateMethod = "isU12Imm";
+  let RenderMethod = "addImmOperands";
+}
+def u12imm  : Operand<i32> {
+  let PrintMethod = "printU12ImmOperand";
+  let ParserMatchClass = PPCU12ImmAsmOperand;
+  let DecoderMethod = "decodeUImmOperand<12>";
+}
 def PPCS16ImmAsmOperand : AsmOperandClass {
   let Name = "S16Imm"; let PredicateMethod = "isS16Imm";
   let RenderMethod = "addS16ImmOperands";
@@ -680,6 +720,10 @@ def IsPPC6xx  : Predicate<"PPCSubTarget->isPPC6xx()">;
 def IsE500  : Predicate<"PPCSubTarget->isE500()">;
 def HasSPE  : Predicate<"PPCSubTarget->HasSPE()">;
 def HasICBT : Predicate<"PPCSubTarget->hasICBT()">;
+
+def NoNaNsFPMath : Predicate<"TM.Options.NoNaNsFPMath">;
+def NaNsFPMath   : Predicate<"!TM.Options.NoNaNsFPMath">;
+
 //===----------------------------------------------------------------------===//
 // PowerPC Multiclass Definitions.
 
@@ -2643,6 +2687,7 @@ include "PPCInstrAltivec.td"
 include "PPCInstrSPE.td"
 include "PPCInstr64Bit.td"
 include "PPCInstrVSX.td"
+include "PPCInstrQPX.td"
 
 def crnot : OutPatFrag<(ops node:$in),
                        (CRNOR $in, $in)>;

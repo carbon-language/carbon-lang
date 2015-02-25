@@ -34,7 +34,20 @@ FullRegNames("ppc-asm-full-reg-names", cl::Hidden, cl::init(false),
 #include "PPCGenAsmWriter.inc"
 
 void PPCInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
-  OS << getRegisterName(RegNo);
+  const char *RegName = getRegisterName(RegNo);
+  if (RegName[0] == 'q' /* QPX */) {
+    // The system toolchain on the BG/Q does not understand QPX register names
+    // in .cfi_* directives, so print the name of the floating-point
+    // subregister instead.
+    std::string RN(RegName);
+
+    RN[0] = 'f';
+    OS << RN;
+
+    return;
+  }
+
+  OS << RegName;
 }
 
 void PPCInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
@@ -236,6 +249,13 @@ void PPCInstPrinter::printU6ImmOperand(const MCInst *MI, unsigned OpNo,
   O << (unsigned int)Value;
 }
 
+void PPCInstPrinter::printU12ImmOperand(const MCInst *MI, unsigned OpNo,
+                                        raw_ostream &O) {
+  unsigned short Value = MI->getOperand(OpNo).getImm();
+  assert(Value <= 4095 && "Invalid u12imm argument!");
+  O << (unsigned short)Value;
+}
+
 void PPCInstPrinter::printS16ImmOperand(const MCInst *MI, unsigned OpNo,
                                         raw_ostream &O) {
   if (MI->getOperand(OpNo).isImm())
@@ -338,6 +358,7 @@ static const char *stripRegisterPrefix(const char *RegName) {
   switch (RegName[0]) {
   case 'r':
   case 'f':
+  case 'q': // for QPX
   case 'v':
     if (RegName[1] == 's')
       return RegName + 2;

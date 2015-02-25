@@ -164,6 +164,17 @@ static const unsigned G8Regs[] = {
   PPC::X28, PPC::X29, PPC::X30, PPC::X31
 };
 
+static const unsigned QFRegs[] = {
+  PPC::QF0, PPC::QF1, PPC::QF2, PPC::QF3,
+  PPC::QF4, PPC::QF5, PPC::QF6, PPC::QF7,
+  PPC::QF8, PPC::QF9, PPC::QF10, PPC::QF11,
+  PPC::QF12, PPC::QF13, PPC::QF14, PPC::QF15,
+  PPC::QF16, PPC::QF17, PPC::QF18, PPC::QF19,
+  PPC::QF20, PPC::QF21, PPC::QF22, PPC::QF23,
+  PPC::QF24, PPC::QF25, PPC::QF26, PPC::QF27,
+  PPC::QF28, PPC::QF29, PPC::QF30, PPC::QF31
+};
+
 template <std::size_t N>
 static DecodeStatus decodeRegisterClass(MCInst &Inst, uint64_t RegNo,
                                         const unsigned (&Regs)[N]) {
@@ -234,6 +245,15 @@ static DecodeStatus DecodeG8RCRegisterClass(MCInst &Inst, uint64_t RegNo,
 
 #define DecodePointerLikeRegClass0 DecodeGPRCRegisterClass
 #define DecodePointerLikeRegClass1 DecodeGPRC_NOR0RegisterClass
+
+static DecodeStatus DecodeQFRCRegisterClass(MCInst &Inst, uint64_t RegNo,
+                                            uint64_t Address,
+                                            const void *Decoder) {
+  return decodeRegisterClass(Inst, RegNo, QFRegs);
+}
+
+#define DecodeQSRCRegisterClass DecodeQFRCRegisterClass
+#define DecodeQBRCRegisterClass DecodeQFRCRegisterClass
 
 template<unsigned N>
 static DecodeStatus decodeUImmOperand(MCInst &Inst, uint64_t Imm,
@@ -334,6 +354,15 @@ DecodeStatus PPCDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   // The instruction is big-endian encoded.
   uint32_t Inst =
       (Bytes[0] << 24) | (Bytes[1] << 16) | (Bytes[2] << 8) | (Bytes[3] << 0);
+
+  if ((STI.getFeatureBits() & PPC::FeatureQPX) != 0) {
+    DecodeStatus result =
+      decodeInstruction(DecoderTableQPX32, MI, Inst, Address, this, STI);
+    if (result != MCDisassembler::Fail)
+      return result;
+
+    MI.clear();
+  }
 
   return decodeInstruction(DecoderTable32, MI, Inst, Address, this, STI);
 }
