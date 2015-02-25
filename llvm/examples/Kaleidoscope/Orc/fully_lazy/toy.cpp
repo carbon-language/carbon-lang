@@ -682,13 +682,18 @@ std::string MakeLegalFunctionName(std::string Name)
 
 class SessionContext {
 public:
-  SessionContext(LLVMContext &C) : Context(C) {}
+  SessionContext(LLVMContext &C)
+    : Context(C), TM(EngineBuilder().selectTarget()) {}
   LLVMContext& getLLVMContext() const { return Context; }
+  TargetMachine& getTarget() { return *TM; }
   void addPrototypeAST(std::unique_ptr<PrototypeAST> P);
   PrototypeAST* getPrototypeAST(const std::string &Name);
 private:
   typedef std::map<std::string, std::unique_ptr<PrototypeAST>> PrototypeMap;
+  
   LLVMContext &Context;
+  std::unique_ptr<TargetMachine> TM;
+      
   PrototypeMap Prototypes;
 };
 
@@ -710,7 +715,9 @@ public:
     : Session(S),
       M(new Module(GenerateUniqueName("jit_module_"),
                    Session.getLLVMContext())),
-      Builder(Session.getLLVMContext()) {}
+      Builder(Session.getLLVMContext()) {
+    M->setDataLayout(Session.getTarget().getDataLayout());
+  }
 
   SessionContext& getSession() { return Session; }
   Module& getM() const { return *M; }
@@ -1139,6 +1146,12 @@ static std::unique_ptr<llvm::Module> IRGen(SessionContext &S,
   return C.takeM();
 }
 
+template <typename T>
+static std::vector<T> singletonSet(T t) {
+  std::vector<T> Vec;
+  Vec.push_back(std::move(t));
+  return Vec;
+}
 
 static void EarthShatteringKaboom() {
   fprintf(stderr, "Earth shattering kaboom.");
@@ -1150,10 +1163,20 @@ public:
   typedef ObjectLinkingLayer<> ObjLayerT;
   typedef IRCompileLayer<ObjLayerT> CompileLayerT;
   typedef LazyEmittingLayer<CompileLayerT> LazyEmitLayerT;
-
   typedef LazyEmitLayerT::ModuleSetHandleT ModuleHandleT;
 
-  std::string Mangle(const std::string &Name) {
+  KaleidoscopeJIT(SessionContext &Session)
+    : Session(Session),
+      Mang(Session.getTarget().getDataLayout()),
+      ObjectLayer(
+        [](){ return llvm::make_unique<SectionMemoryManager>(); }),
+      CompileLayer(ObjectLayer, SimpleCompiler(Session.getTarget())),
+      LazyEmitLayer(CompileLayer),
+      CompileCallbacks(LazyEmitLayer, Session.getLLVMContext(),
+                       reinterpret_cast<uintptr_t>(EarthShatteringKaboom),
+                       64) {}
+
+  std::string mangle(const std::string &Name) {
     std::string MangledName;
     {
       raw_string_ostream MangledNameStream(MangledName);
@@ -1162,32 +1185,18 @@ public:
     return MangledName;
   }
 
-  KaleidoscopeJIT(SessionContext &Session)
-    : TM(EngineBuilder().selectTarget()),
-      Mang(TM->getDataLayout()), Session(Session),
-      ObjectLayer(
-        [](){ return llvm::make_unique<SectionMemoryManager>(); }),
-      CompileLayer(ObjectLayer, SimpleCompiler(*TM)),
-      LazyEmitLayer(CompileLayer),
-      CompileCallbacks(LazyEmitLayer, Session.getLLVMContext(),
-                       reinterpret_cast<uintptr_t>(EarthShatteringKaboom),
-                       64) {}
+  void addFunctionDefinition(std::unique_ptr<FunctionAST> FnAST) {
+    FunctionDefs[mangle(FnAST->Proto->Name)] = std::move(FnAST);
+  }
 
   ModuleHandleT addModule(std::unique_ptr<Module> M) {
-    if (!M->getDataLayout())
-      M->setDataLayout(TM->getDataLayout());
-
-    // The LazyEmitLayer takes lists of modules, rather than single modules, so
-    // we'll just build a single-element list.
-    std::vector<std::unique_ptr<Module>> S;
-    S.push_back(std::move(M));
-
     // We need a memory manager to allocate memory and resolve symbols for this
-    // new module. Create one that resolves symbols by looking back into the JIT.
+    // new module. Create one that resolves symbols by looking back into the
+    // JIT.
     auto MM = createLookasideRTDyldMM<SectionMemoryManager>(
                 [&](const std::string &Name) {
                   // First try to find 'Name' within the JIT.
-                  if (auto Symbol = findMangledSymbol(Name))
+                  if (auto Symbol = findSymbol(Name))
                     return Symbol.getAddress();
 
                   // If we don't already have a definition of 'Name' then search
@@ -1196,29 +1205,22 @@ public:
                 },
                 [](const std::string &S) { return 0; } );
 
-    return LazyEmitLayer.addModuleSet(std::move(S), std::move(MM));
+    return LazyEmitLayer.addModuleSet(singletonSet(std::move(M)),
+                                      std::move(MM));
   }
 
   void removeModule(ModuleHandleT H) { LazyEmitLayer.removeModuleSet(H); }
 
-  JITSymbol findMangledSymbol(const std::string &Name) {
+  JITSymbol findSymbol(const std::string &Name) {
     return LazyEmitLayer.findSymbol(Name, true);
   }
 
-  JITSymbol findMangledSymbolIn(ModuleHandleT H, const std::string &Name) {
+  JITSymbol findSymbolIn(ModuleHandleT H, const std::string &Name) {
     return LazyEmitLayer.findSymbolIn(H, Name, true);
   }
 
-  JITSymbol findSymbol(const std::string &Name) {
-    return findMangledSymbol(Mangle(Name));
-  }
-
-  JITSymbol findSymbolIn(ModuleHandleT H, const std::string &Name) {
-    return findMangledSymbolIn(H, Mangle(Name));
-  }
-
-  void addFunctionDefinition(std::unique_ptr<FunctionAST> FnAST) {
-    FunctionDefs[Mangle(FnAST->Proto->Name)] = std::move(FnAST);
+  JITSymbol findUnmangledSymbol(const std::string &Name) {
+    return findSymbol(mangle(Name));
   }
 
 private:
@@ -1239,7 +1241,7 @@ private:
     FunctionDefs.erase(DefI);
 
     // Return the address of the stub.
-    return findMangledSymbolIn(H, Name).getAddress();
+    return findSymbolIn(H, Name).getAddress();
   }
 
   // This method will take the AST for a function definition and IR-gen a stub
@@ -1250,7 +1252,6 @@ private:
     //         the function.
     IRGenContext C(Session);
     Function *F = FnAST->Proto->IRGen(C);
-    C.getM().setDataLayout(TM->getDataLayout());
 
     // Step 2) Get a compile callback that can be used to compile the body of
     //         the function. The resulting CallbackInfo type will let us set the
@@ -1286,15 +1287,13 @@ private:
       return findSymbolIn(H, Fn->Proto->Name).getAddress();
     });
     CallbackInfo.setUpdateAction(
-      CompileCallbacks.getLocalFPUpdater(H, Mangle(BodyPtrName)));
+      CompileCallbacks.getLocalFPUpdater(H, mangle(BodyPtrName)));
 
     return H;
   }
 
-  std::unique_ptr<TargetMachine> TM;
-  Mangler Mang;
   SessionContext &Session;
-
+  Mangler Mang;
   ObjLayerT ObjectLayer;
   CompileLayerT CompileLayer;
   LazyEmitLayerT LazyEmitLayer;
@@ -1337,7 +1336,7 @@ static void HandleTopLevelExpression(SessionContext &S, KaleidoscopeJIT &J) {
       auto H = J.addModule(C.takeM());
 
       // Get the address of the JIT'd function in memory.
-      auto ExprSymbol = J.findSymbol("__anon_expr");
+      auto ExprSymbol = J.findUnmangledSymbol("__anon_expr");
       
       // Cast it to the right type (takes no arguments, returns a double) so we
       // can call it as a native function.

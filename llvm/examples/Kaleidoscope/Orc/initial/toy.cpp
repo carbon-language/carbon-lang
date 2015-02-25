@@ -1,4 +1,3 @@
-
 #include "llvm/Analysis/Passes.h"
 #include "llvm/ExecutionEngine/Orc/CompileUtils.h"
 #include "llvm/ExecutionEngine/Orc/IRCompileLayer.h"
@@ -7,8 +6,8 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/TargetSelect.h"
@@ -682,13 +681,18 @@ std::string MakeLegalFunctionName(std::string Name)
 
 class SessionContext {
 public:
-  SessionContext(LLVMContext &C) : Context(C) {}
+  SessionContext(LLVMContext &C)
+    : Context(C), TM(EngineBuilder().selectTarget()) {}
   LLVMContext& getLLVMContext() const { return Context; }
+  TargetMachine& getTarget() { return *TM; }
   void addPrototypeAST(std::unique_ptr<PrototypeAST> P);
   PrototypeAST* getPrototypeAST(const std::string &Name);
 private:
   typedef std::map<std::string, std::unique_ptr<PrototypeAST>> PrototypeMap;
+  
   LLVMContext &Context;
+  std::unique_ptr<TargetMachine> TM;
+      
   PrototypeMap Prototypes;
 };
 
@@ -710,7 +714,9 @@ public:
     : Session(S),
       M(new Module(GenerateUniqueName("jit_module_"),
                    Session.getLLVMContext())),
-      Builder(Session.getLLVMContext()) {}
+      Builder(Session.getLLVMContext()) {
+    M->setDataLayout(Session.getTarget().getDataLayout());
+  }
 
   SessionContext& getSession() { return Session; }
   Module& getM() const { return *M; }
@@ -1126,62 +1132,6 @@ Function *FunctionAST::IRGen(IRGenContext &C) const {
 // Top-Level parsing and JIT Driver
 //===----------------------------------------------------------------------===//
 
-class KaleidoscopeJIT {
-public:
-  typedef ObjectLinkingLayer<> ObjLayerT;
-  typedef IRCompileLayer<ObjLayerT> CompileLayerT;
-
-  typedef CompileLayerT::ModuleSetHandleT ModuleHandleT;
-
-  KaleidoscopeJIT()
-    : TM(EngineBuilder().selectTarget()),
-      Mang(TM->getDataLayout()),
-      CompileLayer(ObjectLayer, SimpleCompiler(*TM)) {}
-
-  ModuleHandleT addModule(std::unique_ptr<Module> M) {
-    if (!M->getDataLayout())
-      M->setDataLayout(TM->getDataLayout());
-
-    // The LazyEmitLayer takes lists of modules, rather than single modules, so
-    // we'll just build a single-element list.
-    std::vector<std::unique_ptr<Module>> S;
-    S.push_back(std::move(M));
-
-    // We need a memory manager to allocate memory and resolve symbols for this
-    // new module. Create one that resolves symbols by looking back into the JIT.
-    auto MM = createLookasideRTDyldMM<SectionMemoryManager>(
-                [&](const std::string &S) {
-                  return findMangledSymbol(S).getAddress();
-                },
-                [](const std::string &S) { return 0; } );
-
-    return CompileLayer.addModuleSet(std::move(S), std::move(MM));
-  }
-
-  void removeModule(ModuleHandleT H) { CompileLayer.removeModuleSet(H); }
-
-  JITSymbol findMangledSymbol(const std::string &Name) {
-    return CompileLayer.findSymbol(Name, false);
-  }
-
-  JITSymbol findSymbol(const std::string Name) {
-    std::string MangledName;
-    {
-      raw_string_ostream MangledNameStream(MangledName);
-      Mang.getNameWithPrefix(MangledNameStream, Name);
-    }
-    return findMangledSymbol(MangledName);
-  }
-
-private:
-
-  std::unique_ptr<TargetMachine> TM;
-  Mangler Mang;
-
-  ObjLayerT ObjectLayer;
-  CompileLayerT CompileLayer;
-};
-
 static std::unique_ptr<llvm::Module> IRGen(SessionContext &S,
                                            const FunctionAST &F) {
   IRGenContext C(S);
@@ -1194,6 +1144,62 @@ static std::unique_ptr<llvm::Module> IRGen(SessionContext &S,
 #endif
   return C.takeM();
 }
+
+template <typename T>
+static std::vector<T> singletonSet(T t) {
+  std::vector<T> Vec;
+  Vec.push_back(std::move(t));
+  return Vec;
+}
+
+class KaleidoscopeJIT {
+public:
+  typedef ObjectLinkingLayer<> ObjLayerT;
+  typedef IRCompileLayer<ObjLayerT> CompileLayerT;
+  typedef CompileLayerT::ModuleSetHandleT ModuleHandleT;
+
+  KaleidoscopeJIT(SessionContext &Session)
+    : Mang(Session.getTarget().getDataLayout()),
+      CompileLayer(ObjectLayer, SimpleCompiler(Session.getTarget())) {}
+
+  std::string mangle(const std::string &Name) {
+    std::string MangledName;
+    {
+      raw_string_ostream MangledNameStream(MangledName);
+      Mang.getNameWithPrefix(MangledNameStream, Name);
+    }
+    return MangledName;
+  }
+
+  ModuleHandleT addModule(std::unique_ptr<Module> M) {
+    // We need a memory manager to allocate memory and resolve symbols for this
+    // new module. Create one that resolves symbols by looking back into the
+    // JIT.
+    auto MM = createLookasideRTDyldMM<SectionMemoryManager>(
+                [&](const std::string &S) {
+                  return findSymbol(S).getAddress();
+                },
+                [](const std::string &S) { return 0; } );
+
+    return CompileLayer.addModuleSet(singletonSet(std::move(M)), std::move(MM));
+  }
+
+  void removeModule(ModuleHandleT H) { CompileLayer.removeModuleSet(H); }
+
+  JITSymbol findSymbol(const std::string &Name) {
+    return CompileLayer.findSymbol(Name, true);
+  }
+
+  JITSymbol findUnmangledSymbol(const std::string Name) {
+    return findSymbol(mangle(Name));
+  }
+
+private:
+
+  Mangler Mang;
+  ObjLayerT ObjectLayer;
+  CompileLayerT CompileLayer;
+};
 
 static void HandleDefinition(SessionContext &S, KaleidoscopeJIT &J) {
   if (auto F = ParseDefinition()) {
@@ -1230,7 +1236,7 @@ static void HandleTopLevelExpression(SessionContext &S, KaleidoscopeJIT &J) {
       auto H = J.addModule(C.takeM());
 
       // Get the address of the JIT'd function in memory.
-      auto ExprSymbol = J.findSymbol("__anon_expr");
+      auto ExprSymbol = J.findUnmangledSymbol("__anon_expr");
       
       // Cast it to the right type (takes no arguments, returns a double) so we
       // can call it as a native function.
@@ -1252,8 +1258,8 @@ static void HandleTopLevelExpression(SessionContext &S, KaleidoscopeJIT &J) {
 
 /// top ::= definition | external | expression | ';'
 static void MainLoop() {
-  KaleidoscopeJIT J;
   SessionContext S(getGlobalContext());
+  KaleidoscopeJIT J(S);
 
   while (1) {
     switch (CurTok) {
