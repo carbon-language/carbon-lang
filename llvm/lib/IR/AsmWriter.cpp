@@ -3214,20 +3214,26 @@ void Metadata::printAsOperand(raw_ostream &ROS, bool PrintType,
 }
 
 // Value::dump - allow easy printing of Values from the debugger.
+LLVM_DUMP_METHOD
 void Value::dump() const { print(dbgs()); dbgs() << '\n'; }
 
 // Type::dump - allow easy printing of Types from the debugger.
+LLVM_DUMP_METHOD
 void Type::dump() const { print(dbgs()); dbgs() << '\n'; }
 
 // Module::dump() - Allow printing of Modules from the debugger.
+LLVM_DUMP_METHOD
 void Module::dump() const { print(dbgs(), nullptr); }
 
 // \brief Allow printing of Comdats from the debugger.
+LLVM_DUMP_METHOD
 void Comdat::dump() const { print(dbgs()); }
 
 // NamedMDNode::dump() - Allow printing of NamedMDNodes from the debugger.
+LLVM_DUMP_METHOD
 void NamedMDNode::dump() const { print(dbgs()); }
 
+LLVM_DUMP_METHOD
 void Metadata::dump() const {
   print(dbgs());
   dbgs() << '\n';
