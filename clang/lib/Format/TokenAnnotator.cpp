@@ -766,8 +766,8 @@ private:
               break;
           }
           if (Previous->isOneOf(TT_BinaryOperator, TT_UnaryOperator) &&
-              Previous->isOneOf(tok::star, tok::amp) && Previous->Previous &&
-              Previous->Previous->isNot(tok::equal))
+              Previous->isOneOf(tok::star, tok::amp, tok::ampamp) &&
+              Previous->Previous && Previous->Previous->isNot(tok::equal))
             Previous->Type = TT_PointerOrReference;
         }
       }
@@ -972,8 +972,7 @@ private:
     bool IsSizeOfOrAlignOf =
         LeftOfParens && LeftOfParens->isOneOf(tok::kw_sizeof, tok::kw_alignof);
     if (ParensAreType && !ParensCouldEndDecl && !IsSizeOfOrAlignOf &&
-        ((Contexts.size() > 1 && Contexts[Contexts.size() - 2].IsExpression) ||
-         (Tok.Next && Tok.Next->isBinaryOperator())))
+        (Contexts.size() > 1 && Contexts[Contexts.size() - 2].IsExpression))
       IsCast = true;
     else if (Tok.Next && Tok.Next->isNot(tok::string_literal) &&
              (Tok.Next->Tok.isLiteral() ||
@@ -1040,7 +1039,7 @@ private:
 
     if (NextToken->is(tok::l_square) && NextToken->isNot(TT_LambdaLSquare))
       return TT_PointerOrReference;
-    if (NextToken->isOneOf(tok::kw_operator, tok::comma))
+    if (NextToken->isOneOf(tok::kw_operator, tok::comma, tok::semi))
       return TT_PointerOrReference;
 
     if (PrevToken->is(tok::r_paren) && PrevToken->MatchingParen &&
@@ -1663,9 +1662,14 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Left.is(tok::l_square) && Right.is(tok::amp))
     return false;
   if (Right.is(TT_PointerOrReference))
-    return Left.Tok.isLiteral() ||
-           (!Left.isOneOf(TT_PointerOrReference, tok::l_paren) &&
-            Style.PointerAlignment != FormatStyle::PAS_Left);
+    return !(Left.is(tok::r_paren) && Left.MatchingParen &&
+             (Left.MatchingParen->is(TT_OverloadedOperatorLParen) ||
+              (Left.MatchingParen->Previous &&
+               Left.MatchingParen->Previous->is(
+                   TT_FunctionDeclarationName)))) &&
+           (Left.Tok.isLiteral() ||
+            (!Left.isOneOf(TT_PointerOrReference, tok::l_paren) &&
+             Style.PointerAlignment != FormatStyle::PAS_Left));
   if (Right.is(TT_FunctionTypeLParen) && Left.isNot(tok::l_paren) &&
       (!Left.is(TT_PointerOrReference) ||
        Style.PointerAlignment != FormatStyle::PAS_Right))
