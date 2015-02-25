@@ -14,6 +14,7 @@
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Symbol/Symbol.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Symtab.h"
 #include "lldb/Target/CPPLanguageRuntime.h"
@@ -546,9 +547,12 @@ Symtab::AppendSymbolIndexesWithType (SymbolType symbol_type, Debug symbol_debug_
 uint32_t
 Symtab::GetIndexForSymbol (const Symbol *symbol) const
 {
-    const Symbol *first_symbol = &m_symbols[0];
-    if (symbol >= first_symbol && symbol < first_symbol + m_symbols.size())
-        return symbol - first_symbol;
+    if (!m_symbols.empty())
+    {
+        const Symbol *first_symbol = &m_symbols[0];
+        if (symbol >= first_symbol && symbol < first_symbol + m_symbols.size())
+            return symbol - first_symbol;
+    }
     return UINT32_MAX;
 }
 
@@ -1178,3 +1182,20 @@ Symtab::FindFunctionSymbols (const ConstString &name,
     return count;
 }
 
+
+const Symbol *
+Symtab::GetParent (Symbol *child_symbol) const
+{
+    uint32_t child_idx = GetIndexForSymbol(child_symbol);
+    if (child_idx != UINT32_MAX && child_idx > 0)
+    {
+        for (uint32_t idx = child_idx - 1; idx != UINT32_MAX; --idx)
+        {
+            const Symbol *symbol = SymbolAtIndex (idx);
+            const uint32_t sibling_idx = symbol->GetSiblingIndex();
+            if (sibling_idx != UINT32_MAX && sibling_idx > child_idx)
+                return symbol;
+        }
+    }
+    return NULL;
+}

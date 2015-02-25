@@ -235,7 +235,7 @@ Symbol::SetReExportedSymbolSharedLibrary(const FileSpec &fspec)
 uint32_t
 Symbol::GetSiblingIndex() const
 {
-    return m_size_is_sibling ? m_addr_range.GetByteSize() : 0;
+    return m_size_is_sibling ? m_addr_range.GetByteSize() : UINT32_MAX;
 }
 
 bool

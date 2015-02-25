@@ -416,7 +416,7 @@ SymbolFileDWARFDebugMap::InitOSO()
                     m_compile_unit_infos[i].oso_mod_time = oso_mod_time;
                     uint32_t sibling_idx = so_symbol->GetSiblingIndex();
                     // The sibling index can't be less that or equal to the current index "i"
-                    if (sibling_idx <= i)
+                    if (sibling_idx == UINT32_MAX)
                     {
                         m_obj_file->GetModule()->ReportError ("N_SO in symbol with UID %u has invalid sibling in debug map, please file a bug and attach the binary listed in this error", so_symbol->GetID());
                     }
@@ -1219,15 +1219,63 @@ SymbolFileDWARFDebugMap::FindCompleteObjCDefinitionTypeForDIE (const DWARFDebugI
                                                                const ConstString &type_name,
                                                                bool must_be_implementation)
 {
+    // If we have a debug map, we will have an Objective C symbol whose name is
+    // the type name and whose type is eSymbolTypeObjCClass. If we can find that
+    // symbol and find its containing parent, we can locate the .o file that will
+    // contain the implementation definition since it will be scoped inside the N_SO
+    // and we can then locate the SymbolFileDWARF that corresponds to that N_SO.
+    SymbolFileDWARF *oso_dwarf = NULL;
     TypeSP type_sp;
-    SymbolFileDWARF *oso_dwarf;
-    for (uint32_t oso_idx = 0; ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx)) != NULL); ++oso_idx)
+    ObjectFile *module_objfile = m_obj_file->GetModule()->GetObjectFile();
+    if (module_objfile)
     {
-        type_sp = oso_dwarf->FindCompleteObjCDefinitionTypeForDIE (die, type_name, must_be_implementation);
-        if (type_sp)
-            break;
+        Symtab *symtab = module_objfile->GetSymtab();
+        if (symtab)
+        {
+            Symbol *objc_class_symbol = symtab->FindFirstSymbolWithNameAndType(type_name, eSymbolTypeObjCClass, Symtab::eDebugAny, Symtab::eVisibilityAny);
+            if (objc_class_symbol)
+            {
+                // Get the N_SO symbol that contains the objective C class symbol as this
+                // should be the .o file that contains the real definition...
+                const Symbol *source_file_symbol = symtab->GetParent(objc_class_symbol);
+
+                if (source_file_symbol && source_file_symbol->GetType() == eSymbolTypeSourceFile)
+                {
+                    const uint32_t source_file_symbol_idx = symtab->GetIndexForSymbol(source_file_symbol);
+                    if (source_file_symbol_idx != UINT32_MAX)
+                    {
+                        CompileUnitInfo *compile_unit_info = GetCompileUnitInfoForSymbolWithIndex (source_file_symbol_idx, NULL);
+                        if (compile_unit_info)
+                        {
+                            oso_dwarf = GetSymbolFileByCompUnitInfo (compile_unit_info);
+                            if (oso_dwarf)
+                            {
+                                TypeSP type_sp (oso_dwarf->FindCompleteObjCDefinitionTypeForDIE (die, type_name, must_be_implementation));
+                                if (type_sp)
+                                {
+                                    return type_sp;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
-    return type_sp;
+
+    // Only search all .o files for the definition if we don't need the implementation
+    // because otherwise, with a valid debug map we should have the ObjC class symbol and
+    // the code above should have found it.
+    if (must_be_implementation == false)
+    {
+        for (uint32_t oso_idx = 0; ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx)) != NULL); ++oso_idx)
+        {
+            TypeSP type_sp (oso_dwarf->FindCompleteObjCDefinitionTypeForDIE (die, type_name, must_be_implementation));
+            if (type_sp)
+                return type_sp;
+        }
+    }
+    return TypeSP();
 }
 
 uint32_t
