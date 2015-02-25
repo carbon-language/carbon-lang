@@ -127,16 +127,16 @@ namespace clang {
       Decl *MergeWith;
       mutable bool Owning;
       Decl::Kind DeclKind;
-      
+
       void operator=(RedeclarableResult &) = delete;
-      
+
     public:
       RedeclarableResult(ASTReader &Reader, GlobalDeclID FirstID,
                          Decl *MergeWith, Decl::Kind DeclKind)
         : Reader(Reader), FirstID(FirstID), MergeWith(MergeWith),
           Owning(true), DeclKind(DeclKind) {}
 
-      RedeclarableResult(const RedeclarableResult &Other)
+      RedeclarableResult(RedeclarableResult &&Other)
         : Reader(Other.Reader), FirstID(Other.FirstID),
           MergeWith(Other.MergeWith), Owning(Other.Owning),
           DeclKind(Other.DeclKind) {
@@ -148,7 +148,7 @@ namespace clang {
             Reader.PendingDeclChainsKnown.insert(FirstID).second)
           Reader.PendingDeclChains.push_back(FirstID);
       }
-      
+
       /// \brief Retrieve the first ID.
       GlobalDeclID getFirstID() const { return FirstID; }
 
