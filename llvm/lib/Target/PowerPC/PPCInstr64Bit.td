@@ -863,19 +863,15 @@ def LDUX : XForm_1<31, 53, (outs g8rc:$rD, ptr_rc_nor0:$ea_result),
 }
 
 // Support for medium and large code model.
+let hasSideEffects = 0 in {
 def ADDIStocHA: Pseudo<(outs g8rc:$rD), (ins g8rc_nox0:$reg, tocentry:$disp),
-                       "#ADDIStocHA",
-                       [(set i64:$rD,
-                         (PPCaddisTocHA i64:$reg, tglobaladdr:$disp))]>,
-                       isPPC64;
+                       "#ADDIStocHA", []>, isPPC64;
+let mayLoad = 1 in
 def LDtocL: Pseudo<(outs g8rc:$rD), (ins tocentry:$disp, g8rc_nox0:$reg),
-                   "#LDtocL",
-                   [(set i64:$rD,
-                     (PPCldTocL tglobaladdr:$disp, i64:$reg))]>, isPPC64;
+                   "#LDtocL", []>, isPPC64;
 def ADDItocL: Pseudo<(outs g8rc:$rD), (ins g8rc_nox0:$reg, tocentry:$disp),
-                     "#ADDItocL",
-                     [(set i64:$rD,
-                       (PPCaddiTocL i64:$reg, tglobaladdr:$disp))]>, isPPC64;
+                     "#ADDItocL", []>, isPPC64;
+}
 
 // Support for thread-local storage.
 def ADDISgotTprelHA: Pseudo<(outs g8rc:$rD), (ins g8rc_nox0:$reg, s16imm64:$disp),

@@ -230,12 +230,6 @@ def PPClarx      : SDNode<"PPCISD::LARX", SDT_PPClarx,
 def PPCstcx      : SDNode<"PPCISD::STCX", SDT_PPCstcx,
                           [SDNPHasChain, SDNPMayStore]>;
 
-// Instructions to support medium and large code model
-def PPCaddisTocHA : SDNode<"PPCISD::ADDIS_TOC_HA", SDTIntBinOp, []>;
-def PPCldTocL     : SDNode<"PPCISD::LD_TOC_L", SDTIntBinOp, [SDNPMayLoad]>;
-def PPCaddiTocL   : SDNode<"PPCISD::ADDI_TOC_L", SDTIntBinOp, []>;
-
-
 // Instructions to support dynamic alloca.
 def SDTDynOp  : SDTypeProfile<1, 2, []>;
 def PPCdynalloc   : SDNode<"PPCISD::DYNALLOC", SDTDynOp, [SDNPHasChain]>;

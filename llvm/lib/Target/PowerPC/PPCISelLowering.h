@@ -192,7 +192,7 @@ namespace llvm {
       PPC32_GOT,
 
       /// GPRC = address of _GLOBAL_OFFSET_TABLE_. Used by general dynamic and
-      /// local dynamic TLS  on PPC32.
+      /// local dynamic TLS on PPC32.
       PPC32_PICGOT,
 
       /// G8RC = ADDIS_GOT_TPREL_HA %X2, Symbol - Used by the initial-exec
@@ -324,21 +324,6 @@ namespace llvm {
       /// load which zero-extends from a 32-bit integer value into the
       /// destination 64-bit register.
       LFIWZX,
-
-      /// G8RC = ADDIS_TOC_HA %X2, Symbol - For medium and large code model,
-      /// produces an ADDIS8 instruction that adds the TOC base register to
-      /// sym\@toc\@ha.
-      ADDIS_TOC_HA,
-
-      /// G8RC = LD_TOC_L Symbol, G8RReg - For medium and large code model,
-      /// produces a LD instruction with base register G8RReg and offset
-      /// sym\@toc\@l. Preceded by an ADDIS_TOC_HA to form a full 32-bit offset.
-      LD_TOC_L,
-
-      /// G8RC = ADDI_TOC_L G8RReg, Symbol - For medium code model, produces
-      /// an ADDI8 instruction that adds G8RReg to sym\@toc\@l.
-      /// Preceded by an ADDIS_TOC_HA to form a full 32-bit offset.
-      ADDI_TOC_L,
 
       /// VSRC, CHAIN = LXVD2X_LE CHAIN, Ptr - Occurs only for little endian.
       /// Maps directly to an lxvd2x instruction that will be followed by
