@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -emit-llvm-only %s -triple=i386-pc-win32 -mconstructor-aliases -fcxx-exceptions -fexceptions -fno-rtti -verify -DTRY
-// RUN: %clang_cc1 -emit-llvm-only %s -triple=i386-pc-win32 -mconstructor-aliases -fcxx-exceptions -fexceptions -fno-rtti -verify -DTHROW
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-win32 -mconstructor-aliases -fcxx-exceptions -fexceptions -fno-rtti -DTRY   | FileCheck %s -check-prefix=TRY
+// RUN: %clang_cc1 -emit-llvm %s -o - -triple=i386-pc-win32 -mconstructor-aliases -fcxx-exceptions -fexceptions -fno-rtti -DTHROW | FileCheck %s -check-prefix=THROW
 
 void external();
 
@@ -10,14 +10,17 @@ inline void not_emitted() {
 int main() {
   int rv = 0;
 #ifdef TRY
-  try { // expected-error {{cannot compile this try statement yet}}
-    external();
+  try {
+    external(); // TRY: invoke void @"\01?external@@YAXXZ"
   } catch (int) {
     rv = 1;
+    // TRY: call i8* @llvm.eh.begincatch
+    // TRY: call void @llvm.eh.endcatch
   }
 #endif
 #ifdef THROW
-  throw int(42); // expected-error {{cannot compile this throw expression yet}}
+  // THROW: call void @"\01?terminate@@YAXXZ"
+  throw int(42);
 #endif
   return rv;
 }

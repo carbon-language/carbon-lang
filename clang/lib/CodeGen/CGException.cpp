@@ -64,6 +64,9 @@ static llvm::Constant *getGetExceptionPtrFn(CodeGenModule &CGM) {
 }
 
 static llvm::Constant *getBeginCatchFn(CodeGenModule &CGM) {
+  if (CGM.getTarget().getCXXABI().isMicrosoft())
+    return CGM.getIntrinsic(llvm::Intrinsic::eh_begincatch);
+
   // void *__cxa_begin_catch(void*);
 
   llvm::FunctionType *FTy =
@@ -73,6 +76,9 @@ static llvm::Constant *getBeginCatchFn(CodeGenModule &CGM) {
 }
 
 static llvm::Constant *getEndCatchFn(CodeGenModule &CGM) {
+  if (CGM.getTarget().getCXXABI().isMicrosoft())
+    return CGM.getIntrinsic(llvm::Intrinsic::eh_endcatch);
+
   // void __cxa_end_catch();
 
   llvm::FunctionType *FTy =
@@ -102,8 +108,11 @@ static llvm::Constant *getTerminateFn(CodeGenModule &CGM) {
   if (CGM.getLangOpts().CPlusPlus &&
       CGM.getTarget().getCXXABI().isItaniumFamily()) {
     name = "_ZSt9terminatev";
+  } else if (CGM.getLangOpts().CPlusPlus &&
+             CGM.getTarget().getCXXABI().isMicrosoft()) {
+    name = "\01?terminate@@YAXXZ";
   } else if (CGM.getLangOpts().ObjC1 &&
-           CGM.getLangOpts().ObjCRuntime.hasTerminate())
+             CGM.getLangOpts().ObjCRuntime.hasTerminate())
     name = "objc_terminate";
   else
     name = "abort";
@@ -472,7 +481,15 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E,
   }
 
   if (CGM.getTarget().getTriple().isKnownWindowsMSVCEnvironment()) {
-    ErrorUnsupported(E, "throw expression");
+    // Call std::terminate().
+    llvm::CallInst *TermCall = EmitNounwindRuntimeCall(getTerminateFn(CGM));
+    TermCall->setDoesNotReturn();
+
+    // throw is an expression, and the expression emitters expect us
+    // to leave ourselves at a valid insertion point.
+    if (KeepInsertionPoint)
+      EmitBlock(createBasicBlock("throw.cont"));
+
     return;
   }
 
@@ -633,11 +650,6 @@ void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
 }
 
 void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
-  if (CGM.getTarget().getTriple().isKnownWindowsMSVCEnvironment()) {
-    ErrorUnsupported(&S, "try statement");
-    return;
-  }
-
   EnterCXXTryStmt(S);
   EmitStmt(S.getTryBlock());
   ExitCXXTryStmt(S);
