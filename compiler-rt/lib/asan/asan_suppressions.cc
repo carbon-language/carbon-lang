@@ -31,23 +31,22 @@ static const char *kSuppressionTypes[] = {
     kInterceptorName, kInterceptorViaFunction, kInterceptorViaLibrary,
     kODRViolation};
 
-extern "C" {
 #if SANITIZER_SUPPORTS_WEAK_HOOKS
+extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 const char *__asan_default_suppressions();
-#else
-// No week hooks, provide empty implementation.
-const char *__asan_default_suppressions() { return ""; }
-#endif  // SANITIZER_SUPPORTS_WEAK_HOOKS
 }  // extern "C"
+#endif  // SANITIZER_SUPPORTS_WEAK_HOOKS
 
 void InitializeSuppressions() {
   CHECK_EQ(nullptr, suppression_ctx);
   suppression_ctx = new (suppression_placeholder)  // NOLINT
       SuppressionContext(kSuppressionTypes, ARRAY_SIZE(kSuppressionTypes));
   suppression_ctx->ParseFromFile(flags()->suppressions);
+#if SANITIZER_SUPPORTS_WEAK_HOOKS
   if (&__asan_default_suppressions)
     suppression_ctx->Parse(__asan_default_suppressions());
+#endif  // SANITIZER_SUPPORTS_WEAK_HOOKS
 }
 
 bool IsInterceptorSuppressed(const char *interceptor_name) {
