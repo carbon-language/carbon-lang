@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target
 // Test with pch.
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9 -emit-pch -o %t.pch %S/external-defs.h
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9 -include-pch %t.pch -emit-llvm -o %t %s

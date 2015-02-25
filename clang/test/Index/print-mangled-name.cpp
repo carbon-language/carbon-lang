@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target
 // RUN: %clang_cc1 -triple i686-pc-linux-gnu -emit-pch %s -o %t_linux.ast
 // RUN: c-index-test -test-print-mangle %t_linux.ast | FileCheck %s --check-prefix=ITANIUM
 

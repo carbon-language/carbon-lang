@@ -18,7 +18,7 @@
 // CHECK-DEBUG-DAG: [[S4:%.+]] = type { [[INT]], [[INT]] }
 // CHECK-DEBUG-DAG: [[S5:%.+]] = type { [[INT]], [[INT]], [[INT]] }
 // CHECK-DEBUG-DAG: [[SMAIN:%.+]] = type { [[INT]], double, double }
-
+// REQUIRES: x86-registered-target
 struct S1 {
   int a;
   S1()

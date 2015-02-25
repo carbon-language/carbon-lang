@@ -1,5 +1,6 @@
 // Test this without pch.
 // RUN: %clang_cc1 -triple=x86_64-unknown-freebsd7.0 -include %S/va_arg.h %s -emit-llvm -o -
+// REQUIRES: x86-registered-target
 
 // Test with pch.
 // RUN: %clang_cc1 -triple=x86_64-unknown-freebsd7.0 -emit-pch -o %t %S/va_arg.h

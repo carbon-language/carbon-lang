@@ -40,6 +40,7 @@ set(SOURCES
 set(LIBS
   clangAST
   clangBasic
+  clangCodeGen
   clangFrontend
   clangIndex
   clangLex

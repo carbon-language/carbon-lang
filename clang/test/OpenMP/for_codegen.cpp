@@ -3,9 +3,9 @@
 // RUN: %clang_cc1 -fopenmp=libiomp5 -x c++ -triple x86_64-unknown-unknown -fexceptions -fcxx-exceptions -g -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s
 //
 // expected-no-diagnostics
+// REQUIRES: x86-registered-target
 #ifndef HEADER
 #define HEADER
-
 // CHECK: [[IDENT_T_TY:%.+]] = type { i32, i32, i32, i32, i8* }
 // CHECK-LABEL: define {{.*void}} @{{.*}}without_schedule_clause{{.*}}(float* {{.+}}, float* {{.+}}, float* {{.+}}, float* {{.+}})
 void without_schedule_clause(float *a, float *b, float *c, float *d) {
