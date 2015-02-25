@@ -1525,11 +1525,12 @@ class Base(unittest2.TestCase):
         
         return os.environ["CC"]
 
-    def getBuildFlags(self, use_cpp11=True, use_libcxx=False, use_libstdcxx=False, use_pthreads=True):
+    def getBuildFlags(self, use_cpp11=True, use_libcxx=False, use_libstdcxx=False):
         """ Returns a dictionary (which can be provided to build* functions above) which
             contains OS-specific build flags.
         """
         cflags = ""
+        ldflags = ""
 
         # On Mac OS X, unless specifically requested to use libstdc++, use libc++
         if not use_libstdcxx and sys.platform.startswith('darwin'):
@@ -1553,9 +1554,6 @@ class Base(unittest2.TestCase):
             cflags += " -stdlib=libc++"
         elif "clang" in self.getCompiler():
             cflags += " -stdlib=libstdc++"
-
-        if use_pthreads:
-            ldflags = "-lpthread"
 
         return {'CFLAGS_EXTRAS' : cflags,
                 'LD_EXTRAS' : ldflags,
