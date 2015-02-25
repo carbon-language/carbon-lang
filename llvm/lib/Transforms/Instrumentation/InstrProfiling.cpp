@@ -288,6 +288,7 @@ void InstrProfiling::emitRuntimeHook() {
   User->addFnAttr(Attribute::NoInline);
   if (Options.NoRedZone)
     User->addFnAttr(Attribute::NoRedZone);
+  User->setVisibility(GlobalValue::HiddenVisibility);
 
   IRBuilder<> IRB(BasicBlock::Create(M->getContext(), "", User));
   auto *Load = IRB.CreateLoad(Var);

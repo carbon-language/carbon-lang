@@ -40,7 +40,7 @@ declare void @llvm.instrprof.increment(i8*, i64, i32, i32)
 
 ; CHECK: @__llvm_profile_runtime = external global i32
 
-; CHECK: define linkonce_odr i32 @__llvm_profile_runtime_user() {{.*}} {
+; CHECK: define linkonce_odr hidden i32 @__llvm_profile_runtime_user() {{.*}} {
 ; CHECK:   %[[REG:.*]] = load i32* @__llvm_profile_runtime
 ; CHECK:   ret i32 %[[REG]]
 ; CHECK: }
