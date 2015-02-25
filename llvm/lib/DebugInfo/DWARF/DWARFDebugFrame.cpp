@@ -179,19 +179,6 @@ void FrameEntry::parseInstructions(DataExtractor Data, uint32_t *Offset,
   }
 }
 
-
-void FrameEntry::dumpInstructions(raw_ostream &OS) const {
-  // TODO: at the moment only instruction names are dumped. Expand this to
-  // dump operands as well.
-  for (const auto &Instr : Instructions) {
-    uint8_t Opcode = Instr.Opcode;
-    if (Opcode & DWARF_CFI_PRIMARY_OPCODE_MASK)
-      Opcode &= DWARF_CFI_PRIMARY_OPCODE_MASK;
-    OS << "  " << CallFrameString(Opcode) << ":\n";
-  }
-}
-
-
 namespace {
 /// \brief DWARF Common Information Entry (CIE)
 class CIE : public FrameEntry {
@@ -285,6 +272,16 @@ private:
 };
 } // end anonymous namespace
 
+void FrameEntry::dumpInstructions(raw_ostream &OS) const {
+  // TODO: at the moment only instruction names are dumped. Expand this to
+  // dump operands as well.
+  for (const auto &Instr : Instructions) {
+    uint8_t Opcode = Instr.Opcode;
+    if (Opcode & DWARF_CFI_PRIMARY_OPCODE_MASK)
+      Opcode &= DWARF_CFI_PRIMARY_OPCODE_MASK;
+    OS << "  " << CallFrameString(Opcode) << ":\n";
+  }
+}
 
 DWARFDebugFrame::DWARFDebugFrame() {
 }
