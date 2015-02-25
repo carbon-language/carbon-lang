@@ -721,7 +721,7 @@ the symbol (e.g., MSVC).  This can lead to problems at link time.
   // Bar isn't POD, but it does look like a struct.
   struct Bar {
     int Data;
-    Foo() : Data(0) { }
+    Bar() : Data(0) { }
   };
 
 Do not use Braced Initializer Lists to Call a Constructor
