@@ -411,6 +411,7 @@ void FinalOverriders::dump(raw_ostream &Out, BaseSubobject Base,
   for (const auto *MD : RD->methods()) {
     if (!MD->isVirtual())
       continue;
+    MD = MD->getCanonicalDecl();
 
     OverriderInfo Overrider = getOverrider(MD, Base.getBaseOffset());
 
@@ -695,6 +696,7 @@ void VCallAndVBaseOffsetBuilder::AddVCallOffsets(BaseSubobject Base,
   for (const auto *MD : RD->methods()) {
     if (!MD->isVirtual())
       continue;
+    MD = MD->getCanonicalDecl();
 
     CharUnits OffsetOffset = getCurrentOffsetOffset();
     
@@ -1514,6 +1516,7 @@ void ItaniumVTableBuilder::AddMethods(
   for (const auto *MD : RD->methods()) {
     if (!MD->isVirtual())
       continue;
+    MD = MD->getCanonicalDecl();
 
     // Get the final overrider.
     FinalOverriders::OverriderInfo Overrider = 
@@ -2196,6 +2199,7 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
     // We only want virtual member functions.
     if (!MD->isVirtual())
       continue;
+    MD = MD->getCanonicalDecl();
 
     std::string MethodName =
       PredefinedExpr::ComputeName(PredefinedExpr::PrettyFunctionNoVirtual,
