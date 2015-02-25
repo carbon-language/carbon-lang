@@ -115,14 +115,21 @@ public:
 } // end anon namespace
 
 static void diagnosticHandler(const DiagnosticInfo &DI, void *Context) {
-  assert(DI.getSeverity() == DS_Error && "Only expecting errors");
-
   raw_ostream &OS = errs();
   OS << (char *)Context << ": ";
+  switch (DI.getSeverity()) {
+  case DS_Error: OS << "error: "; break;
+  case DS_Warning: OS << "warning: "; break;
+  case DS_Remark: OS << "remark: "; break;
+  case DS_Note: OS << "note: "; break;
+  }
+
   DiagnosticPrinterRawOStream DP(OS);
   DI.print(DP);
   OS << '\n';
-  exit(1);
+
+  if (DI.getSeverity() == DS_Error)
+    exit(1);
 }
 
 int main(int argc, char **argv) {
