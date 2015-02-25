@@ -10,27 +10,38 @@
 #define X86_64_EXECUTABLE_WRITER_H
 
 #include "ExecutableWriter.h"
+#include "X86_64ElfType.h"
 #include "X86_64LinkingContext.h"
 
 namespace lld {
 namespace elf {
 
-template <class ELFT>
-class X86_64ExecutableWriter : public ExecutableWriter<ELFT> {
+class X86_64ExecutableWriter : public ExecutableWriter<X86_64ELFType> {
 public:
   X86_64ExecutableWriter(X86_64LinkingContext &context,
-                         X86_64TargetLayout<ELFT> &layout);
+                         X86_64TargetLayout &layout)
+      : ExecutableWriter(context, layout), _gotFile(new GOTFile(context)),
+        _context(context) {}
 
 protected:
   // Add any runtime files and their atoms to the output
-  virtual bool createImplicitFiles(std::vector<std::unique_ptr<File>> &);
+  virtual bool
+  createImplicitFiles(std::vector<std::unique_ptr<File>> &result) {
+    ExecutableWriter::createImplicitFiles(result);
+    _gotFile->addAtom(*new (_gotFile->_alloc)
+                      GLOBAL_OFFSET_TABLEAtom(*_gotFile));
+    if (_context.isDynamic())
+      _gotFile->addAtom(*new (_gotFile->_alloc) DYNAMICAtom(*_gotFile));
+    result.push_back(std::move(_gotFile));
+    return true;
+  }
 
   virtual void finalizeDefaultAtomValues() {
-    return ExecutableWriter<ELFT>::finalizeDefaultAtomValues();
+    return ExecutableWriter::finalizeDefaultAtomValues();
   }
 
   virtual void addDefaultAtoms() {
-    return ExecutableWriter<ELFT>::addDefaultAtoms();
+    return ExecutableWriter::addDefaultAtoms();
   }
 
 private:
@@ -42,25 +53,7 @@ private:
 
   std::unique_ptr<GOTFile> _gotFile;
   X86_64LinkingContext &_context;
-  X86_64TargetLayout<ELFT> &_x86_64Layout;
 };
-
-template <class ELFT>
-X86_64ExecutableWriter<ELFT>::X86_64ExecutableWriter(
-    X86_64LinkingContext &context, X86_64TargetLayout<ELFT> &layout)
-    : ExecutableWriter<ELFT>(context, layout), _gotFile(new GOTFile(context)),
-      _context(context), _x86_64Layout(layout) {}
-
-template <class ELFT>
-bool X86_64ExecutableWriter<ELFT>::createImplicitFiles(
-    std::vector<std::unique_ptr<File>> &result) {
-  ExecutableWriter<ELFT>::createImplicitFiles(result);
-  _gotFile->addAtom(*new (_gotFile->_alloc) GLOBAL_OFFSET_TABLEAtom(*_gotFile));
-  if (_context.isDynamic())
-    _gotFile->addAtom(*new (_gotFile->_alloc) DYNAMICAtom(*_gotFile));
-  result.push_back(std::move(_gotFile));
-  return true;
-}
 
 } // namespace elf
 } // namespace lld

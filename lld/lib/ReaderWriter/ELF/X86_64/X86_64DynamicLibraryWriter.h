@@ -10,28 +10,28 @@
 #define X86_64_DYNAMIC_LIBRARY_WRITER_H
 
 #include "DynamicLibraryWriter.h"
+#include "X86_64ElfType.h"
 #include "X86_64LinkingContext.h"
 #include "X86_64TargetHandler.h"
 
 namespace lld {
 namespace elf {
 
-template <class ELFT>
-class X86_64DynamicLibraryWriter : public DynamicLibraryWriter<ELFT> {
+class X86_64DynamicLibraryWriter : public DynamicLibraryWriter<X86_64ELFType> {
 public:
   X86_64DynamicLibraryWriter(X86_64LinkingContext &context,
-                             X86_64TargetLayout<ELFT> &layout);
+                             X86_64TargetLayout &layout);
 
 protected:
   // Add any runtime files and their atoms to the output
   virtual bool createImplicitFiles(std::vector<std::unique_ptr<File>> &);
 
   virtual void finalizeDefaultAtomValues() {
-    return DynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues();
+    return DynamicLibraryWriter::finalizeDefaultAtomValues();
   }
 
   virtual void addDefaultAtoms() {
-    return DynamicLibraryWriter<ELFT>::addDefaultAtoms();
+    return DynamicLibraryWriter::addDefaultAtoms();
   }
 
 private:
@@ -43,20 +43,17 @@ private:
 
   std::unique_ptr<GOTFile> _gotFile;
   X86_64LinkingContext &_context;
-  X86_64TargetLayout<ELFT> &_x86_64Layout;
+  X86_64TargetLayout &_x86_64Layout;
 };
 
-template <class ELFT>
-X86_64DynamicLibraryWriter<ELFT>::X86_64DynamicLibraryWriter(
-    X86_64LinkingContext &context, X86_64TargetLayout<ELFT> &layout)
-    : DynamicLibraryWriter<ELFT>(context, layout),
-      _gotFile(new GOTFile(context)), _context(context), _x86_64Layout(layout) {
-}
+X86_64DynamicLibraryWriter::X86_64DynamicLibraryWriter(
+    X86_64LinkingContext &context, X86_64TargetLayout &layout)
+    : DynamicLibraryWriter(context, layout), _gotFile(new GOTFile(context)),
+      _context(context), _x86_64Layout(layout) {}
 
-template <class ELFT>
-bool X86_64DynamicLibraryWriter<ELFT>::createImplicitFiles(
+bool X86_64DynamicLibraryWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
-  DynamicLibraryWriter<ELFT>::createImplicitFiles(result);
+  DynamicLibraryWriter::createImplicitFiles(result);
   _gotFile->addAtom(*new (_gotFile->_alloc) GLOBAL_OFFSET_TABLEAtom(*_gotFile));
   _gotFile->addAtom(*new (_gotFile->_alloc) DYNAMICAtom(*_gotFile));
   result.push_back(std::move(_gotFile));

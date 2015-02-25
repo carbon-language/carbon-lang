@@ -11,6 +11,7 @@
 #define LLD_READER_WRITER_ELF_X86_64_X86_64_TARGET_HANDLER_H
 
 #include "DefaultTargetHandler.h"
+#include "X86_64LinkingContext.h"
 #include "TargetLayout.h"
 #include "X86_64ELFFile.h"
 #include "X86_64ELFReader.h"
@@ -19,12 +20,10 @@
 
 namespace lld {
 namespace elf {
-class X86_64LinkingContext;
-
-template <class ELFT> class X86_64TargetLayout : public TargetLayout<ELFT> {
+class X86_64TargetLayout : public TargetLayout<X86_64ELFType> {
 public:
   X86_64TargetLayout(X86_64LinkingContext &context)
-      : TargetLayout<ELFT>(context) {}
+      : TargetLayout(context) {}
 };
 
 class X86_64TargetHandler final
@@ -32,7 +31,7 @@ class X86_64TargetHandler final
 public:
   X86_64TargetHandler(X86_64LinkingContext &context);
 
-  X86_64TargetLayout<X86_64ELFType> &getTargetLayout() override {
+  X86_64TargetLayout &getTargetLayout() override {
     return *(_x86_64TargetLayout.get());
   }
 
@@ -55,7 +54,7 @@ public:
 private:
   static const Registry::KindStrings kindStrings[];
   X86_64LinkingContext &_context;
-  std::unique_ptr<X86_64TargetLayout<X86_64ELFType>> _x86_64TargetLayout;
+  std::unique_ptr<X86_64TargetLayout> _x86_64TargetLayout;
   std::unique_ptr<X86_64TargetRelocationHandler> _x86_64RelocationHandler;
 };
 
