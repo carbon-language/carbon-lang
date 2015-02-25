@@ -246,10 +246,11 @@ public:
   // an offset to the CIE (provided by parsing the FDE header). The CIE itself
   // is obtained lazily once it's actually required.
   FDE(uint64_t Offset, uint64_t Length, int64_t LinkedCIEOffset,
-      uint64_t InitialLocation, uint64_t AddressRange)
+      uint64_t InitialLocation, uint64_t AddressRange,
+      CIE *Cie)
       : FrameEntry(FK_FDE, Offset, Length), LinkedCIEOffset(LinkedCIEOffset),
         InitialLocation(InitialLocation), AddressRange(AddressRange),
-        LinkedCIE(nullptr) {}
+        LinkedCIE(Cie) {}
 
   ~FDE() {
   }
@@ -299,6 +300,7 @@ static void LLVM_ATTRIBUTE_UNUSED dumpDataAux(DataExtractor Data,
 
 void DWARFDebugFrame::parse(DataExtractor Data) {
   uint32_t Offset = 0;
+  DenseMap<uint32_t, CIE *> CIEs;
 
   while (Data.isValidOffset(Offset)) {
     uint32_t StartOffset = Offset;
@@ -338,9 +340,11 @@ void DWARFDebugFrame::parse(DataExtractor Data) {
       int64_t DataAlignmentFactor = Data.getSLEB128(&Offset);
       uint64_t ReturnAddressRegister = Data.getULEB128(&Offset);
 
-      Entries.emplace_back(new CIE(StartOffset, Length, Version,
-                                   StringRef(Augmentation), CodeAlignmentFactor,
-                                   DataAlignmentFactor, ReturnAddressRegister));
+      auto Cie = make_unique<CIE>(StartOffset, Length, Version,
+                                  StringRef(Augmentation), CodeAlignmentFactor,
+                                  DataAlignmentFactor, ReturnAddressRegister);
+      CIEs[StartOffset] = Cie.get();
+      Entries.emplace_back(std::move(Cie));
     } else {
       // FDE
       uint64_t CIEPointer = Id;
@@ -348,7 +352,8 @@ void DWARFDebugFrame::parse(DataExtractor Data) {
       uint64_t AddressRange = Data.getAddress(&Offset);
 
       Entries.emplace_back(new FDE(StartOffset, Length, CIEPointer,
-                                   InitialLocation, AddressRange));
+                                   InitialLocation, AddressRange,
+                                   CIEs[CIEPointer]));
     }
 
     Entries.back()->parseInstructions(Data, &Offset, EndStructureOffset);
