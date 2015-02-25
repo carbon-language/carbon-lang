@@ -120,7 +120,7 @@ HostProcessWindows::MonitorThread(void *thread_arg)
     MonitorInfo *info = static_cast<MonitorInfo *>(thread_arg);
     if (info)
     {
-        DWORD wait_result = ::WaitForSingleObject(info->process_handle, INFINITE);
+        ::WaitForSingleObject(info->process_handle, INFINITE);
         ::GetExitCodeProcess(info->process_handle, &exit_code);
         info->callback(info->baton, ::GetProcessId(info->process_handle), true, 0, exit_code);
         ::CloseHandle(info->process_handle);

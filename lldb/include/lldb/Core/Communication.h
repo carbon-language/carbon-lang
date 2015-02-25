@@ -85,14 +85,14 @@ namespace lldb_private {
 class Communication : public Broadcaster
 {
 public:
-    enum {
-        eBroadcastBitDisconnected           = (1 << 0), ///< Sent when the communications connection is lost.
-        eBroadcastBitReadThreadGotBytes     = (1 << 1), ///< Sent by the read thread when bytes become available.
-        eBroadcastBitReadThreadDidExit      = (1 << 2), ///< Sent by the read thread when it exits to inform clients.
-        eBroadcastBitReadThreadShouldExit   = (1 << 3), ///< Sent by clients that need to cancel the read thread.
-        eBroadcastBitPacketAvailable        = (1 << 4), ///< Sent when data received makes a complete packet.
-        kLoUserBroadcastBit                 = (1 << 16),///< Subclasses can used bits 31:16 for any needed events.
-        kHiUserBroadcastBit                 = (1 << 31),
+    enum : unsigned {
+        eBroadcastBitDisconnected           = (1u << 0), ///< Sent when the communications connection is lost.
+        eBroadcastBitReadThreadGotBytes     = (1u << 1), ///< Sent by the read thread when bytes become available.
+        eBroadcastBitReadThreadDidExit      = (1u << 2), ///< Sent by the read thread when it exits to inform clients.
+        eBroadcastBitReadThreadShouldExit   = (1u << 3), ///< Sent by clients that need to cancel the read thread.
+        eBroadcastBitPacketAvailable        = (1u << 4), ///< Sent when data received makes a complete packet.
+        kLoUserBroadcastBit                 = (1u << 16),///< Subclasses can used bits 31:16 for any needed events.
+        kHiUserBroadcastBit                 = (1u << 31),
         eAllEventBits                       = 0xffffffff
     };
 

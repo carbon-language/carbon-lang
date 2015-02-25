@@ -20,8 +20,6 @@ using namespace lldb_private;
 
 namespace
 {
-static const DWORD MS_VC_EXCEPTION = 0x406D1388;
-
 #pragma pack(push, 8)
 struct THREADNAME_INFO
 {
@@ -38,7 +36,9 @@ ThisThread::SetName(llvm::StringRef name)
 {
 // Other compilers don't yet support SEH, so we can only set the thread if compiling with MSVC.
 // TODO(zturner): Once clang-cl supports SEH, relax this conditional.
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(__clang__)  /* clang-cl doesn't support SEH */
+  static const DWORD MS_VC_EXCEPTION = 0x406D1388;
+
     THREADNAME_INFO info;
     info.dwType = 0x1000;
     info.szName = name.data();

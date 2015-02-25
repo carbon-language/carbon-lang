@@ -269,7 +269,7 @@ ABISysV_hexagon::PrepareTrivialCall ( Thread &thread,
 
 #if HEX_ABI_DEBUG
     // print the original stack pointer
-    printf( "sp : %04lx \n", sp );
+    printf( "sp : %04llx \n", sp );
 #endif
 
     // make sure number of parameters matches prototype
@@ -337,7 +337,7 @@ ABISysV_hexagon::PrepareTrivialCall ( Thread &thread,
         uint32_t data = 0;
         lldb::addr_t addr = sp + i * 4;
         proc->ReadMemory( addr, (void*)&data, sizeof( data ), error );
-        printf( "\n0x%04lx 0x%08x ", addr, data );
+        printf( "\n0x%04llx 0x%08x ", addr, data );
         if ( i == 0 ) printf( "<<-- sp" );
     }
     printf( "\n" );

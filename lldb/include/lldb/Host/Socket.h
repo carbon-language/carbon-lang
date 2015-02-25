@@ -34,8 +34,10 @@ namespace lldb_private {
 
 #if defined(_MSC_VER)
     typedef SOCKET NativeSocket;
+    inline bool IS_VALID_SOCKET(NativeSocket socket) { return socket != INVALID_SOCKET; }
 #else
     typedef int NativeSocket;
+    inline bool IS_VALID_SOCKET(NativeSocket socket) { return socket >= 0; }
 #endif
 
 class Socket : public IOObject

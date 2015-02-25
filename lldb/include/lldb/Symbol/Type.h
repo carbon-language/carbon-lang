@@ -71,7 +71,7 @@ public:
         eEncodingIsSyntheticUID
     } EncodingDataType;
 
-    typedef enum ResolveStateTag
+    typedef enum ResolveStateTag : unsigned
     {
         eResolveStateUnresolved = 0,
         eResolveStateForward    = 1,

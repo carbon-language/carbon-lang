@@ -235,14 +235,13 @@ PseudoTerminal::GetSlaveName (char *error_str, size_t error_len) const
 lldb::pid_t
 PseudoTerminal::Fork (char *error_str, size_t error_len)
 {
+    pid_t pid = LLDB_INVALID_PROCESS_ID;
+#if !defined(_MSC_VER)
     if (error_str)
         error_str[0] = '\0';
 
-    pid_t pid = LLDB_INVALID_PROCESS_ID;
     int flags = O_RDWR;
-#if !defined(_MSC_VER)
     flags |= O_CLOEXEC;
-#endif
     if (OpenFirstAvailableMaster (flags, error_str, error_len))
     {
         // Successfully opened our master pseudo terminal
@@ -300,6 +299,7 @@ PseudoTerminal::Fork (char *error_str, size_t error_len)
             // Do nothing and let the pid get returned!
         }
     }
+#endif
     return pid;
 }
 

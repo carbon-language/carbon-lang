@@ -79,7 +79,6 @@ DebuggerThread::DebuggerThreadRoutine(const ProcessLaunchInfo &launch_info)
     // Grab a shared_ptr reference to this so that we know it won't get deleted until after the
     // thread routine has exited.
     std::shared_ptr<DebuggerThread> this_ref(shared_from_this());
-    Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
 
     Error error;
     ProcessLauncherWindows launcher;

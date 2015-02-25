@@ -54,7 +54,7 @@ OptionParser::Parse (int argc,
     return getopt_long_only(argc, argv, optstring, &opts[0], longindex);
 }
 
-char*
+const char*
 OptionParser::GetOptionArgument()
 {
     return optarg;

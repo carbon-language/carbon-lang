@@ -5010,7 +5010,6 @@ public:
             if (OpenPipes())
             {
                 const int read_fd = m_read_file.GetDescriptor();
-                const int pipe_read_fd = m_pipe.GetReadFileDescriptor();
                 TerminalState terminal_state;
                 terminal_state.Save (read_fd, false);
                 Terminal terminal(read_fd);
@@ -5018,6 +5017,7 @@ public:
                 terminal.SetEcho(false);
 // FD_ZERO, FD_SET are not supported on windows
 #ifndef _WIN32
+                const int pipe_read_fd = m_pipe.GetReadFileDescriptor();
                 while (!GetIsDone())
                 {
                     fd_set read_fdset;

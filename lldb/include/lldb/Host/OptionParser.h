@@ -46,7 +46,7 @@ public:
         const char *optstring,
         const Option *longopts, int *longindex);
 
-    static char* GetOptionArgument();
+    static const char* GetOptionArgument();
     static int GetOptionIndex();
     static int GetOptionErrorCause();
     static std::string GetShortOptionString(struct option *long_options);
