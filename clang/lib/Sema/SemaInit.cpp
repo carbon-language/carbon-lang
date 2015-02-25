@@ -3193,9 +3193,9 @@ ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
       // C++11 [over.best.ics]p4:
       //   ... and the constructor or user-defined conversion function is a
       //   candidate by
-      //   — 13.3.1.3, when the argument is the temporary in the second step
+      //   - 13.3.1.3, when the argument is the temporary in the second step
       //     of a class copy-initialization, or
-      //   — 13.3.1.4, 13.3.1.5, or 13.3.1.6 (in all cases),
+      //   - 13.3.1.4, 13.3.1.5, or 13.3.1.6 (in all cases),
       //   user-defined conversion sequences are not considered.
       // FIXME: This breaks backward compatibility, e.g. PR12117. As a
       //        temporary fix, let's re-instate the third bullet above until

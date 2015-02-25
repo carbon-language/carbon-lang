@@ -1041,7 +1041,7 @@ ELFObjectWriter::computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
     // in defined ones.
     //
     // FIXME: All name handling should be done before we get to the writer,
-    // including dealing with GNU-style version suffixes.  Fixing this isn’t
+    // including dealing with GNU-style version suffixes.  Fixing this isn't
     // trivial.
     //
     // We thus have to be careful to not perform the symbol version replacement
