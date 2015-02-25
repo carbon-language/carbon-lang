@@ -193,13 +193,14 @@ CMICmdArgValFile::IsFilePath(const CMIUtilString &vrFileNamePath) const
 bool
 CMICmdArgValFile::IsValidChars(const CMIUtilString &vrText) const
 {
+    static CMIUtilString s_strSpecialCharacters(".'\"`@#$%^&*()_+-={}[]| ");
     const MIchar *pPtr = const_cast<MIchar *>(vrText.c_str());
     for (MIuint i = 0; i < vrText.length(); i++, pPtr++)
     {
         const MIchar c = *pPtr;
         if (::isalnum((int)c) == 0)
         {
-            if ((c != '.') && (c != '-') && (c != '_'))
+            if (s_strSpecialCharacters.find(c) == CMIUtilString::npos)
                 return false;
         }
     }
