@@ -286,16 +286,6 @@ std::error_code RawCoverageMappingReader::read() {
   return success();
 }
 
-ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
-    StringRef FileName)
-    : CurrentRecord(0) {
-  auto File = llvm::object::ObjectFile::createObjectFile(FileName);
-  if (!File)
-    error(File.getError());
-  else
-    Object = std::move(File.get());
-}
-
 namespace {
 /// \brief The coverage mapping data for a single function.
 /// It points to the function's name.
@@ -449,7 +439,7 @@ static std::error_code decodeTestingFormat(StringRef Data,
 }
 
 ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
-    std::unique_ptr<MemoryBuffer> &ObjectBuffer, sys::fs::file_magic Type)
+    std::unique_ptr<MemoryBuffer> &ObjectBuffer)
     : CurrentRecord(0) {
   if (ObjectBuffer->getBuffer().startswith(TestingFormatMagic)) {
     // This is a special format used for testing.
@@ -467,8 +457,8 @@ ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
     return;
   }
 
-  auto File = object::ObjectFile::createObjectFile(
-      ObjectBuffer->getMemBufferRef(), Type);
+  auto File =
+      object::ObjectFile::createObjectFile(ObjectBuffer->getMemBufferRef());
   if (!File)
     error(File.getError());
   else

@@ -185,10 +185,7 @@ private:
   std::error_code success() { return error(instrprof_error::success); }
 
 public:
-  ObjectFileCoverageMappingReader(StringRef FileName);
-  ObjectFileCoverageMappingReader(
-      std::unique_ptr<MemoryBuffer> &ObjectBuffer,
-      sys::fs::file_magic Type = sys::fs::file_magic::unknown);
+  ObjectFileCoverageMappingReader(std::unique_ptr<MemoryBuffer> &ObjectBuffer);
 
   std::error_code readHeader();
   std::error_code readNextRecord(CoverageMappingRecord &Record) override;
