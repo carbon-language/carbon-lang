@@ -1113,6 +1113,8 @@ static unsigned GetNumNodeResults(Record *Operator, CodeGenDAGPatterns &CDP) {
 
     // FIXME: Should allow access to all the results here.
     unsigned NumDefsToAdd = InstInfo.Operands.NumDefs ? 1 : 0;
+    if (InstInfo.hasTwoExplicitDefs)
+      ++NumDefsToAdd;
 
     // Add on one implicit def if it has a resolvable type.
     if (InstInfo.HasOneImplicitDefWithKnownVT(CDP.getTargetInfo()) !=MVT::Other)
@@ -1609,11 +1611,20 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     assert(getNumTypes() == 0 && "Set doesn't produce a value");
     assert(getNumChildren() >= 2 && "Missing RHS of a set?");
     unsigned NC = getNumChildren();
+    unsigned NumOfSrcs = NC-1;
 
+    // destination
     TreePatternNode *SetVal = getChild(NC-1);
     bool MadeChange = SetVal->ApplyTypeConstraints(TP, NotRegisters);
 
-    for (unsigned i = 0; i < NC-1; ++i) {
+    // second explicit destination
+    if (TP.getRecord()->getValueAsBit("hasTwoExplicitDefs")) {
+      TreePatternNode *Set2Val = getChild(NC-2);
+      MadeChange = Set2Val->ApplyTypeConstraints(TP, NotRegisters);
+      NumOfSrcs --;
+    }
+    
+    for (unsigned i = 0; i < NumOfSrcs; ++i) {
       TreePatternNode *Child = getChild(i);
       MadeChange |= Child->ApplyTypeConstraints(TP, NotRegisters);
 
@@ -2856,7 +2867,7 @@ const DAGInstruction &CodeGenDAGPatterns::parseInstructionPattern(
 
     // Check that all of the results occur first in the list.
     std::vector<Record*> Results;
-    TreePatternNode *Res0Node = nullptr;
+    SmallVector<TreePatternNode *, 2> ResNode;
     for (unsigned i = 0; i != NumResults; ++i) {
       if (i == CGI.Operands.size())
         I->error("'" + InstResults.begin()->first +
@@ -2868,8 +2879,7 @@ const DAGInstruction &CodeGenDAGPatterns::parseInstructionPattern(
       if (!RNode)
         I->error("Operand $" + OpName + " does not exist in operand list!");
 
-      if (i == 0)
-        Res0Node = RNode;
+      ResNode.push_back(RNode);
       Record *R = cast<DefInit>(RNode->getLeafValue())->getDef();
       if (!R)
         I->error("Operand $" + OpName + " should be a set destination: all "
@@ -2946,7 +2956,7 @@ const DAGInstruction &CodeGenDAGPatterns::parseInstructionPattern(
                           GetNumNodeResults(I->getRecord(), *this));
     // Copy fully inferred output node type to instruction result pattern.
     for (unsigned i = 0; i != NumResults; ++i)
-      ResultPattern->setType(i, Res0Node->getExtType(i));
+      ResultPattern->setType(i, ResNode[i]->getExtType(0));
 
     // Create and insert the instruction.
     // FIXME: InstImpResults should not be part of DAGInstruction.
