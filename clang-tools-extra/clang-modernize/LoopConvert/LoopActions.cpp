@@ -561,7 +561,7 @@ bool ForLoopIndexUseVisitor::TraverseMemberExpr(MemberExpr *Member) {
              "Operator-> takes more than one argument");
       Obj = getDeclRef(Call->getArg(0));
       ResultExpr = Obj;
-      ExprType = Call->getCallReturnType();
+      ExprType = Call->getCallReturnType(*Context);
     }
   }
 
