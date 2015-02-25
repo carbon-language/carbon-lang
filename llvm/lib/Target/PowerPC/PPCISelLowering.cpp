@@ -9987,7 +9987,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
                 isa<ConstantSDNode>(UI->getOperand(1)) &&
                 (cast<ConstantSDNode>(Add->getOperand(1))->getZExtValue() -
                  cast<ConstantSDNode>(UI->getOperand(1))->getZExtValue()) %
-                (1 << Bits) == 0) {
+                (1ULL << Bits) == 0) {
               SDNode *OtherAdd = *UI;
               for (SDNode::use_iterator VI = OtherAdd->use_begin(),
                    VE = OtherAdd->use_end(); VI != VE; ++VI) {
