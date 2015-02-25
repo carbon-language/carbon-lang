@@ -247,9 +247,9 @@ Using ``llvm.gcwrite``
 
 The ``llvm.gcroot`` intrinsic is used to inform LLVM that a stack variable
 references an object on the heap and is to be tracked for garbage collection.
-The exact impact on generated code is specified by a :ref:`compiler plugin
-<plugin>`.  All calls to ``llvm.gcroot`` **must** reside inside the first basic
-block.
+The exact impact on generated code is specified by the Function's selected 
+:ref:`GC strategy <plugin>`.  All calls to ``llvm.gcroot`` **must** reside 
+inside the first basic block.
 
 The first argument **must** be a value referring to an alloca instruction or a
 bitcast of an alloca.  The second contains a pointer to metadata that should be
