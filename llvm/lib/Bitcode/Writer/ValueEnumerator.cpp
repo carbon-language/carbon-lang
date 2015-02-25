@@ -803,3 +803,7 @@ unsigned ValueEnumerator::getGlobalBasicBlockID(const BasicBlock *BB) const {
   IncorporateFunctionInfoGlobalBBIDs(BB->getParent(), GlobalBasicBlockIDs);
   return getGlobalBasicBlockID(BB);
 }
+
+uint64_t ValueEnumerator::computeBitsRequiredForTypeIndicies() const {
+  return Log2_32_Ceil(getTypes().size() + 1);
+}

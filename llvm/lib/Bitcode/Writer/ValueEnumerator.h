@@ -182,6 +182,7 @@ public:
   ///
   void incorporateFunction(const Function &F);
   void purgeFunction();
+  uint64_t computeBitsRequiredForTypeIndicies() const;
 
 private:
   void OptimizeConstants(unsigned CstStart, unsigned CstEnd);
