@@ -18,6 +18,7 @@
 #include "asan_report.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
+#include "asan_suppressions.h"
 #include "asan_thread.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_mutex.h"
@@ -158,7 +159,8 @@ static void RegisterGlobal(const Global *g) {
       // the entire redzone of the second global may be within the first global.
       for (ListOfGlobals *l = list_of_all_globals; l; l = l->next) {
         if (g->beg == l->g->beg &&
-            (flags()->detect_odr_violation >= 2 || g->size != l->g->size))
+            (flags()->detect_odr_violation >= 2 || g->size != l->g->size) &&
+            !IsODRViolationSuppressed(g->name))
           ReportODRViolation(g, FindRegistrationSite(g),
                              l->g, FindRegistrationSite(l->g));
       }

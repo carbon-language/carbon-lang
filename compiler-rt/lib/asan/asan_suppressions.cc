@@ -26,8 +26,10 @@ static SuppressionContext *suppression_ctx = nullptr;
 static const char kInterceptorName[] = "interceptor_name";
 static const char kInterceptorViaFunction[] = "interceptor_via_fun";
 static const char kInterceptorViaLibrary[] = "interceptor_via_lib";
+static const char kODRViolation[] = "odr_violation";
 static const char *kSuppressionTypes[] = {
-    kInterceptorName, kInterceptorViaFunction, kInterceptorViaLibrary};
+    kInterceptorName, kInterceptorViaFunction, kInterceptorViaLibrary,
+    kODRViolation};
 
 void InitializeSuppressions() {
   CHECK_EQ(nullptr, suppression_ctx);
@@ -47,6 +49,13 @@ bool HaveStackTraceBasedSuppressions() {
   CHECK(suppression_ctx);
   return suppression_ctx->HasSuppressionType(kInterceptorViaFunction) ||
          suppression_ctx->HasSuppressionType(kInterceptorViaLibrary);
+}
+
+bool IsODRViolationSuppressed(const char *global_var_name) {
+  CHECK(suppression_ctx);
+  Suppression *s;
+  // Match "odr_violation" suppressions.
+  return suppression_ctx->Match(global_var_name, kODRViolation, &s);
 }
 
 bool IsStackTraceSuppressed(const StackTrace *stack) {

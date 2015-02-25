@@ -23,6 +23,7 @@ void InitializeSuppressions();
 bool IsInterceptorSuppressed(const char *interceptor_name);
 bool HaveStackTraceBasedSuppressions();
 bool IsStackTraceSuppressed(const StackTrace *stack);
+bool IsODRViolationSuppressed(const char *global_var_name);
 
 } // namespace __asan
 
