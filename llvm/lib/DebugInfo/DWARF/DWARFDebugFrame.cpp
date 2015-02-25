@@ -381,7 +381,7 @@ static void printOperand(raw_ostream &OS, uint8_t Opcode, unsigned OperandIdx,
       OS << format(" %" PRId64 "*data_alignment_factor" , Operand);
     break;
   case OT_Register:
-    OS << format(" reg%d", Operand);
+    OS << format(" reg%" PRId64, Operand);
     break;
   case OT_Expression:
     OS << " expression";
