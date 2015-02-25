@@ -2,10 +2,13 @@
 // REQUIRES: shell
 
 namespace std {
-struct vec_iterator {};
+template <typename T> struct vec_iterator {
+  T *ptr;
+  vec_iterator operator++(int);
+};
 
 template <typename T> struct vector {
-  typedef vec_iterator iterator;
+  typedef vec_iterator<T> iterator;
 
   iterator begin();
   iterator end();
@@ -21,6 +24,8 @@ template <typename FwIt, typename Func>
 FwIt remove_if(FwIt begin, FwIt end, Func f);
 
 template <typename FwIt> FwIt unique(FwIt begin, FwIt end);
+
+template <typename T> struct unique_ptr {};
 } // namespace std
 
 struct custom_iter {};
@@ -64,4 +69,9 @@ int main() {
   ERASE(v, 15);
   // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: this call will remove at most one
   // CHECK-FIXES: {{^  }}ERASE(v, 15);{{$}}
+
+  std::vector<std::unique_ptr<int>> vupi;
+  auto iter = vupi.begin();
+  vupi.erase(iter++);
+  // CHECK-FIXES: {{^  }}vupi.erase(iter++);{{$}}
 }
