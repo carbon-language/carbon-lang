@@ -264,26 +264,26 @@ entry:
   ret void
 }
 ; CHECK-LABEL: @caller2
-; CHECK: ld [[REG:[0-9]+]], .LC
-; CHECK-DAG: lfs 1, 0([[REG]])
-; CHECK-DAG: lfs 2, 4([[REG]])
-; CHECK-DAG: lfs 3, 8([[REG]])
-; CHECK-DAG: lfs 4, 12([[REG]])
-; CHECK-DAG: lfs 5, 16([[REG]])
-; CHECK-DAG: lfs 6, 20([[REG]])
-; CHECK-DAG: lfs 7, 24([[REG]])
-; CHECK-DAG: lfs 8, 28([[REG]])
-; CHECK: ld [[REG:[0-9]+]], .LC
-; CHECK-DAG: lfs 9, 0([[REG]])
-; CHECK-DAG: lfs 10, 4([[REG]])
-; CHECK-DAG: lfs 11, 8([[REG]])
-; CHECK-DAG: lfs 12, 12([[REG]])
-; CHECK-DAG: lfs 13, 16([[REG]])
-; CHECK: ld [[REG:[0-9]+]], .LC
-; CHECK-DAG: lwz [[REG0:[0-9]+]], 0([[REG]])
-; CHECK-DAG: lwz [[REG1:[0-9]+]], 4([[REG]])
-; CHECK-DAG: sldi [[REG1]], [[REG1]], 32
-; CHECK-DAG: or 10, [[REG0]], [[REG1]]
+; CHECK: ld {{[0-9]+}}, .LC
+; CHECK-DAG: lfs 1, 0({{[0-9]+}})
+; CHECK-DAG: lfs 2, 4({{[0-9]+}})
+; CHECK-DAG: lfs 3, 8({{[0-9]+}})
+; CHECK-DAG: lfs 4, 12({{[0-9]+}})
+; CHECK-DAG: lfs 5, 16({{[0-9]+}})
+; CHECK-DAG: lfs 6, 20({{[0-9]+}})
+; CHECK-DAG: lfs 7, 24({{[0-9]+}})
+; CHECK-DAG: lfs 8, 28({{[0-9]+}})
+
+; CHECK-DAG: lfs 9, 0({{[0-9]+}})
+; CHECK-DAG: lfs 10, 4({{[0-9]+}})
+; CHECK-DAG: lfs 11, 8({{[0-9]+}})
+; CHECK-DAG: lfs 12, 12({{[0-9]+}})
+; CHECK-DAG: lfs 13, 16({{[0-9]+}})
+
+; CHECK-DAG: lwz [[REG0:[0-9]+]], 0({{[0-9]+}})
+; CHECK-DAG: lwz [[REG1:[0-9]+]], 4({{[0-9]+}})
+; CHECK-DAG: sldi [[REG2:[0-9]+]], [[REG1]], 32
+; CHECK-DAG: or 10, [[REG0]], [[REG2]]
 ; CHECK: bl test2
 
 declare void @test2([8 x float], [5 x float], [2 x float])

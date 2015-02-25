@@ -35,17 +35,17 @@ entry:
   ret void
 
 ; CHECK-LABEL: @test2
-; CHECK: ld {{[0-9]+}}, 112(1)
-; CHECK: li [[REG16:[0-9]+]], 16
-; CHECK: addi [[REGB:[0-9]+]], 1, 112
-; CHECK: lvx 2, [[REGB]], [[REG16]]
+; CHECK-DAG: ld {{[0-9]+}}, 112(1)
+; CHECK-DAG: li [[REG16:[0-9]+]], 16
+; CHECK-DAG: addi [[REGB:[0-9]+]], 1, 112
+; CHECK-DAG: lvx 2, [[REGB]], [[REG16]]
 ; CHECK: blr
 
 ; CHECK-VSX-LABEL: @test2
-; CHECK-VSX: ld {{[0-9]+}}, 112(1)
-; CHECK-VSX: li [[REG16:[0-9]+]], 16
-; CHECK-VSX: addi [[REGB:[0-9]+]], 1, 112
-; CHECK-VSX: lxvw4x {{[0-9]+}}, [[REGB]], [[REG16]]
+; CHECK-VSX-DAG: ld {{[0-9]+}}, 112(1)
+; CHECK-VSX-DAG: li [[REG16:[0-9]+]], 16
+; CHECK-VSX-DAG: addi [[REGB:[0-9]+]], 1, 112
+; CHECK-VSX-DAG: lxvw4x {{[0-9]+}}, [[REGB]], [[REG16]]
 ; CHECK-VSX: blr
 }
 
@@ -61,17 +61,17 @@ entry:
   ret void
 
 ; CHECK-LABEL: @test3
-; CHECK: ld {{[0-9]+}}, 128(1)
-; CHECK: li [[REG16:[0-9]+]], 16
-; CHECK: addi [[REGB:[0-9]+]], 1, 128
-; CHECK: lvx 2, [[REGB]], [[REG16]]
+; CHECK-DAG: ld {{[0-9]+}}, 128(1)
+; CHECK-DAG: li [[REG16:[0-9]+]], 16
+; CHECK-DAG: addi [[REGB:[0-9]+]], 1, 128
+; CHECK-DAG: lvx 2, [[REGB]], [[REG16]]
 ; CHECK: blr
 
 ; CHECK-VSX-LABEL: @test3
-; CHECK-VSX: ld {{[0-9]+}}, 128(1)
-; CHECK-VSX: li [[REG16:[0-9]+]], 16
-; CHECK-VSX: addi [[REGB:[0-9]+]], 1, 128
-; CHECK-VSX: lxvw4x {{[0-9]+}}, [[REGB]], [[REG16]]
+; CHECK-VSX-DAG: ld {{[0-9]+}}, 128(1)
+; CHECK-VSX-DAG: li [[REG16:[0-9]+]], 16
+; CHECK-VSX-DAG: addi [[REGB:[0-9]+]], 1, 128
+; CHECK-VSX-DAG: lxvw4x {{[0-9]+}}, [[REGB]], [[REG16]]
 ; CHECK-VSX: blr
 }
 

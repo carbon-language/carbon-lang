@@ -71,8 +71,6 @@ namespace llvm {
       /// though these are usually folded into other nodes.
       Hi, Lo,
 
-      TOC_ENTRY,
-
       /// The following two target-specific nodes are used for calls through
       /// function pointers in the 64-bit SVR4 ABI.
 
@@ -337,7 +335,12 @@ namespace llvm {
 
       /// QBRC, CHAIN = QVLFSb CHAIN, Ptr
       /// The 4xf32 load used for v4i1 constants.
-      QVLFSb
+      QVLFSb,
+
+      /// GPRC = TOC_ENTRY GA, TOC
+      /// Loads the entry for GA from the TOC, where the TOC base is given by
+      /// the last operand.
+      TOC_ENTRY
     };
   }
 

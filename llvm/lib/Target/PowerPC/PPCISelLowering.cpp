@@ -1821,6 +1821,19 @@ static void setUsesTOCBasePtr(SelectionDAG &DAG) {
   setUsesTOCBasePtr(DAG.getMachineFunction());
 }
 
+static SDValue getTOCEntry(SelectionDAG &DAG, SDLoc dl, bool Is64Bit,
+                           SDValue GA) {
+  EVT VT = Is64Bit ? MVT::i64 : MVT::i32;
+  SDValue Reg = Is64Bit ? DAG.getRegister(PPC::X2, VT) :
+                DAG.getNode(PPCISD::GlobalBaseReg, dl, VT);
+
+  SDValue Ops[] = { GA, Reg };
+  return DAG.getMemIntrinsicNode(PPCISD::TOC_ENTRY, dl,
+                                 DAG.getVTList(VT, MVT::Other), Ops, VT,
+                                 MachinePointerInfo::getGOT(), 0, false, true,
+                                 false, 0);
+}
+
 SDValue PPCTargetLowering::LowerConstantPool(SDValue Op,
                                              SelectionDAG &DAG) const {
   EVT PtrVT = Op.getValueType();
@@ -1832,8 +1845,7 @@ SDValue PPCTargetLowering::LowerConstantPool(SDValue Op,
   if (Subtarget.isSVR4ABI() && Subtarget.isPPC64()) {
     setUsesTOCBasePtr(DAG);
     SDValue GA = DAG.getTargetConstantPool(C, PtrVT, CP->getAlignment(), 0);
-    return DAG.getNode(PPCISD::TOC_ENTRY, SDLoc(CP), MVT::i64, GA,
-                       DAG.getRegister(PPC::X2, MVT::i64));
+    return getTOCEntry(DAG, SDLoc(CP), true, GA);
   }
 
   unsigned MOHiFlag, MOLoFlag;
@@ -1843,9 +1855,7 @@ SDValue PPCTargetLowering::LowerConstantPool(SDValue Op,
   if (isPIC && Subtarget.isSVR4ABI()) {
     SDValue GA = DAG.getTargetConstantPool(C, PtrVT, CP->getAlignment(),
                                            PPCII::MO_PIC_FLAG);
-    SDLoc DL(CP);
-    return DAG.getNode(PPCISD::TOC_ENTRY, DL, MVT::i32, GA,
-                       DAG.getNode(PPCISD::GlobalBaseReg, DL, PtrVT));
+    return getTOCEntry(DAG, SDLoc(CP), false, GA);
   }
 
   SDValue CPIHi =
@@ -1864,8 +1874,7 @@ SDValue PPCTargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) const {
   if (Subtarget.isSVR4ABI() && Subtarget.isPPC64()) {
     setUsesTOCBasePtr(DAG);
     SDValue GA = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
-    return DAG.getNode(PPCISD::TOC_ENTRY, SDLoc(JT), MVT::i64, GA,
-                       DAG.getRegister(PPC::X2, MVT::i64));
+    return getTOCEntry(DAG, SDLoc(JT), true, GA);
   }
 
   unsigned MOHiFlag, MOLoFlag;
@@ -1875,9 +1884,7 @@ SDValue PPCTargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) const {
   if (isPIC && Subtarget.isSVR4ABI()) {
     SDValue GA = DAG.getTargetJumpTable(JT->getIndex(), PtrVT,
                                         PPCII::MO_PIC_FLAG);
-    SDLoc DL(GA);
-    return DAG.getNode(PPCISD::TOC_ENTRY, SDLoc(JT), PtrVT, GA,
-                       DAG.getNode(PPCISD::GlobalBaseReg, DL, PtrVT));
+    return getTOCEntry(DAG, SDLoc(GA), false, GA);
   }
 
   SDValue JTIHi = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, MOHiFlag);
@@ -1896,8 +1903,7 @@ SDValue PPCTargetLowering::LowerBlockAddress(SDValue Op,
   if (Subtarget.isSVR4ABI() && Subtarget.isPPC64()) {
     setUsesTOCBasePtr(DAG);
     SDValue GA = DAG.getTargetBlockAddress(BA, PtrVT, BASDN->getOffset());
-    return DAG.getNode(PPCISD::TOC_ENTRY, SDLoc(BASDN), MVT::i64, GA,
-                       DAG.getRegister(PPC::X2, MVT::i64));
+    return getTOCEntry(DAG, SDLoc(BASDN), true, GA);
   }
 
   unsigned MOHiFlag, MOLoFlag;
@@ -2007,8 +2013,7 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
   if (Subtarget.isSVR4ABI() && Subtarget.isPPC64()) {
     setUsesTOCBasePtr(DAG);
     SDValue GA = DAG.getTargetGlobalAddress(GV, DL, PtrVT, GSDN->getOffset());
-    return DAG.getNode(PPCISD::TOC_ENTRY, DL, MVT::i64, GA,
-                       DAG.getRegister(PPC::X2, MVT::i64));
+    return getTOCEntry(DAG, DL, true, GA);
   }
 
   unsigned MOHiFlag, MOLoFlag;
@@ -2019,8 +2024,7 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
     SDValue GA = DAG.getTargetGlobalAddress(GV, DL, PtrVT,
                                             GSDN->getOffset(),
                                             PPCII::MO_PIC_FLAG);
-    return DAG.getNode(PPCISD::TOC_ENTRY, DL, MVT::i32, GA,
-                       DAG.getNode(PPCISD::GlobalBaseReg, DL, MVT::i32));
+    return getTOCEntry(DAG, DL, false, GA);
   }
 
   SDValue GAHi =

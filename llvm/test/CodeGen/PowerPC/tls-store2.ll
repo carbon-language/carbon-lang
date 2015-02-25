@@ -22,7 +22,10 @@ entry:
 ; CHECK: addi 3, {{[0-9]+}}, __once_callable@got@tlsgd@l
 ; CHECK: bl __tls_get_addr(__once_callable@tlsgd)
 ; CHECK-NEXT: nop
-; CHECK: std {{[0-9]+}}, 0(3)
+; FIXME: We could check here for 'std {{[0-9]+}}, 0(3)', but that no longer
+; works because, with new scheduling freedom, we create a copy of R3 based on the
+; initial scheduling, but don't coalesce it again after we move the instructions
+; so that the copy is no longer necessary.
 ; CHECK: addi 3, {{[0-9]+}}, __once_call@got@tlsgd@l
 ; CHECK: bl __tls_get_addr(__once_call@tlsgd)
 ; CHECK-NEXT: nop
