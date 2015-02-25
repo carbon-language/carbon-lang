@@ -1063,6 +1063,34 @@ static bool canBeCheaplyTransformed(ScalarEvolution &SE,
   return false;
 }
 
+static bool IsIncrementNSW(ScalarEvolution &SE, const SCEVAddRecExpr *AR) {
+  if (!isa<IntegerType>(AR->getType()))
+    return false;
+
+  unsigned BitWidth = cast<IntegerType>(AR->getType())->getBitWidth();
+  Type *WideTy = IntegerType::get(AR->getType()->getContext(), BitWidth * 2);
+  const SCEV *Step = AR->getStepRecurrence(SE);
+  const SCEV *OpAfterExtend = SE.getAddExpr(SE.getSignExtendExpr(Step, WideTy),
+                                            SE.getSignExtendExpr(AR, WideTy));
+  const SCEV *ExtendAfterOp =
+    SE.getSignExtendExpr(SE.getAddExpr(AR, Step), WideTy);
+  return ExtendAfterOp == OpAfterExtend;
+}
+
+static bool IsIncrementNUW(ScalarEvolution &SE, const SCEVAddRecExpr *AR) {
+  if (!isa<IntegerType>(AR->getType()))
+    return false;
+
+  unsigned BitWidth = cast<IntegerType>(AR->getType())->getBitWidth();
+  Type *WideTy = IntegerType::get(AR->getType()->getContext(), BitWidth * 2);
+  const SCEV *Step = AR->getStepRecurrence(SE);
+  const SCEV *OpAfterExtend = SE.getAddExpr(SE.getZeroExtendExpr(Step, WideTy),
+                                            SE.getZeroExtendExpr(AR, WideTy));
+  const SCEV *ExtendAfterOp =
+    SE.getZeroExtendExpr(SE.getAddExpr(AR, Step), WideTy);
+  return ExtendAfterOp == OpAfterExtend;
+}
+
 /// getAddRecExprPHILiterally - Helper for expandAddRecExprLiterally. Expand
 /// the base addrec, which is the addrec without any non-loop-dominating
 /// values, and return the PHI.
@@ -1154,6 +1182,9 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
     }
   }
 
+  bool IncrementIsNUW = IsIncrementNUW(SE, Normalized);
+  bool IncrementIsNSW = IsIncrementNSW(SE, Normalized);
+
   // Save the original insertion point so we can restore it when we're done.
   BuilderType::InsertPointGuard Guard(Builder);
 
@@ -1213,10 +1244,11 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
       IVIncInsertPos : Pred->getTerminator();
     Builder.SetInsertPoint(InsertPos);
     Value *IncV = expandIVInc(PN, StepV, L, ExpandTy, IntTy, useSubtract);
+
     if (isa<OverflowingBinaryOperator>(IncV)) {
-      if (Normalized->getNoWrapFlags(SCEV::FlagNUW))
+      if (IncrementIsNUW)
         cast<BinaryOperator>(IncV)->setHasNoUnsignedWrap();
-      if (Normalized->getNoWrapFlags(SCEV::FlagNSW))
+      if (IncrementIsNSW)
         cast<BinaryOperator>(IncV)->setHasNoSignedWrap();
     }
     PN->addIncoming(IncV, Pred);
