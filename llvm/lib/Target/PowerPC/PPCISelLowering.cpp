@@ -5075,7 +5075,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
           RegsToPass.push_back(std::make_pair(QFPR[QFPR_idx++], Load));
         }
         ArgOffset += (IsF32 ? 16 : 32);
-        for (unsigned i=0; i<(IsF32 ? 16 : 32); i+=PtrByteSize) {
+        for (unsigned i = 0; i < (IsF32 ? 16U : 32U); i += PtrByteSize) {
           if (GPR_idx == NumGPRs)
             break;
           SDValue Ix = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff,
