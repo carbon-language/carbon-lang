@@ -2090,15 +2090,6 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
     }
   }
   
-  // If the function is sized operator delete and has not already been
-  // declared, and weak definitions have been disabled, do not declare
-  // it implicitly. Instead, let deallocation function lookup pick up
-  // unsized delete.
-  // FIXME: We should remove this guard once backward compatibility is
-  // no longer an issue
-  if (NumParams == 2 && !getLangOpts().DefineSizedDeallocation)
-    return;
-
   FunctionProtoType::ExtProtoInfo EPI;
 
   QualType BadAllocType;
@@ -2130,6 +2121,16 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
   // Implicit sized deallocation functions always have default visibility.
   Alloc->addAttr(VisibilityAttr::CreateImplicit(Context,
                                                 VisibilityAttr::Default));
+
+  if (NumParams == 2 && !getLangOpts().DefineSizedDeallocation) {
+    assert(getLangOpts().SizedDeallocation &&
+           "Only sized deallocation can have two parameters");
+
+    // This declaration should be emited as extern_weak.
+    LinkageInfo LV = Alloc->getLinkageAndVisibility();
+    assert(LV.getLinkage() == clang::ExternalLinkage);
+    Alloc->addAttr(WeakAttr::CreateImplicit(Context));
+  }
 
   if (AddRestrictAttr)
     Alloc->addAttr(
