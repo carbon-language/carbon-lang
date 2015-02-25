@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=ppc64 -mcpu=a2q | FileCheck %s
+target triple = "powerpc64-bgq-linux"
 
 define void @foo(<4 x double> %v, <4 x double>* %p) {
 entry:

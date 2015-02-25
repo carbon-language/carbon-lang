@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=ppc64 -mcpu=a2q | FileCheck %s
+target triple = "powerpc64-bgq-linux"
 
 @Q = constant <4 x i1> <i1 0, i1 undef, i1 1, i1 1>, align 16
 @R = global <4 x i1> <i1 0, i1 0, i1 0, i1 0>, align 16
