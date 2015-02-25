@@ -48,6 +48,17 @@ struct BitSetInfo {
     return Bits.size() == 1 && Bits[0] == 1;
   }
 
+  bool isAllOnes() const {
+    for (unsigned I = 0; I != Bits.size() - 1; ++I)
+      if (Bits[I] != 0xFF)
+        return false;
+
+    if (BitSize % 8 == 0)
+      return Bits[Bits.size() - 1] == 0xFF;
+
+    return Bits[Bits.size() - 1] == (1 << (BitSize % 8)) - 1;
+  }
+
   bool containsGlobalOffset(uint64_t Offset) const;
 
   bool containsValue(const DataLayout *DL,

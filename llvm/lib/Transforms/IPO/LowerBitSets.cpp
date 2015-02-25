@@ -157,6 +157,7 @@ struct LowerBitSets : public ModulePass {
 
   const DataLayout *DL;
   IntegerType *Int1Ty;
+  IntegerType *Int8Ty;
   IntegerType *Int32Ty;
   Type *Int32PtrTy;
   IntegerType *Int64Ty;
@@ -173,7 +174,7 @@ struct LowerBitSets : public ModulePass {
               const DenseMap<GlobalVariable *, uint64_t> &GlobalLayout);
   Value *createBitSetTest(IRBuilder<> &B, const BitSetInfo &BSI,
                           GlobalVariable *BitSetGlobal, Value *BitOffset);
-  void
+  Value *
   lowerBitSetCall(CallInst *CI, const BitSetInfo &BSI,
                   GlobalVariable *BitSetGlobal, GlobalVariable *CombinedGlobal,
                   const DenseMap<GlobalVariable *, uint64_t> &GlobalLayout);
@@ -203,6 +204,7 @@ bool LowerBitSets::doInitialization(Module &M) {
     report_fatal_error("Data layout required");
 
   Int1Ty = Type::getInt1Ty(M.getContext());
+  Int8Ty = Type::getInt8Ty(M.getContext());
   Int32Ty = Type::getInt32Ty(M.getContext());
   Int32PtrTy = PointerType::getUnqual(Int32Ty);
   Int64Ty = Type::getInt64Ty(M.getContext());
@@ -293,19 +295,16 @@ Value *LowerBitSets::createBitSetTest(IRBuilder<> &B, const BitSetInfo &BSI,
   }
 }
 
-/// Lower a llvm.bitset.test call to its implementation.
-void LowerBitSets::lowerBitSetCall(
+/// Lower a llvm.bitset.test call to its implementation. Returns the value to
+/// replace the call with.
+Value *LowerBitSets::lowerBitSetCall(
     CallInst *CI, const BitSetInfo &BSI, GlobalVariable *BitSetGlobal,
     GlobalVariable *CombinedGlobal,
     const DenseMap<GlobalVariable *, uint64_t> &GlobalLayout) {
   Value *Ptr = CI->getArgOperand(0);
 
-  if (BSI.containsValue(DL, GlobalLayout, Ptr)) {
-    CI->replaceAllUsesWith(
-        ConstantInt::getTrue(BitSetGlobal->getParent()->getContext()));
-    CI->eraseFromParent();
-    return;
-  }
+  if (BSI.containsValue(DL, GlobalLayout, Ptr))
+    return ConstantInt::getTrue(BitSetGlobal->getParent()->getContext());
 
   Constant *GlobalAsInt = ConstantExpr::getPtrToInt(CombinedGlobal, IntPtrTy);
   Constant *OffsetedGlobalAsInt = ConstantExpr::getAdd(
@@ -317,12 +316,8 @@ void LowerBitSets::lowerBitSetCall(
 
   Value *PtrAsInt = B.CreatePtrToInt(Ptr, IntPtrTy);
 
-  if (BSI.isSingleOffset()) {
-    Value *Eq = B.CreateICmpEQ(PtrAsInt, OffsetedGlobalAsInt);
-    CI->replaceAllUsesWith(Eq);
-    CI->eraseFromParent();
-    return;
-  }
+  if (BSI.isSingleOffset())
+    return B.CreateICmpEQ(PtrAsInt, OffsetedGlobalAsInt);
 
   Value *PtrOffset = B.CreateSub(PtrAsInt, OffsetedGlobalAsInt);
 
@@ -349,6 +344,10 @@ void LowerBitSets::lowerBitSetCall(
   Constant *BitSizeConst = ConstantInt::get(IntPtrTy, BSI.BitSize);
   Value *OffsetInRange = B.CreateICmpULT(BitOffset, BitSizeConst);
 
+  // If the bit set is all ones, testing against it is unnecessary.
+  if (BSI.isAllOnes())
+    return OffsetInRange;
+
   TerminatorInst *Term = SplitBlockAndInsertIfThen(OffsetInRange, CI, false);
   IRBuilder<> ThenB(Term);
 
@@ -363,9 +362,7 @@ void LowerBitSets::lowerBitSetCall(
   PHINode *P = B.CreatePHI(Int1Ty, 2);
   P->addIncoming(ConstantInt::get(Int1Ty, 0), InitialBB);
   P->addIncoming(Bit, ThenB.GetInsertBlock());
-
-  CI->replaceAllUsesWith(P);
-  CI->eraseFromParent();
+  return P;
 }
 
 /// Given a disjoint set of bitsets and globals, layout the globals, build the
@@ -376,8 +373,24 @@ void LowerBitSets::buildBitSetsFromGlobals(
     const std::vector<GlobalVariable *> &Globals) {
   // Build a new global with the combined contents of the referenced globals.
   std::vector<Constant *> GlobalInits;
-  for (GlobalVariable *G : Globals)
+  for (GlobalVariable *G : Globals) {
     GlobalInits.push_back(G->getInitializer());
+    uint64_t InitSize = DL->getTypeAllocSize(G->getInitializer()->getType());
+
+    // Compute the amount of padding required to align the next element to the
+    // next power of 2.
+    uint64_t Padding = NextPowerOf2(InitSize - 1) - InitSize;
+
+    // Cap at 128 was found experimentally to have a good data/instruction
+    // overhead tradeoff.
+    if (Padding > 128)
+      Padding = RoundUpToAlignment(InitSize, 128) - InitSize;
+
+    GlobalInits.push_back(
+        ConstantAggregateZero::get(ArrayType::get(Int8Ty, Padding)));
+  }
+  if (!GlobalInits.empty())
+    GlobalInits.pop_back();
   Constant *NewInit = ConstantStruct::getAnon(M.getContext(), GlobalInits);
   auto CombinedGlobal =
       new GlobalVariable(M, NewInit->getType(), /*isConstant=*/true,
@@ -389,7 +402,8 @@ void LowerBitSets::buildBitSetsFromGlobals(
   // Compute the offsets of the original globals within the new global.
   DenseMap<GlobalVariable *, uint64_t> GlobalLayout;
   for (unsigned I = 0; I != Globals.size(); ++I)
-    GlobalLayout[Globals[I]] = CombinedGlobalLayout->getElementOffset(I);
+    // Multiply by 2 to account for padding elements.
+    GlobalLayout[Globals[I]] = CombinedGlobalLayout->getElementOffset(I * 2);
 
   // For each bitset in this disjoint set...
   for (MDString *BS : BitSets) {
@@ -406,7 +420,10 @@ void LowerBitSets::buildBitSetsFromGlobals(
     // Lower each call to llvm.bitset.test for this bitset.
     for (CallInst *CI : BitSetTestCallSites[BS]) {
       ++NumBitSetCallsLowered;
-      lowerBitSetCall(CI, BSI, BitSetGlobal, CombinedGlobal, GlobalLayout);
+      Value *Lowered =
+          lowerBitSetCall(CI, BSI, BitSetGlobal, CombinedGlobal, GlobalLayout);
+      CI->replaceAllUsesWith(Lowered);
+      CI->eraseFromParent();
     }
   }
 
@@ -414,8 +431,9 @@ void LowerBitSets::buildBitSetsFromGlobals(
   // global from which we built the combined global, and replace references
   // to the original globals with references to the aliases.
   for (unsigned I = 0; I != Globals.size(); ++I) {
+    // Multiply by 2 to account for padding elements.
     Constant *CombinedGlobalIdxs[] = {ConstantInt::get(Int32Ty, 0),
-                                      ConstantInt::get(Int32Ty, I)};
+                                      ConstantInt::get(Int32Ty, I * 2)};
     Constant *CombinedGlobalElemPtr =
         ConstantExpr::getGetElementPtr(CombinedGlobal, CombinedGlobalIdxs);
     GlobalAlias *GAlias = GlobalAlias::create(

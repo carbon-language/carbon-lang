@@ -6,7 +6,7 @@ target datalayout = "e-p:32:32"
 ; (see GlobalLayoutBuilder in include/llvm/Transforms/IPO/LowerBitSets.h).
 ; The chosen layout in this case is a, e, b, d, c.
 
-; CHECK: private constant { i32, i32, i32, i32, i32 } { i32 1, i32 5, i32 2, i32 4, i32 3 }
+; CHECK: private constant { i32, [0 x i8], i32, [0 x i8], i32, [0 x i8], i32, [0 x i8], i32 } { i32 1, [0 x i8] zeroinitializer, i32 5, [0 x i8] zeroinitializer, i32 2, [0 x i8] zeroinitializer, i32 4, [0 x i8] zeroinitializer, i32 3 }
 @a = constant i32 1
 @b = constant i32 2
 @c = constant i32 3

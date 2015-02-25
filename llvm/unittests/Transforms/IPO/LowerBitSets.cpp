@@ -20,19 +20,22 @@ TEST(LowerBitSets, BitSetBuilder) {
     uint64_t BitSize;
     unsigned AlignLog2;
     bool IsSingleOffset;
+    bool IsAllOnes;
   } BSBTests[] = {
-      {{}, {0}, 0, 1, 0, false},
-      {{0}, {1}, 0, 1, 0, true},
-      {{4}, {1}, 4, 1, 0, true},
-      {{37}, {1}, 37, 1, 0, true},
-      {{0, 1}, {3}, 0, 2, 0, false},
-      {{0, 4}, {3}, 0, 2, 2, false},
-      {{0, uint64_t(1) << 33}, {3}, 0, 2, 33, false},
-      {{3, 7}, {3}, 3, 2, 2, false},
-      {{0, 1, 7}, {131}, 0, 8, 0, false},
-      {{0, 2, 14}, {131}, 0, 8, 1, false},
-      {{0, 1, 8}, {3, 1}, 0, 9, 0, false},
-      {{0, 2, 16}, {3, 1}, 0, 9, 1, false},
+      {{}, {0}, 0, 1, 0, false, false},
+      {{0}, {1}, 0, 1, 0, true, true},
+      {{4}, {1}, 4, 1, 0, true, true},
+      {{37}, {1}, 37, 1, 0, true, true},
+      {{0, 1}, {3}, 0, 2, 0, false, true},
+      {{0, 4}, {3}, 0, 2, 2, false, true},
+      {{0, uint64_t(1) << 33}, {3}, 0, 2, 33, false, true},
+      {{3, 7}, {3}, 3, 2, 2, false, true},
+      {{0, 1, 7}, {131}, 0, 8, 0, false, false},
+      {{0, 2, 14}, {131}, 0, 8, 1, false, false},
+      {{0, 1, 8}, {3, 1}, 0, 9, 0, false, false},
+      {{0, 2, 16}, {3, 1}, 0, 9, 1, false, false},
+      {{0, 1, 2, 3, 4, 5, 6, 7}, {255}, 0, 8, 0, false, true},
+      {{0, 1, 2, 3, 4, 5, 6, 7, 8}, {255, 1}, 0, 9, 0, false, true},
   };
 
   for (auto &&T : BSBTests) {
@@ -47,6 +50,7 @@ TEST(LowerBitSets, BitSetBuilder) {
     EXPECT_EQ(T.BitSize, BSI.BitSize);
     EXPECT_EQ(T.AlignLog2, BSI.AlignLog2);
     EXPECT_EQ(T.IsSingleOffset, BSI.isSingleOffset());
+    EXPECT_EQ(T.IsAllOnes, BSI.isAllOnes());
 
     for (auto Offset : T.Offsets)
       EXPECT_TRUE(BSI.containsGlobalOffset(Offset));
