@@ -44,7 +44,6 @@ void __asan_default_on_error() {}
 #pragma comment(linker, "/alternatename:___sanitizer_malloc_hook=___sanitizer_default_malloc_hook")  // NOLINT
 #pragma comment(linker, "/alternatename:___sanitizer_free_hook=___sanitizer_default_free_hook")      // NOLINT
 #pragma comment(linker, "/alternatename:___asan_default_options=___asan_default_default_options")    // NOLINT
-#pragma comment(linker, "/alternatename:___asan_default_suppressions=___asan_default_default_suppressions")    // NOLINT
 #pragma comment(linker, "/alternatename:___asan_on_error=___asan_default_on_error")                  // NOLINT
 }  // extern "C"
 
