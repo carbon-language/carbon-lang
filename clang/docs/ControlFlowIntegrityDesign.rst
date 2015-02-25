@@ -6,7 +6,7 @@ This page documents the design of the :doc:`ControlFlowIntegrity` schemes
 supported by Clang.
 
 Forward-Edge CFI for Virtual Calls
-----------------------------------
+==================================
 
 This scheme works by allocating, for each static type used to make a virtual
 call, a region of read-only storage in the object file holding a bit vector
@@ -57,8 +57,7 @@ To emit a virtual call, the compiler will assemble code that checks that
 the object's virtual table pointer is in-bounds and aligned and that the
 relevant bit is set in the bit vector.
 
-For example on x86 a typical virtual call may look like this if the bit
-vector is stored in memory:
+For example on x86 a typical virtual call may look like this:
 
 .. code-block:: none
 
@@ -80,7 +79,44 @@ vector is stored in memory:
     [...]
     15ef:       0f 0b                   ud2    
 
-Or if the bit vector fits in 32 bits:
+The compiler relies on co-operation from the linker in order to assemble
+the bit vectors for the whole program. It currently does this using LLVM's
+`bit sets`_ mechanism together with link-time optimization.
+
+.. _address point: https://mentorembedded.github.io/cxx-abi/abi.html#vtable-general
+.. _bit sets: http://llvm.org/docs/BitSets.html
+
+Optimizations
+-------------
+
+The scheme as described above is the fully general variant of the scheme.
+Most of the time we are able to apply one or more of the following
+optimizations to improve binary size or performance.
+
+Stripping Leading/Trailing Zeros in Bit Vectors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If a bit vector contains leading or trailing zeros, we can strip them from
+the vector. The compiler will emit code to check if the pointer is in range
+of the region covered by ones, and perform the bit vector check using a
+truncated version of the bit vector. For example, the bit vectors for our
+example class hierarchy will be emitted like this:
+
+.. csv-table:: Bit Vectors for A, B, C
+  :header: Class, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
+
+  A,  ,  , 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,  ,  
+  B,  ,  ,  ,  ,  ,  ,  , 1,  ,  ,  ,  ,  ,  ,  
+  C,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1,  ,  
+
+Short Inline Bit Vectors
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the vector is sufficiently short, we can represent it as an inline constant
+on x86. This saves us a few instructions when reading the correct element
+of the bit vector.
+
+If the bit vector fits in 32 bits, the code looks like this:
 
 .. code-block:: none
 
@@ -119,9 +155,82 @@ Or if the bit vector fits in 64 bits:
     [...]
     11f5:       0f 0b                   ud2    
 
-The compiler relies on co-operation from the linker in order to assemble
-the bit vector for the whole program. It currently does this using LLVM's
-`bit sets`_ mechanism together with link-time optimization.
+If the bit vector consists of a single bit, there is only one possible
+virtual table, and the check can consist of a single equality comparison:
 
-.. _address point: https://mentorembedded.github.io/cxx-abi/abi.html#vtable-general
-.. _bit sets: http://llvm.org/docs/BitSets.html
+.. code-block:: none
+
+     9a2:   48 8b 03                mov    (%rbx),%rax
+     9a5:   48 8d 0d a4 13 00 00    lea    0x13a4(%rip),%rcx
+     9ac:   48 39 c8                cmp    %rcx,%rax
+     9af:   75 25                   jne    9d6 <main+0x86>
+     9b1:   48 89 df                mov    %rbx,%rdi
+     9b4:   ff 10                   callq  *(%rax)
+     [...]
+     9d6:   0f 0b                   ud2
+
+Virtual Table Layout
+~~~~~~~~~~~~~~~~~~~~
+
+The compiler lays out classes of disjoint hierarchies in separate regions
+of the object file. At worst, bit vectors in disjoint hierarchies only
+need to cover their disjoint hierarchy. But the closer that classes in
+sub-hierarchies are laid out to each other, the smaller the bit vectors for
+those sub-hierarchies need to be (see "Stripping Leading/Trailing Zeros in Bit
+Vectors" above). The `GlobalLayoutBuilder`_ class is responsible for laying
+out the globals efficiently to minimize the sizes of the underlying bitsets.
+
+.. _GlobalLayoutBuilder: http://llvm.org/klaus/llvm/blob/master/include/llvm/Transforms/IPO/LowerBitSets.h
+
+Alignment
+~~~~~~~~~
+
+If all gaps between address points in a particular bit vector are multiples
+of powers of 2, the compiler can compress the bit vector by strengthening
+the alignment requirements of the virtual table pointer. For example, given
+this class hierarchy:
+
+.. code-block:: c++
+
+  struct A {
+    virtual void f1();
+    virtual void f2();
+  };
+
+  struct B : A {
+    virtual void f1();
+    virtual void f2();
+    virtual void f3();
+    virtual void f4();
+    virtual void f5();
+    virtual void f6();
+  };
+
+  struct C : A {
+    virtual void f1();
+    virtual void f2();
+  };
+
+The virtual tables will be laid out like this:
+
+.. csv-table:: Virtual Table Layout for A, B, C
+  :header: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+
+  A::offset-to-top, &A::rtti, &A::f1, &A::f2, B::offset-to-top, &B::rtti, &B::f1, &B::f2, &B::f3, &B::f4, &B::f5, &B::f6, C::offset-to-top, &C::rtti, &C::f1, &C::f2
+
+Notice that each address point for A is separated by 4 words. This lets us
+emit a compressed bit vector for A that looks like this:
+
+.. csv-table::
+  :header: 2, 6, 10, 14
+
+  1, 1, 0, 1
+
+At call sites, the compiler will strengthen the alignment requirements by
+using a different rotate count. For example, on a 64-bit machine where the
+address points are 4-word aligned (as in A from our example), the ``rol``
+instruction may look like this:
+
+.. code-block:: none
+
+     dd2:       48 c1 c1 3b             rol    $0x3b,%rcx
