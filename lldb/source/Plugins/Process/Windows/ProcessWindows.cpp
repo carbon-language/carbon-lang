@@ -222,7 +222,11 @@ ProcessWindows::DoLaunch(Module *exe_module,
     {
         // Block this function until we receive the initial stop from the process.
         if (::WaitForSingleObject(m_session_data->m_initial_stop_event, INFINITE) == WAIT_OBJECT_0)
+        {
             process = debugger->GetProcess();
+            if (m_session_data->m_launch_error.Fail())
+                result = m_session_data->m_launch_error;
+        }
         else
             result.SetError(::GetLastError(), eErrorTypeWin32);
     }
