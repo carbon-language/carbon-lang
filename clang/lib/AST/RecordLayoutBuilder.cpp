@@ -55,6 +55,52 @@ struct BaseSubobjectInfo {
   const BaseSubobjectInfo *Derived;
 };
 
+/// \brief Externally provided layout. Typically used when the AST source, such
+/// as DWARF, lacks all the information that was available at compile time, such
+/// as alignment attributes on fields and pragmas in effect.
+struct ExternalLayout {
+  ExternalLayout() : Size(0), Align(0) {}
+
+  /// \brief Overall record size in bits.
+  uint64_t Size;
+
+  /// \brief Overall record alignment in bits.
+  uint64_t Align;
+
+  /// \brief Record field offsets in bits.
+  llvm::DenseMap<const FieldDecl *, uint64_t> FieldOffsets;
+
+  /// \brief Direct, non-virtual base offsets.
+  llvm::DenseMap<const CXXRecordDecl *, CharUnits> BaseOffsets;
+
+  /// \brief Virtual base offsets.
+  llvm::DenseMap<const CXXRecordDecl *, CharUnits> VirtualBaseOffsets;
+
+  /// Get the offset of the given field. The external source must provide
+  /// entries for all fields in the record.
+  uint64_t getExternalFieldOffset(const FieldDecl *FD) {
+    assert(FieldOffsets.count(FD) &&
+           "Field does not have an external offset");
+    return FieldOffsets[FD];
+  }
+
+  bool getExternalNVBaseOffset(const CXXRecordDecl *RD, CharUnits &BaseOffset) {
+    auto Known = BaseOffsets.find(RD);
+    if (Known == BaseOffsets.end())
+      return false;
+    BaseOffset = Known->second;
+    return true;
+  }
+
+  bool getExternalVBaseOffset(const CXXRecordDecl *RD, CharUnits &BaseOffset) {
+    auto Known = VirtualBaseOffsets.find(RD);
+    if (Known == VirtualBaseOffsets.end())
+      return false;
+    BaseOffset = Known->second;
+    return true;
+  }
+};
+
 /// EmptySubobjectMap - Keeps track of which empty subobjects exist at different
 /// offsets while laying out a C++ class.
 class EmptySubobjectMap {
@@ -541,7 +587,7 @@ protected:
 
   /// \brief Whether the external AST source has provided a layout for this
   /// record.
-  unsigned ExternalLayout : 1;
+  unsigned UseExternalLayout : 1;
 
   /// \brief Whether we need to infer alignment, even when we have an 
   /// externally-provided layout.
@@ -607,26 +653,14 @@ protected:
   /// avoid visiting virtual bases more than once.
   llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBases;
 
-  /// \brief Externally-provided size.
-  uint64_t ExternalSize;
-
-  /// \brief Externally-provided alignment.
-  uint64_t ExternalAlign;
-
-  /// \brief Externally-provided field offsets.
-  llvm::DenseMap<const FieldDecl *, uint64_t> ExternalFieldOffsets;
-
-  /// \brief Externally-provided direct, non-virtual base offsets.
-  llvm::DenseMap<const CXXRecordDecl *, CharUnits> ExternalBaseOffsets;
-
-  /// \brief Externally-provided virtual base offsets.
-  llvm::DenseMap<const CXXRecordDecl *, CharUnits> ExternalVirtualBaseOffsets;
+  /// Valid if UseExternalLayout is true.
+  ExternalLayout External;
 
   RecordLayoutBuilder(const ASTContext &Context,
                       EmptySubobjectMap *EmptySubobjects)
     : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), 
       Alignment(CharUnits::One()), UnpackedAlignment(CharUnits::One()),
-      ExternalLayout(false), InferAlignment(false),
+      UseExternalLayout(false), InferAlignment(false),
       Packed(false), IsUnion(false), IsMac68kAlign(false), IsMsStruct(false),
       UnfilledBitsInLastUnit(0), LastBitfieldTypeSize(0),
       MaxFieldAlignment(CharUnits::Zero()), 
@@ -1134,21 +1168,12 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
   
   // Query the external layout to see if it provides an offset.
   bool HasExternalLayout = false;
-  if (ExternalLayout) {
+  if (UseExternalLayout) {
     llvm::DenseMap<const CXXRecordDecl *, CharUnits>::iterator Known;
-    if (Base->IsVirtual) {
-      Known = ExternalVirtualBaseOffsets.find(Base->Class);
-      if (Known != ExternalVirtualBaseOffsets.end()) {
-        Offset = Known->second;
-        HasExternalLayout = true;
-      }
-    } else {
-      Known = ExternalBaseOffsets.find(Base->Class);
-      if (Known != ExternalBaseOffsets.end()) {
-        Offset = Known->second;
-        HasExternalLayout = true;
-      }
-    }
+    if (Base->IsVirtual)
+      HasExternalLayout = External.getExternalNVBaseOffset(Base->Class, Offset);
+    else
+      HasExternalLayout = External.getExternalVBaseOffset(Base->Class, Offset);
   }
   
   CharUnits UnpackedBaseAlign = Layout.getNonVirtualAlignment();
@@ -1235,18 +1260,15 @@ void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
   
   // If there is an external AST source, ask it for the various offsets.
   if (const RecordDecl *RD = dyn_cast<RecordDecl>(D))
-    if (ExternalASTSource *External = Context.getExternalSource()) {
-      ExternalLayout = External->layoutRecordType(RD,
-                                                  ExternalSize,
-                                                  ExternalAlign,
-                                                  ExternalFieldOffsets,
-                                                  ExternalBaseOffsets,
-                                                  ExternalVirtualBaseOffsets);
+    if (ExternalASTSource *Source = Context.getExternalSource()) {
+      UseExternalLayout = Source->layoutRecordType(
+          RD, External.Size, External.Align, External.FieldOffsets,
+          External.BaseOffsets, External.VirtualBaseOffsets);
 
       // Update based on external alignment.
-      if (ExternalLayout) {
-        if (ExternalAlign > 0) {
-          Alignment = Context.toCharUnitsFromBits(ExternalAlign);
+      if (UseExternalLayout) {
+        if (External.Align > 0) {
+          Alignment = Context.toCharUnitsFromBits(External.Align);
         } else {
           // The external source didn't have alignment information; infer it.
           InferAlignment = true;
@@ -1588,7 +1610,7 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
 
   // If we're using external layout, give the external layout a chance
   // to override this information.
-  if (ExternalLayout)
+  if (UseExternalLayout)
     FieldOffset = updateExternalFieldOffset(D, FieldOffset);
 
   // Okay, place the bitfield at the calculated offset.
@@ -1604,7 +1626,7 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
     FieldAlign = UnpackedFieldAlign = 1;
 
   // Diagnose differences in layout due to padding or packing.
-  if (!ExternalLayout)
+  if (!UseExternalLayout)
     CheckFieldPadding(FieldOffset, UnpaddedFieldOffset, UnpackedFieldOffset,
                       UnpackedFieldAlign, FieldPacked, D);
 
@@ -1727,7 +1749,7 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D,
   UnpackedFieldOffset = 
     UnpackedFieldOffset.RoundUpToAlignment(UnpackedFieldAlign);
 
-  if (ExternalLayout) {
+  if (UseExternalLayout) {
     FieldOffset = Context.toCharUnitsFromBits(
                     updateExternalFieldOffset(D, Context.toBits(FieldOffset)));
     
@@ -1750,8 +1772,8 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D,
   // Place this field at the current location.
   FieldOffsets.push_back(Context.toBits(FieldOffset));
 
-  if (!ExternalLayout)
-    CheckFieldPadding(Context.toBits(FieldOffset), UnpaddedFieldOffset,
+  if (!UseExternalLayout)
+    CheckFieldPadding(Context.toBits(FieldOffset), UnpaddedFieldOffset, 
                       Context.toBits(UnpackedFieldOffset),
                       Context.toBits(UnpackedFieldAlign), FieldPacked, D);
 
@@ -1802,15 +1824,15 @@ void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
   uint64_t RoundedSize
     = llvm::RoundUpToAlignment(getSizeInBits(), Context.toBits(Alignment));
 
-  if (ExternalLayout) {
+  if (UseExternalLayout) {
     // If we're inferring alignment, and the external size is smaller than
     // our size after we've rounded up to alignment, conservatively set the
     // alignment to 1.
-    if (InferAlignment && ExternalSize < RoundedSize) {
+    if (InferAlignment && External.Size < RoundedSize) {
       Alignment = CharUnits::One();
       InferAlignment = false;
     }
-    setSize(ExternalSize);
+    setSize(External.Size);
     return;
   }
 
@@ -1846,7 +1868,7 @@ void RecordLayoutBuilder::UpdateAlignment(CharUnits NewAlignment,
                                           CharUnits UnpackedNewAlignment) {
   // The alignment is not modified when using 'mac68k' alignment or when
   // we have an externally-supplied layout that also provides overall alignment.
-  if (IsMac68kAlign || (ExternalLayout && !InferAlignment))
+  if (IsMac68kAlign || (UseExternalLayout && !InferAlignment))
     return;
 
   if (NewAlignment > Alignment) {
@@ -1865,10 +1887,7 @@ void RecordLayoutBuilder::UpdateAlignment(CharUnits NewAlignment,
 uint64_t
 RecordLayoutBuilder::updateExternalFieldOffset(const FieldDecl *Field, 
                                                uint64_t ComputedOffset) {
-  assert(ExternalFieldOffsets.find(Field) != ExternalFieldOffsets.end() &&
-         "Field does not have an external offset");
-
-  uint64_t ExternalFieldOffset = ExternalFieldOffsets[Field];
+  uint64_t ExternalFieldOffset = External.getExternalFieldOffset(Field);
 
   if (InferAlignment && ExternalFieldOffset < ComputedOffset) {
     // The externally-supplied field offset is before the field offset we
@@ -2251,6 +2270,13 @@ public:
   /// \brief True if this class is zero sized or first base is zero sized or
   /// has this property.  Only used for MS-ABI.
   bool LeadsWithZeroSizedBase : 1;
+
+  /// \brief True if the external AST source provided a layout for this record.
+  bool UseExternalLayout : 1;
+
+  /// \brief The layout provided by the external AST source. Only active if
+  /// UseExternalLayout is true.
+  ExternalLayout External;
 };
 } // namespace
 
@@ -2370,6 +2396,13 @@ void MicrosoftRecordLayoutBuilder::initializeLayout(const RecordDecl *RD) {
   // Packed attribute forces max field alignment to be 1.
   if (RD->hasAttr<PackedAttr>())
     MaxFieldAlignment = CharUnits::One();
+
+  // Try to respect the external layout if present.
+  UseExternalLayout = false;
+  if (ExternalASTSource *Source = Context.getExternalSource())
+    UseExternalLayout = Source->layoutRecordType(
+        RD, External.Size, External.Align, External.FieldOffsets,
+        External.BaseOffsets, External.VirtualBaseOffsets);
 }
 
 void
@@ -2474,7 +2507,18 @@ void MicrosoftRecordLayoutBuilder::layoutNonVirtualBase(
       BaseLayout.leadsWithZeroSizedBase())
     Size++;
   ElementInfo Info = getAdjustedElementInfo(BaseLayout);
-  CharUnits BaseOffset = Size.RoundUpToAlignment(Info.Alignment);
+  CharUnits BaseOffset;
+
+  // Respect the external AST source base offset, if present.
+  bool FoundBase = false;
+  if (UseExternalLayout) {
+    FoundBase = External.getExternalNVBaseOffset(BaseDecl, BaseOffset);
+    if (FoundBase)
+      assert(BaseOffset >= Size && "base offset already allocated");
+  }
+
+  if (!FoundBase)
+    BaseOffset = Size.RoundUpToAlignment(Info.Alignment);
   Bases.insert(std::make_pair(BaseDecl, BaseOffset));
   Size = BaseOffset + BaseLayout.getNonVirtualSize();
   PreviousBaseLayout = &BaseLayout;
@@ -2498,7 +2542,14 @@ void MicrosoftRecordLayoutBuilder::layoutField(const FieldDecl *FD) {
     placeFieldAtOffset(CharUnits::Zero());
     Size = std::max(Size, Info.Size);
   } else {
-    CharUnits FieldOffset = Size.RoundUpToAlignment(Info.Alignment);
+    CharUnits FieldOffset;
+    if (UseExternalLayout) {
+      FieldOffset =
+          Context.toCharUnitsFromBits(External.getExternalFieldOffset(FD));
+      assert(FieldOffset >= Size && "field offset already allocated");
+    } else {
+      FieldOffset = Size.RoundUpToAlignment(Info.Alignment);
+    }
     placeFieldAtOffset(FieldOffset);
     Size = FieldOffset + Info.Size;
   }
@@ -2572,14 +2623,16 @@ void MicrosoftRecordLayoutBuilder::injectVBPtr(const CXXRecordDecl *RD) {
   CharUnits InjectionSite = VBPtrOffset;
   // But before we do, make sure it's properly aligned.
   VBPtrOffset = VBPtrOffset.RoundUpToAlignment(PointerInfo.Alignment);
+  // Shift everything after the vbptr down, unless we're using an external
+  // layout.
+  if (UseExternalLayout)
+    return;
   // Determine where the first field should be laid out after the vbptr.
   CharUnits FieldStart = VBPtrOffset + PointerInfo.Size;
   // Make sure that the amount we push the fields back by is a multiple of the
   // alignment.
   CharUnits Offset = (FieldStart - InjectionSite).RoundUpToAlignment(
       std::max(RequiredAlignment, Alignment));
-  // Increase the size of the object and push back all fields by the offset
-  // amount.
   Size += Offset;
   for (uint64_t &FieldOffset : FieldOffsets)
     FieldOffset += Context.toBits(Offset);
@@ -2646,7 +2699,18 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
     }
     // Insert the virtual base.
     ElementInfo Info = getAdjustedElementInfo(BaseLayout);
-    CharUnits BaseOffset = Size.RoundUpToAlignment(Info.Alignment);
+    CharUnits BaseOffset;
+
+    // Respect the external AST source base offset, if present.
+    bool FoundBase = false;
+    if (UseExternalLayout) {
+      FoundBase = External.getExternalVBaseOffset(BaseDecl, BaseOffset);
+      if (FoundBase)
+        assert(BaseOffset >= Size && "base offset already allocated");
+    }
+    if (!FoundBase)
+      BaseOffset = Size.RoundUpToAlignment(Info.Alignment);
+
     VBases.insert(std::make_pair(BaseDecl,
         ASTRecordLayout::VBaseInfo(BaseOffset, HasVtordisp)));
     Size = BaseOffset + BaseLayout.getNonVirtualSize();
@@ -2675,6 +2739,12 @@ void MicrosoftRecordLayoutBuilder::finalizeLayout(const RecordDecl *RD) {
       Size = Alignment;
     else
       Size = MinEmptyStructSize;
+  }
+
+  if (UseExternalLayout) {
+    Size = Context.toCharUnitsFromBits(External.Size);
+    if (External.Align)
+      Alignment = Context.toCharUnitsFromBits(External.Align);
   }
 }
 
@@ -2814,7 +2884,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
 
   const ASTRecordLayout *NewEntry = nullptr;
 
-  if (isMsLayout(D) && !D->getASTContext().getExternalSource()) {
+  if (isMsLayout(D)) {
     NewEntry = BuildMicrosoftASTRecordLayout(D);
   } else if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     EmptySubobjectMap EmptySubobjects(*this, RD);
