@@ -330,7 +330,7 @@ static ArrayRef<OperandType[2]> getOperandTypes() {
 #undef DECLARE_OP0
 #undef DECLARE_OP1
 #undef DECLARE_OP2
-  return OpTypes;
+  return ArrayRef<OperandType[2]>(&OpTypes[0], DW_CFA_restore+1);
 }
 
 static ArrayRef<OperandType[2]> OpTypes = getOperandTypes();
