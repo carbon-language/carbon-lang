@@ -354,15 +354,15 @@ public:
     static const mask xdigit = _HEX;
     static const mask blank  = _BLANK;
 #elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__EMSCRIPTEN__) || defined(__NetBSD__) || defined(__ANDROID__)
-#ifdef __APPLE__
+# ifdef __APPLE__
     typedef __uint32_t mask;
-#elif defined(__FreeBSD__)
+# elif defined(__FreeBSD__)
     typedef unsigned long mask;
-#elif defined(__EMSCRIPTEN__) ||  defined(__NetBSD__)
+# elif defined(__EMSCRIPTEN__) ||  defined(__NetBSD__)
     typedef unsigned short mask;
-#elif defined(__ANDROID__)
+# elif defined(__ANDROID__)
     typedef unsigned char mask;
-#endif
+# endif
     static const mask space  = _CTYPE_S;
     static const mask print  = _CTYPE_R;
     static const mask cntrl  = _CTYPE_C;
@@ -394,7 +394,20 @@ public:
     static const mask punct  = _ISPUNCT;
     static const mask xdigit = _ISXDIGIT;
     static const mask blank  = _ISBLANK;
-#else  // __GLIBC__ || _WIN32 || __APPLE__ || __FreeBSD__ || __EMSCRIPTEN__ || __sun__
+#elif defined(_NEWLIB_VERSION)
+    // Same type as Newlib's _ctype_ array in newlib/libc/include/ctype.h.
+    typedef char mask;
+    static const mask space  = _S;
+    static const mask print  = _P | _U | _L | _N | _B;
+    static const mask cntrl  = _C;
+    static const mask upper  = _U;
+    static const mask lower  = _L;
+    static const mask alpha  = _U | _L;
+    static const mask digit  = _N;
+    static const mask punct  = _P;
+    static const mask xdigit = _X | _N;
+    static const mask blank  = _B;
+#else
     typedef unsigned long mask;
     static const mask space  = 1<<0;
     static const mask print  = 1<<1;
@@ -406,7 +419,7 @@ public:
     static const mask punct  = 1<<7;
     static const mask xdigit = 1<<8;
     static const mask blank  = 1<<9;
-#endif  // __GLIBC__ || _WIN32 || __APPLE__ || __FreeBSD__
+#endif
     static const mask alnum  = alpha | digit;
     static const mask graph  = alnum | punct;
 
