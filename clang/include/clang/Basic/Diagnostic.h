@@ -991,7 +991,8 @@ public:
 
   void AddFixItHint(const FixItHint &Hint) const {
     assert(isActive() && "Clients must not add to cleared diagnostic!");
-    DiagObj->DiagFixItHints.push_back(Hint);
+    if (!Hint.isNull())
+      DiagObj->DiagFixItHints.push_back(Hint);
   }
 
   void addFlagValue(StringRef V) const { DiagObj->FlagValue = V; }
@@ -1095,7 +1096,13 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
 
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            const FixItHint &Hint) {
-  if (!Hint.isNull())
+  DB.AddFixItHint(Hint);
+  return DB;
+}
+
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           ArrayRef<FixItHint> Hints) {
+  for (const FixItHint &Hint : Hints)
     DB.AddFixItHint(Hint);
   return DB;
 }
