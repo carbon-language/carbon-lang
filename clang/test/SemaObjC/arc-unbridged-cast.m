@@ -32,15 +32,20 @@ CFStringRef auditedString(void);
 CFStringRef auditedCreateString(void);
 #pragma clang arc_cf_code_audited end
 
+extern const CFStringRef kUserConst;
+
 void test1(int cond) {
   id x;
   x = (id) auditedString();
+  x = (id) kUserConst;
   x = (id) (cond ? auditedString() : (void*) 0);
   x = (id) (cond ? (void*) 0 : auditedString());
   x = (id) (cond ? (CFStringRef) @"help" : auditedString());
+  x = (id) (cond ? (CFStringRef) @"help" : kUserConst);
 
   x = (id) unauditedString(); // expected-error {{requires a bridged cast}} expected-note {{use __bridge to}} expected-note {{use CFBridgingRelease call to}}
   x = (id) (cond ? unauditedString() : (void*) 0); // expected-error {{requires a bridged cast}} expected-note {{use __bridge to}} expected-note {{use CFBridgingRelease call to}}
+  x = (id) (cond ? unauditedString() : kUserConst); // expected-error {{requires a bridged cast}} expected-note {{use __bridge to}} expected-note {{use CFBridgingRelease call to}}
   x = (id) (cond ? (void*) 0 : unauditedString()); // expected-error {{requires a bridged cast}} expected-note {{use __bridge to}} expected-note {{use CFBridgingRelease call to}}
   x = (id) (cond ? (CFStringRef) @"help" : unauditedString()); // expected-error {{requires a bridged cast}} expected-note {{use __bridge to}} expected-note {{use CFBridgingRelease call to}}
 
@@ -68,11 +73,13 @@ void test1(int cond) {
   x = (id) (cond ? [object makeString] : (void*) 0);
   x = (id) (cond ? (void*) 0 : [object makeString]);
   x = (id) (cond ? (CFStringRef) @"help" : [object makeString]);  
+  x = (id) (cond ? kUserConst : [object makeString]);
 
   x = (id) [object newString];
   x = (id) (cond ? [object newString] : (void*) 0);
   x = (id) (cond ? (void*) 0 : [object newString]);
   x = (id) (cond ? (CFStringRef) @"help" : [object newString]); // a bit questionable
+  x = (id) (cond ? kUserConst : [object newString]); // expected-error{{requires a bridged cast}} expected-note{{use __bridge to}} expected-note{{use CFBridgingRelease call to}}
 }
 
 // rdar://problem/10246264

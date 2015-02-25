@@ -594,7 +594,9 @@ retainable pointer type <arc.misc.c-retainable>` and it is:
 * a message send, and the declared method either has the
   ``cf_returns_not_retained`` attribute or it has neither the
   ``cf_returns_retained`` attribute nor a :ref:`selector family
-  <arc.method-families>` that implies a retained result.
+  <arc.method-families>` that implies a retained result, or
+* :when-revised:`[beginning LLVM 3.6]` :revision:`a load from a` ``const``
+  :revision:`non-system global variable.`
 
 An expression is :arc-term:`known retained` if it is an rvalue of :ref:`C
 retainable pointer type <arc.misc.c-retainable>` and it is:
@@ -630,6 +632,12 @@ retain-agnostic, the conversion is treated as a ``__bridge`` cast.
   that some code patterns  ---  for example, creating a CF value, assigning it
   to an ObjC-typed local, and then calling ``CFRelease`` when done  ---  are a
   bit too likely to be accidentally accepted, leading to mysterious behavior.
+
+  For loads from ``const`` global variables of :ref:`C retainable pointer type
+  <arc.misc.c-retainable>`, it is reasonable to assume that global system
+  constants were initialitzed with true constants (e.g. string literals), but
+  user constants might have been initialized with something dynamically
+  allocated, using a global initializer.
 
 .. _arc.objects.restrictions.conversion-exception-contextual:
 

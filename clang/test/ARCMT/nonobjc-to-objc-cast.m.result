@@ -7,6 +7,7 @@
 typedef const struct __CFString * CFStringRef;
 extern const CFStringRef kUTTypePlainText;
 extern const CFStringRef kUTTypeRTF;
+extern CFStringRef kNonConst;
 
 typedef const struct __CFAllocator * CFAllocatorRef;
 typedef const struct __CFUUID * CFUUIDRef;
@@ -28,10 +29,14 @@ struct StrS {
 @end
 
 void f(BOOL b, id p) {
-  NSString *str = (__bridge NSString *)kUTTypePlainText;
-  str = (__bridge NSString *)(b ? kUTTypeRTF : kUTTypePlainText);
-  str = (__bridge NSString *)(b ? kUTTypeRTF : kUTTypePlainText);
+  NSString *str = (NSString *)kUTTypePlainText; // no change
+  str = b ? kUTTypeRTF : kUTTypePlainText; // no change
+  str = (NSString *)(b ? kUTTypeRTF : kUTTypePlainText); // no change
   str = (NSString *)p; // no change.
+
+  str = (__bridge NSString *)kNonConst;
+  str = (__bridge NSString *)(b ? kUTTypeRTF : kNonConst);
+  str = (__bridge NSString *)(b ? kUTTypeRTF : kNonConst);
 
   CFUUIDRef   _uuid;
   NSString *_uuidString = (NSString *)CFBridgingRelease(CFUUIDCreateString(kCFAllocatorDefault, _uuid));
