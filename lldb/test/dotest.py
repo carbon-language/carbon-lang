@@ -551,6 +551,7 @@ def parseOptionsAndInitTestdirs():
     X('-S', "Skip the build and cleanup while running the test. Use this option with care as you would need to build the inferior(s) by hand and build the executable(s) with the correct name(s). This can be used with '-# n' to stress test certain test cases for n number of times")
     X('-t', 'Turn on tracing of lldb command and other detailed test executions')
     group.add_argument('-u', dest='unset_env_varnames', metavar='variable', action='append', help='Specify an environment variable to unset before running the test cases. e.g., -u DYLD_INSERT_LIBRARIES -u MallocScribble')
+    group.add_argument('--env', dest='set_env_vars', metavar='variable', action='append', help='Specify an environment variable to set to the given value before running the test cases e.g.: --env CXXFLAGS=-O3 --env DYLD_INSERT_LIBRARIES')
     X('-v', 'Do verbose mode of unittest framework (print out each test case invocation)')
     X('-w', 'Insert some wait time (currently 0.5 sec) between consecutive test cases')
     X('-T', 'Obtain and dump svn information for this checkout of LLDB (off by default)')
@@ -574,7 +575,15 @@ def parseOptionsAndInitTestdirs():
                 # is automatically translated into a corresponding call to unsetenv().
                 del os.environ[env_var]
                 #os.unsetenv(env_var)
-    
+
+    if args.set_env_vars:
+        for env_var in args.set_env_vars:
+            parts = env_var.split('=', 1)
+            if len(parts) == 1:
+                os.environ[parts[0]] = ""
+            else:
+                os.environ[parts[0]] = parts[1]
+
     # only print the args if being verbose (and parsable is off)
     if args.v and not args.q:
         print sys.argv
