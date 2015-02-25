@@ -6,6 +6,10 @@
 
 define void @f(i32 %a, ...) {
 entry:
+; Check that space is reserved above the pushed lr for variadic argument
+; registers to be stored in.
+; CHECK: sub sp, #[[IMM:[0-9]+]]
+; CHECK: push
         %va = alloca i8*, align 4               ; <i8**> [#uses=4]
         %va.upgrd.1 = bitcast i8** %va to i8*           ; <i8*> [#uses=1]
         call void @llvm.va_start( i8* %va.upgrd.1 )
@@ -27,6 +31,13 @@ bb7:            ; preds = %bb
         %va.upgrd.4 = bitcast i8** %va to i8*           ; <i8*> [#uses=1]
         call void @llvm.va_end( i8* %va.upgrd.4 )
         ret void
+
+; The return sequence should pop the lr to r3, recover the stack space used to
+; store variadic argument registers, then return via r3. Possibly there is a pop
+; before this, but only if the function happened to use callee-saved registers.
+; CHECK: pop {r3}
+; CHECK: add sp, #[[IMM]]
+; CHECK: bx r3
 }
 
 declare void @llvm.va_start(i8*)
@@ -34,8 +45,3 @@ declare void @llvm.va_start(i8*)
 declare i32 @printf(i8*, ...)
 
 declare void @llvm.va_end(i8*)
-
-; CHECK: pop
-; CHECK: pop
-; CHECK-NOT: pop
-

@@ -43,26 +43,6 @@ bb3:
 declare noalias i8* @strdup(i8* nocapture) nounwind
 declare i32 @_called_func(i8*, i32*) nounwind
 
-; Variable ending up at unaligned offset from sp (i.e. not a multiple of 4)
-define void @test_local_var_addr() {
-; CHECK-LABEL: test_local_var_addr:
-
-  %addr1 = alloca i8
-  %addr2 = alloca i8
-
-; CHECK: mov r0, sp
-; CHECK: adds r0, #{{[0-9]+}}
-; CHECK: blx
-  call void @take_ptr(i8* %addr1)
-
-; CHECK: mov r0, sp
-; CHECK: adds r0, #{{[0-9]+}}
-; CHECK: blx
-  call void @take_ptr(i8* %addr2)
-
-  ret void
-}
-
 ; Simple variable ending up *at* sp.
 define void @test_simple_var() {
 ; CHECK-LABEL: test_simple_var:
@@ -126,14 +106,16 @@ define void @test_local_var_offset_1020() {
   ret void
 }
 
-; Max range addressable with tADDrSPi + tADDi8
-define void @test_local_var_offset_1275() {
-; CHECK-LABEL: test_local_var_offset_1275
+; Max range addressable with tADDrSPi + tADDi8 is 1275, however the automatic
+; 4-byte aligning of objects on the stack combined with 8-byte stack alignment
+; means that 1268 is the max offset we can use.
+define void @test_local_var_offset_1268() {
+; CHECK-LABEL: test_local_var_offset_1268
   %addr1 = alloca i8, i32 1
-  %addr2 = alloca i8, i32 1275
+  %addr2 = alloca i8, i32 1268
 
 ; CHECK: add r0, sp, #1020
-; CHECK: adds r0, #255
+; CHECK: adds r0, #248
 ; CHECK-NEXT: blx
   call void @take_ptr(i8* %addr1)
 

@@ -30,9 +30,9 @@ entry:
 ; CHECK-ARM: push {r11, lr}
 ; CHECK-ARM: mov r11, sp
 
-; CHECK-THUMB: push {r4, r6, r7, lr}
-; CHECK-THUMB: add r7, sp, #8
+; CHECK-THUMB: push {r7, lr}
+; CHECK-THUMB: add r7, sp, #0
 
 ; CHECK-DARWIN-ARM: push {r7, lr}
-; CHECK-DARWIN-THUMB: push {r4, r7, lr}
+; CHECK-DARWIN-THUMB: push {r7, lr}
 

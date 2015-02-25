@@ -1296,7 +1296,7 @@ define void @test_atomic_store_monotonic_regoff_i8(i64 %base, i64 %off, i8 %val)
   %addr = inttoptr i64 %addr_int to i8*
 
   store atomic i8 %val, i8* %addr monotonic, align 1
-; CHECK-LE: ldrb{{(\.w)?}} [[VAL:r[0-9]+]], [sp]
+; CHECK-LE: ldr{{b?(\.w)?}} [[VAL:r[0-9]+]], [sp]
 ; CHECK-LE: strb [[VAL]], [r0, r2]
 ; CHECK-BE: ldrb{{(\.w)?}} [[VAL:r[0-9]+]], [sp, #3]
 ; CHECK-BE: strb [[VAL]], [r1, r3]

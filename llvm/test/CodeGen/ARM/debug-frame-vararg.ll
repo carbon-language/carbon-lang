@@ -88,24 +88,22 @@
 ; CHECK-THUMB-FP: .cfi_startproc
 ; CHECK-THUMB-FP: sub    sp, #16
 ; CHECK-THUMB-FP: .cfi_def_cfa_offset 16
-; CHECK-THUMB-FP: push   {r4, r5, r7, lr}
-; CHECK-THUMB-FP: .cfi_def_cfa_offset 32
+; CHECK-THUMB-FP: push   {r4, lr}
+; CHECK-THUMB-FP: .cfi_def_cfa_offset 24
 ; CHECK-THUMB-FP: .cfi_offset lr, -20
-; CHECK-THUMB-FP: .cfi_offset r7, -24
-; CHECK-THUMB-FP: .cfi_offset r5, -28
-; CHECK-THUMB-FP: .cfi_offset r4, -32
+; CHECK-THUMB-FP: .cfi_offset r4, -24
 ; CHECK-THUMB-FP: sub    sp, #8
-; CHECK-THUMB-FP: .cfi_def_cfa_offset 40
+; CHECK-THUMB-FP: .cfi_def_cfa_offset 32
 
 ; CHECK-THUMB-FP-ELIM-LABEL: sum
 ; CHECK-THUMB-FP-ELIM: .cfi_startproc
 ; CHECK-THUMB-FP-ELIM: sub    sp, #16
 ; CHECK-THUMB-FP-ELIM: .cfi_def_cfa_offset 16
-; CHECK-THUMB-FP-ELIM: push   {r4, r5, r7, lr}
+; CHECK-THUMB-FP-ELIM: push   {r4, r6, r7, lr}
 ; CHECK-THUMB-FP-ELIM: .cfi_def_cfa_offset 32
 ; CHECK-THUMB-FP-ELIM: .cfi_offset lr, -20
 ; CHECK-THUMB-FP-ELIM: .cfi_offset r7, -24
-; CHECK-THUMB-FP-ELIM: .cfi_offset r5, -28
+; CHECK-THUMB-FP-ELIM: .cfi_offset r6, -28
 ; CHECK-THUMB-FP-ELIM: .cfi_offset r4, -32
 ; CHECK-THUMB-FP-ELIM: add    r7, sp, #8
 ; CHECK-THUMB-FP-ELIM: .cfi_def_cfa r7, 24

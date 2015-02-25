@@ -7,16 +7,17 @@ target triple = "thumbv6m--linux-gnueabi"
 @e = internal unnamed_addr global i32* null, align 4
 
 ; Function Attrs: nounwind optsize
-define void @fn1() #0 {
+define void @fn1(i32 %x, i32 %y, i32 %z) #0 {
 entry:
 ; CHECK-LABEL: fn1:
 ; CHECK: stm r[[BASE:[0-9]]]!, {{.*}}
 ; CHECK-NOT: {{.*}} r[[BASE]]
-; CHECK: ldr r[[BASE]], {{.*}}
   %g = alloca i32, align 4
   %h = alloca i32, align 4
-  store i32 1, i32* %g, align 4
-  store i32 0, i32* %h, align 4
+  %i = alloca i32, align 4
+  store i32 %x, i32* %i, align 4
+  store i32 %y, i32* %h, align 4
+  store i32 %z, i32* %g, align 4
   %.pr = load i32* @d, align 4
   %cmp11 = icmp slt i32 %.pr, 1
   br i1 %cmp11, label %for.inc.lr.ph, label %for.body5

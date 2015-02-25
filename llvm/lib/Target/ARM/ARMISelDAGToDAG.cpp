@@ -1197,6 +1197,11 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDValue N,
                                             SDValue &Base, SDValue &OffImm) {
   if (N.getOpcode() == ISD::FrameIndex) {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
+    // Only multiples of 4 are allowed for the offset, so the frame object
+    // alignment must be at least 4.
+    MachineFrameInfo *MFI = MF->getFrameInfo();
+    if (MFI->getObjectAlignment(FI) < 4)
+      MFI->setObjectAlignment(FI, 4);
     Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy());
     OffImm = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
@@ -1214,6 +1219,11 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeSP(SDValue N,
       Base = N.getOperand(0);
       if (Base.getOpcode() == ISD::FrameIndex) {
         int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+        // For LHS+RHS to result in an offset that's a multiple of 4 the object
+        // indexed by the LHS must be 4-byte aligned.
+        MachineFrameInfo *MFI = MF->getFrameInfo();
+        if (MFI->getObjectAlignment(FI) < 4)
+          MFI->setObjectAlignment(FI, 4);
         Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy());
       }
       OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
@@ -2502,6 +2512,11 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     SDValue TFI = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy());
     if (Subtarget->isThumb1Only()) {
+      // Set the alignment of the frame object to 4, to avoid having to generate
+      // more than one ADD
+      MachineFrameInfo *MFI = MF->getFrameInfo();
+      if (MFI->getObjectAlignment(FI) < 4)
+        MFI->setObjectAlignment(FI, 4);
       return CurDAG->SelectNodeTo(N, ARM::tADDframe, MVT::i32, TFI,
                                   CurDAG->getTargetConstant(0, MVT::i32));
     } else {

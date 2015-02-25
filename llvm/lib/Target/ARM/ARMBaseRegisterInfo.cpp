@@ -546,12 +546,13 @@ needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
   //        and pick a real one.
   Offset += 128; // 128 bytes of spill slots
 
-  // If there is a frame pointer, try using it.
+  // If there's a frame pointer and the addressing mode allows it, try using it.
   // The FP is only available if there is no dynamic realignment. We
   // don't know for sure yet whether we'll need that, so we guess based
   // on whether there are any local variables that would trigger it.
   unsigned StackAlign = TFI->getStackAlignment();
-  if (TFI->hasFP(MF) &&
+  if (TFI->hasFP(MF) && 
+      (MI->getDesc().TSFlags & ARMII::AddrModeMask) != ARMII::AddrModeT1_s &&
       !((MFI->getLocalFrameMaxAlign() > StackAlign) && canRealignStack(MF))) {
     if (isFrameOffsetLegal(MI, FPOffset))
       return false;
@@ -668,7 +669,7 @@ bool ARMBaseRegisterInfo::isFrameOffsetLegal(const MachineInstr *MI,
     NumBits = 8;
     break;
   case ARMII::AddrModeT1_s:
-    NumBits = 5;
+    NumBits = 8;
     Scale = 4;
     isSigned = false;
     break;

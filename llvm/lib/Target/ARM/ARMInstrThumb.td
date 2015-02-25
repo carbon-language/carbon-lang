@@ -1375,6 +1375,17 @@ def : T1Pat<(zextloadi1 t_addrmode_rrs1:$addr),
 def : T1Pat<(zextloadi1 t_addrmode_is1:$addr),
             (tLDRBi t_addrmode_is1:$addr)>;
 
+// extload from the stack -> word load from the stack, as it avoids having to
+// materialize the base in a separate register. This only works when a word
+// load puts the byte/halfword value in the same place in the register that the
+// byte/halfword load would, i.e. when little-endian.
+def : T1Pat<(extloadi1  t_addrmode_sp:$addr), (tLDRspi t_addrmode_sp:$addr)>,
+      Requires<[IsThumb, IsThumb1Only, IsLE]>;
+def : T1Pat<(extloadi8  t_addrmode_sp:$addr), (tLDRspi t_addrmode_sp:$addr)>,
+      Requires<[IsThumb, IsThumb1Only, IsLE]>;
+def : T1Pat<(extloadi16 t_addrmode_sp:$addr), (tLDRspi t_addrmode_sp:$addr)>,
+      Requires<[IsThumb, IsThumb1Only, IsLE]>;
+
 // extload -> zextload
 def : T1Pat<(extloadi1  t_addrmode_rrs1:$addr), (tLDRBr t_addrmode_rrs1:$addr)>;
 def : T1Pat<(extloadi1  t_addrmode_is1:$addr),  (tLDRBi t_addrmode_is1:$addr)>;
