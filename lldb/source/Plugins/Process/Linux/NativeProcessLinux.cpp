@@ -1564,11 +1564,11 @@ NativeProcessLinux::Launch(LaunchArgs *args)
                 exit(eDupStdinFailed);
 
         if (!args->m_stdout_path.empty ())
-            if (!DupDescriptor(args->m_stdout_path.c_str (), STDOUT_FILENO, O_WRONLY | O_CREAT))
+            if (!DupDescriptor(args->m_stdout_path.c_str (), STDOUT_FILENO, O_WRONLY | O_CREAT | O_TRUNC))
                 exit(eDupStdoutFailed);
 
         if (!args->m_stderr_path.empty ())
-            if (!DupDescriptor(args->m_stderr_path.c_str (), STDERR_FILENO, O_WRONLY | O_CREAT))
+            if (!DupDescriptor(args->m_stderr_path.c_str (), STDERR_FILENO, O_WRONLY | O_CREAT | O_TRUNC))
                 exit(eDupStderrFailed);
 
         // Change working directory
