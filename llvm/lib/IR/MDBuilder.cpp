@@ -55,14 +55,18 @@ MDNode *MDBuilder::createBranchWeights(ArrayRef<uint32_t> Weights) {
 
 MDNode *MDBuilder::createRange(const APInt &Lo, const APInt &Hi) {
   assert(Lo.getBitWidth() == Hi.getBitWidth() && "Mismatched bitwidths!");
+
+  Type *Ty = IntegerType::get(Context, Lo.getBitWidth());
+  return createRange(ConstantInt::get(Ty, Lo), ConstantInt::get(Ty, Hi));
+}
+
+MDNode *MDBuilder::createRange(Constant *Lo, Constant *Hi) {
   // If the range is everything then it is useless.
   if (Hi == Lo)
     return nullptr;
 
   // Return the range [Lo, Hi).
-  Type *Ty = IntegerType::get(Context, Lo.getBitWidth());
-  Metadata *Range[2] = {createConstant(ConstantInt::get(Ty, Lo)),
-                        createConstant(ConstantInt::get(Ty, Hi))};
+  Metadata *Range[2] = {createConstant(Lo), createConstant(Hi)};
   return MDNode::get(Context, Range);
 }
 

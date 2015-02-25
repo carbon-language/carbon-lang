@@ -17,6 +17,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/MDBuilder.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
@@ -309,6 +310,7 @@ static LoadInst *combineLoadToNewType(InstCombiner &IC, LoadInst &LI, Type *NewT
   LoadInst *NewLoad = IC.Builder->CreateAlignedLoad(
       IC.Builder->CreateBitCast(Ptr, NewTy->getPointerTo(AS)),
       LI.getAlignment(), LI.getName());
+  MDBuilder MDB(NewLoad->getContext());
   for (const auto &MDPair : MD) {
     unsigned ID = MDPair.first;
     MDNode *N = MDPair.second;
@@ -335,15 +337,27 @@ static LoadInst *combineLoadToNewType(InstCombiner &IC, LoadInst &LI, Type *NewT
       break;
 
     case LLVMContext::MD_nonnull:
-      // FIXME: We should translate this into range metadata for integer types
-      // and vice versa.
-      if (NewTy->isPointerTy())
+      // This only directly applies if the new type is also a pointer.
+      if (NewTy->isPointerTy()) {
         NewLoad->setMetadata(ID, N);
+        break;
+      }
+      // If it's integral now, translate it to !range metadata.
+      if (NewTy->isIntegerTy()) {
+        auto *ITy = cast<IntegerType>(NewTy);
+        auto *NullInt = ConstantExpr::getPtrToInt(
+            ConstantPointerNull::get(cast<PointerType>(Ptr->getType())), ITy);
+        auto *NonNullInt =
+            ConstantExpr::getAdd(NullInt, ConstantInt::get(ITy, 1));
+        NewLoad->setMetadata(LLVMContext::MD_range,
+                             MDB.createRange(NonNullInt, NullInt));
+      }
       break;
 
     case LLVMContext::MD_range:
       // FIXME: It would be nice to propagate this in some way, but the type
-      // conversions make it hard.
+      // conversions make it hard. If the new type is a pointer, we could
+      // translate it to !nonnull metadata.
       break;
     }
   }

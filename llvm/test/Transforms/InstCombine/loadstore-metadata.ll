@@ -82,21 +82,29 @@ exit:
 
 define void @test_load_cast_combine_nonnull(float** %ptr) {
 ; We can't preserve nonnull metadata when converting a load of a pointer to
-; a load of an integer.
-; FIXME: We should really transform this into range metadata and vice versa.
+; a load of an integer. Instead, we translate it to range metadata.
+; FIXME: We should also transform range metadata back into nonnull metadata.
+; FIXME: This test is very fragile. If any LABEL lines are added after
+; this point, the test will fail, because this test depends on a metadata tuple,
+; which is always emitted at the end of the file. At some point, we should
+; consider an option to the IR printer to emit MD tuples after the function
+; that first uses them--this will allow us to refer to them like this and not
+; have the tests break. For now, this function must always come last in this
+; file, and no LABEL lines are to be added after this point.
 ;
 ; CHECK-LABEL: @test_load_cast_combine_nonnull(
-; CHECK: %[[V:.*]] = load i64* %{{.*}}
+; CHECK: %[[V:.*]] = load i64* %{{.*}}, !range ![[MD:[0-9]+]]
 ; CHECK-NOT: !nonnull
 ; CHECK: store i64 %[[V]], i64*
 entry:
   %p = load float** %ptr, !nonnull !3
   %gep = getelementptr float** %ptr, i32 42
   store float* %p, float** %gep
-
   ret void
 }
 
+; This is the metadata tuple that we reference above:
+; CHECK: ![[MD]] = !{i64 1, i64 0}
 !0 = !{ !1, !1, i64 0 }
 !1 = !{ !1 }
 !2 = !{ !2, !1 }

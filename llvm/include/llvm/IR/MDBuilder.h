@@ -67,6 +67,9 @@ public:
   /// \brief Return metadata describing the range [Lo, Hi).
   MDNode *createRange(const APInt &Lo, const APInt &Hi);
 
+  /// \brief Return metadata describing the range [Lo, Hi).
+  MDNode *createRange(Constant *Lo, Constant *Hi);
+
   //===------------------------------------------------------------------===//
   // AA metadata.
   //===------------------------------------------------------------------===//
