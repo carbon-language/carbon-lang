@@ -249,9 +249,9 @@ uint32_t
 ExecutionContext::GetAddressByteSize() const
 {
     if (m_target_sp && m_target_sp->GetArchitecture().IsValid())
-        m_target_sp->GetArchitecture().GetAddressByteSize();
+        return m_target_sp->GetArchitecture().GetAddressByteSize();
     if (m_process_sp)
-        m_process_sp->GetAddressByteSize();
+        return m_process_sp->GetAddressByteSize();
     return sizeof(void *);
 }
 
