@@ -155,6 +155,7 @@ private:
   typedef StringMap<uint8_t> StringSet;
 
   void initialize();
+  void destroyMergedModule();
   std::unique_ptr<LLVMContext> OwnedContext;
   LLVMContext &Context;
   Linker IRLinker;
@@ -172,6 +173,7 @@ private:
   TargetOptions Options;
   lto_diagnostic_handler_t DiagHandler;
   void *DiagContext;
+  LTOModule *OwnedModule;
 };
 }
 #endif
