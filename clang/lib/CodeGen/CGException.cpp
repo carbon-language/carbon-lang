@@ -813,8 +813,8 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
   bool hasFilter = false;
   SmallVector<llvm::Value*, 4> filterTypes;
   llvm::SmallPtrSet<llvm::Value*, 4> catchTypes;
-  for (EHScopeStack::iterator I = EHStack.begin(), E = EHStack.end(); I != E;
-       ++I) {
+  for (EHScopeStack::iterator I = EHStack.begin(), E = EHStack.end();
+         I != E; ++I) {
 
     switch (I->getKind()) {
     case EHScope::Cleanup:
@@ -1927,7 +1927,6 @@ void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S, SEHFinallyInfo &FI) {
     assert(FI.ContBB && "did not emit normal cleanup");
 
     // Emit the code into FinallyBB.
-    CGBuilderTy::InsertPoint SavedIP = Builder.saveIP();
     Builder.SetInsertPoint(FI.FinallyBB);
     EmitStmt(Finally->getBlock());
 
@@ -1950,7 +1949,7 @@ void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S, SEHFinallyInfo &FI) {
       Builder.CreateBr(FI.ContBB);
     }
 
-    Builder.restoreIP(SavedIP);
+    Builder.SetInsertPoint(FI.ContBB);
 
     return;
   }
