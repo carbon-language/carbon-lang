@@ -1,5 +1,4 @@
 set(LLVM_LINK_COMPONENTS
-  ${LLVM_TARGETS_TO_BUILD}
   Analysis
   BitReader
   BitWriter
@@ -64,7 +63,6 @@ add_clang_library(clangCodeGen
   CodeGenAction.cpp
   CodeGenFunction.cpp
   CodeGenModule.cpp
-  CodeGenModuleContainer.cpp
   CodeGenPGO.cpp
   CodeGenTBAA.cpp
   CodeGenTypes.cpp

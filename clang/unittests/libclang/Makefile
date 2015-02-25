@@ -12,14 +12,13 @@ TESTNAME = libclang
 LINK_LIBS_IN_SHARED := 1
 
 include $(CLANG_LEVEL)/../../Makefile.config
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader ipo objcarcopts \
-                   instrumentation bitwriter support mc option
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc option
 
 # Note that 'USEDLIBS' must include all of the core clang libraries
 # when -static is given to linker on cygming.
 USEDLIBS = clang.a \
 	   clangIndex.a clangFormat.a clangRewrite.a \
-	   clangCodeGen.a clangFrontend.a clangDriver.a \
+	   clangFrontend.a clangDriver.a \
 	   clangTooling.a \
 	   clangToolingCore.a \
 	   clangSerialization.a clangParse.a clangSema.a \

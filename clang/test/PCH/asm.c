@@ -1,4 +1,3 @@
-// REQUIRES: x86-registered-target
 // Test this without pch.
 // RUN: %clang_cc1 -triple i386-unknown-unknown -include %S/asm.h -fsyntax-only -verify %s
 

@@ -15,9 +15,8 @@ TOOLNAME = clang-check
 TOOL_NO_EXPORTS = 1
 
 include $(CLANG_LEVEL)/../../Makefile.config
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter \
-                   instrumentation ipo mc option objcarcopts support
-USEDLIBS = clangFrontend.a clangCodeGen.a clangSerialization.a clangDriver.a \
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc option
+USEDLIBS = clangFrontend.a clangSerialization.a clangDriver.a \
            clangTooling.a clangParse.a clangSema.a \
            clangStaticAnalyzerFrontend.a clangStaticAnalyzerCheckers.a \
            clangStaticAnalyzerCore.a clangAnalysis.a clangRewriteFrontend.a \

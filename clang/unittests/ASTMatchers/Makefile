@@ -13,10 +13,9 @@ PARALLEL_DIRS = Dynamic
 
 TESTNAME = ASTMatchers
 include $(CLANG_LEVEL)/../../Makefile.config
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter \
-                   instrumentation mc option objcarcopts support
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc option
 USEDLIBS = clangTooling.a clangFrontend.a clangSerialization.a clangDriver.a \
-           clangCodeGen.a clangRewrite.a clangRewriteFrontend.a \
+           clangRewrite.a clangRewriteFrontend.a \
            clangParse.a clangSema.a clangAnalysis.a \
            clangEdit.a clangAST.a clangASTMatchers.a clangLex.a clangBasic.a
 

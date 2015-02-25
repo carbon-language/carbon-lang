@@ -22,15 +22,13 @@ TOOL_NO_EXPORTS = 1
 # LINK_COMPONENTS before including Makefile.rules
 include $(CLANG_LEVEL)/../../Makefile.config
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter \
-                   instrumentation ipo support mc objcarcopts option
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc option
 
 # Note that 'USEDLIBS' must include all of the core clang libraries
 # when -static is given to linker on cygming.
 USEDLIBS = clang.a \
 	   clangIndex.a clangFormat.a clangRewrite.a \
-           clangCodeGen.a \
-	   clangFrontend.a clangCodeGen.a clangDriver.a \
+	   clangFrontend.a clangDriver.a \
 	   clangTooling.a \
 	   clangToolingCore.a \
 	   clangSerialization.a clangParse.a clangSema.a \
