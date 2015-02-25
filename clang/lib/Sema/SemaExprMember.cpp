@@ -969,8 +969,7 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
           CXXScopeSpec TempSS(SS);
           RetryExpr = ActOnMemberAccessExpr(
               ExtraArgs->S, RetryExpr.get(), OpLoc, tok::arrow, TempSS,
-              TemplateKWLoc, ExtraArgs->Id, ExtraArgs->ObjCImpDecl,
-              ExtraArgs->HasTrailingLParen);
+              TemplateKWLoc, ExtraArgs->Id, ExtraArgs->ObjCImpDecl);
         }
         if (Trap.hasErrorOccurred())
           RetryExpr = ExprError();
@@ -1591,9 +1590,6 @@ static ExprResult LookupMemberExpr(Sema &S, LookupResult &R,
 /// possibilities, including destructor and operator references.
 ///
 /// \param OpKind either tok::arrow or tok::period
-/// \param HasTrailingLParen whether the next token is '(', which
-///   is used to diagnose mis-uses of special members that can
-///   only be called
 /// \param ObjCImpDecl the current Objective-C \@implementation
 ///   decl; this is an ugly hack around the fact that Objective-C
 ///   \@implementations aren't properly put in the context chain
@@ -1603,23 +1599,9 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
                                        CXXScopeSpec &SS,
                                        SourceLocation TemplateKWLoc,
                                        UnqualifiedId &Id,
-                                       Decl *ObjCImpDecl,
-                                       bool HasTrailingLParen) {
+                                       Decl *ObjCImpDecl) {
   if (SS.isSet() && SS.isInvalid())
     return ExprError();
-
-  // The only way a reference to a destructor can be used is to
-  // immediately call it. If the next token is not a '(', produce
-  // a diagnostic and build the call now.
-  if (!HasTrailingLParen &&
-      Id.getKind() == UnqualifiedId::IK_DestructorName) {
-    ExprResult DtorAccess =
-        ActOnMemberAccessExpr(S, Base, OpLoc, OpKind, SS, TemplateKWLoc, Id,
-                              ObjCImpDecl, /*HasTrailingLParen*/true);
-    if (DtorAccess.isInvalid())
-      return DtorAccess;
-    return DiagnoseDtorReference(Id.getLocStart(), DtorAccess.get());
-  }
 
   // Warn about the explicit constructor calls Microsoft extension.
   if (getLangOpts().MicrosoftExt &&
@@ -1653,8 +1635,7 @@ ExprResult Sema::ActOnMemberAccessExpr(Scope *S, Expr *Base,
                                     NameInfo, TemplateArgs);
   }
 
-  ActOnMemberAccessExtraArgs ExtraArgs = {S, Id, ObjCImpDecl,
-                                          HasTrailingLParen};
+  ActOnMemberAccessExtraArgs ExtraArgs = {S, Id, ObjCImpDecl};
   return BuildMemberReferenceExpr(Base, Base->getType(), OpLoc, IsArrow, SS,
                                   TemplateKWLoc, FirstQualifierInScope,
                                   NameInfo, TemplateArgs, &ExtraArgs);

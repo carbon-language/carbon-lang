@@ -283,7 +283,7 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
   case Expr::CXXMemberCallExprClass:
   case Expr::UserDefinedLiteralClass:
   case Expr::CUDAKernelCallExprClass:
-    return ClassifyUnnamed(Ctx, cast<CallExpr>(E)->getCallReturnType());
+    return ClassifyUnnamed(Ctx, cast<CallExpr>(E)->getCallReturnType(Ctx));
 
     // __builtin_choose_expr is equivalent to the chosen expression.
   case Expr::ChooseExprClass:

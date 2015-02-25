@@ -1271,16 +1271,21 @@ bool CallExpr::isUnevaluatedBuiltinCall(ASTContext &Ctx) const {
   return false;
 }
 
-QualType CallExpr::getCallReturnType() const {
-  QualType CalleeType = getCallee()->getType();
-  if (const PointerType *FnTypePtr = CalleeType->getAs<PointerType>())
+QualType CallExpr::getCallReturnType(const ASTContext &Ctx) const {
+  const Expr *Callee = getCallee();
+  QualType CalleeType = Callee->getType();
+  if (const auto *FnTypePtr = CalleeType->getAs<PointerType>()) {
     CalleeType = FnTypePtr->getPointeeType();
-  else if (const BlockPointerType *BPT = CalleeType->getAs<BlockPointerType>())
+  } else if (const auto *BPT = CalleeType->getAs<BlockPointerType>()) {
     CalleeType = BPT->getPointeeType();
-  else if (CalleeType->isSpecificPlaceholderType(BuiltinType::BoundMember))
+  } else if (CalleeType->isSpecificPlaceholderType(BuiltinType::BoundMember)) {
+    if (isa<CXXPseudoDestructorExpr>(Callee->IgnoreParens()))
+      return Ctx.VoidTy;
+
     // This should never be overloaded and so should never return null.
-    CalleeType = Expr::findBoundMemberType(getCallee());
-    
+    CalleeType = Expr::findBoundMemberType(Callee);
+  }
+
   const FunctionType *FnType = CalleeType->castAs<FunctionType>();
   return FnType->getReturnType();
 }
@@ -2170,8 +2175,8 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
     case OO_Greater:
     case OO_GreaterEqual:
     case OO_LessEqual:
-      if (Op->getCallReturnType()->isReferenceType() ||
-          Op->getCallReturnType()->isVoidType())
+      if (Op->getCallReturnType(Ctx)->isReferenceType() ||
+          Op->getCallReturnType(Ctx)->isVoidType())
         break;
       WarnE = this;
       Loc = Op->getOperatorLoc();
@@ -2423,7 +2428,7 @@ QualType Expr::findBoundMemberType(const Expr *expr) {
     return type;
   }
 
-  assert(isa<UnresolvedMemberExpr>(expr));
+  assert(isa<UnresolvedMemberExpr>(expr) || isa<CXXPseudoDestructorExpr>(expr));
   return QualType();
 }
 

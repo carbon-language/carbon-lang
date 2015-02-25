@@ -184,7 +184,7 @@ static bool SemaBuiltinCallWithStaticChain(Sema &S, CallExpr *BuiltinCall) {
     return true;
   }
 
-  QualType ReturnTy = CE->getCallReturnType();
+  QualType ReturnTy = CE->getCallReturnType(S.Context);
   QualType ArgTys[2] = { ReturnTy, ChainResult.get()->getType() };
   QualType BuiltinTy = S.Context.getFunctionType(
       ReturnTy, ArgTys, FunctionProtoType::ExtProtoInfo());
@@ -6860,7 +6860,7 @@ static bool CheckForReference(Sema &SemaRef, const Expr *E,
     if (!M->getMemberDecl()->getType()->isReferenceType())
       return false;
   } else if (const CallExpr *Call = dyn_cast<CallExpr>(E)) {
-    if (!Call->getCallReturnType()->isReferenceType())
+    if (!Call->getCallReturnType(SemaRef.Context)->isReferenceType())
       return false;
     FD = Call->getDirectCallee();
   } else {

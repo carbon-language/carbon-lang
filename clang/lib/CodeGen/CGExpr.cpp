@@ -3198,7 +3198,7 @@ LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
   if (!RV.isScalar())
     return MakeAddrLValue(RV.getAggregateAddr(), E->getType());
 
-  assert(E->getCallReturnType()->isReferenceType() &&
+  assert(E->getCallReturnType(getContext())->isReferenceType() &&
          "Can't have a scalar return unless the return type is a "
          "reference type!");
 

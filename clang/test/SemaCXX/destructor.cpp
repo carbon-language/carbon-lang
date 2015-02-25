@@ -392,3 +392,14 @@ struct S {
   volatile ~S() { } // expected-error{{destructor cannot have a return type}}
 };
 }
+
+namespace PR22668 {
+struct S {
+};
+void f(S s) {
+  (s.~S)();
+}
+void g(S s) {
+  (s.~S); // expected-error{{reference to destructor must be called}}
+}
+}

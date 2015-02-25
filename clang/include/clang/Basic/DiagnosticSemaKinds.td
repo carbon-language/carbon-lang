@@ -5645,8 +5645,8 @@ def err_pseudo_dtor_type_mismatch : Error<
 def err_pseudo_dtor_call_with_args : Error<
   "call to pseudo-destructor cannot have any arguments">;
 def err_dtor_expr_without_call : Error<
-  "%select{destructor reference|pseudo-destructor expression}0 must be "
-  "called immediately with '()'">;
+  "reference to %select{destructor|pseudo-destructor}0 must be called"
+  "%select{|; did you mean to call it with no arguments?}1">;
 def err_pseudo_dtor_destructor_non_type : Error<
   "%0 does not refer to a type name in pseudo-destructor expression; expected "
   "the name of type %1">;

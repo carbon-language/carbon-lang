@@ -13966,7 +13966,17 @@ ExprResult Sema::CheckPlaceholderExpr(Expr *E) {
   // Bound member functions.
   case BuiltinType::BoundMember: {
     ExprResult result = E;
-    tryToRecoverWithCall(result, PDiag(diag::err_bound_member_function),
+    const Expr *BME = E->IgnoreParens();
+    PartialDiagnostic PD = PDiag(diag::err_bound_member_function);
+    // Try to give a nicer diagnostic if it is a bound member that we recognize.
+    if (isa<CXXPseudoDestructorExpr>(BME)) {
+      PD = PDiag(diag::err_dtor_expr_without_call) << /*pseudo-destructor*/ 1;
+    } else if (const auto *ME = dyn_cast<MemberExpr>(BME)) {
+      if (ME->getMemberNameInfo().getName().getNameKind() ==
+          DeclarationName::CXXDestructorName)
+        PD = PDiag(diag::err_dtor_expr_without_call) << /*destructor*/ 0;
+    }
+    tryToRecoverWithCall(result, PD,
                          /*complain*/ true);
     return result;
   }

@@ -3340,7 +3340,7 @@ bool RetainCountChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
   // See if it's one of the specific functions we know how to eval.
   bool canEval = false;
 
-  QualType ResultTy = CE->getCallReturnType();
+  QualType ResultTy = CE->getCallReturnType(C.getASTContext());
   if (ResultTy->isObjCIdType()) {
     // Handle: id NSMakeCollectable(CFTypeRef)
     canEval = II->isStr("NSMakeCollectable");

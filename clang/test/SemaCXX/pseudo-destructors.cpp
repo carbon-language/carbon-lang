@@ -59,7 +59,11 @@ void f(A* a, Foo *f, int *i, double *d, int ii) {
 typedef int Integer;
 
 void destroy_without_call(int *ip) {
-  ip->~Integer; // expected-error{{called immediately}}
+  ip->~Integer; // expected-error{{reference to pseudo-destructor must be called}}
+}
+
+void paren_destroy_with_call(int *ip) {
+  (ip->~Integer)();
 }
 
 // PR5530

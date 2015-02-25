@@ -2205,7 +2205,7 @@ CodeGenFunction::CanDevirtualizeMemberFunctionCall(const Expr *Base,
   
   // Check if this is a call expr that returns a record type.
   if (const CallExpr *CE = dyn_cast<CallExpr>(Base))
-    return CE->getCallReturnType()->isRecordType();
+    return CE->getCallReturnType(getContext())->isRecordType();
 
   // We can't devirtualize the call.
   return false;
