@@ -1,6 +1,6 @@
 // RUN: rm -rf %t
 // RUN: pp-trace -ignore FileChanged,MacroDefined %s -x objective-c++ -undef -target x86_64 -std=c++11 -fmodules -fcxx-modules -fmodules-cache-path=%t -I%S -I%S/Input | FileCheck --strict-whitespace %s
-
+// REQUIRES: x86-registered-target
 // CHECK: ---
 
 @import Level1A;
