@@ -223,7 +223,6 @@ def MMX_MOVD64rr : MMXI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR32:$src),
                         [(set VR64:$dst,
                          (x86mmx (scalar_to_vector GR32:$src)))],
                         IIC_MMX_MOV_MM_RM>, Sched<[WriteMove]>;
-let canFoldAsLoad = 1 in
 def MMX_MOVD64rm : MMXI<0x6E, MRMSrcMem, (outs VR64:$dst), (ins i32mem:$src),
                         "movd\t{$src, $dst|$dst, $src}",
                         [(set VR64:$dst,
