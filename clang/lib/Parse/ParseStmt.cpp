@@ -408,12 +408,6 @@ StmtResult Parser::ParseExprStatement() {
   return Actions.ActOnExprStmt(Expr);
 }
 
-StmtResult Parser::ParseSEHTryBlock() {
-  assert(Tok.is(tok::kw___try) && "Expected '__try'");
-  SourceLocation Loc = ConsumeToken();
-  return ParseSEHTryBlockCommon(Loc);
-}
-
 /// ParseSEHTryBlockCommon
 ///
 /// seh-try-block:
@@ -423,7 +417,10 @@ StmtResult Parser::ParseSEHTryBlock() {
 ///   seh-except-block
 ///   seh-finally-block
 ///
-StmtResult Parser::ParseSEHTryBlockCommon(SourceLocation TryLoc) {
+StmtResult Parser::ParseSEHTryBlock() {
+  assert(Tok.is(tok::kw___try) && "Expected '__try'");
+  SourceLocation TryLoc = ConsumeToken();
+
   if(Tok.isNot(tok::l_brace))
     return StmtError(Diag(Tok, diag::err_expected) << tok::l_brace);
 

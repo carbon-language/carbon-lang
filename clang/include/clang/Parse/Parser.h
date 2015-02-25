@@ -1658,7 +1658,6 @@ private:
   // MS: SEH Statements and Blocks
 
   StmtResult ParseSEHTryBlock();
-  StmtResult ParseSEHTryBlockCommon(SourceLocation Loc);
   StmtResult ParseSEHExceptBlock(SourceLocation Loc);
   StmtResult ParseSEHFinallyBlock(SourceLocation Loc);
   StmtResult ParseSEHLeaveStatement();
