@@ -49,8 +49,7 @@ entry:
 define i32 @test2(i32* nocapture readonly %ptr) {
 ; CHECK-LABEL: test2:
 ; CHECK:       ## BB#0: ## %entry
-; CHECK-NEXT:    movq (%rdi), %mm0
-; CHECK-NEXT:    pshufw $232, %mm0, %mm0
+; CHECK-NEXT:    pshufw $232, (%rdi), %mm0
 ; CHECK-NEXT:    movd %mm0, %eax
 ; CHECK-NEXT:    emms
 ; CHECK-NEXT:    retq
