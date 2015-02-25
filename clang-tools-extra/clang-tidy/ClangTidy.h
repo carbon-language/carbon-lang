@@ -82,9 +82,9 @@ private:
 
 /// \brief Base class for all clang-tidy checks.
 ///
-/// To implement a \c ClangTidyCheck, write a subclass and overwrite some of the
+/// To implement a \c ClangTidyCheck, write a subclass and override some of the
 /// base class's methods. E.g. to implement a check that validates namespace
-/// declarations, overwrite \c registerMatchers:
+/// declarations, override \c registerMatchers:
 ///
 /// \code
 /// registerMatchers(ast_matchers::MatchFinder *Finder) {
@@ -92,7 +92,7 @@ private:
 /// }
 /// \endcode
 ///
-/// and then overwrite \c check(const MatchResult &Result) to do the actual
+/// and then override \c check(const MatchResult &Result) to do the actual
 /// check for each match.
 ///
 /// A new \c ClangTidyCheck instance is created per translation unit.
@@ -115,13 +115,13 @@ public:
 
   virtual ~ClangTidyCheck() {}
 
-  /// \brief Overwrite this to register \c PPCallbacks with \c Compiler.
+  /// \brief Override this to register \c PPCallbacks with \c Compiler.
   ///
   /// This should be used for clang-tidy checks that analyze preprocessor-
   /// dependent properties, e.g. the order of include directives.
   virtual void registerPPCallbacks(CompilerInstance &Compiler) {}
 
-  /// \brief Overwrite this to register ASTMatchers with \p Finder.
+  /// \brief Override this to register ASTMatchers with \p Finder.
   ///
   /// This should be used by clang-tidy checks that analyze code properties that
   /// dependent on AST knowledge.
