@@ -226,7 +226,7 @@ illegal to mark a statepoint as being either 'readonly' or 'readnone'.
 Note that legal IR can not perform any memory operation on a 'gc
 pointer' argument of the statepoint in a location statically reachable
 from the statepoint.  Instead, the explicitly relocated value (from a
-''gc.relocate'') must be used.
+``gc.relocate``) must be used.
 
 'llvm.experimental.gc.result' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -242,8 +242,8 @@ Syntax:
 Overview:
 """""""""
 
-'''gc.result''' extracts the result of the original call instruction
-which was replaced by the '''gc.statepoint'''.  The '''gc.result'''
+``gc.result`` extracts the result of the original call instruction
+which was replaced by the ``gc.statepoint``.  The ``gc.result``
 intrinsic is actually a family of three intrinsics due to an
 implementation limitation.  Other than the type of the return value,
 the semantics are the same.
@@ -251,22 +251,22 @@ the semantics are the same.
 Operands:
 """""""""
 
-The first and only argument is the '''gc.statepoint''' which starts
-the safepoint sequence of which this '''gc.result'' is a part.
+The first and only argument is the ``gc.statepoint`` which starts
+the safepoint sequence of which this ``gc.result`` is a part.
 Despite the typing of this as a generic i32, *only* the value defined
-by a '''gc.statepoint''' is legal here.
+by a ``gc.statepoint`` is legal here.
 
 Semantics:
 """"""""""
 
-The ''gc.result'' represents the return value of the call target of
-the ''statepoint''.  The type of the ''gc.result'' must exactly match
+The ``gc.result`` represents the return value of the call target of
+the ``statepoint``.  The type of the ``gc.result`` must exactly match
 the type of the target.  If the call target returns void, there will
-be no ''gc.result''.
+be no ``gc.result``.
 
-A ''gc.result'' is modeled as a 'readnone' pure function.  It has no
+A ``gc.result`` is modeled as a 'readnone' pure function.  It has no
 side effects since it is just a projection of the return value of the
-previous call represented by the ''gc.statepoint''.
+previous call represented by the ``gc.statepoint``.
 
 'llvm.experimental.gc.relocate' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -284,16 +284,16 @@ Syntax:
 Overview:
 """""""""
 
-A ''gc.relocate'' returns the potentially relocated value of a pointer
+A ``gc.relocate`` returns the potentially relocated value of a pointer
 at the safepoint.
 
 Operands:
 """""""""
 
-The first argument is the '''gc.statepoint''' which starts the
-safepoint sequence of which this '''gc.relocation'' is a part.
+The first argument is the ``gc.statepoint`` which starts the
+safepoint sequence of which this ``gc.relocation`` is a part.
 Despite the typing of this as a generic i32, *only* the value defined
-by a '''gc.statepoint''' is legal here.
+by a ``gc.statepoint`` is legal here.
 
 The second argument is an index into the statepoints list of arguments
 which specifies the base pointer for the pointer being relocated.
@@ -309,18 +309,18 @@ within the 'gc parameter' section of the statepoint's argument list.
 Semantics:
 """"""""""
 
-The return value of ''gc.relocate'' is the potentially relocated value
+The return value of ``gc.relocate`` is the potentially relocated value
 of the pointer specified by it's arguments.  It is unspecified how the
 value of the returned pointer relates to the argument to the
-''gc.statepoint'' other than that a) it points to the same source
+``gc.statepoint`` other than that a) it points to the same source
 language object with the same offset, and b) the 'based-on'
 relationship of the newly relocated pointers is a projection of the
 unrelocated pointers.  In particular, the integer value of the pointer
 returned is unspecified.
 
-A ''gc.relocate'' is modeled as a 'readnone' pure function.  It has no
+A ``gc.relocate`` is modeled as a ``readnone`` pure function.  It has no
 side effects since it is just a way to extract information about work
-done during the actual call modeled by the ''gc.statepoint''.
+done during the actual call modeled by the ``gc.statepoint``.
 
 
 Stack Map Format

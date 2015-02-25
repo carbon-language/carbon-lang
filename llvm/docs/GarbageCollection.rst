@@ -59,8 +59,8 @@ When generating LLVM IR for your functions, you will need to:
 You will need to identify roots (i.e. references to heap objects your collector 
 needs to know about) in your generated IR, so that LLVM can encode them into 
 your final stack maps.  Depending on the collector strategy chosen, this is 
-accomplished by using either the ''@llvm.gcroot'' intrinsics or an 
-''gc.statepoint'' relocation sequence. 
+accomplished by using either the ``@llvm.gcroot`` intrinsics or an 
+``gc.statepoint`` relocation sequence. 
 
 Don't forget to create a root for each intermediate value that is generated when
 evaluating an expression.  In ``h(f(), g())``, the result of ``f()`` could 
@@ -482,12 +482,12 @@ data structure, but there are only 20 lines of meaningful code.)
 The 'Erlang' and 'Ocaml' GCs
 -----------------------------
 
-LLVM ships with two example collectors which leverage the ''gcroot'' 
+LLVM ships with two example collectors which leverage the ``gcroot`` 
 mechanisms.  To our knowledge, these are not actually used by any language 
 runtime, but they do provide a reasonable starting point for someone interested 
-in writing an ''gcroot' compatible GC plugin.  In particular, these are the 
+in writing an ``gcroot`` compatible GC plugin.  In particular, these are the 
 only in tree examples of how to produce a custom binary stack map format using 
-a ''gcroot'' strategy.
+a ``gcroot`` strategy.
 
 As there names imply, the binary format produced is intended to model that 
 used by the Erlang and OCaml compilers respectively.  
@@ -501,7 +501,7 @@ The Statepoint Example GC
   F.setGC("statepoint-example");
 
 This GC provides an example of how one might use the infrastructure provided 
-by ''gc.statepoint''.  
+by ``gc.statepoint``.  
 
 
 Custom GC Strategies
