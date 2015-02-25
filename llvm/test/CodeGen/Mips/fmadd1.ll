@@ -8,15 +8,15 @@
 ; RUN: llc < %s -march=mipsel   -mcpu=mips32              -enable-no-nans-fp-math | FileCheck %s -check-prefix=ALL -check-prefix=32   -check-prefix=32-NONAN
 ; RUN: llc < %s -march=mipsel   -mcpu=mips32r2            -enable-no-nans-fp-math | FileCheck %s -check-prefix=ALL -check-prefix=32R2 -check-prefix=32R2-NONAN
 ; RUN: llc < %s -march=mipsel   -mcpu=mips32r6            -enable-no-nans-fp-math | FileCheck %s -check-prefix=ALL -check-prefix=32R6 -check-prefix=32R6-NONAN
-; RUN: llc < %s -march=mips64el -mcpu=mips64   -mattr=n64 -enable-no-nans-fp-math | FileCheck %s -check-prefix=ALL -check-prefix=64   -check-prefix=64-NONAN
-; RUN: llc < %s -march=mips64el -mcpu=mips64r2 -mattr=n64 -enable-no-nans-fp-math | FileCheck %s -check-prefix=ALL -check-prefix=64R2 -check-prefix=64R2-NONAN
-; RUN: llc < %s -march=mips64el -mcpu=mips64r6 -mattr=n64 -enable-no-nans-fp-math | FileCheck %s -check-prefix=ALL -check-prefix=64R6 -check-prefix=64R6-NONAN
+; RUN: llc < %s -march=mips64el -mcpu=mips64   -target-abi=n64 -enable-no-nans-fp-math | FileCheck %s -check-prefix=ALL -check-prefix=64   -check-prefix=64-NONAN
+; RUN: llc < %s -march=mips64el -mcpu=mips64r2 -target-abi=n64 -enable-no-nans-fp-math | FileCheck %s -check-prefix=ALL -check-prefix=64R2 -check-prefix=64R2-NONAN
+; RUN: llc < %s -march=mips64el -mcpu=mips64r6 -target-abi=n64 -enable-no-nans-fp-math | FileCheck %s -check-prefix=ALL -check-prefix=64R6 -check-prefix=64R6-NONAN
 ; RUN: llc < %s -march=mipsel   -mcpu=mips32              | FileCheck %s -check-prefix=ALL -check-prefix=32 -check-prefix=32-NAN
 ; RUN: llc < %s -march=mipsel   -mcpu=mips32r2            | FileCheck %s -check-prefix=ALL -check-prefix=32R2 -check-prefix=32R2-NAN
 ; RUN: llc < %s -march=mipsel   -mcpu=mips32r6            | FileCheck %s -check-prefix=ALL -check-prefix=32R6 -check-prefix=32R6-NAN
-; RUN: llc < %s -march=mips64el -mcpu=mips64   -mattr=n64 | FileCheck %s -check-prefix=ALL -check-prefix=64   -check-prefix=64-NAN
-; RUN: llc < %s -march=mips64el -mcpu=mips64r2 -mattr=n64 | FileCheck %s -check-prefix=ALL -check-prefix=64R2 -check-prefix=64R2-NAN
-; RUN: llc < %s -march=mips64el -mcpu=mips64r6 -mattr=n64 | FileCheck %s -check-prefix=ALL -check-prefix=64R6 -check-prefix=64R6-NAN
+; RUN: llc < %s -march=mips64el -mcpu=mips64   -target-abi=n64 | FileCheck %s -check-prefix=ALL -check-prefix=64   -check-prefix=64-NAN
+; RUN: llc < %s -march=mips64el -mcpu=mips64r2 -target-abi=n64 | FileCheck %s -check-prefix=ALL -check-prefix=64R2 -check-prefix=64R2-NAN
+; RUN: llc < %s -march=mips64el -mcpu=mips64r6 -target-abi=n64 | FileCheck %s -check-prefix=ALL -check-prefix=64R6 -check-prefix=64R6-NAN
 
 define float @FOO0float(float %a, float %b, float %c) nounwind readnone {
 entry:
