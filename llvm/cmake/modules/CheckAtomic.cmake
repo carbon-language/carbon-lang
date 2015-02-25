@@ -2,9 +2,13 @@
 
 INCLUDE(CheckCXXSourceCompiles)
 
-check_library_exists(atomic __atomic_fetch_add_4 "" HAVE_LIBATOMIC)
-if (HAVE_LIBATOMIC)
-  list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
+check_function_exists(__atomic_fetch_add_4 HAVE___ATOMIC_FETCH_ADD_4)
+if( NOT HAVE___ATOMIC_FETCH_ADD_4 )
+  check_library_exists(atomic __atomic_fetch_add_4 "" HAVE_LIBATOMIC)
+  set(HAVE_LIBATOMIC False)
+  if( HAVE_LIBATOMIC )
+    list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
+  endif()
 endif()
 
 CHECK_CXX_SOURCE_COMPILES("
