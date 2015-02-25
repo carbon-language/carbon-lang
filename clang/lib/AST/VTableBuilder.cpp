@@ -411,7 +411,7 @@ void FinalOverriders::dump(raw_ostream &Out, BaseSubobject Base,
   for (const auto *MD : RD->methods()) {
     if (!MD->isVirtual())
       continue;
-  
+
     OverriderInfo Overrider = getOverrider(MD, Base.getBaseOffset());
 
     Out << "  ";
