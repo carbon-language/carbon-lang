@@ -3062,9 +3062,22 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       InstructionList.push_back(I);
       break;
     }
-    case bitc::FUNC_CODE_INST_INBOUNDS_GEP:
-    case bitc::FUNC_CODE_INST_GEP: { // GEP: [n x operands]
+    case bitc::FUNC_CODE_INST_INBOUNDS_GEP_OLD:
+    case bitc::FUNC_CODE_INST_GEP_OLD:
+    case bitc::FUNC_CODE_INST_GEP: { // GEP: type, [n x operands]
       unsigned OpNum = 0;
+
+      Type *Ty;
+      bool InBounds;
+
+      if (BitCode == bitc::FUNC_CODE_INST_GEP) {
+        InBounds = Record[OpNum++];
+        Ty = getTypeByID(Record[OpNum++]);
+      } else {
+        InBounds = BitCode == bitc::FUNC_CODE_INST_INBOUNDS_GEP_OLD;
+        Ty = nullptr;
+      }
+
       Value *BasePtr;
       if (getValueTypePair(Record, OpNum, NextValueNo, BasePtr))
         return Error("Invalid record");
@@ -3078,8 +3091,9 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       }
 
       I = GetElementPtrInst::Create(BasePtr, GEPIdx);
+      assert(!Ty || Ty == cast<GetElementPtrInst>(I)->getSourceElementType());
       InstructionList.push_back(I);
-      if (BitCode == bitc::FUNC_CODE_INST_INBOUNDS_GEP)
+      if (InBounds)
         cast<GetElementPtrInst>(I)->setIsInBounds(true);
       break;
     }

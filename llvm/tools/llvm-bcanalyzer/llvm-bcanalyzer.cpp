@@ -222,8 +222,10 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
 
     case bitc::FUNC_CODE_INST_BINOP:        return "INST_BINOP";
     case bitc::FUNC_CODE_INST_CAST:         return "INST_CAST";
-    case bitc::FUNC_CODE_INST_GEP:          return "INST_GEP";
-    case bitc::FUNC_CODE_INST_INBOUNDS_GEP: return "INST_INBOUNDS_GEP";
+    case bitc::FUNC_CODE_INST_GEP_OLD:
+      return "INST_GEP_OLD";
+    case bitc::FUNC_CODE_INST_INBOUNDS_GEP_OLD:
+      return "INST_INBOUNDS_GEP_OLD";
     case bitc::FUNC_CODE_INST_SELECT:       return "INST_SELECT";
     case bitc::FUNC_CODE_INST_EXTRACTELT:   return "INST_EXTRACTELT";
     case bitc::FUNC_CODE_INST_INSERTELT:    return "INST_INSERTELT";
@@ -248,6 +250,8 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::FUNC_CODE_DEBUG_LOC_AGAIN:   return "DEBUG_LOC_AGAIN";
     case bitc::FUNC_CODE_INST_CALL:         return "INST_CALL";
     case bitc::FUNC_CODE_DEBUG_LOC:         return "DEBUG_LOC";
+    case bitc::FUNC_CODE_INST_GEP:
+      return "INST_GEP";
     }
   case bitc::VALUE_SYMTAB_BLOCK_ID:
     switch (CodeID) {

@@ -293,7 +293,7 @@ namespace bitc {
 
     FUNC_CODE_INST_BINOP       =  2, // BINOP:      [opcode, ty, opval, opval]
     FUNC_CODE_INST_CAST        =  3, // CAST:       [opcode, ty, opty, opval]
-    FUNC_CODE_INST_GEP         =  4, // GEP:        [n x operands]
+    FUNC_CODE_INST_GEP_OLD     =  4, // GEP:        [n x operands]
     FUNC_CODE_INST_SELECT      =  5, // SELECT:     [ty, opval, opval, opval]
     FUNC_CODE_INST_EXTRACTELT  =  6, // EXTRACTELT: [opty, opval, opval]
     FUNC_CODE_INST_INSERTELT   =  7, // INSERTELT:  [ty, opval, opval, opval]
@@ -327,7 +327,7 @@ namespace bitc {
     FUNC_CODE_INST_CMP2        = 28, // CMP2:       [opty, opval, opval, pred]
     // new select on i1 or [N x i1]
     FUNC_CODE_INST_VSELECT     = 29, // VSELECT:    [ty,opval,opval,predty,pred]
-    FUNC_CODE_INST_INBOUNDS_GEP= 30, // INBOUNDS_GEP: [n x operands]
+    FUNC_CODE_INST_INBOUNDS_GEP_OLD = 30, // INBOUNDS_GEP: [n x operands]
     FUNC_CODE_INST_INDIRECTBR  = 31, // INDIRECTBR: [opty, op0, op1, ...]
     // 32 is unused.
     FUNC_CODE_DEBUG_LOC_AGAIN  = 33, // DEBUG_LOC_AGAIN
@@ -345,8 +345,9 @@ namespace bitc {
     FUNC_CODE_INST_LANDINGPAD  = 40, // LANDINGPAD: [ty,val,val,num,id0,val0...]
     FUNC_CODE_INST_LOADATOMIC  = 41, // LOAD: [opty, op, align, vol,
                                      //        ordering, synchscope]
-    FUNC_CODE_INST_STOREATOMIC = 42  // STORE: [ptrty,ptr,val, align, vol
+    FUNC_CODE_INST_STOREATOMIC = 42, // STORE: [ptrty,ptr,val, align, vol
                                      //         ordering, synchscope]
+    FUNC_CODE_INST_GEP         = 43, // GEP:  [inbounds, n x operands]
   };
 
   enum UseListCodes {

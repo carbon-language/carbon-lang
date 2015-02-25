@@ -845,6 +845,13 @@ public:
     return cast<SequentialType>(Instruction::getType());
   }
 
+  Type *getSourceElementType() const {
+    SequentialType *Ty = cast<SequentialType>(getPointerOperandType());
+    if (VectorType *VTy = dyn_cast<VectorType>(Ty))
+      Ty = cast<SequentialType>(VTy->getElementType());
+    return Ty->getElementType();
+  }
+
   /// \brief Returns the address space of this instruction's pointer type.
   unsigned getAddressSpace() const {
     // Note that this is always the same as the pointer operand's address space
