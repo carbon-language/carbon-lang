@@ -251,23 +251,27 @@ CommandObjectMultiword::HandleCompletion
                                                           &temp_matches);
             if (cmd_obj != NULL)
             {
-                matches.DeleteStringAtIndex (0);
-                input.Shift();
-                cursor_char_position = 0;
-                input.AppendArgument ("");
-                return cmd_obj->HandleCompletion (input, 
-                                                  cursor_index, 
-                                                  cursor_char_position, 
-                                                  match_start_point,
-                                                  max_return_elements,
-                                                  word_complete, 
-                                                  matches);
+                if (input.GetArgumentCount() == 1)
+                {
+                    word_complete = true;
+                }
+                else
+                {
+                    matches.DeleteStringAtIndex (0);
+                    input.Shift();
+                    cursor_char_position = 0;
+                    input.AppendArgument ("");
+                    return cmd_obj->HandleCompletion (input,
+                                                      cursor_index,
+                                                      cursor_char_position,
+                                                      match_start_point,
+                                                      max_return_elements,
+                                                      word_complete,
+                                                      matches);
+                }
             }
-            else
-                return matches.GetSize();
         }
-        else
-            return matches.GetSize();
+        return matches.GetSize();
     }
     else
     {
