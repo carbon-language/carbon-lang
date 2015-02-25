@@ -14,8 +14,13 @@
 #ifndef LLVM_TRANSFORMS_UTILS_LOOPUTILS_H
 #define LLVM_TRANSFORMS_UTILS_LOOPUTILS_H
 
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/IR/Dominators.h"
+
 namespace llvm {
 class AliasAnalysis;
+class AliasSet;
+class AliasSetTracker;
 class AssumptionCache;
 class BasicBlock;
 class DataLayout;
@@ -23,10 +28,9 @@ class DominatorTree;
 class Loop;
 class LoopInfo;
 class Pass;
-class ScalarEvolution;
-class AliasSetTracker;
-class AliasSet;
 class PredIteratorCache;
+class ScalarEvolution;
+class TargetLibraryInfo;
 
 /// \brief Captures loop safety information.
 /// It keep information for loop & its header may throw exception.
