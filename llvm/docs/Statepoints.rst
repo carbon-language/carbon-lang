@@ -322,6 +322,7 @@ A ``gc.relocate`` is modeled as a ``readnone`` pure function.  It has no
 side effects since it is just a way to extract information about work
 done during the actual call modeled by the ``gc.statepoint``.
 
+.. _statepoint-stackmap-format:
 
 Stack Map Format
 ================
