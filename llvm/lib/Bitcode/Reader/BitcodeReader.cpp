@@ -3574,12 +3574,21 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       unsigned OpNum = 0;
       Value *Op;
       if (getValueTypePair(Record, OpNum, NextValueNo, Op) ||
-          OpNum+2 != Record.size())
+          (OpNum + 2 != Record.size() && OpNum + 3 != Record.size()))
         return Error("Invalid record");
+
+      Type *Ty = nullptr;
+      if (OpNum + 3 == Record.size())
+        Ty = getTypeByID(Record[OpNum++]);
+
       unsigned Align;
       if (std::error_code EC = parseAlignmentValue(Record[OpNum], Align))
         return EC;
       I = new LoadInst(Op, "", Record[OpNum+1], Align);
+
+      assert((!Ty || Ty == I->getType()) &&
+             "Explicit type doesn't match pointee type of the first operand");
+
       InstructionList.push_back(I);
       break;
     }
@@ -3588,8 +3597,12 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       unsigned OpNum = 0;
       Value *Op;
       if (getValueTypePair(Record, OpNum, NextValueNo, Op) ||
-          OpNum+4 != Record.size())
+          (OpNum + 4 != Record.size() && OpNum + 5 != Record.size()))
         return Error("Invalid record");
+
+      Type *Ty = nullptr;
+      if (OpNum + 5 == Record.size())
+        Ty = getTypeByID(Record[OpNum++]);
 
       AtomicOrdering Ordering = GetDecodedOrdering(Record[OpNum+2]);
       if (Ordering == NotAtomic || Ordering == Release ||
@@ -3603,6 +3616,10 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       if (std::error_code EC = parseAlignmentValue(Record[OpNum], Align))
         return EC;
       I = new LoadInst(Op, "", Record[OpNum+1], Align, Ordering, SynchScope);
+
+      assert((!Ty || Ty == I->getType()) &&
+             "Explicit type doesn't match pointee type of the first operand");
+
       InstructionList.push_back(I);
       break;
     }
