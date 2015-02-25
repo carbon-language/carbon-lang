@@ -536,7 +536,7 @@ endif()
 
 #############################
 # --- Create Common Files ---
-add_custom_target(common DEPENDS ${export_cmn_files})
+add_custom_target(common ALL DEPENDS ${export_cmn_files})
 add_custom_target(clean-common COMMAND ${CMAKE_COMMAND} -E remove -f ${export_cmn_files})
 
 ##########################################
