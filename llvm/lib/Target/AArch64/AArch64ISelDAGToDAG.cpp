@@ -1399,8 +1399,11 @@ static bool isBitfieldExtractOpFromAnd(SelectionDAG *CurDAG, SDNode *N,
 
   // Bail out on large immediates. This happens when no proper
   // combining/constant folding was performed.
-  if (!BiggerPattern && (Srl_imm <= 0 || Srl_imm >= VT.getSizeInBits()))
+  if (!BiggerPattern && (Srl_imm <= 0 || Srl_imm >= VT.getSizeInBits())) {
+    DEBUG((dbgs() << N
+           << ": Found large shift immediate, this should not happen\n"));
     return false;
+  }
 
   LSB = Srl_imm;
   MSB = Srl_imm + (VT == MVT::i32 ? countTrailingOnes<uint32_t>(And_imm)
@@ -1506,8 +1509,11 @@ static bool isBitfieldExtractOpFromShr(SDNode *N, unsigned &Opc, SDValue &Opd0,
 
   // Missing combines/constant folding may have left us with strange
   // constants.
-  if (Shl_imm >= VT.getSizeInBits())
+  if (Shl_imm >= VT.getSizeInBits()) {
+    DEBUG((dbgs() << N
+           << ": Found large shift immediate, this should not happen\n"));
     return false;
+  }
 
   uint64_t Srl_imm = 0;
   if (!isIntImmediate(N->getOperand(1), Srl_imm))
