@@ -20,4 +20,10 @@ endif()
 add_lit_testsuite(check-cfi "Running the cfi regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}
   DEPENDS ${CFI_TEST_DEPS})
+
+add_lit_target(check-cfi-and-supported "Running the cfi regression tests"
+  ${CMAKE_CURRENT_BINARY_DIR}
+  PARAMS check_supported=1
+  DEPENDS ${CFI_TEST_DEPS})
+
 set_target_properties(check-cfi PROPERTIES FOLDER "Tests")
