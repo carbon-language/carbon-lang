@@ -17,9 +17,10 @@ TOOL_NO_EXPORTS = 1
 
 SOURCES = ClangApplyReplacementsMain.cpp
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc mcparser option
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader ipo objcarcopts \
+                   instrumentation bitwriter support mc option
 USEDLIBS = clangApplyReplacements.a clangFormat.a \
-	   clangTooling.a clangToolingCore.a clangFrontend.a \
+	   clangTooling.a clangToolingCore.a clangFrontend.a clangCodeGen.a \
 	   clangSerialization.a clangDriver.a clangRewriteFrontend.a \
 	   clangRewrite.a clangParse.a clangSema.a clangAnalysis.a \
 	   clangAST.a clangASTMatchers.a clangEdit.a clangLex.a clangBasic.a
