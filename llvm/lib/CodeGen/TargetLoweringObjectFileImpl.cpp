@@ -164,9 +164,7 @@ static unsigned getELFSectionType(StringRef Name, SectionKind K) {
   return ELF::SHT_PROGBITS;
 }
 
-
-static unsigned
-getELFSectionFlags(SectionKind K, bool InCOMDAT) {
+static unsigned getELFSectionFlags(SectionKind K) {
   unsigned Flags = 0;
 
   if (!K.isMetadata())
@@ -181,10 +179,7 @@ getELFSectionFlags(SectionKind K, bool InCOMDAT) {
   if (K.isThreadLocal())
     Flags |= ELF::SHF_TLS;
 
-  // FIXME: There is nothing in ELF preventing an SHF_MERGE from being
-  // in a comdat. We just avoid it for now because we don't print
-  // those .sections correctly.
-  if (!InCOMDAT && (K.isMergeableCString() || K.isMergeableConst()))
+  if (K.isMergeableCString() || K.isMergeableConst())
     Flags |= ELF::SHF_MERGE;
 
   if (K.isMergeableCString())
@@ -214,7 +209,7 @@ const MCSection *TargetLoweringObjectFileELF::getExplicitSectionGlobal(
   Kind = getELFKindForNamedSection(SectionName, Kind);
 
   StringRef Group = "";
-  unsigned Flags = getELFSectionFlags(Kind, GV->hasComdat());
+  unsigned Flags = getELFSectionFlags(Kind);
   if (const Comdat *C = getELFComdat(GV)) {
     Group = C->getName();
     Flags |= ELF::SHF_GROUP;
@@ -249,97 +244,74 @@ static StringRef getSectionPrefixForGlobal(SectionKind Kind) {
   return ".data.rel.ro";
 }
 
-static const MCSection *
-getUniqueELFSection(MCContext &Ctx, const GlobalValue &GV, SectionKind Kind,
-                    Mangler &Mang, const TargetMachine &TM, unsigned Flags) {
-  StringRef Prefix = getSectionPrefixForGlobal(Kind);
+const MCSection *TargetLoweringObjectFileELF::
+SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
+                       Mangler &Mang, const TargetMachine &TM) const {
+  unsigned Flags = getELFSectionFlags(Kind);
 
-  SmallString<128> Name(Prefix);
-  bool UniqueSectionNames = TM.getUniqueSectionNames();
-  if (UniqueSectionNames) {
-    Name.push_back('.');
-    TM.getNameWithPrefix(Name, &GV, Mang, true);
+  // If we have -ffunction-section or -fdata-section then we should emit the
+  // global value to a uniqued section specifically for it.
+  bool EmitUniqueSection = false;
+  if (!(Flags & ELF::SHF_MERGE) && !Kind.isCommon()) {
+    if (Kind.isText())
+      EmitUniqueSection = TM.getFunctionSections();
+    else
+      EmitUniqueSection = TM.getDataSections();
   }
+  EmitUniqueSection |= GV->hasComdat();
+
+  unsigned EntrySize = 0;
+  if (Kind.isMergeableCString()) {
+    if (Kind.isMergeable2ByteCString()) {
+      EntrySize = 2;
+    } else if (Kind.isMergeable4ByteCString()) {
+      EntrySize = 4;
+    } else {
+      EntrySize = 1;
+      assert(Kind.isMergeable1ByteCString() && "unknown string width");
+    }
+  } else if (Kind.isMergeableConst()) {
+    if (Kind.isMergeableConst4()) {
+      EntrySize = 4;
+    } else if (Kind.isMergeableConst8()) {
+      EntrySize = 8;
+    } else {
+      assert(Kind.isMergeableConst16() && "unknown data width");
+      EntrySize = 16;
+    }
+  }
+
   StringRef Group = "";
-  if (const Comdat *C = getELFComdat(&GV)) {
+  if (const Comdat *C = getELFComdat(GV)) {
     Flags |= ELF::SHF_GROUP;
     Group = C->getName();
   }
 
-  return Ctx.getELFSection(Name, getELFSectionType(Name, Kind), Flags, 0, Group,
-                           !UniqueSectionNames);
-}
-
-const MCSection *TargetLoweringObjectFileELF::
-SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                       Mangler &Mang, const TargetMachine &TM) const {
-  unsigned Flags = getELFSectionFlags(Kind, GV->hasComdat());
-
-  // If we have -ffunction-section or -fdata-section then we should emit the
-  // global value to a uniqued section specifically for it.
-  bool EmitUniquedSection = false;
-  if (!(Flags & ELF::SHF_MERGE) && !Kind.isCommon()) {
-    if (Kind.isText())
-      EmitUniquedSection = TM.getFunctionSections();
-    else
-      EmitUniquedSection = TM.getDataSections();
-  }
-
-  if (EmitUniquedSection || GV->hasComdat())
-    return getUniqueELFSection(getContext(), *GV, Kind, Mang, TM, Flags);
-
-  if (Kind.isText()) return TextSection;
-
+  bool UniqueSectionNames = TM.getUniqueSectionNames();
+  SmallString<128> Name;
   if (Kind.isMergeableCString()) {
-
     // We also need alignment here.
     // FIXME: this is getting the alignment of the character, not the
     // alignment of the global!
     unsigned Align =
         TM.getDataLayout()->getPreferredAlignment(cast<GlobalVariable>(GV));
 
-    unsigned EntrySize = 1;
-    if (Kind.isMergeable2ByteCString())
-      EntrySize = 2;
-    else if (Kind.isMergeable4ByteCString())
-      EntrySize = 4;
-    else
-      assert(Kind.isMergeable1ByteCString() && "unknown string width");
-
     std::string SizeSpec = ".rodata.str" + utostr(EntrySize) + ".";
-    std::string Name = SizeSpec + utostr(Align);
-    return getContext().getELFSection(
-        Name, ELF::SHT_PROGBITS,
-        ELF::SHF_ALLOC | ELF::SHF_MERGE | ELF::SHF_STRINGS, EntrySize, "");
+    Name = SizeSpec + utostr(Align);
+  } else if (Kind.isMergeableConst()) {
+    Name = ".rodata.cst";
+    Name += utostr(EntrySize);
+  } else {
+    Name = getSectionPrefixForGlobal(Kind);
   }
 
-  if (Kind.isMergeableConst()) {
-    if (Kind.isMergeableConst4() && MergeableConst4Section)
-      return MergeableConst4Section;
-    if (Kind.isMergeableConst8() && MergeableConst8Section)
-      return MergeableConst8Section;
-    if (Kind.isMergeableConst16() && MergeableConst16Section)
-      return MergeableConst16Section;
-    return ReadOnlySection;  // .const
+  if (EmitUniqueSection && UniqueSectionNames) {
+    Name.push_back('.');
+    TM.getNameWithPrefix(Name, GV, Mang, true);
   }
-
-  if (Kind.isReadOnly())             return ReadOnlySection;
-
-  if (Kind.isThreadData())           return TLSDataSection;
-  if (Kind.isThreadBSS())            return TLSBSSSection;
-
-  // Note: we claim that common symbols are put in BSSSection, but they are
-  // really emitted with the magic .comm directive, which creates a symbol table
-  // entry but not a section.
-  if (Kind.isBSS() || Kind.isCommon()) return BSSSection;
-
-  if (Kind.isDataNoRel())            return DataSection;
-  if (Kind.isDataRelLocal())         return DataRelLocalSection;
-  if (Kind.isDataRel())              return DataRelSection;
-  if (Kind.isReadOnlyWithRelLocal()) return DataRelROLocalSection;
-
-  assert(Kind.isReadOnlyWithRel() && "Unknown section kind");
-  return DataRelROSection;
+  return getContext().getELFSection(Name, getELFSectionType(Name, Kind), Flags,
+                                    EntrySize, Group,
+                                    EmitUniqueSection && !UniqueSectionNames);
 }
 
 const MCSection *TargetLoweringObjectFileELF::getSectionForJumpTable(
@@ -351,8 +323,7 @@ const MCSection *TargetLoweringObjectFileELF::getSectionForJumpTable(
   if (!EmitUniqueSection)
     return ReadOnlySection;
 
-  return getUniqueELFSection(getContext(), F, SectionKind::getReadOnly(), Mang,
-                             TM, ELF::SHF_ALLOC);
+  return SelectSectionForGlobal(&F, SectionKind::getReadOnly(), Mang, TM);
 }
 
 bool TargetLoweringObjectFileELF::shouldPutJumpTableInFunctionSection(
