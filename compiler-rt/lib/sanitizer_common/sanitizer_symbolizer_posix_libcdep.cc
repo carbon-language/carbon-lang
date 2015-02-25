@@ -105,7 +105,8 @@ SymbolizerProcess::SymbolizerProcess(const char *path)
   CHECK_NE(path_[0], '\0');
 }
 
-char *SymbolizerProcess::SendCommand(bool is_data, const char *module_name, uptr module_offset) {
+char *SymbolizerProcess::SendCommand(bool is_data, const char *module_name,
+                                     uptr module_offset) {
   for (; times_restarted_ < kMaxTimesRestarted; times_restarted_++) {
     // Start or restart symbolizer if we failed to send command to it.
     if (char *res = SendCommandImpl(is_data, module_name, module_offset))
