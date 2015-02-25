@@ -67,7 +67,7 @@ endif
 # Setting defaults
 mode?=release
 
-ifeq "$(filter 32 32e 64,$(arch))" ""
+ifeq "$(filter 32 32e 64 mic,$(arch))" ""
     compiler?=gcc
 else
     ifeq "$(omp_os)" "windows"
@@ -79,7 +79,7 @@ endif
 
 ifneq "$(mic)" "no"
     ifeq "$(compiler)" "gcc"
-	$(error Compiling the runtime with gcc is not supported on Intel\(R\) Many Integrated Core Architecture)
+        $(error Compiling the runtime with gcc is not supported on Intel(R) Many Integrated Core Architecture)
     endif
 
     # Add Intel(R) Many Integrated Core Architecture kind (knf, knc, knl, etc.)
@@ -94,7 +94,7 @@ ifneq "$(mic)" "no"
         micBinPresent = $(shell if test -d $(micBinPath); then echo OK; else echo KO; fi)
         ifneq "$(micBinPresent)" "OK"
             # We can't find them in the normal place, so complain.
-            $(error Compiling for Intel\(R\) Many Integrated Core Architecture requires that the cross-hosted binutils are available in $(micBinPath).\
+            $(error Compiling for Intel(R) Many Integrated Core Architecture requires that the cross-hosted binutils are available in $(micBinPath).\
 See the Tools tab at http://software.intel.com/mic-developer)
         endif
         export PATH := $(micBinPath):${PATH}
