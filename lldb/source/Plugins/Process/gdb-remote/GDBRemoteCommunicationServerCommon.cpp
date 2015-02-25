@@ -19,6 +19,8 @@
 // Other libraries and framework includes
 #include "llvm/ADT/Triple.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/Module.h"
+#include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/StreamGDBRemote.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/Config.h"
@@ -29,6 +31,7 @@
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/Args.h"
+#include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
@@ -72,6 +75,8 @@ GDBRemoteCommunicationServerCommon::GDBRemoteCommunicationServerCommon(const cha
                                   &GDBRemoteCommunicationServerCommon::Handle_qLaunchSuccess);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_QListThreadsInStopReply,
                                   &GDBRemoteCommunicationServerCommon::Handle_QListThreadsInStopReply);
+    RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qModuleInfo,
+                                  &GDBRemoteCommunicationServerCommon::Handle_qModuleInfo);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qPlatform_chmod,
                                   &GDBRemoteCommunicationServerCommon::Handle_qPlatform_chmod);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qPlatform_mkdir,
@@ -820,7 +825,7 @@ GDBRemoteCommunicationServerCommon::Handle_vFile_MD5 (StringExtractorGDBRemote &
     {
         uint64_t a,b;
         StreamGDBRemote response;
-        if (FileSystem::CalculateMD5(FileSpec(path.c_str(), false), a, b) == false)
+        if (!FileSystem::CalculateMD5(FileSpec(path.c_str(), false), a, b))
         {
             response.PutCString("F,");
             response.PutCString("x");
@@ -1107,6 +1112,70 @@ GDBRemoteCommunicationServerCommon::Handle_A (StringExtractorGDBRemote &packet)
         }
     }
     return SendErrorResponse (8);
+}
+
+GDBRemoteCommunication::PacketResult
+GDBRemoteCommunicationServerCommon::Handle_qModuleInfo (StringExtractorGDBRemote &packet)
+{
+    packet.SetFilePos(::strlen ("qModuleInfo:"));
+
+    std::string module_path;
+    packet.GetHexByteStringTerminatedBy(module_path, ';');
+    if (module_path.empty())
+        return SendErrorResponse (1);
+    const FileSpec module_path_spec(module_path.c_str(), true);
+
+    if (packet.GetChar() != ';')
+        return SendErrorResponse (2);
+
+    std::string triple;
+    packet.GetHexByteString(triple);
+    const ModuleSpec module_spec(module_path_spec, ArchSpec(triple.c_str()));
+
+    ModuleSpecList module_specs;
+    if (!ObjectFile::GetModuleSpecifications(module_path_spec, 0, 0, module_specs))
+        return SendErrorResponse (3);
+
+    ModuleSpec matched_module_spec;
+    if (!module_specs.FindMatchingModuleSpec(module_spec, matched_module_spec))
+        return SendErrorResponse (4);
+
+    const ModuleSP module(new Module(matched_module_spec));
+
+    const auto obj_file(module->GetObjectFile());
+    const auto file_offset = obj_file->GetFileOffset();
+    const auto file_size = obj_file->GetByteSize();
+
+    StreamGDBRemote response;
+
+    const auto uuid_str = module->GetUUID().GetAsString();
+    if (uuid_str.empty())
+    {
+        std::string md5_hash;
+        if (!FileSystem::CalculateMD5AsString(module_path_spec, file_offset, file_size, md5_hash))
+            return SendErrorResponse (5);
+        response.PutCString ("md5:");
+        response.PutCStringAsRawHex8(md5_hash.c_str());
+    }
+    else{
+        response.PutCString ("uuid:");
+        response.PutCStringAsRawHex8(uuid_str.c_str());
+    }
+    response.PutChar(';');
+
+    const auto &module_arch = matched_module_spec.GetArchitecture();
+    response.PutCString("triple:");
+    response.PutCStringAsRawHex8( module_arch.GetTriple().getTriple().c_str());
+    response.PutChar(';');
+
+    response.PutCString("file_offset:");
+    response.PutHex64(file_offset);
+    response.PutChar(';');
+    response.PutCString("file_size:");
+    response.PutHex64(file_size);
+    response.PutChar(';');
+
+    return SendPacketNoLock(response.GetData(), response.GetSize());
 }
 
 void

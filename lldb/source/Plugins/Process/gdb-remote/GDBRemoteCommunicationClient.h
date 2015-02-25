@@ -534,6 +534,11 @@ public:
     bool
     GetThreadExtendedInfoSupported();
 
+    bool
+    GetModuleInfo (const char* module_path,
+                   const lldb_private::ArchSpec& arch_spec,
+                   StringExtractorGDBRemote &response);
+
 protected:
 
     PacketResult

@@ -988,6 +988,21 @@ for this region.
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
+// qModuleInfo:<module_path>;<arch triple>
+//
+// BRIEF
+//  Get information for a module by given module path and architecture.
+//
+// RESPONSE
+//  "(uuid|md5):...;triple:...;file_offset:...;file_size...;"
+//  "EXX" - for any errors
+//
+// PRIORITY TO IMPLEMENT
+//  Optional, required if dynamic loader cannot fetch module's information like
+//  UUID directly from inferior's memory.
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
 // Stop reply packet extensions
 //
 // BRIEF

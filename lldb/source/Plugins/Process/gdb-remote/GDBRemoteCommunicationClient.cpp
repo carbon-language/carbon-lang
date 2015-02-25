@@ -3703,3 +3703,21 @@ GDBRemoteCommunicationClient::RestoreRegisterState (lldb::tid_t tid, uint32_t sa
     }
     return false;
 }
+
+bool
+GDBRemoteCommunicationClient::GetModuleInfo (const char* module_path,
+                                             const lldb_private::ArchSpec& arch_spec,
+                                             StringExtractorGDBRemote &response)
+{
+    if (!(module_path && module_path[0]))
+        return false;
+
+    StreamString packet;
+    packet.PutCString("qModuleInfo:");
+    packet.PutBytesAsRawHex8(module_path, strlen(module_path));
+    packet.PutCString(";");
+    const auto& tripple = arch_spec.GetTriple().getTriple();
+    packet.PutBytesAsRawHex8(tripple.c_str(), tripple.size());
+
+    return SendPacketAndWaitForResponse (packet.GetData(), packet.GetSize(), response, false) == PacketResult::Success;
+}

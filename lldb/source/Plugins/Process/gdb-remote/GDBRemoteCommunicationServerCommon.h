@@ -126,6 +126,9 @@ protected:
     Handle_vFile_MD5 (StringExtractorGDBRemote &packet);
 
     PacketResult
+    Handle_qModuleInfo (StringExtractorGDBRemote &packet);
+
+    PacketResult
     Handle_qPlatform_shell (StringExtractorGDBRemote &packet);
 
     PacketResult
