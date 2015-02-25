@@ -308,6 +308,69 @@ class SymbolizerProcess : public ExternalSymbolizerInterface {
   bool reported_invalid_path_;
 };
 
+
+// Parses one or more two-line strings in the following format:
+//   <function_name>
+//   <file_name>:<line_number>[:<column_number>]
+// Used by LLVMSymbolizer, Addr2LinePool and InternalSymbolizer, since all of
+// them use the same output format.
+static void ParseSymbolizePCOutput(const char *str, SymbolizedStack *res) {
+  bool top_frame = true;
+  SymbolizedStack *last = res;
+  while (true) {
+    char *function_name = 0;
+    str = ExtractToken(str, "\n", &function_name);
+    CHECK(function_name);
+    if (function_name[0] == '\0') {
+      // There are no more frames.
+      break;
+    }
+    SymbolizedStack *cur;
+    if (top_frame) {
+      cur = res;
+      top_frame = false;
+    } else {
+      cur = SymbolizedStack::New(res->info.address);
+      cur->info.FillAddressAndModuleInfo(res->info.address, res->info.module,
+                                         res->info.module_offset);
+      last->next = cur;
+      last = cur;
+    }
+
+    AddressInfo *info = &cur->info;
+    info->function = function_name;
+    // Parse <file>:<line>:<column> buffer.
+    char *file_line_info = 0;
+    str = ExtractToken(str, "\n", &file_line_info);
+    CHECK(file_line_info);
+    const char *line_info = ExtractToken(file_line_info, ":", &info->file);
+    line_info = ExtractInt(line_info, ":", &info->line);
+    line_info = ExtractInt(line_info, "", &info->column);
+    InternalFree(file_line_info);
+
+    // Functions and filenames can be "??", in which case we write 0
+    // to address info to mark that names are unknown.
+    if (0 == internal_strcmp(info->function, "??")) {
+      InternalFree(info->function);
+      info->function = 0;
+    }
+    if (0 == internal_strcmp(info->file, "??")) {
+      InternalFree(info->file);
+      info->file = 0;
+    }
+  }
+}
+
+// Parses a two-line string in the following format:
+//   <symbol_name>
+//   <start_address> <size>
+// Used by LLVMSymbolizer and InternalSymbolizer.
+static void ParseSymbolizeDataOutput(const char *str, DataInfo *info) {
+  str = ExtractToken(str, "\n", &info->name);
+  str = ExtractUptr(str, " ", &info->start);
+  str = ExtractUptr(str, "\n", &info->size);
+}
+
 // For now we assume the following protocol:
 // For each request of the form
 //   <module_name> <module_offset>
@@ -537,49 +600,7 @@ class POSIXSymbolizer : public Symbolizer {
       return res;
     }
 
-    bool top_frame = true;
-    SymbolizedStack *last = res;
-    while (true) {
-      char *function_name = 0;
-      str = ExtractToken(str, "\n", &function_name);
-      CHECK(function_name);
-      if (function_name[0] == '\0') {
-        // There are no more frames.
-        break;
-      }
-      SymbolizedStack *cur;
-      if (top_frame) {
-        cur = res;
-        top_frame = false;
-      } else {
-        cur = SymbolizedStack::New(addr);
-        cur->info.FillAddressAndModuleInfo(addr, module_name, module_offset);
-        last->next = cur;
-        last = cur;
-      }
-
-      AddressInfo *info = &cur->info;
-      info->function = function_name;
-      // Parse <file>:<line>:<column> buffer.
-      char *file_line_info = 0;
-      str = ExtractToken(str, "\n", &file_line_info);
-      CHECK(file_line_info);
-      const char *line_info = ExtractToken(file_line_info, ":", &info->file);
-      line_info = ExtractInt(line_info, ":", &info->line);
-      line_info = ExtractInt(line_info, "", &info->column);
-      InternalFree(file_line_info);
-
-      // Functions and filenames can be "??", in which case we write 0
-      // to address info to mark that names are unknown.
-      if (0 == internal_strcmp(info->function, "??")) {
-        InternalFree(info->function);
-        info->function = 0;
-      }
-      if (0 == internal_strcmp(info->file, "??")) {
-        InternalFree(info->file);
-        info->file = 0;
-      }
-    }
+    ParseSymbolizePCOutput(str, res);
     return res;
   }
 
@@ -602,9 +623,7 @@ class POSIXSymbolizer : public Symbolizer {
     const char *str = SendCommand(true, module_name, module_offset);
     if (str == 0)
       return true;
-    str = ExtractToken(str, "\n", &info->name);
-    str = ExtractUptr(str, " ", &info->start);
-    str = ExtractUptr(str, "\n", &info->size);
+    ParseSymbolizeDataOutput(str, info);
     info->start += module->base_address();
     return true;
   }
