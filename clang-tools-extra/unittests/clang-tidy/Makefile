@@ -11,8 +11,7 @@ CLANG_LEVEL = ../../../..
 include $(CLANG_LEVEL)/../../Makefile.config
 
 TESTNAME = ClangTidy
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader ipo objcarcopts \
-                   instrumentation bitwriter support mc option \
+LINK_COMPONENTS := asmparser bitreader support MC MCParser option \
 		 TransformUtils
 USEDLIBS = clangTidy.a clangTidyLLVMModule.a clangTidyGoogleModule.a \
 	   clangTidyMiscModule.a clangTidyReadability.a clangTidy.a \
@@ -20,7 +19,7 @@ USEDLIBS = clangTidy.a clangTidyLLVMModule.a clangTidyGoogleModule.a \
 	   clangStaticAnalyzerFrontend.a clangStaticAnalyzerCheckers.a \
 	   clangStaticAnalyzerCore.a \
 	   clangFormat.a clangTooling.a clangToolingCore.a \
-	   clangFrontend.a clangCodeGen.a clangSerialization.a \
+	   clangFrontend.a clangSerialization.a \
 	   clangDriver.a clangRewriteFrontend.a clangRewrite.a \
 	   clangParse.a clangSema.a clangAnalysis.a clangAST.a \
 	   clangASTMatchers.a clangEdit.a clangLex.a clangBasic.a
