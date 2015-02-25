@@ -1074,21 +1074,20 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   if (RegInfo->needsStackRealignment(MF) || MFI->hasVarSizedObjects()) {
     if (RegInfo->needsStackRealignment(MF))
       MBBI = FirstCSPop;
-    if (IsWinEH) {
-      // There are only two legal forms of epilogue:
-      // - add SEHAllocationSize, %rsp
-      // - lea SEHAllocationSize(%FramePtr), %rsp
-      //
-      // We are *not* permitted to use 'mov %FramePtr, %rsp' because the Win64
-      // unwinder will not recognize 'mov' as an epilogue instruction.
-      unsigned SEHFrameOffset = calculateSetFPREG(SEHStackAllocAmt);
-      addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(X86::LEA64r), StackPtr),
-                   FramePtr, false, SEHStackAllocAmt - SEHFrameOffset);
-      --MBBI;
-    } else if (CSSize != 0) {
+    unsigned SEHFrameOffset = calculateSetFPREG(SEHStackAllocAmt);
+    uint64_t LEAAmount = IsWinEH ? SEHStackAllocAmt - SEHFrameOffset : -CSSize;
+
+    // There are only two legal forms of epilogue:
+    // - add SEHAllocationSize, %rsp
+    // - lea SEHAllocationSize(%FramePtr), %rsp
+    //
+    // 'mov %FramePtr, %rsp' will not be recognized as an epilogue sequence.
+    // However, we may use this sequence if we have a frame pointer because the
+    // effects of the prologue can safely be undone.
+    if (LEAAmount != 0) {
       unsigned Opc = getLEArOpcode(Uses64BitFramePtr);
       addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr),
-                   FramePtr, false, -CSSize);
+                   FramePtr, false, LEAAmount);
       --MBBI;
     } else {
       unsigned Opc = (Uses64BitFramePtr ? X86::MOV64rr : X86::MOV32rr);

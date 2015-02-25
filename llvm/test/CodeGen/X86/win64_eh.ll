@@ -167,7 +167,7 @@ entry:
 ; WIN64: andq  $-64, %rsp
 ; WIN64: movaps  -32(%rbp), %xmm6        # 16-byte Reload
 ; WIN64: movaps  -16(%rbp), %xmm7        # 16-byte Reload
-; WIN64: leaq  (%rbp), %rsp
+; WIN64: movq  %rbp, %rsp
 ; WIN64: popq  %rbx
 ; WIN64: popq  %rdi
 ; WIN64: popq  %rbp
