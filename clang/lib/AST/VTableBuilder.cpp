@@ -2930,6 +2930,7 @@ static void GroupNewVirtualOverloads(
   typedef llvm::DenseMap<DeclarationName, unsigned> VisitedGroupIndicesTy;
   VisitedGroupIndicesTy VisitedGroupIndices;
   for (const auto *MD : RD->methods()) {
+    MD = MD->getCanonicalDecl();
     VisitedGroupIndicesTy::iterator J;
     bool Inserted;
     std::tie(J, Inserted) = VisitedGroupIndices.insert(
