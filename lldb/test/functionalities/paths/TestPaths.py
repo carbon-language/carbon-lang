@@ -28,6 +28,12 @@ class TestPaths(TestBase):
             # No directory path types should have the filename set
             self.assertTrue (f.GetFilename() == None);
 
+    def test_filespec_resolve_doesnt_prepend_cwd_if_file_doesnt_exist (self):
+        file_only = lldb.SBFileSpec("VeryUnlikelToExistInTheCurrentWorkingDirectory", True)
+        # SBFileSpec(path, True) should not prepend the current-working-directory to the
+        # file path if it doesn't exist in the current directory.
+        self.assertTrue (file_only.GetDirectory() == None)
+
     @unittest2.skipUnless(sys.platform.startswith("win32"), "Test for windows only")
     def test_windows_double_slash (self):
         '''Test to check the path with double slash is handled correctly '''
