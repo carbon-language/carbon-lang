@@ -124,15 +124,12 @@ public:
       // changed the header guard or not.
       if (!FixIts.empty()) {
         if (CurHeaderGuard != NewGuard) {
-          auto D = Check->diag(Ifndef,
-                               "header guard does not follow preferred style");
-          for (FixItHint &Fix : FixIts)
-            D.AddFixItHint(std::move(Fix));
+          Check->diag(Ifndef, "header guard does not follow preferred style")
+              << FixIts;
         } else {
-          auto D = Check->diag(EndIf, "#endif for a header guard should "
-                                      "reference the guard macro in a comment");
-          for (FixItHint &Fix : FixIts)
-            D.AddFixItHint(std::move(Fix));
+          Check->diag(EndIf, "#endif for a header guard should reference the "
+                             "guard macro in a comment")
+              << FixIts;
         }
       }
     }
