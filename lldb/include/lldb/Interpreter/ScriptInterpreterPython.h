@@ -34,6 +34,8 @@ class ScriptInterpreterPython :
 {
 public:
 
+    friend class IOHandlerPythonInterpreter;
+
     ScriptInterpreterPython (CommandInterpreter &interpreter);
 
     ~ScriptInterpreterPython ();

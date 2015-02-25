@@ -9,7 +9,7 @@ int opterr = 1;     /* if error message should be printed */
 int optind = 1;     /* index into parent argv vector */
 int optopt = '?';   /* character checked for validity */
 int optreset;       /* reset getopt */
-const char *optarg;       /* argument associated with option */
+char *optarg;       /* argument associated with option */
 
 #define PRINT_ERROR ((opterr) && (*options != ':'))
 
@@ -31,11 +31,19 @@ static int parse_long_options(char * const *, const char *,
 static int gcd(int, int);
 static void permute_args(int, int, int, char * const *);
 
-static const char *place = EMSG; /* option letter processing */
+static char *place = EMSG; /* option letter processing */
 
 /* XXX: set optreset to 1 rather than these two */
 static int nonopt_start = -1; /* first non option argument (for permute) */
 static int nonopt_end = -1;   /* first option after non options (for permute) */
+
+/* Error messages */
+static const char recargchar[] = "option requires an argument -- %c";
+static const char recargstring[] = "option requires an argument -- %s";
+static const char ambig[] = "ambiguous option -- %.*s";
+static const char noarg[] = "option doesn't take an argument -- %.*s";
+static const char illoptchar[] = "unknown option -- %c";
+static const char illoptstring[] = "unknown option -- %s";
 
 /*
 * Compute the greatest common divisor of a and b.
@@ -104,7 +112,7 @@ static int
 parse_long_options(char * const *nargv, const char *options,
 const struct option *long_options, int *idx, int short_too)
 {
-    const char *current_argv, *has_equal;
+    char *current_argv, *has_equal;
     size_t current_argv_len;
     int i, match;
 

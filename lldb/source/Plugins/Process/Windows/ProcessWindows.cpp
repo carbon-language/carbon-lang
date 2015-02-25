@@ -55,8 +55,8 @@ class ProcessWindowsData
 {
   public:
     ProcessWindowsData(const ProcessLaunchInfo &launch_info)
-        : m_launch_info(launch_info)
-        , m_initial_stop_event(nullptr)
+        : m_initial_stop_event(nullptr)
+        , m_launch_info(launch_info)
         , m_initial_stop_received(false)
     {
         m_initial_stop_event = ::CreateEvent(nullptr, TRUE, FALSE, nullptr);
@@ -334,6 +334,7 @@ ProcessWindows::RefreshStateAfterStop()
         BreakpointSiteSP site(GetBreakpointSiteList().FindByAddress(pc - 1));
         if (site && site->ValidForThisThread(stop_thread.get()))
         {
+            lldb::break_id_t break_id = LLDB_INVALID_BREAK_ID;
             stop_info = StopInfo::CreateStopReasonWithBreakpointSiteID(*stop_thread, site->GetID());
             register_context->SetPC(pc - 1);
         }
@@ -392,6 +393,7 @@ void ProcessWindows::DidLaunch()
 {
     llvm::sys::ScopedLock lock(m_mutex);
 
+    StateType state = GetPrivateState();
     // The initial stop won't broadcast the state change event, so account for that here.
     if (m_session_data && GetPrivateState() == eStateStopped &&
             m_session_data->m_launch_info.GetFlags().Test(eLaunchFlagStopAtEntry))
@@ -555,6 +557,7 @@ ProcessWindows::OnDebugException(bool first_chance, const ExceptionRecord &recor
     }
 
     ExceptionResult result = ExceptionResult::SendToApplication;
+    lldb::StateType state = GetPrivateState();
     switch (record.GetExceptionCode())
     {
         case EXCEPTION_BREAKPOINT:

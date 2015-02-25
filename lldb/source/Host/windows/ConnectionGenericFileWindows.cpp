@@ -208,9 +208,9 @@ ConnectionGenericFile::Read(void *dst, size_t dst_len, uint32_t timeout_usec, ll
             TimeValue time_value;
             time_value.OffsetWithMicroSeconds(timeout_usec);
             DWORD milliseconds = time_value.milliseconds();
-            DWORD wait_result = ::WaitForMultipleObjects(llvm::array_lengthof(m_event_handles), m_event_handles, FALSE, milliseconds);
+            result = ::WaitForMultipleObjects(llvm::array_lengthof(m_event_handles), m_event_handles, FALSE, milliseconds);
             // All of the events are manual reset events, so make sure we reset them to non-signalled.
-            switch (wait_result)
+            switch (result)
             {
                 case WAIT_OBJECT_0 + kBytesAvailableEvent:
                     break;

@@ -40,7 +40,7 @@ namespace lldb_private
 class LocalDebugDelegate : public IDebugDelegate
 {
   public:
-    explicit LocalDebugDelegate(lldb::ProcessSP process);
+    explicit LocalDebugDelegate::LocalDebugDelegate(lldb::ProcessSP process);
 
     virtual void OnExitProcess(uint32_t exit_code) override;
     virtual void OnDebuggerConnected(lldb::addr_t image_base) override;

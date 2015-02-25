@@ -38,7 +38,7 @@ TargetThreadWindows::~TargetThreadWindows()
 void
 TargetThreadWindows::RefreshStateAfterStop()
 {
-    ::SuspendThread(m_host_thread.GetNativeThread().GetSystemHandle());
+    DWORD old_suspend_count = ::SuspendThread(m_host_thread.GetNativeThread().GetSystemHandle());
 
     GetRegisterContext()->InvalidateIfNeeded(false);
 }

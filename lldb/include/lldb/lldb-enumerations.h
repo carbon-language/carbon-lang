@@ -652,7 +652,7 @@ namespace lldb {
         eBasicTypeOther
     } BasicType;
 
-    typedef enum TypeClass : unsigned
+    typedef enum TypeClass
     {
         eTypeClassInvalid           = (0u),
         eTypeClassArray             = (1u << 0),

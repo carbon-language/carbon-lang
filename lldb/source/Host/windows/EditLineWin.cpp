@@ -247,10 +247,10 @@ el_set (EditLine *el, int code, ...)
 
             // get the function pointer from the arg list
             void *func_vp = (void*)va_arg(vl, el_prompt_func);
-            va_arg(vl, int);
+            char  escape = (char)va_arg(vl, int);
             // call to get the prompt as a string
             el_prompt_func func_fp = (el_prompt_func)func_vp;
-            func_fp(el);
+            const char *newPrompt = func_fp(el);
         }
         break;
 
