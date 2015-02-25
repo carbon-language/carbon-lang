@@ -3000,6 +3000,7 @@ static void WriteMDNodeComment(const MDNode *Node,
 void AssemblyWriter::writeMDNode(unsigned Slot, const MDNode *Node) {
   Out << '!' << Slot << " = ";
   printMDNodeBody(Node);
+  Out << "\n";
 }
 
 void AssemblyWriter::writeAllMDNodes() {
@@ -3017,7 +3018,6 @@ void AssemblyWriter::writeAllMDNodes() {
 void AssemblyWriter::printMDNodeBody(const MDNode *Node) {
   WriteMDNodeBodyInternal(Out, Node, &TypePrinter, &Machine, TheModule);
   WriteMDNodeComment(Node, Out);
-  Out << "\n";
 }
 
 void AssemblyWriter::writeAllAttributeGroups() {

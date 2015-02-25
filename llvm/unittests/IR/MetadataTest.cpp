@@ -228,7 +228,7 @@ TEST_F(MDNodeTest, Print) {
     MDNode *Nodes[] = {N0, N1, N2};
     for (auto *Node : Nodes)
       OS << ", <" << (void *)Node << ">";
-    OS << "}\n";
+    OS << "}";
   }
 
   std::string Actual;
