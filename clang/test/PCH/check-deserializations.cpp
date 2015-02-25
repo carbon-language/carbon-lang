@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -emit-pch -o %t.1 %s
-// RUN: %clang_cc1 -error-on-deserialized-decl S1_keyfunc -error-on-deserialized-decl S3 -include-pch %t.1 -emit-pch -o %t.2 %s
-// RUN: %clang_cc1 -error-on-deserialized-decl S1_method -error-on-deserialized-decl S3 -include-pch %t.2 -emit-llvm-only %s
+// RUN: %clang_cc1 -triple x86_64-linux-gnu -emit-pch -o %t.1 %s
+// RUN: %clang_cc1 -triple x86_64-linux-gnu -error-on-deserialized-decl S1_keyfunc -error-on-deserialized-decl S3 -include-pch %t.1 -emit-pch -o %t.2 %s
+// RUN: %clang_cc1 -triple x86_64-linux-gnu -error-on-deserialized-decl S1_method -error-on-deserialized-decl S3 -include-pch %t.2 -emit-llvm-only %s
 
 #ifndef HEADER1
 #define HEADER1
