@@ -42,14 +42,11 @@ private:
   };
 
   std::unique_ptr<GOTFile> _gotFile;
-  X86_64LinkingContext &_context;
-  X86_64TargetLayout &_x86_64Layout;
 };
 
 X86_64DynamicLibraryWriter::X86_64DynamicLibraryWriter(
     X86_64LinkingContext &context, X86_64TargetLayout &layout)
-    : DynamicLibraryWriter(context, layout), _gotFile(new GOTFile(context)),
-      _context(context), _x86_64Layout(layout) {}
+    : DynamicLibraryWriter(context, layout), _gotFile(new GOTFile(context)) {}
 
 bool X86_64DynamicLibraryWriter::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &result) {
