@@ -160,3 +160,45 @@ void noreturn_finally() {
 // CHECK-NEXT: cleanup
 // CHECK: store i8 1, i8* %
 // CHECK: br label %[[finally]]
+
+int finally_with_return() {
+  __try {
+    return 42;
+  } __finally {
+  }
+}
+// CHECK-LABEL: define i32 @finally_with_return()
+// CHECK: store i8 0, i8* %
+// CHECK-NEXT: br label %[[finally:[^ ]*]]
+//
+// CHECK: [[finally]]
+// CHECK-NEXT: br label %[[finallycont:[^ ]*]]
+//
+// CHECK: [[finallycont]]
+// CHECK-NEXT: ret i32 42
+
+int nested___finally___finally() {
+  __try {
+    __try {
+    } __finally {
+      return 1;
+    }
+  } __finally {
+    // Intentionally no return here.
+  }
+  return 0;
+}
+// CHECK-LABEL: define i32 @nested___finally___finally
+// CHECK: store i8 0, i8* %
+// CHECK-NEXT: br label %[[finally:[^ ]*]]
+//
+// CHECK: [[finally]]
+// CHECK-NEXT:  store i32 1, i32* %cleanup.dest.slot
+// CHECK-NEXT:  store i8 0, i8* %abnormal.termination.slot
+// CHECK-NEXT: br label %[[outerfinally:[^ ]*]]
+//
+// CHECK: [[outerfinally]]
+// CHECK-NEXT: br label %[[finallycont:[^ ]*]]
+//
+// CHECK: [[finallycont]]
+// CHECK-NEXT: ret i32 1
