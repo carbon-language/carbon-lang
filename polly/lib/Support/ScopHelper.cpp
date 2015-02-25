@@ -170,7 +170,7 @@ BasicBlock *polly::simplifyRegion(Scop *S, Pass *P) {
   // Create single exit edge if the region has multiple exit edges.
   if (!R->getExitingBlock()) {
     BasicBlock *NewExiting = createSingleExitEdge(R, P);
-    (void) NewExiting;
+    (void)NewExiting;
     assert(NewExiting == R->getExitingBlock() &&
            "Did not create a single exiting block");
   }
