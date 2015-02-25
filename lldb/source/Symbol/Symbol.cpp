@@ -291,10 +291,7 @@ Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Target *target)
 void
 Symbol::Dump(Stream *s, Target *target, uint32_t index) const
 {
-//  s->Printf("%.*p: ", (int)sizeof(void*) * 2, this);
-//  s->Indent();
-//  s->Printf("Symbol[%5u] %6u %c%c %-12s ",
-    s->Printf("[%5u] %6u %c%c%c %-12s ",
+    s->Printf("[%5u] %6u %c%c%c %-15s ",
               index,
               GetID(),
               m_is_debug ? 'D' : ' ',

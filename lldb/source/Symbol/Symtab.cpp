@@ -201,8 +201,8 @@ Symtab::DumpSymbolHeader (Stream *s)
     s->Indent("               |Synthetic symbol\n");
     s->Indent("               ||Externally Visible\n");
     s->Indent("               |||\n");
-    s->Indent("Index   UserID DSX Type         File Address/Value Load Address       Size               Flags      Name\n");
-    s->Indent("------- ------ --- ------------ ------------------ ------------------ ------------------ ---------- ----------------------------------\n");
+    s->Indent("Index   UserID DSX Type            File Address/Value Load Address       Size               Flags      Name\n");
+    s->Indent("------- ------ --- --------------- ------------------ ------------------ ------------------ ---------- ----------------------------------\n");
 }
 
 
