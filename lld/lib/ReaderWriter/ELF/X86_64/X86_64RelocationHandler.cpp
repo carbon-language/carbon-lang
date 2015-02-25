@@ -56,6 +56,14 @@ static void reloc16(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   // TODO: Check for overflow.
 }
 
+/// \brief R_X86_64_PC64 - word64: S + A - P
+static void relocPC64(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+  int64_t result = (uint64_t)((S + A) - P);
+  *reinterpret_cast<llvm::support::ulittle64_t *>(location) =
+      result |
+      (uint64_t) * reinterpret_cast<llvm::support::ulittle64_t *>(location);
+}
+
 std::error_code X86_64TargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const lld::AtomLayout &atom,
     const Reference &ref) const {
@@ -112,6 +120,9 @@ std::error_code X86_64TargetRelocationHandler::applyRelocation(
     std::memcpy(location - 3, instr, sizeof(instr));
     break;
   }
+  case R_X86_64_PC64:
+    relocPC64(location, relocVAddress, targetVAddress, ref.addend());
+    break;
   case LLD_R_X86_64_GOTRELINDEX: {
     const DefinedAtom *target = cast<const DefinedAtom>(ref.target());
     for (const Reference *r : *target) {
