@@ -25,6 +25,7 @@ if(NOT LLVM_FORCE_USE_OLD_TOOLCHAIN)
       if (CMAKE_CXX_SIMULATE_VERSION VERSION_LESS 18.0)
         message(FATAL_ERROR "Host Clang must have at least -fms-compatibility-version=18.0")
       endif()
+      set(CLANG_CL 1)
     elseif(NOT LLVM_ENABLE_LIBCXX)
       # Otherwise, test that we aren't using too old of a version of libstdc++
       # with the Clang compiler. This is tricky as there is no real way to
