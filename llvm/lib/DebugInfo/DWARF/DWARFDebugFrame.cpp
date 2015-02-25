@@ -210,6 +210,9 @@ public:
   ~CIE() {
   }
 
+  uint64_t getCodeAlignmentFactor() const { return CodeAlignmentFactor; }
+  int64_t getDataAlignmentFactor() const { return DataAlignmentFactor; }
+
   void dumpHeader(raw_ostream &OS) const override {
     OS << format("%08x %08x %08x CIE",
                  (uint32_t)Offset, (uint32_t)Length, DW_CIE_ID)
@@ -254,6 +257,8 @@ public:
 
   ~FDE() {
   }
+
+  CIE *getLinkedCIE() const { return LinkedCIE; }
 
   void dumpHeader(raw_ostream &OS) const override {
     OS << format("%08x %08x %08x FDE ",
