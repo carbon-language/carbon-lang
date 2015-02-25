@@ -24,7 +24,9 @@
 // RUN: rm -f %t.supp
 
 // GNU driver doesn't handle .so files properly.
-// REQUIRES: Clang
+// Temporary disable the test on non-x86_64
+// (http://llvm.org/bugs/show_bug.cgi?id=22699)
+// REQUIRES: Clang, x86_64-supported-target
 
 #ifndef SZ
 # define SZ 4
