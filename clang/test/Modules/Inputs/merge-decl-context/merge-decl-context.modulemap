@@ -1,0 +1,13 @@
+module "a" {
+  textual header "a.h"
+}
+
+module "b" {
+  export *
+  header "b.h"
+}
+
+module "c" {
+  export *
+  header "c.h"
+}

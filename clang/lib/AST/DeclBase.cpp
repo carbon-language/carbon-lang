@@ -1308,12 +1308,16 @@ DeclContext::lookup(DeclarationName Name) const {
   if (PrimaryContext != this)
     return PrimaryContext->lookup(Name);
 
-  // If this is a namespace, ensure that any later redeclarations of it have
-  // been loaded, since they may add names to the result of this lookup.
-  if (auto *ND = dyn_cast<NamespaceDecl>(this))
-    (void)ND->getMostRecentDecl();
+  // If we have an external source, ensure that any later redeclarations of this
+  // context have been loaded, since they may add names to the result of this
+  // lookup (or add external visible storage).
+  ExternalASTSource *Source = getParentASTContext().getExternalSource();
+  if (Source)
+    (void)cast<Decl>(this)->getMostRecentDecl();
 
   if (hasExternalVisibleStorage()) {
+    assert(Source && "external visible storage but no external source?");
+
     if (NeedToReconcileExternalVisibleStorage)
       reconcileExternalVisibleStorage();
 
@@ -1332,7 +1336,6 @@ DeclContext::lookup(DeclarationName Name) const {
     if (!R.second && !R.first->second.hasExternalDecls())
       return R.first->second.getLookupResult();
 
-    ExternalASTSource *Source = getParentASTContext().getExternalSource();
     if (Source->FindExternalVisibleDeclsByName(this, Name) || !R.second) {
       if (StoredDeclsMap *Map = LookupPtr.getPointer()) {
         StoredDeclsMap::iterator I = Map->find(Name);
