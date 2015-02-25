@@ -222,8 +222,24 @@ programs that use different garbage collection algorithms (or none at all).
 
 .. _gcroot:
 
-Identifying GC roots on the stack: ``llvm.gcroot``
---------------------------------------------------
+Identifying GC roots on the stack
+----------------------------------
+
+LLVM currently supports two different mechanisms for describing references in
+compiled code at safepoints.  ``llvm.gcroot`` is the older mechanism; 
+``gc.statepoint`` has been added more recently.  At the moment, you can choose 
+either implementation (on a per :ref:`GC strategy <plugin>` basis).  Longer 
+term, we will probably either migrate away from ``llvm.gcroot`` entirely, or 
+substantially merge their implementations. Note that most new development 
+work is focused on ``gc.statepoint``.  
+
+Using ``gc.statepoint``
+^^^^^^^^^^^^^^^^^^^^^^^^
+:doc:`This page <Statepoints>` contains detailed documentation for 
+``gc.statepoint``. 
+
+Using ``llvm.gcwrite``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: llvm
 
@@ -235,19 +251,22 @@ The exact impact on generated code is specified by a :ref:`compiler plugin
 <plugin>`.  All calls to ``llvm.gcroot`` **must** reside inside the first basic
 block.
 
-A compiler which uses mem2reg to raise imperative code using ``alloca`` into SSA
-form need only add a call to ``@llvm.gcroot`` for those variables which a
-pointers into the GC heap.
+The first argument **must** be a value referring to an alloca instruction or a
+bitcast of an alloca.  The second contains a pointer to metadata that should be
+associated with the pointer, and **must** be a constant or global value
+address.  If your target collector uses tags, use a null pointer for metadata.
+
+A compiler which performs manual SSA construction **must** ensure that SSA 
+values representing GC references are stored in to the alloca passed to the
+respective ``gcroot`` before every call site and reloaded after every call.  
+A compiler which uses mem2reg to raise imperative code using ``alloca`` into 
+SSA form need only add a call to ``@llvm.gcroot`` for those variables which 
+are pointers into the GC heap.  
 
 It is also important to mark intermediate values with ``llvm.gcroot``.  For
 example, consider ``h(f(), g())``.  Beware leaking the result of ``f()`` in the
 case that ``g()`` triggers a collection.  Note, that stack variables must be
 initialized and marked with ``llvm.gcroot`` in function's prologue.
-
-The first argument **must** be a value referring to an alloca instruction or a
-bitcast of an alloca.  The second contains a pointer to metadata that should be
-associated with the pointer, and **must** be a constant or global value
-address.  If your target collector uses tags, use a null pointer for metadata.
 
 The ``%metadata`` argument can be used to avoid requiring heap objects to have
 'isa' pointers or tag bits. [Appel89_, Goldberg91_, Tolmach94_] If specified,

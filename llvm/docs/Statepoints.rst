@@ -14,8 +14,8 @@ with caution.  Because the intrinsics have experimental status,
 compatibility across LLVM releases is not guaranteed.
 
 LLVM currently supports an alternate mechanism for conservative
-garbage collection support using the gc_root intrinsic.  The mechanism
-described here shares little in common with the alternate
+garbage collection support using the ``gcroot`` intrinsic.  The mechanism
+described here shares little in common with the alternate ``gcroot``
 implementation and it is hoped that this mechanism will eventually
 replace the gc_root mechanism.
 
