@@ -1813,7 +1813,7 @@ EmitBitCastOfLValueToProperType(CodeGenFunction &CGF,
 static LValue EmitThreadPrivateVarDeclLValue(
     CodeGenFunction &CGF, const VarDecl *VD, QualType T, llvm::Value *V,
     llvm::Type *RealVarTy, CharUnits Alignment, SourceLocation Loc) {
-  V = CGF.CGM.getOpenMPRuntime().getOMPAddrOfThreadPrivate(CGF, VD, V, Loc);
+  V = CGF.CGM.getOpenMPRuntime().getAddrOfThreadPrivate(CGF, VD, V, Loc);
   V = EmitBitCastOfLValueToProperType(CGF, V, RealVarTy);
   return CGF.MakeAddrLValue(V, T, Alignment);
 }

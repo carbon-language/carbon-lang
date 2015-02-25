@@ -141,7 +141,7 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
 
   if (!T->isReferenceType()) {
     if (getLangOpts().OpenMP && D.hasAttr<OMPThreadPrivateDeclAttr>())
-      (void)CGM.getOpenMPRuntime().EmitOMPThreadPrivateVarDefinition(
+      (void)CGM.getOpenMPRuntime().emitThreadPrivateVarDefinition(
           &D, DeclPtr, D.getAttr<OMPThreadPrivateDeclAttr>()->getLocation(),
           PerformInit, this);
     if (PerformInit)

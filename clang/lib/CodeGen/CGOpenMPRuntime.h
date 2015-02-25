@@ -125,7 +125,7 @@ private:
   /// \brief Map of flags and corresponding default locations.
   typedef llvm::DenseMap<unsigned, llvm::Value *> OpenMPDefaultLocMapTy;
   OpenMPDefaultLocMapTy OpenMPDefaultLocMap;
-  llvm::Value *GetOrCreateDefaultOpenMPLocation(OpenMPLocationFlags Flags);
+  llvm::Value *getOrCreateDefaultLocation(OpenMPLocationFlags Flags);
   /// \brief Describes ident structure that describes a source location.
   /// All descriptions are taken from
   /// http://llvm.org/svn/llvm-project/openmp/trunk/runtime/src/kmp.h
@@ -197,9 +197,8 @@ private:
   /// \brief Emits object of ident_t type with info for source location.
   /// \param Flags Flags for OpenMP location.
   ///
-  llvm::Value *
-  EmitOpenMPUpdateLocation(CodeGenFunction &CGF, SourceLocation Loc,
-                           OpenMPLocationFlags Flags = OMP_IDENT_KMPC);
+  llvm::Value *emitUpdateLocation(CodeGenFunction &CGF, SourceLocation Loc,
+                                  OpenMPLocationFlags Flags = OMP_IDENT_KMPC);
 
   /// \brief Returns pointer to ident_t type.
   llvm::Type *getIdentTyPointerTy();
@@ -210,7 +209,7 @@ private:
   /// \brief Returns specified OpenMP runtime function.
   /// \param Function OpenMP runtime function.
   /// \return Specified function.
-  llvm::Constant *CreateRuntimeFunction(OpenMPRTLFunction Function);
+  llvm::Constant *createRuntimeFunction(OpenMPRTLFunction Function);
 
   /// \brief If the specified mangled name is not in the module, create and
   /// return threadprivate cache object. This object is a pointer's worth of
@@ -221,12 +220,12 @@ private:
 
   /// \brief Emits address of the word in a memory where current thread id is
   /// stored.
-  virtual llvm::Value *EmitThreadIDAddress(CodeGenFunction &CGF,
+  virtual llvm::Value *emitThreadIDAddress(CodeGenFunction &CGF,
                                            SourceLocation Loc);
 
   /// \brief Gets thread id value for the current thread.
   ///
-  llvm::Value *GetOpenMPThreadID(CodeGenFunction &CGF, SourceLocation Loc);
+  llvm::Value *getThreadID(CodeGenFunction &CGF, SourceLocation Loc);
 
   /// \brief Gets (if variable with the given name already exist) or creates
   /// internal global variable with the specified Name. The created variable has
@@ -234,7 +233,7 @@ private:
   /// \param Ty Type of the global variable. If it is exist already the type
   /// must be the same.
   /// \param Name Name of the variable.
-  llvm::Constant *GetOrCreateInternalVariable(llvm::Type *Ty,
+  llvm::Constant *getOrCreateInternalVariable(llvm::Type *Ty,
                                               const llvm::Twine &Name);
 
   /// \brief Set of threadprivate variables with the generated initializer.
@@ -246,16 +245,16 @@ private:
   /// \param CopyCtor Pointer to a global copy function for \a VD.
   /// \param Dtor Pointer to a global destructor function for \a VD.
   /// \param Loc Location of threadprivate declaration.
-  void EmitOMPThreadPrivateVarInit(CodeGenFunction &CGF, llvm::Value *VDAddr,
-                                   llvm::Value *Ctor, llvm::Value *CopyCtor,
-                                   llvm::Value *Dtor, SourceLocation Loc);
+  void emitThreadPrivateVarInit(CodeGenFunction &CGF, llvm::Value *VDAddr,
+                                llvm::Value *Ctor, llvm::Value *CopyCtor,
+                                llvm::Value *Dtor, SourceLocation Loc);
 
   /// \brief Returns corresponding lock object for the specified critical region
   /// name. If the lock object does not exist it is created, otherwise the
   /// reference to the existing copy is returned.
   /// \param CriticalName Name of the critical region.
   ///
-  llvm::Value *GetCriticalRegionLock(StringRef CriticalName);
+  llvm::Value *getCriticalRegionLock(StringRef CriticalName);
 
 public:
   explicit CGOpenMPRuntime(CodeGenModule &CGM);
@@ -268,13 +267,12 @@ public:
   /// \param D OpenMP directive.
   /// \param ThreadIDVar Variable for thread id in the current OpenMP region.
   ///
-  virtual llvm::Value *
-  EmitOpenMPOutlinedFunction(const OMPExecutableDirective &D,
-                             const VarDecl *ThreadIDVar);
+  virtual llvm::Value *emitOutlinedFunction(const OMPExecutableDirective &D,
+                                            const VarDecl *ThreadIDVar);
 
   /// \brief Cleans up references to the objects in finished function.
   ///
-  void FunctionFinished(CodeGenFunction &CGF);
+  void functionFinished(CodeGenFunction &CGF);
 
   /// \brief Emits code for parallel call of the \a OutlinedFn with variables
   /// captured in a record which address is stored in \a CapturedStruct.
@@ -283,9 +281,9 @@ public:
   /// \param CapturedStruct A pointer to the record with the references to
   /// variables used in \a OutlinedFn function.
   ///
-  virtual void EmitOMPParallelCall(CodeGenFunction &CGF, SourceLocation Loc,
-                                   llvm::Value *OutlinedFn,
-                                   llvm::Value *CapturedStruct);
+  virtual void emitParallelCall(CodeGenFunction &CGF, SourceLocation Loc,
+                                llvm::Value *OutlinedFn,
+                                llvm::Value *CapturedStruct);
 
   /// \brief Emits code for serial call of the \a OutlinedFn with variables
   /// captured in a record which address is stored in \a CapturedStruct.
@@ -293,41 +291,40 @@ public:
   /// \param CapturedStruct A pointer to the record with the references to
   /// variables used in \a OutlinedFn function.
   ///
-  virtual void EmitOMPSerialCall(CodeGenFunction &CGF, SourceLocation Loc,
-                                 llvm::Value *OutlinedFn,
-                                 llvm::Value *CapturedStruct);
+  virtual void emitSerialCall(CodeGenFunction &CGF, SourceLocation Loc,
+                              llvm::Value *OutlinedFn,
+                              llvm::Value *CapturedStruct);
 
   /// \brief Emits a critical region.
   /// \param CriticalName Name of the critical region.
   /// \param CriticalOpGen Generator for the statement associated with the given
   /// critical region.
-  virtual void EmitOMPCriticalRegion(CodeGenFunction &CGF,
-                                     StringRef CriticalName,
-                                     const std::function<void()> &CriticalOpGen,
-                                     SourceLocation Loc);
+  virtual void emitCriticalRegion(CodeGenFunction &CGF, StringRef CriticalName,
+                                  const std::function<void()> &CriticalOpGen,
+                                  SourceLocation Loc);
 
   /// \brief Emits a master region.
   /// \param MasterOpGen Generator for the statement associated with the given
   /// master region.
-  virtual void EmitOMPMasterRegion(CodeGenFunction &CGF,
-                                   const std::function<void()> &MasterOpGen,
-                                   SourceLocation Loc);
+  virtual void emitMasterRegion(CodeGenFunction &CGF,
+                                const std::function<void()> &MasterOpGen,
+                                SourceLocation Loc);
 
   /// \brief Emits code for a taskyield directive.
-  virtual void EmitOMPTaskyieldCall(CodeGenFunction &CGF, SourceLocation Loc);
+  virtual void emitTaskyieldCall(CodeGenFunction &CGF, SourceLocation Loc);
 
   /// \brief Emits a single region.
   /// \param SingleOpGen Generator for the statement associated with the given
   /// single region.
-  virtual void EmitOMPSingleRegion(CodeGenFunction &CGF,
-                                   const std::function<void()> &SingleOpGen,
-                                   SourceLocation Loc);
+  virtual void emitSingleRegion(CodeGenFunction &CGF,
+                                const std::function<void()> &SingleOpGen,
+                                SourceLocation Loc);
 
   /// \brief Emits explicit barrier for OpenMP threads.
   /// \param IsExplicit true, if it is explicitly specified barrier.
   ///
-  virtual void EmitOMPBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,
-                                  bool IsExplicit = true);
+  virtual void emitBarrierCall(CodeGenFunction &CGF, SourceLocation Loc,
+                               bool IsExplicit = true);
 
   /// \brief Check if the specified \a ScheduleKind is static non-chunked.
   /// This kind of worksharing directive is emitted without outer loop.
@@ -366,11 +363,11 @@ public:
   /// \param Chunk Value of the chunk for the static_chunked scheduled loop.
   /// For the default (nullptr) value, the chunk 1 will be used.
   ///
-  virtual void EmitOMPForInit(CodeGenFunction &CGF, SourceLocation Loc,
-                              OpenMPScheduleClauseKind SchedKind,
-                              unsigned IVSize, bool IVSigned, llvm::Value *IL,
-                              llvm::Value *LB, llvm::Value *UB, llvm::Value *ST,
-                              llvm::Value *Chunk = nullptr);
+  virtual void emitForInit(CodeGenFunction &CGF, SourceLocation Loc,
+                           OpenMPScheduleClauseKind SchedKind, unsigned IVSize,
+                           bool IVSigned, llvm::Value *IL, llvm::Value *LB,
+                           llvm::Value *UB, llvm::Value *ST,
+                           llvm::Value *Chunk = nullptr);
 
   /// \brief Call the appropriate runtime routine to notify that we finished
   /// all the work with current loop.
@@ -379,16 +376,16 @@ public:
   /// \param Loc Clang source location.
   /// \param ScheduleKind Schedule kind, specified by the 'schedule' clause.
   ///
-  virtual void EmitOMPForFinish(CodeGenFunction &CGF, SourceLocation Loc,
-                                OpenMPScheduleClauseKind ScheduleKind);
+  virtual void emitForFinish(CodeGenFunction &CGF, SourceLocation Loc,
+                             OpenMPScheduleClauseKind ScheduleKind);
 
   /// \brief Emits call to void __kmpc_push_num_threads(ident_t *loc, kmp_int32
   /// global_tid, kmp_int32 num_threads) to generate code for 'num_threads'
   /// clause.
   /// \param NumThreads An integer value of threads.
-  virtual void EmitOMPNumThreadsClause(CodeGenFunction &CGF,
-                                       llvm::Value *NumThreads,
-                                       SourceLocation Loc);
+  virtual void emitNumThreadsClause(CodeGenFunction &CGF,
+                                    llvm::Value *NumThreads,
+                                    SourceLocation Loc);
 
   /// \brief Returns address of the threadprivate variable for the current
   /// thread.
@@ -396,10 +393,10 @@ public:
   /// \param VDAddr Address of the global variable \a VD.
   /// \param Loc Location of the reference to threadprivate var.
   /// \return Address of the threadprivate variable for the current thread.
-  virtual llvm::Value *getOMPAddrOfThreadPrivate(CodeGenFunction &CGF,
-                                                 const VarDecl *VD,
-                                                 llvm::Value *VDAddr,
-                                                 SourceLocation Loc);
+  virtual llvm::Value *getAddrOfThreadPrivate(CodeGenFunction &CGF,
+                                              const VarDecl *VD,
+                                              llvm::Value *VDAddr,
+                                              SourceLocation Loc);
 
   /// \brief Emit a code for initialization of threadprivate variable. It emits
   /// a call to runtime library which adds initial value to the newly created
@@ -410,14 +407,14 @@ public:
   /// \param Loc Location of threadprivate declaration.
   /// \param PerformInit true if initialization expression is not constant.
   virtual llvm::Function *
-  EmitOMPThreadPrivateVarDefinition(const VarDecl *VD, llvm::Value *VDAddr,
-                                    SourceLocation Loc, bool PerformInit,
-                                    CodeGenFunction *CGF = nullptr);
+  emitThreadPrivateVarDefinition(const VarDecl *VD, llvm::Value *VDAddr,
+                                 SourceLocation Loc, bool PerformInit,
+                                 CodeGenFunction *CGF = nullptr);
 
   /// \brief Emit flush of the variables specified in 'omp flush' directive.
   /// \param Vars List of variables to flush.
-  virtual void EmitOMPFlush(CodeGenFunction &CGF, ArrayRef<const Expr *> Vars,
-                            SourceLocation Loc);
+  virtual void emitFlush(CodeGenFunction &CGF, ArrayRef<const Expr *> Vars,
+                         SourceLocation Loc);
 };
 } // namespace CodeGen
 } // namespace clang

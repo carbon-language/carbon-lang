@@ -3674,10 +3674,8 @@ void CodeGenModule::EmitOMPThreadPrivateDecl(const OMPThreadPrivateDecl *D) {
         VD->getAnyInitializer() &&
         !VD->getAnyInitializer()->isConstantInitializer(getContext(),
                                                         /*ForRef=*/false);
-    if (auto InitFunction =
-            getOpenMPRuntime().EmitOMPThreadPrivateVarDefinition(
-                VD, GetAddrOfGlobalVar(VD), RefExpr->getLocStart(),
-                PerformInit))
+    if (auto InitFunction = getOpenMPRuntime().emitThreadPrivateVarDefinition(
+            VD, GetAddrOfGlobalVar(VD), RefExpr->getLocStart(), PerformInit))
       CXXGlobalInits.push_back(InitFunction);
   }
 }
