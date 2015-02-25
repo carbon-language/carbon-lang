@@ -43,9 +43,19 @@ class CommandLineCompletionTestCase(TestBase):
                               turn_off_re_match=True)
 
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    def test_watchpoint_command_dash_w_space(self):
-        """Test that 'watchpoint command' completes to ['Available completions:', 'add', 'delete', 'list']."""
-        self.complete_from_to('watchpoint command', ['Available completions:', 'add', 'delete', 'list'])
+    def test_watchpoint_co(self):
+        """Test that 'watchpoint co' completes to 'watchpoint command '."""
+        self.complete_from_to('watchpoint co', 'watchpoint command ')
+
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    def test_watchpoint_command_space(self):
+        """Test that 'watchpoint command ' completes to ['Available completions:', 'add', 'delete', 'list']."""
+        self.complete_from_to('watchpoint command ', ['Available completions:', 'add', 'delete', 'list'])
+
+    @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
+    def test_watchpoint_command_a(self):
+        """Test that 'watchpoint command a' completes to 'watchpoint command add '."""
+        self.complete_from_to('watchpoint command a', 'watchpoint command add ')
 
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     def test_watchpoint_set_variable_dash_w(self):
