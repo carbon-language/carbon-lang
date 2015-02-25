@@ -1,10 +1,13 @@
 /*
- * Copyright 2013      Ecole Normale Superieure
+ * Copyright 2013-2014 Ecole Normale Superieure
+ * Copyright 2014      INRIA Rocquencourt
  *
  * Use of this software is governed by the MIT license
  *
  * Written by Sven Verdoolaege,
  * Ecole Normale Superieure, 45 rue d'Ulm, 75230 Paris, France
+ * and Inria Paris - Rocquencourt, Domaine de Voluceau - Rocquencourt,
+ * B.P. 105 - 78153 Le Chesnay, France
  */
 
 #include <isl/map.h>
@@ -286,6 +289,46 @@ error:
 	return NULL;
 }
 
+/* Construct a tree with a root node of type "type" and as children
+ * "tree1" and "tree2".
+ * If the root of one (or both) of the input trees is itself of type "type",
+ * then the tree is replaced by its children.
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_from_pair(
+	enum isl_schedule_node_type type, __isl_take isl_schedule_tree *tree1,
+	__isl_take isl_schedule_tree *tree2)
+{
+	isl_ctx *ctx;
+	isl_schedule_tree_list *list;
+
+	if (!tree1 || !tree2)
+		goto error;
+
+	ctx = isl_schedule_tree_get_ctx(tree1);
+	if (isl_schedule_tree_get_type(tree1) == type) {
+		list = isl_schedule_tree_list_copy(tree1->children);
+		isl_schedule_tree_free(tree1);
+	} else {
+		list = isl_schedule_tree_list_alloc(ctx, 2);
+		list = isl_schedule_tree_list_add(list, tree1);
+	}
+	if (isl_schedule_tree_get_type(tree2) == type) {
+		isl_schedule_tree_list *children;
+
+		children = isl_schedule_tree_list_copy(tree2->children);
+		list = isl_schedule_tree_list_concat(list, children);
+		isl_schedule_tree_free(tree2);
+	} else {
+		list = isl_schedule_tree_list_add(list, tree2);
+	}
+
+	return isl_schedule_tree_from_children(type, list);
+error:
+	isl_schedule_tree_free(tree1);
+	isl_schedule_tree_free(tree2);
+	return NULL;
+}
+
 /* Return the isl_ctx to which "tree" belongs.
  */
 isl_ctx *isl_schedule_tree_get_ctx(__isl_keep isl_schedule_tree *tree)
@@ -300,6 +343,64 @@ enum isl_schedule_node_type isl_schedule_tree_get_type(
 	__isl_keep isl_schedule_tree *tree)
 {
 	return tree ? tree->type : isl_schedule_node_error;
+}
+
+/* Are "tree1" and "tree2" obviously equal to each other?
+ */
+int isl_schedule_tree_plain_is_equal(__isl_keep isl_schedule_tree *tree1,
+	__isl_keep isl_schedule_tree *tree2)
+{
+	int equal;
+	int i, n;
+
+	if (!tree1 || !tree2)
+		return -1;
+	if (tree1 == tree2)
+		return 1;
+	if (tree1->type != tree2->type)
+		return 0;
+
+	switch (tree1->type) {
+	case isl_schedule_node_band:
+		equal = isl_schedule_band_plain_is_equal(tree1->band,
+							tree2->band);
+		break;
+	case isl_schedule_node_domain:
+		equal = isl_union_set_is_equal(tree1->domain, tree2->domain);
+		break;
+	case isl_schedule_node_filter:
+		equal = isl_union_set_is_equal(tree1->filter, tree2->filter);
+		break;
+	case isl_schedule_node_leaf:
+	case isl_schedule_node_sequence:
+	case isl_schedule_node_set:
+		equal = 1;
+		break;
+	case isl_schedule_node_error:
+		equal = -1;
+		break;
+	}
+
+	if (equal < 0 || !equal)
+		return equal;
+
+	n = isl_schedule_tree_n_children(tree1);
+	if (n != isl_schedule_tree_n_children(tree2))
+		return 0;
+	for (i = 0; i < n; ++i) {
+		isl_schedule_tree *child1, *child2;
+
+		child1 = isl_schedule_tree_get_child(tree1, i);
+		child2 = isl_schedule_tree_get_child(tree2, i);
+		equal = isl_schedule_tree_plain_is_equal(child1, child2);
+		isl_schedule_tree_free(child1);
+		isl_schedule_tree_free(child2);
+
+		if (equal < 0 || !equal)
+			return equal;
+	}
+
+	return 1;
 }
 
 /* Does "tree" have any children, other than an implicit leaf.
@@ -357,6 +458,37 @@ __isl_give isl_schedule_tree *isl_schedule_tree_reset_children(
 	if (!tree)
 		return NULL;
 	tree->children = isl_schedule_tree_list_free(tree->children);
+	return tree;
+}
+
+/* Remove the child at position "pos" from the children of "tree".
+ * If there was only one child to begin with, then remove all children.
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_drop_child(
+	__isl_take isl_schedule_tree *tree, int pos)
+{
+	int n;
+
+	tree = isl_schedule_tree_cow(tree);
+	if (!tree)
+		return NULL;
+
+	if (!isl_schedule_tree_has_children(tree))
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"tree does not have any explicit children",
+			return isl_schedule_tree_free(tree));
+	n = isl_schedule_tree_list_n_schedule_tree(tree->children);
+	if (pos < 0 || pos >= n)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"position out of bounds",
+			return isl_schedule_tree_free(tree));
+	if (n == 1)
+		return isl_schedule_tree_reset_children(tree);
+
+	tree->children = isl_schedule_tree_list_drop(tree->children, pos, 1);
+	if (!tree->children)
+		return isl_schedule_tree_free(tree);
+
 	return tree;
 }
 
@@ -468,6 +600,35 @@ __isl_give isl_schedule_tree *isl_schedule_tree_insert_filter(
 
 	res = isl_schedule_tree_from_filter(filter);
 	return isl_schedule_tree_replace_child(res, 0, tree);
+}
+
+/* Insert a filter node with filter set "filter"
+ * in each of the children of "tree".
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_children_insert_filter(
+	__isl_take isl_schedule_tree *tree, __isl_take isl_union_set *filter)
+{
+	int i, n;
+
+	if (!tree || !filter)
+		goto error;
+
+	n = isl_schedule_tree_n_children(tree);
+	for (i = 0; i < n; ++i) {
+		isl_schedule_tree *child;
+
+		child = isl_schedule_tree_get_child(tree, i);
+		child = isl_schedule_tree_insert_filter(child,
+						    isl_union_set_copy(filter));
+		tree = isl_schedule_tree_replace_child(tree, i, child);
+	}
+
+	isl_union_set_free(filter);
+	return tree;
+error:
+	isl_union_set_free(filter);
+	isl_schedule_tree_free(tree);
+	return NULL;
 }
 
 /* Return the number of members in the band tree root.
@@ -1231,6 +1392,197 @@ __isl_give isl_schedule_tree *isl_schedule_tree_append_to_leaves(
 error:
 	isl_schedule_tree_free(tree1);
 	isl_schedule_tree_free(tree2);
+	return NULL;
+}
+
+/* Reset the user pointer on all identifiers of parameters and tuples
+ * in the root of "tree".
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_reset_user(
+	__isl_take isl_schedule_tree *tree)
+{
+	if (isl_schedule_tree_is_leaf(tree))
+		return tree;
+
+	tree = isl_schedule_tree_cow(tree);
+	if (!tree)
+		return NULL;
+
+	switch (tree->type) {
+	case isl_schedule_node_error:
+		return isl_schedule_tree_free(tree);
+	case isl_schedule_node_band:
+		tree->band = isl_schedule_band_reset_user(tree->band);
+		if (!tree->band)
+			return isl_schedule_tree_free(tree);
+		break;
+	case isl_schedule_node_domain:
+		tree->domain = isl_union_set_reset_user(tree->domain);
+		if (!tree->domain)
+			return isl_schedule_tree_free(tree);
+		break;
+	case isl_schedule_node_filter:
+		tree->filter = isl_union_set_reset_user(tree->filter);
+		if (!tree->filter)
+			return isl_schedule_tree_free(tree);
+		break;
+	case isl_schedule_node_leaf:
+	case isl_schedule_node_sequence:
+	case isl_schedule_node_set:
+		break;
+	}
+
+	return tree;
+}
+
+/* Align the parameters of the root of "tree" to those of "space".
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_align_params(
+	__isl_take isl_schedule_tree *tree, __isl_take isl_space *space)
+{
+	if (!space)
+		goto error;
+
+	if (isl_schedule_tree_is_leaf(tree)) {
+		isl_space_free(space);
+		return tree;
+	}
+
+	tree = isl_schedule_tree_cow(tree);
+	if (!tree)
+		goto error;
+
+	switch (tree->type) {
+	case isl_schedule_node_error:
+		goto error;
+	case isl_schedule_node_band:
+		tree->band = isl_schedule_band_align_params(tree->band, space);
+		if (!tree->band)
+			return isl_schedule_tree_free(tree);
+		break;
+	case isl_schedule_node_domain:
+		tree->domain = isl_union_set_align_params(tree->domain, space);
+		if (!tree->domain)
+			return isl_schedule_tree_free(tree);
+		break;
+	case isl_schedule_node_filter:
+		tree->filter = isl_union_set_align_params(tree->filter, space);
+		if (!tree->filter)
+			return isl_schedule_tree_free(tree);
+		break;
+	case isl_schedule_node_leaf:
+	case isl_schedule_node_sequence:
+	case isl_schedule_node_set:
+		isl_space_free(space);
+		break;
+	}
+
+	return tree;
+error:
+	isl_space_free(space);
+	isl_schedule_tree_free(tree);
+	return NULL;
+}
+
+/* Does "tree" involve the iteration domain?
+ * That is, does it need to be modified
+ * by isl_schedule_tree_pullback_union_pw_multi_aff?
+ */
+static int involves_iteration_domain(__isl_keep isl_schedule_tree *tree)
+{
+	if (!tree)
+		return -1;
+
+	switch (tree->type) {
+	case isl_schedule_node_error:
+		return -1;
+	case isl_schedule_node_band:
+	case isl_schedule_node_domain:
+	case isl_schedule_node_filter:
+		return 1;
+	case isl_schedule_node_leaf:
+	case isl_schedule_node_sequence:
+	case isl_schedule_node_set:
+		return 0;
+	}
+}
+
+/* Compute the pullback of the root node of "tree" by the function
+ * represented by "upma".
+ * In other words, plug in "upma" in the iteration domains of
+ * the root node of "tree".
+ *
+ * We first check if the root node involves any iteration domains.
+ * If so, we handle the specific cases.
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_pullback_union_pw_multi_aff(
+	__isl_take isl_schedule_tree *tree,
+	__isl_take isl_union_pw_multi_aff *upma)
+{
+	int involves;
+
+	if (!tree || !upma)
+		goto error;
+
+	involves = involves_iteration_domain(tree);
+	if (involves < 0)
+		goto error;
+	if (!involves) {
+		isl_union_pw_multi_aff_free(upma);
+		return tree;
+	}
+
+	tree = isl_schedule_tree_cow(tree);
+	if (!tree)
+		goto error;
+
+	if (tree->type == isl_schedule_node_band) {
+		tree->band = isl_schedule_band_pullback_union_pw_multi_aff(
+							    tree->band, upma);
+		if (!tree->band)
+			return isl_schedule_tree_free(tree);
+	} else if (tree->type == isl_schedule_node_domain) {
+		tree->domain =
+			isl_union_set_preimage_union_pw_multi_aff(tree->domain,
+									upma);
+		if (!tree->domain)
+			return isl_schedule_tree_free(tree);
+	} else if (tree->type == isl_schedule_node_filter) {
+		tree->filter =
+			isl_union_set_preimage_union_pw_multi_aff(tree->filter,
+									upma);
+		if (!tree->filter)
+			return isl_schedule_tree_free(tree);
+	}
+
+	return tree;
+error:
+	isl_union_pw_multi_aff_free(upma);
+	isl_schedule_tree_free(tree);
+	return NULL;
+}
+
+/* Compute the gist of the band tree root with respect to "context".
+ */
+__isl_give isl_schedule_tree *isl_schedule_tree_band_gist(
+	__isl_take isl_schedule_tree *tree, __isl_take isl_union_set *context)
+{
+	if (!tree)
+		return NULL;
+	if (tree->type != isl_schedule_node_band)
+		isl_die(isl_schedule_tree_get_ctx(tree), isl_error_invalid,
+			"not a band node", goto error);
+	tree = isl_schedule_tree_cow(tree);
+	if (!tree)
+		goto error;
+
+	tree->band = isl_schedule_band_gist(tree->band, context);
+	if (!tree->band)
+		return isl_schedule_tree_free(tree);
+	return tree;
+error:
+	isl_union_set_free(context);
+	isl_schedule_tree_free(tree);
 	return NULL;
 }
 

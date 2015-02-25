@@ -88,8 +88,10 @@ static int isl_id_has_name_and_user(const void *entry, const void *val)
 
 	if (id->user != nu->user)
 		return 0;
-	if (!id->name && !nu->name)
+	if (id->name == nu->name)
 		return 1;
+	if (!id->name || !nu->name)
+		return 0;
 
 	return !strcmp(id->name, nu->name);
 }

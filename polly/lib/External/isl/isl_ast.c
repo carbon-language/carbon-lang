@@ -351,7 +351,6 @@ int isl_ast_expr_is_equal(__isl_keep isl_ast_expr *expr1,
 			int equal;
 			equal = isl_ast_expr_is_equal(expr1->u.op.args[i],
 							expr2->u.op.args[i]);
-				return 0;
 			if (equal < 0 || !equal)
 				return equal;
 		}

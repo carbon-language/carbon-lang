@@ -49,6 +49,9 @@ enum isl_schedule_node_type isl_schedule_tree_get_type(
 __isl_give isl_schedule_tree *isl_schedule_tree_leaf(isl_ctx *ctx);
 int isl_schedule_tree_is_leaf(__isl_keep isl_schedule_tree *tree);
 
+int isl_schedule_tree_plain_is_equal(__isl_keep isl_schedule_tree *tree1,
+	__isl_keep isl_schedule_tree *tree2);
+
 __isl_give isl_schedule_tree *isl_schedule_tree_copy(
 	__isl_keep isl_schedule_tree *tree);
 __isl_null isl_schedule_tree *isl_schedule_tree_free(
@@ -63,6 +66,9 @@ __isl_give isl_schedule_tree *isl_schedule_tree_from_filter(
 __isl_give isl_schedule_tree *isl_schedule_tree_from_children(
 	enum isl_schedule_node_type type,
 	__isl_take isl_schedule_tree_list *list);
+__isl_give isl_schedule_tree *isl_schedule_tree_from_pair(
+	enum isl_schedule_node_type type, __isl_take isl_schedule_tree *tree1,
+	__isl_take isl_schedule_tree *tree2);
 
 __isl_give isl_space *isl_schedule_tree_band_get_space(
 	__isl_keep isl_schedule_tree *tree);
@@ -103,6 +109,8 @@ __isl_give isl_schedule_tree *isl_schedule_tree_insert_domain(
 	__isl_take isl_schedule_tree *tree, __isl_take isl_union_set *domain);
 __isl_give isl_schedule_tree *isl_schedule_tree_insert_filter(
 	__isl_take isl_schedule_tree *tree, __isl_take isl_union_set *filter);
+__isl_give isl_schedule_tree *isl_schedule_tree_children_insert_filter(
+	__isl_take isl_schedule_tree *tree, __isl_take isl_union_set *filter);
 
 __isl_give isl_schedule_tree *isl_schedule_tree_append_to_leaves(
 	__isl_take isl_schedule_tree *tree1,
@@ -116,14 +124,26 @@ __isl_give isl_schedule_tree *isl_schedule_tree_band_tile(
 	__isl_take isl_schedule_tree *tree, __isl_take isl_multi_val *sizes);
 __isl_give isl_schedule_tree *isl_schedule_tree_band_split(
 	__isl_take isl_schedule_tree *tree, int pos);
+__isl_give isl_schedule_tree *isl_schedule_tree_band_gist(
+	__isl_take isl_schedule_tree *tree, __isl_take isl_union_set *context);
 
 __isl_give isl_schedule_tree *isl_schedule_tree_child(
 	__isl_take isl_schedule_tree *tree, int pos);
 __isl_give isl_schedule_tree *isl_schedule_tree_reset_children(
 	__isl_take isl_schedule_tree *tree);
+__isl_give isl_schedule_tree *isl_schedule_tree_drop_child(
+	__isl_take isl_schedule_tree *tree, int pos);
 __isl_give isl_schedule_tree *isl_schedule_tree_replace_child(
 	__isl_take isl_schedule_tree *tree, int pos,
 	__isl_take isl_schedule_tree *new_child);
+
+__isl_give isl_schedule_tree *isl_schedule_tree_reset_user(
+	__isl_take isl_schedule_tree *tree);
+__isl_give isl_schedule_tree *isl_schedule_tree_align_params(
+	__isl_take isl_schedule_tree *tree, __isl_take isl_space *space);
+__isl_give isl_schedule_tree *isl_schedule_tree_pullback_union_pw_multi_aff(
+	__isl_take isl_schedule_tree *tree,
+	__isl_take isl_union_pw_multi_aff *upma);
 
 __isl_give isl_printer *isl_printer_print_schedule_tree(
 	__isl_take isl_printer *p, __isl_keep isl_schedule_tree *tree);

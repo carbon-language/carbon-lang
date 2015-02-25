@@ -919,7 +919,7 @@ __isl_give isl_local_space *isl_local_space_substitute_seq(
 	pos += isl_local_space_offset(ls, type);
 
 	isl_int_init(v);
-	for (i = first; i < ls->div->n_row; ++i) {
+	for (i = first; i < first + n; ++i) {
 		if (isl_int_is_zero(ls->div->row[i][1 + pos]))
 			continue;
 		isl_seq_substitute(ls->div->row[i], pos, subs,

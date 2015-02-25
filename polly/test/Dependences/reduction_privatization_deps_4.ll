@@ -2,15 +2,15 @@
 ;
 ; CHECK:     RAW dependences:
 ; CHECK-DAG:   Stmt_S2[i0, i1] -> Stmt_S1[i1] : i0 >= 0 and i1 >= 1 + i0 and i1 <= 98
-; CHECK-DAG:   Stmt_S1[i0] -> Stmt_S2[i0, i0] : i0 >= 0 and i0 <= 98
-; CHECK-DAG:   Stmt_S2[i0, i0] -> Stmt_S3[i0] : i0 >= 0 and i0 <= 98
+; CHECK-DAG:   Stmt_S1[i0] -> Stmt_S2[i0, i0] : i0 <= 98 and i0 >= 0
+; CHECK-DAG:   Stmt_S2[i0, i0] -> Stmt_S3[i0] : i0 <= 98 and i0 >= 0
 ; CHECK-DAG:   Stmt_S3[i0] -> Stmt_S2[o0, i0] : i0 >= 0 and o0 >= 1 + i0 and o0 <= 98
 ; CHECK:     WAR dependences:
 ; CHECK-DAG:    {  }
 ; CHECK:     WAW dependences:
 ; CHECK-DAG:   Stmt_S2[i0, i1] -> Stmt_S1[i1] : i0 >= 0 and i1 >= 1 + i0 and i1 <= 98
-; CHECK-DAG:   Stmt_S1[i0] -> Stmt_S2[i0, i0] : i0 >= 0 and i0 <= 98
-; CHECK-DAG:   Stmt_S2[i0, i0] -> Stmt_S3[i0] : i0 >= 0 and i0 <= 98
+; CHECK-DAG:   Stmt_S1[i0] -> Stmt_S2[i0, i0] : i0 <= 98 and i0 >= 0
+; CHECK-DAG:   Stmt_S2[i0, i0] -> Stmt_S3[i0] : i0 <= 98 and i0 >= 0
 ; CHECK-DAG:   Stmt_S3[i0] -> Stmt_S2[o0, i0] : i0 >= 0 and o0 >= 1 + i0 and o0 <= 98
 ; CHECK:     Reduction dependences:
 ; CHECK-DAG:    { Stmt_S2[i0, i1] -> Stmt_S2[1 + i0, i1] : (i0 >= 0 and i1 >= 2 + i0 and i1 <= 99) or (i0 <= 97 and i1 >= 0 and i1 <= -1 + i0) }

@@ -1948,14 +1948,12 @@ static __isl_give isl_map *construct_power(__isl_keep isl_map *map,
 {
 	struct isl_map *app = NULL;
 	isl_space *dim = NULL;
-	unsigned d;
 
 	if (!map)
 		return NULL;
 
 	dim = isl_map_get_space(map);
 
-	d = isl_space_dim(dim, isl_dim_in);
 	dim = isl_space_add_dims(dim, isl_dim_in, 1);
 	dim = isl_space_add_dims(dim, isl_dim_out, 1);
 

@@ -2363,10 +2363,9 @@ static __isl_give isl_multi_aff *node_extract_partial_schedule_multi_aff(
 	isl_local_space *ls;
 	isl_aff *aff;
 	isl_multi_aff *ma;
-	int nrow, ncol;
+	int nrow;
 
 	nrow = isl_mat_rows(node->sched);
-	ncol = isl_mat_cols(node->sched) - 1;
 	if (node->compressed)
 		space = isl_multi_aff_get_domain_space(node->decompress);
 	else

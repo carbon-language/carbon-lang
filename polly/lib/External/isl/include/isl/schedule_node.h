@@ -18,6 +18,9 @@ __isl_give isl_schedule_node *isl_schedule_node_copy(
 __isl_null isl_schedule_node *isl_schedule_node_free(
 	__isl_take isl_schedule_node *node);
 
+int isl_schedule_node_is_equal(__isl_keep isl_schedule_node *node1,
+	__isl_keep isl_schedule_node *node2);
+
 isl_ctx *isl_schedule_node_get_ctx(__isl_keep isl_schedule_node *node);
 enum isl_schedule_node_type isl_schedule_node_get_type(
 	__isl_keep isl_schedule_node *node);
@@ -27,6 +30,9 @@ __isl_give isl_schedule *isl_schedule_node_get_schedule(
 	__isl_keep isl_schedule_node *node);
 
 int isl_schedule_node_foreach_descendant(__isl_keep isl_schedule_node *node,
+	int (*fn)(__isl_keep isl_schedule_node *node, void *user), void *user);
+int isl_schedule_node_foreach_ancestor_top_down(
+	__isl_keep isl_schedule_node *node,
 	int (*fn)(__isl_keep isl_schedule_node *node, void *user), void *user);
 __isl_give isl_schedule_node *isl_schedule_node_map_descendant(
 	__isl_take isl_schedule_node *node,
@@ -40,11 +46,21 @@ int isl_schedule_node_has_previous_sibling(__isl_keep isl_schedule_node *node);
 int isl_schedule_node_has_next_sibling(__isl_keep isl_schedule_node *node);
 int isl_schedule_node_n_children(__isl_keep isl_schedule_node *node);
 int isl_schedule_node_get_child_position(__isl_keep isl_schedule_node *node);
+int isl_schedule_node_get_ancestor_child_position(
+	__isl_keep isl_schedule_node *node,
+	__isl_keep isl_schedule_node *ancestor);
 __isl_give isl_schedule_node *isl_schedule_node_get_child(
 	__isl_keep isl_schedule_node *node, int pos);
+__isl_give isl_schedule_node *isl_schedule_node_get_shared_ancestor(
+	__isl_keep isl_schedule_node *node1,
+	__isl_keep isl_schedule_node *node2);
 
+__isl_give isl_schedule_node *isl_schedule_node_root(
+	__isl_take isl_schedule_node *node);
 __isl_give isl_schedule_node *isl_schedule_node_parent(
 	__isl_take isl_schedule_node *node);
+__isl_give isl_schedule_node *isl_schedule_node_ancestor(
+	__isl_take isl_schedule_node *node, int generation);
 __isl_give isl_schedule_node *isl_schedule_node_child(
 	__isl_take isl_schedule_node *node, int pos);
 __isl_give isl_schedule_node *isl_schedule_node_first_child(
@@ -90,6 +106,7 @@ __isl_give isl_union_set *isl_schedule_node_domain_get_domain(
 __isl_give isl_union_set *isl_schedule_node_filter_get_filter(
 	__isl_keep isl_schedule_node *node);
 
+int isl_schedule_node_get_schedule_depth(__isl_keep isl_schedule_node *node);
 __isl_give isl_union_set *isl_schedule_node_get_universe_domain(
 	__isl_keep isl_schedule_node *node);
 __isl_give isl_union_pw_multi_aff *
@@ -111,6 +128,16 @@ __isl_give isl_schedule_node *isl_schedule_node_insert_sequence(
 __isl_give isl_schedule_node *isl_schedule_node_insert_set(
 	__isl_take isl_schedule_node *node,
 	__isl_take isl_union_set_list *filters);
+
+__isl_give isl_schedule_node *isl_schedule_node_cut(
+	__isl_take isl_schedule_node *node);
+__isl_give isl_schedule_node *isl_schedule_node_delete(
+	__isl_take isl_schedule_node *node);
+
+__isl_give isl_schedule_node *isl_schedule_node_reset_user(
+	__isl_take isl_schedule_node *node);
+__isl_give isl_schedule_node *isl_schedule_node_align_params(
+	__isl_take isl_schedule_node *node, __isl_take isl_space *space);
 
 __isl_give isl_printer *isl_printer_print_schedule_node(
 	__isl_take isl_printer *p, __isl_keep isl_schedule_node *node);

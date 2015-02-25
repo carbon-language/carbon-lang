@@ -669,11 +669,9 @@ __isl_give isl_constraint *isl_constraint_set_coefficient_si(
  * In particular, this means that the local spaces of "bset" and
  * "constraint" need to be the same.
  *
- * Since the given constraint may actually be a pointer into the bset,
- * we have to be careful not to reorder the constraints as the user
- * may be holding on to other constraints from the same bset.
- * This should be cleaned up when the internal representation of
- * isl_constraint is changed to use isl_aff.
+ * We manually set ISL_BASIC_SET_FINAL instead of calling
+ * isl_basic_set_finalize because this function is called by CLooG,
+ * which does not expect any variables to disappear.
  */
 __isl_give isl_basic_set *isl_basic_set_drop_constraint(
 	__isl_take isl_basic_set *bset, __isl_take isl_constraint *constraint)
@@ -684,6 +682,7 @@ __isl_give isl_basic_set *isl_basic_set_drop_constraint(
 	unsigned total;
 	isl_local_space *ls1;
 	int equal;
+	int equality;
 
 	if (!bset || !constraint)
 		goto error;
@@ -698,7 +697,12 @@ __isl_give isl_basic_set *isl_basic_set_drop_constraint(
 		return bset;
 	}
 
-	if (isl_constraint_is_equality(constraint)) {
+	bset = isl_basic_set_cow(bset);
+	if (!bset)
+		goto error;
+
+	equality = isl_constraint_is_equality(constraint);
+	if (equality) {
 		n = bset->n_eq;
 		row = bset->eq;
 	} else {
@@ -707,11 +711,18 @@ __isl_give isl_basic_set *isl_basic_set_drop_constraint(
 	}
 
 	total = isl_constraint_dim(constraint, isl_dim_all);
-	for (i = 0; i < n; ++i)
-		if (isl_seq_eq(row[i], constraint->v->el, 1 + total))
-			isl_seq_clr(row[i], 1 + total);
+	for (i = 0; i < n; ++i) {
+		if (!isl_seq_eq(row[i], constraint->v->el, 1 + total))
+			continue;
+		if (equality && isl_basic_set_drop_equality(bset, i) < 0)
+			goto error;
+		if (!equality && isl_basic_set_drop_inequality(bset, i) < 0)
+			goto error;
+		break;
+	}
 			
 	isl_constraint_free(constraint);
+	ISL_F_SET(bset, ISL_BASIC_SET_FINAL);
 	return bset;
 error:
 	isl_constraint_free(constraint);

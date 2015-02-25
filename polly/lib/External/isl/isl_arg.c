@@ -386,7 +386,6 @@ static void print_default(struct isl_arg *decl, const char *def, int pos)
 			printf("\n%30s", "");
 		else
 			printf("%*s", 30 - pos, "");
-		pos = 0;
 	} else {
 		if (pos + len >= 48)
 			printf("\n%30s", "");
@@ -456,7 +455,6 @@ static void print_default_flags(struct isl_arg *decl, void *opt, int pos)
 			printf("\n%30s", "");
 		else
 			printf("%*s", 30 - pos, "");
-		pos = 0;
 	} else {
 		if (pos + len >= 48)
 			printf("\n%30s", "");

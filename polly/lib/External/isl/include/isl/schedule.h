@@ -4,6 +4,7 @@
 #include <isl/union_set_type.h>
 #include <isl/union_map_type.h>
 #include <isl/schedule_type.h>
+#include <isl/aff_type.h>
 #include <isl/band.h>
 #include <isl/space.h>
 #include <isl/list.h>
@@ -82,6 +83,8 @@ __isl_null isl_schedule *isl_schedule_free(__isl_take isl_schedule *sched);
 __isl_give isl_union_map *isl_schedule_get_map(__isl_keep isl_schedule *sched);
 
 isl_ctx *isl_schedule_get_ctx(__isl_keep isl_schedule *sched);
+int isl_schedule_plain_is_equal(__isl_keep isl_schedule *schedule1,
+	__isl_keep isl_schedule *schedule2);
 
 __isl_give isl_schedule_node *isl_schedule_get_root(
 	__isl_keep isl_schedule *schedule);
@@ -94,6 +97,24 @@ __isl_give isl_schedule *isl_schedule_map_schedule_node(
 	__isl_take isl_schedule *schedule,
 	__isl_give isl_schedule_node *(*fn)(
 		__isl_take isl_schedule_node *node, void *user), void *user);
+
+__isl_give isl_schedule *isl_schedule_insert_partial_schedule(
+	__isl_take isl_schedule *schedule,
+	__isl_take isl_multi_union_pw_aff *partial);
+__isl_give isl_schedule *isl_schedule_sequence(
+	__isl_take isl_schedule *schedule1, __isl_take isl_schedule *schedule2);
+__isl_give isl_schedule *isl_schedule_set(
+	__isl_take isl_schedule *schedule1, __isl_take isl_schedule *schedule2);
+__isl_give isl_schedule *isl_schedule_intersect_domain(
+	__isl_take isl_schedule *schedule, __isl_take isl_union_set *domain);
+
+__isl_give isl_schedule *isl_schedule_reset_user(
+	__isl_take isl_schedule *schedule);
+__isl_give isl_schedule *isl_schedule_align_params(
+	__isl_take isl_schedule *schedule, __isl_take isl_space *space);
+__isl_give isl_schedule *isl_schedule_pullback_union_pw_multi_aff(
+	__isl_take isl_schedule *schedule,
+	__isl_take isl_union_pw_multi_aff *upma);
 
 __isl_give isl_band_list *isl_schedule_get_band_forest(
 	__isl_keep isl_schedule *schedule);

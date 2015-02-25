@@ -1179,14 +1179,12 @@ error2:
 
 struct isl_set *isl_set_preimage(struct isl_set *set, struct isl_mat *mat)
 {
-	struct isl_ctx *ctx;
 	int i;
 
 	set = isl_set_cow(set);
 	if (!set)
 		return NULL;
 
-	ctx = set->ctx;
 	for (i = 0; i < set->n; ++i) {
 		set->p[i] = isl_basic_set_preimage(set->p[i],
 						    isl_mat_copy(mat));

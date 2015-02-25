@@ -638,10 +638,10 @@ int isl_basic_set_dim_residue_class(struct isl_basic_set *bset,
 		return 0;
 	}
 
-	ctx = bset->ctx;
+	ctx = isl_basic_set_get_ctx(bset);
 	total = isl_basic_set_total_dim(bset);
 	nparam = isl_basic_set_n_param(bset);
-	H = isl_mat_sub_alloc6(bset->ctx, bset->eq, 0, bset->n_eq, 1, total);
+	H = isl_mat_sub_alloc6(ctx, bset->eq, 0, bset->n_eq, 1, total);
 	H = isl_mat_left_hermite(H, 0, &U, NULL);
 	if (!H)
 		return -1;
@@ -657,11 +657,11 @@ int isl_basic_set_dim_residue_class(struct isl_basic_set *bset,
 		return 0;
 	}
 
-	C = isl_mat_alloc(bset->ctx, 1+bset->n_eq, 1);
+	C = isl_mat_alloc(ctx, 1 + bset->n_eq, 1);
 	if (!C)
 		goto error;
 	isl_int_set_si(C->row[0][0], 1);
-	isl_mat_sub_neg(C->ctx, C->row+1, bset->eq, bset->n_eq, 0, 0, 1);
+	isl_mat_sub_neg(ctx, C->row + 1, bset->eq, bset->n_eq, 0, 0, 1);
 	H1 = isl_mat_sub_alloc(H, 0, H->n_row, 0, H->n_row);
 	H1 = isl_mat_lin_to_aff(H1);
 	C = isl_mat_inverse_product(H1, C);

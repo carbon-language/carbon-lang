@@ -1305,7 +1305,7 @@ __isl_give isl_space *isl_space_domain_factor_domain(
 
 	nested = space->nested[0];
 	domain = isl_space_copy(space);
-	domain = isl_space_drop_dims(space, isl_dim_in,
+	domain = isl_space_drop_dims(domain, isl_dim_in,
 					nested->n_in, nested->n_out);
 	if (!domain)
 		return isl_space_free(space);
@@ -1344,7 +1344,7 @@ __isl_give isl_space *isl_space_domain_factor_range(
 
 	nested = space->nested[0];
 	range = isl_space_copy(space);
-	range = isl_space_drop_dims(space, isl_dim_in, 0, nested->n_in);
+	range = isl_space_drop_dims(range, isl_dim_in, 0, nested->n_in);
 	if (!range)
 		return isl_space_free(space);
 	if (nested->tuple_id[1]) {
@@ -1382,7 +1382,7 @@ __isl_give isl_space *isl_space_range_factor_domain(
 
 	nested = space->nested[1];
 	domain = isl_space_copy(space);
-	domain = isl_space_drop_dims(space, isl_dim_out,
+	domain = isl_space_drop_dims(domain, isl_dim_out,
 					nested->n_in, nested->n_out);
 	if (!domain)
 		return isl_space_free(space);
@@ -1421,7 +1421,7 @@ __isl_give isl_space *isl_space_range_factor_range(
 
 	nested = space->nested[1];
 	range = isl_space_copy(space);
-	range = isl_space_drop_dims(space, isl_dim_out, 0, nested->n_in);
+	range = isl_space_drop_dims(range, isl_dim_out, 0, nested->n_in);
 	if (!range)
 		return isl_space_free(space);
 	if (nested->tuple_id[1]) {

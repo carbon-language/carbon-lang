@@ -882,7 +882,7 @@ static int pw_aff_constant_is_negative(__isl_take isl_pw_aff *pa, void *user)
 	r = isl_pw_aff_foreach_piece(pa, &aff_constant_is_negative, user);
 	isl_pw_aff_free(pa);
 
-	return *neg ? 0 : -1;
+	return (*neg && r >= 0) ? 0 : -1;
 }
 
 /* Does each element in "list" have a negative constant term?
@@ -2571,7 +2571,6 @@ static __isl_give isl_set *do_unroll(struct isl_codegen_domains *domains,
 {
 	int i, n;
 	int depth;
-	isl_ctx *ctx;
 	isl_aff *lower;
 	isl_multi_aff *expansion;
 	isl_basic_map *bmap;
@@ -2581,7 +2580,6 @@ static __isl_give isl_set *do_unroll(struct isl_codegen_domains *domains,
 	if (!domain)
 		return isl_set_free(class_domain);
 
-	ctx = isl_set_get_ctx(domain);
 	depth = isl_ast_build_get_depth(domains->build);
 	build = isl_ast_build_copy(domains->build);
 	domain = isl_ast_build_eliminate_inner(build, domain);
@@ -3360,14 +3358,12 @@ static __isl_give isl_ast_graft_list *generate_shift_component(
 	isl_ast_graft_list *list;
 	int first;
 	int depth;
-	isl_ctx *ctx;
 	isl_val *val;
 	isl_multi_val *mv;
 	isl_space *space;
 	isl_multi_aff *ma, *zero;
 	isl_union_map *executed;
 
-	ctx = isl_ast_build_get_ctx(build);
 	depth = isl_ast_build_get_depth(build);
 
 	first = first_offset(domain, order, n, build);

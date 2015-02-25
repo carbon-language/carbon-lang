@@ -5,6 +5,7 @@
 #include <isl/map_type.h>
 #include <isl/union_set_type.h>
 #include <isl/union_map_type.h>
+#include <isl/schedule.h>
 
 #if defined(__cplusplus)
 extern "C" {
@@ -61,6 +62,41 @@ __isl_give isl_map *isl_flow_get_no_source(__isl_keep isl_flow *deps, int must);
 void isl_flow_free(__isl_take isl_flow *deps);
 
 isl_ctx *isl_flow_get_ctx(__isl_keep isl_flow *deps);
+
+struct isl_union_access_info;
+typedef struct isl_union_access_info isl_union_access_info;
+struct isl_union_flow;
+typedef struct isl_union_flow isl_union_flow;
+
+__isl_give isl_union_access_info *isl_union_access_info_from_sink(
+	__isl_take isl_union_map *sink);
+__isl_give isl_union_access_info *isl_union_access_info_set_must_source(
+	__isl_take isl_union_access_info *access,
+	__isl_take isl_union_map *must_source);
+__isl_give isl_union_access_info *isl_union_access_info_set_may_source(
+	__isl_take isl_union_access_info *access,
+	__isl_take isl_union_map *may_source);
+__isl_give isl_union_access_info *isl_union_access_info_set_schedule(
+	__isl_take isl_union_access_info *access,
+	__isl_take isl_schedule *schedule);
+__isl_give isl_union_access_info *isl_union_access_info_set_schedule_map(
+	__isl_take isl_union_access_info *access,
+	__isl_take isl_union_map *schedule_map);
+__isl_null isl_union_access_info *isl_union_access_info_free(
+	__isl_take isl_union_access_info *access);
+
+__isl_give isl_union_flow *isl_union_access_info_compute_flow(
+	__isl_take isl_union_access_info *access);
+
+__isl_give isl_union_map *isl_union_flow_get_must_dependence(
+	__isl_keep isl_union_flow *flow);
+__isl_give isl_union_map *isl_union_flow_get_may_dependence(
+	__isl_keep isl_union_flow *flow);
+__isl_give isl_union_map *isl_union_flow_get_must_no_source(
+	__isl_keep isl_union_flow *flow);
+__isl_give isl_union_map *isl_union_flow_get_may_no_source(
+	__isl_keep isl_union_flow *flow);
+__isl_null isl_union_flow *isl_union_flow_free(__isl_take isl_union_flow *flow);
 
 int isl_union_map_compute_flow(__isl_take isl_union_map *sink,
 	__isl_take isl_union_map *must_source,

@@ -1771,14 +1771,9 @@ static __isl_give isl_basic_map *basic_map_read_polylib_constraint(
 	int type;
 	int k;
 	isl_int *c;
-	unsigned nparam;
-	unsigned dim;
 
 	if (!bmap)
 		return NULL;
-
-	nparam = isl_basic_map_dim(bmap, isl_dim_param);
-	dim = isl_basic_map_dim(bmap, isl_dim_out);
 
 	tok = isl_stream_next_token(s);
 	if (!tok || tok->type != ISL_TOKEN_VALUE) {

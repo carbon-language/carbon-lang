@@ -34,6 +34,9 @@ __isl_null isl_schedule_band *isl_schedule_band_free(
 
 isl_ctx *isl_schedule_band_get_ctx(__isl_keep isl_schedule_band *band);
 
+int isl_schedule_band_plain_is_equal(__isl_keep isl_schedule_band *band1,
+	__isl_keep isl_schedule_band *band2);
+
 __isl_give isl_space *isl_schedule_band_get_space(
 	__isl_keep isl_schedule_band *band);
 __isl_give isl_multi_union_pw_aff *isl_schedule_band_get_partial_schedule(
@@ -59,5 +62,15 @@ __isl_give isl_schedule_band *isl_schedule_band_point(
 	__isl_take isl_multi_val *sizes);
 __isl_give isl_schedule_band *isl_schedule_band_drop(
 	__isl_take isl_schedule_band *band, int pos, int n);
+__isl_give isl_schedule_band *isl_schedule_band_gist(
+	__isl_take isl_schedule_band *band, __isl_take isl_union_set *context);
+
+__isl_give isl_schedule_band *isl_schedule_band_reset_user(
+	__isl_take isl_schedule_band *band);
+__isl_give isl_schedule_band *isl_schedule_band_align_params(
+	__isl_take isl_schedule_band *band, __isl_take isl_space *space);
+__isl_give isl_schedule_band *isl_schedule_band_pullback_union_pw_multi_aff(
+	__isl_take isl_schedule_band *band,
+	__isl_take isl_union_pw_multi_aff *upma);
 
 #endif

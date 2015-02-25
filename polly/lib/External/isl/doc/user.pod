@@ -222,6 +222,20 @@ to compute the sum on the union of definition domains.
 The original behavior of C<isl_union_pw_multi_aff_add> was
 confused and is no longer available.
 
+=item * Band forests have been replaced by schedule trees.
+
+=item * The function C<isl_union_map_compute_flow> has been
+replaced by the function C<isl_union_access_info_compute_flow>.
+Note that the may dependence relation returned by
+C<isl_union_flow_get_may_dependence> is the union of
+the two dependence relations returned by
+C<isl_union_map_compute_flow>.  Similarly for the no source relations.
+The function C<isl_union_map_compute_flow> is still available
+for backward compatibility, but it will be removed in the future.
+
+=item * The function C<isl_basic_set_drop_constraint> has been
+deprecated.
+
 =back
 
 =head1 License
@@ -1872,9 +1886,6 @@ using the following functions.
 		__isl_take isl_constraint *constraint);
 	__isl_give isl_set *isl_set_add_constraint(
 		__isl_take isl_set *set,
-		__isl_take isl_constraint *constraint);
-	__isl_give isl_basic_set *isl_basic_set_drop_constraint(
-		__isl_take isl_basic_set *bset,
 		__isl_take isl_constraint *constraint);
 
 For example, to create a set containing the even integers
@@ -7283,12 +7294,78 @@ C<isl_schedule> objects may be copied and freed using the following functions.
 	__isl_null isl_schedule *isl_schedule_free(
 		__isl_take isl_schedule *sched);
 
+The following functions checks whether two C<isl_schedule> objects
+are obviously the same.
+
+	#include <isl/schedule.h>
+	int isl_schedule_plain_is_equal(
+		__isl_keep isl_schedule *schedule1,
+		__isl_keep isl_schedule *schedule2);
+
 The domain of the schedule, i.e., the domain described by the root node,
 can be obtained using the following function.
 
 	#include <isl/schedule.h>
 	__isl_give isl_union_set *isl_schedule_get_domain(
 		__isl_keep isl_schedule *schedule);
+
+An extra top-level band node (right underneath the domain node) can
+be introduced into the schedule using the following function.
+
+	#include <isl/schedule.h>
+	__isl_give isl_schedule *
+	isl_schedule_insert_partial_schedule(
+		__isl_take isl_schedule *schedule,
+		__isl_take isl_multi_union_pw_aff *partial);
+
+A schedule that combines two schedules either in the given
+order or in an arbitrary order, i.e., with an C<isl_schedule_node_sequence>
+or an C<isl_schedule_node_set> node,
+can be created using the following functions.
+
+	#include <isl/schedule.h>
+	__isl_give isl_schedule *isl_schedule_sequence(
+		__isl_take isl_schedule *schedule1,
+		__isl_take isl_schedule *schedule2);
+	__isl_give isl_schedule *isl_schedule_set(
+		__isl_take isl_schedule *schedule1,
+		__isl_take isl_schedule *schedule2);
+
+The domains of the two input schedules need to be disjoint.
+
+The following function can be used to restrict the domain
+of a schedule to be a subset of the given union set.
+This operation may remove nodes in the tree that have become
+redundant.
+
+	#include <isl/schedule.h>
+	__isl_give isl_schedule *isl_schedule_intersect_domain(
+		__isl_take isl_schedule *schedule,
+		__isl_take isl_union_set *domain);
+
+The following function resets the user pointers on all parameter
+and tuple identifiers referenced by the nodes of the given schedule.
+
+	#include <isl/schedule.h>
+	__isl_give isl_schedule *isl_schedule_reset_user(
+		__isl_take isl_schedule *schedule);
+
+The following function aligns the parameters of all nodes
+in the given schedule to the given space.
+
+	#include <isl/schedule.h>
+	__isl_give isl_schedule *isl_schedule_align_params(
+		__isl_take isl_schedule *schedule,
+		__isl_take isl_space *space);
+
+The following function allows the user to plug in a given function
+in the iteration domains.
+
+	#include <isl/schedule.h>
+	__isl_give isl_schedule *
+	isl_schedule_pullback_union_pw_multi_aff(
+		__isl_take isl_schedule *schedule,
+		__isl_take isl_union_pw_multi_aff *upma);
 
 An C<isl_union_map> representation of the schedule can be obtained
 from an C<isl_schedule> using the following function.
@@ -7347,6 +7424,14 @@ Schedule nodes can be copied and freed using the following functions.
 	__isl_null isl_schedule_node *isl_schedule_node_free(
 		__isl_take isl_schedule_node *node);
 
+The following functions can be used to check if two schedule
+nodes point to the same position in the same schedule.
+
+	#include <isl/schedule_node.h>
+	int isl_schedule_node_is_equal(
+		__isl_keep isl_schedule_node *node1,
+		__isl_keep isl_schedule_node *node2);
+
 The following properties can be obtained from a schedule node.
 
 	#include <isl/schedule_node.h>
@@ -7373,6 +7458,11 @@ exists.
 		__isl_keep isl_schedule_node *node);
 	__isl_give isl_schedule_node *isl_schedule_node_parent(
 		__isl_take isl_schedule_node *node);
+	__isl_give isl_schedule_node *isl_schedule_node_root(
+		__isl_take isl_schedule_node *node);
+	__isl_give isl_schedule_node *isl_schedule_node_ancestor(
+		__isl_take isl_schedule_node *node,
+		int generation);
 	int isl_schedule_node_n_children(
 		__isl_keep isl_schedule_node *node);
 	__isl_give isl_schedule_node *isl_schedule_node_child(
@@ -7392,18 +7482,33 @@ exists.
 	isl_schedule_node_next_sibling(
 		__isl_take isl_schedule_node *node);
 
+For C<isl_schedule_node_ancestor>, the ancestor of generation 0
+is the node itself, the ancestor of generation 1 is its parent and so on.
+
 It is also possible to query the number of ancestors of a node,
 the position of the current node
-within the children of its parent or to obtain a copy of a given
+within the children of its parent, the position of the subtree
+containing a node within the children of an ancestor
+or to obtain a copy of a given
 child without destroying the current node.
+Given two nodes that point to the same schedule, their closest
+shared ancestor can be obtained using
+C<isl_schedule_node_get_shared_ancestor>.
 
 	#include <isl/schedule_node.h>
 	int isl_schedule_node_get_tree_depth(
 		__isl_keep isl_schedule_node *node);
 	int isl_schedule_node_get_child_position(
 		__isl_keep isl_schedule_node *node);
+	int isl_schedule_node_get_ancestor_child_position(
+		__isl_keep isl_schedule_node *node,
+		__isl_keep isl_schedule_node *ancestor);
 	__isl_give isl_schedule_node *isl_schedule_node_get_child(
 		__isl_keep isl_schedule_node *node, int pos);
+	__isl_give isl_schedule_node *
+	isl_schedule_node_get_shared_ancestor(
+		__isl_keep isl_schedule_node *node1,
+		__isl_keep isl_schedule_node *node2);
 
 All nodes in a schedule tree or
 all descendants of a specific node (including the node) can be visited
@@ -7427,6 +7532,16 @@ or failure (negative result), but also indicates whether the children
 of the given node should be visited.  In particular, if the callback
 returns a positive value, then the children are visited, but if
 the callback returns zero, then the children are not visited.
+
+The ancestors of a node in a schedule tree can be visited from
+the root down to and including the parent of the node using
+the following function.
+
+	#include <isl/schedule_node.h>
+	int isl_schedule_node_foreach_ancestor_top_down(
+		__isl_keep isl_schedule_node *node,
+		int (*fn)(__isl_keep isl_schedule_node *node,
+			void *user), void *user);
 
 The following functions allows for a depth-first post-order
 traversal of the nodes in a schedule tree or
@@ -7453,6 +7568,43 @@ The traversal continues from the node returned by the callback function.
 It is the responsibility of the user to ensure that this does not
 lead to an infinite loop.  It is safest to always return a pointer
 to the same position (same ancestors and child positions) as the input node.
+
+The following function removes a node (along with its descendants)
+from a schedule tree and returns a pointer to the leaf at the
+same position in the updated tree.
+It is not allowed to remove the root of a schedule tree or
+a child of a set or sequence node.
+
+	#include <isl/schedule_node.h>
+	__isl_give isl_schedule_node *isl_schedule_node_cut(
+		__isl_take isl_schedule_node *node);
+
+The following function removes a single node
+from a schedule tree and returns a pointer to the child
+of the node, now located at the position of the original node
+or to a leaf node at that position if there was no child.
+It is not allowed to remove the root of a schedule tree,
+a set or sequence node or a child of a set or sequence node.
+
+	#include <isl/schedule_node.h>
+	__isl_give isl_schedule_node *isl_schedule_node_delete(
+		__isl_take isl_schedule_node *node);
+
+The following function resets the user pointers on all parameter
+and tuple identifiers referenced by the given schedule node.
+
+	#include <isl/schedule_node.h>
+	__isl_give isl_schedule_node *isl_schedule_node_reset_user(
+		__isl_take isl_schedule_node *node);
+
+The following function aligns the parameters of the given schedule
+node to the given space.
+
+	#include <isl/schedule_node.h>
+	__isl_give isl_schedule_node *
+	isl_schedule_node_align_params(
+		__isl_take isl_schedule_node *node,
+		__isl_take isl_space *space);
 
 Several node types have their own functions for querying
 (and in some cases setting) some node type specific properties.
@@ -7529,6 +7681,15 @@ node determined by its ancestors.
 The function C<isl_schedule_node_get_subtree_schedule_union_map>
 returns a representation of the partial schedule defined by the
 subtree rooted at the given node.
+
+The total number of outer band members of given node, i.e.,
+the shared output dimension of the maps in the result
+of C<isl_schedule_node_get_prefix_schedule_union_map> can be obtained
+using the following function.
+
+	#include <isl/schedule_node.h>
+	int isl_schedule_node_get_schedule_depth(
+		__isl_keep isl_schedule_node *node);
 
 The following function returns the union of universes in the spaces that
 contain elements that reach the given node.
@@ -7666,6 +7827,96 @@ then memory based dependence analysis is performed.
 If, on the other hand, all sources are I<must> accesses,
 then value based dependence analysis is performed.
 
+=head3 High-level Interface
+
+A high-level interface to dependence analysis is provided
+by the following function.
+
+	#include <isl/flow.h>
+	__isl_give isl_union_flow *
+	isl_union_access_info_compute_flow(
+		__isl_take isl_union_access_info *access);
+
+The input C<isl_union_access_info> object describes the sink
+access relations, the source access relations and a schedule,
+while the output C<isl_union_flow> object describes
+the resulting dependence relations and the subsets of the
+sink relations for which no source was found.
+
+An C<isl_union_access_info> is created, modified and freed using
+the following functions.
+
+	#include <isl/flow.h>
+	__isl_give isl_union_access_info *
+	isl_union_access_info_from_sink(
+		__isl_take isl_union_map *sink);
+	__isl_give isl_union_access_info *
+	isl_union_access_info_set_must_source(
+		__isl_take isl_union_access_info *access,
+		__isl_take isl_union_map *must_source);
+	__isl_give isl_union_access_info *
+	isl_union_access_info_set_may_source(
+		__isl_take isl_union_access_info *access,
+		__isl_take isl_union_map *may_source);
+	__isl_give isl_union_access_info *
+	isl_union_access_info_set_schedule(
+		__isl_take isl_union_access_info *access,
+		__isl_take isl_schedule *schedule);
+	__isl_give isl_union_access_info *
+	isl_union_access_info_set_schedule_map(
+		__isl_take isl_union_access_info *access,
+		__isl_take isl_union_map *schedule_map);
+	__isl_null isl_union_access_info *
+	isl_union_access_info_free(
+		__isl_take isl_union_access_info *access);
+
+The may sources set by C<isl_union_access_info_set_may_source>
+do not need to include the must sources set by
+C<isl_union_access_info_set_must_source> as a subset.
+The user is free not to call one (or both) of these functions,
+in which case the corresponding set is kept to its empty default.
+Similarly, the default schedule initialized by
+C<isl_union_access_info_from_sink> is empty.
+The current schedule is determined by the last call to either
+C<isl_union_access_info_set_schedule> or
+C<isl_union_access_info_set_schedule_map>.
+The domain of the schedule corresponds to the domains of
+the access relations.  In particular, the domains of the access
+relations are effectively intersected with the domain of the schedule
+and only the resulting accesses are considered by the dependence analysis.
+
+The output of C<isl_union_access_info_compute_flow> can be examined
+and freed using the following functions.
+
+	#include <isl/flow.h>
+	__isl_give isl_union_map *isl_union_flow_get_must_dependence(
+		__isl_keep isl_union_flow *flow);
+	__isl_give isl_union_map *isl_union_flow_get_may_dependence(
+		__isl_keep isl_union_flow *flow);
+	__isl_give isl_union_map *isl_union_flow_get_must_no_source(
+		__isl_keep isl_union_flow *flow);
+	__isl_give isl_union_map *isl_union_flow_get_may_no_source(
+		__isl_keep isl_union_flow *flow);
+	__isl_null isl_union_flow *isl_union_flow_free(
+		__isl_take isl_union_flow *flow);
+
+The relation returned by C<isl_union_flow_get_must_dependence>
+relates domain elements of must sources to domain elements of the sink.
+The relation returned by C<isl_union_flow_get_may_dependence>
+relates domain elements of must or may sources to domain elements of the sink
+and includes the previous relation as a subset.
+The relation returned by C<isl_union_flow_get_must_no_source> is the subset
+of the sink relation for which no dependences have been found.
+The relation returned by C<isl_union_flow_get_may_no_source> is the subset
+of the sink relation for which no definite dependences have been found.
+That is, it contains those sink access that do not contribute to any
+of the elements in the relation returned
+by C<isl_union_flow_get_must_dependence>.
+
+=head3 Low-level Interface
+
+A lower-level interface is provided by the following functions.
+
 	#include <isl/flow.h>
 
 	typedef int (*isl_access_level_before)(void *first, void *second);
@@ -7751,31 +8002,7 @@ source and if it is not followed by any I<may> sources.
 After finishing with an C<isl_flow>, the user should call
 C<isl_flow_free> to free all associated memory.
 
-A higher-level interface to dependence analysis is provided
-by the following function.
-
-	#include <isl/flow.h>
-
-	int isl_union_map_compute_flow(__isl_take isl_union_map *sink,
-		__isl_take isl_union_map *must_source,
-		__isl_take isl_union_map *may_source,
-		__isl_take isl_union_map *schedule,
-		__isl_give isl_union_map **must_dep,
-		__isl_give isl_union_map **may_dep,
-		__isl_give isl_union_map **must_no_source,
-		__isl_give isl_union_map **may_no_source);
-
-The arrays are identified by the tuple names of the ranges
-of the accesses.  The iteration domains by the tuple names
-of the domains of the accesses and of the schedule.
-The relative order of the iteration domains is given by the
-schedule.  The relations returned through C<must_no_source>
-and C<may_no_source> are subsets of C<sink>.
-Any of C<must_dep>, C<may_dep>, C<must_no_source>
-or C<may_no_source> may be C<NULL>, but a C<NULL> value for
-any of the other arguments is treated as an error.
-
-=head3 Interaction with Dependence Analysis
+=head3 Interaction with the Low-level Interface
 
 During the dependence analysis, we frequently need to perform
 the following operation.  Given a relation between sink iterations
@@ -7975,114 +8202,6 @@ The use of C<isl_union_set_compute_schedule> is discouraged.
 The generated schedule represents a schedule tree.
 For more information on schedule trees, see
 L</"Schedule Trees">.
-
-A representation of the schedule as a forest of bands can be obtained
-using the following function.
-
-	__isl_give isl_band_list *isl_schedule_get_band_forest(
-		__isl_keep isl_schedule *schedule);
-
-If the input schedule is represented by a schedule tree, then a call
-to C<isl_schedule_get_band_forest> replaces the internal schedule tree
-representation by a band forest representation.
-
-The individual bands can be visited in depth-first post-order
-using the following function.
-
-	#include <isl/schedule.h>
-	int isl_schedule_foreach_band(
-		__isl_keep isl_schedule *sched,
-		int (*fn)(__isl_keep isl_band *band, void *user),
-		void *user);
-
-The list can be manipulated as explained in L<"Lists">.
-The bands inside the list can be copied and freed using the following
-functions.
-
-	#include <isl/band.h>
-	__isl_give isl_band *isl_band_copy(
-		__isl_keep isl_band *band);
-	__isl_null isl_band *isl_band_free(
-		__isl_take isl_band *band);
-
-Each band contains zero or more scheduling dimensions.
-These are referred to as the members of the band.
-The section of the schedule that corresponds to the band is
-referred to as the partial schedule of the band.
-For those nodes that participate in a band, the outer scheduling
-dimensions form the prefix schedule, while the inner scheduling
-dimensions form the suffix schedule.
-That is, if we take a cut of the band forest, then the union of
-the concatenations of the prefix, partial and suffix schedules of
-each band in the cut is equal to the entire schedule (modulo
-some possible padding at the end with zero scheduling dimensions).
-The properties of a band can be inspected using the following functions.
-
-	#include <isl/band.h>
-	int isl_band_has_children(__isl_keep isl_band *band);
-	__isl_give isl_band_list *isl_band_get_children(
-		__isl_keep isl_band *band);
-
-	__isl_give isl_union_map *isl_band_get_prefix_schedule(
-		__isl_keep isl_band *band);
-	__isl_give isl_union_map *isl_band_get_partial_schedule(
-		__isl_keep isl_band *band);
-	__isl_give isl_union_map *isl_band_get_suffix_schedule(
-		__isl_keep isl_band *band);
-
-	int isl_band_n_member(__isl_keep isl_band *band);
-	int isl_band_member_is_coincident(
-		__isl_keep isl_band *band, int pos);
-
-	int isl_band_list_foreach_band(
-		__isl_keep isl_band_list *list,
-		int (*fn)(__isl_keep isl_band *band, void *user),
-		void *user);
-
-Note that a scheduling dimension is considered to be ``coincident''
-if it satisfies the coincidence constraints within its band.
-That is, if the dependence distances of the coincidence
-constraints are all zero in that direction (for fixed
-iterations of outer bands).
-Like C<isl_schedule_foreach_band>,
-the function C<isl_band_list_foreach_band> calls C<fn> on the bands
-in depth-first post-order.
-
-A band can be tiled using the following function.
-
-	#include <isl/band.h>
-	int isl_band_tile(__isl_keep isl_band *band,
-		__isl_take isl_vec *sizes);
-
-	int isl_options_set_tile_scale_tile_loops(isl_ctx *ctx,
-		int val);
-	int isl_options_get_tile_scale_tile_loops(isl_ctx *ctx);
-	int isl_options_set_tile_shift_point_loops(isl_ctx *ctx,
-		int val);
-	int isl_options_get_tile_shift_point_loops(isl_ctx *ctx);
-
-The C<isl_band_tile> function tiles the band using the given tile sizes
-inside its schedule.
-A new child band is created to represent the point loops and it is
-inserted between the modified band and its children.
-The C<tile_scale_tile_loops> option specifies whether the tile
-loops iterators should be scaled by the tile sizes.
-If the C<tile_shift_point_loops> option is set, then the point loops
-are shifted to start at zero.
-
-A band can be split into two nested bands using the following function.
-
-	int isl_band_split(__isl_keep isl_band *band, int pos);
-
-The resulting outer band contains the first C<pos> dimensions of C<band>
-while the inner band contains the remaining dimensions.
-
-A representation of the band can be printed using
-
-	#include <isl/band.h>
-	__isl_give isl_printer *isl_printer_print_band(
-		__isl_take isl_printer *p,
-		__isl_keep isl_band *band);
 
 =head3 Options
 

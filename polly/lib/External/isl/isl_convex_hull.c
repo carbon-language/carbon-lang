@@ -1315,12 +1315,12 @@ static struct isl_basic_set *convex_hull_pair_pointed(
 
 	if (!bset1 || !bset2)
 		goto error;
-	ctx = bset1->ctx;
+	ctx = isl_basic_set_get_ctx(bset1);
 	dir = valid_direction(isl_basic_set_copy(bset1),
 				isl_basic_set_copy(bset2));
 	if (!dir)
 		goto error;
-	T = isl_mat_alloc(bset1->ctx, dir->size, dir->size);
+	T = isl_mat_alloc(ctx, dir->size, dir->size);
 	if (!T)
 		goto error;
 	isl_seq_cpy(T->row[0], dir->block.data, dir->size);
@@ -1926,14 +1926,12 @@ struct isl_basic_map *isl_map_convex_hull(struct isl_map *map)
 	struct isl_basic_set *affine_hull = NULL;
 	struct isl_basic_map *convex_hull = NULL;
 	struct isl_set *set = NULL;
-	struct isl_ctx *ctx;
 
 	map = isl_map_detect_equalities(map);
 	map = isl_map_align_divs(map);
 	if (!map)
 		goto error;
 
-	ctx = map->ctx;
 	if (map->n == 0) {
 		convex_hull = isl_basic_map_empty_like_map(map);
 		isl_map_free(map);

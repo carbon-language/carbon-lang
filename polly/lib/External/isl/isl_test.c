@@ -4546,6 +4546,9 @@ struct {
 	{ "{ B[i] -> C[([i/2])] }", "{ B[5] }", "{ C[2] }" },
 	{ "[n] -> { B[i,j] -> C[([i/2]) + 2j] }",
 	  "[n] -> { B[n,[n/3]] }", "[n] -> { C[([n/2]) + 2*[n/3]] }", },
+	{ "{ [i, j] -> [floor((i)/4) + floor((2*i+j)/5)] }",
+	  "{ [i, j] -> [floor((i)/3), j] }",
+	  "{ [i, j] -> [(floor((i)/12) + floor((j + 2*floor((i)/3))/5))] }" },
 };
 
 static int test_pullback(isl_ctx *ctx)
@@ -4573,25 +4576,33 @@ static int test_pullback(isl_ctx *ctx)
 	return 0;
 }
 
-/* Check that negation is printed correctly.
+/* Check that negation is printed correctly and that equal expressions
+ * are correctly identified.
  */
 static int test_ast(isl_ctx *ctx)
 {
 	isl_ast_expr *expr, *expr1, *expr2, *expr3;
 	char *str;
-	int ok;
+	int ok, equal;
 
 	expr1 = isl_ast_expr_from_id(isl_id_alloc(ctx, "A", NULL));
 	expr2 = isl_ast_expr_from_id(isl_id_alloc(ctx, "B", NULL));
 	expr = isl_ast_expr_add(expr1, expr2);
+	expr2 = isl_ast_expr_copy(expr);
 	expr = isl_ast_expr_neg(expr);
+	expr2 = isl_ast_expr_neg(expr2);
+	equal = isl_ast_expr_is_equal(expr, expr2);
 	str = isl_ast_expr_to_str(expr);
 	ok = str ? !strcmp(str, "-(A + B)") : -1;
 	free(str);
 	isl_ast_expr_free(expr);
+	isl_ast_expr_free(expr2);
 
-	if (ok < 0)
+	if (ok < 0 || equal < 0)
 		return -1;
+	if (!equal)
+		isl_die(ctx, isl_error_unknown,
+			"equal expressions not considered equal", return -1);
 	if (!ok)
 		isl_die(ctx, isl_error_unknown,
 			"isl_ast_expr printed incorrectly", return -1);

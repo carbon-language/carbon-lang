@@ -10,11 +10,11 @@
 ; CHECK: }
 ; CHECK: Wrapped Dependences:
 ; CHECK: RAW dependences:
-; CHECK:   { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> [Stmt_for_cond[1 + i0] -> MemRef_sum[0]] : i0 >= 0 and i0 <= 99 }
+; CHECK:   { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> [Stmt_for_cond[1 + i0] -> MemRef_sum[0]] : i0 <= 99 and i0 >= 0 }
 ; CHECK: WAR dependences:
 ; CHECK:   {  }
 ; CHECK: WAW dependences:
-; CHECK:   { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> [Stmt_for_cond[1 + i0] -> MemRef_sum[0]] : i0 >= 0 and i0 <= 99 }
+; CHECK:   { [Stmt_for_cond[i0] -> MemRef_sum[0]] -> [Stmt_for_cond[1 + i0] -> MemRef_sum[0]] : i0 <= 99 and i0 >= 0 }
 ; CHECK: Reduction dependences:
 ; CHECK:   n/a
 ; CHECK: Final Wrapped Dependences:

@@ -1,10 +1,13 @@
 /*
  * Copyright 2013-2014 Ecole Normale Superieure
+ * Copyright 2014      INRIA Rocquencourt
  *
  * Use of this software is governed by the MIT license
  *
  * Written by Sven Verdoolaege,
  * Ecole Normale Superieure, 45 rue d'Ulm, 75230 Paris, France
+ * and Inria Paris - Rocquencourt, Domaine de Voluceau - Rocquencourt,
+ * B.P. 105 - 78153 Le Chesnay, France
  */
 
 #include <isl/schedule_node.h>
@@ -140,6 +143,29 @@ __isl_null isl_schedule_band *isl_schedule_band_free(
 	free(band);
 
 	return NULL;
+}
+
+/* Are "band1" and "band2" obviously equal?
+ */
+int isl_schedule_band_plain_is_equal(__isl_keep isl_schedule_band *band1,
+	__isl_keep isl_schedule_band *band2)
+{
+	int i;
+
+	if (!band1 || !band2)
+		return -1;
+	if (band1 == band2)
+		return 1;
+
+	if (band1->n != band2->n)
+		return 0;
+	for (i = 0; i < band1->n; ++i)
+		if (band1->coincident[i] != band2->coincident[i])
+			return 0;
+	if (band1->permutable != band2->permutable)
+		return 0;
+
+	return isl_multi_union_pw_aff_plain_is_equal(band1->mupa, band2->mupa);
 }
 
 /* Return the number of scheduling dimensions in the band.
@@ -414,4 +440,90 @@ __isl_give isl_schedule_band *isl_schedule_band_drop(
 	band->n -= n;
 
 	return band;
+}
+
+/* Reset the user pointer on all identifiers of parameters and tuples
+ * in "band".
+ */
+__isl_give isl_schedule_band *isl_schedule_band_reset_user(
+	__isl_take isl_schedule_band *band)
+{
+	band = isl_schedule_band_cow(band);
+	if (!band)
+		return NULL;
+
+	band->mupa = isl_multi_union_pw_aff_reset_user(band->mupa);
+	if (!band->mupa)
+		return isl_schedule_band_free(band);
+
+	return band;
+}
+
+/* Align the parameters of "band" to those of "space".
+ */
+__isl_give isl_schedule_band *isl_schedule_band_align_params(
+	__isl_take isl_schedule_band *band, __isl_take isl_space *space)
+{
+	band = isl_schedule_band_cow(band);
+	if (!band || !space)
+		goto error;
+
+	band->mupa = isl_multi_union_pw_aff_align_params(band->mupa, space);
+	if (!band->mupa)
+		return isl_schedule_band_free(band);
+
+	return band;
+error:
+	isl_space_free(space);
+	isl_schedule_band_free(band);
+	return NULL;
+}
+
+/* Compute the pullback of "band" by the function represented by "upma".
+ * In other words, plug in "upma" in the iteration domains of "band".
+ */
+__isl_give isl_schedule_band *isl_schedule_band_pullback_union_pw_multi_aff(
+	__isl_take isl_schedule_band *band,
+	__isl_take isl_union_pw_multi_aff *upma)
+{
+	band = isl_schedule_band_cow(band);
+	if (!band || !upma)
+		goto error;
+
+	band->mupa =
+		isl_multi_union_pw_aff_pullback_union_pw_multi_aff(band->mupa,
+									upma);
+	if (!band->mupa)
+		return isl_schedule_band_free(band);
+
+	return band;
+error:
+	isl_union_pw_multi_aff_free(upma);
+	isl_schedule_band_free(band);
+	return NULL;
+}
+
+/* Compute the gist of "band" with respect to "context".
+ * In particular, compute the gist of the associated partial schedule.
+ */
+__isl_give isl_schedule_band *isl_schedule_band_gist(
+	__isl_take isl_schedule_band *band, __isl_take isl_union_set *context)
+{
+	if (!band || !context)
+		goto error;
+	if (band->n == 0) {
+		isl_union_set_free(context);
+		return band;
+	}
+	band = isl_schedule_band_cow(band);
+	if (!band)
+		goto error;
+	band->mupa = isl_multi_union_pw_aff_gist(band->mupa, context);
+	if (!band->mupa)
+		return isl_schedule_band_free(band);
+	return band;
+error:
+	isl_union_set_free(context);
+	isl_schedule_band_free(band);
+	return NULL;
 }

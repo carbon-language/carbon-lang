@@ -2,7 +2,7 @@
 ;
 ; CHECK: RAW dependences:
 ; CHECK-DAG: Stmt_S2[i0, i1] -> Stmt_S3[i0] : i0 <= 1023 and i0 >= 0 and i1 <= 1023 and i1 >= 0
-; CHECK-DAG: Stmt_S3[i0] -> Stmt_S0[1 + i0] : i0 >= 0 and i0 <= 1022
+; CHECK-DAG: Stmt_S3[i0] -> Stmt_S0[1 + i0] : i0 <= 1022 and i0 >= 0
 ; CHECK-DAG: Stmt_S0[i0] -> Stmt_S1[i0, o1] : i0 <= 1023 and i0 >= 0 and o1 <= 1023 and o1 >= 0
 ; These are the important RAW dependences, as they need to originate/end in only one iteration:
 ; CHECK-DAG: Stmt_S1[i0, 1023] -> Stmt_S2[i0, o1] : i0 <= 1023 and i0 >= 0 and o1 <= 1023 and o1 >= 0
@@ -11,7 +11,7 @@
 ; CHECK:   {  }
 ; CHECK: WAW dependences:
 ; CHECK-DAG: Stmt_S2[i0, i1] -> Stmt_S3[i0] : i0 <= 1023 and i0 >= 0 and i1 <= 1023 and i1 >= 0
-; CHECK-DAG: Stmt_S3[i0] -> Stmt_S0[1 + i0] : i0 >= 0 and i0 <= 1022
+; CHECK-DAG: Stmt_S3[i0] -> Stmt_S0[1 + i0] : i0 <= 1022 and i0 >= 0
 ; CHECK-DAG: Stmt_S0[i0] -> Stmt_S1[i0, o1] : i0 <= 1023 and i0 >= 0 and o1 <= 1023 and o1 >= 0
 ; These are the important WAW dependences, as they need to originate/end in only one iteration:
 ; CHECK-DAG: Stmt_S1[i0, 1023] -> Stmt_S2[i0, o1] : i0 <= 1023 and i0 >= 0 and o1 <= 1023 and o1 >= 0

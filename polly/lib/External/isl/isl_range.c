@@ -29,7 +29,6 @@ static int has_sign(__isl_keep isl_basic_set *bset,
 	__isl_keep isl_qpolynomial *poly, int sign, int *signs)
 {
 	struct range_data data_m;
-	unsigned nvar;
 	unsigned nparam;
 	isl_space *dim;
 	isl_val *opt;
@@ -37,7 +36,6 @@ static int has_sign(__isl_keep isl_basic_set *bset,
 	enum isl_fold type;
 
 	nparam = isl_basic_set_dim(bset, isl_dim_param);
-	nvar = isl_basic_set_dim(bset, isl_dim_set);
 
 	bset = isl_basic_set_copy(bset);
 	poly = isl_qpolynomial_copy(poly);

@@ -1,10 +1,13 @@
 /*
- * Copyright 2013      Ecole Normale Superieure
+ * Copyright 2013-2014 Ecole Normale Superieure
+ * Copyright 2014      INRIA Rocquencourt
  *
  * Use of this software is governed by the MIT license
  *
  * Written by Sven Verdoolaege,
  * Ecole Normale Superieure, 45 rue d'Ulm, 75230 Paris, France
+ * and Inria Paris - Rocquencourt, Domaine de Voluceau - Rocquencourt,
+ * B.P. 105 - 78153 Le Chesnay, France
  */
 
 #include <isl/set.h>
@@ -216,6 +219,61 @@ __isl_null isl_schedule_node *isl_schedule_node_free(
 	free(node);
 
 	return NULL;
+}
+
+/* Do "node1" and "node2" point to the same position in the same
+ * schedule?
+ */
+int isl_schedule_node_is_equal(__isl_keep isl_schedule_node *node1,
+	__isl_keep isl_schedule_node *node2)
+{
+	int i, n1, n2;
+
+	if (!node1 || !node2)
+		return -1;
+	if (node1 == node2)
+		return 1;
+	if (node1->schedule != node2->schedule)
+		return 0;
+
+	n1 = isl_schedule_node_get_tree_depth(node1);
+	n2 = isl_schedule_node_get_tree_depth(node2);
+	if (n1 != n2)
+		return 0;
+	for (i = 0; i < n1; ++i)
+		if (node1->child_pos[i] != node2->child_pos[i])
+			return 0;
+
+	return 1;
+}
+
+/* Return the number of outer schedule dimensions of "node"
+ * in its schedule tree.
+ *
+ * Return -1 on error.
+ */
+int isl_schedule_node_get_schedule_depth(__isl_keep isl_schedule_node *node)
+{
+	int i, n;
+	int depth = 0;
+
+	if (!node)
+		return -1;
+
+	n = isl_schedule_tree_list_n_schedule_tree(node->ancestors);
+	for (i = n - 1; i >= 0; --i) {
+		isl_schedule_tree *tree;
+
+		tree = isl_schedule_tree_list_get_schedule_tree(
+						    node->ancestors, i);
+		if (!tree)
+			return -1;
+		if (tree->type == isl_schedule_node_band)
+			depth += isl_schedule_tree_band_n_member(tree);
+		isl_schedule_tree_free(tree);
+	}
+
+	return depth;
 }
 
 /* Internal data structure for
@@ -651,31 +709,70 @@ int isl_schedule_node_n_children(__isl_keep isl_schedule_node *node)
 	return n;
 }
 
+/* Move the "node" pointer to the ancestor of the given generation
+ * of the node it currently points to, where generation 0 is the node
+ * itself and generation 1 is its parent.
+ */
+__isl_give isl_schedule_node *isl_schedule_node_ancestor(
+	__isl_take isl_schedule_node *node, int generation)
+{
+	int n;
+	isl_schedule_tree *tree;
+
+	if (!node)
+		return NULL;
+	if (generation == 0)
+		return node;
+	n = isl_schedule_node_get_tree_depth(node);
+	if (n < 0)
+		return isl_schedule_node_free(node);
+	if (generation < 0 || generation > n)
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_invalid,
+			"generation out of bounds",
+			return isl_schedule_node_free(node));
+	node = isl_schedule_node_cow(node);
+	if (!node)
+		return NULL;
+
+	tree = isl_schedule_tree_list_get_schedule_tree(node->ancestors,
+							n - generation);
+	isl_schedule_tree_free(node->tree);
+	node->tree = tree;
+	node->ancestors = isl_schedule_tree_list_drop(node->ancestors,
+						    n - generation, generation);
+	if (!node->ancestors || !node->tree)
+		return isl_schedule_node_free(node);
+
+	return node;
+}
+
 /* Move the "node" pointer to the parent of the node it currently points to.
  */
 __isl_give isl_schedule_node *isl_schedule_node_parent(
 	__isl_take isl_schedule_node *node)
 {
-	int n;
-	isl_schedule_tree *tree;
-
-	node = isl_schedule_node_cow(node);
 	if (!node)
 		return NULL;
 	if (!isl_schedule_node_has_parent(node))
 		isl_die(isl_schedule_node_get_ctx(node), isl_error_invalid,
 			"node has no parent",
 			return isl_schedule_node_free(node));
-	n = isl_schedule_tree_list_n_schedule_tree(node->ancestors);
-	tree = isl_schedule_tree_list_get_schedule_tree(node->ancestors, n - 1);
-	isl_schedule_tree_free(node->tree);
-	node->tree = tree;
-	node->ancestors = isl_schedule_tree_list_drop(node->ancestors,
-								n - 1, 1);
-	if (!node->ancestors || !node->tree)
-		return isl_schedule_node_free(node);
+	return isl_schedule_node_ancestor(node, 1);
+}
 
-	return node;
+/* Move the "node" pointer to the root of its schedule tree.
+ */
+__isl_give isl_schedule_node *isl_schedule_node_root(
+	__isl_take isl_schedule_node *node)
+{
+	int n;
+
+	if (!node)
+		return NULL;
+	n = isl_schedule_node_get_tree_depth(node);
+	if (n < 0)
+		return isl_schedule_node_free(node);
+	return isl_schedule_node_ancestor(node, n);
 }
 
 /* Move the "node" pointer to the child at position "pos" of the node
@@ -971,6 +1068,38 @@ __isl_give isl_schedule_node *isl_schedule_node_map_descendant(
 	struct isl_schedule_node_postorder_data data = { fn, user };
 
 	return traverse(node, &postorder_enter, &postorder_leave, &data);
+}
+
+/* Traverse the ancestors of "node" from the root down to and including
+ * the parent of "node", calling "fn" on each of them.
+ *
+ * If "fn" returns -1 on any of the nodes, then the traversal is aborted.
+ *
+ * Return 0 on success and -1 on failure.
+ */
+int isl_schedule_node_foreach_ancestor_top_down(
+	__isl_keep isl_schedule_node *node,
+	int (*fn)(__isl_keep isl_schedule_node *node, void *user), void *user)
+{
+	int i, n;
+
+	if (!node)
+		return -1;
+
+	n = isl_schedule_node_get_tree_depth(node);
+	for (i = 0; i < n; ++i) {
+		isl_schedule_node *ancestor;
+		int r;
+
+		ancestor = isl_schedule_node_copy(node);
+		ancestor = isl_schedule_node_ancestor(ancestor, n - i);
+		r = fn(ancestor, user);
+		isl_schedule_node_free(ancestor);
+		if (r < 0)
+			return -1;
+	}
+
+	return 0;
 }
 
 /* Return the number of members in the given band node.
@@ -1504,6 +1633,476 @@ __isl_give isl_schedule_node *isl_schedule_node_insert_set(
 {
 	return isl_schedule_node_insert_children(node,
 					isl_schedule_node_set, filters);
+}
+
+/* Remove "node" from its schedule tree and return a pointer
+ * to the leaf at the same position in the updated schedule tree.
+ *
+ * It is not allowed to remove the root of a schedule tree or
+ * a child of a set or sequence node.
+ */
+__isl_give isl_schedule_node *isl_schedule_node_cut(
+	__isl_take isl_schedule_node *node)
+{
+	isl_schedule_tree *leaf;
+	enum isl_schedule_node_type parent_type;
+
+	if (!node)
+		return NULL;
+	if (!isl_schedule_node_has_parent(node))
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_invalid,
+			"cannot cut root", return isl_schedule_node_free(node));
+
+	parent_type = isl_schedule_node_get_parent_type(node);
+	if (parent_type == isl_schedule_node_set ||
+	    parent_type == isl_schedule_node_sequence)
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_invalid,
+			"cannot cut child of set or sequence",
+			return isl_schedule_node_free(node));
+
+	leaf = isl_schedule_node_get_leaf(node);
+	return isl_schedule_node_graft_tree(node, leaf);
+}
+
+/* Remove a single node from the schedule tree, attaching the child
+ * of "node" directly to its parent.
+ * Return a pointer to this former child or to the leaf the position
+ * of the original node if there was no child.
+ * It is not allowed to remove the root of a schedule tree,
+ * a set or sequence node or a child of a set or sequence node.
+ */
+__isl_give isl_schedule_node *isl_schedule_node_delete(
+	__isl_take isl_schedule_node *node)
+{
+	int n;
+	isl_schedule_tree *tree;
+	enum isl_schedule_node_type type;
+
+	if (!node)
+		return NULL;
+
+	if (isl_schedule_node_get_tree_depth(node) == 0)
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_invalid,
+			"cannot delete root node",
+			return isl_schedule_node_free(node));
+	n = isl_schedule_node_n_children(node);
+	if (n != 1)
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_invalid,
+			"can only delete node with a single child",
+			return isl_schedule_node_free(node));
+	type = isl_schedule_node_get_parent_type(node);
+	if (type == isl_schedule_node_sequence || type == isl_schedule_node_set)
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_invalid,
+			"cannot delete child of set or sequence",
+			return isl_schedule_node_free(node));
+
+	tree = isl_schedule_node_get_tree(node);
+	if (!tree || isl_schedule_tree_has_children(tree)) {
+		tree = isl_schedule_tree_child(tree, 0);
+	} else {
+		isl_schedule_tree_free(tree);
+		tree = isl_schedule_node_get_leaf(node);
+	}
+	node = isl_schedule_node_graft_tree(node, tree);
+
+	return node;
+}
+
+/* Compute the gist of the given band node with respect to "context".
+ */
+__isl_give isl_schedule_node *isl_schedule_node_band_gist(
+	__isl_take isl_schedule_node *node, __isl_take isl_union_set *context)
+{
+	isl_schedule_tree *tree;
+
+	tree = isl_schedule_node_get_tree(node);
+	tree = isl_schedule_tree_band_gist(tree, context);
+	return isl_schedule_node_graft_tree(node, tree);
+}
+
+/* Internal data structure for isl_schedule_node_gist.
+ * "filters" contains an element for each outer filter node
+ * with respect to the current position, each representing
+ * the intersection of the previous element and the filter on the filter node.
+ * The first element in the original context passed to isl_schedule_node_gist.
+ */
+struct isl_node_gist_data {
+	isl_union_set_list *filters;
+};
+
+/* Can we finish gisting at this node?
+ * That is, is the filter on the current filter node a subset of
+ * the original context passed to isl_schedule_node_gist?
+ */
+static int gist_done(__isl_keep isl_schedule_node *node,
+	struct isl_node_gist_data *data)
+{
+	isl_union_set *filter, *outer;
+	int subset;
+
+	filter = isl_schedule_node_filter_get_filter(node);
+	outer = isl_union_set_list_get_union_set(data->filters, 0);
+	subset = isl_union_set_is_subset(filter, outer);
+	isl_union_set_free(outer);
+	isl_union_set_free(filter);
+
+	return subset;
+}
+
+/* Callback for "traverse" to enter a node and to move
+ * to the deepest initial subtree that should be traversed
+ * by isl_schedule_node_gist.
+ *
+ * The "filters" list is extended by one element each time
+ * we come across a filter node by the result of intersecting
+ * the last element in the list with the filter on the filter node.
+ *
+ * If the filter on the current filter node is a subset of
+ * the original context passed to isl_schedule_node_gist,
+ * then there is no need to go into its subtree since it cannot
+ * be further simplified by the context.  The "filters" list is
+ * still extended for consistency, but the actual value of the
+ * added element is immaterial since it will not be used.
+ *
+ * Otherwise, the filter on the current filter node is replaced by
+ * the gist of the original filter with respect to the intersection
+ * of the original context with the intermediate filters.
+ *
+ * If the new element in the "filters" list is empty, then no elements
+ * can reach the descendants of the current filter node.  The subtree
+ * underneath the filter node is therefore removed.
+ */
+static __isl_give isl_schedule_node *gist_enter(
+	__isl_take isl_schedule_node *node, void *user)
+{
+	struct isl_node_gist_data *data = user;
+
+	do {
+		isl_union_set *filter, *inner;
+		int done, empty;
+		int n;
+
+		switch (isl_schedule_node_get_type(node)) {
+		case isl_schedule_node_error:
+			return isl_schedule_node_free(node);
+		case isl_schedule_node_band:
+		case isl_schedule_node_domain:
+		case isl_schedule_node_leaf:
+		case isl_schedule_node_sequence:
+		case isl_schedule_node_set:
+			continue;
+		case isl_schedule_node_filter:
+			break;
+		}
+		done = gist_done(node, data);
+		filter = isl_schedule_node_filter_get_filter(node);
+		if (done < 0 || done) {
+			data->filters = isl_union_set_list_add(data->filters,
+								filter);
+			if (done < 0)
+				return isl_schedule_node_free(node);
+			return node;
+		}
+		n = isl_union_set_list_n_union_set(data->filters);
+		inner = isl_union_set_list_get_union_set(data->filters, n - 1);
+		filter = isl_union_set_gist(filter, isl_union_set_copy(inner));
+		node = isl_schedule_node_filter_set_filter(node,
+						isl_union_set_copy(filter));
+		filter = isl_union_set_intersect(filter, inner);
+		empty = isl_union_set_is_empty(filter);
+		data->filters = isl_union_set_list_add(data->filters, filter);
+		if (empty < 0)
+			return isl_schedule_node_free(node);
+		if (!empty)
+			continue;
+		node = isl_schedule_node_child(node, 0);
+		node = isl_schedule_node_cut(node);
+		node = isl_schedule_node_parent(node);
+		return node;
+	} while (isl_schedule_node_has_children(node) &&
+		(node = isl_schedule_node_first_child(node)) != NULL);
+
+	return node;
+}
+
+/* Callback for "traverse" to leave a node for isl_schedule_node_gist.
+ *
+ * In particular, if the current node is a filter node, then we remove
+ * the element on the "filters" list that was added when we entered
+ * the node.  There is no need to compute any gist here, since we
+ * already did that when we entered the node.
+ *
+ * If the current node is a band node, then we compute the gist of
+ * the band node with respect to the intersection of the original context
+ * and the intermediate filters.
+ *
+ * If the current node is a sequence or set node, then some of
+ * the filter children may have become empty and so they are removed.
+ * If only one child is left, then the set or sequence node along with
+ * the single remaining child filter is removed.  The filter can be
+ * removed because the filters on a sequence or set node are supposed
+ * to partition the incoming domain instances.
+ * In principle, it should then be impossible for there to be zero
+ * remaining children, but should this happen, we replace the entire
+ * subtree with an empty filter.
+ */
+static __isl_give isl_schedule_node *gist_leave(
+	__isl_take isl_schedule_node *node, void *user)
+{
+	struct isl_node_gist_data *data = user;
+	isl_schedule_tree *tree;
+	int i, n;
+	isl_union_set *filter;
+
+	switch (isl_schedule_node_get_type(node)) {
+	case isl_schedule_node_error:
+		return isl_schedule_node_free(node);
+	case isl_schedule_node_filter:
+		n = isl_union_set_list_n_union_set(data->filters);
+		data->filters = isl_union_set_list_drop(data->filters,
+							n - 1, 1);
+		break;
+	case isl_schedule_node_band:
+		n = isl_union_set_list_n_union_set(data->filters);
+		filter = isl_union_set_list_get_union_set(data->filters, n - 1);
+		node = isl_schedule_node_band_gist(node, filter);
+		break;
+	case isl_schedule_node_set:
+	case isl_schedule_node_sequence:
+		tree = isl_schedule_node_get_tree(node);
+		n = isl_schedule_tree_n_children(tree);
+		for (i = n - 1; i >= 0; --i) {
+			isl_schedule_tree *child;
+			isl_union_set *filter;
+			int empty;
+
+			child = isl_schedule_tree_get_child(tree, i);
+			filter = isl_schedule_tree_filter_get_filter(child);
+			empty = isl_union_set_is_empty(filter);
+			isl_union_set_free(filter);
+			isl_schedule_tree_free(child);
+			if (empty < 0)
+				tree = isl_schedule_tree_free(tree);
+			else if (empty)
+				tree = isl_schedule_tree_drop_child(tree, i);
+		}
+		n = isl_schedule_tree_n_children(tree);
+		node = isl_schedule_node_graft_tree(node, tree);
+		if (n == 1) {
+			node = isl_schedule_node_delete(node);
+			node = isl_schedule_node_delete(node);
+		} else if (n == 0) {
+			isl_space *space;
+
+			filter =
+			    isl_union_set_list_get_union_set(data->filters, 0);
+			space = isl_union_set_get_space(filter);
+			isl_union_set_free(filter);
+			filter = isl_union_set_empty(space);
+			node = isl_schedule_node_cut(node);
+			node = isl_schedule_node_insert_filter(node, filter);
+		}
+		break;
+	case isl_schedule_node_domain:
+	case isl_schedule_node_leaf:
+		break;
+	}
+
+	return node;
+}
+
+/* Compute the gist of the subtree at "node" with respect to
+ * the reaching domain elements in "context".
+ * In particular, compute the gist of all band and filter nodes
+ * in the subtree with respect to "context".  Children of set or sequence
+ * nodes that end up with an empty filter are removed completely.
+ *
+ * We keep track of the intersection of "context" with all outer filters
+ * of the current node within the subtree in the final element of "filters".
+ * Initially, this list contains the single element "context" and it is
+ * extended or shortened each time we enter or leave a filter node.
+ */
+__isl_give isl_schedule_node *isl_schedule_node_gist(
+	__isl_take isl_schedule_node *node, __isl_take isl_union_set *context)
+{
+	struct isl_node_gist_data data;
+
+	data.filters = isl_union_set_list_from_union_set(context);
+	node = traverse(node, &gist_enter, &gist_leave, &data);
+	isl_union_set_list_free(data.filters);
+	return node;
+}
+
+/* Intersect the domain of domain node "node" with "domain".
+ *
+ * If the domain of "node" is already a subset of "domain",
+ * then nothing needs to be changed.
+ *
+ * Otherwise, we replace the domain of the domain node by the intersection
+ * and simplify the subtree rooted at "node" with respect to this intersection.
+ */
+__isl_give isl_schedule_node *isl_schedule_node_domain_intersect_domain(
+	__isl_take isl_schedule_node *node, __isl_take isl_union_set *domain)
+{
+	isl_schedule_tree *tree;
+	isl_union_set *uset;
+	int is_subset;
+
+	if (!node || !domain)
+		goto error;
+
+	uset = isl_schedule_tree_domain_get_domain(node->tree);
+	is_subset = isl_union_set_is_subset(uset, domain);
+	isl_union_set_free(uset);
+	if (is_subset < 0)
+		goto error;
+	if (is_subset) {
+		isl_union_set_free(domain);
+		return node;
+	}
+
+	tree = isl_schedule_tree_copy(node->tree);
+	uset = isl_schedule_tree_domain_get_domain(tree);
+	uset = isl_union_set_intersect(uset, domain);
+	tree = isl_schedule_tree_domain_set_domain(tree,
+						    isl_union_set_copy(uset));
+	node = isl_schedule_node_graft_tree(node, tree);
+
+	node = isl_schedule_node_child(node, 0);
+	node = isl_schedule_node_gist(node, uset);
+	node = isl_schedule_node_parent(node);
+
+	return node;
+error:
+	isl_schedule_node_free(node);
+	isl_union_set_free(domain);
+	return NULL;
+}
+
+/* Reset the user pointer on all identifiers of parameters and tuples
+ * in the schedule node "node".
+ */
+__isl_give isl_schedule_node *isl_schedule_node_reset_user(
+	__isl_take isl_schedule_node *node)
+{
+	isl_schedule_tree *tree;
+
+	tree = isl_schedule_node_get_tree(node);
+	tree = isl_schedule_tree_reset_user(tree);
+	node = isl_schedule_node_graft_tree(node, tree);
+
+	return node;
+}
+
+/* Align the parameters of the schedule node "node" to those of "space".
+ */
+__isl_give isl_schedule_node *isl_schedule_node_align_params(
+	__isl_take isl_schedule_node *node, __isl_take isl_space *space)
+{
+	isl_schedule_tree *tree;
+
+	tree = isl_schedule_node_get_tree(node);
+	tree = isl_schedule_tree_align_params(tree, space);
+	node = isl_schedule_node_graft_tree(node, tree);
+
+	return node;
+}
+
+/* Compute the pullback of schedule node "node"
+ * by the function represented by "upma".
+ * In other words, plug in "upma" in the iteration domains
+ * of schedule node "node".
+ *
+ * Note that this is only a helper function for
+ * isl_schedule_pullback_union_pw_multi_aff.  In order to maintain consistency,
+ * this function should not be called on a single node without also
+ * calling it on all the other nodes.
+ */
+__isl_give isl_schedule_node *isl_schedule_node_pullback_union_pw_multi_aff(
+	__isl_take isl_schedule_node *node,
+	__isl_take isl_union_pw_multi_aff *upma)
+{
+	isl_schedule_tree *tree;
+
+	tree = isl_schedule_node_get_tree(node);
+	tree = isl_schedule_tree_pullback_union_pw_multi_aff(tree, upma);
+	node = isl_schedule_node_graft_tree(node, tree);
+
+	return node;
+}
+
+/* Return the position of the subtree containing "node" among the children
+ * of "ancestor".  "node" is assumed to be a descendant of "ancestor".
+ * In particular, both nodes should point to the same schedule tree.
+ *
+ * Return -1 on error.
+ */
+int isl_schedule_node_get_ancestor_child_position(
+	__isl_keep isl_schedule_node *node,
+	__isl_keep isl_schedule_node *ancestor)
+{
+	int n1, n2;
+	isl_schedule_tree *tree;
+
+	if (!node || !ancestor)
+		return -1;
+
+	if (node->schedule != ancestor->schedule)
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_invalid,
+			"not a descendant", return -1);
+
+	n1 = isl_schedule_node_get_tree_depth(ancestor);
+	n2 = isl_schedule_node_get_tree_depth(node);
+
+	if (n1 >= n2)
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_invalid,
+			"not a descendant", return -1);
+	tree = isl_schedule_tree_list_get_schedule_tree(node->ancestors, n1);
+	isl_schedule_tree_free(tree);
+	if (tree != ancestor->tree)
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_invalid,
+			"not a descendant", return -1);
+
+	return node->child_pos[n1];
+}
+
+/* Given two nodes that point to the same schedule tree, return their
+ * closest shared ancestor.
+ *
+ * Since the two nodes point to the same schedule, they share at least
+ * one ancestor, the root of the schedule.  We move down from the root
+ * to the first ancestor where the respective children have a different
+ * child position.  This is the requested ancestor.
+ * If there is no ancestor where the children have a different position,
+ * then one node is an ancestor of the other and then this node is
+ * the requested ancestor.
+ */
+__isl_give isl_schedule_node *isl_schedule_node_get_shared_ancestor(
+	__isl_keep isl_schedule_node *node1,
+	__isl_keep isl_schedule_node *node2)
+{
+	int i, n1, n2;
+
+	if (!node1 || !node2)
+		return NULL;
+	if (node1->schedule != node2->schedule)
+		isl_die(isl_schedule_node_get_ctx(node1), isl_error_invalid,
+			"not part of same schedule", return NULL);
+	n1 = isl_schedule_node_get_tree_depth(node1);
+	n2 = isl_schedule_node_get_tree_depth(node2);
+	if (n2 < n1)
+		return isl_schedule_node_get_shared_ancestor(node2, node1);
+	if (n1 == 0)
+		return isl_schedule_node_copy(node1);
+	if (isl_schedule_node_is_equal(node1, node2))
+		return isl_schedule_node_copy(node1);
+
+	for (i = 0; i < n1; ++i)
+		if (node1->child_pos[i] != node2->child_pos[i])
+			break;
+
+	node1 = isl_schedule_node_copy(node1);
+	return isl_schedule_node_ancestor(node1, n1 - i);
 }
 
 /* Print "node" to "p".

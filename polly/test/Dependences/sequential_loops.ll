@@ -273,7 +273,7 @@ exit.2:
 ; VALUE:   RAW dependences:
 ; VALUE:     [p] -> {
 ; VALUE:       Stmt_S1[i0] -> Stmt_S2[-p + i0] :
-; VALUE:           i0 >= p and i0 <= 9 + p and p <= 190 and i0 <= 99 and i0 >= 0
+; VALUE:           p <= 190 and i0 >= p and i0 <= 9 + p and i0 >= 0 and i0 <= 99
 ; VALUE:     }
 ; VALUE:   WAR dependences:
 ; VALUE:     [p] -> {

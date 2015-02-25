@@ -1459,12 +1459,10 @@ static __isl_give isl_aff *merge_divs(__isl_take isl_aff *aff, int a, int b)
 static __isl_give isl_aff *sort_divs(__isl_take isl_aff *aff)
 {
 	int i, j, n;
-	unsigned off;
 
 	if (!aff)
 		return NULL;
 
-	off = isl_local_space_offset(aff->ls, isl_dim_div);
 	n = isl_aff_dim(aff, isl_dim_div);
 	for (i = 1; i < n; ++i) {
 		for (j = i - 1; j >= 0; --j) {
@@ -4908,7 +4906,7 @@ static __isl_give isl_pw_multi_aff *pw_multi_aff_from_map_stride(
 		map = set;
 	else
 		map = isl_set_unwrap(set);
-	pma = isl_pw_multi_aff_from_map(set);
+	pma = isl_pw_multi_aff_from_map(map);
 
 	if (!is_set) {
 		space = isl_pw_multi_aff_get_domain_space(pma);
@@ -6569,13 +6567,12 @@ error:
 static __isl_give isl_pw_aff *isl_multi_pw_aff_apply_aff_aligned(
 	__isl_take isl_multi_pw_aff *mpa, __isl_take isl_aff *aff)
 {
-	int i, n_param, n_in, n_div;
+	int i, n_in, n_div;
 	isl_space *space;
 	isl_val *v;
 	isl_pw_aff *pa;
 	isl_aff *tmp;
 
-	n_param = isl_aff_dim(aff, isl_dim_param);
 	n_in = isl_aff_dim(aff, isl_dim_in);
 	n_div = isl_aff_dim(aff, isl_dim_div);
 

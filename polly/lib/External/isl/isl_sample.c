@@ -595,7 +595,6 @@ error:
 static struct isl_vec *sample_bounded(struct isl_basic_set *bset)
 {
 	unsigned dim;
-	struct isl_ctx *ctx;
 	struct isl_vec *sample;
 	struct isl_tab *tab = NULL;
 	isl_factorizer *f;
@@ -620,14 +619,12 @@ static struct isl_vec *sample_bounded(struct isl_basic_set *bset)
 	if (f->n_group != 0)
 		return factored_sample(bset, f);
 	isl_factorizer_free(f);
-		
-	ctx = bset->ctx;
 
 	tab = isl_tab_from_basic_set(bset, 1);
 	if (tab && tab->empty) {
 		isl_tab_free(tab);
 		ISL_F_SET(bset, ISL_BASIC_SET_EMPTY);
-		sample = isl_vec_alloc(bset->ctx, 0);
+		sample = isl_vec_alloc(isl_basic_set_get_ctx(bset), 0);
 		isl_basic_set_free(bset);
 		return sample;
 	}
@@ -924,11 +921,11 @@ __isl_give isl_vec *isl_basic_set_sample_with_cone(
 	if (!bset || !cone)
 		goto error;
 
-	ctx = bset->ctx;
+	ctx = isl_basic_set_get_ctx(bset);
 	total = isl_basic_set_total_dim(cone);
 	cone_dim = total - cone->n_eq;
 
-	M = isl_mat_sub_alloc6(bset->ctx, cone->eq, 0, cone->n_eq, 1, total);
+	M = isl_mat_sub_alloc6(ctx, cone->eq, 0, cone->n_eq, 1, total);
 	M = isl_mat_left_hermite(M, 0, &U, NULL);
 	if (!M)
 		goto error;
