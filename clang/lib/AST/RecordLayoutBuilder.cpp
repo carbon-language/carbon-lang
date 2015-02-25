@@ -609,10 +609,10 @@ protected:
 
   /// \brief Externally-provided size.
   uint64_t ExternalSize;
-  
+
   /// \brief Externally-provided alignment.
   uint64_t ExternalAlign;
-  
+
   /// \brief Externally-provided field offsets.
   llvm::DenseMap<const FieldDecl *, uint64_t> ExternalFieldOffsets;
 
@@ -626,7 +626,7 @@ protected:
                       EmptySubobjectMap *EmptySubobjects)
     : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), 
       Alignment(CharUnits::One()), UnpackedAlignment(CharUnits::One()),
-      ExternalLayout(false), InferAlignment(false), 
+      ExternalLayout(false), InferAlignment(false),
       Packed(false), IsUnion(false), IsMac68kAlign(false), IsMsStruct(false),
       UnfilledBitsInLastUnit(0), LastBitfieldTypeSize(0),
       MaxFieldAlignment(CharUnits::Zero()), 
@@ -1236,13 +1236,13 @@ void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
   // If there is an external AST source, ask it for the various offsets.
   if (const RecordDecl *RD = dyn_cast<RecordDecl>(D))
     if (ExternalASTSource *External = Context.getExternalSource()) {
-      ExternalLayout = External->layoutRecordType(RD, 
+      ExternalLayout = External->layoutRecordType(RD,
                                                   ExternalSize,
                                                   ExternalAlign,
                                                   ExternalFieldOffsets,
                                                   ExternalBaseOffsets,
                                                   ExternalVirtualBaseOffsets);
-      
+
       // Update based on external alignment.
       if (ExternalLayout) {
         if (ExternalAlign > 0) {
@@ -1751,7 +1751,7 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D,
   FieldOffsets.push_back(Context.toBits(FieldOffset));
 
   if (!ExternalLayout)
-    CheckFieldPadding(Context.toBits(FieldOffset), UnpaddedFieldOffset, 
+    CheckFieldPadding(Context.toBits(FieldOffset), UnpaddedFieldOffset,
                       Context.toBits(UnpackedFieldOffset),
                       Context.toBits(UnpackedFieldAlign), FieldPacked, D);
 
@@ -1867,9 +1867,9 @@ RecordLayoutBuilder::updateExternalFieldOffset(const FieldDecl *Field,
                                                uint64_t ComputedOffset) {
   assert(ExternalFieldOffsets.find(Field) != ExternalFieldOffsets.end() &&
          "Field does not have an external offset");
-  
+
   uint64_t ExternalFieldOffset = ExternalFieldOffsets[Field];
-  
+
   if (InferAlignment && ExternalFieldOffset < ComputedOffset) {
     // The externally-supplied field offset is before the field offset we
     // computed. Assume that the structure is packed.
