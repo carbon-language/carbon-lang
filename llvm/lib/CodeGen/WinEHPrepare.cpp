@@ -320,6 +320,7 @@ bool WinEHPrepare::prepareCPPEHHandlers(
   // that pull the EHObjPtr from the frame alloc structure
   for (AllocaInst *EHObjPtr : HandlerEHObjPtrs) {
     Value *EHData = EHDataMap[EHObjPtr->getParent()->getParent()];
+    Builder.SetInsertPoint(EHObjPtr);
     Value *ElementPtr = Builder.CreateConstInBoundsGEP2_32(EHData, 0, 1);
     EHObjPtr->replaceAllUsesWith(ElementPtr);
     EHObjPtr->removeFromParent();
