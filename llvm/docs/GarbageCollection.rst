@@ -386,6 +386,8 @@ greater performance impact since pointer reads are more frequent than writes.
 
 .. _plugin:
 
+.. _builtin-gc-strategies:
+
 Built In GC Strategies
 ======================
 

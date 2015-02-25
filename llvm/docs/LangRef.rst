@@ -1014,19 +1014,22 @@ Currently, only the following parameter attributes are defined:
 
 .. _gc:
 
-Garbage Collector Names
------------------------
+Garbage Collector Strategy Names
+--------------------------------
 
-Each function may specify a garbage collector name, which is simply a
+Each function may specify a garbage collector strategy name, which is simply a
 string:
 
 .. code-block:: llvm
 
     define void @f() gc "name" { ... }
 
-The compiler declares the supported values of *name*. Specifying a
-collector will cause the compiler to alter its output in order to
-support the named garbage collection algorithm.
+The supported values of *name* includes those :ref:`built in to LLVM 
+<builtin-gc-strategies>` and any provided by loaded plugins.  Specifying a GC
+strategy will cause the compiler to alter its output in order to support the 
+named garbage collection algorithm.  Note that LLVM itself does not contain a 
+garbage collector, this functionality is restricted to generating machine code
+which can interoperate with a collector provided externally.  
 
 .. _prefixdata:
 
@@ -7113,11 +7116,18 @@ stack <int_gcroot>`, as well as garbage collector implementations that
 require :ref:`read <int_gcread>` and :ref:`write <int_gcwrite>` barriers.
 Front-ends for type-safe garbage collected languages should generate
 these intrinsics to make use of the LLVM garbage collectors. For more
-details, see `Accurate Garbage Collection with
-LLVM <GarbageCollection.html>`_.
+details, see `Garbage Collection with LLVM <GarbageCollection.html>`_.
 
-The garbage collection intrinsics only operate on objects in the generic
-address space (address space zero).
+Experimental Statepoint Intrinsics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+LLVM provides an second experimental set of intrinsics for describing garbage
+collection safepoints in compiled code.  These intrinsics are an alternative 
+to the ``llvm.gcroot`` intrinsics, but are compatible with the ones for 
+:ref:`read <int_gcread>` and :ref:`write <int_gcwrite>` barriers.  The 
+differences in approach are covered in the `Garbage Collection with LLVM 
+<GarbageCollection.html>`_ documentation.  The intrinsics themselves are 
+described in :doc:`Statepoints`.
 
 .. _int_gcroot:
 
