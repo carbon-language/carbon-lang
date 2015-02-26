@@ -129,6 +129,7 @@ public:
     Length->print(OS);
     OS << "  Branch: ";
     getBranch()->print(OS);
+    OS << "\n";
   }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
