@@ -88,6 +88,10 @@ N: Nico Rieck
 E: nico.rieck@gmail.com
 D: Windows fixes
 
+N: Jon Roelofs
+E: jonathan@codesourcery.com
+D: Remote testing, Newlib port, baremetal/single-threaded support.
+
 N: Jonathan Sauer
 D: Minor patches, mostly related to constexpr
 
