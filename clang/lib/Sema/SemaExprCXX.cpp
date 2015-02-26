@@ -2127,8 +2127,8 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
            "Only sized deallocation can have two parameters");
 
     // This declaration should be emited as extern_weak.
-    LinkageInfo LV = Alloc->getLinkageAndVisibility();
-    assert(LV.getLinkage() == clang::ExternalLinkage);
+    assert(Alloc->getLinkageAndVisibility().getLinkage() ==
+           clang::ExternalLinkage);
     Alloc->addAttr(WeakAttr::CreateImplicit(Context));
   }
 
