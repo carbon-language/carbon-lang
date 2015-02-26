@@ -94,14 +94,14 @@ private:
   bool Initialized;
   bool DisableLineMarkers;
   bool DumpDefines;
-  bool UseLineDirective;
+  bool UseLineDirectives;
   bool IsFirstFileEntered;
 public:
-  PrintPPOutputPPCallbacks(Preprocessor &pp, raw_ostream &os,
-                           bool lineMarkers, bool defines)
-     : PP(pp), SM(PP.getSourceManager()),
-       ConcatInfo(PP), OS(os), DisableLineMarkers(lineMarkers),
-       DumpDefines(defines) {
+  PrintPPOutputPPCallbacks(Preprocessor &pp, raw_ostream &os, bool lineMarkers,
+                           bool defines, bool UseLineDirectives)
+      : PP(pp), SM(PP.getSourceManager()), ConcatInfo(PP), OS(os),
+        DisableLineMarkers(lineMarkers), DumpDefines(defines),
+        UseLineDirectives(UseLineDirectives) {
     CurLine = 0;
     CurFilename += "<uninit>";
     EmittedTokensOnThisLine = false;
@@ -109,9 +109,6 @@ public:
     FileType = SrcMgr::C_User;
     Initialized = false;
     IsFirstFileEntered = false;
-
-    // If we're in microsoft mode, use normal #line instead of line markers.
-    UseLineDirective = PP.getLangOpts().MicrosoftExt;
   }
 
   void setEmittedTokensOnThisLine() { EmittedTokensOnThisLine = true; }
@@ -183,7 +180,7 @@ void PrintPPOutputPPCallbacks::WriteLineInfo(unsigned LineNo,
   startNewLineIfNeeded(/*ShouldUpdateCurrentLine=*/false);
 
   // Emit #line directives or GNU line markers depending on what mode we're in.
-  if (UseLineDirective) {
+  if (UseLineDirectives) {
     OS << "#line" << ' ' << LineNo << ' ' << '"';
     OS.write_escaped(CurFilename);
     OS << '"';
@@ -719,9 +716,8 @@ void clang::DoPrintPreprocessedInput(Preprocessor &PP, raw_ostream *OS,
   // to -C or -CC.
   PP.SetCommentRetentionState(Opts.ShowComments, Opts.ShowMacroComments);
 
-  PrintPPOutputPPCallbacks *Callbacks =
-      new PrintPPOutputPPCallbacks(PP, *OS, !Opts.ShowLineMarkers,
-                                   Opts.ShowMacros);
+  PrintPPOutputPPCallbacks *Callbacks = new PrintPPOutputPPCallbacks(
+      PP, *OS, !Opts.ShowLineMarkers, Opts.ShowMacros, Opts.UseLineDirectives);
   PP.AddPragmaHandler(new UnknownPragmaHandler("#pragma", Callbacks));
   PP.AddPragmaHandler("GCC", new UnknownPragmaHandler("#pragma GCC",Callbacks));
   PP.AddPragmaHandler("clang",

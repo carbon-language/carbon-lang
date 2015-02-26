@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fms-extensions -std=c++11 -E %s | FileCheck %s
+// RUN: %clang_cc1 -fms-extensions -std=c++11 -E %s -fuse-line-directives | FileCheck %s
 
 // Test that we properly expand the C99 _Pragma and Microsoft __pragma
 // into #pragma directives, with newlines where needed. <rdar://problem/8412013>

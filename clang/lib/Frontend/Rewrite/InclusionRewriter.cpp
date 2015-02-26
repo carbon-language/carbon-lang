@@ -43,14 +43,15 @@ class InclusionRewriter : public PPCallbacks {
   StringRef MainEOL; ///< The line ending marker to use.
   const llvm::MemoryBuffer *PredefinesBuffer; ///< The preprocessor predefines.
   bool ShowLineMarkers; ///< Show #line markers.
-  bool UseLineDirective; ///< Use of line directives or line markers.
+  bool UseLineDirectives; ///< Use of line directives or line markers.
   typedef std::map<unsigned, FileChange> FileChangeMap;
   FileChangeMap FileChanges; ///< Tracks which files were included where.
   /// Used transitively for building up the FileChanges mapping over the
   /// various \c PPCallbacks callbacks.
   FileChangeMap::iterator LastInsertedFileChange;
 public:
-  InclusionRewriter(Preprocessor &PP, raw_ostream &OS, bool ShowLineMarkers);
+  InclusionRewriter(Preprocessor &PP, raw_ostream &OS, bool ShowLineMarkers,
+                    bool UseLineDirectives);
   bool Process(FileID FileId, SrcMgr::CharacteristicKind FileType);
   void setPredefinesBuffer(const llvm::MemoryBuffer *Buf) {
     PredefinesBuffer = Buf;
@@ -89,13 +90,12 @@ private:
 
 /// Initializes an InclusionRewriter with a \p PP source and \p OS destination.
 InclusionRewriter::InclusionRewriter(Preprocessor &PP, raw_ostream &OS,
-                                     bool ShowLineMarkers)
+                                     bool ShowLineMarkers,
+                                     bool UseLineDirectives)
     : PP(PP), SM(PP.getSourceManager()), OS(OS), MainEOL("\n"),
       PredefinesBuffer(nullptr), ShowLineMarkers(ShowLineMarkers),
-      LastInsertedFileChange(FileChanges.end()) {
-  // If we're in microsoft mode, use normal #line instead of line markers.
-  UseLineDirective = PP.getLangOpts().MicrosoftExt;
-}
+      LastInsertedFileChange(FileChanges.end()),
+      UseLineDirectives(UseLineDirectives) {}
 
 /// Write appropriate line information as either #line directives or GNU line
 /// markers depending on what mode we're in, including the \p Filename and
@@ -106,7 +106,7 @@ void InclusionRewriter::WriteLineInfo(const char *Filename, int Line,
                                       StringRef Extra) {
   if (!ShowLineMarkers)
     return;
-  if (UseLineDirective) {
+  if (UseLineDirectives) {
     OS << "#line" << ' ' << Line << ' ' << '"';
     OS.write_escaped(Filename);
     OS << '"';
@@ -561,8 +561,8 @@ bool InclusionRewriter::Process(FileID FileId,
 void clang::RewriteIncludesInInput(Preprocessor &PP, raw_ostream *OS,
                                    const PreprocessorOutputOptions &Opts) {
   SourceManager &SM = PP.getSourceManager();
-  InclusionRewriter *Rewrite = new InclusionRewriter(PP, *OS,
-                                                     Opts.ShowLineMarkers);
+  InclusionRewriter *Rewrite = new InclusionRewriter(
+      PP, *OS, Opts.ShowLineMarkers, Opts.UseLineDirectives);
   Rewrite->detectMainFileEOL();
 
   PP.addPPCallbacks(std::unique_ptr<PPCallbacks>(Rewrite));

@@ -10,9 +10,9 @@ push_p
 
 push_p _Pragma("pack(push)") __pragma(pack(push))
 // CHECK: #pragma pack(push)
-// CHECK-NEXT: #line 11 "{{.*}}_Pragma-location.c"
+// CHECK-NEXT: # 11 "{{.*}}_Pragma-location.c"
 // CHECK-NEXT: #pragma pack(push)
-// CHECK-NEXT: #line 11 "{{.*}}_Pragma-location.c"
+// CHECK-NEXT: # 11 "{{.*}}_Pragma-location.c"
 // CHECK-NEXT: #pragma pack(push)
 
 
@@ -31,17 +31,17 @@ void test () {
 
 // CHECK: void test () {
 // CHECK-NEXT:   1;
-// CHECK-NEXT: #line 24 "{{.*}}_Pragma-location.c"
+// CHECK-NEXT: # 24 "{{.*}}_Pragma-location.c"
 // CHECK-NEXT: #pragma clang diagnostic push
 // CHECK-NEXT: #pragma clang diagnostic ignored "-Wformat-extra-args"
 // CHECK-NEXT: #pragma clang diagnostic pop
 
 // CHECK:   2;
-// CHECK-NEXT: #line 28 "{{.*}}_Pragma-location.c"
+// CHECK-NEXT: # 28 "{{.*}}_Pragma-location.c"
 // CHECK-NEXT: #pragma clang diagnostic push
-// CHECK-NEXT: #line 28 "{{.*}}_Pragma-location.c"
+// CHECK-NEXT: # 28 "{{.*}}_Pragma-location.c"
 // CHECK-NEXT: #pragma clang diagnostic ignored "-Wformat-extra-args"
 // CHECK-NEXT:   3;
-// CHECK-NEXT: #line 29 "{{.*}}_Pragma-location.c"
+// CHECK-NEXT: # 29 "{{.*}}_Pragma-location.c"
 // CHECK-NEXT: #pragma clang diagnostic pop
 // CHECK-NEXT: }
