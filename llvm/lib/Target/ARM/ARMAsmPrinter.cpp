@@ -16,6 +16,7 @@
 #include "ARM.h"
 #include "ARMConstantPoolValue.h"
 #include "ARMFPUName.h"
+#include "ARMArchExtName.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMTargetMachine.h"
 #include "ARMTargetObjectFile.h"
@@ -668,9 +669,17 @@ void ARMAsmPrinter::emitAttributes() {
 
   std::string CPUString = STI.getCPUString();
 
-  // FIXME: remove krait check when GNU tools support krait cpu
-  if (CPUString != "generic" && CPUString != "krait")
-    ATS.emitTextAttribute(ARMBuildAttrs::CPU_name, CPUString);
+  if (CPUString != "generic") {
+    // FIXME: remove krait check when GNU tools support krait cpu
+    if (STI.isKrait()) {
+      ATS.emitTextAttribute(ARMBuildAttrs::CPU_name, "cortex-a9");
+      // We consider krait as a "cortex-a9" + hwdiv CPU
+      // Enable hwdiv through ".arch_extension idiv"
+      if (STI.hasDivide() || STI.hasDivideInARMMode())
+        ATS.emitArchExtension(ARM::HWDIV);
+    } else
+      ATS.emitTextAttribute(ARMBuildAttrs::CPU_name, CPUString);
+  }
 
   ATS.emitAttribute(ARMBuildAttrs::CPU_arch, getArchForCPU(CPUString, &STI));
 
