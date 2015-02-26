@@ -9,3 +9,5 @@ add_llvm_library(lldX86_64ELFTarget
     LLVMObject
     LLVMSupport
   )
+
+add_subdirectory(ExampleSubTarget)

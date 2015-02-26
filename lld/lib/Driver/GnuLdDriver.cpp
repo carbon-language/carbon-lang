@@ -353,6 +353,7 @@ GnuLdDriver::createELFLinkingContext(llvm::Triple triple) {
   LLVM_TARGET(Hexagon)
   LLVM_TARGET(Mips)
   LLVM_TARGET(X86)
+  LLVM_TARGET(Example)
   LLVM_TARGET(X86_64)
 #undef LLVM_TARGET
   return nullptr;
