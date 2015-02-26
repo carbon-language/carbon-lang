@@ -215,7 +215,7 @@ struct NativeReferenceIvarsV1 {
 // The NCS_ReferencesArrayV2 chunk contains an array of these structs
 //
 struct NativeReferenceIvarsV2 {
-  enum {
+  enum : unsigned {
     noTarget = UINT32_MAX
   };
   uint64_t  offsetInAtom;
