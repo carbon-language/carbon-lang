@@ -7680,7 +7680,7 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 /// The exact breakdown of how to form these dword pairs and align them on the
 /// correct sides is really tricky. See the comments within the function for
 /// more of the details.
-static SDValue lowerV8I16SingleInputVectorShuffle(
+static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
     SDLoc DL, SDValue V, MutableArrayRef<int> Mask,
     const X86Subtarget *Subtarget, SelectionDAG &DAG) {
   assert(V.getSimpleValueType() == MVT::v8i16 && "Bad input type!");
@@ -7707,27 +7707,6 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
   MutableArrayRef<int> LToHInputs(HiInputs.data(), NumLToH);
   MutableArrayRef<int> HToLInputs(LoInputs.data() + NumLToL, NumHToL);
   MutableArrayRef<int> HToHInputs(HiInputs.data() + NumLToH, NumHToH);
-
-  // Check for being able to broadcast a single element.
-  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(DL, MVT::v8i16, V,
-                                                        Mask, Subtarget, DAG))
-    return Broadcast;
-
-  // Try to use shift instructions.
-  if (SDValue Shift =
-          lowerVectorShuffleAsShift(DL, MVT::v8i16, V, V, Mask, DAG))
-    return Shift;
-
-  // Use dedicated unpack instructions for masks that match their pattern.
-  if (isShuffleEquivalent(V, V, Mask, {0, 0, 1, 1, 2, 2, 3, 3}))
-    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8i16, V, V);
-  if (isShuffleEquivalent(V, V, Mask, {4, 4, 5, 5, 6, 6, 7, 7}))
-    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8i16, V, V);
-
-  // Try to use byte rotation instructions.
-  if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
-          DL, MVT::v8i16, V, V, Mask, Subtarget, DAG))
-    return Rotate;
 
   // Simplify the 1-into-3 and 3-into-1 cases with a single pshufd. For all
   // such inputs we can swap two of the dwords across the half mark and end up
@@ -8222,8 +8201,31 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   int NumV2Inputs = std::count_if(Mask.begin(), Mask.end(), isV2);
 
-  if (NumV2Inputs == 0)
-    return lowerV8I16SingleInputVectorShuffle(DL, V1, Mask, Subtarget, DAG);
+  if (NumV2Inputs == 0) {
+    // Check for being able to broadcast a single element.
+    if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(DL, MVT::v8i16, V1,
+                                                          Mask, Subtarget, DAG))
+      return Broadcast;
+
+    // Try to use shift instructions.
+    if (SDValue Shift =
+            lowerVectorShuffleAsShift(DL, MVT::v8i16, V1, V1, Mask, DAG))
+      return Shift;
+
+    // Use dedicated unpack instructions for masks that match their pattern.
+    if (isShuffleEquivalent(V1, V1, Mask, {0, 0, 1, 1, 2, 2, 3, 3}))
+      return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8i16, V1, V1);
+    if (isShuffleEquivalent(V1, V1, Mask, {4, 4, 5, 5, 6, 6, 7, 7}))
+      return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8i16, V1, V1);
+
+    // Try to use byte rotation instructions.
+    if (SDValue Rotate = lowerVectorShuffleAsByteRotate(DL, MVT::v8i16, V1, V1,
+                                                        Mask, Subtarget, DAG))
+      return Rotate;
+
+    return lowerV8I16GeneralSingleInputVectorShuffle(DL, V1, Mask, Subtarget,
+                                                     DAG);
+  }
 
   assert(std::any_of(Mask.begin(), Mask.end(), isV1) &&
          "All single-input shuffles should be canonicalized to be V1-input "
