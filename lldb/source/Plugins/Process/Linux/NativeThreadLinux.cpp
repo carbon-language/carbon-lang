@@ -218,6 +218,8 @@ NativeThreadLinux::SetWatchpoint (lldb::addr_t addr, size_t size, uint32_t watch
 {
     if (!hardware)
         return Error ("not implemented");
+    if (m_state == eStateLaunching)
+        return Error ();
     Error error = RemoveWatchpoint(addr);
     if (error.Fail()) return error;
     NativeRegisterContextSP reg_ctx = GetRegisterContext ();
