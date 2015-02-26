@@ -1045,11 +1045,16 @@ static void emitEncodingByte(MCObjectStreamer &Streamer, unsigned Encoding) {
 void FrameEmitterImpl::EmitCFIInstruction(MCObjectStreamer &Streamer,
                                           const MCCFIInstruction &Instr) {
   int dataAlignmentFactor = getDataAlignmentFactor(Streamer);
+  auto *MRI = Streamer.getContext().getRegisterInfo();
 
   switch (Instr.getOperation()) {
   case MCCFIInstruction::OpRegister: {
     unsigned Reg1 = Instr.getRegister();
     unsigned Reg2 = Instr.getRegister2();
+    if (!IsEH) {
+      Reg1 = MRI->getDwarfRegNum(MRI->getLLVMRegNum(Reg1, true), false);
+      Reg2 = MRI->getDwarfRegNum(MRI->getLLVMRegNum(Reg2, true), false);
+    }
     Streamer.EmitIntValue(dwarf::DW_CFA_register, 1);
     Streamer.EmitULEB128IntValue(Reg1);
     Streamer.EmitULEB128IntValue(Reg2);
@@ -1082,8 +1087,11 @@ void FrameEmitterImpl::EmitCFIInstruction(MCObjectStreamer &Streamer,
     return;
   }
   case MCCFIInstruction::OpDefCfa: {
+    unsigned Reg = Instr.getRegister();
+    if (!IsEH)
+      Reg = MRI->getDwarfRegNum(MRI->getLLVMRegNum(Reg, true), false);
     Streamer.EmitIntValue(dwarf::DW_CFA_def_cfa, 1);
-    Streamer.EmitULEB128IntValue(Instr.getRegister());
+    Streamer.EmitULEB128IntValue(Reg);
     CFAOffset = -Instr.getOffset();
     Streamer.EmitULEB128IntValue(CFAOffset);
 
@@ -1091,8 +1099,11 @@ void FrameEmitterImpl::EmitCFIInstruction(MCObjectStreamer &Streamer,
   }
 
   case MCCFIInstruction::OpDefCfaRegister: {
+    unsigned Reg = Instr.getRegister();
+    if (!IsEH)
+      Reg = MRI->getDwarfRegNum(MRI->getLLVMRegNum(Reg, true), false);
     Streamer.EmitIntValue(dwarf::DW_CFA_def_cfa_register, 1);
-    Streamer.EmitULEB128IntValue(Instr.getRegister());
+    Streamer.EmitULEB128IntValue(Reg);
 
     return;
   }
@@ -1103,6 +1114,9 @@ void FrameEmitterImpl::EmitCFIInstruction(MCObjectStreamer &Streamer,
       Instr.getOperation() == MCCFIInstruction::OpRelOffset;
 
     unsigned Reg = Instr.getRegister();
+    if (!IsEH)
+      Reg = MRI->getDwarfRegNum(MRI->getLLVMRegNum(Reg, true), false);
+
     int Offset = Instr.getOffset();
     if (IsRelative)
       Offset -= CFAOffset;
@@ -1136,6 +1150,8 @@ void FrameEmitterImpl::EmitCFIInstruction(MCObjectStreamer &Streamer,
   }
   case MCCFIInstruction::OpRestore: {
     unsigned Reg = Instr.getRegister();
+    if (!IsEH)
+      Reg = MRI->getDwarfRegNum(MRI->getLLVMRegNum(Reg, true), false);
     Streamer.EmitIntValue(dwarf::DW_CFA_restore | Reg, 1);
     return;
   }
@@ -1290,10 +1306,10 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCObjectStreamer &streamer,
   if (CIEVersion == 1) {
     assert(MRI->getRARegister() <= 255 &&
            "DWARF 2 encodes return_address_register in one byte");
-    streamer.EmitIntValue(MRI->getDwarfRegNum(MRI->getRARegister(), true), 1);
+    streamer.EmitIntValue(MRI->getDwarfRegNum(MRI->getRARegister(), IsEH), 1);
   } else {
     streamer.EmitULEB128IntValue(
-        MRI->getDwarfRegNum(MRI->getRARegister(), true));
+        MRI->getDwarfRegNum(MRI->getRARegister(), IsEH));
   }
 
   // Augmentation Data Length (optional)
