@@ -1930,7 +1930,6 @@ getPICJumpTableRelocBaseExpr(const MachineFunction *MF, unsigned JTI,
   return MCSymbolRefExpr::Create(MF->getPICBaseSymbol(), Ctx);
 }
 
-// FIXME: Why this routine is here? Move to RegInfo!
 std::pair<const TargetRegisterClass *, uint8_t>
 X86TargetLowering::findRepresentativeClass(const TargetRegisterInfo *TRI,
                                            MVT VT) const {
