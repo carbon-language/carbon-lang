@@ -169,8 +169,8 @@ class CMIDriver : public CMICmnBase,
     CMICmnLLDBDebugger &m_rLldbDebugger;
     CMICmnStreamStdout &m_rStdOut;
     DriverState_e m_eCurrentDriverState;
-    bool m_bHaveExecutableFileNamePathOnCmdLine; // True = Yes executable given as one of the parameters to the MI Driver, false = not found
+    bool m_bHaveExecutableFileNamePathOnCmdLine; // True = yes, executable given as one of the parameters to the MI Driver, false = not found
     CMIUtilString m_strCmdLineArgExecuteableFileNamePath;
-    bool m_bDriverDebuggingArgExecutable; // True = The MI Driver (MI mode) is debugging executable passed as argument, false = running via
-                                          // a client i.e Eclipse
+    bool m_bDriverDebuggingArgExecutable; // True = the MI Driver (MI mode) is debugging executable passed as argument,
+                                          // false = running via a client (e.g. Eclipse)
 };
