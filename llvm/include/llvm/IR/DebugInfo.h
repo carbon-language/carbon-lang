@@ -1030,7 +1030,7 @@ class DIImportedEntity : public DIDescriptor {
   void printInternal(raw_ostream &OS) const;
 
 public:
-  DIImportedEntity() {}
+  DIImportedEntity() = default;
   explicit DIImportedEntity(const MDNode *N) : DIDescriptor(N) {}
   DIScope getContext() const { return getFieldAs<DIScope>(1); }
   DIDescriptorRef getEntity() const { return getFieldAs<DIDescriptorRef>(2); }
