@@ -5674,6 +5674,10 @@ public:
     return CPU == "mips32r6" || ABI == "n32" || ABI == "n64" || ABI == "64";
   }
 
+  bool isNan2008() const override {
+    return IsNan2008;
+  }
+
   StringRef getABI() const override { return ABI; }
   bool setCPU(const std::string &Name) override {
     bool IsMips32 = getTriple().getArch() == llvm::Triple::mips ||
