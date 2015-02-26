@@ -86,7 +86,6 @@ class CMICmnLLDBDebuggerHandleEvents : public CMICmnBase, public MI::ISingleton<
     bool TextToStdout(const CMIUtilString &vrTxt);
     bool TextToStderr(const CMIUtilString &vrTxt);
     bool UpdateSelectedThread(void);
-    bool ConvertPrintfCtrlCodeToString(const MIchar vCtrl, CMIUtilString &vwrStrEquivalent);
 
     // Overridden:
   private:

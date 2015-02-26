@@ -20,11 +20,12 @@
 //--
 
 // Third party headers
-#include <memory>   // std::unique_ptr
-#include <stdarg.h> // va_list, va_start, var_end
-#include <sstream>  // std::stringstream
-#include <string.h> // for strncmp
-#include <limits.h> // for ULONG_MAX
+#include <inttypes.h> // for PRIx8
+#include <limits.h>   // for ULONG_MAX
+#include <memory>     // std::unique_ptr
+#include <sstream>    // std::stringstream
+#include <stdarg.h>   // va_list, va_start, var_end
+#include <string.h>   // for strncmp
 
 // In-house headers:
 #include "MIUtilString.h"
@@ -796,4 +797,71 @@ CMIUtilString::FindFirstQuote(const MIuint vnPos) const
     while (nPos < nLen);
 
     return (MIuint)std::string::npos;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Get escaped string from *this string.
+// Type:    Method.
+// Args:    None.
+// Return:  CMIUtilString - The escaped version of the initial string.
+// Throws:  None.
+//--
+CMIUtilString
+CMIUtilString::Escape(const bool vbEscapeQuotes /* = false */) const
+{
+    const MIuint nLen(length());
+    CMIUtilString strNew;
+    strNew.reserve(nLen);
+    for (MIuint nIndex(0); nIndex < nLen; ++nIndex)
+    {
+        const MIchar cUnescapedChar((*this)[nIndex]);
+        switch (cUnescapedChar)
+        {
+            case '\a':
+                strNew.append("\\a");
+                break;
+            case '\b':
+                strNew.append("\\b");
+                break;
+            case '\t':
+                strNew.append("\\t");
+                break;
+            case '\n':
+                strNew.append("\\n");
+                break;
+            case '\v':
+                strNew.append("\\v");
+                break;
+            case '\f':
+                strNew.append("\\f");
+                break;
+            case '\r':
+                strNew.append("\\r");
+                break;
+            case '\033':
+                strNew.append("\\e");
+                break;
+            case '\\':
+                strNew.append("\\\\");
+                break;
+            case '\"':
+                if (vbEscapeQuotes)
+                {
+                    strNew.append("\\\"");
+                    break;
+                }
+                // FALLTHROUGH
+            default:
+                if (::isprint(cUnescapedChar))
+                    strNew.push_back(cUnescapedChar);
+                else
+                {
+                    char strEscapedChar[sizeof("\\xXX")];
+                    ::sprintf(strEscapedChar, "\\x%02" PRIx8, cUnescapedChar);
+                    strNew.append(strEscapedChar);
+                }
+                break;
+        }
+    }
+    return strNew;
 }

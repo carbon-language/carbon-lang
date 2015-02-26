@@ -1379,26 +1379,24 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStateExited(void)
 bool
 CMICmnLLDBDebuggerHandleEvents::GetProcessStdout(void)
 {
-    bool bOk = MIstatus::success;
-
-    char c;
-    size_t nBytes = 0;
     CMIUtilString text;
+    std::unique_ptr<char[]> apStdoutBuffer(new char[1024]);
     lldb::SBProcess process = CMICmnLLDBDebugSessionInfo::Instance().GetDebugger().GetSelectedTarget().GetProcess();
-    while (process.GetSTDOUT(&c, 1) > 0)
+    while (1)
     {
-        CMIUtilString str;
-        if (ConvertPrintfCtrlCodeToString(c, str))
-            text += str;
-        nBytes++;
-    }
-    if (nBytes > 0)
-    {
-        const CMIUtilString t(CMIUtilString::Format("~\"%s\"", text.c_str()));
-        bOk = TextToStdout(t);
+        const size_t nBytes = process.GetSTDOUT(apStdoutBuffer.get(), 1024);
+        if (nBytes == 0)
+            break;
+
+        text.append(apStdoutBuffer.get(), nBytes);
     }
 
-    return bOk;
+    if (text.empty())
+        return MIstatus::success;
+
+    const bool bEscapeQuotes(true);
+    const CMIUtilString t(CMIUtilString::Format("~\"%s\"", text.Escape(bEscapeQuotes).c_str()));
+    return TextToStdout(t);
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -1414,72 +1412,24 @@ CMICmnLLDBDebuggerHandleEvents::GetProcessStdout(void)
 bool
 CMICmnLLDBDebuggerHandleEvents::GetProcessStderr(void)
 {
-    bool bOk = MIstatus::success;
-
-    char c;
-    size_t nBytes = 0;
     CMIUtilString text;
+    std::unique_ptr<char[]> apStderrBuffer(new char[1024]);
     lldb::SBProcess process = CMICmnLLDBDebugSessionInfo::Instance().GetDebugger().GetSelectedTarget().GetProcess();
-    while (process.GetSTDERR(&c, 1) > 0)
+    while (1)
     {
-        CMIUtilString str;
-        if (ConvertPrintfCtrlCodeToString(c, str))
-            text += str;
-        nBytes++;
-    }
-    if (nBytes > 0)
-    {
-        const CMIUtilString t(CMIUtilString::Format("~\"%s\"", text.c_str()));
-        bOk = TextToStdout(t);
+        const size_t nBytes = process.GetSTDERR(apStderrBuffer.get(), 1024);
+        if (nBytes == 0)
+            break;
+
+        text.append(apStderrBuffer.get(), nBytes);
     }
 
-    return bOk;
-}
+    if (text.empty())
+        return MIstatus::success;
 
-//++ ------------------------------------------------------------------------------------
-// Details: Convert text stream control codes to text equivalent.
-// Type:    Method.
-// Args:    vCtrl             - (R) The control code.
-//          vwrStrEquivalent  - (W) The text equivalent.
-// Return:  MIstatus::success - Functionality succeeded.
-//          MIstatus::failure - Functionality failed.
-// Throws:  None.
-//--
-bool
-CMICmnLLDBDebuggerHandleEvents::ConvertPrintfCtrlCodeToString(const MIchar vCtrl, CMIUtilString &vwrStrEquivalent)
-{
-    switch (vCtrl)
-    {
-        case '\033':
-            vwrStrEquivalent = "\\e";
-            break;
-        case '\a':
-            vwrStrEquivalent = "\\a";
-            break;
-        case '\b':
-            vwrStrEquivalent = "\\b";
-            break;
-        case '\f':
-            vwrStrEquivalent = "\\f";
-            break;
-        case '\n':
-            vwrStrEquivalent = "\\n";
-            break;
-        case '\r':
-            vwrStrEquivalent = "\\r";
-            break;
-        case '\t':
-            vwrStrEquivalent = "\\t";
-            break;
-        case '\v':
-            vwrStrEquivalent = "\\v";
-            break;
-        default:
-            vwrStrEquivalent = CMIUtilString::Format("%c", vCtrl);
-            break;
-    }
-
-    return MIstatus::success;
+    const bool bEscapeQuotes(true);
+    const CMIUtilString t(CMIUtilString::Format("~\"%s\"", text.Escape(bEscapeQuotes).c_str()));
+    return TextToStdout(t);
 }
 
 //++ ------------------------------------------------------------------------------------
