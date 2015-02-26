@@ -1223,6 +1223,10 @@ public:
     return findSymbol(mangle(Name));
   }
 
+  JITSymbol findUnmangledSymbolIn(ModuleHandleT H, const std::string &Name) {
+    return findSymbolIn(H, mangle(Name));
+  }
+
 private:
 
   // This method searches the FunctionDefs map for a definition of 'Name'. If it
@@ -1284,7 +1288,7 @@ private:
     std::shared_ptr<FunctionAST> Fn = std::move(FnAST);
     CallbackInfo.setCompileAction([this, Fn]() {
       auto H = addModule(IRGen(Session, *Fn));
-      return findSymbolIn(H, Fn->Proto->Name).getAddress();
+      return findUnmangledSymbolIn(H, Fn->Proto->Name).getAddress();
     });
     CallbackInfo.setUpdateAction(
       CompileCallbacks.getLocalFPUpdater(H, mangle(BodyPtrName)));
