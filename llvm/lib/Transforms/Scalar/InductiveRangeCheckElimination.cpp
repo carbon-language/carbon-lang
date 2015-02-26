@@ -82,6 +82,9 @@ static cl::opt<unsigned> LoopSizeCutoff("irce-loop-size-cutoff", cl::Hidden,
 static cl::opt<bool> PrintChangedLoops("irce-print-changed-loops", cl::Hidden,
                                        cl::init(false));
 
+static cl::opt<int> MaxExitProbReciprocal("irce-max-exit-prob-reciprocal",
+                                          cl::Hidden, cl::init(10));
+
 #define DEBUG_TYPE "irce"
 
 namespace {
@@ -441,7 +444,9 @@ struct LoopStructure {
     return Result;
   }
 
-  static Optional<LoopStructure> parseLoopStructure(ScalarEvolution &, Loop &,
+  static Optional<LoopStructure> parseLoopStructure(ScalarEvolution &,
+                                                    BranchProbabilityInfo &BPI,
+                                                    Loop &,
                                                     const char *&);
 };
 
@@ -615,8 +620,8 @@ static bool CanBeSMin(ScalarEvolution &SE, const SCEV *S) {
 }
 
 Optional<LoopStructure>
-LoopStructure::parseLoopStructure(ScalarEvolution &SE, Loop &L,
-                                  const char *&FailureReason) {
+LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BPI,
+                                  Loop &L, const char *&FailureReason) {
   assert(L.isLoopSimplifyForm() && "should follow from addRequired<>");
 
   BasicBlock *Latch = L.getLoopLatch();
@@ -639,6 +644,14 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE, Loop &L,
   }
 
   unsigned LatchBrExitIdx = LatchBr->getSuccessor(0) == Header ? 1 : 0;
+
+  BranchProbability ExitProbability =
+    BPI.getEdgeProbability(LatchBr->getParent(), LatchBrExitIdx);
+
+  if (ExitProbability > BranchProbability(1, MaxExitProbReciprocal)) {
+    FailureReason = "short running loop, not profitable";
+    return None;
+  }
 
   ICmpInst *ICI = dyn_cast<ICmpInst>(LatchBr->getCondition());
   if (!ICI || !isa<IntegerType>(ICI->getOperand(0)->getType())) {
@@ -1340,7 +1353,7 @@ bool InductiveRangeCheckElimination::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   const char *FailureReason = nullptr;
   Optional<LoopStructure> MaybeLoopStructure =
-      LoopStructure::parseLoopStructure(SE, *L, FailureReason);
+      LoopStructure::parseLoopStructure(SE, BPI, *L, FailureReason);
   if (!MaybeLoopStructure.hasValue()) {
     DEBUG(dbgs() << "irce: could not parse loop structure: " << FailureReason
                  << "\n";);
