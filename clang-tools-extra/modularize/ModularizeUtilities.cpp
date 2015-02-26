@@ -342,12 +342,30 @@ bool ModularizeUtilities::collectUmbrellaHeaders(StringRef UmbrellaDirName,
   return true;
 }
 
+std::string normalize(StringRef Path) {
+  SmallString<128> Buffer;
+  llvm::sys::path::const_iterator B = llvm::sys::path::begin(Path),
+    E = llvm::sys::path::end(Path);
+  while (B != E) {
+    if (B->compare(".") == 0) {
+    }
+    else if (B->compare("..") == 0)
+      llvm::sys::path::remove_filename(Buffer);
+    else
+      llvm::sys::path::append(Buffer, *B);
+    ++B;
+  }
+  if (Path.endswith("/") || Path.endswith("\\"))
+    Buffer.append(1, Path.back());
+  return Buffer.c_str();
+}
+
 // Convert header path to canonical form.
 // The canonical form is basically just use forward slashes, and remove "./".
 // \param FilePath The file path, relative to the module map directory.
 // \returns The file path in canonical form.
 std::string ModularizeUtilities::getCanonicalPath(StringRef FilePath) {
-  std::string Tmp(FilePath);
+  std::string Tmp(normalize(FilePath));
   std::replace(Tmp.begin(), Tmp.end(), '\\', '/');
   StringRef Tmp2(Tmp);
   if (Tmp2.startswith("./"))

@@ -251,6 +251,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/StringPool.h"
 #include "llvm/Support/raw_ostream.h"
+#include "ModularizeUtilities.h"
 
 namespace Modularize {
 
@@ -930,8 +931,8 @@ public:
     // and block statement.
     clang::FileID FileID = PP.getSourceManager().getFileID(BlockStartLoc);
     std::string SourcePath = getSourceLocationFile(PP, BlockStartLoc);
+    SourcePath = ModularizeUtilities::getCanonicalPath(SourcePath);
     HeaderHandle SourceHandle = findHeaderHandle(SourcePath);
-    // FIXME: Go back and fix getSourceLocation to use a canonical form.
     if (SourceHandle == -1)
       return true;
     int BlockStartLine, BlockStartColumn, BlockEndLine, BlockEndColumn;
