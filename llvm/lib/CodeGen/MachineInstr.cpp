@@ -1512,12 +1512,6 @@ void MachineInstr::dump() const {
 #endif
 }
 
-static void printDebugLoc(DebugLoc DL, const MachineFunction *MF,
-                         raw_ostream &CommentOS) {
-  const LLVMContext &Ctx = MF->getFunction()->getContext();
-  DL.print(Ctx, CommentOS);
-}
-
 void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM,
                          bool SkipOpers) const {
   // We can be a bit tidier if we know the TargetMachine and/or MachineFunction.
@@ -1738,7 +1732,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM,
       DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(InlinedAt);
       if (!InlinedAtDL.isUnknown() && MF) {
         OS << " inlined @[ ";
-        printDebugLoc(InlinedAtDL, MF, OS);
+	InlinedAtDL.print(OS);
         OS << " ]";
       }
     }
@@ -1747,7 +1741,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM,
   } else if (!debugLoc.isUnknown() && MF) {
     if (!HaveSemi) OS << ";";
     OS << " dbg:";
-    printDebugLoc(debugLoc, MF, OS);
+    debugLoc.print(OS);
   }
 
   OS << '\n';
