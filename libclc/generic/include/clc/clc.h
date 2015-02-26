@@ -38,6 +38,7 @@
 #include <clc/math/atan2.h>
 #include <clc/math/copysign.h>
 #include <clc/math/cos.h>
+#include <clc/math/cospi.h>
 #include <clc/math/ceil.h>
 #include <clc/math/exp.h>
 #include <clc/math/exp10.h>
