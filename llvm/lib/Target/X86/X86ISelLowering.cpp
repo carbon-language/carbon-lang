@@ -20759,26 +20759,32 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
       return Shuffle;
   }
 
-  // If we know that this node is legal then we know that it is going to be
-  // matched by one of the SSE/AVX BLEND instructions. These instructions only
-  // depend on the highest bit in each word. Try to use SimplifyDemandedBits
-  // to simplify previous instructions.
+  // If this is a *dynamic* select (non-constant condition) and we can match
+  // this node with one of the variable blend instructions, restructure the
+  // condition so that the blends can use the high bit of each element and use
+  // SimplifyDemandedBits to simplify the condition operand.
   if (N->getOpcode() == ISD::VSELECT && DCI.isBeforeLegalizeOps() &&
       !DCI.isBeforeLegalize() &&
-      // We explicitly check against SSE4.1, v8i16 and v16i16 because, although
-      // vselect nodes may be marked as Custom, they might only be legal when
-      // Cond is a build_vector of constants. This will be taken care in
-      // a later condition.
-      (TLI.isOperationLegalOrCustom(ISD::VSELECT, VT) &&
-       Subtarget->hasSSE41() && VT != MVT::v16i16 && VT != MVT::v8i16) &&
-      // Don't optimize vector of constants. Those are handled by
-      // the generic code and all the bits must be properly set for
-      // the generic optimizer.
       !ISD::isBuildVectorOfConstantSDNodes(Cond.getNode())) {
     unsigned BitWidth = Cond.getValueType().getScalarType().getSizeInBits();
 
     // Don't optimize vector selects that map to mask-registers.
     if (BitWidth == 1)
+      return SDValue();
+
+    // We can only handle the cases where VSELECT is directly legal on the
+    // subtarget. We custom lower VSELECT nodes with constant conditions and
+    // this makes it hard to see whether a dynamic VSELECT will correctly
+    // lower, so we both check the operation's status and explicitly handle the
+    // cases where a *dynamic* blend will fail even though a constant-condition
+    // blend could be custom lowered.
+    // FIXME: We should find a better way to handle this class of problems.
+    // Potentially, we should combine constant-condition vselect nodes
+    // pre-legalization into shuffles and not mark as many types as custom
+    // lowered.
+    if (!TLI.isOperationLegalOrCustom(ISD::VSELECT, VT))
+      return SDValue();
+    if (!Subtarget->hasSSE41() || VT == MVT::v16i16 || VT == MVT::v8i16)
       return SDValue();
 
     assert(BitWidth >= 8 && BitWidth <= 64 && "Invalid mask size");
