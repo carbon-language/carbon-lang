@@ -423,10 +423,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   if (auto *arg = parsedArgs->getLastArg(OPT_sysroot))
     ctx->setSysroot(arg->getValue());
 
-  // Add the default search directory specific to the target.
-  if (!parsedArgs->hasArg(OPT_nostdlib))
-    addPlatformSearchDirs(*ctx, triple, baseTriple);
-
   // Handle --demangle option(For compatibility)
   if (parsedArgs->hasArg(OPT_demangle))
     ctx->setDemangleSymbols(true);
@@ -544,6 +540,10 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
   for (auto *arg : parsedArgs->filtered(OPT_L))
     ctx->addSearchPath(arg->getValue());
+
+  // Add the default search directory specific to the target.
+  if (!parsedArgs->hasArg(OPT_nostdlib))
+    addPlatformSearchDirs(*ctx, triple, baseTriple);
 
   for (auto *arg : parsedArgs->filtered(OPT_u))
     ctx->addInitialUndefinedSymbol(arg->getValue());
