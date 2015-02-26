@@ -87,7 +87,7 @@ class Origin {
     CHECK(isChainedOrigin());
     u32 prev_id;
     u32 stack_id = ChainedOriginDepotGet(getChainedId(), &prev_id);
-    *stack = StackDepotGet(stack_id);
+    if (stack) *stack = StackDepotGet(stack_id);
     return Origin(prev_id);
   }
 

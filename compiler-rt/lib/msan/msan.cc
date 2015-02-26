@@ -543,6 +543,13 @@ u32 __msan_get_origin(const void *a) {
   return *(u32*)origin_ptr;
 }
 
+int __msan_origin_is_descendant_or_same(u32 this_id, u32 prev_id) {
+  Origin o = Origin::FromRawId(this_id);
+  while (o.raw_id() != prev_id && o.isChainedOrigin())
+    o = o.getNextChainedOrigin(nullptr);
+  return o.raw_id() == prev_id;
+}
+
 u32 __msan_get_umr_origin() {
   return __msan_origin_tls;
 }

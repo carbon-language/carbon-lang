@@ -134,8 +134,11 @@ static bool TrackingOrigins() {
   __msan_set_origin(&x, sizeof(x), 0x1234);
   U4 origin = __msan_get_origin(&x);
   __msan_set_origin(&x, sizeof(x), 0);
-  return origin == 0x1234;
+  return __msan_origin_is_descendant_or_same(origin, 0x1234);
 }
+
+#define EXPECT_ORIGIN(expected, origin) \
+  EXPECT_TRUE(__msan_origin_is_descendant_or_same((origin), (expected)))
 
 #define EXPECT_UMR(action) \
     do {                        \
@@ -144,14 +147,13 @@ static bool TrackingOrigins() {
       __msan_set_expect_umr(0); \
     } while (0)
 
-#define EXPECT_UMR_O(action, origin) \
-    do {                                            \
-      __msan_set_expect_umr(1);                     \
-      action;                                       \
-      __msan_set_expect_umr(0);                     \
-      if (TrackingOrigins())                        \
-        EXPECT_EQ(origin, __msan_get_umr_origin()); \
-    } while (0)
+#define EXPECT_UMR_O(action, origin)                                       \
+  do {                                                                     \
+    __msan_set_expect_umr(1);                                              \
+    action;                                                                \
+    __msan_set_expect_umr(0);                                              \
+    if (TrackingOrigins()) EXPECT_ORIGIN(origin, __msan_get_umr_origin()); \
+  } while (0)
 
 #define EXPECT_POISONED(x) ExpectPoisoned(x)
 
@@ -166,8 +168,7 @@ void ExpectPoisoned(const T& t) {
 template<typename T>
 void ExpectPoisonedWithOrigin(const T& t, unsigned origin) {
   EXPECT_NE(-1, __msan_test_shadow((void*)&t, sizeof(t)));
-  if (TrackingOrigins())
-    EXPECT_EQ(origin, __msan_get_origin((void*)&t));
+  if (TrackingOrigins()) EXPECT_ORIGIN(origin, __msan_get_origin((void *)&t));
 }
 
 #define EXPECT_NOT_POISONED(x) EXPECT_EQ(true, TestForNotPoisoned((x)))
@@ -3902,15 +3903,15 @@ TEST(VectorMaddTest, mmx_pmadd_wd) {
 #endif  // defined(__clang__)
 
 TEST(MemorySanitizerOrigins, SetGet) {
-  EXPECT_EQ(TrackingOrigins(), __msan_get_track_origins());
+  EXPECT_EQ(TrackingOrigins(), !!__msan_get_track_origins());
   if (!TrackingOrigins()) return;
   int x;
   __msan_set_origin(&x, sizeof(x), 1234);
-  EXPECT_EQ(1234U, __msan_get_origin(&x));
+  EXPECT_ORIGIN(1234U, __msan_get_origin(&x));
   __msan_set_origin(&x, sizeof(x), 5678);
-  EXPECT_EQ(5678U, __msan_get_origin(&x));
+  EXPECT_ORIGIN(5678U, __msan_get_origin(&x));
   __msan_set_origin(&x, sizeof(x), 0);
-  EXPECT_EQ(0U, __msan_get_origin(&x));
+  EXPECT_ORIGIN(0U, __msan_get_origin(&x));
 }
 
 namespace {
@@ -3926,12 +3927,12 @@ TEST(MemorySanitizerOrigins, InitializedStoreDoesNotChangeOrigin) {
   S s;
   U4 origin = rand();  // NOLINT
   s.a = *GetPoisonedO<U2>(0, origin);
-  EXPECT_EQ(origin, __msan_get_origin(&s.a));
-  EXPECT_EQ(origin, __msan_get_origin(&s.b));
+  EXPECT_ORIGIN(origin, __msan_get_origin(&s.a));
+  EXPECT_ORIGIN(origin, __msan_get_origin(&s.b));
 
   s.b = 42;
-  EXPECT_EQ(origin, __msan_get_origin(&s.a));
-  EXPECT_EQ(origin, __msan_get_origin(&s.b));
+  EXPECT_ORIGIN(origin, __msan_get_origin(&s.a));
+  EXPECT_ORIGIN(origin, __msan_get_origin(&s.b));
 }
 }  // namespace
 
@@ -3947,7 +3948,8 @@ void BinaryOpOriginTest(BinaryOp op) {
   *z = op(*x, *y);
   U4 origin = __msan_get_origin(z);
   EXPECT_POISONED_O(*z, origin);
-  EXPECT_EQ(true, origin == ox || origin == oy);
+  EXPECT_EQ(true, __msan_origin_is_descendant_or_same(origin, ox) ||
+                      __msan_origin_is_descendant_or_same(origin, oy));
 
   // y is poisoned, x is not.
   *x = 10101;
@@ -3956,7 +3958,7 @@ void BinaryOpOriginTest(BinaryOp op) {
   __msan_set_origin(z, sizeof(*z), 0);
   *z = op(*x, *y);
   EXPECT_POISONED_O(*z, oy);
-  EXPECT_EQ(__msan_get_origin(z), oy);
+  EXPECT_ORIGIN(oy, __msan_get_origin(z));
 
   // x is poisoned, y is not.
   *x = *GetPoisonedO<T>(0, ox);
@@ -3965,7 +3967,7 @@ void BinaryOpOriginTest(BinaryOp op) {
   __msan_set_origin(z, sizeof(*z), 0);
   *z = op(*x, *y);
   EXPECT_POISONED_O(*z, ox);
-  EXPECT_EQ(__msan_get_origin(z), ox);
+  EXPECT_ORIGIN(ox, __msan_get_origin(z));
 }
 
 template<class T> INLINE T XOR(const T &a, const T&b) { return a ^ b; }
