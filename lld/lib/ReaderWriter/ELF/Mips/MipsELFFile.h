@@ -291,7 +291,7 @@ private:
     }
   }
 
-  uint32_t getPairRelocation(const Elf_Rel &rel) {
+  uint32_t getPairRelocation(const Elf_Rel &rel) const {
     switch (rel.getType(isMips64EL())) {
     case llvm::ELF::R_MIPS_HI16:
       return llvm::ELF::R_MIPS_LO16;
@@ -313,7 +313,7 @@ private:
   }
 
   Elf_Rel_Iter findMatchingRelocation(uint32_t pairRelType, Elf_Rel_Iter rit,
-                                      Elf_Rel_Iter eit) {
+                                      Elf_Rel_Iter eit) const {
     return std::find_if(rit, eit, [&](const Elf_Rel &rel) {
       return rel.getType(isMips64EL()) == pairRelType &&
              rel.getSymbol(isMips64EL()) == rit->getSymbol(isMips64EL());
@@ -321,7 +321,7 @@ private:
   }
 
   bool isMips64EL() const { return this->_objFile->isMips64EL(); }
-  bool isLocalBinding(const Elf_Rel &rel) {
+  bool isLocalBinding(const Elf_Rel &rel) const {
     return this->_objFile->getSymbol(rel.getSymbol(isMips64EL()))
                ->getBinding() == llvm::ELF::STB_LOCAL;
   }
