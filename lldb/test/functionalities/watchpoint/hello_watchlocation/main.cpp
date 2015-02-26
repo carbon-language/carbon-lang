@@ -18,6 +18,8 @@ pthread_t g_thread_1 = NULL;
 pthread_t g_thread_2 = NULL;
 pthread_t g_thread_3 = NULL;
 
+pthread_barrier_t g_barrier;
+
 char *g_char_ptr = NULL;
 
 void
@@ -52,6 +54,8 @@ thread_func (void *arg)
     uint32_t thread_index = *((uint32_t *)arg);
     printf ("%s (thread index = %u) startng...\n", __FUNCTION__, thread_index);
 
+    pthread_barrier_wait(&g_barrier);
+
     uint32_t count = 0;
     uint32_t val;
     while (count++ < 15)
@@ -84,17 +88,23 @@ int main (int argc, char const *argv[])
     g_char_ptr = (char *)malloc (1);
     *g_char_ptr = 0;
 
+    pthread_barrier_init(&g_barrier, NULL, 4);
+
     // Create 3 threads
     err = ::pthread_create (&g_thread_1, NULL, thread_func, &thread_index_1);
     err = ::pthread_create (&g_thread_2, NULL, thread_func, &thread_index_2);
     err = ::pthread_create (&g_thread_3, NULL, thread_func, &thread_index_3);
 
     printf ("Before turning all three threads loose...\n"); // Set break point at this line.
+    pthread_barrier_wait(&g_barrier);
 
     // Join all of our threads
     err = ::pthread_join (g_thread_1, &thread_result);
     err = ::pthread_join (g_thread_2, &thread_result);
     err = ::pthread_join (g_thread_3, &thread_result);
+
+    pthread_barrier_destroy(&g_barrier);
+    free(g_char_ptr);
 
     return 0;
 }
