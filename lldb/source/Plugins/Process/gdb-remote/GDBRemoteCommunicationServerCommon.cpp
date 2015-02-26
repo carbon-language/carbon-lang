@@ -43,6 +43,12 @@
 using namespace lldb;
 using namespace lldb_private;
 
+#ifdef __ANDROID__
+    const static uint32_t g_default_packet_timeout_sec = 20; // seconds
+#else
+    const static uint32_t g_default_packet_timeout_sec = 0; // not specified
+#endif
+
 //----------------------------------------------------------------------
 // GDBRemoteCommunicationServerCommon constructor
 //----------------------------------------------------------------------
@@ -240,6 +246,9 @@ GDBRemoteCommunicationServerCommon::Handle_qHostInfo (StringExtractorGDBRemote &
         response.PutChar(';');
     }
 #endif  // #if defined(__APPLE__)
+
+    if (g_default_packet_timeout_sec > 0)
+        response.Printf ("default_packet_timeout:%u;", g_default_packet_timeout_sec);
 
     return SendPacketNoLock (response.GetData(), response.GetSize());
 }
