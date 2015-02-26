@@ -1710,7 +1710,7 @@ DataExtractor::Dump (Stream *s,
             {
                 size_t complex_int_byte_size = item_byte_size / 2;
                 
-                if (complex_int_byte_size <= 8)
+                if (complex_int_byte_size > 0 && complex_int_byte_size <= 8)
                 {
                     s->Printf("%" PRIu64, GetMaxU64Bitfield(&offset, complex_int_byte_size, 0, 0));
                     s->Printf(" + %" PRIu64 "i", GetMaxU64Bitfield(&offset, complex_int_byte_size, 0, 0));
