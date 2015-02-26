@@ -360,7 +360,7 @@ public:
     LoadPlugin (const FileSpec& spec, Error& error);
 
     void
-    ExecuteIOHanders();
+    ExecuteIOHandlers();
     
     bool
     IsForwardingEvents ();

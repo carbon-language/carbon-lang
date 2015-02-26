@@ -3370,7 +3370,7 @@ CommandInterpreter::RunCommandInterpreter(bool auto_handle_events,
     }
     else
     {
-        m_debugger.ExecuteIOHanders();
+        m_debugger.ExecuteIOHandlers();
         
         if (auto_handle_events)
             m_debugger.StopEventHandlerThread();
