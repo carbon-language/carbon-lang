@@ -2090,52 +2090,6 @@ ValueObject::IsObjCNil ()
     return canReadValue && isZero;
 }
 
-ValueObjectSP
-ValueObject::GetSyntheticArrayMember (size_t index, bool can_create)
-{
-    const uint32_t type_info = GetTypeInfo ();
-    if (type_info & eTypeIsArray)
-        return GetSyntheticArrayMemberFromArray(index, can_create);
-
-    if (type_info & eTypeIsPointer)
-        return GetSyntheticArrayMemberFromPointer(index, can_create);
-    
-    return ValueObjectSP();
-    
-}
-
-ValueObjectSP
-ValueObject::GetSyntheticArrayMemberFromPointer (size_t index, bool can_create)
-{
-    ValueObjectSP synthetic_child_sp;
-    if (IsPointerType ())
-    {
-        char index_str[64];
-        snprintf(index_str, sizeof(index_str), "[%" PRIu64 "]", (uint64_t)index);
-        ConstString index_const_str(index_str);
-        // Check if we have already created a synthetic array member in this
-        // valid object. If we have we will re-use it.
-        synthetic_child_sp = GetSyntheticChild (index_const_str);
-        if (!synthetic_child_sp)
-        {
-            ValueObject *synthetic_child;
-            // We haven't made a synthetic array member for INDEX yet, so
-            // lets make one and cache it for any future reference.
-            synthetic_child = CreateChildAtIndex(0, true, index);
-
-            // Cache the value if we got one back...
-            if (synthetic_child)
-            {
-                AddSyntheticChild(index_const_str, synthetic_child);
-                synthetic_child_sp = synthetic_child->GetSP();
-                synthetic_child_sp->SetName(ConstString(index_str));
-                synthetic_child_sp->m_is_array_item_for_pointer = true;
-            }
-        }
-    }
-    return synthetic_child_sp;
-}
-
 // This allows you to create an array member using and index
 // that doesn't not fall in the normal bounds of the array.
 // Many times structure can be defined as:
@@ -2148,10 +2102,10 @@ ValueObject::GetSyntheticArrayMemberFromPointer (size_t index, bool can_create)
 // there are more items in "item_array".
 
 ValueObjectSP
-ValueObject::GetSyntheticArrayMemberFromArray (size_t index, bool can_create)
+ValueObject::GetSyntheticArrayMember (size_t index, bool can_create)
 {
     ValueObjectSP synthetic_child_sp;
-    if (IsArrayType ())
+    if (IsPointerType () || IsArrayType())
     {
         char index_str[64];
         snprintf(index_str, sizeof(index_str), "[%" PRIu64 "]", (uint64_t)index);
@@ -2165,7 +2119,7 @@ ValueObject::GetSyntheticArrayMemberFromArray (size_t index, bool can_create)
             // We haven't made a synthetic array member for INDEX yet, so
             // lets make one and cache it for any future reference.
             synthetic_child = CreateChildAtIndex(0, true, index);
-            
+
             // Cache the value if we got one back...
             if (synthetic_child)
             {
@@ -3024,7 +2978,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     {
                         ValueObjectSP child_valobj_sp = root->GetChildAtIndex(index, true);
                         if (!child_valobj_sp)
-                            child_valobj_sp = root->GetSyntheticArrayMemberFromArray(index, true);
+                            child_valobj_sp = root->GetSyntheticArrayMember(index, true);
                         if (!child_valobj_sp)
                             if (root->HasSyntheticValue() && root->GetSyntheticValue()->GetNumChildren() > index)
                                 child_valobj_sp = root->GetSyntheticValue()->GetChildAtIndex(index, true);
@@ -3073,7 +3027,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                                 root = root->GetSyntheticValue()->GetChildAtIndex(index, true);
                             }
                             else
-                                root = root->GetSyntheticArrayMemberFromPointer(index, true);
+                                root = root->GetSyntheticArrayMember(index, true);
                             if (!root.get())
                             {
                                 *first_unparsed = expression_cstr;
@@ -3416,7 +3370,7 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
                         }
                         else
                         {
-                            root = root->GetSyntheticArrayMemberFromPointer(index, true);
+                            root = root->GetSyntheticArrayMember(index, true);
                             if (!root.get())
                             {
                                 *first_unparsed = expression_cstr;

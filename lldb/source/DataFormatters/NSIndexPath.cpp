@@ -278,7 +278,7 @@ protected:
 	    {
 	        if (m_indexes)
 		{
-		    ValueObjectSP index_sp(m_indexes->GetSyntheticArrayMemberFromPointer(idx, true));
+		    ValueObjectSP index_sp(m_indexes->GetSyntheticArrayMember(idx, true));
 		    return index_sp;
 		}
 		return nullptr;

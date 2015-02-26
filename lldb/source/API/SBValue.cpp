@@ -969,14 +969,7 @@ SBValue::GetChildAtIndex (uint32_t idx, lldb::DynamicValueType use_dynamic, bool
         child_sp = value_sp->GetChildAtIndex (idx, can_create);
         if (can_create_synthetic && !child_sp)
         {
-            if (value_sp->IsPointerType())
-            {
-                child_sp = value_sp->GetSyntheticArrayMemberFromPointer(idx, can_create);
-            }
-            else if (value_sp->IsArrayType())
-            {
-                child_sp = value_sp->GetSyntheticArrayMemberFromArray(idx, can_create);
-            }
+            child_sp = value_sp->GetSyntheticArrayMember(idx, can_create);
         }
     }
 

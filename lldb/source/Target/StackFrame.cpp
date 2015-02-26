@@ -920,7 +920,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                     }
                                     else
                                     {
-                                        child_valobj_sp = valobj_sp->GetSyntheticArrayMemberFromPointer (child_index, true);
+                                        child_valobj_sp = valobj_sp->GetSyntheticArrayMember (child_index, true);
                                         if (!child_valobj_sp)
                                         {
                                             valobj_sp->GetExpressionPath (var_expr_path_strm, false);

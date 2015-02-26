@@ -679,12 +679,6 @@ public:
     GetSyntheticArrayMember (size_t index, bool can_create);
 
     lldb::ValueObjectSP
-    GetSyntheticArrayMemberFromPointer (size_t index, bool can_create);
-    
-    lldb::ValueObjectSP
-    GetSyntheticArrayMemberFromArray (size_t index, bool can_create);
-    
-    lldb::ValueObjectSP
     GetSyntheticBitFieldChild (uint32_t from, uint32_t to, bool can_create);
 
     lldb::ValueObjectSP
