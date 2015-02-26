@@ -10055,6 +10055,9 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
 }
 
 bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
+  if (OptLevel == CodeGenOpt::None)
+    return false;
+
   EVT MemVT = St->getMemoryVT();
   int64_t ElementSizeBytes = MemVT.getSizeInBits()/8;
   bool NoVectors = DAG.getMachineFunction().getFunction()->hasFnAttribute(
