@@ -191,7 +191,7 @@ public:
 
   /// \brief Used to ensure that if the analysis was run with speculating the
   /// value of symbolic strides, the client queries it with the same assumption.
-  /// Only used in DEBUG build but we don't want NDEBUG-depedent ABI.
+  /// Only used in DEBUG build but we don't want NDEBUG-dependent ABI.
   unsigned NumSymbolicStrides;
 
 private:
