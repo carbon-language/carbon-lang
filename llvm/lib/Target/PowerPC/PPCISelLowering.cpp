@@ -880,7 +880,7 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
   else
     setSchedulingPreference(Sched::Hybrid);
 
-  computeRegisterProperties();
+  computeRegisterProperties(STI.getRegisterInfo());
 
   // The Freescale cores do better with aggressive inlining of memcpy and
   // friends. GCC uses same threshold of 128 bytes (= 32 word stores).

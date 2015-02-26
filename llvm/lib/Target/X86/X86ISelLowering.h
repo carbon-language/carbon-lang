@@ -850,8 +850,9 @@ namespace llvm {
     LegalizeTypeAction getPreferredVectorAction(EVT VT) const override;
 
   protected:
-    std::pair<const TargetRegisterClass*, uint8_t>
-    findRepresentativeClass(MVT VT) const override;
+    std::pair<const TargetRegisterClass *, uint8_t>
+    findRepresentativeClass(const TargetRegisterInfo *TRI,
+                            MVT VT) const override;
 
   private:
     /// Keep a pointer to the X86Subtarget around so that we can

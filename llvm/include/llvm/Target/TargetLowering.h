@@ -1225,12 +1225,12 @@ protected:
 
   /// Return the largest legal super-reg register class of the register class
   /// for the specified type and its associated "cost".
-  virtual std::pair<const TargetRegisterClass*, uint8_t>
-  findRepresentativeClass(MVT VT) const;
+  virtual std::pair<const TargetRegisterClass *, uint8_t>
+  findRepresentativeClass(const TargetRegisterInfo *TRI, MVT VT) const;
 
   /// Once all of the register classes are added, this allows us to compute
   /// derived properties we expose.
-  void computeRegisterProperties();
+  void computeRegisterProperties(const TargetRegisterInfo *TRI);
 
   /// Indicate that the specified operation does not work with the specified
   /// type and indicate what to do about it.

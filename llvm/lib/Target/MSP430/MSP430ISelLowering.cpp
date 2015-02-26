@@ -57,7 +57,8 @@ HWMultMode("msp430-hwmult-mode", cl::Hidden,
                 "Assume hardware multiplier cannot be used inside interrupts"),
              clEnumValEnd));
 
-MSP430TargetLowering::MSP430TargetLowering(const TargetMachine &TM)
+MSP430TargetLowering::MSP430TargetLowering(const TargetMachine &TM,
+                                           const MSP430Subtarget &STI)
     : TargetLowering(TM) {
 
   // Set up the register classes.
@@ -65,7 +66,7 @@ MSP430TargetLowering::MSP430TargetLowering(const TargetMachine &TM)
   addRegisterClass(MVT::i16, &MSP430::GR16RegClass);
 
   // Compute derived properties from the register classes
-  computeRegisterProperties();
+  computeRegisterProperties(STI.getRegisterInfo());
 
   // Provide all sorts of operation actions
 

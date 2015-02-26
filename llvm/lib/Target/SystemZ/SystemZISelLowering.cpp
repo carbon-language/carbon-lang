@@ -96,7 +96,7 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &tm,
   addRegisterClass(MVT::f128, &SystemZ::FP128BitRegClass);
 
   // Compute derived properties from the register classes
-  computeRegisterProperties();
+  computeRegisterProperties(Subtarget.getRegisterInfo());
 
   // Set up special registers.
   setExceptionPointerRegister(SystemZ::R6D);

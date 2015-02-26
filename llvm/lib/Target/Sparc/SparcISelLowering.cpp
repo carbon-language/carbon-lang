@@ -1669,7 +1669,7 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM,
 
   setMinFunctionAlignment(2);
 
-  computeRegisterProperties();
+  computeRegisterProperties(Subtarget->getRegisterInfo());
 }
 
 const char *SparcTargetLowering::getTargetNodeName(unsigned Opcode) const {

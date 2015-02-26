@@ -88,14 +88,15 @@ public:
 int DiagnosticInfoUnsupported::KindID = 0;
 }
 
-BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM)
+BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
+                                     const BPFSubtarget &STI)
     : TargetLowering(TM) {
 
   // Set up the register classes.
   addRegisterClass(MVT::i64, &BPF::GPRRegClass);
 
   // Compute derived properties from the register classes
-  computeRegisterProperties();
+  computeRegisterProperties(STI.getRegisterInfo());
 
   setStackPointerRegisterToSaveRestore(BPF::R11);
 

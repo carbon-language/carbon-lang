@@ -40,7 +40,7 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM,
   addRegisterClass(MVT::v2f32, &AMDGPU::R600_Reg64RegClass);
   addRegisterClass(MVT::v2i32, &AMDGPU::R600_Reg64RegClass);
 
-  computeRegisterProperties();
+  computeRegisterProperties(STI.getRegisterInfo());
 
   // Set condition code actions
   setCondCodeAction(ISD::SETO,   MVT::f32, Expand);

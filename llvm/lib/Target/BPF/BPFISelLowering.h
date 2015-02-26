@@ -33,7 +33,7 @@ enum {
 
 class BPFTargetLowering : public TargetLowering {
 public:
-  explicit BPFTargetLowering(const TargetMachine &TM);
+  explicit BPFTargetLowering(const TargetMachine &TM, const BPFSubtarget &STI);
 
   // Provide custom lowering hooks for some operations.
   SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;

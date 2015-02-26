@@ -271,7 +271,7 @@ NVPTXTargetLowering::NVPTXTargetLowering(const NVPTXTargetMachine &TM,
 
   // Now deduce the information based on the above mentioned
   // actions
-  computeRegisterProperties();
+  computeRegisterProperties(STI.getRegisterInfo());
 }
 
 const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {

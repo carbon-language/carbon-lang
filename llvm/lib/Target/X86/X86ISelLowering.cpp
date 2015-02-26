@@ -1694,7 +1694,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   setTargetDAGCombine(ISD::MUL);
   setTargetDAGCombine(ISD::XOR);
 
-  computeRegisterProperties();
+  computeRegisterProperties(Subtarget->getRegisterInfo());
 
   // On Darwin, -Os means optimize for size without hurting performance,
   // do not reduce the limit.
@@ -1931,13 +1931,14 @@ getPICJumpTableRelocBaseExpr(const MachineFunction *MF, unsigned JTI,
 }
 
 // FIXME: Why this routine is here? Move to RegInfo!
-std::pair<const TargetRegisterClass*, uint8_t>
-X86TargetLowering::findRepresentativeClass(MVT VT) const{
+std::pair<const TargetRegisterClass *, uint8_t>
+X86TargetLowering::findRepresentativeClass(const TargetRegisterInfo *TRI,
+                                           MVT VT) const {
   const TargetRegisterClass *RRC = nullptr;
   uint8_t Cost = 1;
   switch (VT.SimpleTy) {
   default:
-    return TargetLowering::findRepresentativeClass(VT);
+    return TargetLowering::findRepresentativeClass(TRI, VT);
   case MVT::i8: case MVT::i16: case MVT::i32: case MVT::i64:
     RRC = Subtarget->is64Bit() ? &X86::GR64RegClass : &X86::GR32RegClass;
     break;

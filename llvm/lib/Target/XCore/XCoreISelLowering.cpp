@@ -76,7 +76,7 @@ XCoreTargetLowering::XCoreTargetLowering(const TargetMachine &TM,
   addRegisterClass(MVT::i32, &XCore::GRRegsRegClass);
 
   // Compute derived properties from the register classes
-  computeRegisterProperties();
+  computeRegisterProperties(Subtarget.getRegisterInfo());
 
   // Division is expensive
   setIntDivIsCheap(false);

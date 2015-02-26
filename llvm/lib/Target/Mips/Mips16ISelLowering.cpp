@@ -149,7 +149,7 @@ Mips16TargetLowering::Mips16TargetLowering(const MipsTargetMachine &TM,
   setOperationAction(ISD::BSWAP, MVT::i32, Expand);
   setOperationAction(ISD::BSWAP, MVT::i64, Expand);
 
-  computeRegisterProperties();
+  computeRegisterProperties(STI.getRegisterInfo());
 }
 
 const MipsTargetLowering *

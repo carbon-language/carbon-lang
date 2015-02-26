@@ -1144,10 +1144,9 @@ TargetLoweringBase::emitPatchPoint(MachineInstr *MI,
 
 /// findRepresentativeClass - Return the largest legal super-reg register class
 /// of the register class for the specified type and its associated "cost".
-std::pair<const TargetRegisterClass*, uint8_t>
-TargetLoweringBase::findRepresentativeClass(MVT VT) const {
-  const TargetRegisterInfo *TRI =
-      getTargetMachine().getSubtargetImpl()->getRegisterInfo();
+std::pair<const TargetRegisterClass *, uint8_t>
+TargetLoweringBase::findRepresentativeClass(const TargetRegisterInfo *TRI,
+                                            MVT VT) const {
   const TargetRegisterClass *RC = RegClassForVT[VT.SimpleTy];
   if (!RC)
     return std::make_pair(RC, 0);
@@ -1173,7 +1172,8 @@ TargetLoweringBase::findRepresentativeClass(MVT VT) const {
 
 /// computeRegisterProperties - Once all of the register classes are added,
 /// this allows us to compute derived properties we expose.
-void TargetLoweringBase::computeRegisterProperties() {
+void TargetLoweringBase::computeRegisterProperties(
+    const TargetRegisterInfo *TRI) {
   static_assert(MVT::LAST_VALUETYPE <= MVT::MAX_ALLOWED_VALUETYPE,
                 "Too many value types for ValueTypeActions to hold!");
 
@@ -1355,7 +1355,7 @@ void TargetLoweringBase::computeRegisterProperties() {
   for (unsigned i = 0; i != MVT::LAST_VALUETYPE; ++i) {
     const TargetRegisterClass* RRC;
     uint8_t Cost;
-    std::tie(RRC, Cost) = findRepresentativeClass((MVT::SimpleValueType)i);
+    std::tie(RRC, Cost) = findRepresentativeClass(TRI, (MVT::SimpleValueType)i);
     RepRegClassForVT[i] = RRC;
     RepRegClassCostForVT[i] = Cost;
   }

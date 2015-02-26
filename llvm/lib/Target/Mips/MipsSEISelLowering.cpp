@@ -224,7 +224,7 @@ MipsSETargetLowering::MipsSETargetLowering(const MipsTargetMachine &TM,
     setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
   }
 
-  computeRegisterProperties();
+  computeRegisterProperties(Subtarget.getRegisterInfo());
 }
 
 const MipsTargetLowering *

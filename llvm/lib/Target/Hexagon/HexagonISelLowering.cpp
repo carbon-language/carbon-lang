@@ -1055,7 +1055,7 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
 
   addRegisterClass(MVT::i1, &Hexagon::PredRegsRegClass);
 
-  computeRegisterProperties();
+  computeRegisterProperties(Subtarget->getRegisterInfo());
 
   // Align loop entry
   setPrefLoopAlignment(4);

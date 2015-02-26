@@ -60,7 +60,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM,
   addRegisterClass(MVT::v16i32, &AMDGPU::SReg_512RegClass);
   addRegisterClass(MVT::v16f32, &AMDGPU::VReg_512RegClass);
 
-  computeRegisterProperties();
+  computeRegisterProperties(STI.getRegisterInfo());
 
   setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v8i32, Expand);
   setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v8f32, Expand);
