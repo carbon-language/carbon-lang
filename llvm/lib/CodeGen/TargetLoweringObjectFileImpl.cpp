@@ -244,22 +244,9 @@ static StringRef getSectionPrefixForGlobal(SectionKind Kind) {
   return ".data.rel.ro";
 }
 
-const MCSection *TargetLoweringObjectFileELF::
-SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                       Mangler &Mang, const TargetMachine &TM) const {
-  unsigned Flags = getELFSectionFlags(Kind);
-
-  // If we have -ffunction-section or -fdata-section then we should emit the
-  // global value to a uniqued section specifically for it.
-  bool EmitUniqueSection = false;
-  if (!(Flags & ELF::SHF_MERGE) && !Kind.isCommon()) {
-    if (Kind.isText())
-      EmitUniqueSection = TM.getFunctionSections();
-    else
-      EmitUniqueSection = TM.getDataSections();
-  }
-  EmitUniqueSection |= GV->hasComdat();
-
+static const MCSectionELF *selectELFSectionForGlobal(
+    MCContext &Ctx, const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
+    const TargetMachine &TM, bool EmitUniqueSection, unsigned Flags) {
   unsigned EntrySize = 0;
   if (Kind.isMergeableCString()) {
     if (Kind.isMergeable2ByteCString()) {
@@ -309,9 +296,29 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     Name.push_back('.');
     TM.getNameWithPrefix(Name, GV, Mang, true);
   }
-  return getContext().getELFSection(Name, getELFSectionType(Name, Kind), Flags,
-                                    EntrySize, Group,
-                                    EmitUniqueSection && !UniqueSectionNames);
+  return Ctx.getELFSection(Name, getELFSectionType(Name, Kind), Flags,
+                           EntrySize, Group,
+                           EmitUniqueSection && !UniqueSectionNames);
+}
+
+const MCSection *TargetLoweringObjectFileELF::SelectSectionForGlobal(
+    const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
+    const TargetMachine &TM) const {
+  unsigned Flags = getELFSectionFlags(Kind);
+
+  // If we have -ffunction-section or -fdata-section then we should emit the
+  // global value to a uniqued section specifically for it.
+  bool EmitUniqueSection = false;
+  if (!(Flags & ELF::SHF_MERGE) && !Kind.isCommon()) {
+    if (Kind.isText())
+      EmitUniqueSection = TM.getFunctionSections();
+    else
+      EmitUniqueSection = TM.getDataSections();
+  }
+  EmitUniqueSection |= GV->hasComdat();
+
+  return selectELFSectionForGlobal(getContext(), GV, Kind, Mang, TM,
+                                   EmitUniqueSection, Flags);
 }
 
 const MCSection *TargetLoweringObjectFileELF::getSectionForJumpTable(
@@ -323,7 +330,8 @@ const MCSection *TargetLoweringObjectFileELF::getSectionForJumpTable(
   if (!EmitUniqueSection)
     return ReadOnlySection;
 
-  return SelectSectionForGlobal(&F, SectionKind::getReadOnly(), Mang, TM);
+  return selectELFSectionForGlobal(getContext(), &F, SectionKind::getReadOnly(),
+                                   Mang, TM, EmitUniqueSection, ELF::SHF_ALLOC);
 }
 
 bool TargetLoweringObjectFileELF::shouldPutJumpTableInFunctionSection(
