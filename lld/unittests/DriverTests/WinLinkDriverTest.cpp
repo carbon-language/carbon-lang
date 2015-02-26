@@ -149,9 +149,13 @@ TEST_F(WinLinkParserTest, InputOrder) {
 //
 
 TEST_F(WinLinkParserTest, AlternateName) {
-  EXPECT_TRUE(parse("link.exe", "/alternatename:sym1=sym2", "a.out", nullptr));
-  EXPECT_EQ("sym1", _ctx.getAlternateName("sym2"));
-  EXPECT_EQ("", _ctx.getAlternateName("foo"));
+  EXPECT_TRUE(parse("link.exe", "/alternatename:sym1=sym",
+                    "/alternatename:sym2=sym", "a.out", nullptr));
+  const std::set<std::string> &aliases = _ctx.getAlternateNames("sym");
+  EXPECT_EQ(2U, aliases.size());
+  auto it = aliases.begin();
+  EXPECT_EQ("sym1", *it++);
+  EXPECT_EQ("sym2", *it++);
 }
 
 TEST_F(WinLinkParserTest, Export) {

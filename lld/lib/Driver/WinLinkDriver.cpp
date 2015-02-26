@@ -954,7 +954,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     StringRef weak, def;
     if (!parseAlternateName(arg->getValue(), weak, def, diag))
       return false;
-    ctx.setAlternateName(weak, def);
+    ctx.addAlternateName(weak, def);
   }
 
   // Parse /base command line option. The argument for the parameter is in
