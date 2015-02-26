@@ -83,7 +83,7 @@ struct VectorizerParams {
 
   /// \\brief When performing memory disambiguation checks at runtime do not
   /// make more than this number of comparisons.
-  static const unsigned RuntimeMemoryCheckThreshold;
+  static unsigned RuntimeMemoryCheckThreshold;
 };
 
 /// \brief Drive the analysis of memory accesses in the loop

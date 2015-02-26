@@ -29,7 +29,7 @@ static cl::opt<unsigned, true>
 VectorizationFactor("force-vector-width", cl::Hidden,
                     cl::desc("Sets the SIMD width. Zero is autoselect."),
                     cl::location(VectorizerParams::VectorizationFactor));
-unsigned VectorizerParams::VectorizationFactor = 0;
+unsigned VectorizerParams::VectorizationFactor;
 
 static cl::opt<unsigned, true>
 VectorizationInterleave("force-vector-interleave", cl::Hidden,
@@ -37,11 +37,14 @@ VectorizationInterleave("force-vector-interleave", cl::Hidden,
                                  "Zero is autoselect."),
                         cl::location(
                             VectorizerParams::VectorizationInterleave));
-unsigned VectorizerParams::VectorizationInterleave = 0;
+unsigned VectorizerParams::VectorizationInterleave;
 
-/// When performing memory disambiguation checks at runtime do not make more
-/// than this number of comparisons.
-const unsigned VectorizerParams::RuntimeMemoryCheckThreshold = 8;
+static cl::opt<unsigned, true> RuntimeMemoryCheckThreshold(
+    "runtime-memory-check-threshold", cl::Hidden,
+    cl::desc("When performing memory disambiguation checks at runtime do not "
+             "generate more than this number of comparisons (default = 8)."),
+    cl::location(VectorizerParams::RuntimeMemoryCheckThreshold), cl::init(8));
+unsigned VectorizerParams::RuntimeMemoryCheckThreshold;
 
 /// Maximum SIMD width.
 const unsigned VectorizerParams::MaxVectorWidth = 64;
@@ -1112,8 +1115,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
 
   // Check that we did not collect too many pointers or found an unsizeable
   // pointer.
-  if (!CanDoRT ||
-      NumComparisons > VectorizerParams::RuntimeMemoryCheckThreshold) {
+  if (!CanDoRT || NumComparisons > RuntimeMemoryCheckThreshold) {
     PtrRtCheck.reset();
     CanDoRT = false;
   }
@@ -1154,15 +1156,14 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
                                          TheLoop, Strides, true);
       // Check that we did not collect too many pointers or found an unsizeable
       // pointer.
-      if (!CanDoRT ||
-          NumComparisons > VectorizerParams::RuntimeMemoryCheckThreshold) {
+      if (!CanDoRT || NumComparisons > RuntimeMemoryCheckThreshold) {
         if (!CanDoRT && NumComparisons > 0)
           emitAnalysis(LoopAccessReport()
                        << "cannot check memory dependencies at runtime");
         else
           emitAnalysis(LoopAccessReport()
                        << NumComparisons << " exceeds limit of "
-                       << VectorizerParams::RuntimeMemoryCheckThreshold
+                       << RuntimeMemoryCheckThreshold
                        << " dependent memory operations checked at runtime");
         DEBUG(dbgs() << "LAA: Can't vectorize with memory checks\n");
         PtrRtCheck.reset();
