@@ -2,9 +2,11 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-codegen-isl -S -polly-delinearize < %s | FileCheck %s
 
 ; CHECK: %1 = zext i32 %n to i64
-; CHECK: %2 = icmp sge i64 %1, 1
-; CHECK: %3 = select i1 %2, i64 1, i64 0
-; CHECK: %4 = icmp ne i64 %3, 0
+; CHECK-NEST: %2 = icmp sge i64 %1, 1
+; CHECK-NEST: br label %polly.split_new_and_old
+; CHECK: polly.split_new_and_old:
+; CHECK-NEXT: br i1 %2, label %polly.start, label %for.body4
+
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"

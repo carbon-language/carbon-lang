@@ -41,7 +41,7 @@ ret:
   ret void
 }
 
-; CHECK: if (n <= 1024 ? 1 : 0)
+; CHECK: if (n <= 1024)
 ; CHECK:   #pragma omp parallel for
 ; CHECK:   for (int c0 = 0; c0 < n; c0 += 1)
 ; CHECK:     #pragma simd

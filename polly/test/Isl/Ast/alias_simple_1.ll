@@ -12,11 +12,11 @@
 ;        A[i] = B[i];
 ;    }
 ;
-; NOAA: if ((N <= 1024 ? 1 : 0) && (&MemRef_A[N] <= &MemRef_B[0] || &MemRef_B[N] <= &MemRef_A[0]))
-; BASI: if ((N <= 1024 ? 1 : 0) && (&MemRef_A[N] <= &MemRef_B[0] || &MemRef_B[N] <= &MemRef_A[0]))
-; TBAA: if (N <= 1024 ? 1 : 0)
-; SCEV: if ((N <= 1024 ? 1 : 0) && (&MemRef_A[N] <= &MemRef_B[0] || &MemRef_B[N] <= &MemRef_A[0]))
-; GLOB: if ((N <= 1024 ? 1 : 0) && (&MemRef_A[N] <= &MemRef_B[0] || &MemRef_B[N] <= &MemRef_A[0]))
+; NOAA: if (N <= 1024 && (&MemRef_A[N] <= &MemRef_B[0] || &MemRef_B[N] <= &MemRef_A[0]))
+; BASI: if (N <= 1024 && (&MemRef_A[N] <= &MemRef_B[0] || &MemRef_B[N] <= &MemRef_A[0]))
+; TBAA: if (N <= 1024)
+; SCEV: if (N <= 1024 && (&MemRef_A[N] <= &MemRef_B[0] || &MemRef_B[N] <= &MemRef_A[0]))
+; GLOB: if (N <= 1024 && (&MemRef_A[N] <= &MemRef_B[0] || &MemRef_B[N] <= &MemRef_A[0]))
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

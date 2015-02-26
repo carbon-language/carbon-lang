@@ -22,7 +22,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK: ({{(q == 100 && o <= 0|o <= 0 && q == 100)}})
 ; CHECK: ||
 ; CHECK: ({{(q == 0 && o >= 1)|(o >= 1 && q == 0)}})
-; CHECK: ? 1 : 0)
+; CHECK: )
 
 ; CHECK:     if (o >= 1) {
 ; CHECK:       for (int c1 = 0; c1 < n; c1 += 1)

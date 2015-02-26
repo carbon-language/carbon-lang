@@ -313,23 +313,7 @@ void IslAst::buildRunCondition(__isl_keep isl_ast_build *Build) {
   // optimized scop can be executed conditionally according to the result of the
   // run-time check.
 
-  isl_aff *Zero =
-      isl_aff_zero_on_domain(isl_local_space_from_space(S->getParamSpace()));
-  isl_aff *One =
-      isl_aff_zero_on_domain(isl_local_space_from_space(S->getParamSpace()));
-
-  One = isl_aff_add_constant_si(One, 1);
-
-  isl_pw_aff *PwZero = isl_pw_aff_from_aff(Zero);
-  isl_pw_aff *PwOne = isl_pw_aff_from_aff(One);
-
-  PwOne = isl_pw_aff_intersect_domain(PwOne, S->getAssumedContext());
-  PwZero = isl_pw_aff_intersect_domain(
-      PwZero, isl_set_complement(S->getAssumedContext()));
-
-  isl_pw_aff *Cond = isl_pw_aff_union_max(PwOne, PwZero);
-
-  RunCondition = isl_ast_build_expr_from_pw_aff(Build, Cond);
+  RunCondition = isl_ast_build_expr_from_set(Build, S->getAssumedContext());
 
   // Create the alias checks from the minimal/maximal accesses in each alias
   // group. This operation is by construction quadratic in the number of
