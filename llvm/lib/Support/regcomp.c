@@ -1422,7 +1422,7 @@ enlarge(struct parse *p, sopno size)
 	if (p->ssize >= size)
 		return;
 
-	if ((unsigned long)size > SIZE_MAX / sizeof(sop)) {
+	if ((uintptr_t)size > SIZE_MAX / sizeof(sop)) {
 		SETERROR(REG_ESPACE);
 		return;
 	}
@@ -1443,7 +1443,7 @@ static void
 stripsnug(struct parse *p, struct re_guts *g)
 {
 	g->nstates = p->slen;
-	if ((unsigned long)p->slen > SIZE_MAX / sizeof(sop)) {
+	if ((uintptr_t)p->slen > SIZE_MAX / sizeof(sop)) {
 		g->strip = p->strip;
 		SETERROR(REG_ESPACE);
 		return;
