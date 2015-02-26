@@ -8,7 +8,7 @@
 ; GCN: v_mov_b32_e32 [[DATA:v[0-9]+]], 4
 ; GCN: s_load_dword [[SPTR:s[0-9]+]],
 ; GCN: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
-; GCN: ds_wrxchg_rtn_b32 [[RESULT:v[0-9]+]], [[VPTR]], [[DATA]] [M0]
+; GCN: ds_wrxchg_rtn_b32 [[RESULT:v[0-9]+]], [[VPTR]], [[DATA]]
 ; GCN: buffer_store_dword [[RESULT]],
 ; GCN: s_endpgm
 define void @lds_atomic_xchg_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
@@ -34,7 +34,7 @@ define void @lds_atomic_xchg_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspac
 ; GCN: v_mov_b32_e32 [[DATA:v[0-9]+]], 4
 ; GCN: s_load_dword [[SPTR:s[0-9]+]],
 ; GCN: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
-; GCN: ds_add_rtn_u32 [[RESULT:v[0-9]+]], [[VPTR]], [[DATA]] [M0]
+; GCN: ds_add_rtn_u32 [[RESULT:v[0-9]+]], [[VPTR]], [[DATA]]
 ; GCN: buffer_store_dword [[RESULT]],
 ; GCN: s_endpgm
 define void @lds_atomic_add_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
@@ -56,7 +56,7 @@ define void @lds_atomic_add_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace
 
 ; FUNC-LABEL: {{^}}lds_atomic_add_ret_i32_bad_si_offset:
 ; EG: LDS_ADD_RET *
-; SI: ds_add_rtn_u32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}} [M0]
+; SI: ds_add_rtn_u32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
 ; CIVI: ds_add_rtn_u32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}} offset:16
 ; GCN: s_endpgm
 define void @lds_atomic_add_ret_i32_bad_si_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr, i32 %a, i32 %b) nounwind {
@@ -71,7 +71,7 @@ define void @lds_atomic_add_ret_i32_bad_si_offset(i32 addrspace(1)* %out, i32 ad
 ; FUNC-LABEL: {{^}}lds_atomic_inc_ret_i32:
 ; EG: LDS_ADD_RET *
 ; GCN: v_mov_b32_e32 [[NEGONE:v[0-9]+]], -1
-; GCN: ds_inc_rtn_u32 v{{[0-9]+}}, v{{[0-9]+}}, [[NEGONE]] [M0]
+; GCN: ds_inc_rtn_u32 v{{[0-9]+}}, v{{[0-9]+}}, [[NEGONE]]
 ; GCN: s_endpgm
 define void @lds_atomic_inc_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
   %result = atomicrmw add i32 addrspace(3)* %ptr, i32 1 seq_cst
@@ -93,7 +93,7 @@ define void @lds_atomic_inc_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace
 
 ; FUNC-LABEL: {{^}}lds_atomic_inc_ret_i32_bad_si_offset:
 ; EG: LDS_ADD_RET *
-; SI: ds_inc_rtn_u32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}} [M0]
+; SI: ds_inc_rtn_u32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
 ; CIVI: ds_inc_rtn_u32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}} offset:16
 ; GCN: s_endpgm
 define void @lds_atomic_inc_ret_i32_bad_si_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr, i32 %a, i32 %b) nounwind {
@@ -129,7 +129,7 @@ define void @lds_atomic_sub_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspace
 ; FUNC-LABEL: {{^}}lds_atomic_dec_ret_i32:
 ; EG: LDS_SUB_RET *
 ; GCN: v_mov_b32_e32 [[NEGONE:v[0-9]+]], -1
-; GCN: ds_dec_rtn_u32  v{{[0-9]+}}, v{{[0-9]+}}, [[NEGONE]] [M0]
+; GCN: ds_dec_rtn_u32  v{{[0-9]+}}, v{{[0-9]+}}, [[NEGONE]]
 ; GCN: s_endpgm
 define void @lds_atomic_dec_ret_i32(i32 addrspace(1)* %out, i32 addrspace(3)* %ptr) nounwind {
   %result = atomicrmw sub i32 addrspace(3)* %ptr, i32 1 seq_cst
@@ -308,7 +308,7 @@ define void @lds_atomic_umax_ret_i32_offset(i32 addrspace(1)* %out, i32 addrspac
 ; GCN: s_load_dword [[SPTR:s[0-9]+]],
 ; GCN: v_mov_b32_e32 [[DATA:v[0-9]+]], 4
 ; GCN: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
-; GCN: ds_wrxchg_rtn_b32 [[RESULT:v[0-9]+]], [[VPTR]], [[DATA]] [M0]
+; GCN: ds_wrxchg_rtn_b32 [[RESULT:v[0-9]+]], [[VPTR]], [[DATA]]
 ; GCN: s_endpgm
 define void @lds_atomic_xchg_noret_i32(i32 addrspace(3)* %ptr) nounwind {
   %result = atomicrmw xchg i32 addrspace(3)* %ptr, i32 4 seq_cst
@@ -329,7 +329,7 @@ define void @lds_atomic_xchg_noret_i32_offset(i32 addrspace(3)* %ptr) nounwind {
 ; GCN: s_load_dword [[SPTR:s[0-9]+]],
 ; GCN: v_mov_b32_e32 [[DATA:v[0-9]+]], 4
 ; GCN: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
-; GCN: ds_add_u32 [[VPTR]], [[DATA]] [M0]
+; GCN: ds_add_u32 [[VPTR]], [[DATA]]
 ; GCN: s_endpgm
 define void @lds_atomic_add_noret_i32(i32 addrspace(3)* %ptr) nounwind {
   %result = atomicrmw add i32 addrspace(3)* %ptr, i32 4 seq_cst
@@ -346,8 +346,8 @@ define void @lds_atomic_add_noret_i32_offset(i32 addrspace(3)* %ptr) nounwind {
 }
 
 ; FUNC-LABEL: {{^}}lds_atomic_add_noret_i32_bad_si_offset
-; SI: ds_add_u32 v{{[0-9]+}}, v{{[0-9]+}} [M0]
-; CIVI: ds_add_u32 v{{[0-9]+}}, v{{[0-9]+}} offset:16 [M0]
+; SI: ds_add_u32 v{{[0-9]+}}, v{{[0-9]+}}
+; CIVI: ds_add_u32 v{{[0-9]+}}, v{{[0-9]+}} offset:16
 ; GCN: s_endpgm
 define void @lds_atomic_add_noret_i32_bad_si_offset(i32 addrspace(3)* %ptr, i32 %a, i32 %b) nounwind {
   %sub = sub i32 %a, %b
@@ -359,7 +359,7 @@ define void @lds_atomic_add_noret_i32_bad_si_offset(i32 addrspace(3)* %ptr, i32 
 
 ; FUNC-LABEL: {{^}}lds_atomic_inc_noret_i32:
 ; GCN: v_mov_b32_e32 [[NEGONE:v[0-9]+]], -1
-; GCN: ds_inc_u32 v{{[0-9]+}}, [[NEGONE]] [M0]
+; GCN: ds_inc_u32 v{{[0-9]+}}, [[NEGONE]]
 ; GCN: s_endpgm
 define void @lds_atomic_inc_noret_i32(i32 addrspace(3)* %ptr) nounwind {
   %result = atomicrmw add i32 addrspace(3)* %ptr, i32 1 seq_cst

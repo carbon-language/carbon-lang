@@ -1523,7 +1523,7 @@ multiclass DS_Load_Helper <bits<8> op, string asm, RegisterClass regClass>
   asm,
   (outs regClass:$vdst),
   (ins i1imm:$gds, VGPR_32:$addr, ds_offset:$offset, M0Reg:$m0),
-  asm#" $vdst, $addr"#"$offset"#" [M0]",
+  asm#" $vdst, $addr"#"$offset",
   []>;
 
 multiclass DS_Load2_m <bits<8> op, string opName, dag outs, dag ins, string asm,
@@ -1545,7 +1545,7 @@ multiclass DS_Load2_Helper <bits<8> op, string asm, RegisterClass regClass>
   (outs regClass:$vdst),
   (ins i1imm:$gds, VGPR_32:$addr, ds_offset0:$offset0, ds_offset1:$offset1,
         M0Reg:$m0),
-  asm#" $vdst, $addr"#"$offset0"#"$offset1 [M0]",
+  asm#" $vdst, $addr"#"$offset0"#"$offset1",
   []>;
 
 multiclass DS_1A_Store_m <bits<8> op, string opName, dag outs, dag ins,
@@ -1566,7 +1566,7 @@ multiclass DS_Store_Helper <bits<8> op, string asm, RegisterClass regClass>
   asm,
   (outs),
   (ins i1imm:$gds, VGPR_32:$addr, regClass:$data0, ds_offset:$offset, M0Reg:$m0),
-  asm#" $addr, $data0"#"$offset"#" [M0]",
+  asm#" $addr, $data0"#"$offset",
   []>;
 
 multiclass DS_Store_m <bits<8> op, string opName, dag outs, dag ins,
@@ -1588,7 +1588,7 @@ multiclass DS_Store2_Helper <bits<8> op, string asm, RegisterClass regClass>
   (outs),
   (ins i1imm:$gds, VGPR_32:$addr, regClass:$data0, regClass:$data1,
        ds_offset0:$offset0, ds_offset1:$offset1, M0Reg:$m0),
-  asm#" $addr, $data0, $data1"#"$offset0"#"$offset1 [M0]",
+  asm#" $addr, $data0, $data1"#"$offset0"#"$offset1",
   []>;
 
 // 1 address, 1 data.
@@ -1612,7 +1612,7 @@ multiclass DS_1A1D_RET <bits<8> op, string asm, RegisterClass rc,
   op, asm,
   (outs rc:$vdst),
   (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, ds_offset:$offset, M0Reg:$m0),
-  asm#" $vdst, $addr, $data0"#"$offset"#" [M0]", [], noRetOp>;
+  asm#" $vdst, $addr, $data0"#"$offset", [], noRetOp>;
 
 // 1 address, 2 data.
 multiclass DS_1A2D_RET_m <bits<8> op, string opName, dag outs, dag ins,
@@ -1633,7 +1633,7 @@ multiclass DS_1A2D_RET <bits<8> op, string asm, RegisterClass rc,
   op, asm,
   (outs rc:$vdst),
   (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, rc:$data1, ds_offset:$offset, M0Reg:$m0),
-  asm#" $vdst, $addr, $data0, $data1"#"$offset"#" [M0]",
+  asm#" $vdst, $addr, $data0, $data1"#"$offset",
   [], noRetOp>;
 
 // 1 address, 2 data.
@@ -1655,7 +1655,7 @@ multiclass DS_1A2D_NORET <bits<8> op, string asm, RegisterClass rc,
   op, asm,
   (outs),
   (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, rc:$data1, ds_offset:$offset, M0Reg:$m0),
-  asm#" $addr, $data0, $data1"#"$offset"#" [M0]",
+  asm#" $addr, $data0, $data1"#"$offset",
   [], noRetOp>;
 
 // 1 address, 1 data.
@@ -1677,7 +1677,7 @@ multiclass DS_1A1D_NORET <bits<8> op, string asm, RegisterClass rc,
   op, asm,
   (outs),
   (ins i1imm:$gds, VGPR_32:$addr, rc:$data0, ds_offset:$offset, M0Reg:$m0),
-  asm#" $addr, $data0"#"$offset"#" [M0]",
+  asm#" $addr, $data0"#"$offset",
   [], noRetOp>;
 
 //===----------------------------------------------------------------------===//

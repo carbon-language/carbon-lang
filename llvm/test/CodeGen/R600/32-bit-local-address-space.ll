@@ -131,7 +131,7 @@ define void @local_address_gep_const_offset_store(i32 addrspace(3)* %out, i32 %v
 ; FUNC-LABEL: {{^}}local_address_gep_large_const_offset_store:
 ; SI: s_add_i32 [[SPTR:s[0-9]]], s{{[0-9]+}}, 0x10004
 ; SI: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
-; SI: ds_write_b32 [[VPTR]], v{{[0-9]+}} [M0]{{$}}
+; SI: ds_write_b32 [[VPTR]], v{{[0-9]+$}}
 define void @local_address_gep_large_const_offset_store(i32 addrspace(3)* %out, i32 %val) {
   %gep = getelementptr i32 addrspace(3)* %out, i32 16385
   store i32 %val, i32 addrspace(3)* %gep, align 4

@@ -35,7 +35,7 @@ define void @lds_atomic_add_ret_i64(i64 addrspace(1)* %out, i64 addrspace(3)* %p
 ; SI: s_load_dword [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; VI: s_load_dword [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0x2c
 ; GCN-DAG: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[PTR]]
-; GCN: ds_add_rtn_u64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[VPTR]], v{{\[}}[[LOVDATA]]:[[HIVDATA]]{{\]}} offset:32 [M0]
+; GCN: ds_add_rtn_u64 [[RESULT:v\[[0-9]+:[0-9]+\]]], [[VPTR]], v{{\[}}[[LOVDATA]]:[[HIVDATA]]{{\]}} offset:32
 ; GCN: buffer_store_dwordx2 [[RESULT]],
 ; GCN: s_endpgm
 define void @lds_atomic_add_ret_i64_offset(i64 addrspace(1)* %out, i64 addrspace(3)* %ptr) nounwind {
@@ -280,7 +280,7 @@ define void @lds_atomic_add_noret_i64(i64 addrspace(3)* %ptr) nounwind {
 ; GCN: v_mov_b32_e32 v[[LOVDATA:[0-9]+]], 9
 ; GCN: v_mov_b32_e32 v[[HIVDATA:[0-9]+]], 0
 ; GCN: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[PTR]]
-; GCN: ds_add_u64 [[VPTR]], v{{\[}}[[LOVDATA]]:[[HIVDATA]]{{\]}} offset:32 [M0]
+; GCN: ds_add_u64 [[VPTR]], v{{\[}}[[LOVDATA]]:[[HIVDATA]]{{\]}} offset:32
 ; GCN: s_endpgm
 define void @lds_atomic_add_noret_i64_offset(i64 addrspace(3)* %ptr) nounwind {
   %gep = getelementptr i64 addrspace(3)* %ptr, i64 4

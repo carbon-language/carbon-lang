@@ -17,7 +17,7 @@ declare i32 @llvm.r600.read.tidig.x() #1
 
 ; SI-LABEL: {{^}}load_shl_base_lds_0:
 ; SI: v_lshlrev_b32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
-; SI: ds_read_b32 {{v[0-9]+}}, [[PTR]] offset:8 [M0]
+; SI: ds_read_b32 {{v[0-9]+}}, [[PTR]] offset:8
 ; SI: s_endpgm
 define void @load_shl_base_lds_0(float addrspace(1)* %out, i32 addrspace(1)* %add_use) #0 {
   %tid.x = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -34,7 +34,7 @@ define void @load_shl_base_lds_0(float addrspace(1)* %out, i32 addrspace(1)* %ad
 
 ; SI-LABEL: {{^}}load_shl_base_lds_1:
 ; SI: v_lshlrev_b32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
-; SI: ds_read_b32 [[RESULT:v[0-9]+]], [[PTR]] offset:8 [M0]
+; SI: ds_read_b32 [[RESULT:v[0-9]+]], [[PTR]] offset:8
 ; SI: v_add_i32_e32 [[ADDUSE:v[0-9]+]], 8, v{{[0-9]+}}
 ; SI-DAG: buffer_store_dword [[RESULT]]
 ; SI-DAG: buffer_store_dword [[ADDUSE]]
@@ -71,7 +71,7 @@ define void @load_shl_base_lds_max_offset(i8 addrspace(1)* %out, i8 addrspace(3)
 ; SI-LABEL: {{^}}load_shl_base_lds_2:
 ; SI: s_mov_b32 m0, -1
 ; SI-NEXT: v_lshlrev_b32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
-; SI-NEXT: ds_read2st64_b32 {{v\[[0-9]+:[0-9]+\]}}, [[PTR]] offset0:1 offset1:9 [M0]
+; SI-NEXT: ds_read2st64_b32 {{v\[[0-9]+:[0-9]+\]}}, [[PTR]] offset0:1 offset1:9
 ; SI: s_endpgm
 define void @load_shl_base_lds_2(float addrspace(1)* %out) #0 {
   %tid.x = tail call i32 @llvm.r600.read.tidig.x() #1
@@ -87,7 +87,7 @@ define void @load_shl_base_lds_2(float addrspace(1)* %out) #0 {
 
 ; SI-LABEL: {{^}}store_shl_base_lds_0:
 ; SI: v_lshlrev_b32_e32 [[PTR:v[0-9]+]], 2, {{v[0-9]+}}
-; SI: ds_write_b32 [[PTR]], {{v[0-9]+}} offset:8 [M0]
+; SI: ds_write_b32 [[PTR]], {{v[0-9]+}} offset:8
 ; SI: s_endpgm
 define void @store_shl_base_lds_0(float addrspace(1)* %out, i32 addrspace(1)* %add_use) #0 {
   %tid.x = tail call i32 @llvm.r600.read.tidig.x() #1
