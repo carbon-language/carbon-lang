@@ -20740,6 +20740,25 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
     }
   }
 
+  // We should generate an X86ISD::BLENDI from a vselect if its argument
+  // is a sign_extend_inreg of an any_extend of a BUILD_VECTOR of
+  // constants. This specific pattern gets generated when we split a
+  // selector for a 512 bit vector in a machine without AVX512 (but with
+  // 256-bit vectors), during legalization:
+  //
+  // (vselect (sign_extend (any_extend (BUILD_VECTOR)) i1) LHS RHS)
+  //
+  // Iff we find this pattern and the build_vectors are built from
+  // constants, we translate the vselect into a shuffle_vector that we
+  // know will be matched by LowerVECTOR_SHUFFLEtoBlend.
+  if ((N->getOpcode() == ISD::VSELECT ||
+       N->getOpcode() == X86ISD::SHRUNKBLEND) &&
+      !DCI.isBeforeLegalize()) {
+    SDValue Shuffle = transformVSELECTtoBlendVECTOR_SHUFFLE(N, DAG, Subtarget);
+    if (Shuffle.getNode())
+      return Shuffle;
+  }
+
   // If we know that this node is legal then we know that it is going to be
   // matched by one of the SSE/AVX BLEND instructions. These instructions only
   // depend on the highest bit in each word. Try to use SimplifyDemandedBits
@@ -20808,25 +20827,6 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
                       TLO.New, N->getOperand(1), N->getOperand(2)));
       return SDValue();
     }
-  }
-
-  // We should generate an X86ISD::BLENDI from a vselect if its argument
-  // is a sign_extend_inreg of an any_extend of a BUILD_VECTOR of
-  // constants. This specific pattern gets generated when we split a
-  // selector for a 512 bit vector in a machine without AVX512 (but with
-  // 256-bit vectors), during legalization:
-  //
-  // (vselect (sign_extend (any_extend (BUILD_VECTOR)) i1) LHS RHS)
-  //
-  // Iff we find this pattern and the build_vectors are built from
-  // constants, we translate the vselect into a shuffle_vector that we
-  // know will be matched by LowerVECTOR_SHUFFLEtoBlend.
-  if ((N->getOpcode() == ISD::VSELECT ||
-       N->getOpcode() == X86ISD::SHRUNKBLEND) &&
-      !DCI.isBeforeLegalize()) {
-    SDValue Shuffle = transformVSELECTtoBlendVECTOR_SHUFFLE(N, DAG, Subtarget);
-    if (Shuffle.getNode())
-      return Shuffle;
   }
 
   return SDValue();
