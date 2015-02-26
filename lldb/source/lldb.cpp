@@ -112,7 +112,7 @@ static void fatal_error_handler(void *user_data, const std::string& reason,
 void
 lldb_private::Initialize ()
 {
-    // Make sure we inialize only once
+    // Make sure we initialize only once
     static Mutex g_inited_mutex(Mutex::eMutexTypeRecursive);
     static bool g_inited = false;
 
