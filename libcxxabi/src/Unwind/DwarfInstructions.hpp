@@ -605,7 +605,7 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
     case DW_OP_lit29:
     case DW_OP_lit30:
     case DW_OP_lit31:
-      value = opcode - DW_OP_lit0;
+      value = static_cast<pint_t>(opcode - DW_OP_lit0);
       *(++sp) = value;
       if (log)
         fprintf(stderr, "push literal 0x%" PRIx64 "\n", (uint64_t)value);
@@ -643,14 +643,14 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
     case DW_OP_reg29:
     case DW_OP_reg30:
     case DW_OP_reg31:
-      reg = opcode - DW_OP_reg0;
+      reg = static_cast<uint32_t>(opcode - DW_OP_reg0);
       *(++sp) = registers.getRegister((int)reg);
       if (log)
         fprintf(stderr, "push reg %d\n", reg);
       break;
 
     case DW_OP_regx:
-      reg = (uint32_t)addressSpace.getULEB128(p, expressionEnd);
+      reg = static_cast<uint32_t>(addressSpace.getULEB128(p, expressionEnd));
       *(++sp) = registers.getRegister((int)reg);
       if (log)
         fprintf(stderr, "push reg %d + 0x%" PRIx64 "\n", reg, (uint64_t)svalue);
@@ -688,18 +688,18 @@ DwarfInstructions<A, R>::evaluateExpression(pint_t expression, A &addressSpace,
     case DW_OP_breg29:
     case DW_OP_breg30:
     case DW_OP_breg31:
-      reg = opcode - DW_OP_breg0;
+      reg = static_cast<uint32_t>(opcode - DW_OP_breg0);
       svalue = (sint_t)addressSpace.getSLEB128(p, expressionEnd);
-      svalue += registers.getRegister((int)reg);
+      svalue += static_cast<sint_t>(registers.getRegister((int)reg));
       *(++sp) = (pint_t)(svalue);
       if (log)
         fprintf(stderr, "push reg %d + 0x%" PRIx64 "\n", reg, (uint64_t)svalue);
       break;
 
     case DW_OP_bregx:
-      reg = (uint32_t)addressSpace.getULEB128(p, expressionEnd);
+      reg = static_cast<uint32_t>(addressSpace.getULEB128(p, expressionEnd));
       svalue = (sint_t)addressSpace.getSLEB128(p, expressionEnd);
-      svalue += registers.getRegister((int)reg);
+      svalue += static_cast<sint_t>(registers.getRegister((int)reg));
       *(++sp) = (pint_t)(svalue);
       if (log)
         fprintf(stderr, "push reg %d + 0x%" PRIx64 "\n", reg, (uint64_t)svalue);

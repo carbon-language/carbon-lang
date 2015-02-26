@@ -309,7 +309,8 @@ _LIBUNWIND_EXPORT void unw_save_vfp_as_X(unw_cursor_t *cursor) {
 /// SPI: walks cached dwarf entries
 _LIBUNWIND_EXPORT void unw_iterate_dwarf_unwind_cache(void (*func)(
     unw_word_t ip_start, unw_word_t ip_end, unw_word_t fde, unw_word_t mh)) {
-  _LIBUNWIND_TRACE_API("unw_iterate_dwarf_unwind_cache(func=%p)\n", func);
+  _LIBUNWIND_TRACE_API("unw_iterate_dwarf_unwind_cache(func=%p)\n",
+                       reinterpret_cast<void *>(func));
   DwarfFDECache<LocalAddressSpace>::iterateCacheEntries(func);
 }
 
