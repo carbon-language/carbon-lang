@@ -873,37 +873,12 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
   // this logic out to the initialization of the pass.  Doesn't appear to
   // matter in practice.
 
-  // Fill in the one generic type'd argument (the function is also vararg)
-  std::vector<Type *> argTypes;
-  argTypes.push_back(CS.getCalledValue()->getType());
-
-  Function *gc_statepoint_decl = Intrinsic::getDeclaration(
-      M, Intrinsic::experimental_gc_statepoint, argTypes);
-
   // Then go ahead and use the builder do actually do the inserts.  We insert
   // immediately before the previous instruction under the assumption that all
   // arguments will be available here.  We can't insert afterwards since we may
   // be replacing a terminator.
   Instruction *insertBefore = CS.getInstruction();
   IRBuilder<> Builder(insertBefore);
-  // First, create the statepoint (with all live ptrs as arguments).
-  std::vector<llvm::Value *> args;
-  // target, #call args, unused, call args..., #deopt args, deopt args..., gc args...
-  Value *Target = CS.getCalledValue();
-  args.push_back(Target);
-  int callArgSize = CS.arg_size();
-  args.push_back(
-      ConstantInt::get(Type::getInt32Ty(M->getContext()), callArgSize));
-  // TODO: add a 'Needs GC-rewrite' later flag
-  args.push_back(ConstantInt::get(Type::getInt32Ty(M->getContext()), 0));
-
-  // Copy all the arguments of the original call
-  args.insert(args.end(), CS.arg_begin(), CS.arg_end());
-
-  // # of deopt arguments: this pass currently does not support the
-  // identification of deopt arguments.  If this is interesting to you,
-  // please ask on llvm-dev.
-  args.push_back(ConstantInt::get(Type::getInt32Ty(M->getContext()), 0));
 
   // Note: The gc args are not filled in at this time, that's handled by
   // RewriteStatepointsForGC (which is currently under review).
@@ -913,20 +888,21 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
   AttributeSet return_attributes;
   if (CS.isCall()) {
     CallInst *toReplace = cast<CallInst>(CS.getInstruction());
-    CallInst *call =
-        Builder.CreateCall(gc_statepoint_decl, args, "safepoint_token");
-    call->setTailCall(toReplace->isTailCall());
-    call->setCallingConv(toReplace->getCallingConv());
+    CallInst *Call = Builder.CreateGCStatepoint(
+        CS.getCalledValue(), makeArrayRef(CS.arg_begin(), CS.arg_end()), None,
+        None, "safepoint_token");
+    Call->setTailCall(toReplace->isTailCall());
+    Call->setCallingConv(toReplace->getCallingConv());
 
     // Before we have to worry about GC semantics, all attributes are legal
     AttributeSet new_attrs = toReplace->getAttributes();
     // In case if we can handle this set of sttributes - set up function attrs
     // directly on statepoint and return attrs later for gc_result intrinsic.
-    call->setAttributes(new_attrs.getFnAttributes());
+    Call->setAttributes(new_attrs.getFnAttributes());
     return_attributes = new_attrs.getRetAttributes();
     // TODO: handle param attributes
 
-    token = call;
+    token = Call;
 
     // Put the following gc_result and gc_relocate calls immediately after the
     // the old call (which we're about to delete)
@@ -938,6 +914,33 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
     Builder.SetCurrentDebugLocation(IP->getDebugLoc());
 
   } else if (CS.isInvoke()) {
+    // TODO: make CreateGCStatepoint return an Instruction that we can cast to a
+    // Call or Invoke, instead of doing this junk here.
+
+    // Fill in the one generic type'd argument (the function is also
+    // vararg)
+    std::vector<Type *> argTypes;
+    argTypes.push_back(CS.getCalledValue()->getType());
+
+    Function *gc_statepoint_decl = Intrinsic::getDeclaration(
+        M, Intrinsic::experimental_gc_statepoint, argTypes);
+
+    // First, create the statepoint (with all live ptrs as arguments).
+    std::vector<llvm::Value *> args;
+    // target, #call args, unused, ... call parameters, #deopt args, ... deopt
+    // parameters, ... gc parameters
+    Value *Target = CS.getCalledValue();
+    args.push_back(Target);
+    int callArgSize = CS.arg_size();
+    // #call args
+    args.push_back(Builder.getInt32(callArgSize));
+    // unused
+    args.push_back(Builder.getInt32(0));
+    // call parameters
+    args.insert(args.end(), CS.arg_begin(), CS.arg_end());
+    // #deopt args: 0
+    args.push_back(Builder.getInt32(0));
+
     InvokeInst *toReplace = cast<InvokeInst>(CS.getInstruction());
 
     // Insert the new invoke into the old block.  We'll remove the old one in a
@@ -973,19 +976,11 @@ static Value *ReplaceWithStatepoint(const CallSite &CS, /* to replace */
 
   // Only add the gc_result iff there is actually a used result
   if (!CS.getType()->isVoidTy() && !CS.getInstruction()->use_empty()) {
-    Instruction *gc_result = nullptr;
-    std::vector<Type *> types;     // one per 'any' type
-    types.push_back(CS.getType()); // result type
-    Intrinsic::ID Id = Intrinsic::experimental_gc_result;
-    Value *gc_result_func = Intrinsic::getDeclaration(M, Id, types);
-
-    std::vector<Value *> args;
-    args.push_back(token);
-    gc_result = Builder.CreateCall(
-        gc_result_func, args,
-        CS.getInstruction()->hasName() ? CS.getInstruction()->getName() : "");
-
-    cast<CallInst>(gc_result)->setAttributes(return_attributes);
+    std::string takenName =
+      CS.getInstruction()->hasName() ? CS.getInstruction()->getName() : "";
+    CallInst *gc_result =
+        Builder.CreateGCResult(token, CS.getType(), takenName);
+    gc_result->setAttributes(return_attributes);
     return gc_result;
   } else {
     // No return value for the call.

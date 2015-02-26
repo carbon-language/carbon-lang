@@ -447,6 +447,14 @@ public:
                                ArrayRef<Value *> GCArgs,
                                const Twine &Name = "");
 
+  // Conveninence function for the common case when CallArgs are filled in using
+  // makeArrayRef(CS.arg_begin(), .arg_end()); Use needs to be .get()'ed to get
+  // the Value *.
+  CallInst *CreateGCStatepoint(Value *ActualCallee, ArrayRef<Use> CallArgs,
+                               ArrayRef<Value *> DeoptArgs,
+                               ArrayRef<Value *> GCArgs,
+                               const Twine &Name = "");
+
   /// \brief Create a call to the experimental.gc.result intrinsic to extract
   /// the result from a call wrapped in a statepoint.
   CallInst *CreateGCResult(Instruction *Statepoint,

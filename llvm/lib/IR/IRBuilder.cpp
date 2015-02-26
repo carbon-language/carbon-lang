@@ -260,6 +260,17 @@ CallInst *IRBuilderBase::CreateGCStatepoint(Value *ActualCallee,
  return createCallHelper(FnStatepoint, args, this, Name);
 }
 
+CallInst *IRBuilderBase::CreateGCStatepoint(Value *ActualCallee,
+                                            ArrayRef<Use> CallArgs,
+                                            ArrayRef<Value *> DeoptArgs,
+                                            ArrayRef<Value *> GCArgs,
+                                            const Twine &Name) {
+  std::vector<Value *> VCallArgs;
+  for (auto &U : CallArgs)
+    VCallArgs.push_back(U.get());
+  return CreateGCStatepoint(ActualCallee, VCallArgs, DeoptArgs, GCArgs, Name);
+}
+
 CallInst *IRBuilderBase::CreateGCResult(Instruction *Statepoint,
                                        Type *ResultType,
                                        const Twine &Name) {
