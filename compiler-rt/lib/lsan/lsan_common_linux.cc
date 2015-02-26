@@ -154,8 +154,8 @@ struct DoStopTheWorldParam {
   void *argument;
 };
 
-static int DoStopTheWorldCallback(struct dl_phdr_info *info,
-                                             size_t size, void *data) {
+static int DoStopTheWorldCallback(struct dl_phdr_info *info, size_t size,
+                                  void *data) {
   DoStopTheWorldParam *param = reinterpret_cast<DoStopTheWorldParam *>(data);
   StopTheWorld(param->callback, param->argument);
   return 1;
