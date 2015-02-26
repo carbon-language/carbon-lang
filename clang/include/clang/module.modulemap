@@ -98,12 +98,24 @@ module Clang_Rewrite { requires cplusplus umbrella "Rewrite" module * { export *
 module Clang_Sema { requires cplusplus umbrella "Sema" module * { export * } }
 module Clang_Serialization { requires cplusplus umbrella "Serialization" module * { export * } }
 
-module Clang_StaticAnalyzer {
+module Clang_StaticAnalyzer_Core {
   requires cplusplus
-  umbrella "StaticAnalyzer"
+  umbrella "StaticAnalyzer/Core"
 
   textual header "StaticAnalyzer/Core/Analyses.def"
 
+  module * { export * }
+}
+
+module Clang_StaticAnalyzer_Checkers {
+  requires cplusplus
+  umbrella "StaticAnalyzer/Checkers"
+  module * { export * }
+}
+
+module Clang_StaticAnalyzer_Frontend {
+  requires cplusplus
+  umbrella "StaticAnalyzer/Frontend"
   module * { export * }
 }
 
