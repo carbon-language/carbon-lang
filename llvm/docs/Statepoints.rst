@@ -115,21 +115,37 @@ garbage collected objects.
   <statepoint-utilities>` described below. 
 
 This abstract function call is concretely represented by a sequence of
-intrinsic calls known as a 'statepoint sequence'.
-
+intrinsic calls known collectively as a "statepoint relocation sequence".
 
 Let's consider a simple call in LLVM IR:
-  todo
 
-Depending on our language we may need to allow a safepoint during the
-execution of the function called from this site.  If so, we need to
-let the collector update local values in the current frame.
+.. code-block:: llvm
 
-Let's say we need to relocate SSA values 'a', 'b', and 'c' at this
-safepoint.  To represent this, we would generate the statepoint
-sequence:
+  define i8 addrspace(1)* @test1(i8 addrspace(1)* %obj) 
+         gc "statepoint-example" {
+    call void ()* @foo()
+    ret i8 addrspace(1)* %obj
+  }
 
-  todo
+Depending on our language we may need to allow a safepoint during the execution 
+of ``foo``. If so, we need to let the collector update local values in the 
+current frame.  If we don't, we'll be accessing a potential invalid reference 
+once we eventually return from the call.
+
+In this example, we need to relocate the SSA value ``%obj``.  Since we can't 
+actually change the value in the SSA value ``%obj``, we need to introduce a new 
+SSA value ``%obj.relocated`` which represents the potentially changed value of
+``%obj`` after the safepoint and update any following uses appropriately.  The 
+resulting relocation sequence is:
+
+.. code-block:: llvm
+
+  define i8 addrspace(1)* @test1(i8 addrspace(1)* %obj) 
+         gc "statepoint-example" {
+    %0 = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0, i8 addrspace(1)* %obj)
+    %obj.relocated = call coldcc i8 addrspace(1)* @llvm.experimental.gc.relocate.p1i8(i32 %0, i32 9, i32 9)
+    ret i8 addrspace(1)* %obj.relocated
+  }
 
 Ideally, this sequence would have been represented as a M argument, N
 return value function (where M is the number of values being
@@ -140,20 +156,59 @@ representation.
 Instead, the statepoint intrinsic marks the actual site of the
 safepoint or statepoint.  The statepoint returns a token value (which
 exists only at compile time).  To get back the original return value
-of the call, we use the 'gc.result' intrinsic.  To get the relocation
-of each pointer in turn, we use the 'gc.relocate' intrinsic with the
-appropriate index.  Note that both the gc.relocate and gc.result are
-tied to the statepoint.  The combination forms a "statepoint sequence"
-and represents the entitety of a parseable call or 'statepoint'.
+of the call, we use the ``gc.result`` intrinsic.  To get the relocation
+of each pointer in turn, we use the ``gc.relocate`` intrinsic with the
+appropriate index.  Note that both the ``gc.relocate`` and ``gc.result`` are
+tied to the statepoint.  The combination forms a "statepoint relocation 
+sequence" and represents the entitety of a parseable call or 'statepoint'.
 
-When lowered, this example would generate the following x86 assembly::
-  put assembly here
+When lowered, this example would generate the following x86 assembly:
+
+.. code-block:: gas
+  
+	  .globl	test1
+	  .align	16, 0x90
+	  pushq	%rax
+	  callq	foo
+  .Ltmp1:
+	  movq	(%rsp), %rax  # This load is redundant (oops!)
+	  popq	%rdx
+	  retq
 
 Each of the potentially relocated values has been spilled to the
 stack, and a record of that location has been recorded to the
-:ref: `Stack Map section <stackmap-section>`.  If the garbage collector
+:ref:`Stack Map section <stackmap-section>`.  If the garbage collector
 needs to update any of these pointers during the call, it knows
 exactly what to change.
+
+The relevant parts of the StackMap section for our example are:
+
+.. code-block:: gas
+  
+  # This describes the call site
+  # Stack Maps: callsite 2882400000
+	  .quad	2882400000
+	  .long	.Ltmp1-test1
+	  .short	0
+  # .. 8 entries skipped ..
+  # This entry describes the spill slot which is directly addressable
+  # off RSP with offset 0.  Given the value was spilled with a pushq, 
+  # that makes sense.
+  # Stack Maps:   Loc 8: Direct RSP     [encoding: .byte 2, .byte 8, .short 7, .int 0]
+	  .byte	2
+	  .byte	8
+	  .short	7
+	  .long	0
+
+This example was taken from the tests for the :ref:`RewriteStatepointsForGC` utility pass.  As such, it's full StackMap can be easily examined with the following command.
+
+.. code-block:: bash
+
+  opt -rewrite-statepoints-for-gc test/Transforms/RewriteStatepointsForGC/basics.ll -S | llc -debug-only=stackmaps
+
+
+
+
 
 Intrinsics
 ===========
@@ -458,6 +513,35 @@ invoke instructions with appropriate ``gc.statepoint`` and ``gc.result`` pairs,
 and inserting safepoint polls sufficient to ensure running code checks for a 
 safepoint request on a timely manner.  This pass is expected to be run before 
 RewriteStatepointsForGC and thus does not produce full relocation sequences.  
+
+As an example, given input IR of the following:
+
+.. code-block:: llvm
+
+  define void @test() gc "statepoint-example" {
+    call void @foo()
+    ret void
+  }
+
+  declare void @do_safepoint()
+  define void @gc.safepoint_poll() {
+    call void @do_safepoint()
+    ret void
+  }
+
+
+This pass would produce the following IR:
+
+.. code-block:: llvm
+
+  define void @test() gc "statepoint-example" {
+    %safepoint_token = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @do_safepoint, i32 0, i32 0, i32 0)
+    %safepoint_token1 = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 0)
+    ret void
+  }
+
+In this case, we've added an (unconditional) entry safepoint poll and converted the call into a ``gc.statepoint``.  Note that despite appearances, the entry poll is not necessarily redundant.  We'd have to know that ``foo`` and ``test`` were not mutually recursive for the poll to be redundant.  In practice, you'd probably want to your poll definition to contain a conditional branch of some form.
+
 
 At the moment, PlaceSafepoints can insert safepoint polls at method entry and 
 loop backedges locations.  Extending this to work with return polls would be 
