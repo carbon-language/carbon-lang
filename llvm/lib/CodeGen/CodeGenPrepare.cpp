@@ -1955,6 +1955,7 @@ void TypePromotionTransaction::rollback(
 /// This encapsulates the logic for matching the target-legal addressing modes.
 class AddressingModeMatcher {
   SmallVectorImpl<Instruction*> &AddrModeInsts;
+  const TargetMachine &TM;
   const TargetLowering &TLI;
 
   /// AccessTy/MemoryInst - This is the type for the access (e.g. double) and
@@ -1978,13 +1979,15 @@ class AddressingModeMatcher {
   /// always returns true.
   bool IgnoreProfitability;
 
-  AddressingModeMatcher(SmallVectorImpl<Instruction*> &AMI,
-                        const TargetLowering &T, Type *AT,
-                        Instruction *MI, ExtAddrMode &AM,
-                        const SetOfInstrs &InsertedTruncs,
+  AddressingModeMatcher(SmallVectorImpl<Instruction *> &AMI,
+                        const TargetMachine &TM, Type *AT, Instruction *MI,
+                        ExtAddrMode &AM, const SetOfInstrs &InsertedTruncs,
                         InstrToOrigTy &PromotedInsts,
                         TypePromotionTransaction &TPT)
-      : AddrModeInsts(AMI), TLI(T), AccessTy(AT), MemoryInst(MI), AddrMode(AM),
+      : AddrModeInsts(AMI), TM(TM),
+        TLI(*TM.getSubtargetImpl(*MI->getParent()->getParent())
+                 ->getTargetLowering()),
+        AccessTy(AT), MemoryInst(MI), AddrMode(AM),
         InsertedTruncs(InsertedTruncs), PromotedInsts(PromotedInsts), TPT(TPT) {
     IgnoreProfitability = false;
   }
@@ -2001,13 +2004,13 @@ public:
   static ExtAddrMode Match(Value *V, Type *AccessTy,
                            Instruction *MemoryInst,
                            SmallVectorImpl<Instruction*> &AddrModeInsts,
-                           const TargetLowering &TLI,
+                           const TargetMachine &TM,
                            const SetOfInstrs &InsertedTruncs,
                            InstrToOrigTy &PromotedInsts,
                            TypePromotionTransaction &TPT) {
     ExtAddrMode Result;
 
-    bool Success = AddressingModeMatcher(AddrModeInsts, TLI, AccessTy,
+    bool Success = AddressingModeMatcher(AddrModeInsts, TM, AccessTy,
                                          MemoryInst, Result, InsertedTruncs,
                                          PromotedInsts, TPT).MatchAddr(V, 0);
     (void)Success; assert(Success && "Couldn't select *anything*?");
@@ -2812,7 +2815,8 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
 /// return false.
 static bool IsOperandAMemoryOperand(CallInst *CI, InlineAsm *IA, Value *OpVal,
                                     const TargetLowering &TLI) {
-  TargetLowering::AsmOperandInfoVector TargetConstraints = TLI.ParseConstraints(ImmutableCallSite(CI));
+  TargetLowering::AsmOperandInfoVector TargetConstraints =
+      TLI.ParseConstraints(ImmutableCallSite(CI));
   for (unsigned i = 0, e = TargetConstraints.size(); i != e; ++i) {
     TargetLowering::AsmOperandInfo &OpInfo = TargetConstraints[i];
 
@@ -2984,7 +2988,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
     ExtAddrMode Result;
     TypePromotionTransaction::ConstRestorationPt LastKnownGood =
         TPT.getRestorationPoint();
-    AddressingModeMatcher Matcher(MatchedAddrModeInsts, TLI, AddressAccessTy,
+    AddressingModeMatcher Matcher(MatchedAddrModeInsts, TM, AddressAccessTy,
                                   MemoryInst, Result, InsertedTruncs,
                                   PromotedInsts, TPT);
     Matcher.IgnoreProfitability = true;
@@ -3067,7 +3071,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     // For non-PHIs, determine the addressing mode being computed.
     SmallVector<Instruction*, 16> NewAddrModeInsts;
     ExtAddrMode NewAddrMode = AddressingModeMatcher::Match(
-        V, AccessTy, MemoryInst, NewAddrModeInsts, *TLI, InsertedTruncsSet,
+        V, AccessTy, MemoryInst, NewAddrModeInsts, *TM, InsertedTruncsSet,
         PromotedInsts, TPT);
 
     // This check is broken into two cases with very similar code to avoid using
