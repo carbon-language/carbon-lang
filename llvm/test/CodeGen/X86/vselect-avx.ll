@@ -79,3 +79,14 @@ define void @test3(<4 x i32> %induction30, <4 x i16>* %tmp16, <4 x i16>* %tmp17,
   store <4 x i16> %predphi, <4 x i16>* %tmp17, align 8
  ret void
 }
+
+; We shouldn't try to lower this directly using VSELECT because we don't have
+; vpblendvb in AVX1, only in AVX2. Instead, it should be expanded.
+;
+; CHECK-LABEL: PR22706:
+; CHECK: vpcmpgtb
+; CHECK: vpcmpgtb
+define <32 x i8> @PR22706(<32 x i1> %x) {
+  %tmp = select <32 x i1> %x, <32 x i8> <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>, <32 x i8> <i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2>
+  ret <32 x i8> %tmp
+}

@@ -10126,24 +10126,31 @@ SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
   if (!Subtarget->hasSSE41())
     return SDValue();
 
-  // Some types for vselect were previously set to Expand, not Legal or
-  // Custom. Return an empty SDValue so we fall-through to Expand, after
-  // the Custom lowering phase.
-  MVT VT = Op.getSimpleValueType();
-  switch (VT.SimpleTy) {
+  // Only some types will be legal on some subtargets. If we can emit a legal
+  // VSELECT-matching blend, return Op, and but if we need to expand, return
+  // a null value.
+  switch (Op.getSimpleValueType().SimpleTy) {
   default:
-    break;
+    // Most of the vector types have blends past SSE4.1.
+    return Op;
+
+  case MVT::v32i8:
+    // The byte blends for AVX vectors were introduced only in AVX2.
+    if (Subtarget->hasAVX2())
+      return Op;
+
+    return SDValue();
+
   case MVT::v8i16:
   case MVT::v16i16:
+    // AVX-512 BWI and VLX features support VSELECT with i16 elements.
     if (Subtarget->hasBWI() && Subtarget->hasVLX())
-      break;
+      return Op;
+
+    // FIXME: We should custom lower this by fixing the condition and using i8
+    // blends.
     return SDValue();
   }
-
-  // We couldn't create a "Blend with immediate" node.
-  // This node should still be legal, but we'll have to emit a blendv*
-  // instruction.
-  return Op;
 }
 
 static SDValue LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG) {
@@ -20784,7 +20791,17 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
     // lowered.
     if (!TLI.isOperationLegalOrCustom(ISD::VSELECT, VT))
       return SDValue();
-    if (!Subtarget->hasSSE41() || VT == MVT::v16i16 || VT == MVT::v8i16)
+    // FIXME: We don't support i16-element blends currently. We could and
+    // should support them by making *all* the bits in the condition be set
+    // rather than just the high bit and using an i8-element blend.
+    if (VT.getScalarType() == MVT::i16)
+      return SDValue();
+    // Dynamic blending was only available from SSE4.1 onward.
+    if (VT.getSizeInBits() == 128 && !Subtarget->hasSSE41())
+      return SDValue();
+    // Byte blends are only available in AVX2
+    if (VT.getSizeInBits() == 256 && VT.getScalarType() == MVT::i8 &&
+        !Subtarget->hasAVX2())
       return SDValue();
 
     assert(BitWidth >= 8 && BitWidth <= 64 && "Invalid mask size");
