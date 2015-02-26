@@ -73,6 +73,7 @@ namespace Check {
     CheckNone = 0,
     CheckPlain,
     CheckNext,
+    CheckSame,
     CheckNot,
     CheckDAG,
     CheckLabel,
@@ -620,6 +621,9 @@ struct CheckString {
   /// CheckNext - Verify there is a single line in the given buffer.
   bool CheckNext(const SourceMgr &SM, StringRef Buffer) const;
 
+  /// CheckSame - Verify there is no newline in the given buffer.
+  bool CheckSame(const SourceMgr &SM, StringRef Buffer) const;
+
   /// CheckNot - Verify there's no "not strings" in the given buffer.
   bool CheckNot(const SourceMgr &SM, StringRef Buffer,
                 const std::vector<const Pattern *> &NotStrings,
@@ -683,6 +687,9 @@ static size_t CheckTypeSize(Check::CheckType Ty) {
   case Check::CheckNext:
     return sizeof("-NEXT:") - 1;
 
+  case Check::CheckSame:
+    return sizeof("-SAME:") - 1;
+
   case Check::CheckNot:
     return sizeof("-NOT:") - 1;
 
@@ -712,6 +719,9 @@ static Check::CheckType FindCheckType(StringRef Buffer, StringRef Prefix) {
   StringRef Rest = Buffer.drop_front(Prefix.size() + 1);
   if (Rest.startswith("NEXT:"))
     return Check::CheckNext;
+
+  if (Rest.startswith("SAME:"))
+    return Check::CheckSame;
 
   if (Rest.startswith("NOT:"))
     return Check::CheckNot;
@@ -919,10 +929,12 @@ static bool ReadCheckFile(SourceMgr &SM,
     Buffer = Buffer.substr(EOL);
 
     // Verify that CHECK-NEXT lines have at least one CHECK line before them.
-    if ((CheckTy == Check::CheckNext) && CheckStrings.empty()) {
+    if ((CheckTy == Check::CheckNext || CheckTy == Check::CheckSame) &&
+        CheckStrings.empty()) {
+      StringRef Type = CheckTy == Check::CheckNext ? "NEXT" : "SAME";
       SM.PrintMessage(SMLoc::getFromPointer(UsedPrefixStart),
                       SourceMgr::DK_Error,
-                      "found '" + UsedPrefix + "-NEXT:' without previous '"
+                      "found '" + UsedPrefix + "-" + Type + "' without previous '"
                       + UsedPrefix + ": line");
       return true;
     }
@@ -1053,6 +1065,11 @@ size_t CheckString::Check(const SourceMgr &SM, StringRef Buffer,
     if (CheckNext(SM, SkippedRegion))
       return StringRef::npos;
 
+    // If this check is a "CHECK-SAME", verify that the previous match was on
+    // the same line (i.e. that there is no newline between them).
+    if (CheckSame(SM, SkippedRegion))
+      return StringRef::npos;
+
     // If this match had "not strings", verify that they don't exist in the
     // skipped region.
     if (CheckNot(SM, SkippedRegion, NotStrings, VariableTable))
@@ -1095,6 +1112,34 @@ bool CheckString::CheckNext(const SourceMgr &SM, StringRef Buffer) const {
                     "previous match ended here");
     SM.PrintMessage(SMLoc::getFromPointer(FirstNewLine), SourceMgr::DK_Note,
                     "non-matching line after previous match is here");
+    return true;
+  }
+
+  return false;
+}
+
+bool CheckString::CheckSame(const SourceMgr &SM, StringRef Buffer) const {
+  if (CheckTy != Check::CheckSame)
+    return false;
+
+  // Count the number of newlines between the previous match and this one.
+  assert(Buffer.data() !=
+             SM.getMemoryBuffer(SM.FindBufferContainingLoc(
+                                    SMLoc::getFromPointer(Buffer.data())))
+                 ->getBufferStart() &&
+         "CHECK-SAME can't be the first check in a file");
+
+  const char *FirstNewLine = nullptr;
+  unsigned NumNewLines = CountNumNewlinesBetween(Buffer, FirstNewLine);
+
+  if (NumNewLines != 0) {
+    SM.PrintMessage(Loc, SourceMgr::DK_Error,
+                    Prefix +
+                        "-SAME: is not on the same line as the previous match");
+    SM.PrintMessage(SMLoc::getFromPointer(Buffer.end()), SourceMgr::DK_Note,
+                    "'next' match was here");
+    SM.PrintMessage(SMLoc::getFromPointer(Buffer.data()), SourceMgr::DK_Note,
+                    "previous match ended here");
     return true;
   }
 
