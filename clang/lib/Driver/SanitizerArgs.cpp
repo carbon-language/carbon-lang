@@ -360,7 +360,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
                             options::OPT_fsanitize_memory_track_origins,
                             options::OPT_fno_sanitize_memory_track_origins)) {
       if (A->getOption().matches(options::OPT_fsanitize_memory_track_origins)) {
-        MsanTrackOrigins = 1;
+        MsanTrackOrigins = 2;
       } else if (A->getOption().matches(
                      options::OPT_fno_sanitize_memory_track_origins)) {
         MsanTrackOrigins = 0;

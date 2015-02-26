@@ -1030,10 +1030,11 @@ are listed below.
       uninitialized bits came from. Slows down execution by additional
       1.5x-2x.
 
-      Possible values for level are 0 (off), 1 (default), 2. Level 2 adds more
-      sections to MemorySanitizer reports describing the order of memory stores
-      the uninitialized value went through. Beware, this mode may use a lot of
-      extra memory.
+      Possible values for level are 0 (off), 1, 2 (default). Level 2
+      adds more sections to MemorySanitizer reports describing the
+      order of memory stores the uninitialized value went
+      through. This mode may use extra memory in programs that copy
+      uninitialized memory a lot.
 
    Extra features of UndefinedBehaviorSanitizer:
 
