@@ -1174,7 +1174,8 @@ public:
     return MangledName;
   }
 
-  void addFunctionDefinition(std::unique_ptr<FunctionAST> FnAST) {
+  void addFunctionAST(std::unique_ptr<FunctionAST> FnAST) {
+    std::cerr << "Adding AST: " << FnAST->Proto->Name << "\n";
     FunctionDefs[mangle(FnAST->Proto->Name)] = std::move(FnAST);
   }
 
@@ -1190,7 +1191,7 @@ public:
 
                   // If we don't already have a definition of 'Name' then search
                   // the ASTs.
-                  return searchUncompiledASTs(Name);
+                  return searchFunctionASTs(Name);
                 },
                 [](const std::string &S) { return 0; } );
 
@@ -1216,21 +1217,17 @@ private:
 
   // This method searches the FunctionDefs map for a definition of 'Name'. If it
   // finds one it generates a stub for it and returns the address of the stub.
-  TargetAddress searchUncompiledASTs(const std::string &Name) {
+  TargetAddress searchFunctionASTs(const std::string &Name) {
     auto DefI = FunctionDefs.find(Name);
     if (DefI == FunctionDefs.end())
       return 0;
 
-    // We have AST for 'Name'. IRGen it, add it to the JIT, and
-    // return the address for it.
-    // FIXME: What happens if IRGen fails?
-    auto H = addModule(IRGen(Session, *DefI->second));
-
-    // Remove the function definition's AST now that we're
-    // finished with it.
+    // Take the FunctionAST out of the map.
+    auto FnAST = std::move(DefI->second);
     FunctionDefs.erase(DefI);
 
-    // Return the address of the function.
+    // IRGen the AST, add it to the JIT, and return the address for it.
+    auto H = addModule(IRGen(Session, *FnAST));
     return findSymbolIn(H, Name).getAddress();
   }
 
@@ -1246,7 +1243,7 @@ private:
 static void HandleDefinition(SessionContext &S, KaleidoscopeJIT &J) {
   if (auto F = ParseDefinition()) {
     S.addPrototypeAST(llvm::make_unique<PrototypeAST>(*F->Proto));
-    J.addFunctionDefinition(std::move(F));
+    J.addFunctionAST(std::move(F));
   } else {
     // Skip token for error recovery.
     getNextToken();
