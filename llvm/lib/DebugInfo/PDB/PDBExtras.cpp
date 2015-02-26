@@ -247,31 +247,6 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const PDB_SymType &Tag) {
   return OS;
 }
 
-raw_ostream &llvm::operator<<(raw_ostream &OS, const PDB_BuiltinType &Type) {
-  switch (Type) {
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, Void, "void", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, Char, "char", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, WCharT, "wchar_t", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, Int, "int", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, UInt, "uint", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, Float, "float", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, BCD, "BCD", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, Bool, "bool", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, Long, "long", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, ULong, "ulong", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, Currency, "CURRENCY", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, Date, "DATE", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, Variant, "VARIANT", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, Complex, "complex", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, Bitfield, "bitfield", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, BSTR, "BSTR", OS)
-    CASE_OUTPUT_ENUM_CLASS_STR(PDB_BuiltinType, HResult, "HRESULT", OS)
-  default:
-    break;
-  }
-  return OS;
-}
-
 raw_ostream &llvm::operator<<(raw_ostream &OS, const PDB_UniqueId &Id) {
   static const char *Lookup = "0123456789ABCDEF";
 

@@ -26,22 +26,39 @@ struct VirtualBase {
 
 struct B : public A, protected virtual VirtualBase {
   void PureFunc() override {}
+};
 
+struct MemberTest {
   enum NestedEnum {
     FirstVal,
     SecondVal
   };
 
   typedef int NestedTypedef;
-  NestedEnum EnumVar;
-  NestedTypedef TypedefVar;
+
+  NestedEnum m_nested_enum;
+  NestedTypedef m_typedef;
+  bool m_bool;
+  char m_char;
+  wchar_t m_wchar_t;
+  int m_int;
+  unsigned m_unsigned;
+  long m_long;
+  unsigned long m_unsigned_long;
+  __int64 m_int64;
+  unsigned __int64 m_unsigned_int64;
+  float m_float;
+  double m_double;
+  void (*m_pfn_2_args)(int, double);
 };
 
 typedef int IntType;
 typedef A ClassAType;
 
 int main(int argc, char **argv) {
+  // Force symbol references so the linker generates debug info
   B b;
+  MemberTest members;
   auto PureAddr = &B::PureFunc;
   auto VirtualAddr = &A::PureFunc;
   auto RegularAddr = &A::RegularFunc;

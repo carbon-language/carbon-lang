@@ -37,6 +37,8 @@ public:
 private:
   void dumpSymbolTypeAndName(const PDBSymbol &Type, StringRef Name,
                              raw_ostream &OS);
+  bool tryDumpFunctionPointer(const PDBSymbol &Type, StringRef Name,
+                              raw_ostream &OS);
 };
 }
 

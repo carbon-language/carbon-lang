@@ -4,23 +4,23 @@
 
 ; The format is func [0x<rva_start>+<prologue_length> - 0x<rva_end>-<epilogue_length>]
 ; SYM_FORMAT: symbolformat-fpo.obj
-; SYM_FORMAT-DAG: func [0x001130+0 - 0x001137-1] (FPO) uint32_t __cdecl fpo_func(uint32_t n)
+; SYM_FORMAT-DAG: func [{{.*}}] (FPO) unsigned __cdecl fpo_func(unsigned n)
 ; SYM_FORMAT: symbolformat.obj
-; SYM_FORMAT-DAG: func [0x001140+3 - 0x001147-2] (EBP) int32_t __cdecl _purecall()
-; SYM_FORMAT-DAG: func [0x001150+6 - 0x0011b6-4] (EBP) int32_t __cdecl main(int32_t argc, char** argv)
-; SYM_FORMAT-DAG: func [0x0010b0+7 - 0x0010c7-4] (EBP) void A::A()
-; SYM_FORMAT-DAG: func [0x0011c0+7 - 0x0011f1-6] (EBP) void B::B()
-; SYM_FORMAT-DAG: thunk [0x000010f6 - 0x000010fa] (Pcode) B::`vcall'{0}'
-; SYM_FORMAT-DAG: func [0x001100+7 - 0x00110b-4] (EBP) virtual void B::PureFunc()
-; SYM_FORMAT-DAG: func [0x001110+7 - 0x00111b-4] (EBP) void A::RegularFunc()
-; SYM_FORMAT-DAG: func [0x001120+7 - 0x00112b-4] (EBP) virtual void A::VirtualFunc()
+; SYM_FORMAT-DAG: func [{{.*}}] (EBP) int __cdecl _purecall()
+; SYM_FORMAT-DAG: func [{{.*}}] (EBP) int __cdecl main(int argc, char** argv)
+; SYM_FORMAT-DAG: func [{{.*}}] (EBP) void A::A()
+; SYM_FORMAT-DAG: func [{{.*}}] (EBP) void B::B()
+; SYM_FORMAT-DAG: thunk [{{.*}}] (Pcode) B::`vcall'{0}'
+; SYM_FORMAT-DAG: func [{{.*}}] (EBP) virtual void B::PureFunc()
+; SYM_FORMAT-DAG: func [{{.*}}] (EBP) void A::RegularFunc()
+; SYM_FORMAT-DAG: func [{{.*}}] (EBP) virtual void A::VirtualFunc()
 
 ; TYPES_FORMAT: Enums
 ; TYPES_FORMAT-DAG: enum TestEnum
 ; TYPES_FORMAT-DAG: enum TestEnumClass
 ; TYPES_FORMAT: Function Signatures
-; TYPES_FORMAT-DAG: int32_t __cdecl ()
-; TYPES_FORMAT-DAG: int32_t __cdecl (int32_t, char**)
+; TYPES_FORMAT-DAG: int __cdecl ()
+; TYPES_FORMAT-DAG: int __cdecl (int, char**)
 ; TYPES_FORMAT-DAG: void (A::)()
 ; TYPES_FORMAT-DAG: void (B::)()
 ; TYPES_FORMAT-DAG: void (B::)(B&)
@@ -30,7 +30,7 @@
 ; TYPES_FORMAT-DAG: void (A::)()
 ; TYPES_FORMAT-DAG: A& (A::)(A&)
 ; TYPES_FORMAT: Typedefs
-; TYPES_FORMAT-DAG: typedef int32_t IntType
+; TYPES_FORMAT-DAG: typedef int IntType
 ; TYPES_FORMAT-DAG: typedef class A ClassAType
 ; TYPES_FORMAT: Classes
 ; TYPES_FORMAT-DAG: class A
@@ -43,7 +43,19 @@
 ; FULL_CLASS: virtual void VirtualFunc()
 ; FULL_CLASS: void RegularFunc()
 ; FULL_CLASS: }
-; FULL_CLASS-DAG: class B {
-; FULL_CLASS: public:
-; FULL_CLASS: virtual void PureFunc()
+; FULL_CLASS-DAG: class MemberTest {
+; FULL_CLASS: data +0x00 MemberTest::NestedEnum m_nested_enum
+; FULL_CLASS: data +0x04 int m_typedef
+; FULL_CLASS: data +0x08 bool m_bool
+; FULL_CLASS: data +0x09 char m_char
+; FULL_CLASS: data +0x0a wchar_t m_wchar_t
+; FULL_CLASS: data +0x0c int m_int
+; FULL_CLASS: data +0x10 unsigned m_unsigned
+; FULL_CLASS: data +0x14 long m_long
+; FULL_CLASS: data +0x18 unsigned long m_unsigned_long
+; FULL_CLASS: data +0x20 __int64 m_int64
+; FULL_CLASS: data +0x28 unsigned __int64 m_unsigned_int64
+; FULL_CLASS: data +0x30 float m_float
+; FULL_CLASS: data +0x38 double m_double
+; FULL_CLASS: data +0x40 void (__cdecl *m_pfn_2_args)(int, double)
 ; FULL_CLASS: }

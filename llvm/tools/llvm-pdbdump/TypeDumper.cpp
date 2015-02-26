@@ -68,7 +68,7 @@ void TypeDumper::dump(const PDBSymbolTypeFunctionSig &Symbol, raw_ostream &OS,
     OS << newline(Indent);
 
   FunctionDumper Dumper;
-  Dumper.start(Symbol, FunctionDumper::PointerType::None, OS);
+  Dumper.start(Symbol, nullptr, FunctionDumper::PointerType::None, OS);
 }
 
 void TypeDumper::dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,

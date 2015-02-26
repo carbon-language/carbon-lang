@@ -9,12 +9,12 @@
 
 #include "TypedefDumper.h"
 
+#include "BuiltinDumper.h"
 #include "FunctionDumper.h"
 #include "llvm-pdbdump.h"
 
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBExtras.h"
-#include "llvm/DebugInfo/PDB/PDBSymbolTypeBuiltin.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeEnum.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeFunctionSig.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypePointer.h"
@@ -39,10 +39,8 @@ void TypedefDumper::dump(const PDBSymbolTypeArray &Symbol, raw_ostream &OS,
 
 void TypedefDumper::dump(const PDBSymbolTypeBuiltin &Symbol, raw_ostream &OS,
                          int Indent) {
-  PDB_BuiltinType Type = Symbol.getBuiltinType();
-  OS << Type;
-  if (Type == PDB_BuiltinType::UInt || Type == PDB_BuiltinType::Int)
-    OS << (8 * Symbol.getLength()) << "_t";
+  BuiltinDumper Dumper;
+  Dumper.start(Symbol, OS);
 }
 
 void TypedefDumper::dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
@@ -65,7 +63,7 @@ void TypedefDumper::dump(const PDBSymbolTypePointer &Symbol, raw_ostream &OS,
     if (Symbol.isReference())
       Pointer = FunctionDumper::PointerType::Reference;
     FunctionDumper NestedDumper;
-    NestedDumper.start(*FuncSig, Pointer, OS);
+    NestedDumper.start(*FuncSig, nullptr, Pointer, OS);
   } else {
     PointeeType->dump(OS, Indent, *this);
     OS << ((Symbol.isReference()) ? "&" : "*");
@@ -75,7 +73,7 @@ void TypedefDumper::dump(const PDBSymbolTypePointer &Symbol, raw_ostream &OS,
 void TypedefDumper::dump(const PDBSymbolTypeFunctionSig &Symbol,
                          raw_ostream &OS, int Indent) {
   FunctionDumper Dumper;
-  Dumper.start(Symbol, FunctionDumper::PointerType::None, OS);
+  Dumper.start(Symbol, nullptr, FunctionDumper::PointerType::None, OS);
 }
 
 void TypedefDumper::dump(const PDBSymbolTypeUDT &Symbol, raw_ostream &OS,

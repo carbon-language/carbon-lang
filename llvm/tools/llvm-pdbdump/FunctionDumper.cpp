@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "FunctionDumper.h"
+#include "BuiltinDumper.h"
 #include "llvm-pdbdump.h"
 
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
@@ -16,7 +17,6 @@
 #include "llvm/DebugInfo/PDB/PDBSymbolFuncDebugEnd.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolFuncDebugStart.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeArray.h"
-#include "llvm/DebugInfo/PDB/PDBSymbolTypeBuiltin.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeEnum.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeFunctionArg.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeFunctionSig.h"
@@ -45,7 +45,8 @@ void dumpClassParentWithScopeOperator(const T &Symbol, llvm::raw_ostream &OS,
 FunctionDumper::FunctionDumper() : PDBSymDumper(true) {}
 
 void FunctionDumper::start(const PDBSymbolTypeFunctionSig &Symbol,
-                           PointerType Pointer, raw_ostream &OS) {
+                           const char *Name, PointerType Pointer,
+                           raw_ostream &OS) {
   auto ReturnType = Symbol.getReturnType();
   ReturnType->dump(OS, 0, *this);
   OS << " ";
@@ -70,13 +71,14 @@ void FunctionDumper::start(const PDBSymbolTypeFunctionSig &Symbol,
     OS << "(";
     if (ShouldDumpCallingConvention)
       OS << CC << " ";
-    OS << Symbol.getCallingConvention() << " ";
     if (ClassParent)
       OS << ClassParent->getName() << "::";
     if (Pointer == PointerType::Reference)
       OS << "&";
     else
       OS << "*";
+    if (Name)
+      OS << Name;
     OS << ")";
   }
 
@@ -185,10 +187,8 @@ void FunctionDumper::dump(const PDBSymbolTypeArray &Symbol, raw_ostream &OS,
 
 void FunctionDumper::dump(const PDBSymbolTypeBuiltin &Symbol, raw_ostream &OS,
                           int Indent) {
-  PDB_BuiltinType Type = Symbol.getBuiltinType();
-  OS << Type;
-  if (Type == PDB_BuiltinType::UInt || Type == PDB_BuiltinType::Int)
-    OS << (8 * Symbol.getLength()) << "_t";
+  BuiltinDumper Dumper;
+  Dumper.start(Symbol, OS);
 }
 
 void FunctionDumper::dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
@@ -226,7 +226,7 @@ void FunctionDumper::dump(const PDBSymbolTypePointer &Symbol, raw_ostream &OS,
     FunctionDumper NestedDumper;
     PointerType Pointer =
         Symbol.isReference() ? PointerType::Reference : PointerType::Pointer;
-    NestedDumper.start(*FuncSig, Pointer, OS);
+    NestedDumper.start(*FuncSig, nullptr, Pointer, OS);
   } else {
     if (Symbol.isConstType())
       OS << "const ";

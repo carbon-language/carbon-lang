@@ -9,13 +9,14 @@
 
 #include "VariableDumper.h"
 
+#include "BuiltinDumper.h"
 #include "llvm-pdbdump.h"
 #include "FunctionDumper.h"
 
 #include "llvm/DebugInfo/PDB/PDBSymbolData.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolFunc.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeArray.h"
-#include "llvm/DebugInfo/PDB/PDBSymbolTypeBuiltin.h"
+#include "llvm/DebugInfo/PDB/PDBSymbolTypeFunctionSig.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypePointer.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeTypedef.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeEnum.h"
@@ -57,7 +58,8 @@ void VariableDumper::start(const PDBSymbolData &Var, raw_ostream &OS,
 
 void VariableDumper::dump(const PDBSymbolTypeBuiltin &Symbol, raw_ostream &OS,
                           int Indent) {
-  OS << Symbol.getBuiltinType();
+  BuiltinDumper Dumper;
+  Dumper.start(Symbol, OS);
 }
 
 void VariableDumper::dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
@@ -114,7 +116,29 @@ void VariableDumper::dumpSymbolTypeAndName(const PDBSymbol &Type,
     ElementType->dump(OS, 0, *this);
     OS << " " << Name << IndexStream.str();
   } else {
-    Type.dump(OS, 0, *this);
-    OS << " " << Name;
+    if (!tryDumpFunctionPointer(Type, Name, OS)) {
+      Type.dump(OS, 0, *this);
+      OS << " " << Name;
+    }
   }
+}
+
+bool VariableDumper::tryDumpFunctionPointer(const PDBSymbol &Type,
+                                            StringRef Name, raw_ostream &OS) {
+  // Function pointers come across as pointers to function signatures.  But the
+  // signature carries no name, so we have to handle this case separately.
+  if (auto *PointerType = dyn_cast<PDBSymbolTypePointer>(&Type)) {
+    auto PointeeType = PointerType->getPointeeType();
+    if (auto *FunctionSig =
+            dyn_cast<PDBSymbolTypeFunctionSig>(PointeeType.get())) {
+      FunctionDumper Dumper;
+      FunctionDumper::PointerType PT = FunctionDumper::PointerType::Pointer;
+      if (PointerType->isReference())
+        PT = FunctionDumper::PointerType::Reference;
+      std::string NameStr(Name.begin(), Name.end());
+      Dumper.start(*FunctionSig, NameStr.c_str(), PT, OS);
+      return true;
+    }
+  }
+  return false;
 }

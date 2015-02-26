@@ -20,8 +20,8 @@ public:
 
   enum class PointerType { None, Pointer, Reference };
 
-  void start(const PDBSymbolTypeFunctionSig &Symbol, PointerType Pointer,
-             raw_ostream &OS);
+  void start(const PDBSymbolTypeFunctionSig &Symbol, const char *Name,
+             PointerType Pointer, raw_ostream &OS);
   void start(const PDBSymbolFunc &Symbol, PointerType Pointer, raw_ostream &OS,
              int Indent);
 

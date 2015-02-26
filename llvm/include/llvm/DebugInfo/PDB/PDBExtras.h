@@ -26,7 +26,6 @@ raw_ostream &operator<<(raw_ostream &OS, const PDB_ThunkOrdinal &Thunk);
 raw_ostream &operator<<(raw_ostream &OS, const PDB_Checksum &Checksum);
 raw_ostream &operator<<(raw_ostream &OS, const PDB_Lang &Lang);
 raw_ostream &operator<<(raw_ostream &OS, const PDB_SymType &Tag);
-raw_ostream &operator<<(raw_ostream &OS, const PDB_BuiltinType &Type);
 raw_ostream &operator<<(raw_ostream &OS, const PDB_UniqueId &Id);
 
 raw_ostream &operator<<(raw_ostream &OS, const Variant &Value);
