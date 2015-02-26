@@ -298,7 +298,7 @@ def make_symlink( vDictArgs, vstrFrameworkPythonDir, vstrSrcFile, vstrTargetFile
 		return (bOk, strErrMsg);
 	else:
 		# Resolve vstrSrcFile path relatively the build directory
-		stdBuildDir = "";
+		strBuildDir = "";
 		if eOSType == utilsOsType.EnumOsType.Windows:
 			# On a Windows platform the vstrFrameworkPythonDir looks like:
 			# llvm\\build\\Lib\\site-packages\\lldb

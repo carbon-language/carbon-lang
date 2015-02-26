@@ -436,7 +436,7 @@ Removes given file, ignoring error if it doesn't exist.
 """
 def remove_ignore_enoent(filename):
 	try:
-		os.remove( strSwigOutputFile );
+		os.remove( filename );
 	except OSError as e:
 		import errno
 		if e.errno != errno.ENOENT:
@@ -702,7 +702,7 @@ def main( vDictArgs ):
 		remove_ignore_enoent( strSwigOutputFile )
 		open( strSwigOutputFile, 'w' ).close(); # Touch the file
 		if bDebug:
-			strMsg = strMsgLldbDisablePython;
+			strMsg = strMsgLldbDisablePythonEnv;
 		return (0, strMsg );
 		
 	# If this project is being built with LLDB_DISABLE_PYTHON defined,
