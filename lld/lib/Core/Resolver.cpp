@@ -383,11 +383,16 @@ void Resolver::deadStripOptimize() {
 
   // Some type of references prevent referring atoms to be dead-striped.
   // Make a reverse map of such references before traversing the graph.
-  for (const Atom *atom : _atoms)
+  // While traversing the list of atoms, mark AbsoluteAtoms as live
+  // in order to avoid reclaim.
+  for (const Atom *atom : _atoms) {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom))
       for (const Reference *ref : *defAtom)
         if (isBackref(ref))
           _reverseRef[ref->target()].insert(atom);
+    if (const AbsoluteAtom *absAtom = dyn_cast<AbsoluteAtom>(atom))
+      markLive(absAtom);
+  }
 
   // By default, shared libraries are built with all globals as dead strip roots
   if (_context.globalsAreDeadStripRoots())
