@@ -1089,18 +1089,17 @@ void ELFFile<ELFT>::updateReferenceForMergeStringAccess(ELFReference<ELFT> *ref,
 
 template <class ELFT> void ELFFile<ELFT>::updateReferences() {
   for (auto &ri : _references) {
-    if (ri->kindNamespace() == lld::Reference::KindNamespace::ELF) {
-      const Elf_Sym *symbol = _objFile->getSymbol(ri->targetSymbolIndex());
-      const Elf_Shdr *shdr = _objFile->getSection(symbol);
+    if (ri->kindNamespace() != lld::Reference::KindNamespace::ELF)
+      continue;
+    const Elf_Sym *symbol = _objFile->getSymbol(ri->targetSymbolIndex());
+    const Elf_Shdr *shdr = _objFile->getSection(symbol);
 
-      // If the atom is not in mergeable string section, the target atom is
-      // simply that atom.
-      if (!isMergeableStringSection(shdr)) {
-        ri->setTarget(findAtom(findSymbolForReference(ri), symbol));
-        continue;
-      }
+    // If the atom is not in mergeable string section, the target atom is
+    // simply that atom.
+    if (isMergeableStringSection(shdr))
       updateReferenceForMergeStringAccess(ri, symbol, shdr);
-    }
+    else
+      ri->setTarget(findAtom(findSymbolForReference(ri), symbol));
   }
 }
 
