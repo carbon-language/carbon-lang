@@ -6803,7 +6803,7 @@ static bool isShuffleFoldableLoad(SDValue V) {
 /// This is a common pattern that we have especially efficient patterns to lower
 /// across all subtarget feature sets.
 static SDValue lowerVectorShuffleAsElementInsertion(
-    MVT VT, SDLoc DL, SDValue V1, SDValue V2, ArrayRef<int> Mask,
+    SDLoc DL, MVT VT, SDValue V1, SDValue V2, ArrayRef<int> Mask,
     const X86Subtarget *Subtarget, SelectionDAG &DAG) {
   SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
   MVT ExtVT = VT;
@@ -6905,7 +6905,7 @@ static SDValue lowerVectorShuffleAsElementInsertion(
 /// For convenience, this code also bundles all of the subtarget feature set
 /// filtering. While a little annoying to re-dispatch on type here, there isn't
 /// a convenient way to factor it out.
-static SDValue lowerVectorShuffleAsBroadcast(MVT VT, SDLoc DL, SDValue V,
+static SDValue lowerVectorShuffleAsBroadcast(SDLoc DL, MVT VT, SDValue V,
                                              ArrayRef<int> Mask,
                                              const X86Subtarget *Subtarget,
                                              SelectionDAG &DAG) {
@@ -7064,7 +7064,7 @@ static SDValue lowerVectorShuffleAsInsertPS(SDValue Op, SDValue V1, SDValue V2,
 /// because for floating point vectors we have a generalized SHUFPS lowering
 /// strategy that handles everything that doesn't *exactly* match an unpack,
 /// making this clever lowering unnecessary.
-static SDValue lowerVectorShuffleAsUnpack(MVT VT, SDLoc DL, SDValue V1,
+static SDValue lowerVectorShuffleAsUnpack(SDLoc DL, MVT VT, SDValue V1,
                                           SDValue V2, ArrayRef<int> Mask,
                                           SelectionDAG &DAG) {
   assert(!VT.isFloatingPoint() &&
@@ -7214,14 +7214,14 @@ static SDValue lowerV2F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // If we have a single input, insert that into V1 if we can do so cheaply.
   if ((Mask[0] >= 2) + (Mask[1] >= 2) == 1) {
     if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
-            MVT::v2f64, DL, V1, V2, Mask, Subtarget, DAG))
+            DL, MVT::v2f64, V1, V2, Mask, Subtarget, DAG))
       return Insertion;
     // Try inverting the insertion since for v2 masks it is easy to do and we
     // can't reliably sort the mask one way or the other.
     int InverseMask[2] = {Mask[0] < 0 ? -1 : (Mask[0] ^ 2),
                           Mask[1] < 0 ? -1 : (Mask[1] ^ 2)};
     if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
-            MVT::v2f64, DL, V2, V1, InverseMask, Subtarget, DAG))
+            DL, MVT::v2f64, V2, V1, InverseMask, Subtarget, DAG))
       return Insertion;
   }
 
@@ -7272,7 +7272,7 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   if (isSingleInputShuffleMask(Mask)) {
     // Check for being able to broadcast a single element.
-    if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v2i64, DL, V1,
+    if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(DL, MVT::v2i64, V1,
                                                           Mask, Subtarget, DAG))
       return Broadcast;
 
@@ -7320,13 +7320,13 @@ static SDValue lowerV2I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // When loading a scalar and then shuffling it into a vector we can often do
   // the insertion cheaply.
   if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
-          MVT::v2i64, DL, V1, V2, Mask, Subtarget, DAG))
+          DL, MVT::v2i64, V1, V2, Mask, Subtarget, DAG))
     return Insertion;
   // Try inverting the insertion since for v2 masks it is easy to do and we
   // can't reliably sort the mask one way or the other.
   int InverseMask[2] = {Mask[0] ^ 2, Mask[1] ^ 2};
   if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
-          MVT::v2i64, DL, V2, V1, InverseMask, Subtarget, DAG))
+          DL, MVT::v2i64, V2, V1, InverseMask, Subtarget, DAG))
     return Insertion;
 
   // We have different paths for blend lowering, but they all must use the
@@ -7495,7 +7495,7 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   if (NumV2Elements == 0) {
     // Check for being able to broadcast a single element.
-    if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v4f32, DL, V1,
+    if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(DL, MVT::v4f32, V1,
                                                           Mask, Subtarget, DAG))
       return Broadcast;
 
@@ -7526,7 +7526,7 @@ static SDValue lowerV4F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // when the V2 input is targeting element 0 of the mask -- that is the fast
   // case here.
   if (NumV2Elements == 1 && Mask[0] >= 4)
-    if (SDValue V = lowerVectorShuffleAsElementInsertion(MVT::v4f32, DL, V1, V2,
+    if (SDValue V = lowerVectorShuffleAsElementInsertion(DL, MVT::v4f32, V1, V2,
                                                          Mask, Subtarget, DAG))
       return V;
 
@@ -7586,7 +7586,7 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   if (NumV2Elements == 0) {
     // Check for being able to broadcast a single element.
-    if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v4i32, DL, V1,
+    if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(DL, MVT::v4i32, V1,
                                                           Mask, Subtarget, DAG))
       return Broadcast;
 
@@ -7613,7 +7613,7 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   // There are special ways we can lower some single-element blends.
   if (NumV2Elements == 1)
-    if (SDValue V = lowerVectorShuffleAsElementInsertion(MVT::v4i32, DL, V1, V2,
+    if (SDValue V = lowerVectorShuffleAsElementInsertion(DL, MVT::v4i32, V1, V2,
                                                          Mask, Subtarget, DAG))
       return V;
 
@@ -7654,7 +7654,7 @@ static SDValue lowerV4I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   // Try to lower by permuting the inputs into an unpack instruction.
   if (SDValue Unpack =
-          lowerVectorShuffleAsUnpack(MVT::v4i32, DL, V1, V2, Mask, DAG))
+          lowerVectorShuffleAsUnpack(DL, MVT::v4i32, V1, V2, Mask, DAG))
     return Unpack;
 
   // We implement this with SHUFPS because it can blend from two vectors.
@@ -7709,7 +7709,7 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
   MutableArrayRef<int> HToHInputs(HiInputs.data() + NumLToH, NumHToH);
 
   // Check for being able to broadcast a single element.
-  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v8i16, DL, V,
+  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(DL, MVT::v8i16, V,
                                                         Mask, Subtarget, DAG))
     return Broadcast;
 
@@ -8236,7 +8236,7 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   // There are special ways we can lower some single-element blends.
   if (NumV2Inputs == 1)
-    if (SDValue V = lowerVectorShuffleAsElementInsertion(MVT::v8i16, DL, V1, V2,
+    if (SDValue V = lowerVectorShuffleAsElementInsertion(DL, MVT::v8i16, V1, V2,
                                                          Mask, Subtarget, DAG))
       return V;
 
@@ -8268,7 +8268,7 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return BitBlend;
 
   if (SDValue Unpack =
-          lowerVectorShuffleAsUnpack(MVT::v8i16, DL, V1, V2, Mask, DAG))
+          lowerVectorShuffleAsUnpack(DL, MVT::v8i16, V1, V2, Mask, DAG))
     return Unpack;
 
   // If we can't directly blend but can use PSHUFB, that will be better as it
@@ -8392,7 +8392,7 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // For single-input shuffles, there are some nicer lowering tricks we can use.
   if (NumV2Elements == 0) {
     // Check for being able to broadcast a single element.
-    if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v16i8, DL, V1,
+    if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(DL, MVT::v16i8, V1,
                                                           Mask, Subtarget, DAG))
       return Broadcast;
 
@@ -8539,7 +8539,7 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       // shuffles will both be pshufb, in which case we shouldn't bother with
       // this.
       if (SDValue Unpack =
-              lowerVectorShuffleAsUnpack(MVT::v16i8, DL, V1, V2, Mask, DAG))
+              lowerVectorShuffleAsUnpack(DL, MVT::v16i8, V1, V2, Mask, DAG))
         return Unpack;
     }
 
@@ -8548,7 +8548,7 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   // There are special ways we can lower some single-element blends.
   if (NumV2Elements == 1)
-    if (SDValue V = lowerVectorShuffleAsElementInsertion(MVT::v16i8, DL, V1, V2,
+    if (SDValue V = lowerVectorShuffleAsElementInsertion(DL, MVT::v16i8, V1, V2,
                                                          Mask, Subtarget, DAG))
       return V;
 
@@ -9126,7 +9126,7 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   if (isSingleInputShuffleMask(Mask)) {
     // Check for being able to broadcast a single element.
-    if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v4f64, DL, V1,
+    if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(DL, MVT::v4f64, V1,
                                                           Mask, Subtarget, DAG))
       return Broadcast;
 
@@ -9170,7 +9170,7 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       std::count_if(Mask.begin(), Mask.end(), [](int M) { return M >= 4; });
   if (NumV2Elements == 1 && Mask[0] >= 4)
     if (SDValue Insertion = lowerVectorShuffleAsElementInsertion(
-            MVT::v4f64, DL, V1, V2, Mask, Subtarget, DAG))
+            DL, MVT::v4f64, V1, V2, Mask, Subtarget, DAG))
       return Insertion;
 
   if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v4f64, V1, V2, Mask,
@@ -9242,7 +9242,7 @@ static SDValue lowerV4I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return Blend;
 
   // Check for being able to broadcast a single element.
-  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v4i64, DL, V1,
+  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(DL, MVT::v4i64, V1,
                                                         Mask, Subtarget, DAG))
     return Broadcast;
 
@@ -9320,7 +9320,7 @@ static SDValue lowerV8F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return Blend;
 
   // Check for being able to broadcast a single element.
-  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v8f32, DL, V1,
+  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(DL, MVT::v8f32, V1,
                                                         Mask, Subtarget, DAG))
     return Broadcast;
 
@@ -9427,7 +9427,7 @@ static SDValue lowerV8I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return Blend;
 
   // Check for being able to broadcast a single element.
-  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v8i32, DL, V1,
+  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(DL, MVT::v8i32, V1,
                                                         Mask, Subtarget, DAG))
     return Broadcast;
 
@@ -9507,7 +9507,7 @@ static SDValue lowerV16I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return ZExt;
 
   // Check for being able to broadcast a single element.
-  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v16i16, DL, V1,
+  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(DL, MVT::v16i16, V1,
                                                         Mask, Subtarget, DAG))
     return Broadcast;
 
@@ -9599,7 +9599,7 @@ static SDValue lowerV32I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return ZExt;
 
   // Check for being able to broadcast a single element.
-  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(MVT::v32i8, DL, V1,
+  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(DL, MVT::v32i8, V1,
                                                         Mask, Subtarget, DAG))
     return Broadcast;
 
@@ -9864,7 +9864,7 @@ static SDValue lower512BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
          "Cannot lower 512-bit vectors w/ basic ISA!");
 
   // Check for being able to broadcast a single element.
-  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(VT.SimpleTy, DL, V1,
+  if (SDValue Broadcast = lowerVectorShuffleAsBroadcast(DL, VT.SimpleTy, V1,
                                                         Mask, Subtarget, DAG))
     return Broadcast;
 
