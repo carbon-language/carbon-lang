@@ -1176,8 +1176,8 @@ public:
     // new module. Create one that resolves symbols by looking back into the
     // JIT.
     auto MM = createLookasideRTDyldMM<SectionMemoryManager>(
-                [&](const std::string &S) {
-                  return findSymbol(S).getAddress();
+                [&](const std::string &Name) {
+                  return findSymbol(Name).getAddress();
                 },
                 [](const std::string &S) { return 0; } );
 
