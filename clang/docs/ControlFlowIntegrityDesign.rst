@@ -93,6 +93,12 @@ The scheme as described above is the fully general variant of the scheme.
 Most of the time we are able to apply one or more of the following
 optimizations to improve binary size or performance.
 
+In fact, if you try the above example with the current version of the
+compiler, you will probably find that it will not use the described virtual
+table layout or machine instructions. Some of the optimizations we are about
+to introduce cause the compiler to use a different layout or a different
+sequence of machine instructions.
+
 Stripping Leading/Trailing Zeros in Bit Vectors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -180,7 +186,7 @@ those sub-hierarchies need to be (see "Stripping Leading/Trailing Zeros in Bit
 Vectors" above). The `GlobalLayoutBuilder`_ class is responsible for laying
 out the globals efficiently to minimize the sizes of the underlying bitsets.
 
-.. _GlobalLayoutBuilder: http://llvm.org/klaus/llvm/blob/master/include/llvm/Transforms/IPO/LowerBitSets.h
+.. _GlobalLayoutBuilder: http://llvm.org/viewvc/llvm-project/llvm/trunk/include/llvm/Transforms/IPO/LowerBitSets.h?view=markup
 
 Alignment
 ~~~~~~~~~
@@ -234,3 +240,26 @@ instruction may look like this:
 .. code-block:: none
 
      dd2:       48 c1 c1 3b             rol    $0x3b,%rcx
+
+Padding to Powers of 2
+~~~~~~~~~~~~~~~~~~~~~~
+
+Of course, this alignment scheme works best if the address points are
+in fact aligned correctly. To make this more likely to happen, we insert
+padding between virtual tables that in many cases aligns address points to
+a power of 2. Specifically, our padding aligns virtual tables to the next
+highest power of 2 bytes; because address points for specific base classes
+normally appear at fixed offsets within the virtual table, this normally
+has the effect of aligning the address points as well.
+
+This scheme introduces tradeoffs between decreased space overhead for
+instructions and bit vectors and increased overhead in the form of padding. We
+therefore limit the amount of padding so that we align to no more than 128
+bytes. This number was found experimentally to provide a good tradeoff.
+
+Eliminating Bit Vector Checks for All-Ones Bit Vectors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the bit vector is all ones, the bit vector check is redundant; we simply
+need to check that the address is in range and well aligned. This is more
+likely to occur if the virtual tables are padded.
