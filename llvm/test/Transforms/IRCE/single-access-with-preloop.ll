@@ -31,14 +31,21 @@ define void @single_access_with_preloop(i32 *%arr, i32 *%a_len_ptr, i32 %n, i32 
 ; CHECK-LABEL: loop.preheader:
 ; CHECK: [[not_safe_start:[^ ]+]] = add i32 %offset, -1
 ; CHECK: [[not_n:[^ ]+]] = sub i32 -1, %n
-; CHECK: [[not_exit_preloop_at_cond:[^ ]+]] = icmp sgt i32 [[not_safe_start]], [[not_n]]
-; CHECK: [[not_exit_preloop_at:[^ ]+]] = select i1 [[not_exit_preloop_at_cond]], i32 [[not_safe_start]], i32 [[not_n]]
-; CHECK: [[exit_preloop_at:[^ ]+]] = sub i32 -1, [[not_exit_preloop_at]]
+; CHECK: [[not_exit_preloop_at_cond_loclamp:[^ ]+]] = icmp sgt i32 [[not_safe_start]], [[not_n]]
+; CHECK: [[not_exit_preloop_at_loclamp:[^ ]+]] = select i1 [[not_exit_preloop_at_cond_loclamp]], i32 [[not_safe_start]], i32 [[not_n]]
+; CHECK: [[exit_preloop_at_loclamp:[^ ]+]] = sub i32 -1, [[not_exit_preloop_at_loclamp]]
+; CHECK: [[exit_preloop_at_cond:[^ ]+]] = icmp sgt i32 [[exit_preloop_at_loclamp]], 0
+; CHECK: [[exit_preloop_at:[^ ]+]] = select i1 [[exit_preloop_at_cond]], i32 [[exit_preloop_at_loclamp]], i32 0
 
-; CHECK: [[not_safe_end:[^ ]+]] = sub i32 [[not_safe_start]], %len
-; CHECK: [[not_exit_mainloop_at_cond:[^ ]+]] = icmp sgt i32 [[not_safe_end]], [[not_n]]
-; CHECK: [[not_exit_mainloop_at:[^ ]+]] = select i1 [[not_exit_mainloop_at_cond]], i32 [[not_safe_end]], i32 [[not_n]]
-; CHECK: [[exit_mainloop_at:[^ ]+]] = sub i32 -1, [[not_exit_mainloop_at]]
+
+; CHECK: [[not_safe_start_2:[^ ]+]] = add i32 %offset, -1
+; CHECK: [[not_safe_end:[^ ]+]] = sub i32 [[not_safe_start_2]], %len
+; CHECK: [[not_exit_mainloop_at_cond_loclamp:[^ ]+]] = icmp sgt i32 [[not_safe_end]], [[not_n]]
+; CHECK: [[not_exit_mainloop_at_loclamp:[^ ]+]] = select i1 [[not_exit_mainloop_at_cond_loclamp]], i32 [[not_safe_end]], i32 [[not_n]]
+; CHECK: [[exit_mainloop_at_loclamp:[^ ]+]] = sub i32 -1, [[not_exit_mainloop_at_loclamp]]
+; CHECK: [[exit_mainloop_at_cmp:[^ ]+]] = icmp sgt i32 [[exit_mainloop_at_loclamp]], 0
+; CHECK: [[exit_mainloop_at:[^ ]+]] = select i1 [[exit_mainloop_at_cmp]], i32 [[exit_mainloop_at_loclamp]], i32 0
+
 
 ; CHECK-LABEL: in.bounds:
 ; CHECK: [[continue_mainloop_cond:[^ ]+]] = icmp slt i32 %idx.next, [[exit_mainloop_at]]

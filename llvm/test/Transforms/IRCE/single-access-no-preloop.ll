@@ -36,6 +36,7 @@ define void @single_access_no_preloop_no_offset(i32 *%arr, i32 *%a_len_ptr, i32 
 
 ; CHECK-LABEL: main.pseudo.exit:
 ; CHECK-NEXT: %idx.copy = phi i32 [ 0, %loop.preheader ], [ %idx.next, %main.exit.selector ]
+; CHECK-NEXT: %indvar.end = phi i32 [ 0, %loop.preheader ], [ %idx.next, %main.exit.selector ]
 ; CHECK-NEXT: br label %postloop
 
 ; CHECK-LABEL: postloop:
@@ -85,17 +86,19 @@ define void @single_access_no_preloop_with_offset(i32 *%arr, i32 *%a_len_ptr, i3
 ; CHECK-LABEL: loop.preheader:
 ; CHECK: [[not_n:[^ ]+]] = sub i32 -1, %n
 ; CHECK: [[not_safe_range_end:[^ ]+]] = sub i32 3, %len
-; CHECK: [[not_exit_main_loop_at_cmp:[^ ]+]] = icmp sgt i32 [[not_n]], [[not_safe_range_end]]
-; CHECK: [[not_exit_main_loop_at:[^ ]+]] = select i1 [[not_exit_main_loop_at_cmp]], i32 [[not_n]], i32 [[not_safe_range_end]]
-; CHECK: [[exit_main_loop_at:[^ ]+]] = sub i32 -1, [[not_exit_main_loop_at]]
-; CHECK: [[enter_main_loop:[^ ]+]] = icmp slt i32 0, [[exit_main_loop_at]]
+; CHECK: [[not_exit_main_loop_at_hiclamp_cmp:[^ ]+]] = icmp sgt i32 [[not_n]], [[not_safe_range_end]]
+; CHECK: [[not_exit_main_loop_at_hiclamp:[^ ]+]] = select i1 [[not_exit_main_loop_at_hiclamp_cmp]], i32 [[not_n]], i32 [[not_safe_range_end]]
+; CHECK: [[exit_main_loop_at_hiclamp:[^ ]+]] = sub i32 -1, [[not_exit_main_loop_at_hiclamp]]
+; CHECK: [[exit_main_loop_at_loclamp_cmp:[^ ]+]] = icmp sgt i32 [[exit_main_loop_at_hiclamp]], 0
+; CHECK: [[exit_main_loop_at_loclamp:[^ ]+]] = select i1 [[exit_main_loop_at_loclamp_cmp]], i32 [[exit_main_loop_at_hiclamp]], i32 0
+; CHECK: [[enter_main_loop:[^ ]+]] = icmp slt i32 0, [[exit_main_loop_at_loclamp]]
 ; CHECK: br i1 [[enter_main_loop]], label %loop, label %main.pseudo.exit
 
 ; CHECK-LABEL: loop:
 ; CHECK: br i1 true, label %in.bounds, label %out.of.bounds
 
 ; CHECK-LABEL: in.bounds:
-; CHECK: [[continue_main_loop:[^ ]+]] = icmp slt i32 %idx.next, [[exit_main_loop_at]]
+; CHECK: [[continue_main_loop:[^ ]+]] = icmp slt i32 %idx.next, [[exit_main_loop_at_loclamp]]
 ; CHECK: br i1 [[continue_main_loop]], label %loop, label %main.exit.selector
 
 ; CHECK-LABEL: main.pseudo.exit:
