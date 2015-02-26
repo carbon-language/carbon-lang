@@ -201,10 +201,6 @@ class DwarfDebug : public AsmPrinterHandler {
   // Size of each symbol emitted (for those symbols that have a specific size).
   DenseMap<const MCSymbol *, uint64_t> SymSize;
 
-  // Provides a unique id per text section.
-  typedef DenseMap<const MCSection *, SmallVector<SymbolCU, 8> > SectionMapType;
-  SectionMapType SectionMap;
-
   LexicalScopes LScopes;
 
   // Collection of abstract variables.
@@ -370,10 +366,6 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Finish off debug information after all functions have been
   /// processed.
   void finalizeModuleInfo();
-
-  /// \brief Emit labels to close any remaining sections that have been left
-  /// open.
-  void endSections();
 
   /// \brief Emit the debug info section.
   void emitDebugInfo();
