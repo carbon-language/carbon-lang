@@ -44,7 +44,7 @@ else()
       clang_rt.san-${arch}
       clang_rt.ubsan-${arch}
       clang_rt.ubsan_cxx-${arch})
-    if (UNIX AND NOT ${arch} STREQUAL "i386" AND NOT ${arch} STREQUAL "i686")
+    if (UNIX AND NOT ${arch} MATCHES "i386|i686")
       add_sanitizer_rt_symbols(clang_rt.ubsan-${arch} ubsan.syms.extra)
       add_sanitizer_rt_symbols(clang_rt.ubsan_cxx-${arch} ubsan.syms.extra)
       add_dependencies(ubsan
