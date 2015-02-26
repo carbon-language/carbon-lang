@@ -139,6 +139,7 @@ public:
                                     StringRef StringValue = "");
   virtual void emitFPU(unsigned FPU);
   virtual void emitArch(unsigned Arch);
+  virtual void emitArchExtension(unsigned ArchExt);
   virtual void emitObjectArch(unsigned Arch);
   virtual void finishAttributeSection();
   virtual void emitInst(uint32_t Inst, char Suffix = '\0');

@@ -15,6 +15,7 @@
 
 #include "ARMArchName.h"
 #include "ARMFPUName.h"
+#include "ARMArchExtName.h"
 #include "ARMRegisterInfo.h"
 #include "ARMUnwindOpAsm.h"
 #include "llvm/ADT/StringExtras.h"
@@ -105,6 +106,19 @@ static unsigned GetArchDefaultCPUArch(unsigned ID) {
   return 0;
 }
 
+static const char *GetArchExtName(unsigned ID) {
+  switch (ID) {
+  default:
+    llvm_unreachable("Unknown ARCH Extension kind");
+    break;
+#define ARM_ARCHEXT_NAME(NAME, ID)                                             \
+  case ARM::ID:                                                                \
+    return NAME;
+#include "ARMArchExtName.def"
+  }
+  return nullptr;
+}
+
 namespace {
 
 class ARMELFStreamer;
@@ -134,6 +148,7 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
                             StringRef StrinValue) override;
   void emitArch(unsigned Arch) override;
+  void emitArchExtension(unsigned ArchExt) override;
   void emitObjectArch(unsigned Arch) override;
   void emitFPU(unsigned FPU) override;
   void emitInst(uint32_t Inst, char Suffix = '\0') override;
@@ -248,6 +263,9 @@ void ARMTargetAsmStreamer::emitIntTextAttribute(unsigned Attribute,
 }
 void ARMTargetAsmStreamer::emitArch(unsigned Arch) {
   OS << "\t.arch\t" << GetArchName(Arch) << "\n";
+}
+void ARMTargetAsmStreamer::emitArchExtension(unsigned ArchExt) {
+  OS << "\t.arch_extension\t" << GetArchExtName(ArchExt) << "\n";
 }
 void ARMTargetAsmStreamer::emitObjectArch(unsigned Arch) {
   OS << "\t.object_arch\t" << GetArchName(Arch) << '\n';

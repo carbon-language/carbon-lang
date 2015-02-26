@@ -1,0 +1,30 @@
+//===-- ARMArchExtName.def - List of the ARM Extension names ----*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file contains the list of the supported ARM Architecture Extension
+// names. These can be used to enable the extension through .arch_extension
+// attribute
+//
+//===----------------------------------------------------------------------===//
+
+// NOTE: NO INCLUDE GUARD DESIRED!
+
+#ifndef ARM_ARCHEXT_NAME
+#error "You must define ARM_ARCHEXT_NAME(NAME, ID) before including ARMArchExtName.h"
+#endif
+
+ARM_ARCHEXT_NAME("crc", CRC)
+ARM_ARCHEXT_NAME("crypto", CRYPTO)
+ARM_ARCHEXT_NAME("fp", FP)
+ARM_ARCHEXT_NAME("idiv", HWDIV)
+ARM_ARCHEXT_NAME("mp", MP)
+ARM_ARCHEXT_NAME("sec", SEC)
+ARM_ARCHEXT_NAME("virt", VIRT)
+
+#undef ARM_ARCHEXT_NAME
