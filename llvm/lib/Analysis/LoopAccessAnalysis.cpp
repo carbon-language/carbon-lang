@@ -794,11 +794,10 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
 
   assert(Val.isStrictlyPositive() && "Expect a positive value");
 
-  // Positive distance bigger than max vectorization factor.
   if (ATy != BTy) {
     DEBUG(dbgs() <<
           "LAA: ReadWrite-Write positive dependency with different types\n");
-    return false;
+    return true;
   }
 
   unsigned Distance = (unsigned) Val.getZExtValue();
@@ -820,6 +819,7 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
     return true;
   }
 
+  // Positive distance bigger than max vectorization factor.
   MaxSafeDepDistBytes = Distance < MaxSafeDepDistBytes ?
     Distance : MaxSafeDepDistBytes;
 
