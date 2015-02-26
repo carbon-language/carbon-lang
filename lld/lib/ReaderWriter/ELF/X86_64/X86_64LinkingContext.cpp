@@ -12,22 +12,27 @@
 #include "X86_64RelocationPass.h"
 
 using namespace lld;
+using namespace elf;
 
-std::unique_ptr<ELFLinkingContext>
-elf::X86_64LinkingContext::create(llvm::Triple triple) {
-  if (triple.getArch() == llvm::Triple::x86_64)
-    return std::unique_ptr<ELFLinkingContext>(
-             new elf::X86_64LinkingContext(triple));
-  return nullptr;
-}
+X86_64LinkingContext::X86_64LinkingContext(
+    llvm::Triple triple, std::unique_ptr<TargetHandlerBase> handler)
+    : ELFLinkingContext(triple, std::move(handler)) {}
 
-elf::X86_64LinkingContext::X86_64LinkingContext(llvm::Triple triple)
-    : ELFLinkingContext(triple, std::unique_ptr<TargetHandlerBase>(
-                        new X86_64TargetHandler(*this))) {}
+X86_64LinkingContext::X86_64LinkingContext(llvm::Triple triple)
+    : X86_64LinkingContext(triple,
+                           llvm::make_unique<X86_64TargetHandler>(*this)) {}
 
-void elf::X86_64LinkingContext::addPasses(PassManager &pm) {
+void X86_64LinkingContext::addPasses(PassManager &pm) {
   auto pass = createX86_64RelocationPass(*this);
   if (pass)
     pm.add(std::move(pass));
   ELFLinkingContext::addPasses(pm);
+}
+
+std::unique_ptr<ELFLinkingContext>
+X86_64LinkingContext::create(llvm::Triple triple) {
+  if (triple.getArch() == llvm::Triple::x86_64)
+    return std::unique_ptr<ELFLinkingContext>(
+        new elf::X86_64LinkingContext(triple));
+  return nullptr;
 }

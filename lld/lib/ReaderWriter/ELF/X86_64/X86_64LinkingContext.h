@@ -24,7 +24,9 @@ enum {
   LLD_R_X86_64_GOTRELINDEX = 1024,
 };
 
-class X86_64LinkingContext final : public ELFLinkingContext {
+class X86_64LinkingContext : public ELFLinkingContext {
+protected:
+  X86_64LinkingContext(llvm::Triple, std::unique_ptr<TargetHandlerBase>);
 public:
   static std::unique_ptr<ELFLinkingContext> create(llvm::Triple);
   X86_64LinkingContext(llvm::Triple);

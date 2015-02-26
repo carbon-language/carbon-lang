@@ -26,7 +26,7 @@ public:
       : TargetLayout(context) {}
 };
 
-class X86_64TargetHandler final
+class X86_64TargetHandler
     : public DefaultTargetHandler<X86_64ELFType> {
 public:
   X86_64TargetHandler(X86_64LinkingContext &context);
@@ -51,7 +51,7 @@ public:
 
   std::unique_ptr<Writer> getWriter() override;
 
-private:
+protected:
   static const Registry::KindStrings kindStrings[];
   X86_64LinkingContext &_context;
   std::unique_ptr<X86_64TargetLayout> _x86_64TargetLayout;
