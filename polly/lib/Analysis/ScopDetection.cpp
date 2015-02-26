@@ -129,7 +129,7 @@ static cl::opt<bool>
 static cl::opt<bool> AllowNonAffineSubRegions(
     "polly-allow-nonaffine-branches",
     cl::desc("Allow non affine conditions for branches"), cl::Hidden,
-    cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+    cl::init(true), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 static cl::opt<bool> AllowUnsigned("polly-allow-unsigned",
                                    cl::desc("Allow unsigned expressions"),
