@@ -25,6 +25,10 @@ N: Doug Gregor
 E: dgregor@apple.com
 D: All parts of Clang not covered by someone else
 
+N: Reid Kleckner
+E: rnk@google.com
+D: Microsoft C++ ABI compatibility and general Windows support
+
 N: Anton Korobeynikov
 E: anton@korobeynikov.info
 D: Exception handling, Windows codegen, ARM EABI
