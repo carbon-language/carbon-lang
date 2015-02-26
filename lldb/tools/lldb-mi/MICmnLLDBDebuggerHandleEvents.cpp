@@ -948,14 +948,14 @@ CMICmnLLDBDebuggerHandleEvents::HandleProcessEventStopException(void)
     const lldb::SBProcess sbProcess = CMICmnLLDBDebugSessionInfo::Instance().GetProcess();
     lldb::SBThread sbThread = sbProcess.GetSelectedThread();
     const size_t nStopDescriptionLen = sbThread.GetStopDescription(nullptr, 0);
-    std::shared_ptr<char> spStopDescription(new char[nStopDescriptionLen]);
-    sbThread.GetStopDescription(spStopDescription.get(), nStopDescriptionLen);
+    std::unique_ptr<char[]> apStopDescription(new char[nStopDescriptionLen]);
+    sbThread.GetStopDescription(apStopDescription.get(), nStopDescriptionLen);
 
     // MI print "*stopped,reason=\"exception-received\",exception=\"%s\",thread-id=\"%d\",stopped-threads=\"all\""
     const CMICmnMIValueConst miValueConst("exception-received");
     const CMICmnMIValueResult miValueResult("reason", miValueConst);
     CMICmnMIOutOfBandRecord miOutOfBandRecord(CMICmnMIOutOfBandRecord::eOutOfBand_Stopped, miValueResult);
-    const CMIUtilString strReason(spStopDescription.get());
+    const CMIUtilString strReason(apStopDescription.get());
     const CMICmnMIValueConst miValueConst2(strReason);
     const CMICmnMIValueResult miValueResult2("exception", miValueConst2);
     bool bOk = miOutOfBandRecord.Add(miValueResult2);
