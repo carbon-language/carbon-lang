@@ -1895,7 +1895,7 @@ def : InstRW<[WriteMULr], (instregex "(V?)MUL(P|S)(S|D)rr")>;
 
 // x,m / v,v,m.
 def WriteMULm : SchedWriteRes<[HWPort01, HWPort23]> {
-  let Latency = 4;
+  let Latency = 9;
   let NumMicroOps = 2;
   let ResourceCycles = [1, 1];
 }
