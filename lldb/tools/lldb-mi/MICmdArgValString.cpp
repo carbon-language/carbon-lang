@@ -46,7 +46,7 @@ CMICmdArgValString::CMICmdArgValString(void)
 // Throws:  None.
 //--
 CMICmdArgValString::CMICmdArgValString(const bool vbAnything)
-    : m_bHandleQuotedString(false)
+    : m_bHandleQuotedString(vbAnything ? true : false)
     , m_bAcceptNumbers(false)
     , m_bHandleDirPaths(false)
     , m_bHandleAnything(vbAnything)
@@ -123,7 +123,7 @@ CMICmdArgValString::Validate(CMICmdArgContext &vrwArgContext)
         return MIstatus::success;
 
     if (m_bHandleQuotedString)
-        return (ValidateQuotedText(vrwArgContext) || ValidateQuotedTextEmbedded(vrwArgContext));
+        return ValidateQuotedText(vrwArgContext);
 
     return ValidateSingleText(vrwArgContext);
 }
@@ -140,22 +140,6 @@ CMICmdArgValString::Validate(CMICmdArgContext &vrwArgContext)
 bool
 CMICmdArgValString::ValidateSingleText(CMICmdArgContext &vrwArgContext)
 {
-    if (vrwArgContext.GetNumberArgsPresent() == 1)
-    {
-        const CMIUtilString &rArg(vrwArgContext.GetArgsLeftToParse());
-        if (IsStringArg(rArg))
-        {
-            m_bFound = true;
-            m_bValid = true;
-            m_argValue = rArg;
-            vrwArgContext.RemoveArg(rArg);
-            return MIstatus::success;
-        }
-        else
-            return MIstatus::failure;
-    }
-
-    // More than one option...
     const CMIUtilString::VecString_t vecOptions(vrwArgContext.GetArgs());
     CMIUtilString::VecString_t::const_iterator it = vecOptions.begin();
     while (it != vecOptions.end())
@@ -168,7 +152,7 @@ CMICmdArgValString::ValidateSingleText(CMICmdArgContext &vrwArgContext)
             if (vrwArgContext.RemoveArg(rArg))
             {
                 m_bValid = true;
-                m_argValue = rArg;
+                m_argValue = rArg.StripSlashes();
                 return MIstatus::success;
             }
             else
@@ -184,8 +168,7 @@ CMICmdArgValString::ValidateSingleText(CMICmdArgContext &vrwArgContext)
 
 //++ ------------------------------------------------------------------------------------
 // Details: Parse the command's argument options string and try to extract all the words
-//          between quotes then delimited by the next space. Can fall through to
-//          ValidateSingleText() or ValidateQuotedQuotedTextEmbedded().
+//          between quotes then delimited by the next space.
 // Type:    Method.
 // Args:    vrwArgContext   - (RW) The command's argument options string.
 // Return:  MIstatus::success - Functional succeeded.
@@ -195,148 +178,21 @@ CMICmdArgValString::ValidateSingleText(CMICmdArgContext &vrwArgContext)
 bool
 CMICmdArgValString::ValidateQuotedText(CMICmdArgContext &vrwArgContext)
 {
-    // CODETAG_QUOTEDTEXT_SIMILAR_CODE
-    CMIUtilString strOptions = vrwArgContext.GetArgsLeftToParse();
-    const MIchar cQuote = '"';
-
-    // Look for first quote of two
-    MIint nPos = strOptions.find(cQuote);
-    if (nPos == (MIint)std::string::npos)
-        return ValidateSingleText(vrwArgContext);
-
-    // Is one and only quote at end of the string
-    const MIint nLen = strOptions.length();
-    if (nPos == (MIint)(nLen - 1))
+    const CMIUtilString::VecString_t vecOptions(vrwArgContext.GetArgs());
+    if (vecOptions.size() == 0)
         return MIstatus::failure;
 
-    // Quote must be the first character in the string or be preceeded by a space
-    if ((nPos > 0) && (strOptions[nPos - 1] != ' '))
+    const CMIUtilString &rArg(vecOptions[0]);
+    if (!IsStringArg(rArg))
         return MIstatus::failure;
 
-    // Need to find the other quote
-    const MIint nPos2 = strOptions.rfind(cQuote);
-    if (nPos2 == (MIint)std::string::npos)
-        return MIstatus::failure;
+    m_bFound = true;
 
-    // Is there quotes surrounding string formatting embedded quotes
-    if (IsStringArgQuotedQuotedTextEmbedded(strOptions))
-        return ValidateQuotedQuotedTextEmbedded(vrwArgContext);
-
-    // Make sure not same back quote, need two quotes
-    if (nPos == nPos2)
-        return MIstatus::failure;
-
-    // Extract quoted text
-    const CMIUtilString strQuotedTxt = strOptions.substr(nPos, nPos2 - nPos + 1).c_str();
-    if (vrwArgContext.RemoveArg(strQuotedTxt))
+    if (vrwArgContext.RemoveArg(rArg))
     {
-        m_bFound = true;
         m_bValid = true;
-        m_argValue = strOptions.substr(nPos + 1, nPos2 - nPos - 1).c_str();
-        return MIstatus::success;
-    }
-
-    return MIstatus::failure;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details: Parse the command's argument options string and try to extract all the words
-//          between quotes then delimited by the next space. If there any string format
-//          characters '\\' used to embed quotes these are ignored i.e. "\\\"%5d\\\""
-//          becomes "%5d". Can fall through to ValidateQuotedText().
-// Type:    Method.
-// Args:    vrwArgContext   - (RW) The command's argument options string.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMICmdArgValString::ValidateQuotedTextEmbedded(CMICmdArgContext &vrwArgContext)
-{
-    // CODETAG_QUOTEDTEXT_SIMILAR_CODE
-    CMIUtilString strOptions = vrwArgContext.GetArgsLeftToParse();
-    const MIchar cBckSlash = '\\';
-    const MIint nPos = strOptions.find(cBckSlash);
-    if (nPos == (MIint)std::string::npos)
-        return ValidateQuotedText(vrwArgContext);
-
-    // Back slash must be the first character in the string or be preceeded by a space
-    // or '\\'
-    const MIchar cSpace = ' ';
-    if ((nPos > 0) && (strOptions[nPos - 1] != cSpace))
-        return MIstatus::failure;
-
-    // Need to find the other back slash
-    const MIint nPos2 = strOptions.rfind(cBckSlash);
-    if (nPos2 == (MIint)std::string::npos)
-        return MIstatus::failure;
-
-    // Make sure not same back slash, need two slashs
-    if (nPos == nPos2)
-        return MIstatus::failure;
-
-    // Look for the two quotes
-    const MIint nLen = strOptions.length();
-    const MIchar cQuote = '"';
-    const MIint nPosQuote1 = nPos + 1;
-    const MIint nPosQuote2 = (nPos2 < nLen) ? nPos2 + 1 : nPos2;
-    if ((nPosQuote1 != nPosQuote2) && (strOptions[nPosQuote1] != cQuote) && (strOptions[nPosQuote2] != cQuote))
-        return MIstatus::failure;
-
-    // Extract quoted text
-    const CMIUtilString strQuotedTxt = strOptions.substr(nPos, nPosQuote2 - nPos + 1).c_str();
-    if (vrwArgContext.RemoveArg(strQuotedTxt))
-    {
-        m_bFound = true;
-        m_bValid = true;
-        m_argValue = strQuotedTxt;
-        return MIstatus::success;
-    }
-
-    return MIstatus::failure;
-}
-
-//++ ------------------------------------------------------------------------------------
-// Details: Parse the command's argument options string and try to extract all the words
-//          between quotes then delimited by the next space. If there any string format
-//          characters '\\' used to embed quotes these are ignored i.e. "\\\"%5d\\\""
-//          becomes "%5d".
-// Type:    Method.
-// Args:    vrwArgContext   - (RW) The command's argument options string.
-// Return:  MIstatus::success - Functional succeeded.
-//          MIstatus::failure - Functional failed.
-// Throws:  None.
-//--
-bool
-CMICmdArgValString::ValidateQuotedQuotedTextEmbedded(CMICmdArgContext &vrwArgContext)
-{
-    // CODETAG_QUOTEDTEXT_SIMILAR_CODE
-    CMIUtilString strOptions = vrwArgContext.GetArgsLeftToParse();
-    const MIint nPos = strOptions.find("\"\\\"");
-    if (nPos == (MIint)std::string::npos)
-        return MIstatus::failure;
-
-    const MIint nPos2 = strOptions.rfind("\\\"\"");
-    if (nPos2 == (MIint)std::string::npos)
-        return MIstatus::failure;
-
-    const MIint nLen = strOptions.length();
-    if ((nLen > 5) && ((nPos + 2) == (nPos2 - 2)))
-        return MIstatus::failure;
-
-    // Quote must be the first character in the string or be preceeded by a space
-    // or '\\'
-    const MIchar cSpace = ' ';
-    if ((nPos > 0) && (strOptions[nPos - 1] != cSpace))
-        return MIstatus::failure;
-
-    // Extract quoted text
-    const CMIUtilString strQuotedTxt = strOptions.substr(nPos, nPos2 - nPos + 3).c_str();
-    if (vrwArgContext.RemoveArg(strQuotedTxt))
-    {
-        m_bFound = true;
-        m_bValid = true;
-        m_argValue = strQuotedTxt;
+        const MIchar cQuote = '"';
+        m_argValue = rArg.Trim(cQuote).StripSlashes();
         return MIstatus::success;
     }
 
@@ -373,10 +229,6 @@ CMICmdArgValString::IsStringArg(const CMIUtilString &vrTxt) const
 bool
 CMICmdArgValString::IsStringArgSingleText(const CMIUtilString &vrTxt) const
 {
-    // Accept anything as string word
-    if (m_bHandleAnything)
-        return true;
-
     if (!m_bHandleDirPaths)
     {
         // Look for directory file paths, if found reject
@@ -417,6 +269,10 @@ CMICmdArgValString::IsStringArgSingleText(const CMIUtilString &vrTxt) const
 bool
 CMICmdArgValString::IsStringArgQuotedText(const CMIUtilString &vrTxt) const
 {
+    // Accept anything as string word
+    if (m_bHandleAnything)
+        return true;
+
     // CODETAG_QUOTEDTEXT_SIMILAR_CODE
     const MIchar cQuote = '"';
     const MIint nPos = vrTxt.find(cQuote);

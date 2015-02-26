@@ -73,6 +73,8 @@ class CMIUtilString : public std::string
                      const MIuint vnPos = 0) const;
     MIuint FindFirstNot(const CMIUtilString &vrPattern, const MIuint vnPos = 0) const;
     CMIUtilString Escape(const bool vbEscapeQuotes = false) const;
+    CMIUtilString AddSlashes(void) const;
+    CMIUtilString StripSlashes(void) const;
     //
     CMIUtilString &operator=(const MIchar *vpRhs);
     CMIUtilString &operator=(const std::string &vrRhs);

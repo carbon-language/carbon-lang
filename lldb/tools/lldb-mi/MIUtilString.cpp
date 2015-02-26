@@ -865,3 +865,87 @@ CMIUtilString::Escape(const bool vbEscapeQuotes /* = false */) const
     }
     return strNew;
 }
+
+//++ ------------------------------------------------------------------------------------
+// Details: Get string with backslashes in front of double quote '"' and backslash '\\'
+//          characters.
+// Type:    Method.
+// Args:    None.
+// Return:  CMIUtilString - The wrapped version of the initial string.
+// Throws:  None.
+//--
+CMIUtilString
+CMIUtilString::AddSlashes(void) const
+{
+    const MIchar cBckSlash('\\');
+    const MIuint nLen(length());
+    CMIUtilString strNew;
+    strNew.reserve(nLen);
+
+    MIuint nOffset(0);
+    while (nOffset < nLen)
+    {
+        const MIuint nUnescapedCharPos(find_first_of("\"\\", nOffset));
+        const bool bUnescapedCharNotFound(nUnescapedCharPos == (MIuint)std::string::npos);
+        if (bUnescapedCharNotFound)
+        {
+            const MIuint nAppendAll((MIuint)std::string::npos);
+            strNew.append(*this, nOffset, nAppendAll);
+            break;
+        }
+        const MIuint nAppendLen(nUnescapedCharPos - nOffset);
+        strNew.append(*this, nOffset, nAppendLen);
+        strNew.push_back(cBckSlash);
+        const MIchar cUnescapedChar((*this)[nUnescapedCharPos]);
+        strNew.push_back(cUnescapedChar);
+        nOffset = nUnescapedCharPos + 1;
+    }
+
+    return strNew;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Remove backslashes added by CMIUtilString::AddSlashes.
+// Type:    Method.
+// Args:    None.
+// Return:  CMIUtilString - The initial version of wrapped string.
+// Throws:  None.
+//--
+CMIUtilString
+CMIUtilString::StripSlashes(void) const
+{
+    const MIchar cBckSlash('\\');
+    const MIuint nLen(length());
+    CMIUtilString strNew;
+    strNew.reserve(nLen);
+
+    MIuint nOffset(0);
+    while (nOffset < nLen)
+    {
+        const MIuint nBckSlashPos(find(cBckSlash, nOffset));
+        const bool bBckSlashNotFound(nBckSlashPos == (MIuint)std::string::npos);
+        if (bBckSlashNotFound)
+        {
+            const MIuint nAppendAll((MIuint)std::string::npos);
+            strNew.append(*this, nOffset, nAppendAll);
+            break;
+        }
+        const MIuint nAppendLen(nBckSlashPos - nOffset);
+        strNew.append(*this, nOffset, nAppendLen);
+        const bool bBckSlashIsLast(nBckSlashPos == nLen);
+        if (bBckSlashIsLast)
+        {
+            strNew.push_back(cBckSlash);
+            break;
+        }
+        const MIchar cEscapedChar((*this)[nBckSlashPos + 1]);
+        const MIuint nEscapedCharPos(std::string("\"\\").find(cEscapedChar));
+        const bool bEscapedCharNotFound(nEscapedCharPos == (MIuint)std::string::npos);
+        if (bEscapedCharNotFound)
+            strNew.push_back(cBckSlash);
+        strNew.push_back(cEscapedChar);
+        nOffset = nBckSlashPos + 2;
+    }
+
+    return strNew;
+}

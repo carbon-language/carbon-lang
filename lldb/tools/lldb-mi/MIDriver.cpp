@@ -1172,7 +1172,7 @@ CMIDriver::GetExecutableFileNamePathOnCmdLine(void) const
 bool
 CMIDriver::LocalDebugSessionStartupInjectCommands(void)
 {
-    const CMIUtilString strCmd(CMIUtilString::Format("-file-exec-and-symbols \"%s\"", m_strCmdLineArgExecuteableFileNamePath.c_str()));
+    const CMIUtilString strCmd(CMIUtilString::Format("-file-exec-and-symbols \"%s\"", m_strCmdLineArgExecuteableFileNamePath.AddSlashes().c_str()));
     const bool bOk = CMICmnStreamStdout::TextToStdout(strCmd);
     return (bOk && InterpretCommand(strCmd));
 }

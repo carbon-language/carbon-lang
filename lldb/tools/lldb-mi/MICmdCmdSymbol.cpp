@@ -91,7 +91,7 @@ CMICmdCmdSymbolListLines::Execute(void)
     CMICMDBASE_GETOPTION(pArgFile, File, m_constStrArgNameFile);
 
     const CMIUtilString &strFilePath(pArgFile->GetValue());
-    const CMIUtilString strCmd(CMIUtilString::Format("target modules dump line-table \"%s\"", strFilePath.c_str()));
+    const CMIUtilString strCmd(CMIUtilString::Format("target modules dump line-table \"%s\"", strFilePath.AddSlashes().c_str()));
 
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     const lldb::ReturnStatus rtn = rSessionInfo.GetDebugger().GetCommandInterpreter().HandleCommand(strCmd.c_str(), m_lldbResult);

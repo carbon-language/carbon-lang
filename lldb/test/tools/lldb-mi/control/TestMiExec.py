@@ -97,8 +97,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         #self.runCmd("-data-evaluate-expression argv[2]")
         #self.expect("\^done,value=\"2nd arg\"")
         self.runCmd("-interpreter-exec command \"print argv[2]\"")
-        #FIXME: lldb-mi doesn't handle inner quotes
-        self.expect("\"\\\\\\\"2nd arg\\\\\\\"\"") #FIXME: self.expect("\"2nd arg\"")
+        self.expect("\"2nd arg\"")
         #self.runCmd("-data-evaluate-expression argv[3]")
         #self.expect("\^done,value=\"third_arg\"")
         self.runCmd("-interpreter-exec command \"print argv[3]\"")
