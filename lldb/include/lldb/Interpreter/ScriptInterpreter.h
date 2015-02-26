@@ -601,6 +601,12 @@ public:
         error.SetErrorString("loading unimplemented");
         return false;
     }
+    
+    virtual bool
+    IsReservedWord (const char* word)
+    {
+        return false;
+    }
 
     virtual lldb::ScriptInterpreterObjectSP
     MakeScriptObject (void* object)

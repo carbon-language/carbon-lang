@@ -195,7 +195,7 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     
     int old_count = Debugger::TestDebuggerRefCount();
     
-    run_string.Printf ("run_one_line (%s, 'import copy, os, re, sys, uuid, lldb')", m_dictionary_name.c_str());
+    run_string.Printf ("run_one_line (%s, 'import copy, keyword, os, re, sys, uuid, lldb')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
 
     // WARNING: temporary code that loads Cocoa formatters - this should be done on a per-platform basis rather than loading the whole set
@@ -2580,6 +2580,21 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         
         return true;
     }
+}
+
+bool
+ScriptInterpreterPython::IsReservedWord (const char* word)
+{
+    StreamString command_stream;
+    command_stream.Printf("keyword.iskeyword('%s')", word);
+    bool result;
+    ExecuteScriptOptions options;
+    options.SetEnableIO(false);
+    options.SetMaskoutErrors(true);
+    options.SetSetLLDBGlobals(false);
+    if (ExecuteOneLineWithReturn(command_stream.GetData(), ScriptInterpreter::eScriptReturnTypeBool, &result, options))
+        return result;
+    return false;
 }
 
 lldb::ScriptInterpreterObjectSP

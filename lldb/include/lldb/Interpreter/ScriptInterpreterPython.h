@@ -248,6 +248,9 @@ public:
                          lldb_private::Error& error,
                          lldb::ScriptInterpreterObjectSP* module_sp = nullptr) override;
     
+    bool
+    IsReservedWord (const char* word) override;
+    
     lldb::ScriptInterpreterObjectSP
     MakeScriptObject (void* object) override;
     
