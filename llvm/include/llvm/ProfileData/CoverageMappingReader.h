@@ -142,7 +142,7 @@ private:
 
 /// \brief Reader for the coverage mapping data that is emitted by the
 /// frontend and stored in an object file.
-class ObjectFileCoverageMappingReader : public CoverageMappingReader {
+class BinaryCoverageReader : public CoverageMappingReader {
 public:
   struct ProfileMappingRecord {
     CoverageMappingVersion Version;
@@ -170,10 +170,8 @@ private:
   std::vector<CounterExpression> Expressions;
   std::vector<CounterMappingRegion> MappingRegions;
 
-  ObjectFileCoverageMappingReader(const ObjectFileCoverageMappingReader &)
-      = delete;
-  ObjectFileCoverageMappingReader &
-  operator=(const ObjectFileCoverageMappingReader &) = delete;
+  BinaryCoverageReader(const BinaryCoverageReader &) = delete;
+  BinaryCoverageReader &operator=(const BinaryCoverageReader &) = delete;
 
   /// \brief Set the current error_code and return same.
   std::error_code error(std::error_code EC) {
@@ -185,7 +183,7 @@ private:
   std::error_code success() { return error(instrprof_error::success); }
 
 public:
-  ObjectFileCoverageMappingReader(std::unique_ptr<MemoryBuffer> &ObjectBuffer);
+  BinaryCoverageReader(std::unique_ptr<MemoryBuffer> &ObjectBuffer);
 
   std::error_code readHeader();
   std::error_code readNextRecord(CoverageMappingRecord &Record) override;

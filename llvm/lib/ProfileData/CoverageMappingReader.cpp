@@ -334,7 +334,7 @@ struct SectionData {
 template <typename T>
 std::error_code readCoverageMappingData(
     SectionData &ProfileNames, StringRef Data,
-    std::vector<ObjectFileCoverageMappingReader::ProfileMappingRecord> &Records,
+    std::vector<BinaryCoverageReader::ProfileMappingRecord> &Records,
     std::vector<StringRef> &Filenames) {
   llvm::DenseSet<T> UniqueFunctionMappingData;
 
@@ -400,7 +400,7 @@ std::error_code readCoverageMappingData(
               ProfileNames.get(MappingRecord.FunctionNamePtr,
                                MappingRecord.FunctionNameSize, FunctionName))
         return Err;
-      Records.push_back(ObjectFileCoverageMappingReader::ProfileMappingRecord(
+      Records.push_back(BinaryCoverageReader::ProfileMappingRecord(
           Version, FunctionName, MappingRecord.FunctionHash, Mapping,
           FilenamesBegin, Filenames.size() - FilenamesBegin));
     }
@@ -438,7 +438,7 @@ static std::error_code decodeTestingFormat(StringRef Data,
   return instrprof_error::success;
 }
 
-ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
+BinaryCoverageReader::BinaryCoverageReader(
     std::unique_ptr<MemoryBuffer> &ObjectBuffer)
     : CurrentRecord(0) {
   if (ObjectBuffer->getBuffer().startswith(TestingFormatMagic)) {
@@ -466,7 +466,7 @@ ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
                                       std::move(ObjectBuffer));
 }
 
-std::error_code ObjectFileCoverageMappingReader::readHeader() {
+std::error_code BinaryCoverageReader::readHeader() {
   const ObjectFile *OF = Object.getBinary();
   if (!OF)
     return getError();
@@ -515,7 +515,7 @@ std::error_code ObjectFileCoverageMappingReader::readHeader() {
 }
 
 std::error_code
-ObjectFileCoverageMappingReader::readNextRecord(CoverageMappingRecord &Record) {
+BinaryCoverageReader::readNextRecord(CoverageMappingRecord &Record) {
   if (CurrentRecord >= MappingRecords.size())
     return error(instrprof_error::eof);
 

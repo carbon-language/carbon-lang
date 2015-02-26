@@ -221,7 +221,7 @@ CoverageMapping::load(StringRef ObjectFilename, StringRef ProfileFilename) {
   auto CounterMappingBuff = MemoryBuffer::getFileOrSTDIN(ObjectFilename);
   if (auto EC = CounterMappingBuff.getError())
     return EC;
-  ObjectFileCoverageMappingReader CoverageReader(CounterMappingBuff.get());
+  BinaryCoverageReader CoverageReader(CounterMappingBuff.get());
   if (auto EC = CoverageReader.readHeader())
     return EC;
   auto ProfileReaderOrErr = IndexedInstrProfReader::create(ProfileFilename);
