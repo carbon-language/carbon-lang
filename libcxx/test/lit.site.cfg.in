@@ -18,6 +18,7 @@ config.target_triple            = "@LIBCXX_TARGET_TRIPLE@"
 config.sysroot                  = "@LIBCXX_SYSROOT@"
 config.gcc_toolchain            = "@LIBCXX_GCC_TOOLCHAIN@"
 config.target_info              = "@LIBCXX_TARGET_INFO@"
+config.executor                 = "@LIBCXX_EXECUTOR@"
 
 # Let the main config do the real work.
 lit_config.load_config(config, "@LIBCXX_SOURCE_DIR@/test/lit.cfg")
