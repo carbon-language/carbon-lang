@@ -824,7 +824,6 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
       ++NewIndentLevel;
     } else {
       NewIndent = State.Stack.back().LastSpace + Style.ContinuationIndentWidth;
-      NewIndent = std::min(State.Column + 1, NewIndent);
     }
     const FormatToken *NextNoComment = Current.getNextNonComment();
     AvoidBinPacking =

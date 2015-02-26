@@ -5943,6 +5943,11 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
   verifyFormat("std::vector<int> v = {1, 0 /* comment */};");
   verifyFormat("Node n{1, Node{1000}, //\n"
                "       2};");
+  verifyFormat("Aaaa aaaaaaa{\n"
+               "    {\n"
+               "        aaaa,\n"
+               "    },\n"
+               "};");
 
   // In combination with BinPackParameters = false.
   FormatStyle NoBinPacking = getLLVMStyle();
