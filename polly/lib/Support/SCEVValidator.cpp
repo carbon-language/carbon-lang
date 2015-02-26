@@ -82,7 +82,7 @@ public:
   std::vector<const SCEV *> getParameters() { return Parameters; }
 
   /// @brief Add the parameters of Source to this result.
-  void addParamsFrom(class ValidatorResult &Source) {
+  void addParamsFrom(const ValidatorResult &Source) {
     Parameters.insert(Parameters.end(), Source.Parameters.begin(),
                       Source.Parameters.end());
   }
@@ -91,7 +91,7 @@ public:
   ///
   /// This means to merge the parameters and to set the Type to the most
   /// specific Type that matches both.
-  void merge(class ValidatorResult &ToMerge) {
+  void merge(const ValidatorResult &ToMerge) {
     Type = std::max(Type, ToMerge.Type);
     addParamsFrom(ToMerge);
   }
