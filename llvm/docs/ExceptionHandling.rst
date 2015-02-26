@@ -278,9 +278,9 @@ there are no catches or filters that require it to.
   exceptions and throws a third.
 
 When all cleanups are finished, if the exception is not handled by the current
-function, resume unwinding by calling the `resume
-instruction <LangRef.html#i_resume>`_, passing in the result of the
-``landingpad`` instruction for the original landing pad.
+function, resume unwinding by calling the :ref:`resume instruction <i_resume>`,
+passing in the result of the ``landingpad`` instruction for the original
+landing pad.
 
 Throw Filters
 -------------
