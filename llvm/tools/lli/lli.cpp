@@ -597,7 +597,7 @@ int main(int argc, char **argv, char * const *envp) {
     // function later on to make an explicit call, so get the function now.
     Constant *Exit = Mod->getOrInsertFunction("exit", Type::getVoidTy(Context),
                                                       Type::getInt32Ty(Context),
-                                                      NULL);
+                                                      nullptr);
 
     // Run static constructors.
     if (!ForceInterpreter) {

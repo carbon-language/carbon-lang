@@ -195,9 +195,9 @@ static Constant *GetTorInit(std::vector<std::pair<Function*, int> > &TorList) {
   assert(!TorList.empty() && "Don't create empty tor list!");
   std::vector<Constant*> ArrayElts;
   Type *Int32Ty = Type::getInt32Ty(TorList[0].first->getContext());
-  
+
   StructType *STy =
-    StructType::get(Int32Ty, TorList[0].first->getType(), NULL);
+      StructType::get(Int32Ty, TorList[0].first->getType(), nullptr);
   for (unsigned i = 0, e = TorList.size(); i != e; ++i) {
     Constant *Elts[] = {
       ConstantInt::get(Int32Ty, TorList[i].second),
