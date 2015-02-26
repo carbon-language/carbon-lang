@@ -19,6 +19,7 @@
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_platform.h"
+#include "sanitizer_common/sanitizer_stoptheworld.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
 #if SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips64)) \
@@ -99,6 +100,8 @@ typedef InternalMmapVector<uptr> Frontier;
 void InitializePlatformSpecificModules();
 void ProcessGlobalRegions(Frontier *frontier);
 void ProcessPlatformSpecificAllocations(Frontier *frontier);
+// Run stoptheworld while holding any platform-specific locks.
+void DoStopTheWorld(StopTheWorldCallback callback, void* argument);
 
 void ScanRangeForPointers(uptr begin, uptr end,
                           Frontier *frontier,

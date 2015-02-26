@@ -85,10 +85,6 @@ static int ProcessGlobalRegionsCallback(struct dl_phdr_info *info, size_t size,
 // Scans global variables for heap pointers.
 void ProcessGlobalRegions(Frontier *frontier) {
   if (!flags()->use_globals) return;
-  // FIXME: dl_iterate_phdr acquires a linker lock, so we run a risk of
-  // deadlocking by running this under StopTheWorld. However, the lock is
-  // reentrant, so we should be able to fix this by acquiring the lock before
-  // suspending threads.
   dl_iterate_phdr(ProcessGlobalRegionsCallback, frontier);
 }
 
@@ -151,6 +147,31 @@ void ProcessPlatformSpecificAllocations(Frontier *frontier) {
   StackDepotReverseMap stack_depot_reverse_map;
   ProcessPlatformAllocParam arg = {frontier, &stack_depot_reverse_map};
   ForEachChunk(ProcessPlatformSpecificAllocationsCb, &arg);
+}
+
+struct DoStopTheWorldParam {
+  StopTheWorldCallback callback;
+  void *argument;
+};
+
+static int DoStopTheWorldCallback(struct dl_phdr_info *info,
+                                             size_t size, void *data) {
+  DoStopTheWorldParam *param = reinterpret_cast<DoStopTheWorldParam *>(data);
+  StopTheWorld(param->callback, param->argument);
+  return 1;
+}
+
+// LSan calls dl_iterate_phdr() from the tracer task. This may deadlock: if one
+// of the threads is frozen while holding the libdl lock, the tracer will hang
+// in dl_iterate_phdr() forever.
+// Luckily, (a) the lock is reentrant and (b) libc can't distinguish between the
+// tracer task and the thread that spawned it. Thus, if we run the tracer task
+// while holding the libdl lock in the parent thread, we can safely reenter it
+// in the tracer. The solution is to run stoptheworld from a dl_iterate_phdr()
+// callback in the parent thread.
+void DoStopTheWorld(StopTheWorldCallback callback, void *argument) {
+  DoStopTheWorldParam param = {callback, argument};
+  dl_iterate_phdr(DoStopTheWorldCallback, &param);
 }
 
 }  // namespace __lsan

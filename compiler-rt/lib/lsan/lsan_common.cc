@@ -21,7 +21,6 @@
 #include "sanitizer_common/sanitizer_procmaps.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
-#include "sanitizer_common/sanitizer_stoptheworld.h"
 #include "sanitizer_common/sanitizer_suppressions.h"
 #include "sanitizer_common/sanitizer_report_decorator.h"
 
@@ -400,7 +399,7 @@ void DoLeakCheck() {
   param.success = false;
   LockThreadRegistry();
   LockAllocator();
-  StopTheWorld(DoLeakCheckCallback, &param);
+  DoStopTheWorld(DoLeakCheckCallback, &param);
   UnlockAllocator();
   UnlockThreadRegistry();
 
