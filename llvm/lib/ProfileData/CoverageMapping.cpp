@@ -219,16 +219,18 @@ CoverageMapping::load(CoverageMappingReader &CoverageReader,
 ErrorOr<std::unique_ptr<CoverageMapping>>
 CoverageMapping::load(StringRef ObjectFilename, StringRef ProfileFilename) {
   auto CounterMappingBuff = MemoryBuffer::getFileOrSTDIN(ObjectFilename);
-  if (auto EC = CounterMappingBuff.getError())
+  if (std::error_code EC = CounterMappingBuff.getError())
     return EC;
-  BinaryCoverageReader CoverageReader(CounterMappingBuff.get());
-  if (auto EC = CoverageReader.readHeader())
+  auto CoverageReaderOrErr =
+      BinaryCoverageReader::create(CounterMappingBuff.get());
+  if (std::error_code EC = CoverageReaderOrErr.getError())
     return EC;
+  auto CoverageReader = std::move(CoverageReaderOrErr.get());
   auto ProfileReaderOrErr = IndexedInstrProfReader::create(ProfileFilename);
   if (auto EC = ProfileReaderOrErr.getError())
     return EC;
   auto ProfileReader = std::move(ProfileReaderOrErr.get());
-  return load(CoverageReader, *ProfileReader);
+  return load(*CoverageReader, *ProfileReader);
 }
 
 namespace {
