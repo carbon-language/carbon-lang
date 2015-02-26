@@ -305,14 +305,8 @@ static __isl_give isl_ast_node *AtEachDomain(__isl_take isl_ast_node *Node,
 
 void IslAst::buildRunCondition(__isl_keep isl_ast_build *Build) {
   // The conditions that need to be checked at run-time for this scop are
-  // available as an isl_set in the AssumedContext. We generate code for this
-  // check as follows. First, we generate an isl_pw_aff that is 1, if a certain
-  // combination of parameter values fulfills the conditions in the assumed
-  // context, and that is 0 otherwise. We then translate this isl_pw_aff into
-  // an isl_ast_expr. At run-time this expression can be evaluated and the
-  // optimized scop can be executed conditionally according to the result of the
-  // run-time check.
-
+  // available as an isl_set in the AssumedContext from which we can directly
+  // derive a run-time condition.
   RunCondition = isl_ast_build_expr_from_set(Build, S->getAssumedContext());
 
   // Create the alias checks from the minimal/maximal accesses in each alias
