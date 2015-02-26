@@ -367,7 +367,7 @@ HostInfoBase::ComputeUserPluginsDirectory(FileSpec &file_spec)
 void
 HostInfoBase::ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_64)
 {
-    llvm::Triple triple(llvm::sys::getDefaultTargetTriple());
+    llvm::Triple triple(llvm::sys::getProcessTriple());
 
     arch_32.Clear();
     arch_64.Clear();
