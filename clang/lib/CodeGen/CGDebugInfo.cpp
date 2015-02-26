@@ -3321,11 +3321,11 @@ void CGDebugInfo::EmitUsingDecl(const UsingDecl &UD) {
 llvm::DIImportedEntity
 CGDebugInfo::EmitNamespaceAlias(const NamespaceAliasDecl &NA) {
   if (CGM.getCodeGenOpts().getDebugInfo() < CodeGenOptions::LimitedDebugInfo)
-    return llvm::DIImportedEntity(nullptr);
+    return llvm::DIImportedEntity();
   auto &VH = NamespaceAliasCache[&NA];
   if (VH)
     return llvm::DIImportedEntity(cast<llvm::MDNode>(VH));
-  llvm::DIImportedEntity R(nullptr);
+  llvm::DIImportedEntity R;
   if (const NamespaceAliasDecl *Underlying =
           dyn_cast<NamespaceAliasDecl>(NA.getAliasedNamespace()))
     // This could cache & dedup here rather than relying on metadata deduping.
