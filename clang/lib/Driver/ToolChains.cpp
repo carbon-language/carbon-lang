@@ -1783,10 +1783,13 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
   addMultilibFlag(isMips64(TargetArch), "m64", Flags);
   addMultilibFlag(isMips16(Args), "mips16", Flags);
   addMultilibFlag(CPUName == "mips32", "march=mips32", Flags);
-  addMultilibFlag(CPUName == "mips32r2", "march=mips32r2", Flags);
+  addMultilibFlag(CPUName == "mips32r2" || CPUName == "mips32r3" ||
+                      CPUName == "mips32r5",
+                  "march=mips32r2", Flags);
   addMultilibFlag(CPUName == "mips32r6", "march=mips32r6", Flags);
   addMultilibFlag(CPUName == "mips64", "march=mips64", Flags);
-  addMultilibFlag(CPUName == "mips64r2" || CPUName == "octeon",
+  addMultilibFlag(CPUName == "mips64r2" || CPUName == "mips64r3" ||
+                      CPUName == "mips64r5" || CPUName == "octeon",
                   "march=mips64r2", Flags);
   addMultilibFlag(isMicroMips(Args), "mmicromips", Flags);
   addMultilibFlag(tools::mips::isUCLibc(Args), "muclibc", Flags);
