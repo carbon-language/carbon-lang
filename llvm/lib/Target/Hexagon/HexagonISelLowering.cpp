@@ -1595,10 +1595,10 @@ const {
 // Inline Assembly Support
 //===----------------------------------------------------------------------===//
 
-std::pair<unsigned, const TargetRegisterClass*>
-HexagonTargetLowering::getRegForInlineAsmConstraint(const
-                                                    std::string &Constraint,
-                                                    MVT VT) const {
+std::pair<unsigned, const TargetRegisterClass *>
+HexagonTargetLowering::getRegForInlineAsmConstraint(
+    const TargetRegisterInfo *TRI, const std::string &Constraint,
+    MVT VT) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     case 'r':   // R0-R31
@@ -1619,7 +1619,7 @@ HexagonTargetLowering::getRegForInlineAsmConstraint(const
     }
   }
 
-  return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
+  return TargetLowering::getRegForInlineAsmConstraint(TRI, Constraint, VT);
 }
 
 /// isFPImmLegal - Returns true if the target can instruction select the

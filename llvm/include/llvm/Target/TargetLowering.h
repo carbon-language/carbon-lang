@@ -2525,7 +2525,8 @@ public:
   /// specific constraints and their prefixes, and also tie in the associated
   /// operand values.  If this returns an empty vector, and if the constraint
   /// string itself isn't empty, there was an error parsing.
-  virtual AsmOperandInfoVector ParseConstraints(ImmutableCallSite CS) const;
+  virtual AsmOperandInfoVector ParseConstraints(const TargetRegisterInfo *TRI,
+                                                ImmutableCallSite CS) const;
 
   /// Examine constraint type and operand type and determine a weight value.
   /// The operand object must already have been set up with the operand type.
@@ -2557,9 +2558,9 @@ public:
   ///
   /// This should only be used for C_Register constraints.  On error, this
   /// returns a register number of 0 and a null register class pointer.
-  virtual std::pair<unsigned, const TargetRegisterClass*>
-    getRegForInlineAsmConstraint(const std::string &Constraint,
-                                 MVT VT) const;
+  virtual std::pair<unsigned, const TargetRegisterClass *>
+  getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
+                               const std::string &Constraint, MVT VT) const;
 
   /// Try to replace an X constraint, which matches anything, with another that
   /// has more specific requirements based on the type of the corresponding

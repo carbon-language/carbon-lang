@@ -221,8 +221,9 @@ public:
   bool isTruncateFree(EVT, EVT) const override;
   const char *getTargetNodeName(unsigned Opcode) const override;
   std::pair<unsigned, const TargetRegisterClass *>
-    getRegForInlineAsmConstraint(const std::string &Constraint,
-                                 MVT VT) const override;
+  getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
+                               const std::string &Constraint,
+                               MVT VT) const override;
   TargetLowering::ConstraintType
     getConstraintType(const std::string &Constraint) const override;
   TargetLowering::ConstraintWeight

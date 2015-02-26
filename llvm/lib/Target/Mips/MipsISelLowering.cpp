@@ -3291,9 +3291,10 @@ parseRegForInlineAsmConstraint(StringRef C, MVT VT) const {
 /// Given a register class constraint, like 'r', if this corresponds directly
 /// to an LLVM register class, return a register of 0 and the register class
 /// pointer.
-std::pair<unsigned, const TargetRegisterClass*> MipsTargetLowering::
-getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const
-{
+std::pair<unsigned, const TargetRegisterClass *>
+MipsTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
+                                                 const std::string &Constraint,
+                                                 MVT VT) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     case 'd': // Address register. Same as 'r' unless generating MIPS16 code.
@@ -3349,7 +3350,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const
   if (R.second)
     return R;
 
-  return TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
+  return TargetLowering::getRegForInlineAsmConstraint(TRI, Constraint, VT);
 }
 
 /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops

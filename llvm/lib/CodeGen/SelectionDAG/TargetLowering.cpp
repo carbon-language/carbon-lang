@@ -2187,9 +2187,10 @@ void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
   }
 }
 
-std::pair<unsigned, const TargetRegisterClass*> TargetLowering::
-getRegForInlineAsmConstraint(const std::string &Constraint,
-                             MVT VT) const {
+std::pair<unsigned, const TargetRegisterClass *>
+TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *RI,
+                                             const std::string &Constraint,
+                                             MVT VT) const {
   if (Constraint.empty() || Constraint[0] != '{')
     return std::make_pair(0u, static_cast<TargetRegisterClass*>(nullptr));
   assert(*(Constraint.end()-1) == '}' && "Not a brace enclosed constraint?");
@@ -2201,8 +2202,6 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
     std::make_pair(0u, static_cast<const TargetRegisterClass*>(nullptr));
 
   // Figure out which register class contains this reg.
-  const TargetRegisterInfo *RI =
-      getTargetMachine().getSubtargetImpl()->getRegisterInfo();
   for (TargetRegisterInfo::regclass_iterator RCI = RI->regclass_begin(),
        E = RI->regclass_end(); RCI != E; ++RCI) {
     const TargetRegisterClass *RC = *RCI;
@@ -2255,8 +2254,9 @@ unsigned TargetLowering::AsmOperandInfo::getMatchedOperand() const {
 /// and also tie in the associated operand values.
 /// If this returns an empty vector, and if the constraint string itself
 /// isn't empty, there was an error parsing.
-TargetLowering::AsmOperandInfoVector TargetLowering::ParseConstraints(
-    ImmutableCallSite CS) const {
+TargetLowering::AsmOperandInfoVector
+TargetLowering::ParseConstraints(const TargetRegisterInfo *TRI,
+                                 ImmutableCallSite CS) const {
   /// ConstraintOperands - Information about all of the constraints.
   AsmOperandInfoVector ConstraintOperands;
   const InlineAsm *IA = cast<InlineAsm>(CS.getCalledValue());
@@ -2418,12 +2418,12 @@ TargetLowering::AsmOperandInfoVector TargetLowering::ParseConstraints(
       AsmOperandInfo &Input = ConstraintOperands[OpInfo.MatchingInput];
 
       if (OpInfo.ConstraintVT != Input.ConstraintVT) {
-        std::pair<unsigned, const TargetRegisterClass*> MatchRC =
-          getRegForInlineAsmConstraint(OpInfo.ConstraintCode,
-                                       OpInfo.ConstraintVT);
-        std::pair<unsigned, const TargetRegisterClass*> InputRC =
-          getRegForInlineAsmConstraint(Input.ConstraintCode,
-                                       Input.ConstraintVT);
+        std::pair<unsigned, const TargetRegisterClass *> MatchRC =
+            getRegForInlineAsmConstraint(TRI, OpInfo.ConstraintCode,
+                                         OpInfo.ConstraintVT);
+        std::pair<unsigned, const TargetRegisterClass *> InputRC =
+            getRegForInlineAsmConstraint(TRI, Input.ConstraintCode,
+                                         Input.ConstraintVT);
         if ((OpInfo.ConstraintVT.isInteger() !=
              Input.ConstraintVT.isInteger()) ||
             (MatchRC.second != InputRC.second)) {

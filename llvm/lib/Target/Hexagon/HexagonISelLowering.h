@@ -165,8 +165,9 @@ bool isPositiveHalfWord(SDNode *N);
                                     ISD::MemIndexedMode &AM,
                                     SelectionDAG &DAG) const override;
 
-    std::pair<unsigned, const TargetRegisterClass*>
-    getRegForInlineAsmConstraint(const std::string &Constraint,
+    std::pair<unsigned, const TargetRegisterClass *>
+    getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
+                                 const std::string &Constraint,
                                  MVT VT) const override;
 
     // Intrinsics
