@@ -403,5 +403,13 @@ void widened(float *a, float *b, float *c, float *d) {
 // CHECK: ret void
 }
 
+void parallel_simd(float *a) {
+#pragma omp parallel
+#pragma omp simd
+  // CHECK-NOT: __kmpc_global_thread_num
+  for (unsigned i = 131071; i <= 2147483647; i += 127)
+    a[i] += i;
+}
+
 #endif // HEADER
 

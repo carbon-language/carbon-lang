@@ -35,4 +35,13 @@ int main() {
   return a;
 }
 
+// CHECK-LABEL: parallel_critical
+void parallel_critical(float *a) {
+#pragma omp parallel
+#pragma omp critical
+  // CHECK-NOT: __kmpc_global_thread_num
+  for (unsigned i = 131071; i <= 2147483647; i += 127)
+    a[i] += i;
+}
+
 #endif

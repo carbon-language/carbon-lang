@@ -194,22 +194,22 @@ public:
 
     void setContextValue(llvm::Value *V) { ThisValue = V; }
     // \brief Retrieve the value of the context parameter.
-    llvm::Value *getContextValue() const { return ThisValue; }
+    virtual llvm::Value *getContextValue() const { return ThisValue; }
 
     /// \brief Lookup the captured field decl for a variable.
-    const FieldDecl *lookup(const VarDecl *VD) const {
+    virtual const FieldDecl *lookup(const VarDecl *VD) const {
       return CaptureFields.lookup(VD);
     }
 
-    bool isCXXThisExprCaptured() const { return CXXThisFieldDecl != nullptr; }
-    FieldDecl *getThisFieldDecl() const { return CXXThisFieldDecl; }
+    bool isCXXThisExprCaptured() const { return getThisFieldDecl() != nullptr; }
+    virtual FieldDecl *getThisFieldDecl() const { return CXXThisFieldDecl; }
 
     static bool classof(const CGCapturedStmtInfo *) {
       return true;
     }
 
     /// \brief Emit the captured statement body.
-    virtual void EmitBody(CodeGenFunction &CGF, Stmt *S) {
+    virtual void EmitBody(CodeGenFunction &CGF, const Stmt *S) {
       RegionCounter Cnt = CGF.getPGORegionCounter(S);
       Cnt.beginRegion(CGF.Builder);
       CGF.EmitStmt(S);

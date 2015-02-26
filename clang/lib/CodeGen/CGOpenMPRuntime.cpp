@@ -27,30 +27,46 @@ using namespace clang;
 using namespace CodeGen;
 
 namespace {
-/// \brief API for captured statement code generation in OpenMP constructs.
+/// \brief Base class for handling code generation inside OpenMP regions.
 class CGOpenMPRegionInfo : public CodeGenFunction::CGCapturedStmtInfo {
 public:
-  CGOpenMPRegionInfo(const OMPExecutableDirective &D, const CapturedStmt &CS,
-                     const VarDecl *ThreadIDVar)
-      : CGCapturedStmtInfo(CS, CR_OpenMP), ThreadIDVar(ThreadIDVar),
-        Directive(D) {
-    assert(ThreadIDVar != nullptr && "No ThreadID in OpenMP region.");
-  }
+  CGOpenMPRegionInfo(const OMPExecutableDirective &D, const CapturedStmt &CS)
+      : CGCapturedStmtInfo(CS, CR_OpenMP), Directive(D) {}
 
-  /// \brief Gets a variable or parameter for storing global thread id
+  CGOpenMPRegionInfo(const OMPExecutableDirective &D)
+      : CGCapturedStmtInfo(CR_OpenMP), Directive(D) {}
+
+  /// \brief Get a variable or parameter for storing global thread id
   /// inside OpenMP construct.
-  const VarDecl *getThreadIDVariable() const { return ThreadIDVar; }
+  virtual const VarDecl *getThreadIDVariable() const = 0;
 
-  /// \brief Gets an LValue for the current ThreadID variable.
+  /// \brief Get an LValue for the current ThreadID variable.
   LValue getThreadIDVariableLValue(CodeGenFunction &CGF);
+
+    /// \brief Emit the captured statement body.
+  virtual void EmitBody(CodeGenFunction &CGF, const Stmt *S) override;
 
   static bool classof(const CGCapturedStmtInfo *Info) {
     return Info->getKind() == CR_OpenMP;
   }
+protected:
+  /// \brief OpenMP executable directive associated with the region.
+  const OMPExecutableDirective &Directive;
+};
 
-  /// \brief Emit the captured statement body.
-  void EmitBody(CodeGenFunction &CGF, Stmt *S) override;
-
+/// \brief API for captured statement code generation in OpenMP constructs.
+class CGOpenMPOutlinedRegionInfo : public CGOpenMPRegionInfo {
+public:
+  CGOpenMPOutlinedRegionInfo(const OMPExecutableDirective &D,
+                             const CapturedStmt &CS, const VarDecl *ThreadIDVar)
+      : CGOpenMPRegionInfo(D, CS), ThreadIDVar(ThreadIDVar) {
+    assert(ThreadIDVar != nullptr && "No ThreadID in OpenMP region.");
+  }
+  /// \brief Get a variable or parameter for storing global thread id
+  /// inside OpenMP construct.
+  virtual const VarDecl *getThreadIDVariable() const override {
+    return ThreadIDVar;
+  }
   /// \brief Get the name of the capture helper.
   StringRef getHelperName() const override { return ".omp_outlined."; }
 
@@ -58,18 +74,62 @@ private:
   /// \brief A variable or parameter storing global thread id for OpenMP
   /// constructs.
   const VarDecl *ThreadIDVar;
-  /// \brief OpenMP executable directive associated with the region.
-  const OMPExecutableDirective &Directive;
+};
+
+/// \brief API for inlined captured statement code generation in OpenMP
+/// constructs.
+class CGOpenMPInlinedRegionInfo : public CGOpenMPRegionInfo {
+public:
+  CGOpenMPInlinedRegionInfo(const OMPExecutableDirective &D,
+                            CodeGenFunction::CGCapturedStmtInfo *OldCSI)
+      : CGOpenMPRegionInfo(D), OldCSI(OldCSI),
+        OuterRegionInfo(dyn_cast_or_null<CGOpenMPRegionInfo>(OldCSI)) {}
+  // \brief Retrieve the value of the context parameter.
+  virtual llvm::Value *getContextValue() const override {
+    if (OuterRegionInfo)
+      return OuterRegionInfo->getContextValue();
+    llvm_unreachable("No context value for inlined OpenMP region");
+  }
+  /// \brief Lookup the captured field decl for a variable.
+  virtual const FieldDecl *lookup(const VarDecl *VD) const override {
+    if (OuterRegionInfo)
+      return OuterRegionInfo->lookup(VD);
+    llvm_unreachable("Trying to reference VarDecl that is neither local nor "
+                     "captured in outer OpenMP region");
+  }
+  virtual FieldDecl *getThisFieldDecl() const override {
+    if (OuterRegionInfo)
+      return OuterRegionInfo->getThisFieldDecl();
+    return nullptr;
+  }
+  /// \brief Get a variable or parameter for storing global thread id
+  /// inside OpenMP construct.
+  virtual const VarDecl *getThreadIDVariable() const override {
+    if (OuterRegionInfo)
+      return OuterRegionInfo->getThreadIDVariable();
+    return nullptr;
+  }
+  /// \brief Get the name of the capture helper.
+  virtual StringRef getHelperName() const override {
+    llvm_unreachable("No helper name for inlined OpenMP construct");
+  }
+
+  CodeGenFunction::CGCapturedStmtInfo *getOldCSI() const { return OldCSI; }
+
+private:
+  /// \brief CodeGen info about outer OpenMP region.
+  CodeGenFunction::CGCapturedStmtInfo *OldCSI;
+  CGOpenMPRegionInfo *OuterRegionInfo;
 };
 } // namespace
 
 LValue CGOpenMPRegionInfo::getThreadIDVariableLValue(CodeGenFunction &CGF) {
   return CGF.MakeNaturalAlignAddrLValue(
-      CGF.GetAddrOfLocalVar(ThreadIDVar),
-      CGF.getContext().getPointerType(ThreadIDVar->getType()));
+      CGF.GetAddrOfLocalVar(getThreadIDVariable()),
+      CGF.getContext().getPointerType(getThreadIDVariable()->getType()));
 }
 
-void CGOpenMPRegionInfo::EmitBody(CodeGenFunction &CGF, Stmt *S) {
+void CGOpenMPRegionInfo::EmitBody(CodeGenFunction &CGF, const Stmt *S) {
   CodeGenFunction::OMPPrivateScope PrivateScope(CGF);
   CGF.EmitOMPPrivateClause(Directive, PrivateScope);
   CGF.EmitOMPFirstprivateClause(Directive, PrivateScope);
@@ -98,7 +158,7 @@ CGOpenMPRuntime::emitOutlinedFunction(const OMPExecutableDirective &D,
                                       const VarDecl *ThreadIDVar) {
   const CapturedStmt *CS = cast<CapturedStmt>(D.getAssociatedStmt());
   CodeGenFunction CGF(CGM, true);
-  CGOpenMPRegionInfo CGInfo(D, *CS, ThreadIDVar);
+  CGOpenMPOutlinedRegionInfo CGInfo(D, *CS, ThreadIDVar);
   CGF.CapturedStmtInfo = &CGInfo;
   return CGF.GenerateCapturedStmtFunction(*CS);
 }
@@ -205,32 +265,34 @@ llvm::Value *CGOpenMPRuntime::getThreadID(CodeGenFunction &CGF,
   }
   if (auto OMPRegionInfo =
           dyn_cast_or_null<CGOpenMPRegionInfo>(CGF.CapturedStmtInfo)) {
-    // Check if this an outlined function with thread id passed as argument.
-    auto ThreadIDVar = OMPRegionInfo->getThreadIDVariable();
-    auto LVal = OMPRegionInfo->getThreadIDVariableLValue(CGF);
-    auto RVal = CGF.EmitLoadOfLValue(LVal, Loc);
-    LVal = CGF.MakeNaturalAlignAddrLValue(RVal.getScalarVal(),
-                                          ThreadIDVar->getType());
-    ThreadID = CGF.EmitLoadOfLValue(LVal, Loc).getScalarVal();
-    // If value loaded in entry block, cache it and use it everywhere in
-    // function.
-    if (CGF.Builder.GetInsertBlock() == CGF.AllocaInsertPt->getParent()) {
-      auto &Elem = OpenMPLocThreadIDMap.FindAndConstruct(CGF.CurFn);
-      Elem.second.ThreadID = ThreadID;
+    if (auto ThreadIDVar = OMPRegionInfo->getThreadIDVariable()) {
+      // Check if this an outlined function with thread id passed as argument.
+      auto LVal = OMPRegionInfo->getThreadIDVariableLValue(CGF);
+      auto RVal = CGF.EmitLoadOfLValue(LVal, Loc);
+      LVal = CGF.MakeNaturalAlignAddrLValue(RVal.getScalarVal(),
+                                            ThreadIDVar->getType());
+      ThreadID = CGF.EmitLoadOfLValue(LVal, Loc).getScalarVal();
+      // If value loaded in entry block, cache it and use it everywhere in
+      // function.
+      if (CGF.Builder.GetInsertBlock() == CGF.AllocaInsertPt->getParent()) {
+        auto &Elem = OpenMPLocThreadIDMap.FindAndConstruct(CGF.CurFn);
+        Elem.second.ThreadID = ThreadID;
+      }
+      return ThreadID;
     }
-  } else {
-    // This is not an outlined function region - need to call __kmpc_int32
-    // kmpc_global_thread_num(ident_t *loc).
-    // Generate thread id value and cache this value for use across the
-    // function.
-    CGBuilderTy::InsertPointGuard IPG(CGF.Builder);
-    CGF.Builder.SetInsertPoint(CGF.AllocaInsertPt);
-    ThreadID = CGF.EmitRuntimeCall(
-        createRuntimeFunction(OMPRTL__kmpc_global_thread_num),
-        emitUpdateLocation(CGF, Loc));
-    auto &Elem = OpenMPLocThreadIDMap.FindAndConstruct(CGF.CurFn);
-    Elem.second.ThreadID = ThreadID;
   }
+
+  // This is not an outlined function region - need to call __kmpc_int32
+  // kmpc_global_thread_num(ident_t *loc).
+  // Generate thread id value and cache this value for use across the
+  // function.
+  CGBuilderTy::InsertPointGuard IPG(CGF.Builder);
+  CGF.Builder.SetInsertPoint(CGF.AllocaInsertPt);
+  ThreadID =
+      CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_global_thread_num),
+                          emitUpdateLocation(CGF, Loc));
+  auto &Elem = OpenMPLocThreadIDMap.FindAndConstruct(CGF.CurFn);
+  Elem.second.ThreadID = ThreadID;
   return ThreadID;
 }
 
@@ -703,8 +765,10 @@ llvm::Value *CGOpenMPRuntime::emitThreadIDAddress(CodeGenFunction &CGF,
                                                   SourceLocation Loc) {
   if (auto OMPRegionInfo =
           dyn_cast_or_null<CGOpenMPRegionInfo>(CGF.CapturedStmtInfo))
-    return CGF.EmitLoadOfLValue(OMPRegionInfo->getThreadIDVariableLValue(CGF),
-                                SourceLocation()).getScalarVal();
+    if (OMPRegionInfo->getThreadIDVariable())
+      return CGF.EmitLoadOfLValue(OMPRegionInfo->getThreadIDVariableLValue(CGF),
+                                  Loc).getScalarVal();
+
   auto ThreadID = getThreadID(CGF, Loc);
   auto Int32Ty =
       CGF.getContext().getIntTypeForBitwidth(/*DestWidth*/ 32, /*Signed*/ true);
@@ -977,5 +1041,18 @@ void CGOpenMPRuntime::emitFlush(CodeGenFunction &CGF, ArrayRef<const Expr *>,
   // Build call void __kmpc_flush(ident_t *loc)
   CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_flush),
                       emitUpdateLocation(CGF, Loc));
+}
+
+InlinedOpenMPRegionRAII::InlinedOpenMPRegionRAII(
+    CodeGenFunction &CGF, const OMPExecutableDirective &D)
+    : CGF(CGF) {
+  CGF.CapturedStmtInfo = new CGOpenMPInlinedRegionInfo(D, CGF.CapturedStmtInfo);
+}
+
+InlinedOpenMPRegionRAII::~InlinedOpenMPRegionRAII() {
+  auto *OldCSI =
+      cast<CGOpenMPInlinedRegionInfo>(CGF.CapturedStmtInfo)->getOldCSI();
+  delete CGF.CapturedStmtInfo;
+  CGF.CapturedStmtInfo = OldCSI;
 }
 

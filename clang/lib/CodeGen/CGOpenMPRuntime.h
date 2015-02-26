@@ -43,9 +43,6 @@ class CodeGenFunction;
 class CodeGenModule;
 
 class CGOpenMPRuntime {
-public:
-
-private:
   enum OpenMPRTLFunction {
     /// \brief Call to void __kmpc_fork_call(ident_t *loc, kmp_int32 argc,
     /// kmpc_micro microtask, ...);
@@ -415,6 +412,16 @@ public:
   /// \param Vars List of variables to flush.
   virtual void emitFlush(CodeGenFunction &CGF, ArrayRef<const Expr *> Vars,
                          SourceLocation Loc);
+};
+
+/// \brief RAII for emitting code of CapturedStmt without function outlining.
+class InlinedOpenMPRegionRAII {
+  CodeGenFunction &CGF;
+
+public:
+  InlinedOpenMPRegionRAII(CodeGenFunction &CGF,
+                          const OMPExecutableDirective &D);
+  ~InlinedOpenMPRegionRAII();
 };
 } // namespace CodeGen
 } // namespace clang

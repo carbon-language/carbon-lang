@@ -43,4 +43,13 @@ int main() {
   return a;
 }
 
+// CHECK-LABEL: parallel_single
+void parallel_single(float *a) {
+#pragma omp parallel
+#pragma omp single
+  // CHECK-NOT: __kmpc_global_thread_num
+  for (unsigned i = 131071; i <= 2147483647; i += 127)
+    a[i] += i;
+}
+
 #endif
