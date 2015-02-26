@@ -184,7 +184,8 @@ namespace llvm {
 /// AvoidMessageBoxHook - Emulates hitting "retry" from an "abort, retry,
 /// ignore" CRT debug report dialog.  "retry" raises an exception which
 /// ultimately triggers our stack dumper.
-static int AvoidMessageBoxHook(int ReportType, char *Message, int *Return) {
+static LLVM_ATTRIBUTE_UNUSED int
+AvoidMessageBoxHook(int ReportType, char *Message, int *Return) {
   // Set *Return to the retry code for the return value of _CrtDbgReport:
   // http://msdn.microsoft.com/en-us/library/8hyw4sy7(v=vs.71).aspx
   // This may also trigger just-in-time debugging via DebugBreak().

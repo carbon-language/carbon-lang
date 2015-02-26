@@ -35,6 +35,8 @@ class TempEnvVar {
 #if HAVE_SETENV
     // Assume setenv and unsetenv come together.
     unsetenv(name);
+#else
+    (void)name; // Suppress -Wunused-private-field.
 #endif
   }
 
