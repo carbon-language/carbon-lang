@@ -1182,9 +1182,6 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
     }
   }
 
-  bool IncrementIsNUW = IsIncrementNUW(SE, Normalized);
-  bool IncrementIsNSW = IsIncrementNSW(SE, Normalized);
-
   // Save the original insertion point so we can restore it when we're done.
   BuilderType::InsertPointGuard Guard(Builder);
 
@@ -1218,6 +1215,12 @@ SCEVExpander::getAddRecExprPHILiterally(const SCEVAddRecExpr *Normalized,
     Step = SE.getNegativeSCEV(Step);
   // Expand the step somewhere that dominates the loop header.
   Value *StepV = expandCodeFor(Step, IntTy, L->getHeader()->begin());
+
+  // The no-wrap behavior proved by IsIncrement(NUW|NSW) is only applicable if
+  // we actually do emit an addition.  It does not apply if we emit a
+  // subtraction.
+  bool IncrementIsNUW = !useSubtract && IsIncrementNUW(SE, Normalized);
+  bool IncrementIsNSW = !useSubtract && IsIncrementNSW(SE, Normalized);
 
   // Create the PHI.
   BasicBlock *Header = L->getHeader();
