@@ -1,4 +1,4 @@
-; RUN: llc -march=mips64el -filetype=obj -mcpu=mips64r2 -mattr=n64 %s -o - \
+; RUN: llc -march=mips64el -filetype=obj -mcpu=mips64r2 -target-abi=n64 %s -o - \
 ; RUN: | llvm-objdump -disassemble -triple mips64el -mattr +mips64r2 - \
 ; RUN: | FileCheck %s
 

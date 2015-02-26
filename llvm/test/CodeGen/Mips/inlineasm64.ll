@@ -1,4 +1,4 @@
-; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 < %s | FileCheck %s
+; RUN: llc -march=mips64el -mcpu=mips64r2 -target-abi=n64 < %s | FileCheck %s
 
 @gl2 = external global i64
 @gl1 = external global i64

@@ -3,7 +3,7 @@
 ; The target is 64 bit.
 ;
 ;
-; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 < %s | FileCheck %s
+; RUN: llc -march=mips64el -mcpu=mips64r2 -target-abi=n64 < %s | FileCheck %s
 
 
 define i32 @main() nounwind {

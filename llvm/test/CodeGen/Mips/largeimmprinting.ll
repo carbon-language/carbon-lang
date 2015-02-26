@@ -1,7 +1,7 @@
 ; RUN: llc -march=mipsel < %s | FileCheck %s -check-prefix=32
-; RUN: llc -march=mips64el -mcpu=mips4 -mattr=n64 < %s | \
+; RUN: llc -march=mips64el -mcpu=mips4 -target-abi=n64 < %s | \
 ; RUN:     FileCheck %s -check-prefix=64
-; RUN: llc -march=mips64el -mcpu=mips64 -mattr=n64 < %s | \
+; RUN: llc -march=mips64el -mcpu=mips64 -target-abi=n64 < %s | \
 ; RUN:     FileCheck %s -check-prefix=64
 
 %struct.S1 = type { [65536 x i8] }
