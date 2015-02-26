@@ -94,8 +94,8 @@ InclusionRewriter::InclusionRewriter(Preprocessor &PP, raw_ostream &OS,
                                      bool UseLineDirectives)
     : PP(PP), SM(PP.getSourceManager()), OS(OS), MainEOL("\n"),
       PredefinesBuffer(nullptr), ShowLineMarkers(ShowLineMarkers),
-      LastInsertedFileChange(FileChanges.end()),
-      UseLineDirectives(UseLineDirectives) {}
+      UseLineDirectives(UseLineDirectives),
+      LastInsertedFileChange(FileChanges.end()) {}
 
 /// Write appropriate line information as either #line directives or GNU line
 /// markers depending on what mode we're in, including the \p Filename and
