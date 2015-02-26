@@ -1838,7 +1838,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   if ((Right.is(TT_BinaryOperator) && !Left.is(tok::l_paren)) ||
       Left.isOneOf(TT_BinaryOperator, TT_ConditionalExpr))
     return true;
-  if (Left.is(TT_TemplateCloser) && Right.is(tok::l_paren))
+  if (Left.is(TT_TemplateCloser) && Right.is(tok::l_paren) &&
+      Right.isNot(TT_FunctionTypeLParen))
     return Style.SpaceBeforeParens == FormatStyle::SBPO_Always;
   if (Right.is(TT_TemplateOpener) && Left.is(tok::r_paren) &&
       Left.MatchingParen && Left.MatchingParen->is(TT_OverloadedOperatorLParen))

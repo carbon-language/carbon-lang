@@ -5606,6 +5606,11 @@ TEST_F(FormatTest, FormatsFunctionTypes) {
   verifyFormat("void f() { function(*some_pointer_var)[0] = 10; }");
 }
 
+TEST_F(FormatTest, FormatsPointersToArrayTypes) {
+  verifyFormat("A (*foo_)[6];");
+  verifyFormat("vector<int> (*foo_)[6];");
+}
+
 TEST_F(FormatTest, BreaksLongVariableDeclarations) {
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType\n"
                "    LoooooooooooooooooooooooooooooooooooooooongVariable;");
