@@ -162,6 +162,13 @@ int nested___except___finally() {
 // CHECK-NEXT: br label %[[tryleave:[^ ]*]]
 // CHECK-NOT: store i32 23
 
+// Unused __finally continuation block
+// CHECK: store i32 51, i32* %
+// CHECK-NEXT: br label %[[tryleave]]
+
+// CHECK: [[tryleave]]
+// CHECK-NEXT: br label %[[trycont:[^ ]*]]
+
 // CHECK: [[g1_lpad]]
 // CHECK: store i8 1, i8* %
 // CHECK-NEXT:  br label %[[finally]]
@@ -171,13 +178,10 @@ int nested___except___finally() {
 // CHECK: br label %[[except:[^ ]*]]
 
 // CHECK: [[except]]
-// CHECK-NEXT: br label %[[trycont:[^ ]*]]
+// CHECK-NEXT: br label %[[trycont]]
 
 // CHECK: [[trycont]]
 // CHECK-NEXT: ret i32 1
-
-// CHECK: [[tryleave]]
-// CHECK-NEXT: br label %[[trycont]]
 
 int nested___except___except() {
   int myres = 0;

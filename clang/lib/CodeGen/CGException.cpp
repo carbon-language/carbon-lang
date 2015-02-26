@@ -1684,8 +1684,7 @@ llvm::BasicBlock *CodeGenFunction::getEHResumeBlock(bool isCleanup) {
   const char *RethrowName = Personality.CatchallRethrowFn;
   if (RethrowName != nullptr && !isCleanup) {
     EmitRuntimeCall(getCatchallRethrowFn(CGM, RethrowName),
-                    getExceptionFromSlot())
-      ->setDoesNotReturn();
+                    getExceptionFromSlot())->setDoesNotReturn();
     Builder.CreateUnreachable();
     Builder.restoreIP(SavedIP);
     return EHResumeBlock;
@@ -1943,23 +1942,17 @@ void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S, SEHFinallyInfo &FI) {
     Builder.SetInsertPoint(FI.FinallyBB);
     EmitStmt(Finally->getBlock());
 
-    // If the finally block doesn't fall through, we don't need these blocks.
-    if (!HaveInsertPoint()) {
-      FI.ContBB->eraseFromParent();
-      if (FI.ResumeBB)
-        FI.ResumeBB->eraseFromParent();
-      return;
-    }
-
-    if (FI.ResumeBB) {
-      llvm::Value *IsEH = Builder.CreateLoad(getAbnormalTerminationSlot(),
-                                             "abnormal.termination");
-      IsEH = Builder.CreateICmpEQ(IsEH, llvm::ConstantInt::get(Int8Ty, 0));
-      Builder.CreateCondBr(IsEH, FI.ContBB, FI.ResumeBB);
-    } else {
-      // There was nothing exceptional in the try body, so we only have normal
-      // control flow.
-      Builder.CreateBr(FI.ContBB);
+    if (HaveInsertPoint()) {
+      if (FI.ResumeBB) {
+        llvm::Value *IsEH = Builder.CreateLoad(getAbnormalTerminationSlot(),
+                                               "abnormal.termination");
+        IsEH = Builder.CreateICmpEQ(IsEH, llvm::ConstantInt::get(Int8Ty, 0));
+        Builder.CreateCondBr(IsEH, FI.ContBB, FI.ResumeBB);
+      } else {
+        // There was nothing exceptional in the try body, so we only have normal
+        // control flow.
+        Builder.CreateBr(FI.ContBB);
+      }
     }
 
     Builder.restoreIP(SavedIP);

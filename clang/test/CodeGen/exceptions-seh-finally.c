@@ -193,12 +193,99 @@ int nested___finally___finally() {
 // CHECK-NEXT: br label %[[finally:[^ ]*]]
 //
 // CHECK: [[finally]]
-// CHECK-NEXT:  store i32 1, i32* %
-// CHECK-NEXT:  store i8 0, i8* %
+// CHECK-NEXT: store i32 1, i32* %
+// CHECK-NEXT: store i32 1, i32* %
+// CHECK-NEXT: br label %[[cleanup:[^ ]*]]
+//
+// The finally's unreachable continuation block:
+// CHECK: store i32 0, i32* %
+// CHECK-NEXT: br label %[[cleanup]]
+//
+// CHECK: [[cleanup]]
+// CHECK-NEXT: store i8 0, i8* %
 // CHECK-NEXT: br label %[[outerfinally:[^ ]*]]
 //
 // CHECK: [[outerfinally]]
 // CHECK-NEXT: br label %[[finallycont:[^ ]*]]
 //
 // CHECK: [[finallycont]]
-// CHECK-NEXT: ret i32 1
+// CHECK-NEXT: %[[dest:[^ ]*]] = load i32* %
+// CHECK-NEXT: switch i32 %[[dest]]
+// CHECK-NEXT: i32 0, label %[[cleanupcont:[^ ]*]]
+//
+// CHECK: [[cleanupcont]]
+// CHECK-NEXT: store i32 0, i32* %
+// CHECK-NEXT: br label %[[return:[^ ]*]]
+//
+// CHECK: [[return]]
+// CHECK-NEXT: %[[reg:[^ ]*]] = load i32* %
+// CHECK-NEXT: ret i32 %[[reg]]
+
+int nested___finally___finally_with_eh_edge() {
+  __try {
+    __try {
+      might_crash();
+    } __finally {
+      return 899;
+    }
+  } __finally {
+    // Intentionally no return here.
+  }
+  return 912;
+}
+// CHECK-LABEL: define i32 @nested___finally___finally_with_eh_edge
+// CHECK: invoke void @might_crash() #3
+// CHECK-NEXT: to label %[[invokecont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
+//
+// CHECK: [[invokecont]]
+// CHECK-NEXT: store i8 0, i8* %[[abnormal:[^ ]*]]
+// CHECK-NEXT: br label %[[finally:[^ ]*]]
+
+// CHECK: [[finally]]
+// CHECK-NEXT: store i32 899, i32* %
+// CHECK-NEXT: store i32 1, i32* %
+// CHECK-NEXT: br label %[[cleanup:[^ ]*]]
+//
+// The inner finally's unreachable continuation block:
+// CHECK: store i32 0, i32* %
+// CHECK-NEXT: br label %[[cleanup]]
+//
+// CHECK: [[cleanup]]
+// CHECK-NEXT: store i8 0, i8* %
+// CHECK-NEXT: br label %[[outerfinally:[^ ]*]]
+//
+// CHECK: [[outerfinally]]
+// CHECK-NEXT: %[[abnormallocal:[^ ]*]] = load i8* %[[abnormal]]
+// CHECK-NEXT: %[[reg:[^ ]*]] = icmp eq i8 %[[abnormallocal]], 0
+// CHECK-NEXT: br i1 %[[reg]], label %[[finallycont:[^ ]*]], label %[[finallyresume:[^ ]*]]
+//
+// CHECK: [[finallycont]]
+// CHECK-NEXT: %[[dest:[^ ]*]] = load i32* %
+// CHECK-NEXT: switch i32 %[[dest]]
+// CHECK-NEXT: i32 0, label %[[cleanupcont:[^ ]*]]
+//
+// CHECK: [[cleanupcont]]
+// CHECK-NEXT: store i32 912, i32* %
+// CHECK-NEXT: br label %[[return:[^ ]*]]
+//
+//
+// CHECK: [[lpad]]
+// CHECK-NEXT: landingpad
+// CHECK-NEXT: cleanup
+// CHECK: store i8 1, i8* %[[abnormal]]
+// CHECK: br label %[[finally]]
+//
+// The inner finally's unreachable resume block:
+// CHECK: store i8 1, i8* %[[abnormal]]
+// CHECK-NEXT: br label %[[outerfinally]]
+//
+// CHECK: [[finallyresume]]
+// CHECK-NEXT: br label %[[ehresume:[^ ]*]]
+//
+// CHECK: [[return]]
+// CHECK-NEXT: %[[reg:[^ ]*]] = load i32* %
+// CHECK-NEXT: ret i32 %[[reg]]
+//
+// The ehresume block, not reachable either.
+// CHECK: [[ehresume]]
+// CHECK: resume
