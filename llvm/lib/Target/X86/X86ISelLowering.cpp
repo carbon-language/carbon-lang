@@ -6175,6 +6175,9 @@ static SDValue lowerVectorShuffleAsBlend(SDLoc DL, MVT VT, SDValue V1,
     // FALLTHROUGH
   case MVT::v16i8:
   case MVT::v32i8: {
+    assert((VT.getSizeInBits() == 128 || Subtarget->hasAVX2()) &&
+           "256-bit byte-blends require AVX2 support!");
+
     // Scale the blend by the number of bytes per element.
     int Scale = VT.getScalarSizeInBits() / 8;
 
