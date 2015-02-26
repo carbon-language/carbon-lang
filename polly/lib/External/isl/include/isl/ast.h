@@ -30,9 +30,17 @@ __isl_give isl_ast_expr *isl_ast_expr_mul(__isl_take isl_ast_expr *expr1,
 	__isl_take isl_ast_expr *expr2);
 __isl_give isl_ast_expr *isl_ast_expr_div(__isl_take isl_ast_expr *expr1,
 	__isl_take isl_ast_expr *expr2);
+__isl_give isl_ast_expr *isl_ast_expr_pdiv_q(__isl_take isl_ast_expr *expr1,
+	__isl_take isl_ast_expr *expr2);
+__isl_give isl_ast_expr *isl_ast_expr_pdiv_r(__isl_take isl_ast_expr *expr1,
+	__isl_take isl_ast_expr *expr2);
 __isl_give isl_ast_expr *isl_ast_expr_and(__isl_take isl_ast_expr *expr1,
 	__isl_take isl_ast_expr *expr2);
+__isl_give isl_ast_expr *isl_ast_expr_and_then(__isl_take isl_ast_expr *expr1,
+	__isl_take isl_ast_expr *expr2);
 __isl_give isl_ast_expr *isl_ast_expr_or(__isl_take isl_ast_expr *expr1,
+	__isl_take isl_ast_expr *expr2);
+__isl_give isl_ast_expr *isl_ast_expr_or_else(__isl_take isl_ast_expr *expr1,
 	__isl_take isl_ast_expr *expr2);
 __isl_give isl_ast_expr *isl_ast_expr_le(__isl_take isl_ast_expr *expr1,
 	__isl_take isl_ast_expr *expr2);
@@ -46,6 +54,8 @@ __isl_give isl_ast_expr *isl_ast_expr_eq(__isl_take isl_ast_expr *expr1,
 	__isl_take isl_ast_expr *expr2);
 __isl_give isl_ast_expr *isl_ast_expr_access(__isl_take isl_ast_expr *array,
 	__isl_take isl_ast_expr_list *indices);
+__isl_give isl_ast_expr *isl_ast_expr_call(__isl_take isl_ast_expr *function,
+	__isl_take isl_ast_expr_list *arguments);
 __isl_give isl_ast_expr *isl_ast_expr_address_of(__isl_take isl_ast_expr *expr);
 
 __isl_give isl_ast_expr *isl_ast_expr_copy(__isl_keep isl_ast_expr *expr);

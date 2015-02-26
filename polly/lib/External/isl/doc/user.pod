@@ -8625,10 +8625,22 @@ the context of an C<isl_ast_build>.
 	__isl_give isl_ast_expr *isl_ast_expr_div(
 		__isl_take isl_ast_expr *expr1,
 		__isl_take isl_ast_expr *expr2);
+	__isl_give isl_ast_expr *isl_ast_expr_pdiv_q(
+		__isl_take isl_ast_expr *expr1,
+		__isl_take isl_ast_expr *expr2);
+	__isl_give isl_ast_expr *isl_ast_expr_pdiv_r(
+		__isl_take isl_ast_expr *expr1,
+		__isl_take isl_ast_expr *expr2);
 	__isl_give isl_ast_expr *isl_ast_expr_and(
 		__isl_take isl_ast_expr *expr1,
 		__isl_take isl_ast_expr *expr2)
+	__isl_give isl_ast_expr *isl_ast_expr_and_then(
+		__isl_take isl_ast_expr *expr1,
+		__isl_take isl_ast_expr *expr2)
 	__isl_give isl_ast_expr *isl_ast_expr_or(
+		__isl_take isl_ast_expr *expr1,
+		__isl_take isl_ast_expr *expr2)
+	__isl_give isl_ast_expr *isl_ast_expr_or_else(
 		__isl_take isl_ast_expr *expr1,
 		__isl_take isl_ast_expr *expr2)
 	__isl_give isl_ast_expr *isl_ast_expr_eq(
@@ -8649,12 +8661,20 @@ the context of an C<isl_ast_build>.
 	__isl_give isl_ast_expr *isl_ast_expr_access(
 		__isl_take isl_ast_expr *array,
 		__isl_take isl_ast_expr_list *indices);
+	__isl_give isl_ast_expr *isl_ast_expr_call(
+		__isl_take isl_ast_expr *function,
+		__isl_take isl_ast_expr_list *arguments);
 
 The function C<isl_ast_expr_address_of> can be applied to an
 C<isl_ast_expr> of type C<isl_ast_op_access> only. It is meant
-to represent the address of the C<isl_ast_expr_access>.
+to represent the address of the C<isl_ast_expr_access>. The function
+C<isl_ast_expr_and_then> as well as C<isl_ast_expr_or_else> are short-circuit
+versions of C<isl_ast_expr_and> and C<isl_ast_expr_or>, respectively.
 
 	#include <isl/ast_build.h>
+	__isl_give isl_ast_expr *isl_ast_build_expr_from_set(
+		__isl_keep isl_ast_build *build,
+		__isl_take isl_set *set);
 	__isl_give isl_ast_expr *isl_ast_build_expr_from_pw_aff(
 		__isl_keep isl_ast_build *build,
 		__isl_take isl_pw_aff *pa);
@@ -8675,7 +8695,8 @@ to represent the address of the C<isl_ast_expr_access>.
 		__isl_keep isl_ast_build *build,
 		__isl_take isl_multi_pw_aff *mpa);
 
-The domains of C<pa>, C<mpa> and C<pma> should correspond
+The set <set> and
+the domains of C<pa>, C<mpa> and C<pma> should correspond
 to the schedule space of C<build>.
 The tuple id of C<mpa> or C<pma> is used as the array being accessed or
 the function being called.

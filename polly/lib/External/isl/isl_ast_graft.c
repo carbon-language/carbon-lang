@@ -278,7 +278,7 @@ static __isl_give isl_ast_node *ast_node_insert_if(
 		isl_ast_node *if_node;
 		isl_ast_expr *expr;
 
-		expr = isl_ast_build_expr_from_set(build, guard);
+		expr = isl_ast_build_expr_from_set_internal(build, guard);
 
 		if_node = isl_ast_node_alloc_if(expr);
 		return isl_ast_node_if_set_then(if_node, node);

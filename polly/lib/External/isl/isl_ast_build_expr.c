@@ -1497,8 +1497,10 @@ static int expr_from_set(__isl_take isl_basic_set *bset, void *user)
  * The result is simplified in terms of build->domain.
  *
  * If "set" is an (obviously) empty set, then return the expression "0".
+ *
+ * "set" lives in the internal schedule space.
  */
-__isl_give isl_ast_expr *isl_ast_build_expr_from_set(
+__isl_give isl_ast_expr *isl_ast_build_expr_from_set_internal(
 	__isl_keep isl_ast_build *build, __isl_take isl_set *set)
 {
 	struct isl_expr_from_set_data data = { build, 1, NULL };
@@ -1512,6 +1514,32 @@ __isl_give isl_ast_expr *isl_ast_build_expr_from_set(
 
 	isl_set_free(set);
 	return data.res;
+}
+
+/* Construct an isl_ast_expr that evaluates the conditions defining "set".
+ * The result is simplified in terms of build->domain.
+ *
+ * If "set" is an (obviously) empty set, then return the expression "0".
+ *
+ * "set" lives in the external schedule space.
+ *
+ * The internal AST expression generation assumes that there are
+ * no unknown divs, so make sure an explicit representation is available.
+ * Since the set comes from the outside, it may have constraints that
+ * are redundant with respect to the build domain.  Remove them first.
+ */
+__isl_give isl_ast_expr *isl_ast_build_expr_from_set(
+	__isl_keep isl_ast_build *build, __isl_take isl_set *set)
+{
+	if (isl_ast_build_need_schedule_map(build)) {
+		isl_multi_aff *ma;
+		ma = isl_ast_build_get_schedule_map_multi_aff(build);
+		set = isl_set_preimage_multi_aff(set, ma);
+	}
+
+	set = isl_set_compute_divs(set);
+	set = isl_ast_build_compute_gist(build, set);
+	return isl_ast_build_expr_from_set_internal(build, set);
 }
 
 struct isl_from_pw_aff_data {
@@ -1560,7 +1588,7 @@ static int ast_expr_from_pw_aff(__isl_take isl_set *set,
 
 		ternary = isl_ast_expr_alloc_op(ctx, isl_ast_op_select, 3);
 		gist = isl_set_gist(isl_set_copy(set), isl_set_copy(data->dom));
-		arg = isl_ast_build_expr_from_set(data->build, gist);
+		arg = isl_ast_build_expr_from_set_internal(data->build, gist);
 		ternary = isl_ast_expr_set_op_arg(ternary, 0, arg);
 		build = isl_ast_build_copy(data->build);
 		build = isl_ast_build_restrict_generated(build, set);

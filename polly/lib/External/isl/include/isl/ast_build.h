@@ -79,6 +79,8 @@ __isl_give isl_ast_build *isl_ast_build_set_create_leaf(
 	__isl_give isl_ast_node *(*fn)(__isl_take isl_ast_build *build,
 		void *user), void *user);
 
+__isl_give isl_ast_expr *isl_ast_build_expr_from_set(
+	__isl_keep isl_ast_build *build, __isl_take isl_set *set);
 __isl_give isl_ast_expr *isl_ast_build_expr_from_pw_aff(
 	__isl_keep isl_ast_build *build, __isl_take isl_pw_aff *pa);
 __isl_give isl_ast_expr *isl_ast_build_access_from_pw_multi_aff(

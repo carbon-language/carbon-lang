@@ -6,7 +6,7 @@
 
 __isl_give isl_ast_expr *isl_ast_build_expr_from_basic_set(
 	 __isl_keep isl_ast_build *build, __isl_take isl_basic_set *bset);
-__isl_give isl_ast_expr *isl_ast_build_expr_from_set(
+__isl_give isl_ast_expr *isl_ast_build_expr_from_set_internal(
 	__isl_keep isl_ast_build *build, __isl_take isl_set *set);
 
 __isl_give isl_ast_expr *isl_ast_build_expr_from_pw_aff_internal(

@@ -986,7 +986,7 @@ static __isl_give isl_ast_graft *set_for_cond_from_set(
 	if (!graft)
 		return NULL;
 
-	cond = isl_ast_build_expr_from_set(build, isl_set_copy(set));
+	cond = isl_ast_build_expr_from_set_internal(build, isl_set_copy(set));
 	graft->node->u.f.cond = cond;
 	if (!graft->node->u.f.cond)
 		return isl_ast_graft_free(graft);

@@ -1894,7 +1894,8 @@ __isl_give isl_set *isl_ast_build_compute_gist(
 	if (!build)
 		goto error;
 
-	set = isl_set_preimage_multi_aff(set,
+	if (!isl_set_is_params(set))
+		set = isl_set_preimage_multi_aff(set,
 					isl_multi_aff_copy(build->values));
 	set = isl_set_gist(set, isl_set_copy(build->domain));
 
