@@ -26,6 +26,7 @@
 // FIXME: This test produces linker errors on Darwin.
 // XFAIL: darwin
 // REQUIRES: stable-runtime
+#include <new>
 
 extern "C" {
 const char *__ubsan_default_options() {
@@ -76,12 +77,15 @@ int main(int, char **argv) {
   (void)((T&)u).S::v();
 
   char Buffer[sizeof(U)] = {};
+  char TStorage[sizeof(T)];
   switch (argv[1][1]) {
   case '0':
     p = reinterpret_cast<T*>(Buffer);
     break;
   case 'S':
-    p = reinterpret_cast<T*>(new S);
+    // Make sure p points to the memory chunk of sufficient size to prevent ASan
+    // reports about out-of-bounds access.
+    p = reinterpret_cast<T*>(new(TStorage) S);
     break;
   case 'T':
     p = new T;
