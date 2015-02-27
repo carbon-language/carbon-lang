@@ -264,6 +264,7 @@ AtomicInfo::translateAtomicOrdering(const llvm::AtomicOrdering AO) {
   case llvm::SequentiallyConsistent:
     return AtomicExpr::AO_ABI_memory_order_seq_cst;
   }
+  llvm_unreachable("Unhandled AtomicOrdering");
 }
 
 llvm::Value *AtomicInfo::CreateTempAlloca() const {
