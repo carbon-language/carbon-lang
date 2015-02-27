@@ -123,14 +123,14 @@ namespace test7 {
 // CHECK-NEXT: [[SELECTOR:%.*]] = extractvalue { i8*, i32 } [[CAUGHTVAL]], 1
 // CHECK-NEXT: store i32 [[SELECTOR]], i32* [[SELECTORVAR]]
 // CHECK-NEXT: br label
-// CHECK:      [[SELECTOR:%.*]] = load i32* [[SELECTORVAR]]
+// CHECK:      [[SELECTOR:%.*]] = load i32, i32* [[SELECTORVAR]]
 // CHECK-NEXT: [[T0:%.*]] = call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIi to i8*))
 // CHECK-NEXT: icmp eq i32 [[SELECTOR]], [[T0]]
 // CHECK-NEXT: br i1
-// CHECK:      [[T0:%.*]] = load i8** [[CAUGHTEXNVAR]]
+// CHECK:      [[T0:%.*]] = load i8*, i8** [[CAUGHTEXNVAR]]
 // CHECK-NEXT: [[T1:%.*]] = call i8* @__cxa_begin_catch(i8* [[T0]])
 // CHECK-NEXT: [[T2:%.*]] = bitcast i8* [[T1]] to i32*
-// CHECK-NEXT: [[T3:%.*]] = load i32* [[T2]]
+// CHECK-NEXT: [[T3:%.*]] = load i32, i32* [[T2]]
 // CHECK-NEXT: store i32 [[T3]], i32* {{%.*}}, align 4
 // CHECK-NEXT: invoke void @__cxa_rethrow
       catch (int) {
@@ -145,7 +145,7 @@ namespace test7 {
 // CHECK-NEXT: store i32 [[SELECTOR]], i32* [[SELECTORVAR]]
 // CHECK-NEXT: call void @__cxa_end_catch()
 // CHECK-NEXT: br label
-// CHECK:      load i8** [[CAUGHTEXNVAR]]
+// CHECK:      load i8*, i8** [[CAUGHTEXNVAR]]
 // CHECK-NEXT: call i8* @__cxa_begin_catch
 // CHECK-NEXT: call void @__cxa_end_catch
     catch (...) {
@@ -221,7 +221,7 @@ namespace test10 {
     } catch (int i) {
     // CHECK:      call i8* @__cxa_begin_catch
     // CHECK-NEXT: bitcast
-    // CHECK-NEXT: load i32*
+    // CHECK-NEXT: load i32, i32*
     // CHECK-NEXT: store i32
     // CHECK-NEXT: call void @__cxa_end_catch() [[NUW:#[0-9]+]]
     } catch (B a) {
@@ -251,7 +251,7 @@ namespace test11 {
       // CHECK:      invoke void @_ZN6test116opaqueEv()
       opaque();
     } catch (int**&p) {
-      // CHECK:      [[EXN:%.*]] = load i8**
+      // CHECK:      [[EXN:%.*]] = load i8*, i8**
       // CHECK-NEXT: call i8* @__cxa_begin_catch(i8* [[EXN]]) [[NUW]]
       // CHECK-NEXT: [[ADJ1:%.*]] = getelementptr i8, i8* [[EXN]], i32 32
       // CHECK-NEXT: [[ADJ2:%.*]] = bitcast i8* [[ADJ1]] to i32***
@@ -272,7 +272,7 @@ namespace test11 {
       // CHECK-NEXT: invoke void @_ZN6test116opaqueEv()
       opaque();
     } catch (A*&p) {
-      // CHECK:      [[EXN:%.*]] = load i8** [[EXNSLOT]]
+      // CHECK:      [[EXN:%.*]] = load i8*, i8** [[EXNSLOT]]
       // CHECK-NEXT: [[ADJ1:%.*]] = call i8* @__cxa_begin_catch(i8* [[EXN]]) [[NUW]]
       // CHECK-NEXT: [[ADJ2:%.*]] = bitcast i8* [[ADJ1]] to [[A]]*
       // CHECK-NEXT: store [[A]]* [[ADJ2]], [[A]]** [[TMP]]
@@ -384,7 +384,7 @@ namespace test15 {
       int x = 10;
 
       while (true) {
-        // CHECK:      load i32* [[X]]
+        // CHECK:      load i32, i32* [[X]]
         // CHECK-NEXT: [[COND:%.*]] = invoke zeroext i1 @_ZN6test156opaqueEi
         // CHECK:      br i1 [[COND]]
         if (opaque(x))
@@ -438,9 +438,9 @@ namespace test16 {
     // CHECK:      invoke void @_ZN6test161AD1Ev([[A]]* [[TEMP]])
     // CHECK:      ret void
 
-    // CHECK:      [[T0:%.*]] = load i1* [[EXN_ACTIVE]]
+    // CHECK:      [[T0:%.*]] = load i1, i1* [[EXN_ACTIVE]]
     // CHECK-NEXT: br i1 [[T0]]
-    // CHECK:      [[T1:%.*]] = load i8** [[EXN_SAVE]]
+    // CHECK:      [[T1:%.*]] = load i8*, i8** [[EXN_SAVE]]
     // CHECK-NEXT: call void @__cxa_free_exception(i8* [[T1]])
     // CHECK-NEXT: br label
   }

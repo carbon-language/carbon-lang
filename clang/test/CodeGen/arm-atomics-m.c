@@ -15,7 +15,7 @@ void test_presence(void)
   __atomic_fetch_add(&i, 1, memory_order_seq_cst);
   // CHECK: atomicrmw sub i32* {{.*}} seq_cst
   __atomic_fetch_sub(&i, 1, memory_order_seq_cst);
-  // CHECK: load atomic i32* {{.*}} seq_cst
+  // CHECK: load atomic i32, i32* {{.*}} seq_cst
   int r;
   __atomic_load(&i, &r, memory_order_seq_cst);
   // CHECK: store atomic i32 {{.*}} seq_cst

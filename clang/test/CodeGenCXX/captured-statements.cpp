@@ -63,8 +63,8 @@ void test2(int x) {
   //
   // CHECK-2: define internal void @[[HelperName]]
   // CHECK-2:   getelementptr inbounds %[[Capture]], %[[Capture]]*
-  // CHECK-2:   load i32**
-  // CHECK-2:   load i32*
+  // CHECK-2:   load i32*, i32**
+  // CHECK-2:   load i32, i32*
 }
 
 void test3(int x) {

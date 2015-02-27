@@ -32,9 +32,9 @@ const std::type_info* test3_typeid() { return &typeid(*fn()); }
 // CHECK-NEXT:   unreachable
 // CHECK:        [[THIS:%.*]] = bitcast %struct.A* [[CALL]] to i8*
 // CHECK-NEXT:   [[VBTBLP:%.*]] = getelementptr inbounds %struct.A, %struct.A* [[CALL]], i32 0, i32 0
-// CHECK-NEXT:   [[VBTBL:%.*]] = load i32** [[VBTBLP]], align 4
+// CHECK-NEXT:   [[VBTBL:%.*]] = load i32*, i32** [[VBTBLP]], align 4
 // CHECK-NEXT:   [[VBSLOT:%.*]] = getelementptr inbounds i32, i32* [[VBTBL]], i32 1
-// CHECK-NEXT:   [[VBASE_OFFS:%.*]] = load i32* [[VBSLOT]], align 4
+// CHECK-NEXT:   [[VBASE_OFFS:%.*]] = load i32, i32* [[VBSLOT]], align 4
 // CHECK-NEXT:   [[ADJ:%.*]] = getelementptr inbounds i8, i8* [[THIS]], i32 [[VBASE_OFFS]]
 // CHECK-NEXT:   [[RT:%.*]] = tail call i8* @__RTtypeid(i8* [[ADJ]])
 // CHECK-NEXT:   [[RET:%.*]] = bitcast i8* [[RT]] to %struct.type_info*

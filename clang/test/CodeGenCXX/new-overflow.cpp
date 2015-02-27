@@ -103,7 +103,7 @@ namespace test5 {
   typedef A elt;
 
   // CHECK:    define [[A:%.*]]* @_ZN5test54testEi(i32
-  // CHECK:      [[N:%.*]] = load i32*
+  // CHECK:      [[N:%.*]] = load i32, i32*
   // CHECK-NEXT: [[T0:%.*]] = icmp slt i32 [[N]], 0
   // CHECK-NEXT: [[T1:%.*]] = select i1 [[T0]], i32 -1, i32 [[N]]
   // CHECK-NEXT: call noalias i8* @_Znaj(i32 [[T1]])
@@ -168,7 +168,7 @@ namespace test8 {
   typedef A elt;
 
   // CHECK:    define [[A:%.*]]* @_ZN5test84testEx(i64
-  // CHECK:      [[N:%.*]] = load i64*
+  // CHECK:      [[N:%.*]] = load i64, i64*
   // CHECK-NEXT: [[T0:%.*]] = icmp uge i64 [[N]], 4294967296
   // CHECK-NEXT: [[T1:%.*]] = trunc i64 [[N]] to i32
   // CHECK-NEXT: [[T2:%.*]] = call { i32, i1 } @llvm.umul.with.overflow.i32(i32 [[T1]], i32 4)
@@ -193,7 +193,7 @@ namespace test9 {
   typedef A elt;
 
   // CHECK:    define [[A:%.*]]* @_ZN5test94testEy(i64
-  // CHECK:      [[N:%.*]] = load i64*
+  // CHECK:      [[N:%.*]] = load i64, i64*
   // CHECK-NEXT: [[T0:%.*]] = icmp uge i64 [[N]], 4294967296
   // CHECK-NEXT: [[T1:%.*]] = trunc i64 [[N]] to i32
   // CHECK-NEXT: [[T2:%.*]] = call { i32, i1 } @llvm.umul.with.overflow.i32(i32 [[T1]], i32 4)

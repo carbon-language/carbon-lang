@@ -372,7 +372,7 @@ namespace partly_constant {
   //
   // Second init list array (non-constant).
   // CHECK: store i32 4, i32* getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_SECOND]], i64 0, i64 0)
-  // CHECK: load i32* @_ZN15partly_constant1kE
+  // CHECK: load i32, i32* @_ZN15partly_constant1kE
   // CHECK: store i32 {{.*}}, i32* getelementptr inbounds ({{.*}}* @[[PARTLY_CONSTANT_SECOND]], i64 0, i64 1)
   //
   // Second init list.

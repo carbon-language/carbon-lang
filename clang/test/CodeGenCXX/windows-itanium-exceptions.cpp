@@ -36,7 +36,7 @@ void attempt() {
 // CHECK:    store i32 %2, i32* %ehselector.slot
 // CHECK:    br label %catch
 // CHECK: catch:
-// CHECK:    %exn = load i8** %exn.slot
+// CHECK:    %exn = load i8*, i8** %exn.slot
 // CHECK:    %3 = call {{.*}}i8* @__cxa_begin_catch(i8* %{{2|exn}})
 // CHECK:    call {{.*}}void @__cxa_end_catch()
 // CHECK:    br label %try.cont

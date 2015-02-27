@@ -17,7 +17,7 @@ int s0_align_y = __alignof(((struct s0*)0)->y);
 int s0_align   = __alignof(struct s0);
 
 // CHECK-FUNCTIONS-LABEL: define i32 @s0_load_x
-// CHECK-FUNCTIONS: [[s0_load_x:%.*]] = load i32* {{.*}}, align 4
+// CHECK-FUNCTIONS: [[s0_load_x:%.*]] = load i32, i32* {{.*}}, align 4
 // CHECK-FUNCTIONS: ret i32 [[s0_load_x]]
 int s0_load_x(struct s0 *a) { return a->x; }
 // FIXME: This seems like it should be align 1. This is actually something which
@@ -25,7 +25,7 @@ int s0_load_x(struct s0 *a) { return a->x; }
 // with align 1 (in 2363.1 at least).
 //
 // CHECK-FUNCTIONS-LABEL: define i32 @s0_load_y
-// CHECK-FUNCTIONS: [[s0_load_y:%.*]] = load i32* {{.*}}, align 1
+// CHECK-FUNCTIONS: [[s0_load_y:%.*]] = load i32, i32* {{.*}}, align 1
 // CHECK-FUNCTIONS: ret i32 [[s0_load_y]]
 int s0_load_y(struct s0 *a) { return a->y; }
 // CHECK-FUNCTIONS-LABEL: define void @s0_copy
@@ -47,11 +47,11 @@ int s1_align_y = __alignof(((struct s1*)0)->y);
 int s1_align   = __alignof(struct s1);
 
 // CHECK-FUNCTIONS-LABEL: define i32 @s1_load_x
-// CHECK-FUNCTIONS: [[s1_load_x:%.*]] = load i32* {{.*}}, align 1
+// CHECK-FUNCTIONS: [[s1_load_x:%.*]] = load i32, i32* {{.*}}, align 1
 // CHECK-FUNCTIONS: ret i32 [[s1_load_x]]
 int s1_load_x(struct s1 *a) { return a->x; }
 // CHECK-FUNCTIONS-LABEL: define i32 @s1_load_y
-// CHECK-FUNCTIONS: [[s1_load_y:%.*]] = load i32* {{.*}}, align 1
+// CHECK-FUNCTIONS: [[s1_load_y:%.*]] = load i32, i32* {{.*}}, align 1
 // CHECK-FUNCTIONS: ret i32 [[s1_load_y]]
 int s1_load_y(struct s1 *a) { return a->y; }
 // CHECK-FUNCTIONS-LABEL: define void @s1_copy
@@ -75,11 +75,11 @@ int s2_align_y = __alignof(((struct s2*)0)->y);
 int s2_align   = __alignof(struct s2);
 
 // CHECK-FUNCTIONS-LABEL: define i32 @s2_load_x
-// CHECK-FUNCTIONS: [[s2_load_y:%.*]] = load i32* {{.*}}, align 2
+// CHECK-FUNCTIONS: [[s2_load_y:%.*]] = load i32, i32* {{.*}}, align 2
 // CHECK-FUNCTIONS: ret i32 [[s2_load_y]]
 int s2_load_x(struct s2 *a) { return a->x; }
 // CHECK-FUNCTIONS-LABEL: define i32 @s2_load_y
-// CHECK-FUNCTIONS: [[s2_load_y:%.*]] = load i32* {{.*}}, align 2
+// CHECK-FUNCTIONS: [[s2_load_y:%.*]] = load i32, i32* {{.*}}, align 2
 // CHECK-FUNCTIONS: ret i32 [[s2_load_y]]
 int s2_load_y(struct s2 *a) { return a->y; }
 // CHECK-FUNCTIONS-LABEL: define void @s2_copy
@@ -95,6 +95,6 @@ int s3_1 = __alignof(((struct s3*) 0)->anInt);
 // CHECK-FUNCTIONS-LABEL: define i32 @test3(
 int test3(struct s3 *ptr) {
   // CHECK-FUNCTIONS:      [[PTR:%.*]] = getelementptr inbounds {{%.*}}, {{%.*}}* {{%.*}}, i32 0, i32 1
-  // CHECK-FUNCTIONS-NEXT: load i32* [[PTR]], align 1
+  // CHECK-FUNCTIONS-NEXT: load i32, i32* [[PTR]], align 1
   return ptr->anInt;
 }

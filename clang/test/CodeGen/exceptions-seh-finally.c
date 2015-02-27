@@ -22,7 +22,7 @@ void basic_finally(void) {
 //
 // CHECK: [[finally]]
 // CHECK: call void @cleanup()
-// CHECK: load i8* %[[abnormal]]
+// CHECK: load i8, i8* %[[abnormal]]
 // CHECK: icmp eq
 // CHECK: br i1 %{{.*}}, label %[[finallycont:[^ ]*]], label %[[resumecont:[^ ]*]]
 //
@@ -97,10 +97,10 @@ void use_abnormal_termination(void) {
 // CHECK: br label %[[finally:[^ ]*]]
 //
 // CHECK: [[finally]]
-// CHECK: load i8* %[[abnormal]]
+// CHECK: load i8, i8* %[[abnormal]]
 // CHECK: zext i8 %{{.*}} to i32
 // CHECK: store i32 %{{.*}}, i32* @crashed
-// CHECK: load i8* %[[abnormal]]
+// CHECK: load i8, i8* %[[abnormal]]
 // CHECK: icmp eq
 // CHECK: br i1 %{{.*}}, label %[[finallycont:[^ ]*]], label %[[resumecont:[^ ]*]]
 //
@@ -209,7 +209,7 @@ int nested___finally___finally() {
 // CHECK-NEXT: br label %[[finallycont:[^ ]*]]
 //
 // CHECK: [[finallycont]]
-// CHECK-NEXT: %[[dest:[^ ]*]] = load i32* %
+// CHECK-NEXT: %[[dest:[^ ]*]] = load i32, i32* %
 // CHECK-NEXT: switch i32 %[[dest]]
 // CHECK-NEXT: i32 0, label %[[cleanupcont:[^ ]*]]
 //
@@ -218,7 +218,7 @@ int nested___finally___finally() {
 // CHECK-NEXT: br label %[[return:[^ ]*]]
 //
 // CHECK: [[return]]
-// CHECK-NEXT: %[[reg:[^ ]*]] = load i32* %
+// CHECK-NEXT: %[[reg:[^ ]*]] = load i32, i32* %
 // CHECK-NEXT: ret i32 %[[reg]]
 
 int nested___finally___finally_with_eh_edge() {
@@ -255,12 +255,12 @@ int nested___finally___finally_with_eh_edge() {
 // CHECK-NEXT: br label %[[outerfinally:[^ ]*]]
 //
 // CHECK: [[outerfinally]]
-// CHECK-NEXT: %[[abnormallocal:[^ ]*]] = load i8* %[[abnormal]]
+// CHECK-NEXT: %[[abnormallocal:[^ ]*]] = load i8, i8* %[[abnormal]]
 // CHECK-NEXT: %[[reg:[^ ]*]] = icmp eq i8 %[[abnormallocal]], 0
 // CHECK-NEXT: br i1 %[[reg]], label %[[finallycont:[^ ]*]], label %[[finallyresume:[^ ]*]]
 //
 // CHECK: [[finallycont]]
-// CHECK-NEXT: %[[dest:[^ ]*]] = load i32* %
+// CHECK-NEXT: %[[dest:[^ ]*]] = load i32, i32* %
 // CHECK-NEXT: switch i32 %[[dest]]
 // CHECK-NEXT: i32 0, label %[[cleanupcont:[^ ]*]]
 //
@@ -283,7 +283,7 @@ int nested___finally___finally_with_eh_edge() {
 // CHECK-NEXT: br label %[[ehresume:[^ ]*]]
 //
 // CHECK: [[return]]
-// CHECK-NEXT: %[[reg:[^ ]*]] = load i32* %
+// CHECK-NEXT: %[[reg:[^ ]*]] = load i32, i32* %
 // CHECK-NEXT: ret i32 %[[reg]]
 //
 // The ehresume block, not reachable either.

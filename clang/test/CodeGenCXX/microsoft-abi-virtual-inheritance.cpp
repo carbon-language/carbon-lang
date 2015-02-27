@@ -21,7 +21,7 @@ struct B : virtual VBase {
 
 B::B() {
   // CHECK-LABEL: define x86_thiscallcc %struct.B* @"\01??0B@@QAE@XZ"
-  // CHECK:   %[[THIS:.*]] = load %struct.B**
+  // CHECK:   %[[THIS:.*]] = load %struct.B*, %struct.B**
   // CHECK:   br i1 %{{.*}}, label %[[INIT_VBASES:.*]], label %[[SKIP_VBASES:.*]]
 
   // Don't check the INIT_VBASES case as it's covered by the ctor tests.
@@ -57,7 +57,7 @@ B::~B() {
   // CHECK:   %[[THIS_i8:.*]] = getelementptr inbounds i8, i8* %[[THIS_PARAM_i8]], i32 -8
   // CHECK:   %[[THIS:.*]] = bitcast i8* %[[THIS_i8]] to %struct.B*
   // CHECK:   store %struct.B* %[[THIS]], %struct.B** %[[THIS_ADDR:.*]], align 4
-  // CHECK:   %[[THIS:.*]] = load %struct.B** %[[THIS_ADDR]]
+  // CHECK:   %[[THIS:.*]] = load %struct.B*, %struct.B** %[[THIS_ADDR]]
 
   // Restore the vfptr that could have been changed by a subclass.
   // CHECK:   %[[THIS_i8:.*]] = bitcast %struct.B* %[[THIS]] to i8*
@@ -85,7 +85,7 @@ B::~B() {
   // CHECK: ret
 
   // CHECK2-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_DB@@UAE@XZ"(%struct.B*
-  // CHECK2: %[[THIS:.*]] = load %struct.B** {{.*}}
+  // CHECK2: %[[THIS:.*]] = load %struct.B*, %struct.B** {{.*}}
   // CHECK2: %[[THIS_i8:.*]] = bitcast %struct.B* %[[THIS]] to i8*
   // CHECK2: %[[B_i8:.*]] = getelementptr i8, i8* %[[THIS_i8]], i32 8
   // CHECK2: %[[B:.*]] = bitcast i8* %[[B_i8]] to %struct.B*
@@ -101,7 +101,7 @@ B::~B() {
   // CHECK2:   %[[THIS_i8:.*]] = getelementptr inbounds i8, i8* %[[THIS_PARAM_i8:.*]], i32 -8
   // CHECK2:   %[[THIS:.*]] = bitcast i8* %[[THIS_i8]] to %struct.B*
   // CHECK2:   store %struct.B* %[[THIS]], %struct.B** %[[THIS_ADDR:.*]], align 4
-  // CHECK2:   %[[THIS:.*]] = load %struct.B** %[[THIS_ADDR]]
+  // CHECK2:   %[[THIS:.*]] = load %struct.B*, %struct.B** %[[THIS_ADDR]]
   // CHECK2:   call x86_thiscallcc void @"\01??_DB@@UAE@XZ"(%struct.B* %[[THIS]])
   // ...
   // CHECK2: ret
@@ -119,13 +119,13 @@ void B::foo() {
 // CHECK: store %struct.B* %[[THIS]], %struct.B** %[[THIS_ADDR]], align 4
 
   field = 42;
-// CHECK: %[[THIS:.*]] = load %struct.B** %[[THIS_ADDR]]
+// CHECK: %[[THIS:.*]] = load %struct.B*, %struct.B** %[[THIS_ADDR]]
 // CHECK: %[[THIS8:.*]] = bitcast %struct.B* %[[THIS]] to i8*
 // CHECK: %[[VBPTR:.*]] = getelementptr inbounds i8, i8* %[[THIS8]], i32 0
 // CHECK: %[[VBPTR8:.*]] = bitcast i8* %[[VBPTR]] to i32**
-// CHECK: %[[VBTABLE:.*]] = load i32** %[[VBPTR8]]
+// CHECK: %[[VBTABLE:.*]] = load i32*, i32** %[[VBPTR8]]
 // CHECK: %[[VBENTRY:.*]] = getelementptr inbounds i32, i32* %[[VBTABLE]], i32 1
-// CHECK: %[[VBOFFSET32:.*]] = load i32* %[[VBENTRY]]
+// CHECK: %[[VBOFFSET32:.*]] = load i32, i32* %[[VBENTRY]]
 // CHECK: %[[VBOFFSET:.*]] = add nsw i32 0, %[[VBOFFSET32]]
 // CHECK: %[[THIS8:.*]] = bitcast %struct.B* %[[THIS]] to i8*
 // CHECK: %[[VBASE_i8:.*]] = getelementptr inbounds i8, i8* %[[THIS8]], i32 %[[VBOFFSET]]
@@ -147,22 +147,22 @@ void call_vbase_bar(B *obj) {
 // CHECK: %[[OBJ_i8:.*]] = bitcast %struct.B* %[[OBJ]] to i8*
 // CHECK: %[[VBPTR:.*]] = getelementptr inbounds i8, i8* %[[OBJ_i8]], i32 0
 // CHECK: %[[VBPTR8:.*]] = bitcast i8* %[[VBPTR]] to i32**
-// CHECK: %[[VBTABLE:.*]] = load i32** %[[VBPTR8]]
+// CHECK: %[[VBTABLE:.*]] = load i32*, i32** %[[VBPTR8]]
 // CHECK: %[[VBENTRY:.*]] = getelementptr inbounds i32, i32* %[[VBTABLE]], i32 1
-// CHECK: %[[VBOFFSET32:.*]] = load i32* %[[VBENTRY]]
+// CHECK: %[[VBOFFSET32:.*]] = load i32, i32* %[[VBENTRY]]
 // CHECK: %[[VBOFFSET:.*]] = add nsw i32 0, %[[VBOFFSET32]]
 // CHECK: %[[VBASE_i8:.*]] = getelementptr inbounds i8, i8* %[[OBJ_i8]], i32 %[[VBOFFSET]]
 // CHECK: %[[VFPTR:.*]] = bitcast i8* %[[VBASE_i8]] to void (i8*)***
-// CHECK: %[[VFTABLE:.*]] = load void (i8*)*** %[[VFPTR]]
+// CHECK: %[[VFTABLE:.*]] = load void (i8*)**, void (i8*)*** %[[VFPTR]]
 // CHECK: %[[VFUN:.*]] = getelementptr inbounds void (i8*)*, void (i8*)** %[[VFTABLE]], i64 2
-// CHECK: %[[VFUN_VALUE:.*]] = load void (i8*)** %[[VFUN]]
+// CHECK: %[[VFUN_VALUE:.*]] = load void (i8*)*, void (i8*)** %[[VFUN]]
 //
 // CHECK: %[[OBJ_i8:.*]] = bitcast %struct.B* %[[OBJ]] to i8*
 // CHECK: %[[VBPTR:.*]] = getelementptr inbounds i8, i8* %[[OBJ_i8]], i32 0
 // CHECK: %[[VBPTR8:.*]] = bitcast i8* %[[VBPTR]] to i32**
-// CHECK: %[[VBTABLE:.*]] = load i32** %[[VBPTR8]]
+// CHECK: %[[VBTABLE:.*]] = load i32*, i32** %[[VBPTR8]]
 // CHECK: %[[VBENTRY:.*]] = getelementptr inbounds i32, i32* %[[VBTABLE]], i32 1
-// CHECK: %[[VBOFFSET32:.*]] = load i32* %[[VBENTRY]]
+// CHECK: %[[VBOFFSET32:.*]] = load i32, i32* %[[VBENTRY]]
 // CHECK: %[[VBOFFSET:.*]] = add nsw i32 0, %[[VBOFFSET32]]
 // CHECK: %[[VBASE:.*]] = getelementptr inbounds i8, i8* %[[OBJ_i8]], i32 %[[VBOFFSET]]
 //
@@ -179,22 +179,22 @@ void delete_B(B *obj) {
 // CHECK: %[[OBJ_i8:.*]] = bitcast %struct.B* %[[OBJ]] to i8*
 // CHECK: %[[VBPTR:.*]] = getelementptr inbounds i8, i8* %[[OBJ_i8]], i32 0
 // CHECK: %[[VBPTR8:.*]] = bitcast i8* %[[VBPTR]] to i32**
-// CHECK: %[[VBTABLE:.*]] = load i32** %[[VBPTR8]]
+// CHECK: %[[VBTABLE:.*]] = load i32*, i32** %[[VBPTR8]]
 // CHECK: %[[VBENTRY:.*]] = getelementptr inbounds i32, i32* %[[VBTABLE]], i32 1
-// CHECK: %[[VBOFFSET32:.*]] = load i32* %[[VBENTRY]]
+// CHECK: %[[VBOFFSET32:.*]] = load i32, i32* %[[VBENTRY]]
 // CHECK: %[[VBOFFSET:.*]] = add nsw i32 0, %[[VBOFFSET32]]
 // CHECK: %[[VBASE_i8:.*]] = getelementptr inbounds i8, i8* %[[OBJ_i8]], i32 %[[VBOFFSET]]
 // CHECK: %[[VFPTR:.*]] = bitcast i8* %[[VBASE_i8]] to i8* (%struct.B*, i32)***
-// CHECK: %[[VFTABLE:.*]] = load i8* (%struct.B*, i32)*** %[[VFPTR]]
+// CHECK: %[[VFTABLE:.*]] = load i8* (%struct.B*, i32)**, i8* (%struct.B*, i32)*** %[[VFPTR]]
 // CHECK: %[[VFUN:.*]] = getelementptr inbounds i8* (%struct.B*, i32)*, i8* (%struct.B*, i32)** %[[VFTABLE]], i64 0
-// CHECK: %[[VFUN_VALUE:.*]] = load i8* (%struct.B*, i32)** %[[VFUN]]
+// CHECK: %[[VFUN_VALUE:.*]] = load i8* (%struct.B*, i32)*, i8* (%struct.B*, i32)** %[[VFUN]]
 //
 // CHECK: %[[OBJ_i8:.*]] = bitcast %struct.B* %[[OBJ]] to i8*
 // CHECK: %[[VBPTR:.*]] = getelementptr inbounds i8, i8* %[[OBJ_i8]], i32 0
 // CHECK: %[[VBPTR8:.*]] = bitcast i8* %[[VBPTR]] to i32**
-// CHECK: %[[VBTABLE:.*]] = load i32** %[[VBPTR8]]
+// CHECK: %[[VBTABLE:.*]] = load i32*, i32** %[[VBPTR8]]
 // CHECK: %[[VBENTRY:.*]] = getelementptr inbounds i32, i32* %[[VBTABLE]], i32 1
-// CHECK: %[[VBOFFSET32:.*]] = load i32* %[[VBENTRY]]
+// CHECK: %[[VBOFFSET32:.*]] = load i32, i32* %[[VBENTRY]]
 // CHECK: %[[VBOFFSET:.*]] = add nsw i32 0, %[[VBOFFSET32]]
 // CHECK: %[[VBASE_i8:.*]] = getelementptr inbounds i8, i8* %[[OBJ_i8]], i32 %[[VBOFFSET]]
 // CHECK: %[[VBASE:.*]] = bitcast i8* %[[VBASE_i8]] to %struct.B*
@@ -288,7 +288,7 @@ D::~D() {
   // CHECK: %[[THIS_i8:.*]] = getelementptr inbounds i8, i8* %[[ARG_i8]], i32 -24
   // CHECK: %[[THIS:.*]] = bitcast i8* %[[THIS_i8]] to %"struct.diamond::D"*
   // CHECK: store %"struct.diamond::D"* %[[THIS]], %"struct.diamond::D"** %[[THIS_VAL:.*]], align 4
-  // CHECK: %[[THIS:.*]] = load %"struct.diamond::D"** %[[THIS_VAL]]
+  // CHECK: %[[THIS:.*]] = load %"struct.diamond::D"*, %"struct.diamond::D"** %[[THIS_VAL]]
   // CHECK: %[[D_i8:.*]] = bitcast %"struct.diamond::D"* %[[THIS]] to i8*
   // CHECK: %[[C_i8:.*]] = getelementptr inbounds i8, i8* %[[D_i8]], i64 4
   // CHECK: %[[C:.*]] = bitcast i8* %[[C_i8]] to %"struct.diamond::C"*
@@ -362,7 +362,7 @@ void D::bar() {
   C::foo();
   // Shouldn't need any vbtable lookups.  All we have to do is adjust to C*,
   // then compensate for the adjustment performed in the C::foo() prologue.
-  // CHECK-NOT: load i8**
+  // CHECK-NOT: load i8*, i8**
   // CHECK: %[[OBJ_i8:.*]] = bitcast %"struct.test3::D"* %{{.*}} to i8*
   // CHECK: %[[C_i8:.*]] = getelementptr inbounds i8, i8* %[[OBJ_i8]], i32 8
   // CHECK: %[[C:.*]] = bitcast i8* %[[C_i8]] to %"struct.test3::C"*
@@ -408,9 +408,9 @@ void destroy(C *obj) {
 
   delete obj;
   // CHECK: %[[VPTR:.*]] = bitcast %"struct.test4::C"* %[[OBJ:.*]] to i8* (%"struct.test4::C"*, i32)***
-  // CHECK: %[[VFTABLE:.*]] = load i8* (%"struct.test4::C"*, i32)*** %[[VPTR]]
+  // CHECK: %[[VFTABLE:.*]] = load i8* (%"struct.test4::C"*, i32)**, i8* (%"struct.test4::C"*, i32)*** %[[VPTR]]
   // CHECK: %[[VFTENTRY:.*]] = getelementptr inbounds i8* (%"struct.test4::C"*, i32)*, i8* (%"struct.test4::C"*, i32)** %[[VFTABLE]], i64 0
-  // CHECK: %[[VFUN:.*]] = load i8* (%"struct.test4::C"*, i32)** %[[VFTENTRY]]
+  // CHECK: %[[VFUN:.*]] = load i8* (%"struct.test4::C"*, i32)*, i8* (%"struct.test4::C"*, i32)** %[[VFTENTRY]]
   // CHECK: call x86_thiscallcc i8* %[[VFUN]](%"struct.test4::C"* %[[OBJ]], i32 1)
   // CHECK: ret
 }
@@ -443,9 +443,9 @@ void destroy(E *obj) {
   // CHECK: %[[OBJ_i8:.*]] = bitcast %"struct.test4::E"* %[[OBJ:.*]] to i8*
   // CHECK: %[[B_i8:.*]] = getelementptr inbounds i8, i8* %[[OBJ_i8]], i32 4
   // CHECK: %[[VPTR:.*]] = bitcast i8* %[[B_i8]] to i8* (%"struct.test4::E"*, i32)***
-  // CHECK: %[[VFTABLE:.*]] = load i8* (%"struct.test4::E"*, i32)*** %[[VPTR]]
+  // CHECK: %[[VFTABLE:.*]] = load i8* (%"struct.test4::E"*, i32)**, i8* (%"struct.test4::E"*, i32)*** %[[VPTR]]
   // CHECK: %[[VFTENTRY:.*]] = getelementptr inbounds i8* (%"struct.test4::E"*, i32)*, i8* (%"struct.test4::E"*, i32)** %[[VFTABLE]], i64 0
-  // CHECK: %[[VFUN:.*]] = load i8* (%"struct.test4::E"*, i32)** %[[VFTENTRY]]
+  // CHECK: %[[VFUN:.*]] = load i8* (%"struct.test4::E"*, i32)*, i8* (%"struct.test4::E"*, i32)** %[[VFTENTRY]]
   // CHECK: %[[OBJ_i8:.*]] = bitcast %"struct.test4::E"* %[[OBJ]] to i8*
   // CHECK: %[[B_i8:.*]] = getelementptr inbounds i8, i8* %[[OBJ_i8]], i32 4
   // FIXME: in fact, the call should take i8* and the bitcast is redundant.

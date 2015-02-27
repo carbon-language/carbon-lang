@@ -23,18 +23,18 @@ struct S1 { Class isa; };
 @end
 //   The getter should be a simple load.
 // CHECK:    define internal [[S1:%.*]]* @"\01-[Test1 pointer]"(
-// CHECK:      [[OFFSET:%.*]] = load i64* @"OBJC_IVAR_$_Test1.pointer"
+// CHECK:      [[OFFSET:%.*]] = load i64, i64* @"OBJC_IVAR_$_Test1.pointer"
 // CHECK-NEXT: [[T0:%.*]] = bitcast [[TEST1:%.*]]* {{%.*}} to i8*
 // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds i8, i8* [[T0]], i64 [[OFFSET]]
 // CHECK-NEXT: [[T2:%.*]] = bitcast i8* [[T1]] to [[S1]]**
-// CHECK-NEXT: [[T3:%.*]] = load [[S1]]** [[T2]], align 8
+// CHECK-NEXT: [[T3:%.*]] = load [[S1]]*, [[S1]]** [[T2]], align 8
 // CHECK-NEXT: ret [[S1]]* [[T3]]
 
 //   The setter should be using objc_setProperty.
 // CHECK:    define internal void @"\01-[Test1 setPointer:]"(
 // CHECK:      [[T0:%.*]] = bitcast [[TEST1]]* {{%.*}} to i8*
-// CHECK-NEXT: [[OFFSET:%.*]] = load i64* @"OBJC_IVAR_$_Test1.pointer"
-// CHECK-NEXT: [[T1:%.*]] = load [[S1]]** {{%.*}}
+// CHECK-NEXT: [[OFFSET:%.*]] = load i64, i64* @"OBJC_IVAR_$_Test1.pointer"
+// CHECK-NEXT: [[T1:%.*]] = load [[S1]]*, [[S1]]** {{%.*}}
 // CHECK-NEXT: [[T2:%.*]] = bitcast [[S1]]* [[T1]] to i8*
 // CHECK-NEXT: call void @objc_setProperty(i8* [[T0]], i8* {{%.*}}, i64 [[OFFSET]], i8* [[T2]], i1 zeroext false, i1 zeroext false)
 // CHECK-NEXT: ret void
@@ -56,9 +56,9 @@ static Class theGlobalClass;
 }
 @end
 // CHECK:    define internal void @"\01-[Test2 test]"(
-// CHECK:      [[T0:%.*]] = load i8** @theGlobalClass, align 8
-// CHECK-NEXT: [[T1:%.*]] = load [[TEST2:%.*]]**
-// CHECK-NEXT: [[OFFSET:%.*]] = load i64* @"OBJC_IVAR_$_Test2._theClass"
+// CHECK:      [[T0:%.*]] = load i8*, i8** @theGlobalClass, align 8
+// CHECK-NEXT: [[T1:%.*]] = load [[TEST2:%.*]]*, [[TEST2:%.*]]**
+// CHECK-NEXT: [[OFFSET:%.*]] = load i64, i64* @"OBJC_IVAR_$_Test2._theClass"
 // CHECK-NEXT: [[T2:%.*]] = bitcast [[TEST2]]* [[T1]] to i8*
 // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds i8, i8* [[T2]], i64 [[OFFSET]]
 // CHECK-NEXT: [[T4:%.*]] = bitcast i8* [[T3]] to i8**
@@ -66,20 +66,20 @@ static Class theGlobalClass;
 // CHECK-NEXT: ret void
 
 // CHECK:    define internal i8* @"\01-[Test2 theClass]"(
-// CHECK:      [[OFFSET:%.*]] = load i64* @"OBJC_IVAR_$_Test2._theClass"
+// CHECK:      [[OFFSET:%.*]] = load i64, i64* @"OBJC_IVAR_$_Test2._theClass"
 // CHECK-NEXT: [[T0:%.*]] = tail call i8* @objc_getProperty(i8* {{.*}}, i8* {{.*}}, i64 [[OFFSET]], i1 zeroext true)
 // CHECK-NEXT: ret i8* [[T0]]
 
 // CHECK:    define internal void @"\01-[Test2 setTheClass:]"(
 // CHECK:      [[T0:%.*]] = bitcast [[TEST2]]* {{%.*}} to i8*
-// CHECK-NEXT: [[OFFSET:%.*]] = load i64* @"OBJC_IVAR_$_Test2._theClass"
-// CHECK-NEXT: [[T1:%.*]] = load i8** {{%.*}}
+// CHECK-NEXT: [[OFFSET:%.*]] = load i64, i64* @"OBJC_IVAR_$_Test2._theClass"
+// CHECK-NEXT: [[T1:%.*]] = load i8*, i8** {{%.*}}
 // CHECK-NEXT: call void @objc_setProperty(i8* [[T0]], i8* {{%.*}}, i64 [[OFFSET]], i8* [[T1]], i1 zeroext true, i1 zeroext true)
 // CHECK-NEXT: ret void
 
 // CHECK:    define internal void @"\01-[Test2 .cxx_destruct]"(
-// CHECK:      [[T0:%.*]] = load [[TEST2]]**
-// CHECK-NEXT: [[OFFSET:%.*]] = load i64* @"OBJC_IVAR_$_Test2._theClass"
+// CHECK:      [[T0:%.*]] = load [[TEST2]]*, [[TEST2]]**
+// CHECK-NEXT: [[OFFSET:%.*]] = load i64, i64* @"OBJC_IVAR_$_Test2._theClass"
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST2]]* [[T0]] to i8*
 // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds i8, i8* [[T1]], i64 [[OFFSET]]
 // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to i8**
@@ -100,17 +100,17 @@ void test3(Test3 *t) {
 // CHECK:      [[T:%.*]] = alloca [[TEST3]]*,
 // CHECK-NEXT: [[X:%.*]] = alloca i8*,
 //   Property access.
-// CHECK:      [[T0:%.*]] = load [[TEST3]]** [[T]],
-// CHECK-NEXT: [[SEL:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES
+// CHECK:      [[T0:%.*]] = load [[TEST3]]*, [[TEST3]]** [[T]],
+// CHECK-NEXT: [[SEL:%.*]] = load i8*, i8** @OBJC_SELECTOR_REFERENCES
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST3]]* [[T0]] to i8*
 // CHECK-NEXT: [[T2:%.*]] = call i8* bitcast ({{.*}} @objc_msgSend to {{.*}})(i8* [[T1]], i8* [[SEL]])
 // CHECK-NEXT: store i8* [[T2]], i8** [[X]],
 //   Message send.
-// CHECK-NEXT: [[T0:%.*]] = load [[TEST3]]** [[T]],
-// CHECK-NEXT: [[SEL:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES
+// CHECK-NEXT: [[T0:%.*]] = load [[TEST3]]*, [[TEST3]]** [[T]],
+// CHECK-NEXT: [[SEL:%.*]] = load i8*, i8** @OBJC_SELECTOR_REFERENCES
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST3]]* [[T0]] to i8*
 // CHECK-NEXT: [[T2:%.*]] = call i8* bitcast ({{.*}} @objc_msgSend to {{.*}})(i8* [[T1]], i8* [[SEL]])
-// CHECK-NEXT: [[T3:%.*]] = load i8** [[X]],
+// CHECK-NEXT: [[T3:%.*]] = load i8*, i8** [[X]],
 // CHECK-NEXT: store i8* [[T2]], i8** [[X]],
 // CHECK-NEXT: call void @objc_release(i8* [[T3]])
 //   Epilogue.

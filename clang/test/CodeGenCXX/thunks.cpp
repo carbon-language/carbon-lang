@@ -227,7 +227,7 @@ namespace Test8 {
   void C::helper(NonPOD var) {}
 
   // CHECK-LABEL: define void @_ZThn8_N5Test81C3barENS_6NonPODE(
-  // CHECK-NOT: load [[NONPODTYPE]]*
+  // CHECK-NOT: load [[NONPODTYPE]], [[NONPODTYPE]]*
   // CHECK-NOT: memcpy
   // CHECK: ret void
   void C::bar(NonPOD var) {}

@@ -21,7 +21,7 @@ void test0(void) {
 // CHECK-NEXT:  [[SIX:%.*]] = bitcast
 // CHECK-NEXT:  [[SEVEN:%.*]]  = icmp eq i8* [[SIX]], null
 // CHECK-NEXT:  br i1 [[SEVEN]], label [[NULLINIT:%.*]], label [[CALL_LABEL:%.*]]
-// CHECK:       [[FN:%.*]] = load i8** getelementptr inbounds
+// CHECK:       [[FN:%.*]] = load i8*, i8** getelementptr inbounds
 // CHECK-NEXT:  [[EIGHT:%.*]] = bitcast i8* [[FN]]
 // CHECK-NEXT:  [[CALL:%.*]] = call signext i8 [[EIGHT]]
 // CHECK-NEXT:  br label [[CONT:%.*]]
@@ -43,13 +43,13 @@ void test1(void) {
 //   Various initializations.
 // CHECK:      [[T0:%.*]] = call i8* bitcast (
 // CHECK-NEXT: store i8* [[T0]], i8** [[OBJ]]
-// CHECK-NEXT: [[T0:%.*]] = load i8** [[OBJ]]
+// CHECK-NEXT: [[T0:%.*]] = load i8*, i8** [[OBJ]]
 // CHECK-NEXT: call i8* @objc_initWeak(i8** [[WEAKOBJ]], i8* [[T0]]) [[NUW]]
 //   Okay, start the message-send.
-// CHECK-NEXT: [[T0:%.*]] = load [[MYOBJECT:%.*]]** @x
-// CHECK-NEXT: [[ARG:%.*]] = load i8** [[OBJ]]
+// CHECK-NEXT: [[T0:%.*]] = load [[MYOBJECT:%.*]]*, [[MYOBJECT:%.*]]** @x
+// CHECK-NEXT: [[ARG:%.*]] = load i8*, i8** [[OBJ]]
 // CHECK-NEXT: [[ARG_RETAINED:%.*]] = call i8* @objc_retain(i8* [[ARG]])
-// CHECK-NEXT: load i8** @
+// CHECK-NEXT: load i8*, i8** @
 // CHECK-NEXT: [[SELF:%.*]] = bitcast [[MYOBJECT]]* [[T0]] to i8*
 //   Null check.
 // CHECK-NEXT: [[T0:%.*]] = icmp eq i8* [[SELF]], null
@@ -60,9 +60,9 @@ void test1(void) {
 // CHECK:      [[T0:%.*]] = bitcast { float, float }* [[COERCE:%.*]] to <2 x float>*
 // CHECK-NEXT: store <2 x float> [[CALL]], <2 x float>* [[T0]],
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds { float, float }, { float, float }* [[COERCE]], i32 0, i32 0
-// CHECK-NEXT: [[REALCALL:%.*]] = load float* [[T0]]
+// CHECK-NEXT: [[REALCALL:%.*]] = load float, float* [[T0]]
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds { float, float }, { float, float }* [[COERCE]], i32 0, i32 1
-// CHECK-NEXT: [[IMAGCALL:%.*]] = load float* [[T0]]
+// CHECK-NEXT: [[IMAGCALL:%.*]] = load float, float* [[T0]]
 // CHECK-NEXT: br label [[CONT:%.*]]{{$}}
 //   Null path.
 // CHECK:      call void @objc_release(i8* [[ARG_RETAINED]]) [[NUW]]

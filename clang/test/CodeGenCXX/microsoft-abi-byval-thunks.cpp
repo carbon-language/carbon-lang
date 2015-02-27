@@ -46,7 +46,7 @@ C::C() {} // force emission
 // CHECK32-LABEL: define linkonce_odr x86_stdcallcc void @"\01?foo@C@stdcall_thunk@@W3AGXUAgg@2@@Z"
 // CHECK32:             (<{ %"struct.stdcall_thunk::C"*, %"struct.stdcall_thunk::Agg" }>* inalloca)
 // CHECK32:   %[[this_slot:[^ ]*]] = getelementptr inbounds <{ %"struct.stdcall_thunk::C"*, %"struct.stdcall_thunk::Agg" }>, <{ %"struct.stdcall_thunk::C"*, %"struct.stdcall_thunk::Agg" }>* %0, i32 0, i32 0
-// CHECK32:   load %"struct.stdcall_thunk::C"** %[[this_slot]]
+// CHECK32:   load %"struct.stdcall_thunk::C"*, %"struct.stdcall_thunk::C"** %[[this_slot]]
 // CHECK32:   getelementptr i8, i8* %{{.*}}, i32 -4
 // CHECK32:   store %"struct.stdcall_thunk::C"* %{{.*}}, %"struct.stdcall_thunk::C"** %[[this_slot]]
 // CHECK32:   musttail call x86_stdcallcc void @"\01?foo@C@stdcall_thunk@@UAGXUAgg@2@@Z"
@@ -78,7 +78,7 @@ C::C() {} // force emission
 // CHECK32-LABEL: define linkonce_odr %"struct.sret_thunk::Agg"* @"\01?foo@C@sret_thunk@@W3AA?AUAgg@2@U32@@Z"
 // CHECK32:             (<{ %"struct.sret_thunk::C"*, %"struct.sret_thunk::Agg"*, %"struct.sret_thunk::Agg" }>* inalloca)
 // CHECK32:   %[[this_slot:[^ ]*]] = getelementptr inbounds <{ %"struct.sret_thunk::C"*, %"struct.sret_thunk::Agg"*, %"struct.sret_thunk::Agg" }>, <{ %"struct.sret_thunk::C"*, %"struct.sret_thunk::Agg"*, %"struct.sret_thunk::Agg" }>* %0, i32 0, i32 0
-// CHECK32:   load %"struct.sret_thunk::C"** %[[this_slot]]
+// CHECK32:   load %"struct.sret_thunk::C"*, %"struct.sret_thunk::C"** %[[this_slot]]
 // CHECK32:   getelementptr i8, i8* %{{.*}}, i32 -4
 // CHECK32:   store %"struct.sret_thunk::C"* %{{.*}}, %"struct.sret_thunk::C"** %[[this_slot]]
 // CHECK32:   %[[rv:[^ ]*]] = musttail call %"struct.sret_thunk::Agg"* @"\01?foo@C@sret_thunk@@UAA?AUAgg@2@U32@@Z"

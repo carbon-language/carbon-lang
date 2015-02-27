@@ -16,5 +16,5 @@
 @end
 
 // CHECK: [[T:%.*]] = call dereferenceable({{[0-9]+}}) i32* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
-// CHECK: [[U:%.*]] = load i32* [[T]]
+// CHECK: [[U:%.*]] = load i32, i32* [[T]]
 // CHECK  [[V:%.*]] = icmp eq i32 [[U]], 0

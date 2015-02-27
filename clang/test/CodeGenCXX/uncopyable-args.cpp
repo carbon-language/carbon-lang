@@ -12,7 +12,7 @@ void bar() {
 }
 // CHECK-LABEL: define void @_ZN7trivial3barEv()
 // CHECK: alloca %"struct.trivial::A"
-// CHECK: load i8**
+// CHECK: load i8*, i8**
 // CHECK: call void @_ZN7trivial3fooENS_1AE(i8* %{{.*}})
 // CHECK-LABEL: declare void @_ZN7trivial3fooENS_1AE(i8*)
 
@@ -33,7 +33,7 @@ void bar() {
 // CHECK-LABEL: define void @_ZN12default_ctor3barEv()
 // CHECK: alloca %"struct.default_ctor::A"
 // CHECK: call void @_Z{{.*}}C1Ev(
-// CHECK: load i8**
+// CHECK: load i8*, i8**
 // CHECK: call void @_ZN12default_ctor3fooENS_1AE(i8* %{{.*}})
 // CHECK-LABEL: declare void @_ZN12default_ctor3fooENS_1AE(i8*)
 
@@ -136,7 +136,7 @@ void bar() {
 }
 // CHECK-LABEL: define void @_ZN14copy_defaulted3barEv()
 // CHECK: call void @_Z{{.*}}C1Ev(
-// CHECK: load i8**
+// CHECK: load i8*, i8**
 // CHECK: call void @_ZN14copy_defaulted3fooENS_1AE(i8* %{{.*}})
 // CHECK-LABEL: declare void @_ZN14copy_defaulted3fooENS_1AE(i8*)
 
@@ -156,7 +156,7 @@ void bar() {
 }
 // CHECK-LABEL: define void @_ZN14move_defaulted3barEv()
 // CHECK: call void @_Z{{.*}}C1Ev(
-// CHECK: load i8**
+// CHECK: load i8*, i8**
 // CHECK: call void @_ZN14move_defaulted3fooENS_1AE(i8* %{{.*}})
 // CHECK-LABEL: declare void @_ZN14move_defaulted3fooENS_1AE(i8*)
 
@@ -175,7 +175,7 @@ void bar() {
 }
 // CHECK-LABEL: define void @_ZN17trivial_defaulted3barEv()
 // CHECK: call void @_Z{{.*}}C1Ev(
-// CHECK: load i8**
+// CHECK: load i8*, i8**
 // CHECK: call void @_ZN17trivial_defaulted3fooENS_1AE(i8* %{{.*}})
 // CHECK-LABEL: declare void @_ZN17trivial_defaulted3fooENS_1AE(i8*)
 

@@ -37,7 +37,7 @@ namespace test1 {
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[A]]* [[X]] to i8*
   // CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[T0]], i8* [[T1]], i64 8, i32 4, i1 false)
   // CHECK-NEXT: [[T0:%.*]] = bitcast [[A]]* [[TMP]] to i64*
-  // CHECK-NEXT: [[T1:%.*]] = load i64* [[T0]], align 1
+  // CHECK-NEXT: [[T1:%.*]] = load i64, i64* [[T0]], align 1
   // CHECK-NEXT: call void (...)* @_ZN5test13fooEz(i64 [[T1]])
   // CHECK-NEXT: ret void
 }

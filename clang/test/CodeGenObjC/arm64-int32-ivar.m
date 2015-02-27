@@ -11,7 +11,7 @@
 @end
 
 @implementation I
-// CHECK: [[IVAR:%.*]] = load i32* @"OBJC_IVAR_$_I.IVAR2"
+// CHECK: [[IVAR:%.*]] = load i32, i32* @"OBJC_IVAR_$_I.IVAR2"
 // CHECK: [[CONV:%.*]] = sext i32 [[IVAR]] to i64
 - (id) METH { return IVAR2; }
 @end

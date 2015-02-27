@@ -13,4 +13,4 @@ long double test (struct S x)
   return x.b;
 }
 
-// CHECK: %{{[0-9]}} = load ppc_fp128* %{{[a-zA-Z0-9]+}}, align 16
+// CHECK: %{{[0-9]}} = load ppc_fp128, ppc_fp128* %{{[a-zA-Z0-9]+}}, align 16

@@ -134,7 +134,7 @@ struct s34 { char c; };
 void f34(struct s34 s);
 void g34(struct s34 *s) { f34(*s); }
 // CHECK: @g34(%struct.s34* %s)
-// CHECK: %[[a:.*]] = load i8* %{{.*}}
+// CHECK: %[[a:.*]] = load i8, i8* %{{.*}}
 // CHECK: zext i8 %[[a]] to i64
 // CHECK: call void @f34(i64 %{{.*}})
 
@@ -200,9 +200,9 @@ float32x4_t f35(int i, s35_with_align s1, s35_with_align s2) {
 // CHECK: %s1 = alloca %struct.s35, align 16
 // CHECK: %s2 = alloca %struct.s35, align 16
 // CHECK: %[[a:.*]] = bitcast %struct.s35* %s1 to <4 x float>*
-// CHECK: load <4 x float>* %[[a]], align 16
+// CHECK: load <4 x float>, <4 x float>* %[[a]], align 16
 // CHECK: %[[b:.*]] = bitcast %struct.s35* %s2 to <4 x float>*
-// CHECK: load <4 x float>* %[[b]], align 16
+// CHECK: load <4 x float>, <4 x float>* %[[b]], align 16
   float32x4_t v = vaddq_f32(*(float32x4_t *)&s1,
                             *(float32x4_t *)&s2);
   return v;
@@ -222,9 +222,9 @@ int32x4_t f36(int i, s36_with_align s1, s36_with_align s2) {
 // CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 1
 // CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 1
 // CHECK: %[[a:.*]] = bitcast %struct.s36* %s1 to <4 x i32>*
-// CHECK: load <4 x i32>* %[[a]], align 16
+// CHECK: load <4 x i32>, <4 x i32>* %[[a]], align 16
 // CHECK: %[[b:.*]] = bitcast %struct.s36* %s2 to <4 x i32>*
-// CHECK: load <4 x i32>* %[[b]], align 16
+// CHECK: load <4 x i32>, <4 x i32>* %[[b]], align 16
   int32x4_t v = vaddq_s32(*(int32x4_t *)&s1,
                           *(int32x4_t *)&s2);
   return v;
@@ -239,9 +239,9 @@ typedef struct s37 s37_with_align;
 int32x4_t f37(int i, s37_with_align s1, s37_with_align s2) {
 // CHECK: define <4 x i32> @f37(i32 %i, %struct.s37* %s1, %struct.s37* %s2)
 // CHECK: %[[a:.*]] = bitcast %struct.s37* %s1 to <4 x i32>*
-// CHECK: load <4 x i32>* %[[a]], align 16
+// CHECK: load <4 x i32>, <4 x i32>* %[[a]], align 16
 // CHECK: %[[b:.*]] = bitcast %struct.s37* %s2 to <4 x i32>*
-// CHECK: load <4 x i32>* %[[b]], align 16
+// CHECK: load <4 x i32>, <4 x i32>* %[[b]], align 16
   int32x4_t v = vaddq_s32(*(int32x4_t *)&s1,
                           *(int32x4_t *)&s2);
   return v;
@@ -287,8 +287,8 @@ s38_no_align g38;
 s38_no_align g38_2;
 int caller38() {
 // CHECK: define i32 @caller38()
-// CHECK: %[[a:.*]] = load i64* bitcast (%struct.s38* @g38 to i64*), align 1
-// CHECK: %[[b:.*]] = load i64* bitcast (%struct.s38* @g38_2 to i64*), align 1
+// CHECK: %[[a:.*]] = load i64, i64* bitcast (%struct.s38* @g38 to i64*), align 1
+// CHECK: %[[b:.*]] = load i64, i64* bitcast (%struct.s38* @g38_2 to i64*), align 1
 // CHECK: call i32 @f38(i32 3, i64 %[[a]], i64 %[[b]])
   return f38(3, g38, g38_2);
 }
@@ -309,8 +309,8 @@ int f38_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 }
 int caller38_stack() {
 // CHECK: define i32 @caller38_stack()
-// CHECK: %[[a:.*]] = load i64* bitcast (%struct.s38* @g38 to i64*), align 1
-// CHECK: %[[b:.*]] = load i64* bitcast (%struct.s38* @g38_2 to i64*), align 1
+// CHECK: %[[a:.*]] = load i64, i64* bitcast (%struct.s38* @g38 to i64*), align 1
+// CHECK: %[[b:.*]] = load i64, i64* bitcast (%struct.s38* @g38_2 to i64*), align 1
 // CHECK: call i32 @f38_stack(i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i64 %[[a]], i64 %[[b]])
   return f38_stack(1, 2, 3, 4, 5, 6, 7, 8, 9, g38, g38_2);
 }
@@ -340,8 +340,8 @@ s39_with_align g39;
 s39_with_align g39_2;
 int caller39() {
 // CHECK: define i32 @caller39()
-// CHECK: %[[a:.*]] = load i128* bitcast (%struct.s39* @g39 to i128*), align 1
-// CHECK: %[[b:.*]] = load i128* bitcast (%struct.s39* @g39_2 to i128*), align 1
+// CHECK: %[[a:.*]] = load i128, i128* bitcast (%struct.s39* @g39 to i128*), align 1
+// CHECK: %[[b:.*]] = load i128, i128* bitcast (%struct.s39* @g39_2 to i128*), align 1
 // CHECK: call i32 @f39(i32 3, i128 %[[a]], i128 %[[b]])
   return f39(3, g39, g39_2);
 }
@@ -362,8 +362,8 @@ int f39_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 }
 int caller39_stack() {
 // CHECK: define i32 @caller39_stack()
-// CHECK: %[[a:.*]] = load i128* bitcast (%struct.s39* @g39 to i128*), align 1
-// CHECK: %[[b:.*]] = load i128* bitcast (%struct.s39* @g39_2 to i128*), align 1
+// CHECK: %[[a:.*]] = load i128, i128* bitcast (%struct.s39* @g39 to i128*), align 1
+// CHECK: %[[b:.*]] = load i128, i128* bitcast (%struct.s39* @g39_2 to i128*), align 1
 // CHECK: call i32 @f39_stack(i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i128 %[[a]], i128 %[[b]])
   return f39_stack(1, 2, 3, 4, 5, 6, 7, 8, 9, g39, g39_2);
 }
@@ -395,8 +395,8 @@ s40_no_align g40;
 s40_no_align g40_2;
 int caller40() {
 // CHECK: define i32 @caller40()
-// CHECK: %[[a:.*]] = load [2 x i64]* bitcast (%struct.s40* @g40 to [2 x i64]*), align 1
-// CHECK: %[[b:.*]] = load [2 x i64]* bitcast (%struct.s40* @g40_2 to [2 x i64]*), align 1
+// CHECK: %[[a:.*]] = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40 to [2 x i64]*), align 1
+// CHECK: %[[b:.*]] = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40_2 to [2 x i64]*), align 1
 // CHECK: call i32 @f40(i32 3, [2 x i64] %[[a]], [2 x i64] %[[b]])
   return f40(3, g40, g40_2);
 }
@@ -417,8 +417,8 @@ int f40_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 }
 int caller40_stack() {
 // CHECK: define i32 @caller40_stack()
-// CHECK: %[[a:.*]] = load [2 x i64]* bitcast (%struct.s40* @g40 to [2 x i64]*), align 1
-// CHECK: %[[b:.*]] = load [2 x i64]* bitcast (%struct.s40* @g40_2 to [2 x i64]*), align 1
+// CHECK: %[[a:.*]] = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40 to [2 x i64]*), align 1
+// CHECK: %[[b:.*]] = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40_2 to [2 x i64]*), align 1
 // CHECK: call i32 @f40_stack(i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, [2 x i64] %[[a]], [2 x i64] %[[b]])
   return f40_stack(1, 2, 3, 4, 5, 6, 7, 8, 9, g40, g40_2);
 }
@@ -450,8 +450,8 @@ s41_with_align g41;
 s41_with_align g41_2;
 int caller41() {
 // CHECK: define i32 @caller41()
-// CHECK: %[[a:.*]] = load i128* bitcast (%struct.s41* @g41 to i128*), align 1
-// CHECK: %[[b:.*]] = load i128* bitcast (%struct.s41* @g41_2 to i128*), align 1
+// CHECK: %[[a:.*]] = load i128, i128* bitcast (%struct.s41* @g41 to i128*), align 1
+// CHECK: %[[b:.*]] = load i128, i128* bitcast (%struct.s41* @g41_2 to i128*), align 1
 // CHECK: call i32 @f41(i32 3, i128 %[[a]], i128 %[[b]])
   return f41(3, g41, g41_2);
 }
@@ -472,8 +472,8 @@ int f41_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 }
 int caller41_stack() {
 // CHECK: define i32 @caller41_stack()
-// CHECK: %[[a:.*]] = load i128* bitcast (%struct.s41* @g41 to i128*), align 1
-// CHECK: %[[b:.*]] = load i128* bitcast (%struct.s41* @g41_2 to i128*), align 1
+// CHECK: %[[a:.*]] = load i128, i128* bitcast (%struct.s41* @g41 to i128*), align 1
+// CHECK: %[[b:.*]] = load i128, i128* bitcast (%struct.s41* @g41_2 to i128*), align 1
 // CHECK: call i32 @f41_stack(i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i128 %[[a]], i128 %[[b]])
   return f41_stack(1, 2, 3, 4, 5, 6, 7, 8, 9, g41, g41_2);
 }
@@ -626,7 +626,7 @@ struct HFA {
 float test_hfa(int n, ...) {
 // CHECK-LABEL: define float @test_hfa(i32 %n, ...)
 // CHECK: [[THELIST:%.*]] = alloca i8*
-// CHECK: [[CURLIST:%.*]] = load i8** [[THELIST]]
+// CHECK: [[CURLIST:%.*]] = load i8*, i8** [[THELIST]]
 
   // HFA is not indirect, so occupies its full 16 bytes on the stack.
 // CHECK: [[NEXTLIST:%.*]] = getelementptr i8, i8* [[CURLIST]], i32 16
@@ -652,7 +652,7 @@ struct TooBigHFA {
 float test_toobig_hfa(int n, ...) {
 // CHECK-LABEL: define float @test_toobig_hfa(i32 %n, ...)
 // CHECK: [[THELIST:%.*]] = alloca i8*
-// CHECK: [[CURLIST:%.*]] = load i8** [[THELIST]]
+// CHECK: [[CURLIST:%.*]] = load i8*, i8** [[THELIST]]
 
   // TooBigHFA is not actually an HFA, so gets passed indirectly. Only 8 bytes
   // of stack consumed.
@@ -660,7 +660,7 @@ float test_toobig_hfa(int n, ...) {
 // CHECK: store i8* [[NEXTLIST]], i8** [[THELIST]]
 
 // CHECK: [[HFAPTRPTR:%.*]] = bitcast i8* [[CURLIST]] to i8**
-// CHECK: [[HFAPTR:%.*]] = load i8** [[HFAPTRPTR]]
+// CHECK: [[HFAPTR:%.*]] = load i8*, i8** [[HFAPTRPTR]]
 // CHECK: bitcast i8* [[HFAPTR]] to %struct.TooBigHFA*
   __builtin_va_list thelist;
   __builtin_va_start(thelist, n);
@@ -675,7 +675,7 @@ struct HVA {
 int32x4_t test_hva(int n, ...) {
 // CHECK-LABEL: define <4 x i32> @test_hva(i32 %n, ...)
 // CHECK: [[THELIST:%.*]] = alloca i8*
-// CHECK: [[CURLIST:%.*]] = load i8** [[THELIST]]
+// CHECK: [[CURLIST:%.*]] = load i8*, i8** [[THELIST]]
 
   // HVA is not indirect, so occupies its full 16 bytes on the stack. but it
   // must be properly aligned.
@@ -701,7 +701,7 @@ struct TooBigHVA {
 int32x4_t test_toobig_hva(int n, ...) {
 // CHECK-LABEL: define <4 x i32> @test_toobig_hva(i32 %n, ...)
 // CHECK: [[THELIST:%.*]] = alloca i8*
-// CHECK: [[CURLIST:%.*]] = load i8** [[THELIST]]
+// CHECK: [[CURLIST:%.*]] = load i8*, i8** [[THELIST]]
 
   // TooBigHVA is not actually an HVA, so gets passed indirectly. Only 8 bytes
   // of stack consumed.
@@ -709,7 +709,7 @@ int32x4_t test_toobig_hva(int n, ...) {
 // CHECK: store i8* [[NEXTLIST]], i8** [[THELIST]]
 
 // CHECK: [[HVAPTRPTR:%.*]] = bitcast i8* [[CURLIST]] to i8**
-// CHECK: [[HVAPTR:%.*]] = load i8** [[HVAPTRPTR]]
+// CHECK: [[HVAPTR:%.*]] = load i8*, i8** [[HVAPTRPTR]]
 // CHECK: bitcast i8* [[HVAPTR]] to %struct.TooBigHVA*
   __builtin_va_list thelist;
   __builtin_va_start(thelist, n);

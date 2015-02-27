@@ -61,7 +61,7 @@ int HasDeactivatedCleanups() {
 // WIN32:   ret i32
 //
 //        Conditionally destroy arg1.
-// WIN32:   %[[cond:.*]] = load i1* %[[isactive]]
+// WIN32:   %[[cond:.*]] = load i1, i1* %[[isactive]]
 // WIN32:   br i1 %[[cond]]
 // WIN32:   invoke x86_thiscallcc void @"\01??1A@@QAE@XZ"(%struct.A* %[[arg1]])
 // WIN32: }
@@ -125,7 +125,7 @@ int HasConditionalDeactivatedCleanups(bool cond) {
 // WIN32:   ret i32
 //
 //        Somewhere in the landing pad soup, we conditionally destroy arg1.
-// WIN32:   %[[isactive:.*]] = load i1* %[[arg1_cond]]
+// WIN32:   %[[isactive:.*]] = load i1, i1* %[[arg1_cond]]
 // WIN32:   br i1 %[[isactive]]
 // WIN32:   invoke x86_thiscallcc void @"\01??1A@@QAE@XZ"
 // WIN32: }

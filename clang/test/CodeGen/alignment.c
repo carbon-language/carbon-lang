@@ -23,7 +23,7 @@ int test1a(myint *p) {
   return *p;
 }
 // CHECK: @test1a(
-// CHECK: load i32* {{.*}}, align 1
+// CHECK: load i32, i32* {{.*}}, align 1
 // CHECK: ret i32
 
 

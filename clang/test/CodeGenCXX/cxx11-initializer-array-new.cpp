@@ -46,7 +46,7 @@ void *q = new S[n][3]{ { 1, 2, 3 }, { 4, 5, 6 } };
 
 // CHECK-LABEL: define
 //
-// CHECK: load i32* @n
+// CHECK: load i32, i32* @n
 // CHECK: call {{.*}} @llvm.umul.with.overflow.i64(i64 %[[N:.*]], i64 12)
 // CHECK: %[[ELTS:.*]] = mul i64 %[[N]], 3
 // CHECK: call {{.*}} @llvm.uadd.with.overflow.i64(i64 %{{.*}}, i64 8)
@@ -106,7 +106,7 @@ void *r = new T[n][3]{ { 1, 2, 3 }, { 4, 5, 6 } };
 
 // CHECK-LABEL: define
 //
-// CHECK: load i32* @n
+// CHECK: load i32, i32* @n
 // CHECK: call {{.*}} @llvm.umul.with.overflow.i64(i64 %[[N:.*]], i64 12)
 // CHECK: %[[ELTS:.*]] = mul i64 %[[N]], 3
 //

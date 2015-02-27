@@ -286,7 +286,7 @@ int nested___finally___except() {
 // CHECK-NEXT: br label %[[finally:[^ ]*]]
 
 // CHECK: [[finally]]
-// CHECK-NEXT: %[[abnormallocal:[^ ]*]] = load i8* %[[abnormal]]
+// CHECK-NEXT: %[[abnormallocal:[^ ]*]] = load i8, i8* %[[abnormal]]
 // CHECK-NEXT: %[[reg:[^ ]*]] = icmp eq i8 %[[abnormallocal]], 0
 // CHECK-NEXT: br i1 %[[reg]], label %[[finallycont:[^ ]*]], label %[[finallyresume:[^ ]*]]
 
@@ -345,7 +345,7 @@ int nested___finally___finally() {
 // CHECK-NEXT: br label %[[outerfinally:[^ ]*]]
 
 // CHECK: [[outerfinally]]
-// CHECK-NEXT: %[[abnormallocal:[^ ]*]] = load i8* %[[abnormal]]
+// CHECK-NEXT: %[[abnormallocal:[^ ]*]] = load i8, i8* %[[abnormal]]
 // CHECK-NEXT: %[[reg:[^ ]*]] = icmp eq i8 %[[abnormallocal]], 0
 // CHECK-NEXT: br i1 %[[reg]], label %[[finallycont:[^ ]*]], label %[[finallyresume:[^ ]*]]
 

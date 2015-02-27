@@ -80,7 +80,7 @@ namespace test4 {
     // CHECK-NEXT: getelementptr
     // CHECK-NEXT: bitcast
     // CHECK-NEXT: getelementptr
-    // CHECK-NEXT: load i32*
+    // CHECK-NEXT: load i32, i32*
     return c_ptr->B::x;
   }
 }

@@ -35,7 +35,7 @@ void test4() {
 // PR12395
 int test5() {
   // CHECK: @test5
-  // CHECK: load i32* getelementptr inbounds (%struct.Y* @g, i32 0, i32 1, i32 0, i64 0), align 1
+  // CHECK: load i32, i32* getelementptr inbounds (%struct.Y* @g, i32 0, i32 1, i32 0, i64 0), align 1
   return g.y.x[0];
 }
 
@@ -60,6 +60,6 @@ struct YBitfield gbitfield;
 
 unsigned test7() {
   // CHECK: @test7
-  // CHECK: load i32* getelementptr inbounds (%struct.YBitfield* @gbitfield, i32 0, i32 1, i32 0), align 4
+  // CHECK: load i32, i32* getelementptr inbounds (%struct.YBitfield* @gbitfield, i32 0, i32 1, i32 0), align 4
   return gbitfield.y.b2;
 }

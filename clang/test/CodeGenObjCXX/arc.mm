@@ -21,7 +21,7 @@ void test0(__weak id *wp, __weak volatile id *wvp) {
 
   // CHECK:      [[T0:%.*]] = call i8* @_Z12test0_helperv()
   // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
-  // CHECK-NEXT: [[T2:%.*]] = load i8*** {{%.*}}, align 8
+  // CHECK-NEXT: [[T2:%.*]] = load i8**, i8*** {{%.*}}, align 8
   // CHECK-NEXT: [[T3:%.*]] = call i8* @objc_storeWeak(i8** [[T2]], i8* [[T1]])
   // CHECK-NEXT: [[T4:%.*]] = call i8* @objc_retain(i8* [[T3]])
   // CHECK-NEXT: store i8* [[T4]], i8**
@@ -30,7 +30,7 @@ void test0(__weak id *wp, __weak volatile id *wvp) {
 
   // CHECK:      [[T0:%.*]] = call i8* @_Z12test0_helperv()
   // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T0]])
-  // CHECK-NEXT: [[T2:%.*]] = load i8*** {{%.*}}, align 8
+  // CHECK-NEXT: [[T2:%.*]] = load i8**, i8*** {{%.*}}, align 8
   // CHECK-NEXT: [[T3:%.*]] = call i8* @objc_storeWeak(i8** [[T2]], i8* [[T1]])
   // CHECK-NEXT: [[T4:%.*]] = call i8* @objc_loadWeakRetained(i8** [[T2]])
   // CHECK-NEXT: store i8* [[T4]], i8**
@@ -67,28 +67,28 @@ void test34(int cond) {
   // CHECK-NEXT: store i8* null, i8** [[STRONG]]
   // CHECK-NEXT: call i8* @objc_initWeak(i8** [[WEAK]], i8* null)
 
-  // CHECK-NEXT: [[T0:%.*]] = load i32* [[COND]]
+  // CHECK-NEXT: [[T0:%.*]] = load i32, i32* [[COND]]
   // CHECK-NEXT: [[T1:%.*]] = icmp ne i32 [[T0]], 0
   // CHECK:      [[ARG:%.*]] = phi i8**
   // CHECK-NEXT: [[T0:%.*]] = icmp eq i8** [[ARG]], null
   // CHECK-NEXT: [[T1:%.*]] = select i1 [[T0]], i8** null, i8** [[TEMP1]]
   // CHECK-NEXT: br i1 [[T0]],
-  // CHECK:      [[T0:%.*]] = load i8** [[ARG]]
+  // CHECK:      [[T0:%.*]] = load i8*, i8** [[ARG]]
   // CHECK-NEXT: store i8* [[T0]], i8** [[TEMP1]]
   // CHECK-NEXT: br label
   // CHECK:      [[W0:%.*]] = phi i8* [ [[T0]], {{%.*}} ], [ undef, {{%.*}} ]
   // CHECK:      call void @_Z11test34_sinkPU15__autoreleasingP11objc_object(i8** [[T1]])
   // CHECK-NEXT: [[T0:%.*]] = icmp eq i8** [[ARG]], null
   // CHECK-NEXT: br i1 [[T0]],
-  // CHECK:      [[T0:%.*]] = load i8** [[TEMP1]]
+  // CHECK:      [[T0:%.*]] = load i8*, i8** [[TEMP1]]
   // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]])
   // CHECK-NEXT: call void (...)* @clang.arc.use(i8* [[W0]])
-  // CHECK-NEXT: [[T2:%.*]] = load i8** [[ARG]]
+  // CHECK-NEXT: [[T2:%.*]] = load i8*, i8** [[ARG]]
   // CHECK-NEXT: store i8* [[T1]], i8** [[ARG]]
   // CHECK-NEXT: call void @objc_release(i8* [[T2]])
   // CHECK-NEXT: br label
 
-  // CHECK:      [[T0:%.*]] = load i32* [[COND]]
+  // CHECK:      [[T0:%.*]] = load i32, i32* [[COND]]
   // CHECK-NEXT: [[T1:%.*]] = icmp ne i32 [[T0]], 0
   // CHECK:      [[ARG:%.*]] = phi i8**
   // CHECK-NEXT: [[T0:%.*]] = icmp eq i8** [[ARG]], null
@@ -103,7 +103,7 @@ void test34(int cond) {
   // CHECK:      call void @_Z11test34_sinkPU15__autoreleasingP11objc_object(i8** [[T1]])
   // CHECK-NEXT: [[T0:%.*]] = icmp eq i8** [[ARG]], null
   // CHECK-NEXT: br i1 [[T0]],
-  // CHECK:      [[T0:%.*]] = load i8** [[TEMP2]]
+  // CHECK:      [[T0:%.*]] = load i8*, i8** [[TEMP2]]
   // CHECK-NEXT: call i8* @objc_storeWeak(i8** [[ARG]], i8* [[T0]])
   // CHECK-NEXT: br label
 
@@ -203,7 +203,7 @@ template void test37<Test37>(Test37 *a);
 // CHECK-NEXT: [[COLL:%.*]] = bitcast i8* [[T2]] to [[NSARRAY]]*
 
 // Make sure it's not immediately released before starting the iteration.
-// CHECK-NEXT: load i8** @OBJC_SELECTOR_REFERENCES_
+// CHECK-NEXT: load i8*, i8** @OBJC_SELECTOR_REFERENCES_
 // CHECK-NEXT: [[T0:%.*]] = bitcast [[NSARRAY]]* [[COLL]] to i8*
 // CHECK-NEXT: @objc_msgSend
 
@@ -291,9 +291,9 @@ template void test40_helper<int>();
 // CHECK:      [[X:%.*]] = alloca i8*
 // CHECK-NEXT: [[TEMP:%.*]] = alloca i8*
 // CHECK-NEXT: store i8* null, i8** [[X]]
-// CHECK:      [[T0:%.*]] = load i8** [[X]]
+// CHECK:      [[T0:%.*]] = load i8*, i8** [[X]]
 // CHECK-NEXT: store i8* [[T0]], i8** [[TEMP]]
 // CHECK:      @objc_msgSend
-// CHECK-NEXT: [[T0:%.*]] = load i8** [[TEMP]]
+// CHECK-NEXT: [[T0:%.*]] = load i8*, i8** [[TEMP]]
 // CHECK-NEXT: call i8* @objc_retain(i8* [[T0]])
 

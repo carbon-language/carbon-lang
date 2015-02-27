@@ -25,10 +25,10 @@ void gtid_test() {
 
 // CHECK: define internal void [[GTID_TEST_REGION1]](i{{.+}}* [[GTID_PARAM:%.+]], i
 // CHECK: store i{{[0-9]+}}* [[GTID_PARAM]], i{{[0-9]+}}** [[GTID_ADDR_REF:%.+]],
-// CHECK: [[GTID_ADDR:%.+]] = load i{{[0-9]+}}** [[GTID_ADDR_REF]]
-// CHECK: [[GTID:%.+]] = load i{{[0-9]+}}* [[GTID_ADDR]]
+// CHECK: [[GTID_ADDR:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[GTID_ADDR_REF]]
+// CHECK: [[GTID:%.+]] = load i{{[0-9]+}}, i{{[0-9]+}}* [[GTID_ADDR]]
 // CHECK: call void @__kmpc_serialized_parallel(%{{.+}}* @{{.+}}, i{{.+}} [[GTID]])
-// CHECK: [[GTID_ADDR:%.+]] = load i{{[0-9]+}}** [[GTID_ADDR_REF]]
+// CHECK: [[GTID_ADDR:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[GTID_ADDR_REF]]
 // CHECK: call void [[GTID_TEST_REGION2:@.+]](i{{[0-9]+}}* [[GTID_ADDR]]
 // CHECK: call void @__kmpc_end_serialized_parallel(%{{.+}}* @{{.+}}, i{{.+}} [[GTID]])
 // CHECK: ret void

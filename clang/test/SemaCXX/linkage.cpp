@@ -83,7 +83,7 @@ extern "C" {
         // Test both for mangling in the code generation and warnings from use
         // of internal, undefined names via -Werror.
         // CHECK: call i32 @g(
-        // CHECK: load i32* @a,
+        // CHECK: load i32, i32* @a,
         return g() + a;
       }
     };

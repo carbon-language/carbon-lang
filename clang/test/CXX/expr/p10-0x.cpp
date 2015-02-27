@@ -10,26 +10,26 @@ volatile int& refcall();
 // CHECK: define void @_Z2f1PViPV1S
 void f1(volatile int *x, volatile S* s) {
   // We should perform the load in these cases.
-  // CHECK: load volatile i32*
+  // CHECK: load volatile i32, i32*
   (*x);
-  // CHECK: load volatile i32*
+  // CHECK: load volatile i32, i32*
   __extension__ g1;
-  // CHECK: load volatile i32*
+  // CHECK: load volatile i32, i32*
   s->a;
-  // CHECK: load volatile i32*
+  // CHECK: load volatile i32, i32*
   g2.a;
-  // CHECK: load volatile i32*
+  // CHECK: load volatile i32, i32*
   s->*(&S::a);
-  // CHECK: load volatile i32*
-  // CHECK: load volatile i32*
+  // CHECK: load volatile i32, i32*
+  // CHECK: load volatile i32, i32*
   x[0], 1 ? x[0] : *x;
 
-  // CHECK: load volatile i32*
-  // CHECK: load volatile i32*
-  // CHECK: load volatile i32*
+  // CHECK: load volatile i32, i32*
+  // CHECK: load volatile i32, i32*
+  // CHECK: load volatile i32, i32*
   *x ?: *x;
 
-  // CHECK: load volatile i32*
+  // CHECK: load volatile i32, i32*
   ({ *x; });
 
   // CHECK-NOT: load volatile

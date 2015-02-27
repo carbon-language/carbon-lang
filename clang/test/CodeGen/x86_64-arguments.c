@@ -402,8 +402,8 @@ void test49(double d, double e) {
   test49_helper(d, e);
 }
 // CHECK-LABEL:    define void @test49(
-// CHECK:      [[T0:%.*]] = load double*
-// CHECK-NEXT: [[T1:%.*]] = load double*
+// CHECK:      [[T0:%.*]] = load double, double*
+// CHECK-NEXT: [[T1:%.*]] = load double, double*
 // CHECK-NEXT: call void (double, ...)* @test49_helper(double [[T0]], double [[T1]])
 
 void test50_helper();
@@ -411,8 +411,8 @@ void test50(double d, double e) {
   test50_helper(d, e);
 }
 // CHECK-LABEL:    define void @test50(
-// CHECK:      [[T0:%.*]] = load double*
-// CHECK-NEXT: [[T1:%.*]] = load double*
+// CHECK:      [[T0:%.*]] = load double, double*
+// CHECK-NEXT: [[T1:%.*]] = load double, double*
 // CHECK-NEXT: call void (double, double, ...)* bitcast (void (...)* @test50_helper to void (double, double, ...)*)(double [[T0]], double [[T1]])
 
 struct test51_s { __uint128_t intval; };
@@ -424,7 +424,7 @@ void test51(struct test51_s *s, __builtin_va_list argList) {
 // CHECK: [[TMP_ADDR:%.*]] = alloca [[STRUCT_TEST51:%.*]], align 16
 // CHECK: br i1
 // CHECK: [[REG_SAVE_AREA_PTR:%.*]] = getelementptr inbounds {{.*}}, i32 0, i32 3
-// CHECK-NEXT: [[REG_SAVE_AREA:%.*]] = load i8** [[REG_SAVE_AREA_PTR]]
+// CHECK-NEXT: [[REG_SAVE_AREA:%.*]] = load i8*, i8** [[REG_SAVE_AREA_PTR]]
 // CHECK-NEXT: [[VALUE_ADDR:%.*]] = getelementptr i8, i8* [[REG_SAVE_AREA]], i32 {{.*}}
 // CHECK-NEXT: [[CASTED_VALUE_ADDR:%.*]] = bitcast i8* [[VALUE_ADDR]] to [[STRUCT_TEST51]]
 // CHECK-NEXT: [[CASTED_TMP_ADDR:%.*]] = bitcast [[STRUCT_TEST51]]* [[TMP_ADDR]] to i8*

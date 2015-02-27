@@ -51,4 +51,4 @@ id Test16877359() {
 // CHECK: @"OBJC_METACLASS_$_MySecretNamespace.Message" = global %struct._class_t
 // CHECK: @"OBJC_CLASS_$_foo" = external global %struct._class_t
 // CHECK: define internal i8* @"\01-[Message MyMethod]"
-// CHECK: [[IVAR:%.*]] = load i64* @"OBJC_IVAR_$_MySecretNamespace.Message.MyIVAR"
+// CHECK: [[IVAR:%.*]] = load i64, i64* @"OBJC_IVAR_$_MySecretNamespace.Message.MyIVAR"

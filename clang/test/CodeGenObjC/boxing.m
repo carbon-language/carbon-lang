@@ -67,29 +67,29 @@ typedef signed char BOOL;
 // CHECK: [[stringWithUTF8StringSEL:@.*]] = private externally_initialized global i8* getelementptr inbounds ([22 x i8]* [[stringWithUTF8StringMeth]]
 
 int main() {
-  // CHECK: load i8** [[WithIntSEL]]
+  // CHECK: load i8*, i8** [[WithIntSEL]]
   int i; @(i);
-  // CHECK: load i8** [[WithCharSEL]]
+  // CHECK: load i8*, i8** [[WithCharSEL]]
   signed char sc; @(sc);
-  // CHECK: load i8** [[WithBoolSEL]]
+  // CHECK: load i8*, i8** [[WithBoolSEL]]
   BOOL b; @(b);
-  // CHECK: load i8** [[WithBoolSEL]]
+  // CHECK: load i8*, i8** [[WithBoolSEL]]
   typeof(b) b2; @(b2);
-  // CHECK: load i8** [[WithBoolSEL]]
+  // CHECK: load i8*, i8** [[WithBoolSEL]]
   typedef const typeof(b) MyBOOL; MyBOOL b3; @(b3);
-  // CHECK: load i8** [[WithBoolSEL]]
+  // CHECK: load i8*, i8** [[WithBoolSEL]]
   @((BOOL)i);
-  // CHECK: load i8** [[WithIntegerSEL]]
+  // CHECK: load i8*, i8** [[WithIntegerSEL]]
   @((NSInteger)i);
-  // CHECK: load i8** [[WithUnsignedIntegerSEL]]
+  // CHECK: load i8*, i8** [[WithUnsignedIntegerSEL]]
   @((NSUInteger)i);
-  // CHECK: load i8** [[stringWithUTF8StringSEL]]
+  // CHECK: load i8*, i8** [[stringWithUTF8StringSEL]]
   const char *s; @(s);
 
   typedef enum : NSInteger { Red, Green, Blue } Color;
-  // CHECK: load i8** [[WithIntegerSEL]]
+  // CHECK: load i8*, i8** [[WithIntegerSEL]]
   @(Red);
   Color col = Red;
-  // CHECK: load i8** [[WithIntegerSEL]]
+  // CHECK: load i8*, i8** [[WithIntegerSEL]]
   @(col);
 }

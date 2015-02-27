@@ -522,7 +522,7 @@ namespace test14 {
       static int a(), x;
     };
     // CHECK-LABEL: define i32 @_ZN6test141S1aEv
-    // CHECK: load i32* @_ZN6test141S1xE
+    // CHECK: load i32, i32* @_ZN6test141S1xE
     int S::a() { return S::x; }
   }
 }

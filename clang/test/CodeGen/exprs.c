@@ -127,9 +127,9 @@ int f11(long X) {
   return A[X];
 
 // CHECK: [[Xaddr:%[^ ]+]] = alloca i64, align 8
-// CHECK: load {{.*}}* [[Xaddr]]
+// CHECK: load {{.*}}, {{.*}}* [[Xaddr]]
 // CHECK-NEXT: getelementptr inbounds [100 x i32], [100 x i32]* %A, i32 0, 
-// CHECK-NEXT: load i32*
+// CHECK-NEXT: load i32, i32*
 }
 
 int f12() {

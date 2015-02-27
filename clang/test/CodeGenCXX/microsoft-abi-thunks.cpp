@@ -129,9 +129,9 @@ I::I() {}  // Emits vftable and forces thunk generation.
 // CODEGEN: %[[ORIG_RET_i8:.*]] = bitcast %struct.F* %[[ORIG_RET]] to i8*
 // CODEGEN: %[[VBPTR_i8:.*]] = getelementptr inbounds i8, i8* %[[ORIG_RET_i8]], i32 4
 // CODEGEN: %[[VBPTR:.*]] = bitcast i8* %[[VBPTR_i8]] to i32**
-// CODEGEN: %[[VBTABLE:.*]] = load i32** %[[VBPTR]]
+// CODEGEN: %[[VBTABLE:.*]] = load i32*, i32** %[[VBPTR]]
 // CODEGEN: %[[VBASE_OFFSET_PTR:.*]] = getelementptr inbounds i32, i32* %[[VBTABLE]], i32 2
-// CODEGEN: %[[VBASE_OFFSET:.*]] = load i32* %[[VBASE_OFFSET_PTR]]
+// CODEGEN: %[[VBASE_OFFSET:.*]] = load i32, i32* %[[VBASE_OFFSET_PTR]]
 // CODEGEN: %[[RES_i8:.*]] = getelementptr inbounds i8, i8* %[[VBPTR_i8]], i32 %[[VBASE_OFFSET]]
 // CODEGEN: %[[RES:.*]] = bitcast i8* %[[RES_i8]] to %struct.F*
 // CODEGEN: phi %struct.F* {{.*}} %[[RES]]

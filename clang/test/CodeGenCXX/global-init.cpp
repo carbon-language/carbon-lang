@@ -77,7 +77,7 @@ namespace test4 {
   extern int foo();
 
   // This needs an initialization function and guard variables.
-  // CHECK: load i8* bitcast (i64* @_ZGVN5test41xE
+  // CHECK: load i8, i8* bitcast (i64* @_ZGVN5test41xE
   // CHECK: [[CALL:%.*]] = call i32 @_ZN5test43fooEv
   // CHECK-NEXT: store i32 [[CALL]], i32* @_ZN5test41xE
   // CHECK-NEXT: store i64 1, i64* @_ZGVN5test41xE
@@ -187,11 +187,11 @@ namespace test7 {
 // At the end of the file, we check that y is initialized before z.
 
 // CHECK:      define internal void [[TEST1_Z_INIT:@.*]]()
-// CHECK:        load i32* @_ZN5test1L1yE
+// CHECK:        load i32, i32* @_ZN5test1L1yE
 // CHECK-NEXT:   xor
 // CHECK-NEXT:   store i32 {{.*}}, i32* @_ZN5test1L1zE
 // CHECK:      define internal void [[TEST1_Y_INIT:@.*]]()
-// CHECK:        load i32* @_ZN5test1L1xE
+// CHECK:        load i32, i32* @_ZN5test1L1xE
 // CHECK-NEXT:   sub
 // CHECK-NEXT:   store i32 {{.*}}, i32* @_ZN5test1L1yE
 

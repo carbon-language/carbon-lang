@@ -78,7 +78,7 @@ void call_D5(D5 *p) {
 // Check the call site.
 //
 // ARM64-LABEL: define void @_Z7call_D5P2D5(%struct.D5* %p)
-// ARM64: load [3 x double]*
+// ARM64: load [3 x double], [3 x double]*
 // ARM64: call %struct.D5 @_Z7func_D52D5([3 x double] %{{.*}})
 
 struct Empty { };

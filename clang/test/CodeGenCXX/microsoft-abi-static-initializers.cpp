@@ -52,7 +52,7 @@ void StaticLocal() {
 }
 
 // CHECK-LABEL: define void @"\01?StaticLocal@@YAXXZ"()
-// CHECK: load i32* @"\01?$S1@?1??StaticLocal@@YAXXZ@4IA"
+// CHECK: load i32, i32* @"\01?$S1@?1??StaticLocal@@YAXXZ@4IA"
 // CHECK: store i32 {{.*}}, i32* @"\01?$S1@?1??StaticLocal@@YAXXZ@4IA"
 // CHECK: ret
 
@@ -94,7 +94,7 @@ void MultipleStatics() {
   static S S35;
 }
 // CHECK-LABEL: define void @"\01?MultipleStatics@@YAXXZ"()
-// CHECK: load i32* @"\01?$S1@?1??MultipleStatics@@YAXXZ@4IA"
+// CHECK: load i32, i32* @"\01?$S1@?1??MultipleStatics@@YAXXZ@4IA"
 // CHECK: and i32 {{.*}}, 1
 // CHECK: and i32 {{.*}}, 2
 // CHECK: and i32 {{.*}}, 4
@@ -102,7 +102,7 @@ void MultipleStatics() {
 // CHECK: and i32 {{.*}}, 16
 //   ...
 // CHECK: and i32 {{.*}}, -2147483648
-// CHECK: load i32* @"\01?$S1@?1??MultipleStatics@@YAXXZ@4IA1"
+// CHECK: load i32, i32* @"\01?$S1@?1??MultipleStatics@@YAXXZ@4IA1"
 // CHECK: and i32 {{.*}}, 1
 // CHECK: and i32 {{.*}}, 2
 // CHECK: and i32 {{.*}}, 4
@@ -144,7 +144,7 @@ inline S &getS() {
 }
 
 // CHECK-LABEL: define linkonce_odr dereferenceable({{[0-9]+}}) %struct.S* @"\01?getS@@YAAAUS@@XZ"() {{.*}} comdat
-// CHECK: load i32* @"\01??_B?1??getS@@YAAAUS@@XZ@51"
+// CHECK: load i32, i32* @"\01??_B?1??getS@@YAAAUS@@XZ@51"
 // CHECK: and i32 {{.*}}, 1
 // CHECK: icmp ne i32 {{.*}}, 0
 // CHECK: br i1

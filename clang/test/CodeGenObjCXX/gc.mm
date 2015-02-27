@@ -12,9 +12,9 @@ namespace test0 {
 // CHECK-LABEL:    define void @_ZN5test01AC2Ev(
 // CHECK:      [[THIS:%.*]] = alloca [[TEST0:%.*]]*, align 8
 // CHECK-NEXT: store 
-// CHECK-NEXT: [[T0:%.*]] = load [[TEST0]]** [[THIS]]
+// CHECK-NEXT: [[T0:%.*]] = load [[TEST0]]*, [[TEST0]]** [[THIS]]
 // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[TEST0]], [[TEST0]]* [[T0]], i32 0, i32 0
-// CHECK-NEXT: [[T2:%.*]] = load i8** @_ZN5test01xE
+// CHECK-NEXT: [[T2:%.*]] = load i8*, i8** @_ZN5test01xE
 // CHECK-NEXT: call i8* @objc_assign_strongCast(i8* [[T2]], i8** [[T1]])
 // CHECK-NEXT: ret void
 }

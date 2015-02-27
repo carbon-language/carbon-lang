@@ -12,7 +12,7 @@
 
 int test0() {
   extern __unknown_anytype test0_any;
-  // COMMON: load i32* @test0_any
+  // COMMON: load i32, i32* @test0_any
   return (int) test0_any;
 }
 
@@ -38,7 +38,7 @@ float test2a() {
 
 float test3() {
   extern __unknown_anytype test3_any;
-  // COMMON: [[FN:%.*]] = load float (i32)** @test3_any,
+  // COMMON: [[FN:%.*]] = load float (i32)*, float (i32)** @test3_any,
   // COMMON: call float [[FN]](i32 5)
   return ((float(*)(int)) test3_any)(5);
 }
@@ -48,8 +48,8 @@ namespace test4 {
   extern __unknown_anytype test4_any2;
 
   int test() {
-    // COMMON: load i32* @_ZN5test410test4_any1E
-    // COMMON: load i8* @_ZN5test410test4_any2E
+    // COMMON: load i32, i32* @_ZN5test410test4_any1E
+    // COMMON: load i8, i8* @_ZN5test410test4_any2E
     return (int) test4_any1 + (char) test4_any2;
   }
 }

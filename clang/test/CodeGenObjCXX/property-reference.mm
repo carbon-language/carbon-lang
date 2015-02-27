@@ -42,7 +42,7 @@ namespace test1 {
 @end
 // CHECK:    define internal dereferenceable({{[0-9]+}}) [[A:%.*]]* @"\01-[Test1 prop1]"(
 // CHECK:      [[SELF:%.*]] = alloca [[TEST1:%.*]]*, align 8
-// CHECK:      [[T0:%.*]] = load [[TEST1]]** [[SELF]]
+// CHECK:      [[T0:%.*]] = load [[TEST1]]*, [[TEST1]]** [[SELF]]
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST1]]* [[T0]] to i8*
 // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds i8, i8* [[T1]], i64 0
 // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[A]]*
@@ -68,10 +68,10 @@ template void test2<int>(Test2*);
 // CHECK: [[X:%.*]] = alloca i32,
 // CHECK:      @objc_msgSend
 // CHECK:      store i32 {{%.*}}, i32* [[X]],
-// CHECK:      load i32* [[X]],
+// CHECK:      load i32, i32* [[X]],
 // CHECK:      @objc_msgSend
 // CHECK:      @objc_msgSend
-// CHECK:      load i32* [[X]],
+// CHECK:      load i32, i32* [[X]],
 // CHECK-NEXT: add nsw
 // CHECK:      @objc_msgSend
 // CHECK-NEXT: ret void
@@ -87,10 +87,10 @@ template void test3<int>(Test2*);
 // CHECK: [[X:%.*]] = alloca i32,
 // CHECK:      @objc_msgSend
 // CHECK:      store i32 {{%.*}}, i32* [[X]],
-// CHECK:      load i32* [[X]],
+// CHECK:      load i32, i32* [[X]],
 // CHECK:      @objc_msgSend
 // CHECK:      @objc_msgSend
-// CHECK:      load i32* [[X]],
+// CHECK:      load i32, i32* [[X]],
 // CHECK-NEXT: add nsw
 // CHECK:      @objc_msgSend
 // CHECK-NEXT: ret void

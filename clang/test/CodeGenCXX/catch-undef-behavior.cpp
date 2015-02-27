@@ -57,7 +57,7 @@ void member_access(S *p) {
   // (1b) Check that 'p' actually points to an 'S'.
 
   // CHECK: %[[VPTRADDR:.*]] = bitcast {{.*}} to i64*
-  // CHECK-NEXT: %[[VPTR:.*]] = load i64* %[[VPTRADDR]]
+  // CHECK-NEXT: %[[VPTR:.*]] = load i64, i64* %[[VPTRADDR]]
   //
   // hash_16_bytes:
   //
@@ -82,7 +82,7 @@ void member_access(S *p) {
   //
   // CHECK-NEXT: %[[IDX:.*]] = and i64 %{{.*}}, 127
   // CHECK-NEXT: getelementptr inbounds [128 x i64], [128 x i64]* @__ubsan_vptr_type_cache, i32 0, i64 %[[IDX]]
-  // CHECK-NEXT: %[[CACHEVAL:.*]] = load i64*
+  // CHECK-NEXT: %[[CACHEVAL:.*]] = load i64, i64*
   // CHECK-NEXT: icmp eq i64 %[[CACHEVAL]], %[[HASH]]
   // CHECK-NEXT: br i1
 
@@ -116,7 +116,7 @@ void member_access(S *p) {
 
   // (3b) Check that 'p' actually points to an 'S'
 
-  // CHECK: load i64*
+  // CHECK: load i64, i64*
   // CHECK-NEXT: xor i64 {{-4030275160588942838|2562089159}},
   // [...]
   // CHECK: getelementptr inbounds [128 x i64], [128 x i64]* @__ubsan_vptr_type_cache, i32 0, i64 %
@@ -399,13 +399,13 @@ void indirect_function_call(void (*p)(int)) {
 
   // Signature check
   // CHECK-NEXT: [[SIGPTR:%[0-9]*]] = getelementptr <{ i32, i8* }>, <{ i32, i8* }>* [[PTR]], i32 0, i32 0
-  // CHECK-NEXT: [[SIG:%[0-9]*]] = load i32* [[SIGPTR]]
+  // CHECK-NEXT: [[SIG:%[0-9]*]] = load i32, i32* [[SIGPTR]]
   // CHECK-NEXT: [[SIGCMP:%[0-9]*]] = icmp eq i32 [[SIG]], 1413876459
   // CHECK-NEXT: br i1 [[SIGCMP]]
 
   // RTTI pointer check
   // CHECK: [[RTTIPTR:%[0-9]*]] = getelementptr <{ i32, i8* }>, <{ i32, i8* }>* [[PTR]], i32 0, i32 1
-  // CHECK-NEXT: [[RTTI:%[0-9]*]] = load i8** [[RTTIPTR]]
+  // CHECK-NEXT: [[RTTI:%[0-9]*]] = load i8*, i8** [[RTTIPTR]]
   // CHECK-NEXT: [[RTTICMP:%[0-9]*]] = icmp eq i8* [[RTTI]], bitcast ({ i8*, i8* }* @_ZTIFviE to i8*)
   // CHECK-NEXT: br i1 [[RTTICMP]]
   p(42);

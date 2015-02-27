@@ -15,5 +15,5 @@ S::S() {
 // CHECK: %struct.S* @_ZN1SC1Ev(%struct.S* returned %this)
 // CHECK: [[THISADDR:%[a-zA-z0-9.]+]] = alloca %struct.S*
 // CHECK: store %struct.S* %this, %struct.S** [[THISADDR]]
-// CHECK: [[THIS1:%.*]] = load %struct.S** [[THISADDR]]
+// CHECK: [[THIS1:%.*]] = load %struct.S*, %struct.S** [[THISADDR]]
 // CHECK: ret %struct.S* [[THIS1]]

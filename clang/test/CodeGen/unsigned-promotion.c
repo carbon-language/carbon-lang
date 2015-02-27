@@ -15,16 +15,16 @@ extern void opaquechar(unsigned char);
 // CHECKS-LABEL:   define void @testshortadd()
 // CHECKU-LABEL: define void @testshortadd()
 void testshortadd() {
-  // CHECKS:        load i16* @sj
-  // CHECKS:        load i16* @sk
+  // CHECKS:        load i16, i16* @sj
+  // CHECKS:        load i16, i16* @sk
   // CHECKS:        [[T1:%.*]] = call { i32, i1 } @llvm.sadd.with.overflow.i32(i32 [[T2:%.*]], i32 [[T3:%.*]])
   // CHECKS-NEXT:   [[T4:%.*]] = extractvalue { i32, i1 } [[T1]], 0
   // CHECKS-NEXT:   [[T5:%.*]] = extractvalue { i32, i1 } [[T1]], 1
   // CHECKS:        call void @__ubsan_handle_add_overflow
   //
-  // CHECKU:      [[T1:%.*]] = load i16* @sj
+  // CHECKU:      [[T1:%.*]] = load i16, i16* @sj
   // CHECKU:      [[T2:%.*]] = zext i16 [[T1]]
-  // CHECKU:      [[T3:%.*]] = load i16* @sk
+  // CHECKU:      [[T3:%.*]] = load i16, i16* @sk
   // CHECKU:      [[T4:%.*]] = zext i16 [[T3]]
   // CHECKU-NOT:  llvm.sadd
   // CHECKU-NOT:  llvm.uadd
@@ -37,16 +37,16 @@ void testshortadd() {
 // CHECKU-LABEL: define void @testshortsub()
 void testshortsub() {
 
-  // CHECKS:        load i16* @sj
-  // CHECKS:        load i16* @sk
+  // CHECKS:        load i16, i16* @sj
+  // CHECKS:        load i16, i16* @sk
   // CHECKS:        [[T1:%.*]] = call { i32, i1 } @llvm.ssub.with.overflow.i32(i32 [[T2:%.*]], i32 [[T3:%.*]])
   // CHECKS-NEXT:   [[T4:%.*]] = extractvalue { i32, i1 } [[T1]], 0
   // CHECKS-NEXT:   [[T5:%.*]] = extractvalue { i32, i1 } [[T1]], 1
   // CHECKS:        call void @__ubsan_handle_sub_overflow
   //
-  // CHECKU:      [[T1:%.*]] = load i16* @sj
+  // CHECKU:      [[T1:%.*]] = load i16, i16* @sj
   // CHECKU:      [[T2:%.*]] = zext i16 [[T1]]
-  // CHECKU:      [[T3:%.*]] = load i16* @sk
+  // CHECKU:      [[T3:%.*]] = load i16, i16* @sk
   // CHECKU:      [[T4:%.*]] = zext i16 [[T3]]
   // CHECKU-NOT:  llvm.ssub
   // CHECKU-NOT:  llvm.usub
@@ -59,16 +59,16 @@ void testshortsub() {
 // CHECKU-LABEL: define void @testshortmul()
 void testshortmul() {
 
-  // CHECKS:        load i16* @sj
-  // CHECKS:        load i16* @sk
+  // CHECKS:        load i16, i16* @sj
+  // CHECKS:        load i16, i16* @sk
   // CHECKS:        [[T1:%.*]] = call { i32, i1 } @llvm.smul.with.overflow.i32(i32 [[T2:%.*]], i32 [[T3:%.*]])
   // CHECKS-NEXT:   [[T4:%.*]] = extractvalue { i32, i1 } [[T1]], 0
   // CHECKS-NEXT:   [[T5:%.*]] = extractvalue { i32, i1 } [[T1]], 1
   // CHECKS:        call void @__ubsan_handle_mul_overflow
   //
-  // CHECKU:      [[T1:%.*]] = load i16* @sj
+  // CHECKU:      [[T1:%.*]] = load i16, i16* @sj
   // CHECKU:      [[T2:%.*]] = zext i16 [[T1]]
-  // CHECKU:      [[T3:%.*]] = load i16* @sk
+  // CHECKU:      [[T3:%.*]] = load i16, i16* @sk
   // CHECKU:      [[T4:%.*]] = zext i16 [[T3]]
   // CHECKU-NOT:  llvm.smul
   // CHECKU-NOT:  llvm.umul
@@ -80,16 +80,16 @@ void testshortmul() {
 // CHECKU-LABEL: define void @testcharadd()
 void testcharadd() {
 
-  // CHECKS:        load i8* @cj
-  // CHECKS:        load i8* @ck
+  // CHECKS:        load i8, i8* @cj
+  // CHECKS:        load i8, i8* @ck
   // CHECKS:        [[T1:%.*]] = call { i32, i1 } @llvm.sadd.with.overflow.i32(i32 [[T2:%.*]], i32 [[T3:%.*]])
   // CHECKS-NEXT:   [[T4:%.*]] = extractvalue { i32, i1 } [[T1]], 0
   // CHECKS-NEXT:   [[T5:%.*]] = extractvalue { i32, i1 } [[T1]], 1
   // CHECKS:        call void @__ubsan_handle_add_overflow
   //
-  // CHECKU:      [[T1:%.*]] = load i8* @cj
+  // CHECKU:      [[T1:%.*]] = load i8, i8* @cj
   // CHECKU:      [[T2:%.*]] = zext i8 [[T1]]
-  // CHECKU:      [[T3:%.*]] = load i8* @ck
+  // CHECKU:      [[T3:%.*]] = load i8, i8* @ck
   // CHECKU:      [[T4:%.*]] = zext i8 [[T3]]
   // CHECKU-NOT:  llvm.sadd
   // CHECKU-NOT:  llvm.uadd
@@ -102,16 +102,16 @@ void testcharadd() {
 // CHECKU-LABEL: define void @testcharsub()
 void testcharsub() {
 
-  // CHECKS:        load i8* @cj
-  // CHECKS:        load i8* @ck
+  // CHECKS:        load i8, i8* @cj
+  // CHECKS:        load i8, i8* @ck
   // CHECKS:        [[T1:%.*]] = call { i32, i1 } @llvm.ssub.with.overflow.i32(i32 [[T2:%.*]], i32 [[T3:%.*]])
   // CHECKS-NEXT:   [[T4:%.*]] = extractvalue { i32, i1 } [[T1]], 0
   // CHECKS-NEXT:   [[T5:%.*]] = extractvalue { i32, i1 } [[T1]], 1
   // CHECKS:        call void @__ubsan_handle_sub_overflow
   //
-  // CHECKU:      [[T1:%.*]] = load i8* @cj
+  // CHECKU:      [[T1:%.*]] = load i8, i8* @cj
   // CHECKU:      [[T2:%.*]] = zext i8 [[T1]]
-  // CHECKU:      [[T3:%.*]] = load i8* @ck
+  // CHECKU:      [[T3:%.*]] = load i8, i8* @ck
   // CHECKU:      [[T4:%.*]] = zext i8 [[T3]]
   // CHECKU-NOT:  llvm.ssub
   // CHECKU-NOT:  llvm.usub
@@ -124,16 +124,16 @@ void testcharsub() {
 // CHECKU-LABEL: define void @testcharmul()
 void testcharmul() {
 
-  // CHECKS:        load i8* @cj
-  // CHECKS:        load i8* @ck
+  // CHECKS:        load i8, i8* @cj
+  // CHECKS:        load i8, i8* @ck
   // CHECKS:        [[T1:%.*]] = call { i32, i1 } @llvm.smul.with.overflow.i32(i32 [[T2:%.*]], i32 [[T3:%.*]])
   // CHECKS-NEXT:   [[T4:%.*]] = extractvalue { i32, i1 } [[T1]], 0
   // CHECKS-NEXT:   [[T5:%.*]] = extractvalue { i32, i1 } [[T1]], 1
   // CHECKS:        call void @__ubsan_handle_mul_overflow
   //
-  // CHECKU:      [[T1:%.*]] = load i8* @cj
+  // CHECKU:      [[T1:%.*]] = load i8, i8* @cj
   // CHECKU:      [[T2:%.*]] = zext i8 [[T1]]
-  // CHECKU:      [[T3:%.*]] = load i8* @ck
+  // CHECKU:      [[T3:%.*]] = load i8, i8* @ck
   // CHECKU:      [[T4:%.*]] = zext i8 [[T3]]
   // CHECKU-NOT:  llvm.smul
   // CHECKU-NOT:  llvm.umul

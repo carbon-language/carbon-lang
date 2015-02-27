@@ -12,4 +12,4 @@ int fish() { return fake() + __PRAGMA_REDEFINE_EXTNAME + name; }
 // Check that the call to fake() is emitted as a call to real()
 // CHECK:   call i32 @real()
 // Check that this also works with variables names
-// CHECK:   load i32* @alias
+// CHECK:   load i32, i32* @alias

@@ -1,16 +1,16 @@
 // RUN: not %clang_cc1 -triple x86_64-apple-darwin -verify -emit-llvm -o - %s | FileCheck %s
 void t1() {
   // CHECK-LABEL: define void @_Z2t1v
-  // CHECK: [[REFLOAD:%.*]] = load i32** @a, align 8
-  // CHECK: load i32* [[REFLOAD]], align 4
+  // CHECK: [[REFLOAD:%.*]] = load i32*, i32** @a, align 8
+  // CHECK: load i32, i32* [[REFLOAD]], align 4
   extern int& a;
   int b = a; 
 }
 
 void t2(int& a) {
   // CHECK-LABEL: define void @_Z2t2Ri
-  // CHECK: [[REFLOAD2:%.*]] = load i32** {{.*}}, align 8
-  // CHECK: load i32* [[REFLOAD2]], align 4
+  // CHECK: [[REFLOAD2:%.*]] = load i32*, i32** {{.*}}, align 8
+  // CHECK: load i32, i32* [[REFLOAD2]], align 4
   int b = a;
 }
 
@@ -307,6 +307,6 @@ namespace N6 {
   extern struct x {char& x;}y;
   int a() { return y.x; }
   // CHECK-LABEL: define i32 @_ZN2N61aEv
-  // CHECK: [[REFLOAD3:%.*]] = load i8** getelementptr inbounds (%"struct.N6::x"* @_ZN2N61yE, i32 0, i32 0), align 8
-  // CHECK: load i8* [[REFLOAD3]], align 1
+  // CHECK: [[REFLOAD3:%.*]] = load i8*, i8** getelementptr inbounds (%"struct.N6::x"* @_ZN2N61yE, i32 0, i32 0), align 8
+  // CHECK: load i8, i8* [[REFLOAD3]], align 1
 }

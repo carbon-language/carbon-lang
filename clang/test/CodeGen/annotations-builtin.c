@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
 // CHECK: call i64 @llvm.annotation.i64
 
     int inta = __builtin_annotation(intfoo, "annotation_a");
-// CHECK: load i32* @intfoo
+// CHECK: load i32, i32* @intfoo
 // CHECK-NEXT: call i32 @llvm.annotation.i32
 // CHECK-NEXT: store
 

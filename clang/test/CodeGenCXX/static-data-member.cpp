@@ -67,7 +67,7 @@ namespace test3 {
   // CHECK-LABEL: define internal void @__cxx_global_var_init1() {{.*}} comdat($_ZN5test31AIiE1xE)
   // MACHO-LABEL: define internal void @__cxx_global_var_init1()
   // MACHO-NOT: comdat
-  // CHECK:      [[GUARDBYTE:%.*]] = load i8* bitcast (i64* @_ZGVN5test31AIiE1xE to i8*)
+  // CHECK:      [[GUARDBYTE:%.*]] = load i8, i8* bitcast (i64* @_ZGVN5test31AIiE1xE to i8*)
   // CHECK-NEXT: [[UNINITIALIZED:%.*]] = icmp eq i8 [[GUARDBYTE]], 0
   // CHECK-NEXT: br i1 [[UNINITIALIZED]]
   // CHECK:      [[TMP:%.*]] = call i32 @_ZN5test33fooEv()

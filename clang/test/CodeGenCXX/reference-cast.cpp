@@ -174,10 +174,10 @@ unsigned pr10592(const int &v) {
   // CHECK: [[VADDR:%[a-zA-Z0-9.]+]] = alloca i32*
   // CHECK-NEXT: [[REFTMP:%[a-zA-Z0-9.]+]] = alloca i32
   // CHECK-NEXT: store i32* [[V:%[a-zA-Z0-9.]+]], i32** [[VADDR]]
-  // CHECK-NEXT: [[VADDR_1:%[a-zA-Z0-9.]+]] = load i32** [[VADDR]]
-  // CHECK-NEXT: [[VVAL:%[a-zA-Z0-9.]+]] = load i32* [[VADDR_1]]
+  // CHECK-NEXT: [[VADDR_1:%[a-zA-Z0-9.]+]] = load i32*, i32** [[VADDR]]
+  // CHECK-NEXT: [[VVAL:%[a-zA-Z0-9.]+]] = load i32, i32* [[VADDR_1]]
   // CHECK-NEXT: store i32 [[VVAL]], i32* [[REFTMP]]
-  // CHECK-NEXT: [[VVAL_I:%[a-zA-Z0-9.]+]] = load i32* [[REFTMP]]
+  // CHECK-NEXT: [[VVAL_I:%[a-zA-Z0-9.]+]] = load i32, i32* [[REFTMP]]
   // CHECK-NEXT: ret i32 [[VVAL_I]]
   return static_cast<const unsigned &>(v);
 }

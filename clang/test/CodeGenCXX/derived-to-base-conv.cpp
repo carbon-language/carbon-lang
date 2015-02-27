@@ -79,7 +79,7 @@ void test2(Test2b &x) {
   // CHECK:      [[X:%.*]] = alloca [[B:%.*]]*, align 8
   // CHECK-NEXT: [[Y:%.*]] = alloca [[A:%.*]]*, align 8
   // CHECK-NEXT: store [[B]]* {{%.*}}, [[B]]** [[X]], align 8
-  // CHECK-NEXT: [[T0:%.*]] = load [[B]]** [[X]], align 8
+  // CHECK-NEXT: [[T0:%.*]] = load [[B]]*, [[B]]** [[X]], align 8
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[B]]* [[T0]] to [[A]]*
   // CHECK-NEXT: store [[A]]* [[T1]], [[A]]** [[Y]], align 8
   // CHECK-NEXT: ret void

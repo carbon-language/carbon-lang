@@ -22,7 +22,7 @@ void no_constructor_destructor_infinite_recursion() {
 // CHECK:      define linkonce_odr x86_thiscallcc %"class.basic::A"* @"\01??0A@basic@@QAE@XZ"(%"class.basic::A"* returned %this) {{.*}} comdat {{.*}} {
 // CHECK:        [[THIS_ADDR:%[.0-9A-Z_a-z]+]] = alloca %"class.basic::A"*, align 4
 // CHECK-NEXT:   store %"class.basic::A"* %this, %"class.basic::A"** [[THIS_ADDR]], align 4
-// CHECK-NEXT:   [[T1:%[.0-9A-Z_a-z]+]] = load %"class.basic::A"** [[THIS_ADDR]]
+// CHECK-NEXT:   [[T1:%[.0-9A-Z_a-z]+]] = load %"class.basic::A"*, %"class.basic::A"** [[THIS_ADDR]]
 // CHECK-NEXT:   ret %"class.basic::A"* [[T1]]
 // CHECK-NEXT: }
 }
@@ -49,7 +49,7 @@ struct C {
 // DTORS:      define linkonce_odr x86_thiscallcc i8* @"\01??_GC@basic@@UAEPAXI@Z"(%"struct.basic::C"* %this, i32 %should_call_delete) {{.*}} comdat {{.*}} {
 // DTORS:        store i32 %should_call_delete, i32* %[[SHOULD_DELETE_VAR:[0-9a-z._]+]], align 4
 // DTORS:        store i8* %{{.*}}, i8** %[[RETVAL:[0-9a-z._]+]]
-// DTORS:        %[[SHOULD_DELETE_VALUE:[0-9a-z._]+]] = load i32* %[[SHOULD_DELETE_VAR]]
+// DTORS:        %[[SHOULD_DELETE_VALUE:[0-9a-z._]+]] = load i32, i32* %[[SHOULD_DELETE_VAR]]
 // DTORS:        call x86_thiscallcc void @"\01??1C@basic@@UAE@XZ"(%"struct.basic::C"* %[[THIS:[0-9a-z]+]])
 // DTORS-NEXT:   %[[CONDITION:[0-9]+]] = icmp eq i32 %[[SHOULD_DELETE_VALUE]], 0
 // DTORS-NEXT:   br i1 %[[CONDITION]], label %[[CONTINUE_LABEL:[0-9a-z._]+]], label %[[CALL_DELETE_LABEL:[0-9a-z._]+]]
@@ -60,7 +60,7 @@ struct C {
 // DTORS-NEXT:   br label %[[CONTINUE_LABEL]]
 //
 // DTORS:      [[CONTINUE_LABEL]]
-// DTORS-NEXT:   %[[RET:.*]] = load i8** %[[RETVAL]]
+// DTORS-NEXT:   %[[RET:.*]] = load i8*, i8** %[[RETVAL]]
 // DTORS-NEXT:   ret i8* %[[RET]]
 
 // Check that we do the mangling correctly on x64.
@@ -82,11 +82,11 @@ void check_vftable_offset() {
 void call_complete_dtor(C *obj_ptr) {
 // CHECK: define void @"\01?call_complete_dtor@basic@@YAXPAUC@1@@Z"(%"struct.basic::C"* %obj_ptr)
   obj_ptr->~C();
-// CHECK: %[[OBJ_PTR_VALUE:.*]] = load %"struct.basic::C"** %{{.*}}, align 4
+// CHECK: %[[OBJ_PTR_VALUE:.*]] = load %"struct.basic::C"*, %"struct.basic::C"** %{{.*}}, align 4
 // CHECK-NEXT: %[[PVTABLE:.*]] = bitcast %"struct.basic::C"* %[[OBJ_PTR_VALUE]] to i8* (%"struct.basic::C"*, i32)***
-// CHECK-NEXT: %[[VTABLE:.*]] = load i8* (%"struct.basic::C"*, i32)*** %[[PVTABLE]]
+// CHECK-NEXT: %[[VTABLE:.*]] = load i8* (%"struct.basic::C"*, i32)**, i8* (%"struct.basic::C"*, i32)*** %[[PVTABLE]]
 // CHECK-NEXT: %[[PVDTOR:.*]] = getelementptr inbounds i8* (%"struct.basic::C"*, i32)*, i8* (%"struct.basic::C"*, i32)** %[[VTABLE]], i64 0
-// CHECK-NEXT: %[[VDTOR:.*]] = load i8* (%"struct.basic::C"*, i32)** %[[PVDTOR]]
+// CHECK-NEXT: %[[VDTOR:.*]] = load i8* (%"struct.basic::C"*, i32)*, i8* (%"struct.basic::C"*, i32)** %[[PVDTOR]]
 // CHECK-NEXT: call x86_thiscallcc i8* %[[VDTOR]](%"struct.basic::C"* %[[OBJ_PTR_VALUE]], i32 0)
 // CHECK-NEXT: ret void
 }
@@ -94,14 +94,14 @@ void call_complete_dtor(C *obj_ptr) {
 void call_deleting_dtor(C *obj_ptr) {
 // CHECK: define void @"\01?call_deleting_dtor@basic@@YAXPAUC@1@@Z"(%"struct.basic::C"* %obj_ptr)
   delete obj_ptr;
-// CHECK:      %[[OBJ_PTR_VALUE:.*]] = load %"struct.basic::C"** %{{.*}}, align 4
+// CHECK:      %[[OBJ_PTR_VALUE:.*]] = load %"struct.basic::C"*, %"struct.basic::C"** %{{.*}}, align 4
 // CHECK:      br i1 {{.*}}, label %[[DELETE_NULL:.*]], label %[[DELETE_NOTNULL:.*]]
 
 // CHECK:      [[DELETE_NOTNULL]]
 // CHECK-NEXT:   %[[PVTABLE:.*]] = bitcast %"struct.basic::C"* %[[OBJ_PTR_VALUE]] to i8* (%"struct.basic::C"*, i32)***
-// CHECK-NEXT:   %[[VTABLE:.*]] = load i8* (%"struct.basic::C"*, i32)*** %[[PVTABLE]]
+// CHECK-NEXT:   %[[VTABLE:.*]] = load i8* (%"struct.basic::C"*, i32)**, i8* (%"struct.basic::C"*, i32)*** %[[PVTABLE]]
 // CHECK-NEXT:   %[[PVDTOR:.*]] = getelementptr inbounds i8* (%"struct.basic::C"*, i32)*, i8* (%"struct.basic::C"*, i32)** %[[VTABLE]], i64 0
-// CHECK-NEXT:   %[[VDTOR:.*]] = load i8* (%"struct.basic::C"*, i32)** %[[PVDTOR]]
+// CHECK-NEXT:   %[[VDTOR:.*]] = load i8* (%"struct.basic::C"*, i32)*, i8* (%"struct.basic::C"*, i32)** %[[PVDTOR]]
 // CHECK-NEXT:   call x86_thiscallcc i8* %[[VDTOR]](%"struct.basic::C"* %[[OBJ_PTR_VALUE]], i32 1)
 // CHECK:      ret void
 }
@@ -109,14 +109,14 @@ void call_deleting_dtor(C *obj_ptr) {
 void call_deleting_dtor_and_global_delete(C *obj_ptr) {
 // CHECK: define void @"\01?call_deleting_dtor_and_global_delete@basic@@YAXPAUC@1@@Z"(%"struct.basic::C"* %obj_ptr)
   ::delete obj_ptr;
-// CHECK:      %[[OBJ_PTR_VALUE:.*]] = load %"struct.basic::C"** %{{.*}}, align 4
+// CHECK:      %[[OBJ_PTR_VALUE:.*]] = load %"struct.basic::C"*, %"struct.basic::C"** %{{.*}}, align 4
 // CHECK:      br i1 {{.*}}, label %[[DELETE_NULL:.*]], label %[[DELETE_NOTNULL:.*]]
 
 // CHECK:      [[DELETE_NOTNULL]]
 // CHECK-NEXT:   %[[PVTABLE:.*]] = bitcast %"struct.basic::C"* %[[OBJ_PTR_VALUE]] to i8* (%"struct.basic::C"*, i32)***
-// CHECK-NEXT:   %[[VTABLE:.*]] = load i8* (%"struct.basic::C"*, i32)*** %[[PVTABLE]]
+// CHECK-NEXT:   %[[VTABLE:.*]] = load i8* (%"struct.basic::C"*, i32)**, i8* (%"struct.basic::C"*, i32)*** %[[PVTABLE]]
 // CHECK-NEXT:   %[[PVDTOR:.*]] = getelementptr inbounds i8* (%"struct.basic::C"*, i32)*, i8* (%"struct.basic::C"*, i32)** %[[VTABLE]], i64 0
-// CHECK-NEXT:   %[[VDTOR:.*]] = load i8* (%"struct.basic::C"*, i32)** %[[PVDTOR]]
+// CHECK-NEXT:   %[[VDTOR:.*]] = load i8* (%"struct.basic::C"*, i32)*, i8* (%"struct.basic::C"*, i32)** %[[PVDTOR]]
 // CHECK-NEXT:   %[[CALL:.*]] = call x86_thiscallcc i8* %[[VDTOR]](%"struct.basic::C"* %[[OBJ_PTR_VALUE]], i32 0)
 // CHECK-NEXT:   call void @"\01??3@YAXPAX@Z"(i8* %[[CALL]])
 // CHECK:      ret void
@@ -158,7 +158,7 @@ C::~C() {
 // CHECK:       (%"struct.dtor_in_second_nvbase::C"* %this)
 //      No this adjustment!
 // CHECK-NOT: getelementptr
-// CHECK:   load %"struct.dtor_in_second_nvbase::C"** %{{.*}}
+// CHECK:   load %"struct.dtor_in_second_nvbase::C"*, %"struct.dtor_in_second_nvbase::C"** %{{.*}}
 //      Now we this-adjust before calling ~B.
 // CHECK:   bitcast %"struct.dtor_in_second_nvbase::C"* %{{.*}} to i8*
 // CHECK:   getelementptr inbounds i8, i8* %{{.*}}, i64 4
@@ -240,7 +240,7 @@ C::C() {
   // CHECK: define x86_thiscallcc %"struct.constructors::C"* @"\01??0C@constructors@@QAE@XZ"(%"struct.constructors::C"* returned %this, i32 %is_most_derived)
   // TODO: make sure this works in the Release build too;
   // CHECK: store i32 %is_most_derived, i32* %[[IS_MOST_DERIVED_VAR:.*]], align 4
-  // CHECK: %[[IS_MOST_DERIVED_VAL:.*]] = load i32* %[[IS_MOST_DERIVED_VAR]]
+  // CHECK: %[[IS_MOST_DERIVED_VAL:.*]] = load i32, i32* %[[IS_MOST_DERIVED_VAR]]
   // CHECK: %[[SHOULD_CALL_VBASE_CTORS:.*]] = icmp ne i32 %[[IS_MOST_DERIVED_VAL]], 0
   // CHECK: br i1 %[[SHOULD_CALL_VBASE_CTORS]], label %[[INIT_VBASES:.*]], label %[[SKIP_VBASES:.*]]
   //
@@ -275,7 +275,7 @@ struct D : C {
 D::D() {
   // CHECK: define x86_thiscallcc %"struct.constructors::D"* @"\01??0D@constructors@@QAE@XZ"(%"struct.constructors::D"* returned %this, i32 %is_most_derived) unnamed_addr
   // CHECK: store i32 %is_most_derived, i32* %[[IS_MOST_DERIVED_VAR:.*]], align 4
-  // CHECK: %[[IS_MOST_DERIVED_VAL:.*]] = load i32* %[[IS_MOST_DERIVED_VAR]]
+  // CHECK: %[[IS_MOST_DERIVED_VAL:.*]] = load i32, i32* %[[IS_MOST_DERIVED_VAR]]
   // CHECK: %[[SHOULD_CALL_VBASE_CTORS:.*]] = icmp ne i32 %[[IS_MOST_DERIVED_VAL]], 0
   // CHECK: br i1 %[[SHOULD_CALL_VBASE_CTORS]], label %[[INIT_VBASES:.*]], label %[[SKIP_VBASES:.*]]
   //
@@ -302,7 +302,7 @@ struct E : virtual C {
 E::E() {
   // CHECK: define x86_thiscallcc %"struct.constructors::E"* @"\01??0E@constructors@@QAE@XZ"(%"struct.constructors::E"* returned %this, i32 %is_most_derived) unnamed_addr
   // CHECK: store i32 %is_most_derived, i32* %[[IS_MOST_DERIVED_VAR:.*]], align 4
-  // CHECK: %[[IS_MOST_DERIVED_VAL:.*]] = load i32* %[[IS_MOST_DERIVED_VAR]]
+  // CHECK: %[[IS_MOST_DERIVED_VAL:.*]] = load i32, i32* %[[IS_MOST_DERIVED_VAR]]
   // CHECK: %[[SHOULD_CALL_VBASE_CTORS:.*]] = icmp ne i32 %[[IS_MOST_DERIVED_VAL]], 0
   // CHECK: br i1 %[[SHOULD_CALL_VBASE_CTORS]], label %[[INIT_VBASES:.*]], label %[[SKIP_VBASES:.*]]
   //

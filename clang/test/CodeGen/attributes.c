@@ -79,7 +79,7 @@ void (__attribute__((fastcall)) *fptr)(int);
 void t21(void) {
   fptr(10);
 }
-// CHECK: [[FPTRVAR:%[a-z0-9]+]] = load void (i32)** @fptr
+// CHECK: [[FPTRVAR:%[a-z0-9]+]] = load void (i32)*, void (i32)** @fptr
 // CHECK-NEXT: call x86_fastcallcc void [[FPTRVAR]](i32 inreg 10)
 
 

@@ -30,7 +30,7 @@ int main (int argc, const char * argv[]) {
 
 // CHECK: [[SIXTEEN:%.*]]  = call i8* @objc_loadWeakRetained(i8** {{%.*}})
 // CHECK-NEXT:  [[SEVENTEEN:%.*]] = bitcast i8* [[SIXTEEN]] to {{%.*}}
-// CHECK-NEXT:  [[EIGHTEEN:%.*]] = load i8** @OBJC_SELECTOR_REFERENCES_6
+// CHECK-NEXT:  [[EIGHTEEN:%.*]] = load i8*, i8** @OBJC_SELECTOR_REFERENCES_6
 // CHECK-NEXT:  [[NINETEEN:%.*]] = bitcast %0* [[SEVENTEEN]] to i8*
 // CHECK-NEXT:  call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
 // CHECK-NEXT:  [[TWENTY:%.*]] = bitcast %0* [[SEVENTEEN]] to i8*
@@ -64,13 +64,13 @@ void test1(int cond) {
 // CHECK: call void @test34_sink(
 // CHECK-NEXT: [[ICRISNULL1:%.*]] = icmp eq i8** [[COND1]], null
 // CHECK-NEXT: br i1 [[ICRISNULL1]], label [[ICRDONE:%.*]], label [[ICRWRITEBACK:%.*]]
-// CHECK:  [[TWO:%.*]] = load i8** [[INCRTEMP]]
+// CHECK:  [[TWO:%.*]] = load i8*, i8** [[INCRTEMP]]
 // CHECK-NEXT:  [[THREE:%.*]] = call i8* @objc_storeWeak(
 // CHECK-NEXT  br label [[ICRDONE]]
-// CHECK:  [[CLEANUPISACTIVE:%.*]] = load i1* [[CONDCLEANUP]]
+// CHECK:  [[CLEANUPISACTIVE:%.*]] = load i1, i1* [[CONDCLEANUP]]
 // CHECK-NEXT:  br i1 [[CLEANUPISACTIVE]], label [[CLEASNUPACTION:%.*]], label [[CLEANUPDONE:%.*]]
 
-// CHECK: [[FOUR:%.*]] = load i8** [[CONDCLEANUPSAVE]]
+// CHECK: [[FOUR:%.*]] = load i8*, i8** [[CONDCLEANUPSAVE]]
 // CHECK-NEXT: call void @objc_release(i8* [[FOUR]])
 // CHECK-NEXT:  br label
 // CHECK:  call void @objc_destroyWeak(i8** [[WEAK]])

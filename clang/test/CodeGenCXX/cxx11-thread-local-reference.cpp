@@ -19,7 +19,7 @@ int &g() { return r; }
 
 // CHECK: define weak_odr hidden i32* @_ZTW1r() {
 // CHECK: call void @_ZTH1r()
-// CHECK: load i32** @r, align 8
+// CHECK: load i32*, i32** @r, align 8
 // CHECK: ret i32* %{{.*}}
 
 // CHECK-LABEL: define internal void @__tls_init()

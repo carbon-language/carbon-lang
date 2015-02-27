@@ -20,11 +20,11 @@ void f() {
   // CHECK-NEXT: [[COMPOUNDLIT:%[a-zA-Z0-9.]+]] = alloca [[STRUCT]]
   // CHECK-NEXT: [[CX:%[a-zA-Z0-9.]+]] = getelementptr inbounds [[STRUCT]], [[STRUCT]]* [[COMPOUNDLIT]], i32 0, i32 0
   // CHECK-NEXT: [[SY:%[a-zA-Z0-9.]+]] = getelementptr inbounds [[STRUCT]], [[STRUCT]]* [[S]], i32 0, i32 1
-  // CHECK-NEXT: [[TMP:%[a-zA-Z0-9.]+]] = load i32* [[SY]]
+  // CHECK-NEXT: [[TMP:%[a-zA-Z0-9.]+]] = load i32, i32* [[SY]]
   // CHECK-NEXT: store i32 [[TMP]], i32* [[CX]]
   // CHECK-NEXT: [[CY:%[a-zA-Z0-9.]+]] = getelementptr inbounds [[STRUCT]], [[STRUCT]]* [[COMPOUNDLIT]], i32 0, i32 1
   // CHECK-NEXT: [[SX:%[a-zA-Z0-9.]+]] = getelementptr inbounds [[STRUCT]], [[STRUCT]]* [[S]], i32 0, i32 0
-  // CHECK-NEXT: [[TMP:%[a-zA-Z0-9.]+]] = load i32* [[SX]]
+  // CHECK-NEXT: [[TMP:%[a-zA-Z0-9.]+]] = load i32, i32* [[SX]]
   // CHECK-NEXT: store i32 [[TMP]], i32* [[CY]]
   // CHECK-NEXT: [[SI8:%[a-zA-Z0-9.]+]] = bitcast [[STRUCT]]* [[S]] to i8*
   // CHECK-NEXT: [[COMPOUNDLITI8:%[a-zA-Z0-9.]+]] = bitcast [[STRUCT]]* [[COMPOUNDLIT]] to i8*
@@ -47,15 +47,15 @@ struct G g(int x, int y, int z) {
 
   // Evaluate the compound literal directly in the result value slot.
   // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[G]], [[G]]* [[RESULT]], i32 0, i32 0
-  // CHECK-NEXT: [[T1:%.*]] = load i32* [[X]], align 4
+  // CHECK-NEXT: [[T1:%.*]] = load i32, i32* [[X]], align 4
   // CHECK-NEXT: [[T2:%.*]] = trunc i32 [[T1]] to i16
   // CHECK-NEXT: store i16 [[T2]], i16* [[T0]], align 2
   // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[G]], [[G]]* [[RESULT]], i32 0, i32 1
-  // CHECK-NEXT: [[T1:%.*]] = load i32* [[Y]], align 4
+  // CHECK-NEXT: [[T1:%.*]] = load i32, i32* [[Y]], align 4
   // CHECK-NEXT: [[T2:%.*]] = trunc i32 [[T1]] to i16
   // CHECK-NEXT: store i16 [[T2]], i16* [[T0]], align 2
   // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[G]], [[G]]* [[RESULT]], i32 0, i32 2
-  // CHECK-NEXT: [[T1:%.*]] = load i32* [[Z]], align 4
+  // CHECK-NEXT: [[T1:%.*]] = load i32, i32* [[Z]], align 4
   // CHECK-NEXT: [[T2:%.*]] = trunc i32 [[T1]] to i16
   // CHECK-NEXT: store i16 [[T2]], i16* [[T0]], align 2
   return (struct G) { x, y, z };
@@ -63,6 +63,6 @@ struct G g(int x, int y, int z) {
   // CHECK-NEXT: [[T0:%.*]] = bitcast i48* [[COERCE_TEMP]] to i8*
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[G]]* [[RESULT]] to i8*
   // CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[T0]], i8* [[T1]], i64 6
-  // CHECK-NEXT: [[T0:%.*]] = load i48* [[COERCE_TEMP]]
+  // CHECK-NEXT: [[T0:%.*]] = load i48, i48* [[COERCE_TEMP]]
   // CHECK-NEXT: ret i48 [[T0]]
 }

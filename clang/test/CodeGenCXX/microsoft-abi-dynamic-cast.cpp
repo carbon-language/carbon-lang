@@ -21,9 +21,9 @@ T* test2(A* x) { return &dynamic_cast<T&>(*x); }
 // CHECK-LABEL: define %struct.T* @"\01?test2@@YAPAUT@@PAUA@@@Z"(%struct.A* %x)
 // CHECK:        [[CAST:%.*]] = bitcast %struct.A* %x to i8*
 // CHECK-NEXT:   [[VBPTRPTR:%.*]] = getelementptr inbounds %struct.A, %struct.A* %x, i32 0, i32 0
-// CHECK-NEXT:   [[VBTBL:%.*]] = load i32** [[VBPTRPTR]], align 4
+// CHECK-NEXT:   [[VBTBL:%.*]] = load i32*, i32** [[VBPTRPTR]], align 4
 // CHECK-NEXT:   [[VBOFFP:%.*]] = getelementptr inbounds i32, i32* [[VBTBL]], i32 1
-// CHECK-NEXT:   [[VBOFFS:%.*]] = load i32* [[VBOFFP]], align 4
+// CHECK-NEXT:   [[VBOFFS:%.*]] = load i32, i32* [[VBOFFP]], align 4
 // CHECK-NEXT:   [[ADJ:%.*]] = getelementptr inbounds i8, i8* [[CAST]], i32 [[VBOFFS]]
 // CHECK-NEXT:   [[CALL:%.*]] = tail call i8* @__RTDynamicCast(i8* [[ADJ]], i32 [[VBOFFS]], i8* bitcast (%rtti.TypeDescriptor7* @"\01??_R0?AUA@@@8" to i8*), i8* bitcast (%rtti.TypeDescriptor7* @"\01??_R0?AUT@@@8" to i8*), i32 1)
 // CHECK-NEXT:   [[RET:%.*]] = bitcast i8* [[CALL]] to %struct.T*
@@ -34,9 +34,9 @@ T* test3(B* x) { return &dynamic_cast<T&>(*x); }
 // CHECK:        [[VOIDP:%.*]] = getelementptr inbounds %struct.B, %struct.B* %x, i32 0, i32 0, i32 0
 // CHECK-NEXT:   [[VBPTR:%.*]] = getelementptr inbounds i8, i8* [[VOIDP]], i32 4
 // CHECK-NEXT:   [[VBPTRPTR:%.*]] = bitcast i8* [[VBPTR:%.*]] to i32**
-// CHECK-NEXT:   [[VBTBL:%.*]] = load i32** [[VBPTRPTR]], align 4
+// CHECK-NEXT:   [[VBTBL:%.*]] = load i32*, i32** [[VBPTRPTR]], align 4
 // CHECK-NEXT:   [[VBOFFP:%.*]] = getelementptr inbounds i32, i32* [[VBTBL]], i32 1
-// CHECK-NEXT:   [[VBOFFS:%.*]] = load i32* [[VBOFFP]], align 4
+// CHECK-NEXT:   [[VBOFFS:%.*]] = load i32, i32* [[VBOFFP]], align 4
 // CHECK-NEXT:   [[DELTA:%.*]] = add nsw i32 [[VBOFFS]], 4
 // CHECK-NEXT:   [[ADJ:%.*]] = getelementptr inbounds i8, i8* [[VOIDP]], i32 [[DELTA]]
 // CHECK-NEXT:   [[CALL:%.*]] = tail call i8* @__RTDynamicCast(i8* [[ADJ]], i32 [[DELTA]], i8* bitcast (%rtti.TypeDescriptor7* @"\01??_R0?AUB@@@8" to i8*), i8* bitcast (%rtti.TypeDescriptor7* @"\01??_R0?AUT@@@8" to i8*), i32 1)
@@ -56,9 +56,9 @@ T* test5(A* x) { return dynamic_cast<T*>(x); }
 // CHECK-NEXT:   br i1 [[CHECK]]
 // CHECK:        [[VOIDP:%.*]] = bitcast %struct.A* %x to i8*
 // CHECK-NEXT:   [[VBPTRPTR:%.*]] = getelementptr inbounds %struct.A, %struct.A* %x, i32 0, i32 0
-// CHECK-NEXT:   [[VBTBL:%.*]] = load i32** [[VBPTRPTR]], align 4
+// CHECK-NEXT:   [[VBTBL:%.*]] = load i32*, i32** [[VBPTRPTR]], align 4
 // CHECK-NEXT:   [[VBOFFP:%.*]] = getelementptr inbounds i32, i32* [[VBTBL]], i32 1
-// CHECK-NEXT:   [[VBOFFS:%.*]] = load i32* [[VBOFFP]], align 4
+// CHECK-NEXT:   [[VBOFFS:%.*]] = load i32, i32* [[VBOFFP]], align 4
 // CHECK-NEXT:   [[ADJ:%.*]] = getelementptr inbounds i8, i8* [[VOIDP]], i32 [[VBOFFS]]
 // CHECK-NEXT:   [[CALL:%.*]] = tail call i8* @__RTDynamicCast(i8* [[ADJ]], i32 [[VBOFFS]], i8* bitcast (%rtti.TypeDescriptor7* @"\01??_R0?AUA@@@8" to i8*), i8* bitcast (%rtti.TypeDescriptor7* @"\01??_R0?AUT@@@8" to i8*), i32 0)
 // CHECK-NEXT:   [[RES:%.*]] = bitcast i8* [[CALL]] to %struct.T*
@@ -73,9 +73,9 @@ T* test6(B* x) { return dynamic_cast<T*>(x); }
 // CHECK:        [[CAST:%.*]] = getelementptr inbounds %struct.B, %struct.B* %x, i32 0, i32 0, i32 0
 // CHECK-NEXT:   [[VBPTR:%.*]] = getelementptr inbounds i8, i8* [[CAST]], i32 4
 // CHECK-NEXT:   [[VBPTRPTR:%.*]] = bitcast i8* [[VBPTR]] to i32**
-// CHECK-NEXT:   [[VBTBL:%.*]] = load i32** [[VBPTRPTR]], align 4
+// CHECK-NEXT:   [[VBTBL:%.*]] = load i32*, i32** [[VBPTRPTR]], align 4
 // CHECK-NEXT:   [[VBOFFP:%.*]] = getelementptr inbounds i32, i32* [[VBTBL]], i32 1
-// CHECK-NEXT:   [[VBOFFS:%.*]] = load i32* [[VBOFFP]], align 4
+// CHECK-NEXT:   [[VBOFFS:%.*]] = load i32, i32* [[VBOFFP]], align 4
 // CHECK-NEXT:   [[DELTA:%.*]] = add nsw i32 [[VBOFFS]], 4
 // CHECK-NEXT:   [[ADJ:%.*]] = getelementptr inbounds i8, i8* [[CAST]], i32 [[DELTA]]
 // CHECK-NEXT:   [[CALL:%.*]] = tail call i8* @__RTDynamicCast(i8* [[ADJ]], i32 [[DELTA]], i8* bitcast (%rtti.TypeDescriptor7* @"\01??_R0?AUB@@@8" to i8*), i8* bitcast (%rtti.TypeDescriptor7* @"\01??_R0?AUT@@@8" to i8*), i32 0)
@@ -96,9 +96,9 @@ void* test8(A* x) { return dynamic_cast<void*>(x); }
 // CHECK-NEXT:   br i1 [[CHECK]]
 // CHECK:        [[VOIDP:%.*]] = bitcast %struct.A* %x to i8*
 // CHECK-NEXT:   [[VBPTRPTR:%.*]] = getelementptr inbounds %struct.A, %struct.A* %x, i32 0, i32 0
-// CHECK-NEXT:   [[VBTBL:%.*]] = load i32** [[VBPTRPTR]], align 4
+// CHECK-NEXT:   [[VBTBL:%.*]] = load i32*, i32** [[VBPTRPTR]], align 4
 // CHECK-NEXT:   [[VBOFFP:%.*]] = getelementptr inbounds i32, i32* [[VBTBL]], i32 1
-// CHECK-NEXT:   [[VBOFFS:%.*]] = load i32* [[VBOFFP]], align 4
+// CHECK-NEXT:   [[VBOFFS:%.*]] = load i32, i32* [[VBOFFP]], align 4
 // CHECK-NEXT:   [[ADJ:%.*]] = getelementptr inbounds i8, i8* [[VOIDP]], i32 [[VBOFFS]]
 // CHECK-NEXT:   [[RES:%.*]] = tail call i8* @__RTCastToVoid(i8* [[ADJ]])
 // CHECK-NEXT:   br label
@@ -112,9 +112,9 @@ void* test9(B* x) { return dynamic_cast<void*>(x); }
 // CHECK:        [[CAST:%.*]] = getelementptr inbounds %struct.B, %struct.B* %x, i32 0, i32 0, i32 0
 // CHECK-NEXT:   [[VBPTR:%.*]] = getelementptr inbounds i8, i8* [[CAST]], i32 4
 // CHECK-NEXT:   [[VBPTRPTR:%.*]] = bitcast i8* [[VBPTR]] to i32**
-// CHECK-NEXT:   [[VBTBL:%.*]] = load i32** [[VBPTRPTR]], align 4
+// CHECK-NEXT:   [[VBTBL:%.*]] = load i32*, i32** [[VBPTRPTR]], align 4
 // CHECK-NEXT:   [[VBOFFP:%.*]] = getelementptr inbounds i32, i32* [[VBTBL]], i32 1
-// CHECK-NEXT:   [[VBOFFS:%.*]] = load i32* [[VBOFFP]], align 4
+// CHECK-NEXT:   [[VBOFFS:%.*]] = load i32, i32* [[VBOFFP]], align 4
 // CHECK-NEXT:   [[DELTA:%.*]] = add nsw i32 [[VBOFFS]], 4
 // CHECK-NEXT:   [[ADJ:%.*]] = getelementptr inbounds i8, i8* [[CAST]], i32 [[DELTA]]
 // CHECK-NEXT:   [[CALL:%.*]] = tail call i8* @__RTCastToVoid(i8* [[ADJ]])

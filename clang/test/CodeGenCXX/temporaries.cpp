@@ -531,7 +531,7 @@ namespace Elision {
   struct C { operator A() const; };
   void test6(const C *x) {
     // CHECK:      [[T0:%.*]] = alloca [[A]], align 8
-    // CHECK:      [[X:%.*]] = load [[C]]** {{%.*}}, align 8
+    // CHECK:      [[X:%.*]] = load [[C]]*, [[C]]** {{%.*}}, align 8
     // CHECK-NEXT: call void @_ZNK7Elision1CcvNS_1AEEv([[A]]* sret [[T0]], [[C]]* [[X]])
     // CHECK-NEXT: call void @_ZNK7Elision1A3fooEv([[A]]* [[T0]])
     // CHECK-NEXT: call void @_ZN7Elision1AD1Ev([[A]]* [[T0]])
@@ -557,11 +557,11 @@ namespace PR8623 {
     // CHECK:      call void @_ZN6PR86231AC1Ei([[A]]* [[TMP]], i32 3)
     // CHECK-NEXT: store i1 true, i1* [[RCONS]]
     // CHECK-NEXT: br label
-    // CHECK:      load i1* [[RCONS]]
+    // CHECK:      load i1, i1* [[RCONS]]
     // CHECK-NEXT: br i1
     // CHECK:      call void @_ZN6PR86231AD1Ev([[A]]* [[TMP]])
     // CHECK-NEXT: br label
-    // CHECK:      load i1* [[LCONS]]
+    // CHECK:      load i1, i1* [[LCONS]]
     // CHECK-NEXT: br i1
     // CHECK:      call void @_ZN6PR86231AD1Ev([[A]]* [[TMP]])
     // CHECK-NEXT: br label

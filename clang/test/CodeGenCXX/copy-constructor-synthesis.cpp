@@ -137,9 +137,9 @@ void f(B b1) {
 }
 
 // CHECK:    define linkonce_odr dereferenceable({{[0-9]+}}) [[A:%.*]]* @_ZN12rdar138169401AaSERKS0_(
-// CHECK:      [[THIS:%.*]] = load [[A]]**
+// CHECK:      [[THIS:%.*]] = load [[A]]*, [[A]]**
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[A]], [[A]]* [[THIS]], i32 0, i32 1
-// CHECK-NEXT: [[OTHER:%.*]] = load [[A]]**
+// CHECK-NEXT: [[OTHER:%.*]] = load [[A]]*, [[A]]**
 // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[A]], [[A]]* [[OTHER]], i32 0, i32 1
 // CHECK-NEXT: [[T4:%.*]] = bitcast i16* [[T0]] to i8*
 // CHECK-NEXT: [[T5:%.*]] = bitcast i16* [[T2]] to i8*
@@ -164,11 +164,11 @@ void f(B b1) {
 // CHECK: call void @_ZN6PR66281TD1Ev
 
 // CHECK-LABEL:    define linkonce_odr void @_ZN12rdar138169401AC2ERKS0_(
-// CHECK:      [[THIS:%.*]] = load [[A]]**
+// CHECK:      [[THIS:%.*]] = load [[A]]*, [[A]]**
 // CHECK-NEXT: [[T0:%.*]] = bitcast [[A]]* [[THIS]] to i32 (...)***
 // CHECK-NEXT: store i32 (...)** bitcast (i8** getelementptr inbounds ([4 x i8*]* @_ZTVN12rdar138169401AE, i64 0, i64 2) to i32 (...)**), i32 (...)*** [[T0]]
 // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[A]], [[A]]* [[THIS]], i32 0, i32 1
-// CHECK-NEXT: [[OTHER:%.*]] = load [[A]]**
+// CHECK-NEXT: [[OTHER:%.*]] = load [[A]]*, [[A]]**
 // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[A]], [[A]]* [[OTHER]], i32 0, i32 1
 // CHECK-NEXT: [[T4:%.*]] = bitcast i16* [[T0]] to i8*
 // CHECK-NEXT: [[T5:%.*]] = bitcast i16* [[T2]] to i8*

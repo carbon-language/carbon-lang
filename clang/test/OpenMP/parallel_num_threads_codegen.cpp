@@ -49,7 +49,7 @@ int main() {
 // CHECK:       store i8 [[S_CHAR_OP]], i8* [[A_ADDR]]
 // CHECK:       call void @__kmpc_push_num_threads([[IDENT_T_TY]]* [[DEF_LOC_2]], i32 [[GTID]], i32 2)
 // CHECK:       call void {{.*}}* @__kmpc_fork_call(
-// CHECK:       [[A_VAL:%.+]] = load i8* [[A_ADDR]]
+// CHECK:       [[A_VAL:%.+]] = load i8, i8* [[A_ADDR]]
 // CHECK:       [[RES:%.+]] = sext i8 [[A_VAL]] to i32
 // CHECK:       call void @__kmpc_push_num_threads([[IDENT_T_TY]]* [[DEF_LOC_2]], i32 [[GTID]], i32 [[RES]])
 // CHECK:       call void {{.*}}* @__kmpc_fork_call(

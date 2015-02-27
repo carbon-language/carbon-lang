@@ -40,13 +40,13 @@ namespace test2 {
   void test(A *p) {
     // CHECK:      [[P:%.*]] = alloca [[A]]*, align 4
     // CHECK-NEXT: store [[A]]* {{%.*}}, [[A]]** [[P]], align 4
-    // CHECK-NEXT: [[T0:%.*]] = load [[A]]** [[P]], align 4
+    // CHECK-NEXT: [[T0:%.*]] = load [[A]]*, [[A]]** [[P]], align 4
     // CHECK-NEXT: [[T1:%.*]] = icmp eq [[A]]* [[T0]], null
     // CHECK-NEXT: br i1 [[T1]],
     // CHECK:      [[T2:%.*]] = bitcast [[A]]* [[T0]] to i8*
     // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds i8, i8* [[T2]], i64 -4
     // CHECK-NEXT: [[T4:%.*]] = bitcast i8* [[T3]] to i32*
-    // CHECK-NEXT: [[T5:%.*]] = load i32* [[T4]]
+    // CHECK-NEXT: [[T5:%.*]] = load i32, i32* [[T4]]
     // CHECK-NEXT: call void @_ZdaPv(i8* [[T3]])
     // CHECK-NEXT: br label
     ::delete[] p;

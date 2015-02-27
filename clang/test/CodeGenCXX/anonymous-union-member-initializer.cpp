@@ -82,7 +82,7 @@ namespace PR10512 {
   // CHECK-LABEL: define void @_ZN7PR105121AC2Ev
   // CHECK: [[THISADDR:%[a-zA-z0-9.]+]] = alloca [[A:%"struct[A-Za-z0-9:.]+"]]
   // CHECK-NEXT: store [[A]]* [[THIS:%[a-zA-z0-9.]+]], [[A]]** [[THISADDR]]
-  // CHECK-NEXT: [[THIS1:%[a-zA-z0-9.]+]] = load [[A]]** [[THISADDR]]
+  // CHECK-NEXT: [[THIS1:%[a-zA-z0-9.]+]] = load [[A]]*, [[A]]** [[THISADDR]]
   // CHECK-NEXT: ret void
   A::A() {}
 
@@ -91,11 +91,11 @@ namespace PR10512 {
   // CHECK-NEXT: [[XADDR:%[a-zA-z0-9.]+]] = alloca i32
   // CHECK-NEXT: store [[A]]* [[THIS:%[a-zA-z0-9.]+]], [[A]]** [[THISADDR]]
   // CHECK-NEXT: store i32 [[X:%[a-zA-z0-9.]+]], i32* [[XADDR]]
-  // CHECK-NEXT: [[THIS1:%[a-zA-z0-9.]+]] = load [[A]]** [[THISADDR]]
+  // CHECK-NEXT: [[THIS1:%[a-zA-z0-9.]+]] = load [[A]]*, [[A]]** [[THISADDR]]
   // CHECK-NEXT: {{getelementptr inbounds.*i32 0, i32 0}}
   // CHECK-NEXT: {{getelementptr inbounds.*i32 0, i32 0}}
   // CHECK-NEXT: {{getelementptr inbounds.*i32 0, i32 0}}
-  // CHECK-NEXT: [[TMP:%[a-zA-z0-9.]+]] = load i32* [[XADDR]]
+  // CHECK-NEXT: [[TMP:%[a-zA-z0-9.]+]] = load i32, i32* [[XADDR]]
   // CHECK-NEXT: store i32 [[TMP]]
   // CHECK-NEXT: ret void
   A::A(int x) : x(x) { }
@@ -105,11 +105,11 @@ namespace PR10512 {
   // CHECK-NEXT: [[XADDR:%[a-zA-z0-9.]+]] = alloca i64
   // CHECK-NEXT: store [[A]]* [[THIS:%[a-zA-z0-9.]+]], [[A]]** [[THISADDR]]
   // CHECK-NEXT: store i64 [[X:%[a-zA-z0-9.]+]], i64* [[XADDR]]
-  // CHECK-NEXT: [[THIS1:%[a-zA-z0-9.]+]] = load [[A]]** [[THISADDR]]
+  // CHECK-NEXT: [[THIS1:%[a-zA-z0-9.]+]] = load [[A]]*, [[A]]** [[THISADDR]]
   // CHECK-NEXT: {{getelementptr inbounds.*i32 0, i32 0}}
   // CHECK-NEXT: {{getelementptr inbounds.*i32 0, i32 1}}
   // CHECK-NEXT: {{getelementptr inbounds.*i32 0, i32 0}}
-  // CHECK-NEXT: [[TMP:%[a-zA-z0-9.]+]] = load i64* [[XADDR]]
+  // CHECK-NEXT: [[TMP:%[a-zA-z0-9.]+]] = load i64, i64* [[XADDR]]
   // CHECK-NEXT: [[CONV:%[a-zA-z0-9.]+]] = trunc i64 [[TMP]] to i32
   // CHECK-NEXT: store i32 [[CONV]]
   // CHECK-NEXT: ret void

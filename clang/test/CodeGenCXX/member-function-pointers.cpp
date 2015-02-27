@@ -43,14 +43,14 @@ void f() {
   // CODE-LP64: store volatile { i64, i64 } zeroinitializer, { i64, i64 }* @vpa
   vpa = 0;
 
-  // CODE-LP64: [[TMP:%.*]] = load { i64, i64 }* @pa, align 8
+  // CODE-LP64: [[TMP:%.*]] = load { i64, i64 }, { i64, i64 }* @pa, align 8
   // CODE-LP64: [[TMPADJ:%.*]] = extractvalue { i64, i64 } [[TMP]], 1
   // CODE-LP64: [[ADJ:%.*]] = add nsw i64 [[TMPADJ]], 16
   // CODE-LP64: [[RES:%.*]] = insertvalue { i64, i64 } [[TMP]], i64 [[ADJ]], 1
   // CODE-LP64: store { i64, i64 } [[RES]], { i64, i64 }* @pc, align 8
   pc = pa;
 
-  // CODE-LP64: [[TMP:%.*]] = load { i64, i64 }* @pc, align 8
+  // CODE-LP64: [[TMP:%.*]] = load { i64, i64 }, { i64, i64 }* @pc, align 8
   // CODE-LP64: [[TMPADJ:%.*]] = extractvalue { i64, i64 } [[TMP]], 1
   // CODE-LP64: [[ADJ:%.*]] = sub nsw i64 [[TMPADJ]], 16
   // CODE-LP64: [[RES:%.*]] = insertvalue { i64, i64 } [[TMP]], i64 [[ADJ]], 1

@@ -39,7 +39,7 @@ void foo(id a) {
     // CHECK: unreachable
 
     // CHECK:      call void @objc_exception_try_exit
-    // CHECK:      [[T:%.*]] = load i8** [[SYNC]]
+    // CHECK:      [[T:%.*]] = load i8*, i8** [[SYNC]]
     // CHECK-NEXT: call i32 @objc_sync_exit
     // CHECK: ret void
     return;
@@ -59,7 +59,7 @@ int f0(id a) {
   @synchronized((x++, a)) {    
   }
 
-  // CHECK: [[T:%.*]] = load i32* [[X]]
+  // CHECK: [[T:%.*]] = load i32, i32* [[X]]
   // CHECK: ret i32 [[T]]
   return x;
 }

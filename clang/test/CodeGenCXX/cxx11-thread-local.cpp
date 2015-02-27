@@ -57,7 +57,7 @@ int e = V<int>::m;
 
 // CHECK-LABEL: define i32 @_Z1fv()
 int f() {
-  // CHECK: %[[GUARD:.*]] = load i8* @_ZGVZ1fvE1n, align 1
+  // CHECK: %[[GUARD:.*]] = load i8, i8* @_ZGVZ1fvE1n, align 1
   // CHECK: %[[NEED_INIT:.*]] = icmp eq i8 %[[GUARD]], 0
   // CHECK: br i1 %[[NEED_INIT]]
 
@@ -67,13 +67,13 @@ int f() {
   // CHECK: br label
   static thread_local int n = g();
 
-  // CHECK: load i32* @_ZZ1fvE1n, align 4
+  // CHECK: load i32, i32* @_ZZ1fvE1n, align 4
   return n;
 }
 
 // CHECK: define {{.*}} @[[C_INIT:.*]]()
 // CHECK: call i32* @_ZTW1b()
-// CHECK-NEXT: load i32* %{{.*}}, align 4
+// CHECK-NEXT: load i32, i32* %{{.*}}, align 4
 // CHECK-NEXT: store i32 %{{.*}}, i32* @c, align 4
 
 // CHECK-LABEL: define weak_odr hidden i32* @_ZTW1b()
@@ -94,7 +94,7 @@ int f() {
 
 // CHECK: define {{.*}} @[[E_INIT:.*]]()
 // CHECK: call i32* @_ZTWN1VIiE1mE()
-// CHECK-NEXT: load i32* %{{.*}}, align 4
+// CHECK-NEXT: load i32, i32* %{{.*}}, align 4
 // CHECK-NEXT: store i32 %{{.*}}, i32* @e, align 4
 
 // CHECK-LABEL: define weak_odr hidden i32* @_ZTWN1VIiE1mE()
@@ -107,19 +107,19 @@ struct T { ~T(); };
 
 // CHECK-LABEL: define void @_Z8tls_dtorv()
 void tls_dtor() {
-  // CHECK: load i8* @_ZGVZ8tls_dtorvE1s
+  // CHECK: load i8, i8* @_ZGVZ8tls_dtorvE1s
   // CHECK: call void @_ZN1SC1Ev(%struct.S* @_ZZ8tls_dtorvE1s)
   // CHECK: call i32 @__cxa_thread_atexit({{.*}}@_ZN1SD1Ev {{.*}} @_ZZ8tls_dtorvE1s{{.*}} @__dso_handle
   // CHECK: store i8 1, i8* @_ZGVZ8tls_dtorvE1s
   static thread_local S s;
 
-  // CHECK: load i8* @_ZGVZ8tls_dtorvE1t
+  // CHECK: load i8, i8* @_ZGVZ8tls_dtorvE1t
   // CHECK-NOT: _ZN1T
   // CHECK: call i32 @__cxa_thread_atexit({{.*}}@_ZN1TD1Ev {{.*}}@_ZZ8tls_dtorvE1t{{.*}} @__dso_handle
   // CHECK: store i8 1, i8* @_ZGVZ8tls_dtorvE1t
   static thread_local T t;
 
-  // CHECK: load i8* @_ZGVZ8tls_dtorvE1u
+  // CHECK: load i8, i8* @_ZGVZ8tls_dtorvE1u
   // CHECK: call void @_ZN1SC1Ev(%struct.S* @_ZGRZ8tls_dtorvE1u_)
   // CHECK: call i32 @__cxa_thread_atexit({{.*}}@_ZN1SD1Ev {{.*}} @_ZGRZ8tls_dtorvE1u_{{.*}} @__dso_handle
   // CHECK: store i8 1, i8* @_ZGVZ8tls_dtorvE1u
@@ -154,7 +154,7 @@ void set_anon_i() {
 // CHECK-LABEL: define internal i32* @_ZTWN12_GLOBAL__N_16anon_iE()
 
 // CHECK: define {{.*}} @[[V_M_INIT:.*]]()
-// CHECK: load i8* bitcast (i64* @_ZGVN1VIiE1mE to i8*)
+// CHECK: load i8, i8* bitcast (i64* @_ZGVN1VIiE1mE to i8*)
 // CHECK: %[[V_M_INITIALIZED:.*]] = icmp eq i8 %{{.*}}, 0
 // CHECK: br i1 %[[V_M_INITIALIZED]],
 // need init:
@@ -169,7 +169,7 @@ void set_anon_i() {
 
 
 // CHECK: define {{.*}}@__tls_init()
-// CHECK: load i8* @__tls_guard
+// CHECK: load i8, i8* @__tls_guard
 // CHECK: %[[NEED_TLS_INIT:.*]] = icmp eq i8 %{{.*}}, 0
 // CHECK: store i8 1, i8* @__tls_guard
 // CHECK: br i1 %[[NEED_TLS_INIT]],

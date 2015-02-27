@@ -16,8 +16,8 @@
 // CHECK-NEXT:  [[CMD:%.*]] = alloca i8*,
 // CHECK-NEXT:  store [[WPT]]* {{%.*}}, [[WPT]]** [[SELF]]
 // CHECK-NEXT:  store i8* {{%.*}}, i8** [[CMD]]
-// CHECK-NEXT:  [[T0:%.*]] = load [[WPT]]** [[SELF]]
-// CHECK-NEXT:  [[T1:%.*]] = load i64* @"OBJC_IVAR_$_WeakPropertyTest.PROP"
+// CHECK-NEXT:  [[T0:%.*]] = load [[WPT]]*, [[WPT]]** [[SELF]]
+// CHECK-NEXT:  [[T1:%.*]] = load i64, i64* @"OBJC_IVAR_$_WeakPropertyTest.PROP"
 // CHECK-NEXT:  [[T2:%.*]] = bitcast [[WPT]]* [[T0]] to i8*
 // CHECK-NEXT:  [[T3:%.*]] = getelementptr inbounds i8, i8* [[T2]], i64 [[T1]]
 // CHECK-NEXT:  [[T4:%.*]] = bitcast i8* [[T3]] to i8**
@@ -32,9 +32,9 @@
 // CHECK-NEXT:  store [[WPT]]* {{%.*}}, [[WPT]]** [[SELF]]
 // CHECK-NEXT:  store i8* {{%.*}}, i8** [[CMD]]
 // CHECK-NEXT:  store i8* {{%.*}}, i8** [[PROP]]
-// CHECK-NEXT:  [[V:%.*]] = load i8** [[PROP]]
-// CHECK-NEXT:  [[T0:%.*]] = load [[WPT]]** [[SELF]]
-// CHECK-NEXT:  [[T1:%.*]] = load i64* @"OBJC_IVAR_$_WeakPropertyTest.PROP"
+// CHECK-NEXT:  [[V:%.*]] = load i8*, i8** [[PROP]]
+// CHECK-NEXT:  [[T0:%.*]] = load [[WPT]]*, [[WPT]]** [[SELF]]
+// CHECK-NEXT:  [[T1:%.*]] = load i64, i64* @"OBJC_IVAR_$_WeakPropertyTest.PROP"
 // CHECK-NEXT:  [[T2:%.*]] = bitcast [[WPT]]* [[T0]] to i8*
 // CHECK-NEXT:  [[T3:%.*]] = getelementptr inbounds i8, i8* [[T2]], i64 [[T1]]
 // CHECK-NEXT:  [[T4:%.*]] = bitcast i8* [[T3]] to i8**
@@ -46,8 +46,8 @@
 // CHECK-NEXT:  [[CMD:%.*]] = alloca i8*,
 // CHECK-NEXT:  store [[WPT]]* {{%.*}}, [[WPT]]** [[SELF]]
 // CHECK-NEXT:  store i8* {{%.*}}, i8** [[CMD]]
-// CHECK-NEXT:  [[T0:%.*]] = load [[WPT]]** [[SELF]]
-// CHECK-NEXT:  [[T1:%.*]] = load i64* @"OBJC_IVAR_$_WeakPropertyTest.PROP"
+// CHECK-NEXT:  [[T0:%.*]] = load [[WPT]]*, [[WPT]]** [[SELF]]
+// CHECK-NEXT:  [[T1:%.*]] = load i64, i64* @"OBJC_IVAR_$_WeakPropertyTest.PROP"
 // CHECK-NEXT:  [[T2:%.*]] = bitcast [[WPT]]* [[T0]] to i8*
 // CHECK-NEXT:  [[T3:%.*]] = getelementptr inbounds i8, i8* [[T2]], i64 [[T1]]
 // CHECK-NEXT:  [[T4:%.*]] = bitcast i8* [[T3]] to i8**

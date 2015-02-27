@@ -32,7 +32,7 @@ int safe_div(int numerator, int denominator, int *res) {
 // CHECK: [[except]]
 // CHECK-NEXT: store i32 -42, i32* %[[success:[^ ]*]]
 //
-// CHECK: %[[res:[^ ]*]] = load i32* %[[success]]
+// CHECK: %[[res:[^ ]*]] = load i32, i32* %[[success]]
 // CHECK: ret i32 %[[res]]
 
 void j(void);
@@ -57,7 +57,7 @@ int filter_expr_capture(void) {
 // CHECK-NEXT: catch i8* bitcast (i32 (i8*, i8*)* @"\01?filt$0@0@filter_expr_capture@@" to i8*)
 // CHECK: store i32 13, i32* %[[r]]
 //
-// CHECK: %[[rv:[^ ]*]] = load i32* %[[r]]
+// CHECK: %[[rv:[^ ]*]] = load i32, i32* %[[r]]
 // CHECK: ret i32 %[[rv]]
 
 // CHECK-LABEL: define internal i32 @"\01?filt$0@0@filter_expr_capture@@"(i8* %exception_pointers, i8* %frame_pointer)
@@ -95,12 +95,12 @@ int nested_try(void) {
 // CHECK: store i8* %{{.*}}, i8** %[[ehptr_slot:[^ ]*]]
 // CHECK: store i32 %{{.*}}, i32* %[[sel_slot:[^ ]*]]
 //
-// CHECK: load i32* %[[sel_slot]]
+// CHECK: load i32, i32* %[[sel_slot]]
 // CHECK: call i32 @llvm.eh.typeid.for(i8* bitcast (i32 (i8*, i8*)* @"\01?filt$1@0@nested_try@@" to i8*))
 // CHECK: icmp eq i32
 // CHECK: br i1
 //
-// CHECK: load i32* %[[sel_slot]]
+// CHECK: load i32, i32* %[[sel_slot]]
 // CHECK: call i32 @llvm.eh.typeid.for(i8* bitcast (i32 (i8*, i8*)* @"\01?filt$0@0@nested_try@@" to i8*))
 // CHECK: icmp eq i32
 // CHECK: br i1
@@ -109,7 +109,7 @@ int nested_try(void) {
 // CHECK: br label %[[outer_try_cont:[^ ]*]]
 //
 // CHECK: [[outer_try_cont]]
-// CHECK: %[[r_load:[^ ]*]] = load i32* %[[r]]
+// CHECK: %[[r_load:[^ ]*]] = load i32, i32* %[[r]]
 // CHECK: ret i32 %[[r_load]]
 //
 // CHECK: store i32 123, i32* %[[r]]
@@ -130,7 +130,7 @@ void basic_finally(void) {
   }
 }
 // CHECK-LABEL: define void @basic_finally()
-// CHECK: load i32* @g
+// CHECK: load i32, i32* @g
 // CHECK: add i32 %{{.*}}, 1
 // CHECK: store i32 %{{.*}}, i32* @g
 //
@@ -141,7 +141,7 @@ void basic_finally(void) {
 // CHECK: br label %[[finally:[^ ]*]]
 //
 // CHECK: [[finally]]
-// CHECK: load i32* @g
+// CHECK: load i32, i32* @g
 // CHECK: add i32 %{{.*}}, -1
 // CHECK: store i32 %{{.*}}, i32* @g
 // CHECK: icmp eq
@@ -177,7 +177,7 @@ int except_return(void) {
 // CHECK: br label %[[retbb]]
 //
 // CHECK: [[retbb]]
-// CHECK: %[[r:[^ ]*]] = load i32* %[[rv]]
+// CHECK: %[[r:[^ ]*]] = load i32, i32* %[[rv]]
 // CHECK: ret i32 %[[r]]
 
 // CHECK: attributes #[[NOINLINE]] = { {{.*noinline.*}} }

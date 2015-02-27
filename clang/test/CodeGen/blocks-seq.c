@@ -2,10 +2,10 @@
 // CHECK: [[Vi:%.+]] = alloca %struct.__block_byref_i, align 8
 // CHECK: call i32 (...)* @rhs()
 // CHECK: [[V7:%.+]] = getelementptr inbounds %struct.__block_byref_i, %struct.__block_byref_i* [[Vi]], i32 0, i32 1
-// CHECK: load %struct.__block_byref_i** [[V7]]
+// CHECK: load %struct.__block_byref_i*, %struct.__block_byref_i** [[V7]]
 // CHECK: call i32 (...)* @rhs()
 // CHECK: [[V11:%.+]] = getelementptr inbounds %struct.__block_byref_i, %struct.__block_byref_i* [[Vi]], i32 0, i32 1
-// CHECK: load %struct.__block_byref_i** [[V11]]
+// CHECK: load %struct.__block_byref_i*, %struct.__block_byref_i** [[V11]]
 
 int rhs();
 

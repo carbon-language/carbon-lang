@@ -22,7 +22,7 @@ static SetSection gSetSection;
 @end
 
 // CHECK: [[SELF:%.*]] = alloca [[T6:%.*]]*, align
-// CHECK: [[T0:%.*]] = load {{.*}}* [[SELF]], align
-// CHECK: [[T1:%.*]] = load {{.*}}* @OBJC_SELECTOR_REFERENCES_
+// CHECK: [[T0:%.*]] = load {{.*}}, {{.*}}* [[SELF]], align
+// CHECK: [[T1:%.*]] = load {{.*}}, {{.*}}* @OBJC_SELECTOR_REFERENCES_
 // CHECK: [[C:%.*]] = call dereferenceable({{[0-9]+}}) %struct.SetSection* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
 // CHECK: call dereferenceable({{[0-9]+}}) i32* @_ZN10SetSection2atEi(%struct.SetSection* [[C]]

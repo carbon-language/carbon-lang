@@ -145,7 +145,7 @@ CALL_AO(PackedMembers)
 // VolatileMember copy-assignment:
 // CHECK-LABEL: define linkonce_odr dereferenceable({{[0-9]+}}) %struct.VolatileMember* @_ZN14VolatileMemberaSERKS_(%struct.VolatileMember* %this, %struct.VolatileMember* dereferenceable({{[0-9]+}}))
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 4{{.*}})
-// CHECK: load volatile i32* {{.*}}, align 4
+// CHECK: load volatile i32, i32* {{.*}}, align 4
 // CHECK: store volatile i32 {{.*}}, align 4
 // CHECK: call dereferenceable({{[0-9]+}}) %struct.NonPOD* @_ZN6NonPODaSERKS_
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 4{{.*}})
@@ -227,7 +227,7 @@ CALL_CC(VolatileMember)
 // VolatileMember copy-constructor:
 // CHECK-LABEL: define linkonce_odr void @_ZN14VolatileMemberC2ERKS_(%struct.VolatileMember* %this, %struct.VolatileMember* dereferenceable({{[0-9]+}}))
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 4{{.*}})
-// CHECK: load volatile i32* {{.*}}, align 4
+// CHECK: load volatile i32, i32* {{.*}}, align 4
 // CHECK: store volatile i32 {{.*}}, align 4
 // CHECK: call void @_ZN6NonPODC1ERKS_
 // CHECK: call void @llvm.memcpy.p0i8.p0i8.i64({{.*}}i64 16, i32 4{{.*}})

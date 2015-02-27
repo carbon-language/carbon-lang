@@ -65,7 +65,7 @@ void take_block(void (^block)()) { block(); }
 // Check lines for BlockInLambda test below
 // ARC-LABEL: define internal i32 @___ZZN13BlockInLambda1X1fEvENKUlvE_clEv_block_invoke
 // ARC: [[Y:%.*]] = getelementptr inbounds %"struct.BlockInLambda::X", %"struct.BlockInLambda::X"* {{.*}}, i32 0, i32 1
-// ARC-NEXT: [[YVAL:%.*]] = load i32* [[Y]], align 4
+// ARC-NEXT: [[YVAL:%.*]] = load i32, i32* [[Y]], align 4
 // ARC-NEXT: ret i32 [[YVAL]]
 
 typedef int (^fptr)();

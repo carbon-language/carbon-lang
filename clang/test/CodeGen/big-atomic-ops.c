@@ -16,13 +16,13 @@ typedef enum memory_order {
 
 int fi1(_Atomic(int) *i) {
   // CHECK: @fi1
-  // CHECK: load atomic i32* {{.*}} seq_cst
+  // CHECK: load atomic i32, i32* {{.*}} seq_cst
   return __c11_atomic_load(i, memory_order_seq_cst);
 }
 
 int fi1a(int *i) {
   // CHECK: @fi1a
-  // CHECK: load atomic i32* {{.*}} seq_cst
+  // CHECK: load atomic i32, i32* {{.*}} seq_cst
   int v;
   __atomic_load(i, &v, memory_order_seq_cst);
   return v;
@@ -30,7 +30,7 @@ int fi1a(int *i) {
 
 int fi1b(int *i) {
   // CHECK: @fi1b
-  // CHECK: load atomic i32* {{.*}} seq_cst
+  // CHECK: load atomic i32, i32* {{.*}} seq_cst
   return __atomic_load_n(i, memory_order_seq_cst);
 }
 
@@ -113,7 +113,7 @@ _Bool fi4b(int *i) {
 
 float ff1(_Atomic(float) *d) {
   // CHECK: @ff1
-  // CHECK: load atomic i32* {{.*}} monotonic
+  // CHECK: load atomic i32, i32* {{.*}} monotonic
   return __c11_atomic_load(d, memory_order_relaxed);
 }
 
@@ -129,7 +129,7 @@ float ff3(_Atomic(float) *d) {
 
 int* fp1(_Atomic(int*) *p) {
   // CHECK: @fp1
-  // CHECK: load atomic i64* {{.*}} seq_cst
+  // CHECK: load atomic i64, i64* {{.*}} seq_cst
   return __c11_atomic_load(p, memory_order_seq_cst);
 }
 

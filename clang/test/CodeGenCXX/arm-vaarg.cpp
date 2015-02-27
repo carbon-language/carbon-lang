@@ -9,7 +9,7 @@ int take_args(int a, ...) {
 // CHECK: call void @llvm.va_start
 
   emptyvar = __builtin_va_arg(l, Empty);
-// CHECK: load i8**
+// CHECK: load i8*, i8**
 // CHECK-NOT: getelementptr
 // CHECK: [[EMPTY_PTR:%[a-zA-Z0-9._]+]] = bitcast i8* {{%[a-zA-Z0-9._]+}} to %struct.Empty*
 
@@ -17,10 +17,10 @@ int take_args(int a, ...) {
   // (e.g. it's at the very bottom of the stack and the next page is
   // invalid). This doesn't matter provided it's never loaded (there's no
   // well-defined way to tell), but it becomes a problem if we do try to use it.
-// CHECK-NOT: load %struct.Empty* [[EMPTY_PTR]]
+// CHECK-NOT: load %struct.Empty, %struct.Empty* [[EMPTY_PTR]]
 
   int i = __builtin_va_arg(l, int);
-// CHECK: load i32*
+// CHECK: load i32, i32*
 
   __builtin_va_end(l);
   return i;

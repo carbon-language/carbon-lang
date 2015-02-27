@@ -4,7 +4,7 @@
 // CHECK-LABEL: @test1
 int test1(int *a, int i) {
 // CHECK: store i32* %a, i32** [[A_ADDR:%.+]], align
-// CHECK: [[A:%.+]] = load i32** [[A_ADDR]]
+// CHECK: [[A:%.+]] = load i32*, i32** [[A_ADDR]]
 // CHECK: [[CMP:%.+]] = icmp ne i32* [[A]], null
 // CHECK: call void @llvm.assume(i1 [[CMP]])
 #ifdef _MSC_VER
@@ -14,7 +14,7 @@ int test1(int *a, int i) {
 #endif
 
 // Nothing is generated for an assume with side effects...
-// CHECK-NOT: load i32** %i.addr
+// CHECK-NOT: load i32*, i32** %i.addr
 // CHECK-NOT: call void @llvm.assume
 #ifdef _MSC_VER
   __assume(++i != 0)

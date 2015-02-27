@@ -17,11 +17,11 @@ void func(struct struct1* p, float *a, float *b, float c) {
   // FIXME: We should be able to come up with a more aggressive alignment
   // estimate.
   // CHECK: @func
-  // CHECK: load <4 x float>* {{%.*}}, align 1
+  // CHECK: load <4 x float>, <4 x float>* {{%.*}}, align 1
   // CHECK: store <4 x float> {{%.*}}, <4 x float>* {{%.*}}, align 1
-  // CHECK: load <4 x float>* {{%.*}}, align 1
-  // CHECK: load <4 x float>* {{%.*}}, align 1
-  // CHECK: load <4 x float>* {{%.*}}, align 1
+  // CHECK: load <4 x float>, <4 x float>* {{%.*}}, align 1
+  // CHECK: load <4 x float>, <4 x float>* {{%.*}}, align 1
+  // CHECK: load <4 x float>, <4 x float>* {{%.*}}, align 1
   // CHECK: store <4 x float> {{%.*}}, <4 x float>* {{%.*}}, align 1
   // CHECK: ret void
 }

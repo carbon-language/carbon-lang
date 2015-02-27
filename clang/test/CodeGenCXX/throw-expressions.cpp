@@ -34,7 +34,7 @@ int test5(bool x, bool y, int z) {
 // CHECK: br i1
 //
 // y.true:
-// CHECK: load i32*
+// CHECK: load i32, i32*
 // CHECK: br label
 //
 // y.false:
@@ -58,7 +58,7 @@ int test6(bool x, bool y, int z) {
 // CHECK: br i1
 //
 // y.true:
-// CHECK: load i32*
+// CHECK: load i32, i32*
 // CHECK: br label
 //
 // y.false:

@@ -39,7 +39,7 @@ namespace test0 {
 // CHECK-NEXT: call void @__clang_call_terminate(i8* [[T1]])
 // CHECK-NEXT: unreachable
 //   The terminate handler chained to by the cleanup lpad.
-// CHECK:      [[T0:%.*]] = load i8** [[EXN]]
+// CHECK:      [[T0:%.*]] = load i8*, i8** [[EXN]]
 // CHECK-NEXT: call void @__clang_call_terminate(i8* [[T0]])
 // CHECK-NEXT: unreachable
 

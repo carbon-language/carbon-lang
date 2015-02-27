@@ -12,7 +12,7 @@ void test1() {
 // CHECK: @test2
 void test2() {
   // CHECK: [[REGCALLRESULT:%[a-zA-Z0-9\.]+]] = call i32* @foo()
-  // CHECK: load i32* [[REGCALLRESULT]]
+  // CHECK: load i32, i32* [[REGCALLRESULT]]
   // CHECK: call i32 asm
   // CHECK: store i32 {{%[a-zA-Z0-9\.]+}}, i32* [[REGCALLRESULT]]
   asm ("foobar" : "+r"(*foo()));

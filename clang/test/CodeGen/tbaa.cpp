@@ -203,9 +203,9 @@ struct five {
 char g13(struct five *a, struct five *b) {
   return a->b;
 // CHECK: define signext i8 @{{.*}}(
-// CHECK: load i8* %{{.*}}, align 1, !tbaa [[TAG_char:!.*]]
+// CHECK: load i8, i8* %{{.*}}, align 1, !tbaa [[TAG_char:!.*]]
 // PATH: define signext i8 @{{.*}}(
-// PATH: load i8* %{{.*}}, align 1, !tbaa [[TAG_five_b:!.*]]
+// PATH: load i8, i8* %{{.*}}, align 1, !tbaa [[TAG_five_b:!.*]]
 }
 
 struct six {
@@ -216,9 +216,9 @@ struct six {
 };
 char g14(struct six *a, struct six *b) {
 // CHECK: define signext i8 @{{.*}}(
-// CHECK: load i8* %{{.*}}, align 1, !tbaa [[TAG_char]]
+// CHECK: load i8, i8* %{{.*}}, align 1, !tbaa [[TAG_char]]
 // PATH: define signext i8 @{{.*}}(
-// PATH: load i8* %{{.*}}, align 1, !tbaa [[TAG_six_b:!.*]]
+// PATH: load i8, i8* %{{.*}}, align 1, !tbaa [[TAG_six_b:!.*]]
   return a->b;
 }
 

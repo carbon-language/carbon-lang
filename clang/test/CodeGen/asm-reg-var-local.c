@@ -16,11 +16,11 @@ int foo() {
 // CHECK:  store i32 42, i32* [[A]]
 
   asm volatile("; %0 This asm uses rsi" : : "r"(a));
-// CHECK:  [[TMP:%[a-zA-Z0-9]+]] = load i32* [[A]]
+// CHECK:  [[TMP:%[a-zA-Z0-9]+]] = load i32, i32* [[A]]
 // CHECK:  call void asm sideeffect "; $0 This asm uses rsi", "{rsi},~{dirflag},~{fpsr},~{flags}"(i32 [[TMP]])
 
   return a;
-// CHECK:  [[TMP1:%[a-zA-Z0-9]+]] = load i32* [[A]]
+// CHECK:  [[TMP1:%[a-zA-Z0-9]+]] = load i32, i32* [[A]]
 // CHECK:  ret i32 [[TMP1]]
 }
 
@@ -39,10 +39,10 @@ int earlyclobber() {
 // CHECK:  store i32 42, i32* [[A]]
 
   asm volatile("; %0 This asm uses rsi" : : "r"(a));
-// CHECK:  [[TMP:%[a-zA-Z0-9]+]] = load i32* [[A]]
+// CHECK:  [[TMP:%[a-zA-Z0-9]+]] = load i32, i32* [[A]]
 // CHECK:  call void asm sideeffect "; $0 This asm uses rsi", "{rsi},~{dirflag},~{fpsr},~{flags}"(i32 [[TMP]])
 
   return a;
-// CHECK:  [[TMP1:%[a-zA-Z0-9]+]] = load i32* [[A]]
+// CHECK:  [[TMP1:%[a-zA-Z0-9]+]] = load i32, i32* [[A]]
 // CHECK:  ret i32 [[TMP1]]
 }

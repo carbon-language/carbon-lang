@@ -106,6 +106,6 @@ namespace test1 {
   struct B { B(); int x; A a[0]; };
   B::B() {}
   // CHECK-LABEL:    define void @_ZN5test11BC2Ev(
-  // CHECK:      [[THIS:%.*]] = load [[B:%.*]]**
+  // CHECK:      [[THIS:%.*]] = load [[B:%.*]]*, [[B:%.*]]**
   // CHECK-NEXT: ret void
 }

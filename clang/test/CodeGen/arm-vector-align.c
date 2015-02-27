@@ -23,7 +23,7 @@ void t1(AlignedAddr *addr1, AlignedAddr *addr2) {
 // Radar 10538555: Make sure unaligned load/stores do not gain alignment.
 void t2(char *addr) {
 // CHECK: @t2
-// CHECK: load i32* %{{.*}}, align 1
+// CHECK: load i32, i32* %{{.*}}, align 1
   int32x2_t vec = vld1_dup_s32(addr);
 // CHECK: store i32 %{{.*}}, i32* {{.*}}, align 1
   vst1_lane_s32(addr, vec, 1);

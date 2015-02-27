@@ -72,7 +72,7 @@ void (^b)() = ^{};
 int main() {
    (b?: ^{})();
 }
-// CHECK: [[ZERO:%.*]] = load void (...)** @b
+// CHECK: [[ZERO:%.*]] = load void (...)*, void (...)** @b
 // CHECK-NEXT: [[TB:%.*]] = icmp ne void (...)* [[ZERO]], null
 // CHECK-NEXT: br i1 [[TB]], label [[CT:%.*]], label [[CF:%.*]]
 // CHECK: [[ONE:%.*]] = bitcast void (...)* [[ZERO]] to void ()*

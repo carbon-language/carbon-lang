@@ -80,7 +80,7 @@ namespace test3 {
     // CHECK-LABEL:    define void @_ZN5test35test0ERNS_1BE(
     // CHECK:      [[X:%.*]] = alloca [[B:%.*]]*,
     // CHECK-NEXT: store [[B]]* {{%.*}}, [[B]]** [[X]]
-    // CHECK-NEXT: [[T0:%.*]] = load [[B]]** [[X]]
+    // CHECK-NEXT: [[T0:%.*]] = load [[B]]*, [[B]]** [[X]]
     // CHECK-NEXT: [[BOOL:%.*]] = call zeroext i1 @_ZN5test31BcvbEv([[B]]* [[T0]])
     // CHECK-NEXT: br i1 [[BOOL]]
     // CHECK:      call void @_ZN5test31BC1ERKS0_([[B]]* [[RESULT:%.*]], [[B]]* dereferenceable({{[0-9]+}}) [[T0]])
@@ -112,7 +112,7 @@ namespace test3 {
     // CHECK-LABEL:    define void @_ZN5test35test2ERNS_1BE(
     // CHECK:      [[X:%.*]] = alloca [[B]]*,
     // CHECK-NEXT: store [[B]]* {{%.*}}, [[B]]** [[X]]
-    // CHECK-NEXT: [[T0:%.*]] = load [[B]]** [[X]]
+    // CHECK-NEXT: [[T0:%.*]] = load [[B]]*, [[B]]** [[X]]
     // CHECK-NEXT: [[BOOL:%.*]] = call zeroext i1 @_ZN5test31BcvbEv([[B]]* [[T0]])
     // CHECK-NEXT: br i1 [[BOOL]]
     // CHECK:      call void @_ZN5test31BcvNS_1AEEv([[A:%.*]]* sret [[RESULT:%.*]], [[B]]* [[T0]])

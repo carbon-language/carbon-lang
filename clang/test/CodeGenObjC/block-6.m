@@ -10,7 +10,7 @@ void MYFUNC() {
 
 // CHECK:      [[T1:%.*]] = bitcast i8* ()*
 // CHECK:      [[FORWARDING:%.*]] = getelementptr inbounds [[OBSERVER_T]], [[OBSERVER_T]]* [[OBSERVER_SLOT]], i32 0, i32 1
-// CHECK-NEXT: [[T0:%.*]] = load [[OBSERVER_T]]** [[FORWARDING]]
+// CHECK-NEXT: [[T0:%.*]] = load [[OBSERVER_T]]*, [[OBSERVER_T]]** [[FORWARDING]]
 // CHECK-NEXT: [[OBSERVER:%.*]] = getelementptr inbounds [[OBSERVER_T]], [[OBSERVER_T]]* [[T0]], i32 0, i32 6
 // CHECK-NEXT: store i8* [[T1]], i8** [[OBSERVER]]
   __block id observer = ^{ return observer; };

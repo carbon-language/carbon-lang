@@ -10,7 +10,7 @@ void test0(_Bool cond) {
   // CHECK-NEXT: [[RELCOND:%.*]] = alloca i1
   // CHECK-NEXT: zext
   // CHECK-NEXT: store
-  // CHECK-NEXT: [[T0:%.*]] = load i8* [[COND]]
+  // CHECK-NEXT: [[T0:%.*]] = load i8, i8* [[COND]]
   // CHECK-NEXT: [[T1:%.*]] = trunc i8 [[T0]] to i1
   // CHECK-NEXT: store i1 false, i1* [[RELCOND]]
   // CHECK-NEXT: br i1 [[T1]],
@@ -22,12 +22,12 @@ void test0(_Bool cond) {
   // CHECK:      [[T0:%.*]] = phi i8* [ null, {{%.*}} ], [ [[CALL]], {{%.*}} ]
   // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]]) [[NUW:#[0-9]+]]
   // CHECK-NEXT: store i8* [[T1]], i8** [[X]],
-  // CHECK-NEXT: [[REL:%.*]] = load i1* [[RELCOND]]
+  // CHECK-NEXT: [[REL:%.*]] = load i1, i1* [[RELCOND]]
   // CHECK-NEXT: br i1 [[REL]],
-  // CHECK:      [[T0:%.*]] = load i8** [[RELVAL]]
+  // CHECK:      [[T0:%.*]] = load i8*, i8** [[RELVAL]]
   // CHECK-NEXT: call void @objc_release(i8* [[T0]]) [[NUW]]
   // CHECK-NEXT: br label
-  // CHECK:      [[T0:%.*]] = load i8** [[X]]
+  // CHECK:      [[T0:%.*]] = load i8*, i8** [[X]]
   // CHECK-NEXT: call void @objc_release(i8* [[T0]]) [[NUW]]
   // CHECK-NEXT: ret void
   id x = (cond ? 0 : test0_helper());
@@ -52,28 +52,28 @@ void test1(int cond) {
   // CHECK-NEXT: store i8* null, i8** [[STRONG]]
   // CHECK-NEXT: call i8* @objc_initWeak(i8** [[WEAK]], i8* null)
 
-  // CHECK-NEXT: [[T0:%.*]] = load i32* [[COND]]
+  // CHECK-NEXT: [[T0:%.*]] = load i32, i32* [[COND]]
   // CHECK-NEXT: [[T1:%.*]] = icmp ne i32 [[T0]], 0
   // CHECK:      [[ARG:%.*]] = phi i8**
   // CHECK-NEXT: [[T0:%.*]] = icmp eq i8** [[ARG]], null
   // CHECK-NEXT: [[T1:%.*]] = select i1 [[T0]], i8** null, i8** [[TEMP1]]
   // CHECK-NEXT: br i1 [[T0]],
-  // CHECK:      [[T0:%.*]] = load i8** [[ARG]]
+  // CHECK:      [[T0:%.*]] = load i8*, i8** [[ARG]]
   // CHECK-NEXT: store i8* [[T0]], i8** [[TEMP1]]
   // CHECK-NEXT: br label
   // CHECK:      [[W:%.*]] = phi i8* [ [[T0]], {{%.*}} ], [ undef, {{%.*}} ]
   // CHECK-NEXT: call void @test1_sink(i8** [[T1]])
   // CHECK-NEXT: [[T0:%.*]] = icmp eq i8** [[ARG]], null
   // CHECK-NEXT: br i1 [[T0]],
-  // CHECK:      [[T0:%.*]] = load i8** [[TEMP1]]
+  // CHECK:      [[T0:%.*]] = load i8*, i8** [[TEMP1]]
   // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retain(i8* [[T0]])
   // CHECK-NEXT: call void (...)* @clang.arc.use(i8* [[W]]) [[NUW]]
-  // CHECK-NEXT: [[T2:%.*]] = load i8** [[ARG]]
+  // CHECK-NEXT: [[T2:%.*]] = load i8*, i8** [[ARG]]
   // CHECK-NEXT: store i8* [[T1]], i8** [[ARG]]
   // CHECK-NEXT: call void @objc_release(i8* [[T2]])
   // CHECK-NEXT: br label
 
-  // CHECK:      [[T0:%.*]] = load i32* [[COND]]
+  // CHECK:      [[T0:%.*]] = load i32, i32* [[COND]]
   // CHECK-NEXT: [[T1:%.*]] = icmp ne i32 [[T0]], 0
   // CHECK:      [[ARG:%.*]] = phi i8**
   // CHECK-NEXT: [[T0:%.*]] = icmp eq i8** [[ARG]], null
@@ -88,7 +88,7 @@ void test1(int cond) {
   // CHECK:      call void @test1_sink(i8** [[T1]])
   // CHECK-NEXT: [[T0:%.*]] = icmp eq i8** [[ARG]], null
   // CHECK-NEXT: br i1 [[T0]],
-  // CHECK:      [[T0:%.*]] = load i8** [[TEMP2]]
+  // CHECK:      [[T0:%.*]] = load i8*, i8** [[TEMP2]]
   // CHECK-NEXT: call i8* @objc_storeWeak(i8** [[ARG]], i8* [[T0]])
   // CHECK-NEXT: br label
 
@@ -112,7 +112,7 @@ void test2(int cond) {
   // CHECK:      [[CLEANUP_SAVE:%.*]] = alloca i8*
   // CHECK:      [[RUN_CLEANUP:%.*]] = alloca i1
   //   Evaluate condition; cleanup disabled by default.
-  // CHECK:      [[T0:%.*]] = load i32* [[COND]],
+  // CHECK:      [[T0:%.*]] = load i32, i32* [[COND]],
   // CHECK-NEXT: icmp ne i32 [[T0]], 0
   // CHECK-NEXT: store i1 false, i1* [[RUN_CLEANUP]]
   // CHECK-NEXT: br i1
@@ -126,9 +126,9 @@ void test2(int cond) {
   // CHECK:      [[T0:%.*]] = phi i8* [ [[T1]], {{%.*}} ], [ null, {{%.*}} ]
   // CHECK-NEXT: [[RESULT:%.*]] = call i8* @objc_retain(i8* [[T0]])
   //   Leaving full-expression; run conditional cleanup.
-  // CHECK-NEXT: [[T0:%.*]] = load i1* [[RUN_CLEANUP]]
+  // CHECK-NEXT: [[T0:%.*]] = load i1, i1* [[RUN_CLEANUP]]
   // CHECK-NEXT: br i1 [[T0]]
-  // CHECK:      [[T0:%.*]] = load i8** [[CLEANUP_SAVE]]
+  // CHECK:      [[T0:%.*]] = load i8*, i8** [[CLEANUP_SAVE]]
   // CHECK-NEXT: call void @objc_release(i8* [[T0]])
   // CHECK-NEXT: br label
   //   And way down at the end of the loop:

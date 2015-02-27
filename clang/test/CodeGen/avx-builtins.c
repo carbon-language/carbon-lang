@@ -10,17 +10,17 @@
 //
 
 __m256 test__mm256_loadu_ps(void* p) {
-  // CHECK: load <8 x float>* %{{.*}}, align 1
+  // CHECK: load <8 x float>, <8 x float>* %{{.*}}, align 1
   return _mm256_loadu_ps(p);
 }
 
 __m256d test__mm256_loadu_pd(void* p) {
-  // CHECK: load <4 x double>* %{{.*}}, align 1
+  // CHECK: load <4 x double>, <4 x double>* %{{.*}}, align 1
   return _mm256_loadu_pd(p);
 }
 
 __m256i test__mm256_loadu_si256(void* p) {
-  // CHECK: load <4 x i64>* %{{.+}}, align 1
+  // CHECK: load <4 x i64>, <4 x i64>* %{{.+}}, align 1
   return _mm256_loadu_si256(p);
 }
 

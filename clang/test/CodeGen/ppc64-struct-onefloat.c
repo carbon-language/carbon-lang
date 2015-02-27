@@ -36,14 +36,14 @@ void foo(void)
 
 // CHECK-LABEL: define void @foo
 // CHECK:  %{{[a-zA-Z0-9.]+}} = getelementptr %struct.s1, %struct.s1* %p1, i32 0, i32 0
-// CHECK:  %{{[0-9]+}} = load float* %{{[a-zA-Z0-9.]+}}, align 1
+// CHECK:  %{{[0-9]+}} = load float, float* %{{[a-zA-Z0-9.]+}}, align 1
 // CHECK:  %{{[a-zA-Z0-9.]+}} = getelementptr %struct.s2, %struct.s2* %p2, i32 0, i32 0
-// CHECK:  %{{[0-9]+}} = load double* %{{[a-zA-Z0-9.]+}}, align 1
+// CHECK:  %{{[0-9]+}} = load double, double* %{{[a-zA-Z0-9.]+}}, align 1
 // CHECK:  %{{[a-zA-Z0-9.]+}} = getelementptr %struct.s4, %struct.s4* %p4, i32 0, i32 0
 // CHECK:  %{{[a-zA-Z0-9.]+}} = getelementptr %struct.s1, %struct.s1* %{{[a-zA-Z0-9.]+}}, i32 0, i32 0
-// CHECK:  %{{[0-9]+}} = load float* %{{[a-zA-Z0-9.]+}}, align 1
+// CHECK:  %{{[0-9]+}} = load float, float* %{{[a-zA-Z0-9.]+}}, align 1
 // CHECK:  %{{[a-zA-Z0-9.]+}} = getelementptr %struct.s5, %struct.s5* %p5, i32 0, i32 0
 // CHECK:  %{{[a-zA-Z0-9.]+}} = getelementptr %struct.s2, %struct.s2* %{{[a-zA-Z0-9.]+}}, i32 0, i32 0
-// CHECK:  %{{[0-9]+}} = load double* %{{[a-zA-Z0-9.]+}}, align 1
+// CHECK:  %{{[0-9]+}} = load double, double* %{{[a-zA-Z0-9.]+}}, align 1
 // CHECK:  call void @bar(float inreg %{{[0-9]+}}, double inreg %{{[0-9]+}}, float inreg %{{[0-9]+}}, double inreg %{{[0-9]+}})
 // CHECK:  ret void

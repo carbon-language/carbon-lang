@@ -63,9 +63,9 @@ void bar_float(void) {
 // CHECK: store float 2.000000e+00, float* %[[VAR2]]
 // CHECK: store float -2.500000e+00, float* %[[VAR3]]
 // CHECK: %[[VAR4:[A-Za-z0-9.]+]] = getelementptr { float, float }, { float, float }* %[[VAR1]], i32 0, i32 0
-// CHECK: %[[VAR5:[A-Za-z0-9.]+]] = load float* %[[VAR4]], align 1
+// CHECK: %[[VAR5:[A-Za-z0-9.]+]] = load float, float* %[[VAR4]], align 1
 // CHECK: %[[VAR6:[A-Za-z0-9.]+]] = getelementptr { float, float }, { float, float }* %[[VAR1]], i32 0, i32 1
-// CHECK: %[[VAR7:[A-Za-z0-9.]+]] = load float* %[[VAR6]], align 1
+// CHECK: %[[VAR7:[A-Za-z0-9.]+]] = load float, float* %[[VAR6]], align 1
 // CHECK: %{{[A-Za-z0-9.]+}} = call float @foo_float(float %[[VAR5]], float %[[VAR7]])
 
 void bar_double(void) {
@@ -79,9 +79,9 @@ void bar_double(void) {
 // CHECK: store double 2.000000e+00, double* %[[VAR12]]
 // CHECK: store double -2.500000e+00, double* %[[VAR13]]
 // CHECK: %[[VAR14:[A-Za-z0-9.]+]] = getelementptr { double, double }, { double, double }* %[[VAR11]], i32 0, i32 0
-// CHECK: %[[VAR15:[A-Za-z0-9.]+]] = load double* %[[VAR14]], align 1
+// CHECK: %[[VAR15:[A-Za-z0-9.]+]] = load double, double* %[[VAR14]], align 1
 // CHECK: %[[VAR16:[A-Za-z0-9.]+]] = getelementptr { double, double }, { double, double }* %[[VAR11]], i32 0, i32 1
-// CHECK: %[[VAR17:[A-Za-z0-9.]+]] = load double* %[[VAR16]], align 1
+// CHECK: %[[VAR17:[A-Za-z0-9.]+]] = load double, double* %[[VAR16]], align 1
 // CHECK: %{{[A-Za-z0-9.]+}} = call double @foo_double(double %[[VAR15]], double %[[VAR17]])
 
 void bar_long_double(void) {
@@ -95,9 +95,9 @@ void bar_long_double(void) {
 // CHECK: store ppc_fp128 0xM40000000000000000000000000000000, ppc_fp128* %[[VAR22]]
 // CHECK: store ppc_fp128 0xMC0040000000000000000000000000000, ppc_fp128* %[[VAR23]]
 // CHECK: %[[VAR24:[A-Za-z0-9.]+]] = getelementptr { ppc_fp128, ppc_fp128 }, { ppc_fp128, ppc_fp128 }* %[[VAR21]], i32 0, i32 0
-// CHECK: %[[VAR25:[A-Za-z0-9.]+]] = load ppc_fp128* %[[VAR24]], align 1
+// CHECK: %[[VAR25:[A-Za-z0-9.]+]] = load ppc_fp128, ppc_fp128* %[[VAR24]], align 1
 // CHECK: %[[VAR26:[A-Za-z0-9.]+]] = getelementptr { ppc_fp128, ppc_fp128 }, { ppc_fp128, ppc_fp128 }* %[[VAR21]], i32 0, i32 1
-// CHECK: %[[VAR27:[A-Za-z0-9.]+]] = load ppc_fp128* %[[VAR26]], align 1
+// CHECK: %[[VAR27:[A-Za-z0-9.]+]] = load ppc_fp128, ppc_fp128* %[[VAR26]], align 1
 // CHECK: %{{[A-Za-z0-9.]+}} = call ppc_fp128 @foo_long_double(ppc_fp128 %[[VAR25]], ppc_fp128 %[[VAR27]])
 
 void bar_int(void) {
@@ -111,9 +111,9 @@ void bar_int(void) {
 // CHECK: store i32 2, i32* %[[VAR32]]
 // CHECK: store i32 -3, i32* %[[VAR33]]
 // CHECK: %[[VAR34:[A-Za-z0-9.]+]] = getelementptr { i32, i32 }, { i32, i32 }* %[[VAR31]], i32 0, i32 0
-// CHECK: %[[VAR35:[A-Za-z0-9.]+]] = load i32* %[[VAR34]], align 1
+// CHECK: %[[VAR35:[A-Za-z0-9.]+]] = load i32, i32* %[[VAR34]], align 1
 // CHECK: %[[VAR36:[A-Za-z0-9.]+]] = getelementptr { i32, i32 }, { i32, i32 }* %[[VAR31]], i32 0, i32 1
-// CHECK: %[[VAR37:[A-Za-z0-9.]+]] = load i32* %[[VAR36]], align 1
+// CHECK: %[[VAR37:[A-Za-z0-9.]+]] = load i32, i32* %[[VAR36]], align 1
 // CHECK: %{{[A-Za-z0-9.]+}} = call signext i32 @foo_int(i32 %[[VAR35]], i32 %[[VAR37]])
 
 void bar_short(void) {
@@ -127,9 +127,9 @@ void bar_short(void) {
 // CHECK: store i16 2, i16* %[[VAR42]]
 // CHECK: store i16 -3, i16* %[[VAR43]]
 // CHECK: %[[VAR44:[A-Za-z0-9.]+]] = getelementptr { i16, i16 }, { i16, i16 }* %[[VAR41]], i32 0, i32 0
-// CHECK: %[[VAR45:[A-Za-z0-9.]+]] = load i16* %[[VAR44]], align 1
+// CHECK: %[[VAR45:[A-Za-z0-9.]+]] = load i16, i16* %[[VAR44]], align 1
 // CHECK: %[[VAR46:[A-Za-z0-9.]+]] = getelementptr { i16, i16 }, { i16, i16 }* %[[VAR41]], i32 0, i32 1
-// CHECK: %[[VAR47:[A-Za-z0-9.]+]] = load i16* %[[VAR46]], align 1
+// CHECK: %[[VAR47:[A-Za-z0-9.]+]] = load i16, i16* %[[VAR46]], align 1
 // CHECK: %{{[A-Za-z0-9.]+}} = call signext i16 @foo_short(i16 %[[VAR45]], i16 %[[VAR47]])
 
 void bar_char(void) {
@@ -143,9 +143,9 @@ void bar_char(void) {
 // CHECK: store i8 2, i8* %[[VAR52]]
 // CHECK: store i8 -3, i8* %[[VAR53]]
 // CHECK: %[[VAR54:[A-Za-z0-9.]+]] = getelementptr { i8, i8 }, { i8, i8 }* %[[VAR51]], i32 0, i32 0
-// CHECK: %[[VAR55:[A-Za-z0-9.]+]] = load i8* %[[VAR54]], align 1
+// CHECK: %[[VAR55:[A-Za-z0-9.]+]] = load i8, i8* %[[VAR54]], align 1
 // CHECK: %[[VAR56:[A-Za-z0-9.]+]] = getelementptr { i8, i8 }, { i8, i8 }* %[[VAR51]], i32 0, i32 1
-// CHECK: %[[VAR57:[A-Za-z0-9.]+]] = load i8* %[[VAR56]], align 1
+// CHECK: %[[VAR57:[A-Za-z0-9.]+]] = load i8, i8* %[[VAR56]], align 1
 // CHECK: %{{[A-Za-z0-9.]+}} = call signext i8 @foo_char(i8 %[[VAR55]], i8 %[[VAR57]])
 
 void bar_long(void) {
@@ -159,9 +159,9 @@ void bar_long(void) {
 // CHECK: store i64 2, i64* %[[VAR62]]
 // CHECK: store i64 -3, i64* %[[VAR63]]
 // CHECK: %[[VAR64:[A-Za-z0-9.]+]] = getelementptr { i64, i64 }, { i64, i64 }* %[[VAR61]], i32 0, i32 0
-// CHECK: %[[VAR65:[A-Za-z0-9.]+]] = load i64* %[[VAR64]], align 1
+// CHECK: %[[VAR65:[A-Za-z0-9.]+]] = load i64, i64* %[[VAR64]], align 1
 // CHECK: %[[VAR66:[A-Za-z0-9.]+]] = getelementptr { i64, i64 }, { i64, i64 }* %[[VAR61]], i32 0, i32 1
-// CHECK: %[[VAR67:[A-Za-z0-9.]+]] = load i64* %[[VAR66]], align 1
+// CHECK: %[[VAR67:[A-Za-z0-9.]+]] = load i64, i64* %[[VAR66]], align 1
 // CHECK: %{{[A-Za-z0-9.]+}} = call i64 @foo_long(i64 %[[VAR65]], i64 %[[VAR67]])
 
 void bar_long_long(void) {
@@ -175,9 +175,9 @@ void bar_long_long(void) {
 // CHECK: store i64 2, i64* %[[VAR72]]
 // CHECK: store i64 -3, i64* %[[VAR73]]
 // CHECK: %[[VAR74:[A-Za-z0-9.]+]] = getelementptr { i64, i64 }, { i64, i64 }* %[[VAR71]], i32 0, i32 0
-// CHECK: %[[VAR75:[A-Za-z0-9.]+]] = load i64* %[[VAR74]], align 1
+// CHECK: %[[VAR75:[A-Za-z0-9.]+]] = load i64, i64* %[[VAR74]], align 1
 // CHECK: %[[VAR76:[A-Za-z0-9.]+]] = getelementptr { i64, i64 }, { i64, i64 }* %[[VAR71]], i32 0, i32 1
-// CHECK: %[[VAR77:[A-Za-z0-9.]+]] = load i64* %[[VAR76]], align 1
+// CHECK: %[[VAR77:[A-Za-z0-9.]+]] = load i64, i64* %[[VAR76]], align 1
 // CHECK: %{{[A-Za-z0-9.]+}} = call i64 @foo_long_long(i64 %[[VAR75]], i64 %[[VAR77]])
 
 // CHECK: attributes [[NUW]] = { nounwind{{.*}} }

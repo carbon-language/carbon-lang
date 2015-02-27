@@ -12,7 +12,7 @@ public:
 void foo(StringRef X);
 void bar(StringRef &A) {
 // CHECK: @_Z3barR9StringRef
-// CHECK: load i8**
+// CHECK: load i8*, i8**
   foo(A);
 // CHECK: ret void
 }

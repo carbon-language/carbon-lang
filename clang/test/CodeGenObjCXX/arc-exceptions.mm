@@ -94,7 +94,7 @@ namespace test4 {
     throw 0;
   }
   // CHECK-LABEL:    define void @_ZN5test41AC2Ev(
-  // CHECK:      [[THIS:%.*]] = load [[A:%.*]]** {{%.*}}
+  // CHECK:      [[THIS:%.*]] = load [[A:%.*]]*, [[A:%.*]]** {{%.*}}
   //   Construct single.
   // CHECK-NEXT: [[SINGLE:%.*]] = getelementptr inbounds [[A]], [[A]]* [[THIS]], i32 0, i32 0
   // CHECK-NEXT: store i8* null, i8** [[SINGLE]], align 8

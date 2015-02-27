@@ -122,7 +122,7 @@ namespace test4 {
   // CHECK-LABEL: define internal void @___ZN5test44testEv_block_invoke
   // CHECK: [[TMP:%.*]] = alloca [[A:%.*]], align 1
   // CHECK-NEXT: store i8* [[BLOCKDESC:%.*]], i8** {{.*}}, align 8
-  // CHECK-NEXT: load i8**
+  // CHECK-NEXT: load i8*, i8**
   // CHECK-NEXT: bitcast i8* [[BLOCKDESC]] to <{ i8*, i32, i32, i8*, %struct.__block_descriptor* }>*
   // CHECK:      call void @_ZN5test41AC1Ev([[A]]* [[TMP]])
   // CHECK-NEXT: call void @_ZN5test43fooENS_1AE([[A]]* [[TMP]])
@@ -157,7 +157,7 @@ namespace test5 {
   // CHECK-NEXT: store i8 [[T0]], i8* [[COND]], align 1
   // CHECK-NEXT: call void @_ZN5test51AC1Ev([[A]]* [[X]])
   // CHECK-NEXT: [[CLEANUP_ADDR:%.*]] = getelementptr inbounds [[BLOCK_T]], [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
-  // CHECK-NEXT: [[T0:%.*]] = load i8* [[COND]], align 1
+  // CHECK-NEXT: [[T0:%.*]] = load i8, i8* [[COND]], align 1
   // CHECK-NEXT: [[T1:%.*]] = trunc i8 [[T0]] to i1
   // CHECK-NEXT: store i1 false, i1* [[CLEANUP_ACTIVE]]
   // CHECK-NEXT: br i1 [[T1]],
@@ -173,7 +173,7 @@ namespace test5 {
   // CHECK-NEXT: store
   // CHECK-NEXT: load
   // CHECK-NEXT: call void @_ZN5test511doWithBlockEU13block_pointerFvvE(
-  // CHECK-NEXT: [[T0:%.*]] = load i1* [[CLEANUP_ACTIVE]]
+  // CHECK-NEXT: [[T0:%.*]] = load i1, i1* [[CLEANUP_ACTIVE]]
   // CHECK-NEXT: br i1 [[T0]]
   // CHECK:      call void @_ZN5test51AD1Ev([[A]]* [[CLEANUP_ADDR]])
   // CHECK-NEXT: br label

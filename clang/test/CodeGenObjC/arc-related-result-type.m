@@ -13,7 +13,7 @@ void test0(Test0 *val) {
 // CHECK-NEXT: bitcast
 // CHECK-NEXT: bitcast
 // CHECK-NEXT: call void @objc_storeStrong(
-// CHECK-NEXT: load [[TEST0]]** [[VAL]],
+// CHECK-NEXT: load [[TEST0]]*, [[TEST0]]** [[VAL]],
 // CHECK-NEXT: load
 // CHECK-NEXT: bitcast
 // CHECK-NEXT: [[T0:%.*]] = call i8* bitcast (

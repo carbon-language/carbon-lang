@@ -254,12 +254,12 @@ namespace test4 {
   // CHECK5:      [[X:%.*]] = alloca i32
   // CHECK5-NEXT: [[A:%.*]] = alloca
   // CHECK5:      br label
-  // CHECK5:      [[TMP:%.*]] = load i32* [[X]]
+  // CHECK5:      [[TMP:%.*]] = load i32, i32* [[X]]
   // CHECK5-NEXT: [[CMP:%.*]] = icmp ne i32 [[TMP]], 0
   // CHECK5-NEXT: br i1
   // CHECK5:      call void @_ZN5test41AD1Ev(
   // CHECK5:      br label
-  // CHECK5:      [[TMP:%.*]] = load i32* [[X]]
+  // CHECK5:      [[TMP:%.*]] = load i32, i32* [[X]]
   // CHECK5:      [[TMP2:%.*]] = add nsw i32 [[TMP]], -1
   // CHECK5:      store i32 [[TMP2]], i32* [[X]]
   // CHECK5:      br label

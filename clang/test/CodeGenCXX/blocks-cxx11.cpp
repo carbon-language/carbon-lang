@@ -51,7 +51,7 @@ namespace test_complex_int {
     // CHECK:      store i32 500,
     // CHECK-NEXT: store i32 0,
     // CHECK-NEXT: [[COERCE:%.*]] = bitcast
-    // CHECK-NEXT: [[CVAL:%.*]] = load i64* [[COERCE]]
+    // CHECK-NEXT: [[CVAL:%.*]] = load i64, i64* [[COERCE]]
     // CHECK-NEXT: call void @_Z13takeItByValueICiEvT_(i64 [[CVAL]])
   }
 }
@@ -70,14 +70,14 @@ namespace test_complex_int_ref_mutable {
   void test() {
     const _Complex int &x = y;
     takeABlock(^{ takeItByValue(x); });
-    // CHECK:      [[R:%.*]] = load i32* getelementptr inbounds ({ i32, i32 }* @_ZN28test_complex_int_ref_mutable1yE, i32 0, i32 0)
-    // CHECK-NEXT: [[I:%.*]] = load i32* getelementptr inbounds ({ i32, i32 }* @_ZN28test_complex_int_ref_mutable1yE, i32 0, i32 1)
+    // CHECK:      [[R:%.*]] = load i32, i32* getelementptr inbounds ({ i32, i32 }* @_ZN28test_complex_int_ref_mutable1yE, i32 0, i32 0)
+    // CHECK-NEXT: [[I:%.*]] = load i32, i32* getelementptr inbounds ({ i32, i32 }* @_ZN28test_complex_int_ref_mutable1yE, i32 0, i32 1)
     // CHECK-NEXT: [[RSLOT:%.*]] = getelementptr inbounds { i32, i32 }, { i32, i32 }* [[CSLOT:%.*]], i32 0, i32 0
     // CHECK-NEXT: [[ISLOT:%.*]] = getelementptr inbounds { i32, i32 }, { i32, i32 }* [[CSLOT]], i32 0, i32 1
     // CHECK-NEXT: store i32 [[R]], i32* [[RSLOT]]
     // CHECK-NEXT: store i32 [[I]], i32* [[ISLOT]]
     // CHECK-NEXT: [[COERCE:%.*]] = bitcast { i32, i32 }* [[CSLOT]] to i64*
-    // CHECK-NEXT: [[CVAL:%.*]] = load i64* [[COERCE]],
+    // CHECK-NEXT: [[CVAL:%.*]] = load i64, i64* [[COERCE]],
     // CHECK-NEXT: call void @_Z13takeItByValueICiEvT_(i64 [[CVAL]])
   }
 }
@@ -102,7 +102,7 @@ namespace test_block_in_lambda {
   }
   // CHECK-LABEL:    define internal void @"_ZZN20test_block_in_lambda4testENS_1AEENK3$_0clEv"(
   // CHECK:      [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]], align 8
-  // CHECK:      [[THIS:%.*]] = load [[LAMBDA_T:%.*]]**
+  // CHECK:      [[THIS:%.*]] = load [[LAMBDA_T:%.*]]*, [[LAMBDA_T:%.*]]**
   // CHECK:      [[TO_DESTROY:%.*]] = getelementptr inbounds [[BLOCK_T]], [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
   // CHECK:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]], [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
   // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[LAMBDA_T]], [[LAMBDA_T]]* [[THIS]], i32 0, i32 0

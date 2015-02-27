@@ -56,7 +56,7 @@ int f() { return x()(); }
 }
 
 // CHECK-LABEL: define internal i32 @"_ZZNK14pr18020_lambda3$_0clEvENKUlvE_clEv"
-// CHECK: load i32* @"_ZZNK14pr18020_lambda3$_0clEvE2l1"
+// CHECK: load i32, i32* @"_ZZNK14pr18020_lambda3$_0clEvE2l1"
 
 namespace pr18020_constexpr {
 // Taking the address of l1 in a constant expression used to crash.
@@ -71,7 +71,7 @@ int f() { return x()(); }
 }
 
 // CHECK-LABEL: define internal i32 @"_ZZNK17pr18020_constexpr3$_1clEvENKUlvE_clEv"
-// CHECK: load i32** @"_ZZZNK17pr18020_constexpr3$_1clEvENKUlvE_clEvE2l2"
+// CHECK: load i32*, i32** @"_ZZZNK17pr18020_constexpr3$_1clEvENKUlvE_clEvE2l2"
 
 // Lambda-less reduction that references l1 before emitting it.  This didn't
 // crash if you put it in a namespace.
@@ -88,7 +88,7 @@ static pr18020_class x;
 int pr18020_f() { return x()(); }
 
 // CHECK-LABEL: define linkonce_odr i32 @_ZZN13pr18020_classclEvEN1UclEv
-// CHECK: load i32* @_ZZN13pr18020_classclEvE2l1
+// CHECK: load i32, i32* @_ZZN13pr18020_classclEvE2l1
 
 // In this test case, the function containing the static local will not be
 // emitted because it is unneeded. However, the operator call of the inner class
@@ -104,7 +104,7 @@ extern "C" int call_deduced_return_operator() {
 
 // CHECK-LABEL: define i32 @call_deduced_return_operator()
 // CHECK: call i32* @_ZZL14deduced_returnvEN1SclEv(
-// CHECK: load i32* %
+// CHECK: load i32, i32* %
 // CHECK: ret i32 %
 
 // CHECK-LABEL: define internal i32* @_ZZL14deduced_returnvEN1SclEv(%struct.S* %this)
@@ -124,7 +124,7 @@ extern "C" int call_block_deduced_return() {
 
 // CHECK-LABEL: define i32 @call_block_deduced_return()
 // CHECK: call i32* @_ZZZL20block_deduced_returnvEUb_EN1SclEv(
-// CHECK: load i32* %
+// CHECK: load i32, i32* %
 // CHECK: ret i32 %
 
 // CHECK-LABEL: define internal i32* @_ZZZL20block_deduced_returnvEUb_EN1SclEv(%struct.S.6* %this) #0 align 2 {
@@ -142,7 +142,7 @@ label:
 void *global_label = decltype(static_local_label(0))::get();
 
 // CHECK-LABEL: define linkonce_odr i8* @_ZZ18static_local_labelPvEN1S3getEv()
-// CHECK: %[[lbl:[^ ]*]] = load i8** @_ZZ18static_local_labelPvE1q
+// CHECK: %[[lbl:[^ ]*]] = load i8*, i8** @_ZZ18static_local_labelPvE1q
 // CHECK: ret i8* %[[lbl]]
 
 auto global_lambda = []() {

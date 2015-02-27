@@ -16,14 +16,14 @@ volatile float TestAlign(void)
 // CHECK-NEXT:  [[CALL:%.*]] = call noalias i8* @_Znwm(i64 32)
 // CHECK-NEXT:  [[ZERO:%.*]] = bitcast i8* [[CALL]] to <8 x float>*
 // CHECK-NEXT:  store <8 x float>* [[ZERO]], <8 x float>** [[P:%.*]], align 8
-// CHECK-NEXT:  [[ONE:%.*]] = load <8 x float>** [[P]], align 8
-// CHECK-NEXT:  [[TWO:%.*]] = load volatile <8 x float>* [[ONE]], align 16
-// CHECK-NEXT:  [[THREE:%.*]] = load <8 x float>** [[P]], align 8
+// CHECK-NEXT:  [[ONE:%.*]] = load <8 x float>*, <8 x float>** [[P]], align 8
+// CHECK-NEXT:  [[TWO:%.*]] = load volatile <8 x float>, <8 x float>* [[ONE]], align 16
+// CHECK-NEXT:  [[THREE:%.*]] = load <8 x float>*, <8 x float>** [[P]], align 8
 // CHECK-NEXT:  store volatile <8 x float> [[TWO]], <8 x float>* [[THREE]], align 16
-// CHECK-NEXT:  [[FOUR:%.*]] = load <8 x float>** [[P]], align 8
-// CHECK-NEXT:  [[FIVE:%.*]] = load volatile <8 x float>* [[FOUR]], align 16
+// CHECK-NEXT:  [[FOUR:%.*]] = load <8 x float>*, <8 x float>** [[P]], align 8
+// CHECK-NEXT:  [[FIVE:%.*]] = load volatile <8 x float>, <8 x float>* [[FOUR]], align 16
 // CHECK-NEXT:  store <8 x float> [[FIVE]], <8 x float>* [[R]], align 32
-// CHECK-NEXT:  [[SIX:%.*]] = load <8 x float>* [[R]], align 32
+// CHECK-NEXT:  [[SIX:%.*]] = load <8 x float>, <8 x float>* [[R]], align 32
 // CHECK-NEXT:  [[VECEXT:%.*]] = extractelement <8 x float> [[SIX]], i32 0
 // CHECK-NEXT:  ret float [[VECEXT]]
 
@@ -45,13 +45,13 @@ volatile float TestAlign2(void)
 // CHECK-NEXT:  [[CALL:%.*]] = call noalias i8* @_Znwm(i64 32)
 // CHECK-NEXT:  [[ZERO:%.*]] = bitcast i8* [[CALL]] to <8 x float>*
 // CHECK-NEXT:  store <8 x float>* [[ZERO]], <8 x float>** [[P:%.*]], align 8
-// CHECK-NEXT:  [[ONE:%.*]] = load <8 x float>** [[P]], align 8
-// CHECK-NEXT:  [[TWO:%.*]] = load volatile <8 x float>* [[ONE]], align 32
-// CHECK-NEXT:  [[THREE:%.*]] = load <8 x float>** [[P]], align 8
+// CHECK-NEXT:  [[ONE:%.*]] = load <8 x float>*, <8 x float>** [[P]], align 8
+// CHECK-NEXT:  [[TWO:%.*]] = load volatile <8 x float>, <8 x float>* [[ONE]], align 32
+// CHECK-NEXT:  [[THREE:%.*]] = load <8 x float>*, <8 x float>** [[P]], align 8
 // CHECK-NEXT:  store volatile <8 x float> [[TWO]], <8 x float>* [[THREE]], align 32
-// CHECK-NEXT:  [[FOUR:%.*]] = load <8 x float>** [[P]], align 8
-// CHECK-NEXT:  [[FIVE:%.*]] = load volatile <8 x float>* [[FOUR]], align 32
+// CHECK-NEXT:  [[FOUR:%.*]] = load <8 x float>*, <8 x float>** [[P]], align 8
+// CHECK-NEXT:  [[FIVE:%.*]] = load volatile <8 x float>, <8 x float>* [[FOUR]], align 32
 // CHECK-NEXT:  store <8 x float> [[FIVE]], <8 x float>* [[R]], align 32
-// CHECK-NEXT:  [[SIX:%.*]] = load <8 x float>* [[R]], align 32
+// CHECK-NEXT:  [[SIX:%.*]] = load <8 x float>, <8 x float>* [[R]], align 32
 // CHECK-NEXT:  [[VECEXT:%.*]] = extractelement <8 x float> [[SIX]], i32 0
 // CHECK-NEXT:  ret float [[VECEXT]]
