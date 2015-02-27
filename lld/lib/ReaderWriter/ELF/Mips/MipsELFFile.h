@@ -11,7 +11,6 @@
 
 #include "ELFReader.h"
 #include "MipsLinkingContext.h"
-#include "llvm/Support/Endian.h"
 
 namespace llvm {
 namespace object {
