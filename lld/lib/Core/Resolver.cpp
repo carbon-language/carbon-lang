@@ -31,12 +31,9 @@ bool Resolver::handleFile(const File &file) {
   bool undefAdded = false;
   for (const DefinedAtom *atom : file.defined())
     doDefinedAtom(*atom);
-  for (const UndefinedAtom *atom : file.undefined()) {
-    if (doUndefinedAtom(*atom)) {
+  for (const UndefinedAtom *atom : file.undefined())
+    if (doUndefinedAtom(*atom))
       undefAdded = true;
-      maybePreloadArchiveMember(atom->name());
-    }
-  }
   for (const SharedLibraryAtom *atom : file.sharedLibrary())
     doSharedLibraryAtom(*atom);
   for (const AbsoluteAtom *atom : file.absolute())
@@ -230,17 +227,6 @@ void Resolver::doAbsoluteAtom(const AbsoluteAtom &atom) {
 void Resolver::addAtoms(const std::vector<const DefinedAtom *> &newAtoms) {
   for (const DefinedAtom *newAtom : newAtoms)
     doDefinedAtom(*newAtom);
-}
-
-// Instantiate an archive file member if there's a file containing a
-// defined symbol for a given symbol name. Instantiation is done in a
-// different worker thread and has no visible side effect.
-void Resolver::maybePreloadArchiveMember(StringRef sym) {
-  auto it = _archiveMap.find(sym);
-  if (it == _archiveMap.end())
-    return;
-  ArchiveLibraryFile *archive = it->second;
-  archive->preload(_context.getTaskGroup(), sym);
 }
 
 // Returns true if at least one of N previous files has created an
