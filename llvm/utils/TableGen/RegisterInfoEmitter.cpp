@@ -610,17 +610,19 @@ static void printMask(raw_ostream &OS, unsigned Val) {
 static bool combine(const CodeGenSubRegIndex *Idx,
                     SmallVectorImpl<CodeGenSubRegIndex*> &Vec) {
   const CodeGenSubRegIndex::CompMap &Map = Idx->getComposites();
-  for (CodeGenSubRegIndex::CompMap::const_iterator
-       I = Map.begin(), E = Map.end(); I != E; ++I) {
-    CodeGenSubRegIndex *&Entry = Vec[I->first->EnumValue - 1];
-    if (Entry && Entry != I->second)
+  for (const auto &I : Map) {
+    CodeGenSubRegIndex *&Entry = Vec[I.first->EnumValue - 1];
+    if (Entry && Entry != I.second)
       return false;
   }
 
   // All entries are compatible. Make it so.
-  for (CodeGenSubRegIndex::CompMap::const_iterator
-       I = Map.begin(), E = Map.end(); I != E; ++I)
-    Vec[I->first->EnumValue - 1] = I->second;
+  for (const auto &I : Map) {
+    auto *&Entry = Vec[I.first->EnumValue - 1];
+    assert((!Entry || Entry == I.second) &&
+           "Expected EnumValue to be unique");
+    Entry = I.second;
+  }
   return true;
 }
 
