@@ -48,8 +48,7 @@ const char* inet_ntop(int af, const void * src,
                 const char* formatted = inet_ntoa(*static_cast<const in_addr*>(src));
                 if (formatted && strlen(formatted) < size)
                 {
-                    strncpy(dst, formatted, size);
-                    return dst;
+                    return ::strcpy(dst, formatted);
                 }
             }
             return nullptr;
@@ -64,8 +63,7 @@ const char* inet_ntop(int af, const void * src,
                                           );
                 if (full_size < static_cast<int>(size))
                 {
-                    strncpy(dst,tmp,size);
-                    return dst;
+                    return ::strcpy(dst, tmp);
                 }
                 return nullptr;
             }

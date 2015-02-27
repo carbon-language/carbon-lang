@@ -793,10 +793,8 @@ FileSpec::GetPath(char *path, size_t path_max_len, bool denormalize) const
         return 0;
 
     std::string result = GetPath(denormalize);
-
-    size_t result_length = std::min(path_max_len-1, result.length());
-    ::strncpy(path, result.c_str(), result_length + 1);
-    return result_length;
+    ::snprintf(path, path_max_len, "%s", result.c_str());
+    return std::min(path_max_len-1, result.length());
 }
 
 std::string

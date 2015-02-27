@@ -153,11 +153,8 @@ HostInfoPosix::ComputeSupportExeDirectory(FileSpec &file_spec)
     char *lib_pos = ::strstr(raw_path, "/lib");
     if (lib_pos != nullptr)
     {
-        // First terminate the raw path at the start of lib.
-        *lib_pos = '\0';
-
         // Now write in bin in place of lib.
-        ::strncpy(lib_pos, "/bin", PATH_MAX - (lib_pos - raw_path));
+        ::snprintf(lib_pos, PATH_MAX - (lib_pos - raw_path), "/bin");
 
         if (log)
             log->Printf("Host::%s() derived the bin path as: %s", __FUNCTION__, raw_path);

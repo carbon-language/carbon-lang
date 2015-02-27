@@ -3639,7 +3639,7 @@ GDBRemoteCommunicationClient::SaveRegisterState (lldb::tid_t tid, uint32_t &save
             if (thread_suffix_supported)
                 ::snprintf (packet, sizeof(packet), "QSaveRegisterState;thread:%4.4" PRIx64 ";", tid);
             else
-                ::strncpy (packet, "QSaveRegisterState", sizeof(packet));
+                ::snprintf(packet, sizeof(packet), "QSaveRegisterState");
             
             StringExtractorGDBRemote response;
 

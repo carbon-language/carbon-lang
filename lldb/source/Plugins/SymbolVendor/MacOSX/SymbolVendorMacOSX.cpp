@@ -231,7 +231,7 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp, lldb_privat
                                                                                 const char *node_content = (const char *)::xmlNodeGetContent(value_node);
                                                                                 if (node_content)
                                                                                 {
-                                                                                    strncpy(DBGBuildSourcePath, node_content, sizeof(DBGBuildSourcePath));
+                                                                                    ::snprintf(DBGBuildSourcePath, sizeof(DBGBuildSourcePath), "%s", node_content);
                                                                                     xmlFree((void *) node_content);
                                                                                 }
                                                                             }

@@ -134,22 +134,23 @@ HostInfoMacOSX::ComputeSupportExeDirectory(FileSpec &file_spec)
     FileSpec lldb_file_spec;
     if (!GetLLDBPath(lldb::ePathTypeLLDBShlibDir, lldb_file_spec))
         return false;
-    char raw_path[PATH_MAX];
-    lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
 
-    char *framework_pos = ::strstr(raw_path, "LLDB.framework");
-    if (framework_pos)
+    std::string raw_path = lldb_file_spec.GetPath();
+
+    size_t framework_pos = raw_path.find("LLDB.framework");
+    if (framework_pos != std::string::npos)
     {
         framework_pos += strlen("LLDB.framework");
 #if defined(__arm__) || defined(__arm64__) || defined(__aarch64__)
         // Shallow bundle
-        *framework_pos = '\0';
+        raw_path.resize(framework_pos);
 #else
         // Normal bundle
-        ::strncpy(framework_pos, "/Resources", PATH_MAX - (framework_pos - raw_path));
+        raw_path.resize(framework_pos);
+        raw_path.append("/Resources");
 #endif
     }
-    file_spec.GetDirectory().SetCString(raw_path);
+    file_spec.GetDirectory().SetString(llvm::StringRef(raw_path.c_str(), raw_path.size()));
     return (bool)file_spec.GetDirectory();
 }
 
@@ -160,16 +161,16 @@ HostInfoMacOSX::ComputeHeaderDirectory(FileSpec &file_spec)
     if (!HostInfo::GetLLDBPath(lldb::ePathTypeLLDBShlibDir, lldb_file_spec))
         return false;
 
-    char raw_path[PATH_MAX];
-    lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
+    std::string raw_path = lldb_file_spec.GetPath();
 
-    char *framework_pos = ::strstr(raw_path, "LLDB.framework");
-    if (framework_pos)
+    size_t framework_pos = raw_path.find("LLDB.framework");
+    if (framework_pos != std::string::npos)
     {
         framework_pos += strlen("LLDB.framework");
-        ::strncpy(framework_pos, "/Headers", PATH_MAX - (framework_pos - raw_path));
+        raw_path.resize(framework_pos);
+        raw_path.append("/Headers");
     }
-    file_spec.GetDirectory().SetCString(raw_path);
+    file_spec.GetDirectory().SetString(llvm::StringRef(raw_path.c_str(), raw_path.size()));
     return true;
 }
 
@@ -181,14 +182,14 @@ HostInfoMacOSX::ComputePythonDirectory(FileSpec &file_spec)
     if (!GetLLDBPath(lldb::ePathTypeLLDBShlibDir, lldb_file_spec))
         return false;
 
-    char raw_path[PATH_MAX];
-    lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
+    std::string raw_path = lldb_file_spec.GetPath();
 
-    char *framework_pos = ::strstr(raw_path, "LLDB.framework");
-    if (framework_pos)
+    size_t framework_pos = raw_path.find("LLDB.framework");
+    if (framework_pos != std::string::npos)
     {
         framework_pos += strlen("LLDB.framework");
-        ::strncpy(framework_pos, "/Resources/Python", PATH_MAX - (framework_pos - raw_path));
+        raw_path.resize(framework_pos);
+        raw_path.append("/Resources/Python");
     }
     else
     {
@@ -198,9 +199,9 @@ HostInfoMacOSX::ComputePythonDirectory(FileSpec &file_spec)
         os.flush();
 
         // We may get our string truncated. Should we protect this with an assert?
-        ::strncat(raw_path, python_version_dir.c_str(), sizeof(raw_path) - strlen(raw_path) - 1);
+        raw_path.append(python_version_dir.c_str());
     }
-    file_spec.GetDirectory().SetCString(raw_path);
+    file_spec.GetDirectory().SetString(llvm::StringRef(raw_path.c_str(), raw_path.size()));
     return true;
 #else
     return false;
@@ -214,16 +215,16 @@ HostInfoMacOSX::ComputeClangDirectory(FileSpec &file_spec)
     if (!GetLLDBPath (lldb::ePathTypeLLDBShlibDir, lldb_file_spec))
         return false;
     
-    char raw_path[PATH_MAX];
-    lldb_file_spec.GetPath (raw_path, sizeof (raw_path));
+    std::string raw_path = lldb_file_spec.GetPath();
     
-    char *framework_pos = ::strstr (raw_path, "LLDB.framework");
-    if (framework_pos)
+    size_t framework_pos = raw_path.find("LLDB.framework");
+    if (framework_pos != std::string::npos)
     {
         framework_pos += strlen("LLDB.framework");
-        ::strncpy (framework_pos, "/Resources/Clang", PATH_MAX - (framework_pos - raw_path));
+        raw_path.resize(framework_pos);
+        raw_path.append("/Resources/Clang");
     }
-    file_spec.SetFile (raw_path, true);
+    file_spec.SetFile (raw_path.c_str(), true);
     return true;
 }
 
@@ -233,16 +234,17 @@ HostInfoMacOSX::ComputeSystemPluginsDirectory(FileSpec &file_spec)
     FileSpec lldb_file_spec;
     if (!GetLLDBPath(lldb::ePathTypeLLDBShlibDir, lldb_file_spec))
         return false;
-    char raw_path[PATH_MAX];
-    lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
 
-    char *framework_pos = ::strstr(raw_path, "LLDB.framework");
-    if (!framework_pos)
+    std::string raw_path = lldb_file_spec.GetPath();
+
+    size_t framework_pos = raw_path.find("LLDB.framework");
+    if (framework_pos == std::string::npos)
         return false;
 
     framework_pos += strlen("LLDB.framework");
-    ::strncpy(framework_pos, "/Resources/PlugIns", PATH_MAX - (framework_pos - raw_path));
-    file_spec.GetDirectory().SetCString(raw_path);
+    raw_path.resize(framework_pos);
+    raw_path.append("/Resources/PlugIns");
+    file_spec.GetDirectory().SetString(llvm::StringRef(raw_path.c_str(), raw_path.size()));
     return true;
 }
 

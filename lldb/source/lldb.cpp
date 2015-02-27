@@ -364,13 +364,13 @@ lldb_private::GetVersion ()
         
         const char *newline_loc = strchr(version_string, '\n');
         
-        size_t version_len = sizeof(g_version_string);
+        size_t version_len = sizeof(g_version_string) - 1;
         
         if (newline_loc &&
             (newline_loc - version_string < static_cast<ptrdiff_t>(version_len)))
             version_len = newline_loc - version_string;
         
-        ::strncpy(g_version_string, version_string, version_len);
+        ::snprintf(g_version_string, version_len + 1, "%s", version_string);
     }
 
     return g_version_string;
