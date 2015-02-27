@@ -422,27 +422,26 @@ bool Resolver::checkUndefines() {
   if (!undefinedAtoms.empty()) {
     // FIXME: need diagnostics interface for writing error messages
     bool foundUndefines = false;
-    for (const UndefinedAtom *undefAtom : undefinedAtoms) {
-      const File &f = undefAtom->file();
-
+    for (const UndefinedAtom *undef : undefinedAtoms) {
       // Skip over a weak symbol.
-      if (undefAtom->canBeNull() != UndefinedAtom::canBeNullNever)
+      if (undef->canBeNull() != UndefinedAtom::canBeNullNever)
         continue;
 
       // If this is a library and undefined symbols are allowed on the
       // target platform, skip over it.
-      if (isa<SharedLibraryFile>(f) && _context.allowShlibUndefines())
+      if (isa<SharedLibraryFile>(undef->file()) &&
+          _context.allowShlibUndefines())
         continue;
 
       // If the undefine is coalesced away, skip over it.
-      if (_symbolTable.isCoalescedAway(undefAtom))
+      if (_symbolTable.isCoalescedAway(undef))
         continue;
 
       // Seems like this symbol is undefined. Warn that.
       foundUndefines = true;
       if (_context.printRemainingUndefines()) {
-        llvm::errs() << "Undefined symbol: " << undefAtom->file().path()
-                     << ": " << _context.demangle(undefAtom->name())
+        llvm::errs() << "Undefined symbol: " << undef->file().path()
+                     << ": " << _context.demangle(undef->name())
                      << "\n";
       }
     }
