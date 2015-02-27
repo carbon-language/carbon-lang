@@ -33,7 +33,7 @@ entry.next:
 for.j:
   %indvar.j = phi i64 [ 0, %entry.next ], [ %indvar.j.next, %for.j ]
   %indvar.j.non_canonical = phi i64 [ %init, %entry.next ], [ %indvar.j.non_canonical.next, %for.j ]
-  %scevgep = getelementptr i64* %A, i64 %indvar.j
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar.j
   store i64 %indvar.j.non_canonical, i64* %scevgep
   %indvar.j.next = add nsw i64 %indvar.j, 1
   %indvar.j.non_canonical.next = add nsw i64 %indvar.j.non_canonical, 1

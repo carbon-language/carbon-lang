@@ -59,14 +59,14 @@ for.cond:                                         ; preds = %for.inc, %entry
   br i1 %exitcond, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr inbounds i32* %B, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %B, i64 %indvars.iv
   %tmp = load i32* %arrayidx, align 4
   %conv = sitofp i32 %tmp to float
-  %arrayidx2 = getelementptr inbounds float* %C, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds float, float* %C, i64 %indvars.iv
   %tmp1 = load float* %arrayidx2, align 4
   %add = fadd fast float %conv, %tmp1
   %conv3 = fptosi float %add to i32
-  %arrayidx5 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %arrayidx5 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %conv3, i32* %arrayidx5, align 4
   br label %for.inc
 

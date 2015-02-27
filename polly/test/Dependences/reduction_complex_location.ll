@@ -37,7 +37,7 @@ for.body3:                                        ; preds = %for.cond1
   %mul = mul nsw i32 %j.0, %i.0
   %mul4 = shl nsw i32 %j.0, 1
   %add = add nsw i32 %i.0, %mul4
-  %arrayidx = getelementptr inbounds i32* %sum, i32 %add
+  %arrayidx = getelementptr inbounds i32, i32* %sum, i32 %add
   %tmp = load i32* %arrayidx, align 4
   %add5 = add nsw i32 %tmp, %mul
   store i32 %add5, i32* %arrayidx, align 4

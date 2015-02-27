@@ -20,7 +20,7 @@ for.cond:                                         ; preds = %for.inc, %entry
 
 for.body:                                         ; preds = %for.cond
   %rem = srem i32 %i.0, 2
-  %arrayidx = getelementptr inbounds i32* %A, i32 %rem
+  %arrayidx = getelementptr inbounds i32, i32* %A, i32 %rem
   store i32 %i.0, i32* %arrayidx, align 4
   br label %for.inc
 

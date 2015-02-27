@@ -35,7 +35,7 @@ for.cond1:                                        ; preds = %for.inc, %for.body
   br i1 %cmp2, label %for.body3, label %for.end
 
 for.body3:                                        ; preds = %for.cond1
-  %arrayidx = getelementptr inbounds i32* %A, i64 %i.0
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %i.0
   %tmp = load i32* %arrayidx, align 4
   %add = add nsw i32 %tmp, 1
   store i32 %add, i32* %arrayidx, align 4
@@ -54,7 +54,7 @@ for.cond5:                                        ; preds = %for.inc10, %for.end
   br i1 %cmp6, label %for.body7, label %for.end12
 
 for.body7:                                        ; preds = %for.cond5
-  %arrayidx8 = getelementptr inbounds i32* %A, i64 %i4.0
+  %arrayidx8 = getelementptr inbounds i32, i32* %A, i64 %i4.0
   %tmp1 = load i32* %arrayidx8, align 4
   %add9 = add nsw i32 %tmp1, 1
   store i32 %add9, i32* %arrayidx8, align 4

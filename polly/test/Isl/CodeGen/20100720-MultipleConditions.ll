@@ -37,7 +37,7 @@ define i32 @main() nounwind {
 
 ; <label>:1                                       ; preds = %12, %0
   %indvar = phi i64 [ %indvar.next, %12 ], [ 0, %0 ] ; <i64> [#uses=4]
-  %scevgep = getelementptr [100 x i32]* @A, i64 0, i64 %indvar ; <i32*> [#uses=3]
+  %scevgep = getelementptr [100 x i32], [100 x i32]* @A, i64 0, i64 %indvar ; <i32*> [#uses=3]
   %i.0 = trunc i64 %indvar to i32                 ; <i32> [#uses=3]
   %exitcond = icmp ne i64 %indvar, 100            ; <i1> [#uses=1]
   br i1 %exitcond, label %2, label %13
@@ -76,7 +76,7 @@ define i32 @main() nounwind {
 ; <label>:13                                      ; preds = %1
   fence seq_cst
   %14 = sext i32 undef to i64                     ; <i64> [#uses=1]
-  %15 = getelementptr inbounds i32* getelementptr inbounds ([100 x i32]* @A, i32 0, i32 0), i64 %14 ; <i32*> [#uses=1]
+  %15 = getelementptr inbounds i32, i32* getelementptr inbounds ([100 x i32]* @A, i32 0, i32 0), i64 %14 ; <i32*> [#uses=1]
   %16 = load i32* %15                             ; <i32> [#uses=1]
   ret i32 %16
 }

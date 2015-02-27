@@ -43,7 +43,7 @@ for.body3:                                        ; preds = %for.cond1
   %tmp = add nsw i64 %indvars.iv3, %indvars.iv
   %tmp7 = shl nsw i64 %indvars.iv3, 9
   %tmp8 = add nsw i64 %tmp7, %indvars.iv
-  %arrayidx = getelementptr inbounds i32* %A, i64 %tmp8
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %tmp8
   %tmp9 = trunc i64 %tmp to i32
   store i32 %tmp9, i32* %arrayidx, align 4
   br label %for.inc

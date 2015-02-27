@@ -14,7 +14,7 @@ start:
 
 loop.header:
   %i = phi i64 [ 0, %start ], [ %i.next, %loop.backedge ]
-  %scevgep = getelementptr [1024 x i32]* @A, i64 0, i64 %i
+  %scevgep = getelementptr [1024 x i32], [1024 x i32]* @A, i64 0, i64 %i
   %exitcond = icmp ne i64 %i, %n_plus_one
   br i1 %exitcond, label %loop.body, label %ret
 
@@ -49,7 +49,7 @@ ret:
 ; CODEGEN:   br label %polly.stmt.loop.body
 
 ; CODEGEN: polly.stmt.loop.body:
-; CODEGEN:   [[PTR:%[a-zA-Z0-9_\.]+]] = getelementptr [1024 x i32]* @A, i64 0, i64 %polly.indvar
+; CODEGEN:   [[PTR:%[a-zA-Z0-9_\.]+]] = getelementptr [1024 x i32], [1024 x i32]* @A, i64 0, i64 %polly.indvar
 ; CODEGEN:   store i32 1, i32* [[PTR]]
 ; CODEGEN:   %polly.indvar_next = add nsw i64 %polly.indvar, 1
 ; CODEGEN:   %polly.adjust_ub = sub i64 %n, 1

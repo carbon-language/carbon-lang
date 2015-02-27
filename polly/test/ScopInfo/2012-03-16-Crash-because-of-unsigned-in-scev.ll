@@ -19,7 +19,7 @@ do.body:
   %indvar = phi i32 [ %3, %do.body ], [ 0, %if.then132 ]
   %1 = add i32 0, %umax
   %2 = sub i32 %1, %indvar
-  %arrayidx = getelementptr [64 x i8]* @array, i32 0, i32 %2
+  %arrayidx = getelementptr [64 x i8], [64 x i8]* @array, i32 0, i32 %2
   store i8 1, i8* %arrayidx, align 1
   %3 = add i32 %indvar, 1
   %exitcond = icmp eq i32 %3, 20

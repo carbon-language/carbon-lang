@@ -21,8 +21,8 @@ entry:
 for.cond:                                         ; preds = %for.inc, %entry
   %tmp1 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
   %tmp = add i32 %tmp1, -1
-  %arrayidx4 = getelementptr [100 x i32]* @A, i32 0, i32 %tmp
-  %arrayidx = getelementptr [100 x i32]* @A, i32 0, i32 %tmp1
+  %arrayidx4 = getelementptr [100 x i32], [100 x i32]* @A, i32 0, i32 %tmp
+  %arrayidx = getelementptr [100 x i32], [100 x i32]* @A, i32 0, i32 %tmp1
   %exitcond = icmp ne i32 %tmp1, 12
   br i1 %exitcond, label %for.body, label %for.end
 

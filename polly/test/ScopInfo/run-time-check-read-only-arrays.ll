@@ -17,9 +17,9 @@ entry:
 
 for.body:
   %indvar = phi i64 [ 0, %entry ], [ %indvar.next, %for.body ]
-  %arrayidx.A = getelementptr float* %A, i64 %indvar
-  %arrayidx.B = getelementptr float* %B, i64 %indvar
-  %arrayidx.C = getelementptr float* %C, i64 %indvar
+  %arrayidx.A = getelementptr float, float* %A, i64 %indvar
+  %arrayidx.B = getelementptr float, float* %B, i64 %indvar
+  %arrayidx.C = getelementptr float, float* %C, i64 %indvar
   %val.A = load float* %arrayidx.A
   %val.B = load float* %arrayidx.B
   %add = fadd float %val.A, %val.B

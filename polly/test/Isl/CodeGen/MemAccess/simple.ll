@@ -31,7 +31,7 @@ entry:
 
 for.cond:                                         ; preds = %for.inc, %entry
   %0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
-  %arrayidx = getelementptr [100 x i32]* @A, i32 0, i32 %0
+  %arrayidx = getelementptr [100 x i32], [100 x i32]* @A, i32 0, i32 %0
   %exitcond1 = icmp ne i32 %0, 12
   br i1 %exitcond1, label %for.body, label %for.end
 
@@ -48,7 +48,7 @@ for.end:                                          ; preds = %for.cond
 
 for.cond4:                                        ; preds = %for.inc11, %for.end
   %1 = phi i32 [ 0, %for.end ], [ %inc13, %for.inc11 ]
-  %arrayidx10 = getelementptr [100 x i32]* @B, i32 0, i32 %1
+  %arrayidx10 = getelementptr [100 x i32], [100 x i32]* @B, i32 0, i32 %1
   %exitcond = icmp ne i32 %1, 12
   br i1 %exitcond, label %for.body7, label %for.end14
 

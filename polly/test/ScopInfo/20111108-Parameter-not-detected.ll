@@ -29,7 +29,7 @@ for.body3:                                        ; preds = %for.cond1
   br i1 %cmp4, label %if.then, label %if.end
 
 if.then:                                          ; preds = %for.body3
-  %arrayidx = getelementptr i8* %A, i64 %indvar
+  %arrayidx = getelementptr i8, i8* %A, i64 %indvar
   store i8 5, i8* %arrayidx
   br label %if.end
 

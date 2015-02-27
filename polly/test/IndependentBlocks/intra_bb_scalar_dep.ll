@@ -39,7 +39,7 @@ for.j:
 ; The scalar evolution of %init_plus_two is (2 + %init). So we have a
 ; non-trivial scalar evolution referring to a value in the same basic block.
 ; We want to ensure that this scalar is not translated into a memory copy.
-  %scevgep = getelementptr i64* %A, i64 %indvar.j
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar.j
   store i64 %init_plus_two, i64* %scevgep
   %indvar.j.next = add nsw i64 %indvar.j, 1
   %exitcond.j = icmp eq i64 %indvar.j.next, %N

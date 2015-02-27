@@ -30,7 +30,7 @@ for.1.preheader:
 
 for.1:
   %indvar.1 = phi i32 [ %Scalar0.val, %for.1.preheader ], [ %indvar.1.next, %for.1]
-  %arrayidx.1 = getelementptr inbounds i32* %A, i32 %indvar.1
+  %arrayidx.1 = getelementptr inbounds i32, i32* %A, i32 %indvar.1
   store i32 1, i32* %arrayidx.1
   %indvar.1.next = add nsw i32 %indvar.1, 1
   %cmp.1 = icmp slt i32 %indvar.1.next, 100

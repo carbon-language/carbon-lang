@@ -20,7 +20,7 @@ for.j:
   br i1 %exitcond.j, label %body, label %for.i
 
 body:
-  %scevgep = getelementptr i64* %a, i64 %j
+  %scevgep = getelementptr i64, i64* %a, i64 %j
   store i64 %j, i64* %scevgep
   br label %for.j
 

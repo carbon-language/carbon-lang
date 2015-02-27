@@ -44,7 +44,7 @@ for.cond:                                         ; preds = %for.inc, %entry
   br i1 %exitcond, label %for.body, label %return
 
 for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr [1024 x float]* @A, i64 0, i64 %indvar
+  %arrayidx = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
   %float = uitofp i64 %indvar to float
   store float %float, float* %arrayidx
   br label %for.inc
@@ -74,7 +74,7 @@ for.cond:                                         ; preds = %for.inc, %entry
   br i1 %exitcond, label %for.body.a, label %return
 
 for.body.a:                                       ; preds = %for.cond
-  %arrayidx = getelementptr [1024 x float]* @A, i64 0, i64 %indvar
+  %arrayidx = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
   %scalar = load float* %arrayidx
   br label %for.body.b
 ; CHECK: BB: for.body.a
@@ -82,7 +82,7 @@ for.body.a:                                       ; preds = %for.cond
 ; CHECK: Write scalar[0]
 
 for.body.b:                                       ; preds = %for.body.a
-  %arrayidx2 = getelementptr [1024 x float]* @A, i64 0, i64 %indvar
+  %arrayidx2 = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
   %float = uitofp i64 %indvar to float
   %sum = fadd float %scalar, %float
   store float %sum, float* %arrayidx2
@@ -119,7 +119,7 @@ for.head:                                         ; preds = %for.inc, %entry
   br label %for.body
 
 for.body:                                         ; preds = %for.head
-  %arrayidx = getelementptr [1024 x float]* @A, i64 0, i64 %indvar
+  %arrayidx = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
   %scalar = load float* %arrayidx
   store float %scalar, float* %scalar.s2a
 ; Escaped uses are still required to be rewritten to stack variable.
@@ -168,7 +168,7 @@ for.cond:                                         ; preds = %for.inc, %preheader
   br i1 %exitcond, label %for.body, label %return
 
 for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr [1024 x float]* @A, i64 0, i64 %indvar
+  %arrayidx = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
   store float %scalar, float* %arrayidx
   br label %for.inc
 ; CHECK: BB: for.body

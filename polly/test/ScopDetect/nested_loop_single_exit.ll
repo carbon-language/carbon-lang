@@ -26,7 +26,7 @@ for.j:
 
 for.i:
   %indvar = phi i64 [ 0, %for.j], [ %indvar.next, %for.i ]
-  %scevgep = getelementptr i64* %A, i64 %indvar
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar
   store i64 %indvar, i64* %scevgep
   %indvar.next = add nsw i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar.next, %N

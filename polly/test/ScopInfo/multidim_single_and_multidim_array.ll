@@ -43,7 +43,7 @@ entry:
 for.i.1:
   %indvar.1 = phi i64 [ 0, %entry ], [ %indvar.next.1, %for.i.1 ]
   %offset.1 = mul i64 %n, %indvar.1
-  %arrayidx.1 = getelementptr float* %X, i64 %offset.1
+  %arrayidx.1 = getelementptr float, float* %X, i64 %offset.1
   store float 1.000000e+00, float* %arrayidx.1
   %indvar.next.1 = add nsw i64 %indvar.1, 1
   %exitcond.1 = icmp ne i64 %indvar.next.1, %n
@@ -57,7 +57,7 @@ for.i.2:
   %offset.2.a = add i64 %n, -1
   %offset.2.b = mul i64 %n, %offset.2.a
   %offset.2.c = add i64 %offset.2.b, %indvar.2
-  %arrayidx.2 = getelementptr float* %X, i64 %offset.2.c
+  %arrayidx.2 = getelementptr float, float* %X, i64 %offset.2.c
   store float 1.000000e+00, float* %arrayidx.2
   %indvar.next.2 = add nsw i64 %indvar.2, 1
   %exitcond.2 = icmp ne i64 %indvar.next.2, %n

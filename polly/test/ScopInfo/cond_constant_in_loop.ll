@@ -21,7 +21,7 @@ entry:
 
 bb:                                               ; preds = %bb3, %entry
   %1 = phi i64 [ 0, %entry ], [ %2, %bb3 ]        ; <i64> [#uses=5]
-  %scevgep = getelementptr i64* %a, i64 %1        ; <i64*> [#uses=2]
+  %scevgep = getelementptr i64, i64* %a, i64 %1        ; <i64*> [#uses=2]
   br i1 true, label %bb1, label %bb2
 
 bb1:                                              ; preds = %bb
@@ -30,7 +30,7 @@ bb1:                                              ; preds = %bb
 
 bb2:                                              ; preds = %bb
   %tmp7 = sub i64 %1, %N                          ; <i64> [#uses=1]
-  %scevgep8 = getelementptr i64* %a, i64 %tmp7    ; <i64*> [#uses=1]
+  %scevgep8 = getelementptr i64, i64* %a, i64 %tmp7    ; <i64*> [#uses=1]
   store i64 %M, i64* %scevgep, align 8
   store i64 0, i64* %scevgep8, align 8
   br label %bb3

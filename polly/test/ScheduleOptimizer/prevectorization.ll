@@ -20,14 +20,14 @@ for.cond1.preheader:                              ; preds = %entry.split, %for.i
 
 for.body3:                                        ; preds = %for.cond1.preheader, %for.inc25
   %indvar6 = phi i64 [ 0, %for.cond1.preheader ], [ %indvar.next7, %for.inc25 ]
-  %arrayidx24 = getelementptr [1536 x [1536 x float]]* @C, i64 0, i64 %indvar4, i64 %indvar6
+  %arrayidx24 = getelementptr [1536 x [1536 x float]], [1536 x [1536 x float]]* @C, i64 0, i64 %indvar4, i64 %indvar6
   store float 0.000000e+00, float* %arrayidx24, align 4
   br label %for.body8
 
 for.body8:                                        ; preds = %for.body3, %for.body8
   %indvar = phi i64 [ 0, %for.body3 ], [ %indvar.next, %for.body8 ]
-  %arrayidx16 = getelementptr [1536 x [1536 x float]]* @A, i64 0, i64 %indvar4, i64 %indvar
-  %arrayidx20 = getelementptr [1536 x [1536 x float]]* @B, i64 0, i64 %indvar, i64 %indvar6
+  %arrayidx16 = getelementptr [1536 x [1536 x float]], [1536 x [1536 x float]]* @A, i64 0, i64 %indvar4, i64 %indvar
+  %arrayidx20 = getelementptr [1536 x [1536 x float]], [1536 x [1536 x float]]* @B, i64 0, i64 %indvar, i64 %indvar6
   %0 = load float* %arrayidx24, align 4
   %1 = load float* %arrayidx16, align 4
   %2 = load float* %arrayidx20, align 4

@@ -36,7 +36,7 @@ for.body:                                         ; preds = %for.cond
   %call4 = call double @floor(double %call3) #2
   %tmp3 = call double @llvm.pow.f64(double %call1, double %call4)
   %conv5 = fptosi double %tmp3 to i32
-  %arrayidx = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %conv5, i32* %arrayidx, align 4
   %tmp4 = trunc i64 %indvars.iv to i32
   %conv6 = sitofp i32 %tmp4 to double
@@ -53,7 +53,7 @@ for.body:                                         ; preds = %for.cond
   %call14 = call double @__exp_finite(double %conv13) #2
   %add15 = fadd fast double %call12, %call14
   %conv16 = fptrunc double %add15 to float
-  %arrayidx18 = getelementptr inbounds float* %B, i64 %indvars.iv
+  %arrayidx18 = getelementptr inbounds float, float* %B, i64 %indvars.iv
   store float %conv16, float* %arrayidx18, align 4
   br label %for.inc
 

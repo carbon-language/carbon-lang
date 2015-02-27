@@ -50,7 +50,7 @@ bb7:                                              ; preds = %bb4
 
 bb8:                                              ; preds = %bb7, %bb6
   %tmp.0 = phi i32 [ 3, %bb6 ], [ 5, %bb7 ]
-  %tmp9 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %tmp9 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %tmp.0, i32* %tmp9, align 4
   br label %bb10
 

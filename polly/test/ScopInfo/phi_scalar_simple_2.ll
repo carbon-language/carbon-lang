@@ -28,7 +28,7 @@ for.cond:                                         ; preds = %for.inc5, %entry
 ; CHECK:         [N, c] -> { Stmt_for_cond[i0] -> MemRef_x_addr_0[] };
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc5 ], [ 0, %entry ]
   %x.addr.0 = phi i32 [ %x, %entry ], [ %x.addr.1, %for.inc5 ]
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %x.addr.0, i32* %arrayidx2
   %cmp = icmp slt i64 %indvars.iv, %tmp
   br i1 %cmp, label %for.body, label %for.end7
@@ -73,7 +73,7 @@ if.then:                                          ; preds = %for.body3
 ; CHECK:         [N, c] -> { Stmt_if_then[i0, i1] -> MemRef_A[i0] };
 ; CHECK:     MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:         [N, c] -> { Stmt_if_then[i0, i1] -> MemRef_x_addr_2[] };
-  %arrayidx = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   %tmp2 = load i32* %arrayidx, align 4
   %add = add nsw i32 %x.addr.1, %tmp2
   br label %if.end

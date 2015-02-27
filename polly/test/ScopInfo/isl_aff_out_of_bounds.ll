@@ -15,7 +15,7 @@ entry:
 
 do.body:                                          ; preds = %do.body, %entry
   %ftmp.0 = phi float* [ %add.ptr, %do.body ], [ %lsp, %entry ]
-  %add.ptr = getelementptr inbounds float* %ftmp.0, i64 2
+  %add.ptr = getelementptr inbounds float, float* %ftmp.0, i64 2
   br i1 true, label %do.end, label %do.body
 
 do.end:                                           ; preds = %do.body

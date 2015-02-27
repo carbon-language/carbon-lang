@@ -12,9 +12,9 @@ bb0:
 
 bb1:
   %indvar = phi i64 [ %indvar.next, %bb4 ], [ 0, %bb0 ]
-  %scevgep = getelementptr [1024 x float]* @B, i64 0, i64 %indvar
-  %scevgep2 = getelementptr [1024 x float]* @C, i64 0, i64 %indvar
-  %scevgep1 = getelementptr [1024 x float]* @A, i64 0, i64 %indvar
+  %scevgep = getelementptr [1024 x float], [1024 x float]* @B, i64 0, i64 %indvar
+  %scevgep2 = getelementptr [1024 x float], [1024 x float]* @C, i64 0, i64 %indvar
+  %scevgep1 = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
   %exitcond = icmp ne i64 %indvar, 4
   br i1 %exitcond, label %bb2a, label %bb5
 

@@ -46,7 +46,7 @@ bb:                                               ; preds = %bb3, %bb.nph8
 bb1:                                              ; preds = %bb1, %bb
   %indvar = phi i64 [ 0, %bb ], [ %indvar.next, %bb1 ]
   %tmp16 = add i64 %indvar, %tmp15
-  %scevgep = getelementptr [128 x i64]* %a, i64 %tmp16, i64 %tmp17
+  %scevgep = getelementptr [128 x i64], [128 x i64]* %a, i64 %tmp16, i64 %tmp17
   store i64 0, i64* %scevgep
   %indvar.next = add i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar.next, %tmp13

@@ -44,7 +44,7 @@ for.j:
 ; SCALARACCESS: Read init
 ; SCALARACCESS: Write A[{0,+,8}<%for.j>]
   %init_plus_two = add i64 %init, 2
-  %scevgep = getelementptr i64* %A, i64 %indvar.j
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar.j
   store i64 %init_plus_two, i64* %scevgep
   %indvar.j.next = add nsw i64 %indvar.j, 1
   %exitcond.j = icmp eq i64 %indvar.j.next, %N
@@ -77,7 +77,7 @@ entry.next:
 for.j:
 ; SCALARACCESS: BB: for.j
   %indvar.j = phi i64 [ 0, %entry.next ], [ %indvar.j.next, %for.j ]
-  %scevgep = getelementptr i64* %A, i64 %indvar.j
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar.j
   store i64 %init, i64* %scevgep
 ; SCALARACCESS: Read init
 ; SCALARACCESS: Write A[{0,+,8}<%for.j>]

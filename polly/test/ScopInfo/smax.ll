@@ -11,7 +11,7 @@ for.body:
   %add = add nsw i32 %x, %x_pos
   %cmp1 = icmp sgt i32 %add, %w
   %cond = select i1 %cmp1, i32 %w, i32 %add
-  %arrayidx = getelementptr inbounds i32* %ptr, i32 %cond
+  %arrayidx = getelementptr inbounds i32, i32* %ptr, i32 %cond
   store i32 1, i32* %arrayidx
   %x.inc = add nsw i32 %x, 1
   %cmp = icmp slt i32 %x.inc, 2

@@ -15,7 +15,7 @@ entry:
 
 bb:                                               ; preds = %bb, %entry
   %i = phi i64 [ 0, %entry ], [ %i.inc, %bb ]
-  %scevgep = getelementptr i64* %a, i64 %i
+  %scevgep = getelementptr i64, i64* %a, i64 %i
   store i64 %i, i64* %scevgep
   %i.inc = add nsw i64 %i, 1
   %exitcond = icmp eq i64 %i.inc, %N

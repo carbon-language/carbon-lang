@@ -24,7 +24,7 @@ entry:
 entry.split:                                      ; preds = %entry
   tail call void @llvm.dbg.value(metadata %struct.b* %A, i64 0, metadata !16), !dbg !23
   tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !17), !dbg !25
-  %b = getelementptr inbounds %struct.b* %A, i64 0, i32 0, !dbg !26
+  %b = getelementptr inbounds %struct.b, %struct.b* %A, i64 0, i32 0, !dbg !26
   br label %for.body, !dbg !27
 
 for.body:                                         ; preds = %for.body, %entry.split
@@ -34,16 +34,16 @@ for.body:                                         ; preds = %for.body, %entry.sp
   %2 = add i64 %0, 2, !dbg !26
   %3 = add i64 %0, 1, !dbg !26
   %4 = load double*** %b, align 8, !dbg !26, !tbaa !28
-  %arrayidx = getelementptr double** %4, i64 %0, !dbg !26
+  %arrayidx = getelementptr double*, double** %4, i64 %0, !dbg !26
   store double* null, double** %arrayidx, align 8, !dbg !26, !tbaa !33
   %5 = load double*** %b, align 8, !dbg !26, !tbaa !28
-  %arrayidx.1 = getelementptr double** %5, i64 %3, !dbg !26
+  %arrayidx.1 = getelementptr double*, double** %5, i64 %3, !dbg !26
   store double* null, double** %arrayidx.1, align 8, !dbg !26, !tbaa !33
   %6 = load double*** %b, align 8, !dbg !26, !tbaa !28
-  %arrayidx.2 = getelementptr double** %6, i64 %2, !dbg !26
+  %arrayidx.2 = getelementptr double*, double** %6, i64 %2, !dbg !26
   store double* null, double** %arrayidx.2, align 8, !dbg !26, !tbaa !33
   %7 = load double*** %b, align 8, !dbg !26, !tbaa !28
-  %arrayidx.3 = getelementptr double** %7, i64 %1, !dbg !26
+  %arrayidx.3 = getelementptr double*, double** %7, i64 %1, !dbg !26
   store double* null, double** %arrayidx.3, align 8, !dbg !26, !tbaa !33
   %indvar.next = add i64 %indvar4, 1, !dbg !27
   %exitcond = icmp eq i64 %indvar.next, 8, !dbg !27

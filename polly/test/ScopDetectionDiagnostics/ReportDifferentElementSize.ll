@@ -19,10 +19,10 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %i.05 = phi i64 [ 0, %entry ], [ %tmp11, %for.body ]
   %tmp = shl i64 %i.05, 3, !dbg !15
-  %uglygep = getelementptr i8* %A, i64 %tmp
+  %uglygep = getelementptr i8, i8* %A, i64 %tmp
   %arrayidx = bitcast i8* %uglygep to double*, !dbg !16
   %tmp9 = shl i64 %i.05, 2, !dbg !15
-  %uglygep7 = getelementptr i8* %A, i64 %tmp9
+  %uglygep7 = getelementptr i8, i8* %A, i64 %tmp9
   %arrayidx1 = bitcast i8* %uglygep7 to float*, !dbg !17
   %tmp10 = load double* %arrayidx, align 8, !dbg !16, !tbaa !18
   %conv = fptrunc double %tmp10 to float, !dbg !16

@@ -32,7 +32,7 @@ for.cond1.preheader:
 
 for.body35:
   %j.012 = phi i64 [ %j.0, %for.body35 ], [ %j.010, %for.cond1.preheader ]
-  %arrayidx39 = getelementptr inbounds [512 x double]* %R, i64 0, i64 %j.012
+  %arrayidx39 = getelementptr inbounds [512 x double], [512 x double]* %R, i64 0, i64 %j.012
   store double 0.000000e+00, double* %arrayidx39
   %j.0 = add nsw i64 %j.012, 1
   %cmp34 = icmp slt i64 %j.0, %nj

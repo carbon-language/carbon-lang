@@ -16,7 +16,7 @@ pre:
 
 for.i:
   %indvar = phi i64 [ 0, %pre ], [ %indvar.next, %for.i ]
-  %scevgep = getelementptr i64* %A, i64 %indvar
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar
   store i64 %indvar, i64* %scevgep
   %indvar.next = add nsw i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar.next, %N
@@ -43,7 +43,7 @@ for.i:
 
 S1:
   %conv = sitofp i64 %indvar.i to float
-  %arrayidx5 = getelementptr float* %A, i64 %indvar.i
+  %arrayidx5 = getelementptr float, float* %A, i64 %indvar.i
   store float %conv, float* %arrayidx5, align 4
   br label %for.i.inc
 
@@ -69,7 +69,7 @@ for.i:
 
 S1:
   %conv = sitofp i64 %indvar.i to float
-  %arrayidx5 = getelementptr float* inttoptr (i64 100 to float*), i64 %indvar.i
+  %arrayidx5 = getelementptr float, float* inttoptr (i64 100 to float*), i64 %indvar.i
   store float %conv, float* %arrayidx5, align 4
   br label %for.i.inc
 
@@ -97,7 +97,7 @@ for.i:
 
 S1:
   %conv = sitofp i64 %indvar.i to float
-  %arrayidx5 = getelementptr float* @A, i64 %indvar.i
+  %arrayidx5 = getelementptr float, float* @A, i64 %indvar.i
   store float %conv, float* %arrayidx5, align 4
   br label %for.i.inc
 
@@ -126,7 +126,7 @@ for.i:
 
 S1:
   %conv = sitofp i64 %indvar.i to float
-  %arrayidx5 = getelementptr float* %A, i64 %indvar.i
+  %arrayidx5 = getelementptr float, float* %A, i64 %indvar.i
   store float %conv, float* %arrayidx5, align 4
   br label %for.i.inc
 
@@ -159,7 +159,7 @@ for.i:
 
 S1:
   %conv = sitofp i64 %indvar.i to float
-  %arrayidx5 = getelementptr float* %ptr, i64 %indvar.i
+  %arrayidx5 = getelementptr float, float* %ptr, i64 %indvar.i
   store float %conv, float* %arrayidx5, align 4
   br label %for.i.inc
 
@@ -189,7 +189,7 @@ for.i:
 
 S1:
   %conv = sitofp i64 %indvar.i to float
-  %arrayidx5 = getelementptr float* %ptr, i64 %indvar.i
+  %arrayidx5 = getelementptr float, float* %ptr, i64 %indvar.i
   store float %conv, float* %arrayidx5, align 4
   br label %for.i.inc
 
@@ -219,7 +219,7 @@ for.i:
 
 S1:
   %conv = sitofp i64 %indvar.i to float
-  %arrayidx5 = getelementptr float* %ptr2, i64 %indvar.i
+  %arrayidx5 = getelementptr float, float* %ptr2, i64 %indvar.i
   store float %conv, float* %arrayidx5, align 4
   br label %for.i.inc
 
@@ -249,7 +249,7 @@ for.i:
 
 S1:
   %conv = sitofp i64 %indvar.i to float
-  %arrayidx5 = getelementptr float* %ptr2, i64 %indvar.i
+  %arrayidx5 = getelementptr float, float* %ptr2, i64 %indvar.i
   store float %conv, float* %arrayidx5, align 4
   br label %for.i.inc
 
@@ -271,14 +271,14 @@ entry:
 
 for.i:
   %indvar.i = phi i64 [ %indvar.i.next, %for.i.inc ], [ 0, %entry ]
-  %arrayidx = getelementptr float** %A, i64 %indvar.i
+  %arrayidx = getelementptr float*, float** %A, i64 %indvar.i
   br label %for.j
 
 for.j:
   %indvar.j = phi i64 [ 0, %for.i ], [ %indvar.j.next, %for.j ]
   %conv = sitofp i64 %indvar.i to float
   %basepointer = load float** %arrayidx, align 8
-  %arrayidx5 = getelementptr float* %basepointer, i64 %indvar.j
+  %arrayidx5 = getelementptr float, float* %basepointer, i64 %indvar.j
   store float %conv, float* %arrayidx5, align 4
   %indvar.j.next = add i64 %indvar.j, 1
   %exitcond.j = icmp ne i64 %indvar.j.next, %n

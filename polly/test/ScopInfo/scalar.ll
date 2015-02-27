@@ -12,12 +12,12 @@ for:
   br label %S1
 
 S1:
-  %scevgep1 = getelementptr i64* %a, i64 %indvar
+  %scevgep1 = getelementptr i64, i64* %a, i64 %indvar
   %val = load i64* %scevgep1, align 8
   br label %S2
 
 S2:
-  %scevgep2 = getelementptr i64* %a, i64 %indvar
+  %scevgep2 = getelementptr i64, i64* %a, i64 %indvar
   store i64 %val, i64* %scevgep2, align 8
   br label %for.backedge
 

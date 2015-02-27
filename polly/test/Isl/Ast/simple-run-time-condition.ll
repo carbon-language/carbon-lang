@@ -54,7 +54,7 @@ for.j:
   %subscript0 = mul i64 %offset0, %m
   %offset1 = add nsw i64 %j, %q
   %subscript1 = add i64 %offset1, %subscript0
-  %idx = getelementptr inbounds double* %A, i64 %subscript1
+  %idx = getelementptr inbounds double, double* %A, i64 %subscript1
   store double 1.0, double* %idx
   br label %for.j.inc
 
@@ -79,7 +79,7 @@ for.j.1:
   %offset1.1 = add nsw i64 %j.1, %q
   %subscript1.1 = add i64 %offset1.1, %subscript0.1
   %subscript1.2 = sub i64 %subscript1.1, 100
-  %idx.1 = getelementptr inbounds double* %A, i64 %subscript1.2
+  %idx.1 = getelementptr inbounds double, double* %A, i64 %subscript1.2
   store double 1.0, double* %idx.1
   br label %for.j.inc.1
 

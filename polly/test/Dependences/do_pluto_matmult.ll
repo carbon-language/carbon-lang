@@ -22,13 +22,13 @@ do.body:                                          ; preds = %do.cond42, %entry
 
 do.body1:                                         ; preds = %do.cond36, %do.body
   %indvar1 = phi i64 [ %indvar.next2, %do.cond36 ], [ 0, %do.body ] ; <i64> [#uses=3]
-  %arrayidx5 = getelementptr [36 x [49 x double]]* @C, i64 0, i64 %indvar3, i64 %indvar1 ; <double*> [#uses=2]
+  %arrayidx5 = getelementptr [36 x [49 x double]], [36 x [49 x double]]* @C, i64 0, i64 %indvar3, i64 %indvar1 ; <double*> [#uses=2]
   br label %do.body2
 
 do.body2:                                         ; preds = %do.cond, %do.body1
   %indvar = phi i64 [ %indvar.next, %do.cond ], [ 0, %do.body1 ] ; <i64> [#uses=3]
-  %arrayidx13 = getelementptr [36 x [49 x double]]* @A, i64 0, i64 %indvar3, i64 %indvar ; <double*> [#uses=1]
-  %arrayidx22 = getelementptr [36 x [49 x double]]* @B, i64 0, i64 %indvar, i64 %indvar1 ; <double*> [#uses=1]
+  %arrayidx13 = getelementptr [36 x [49 x double]], [36 x [49 x double]]* @A, i64 0, i64 %indvar3, i64 %indvar ; <double*> [#uses=1]
+  %arrayidx22 = getelementptr [36 x [49 x double]], [36 x [49 x double]]* @B, i64 0, i64 %indvar, i64 %indvar1 ; <double*> [#uses=1]
   %tmp6 = load double* %arrayidx5                 ; <double> [#uses=1]
   %mul = fmul double 1.000000e+00, %tmp6          ; <double> [#uses=1]
   %tmp14 = load double* %arrayidx13               ; <double> [#uses=1]

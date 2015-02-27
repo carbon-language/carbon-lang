@@ -47,7 +47,7 @@ for.cond:                                         ; preds = %for.inc, %if
   br i1 %exitcond, label %for.body, label %while.begin
 
 for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   %tmp = trunc i64 %indvars.iv to i32
   store i32 %tmp, i32* %arrayidx, align 4
   br label %for.inc

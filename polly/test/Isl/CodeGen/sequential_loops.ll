@@ -42,7 +42,7 @@ bb:
 
 bb1:                                              ; preds = %bb3, %bb
   %indvar1 = phi i64 [ %indvar.next2, %bb3 ], [ 0, %bb ]
-  %scevgep4 = getelementptr [1024 x i32]* @A, i64 0, i64 %indvar1
+  %scevgep4 = getelementptr [1024 x i32], [1024 x i32]* @A, i64 0, i64 %indvar1
   %exitcond3 = icmp ne i64 %indvar1, 512
   br i1 %exitcond3, label %bb2, label %bb4
 
@@ -60,7 +60,7 @@ bb4:                                              ; preds = %bb1
 bb5:                                              ; preds = %bb7, %bb4
   %indvar = phi i64 [ %indvar.next, %bb7 ], [ 0, %bb4 ]
   %tmp = add i64 %indvar, 512
-  %scevgep = getelementptr [1024 x i32]* @A, i64 0, i64 %tmp
+  %scevgep = getelementptr [1024 x i32], [1024 x i32]* @A, i64 0, i64 %tmp
   %exitcond = icmp ne i64 %indvar, 512
   br i1 %exitcond, label %bb6, label %bb8
 
@@ -85,7 +85,7 @@ bb:
 bb1:                                              ; preds = %bb15, %bb
   %indvar = phi i64 [ %indvar.next, %bb15 ], [ 0, %bb ]
   %i.0 = trunc i64 %indvar to i32
-  %scevgep = getelementptr [1024 x i32]* @A, i64 0, i64 %indvar
+  %scevgep = getelementptr [1024 x i32], [1024 x i32]* @A, i64 0, i64 %indvar
   %tmp = icmp slt i32 %i.0, 1024
   br i1 %tmp, label %bb2, label %bb16
 

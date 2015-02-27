@@ -34,7 +34,7 @@ for.cond1:                                        ; preds = %for.inc, %for.body
 for.body3:                                        ; preds = %for.cond1
   %tmp = shl nsw i64 %indvars.iv, 10
   %tmp6 = add nsw i64 %indvars.iv3, %tmp
-  %arrayidx = getelementptr inbounds i32* %A, i64 %tmp6
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %tmp6
   store i32 0, i32* %arrayidx, align 4
   br label %for.inc
 

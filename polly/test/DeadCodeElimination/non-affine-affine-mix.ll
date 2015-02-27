@@ -29,7 +29,7 @@ for.cond:
 
 S1:
   %rem = srem i32 %i.0, 2
-  %arrayidx = getelementptr inbounds i32* %A, i32 %rem
+  %arrayidx = getelementptr inbounds i32, i32* %A, i32 %rem
   store i32 %i.0, i32* %arrayidx, align 4
   br label %for.inc
 
@@ -46,7 +46,7 @@ for.cond.2:
   br i1 %exitcond.2, label %S2, label %for.end
 
 S2:
-  %arrayidx.2 = getelementptr inbounds i32* %A, i32 %i.2
+  %arrayidx.2 = getelementptr inbounds i32, i32* %A, i32 %i.2
   store i32 %i.2, i32* %arrayidx.2, align 4
   br label %for.inc.2
 

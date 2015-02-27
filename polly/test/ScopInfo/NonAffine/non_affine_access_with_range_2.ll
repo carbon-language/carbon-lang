@@ -32,7 +32,7 @@ bb6:                                              ; preds = %bb11, %bb5
 
 bb7:                                              ; preds = %bb6
   %tmp = mul nsw i64 %indvars.iv1, %indvars.iv
-  %tmp8 = getelementptr inbounds i32* %A, i64 %tmp
+  %tmp8 = getelementptr inbounds i32, i32* %A, i64 %tmp
   %tmp9 = load i32* %tmp8, align 4
   %tmp10 = add nsw i32 %tmp9, 1
   store i32 %tmp10, i32* %tmp8, align 4

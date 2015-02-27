@@ -19,7 +19,7 @@ S1:
 ; return value remains invariant throughout the whole loop.
   %ptr = call float* @getNextBasePtr(float* %A)
   %conv = sitofp i64 %indvar.i to float
-  %arrayidx5 = getelementptr float* %ptr, i64 %indvar.i
+  %arrayidx5 = getelementptr float, float* %ptr, i64 %indvar.i
   store float %conv, float* %arrayidx5, align 4
   store float 1.0, float* %B
   br label %for.i.inc

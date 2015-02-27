@@ -13,7 +13,7 @@ entry:
 for.i:
   %indvar.i = phi i64 [ 0, %entry ], [ %indvar.next.i, %for.i.backedge ]
   %indvar.next.i = add i64 %indvar.i, 1
-  %scevgep = getelementptr i64* %A, i64 %indvar.i
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar.i
   store i64 %indvar.i, i64* %scevgep, align 4
   br i1 true, label %for.j.preheader, label %for.j2
 

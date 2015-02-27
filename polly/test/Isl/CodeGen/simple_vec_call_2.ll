@@ -13,7 +13,7 @@ entry:
 
 body:
   %indvar = phi i64 [ 0, %entry ], [ %indvar_next, %body ]
-  %scevgep = getelementptr [1024 x float**]* @B, i64 0, i64 %indvar
+  %scevgep = getelementptr [1024 x float**], [1024 x float**]* @B, i64 0, i64 %indvar
   %value = load float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 0), align 16
   %result = tail call float** @foo(float %value) nounwind
   store float** %result, float*** %scevgep, align 4

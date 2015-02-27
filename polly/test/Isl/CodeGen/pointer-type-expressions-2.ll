@@ -9,7 +9,7 @@ entry:
 
 body:
   %ptr = phi i8* [ %start, %entry ], [ %ptr2, %body ]
-  %ptr2 = getelementptr inbounds i8* %ptr, i64 1
+  %ptr2 = getelementptr inbounds i8, i8* %ptr, i64 1
   %cmp = icmp eq i8* %ptr2, %end
   store i32 42, i32* %A
   br i1 %cmp, label %exit, label %body

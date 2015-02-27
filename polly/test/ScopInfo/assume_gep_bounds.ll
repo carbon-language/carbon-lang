@@ -49,7 +49,7 @@ for.body6:                                        ; preds = %for.cond4
   %add = add nsw i64 %i.0, %j.0
   %add7 = add nsw i64 %add, %k.0
   %conv = sitofp i64 %add7 to float
-  %arrayidx9 = getelementptr inbounds [20 x [30 x float]]* %A, i64 %i.0, i64 %j.0, i64 %k.0
+  %arrayidx9 = getelementptr inbounds [20 x [30 x float]], [20 x [30 x float]]* %A, i64 %i.0, i64 %j.0, i64 %k.0
   store float %conv, float* %arrayidx9, align 4
   br label %for.inc
 

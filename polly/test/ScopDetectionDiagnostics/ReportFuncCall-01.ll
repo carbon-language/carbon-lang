@@ -23,7 +23,7 @@ for.body.lr.ph:                                   ; preds = %entry
 
 for.body:                                         ; preds = %for.body, %for.body.lr.ph
   %indvar = phi i64 [ 0, %for.body.lr.ph ], [ %indvar.next, %for.body ]
-  %arrayidx = getelementptr double* %A, i64 %indvar, !dbg !12
+  %arrayidx = getelementptr double, double* %A, i64 %indvar, !dbg !12
   %call = tail call double @invalidCall(double* %A) #2, !dbg !12
   store double %call, double* %arrayidx, align 8, !dbg !12, !tbaa !14
   %indvar.next = add i64 %indvar, 1, !dbg !10

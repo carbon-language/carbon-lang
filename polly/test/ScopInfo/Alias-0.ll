@@ -14,10 +14,10 @@ bb.nph:
 
 bb3:                                              ; preds = %bb3, %bb.nph
   %i.06 = phi i64 [ 0, %bb.nph ], [ %tmp, %bb3 ]  ; <i64> [#uses=3]
-  %scevgep = getelementptr i32* %a, i64 %i.06     ; <i32*> [#uses=1]
-  %scevgep7 = getelementptr i32* %iftmp.0.0, i64 %i.06 ; <i32*> [#uses=1]
+  %scevgep = getelementptr i32, i32* %a, i64 %i.06     ; <i32*> [#uses=1]
+  %scevgep7 = getelementptr i32, i32* %iftmp.0.0, i64 %i.06 ; <i32*> [#uses=1]
   %tmp = add i64 %i.06, 1                         ; <i64> [#uses=3]
-  %scevgep8 = getelementptr i32* %iftmp.0.0, i64 %tmp ; <i32*> [#uses=1]
+  %scevgep8 = getelementptr i32, i32* %iftmp.0.0, i64 %tmp ; <i32*> [#uses=1]
   %2 = load i32* %scevgep, align 4                ; <i32> [#uses=1]
   %3 = load i32* %scevgep8, align 4               ; <i32> [#uses=1]
   %4 = shl i32 %3, 1                              ; <i32> [#uses=1]

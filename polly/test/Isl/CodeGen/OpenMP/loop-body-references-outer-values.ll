@@ -18,7 +18,7 @@
 ; IR-LABEL: polly.start:
 ; IR-NEXT:  %0 = bitcast { float* }* %polly.par.userContext to i8*
 ; IR-NEXT:  call void @llvm.lifetime.start(i64 8, i8* %0)
-; IR-NEXT:  %1 = getelementptr inbounds { float* }* %polly.par.userContext, i32 0, i32 0
+; IR-NEXT:  %1 = getelementptr inbounds { float* }, { float* }* %polly.par.userContext, i32 0, i32 0
 ; IR-NEXT:  store float* %A, float** %1
 ; IR-NEXT:  %polly.par.userContext1 = bitcast { float* }* %polly.par.userContext to i8*
 
@@ -35,7 +35,7 @@ for.cond:                                         ; preds = %for.inc, %entry
 
 for.body:                                         ; preds = %for.cond
   %conv = sitofp i64 %i.0 to float
-  %arrayidx = getelementptr inbounds float* %A, i64 %i.0
+  %arrayidx = getelementptr inbounds float, float* %A, i64 %i.0
   store float %conv, float* %arrayidx, align 4
   br label %for.inc
 

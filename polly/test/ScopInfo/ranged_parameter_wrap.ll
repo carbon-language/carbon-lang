@@ -26,7 +26,7 @@ for.cond:                                         ; preds = %for.inc, %entry
 for.body:                                         ; preds = %for.cond
   %add = add i32 %i.0, %tmp
   %idxprom = sext i32 %add to i64
-  %arrayidx = getelementptr inbounds i32* %A, i64 %idxprom
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %idxprom
   store i32 %i.0, i32* %arrayidx, align 4
   br label %for.inc
 

@@ -20,7 +20,7 @@ bb:
   br i1 %brcond, label %store, label %bb.backedge
 
 store:
-  %scevgep = getelementptr i64* %a, i64 %i
+  %scevgep = getelementptr i64, i64* %a, i64 %i
   store i64 %i, i64* %scevgep
   br label %bb.backedge
 
@@ -41,7 +41,7 @@ return:
 ; CHECK:     Stmt_store(c0);
 ; CHECK: }
 
-; CODEGEN:       %[[Pinc:[_a-zA-Z0-9]+]] = getelementptr float* %P, i64 1
+; CODEGEN:       %[[Pinc:[_a-zA-Z0-9]+]] = getelementptr float, float* %P, i64 1
 ; CODEGEN-NEXT:                             icmp uge float* %Q, %[[Pinc]]
-; CODEGEN:       %[[Qinc:[_a-zA-Z0-9]+]] = getelementptr float* %Q, i64 1
+; CODEGEN:       %[[Qinc:[_a-zA-Z0-9]+]] = getelementptr float, float* %Q, i64 1
 ; CODEGEN-NEXT:                             icmp uge float* %P, %[[Qinc]]

@@ -30,7 +30,7 @@ for.i:
 
 S:
   %ptr = load float** %A,  !tbaa !2
-  %scevgep = getelementptr float* %ptr, i64 %indvar
+  %scevgep = getelementptr float, float* %ptr, i64 %indvar
   %val = load float* %scevgep, !tbaa !6
   %sum = fadd float %val, 1.0
   store float %sum, float* %scevgep, !tbaa !6

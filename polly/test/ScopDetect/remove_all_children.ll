@@ -23,7 +23,7 @@ if.end33:                                         ; preds = %while.end30
 
 while.body36:                                     ; preds = %while.body36, %while.body36.lr.ph
   %indvar77 = phi i64 [ 0, %if.end33 ], [ %indvar.next78, %while.body36 ]
-  %arrayidx40 = getelementptr i32* %eclass, i64 0
+  %arrayidx40 = getelementptr i32, i32* %eclass, i64 0
   %indvar.next78 = add i64 %indvar77, 1
   br i1 false, label %while.body36, label %while.end44
 
@@ -32,7 +32,7 @@ while.end44:                                      ; preds = %while.body36, %if.e
 
 while.body50:                                     ; preds = %while.body50, %while.body50.lr.ph
   %indvar79 = phi i64 [ 0, %while.end44 ], [ %indvar.next80, %while.body50 ]
-  %arrayidx55 = getelementptr i32* %eclass, i64 0
+  %arrayidx55 = getelementptr i32, i32* %eclass, i64 0
   store i32 0, i32* %arrayidx55, align 4
   %indvar.next80 = add i64 %indvar79, 1
   br i1 false, label %while.body50, label %while.cond.loopexit

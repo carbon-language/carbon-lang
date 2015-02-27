@@ -20,7 +20,7 @@ entry.split:                                      ; preds = %entry
 for.body:                                         ; preds = %entry.split, %for.body
   %indvar = phi i64 [ 0, %entry.split ], [ %indvar.next, %for.body ]
   %mul = mul nsw i64 %indvar, %indvar
-  %arrayidx = getelementptr inbounds i64* %A, i64 %mul
+  %arrayidx = getelementptr inbounds i64, i64* %A, i64 %mul
   store i64 %indvar, i64* %arrayidx, align 4
   %indvar.next = add nsw i64 %indvar, 1
   %exitcond = icmp ne i64 %indvar.next, 1024

@@ -21,7 +21,7 @@ entry:
 
 bb1:                                              ; preds = %bb2.preheader, %bb1
   %indvar = phi i64 [ 0, %bb2.preheader ], [ %indvar.next, %bb1 ] ; <i64> [#uses=2]
-  %scevgep = getelementptr [128 x i64]* %a, i64 %indvar, i64 %tmp10 ; <i64*> [#uses=1]
+  %scevgep = getelementptr [128 x i64], [128 x i64]* %a, i64 %indvar, i64 %tmp10 ; <i64*> [#uses=1]
   store i64 0, i64* %scevgep, align 8
   %indvar.next = add i64 %indvar, 1               ; <i64> [#uses=2]
   %exitcond = icmp eq i64 %indvar.next, %tmp9     ; <i1> [#uses=1]

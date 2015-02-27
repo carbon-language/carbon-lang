@@ -4,13 +4,13 @@
 ; them in the RTC's. We use i8* as max pointer type.
 ;
 ; CHECK: entry:
-; CHECK:   %polly.access.B = getelementptr float** %B, i64 1024
-; CHECK:   %polly.access.A = getelementptr double** %A, i64 0
+; CHECK:   %polly.access.B = getelementptr float*, float** %B, i64 1024
+; CHECK:   %polly.access.A = getelementptr double*, double** %A, i64 0
 ; CHECK:   %[[paBb:[._a-zA-Z0-9]]] = bitcast float** %polly.access.B to i8*
 ; CHECK:   %[[paAb:[._a-zA-Z0-9]]] = bitcast double** %polly.access.A to i8*
 ; CHECK:   %[[ALeB:[._a-zA-Z0-9]]] = icmp ule i8* %[[paBb]], %[[paAb]]
-; CHECK:   %polly.access.A1 = getelementptr double** %A, i64 1024
-; CHECK:   %polly.access.B2 = getelementptr float** %B, i64 0
+; CHECK:   %polly.access.A1 = getelementptr double*, double** %A, i64 1024
+; CHECK:   %polly.access.B2 = getelementptr float*, float** %B, i64 0
 ; CHECK:   %[[paA1b:[._a-zA-Z0-9]]] = bitcast double** %polly.access.A1 to i8*
 ; CHECK:   %[[paB2b:[._a-zA-Z0-9]]] = bitcast float** %polly.access.B2 to i8*
 ; CHECK:   %[[A1LeB2:[._a-zA-Z0-9]]] = icmp ule i8* %[[paA1b]], %[[paB2b]]
@@ -35,10 +35,10 @@ for.cond:                                         ; preds = %for.inc, %entry
   br i1 %exitcond, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr inbounds float** %B, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds float*, float** %B, i64 %indvars.iv
   %tmp = load float** %arrayidx, align 8
   %tmp1 = bitcast float* %tmp to double*
-  %arrayidx2 = getelementptr inbounds double** %A, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds double*, double** %A, i64 %indvars.iv
   store double* %tmp1, double** %arrayidx2, align 8
   br label %for.inc
 

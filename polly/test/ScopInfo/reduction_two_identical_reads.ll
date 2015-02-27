@@ -23,10 +23,10 @@ for.cond:                                         ; preds = %for.inc, %entry
   br i1 %exitcond, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr inbounds i32* %A, i32 %i.0
+  %arrayidx = getelementptr inbounds i32, i32* %A, i32 %i.0
   %tmp = load i32* %arrayidx, align 4
   %add = add nsw i32 %tmp, %tmp
-  %arrayidx2 = getelementptr inbounds i32* %A, i32 %i.0
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i32 %i.0
   store i32 %add, i32* %arrayidx2, align 4
   br label %for.inc
 
@@ -48,12 +48,12 @@ for.cond:                                         ; preds = %for.inc, %entry
   br i1 %exitcond, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr inbounds i32* %A, i32 %i.0
+  %arrayidx = getelementptr inbounds i32, i32* %A, i32 %i.0
   %tmp = load i32* %arrayidx, align 4
-  %arrayidxCopy = getelementptr inbounds i32* %A, i32 %i.0
+  %arrayidxCopy = getelementptr inbounds i32, i32* %A, i32 %i.0
   %tmpCopy = load i32* %arrayidxCopy, align 4
   %add = add nsw i32 %tmp, %tmpCopy
-  %arrayidx2 = getelementptr inbounds i32* %A, i32 %i.0
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i32 %i.0
   store i32 %add, i32* %arrayidx2, align 4
   br label %for.inc
 

@@ -44,7 +44,7 @@ for.k:
   %subscript2 = mul i64 %subscript1, %o
   %offset2 = add nsw i64 %k, 7
   %subscript3 = add i64 %subscript2, %offset2
-  %idx = getelementptr inbounds double* %A, i64 %subscript3
+  %idx = getelementptr inbounds double, double* %A, i64 %subscript3
   store double 1.0, double* %idx
 
   %offset3 = add nsw i64 %i, 13
@@ -54,7 +54,7 @@ for.k:
   %subscript6 = mul i64 %subscript5, %o
   %offset5 = add nsw i64 %k, 17
   %subscript7 = add i64 %subscript6, %offset5
-  %idx1 = getelementptr inbounds double* %A, i64 %subscript7
+  %idx1 = getelementptr inbounds double, double* %A, i64 %subscript7
   store double 11.0, double* %idx1
 
   br label %for.k.inc

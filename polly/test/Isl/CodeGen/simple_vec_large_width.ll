@@ -11,8 +11,8 @@ define void @simple_vec_large_width() nounwind {
 
 ; <label>:1                                       ; preds = %4, %0
   %indvar = phi i64 [ %indvar.next, %4 ], [ 0, %0 ]
-  %scevgep = getelementptr [1024 x float]* @B, i64 0, i64 %indvar
-  %scevgep1 = getelementptr [1024 x float]* @A, i64 0, i64 %indvar
+  %scevgep = getelementptr [1024 x float], [1024 x float]* @B, i64 0, i64 %indvar
+  %scevgep1 = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
   %exitcond = icmp ne i64 %indvar, 15
   br i1 %exitcond, label %2, label %5
 

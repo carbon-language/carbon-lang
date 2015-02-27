@@ -33,10 +33,10 @@ for.body3:                                        ; preds = %for.body3, %for.con
   %i.020 = phi i64 [ 0, %for.cond1.preheader ], [ %inc, %for.body3 ]
   %add = add nsw i64 %i.020, %mul
   %add4 = add nsw i64 %add, 1
-  %arrayidx = getelementptr inbounds float* %input, i64 %add4
+  %arrayidx = getelementptr inbounds float, float* %input, i64 %add4
   %0 = load float* %arrayidx, align 8
   %mul5 = fmul float %0, %0
-  %arrayidx9 = getelementptr inbounds float* %input, i64 %add
+  %arrayidx9 = getelementptr inbounds float, float* %input, i64 %add
   store float %mul5, float* %arrayidx9, align 8
   %inc = add nsw i64 %i.020, 1
   %exitcond = icmp eq i64 %inc, 63

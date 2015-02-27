@@ -20,7 +20,7 @@ entry:
 
 for.i:
   %indvar = phi i64 [ 0, %entry ], [ %indvar.next, %merge ]
-  %scevgep = getelementptr i64* %A, i64 %indvar
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar
   %cmp = icmp eq i64 %indvar, 3
   br i1 %cmp, label %then, label %else
 

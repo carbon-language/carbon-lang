@@ -12,7 +12,7 @@ if.cond:
   br i1 false, label %if.then, label %if.end
 
 if.then:
-  %ptr = getelementptr [1536 x float]* @A, i64 0, i32 23
+  %ptr = getelementptr [1536 x float], [1536 x float]* @A, i64 0, i32 23
   store float undef, float* %ptr
   br label %if.end
 

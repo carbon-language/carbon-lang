@@ -16,7 +16,7 @@ sw.bb3:
 for.body:
   %i.16 = phi i32 [ %inc04, %for.body ], [ 0, %sw.bb3 ]
   %idxprom11 = sext i32 %i.16 to i64
-  %arrayidx12 = getelementptr inbounds double* %tmp, i64 %idxprom11
+  %arrayidx12 = getelementptr inbounds double, double* %tmp, i64 %idxprom11
   store double 1.0, double* %arrayidx12, align 8
   %inc04 = add nsw i32 %i.16, 1
   %cmp7 = icmp slt i32 %inc04, %sendcount

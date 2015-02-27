@@ -23,7 +23,7 @@ bb.nph:                                           ; preds = %bb4
 bb7:                                              ; preds = %bb7, %bb.nph
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %bb7 ] ; <i64> [#uses=2]
   %tmp21 = add i64 %tmp, %indvar                  ; <i64> [#uses=1]
-  %scevgep = getelementptr [72 x i32]* @edge.8265, i64 0, i64 %tmp21 ; <i32*> [#uses=1]
+  %scevgep = getelementptr [72 x i32], [72 x i32]* @edge.8265, i64 0, i64 %tmp21 ; <i32*> [#uses=1]
   store i32 undef, i32* %scevgep, align 4
   %indvar.next = add i64 %indvar, 1               ; <i64> [#uses=1]
   br i1 undef, label %bb10, label %bb7

@@ -47,14 +47,14 @@ for.body6.us:                                     ; preds = %for.body6.us, %bb.n
 
 bb.nph.us:                                        ; preds = %bb.nph31.split.us, %for.inc06.us
   %indvar = phi i64 [ %indvar.next, %for.inc06.us ], [ 0, %bb.nph31.split.us ] ; <i64> [#uses=3]
-  %arrayidx.us = getelementptr [100 x i32]* @A, i64 0, i64 %indvar ; <i32*> [#uses=2]
+  %arrayidx.us = getelementptr [100 x i32], [100 x i32]* @A, i64 0, i64 %indvar ; <i32*> [#uses=2]
   %i.027.us = trunc i64 %indvar to i32            ; <i32> [#uses=2]
   store i32 %i.027.us, i32* %arrayidx.us
   br label %for.body6.us
 
 for.end19:                                        ; preds = %for.inc06.us
   %idxprom21 = sext i32 %z to i64                 ; <i64> [#uses=1]
-  %arrayidx22 = getelementptr inbounds [100 x i32]* @A, i64 0, i64 %idxprom21 ; <i32*> [#uses=1]
+  %arrayidx22 = getelementptr inbounds [100 x i32], [100 x i32]* @A, i64 0, i64 %idxprom21 ; <i32*> [#uses=1]
   %tmp23 = load i32* %arrayidx22                  ; <i32> [#uses=1]
   ret i32 %tmp23
 }

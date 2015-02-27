@@ -18,7 +18,7 @@ for.cond:                                         ; preds = %for.body, %entry
   br i1 %cmp, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr inbounds [2048 x i64]* @b, i64 0, i64 %indvar
+  %arrayidx = getelementptr inbounds [2048 x i64], [2048 x i64]* @b, i64 0, i64 %indvar
   store i64 1, i64* %arrayidx
   %inc = add nsw i64 %indvar, 1
   br label %for.cond

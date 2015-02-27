@@ -18,7 +18,7 @@ for.j:
 
 if.then:
   %mul = mul nsw i64 %n, %k
-  %arrayidx = getelementptr float* %A, i64 %mul
+  %arrayidx = getelementptr float, float* %A, i64 %mul
   store float 0.000000e+00, float* %arrayidx
   br label %return
 

@@ -52,7 +52,7 @@ for.j:
 
 ; SCALARACCESS: %init_2 = load i64* %init_ptr
 ; SCALARACCESS: %init_sum = add i64 %init, %init_2
-  %scevgep = getelementptr i64* %A, i64 %indvar.j
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar.j
   store i64 %init_sum, i64* %scevgep
   %indvar.j.next = add nsw i64 %indvar.j, 1
   %exitcond.j = icmp eq i64 %indvar.j.next, %N

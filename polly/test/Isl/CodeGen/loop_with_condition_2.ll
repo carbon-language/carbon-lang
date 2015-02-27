@@ -27,8 +27,8 @@ entry:
 
 for.cond:                                         ; preds = %for.inc, %entry
   %indvar = phi i64 [ %indvar.next, %for.inc ], [ 0, %entry ]
-  %arrayidx = getelementptr [1024 x i32]* @A, i64 0, i64 %indvar
-  %arrayidx10 = getelementptr [1024 x i32]* @B, i64 0, i64 %indvar
+  %arrayidx = getelementptr [1024 x i32], [1024 x i32]* @A, i64 0, i64 %indvar
+  %arrayidx10 = getelementptr [1024 x i32], [1024 x i32]* @B, i64 0, i64 %indvar
   %tmp2 = add i64 %tmp1, %indvar
   %sub = trunc i64 %tmp2 to i32
   %exitcond = icmp ne i64 %indvar, 1024
@@ -68,7 +68,7 @@ entry:
 
 for.cond:                                         ; preds = %for.inc, %entry
   %indvar1 = phi i64 [ %indvar.next2, %for.inc ], [ 0, %entry ]
-  %arrayidx = getelementptr [1024 x i32]* @B, i64 0, i64 %indvar1
+  %arrayidx = getelementptr [1024 x i32], [1024 x i32]* @B, i64 0, i64 %indvar1
   %i.0 = trunc i64 %indvar1 to i32
   %cmp = icmp slt i32 %i.0, 1024
   br i1 %cmp, label %for.body, label %for.end
@@ -93,7 +93,7 @@ for.end:                                          ; preds = %for.cond
 
 for.cond6:                                        ; preds = %for.inc12, %for.end
   %indvar = phi i64 [ %indvar.next, %for.inc12 ], [ 0, %for.end ]
-  %arrayidx15 = getelementptr [1024 x i32]* @A, i64 0, i64 %indvar
+  %arrayidx15 = getelementptr [1024 x i32], [1024 x i32]* @A, i64 0, i64 %indvar
   %i.1 = trunc i64 %indvar to i32
   %cmp8 = icmp slt i32 %i.1, 1024
   br i1 %cmp8, label %for.body9, label %for.end35

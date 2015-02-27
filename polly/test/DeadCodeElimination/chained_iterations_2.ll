@@ -19,7 +19,7 @@ entry:
 
 for.body.1:
   %indvar.1 = phi i64 [ 0, %entry ], [ %indvar.next.1, %for.body.1 ]
-  %arrayidx.1 = getelementptr [200 x i32]* %A, i64 0, i64 %indvar.1
+  %arrayidx.1 = getelementptr [200 x i32], [200 x i32]* %A, i64 0, i64 %indvar.1
   store i32 2, i32* %arrayidx.1, align 4
   %indvar.next.1 = add i64 %indvar.1, 1
   %exitcond.1 = icmp ne i64 %indvar.next.1, 200
@@ -30,9 +30,9 @@ exit.1:
 
 for.body.2:
   %indvar.2 = phi i64 [ 0, %exit.1 ], [ %indvar.next.2, %for.body.2 ]
-  %arrayidx.2.a = getelementptr [200 x i32]* %A, i64 0, i64 %indvar.2
+  %arrayidx.2.a = getelementptr [200 x i32], [200 x i32]* %A, i64 0, i64 %indvar.2
   %val = load i32* %arrayidx.2.a, align 4
-  %arrayidx.2.b = getelementptr [200 x i32]* %B, i64 0, i64 %indvar.2
+  %arrayidx.2.b = getelementptr [200 x i32], [200 x i32]* %B, i64 0, i64 %indvar.2
   store i32 %val, i32* %arrayidx.2.b, align 4
   %indvar.next.2 = add i64 %indvar.2, 1
   %exitcond.2 = icmp ne i64 %indvar.next.2, 200
@@ -43,8 +43,8 @@ exit.2:
 
 for.body.3:
   %indvar.3 = phi i64 [ 0, %exit.2 ], [ %indvar.next.3, %for.body.3 ]
-  %arrayidx.3.a = getelementptr [200 x i32]* %A, i64 0, i64 %indvar.3
-  %arrayidx.3.b = getelementptr [200 x i32]* %B, i64 0, i64 %indvar.3
+  %arrayidx.3.a = getelementptr [200 x i32], [200 x i32]* %A, i64 0, i64 %indvar.3
+  %arrayidx.3.b = getelementptr [200 x i32], [200 x i32]* %B, i64 0, i64 %indvar.3
   store i32 5, i32* %arrayidx.3.a, align 4
   store i32 5, i32* %arrayidx.3.b, align 4
   %indvar.next.3 = add i64 %indvar.3, 1

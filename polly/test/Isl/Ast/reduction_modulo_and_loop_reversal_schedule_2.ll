@@ -62,7 +62,7 @@ for.body5:                                        ; preds = %for.cond2
 
 S1:                                               ; preds = %for.body5
   %add6 = add nsw i32 %i1.0, 1
-  %arrayidx7 = getelementptr inbounds i32* %A, i32 %add6
+  %arrayidx7 = getelementptr inbounds i32, i32* %A, i32 %add6
   store i32 1, i32* %arrayidx7, align 4
   br label %for.inc8
 

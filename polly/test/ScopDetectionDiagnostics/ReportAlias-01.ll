@@ -24,8 +24,8 @@ entry.split:                                      ; preds = %entry
 
 for.body:                                         ; preds = %entry.split, %for.body
   %indvar = phi i64 [ 0, %entry.split ], [ %indvar.next, %for.body ]
-  %arrayidx = getelementptr i32* %B, i64 %indvar, !dbg !22
-  %arrayidx2 = getelementptr i32* %A, i64 %indvar, !dbg !22
+  %arrayidx = getelementptr i32, i32* %B, i64 %indvar, !dbg !22
+  %arrayidx2 = getelementptr i32, i32* %A, i64 %indvar, !dbg !22
   %0 = load i32* %arrayidx, align 4, !dbg !22
   store i32 %0, i32* %arrayidx2, align 4, !dbg !22
   tail call void @llvm.dbg.value(metadata !{null}, i64 0, metadata !18), !dbg !20

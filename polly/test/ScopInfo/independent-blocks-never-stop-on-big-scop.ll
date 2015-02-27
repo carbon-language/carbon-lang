@@ -8,7 +8,7 @@ define i32 @main() nounwind uwtable readnone {
 
 ; <label>:1                                       ; preds = %1, %0
   %indvars.iv3 = phi i64 [ 0, %0 ], [ %indvars.iv.next4, %1 ]
-  %2 = getelementptr inbounds [100 x i32]* %arr, i64 0, i64 %indvars.iv3
+  %2 = getelementptr inbounds [100 x i32], [100 x i32]* %arr, i64 0, i64 %indvars.iv3
   %3 = trunc i64 %indvars.iv3 to i32
   store i32 %3, i32* %2, align 4, !tbaa !0
   %indvars.iv.next4 = add i64 %indvars.iv3, 1
@@ -18,7 +18,7 @@ define i32 @main() nounwind uwtable readnone {
 
 .preheader:                                       ; preds = %.preheader, %1
   %indvars.iv = phi i64 [ %indvars.iv.next, %.preheader ], [ 0, %1 ]
-  %4 = getelementptr inbounds [100 x i32]* %arr, i64 0, i64 %indvars.iv
+  %4 = getelementptr inbounds [100 x i32], [100 x i32]* %arr, i64 0, i64 %indvars.iv
   %5 = load i32* %4, align 4, !tbaa !0
   %6 = xor i32 %5, -1
   %7 = shl i32 %5, 15

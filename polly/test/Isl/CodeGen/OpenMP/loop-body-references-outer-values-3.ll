@@ -24,9 +24,9 @@ entry:
 
 for.body:
   %indvar = phi i64 [ %indvar.next, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr inbounds i64** %tmp, i64 0
+  %arrayidx = getelementptr inbounds i64*, i64** %tmp, i64 0
   %tmp1 = load i64** %arrayidx, align 8
-  %arrayidx.2 = getelementptr inbounds i64* %tmp1, i64 %indvar
+  %arrayidx.2 = getelementptr inbounds i64, i64* %tmp1, i64 %indvar
   store i64 1, i64* %arrayidx.2, align 4
   %indvar.next = add nsw i64 %indvar, 1
   %cmp = icmp slt i64 %indvar.next, %cols
@@ -48,13 +48,13 @@ end:
 define void @bar(i64 %cols, i8* noalias %call) {
 entry:
   %tmp = bitcast i8* %call to i64**
-  %arrayidx = getelementptr inbounds i64** %tmp, i64 0
+  %arrayidx = getelementptr inbounds i64*, i64** %tmp, i64 0
   br label %for.body
 
 for.body:
   %indvar = phi i64 [ %indvar.next, %for.body ], [ 0, %entry ]
   %tmp1 = load i64** %arrayidx, align 8
-  %arrayidx.2 = getelementptr inbounds i64* %tmp1, i64 %indvar
+  %arrayidx.2 = getelementptr inbounds i64, i64* %tmp1, i64 %indvar
   store i64 1, i64* %arrayidx.2, align 4
   %indvar.next = add nsw i64 %indvar, 1
   %cmp = icmp slt i64 %indvar.next, %cols

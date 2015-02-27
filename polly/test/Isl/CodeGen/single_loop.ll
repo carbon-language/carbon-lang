@@ -27,14 +27,14 @@ target triple = "x86_64-unknown-linux-gnu"
 define i32 @main() nounwind {
 entry:
   %A = alloca [1024 x i32], align 4               ; <[1024 x i32]*> [#uses=3]
-  %arraydecay = getelementptr inbounds [1024 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
+  %arraydecay = getelementptr inbounds [1024 x i32], [1024 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
   %conv = bitcast i32* %arraydecay to i8*         ; <i8*> [#uses=1]
   call void @llvm.memset.p0i8.i64(i8* %conv, i8 0, i64 4096, i32 1, i1 false)
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
   %indvar1 = phi i64 [ %indvar.next2, %for.inc ], [ 0, %entry ] ; <i64> [#uses=3]
-  %arrayidx = getelementptr [1024 x i32]* %A, i64 0, i64 %indvar1 ; <i32*> [#uses=1]
+  %arrayidx = getelementptr [1024 x i32], [1024 x i32]* %A, i64 0, i64 %indvar1 ; <i32*> [#uses=1]
   %exitcond = icmp ne i64 %indvar1, 1024          ; <i1> [#uses=1]
   br i1 %exitcond, label %for.body, label %for.end
 
@@ -51,7 +51,7 @@ for.end:                                          ; preds = %for.cond
 
 for.cond5:                                        ; preds = %for.inc07, %for.end
   %indvar = phi i64 [ %indvar.next, %for.inc07 ], [ 0, %for.end ] ; <i64> [#uses=3]
-  %arrayidx13 = getelementptr [1024 x i32]* %A, i64 0, i64 %indvar ; <i32*> [#uses=1]
+  %arrayidx13 = getelementptr [1024 x i32], [1024 x i32]* %A, i64 0, i64 %indvar ; <i32*> [#uses=1]
   %i.1 = trunc i64 %indvar to i32                 ; <i32> [#uses=1]
   %cmp7 = icmp slt i32 %i.1, 1024                 ; <i1> [#uses=1]
   br i1 %cmp7, label %for.body9, label %for.end20

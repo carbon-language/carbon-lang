@@ -32,12 +32,12 @@ for.cond1:                                        ; preds = %for.inc, %for.body
   br i1 %exitcond, label %for.body3, label %for.end
 
 for.body3:                                        ; preds = %for.cond1
-  %arrayidx = getelementptr inbounds i32* %sums, i32 %i.0
+  %arrayidx = getelementptr inbounds i32, i32* %sums, i32 %i.0
   %tmp = load i32* %arrayidx, align 4
   %add = add nsw i32 %tmp, 5
   store i32 %add, i32* %arrayidx, align 4
   %add4 = add nsw i32 %i.0, 10
-  %arrayidx5 = getelementptr inbounds i32* %sums, i32 %add4
+  %arrayidx5 = getelementptr inbounds i32, i32* %sums, i32 %add4
   %tmp2 = load i32* %arrayidx5, align 4
   %mul = mul nsw i32 %tmp2, 5
   store i32 %mul, i32* %arrayidx5, align 4

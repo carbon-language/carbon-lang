@@ -20,17 +20,17 @@ for.cond:                                         ; preds = %for.inc, %entry
   br i1 %cmp, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr inbounds i32* %A, i32 %i.0
+  %arrayidx = getelementptr inbounds i32, i32* %A, i32 %i.0
   %tmp = load i32* %arrayidx, align 4
   %add = add nsw i32 %tmp, 1
   %add1 = add nsw i32 %i.0, 7
-  %arrayidx2 = getelementptr inbounds i32* %A, i32 %add1
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i32 %add1
   store i32 %add, i32* %arrayidx2, align 4
-  %arrayidx3 = getelementptr inbounds i32* %B, i32 %i.0
+  %arrayidx3 = getelementptr inbounds i32, i32* %B, i32 %i.0
   %tmp1 = load i32* %arrayidx3, align 4
   %add4 = add nsw i32 %tmp1, 1
   %add5 = add nsw i32 %i.0, 5
-  %arrayidx6 = getelementptr inbounds i32* %B, i32 %add5
+  %arrayidx6 = getelementptr inbounds i32, i32* %B, i32 %add5
   store i32 %add4, i32* %arrayidx6, align 4
   br label %for.inc
 

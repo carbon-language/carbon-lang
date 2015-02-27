@@ -25,10 +25,10 @@ for.cond:                                         ; preds = %for.inc, %entry
 
 for.body:                                         ; preds = %for.cond
   %tmp = shl nsw i64 %indvars.iv, 1
-  %arrayidx = getelementptr inbounds i32* %B, i64 %tmp
+  %arrayidx = getelementptr inbounds i32, i32* %B, i64 %tmp
   %tmp4 = load i32* %arrayidx, align 4
   %tmp5 = shl nsw i64 %indvars.iv, 1
-  %arrayidx3 = getelementptr inbounds i32* %A, i64 %tmp5
+  %arrayidx3 = getelementptr inbounds i32, i32* %A, i64 %tmp5
   store i32 %tmp4, i32* %arrayidx3, align 4
   br label %for.inc
 

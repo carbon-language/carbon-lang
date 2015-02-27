@@ -32,7 +32,7 @@ for.i:
   %i = phi i64 [ 0, %entry ], [ %i.inc, %for.i ]
   %tmp = mul nsw i64 %i, %n
   %vlaarrayidx.sum = add i64 %i, %tmp
-  %arrayidx = getelementptr inbounds double* %A, i64 %vlaarrayidx.sum
+  %arrayidx = getelementptr inbounds double, double* %A, i64 %vlaarrayidx.sum
   store double 1.0, double* %arrayidx
   %i.inc = add nsw i64 %i, 1
   %i.exitcond = icmp eq i64 %i.inc, %n

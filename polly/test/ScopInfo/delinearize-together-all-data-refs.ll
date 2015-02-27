@@ -51,10 +51,10 @@ for.body6.lr.ph:                                  ; preds = %for.cond4.preheader
 for.body6:                                        ; preds = %for.body6, %for.body6.lr.ph
   %k.032 = phi i64 [ 0, %for.body6.lr.ph ], [ %inc, %for.body6 ]
   %arrayidx8.sum = add i64 %arrayidx.sum, %k.032
-  %arrayidx9 = getelementptr inbounds double* %A, i64 %arrayidx8.sum
+  %arrayidx9 = getelementptr inbounds double, double* %A, i64 %arrayidx8.sum
   store double 1.000000e+00, double* %arrayidx9, align 8
   %arrayidx10.sum = add i64 %k.032, %2
-  %arrayidx12 = getelementptr inbounds double* %A, i64 %arrayidx10.sum
+  %arrayidx12 = getelementptr inbounds double, double* %A, i64 %arrayidx10.sum
   store double 2.000000e+00, double* %arrayidx12, align 8
   %inc = add nsw i64 %k.032, 1
   %osub = sub nsw i64 %o, 7

@@ -47,7 +47,7 @@ for.j:
   %subscript1 = add i64 %j, %subscript0
   %subscript2 = mul i64 %subscript1, %o
   %subscript = add i64 %subscript2, %k
-  %idx = getelementptr inbounds double* %A, i64 %subscript
+  %idx = getelementptr inbounds double, double* %A, i64 %subscript
   store double 1.0, double* %idx
   br label %for.j.inc
 

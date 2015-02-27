@@ -55,7 +55,7 @@ for.i.head1:
 for.i:
   %indvar = phi i64 [ 0, %for.i.head1], [ %indvar.next, %for.i ]
   fence seq_cst
-  %scevgep = getelementptr i64* %A, i64 %indvar
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar
   store i64 %indvar, i64* %scevgep
   %indvar.next = add nsw i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar.next, %N

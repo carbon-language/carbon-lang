@@ -11,7 +11,7 @@
 ; compute runtime alias checks but treat it as if it was a char array.
 ;
 ; CHECK: %polly.access.cast.S = bitcast %struct.st* %S to i8*
-; CHECK: %polly.access.S = getelementptr i8* %polly.access.cast.S, i64 1424
+; CHECK: %polly.access.S = getelementptr i8, i8* %polly.access.cast.S, i64 1424
 ;
 ;    struct st {
 ;      int Dummy[100];
@@ -37,10 +37,10 @@ for.cond:                                         ; preds = %for.inc, %entry
   br i1 %exitcond, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr inbounds %struct.st* %S, i64 0, i32 1, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds %struct.st, %struct.st* %S, i64 0, i32 1, i64 %indvars.iv
   %tmp = load i8* %arrayidx, align 1
   %conv = sext i8 %tmp to i32
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %conv, i32* %arrayidx2, align 4
   br label %for.inc
 

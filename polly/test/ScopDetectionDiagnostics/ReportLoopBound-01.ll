@@ -21,7 +21,7 @@ entry.split:                                      ; preds = %entry
   tail call void @llvm.dbg.value(metadata i32 %n, i64 0, metadata !15), !dbg !16
   tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !18), !dbg !20
   %idxprom = sext i32 %n to i64, !dbg !21
-  %arrayidx = getelementptr inbounds i32* %A, i64 %idxprom, !dbg !21
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %idxprom, !dbg !21
   %0 = load i32* %arrayidx, align 4, !dbg !21
   %cmp3 = icmp sgt i32 %0, 0, !dbg !21
   br i1 %cmp3, label %for.body.lr.ph, label %for.end, !dbg !21
@@ -31,7 +31,7 @@ for.body.lr.ph:                                   ; preds = %entry.split
 
 for.body:                                         ; preds = %for.body.lr.ph, %for.body
   %indvar = phi i64 [ 0, %for.body.lr.ph ], [ %indvar.next, %for.body ]
-  %arrayidx2 = getelementptr i32* %A, i64 %indvar, !dbg !24
+  %arrayidx2 = getelementptr i32, i32* %A, i64 %indvar, !dbg !24
   %1 = add i64 %indvar, 1, !dbg !24
   %inc = trunc i64 %1 to i32, !dbg !21
   store i32 0, i32* %arrayidx2, align 4, !dbg !24

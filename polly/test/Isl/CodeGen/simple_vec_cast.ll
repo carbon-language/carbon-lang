@@ -11,7 +11,7 @@ bb:
 
 bb1:                                              ; preds = %bb3, %bb
   %indvar = phi i64 [ %indvar.next, %bb3 ], [ 0, %bb ]
-  %scevgep = getelementptr [1024 x double]* @B, i64 0, i64 %indvar
+  %scevgep = getelementptr [1024 x double], [1024 x double]* @B, i64 0, i64 %indvar
   %exitcond = icmp ne i64 %indvar, 4
   br i1 %exitcond, label %bb2, label %bb4
 

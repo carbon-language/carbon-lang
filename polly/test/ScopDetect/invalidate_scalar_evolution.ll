@@ -24,7 +24,7 @@ for.i:
   %indvar.p2 = phi i64 [ 0, %pre ], [ %indvar.p2.next, %for.i ]
   %sum = add i64 %indvar, %indvar.p1
   %sum2 = sub i64 %sum, %indvar.p2
-  %scevgep = getelementptr i64* %A, i64 %indvar
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar
   store i64 %indvar, i64* %scevgep
   %indvar.next = add nsw i64 %indvar, 1
   %indvar.p1.next = add nsw i64 %indvar.p1, %p_tmp

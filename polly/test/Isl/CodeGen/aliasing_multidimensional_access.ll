@@ -6,7 +6,7 @@
 ; CHECK:  %[[TMP1:[._0-9a-zA-Z]*]] = add i64 %[[TMP0]], 149
 ; CHECK:  %[[TMP2:[._0-9a-zA-Z]*]] = mul i64 %[[TMP1]], %p
 ; CHECK:  %[[TMP3:[._0-9a-zA-Z]*]] = add i64 %[[TMP2]], 150
-; CHECK:  %polly.access.A{{[0-9]*}} = getelementptr double* %A, i64 %[[TMP3]]
+; CHECK:  %polly.access.A{{[0-9]*}} = getelementptr double, double* %A, i64 %[[TMP3]]
 ;
 ;    void foo(long n, long m, long p, double A[n][m][p], int *B) {
 ;      for (long i = 0; i < 100; i++)
@@ -43,7 +43,7 @@ for.cond4:                                        ; preds = %for.inc, %for.body3
   br i1 %exitcond, label %for.body6, label %for.end
 
 for.body6:                                        ; preds = %for.cond4
-  %arrayidx = getelementptr inbounds i32* %B, i64 %k.0
+  %arrayidx = getelementptr inbounds i32, i32* %B, i64 %k.0
   %tmp3 = load i32* %arrayidx, align 2
   %conv = sitofp i32 %tmp3 to double
   %tmp4 = mul nuw i64 %m, %p
@@ -51,7 +51,7 @@ for.body6:                                        ; preds = %for.cond4
   %tmp6 = mul nsw i64 %j.0, %p
   %arrayidx7.sum = add i64 %tmp5, %tmp6
   %arrayidx8.sum = add i64 %arrayidx7.sum, %k.0
-  %arrayidx9 = getelementptr inbounds double* %A, i64 %arrayidx8.sum
+  %arrayidx9 = getelementptr inbounds double, double* %A, i64 %arrayidx8.sum
   store double %conv, double* %arrayidx9, align 8
   br label %for.inc
 

@@ -17,7 +17,7 @@ entry:
 
 for.body:
   %i.02 = phi i32 [ %add, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr inbounds i8* %a, i64 0
+  %arrayidx = getelementptr inbounds i8, i8* %a, i64 0
   store i8 2, i8* %arrayidx, align 1
   %add = add nsw i32 %i.02, 1
   %cmp = icmp slt i32 %add, %mul

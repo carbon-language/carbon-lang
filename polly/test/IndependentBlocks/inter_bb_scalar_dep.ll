@@ -43,7 +43,7 @@ for.j:
 ; CHECK: %init.loadarray = load i64* %init.s2a
 ; CHECK: %init_plus_two = add i64 %init.loadarray, 2
 ; SCALARACCESS: %init_plus_two = add i64 %init, 2
-  %scevgep = getelementptr i64* %A, i64 %indvar.j
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar.j
   store i64 %init_plus_two, i64* %scevgep
   %indvar.j.next = add nsw i64 %indvar.j, 1
   %exitcond.j = icmp eq i64 %indvar.j.next, %N

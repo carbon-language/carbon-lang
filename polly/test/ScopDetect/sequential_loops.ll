@@ -22,7 +22,7 @@ entry:
 
 for.i.1:
   %indvar = phi i64 [ 0, %entry ], [ %indvar.next, %for.i.1 ]
-  %scevgep = getelementptr i64* %A, i64 %indvar
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar
   store i64 %indvar, i64* %scevgep
   %indvar.next = add nsw i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar.next, %N
@@ -30,7 +30,7 @@ for.i.1:
 
 for.i.2:
   %indvar.2 = phi i64 [ 0, %for.i.1 ], [ %indvar.next.2, %for.i.2 ]
-  %scevgep.2 = getelementptr i64* %A, i64 %indvar.2
+  %scevgep.2 = getelementptr i64, i64* %A, i64 %indvar.2
   store i64 %indvar.2, i64* %scevgep.2
   %indvar.next.2 = add nsw i64 %indvar.2, 1
   %exitcond.2 = icmp eq i64 %indvar.next.2, %N
@@ -69,7 +69,7 @@ entry:
 
 for.i.1:
   %indvar = phi i64 [ 0, %entry ], [ %indvar.next, %for.i.1 ]
-  %scevgep = getelementptr i64* %A, i64 %indvar
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar
   store i64 %indvar, i64* %scevgep
   %indvar.next = add nsw i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar.next, %N
@@ -80,7 +80,7 @@ preheader:
 
 for.i.2:
   %indvar.2 = phi i64 [ 0, %preheader ], [ %indvar.next.2, %for.i.2 ]
-  %scevgep.2 = getelementptr i64* %A, i64 %indvar.2
+  %scevgep.2 = getelementptr i64, i64* %A, i64 %indvar.2
   store i64 %indvar.2, i64* %scevgep.2
   %indvar.next.2 = add nsw i64 %indvar.2, 1
   %exitcond.2 = icmp eq i64 %indvar.next.2, %N

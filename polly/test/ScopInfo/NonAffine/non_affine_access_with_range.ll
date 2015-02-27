@@ -26,7 +26,7 @@ bb2:                                              ; preds = %bb1
   %tmp3 = zext i32 %tmp to i64
   %tmp4 = mul nuw nsw i64 %indvars.iv, %tmp3
   %tmp4b = add nsw nuw i64 %tmp4, -3
-  %tmp5 = getelementptr inbounds i32* %A, i64 %tmp4b
+  %tmp5 = getelementptr inbounds i32, i32* %A, i64 %tmp4b
   %tmp6 = load i32* %tmp5, align 4
   %tmp7 = add nsw i32 %tmp6, 1
   store i32 %tmp7, i32* %tmp5, align 4

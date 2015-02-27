@@ -34,14 +34,14 @@ target triple = "x86_64-pc-linux-gnu"
 define i32 @main() nounwind {
 ; <label>:0
   %A = alloca [1021 x i32], align 16              ; <[1021 x i32]*> [#uses=6]
-  %1 = getelementptr inbounds [1021 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
+  %1 = getelementptr inbounds [1021 x i32], [1021 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
   %2 = bitcast i32* %1 to i8*                     ; <i8*> [#uses=1]
   call void @llvm.memset.p0i8.i64(i8* %2, i8 0, i64 4084, i32 1, i1 false)
-  %3 = getelementptr inbounds [1021 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
-  %4 = getelementptr inbounds i32* %3, i64 0      ; <i32*> [#uses=1]
+  %3 = getelementptr inbounds [1021 x i32], [1021 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
+  %4 = getelementptr inbounds i32, i32* %3, i64 0      ; <i32*> [#uses=1]
   store i32 1, i32* %4
-  %5 = getelementptr inbounds [1021 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
-  %6 = getelementptr inbounds i32* %5, i64 1      ; <i32*> [#uses=1]
+  %5 = getelementptr inbounds [1021 x i32], [1021 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
+  %6 = getelementptr inbounds i32, i32* %5, i64 1      ; <i32*> [#uses=1]
   store i32 1, i32* %6
   fence seq_cst
   br label %7
@@ -49,11 +49,11 @@ define i32 @main() nounwind {
 ; <label>:7                                       ; preds = %14, %0
   %indvar = phi i64 [ %indvar.next, %14 ], [ 0, %0 ] ; <i64> [#uses=5]
   %red.0 = phi i32 [ 0, %0 ], [ %13, %14 ]        ; <i32> [#uses=2]
-  %scevgep = getelementptr [1021 x i32]* %A, i64 0, i64 %indvar ; <i32*> [#uses=2]
+  %scevgep = getelementptr [1021 x i32], [1021 x i32]* %A, i64 0, i64 %indvar ; <i32*> [#uses=2]
   %tmp = add i64 %indvar, 2                       ; <i64> [#uses=1]
-  %scevgep1 = getelementptr [1021 x i32]* %A, i64 0, i64 %tmp ; <i32*> [#uses=1]
+  %scevgep1 = getelementptr [1021 x i32], [1021 x i32]* %A, i64 0, i64 %tmp ; <i32*> [#uses=1]
   %tmp2 = add i64 %indvar, 1                      ; <i64> [#uses=1]
-  %scevgep3 = getelementptr [1021 x i32]* %A, i64 0, i64 %tmp2 ; <i32*> [#uses=1]
+  %scevgep3 = getelementptr [1021 x i32], [1021 x i32]* %A, i64 0, i64 %tmp2 ; <i32*> [#uses=1]
   %exitcond = icmp ne i64 %indvar, 1019           ; <i1> [#uses=1]
   br i1 %exitcond, label %8, label %15
 

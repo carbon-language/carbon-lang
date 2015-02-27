@@ -9,7 +9,7 @@ bb20:
   br label %bb22
 
 bb21:                                             ; preds = %bb22
-  %r_addr.1.moved.to.bb21 = getelementptr i16* %r, i64 0
+  %r_addr.1.moved.to.bb21 = getelementptr i16, i16* %r, i64 0
   store i16 0, i16* %r_addr.1.moved.to.bb21, align 2
   %indvar.next = add i64 %indvar, 1
   br label %bb22

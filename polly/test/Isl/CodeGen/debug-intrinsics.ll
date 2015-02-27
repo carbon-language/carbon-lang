@@ -19,7 +19,7 @@ for.body.lr.ph:                                   ; preds = %entry.split
 
 for.body:                                         ; preds = %for.body.lr.ph, %for.body
   %0 = phi i64 [ 0, %for.body.lr.ph ], [ %1, %for.body ], !dbg !21
-  %arrayidx = getelementptr float* %A, i64 %0, !dbg !21
+  %arrayidx = getelementptr float, float* %A, i64 %0, !dbg !21
   %conv = sitofp i64 %0 to float, !dbg !21
   store float %conv, float* %arrayidx, align 4, !dbg !21
   %1 = add nsw i64 %0, 1, !dbg !20

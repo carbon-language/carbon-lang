@@ -17,10 +17,10 @@ for.cond:                                         ; preds = %for.body, %entry
   br i1 %cmp, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr inbounds i16* %B, i64 0
+  %arrayidx = getelementptr inbounds i16, i16* %B, i64 0
   %load = load i16* %arrayidx
   %add10 = add nsw i16 %load, 1
-  %arrayidx13 = getelementptr inbounds i16* %A, i64 %indvar
+  %arrayidx13 = getelementptr inbounds i16, i16* %A, i64 %indvar
   store i16 %add10, i16* %arrayidx13, align 2
   %inc = add nsw i64 %indvar, 1
   br label %for.cond

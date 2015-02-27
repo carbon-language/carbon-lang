@@ -12,7 +12,7 @@ entry:
 
 bb:
   %indvar = phi i1024 [ 0, %entry ], [ %indvar.next, %bb ]
-  %scevgep = getelementptr i1024* %a, i1024 %indvar
+  %scevgep = getelementptr i1024, i1024* %a, i1024 %indvar
   store i1024 %indvar, i1024* %scevgep, align 8
   %indvar.next = add nsw i1024 %indvar, 1
   %exitcond = icmp eq i1024 %indvar, 123456000000000000000000000
@@ -31,7 +31,7 @@ entry:
 
 bb:
   %indvar = phi i32 [ 0, %entry ], [ %indvar.next, %bb ]
-  %scevgep = getelementptr i32* %a, i32 %indvar
+  %scevgep = getelementptr i32, i32* %a, i32 %indvar
   store i32 %indvar, i32* %scevgep, align 8
   %indvar.next = add nsw i32 %indvar, 1
   %exitcond = icmp eq i32 %indvar, 123456
@@ -50,7 +50,7 @@ entry:
 
 bb:
   %indvar = phi i32 [ 0, %entry ], [ %indvar.next, %bb ]
-  %scevgep = getelementptr i32* %a, i32 %indvar
+  %scevgep = getelementptr i32, i32* %a, i32 %indvar
   store i32 %indvar, i32* %scevgep, align 8
   %indvar.next = add nsw i32 %indvar, 1
   %sub = sub i32 %n, 123456
@@ -70,7 +70,7 @@ entry:
 
 bb:
   %indvar = phi i1024 [ 0, %entry ], [ %indvar.next, %bb ]
-  %scevgep = getelementptr i1024* %a, i1024 %indvar
+  %scevgep = getelementptr i1024, i1024* %a, i1024 %indvar
   store i1024 %indvar, i1024* %scevgep, align 8
   %indvar.next = add nsw i1024 %indvar, 1
   %sub = sub i1024 %n, 123456000000000000000000000000000000
@@ -89,7 +89,7 @@ entry:
 
 bb:
   %indvar = phi i1023 [ 0, %entry ], [ %indvar.next, %bb ]
-  %scevgep = getelementptr i1023* %a, i1023 %indvar
+  %scevgep = getelementptr i1023, i1023* %a, i1023 %indvar
   store i1023 %indvar, i1023* %scevgep, align 8
   %indvar.next = add nsw i1023 %indvar, 1
   %sub = sub i1023 %n, 123456000000000000000000000000000000
@@ -109,7 +109,7 @@ entry:
 
 bb:
   %indvar = phi i3 [ 0, %entry ], [ %indvar.next, %bb ]
-  %scevgep = getelementptr i3* %a, i3 %indvar
+  %scevgep = getelementptr i3, i3* %a, i3 %indvar
   store i3 %indvar, i3* %scevgep, align 8
   %indvar.next = add nsw i3 %indvar, 1
   %sub = sub i3 %n, 3

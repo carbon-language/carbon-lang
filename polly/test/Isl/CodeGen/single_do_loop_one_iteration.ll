@@ -33,15 +33,15 @@ target triple = "x86_64-unknown-linux-gnu"
 define i32 @main() nounwind {
 entry:
   %A = alloca [20 x i32], align 4                 ; <[20 x i32]*> [#uses=3]
-  %arraydecay = getelementptr inbounds [20 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
-  %arrayidx = getelementptr inbounds i32* %arraydecay, i64 0 ; <i32*> [#uses=1]
+  %arraydecay = getelementptr inbounds [20 x i32], [20 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
+  %arrayidx = getelementptr inbounds i32, i32* %arraydecay, i64 0 ; <i32*> [#uses=1]
   store i32 1, i32* %arrayidx
   fence seq_cst
   br label %do.body
 
 do.body:                                          ; preds = %do.cond, %entry
-  %arraydecay1 = getelementptr inbounds [20 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
-  %arrayidx2 = getelementptr inbounds i32* %arraydecay1, i64 0 ; <i32*> [#uses=1]
+  %arraydecay1 = getelementptr inbounds [20 x i32], [20 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
+  %arrayidx2 = getelementptr inbounds i32, i32* %arraydecay1, i64 0 ; <i32*> [#uses=1]
   store i32 0, i32* %arrayidx2
   br label %do.cond
 
@@ -50,8 +50,8 @@ do.cond:                                          ; preds = %do.body
 
 do.end:                                           ; preds = %do.cond
   fence seq_cst
-  %arraydecay4 = getelementptr inbounds [20 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
-  %arrayidx5 = getelementptr inbounds i32* %arraydecay4, i64 0 ; <i32*> [#uses=1]
+  %arraydecay4 = getelementptr inbounds [20 x i32], [20 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
+  %arrayidx5 = getelementptr inbounds i32, i32* %arraydecay4, i64 0 ; <i32*> [#uses=1]
   %tmp6 = load i32* %arrayidx5                    ; <i32> [#uses=1]
   %cmp7 = icmp eq i32 %tmp6, 0                    ; <i1> [#uses=1]
   br i1 %cmp7, label %if.then, label %if.else

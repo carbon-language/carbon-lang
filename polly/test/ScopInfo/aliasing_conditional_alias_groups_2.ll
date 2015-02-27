@@ -30,16 +30,16 @@ for.body:                                         ; preds = %for.cond
   br i1 %tobool, label %if.else, label %if.then
 
 if.then:                                          ; preds = %for.body
-  %arrayidx = getelementptr inbounds i32* %B, i64 5
+  %arrayidx = getelementptr inbounds i32, i32* %B, i64 5
   %tmp = load i32* %arrayidx, align 4
-  %arrayidx1 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %tmp, i32* %arrayidx1, align 4
   br label %if.end
 
 if.else:                                          ; preds = %for.body
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 7
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 7
   %tmp1 = load i32* %arrayidx2, align 4
-  %arrayidx4 = getelementptr inbounds i32* %B, i64 %indvars.iv
+  %arrayidx4 = getelementptr inbounds i32, i32* %B, i64 %indvars.iv
   store i32 %tmp1, i32* %arrayidx4, align 4
   br label %if.end
 

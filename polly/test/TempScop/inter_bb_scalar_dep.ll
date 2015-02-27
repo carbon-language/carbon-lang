@@ -37,7 +37,7 @@ for.j:                                            ; preds = %for.j, %entry.next
   %init_plus_two = add i64 %init, 2
 ; CHECK: Read init[0]
 ; CHECK: Write A[{0,+,8}<%for.j>]
-  %scevgep = getelementptr i64* %A, i64 %indvar.j
+  %scevgep = getelementptr i64, i64* %A, i64 %indvar.j
   store i64 %init_plus_two, i64* %scevgep
   %indvar.j.next = add nsw i64 %indvar.j, 1
   %exitcond.j = icmp eq i64 %indvar.j.next, %N

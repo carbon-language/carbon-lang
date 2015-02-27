@@ -34,7 +34,7 @@ for.cond1:                                        ; preds = %for.inc, %for.body
 for.body3:                                        ; preds = %for.cond1
   %mul = shl nsw i32 %i.0, 5
   %add = add nsw i32 %mul, %j.0
-  %arrayidx = getelementptr inbounds [1040 x float]* @A, i32 0, i32 %add
+  %arrayidx = getelementptr inbounds [1040 x float], [1040 x float]* @A, i32 0, i32 %add
   store float 100.0, float* %arrayidx, align 4
   br label %for.inc
 
@@ -59,7 +59,7 @@ for.end6:                                         ; preds = %for.cond
 ; WITHCONST:  %[[MUL2:[._a-zA-Z0-9]+]] = mul nsw i64 2, %[[IVIn]]
 ; WITHCONST:  %[[SUM1:[._a-zA-Z0-9]+]] = add nsw i64 %[[MUL1]], %[[MUL2]]
 ; WITHCONST:  %[[SUM2:[._a-zA-Z0-9]+]] = add nsw i64 %[[SUM1]], 5
-; WITHCONST:  %[[ACC:[._a-zA-Z0-9]*]] = getelementptr float* getelementptr inbounds ([1040 x float]* @A, i{{(32|64)}} 0, i{{(32|64)}} 0), i64 %[[SUM2]]
+; WITHCONST:  %[[ACC:[._a-zA-Z0-9]*]] = getelementptr float, float* getelementptr inbounds ([1040 x float]* @A, i{{(32|64)}} 0, i{{(32|64)}} 0), i64 %[[SUM2]]
 ; WITHCONST:  store float 1.000000e+02, float* %[[ACC]]
 
 ; WITHOUTCONST:  %[[IVOut:polly.indvar[0-9]*]] = phi i64 [ 0, %polly.loop_preheader{{[0-9]*}} ], [ %polly.indvar_next{{[0-9]*}}, %polly.{{[._a-zA-Z0-9]*}} ]
@@ -67,5 +67,5 @@ for.end6:                                         ; preds = %for.cond
 ; WITHOUTCONST:  %[[MUL1:[._a-zA-Z0-9]+]] = mul nsw i64 16, %[[IVOut]]
 ; WITHOUTCONST:  %[[MUL2:[._a-zA-Z0-9]+]] = mul nsw i64 2, %[[IVIn]]
 ; WITHOUTCONST:  %[[SUM1:[._a-zA-Z0-9]+]] = add nsw i64 %[[MUL1]], %[[MUL2]]
-; WITHOUTCONST:  %[[ACC:[._a-zA-Z0-9]*]] = getelementptr float* getelementptr inbounds ([1040 x float]* @A, i{{(32|64)}} 0, i{{(32|64)}} 0), i64 %[[SUM1]]
+; WITHOUTCONST:  %[[ACC:[._a-zA-Z0-9]*]] = getelementptr float, float* getelementptr inbounds ([1040 x float]* @A, i{{(32|64)}} 0, i{{(32|64)}} 0), i64 %[[SUM1]]
 ; WITHOUTCONST:  store float 1.000000e+02, float* %[[ACC]]

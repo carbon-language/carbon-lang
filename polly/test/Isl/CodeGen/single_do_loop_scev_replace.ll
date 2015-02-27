@@ -51,7 +51,7 @@ entry:
 do.body:                                          ; preds = %do.cond, %entry
   %indvar = phi i64 [ %indvar.next, %do.cond ], [ 0, %entry ] ; <i64> [#uses=3]
   %tmp = mul i64 %indvar, 2                       ; <i64> [#uses=1]
-  %arrayidx = getelementptr [40 x i32]* @A, i64 0, i64 %tmp ; <i32*> [#uses=1]
+  %arrayidx = getelementptr [40 x i32], [40 x i32]* @A, i64 0, i64 %tmp ; <i32*> [#uses=1]
   %i.0 = trunc i64 %indvar to i32                 ; <i32> [#uses=1]
   br label %do.cond
 

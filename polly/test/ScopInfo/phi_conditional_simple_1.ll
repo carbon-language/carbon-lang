@@ -46,7 +46,7 @@ if.else:                                          ; preds = %for.body
 
 if.end:                                           ; preds = %if.else, %if.then
   %phi = phi i32 [ 1, %if.then], [ 2, %if.else ]
-  %arrayidx = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %phi, i32* %arrayidx, align 4
   br label %for.inc
 

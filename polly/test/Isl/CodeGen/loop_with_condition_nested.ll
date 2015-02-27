@@ -60,8 +60,8 @@ define void @loop_with_condition() nounwind {
 
 ; <label>:1                                       ; preds = %10, %0
   %indvar = phi i64 [ %indvar.next, %10 ], [ 0, %0 ] ; <i64> [#uses=5]
-  %scevgep = getelementptr [1024 x i32]* @A, i64 0, i64 %indvar ; <i32*> [#uses=2]
-  %scevgep1 = getelementptr [1024 x i32]* @B, i64 0, i64 %indvar ; <i32*> [#uses=1]
+  %scevgep = getelementptr [1024 x i32], [1024 x i32]* @A, i64 0, i64 %indvar ; <i32*> [#uses=2]
+  %scevgep1 = getelementptr [1024 x i32], [1024 x i32]* @B, i64 0, i64 %indvar ; <i32*> [#uses=1]
   %i.0 = trunc i64 %indvar to i32                 ; <i32> [#uses=2]
   %exitcond = icmp ne i64 %indvar, 1024           ; <i1> [#uses=1]
   br i1 %exitcond, label %2, label %11
@@ -107,7 +107,7 @@ define i32 @main() nounwind {
 
 ; <label>:1                                       ; preds = %8, %0
   %indvar1 = phi i64 [ %indvar.next2, %8 ], [ 0, %0 ] ; <i64> [#uses=3]
-  %scevgep3 = getelementptr [1024 x i32]* @B, i64 0, i64 %indvar1 ; <i32*> [#uses=1]
+  %scevgep3 = getelementptr [1024 x i32], [1024 x i32]* @B, i64 0, i64 %indvar1 ; <i32*> [#uses=1]
   %i.0 = trunc i64 %indvar1 to i32                ; <i32> [#uses=1]
   %2 = icmp slt i32 %i.0, 1024                    ; <i1> [#uses=1]
   br i1 %2, label %3, label %9
@@ -132,7 +132,7 @@ define i32 @main() nounwind {
 
 ; <label>:10                                      ; preds = %37, %9
   %indvar = phi i64 [ %indvar.next, %37 ], [ 0, %9 ] ; <i64> [#uses=3]
-  %scevgep = getelementptr [1024 x i32]* @A, i64 0, i64 %indvar ; <i32*> [#uses=3]
+  %scevgep = getelementptr [1024 x i32], [1024 x i32]* @A, i64 0, i64 %indvar ; <i32*> [#uses=3]
   %i.1 = trunc i64 %indvar to i32                 ; <i32> [#uses=6]
   %11 = icmp slt i32 %i.1, 1024                   ; <i1> [#uses=1]
   br i1 %11, label %12, label %38

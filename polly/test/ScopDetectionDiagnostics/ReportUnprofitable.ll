@@ -32,7 +32,7 @@ for.cond:                                         ; preds = %for.inc, %entry
   br i1 %exitcond, label %for.body, label %for.end, !dbg !22
 
 for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr inbounds float* %A, i64 %i.0, !dbg !23
+  %arrayidx = getelementptr inbounds float, float* %A, i64 %i.0, !dbg !23
   store float 0.000000e+00, float* %arrayidx, align 4, !dbg !25
   br label %for.inc, !dbg !23
 
@@ -61,7 +61,7 @@ for.cond:                                         ; preds = %for.inc, %entry
   br i1 %exitcond, label %for.body, label %for.end, !dbg !35
 
 for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr inbounds float* %A, i64 %i.0, !dbg !36
+  %arrayidx = getelementptr inbounds float, float* %A, i64 %i.0, !dbg !36
   %val = load float* %arrayidx, align 4, !dbg !38
   br label %for.inc, !dbg !36
 

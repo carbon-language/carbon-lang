@@ -28,8 +28,8 @@ bb:
 
 bb2:                                              ; preds = %bb5, %bb
   %indvar = phi i64 [ %indvar.next, %bb5 ], [ 0, %bb ]
-  %scevgep = getelementptr [1024 x float]* @B, i64 0, i64 %indvar
-  %scevgep1 = getelementptr [1024 x float]* @A, i64 0, i64 %indvar
+  %scevgep = getelementptr [1024 x float], [1024 x float]* @B, i64 0, i64 %indvar
+  %scevgep1 = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
   %exitcond = icmp ne i64 %indvar, 4
   br i1 %exitcond, label %bb3, label %bb6
 

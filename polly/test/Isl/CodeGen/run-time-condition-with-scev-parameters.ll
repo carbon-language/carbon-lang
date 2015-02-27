@@ -20,7 +20,7 @@ for.body4:                                        ; preds = %for.body4, %entry
   %indvar1 = phi i64 [ %indvar.next2, %for.body4 ], [ 0, %entry ]
   %.moved.to.for.body4 = mul i64 %0, %indvar1
   %1 = add i64 %.moved.to.for.body4, 0
-  %arrayidx7 = getelementptr double* %data, i64 %1
+  %arrayidx7 = getelementptr double, double* %data, i64 %1
   store double undef, double* %arrayidx7, align 8
   %indvar.next2 = add i64 %indvar1, 1
   br i1 false, label %for.body4, label %for.end10

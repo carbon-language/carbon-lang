@@ -14,7 +14,7 @@ bb20:                                             ; preds = %bb34
   br i1 false, label %bb21, label %bb23
 
 bb21:                                             ; preds = %bb20
-  %0 = getelementptr inbounds [2 x float]* %x, i64 undef ; <[2 x float]*> [#uses=1]
+  %0 = getelementptr inbounds [2 x float], [2 x float]* %x, i64 undef ; <[2 x float]*> [#uses=1]
   store [2 x float]* %0, [2 x float]** %d.1.reg2mem
   br label %bb23
 
@@ -23,7 +23,7 @@ bb23:                                             ; preds = %bb21, %bb20
   br i1 undef, label %bb29, label %bb34
 
 bb29:                                             ; preds = %bb23
-  %1 = getelementptr inbounds [2 x float]* %d.1.reload, i64 undef ; <[2 x float]*> [#uses=0]
+  %1 = getelementptr inbounds [2 x float], [2 x float]* %d.1.reload, i64 undef ; <[2 x float]*> [#uses=0]
   br label %bb34
 
 bb34:                                             ; preds = %bb29, %bb23, %entry

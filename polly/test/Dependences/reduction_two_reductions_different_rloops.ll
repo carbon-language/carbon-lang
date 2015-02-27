@@ -40,17 +40,17 @@ for.cond1:                                        ; preds = %for.inc, %for.body
 for.body3:                                        ; preds = %for.cond1
   %add = add nsw i32 %i.0, %j.0
   %sub = add nsw i32 %add, -1
-  %arrayidx = getelementptr inbounds i32* %Values, i32 %sub
+  %arrayidx = getelementptr inbounds i32, i32* %Values, i32 %sub
   %tmp = load i32* %arrayidx, align 4
-  %arrayidx4 = getelementptr inbounds i32* %A, i32 %i.0
+  %arrayidx4 = getelementptr inbounds i32, i32* %A, i32 %i.0
   %tmp2 = load i32* %arrayidx4, align 4
   %add5 = add nsw i32 %tmp2, %tmp
   store i32 %add5, i32* %arrayidx4, align 4
   %add6 = add nsw i32 %i.0, %j.0
   %add7 = add nsw i32 %add6, 42
-  %arrayidx8 = getelementptr inbounds i32* %Values, i32 %add7
+  %arrayidx8 = getelementptr inbounds i32, i32* %Values, i32 %add7
   %tmp3 = load i32* %arrayidx8, align 4
-  %arrayidx9 = getelementptr inbounds i32* %B, i32 %j.0
+  %arrayidx9 = getelementptr inbounds i32, i32* %B, i32 %j.0
   %tmp4 = load i32* %arrayidx9, align 4
   %add10 = add nsw i32 %tmp4, %tmp3
   store i32 %add10, i32* %arrayidx9, align 4
