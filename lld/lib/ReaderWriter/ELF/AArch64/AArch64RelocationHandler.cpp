@@ -9,6 +9,7 @@
 
 #include "AArch64TargetHandler.h"
 #include "AArch64LinkingContext.h"
+#include "lld/Core/Endian.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 
@@ -32,18 +33,14 @@ static void relocR_AARCH64_ABS64(uint8_t *location, uint64_t P, uint64_t S,
       llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
       llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
       llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::ulittle64_t *>(location) =
-      result |
-      (int64_t) * reinterpret_cast<llvm::support::little64_t *>(location);
+  write64le(location, result | read64le(location));
 }
 
 /// \brief R_AARCH64_PREL32 - word32: S + A - P
 static void relocR_AARCH64_PREL32(uint8_t *location, uint64_t P, uint64_t S,
                                   int64_t A) {
   int32_t result = (int32_t)((S + A) - P);
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result +
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result + (int32_t)read32le(location));
 }
 
 /// \brief R_AARCH64_ABS32 - word32:  S + A
@@ -58,9 +55,7 @@ static std::error_code relocR_AARCH64_ABS32(uint8_t *location, uint64_t P,
       llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
       llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
       llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
   return std::error_code();
 }
 
@@ -81,9 +76,7 @@ static void relocR_AARCH64_ADR_PREL_PG_HI21(uint8_t *location, uint64_t P,
       llvm::dbgs() << " immhi: " << Twine::utohexstr(immhi);
       llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      immlo | immhi |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, immlo | immhi | read32le(location));
   // TODO: Make sure this is correct!
 }
 
@@ -103,9 +96,7 @@ static void relocR_AARCH64_ADR_PREL_LO21(uint8_t *location, uint64_t P,
       llvm::dbgs() << " immhi: " << Twine::utohexstr(immhi);
       llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      immlo | immhi |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, immlo | immhi | read32le(location));
   // TODO: Make sure this is correct!
 }
 
@@ -120,9 +111,7 @@ static void relocR_AARCH64_ADD_ABS_LO12_NC(uint8_t *location, uint64_t P,
       llvm::dbgs() << " A: " << Twine::utohexstr(A);
       llvm::dbgs() << " P: " << Twine::utohexstr(P);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
 }
 
 static void relocJump26(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
@@ -135,9 +124,7 @@ static void relocJump26(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
       llvm::dbgs() << " A: " << Twine::utohexstr(A);
       llvm::dbgs() << " P: " << Twine::utohexstr(P);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
 }
 
 /// \brief R_AARCH64_CONDBR19
@@ -152,9 +139,7 @@ static void relocR_AARCH64_CONDBR19(uint8_t *location, uint64_t P, uint64_t S,
       llvm::dbgs() << " A: " << Twine::utohexstr(A);
       llvm::dbgs() << " P: " << Twine::utohexstr(P);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
 }
 
 /// \brief R_AARCH64_LDST8_ABS_LO12_NC - S + A
@@ -168,9 +153,7 @@ static void relocR_AARCH64_LDST8_ABS_LO12_NC(uint8_t *location, uint64_t P,
       llvm::dbgs() << " A: " << Twine::utohexstr(A);
       llvm::dbgs() << " P: " << Twine::utohexstr(P);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
 }
 
 /// \brief R_AARCH64_LDST16_ABS_LO12_NC
@@ -185,9 +168,7 @@ static void relocR_AARCH64_LDST16_ABS_LO12_NC(uint8_t *location, uint64_t P,
       llvm::dbgs() << " A: " << Twine::utohexstr(A);
       llvm::dbgs() << " P: " << Twine::utohexstr(P);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
 }
 
 /// \brief R_AARCH64_LDST32_ABS_LO12_NC
@@ -202,9 +183,7 @@ static void relocR_AARCH64_LDST32_ABS_LO12_NC(uint8_t *location, uint64_t P,
       llvm::dbgs() << " A: " << Twine::utohexstr(A);
       llvm::dbgs() << " P: " << Twine::utohexstr(P);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
 }
 
 /// \brief R_AARCH64_LDST64_ABS_LO12_NC
@@ -219,9 +198,7 @@ static void relocR_AARCH64_LDST64_ABS_LO12_NC(uint8_t *location, uint64_t P,
       llvm::dbgs() << " A: " << Twine::utohexstr(A);
       llvm::dbgs() << " P: " << Twine::utohexstr(P);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
 }
 
 /// \brief R_AARCH64_LDST128_ABS_LO12_NC
@@ -236,9 +213,7 @@ static void relocR_AARCH64_LDST128_ABS_LO12_NC(uint8_t *location, uint64_t P,
       llvm::dbgs() << " A: " << Twine::utohexstr(A);
       llvm::dbgs() << " P: " << Twine::utohexstr(P);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
 }
 
 static void relocR_AARCH64_ADR_GOT_PAGE(uint8_t *location, uint64_t P,
@@ -257,9 +232,7 @@ static void relocR_AARCH64_ADR_GOT_PAGE(uint8_t *location, uint64_t P,
       llvm::dbgs() << " immhi: " << Twine::utohexstr(immhi);
       llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      immlo | immhi |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
 }
 
 // R_AARCH64_LD64_GOT_LO12_NC
@@ -274,9 +247,7 @@ static void relocR_AARCH64_LD64_GOT_LO12_NC(uint8_t *location, uint64_t P,
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   result &= 0xFF8;
   result <<= 7;
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
 }
 
 // ADD_AARCH64_GOTRELINDEX
@@ -291,9 +262,7 @@ static void relocADD_AARCH64_GOTRELINDEX(uint8_t *location, uint64_t P,
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   result &= 0xFFF;
   result <<= 10;
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
 }
 
 // R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21
@@ -314,9 +283,7 @@ static void relocR_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21(uint8_t *location,
       llvm::dbgs() << " immhi: " << Twine::utohexstr(immhi);
       llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      immlo | immhi |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, immlo | immhi | read32le(location));
 }
 
 // R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC
@@ -332,9 +299,7 @@ static void relocR_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC(uint8_t *location,
       llvm::dbgs() << " A: " << Twine::utohexstr(A);
       llvm::dbgs() << " P: " << Twine::utohexstr(P);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
 }
 
 /// \brief R_AARCH64_TLSLE_ADD_TPREL_HI12
@@ -349,9 +314,7 @@ static void relocR_AARCH64_TLSLE_ADD_TPREL_HI12(uint8_t *location, uint64_t P,
       llvm::dbgs() << " A: " << Twine::utohexstr(A);
       llvm::dbgs() << " P: " << Twine::utohexstr(P);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
 }
 
 /// \brief R_AARCH64_TLSLE_ADD_TPREL_LO12_NC
@@ -367,9 +330,7 @@ static void relocR_AARCH64_TLSLE_ADD_TPREL_LO12_NC(uint8_t *location,
       llvm::dbgs() << " A: " << Twine::utohexstr(A);
       llvm::dbgs() << " P: " << Twine::utohexstr(P);
       llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
 }
 
 std::error_code AArch64TargetRelocationHandler::applyRelocation(

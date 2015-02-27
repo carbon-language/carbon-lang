@@ -9,6 +9,7 @@
 
 #include "X86_64LinkingContext.h"
 #include "X86_64TargetHandler.h"
+#include "lld/Core/Endian.h"
 
 using namespace lld;
 using namespace elf;
@@ -16,52 +17,40 @@ using namespace elf;
 /// \brief R_X86_64_64 - word64: S + A
 static void reloc64(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   uint64_t result = S + A;
-  *reinterpret_cast<llvm::support::ulittle64_t *>(location) =
-      result |
-      (uint64_t) * reinterpret_cast<llvm::support::ulittle64_t *>(location);
+  write64le(location, result | read64le(location));
 }
 
 /// \brief R_X86_64_PC32 - word32: S + A - P
 static void relocPC32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   uint32_t result = (uint32_t)((S + A) - P);
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result +
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  write32le(location, result + read32le(location));
 }
 
 /// \brief R_X86_64_32 - word32:  S + A
 static void reloc32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   int32_t result = (uint32_t)(S + A);
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      result |
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  write32le(location, result | read32le(location));
   // TODO: Make sure that the result zero extends to the 64bit value.
 }
 
 /// \brief R_X86_64_32S - word32:  S + A
 static void reloc32S(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   int32_t result = (int32_t)(S + A);
-  *reinterpret_cast<llvm::support::little32_t *>(location) =
-      result |
-      (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
+  write32le(location, result | read32le(location));
   // TODO: Make sure that the result sign extends to the 64bit value.
 }
 
 /// \brief R_X86_64_16 - word16:  S + A
 static void reloc16(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   uint16_t result = (uint16_t)(S + A);
-  *reinterpret_cast<llvm::support::ulittle16_t *>(location) =
-      result |
-      (uint16_t) * reinterpret_cast<llvm::support::ulittle16_t *>(location);
+  write16le(location, result | read16le(location));
   // TODO: Check for overflow.
 }
 
 /// \brief R_X86_64_PC64 - word64: S + A - P
 static void relocPC64(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   int64_t result = (uint64_t)((S + A) - P);
-  *reinterpret_cast<llvm::support::ulittle64_t *>(location) =
-      result |
-      (uint64_t) * reinterpret_cast<llvm::support::ulittle64_t *>(location);
+  write64le(location, result | read64le(location));
 }
 
 std::error_code X86_64TargetRelocationHandler::applyRelocation(
@@ -100,11 +89,9 @@ std::error_code X86_64TargetRelocationHandler::applyRelocation(
     _tlsSize = _x86_64Layout.getTLSSize();
     if (ref.kindValue() == R_X86_64_TPOFF32 ||
         ref.kindValue() == R_X86_64_DTPOFF32) {
-      int32_t result = (int32_t)(targetVAddress - _tlsSize);
-      *reinterpret_cast<llvm::support::little32_t *>(location) = result;
+      write32le(location, targetVAddress - _tlsSize);
     } else {
-      int64_t result = (int64_t)(targetVAddress - _tlsSize);
-      *reinterpret_cast<llvm::support::little64_t *>(location) = result;
+      write64le(location, targetVAddress - _tlsSize);
     }
     break;
   }

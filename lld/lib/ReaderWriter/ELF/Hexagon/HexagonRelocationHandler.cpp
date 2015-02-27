@@ -7,10 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "HexagonTargetHandler.h"
 #include "HexagonLinkingContext.h"
 #include "HexagonRelocationFunctions.h"
+#include "HexagonTargetHandler.h"
 #include "HexagonRelocationHandler.h"
+#include "lld/Core/Endian.h"
 
 using namespace lld;
 using namespace elf;
@@ -18,9 +19,7 @@ using namespace elf;
 using namespace llvm::ELF;
 
 #define APPLY_RELOC(result)                                                    \
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =                  \
-      result |                                                                 \
-      (uint32_t) * reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  write32le(location, result | read32le(location));
 
 static int relocBNPCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A,
                         int32_t nBits) {
@@ -349,5 +348,3 @@ std::error_code HexagonTargetRelocationHandler::applyRelocation(
 
   return std::error_code();
 }
-
-

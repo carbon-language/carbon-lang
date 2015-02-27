@@ -9,6 +9,7 @@
 
 #include "IdataPass.h"
 #include "Pass.h"
+#include "lld/Core/Endian.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/Simple.h"
@@ -45,7 +46,7 @@ std::vector<uint8_t> HintNameAtom::assembleRawContent(uint16_t hint,
   std::vector<uint8_t> ret(size);
   ret[importName.size()] = 0;
   ret[importName.size() - 1] = 0;
-  *reinterpret_cast<llvm::support::ulittle16_t *>(&ret[0]) = hint;
+  write16le(&ret[0], hint);
   std::memcpy(&ret[2], importName.data(), importName.size());
   return ret;
 }
@@ -56,11 +57,11 @@ ImportTableEntryAtom::assembleRawContent(uint64_t rva, bool is64) {
   // in PE+. In PE+, bits 62-31 are filled with zero.
   if (is64) {
     std::vector<uint8_t> ret(8);
-    *reinterpret_cast<llvm::support::ulittle64_t *>(&ret[0]) = rva;
+    write64le(&ret[0], rva);
     return ret;
   }
   std::vector<uint8_t> ret(4);
-  *reinterpret_cast<llvm::support::ulittle32_t *>(&ret[0]) = rva;
+  write32le(&ret[0], rva);
   return ret;
 }
 

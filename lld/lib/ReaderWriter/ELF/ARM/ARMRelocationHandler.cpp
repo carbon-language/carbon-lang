@@ -10,6 +10,7 @@
 #include "ARMTargetHandler.h"
 #include "ARMLinkingContext.h"
 
+#include "lld/Core/Endian.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 
@@ -17,10 +18,8 @@ using namespace lld;
 using namespace elf;
 
 static Reference::Addend readAddend_THM_MOV(const uint8_t *location) {
-  const auto halfHi = uint16_t(
-      *reinterpret_cast<const llvm::support::ulittle16_t *>(location));
-  const auto halfLo = uint16_t(
-      *reinterpret_cast<const llvm::support::ulittle16_t *>(location + 2));
+  const uint16_t halfHi = read16le(location);
+  const uint16_t halfLo = read16le(location + 2);
 
   const uint16_t imm8 = halfLo & 0xFF;
   const uint16_t imm3 = (halfLo >> 12) & 0x7;
@@ -33,8 +32,7 @@ static Reference::Addend readAddend_THM_MOV(const uint8_t *location) {
 }
 
 static Reference::Addend readAddend_ARM_MOV(const uint8_t *location) {
-  const auto value = uint32_t(
-      *reinterpret_cast<const llvm::support::ulittle32_t *>(location));
+  const uint32_t value = read32le(location);
 
   const uint32_t imm12 = value & 0xFFF;
   const uint32_t imm4 = (value >> 16) & 0xF;
@@ -44,10 +42,8 @@ static Reference::Addend readAddend_ARM_MOV(const uint8_t *location) {
 }
 
 static Reference::Addend readAddend_THM_CALL(const uint8_t *location) {
-  const auto halfHi = uint16_t(
-      *reinterpret_cast<const llvm::support::ulittle16_t *>(location));
-  const auto halfLo = uint16_t(
-      *reinterpret_cast<const llvm::support::ulittle16_t *>(location + 2));
+  const uint16_t halfHi = read16le(location);
+  const uint16_t halfLo = read16le(location + 2);
 
   const uint16_t imm10 = halfHi & 0x3FF;
   const uint16_t bitS = (halfHi >> 10) & 0x1;
@@ -64,8 +60,7 @@ static Reference::Addend readAddend_THM_CALL(const uint8_t *location) {
 }
 
 static Reference::Addend readAddend_ARM_CALL(const uint8_t *location) {
-  const auto value = uint32_t(
-      *reinterpret_cast<const llvm::support::ulittle32_t *>(location));
+  const uint32_t value = read32le(location);
 
   const bool isBLX = (value & 0xF0000000) == 0xF0000000;
   const uint32_t bitH = isBLX ? ((value & 0x1000000) >> 24) : 0;
@@ -78,8 +73,7 @@ static Reference::Addend readAddend(const uint8_t *location,
                                     Reference::KindValue kindValue) {
   switch (kindValue) {
   case R_ARM_ABS32:
-    return int32_t(
-        *reinterpret_cast<const llvm::support::little32_t *>(location));
+    return (int32_t)read32le(location);
   case R_ARM_THM_CALL:
   case R_ARM_THM_JUMP24:
     return readAddend_THM_CALL(location);
@@ -100,22 +94,16 @@ static Reference::Addend readAddend(const uint8_t *location,
 static inline void applyArmReloc(uint8_t *location, uint32_t result,
                                  uint32_t mask = 0xFFFFFFFF) {
   assert(!(result & ~mask));
-  *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
-      (uint32_t(*reinterpret_cast<llvm::support::ulittle32_t *>(location)) &
-       ~mask) | (result & mask);
+  write32le(location, (read32le(location) & ~mask) | (result & mask));
 }
 
 static inline void applyThmReloc(uint8_t *location, uint16_t resHi,
                                  uint16_t resLo, uint16_t maskHi,
                                  uint16_t maskLo = 0xFFFF) {
   assert(!(resHi & ~maskHi) && !(resLo & ~maskLo));
-  *reinterpret_cast<llvm::support::ulittle16_t *>(location) =
-      (uint16_t(*reinterpret_cast<llvm::support::ulittle16_t *>(location)) &
-       ~maskHi) | (resHi & maskHi);
+  write16le(location, (read16le(location) & ~maskHi) | (resHi & maskHi));
   location += 2;
-  *reinterpret_cast<llvm::support::ulittle16_t *>(location) =
-      (uint16_t(*reinterpret_cast<llvm::support::ulittle16_t *>(location)) &
-       ~maskLo) | (resLo & maskLo);
+  write16le(location, (read16le(location) & ~maskLo) | (resLo & maskLo));
 }
 
 /// \brief R_ARM_ABS32 - (S + A) | T
