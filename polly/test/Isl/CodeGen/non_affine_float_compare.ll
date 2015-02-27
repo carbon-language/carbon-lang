@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-codegen-isl -polly-no-early-exit -polly-allow-nonaffine-branches -S < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-codegen-isl -polly-no-early-exit -polly-allow-nonaffine-branches -S -verify-dom-info < %s | FileCheck %s
 ;
 ;    void f(float *A) {
 ;      for (int i = 0; i < 1024; i++)
@@ -14,16 +14,16 @@
 ; CHECK:   %scevgep[[R2:[0-9]*]] = getelementptr float* %scevgep{{[0-9]*}}, i64 %polly.indvar
 ; CHECK:   %tmp6_p_scalar_ = load float* %scevgep[[R2]], align 4, !alias.scope !0, !noalias !2
 ; CHECK:   %p_tmp7 = fcmp oeq float %tmp3_p_scalar_, %tmp6_p_scalar_
-; CHECK:   br i1 %p_tmp7, label %polly.stmt.bb8, label %polly.stmt.bb12.pre
+; CHECK:   br i1 %p_tmp7, label %polly.stmt.bb8, label %polly.stmt.bb12.[[R:[a-zA-Z_.0-9]*]]
 
 ; CHECK: polly.stmt.bb8:
 ; CHECK:   %scevgep[[R3:[0-9]*]] = getelementptr float* %A, i64 %polly.indvar
 ; CHECK:   %tmp10_p_scalar_ = load float* %scevgep[[R3]], align 4, !alias.scope !0, !noalias !2
 ; CHECK:   %p_tmp11 = fadd float %tmp10_p_scalar_, 1.000000e+00
 ; CHECK:   store float %p_tmp11, float* %scevgep[[R3]], align 4, !alias.scope !0, !noalias !2
-; CHECK:   br label %polly.stmt.bb12.pre
+; CHECK:   br label %polly.stmt.bb12.[[R]]
 
-; CHECK: polly.stmt.bb12.pre:
+; CHECK: polly.stmt.bb12.[[R]]:
 ; CHECK:   br label %polly.stmt.bb12
 
 ; CHECK: polly.stmt.bb12:

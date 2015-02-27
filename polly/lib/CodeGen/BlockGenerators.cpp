@@ -295,18 +295,27 @@ void BlockGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
   copyBB(Stmt, BB, BBMap, GlobalMap, LTS);
 }
 
-BasicBlock *BlockGenerator::copyBB(ScopStmt &Stmt, BasicBlock *BB,
-                                   ValueMapT &BBMap, ValueMapT &GlobalMap,
-                                   LoopToScevMapT &LTS) {
+BasicBlock *BlockGenerator::splitBB(BasicBlock *BB) {
   BasicBlock *CopyBB =
       SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
   CopyBB->setName("polly.stmt." + BB->getName());
-  Builder.SetInsertPoint(CopyBB->begin());
+  return CopyBB;
+}
 
+BasicBlock *BlockGenerator::copyBB(ScopStmt &Stmt, BasicBlock *BB,
+                                   ValueMapT &BBMap, ValueMapT &GlobalMap,
+                                   LoopToScevMapT &LTS) {
+  BasicBlock *CopyBB = splitBB(BB);
+  copyBB(Stmt, BB, CopyBB, BBMap, GlobalMap, LTS);
+  return CopyBB;
+}
+
+void BlockGenerator::copyBB(ScopStmt &Stmt, BasicBlock *BB, BasicBlock *CopyBB,
+                            ValueMapT &BBMap, ValueMapT &GlobalMap,
+                            LoopToScevMapT &LTS) {
+  Builder.SetInsertPoint(CopyBB->begin());
   for (Instruction &Inst : *BB)
     copyInstruction(Stmt, &Inst, BBMap, GlobalMap, LTS);
-
-  return CopyBB;
 }
 
 VectorBlockGenerator::VectorBlockGenerator(BlockGenerator &BlockGen,
@@ -662,6 +671,19 @@ void VectorBlockGenerator::copyStmt(ScopStmt &Stmt) {
     copyInstruction(Stmt, &Inst, VectorBlockMap, ScalarBlockMap);
 }
 
+BasicBlock *RegionGenerator::repairDominance(
+    BasicBlock *BB, BasicBlock *BBCopy,
+    DenseMap<BasicBlock *, BasicBlock *> &BlockMap) {
+
+  BasicBlock *BBIDom = DT.getNode(BB)->getIDom()->getBlock();
+  BasicBlock *BBCopyIDom = BlockMap.lookup(BBIDom);
+
+  if (BBCopyIDom)
+    DT.changeImmediateDominator(BBCopy, BBCopyIDom);
+
+  return BBCopyIDom;
+}
+
 void RegionGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
                                LoopToScevMapT &LTS) {
   assert(Stmt.isRegionStmt() &&
@@ -670,8 +692,11 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
   // The region represented by the statement.
   Region *R = Stmt.getRegion();
 
-  // The "BBMap" for the whole region.
-  ValueMapT RegionMap;
+  // The "BBMaps" for the whole region.
+  DenseMap<BasicBlock *, ValueMapT> RegionMaps;
+
+  // A map from old to new blocks in the region
+  DenseMap<BasicBlock *, BasicBlock *> BlockMap;
 
   // Iterate over all blocks in the region in a breadth-first search.
   std::deque<BasicBlock *> Blocks;
@@ -683,8 +708,17 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
     BasicBlock *BB = Blocks.front();
     Blocks.pop_front();
 
+    // First split the block and update dominance information.
+    BasicBlock *BBCopy = splitBB(BB);
+    BasicBlock *BBCopyIDom = repairDominance(BB, BBCopy, BlockMap);
+
+    // Get the mapping for this block and initialize it with the mapping
+    // available at its immediate dominator (in the new region).
+    ValueMapT &RegionMap = RegionMaps[BBCopy];
+    RegionMap = RegionMaps[BBCopyIDom];
+
     // Copy the block with the BlockGenerator.
-    BasicBlock *BBCopy = copyBB(Stmt, BB, RegionMap, GlobalMap, LTS);
+    copyBB(Stmt, BB, BBCopy, RegionMap, GlobalMap, LTS);
 
     // And continue with new successors inside the region.
     for (auto SI = succ_begin(BB), SE = succ_end(BB); SI != SE; SI++)
@@ -692,14 +726,16 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
         Blocks.push_back(*SI);
 
     // In order to remap PHI nodes we store also basic block mappings.
-    RegionMap[BB] = BBCopy;
+    BlockMap[BB] = BBCopy;
   }
 
   // Now create a new dedicated region exit block and add it to the region map.
-  BasicBlock *RegionExit =
+  BasicBlock *ExitBBCopy =
       SplitBlock(Builder.GetInsertBlock(), Builder.GetInsertPoint(), &DT, &LI);
-  RegionExit->setName("polly.stmt." + R->getExit()->getName() + ".pre");
-  RegionMap[R->getExit()] = RegionExit;
+  ExitBBCopy->setName("polly.stmt." + R->getExit()->getName() + ".as.exit");
+  BlockMap[R->getExit()] = ExitBBCopy;
+
+  repairDominance(R->getExit(), ExitBBCopy, BlockMap);
 
   // As the block generator doesn't handle control flow we need to add the
   // region control flow by hand after all blocks have been copied.
@@ -707,8 +743,11 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
 
     BranchInst *BI = cast<BranchInst>(BB->getTerminator());
 
-    BasicBlock *BBCopy = cast<BasicBlock>(RegionMap[BB]);
+    BasicBlock *BBCopy = BlockMap[BB];
     Instruction *BICopy = BBCopy->getTerminator();
+
+    ValueMapT &RegionMap = RegionMaps[BBCopy];
+    RegionMap.insert(BlockMap.begin(), BlockMap.end());
 
     Builder.SetInsertPoint(BBCopy);
     copyInstScalar(Stmt, BI, RegionMap, GlobalMap, LTS);
@@ -716,5 +755,5 @@ void RegionGenerator::copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap,
   }
 
   // Reset the old insert point for the build.
-  Builder.SetInsertPoint(RegionExit->begin());
+  Builder.SetInsertPoint(ExitBBCopy->begin());
 }

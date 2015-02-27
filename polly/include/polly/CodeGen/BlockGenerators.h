@@ -100,6 +100,9 @@ protected:
   /// @brief The dominator tree of this function.
   DominatorTree &DT;
 
+  /// @brief Split @p BB to create a new one we can use to clone @p BB in.
+  BasicBlock *splitBB(BasicBlock *BB);
+
   /// @brief Copy the given basic block.
   ///
   /// @param Stmt      The statement to code generate.
@@ -114,6 +117,20 @@ protected:
   /// @returns The copy of the basic block.
   BasicBlock *copyBB(ScopStmt &Stmt, BasicBlock *BB, ValueMapT &BBMap,
                      ValueMapT &GlobalMap, LoopToScevMapT &LTS);
+
+  /// @brief Copy the given basic block.
+  ///
+  /// @param Stmt      The statement to code generate.
+  /// @param BB        The basic block to code generate.
+  /// @param BBCopy    The new basic block to generate code in.
+  /// @param BBMap     A mapping from old values to their new values in this
+  /// block.
+  /// @param GlobalMap A mapping from old values to their new values
+  ///                  (for values recalculated in the new ScoP, but not
+  ///                  within this basic block).
+  /// @param LTS       A map from old loops to new induction variables as SCEVs.
+  void copyBB(ScopStmt &Stmt, BasicBlock *BB, BasicBlock *BBCopy,
+              ValueMapT &BBMap, ValueMapT &GlobalMap, LoopToScevMapT &LTS);
 
   /// @brief Get the new version of a value.
   ///
@@ -360,6 +377,13 @@ public:
   ///                  within this basic block).
   /// @param LTS       A map from old loops to new induction variables as SCEVs.
   void copyStmt(ScopStmt &Stmt, ValueMapT &GlobalMap, LoopToScevMapT &LTS);
+
+private:
+  /// @brief Repair the dominance tree after we created a copy block for @p BB.
+  ///
+  /// @returns The immediate dominator in the DT for @p BBCopy if in the region.
+  BasicBlock *repairDominance(BasicBlock *BB, BasicBlock *BBCopy,
+                              DenseMap<BasicBlock *, BasicBlock *> &BlockMap);
 };
 }
 #endif
