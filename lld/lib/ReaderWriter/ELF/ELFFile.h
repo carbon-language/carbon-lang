@@ -11,28 +11,7 @@
 #define LLD_READER_WRITER_ELF_FILE_H
 
 #include "Atoms.h"
-#include "lld/Core/File.h"
-#include "lld/Core/Reference.h"
-#include "lld/ReaderWriter/ELFLinkingContext.h"
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSet.h"
-#include "llvm/ADT/StringMap.h"
-#include "llvm/Object/ELF.h"
-#include "llvm/Object/ObjectFile.h"
-#include "llvm/Support/Allocator.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/ELF.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/ErrorOr.h"
-#include "llvm/Support/MathExtras.h"
-#include "llvm/Support/Memory.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Path.h"
-#include "llvm/Support/raw_ostream.h"
 #include <map>
-#include <system_error>
 #include <unordered_map>
 
 namespace lld {
