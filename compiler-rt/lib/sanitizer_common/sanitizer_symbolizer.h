@@ -141,8 +141,8 @@ class ExternalSymbolizerInterface {
  public:
   // Can't declare pure virtual functions in sanitizer runtimes:
   // __cxa_pure_virtual might be unavailable.
-  virtual char *SendCommand(bool is_data, const char *module_name,
-                            uptr module_offset) {
+  virtual const char *SendCommand(bool is_data, const char *module_name,
+                                  uptr module_offset) {
     UNIMPLEMENTED();
   }
 };
@@ -150,25 +150,17 @@ class ExternalSymbolizerInterface {
 // SymbolizerProcess encapsulates communication between the tool and
 // external symbolizer program, running in a different subprocess.
 // SymbolizerProcess may not be used from two threads simultaneously.
-class SymbolizerProcess : public ExternalSymbolizerInterface {
+class SymbolizerProcess {
  public:
   explicit SymbolizerProcess(const char *path);
-  char *SendCommand(bool is_data, const char *module_name,
-                    uptr module_offset) override;
+  const char *SendCommand(const char *command);
 
  private:
   bool Restart();
-  char *SendCommandImpl(bool is_data, const char *module_name,
-                        uptr module_offset);
+  const char *SendCommandImpl(const char *command);
   bool ReadFromSymbolizer(char *buffer, uptr max_length);
   bool WriteToSymbolizer(const char *buffer, uptr length);
   bool StartSymbolizerSubprocess();
-
-  virtual bool RenderInputCommand(char *buffer, uptr max_length, bool is_data,
-                                  const char *module_name,
-                                  uptr module_offset) const {
-    UNIMPLEMENTED();
-  }
 
   virtual bool ReachedEndOfOutput(const char *buffer, uptr length) const {
     UNIMPLEMENTED();
