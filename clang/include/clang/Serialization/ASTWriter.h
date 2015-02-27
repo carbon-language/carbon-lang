@@ -477,6 +477,9 @@ private:
   void WriteTypeAbbrevs();
   void WriteType(QualType T);
 
+  template<typename Visitor>
+  void visitLocalLookupResults(const DeclContext *DC, Visitor AddLookupResult);
+
   uint32_t GenerateNameLookupTable(const DeclContext *DC,
                                    llvm::SmallVectorImpl<char> &LookupTable);
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);

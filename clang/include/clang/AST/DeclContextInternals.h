@@ -78,6 +78,17 @@ public:
     return getAsVectorAndHasExternal().getPointer();
   }
 
+  bool hasLocalDecls() const {
+    if (NamedDecl *Singleton = getAsDecl()) {
+      return !Singleton->isFromASTFile();
+    } else if (DeclsTy *Vec = getAsVector()) {
+      for (auto *D : *Vec)
+        if (!D->isFromASTFile())
+          return true;
+    }
+    return false;
+  }
+
   bool hasExternalDecls() const {
     return getAsVectorAndHasExternal().getInt();
   }
