@@ -3056,6 +3056,8 @@ number representing the maximum relative error, for example:
 
     !0 = !{ float 2.5 } ; maximum acceptable inaccuracy is 2.5 ULPs
 
+.. _range-metadata:
+
 '``range``' Metadata
 ^^^^^^^^^^^^^^^^^^^^
 
