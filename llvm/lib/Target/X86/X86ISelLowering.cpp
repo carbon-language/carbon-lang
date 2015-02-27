@@ -7859,8 +7859,8 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
 
     // Recurse back into this routine to re-compute state now that this isn't
     // a 3 and 1 problem.
-    return DAG.getVectorShuffle(MVT::v8i16, DL, V, DAG.getUNDEF(MVT::v8i16),
-                                Mask);
+    return lowerV8I16GeneralSingleInputVectorShuffle(DL, V, Mask, Subtarget,
+                                                     DAG);
   };
   if ((NumLToL == 3 && NumHToL == 1) || (NumLToL == 1 && NumHToL == 3))
     return balanceSides(LToLInputs, HToLInputs, HToHInputs, LToHInputs, 0, 4);
