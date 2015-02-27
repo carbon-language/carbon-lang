@@ -383,7 +383,7 @@ protected:
   /// sections. They may not reference local symbols for addresses in
   /// the group's sections, including section symbols.
   /// ABI Doc : https://mentorembedded.github.io/cxx-abi/abi/prop-72-comdat.html
-  /// Does the atom need to be redirected using a separate undefined atom ?
+  /// Does the atom need to be redirected using a separate undefined atom?
   bool redirectReferenceUsingUndefAtom(const Elf_Sym *sourceSymbol,
                                        const Elf_Sym *targetSymbol) const;
 
@@ -440,7 +440,7 @@ protected:
   /// \brief the cached options relevant while reading the ELF File
   bool _doStringsMerge;
 
-  /// \brief Is --wrap on ?
+  /// \brief Is --wrap on?
   bool _useWrap;
 
   /// \brief The LinkingContext.
@@ -1166,7 +1166,7 @@ void ELFFile<ELFT>::createEdge(ELFDefinedAtom<ELFT> *from,
   from->addReference(reference);
 }
 
-/// Does the atom need to be redirected using a separate undefined atom ?
+/// Does the atom need to be redirected using a separate undefined atom?
 template <class ELFT>
 bool ELFFile<ELFT>::redirectReferenceUsingUndefAtom(
     const Elf_Sym *sourceSymbol, const Elf_Sym *targetSymbol) const {

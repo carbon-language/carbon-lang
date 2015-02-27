@@ -950,7 +950,7 @@ std::error_code FileCOFF::addRelocationReferenceToAtoms() {
   for (const auto &sec : _obj->sections()) {
     const coff_section *section = _obj->getCOFFSection(sec);
 
-    // Skip there's no atom for the section. Currently we do not create any
+    // Skip if there's no atom for the section. Currently we do not create any
     // atoms for some sections, such as "debug$S", and such sections need to
     // be skipped here too.
     if (_sectionAtoms.find(section) == _sectionAtoms.end())
@@ -1056,10 +1056,13 @@ StringRef FileCOFF::ArrayRefToString(ArrayRef<uint8_t> array) {
   if (array.empty())
     return "";
 
+  // This is equivalent to strnlen, but we don't use the function because
+  // it only exists in recent POSIX standards.
   size_t len = 0;
   size_t e = array.size();
   while (len < e && array[len] != '\0')
     ++len;
+
   std::string *contents =
       new (_alloc) std::string(reinterpret_cast<const char *>(&array[0]), len);
   return StringRef(*contents).trim();

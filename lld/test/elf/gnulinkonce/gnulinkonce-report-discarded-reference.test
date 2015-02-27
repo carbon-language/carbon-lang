@@ -2,7 +2,7 @@
 # appropriately. The testcase has been created by using the following source
 # code.
 # TODO: This test should produce a discarded reference error message which it
-# doesnot currently.
+# does not currently.
 # linkoncea.s
 #        .section .gnu.linkonce.d.dummy,"aw"
 #bar:
