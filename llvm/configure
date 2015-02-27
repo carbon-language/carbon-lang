@@ -1999,6 +1999,12 @@ echo "$as_me: error: Already configured in ${srcdir}" >&2;}
   fi
 fi
 
+if test ${srcdir} == "." ; then
+  { { echo "$as_me:$LINENO: error: In-source builds are discouraged. Configure from a separate build directory." >&5
+echo "$as_me: error: In-source builds are discouraged. Configure from a separate build directory." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
 : ${CFLAGS=}
 : ${CXXFLAGS=}
 
