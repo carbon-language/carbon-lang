@@ -622,8 +622,7 @@ public:
   void removeValue(const Value *V) {
     // This is to support hack in lowerCallFromStatepoint
     // Should be removed when hack is resolved
-    if (NodeMap.count(V))
-      NodeMap.erase(V);
+    NodeMap.erase(V);
   }
 
   void setUnusedArgValue(const Value *V, SDValue NewN) {
