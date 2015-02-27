@@ -111,7 +111,7 @@ for i in xrange(0, main_size, 6):
     a, b = b, a + b
     offset = 4096 + b % 500000
     value = a % 256
-    print '  %%ptr%d = getelementptr i8 *%%base, i64 %d' % (i, offset)
+    print '  %%ptr%d = getelementptr i8, i8 *%%base, i64 %d' % (i, offset)
     print '  store volatile i8 %d, i8 *%%ptr%d' % (value, i)
 
 for i in xrange(branch_blocks):

@@ -29,7 +29,7 @@ print 'entry:'
 
 # Make the allocation big, so that it goes at the top of the frame.
 print '  %array = alloca [1000 x i64]'
-print '  %area = getelementptr [1000 x i64] *%array, i64 0, i64 0'
+print '  %area = getelementptr [1000 x i64], [1000 x i64] *%array, i64 0, i64 0'
 print '  %%base = call i64 *@foo(i64 *%%area%s)' % (', i64 0' * args)
 print ''
 
@@ -37,7 +37,7 @@ print ''
 # another for %base, so we need 14 live values.
 count = 14
 for i in range(count):
-    print '  %%ptr%d = getelementptr i64 *%%base, i64 %d' % (i, i / 2)
+    print '  %%ptr%d = getelementptr i64, i64 *%%base, i64 %d' % (i, i / 2)
     print '  %%val%d = load volatile i64 , i64 *%%ptr%d' % (i, i)
     print ''
 
