@@ -1611,7 +1611,8 @@ void ASTDeclReader::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
   VisitCXXMethodDecl(D);
 
   if (auto *CD = ReadDeclAs<CXXConstructorDecl>(Record, Idx))
-    D->setInheritedConstructor(CD);
+    if (D->isCanonicalDecl())
+      D->setInheritedConstructor(CD);
   D->IsExplicitSpecified = Record[Idx++];
   // FIXME: We should defer loading this until we need the constructor's body.
   std::tie(D->CtorInitializers, D->NumCtorInitializers) =

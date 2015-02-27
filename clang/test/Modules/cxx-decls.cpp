@@ -52,5 +52,7 @@ int use_namespace_alias() { return Alias::a + Alias::b; }
 
 void use_extern_c_function_2() { ExternCFunction(); }
 
+InhCtorB inhctorb(2);
+
 // CHECK: VarDecl [[mergeUsedFlag:0x[0-9a-f]*]] {{.*}} in cxx_decls.imported used mergeUsedFlag
 // CHECK: VarDecl {{0x[0-9a-f]*}} prev [[mergeUsedFlag]] {{.*}} in cxx_decls_merged used mergeUsedFlag
