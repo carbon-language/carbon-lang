@@ -2380,8 +2380,7 @@ define <16 x i16> @shuffle_v16i16_04_05_06_03_uu_uu_uu_uu_12_13_14_11_uu_uu_uu_u
 ; AVX2:       # BB#0:
 ; AVX2-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[3,1,2,0,7,5,6,4]
 ; AVX2-NEXT:    vpshuflw {{.*#+}} ymm0 = ymm0[0,3,2,3,4,5,6,7,8,11,10,11,12,13,14,15]
-; AVX2-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[0,2,2,3,4,6,6,7]
-; AVX2-NEXT:    vpshuflw {{.*#+}} ymm0 = ymm0[2,3,0,1,4,5,6,7,10,11,8,9,12,13,14,15]
+; AVX2-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[2,0,2,3,6,4,6,7]
 ; AVX2-NEXT:    retq
   %shuffle = shufflevector <16 x i16> %a, <16 x i16> %b, <16 x i32> <i32 4, i32 5, i32 6, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 12, i32 13, i32 14, i32 11, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <16 x i16> %shuffle

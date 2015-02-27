@@ -19435,11 +19435,25 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
 /// This is a very minor wrapper around getTargetShuffleMask to easy forming v4
 /// PSHUF-style masks that can be reused with such instructions.
 static SmallVector<int, 4> getPSHUFShuffleMask(SDValue N) {
+  MVT VT = N.getSimpleValueType();
   SmallVector<int, 4> Mask;
   bool IsUnary;
-  bool HaveMask = getTargetShuffleMask(N.getNode(), N.getSimpleValueType(), Mask, IsUnary);
+  bool HaveMask = getTargetShuffleMask(N.getNode(), VT, Mask, IsUnary);
   (void)HaveMask;
   assert(HaveMask);
+
+  // If we have more than 128-bits, only the low 128-bits of shuffle mask
+  // matter. Check that the upper masks are repeats and remove them.
+  if (VT.getSizeInBits() > 128) {
+    int LaneElts = 128 / VT.getScalarSizeInBits();
+#ifndef NDEBUG
+    for (int i = 1, NumLanes = VT.getSizeInBits() / 128; i < NumLanes; ++i)
+      for (int j = 0; j < LaneElts; ++j)
+        assert(Mask[j] == Mask[i * LaneElts + j] - LaneElts &&
+               "Mask doesn't repeat in high 128-bit lanes!");
+#endif
+    Mask.resize(LaneElts);
+  }
 
   switch (N.getOpcode()) {
   case X86ISD::PSHUFD:
@@ -19513,7 +19527,8 @@ combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
     case X86ISD::UNPCKH:
       // For either i8 -> i16 or i16 -> i32 unpacks, we can combine a dword
       // shuffle into a preceding word shuffle.
-      if (V.getValueType() != MVT::v16i8 && V.getValueType() != MVT::v8i16)
+      if (V.getSimpleValueType().getScalarType() != MVT::i8 &&
+          V.getSimpleValueType().getScalarType() != MVT::i16)
         return SDValue();
 
       // Search for a half-shuffle which we can combine with.
@@ -19687,8 +19702,7 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
     break;
   case X86ISD::PSHUFLW:
   case X86ISD::PSHUFHW:
-    assert(VT == MVT::v8i16);
-    (void)VT;
+    assert(VT.getScalarType() == MVT::i16 && "Bad word shuffle type!");
 
     if (combineRedundantHalfShuffle(N, Mask, DAG, DCI))
       return SDValue(); // We combined away this shuffle, so we're done.
@@ -19701,12 +19715,13 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
       int DOffset = N.getOpcode() == X86ISD::PSHUFLW ? 0 : 2;
       DMask[DOffset + 0] = DOffset + 1;
       DMask[DOffset + 1] = DOffset + 0;
-      V = DAG.getNode(ISD::BITCAST, DL, MVT::v4i32, V);
+      MVT DVT = MVT::getVectorVT(MVT::i32, VT.getVectorNumElements() / 2);
+      V = DAG.getNode(ISD::BITCAST, DL, DVT, V);
       DCI.AddToWorklist(V.getNode());
-      V = DAG.getNode(X86ISD::PSHUFD, DL, MVT::v4i32, V,
+      V = DAG.getNode(X86ISD::PSHUFD, DL, DVT, V,
                       getV4X86ShuffleImm8ForMask(DMask, DAG));
       DCI.AddToWorklist(V.getNode());
-      return DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V);
+      return DAG.getNode(ISD::BITCAST, DL, VT, V);
     }
 
     // Look for shuffle patterns which can be implemented as a single unpack.
@@ -19741,11 +19756,11 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
             std::equal(std::begin(MappedMask), std::end(MappedMask),
                        std::begin(UnpackHiMask))) {
           // We can replace all three shuffles with an unpack.
-          V = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, D.getOperand(0));
+          V = DAG.getNode(ISD::BITCAST, DL, VT, D.getOperand(0));
           DCI.AddToWorklist(V.getNode());
           return DAG.getNode(MappedMask[0] == 0 ? X86ISD::UNPCKL
                                                 : X86ISD::UNPCKH,
-                             DL, MVT::v8i16, V, V);
+                             DL, VT, V, V);
         }
       }
     }
@@ -19893,10 +19908,6 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
     }
   }
 
-  // Only handle 128 wide vector from here on.
-  if (!VT.is128BitVector())
-    return SDValue();
-
   // Combine a vector_shuffle that is equal to build_vector load1, load2, load3,
   // load4, <0, 1, 2, 3> into a 128-bit load if the load addresses are
   // consecutive, non-overlapping, and in the right order.
@@ -19913,6 +19924,10 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
         PerformTargetShuffleCombine(SDValue(N, 0), DAG, DCI, Subtarget);
     if (Shuffle.getNode())
       return Shuffle;
+
+    // Only handle 128 wide vector from here on.
+    if (!VT.is128BitVector())
+      return SDValue();
 
     // Try recursively combining arbitrary sequences of x86 shuffle
     // instructions into higher-order shuffles. We do this after combining
