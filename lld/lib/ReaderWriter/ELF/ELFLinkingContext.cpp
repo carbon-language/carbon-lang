@@ -106,6 +106,10 @@ bool ELFLinkingContext::validateImpl(raw_ostream &diagnostics) {
     _writer = createWriterELF(this->targetHandler());
     break;
   }
+
+  // If -dead_strip, set up initial live symbols.
+  if (deadStrip())
+    addDeadStripRoot(entrySymbolName());
   return true;
 }
 
