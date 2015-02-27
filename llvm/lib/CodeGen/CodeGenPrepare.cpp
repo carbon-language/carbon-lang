@@ -561,12 +561,15 @@ static void computeBaseDerivedRelocateMap(
 
     IntrinsicInst *I = Item.second;
     auto BaseKey = std::make_pair(Key.first, Key.first);
-    IntrinsicInst *Base = RelocateIdxMap[BaseKey];
-    if (!Base)
+
+    // We're iterating over RelocateIdxMap so we cannot modify it.
+    auto MaybeBase = RelocateIdxMap.find(BaseKey);
+    if (MaybeBase == RelocateIdxMap.end())
       // TODO: We might want to insert a new base object relocate and gep off
       // that, if there are enough derived object relocates.
       continue;
-    RelocateInstMap[Base].push_back(I);
+
+    RelocateInstMap[MaybeBase->second].push_back(I);
   }
 }
 
