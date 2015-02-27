@@ -7,7 +7,7 @@
 ; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi -mcpu=krait | FileCheck %s --check-prefix=DIV_EXTENSION
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a9 | FileCheck %s --check-prefix=NODIV_KRAIT
 ; RUN: llc < %s -mtriple=thumbv7-linux-gnueabi -mcpu=cortex-a9 | FileCheck %s --check-prefix=NODIV_KRAIT
-; RUN: llc < %s -mcpu=krait -mattr=-hwdiv,-hwdiv-arm | FileCheck %s --check-prefix=NODIV_KRAIT
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=krait -mattr=-hwdiv,-hwdiv-arm | FileCheck %s --check-prefix=NODIV_KRAIT
 
 ; check if correct instruction is emitted by integrated assembler
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=krait -filetype=obj | llvm-objdump -mcpu=krait -triple armv7-linux-gnueabi -d - | FileCheck %s --check-prefix=HWDIV
