@@ -351,16 +351,21 @@ void addLayoutEdge(T *a, U *b, uint32_t which) {
   a->addReference(std::unique_ptr<COFFReference>(ref));
 }
 
-/// Connect atoms with layout-before edges. It prevents atoms from
-/// being GC'ed (aka dead-stripped) if there is a reference to one of
-/// the atoms in the same layout-before chain. In such case we want to
-/// emit all the atoms appeared in the same chain, because the "live"
-/// atom may reference other atoms in the same chain.
+template <typename T, typename U> void connectWithLayoutEdge(T *a, U *b) {
+  addLayoutEdge(a, b, lld::Reference::kindLayoutAfter);
+  addLayoutEdge(b, a, lld::Reference::kindLayoutBefore);
+}
+
+/// Connect atoms with layout-before/after edges. It prevents atoms
+/// from being GC'ed (aka dead-stripped) if there is a reference to
+/// one of the atoms in the same layout-before chain. In such case we
+/// want to emit all the atoms appeared in the same chain, because the
+/// "live" atom may reference other atoms in the same chain.
 template <typename T> void connectAtomsWithLayoutEdge(std::vector<T *> &atoms) {
   if (atoms.size() < 2)
     return;
   for (auto it = atoms.begin(), e = atoms.end(); it + 1 != e; ++it)
-    addLayoutEdge(*(it + 1), *it, lld::Reference::kindLayoutBefore);
+    connectWithLayoutEdge(*it, *(it + 1));
 }
 
 } // namespace pecoff
