@@ -98,8 +98,8 @@ print ''
 for i in xrange(branch_blocks):
     next = 'before%d' % (i + 1) if i + 1 < branch_blocks else 'main'
     print 'before%d:' % i
-    print '  %%bcur%da = load i64 *%%stopa' % i
-    print '  %%bcur%db = load i64 *%%stopb' % i
+    print '  %%bcur%da = load i64 , i64 *%%stopa' % i
+    print '  %%bcur%db = load i64 , i64 *%%stopb' % i
     print '  %%bsub%d = sub i64 %%bcur%da, %%bcur%db' % (i, i, i)
     print '  %%btest%d = icmp ult i64 %%bsub%d, %d' % (i, i, i + 50)
     print '  br i1 %%btest%d, label %%after0, label %%%s' % (i, next)
@@ -115,8 +115,8 @@ for i in xrange(0, main_size, 6):
     print '  store volatile i8 %d, i8 *%%ptr%d' % (value, i)
 
 for i in xrange(branch_blocks):
-    print '  %%acur%da = load i64 *%%stopa' % i
-    print '  %%acur%db = load i64 *%%stopb' % i
+    print '  %%acur%da = load i64 , i64 *%%stopa' % i
+    print '  %%acur%db = load i64 , i64 *%%stopb' % i
     print '  %%asub%d = sub i64 %%acur%da, %%acur%db' % (i, i, i)
     print '  %%atest%d = icmp ult i64 %%asub%d, %d' % (i, i, i + 100)
     print '  br i1 %%atest%d, label %%main, label %%after%d' % (i, i)

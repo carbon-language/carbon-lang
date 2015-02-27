@@ -72,7 +72,7 @@ for i in xrange(blocks):
     print 'b%d:' % i
     print '  store volatile i8 %d, i8 *%%base' % value
     print '  %%astop%d = getelementptr i32 *%%stop, i64 %d' % (i, i)
-    print '  %%acur%d = load i32 *%%astop%d' % (i, i)
+    print '  %%acur%d = load i32 , i32 *%%astop%d' % (i, i)
     print '  %%atest%d = icmp eq i32 %%limit, %%acur%d' % (i, i)
     print '  br i1 %%atest%d, label %%%s, label %%%s' % (i, other, next)
 

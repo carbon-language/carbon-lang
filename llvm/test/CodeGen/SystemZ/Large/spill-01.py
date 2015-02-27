@@ -26,7 +26,7 @@ print 'define void @f1(i64 *%base0, i64 *%base1) {'
 
 for i in range(count):
     print '  %%ptr%d = getelementptr i64 *%%base%d, i64 %d' % (i, i % 2, i / 2)
-    print '  %%val%d = load i64 *%%ptr%d' % (i, i)
+    print '  %%val%d = load i64 , i64 *%%ptr%d' % (i, i)
     print ''
 
 print '  call void @foo()'

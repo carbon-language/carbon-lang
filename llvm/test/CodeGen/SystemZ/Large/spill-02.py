@@ -38,7 +38,7 @@ print ''
 count = 14
 for i in range(count):
     print '  %%ptr%d = getelementptr i64 *%%base, i64 %d' % (i, i / 2)
-    print '  %%val%d = load volatile i64 *%%ptr%d' % (i, i)
+    print '  %%val%d = load volatile i64 , i64 *%%ptr%d' % (i, i)
     print ''
 
 # Encourage the register allocator to give preference to these %vals

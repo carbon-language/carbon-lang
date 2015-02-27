@@ -41,7 +41,7 @@ print 'entry:'
 
 for i in xrange(branch_blocks - 1, -1, -1):
     print '  %%countptr%d = getelementptr i64 *%%counts, i64 %d' % (i, i)
-    print '  %%initcount%d = load i64 *%%countptr%d' % (i, i)
+    print '  %%initcount%d = load i64 , i64 *%%countptr%d' % (i, i)
     print '  br label %%loop%d' % i
     
     print 'loop%d:' % i

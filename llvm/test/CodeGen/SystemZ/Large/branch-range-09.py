@@ -79,7 +79,7 @@ for i in xrange(branch_blocks):
     next = 'before%d' % (i + 1) if i + 1 < branch_blocks else 'main'
     print 'before%d:' % i
     print '  %%bstop%d = getelementptr i8 *%%stop, i64 %d' % (i, i)
-    print '  %%bcur%d = load i8 *%%bstop%d' % (i, i)
+    print '  %%bcur%d = load i8 , i8 *%%bstop%d' % (i, i)
     print '  %%bext%d = sext i8 %%bcur%d to i32' % (i, i)
     print '  %%btest%d = icmp ult i32 %%limit, %%bext%d' % (i, i)
     print '  br i1 %%btest%d, label %%after0, label %%%s' % (i, next)
@@ -96,7 +96,7 @@ for i in xrange(0, main_size, 6):
 
 for i in xrange(branch_blocks):
     print '  %%astop%d = getelementptr i8 *%%stop, i64 %d' % (i, i + 25)
-    print '  %%acur%d = load i8 *%%astop%d' % (i, i)
+    print '  %%acur%d = load i8 , i8 *%%astop%d' % (i, i)
     print '  %%aext%d = sext i8 %%acur%d to i32' % (i, i)
     print '  %%atest%d = icmp ult i32 %%limit, %%aext%d' % (i, i)
     print '  br i1 %%atest%d, label %%main, label %%after%d' % (i, i)

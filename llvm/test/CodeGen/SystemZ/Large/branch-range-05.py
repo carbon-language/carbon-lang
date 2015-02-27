@@ -82,7 +82,7 @@ print ''
 for i in xrange(branch_blocks):
     next = 'before%d' % (i + 1) if i + 1 < branch_blocks else 'main'
     print 'before%d:' % i
-    print '  %%bcur%d = load i8 *%%stop' % i
+    print '  %%bcur%d = load i8 , i8 *%%stop' % i
     print '  %%bext%d = sext i8 %%bcur%d to i32' % (i, i)
     print '  %%btest%d = icmp slt i32 %%bext%d, %d' % (i, i, i + 50)
     print '  br i1 %%btest%d, label %%after0, label %%%s' % (i, next)
@@ -98,7 +98,7 @@ for i in xrange(0, main_size, 6):
     print '  store volatile i8 %d, i8 *%%ptr%d' % (value, i)
 
 for i in xrange(branch_blocks):
-    print '  %%acur%d = load i8 *%%stop' % i
+    print '  %%acur%d = load i8 , i8 *%%stop' % i
     print '  %%aext%d = sext i8 %%acur%d to i32' % (i, i)
     print '  %%atest%d = icmp slt i32 %%aext%d, %d' % (i, i, i + 100)
     print '  br i1 %%atest%d, label %%main, label %%after%d' % (i, i)
