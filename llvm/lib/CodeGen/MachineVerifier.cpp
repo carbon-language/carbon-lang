@@ -397,7 +397,7 @@ void MachineVerifier::report(const char *msg,
   assert(MO);
   report(msg, MO->getParent());
   errs() << "- operand " << MONum << ":   ";
-  MO->print(errs(), TM);
+  MO->print(errs(), TRI);
   errs() << "\n";
 }
 

@@ -276,7 +276,7 @@ public:
 
   /// getDebugLoc - Return DebugLoc of this UserValue.
   DebugLoc getDebugLoc() { return dl;}
-  void print(raw_ostream&, const TargetMachine*);
+  void print(raw_ostream &, const TargetRegisterInfo *);
 };
 } // namespace
 
@@ -362,7 +362,7 @@ public:
 };
 } // namespace
 
-void UserValue::print(raw_ostream &OS, const TargetMachine *TM) {
+void UserValue::print(raw_ostream &OS, const TargetRegisterInfo *TRI) {
   DIVariable DV(Variable);
   OS << "!\"";
   DV.printExtendedName(OS);
@@ -378,7 +378,7 @@ void UserValue::print(raw_ostream &OS, const TargetMachine *TM) {
   }
   for (unsigned i = 0, e = locations.size(); i != e; ++i) {
     OS << " Loc" << i << '=';
-    locations[i].print(OS, TM);
+    locations[i].print(OS, TRI);
   }
   OS << '\n';
 }
@@ -386,7 +386,7 @@ void UserValue::print(raw_ostream &OS, const TargetMachine *TM) {
 void LDVImpl::print(raw_ostream &OS) {
   OS << "********** DEBUG VARIABLES **********\n";
   for (unsigned i = 0, e = userValues.size(); i != e; ++i)
-    userValues[i]->print(OS, &MF->getTarget());
+    userValues[i]->print(OS, TRI);
 }
 
 void UserValue::coalesceLocation(unsigned LocNo) {
@@ -1004,7 +1004,7 @@ void LDVImpl::emitDebugValues(VirtRegMap *VRM) {
     return;
   const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
   for (unsigned i = 0, e = userValues.size(); i != e; ++i) {
-    DEBUG(userValues[i]->print(dbgs(), &MF->getTarget()));
+    DEBUG(userValues[i]->print(dbgs(), TRI));
     userValues[i]->rewriteLocations(*VRM, *TRI);
     userValues[i]->emitDebugValues(VRM, *LIS, *TII);
   }

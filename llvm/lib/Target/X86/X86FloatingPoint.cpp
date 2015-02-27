@@ -438,7 +438,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
         // Rewind to first instruction newly inserted.
         while (Start != BB.begin() && std::prev(Start) != PrevI) --Start;
         dbgs() << "Inserted instructions:\n\t";
-        Start->print(dbgs(), &MF.getTarget());
+        Start->print(dbgs());
         while (++Start != std::next(I)) {}
       }
       dumpStack();

@@ -287,12 +287,12 @@ public:
     raw_string_ostream OS(S);
     
     OS << "{";
-    StartInst->print(OS, NULL, true);
+    StartInst->print(OS, /* SkipOpers= */true);
     OS << " -> ";
-    LastInst->print(OS, NULL, true);
+    LastInst->print(OS, /* SkipOpers= */true);
     if (KillInst) {
       OS << " (kill @ ";
-      KillInst->print(OS, NULL, true);
+      KillInst->print(OS, /* SkipOpers= */true);
       OS << ")";
     }
     OS << "}";

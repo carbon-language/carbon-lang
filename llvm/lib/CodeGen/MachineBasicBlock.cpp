@@ -307,7 +307,7 @@ void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
     OS << '\t';
     if (I->isInsideBundle())
       OS << "  * ";
-    I->print(OS, &getParent()->getTarget());
+    I->print(OS);
   }
 
   // Print the successors of this block according to the CFG.
