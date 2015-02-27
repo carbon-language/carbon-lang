@@ -145,6 +145,7 @@ public:
   }
   void emitTCEntry(const MCSymbol &S) override {
     // Creates a R_PPC64_TOC relocation
+    Streamer.EmitValueToAlignment(8);
     Streamer.EmitSymbolValue(&S, 8);
   }
   void emitMachine(StringRef CPU) override {
