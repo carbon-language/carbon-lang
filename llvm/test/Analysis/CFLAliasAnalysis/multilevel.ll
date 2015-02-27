@@ -23,8 +23,8 @@ define void @test() {
   store %T* %A, %T** %M
   store %T* %B, %T** %N
 
-  %AP = load %T** %M ; PartialAlias with %A
-  %BP = load %T** %N ; PartialAlias with %B
+  %AP = load %T*, %T** %M ; PartialAlias with %A
+  %BP = load %T*, %T** %N ; PartialAlias with %B
 
   ret void
 }

@@ -10,6 +10,6 @@ define i32 @test(i1 %cond, i32 *%P) {
   call void @test2() readonly
 
   %P2 = select i1 %cond, i32 *%P, i32* %A
-  %V = load i32* %P2
+  %V = load i32, i32* %P2
   ret i32 %V
 }

@@ -2,7 +2,7 @@
 
 define float @chainfail1(i64* nocapture %a, i64* nocapture %b, i32 %x, i32 %y, float* nocapture %f) nounwind uwtable noinline ssp {
 entry:
-  %tmp1 = load i64* %a, align 8
+  %tmp1 = load i64, i64* %a, align 8
 ; Insure x87 ops are properly chained, order preserved.
 ; CHECK: fildll
   %conv = sitofp i64 %tmp1 to float
@@ -23,7 +23,7 @@ entry:
   %sub = add nsw i32 %mul, -1
   %idxprom = sext i32 %sub to i64
   %arrayidx = getelementptr inbounds i64, i64* %a, i64 %idxprom
-  %tmp4 = load i64* %arrayidx, align 8
+  %tmp4 = load i64, i64* %arrayidx, align 8
 ; CHECK: fildll
   %conv = sitofp i64 %tmp4 to float
   store float %conv, float* %f, align 4
@@ -35,7 +35,7 @@ entry:
   br i1 undef, label %while.end, label %while.body
 
 while.body:                                       ; preds = %while.body, %entry
-  %x.1.copyload = load i24* undef, align 1
+  %x.1.copyload = load i24, i24* undef, align 1
   %conv = sitofp i24 %x.1.copyload to float
   %div = fmul float %conv, 0x3E80000000000000
   store float %div, float* undef, align 4

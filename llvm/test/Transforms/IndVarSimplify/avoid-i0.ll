@@ -34,25 +34,25 @@ entry:
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
 	store i32 %_si1, i32* %_si1_addr
 	store i8 %_si2, i8* %_si2_addr
-	%1 = load i8* %_si2_addr, align 1		; <i8> [#uses=1]
+	%1 = load i8, i8* %_si2_addr, align 1		; <i8> [#uses=1]
 	%2 = sext i8 %1 to i32		; <i32> [#uses=1]
-	%3 = load i32* %_si1_addr, align 4		; <i32> [#uses=1]
+	%3 = load i32, i32* %_si1_addr, align 4		; <i32> [#uses=1]
 	%4 = xor i32 %2, %3		; <i32> [#uses=1]
-	%5 = load i8* %_si2_addr, align 1		; <i8> [#uses=1]
+	%5 = load i8, i8* %_si2_addr, align 1		; <i8> [#uses=1]
 	%6 = sext i8 %5 to i32		; <i32> [#uses=1]
 	%7 = sub i32 7, %6		; <i32> [#uses=1]
-	%8 = load i32* %_si1_addr, align 4		; <i32> [#uses=1]
+	%8 = load i32, i32* %_si1_addr, align 4		; <i32> [#uses=1]
 	%9 = shl i32 %8, %7		; <i32> [#uses=1]
 	%10 = and i32 %4, %9		; <i32> [#uses=1]
 	%11 = icmp slt i32 %10, 0		; <i1> [#uses=1]
 	%12 = zext i1 %11 to i32		; <i32> [#uses=1]
 	store i32 %12, i32* %0, align 4
-	%13 = load i32* %0, align 4		; <i32> [#uses=1]
+	%13 = load i32, i32* %0, align 4		; <i32> [#uses=1]
 	store i32 %13, i32* %retval, align 4
 	br label %return
 
 return:		; preds = %entry
-	%retval1 = load i32* %retval		; <i32> [#uses=1]
+	%retval1 = load i32, i32* %retval		; <i32> [#uses=1]
 	%retval12 = trunc i32 %retval1 to i8		; <i8> [#uses=1]
 	ret i8 %retval12
 }
@@ -66,15 +66,15 @@ entry:
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
 	store i32 %_ui1, i32* %_ui1_addr
 	store i32 %_ui2, i32* %_ui2_addr
-	%1 = load i32* %_ui1_addr, align 4		; <i32> [#uses=1]
+	%1 = load i32, i32* %_ui1_addr, align 4		; <i32> [#uses=1]
 	%2 = sub i32 %1, 1		; <i32> [#uses=1]
 	store i32 %2, i32* %0, align 4
-	%3 = load i32* %0, align 4		; <i32> [#uses=1]
+	%3 = load i32, i32* %0, align 4		; <i32> [#uses=1]
 	store i32 %3, i32* %retval, align 4
 	br label %return
 
 return:		; preds = %entry
-	%retval1 = load i32* %retval		; <i32> [#uses=1]
+	%retval1 = load i32, i32* %retval		; <i32> [#uses=1]
 	ret i32 %retval1
 }
 
@@ -90,31 +90,31 @@ entry:
 	br label %bb4
 
 bb:		; preds = %bb4
-	%0 = load volatile i32* @x, align 4		; <i32> [#uses=1]
+	%0 = load volatile i32, i32* @x, align 4		; <i32> [#uses=1]
 	store i32 %0, i32* %vol.0, align 4
 	store i32 0, i32* %l_52, align 4
 	br label %bb2
 
 bb1:		; preds = %bb2
-	%1 = load i32* %l_52, align 4		; <i32> [#uses=1]
+	%1 = load i32, i32* %l_52, align 4		; <i32> [#uses=1]
 	%2 = call i32 @safe_sub_func_uint64_t_u_u(i32 %1, i32 1) nounwind		; <i32> [#uses=1]
 	store i32 %2, i32* %l_52, align 4
 	br label %bb2
 
 bb2:		; preds = %bb1, %bb
-	%3 = load i32* %l_52, align 4		; <i32> [#uses=1]
+	%3 = load i32, i32* %l_52, align 4		; <i32> [#uses=1]
 	%4 = icmp eq i32 %3, 0		; <i1> [#uses=1]
 	br i1 %4, label %bb1, label %bb3
 
 bb3:		; preds = %bb2
-	%5 = load i32* %l_52, align 4		; <i32> [#uses=1]
+	%5 = load i32, i32* %l_52, align 4		; <i32> [#uses=1]
 	%6 = call signext i8 @safe_sub_func_int32_t_s_s(i32 %5, i8 signext 1) nounwind		; <i8> [#uses=1]
 	%7 = sext i8 %6 to i32		; <i32> [#uses=1]
 	store i32 %7, i32* %l_52, align 4
 	br label %bb4
 
 bb4:		; preds = %bb3, %entry
-	%8 = load i32* %l_52, align 4		; <i32> [#uses=1]
+	%8 = load i32, i32* %l_52, align 4		; <i32> [#uses=1]
 	%9 = icmp ne i32 %8, 0		; <i1> [#uses=1]
 	br i1 %9, label %bb, label %bb5
 

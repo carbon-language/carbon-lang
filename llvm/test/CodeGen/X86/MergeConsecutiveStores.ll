@@ -166,8 +166,8 @@ define void @merge_loads_i16(i32 %count, %struct.A* noalias nocapture %q, %struc
 ; <label>:4                                       ; preds = %4, %.lr.ph
   %i.02 = phi i32 [ 0, %.lr.ph ], [ %9, %4 ]
   %.01 = phi %struct.A* [ %p, %.lr.ph ], [ %10, %4 ]
-  %5 = load i8* %2, align 1
-  %6 = load i8* %3, align 1
+  %5 = load i8, i8* %2, align 1
+  %6 = load i8, i8* %3, align 1
   %7 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 0
   store i8 %5, i8* %7, align 1
   %8 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 1
@@ -200,11 +200,11 @@ define void @no_merge_loads(i32 %count, %struct.A* noalias nocapture %q, %struct
 a4:                                       ; preds = %4, %.lr.ph
   %i.02 = phi i32 [ 0, %.lr.ph ], [ %a9, %a4 ]
   %.01 = phi %struct.A* [ %p, %.lr.ph ], [ %a10, %a4 ]
-  %a5 = load i8* %2, align 1
+  %a5 = load i8, i8* %2, align 1
   %a7 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 0
   store i8 %a5, i8* %a7, align 1
   %a8 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 1
-  %a6 = load i8* %3, align 1
+  %a6 = load i8, i8* %3, align 1
   store i8 %a6, i8* %a8, align 1
   %a9 = add nsw i32 %i.02, 1
   %a10 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 1
@@ -234,8 +234,8 @@ define void @merge_loads_integer(i32 %count, %struct.B* noalias nocapture %q, %s
 ; <label>:4                                       ; preds = %4, %.lr.ph
   %i.02 = phi i32 [ 0, %.lr.ph ], [ %9, %4 ]
   %.01 = phi %struct.B* [ %p, %.lr.ph ], [ %10, %4 ]
-  %5 = load i32* %2
-  %6 = load i32* %3
+  %5 = load i32, i32* %2
+  %6 = load i32, i32* %3
   %7 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 0
   store i32 %5, i32* %7
   %8 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 1
@@ -274,10 +274,10 @@ block4:                                       ; preds = %4, %.lr.ph
   %a8 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 1
   %a9 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 2
   %a10 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 3
-  %b1 = load i32* %a2
-  %b2 = load i32* %a3
-  %b3 = load i32* %a4
-  %b4 = load i32* %a5
+  %b1 = load i32, i32* %a2
+  %b2 = load i32, i32* %a3
+  %b3 = load i32, i32* %a4
+  %b4 = load i32, i32* %a5
   store i32 %b1, i32* %a7
   store i32 %b2, i32* %a8
   store i32 %b3, i32* %a9
@@ -321,10 +321,10 @@ block4:                                       ; preds = %4, %.lr.ph
   %a8 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 1
   %a9 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 2
   %a10 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 3
-  %b1 = load i32* %a2, align 1
-  %b2 = load i32* %a3, align 1
-  %b3 = load i32* %a4, align 1
-  %b4 = load i32* %a5, align 1
+  %b1 = load i32, i32* %a2, align 1
+  %b2 = load i32, i32* %a3, align 1
+  %b3 = load i32, i32* %a4, align 1
+  %b4 = load i32, i32* %a5, align 1
   store i32 %b1, i32* %a7, align 1
   store i32 %b2, i32* %a8, align 1
   store i32 %b3, i32* %a9, align 1
@@ -351,12 +351,12 @@ define void @MergeLoadStoreBaseIndexOffset(i64* %a, i8* %b, i8* %c, i32 %n) {
   %.08 = phi i8* [ %b, %0 ], [ %10, %1 ]
   %.0 = phi i64* [ %a, %0 ], [ %2, %1 ]
   %2 = getelementptr inbounds i64, i64* %.0, i64 1
-  %3 = load i64* %.0, align 1
+  %3 = load i64, i64* %.0, align 1
   %4 = getelementptr inbounds i8, i8* %c, i64 %3
-  %5 = load i8* %4, align 1
+  %5 = load i8, i8* %4, align 1
   %6 = add i64 %3, 1
   %7 = getelementptr inbounds i8, i8* %c, i64 %6
-  %8 = load i8* %7, align 1
+  %8 = load i8, i8* %7, align 1
   store i8 %5, i8* %.08, align 1
   %9 = getelementptr inbounds i8, i8* %.08, i64 1
   store i8 %8, i8* %9, align 1
@@ -383,13 +383,13 @@ define void @MergeLoadStoreBaseIndexOffsetSext(i8* %a, i8* %b, i8* %c, i32 %n) {
   %.08 = phi i8* [ %b, %0 ], [ %11, %1 ]
   %.0 = phi i8* [ %a, %0 ], [ %2, %1 ]
   %2 = getelementptr inbounds i8, i8* %.0, i64 1
-  %3 = load i8* %.0, align 1
+  %3 = load i8, i8* %.0, align 1
   %4 = sext i8 %3 to i64
   %5 = getelementptr inbounds i8, i8* %c, i64 %4
-  %6 = load i8* %5, align 1
+  %6 = load i8, i8* %5, align 1
   %7 = add i64 %4, 1
   %8 = getelementptr inbounds i8, i8* %c, i64 %7
-  %9 = load i8* %8, align 1
+  %9 = load i8, i8* %8, align 1
   store i8 %6, i8* %.08, align 1
   %10 = getelementptr inbounds i8, i8* %.08, i64 1
   store i8 %9, i8* %10, align 1
@@ -415,14 +415,14 @@ define void @loadStoreBaseIndexOffsetSextNoSex(i8* %a, i8* %b, i8* %c, i32 %n) {
   %.08 = phi i8* [ %b, %0 ], [ %11, %1 ]
   %.0 = phi i8* [ %a, %0 ], [ %2, %1 ]
   %2 = getelementptr inbounds i8, i8* %.0, i64 1
-  %3 = load i8* %.0, align 1
+  %3 = load i8, i8* %.0, align 1
   %4 = sext i8 %3 to i64
   %5 = getelementptr inbounds i8, i8* %c, i64 %4
-  %6 = load i8* %5, align 1
+  %6 = load i8, i8* %5, align 1
   %7 = add i8 %3, 1
   %wrap.4 = sext i8 %7 to i64
   %8 = getelementptr inbounds i8, i8* %c, i64 %wrap.4
-  %9 = load i8* %8, align 1
+  %9 = load i8, i8* %8, align 1
   store i8 %6, i8* %.08, align 1
   %10 = getelementptr inbounds i8, i8* %.08, i64 1
   store i8 %9, i8* %10, align 1
@@ -477,11 +477,11 @@ define void @merge_vec_element_and_scalar_load([6 x i64]* %array) {
   %idx4 = getelementptr inbounds [6 x i64], [6 x i64]* %array, i64 0, i64 4
   %idx5 = getelementptr inbounds [6 x i64], [6 x i64]* %array, i64 0, i64 5
 
-  %a0 = load i64* %idx0, align 8
+  %a0 = load i64, i64* %idx0, align 8
   store i64 %a0, i64* %idx4, align 8
 
   %b = bitcast i64* %idx1 to <2 x i64>*
-  %v = load <2 x i64>* %b, align 8
+  %v = load <2 x i64>, <2 x i64>* %b, align 8
   %a1 = extractelement <2 x i64> %v, i32 0
   store i64 %a1, i64* %idx5, align 8
   ret void

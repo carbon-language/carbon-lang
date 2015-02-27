@@ -15,13 +15,13 @@ target triple = "aarch64-linux-gnueabi"
 ; elimilate the common subexpression for the second use.
 define void @test_GEP_CSE([240 x %struct]* %string, i32* %adj, i32 %lib, i64 %idxprom) {
   %liberties = getelementptr [240 x %struct], [240 x %struct]* %string, i64 1, i64 %idxprom, i32 3
-  %1 = load i32* %liberties, align 4
+  %1 = load i32, i32* %liberties, align 4
   %cmp = icmp eq i32 %1, %lib
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
   %origin = getelementptr [240 x %struct], [240 x %struct]* %string, i64 1, i64 %idxprom, i32 2
-  %2 = load i32* %origin, align 4
+  %2 = load i32, i32* %origin, align 4
   store i32 %2, i32* %adj, align 4
   br label %if.end
 
@@ -66,9 +66,9 @@ if.end:                                           ; preds = %if.then, %entry
 ; use.
 define void @test_GEP_across_BB(%class.my* %this, i64 %idx) {
   %1 = getelementptr %class.my, %class.my* %this, i64 0, i32 3, i64 %idx, i32 1
-  %2 = load i32* %1, align 4
+  %2 = load i32, i32* %1, align 4
   %3 = getelementptr %class.my, %class.my* %this, i64 0, i32 3, i64 %idx, i32 2
-  %4 = load i32* %3, align 4
+  %4 = load i32, i32* %3, align 4
   %5 = icmp eq i32 %2, %4
   br i1 %5, label %if.true, label %exit
 

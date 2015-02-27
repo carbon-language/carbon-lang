@@ -13,10 +13,10 @@ entry:
 
   %b = alloca <6 x i32>, align 16
   %a = alloca <4 x i32>, align 16
-  %stuff = load <6 x i32>* %p, align 16
+  %stuff = load <6 x i32>, <6 x i32>* %p, align 16
   store <6 x i32> %stuff, <6 x i32>* %b, align 16
   store <4 x i32> <i32 0, i32 1, i32 2, i32 3>, <4 x i32>* %a, align 16
-  %0 = load <4 x i32>* %a, align 16
+  %0 = load <4 x i32>, <4 x i32>* %a, align 16
   ret <4 x i32> %0
 
 ; Epilogue
@@ -46,7 +46,7 @@ entry:
   %a = alloca <4 x i32>, align 16
   store <4 x i32> <i32 42, i32 42, i32 42, i32 42>, <4 x i32>* %b, align 16
   store <4 x i32> <i32 0, i32 1, i32 2, i32 3>, <4 x i32>* %a, align 16
-  %0 = load <4 x i32>* %a, align 16
+  %0 = load <4 x i32>, <4 x i32>* %a, align 16
   call void @llvm.va_start(i8* null)
   ret <4 x i32> %0
 
@@ -78,7 +78,7 @@ entry:
 ; CHECK-V4T:    push    {[[SAVED:(r[4567](, )?)+]], lr}
 ; CHECK-V5T:    push    {[[SAVED:(r[4567](, )?)+]], lr}
 
-  %0 = load <6 x i32>* %p, align 16
+  %0 = load <6 x i32>, <6 x i32>* %p, align 16
   %1 = extractelement <6 x i32> %0, i32 0
   %2 = extractelement <6 x i32> %0, i32 1
   %3 = extractelement <6 x i32> %0, i32 2
@@ -121,24 +121,24 @@ entry:
   store i32 2, i32* %b, align 4
   store i32 3, i32* %c, align 4
   store i32 4, i32* %d, align 4
-  %0 = load i32* %a, align 4
+  %0 = load i32, i32* %a, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %a, align 4
-  %1 = load i32* %b, align 4
+  %1 = load i32, i32* %b, align 4
   %inc1 = add nsw i32 %1, 1
   store i32 %inc1, i32* %b, align 4
-  %2 = load i32* %c, align 4
+  %2 = load i32, i32* %c, align 4
   %inc2 = add nsw i32 %2, 1
   store i32 %inc2, i32* %c, align 4
-  %3 = load i32* %d, align 4
+  %3 = load i32, i32* %d, align 4
   %inc3 = add nsw i32 %3, 1
   store i32 %inc3, i32* %d, align 4
-  %4 = load i32* %a, align 4
-  %5 = load i32* %b, align 4
+  %4 = load i32, i32* %a, align 4
+  %5 = load i32, i32* %b, align 4
   %add = add nsw i32 %4, %5
-  %6 = load i32* %c, align 4
+  %6 = load i32, i32* %c, align 4
   %add4 = add nsw i32 %add, %6
-  %7 = load i32* %d, align 4
+  %7 = load i32, i32* %d, align 4
   %add5 = add nsw i32 %add4, %7
   %add6 = add nsw i32 %add5, %i
   call void @llvm.va_start(i8* null)

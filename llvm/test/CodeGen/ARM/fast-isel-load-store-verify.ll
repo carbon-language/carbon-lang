@@ -17,7 +17,7 @@ define i8 @t1() nounwind uwtable ssp {
 ; ALL: @t1
 ; ALL: ldrb
 ; ALL: add
-  %1 = load i8* @a, align 1
+  %1 = load i8, i8* @a, align 1
   %2 = add nsw i8 %1, 1
   ret i8 %2
 }
@@ -26,7 +26,7 @@ define i16 @t2() nounwind uwtable ssp {
 ; ALL: @t2
 ; ALL: ldrh
 ; ALL: add
-  %1 = load i16* @b, align 2
+  %1 = load i16, i16* @b, align 2
   %2 = add nsw i16 %1, 1
   ret i16 %2
 }
@@ -35,7 +35,7 @@ define i32 @t3() nounwind uwtable ssp {
 ; ALL: @t3
 ; ALL: ldr
 ; ALL: add
-  %1 = load i32* @c, align 4
+  %1 = load i32, i32* @c, align 4
   %2 = add nsw i32 %1, 1
   ret i32 %2
 }

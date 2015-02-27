@@ -10,7 +10,7 @@ declare i8* @malloc(i64) nounwind
 define noalias i8* @test1() nounwind uwtable ssp {
 entry:
   %call = tail call i8* @malloc(i64 100) nounwind
-  %0 = load i8* %call, align 1
+  %0 = load i8, i8* %call, align 1
   %tobool = icmp eq i8 %0, 0
   br i1 %tobool, label %if.end, label %if.then
 
@@ -35,7 +35,7 @@ declare i8* @_Znwm(i64) nounwind
 define noalias i8* @test2() nounwind uwtable ssp {
 entry:
   %call = tail call i8* @_Znwm(i64 100) nounwind
-  %0 = load i8* %call, align 1
+  %0 = load i8, i8* %call, align 1
   %tobool = icmp eq i8 %0, 0
   br i1 %tobool, label %if.end, label %if.then
 

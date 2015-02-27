@@ -4,7 +4,7 @@ define weak_odr i32 @_ZN5ClassIiE3fooEv(%struct.Class* %this) align 2 {
 entry:
   %this.addr = alloca %struct.Class*, align 8
   store %struct.Class* %this, %struct.Class** %this.addr, align 8
-  %this1 = load %struct.Class** %this.addr
+  %this1 = load %struct.Class*, %struct.Class** %this.addr
   ret i32 0, !dbg !12
 }
 

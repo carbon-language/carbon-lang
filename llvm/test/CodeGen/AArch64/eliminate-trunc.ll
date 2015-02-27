@@ -15,10 +15,10 @@ entry:
 for.body4.us:
   %indvars.iv = phi i64 [ 0, %for.body4.lr.ph.us ], [ %indvars.iv.next, %for.body4.us ]
   %arrayidx6.us = getelementptr inbounds [8 x i8], [8 x i8]* %a, i64 %indvars.iv26, i64 %indvars.iv
-  %0 = load i8* %arrayidx6.us, align 1
+  %0 = load i8, i8* %arrayidx6.us, align 1
   %idxprom7.us = zext i8 %0 to i64
   %arrayidx8.us = getelementptr inbounds i8, i8* %box, i64 %idxprom7.us
-  %1 = load i8* %arrayidx8.us, align 1
+  %1 = load i8, i8* %arrayidx8.us, align 1
   store i8 %1, i8* %arrayidx6.us, align 1
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %2 = trunc i64 %indvars.iv.next to i32

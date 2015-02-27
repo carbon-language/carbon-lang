@@ -30,8 +30,8 @@ entry:
   %y.addr = alloca i32, align 4
   store i32 %x, i32* %x.addr, align 4
   store i32 %y, i32* %y.addr, align 4
-  %0 = load i32* %x.addr, align 4, !dbg !11
-  %1 = load i32* %y.addr, align 4, !dbg !11
+  %0 = load i32, i32* %x.addr, align 4, !dbg !11
+  %1 = load i32, i32* %y.addr, align 4, !dbg !11
   %add = add nsw i32 %0, %1, !dbg !11
   ret i32 %add, !dbg !11
 }
@@ -47,7 +47,7 @@ entry:
   br label %while.cond, !dbg !13
 
 while.cond:                                       ; preds = %if.end, %entry
-  %0 = load i32* %i, align 4, !dbg !14
+  %0 = load i32, i32* %i, align 4, !dbg !14
   %inc = add nsw i32 %0, 1, !dbg !14
   store i32 %inc, i32* %i, align 4, !dbg !14
   %cmp = icmp slt i32 %0, 400000000, !dbg !14
@@ -56,7 +56,7 @@ while.cond:                                       ; preds = %if.end, %entry
 ; CHECK: edge while.cond -> while.end probability is 1 / 5392 = 0.018546%
 
 while.body:                                       ; preds = %while.cond
-  %1 = load i32* %i, align 4, !dbg !16
+  %1 = load i32, i32* %i, align 4, !dbg !16
   %cmp1 = icmp ne i32 %1, 100, !dbg !16
   br i1 %cmp1, label %if.then, label %if.else, !dbg !16
 ; Without discriminator information, the profiler used to think that
@@ -68,8 +68,8 @@ while.body:                                       ; preds = %while.cond
 
 
 if.then:                                          ; preds = %while.body
-  %2 = load i32* %i, align 4, !dbg !18
-  %3 = load i32* %s, align 4, !dbg !18
+  %2 = load i32, i32* %i, align 4, !dbg !18
+  %3 = load i32, i32* %s, align 4, !dbg !18
   %call = call i32 @_Z3sumii(i32 %2, i32 %3), !dbg !18
   store i32 %call, i32* %s, align 4, !dbg !18
   br label %if.end, !dbg !18
@@ -82,7 +82,7 @@ if.end:                                           ; preds = %if.else, %if.then
   br label %while.cond, !dbg !22
 
 while.end:                                        ; preds = %while.cond
-  %4 = load i32* %s, align 4, !dbg !24
+  %4 = load i32, i32* %s, align 4, !dbg !24
   %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0), i32 %4), !dbg !24
   ret i32 0, !dbg !25
 }

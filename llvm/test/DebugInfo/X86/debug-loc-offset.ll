@@ -65,7 +65,7 @@ entry:
   %b.addr = alloca i32, align 4
   store i32 %b, i32* %b.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %b.addr, metadata !21, metadata !{!"0x102"}), !dbg !22
-  %0 = load i32* %b.addr, align 4, !dbg !23
+  %0 = load i32, i32* %b.addr, align 4, !dbg !23
   %add = add nsw i32 %0, 4, !dbg !23
   ret i32 %add, !dbg !23
 }
@@ -80,12 +80,12 @@ entry:
   call void @llvm.dbg.declare(metadata i32* %z, metadata !26, metadata !{!"0x102"}), !dbg !27
   store i32 2, i32* %z, align 4, !dbg !27
   %var = getelementptr inbounds %struct.A, %struct.A* %a, i32 0, i32 1, !dbg !28
-  %0 = load i32* %var, align 4, !dbg !28
+  %0 = load i32, i32* %var, align 4, !dbg !28
   %cmp = icmp sgt i32 %0, 2, !dbg !28
   br i1 %cmp, label %if.then, label %if.end, !dbg !28
 
 if.then:                                          ; preds = %entry
-  %1 = load i32* %z, align 4, !dbg !30
+  %1 = load i32, i32* %z, align 4, !dbg !30
   %inc = add nsw i32 %1, 1, !dbg !30
   store i32 %inc, i32* %z, align 4, !dbg !30
   br label %if.end, !dbg !30
@@ -97,7 +97,7 @@ if.end:                                           ; preds = %if.then, %entry
   br i1 %cmp1, label %if.then2, label %if.end4, !dbg !31
 
 if.then2:                                         ; preds = %if.end
-  %2 = load i32* %z, align 4, !dbg !33
+  %2 = load i32, i32* %z, align 4, !dbg !33
   %inc3 = add nsw i32 %2, 1, !dbg !33
   store i32 %inc3, i32* %z, align 4, !dbg !33
   br label %if.end4, !dbg !33

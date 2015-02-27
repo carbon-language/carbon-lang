@@ -8,7 +8,7 @@ define void @test(i32 %i) nounwind {
 entry:
   %i.addr = alloca i32, align 4
   store i32 %i, i32* %i.addr, align 4
-  %0 = load i32* %i.addr, align 4
+  %0 = load i32, i32* %i.addr, align 4
   switch i32 %0, label %sw.epilog [
     i32 115, label %sw.bb
     i32 105, label %sw.bb1

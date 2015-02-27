@@ -40,7 +40,7 @@ define i32 @f1() {
 ; MINGW32-NEXT: retl
 
 entry:
-	%tmp1 = load i32* @i1
+	%tmp1 = load i32, i32* @i1
 	ret i32 %tmp1
 }
 
@@ -105,7 +105,7 @@ define i32 @f3() nounwind {
 ; MINGW32-NEXT: retl
 
 entry:
-	%tmp1 = load i32* @i2
+	%tmp1 = load i32, i32* @i2
 	ret i32 %tmp1
 }
 
@@ -168,7 +168,7 @@ define i32 @f5() nounwind {
 ; MINGW32-NEXT: retl
 
 entry:
-	%tmp1 = load i32* @i3
+	%tmp1 = load i32, i32* @i3
 	ret i32 %tmp1
 }
 
@@ -219,7 +219,7 @@ define i32 @f7() {
 ; MINGW32-NEXT: retl
 
 entry:
-	%tmp1 = load i32* @i4
+	%tmp1 = load i32, i32* @i4
 	ret i32 %tmp1
 }
 
@@ -258,7 +258,7 @@ define i32 @f9() {
 ; MINGW32-NEXT: retl
 
 entry:
-	%tmp1 = load i32* @i5
+	%tmp1 = load i32, i32* @i5
 	ret i32 %tmp1
 }
 
@@ -309,7 +309,7 @@ define i16 @f11() {
 ; MINGW32: retl
 
 entry:
-	%tmp1 = load i16* @s1
+	%tmp1 = load i16, i16* @s1
 	ret i16 %tmp1
 }
 
@@ -341,7 +341,7 @@ define i32 @f12() {
 
 
 entry:
-	%tmp1 = load i16* @s1
+	%tmp1 = load i16, i16* @s1
   %tmp2 = sext i16 %tmp1 to i32
 	ret i32 %tmp2
 }
@@ -373,7 +373,7 @@ define i8 @f13() {
 ; MINGW32-NEXT: retl
 
 entry:
-	%tmp1 = load i8* @b1
+	%tmp1 = load i8, i8* @b1
 	ret i8 %tmp1
 }
 
@@ -404,7 +404,7 @@ define i32 @f14() {
 ; MINGW32-NEXT: retl
 
 entry:
-	%tmp1 = load i8* @b1
+	%tmp1 = load i8, i8* @b1
   %tmp2 = sext i8 %tmp1 to i32
 	ret i32 %tmp2
 }

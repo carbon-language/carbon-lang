@@ -32,7 +32,7 @@ define i1 @produce_i1_ret() {
 ; CHECK-LABEL: produce_i1_ret:
 ; CHECK: ldr [[VAR32:w[0-9]+]], [{{x[0-9]+}}, :lo12:var]
 ; CHECK: and w0, [[VAR32]], #{{0x1|0xff}}
-  %val = load %big* @var
+  %val = load %big, %big* @var
   %val1 = trunc %big %val to i1
   ret i1 %val1
 }
@@ -42,7 +42,7 @@ define void @produce_i1_arg() {
 ; CHECK: ldr [[VAR32:w[0-9]+]], [{{x[0-9]+}}, :lo12:var]
 ; CHECK: and w0, [[VAR32]], #{{0x1|0xff}}
 ; CHECK: bl consume_i1_arg
-  %val = load %big* @var
+  %val = load %big, %big* @var
   %val1 = trunc %big %val to i1
   call void @consume_i1_arg(i1 %val1)
   ret void

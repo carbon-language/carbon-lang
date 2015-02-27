@@ -98,10 +98,10 @@ for.body.preheader:                               ; preds = %entry
 for.body:                                         ; preds = %for.body.preheader, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %for.body.preheader ]
   %arrayidx = getelementptr inbounds i32, i32* %B, i64 %indvars.iv, !dbg !35
-  %0 = load i32* %arrayidx, align 4, !dbg !35, !tbaa !18
+  %0 = load i32, i32* %arrayidx, align 4, !dbg !35, !tbaa !18
   %idxprom1 = sext i32 %0 to i64, !dbg !35
   %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %idxprom1, !dbg !35
-  %1 = load i32* %arrayidx2, align 4, !dbg !35, !tbaa !18
+  %1 = load i32, i32* %arrayidx2, align 4, !dbg !35, !tbaa !18
   %arrayidx4 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv, !dbg !35
   store i32 %1, i32* %arrayidx4, align 4, !dbg !35, !tbaa !18
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1, !dbg !32

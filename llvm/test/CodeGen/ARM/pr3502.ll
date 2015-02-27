@@ -11,7 +11,7 @@ define void @SomeCall(i32 %num) nounwind {
 entry:
 	tail call void asm sideeffect "mcr p15, 0, $0, c7, c10, 4 \0A\09", "r,~{memory}"(i32 0) nounwind
 	tail call void asm sideeffect "mcr p15,0,$0,c7,c14,0", "r,~{memory}"(i32 0) nounwind
-	%0 = load %struct.SHARED_AREA** null, align 4		; <%struct.SHARED_AREA*> [#uses=1]
+	%0 = load %struct.SHARED_AREA*, %struct.SHARED_AREA** null, align 4		; <%struct.SHARED_AREA*> [#uses=1]
 	%1 = ptrtoint %struct.SHARED_AREA* %0 to i32		; <i32> [#uses=1]
 	%2 = lshr i32 %1, 20		; <i32> [#uses=1]
 	%3 = tail call i32 @SetCurrEntry(i32 %2, i32 0) nounwind		; <i32> [#uses=0]

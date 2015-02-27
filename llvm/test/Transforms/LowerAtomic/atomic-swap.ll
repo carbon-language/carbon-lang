@@ -5,7 +5,7 @@ define i8 @cmpswap() {
   %i = alloca i8
   %pair = cmpxchg i8* %i, i8 0, i8 42 monotonic monotonic
   %j = extractvalue { i8, i1 } %pair, 0
-; CHECK: [[OLDVAL:%[a-z0-9]+]] = load i8* [[ADDR:%[a-z0-9]+]]
+; CHECK: [[OLDVAL:%[a-z0-9]+]] = load i8, i8* [[ADDR:%[a-z0-9]+]]
 ; CHECK-NEXT: [[SAME:%[a-z0-9]+]] = icmp eq i8 [[OLDVAL]], 0
 ; CHECK-NEXT: [[TO_STORE:%[a-z0-9]+]] = select i1 [[SAME]], i8 42, i8 [[OLDVAL]]
 ; CHECK-NEXT: store i8 [[TO_STORE]], i8* [[ADDR]]

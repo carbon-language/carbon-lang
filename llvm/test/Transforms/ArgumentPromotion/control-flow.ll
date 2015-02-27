@@ -8,7 +8,7 @@ T:              ; preds = %0
         ret i32 17
 
 F:              ; preds = %0
-        %X = load i32* %P               ; <i32> [#uses=1]
+        %X = load i32, i32* %P               ; <i32> [#uses=1]
         ret i32 %X
 }
 

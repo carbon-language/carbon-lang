@@ -10,7 +10,7 @@ target triple = "i386-unknown-linux-gnu"
 
 define i32 @f(i8* %p) nounwind {
 entry:
-  %0 = load i8* %p
+  %0 = load i8, i8* %p
   %conv = sext i8 %0 to i32
   ret i32 %conv
 }

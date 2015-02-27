@@ -11,7 +11,7 @@ invoke.cont145:
   br i1 %or.cond, label %if.then274, label %invoke.cont145
 
 if.then274:
-  %0 = load i32* null, align 4
+  %0 = load i32, i32* null, align 4
   br i1 undef, label %invoke.cont291, label %if.else313
 
 invoke.cont291:

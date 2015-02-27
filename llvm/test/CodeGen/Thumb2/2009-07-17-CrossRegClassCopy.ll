@@ -18,7 +18,7 @@ bb.i:		; preds = %bb.i, %bb1
 	%indvar.i = phi i32 [ 0, %bb1 ], [ %2, %bb.i ]		; <i32> [#uses=3]
 	%tmp39 = add i32 %indvar.i, %tmp38		; <i32> [#uses=1]
 	%p_addr.0.i = getelementptr i8, i8* undef, i32 %tmp39		; <i8*> [#uses=1]
-	%0 = load i8* %p_addr.0.i, align 1		; <i8> [#uses=1]
+	%0 = load i8, i8* %p_addr.0.i, align 1		; <i8> [#uses=1]
 	%1 = icmp slt i8 %0, 0		; <i1> [#uses=1]
 	%2 = add i32 %indvar.i, 1		; <i32> [#uses=1]
 	br i1 %1, label %bb.i, label %read_uleb128.exit

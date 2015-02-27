@@ -7,7 +7,7 @@ entry:
 ; CHECK-LABEL: shift5a:
 ; CHECK: movd
 ; CHECK: pslld
-  %amt = load i32* %pamt 
+  %amt = load i32, i32* %pamt 
   %tmp0 = insertelement <4 x i32> undef, i32 %amt, i32 0
   %shamt = shufflevector <4 x i32> %tmp0, <4 x i32> undef, <4 x i32> zeroinitializer 
   %shl = shl <4 x i32> %val, %shamt
@@ -21,7 +21,7 @@ entry:
 ; CHECK-LABEL: shift5b:
 ; CHECK: movd
 ; CHECK: psrad
-  %amt = load i32* %pamt 
+  %amt = load i32, i32* %pamt 
   %tmp0 = insertelement <4 x i32> undef, i32 %amt, i32 0
   %shamt = shufflevector <4 x i32> %tmp0, <4 x i32> undef, <4 x i32> zeroinitializer 
   %shr = ashr <4 x i32> %val, %shamt

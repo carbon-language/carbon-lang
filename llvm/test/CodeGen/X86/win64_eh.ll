@@ -62,21 +62,21 @@ entry:
   store i32 %d_arg, i32* %d
   store i32 %e_arg, i32* %e
   store i32 %f_arg, i32* %f
-  %tmp = load i32* %a
+  %tmp = load i32, i32* %a
   %tmp1 = mul i32 %tmp, 2
-  %tmp2 = load i32* %b
+  %tmp2 = load i32, i32* %b
   %tmp3 = mul i32 %tmp2, 3
   %tmp4 = add i32 %tmp1, %tmp3
-  %tmp5 = load i32* %c
+  %tmp5 = load i32, i32* %c
   %tmp6 = mul i32 %tmp5, 5
   %tmp7 = add i32 %tmp4, %tmp6
-  %tmp8 = load i32* %d
+  %tmp8 = load i32, i32* %d
   %tmp9 = mul i32 %tmp8, 7
   %tmp10 = add i32 %tmp7, %tmp9
-  %tmp11 = load i32* %e
+  %tmp11 = load i32, i32* %e
   %tmp12 = mul i32 %tmp11, 11
   %tmp13 = add i32 %tmp10, %tmp12
-  %tmp14 = load i32* %f
+  %tmp14 = load i32, i32* %f
   %tmp15 = mul i32 %tmp14, 13
   %tmp16 = add i32 %tmp13, %tmp15
   ret i32 %tmp16
@@ -105,7 +105,7 @@ define i32 @foo4() #0 {
 entry:
   %step = alloca i32, align 4
   store i32 0, i32* %step
-  %tmp = load i32* %step
+  %tmp = load i32, i32* %step
 
   %tmp1 = invoke i32 @bar()
           to label %finally unwind label %landingpad
@@ -123,7 +123,7 @@ landingpad:
   unreachable
 
 endtryfinally:
-  %tmp10 = load i32* %step
+  %tmp10 = load i32, i32* %step
   ret i32 %tmp10
 }
 ; WIN64-LABEL: foo4:

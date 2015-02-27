@@ -68,7 +68,7 @@ define i32 @cmpxchg_use_eflags_and_val(i32* %addr, i32 %offset) {
   ; Result already in %eax
 ; CHECK: retq
 entry:
-  %init = load atomic i32* %addr seq_cst, align 4
+  %init = load atomic i32, i32* %addr seq_cst, align 4
   br label %loop
 
 loop:

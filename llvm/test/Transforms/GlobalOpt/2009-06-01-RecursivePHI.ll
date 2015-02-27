@@ -33,7 +33,7 @@ bb.i4.i:		; preds = %my_calloc.exit.i
 	unreachable
 
 my_calloc.exit5.i:		; preds = %my_calloc.exit.i
-	%.pre.i58 = load %struct.s_net** @net, align 4		; <%struct.s_net*> [#uses=1]
+	%.pre.i58 = load %struct.s_net*, %struct.s_net** @net, align 4		; <%struct.s_net*> [#uses=1]
 	br label %bb17.i78
 
 bb1.i61:		; preds = %bb4.preheader.i, %bb1.i61
@@ -58,11 +58,11 @@ bb.i1.i68:		; preds = %bb8.i67
 	unreachable
 
 my_malloc.exit.i70:		; preds = %bb8.i67
-	%0 = load %struct.s_net** @net, align 4		; <%struct.s_net*> [#uses=1]
+	%0 = load %struct.s_net*, %struct.s_net** @net, align 4		; <%struct.s_net*> [#uses=1]
 	br i1 undef, label %bb9.i71, label %bb16.i77
 
 bb9.i71:		; preds = %bb9.i71, %my_malloc.exit.i70
-	%1 = load %struct.s_net** @net, align 4		; <%struct.s_net*> [#uses=1]
+	%1 = load %struct.s_net*, %struct.s_net** @net, align 4		; <%struct.s_net*> [#uses=1]
 	br i1 undef, label %bb9.i71, label %bb16.i77
 
 bb16.i77:		; preds = %bb9.i71, %my_malloc.exit.i70, %bb15.preheader.i

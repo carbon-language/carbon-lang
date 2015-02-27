@@ -16,12 +16,12 @@ entry:
   %retval = alloca i32, align 4
   %i.addr = alloca i32, align 4
   store i32 %i, i32* %i.addr, align 4
-  %0 = load i32* %i.addr, align 4, !dbg !10
+  %0 = load i32, i32* %i.addr, align 4, !dbg !10
   %cmp = icmp slt i32 %0, 10, !dbg !10
   br i1 %cmp, label %if.then, label %if.end, !dbg !10
 
 if.then:                                          ; preds = %entry
-  %1 = load i32* %i.addr, align 4, !dbg !14
+  %1 = load i32, i32* %i.addr, align 4, !dbg !14
   %sub = sub nsw i32 %1, 1, !dbg !14
   store i32 %sub, i32* %retval, !dbg !14
   br label %return, !dbg !14
@@ -31,7 +31,7 @@ if.end:                                           ; preds = %entry
   br label %return, !dbg !12
 
 return:                                           ; preds = %if.end, %if.then
-  %2 = load i32* %retval, !dbg !13
+  %2 = load i32, i32* %retval, !dbg !13
   ret i32 %2, !dbg !13
 }
 

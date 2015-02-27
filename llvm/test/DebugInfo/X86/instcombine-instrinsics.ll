@@ -33,9 +33,9 @@ define void @init() #0 {
   call void @llvm.dbg.declare(metadata %struct.i14** %p, metadata !11, metadata !{!"0x102"}), !dbg !18
   store %struct.i14* null, %struct.i14** %p, align 8, !dbg !18
   %1 = call i32 @foo(%struct.i14** %p), !dbg !19
-  %2 = load %struct.i14** %p, align 8, !dbg !20
+  %2 = load %struct.i14*, %struct.i14** %p, align 8, !dbg !20
   %3 = getelementptr inbounds %struct.i14, %struct.i14* %2, i32 0, i32 0, !dbg !20
-  %4 = load i64* %3, align 8, !dbg !20
+  %4 = load i64, i64* %3, align 8, !dbg !20
   %5 = or i64 %4, 4, !dbg !20
   store i64 %5, i64* %3, align 8, !dbg !20
   %6 = call i32 @foo(%struct.i14** %p), !dbg !21

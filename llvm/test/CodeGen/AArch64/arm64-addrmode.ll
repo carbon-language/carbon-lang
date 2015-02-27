@@ -9,7 +9,7 @@
 ; CHECK: ret
 define void @t1() {
   %incdec.ptr = getelementptr inbounds i64, i64* @object, i64 1
-  %tmp = load volatile i64* %incdec.ptr, align 8
+  %tmp = load volatile i64, i64* %incdec.ptr, align 8
   ret void
 }
 
@@ -21,7 +21,7 @@ define void @t1() {
 ; CHECK: ret
 define void @t2() {
   %incdec.ptr = getelementptr inbounds i64, i64* @object, i64 -33
-  %tmp = load volatile i64* %incdec.ptr, align 8
+  %tmp = load volatile i64, i64* %incdec.ptr, align 8
   ret void
 }
 
@@ -31,7 +31,7 @@ define void @t2() {
 ; CHECK: ret
 define void @t3() {
   %incdec.ptr = getelementptr inbounds i64, i64* @object, i64 4095
-  %tmp = load volatile i64* %incdec.ptr, align 8
+  %tmp = load volatile i64, i64* %incdec.ptr, align 8
   ret void
 }
 
@@ -42,7 +42,7 @@ define void @t3() {
 ; CHECK: ret
 define void @t4() {
   %incdec.ptr = getelementptr inbounds i64, i64* @object, i64 4096
-  %tmp = load volatile i64* %incdec.ptr, align 8
+  %tmp = load volatile i64, i64* %incdec.ptr, align 8
   ret void
 }
 
@@ -52,7 +52,7 @@ define void @t4() {
 ; CHECK: ret
 define void @t5(i64 %a) {
   %incdec.ptr = getelementptr inbounds i64, i64* @object, i64 %a
-  %tmp = load volatile i64* %incdec.ptr, align 8
+  %tmp = load volatile i64, i64* %incdec.ptr, align 8
   ret void
 }
 
@@ -65,7 +65,7 @@ define void @t5(i64 %a) {
 define void @t6(i64 %a) {
   %tmp1 = getelementptr inbounds i64, i64* @object, i64 %a
   %incdec.ptr = getelementptr inbounds i64, i64* %tmp1, i64 4096
-  %tmp = load volatile i64* %incdec.ptr, align 8
+  %tmp = load volatile i64, i64* %incdec.ptr, align 8
   ret void
 }
 
@@ -76,7 +76,7 @@ define void @t7(i64 %a) {
 ; CHECK-NEXT: ldr xzr, [x0, x[[NUM]]]
   %1 = add i64 %a, 65535   ;0xffff
   %2 = inttoptr i64 %1 to i64*
-  %3 = load volatile i64* %2, align 8
+  %3 = load volatile i64, i64* %2, align 8
   ret void
 }
 
@@ -86,7 +86,7 @@ define void @t8(i64 %a) {
 ; CHECK-NEXT: ldr xzr, [x0, [[REG]]]
   %1 = sub i64 %a, 4662   ;-4662 is 0xffffffffffffedca
   %2 = inttoptr i64 %1 to i64*
-  %3 = load volatile i64* %2, align 8
+  %3 = load volatile i64, i64* %2, align 8
   ret void
 }
 
@@ -96,7 +96,7 @@ define void @t9(i64 %a) {
 ; CHECK-NEXT: ldr xzr, [x0, [[REG]]]
   %1 = add i64 -305463297, %a   ;-305463297 is 0xffffffffedcaffff
   %2 = inttoptr i64 %1 to i64*
-  %3 = load volatile i64* %2, align 8
+  %3 = load volatile i64, i64* %2, align 8
   ret void
 }
 
@@ -106,7 +106,7 @@ define void @t10(i64 %a) {
 ; CHECK-NEXT: ldr xzr, [x0, [[REG]]]
   %1 = add i64 %a, 81909218222800896   ;0x123000000000000
   %2 = inttoptr i64 %1 to i64*
-  %3 = load volatile i64* %2, align 8
+  %3 = load volatile i64, i64* %2, align 8
   ret void
 }
 
@@ -117,7 +117,7 @@ define void @t11(i64 %a) {
 ; CHECK-NEXT: ldr xzr, [x0, x[[NUM]]]
   %1 = add i64 %a, 19088743   ;0x1234567
   %2 = inttoptr i64 %1 to i64*
-  %3 = load volatile i64* %2, align 8
+  %3 = load volatile i64, i64* %2, align 8
   ret void
 }
 
@@ -128,7 +128,7 @@ define void @t12(i64 %a) {
 ; CHECK-NEXT: ldr xzr, {{\[}}[[REG]]]
   %1 = add i64 %a, 4095   ;0xfff
   %2 = inttoptr i64 %1 to i64*
-  %3 = load volatile i64* %2, align 8
+  %3 = load volatile i64, i64* %2, align 8
   ret void
 }
 
@@ -138,7 +138,7 @@ define void @t13(i64 %a) {
 ; CHECK-NEXT: ldr xzr, {{\[}}[[REG]]]
   %1 = add i64 %a, -4095   ;-0xfff
   %2 = inttoptr i64 %1 to i64*
-  %3 = load volatile i64* %2, align 8
+  %3 = load volatile i64, i64* %2, align 8
   ret void
 }
 
@@ -148,7 +148,7 @@ define void @t14(i64 %a) {
 ; CHECK-NEXT: ldr xzr, {{\[}}[[REG]]]
   %1 = add i64 %a, 1191936   ;0x123000
   %2 = inttoptr i64 %1 to i64*
-  %3 = load volatile i64* %2, align 8
+  %3 = load volatile i64, i64* %2, align 8
   ret void
 }
 
@@ -158,7 +158,7 @@ define void @t15(i64 %a) {
 ; CHECK-NEXT: ldr xzr, {{\[}}[[REG]]]
   %1 = add i64 %a, -1191936   ;0xFFFFFFFFFFEDD000
   %2 = inttoptr i64 %1 to i64*
-  %3 = load volatile i64* %2, align 8
+  %3 = load volatile i64, i64* %2, align 8
   ret void
 }
 
@@ -167,7 +167,7 @@ define void @t16(i64 %a) {
 ; CHECK: ldr xzr, [x0, #28672]
   %1 = add i64 %a, 28672   ;0x7000
   %2 = inttoptr i64 %1 to i64*
-  %3 = load volatile i64* %2, align 8
+  %3 = load volatile i64, i64* %2, align 8
   ret void
 }
 
@@ -176,6 +176,6 @@ define void @t17(i64 %a) {
 ; CHECK: ldur xzr, [x0, #-256]
   %1 = add i64 %a, -256   ;-0x100
   %2 = inttoptr i64 %1 to i64*
-  %3 = load volatile i64* %2, align 8
+  %3 = load volatile i64, i64* %2, align 8
   ret void
 }

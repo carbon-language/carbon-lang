@@ -16,7 +16,7 @@ entry:
 for.body:
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds [1024 x i32], [1024 x i32]* @B, i64 0, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %shl = ashr i32 %0, 3
   %arrayidx2 = getelementptr inbounds [1024 x i32], [1024 x i32]* @A, i64 0, i64 %indvars.iv
   store i32 %shl, i32* %arrayidx2, align 4

@@ -14,7 +14,7 @@ define i32 @bpf_prog1(%struct.bpf_context* nocapture %ctx) #0 section "events/ne
   %1 = getelementptr inbounds [3 x i8], [3 x i8]* %devname, i64 0, i64 0
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* getelementptr inbounds ([3 x i8]* @bpf_prog1.devname, i64 0, i64 0), i64 3, i32 1, i1 false)
   %2 = getelementptr inbounds %struct.bpf_context, %struct.bpf_context* %ctx, i64 0, i32 0
-  %3 = load i64* %2, align 8
+  %3 = load i64, i64* %2, align 8
   %4 = inttoptr i64 %3 to %struct.sk_buff*
   %5 = getelementptr inbounds %struct.sk_buff, %struct.sk_buff* %4, i64 0, i32 2
   %6 = bitcast i64* %5 to i8*

@@ -18,7 +18,7 @@ define void @storeinit(i32 %i) {
 
 define float @readval(i32 %i) {
         %Ptr = getelementptr { i32, [4 x float] }, { i32, [4 x float] }* @G, i32 0, i32 1, i32 %i             ; <float*> [#uses=1]
-        %V = load float* %Ptr           ; <float> [#uses=1]
+        %V = load float, float* %Ptr           ; <float> [#uses=1]
         ret float %V
 }
 

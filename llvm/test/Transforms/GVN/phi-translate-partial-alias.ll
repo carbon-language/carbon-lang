@@ -8,18 +8,18 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 ; CHECK: define void @test0(i8* %begin)
 ; CHECK: loop:
-; CHECK:   %l0 = load i8* %phi
+; CHECK:   %l0 = load i8, i8* %phi
 ; CHECK:   call void @bar(i8 %l0)
-; CHECK:   %l1 = load i8* %phi
+; CHECK:   %l1 = load i8, i8* %phi
 define void @test0(i8* %begin) {
 entry:
   br label %loop
 
 loop:
   %phi = phi i8* [ %begin, %entry ], [ %next, %loop ]
-  %l0 = load i8* %phi
+  %l0 = load i8, i8* %phi
   call void @bar(i8 %l0)
-  %l1 = load i8* %phi
+  %l1 = load i8, i8* %phi
   %next = getelementptr inbounds i8, i8* %phi, i8 %l1
   br label %loop
 }

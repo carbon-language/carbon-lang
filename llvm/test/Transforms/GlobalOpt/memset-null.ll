@@ -23,7 +23,7 @@ entry:
 
 define internal void @_GLOBAL__I_b() nounwind {
 entry:
-  %tmp.i.i.i = load i8** @y, align 8
+  %tmp.i.i.i = load i8*, i8** @y, align 8
   tail call void @llvm.memset.p0i8.i64(i8* %tmp.i.i.i, i8 0, i64 10, i32 1, i1 false) nounwind
   ret void
 }

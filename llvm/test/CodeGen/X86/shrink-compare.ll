@@ -4,7 +4,7 @@ declare void @bar()
 
 define void @test1(i32* nocapture %X) nounwind minsize {
 entry:
-  %tmp1 = load i32* %X, align 4
+  %tmp1 = load i32, i32* %X, align 4
   %and = and i32 %tmp1, 255
   %cmp = icmp eq i32 %and, 47
   br i1 %cmp, label %if.then, label %if.end
@@ -72,7 +72,7 @@ lor.end:                                          ; preds = %lor.rhs, %entry
 ; PR16551
 define void @test5(i32 %X) nounwind minsize {
 entry:
-  %bf.load = load i56* bitcast ({ i8, i8, i8, i8, i8, i8, i8, i8 }* @x to i56*), align 4
+  %bf.load = load i56, i56* bitcast ({ i8, i8, i8, i8, i8, i8, i8, i8 }* @x to i56*), align 4
   %bf.lshr = lshr i56 %bf.load, 32
   %bf.cast = trunc i56 %bf.lshr to i32
   %cmp = icmp ne i32 %bf.cast, 1

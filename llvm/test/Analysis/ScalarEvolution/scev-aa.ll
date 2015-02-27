@@ -22,8 +22,8 @@ bb:
   %pi = getelementptr double, double* %p, i64 %i
   %i.next = add i64 %i, 1
   %pi.next = getelementptr double, double* %p, i64 %i.next
-  %x = load double* %pi
-  %y = load double* %pi.next
+  %x = load double, double* %pi
+  %y = load double, double* %pi.next
   %z = fmul double %x, %y
   store double %z, double* %pi
   %exitcond = icmp eq i64 %i.next, %n
@@ -61,15 +61,15 @@ bb:
   %pi.j = getelementptr double, double* %p, i64 %e
   %f = add i64 %i.next, %j
   %pi.next.j = getelementptr double, double* %p, i64 %f
-  %x = load double* %pi.j
-  %y = load double* %pi.next.j
+  %x = load double, double* %pi.j
+  %y = load double, double* %pi.next.j
   %z = fmul double %x, %y
   store double %z, double* %pi.j
 
   %o = add i64 %j, 91
   %g = add i64 %i, %o
   %pi.j.next = getelementptr double, double* %p, i64 %g
-  %a = load double* %pi.j.next
+  %a = load double, double* %pi.j.next
   %b = fmul double %x, %a
   store double %b, double* %pi.j.next
 
@@ -118,15 +118,15 @@ bb:
   %pi.j = getelementptr double, double* %p, i64 %e
   %f = add i64 %i.next, %j
   %pi.next.j = getelementptr double, double* %p, i64 %f
-  %x = load double* %pi.j
-  %y = load double* %pi.next.j
+  %x = load double, double* %pi.j
+  %y = load double, double* %pi.next.j
   %z = fmul double %x, %y
   store double %z, double* %pi.j
 
   %o = add i64 %j, %n
   %g = add i64 %i, %o
   %pi.j.next = getelementptr double, double* %p, i64 %g
-  %a = load double* %pi.j.next
+  %a = load double, double* %pi.j.next
   %b = fmul double %x, %a
   store double %b, double* %pi.j.next
 
@@ -202,7 +202,7 @@ for.body:                                         ; preds = %entry, %for.body
   %inc = add nsw i64 %i, 1                         ; <i64> [#uses=2]
   %arrayidx = getelementptr inbounds i64, i64* %p, i64 %inc
   store i64 0, i64* %arrayidx
-  %tmp6 = load i64* %p                            ; <i64> [#uses=1]
+  %tmp6 = load i64, i64* %p                            ; <i64> [#uses=1]
   %cmp = icmp slt i64 %inc, %tmp6                 ; <i1> [#uses=1]
   br i1 %cmp, label %for.body, label %for.end
 

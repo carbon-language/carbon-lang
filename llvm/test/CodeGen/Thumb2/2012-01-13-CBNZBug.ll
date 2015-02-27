@@ -23,15 +23,15 @@ tailrecurse:                                      ; preds = %if.then10, %entry
 
 if.end:                                           ; preds = %tailrecurse
   %string = getelementptr inbounds %struct.Dict_node_struct, %struct.Dict_node_struct* %dn.tr, i32 0, i32 0
-  %0 = load i8** %string, align 4
+  %0 = load i8*, i8** %string, align 4
   br label %while.cond.i
 
 while.cond.i:                                     ; preds = %while.body.i, %if.end
   %1 = phi i8* [ %s, %if.end ], [ %incdec.ptr.i, %while.body.i ]
   %storemerge.i = phi i8* [ %0, %if.end ], [ %incdec.ptr6.i, %while.body.i ]
-  %2 = load i8* %1, align 1
+  %2 = load i8, i8* %1, align 1
   %cmp.i = icmp eq i8 %2, 0
-  %.pre.i = load i8* %storemerge.i, align 1
+  %.pre.i = load i8, i8* %storemerge.i, align 1
   br i1 %cmp.i, label %lor.lhs.false.i, label %land.end.i
 
 land.end.i:                                       ; preds = %while.cond.i
@@ -69,7 +69,7 @@ if.end3:                                          ; preds = %dict_match.exit, %l
 ; CHECK-NOT: cbnz
   %storemerge1.i3 = phi i32 [ %sub.i, %dict_match.exit ], [ 0, %lor.lhs.false.i ], [ 0, %while.end.i ]
   %right = getelementptr inbounds %struct.Dict_node_struct, %struct.Dict_node_struct* %dn.tr, i32 0, i32 4
-  %4 = load %struct.Dict_node_struct** %right, align 4
+  %4 = load %struct.Dict_node_struct*, %struct.Dict_node_struct** %right, align 4
   tail call fastcc void @rdictionary_lookup(%struct.Dict_node_struct* %4, i8* %s)
   %cmp4 = icmp eq i32 %storemerge1.i3, 0
   br i1 %cmp4, label %if.then5, label %if.end8
@@ -79,7 +79,7 @@ if.then5:                                         ; preds = %if.end3
   %5 = bitcast i8* %call6 to %struct.Dict_node_struct*
   %6 = bitcast %struct.Dict_node_struct* %dn.tr to i8*
   tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %call6, i8* %6, i32 16, i32 4, i1 false)
-  %7 = load %struct.Dict_node_struct** @lookup_list, align 4
+  %7 = load %struct.Dict_node_struct*, %struct.Dict_node_struct** @lookup_list, align 4
   %right7 = getelementptr inbounds i8, i8* %call6, i32 16
   %8 = bitcast i8* %right7 to %struct.Dict_node_struct**
   store %struct.Dict_node_struct* %7, %struct.Dict_node_struct** %8, align 4
@@ -92,7 +92,7 @@ if.end8:                                          ; preds = %if.end3
 
 if.then10:                                        ; preds = %if.end8, %if.then5, %dict_match.exit
   %left = getelementptr inbounds %struct.Dict_node_struct, %struct.Dict_node_struct* %dn.tr, i32 0, i32 3
-  %9 = load %struct.Dict_node_struct** %left, align 4
+  %9 = load %struct.Dict_node_struct*, %struct.Dict_node_struct** %left, align 4
   br label %tailrecurse
 
 if.end11:                                         ; preds = %if.end8, %tailrecurse

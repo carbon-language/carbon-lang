@@ -15,13 +15,13 @@ target triple = "powerpc64-bgq-linux"
 define i32 @testload(i32 *%ptr, i32 %sumin) {
 entry:
   %sum1 = add i32 %sumin, 1
-  %val1 = load i32* %ptr
+  %val1 = load i32, i32* %ptr
   %p = icmp eq i32 %sumin, 0
   br i1 %p, label %true, label %end
 true:
   %sum2 = add i32 %sum1, 1
   %ptr2 = getelementptr i32, i32* %ptr, i32 1
-  %val = load i32* %ptr2
+  %val = load i32, i32* %ptr2
   %val2 = add i32 %val1, %val
   br label %end
 end:

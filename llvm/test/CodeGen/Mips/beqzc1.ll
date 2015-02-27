@@ -6,7 +6,7 @@
 ; Function Attrs: nounwind optsize
 define i32 @main() #0 {
 entry:
-  %0 = load i32* @i, align 4
+  %0 = load i32, i32* @i, align 4
   %cmp = icmp eq i32 %0, 0
   br i1 %cmp, label %if.then, label %if.end
 

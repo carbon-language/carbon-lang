@@ -14,7 +14,7 @@ _ZNSt8auto_ptrIiED1Ev.exit:
   call void @_Z3barv(%"class.std::auto_ptr"* sret %temp.lvalue)
   %tmp.i.i = getelementptr inbounds %"class.std::auto_ptr", %"class.std::auto_ptr"* %temp.lvalue, i64 0, i32 0
 ; CHECK-NOT: load
-  %tmp2.i.i = load i32** %tmp.i.i, align 8
+  %tmp2.i.i = load i32*, i32** %tmp.i.i, align 8
   %tmp.i.i4 = getelementptr inbounds %"class.std::auto_ptr", %"class.std::auto_ptr"* %agg.result, i64 0, i32 0
 ; CHECK-NOT: store
   store i32* %tmp2.i.i, i32** %tmp.i.i4, align 8

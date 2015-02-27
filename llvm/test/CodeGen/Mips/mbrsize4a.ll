@@ -21,7 +21,7 @@ y:                                                ; preds = %z
   br label %z
 
 return:                                           ; No predecessors!
-  %0 = load i32* %retval
+  %0 = load i32, i32* %retval
   ret i32 %0
 ; jal16: 	jal	$BB{{[0-9]+}}_{{[0-9]+}}
 }

@@ -27,7 +27,7 @@ declare double @nearbyint(double) readonly
 
 define void @simple_float() {
 ; CHECK-LABEL: simple_float:
-  %val1 = load volatile float* @varfloat
+  %val1 = load volatile float, float* @varfloat
 
   %valabs = call float @fabsf(float %val1)
   store volatile float %valabs, float* @varfloat
@@ -66,7 +66,7 @@ define void @simple_float() {
 
 define void @simple_double() {
 ; CHECK-LABEL: simple_double:
-  %val1 = load volatile double* @vardouble
+  %val1 = load volatile double, double* @vardouble
 
   %valabs = call double @fabs(double %val1)
   store volatile double %valabs, double* @vardouble
@@ -106,9 +106,9 @@ define void @simple_double() {
 define void @converts() {
 ; CHECK-LABEL: converts:
 
-  %val16 = load volatile half* @varhalf
-  %val32 = load volatile float* @varfloat
-  %val64 = load volatile double* @vardouble
+  %val16 = load volatile half, half* @varhalf
+  %val32 = load volatile float, float* @varfloat
+  %val64 = load volatile double, double* @vardouble
 
   %val16to32 = fpext half %val16 to float
   store volatile float %val16to32, float* @varfloat

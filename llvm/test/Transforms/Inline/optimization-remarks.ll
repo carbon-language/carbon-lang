@@ -12,8 +12,8 @@ entry:
   %y.addr = alloca i32, align 4
   store i32 %x, i32* %x.addr, align 4
   store i32 %y, i32* %y.addr, align 4
-  %0 = load i32* %x.addr, align 4
-  %1 = load i32* %y.addr, align 4
+  %0 = load i32, i32* %x.addr, align 4
+  %1 = load i32, i32* %y.addr, align 4
   %add = add nsw i32 %0, %1
   ret i32 %add
 }
@@ -25,8 +25,8 @@ entry:
   %y.addr = alloca i32, align 4
   store i32 %x, i32* %x.addr, align 4
   store i32 %y, i32* %y.addr, align 4
-  %0 = load i32* %x.addr, align 4
-  %1 = load i32* %y.addr, align 4
+  %0 = load i32, i32* %x.addr, align 4
+  %1 = load i32, i32* %y.addr, align 4
   %mul = mul nsw i32 %0, %1
   %conv = sitofp i32 %mul to float
   ret float %conv
@@ -37,14 +37,14 @@ define i32 @bar(i32 %j) #2 {
 entry:
   %j.addr = alloca i32, align 4
   store i32 %j, i32* %j.addr, align 4
-  %0 = load i32* %j.addr, align 4
-  %1 = load i32* %j.addr, align 4
+  %0 = load i32, i32* %j.addr, align 4
+  %1 = load i32, i32* %j.addr, align 4
   %sub = sub nsw i32 %1, 2
   %call = call i32 @foo(i32 %0, i32 %sub)
   %conv = sitofp i32 %call to float
-  %2 = load i32* %j.addr, align 4
+  %2 = load i32, i32* %j.addr, align 4
   %sub1 = sub nsw i32 %2, 2
-  %3 = load i32* %j.addr, align 4
+  %3 = load i32, i32* %j.addr, align 4
   %call2 = call float @foz(i32 %sub1, i32 %3)
   %mul = fmul float %conv, %call2
   %conv3 = fptosi float %mul to i32

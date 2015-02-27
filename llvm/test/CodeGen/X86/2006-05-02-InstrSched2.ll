@@ -12,13 +12,13 @@ cond_true456.i:		; preds = %cond_true456.i, %newFuncRoot
 	%__s441.2.4.i = phi i8* [ %tmp451.i.upgrd.1, %cond_true456.i ], [ %tmp435.i, %newFuncRoot ]		; <i8*> [#uses=2]
 	%__h.2.4.i = phi i32 [ %tmp449.i, %cond_true456.i ], [ 0, %newFuncRoot ]	; <i32> [#uses=1]
 	%tmp446.i = mul i32 %__h.2.4.i, 5		; <i32> [#uses=1]
-	%tmp.i = load i8* %__s441.2.4.i		; <i8> [#uses=1]
+	%tmp.i = load i8, i8* %__s441.2.4.i		; <i8> [#uses=1]
 	%tmp448.i = sext i8 %tmp.i to i32		; <i32> [#uses=1]
 	%tmp449.i = add i32 %tmp448.i, %tmp446.i		; <i32> [#uses=2]
 	%tmp450.i = ptrtoint i8* %__s441.2.4.i to i32		; <i32> [#uses=1]
 	%tmp451.i = add i32 %tmp450.i, 1		; <i32> [#uses=1]
 	%tmp451.i.upgrd.1 = inttoptr i32 %tmp451.i to i8*		; <i8*> [#uses=2]
-	%tmp45435.i = load i8* %tmp451.i.upgrd.1		; <i8> [#uses=1]
+	%tmp45435.i = load i8, i8* %tmp451.i.upgrd.1		; <i8> [#uses=1]
 	%tmp45536.i = icmp eq i8 %tmp45435.i, 0		; <i1> [#uses=1]
 	br i1 %tmp45536.i, label %bb459.i.exitStub, label %cond_true456.i
 }

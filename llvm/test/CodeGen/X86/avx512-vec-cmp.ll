@@ -31,7 +31,7 @@ define <16 x i32> @test3(<16 x i32> %x, <16 x i32> %x1, <16 x i32>* %yp) nounwin
 ; CHECK-NEXT:    vmovdqa32 %zmm0, %zmm1 {%k1}
 ; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
-  %y = load <16 x i32>* %yp, align 4
+  %y = load <16 x i32>, <16 x i32>* %yp, align 4
   %mask = icmp eq <16 x i32> %x, %y
   %max = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> %x1
   ret <16 x i32> %max
@@ -215,7 +215,7 @@ define <16 x i32> @test17(<16 x i32> %x, <16 x i32> %x1, <16 x i32>* %y.ptr) nou
 ; CHECK-NEXT:    vmovdqa32 %zmm0, %zmm1 {%k1}
 ; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
-  %y = load <16 x i32>* %y.ptr, align 4
+  %y = load <16 x i32>, <16 x i32>* %y.ptr, align 4
   %mask = icmp sgt <16 x i32> %x, %y
   %max = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> %x1
   ret <16 x i32> %max
@@ -228,7 +228,7 @@ define <16 x i32> @test18(<16 x i32> %x, <16 x i32> %x1, <16 x i32>* %y.ptr) nou
 ; CHECK-NEXT:    vmovdqa32 %zmm0, %zmm1 {%k1}
 ; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
-  %y = load <16 x i32>* %y.ptr, align 4
+  %y = load <16 x i32>, <16 x i32>* %y.ptr, align 4
   %mask = icmp sle <16 x i32> %x, %y
   %max = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> %x1
   ret <16 x i32> %max
@@ -241,7 +241,7 @@ define <16 x i32> @test19(<16 x i32> %x, <16 x i32> %x1, <16 x i32>* %y.ptr) nou
 ; CHECK-NEXT:    vmovdqa32 %zmm0, %zmm1 {%k1}
 ; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
-  %y = load <16 x i32>* %y.ptr, align 4
+  %y = load <16 x i32>, <16 x i32>* %y.ptr, align 4
   %mask = icmp ule <16 x i32> %x, %y
   %max = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> %x1
   ret <16 x i32> %max
@@ -286,7 +286,7 @@ define <8 x i64> @test22(<8 x i64> %x, <8 x i64>* %y.ptr, <8 x i64> %x1, <8 x i6
 ; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %mask1 = icmp sgt <8 x i64> %x1, %y1
-  %y = load <8 x i64>* %y.ptr, align 4
+  %y = load <8 x i64>, <8 x i64>* %y.ptr, align 4
   %mask0 = icmp sgt <8 x i64> %x, %y
   %mask = select <8 x i1> %mask0, <8 x i1> %mask1, <8 x i1> zeroinitializer
   %max = select <8 x i1> %mask, <8 x i64> %x, <8 x i64> %x1
@@ -302,7 +302,7 @@ define <16 x i32> @test23(<16 x i32> %x, <16 x i32>* %y.ptr, <16 x i32> %x1, <16
 ; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %mask1 = icmp sge <16 x i32> %x1, %y1
-  %y = load <16 x i32>* %y.ptr, align 4
+  %y = load <16 x i32>, <16 x i32>* %y.ptr, align 4
   %mask0 = icmp ule <16 x i32> %x, %y
   %mask = select <16 x i1> %mask0, <16 x i1> %mask1, <16 x i1> zeroinitializer
   %max = select <16 x i1> %mask, <16 x i32> %x, <16 x i32> %x1
@@ -316,7 +316,7 @@ define <8 x i64> @test24(<8 x i64> %x, <8 x i64> %x1, i64* %yb.ptr) nounwind {
 ; CHECK-NEXT:    vmovdqa64 %zmm0, %zmm1 {%k1}
 ; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
-  %yb = load i64* %yb.ptr, align 4
+  %yb = load i64, i64* %yb.ptr, align 4
   %y.0 = insertelement <8 x i64> undef, i64 %yb, i32 0
   %y = shufflevector <8 x i64> %y.0, <8 x i64> undef, <8 x i32> zeroinitializer
   %mask = icmp eq <8 x i64> %x, %y
@@ -331,7 +331,7 @@ define <16 x i32> @test25(<16 x i32> %x, i32* %yb.ptr, <16 x i32> %x1) nounwind 
 ; CHECK-NEXT:    vmovdqa32 %zmm0, %zmm1 {%k1}
 ; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
-  %yb = load i32* %yb.ptr, align 4
+  %yb = load i32, i32* %yb.ptr, align 4
   %y.0 = insertelement <16 x i32> undef, i32 %yb, i32 0
   %y = shufflevector <16 x i32> %y.0, <16 x i32> undef, <16 x i32> zeroinitializer
   %mask = icmp sle <16 x i32> %x, %y
@@ -348,7 +348,7 @@ define <16 x i32> @test26(<16 x i32> %x, i32* %yb.ptr, <16 x i32> %x1, <16 x i32
 ; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %mask1 = icmp sge <16 x i32> %x1, %y1
-  %yb = load i32* %yb.ptr, align 4
+  %yb = load i32, i32* %yb.ptr, align 4
   %y.0 = insertelement <16 x i32> undef, i32 %yb, i32 0
   %y = shufflevector <16 x i32> %y.0, <16 x i32> undef, <16 x i32> zeroinitializer
   %mask0 = icmp sgt <16 x i32> %x, %y
@@ -366,7 +366,7 @@ define <8 x i64> @test27(<8 x i64> %x, i64* %yb.ptr, <8 x i64> %x1, <8 x i64> %y
 ; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %mask1 = icmp sge <8 x i64> %x1, %y1
-  %yb = load i64* %yb.ptr, align 4
+  %yb = load i64, i64* %yb.ptr, align 4
   %y.0 = insertelement <8 x i64> undef, i64 %yb, i32 0
   %y = shufflevector <8 x i64> %y.0, <8 x i64> undef, <8 x i32> zeroinitializer
   %mask0 = icmp sle <8 x i64> %x, %y

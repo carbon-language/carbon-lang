@@ -950,7 +950,7 @@ define i1 @returns_nonnull_as_deref() {
 }
 
 define i1 @nonnull_load(i32** %addr) {
-  %ptr = load i32** %addr, !nonnull !{}
+  %ptr = load i32*, i32** %addr, !nonnull !{}
   %cmp = icmp eq i32* %ptr, null
   ret i1 %cmp
 ; CHECK-LABEL: @nonnull_load
@@ -958,14 +958,14 @@ define i1 @nonnull_load(i32** %addr) {
 }
 
 define i1 @nonnull_load_as_outer(i32* addrspace(1)* %addr) {
-  %ptr = load i32* addrspace(1)* %addr, !nonnull !{}
+  %ptr = load i32*, i32* addrspace(1)* %addr, !nonnull !{}
   %cmp = icmp eq i32* %ptr, null
   ret i1 %cmp
 ; CHECK-LABEL: @nonnull_load_as_outer
 ; CHECK: ret i1 false
 }
 define i1 @nonnull_load_as_inner(i32 addrspace(1)** %addr) {
-  %ptr = load i32 addrspace(1)** %addr, !nonnull !{}
+  %ptr = load i32 addrspace(1)*, i32 addrspace(1)** %addr, !nonnull !{}
   %cmp = icmp eq i32 addrspace(1)* %ptr, null
   ret i1 %cmp
 ; CHECK-LABEL: @nonnull_load_as_inner

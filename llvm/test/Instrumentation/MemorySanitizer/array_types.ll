@@ -12,8 +12,8 @@ entry:
 }
 
 ; CHECK-LABEL: @InsertValue(
-; CHECK-DAG: [[Sy:%.*]] = load i32* {{.*}}@__msan_param_tls to i64), i64 8) to i32*)
-; CHECK-DAG: [[Sx:%.*]] = load i32* {{.*}}@__msan_param_tls to i32*)
+; CHECK-DAG: [[Sy:%.*]] = load i32, i32* {{.*}}@__msan_param_tls to i64), i64 8) to i32*)
+; CHECK-DAG: [[Sx:%.*]] = load i32, i32* {{.*}}@__msan_param_tls to i32*)
 ; CHECK: [[A:%.*]] = insertvalue [2 x i32] [i32 -1, i32 -1], i32 [[Sx]], 0
 ; CHECK: [[B:%.*]] = insertvalue [2 x i32] [[A]], i32 [[Sy]], 1
 ; CHECK: store [2 x i32] [[B]], [2 x i32]* {{.*}}@__msan_retval_tls
@@ -28,8 +28,8 @@ entry:
 }
 
 ; CHECK-LABEL: @InsertValueDouble(
-; CHECK-DAG: [[Sy:%.*]] = load i64* {{.*}}@__msan_param_tls to i64), i64 8) to i64*)
-; CHECK-DAG: [[Sx:%.*]] = load i64* getelementptr {{.*}}@__msan_param_tls, i32 0, i32 0
+; CHECK-DAG: [[Sy:%.*]] = load i64, i64* {{.*}}@__msan_param_tls to i64), i64 8) to i64*)
+; CHECK-DAG: [[Sx:%.*]] = load i64, i64* getelementptr {{.*}}@__msan_param_tls, i32 0, i32 0
 ; CHECK: [[A:%.*]] = insertvalue [2 x i64] [i64 -1, i64 -1], i64 [[Sx]], 0
 ; CHECK: [[B:%.*]] = insertvalue [2 x i64] [[A]], i64 [[Sy]], 1
 ; CHECK: store [2 x i64] [[B]], [2 x i64]* {{.*}}@__msan_retval_tls
@@ -43,7 +43,7 @@ entry:
 }
 
 ; CHECK-LABEL: @ExtractValue(
-; CHECK: [[Sa:%.*]] = load [2 x i32]* {{.*}}@__msan_param_tls to [2 x i32]*)
+; CHECK: [[Sa:%.*]] = load [2 x i32], [2 x i32]* {{.*}}@__msan_param_tls to [2 x i32]*)
 ; CHECK: [[Sx:%.*]] = extractvalue [2 x i32] [[Sa]], 1
 ; CHECK: store i32 [[Sx]], i32* {{.*}}@__msan_retval_tls
 ; CHECK: ret i32
@@ -59,7 +59,7 @@ define i32 @ArrayInStruct(%MyStruct %s) sanitize_memory {
 }
 
 ; CHECK-LABEL: @ArrayInStruct(
-; CHECK: [[Ss:%.*]] = load { i32, i32, [3 x i32] }* {{.*}}@__msan_param_tls to { i32, i32, [3 x i32] }*)
+; CHECK: [[Ss:%.*]] = load { i32, i32, [3 x i32] }, { i32, i32, [3 x i32] }* {{.*}}@__msan_param_tls to { i32, i32, [3 x i32] }*)
 ; CHECK: [[Sx:%.*]] = extractvalue { i32, i32, [3 x i32] } [[Ss]], 2, 1
 ; CHECK: store i32 [[Sx]], i32* {{.*}}@__msan_retval_tls
 ; CHECK: ret i32
@@ -71,7 +71,7 @@ define i32 @ArrayOfStructs([3 x { i32, i32 }] %a) sanitize_memory {
 }
 
 ; CHECK-LABEL: @ArrayOfStructs(
-; CHECK: [[Ss:%.*]] = load [3 x { i32, i32 }]* {{.*}}@__msan_param_tls to [3 x { i32, i32 }]*)
+; CHECK: [[Ss:%.*]] = load [3 x { i32, i32 }], [3 x { i32, i32 }]* {{.*}}@__msan_param_tls to [3 x { i32, i32 }]*)
 ; CHECK: [[Sx:%.*]] = extractvalue [3 x { i32, i32 }] [[Ss]], 2, 1
 ; CHECK: store i32 [[Sx]], i32* {{.*}}@__msan_retval_tls
 ; CHECK: ret i32
@@ -83,7 +83,7 @@ define <8 x i16> @ArrayOfVectors([3 x <8 x i16>] %a) sanitize_memory {
 }
 
 ; CHECK-LABEL: @ArrayOfVectors(
-; CHECK: [[Ss:%.*]] = load [3 x <8 x i16>]* {{.*}}@__msan_param_tls to [3 x <8 x i16>]*)
+; CHECK: [[Ss:%.*]] = load [3 x <8 x i16>], [3 x <8 x i16>]* {{.*}}@__msan_param_tls to [3 x <8 x i16>]*)
 ; CHECK: [[Sx:%.*]] = extractvalue [3 x <8 x i16>] [[Ss]], 1
 ; CHECK: store <8 x i16> [[Sx]], <8 x i16>* {{.*}}@__msan_retval_tls
 ; CHECK: ret <8 x i16>

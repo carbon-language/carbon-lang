@@ -9,7 +9,7 @@ define void @x0(i8* nocapture %buf, i32 %nbytes) nounwind optsize {
 entry:
   tail call void @llvm.dbg.value(metadata i8* %buf, i64 0, metadata !0, metadata !{!"0x102"}), !dbg !15
   tail call void @llvm.dbg.value(metadata i32 %nbytes, i64 0, metadata !8, metadata !{!"0x102"}), !dbg !16
-  %tmp = load i32* @length, !dbg !17              ; <i32> [#uses=3]
+  %tmp = load i32, i32* @length, !dbg !17              ; <i32> [#uses=3]
   %cmp = icmp eq i32 %tmp, -1, !dbg !17           ; <i1> [#uses=1]
   %cmp.not = xor i1 %cmp, true                    ; <i1> [#uses=1]
   %cmp3 = icmp ult i32 %tmp, %nbytes, !dbg !17    ; <i1> [#uses=1]

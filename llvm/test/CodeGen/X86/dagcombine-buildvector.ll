@@ -17,7 +17,7 @@ entry:
 ; CHECK: movdqa
 define void @test2(<4 x i16>* %src, <4 x i32>* %dest) nounwind {
 entry:
-        %tmp1 = load <4 x i16>* %src
+        %tmp1 = load <4 x i16>, <4 x i16>* %src
         %tmp3 = shufflevector <4 x i16> %tmp1, <4 x i16> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
         %0 = tail call <4 x i32> @llvm.x86.sse41.pmovzxwd(<8 x i16> %tmp3)
         store <4 x i32> %0, <4 x i32>* %dest

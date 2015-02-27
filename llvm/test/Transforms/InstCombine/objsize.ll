@@ -22,11 +22,11 @@ entry:
   br i1 %cmp, label %cond.true, label %cond.false
 
 cond.true:
-  %1 = load i8** %retval
+  %1 = load i8*, i8** %retval
   ret i8* %1
 
 cond.false:
-  %2 = load i8** %retval
+  %2 = load i8*, i8** %retval
   ret i8* %2
 }
 
@@ -126,7 +126,7 @@ define i8* @test5(i32 %n) nounwind ssp {
 entry:
   %0 = tail call noalias i8* @malloc(i32 20) nounwind
   %1 = tail call i32 @llvm.objectsize.i32.p0i8(i8* %0, i1 false)
-  %2 = load i8** @s, align 8
+  %2 = load i8*, i8** @s, align 8
 ; CHECK-NOT: @llvm.objectsize
 ; CHECK: @llvm.memcpy.p0i8.p0i8.i32(i8* %0, i8* %1, i32 10, i32 1, i1 false)
   %3 = tail call i8* @__memcpy_chk(i8* %0, i8* %2, i32 10, i32 %1) nounwind
@@ -138,7 +138,7 @@ define void @test6(i32 %n) nounwind ssp {
 entry:
   %0 = tail call noalias i8* @malloc(i32 20) nounwind
   %1 = tail call i32 @llvm.objectsize.i32.p0i8(i8* %0, i1 false)
-  %2 = load i8** @s, align 8
+  %2 = load i8*, i8** @s, align 8
 ; CHECK-NOT: @llvm.objectsize
 ; CHECK: @__memcpy_chk(i8* %0, i8* %1, i32 30, i32 20)
   %3 = tail call i8* @__memcpy_chk(i8* %0, i8* %2, i32 30, i32 %1) nounwind

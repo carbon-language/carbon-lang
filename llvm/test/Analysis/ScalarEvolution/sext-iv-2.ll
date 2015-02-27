@@ -56,7 +56,7 @@ bb4.bb5_crit_edge:		; preds = %bb4
 	br label %bb5
 
 bb5:		; preds = %bb4.bb5_crit_edge, %entry
-	%tmp12 = load i32* getelementptr ([32 x [256 x i32]]* @table, i64 0, i64 9, i64 132), align 16		; <i32> [#uses=1]
+	%tmp12 = load i32, i32* getelementptr ([32 x [256 x i32]]* @table, i64 0, i64 9, i64 132), align 16		; <i32> [#uses=1]
 	%tmp13 = icmp eq i32 %tmp12, -1116		; <i1> [#uses=1]
 	br i1 %tmp13, label %bb7, label %bb6
 

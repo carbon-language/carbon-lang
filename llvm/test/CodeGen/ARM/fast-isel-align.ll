@@ -34,7 +34,7 @@ entry:
 ; THUMB: str r1, [r0]
 
   %add = fadd float %x, %y
-  %0 = load %struct.anon** @a, align 4
+  %0 = load %struct.anon*, %struct.anon** @a, align 4
   %x1 = getelementptr inbounds %struct.anon, %struct.anon* %0, i32 0, i32 0
   store float %add, float* %x1, align 1
   ret void
@@ -66,9 +66,9 @@ entry:
 ; THUMB: @unaligned_f32_load
   %0 = alloca %class.TAlignTest*, align 4
   store %class.TAlignTest* %this, %class.TAlignTest** %0, align 4
-  %1 = load %class.TAlignTest** %0
+  %1 = load %class.TAlignTest*, %class.TAlignTest** %0
   %2 = getelementptr inbounds %class.TAlignTest, %class.TAlignTest* %1, i32 0, i32 1
-  %3 = load float* %2, align 1
+  %3 = load float, float* %2, align 1
   %4 = fcmp une float %3, 0.000000e+00
 ; ARM: ldr r[[R:[0-9]+]], [r0, #2]
 ; ARM: vmov s0, r[[R]]
@@ -103,7 +103,7 @@ entry:
 ; THUMB-STRICT-ALIGN: ldrb
 ; THUMB-STRICT-ALIGN: ldrb
 
-  %0 = load i16* %x, align 1
+  %0 = load i16, i16* %x, align 1
   ret i16 %0
 }
 
@@ -139,6 +139,6 @@ entry:
 ; THUMB-STRICT-ALIGN: ldrb
 ; THUMB-STRICT-ALIGN: ldrb
 
-  %0 = load i32* %x, align 1
+  %0 = load i32, i32* %x, align 1
   ret i32 %0
 }

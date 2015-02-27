@@ -4,7 +4,7 @@
 
 define <2 x i64> @t1(<2 x i64>* %ptr) nounwind  {
 	%tmp45 = bitcast <2 x i64>* %ptr to <2 x i32>*
-	%tmp615 = load <2 x i32>* %tmp45
+	%tmp615 = load <2 x i32>, <2 x i32>* %tmp45
 	%tmp7 = bitcast <2 x i32> %tmp615 to i64
 	%tmp8 = insertelement <2 x i64> zeroinitializer, i64 %tmp7, i32 0
 	ret <2 x i64> %tmp8

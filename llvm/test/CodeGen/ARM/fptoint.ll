@@ -4,13 +4,13 @@
 @u = weak global i32 0		; <i32*> [#uses=2]
 
 define i32 @foo1(float *%x) {
-        %tmp1 = load float* %x
+        %tmp1 = load float, float* %x
 	%tmp2 = bitcast float %tmp1 to i32
 	ret i32 %tmp2
 }
 
 define i64 @foo2(double *%x) {
-        %tmp1 = load double* %x
+        %tmp1 = load double, double* %x
 	%tmp2 = bitcast double %tmp1 to i64
 	ret i64 %tmp2
 }

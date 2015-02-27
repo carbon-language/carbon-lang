@@ -14,7 +14,7 @@ entry:
 ; CHECK: @llvm.ppc.qpx.qvlfs
 ; CHECK: ret <4 x double>
 
-  %v0 = load <4 x float>* %h, align 8
+  %v0 = load <4 x float>, <4 x float>* %h, align 8
   %v0e = fpext <4 x float> %v0 to <4 x double>
   %a = fadd <4 x double> %v0e, %vl
   ret <4 x double> %a
@@ -30,7 +30,7 @@ entry:
 ; CHECK-NOT: @llvm.ppc.qpx.qvlfs
 ; CHECK: ret <4 x double>
 
-  %v0 = load <4 x float>* %h, align 8
+  %v0 = load <4 x float>, <4 x float>* %h, align 8
   %v0e = fpext <4 x float> %v0 to <4 x double>
   %a = fadd <4 x double> %v0e, %vl
   ret <4 x double> %a
@@ -44,7 +44,7 @@ entry:
   %hv = bitcast <4 x float>* %h1 to i8*
   call void @llvm.ppc.qpx.qvstfs(<4 x double> %d, i8* %hv)
 
-  %v0 = load <4 x float>* %h, align 8
+  %v0 = load <4 x float>, <4 x float>* %h, align 8
   ret <4 x float> %v0
 
 ; CHECK-LABEL: @test2
@@ -58,7 +58,7 @@ entry:
   %hv = bitcast <4 x float>* %h1 to i8*
   call void @llvm.ppc.qpx.qvstfs(<4 x double> %d, i8* %hv)
 
-  %v0 = load <4 x float>* %h, align 8
+  %v0 = load <4 x float>, <4 x float>* %h, align 8
   ret <4 x float> %v0
 
 ; CHECK-LABEL: @test2
@@ -78,7 +78,7 @@ entry:
 ; CHECK: @llvm.ppc.qpx.qvlfd
 ; CHECK: ret <4 x double>
 
-  %v0 = load <4 x double>* %h, align 8
+  %v0 = load <4 x double>, <4 x double>* %h, align 8
   %a = fadd <4 x double> %v0, %vl
   ret <4 x double> %a
 }
@@ -93,7 +93,7 @@ entry:
 ; CHECK: @llvm.ppc.qpx.qvlfd
 ; CHECK: ret <4 x double>
 
-  %v0 = load <4 x double>* %h, align 8
+  %v0 = load <4 x double>, <4 x double>* %h, align 8
   %a = fadd <4 x double> %v0, %vl
   ret <4 x double> %a
 }
@@ -108,7 +108,7 @@ entry:
 ; CHECK-NOT: @llvm.ppc.qpx.qvlfd
 ; CHECK: ret <4 x double>
 
-  %v0 = load <4 x double>* %h, align 8
+  %v0 = load <4 x double>, <4 x double>* %h, align 8
   %a = fadd <4 x double> %v0, %vl
   ret <4 x double> %a
 }
@@ -121,7 +121,7 @@ entry:
   %hv = bitcast <4 x double>* %h1 to i8*
   call void @llvm.ppc.qpx.qvstfd(<4 x double> %d, i8* %hv)
 
-  %v0 = load <4 x double>* %h, align 8
+  %v0 = load <4 x double>, <4 x double>* %h, align 8
   ret <4 x double> %v0
 
 ; CHECK-LABEL: @test2l
@@ -135,7 +135,7 @@ entry:
   %hv = bitcast <4 x double>* %h1 to i8*
   call void @llvm.ppc.qpx.qvstfd(<4 x double> %d, i8* %hv)
 
-  %v0 = load <4 x double>* %h, align 8
+  %v0 = load <4 x double>, <4 x double>* %h, align 8
   ret <4 x double> %v0
 
 ; CHECK-LABEL: @test2ln
@@ -149,7 +149,7 @@ entry:
   %hv = bitcast <4 x double>* %h1 to i8*
   call void @llvm.ppc.qpx.qvstfd(<4 x double> %d, i8* %hv)
 
-  %v0 = load <4 x double>* %h, align 8
+  %v0 = load <4 x double>, <4 x double>* %h, align 8
   ret <4 x double> %v0
 
 ; CHECK-LABEL: @test2l

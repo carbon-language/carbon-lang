@@ -10,7 +10,7 @@
 define i32 @vorbis_staticbook_pack(%struct.static_codebook* %c, %struct.oggpack_buffer* %opb) {
 entry:
 	%opb_addr = alloca %struct.oggpack_buffer*		; <%struct.oggpack_buffer**> [#uses=1]
-	%tmp1 = load %struct.oggpack_buffer** %opb_addr, align 4		; <%struct.oggpack_buffer*> [#uses=1]
+	%tmp1 = load %struct.oggpack_buffer*, %struct.oggpack_buffer** %opb_addr, align 4		; <%struct.oggpack_buffer*> [#uses=1]
 	call void @oggpack_write( %struct.oggpack_buffer* %tmp1, i32 5653314, i32 24 ) nounwind 
 	call void @oggpack_write( %struct.oggpack_buffer* null, i32 0, i32 24 ) nounwind 
 	unreachable

@@ -65,7 +65,7 @@ bb17:		; preds = %cond_false, %cond_true, %entry
 
 define void @foo(i32 %a) nounwind {
 entry:
-	%tmp = load i32** @x		; <i32*> [#uses=1]
+	%tmp = load i32*, i32** @x		; <i32*> [#uses=1]
 	store i32 %a, i32* %tmp
 	ret void
 }

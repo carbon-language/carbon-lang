@@ -11,7 +11,7 @@ entry:
 cond_true23:		; preds = %entry
 	%tmp138 = getelementptr %struct.cl_perfunc_opts, %struct.cl_perfunc_opts* @cl_pf_opts, i32 0, i32 8		; <i8*> [#uses=1]
 	%tmp138.upgrd.1 = bitcast i8* %tmp138 to i32*		; <i32*> [#uses=2]
-	%tmp139 = load i32* %tmp138.upgrd.1		; <i32> [#uses=1]
+	%tmp139 = load i32, i32* %tmp138.upgrd.1		; <i32> [#uses=1]
 	%tmp140 = shl i32 1, 27		; <i32> [#uses=1]
 	%tmp141 = and i32 %tmp140, 134217728		; <i32> [#uses=1]
 	%tmp142 = and i32 %tmp139, -134217729		; <i32> [#uses=1]
@@ -19,7 +19,7 @@ cond_true23:		; preds = %entry
 	store i32 %tmp143, i32* %tmp138.upgrd.1
 	%tmp144 = getelementptr %struct.cl_perfunc_opts, %struct.cl_perfunc_opts* @cl_pf_opts, i32 0, i32 8		; <i8*> [#uses=1]
 	%tmp144.upgrd.2 = bitcast i8* %tmp144 to i32*		; <i32*> [#uses=1]
-	%tmp145 = load i32* %tmp144.upgrd.2		; <i32> [#uses=1]
+	%tmp145 = load i32, i32* %tmp144.upgrd.2		; <i32> [#uses=1]
 	%tmp146 = shl i32 %tmp145, 22		; <i32> [#uses=1]
 	%tmp147 = lshr i32 %tmp146, 31		; <i32> [#uses=1]
 	%tmp147.upgrd.3 = trunc i32 %tmp147 to i8		; <i8> [#uses=1]

@@ -26,14 +26,14 @@ bb1692:
   %tmp1702 = and i32 %tmp1701, 1020
   %tmp1703 = getelementptr inbounds [1028 x i8], [1028 x i8]* null, i32 0, i32 %tmp1702
   %tmp1704 = bitcast i8* %tmp1703 to i32*
-  %load1 = load i32* %tmp1704, align 4
+  %load1 = load i32, i32* %tmp1704, align 4
 
 ; %load2 = (load (shl (and %xor, 255), 2))
   %tmp1698 = and i32 %xor, 255
   %tmp1706 = shl i32 %tmp1698, 2
   %tmp1707 = getelementptr inbounds [1028 x i8], [1028 x i8]* null, i32 0, i32 %tmp1706
   %tmp1708 = bitcast i8* %tmp1707 to i32*
-  %load2 = load i32* %tmp1708, align 4
+  %load2 = load i32, i32* %tmp1708, align 4
 
   %tmp1710 = or i32 %load2, %a
 

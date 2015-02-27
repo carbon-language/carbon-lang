@@ -43,7 +43,7 @@ return:
 
 define <16 x i8> @test1(<2 x i64> %x) {
 entry:
-	%tmp = load <16 x i8>* bitcast ([4 x i32]* @GLOBAL to <16 x i8>*), align 1
+	%tmp = load <16 x i8>, <16 x i8>* bitcast ([4 x i32]* @GLOBAL to <16 x i8>*), align 1
 	ret <16 x i8> %tmp
 }
 
@@ -53,7 +53,7 @@ define <16 x i8> @test1_as1(<2 x i64> %x) {
 ; CHECK-LABEL: @test1_as1(
 ; CHECK: tmp = load
 ; CHECK: GLOBAL_as1{{.*}}align 16
-  %tmp = load <16 x i8> addrspace(1)* bitcast ([4 x i32] addrspace(1)* @GLOBAL_as1 to <16 x i8> addrspace(1)*), align 1
+  %tmp = load <16 x i8>, <16 x i8> addrspace(1)* bitcast ([4 x i32] addrspace(1)* @GLOBAL_as1 to <16 x i8> addrspace(1)*), align 1
   ret <16 x i8> %tmp
 }
 
@@ -63,7 +63,7 @@ define <16 x i8> @test1_as1_gep(<2 x i64> %x) {
 ; CHECK-LABEL: @test1_as1_gep(
 ; CHECK: tmp = load
 ; CHECK: GLOBAL_as1_gep{{.*}}align 16
-  %tmp = load <16 x i8> addrspace(1)* bitcast (i32 addrspace(1)* getelementptr ([8 x i32] addrspace(1)* @GLOBAL_as1_gep, i16 0, i16 4) to <16 x i8> addrspace(1)*), align 1
+  %tmp = load <16 x i8>, <16 x i8> addrspace(1)* bitcast (i32 addrspace(1)* getelementptr ([8 x i32] addrspace(1)* @GLOBAL_as1_gep, i16 0, i16 4) to <16 x i8> addrspace(1)*), align 1
   ret <16 x i8> %tmp
 }
 
@@ -71,11 +71,11 @@ define <16 x i8> @test1_as1_gep(<2 x i64> %x) {
 ; When a load or store lacks an explicit alignment, add one.
 
 ; CHECK-LABEL: @test2(
-; CHECK: load double* %p, align 8
+; CHECK: load double, double* %p, align 8
 ; CHECK: store double %n, double* %p, align 8
 
 define double @test2(double* %p, double %n) nounwind {
-  %t = load double* %p
+  %t = load double, double* %p
   store double %n, double* %p
   ret double %t
 }

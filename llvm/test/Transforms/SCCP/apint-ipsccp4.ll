@@ -10,13 +10,13 @@
 
 define internal float @test2() {
 	%A = getelementptr [2 x { i212, float}], [2 x { i212, float}]* @Y, i32 0, i32 1, i32 1
-	%B = load float* %A
+	%B = load float, float* %A
 	ret float %B
 }
 
 define internal float  @test3() {
 	%A = getelementptr [2 x { i212, float}], [2 x { i212, float}]* @Y, i32 0, i32 0, i32 1
-	%B = load float* %A
+	%B = load float, float* %A
 	ret float %B
 }
 

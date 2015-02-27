@@ -125,7 +125,7 @@ define void @t9() nounwind {
 entry:
   ; CHECK-LABEL: t9:
   %data = alloca <2 x double>, align 16
-  %0 = load <2 x double>* %data, align 16
+  %0 = load <2 x double>, <2 x double>* %data, align 16
   call void asm sideeffect "mov.2d v4, $0\0A", "w,~{v4}"(<2 x double> %0) nounwind
   ; CHECK: mov.2d v4, {{v[0-9]+}}
   ret void
@@ -137,7 +137,7 @@ entry:
   %data = alloca <2 x float>, align 8
   %a = alloca [2 x float], align 4
   %arraydecay = getelementptr inbounds [2 x float], [2 x float]* %a, i32 0, i32 0
-  %0 = load <2 x float>* %data, align 8
+  %0 = load <2 x float>, <2 x float>* %data, align 8
   call void asm sideeffect "ldr ${1:q}, [$0]\0A", "r,w"(float* %arraydecay, <2 x float> %0) nounwind
   ; CHECK: ldr {{q[0-9]+}}, [{{x[0-9]+}}]
   call void asm sideeffect "ldr ${1:d}, [$0]\0A", "r,w"(float* %arraydecay, <2 x float> %0) nounwind
@@ -155,10 +155,10 @@ define void @t11() nounwind {
 entry:
   ; CHECK-LABEL: t11:
   %a = alloca i32, align 4
-  %0 = load i32* %a, align 4
+  %0 = load i32, i32* %a, align 4
   call void asm sideeffect "mov ${1:x}, ${0:x}\0A", "r,i"(i32 %0, i32 0) nounwind
   ; CHECK: mov xzr, {{x[0-9]+}}
-  %1 = load i32* %a, align 4
+  %1 = load i32, i32* %a, align 4
   call void asm sideeffect "mov ${1:w}, ${0:w}\0A", "r,i"(i32 %1, i32 0) nounwind
   ; CHECK: mov wzr, {{w[0-9]+}}
   ret void
@@ -168,7 +168,7 @@ define void @t12() nounwind {
 entry:
   ; CHECK-LABEL: t12:
   %data = alloca <4 x float>, align 16
-  %0 = load <4 x float>* %data, align 16
+  %0 = load <4 x float>, <4 x float>* %data, align 16
   call void asm sideeffect "mov.2d v4, $0\0A", "x,~{v4}"(<4 x float> %0) nounwind
   ; CHECK mov.2d v4, {{v([0-9])|(1[0-5])}}
   ret void

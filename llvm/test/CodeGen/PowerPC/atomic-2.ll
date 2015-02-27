@@ -39,7 +39,7 @@ entry:
 define i64 @atomic_load(i64* %mem) nounwind {
 entry:
 ; CHECK: @atomic_load
-  %tmp = load atomic i64* %mem acquire, align 64
+  %tmp = load atomic i64, i64* %mem acquire, align 64
 ; CHECK-NOT: ldarx
 ; CHECK: ld
 ; CHECK: sync 1

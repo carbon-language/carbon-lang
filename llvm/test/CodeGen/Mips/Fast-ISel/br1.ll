@@ -10,7 +10,7 @@
 ; Function Attrs: nounwind
 define void @br() #0 {
 entry:
-  %0 = load i32* @b, align 4
+  %0 = load i32, i32* @b, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %if.end, label %if.then
 

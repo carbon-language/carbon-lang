@@ -10,7 +10,7 @@ B2:		; preds = %0
 	store i32 2, i32* %X
 	br i1 %c2, label %Exit, label %Exit
 Exit:		; preds = %B2, %B2, %0
-	%Y = load i32* %X		; <i32> [#uses=1]
+	%Y = load i32, i32* %X		; <i32> [#uses=1]
 	ret i32 %Y
 }
 

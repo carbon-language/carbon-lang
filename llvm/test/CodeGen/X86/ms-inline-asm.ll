@@ -50,7 +50,7 @@ entry:
   store i32 2, i32* %b, align 4
   call void asm sideeffect inteldialect "lea ebx, foo\0A\09mov eax, [ebx].0\0A\09mov [ebx].4, ecx", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
   %b1 = getelementptr inbounds %struct.t18_type, %struct.t18_type* %foo, i32 0, i32 1
-  %0 = load i32* %b1, align 4
+  %0 = load i32, i32* %b1, align 4
   ret i32 %0
 ; CHECK: t18
 ; CHECK: {{## InlineAsm Start|#APP}}
@@ -87,7 +87,7 @@ entry:
   %res = alloca i32*, align 4
   call void asm sideeffect inteldialect "lea edi, dword ptr $0", "*m,~{edi},~{dirflag},~{fpsr},~{flags}"([2 x i32]* @results) nounwind
   call void asm sideeffect inteldialect "mov dword ptr $0, edi", "=*m,~{dirflag},~{fpsr},~{flags}"(i32** %res) nounwind
-  %0 = load i32** %res, align 4
+  %0 = load i32*, i32** %res, align 4
   ret i32* %0
 ; CHECK-LABEL: t30:
 ; CHECK: {{## InlineAsm Start|#APP}}
@@ -111,7 +111,7 @@ entry:
   %val = alloca i32, align 64
   store i32 -1, i32* %val, align 64
   call void asm sideeffect inteldialect "mov dword ptr $0, esp", "=*m,~{dirflag},~{fpsr},~{flags}"(i32* %val)
-  %sp = load i32* %val, align 64
+  %sp = load i32, i32* %val, align 64
   ret i32 %sp
 ; CHECK-LABEL: t31:
 ; CHECK: pushl %ebp

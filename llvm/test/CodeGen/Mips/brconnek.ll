@@ -5,7 +5,7 @@
 
 define void @test() nounwind {
 entry:
-  %0 = load i32* @j, align 4
+  %0 = load i32, i32* @j, align 4
   %cmp = icmp eq i32 %0, 5
   br i1 %cmp, label %if.then, label %if.end
 

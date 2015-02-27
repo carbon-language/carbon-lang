@@ -15,21 +15,21 @@ target triple = "x86_64-apple-macosx10.9.0"
 ;CHECK: store <4 x i32>
 define i32 @foo(i32* noalias nocapture %A, i8* noalias nocapture %B) {
 entry:
-  %0 = load i8* %B, align 1
+  %0 = load i8, i8* %B, align 1
   %conv = sext i8 %0 to i32
   store i32 %conv, i32* %A, align 4
   %arrayidx2 = getelementptr inbounds i8, i8* %B, i64 1
-  %1 = load i8* %arrayidx2, align 1
+  %1 = load i8, i8* %arrayidx2, align 1
   %conv3 = sext i8 %1 to i32
   %arrayidx4 = getelementptr inbounds i32, i32* %A, i64 1
   store i32 %conv3, i32* %arrayidx4, align 4
   %arrayidx5 = getelementptr inbounds i8, i8* %B, i64 2
-  %2 = load i8* %arrayidx5, align 1
+  %2 = load i8, i8* %arrayidx5, align 1
   %conv6 = sext i8 %2 to i32
   %arrayidx7 = getelementptr inbounds i32, i32* %A, i64 2
   store i32 %conv6, i32* %arrayidx7, align 4
   %arrayidx8 = getelementptr inbounds i8, i8* %B, i64 3
-  %3 = load i8* %arrayidx8, align 1
+  %3 = load i8, i8* %arrayidx8, align 1
   %conv9 = sext i8 %3 to i32
   %arrayidx10 = getelementptr inbounds i32, i32* %A, i64 3
   store i32 %conv9, i32* %arrayidx10, align 4

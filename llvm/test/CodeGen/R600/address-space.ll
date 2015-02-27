@@ -21,8 +21,8 @@ entry:
   br label %bb32
 
 bb32:
-  %a = load float addrspace(3)* %x, align 4
-  %b = load float addrspace(3)* %y, align 4
+  %a = load float, float addrspace(3)* %x, align 4
+  %b = load float, float addrspace(3)* %y, align 4
   %cmp = fcmp one float %a, %b
   br i1 %cmp, label %bb34, label %bb33
 

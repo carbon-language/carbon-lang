@@ -28,7 +28,7 @@ bb11:		; preds = %bb9
 	br i1 undef, label %bb15, label %bb12
 
 bb12:		; preds = %bb11
-	%0 = load i32** @XX, align 4		; <i32*> [#uses=0]
+	%0 = load i32*, i32** @XX, align 4		; <i32*> [#uses=0]
 	br label %bb228.i
 
 bb74.i:		; preds = %bb228.i

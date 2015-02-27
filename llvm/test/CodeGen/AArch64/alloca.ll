@@ -51,7 +51,7 @@ define i64 @test_alloca_with_local(i64 %n) {
   call void @use_addr_loc(i8* %buf, i64* %loc)
 ; CHECK: bl use_addr
 
-  %val = load i64* %loc
+  %val = load i64, i64* %loc
 
 ; CHECK: ldur x0, [x29, #-[[LOC_FROM_FP]]]
 

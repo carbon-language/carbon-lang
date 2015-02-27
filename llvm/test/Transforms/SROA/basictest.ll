@@ -19,7 +19,7 @@ entry:
   call void @llvm.lifetime.start(i64 4, i8* %a1.i8)
 
   store i32 0, i32* %a1
-  %v1 = load i32* %a1
+  %v1 = load i32, i32* %a1
 
   call void @llvm.lifetime.end(i64 4, i8* %a1.i8)
 
@@ -27,7 +27,7 @@ entry:
   call void @llvm.lifetime.start(i64 4, i8* %a2.i8)
 
   store float 0.0, float* %a2
-  %v2 = load float * %a2
+  %v2 = load float , float * %a2
   %v2.int = bitcast float %v2 to i32
   %sum1 = add i32 %v1, %v2.int
 
@@ -45,7 +45,7 @@ entry:
   %X = alloca { i32, float }
   %Y = getelementptr { i32, float }, { i32, float }* %X, i64 0, i32 0
   store i32 0, i32* %Y
-  %Z = load i32* %Y
+  %Z = load i32, i32* %Y
   ret i32 %Z
 }
 
@@ -61,7 +61,7 @@ entry:
   br label %L2
 
 L2:
-  %Z = load i64* %B
+  %Z = load i64, i64* %B
   ret i64 %Z
 }
 
@@ -84,7 +84,7 @@ entry:
 ; CHECK-NEXT: %[[gep_dst:.*]] = getelementptr inbounds [42 x i8], [42 x i8]* %[[test3_a1]], i64 0, i64 0
 ; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[gep_dst]], i8* %src, i32 42
 ; CHECK-NEXT: %[[gep:.*]] = getelementptr inbounds i8, i8* %src, i64 42
-; CHECK-NEXT: %[[test3_r1:.*]] = load i8* %[[gep]]
+; CHECK-NEXT: %[[test3_r1:.*]] = load i8, i8* %[[gep]]
 ; CHECK-NEXT: %[[gep_src:.*]] = getelementptr inbounds i8, i8* %src, i64 43
 ; CHECK-NEXT: %[[gep_dst:.*]] = getelementptr inbounds [99 x i8], [99 x i8]* %[[test3_a2]], i64 0, i64 0
 ; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[gep_dst]], i8* %[[gep_src]], i32 99
@@ -98,7 +98,7 @@ entry:
 ; CHECK-NEXT: %[[gep_dst:.*]] = getelementptr inbounds [7 x i8], [7 x i8]* %[[test3_a5]], i64 0, i64 0
 ; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[gep_dst]], i8* %[[gep_src]], i32 7
 ; CHECK-NEXT: %[[gep:.*]] = getelementptr inbounds i8, i8* %src, i64 207
-; CHECK-NEXT: %[[test3_r2:.*]] = load i8* %[[gep]]
+; CHECK-NEXT: %[[test3_r2:.*]] = load i8, i8* %[[gep]]
 ; CHECK-NEXT: %[[gep_src:.*]] = getelementptr inbounds i8, i8* %src, i64 208
 ; CHECK-NEXT: %[[gep_dst:.*]] = getelementptr inbounds [7 x i8], [7 x i8]* %[[test3_a6]], i64 0, i64 0
 ; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[gep_dst]], i8* %[[gep_src]], i32 7
@@ -320,9 +320,9 @@ entry:
 ; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[gep]], i8* %src, i32 20
 ; CHECK-NEXT: %[[gep:.*]] = getelementptr inbounds i8, i8* %src, i64 20
 ; CHECK-NEXT: %[[bitcast:.*]] = bitcast i8* %[[gep]] to i16*
-; CHECK-NEXT: %[[test4_r1:.*]] = load i16* %[[bitcast]]
+; CHECK-NEXT: %[[test4_r1:.*]] = load i16, i16* %[[bitcast]]
 ; CHECK-NEXT: %[[gep:.*]] = getelementptr inbounds i8, i8* %src, i64 22
-; CHECK-NEXT: %[[test4_r2:.*]] = load i8* %[[gep]]
+; CHECK-NEXT: %[[test4_r2:.*]] = load i8, i8* %[[gep]]
 ; CHECK-NEXT: %[[gep_src:.*]] = getelementptr inbounds i8, i8* %src, i64 23
 ; CHECK-NEXT: %[[gep_dst:.*]] = getelementptr inbounds [7 x i8], [7 x i8]* %[[test4_a2]], i64 0, i64 0
 ; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[gep_dst]], i8* %[[gep_src]], i32 7
@@ -331,17 +331,17 @@ entry:
 ; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[gep_dst]], i8* %[[gep_src]], i32 10
 ; CHECK-NEXT: %[[gep:.*]] = getelementptr inbounds i8, i8* %src, i64 40
 ; CHECK-NEXT: %[[bitcast:.*]] = bitcast i8* %[[gep]] to i16*
-; CHECK-NEXT: %[[test4_r3:.*]] = load i16* %[[bitcast]]
+; CHECK-NEXT: %[[test4_r3:.*]] = load i16, i16* %[[bitcast]]
 ; CHECK-NEXT: %[[gep:.*]] = getelementptr inbounds i8, i8* %src, i64 42
-; CHECK-NEXT: %[[test4_r4:.*]] = load i8* %[[gep]]
+; CHECK-NEXT: %[[test4_r4:.*]] = load i8, i8* %[[gep]]
 ; CHECK-NEXT: %[[gep_src:.*]] = getelementptr inbounds i8, i8* %src, i64 43
 ; CHECK-NEXT: %[[gep_dst:.*]] = getelementptr inbounds [7 x i8], [7 x i8]* %[[test4_a4]], i64 0, i64 0
 ; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[gep_dst]], i8* %[[gep_src]], i32 7
 ; CHECK-NEXT: %[[gep:.*]] = getelementptr inbounds i8, i8* %src, i64 50
 ; CHECK-NEXT: %[[bitcast:.*]] = bitcast i8* %[[gep]] to i16*
-; CHECK-NEXT: %[[test4_r5:.*]] = load i16* %[[bitcast]]
+; CHECK-NEXT: %[[test4_r5:.*]] = load i16, i16* %[[bitcast]]
 ; CHECK-NEXT: %[[gep:.*]] = getelementptr inbounds i8, i8* %src, i64 52
-; CHECK-NEXT: %[[test4_r6:.*]] = load i8* %[[gep]]
+; CHECK-NEXT: %[[test4_r6:.*]] = load i8, i8* %[[gep]]
 ; CHECK-NEXT: %[[gep_src:.*]] = getelementptr inbounds i8, i8* %src, i64 53
 ; CHECK-NEXT: %[[gep_dst:.*]] = getelementptr inbounds [7 x i8], [7 x i8]* %[[test4_a5]], i64 0, i64 0
 ; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[gep_dst]], i8* %[[gep_src]], i32 7
@@ -422,7 +422,7 @@ entry:
   store float 0.0, float* %fptr
   %ptr = getelementptr [4 x i8], [4 x i8]* %a, i32 0, i32 2
   %iptr = bitcast i8* %ptr to i16*
-  %val = load i16* %iptr
+  %val = load i16, i16* %iptr
   ret i16 %val
 }
 
@@ -430,7 +430,7 @@ define i32 @test6() {
 ; CHECK-LABEL: @test6(
 ; CHECK: alloca i32
 ; CHECK-NEXT: store volatile i32
-; CHECK-NEXT: load i32*
+; CHECK-NEXT: load i32, i32*
 ; CHECK-NEXT: ret i32
 
 entry:
@@ -438,7 +438,7 @@ entry:
   %ptr = getelementptr [4 x i8], [4 x i8]* %a, i32 0, i32 0
   call void @llvm.memset.p0i8.i32(i8* %ptr, i8 42, i32 4, i32 1, i1 true)
   %iptr = bitcast i8* %ptr to i32*
-  %val = load i32* %iptr
+  %val = load i32, i32* %iptr
   ret i32 %val
 }
 
@@ -446,10 +446,10 @@ define void @test7(i8* %src, i8* %dst) {
 ; CHECK-LABEL: @test7(
 ; CHECK: alloca i32
 ; CHECK-NEXT: bitcast i8* %src to i32*
-; CHECK-NEXT: load volatile i32*
+; CHECK-NEXT: load volatile i32, i32*
 ; CHECK-NEXT: store volatile i32
 ; CHECK-NEXT: bitcast i8* %dst to i32*
-; CHECK-NEXT: load volatile i32*
+; CHECK-NEXT: load volatile i32, i32*
 ; CHECK-NEXT: store volatile i32
 ; CHECK-NEXT: ret
 
@@ -472,27 +472,27 @@ entry:
 ; CHECK-NOT: alloca
 
   %s2.next.ptr = getelementptr %S2, %S2* %s2, i64 0, i32 1
-  %s2.next = load %S2** %s2.next.ptr
+  %s2.next = load %S2*, %S2** %s2.next.ptr
 ; CHECK:      %[[gep:.*]] = getelementptr %S2, %S2* %s2, i64 0, i32 1
-; CHECK-NEXT: %[[next:.*]] = load %S2** %[[gep]]
+; CHECK-NEXT: %[[next:.*]] = load %S2*, %S2** %[[gep]]
 
   %s2.next.s1.ptr = getelementptr %S2, %S2* %s2.next, i64 0, i32 0
-  %s2.next.s1 = load %S1** %s2.next.s1.ptr
+  %s2.next.s1 = load %S1*, %S1** %s2.next.s1.ptr
   %new.s1.ptr = getelementptr %S2, %S2* %new, i64 0, i32 0
   store %S1* %s2.next.s1, %S1** %new.s1.ptr
   %s2.next.next.ptr = getelementptr %S2, %S2* %s2.next, i64 0, i32 1
-  %s2.next.next = load %S2** %s2.next.next.ptr
+  %s2.next.next = load %S2*, %S2** %s2.next.next.ptr
   %new.next.ptr = getelementptr %S2, %S2* %new, i64 0, i32 1
   store %S2* %s2.next.next, %S2** %new.next.ptr
 ; CHECK-NEXT: %[[gep:.*]] = getelementptr %S2, %S2* %[[next]], i64 0, i32 0
-; CHECK-NEXT: %[[next_s1:.*]] = load %S1** %[[gep]]
+; CHECK-NEXT: %[[next_s1:.*]] = load %S1*, %S1** %[[gep]]
 ; CHECK-NEXT: %[[gep:.*]] = getelementptr %S2, %S2* %[[next]], i64 0, i32 1
-; CHECK-NEXT: %[[next_next:.*]] = load %S2** %[[gep]]
+; CHECK-NEXT: %[[next_next:.*]] = load %S2*, %S2** %[[gep]]
 
-  %new.s1 = load %S1** %new.s1.ptr
+  %new.s1 = load %S1*, %S1** %new.s1.ptr
   %result1 = insertvalue %S2 undef, %S1* %new.s1, 0
 ; CHECK-NEXT: %[[result1:.*]] = insertvalue %S2 undef, %S1* %[[next_s1]], 0
-  %new.next = load %S2** %new.next.ptr
+  %new.next = load %S2*, %S2** %new.next.ptr
   %result2 = insertvalue %S2 %result1, %S2* %new.next, 1
 ; CHECK-NEXT: %[[result2:.*]] = insertvalue %S2 %[[result1]], %S2* %[[next_next]], 1
   ret %S2 %result2
@@ -530,7 +530,7 @@ entry:
   store i8 26, i8* %gep3, align 1
   %cast = bitcast { [3 x i8] }* %a to { i64 }*
   %elt = getelementptr inbounds { i64 }, { i64 }* %cast, i32 0, i32 0
-  %load = load i64* %elt
+  %load = load i64, i64* %elt
   %result = and i64 %load, 16777215
   ret i64 %result
 }
@@ -545,7 +545,7 @@ entry:
   %ptr = getelementptr [8 x i8], [8 x i8]* %a, i32 0, i32 0
   call void @llvm.memset.p0i8.i32(i8* %ptr, i8 0, i32 8, i32 1, i1 false)
   %s2ptrptr = bitcast i8* %ptr to %S2**
-  %s2ptr = load %S2** %s2ptrptr
+  %s2ptr = load %S2*, %S2** %s2ptrptr
   ret %S2* %s2ptr
 }
 
@@ -561,13 +561,13 @@ entry:
 good:
   %Y = getelementptr i32, i32* %X, i64 0
   store i32 0, i32* %Y
-  %Z = load i32* %Y
+  %Z = load i32, i32* %Y
   ret i32 %Z
 
 bad:
   %Y2 = getelementptr i32, i32* %X, i64 1
   store i32 0, i32* %Y2
-  %Z2 = load i32* %Y2
+  %Z2 = load i32, i32* %Y2
   ret i32 %Z2
 }
 
@@ -589,7 +589,7 @@ entry:
   %a2ptr = getelementptr [3 x i8], [3 x i8]* %a, i64 0, i32 2
   store i8 0, i8* %a2ptr
   %aiptr = bitcast [3 x i8]* %a to i24*
-  %ai = load i24* %aiptr
+  %ai = load i24, i24* %aiptr
 ; CHECK-NOT: store
 ; CHECK-NOT: load
 ; CHECK:      %[[ext2:.*]] = zext i8 0 to i24
@@ -607,11 +607,11 @@ entry:
   %biptr = bitcast [3 x i8]* %b to i24*
   store i24 %ai, i24* %biptr
   %b0ptr = getelementptr [3 x i8], [3 x i8]* %b, i64 0, i32 0
-  %b0 = load i8* %b0ptr
+  %b0 = load i8, i8* %b0ptr
   %b1ptr = getelementptr [3 x i8], [3 x i8]* %b, i64 0, i32 1
-  %b1 = load i8* %b1ptr
+  %b1 = load i8, i8* %b1ptr
   %b2ptr = getelementptr [3 x i8], [3 x i8]* %b, i64 0, i32 2
-  %b2 = load i8* %b2ptr
+  %b2 = load i8, i8* %b2ptr
 ; CHECK-NOT: store
 ; CHECK-NOT: load
 ; CHECK:      %[[trunc0:.*]] = trunc i24 %[[insert0]] to i8
@@ -646,7 +646,7 @@ entry:
   store i8 0, i8* %b2ptr
   %iptrcast = bitcast [3 x i8]* %a to i16*
   %iptrgep = getelementptr i16, i16* %iptrcast, i64 1
-  %i = load i16* %iptrgep
+  %i = load i16, i16* %iptrgep
   %ret = zext i16 %i to i32
   ret i32 %ret
 }
@@ -672,15 +672,15 @@ entry:
   %4 = getelementptr inbounds %test14.struct, %test14.struct* %a, i32 0, i32 0
   %5 = bitcast [3 x i32]* %3 to i32*
   %6 = bitcast [3 x i32]* %4 to i32*
-  %7 = load i32* %6, align 4
+  %7 = load i32, i32* %6, align 4
   store i32 %7, i32* %5, align 4
   %8 = getelementptr inbounds i32, i32* %5, i32 1
   %9 = getelementptr inbounds i32, i32* %6, i32 1
-  %10 = load i32* %9, align 4
+  %10 = load i32, i32* %9, align 4
   store i32 %10, i32* %8, align 4
   %11 = getelementptr inbounds i32, i32* %5, i32 2
   %12 = getelementptr inbounds i32, i32* %6, i32 2
-  %13 = load i32* %12, align 4
+  %13 = load i32, i32* %12, align 4
   store i32 %13, i32* %11, align 4
   ret void
 }
@@ -735,7 +735,7 @@ define void @test16(i8* %src, i8* %dst) {
 ; CHECK-LABEL: @test16(
 ; CHECK-NOT: alloca
 ; CHECK:      %[[srccast:.*]] = bitcast i8* %src to i24*
-; CHECK-NEXT: load i24* %[[srccast]]
+; CHECK-NEXT: load i24, i24* %[[srccast]]
 ; CHECK-NEXT: %[[dstcast:.*]] = bitcast i8* %dst to i24*
 ; CHECK-NEXT: store i24 0, i24* %[[dstcast]]
 ; CHECK-NEXT: ret void
@@ -776,7 +776,7 @@ define void @test18(i8* %src, i8* %dst, i32 %size) {
 ; CHECK:      %[[a:.*]] = alloca [34 x i8]
 ; CHECK:      %[[srcgep1:.*]] = getelementptr inbounds i8, i8* %src, i64 4
 ; CHECK-NEXT: %[[srccast1:.*]] = bitcast i8* %[[srcgep1]] to i32*
-; CHECK-NEXT: %[[srcload:.*]] = load i32* %[[srccast1]]
+; CHECK-NEXT: %[[srcload:.*]] = load i32, i32* %[[srccast1]]
 ; CHECK-NEXT: %[[agep1:.*]] = getelementptr inbounds [34 x i8], [34 x i8]* %[[a]], i64 0, i64 0
 ; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[agep1]], i8* %src, i32 %size,
 ; CHECK-NEXT: %[[agep2:.*]] = getelementptr inbounds [34 x i8], [34 x i8]* %[[a]], i64 0, i64 0
@@ -821,7 +821,7 @@ entry:
   %cast2 = bitcast { i64, i8* }* %a to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %cast2, i8* %cast1, i32 16, i32 1, i1 false)
   %gep = getelementptr inbounds { i64, i8* }, { i64, i8* }* %a, i32 0, i32 0
-  %val = load i64* %gep
+  %val = load i64, i64* %gep
   ret i32 undef
 }
 
@@ -845,9 +845,9 @@ entry:
   %gep3.2 = getelementptr i32, i32* %gep3.1, i32 -12
   store i32 3, i32* %gep3.2
 
-  %load1 = load i32* %gep1
-  %load2 = load i32* %gep2.2
-  %load3 = load i32* %gep3.2
+  %load1 = load i32, i32* %gep1
+  %load2 = load i32, i32* %gep2.2
+  %load3 = load i32, i32* %gep3.2
   %sum1 = add i32 %load1, %load2
   %sum2 = add i32 %sum1, %load3
   ret i32 %sum2
@@ -876,9 +876,9 @@ entry:
   store i8 255, i8* %gep5
   %cast1 = bitcast i8* %gep4 to i32*
   store i32 0, i32* %cast1
-  %load = load i8* %gep0
+  %load = load i8, i8* %gep0
   %gep6 = getelementptr i8, i8* %gep0, i32 1
-  %load2 = load i8* %gep6
+  %load2 = load i8, i8* %gep6
   %result = or i8 %load, %load2
   ret i8 %result
 }
@@ -895,7 +895,7 @@ define void @PR13916.1() {
 entry:
   %a = alloca i8
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %a, i8* %a, i32 1, i32 1, i1 false)
-  %tmp2 = load i8* %a
+  %tmp2 = load i8, i8* %a
   ret void
 }
 
@@ -919,7 +919,7 @@ if.then:
 
 if.end:
   %gep = getelementptr %PR13916.struct, %PR13916.struct* %a, i32 0, i32 0
-  %tmp2 = load i8* %gep
+  %tmp2 = load i8, i8* %gep
   ret void
 }
 
@@ -968,7 +968,7 @@ entry:
   store double* %c, double** %b
   store double* %a, double** %b
   store double %x, double* %c
-  %ret = load double* %a
+  %ret = load double, double* %a
 ; CHECK-NOT: store
 ; CHECK-NOT: load
 
@@ -1013,7 +1013,7 @@ entry:
 
   %gep2 = getelementptr { { [1 x { i32 }] } }, { { [1 x { i32 }] } }* %a1, i32 0, i32 0
   %ptrcast1 = bitcast { [1 x { i32 }] }* %gep2 to { [1 x { float }] }*
-  %load1 = load { [1 x { float }] }* %ptrcast1
+  %load1 = load { [1 x { float }] }, { [1 x { float }] }* %ptrcast1
   %unwrap1 = extractvalue { [1 x { float }] } %load1, 0, 0
 
   %wrap2 = insertvalue { {}, { float }, [0 x i8] } undef, { float } %unwrap1, 1
@@ -1021,7 +1021,7 @@ entry:
 
   %gep3 = getelementptr { {}, { float }, [0 x i8] }, { {}, { float }, [0 x i8] }* %a2, i32 0, i32 1, i32 0
   %ptrcast2 = bitcast float* %gep3 to <4 x i8>*
-  %load3 = load <4 x i8>* %ptrcast2
+  %load3 = load <4 x i8>, <4 x i8>* %ptrcast2
   %valcast1 = bitcast <4 x i8> %load3 to i32
 
   %wrap3 = insertvalue [1 x [1 x i32]] undef, i32 %valcast1, 0, 0
@@ -1032,7 +1032,7 @@ entry:
 
   %gep5 = getelementptr { [0 x i8], { [0 x double], [1 x [1 x <4 x i8>]], {} }, { { {} } } }, { [0 x i8], { [0 x double], [1 x [1 x <4 x i8>]], {} }, { { {} } } }* %a3, i32 0, i32 1, i32 1, i32 0
   %ptrcast4 = bitcast [1 x <4 x i8>]* %gep5 to { {}, float, {} }*
-  %load4 = load { {}, float, {} }* %ptrcast4
+  %load4 = load { {}, float, {} }, { {}, float, {} }* %ptrcast4
   %unwrap2 = extractvalue { {}, float, {} } %load4, 1
   %valcast2 = bitcast float %unwrap2 to i32
 
@@ -1080,8 +1080,8 @@ entry:
   store i32 1072693248, i32* %X.sroa.0.4.cast5.i, align 4
 
   ; Do the actual math...
-  %X.sroa.0.0.load1.i = load double* %X.sroa.0.i, align 8
-  %accum.real.i = load double* %d, align 8
+  %X.sroa.0.0.load1.i = load double, double* %X.sroa.0.i, align 8
+  %accum.real.i = load double, double* %d, align 8
   %add.r.i = fadd double %accum.real.i, %X.sroa.0.0.load1.i
   store double %add.r.i, double* %d, align 8
   call void @llvm.lifetime.end(i64 -1, i8* %0)
@@ -1104,13 +1104,13 @@ entry:
   ; CHECK-NOT: store
 
   %phi.realp = getelementptr inbounds { float, float }, { float, float }* %phi, i32 0, i32 0
-  %phi.real = load float* %phi.realp
+  %phi.real = load float, float* %phi.realp
   %phi.imagp = getelementptr inbounds { float, float }, { float, float }* %phi, i32 0, i32 1
-  %phi.imag = load float* %phi.imagp
+  %phi.imag = load float, float* %phi.imagp
   ; CHECK:      %[[realp:.*]] = getelementptr inbounds { float, float }, { float, float }* %phi, i32 0, i32 0
-  ; CHECK-NEXT: %[[real:.*]] = load float* %[[realp]]
+  ; CHECK-NEXT: %[[real:.*]] = load float, float* %[[realp]]
   ; CHECK-NEXT: %[[imagp:.*]] = getelementptr inbounds { float, float }, { float, float }* %phi, i32 0, i32 1
-  ; CHECK-NEXT: %[[imag:.*]] = load float* %[[imagp]]
+  ; CHECK-NEXT: %[[imag:.*]] = load float, float* %[[imagp]]
 
   %real = getelementptr inbounds { float, float }, { float, float }* %retval, i32 0, i32 0
   %imag = getelementptr inbounds { float, float }, { float, float }* %retval, i32 0, i32 1
@@ -1126,7 +1126,7 @@ entry:
   ; CHECK-NEXT: %[[real_mask:.*]] = and i64 %[[imag_insert]], -4294967296
   ; CHECK-NEXT: %[[real_insert:.*]] = or i64 %[[real_mask]], %[[real_ext]]
 
-  %1 = load i64* %0, align 1
+  %1 = load i64, i64* %0, align 1
   ret i64 %1
   ; CHECK-NEXT: ret i64 %[[real_insert]]
 }
@@ -1199,18 +1199,18 @@ entry:
   %b.i1 = bitcast <{ i1 }>* %b to i1*
   store i1 %x, i1* %b.i1, align 8
   %b.i8 = bitcast <{ i1 }>* %b to i8*
-  %foo = load i8* %b.i8, align 1
+  %foo = load i8, i8* %b.i8, align 1
 ; CHECK-NEXT: %[[ext:.*]] = zext i1 %x to i8
 ; CHECK-NEXT: store i8 %[[ext]], i8* %[[a]], align 8
-; CHECK-NEXT: {{.*}} = load i8* %[[a]], align 8
+; CHECK-NEXT: {{.*}} = load i8, i8* %[[a]], align 8
 
   %a.i8 = bitcast <{ i1 }>* %a to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %a.i8, i8* %b.i8, i32 1, i32 1, i1 false) nounwind
-  %bar = load i8* %a.i8, align 1
+  %bar = load i8, i8* %a.i8, align 1
   %a.i1 = getelementptr inbounds <{ i1 }>, <{ i1 }>* %a, i32 0, i32 0
-  %baz = load i1* %a.i1, align 1
+  %baz = load i1, i1* %a.i1, align 1
 ; CHECK-NEXT: %[[a_cast:.*]] = bitcast i8* %[[a]] to i1*
-; CHECK-NEXT: {{.*}} = load i1* %[[a_cast]], align 8
+; CHECK-NEXT: {{.*}} = load i1, i1* %[[a_cast]], align 8
 
   ret void
 }
@@ -1226,7 +1226,7 @@ entry:
 
   %cast = bitcast <3 x i8>* %a to i32*
   store i32 %x, i32* %cast, align 1
-  %y = load <3 x i8>* %a, align 4
+  %y = load <3 x i8>, <3 x i8>* %a, align 4
   ret <3 x i8> %y
 ; CHECK: ret <3 x i8>
 }
@@ -1242,7 +1242,7 @@ entry:
 
   store <3 x i8> %x, <3 x i8>* %a, align 1
   %cast = bitcast <3 x i8>* %a to i32*
-  %y = load i32* %cast, align 4
+  %y = load i32, i32* %cast, align 4
   ret i32 %y
 ; CHECK: ret i32
 }
@@ -1258,7 +1258,7 @@ entry:
 
   %a.i8 = bitcast i32* %a to i8*
   call void @llvm.memset.p0i8.i32(i8* %a.i8, i8 0, i32 %x, i32 1, i1 false)
-  %v = load i32* %a
+  %v = load i32, i32* %a
   ret i32 %v
 }
 
@@ -1283,7 +1283,7 @@ entry:
 
 bb4:
   %src.gep3 = getelementptr inbounds i8, i8* %src, i32 3
-  %src.3 = load i8* %src.gep3
+  %src.3 = load i8, i8* %src.gep3
   %tmp.gep3 = getelementptr inbounds [4 x i8], [4 x i8]* %tmp, i32 0, i32 3
   store i8 %src.3, i8* %tmp.gep3
 ; CHECK: store i8
@@ -1292,7 +1292,7 @@ bb4:
 
 bb3:
   %src.gep2 = getelementptr inbounds i8, i8* %src, i32 2
-  %src.2 = load i8* %src.gep2
+  %src.2 = load i8, i8* %src.gep2
   %tmp.gep2 = getelementptr inbounds [4 x i8], [4 x i8]* %tmp, i32 0, i32 2
   store i8 %src.2, i8* %tmp.gep2
 ; CHECK: store i8
@@ -1301,7 +1301,7 @@ bb3:
 
 bb2:
   %src.gep1 = getelementptr inbounds i8, i8* %src, i32 1
-  %src.1 = load i8* %src.gep1
+  %src.1 = load i8, i8* %src.gep1
   %tmp.gep1 = getelementptr inbounds [4 x i8], [4 x i8]* %tmp, i32 0, i32 1
   store i8 %src.1, i8* %tmp.gep1
 ; CHECK: store i8
@@ -1310,7 +1310,7 @@ bb2:
 
 bb1:
   %src.gep0 = getelementptr inbounds i8, i8* %src, i32 0
-  %src.0 = load i8* %src.gep0
+  %src.0 = load i8, i8* %src.gep0
   %tmp.gep0 = getelementptr inbounds [4 x i8], [4 x i8]* %tmp, i32 0, i32 0
   store i8 %src.0, i8* %tmp.gep0
 ; CHECK: store i8
@@ -1332,7 +1332,7 @@ define void @PR15805(i1 %a, i1 %b) {
   %c = alloca i64, align 8
   %p.0.c = select i1 undef, i64* %c, i64* %c
   %cond.in = select i1 undef, i64* %p.0.c, i64* %c
-  %cond = load i64* %cond.in, align 8
+  %cond = load i64, i64* %cond.in, align 8
   ret void
 }
 
@@ -1351,7 +1351,7 @@ define void @PR15805.1(i1 %a, i1 %b) {
 loop:
   %cond.in = select i1 undef, i64* %c, i64* %p.0.c
   %p.0.c = select i1 undef, i64* %c, i64* %c
-  %cond = load i64* %cond.in, align 8
+  %cond = load i64, i64* %cond.in, align 8
   br i1 undef, label %loop, label %exit
 
 exit:
@@ -1374,7 +1374,7 @@ entry:
   %b.cast = bitcast i32* %b to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %b.cast, i8* %a, i32 4, i32 4, i1 true)
   %b.gep = getelementptr inbounds i8, i8* %b.cast, i32 2
-  load i8* %b.gep, align 2
+  load i8, i8* %b.gep, align 2
   unreachable
 }
 
@@ -1394,7 +1394,7 @@ entry:
   store <2 x float> undef, <2 x float>* %0, align 8
   %1 = getelementptr inbounds { <2 x float>, <2 x float> }, { <2 x float>, <2 x float> }* %tv1, i64 0, i32 1, i64 0
   %cond105.in.i.i = select i1 undef, float* null, float* %1
-  %cond105.i.i = load float* %cond105.in.i.i, align 8
+  %cond105.i.i = load float, float* %cond105.in.i.i, align 8
   ret void
 }
 
@@ -1427,9 +1427,9 @@ entry:
 define void @test24(i8* %src, i8* %dst) {
 ; CHECK-LABEL: @test24(
 ; CHECK: alloca i64, align 16
-; CHECK: load volatile i64* %{{[^,]*}}, align 1
+; CHECK: load volatile i64, i64* %{{[^,]*}}, align 1
 ; CHECK: store volatile i64 %{{[^,]*}}, i64* %{{[^,]*}}, align 16
-; CHECK: load volatile i64* %{{[^,]*}}, align 16
+; CHECK: load volatile i64, i64* %{{[^,]*}}, align 16
 ; CHECK: store volatile i64 %{{[^,]*}}, i64* %{{[^,]*}}, align 1
 
 entry:
@@ -1466,10 +1466,10 @@ entry:
   %b.gep2 = getelementptr [2 x float], [2 x float]* %b.cast, i32 0, i32 1
   store float 0.0, float* %a.gep1
   store float 1.0, float* %a.gep2
-  %v = load i64* %a
+  %v = load i64, i64* %a
   store i64 %v, i64* %b
-  %f1 = load float* %b.gep1
-  %f2 = load float* %b.gep2
+  %f1 = load float, float* %b.gep1
+  %f2 = load float, float* %b.gep2
   %ret = fadd float %f1, %f2
   ret float %ret
 }
@@ -1482,8 +1482,8 @@ define void @test26() {
 ;
 ; CHECK-LABEL: @test26(
 ; CHECK-NOT: alloca
-; CHECK: %[[L1:.*]] = load i32* bitcast
-; CHECK: %[[L2:.*]] = load i32* bitcast
+; CHECK: %[[L1:.*]] = load i32, i32* bitcast
+; CHECK: %[[L2:.*]] = load i32, i32* bitcast
 ; CHECK: %[[F1:.*]] = bitcast i32 %[[L1]] to float
 ; CHECK: %[[F2:.*]] = bitcast i32 %[[L2]] to float
 ; CHECK: %[[SUM:.*]] = fadd float %[[F1]], %[[F2]]
@@ -1498,14 +1498,14 @@ entry:
   %a.cast = bitcast i64* %a to [2 x float]*
   %a.gep1 = getelementptr [2 x float], [2 x float]* %a.cast, i32 0, i32 0
   %a.gep2 = getelementptr [2 x float], [2 x float]* %a.cast, i32 0, i32 1
-  %v1 = load i64* bitcast ([2 x float]* @complex1 to i64*)
+  %v1 = load i64, i64* bitcast ([2 x float]* @complex1 to i64*)
   store i64 %v1, i64* %a
-  %f1 = load float* %a.gep1
-  %f2 = load float* %a.gep2
+  %f1 = load float, float* %a.gep1
+  %f2 = load float, float* %a.gep2
   %sum = fadd float %f1, %f2
   store float %sum, float* %a.gep1
   store float %sum, float* %a.gep2
-  %v2 = load i64* %a
+  %v2 = load i64, i64* %a
   store i64 %v2, i64* bitcast ([2 x float]* @complex2 to i64*)
   ret void
 }
@@ -1534,10 +1534,10 @@ entry:
   %fptr3 = bitcast i8* %gep3 to float*
   store float 0.0, float* %fptr1
   store float 1.0, float* %fptr2
-  %v = load i64* %iptr1
+  %v = load i64, i64* %iptr1
   store i64 %v, i64* %iptr2
-  %f1 = load float* %fptr2
-  %f2 = load float* %fptr3
+  %f1 = load float, float* %fptr2
+  %f2 = load float, float* %fptr3
   %ret = fadd float %f1, %f2
   ret float %ret
 }
@@ -1560,7 +1560,7 @@ entry:
   %a = alloca i32
   %a.cast = bitcast i32* %a to i16*
   store volatile i16 42, i16* %a.cast
-  %load = load i32* %a
+  %load = load i32, i32* %a
   store i32 %load, i32* %a
   ret i32 %load
 }
@@ -1587,7 +1587,7 @@ entry:
   %a.cast1 = bitcast i64* %a to i32*
   %a.cast2 = bitcast i64* %a to i16*
   store volatile i16 42, i16* %a.cast2
-  %load = load i32* %a.cast1
+  %load = load i32, i32* %a.cast1
   store i32 %load, i32* %a.cast1
   %a.gep1 = getelementptr i32, i32* %a.cast1, i32 1
   %a.cast3 = bitcast i32* %a.gep1 to i8*

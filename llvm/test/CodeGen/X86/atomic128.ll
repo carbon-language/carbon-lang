@@ -249,7 +249,7 @@ define i128 @atomic_load_seq_cst(i128* %p) {
 ; CHECK: lock
 ; CHECK: cmpxchg16b (%rdi)
 
-   %r = load atomic i128* %p seq_cst, align 16
+   %r = load atomic i128, i128* %p seq_cst, align 16
    ret i128 %r
 }
 
@@ -262,7 +262,7 @@ define i128 @atomic_load_relaxed(i128* %p) {
 ; CHECK: lock
 ; CHECK: cmpxchg16b (%rdi)
 
-   %r = load atomic i128* %p monotonic, align 16
+   %r = load atomic i128, i128* %p monotonic, align 16
    ret i128 %r
 }
 

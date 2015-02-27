@@ -30,9 +30,9 @@ end:                                              ; preds = %indirectgoto
 indirectgoto:                                     ; preds = %lab0, %entry
   %indvar = phi i32 [ %indvar.next, %lab0 ], [ 0, %entry ] ; <i32> [#uses=2]
   %pc.addr.0 = getelementptr i32, i32* %pc, i32 %indvar ; <i32*> [#uses=1]
-  %tmp1.pn = load i32* %pc.addr.0                 ; <i32> [#uses=1]
+  %tmp1.pn = load i32, i32* %pc.addr.0                 ; <i32> [#uses=1]
   %indirect.goto.dest.in = getelementptr inbounds [2 x i8*], [2 x i8*]* @bar.l, i32 0, i32 %tmp1.pn ; <i8**> [#uses=1]
-  %indirect.goto.dest = load i8** %indirect.goto.dest.in ; <i8*> [#uses=1]
+  %indirect.goto.dest = load i8*, i8** %indirect.goto.dest.in ; <i8*> [#uses=1]
   indirectbr i8* %indirect.goto.dest, [label %lab0, label %end]
 }
 

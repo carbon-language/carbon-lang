@@ -9,7 +9,7 @@ define <16 x i32> @test1(i32* %x) {
 ; CHECK-NEXT:    vpblendd {{.*#+}} ymm0 = ymm1[0,1,2,3],ymm0[4],ymm1[5,6,7]
 ; CHECK-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0
 ; CHECK-NEXT:    retq
-   %y = load i32* %x, align 4
+   %y = load i32, i32* %x, align 4
    %res = insertelement <16 x i32>zeroinitializer, i32 %y, i32 4
    ret <16 x i32>%res
 }

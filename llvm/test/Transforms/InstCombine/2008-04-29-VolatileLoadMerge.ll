@@ -7,11 +7,11 @@ target triple = "i386-apple-darwin8"
 define i32 @main(i32 %i) nounwind  {
 entry:
 	%tmp93 = icmp slt i32 %i, 10		; <i1> [#uses=0]
-	%tmp34 = load volatile i32* @g_1, align 4		; <i32> [#uses=1]
+	%tmp34 = load volatile i32, i32* @g_1, align 4		; <i32> [#uses=1]
 	br i1 %tmp93, label %bb11, label %bb
 
 bb:		; preds = %bb, %entry
-	%tmp3 = load volatile i32* @g_1, align 4		; <i32> [#uses=1]
+	%tmp3 = load volatile i32, i32* @g_1, align 4		; <i32> [#uses=1]
 	br label %bb11
 
 bb11:		; preds = %bb

@@ -9,8 +9,8 @@
 
 define void @VSLDOI_xy(<8 x i16>* %A, <8 x i16>* %B) {
 entry:
-	%tmp = load <8 x i16>* %A		; <<8 x i16>> [#uses=1]
-	%tmp2 = load <8 x i16>* %B		; <<8 x i16>> [#uses=1]
+	%tmp = load <8 x i16>, <8 x i16>* %A		; <<8 x i16>> [#uses=1]
+	%tmp2 = load <8 x i16>, <8 x i16>* %B		; <<8 x i16>> [#uses=1]
 	%tmp.upgrd.1 = bitcast <8 x i16> %tmp to <16 x i8>		; <<16 x i8>> [#uses=11]
 	%tmp2.upgrd.2 = bitcast <8 x i16> %tmp2 to <16 x i8>		; <<16 x i8>> [#uses=5]
 	%tmp.upgrd.3 = extractelement <16 x i8> %tmp.upgrd.1, i32 5		; <i8> [#uses=1]
@@ -51,8 +51,8 @@ entry:
 }
 
 define void @VSLDOI_xx(<8 x i16>* %A, <8 x i16>* %B) {
-	%tmp = load <8 x i16>* %A		; <<8 x i16>> [#uses=1]
-	%tmp2 = load <8 x i16>* %A		; <<8 x i16>> [#uses=1]
+	%tmp = load <8 x i16>, <8 x i16>* %A		; <<8 x i16>> [#uses=1]
+	%tmp2 = load <8 x i16>, <8 x i16>* %A		; <<8 x i16>> [#uses=1]
 	%tmp.upgrd.5 = bitcast <8 x i16> %tmp to <16 x i8>		; <<16 x i8>> [#uses=11]
 	%tmp2.upgrd.6 = bitcast <8 x i16> %tmp2 to <16 x i8>		; <<16 x i8>> [#uses=5]
 	%tmp.upgrd.7 = extractelement <16 x i8> %tmp.upgrd.5, i32 5		; <i8> [#uses=1]
@@ -94,9 +94,9 @@ define void @VSLDOI_xx(<8 x i16>* %A, <8 x i16>* %B) {
 
 define void @VPERM_promote(<8 x i16>* %A, <8 x i16>* %B) {
 entry:
-	%tmp = load <8 x i16>* %A		; <<8 x i16>> [#uses=1]
+	%tmp = load <8 x i16>, <8 x i16>* %A		; <<8 x i16>> [#uses=1]
 	%tmp.upgrd.9 = bitcast <8 x i16> %tmp to <4 x i32>		; <<4 x i32>> [#uses=1]
-	%tmp2 = load <8 x i16>* %B		; <<8 x i16>> [#uses=1]
+	%tmp2 = load <8 x i16>, <8 x i16>* %B		; <<8 x i16>> [#uses=1]
 	%tmp2.upgrd.10 = bitcast <8 x i16> %tmp2 to <4 x i32>		; <<4 x i32>> [#uses=1]
 	%tmp3 = call <4 x i32> @llvm.ppc.altivec.vperm( <4 x i32> %tmp.upgrd.9, <4 x i32> %tmp2.upgrd.10, <16 x i8> < i8 14, i8 14, i8 14, i8 14, i8 14, i8 14, i8 14, i8 14, i8 14, i8 14, i8 14, i8 14, i8 14, i8 14, i8 14, i8 14 > )		; <<4 x i32>> [#uses=1]
 	%tmp3.upgrd.11 = bitcast <4 x i32> %tmp3 to <8 x i16>		; <<8 x i16>> [#uses=1]
@@ -108,8 +108,8 @@ declare <4 x i32> @llvm.ppc.altivec.vperm(<4 x i32>, <4 x i32>, <16 x i8>)
 
 define void @tb_l(<16 x i8>* %A, <16 x i8>* %B) {
 entry:
-	%tmp = load <16 x i8>* %A		; <<16 x i8>> [#uses=8]
-	%tmp2 = load <16 x i8>* %B		; <<16 x i8>> [#uses=8]
+	%tmp = load <16 x i8>, <16 x i8>* %A		; <<16 x i8>> [#uses=8]
+	%tmp2 = load <16 x i8>, <16 x i8>* %B		; <<16 x i8>> [#uses=8]
 	%tmp.upgrd.12 = extractelement <16 x i8> %tmp, i32 8		; <i8> [#uses=1]
 	%tmp3 = extractelement <16 x i8> %tmp2, i32 8		; <i8> [#uses=1]
 	%tmp4 = extractelement <16 x i8> %tmp, i32 9		; <i8> [#uses=1]
@@ -148,8 +148,8 @@ entry:
 
 define void @th_l(<8 x i16>* %A, <8 x i16>* %B) {
 entry:
-	%tmp = load <8 x i16>* %A		; <<8 x i16>> [#uses=4]
-	%tmp2 = load <8 x i16>* %B		; <<8 x i16>> [#uses=4]
+	%tmp = load <8 x i16>, <8 x i16>* %A		; <<8 x i16>> [#uses=4]
+	%tmp2 = load <8 x i16>, <8 x i16>* %B		; <<8 x i16>> [#uses=4]
 	%tmp.upgrd.13 = extractelement <8 x i16> %tmp, i32 4		; <i16> [#uses=1]
 	%tmp3 = extractelement <8 x i16> %tmp2, i32 4		; <i16> [#uses=1]
 	%tmp4 = extractelement <8 x i16> %tmp, i32 5		; <i16> [#uses=1]
@@ -172,8 +172,8 @@ entry:
 
 define void @tw_l(<4 x i32>* %A, <4 x i32>* %B) {
 entry:
-	%tmp = load <4 x i32>* %A		; <<4 x i32>> [#uses=2]
-	%tmp2 = load <4 x i32>* %B		; <<4 x i32>> [#uses=2]
+	%tmp = load <4 x i32>, <4 x i32>* %A		; <<4 x i32>> [#uses=2]
+	%tmp2 = load <4 x i32>, <4 x i32>* %B		; <<4 x i32>> [#uses=2]
 	%tmp.upgrd.14 = extractelement <4 x i32> %tmp, i32 2		; <i32> [#uses=1]
 	%tmp3 = extractelement <4 x i32> %tmp2, i32 2		; <i32> [#uses=1]
 	%tmp4 = extractelement <4 x i32> %tmp, i32 3		; <i32> [#uses=1]
@@ -188,8 +188,8 @@ entry:
 
 define void @tb_h(<16 x i8>* %A, <16 x i8>* %B) {
 entry:
-	%tmp = load <16 x i8>* %A		; <<16 x i8>> [#uses=8]
-	%tmp2 = load <16 x i8>* %B		; <<16 x i8>> [#uses=8]
+	%tmp = load <16 x i8>, <16 x i8>* %A		; <<16 x i8>> [#uses=8]
+	%tmp2 = load <16 x i8>, <16 x i8>* %B		; <<16 x i8>> [#uses=8]
 	%tmp.upgrd.15 = extractelement <16 x i8> %tmp, i32 0		; <i8> [#uses=1]
 	%tmp3 = extractelement <16 x i8> %tmp2, i32 0		; <i8> [#uses=1]
 	%tmp4 = extractelement <16 x i8> %tmp, i32 1		; <i8> [#uses=1]
@@ -228,8 +228,8 @@ entry:
 
 define void @th_h(<8 x i16>* %A, <8 x i16>* %B) {
 entry:
-	%tmp = load <8 x i16>* %A		; <<8 x i16>> [#uses=4]
-	%tmp2 = load <8 x i16>* %B		; <<8 x i16>> [#uses=4]
+	%tmp = load <8 x i16>, <8 x i16>* %A		; <<8 x i16>> [#uses=4]
+	%tmp2 = load <8 x i16>, <8 x i16>* %B		; <<8 x i16>> [#uses=4]
 	%tmp.upgrd.16 = extractelement <8 x i16> %tmp, i32 0		; <i16> [#uses=1]
 	%tmp3 = extractelement <8 x i16> %tmp2, i32 0		; <i16> [#uses=1]
 	%tmp4 = extractelement <8 x i16> %tmp, i32 1		; <i16> [#uses=1]
@@ -252,8 +252,8 @@ entry:
 
 define void @tw_h(<4 x i32>* %A, <4 x i32>* %B) {
 entry:
-	%tmp = load <4 x i32>* %A		; <<4 x i32>> [#uses=2]
-	%tmp2 = load <4 x i32>* %B		; <<4 x i32>> [#uses=2]
+	%tmp = load <4 x i32>, <4 x i32>* %A		; <<4 x i32>> [#uses=2]
+	%tmp2 = load <4 x i32>, <4 x i32>* %B		; <<4 x i32>> [#uses=2]
 	%tmp.upgrd.17 = extractelement <4 x i32> %tmp2, i32 0		; <i32> [#uses=1]
 	%tmp3 = extractelement <4 x i32> %tmp, i32 0		; <i32> [#uses=1]
 	%tmp4 = extractelement <4 x i32> %tmp2, i32 1		; <i32> [#uses=1]
@@ -267,8 +267,8 @@ entry:
 }
 
 define void @tw_h_flop(<4 x i32>* %A, <4 x i32>* %B) {
-	%tmp = load <4 x i32>* %A		; <<4 x i32>> [#uses=2]
-	%tmp2 = load <4 x i32>* %B		; <<4 x i32>> [#uses=2]
+	%tmp = load <4 x i32>, <4 x i32>* %A		; <<4 x i32>> [#uses=2]
+	%tmp2 = load <4 x i32>, <4 x i32>* %B		; <<4 x i32>> [#uses=2]
 	%tmp.upgrd.18 = extractelement <4 x i32> %tmp, i32 0		; <i32> [#uses=1]
 	%tmp3 = extractelement <4 x i32> %tmp2, i32 0		; <i32> [#uses=1]
 	%tmp4 = extractelement <4 x i32> %tmp, i32 1		; <i32> [#uses=1]
@@ -283,7 +283,7 @@ define void @tw_h_flop(<4 x i32>* %A, <4 x i32>* %B) {
 
 define void @VMRG_UNARY_tb_l(<16 x i8>* %A, <16 x i8>* %B) {
 entry:
-	%tmp = load <16 x i8>* %A		; <<16 x i8>> [#uses=16]
+	%tmp = load <16 x i8>, <16 x i8>* %A		; <<16 x i8>> [#uses=16]
 	%tmp.upgrd.19 = extractelement <16 x i8> %tmp, i32 8		; <i8> [#uses=1]
 	%tmp3 = extractelement <16 x i8> %tmp, i32 8		; <i8> [#uses=1]
 	%tmp4 = extractelement <16 x i8> %tmp, i32 9		; <i8> [#uses=1]
@@ -322,7 +322,7 @@ entry:
 
 define void @VMRG_UNARY_th_l(<8 x i16>* %A, <8 x i16>* %B) {
 entry:
-	%tmp = load <8 x i16>* %A		; <<8 x i16>> [#uses=8]
+	%tmp = load <8 x i16>, <8 x i16>* %A		; <<8 x i16>> [#uses=8]
 	%tmp.upgrd.20 = extractelement <8 x i16> %tmp, i32 4		; <i16> [#uses=1]
 	%tmp3 = extractelement <8 x i16> %tmp, i32 4		; <i16> [#uses=1]
 	%tmp4 = extractelement <8 x i16> %tmp, i32 5		; <i16> [#uses=1]
@@ -345,7 +345,7 @@ entry:
 
 define void @VMRG_UNARY_tw_l(<4 x i32>* %A, <4 x i32>* %B) {
 entry:
-	%tmp = load <4 x i32>* %A		; <<4 x i32>> [#uses=4]
+	%tmp = load <4 x i32>, <4 x i32>* %A		; <<4 x i32>> [#uses=4]
 	%tmp.upgrd.21 = extractelement <4 x i32> %tmp, i32 2		; <i32> [#uses=1]
 	%tmp3 = extractelement <4 x i32> %tmp, i32 2		; <i32> [#uses=1]
 	%tmp4 = extractelement <4 x i32> %tmp, i32 3		; <i32> [#uses=1]
@@ -360,7 +360,7 @@ entry:
 
 define void @VMRG_UNARY_tb_h(<16 x i8>* %A, <16 x i8>* %B) {
 entry:
-	%tmp = load <16 x i8>* %A		; <<16 x i8>> [#uses=16]
+	%tmp = load <16 x i8>, <16 x i8>* %A		; <<16 x i8>> [#uses=16]
 	%tmp.upgrd.22 = extractelement <16 x i8> %tmp, i32 0		; <i8> [#uses=1]
 	%tmp3 = extractelement <16 x i8> %tmp, i32 0		; <i8> [#uses=1]
 	%tmp4 = extractelement <16 x i8> %tmp, i32 1		; <i8> [#uses=1]
@@ -399,7 +399,7 @@ entry:
 
 define void @VMRG_UNARY_th_h(<8 x i16>* %A, <8 x i16>* %B) {
 entry:
-	%tmp = load <8 x i16>* %A		; <<8 x i16>> [#uses=8]
+	%tmp = load <8 x i16>, <8 x i16>* %A		; <<8 x i16>> [#uses=8]
 	%tmp.upgrd.23 = extractelement <8 x i16> %tmp, i32 0		; <i16> [#uses=1]
 	%tmp3 = extractelement <8 x i16> %tmp, i32 0		; <i16> [#uses=1]
 	%tmp4 = extractelement <8 x i16> %tmp, i32 1		; <i16> [#uses=1]
@@ -422,7 +422,7 @@ entry:
 
 define void @VMRG_UNARY_tw_h(<4 x i32>* %A, <4 x i32>* %B) {
 entry:
-	%tmp = load <4 x i32>* %A		; <<4 x i32>> [#uses=4]
+	%tmp = load <4 x i32>, <4 x i32>* %A		; <<4 x i32>> [#uses=4]
 	%tmp.upgrd.24 = extractelement <4 x i32> %tmp, i32 0		; <i32> [#uses=1]
 	%tmp3 = extractelement <4 x i32> %tmp, i32 0		; <i32> [#uses=1]
 	%tmp4 = extractelement <4 x i32> %tmp, i32 1		; <i32> [#uses=1]
@@ -437,7 +437,7 @@ entry:
 
 define void @VPCKUHUM_unary(<8 x i16>* %A, <8 x i16>* %B) {
 entry:
-	%tmp = load <8 x i16>* %A		; <<8 x i16>> [#uses=2]
+	%tmp = load <8 x i16>, <8 x i16>* %A		; <<8 x i16>> [#uses=2]
 	%tmp.upgrd.25 = bitcast <8 x i16> %tmp to <16 x i8>		; <<16 x i8>> [#uses=8]
 	%tmp3 = bitcast <8 x i16> %tmp to <16 x i8>		; <<16 x i8>> [#uses=8]
 	%tmp.upgrd.26 = extractelement <16 x i8> %tmp.upgrd.25, i32 1		; <i8> [#uses=1]
@@ -479,7 +479,7 @@ entry:
 
 define void @VPCKUWUM_unary(<4 x i32>* %A, <4 x i32>* %B) {
 entry:
-	%tmp = load <4 x i32>* %A		; <<4 x i32>> [#uses=2]
+	%tmp = load <4 x i32>, <4 x i32>* %A		; <<4 x i32>> [#uses=2]
 	%tmp.upgrd.28 = bitcast <4 x i32> %tmp to <8 x i16>		; <<8 x i16>> [#uses=4]
 	%tmp3 = bitcast <4 x i32> %tmp to <8 x i16>		; <<8 x i16>> [#uses=4]
 	%tmp.upgrd.29 = extractelement <8 x i16> %tmp.upgrd.28, i32 1		; <i16> [#uses=1]

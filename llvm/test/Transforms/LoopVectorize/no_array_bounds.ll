@@ -34,10 +34,10 @@ for.body7.preheader:                              ; preds = %for.cond5.preheader
 for.body:                                         ; preds = %for.body.preheader, %for.body
   %indvars.iv27 = phi i64 [ %indvars.iv.next28, %for.body ], [ 0, %for.body.preheader ]
   %arrayidx = getelementptr inbounds i32, i32* %B, i64 %indvars.iv27, !dbg !14
-  %0 = load i32* %arrayidx, align 4, !dbg !14, !tbaa !22
+  %0 = load i32, i32* %arrayidx, align 4, !dbg !14, !tbaa !22
   %idxprom1 = sext i32 %0 to i64, !dbg !14
   %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %idxprom1, !dbg !14
-  %1 = load i32* %arrayidx2, align 4, !dbg !14, !tbaa !22
+  %1 = load i32, i32* %arrayidx2, align 4, !dbg !14, !tbaa !22
   %inc = add nsw i32 %1, 1, !dbg !14
   store i32 %inc, i32* %arrayidx2, align 4, !dbg !14, !tbaa !22
   %indvars.iv.next28 = add nuw nsw i64 %indvars.iv27, 1, !dbg !10
@@ -48,10 +48,10 @@ for.body:                                         ; preds = %for.body.preheader,
 for.body7:                                        ; preds = %for.body7.preheader, %for.body7
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body7 ], [ 0, %for.body7.preheader ]
   %arrayidx9 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv, !dbg !20
-  %2 = load i32* %arrayidx9, align 4, !dbg !20, !tbaa !22
+  %2 = load i32, i32* %arrayidx9, align 4, !dbg !20, !tbaa !22
   %idxprom10 = sext i32 %2 to i64, !dbg !20
   %arrayidx11 = getelementptr inbounds i32, i32* %B, i64 %idxprom10, !dbg !20
-  %3 = load i32* %arrayidx11, align 4, !dbg !20, !tbaa !22
+  %3 = load i32, i32* %arrayidx11, align 4, !dbg !20, !tbaa !22
   %inc12 = add nsw i32 %3, 1, !dbg !20
   store i32 %inc12, i32* %arrayidx11, align 4, !dbg !20, !tbaa !22
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1, !dbg !16

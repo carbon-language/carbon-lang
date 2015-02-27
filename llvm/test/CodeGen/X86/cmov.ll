@@ -12,7 +12,7 @@ entry:
 	%0 = lshr i32 %x, %n		; <i32> [#uses=1]
 	%1 = and i32 %0, 1		; <i32> [#uses=1]
 	%toBool = icmp eq i32 %1, 0		; <i1> [#uses=1]
-        %v = load i32* %vp
+        %v = load i32, i32* %vp
 	%.0 = select i1 %toBool, i32 %v, i32 12		; <i32> [#uses=1]
 	ret i32 %.0
 }
@@ -27,7 +27,7 @@ entry:
 	%0 = lshr i32 %x, %n		; <i32> [#uses=1]
 	%1 = and i32 %0, 1		; <i32> [#uses=1]
 	%toBool = icmp eq i32 %1, 0		; <i1> [#uses=1]
-        %v = load i32* %vp
+        %v = load i32, i32* %vp
 	%.0 = select i1 %toBool, i32 12, i32 %v		; <i32> [#uses=1]
 	ret i32 %.0
 }
@@ -71,7 +71,7 @@ define void @test3(i64 %a, i64 %b, i1 %p) nounwind {
 
 define i32 @test4() nounwind {
 entry:
-  %0 = load i8* @g_3, align 1                     ; <i8> [#uses=2]
+  %0 = load i8, i8* @g_3, align 1                     ; <i8> [#uses=2]
   %1 = sext i8 %0 to i32                          ; <i32> [#uses=1]
   %.lobit.i = lshr i8 %0, 7                       ; <i8> [#uses=1]
   %tmp.i = zext i8 %.lobit.i to i32               ; <i32> [#uses=1]
@@ -79,12 +79,12 @@ entry:
   %iftmp.17.0.i.i = ashr i32 %1, %tmp.not.i       ; <i32> [#uses=1]
   %retval56.i.i = trunc i32 %iftmp.17.0.i.i to i8 ; <i8> [#uses=1]
   %2 = icmp eq i8 %retval56.i.i, 0                ; <i1> [#uses=2]
-  %g_96.promoted.i = load i8* @g_96               ; <i8> [#uses=3]
+  %g_96.promoted.i = load i8, i8* @g_96               ; <i8> [#uses=3]
   %3 = icmp eq i8 %g_96.promoted.i, 0             ; <i1> [#uses=2]
   br i1 %3, label %func_4.exit.i, label %bb.i.i.i
 
 bb.i.i.i:                                         ; preds = %entry
-  %4 = load volatile i8* @g_100, align 1          ; <i8> [#uses=0]
+  %4 = load volatile i8, i8* @g_100, align 1          ; <i8> [#uses=0]
   br label %func_4.exit.i
 
 ; CHECK-LABEL: test4:
@@ -101,7 +101,7 @@ func_4.exit.i:                                    ; preds = %bb.i.i.i, %entry
   br i1 %brmerge.i, label %func_1.exit, label %bb.i.i
 
 bb.i.i:                                           ; preds = %func_4.exit.i
-  %5 = load volatile i8* @g_100, align 1          ; <i8> [#uses=0]
+  %5 = load volatile i8, i8* @g_100, align 1          ; <i8> [#uses=0]
   br label %func_1.exit
 
 func_1.exit:                                      ; preds = %bb.i.i, %func_4.exit.i
@@ -125,7 +125,7 @@ entry:
 ; CHECK:	orl	$-2, %eax
 ; CHECK:	ret
 
-	%0 = load i32* %P, align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* %P, align 4		; <i32> [#uses=1]
 	%1 = icmp sgt i32 %0, 41		; <i1> [#uses=1]
 	%iftmp.0.0 = select i1 %1, i32 -1, i32 -2		; <i32> [#uses=1]
 	ret i32 %iftmp.0.0
@@ -138,7 +138,7 @@ entry:
 ; CHECK:	movzbl	%al, %eax
 ; CHECK:	leal	4(%rax,%rax,8), %eax
 ; CHECK:        ret
-	%0 = load i32* %P, align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* %P, align 4		; <i32> [#uses=1]
 	%1 = icmp sgt i32 %0, 41		; <i1> [#uses=1]
 	%iftmp.0.0 = select i1 %1, i32 4, i32 13		; <i32> [#uses=1]
 	ret i32 %iftmp.0.0

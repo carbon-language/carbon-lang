@@ -46,7 +46,7 @@ entry:
   %this.addr = alloca %struct.foo*, align 8
   store %struct.foo* %this, %struct.foo** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %struct.foo** %this.addr, metadata !34, metadata !36), !dbg !37
-  %this1 = load %struct.foo** %this.addr
+  %this1 = load %struct.foo*, %struct.foo** %this.addr
   %b = getelementptr inbounds %struct.foo, %struct.foo* %this1, i32 0, i32 0, !dbg !38
   call void @_ZN4baseC2Ev(%struct.base* %b) #2, !dbg !38
   ret void, !dbg !38
@@ -58,7 +58,7 @@ entry:
   %this.addr = alloca %struct.foo*, align 8
   store %struct.foo* %this, %struct.foo** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %struct.foo** %this.addr, metadata !39, metadata !36), !dbg !40
-  %this1 = load %struct.foo** %this.addr
+  %this1 = load %struct.foo*, %struct.foo** %this.addr
   %b = getelementptr inbounds %struct.foo, %struct.foo* %this1, i32 0, i32 0, !dbg !41
   call void @_ZN4baseD1Ev(%struct.base* %b), !dbg !41
   ret void, !dbg !43
@@ -76,7 +76,7 @@ entry:
   %this.addr = alloca %struct.base*, align 8
   store %struct.base* %this, %struct.base** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %struct.base** %this.addr, metadata !44, metadata !36), !dbg !46
-  %this1 = load %struct.base** %this.addr
+  %this1 = load %struct.base*, %struct.base** %this.addr
   %0 = bitcast %struct.base* %this1 to i32 (...)***, !dbg !47
   store i32 (...)** bitcast (i8** getelementptr inbounds ([4 x i8*]* @_ZTV4base, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, !dbg !47
   ret void, !dbg !47

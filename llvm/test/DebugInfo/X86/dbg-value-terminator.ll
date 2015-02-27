@@ -85,7 +85,7 @@ VEC_edge_base_index.exit7.i:                      ; preds = %"3.i5.i"
   br i1 undef, label %may_unswitch_on.exit, label %"44.i", !dbg !12
 
 "44.i":                                           ; preds = %"42.i"
-  %2 = load %a** undef, align 8, !dbg !12
+  %2 = load %a*, %a** undef, align 8, !dbg !12
   %3 = bitcast %a* %2 to %a*, !dbg !12
   call void @llvm.dbg.value(metadata %a* %3, i64 0, metadata !6, metadata !{!"0x102"}), !dbg !12
   br label %may_unswitch_on.exit, !dbg !12

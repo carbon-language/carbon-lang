@@ -206,7 +206,7 @@ define <4 x i32> @load_sext_test1(<4 x i16> *%ptr) {
 ; X32-SSE41-NEXT:    pmovsxwd (%eax), %xmm0
 ; X32-SSE41-NEXT:    retl
 entry:
- %X = load <4 x i16>* %ptr
+ %X = load <4 x i16>, <4 x i16>* %ptr
  %Y = sext <4 x i16> %X to <4 x i32>
  ret <4 x i32>%Y
 }
@@ -244,7 +244,7 @@ define <4 x i32> @load_sext_test2(<4 x i8> *%ptr) {
 ; X32-SSE41-NEXT:    pmovsxbd (%eax), %xmm0
 ; X32-SSE41-NEXT:    retl
 entry:
- %X = load <4 x i8>* %ptr
+ %X = load <4 x i8>, <4 x i8>* %ptr
  %Y = sext <4 x i8> %X to <4 x i32>
  ret <4 x i32>%Y
 }
@@ -284,7 +284,7 @@ define <2 x i64> @load_sext_test3(<2 x i8> *%ptr) {
 ; X32-SSE41-NEXT:    pmovsxbq (%eax), %xmm0
 ; X32-SSE41-NEXT:    retl
 entry:
- %X = load <2 x i8>* %ptr
+ %X = load <2 x i8>, <2 x i8>* %ptr
  %Y = sext <2 x i8> %X to <2 x i64>
  ret <2 x i64>%Y
 }
@@ -324,7 +324,7 @@ define <2 x i64> @load_sext_test4(<2 x i16> *%ptr) {
 ; X32-SSE41-NEXT:    pmovsxwq (%eax), %xmm0
 ; X32-SSE41-NEXT:    retl
 entry:
- %X = load <2 x i16>* %ptr
+ %X = load <2 x i16>, <2 x i16>* %ptr
  %Y = sext <2 x i16> %X to <2 x i64>
  ret <2 x i64>%Y
 }
@@ -364,7 +364,7 @@ define <2 x i64> @load_sext_test5(<2 x i32> *%ptr) {
 ; X32-SSE41-NEXT:    pmovsxdq (%eax), %xmm0
 ; X32-SSE41-NEXT:    retl
 entry:
- %X = load <2 x i32>* %ptr
+ %X = load <2 x i32>, <2 x i32>* %ptr
  %Y = sext <2 x i32> %X to <2 x i64>
  ret <2 x i64>%Y
 }
@@ -400,7 +400,7 @@ define <8 x i16> @load_sext_test6(<8 x i8> *%ptr) {
 ; X32-SSE41-NEXT:    pmovsxbw (%eax), %xmm0
 ; X32-SSE41-NEXT:    retl
 entry:
- %X = load <8 x i8>* %ptr
+ %X = load <8 x i8>, <8 x i8>* %ptr
  %Y = sext <8 x i8> %X to <8 x i16>
  ret <8 x i16>%Y
 }
@@ -566,7 +566,7 @@ define <16 x i16> @sext_16i8_to_16i16(<16 x i8> *%ptr) {
 ; X32-SSE41-NEXT:    pmovsxbw 8(%eax), %xmm1
 ; X32-SSE41-NEXT:    retl
 entry:
- %X = load <16 x i8>* %ptr
+ %X = load <16 x i8>, <16 x i8>* %ptr
  %Y = sext <16 x i8> %X to <16 x i16>
  ret <16 x i16> %Y
 }
@@ -742,7 +742,7 @@ define <4 x i64> @load_sext_4i8_to_4i64(<4 x i8> *%ptr) {
 ; X32-SSE41-NEXT:    pmovsxbq 2(%eax), %xmm1
 ; X32-SSE41-NEXT:    retl
 entry:
- %X = load <4 x i8>* %ptr
+ %X = load <4 x i8>, <4 x i8>* %ptr
  %Y = sext <4 x i8> %X to <4 x i64>
  ret <4 x i64>%Y
 }
@@ -803,7 +803,7 @@ define <4 x i64> @load_sext_4i16_to_4i64(<4 x i16> *%ptr) {
 ; X32-SSE41-NEXT:    pmovsxwq 4(%eax), %xmm1
 ; X32-SSE41-NEXT:    retl
 entry:
- %X = load <4 x i16>* %ptr
+ %X = load <4 x i16>, <4 x i16>* %ptr
  %Y = sext <4 x i16> %X to <4 x i64>
  ret <4 x i64>%Y
 }

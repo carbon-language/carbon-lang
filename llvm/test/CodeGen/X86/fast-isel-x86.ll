@@ -6,7 +6,7 @@
 ; CHECK: retl
 @G = external global float
 define float @test0() nounwind {
-  %t = load float* @G
+  %t = load float, float* @G
   ret float %t
 }
 
@@ -28,7 +28,7 @@ define void @test1({i32, i32, i32, i32}* sret %p) nounwind {
 ; CHECK: retl
 @HHH = external global i32
 define i32 @test2() nounwind {
-  %t = load i32* @HHH
+  %t = load i32, i32* @HHH
   ret i32 %t
 }
 

@@ -50,7 +50,7 @@ for.body9:                                        ; preds = %for.cond7.preheader
   %sub = sub nsw i64 %mul, %l.02
   %add12 = add nsw i64 %i.07, 10
   %arrayidx15 = getelementptr inbounds [100 x [100 x i32]], [100 x [100 x i32]]* %A, i64 10, i64 %add12, i64 %sub
-  %0 = load i32* %arrayidx15, align 4
+  %0 = load i32, i32* %arrayidx15, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.31, i64 1
   store i32 %0, i32* %B.addr.31, align 4
   %inc = add nsw i64 %l.02, 1
@@ -124,7 +124,7 @@ for.body9:                                        ; preds = %for.cond7.preheader
   %sub = sub nsw i64 %mul, %l.02
   %add12 = add nsw i64 %i.07, 10
   %arrayidx15 = getelementptr inbounds [100 x [100 x i32]], [100 x [100 x i32]]* %A, i64 10, i64 %add12, i64 %sub
-  %0 = load i32* %arrayidx15, align 4
+  %0 = load i32, i32* %arrayidx15, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.31, i64 1
   store i32 %0, i32* %B.addr.31, align 4
   %inc = add nsw i64 %l.02, 1
@@ -198,7 +198,7 @@ for.body9:                                        ; preds = %for.cond7.preheader
   %add14 = add nsw i64 %j.05, %k.03
   %add15 = add nsw i64 %i.07, 10
   %arrayidx19 = getelementptr inbounds [100 x [100 x [100 x i32]]], [100 x [100 x [100 x i32]]]* %A, i64 10, i64 %add15, i64 %add14, i64 %add13
-  %0 = load i32* %arrayidx19, align 4
+  %0 = load i32, i32* %arrayidx19, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.31, i64 1
   store i32 %0, i32* %B.addr.31, align 4
   %inc = add nsw i64 %l.02, 1
@@ -273,7 +273,7 @@ for.body9:                                        ; preds = %for.cond7.preheader
   %add15 = add nsw i64 %j.05, %k.03
   %add16 = add nsw i64 %i.07, 10
   %arrayidx20 = getelementptr inbounds [100 x [100 x [100 x i32]]], [100 x [100 x [100 x i32]]]* %A, i64 10, i64 %add16, i64 %add15, i64 %add14
-  %0 = load i32* %arrayidx20, align 4
+  %0 = load i32, i32* %arrayidx20, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.31, i64 1
   store i32 %0, i32* %B.addr.31, align 4
   %inc = add nsw i64 %l.02, 1

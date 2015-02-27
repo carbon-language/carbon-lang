@@ -38,7 +38,7 @@ do.body272:
   %sp.4 = phi i8* [ %tmp30, %block1 ], [ %incdec.ptr273, %do.body272 ]
   %dp.addr.4 = phi i8* [ %tmp29, %block1 ], [ %incdec.ptr274, %do.body272 ]
   %incdec.ptr273 = getelementptr inbounds i8, i8* %sp.4, i64 1
-  %tmp31 = load i8* %sp.4, align 1
+  %tmp31 = load i8, i8* %sp.4, align 1
   %incdec.ptr274 = getelementptr inbounds i8, i8* %dp.addr.4, i64 1
   store i8 %tmp31, i8* %dp.addr.4, align 1
   %dec = add i32 %row_width.5, -1

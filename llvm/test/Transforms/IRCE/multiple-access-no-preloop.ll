@@ -4,8 +4,8 @@ define void @multiple_access_no_preloop(
     i32* %arr_a, i32* %a_len_ptr, i32* %arr_b, i32* %b_len_ptr, i32 %n) {
 
  entry:
-  %len.a = load i32* %a_len_ptr, !range !0
-  %len.b = load i32* %b_len_ptr, !range !0
+  %len.a = load i32, i32* %a_len_ptr, !range !0
+  %len.b = load i32, i32* %b_len_ptr, !range !0
   %first.itr.check = icmp sgt i32 %n, 0
   br i1 %first.itr.check, label %loop, label %exit
 

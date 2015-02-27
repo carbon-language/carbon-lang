@@ -6,7 +6,7 @@ entry:
 	br label %while.cond
 
 while.cond:		; preds = %while.cond, %entry
-	%tmp15 = load i32* %tmp13		; <i32> [#uses=2]
+	%tmp15 = load i32, i32* %tmp13		; <i32> [#uses=2]
 	%bf.lo = lshr i32 %tmp15, 1		; <i32> [#uses=1]
 	%bf.lo.cleared = and i32 %bf.lo, 2147483647		; <i32> [#uses=1]
 	%conv = zext i32 %bf.lo.cleared to i64		; <i64> [#uses=1]

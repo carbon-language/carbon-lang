@@ -25,6 +25,6 @@ entry:
   br label %mylabel
 
 mylabel:
-  %tmp = load volatile i64* %recover, align 8
+  %tmp = load volatile i64, i64* %recover, align 8
   ret i64 %tmp
 }

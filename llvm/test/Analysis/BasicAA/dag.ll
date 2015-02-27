@@ -36,6 +36,6 @@ xc:
   %bigbase = bitcast i8* %base to i16*
   store i16 -1, i16* %bigbase
 
-  %loaded = load i8* %phi
+  %loaded = load i8, i8* %phi
   ret i8 %loaded
 }

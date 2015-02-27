@@ -2,7 +2,7 @@
 
 ; CHECK: define i32* @a(i32** nocapture readonly %p)
 define i32* @a(i32** %p) {
-	%tmp = load i32** %p
+	%tmp = load i32*, i32** %p
 	ret i32* %tmp
 }
 

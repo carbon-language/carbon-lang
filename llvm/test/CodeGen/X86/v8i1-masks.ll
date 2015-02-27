@@ -10,10 +10,10 @@
 ;CHECK: ret
 
 define void @and_masks(<8 x float>* %a, <8 x float>* %b, <8 x float>* %c) nounwind uwtable noinline ssp {
-  %v0 = load <8 x float>* %a, align 16
-  %v1 = load <8 x float>* %b, align 16
+  %v0 = load <8 x float>, <8 x float>* %a, align 16
+  %v1 = load <8 x float>, <8 x float>* %b, align 16
   %m0 = fcmp olt <8 x float> %v1, %v0
-  %v2 = load <8 x float>* %c, align 16
+  %v2 = load <8 x float>, <8 x float>* %c, align 16
   %m1 = fcmp olt <8 x float> %v2, %v0
   %mand = and <8 x i1> %m1, %m0
   %r = zext <8 x i1> %mand to <8 x i32>
@@ -28,8 +28,8 @@ define void @and_masks(<8 x float>* %a, <8 x float>* %b, <8 x float>* %c) nounwi
 ;CHECK: vmovaps
 ;CHECK: ret
 define void @neg_masks(<8 x float>* %a, <8 x float>* %b, <8 x float>* %c) nounwind uwtable noinline ssp {
-  %v0 = load <8 x float>* %a, align 16
-  %v1 = load <8 x float>* %b, align 16
+  %v0 = load <8 x float>, <8 x float>* %a, align 16
+  %v1 = load <8 x float>, <8 x float>* %b, align 16
   %m0 = fcmp olt <8 x float> %v1, %v0
   %mand = xor <8 x i1> %m0, <i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1>
   %r = zext <8 x i1> %mand to <8 x i32>

@@ -8,7 +8,7 @@ define void @inner_loop(i32* %arr, i32* %a_len_ptr, i32 %n) #0 {
 ; CHECK: irce: in function inner_loop: constrained Loop at depth 1 containing: %loop<header><exiting>,%in.bounds<latch><exiting>
 
 entry:
-  %len = load i32* %a_len_ptr, !range !0
+  %len = load i32, i32* %a_len_ptr, !range !0
   %first.itr.check = icmp sgt i32 %n, 0
   br i1 %first.itr.check, label %loop, label %exit
 
@@ -42,7 +42,7 @@ loop:                                             ; preds = %inner_loop.exit, %e
   %idx = phi i32 [ 0, %entry ], [ %idx.next, %inner_loop.exit ]
   %idx.next = add i32 %idx, 1
   %next = icmp ult i32 %idx.next, %parent.count
-  %len.i = load i32* %a_len_ptr, !range !0
+  %len.i = load i32, i32* %a_len_ptr, !range !0
   %first.itr.check.i = icmp sgt i32 %n, 0
   br i1 %first.itr.check.i, label %loop.i, label %exit.i
 
@@ -88,7 +88,7 @@ loop.i:                                           ; preds = %inner_loop.exit.i, 
   %idx.i = phi i32 [ 0, %loop ], [ %idx.next.i, %inner_loop.exit.i ]
   %idx.next.i = add i32 %idx.i, 1
   %next.i = icmp ult i32 %idx.next.i, %parent.count
-  %len.i.i = load i32* %a_len_ptr, !range !0
+  %len.i.i = load i32, i32* %a_len_ptr, !range !0
   %first.itr.check.i.i = icmp sgt i32 %n, 0
   br i1 %first.itr.check.i.i, label %loop.i.i, label %exit.i.i
 
@@ -132,7 +132,7 @@ loop:                                             ; preds = %inner_loop.exit12, 
   %idx = phi i32 [ 0, %entry ], [ %idx.next, %inner_loop.exit12 ]
   %idx.next = add i32 %idx, 1
   %next = icmp ult i32 %idx.next, %parent.count
-  %len.i = load i32* %a_len_ptr, !range !0
+  %len.i = load i32, i32* %a_len_ptr, !range !0
   %first.itr.check.i = icmp sgt i32 %n, 0
   br i1 %first.itr.check.i, label %loop.i, label %exit.i
 
@@ -155,7 +155,7 @@ exit.i:                                           ; preds = %in.bounds.i, %loop
   br label %inner_loop.exit
 
 inner_loop.exit:                                  ; preds = %exit.i, %out.of.bounds.i
-  %len.i1 = load i32* %a_len_ptr, !range !0
+  %len.i1 = load i32, i32* %a_len_ptr, !range !0
   %first.itr.check.i2 = icmp sgt i32 %n, 0
   br i1 %first.itr.check.i2, label %loop.i6, label %exit.i11
 
@@ -202,7 +202,7 @@ loop.i:                                           ; preds = %inner_loop.exit.i, 
   %idx.i = phi i32 [ 0, %loop ], [ %idx.next.i, %inner_loop.exit.i ]
   %idx.next.i = add i32 %idx.i, 1
   %next.i = icmp ult i32 %idx.next.i, %parent.count
-  %len.i.i = load i32* %a_len_ptr, !range !0
+  %len.i.i = load i32, i32* %a_len_ptr, !range !0
   %first.itr.check.i.i = icmp sgt i32 %n, 0
   br i1 %first.itr.check.i.i, label %loop.i.i, label %exit.i.i
 
@@ -234,7 +234,7 @@ loop.i6:                                          ; preds = %inner_loop.exit.i16
   %idx.i1 = phi i32 [ 0, %with_parent.exit ], [ %idx.next.i2, %inner_loop.exit.i16 ]
   %idx.next.i2 = add i32 %idx.i1, 1
   %next.i3 = icmp ult i32 %idx.next.i2, %parent.count
-  %len.i.i4 = load i32* %a_len_ptr, !range !0
+  %len.i.i4 = load i32, i32* %a_len_ptr, !range !0
   %first.itr.check.i.i5 = icmp sgt i32 %n, 0
   br i1 %first.itr.check.i.i5, label %loop.i.i10, label %exit.i.i15
 
@@ -278,7 +278,7 @@ loop:                                             ; preds = %with_parent.exit, %
   %idx = phi i32 [ 0, %entry ], [ %idx.next, %with_parent.exit ]
   %idx.next = add i32 %idx, 1
   %next = icmp ult i32 %idx.next, %grandparent.count
-  %len.i = load i32* %a_len_ptr, !range !0
+  %len.i = load i32, i32* %a_len_ptr, !range !0
   %first.itr.check.i = icmp sgt i32 %n, 0
   br i1 %first.itr.check.i, label %loop.i, label %exit.i
 
@@ -307,7 +307,7 @@ loop.i4:                                          ; preds = %inner_loop.exit.i, 
   %idx.i1 = phi i32 [ 0, %inner_loop.exit ], [ %idx.next.i2, %inner_loop.exit.i ]
   %idx.next.i2 = add i32 %idx.i1, 1
   %next.i3 = icmp ult i32 %idx.next.i2, %parent.count
-  %len.i.i = load i32* %a_len_ptr, !range !0
+  %len.i.i = load i32, i32* %a_len_ptr, !range !0
   %first.itr.check.i.i = icmp sgt i32 %n, 0
   br i1 %first.itr.check.i.i, label %loop.i.i, label %exit.i.i
 

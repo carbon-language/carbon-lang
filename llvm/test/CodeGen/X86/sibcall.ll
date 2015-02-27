@@ -288,10 +288,10 @@ entry:
 ; X32ABI-NEXT: movl 12(%edi), %eax
 ; X32ABI-NEXT: jmpq *%rax
   %0 = getelementptr inbounds %struct.__block_literal_2, %struct.__block_literal_2* %.block_descriptor, i64 0, i32 5 ; <void ()**> [#uses=1]
-  %1 = load void ()** %0, align 8                 ; <void ()*> [#uses=2]
+  %1 = load void ()*, void ()** %0, align 8                 ; <void ()*> [#uses=2]
   %2 = bitcast void ()* %1 to %struct.__block_literal_1* ; <%struct.__block_literal_1*> [#uses=1]
   %3 = getelementptr inbounds %struct.__block_literal_1, %struct.__block_literal_1* %2, i64 0, i32 3 ; <i8**> [#uses=1]
-  %4 = load i8** %3, align 8                      ; <i8*> [#uses=1]
+  %4 = load i8*, i8** %3, align 8                      ; <i8*> [#uses=1]
   %5 = bitcast i8* %4 to void (i8*)*              ; <void (i8*)*> [#uses=1]
   %6 = bitcast void ()* %1 to i8*                 ; <i8*> [#uses=1]
   tail call void %5(i8* %6) nounwind

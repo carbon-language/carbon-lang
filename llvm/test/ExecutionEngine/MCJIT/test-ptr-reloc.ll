@@ -7,8 +7,8 @@
 
 define i32 @main(i32 %argc, i8** nocapture %argv) nounwind readonly {
 entry:
-  %0 = load i8** @ptr, align 4
-  %1 = load i8** @ptr2, align 4
+  %0 = load i8*, i8** @ptr, align 4
+  %1 = load i8*, i8** @ptr2, align 4
   %cmp = icmp eq i8* %0, %1
   %. = zext i1 %cmp to i32
   ret i32 %.

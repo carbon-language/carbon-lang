@@ -8,11 +8,11 @@ define void @foo(float* nocapture %a, float* nocapture %b, float* nocapture read
 ; CHECK-LABEL: @foo
 
 entry:
-  %0 = load float* %b, align 4
+  %0 = load float, float* %b, align 4
   store float %0, float* %a, align 4
-  %1 = load float* %c, align 4
+  %1 = load float, float* %c, align 4
   store float %1, float* %b, align 4
-  %2 = load float* %a, align 4
+  %2 = load float, float* %a, align 4
   store float %2, float* %d, align 4
   ret void
 

@@ -20,7 +20,7 @@ for.body.preheader:                               ; preds = %for.cond
 for.body:                                         ; preds = %for.body, %for.body.preheader
   %g.15 = phi i32 [ undef, %for.body ], [ 0, %for.body.preheader ]
   %arrayidx2 = getelementptr inbounds i32, i32* @fn3.i, i64 0
-  %0 = load i32* %arrayidx2, align 4
+  %0 = load i32, i32* %arrayidx2, align 4
   %call = call i32 @g()
   br i1 false, label %for.body, label %for.end.loopexit
 

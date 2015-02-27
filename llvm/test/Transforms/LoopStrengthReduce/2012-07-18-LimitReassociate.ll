@@ -77,7 +77,7 @@ bb17:                                             ; preds = %bb26, %bb15
 
 bb22:                                             ; preds = %bb17
   %tmp23 = getelementptr inbounds %struct.jim, %struct.jim* @global3, i64 0, i32 3, i64 0
-  %tmp24 = load i8* %tmp23, align 1
+  %tmp24 = load i8, i8* %tmp23, align 1
   %tmp25 = icmp eq i8 %tmp24, 58
   br i1 %tmp25, label %bb30, label %bb26
 
@@ -123,7 +123,7 @@ bb43:                                             ; preds = %bb52, %bb41
 
 bb48:                                             ; preds = %bb43
   %tmp49 = add i64 %tmp44, %tmp37
-  %tmp50 = load i8* undef, align 1
+  %tmp50 = load i8, i8* undef, align 1
   %tmp51 = icmp eq i8 %tmp50, 58
   br i1 %tmp51, label %bb55, label %bb52
 
@@ -166,11 +166,11 @@ bb68:                                             ; preds = %bb59
 
 bb69:                                             ; preds = %bb68
   tail call void (...)* @snork(i8* getelementptr inbounds ([52 x i8]* @global1, i64 0, i64 0), i32 2071) nounwind
-  %tmp70 = load i32* getelementptr inbounds (%struct.snork* @global, i64 0, i32 2), align 4
+  %tmp70 = load i32, i32* getelementptr inbounds (%struct.snork* @global, i64 0, i32 2), align 4
   unreachable
 
 bb71:                                             ; preds = %bb68
-  %tmp72 = load i32* getelementptr inbounds (%struct.snork* @global, i64 0, i32 4), align 4
+  %tmp72 = load i32, i32* getelementptr inbounds (%struct.snork* @global, i64 0, i32 4), align 4
   %tmp73 = icmp eq i32 undef, 0
   br i1 %tmp73, label %bb247, label %bb74
 
@@ -462,7 +462,7 @@ bb221:                                            ; preds = %bb230, %bb219
 bb226:                                            ; preds = %bb221
   %tmp227 = add i64 %tmp222, %tmp216
   %tmp228 = getelementptr inbounds %struct.jim, %struct.jim* @global3, i64 0, i32 3, i64 %tmp227
-  %tmp229 = load i8* %tmp228, align 1
+  %tmp229 = load i8, i8* %tmp228, align 1
   br i1 false, label %bb233, label %bb230
 
 bb230:                                            ; preds = %bb226

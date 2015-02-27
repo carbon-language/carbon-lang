@@ -12,8 +12,8 @@
 ; SI: buffer_store_dwordx2
 ; SI: s_endpgm
 define void @no_reorder_v2f64_global_load_store(<2 x double> addrspace(1)* nocapture %x, <2 x double> addrspace(1)* nocapture %y) nounwind {
-  %tmp1 = load <2 x double> addrspace(1)* %x, align 16
-  %tmp4 = load <2 x double> addrspace(1)* %y, align 16
+  %tmp1 = load <2 x double>, <2 x double> addrspace(1)* %x, align 16
+  %tmp4 = load <2 x double>, <2 x double> addrspace(1)* %y, align 16
   store <2 x double> %tmp4, <2 x double> addrspace(1)* %x, align 16
   store <2 x double> %tmp1, <2 x double> addrspace(1)* %y, align 16
   ret void
@@ -26,8 +26,8 @@ define void @no_reorder_v2f64_global_load_store(<2 x double> addrspace(1)* nocap
 ; SI: ds_write_b64
 ; SI: s_endpgm
 define void @no_reorder_scalarized_v2f64_local_load_store(<2 x double> addrspace(3)* nocapture %x, <2 x double> addrspace(3)* nocapture %y) nounwind {
-  %tmp1 = load <2 x double> addrspace(3)* %x, align 16
-  %tmp4 = load <2 x double> addrspace(3)* %y, align 16
+  %tmp1 = load <2 x double>, <2 x double> addrspace(3)* %x, align 16
+  %tmp4 = load <2 x double>, <2 x double> addrspace(3)* %y, align 16
   store <2 x double> %tmp4, <2 x double> addrspace(3)* %x, align 16
   store <2 x double> %tmp1, <2 x double> addrspace(3)* %y, align 16
   ret void
@@ -76,8 +76,8 @@ define void @no_reorder_scalarized_v2f64_local_load_store(<2 x double> addrspace
 ; SI: buffer_store_dword
 ; SI: s_endpgm
 define void @no_reorder_split_v8i32_global_load_store(<8 x i32> addrspace(1)* nocapture %x, <8 x i32> addrspace(1)* nocapture %y) nounwind {
-  %tmp1 = load <8 x i32> addrspace(1)* %x, align 32
-  %tmp4 = load <8 x i32> addrspace(1)* %y, align 32
+  %tmp1 = load <8 x i32>, <8 x i32> addrspace(1)* %x, align 32
+  %tmp4 = load <8 x i32>, <8 x i32> addrspace(1)* %y, align 32
   store <8 x i32> %tmp4, <8 x i32> addrspace(1)* %x, align 32
   store <8 x i32> %tmp1, <8 x i32> addrspace(1)* %y, align 32
   ret void
@@ -91,8 +91,8 @@ define void @no_reorder_split_v8i32_global_load_store(<8 x i32> addrspace(1)* no
 ; SI: ds_write_b64
 ; SI: s_endpgm
 define void @no_reorder_extload_64(<2 x i32> addrspace(3)* nocapture %x, <2 x i32> addrspace(3)* nocapture %y) nounwind {
-  %tmp1 = load <2 x i32> addrspace(3)* %x, align 8
-  %tmp4 = load <2 x i32> addrspace(3)* %y, align 8
+  %tmp1 = load <2 x i32>, <2 x i32> addrspace(3)* %x, align 8
+  %tmp4 = load <2 x i32>, <2 x i32> addrspace(3)* %y, align 8
   %tmp1ext = zext <2 x i32> %tmp1 to <2 x i64>
   %tmp4ext = zext <2 x i32> %tmp4 to <2 x i64>
   %tmp7 = add <2 x i64> %tmp1ext, <i64 1, i64 1>

@@ -10,7 +10,7 @@ entry:
 ; CHECK-NEXT: setne %al
 ; CHECK-NEXT: movzbl %al, %eax
 ; CHECK-NEXT: ret
-  %0 = load i64* @t1.global, align 8
+  %0 = load i64, i64* @t1.global, align 8
   %and = and i64 4294967295, %0
   %cmp = icmp sgt i64 %and, 0
   %conv = zext i1 %cmp to i32

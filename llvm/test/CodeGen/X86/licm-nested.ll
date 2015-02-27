@@ -14,7 +14,7 @@ entry:
 
 while.cond.preheader:                             ; preds = %entry
   %arrayidx = getelementptr inbounds i8*, i8** %argv, i64 1 ; <i8**> [#uses=1]
-  %tmp2 = load i8** %arrayidx                     ; <i8*> [#uses=1]
+  %tmp2 = load i8*, i8** %arrayidx                     ; <i8*> [#uses=1]
   %call = tail call i32 @atoi(i8* %tmp2) nounwind ; <i32> [#uses=2]
   %tobool51 = icmp eq i32 %call, 0                ; <i1> [#uses=1]
   br i1 %tobool51, label %while.end, label %bb.nph53
@@ -50,7 +50,7 @@ for.body15:                                       ; preds = %for.body, %for.inc3
   %tmp73 = shl i64 %indvar57, 1                   ; <i64> [#uses=1]
   %add = add i64 %tmp73, 4                        ; <i64> [#uses=2]
   %arrayidx17 = getelementptr [8193 x i8], [8193 x i8]* @main.flags, i64 0, i64 %tmp68 ; <i8*> [#uses=1]
-  %tmp18 = load i8* %arrayidx17                   ; <i8> [#uses=1]
+  %tmp18 = load i8, i8* %arrayidx17                   ; <i8> [#uses=1]
   %tobool19 = icmp eq i8 %tmp18, 0                ; <i1> [#uses=1]
   br i1 %tobool19, label %for.inc35, label %if.then
 

@@ -8,7 +8,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define <2 x i64> @ByValArgumentShadowLargeAlignment(<2 x i64>* byval %p) sanitize_memory {
 entry:
-  %x = load <2 x i64>* %p
+  %x = load <2 x i64>, <2 x i64>* %p
   ret <2 x i64> %x
 }
 
@@ -19,7 +19,7 @@ entry:
 
 define i16 @ByValArgumentShadowSmallAlignment(i16* byval %p) sanitize_memory {
 entry:
-  %x = load i16* %p
+  %x = load i16, i16* %p
   ret i16 %x
 }
 

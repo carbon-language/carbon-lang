@@ -11,7 +11,7 @@ entry:
   br i1 %cmp, label %if.then, label %entry.if.end_crit_edge
 
 entry.if.end_crit_edge:
-  %.pre = load i32* @c, align 4
+  %.pre = load i32, i32* @c, align 4
   br label %if.end
 
 if.then:
@@ -32,7 +32,7 @@ entry:
   br i1 %cmp, label %entry.if.end_crit_edge, label %if.then
 
 entry.if.end_crit_edge:
-  %.pre = load i32* @c, align 4
+  %.pre = load i32, i32* @c, align 4
   br label %if.end
 
 if.then:
@@ -53,7 +53,7 @@ entry:
   br i1 %cmp, label %entry.if.end_crit_edge, label %if.then
 
 entry.if.end_crit_edge:
-  %.pre = load i32* @c, align 4
+  %.pre = load i32, i32* @c, align 4
   br label %if.end
 
 if.then:
@@ -73,7 +73,7 @@ entry:
   br i1 %cmp, label %if.then, label %entry.if.end_crit_edge
 
 entry.if.end_crit_edge:
-  %.pre = load i32* @c, align 4
+  %.pre = load i32, i32* @c, align 4
   br label %if.end
 
 if.then:

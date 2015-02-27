@@ -29,7 +29,7 @@ entry:
 ; CHECK-NEXT: ldw r0, r11[0]
 ; CHECK-NEXT: retsp 0
   %0 = getelementptr inbounds %struct.FRAME.f, %struct.FRAME.f* %CHAIN.1, i32 0, i32 0
-  %1 = load i32* %0, align 4
+  %1 = load i32, i32* %0, align 4
   ret i32 %1
 }
 

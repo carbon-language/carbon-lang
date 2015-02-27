@@ -15,18 +15,18 @@ entry:
   store i32 %i, i32* %i_addr
   call void @llvm.dbg.declare(metadata double* %j_addr, metadata !9, metadata !{}), !dbg !8
   store double %j, double* %j_addr
-  %1 = load i32* %i_addr, align 4, !dbg !10       ; <i32> [#uses=1]
+  %1 = load i32, i32* %i_addr, align 4, !dbg !10       ; <i32> [#uses=1]
   %2 = add nsw i32 %1, 1, !dbg !10                ; <i32> [#uses=1]
   %3 = sitofp i32 %2 to double, !dbg !10          ; <double> [#uses=1]
-  %4 = load double* %j_addr, align 8, !dbg !10    ; <double> [#uses=1]
+  %4 = load double, double* %j_addr, align 8, !dbg !10    ; <double> [#uses=1]
   %5 = fadd double %3, %4, !dbg !10               ; <double> [#uses=1]
   store double %5, double* %0, align 8, !dbg !10
-  %6 = load double* %0, align 8, !dbg !10         ; <double> [#uses=1]
+  %6 = load double, double* %0, align 8, !dbg !10         ; <double> [#uses=1]
   store double %6, double* %retval, align 8, !dbg !10
   br label %return, !dbg !10
 
 return:                                           ; preds = %entry
-  %retval1 = load double* %retval, !dbg !10       ; <double> [#uses=1]
+  %retval1 = load double, double* %retval, !dbg !10       ; <double> [#uses=1]
   ret double %retval1, !dbg !10
 }
 

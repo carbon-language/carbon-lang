@@ -16,9 +16,9 @@ entry:
   br i1 undef, label %if.end, label %if.then
 
 if.then:                                          ; preds = %entry
-  %0 = load i64* undef, align 8
+  %0 = load i64, i64* undef, align 8
   %conv.i = trunc i64 %0 to i32
-  %1 = load i32* null, align 4
+  %1 = load i32, i32* null, align 4
   %add = add i32 %1, %conv.i
   store i32 %add, i32* null, align 4
   %counter.i.i = getelementptr inbounds %struct.task_struct.4.16.124, %struct.task_struct.4.16.124* %call1.i, i64 0, i32 1, i32 0

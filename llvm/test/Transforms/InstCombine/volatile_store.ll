@@ -5,7 +5,7 @@
 
 define void @self_assign_1() {
 entry:
-	%tmp = load volatile i32* @x		; <i32> [#uses=1]
+	%tmp = load volatile i32, i32* @x		; <i32> [#uses=1]
 	store volatile i32 %tmp, i32* @x
 	br label %return
 

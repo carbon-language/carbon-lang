@@ -40,7 +40,7 @@ entry:
 
 sw.bb.i:                                          ; preds = %entry
   %call.i.i.i = tail call i32 undef(%struct.A* %ht, i8 zeroext 22, i32 undef, i32 0, %struct.D* undef)
-  %bf.load.i.i = load i128* undef, align 4
+  %bf.load.i.i = load i128, i128* undef, align 4
   %bf.lshr.i.i = lshr i128 %bf.load.i.i, %const72
   %shl1.i.i = shl nuw nsw i128 %bf.lshr.i.i, 8
   %shl.i.i = trunc i128 %shl1.i.i to i32
@@ -59,13 +59,13 @@ cond.false10.i.i:                                 ; preds = %sw.bb.i
 
 cond.end12.i.i:                                   ; preds = %cond.false10.i.i, %__XXX2.exit.i.i
   %.sink.in.i.i = phi i8** [ %arrayidx.i.i.i, %__XXX2.exit.i.i ], [ %arrayidx.i6.i.i, %cond.false10.i.i ]
-  %.sink.i.i = load i8** %.sink.in.i.i, align 4
+  %.sink.i.i = load i8*, i8** %.sink.in.i.i, align 4
   %tmp = bitcast i8* %.sink.i.i to %union.E*
   br i1 undef, label %for.body.i.i, label %if.end196
 
 for.body.i.i:                                     ; preds = %for.body.i.i, %cond.end12.i.i
   %weak.i.i = getelementptr inbounds %union.E, %union.E* %tmp, i32 undef, i32 0
-  %tmp1 = load i32* %weak.i.i, align 4
+  %tmp1 = load i32, i32* %weak.i.i, align 4
   %cmp36.i.i = icmp ne i32 %tmp1, %shl.i.i
   %or.cond = and i1 %cmp36.i.i, false
   br i1 %or.cond, label %for.body.i.i, label %if.end196

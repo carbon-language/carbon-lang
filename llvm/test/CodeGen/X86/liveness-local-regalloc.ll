@@ -71,7 +71,7 @@ BB:
   %A2 = alloca <2 x i8>
   %A1 = alloca i1
   %A = alloca i32
-  %L = load i8* %0
+  %L = load i8, i8* %0
   store i8 -37, i8* %0
   %E = extractelement <4 x i64> zeroinitializer, i32 2
   %Shuff = shufflevector <4 x i64> zeroinitializer, <4 x i64> zeroinitializer, <4 x i32> <i32 5, i32 7, i32 1, i32 3>

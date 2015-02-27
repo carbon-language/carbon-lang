@@ -20,9 +20,9 @@ entry:
 ; CHECK-NOT:    vmov d
 ; CHECK-NEXT:   vst1.16
   %0 = getelementptr inbounds %struct.int32x4_t, %struct.int32x4_t* %vT0ptr, i32 0, i32 0 ; <<4 x i32>*> [#uses=1]
-  %1 = load <4 x i32>* %0, align 16               ; <<4 x i32>> [#uses=1]
+  %1 = load <4 x i32>, <4 x i32>* %0, align 16               ; <<4 x i32>> [#uses=1]
   %2 = getelementptr inbounds %struct.int32x4_t, %struct.int32x4_t* %vT1ptr, i32 0, i32 0 ; <<4 x i32>*> [#uses=1]
-  %3 = load <4 x i32>* %2, align 16               ; <<4 x i32>> [#uses=1]
+  %3 = load <4 x i32>, <4 x i32>* %2, align 16               ; <<4 x i32>> [#uses=1]
   %4 = bitcast i16* %i_ptr to i8*                 ; <i8*> [#uses=1]
   %5 = tail call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %4, i32 1) ; <<8 x i16>> [#uses=1]
   %6 = bitcast <8 x i16> %5 to <2 x double>       ; <<2 x double>> [#uses=2]
@@ -56,9 +56,9 @@ entry:
 ; CHECK:        vst1.16
 ; CHECK:        vst1.16
   %0 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %vT0ptr, i32 0, i32 0 ; <<8 x i16>*> [#uses=1]
-  %1 = load <8 x i16>* %0, align 16               ; <<8 x i16>> [#uses=1]
+  %1 = load <8 x i16>, <8 x i16>* %0, align 16               ; <<8 x i16>> [#uses=1]
   %2 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %vT1ptr, i32 0, i32 0 ; <<8 x i16>*> [#uses=1]
-  %3 = load <8 x i16>* %2, align 16               ; <<8 x i16>> [#uses=1]
+  %3 = load <8 x i16>, <8 x i16>* %2, align 16               ; <<8 x i16>> [#uses=1]
   %4 = bitcast i16* %i_ptr to i8*                 ; <i8*> [#uses=1]
   %5 = tail call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %4, i32 1) ; <<8 x i16>> [#uses=1]
   %6 = getelementptr inbounds i16, i16* %i_ptr, i32 8  ; <i16*> [#uses=1]
@@ -146,7 +146,7 @@ define <8 x i16> @t5(i16* %A, <8 x i16>* %B) nounwind {
 ; CHECK-NOT:    vmov
 ; CHECK:        vadd.i16
   %tmp0 = bitcast i16* %A to i8*                  ; <i8*> [#uses=1]
-  %tmp1 = load <8 x i16>* %B                      ; <<8 x i16>> [#uses=2]
+  %tmp1 = load <8 x i16>, <8 x i16>* %B                      ; <<8 x i16>> [#uses=2]
   %tmp2 = call %struct.__neon_int16x8x2_t @llvm.arm.neon.vld2lane.v8i16(i8* %tmp0, <8 x i16> %tmp1, <8 x i16> %tmp1, i32 1, i32 1) ; <%struct.__neon_int16x8x2_t> [#uses=2]
   %tmp3 = extractvalue %struct.__neon_int16x8x2_t %tmp2, 0 ; <<8 x i16>> [#uses=1]
   %tmp4 = extractvalue %struct.__neon_int16x8x2_t %tmp2, 1 ; <<8 x i16>> [#uses=1]
@@ -159,7 +159,7 @@ define <8 x i8> @t6(i8* %A, <8 x i8>* %B) nounwind {
 ; CHECK:        vldr
 ; CHECK:        vorr d[[D0:[0-9]+]], d[[D1:[0-9]+]]
 ; CHECK-NEXT:   vld2.8 {d[[D1]][1], d[[D0]][1]}
-  %tmp1 = load <8 x i8>* %B                       ; <<8 x i8>> [#uses=2]
+  %tmp1 = load <8 x i8>, <8 x i8>* %B                       ; <<8 x i8>> [#uses=2]
   %tmp2 = call %struct.__neon_int8x8x2_t @llvm.arm.neon.vld2lane.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 1, i32 1) ; <%struct.__neon_int8x8x2_t> [#uses=2]
   %tmp3 = extractvalue %struct.__neon_int8x8x2_t %tmp2, 0 ; <<8 x i8>> [#uses=1]
   %tmp4 = extractvalue %struct.__neon_int8x8x2_t %tmp2, 1 ; <<8 x i8>> [#uses=1]

@@ -9,7 +9,7 @@ declare void @abort() #1
 ; Function Attrs: nounwind ssp uwtable
 define i32 @main() {
 entry:
-  %a.promoted13 = load i32* @a, align 4
+  %a.promoted13 = load i32, i32* @a, align 4
   br label %for.cond1.preheader
 
 for.cond1.preheader:                              ; preds = %entry, %for.end

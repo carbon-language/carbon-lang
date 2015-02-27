@@ -2,7 +2,7 @@
 
 define void @dead_test8(i32* %data.1, i32 %idx.1) {
 entry:
-        %tmp.1 = load i32* %data.1              ; <i32> [#uses=2]
+        %tmp.1 = load i32, i32* %data.1              ; <i32> [#uses=2]
         %tmp.41 = icmp sgt i32 %tmp.1, 0                ; <i1> [#uses=1]
         br i1 %tmp.41, label %no_exit.preheader, label %return
 
@@ -15,7 +15,7 @@ no_exit.preheader:              ; preds = %entry
 no_exit:                ; preds = %endif, %no_exit.preheader
         %k.1 = phi i32 [ %k.0, %endif ], [ 0, %no_exit.preheader ]              ; <i32> [#uses=3]
         %i.0 = phi i32 [ %inc.1, %endif ], [ 0, %no_exit.preheader ]            ; <i32> [#uses=1]
-        %tmp.12 = load i32* %tmp.11             ; <i32> [#uses=1]
+        %tmp.12 = load i32, i32* %tmp.11             ; <i32> [#uses=1]
         %tmp.14 = sub i32 0, %tmp.12            ; <i32> [#uses=1]
         %tmp.161 = icmp ne i32 %k.1, %tmp.14            ; <i1> [#uses=1]
         br i1 %tmp.161, label %then, label %else

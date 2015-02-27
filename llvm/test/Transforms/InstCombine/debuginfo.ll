@@ -19,10 +19,10 @@ entry:
   call void @llvm.dbg.declare(metadata i32* %__val.addr, metadata !7, metadata !{}), !dbg !18
   store i64 %__len, i64* %__len.addr, align 8
   call void @llvm.dbg.declare(metadata i64* %__len.addr, metadata !9, metadata !{}), !dbg !20
-  %tmp = load i8** %__dest.addr, align 8, !dbg !21
-  %tmp1 = load i32* %__val.addr, align 4, !dbg !21
-  %tmp2 = load i64* %__len.addr, align 8, !dbg !21
-  %tmp3 = load i8** %__dest.addr, align 8, !dbg !21
+  %tmp = load i8*, i8** %__dest.addr, align 8, !dbg !21
+  %tmp1 = load i32, i32* %__val.addr, align 4, !dbg !21
+  %tmp2 = load i64, i64* %__len.addr, align 8, !dbg !21
+  %tmp3 = load i8*, i8** %__dest.addr, align 8, !dbg !21
   %0 = call i64 @llvm.objectsize.i64.p0i8(i8* %tmp3, i1 false), !dbg !21
   %call = call i8* @foo(i8* %tmp, i32 %tmp1, i64 %tmp2, i64 %0), !dbg !21
   ret i8* %call, !dbg !21

@@ -15,7 +15,7 @@
 ; SI: ds_read_b32 v{{[0-9]+}}, [[PTR]]
 define void @local_address_load(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:
-  %0 = load i32 addrspace(3)* %in
+  %0 = load i32, i32 addrspace(3)* %in
   store i32 %0, i32 addrspace(1)* %out
   ret void
 }
@@ -27,7 +27,7 @@ entry:
 define void @local_address_gep(i32 addrspace(1)* %out, i32 addrspace(3)* %in, i32 %offset) {
 entry:
   %0 = getelementptr i32, i32 addrspace(3)* %in, i32 %offset
-  %1 = load i32 addrspace(3)* %0
+  %1 = load i32, i32 addrspace(3)* %0
   store i32 %1, i32 addrspace(1)* %out
   ret void
 }
@@ -38,7 +38,7 @@ entry:
 define void @local_address_gep_const_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:
   %0 = getelementptr i32, i32 addrspace(3)* %in, i32 1
-  %1 = load i32 addrspace(3)* %0
+  %1 = load i32, i32 addrspace(3)* %0
   store i32 %1, i32 addrspace(1)* %out
   ret void
 }
@@ -51,7 +51,7 @@ entry:
 define void @local_address_gep_large_const_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:
   %0 = getelementptr i32, i32 addrspace(3)* %in, i32 16385
-  %1 = load i32 addrspace(3)* %0
+  %1 = load i32, i32 addrspace(3)* %0
   store i32 %1, i32 addrspace(1)* %out
   ret void
 }
@@ -73,7 +73,7 @@ define void @null_32bit_lds_ptr(i32 addrspace(1)* %out, i32 addrspace(3)* %lds) 
 ; SI: ds_read_b32
 define void @mul_32bit_ptr(float addrspace(1)* %out, [3 x float] addrspace(3)* %lds, i32 %tid) {
   %ptr = getelementptr [3 x float], [3 x float] addrspace(3)* %lds, i32 %tid, i32 0
-  %val = load float addrspace(3)* %ptr
+  %val = load float, float addrspace(3)* %ptr
   store float %val, float addrspace(1)* %out
   ret void
 }
@@ -84,7 +84,7 @@ define void @mul_32bit_ptr(float addrspace(1)* %out, [3 x float] addrspace(3)* %
 ; SI: v_mov_b32_e32 [[REG:v[0-9]+]], 0
 ; SI: ds_read_b32 v{{[0-9]+}}, [[REG]]
 define void @infer_ptr_alignment_global_offset(float addrspace(1)* %out, i32 %tid) {
-  %val = load float addrspace(3)* @g_lds
+  %val = load float, float addrspace(3)* @g_lds
   store float %val, float addrspace(1)* %out
   ret void
 }

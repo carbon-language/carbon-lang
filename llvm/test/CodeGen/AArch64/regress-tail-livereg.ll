@@ -5,7 +5,7 @@ declare void @bar()
 
 define void @foo() {
 ; CHECK-LABEL: foo:
-       %func = load void()** @var
+       %func = load void()*, void()** @var
 
        ; Calling a function encourages @foo to use a callee-saved register,
        ; which makes it a natural choice for the tail call itself. But we don't

@@ -23,9 +23,9 @@ for.cond.for.end_crit_edge:		; preds = %for.cond
 	br label %for.end
 
 ; CHECK: for.body:
-; CHECK-NEXT: %tmp3 = load i32* @p
+; CHECK-NEXT: %tmp3 = load i32, i32* @p
 for.body:		; preds = %for.cond
-	%tmp3 = load i32* @p		; <i32> [#uses=1]
+	%tmp3 = load i32, i32* @p		; <i32> [#uses=1]
 	%dec = add i32 %tmp3, -1		; <i32> [#uses=2]
 	store i32 %dec, i32* @p
 	%cmp6 = icmp slt i32 %dec, 0		; <i1> [#uses=1]
@@ -40,6 +40,6 @@ for.inc:		; preds = %for.body
 	br label %for.cond
 
 for.end:		; preds = %for.body.for.end_crit_edge, %for.cond.for.end_crit_edge
-	%tmp9 = load i32* @p		; <i32> [#uses=1]
+	%tmp9 = load i32, i32* @p		; <i32> [#uses=1]
 	ret i32 %tmp9
 }

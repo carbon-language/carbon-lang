@@ -14,7 +14,7 @@ target triple = "thumbv7-apple-ios"
 ; CHECK: vstr s
 define void @local_split(float* nocapture %p) nounwind ssp {
 entry:
-  %x = load float* %p, align 4
+  %x = load float, float* %p, align 4
   %a = fadd float %x, 1.0
   tail call void asm sideeffect "", "~{d0},~{d1},~{d2},~{d3},~{d4},~{d5},~{d6},~{d7},~{d8},~{d9},~{d10},~{d11},~{d12},~{d13},~{d14},~{d15}"() nounwind
   store float %a, float* %p, align 4
@@ -33,7 +33,7 @@ entry:
 ; CHECK: vstr s
 define void @global_split(float* nocapture %p1, float* nocapture %p2) nounwind ssp {
 entry:
-  %0 = load float* %p1, align 4
+  %0 = load float, float* %p1, align 4
   %add = fadd float %0, 1.000000e+00
   tail call void asm sideeffect "", "~{d0},~{d1},~{d2},~{d3},~{d4},~{d5},~{d6},~{d7},~{d8},~{d9},~{d10},~{d11},~{d12},~{d13},~{d14},~{d15}"() nounwind
   %cmp = fcmp ogt float %add, 0.000000e+00

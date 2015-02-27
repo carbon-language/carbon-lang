@@ -8,12 +8,12 @@ target triple = "x86_64-apple-macosx10.8.0"
 define void @_ZSt6uniqueISt15_Deque_iteratorIdRdPdEET_S4_S4_(%"struct.std::_Deque_iterator.4.157.174.208.259.276.344.731"* %__first, %"struct.std::_Deque_iterator.4.157.174.208.259.276.344.731"* nocapture %__last) {
 entry:
   %_M_cur2.i.i = getelementptr inbounds %"struct.std::_Deque_iterator.4.157.174.208.259.276.344.731", %"struct.std::_Deque_iterator.4.157.174.208.259.276.344.731"* %__first, i64 0, i32 0
-  %0 = load double** %_M_cur2.i.i, align 8
+  %0 = load double*, double** %_M_cur2.i.i, align 8
   %_M_first3.i.i = getelementptr inbounds %"struct.std::_Deque_iterator.4.157.174.208.259.276.344.731", %"struct.std::_Deque_iterator.4.157.174.208.259.276.344.731"* %__first, i64 0, i32 1
   %_M_cur2.i.i81 = getelementptr inbounds %"struct.std::_Deque_iterator.4.157.174.208.259.276.344.731", %"struct.std::_Deque_iterator.4.157.174.208.259.276.344.731"* %__last, i64 0, i32 0
-  %1 = load double** %_M_cur2.i.i81, align 8
+  %1 = load double*, double** %_M_cur2.i.i81, align 8
   %_M_first3.i.i83 = getelementptr inbounds %"struct.std::_Deque_iterator.4.157.174.208.259.276.344.731", %"struct.std::_Deque_iterator.4.157.174.208.259.276.344.731"* %__last, i64 0, i32 1
-  %2 = load double** %_M_first3.i.i83, align 8
+  %2 = load double*, double** %_M_first3.i.i83, align 8
   br i1 undef, label %_ZSt13adjacent_findISt15_Deque_iteratorIdRdPdEET_S4_S4_.exit, label %while.cond.i.preheader
 
 while.cond.i.preheader:                           ; preds = %entry

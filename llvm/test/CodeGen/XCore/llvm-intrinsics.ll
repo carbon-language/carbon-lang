@@ -145,7 +145,7 @@ entry:
 ; CHECK-NEXT: set sp, r2
 ; CHECK-NEXT: bau r3
   call void (...)* @foo()
-  %0 = load i32* @offset
+  %0 = load i32, i32* @offset
   call void @llvm.eh.return.i32(i32 %0, i8* @handler)
   unreachable
 }

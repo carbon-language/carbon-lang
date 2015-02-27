@@ -13,7 +13,7 @@ entry:
 for.body:
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds i64, i64* %a, i64 %indvars.iv
-  %tmp = load i64* %arrayidx, align 4
+  %tmp = load i64, i64* %arrayidx, align 4
   %conv = uitofp i64 %tmp to double
   %arrayidx2 = getelementptr inbounds double, double* %b, i64 %indvars.iv
   store double %conv, double* %arrayidx2, align 4

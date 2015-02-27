@@ -9,8 +9,8 @@
 
 define void @llvm_mips_and_v_b_test() nounwind {
 entry:
-  %0 = load <16 x i8>* @llvm_mips_and_v_b_ARG1
-  %1 = load <16 x i8>* @llvm_mips_and_v_b_ARG2
+  %0 = load <16 x i8>, <16 x i8>* @llvm_mips_and_v_b_ARG1
+  %1 = load <16 x i8>, <16 x i8>* @llvm_mips_and_v_b_ARG2
   %2 = bitcast <16 x i8> %0 to <16 x i8>
   %3 = bitcast <16 x i8> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.and.v(<16 x i8> %2, <16 x i8> %3)
@@ -32,8 +32,8 @@ entry:
 
 define void @llvm_mips_and_v_h_test() nounwind {
 entry:
-  %0 = load <8 x i16>* @llvm_mips_and_v_h_ARG1
-  %1 = load <8 x i16>* @llvm_mips_and_v_h_ARG2
+  %0 = load <8 x i16>, <8 x i16>* @llvm_mips_and_v_h_ARG1
+  %1 = load <8 x i16>, <8 x i16>* @llvm_mips_and_v_h_ARG2
   %2 = bitcast <8 x i16> %0 to <16 x i8>
   %3 = bitcast <8 x i16> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.and.v(<16 x i8> %2, <16 x i8> %3)
@@ -55,8 +55,8 @@ entry:
 
 define void @llvm_mips_and_v_w_test() nounwind {
 entry:
-  %0 = load <4 x i32>* @llvm_mips_and_v_w_ARG1
-  %1 = load <4 x i32>* @llvm_mips_and_v_w_ARG2
+  %0 = load <4 x i32>, <4 x i32>* @llvm_mips_and_v_w_ARG1
+  %1 = load <4 x i32>, <4 x i32>* @llvm_mips_and_v_w_ARG2
   %2 = bitcast <4 x i32> %0 to <16 x i8>
   %3 = bitcast <4 x i32> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.and.v(<16 x i8> %2, <16 x i8> %3)
@@ -78,8 +78,8 @@ entry:
 
 define void @llvm_mips_and_v_d_test() nounwind {
 entry:
-  %0 = load <2 x i64>* @llvm_mips_and_v_d_ARG1
-  %1 = load <2 x i64>* @llvm_mips_and_v_d_ARG2
+  %0 = load <2 x i64>, <2 x i64>* @llvm_mips_and_v_d_ARG1
+  %1 = load <2 x i64>, <2 x i64>* @llvm_mips_and_v_d_ARG2
   %2 = bitcast <2 x i64> %0 to <16 x i8>
   %3 = bitcast <2 x i64> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.and.v(<16 x i8> %2, <16 x i8> %3)
@@ -97,8 +97,8 @@ entry:
 ;
 define void @and_v_b_test() nounwind {
 entry:
-  %0 = load <16 x i8>* @llvm_mips_and_v_b_ARG1
-  %1 = load <16 x i8>* @llvm_mips_and_v_b_ARG2
+  %0 = load <16 x i8>, <16 x i8>* @llvm_mips_and_v_b_ARG1
+  %1 = load <16 x i8>, <16 x i8>* @llvm_mips_and_v_b_ARG2
   %2 = and <16 x i8> %0, %1
   store <16 x i8> %2, <16 x i8>* @llvm_mips_and_v_b_RES
   ret void
@@ -113,8 +113,8 @@ entry:
 ;
 define void @and_v_h_test() nounwind {
 entry:
-  %0 = load <8 x i16>* @llvm_mips_and_v_h_ARG1
-  %1 = load <8 x i16>* @llvm_mips_and_v_h_ARG2
+  %0 = load <8 x i16>, <8 x i16>* @llvm_mips_and_v_h_ARG1
+  %1 = load <8 x i16>, <8 x i16>* @llvm_mips_and_v_h_ARG2
   %2 = and <8 x i16> %0, %1
   store <8 x i16> %2, <8 x i16>* @llvm_mips_and_v_h_RES
   ret void
@@ -130,8 +130,8 @@ entry:
 
 define void @and_v_w_test() nounwind {
 entry:
-  %0 = load <4 x i32>* @llvm_mips_and_v_w_ARG1
-  %1 = load <4 x i32>* @llvm_mips_and_v_w_ARG2
+  %0 = load <4 x i32>, <4 x i32>* @llvm_mips_and_v_w_ARG1
+  %1 = load <4 x i32>, <4 x i32>* @llvm_mips_and_v_w_ARG2
   %2 = and <4 x i32> %0, %1
   store <4 x i32> %2, <4 x i32>* @llvm_mips_and_v_w_RES
   ret void
@@ -147,8 +147,8 @@ entry:
 
 define void @and_v_d_test() nounwind {
 entry:
-  %0 = load <2 x i64>* @llvm_mips_and_v_d_ARG1
-  %1 = load <2 x i64>* @llvm_mips_and_v_d_ARG2
+  %0 = load <2 x i64>, <2 x i64>* @llvm_mips_and_v_d_ARG1
+  %1 = load <2 x i64>, <2 x i64>* @llvm_mips_and_v_d_ARG2
   %2 = and <2 x i64> %0, %1
   store <2 x i64> %2, <2 x i64>* @llvm_mips_and_v_d_RES
   ret void
@@ -168,9 +168,9 @@ entry:
 
 define void @llvm_mips_bmnz_v_b_test() nounwind {
 entry:
-  %0 = load <16 x i8>* @llvm_mips_bmnz_v_b_ARG1
-  %1 = load <16 x i8>* @llvm_mips_bmnz_v_b_ARG2
-  %2 = load <16 x i8>* @llvm_mips_bmnz_v_b_ARG3
+  %0 = load <16 x i8>, <16 x i8>* @llvm_mips_bmnz_v_b_ARG1
+  %1 = load <16 x i8>, <16 x i8>* @llvm_mips_bmnz_v_b_ARG2
+  %2 = load <16 x i8>, <16 x i8>* @llvm_mips_bmnz_v_b_ARG3
   %3 = bitcast <16 x i8> %0 to <16 x i8>
   %4 = bitcast <16 x i8> %1 to <16 x i8>
   %5 = bitcast <16 x i8> %2 to <16 x i8>
@@ -198,9 +198,9 @@ entry:
 
 define void @llvm_mips_bmnz_v_h_test() nounwind {
 entry:
-  %0 = load <8 x i16>* @llvm_mips_bmnz_v_h_ARG1
-  %1 = load <8 x i16>* @llvm_mips_bmnz_v_h_ARG2
-  %2 = load <8 x i16>* @llvm_mips_bmnz_v_h_ARG3
+  %0 = load <8 x i16>, <8 x i16>* @llvm_mips_bmnz_v_h_ARG1
+  %1 = load <8 x i16>, <8 x i16>* @llvm_mips_bmnz_v_h_ARG2
+  %2 = load <8 x i16>, <8 x i16>* @llvm_mips_bmnz_v_h_ARG3
   %3 = bitcast <8 x i16> %0 to <16 x i8>
   %4 = bitcast <8 x i16> %1 to <16 x i8>
   %5 = bitcast <8 x i16> %2 to <16 x i8>
@@ -228,9 +228,9 @@ entry:
 
 define void @llvm_mips_bmnz_v_w_test() nounwind {
 entry:
-  %0 = load <4 x i32>* @llvm_mips_bmnz_v_w_ARG1
-  %1 = load <4 x i32>* @llvm_mips_bmnz_v_w_ARG2
-  %2 = load <4 x i32>* @llvm_mips_bmnz_v_w_ARG3
+  %0 = load <4 x i32>, <4 x i32>* @llvm_mips_bmnz_v_w_ARG1
+  %1 = load <4 x i32>, <4 x i32>* @llvm_mips_bmnz_v_w_ARG2
+  %2 = load <4 x i32>, <4 x i32>* @llvm_mips_bmnz_v_w_ARG3
   %3 = bitcast <4 x i32> %0 to <16 x i8>
   %4 = bitcast <4 x i32> %1 to <16 x i8>
   %5 = bitcast <4 x i32> %2 to <16 x i8>
@@ -258,9 +258,9 @@ entry:
 
 define void @llvm_mips_bmnz_v_d_test() nounwind {
 entry:
-  %0 = load <2 x i64>* @llvm_mips_bmnz_v_d_ARG1
-  %1 = load <2 x i64>* @llvm_mips_bmnz_v_d_ARG2
-  %2 = load <2 x i64>* @llvm_mips_bmnz_v_d_ARG3
+  %0 = load <2 x i64>, <2 x i64>* @llvm_mips_bmnz_v_d_ARG1
+  %1 = load <2 x i64>, <2 x i64>* @llvm_mips_bmnz_v_d_ARG2
+  %2 = load <2 x i64>, <2 x i64>* @llvm_mips_bmnz_v_d_ARG3
   %3 = bitcast <2 x i64> %0 to <16 x i8>
   %4 = bitcast <2 x i64> %1 to <16 x i8>
   %5 = bitcast <2 x i64> %2 to <16 x i8>
@@ -288,9 +288,9 @@ entry:
 
 define void @llvm_mips_bmz_v_b_test() nounwind {
 entry:
-  %0 = load <16 x i8>* @llvm_mips_bmz_v_b_ARG1
-  %1 = load <16 x i8>* @llvm_mips_bmz_v_b_ARG2
-  %2 = load <16 x i8>* @llvm_mips_bmz_v_b_ARG3
+  %0 = load <16 x i8>, <16 x i8>* @llvm_mips_bmz_v_b_ARG1
+  %1 = load <16 x i8>, <16 x i8>* @llvm_mips_bmz_v_b_ARG2
+  %2 = load <16 x i8>, <16 x i8>* @llvm_mips_bmz_v_b_ARG3
   %3 = bitcast <16 x i8> %0 to <16 x i8>
   %4 = bitcast <16 x i8> %1 to <16 x i8>
   %5 = bitcast <16 x i8> %2 to <16 x i8>
@@ -319,9 +319,9 @@ entry:
 
 define void @llvm_mips_bmz_v_h_test() nounwind {
 entry:
-  %0 = load <8 x i16>* @llvm_mips_bmz_v_h_ARG1
-  %1 = load <8 x i16>* @llvm_mips_bmz_v_h_ARG2
-  %2 = load <8 x i16>* @llvm_mips_bmz_v_h_ARG3
+  %0 = load <8 x i16>, <8 x i16>* @llvm_mips_bmz_v_h_ARG1
+  %1 = load <8 x i16>, <8 x i16>* @llvm_mips_bmz_v_h_ARG2
+  %2 = load <8 x i16>, <8 x i16>* @llvm_mips_bmz_v_h_ARG3
   %3 = bitcast <8 x i16> %0 to <16 x i8>
   %4 = bitcast <8 x i16> %1 to <16 x i8>
   %5 = bitcast <8 x i16> %2 to <16 x i8>
@@ -350,9 +350,9 @@ entry:
 
 define void @llvm_mips_bmz_v_w_test() nounwind {
 entry:
-  %0 = load <4 x i32>* @llvm_mips_bmz_v_w_ARG1
-  %1 = load <4 x i32>* @llvm_mips_bmz_v_w_ARG2
-  %2 = load <4 x i32>* @llvm_mips_bmz_v_w_ARG3
+  %0 = load <4 x i32>, <4 x i32>* @llvm_mips_bmz_v_w_ARG1
+  %1 = load <4 x i32>, <4 x i32>* @llvm_mips_bmz_v_w_ARG2
+  %2 = load <4 x i32>, <4 x i32>* @llvm_mips_bmz_v_w_ARG3
   %3 = bitcast <4 x i32> %0 to <16 x i8>
   %4 = bitcast <4 x i32> %1 to <16 x i8>
   %5 = bitcast <4 x i32> %2 to <16 x i8>
@@ -381,9 +381,9 @@ entry:
 
 define void @llvm_mips_bmz_v_d_test() nounwind {
 entry:
-  %0 = load <2 x i64>* @llvm_mips_bmz_v_d_ARG1
-  %1 = load <2 x i64>* @llvm_mips_bmz_v_d_ARG2
-  %2 = load <2 x i64>* @llvm_mips_bmz_v_d_ARG3
+  %0 = load <2 x i64>, <2 x i64>* @llvm_mips_bmz_v_d_ARG1
+  %1 = load <2 x i64>, <2 x i64>* @llvm_mips_bmz_v_d_ARG2
+  %2 = load <2 x i64>, <2 x i64>* @llvm_mips_bmz_v_d_ARG3
   %3 = bitcast <2 x i64> %0 to <16 x i8>
   %4 = bitcast <2 x i64> %1 to <16 x i8>
   %5 = bitcast <2 x i64> %2 to <16 x i8>
@@ -412,9 +412,9 @@ entry:
 
 define void @llvm_mips_bsel_v_b_test() nounwind {
 entry:
-  %0 = load <16 x i8>* @llvm_mips_bsel_v_b_ARG1
-  %1 = load <16 x i8>* @llvm_mips_bsel_v_b_ARG2
-  %2 = load <16 x i8>* @llvm_mips_bsel_v_b_ARG3
+  %0 = load <16 x i8>, <16 x i8>* @llvm_mips_bsel_v_b_ARG1
+  %1 = load <16 x i8>, <16 x i8>* @llvm_mips_bsel_v_b_ARG2
+  %2 = load <16 x i8>, <16 x i8>* @llvm_mips_bsel_v_b_ARG3
   %3 = bitcast <16 x i8> %0 to <16 x i8>
   %4 = bitcast <16 x i8> %1 to <16 x i8>
   %5 = bitcast <16 x i8> %2 to <16 x i8>
@@ -443,9 +443,9 @@ entry:
 
 define void @llvm_mips_bsel_v_h_test() nounwind {
 entry:
-  %0 = load <8 x i16>* @llvm_mips_bsel_v_h_ARG1
-  %1 = load <8 x i16>* @llvm_mips_bsel_v_h_ARG2
-  %2 = load <8 x i16>* @llvm_mips_bsel_v_h_ARG3
+  %0 = load <8 x i16>, <8 x i16>* @llvm_mips_bsel_v_h_ARG1
+  %1 = load <8 x i16>, <8 x i16>* @llvm_mips_bsel_v_h_ARG2
+  %2 = load <8 x i16>, <8 x i16>* @llvm_mips_bsel_v_h_ARG3
   %3 = bitcast <8 x i16> %0 to <16 x i8>
   %4 = bitcast <8 x i16> %1 to <16 x i8>
   %5 = bitcast <8 x i16> %2 to <16 x i8>
@@ -474,9 +474,9 @@ entry:
 
 define void @llvm_mips_bsel_v_w_test() nounwind {
 entry:
-  %0 = load <4 x i32>* @llvm_mips_bsel_v_w_ARG1
-  %1 = load <4 x i32>* @llvm_mips_bsel_v_w_ARG2
-  %2 = load <4 x i32>* @llvm_mips_bsel_v_w_ARG3
+  %0 = load <4 x i32>, <4 x i32>* @llvm_mips_bsel_v_w_ARG1
+  %1 = load <4 x i32>, <4 x i32>* @llvm_mips_bsel_v_w_ARG2
+  %2 = load <4 x i32>, <4 x i32>* @llvm_mips_bsel_v_w_ARG3
   %3 = bitcast <4 x i32> %0 to <16 x i8>
   %4 = bitcast <4 x i32> %1 to <16 x i8>
   %5 = bitcast <4 x i32> %2 to <16 x i8>
@@ -505,9 +505,9 @@ entry:
 
 define void @llvm_mips_bsel_v_d_test() nounwind {
 entry:
-  %0 = load <2 x i64>* @llvm_mips_bsel_v_d_ARG1
-  %1 = load <2 x i64>* @llvm_mips_bsel_v_d_ARG2
-  %2 = load <2 x i64>* @llvm_mips_bsel_v_d_ARG3
+  %0 = load <2 x i64>, <2 x i64>* @llvm_mips_bsel_v_d_ARG1
+  %1 = load <2 x i64>, <2 x i64>* @llvm_mips_bsel_v_d_ARG2
+  %2 = load <2 x i64>, <2 x i64>* @llvm_mips_bsel_v_d_ARG3
   %3 = bitcast <2 x i64> %0 to <16 x i8>
   %4 = bitcast <2 x i64> %1 to <16 x i8>
   %5 = bitcast <2 x i64> %2 to <16 x i8>
@@ -535,8 +535,8 @@ entry:
 
 define void @llvm_mips_nor_v_b_test() nounwind {
 entry:
-  %0 = load <16 x i8>* @llvm_mips_nor_v_b_ARG1
-  %1 = load <16 x i8>* @llvm_mips_nor_v_b_ARG2
+  %0 = load <16 x i8>, <16 x i8>* @llvm_mips_nor_v_b_ARG1
+  %1 = load <16 x i8>, <16 x i8>* @llvm_mips_nor_v_b_ARG2
   %2 = bitcast <16 x i8> %0 to <16 x i8>
   %3 = bitcast <16 x i8> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.nor.v(<16 x i8> %2, <16 x i8> %3)
@@ -558,8 +558,8 @@ entry:
 
 define void @llvm_mips_nor_v_h_test() nounwind {
 entry:
-  %0 = load <8 x i16>* @llvm_mips_nor_v_h_ARG1
-  %1 = load <8 x i16>* @llvm_mips_nor_v_h_ARG2
+  %0 = load <8 x i16>, <8 x i16>* @llvm_mips_nor_v_h_ARG1
+  %1 = load <8 x i16>, <8 x i16>* @llvm_mips_nor_v_h_ARG2
   %2 = bitcast <8 x i16> %0 to <16 x i8>
   %3 = bitcast <8 x i16> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.nor.v(<16 x i8> %2, <16 x i8> %3)
@@ -581,8 +581,8 @@ entry:
 
 define void @llvm_mips_nor_v_w_test() nounwind {
 entry:
-  %0 = load <4 x i32>* @llvm_mips_nor_v_w_ARG1
-  %1 = load <4 x i32>* @llvm_mips_nor_v_w_ARG2
+  %0 = load <4 x i32>, <4 x i32>* @llvm_mips_nor_v_w_ARG1
+  %1 = load <4 x i32>, <4 x i32>* @llvm_mips_nor_v_w_ARG2
   %2 = bitcast <4 x i32> %0 to <16 x i8>
   %3 = bitcast <4 x i32> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.nor.v(<16 x i8> %2, <16 x i8> %3)
@@ -604,8 +604,8 @@ entry:
 
 define void @llvm_mips_nor_v_d_test() nounwind {
 entry:
-  %0 = load <2 x i64>* @llvm_mips_nor_v_d_ARG1
-  %1 = load <2 x i64>* @llvm_mips_nor_v_d_ARG2
+  %0 = load <2 x i64>, <2 x i64>* @llvm_mips_nor_v_d_ARG1
+  %1 = load <2 x i64>, <2 x i64>* @llvm_mips_nor_v_d_ARG2
   %2 = bitcast <2 x i64> %0 to <16 x i8>
   %3 = bitcast <2 x i64> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.nor.v(<16 x i8> %2, <16 x i8> %3)
@@ -627,8 +627,8 @@ entry:
 
 define void @llvm_mips_or_v_b_test() nounwind {
 entry:
-  %0 = load <16 x i8>* @llvm_mips_or_v_b_ARG1
-  %1 = load <16 x i8>* @llvm_mips_or_v_b_ARG2
+  %0 = load <16 x i8>, <16 x i8>* @llvm_mips_or_v_b_ARG1
+  %1 = load <16 x i8>, <16 x i8>* @llvm_mips_or_v_b_ARG2
   %2 = bitcast <16 x i8> %0 to <16 x i8>
   %3 = bitcast <16 x i8> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.or.v(<16 x i8> %2, <16 x i8> %3)
@@ -650,8 +650,8 @@ entry:
 
 define void @llvm_mips_or_v_h_test() nounwind {
 entry:
-  %0 = load <8 x i16>* @llvm_mips_or_v_h_ARG1
-  %1 = load <8 x i16>* @llvm_mips_or_v_h_ARG2
+  %0 = load <8 x i16>, <8 x i16>* @llvm_mips_or_v_h_ARG1
+  %1 = load <8 x i16>, <8 x i16>* @llvm_mips_or_v_h_ARG2
   %2 = bitcast <8 x i16> %0 to <16 x i8>
   %3 = bitcast <8 x i16> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.or.v(<16 x i8> %2, <16 x i8> %3)
@@ -673,8 +673,8 @@ entry:
 
 define void @llvm_mips_or_v_w_test() nounwind {
 entry:
-  %0 = load <4 x i32>* @llvm_mips_or_v_w_ARG1
-  %1 = load <4 x i32>* @llvm_mips_or_v_w_ARG2
+  %0 = load <4 x i32>, <4 x i32>* @llvm_mips_or_v_w_ARG1
+  %1 = load <4 x i32>, <4 x i32>* @llvm_mips_or_v_w_ARG2
   %2 = bitcast <4 x i32> %0 to <16 x i8>
   %3 = bitcast <4 x i32> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.or.v(<16 x i8> %2, <16 x i8> %3)
@@ -696,8 +696,8 @@ entry:
 
 define void @llvm_mips_or_v_d_test() nounwind {
 entry:
-  %0 = load <2 x i64>* @llvm_mips_or_v_d_ARG1
-  %1 = load <2 x i64>* @llvm_mips_or_v_d_ARG2
+  %0 = load <2 x i64>, <2 x i64>* @llvm_mips_or_v_d_ARG1
+  %1 = load <2 x i64>, <2 x i64>* @llvm_mips_or_v_d_ARG2
   %2 = bitcast <2 x i64> %0 to <16 x i8>
   %3 = bitcast <2 x i64> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.or.v(<16 x i8> %2, <16 x i8> %3)
@@ -715,8 +715,8 @@ entry:
 ;
 define void @or_v_b_test() nounwind {
 entry:
-  %0 = load <16 x i8>* @llvm_mips_or_v_b_ARG1
-  %1 = load <16 x i8>* @llvm_mips_or_v_b_ARG2
+  %0 = load <16 x i8>, <16 x i8>* @llvm_mips_or_v_b_ARG1
+  %1 = load <16 x i8>, <16 x i8>* @llvm_mips_or_v_b_ARG2
   %2 = or <16 x i8> %0, %1
   store <16 x i8> %2, <16 x i8>* @llvm_mips_or_v_b_RES
   ret void
@@ -731,8 +731,8 @@ entry:
 ;
 define void @or_v_h_test() nounwind {
 entry:
-  %0 = load <8 x i16>* @llvm_mips_or_v_h_ARG1
-  %1 = load <8 x i16>* @llvm_mips_or_v_h_ARG2
+  %0 = load <8 x i16>, <8 x i16>* @llvm_mips_or_v_h_ARG1
+  %1 = load <8 x i16>, <8 x i16>* @llvm_mips_or_v_h_ARG2
   %2 = or <8 x i16> %0, %1
   store <8 x i16> %2, <8 x i16>* @llvm_mips_or_v_h_RES
   ret void
@@ -748,8 +748,8 @@ entry:
 
 define void @or_v_w_test() nounwind {
 entry:
-  %0 = load <4 x i32>* @llvm_mips_or_v_w_ARG1
-  %1 = load <4 x i32>* @llvm_mips_or_v_w_ARG2
+  %0 = load <4 x i32>, <4 x i32>* @llvm_mips_or_v_w_ARG1
+  %1 = load <4 x i32>, <4 x i32>* @llvm_mips_or_v_w_ARG2
   %2 = or <4 x i32> %0, %1
   store <4 x i32> %2, <4 x i32>* @llvm_mips_or_v_w_RES
   ret void
@@ -765,8 +765,8 @@ entry:
 
 define void @or_v_d_test() nounwind {
 entry:
-  %0 = load <2 x i64>* @llvm_mips_or_v_d_ARG1
-  %1 = load <2 x i64>* @llvm_mips_or_v_d_ARG2
+  %0 = load <2 x i64>, <2 x i64>* @llvm_mips_or_v_d_ARG1
+  %1 = load <2 x i64>, <2 x i64>* @llvm_mips_or_v_d_ARG2
   %2 = or <2 x i64> %0, %1
   store <2 x i64> %2, <2 x i64>* @llvm_mips_or_v_d_RES
   ret void
@@ -785,8 +785,8 @@ entry:
 
 define void @llvm_mips_xor_v_b_test() nounwind {
 entry:
-  %0 = load <16 x i8>* @llvm_mips_xor_v_b_ARG1
-  %1 = load <16 x i8>* @llvm_mips_xor_v_b_ARG2
+  %0 = load <16 x i8>, <16 x i8>* @llvm_mips_xor_v_b_ARG1
+  %1 = load <16 x i8>, <16 x i8>* @llvm_mips_xor_v_b_ARG2
   %2 = bitcast <16 x i8> %0 to <16 x i8>
   %3 = bitcast <16 x i8> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.xor.v(<16 x i8> %2, <16 x i8> %3)
@@ -808,8 +808,8 @@ entry:
 
 define void @llvm_mips_xor_v_h_test() nounwind {
 entry:
-  %0 = load <8 x i16>* @llvm_mips_xor_v_h_ARG1
-  %1 = load <8 x i16>* @llvm_mips_xor_v_h_ARG2
+  %0 = load <8 x i16>, <8 x i16>* @llvm_mips_xor_v_h_ARG1
+  %1 = load <8 x i16>, <8 x i16>* @llvm_mips_xor_v_h_ARG2
   %2 = bitcast <8 x i16> %0 to <16 x i8>
   %3 = bitcast <8 x i16> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.xor.v(<16 x i8> %2, <16 x i8> %3)
@@ -831,8 +831,8 @@ entry:
 
 define void @llvm_mips_xor_v_w_test() nounwind {
 entry:
-  %0 = load <4 x i32>* @llvm_mips_xor_v_w_ARG1
-  %1 = load <4 x i32>* @llvm_mips_xor_v_w_ARG2
+  %0 = load <4 x i32>, <4 x i32>* @llvm_mips_xor_v_w_ARG1
+  %1 = load <4 x i32>, <4 x i32>* @llvm_mips_xor_v_w_ARG2
   %2 = bitcast <4 x i32> %0 to <16 x i8>
   %3 = bitcast <4 x i32> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.xor.v(<16 x i8> %2, <16 x i8> %3)
@@ -854,8 +854,8 @@ entry:
 
 define void @llvm_mips_xor_v_d_test() nounwind {
 entry:
-  %0 = load <2 x i64>* @llvm_mips_xor_v_d_ARG1
-  %1 = load <2 x i64>* @llvm_mips_xor_v_d_ARG2
+  %0 = load <2 x i64>, <2 x i64>* @llvm_mips_xor_v_d_ARG1
+  %1 = load <2 x i64>, <2 x i64>* @llvm_mips_xor_v_d_ARG2
   %2 = bitcast <2 x i64> %0 to <16 x i8>
   %3 = bitcast <2 x i64> %1 to <16 x i8>
   %4 = tail call <16 x i8> @llvm.mips.xor.v(<16 x i8> %2, <16 x i8> %3)
@@ -873,8 +873,8 @@ entry:
 ;
 define void @xor_v_b_test() nounwind {
 entry:
-  %0 = load <16 x i8>* @llvm_mips_xor_v_b_ARG1
-  %1 = load <16 x i8>* @llvm_mips_xor_v_b_ARG2
+  %0 = load <16 x i8>, <16 x i8>* @llvm_mips_xor_v_b_ARG1
+  %1 = load <16 x i8>, <16 x i8>* @llvm_mips_xor_v_b_ARG2
   %2 = xor <16 x i8> %0, %1
   store <16 x i8> %2, <16 x i8>* @llvm_mips_xor_v_b_RES
   ret void
@@ -889,8 +889,8 @@ entry:
 ;
 define void @xor_v_h_test() nounwind {
 entry:
-  %0 = load <8 x i16>* @llvm_mips_xor_v_h_ARG1
-  %1 = load <8 x i16>* @llvm_mips_xor_v_h_ARG2
+  %0 = load <8 x i16>, <8 x i16>* @llvm_mips_xor_v_h_ARG1
+  %1 = load <8 x i16>, <8 x i16>* @llvm_mips_xor_v_h_ARG2
   %2 = xor <8 x i16> %0, %1
   store <8 x i16> %2, <8 x i16>* @llvm_mips_xor_v_h_RES
   ret void
@@ -906,8 +906,8 @@ entry:
 
 define void @xor_v_w_test() nounwind {
 entry:
-  %0 = load <4 x i32>* @llvm_mips_xor_v_w_ARG1
-  %1 = load <4 x i32>* @llvm_mips_xor_v_w_ARG2
+  %0 = load <4 x i32>, <4 x i32>* @llvm_mips_xor_v_w_ARG1
+  %1 = load <4 x i32>, <4 x i32>* @llvm_mips_xor_v_w_ARG2
   %2 = xor <4 x i32> %0, %1
   store <4 x i32> %2, <4 x i32>* @llvm_mips_xor_v_w_RES
   ret void
@@ -923,8 +923,8 @@ entry:
 
 define void @xor_v_d_test() nounwind {
 entry:
-  %0 = load <2 x i64>* @llvm_mips_xor_v_d_ARG1
-  %1 = load <2 x i64>* @llvm_mips_xor_v_d_ARG2
+  %0 = load <2 x i64>, <2 x i64>* @llvm_mips_xor_v_d_ARG1
+  %1 = load <2 x i64>, <2 x i64>* @llvm_mips_xor_v_d_ARG2
   %2 = xor <2 x i64> %0, %1
   store <2 x i64> %2, <2 x i64>* @llvm_mips_xor_v_d_RES
   ret void

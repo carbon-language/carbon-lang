@@ -34,7 +34,7 @@
 ; CHECK: ret
 define i64 @test_bitcast(i64 (i64, i64, i64)** %arg, i1 %bool, i64 %arg2) {
 entry:
-  %loaded_ptr = load i64 (i64, i64, i64)** %arg, align 8
+  %loaded_ptr = load i64 (i64, i64, i64)*, i64 (i64, i64, i64)** %arg, align 8
   %raw = bitcast i64 (i64, i64, i64)* %loaded_ptr to i8*
   switch i1 %bool, label %default [
     i1 true, label %label_true
@@ -73,7 +73,7 @@ label_end:
 ; CHECK: ret
 define i64 @test_inttoptr(i64 (i64, i64, i64)** %arg, i1 %bool, i64 %arg2) {
 entry:
-  %loaded_ptr = load i64 (i64, i64, i64)** %arg, align 8
+  %loaded_ptr = load i64 (i64, i64, i64)*, i64 (i64, i64, i64)** %arg, align 8
   %raw = ptrtoint i64 (i64, i64, i64)* %loaded_ptr to i64
   switch i1 %bool, label %default [
     i1 true, label %label_true
@@ -112,7 +112,7 @@ label_end:
 ; CHECK: ret
 define i64 @test_ptrtoint(i64 (i64, i64, i64)** %arg, i1 %bool, i64 %arg2) {
 entry:
-  %loaded_ptr = load i64 (i64, i64, i64)** %arg, align 8
+  %loaded_ptr = load i64 (i64, i64, i64)*, i64 (i64, i64, i64)** %arg, align 8
   %raw = bitcast i64 (i64, i64, i64)* %loaded_ptr to i8*
   switch i1 %bool, label %default [
     i1 true, label %label_true

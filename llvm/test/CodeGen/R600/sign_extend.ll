@@ -48,7 +48,7 @@ define void @s_sext_i32_to_i64(i64 addrspace(1)* %out, i32 %a) nounwind {
 ; SI: v_ashr
 ; SI: s_endpgm
 define void @v_sext_i32_to_i64(i64 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %val = load i32 addrspace(1)* %in, align 4
+  %val = load i32, i32 addrspace(1)* %in, align 4
   %sext = sext i32 %val to i64
   store i64 %sext, i64 addrspace(1)* %out, align 8
   ret void

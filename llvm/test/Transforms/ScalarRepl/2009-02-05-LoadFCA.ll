@@ -9,7 +9,7 @@ entry:
 	%tmp = alloca { i64, i64 }, align 8		; <{ i64, i64 }*> [#uses=2]
 	store { i64, i64 } %0, { i64, i64 }* %tmp
 	%1 = bitcast { i64, i64 }* %tmp to %struct.anon*		; <%struct.anon*> [#uses=1]
-	%2 = load %struct.anon* %1, align 8		; <%struct.anon> [#uses=1]
+	%2 = load %struct.anon, %struct.anon* %1, align 8		; <%struct.anon> [#uses=1]
         %tmp3 = extractvalue %struct.anon %2, 0
 	ret i32 %tmp3
 }

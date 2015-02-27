@@ -9,7 +9,7 @@ entry:
   br label %return
 
 return:                                           ; preds = %entry
-  %0 = load i32* %retval                          ; <i32> [#uses=1]
+  %0 = load i32, i32* %retval                          ; <i32> [#uses=1]
   call void @llvm.dbg.stoppoint(i32 3, i32 1, metadata !1)
   call void @llvm.dbg.region.end(metadata !0)
   ret i32 %0

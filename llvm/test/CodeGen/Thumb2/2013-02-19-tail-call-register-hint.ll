@@ -18,13 +18,13 @@ define hidden void @func(i8* %Data) nounwind ssp {
   tail call void @def(%"myclass"* %2) nounwind
   %3 = getelementptr inbounds i8, i8* %Data, i32 8
   %4 = bitcast i8* %3 to i8**
-  %5 = load i8** %4, align 4
+  %5 = load i8*, i8** %4, align 4
   tail call void @ghi(i8* %5) nounwind
   %6 = bitcast i8* %Data to void (i8*)**
-  %7 = load void (i8*)** %6, align 4
+  %7 = load void (i8*)*, void (i8*)** %6, align 4
   %8 = getelementptr inbounds i8, i8* %Data, i32 4
   %9 = bitcast i8* %8 to i8**
-  %10 = load i8** %9, align 4
+  %10 = load i8*, i8** %9, align 4
   %11 = icmp eq i8* %Data, null
   br i1 %11, label %14, label %12
 

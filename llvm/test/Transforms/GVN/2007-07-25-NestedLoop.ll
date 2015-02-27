@@ -11,21 +11,21 @@ bb534.preheader:		; preds = %entry
 
 bb556.preheader:		; preds = %entry
 	%tmp56119 = getelementptr %struct.TypHeader, %struct.TypHeader* %hdR, i32 0, i32 0		; <i32*> [#uses=1]
-	%tmp56220 = load i32* %tmp56119		; <i32> [#uses=0]
+	%tmp56220 = load i32, i32* %tmp56119		; <i32> [#uses=0]
 	br i1 false, label %bb.nph23, label %bb675.preheader
 
 bb.nph23:		; preds = %bb556.preheader
 	ret %struct.TypHeader* null
 
 bb656:		; preds = %bb675.outer, %bb656
-	%tmp678 = load i32* %tmp677		; <i32> [#uses=0]
+	%tmp678 = load i32, i32* %tmp677		; <i32> [#uses=0]
 	br i1 false, label %bb684, label %bb656
 
 bb684:		; preds = %bb675.outer, %bb656
 	br i1 false, label %bb924.preheader, label %bb675.outer
 
 bb675.outer:		; preds = %bb675.preheader, %bb684
-	%tmp67812 = load i32* %tmp67711		; <i32> [#uses=0]
+	%tmp67812 = load i32, i32* %tmp67711		; <i32> [#uses=0]
 	br i1 false, label %bb684, label %bb656
 
 bb675.preheader:		; preds = %bb556.preheader

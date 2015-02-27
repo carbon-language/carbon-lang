@@ -5,7 +5,7 @@
 ; SI: v_min_i32_e32
 define void @vector_imin(i32 %p0, i32 %p1, i32 addrspace(1)* %in) #0 {
 main_body:
-  %load = load i32 addrspace(1)* %in, align 4
+  %load = load i32, i32 addrspace(1)* %in, align 4
   %min = call i32 @llvm.AMDGPU.imin(i32 %p0, i32 %load)
   %bc = bitcast i32 %min to float
   call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 0, float %bc, float %bc, float %bc, float %bc)

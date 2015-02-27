@@ -110,42 +110,42 @@ entry:
   store %struct.SmallStruct_1b* %ss7, %struct.SmallStruct_1b** %ss7.addr, align 8
   store %struct.SmallStruct_1b* %ss8, %struct.SmallStruct_1b** %ss8.addr, align 8
   store %struct.SmallStruct_1b* %ss9, %struct.SmallStruct_1b** %ss9.addr, align 8
-  %0 = load %struct.SmallStruct_1b** %ss1.addr, align 8
-  %1 = load %struct.SmallStruct_1b** %ss2.addr, align 8
-  %2 = load %struct.SmallStruct_1b** %ss3.addr, align 8
-  %3 = load %struct.SmallStruct_1b** %ss4.addr, align 8
-  %4 = load %struct.SmallStruct_1b** %ss5.addr, align 8
-  %5 = load %struct.SmallStruct_1b** %ss6.addr, align 8
-  %6 = load %struct.SmallStruct_1b** %ss7.addr, align 8
-  %7 = load %struct.SmallStruct_1b** %ss8.addr, align 8
-  %8 = load %struct.SmallStruct_1b** %ss9.addr, align 8
+  %0 = load %struct.SmallStruct_1b*, %struct.SmallStruct_1b** %ss1.addr, align 8
+  %1 = load %struct.SmallStruct_1b*, %struct.SmallStruct_1b** %ss2.addr, align 8
+  %2 = load %struct.SmallStruct_1b*, %struct.SmallStruct_1b** %ss3.addr, align 8
+  %3 = load %struct.SmallStruct_1b*, %struct.SmallStruct_1b** %ss4.addr, align 8
+  %4 = load %struct.SmallStruct_1b*, %struct.SmallStruct_1b** %ss5.addr, align 8
+  %5 = load %struct.SmallStruct_1b*, %struct.SmallStruct_1b** %ss6.addr, align 8
+  %6 = load %struct.SmallStruct_1b*, %struct.SmallStruct_1b** %ss7.addr, align 8
+  %7 = load %struct.SmallStruct_1b*, %struct.SmallStruct_1b** %ss8.addr, align 8
+  %8 = load %struct.SmallStruct_1b*, %struct.SmallStruct_1b** %ss9.addr, align 8
   %9 = bitcast %struct.SmallStruct_1b* %0 to { i8 }*
   %10 = getelementptr { i8 }, { i8 }* %9, i32 0, i32 0
-  %11 = load i8* %10, align 1
+  %11 = load i8, i8* %10, align 1
   %12 = bitcast %struct.SmallStruct_1b* %1 to { i8 }*
   %13 = getelementptr { i8 }, { i8 }* %12, i32 0, i32 0
-  %14 = load i8* %13, align 1
+  %14 = load i8, i8* %13, align 1
   %15 = bitcast %struct.SmallStruct_1b* %2 to { i8 }*
   %16 = getelementptr { i8 }, { i8 }* %15, i32 0, i32 0
-  %17 = load i8* %16, align 1
+  %17 = load i8, i8* %16, align 1
   %18 = bitcast %struct.SmallStruct_1b* %3 to { i8 }*
   %19 = getelementptr { i8 }, { i8 }* %18, i32 0, i32 0
-  %20 = load i8* %19, align 1
+  %20 = load i8, i8* %19, align 1
   %21 = bitcast %struct.SmallStruct_1b* %4 to { i8 }*
   %22 = getelementptr { i8 }, { i8 }* %21, i32 0, i32 0
-  %23 = load i8* %22, align 1
+  %23 = load i8, i8* %22, align 1
   %24 = bitcast %struct.SmallStruct_1b* %5 to { i8 }*
   %25 = getelementptr { i8 }, { i8 }* %24, i32 0, i32 0
-  %26 = load i8* %25, align 1
+  %26 = load i8, i8* %25, align 1
   %27 = bitcast %struct.SmallStruct_1b* %6 to { i8 }*
   %28 = getelementptr { i8 }, { i8 }* %27, i32 0, i32 0
-  %29 = load i8* %28, align 1
+  %29 = load i8, i8* %28, align 1
   %30 = bitcast %struct.SmallStruct_1b* %7 to { i8 }*
   %31 = getelementptr { i8 }, { i8 }* %30, i32 0, i32 0
-  %32 = load i8* %31, align 1
+  %32 = load i8, i8* %31, align 1
   %33 = bitcast %struct.SmallStruct_1b* %8 to { i8 }*
   %34 = getelementptr { i8 }, { i8 }* %33, i32 0, i32 0
-  %35 = load i8* %34, align 1
+  %35 = load i8, i8* %34, align 1
   call void (i8*, ...)* @varArgF_SmallStruct(i8* getelementptr inbounds ([3 x i8]* @.str, i32 0, i32 0), i8 inreg %11, i8 inreg %14, i8 inreg %17, i8 inreg %20, i8 inreg %23, i8 inreg %26, i8 inreg %29, i8 inreg %32, i8 inreg %35)
   ret void
  ; CHECK-LABEL: smallStruct_1b_x9:

@@ -129,7 +129,7 @@ define arm_aapcs_vfpcc void @foo(float, i1 zeroext, i1 zeroext) nounwind uwtable
   %45 = fmul <4 x float> undef, undef
   %46 = fmul <4 x float> %45, %43
   %47 = fmul <4 x float> undef, %44
-  %48 = load <4 x float>* undef, align 8
+  %48 = load <4 x float>, <4 x float>* undef, align 8
   %49 = bitcast <4 x float> %48 to <2 x i64>
   %50 = shufflevector <2 x i64> %49, <2 x i64> undef, <1 x i32> <i32 1>
   %51 = bitcast <1 x i64> %50 to <2 x float>

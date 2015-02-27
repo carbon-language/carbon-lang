@@ -10,7 +10,7 @@ define <4 x i64> @vector_ptrtoint({<2 x i32*>, <2 x i32*>} %x) {
 ; CHECK-NOT: store
 
   %cast = bitcast {<2 x i32*>, <2 x i32*>}* %a to <4 x i64>*
-  %vec = load <4 x i64>* %cast
+  %vec = load <4 x i64>, <4 x i64>* %cast
 ; CHECK-NOT: load
 ; CHECK: ptrtoint
 
@@ -26,7 +26,7 @@ define <4 x i32*> @vector_inttoptr({<2 x i64>, <2 x i64>} %x) {
 ; CHECK-NOT: store
 
   %cast = bitcast {<2 x i64>, <2 x i64>}* %a to <4 x i32*>*
-  %vec = load <4 x i32*>* %cast
+  %vec = load <4 x i32*>, <4 x i32*>* %cast
 ; CHECK-NOT: load
 ; CHECK: inttoptr
 
@@ -42,7 +42,7 @@ define <2 x i64> @vector_ptrtointbitcast({<1 x i32*>, <1 x i32*>} %x) {
 ; CHECK-NOT: store
 
   %cast = bitcast {<1 x i32*>, <1 x i32*>}* %a to <2 x i64>*
-  %vec = load <2 x i64>* %cast
+  %vec = load <2 x i64>, <2 x i64>* %cast
 ; CHECK-NOT: load
 ; CHECK: ptrtoint
 ; CHECK: bitcast

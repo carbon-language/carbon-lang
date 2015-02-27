@@ -5,7 +5,7 @@
 
 define void @_Z12h000007_testv(i32* %P) {
 entry:
-        %tmp.2 = load i32* @b_rec.0             ; <i32> [#uses=1]
+        %tmp.2 = load i32, i32* @b_rec.0             ; <i32> [#uses=1]
         %tmp.9 = or i32 %tmp.2, -989855744              ; <i32> [#uses=2]
         %tmp.16 = and i32 %tmp.9, -805306369            ; <i32> [#uses=2]
         %tmp.17 = and i32 %tmp.9, -973078529            ; <i32> [#uses=1]

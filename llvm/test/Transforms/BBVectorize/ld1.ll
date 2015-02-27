@@ -3,18 +3,18 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 define double @test1(double* %a, double* %b, double* %c) nounwind uwtable readonly {
 entry:
-  %i0 = load double* %a, align 8
-  %i1 = load double* %b, align 8
+  %i0 = load double, double* %a, align 8
+  %i1 = load double, double* %b, align 8
   %mul = fmul double %i0, %i1
-  %i2 = load double* %c, align 8
+  %i2 = load double, double* %c, align 8
   %add = fadd double %mul, %i2
   %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
-  %i3 = load double* %arrayidx3, align 8
+  %i3 = load double, double* %arrayidx3, align 8
   %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
-  %i4 = load double* %arrayidx4, align 8
+  %i4 = load double, double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
   %arrayidx6 = getelementptr inbounds double, double* %c, i64 1
-  %i5 = load double* %arrayidx6, align 8
+  %i5 = load double, double* %arrayidx6, align 8
   %add7 = fadd double %mul5, %i5
   %mul9 = fmul double %add, %i1
   %add11 = fadd double %mul9, %i2
@@ -26,10 +26,10 @@ entry:
 ; CHECK: %i0.v.i0 = bitcast double* %a to <2 x double>*
 ; CHECK: %i1.v.i0 = bitcast double* %b to <2 x double>*
 ; CHECK: %i2.v.i0 = bitcast double* %c to <2 x double>*
-; CHECK: %i0 = load <2 x double>* %i0.v.i0, align 8
-; CHECK: %i1 = load <2 x double>* %i1.v.i0, align 8
+; CHECK: %i0 = load <2 x double>, <2 x double>* %i0.v.i0, align 8
+; CHECK: %i1 = load <2 x double>, <2 x double>* %i1.v.i0, align 8
 ; CHECK: %mul = fmul <2 x double> %i0, %i1
-; CHECK: %i2 = load <2 x double>* %i2.v.i0, align 8
+; CHECK: %i2 = load <2 x double>, <2 x double>* %i2.v.i0, align 8
 ; CHECK: %add = fadd <2 x double> %mul, %i2
 ; CHECK: %mul9 = fmul <2 x double> %add, %i1
 ; CHECK: %add11 = fadd <2 x double> %mul9, %i2

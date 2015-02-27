@@ -77,7 +77,7 @@ define void @PS_PrintGraphicInclude(%struct.rec* %x, i32 %colmark, i32 %rowmark)
 entry:
 	%buff = alloca [512 x i8], align 4		; <[512 x i8]*> [#uses=5]
 	%0 = getelementptr %struct.rec, %struct.rec* %x, i32 0, i32 0, i32 1, i32 0, i32 0		; <i8*> [#uses=2]
-	%1 = load i8* %0, align 4		; <i8> [#uses=1]
+	%1 = load i8, i8* %0, align 4		; <i8> [#uses=1]
 	%2 = add i8 %1, -94		; <i8> [#uses=1]
 	%3 = icmp ugt i8 %2, 1		; <i1> [#uses=1]
 	br i1 %3, label %bb, label %bb1
@@ -89,7 +89,7 @@ bb1:		; preds = %bb, %entry
 	%4 = getelementptr %struct.rec, %struct.rec* %x, i32 0, i32 0, i32 2		; <%struct.SECOND_UNION*> [#uses=1]
 	%5 = bitcast %struct.SECOND_UNION* %4 to %5*		; <%5*> [#uses=1]
 	%6 = getelementptr %5, %5* %5, i32 0, i32 1		; <i8*> [#uses=1]
-	%7 = load i8* %6, align 1		; <i8> [#uses=1]
+	%7 = load i8, i8* %6, align 1		; <i8> [#uses=1]
 	%8 = icmp eq i8 %7, 0		; <i1> [#uses=1]
 	br i1 %8, label %bb2, label %bb3
 
@@ -98,15 +98,15 @@ bb2:		; preds = %bb1
 	br label %bb3
 
 bb3:		; preds = %bb2, %bb1
-	%9 = load %struct.rec** undef, align 4		; <%struct.rec*> [#uses=0]
+	%9 = load %struct.rec*, %struct.rec** undef, align 4		; <%struct.rec*> [#uses=0]
 	br label %bb5
 
 bb5:		; preds = %bb5, %bb3
-	%y.0 = load %struct.rec** null		; <%struct.rec*> [#uses=2]
+	%y.0 = load %struct.rec*, %struct.rec** null		; <%struct.rec*> [#uses=2]
 	br i1 false, label %bb5, label %bb6
 
 bb6:		; preds = %bb5
-	%10 = load i8* %0, align 4		; <i8> [#uses=1]
+	%10 = load i8, i8* %0, align 4		; <i8> [#uses=1]
 	%11 = getelementptr %struct.rec, %struct.rec* %y.0, i32 0, i32 0, i32 1, i32 0		; <%struct.FILE_POS*> [#uses=1]
 	%12 = call  %struct.FILE* @OpenIncGraphicFile(i8* undef, i8 zeroext %10, %struct.rec** null, %struct.FILE_POS* %11, i32* undef) nounwind		; <%struct.FILE*> [#uses=4]
 	br i1 false, label %bb7, label %bb8
@@ -116,7 +116,7 @@ bb7:		; preds = %bb6
 
 bb8:		; preds = %bb6
 	%13 = and i32 undef, 4095		; <i32> [#uses=2]
-	%14 = load i32* @currentfont, align 4		; <i32> [#uses=0]
+	%14 = load i32, i32* @currentfont, align 4		; <i32> [#uses=0]
 	br i1 false, label %bb10, label %bb9
 
 bb9:		; preds = %bb8
@@ -125,7 +125,7 @@ bb9:		; preds = %bb8
 
 bb.i:		; preds = %bb9
 	call  void (i32, i32, i8*, i32, %struct.FILE_POS*, ...)* @Error(i32 1, i32 2, i8* getelementptr ([20 x i8]* @.str24239, i32 0, i32 0), i32 0, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*), i8* getelementptr ([17 x i8]* @.str111875, i32 0, i32 0)) nounwind
-	%.pre186 = load i32* @currentfont, align 4		; <i32> [#uses=1]
+	%.pre186 = load i32, i32* @currentfont, align 4		; <i32> [#uses=1]
 	br label %FontHalfXHeight.exit
 
 FontHalfXHeight.exit:		; preds = %bb.i, %bb9
@@ -144,9 +144,9 @@ bb2.i:		; preds = %bb1.i
 
 FontSize.exit:		; preds = %bb1.i
 	%17 = getelementptr %struct.FONT_INFO, %struct.FONT_INFO* undef, i32 %16, i32 5		; <%struct.rec**> [#uses=0]
-	%18 = load i32* undef, align 4		; <i32> [#uses=1]
-	%19 = load i32* @currentfont, align 4		; <i32> [#uses=2]
-	%20 = load i32* @font_count, align 4		; <i32> [#uses=1]
+	%18 = load i32, i32* undef, align 4		; <i32> [#uses=1]
+	%19 = load i32, i32* @currentfont, align 4		; <i32> [#uses=2]
+	%20 = load i32, i32* @font_count, align 4		; <i32> [#uses=1]
 	%21 = icmp ult i32 %20, %19		; <i1> [#uses=1]
 	br i1 %21, label %bb.i5, label %FontName.exit
 
@@ -163,19 +163,19 @@ FontName.exit:		; preds = %bb.i5, %FontSize.exit
 bb10:		; preds = %FontName.exit, %bb8
 	%25 = call  i32 @"\01_fwrite"(i8* getelementptr ([11 x i8]* @.str1842948, i32 0, i32 0), i32 1, i32 10, i8* undef) nounwind		; <i32> [#uses=0]
 	%26 = sub i32 %rowmark, undef		; <i32> [#uses=1]
-	%27 = load %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
+	%27 = load %struct.FILE*, %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
 	%28 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %27, i8* getelementptr ([17 x i8]* @.str212784, i32 0, i32 0), i32 undef, i32 %26) nounwind		; <i32> [#uses=0]
 	store i32 0, i32* @cpexists, align 4
 	%29 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* undef, i8* getelementptr ([17 x i8]* @.str192782, i32 0, i32 0), double 2.000000e+01, double 2.000000e+01) nounwind		; <i32> [#uses=0]
 	%30 = getelementptr %struct.rec, %struct.rec* %y.0, i32 0, i32 0, i32 3, i32 0, i32 0, i32 0		; <i32*> [#uses=1]
-	%31 = load i32* %30, align 4		; <i32> [#uses=1]
+	%31 = load i32, i32* %30, align 4		; <i32> [#uses=1]
 	%32 = sub i32 0, %31		; <i32> [#uses=1]
-	%33 = load i32* undef, align 4		; <i32> [#uses=1]
+	%33 = load i32, i32* undef, align 4		; <i32> [#uses=1]
 	%34 = sub i32 0, %33		; <i32> [#uses=1]
-	%35 = load %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
+	%35 = load %struct.FILE*, %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
 	%36 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %35, i8* getelementptr ([17 x i8]* @.str212784, i32 0, i32 0), i32 %32, i32 %34) nounwind		; <i32> [#uses=0]
 	store i32 0, i32* @cpexists, align 4
-	%37 = load %struct.rec** null, align 4		; <%struct.rec*> [#uses=1]
+	%37 = load %struct.rec*, %struct.rec** null, align 4		; <%struct.rec*> [#uses=1]
 	%38 = getelementptr %struct.rec, %struct.rec* %37, i32 0, i32 0, i32 4		; <%struct.FOURTH_UNION*> [#uses=1]
 	%39 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* undef, i8* getelementptr ([23 x i8]* @.str1852949, i32 0, i32 0), %struct.FOURTH_UNION* %38) nounwind		; <i32> [#uses=0]
 	%buff14 = getelementptr [512 x i8], [512 x i8]* %buff, i32 0, i32 0		; <i8*> [#uses=5]
@@ -199,17 +199,17 @@ bb2.i84:		; preds = %bb100.outer, %bb.i80
 	%indvar.i81 = phi i32 [ %indvar.next.i79, %bb.i80 ], [ 0, %bb100.outer ]		; <i32> [#uses=3]
 	%pp.0.i82 = getelementptr [27 x i8], [27 x i8]* @.str141878, i32 0, i32 %indvar.i81		; <i8*> [#uses=2]
 	%sp.0.i83 = getelementptr [512 x i8], [512 x i8]* %buff, i32 0, i32 %indvar.i81		; <i8*> [#uses=1]
-	%44 = load i8* %sp.0.i83, align 1		; <i8> [#uses=2]
+	%44 = load i8, i8* %sp.0.i83, align 1		; <i8> [#uses=2]
 	%45 = icmp eq i8 %44, 0		; <i1> [#uses=1]
 	br i1 %45, label %StringBeginsWith.exit88thread-split, label %bb3.i85
 
 bb3.i85:		; preds = %bb2.i84
-	%46 = load i8* %pp.0.i82, align 1		; <i8> [#uses=3]
+	%46 = load i8, i8* %pp.0.i82, align 1		; <i8> [#uses=3]
 	%47 = icmp eq i8 %46, 0		; <i1> [#uses=1]
 	br i1 %47, label %StringBeginsWith.exit88, label %bb.i80
 
 StringBeginsWith.exit88thread-split:		; preds = %bb2.i84
-	%.pr = load i8* %pp.0.i82		; <i8> [#uses=1]
+	%.pr = load i8, i8* %pp.0.i82		; <i8> [#uses=1]
 	br label %StringBeginsWith.exit88
 
 StringBeginsWith.exit88:		; preds = %StringBeginsWith.exit88thread-split, %bb3.i85
@@ -225,16 +225,16 @@ bb2.i75:		; preds = %bb2.i.i68
 
 bb3.i77:		; preds = %bb2.i75, %StringBeginsWith.exit88
 	%sp.0.i76 = getelementptr [512 x i8], [512 x i8]* %buff, i32 0, i32 undef		; <i8*> [#uses=1]
-	%49 = load i8* %sp.0.i76, align 1		; <i8> [#uses=1]
+	%49 = load i8, i8* %sp.0.i76, align 1		; <i8> [#uses=1]
 	%50 = icmp eq i8 %49, 0		; <i1> [#uses=1]
 	br i1 %50, label %bb24, label %bb2.i.i68
 
 bb24:		; preds = %bb3.i77
 	%51 = call  %struct.rec* @MakeWord(i32 11, i8* %41, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*)) nounwind		; <%struct.rec*> [#uses=0]
-	%52 = load i8* getelementptr ([150 x i8]* @zz_lengths, i32 0, i32 0), align 4		; <i8> [#uses=1]
+	%52 = load i8, i8* getelementptr ([150 x i8]* @zz_lengths, i32 0, i32 0), align 4		; <i8> [#uses=1]
 	%53 = zext i8 %52 to i32		; <i32> [#uses=2]
 	%54 = getelementptr [524 x %struct.rec*], [524 x %struct.rec*]* @zz_free, i32 0, i32 %53		; <%struct.rec**> [#uses=2]
-	%55 = load %struct.rec** %54, align 4		; <%struct.rec*> [#uses=3]
+	%55 = load %struct.rec*, %struct.rec** %54, align 4		; <%struct.rec*> [#uses=3]
 	%56 = icmp eq %struct.rec* %55, null		; <i1> [#uses=1]
 	br i1 %56, label %bb27, label %bb28
 
@@ -262,7 +262,7 @@ GetMemory.exit62:		; preds = %bb2.i60, %bb27
 
 bb28:		; preds = %bb24
 	store %struct.rec* %55, %struct.rec** @zz_hold, align 4
-	%59 = load %struct.rec** null, align 4		; <%struct.rec*> [#uses=1]
+	%59 = load %struct.rec*, %struct.rec** null, align 4		; <%struct.rec*> [#uses=1]
 	store %struct.rec* %59, %struct.rec** %54, align 4
 	br label %bb29
 
@@ -280,7 +280,7 @@ bb35:		; preds = %bb31, %bb29
 	br i1 undef, label %bb41, label %bb37
 
 bb37:		; preds = %bb35
-	%60 = load %struct.rec** null, align 4		; <%struct.rec*> [#uses=1]
+	%60 = load %struct.rec*, %struct.rec** null, align 4		; <%struct.rec*> [#uses=1]
 	store %struct.rec* %60, %struct.rec** undef
 	store %struct.rec* undef, %struct.rec** null
 	store %struct.rec* %.pre184, %struct.rec** null, align 4
@@ -298,11 +298,11 @@ bb.i47:		; preds = %bb3.i52
 
 bb2.i51:		; preds = %bb.i47, %bb2.i.i68, %StringBeginsWith.exit88, %bb.i80
 	%pp.0.i49 = getelementptr [17 x i8], [17 x i8]* @.str1872951, i32 0, i32 0		; <i8*> [#uses=1]
-	%64 = load i8* null, align 1		; <i8> [#uses=1]
+	%64 = load i8, i8* null, align 1		; <i8> [#uses=1]
 	br i1 false, label %StringBeginsWith.exit55thread-split, label %bb3.i52
 
 bb3.i52:		; preds = %bb2.i51
-	%65 = load i8* %pp.0.i49, align 1		; <i8> [#uses=1]
+	%65 = load i8, i8* %pp.0.i49, align 1		; <i8> [#uses=1]
 	br i1 false, label %StringBeginsWith.exit55, label %bb.i47
 
 StringBeginsWith.exit55thread-split:		; preds = %bb2.i51
@@ -322,7 +322,7 @@ bb2.i.i15:		; preds = %bb2.i41
 	br i1 false, label %StringBeginsWith.exitthread-split.i18, label %bb3.i.i16
 
 bb3.i.i16:		; preds = %bb2.i.i15
-	%66 = load i8* %pp.0.i.i13, align 1		; <i8> [#uses=1]
+	%66 = load i8, i8* %pp.0.i.i13, align 1		; <i8> [#uses=1]
 	br label %StringBeginsWith.exit.i20
 
 StringBeginsWith.exitthread-split.i18:		; preds = %bb2.i.i15
@@ -337,7 +337,7 @@ bb2.i6.i26:		; preds = %bb2.i6.i26, %StringBeginsWith.exit.i20
 	%indvar.i3.i23 = phi i32 [ %indvar.next.i1.i21, %bb2.i6.i26 ], [ 0, %StringBeginsWith.exit.i20 ]		; <i32> [#uses=3]
 	%sp.0.i5.i25 = getelementptr [512 x i8], [512 x i8]* %buff, i32 0, i32 %indvar.i3.i23		; <i8*> [#uses=0]
 	%pp.0.i4.i24 = getelementptr [10 x i8], [10 x i8]* @.str752839, i32 0, i32 %indvar.i3.i23		; <i8*> [#uses=1]
-	%68 = load i8* %pp.0.i4.i24, align 1		; <i8> [#uses=0]
+	%68 = load i8, i8* %pp.0.i4.i24, align 1		; <i8> [#uses=0]
 	%indvar.next.i1.i21 = add i32 %indvar.i3.i23, 1		; <i32> [#uses=1]
 	br i1 undef, label %bb2.i6.i26, label %bb55
 
@@ -368,10 +368,10 @@ StringBeginsWith.exit:		; preds = %StringBeginsWith.exitthread-split, %bb3.i
 
 bb66:		; preds = %StringBeginsWith.exit
 	%71 = call  %struct.rec* @MakeWord(i32 11, i8* undef, %struct.FILE_POS* bitcast (%4* @no_file_pos to %struct.FILE_POS*)) nounwind		; <%struct.rec*> [#uses=4]
-	%72 = load i8* getelementptr ([150 x i8]* @zz_lengths, i32 0, i32 0), align 4		; <i8> [#uses=1]
+	%72 = load i8, i8* getelementptr ([150 x i8]* @zz_lengths, i32 0, i32 0), align 4		; <i8> [#uses=1]
 	%73 = zext i8 %72 to i32		; <i32> [#uses=2]
 	%74 = getelementptr [524 x %struct.rec*], [524 x %struct.rec*]* @zz_free, i32 0, i32 %73		; <%struct.rec**> [#uses=2]
-	%75 = load %struct.rec** %74, align 4		; <%struct.rec*> [#uses=3]
+	%75 = load %struct.rec*, %struct.rec** %74, align 4		; <%struct.rec*> [#uses=3]
 	%76 = icmp eq %struct.rec* %75, null		; <i1> [#uses=1]
 	br i1 %76, label %bb69, label %bb70
 
@@ -404,7 +404,7 @@ GetMemory.exit:		; preds = %bb2.i4, %bb69
 	br label %bb71
 
 bb70:		; preds = %bb66
-	%84 = load %struct.rec** null, align 4		; <%struct.rec*> [#uses=1]
+	%84 = load %struct.rec*, %struct.rec** null, align 4		; <%struct.rec*> [#uses=1]
 	store %struct.rec* %84, %struct.rec** %74, align 4
 	br label %bb71
 
@@ -416,7 +416,7 @@ bb71:		; preds = %bb70, %GetMemory.exit
 	%88 = getelementptr %struct.rec, %struct.rec* %.pre185, i32 0, i32 0, i32 0, i32 1, i32 0		; <%struct.rec**> [#uses=1]
 	store %struct.rec* %.pre185, %struct.rec** @xx_link, align 4
 	store %struct.rec* %.pre185, %struct.rec** @zz_res, align 4
-	%89 = load %struct.rec** @needs, align 4		; <%struct.rec*> [#uses=2]
+	%89 = load %struct.rec*, %struct.rec** @needs, align 4		; <%struct.rec*> [#uses=2]
 	store %struct.rec* %89, %struct.rec** @zz_hold, align 4
 	br i1 false, label %bb77, label %bb73
 
@@ -435,7 +435,7 @@ bb77:		; preds = %bb73, %bb71
 bb79:		; preds = %bb77
 	%91 = getelementptr %struct.rec, %struct.rec* %71, i32 0, i32 0, i32 0, i32 1, i32 0		; <%struct.rec**> [#uses=1]
 	store %struct.rec* null, %struct.rec** @zz_tmp, align 4
-	%92 = load %struct.rec** %88, align 4		; <%struct.rec*> [#uses=1]
+	%92 = load %struct.rec*, %struct.rec** %88, align 4		; <%struct.rec*> [#uses=1]
 	store %struct.rec* %92, %struct.rec** %91
 	%93 = getelementptr %struct.rec, %struct.rec* undef, i32 0, i32 0, i32 0, i32 1, i32 1		; <%struct.rec**> [#uses=1]
 	store %struct.rec* %71, %struct.rec** %93, align 4
@@ -467,11 +467,11 @@ bb2.i6.i:		; preds = %bb.i2.i, %StringBeginsWith.exit.i, %bb.i.i
 	br i1 undef, label %strip_out.exitthread-split, label %bb3.i7.i
 
 bb3.i7.i:		; preds = %bb2.i6.i
-	%94 = load i8* undef, align 1		; <i8> [#uses=1]
+	%94 = load i8, i8* undef, align 1		; <i8> [#uses=1]
 	br i1 undef, label %strip_out.exit, label %bb.i2.i
 
 strip_out.exitthread-split:		; preds = %bb2.i6.i
-	%.pr100 = load i8* undef		; <i8> [#uses=1]
+	%.pr100 = load i8, i8* undef		; <i8> [#uses=1]
 	br label %strip_out.exit
 
 strip_out.exit:		; preds = %strip_out.exitthread-split, %bb3.i7.i
@@ -501,7 +501,7 @@ bb102:		; preds = %bb101.split
 	unreachable
 
 bb103:		; preds = %bb101.split
-	%99 = load %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
+	%99 = load %struct.FILE*, %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
 	%100 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %99, i8* getelementptr ([26 x i8]* @.str1932957, i32 0, i32 0)) nounwind		; <i32> [#uses=0]
 	store i32 0, i32* @wordcount, align 4
 	ret void

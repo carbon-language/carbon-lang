@@ -14,7 +14,7 @@ define void @v_sf(float %p) #0 {
 entry:
   %p.addr = alloca float, align 4
   store float %p, float* %p.addr, align 4
-  %0 = load float* %p.addr, align 4
+  %0 = load float, float* %p.addr, align 4
   store float %0, float* @x, align 4
   ret void
 }
@@ -33,7 +33,7 @@ define void @v_df(double %p) #0 {
 entry:
   %p.addr = alloca double, align 8
   store double %p, double* %p.addr, align 8
-  %0 = load double* %p.addr, align 8
+  %0 = load double, double* %p.addr, align 8
   store double %0, double* @xd, align 8
   ret void
 }
@@ -54,9 +54,9 @@ entry:
   %p2.addr = alloca float, align 4
   store float %p1, float* %p1.addr, align 4
   store float %p2, float* %p2.addr, align 4
-  %0 = load float* %p1.addr, align 4
+  %0 = load float, float* %p1.addr, align 4
   store float %0, float* @x, align 4
-  %1 = load float* %p2.addr, align 4
+  %1 = load float, float* %p2.addr, align 4
   store float %1, float* @y, align 4
   ret void
 }
@@ -77,9 +77,9 @@ entry:
   %p2.addr = alloca double, align 8
   store float %p1, float* %p1.addr, align 4
   store double %p2, double* %p2.addr, align 8
-  %0 = load float* %p1.addr, align 4
+  %0 = load float, float* %p1.addr, align 4
   store float %0, float* @x, align 4
-  %1 = load double* %p2.addr, align 8
+  %1 = load double, double* %p2.addr, align 8
   store double %1, double* @yd, align 8
   ret void
 }
@@ -101,9 +101,9 @@ entry:
   %p2.addr = alloca float, align 4
   store double %p1, double* %p1.addr, align 8
   store float %p2, float* %p2.addr, align 4
-  %0 = load double* %p1.addr, align 8
+  %0 = load double, double* %p1.addr, align 8
   store double %0, double* @xd, align 8
-  %1 = load float* %p2.addr, align 4
+  %1 = load float, float* %p2.addr, align 4
   store float %1, float* @y, align 4
   ret void
 }
@@ -125,9 +125,9 @@ entry:
   %p2.addr = alloca double, align 8
   store double %p1, double* %p1.addr, align 8
   store double %p2, double* %p2.addr, align 8
-  %0 = load double* %p1.addr, align 8
+  %0 = load double, double* %p1.addr, align 8
   store double %0, double* @xd, align 8
-  %1 = load double* %p2.addr, align 8
+  %1 = load double, double* %p2.addr, align 8
   store double %1, double* @yd, align 8
   ret void
 }
@@ -146,7 +146,7 @@ entry:
 ; Function Attrs: nounwind
 define float @sf_v() #0 {
 entry:
-  %0 = load float* @ret_sf, align 4
+  %0 = load float, float* @ret_sf, align 4
   ret float %0
 }
 
@@ -155,9 +155,9 @@ define float @sf_sf(float %p) #0 {
 entry:
   %p.addr = alloca float, align 4
   store float %p, float* %p.addr, align 4
-  %0 = load float* %p.addr, align 4
+  %0 = load float, float* %p.addr, align 4
   store float %0, float* @x, align 4
-  %1 = load float* @ret_sf, align 4
+  %1 = load float, float* @ret_sf, align 4
   ret float %1
 }
 
@@ -176,9 +176,9 @@ define float @sf_df(double %p) #0 {
 entry:
   %p.addr = alloca double, align 8
   store double %p, double* %p.addr, align 8
-  %0 = load double* %p.addr, align 8
+  %0 = load double, double* %p.addr, align 8
   store double %0, double* @xd, align 8
-  %1 = load float* @ret_sf, align 4
+  %1 = load float, float* @ret_sf, align 4
   ret float %1
 }
 
@@ -198,11 +198,11 @@ entry:
   %p2.addr = alloca float, align 4
   store float %p1, float* %p1.addr, align 4
   store float %p2, float* %p2.addr, align 4
-  %0 = load float* %p1.addr, align 4
+  %0 = load float, float* %p1.addr, align 4
   store float %0, float* @x, align 4
-  %1 = load float* %p2.addr, align 4
+  %1 = load float, float* %p2.addr, align 4
   store float %1, float* @y, align 4
-  %2 = load float* @ret_sf, align 4
+  %2 = load float, float* @ret_sf, align 4
   ret float %2
 }
 
@@ -222,11 +222,11 @@ entry:
   %p2.addr = alloca double, align 8
   store float %p1, float* %p1.addr, align 4
   store double %p2, double* %p2.addr, align 8
-  %0 = load float* %p1.addr, align 4
+  %0 = load float, float* %p1.addr, align 4
   store float %0, float* @x, align 4
-  %1 = load double* %p2.addr, align 8
+  %1 = load double, double* %p2.addr, align 8
   store double %1, double* @yd, align 8
-  %2 = load float* @ret_sf, align 4
+  %2 = load float, float* @ret_sf, align 4
   ret float %2
 }
 
@@ -247,11 +247,11 @@ entry:
   %p2.addr = alloca float, align 4
   store double %p1, double* %p1.addr, align 8
   store float %p2, float* %p2.addr, align 4
-  %0 = load double* %p1.addr, align 8
+  %0 = load double, double* %p1.addr, align 8
   store double %0, double* @xd, align 8
-  %1 = load float* %p2.addr, align 4
+  %1 = load float, float* %p2.addr, align 4
   store float %1, float* @y, align 4
-  %2 = load float* @ret_sf, align 4
+  %2 = load float, float* @ret_sf, align 4
   ret float %2
 }
 
@@ -272,11 +272,11 @@ entry:
   %p2.addr = alloca double, align 8
   store double %p1, double* %p1.addr, align 8
   store double %p2, double* %p2.addr, align 8
-  %0 = load double* %p1.addr, align 8
+  %0 = load double, double* %p1.addr, align 8
   store double %0, double* @xd, align 8
-  %1 = load double* %p2.addr, align 8
+  %1 = load double, double* %p2.addr, align 8
   store double %1, double* @yd, align 8
-  %2 = load float* @ret_sf, align 4
+  %2 = load float, float* @ret_sf, align 4
   ret float %2
 }
 

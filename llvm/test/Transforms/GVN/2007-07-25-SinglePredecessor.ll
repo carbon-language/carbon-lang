@@ -21,7 +21,7 @@ cond_next.i:		; preds = %entry
 
 cond_true:		; preds = %cond_next.i
 	%tmp3.i8 = getelementptr %struct.mrViewingHitRecord, %struct.mrViewingHitRecord* %VHR, i32 0, i32 1, i32 0, i32 0		; <double*> [#uses=1]
-	%tmp46 = load double* %tmp3.i8		; <double> [#uses=0]
+	%tmp46 = load double, double* %tmp3.i8		; <double> [#uses=0]
 	ret i32 1
 
 return:		; preds = %cond_next.i, %entry

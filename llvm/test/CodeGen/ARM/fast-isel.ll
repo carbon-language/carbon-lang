@@ -9,8 +9,8 @@ entry:
   %b.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr
   store i32 %b, i32* %b.addr
-  %tmp = load i32* %a.addr
-  %tmp1 = load i32* %b.addr
+  %tmp = load i32, i32* %a.addr
+  %tmp1 = load i32, i32* %b.addr
   %add = add nsw i32 %tmp, %tmp1
   ret i32 %add
 }
@@ -110,9 +110,9 @@ bb2:
 ; ARM: sxth
 
 bb3:
-  %c1 = load i8* %ptr3
-  %c2 = load i16* %ptr2
-  %c3 = load i32* %ptr1
+  %c1 = load i8, i8* %ptr3
+  %c2 = load i16, i16* %ptr2
+  %c3 = load i32, i32* %ptr1
   %c4 = zext i8 %c1 to i32
   %c5 = sext i16 %c2 to i32
   %c6 = add i32 %c4, %c5
@@ -138,7 +138,7 @@ bb3:
 @test4g = external global i32
 
 define void @test4() {
-  %a = load i32* @test4g
+  %a = load i32, i32* @test4g
   %b = add i32 %a, 1
   store i32 %b, i32* @test4g
   ret void

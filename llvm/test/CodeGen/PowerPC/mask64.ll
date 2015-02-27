@@ -9,8 +9,8 @@ entry:
 	br i1 false, label %bb16, label %bb49
 
 bb16:		; preds = %entry
-	%tmp19 = load i8** null, align 1		; <i8*> [#uses=1]
-	%tmp21 = load i8* %tmp19, align 1		; <i8> [#uses=1]
+	%tmp19 = load i8*, i8** null, align 1		; <i8*> [#uses=1]
+	%tmp21 = load i8, i8* %tmp19, align 1		; <i8> [#uses=1]
 	switch i8 %tmp21, label %bb49 [
 		 i8 0, label %bb45
 		 i8 1, label %bb34

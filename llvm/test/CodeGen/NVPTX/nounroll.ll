@@ -18,7 +18,7 @@ for.body:
   %i.06 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %idxprom = sext i32 %i.06 to i64
   %arrayidx = getelementptr inbounds float, float* %input, i64 %idxprom
-  %0 = load float* %arrayidx, align 4
+  %0 = load float, float* %arrayidx, align 4
 ; CHECK: ld.f32
   %arrayidx2 = getelementptr inbounds float, float* %output, i64 %idxprom
   store float %0, float* %arrayidx2, align 4

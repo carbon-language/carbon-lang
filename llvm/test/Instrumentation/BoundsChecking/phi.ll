@@ -8,7 +8,7 @@ target datalayout = "e-p:64:64:64-p1:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:32:32-
 ; CHECK-NOT: trap
 define void @f1(i8* nocapture %c) {
 entry:
-  %0 = load i8* %c, align 1
+  %0 = load i8, i8* %c, align 1
   %tobool1 = icmp eq i8 %0, 0
   br i1 %tobool1, label %while.end, label %while.body
 
@@ -16,7 +16,7 @@ while.body:
   %c.addr.02 = phi i8* [ %incdec.ptr, %while.body ], [ %c, %entry ]
   %incdec.ptr = getelementptr inbounds i8, i8* %c.addr.02, i64 -1
   store i8 100, i8* %c.addr.02, align 1
-  %1 = load i8* %incdec.ptr, align 1
+  %1 = load i8, i8* %incdec.ptr, align 1
   %tobool = icmp eq i8 %1, 0
   br i1 %tobool, label %while.end, label %while.body
 
@@ -43,7 +43,7 @@ while.body.i:
 ; CHECK-NEXT: or i1
 ; CHECK-NEXT: br {{.*}}, label %trap
   store i8 100, i8* %c.addr.02.i, align 1
-  %0 = load i8* %incdec.ptr.i, align 1
+  %0 = load i8, i8* %incdec.ptr.i, align 1
   %tobool.i = icmp eq i8 %0, 0
   br i1 %tobool.i, label %fn.exit, label %while.body.i
 
@@ -61,7 +61,7 @@ define void @f1_as1(i8 addrspace(1)* nocapture %c) {
 ; CHECK: add i16 undef, -1
 ; CHECK-NOT: trap
 entry:
-  %0 = load i8 addrspace(1)* %c, align 1
+  %0 = load i8, i8 addrspace(1)* %c, align 1
   %tobool1 = icmp eq i8 %0, 0
   br i1 %tobool1, label %while.end, label %while.body
 
@@ -69,7 +69,7 @@ while.body:
   %c.addr.02 = phi i8 addrspace(1)* [ %incdec.ptr, %while.body ], [ %c, %entry ]
   %incdec.ptr = getelementptr inbounds i8, i8 addrspace(1)* %c.addr.02, i64 -1
   store i8 100, i8 addrspace(1)* %c.addr.02, align 1
-  %1 = load i8 addrspace(1)* %incdec.ptr, align 1
+  %1 = load i8, i8 addrspace(1)* %incdec.ptr, align 1
   %tobool = icmp eq i8 %1, 0
   br i1 %tobool, label %while.end, label %while.body
 
@@ -96,7 +96,7 @@ while.body.i:
 ; CHECK-NEXT: or i1
 ; CHECK-NEXT: br {{.*}}, label %trap
   store i8 100, i8 addrspace(1)* %c.addr.02.i, align 1
-  %0 = load i8 addrspace(1)* %incdec.ptr.i, align 1
+  %0 = load i8, i8 addrspace(1)* %incdec.ptr.i, align 1
   %tobool.i = icmp eq i8 %0, 0
   br i1 %tobool.i, label %fn.exit, label %while.body.i
 

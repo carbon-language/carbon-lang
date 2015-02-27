@@ -46,7 +46,7 @@ define i32 @_Z3bari(i32 %y) #0 {
 entry:
   %MyAlloca = alloca [64 x i8], align 32
   %0 = ptrtoint [64 x i8]* %MyAlloca to i64
-  %1 = load i32* @__asan_option_detect_stack_use_after_return
+  %1 = load i32, i32* @__asan_option_detect_stack_use_after_return
   %2 = icmp ne i32 %1, 0
   br i1 %2, label %3, label %5
 
@@ -75,7 +75,7 @@ entry:
   %19 = lshr i64 %18, 3
   %20 = add i64 %19, 2147450880
   %21 = inttoptr i64 %20 to i8*
-  %22 = load i8* %21
+  %22 = load i8, i8* %21
   %23 = icmp ne i8 %22, 0
   call void @llvm.dbg.declare(metadata i32* %8, metadata !12, metadata !14)
   br i1 %23, label %24, label %30
@@ -98,7 +98,7 @@ entry:
   %32 = lshr i64 %31, 3, !dbg !13
   %33 = add i64 %32, 2147450880, !dbg !13
   %34 = inttoptr i64 %33 to i8*, !dbg !13
-  %35 = load i8* %34, !dbg !13
+  %35 = load i8, i8* %34, !dbg !13
   %36 = icmp ne i8 %35, 0, !dbg !13
   br i1 %36, label %37, label %43, !dbg !13
 
@@ -115,7 +115,7 @@ entry:
   unreachable
 
 ; <label>:43                                      ; preds = %37, %30
-  %44 = load i32* %8, align 4, !dbg !13
+  %44 = load i32, i32* %8, align 4, !dbg !13
   %add = add nsw i32 %44, 2, !dbg !13
   store i64 1172321806, i64* %9, !dbg !13
   %45 = icmp ne i64 %6, %0, !dbg !13
@@ -127,7 +127,7 @@ entry:
   store i64 -723401728380766731, i64* %48, !dbg !13
   %49 = add i64 %6, 56, !dbg !13
   %50 = inttoptr i64 %49 to i64*, !dbg !13
-  %51 = load i64* %50, !dbg !13
+  %51 = load i64, i64* %50, !dbg !13
   %52 = inttoptr i64 %51 to i8*, !dbg !13
   store i8 0, i8* %52, !dbg !13
   br label %56, !dbg !13

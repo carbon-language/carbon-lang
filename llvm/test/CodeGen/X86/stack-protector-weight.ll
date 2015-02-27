@@ -22,7 +22,7 @@ entry:
   call void @foo2(i32* %arraydecay)
   %idxprom = sext i32 %n to i64
   %arrayidx = getelementptr inbounds [128 x i32], [128 x i32]* %a, i64 0, i64 %idxprom
-  %1 = load i32* %arrayidx, align 4
+  %1 = load i32, i32* %arrayidx, align 4
   call void @llvm.lifetime.end(i64 512, i8* %0)
   ret i32 %1
 }

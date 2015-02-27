@@ -13,7 +13,7 @@ bb:		; preds = %entry
 	unreachable
 
 bb1:		; preds = %entry
-	%0 = load i32* @g_3, align 4		; <i32> [#uses=2]
+	%0 = load i32, i32* @g_3, align 4		; <i32> [#uses=2]
 	%1 = sext i32 %0 to i64		; <i64> [#uses=1]
 	%2 = or i64 %1, %p_66		; <i64> [#uses=1]
 	%3 = shl i64 %2, 0		; <i64> [#uses=1]

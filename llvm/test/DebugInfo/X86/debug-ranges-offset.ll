@@ -29,15 +29,15 @@ entry:
   store i64 0, i64* getelementptr inbounds ([1000 x i64]* @__msan_param_tls, i64 0, i64 0), align 8, !dbg !19
   store i64 0, i64* getelementptr inbounds ([8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !19
   %call = call i8* @_Znwm(i64 4) #4, !dbg !19
-  %_msret = load i64* getelementptr inbounds ([8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !19
+  %_msret = load i64, i64* getelementptr inbounds ([8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !19
   %3 = bitcast i8* %call to i32*, !dbg !19
   tail call void @llvm.dbg.value(metadata i32* %3, i64 0, metadata !9, metadata !{!"0x102"}), !dbg !19
   %4 = inttoptr i64 %1 to i64*, !dbg !19
   store i64 %_msret, i64* %4, align 8, !dbg !19
   store volatile i32* %3, i32** %p, align 8, !dbg !19
   tail call void @llvm.dbg.value(metadata i32** %p, i64 0, metadata !9, metadata !{!"0x102"}), !dbg !19
-  %p.0.p.0. = load volatile i32** %p, align 8, !dbg !20
-  %_msld = load i64* %4, align 8, !dbg !20
+  %p.0.p.0. = load volatile i32*, i32** %p, align 8, !dbg !20
+  %_msld = load i64, i64* %4, align 8, !dbg !20
   %_mscmp = icmp eq i64 %_msld, 0, !dbg !20
   br i1 %_mscmp, label %6, label %5, !dbg !20, !prof !22
 
@@ -47,11 +47,11 @@ entry:
   unreachable, !dbg !20
 
 ; <label>:6                                       ; preds = %entry
-  %7 = load i32* %p.0.p.0., align 4, !dbg !20, !tbaa !23
+  %7 = load i32, i32* %p.0.p.0., align 4, !dbg !20, !tbaa !23
   %8 = ptrtoint i32* %p.0.p.0. to i64, !dbg !20
   %9 = and i64 %8, -70368744177665, !dbg !20
   %10 = inttoptr i64 %9 to i32*, !dbg !20
-  %_msld2 = load i32* %10, align 4, !dbg !20
+  %_msld2 = load i32, i32* %10, align 4, !dbg !20
   %11 = icmp ne i32 %_msld2, 0, !dbg !20
   %12 = xor i32 %_msld2, -1, !dbg !20
   %13 = and i32 %7, %12, !dbg !20
@@ -94,15 +94,15 @@ entry:
   store i64 0, i64* getelementptr inbounds ([1000 x i64]* @__msan_param_tls, i64 0, i64 0), align 8, !dbg !30
   store i64 0, i64* getelementptr inbounds ([8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !30
   %call.i = call i8* @_Znwm(i64 4) #4, !dbg !30
-  %_msret = load i64* getelementptr inbounds ([8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !30
+  %_msret = load i64, i64* getelementptr inbounds ([8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !30
   %3 = bitcast i8* %call.i to i32*, !dbg !30
   tail call void @llvm.dbg.value(metadata i32* %3, i64 0, metadata !32, metadata !{!"0x102"}), !dbg !30
   %4 = inttoptr i64 %1 to i64*, !dbg !30
   store i64 %_msret, i64* %4, align 8, !dbg !30
   store volatile i32* %3, i32** %p.i, align 8, !dbg !30
   tail call void @llvm.dbg.value(metadata i32** %p.i, i64 0, metadata !32, metadata !{!"0x102"}), !dbg !30
-  %p.i.0.p.0.p.0..i = load volatile i32** %p.i, align 8, !dbg !33
-  %_msld = load i64* %4, align 8, !dbg !33
+  %p.i.0.p.0.p.0..i = load volatile i32*, i32** %p.i, align 8, !dbg !33
+  %_msld = load i64, i64* %4, align 8, !dbg !33
   %_mscmp = icmp eq i64 %_msld, 0, !dbg !33
   br i1 %_mscmp, label %6, label %5, !dbg !33, !prof !22
 
@@ -112,11 +112,11 @@ entry:
   unreachable, !dbg !33
 
 ; <label>:6                                       ; preds = %entry
-  %7 = load i32* %p.i.0.p.0.p.0..i, align 4, !dbg !33, !tbaa !23
+  %7 = load i32, i32* %p.i.0.p.0.p.0..i, align 4, !dbg !33, !tbaa !23
   %8 = ptrtoint i32* %p.i.0.p.0.p.0..i to i64, !dbg !33
   %9 = and i64 %8, -70368744177665, !dbg !33
   %10 = inttoptr i64 %9 to i32*, !dbg !33
-  %_msld2 = load i32* %10, align 4, !dbg !33
+  %_msld2 = load i32, i32* %10, align 4, !dbg !33
   %11 = icmp ne i32 %_msld2, 0, !dbg !33
   %12 = xor i32 %_msld2, -1, !dbg !33
   %13 = and i32 %7, %12, !dbg !33

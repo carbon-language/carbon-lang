@@ -26,7 +26,7 @@ entry:
   br i1 %cmp7, label %for.body.lr.ph, label %for.end
 
 for.body.lr.ph:                                   ; preds = %entry
-  %.pre = load i32* %m, align 4
+  %.pre = load i32, i32* %m, align 4
   br label %for.body
 
 for.body:                                         ; preds = %for.body, %for.body.lr.ph
@@ -35,11 +35,11 @@ for.body:                                         ; preds = %for.body, %for.body
   %j.09 = phi i32 [ 0, %for.body.lr.ph ], [ %inc1, %for.body ]
   %inc1 = add nsw i32 %j.09, 1
   %arrayidx = getelementptr inbounds i32, i32* %array2, i32 %j.09
-  %1 = load i32* %arrayidx, align 4
+  %1 = load i32, i32* %arrayidx, align 4
   %add = add nsw i32 %0, %1
   store i32 %add, i32* %m, align 4
   %arrayidx2 = getelementptr inbounds i32, i32* %array, i32 %inc1
-  %2 = load i32* %arrayidx2, align 4
+  %2 = load i32, i32* %arrayidx2, align 4
   %add3 = add nsw i32 %2, %sum.010
   %exitcond = icmp eq i32 %inc1, %n
   br i1 %exitcond, label %for.end, label %for.body

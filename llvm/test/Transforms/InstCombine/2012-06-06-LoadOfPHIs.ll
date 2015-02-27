@@ -34,16 +34,16 @@ bb11:                                             ; preds = %bb8
 
 bb12:                                             ; preds = %bb11, %bb10, %bb7, %bb6
   %max.0 = phi double* [ %tmp, %bb6 ], [ %tmp2, %bb7 ], [ %tmp1, %bb10 ], [ %tmp2, %bb11 ]
-; CHECK: %tmp13 = load double* %tmp, align 8
-; CHECK: %tmp14 = load double* %tmp1, align 8
+; CHECK: %tmp13 = load double, double* %tmp, align 8
+; CHECK: %tmp14 = load double, double* %tmp1, align 8
 ; CHECK: %tmp15 = fcmp olt double %tmp13, %tmp14
-  %tmp13 = load double* %tmp, align 8
-  %tmp14 = load double* %tmp1, align 8
+  %tmp13 = load double, double* %tmp, align 8
+  %tmp14 = load double, double* %tmp1, align 8
   %tmp15 = fcmp olt double %tmp13, %tmp14
   br i1 %tmp15, label %bb16, label %bb21
 
 bb16:                                             ; preds = %bb12
-  %tmp17 = load double* %tmp2, align 8
+  %tmp17 = load double, double* %tmp2, align 8
   %tmp18 = fcmp olt double %tmp13, %tmp17
   br i1 %tmp18, label %bb19, label %bb20
 
@@ -54,7 +54,7 @@ bb20:                                             ; preds = %bb16
   br label %bb26
 
 bb21:                                             ; preds = %bb12
-  %tmp22 = load double* %tmp2, align 8
+  %tmp22 = load double, double* %tmp2, align 8
   %tmp23 = fcmp olt double %tmp14, %tmp22
   br i1 %tmp23, label %bb24, label %bb25
 
@@ -66,16 +66,16 @@ bb25:                                             ; preds = %bb21
 
 bb26:                                             ; preds = %bb25, %bb24, %bb20, %bb19
   %min.0 = phi double* [ %tmp, %bb19 ], [ %tmp2, %bb20 ], [ %tmp1, %bb24 ], [ %tmp2, %bb25 ]
-; CHECK: %tmp27 = load double* %min.0, align 8
-; CHECK: %tmp28 = load double* %max.0
+; CHECK: %tmp27 = load double, double* %min.0, align 8
+; CHECK: %tmp28 = load double, double* %max.0
 ; CHECK: %tmp29 = fadd double %tmp27, %tmp28
-  %tmp27 = load double* %min.0, align 8
-  %tmp28 = load double* %max.0
+  %tmp27 = load double, double* %min.0, align 8
+  %tmp28 = load double, double* %max.0
   %tmp29 = fadd double %tmp27, %tmp28
   %tmp30 = fdiv double %tmp29, 2.000000e+00
   store double %tmp30, double* %outL
-  %tmp31 = load double* %min.0
-  %tmp32 = load double* %max.0
+  %tmp31 = load double, double* %min.0
+  %tmp32 = load double, double* %max.0
   %tmp33 = fcmp oeq double %tmp31, %tmp32
   br i1 %tmp33, label %bb34, label %bb35
 
@@ -107,11 +107,11 @@ bb45:                                             ; preds = %bb41, %bb38
   br i1 %tmp46, label %bb47, label %bb55
 
 bb47:                                             ; preds = %bb45
-  %tmp48 = load double* %tmp1, align 8
-  %tmp49 = load double* %tmp2, align 8
+  %tmp48 = load double, double* %tmp1, align 8
+  %tmp49 = load double, double* %tmp2, align 8
   %tmp50 = fsub double %tmp48, %tmp49
-  %tmp51 = load double* %max.0
-  %tmp52 = load double* %min.0
+  %tmp51 = load double, double* %max.0
+  %tmp52 = load double, double* %min.0
   %tmp53 = fsub double %tmp51, %tmp52
   %tmp54 = fdiv double %tmp50, %tmp53
   store double %tmp54, double* %outH
@@ -122,11 +122,11 @@ bb55:                                             ; preds = %bb45
   br i1 %tmp56, label %bb57, label %bb66
 
 bb57:                                             ; preds = %bb55
-  %tmp58 = load double* %tmp2, align 8
-  %tmp59 = load double* %tmp, align 8
+  %tmp58 = load double, double* %tmp2, align 8
+  %tmp59 = load double, double* %tmp, align 8
   %tmp60 = fsub double %tmp58, %tmp59
-  %tmp61 = load double* %max.0
-  %tmp62 = load double* %min.0
+  %tmp61 = load double, double* %max.0
+  %tmp62 = load double, double* %min.0
   %tmp63 = fsub double %tmp61, %tmp62
   %tmp64 = fdiv double %tmp60, %tmp63
   %tmp65 = fadd double 2.000000e+00, %tmp64
@@ -134,11 +134,11 @@ bb57:                                             ; preds = %bb55
   br label %bb75
 
 bb66:                                             ; preds = %bb55
-  %tmp67 = load double* %tmp, align 8
-  %tmp68 = load double* %tmp1, align 8
+  %tmp67 = load double, double* %tmp, align 8
+  %tmp68 = load double, double* %tmp1, align 8
   %tmp69 = fsub double %tmp67, %tmp68
-  %tmp70 = load double* %max.0
-  %tmp71 = load double* %min.0
+  %tmp70 = load double, double* %max.0
+  %tmp71 = load double, double* %min.0
   %tmp72 = fsub double %tmp70, %tmp71
   %tmp73 = fdiv double %tmp69, %tmp72
   %tmp74 = fadd double 4.000000e+00, %tmp73
@@ -146,7 +146,7 @@ bb66:                                             ; preds = %bb55
   br label %bb75
 
 bb75:                                             ; preds = %bb66, %bb57, %bb47
-  %tmp76 = load double* %outH
+  %tmp76 = load double, double* %outH
   %tmp77 = fdiv double %tmp76, 6.000000e+00
   store double %tmp77, double* %outH
   %tmp78 = fcmp olt double %tmp77, 0.000000e+00

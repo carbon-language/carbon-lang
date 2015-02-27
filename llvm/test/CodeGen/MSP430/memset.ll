@@ -8,7 +8,7 @@ target triple = "msp430---elf"
 define void @test() nounwind {
 entry:
 ; CHECK-LABEL: test:
-  %0 = load i8** @buf, align 2
+  %0 = load i8*, i8** @buf, align 2
 ; CHECK: mov.w &buf, r15
 ; CHECK-NEXT: mov.w #5, r14
 ; CHECK-NEXT: mov.w #128, r13

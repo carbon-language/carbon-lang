@@ -14,7 +14,7 @@ BB:
   %A2 = alloca double
   %A1 = alloca float
   %A = alloca double
-  %L = load i8* %0
+  %L = load i8, i8* %0
   store i8 -123, i8* %0
   %E = extractelement <4 x i64> zeroinitializer, i32 1
   %Shuff = shufflevector <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32> zeroinitializer, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
@@ -22,7 +22,7 @@ BB:
   %BC = bitcast i64 181325 to double
   %Sl = select i1 false, <2 x i32> zeroinitializer, <2 x i32> zeroinitializer
   %Cmp = icmp ne <4 x i64> zeroinitializer, zeroinitializer
-  %L5 = load i8* %0
+  %L5 = load i8, i8* %0
   store i8 %L, i8* %0
   %E6 = extractelement <4 x i64> zeroinitializer, i32 3
   %Shuff7 = shufflevector <2 x i16> zeroinitializer, <2 x i16> zeroinitializer, <2 x i32> <i32 2, i32 0>
@@ -33,7 +33,7 @@ BB:
   br label %CF80
 
 CF80:                                             ; preds = %BB
-  %L11 = load i8* %0
+  %L11 = load i8, i8* %0
   store i8 -123, i8* %0
   %E12 = extractelement <2 x i16> zeroinitializer, i32 1
   %Shuff13 = shufflevector <4 x i64> zeroinitializer, <4 x i64> zeroinitializer, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
@@ -42,7 +42,7 @@ CF80:                                             ; preds = %BB
   %PC = bitcast i1* %A4 to i64*
   %Sl16 = select i1 %Cmp10, <4 x i32> zeroinitializer, <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>
   %Cmp17 = icmp ule <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, %Sl16
-  %L18 = load double* %A2
+  %L18 = load double, double* %A2
   store i64 498254, i64* %PC
   %E19 = extractelement <4 x i64> zeroinitializer, i32 0
   %Shuff20 = shufflevector <2 x i1> zeroinitializer, <2 x i1> %I, <2 x i32> <i32 3, i32 1>
@@ -51,7 +51,7 @@ CF80:                                             ; preds = %BB
   %ZE = zext <2 x i1> %Shuff20 to <2 x i32>
   %Sl23 = select i1 %Cmp10, <2 x i1> %Shuff20, <2 x i1> zeroinitializer
   %Cmp24 = icmp ult <2 x i32> zeroinitializer, zeroinitializer
-  %L25 = load i8* %0
+  %L25 = load i8, i8* %0
   store i8 %L25, i8* %0
   %E26 = extractelement <4 x i8> <i8 -1, i8 -1, i8 -1, i8 -1>, i32 3
   %Shuff27 = shufflevector <4 x i32> %Shuff, <4 x i32> %I14, <4 x i32> <i32 6, i32 0, i32 undef, i32 4>
@@ -63,7 +63,7 @@ CF80:                                             ; preds = %BB
 CF79:                                             ; preds = %CF80
   %Sl30 = select i1 false, i8 %B29, i8 -123
   %Cmp31 = icmp sge <2 x i1> %I, %I
-  %L32 = load i64* %PC
+  %L32 = load i64, i64* %PC
   store i8 -123, i8* %0
   %E33 = extractelement <8 x i64> <i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1>, i32 2
   %Shuff34 = shufflevector <4 x i64> zeroinitializer, <4 x i64> %Shuff13, <4 x i32> <i32 5, i32 7, i32 1, i32 3>
@@ -75,7 +75,7 @@ CF79:                                             ; preds = %CF80
   br label %CF
 
 CF:                                               ; preds = %CF, %CF79
-  %L40 = load double* %A
+  %L40 = load double, double* %A
   store i1 %Cmp39, i1* %PC37
   %E41 = extractelement <4 x i64> zeroinitializer, i32 3
   %Shuff42 = shufflevector <2 x i32> zeroinitializer, <2 x i32> %ZE, <2 x i32> <i32 2, i32 undef>
@@ -90,7 +90,7 @@ CF77:                                             ; preds = %CF77, %CF
   br i1 %Cmp46, label %CF77, label %CF78
 
 CF78:                                             ; preds = %CF78, %CF83, %CF82, %CF77
-  %L47 = load i64* %PC
+  %L47 = load i64, i64* %PC
   store i8 -123, i8* %0
   %E48 = extractelement <4 x i64> zeroinitializer, i32 3
   %Shuff49 = shufflevector <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32> zeroinitializer, <4 x i32> <i32 2, i32 4, i32 6, i32 undef>
@@ -105,7 +105,7 @@ CF83:                                             ; preds = %CF78
   br i1 %Cmp54, label %CF78, label %CF82
 
 CF82:                                             ; preds = %CF83
-  %L55 = load i64* %PC
+  %L55 = load i64, i64* %PC
   store i64 %L32, i64* %PC
   %E56 = extractelement <2 x i16> %Shuff7, i32 1
   %Shuff57 = shufflevector <4 x i64> zeroinitializer, <4 x i64> zeroinitializer, <4 x i32> <i32 2, i32 4, i32 6, i32 0>
@@ -114,7 +114,7 @@ CF82:                                             ; preds = %CF83
   %FC = sitofp i64 498254 to double
   %Sl60 = select i1 false, i64 %E6, i64 -1
   %Cmp61 = icmp sgt <4 x i32> %Shuff27, %I43
-  %L62 = load i64* %PC
+  %L62 = load i64, i64* %PC
   store i64 %Sl9, i64* %PC
   %E63 = extractelement <2 x i32> %ZE, i32 0
   %Shuff64 = shufflevector <4 x i64> zeroinitializer, <4 x i64> %Shuff13, <4 x i32> <i32 1, i32 3, i32 undef, i32 7>
@@ -126,7 +126,7 @@ CF82:                                             ; preds = %CF83
 
 CF81:                                             ; preds = %CF82
   %Cmp69 = icmp ne <8 x i64> <i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1>, %B36
-  %L70 = load i8* %0
+  %L70 = load i8, i8* %0
   store i64 %L55, i64* %PC
   %E71 = extractelement <4 x i32> %Shuff49, i32 1
   %Shuff72 = shufflevector <4 x i64> zeroinitializer, <4 x i64> %Shuff34, <4 x i32> <i32 0, i32 2, i32 4, i32 6>

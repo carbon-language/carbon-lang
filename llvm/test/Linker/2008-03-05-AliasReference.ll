@@ -12,6 +12,6 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define i32 @baz() nounwind  {
 entry:
-	%tmp1 = load i32* @bar, align 4		; <i32> [#uses=1]
+	%tmp1 = load i32, i32* @bar, align 4		; <i32> [#uses=1]
 	ret i32 %tmp1
 }

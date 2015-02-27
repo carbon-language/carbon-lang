@@ -50,7 +50,7 @@ entry:
 bb:
   %i.03 = phi i64 [ 0, %entry ], [ %3, %bb ]
   %scevgep = getelementptr double, double* %p, i64 %i.03
-  %1 = load double* %scevgep, align 8
+  %1 = load double, double* %scevgep, align 8
   %2 = fdiv double 3.200000e+00, %1
   store double %2, double* %scevgep, align 8
   %3 = add nsw i64 %i.03, 1
@@ -104,7 +104,7 @@ entry:
 bb:                                               ; preds = %bb60
   %i.0 = phi i32 [ 0, %bb60 ]                    ; <i32> [#uses=2]
   %0 = bitcast float* %x_addr.0 to <4 x float>*   ; <<4 x float>*> [#uses=1]
-  %1 = load <4 x float>* %0, align 16             ; <<4 x float>> [#uses=4]
+  %1 = load <4 x float>, <4 x float>* %0, align 16             ; <<4 x float>> [#uses=4]
   %tmp20 = bitcast <4 x float> %1 to <4 x i32>    ; <<4 x i32>> [#uses=1]
   %tmp22 = and <4 x i32> %tmp20, <i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647> ; <<4 x i32>> [#uses=1]
   %tmp23 = bitcast <4 x i32> %tmp22 to <4 x float> ; <<4 x float>> [#uses=1]
@@ -130,7 +130,7 @@ bb:                                               ; preds = %bb60
   %5 = getelementptr float, float* %x_addr.0, i64 4      ; <float*> [#uses=1]
   %6 = getelementptr float, float* %y_addr.0, i64 4      ; <float*> [#uses=1]
   %7 = add i32 %i.0, 4                            ; <i32> [#uses=1]
-  %8 = load i32* %n, align 4                      ; <i32> [#uses=1]
+  %8 = load i32, i32* %n, align 4                      ; <i32> [#uses=1]
   %9 = icmp sgt i32 %8, %7                        ; <i1> [#uses=1]
   br i1 %9, label %bb60, label %return
 
@@ -157,14 +157,14 @@ declare <4 x float> @llvm.x86.sse2.cvtdq2ps(<4 x i32>) nounwind readnone
 
 define void @default_get_pch_validity() nounwind {
 entry:
-  %tmp4 = load i32* @cl_options_count, align 4    ; <i32> [#uses=1]
+  %tmp4 = load i32, i32* @cl_options_count, align 4    ; <i32> [#uses=1]
   %tmp5 = icmp eq i32 %tmp4, 0                    ; <i1> [#uses=1]
   br i1 %tmp5, label %bb6, label %bb2
 
 bb2:                                              ; preds = %bb2, %entry
   %i.019 = phi i64 [ 0, %entry ], [ %tmp25, %bb2 ] ; <i64> [#uses=1]
   %tmp25 = add i64 %i.019, 1                      ; <i64> [#uses=2]
-  %tmp11 = load i32* @cl_options_count, align 4   ; <i32> [#uses=1]
+  %tmp11 = load i32, i32* @cl_options_count, align 4   ; <i32> [#uses=1]
   %tmp12 = zext i32 %tmp11 to i64                 ; <i64> [#uses=1]
   %tmp13 = icmp ugt i64 %tmp12, %tmp25            ; <i1> [#uses=1]
   br i1 %tmp13, label %bb2, label %bb6

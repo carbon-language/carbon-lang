@@ -7,11 +7,11 @@ define i32 @test1(i8 * %P) {
 entry:
 	%Q = bitcast i8* %P to {i32, i32}*
 	%R = getelementptr {i32, i32}, {i32, i32}* %Q, i32 0, i32 1
-	%S = load i32* %R
+	%S = load i32, i32* %R
 
 	%q = bitcast i8* %P to {i32, i32}*
 	%r = getelementptr {i32, i32}, {i32, i32}* %q, i32 0, i32 1
-	%s = load i32* %r
+	%s = load i32, i32* %r
 
 	%t = sub i32 %S, %s
 	ret i32 %t
@@ -23,12 +23,12 @@ define i32 @test2(i8 * %P) {
 entry:
 	%Q = bitcast i8* %P to {i32, i32, i32}*
 	%R = getelementptr {i32, i32, i32}, {i32, i32, i32}* %Q, i32 0, i32 1
-	%S = load i32* %R
+	%S = load i32, i32* %R
 
 	%r = getelementptr {i32, i32, i32}, {i32, i32, i32}* %Q, i32 0, i32 2
   store i32 42, i32* %r
 
-	%s = load i32* %R
+	%s = load i32, i32* %R
 
 	%t = sub i32 %S, %s
 	ret i32 %t
@@ -42,12 +42,12 @@ define i32 @test3({float, {i32, i32, i32}}* %P) {
 entry:
   %P2 = getelementptr {float, {i32, i32, i32}}, {float, {i32, i32, i32}}* %P, i32 0, i32 1
 	%R = getelementptr {i32, i32, i32}, {i32, i32, i32}* %P2, i32 0, i32 1
-	%S = load i32* %R
+	%S = load i32, i32* %R
 
 	%r = getelementptr {i32, i32, i32}, {i32, i32, i32}* %P2, i32 0, i32 2
   store i32 42, i32* %r
 
-	%s = load i32* %R
+	%s = load i32, i32* %R
 
 	%t = sub i32 %S, %s
 	ret i32 %t
@@ -66,7 +66,7 @@ entry:
   store i32 64, i32* %tmp2, align 8
   %tmp3 = getelementptr inbounds %SmallPtrSet64, %SmallPtrSet64* %P, i64 0, i32 0, i32 4, i64 64
   store i8* null, i8** %tmp3, align 8
-  %tmp4 = load i32* %tmp2, align 8
+  %tmp4 = load i32, i32* %tmp2, align 8
 	ret i32 %tmp4
 ; CHECK-LABEL: @test4(
 ; CHECK: ret i32 64
@@ -77,9 +77,9 @@ define i32 @test5(i32* %p, i64 %i) {
   %pi = getelementptr i32, i32* %p, i64 %i
   %i.next = add i64 %i, 1
   %pi.next = getelementptr i32, i32* %p, i64 %i.next
-  %x = load i32* %pi
+  %x = load i32, i32* %pi
   store i32 42, i32* %pi.next
-  %y = load i32* %pi
+  %y = load i32, i32* %pi
   %z = sub i32 %x, %y
   ret i32 %z
 ; CHECK-LABEL: @test5(
@@ -90,9 +90,9 @@ define i32 @test5_as1_smaller_size(i32 addrspace(1)* %p, i8 %i) {
   %pi = getelementptr i32, i32 addrspace(1)* %p, i8 %i
   %i.next = add i8 %i, 1
   %pi.next = getelementptr i32, i32 addrspace(1)* %p, i8 %i.next
-  %x = load i32 addrspace(1)* %pi
+  %x = load i32, i32 addrspace(1)* %pi
   store i32 42, i32 addrspace(1)* %pi.next
-  %y = load i32 addrspace(1)* %pi
+  %y = load i32, i32 addrspace(1)* %pi
   %z = sub i32 %x, %y
   ret i32 %z
 ; CHECK-LABEL: @test5_as1_smaller_size(
@@ -104,9 +104,9 @@ define i32 @test5_as1_same_size(i32 addrspace(1)* %p, i16 %i) {
   %pi = getelementptr i32, i32 addrspace(1)* %p, i16 %i
   %i.next = add i16 %i, 1
   %pi.next = getelementptr i32, i32 addrspace(1)* %p, i16 %i.next
-  %x = load i32 addrspace(1)* %pi
+  %x = load i32, i32 addrspace(1)* %pi
   store i32 42, i32 addrspace(1)* %pi.next
-  %y = load i32 addrspace(1)* %pi
+  %y = load i32, i32 addrspace(1)* %pi
   %z = sub i32 %x, %y
   ret i32 %z
 ; CHECK-LABEL: @test5_as1_same_size(
@@ -119,9 +119,9 @@ define i32 @test6(i32* %p, i64 %i1) {
   %pi = getelementptr i32, i32* %p, i64 %i
   %i.next = or i64 %i, 1
   %pi.next = getelementptr i32, i32* %p, i64 %i.next
-  %x = load i32* %pi
+  %x = load i32, i32* %pi
   store i32 42, i32* %pi.next
-  %y = load i32* %pi
+  %y = load i32, i32* %pi
   %z = sub i32 %x, %y
   ret i32 %z
 ; CHECK-LABEL: @test6(
@@ -133,9 +133,9 @@ define i32 @test7(i32* %p, i64 %i) {
   %pi = getelementptr i32, i32* %p, i64 1
   %i.next = shl i64 %i, 2
   %pi.next = getelementptr i32, i32* %p, i64 %i.next
-  %x = load i32* %pi
+  %x = load i32, i32* %pi
   store i32 42, i32* %pi.next
-  %y = load i32* %pi
+  %y = load i32, i32* %pi
   %z = sub i32 %x, %y
   ret i32 %z
 ; CHECK-LABEL: @test7(
@@ -150,9 +150,9 @@ define i32 @test8(i32* %p, i16 %i) {
   %i.next = add i16 %i, 1
   %i.next2 = zext i16 %i.next to i32
   %pi.next = getelementptr i32, i32* %p, i32 %i.next2
-  %x = load i32* %pi
+  %x = load i32, i32* %pi
   store i32 42, i32* %pi.next
-  %y = load i32* %pi
+  %y = load i32, i32* %pi
   %z = sub i32 %x, %y
   ret i32 %z
 ; CHECK-LABEL: @test8(
@@ -170,9 +170,9 @@ define i8 @test9([4 x i8] *%P, i32 %i, i32 %j) {
   ; P4 = P + 4*j
   %P4 = getelementptr [4 x i8], [4 x i8]* %P, i32 0, i32 %j2
 
-  %x = load i8* %P2
+  %x = load i8, i8* %P2
   store i8 42, i8* %P4
-  %y = load i8* %P2
+  %y = load i8, i8* %P2
   %z = sub i8 %x, %y
   ret i8 %z
 ; CHECK-LABEL: @test9(
@@ -188,9 +188,9 @@ define i8 @test10([4 x i8] *%P, i32 %i) {
   ; P4 = P + 4*i
   %P4 = getelementptr [4 x i8], [4 x i8]* %P, i32 0, i32 %i2
 
-  %x = load i8* %P2
+  %x = load i8, i8* %P2
   store i8 42, i8* %P4
-  %y = load i8* %P2
+  %y = load i8, i8* %P2
   %z = sub i8 %x, %y
   ret i8 %z
 ; CHECK-LABEL: @test10(
@@ -207,7 +207,7 @@ define float @test11(i32 %indvar, [4 x [2 x float]]* %q) nounwind ssp {
   %y29 = getelementptr inbounds [2 x float], [2 x float]* %arrayidx28, i32 0, i32 1
   store float 1.0, float* %y29, align 4
   store i64 0, i64* %scevgep35, align 4
-  %tmp30 = load float* %y29, align 4
+  %tmp30 = load float, float* %y29, align 4
   ret float %tmp30
 ; CHECK-LABEL: @test11(
 ; CHECK: ret float %tmp30
@@ -223,7 +223,7 @@ define i32 @test12(i32 %x, i32 %y, i8* %p) nounwind {
   %castp = bitcast i8* %p to i32*
   store i32 1, i32* %castp
   store i32 0, i32* %castd
-  %r = load i32* %castp
+  %r = load i32, i32* %castp
   ret i32 %r
 ; CHECK-LABEL: @test12(
 ; CHECK: ret i32 %r

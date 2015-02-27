@@ -70,11 +70,11 @@ entry:
   %memtmp = alloca %struct.pair.162, align 8
   %0 = getelementptr inbounds %struct.pair.162, %struct.pair.162* %memtmp, i64 0, i32 0
   %1 = getelementptr inbounds %struct.pair.162, %struct.pair.162* %__a, i64 0, i32 0
-  %2 = load %struct.BasicBlock** %1, align 8
+  %2 = load %struct.BasicBlock*, %struct.BasicBlock** %1, align 8
   store %struct.BasicBlock* %2, %struct.BasicBlock** %0, align 8
   %3 = getelementptr inbounds %struct.pair.162, %struct.pair.162* %memtmp, i64 0, i32 1
   %4 = getelementptr inbounds %struct.pair.162, %struct.pair.162* %__a, i64 0, i32 1
-  %5 = load i32* %4, align 4
+  %5 = load i32, i32* %4, align 4
   store i32 %5, i32* %3, align 8
   %6 = bitcast %struct.pair.162* %__a to i8*
   %7 = bitcast %struct.pair.162* %__b to i8*

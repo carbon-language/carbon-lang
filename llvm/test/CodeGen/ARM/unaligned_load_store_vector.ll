@@ -11,7 +11,7 @@ entry:
   %vi  = bitcast i8* %pi to <8 x i8>*
   %vo  = bitcast i8* %po to <8 x i8>*
 ;CHECK: vld1.8
-  %v1 = load  <8 x i8>* %vi, align 1
+  %v1 = load  <8 x i8>,  <8 x i8>* %vi, align 1
 ;CHECK: vst1.8
   store <8 x i8> %v1, <8 x i8>* %vo, align 1
   ret void
@@ -29,7 +29,7 @@ entry:
   %vi  = bitcast i8* %pi to <4 x i16>*
   %vo  = bitcast i8* %po to <4 x i16>*
 ;CHECK: vld1.8
-  %v1 = load  <4 x i16>* %vi, align 1
+  %v1 = load  <4 x i16>,  <4 x i16>* %vi, align 1
 ;CHECK: vst1.8
   store <4 x i16> %v1, <4 x i16>* %vo, align 1
   ret void
@@ -47,7 +47,7 @@ entry:
   %vi  = bitcast i8* %pi to <2 x i32>*
   %vo  = bitcast i8* %po to <2 x i32>*
 ;CHECK: vld1.8
-  %v1 = load  <2 x i32>* %vi, align 1
+  %v1 = load  <2 x i32>,  <2 x i32>* %vi, align 1
 ;CHECK: vst1.8
   store <2 x i32> %v1, <2 x i32>* %vo, align 1
   ret void
@@ -65,7 +65,7 @@ entry:
   %vi  = bitcast i8* %pi to <2 x float>*
   %vo  = bitcast i8* %po to <2 x float>*
 ;CHECK: vld1.8
-  %v1 = load  <2 x float>* %vi, align 1
+  %v1 = load  <2 x float>,  <2 x float>* %vi, align 1
 ;CHECK: vst1.8
   store <2 x float> %v1, <2 x float>* %vo, align 1
   ret void
@@ -83,7 +83,7 @@ entry:
   %vi  = bitcast i8* %pi to <16 x i8>*
   %vo  = bitcast i8* %po to <16 x i8>*
 ;CHECK: vld1.8
-  %v1 = load  <16 x i8>* %vi, align 1
+  %v1 = load  <16 x i8>,  <16 x i8>* %vi, align 1
 ;CHECK: vst1.8
   store <16 x i8> %v1, <16 x i8>* %vo, align 1
   ret void
@@ -101,7 +101,7 @@ entry:
   %vi  = bitcast i8* %pi to <8 x i16>*
   %vo  = bitcast i8* %po to <8 x i16>*
 ;CHECK: vld1.8
-  %v1 = load  <8 x i16>* %vi, align 1
+  %v1 = load  <8 x i16>,  <8 x i16>* %vi, align 1
 ;CHECK: vst1.8
   store <8 x i16> %v1, <8 x i16>* %vo, align 1
   ret void
@@ -119,7 +119,7 @@ entry:
   %vi  = bitcast i8* %pi to <4 x i32>*
   %vo  = bitcast i8* %po to <4 x i32>*
 ;CHECK: vld1.8
-  %v1 = load  <4 x i32>* %vi, align 1
+  %v1 = load  <4 x i32>,  <4 x i32>* %vi, align 1
 ;CHECK: vst1.8
   store <4 x i32> %v1, <4 x i32>* %vo, align 1
   ret void
@@ -137,7 +137,7 @@ entry:
   %vi  = bitcast i8* %pi to <2 x i64>*
   %vo  = bitcast i8* %po to <2 x i64>*
 ;CHECK: vld1.8
-  %v1 = load  <2 x i64>* %vi, align 1
+  %v1 = load  <2 x i64>,  <2 x i64>* %vi, align 1
 ;CHECK: vst1.8
   store <2 x i64> %v1, <2 x i64>* %vo, align 1
   ret void
@@ -155,7 +155,7 @@ entry:
   %vi  = bitcast i8* %pi to <4 x float>*
   %vo  = bitcast i8* %po to <4 x float>*
 ;CHECK: vld1.8
-  %v1 = load  <4 x float>* %vi, align 1
+  %v1 = load  <4 x float>,  <4 x float>* %vi, align 1
 ;CHECK: vst1.8
   store <4 x float> %v1, <4 x float>* %vo, align 1
   ret void
@@ -173,7 +173,7 @@ entry:
   %vi  = bitcast i8* %pi to <8 x i8>*
   %vo  = bitcast i8* %po to <8 x i8>*
 ;CHECK: vld1.16
-  %v1 = load  <8 x i8>* %vi, align 2
+  %v1 = load  <8 x i8>,  <8 x i8>* %vi, align 2
 ;CHECK: vst1.16
   store <8 x i8> %v1, <8 x i8>* %vo, align 2
   ret void
@@ -191,7 +191,7 @@ entry:
   %vi  = bitcast i8* %pi to <4 x i16>*
   %vo  = bitcast i8* %po to <4 x i16>*
 ;CHECK: vld1.16
-  %v1 = load  <4 x i16>* %vi, align 2
+  %v1 = load  <4 x i16>,  <4 x i16>* %vi, align 2
 ;CHECK: vst1.16
   store <4 x i16> %v1, <4 x i16>* %vo, align 2
   ret void
@@ -209,7 +209,7 @@ entry:
   %vi  = bitcast i8* %pi to <2 x i32>*
   %vo  = bitcast i8* %po to <2 x i32>*
 ;CHECK: vld1.16
-  %v1 = load  <2 x i32>* %vi, align 2
+  %v1 = load  <2 x i32>,  <2 x i32>* %vi, align 2
 ;CHECK: vst1.16
   store <2 x i32> %v1, <2 x i32>* %vo, align 2
   ret void
@@ -227,7 +227,7 @@ entry:
   %vi  = bitcast i8* %pi to <2 x float>*
   %vo  = bitcast i8* %po to <2 x float>*
 ;CHECK: vld1.16
-  %v1 = load  <2 x float>* %vi, align 2
+  %v1 = load  <2 x float>,  <2 x float>* %vi, align 2
 ;CHECK: vst1.16
   store <2 x float> %v1, <2 x float>* %vo, align 2
   ret void
@@ -245,7 +245,7 @@ entry:
   %vi  = bitcast i8* %pi to <16 x i8>*
   %vo  = bitcast i8* %po to <16 x i8>*
 ;CHECK: vld1.16
-  %v1 = load  <16 x i8>* %vi, align 2
+  %v1 = load  <16 x i8>,  <16 x i8>* %vi, align 2
 ;CHECK: vst1.16
   store <16 x i8> %v1, <16 x i8>* %vo, align 2
   ret void
@@ -263,7 +263,7 @@ entry:
   %vi  = bitcast i8* %pi to <8 x i16>*
   %vo  = bitcast i8* %po to <8 x i16>*
 ;CHECK: vld1.16
-  %v1 = load  <8 x i16>* %vi, align 2
+  %v1 = load  <8 x i16>,  <8 x i16>* %vi, align 2
 ;CHECK: vst1.16
   store <8 x i16> %v1, <8 x i16>* %vo, align 2
   ret void
@@ -281,7 +281,7 @@ entry:
   %vi  = bitcast i8* %pi to <4 x i32>*
   %vo  = bitcast i8* %po to <4 x i32>*
 ;CHECK: vld1.16
-  %v1 = load  <4 x i32>* %vi, align 2
+  %v1 = load  <4 x i32>,  <4 x i32>* %vi, align 2
 ;CHECK: vst1.16
   store <4 x i32> %v1, <4 x i32>* %vo, align 2
   ret void
@@ -299,7 +299,7 @@ entry:
   %vi  = bitcast i8* %pi to <2 x i64>*
   %vo  = bitcast i8* %po to <2 x i64>*
 ;CHECK: vld1.16
-  %v1 = load  <2 x i64>* %vi, align 2
+  %v1 = load  <2 x i64>,  <2 x i64>* %vi, align 2
 ;CHECK: vst1.16
   store <2 x i64> %v1, <2 x i64>* %vo, align 2
   ret void
@@ -317,7 +317,7 @@ entry:
   %vi  = bitcast i8* %pi to <4 x float>*
   %vo  = bitcast i8* %po to <4 x float>*
 ;CHECK: vld1.16
-  %v1 = load  <4 x float>* %vi, align 2
+  %v1 = load  <4 x float>,  <4 x float>* %vi, align 2
 ;CHECK: vst1.16
   store <4 x float> %v1, <4 x float>* %vo, align 2
   ret void
@@ -335,7 +335,7 @@ entry:
   %vi  = bitcast i8* %pi to <8 x i8>*
   %vo  = bitcast i8* %po to <8 x i8>*
 ;CHECK: vldr
-  %v1 = load  <8 x i8>* %vi, align 4
+  %v1 = load  <8 x i8>,  <8 x i8>* %vi, align 4
 ;CHECK: vstr
   store <8 x i8> %v1, <8 x i8>* %vo, align 4
   ret void
@@ -353,7 +353,7 @@ entry:
   %vi  = bitcast i8* %pi to <4 x i16>*
   %vo  = bitcast i8* %po to <4 x i16>*
 ;CHECK: vldr
-  %v1 = load  <4 x i16>* %vi, align 4
+  %v1 = load  <4 x i16>,  <4 x i16>* %vi, align 4
 ;CHECK: vstr
   store <4 x i16> %v1, <4 x i16>* %vo, align 4
   ret void
@@ -371,7 +371,7 @@ entry:
   %vi  = bitcast i8* %pi to <2 x i32>*
   %vo  = bitcast i8* %po to <2 x i32>*
 ;CHECK: vldr
-  %v1 = load  <2 x i32>* %vi, align 4
+  %v1 = load  <2 x i32>,  <2 x i32>* %vi, align 4
 ;CHECK: vstr
   store <2 x i32> %v1, <2 x i32>* %vo, align 4
   ret void
@@ -389,7 +389,7 @@ entry:
   %vi  = bitcast i8* %pi to <2 x float>*
   %vo  = bitcast i8* %po to <2 x float>*
 ;CHECK: vldr
-  %v1 = load  <2 x float>* %vi, align 4
+  %v1 = load  <2 x float>,  <2 x float>* %vi, align 4
 ;CHECK: vstr
   store <2 x float> %v1, <2 x float>* %vo, align 4
   ret void
@@ -407,7 +407,7 @@ entry:
   %vi  = bitcast i8* %pi to <16 x i8>*
   %vo  = bitcast i8* %po to <16 x i8>*
 ;CHECK: vld1.32
-  %v1 = load  <16 x i8>* %vi, align 4
+  %v1 = load  <16 x i8>,  <16 x i8>* %vi, align 4
 ;CHECK: vst1.32
   store <16 x i8> %v1, <16 x i8>* %vo, align 4
   ret void
@@ -425,7 +425,7 @@ entry:
   %vi  = bitcast i8* %pi to <8 x i16>*
   %vo  = bitcast i8* %po to <8 x i16>*
 ;CHECK: vld1.32
-  %v1 = load  <8 x i16>* %vi, align 4
+  %v1 = load  <8 x i16>,  <8 x i16>* %vi, align 4
 ;CHECK: vst1.32
   store <8 x i16> %v1, <8 x i16>* %vo, align 4
   ret void
@@ -443,7 +443,7 @@ entry:
   %vi  = bitcast i8* %pi to <4 x i32>*
   %vo  = bitcast i8* %po to <4 x i32>*
 ;CHECK: vld1.32
-  %v1 = load  <4 x i32>* %vi, align 4
+  %v1 = load  <4 x i32>,  <4 x i32>* %vi, align 4
 ;CHECK: vst1.32
   store <4 x i32> %v1, <4 x i32>* %vo, align 4
   ret void
@@ -461,7 +461,7 @@ entry:
   %vi  = bitcast i8* %pi to <2 x i64>*
   %vo  = bitcast i8* %po to <2 x i64>*
 ;CHECK: vld1.32
-  %v1 = load  <2 x i64>* %vi, align 4
+  %v1 = load  <2 x i64>,  <2 x i64>* %vi, align 4
 ;CHECK: vst1.32
   store <2 x i64> %v1, <2 x i64>* %vo, align 4
   ret void
@@ -479,7 +479,7 @@ entry:
   %vi  = bitcast i8* %pi to <4 x float>*
   %vo  = bitcast i8* %po to <4 x float>*
 ;CHECK: vld1.32
-  %v1 = load  <4 x float>* %vi, align 4
+  %v1 = load  <4 x float>,  <4 x float>* %vi, align 4
 ;CHECK: vst1.32
   store <4 x float> %v1, <4 x float>* %vo, align 4
   ret void

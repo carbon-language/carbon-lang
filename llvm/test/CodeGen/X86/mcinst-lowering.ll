@@ -5,7 +5,7 @@ target triple = "x86_64-apple-darwin10.0.0"
 
 define i32 @f0(i32* nocapture %x) nounwind readonly ssp {
 entry:
-  %tmp1 = load i32* %x                            ; <i32> [#uses=2]
+  %tmp1 = load i32, i32* %x                            ; <i32> [#uses=2]
   %tobool = icmp eq i32 %tmp1, 0                  ; <i1> [#uses=1]
   br i1 %tobool, label %if.end, label %return
 

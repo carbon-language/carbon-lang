@@ -31,25 +31,25 @@ entry:
   store double 0.000000e+00, double* null, align 4
   %call = tail call double @cos(double %angle) nounwind readnone
   %call1 = tail call double @sin(double %angle) nounwind readnone
-  %0 = load double* %V1, align 4
+  %0 = load double, double* %V1, align 4
   %arrayidx2 = getelementptr inbounds double, double* %V1, i32 1
-  %1 = load double* %arrayidx2, align 4
+  %1 = load double, double* %arrayidx2, align 4
   %mul = fmul double %0, %1
   %sub = fsub double 1.000000e+00, %call
   %mul3 = fmul double %mul, %sub
-  %2 = load double* undef, align 4
+  %2 = load double, double* undef, align 4
   %mul5 = fmul double %2, %call1
   %add = fadd double %mul3, %mul5
   store double %add, double* %arrayidx5.1.i, align 4
-  %3 = load double* %V1, align 4
+  %3 = load double, double* %V1, align 4
   %mul11 = fmul double %3, undef
   %mul13 = fmul double %mul11, %sub
-  %4 = load double* %arrayidx2, align 4
+  %4 = load double, double* %arrayidx2, align 4
   %mul15 = fmul double %4, %call1
   %sub16 = fsub double %mul13, %mul15
   store double %sub16, double* %arrayidx5.2.i, align 4
-  %5 = load double* %V1, align 4
-  %6 = load double* %arrayidx2, align 4
+  %5 = load double, double* %V1, align 4
+  %6 = load double, double* %arrayidx2, align 4
   %mul22 = fmul double %5, %6
   %mul24 = fmul double %mul22, %sub
   %sub27 = fsub double %mul24, undef

@@ -13,7 +13,7 @@
 @llvm.used = appending global [2 x i8*] [i8* getelementptr inbounds ([7 x i8]* @"\01L_OBJC_METH_VAR_NAME_40", i32 0, i32 0),  i8* bitcast (i8** @"\01L_OBJC_SELECTOR_REFERENCES_41" to i8*)]
 
 define internal void @__cxx_global_var_init() section "__TEXT,__StaticInit,regular,pure_instructions" {
-  %1 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_41", !invariant.load !2009
+  %1 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_41", !invariant.load !2009
   store i8* %1, i8** getelementptr inbounds ([1 x %struct.ButtonInitData]* @_ZL14buttonInitData, i32 0, i32 0, i32 0), align 4
   ret void
 }
@@ -26,8 +26,8 @@ define internal void @_GLOBAL__I_a() section "__TEXT,__StaticInit,regular,pure_i
 declare void @test(i8*)
 
 define void @print() {
-; CHECK: %1 = load i8** getelementptr inbounds ([1 x %struct.ButtonInitData]* @_ZL14buttonInitData, i32 0, i32 0, i32 0), align 4
-  %1 = load i8** getelementptr inbounds ([1 x %struct.ButtonInitData]* @_ZL14buttonInitData, i32 0, i32 0, i32 0), align 4
+; CHECK: %1 = load i8*, i8** getelementptr inbounds ([1 x %struct.ButtonInitData]* @_ZL14buttonInitData, i32 0, i32 0, i32 0), align 4
+  %1 = load i8*, i8** getelementptr inbounds ([1 x %struct.ButtonInitData]* @_ZL14buttonInitData, i32 0, i32 0, i32 0), align 4
   call void @test(i8* %1)
   ret void
 }

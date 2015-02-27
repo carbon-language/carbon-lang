@@ -25,27 +25,27 @@ entry:
 ; CHECK-NEXT: ldaw r[[R1:[0-9]+]], dp[pool]
 ; CHECK-NEXT: #MEMBARRIER
 ; CHECK-NEXT: ldc r[[R2:[0-9]+]], 0
-  %0 = load atomic i32* bitcast (i64* @pool to i32*) acquire, align 4
+  %0 = load atomic i32, i32* bitcast (i64* @pool to i32*) acquire, align 4
 
 ; CHECK-NEXT: ld16s r3, r[[R1]][r[[R2]]]
 ; CHECK-NEXT: #MEMBARRIER
-  %1 = load atomic i16* bitcast (i64* @pool to i16*) acquire, align 2
+  %1 = load atomic i16, i16* bitcast (i64* @pool to i16*) acquire, align 2
 
 ; CHECK-NEXT: ld8u r11, r[[R1]][r[[R2]]]
 ; CHECK-NEXT: #MEMBARRIER
-  %2 = load atomic i8* bitcast (i64* @pool to i8*) acquire, align 1
+  %2 = load atomic i8, i8* bitcast (i64* @pool to i8*) acquire, align 1
 
 ; CHECK-NEXT: ldw r4, dp[pool]
 ; CHECK-NEXT: #MEMBARRIER
-  %3 = load atomic i32* bitcast (i64* @pool to i32*) seq_cst, align 4
+  %3 = load atomic i32, i32* bitcast (i64* @pool to i32*) seq_cst, align 4
 
 ; CHECK-NEXT: ld16s r5, r[[R1]][r[[R2]]]
 ; CHECK-NEXT: #MEMBARRIER
-  %4 = load atomic i16* bitcast (i64* @pool to i16*) seq_cst, align 2
+  %4 = load atomic i16, i16* bitcast (i64* @pool to i16*) seq_cst, align 2
 
 ; CHECK-NEXT: ld8u r6, r[[R1]][r[[R2]]]
 ; CHECK-NEXT: #MEMBARRIER
-  %5 = load atomic i8* bitcast (i64* @pool to i8*) seq_cst, align 1
+  %5 = load atomic i8, i8* bitcast (i64* @pool to i8*) seq_cst, align 1
 
 ; CHECK-NEXT: #MEMBARRIER
 ; CHECK-NEXT: stw r[[R0]], dp[pool]
@@ -80,11 +80,11 @@ entry:
 ; CHECK-NEXT: st16 r[[R0]], r[[R1]][r[[R2]]]
 ; CHECK-NEXT: ld8u r[[R0]], r[[R1]][r[[R2]]]
 ; CHECK-NEXT: st8 r[[R0]], r[[R1]][r[[R2]]]
-  %6 = load atomic i32* bitcast (i64* @pool to i32*) monotonic, align 4
+  %6 = load atomic i32, i32* bitcast (i64* @pool to i32*) monotonic, align 4
   store atomic i32 %6, i32* bitcast (i64* @pool to i32*) monotonic, align 4
-  %7 = load atomic i16* bitcast (i64* @pool to i16*) monotonic, align 2
+  %7 = load atomic i16, i16* bitcast (i64* @pool to i16*) monotonic, align 2
   store atomic i16 %7, i16* bitcast (i64* @pool to i16*) monotonic, align 2
-  %8 = load atomic i8* bitcast (i64* @pool to i8*) monotonic, align 1
+  %8 = load atomic i8, i8* bitcast (i64* @pool to i8*) monotonic, align 1
   store atomic i8 %8, i8* bitcast (i64* @pool to i8*) monotonic, align 1
 
   ret void

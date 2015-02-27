@@ -9,11 +9,11 @@ define i32 @test1() {
   %1 = tail call noalias i8* @calloc(i64 1, i64 4)
   %2 = bitcast i8* %1 to i32*
   ; This load is trivially constant zero
-  %3 = load i32* %2, align 4
+  %3 = load i32, i32* %2, align 4
   ret i32 %3
 
 ; CHECK-LABEL: @test1(
-; CHECK-NOT: %3 = load i32* %2, align 4
+; CHECK-NOT: %3 = load i32, i32* %2, align 4
 ; CHECK: ret i32 0
 
 ; CHECK_NO_LIBCALLS-LABEL: @test1(

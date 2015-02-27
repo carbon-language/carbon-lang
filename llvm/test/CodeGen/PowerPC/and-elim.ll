@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=ppc32 | not grep rlwin
 
 define void @test(i8* %P) {
-	%W = load i8* %P
+	%W = load i8, i8* %P
 	%X = shl i8 %W, 1
 	%Y = add i8 %X, 2
 	%Z = and i8 %Y, 254        ; dead and

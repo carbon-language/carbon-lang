@@ -37,7 +37,7 @@ bb550:		; preds = %bb543
 	br i1 false, label %bb554, label %bb552
 
 bb552:		; preds = %bb550
-	%0 = load i8* %d.0, align 8		; <i8> [#uses=0]
+	%0 = load i8, i8* %d.0, align 8		; <i8> [#uses=0]
 	br label %bb554
 
 bb554:		; preds = %bb552, %bb550, %bb549

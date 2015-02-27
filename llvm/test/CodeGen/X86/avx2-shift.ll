@@ -130,7 +130,7 @@ define <16 x i16> @vshift07(<16 x i16> %a) nounwind readnone {
 ; CHECK: vpsravd (%
 ; CHECK: ret
 define <4 x i32> @variable_sra0_load(<4 x i32> %x, <4 x i32>* %y) {
-  %y1 = load <4 x i32>* %y
+  %y1 = load <4 x i32>, <4 x i32>* %y
   %k = ashr <4 x i32> %x, %y1
   ret <4 x i32> %k
 }
@@ -139,7 +139,7 @@ define <4 x i32> @variable_sra0_load(<4 x i32> %x, <4 x i32>* %y) {
 ; CHECK: vpsravd (%
 ; CHECK: ret
 define <8 x i32> @variable_sra1_load(<8 x i32> %x, <8 x i32>* %y) {
-  %y1 = load <8 x i32>* %y
+  %y1 = load <8 x i32>, <8 x i32>* %y
   %k = ashr <8 x i32> %x, %y1
   ret <8 x i32> %k
 }
@@ -148,7 +148,7 @@ define <8 x i32> @variable_sra1_load(<8 x i32> %x, <8 x i32>* %y) {
 ; CHECK: vpsllvd (%
 ; CHECK: ret
 define <4 x i32> @variable_shl0_load(<4 x i32> %x, <4 x i32>* %y) {
-  %y1 = load <4 x i32>* %y
+  %y1 = load <4 x i32>, <4 x i32>* %y
   %k = shl <4 x i32> %x, %y1
   ret <4 x i32> %k
 }
@@ -156,7 +156,7 @@ define <4 x i32> @variable_shl0_load(<4 x i32> %x, <4 x i32>* %y) {
 ; CHECK: vpsllvd (%
 ; CHECK: ret
 define <8 x i32> @variable_shl1_load(<8 x i32> %x, <8 x i32>* %y) {
-  %y1 = load <8 x i32>* %y
+  %y1 = load <8 x i32>, <8 x i32>* %y
   %k = shl <8 x i32> %x, %y1
   ret <8 x i32> %k
 }
@@ -164,7 +164,7 @@ define <8 x i32> @variable_shl1_load(<8 x i32> %x, <8 x i32>* %y) {
 ; CHECK: vpsllvq (%
 ; CHECK: ret
 define <2 x i64> @variable_shl2_load(<2 x i64> %x, <2 x i64>* %y) {
-  %y1 = load <2 x i64>* %y
+  %y1 = load <2 x i64>, <2 x i64>* %y
   %k = shl <2 x i64> %x, %y1
   ret <2 x i64> %k
 }
@@ -172,7 +172,7 @@ define <2 x i64> @variable_shl2_load(<2 x i64> %x, <2 x i64>* %y) {
 ; CHECK: vpsllvq (%
 ; CHECK: ret
 define <4 x i64> @variable_shl3_load(<4 x i64> %x, <4 x i64>* %y) {
-  %y1 = load <4 x i64>* %y
+  %y1 = load <4 x i64>, <4 x i64>* %y
   %k = shl <4 x i64> %x, %y1
   ret <4 x i64> %k
 }
@@ -180,7 +180,7 @@ define <4 x i64> @variable_shl3_load(<4 x i64> %x, <4 x i64>* %y) {
 ; CHECK: vpsrlvd (%
 ; CHECK: ret
 define <4 x i32> @variable_srl0_load(<4 x i32> %x, <4 x i32>* %y) {
-  %y1 = load <4 x i32>* %y
+  %y1 = load <4 x i32>, <4 x i32>* %y
   %k = lshr <4 x i32> %x, %y1
   ret <4 x i32> %k
 }
@@ -188,7 +188,7 @@ define <4 x i32> @variable_srl0_load(<4 x i32> %x, <4 x i32>* %y) {
 ; CHECK: vpsrlvd (%
 ; CHECK: ret
 define <8 x i32> @variable_srl1_load(<8 x i32> %x, <8 x i32>* %y) {
-  %y1 = load <8 x i32>* %y
+  %y1 = load <8 x i32>, <8 x i32>* %y
   %k = lshr <8 x i32> %x, %y1
   ret <8 x i32> %k
 }
@@ -196,7 +196,7 @@ define <8 x i32> @variable_srl1_load(<8 x i32> %x, <8 x i32>* %y) {
 ; CHECK: vpsrlvq (%
 ; CHECK: ret
 define <2 x i64> @variable_srl2_load(<2 x i64> %x, <2 x i64>* %y) {
-  %y1 = load <2 x i64>* %y
+  %y1 = load <2 x i64>, <2 x i64>* %y
   %k = lshr <2 x i64> %x, %y1
   ret <2 x i64> %k
 }
@@ -204,7 +204,7 @@ define <2 x i64> @variable_srl2_load(<2 x i64> %x, <2 x i64>* %y) {
 ; CHECK: vpsrlvq (%
 ; CHECK: ret
 define <4 x i64> @variable_srl3_load(<4 x i64> %x, <4 x i64>* %y) {
-  %y1 = load <4 x i64>* %y
+  %y1 = load <4 x i64>, <4 x i64>* %y
   %k = lshr <4 x i64> %x, %y1
   ret <4 x i64> %k
 }

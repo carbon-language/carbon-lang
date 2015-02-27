@@ -50,7 +50,7 @@ define i32 @test2b() {
 @G = internal global i32 undef
 
 define void @test3a() {
-	%X = load i32* @G
+	%X = load i32, i32* @G
 	store i32 %X, i32* @G
 	ret void
 }
@@ -59,7 +59,7 @@ define void @test3a() {
 
 
 define i32 @test3b() {
-	%V = load i32* @G
+	%V = load i32, i32* @G
 	%C = icmp eq i32 %V, 17
 	br i1 %C, label %T, label %F
 T:
@@ -203,7 +203,7 @@ define void @test8b(i32* %P) {
 define void @test9() {
 entry:
         %local_foo = alloca {  }
-        load {  }* @test9g
+        load {  }, {  }* @test9g
         store {  } %0, {  }* %local_foo
         ret void
 }

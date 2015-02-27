@@ -7,7 +7,7 @@ target triple = "i386-pc-linux-gnu"
 
 define i32 @func_73(i32 %p_74) nounwind {
 entry:
-	%0 = load i32* @g_7, align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* @g_7, align 4		; <i32> [#uses=1]
 	%1 = or i8 0, 118		; <i8> [#uses=1]
 	%2 = zext i8 %1 to i64		; <i64> [#uses=1]
 	%3 = icmp ne i32 %0, 0		; <i1> [#uses=1]

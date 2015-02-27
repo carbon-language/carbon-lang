@@ -28,7 +28,7 @@ entry:
   %x.addr = alloca float, align 4
   store float %x, float* %x.addr, align 4
   call void @llvm.dbg.declare(metadata float* %x.addr, metadata !16, metadata !17), !dbg !18
-  %0 = load float* %x.addr, align 4, !dbg !19
+  %0 = load float, float* %x.addr, align 4, !dbg !19
   ret float %0, !dbg !19
 }
 
@@ -46,15 +46,15 @@ entry:
   %dst.addr = alloca float*, align 4
   store float* %dst, float** %dst.addr, align 4
   call void @llvm.dbg.declare(metadata float** %dst.addr, metadata !20, metadata !17), !dbg !21
-  %0 = load float** %dst.addr, align 4, !dbg !22
+  %0 = load float*, float** %dst.addr, align 4, !dbg !22
   %arrayidx = getelementptr inbounds float, float* %0, i32 0, !dbg !22
-  %1 = load float* %arrayidx, align 4, !dbg !22
+  %1 = load float, float* %arrayidx, align 4, !dbg !22
   %call = call float @foo(float %1), !dbg !22
 
 ; CHECK-NOT: call float @foo
 ; CHECK: void @llvm.dbg.declare(metadata float* [[x_addr_i]], metadata [[m23:![0-9]+]], metadata !17), !dbg [[m24:![0-9]+]]
 
-  %2 = load float** %dst.addr, align 4, !dbg !22
+  %2 = load float*, float** %dst.addr, align 4, !dbg !22
   %arrayidx1 = getelementptr inbounds float, float* %2, i32 0, !dbg !22
   store float %call, float* %arrayidx1, align 4, !dbg !22
   ret void, !dbg !23

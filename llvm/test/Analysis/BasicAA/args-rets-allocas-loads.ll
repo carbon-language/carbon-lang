@@ -22,8 +22,8 @@ define void @caller_a(double* %arg_a0,
   %noalias_ret_a0 = call double* @noalias_returner()
   %noalias_ret_a1 = call double* @noalias_returner()
 
-  %loaded_a0 = load double** %indirect_a0
-  %loaded_a1 = load double** %indirect_a1
+  %loaded_a0 = load double*, double** %indirect_a0
+  %loaded_a1 = load double*, double** %indirect_a1
 
   call void @callee(double* %escape_alloca_a0)
   call void @callee(double* %escape_alloca_a1)

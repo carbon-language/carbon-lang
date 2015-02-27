@@ -5,7 +5,7 @@
 
 define void @c() nounwind {
 ; CHECK: movl a+8, %eax
-  %srcval1 = load i96* @a, align 4
+  %srcval1 = load i96, i96* @a, align 4
   %sroa.store.elt2 = lshr i96 %srcval1, 64
   %tmp = trunc i96 %sroa.store.elt2 to i64
 ; CHECK: movl %eax, b

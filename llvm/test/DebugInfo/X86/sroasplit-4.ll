@@ -1,9 +1,9 @@
 ; RUN: opt -sroa < %s -S -o - | FileCheck %s
 ;
 ; Test that recursively splitting an alloca updates the debug info correctly.
-; CHECK: %[[T:.*]] = load i64* @t, align 8
+; CHECK: %[[T:.*]] = load i64, i64* @t, align 8
 ; CHECK: call void @llvm.dbg.value(metadata i64 %[[T]], i64 0, metadata ![[Y:.*]], metadata ![[P1:.*]])
-; CHECK: %[[T1:.*]] = load i64* @t, align 8
+; CHECK: %[[T1:.*]] = load i64, i64* @t, align 8
 ; CHECK: call void @llvm.dbg.value(metadata i64 %[[T1]], i64 0, metadata ![[Y]], metadata ![[P2:.*]])
 ; CHECK: call void @llvm.dbg.value(metadata i64 %[[T]], i64 0, metadata ![[R:.*]], metadata ![[P3:.*]])
 ; CHECK: call void @llvm.dbg.value(metadata i64 %[[T1]], i64 0, metadata ![[R]], metadata ![[P4:.*]])
@@ -62,10 +62,10 @@ if.then:                                          ; preds = %entry
 if.end:                                           ; preds = %entry
   call void @llvm.dbg.declare(metadata %struct.p* %y, metadata !28, metadata !29), !dbg !30
   %s = getelementptr inbounds %struct.p, %struct.p* %y, i32 0, i32 0, !dbg !30
-  %0 = load i64* @t, align 8, !dbg !30
+  %0 = load i64, i64* @t, align 8, !dbg !30
   store i64 %0, i64* %s, align 8, !dbg !30
   %t = getelementptr inbounds %struct.p, %struct.p* %y, i32 0, i32 1, !dbg !30
-  %1 = load i64* @t, align 8, !dbg !30
+  %1 = load i64, i64* @t, align 8, !dbg !30
   store i64 %1, i64* %t, align 8, !dbg !30
   call void @llvm.dbg.declare(metadata %struct.r* %r, metadata !31, metadata !29), !dbg !32
   %i = getelementptr inbounds %struct.r, %struct.r* %r, i32 0, i32 0, !dbg !32
@@ -87,7 +87,7 @@ if.end:                                           ; preds = %entry
   br label %return, !dbg !33
 
 return:                                           ; preds = %if.end, %if.then
-  %6 = load i32* %retval, !dbg !34
+  %6 = load i32, i32* %retval, !dbg !34
   ret i32 %6, !dbg !34
 }
 

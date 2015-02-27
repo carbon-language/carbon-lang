@@ -9,7 +9,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 define void @main() #0 {
 entry:
-  %0 = load <8 x float>* bitcast ([8 x float]* @b to <8 x float>*), align 32
+  %0 = load <8 x float>, <8 x float>* bitcast ([8 x float]* @b to <8 x float>*), align 32
   %bitcast.i = extractelement <8 x float> %0, i32 0
   %vecinit.i.i = insertelement <4 x float> undef, float %bitcast.i, i32 0
   %vecinit2.i.i = insertelement <4 x float> %vecinit.i.i, float 0.000000e+00, i32 1

@@ -12,7 +12,7 @@ entry:
 	%tmp3 = getelementptr %struct..1anon, %struct..1anon* %u, i32 0, i32 0		; <double*> [#uses=1]
 	%tmp34 = bitcast double* %tmp3 to %struct..0anon*		; <%struct..0anon*> [#uses=1]
 	%tmp5 = getelementptr %struct..0anon, %struct..0anon* %tmp34, i32 0, i32 1		; <i32*> [#uses=1]
-	%tmp6 = load i32* %tmp5		; <i32> [#uses=1]
+	%tmp6 = load i32, i32* %tmp5		; <i32> [#uses=1]
 	%tmp7 = shl i32 %tmp6, 1		; <i32> [#uses=1]
 	%tmp8 = lshr i32 %tmp7, 21		; <i32> [#uses=1]
 	%tmp89 = trunc i32 %tmp8 to i16		; <i16> [#uses=1]

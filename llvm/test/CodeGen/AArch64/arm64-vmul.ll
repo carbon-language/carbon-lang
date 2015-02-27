@@ -4,8 +4,8 @@
 define <8 x i16> @smull8h(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: smull8h:
 ;CHECK: smull.8h
-  %tmp1 = load <8 x i8>* %A
-  %tmp2 = load <8 x i8>* %B
+  %tmp1 = load <8 x i8>, <8 x i8>* %A
+  %tmp2 = load <8 x i8>, <8 x i8>* %B
   %tmp3 = call <8 x i16> @llvm.aarch64.neon.smull.v8i16(<8 x i8> %tmp1, <8 x i8> %tmp2)
   ret <8 x i16> %tmp3
 }
@@ -13,8 +13,8 @@ define <8 x i16> @smull8h(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <4 x i32> @smull4s(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: smull4s:
 ;CHECK: smull.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
   %tmp3 = call <4 x i32> @llvm.aarch64.neon.smull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
   ret <4 x i32> %tmp3
 }
@@ -22,8 +22,8 @@ define <4 x i32> @smull4s(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <2 x i64> @smull2d(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: smull2d:
 ;CHECK: smull.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
   %tmp3 = call <2 x i64> @llvm.aarch64.neon.smull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
   ret <2 x i64> %tmp3
 }
@@ -35,8 +35,8 @@ declare <2 x i64> @llvm.aarch64.neon.smull.v2i64(<2 x i32>, <2 x i32>) nounwind 
 define <8 x i16> @umull8h(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: umull8h:
 ;CHECK: umull.8h
-  %tmp1 = load <8 x i8>* %A
-  %tmp2 = load <8 x i8>* %B
+  %tmp1 = load <8 x i8>, <8 x i8>* %A
+  %tmp2 = load <8 x i8>, <8 x i8>* %B
   %tmp3 = call <8 x i16> @llvm.aarch64.neon.umull.v8i16(<8 x i8> %tmp1, <8 x i8> %tmp2)
   ret <8 x i16> %tmp3
 }
@@ -44,8 +44,8 @@ define <8 x i16> @umull8h(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <4 x i32> @umull4s(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: umull4s:
 ;CHECK: umull.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
   %tmp3 = call <4 x i32> @llvm.aarch64.neon.umull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
   ret <4 x i32> %tmp3
 }
@@ -53,8 +53,8 @@ define <4 x i32> @umull4s(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <2 x i64> @umull2d(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: umull2d:
 ;CHECK: umull.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
   %tmp3 = call <2 x i64> @llvm.aarch64.neon.umull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
   ret <2 x i64> %tmp3
 }
@@ -66,8 +66,8 @@ declare <2 x i64> @llvm.aarch64.neon.umull.v2i64(<2 x i32>, <2 x i32>) nounwind 
 define <4 x i32> @sqdmull4s(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: sqdmull4s:
 ;CHECK: sqdmull.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
   %tmp3 = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
   ret <4 x i32> %tmp3
 }
@@ -75,8 +75,8 @@ define <4 x i32> @sqdmull4s(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <2 x i64> @sqdmull2d(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: sqdmull2d:
 ;CHECK: sqdmull.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
   %tmp3 = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
   ret <2 x i64> %tmp3
 }
@@ -84,8 +84,8 @@ define <2 x i64> @sqdmull2d(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <4 x i32> @sqdmull2_4s(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK-LABEL: sqdmull2_4s:
 ;CHECK: sqdmull2.4s
-  %load1 = load <8 x i16>* %A
-  %load2 = load <8 x i16>* %B
+  %load1 = load <8 x i16>, <8 x i16>* %A
+  %load2 = load <8 x i16>, <8 x i16>* %B
   %tmp1 = shufflevector <8 x i16> %load1, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %tmp2 = shufflevector <8 x i16> %load2, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %tmp3 = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
@@ -95,8 +95,8 @@ define <4 x i32> @sqdmull2_4s(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 define <2 x i64> @sqdmull2_2d(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK-LABEL: sqdmull2_2d:
 ;CHECK: sqdmull2.2d
-  %load1 = load <4 x i32>* %A
-  %load2 = load <4 x i32>* %B
+  %load1 = load <4 x i32>, <4 x i32>* %A
+  %load2 = load <4 x i32>, <4 x i32>* %B
   %tmp1 = shufflevector <4 x i32> %load1, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
   %tmp2 = shufflevector <4 x i32> %load2, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
   %tmp3 = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
@@ -110,8 +110,8 @@ declare <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32>, <2 x i32>) nounwin
 define <8 x i16> @pmull8h(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: pmull8h:
 ;CHECK: pmull.8h
-  %tmp1 = load <8 x i8>* %A
-  %tmp2 = load <8 x i8>* %B
+  %tmp1 = load <8 x i8>, <8 x i8>* %A
+  %tmp2 = load <8 x i8>, <8 x i8>* %B
   %tmp3 = call <8 x i16> @llvm.aarch64.neon.pmull.v8i16(<8 x i8> %tmp1, <8 x i8> %tmp2)
   ret <8 x i16> %tmp3
 }
@@ -121,8 +121,8 @@ declare <8 x i16> @llvm.aarch64.neon.pmull.v8i16(<8 x i8>, <8 x i8>) nounwind re
 define <4 x i16> @sqdmulh_4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: sqdmulh_4h:
 ;CHECK: sqdmulh.4h
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
   %tmp3 = call <4 x i16> @llvm.aarch64.neon.sqdmulh.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
   ret <4 x i16> %tmp3
 }
@@ -130,8 +130,8 @@ define <4 x i16> @sqdmulh_4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <8 x i16> @sqdmulh_8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK-LABEL: sqdmulh_8h:
 ;CHECK: sqdmulh.8h
-  %tmp1 = load <8 x i16>* %A
-  %tmp2 = load <8 x i16>* %B
+  %tmp1 = load <8 x i16>, <8 x i16>* %A
+  %tmp2 = load <8 x i16>, <8 x i16>* %B
   %tmp3 = call <8 x i16> @llvm.aarch64.neon.sqdmulh.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp2)
   ret <8 x i16> %tmp3
 }
@@ -139,8 +139,8 @@ define <8 x i16> @sqdmulh_8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 define <2 x i32> @sqdmulh_2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: sqdmulh_2s:
 ;CHECK: sqdmulh.2s
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
   %tmp3 = call <2 x i32> @llvm.aarch64.neon.sqdmulh.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
   ret <2 x i32> %tmp3
 }
@@ -148,8 +148,8 @@ define <2 x i32> @sqdmulh_2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <4 x i32> @sqdmulh_4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK-LABEL: sqdmulh_4s:
 ;CHECK: sqdmulh.4s
-  %tmp1 = load <4 x i32>* %A
-  %tmp2 = load <4 x i32>* %B
+  %tmp1 = load <4 x i32>, <4 x i32>* %A
+  %tmp2 = load <4 x i32>, <4 x i32>* %B
   %tmp3 = call <4 x i32> @llvm.aarch64.neon.sqdmulh.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2)
   ret <4 x i32> %tmp3
 }
@@ -157,8 +157,8 @@ define <4 x i32> @sqdmulh_4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 define i32 @sqdmulh_1s(i32* %A, i32* %B) nounwind {
 ;CHECK-LABEL: sqdmulh_1s:
 ;CHECK: sqdmulh s0, {{s[0-9]+}}, {{s[0-9]+}}
-  %tmp1 = load i32* %A
-  %tmp2 = load i32* %B
+  %tmp1 = load i32, i32* %A
+  %tmp2 = load i32, i32* %B
   %tmp3 = call i32 @llvm.aarch64.neon.sqdmulh.i32(i32 %tmp1, i32 %tmp2)
   ret i32 %tmp3
 }
@@ -172,8 +172,8 @@ declare i32 @llvm.aarch64.neon.sqdmulh.i32(i32, i32) nounwind readnone
 define <4 x i16> @sqrdmulh_4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: sqrdmulh_4h:
 ;CHECK: sqrdmulh.4h
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
   %tmp3 = call <4 x i16> @llvm.aarch64.neon.sqrdmulh.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
   ret <4 x i16> %tmp3
 }
@@ -181,8 +181,8 @@ define <4 x i16> @sqrdmulh_4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <8 x i16> @sqrdmulh_8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK-LABEL: sqrdmulh_8h:
 ;CHECK: sqrdmulh.8h
-  %tmp1 = load <8 x i16>* %A
-  %tmp2 = load <8 x i16>* %B
+  %tmp1 = load <8 x i16>, <8 x i16>* %A
+  %tmp2 = load <8 x i16>, <8 x i16>* %B
   %tmp3 = call <8 x i16> @llvm.aarch64.neon.sqrdmulh.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp2)
   ret <8 x i16> %tmp3
 }
@@ -190,8 +190,8 @@ define <8 x i16> @sqrdmulh_8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 define <2 x i32> @sqrdmulh_2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: sqrdmulh_2s:
 ;CHECK: sqrdmulh.2s
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
   %tmp3 = call <2 x i32> @llvm.aarch64.neon.sqrdmulh.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
   ret <2 x i32> %tmp3
 }
@@ -199,8 +199,8 @@ define <2 x i32> @sqrdmulh_2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <4 x i32> @sqrdmulh_4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK-LABEL: sqrdmulh_4s:
 ;CHECK: sqrdmulh.4s
-  %tmp1 = load <4 x i32>* %A
-  %tmp2 = load <4 x i32>* %B
+  %tmp1 = load <4 x i32>, <4 x i32>* %A
+  %tmp2 = load <4 x i32>, <4 x i32>* %B
   %tmp3 = call <4 x i32> @llvm.aarch64.neon.sqrdmulh.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2)
   ret <4 x i32> %tmp3
 }
@@ -208,8 +208,8 @@ define <4 x i32> @sqrdmulh_4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 define i32 @sqrdmulh_1s(i32* %A, i32* %B) nounwind {
 ;CHECK-LABEL: sqrdmulh_1s:
 ;CHECK: sqrdmulh s0, {{s[0-9]+}}, {{s[0-9]+}}
-  %tmp1 = load i32* %A
-  %tmp2 = load i32* %B
+  %tmp1 = load i32, i32* %A
+  %tmp2 = load i32, i32* %B
   %tmp3 = call i32 @llvm.aarch64.neon.sqrdmulh.i32(i32 %tmp1, i32 %tmp2)
   ret i32 %tmp3
 }
@@ -223,8 +223,8 @@ declare i32 @llvm.aarch64.neon.sqrdmulh.i32(i32, i32) nounwind readnone
 define <2 x float> @fmulx_2s(<2 x float>* %A, <2 x float>* %B) nounwind {
 ;CHECK-LABEL: fmulx_2s:
 ;CHECK: fmulx.2s
-  %tmp1 = load <2 x float>* %A
-  %tmp2 = load <2 x float>* %B
+  %tmp1 = load <2 x float>, <2 x float>* %A
+  %tmp2 = load <2 x float>, <2 x float>* %B
   %tmp3 = call <2 x float> @llvm.aarch64.neon.fmulx.v2f32(<2 x float> %tmp1, <2 x float> %tmp2)
   ret <2 x float> %tmp3
 }
@@ -232,8 +232,8 @@ define <2 x float> @fmulx_2s(<2 x float>* %A, <2 x float>* %B) nounwind {
 define <4 x float> @fmulx_4s(<4 x float>* %A, <4 x float>* %B) nounwind {
 ;CHECK-LABEL: fmulx_4s:
 ;CHECK: fmulx.4s
-  %tmp1 = load <4 x float>* %A
-  %tmp2 = load <4 x float>* %B
+  %tmp1 = load <4 x float>, <4 x float>* %A
+  %tmp2 = load <4 x float>, <4 x float>* %B
   %tmp3 = call <4 x float> @llvm.aarch64.neon.fmulx.v4f32(<4 x float> %tmp1, <4 x float> %tmp2)
   ret <4 x float> %tmp3
 }
@@ -241,8 +241,8 @@ define <4 x float> @fmulx_4s(<4 x float>* %A, <4 x float>* %B) nounwind {
 define <2 x double> @fmulx_2d(<2 x double>* %A, <2 x double>* %B) nounwind {
 ;CHECK-LABEL: fmulx_2d:
 ;CHECK: fmulx.2d
-  %tmp1 = load <2 x double>* %A
-  %tmp2 = load <2 x double>* %B
+  %tmp1 = load <2 x double>, <2 x double>* %A
+  %tmp2 = load <2 x double>, <2 x double>* %B
   %tmp3 = call <2 x double> @llvm.aarch64.neon.fmulx.v2f64(<2 x double> %tmp1, <2 x double> %tmp2)
   ret <2 x double> %tmp3
 }
@@ -254,9 +254,9 @@ declare <2 x double> @llvm.aarch64.neon.fmulx.v2f64(<2 x double>, <2 x double>) 
 define <4 x i32> @smlal4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nounwind {
 ;CHECK-LABEL: smlal4s:
 ;CHECK: smlal.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp4 = call <4 x i32> @llvm.aarch64.neon.smull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
   %tmp5 = add <4 x i32> %tmp3, %tmp4
   ret <4 x i32> %tmp5
@@ -265,9 +265,9 @@ define <4 x i32> @smlal4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nounwind 
 define <2 x i64> @smlal2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nounwind {
 ;CHECK-LABEL: smlal2d:
 ;CHECK: smlal.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp4 = call <2 x i64> @llvm.aarch64.neon.smull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
   %tmp5 = add <2 x i64> %tmp3, %tmp4
   ret <2 x i64> %tmp5
@@ -276,9 +276,9 @@ define <2 x i64> @smlal2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nounwind 
 define <4 x i32> @smlsl4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nounwind {
 ;CHECK-LABEL: smlsl4s:
 ;CHECK: smlsl.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp4 = call <4 x i32> @llvm.aarch64.neon.smull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
   %tmp5 = sub <4 x i32> %tmp3, %tmp4
   ret <4 x i32> %tmp5
@@ -287,9 +287,9 @@ define <4 x i32> @smlsl4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nounwind 
 define <2 x i64> @smlsl2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nounwind {
 ;CHECK-LABEL: smlsl2d:
 ;CHECK: smlsl.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp4 = call <2 x i64> @llvm.aarch64.neon.smull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
   %tmp5 = sub <2 x i64> %tmp3, %tmp4
   ret <2 x i64> %tmp5
@@ -303,9 +303,9 @@ declare <2 x i64> @llvm.aarch64.neon.sqsub.v2i64(<2 x i64>, <2 x i64>)
 define <4 x i32> @sqdmlal4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nounwind {
 ;CHECK-LABEL: sqdmlal4s:
 ;CHECK: sqdmlal.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp4 = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
   %tmp5 = call <4 x i32> @llvm.aarch64.neon.sqadd.v4i32(<4 x i32> %tmp3, <4 x i32> %tmp4)
   ret <4 x i32> %tmp5
@@ -314,9 +314,9 @@ define <4 x i32> @sqdmlal4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nounwin
 define <2 x i64> @sqdmlal2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nounwind {
 ;CHECK-LABEL: sqdmlal2d:
 ;CHECK: sqdmlal.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp4 = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
   %tmp5 = call <2 x i64> @llvm.aarch64.neon.sqadd.v2i64(<2 x i64> %tmp3, <2 x i64> %tmp4)
   ret <2 x i64> %tmp5
@@ -325,9 +325,9 @@ define <2 x i64> @sqdmlal2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nounwin
 define <4 x i32> @sqdmlal2_4s(<8 x i16>* %A, <8 x i16>* %B, <4 x i32>* %C) nounwind {
 ;CHECK-LABEL: sqdmlal2_4s:
 ;CHECK: sqdmlal2.4s
-  %load1 = load <8 x i16>* %A
-  %load2 = load <8 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %load1 = load <8 x i16>, <8 x i16>* %A
+  %load2 = load <8 x i16>, <8 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp1 = shufflevector <8 x i16> %load1, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %tmp2 = shufflevector <8 x i16> %load2, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %tmp4 = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
@@ -338,9 +338,9 @@ define <4 x i32> @sqdmlal2_4s(<8 x i16>* %A, <8 x i16>* %B, <4 x i32>* %C) nounw
 define <2 x i64> @sqdmlal2_2d(<4 x i32>* %A, <4 x i32>* %B, <2 x i64>* %C) nounwind {
 ;CHECK-LABEL: sqdmlal2_2d:
 ;CHECK: sqdmlal2.2d
-  %load1 = load <4 x i32>* %A
-  %load2 = load <4 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %load1 = load <4 x i32>, <4 x i32>* %A
+  %load2 = load <4 x i32>, <4 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp1 = shufflevector <4 x i32> %load1, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
   %tmp2 = shufflevector <4 x i32> %load2, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
   %tmp4 = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
@@ -351,9 +351,9 @@ define <2 x i64> @sqdmlal2_2d(<4 x i32>* %A, <4 x i32>* %B, <2 x i64>* %C) nounw
 define <4 x i32> @sqdmlsl4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nounwind {
 ;CHECK-LABEL: sqdmlsl4s:
 ;CHECK: sqdmlsl.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp4 = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
   %tmp5 = call <4 x i32> @llvm.aarch64.neon.sqsub.v4i32(<4 x i32> %tmp3, <4 x i32> %tmp4)
   ret <4 x i32> %tmp5
@@ -362,9 +362,9 @@ define <4 x i32> @sqdmlsl4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nounwin
 define <2 x i64> @sqdmlsl2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nounwind {
 ;CHECK-LABEL: sqdmlsl2d:
 ;CHECK: sqdmlsl.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp4 = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
   %tmp5 = call <2 x i64> @llvm.aarch64.neon.sqsub.v2i64(<2 x i64> %tmp3, <2 x i64> %tmp4)
   ret <2 x i64> %tmp5
@@ -373,9 +373,9 @@ define <2 x i64> @sqdmlsl2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nounwin
 define <4 x i32> @sqdmlsl2_4s(<8 x i16>* %A, <8 x i16>* %B, <4 x i32>* %C) nounwind {
 ;CHECK-LABEL: sqdmlsl2_4s:
 ;CHECK: sqdmlsl2.4s
-  %load1 = load <8 x i16>* %A
-  %load2 = load <8 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %load1 = load <8 x i16>, <8 x i16>* %A
+  %load2 = load <8 x i16>, <8 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp1 = shufflevector <8 x i16> %load1, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %tmp2 = shufflevector <8 x i16> %load2, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %tmp4 = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
@@ -386,9 +386,9 @@ define <4 x i32> @sqdmlsl2_4s(<8 x i16>* %A, <8 x i16>* %B, <4 x i32>* %C) nounw
 define <2 x i64> @sqdmlsl2_2d(<4 x i32>* %A, <4 x i32>* %B, <2 x i64>* %C) nounwind {
 ;CHECK-LABEL: sqdmlsl2_2d:
 ;CHECK: sqdmlsl2.2d
-  %load1 = load <4 x i32>* %A
-  %load2 = load <4 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %load1 = load <4 x i32>, <4 x i32>* %A
+  %load2 = load <4 x i32>, <4 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp1 = shufflevector <4 x i32> %load1, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
   %tmp2 = shufflevector <4 x i32> %load2, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
   %tmp4 = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
@@ -399,9 +399,9 @@ define <2 x i64> @sqdmlsl2_2d(<4 x i32>* %A, <4 x i32>* %B, <2 x i64>* %C) nounw
 define <4 x i32> @umlal4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nounwind {
 ;CHECK-LABEL: umlal4s:
 ;CHECK: umlal.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp4 = call <4 x i32> @llvm.aarch64.neon.umull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
   %tmp5 = add <4 x i32> %tmp3, %tmp4
   ret <4 x i32> %tmp5
@@ -410,9 +410,9 @@ define <4 x i32> @umlal4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nounwind 
 define <2 x i64> @umlal2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nounwind {
 ;CHECK-LABEL: umlal2d:
 ;CHECK: umlal.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp4 = call <2 x i64> @llvm.aarch64.neon.umull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
   %tmp5 = add <2 x i64> %tmp3, %tmp4
   ret <2 x i64> %tmp5
@@ -421,9 +421,9 @@ define <2 x i64> @umlal2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nounwind 
 define <4 x i32> @umlsl4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nounwind {
 ;CHECK-LABEL: umlsl4s:
 ;CHECK: umlsl.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp4 = call <4 x i32> @llvm.aarch64.neon.umull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
   %tmp5 = sub <4 x i32> %tmp3, %tmp4
   ret <4 x i32> %tmp5
@@ -432,9 +432,9 @@ define <4 x i32> @umlsl4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nounwind 
 define <2 x i64> @umlsl2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nounwind {
 ;CHECK-LABEL: umlsl2d:
 ;CHECK: umlsl.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp4 = call <2 x i64> @llvm.aarch64.neon.umull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
   %tmp5 = sub <2 x i64> %tmp3, %tmp4
   ret <2 x i64> %tmp5
@@ -443,9 +443,9 @@ define <2 x i64> @umlsl2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nounwind 
 define <2 x float> @fmla_2s(<2 x float>* %A, <2 x float>* %B, <2 x float>* %C) nounwind {
 ;CHECK-LABEL: fmla_2s:
 ;CHECK: fmla.2s
-  %tmp1 = load <2 x float>* %A
-  %tmp2 = load <2 x float>* %B
-  %tmp3 = load <2 x float>* %C
+  %tmp1 = load <2 x float>, <2 x float>* %A
+  %tmp2 = load <2 x float>, <2 x float>* %B
+  %tmp3 = load <2 x float>, <2 x float>* %C
   %tmp4 = call <2 x float> @llvm.fma.v2f32(<2 x float> %tmp1, <2 x float> %tmp2, <2 x float> %tmp3)
   ret <2 x float> %tmp4
 }
@@ -453,9 +453,9 @@ define <2 x float> @fmla_2s(<2 x float>* %A, <2 x float>* %B, <2 x float>* %C) n
 define <4 x float> @fmla_4s(<4 x float>* %A, <4 x float>* %B, <4 x float>* %C) nounwind {
 ;CHECK-LABEL: fmla_4s:
 ;CHECK: fmla.4s
-  %tmp1 = load <4 x float>* %A
-  %tmp2 = load <4 x float>* %B
-  %tmp3 = load <4 x float>* %C
+  %tmp1 = load <4 x float>, <4 x float>* %A
+  %tmp2 = load <4 x float>, <4 x float>* %B
+  %tmp3 = load <4 x float>, <4 x float>* %C
   %tmp4 = call <4 x float> @llvm.fma.v4f32(<4 x float> %tmp1, <4 x float> %tmp2, <4 x float> %tmp3)
   ret <4 x float> %tmp4
 }
@@ -463,9 +463,9 @@ define <4 x float> @fmla_4s(<4 x float>* %A, <4 x float>* %B, <4 x float>* %C) n
 define <2 x double> @fmla_2d(<2 x double>* %A, <2 x double>* %B, <2 x double>* %C) nounwind {
 ;CHECK-LABEL: fmla_2d:
 ;CHECK: fmla.2d
-  %tmp1 = load <2 x double>* %A
-  %tmp2 = load <2 x double>* %B
-  %tmp3 = load <2 x double>* %C
+  %tmp1 = load <2 x double>, <2 x double>* %A
+  %tmp2 = load <2 x double>, <2 x double>* %B
+  %tmp3 = load <2 x double>, <2 x double>* %C
   %tmp4 = call <2 x double> @llvm.fma.v2f64(<2 x double> %tmp1, <2 x double> %tmp2, <2 x double> %tmp3)
   ret <2 x double> %tmp4
 }
@@ -477,9 +477,9 @@ declare <2 x double> @llvm.fma.v2f64(<2 x double>, <2 x double>, <2 x double>) n
 define <2 x float> @fmls_2s(<2 x float>* %A, <2 x float>* %B, <2 x float>* %C) nounwind {
 ;CHECK-LABEL: fmls_2s:
 ;CHECK: fmls.2s
-  %tmp1 = load <2 x float>* %A
-  %tmp2 = load <2 x float>* %B
-  %tmp3 = load <2 x float>* %C
+  %tmp1 = load <2 x float>, <2 x float>* %A
+  %tmp2 = load <2 x float>, <2 x float>* %B
+  %tmp3 = load <2 x float>, <2 x float>* %C
   %tmp4 = fsub <2 x float> <float -0.0, float -0.0>, %tmp2
   %tmp5 = call <2 x float> @llvm.fma.v2f32(<2 x float> %tmp1, <2 x float> %tmp4, <2 x float> %tmp3)
   ret <2 x float> %tmp5
@@ -488,9 +488,9 @@ define <2 x float> @fmls_2s(<2 x float>* %A, <2 x float>* %B, <2 x float>* %C) n
 define <4 x float> @fmls_4s(<4 x float>* %A, <4 x float>* %B, <4 x float>* %C) nounwind {
 ;CHECK-LABEL: fmls_4s:
 ;CHECK: fmls.4s
-  %tmp1 = load <4 x float>* %A
-  %tmp2 = load <4 x float>* %B
-  %tmp3 = load <4 x float>* %C
+  %tmp1 = load <4 x float>, <4 x float>* %A
+  %tmp2 = load <4 x float>, <4 x float>* %B
+  %tmp3 = load <4 x float>, <4 x float>* %C
   %tmp4 = fsub <4 x float> <float -0.0, float -0.0, float -0.0, float -0.0>, %tmp2
   %tmp5 = call <4 x float> @llvm.fma.v4f32(<4 x float> %tmp1, <4 x float> %tmp4, <4 x float> %tmp3)
   ret <4 x float> %tmp5
@@ -499,9 +499,9 @@ define <4 x float> @fmls_4s(<4 x float>* %A, <4 x float>* %B, <4 x float>* %C) n
 define <2 x double> @fmls_2d(<2 x double>* %A, <2 x double>* %B, <2 x double>* %C) nounwind {
 ;CHECK-LABEL: fmls_2d:
 ;CHECK: fmls.2d
-  %tmp1 = load <2 x double>* %A
-  %tmp2 = load <2 x double>* %B
-  %tmp3 = load <2 x double>* %C
+  %tmp1 = load <2 x double>, <2 x double>* %A
+  %tmp2 = load <2 x double>, <2 x double>* %B
+  %tmp3 = load <2 x double>, <2 x double>* %C
   %tmp4 = fsub <2 x double> <double -0.0, double -0.0>, %tmp2
   %tmp5 = call <2 x double> @llvm.fma.v2f64(<2 x double> %tmp1, <2 x double> %tmp4, <2 x double> %tmp3)
   ret <2 x double> %tmp5
@@ -510,9 +510,9 @@ define <2 x double> @fmls_2d(<2 x double>* %A, <2 x double>* %B, <2 x double>* %
 define <2 x float> @fmls_commuted_neg_2s(<2 x float>* %A, <2 x float>* %B, <2 x float>* %C) nounwind {
 ;CHECK-LABEL: fmls_commuted_neg_2s:
 ;CHECK: fmls.2s
-  %tmp1 = load <2 x float>* %A
-  %tmp2 = load <2 x float>* %B
-  %tmp3 = load <2 x float>* %C
+  %tmp1 = load <2 x float>, <2 x float>* %A
+  %tmp2 = load <2 x float>, <2 x float>* %B
+  %tmp3 = load <2 x float>, <2 x float>* %C
   %tmp4 = fsub <2 x float> <float -0.0, float -0.0>, %tmp2
   %tmp5 = call <2 x float> @llvm.fma.v2f32(<2 x float> %tmp4, <2 x float> %tmp1, <2 x float> %tmp3)
   ret <2 x float> %tmp5
@@ -521,9 +521,9 @@ define <2 x float> @fmls_commuted_neg_2s(<2 x float>* %A, <2 x float>* %B, <2 x 
 define <4 x float> @fmls_commuted_neg_4s(<4 x float>* %A, <4 x float>* %B, <4 x float>* %C) nounwind {
 ;CHECK-LABEL: fmls_commuted_neg_4s:
 ;CHECK: fmls.4s
-  %tmp1 = load <4 x float>* %A
-  %tmp2 = load <4 x float>* %B
-  %tmp3 = load <4 x float>* %C
+  %tmp1 = load <4 x float>, <4 x float>* %A
+  %tmp2 = load <4 x float>, <4 x float>* %B
+  %tmp3 = load <4 x float>, <4 x float>* %C
   %tmp4 = fsub <4 x float> <float -0.0, float -0.0, float -0.0, float -0.0>, %tmp2
   %tmp5 = call <4 x float> @llvm.fma.v4f32(<4 x float> %tmp4, <4 x float> %tmp1, <4 x float> %tmp3)
   ret <4 x float> %tmp5
@@ -532,9 +532,9 @@ define <4 x float> @fmls_commuted_neg_4s(<4 x float>* %A, <4 x float>* %B, <4 x 
 define <2 x double> @fmls_commuted_neg_2d(<2 x double>* %A, <2 x double>* %B, <2 x double>* %C) nounwind {
 ;CHECK-LABEL: fmls_commuted_neg_2d:
 ;CHECK: fmls.2d
-  %tmp1 = load <2 x double>* %A
-  %tmp2 = load <2 x double>* %B
-  %tmp3 = load <2 x double>* %C
+  %tmp1 = load <2 x double>, <2 x double>* %A
+  %tmp2 = load <2 x double>, <2 x double>* %B
+  %tmp3 = load <2 x double>, <2 x double>* %C
   %tmp4 = fsub <2 x double> <double -0.0, double -0.0>, %tmp2
   %tmp5 = call <2 x double> @llvm.fma.v2f64(<2 x double> %tmp4, <2 x double> %tmp1, <2 x double> %tmp3)
   ret <2 x double> %tmp5
@@ -609,8 +609,8 @@ define <4 x i16> @mul_4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: mul_4h:
 ;CHECK-NOT: dup
 ;CHECK: mul.4h
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
   %tmp3 = shufflevector <4 x i16> %tmp2, <4 x i16> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp4 = mul <4 x i16> %tmp1, %tmp3
   ret <4 x i16> %tmp4
@@ -620,8 +620,8 @@ define <8 x i16> @mul_8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK-LABEL: mul_8h:
 ;CHECK-NOT: dup
 ;CHECK: mul.8h
-  %tmp1 = load <8 x i16>* %A
-  %tmp2 = load <8 x i16>* %B
+  %tmp1 = load <8 x i16>, <8 x i16>* %A
+  %tmp2 = load <8 x i16>, <8 x i16>* %B
   %tmp3 = shufflevector <8 x i16> %tmp2, <8 x i16> %tmp2, <8 x i32> <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
   %tmp4 = mul <8 x i16> %tmp1, %tmp3
   ret <8 x i16> %tmp4
@@ -631,8 +631,8 @@ define <2 x i32> @mul_2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: mul_2s:
 ;CHECK-NOT: dup
 ;CHECK: mul.2s
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
   %tmp3 = shufflevector <2 x i32> %tmp2, <2 x i32> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp4 = mul <2 x i32> %tmp1, %tmp3
   ret <2 x i32> %tmp4
@@ -642,8 +642,8 @@ define <4 x i32> @mul_4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK-LABEL: mul_4s:
 ;CHECK-NOT: dup
 ;CHECK: mul.4s
-  %tmp1 = load <4 x i32>* %A
-  %tmp2 = load <4 x i32>* %B
+  %tmp1 = load <4 x i32>, <4 x i32>* %A
+  %tmp2 = load <4 x i32>, <4 x i32>* %B
   %tmp3 = shufflevector <4 x i32> %tmp2, <4 x i32> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp4 = mul <4 x i32> %tmp1, %tmp3
   ret <4 x i32> %tmp4
@@ -661,8 +661,8 @@ define <2 x float> @fmul_lane_2s(<2 x float>* %A, <2 x float>* %B) nounwind {
 ;CHECK-LABEL: fmul_lane_2s:
 ;CHECK-NOT: dup
 ;CHECK: fmul.2s
-  %tmp1 = load <2 x float>* %A
-  %tmp2 = load <2 x float>* %B
+  %tmp1 = load <2 x float>, <2 x float>* %A
+  %tmp2 = load <2 x float>, <2 x float>* %B
   %tmp3 = shufflevector <2 x float> %tmp2, <2 x float> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp4 = fmul <2 x float> %tmp1, %tmp3
   ret <2 x float> %tmp4
@@ -672,8 +672,8 @@ define <4 x float> @fmul_lane_4s(<4 x float>* %A, <4 x float>* %B) nounwind {
 ;CHECK-LABEL: fmul_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: fmul.4s
-  %tmp1 = load <4 x float>* %A
-  %tmp2 = load <4 x float>* %B
+  %tmp1 = load <4 x float>, <4 x float>* %A
+  %tmp2 = load <4 x float>, <4 x float>* %B
   %tmp3 = shufflevector <4 x float> %tmp2, <4 x float> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp4 = fmul <4 x float> %tmp1, %tmp3
   ret <4 x float> %tmp4
@@ -683,8 +683,8 @@ define <2 x double> @fmul_lane_2d(<2 x double>* %A, <2 x double>* %B) nounwind {
 ;CHECK-LABEL: fmul_lane_2d:
 ;CHECK-NOT: dup
 ;CHECK: fmul.2d
-  %tmp1 = load <2 x double>* %A
-  %tmp2 = load <2 x double>* %B
+  %tmp1 = load <2 x double>, <2 x double>* %A
+  %tmp2 = load <2 x double>, <2 x double>* %B
   %tmp3 = shufflevector <2 x double> %tmp2, <2 x double> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp4 = fmul <2 x double> %tmp1, %tmp3
   ret <2 x double> %tmp4
@@ -714,8 +714,8 @@ define <2 x float> @fmulx_lane_2s(<2 x float>* %A, <2 x float>* %B) nounwind {
 ;CHECK-LABEL: fmulx_lane_2s:
 ;CHECK-NOT: dup
 ;CHECK: fmulx.2s
-  %tmp1 = load <2 x float>* %A
-  %tmp2 = load <2 x float>* %B
+  %tmp1 = load <2 x float>, <2 x float>* %A
+  %tmp2 = load <2 x float>, <2 x float>* %B
   %tmp3 = shufflevector <2 x float> %tmp2, <2 x float> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp4 = call <2 x float> @llvm.aarch64.neon.fmulx.v2f32(<2 x float> %tmp1, <2 x float> %tmp3)
   ret <2 x float> %tmp4
@@ -725,8 +725,8 @@ define <4 x float> @fmulx_lane_4s(<4 x float>* %A, <4 x float>* %B) nounwind {
 ;CHECK-LABEL: fmulx_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: fmulx.4s
-  %tmp1 = load <4 x float>* %A
-  %tmp2 = load <4 x float>* %B
+  %tmp1 = load <4 x float>, <4 x float>* %A
+  %tmp2 = load <4 x float>, <4 x float>* %B
   %tmp3 = shufflevector <4 x float> %tmp2, <4 x float> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp4 = call <4 x float> @llvm.aarch64.neon.fmulx.v4f32(<4 x float> %tmp1, <4 x float> %tmp3)
   ret <4 x float> %tmp4
@@ -736,8 +736,8 @@ define <2 x double> @fmulx_lane_2d(<2 x double>* %A, <2 x double>* %B) nounwind 
 ;CHECK-LABEL: fmulx_lane_2d:
 ;CHECK-NOT: dup
 ;CHECK: fmulx.2d
-  %tmp1 = load <2 x double>* %A
-  %tmp2 = load <2 x double>* %B
+  %tmp1 = load <2 x double>, <2 x double>* %A
+  %tmp2 = load <2 x double>, <2 x double>* %B
   %tmp3 = shufflevector <2 x double> %tmp2, <2 x double> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp4 = call <2 x double> @llvm.aarch64.neon.fmulx.v2f64(<2 x double> %tmp1, <2 x double> %tmp3)
   ret <2 x double> %tmp4
@@ -747,8 +747,8 @@ define <4 x i16> @sqdmulh_lane_4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: sqdmulh_lane_4h:
 ;CHECK-NOT: dup
 ;CHECK: sqdmulh.4h
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
   %tmp3 = shufflevector <4 x i16> %tmp2, <4 x i16> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp4 = call <4 x i16> @llvm.aarch64.neon.sqdmulh.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp3)
   ret <4 x i16> %tmp4
@@ -758,8 +758,8 @@ define <8 x i16> @sqdmulh_lane_8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK-LABEL: sqdmulh_lane_8h:
 ;CHECK-NOT: dup
 ;CHECK: sqdmulh.8h
-  %tmp1 = load <8 x i16>* %A
-  %tmp2 = load <8 x i16>* %B
+  %tmp1 = load <8 x i16>, <8 x i16>* %A
+  %tmp2 = load <8 x i16>, <8 x i16>* %B
   %tmp3 = shufflevector <8 x i16> %tmp2, <8 x i16> %tmp2, <8 x i32> <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
   %tmp4 = call <8 x i16> @llvm.aarch64.neon.sqdmulh.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp3)
   ret <8 x i16> %tmp4
@@ -769,8 +769,8 @@ define <2 x i32> @sqdmulh_lane_2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: sqdmulh_lane_2s:
 ;CHECK-NOT: dup
 ;CHECK: sqdmulh.2s
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
   %tmp3 = shufflevector <2 x i32> %tmp2, <2 x i32> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp4 = call <2 x i32> @llvm.aarch64.neon.sqdmulh.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp3)
   ret <2 x i32> %tmp4
@@ -780,8 +780,8 @@ define <4 x i32> @sqdmulh_lane_4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK-LABEL: sqdmulh_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: sqdmulh.4s
-  %tmp1 = load <4 x i32>* %A
-  %tmp2 = load <4 x i32>* %B
+  %tmp1 = load <4 x i32>, <4 x i32>* %A
+  %tmp2 = load <4 x i32>, <4 x i32>* %B
   %tmp3 = shufflevector <4 x i32> %tmp2, <4 x i32> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp4 = call <4 x i32> @llvm.aarch64.neon.sqdmulh.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp3)
   ret <4 x i32> %tmp4
@@ -800,8 +800,8 @@ define <4 x i16> @sqrdmulh_lane_4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: sqrdmulh_lane_4h:
 ;CHECK-NOT: dup
 ;CHECK: sqrdmulh.4h
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
   %tmp3 = shufflevector <4 x i16> %tmp2, <4 x i16> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp4 = call <4 x i16> @llvm.aarch64.neon.sqrdmulh.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp3)
   ret <4 x i16> %tmp4
@@ -811,8 +811,8 @@ define <8 x i16> @sqrdmulh_lane_8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK-LABEL: sqrdmulh_lane_8h:
 ;CHECK-NOT: dup
 ;CHECK: sqrdmulh.8h
-  %tmp1 = load <8 x i16>* %A
-  %tmp2 = load <8 x i16>* %B
+  %tmp1 = load <8 x i16>, <8 x i16>* %A
+  %tmp2 = load <8 x i16>, <8 x i16>* %B
   %tmp3 = shufflevector <8 x i16> %tmp2, <8 x i16> %tmp2, <8 x i32> <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
   %tmp4 = call <8 x i16> @llvm.aarch64.neon.sqrdmulh.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp3)
   ret <8 x i16> %tmp4
@@ -822,8 +822,8 @@ define <2 x i32> @sqrdmulh_lane_2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: sqrdmulh_lane_2s:
 ;CHECK-NOT: dup
 ;CHECK: sqrdmulh.2s
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
   %tmp3 = shufflevector <2 x i32> %tmp2, <2 x i32> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp4 = call <2 x i32> @llvm.aarch64.neon.sqrdmulh.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp3)
   ret <2 x i32> %tmp4
@@ -833,8 +833,8 @@ define <4 x i32> @sqrdmulh_lane_4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK-LABEL: sqrdmulh_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: sqrdmulh.4s
-  %tmp1 = load <4 x i32>* %A
-  %tmp2 = load <4 x i32>* %B
+  %tmp1 = load <4 x i32>, <4 x i32>* %A
+  %tmp2 = load <4 x i32>, <4 x i32>* %B
   %tmp3 = shufflevector <4 x i32> %tmp2, <4 x i32> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp4 = call <4 x i32> @llvm.aarch64.neon.sqrdmulh.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp3)
   ret <4 x i32> %tmp4
@@ -853,8 +853,8 @@ define <4 x i32> @sqdmull_lane_4s(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: sqdmull_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: sqdmull.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
   %tmp3 = shufflevector <4 x i16> %tmp2, <4 x i16> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp4 = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp3)
   ret <4 x i32> %tmp4
@@ -864,8 +864,8 @@ define <2 x i64> @sqdmull_lane_2d(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: sqdmull_lane_2d:
 ;CHECK-NOT: dup
 ;CHECK: sqdmull.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
   %tmp3 = shufflevector <2 x i32> %tmp2, <2 x i32> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp4 = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp3)
   ret <2 x i64> %tmp4
@@ -875,8 +875,8 @@ define <4 x i32> @sqdmull2_lane_4s(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK-LABEL: sqdmull2_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: sqdmull2.4s
-  %load1 = load <8 x i16>* %A
-  %load2 = load <8 x i16>* %B
+  %load1 = load <8 x i16>, <8 x i16>* %A
+  %load2 = load <8 x i16>, <8 x i16>* %B
   %tmp1 = shufflevector <8 x i16> %load1, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %tmp2 = shufflevector <8 x i16> %load2, <8 x i16> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp4 = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
@@ -887,8 +887,8 @@ define <2 x i64> @sqdmull2_lane_2d(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK-LABEL: sqdmull2_lane_2d:
 ;CHECK-NOT: dup
 ;CHECK: sqdmull2.2d
-  %load1 = load <4 x i32>* %A
-  %load2 = load <4 x i32>* %B
+  %load1 = load <4 x i32>, <4 x i32>* %A
+  %load2 = load <4 x i32>, <4 x i32>* %B
   %tmp1 = shufflevector <4 x i32> %load1, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
   %tmp2 = shufflevector <4 x i32> %load2, <4 x i32> undef, <2 x i32> <i32 1, i32 1>
   %tmp4 = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
@@ -899,8 +899,8 @@ define <4 x i32> @umull_lane_4s(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: umull_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: umull.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
   %tmp3 = shufflevector <4 x i16> %tmp2, <4 x i16> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp4 = call <4 x i32> @llvm.aarch64.neon.umull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp3)
   ret <4 x i32> %tmp4
@@ -910,8 +910,8 @@ define <2 x i64> @umull_lane_2d(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: umull_lane_2d:
 ;CHECK-NOT: dup
 ;CHECK: umull.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
   %tmp3 = shufflevector <2 x i32> %tmp2, <2 x i32> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp4 = call <2 x i64> @llvm.aarch64.neon.umull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp3)
   ret <2 x i64> %tmp4
@@ -921,8 +921,8 @@ define <4 x i32> @smull_lane_4s(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: smull_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: smull.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
   %tmp3 = shufflevector <4 x i16> %tmp2, <4 x i16> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp4 = call <4 x i32> @llvm.aarch64.neon.smull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp3)
   ret <4 x i32> %tmp4
@@ -932,8 +932,8 @@ define <2 x i64> @smull_lane_2d(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: smull_lane_2d:
 ;CHECK-NOT: dup
 ;CHECK: smull.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
   %tmp3 = shufflevector <2 x i32> %tmp2, <2 x i32> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp4 = call <2 x i64> @llvm.aarch64.neon.smull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp3)
   ret <2 x i64> %tmp4
@@ -943,9 +943,9 @@ define <4 x i32> @smlal_lane_4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nou
 ;CHECK-LABEL: smlal_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: smlal.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp4 = shufflevector <4 x i16> %tmp2, <4 x i16> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp5 = call <4 x i32> @llvm.aarch64.neon.smull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp4)
   %tmp6 = add <4 x i32> %tmp3, %tmp5
@@ -956,9 +956,9 @@ define <2 x i64> @smlal_lane_2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nou
 ;CHECK-LABEL: smlal_lane_2d:
 ;CHECK-NOT: dup
 ;CHECK: smlal.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp4 = shufflevector <2 x i32> %tmp2, <2 x i32> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp5 = call <2 x i64> @llvm.aarch64.neon.smull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp4)
   %tmp6 = add <2 x i64> %tmp3, %tmp5
@@ -969,9 +969,9 @@ define <4 x i32> @sqdmlal_lane_4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) n
 ;CHECK-LABEL: sqdmlal_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: sqdmlal.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp4 = shufflevector <4 x i16> %tmp2, <4 x i16> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp5 = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp4)
   %tmp6 = call <4 x i32> @llvm.aarch64.neon.sqadd.v4i32(<4 x i32> %tmp3, <4 x i32> %tmp5)
@@ -982,9 +982,9 @@ define <2 x i64> @sqdmlal_lane_2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) n
 ;CHECK-LABEL: sqdmlal_lane_2d:
 ;CHECK-NOT: dup
 ;CHECK: sqdmlal.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp4 = shufflevector <2 x i32> %tmp2, <2 x i32> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp5 = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp4)
   %tmp6 = call <2 x i64> @llvm.aarch64.neon.sqadd.v2i64(<2 x i64> %tmp3, <2 x i64> %tmp5)
@@ -995,9 +995,9 @@ define <4 x i32> @sqdmlal2_lane_4s(<8 x i16>* %A, <8 x i16>* %B, <4 x i32>* %C) 
 ;CHECK-LABEL: sqdmlal2_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: sqdmlal2.4s
-  %load1 = load <8 x i16>* %A
-  %load2 = load <8 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %load1 = load <8 x i16>, <8 x i16>* %A
+  %load2 = load <8 x i16>, <8 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp1 = shufflevector <8 x i16> %load1, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %tmp2 = shufflevector <8 x i16> %load2, <8 x i16> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp5 = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
@@ -1009,9 +1009,9 @@ define <2 x i64> @sqdmlal2_lane_2d(<4 x i32>* %A, <4 x i32>* %B, <2 x i64>* %C) 
 ;CHECK-LABEL: sqdmlal2_lane_2d:
 ;CHECK-NOT: dup
 ;CHECK: sqdmlal2.2d
-  %load1 = load <4 x i32>* %A
-  %load2 = load <4 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %load1 = load <4 x i32>, <4 x i32>* %A
+  %load2 = load <4 x i32>, <4 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp1 = shufflevector <4 x i32> %load1, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
   %tmp2 = shufflevector <4 x i32> %load2, <4 x i32> undef, <2 x i32> <i32 1, i32 1>
   %tmp5 = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
@@ -1069,9 +1069,9 @@ define <4 x i32> @umlal_lane_4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nou
 ;CHECK-LABEL: umlal_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: umlal.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp4 = shufflevector <4 x i16> %tmp2, <4 x i16> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp5 = call <4 x i32> @llvm.aarch64.neon.umull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp4)
   %tmp6 = add <4 x i32> %tmp3, %tmp5
@@ -1082,9 +1082,9 @@ define <2 x i64> @umlal_lane_2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nou
 ;CHECK-LABEL: umlal_lane_2d:
 ;CHECK-NOT: dup
 ;CHECK: umlal.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp4 = shufflevector <2 x i32> %tmp2, <2 x i32> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp5 = call <2 x i64> @llvm.aarch64.neon.umull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp4)
   %tmp6 = add <2 x i64> %tmp3, %tmp5
@@ -1096,9 +1096,9 @@ define <4 x i32> @smlsl_lane_4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nou
 ;CHECK-LABEL: smlsl_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: smlsl.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp4 = shufflevector <4 x i16> %tmp2, <4 x i16> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp5 = call <4 x i32> @llvm.aarch64.neon.smull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp4)
   %tmp6 = sub <4 x i32> %tmp3, %tmp5
@@ -1109,9 +1109,9 @@ define <2 x i64> @smlsl_lane_2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nou
 ;CHECK-LABEL: smlsl_lane_2d:
 ;CHECK-NOT: dup
 ;CHECK: smlsl.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp4 = shufflevector <2 x i32> %tmp2, <2 x i32> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp5 = call <2 x i64> @llvm.aarch64.neon.smull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp4)
   %tmp6 = sub <2 x i64> %tmp3, %tmp5
@@ -1122,9 +1122,9 @@ define <4 x i32> @sqdmlsl_lane_4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) n
 ;CHECK-LABEL: sqdmlsl_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: sqdmlsl.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp4 = shufflevector <4 x i16> %tmp2, <4 x i16> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp5 = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp4)
   %tmp6 = call <4 x i32> @llvm.aarch64.neon.sqsub.v4i32(<4 x i32> %tmp3, <4 x i32> %tmp5)
@@ -1135,9 +1135,9 @@ define <2 x i64> @sqdmlsl_lane_2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) n
 ;CHECK-LABEL: sqdmlsl_lane_2d:
 ;CHECK-NOT: dup
 ;CHECK: sqdmlsl.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp4 = shufflevector <2 x i32> %tmp2, <2 x i32> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp5 = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp4)
   %tmp6 = call <2 x i64> @llvm.aarch64.neon.sqsub.v2i64(<2 x i64> %tmp3, <2 x i64> %tmp5)
@@ -1148,9 +1148,9 @@ define <4 x i32> @sqdmlsl2_lane_4s(<8 x i16>* %A, <8 x i16>* %B, <4 x i32>* %C) 
 ;CHECK-LABEL: sqdmlsl2_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: sqdmlsl2.4s
-  %load1 = load <8 x i16>* %A
-  %load2 = load <8 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %load1 = load <8 x i16>, <8 x i16>* %A
+  %load2 = load <8 x i16>, <8 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp1 = shufflevector <8 x i16> %load1, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %tmp2 = shufflevector <8 x i16> %load2, <8 x i16> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp5 = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
@@ -1162,9 +1162,9 @@ define <2 x i64> @sqdmlsl2_lane_2d(<4 x i32>* %A, <4 x i32>* %B, <2 x i64>* %C) 
 ;CHECK-LABEL: sqdmlsl2_lane_2d:
 ;CHECK-NOT: dup
 ;CHECK: sqdmlsl2.2d
-  %load1 = load <4 x i32>* %A
-  %load2 = load <4 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %load1 = load <4 x i32>, <4 x i32>* %A
+  %load2 = load <4 x i32>, <4 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp1 = shufflevector <4 x i32> %load1, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
   %tmp2 = shufflevector <4 x i32> %load2, <4 x i32> undef, <2 x i32> <i32 1, i32 1>
   %tmp5 = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
@@ -1176,9 +1176,9 @@ define <4 x i32> @umlsl_lane_4s(<4 x i16>* %A, <4 x i16>* %B, <4 x i32>* %C) nou
 ;CHECK-LABEL: umlsl_lane_4s:
 ;CHECK-NOT: dup
 ;CHECK: umlsl.4s
-  %tmp1 = load <4 x i16>* %A
-  %tmp2 = load <4 x i16>* %B
-  %tmp3 = load <4 x i32>* %C
+  %tmp1 = load <4 x i16>, <4 x i16>* %A
+  %tmp2 = load <4 x i16>, <4 x i16>* %B
+  %tmp3 = load <4 x i32>, <4 x i32>* %C
   %tmp4 = shufflevector <4 x i16> %tmp2, <4 x i16> %tmp2, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   %tmp5 = call <4 x i32> @llvm.aarch64.neon.umull.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp4)
   %tmp6 = sub <4 x i32> %tmp3, %tmp5
@@ -1189,9 +1189,9 @@ define <2 x i64> @umlsl_lane_2d(<2 x i32>* %A, <2 x i32>* %B, <2 x i64>* %C) nou
 ;CHECK-LABEL: umlsl_lane_2d:
 ;CHECK-NOT: dup
 ;CHECK: umlsl.2d
-  %tmp1 = load <2 x i32>* %A
-  %tmp2 = load <2 x i32>* %B
-  %tmp3 = load <2 x i64>* %C
+  %tmp1 = load <2 x i32>, <2 x i32>* %A
+  %tmp2 = load <2 x i32>, <2 x i32>* %B
+  %tmp3 = load <2 x i64>, <2 x i64>* %C
   %tmp4 = shufflevector <2 x i32> %tmp2, <2 x i32> %tmp2, <2 x i32> <i32 1, i32 1>
   %tmp5 = call <2 x i64> @llvm.aarch64.neon.umull.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp4)
   %tmp6 = sub <2 x i64> %tmp3, %tmp5

@@ -10,7 +10,7 @@ entry:
 cond_true:              ; preds = %entry
         ret void
 cond_next71:            ; preds = %entry
-        %tmp73.b = load i1* @qsz.b              ; <i1> [#uses=1]
+        %tmp73.b = load i1, i1* @qsz.b              ; <i1> [#uses=1]
         %ii.4.ph = select i1 %tmp73.b, i64 4, i64 0             ; <i64> [#uses=1]
         br label %bb139
 bb82:           ; preds = %bb139

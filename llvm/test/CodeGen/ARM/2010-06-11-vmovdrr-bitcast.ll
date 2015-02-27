@@ -6,7 +6,7 @@
 define void @foo(%struct.__int8x8x2_t* nocapture %a, i8* %b) nounwind {
 entry:
  %0 = bitcast %struct.__int8x8x2_t* %a to i128*  ; <i128*> [#uses=1]
- %srcval = load i128* %0, align 8                ; <i128> [#uses=2]
+ %srcval = load i128, i128* %0, align 8                ; <i128> [#uses=2]
  %tmp6 = trunc i128 %srcval to i64               ; <i64> [#uses=1]
  %tmp8 = lshr i128 %srcval, 64                   ; <i128> [#uses=1]
  %tmp9 = trunc i128 %tmp8 to i64                 ; <i64> [#uses=1]

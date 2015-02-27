@@ -44,13 +44,13 @@ for.body1940:                                     ; preds = %for.cond1933
   br i1 undef, label %if.then1992, label %if.else2003
 
 if.then1992:                                      ; preds = %for.body1940
-  %tmp14.i302 = load i32* undef                   ; <i32> [#uses=4]
+  %tmp14.i302 = load i32, i32* undef                   ; <i32> [#uses=4]
   %add.i307452 = or i32 %shl1959, 1               ; <i32> [#uses=1]
   %sub.i308 = add i32 %shl, -1                    ; <i32> [#uses=4]
   call  void undef(i32 %tmp14.i302, i32 %sub.i308, i32 %shl1959, i32 0, %struct.pix_pos* undef) nounwind
-  %tmp49.i309 = load void (i32, i32, i32, i32, %struct.pix_pos*)** @getNeighbour ; <void (i32, i32, i32, i32, %struct.pix_pos*)*> [#uses=1]
+  %tmp49.i309 = load void (i32, i32, i32, i32, %struct.pix_pos*)*, void (i32, i32, i32, i32, %struct.pix_pos*)** @getNeighbour ; <void (i32, i32, i32, i32, %struct.pix_pos*)*> [#uses=1]
   call  void %tmp49.i309(i32 %tmp14.i302, i32 %sub.i308, i32 %add.i307452, i32 0, %struct.pix_pos* null) nounwind
-  %tmp49.1.i = load void (i32, i32, i32, i32, %struct.pix_pos*)** @getNeighbour ; <void (i32, i32, i32, i32, %struct.pix_pos*)*> [#uses=1]
+  %tmp49.1.i = load void (i32, i32, i32, i32, %struct.pix_pos*)*, void (i32, i32, i32, i32, %struct.pix_pos*)** @getNeighbour ; <void (i32, i32, i32, i32, %struct.pix_pos*)*> [#uses=1]
   call  void %tmp49.1.i(i32 %tmp14.i302, i32 %sub.i308, i32 undef, i32 0, %struct.pix_pos* %arrayidx56.2.i) nounwind
   call  void undef(i32 %tmp14.i302, i32 %sub.i308, i32 undef, i32 0, %struct.pix_pos* %arrayidx56.3.i) nounwind
   unreachable
@@ -102,11 +102,11 @@ if.then3689:                                      ; preds = %for.cond2882.prehea
   %add3695 = add nsw i32 %mul3693, %shl1959       ; <i32> [#uses=1]
   %mul3697 = shl i32 %add3695, 2                  ; <i32> [#uses=2]
   %arrayidx3705 = getelementptr inbounds i16, i16* undef, i32 1 ; <i16*> [#uses=1]
-  %tmp3706 = load i16* %arrayidx3705              ; <i16> [#uses=1]
+  %tmp3706 = load i16, i16* %arrayidx3705              ; <i16> [#uses=1]
   %conv3707 = sext i16 %tmp3706 to i32            ; <i32> [#uses=1]
   %add3708 = add nsw i32 %conv3707, %mul3697      ; <i32> [#uses=1]
   %arrayidx3724 = getelementptr inbounds i16, i16* null, i32 1 ; <i16*> [#uses=1]
-  %tmp3725 = load i16* %arrayidx3724              ; <i16> [#uses=1]
+  %tmp3725 = load i16, i16* %arrayidx3724              ; <i16> [#uses=1]
   %conv3726 = sext i16 %tmp3725 to i32            ; <i32> [#uses=1]
   %add3727 = add nsw i32 %conv3726, %mul3697      ; <i32> [#uses=1]
   br label %if.end3770
@@ -115,11 +115,11 @@ if.else3728:                                      ; preds = %for.cond2882.prehea
   %mul3733 = add i32 %shl1959, 1073741816         ; <i32> [#uses=1]
   %add3735 = add nsw i32 %mul3733, %mul3693       ; <i32> [#uses=1]
   %mul3737 = shl i32 %add3735, 2                  ; <i32> [#uses=2]
-  %tmp3746 = load i16* undef                      ; <i16> [#uses=1]
+  %tmp3746 = load i16, i16* undef                      ; <i16> [#uses=1]
   %conv3747 = sext i16 %tmp3746 to i32            ; <i32> [#uses=1]
   %add3748 = add nsw i32 %conv3747, %mul3737      ; <i32> [#uses=1]
   %arrayidx3765 = getelementptr inbounds i16, i16* null, i32 1 ; <i16*> [#uses=1]
-  %tmp3766 = load i16* %arrayidx3765              ; <i16> [#uses=1]
+  %tmp3766 = load i16, i16* %arrayidx3765              ; <i16> [#uses=1]
   %conv3767 = sext i16 %tmp3766 to i32            ; <i32> [#uses=1]
   %add3768 = add nsw i32 %conv3767, %mul3737      ; <i32> [#uses=1]
   br label %if.end3770

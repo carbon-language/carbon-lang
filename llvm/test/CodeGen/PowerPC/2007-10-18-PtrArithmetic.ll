@@ -10,9 +10,9 @@ entry:
 cond_true:		; preds = %entry
 	%tmp89 = bitcast float* %res to <4 x i32>*		; <<4 x i32>*> [#uses=1]
 	%tmp1011 = bitcast float* %argA to <4 x i32>*		; <<4 x i32>*> [#uses=1]
-	%tmp14 = load <4 x i32>* %tmp1011, align 16		; <<4 x i32>> [#uses=1]
+	%tmp14 = load <4 x i32>, <4 x i32>* %tmp1011, align 16		; <<4 x i32>> [#uses=1]
 	%tmp1516 = bitcast float* %argB to <4 x i32>*		; <<4 x i32>*> [#uses=1]
-	%tmp18 = load <4 x i32>* %tmp1516, align 16		; <<4 x i32>> [#uses=1]
+	%tmp18 = load <4 x i32>, <4 x i32>* %tmp1516, align 16		; <<4 x i32>> [#uses=1]
 	%tmp19 = sdiv <4 x i32> %tmp14, %tmp18		; <<4 x i32>> [#uses=1]
 	store <4 x i32> %tmp19, <4 x i32>* %tmp89, align 16
 	ret void

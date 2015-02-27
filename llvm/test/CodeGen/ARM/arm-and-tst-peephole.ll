@@ -22,7 +22,7 @@ tailrecurse:                                      ; preds = %sw.bb, %entry
   %acc.tr = phi i32 [ %or, %sw.bb ], [ %acc, %entry ]
   %lsr.iv24 = bitcast %struct.Foo* %lsr.iv2 to i8**
   %scevgep5 = getelementptr i8*, i8** %lsr.iv24, i32 -1
-  %tmp2 = load i8** %scevgep5
+  %tmp2 = load i8*, i8** %scevgep5
   %0 = ptrtoint i8* %tmp2 to i32
 
 ; ARM:      ands {{r[0-9]+}}, {{r[0-9]+}}, #3
@@ -90,7 +90,7 @@ sw.epilog:                                        ; preds = %tailrecurse.switch
 define internal zeroext i8 @bar(%struct.S* %x, %struct.S* nocapture %y) nounwind readonly {
 entry:
   %0 = getelementptr inbounds %struct.S, %struct.S* %x, i32 0, i32 1, i32 0
-  %1 = load i8* %0, align 1
+  %1 = load i8, i8* %0, align 1
   %2 = zext i8 %1 to i32
 ; ARM: ands
 ; THUMB: ands
@@ -104,7 +104,7 @@ entry:
 bb:                                               ; preds = %entry
 ; V8-NEXT: %bb
   %5 = getelementptr inbounds %struct.S, %struct.S* %y, i32 0, i32 1, i32 0
-  %6 = load i8* %5, align 1
+  %6 = load i8, i8* %5, align 1
   %7 = zext i8 %6 to i32
 ; ARM: andsne
 ; THUMB: ands

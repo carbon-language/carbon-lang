@@ -4,7 +4,7 @@
 
 define void @_Z7test1f1v() nounwind {
 entry:
-  %tmp = load i32* @_ZL6test1g, align 4
+  %tmp = load i32, i32* @_ZL6test1g, align 4
   %cmp = icmp eq i32 %tmp, 0
   br i1 %cmp, label %if.then, label %if.end
 
@@ -21,6 +21,6 @@ if.end:                                           ; preds = %if.then, %entry
 ; CHECK-NEXT: ret i32 42
 define i32 @_Z7test1f2v() nounwind {
 entry:
-  %tmp = load i32* @_ZL6test1g, align 4
+  %tmp = load i32, i32* @_ZL6test1g, align 4
   ret i32 %tmp
 }

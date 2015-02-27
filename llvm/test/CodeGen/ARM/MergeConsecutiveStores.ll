@@ -13,12 +13,12 @@ define void @MergeLoadStoreBaseIndexOffset(i32* %a, i8* %b, i8* %c, i32 %n) {
   %.08 = phi i8* [ %b, %0 ], [ %10, %1 ]
   %.0 = phi i32* [ %a, %0 ], [ %2, %1 ]
   %2 = getelementptr inbounds i32, i32* %.0, i32 1
-  %3 = load i32* %.0, align 1
+  %3 = load i32, i32* %.0, align 1
   %4 = getelementptr inbounds i8, i8* %c, i32 %3
-  %5 = load i8* %4, align 1
+  %5 = load i8, i8* %4, align 1
   %6 = add i32 %3, 1
   %7 = getelementptr inbounds i8, i8* %c, i32 %6
-  %8 = load i8* %7, align 1
+  %8 = load i8, i8* %7, align 1
   store i8 %5, i8* %.08, align 1
   %9 = getelementptr inbounds i8, i8* %.08, i32 1
   store i8 %8, i8* %9, align 1
@@ -45,13 +45,13 @@ define void @MergeLoadStoreBaseIndexOffsetSext(i8* %a, i8* %b, i8* %c, i32 %n) {
   %.08 = phi i8* [ %b, %0 ], [ %11, %1 ]
   %.0 = phi i8* [ %a, %0 ], [ %2, %1 ]
   %2 = getelementptr inbounds i8, i8* %.0, i32 1
-  %3 = load i8* %.0, align 1
+  %3 = load i8, i8* %.0, align 1
   %4 = sext i8 %3 to i32
   %5 = getelementptr inbounds i8, i8* %c, i32 %4
-  %6 = load i8* %5, align 1
+  %6 = load i8, i8* %5, align 1
   %7 = add i32 %4, 1
   %8 = getelementptr inbounds i8, i8* %c, i32 %7
-  %9 = load i8* %8, align 1
+  %9 = load i8, i8* %8, align 1
   store i8 %6, i8* %.08, align 1
   %10 = getelementptr inbounds i8, i8* %.08, i32 1
   store i8 %9, i8* %10, align 1
@@ -77,14 +77,14 @@ define void @loadStoreBaseIndexOffsetSextNoSex(i8* %a, i8* %b, i8* %c, i32 %n) {
   %.08 = phi i8* [ %b, %0 ], [ %11, %1 ]
   %.0 = phi i8* [ %a, %0 ], [ %2, %1 ]
   %2 = getelementptr inbounds i8, i8* %.0, i32 1
-  %3 = load i8* %.0, align 1
+  %3 = load i8, i8* %.0, align 1
   %4 = sext i8 %3 to i32
   %5 = getelementptr inbounds i8, i8* %c, i32 %4
-  %6 = load i8* %5, align 1
+  %6 = load i8, i8* %5, align 1
   %7 = add i8 %3, 1
   %wrap.4 = sext i8 %7 to i32
   %8 = getelementptr inbounds i8, i8* %c, i32 %wrap.4
-  %9 = load i8* %8, align 1
+  %9 = load i8, i8* %8, align 1
   store i8 %6, i8* %.08, align 1
   %10 = getelementptr inbounds i8, i8* %.08, i32 1
   store i8 %9, i8* %10, align 1

@@ -16,10 +16,10 @@ target triple = "i386-apple-darwin7"
 define void @bi_windup(i8* %outbuf, i8 zeroext %bi_buf) nounwind {
 entry:
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
-	%0 = load i32* @outcnt, align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* @outcnt, align 4		; <i32> [#uses=1]
 	%1 = getelementptr i8, i8* %outbuf, i32 %0		; <i8*> [#uses=1]
 	store i8 %bi_buf, i8* %1, align 1
-	%2 = load i32* @outcnt, align 4		; <i32> [#uses=1]
+	%2 = load i32, i32* @outcnt, align 4		; <i32> [#uses=1]
 	%3 = icmp eq i32 %2, 16384		; <i1> [#uses=1]
 	br i1 %3, label %bb, label %bb1
 
@@ -31,7 +31,7 @@ bb1:		; preds = %bb, %entry
 ; CHECK: bb1:
 ; CHECK-NEXT: phi
 ; CHECK-NEXT: getelementptr
-	%4 = load i32* @outcnt, align 4		; <i32> [#uses=1]
+	%4 = load i32, i32* @outcnt, align 4		; <i32> [#uses=1]
 	%5 = getelementptr i8, i8* %outbuf, i32 %4		; <i8*> [#uses=1]
 	store i8 %bi_buf, i8* %5, align 1
 	ret void

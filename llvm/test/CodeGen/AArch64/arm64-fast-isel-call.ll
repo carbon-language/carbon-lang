@@ -23,7 +23,7 @@ define i32 @call1(i32 %a) nounwind {
 entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
-  %tmp = load i32* %a.addr, align 4
+  %tmp = load i32, i32* %a.addr, align 4
   ret i32 %tmp
 }
 
@@ -35,7 +35,7 @@ entry:
 ; CHECK-NEXT:  bl _call1
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
-  %tmp = load i32* %a.addr, align 4
+  %tmp = load i32, i32* %a.addr, align 4
   %call = call i32 @call1(i32 %tmp)
   ret i32 %call
 }

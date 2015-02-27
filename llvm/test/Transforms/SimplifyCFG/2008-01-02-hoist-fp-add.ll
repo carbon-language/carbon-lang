@@ -8,7 +8,7 @@ target triple = "i686-apple-darwin8"
 define void @test(i32 %X, i32 %Y, i32 %Z) {
 entry:
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
-	%tmp = load i32* @G, align 8		; <i32> [#uses=2]
+	%tmp = load i32, i32* @G, align 8		; <i32> [#uses=2]
 	%tmp3 = icmp eq i32 %X, %Y		; <i1> [#uses=1]
 	%tmp34 = zext i1 %tmp3 to i8		; <i8> [#uses=1]
 	%toBool = icmp ne i8 %tmp34, 0		; <i1> [#uses=1]

@@ -10,8 +10,8 @@ bb:             ; preds = %bb31, %entry
         br i1 false, label %bb6, label %bb31
 
 bb6:            ; preds = %bb
-        %tmp10 = load i64* null, align 8                ; <i64> [#uses=1]
-        %tmp16 = load i64* null, align 8                ; <i64> [#uses=1]
+        %tmp10 = load i64, i64* null, align 8                ; <i64> [#uses=1]
+        %tmp16 = load i64, i64* null, align 8                ; <i64> [#uses=1]
         br i1 false, label %bb23, label %bb31
 
 bb23:           ; preds = %bb6

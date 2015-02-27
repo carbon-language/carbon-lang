@@ -3,8 +3,8 @@
 define <8 x i8> @sqadd8b(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: sqadd8b:
 ;CHECK: sqadd.8b
-	%tmp1 = load <8 x i8>* %A
-	%tmp2 = load <8 x i8>* %B
+	%tmp1 = load <8 x i8>, <8 x i8>* %A
+	%tmp2 = load <8 x i8>, <8 x i8>* %B
 	%tmp3 = call <8 x i8> @llvm.aarch64.neon.sqadd.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
 	ret <8 x i8> %tmp3
 }
@@ -12,8 +12,8 @@ define <8 x i8> @sqadd8b(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <4 x i16> @sqadd4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: sqadd4h:
 ;CHECK: sqadd.4h
-	%tmp1 = load <4 x i16>* %A
-	%tmp2 = load <4 x i16>* %B
+	%tmp1 = load <4 x i16>, <4 x i16>* %A
+	%tmp2 = load <4 x i16>, <4 x i16>* %B
 	%tmp3 = call <4 x i16> @llvm.aarch64.neon.sqadd.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
 	ret <4 x i16> %tmp3
 }
@@ -21,8 +21,8 @@ define <4 x i16> @sqadd4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <2 x i32> @sqadd2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: sqadd2s:
 ;CHECK: sqadd.2s
-	%tmp1 = load <2 x i32>* %A
-	%tmp2 = load <2 x i32>* %B
+	%tmp1 = load <2 x i32>, <2 x i32>* %A
+	%tmp2 = load <2 x i32>, <2 x i32>* %B
 	%tmp3 = call <2 x i32> @llvm.aarch64.neon.sqadd.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
 	ret <2 x i32> %tmp3
 }
@@ -30,8 +30,8 @@ define <2 x i32> @sqadd2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <8 x i8> @uqadd8b(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: uqadd8b:
 ;CHECK: uqadd.8b
-	%tmp1 = load <8 x i8>* %A
-	%tmp2 = load <8 x i8>* %B
+	%tmp1 = load <8 x i8>, <8 x i8>* %A
+	%tmp2 = load <8 x i8>, <8 x i8>* %B
 	%tmp3 = call <8 x i8> @llvm.aarch64.neon.uqadd.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
 	ret <8 x i8> %tmp3
 }
@@ -39,8 +39,8 @@ define <8 x i8> @uqadd8b(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <4 x i16> @uqadd4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: uqadd4h:
 ;CHECK: uqadd.4h
-	%tmp1 = load <4 x i16>* %A
-	%tmp2 = load <4 x i16>* %B
+	%tmp1 = load <4 x i16>, <4 x i16>* %A
+	%tmp2 = load <4 x i16>, <4 x i16>* %B
 	%tmp3 = call <4 x i16> @llvm.aarch64.neon.uqadd.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
 	ret <4 x i16> %tmp3
 }
@@ -48,8 +48,8 @@ define <4 x i16> @uqadd4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <2 x i32> @uqadd2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: uqadd2s:
 ;CHECK: uqadd.2s
-	%tmp1 = load <2 x i32>* %A
-	%tmp2 = load <2 x i32>* %B
+	%tmp1 = load <2 x i32>, <2 x i32>* %A
+	%tmp2 = load <2 x i32>, <2 x i32>* %B
 	%tmp3 = call <2 x i32> @llvm.aarch64.neon.uqadd.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
 	ret <2 x i32> %tmp3
 }
@@ -57,8 +57,8 @@ define <2 x i32> @uqadd2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <16 x i8> @sqadd16b(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 ;CHECK-LABEL: sqadd16b:
 ;CHECK: sqadd.16b
-	%tmp1 = load <16 x i8>* %A
-	%tmp2 = load <16 x i8>* %B
+	%tmp1 = load <16 x i8>, <16 x i8>* %A
+	%tmp2 = load <16 x i8>, <16 x i8>* %B
 	%tmp3 = call <16 x i8> @llvm.aarch64.neon.sqadd.v16i8(<16 x i8> %tmp1, <16 x i8> %tmp2)
 	ret <16 x i8> %tmp3
 }
@@ -66,8 +66,8 @@ define <16 x i8> @sqadd16b(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 define <8 x i16> @sqadd8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK-LABEL: sqadd8h:
 ;CHECK: sqadd.8h
-	%tmp1 = load <8 x i16>* %A
-	%tmp2 = load <8 x i16>* %B
+	%tmp1 = load <8 x i16>, <8 x i16>* %A
+	%tmp2 = load <8 x i16>, <8 x i16>* %B
 	%tmp3 = call <8 x i16> @llvm.aarch64.neon.sqadd.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp2)
 	ret <8 x i16> %tmp3
 }
@@ -75,8 +75,8 @@ define <8 x i16> @sqadd8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 define <4 x i32> @sqadd4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK-LABEL: sqadd4s:
 ;CHECK: sqadd.4s
-	%tmp1 = load <4 x i32>* %A
-	%tmp2 = load <4 x i32>* %B
+	%tmp1 = load <4 x i32>, <4 x i32>* %A
+	%tmp2 = load <4 x i32>, <4 x i32>* %B
 	%tmp3 = call <4 x i32> @llvm.aarch64.neon.sqadd.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2)
 	ret <4 x i32> %tmp3
 }
@@ -84,8 +84,8 @@ define <4 x i32> @sqadd4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 define <2 x i64> @sqadd2d(<2 x i64>* %A, <2 x i64>* %B) nounwind {
 ;CHECK-LABEL: sqadd2d:
 ;CHECK: sqadd.2d
-	%tmp1 = load <2 x i64>* %A
-	%tmp2 = load <2 x i64>* %B
+	%tmp1 = load <2 x i64>, <2 x i64>* %A
+	%tmp2 = load <2 x i64>, <2 x i64>* %B
 	%tmp3 = call <2 x i64> @llvm.aarch64.neon.sqadd.v2i64(<2 x i64> %tmp1, <2 x i64> %tmp2)
 	ret <2 x i64> %tmp3
 }
@@ -93,8 +93,8 @@ define <2 x i64> @sqadd2d(<2 x i64>* %A, <2 x i64>* %B) nounwind {
 define <16 x i8> @uqadd16b(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 ;CHECK-LABEL: uqadd16b:
 ;CHECK: uqadd.16b
-	%tmp1 = load <16 x i8>* %A
-	%tmp2 = load <16 x i8>* %B
+	%tmp1 = load <16 x i8>, <16 x i8>* %A
+	%tmp2 = load <16 x i8>, <16 x i8>* %B
 	%tmp3 = call <16 x i8> @llvm.aarch64.neon.uqadd.v16i8(<16 x i8> %tmp1, <16 x i8> %tmp2)
 	ret <16 x i8> %tmp3
 }
@@ -102,8 +102,8 @@ define <16 x i8> @uqadd16b(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 define <8 x i16> @uqadd8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK-LABEL: uqadd8h:
 ;CHECK: uqadd.8h
-	%tmp1 = load <8 x i16>* %A
-	%tmp2 = load <8 x i16>* %B
+	%tmp1 = load <8 x i16>, <8 x i16>* %A
+	%tmp2 = load <8 x i16>, <8 x i16>* %B
 	%tmp3 = call <8 x i16> @llvm.aarch64.neon.uqadd.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp2)
 	ret <8 x i16> %tmp3
 }
@@ -111,8 +111,8 @@ define <8 x i16> @uqadd8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 define <4 x i32> @uqadd4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK-LABEL: uqadd4s:
 ;CHECK: uqadd.4s
-	%tmp1 = load <4 x i32>* %A
-	%tmp2 = load <4 x i32>* %B
+	%tmp1 = load <4 x i32>, <4 x i32>* %A
+	%tmp2 = load <4 x i32>, <4 x i32>* %B
 	%tmp3 = call <4 x i32> @llvm.aarch64.neon.uqadd.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2)
 	ret <4 x i32> %tmp3
 }
@@ -120,8 +120,8 @@ define <4 x i32> @uqadd4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 define <2 x i64> @uqadd2d(<2 x i64>* %A, <2 x i64>* %B) nounwind {
 ;CHECK-LABEL: uqadd2d:
 ;CHECK: uqadd.2d
-	%tmp1 = load <2 x i64>* %A
-	%tmp2 = load <2 x i64>* %B
+	%tmp1 = load <2 x i64>, <2 x i64>* %A
+	%tmp2 = load <2 x i64>, <2 x i64>* %B
 	%tmp3 = call <2 x i64> @llvm.aarch64.neon.uqadd.v2i64(<2 x i64> %tmp1, <2 x i64> %tmp2)
 	ret <2 x i64> %tmp3
 }
@@ -149,8 +149,8 @@ declare <2 x i64> @llvm.aarch64.neon.uqadd.v2i64(<2 x i64>, <2 x i64>) nounwind 
 define <8 x i8> @usqadd8b(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: usqadd8b:
 ;CHECK: usqadd.8b
-	%tmp1 = load <8 x i8>* %A
-	%tmp2 = load <8 x i8>* %B
+	%tmp1 = load <8 x i8>, <8 x i8>* %A
+	%tmp2 = load <8 x i8>, <8 x i8>* %B
 	%tmp3 = call <8 x i8> @llvm.aarch64.neon.usqadd.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
 	ret <8 x i8> %tmp3
 }
@@ -158,8 +158,8 @@ define <8 x i8> @usqadd8b(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <4 x i16> @usqadd4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: usqadd4h:
 ;CHECK: usqadd.4h
-	%tmp1 = load <4 x i16>* %A
-	%tmp2 = load <4 x i16>* %B
+	%tmp1 = load <4 x i16>, <4 x i16>* %A
+	%tmp2 = load <4 x i16>, <4 x i16>* %B
 	%tmp3 = call <4 x i16> @llvm.aarch64.neon.usqadd.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
 	ret <4 x i16> %tmp3
 }
@@ -167,8 +167,8 @@ define <4 x i16> @usqadd4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <2 x i32> @usqadd2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: usqadd2s:
 ;CHECK: usqadd.2s
-	%tmp1 = load <2 x i32>* %A
-	%tmp2 = load <2 x i32>* %B
+	%tmp1 = load <2 x i32>, <2 x i32>* %A
+	%tmp2 = load <2 x i32>, <2 x i32>* %B
 	%tmp3 = call <2 x i32> @llvm.aarch64.neon.usqadd.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
 	ret <2 x i32> %tmp3
 }
@@ -176,8 +176,8 @@ define <2 x i32> @usqadd2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <16 x i8> @usqadd16b(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 ;CHECK-LABEL: usqadd16b:
 ;CHECK: usqadd.16b
-	%tmp1 = load <16 x i8>* %A
-	%tmp2 = load <16 x i8>* %B
+	%tmp1 = load <16 x i8>, <16 x i8>* %A
+	%tmp2 = load <16 x i8>, <16 x i8>* %B
 	%tmp3 = call <16 x i8> @llvm.aarch64.neon.usqadd.v16i8(<16 x i8> %tmp1, <16 x i8> %tmp2)
 	ret <16 x i8> %tmp3
 }
@@ -185,8 +185,8 @@ define <16 x i8> @usqadd16b(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 define <8 x i16> @usqadd8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK-LABEL: usqadd8h:
 ;CHECK: usqadd.8h
-	%tmp1 = load <8 x i16>* %A
-	%tmp2 = load <8 x i16>* %B
+	%tmp1 = load <8 x i16>, <8 x i16>* %A
+	%tmp2 = load <8 x i16>, <8 x i16>* %B
 	%tmp3 = call <8 x i16> @llvm.aarch64.neon.usqadd.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp2)
 	ret <8 x i16> %tmp3
 }
@@ -194,8 +194,8 @@ define <8 x i16> @usqadd8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 define <4 x i32> @usqadd4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK-LABEL: usqadd4s:
 ;CHECK: usqadd.4s
-	%tmp1 = load <4 x i32>* %A
-	%tmp2 = load <4 x i32>* %B
+	%tmp1 = load <4 x i32>, <4 x i32>* %A
+	%tmp2 = load <4 x i32>, <4 x i32>* %B
 	%tmp3 = call <4 x i32> @llvm.aarch64.neon.usqadd.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2)
 	ret <4 x i32> %tmp3
 }
@@ -203,8 +203,8 @@ define <4 x i32> @usqadd4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 define <2 x i64> @usqadd2d(<2 x i64>* %A, <2 x i64>* %B) nounwind {
 ;CHECK-LABEL: usqadd2d:
 ;CHECK: usqadd.2d
-	%tmp1 = load <2 x i64>* %A
-	%tmp2 = load <2 x i64>* %B
+	%tmp1 = load <2 x i64>, <2 x i64>* %A
+	%tmp2 = load <2 x i64>, <2 x i64>* %B
 	%tmp3 = call <2 x i64> @llvm.aarch64.neon.usqadd.v2i64(<2 x i64> %tmp1, <2 x i64> %tmp2)
 	ret <2 x i64> %tmp3
 }
@@ -238,8 +238,8 @@ declare <2 x i64> @llvm.aarch64.neon.usqadd.v2i64(<2 x i64>, <2 x i64>) nounwind
 define <8 x i8> @suqadd8b(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: suqadd8b:
 ;CHECK: suqadd.8b
-	%tmp1 = load <8 x i8>* %A
-	%tmp2 = load <8 x i8>* %B
+	%tmp1 = load <8 x i8>, <8 x i8>* %A
+	%tmp2 = load <8 x i8>, <8 x i8>* %B
 	%tmp3 = call <8 x i8> @llvm.aarch64.neon.suqadd.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
 	ret <8 x i8> %tmp3
 }
@@ -247,8 +247,8 @@ define <8 x i8> @suqadd8b(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <4 x i16> @suqadd4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: suqadd4h:
 ;CHECK: suqadd.4h
-	%tmp1 = load <4 x i16>* %A
-	%tmp2 = load <4 x i16>* %B
+	%tmp1 = load <4 x i16>, <4 x i16>* %A
+	%tmp2 = load <4 x i16>, <4 x i16>* %B
 	%tmp3 = call <4 x i16> @llvm.aarch64.neon.suqadd.v4i16(<4 x i16> %tmp1, <4 x i16> %tmp2)
 	ret <4 x i16> %tmp3
 }
@@ -256,8 +256,8 @@ define <4 x i16> @suqadd4h(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <2 x i32> @suqadd2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: suqadd2s:
 ;CHECK: suqadd.2s
-	%tmp1 = load <2 x i32>* %A
-	%tmp2 = load <2 x i32>* %B
+	%tmp1 = load <2 x i32>, <2 x i32>* %A
+	%tmp2 = load <2 x i32>, <2 x i32>* %B
 	%tmp3 = call <2 x i32> @llvm.aarch64.neon.suqadd.v2i32(<2 x i32> %tmp1, <2 x i32> %tmp2)
 	ret <2 x i32> %tmp3
 }
@@ -265,8 +265,8 @@ define <2 x i32> @suqadd2s(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <16 x i8> @suqadd16b(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 ;CHECK-LABEL: suqadd16b:
 ;CHECK: suqadd.16b
-	%tmp1 = load <16 x i8>* %A
-	%tmp2 = load <16 x i8>* %B
+	%tmp1 = load <16 x i8>, <16 x i8>* %A
+	%tmp2 = load <16 x i8>, <16 x i8>* %B
 	%tmp3 = call <16 x i8> @llvm.aarch64.neon.suqadd.v16i8(<16 x i8> %tmp1, <16 x i8> %tmp2)
 	ret <16 x i8> %tmp3
 }
@@ -274,8 +274,8 @@ define <16 x i8> @suqadd16b(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 define <8 x i16> @suqadd8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK-LABEL: suqadd8h:
 ;CHECK: suqadd.8h
-	%tmp1 = load <8 x i16>* %A
-	%tmp2 = load <8 x i16>* %B
+	%tmp1 = load <8 x i16>, <8 x i16>* %A
+	%tmp2 = load <8 x i16>, <8 x i16>* %B
 	%tmp3 = call <8 x i16> @llvm.aarch64.neon.suqadd.v8i16(<8 x i16> %tmp1, <8 x i16> %tmp2)
 	ret <8 x i16> %tmp3
 }
@@ -283,8 +283,8 @@ define <8 x i16> @suqadd8h(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 define <4 x i32> @suqadd4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK-LABEL: suqadd4s:
 ;CHECK: suqadd.4s
-	%tmp1 = load <4 x i32>* %A
-	%tmp2 = load <4 x i32>* %B
+	%tmp1 = load <4 x i32>, <4 x i32>* %A
+	%tmp2 = load <4 x i32>, <4 x i32>* %B
 	%tmp3 = call <4 x i32> @llvm.aarch64.neon.suqadd.v4i32(<4 x i32> %tmp1, <4 x i32> %tmp2)
 	ret <4 x i32> %tmp3
 }
@@ -292,8 +292,8 @@ define <4 x i32> @suqadd4s(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 define <2 x i64> @suqadd2d(<2 x i64>* %A, <2 x i64>* %B) nounwind {
 ;CHECK-LABEL: suqadd2d:
 ;CHECK: suqadd.2d
-	%tmp1 = load <2 x i64>* %A
-	%tmp2 = load <2 x i64>* %B
+	%tmp1 = load <2 x i64>, <2 x i64>* %A
+	%tmp2 = load <2 x i64>, <2 x i64>* %B
 	%tmp3 = call <2 x i64> @llvm.aarch64.neon.suqadd.v2i64(<2 x i64> %tmp1, <2 x i64> %tmp2)
 	ret <2 x i64> %tmp3
 }

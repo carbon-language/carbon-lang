@@ -109,10 +109,10 @@ loop:
   %diagidx = add nsw i32 %rowidx, %i
   %diagidxw = sext i32 %diagidx to i64
   %matrixp = getelementptr inbounds [0 x double], [0 x double]* %matrix, i32 0, i64 %diagidxw
-  %v1 = load double* %matrixp
+  %v1 = load double, double* %matrixp
   %iw = sext i32 %i to i64
   %vectorp = getelementptr inbounds [0 x double], [0 x double]* %vector, i32 0, i64 %iw
-  %v2 = load double* %vectorp
+  %v2 = load double, double* %vectorp
   %row.inc = add nsw i32 %rowidx, %ilead
   %i.inc = add nsw i32 %i, 1
   %cmp196 = icmp slt i32 %i.inc, %irow
@@ -143,10 +143,10 @@ loop:
   %diagidx = add nsw i32 %rowidx, %i
   %diagidxw = sext i32 %diagidx to i64
   %matrixp = getelementptr inbounds [0 x double], [0 x double]* %matrix, i32 0, i64 %diagidxw
-  %v1 = load double* %matrixp
+  %v1 = load double, double* %matrixp
   %iw = sext i32 %i to i64
   %vectorp = getelementptr inbounds [0 x double], [0 x double]* %vector, i32 0, i64 %iw
-  %v2 = load double* %vectorp
+  %v2 = load double, double* %vectorp
   %row.inc = add nsw i32 %rowidx, %ilead
   %i.inc = add nsw i32 %i, 1
   %cmp196 = icmp slt i32 %i.inc, %irow

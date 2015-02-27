@@ -8,8 +8,8 @@ target triple = "aarch64-linux-gnu"
 define void @f(i64* %p, i64* %q) {
   %addr2 = getelementptr i64, i64* %q, i32 1
   %addr = getelementptr i64, i64* %p, i32 1
-  %x = load i64* %p
-  %y = load i64* %addr
+  %x = load i64, i64* %p
+  %y = load i64, i64* %addr
   store i64 %x, i64* %q
   store i64 %y, i64* %addr2
   ret void

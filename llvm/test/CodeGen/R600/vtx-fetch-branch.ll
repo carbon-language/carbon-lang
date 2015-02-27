@@ -16,7 +16,7 @@ entry:
   br i1 %0, label %endif, label %if
 
 if:
-  %1 = load i32 addrspace(1)* %in
+  %1 = load i32, i32 addrspace(1)* %in
   br label %endif
 
 endif:

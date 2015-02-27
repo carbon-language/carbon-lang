@@ -19,7 +19,7 @@ entry:
 
 define i32 @iv() #0 {
 entry:
-  %0 = load i32* @i, align 4
+  %0 = load i32, i32* @i, align 4
   ret i32 %0
 }
 

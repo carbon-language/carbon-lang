@@ -38,7 +38,7 @@ define i32 @test2(i1 %cond) {
   
   %B = call %T* @test2f(i1 %cond, %T* %A)
   %C = getelementptr %T, %T* %B, i32 0, i32 0
-  %D = load i32* %C
+  %D = load i32, i32* %C
   ret i32 %D
   
 ; CHECK-LABEL: @test2(

@@ -14,7 +14,7 @@ declare i32 @func_16(i8 signext %p_19, i32 %p_20) nounwind
 
 define i32 @func_35(i64 %p_38) nounwind ssp {
 entry:
-  %tmp = load i8* @g_14                           ; <i8> [#uses=2]
+  %tmp = load i8, i8* @g_14                           ; <i8> [#uses=2]
   %conv = zext i8 %tmp to i32                     ; <i32> [#uses=1]
   %cmp = icmp sle i32 1, %conv                    ; <i1> [#uses=1]
   %conv2 = zext i1 %cmp to i32                    ; <i32> [#uses=1]

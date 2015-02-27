@@ -20,7 +20,7 @@ while.body:
   %sum = phi i32 [ 0, %entry ], [ %sum.next, %while.body ]
   %iv.next = add i64 %iv, -1
   %adr = getelementptr inbounds i32, i32* %base, i64 %iv.next
-  %tmp = load i32* %adr, align 8
+  %tmp = load i32, i32* %adr, align 8
   %sum.next = add i32 %sum, %tmp
   %iv.narrow = trunc i64 %iv.next to i32
   %cmp.i65 = icmp sgt i32 %iv.narrow, 0
@@ -47,7 +47,7 @@ loop:
   %iv = phi i64 [ 0, %entry ], [ %inc, %tail ]
   %s = phi i64 [ 0, %entry ], [ %s.next, %tail ]
   %adr = getelementptr i64, i64* %base, i64 %iv
-  %val = load i64* %adr
+  %val = load i64, i64* %adr
   %s.next = add i64 %s, %val
   %inc = add i64 %iv, 1
   %cmp = icmp ne i64 %inc, 4
@@ -68,7 +68,7 @@ exit2:
 ;
 ; CHECK-LABEL: @multiExit(
 ; CHECK: getelementptr i32, i32* %base, i32 10
-; CHECK-NEXT: load i32*
+; CHECK-NEXT: load i32, i32*
 ; CHECK: br i1 false, label %l2.10, label %exit1
 ; CHECK: l2.10:
 ; CHECK-NOT: br
@@ -82,7 +82,7 @@ l1:
   %inc1 = add i32 %iv1, 1
   %inc2 = add i32 %iv2, 1
   %adr = getelementptr i32, i32* %base, i32 %iv1
-  %val = load i32* %adr
+  %val = load i32, i32* %adr
   %cmp1 = icmp slt i32 %iv1, 5
   br i1 %cmp1, label %l2, label %exit1
 l2:
@@ -113,7 +113,7 @@ l1:
   %inc1 = add i32 %iv1, 1
   %inc2 = add i32 %iv2, 1
   %adr = getelementptr i32, i32* %base, i32 %iv1
-  %val = load i32* %adr
+  %val = load i32, i32* %adr
   %cmp1 = icmp slt i32 %iv1, 5
   br i1 %cmp1, label %l2, label %exit1
 l2:

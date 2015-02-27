@@ -11,7 +11,7 @@ define internal void @test(i32 %n) nounwind noinline {
 entry:
   %idxprom = sext i32 %n to i64
   %arrayidx = getelementptr inbounds [3 x i8*], [3 x i8*]* @test.x, i64 0, i64 %idxprom
-  %0 = load i8** %arrayidx, align 8
+  %0 = load i8*, i8** %arrayidx, align 8
   indirectbr i8* %0, [label %a, label %b, label %c]
 
 a:

@@ -34,7 +34,7 @@ define i8 @mask8(i8 %x) {
 ; CHECK: ret
 
 define void @mask16_mem(i16* %ptr) {
-  %x = load i16* %ptr, align 4
+  %x = load i16, i16* %ptr, align 4
   %m0 = bitcast i16 %x to <16 x i1>
   %m1 = xor <16 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>
   %ret = bitcast <16 x i1> %m1 to i16
@@ -51,7 +51,7 @@ define void @mask16_mem(i16* %ptr) {
 ; SKX-NEXT: kmovb %k{{[0-7]}}, ([[ARG1]])
 
 define void @mask8_mem(i8* %ptr) {
-  %x = load i8* %ptr, align 4
+  %x = load i8, i8* %ptr, align 4
   %m0 = bitcast i8 %x to <8 x i1>
   %m1 = xor <8 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>
   %ret = bitcast <8 x i1> %m1 to i8
@@ -128,7 +128,7 @@ entry:
 
   %maskPtr = alloca <8 x i1>
   store <8 x i1> <i1 0, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1, i1 1>, <8 x i1>* %maskPtr
-  %mask = load <8 x i1>* %maskPtr
+  %mask = load <8 x i1>, <8 x i1>* %maskPtr
   %mask_convert = bitcast <8 x i1> %mask to i8
   ret i8 %mask_convert
 }

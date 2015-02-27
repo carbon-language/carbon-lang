@@ -20,7 +20,7 @@ bb:		; preds = %bb, %entry
 ; CHECK: movsd %xmm0, 16(%esp)
 ; CHECK: %bb3
 bb3:		; preds = %bb30.loopexit, %bb25, %bb3
-	%2 = load i32* null, align 4		; <i32> [#uses=1]
+	%2 = load i32, i32* null, align 4		; <i32> [#uses=1]
 	%3 = mul i32 %2, 0		; <i32> [#uses=1]
 	%4 = icmp slt i32 0, %3		; <i1> [#uses=1]
 	br i1 %4, label %bb18, label %bb3

@@ -9,21 +9,21 @@ target triple = "x86_64-apple-macosx10.8.0"
 ; CHECK: ret
 define void @test1(double* %a, double* %b, double* %c, double* %d) {
 entry:
-  %i0 = load double* %a, align 8
-  %i1 = load double* %b, align 8
+  %i0 = load double, double* %a, align 8
+  %i1 = load double, double* %b, align 8
   %mul = fmul double %i0, %i1
   %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
-  %i3 = load double* %arrayidx3, align 8
+  %i3 = load double, double* %arrayidx3, align 8
   %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
-  %i4 = load double* %arrayidx4, align 8
+  %i4 = load double, double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
   store double %mul, double* %c, align 8
   %arrayidx5 = getelementptr inbounds double, double* %c, i64 1
   store double %mul5, double* %arrayidx5, align 8
   %0 = bitcast double* %a to <4 x i32>*
-  %1 = load <4 x i32>* %0, align 8
+  %1 = load <4 x i32>, <4 x i32>* %0, align 8
   %2 = bitcast double* %b to <4 x i32>*
-  %3 = load <4 x i32>* %2, align 8
+  %3 = load <4 x i32>, <4 x i32>* %2, align 8
   %4 = mul <4 x i32> %1, %3
   %5 = bitcast double* %d to <4 x i32>*
   store <4 x i32> %4, <4 x i32>* %5, align 8

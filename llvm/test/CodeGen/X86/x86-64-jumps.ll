@@ -22,10 +22,10 @@ define void @test2(i32 %i) nounwind ssp {
 entry:
   %i.addr = alloca i32                            ; <i32*> [#uses=2]
   store i32 %i, i32* %i.addr
-  %tmp = load i32* %i.addr                        ; <i32> [#uses=1]
+  %tmp = load i32, i32* %i.addr                        ; <i32> [#uses=1]
   %idxprom = sext i32 %tmp to i64                 ; <i64> [#uses=1]
   %arrayidx = getelementptr inbounds i32, i32* getelementptr inbounds ([3 x i32]* @test.array, i32 0, i32 0), i64 %idxprom ; <i32*> [#uses=1]
-  %tmp1 = load i32* %arrayidx                     ; <i32> [#uses=1]
+  %tmp1 = load i32, i32* %arrayidx                     ; <i32> [#uses=1]
   %idx.ext = sext i32 %tmp1 to i64                ; <i64> [#uses=1]
   %add.ptr = getelementptr i8, i8* blockaddress(@test2, %foo), i64 %idx.ext ; <i8*> [#uses=1]
   br label %indirectgoto

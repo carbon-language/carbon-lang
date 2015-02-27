@@ -25,7 +25,7 @@ entry:
 	store i32 3855, i32* %ort
 	store i32 3855, i32* %xort
 	store i32 4, i32* %temp
-	%tmp = load i32* %temp
+	%tmp = load i32, i32* %temp
   ; CHECK: ldrex
   ; CHECK: add
   ; CHECK: strex
@@ -308,8 +308,8 @@ define i32 @test_cmpxchg_fail_order1(i32 *%addr, i32 %desired, i32 %new) {
 
 define i32 @load_load_add_acquire(i32* %mem1, i32* %mem2) nounwind {
 ; CHECK-LABEL: load_load_add_acquire
-  %val1 = load atomic i32* %mem1 acquire, align 4
-  %val2 = load atomic i32* %mem2 acquire, align 4
+  %val1 = load atomic i32, i32* %mem1 acquire, align 4
+  %val2 = load atomic i32, i32* %mem2 acquire, align 4
   %tmp = add i32 %val1, %val2
 
 ; CHECK: ldr {{r[0-9]}}, [r0]
@@ -353,7 +353,7 @@ define void @store_store_release(i32* %mem1, i32 %val1, i32* %mem2, i32 %val2) {
 
 define void @load_fence_store_monotonic(i32* %mem1, i32* %mem2) {
 ; CHECK-LABEL: load_fence_store_monotonic
-  %val = load atomic i32* %mem1 monotonic, align 4
+  %val = load atomic i32, i32* %mem1 monotonic, align 4
   fence seq_cst
   store atomic i32 %val, i32* %mem2 monotonic, align 4
 

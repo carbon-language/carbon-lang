@@ -18,7 +18,7 @@ entry:
   store i32 %x, i32* %i, align 4
   store i32 %y, i32* %h, align 4
   store i32 %z, i32* %g, align 4
-  %.pr = load i32* @d, align 4
+  %.pr = load i32, i32* @d, align 4
   %cmp11 = icmp slt i32 %.pr, 1
   br i1 %cmp11, label %for.inc.lr.ph, label %for.body5
 

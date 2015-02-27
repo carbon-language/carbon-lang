@@ -9,7 +9,7 @@ define i32 @test(i32* %P) {
 ; CHECK-NEXT: ret i32 12
 	store i32 12, i32* @X
 	call void @doesnotmodX( )
-	%V = load i32* @X		; <i32> [#uses=1]
+	%V = load i32, i32* @X		; <i32> [#uses=1]
 	ret i32 %V
 }
 

@@ -12,7 +12,7 @@ declare %struct.GPar.0.16.26* @Rf_gpptr(...)
 define void @Rf_GReset() {
 entry:
   %sub = fsub double -0.000000e+00, undef
-  %0 = load double* @d, align 8
+  %0 = load double, double* @d, align 8
   %sub1 = fsub double -0.000000e+00, %0
   br i1 icmp eq (%struct.GPar.0.16.26* (...)* inttoptr (i64 115 to %struct.GPar.0.16.26* (...)*), %struct.GPar.0.16.26* (...)* @Rf_gpptr), label %if.then, label %if.end7
 

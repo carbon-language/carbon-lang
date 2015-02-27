@@ -33,7 +33,7 @@
 
 define void @foo00() nounwind {
 entry:
-	%0 = load i32* getelementptr ([131072 x i32]* @src, i32 0, i64 0), align 4
+	%0 = load i32, i32* getelementptr ([131072 x i32]* @src, i32 0, i64 0), align 4
 	store i32 %0, i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 0), align 4
 	ret void
 
@@ -105,7 +105,7 @@ entry:
 
 define void @fxo00() nounwind {
 entry:
-	%0 = load i32* getelementptr ([32 x i32]* @xsrc, i32 0, i64 0), align 4
+	%0 = load i32, i32* getelementptr ([32 x i32]* @xsrc, i32 0, i64 0), align 4
 	store i32 %0, i32* getelementptr ([32 x i32]* @xdst, i32 0, i64 0), align 4
 	ret void
 
@@ -297,8 +297,8 @@ entry:
 
 define void @foo02() nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
-	%1 = load i32* getelementptr ([131072 x i32]* @src, i32 0, i64 0), align 4
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32]* @src, i32 0, i64 0), align 4
 	store i32 %1, i32* %0, align 4
 	ret void
 ; LINUX-64-STATIC-LABEL: foo02:
@@ -379,8 +379,8 @@ entry:
 
 define void @fxo02() nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
-	%1 = load i32* getelementptr ([32 x i32]* @xsrc, i32 0, i64 0), align 4
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = load i32, i32* getelementptr ([32 x i32]* @xsrc, i32 0, i64 0), align 4
 	store i32 %1, i32* %0, align 4
 ; LINUX-64-STATIC-LABEL: fxo02:
 ; LINUX-64-STATIC: movl    xsrc(%rip), %
@@ -461,7 +461,7 @@ entry:
 
 define void @foo03() nounwind {
 entry:
-	%0 = load i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 0), align 32
+	%0 = load i32, i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 0), align 32
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 0), align 32
 	ret void
 ; LINUX-64-STATIC-LABEL: foo03:
@@ -576,8 +576,8 @@ entry:
 
 define void @foo05() nounwind {
 entry:
-	%0 = load i32** @dptr, align 8
-	%1 = load i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 0), align 32
+	%0 = load i32*, i32** @dptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 0), align 32
 	store i32 %1, i32* %0, align 4
 	ret void
 ; LINUX-64-STATIC-LABEL: foo05:
@@ -648,7 +648,7 @@ entry:
 
 define void @foo06() nounwind {
 entry:
-	%0 = load i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 0), align 4
+	%0 = load i32, i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 0), align 4
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 0), align 4
 	ret void
 ; LINUX-64-STATIC-LABEL: foo06:
@@ -760,8 +760,8 @@ entry:
 
 define void @foo08() nounwind {
 entry:
-	%0 = load i32** @lptr, align 8
-	%1 = load i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 0), align 4
+	%0 = load i32*, i32** @lptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 0), align 4
 	store i32 %1, i32* %0, align 4
 	ret void
 ; LINUX-64-STATIC-LABEL: foo08:
@@ -830,7 +830,7 @@ entry:
 
 define void @qux00() nounwind {
 entry:
-	%0 = load i32* getelementptr ([131072 x i32]* @src, i32 0, i64 16), align 4
+	%0 = load i32, i32* getelementptr ([131072 x i32]* @src, i32 0, i64 16), align 4
 	store i32 %0, i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 16), align 4
 	ret void
 ; LINUX-64-STATIC-LABEL: qux00:
@@ -901,7 +901,7 @@ entry:
 
 define void @qxx00() nounwind {
 entry:
-	%0 = load i32* getelementptr ([32 x i32]* @xsrc, i32 0, i64 16), align 4
+	%0 = load i32, i32* getelementptr ([32 x i32]* @xsrc, i32 0, i64 16), align 4
 	store i32 %0, i32* getelementptr ([32 x i32]* @xdst, i32 0, i64 16), align 4
 	ret void
 ; LINUX-64-STATIC-LABEL: qxx00:
@@ -1104,8 +1104,8 @@ entry:
 
 define void @qux02() nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
-	%1 = load i32* getelementptr ([131072 x i32]* @src, i32 0, i64 16), align 4
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32]* @src, i32 0, i64 16), align 4
 	%2 = getelementptr i32, i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC-LABEL: qux02:
@@ -1187,8 +1187,8 @@ entry:
 
 define void @qxx02() nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
-	%1 = load i32* getelementptr ([32 x i32]* @xsrc, i32 0, i64 16), align 4
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = load i32, i32* getelementptr ([32 x i32]* @xsrc, i32 0, i64 16), align 4
 	%2 = getelementptr i32, i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC-LABEL: qxx02:
@@ -1270,7 +1270,7 @@ entry:
 
 define void @qux03() nounwind {
 entry:
-	%0 = load i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 16), align 32
+	%0 = load i32, i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 16), align 32
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 16), align 32
 	ret void
 ; LINUX-64-STATIC-LABEL: qux03:
@@ -1386,8 +1386,8 @@ entry:
 
 define void @qux05() nounwind {
 entry:
-	%0 = load i32** @dptr, align 8
-	%1 = load i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 16), align 32
+	%0 = load i32*, i32** @dptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 16), align 32
 	%2 = getelementptr i32, i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC-LABEL: qux05:
@@ -1459,7 +1459,7 @@ entry:
 
 define void @qux06() nounwind {
 entry:
-	%0 = load i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 16), align 4
+	%0 = load i32, i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 16), align 4
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 16), align 4
 	ret void
 ; LINUX-64-STATIC-LABEL: qux06:
@@ -1571,8 +1571,8 @@ entry:
 
 define void @qux08() nounwind {
 entry:
-	%0 = load i32** @lptr, align 8
-	%1 = load i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 16), align 4
+	%0 = load i32*, i32** @lptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 16), align 4
 	%2 = getelementptr i32, i32* %0, i64 16
 	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC-LABEL: qux08:
@@ -1643,7 +1643,7 @@ entry:
 define void @ind00(i64 %i) nounwind {
 entry:
 	%0 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %i
-	%1 = load i32* %0, align 4
+	%1 = load i32, i32* %0, align 4
 	%2 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %i
 	store i32 %1, i32* %2, align 4
 	ret void
@@ -1721,7 +1721,7 @@ entry:
 define void @ixd00(i64 %i) nounwind {
 entry:
 	%0 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %i
-	%1 = load i32* %0, align 4
+	%1 = load i32, i32* %0, align 4
 	%2 = getelementptr [32 x i32], [32 x i32]* @xdst, i64 0, i64 %i
 	store i32 %1, i32* %2, align 4
 	ret void
@@ -1950,9 +1950,9 @@ entry:
 
 define void @ind02(i64 %i) nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
+	%0 = load i32*, i32** @ptr, align 8
 	%1 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %i
-	%2 = load i32* %1, align 4
+	%2 = load i32, i32* %1, align 4
 	%3 = getelementptr i32, i32* %0, i64 %i
 	store i32 %2, i32* %3, align 4
 	ret void
@@ -2039,9 +2039,9 @@ entry:
 
 define void @ixd02(i64 %i) nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
+	%0 = load i32*, i32** @ptr, align 8
 	%1 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %i
-	%2 = load i32* %1, align 4
+	%2 = load i32, i32* %1, align 4
 	%3 = getelementptr i32, i32* %0, i64 %i
 	store i32 %2, i32* %3, align 4
 	ret void
@@ -2129,7 +2129,7 @@ entry:
 define void @ind03(i64 %i) nounwind {
 entry:
 	%0 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %i
-	%1 = load i32* %0, align 4
+	%1 = load i32, i32* %0, align 4
 	%2 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %i
 	store i32 %1, i32* %2, align 4
 	ret void
@@ -2271,9 +2271,9 @@ entry:
 
 define void @ind05(i64 %i) nounwind {
 entry:
-	%0 = load i32** @dptr, align 8
+	%0 = load i32*, i32** @dptr, align 8
 	%1 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %i
-	%2 = load i32* %1, align 4
+	%2 = load i32, i32* %1, align 4
 	%3 = getelementptr i32, i32* %0, i64 %i
 	store i32 %2, i32* %3, align 4
 	ret void
@@ -2354,7 +2354,7 @@ entry:
 define void @ind06(i64 %i) nounwind {
 entry:
 	%0 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %i
-	%1 = load i32* %0, align 4
+	%1 = load i32, i32* %0, align 4
 	%2 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %i
 	store i32 %1, i32* %2, align 4
 	ret void
@@ -2495,9 +2495,9 @@ entry:
 
 define void @ind08(i64 %i) nounwind {
 entry:
-	%0 = load i32** @lptr, align 8
+	%0 = load i32*, i32** @lptr, align 8
 	%1 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %i
-	%2 = load i32* %1, align 4
+	%2 = load i32, i32* %1, align 4
 	%3 = getelementptr i32, i32* %0, i64 %i
 	store i32 %2, i32* %3, align 4
 	ret void
@@ -2578,7 +2578,7 @@ define void @off00(i64 %i) nounwind {
 entry:
 	%0 = add i64 %i, 16
 	%1 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %0
-	%2 = load i32* %1, align 4
+	%2 = load i32, i32* %1, align 4
 	%3 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %0
 	store i32 %2, i32* %3, align 4
 	ret void
@@ -2657,7 +2657,7 @@ define void @oxf00(i64 %i) nounwind {
 entry:
 	%0 = add i64 %i, 16
 	%1 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %0
-	%2 = load i32* %1, align 4
+	%2 = load i32, i32* %1, align 4
 	%3 = getelementptr [32 x i32], [32 x i32]* @xdst, i64 0, i64 %0
 	store i32 %2, i32* %3, align 4
 	ret void
@@ -2888,10 +2888,10 @@ entry:
 
 define void @off02(i64 %i) nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
+	%0 = load i32*, i32** @ptr, align 8
 	%1 = add i64 %i, 16
 	%2 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %1
-	%3 = load i32* %2, align 4
+	%3 = load i32, i32* %2, align 4
 	%4 = getelementptr i32, i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
@@ -2978,10 +2978,10 @@ entry:
 
 define void @oxf02(i64 %i) nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
+	%0 = load i32*, i32** @ptr, align 8
 	%1 = add i64 %i, 16
 	%2 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %1
-	%3 = load i32* %2, align 4
+	%3 = load i32, i32* %2, align 4
 	%4 = getelementptr i32, i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
@@ -3070,7 +3070,7 @@ define void @off03(i64 %i) nounwind {
 entry:
 	%0 = add i64 %i, 16
 	%1 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %0
-	%2 = load i32* %1, align 4
+	%2 = load i32, i32* %1, align 4
 	%3 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %0
 	store i32 %2, i32* %3, align 4
 	ret void
@@ -3213,10 +3213,10 @@ entry:
 
 define void @off05(i64 %i) nounwind {
 entry:
-	%0 = load i32** @dptr, align 8
+	%0 = load i32*, i32** @dptr, align 8
 	%1 = add i64 %i, 16
 	%2 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %1
-	%3 = load i32* %2, align 4
+	%3 = load i32, i32* %2, align 4
 	%4 = getelementptr i32, i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
@@ -3298,7 +3298,7 @@ define void @off06(i64 %i) nounwind {
 entry:
 	%0 = add i64 %i, 16
 	%1 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %0
-	%2 = load i32* %1, align 4
+	%2 = load i32, i32* %1, align 4
 	%3 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %0
 	store i32 %2, i32* %3, align 4
 	ret void
@@ -3440,10 +3440,10 @@ entry:
 
 define void @off08(i64 %i) nounwind {
 entry:
-	%0 = load i32** @lptr, align 8
+	%0 = load i32*, i32** @lptr, align 8
 	%1 = add i64 %i, 16
 	%2 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %1
-	%3 = load i32* %2, align 4
+	%3 = load i32, i32* %2, align 4
 	%4 = getelementptr i32, i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
@@ -3522,7 +3522,7 @@ entry:
 
 define void @moo00(i64 %i) nounwind {
 entry:
-	%0 = load i32* getelementptr ([131072 x i32]* @src, i32 0, i64 65536), align 4
+	%0 = load i32, i32* getelementptr ([131072 x i32]* @src, i32 0, i64 65536), align 4
 	store i32 %0, i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 65536), align 4
 	ret void
 ; LINUX-64-STATIC-LABEL: moo00:
@@ -3659,8 +3659,8 @@ entry:
 
 define void @moo02(i64 %i) nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
-	%1 = load i32* getelementptr ([131072 x i32]* @src, i32 0, i64 65536), align 4
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32]* @src, i32 0, i64 65536), align 4
 	%2 = getelementptr i32, i32* %0, i64 65536
 	store i32 %1, i32* %2, align 4
 	ret void
@@ -3742,7 +3742,7 @@ entry:
 
 define void @moo03(i64 %i) nounwind {
 entry:
-	%0 = load i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 65536), align 32
+	%0 = load i32, i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 65536), align 32
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 65536), align 32
 	ret void
 ; LINUX-64-STATIC-LABEL: moo03:
@@ -3858,8 +3858,8 @@ entry:
 
 define void @moo05(i64 %i) nounwind {
 entry:
-	%0 = load i32** @dptr, align 8
-	%1 = load i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 65536), align 32
+	%0 = load i32*, i32** @dptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 65536), align 32
 	%2 = getelementptr i32, i32* %0, i64 65536
 	store i32 %1, i32* %2, align 4
 	ret void
@@ -3931,7 +3931,7 @@ entry:
 
 define void @moo06(i64 %i) nounwind {
 entry:
-	%0 = load i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 65536), align 4
+	%0 = load i32, i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 65536), align 4
 	store i32 %0, i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 65536), align 4
 	ret void
 ; LINUX-64-STATIC-LABEL: moo06:
@@ -4043,8 +4043,8 @@ entry:
 
 define void @moo08(i64 %i) nounwind {
 entry:
-	%0 = load i32** @lptr, align 8
-	%1 = load i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 65536), align 4
+	%0 = load i32*, i32** @lptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 65536), align 4
 	%2 = getelementptr i32, i32* %0, i64 65536
 	store i32 %1, i32* %2, align 4
 	ret void
@@ -4116,7 +4116,7 @@ define void @big00(i64 %i) nounwind {
 entry:
 	%0 = add i64 %i, 65536
 	%1 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %0
-	%2 = load i32* %1, align 4
+	%2 = load i32, i32* %1, align 4
 	%3 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %0
 	store i32 %2, i32* %3, align 4
 	ret void
@@ -4270,10 +4270,10 @@ entry:
 
 define void @big02(i64 %i) nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
+	%0 = load i32*, i32** @ptr, align 8
 	%1 = add i64 %i, 65536
 	%2 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %1
-	%3 = load i32* %2, align 4
+	%3 = load i32, i32* %2, align 4
 	%4 = getelementptr i32, i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
@@ -4362,7 +4362,7 @@ define void @big03(i64 %i) nounwind {
 entry:
 	%0 = add i64 %i, 65536
 	%1 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %0
-	%2 = load i32* %1, align 4
+	%2 = load i32, i32* %1, align 4
 	%3 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %0
 	store i32 %2, i32* %3, align 4
 	ret void
@@ -4505,10 +4505,10 @@ entry:
 
 define void @big05(i64 %i) nounwind {
 entry:
-	%0 = load i32** @dptr, align 8
+	%0 = load i32*, i32** @dptr, align 8
 	%1 = add i64 %i, 65536
 	%2 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %1
-	%3 = load i32* %2, align 4
+	%3 = load i32, i32* %2, align 4
 	%4 = getelementptr i32, i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
@@ -4590,7 +4590,7 @@ define void @big06(i64 %i) nounwind {
 entry:
 	%0 = add i64 %i, 65536
 	%1 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %0
-	%2 = load i32* %1, align 4
+	%2 = load i32, i32* %1, align 4
 	%3 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %0
 	store i32 %2, i32* %3, align 4
 	ret void
@@ -4732,10 +4732,10 @@ entry:
 
 define void @big08(i64 %i) nounwind {
 entry:
-	%0 = load i32** @lptr, align 8
+	%0 = load i32*, i32** @lptr, align 8
 	%1 = add i64 %i, 65536
 	%2 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %1
-	%3 = load i32* %2, align 4
+	%3 = load i32, i32* %2, align 4
 	%4 = getelementptr i32, i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
@@ -5519,7 +5519,7 @@ entry:
 
 define i8* @har02() nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
+	%0 = load i32*, i32** @ptr, align 8
 	%1 = bitcast i32* %0 to i8*
 	ret i8* %1
 ; LINUX-64-STATIC-LABEL: har02:
@@ -5668,7 +5668,7 @@ entry:
 
 define i8* @har05() nounwind {
 entry:
-	%0 = load i32** @dptr, align 8
+	%0 = load i32*, i32** @dptr, align 8
 	%1 = bitcast i32* %0 to i8*
 	ret i8* %1
 ; LINUX-64-STATIC-LABEL: har05:
@@ -5812,7 +5812,7 @@ entry:
 
 define i8* @har08() nounwind {
 entry:
-	%0 = load i32** @lptr, align 8
+	%0 = load i32*, i32** @lptr, align 8
 	%1 = bitcast i32* %0 to i8*
 	ret i8* %1
 ; LINUX-64-STATIC-LABEL: har08:
@@ -6073,7 +6073,7 @@ entry:
 
 define i8* @bat02() nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
+	%0 = load i32*, i32** @ptr, align 8
 	%1 = getelementptr i32, i32* %0, i64 16
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
@@ -6235,7 +6235,7 @@ entry:
 
 define i8* @bat05() nounwind {
 entry:
-	%0 = load i32** @dptr, align 8
+	%0 = load i32*, i32** @dptr, align 8
 	%1 = getelementptr i32, i32* %0, i64 16
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
@@ -6390,7 +6390,7 @@ entry:
 
 define i8* @bat08() nounwind {
 entry:
-	%0 = load i32** @lptr, align 8
+	%0 = load i32*, i32** @lptr, align 8
 	%1 = getelementptr i32, i32* %0, i64 16
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
@@ -6609,7 +6609,7 @@ entry:
 
 define i8* @bam02() nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
+	%0 = load i32*, i32** @ptr, align 8
 	%1 = getelementptr i32, i32* %0, i64 65536
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
@@ -6771,7 +6771,7 @@ entry:
 
 define i8* @bam05() nounwind {
 entry:
-	%0 = load i32** @dptr, align 8
+	%0 = load i32*, i32** @dptr, align 8
 	%1 = getelementptr i32, i32* %0, i64 65536
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
@@ -6926,7 +6926,7 @@ entry:
 
 define i8* @bam08() nounwind {
 entry:
-	%0 = load i32** @lptr, align 8
+	%0 = load i32*, i32** @lptr, align 8
 	%1 = getelementptr i32, i32* %0, i64 65536
 	%2 = bitcast i32* %1 to i8*
 	ret i8* %2
@@ -7230,7 +7230,7 @@ entry:
 
 define i8* @cat02(i64 %i) nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
+	%0 = load i32*, i32** @ptr, align 8
 	%1 = add i64 %i, 16
 	%2 = getelementptr i32, i32* %0, i64 %1
 	%3 = bitcast i32* %2 to i8*
@@ -7420,7 +7420,7 @@ entry:
 
 define i8* @cat05(i64 %i) nounwind {
 entry:
-	%0 = load i32** @dptr, align 8
+	%0 = load i32*, i32** @dptr, align 8
 	%1 = add i64 %i, 16
 	%2 = getelementptr i32, i32* %0, i64 %1
 	%3 = bitcast i32* %2 to i8*
@@ -7605,7 +7605,7 @@ entry:
 
 define i8* @cat08(i64 %i) nounwind {
 entry:
-	%0 = load i32** @lptr, align 8
+	%0 = load i32*, i32** @lptr, align 8
 	%1 = add i64 %i, 16
 	%2 = getelementptr i32, i32* %0, i64 %1
 	%3 = bitcast i32* %2 to i8*
@@ -7915,7 +7915,7 @@ entry:
 
 define i8* @cam02(i64 %i) nounwind {
 entry:
-	%0 = load i32** @ptr, align 8
+	%0 = load i32*, i32** @ptr, align 8
 	%1 = add i64 %i, 65536
 	%2 = getelementptr i32, i32* %0, i64 %1
 	%3 = bitcast i32* %2 to i8*
@@ -8105,7 +8105,7 @@ entry:
 
 define i8* @cam05(i64 %i) nounwind {
 entry:
-	%0 = load i32** @dptr, align 8
+	%0 = load i32*, i32** @dptr, align 8
 	%1 = add i64 %i, 65536
 	%2 = getelementptr i32, i32* %0, i64 %1
 	%3 = bitcast i32* %2 to i8*
@@ -8290,7 +8290,7 @@ entry:
 
 define i8* @cam08(i64 %i) nounwind {
 entry:
-	%0 = load i32** @lptr, align 8
+	%0 = load i32*, i32** @lptr, align 8
 	%1 = add i64 %i, 65536
 	%2 = getelementptr i32, i32* %0, i64 %1
 	%3 = bitcast i32* %2 to i8*
@@ -9180,9 +9180,9 @@ entry:
 
 define void @icaller() nounwind {
 entry:
-	%0 = load void ()** @ifunc, align 8
+	%0 = load void ()*, void ()** @ifunc, align 8
 	call void %0() nounwind
-	%1 = load void ()** @ifunc, align 8
+	%1 = load void ()*, void ()** @ifunc, align 8
 	call void %1() nounwind
 	ret void
 ; LINUX-64-STATIC-LABEL: icaller:
@@ -9270,9 +9270,9 @@ entry:
 
 define void @dicaller() nounwind {
 entry:
-	%0 = load void ()** @difunc, align 8
+	%0 = load void ()*, void ()** @difunc, align 8
 	call void %0() nounwind
-	%1 = load void ()** @difunc, align 8
+	%1 = load void ()*, void ()** @difunc, align 8
 	call void %1() nounwind
 	ret void
 ; LINUX-64-STATIC-LABEL: dicaller:
@@ -9353,9 +9353,9 @@ entry:
 
 define void @licaller() nounwind {
 entry:
-	%0 = load void ()** @lifunc, align 8
+	%0 = load void ()*, void ()** @lifunc, align 8
 	call void %0() nounwind
-	%1 = load void ()** @lifunc, align 8
+	%1 = load void ()*, void ()** @lifunc, align 8
 	call void %1() nounwind
 	ret void
 ; LINUX-64-STATIC-LABEL: licaller:
@@ -9435,9 +9435,9 @@ entry:
 
 define void @itailcaller() nounwind {
 entry:
-	%0 = load void ()** @ifunc, align 8
+	%0 = load void ()*, void ()** @ifunc, align 8
 	call void %0() nounwind
-	%1 = load void ()** @ifunc, align 8
+	%1 = load void ()*, void ()** @ifunc, align 8
 	call void %1() nounwind
 	ret void
 ; LINUX-64-STATIC-LABEL: itailcaller:
@@ -9525,7 +9525,7 @@ entry:
 
 define void @ditailcaller() nounwind {
 entry:
-	%0 = load void ()** @difunc, align 8
+	%0 = load void ()*, void ()** @difunc, align 8
 	call void %0() nounwind
 	ret void
 ; LINUX-64-STATIC-LABEL: ditailcaller:
@@ -9593,7 +9593,7 @@ entry:
 
 define void @litailcaller() nounwind {
 entry:
-	%0 = load void ()** @lifunc, align 8
+	%0 = load void ()*, void ()** @lifunc, align 8
 	call void %0() nounwind
 	ret void
 ; LINUX-64-STATIC-LABEL: litailcaller:

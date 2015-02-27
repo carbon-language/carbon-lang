@@ -36,7 +36,7 @@ entry:
 define void @test2(<1 x i16>* nocapture %b, i32* nocapture %c) nounwind ssp {
 entry:
   %arrayidx = getelementptr inbounds <1 x i16>, <1 x i16>* %b, i64 undef ; <<1 x i16>*>
-  %tmp2 = load <1 x i16>* %arrayidx               ; <<1 x i16>> [#uses=1]
+  %tmp2 = load <1 x i16>, <1 x i16>* %arrayidx               ; <<1 x i16>> [#uses=1]
   %tmp6 = bitcast <1 x i16> %tmp2 to i16          ; <i16> [#uses=1]
   %tmp7 = zext i16 %tmp6 to i32                   ; <i32> [#uses=1]
   %ins = or i32 0, %tmp7                          ; <i32> [#uses=1]
@@ -60,7 +60,7 @@ define void @foo(i1) nounwind align 2 {
 ; <label>:3                                       ; preds = %2, %1
   %4 = phi i8 [ 1, %2 ], [ 0, %1 ]                ; <i8> [#uses=1]
   %5 = icmp eq i8 %4, 0                           ; <i1> [#uses=1]
-  %6 = load i64* @tmp2, align 8                   ; <i64> [#uses=1]
+  %6 = load i64, i64* @tmp2, align 8                   ; <i64> [#uses=1]
   %7 = select i1 %5, i64 0, i64 %6                ; <i64> [#uses=1]
   br label %8
 
@@ -81,7 +81,7 @@ define void @bar3(i1, i1) nounwind align 2 {
 ; <label>:3                                       ; preds = %2
   %4 = getelementptr inbounds %t0, %t0* null, i64 0, i32 1 ; <i32*> [#uses=0]
   %5 = getelementptr inbounds %t1, %t1* null, i64 0, i32 4 ; <i32**> [#uses=1]
-  %6 = load i32** %5, align 8                     ; <i32*> [#uses=1]
+  %6 = load i32*, i32** %5, align 8                     ; <i32*> [#uses=1]
   %7 = icmp ne i32* %6, null                      ; <i1> [#uses=1]
   %8 = zext i1 %7 to i32                          ; <i32> [#uses=1]
   %9 = add i32 %8, 0                              ; <i32> [#uses=1]
@@ -115,7 +115,7 @@ BB1:
 
 BB2:
   %v5_ = phi i1 [ true, %BB0], [false, %BB1]
-  %v6 = load i64* %P
+  %v6 = load i64, i64* %P
   br label %l8
 
 l8:
@@ -183,7 +183,7 @@ cont:                                             ; preds = %ehcleanup
 
 cond.false:                                       ; preds = %entry
   %tmp4 = getelementptr inbounds %class.RuleBasedBreakIterator, %class.RuleBasedBreakIterator* %this, i32 0, i32 0 ; <i64 ()**> [#uses=1]
-  %tmp5 = load i64 ()** %tmp4                     ; <i64 ()*> [#uses=1]
+  %tmp5 = load i64 ()*, i64 ()** %tmp4                     ; <i64 ()*> [#uses=1]
   %call = invoke i64 %tmp5()
           to label %cond.end unwind label %ehcleanup ; <i64> [#uses=1]
 
@@ -242,10 +242,10 @@ entry:
 ; PR6503
 define void @test12(i32* %A) nounwind {
 entry:
-  %tmp1 = load i32* %A
+  %tmp1 = load i32, i32* %A
   %cmp = icmp ugt i32 1, %tmp1                    ; <i1> [#uses=1]
   %conv = zext i1 %cmp to i32                     ; <i32> [#uses=1]
-  %tmp2 = load i32* %A
+  %tmp2 = load i32, i32* %A
   %cmp3 = icmp ne i32 %tmp2, 0                    ; <i1> [#uses=1]
   %conv4 = zext i1 %cmp3 to i32                   ; <i32> [#uses=1]
   %or = or i32 %conv, %conv4                      ; <i32> [#uses=1]
@@ -261,7 +261,7 @@ entry:
   %0 = getelementptr inbounds %s1, %s1* null, i64 0, i32 2, i64 0, i32 0
   %1 = bitcast i64* %0 to i32*
   %2 = getelementptr inbounds %s1, %s1* null, i64 0, i32 2, i64 1, i32 0
-  %.pre = load i32* %1, align 8
+  %.pre = load i32, i32* %1, align 8
   %3 = lshr i32 %.pre, 19
   %brmerge = or i1 undef, undef
   %4 = and i32 %3, 3
@@ -269,7 +269,7 @@ entry:
   %6 = shl i32 %5, 19
   %7 = add i32 %6, 1572864
   %8 = and i32 %7, 1572864
-  %9 = load i64* %2, align 8
+  %9 = load i64, i64* %2, align 8
   %trunc156 = trunc i64 %9 to i32
   %10 = and i32 %trunc156, -1537
   %11 = and i32 %10, -6145
@@ -304,7 +304,7 @@ entry:
 
 define void @test15(i32* %p_92) nounwind {
 entry:
-%0 = load i32* %p_92, align 4
+%0 = load i32, i32* %p_92, align 4
 %1 = icmp ne i32 %0, 0
 %2 = zext i1 %1 to i32
 %3 = call i32 @func_14() nounwind

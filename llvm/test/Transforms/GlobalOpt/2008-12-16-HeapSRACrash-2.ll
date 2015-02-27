@@ -18,7 +18,7 @@ declare noalias i8* @malloc(i32)
 
 define i32 @baz() nounwind readonly noinline {
 bb1.thread:
-	%tmpLD1 = load %struct.foo** @X, align 4		; <%struct.foo*> [#uses=2]
+	%tmpLD1 = load %struct.foo*, %struct.foo** @X, align 4		; <%struct.foo*> [#uses=2]
 	br label %bb1
 
 bb1:		; preds = %bb1, %bb1.thread

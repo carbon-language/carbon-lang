@@ -4,47 +4,47 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 ; DSE should make use of TBAA.
 
 ; CHECK: @test0_yes
-; CHECK-NEXT: load i8* %b
+; CHECK-NEXT: load i8, i8* %b
 ; CHECK-NEXT: store i8 1, i8* %a
 ; CHECK-NEXT: ret i8 %y
 define i8 @test0_yes(i8* %a, i8* %b) nounwind {
   store i8 0, i8* %a, !tbaa !1
-  %y = load i8* %b, !tbaa !2
+  %y = load i8, i8* %b, !tbaa !2
   store i8 1, i8* %a, !tbaa !1
   ret i8 %y
 }
 
 ; CHECK: @test0_no
 ; CHECK-NEXT: store i8 0, i8* %a
-; CHECK-NEXT: load i8* %b
+; CHECK-NEXT: load i8, i8* %b
 ; CHECK-NEXT: store i8 1, i8* %a
 ; CHECK-NEXT: ret i8 %y
 define i8 @test0_no(i8* %a, i8* %b) nounwind {
   store i8 0, i8* %a, !tbaa !3
-  %y = load i8* %b, !tbaa !4
+  %y = load i8, i8* %b, !tbaa !4
   store i8 1, i8* %a, !tbaa !3
   ret i8 %y
 }
 
 ; CHECK: @test1_yes
-; CHECK-NEXT: load i8* %b
+; CHECK-NEXT: load i8, i8* %b
 ; CHECK-NEXT: store i8 1, i8* %a
 ; CHECK-NEXT: ret i8 %y
 define i8 @test1_yes(i8* %a, i8* %b) nounwind {
   store i8 0, i8* %a
-  %y = load i8* %b, !tbaa !5
+  %y = load i8, i8* %b, !tbaa !5
   store i8 1, i8* %a
   ret i8 %y
 }
 
 ; CHECK: @test1_no
 ; CHECK-NEXT: store i8 0, i8* %a
-; CHECK-NEXT: load i8* %b
+; CHECK-NEXT: load i8, i8* %b
 ; CHECK-NEXT: store i8 1, i8* %a
 ; CHECK-NEXT: ret i8 %y
 define i8 @test1_no(i8* %a, i8* %b) nounwind {
   store i8 0, i8* %a
-  %y = load i8* %b, !tbaa !6
+  %y = load i8, i8* %b, !tbaa !6
   store i8 1, i8* %a
   ret i8 %y
 }

@@ -29,7 +29,7 @@ loop:
   %s.01 = phi i32 [ 0, %ph ], [ %sinc, %loop ]
   %ofs = sext i32 %i.02 to i64
   %adr = getelementptr inbounds i32, i32* %arr, i64 %ofs
-  %val = load i32* %adr
+  %val = load i32, i32* %adr
   %sinc = add nsw i32 %s.01, %val
   %iinc = add nsw i32 %i.02, 1
   %cond = icmp slt i32 %iinc, %n
@@ -70,7 +70,7 @@ loop:
   %s.01 = phi i64 [ 0, %ph ], [ %sinc, %loop ]
   %ofs = sext i32 %i.02 to i64
   %adr = getelementptr inbounds i32, i32* %arr, i64 %ofs
-  %val = load i32* %adr
+  %val = load i32, i32* %adr
   %vall = sext i32 %val to i64
   %sinc = add nsw i64 %s.01, %vall
   %iinc = add nsw i32 %i.02, 1
@@ -171,7 +171,7 @@ loop:
   %max = phi i32 [ 0, %entry ], [ %max.next, %loop.inc ]
   %idxprom = sext i32 %idx to i64
   %adr = getelementptr inbounds i32, i32* %base, i64 %idxprom
-  %val = load i32* %adr
+  %val = load i32, i32* %adr
   %cmp19 = icmp sgt i32 %val, %max
   br i1 %cmp19, label %if.then, label %if.else
 
@@ -240,7 +240,7 @@ loop:
   %iv = phi i32 [ 0, %entry], [ %iv.next, %loop ]
   %t1 = sext i32 %iv to i64
   %adr = getelementptr i64, i64* %base, i64 %t1
-  %val = load i64* %adr
+  %val = load i64, i64* %adr
   %t2 = or i32 %iv, 1
   %t3 = sext i32 %t2 to i64
   %iv.next = add i32 %iv, 2

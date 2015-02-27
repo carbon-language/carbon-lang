@@ -19,7 +19,7 @@ entry:
 
 bb.i49.i72:		; preds = %bb.i49.i72, %entry
 	%UNP.i1482.0 = phi i288 [ %.ins659, %bb.i49.i72 ], [ undef, %entry ]		; <i288> [#uses=1]
-	%0 = load i32* null, align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* null, align 4		; <i32> [#uses=1]
 	%1 = xor i32 %0, 17834		; <i32> [#uses=1]
 	%2 = zext i32 %1 to i288		; <i288> [#uses=1]
 	%3 = shl i288 %2, 160		; <i288> [#uses=1]

@@ -13,7 +13,7 @@ ifthen:		; preds = %entry
 	br label %ifend
 
 ifelse:		; preds = %entry
-	%tmp3 = load i8* @g_3		; <i8> [#uses=0]
+	%tmp3 = load i8, i8* @g_3		; <i8> [#uses=0]
         store i8 %tmp3, i8* %A
 	br label %afterfor
 
@@ -27,7 +27,7 @@ forinc:		; preds = %forbody
 	br label %forcond
 
 afterfor:		; preds = %forcond, %forcond.thread
-	%tmp10 = load i8* @g_3		; <i8> [#uses=0]
+	%tmp10 = load i8, i8* @g_3		; <i8> [#uses=0]
 	ret i8 %tmp10
 
 ifend:		; preds = %afterfor, %ifthen

@@ -6,7 +6,7 @@ define i32* @test_atomic_ptr_load(i32** %a0) {
 ; CHECK: movl
 ; CHECK: ret
 0:
-  %0 = load atomic i32** %a0 seq_cst, align 4
+  %0 = load atomic i32*, i32** %a0 seq_cst, align 4
   ret i32* %0
 }
 

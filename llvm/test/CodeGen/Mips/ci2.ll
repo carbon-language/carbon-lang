@@ -8,7 +8,7 @@
 define void @foo() #0 {
 entry:
   store i32 305419896, i32* @i, align 4
-  %0 = load i32* @b, align 4
+  %0 = load i32, i32* @b, align 4
   %tobool = icmp ne i32 %0, 0
   br i1 %tobool, label %if.then, label %if.else
 

@@ -29,7 +29,7 @@ declare void @llvm.eh.unwind.init()
 ; CHECK: _Unwind_Resume_or_Rethrow
 define i32 @_Unwind_Resume_or_Rethrow() nounwind uwtable ssp {
 entry:
-  %0 = load i32* @b, align 4
+  %0 = load i32, i32* @b, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %if.end, label %if.then
 

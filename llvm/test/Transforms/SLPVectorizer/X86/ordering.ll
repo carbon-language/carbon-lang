@@ -5,7 +5,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 define void @updateModelQPFrame(i32 %m_Bits) {
 entry:
-  %0 = load double* undef, align 8
+  %0 = load double, double* undef, align 8
   %mul = fmul double undef, %0
   %mul2 = fmul double undef, %mul
   %mul4 = fmul double %0, %mul2

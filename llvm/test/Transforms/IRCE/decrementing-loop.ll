@@ -2,7 +2,7 @@
 
 define void @decrementing_loop(i32 *%arr, i32 *%a_len_ptr, i32 %n) {
  entry:
-  %len = load i32* %a_len_ptr, !range !0
+  %len = load i32, i32* %a_len_ptr, !range !0
   %first.itr.check = icmp sgt i32 %n, 0
   %start = sub i32 %n, 1
   br i1 %first.itr.check, label %loop, label %exit

@@ -18,8 +18,8 @@
 declare i32 @printf(i8*, ...)
 
 define i32 @main() {
-	%a = load double* @A		; <double> [#uses=12]
-	%b = load double* @B		; <double> [#uses=12]
+	%a = load double, double* @A		; <double> [#uses=12]
+	%b = load double, double* @B		; <double> [#uses=12]
 	%a_s = getelementptr [8 x i8], [8 x i8]* @a_str, i64 0, i64 0		; <i8*> [#uses=1]
 	%b_s = getelementptr [8 x i8], [8 x i8]* @b_str, i64 0, i64 0		; <i8*> [#uses=1]
 	call i32 (i8*, ...)* @printf( i8* %a_s, double %a )		; <i32>:1 [#uses=0]

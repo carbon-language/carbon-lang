@@ -18,7 +18,7 @@ entry:
 
 cond.true:                                        ; preds = %entry
   %arrayidx = getelementptr inbounds i8*, i8** %argv, i64 1 ; <i8**> [#uses=1]
-  %tmp2 = load i8** %arrayidx                     ; <i8*> [#uses=1]
+  %tmp2 = load i8*, i8** %arrayidx                     ; <i8*> [#uses=1]
   %call = tail call i32 @atoi(i8* %tmp2) nounwind readonly ; <i32> [#uses=1]
   br label %while.cond.preheader
 
@@ -82,7 +82,7 @@ for.body15:                                       ; preds = %bb.nph16, %for.cond
   %count.212 = phi i32 [ 0, %bb.nph16 ], [ %count.1, %for.cond12 ] ; <i32> [#uses=2]
   %i.17 = phi i64 [ 2, %bb.nph16 ], [ %inc37, %for.cond12 ] ; <i64> [#uses=4]
   %arrayidx17 = getelementptr inbounds [8193 x i8], [8193 x i8]* @main.flags, i64 0, i64 %i.17 ; <i8*> [#uses=1]
-  %tmp18 = load i8* %arrayidx17                   ; <i8> [#uses=1]
+  %tmp18 = load i8, i8* %arrayidx17                   ; <i8> [#uses=1]
   %tobool19 = icmp eq i8 %tmp18, 0                ; <i1> [#uses=1]
   br i1 %tobool19, label %for.inc35, label %if.then
 

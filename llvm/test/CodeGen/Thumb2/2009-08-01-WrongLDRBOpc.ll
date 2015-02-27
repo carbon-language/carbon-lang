@@ -38,7 +38,7 @@ bb2.i184.i.i:		; preds = %bb.i183.i.i, %bb3.i
 	br i1 undef, label %bb5.i185.i.i, label %bb35.preheader.i.i.i
 
 bb35.preheader.i.i.i:		; preds = %bb2.i184.i.i
-	%0 = load i8* %line3.i.i.i, align 1		; <i8> [#uses=1]
+	%0 = load i8, i8* %line3.i.i.i, align 1		; <i8> [#uses=1]
 	%1 = icmp eq i8 %0, 59		; <i1> [#uses=1]
 	br i1 %1, label %bb36.i.i.i, label %bb9.i186.i.i
 

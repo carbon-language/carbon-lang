@@ -13,7 +13,7 @@ entry:
 for.body:                                         ; preds = %for.inc, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.inc ]
   %arrayidx = getelementptr inbounds i32, i32* %indices, i64 %indvars.iv, !dbg !12
-  %0 = load i32* %arrayidx, align 4, !dbg !12, !tbaa !14
+  %0 = load i32, i32* %arrayidx, align 4, !dbg !12, !tbaa !14
   %cmp1 = icmp eq i32 %0, 1024, !dbg !12
   br i1 %cmp1, label %if.then, label %for.inc, !dbg !12
 

@@ -15,18 +15,18 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 define float @test1(float* %pTmp1, float* %peakWeight, i32 %bandEdgeIndex) nounwind {
 entry:
-	%t0 = load float* %peakWeight, align 4
+	%t0 = load float, float* %peakWeight, align 4
 	br label %bb1
 
 bb:		; preds = %bb2
 	%t1 = sext i32 %hiPart.0 to i64
 	%t2 = getelementptr float, float* %pTmp1, i64 %t1
-	%t3 = load float* %t2, align 4
+	%t3 = load float, float* %t2, align 4
 	%t4 = fadd float %t3, %distERBhi.0
 	%t5 = add i32 %hiPart.0, 1
 	%t6 = sext i32 %t5 to i64
 	%t7 = getelementptr float, float* %peakWeight, i64 %t6
-	%t8 = load float* %t7, align 4
+	%t8 = load float, float* %t7, align 4
 	%t9 = fadd float %t8, %peakCount.0
 	br label %bb1
 

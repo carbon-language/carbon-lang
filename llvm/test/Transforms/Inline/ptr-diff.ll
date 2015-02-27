@@ -25,7 +25,7 @@ then:
   ret i32 3
 
 else:
-  %t = load i32* %begin
+  %t = load i32, i32* %begin
   ret i32 %t
 }
 
@@ -53,7 +53,7 @@ then:
   ret i32 3
 
 else:
-  %t = load i32* %begin
+  %t = load i32, i32* %begin
   ret i32 %t
 }
 
@@ -63,9 +63,9 @@ define i32 @inttoptr_free_cost(i32 %a, i32 %b, i32 %c) {
   %p1 = inttoptr i32 %a to i32 addrspace(1)*
   %p2 = inttoptr i32 %b to i32 addrspace(1)*
   %p3 = inttoptr i32 %c to i32 addrspace(1)*
-  %t1 = load i32 addrspace(1)* %p1
-  %t2 = load i32 addrspace(1)* %p2
-  %t3 = load i32 addrspace(1)* %p3
+  %t1 = load i32, i32 addrspace(1)* %p1
+  %t2 = load i32, i32 addrspace(1)* %p2
+  %t3 = load i32, i32 addrspace(1)* %p3
   %s = add i32 %t1, %t2
   %s1 = add i32 %s, %t3
   ret i32 %s1
@@ -84,9 +84,9 @@ define i32 @inttoptr_cost_smaller_ptr(i32 %a, i32 %b, i32 %c) {
   %p1 = inttoptr i32 %a to i32 addrspace(2)*
   %p2 = inttoptr i32 %b to i32 addrspace(2)*
   %p3 = inttoptr i32 %c to i32 addrspace(2)*
-  %t1 = load i32 addrspace(2)* %p1
-  %t2 = load i32 addrspace(2)* %p2
-  %t3 = load i32 addrspace(2)* %p3
+  %t1 = load i32, i32 addrspace(2)* %p1
+  %t2 = load i32, i32 addrspace(2)* %p2
+  %t3 = load i32, i32 addrspace(2)* %p3
   %s = add i32 %t1, %t2
   %s1 = add i32 %s, %t3
   ret i32 %s1

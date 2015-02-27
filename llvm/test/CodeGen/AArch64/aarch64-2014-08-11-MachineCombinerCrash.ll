@@ -9,7 +9,7 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %arrayidx5 = getelementptr inbounds i32, i32* null, i64 1, !dbg !43
-  %0 = load i32* null, align 4, !dbg !45, !tbaa !46
+  %0 = load i32, i32* null, align 4, !dbg !45, !tbaa !46
   %s1 = sub nsw i32 0, %0, !dbg !50
   %n1 = sext i32 %s1 to i64, !dbg !50
   %arrayidx21 = getelementptr inbounds i32, i32* null, i64 3, !dbg !51

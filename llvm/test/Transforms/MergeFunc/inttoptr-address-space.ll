@@ -12,7 +12,7 @@ target datalayout = "e-p:32:32:32-p1:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:32:32-
 define internal i32 @func10(%.qux.2496 addrspace(1)* nocapture %this) align 2 {
 bb:
   %tmp = getelementptr inbounds %.qux.2496, %.qux.2496 addrspace(1)* %this, i32 0, i32 1, i32 1
-  %tmp1 = load i32 addrspace(1)* %tmp, align 4
+  %tmp1 = load i32, i32 addrspace(1)* %tmp, align 4
   ret i32 %tmp1
 }
 
@@ -24,6 +24,6 @@ bb:
 ; CHECK: %[[V3:.+]] = tail call i32 @func10(%.qux.2496 addrspace(1)* %[[V2]])
 ; CHECK: %{{.*}} = inttoptr i32 %[[V3]] to i8*
   %tmp = getelementptr inbounds %.qux.2585, %.qux.2585 addrspace(1)* %this, i32 0, i32 2
-  %tmp1 = load i8* addrspace(1)* %tmp, align 4
+  %tmp1 = load i8*, i8* addrspace(1)* %tmp, align 4
   ret i8* %tmp1
 }

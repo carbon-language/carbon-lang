@@ -46,8 +46,8 @@ while.cond36.i:                                   ; preds = %while.body41.i, %wh
   br i1 undef, label %do.body, label %while.body41.i
 
 while.body41.i:                                   ; preds = %while.cond36.i
-  %tmp43.i = load i8** @foo                      ; <i8*> [#uses=2]
-  %tmp44.i = load i8* %tmp43.i                    ; <i8> [#uses=1]
+  %tmp43.i = load i8*, i8** @foo                      ; <i8*> [#uses=2]
+  %tmp44.i = load i8, i8* %tmp43.i                    ; <i8> [#uses=1]
   %ptrincdec50.i = getelementptr inbounds i8, i8* %tmp43.i, i16 1 ; <i8*> [#uses=1]
   store i8* %ptrincdec50.i, i8** @foo
   %cmp55.i = icmp eq i8 %tmp44.i, %c              ; <i1> [#uses=1]

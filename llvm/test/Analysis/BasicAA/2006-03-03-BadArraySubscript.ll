@@ -15,9 +15,9 @@ no_exit:		; preds = %no_exit, %entry
 	%tmp.6 = getelementptr [3 x [3 x i32]], [3 x [3 x i32]]* %X, i32 0, i32 0, i32 %i.0.0		; <i32*> [#uses=1]
 	store i32 1, i32* %tmp.6
 	%tmp.8 = getelementptr [3 x [3 x i32]], [3 x [3 x i32]]* %X, i32 0, i32 0, i32 0		; <i32*> [#uses=1]
-	%tmp.9 = load i32* %tmp.8		; <i32> [#uses=1]
+	%tmp.9 = load i32, i32* %tmp.8		; <i32> [#uses=1]
 	%tmp.11 = getelementptr [3 x [3 x i32]], [3 x [3 x i32]]* %X, i32 0, i32 1, i32 0		; <i32*> [#uses=1]
-	%tmp.12 = load i32* %tmp.11		; <i32> [#uses=1]
+	%tmp.12 = load i32, i32* %tmp.11		; <i32> [#uses=1]
 	%tmp.13 = add i32 %tmp.12, %tmp.9		; <i32> [#uses=1]
 	%inc = add i32 %i.0.0, 1		; <i32> [#uses=2]
 	%tmp.2 = icmp slt i32 %inc, %N		; <i1> [#uses=1]

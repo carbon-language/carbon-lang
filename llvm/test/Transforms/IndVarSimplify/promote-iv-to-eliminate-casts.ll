@@ -14,7 +14,7 @@ bb:		; preds = %bb1, %bb.nph
 	%n.01 = phi i32 [ %t6, %bb1 ], [ 0, %bb.nph ]		; <i32> [#uses=2]
 	%t1 = sext i32 %n.01 to i64		; <i64> [#uses=1]
 	%t2 = getelementptr i64, i64* %first, i64 %t1		; <i64*> [#uses=1]
-	%t3 = load i64* %t2, align 8		; <i64> [#uses=1]
+	%t3 = load i64, i64* %t2, align 8		; <i64> [#uses=1]
 	%t4 = lshr i64 %t3, 4		; <i64> [#uses=1]
 	%t5 = add i64 %t4, %result.02		; <i64> [#uses=2]
 	%t6 = add i32 %n.01, 1		; <i32> [#uses=2]

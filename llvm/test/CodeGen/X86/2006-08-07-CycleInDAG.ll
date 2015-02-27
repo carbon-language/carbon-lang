@@ -8,10 +8,10 @@ cond_true.i:		; preds = %0
 	ret i32 0
 
 ilog2.exit:		; preds = %0
-	%tmp24.i = load i32* null		; <i32> [#uses=1]
+	%tmp24.i = load i32, i32* null		; <i32> [#uses=1]
 	%tmp13.i12.i = tail call double @ldexp( double 0.000000e+00, i32 0 )		; <double> [#uses=1]
 	%tmp13.i13.i = fptrunc double %tmp13.i12.i to float		; <float> [#uses=1]
-	%tmp11.s = load i32* null		; <i32> [#uses=1]
+	%tmp11.s = load i32, i32* null		; <i32> [#uses=1]
 	%tmp11.i = bitcast i32 %tmp11.s to i32		; <i32> [#uses=1]
 	%n.i = bitcast i32 %tmp24.i to i32		; <i32> [#uses=1]
 	%tmp13.i7 = mul i32 %tmp11.i, %n.i		; <i32> [#uses=1]

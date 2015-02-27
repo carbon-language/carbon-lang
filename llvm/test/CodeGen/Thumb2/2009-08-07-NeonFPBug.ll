@@ -33,12 +33,12 @@ entry:
 	br label %bb
 
 bb:		; preds = %bb, %entry
-	%0 = load float* undef, align 4		; <float> [#uses=1]
+	%0 = load float, float* undef, align 4		; <float> [#uses=1]
 	%1 = fmul float undef, %0		; <float> [#uses=2]
 	%tmp73 = add i32 0, 224		; <i32> [#uses=1]
 	%scevgep74 = getelementptr i8, i8* null, i32 %tmp73		; <i8*> [#uses=1]
 	%scevgep7475 = bitcast i8* %scevgep74 to float*		; <float*> [#uses=1]
-	%2 = load float* null, align 4		; <float> [#uses=1]
+	%2 = load float, float* null, align 4		; <float> [#uses=1]
 	%3 = fmul float 0.000000e+00, %2		; <float> [#uses=2]
 	%4 = fadd float %1, %3		; <float> [#uses=1]
 	%5 = fsub float %1, %3		; <float> [#uses=2]
@@ -51,7 +51,7 @@ bb:		; preds = %bb, %entry
 	%12 = sitofp i16 undef to float		; <float> [#uses=1]
 	%13 = fmul float %12, 0.000000e+00		; <float> [#uses=2]
 	%14 = sitofp i16 undef to float		; <float> [#uses=1]
-	%15 = load float* %scevgep7475, align 4		; <float> [#uses=1]
+	%15 = load float, float* %scevgep7475, align 4		; <float> [#uses=1]
 	%16 = fmul float %14, %15		; <float> [#uses=2]
 	%17 = fadd float undef, undef		; <float> [#uses=2]
 	%18 = fadd float %13, %16		; <float> [#uses=2]

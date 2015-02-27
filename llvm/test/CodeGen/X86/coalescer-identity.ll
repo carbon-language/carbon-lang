@@ -12,10 +12,10 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 define void @func() nounwind uwtable ssp {
 for.body.lr.ph:
-  %0 = load i32* @g2, align 4
+  %0 = load i32, i32* @g2, align 4
   %tobool6 = icmp eq i32 %0, 0
-  %s.promoted = load i16* @s, align 2
-  %.pre = load i32* @g1, align 4
+  %s.promoted = load i16, i16* @s, align 2
+  %.pre = load i32, i32* @g1, align 4
   br i1 %tobool6, label %for.body.us, label %for.body
 
 for.body.us:                                      ; preds = %for.body.lr.ph, %for.inc.us

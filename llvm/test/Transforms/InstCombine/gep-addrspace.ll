@@ -12,7 +12,7 @@ ST:
   %B = addrspacecast %myStruct addrspace(1)* %A to %myStruct*
   %C = getelementptr inbounds %myStruct, %myStruct* %B, i32 0, i32 1
   %D = getelementptr inbounds [3 x float], [3 x float]* %C, i32 0, i32 2
-  %E = load float* %D, align 4
+  %E = load float, float* %D, align 4
   %F = fsub float %E, undef
   ret void
 }

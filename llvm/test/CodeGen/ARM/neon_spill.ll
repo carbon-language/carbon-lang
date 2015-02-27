@@ -24,7 +24,7 @@ declare arm_aapcs_vfpcc %2** @func4()
 define arm_aapcs_vfpcc void @foo(%3* nocapture) nounwind align 2 {
   call void @llvm.arm.neon.vst4.v4i32(i8* undef, <4 x i32> <i32 0, i32 1065353216, i32 1073741824, i32 1077936128>, <4 x i32> <i32 1082130432, i32 1084227584, i32 1086324736, i32 1088421888>, <4 x i32> <i32 1090519040, i32 1091567616, i32 1092616192, i32 1093664768>, <4 x i32> <i32 1094713344, i32 1095761920, i32 1096810496, i32 1097859072>, i32 16) nounwind
   %2 = call arm_aapcs_vfpcc  %0** @func2() nounwind
-  %3 = load %0** %2, align 4
+  %3 = load %0*, %0** %2, align 4
   store float 0.000000e+00, float* undef, align 4
   %4 = call arm_aapcs_vfpcc  %2* @func3(%2* undef, %2* undef, i32 2956) nounwind
   call arm_aapcs_vfpcc  void @func1(%0* %3, float* undef, float* undef, %2* undef)

@@ -8,7 +8,7 @@
 ;       A[i][j] = 1.0;
 ; }
 
-; Inst:  %val = load double* %arrayidx
+; Inst:  %val = load double, double* %arrayidx
 ; In Loop with Header: for.j
 ; AddRec: {{0,+,(%m * sizeof(double))}<%for.i>,+,sizeof(double)}<%for.j>
 ; Base offset: %A
@@ -35,7 +35,7 @@ for.j:
   %j = phi i64 [ 0, %for.i ], [ %j.inc, %for.j ]
   %vlaarrayidx.sum = add i64 %j, %tmp
   %arrayidx = getelementptr inbounds double, double* %A, i64 %vlaarrayidx.sum
-  %val = load double* %arrayidx
+  %val = load double, double* %arrayidx
   store double %val, double* %arrayidx
   %j.inc = add nsw i64 %j, 1
   %j.exitcond = icmp eq i64 %j.inc, %m

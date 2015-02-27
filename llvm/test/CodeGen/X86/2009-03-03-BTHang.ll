@@ -10,7 +10,7 @@ entry:
 	%1 = and i32 %0, -4096		; <i32> [#uses=1]
 	%2 = inttoptr i32 %1 to %struct.HandleBlock*		; <%struct.HandleBlock*> [#uses=3]
 	%3 = getelementptr %struct.HandleBlock, %struct.HandleBlock* %2, i32 0, i32 0, i32 0		; <i32*> [#uses=1]
-	%4 = load i32* %3, align 4096		; <i32> [#uses=1]
+	%4 = load i32, i32* %3, align 4096		; <i32> [#uses=1]
 	%5 = icmp eq i32 %4, 1751280747		; <i1> [#uses=1]
 	br i1 %5, label %bb, label %bb1
 
@@ -25,7 +25,7 @@ bb:		; preds = %entry
 	%not.i = and i32 %9, 31		; <i32> [#uses=1]
 	%13 = xor i32 %not.i, 31		; <i32> [#uses=1]
 	%14 = shl i32 1, %13		; <i32> [#uses=1]
-	%15 = load i32* %12, align 4		; <i32> [#uses=1]
+	%15 = load i32, i32* %12, align 4		; <i32> [#uses=1]
 	%16 = and i32 %15, %14		; <i32> [#uses=1]
 	%17 = icmp eq i32 %16, 0		; <i1> [#uses=1]
 	%tmp = zext i1 %17 to i8		; <i8> [#uses=1]

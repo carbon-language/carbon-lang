@@ -25,7 +25,7 @@ define i32 @test_ifchains(i32 %i, i32* %a, i32 %b) {
 
 entry:
   %gep1 = getelementptr i32, i32* %a, i32 1
-  %val1 = load i32* %gep1
+  %val1 = load i32, i32* %gep1
   %cond1 = icmp ugt i32 %val1, 1
   br i1 %cond1, label %then1, label %else1, !prof !0
 
@@ -35,7 +35,7 @@ then1:
 
 else1:
   %gep2 = getelementptr i32, i32* %a, i32 2
-  %val2 = load i32* %gep2
+  %val2 = load i32, i32* %gep2
   %cond2 = icmp ugt i32 %val2, 2
   br i1 %cond2, label %then2, label %else2, !prof !0
 
@@ -45,7 +45,7 @@ then2:
 
 else2:
   %gep3 = getelementptr i32, i32* %a, i32 3
-  %val3 = load i32* %gep3
+  %val3 = load i32, i32* %gep3
   %cond3 = icmp ugt i32 %val3, 3
   br i1 %cond3, label %then3, label %else3, !prof !0
 
@@ -55,7 +55,7 @@ then3:
 
 else3:
   %gep4 = getelementptr i32, i32* %a, i32 4
-  %val4 = load i32* %gep4
+  %val4 = load i32, i32* %gep4
   %cond4 = icmp ugt i32 %val4, 4
   br i1 %cond4, label %then4, label %else4, !prof !0
 
@@ -65,7 +65,7 @@ then4:
 
 else4:
   %gep5 = getelementptr i32, i32* %a, i32 3
-  %val5 = load i32* %gep5
+  %val5 = load i32, i32* %gep5
   %cond5 = icmp ugt i32 %val5, 3
   br i1 %cond5, label %then5, label %exit, !prof !0
 
@@ -114,7 +114,7 @@ unlikely2:
 
 body3:
   %arrayidx = getelementptr inbounds i32, i32* %a, i32 %iv
-  %0 = load i32* %arrayidx
+  %0 = load i32, i32* %arrayidx
   %sum = add nsw i32 %0, %base
   %next = add i32 %iv, 1
   %exitcond = icmp eq i32 %next, %i
@@ -167,7 +167,7 @@ bail3:
 
 body4:
   %arrayidx = getelementptr inbounds i32, i32* %a, i32 %iv
-  %0 = load i32* %arrayidx
+  %0 = load i32, i32* %arrayidx
   %sum = add nsw i32 %0, %base
   %next = add i32 %iv, 1
   %exitcond = icmp eq i32 %next, %i
@@ -198,7 +198,7 @@ body0:
 
 body1:
   %arrayidx = getelementptr inbounds i32, i32* %a, i32 %iv
-  %0 = load i32* %arrayidx
+  %0 = load i32, i32* %arrayidx
   %sum = add nsw i32 %0, %base
   %bailcond1 = icmp eq i32 %sum, 42
   br label %body0
@@ -223,7 +223,7 @@ body0:
   %iv = phi i32 [ 0, %entry ], [ %next, %body1 ]
   %base = phi i32 [ 0, %entry ], [ %sum, %body1 ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i32 %iv
-  %0 = load i32* %arrayidx
+  %0 = load i32, i32* %arrayidx
   %sum = add nsw i32 %0, %base
   %bailcond1 = icmp eq i32 %sum, 42
   br i1 %bailcond1, label %exit, label %body1
@@ -253,7 +253,7 @@ body:
   %iv = phi i32 [ 0, %entry ], [ %next, %body ]
   %base = phi i32 [ 0, %entry ], [ %sum, %body ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i32 %iv
-  %0 = load i32* %arrayidx
+  %0 = load i32, i32* %arrayidx
   %sum = add nsw i32 %0, %base
   %next = add i32 %iv, 1
   %exitcond = icmp eq i32 %next, %i
@@ -280,7 +280,7 @@ entry:
 loop.body.1:
   %iv = phi i32 [ 0, %entry ], [ %next, %loop.body.2 ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i32 %iv
-  %bidx = load i32* %arrayidx
+  %bidx = load i32, i32* %arrayidx
   br label %inner.loop.body
 
 inner.loop.body:
@@ -288,7 +288,7 @@ inner.loop.body:
   %base = phi i32 [ 0, %loop.body.1 ], [ %sum, %inner.loop.body ]
   %scaled_idx = mul i32 %bidx, %iv
   %inner.arrayidx = getelementptr inbounds i32, i32* %b, i32 %scaled_idx
-  %0 = load i32* %inner.arrayidx
+  %0 = load i32, i32* %inner.arrayidx
   %sum = add nsw i32 %0, %base
   %inner.next = add i32 %iv, 1
   %inner.exitcond = icmp eq i32 %inner.next, %i
@@ -322,13 +322,13 @@ loop.body1:
   br i1 undef, label %loop.body3, label %loop.body2
 
 loop.body2:
-  %ptr = load i32** undef, align 4
+  %ptr = load i32*, i32** undef, align 4
   br label %loop.body3
 
 loop.body3:
   %myptr = phi i32* [ %ptr2, %loop.body5 ], [ %ptr, %loop.body2 ], [ undef, %loop.body1 ]
   %bcmyptr = bitcast i32* %myptr to i32*
-  %val = load i32* %bcmyptr, align 4
+  %val = load i32, i32* %bcmyptr, align 4
   %comp = icmp eq i32 %val, 48
   br i1 %comp, label %loop.body4, label %loop.body5
 
@@ -336,7 +336,7 @@ loop.body4:
   br i1 undef, label %loop.header, label %loop.body5
 
 loop.body5:
-  %ptr2 = load i32** undef, align 4
+  %ptr2 = load i32*, i32** undef, align 4
   br label %loop.body3
 }
 
@@ -366,7 +366,7 @@ loop.header:
   br i1 %comp0, label %bail, label %loop.body1
 
 loop.body1:
-  %val0 = load i32** undef, align 4
+  %val0 = load i32*, i32** undef, align 4
   br i1 undef, label %loop.body2, label %loop.inner1.begin
 
 loop.body2:
@@ -375,7 +375,7 @@ loop.body2:
 loop.body3:
   %ptr1 = getelementptr inbounds i32, i32* %val0, i32 0
   %castptr1 = bitcast i32* %ptr1 to i32**
-  %val1 = load i32** %castptr1, align 4
+  %val1 = load i32*, i32** %castptr1, align 4
   br label %loop.inner1.begin
 
 loop.inner1.begin:
@@ -387,7 +387,7 @@ loop.inner1.begin:
 loop.inner1.end:
   %ptr2 = getelementptr inbounds i32, i32* %valphi, i32 0
   %castptr2 = bitcast i32* %ptr2 to i32**
-  %val2 = load i32** %castptr2, align 4
+  %val2 = load i32*, i32** %castptr2, align 4
   br label %loop.inner1.begin
 
 loop.body4.dead:
@@ -486,7 +486,7 @@ entry:
   br i1 %cond, label %entry.if.then_crit_edge, label %lor.lhs.false, !prof !1
 
 entry.if.then_crit_edge:
-  %.pre14 = load i8* undef, align 1
+  %.pre14 = load i8, i8* undef, align 1
   br label %if.then
 
 lor.lhs.false:
@@ -616,7 +616,7 @@ body:
   br label %loop2a
 
 loop1:
-  %next.load = load i32** undef
+  %next.load = load i32*, i32** undef
   br i1 %comp.a, label %loop2a, label %loop2b
 
 loop2a:
@@ -728,199 +728,199 @@ define void @many_unanalyzable_branches() {
 entry:
   br label %0
 
-  %val0 = load volatile float* undef
+  %val0 = load volatile float, float* undef
   %cmp0 = fcmp une float %val0, undef
   br i1 %cmp0, label %1, label %0
-  %val1 = load volatile float* undef
+  %val1 = load volatile float, float* undef
   %cmp1 = fcmp une float %val1, undef
   br i1 %cmp1, label %2, label %1
-  %val2 = load volatile float* undef
+  %val2 = load volatile float, float* undef
   %cmp2 = fcmp une float %val2, undef
   br i1 %cmp2, label %3, label %2
-  %val3 = load volatile float* undef
+  %val3 = load volatile float, float* undef
   %cmp3 = fcmp une float %val3, undef
   br i1 %cmp3, label %4, label %3
-  %val4 = load volatile float* undef
+  %val4 = load volatile float, float* undef
   %cmp4 = fcmp une float %val4, undef
   br i1 %cmp4, label %5, label %4
-  %val5 = load volatile float* undef
+  %val5 = load volatile float, float* undef
   %cmp5 = fcmp une float %val5, undef
   br i1 %cmp5, label %6, label %5
-  %val6 = load volatile float* undef
+  %val6 = load volatile float, float* undef
   %cmp6 = fcmp une float %val6, undef
   br i1 %cmp6, label %7, label %6
-  %val7 = load volatile float* undef
+  %val7 = load volatile float, float* undef
   %cmp7 = fcmp une float %val7, undef
   br i1 %cmp7, label %8, label %7
-  %val8 = load volatile float* undef
+  %val8 = load volatile float, float* undef
   %cmp8 = fcmp une float %val8, undef
   br i1 %cmp8, label %9, label %8
-  %val9 = load volatile float* undef
+  %val9 = load volatile float, float* undef
   %cmp9 = fcmp une float %val9, undef
   br i1 %cmp9, label %10, label %9
-  %val10 = load volatile float* undef
+  %val10 = load volatile float, float* undef
   %cmp10 = fcmp une float %val10, undef
   br i1 %cmp10, label %11, label %10
-  %val11 = load volatile float* undef
+  %val11 = load volatile float, float* undef
   %cmp11 = fcmp une float %val11, undef
   br i1 %cmp11, label %12, label %11
-  %val12 = load volatile float* undef
+  %val12 = load volatile float, float* undef
   %cmp12 = fcmp une float %val12, undef
   br i1 %cmp12, label %13, label %12
-  %val13 = load volatile float* undef
+  %val13 = load volatile float, float* undef
   %cmp13 = fcmp une float %val13, undef
   br i1 %cmp13, label %14, label %13
-  %val14 = load volatile float* undef
+  %val14 = load volatile float, float* undef
   %cmp14 = fcmp une float %val14, undef
   br i1 %cmp14, label %15, label %14
-  %val15 = load volatile float* undef
+  %val15 = load volatile float, float* undef
   %cmp15 = fcmp une float %val15, undef
   br i1 %cmp15, label %16, label %15
-  %val16 = load volatile float* undef
+  %val16 = load volatile float, float* undef
   %cmp16 = fcmp une float %val16, undef
   br i1 %cmp16, label %17, label %16
-  %val17 = load volatile float* undef
+  %val17 = load volatile float, float* undef
   %cmp17 = fcmp une float %val17, undef
   br i1 %cmp17, label %18, label %17
-  %val18 = load volatile float* undef
+  %val18 = load volatile float, float* undef
   %cmp18 = fcmp une float %val18, undef
   br i1 %cmp18, label %19, label %18
-  %val19 = load volatile float* undef
+  %val19 = load volatile float, float* undef
   %cmp19 = fcmp une float %val19, undef
   br i1 %cmp19, label %20, label %19
-  %val20 = load volatile float* undef
+  %val20 = load volatile float, float* undef
   %cmp20 = fcmp une float %val20, undef
   br i1 %cmp20, label %21, label %20
-  %val21 = load volatile float* undef
+  %val21 = load volatile float, float* undef
   %cmp21 = fcmp une float %val21, undef
   br i1 %cmp21, label %22, label %21
-  %val22 = load volatile float* undef
+  %val22 = load volatile float, float* undef
   %cmp22 = fcmp une float %val22, undef
   br i1 %cmp22, label %23, label %22
-  %val23 = load volatile float* undef
+  %val23 = load volatile float, float* undef
   %cmp23 = fcmp une float %val23, undef
   br i1 %cmp23, label %24, label %23
-  %val24 = load volatile float* undef
+  %val24 = load volatile float, float* undef
   %cmp24 = fcmp une float %val24, undef
   br i1 %cmp24, label %25, label %24
-  %val25 = load volatile float* undef
+  %val25 = load volatile float, float* undef
   %cmp25 = fcmp une float %val25, undef
   br i1 %cmp25, label %26, label %25
-  %val26 = load volatile float* undef
+  %val26 = load volatile float, float* undef
   %cmp26 = fcmp une float %val26, undef
   br i1 %cmp26, label %27, label %26
-  %val27 = load volatile float* undef
+  %val27 = load volatile float, float* undef
   %cmp27 = fcmp une float %val27, undef
   br i1 %cmp27, label %28, label %27
-  %val28 = load volatile float* undef
+  %val28 = load volatile float, float* undef
   %cmp28 = fcmp une float %val28, undef
   br i1 %cmp28, label %29, label %28
-  %val29 = load volatile float* undef
+  %val29 = load volatile float, float* undef
   %cmp29 = fcmp une float %val29, undef
   br i1 %cmp29, label %30, label %29
-  %val30 = load volatile float* undef
+  %val30 = load volatile float, float* undef
   %cmp30 = fcmp une float %val30, undef
   br i1 %cmp30, label %31, label %30
-  %val31 = load volatile float* undef
+  %val31 = load volatile float, float* undef
   %cmp31 = fcmp une float %val31, undef
   br i1 %cmp31, label %32, label %31
-  %val32 = load volatile float* undef
+  %val32 = load volatile float, float* undef
   %cmp32 = fcmp une float %val32, undef
   br i1 %cmp32, label %33, label %32
-  %val33 = load volatile float* undef
+  %val33 = load volatile float, float* undef
   %cmp33 = fcmp une float %val33, undef
   br i1 %cmp33, label %34, label %33
-  %val34 = load volatile float* undef
+  %val34 = load volatile float, float* undef
   %cmp34 = fcmp une float %val34, undef
   br i1 %cmp34, label %35, label %34
-  %val35 = load volatile float* undef
+  %val35 = load volatile float, float* undef
   %cmp35 = fcmp une float %val35, undef
   br i1 %cmp35, label %36, label %35
-  %val36 = load volatile float* undef
+  %val36 = load volatile float, float* undef
   %cmp36 = fcmp une float %val36, undef
   br i1 %cmp36, label %37, label %36
-  %val37 = load volatile float* undef
+  %val37 = load volatile float, float* undef
   %cmp37 = fcmp une float %val37, undef
   br i1 %cmp37, label %38, label %37
-  %val38 = load volatile float* undef
+  %val38 = load volatile float, float* undef
   %cmp38 = fcmp une float %val38, undef
   br i1 %cmp38, label %39, label %38
-  %val39 = load volatile float* undef
+  %val39 = load volatile float, float* undef
   %cmp39 = fcmp une float %val39, undef
   br i1 %cmp39, label %40, label %39
-  %val40 = load volatile float* undef
+  %val40 = load volatile float, float* undef
   %cmp40 = fcmp une float %val40, undef
   br i1 %cmp40, label %41, label %40
-  %val41 = load volatile float* undef
+  %val41 = load volatile float, float* undef
   %cmp41 = fcmp une float %val41, undef
   br i1 %cmp41, label %42, label %41
-  %val42 = load volatile float* undef
+  %val42 = load volatile float, float* undef
   %cmp42 = fcmp une float %val42, undef
   br i1 %cmp42, label %43, label %42
-  %val43 = load volatile float* undef
+  %val43 = load volatile float, float* undef
   %cmp43 = fcmp une float %val43, undef
   br i1 %cmp43, label %44, label %43
-  %val44 = load volatile float* undef
+  %val44 = load volatile float, float* undef
   %cmp44 = fcmp une float %val44, undef
   br i1 %cmp44, label %45, label %44
-  %val45 = load volatile float* undef
+  %val45 = load volatile float, float* undef
   %cmp45 = fcmp une float %val45, undef
   br i1 %cmp45, label %46, label %45
-  %val46 = load volatile float* undef
+  %val46 = load volatile float, float* undef
   %cmp46 = fcmp une float %val46, undef
   br i1 %cmp46, label %47, label %46
-  %val47 = load volatile float* undef
+  %val47 = load volatile float, float* undef
   %cmp47 = fcmp une float %val47, undef
   br i1 %cmp47, label %48, label %47
-  %val48 = load volatile float* undef
+  %val48 = load volatile float, float* undef
   %cmp48 = fcmp une float %val48, undef
   br i1 %cmp48, label %49, label %48
-  %val49 = load volatile float* undef
+  %val49 = load volatile float, float* undef
   %cmp49 = fcmp une float %val49, undef
   br i1 %cmp49, label %50, label %49
-  %val50 = load volatile float* undef
+  %val50 = load volatile float, float* undef
   %cmp50 = fcmp une float %val50, undef
   br i1 %cmp50, label %51, label %50
-  %val51 = load volatile float* undef
+  %val51 = load volatile float, float* undef
   %cmp51 = fcmp une float %val51, undef
   br i1 %cmp51, label %52, label %51
-  %val52 = load volatile float* undef
+  %val52 = load volatile float, float* undef
   %cmp52 = fcmp une float %val52, undef
   br i1 %cmp52, label %53, label %52
-  %val53 = load volatile float* undef
+  %val53 = load volatile float, float* undef
   %cmp53 = fcmp une float %val53, undef
   br i1 %cmp53, label %54, label %53
-  %val54 = load volatile float* undef
+  %val54 = load volatile float, float* undef
   %cmp54 = fcmp une float %val54, undef
   br i1 %cmp54, label %55, label %54
-  %val55 = load volatile float* undef
+  %val55 = load volatile float, float* undef
   %cmp55 = fcmp une float %val55, undef
   br i1 %cmp55, label %56, label %55
-  %val56 = load volatile float* undef
+  %val56 = load volatile float, float* undef
   %cmp56 = fcmp une float %val56, undef
   br i1 %cmp56, label %57, label %56
-  %val57 = load volatile float* undef
+  %val57 = load volatile float, float* undef
   %cmp57 = fcmp une float %val57, undef
   br i1 %cmp57, label %58, label %57
-  %val58 = load volatile float* undef
+  %val58 = load volatile float, float* undef
   %cmp58 = fcmp une float %val58, undef
   br i1 %cmp58, label %59, label %58
-  %val59 = load volatile float* undef
+  %val59 = load volatile float, float* undef
   %cmp59 = fcmp une float %val59, undef
   br i1 %cmp59, label %60, label %59
-  %val60 = load volatile float* undef
+  %val60 = load volatile float, float* undef
   %cmp60 = fcmp une float %val60, undef
   br i1 %cmp60, label %61, label %60
-  %val61 = load volatile float* undef
+  %val61 = load volatile float, float* undef
   %cmp61 = fcmp une float %val61, undef
   br i1 %cmp61, label %62, label %61
-  %val62 = load volatile float* undef
+  %val62 = load volatile float, float* undef
   %cmp62 = fcmp une float %val62, undef
   br i1 %cmp62, label %63, label %62
-  %val63 = load volatile float* undef
+  %val63 = load volatile float, float* undef
   %cmp63 = fcmp une float %val63, undef
   br i1 %cmp63, label %64, label %63
-  %val64 = load volatile float* undef
+  %val64 = load volatile float, float* undef
   %cmp64 = fcmp une float %val64, undef
   br i1 %cmp64, label %65, label %64
 
@@ -979,14 +979,14 @@ if.then:
   %dec = add nsw i32 %l.0, -1
   %idxprom = sext i32 %dec to i64
   %arrayidx = getelementptr inbounds double, double* %ra, i64 %idxprom
-  %0 = load double* %arrayidx, align 8
+  %0 = load double, double* %arrayidx, align 8
   br label %if.end10
 
 if.else:
   %idxprom1 = sext i32 %ir.0 to i64
   %arrayidx2 = getelementptr inbounds double, double* %ra, i64 %idxprom1
-  %1 = load double* %arrayidx2, align 8
-  %2 = load double* %arrayidx3, align 8
+  %1 = load double, double* %arrayidx2, align 8
+  %2 = load double, double* %arrayidx3, align 8
   store double %2, double* %arrayidx2, align 8
   %dec6 = add nsw i32 %ir.0, -1
   %cmp7 = icmp eq i32 %dec6, 1
@@ -1020,11 +1020,11 @@ while.body:
 land.lhs.true:
   %idxprom13 = sext i32 %j.0 to i64
   %arrayidx14 = getelementptr inbounds double, double* %ra, i64 %idxprom13
-  %3 = load double* %arrayidx14, align 8
+  %3 = load double, double* %arrayidx14, align 8
   %add15 = add nsw i32 %j.0, 1
   %idxprom16 = sext i32 %add15 to i64
   %arrayidx17 = getelementptr inbounds double, double* %ra, i64 %idxprom16
-  %4 = load double* %arrayidx17, align 8
+  %4 = load double, double* %arrayidx17, align 8
   %cmp18 = fcmp olt double %3, %4
   br i1 %cmp18, label %if.then19, label %if.end20
 
@@ -1035,7 +1035,7 @@ if.end20:
   %j.1 = phi i32 [ %add15, %if.then19 ], [ %j.0, %land.lhs.true ], [ %j.0, %while.body ]
   %idxprom21 = sext i32 %j.1 to i64
   %arrayidx22 = getelementptr inbounds double, double* %ra, i64 %idxprom21
-  %5 = load double* %arrayidx22, align 8
+  %5 = load double, double* %arrayidx22, align 8
   %cmp23 = fcmp olt double %rra.0, %5
   br i1 %cmp23, label %if.then24, label %while.cond
 
@@ -1066,7 +1066,7 @@ define i32 @test_cold_calls(i32* %a) {
 
 entry:
   %gep1 = getelementptr i32, i32* %a, i32 1
-  %val1 = load i32* %gep1
+  %val1 = load i32, i32* %gep1
   %cond1 = icmp ugt i32 %val1, 1
   br i1 %cond1, label %then, label %else
 
@@ -1076,7 +1076,7 @@ then:
 
 else:
   %gep2 = getelementptr i32, i32* %a, i32 2
-  %val2 = load i32* %gep2
+  %val2 = load i32, i32* %gep2
   br label %exit
 
 exit:

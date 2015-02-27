@@ -21,7 +21,7 @@ declare void @jnjvmNullPointerException()
 define i32 @JnJVM_java_rmi_activation_ActivationGroupID_hashCode__(%JavaObject* nocapture) nounwind {
 start:
         %1 = getelementptr %JavaObject, %JavaObject* %0, i64 1, i32 1                ; <%JavaCommonClass**> [#uses=1]
-        %2 = load %JavaCommonClass** %1         ; <%JavaCommonClass*> [#uses=4]
+        %2 = load %JavaCommonClass*, %JavaCommonClass** %1         ; <%JavaCommonClass*> [#uses=4]
         %3 = icmp eq %JavaCommonClass* %2, null         ; <i1> [#uses=1]
         br i1 %3, label %verifyNullExit1, label %verifyNullCont2
 
@@ -32,13 +32,13 @@ verifyNullExit1:                ; preds = %start
 verifyNullCont2:                ; preds = %start
         %4 = bitcast %JavaCommonClass* %2 to { %JavaObject, i16, i32, i64 }*            ; <{ %JavaObject, i16, i32, i64 }*> [#uses=1]
         %5 = getelementptr { %JavaObject, i16, i32, i64 }, { %JavaObject, i16, i32, i64 }* %4, i64 0, i32 2             ; <i32*> [#uses=1]
-        %6 = load i32* %5               ; <i32> [#uses=1]
+        %6 = load i32, i32* %5               ; <i32> [#uses=1]
         %7 = getelementptr %JavaCommonClass, %JavaCommonClass* %2, i64 0, i32 4           ; <%JavaClass***> [#uses=1]
         %8 = bitcast %JavaClass*** %7 to i64*           ; <i64*> [#uses=1]
-        %9 = load i64* %8               ; <i64> [#uses=1]
+        %9 = load i64, i64* %8               ; <i64> [#uses=1]
         %10 = trunc i64 %9 to i32               ; <i32> [#uses=1]
         %11 = getelementptr %JavaCommonClass, %JavaCommonClass* %2, i64 0, i32 3          ; <i16*> [#uses=1]
-        %12 = load i16* %11             ; <i16> [#uses=1]
+        %12 = load i16, i16* %11             ; <i16> [#uses=1]
         %13 = sext i16 %12 to i32               ; <i32> [#uses=1]
         %14 = xor i32 %10, %6           ; <i32> [#uses=1]
         %15 = xor i32 %14, %13          ; <i32> [#uses=1]

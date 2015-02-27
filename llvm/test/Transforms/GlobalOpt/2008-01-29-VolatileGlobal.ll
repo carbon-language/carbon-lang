@@ -3,7 +3,7 @@
 
 define double @foo() nounwind  {
 entry:
-	%tmp1 = load volatile double* @t0.1441, align 8		; <double> [#uses=2]
+	%tmp1 = load volatile double, double* @t0.1441, align 8		; <double> [#uses=2]
 	%tmp4 = fmul double %tmp1, %tmp1		; <double> [#uses=1]
 	ret double %tmp4
 }

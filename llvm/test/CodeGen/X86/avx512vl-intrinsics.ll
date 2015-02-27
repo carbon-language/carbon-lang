@@ -805,7 +805,7 @@ define <4 x double> @test_x86_mask_blend_pd_256(i8 %a0, <4 x double> %a1, <4 x d
 define <4 x double> @test_x86_mask_blend_pd_256_memop(<4 x double> %a, <4 x double>* %ptr, i8 %mask) {
   ; CHECK-LABEL: test_x86_mask_blend_pd_256_memop
   ; CHECK: vblendmpd (%
-  %b = load <4 x double>* %ptr
+  %b = load <4 x double>, <4 x double>* %ptr
   %res = call <4 x double> @llvm.x86.avx512.mask.blend.pd.256(<4 x double> %a, <4 x double> %b, i8 %mask) ; <<4 x double>> [#uses=1]
   ret <4 x double> %res
 }
@@ -843,7 +843,7 @@ define <2 x double> @test_x86_mask_blend_pd_128(i8 %a0, <2 x double> %a1, <2 x d
 define <2 x double> @test_x86_mask_blend_pd_128_memop(<2 x double> %a, <2 x double>* %ptr, i8 %mask) {
   ; CHECK-LABEL: test_x86_mask_blend_pd_128_memop
   ; CHECK: vblendmpd (%
-  %b = load <2 x double>* %ptr
+  %b = load <2 x double>, <2 x double>* %ptr
   %res = call <2 x double> @llvm.x86.avx512.mask.blend.pd.128(<2 x double> %a, <2 x double> %b, i8 %mask) ; <<2 x double>> [#uses=1]
   ret <2 x double> %res
 }

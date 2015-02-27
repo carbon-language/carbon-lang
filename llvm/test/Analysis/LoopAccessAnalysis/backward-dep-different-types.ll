@@ -20,18 +20,18 @@ target triple = "x86_64-apple-macosx10.10.0"
 
 define void @f() {
 entry:
-  %a = load i32** @A, align 8
-  %b = load i32** @B, align 8
+  %a = load i32*, i32** @A, align 8
+  %b = load i32*, i32** @B, align 8
   br label %for.body
 
 for.body:                                         ; preds = %for.body, %entry
   %storemerge3 = phi i64 [ 0, %entry ], [ %add, %for.body ]
 
   %arrayidxA = getelementptr inbounds i32, i32* %a, i64 %storemerge3
-  %loadA = load i32* %arrayidxA, align 2
+  %loadA = load i32, i32* %arrayidxA, align 2
 
   %arrayidxB = getelementptr inbounds i32, i32* %b, i64 %storemerge3
-  %loadB = load i32* %arrayidxB, align 2
+  %loadB = load i32, i32* %arrayidxB, align 2
 
   %mul = mul i32 %loadB, %loadA
 

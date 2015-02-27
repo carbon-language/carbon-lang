@@ -9,7 +9,7 @@ target triple = "x86_64-pc-windows-msvc"
 
 ; CHECK-LABEL: @bar
 ; CHECK: entry:
-; CHECK: load i64* bitcast (i32** @in to i64*)
+; CHECK: load i64, i64* bitcast (i32** @in to i64*)
 ; CHECK: do.body:
 ; CHECK-NOT: load
 
@@ -24,11 +24,11 @@ do.body:                                          ; preds = %l2, %entry
   br i1 %c, label %l1, label %do.body.l2_crit_edge
 
 do.body.l2_crit_edge:                             ; preds = %do.body
-  %inval.pre = load i32** @in, align 8
+  %inval.pre = load i32*, i32** @in, align 8
   br label %l2
 
 l1:                                               ; preds = %do.body
-  %v1 = load i64* bitcast (i32** @in to i64*), align 8
+  %v1 = load i64, i64* bitcast (i32** @in to i64*), align 8
   store i64 %v1, i64* bitcast (i32** @out to i64*), align 8
   %0 = inttoptr i64 %v1 to i32*
   br label %l2

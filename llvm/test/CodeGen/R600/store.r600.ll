@@ -7,7 +7,7 @@
 ; EG: MEM_RAT_CACHELESS STORE_RAW T{{[0-9]+\.XYZW, T[0-9]+\.X}}, 1
 
 define void @store_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
-  %1 = load <4 x i32> addrspace(1) * %in
+  %1 = load <4 x i32>, <4 x i32> addrspace(1) * %in
   store <4 x i32> %1, <4 x i32> addrspace(1)* %out
   ret void
 }
@@ -16,7 +16,7 @@ define void @store_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %
 ; EG: {{^}}store_v4f32:
 ; EG: MEM_RAT_CACHELESS STORE_RAW T{{[0-9]+\.XYZW, T[0-9]+\.X}}, 1
 define void @store_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
-  %1 = load <4 x float> addrspace(1) * %in
+  %1 = load <4 x float>, <4 x float> addrspace(1) * %in
   store <4 x float> %1, <4 x float> addrspace(1)* %out
   ret void
 }

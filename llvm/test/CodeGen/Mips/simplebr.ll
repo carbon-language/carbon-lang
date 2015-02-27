@@ -9,7 +9,7 @@ target triple = "mips--linux-gnu"
 ; Function Attrs: nounwind
 define void @foo() #0 {
 entry:
-  %0 = load i32* @i, align 4
+  %0 = load i32, i32* @i, align 4
   %tobool = icmp ne i32 %0, 0
   br i1 %tobool, label %if.then, label %if.else
 

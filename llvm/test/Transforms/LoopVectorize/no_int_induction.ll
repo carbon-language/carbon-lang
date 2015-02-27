@@ -21,7 +21,7 @@ define i32 @sum_array(i32* %A, i32 %n) nounwind uwtable readonly noinline ssp {
 .lr.ph.i:                                         ; preds = %0, %.lr.ph.i
   %.03.i = phi i32* [ %6, %.lr.ph.i ], [ %A, %0 ]
   %.012.i = phi i32 [ %5, %.lr.ph.i ], [ 0, %0 ]
-  %4 = load i32* %.03.i, align 4
+  %4 = load i32, i32* %.03.i, align 4
   %5 = add nsw i32 %4, %.012.i
   %6 = getelementptr inbounds i32, i32* %.03.i, i64 1
   %7 = icmp eq i32* %6, %2
@@ -48,7 +48,7 @@ define i32 @sum_array_as1(i32 addrspace(1)* %A, i32 %n) nounwind uwtable readonl
 .lr.ph.i:                                         ; preds = %0, %.lr.ph.i
   %.03.i = phi i32 addrspace(1)* [ %6, %.lr.ph.i ], [ %A, %0 ]
   %.012.i = phi i32 [ %5, %.lr.ph.i ], [ 0, %0 ]
-  %4 = load i32 addrspace(1)* %.03.i, align 4
+  %4 = load i32, i32 addrspace(1)* %.03.i, align 4
   %5 = add nsw i32 %4, %.012.i
   %6 = getelementptr inbounds i32, i32 addrspace(1)* %.03.i, i64 1
   %7 = icmp eq i32 addrspace(1)* %6, %2

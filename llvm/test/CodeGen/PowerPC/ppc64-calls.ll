@@ -73,7 +73,7 @@ define double @test_external(double %x) nounwind {
 @g = external global void ()*
 declare void @h(i64)
 define void @test_indir_toc_reload(i64 %x) {
-  %1 = load void ()** @g
+  %1 = load void ()*, void ()** @g
   call void %1()
   call void @h(i64 %x)
   ret void

@@ -43,7 +43,7 @@
 ; Function Attrs: nounwind readonly uwtable
 define zeroext i1 @_ZN3Foo3batEv(%struct.Foo* %this) #0 align 2 {
 entry:
-  %0 = load %struct.Foo** @pfoo, align 8
+  %0 = load %struct.Foo*, %struct.Foo** @pfoo, align 8
   tail call void @llvm.dbg.value(metadata %struct.Foo* %0, i64 0, metadata !62, metadata !{!"0x102"})
   %cmp.i = icmp eq %struct.Foo* %0, %this
   ret i1 %cmp.i
@@ -52,9 +52,9 @@ entry:
 ; Function Attrs: nounwind uwtable
 define void @_Z3bazv() #1 {
 entry:
-  %0 = load %struct.Wibble** @wibble1, align 8
+  %0 = load %struct.Wibble*, %struct.Wibble** @wibble1, align 8
   tail call void @llvm.dbg.value(metadata %struct.Flibble* undef, i64 0, metadata !65, metadata !{!"0x102"})
-  %1 = load %struct.Wibble** @wibble2, align 8
+  %1 = load %struct.Wibble*, %struct.Wibble** @wibble2, align 8
   %cmp.i = icmp ugt %struct.Wibble* %1, %0
   br i1 %cmp.i, label %if.then.i, label %_ZN7Flibble3barEP6Wibble.exit
 

@@ -94,11 +94,11 @@
 define void @_Z3fn6v() #0 {
 entry:
   tail call void @_Z3fn8v() #3, !dbg !31
-  %0 = load %struct.C** @x, align 8, !dbg !32, !tbaa !33
+  %0 = load %struct.C*, %struct.C** @x, align 8, !dbg !32, !tbaa !33
   tail call void @llvm.dbg.value(metadata %struct.C* %0, i64 0, metadata !37, metadata !{!"0x102"}) #3, !dbg !38
   tail call void @_Z3fn8v() #3, !dbg !39
   %b.i = getelementptr inbounds %struct.C, %struct.C* %0, i64 0, i32 0, !dbg !40
-  %1 = load i32* %b.i, align 4, !dbg !40, !tbaa !42
+  %1 = load i32, i32* %b.i, align 4, !dbg !40, !tbaa !42
   %tobool.i = icmp eq i32 %1, 0, !dbg !40
   br i1 %tobool.i, label %_ZN1C5m_fn2Ev.exit, label %if.then.i, !dbg !40
 
@@ -119,7 +119,7 @@ entry:
   tail call void @llvm.dbg.value(metadata %struct.C* %this, i64 0, metadata !24, metadata !{!"0x102"}), !dbg !49
   tail call void @_Z3fn8v() #3, !dbg !50
   %b = getelementptr inbounds %struct.C, %struct.C* %this, i64 0, i32 0, !dbg !51
-  %0 = load i32* %b, align 4, !dbg !51, !tbaa !42
+  %0 = load i32, i32* %b, align 4, !dbg !51, !tbaa !42
   %tobool = icmp eq i32 %0, 0, !dbg !51
   br i1 %tobool, label %if.end, label %if.then, !dbg !51
 
@@ -129,11 +129,11 @@ if.then:                                          ; preds = %entry
 
 if.end:                                           ; preds = %entry, %if.then
   tail call void @_Z3fn8v() #3, !dbg !53
-  %1 = load %struct.C** @x, align 8, !dbg !56, !tbaa !33
+  %1 = load %struct.C*, %struct.C** @x, align 8, !dbg !56, !tbaa !33
   tail call void @llvm.dbg.value(metadata %struct.C* %1, i64 0, metadata !57, metadata !{!"0x102"}) #3, !dbg !58
   tail call void @_Z3fn8v() #3, !dbg !59
   %b.i.i = getelementptr inbounds %struct.C, %struct.C* %1, i64 0, i32 0, !dbg !60
-  %2 = load i32* %b.i.i, align 4, !dbg !60, !tbaa !42
+  %2 = load i32, i32* %b.i.i, align 4, !dbg !60, !tbaa !42
   %tobool.i.i = icmp eq i32 %2, 0, !dbg !60
   br i1 %tobool.i.i, label %_Z3fn6v.exit, label %if.then.i.i, !dbg !60
 
@@ -153,11 +153,11 @@ entry:
 
 tailrecurse:                                      ; preds = %tailrecurse.backedge, %entry
   tail call void @_Z3fn8v() #3, !dbg !64
-  %0 = load %struct.C** @x, align 8, !dbg !66, !tbaa !33
+  %0 = load %struct.C*, %struct.C** @x, align 8, !dbg !66, !tbaa !33
   tail call void @llvm.dbg.value(metadata %struct.C* %0, i64 0, metadata !67, metadata !{!"0x102"}) #3, !dbg !68
   tail call void @_Z3fn8v() #3, !dbg !69
   %b.i.i = getelementptr inbounds %struct.C, %struct.C* %0, i64 0, i32 0, !dbg !70
-  %1 = load i32* %b.i.i, align 4, !dbg !70, !tbaa !42
+  %1 = load i32, i32* %b.i.i, align 4, !dbg !70, !tbaa !42
   %tobool.i.i = icmp eq i32 %1, 0, !dbg !70
   br i1 %tobool.i.i, label %tailrecurse.backedge, label %if.then.i.i, !dbg !70
 
@@ -172,7 +172,7 @@ if.then.i.i:                                      ; preds = %tailrecurse
 ; Function Attrs: nounwind
 define void @_Z3fn4v() #0 {
 entry:
-  %0 = load %struct.C** @x, align 8, !dbg !72, !tbaa !33
+  %0 = load %struct.C*, %struct.C** @x, align 8, !dbg !72, !tbaa !33
   tail call void @_ZN1C5m_fn2Ev(%struct.C* %0), !dbg !72
   ret void, !dbg !72
 }
@@ -180,7 +180,7 @@ entry:
 ; Function Attrs: nounwind
 define void @_Z3fn5v() #0 {
 entry:
-  %0 = load %struct.C** @x, align 8, !dbg !73, !tbaa !33
+  %0 = load %struct.C*, %struct.C** @x, align 8, !dbg !73, !tbaa !33
   tail call void @_ZN1C5m_fn2Ev(%struct.C* %0), !dbg !73
   ret void, !dbg !73
 }

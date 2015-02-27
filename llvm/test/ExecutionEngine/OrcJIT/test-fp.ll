@@ -1,7 +1,7 @@
 ; RUN: %lli -use-orcmcjit %s > /dev/null
 
 define double @test(double* %DP, double %Arg) {
-	%D = load double* %DP		; <double> [#uses=1]
+	%D = load double, double* %DP		; <double> [#uses=1]
 	%V = fadd double %D, 1.000000e+00		; <double> [#uses=2]
 	%W = fsub double %V, %V		; <double> [#uses=3]
 	%X = fmul double %W, %W		; <double> [#uses=2]

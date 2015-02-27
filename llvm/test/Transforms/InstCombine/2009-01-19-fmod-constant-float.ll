@@ -14,12 +14,12 @@ entry:
 	%1 = frem double 1.000000e-01, 1.000000e+00	; <double> [#uses=1]
 	%2 = fptrunc double %1 to float		; <float> [#uses=1]
 	store float %2, float* %0, align 4
-	%3 = load float* %0, align 4		; <float> [#uses=1]
+	%3 = load float, float* %0, align 4		; <float> [#uses=1]
 	store float %3, float* %retval, align 4
 	br label %return
 
 return:		; preds = %entry
-	%retval1 = load float* %retval		; <float> [#uses=1]
+	%retval1 = load float, float* %retval		; <float> [#uses=1]
 	ret float %retval1
 }
 
@@ -31,12 +31,12 @@ entry:
 	%1 = frem double -1.000000e-01, 1.000000e+00	; <double> [#uses=1]
 	%2 = fptrunc double %1 to float		; <float> [#uses=1]
 	store float %2, float* %0, align 4
-	%3 = load float* %0, align 4		; <float> [#uses=1]
+	%3 = load float, float* %0, align 4		; <float> [#uses=1]
 	store float %3, float* %retval, align 4
 	br label %return
 
 return:		; preds = %entry
-	%retval1 = load float* %retval		; <float> [#uses=1]
+	%retval1 = load float, float* %retval		; <float> [#uses=1]
 	ret float %retval1
 }
 
@@ -48,12 +48,12 @@ entry:
 	%1 = frem double 1.000000e-01, -1.000000e+00	; <double> [#uses=1]
 	%2 = fptrunc double %1 to float		; <float> [#uses=1]
 	store float %2, float* %0, align 4
-	%3 = load float* %0, align 4		; <float> [#uses=1]
+	%3 = load float, float* %0, align 4		; <float> [#uses=1]
 	store float %3, float* %retval, align 4
 	br label %return
 
 return:		; preds = %entry
-	%retval1 = load float* %retval		; <float> [#uses=1]
+	%retval1 = load float, float* %retval		; <float> [#uses=1]
 	ret float %retval1
 }
 
@@ -65,11 +65,11 @@ entry:
 	%1 = frem double -1.000000e-01, -1.000000e+00	; <double> [#uses=1]
 	%2 = fptrunc double %1 to float		; <float> [#uses=1]
 	store float %2, float* %0, align 4
-	%3 = load float* %0, align 4		; <float> [#uses=1]
+	%3 = load float, float* %0, align 4		; <float> [#uses=1]
 	store float %3, float* %retval, align 4
 	br label %return
 
 return:		; preds = %entry
-	%retval1 = load float* %retval		; <float> [#uses=1]
+	%retval1 = load float, float* %retval		; <float> [#uses=1]
 	ret float %retval1
 }

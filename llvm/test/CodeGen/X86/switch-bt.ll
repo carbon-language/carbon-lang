@@ -16,8 +16,8 @@ define void @test(i8* %l) nounwind {
 entry:
   %l.addr = alloca i8*, align 8                   ; <i8**> [#uses=2]
   store i8* %l, i8** %l.addr
-  %tmp = load i8** %l.addr                        ; <i8*> [#uses=1]
-  %tmp1 = load i8* %tmp                           ; <i8> [#uses=1]
+  %tmp = load i8*, i8** %l.addr                        ; <i8*> [#uses=1]
+  %tmp1 = load i8, i8* %tmp                           ; <i8> [#uses=1]
   %conv = sext i8 %tmp1 to i32                    ; <i32> [#uses=1]
   switch i32 %conv, label %sw.default [
     i32 62, label %sw.bb

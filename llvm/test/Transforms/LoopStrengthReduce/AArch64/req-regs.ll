@@ -11,7 +11,7 @@ target triple = "arm64-apple-ios"
 define void @do_integer_add(i64 %iterations, i8* nocapture readonly %cookie) {
 entry:
   %N = bitcast i8* %cookie to i32*
-  %0 = load i32* %N, align 4
+  %0 = load i32, i32* %N, align 4
   %add = add nsw i32 %0, 57
   %cmp56 = icmp eq i64 %iterations, 0
   br i1 %cmp56, label %while.end, label %for.cond.preheader.preheader

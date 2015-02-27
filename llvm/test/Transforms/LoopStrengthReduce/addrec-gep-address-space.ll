@@ -1,6 +1,6 @@
 ; RUN: opt < %s -loop-reduce -S | FileCheck %s
 ; CHECK: bb1:
-; CHECK: load double addrspace(1)* [[IV:%[^,]+]]
+; CHECK: load double, double addrspace(1)* [[IV:%[^,]+]]
 ; CHECK: store double {{.*}}, double addrspace(1)* [[IV]]
 
 ; CHECK-NOT: cast
@@ -37,7 +37,7 @@ bb1:		; preds = %bb2, %bb.nph
 	%tmp4 = add i64 %j.01, %tmp2		; <i64> [#uses=1]
         %z0 = add i64 %tmp3, 5203
 	%tmp5 = getelementptr double, double addrspace(1)* %p, i64 %z0		; <double addrspace(1)*> [#uses=1]
-	%tmp6 = load double addrspace(1)* %tmp5, align 8		; <double> [#uses=1]
+	%tmp6 = load double, double addrspace(1)* %tmp5, align 8		; <double> [#uses=1]
 	%tmp7 = fdiv double %tmp6, 2.100000e+00		; <double> [#uses=1]
         %z1 = add i64 %tmp4, 5203
 	%tmp8 = getelementptr double, double addrspace(1)* %p, i64 %z1		; <double addrspace(1)*> [#uses=1]

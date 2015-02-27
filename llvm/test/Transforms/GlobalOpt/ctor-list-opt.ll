@@ -51,7 +51,7 @@ T:		; preds = %Cont
 }
 
 define internal void @CTOR4() {
-	%X = load i32* @G3		; <i32> [#uses=1]
+	%X = load i32, i32* @G3		; <i32> [#uses=1]
 	%Y = add i32 %X, 123		; <i32> [#uses=1]
 	store i32 %Y, i32* @G3
 	ret void
@@ -59,7 +59,7 @@ define internal void @CTOR4() {
 
 define internal void @CTOR5() {
 	%X.2p = getelementptr inbounds { i32, [2 x i32] }, { i32, [2 x i32] }* @X, i32 0, i32 1, i32 0		; <i32*> [#uses=2]
-	%X.2 = load i32* %X.2p		; <i32> [#uses=1]
+	%X.2 = load i32, i32* %X.2p		; <i32> [#uses=1]
 	%X.1p = getelementptr inbounds { i32, [2 x i32] }, { i32, [2 x i32] }* @X, i32 0, i32 0		; <i32*> [#uses=1]
 	store i32 %X.2, i32* %X.1p
 	store i32 42, i32* %X.2p
@@ -68,9 +68,9 @@ define internal void @CTOR5() {
 
 define internal void @CTOR6() {
 	%A = alloca i32		; <i32*> [#uses=2]
-	%y = load i32* @Y		; <i32> [#uses=1]
+	%y = load i32, i32* @Y		; <i32> [#uses=1]
 	store i32 %y, i32* %A
-	%Av = load i32* %A		; <i32> [#uses=1]
+	%Av = load i32, i32* %A		; <i32> [#uses=1]
 	%Av1 = add i32 %Av, 1		; <i32> [#uses=1]
 	store i32 %Av1, i32* @Y
 	ret void
@@ -95,7 +95,7 @@ define internal void @CTOR8() {
 }
 
 define i1 @accessor() {
-	%V = load i1* @CTORGV		; <i1> [#uses=1]
+	%V = load i1, i1* @CTORGV		; <i1> [#uses=1]
 	ret i1 %V
 }
 

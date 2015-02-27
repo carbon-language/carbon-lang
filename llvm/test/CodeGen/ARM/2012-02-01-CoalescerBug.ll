@@ -10,7 +10,7 @@ target triple = "armv7-none-linux-gnueabi"
 @foo = external global %0, align 16
 
 define arm_aapcs_vfpcc void @bar(float, i1 zeroext, i1 zeroext) nounwind {
-  %4 = load <4 x float>* getelementptr inbounds (%0* @foo, i32 0, i32 0), align 16
+  %4 = load <4 x float>, <4 x float>* getelementptr inbounds (%0* @foo, i32 0, i32 0), align 16
   %5 = extractelement <4 x float> %4, i32 0
   %6 = extractelement <4 x float> %4, i32 1
   %7 = extractelement <4 x float> %4, i32 2

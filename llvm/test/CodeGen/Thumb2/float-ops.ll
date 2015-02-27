@@ -102,7 +102,7 @@ entry:
 ; CHECK-LABEL: load_f:
 ; NONE: ldr r0, [r0]
 ; HARD: vldr s0, [r0]
-  %0 = load float* %a, align 4
+  %0 = load float, float* %a, align 4
   ret float %0
 }
 
@@ -111,7 +111,7 @@ entry:
 ; CHECK-LABEL: load_d:
 ; NONE: ldm.w r0, {r0, r1}
 ; HARD: vldr d0, [r0]
-  %0 = load double* %a, align 8
+  %0 = load double, double* %a, align 8
   ret double %0
 }
 

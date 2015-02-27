@@ -45,14 +45,14 @@ entry:
 define internal fastcc void @encodeMainData(%struct.lame_global_flags* %gfp, [2 x [576 x i32]]* %l3_enc, %struct.III_side_info_t* %si, [2 x %struct.III_scalefac_t]* %scalefac) nounwind  {
 entry:
 	%tmp69 = getelementptr %struct.lame_global_flags, %struct.lame_global_flags* %gfp, i32 0, i32 43		; <i32*> [#uses=1]
-	%tmp70 = load i32* %tmp69, align 4		; <i32> [#uses=1]
+	%tmp70 = load i32, i32* %tmp69, align 4		; <i32> [#uses=1]
 	%tmp71 = icmp eq i32 %tmp70, 1		; <i1> [#uses=1]
 	br i1 %tmp71, label %bb352, label %bb498
 
 bb113:		; preds = %bb132
 	%tmp123 = getelementptr [2 x %struct.III_scalefac_t], [2 x %struct.III_scalefac_t]* %scalefac, i32 0, i32 0, i32 1, i32 %sfb.0, i32 %window.0		; <i32*> [#uses=1]
-	%tmp124 = load i32* %tmp123, align 4		; <i32> [#uses=1]
-	%tmp126 = load %struct.BF_PartHolder** %tmp80, align 4		; <%struct.BF_PartHolder*> [#uses=1]
+	%tmp124 = load i32, i32* %tmp123, align 4		; <i32> [#uses=1]
+	%tmp126 = load %struct.BF_PartHolder*, %struct.BF_PartHolder** %tmp80, align 4		; <%struct.BF_PartHolder*> [#uses=1]
 	%tmp128 = call %struct.BF_PartHolder* @BF_addEntry( %struct.BF_PartHolder* %tmp126, i32 %tmp124, i32 %tmp93 ) nounwind 		; <%struct.BF_PartHolder*> [#uses=1]
 	store %struct.BF_PartHolder* %tmp128, %struct.BF_PartHolder** %tmp80, align 4
 	%tmp131 = add i32 %window.0, 1		; <i32> [#uses=1]
@@ -73,7 +73,7 @@ bb140:		; preds = %bb341, %bb137
 	br i1 %tmp142, label %bb132, label %bb174
 
 bb166:		; preds = %bb174
-	%tmp160 = load %struct.BF_PartHolder** %tmp80, align 4		; <%struct.BF_PartHolder*> [#uses=1]
+	%tmp160 = load %struct.BF_PartHolder*, %struct.BF_PartHolder** %tmp80, align 4		; <%struct.BF_PartHolder*> [#uses=1]
 	%tmp162 = call %struct.BF_PartHolder* @BF_addEntry( %struct.BF_PartHolder* %tmp160, i32 0, i32 0 ) nounwind 		; <%struct.BF_PartHolder*> [#uses=0]
 	unreachable
 
@@ -84,7 +84,7 @@ bb174:		; preds = %bb140
 bb341:		; preds = %bb352, %bb174
 	%tmp80 = getelementptr [2 x [2 x %struct.BF_PartHolder*]], [2 x [2 x %struct.BF_PartHolder*]]* @scaleFactorsPH, i32 0, i32 0, i32 0		; <%struct.BF_PartHolder**> [#uses=3]
 	%tmp92 = getelementptr [16 x i32], [16 x i32]* @slen1_tab, i32 0, i32 0		; <i32*> [#uses=1]
-	%tmp93 = load i32* %tmp92, align 4		; <i32> [#uses=1]
+	%tmp93 = load i32, i32* %tmp92, align 4		; <i32> [#uses=1]
 	br label %bb140
 
 bb352:		; preds = %entry

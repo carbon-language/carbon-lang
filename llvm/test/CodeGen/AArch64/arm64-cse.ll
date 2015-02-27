@@ -15,7 +15,7 @@ entry:
 ; CHECK: sub
 ; CHECK-NOT: sub
 ; CHECK: ret
- %0 = load i32* %offset, align 4
+ %0 = load i32, i32* %offset, align 4
  %cmp = icmp slt i32 %0, %size
  %s = sub nsw i32 %0, %size
  br i1 %cmp, label %return, label %if.end
@@ -43,7 +43,7 @@ entry:
 ; CHECK: b.lt
 ; CHECK-NOT: sub
 ; CHECK: ret
- %0 = load i32* %offset, align 4
+ %0 = load i32, i32* %offset, align 4
  %cmp = icmp slt i32 %0, 1
  br i1 %cmp, label %return, label %if.end
 

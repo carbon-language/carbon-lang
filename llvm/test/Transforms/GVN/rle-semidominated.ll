@@ -2,7 +2,7 @@
 
 define i32 @main(i32* %p, i32 %x, i32 %y) {
 block1:
-  %z = load i32* %p
+  %z = load i32, i32* %p
   %cmp = icmp eq i32 %x, %y
 	br i1 %cmp, label %block2, label %block3
 
@@ -15,6 +15,6 @@ block3:
   br label %block4
 
 block4:
-  %DEAD = load i32* %p
+  %DEAD = load i32, i32* %p
   ret i32 %DEAD
 }

@@ -19,14 +19,14 @@ declare noalias i8* @malloc(i64)
 
 define i32 @baz() nounwind readonly noinline {
 bb1.thread:
-	%0 = load %struct.foo** @X, align 4		
+	%0 = load %struct.foo*, %struct.foo** @X, align 4		
 	br label %bb1
 
 bb1:		; preds = %bb1, %bb1.thread
 	%i.0.reg2mem.0 = phi i32 [ 0, %bb1.thread ], [ %indvar.next, %bb1 ]
 	%sum.0.reg2mem.0 = phi i32 [ 0, %bb1.thread ], [ %3, %bb1 ]
 	%1 = getelementptr %struct.foo, %struct.foo* %0, i32 %i.0.reg2mem.0, i32 0
-	%2 = load i32* %1, align 4
+	%2 = load i32, i32* %1, align 4
 	%3 = add i32 %2, %sum.0.reg2mem.0	
 	%indvar.next = add i32 %i.0.reg2mem.0, 1	
 	%exitcond = icmp eq i32 %indvar.next, 1200		

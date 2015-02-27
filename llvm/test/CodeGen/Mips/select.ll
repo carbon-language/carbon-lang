@@ -700,8 +700,8 @@ entry:
 ; 64R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 64R6:          or $2, $[[NE]], $[[EQ]]
 
-  %tmp = load double* @d2, align 8
-  %tmp1 = load double* @d3, align 8
+  %tmp = load double, double* @d2, align 8
+  %tmp1 = load double, double* @d3, align 8
   %cmp = fcmp oeq double %tmp, %tmp1
   %cond = select i1 %cmp, i32 %f0, i32 %f1
   ret i32 %cond
@@ -777,8 +777,8 @@ entry:
 ; 64R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 64R6:          or $2, $[[NE]], $[[EQ]]
 
-  %tmp = load double* @d2, align 8
-  %tmp1 = load double* @d3, align 8
+  %tmp = load double, double* @d2, align 8
+  %tmp1 = load double, double* @d3, align 8
   %cmp = fcmp olt double %tmp, %tmp1
   %cond = select i1 %cmp, i32 %f0, i32 %f1
   ret i32 %cond
@@ -854,8 +854,8 @@ entry:
 ; 64R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 64R6:          or $2, $[[NE]], $[[EQ]]
 
-  %tmp = load double* @d2, align 8
-  %tmp1 = load double* @d3, align 8
+  %tmp = load double, double* @d2, align 8
+  %tmp1 = load double, double* @d3, align 8
   %cmp = fcmp ogt double %tmp, %tmp1
   %cond = select i1 %cmp, i32 %f0, i32 %f1
   ret i32 %cond

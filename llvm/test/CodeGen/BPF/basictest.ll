@@ -20,7 +20,7 @@ entry:
 
 @G = external global i8
 define zeroext i8 @loadG() {
-  %tmp = load i8* @G
+  %tmp = load i8, i8* @G
   ret i8 %tmp
 ; CHECK-LABEL: loadG:
 ; CHECK: ld_64 r1

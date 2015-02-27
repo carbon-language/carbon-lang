@@ -10,14 +10,14 @@
 
 define void @goo(double* %r, double* %p, double* %q) nounwind {
 entry:
-	%0 = load double* %p, align 8
+	%0 = load double, double* %p, align 8
 	%1 = fadd double %0, 1.100000e+00
 	%2 = fmul double %1, 1.200000e+00
 	%3 = fadd double %2, 1.300000e+00
 	%4 = fmul double %3, 1.400000e+00
 	%5 = fadd double %4, 1.500000e+00
 	%6 = fptosi double %5 to i32
-	%7 = load double* %r, align 8
+	%7 = load double, double* %r, align 8
 	%8 = fadd double %7, 7.100000e+00
 	%9 = fmul double %8, 7.200000e+00
 	%10 = fadd double %9, 7.300000e+00

@@ -33,7 +33,7 @@ bb161.i:		; preds = %bb142.i
 bb182.i:		; preds = %bb142.i
 	ret void
 bb3261:		; preds = %bb7834, %bb161.i
-	%tmp3263 = load i32* null, align 4		; <i32> [#uses=1]
+	%tmp3263 = load i32, i32* null, align 4		; <i32> [#uses=1]
 	%tmp3264 = icmp eq i32 %tmp3263, 37		; <i1> [#uses=1]
 	br i1 %tmp3264, label %bb3306, label %bb3267
 bb3267:		; preds = %bb3261
@@ -42,7 +42,7 @@ bb3306:		; preds = %bb3261
 	%tmp3310 = invoke %struct.wxStringBase* @_ZN12wxStringBaseaSEPKw( %struct.wxStringBase* null, i32* getelementptr ([5 x i32]* @.str89, i32 0, i32 0) )
 			to label %bb3314 unwind label %lpad		; <%struct.wxStringBase*> [#uses=0]
 bb3314:		; preds = %bb3306
-	%tmp3316 = load i32* null, align 4		; <i32> [#uses=1]
+	%tmp3316 = load i32, i32* null, align 4		; <i32> [#uses=1]
 	switch i32 %tmp3316, label %bb7595 [
 		 i32 0, label %bb7819
 		 i32 37, label %bb7806

@@ -237,7 +237,7 @@ bb1545:		; preds = %bb1544
 	br i1 undef, label %bb1563, label %bb1558
 
 bb1558:		; preds = %bb1545
-	%0 = load %struct.SV** undef		; <%struct.SV*> [#uses=1]
+	%0 = load %struct.SV*, %struct.SV** undef		; <%struct.SV*> [#uses=1]
 	%1 = bitcast %struct.SV* %0 to %struct.GV*		; <%struct.GV*> [#uses=5]
 	br i1 undef, label %bb1563, label %bb1559
 

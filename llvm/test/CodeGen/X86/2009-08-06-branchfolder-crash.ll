@@ -43,12 +43,12 @@ entry:
 	br i1 %tobool, label %lor.lhs.false, label %if.then
 
 lor.lhs.false:		; preds = %entry
-	%tmp1 = load i8* @g_3		; <i8> [#uses=1]
+	%tmp1 = load i8, i8* @g_3		; <i8> [#uses=1]
 	%tobool3 = icmp eq i8 %tmp1, 0		; <i1> [#uses=1]
 	br i1 %tobool3, label %return, label %if.then
 
 if.then:		; preds = %lor.lhs.false, %entry
-	%tmp4 = load i8* @g_3		; <i8> [#uses=1]
+	%tmp4 = load i8, i8* @g_3		; <i8> [#uses=1]
 	%conv5 = sext i8 %tmp4 to i32		; <i32> [#uses=1]
 	ret i32 %conv5
 
@@ -93,12 +93,12 @@ entry:
   br i1 %tobool, label %lor.lhs.false, label %if.then
 
 lor.lhs.false:                                    ; preds = %entry
-  %tmp1 = load i8* @g_3                           ; <i8> [#uses=1]
+  %tmp1 = load i8, i8* @g_3                           ; <i8> [#uses=1]
   %tobool3 = icmp eq i8 %tmp1, 0                  ; <i1> [#uses=1]
   br i1 %tobool3, label %return, label %if.then
 
 if.then:                                          ; preds = %lor.lhs.false, %entry
-  %tmp4 = load i8* @g_3                           ; <i8> [#uses=1]
+  %tmp4 = load i8, i8* @g_3                           ; <i8> [#uses=1]
   %conv5 = sext i8 %tmp4 to i32                   ; <i32> [#uses=1]
   ret i32 %conv5
 

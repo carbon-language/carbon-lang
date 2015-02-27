@@ -9,7 +9,7 @@
 
 define void @Perl_ck_sort() nounwind optsize {
 entry:
-  %tmp27 = load %struct.op** undef, align 4
+  %tmp27 = load %struct.op*, %struct.op** undef, align 4
   switch i16 undef, label %if.end151 [
     i16 178, label %if.then60
     i16 177, label %if.then60
@@ -26,7 +26,7 @@ if.then67:                                        ; preds = %if.then60
 
 if.end95:                                         ; preds = %if.else92, %if.then67
   %.pre-phi = phi %struct.op** [ undef, %if.then60 ], [ %0, %if.then67 ]
-  %tmp98 = load %struct.op** %.pre-phi, align 4
+  %tmp98 = load %struct.op*, %struct.op** %.pre-phi, align 4
   br label %if.end151
 
 if.end151:                                        ; preds = %if.end100, %if.end, %entry

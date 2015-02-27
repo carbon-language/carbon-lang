@@ -15,11 +15,11 @@ entry:
   store <4 x float> <float 0x4008CCCCC0000000, float 0x40099999A0000000, float 0x400A666660000000, float 0x400B333340000000>, <4 x float>* %p3, align 16
   store <4 x float> <float 0x4010666660000000, float 0x4010CCCCC0000000, float 0x4011333340000000, float 0x40119999A0000000>, <4 x float>* %p4, align 16
   store <4 x float> <float 0x4014666660000000, float 0x4014CCCCC0000000, float 0x4015333340000000, float 0x40159999A0000000>, <4 x float>* %p5, align 16
-  %0 = load <4 x float>* %p1, align 16
-  %1 = load <4 x float>* %p2, align 16
-  %2 = load <4 x float>* %p3, align 16
-  %3 = load <4 x float>* %p4, align 16
-  %4 = load <4 x float>* %p5, align 16
+  %0 = load <4 x float>, <4 x float>* %p1, align 16
+  %1 = load <4 x float>, <4 x float>* %p2, align 16
+  %2 = load <4 x float>, <4 x float>* %p3, align 16
+  %3 = load <4 x float>, <4 x float>* %p4, align 16
+  %4 = load <4 x float>, <4 x float>* %p5, align 16
 ; CHECK:      movups {{%xmm[0-7]}}, (%esp)
 ; CHECK-NEXT: calll _dovectortest 
   call void @dovectortest(<4 x float> %0, <4 x float> %1, <4 x float> %2, <4 x float> %3, <4 x float> %4)

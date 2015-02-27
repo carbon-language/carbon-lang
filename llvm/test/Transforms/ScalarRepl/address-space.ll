@@ -7,7 +7,7 @@ target triple = "x86_64-apple-darwin10"
 %struct.anon = type { [1 x float] }
 
 ; CHECK-LABEL: define void @Test(
-; CHECK: load float addrspace(2)*
+; CHECK: load float, float addrspace(2)*
 ; CHECK-NEXT: fsub float
 ; CHECK: store float {{.*}}, float addrspace(2)* 
 define void @Test(%struct.anon addrspace(2)* %pPtr) nounwind {
@@ -19,7 +19,7 @@ entry:
   call void @llvm.memcpy.p0i8.p2i8.i64(i8* %tmp1, i8 addrspace(2)* %tmp2, i64 4, i32 4, i1 false)
   %tmp3 = getelementptr inbounds %struct.anon, %struct.anon* %s, i32 0, i32 0 ; <[1 x float]*> [#uses=1]
   %arrayidx4 = getelementptr inbounds [1 x float], [1 x float]* %tmp3, i32 0, i64 0 ; <float*> [#uses=2]
-  %tmp5 = load float* %arrayidx4                  ; <float> [#uses=1]
+  %tmp5 = load float, float* %arrayidx4                  ; <float> [#uses=1]
   %sub = fsub float %tmp5, 5.000000e+00           ; <float> [#uses=1]
   store float %sub, float* %arrayidx4
   %arrayidx7 = getelementptr inbounds %struct.anon, %struct.anon addrspace(2)* %pPtr, i64 0 ; <%struct.anon addrspace(2)*> [#uses=1]

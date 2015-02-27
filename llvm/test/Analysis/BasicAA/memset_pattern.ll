@@ -13,7 +13,7 @@ entry:
   store i32 1, i32* @z
   tail call void @memset_pattern16(i8* bitcast (i32* @y to i8*), i8* bitcast (i32* @x to i8*), i64 4) nounwind
 ; CHECK-NOT: load
-  %l = load i32* @z
+  %l = load i32, i32* @z
 ; CHECK: ret i32 1
   ret i32 %l
 }

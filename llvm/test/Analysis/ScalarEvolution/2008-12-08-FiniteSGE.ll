@@ -10,7 +10,7 @@ bb1:		; preds = %bb1, %bb1.thread
 	%indvar = phi i32 [ 0, %bb1.thread ], [ %indvar.next, %bb1 ]		; <i32> [#uses=4]
 	%i.0.reg2mem.0 = sub i32 255, %indvar		; <i32> [#uses=2]
 	%0 = getelementptr i32, i32* %alp, i32 %i.0.reg2mem.0		; <i32*> [#uses=1]
-	%1 = load i32* %0, align 4		; <i32> [#uses=1]
+	%1 = load i32, i32* %0, align 4		; <i32> [#uses=1]
 	%2 = getelementptr i32, i32* %lam, i32 %i.0.reg2mem.0		; <i32*> [#uses=1]
 	store i32 %1, i32* %2, align 4
 	%3 = sub i32 254, %indvar		; <i32> [#uses=1]

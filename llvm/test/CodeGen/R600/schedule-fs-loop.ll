@@ -3,15 +3,15 @@
 
 define void @main() {
 main_body:
-  %0 = load <4 x float> addrspace(9)* null
+  %0 = load <4 x float>, <4 x float> addrspace(9)* null
   %1 = extractelement <4 x float> %0, i32 3
   %2 = fptosi float %1 to i32
   %3 = bitcast i32 %2 to float
-  %4 = load <4 x float> addrspace(9)* null
+  %4 = load <4 x float>, <4 x float> addrspace(9)* null
   %5 = extractelement <4 x float> %4, i32 0
-  %6 = load <4 x float> addrspace(9)* null
+  %6 = load <4 x float>, <4 x float> addrspace(9)* null
   %7 = extractelement <4 x float> %6, i32 1
-  %8 = load <4 x float> addrspace(9)* null
+  %8 = load <4 x float>, <4 x float> addrspace(9)* null
   %9 = extractelement <4 x float> %8, i32 2
   br label %LOOP
 

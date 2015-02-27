@@ -7,9 +7,9 @@
 define void @test_cl(<4 x i64>*  %dst, <4 x i64>* %src, i32 %idx) {
 entry:
   %arrayidx = getelementptr inbounds <4 x i64>, <4 x i64> * %src, i32 %idx
-  %0 = load <4 x i64> * %arrayidx, align 32
+  %0 = load <4 x i64> , <4 x i64> * %arrayidx, align 32
   %arrayidx1 = getelementptr inbounds <4 x i64>, <4 x i64> * %dst, i32 %idx
-  %1 = load <4 x i64> * %arrayidx1, align 32
+  %1 = load <4 x i64> , <4 x i64> * %arrayidx1, align 32
   %2 = extractelement <4 x i64> %1, i32 0
   %and = and i64 %2, 63
   %3 = insertelement <4 x i64> undef, i64 %and, i32 0    

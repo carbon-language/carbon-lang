@@ -9,8 +9,8 @@
 ; CHECK:       st {{.+}}, [%o2]
 define i32 @test_atomic_i32(i32* %ptr1, i32* %ptr2, i32* %ptr3) {
 entry:
-  %0 = load atomic i32* %ptr1 acquire, align 8
-  %1 = load atomic i32* %ptr2 acquire, align 8
+  %0 = load atomic i32, i32* %ptr1 acquire, align 8
+  %1 = load atomic i32, i32* %ptr2 acquire, align 8
   %2 = add i32 %0, %1
   store atomic i32 %2, i32* %ptr3 release, align 8
   ret i32 %2
@@ -25,8 +25,8 @@ entry:
 ; CHECK:       stx {{.+}}, [%o2]
 define i64 @test_atomic_i64(i64* %ptr1, i64* %ptr2, i64* %ptr3) {
 entry:
-  %0 = load atomic i64* %ptr1 acquire, align 8
-  %1 = load atomic i64* %ptr2 acquire, align 8
+  %0 = load atomic i64, i64* %ptr1 acquire, align 8
+  %1 = load atomic i64, i64* %ptr2 acquire, align 8
   %2 = add i64 %0, %1
   store atomic i64 %2, i64* %ptr3 release, align 8
   ret i64 %2

@@ -8,7 +8,7 @@ declare void @abort()
 define i1 @bounded_below_slt(i32* nocapture readonly %buffer) {
 ; CHECK-LABEL: bounded_below_slt
 entry:
-  %length = load i32* %buffer, !range !0
+  %length = load i32, i32* %buffer, !range !0
   %entry.pred = icmp eq i32 %length, 0
   br i1 %entry.pred, label %abort, label %loop.preheader
 
@@ -42,7 +42,7 @@ oob:
 define i1 @bounded_below_sle(i32* nocapture readonly %buffer) {
 ; CHECK-LABEL: bounded_below_sle
 entry:
-  %length = load i32* %buffer, !range !0
+  %length = load i32, i32* %buffer, !range !0
   %entry.pred = icmp eq i32 %length, 0
   br i1 %entry.pred, label %abort, label %loop.preheader
 

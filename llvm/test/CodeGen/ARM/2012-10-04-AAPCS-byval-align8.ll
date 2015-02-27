@@ -45,7 +45,7 @@ declare void @f(double);
 define void @test_byval_8_bytes_alignment_fixed_arg(i32 %n1, %struct_t* byval %val) nounwind {
 entry:
   %a = getelementptr inbounds %struct_t, %struct_t* %val, i32 0, i32 0
-  %0 = load double* %a
+  %0 = load double, double* %a
   call void (double)* @f(double %0)
   ret void
 }

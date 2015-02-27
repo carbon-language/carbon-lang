@@ -9,8 +9,8 @@
 define i32 @test_tbz() {
 ; CHECK-LABEL: test_tbz:
 
-  %val = load i32* @var32
-  %val64 = load i64* @var64
+  %val = load i32, i32* @var32
+  %val64 = load i64, i64* @var64
 
   %tbit0 = and i32 %val, 32768
   %tst0 = icmp ne i32 %tbit0, 0

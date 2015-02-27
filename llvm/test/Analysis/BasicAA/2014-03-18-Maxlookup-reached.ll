@@ -30,7 +30,7 @@ define i32 @main() {
   store i8 0, i8* %10
   %11 = getelementptr inbounds i8, i8* %10, i32 -1
   store i8 0, i8* %11
-  %12 = load i32* %1, align 4
+  %12 = load i32, i32* %1, align 4
   ret i32 %12
 ; CHECK: ret i32 %12
 }

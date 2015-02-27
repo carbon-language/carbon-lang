@@ -10,7 +10,7 @@ define <2 x i16> @good(<4 x i32>*, <4 x i8>*) {
 ; CHECK-NEXT:    pmovzxwq %xmm0, %xmm0
 ; CHECK-NEXT:    retq
 entry:
-  %2 = load <4 x i32>* %0, align 16
+  %2 = load <4 x i32>, <4 x i32>* %0, align 16
   %3 = call <4 x i32> @llvm.x86.sse41.pminud(<4 x i32> %2, <4 x i32> <i32 127, i32 127, i32 127, i32 127>)
   %4 = extractelement <4 x i32> %3, i32 0
   %5 = extractelement <4 x i32> %3, i32 1
@@ -31,7 +31,7 @@ define <2 x i16> @bad(<4 x i32>*, <4 x i8>*) {
 ; CHECK-NEXT:    pmovzxwq %xmm0, %xmm0
 ; CHECK-NEXT:    retq
 entry:
-  %2 = load <4 x i32>* %0, align 16
+  %2 = load <4 x i32>, <4 x i32>* %0, align 16
   %3 = call <4 x i32> @llvm.x86.sse41.pminud(<4 x i32> %2, <4 x i32> <i32 127, i32 127, i32 127, i32 127>)
   %4 = extractelement <4 x i32> %3, i32 0
   %5 = extractelement <4 x i32> %3, i32 1

@@ -7,10 +7,10 @@ define float @tf(float* nocapture readonly %i, i32 signext %o) #0 {
 entry:
   %idx.ext = sext i32 %o to i64
   %add.ptr = getelementptr inbounds float, float* %i, i64 %idx.ext
-  %0 = load float* %add.ptr, align 4
+  %0 = load float, float* %add.ptr, align 4
   %add.ptr.sum = add nsw i64 %idx.ext, 1
   %add.ptr3 = getelementptr inbounds float, float* %i, i64 %add.ptr.sum
-  %1 = load float* %add.ptr3, align 4
+  %1 = load float, float* %add.ptr3, align 4
   %add = fadd float %0, %1
   ret float %add
 
@@ -24,10 +24,10 @@ define double @td(double* nocapture readonly %i, i32 signext %o) #0 {
 entry:
   %idx.ext = sext i32 %o to i64
   %add.ptr = getelementptr inbounds double, double* %i, i64 %idx.ext
-  %0 = load double* %add.ptr, align 8
+  %0 = load double, double* %add.ptr, align 8
   %add.ptr.sum = add nsw i64 %idx.ext, 1
   %add.ptr3 = getelementptr inbounds double, double* %i, i64 %add.ptr.sum
-  %1 = load double* %add.ptr3, align 8
+  %1 = load double, double* %add.ptr3, align 8
   %add = fadd double %0, %1
   ret double %add
 

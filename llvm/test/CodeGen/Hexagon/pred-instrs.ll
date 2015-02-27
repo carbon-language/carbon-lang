@@ -25,6 +25,6 @@ if.else:                                          ; preds = %entry
 if.end:                                           ; preds = %if.else, %if.then
   %storemerge = phi i32 [ %and, %if.else ], [ %shl, %if.then ]
   store i32 %storemerge, i32* @a, align 4
-  %0 = load i32* @d, align 4
+  %0 = load i32, i32* @d, align 4
   ret i32 %0
 }

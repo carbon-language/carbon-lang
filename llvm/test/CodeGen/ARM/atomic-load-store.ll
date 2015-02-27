@@ -44,7 +44,7 @@ define i32 @test2(i32* %ptr) {
 ; THUMBM-LABEL: test2
 ; THUMBM: ldr
 ; THUMBM: dmb sy
-  %val = load atomic i32* %ptr seq_cst, align 4
+  %val = load atomic i32, i32* %ptr seq_cst, align 4
   ret i32 %val
 }
 
@@ -76,7 +76,7 @@ define void @test3(i8* %ptr1, i8* %ptr2) {
 ; ARMV6-NOT: mcr
 ; THUMBM-LABEL: test3
 ; THUMBM-NOT: dmb sy
-  %val = load atomic i8* %ptr1 unordered, align 1
+  %val = load atomic i8, i8* %ptr1 unordered, align 1
   store atomic i8 %val, i8* %ptr2 unordered, align 1
   ret void
 }
@@ -87,7 +87,7 @@ define void @test4(i8* %ptr1, i8* %ptr2) {
 ; THUMBONE: ___sync_lock_test_and_set_1
 ; ARMV6-LABEL: test4
 ; THUMBM-LABEL: test4
-  %val = load atomic i8* %ptr1 seq_cst, align 1
+  %val = load atomic i8, i8* %ptr1 seq_cst, align 1
   store atomic i8 %val, i8* %ptr2 seq_cst, align 1
   ret void
 }
@@ -95,7 +95,7 @@ define void @test4(i8* %ptr1, i8* %ptr2) {
 define i64 @test_old_load_64bit(i64* %p) {
 ; ARMV4-LABEL: test_old_load_64bit
 ; ARMV4: ___sync_val_compare_and_swap_8
-  %1 = load atomic i64* %p seq_cst, align 8
+  %1 = load atomic i64, i64* %p seq_cst, align 8
   ret i64 %1
 }
 

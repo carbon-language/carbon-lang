@@ -8,7 +8,7 @@ entry:
   ; Force the float into an odd-numbered register using named registers and
   ; load the vector.
   %b = call float asm sideeffect "mov.s $0, $1", "={$f13},{$f12}" (float %a)
-  %0 = load volatile <4 x float>* @v4f32
+  %0 = load volatile <4 x float>, <4 x float>* @v4f32
 
   ; Clobber all except $f12/$w12 and $f13
   ;
@@ -42,7 +42,7 @@ entry:
   ; Force the float into an odd-numbered register using named registers and
   ; load the vector.
   %b = call float asm sideeffect "mov.s $0, $1", "={$f13},{$f12}" (float %a)
-  %0 = load volatile <4 x float>* @v4f32
+  %0 = load volatile <4 x float>, <4 x float>* @v4f32
 
   ; Clobber all except $f12/$w12 and $f13
   ;
@@ -73,7 +73,7 @@ entry:
 
 define float @msa_extract_0() {
 entry:
-  %0 = load volatile <4 x float>* @v4f32
+  %0 = load volatile <4 x float>, <4 x float>* @v4f32
   %1 = call <4 x float> asm sideeffect "move.v $0, $1", "={$w13},{$w12}" (<4 x float> %0)
 
   ; Clobber all except $f12, and $f13
@@ -101,7 +101,7 @@ entry:
 
 define float @msa_extract_1() {
 entry:
-  %0 = load volatile <4 x float>* @v4f32
+  %0 = load volatile <4 x float>, <4 x float>* @v4f32
   %1 = call <4 x float> asm sideeffect "move.v $0, $1", "={$w13},{$w12}" (<4 x float> %0)
 
   ; Clobber all except $f13

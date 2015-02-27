@@ -1791,8 +1791,8 @@ define <8 x float> @combine_test22(<2 x float>* %a, <2 x float>* %b) {
 ; AVX-NEXT:    vmovhpd (%rsi), %xmm0, %xmm0
 ; AVX-NEXT:    retq
 ; Current AVX2 lowering of this is still awful, not adding a test case.
-  %1 = load <2 x float>* %a, align 8
-  %2 = load <2 x float>* %b, align 8
+  %1 = load <2 x float>, <2 x float>* %a, align 8
+  %2 = load <2 x float>, <2 x float>* %b, align 8
   %3 = shufflevector <2 x float> %1, <2 x float> %2, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <8 x float> %3
 }
@@ -1933,8 +1933,8 @@ define <4 x i8> @combine_test1c(<4 x i8>* %a, <4 x i8>* %b) {
 ; AVX2-NEXT:    vpmovzxbd {{.*#+}} xmm1 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero
 ; AVX2-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3]
 ; AVX2-NEXT:    retq
-  %A = load <4 x i8>* %a
-  %B = load <4 x i8>* %b
+  %A = load <4 x i8>, <4 x i8>* %a
+  %B = load <4 x i8>, <4 x i8>* %b
   %1 = shufflevector <4 x i8> %A, <4 x i8> %B, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
   %2 = shufflevector <4 x i8> %1, <4 x i8> %B, <4 x i32> <i32 0, i32 1, i32 6, i32 3>
   ret <4 x i8> %2
@@ -1976,8 +1976,8 @@ define <4 x i8> @combine_test2c(<4 x i8>* %a, <4 x i8>* %b) {
 ; AVX-NEXT:    vpmovzxbd {{.*#+}} xmm1 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero
 ; AVX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; AVX-NEXT:    retq
-  %A = load <4 x i8>* %a
-  %B = load <4 x i8>* %b
+  %A = load <4 x i8>, <4 x i8>* %a
+  %B = load <4 x i8>, <4 x i8>* %b
   %1 = shufflevector <4 x i8> %A, <4 x i8> %B, <4 x i32> <i32 0, i32 5, i32 1, i32 5>
   %2 = shufflevector <4 x i8> %1, <4 x i8> %B, <4 x i32> <i32 0, i32 2, i32 4, i32 1>
   ret <4 x i8> %2
@@ -2019,8 +2019,8 @@ define <4 x i8> @combine_test3c(<4 x i8>* %a, <4 x i8>* %b) {
 ; AVX-NEXT:    vpmovzxbd {{.*#+}} xmm1 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero
 ; AVX-NEXT:    vpunpckhqdq {{.*#+}} xmm0 = xmm1[1],xmm0[1]
 ; AVX-NEXT:    retq
-  %A = load <4 x i8>* %a
-  %B = load <4 x i8>* %b
+  %A = load <4 x i8>, <4 x i8>* %a
+  %B = load <4 x i8>, <4 x i8>* %b
   %1 = shufflevector <4 x i8> %A, <4 x i8> %B, <4 x i32> <i32 2, i32 3, i32 5, i32 5>
   %2 = shufflevector <4 x i8> %1, <4 x i8> %B, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
   ret <4 x i8> %2
@@ -2071,8 +2071,8 @@ define <4 x i8> @combine_test4c(<4 x i8>* %a, <4 x i8>* %b) {
 ; AVX2-NEXT:    vpmovzxbd {{.*#+}} xmm1 = mem[0],zero,zero,zero,mem[1],zero,zero,zero,mem[2],zero,zero,zero,mem[3],zero,zero,zero
 ; AVX2-NEXT:    vpblendd {{.*#+}} xmm0 = xmm1[0],xmm0[1],xmm1[2,3]
 ; AVX2-NEXT:    retq
-  %A = load <4 x i8>* %a
-  %B = load <4 x i8>* %b
+  %A = load <4 x i8>, <4 x i8>* %a
+  %B = load <4 x i8>, <4 x i8>* %b
   %1 = shufflevector <4 x i8> %A, <4 x i8> %B, <4 x i32> <i32 4, i32 1, i32 6, i32 3>
   %2 = shufflevector <4 x i8> %1, <4 x i8> %B, <4 x i32> <i32 0, i32 1, i32 2, i32 7>
   ret <4 x i8> %2

@@ -972,7 +972,7 @@ define void @test_atomic_cmpxchg_i64(i64 %wanted, i64 %new) nounwind {
 
 define i8 @test_atomic_load_monotonic_i8() nounwind {
 ; CHECK-LABEL: test_atomic_load_monotonic_i8:
-  %val = load atomic i8* @var8 monotonic, align 1
+  %val = load atomic i8, i8* @var8 monotonic, align 1
 ; CHECK-NOT: dmb
 ; CHECK: adrp x[[HIADDR:[0-9]+]], var8
 ; CHECK: ldrb w0, [x[[HIADDR]], {{#?}}:lo12:var8]
@@ -986,7 +986,7 @@ define i8 @test_atomic_load_monotonic_regoff_i8(i64 %base, i64 %off) nounwind {
   %addr_int = add i64 %base, %off
   %addr = inttoptr i64 %addr_int to i8*
 
-  %val = load atomic i8* %addr monotonic, align 1
+  %val = load atomic i8, i8* %addr monotonic, align 1
 ; CHECK-NOT: dmb
 ; CHECK: ldrb w0, [x0, x1]
 ; CHECK-NOT: dmb
@@ -996,7 +996,7 @@ define i8 @test_atomic_load_monotonic_regoff_i8(i64 %base, i64 %off) nounwind {
 
 define i8 @test_atomic_load_acquire_i8() nounwind {
 ; CHECK-LABEL: test_atomic_load_acquire_i8:
-  %val = load atomic i8* @var8 acquire, align 1
+  %val = load atomic i8, i8* @var8 acquire, align 1
 ; CHECK-NOT: dmb
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var8
 ; CHECK-NOT: dmb
@@ -1009,7 +1009,7 @@ define i8 @test_atomic_load_acquire_i8() nounwind {
 
 define i8 @test_atomic_load_seq_cst_i8() nounwind {
 ; CHECK-LABEL: test_atomic_load_seq_cst_i8:
-  %val = load atomic i8* @var8 seq_cst, align 1
+  %val = load atomic i8, i8* @var8 seq_cst, align 1
 ; CHECK-NOT: dmb
 ; CHECK: adrp [[HIADDR:x[0-9]+]], var8
 ; CHECK-NOT: dmb
@@ -1022,7 +1022,7 @@ define i8 @test_atomic_load_seq_cst_i8() nounwind {
 
 define i16 @test_atomic_load_monotonic_i16() nounwind {
 ; CHECK-LABEL: test_atomic_load_monotonic_i16:
-  %val = load atomic i16* @var16 monotonic, align 2
+  %val = load atomic i16, i16* @var16 monotonic, align 2
 ; CHECK-NOT: dmb
 ; CHECK: adrp x[[HIADDR:[0-9]+]], var16
 ; CHECK-NOT: dmb
@@ -1037,7 +1037,7 @@ define i32 @test_atomic_load_monotonic_regoff_i32(i64 %base, i64 %off) nounwind 
   %addr_int = add i64 %base, %off
   %addr = inttoptr i64 %addr_int to i32*
 
-  %val = load atomic i32* %addr monotonic, align 4
+  %val = load atomic i32, i32* %addr monotonic, align 4
 ; CHECK-NOT: dmb
 ; CHECK: ldr w0, [x0, x1]
 ; CHECK-NOT: dmb
@@ -1047,7 +1047,7 @@ define i32 @test_atomic_load_monotonic_regoff_i32(i64 %base, i64 %off) nounwind 
 
 define i64 @test_atomic_load_seq_cst_i64() nounwind {
 ; CHECK-LABEL: test_atomic_load_seq_cst_i64:
-  %val = load atomic i64* @var64 seq_cst, align 8
+  %val = load atomic i64, i64* @var64 seq_cst, align 8
 ; CHECK-NOT: dmb
 ; CHECK: adrp [[HIADDR:x[0-9]+]], var64
 ; CHECK-NOT: dmb

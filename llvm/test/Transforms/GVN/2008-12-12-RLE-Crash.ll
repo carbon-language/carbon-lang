@@ -7,7 +7,7 @@ entry:
 	br label %bb84
 
 bb41:		; preds = %bb82
-	%tmp = load i8* %opt.0, align 1		; <i8> [#uses=0]
+	%tmp = load i8, i8* %opt.0, align 1		; <i8> [#uses=0]
 	%tmp1 = getelementptr i8, i8* %opt.0, i32 1		; <i8*> [#uses=2]
 	switch i32 0, label %bb81 [
 		i32 102, label %bb82
@@ -26,7 +26,7 @@ bb81:		; preds = %bb41
 
 bb82:		; preds = %bb84, %bb79, %bb41
 	%opt.0 = phi i8* [ %tmp3, %bb84 ], [ %tmp1, %bb79 ], [ %tmp1, %bb41 ]		; <i8*> [#uses=3]
-	%tmp2 = load i8* %opt.0, align 1		; <i8> [#uses=0]
+	%tmp2 = load i8, i8* %opt.0, align 1		; <i8> [#uses=0]
 	br i1 false, label %bb84, label %bb41
 
 bb84:		; preds = %bb82, %entry

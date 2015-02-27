@@ -11,7 +11,7 @@ entry:
         br i1 %0, label %bb, label %return
 
 bb:             ; preds = %entry
-        %1 = load volatile i32* null
+        %1 = load volatile i32, i32* null
         unreachable
         
         br label %return

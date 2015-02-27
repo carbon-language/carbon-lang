@@ -45,17 +45,17 @@ entry:
   store i64 %a.coerce0, i64* %1
   %2 = getelementptr %0, %0* %0, i32 0, i32 1
   store i64 %a.coerce1, i64* %2
-  %a = load i128* %coerce, align 16
+  %a = load i128, i128* %coerce, align 16
   store i128 %a, i128* %a.addr, align 16
   %3 = bitcast i128* %coerce1 to %0*
   %4 = getelementptr %0, %0* %3, i32 0, i32 0
   store i64 %b.coerce0, i64* %4
   %5 = getelementptr %0, %0* %3, i32 0, i32 1
   store i64 %b.coerce1, i64* %5
-  %b = load i128* %coerce1, align 16
+  %b = load i128, i128* %coerce1, align 16
   store i128 %b, i128* %b.addr, align 16
-  %tmp = load i128* %a.addr, align 16
-  %tmp2 = load i128* %b.addr, align 16
+  %tmp = load i128, i128* %a.addr, align 16
+  %tmp2 = load i128, i128* %b.addr, align 16
   %6 = call %1 @llvm.umul.with.overflow.i128(i128 %tmp, i128 %tmp2)
 ; CHECK: cmov
 ; CHECK: divti3
@@ -70,7 +70,7 @@ overflow:                                         ; preds = %entry
 nooverflow:                                       ; preds = %entry
   store i128 %7, i128* %retval
   %9 = bitcast i128* %retval to %0*
-  %10 = load %0* %9, align 1
+  %10 = load %0, %0* %9, align 1
   ret %0 %10
 }
 

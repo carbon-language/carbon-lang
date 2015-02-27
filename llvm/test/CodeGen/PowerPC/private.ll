@@ -19,7 +19,7 @@ define i32 @bar() nounwind {
 
 ; LINUX: lis{{.*}}.Lbaz
 ; OSX:  lis{{.*}}l_baz
-	%1 = load i32* @baz, align 4
+	%1 = load i32, i32* @baz, align 4
         ret i32 %1
 }
 

@@ -26,30 +26,30 @@ entry:
   call void @_Z13TagFieldSpecsv(), !dbg !31
   store %struct.vector* %ref.tmp, %struct.vector** %__range, align 8, !dbg !31
   call void @llvm.dbg.declare(metadata i8** %__begin, metadata !32, metadata !{}), !dbg !30
-  %1 = load %struct.vector** %__range, align 8, !dbg !31
+  %1 = load %struct.vector*, %struct.vector** %__range, align 8, !dbg !31
   %call = call i8* @_ZN6vector5beginEv(%struct.vector* %1), !dbg !31
   store i8* %call, i8** %__begin, align 8, !dbg !31
   call void @llvm.dbg.declare(metadata i8** %__end, metadata !33, metadata !{}), !dbg !30
-  %2 = load %struct.vector** %__range, align 8, !dbg !31
+  %2 = load %struct.vector*, %struct.vector** %__range, align 8, !dbg !31
   %call1 = call i8* @_ZN6vector3endEv(%struct.vector* %2), !dbg !31
   store i8* %call1, i8** %__end, align 8, !dbg !31
   br label %for.cond, !dbg !31
 
 for.cond:                                         ; preds = %for.inc, %0
-  %3 = load i8** %__begin, align 8, !dbg !34
-  %4 = load i8** %__end, align 8, !dbg !34
+  %3 = load i8*, i8** %__begin, align 8, !dbg !34
+  %4 = load i8*, i8** %__end, align 8, !dbg !34
   %cmp = icmp ne i8* %3, %4, !dbg !34
   br i1 %cmp, label %for.body, label %for.end, !dbg !34
 
 for.body:                                         ; preds = %for.cond
   call void @llvm.dbg.declare(metadata i8* %spec, metadata !37, metadata !{}), !dbg !31
-  %5 = load i8** %__begin, align 8, !dbg !38
-  %6 = load i8* %5, align 1, !dbg !38
+  %5 = load i8*, i8** %__begin, align 8, !dbg !38
+  %6 = load i8, i8* %5, align 1, !dbg !38
   store i8 %6, i8* %spec, align 1, !dbg !38
   br label %for.inc, !dbg !38
 
 for.inc:                                          ; preds = %for.body
-  %7 = load i8** %__begin, align 8, !dbg !40
+  %7 = load i8*, i8** %__begin, align 8, !dbg !40
   %incdec.ptr = getelementptr inbounds i8, i8* %7, i32 1, !dbg !40
   store i8* %incdec.ptr, i8** %__begin, align 8, !dbg !40
   br label %for.cond, !dbg !40
@@ -59,7 +59,7 @@ for.end:                                          ; preds = %for.cond
   unreachable, !dbg !42
 
 return:                                           ; No predecessors!
-  %8 = load i32* %retval, !dbg !44
+  %8 = load i32, i32* %retval, !dbg !44
   ret i32 %8, !dbg !44
 }
 

@@ -27,7 +27,7 @@ bb967:		; preds = %bb951
 	ret i32 0
 
 bb986:		; preds = %bb951
-	%tmp993 = load i32* %tmp961, align 4		; <i32> [#uses=1]
+	%tmp993 = load i32, i32* %tmp961, align 4		; <i32> [#uses=1]
 	%tmp995 = icmp ugt i32 %tmp993, %tmp910		; <i1> [#uses=2]
 	%tmp1002 = add i32 %tmp955, 1		; <i32> [#uses=1]
 	%low.0 = select i1 %tmp995, i32 0, i32 %tmp1002		; <i32> [#uses=1]

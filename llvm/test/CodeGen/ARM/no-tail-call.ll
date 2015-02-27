@@ -38,7 +38,7 @@ entry:
   %5 = call float @llvm.ceil.f32(float 5.000000e+00)
   %.native3 = getelementptr inbounds %foo, %foo* %1, i32 0, i32 0
   %.native3.value = getelementptr inbounds %Sf, %Sf* %.native3, i32 0, i32 0
-  %6 = load float* %.native3.value, align 4
+  %6 = load float, float* %.native3.value, align 4
   %7 = call float @llvm.ceil.f32(float %6)
   %8 = insertvalue { float, float, float } { float 0.000000e+00, float undef, float undef }, float %5, 1
   %9 = insertvalue { float, float, float } %8, float %7, 2
@@ -76,7 +76,7 @@ entry:
   %5 = call float @llvm.ceil.f32(float 5.000000e+00)
   %.native3 = getelementptr inbounds %foo, %foo* %1, i32 0, i32 0
   %.native3.value = getelementptr inbounds %Sf, %Sf* %.native3, i32 0, i32 0
-  %6 = load float* %.native3.value, align 4
+  %6 = load float, float* %.native3.value, align 4
   %7 = call float @llvm.ceil.f32(float %6)
   %8 = insertvalue { float, float } { float 0.000000e+00, float undef }, float %7, 1
   ret { float, float } %8

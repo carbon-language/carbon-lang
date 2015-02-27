@@ -20,7 +20,7 @@ define void @test3(i32 %X) {
 }
 
 define internal i32 @foo() {
-        %DEAD = load i32* @P            ; <i32> [#uses=1]
+        %DEAD = load i32, i32* @P            ; <i32> [#uses=1]
         ret i32 %DEAD
 }
 

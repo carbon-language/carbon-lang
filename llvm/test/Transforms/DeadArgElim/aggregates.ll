@@ -157,6 +157,6 @@ define internal i8 @outer() {
   %res = call {i8*, i32} @mid()
   %resptr = extractvalue {i8*, i32} %res, 0
 
-  %val = load i8* %resptr
+  %val = load i8, i8* %resptr
   ret i8 %val
 }

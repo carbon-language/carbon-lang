@@ -4,7 +4,7 @@
 @bar = external global <2 x i32>                ; <<2 x i32>*> [#uses=1]
 
 define void @main() {
-        %t0 = load <2 x i32>* @foo              ; <<2 x i32>> [#uses=1]
+        %t0 = load <2 x i32>, <2 x i32>* @foo              ; <<2 x i32>> [#uses=1]
         store <2 x i32> %t0, <2 x i32>* @bar
         ret void
 }

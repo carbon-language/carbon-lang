@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 define void @IncrementMe(i32* nocapture %ptr) nounwind uwtable sanitize_thread {
 entry:
-  %0 = load i32* %ptr, align 4
+  %0 = load i32, i32* %ptr, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %ptr, align 4
   ret void
@@ -16,7 +16,7 @@ entry:
 
 define void @IncrementMeWithCallInBetween(i32* nocapture %ptr) nounwind uwtable sanitize_thread {
 entry:
-  %0 = load i32* %ptr, align 4
+  %0 = load i32, i32* %ptr, align 4
   %inc = add nsw i32 %0, 1
   call void @foo()
   store i32 %inc, i32* %ptr, align 4

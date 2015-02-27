@@ -6,20 +6,20 @@ block1:
 	br i1 %cmp , label %block2, label %block3
 
 block2:
- %a = load i32** %p
+ %a = load i32*, i32** %p
  br label %block4
 
 block3:
-  %b = load i32** %p
+  %b = load i32*, i32** %p
   br label %block4
 
 block4:
 ; CHECK-NOT: %existingPHI = phi
 ; CHECK: %DEAD = phi
   %existingPHI = phi i32* [ %a, %block2 ], [ %b, %block3 ] 
-  %DEAD = load i32** %p
-  %c = load i32* %DEAD
-  %d = load i32* %existingPHI
+  %DEAD = load i32*, i32** %p
+  %c = load i32, i32* %DEAD
+  %d = load i32, i32* %existingPHI
   %e = add i32 %c, %d
   ret i32 %e
 }

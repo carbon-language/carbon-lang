@@ -12,9 +12,9 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 define void @fn1() nounwind uwtable ssp {
 entry:
-  %0 = load %struct._GtkSheetRow** @a, align 8
+  %0 = load %struct._GtkSheetRow*, %struct._GtkSheetRow** @a, align 8
   %1 = bitcast %struct._GtkSheetRow* %0 to i576*
-  %srcval2 = load i576* %1, align 8
+  %srcval2 = load i576, i576* %1, align 8
   %tobool = icmp ugt i576 %srcval2, 57586096570152913699974892898380567793532123114264532903689671329431521032595044740083720782129802971518987656109067457577065805510327036019308994315074097345724415
   br i1 %tobool, label %if.then, label %if.end
 

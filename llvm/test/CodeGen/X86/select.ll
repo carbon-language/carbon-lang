@@ -5,8 +5,8 @@
 %0 = type { i64, i32 }
 
 define i32 @test1(%0* %p, %0* %q, i1 %r) nounwind {
-  %t0 = load %0* %p
-  %t1 = load %0* %q
+  %t0 = load %0, %0* %p
+  %t1 = load %0, %0* %q
   %t4 = select i1 %r, %0 %t0, %0 %t1
   %t5 = extractvalue %0 %t4, 1
   ret i32 %t5
@@ -63,7 +63,7 @@ entry:
 	%0 = fcmp olt double %F, 4.200000e+01		; <i1> [#uses=1]
 	%iftmp.0.0 = select i1 %0, i32 4, i32 0		; <i32> [#uses=1]
 	%1 = getelementptr i8, i8* %P, i32 %iftmp.0.0		; <i8*> [#uses=1]
-	%2 = load i8* %1, align 1		; <i8> [#uses=1]
+	%2 = load i8, i8* %1, align 1		; <i8> [#uses=1]
 	ret i8 %2
 ; CHECK-LABEL: test4:
 ; CHECK: movsbl	({{.*}},4), %eax
@@ -82,8 +82,8 @@ define void @test5(i1 %c, <2 x i16> %a, <2 x i16> %b, <2 x i16>* %p) nounwind {
 }
 
 define void @test6(i32 %C, <4 x float>* %A, <4 x float>* %B) nounwind {
-        %tmp = load <4 x float>* %A             ; <<4 x float>> [#uses=1]
-        %tmp3 = load <4 x float>* %B            ; <<4 x float>> [#uses=2]
+        %tmp = load <4 x float>, <4 x float>* %A             ; <<4 x float>> [#uses=1]
+        %tmp3 = load <4 x float>, <4 x float>* %B            ; <<4 x float>> [#uses=2]
         %tmp9 = fmul <4 x float> %tmp3, %tmp3            ; <<4 x float>> [#uses=1]
         %tmp.upgrd.1 = icmp eq i32 %C, 0                ; <i1> [#uses=1]
         %iftmp.38.0 = select i1 %tmp.upgrd.1, <4 x float> %tmp9, <4 x float> %tmp               ; <<4 x float>> [#uses=1]

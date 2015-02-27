@@ -27,7 +27,7 @@ entry:
 
 define i32 @shl32p(i32* %p, i32 %shamt) nounwind uwtable readnone {
 entry:
-  %x = load i32* %p
+  %x = load i32, i32* %p
   %shl = shl i32 %x, %shamt
 ; BMI2: shl32p
 ; Source order scheduling prevents folding, rdar:14208996.
@@ -41,7 +41,7 @@ entry:
 
 define i32 @shl32pi(i32* %p) nounwind uwtable readnone {
 entry:
-  %x = load i32* %p
+  %x = load i32, i32* %p
   %shl = shl i32 %x, 5
 ; BMI2: shl32pi
 ; BMI2-NOT: shlxl
@@ -72,7 +72,7 @@ entry:
 
 define i64 @shl64p(i64* %p, i64 %shamt) nounwind uwtable readnone {
 entry:
-  %x = load i64* %p
+  %x = load i64, i64* %p
   %shl = shl i64 %x, %shamt
 ; BMI264: shl64p
 ; BMI264: shlxq %{{.+}}, %{{.+}}, %{{.+}}
@@ -82,7 +82,7 @@ entry:
 
 define i64 @shl64pi(i64* %p) nounwind uwtable readnone {
 entry:
-  %x = load i64* %p
+  %x = load i64, i64* %p
   %shl = shl i64 %x, 7
 ; BMI264: shl64pi
 ; BMI264-NOT: shlxq
@@ -104,7 +104,7 @@ entry:
 
 define i32 @lshr32p(i32* %p, i32 %shamt) nounwind uwtable readnone {
 entry:
-  %x = load i32* %p
+  %x = load i32, i32* %p
   %shl = lshr i32 %x, %shamt
 ; BMI2: lshr32p
 ; Source order scheduling prevents folding, rdar:14208996.
@@ -127,7 +127,7 @@ entry:
 
 define i64 @lshr64p(i64* %p, i64 %shamt) nounwind uwtable readnone {
 entry:
-  %x = load i64* %p
+  %x = load i64, i64* %p
   %shl = lshr i64 %x, %shamt
 ; BMI264: lshr64p
 ; BMI264: shrxq %{{.+}}, %{{.+}}, %{{.+}}
@@ -149,7 +149,7 @@ entry:
 
 define i32 @ashr32p(i32* %p, i32 %shamt) nounwind uwtable readnone {
 entry:
-  %x = load i32* %p
+  %x = load i32, i32* %p
   %shl = ashr i32 %x, %shamt
 ; BMI2: ashr32p
 ; Source order scheduling prevents folding, rdar:14208996.
@@ -172,7 +172,7 @@ entry:
 
 define i64 @ashr64p(i64* %p, i64 %shamt) nounwind uwtable readnone {
 entry:
-  %x = load i64* %p
+  %x = load i64, i64* %p
   %shl = ashr i64 %x, %shamt
 ; BMI264: ashr64p
 ; BMI264: sarxq %{{.+}}, %{{.+}}, %{{.+}}

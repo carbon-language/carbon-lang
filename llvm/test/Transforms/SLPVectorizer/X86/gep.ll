@@ -10,12 +10,12 @@ target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 ; CHECK: <2 x i32*>
 define void @foo1 ({ i32*, i32* }* noalias %x, { i32*, i32* }* noalias %y) {
   %1 = getelementptr inbounds { i32*, i32* }, { i32*, i32* }* %y, i64 0, i32 0
-  %2 = load i32** %1, align 8
+  %2 = load i32*, i32** %1, align 8
   %3 = getelementptr inbounds i32, i32* %2, i64 16
   %4 = getelementptr inbounds { i32*, i32* }, { i32*, i32* }* %x, i64 0, i32 0
   store i32* %3, i32** %4, align 8
   %5 = getelementptr inbounds { i32*, i32* }, { i32*, i32* }* %y, i64 0, i32 1
-  %6 = load i32** %5, align 8
+  %6 = load i32*, i32** %5, align 8
   %7 = getelementptr inbounds i32, i32* %6, i64 16
   %8 = getelementptr inbounds { i32*, i32* }, { i32*, i32* }* %x, i64 0, i32 1
   store i32* %7, i32** %8, align 8
@@ -28,12 +28,12 @@ define void @foo1 ({ i32*, i32* }* noalias %x, { i32*, i32* }* noalias %y) {
 ; CHECK-NOT: <2 x i32*>
 define void @foo2 ({ i32*, i32* }* noalias %x, { i32*, i32* }* noalias %y, i32 %i) {
   %1 = getelementptr inbounds { i32*, i32* }, { i32*, i32* }* %y, i64 0, i32 0
-  %2 = load i32** %1, align 8
+  %2 = load i32*, i32** %1, align 8
   %3 = getelementptr inbounds i32, i32* %2, i32 %i
   %4 = getelementptr inbounds { i32*, i32* }, { i32*, i32* }* %x, i64 0, i32 0
   store i32* %3, i32** %4, align 8
   %5 = getelementptr inbounds { i32*, i32* }, { i32*, i32* }* %y, i64 0, i32 1
-  %6 = load i32** %5, align 8
+  %6 = load i32*, i32** %5, align 8
   %7 = getelementptr inbounds i32, i32* %6, i32 %i
   %8 = getelementptr inbounds { i32*, i32* }, { i32*, i32* }* %x, i64 0, i32 1
   store i32* %7, i32** %8, align 8

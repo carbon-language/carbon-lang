@@ -7,12 +7,12 @@ no_exit:		; preds = %no_exit.backedge, %entry
 	%i.0.0 = phi i32 [ 0, %entry ], [ %i.0.0.be, %no_exit.backedge ]		; <i32> [#uses=3]
 	%gep.upgrd.1 = zext i32 %i.0.0 to i64		; <i64> [#uses=1]
 	%tmp.7 = getelementptr i32, i32* %A, i64 %gep.upgrd.1		; <i32*> [#uses=4]
-	%tmp.13 = load i32* %tmp.7		; <i32> [#uses=2]
+	%tmp.13 = load i32, i32* %tmp.7		; <i32> [#uses=2]
 	%tmp.14 = add i32 %tmp.13, 1		; <i32> [#uses=1]
 	store i32 %tmp.14, i32* %tmp.7
 	br i1 %C, label %then, label %endif
 then:		; preds = %no_exit
-	%tmp.29 = load i32* %tmp.7		; <i32> [#uses=1]
+	%tmp.29 = load i32, i32* %tmp.7		; <i32> [#uses=1]
 	%tmp.30 = add i32 %tmp.29, 2		; <i32> [#uses=1]
 	store i32 %tmp.30, i32* %tmp.7
 	%inc9 = add i32 %i.0.0, 1		; <i32> [#uses=2]
@@ -36,13 +36,13 @@ return:		; preds = %endif, %then
 define i32 @test2(i32* %var) {
   %mem = alloca i32
   store i32 2, i32* %mem
-  %c = load i32* %mem
+  %c = load i32, i32* %mem
 
   br label %loop_begin
 
 loop_begin:
 
-  %var_val = load i32* %var
+  %var_val = load i32, i32* %var
 
   switch i32 %c, label %default [
       i32 1, label %inc

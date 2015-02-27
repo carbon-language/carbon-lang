@@ -33,17 +33,17 @@ bb26:		; preds = %bb4
 	br i1 %cond.i, label %bb.i, label %bb4
 
 bb.i:		; preds = %bb26
-	%3 = load i32* null, align 4		; <i32> [#uses=1]
+	%3 = load i32, i32* null, align 4		; <i32> [#uses=1]
 	%4 = uitofp i32 %3 to float		; <float> [#uses=1]
 	%.sum13.i = add i64 0, 4		; <i64> [#uses=1]
 	%5 = getelementptr i8, i8* null, i64 %.sum13.i		; <i8*> [#uses=1]
 	%6 = bitcast i8* %5 to i32*		; <i32*> [#uses=1]
-	%7 = load i32* %6, align 4		; <i32> [#uses=1]
+	%7 = load i32, i32* %6, align 4		; <i32> [#uses=1]
 	%8 = uitofp i32 %7 to float		; <float> [#uses=1]
 	%.sum.i = add i64 0, 8		; <i64> [#uses=1]
 	%9 = getelementptr i8, i8* null, i64 %.sum.i		; <i8*> [#uses=1]
 	%10 = bitcast i8* %9 to i32*		; <i32*> [#uses=1]
-	%11 = load i32* %10, align 4		; <i32> [#uses=1]
+	%11 = load i32, i32* %10, align 4		; <i32> [#uses=1]
 	%12 = uitofp i32 %11 to float		; <float> [#uses=1]
 	%13 = insertelement <4 x float> undef, float %4, i32 0		; <<4 x float>> [#uses=1]
 	%14 = insertelement <4 x float> %13, float %8, i32 1		; <<4 x float>> [#uses=1]

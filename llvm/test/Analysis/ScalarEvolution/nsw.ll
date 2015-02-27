@@ -7,7 +7,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64"
 ; CHECK: Classifying expressions for: @test1
 define void @test1(double* %p) nounwind {
 entry:
-	%tmp = load double* %p, align 8		; <double> [#uses=1]
+	%tmp = load double, double* %p, align 8		; <double> [#uses=1]
 	%tmp1 = fcmp ogt double %tmp, 2.000000e+00		; <i1> [#uses=1]
 	br i1 %tmp1, label %bb.nph, label %return
 
@@ -20,7 +20,7 @@ bb:		; preds = %bb1, %bb.nph
 ; CHECK-NEXT: -->  {0,+,1}<nuw><nsw><%bb>
 	%tmp2 = sext i32 %i.01 to i64		; <i64> [#uses=1]
 	%tmp3 = getelementptr double, double* %p, i64 %tmp2		; <double*> [#uses=1]
-	%tmp4 = load double* %tmp3, align 8		; <double> [#uses=1]
+	%tmp4 = load double, double* %tmp3, align 8		; <double> [#uses=1]
 	%tmp5 = fmul double %tmp4, 9.200000e+00		; <double> [#uses=1]
 	%tmp6 = sext i32 %i.01 to i64		; <i64> [#uses=1]
 	%tmp7 = getelementptr double, double* %p, i64 %tmp6		; <double*> [#uses=1]
@@ -39,7 +39,7 @@ bb1:		; preds = %bb
 	%tmp9 = getelementptr double, double* %p, i64 %phitmp		; <double*> [#uses=1]
 ; CHECK: %tmp9
 ; CHECK-NEXT:  -->  {(8 + %p),+,8}<%bb>
-	%tmp10 = load double* %tmp9, align 8		; <double> [#uses=1]
+	%tmp10 = load double, double* %tmp9, align 8		; <double> [#uses=1]
 	%tmp11 = fcmp ogt double %tmp10, 2.000000e+00		; <i1> [#uses=1]
 	br i1 %tmp11, label %bb, label %bb1.return_crit_edge
 

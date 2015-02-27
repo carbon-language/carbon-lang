@@ -8,15 +8,15 @@
 ; CHECK: CUBE * T{{[0-9]}}.W
 define void @cube() #0 {
 main_body:
-  %0 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 9)
+  %0 = load <4 x float>, <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 9)
   %1 = extractelement <4 x float> %0, i32 3
-  %2 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 9)
+  %2 = load <4 x float>, <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 9)
   %3 = extractelement <4 x float> %2, i32 0
   %4 = fdiv float %3, %1
-  %5 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 9)
+  %5 = load <4 x float>, <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 9)
   %6 = extractelement <4 x float> %5, i32 1
   %7 = fdiv float %6, %1
-  %8 = load <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 9)
+  %8 = load <4 x float>, <4 x float> addrspace(8)* getelementptr ([1024 x <4 x float>] addrspace(8)* null, i64 0, i32 9)
   %9 = extractelement <4 x float> %8, i32 2
   %10 = fdiv float %9, %1
   %11 = insertelement <4 x float> undef, float %4, i32 0

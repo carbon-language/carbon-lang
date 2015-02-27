@@ -10,7 +10,7 @@ bb:             ; preds = %bb, %entry
         %CurPtr_addr.0.rec = bitcast i32 %indvar to i32         ; <i32> [#uses=1]
         %gep.upgrd.1 = zext i32 %indvar to i64          ; <i64> [#uses=1]
         %CurPtr_addr.0 = getelementptr i8, i8* %CurPtr, i64 %gep.upgrd.1            ; <i8*> [#uses=1]
-        %tmp = load i8* %CurPtr_addr.0          ; <i8> [#uses=3]
+        %tmp = load i8, i8* %CurPtr_addr.0          ; <i8> [#uses=3]
         %tmp2.rec = add i32 %CurPtr_addr.0.rec, 1               ; <i32> [#uses=1]
         %tmp2 = getelementptr i8, i8* %CurPtr, i32 %tmp2.rec                ; <i8*> [#uses=1]
         %indvar.next = add i32 %indvar, 1               ; <i32> [#uses=1]

@@ -18,7 +18,7 @@
 ;CHECK: TEX_SAMPLE T{{[0-9]+\.XYZW, T[0-9]+\.XYZW}} RID:0 SID:0 CT:NNUN
 
 define void @test(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
-   %addr = load <4 x float> addrspace(1)* %in
+   %addr = load <4 x float>, <4 x float> addrspace(1)* %in
    %res1 = call <4 x float> @llvm.AMDGPU.tex(<4 x float> %addr, i32 0, i32 0, i32 1)
    %res2 = call <4 x float> @llvm.AMDGPU.tex(<4 x float> %res1, i32 0, i32 0, i32 2)
    %res3 = call <4 x float> @llvm.AMDGPU.tex(<4 x float> %res2, i32 0, i32 0, i32 3)

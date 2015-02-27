@@ -6,7 +6,7 @@ define void @t1(i64* %p, i32 %b) nounwind {
 entry:
   %p.addr = alloca i64*, align 8
   store i64* %p, i64** %p.addr, align 8
-  %tmp = load i64** %p.addr, align 8
+  %tmp = load i64*, i64** %p.addr, align 8
 ; CHECK-LABEL: t1:
 ; CHECK: movl    $2147483648, %eax
 ; CHECK: lock
@@ -19,7 +19,7 @@ define void @t2(i64* %p, i32 %b) nounwind {
 entry:
   %p.addr = alloca i64*, align 8
   store i64* %p, i64** %p.addr, align 8
-  %tmp = load i64** %p.addr, align 8
+  %tmp = load i64*, i64** %p.addr, align 8
 ; CHECK-LABEL: t2:
 ; CHECK: lock
 ; CHECK-NEXT: orq $2147483644, (%r{{.*}})

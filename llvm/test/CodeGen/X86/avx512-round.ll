@@ -99,7 +99,7 @@ declare float @llvm.floor.f32(float %p)
 define float @floor_f32m(float* %aptr) {
 ; CHECK-LABEL: floor_f32m
 ; CHECK: vrndscaless $1, (%rdi), {{.*}}encoding: [0x62,0xf3,0x7d,0x08,0x0a,0x07,0x01]
-  %a = load float* %aptr, align 4
+  %a = load float, float* %aptr, align 4
   %res = call float @llvm.floor.f32(float %a)
   ret float %res
 }

@@ -26,7 +26,7 @@ define <8 x i8> @vld4i8(i8* %A) nounwind {
 define <8 x i8> @vld4i8_update(i8** %ptr, i32 %inc) nounwind {
 ;CHECK-LABEL: vld4i8_update:
 ;CHECK: vld4.8 {d16, d17, d18, d19}, [r2:128], r1
-	%A = load i8** %ptr
+	%A = load i8*, i8** %ptr
 	%tmp1 = call %struct.__neon_int8x8x4_t @llvm.arm.neon.vld4.v8i8(i8* %A, i32 16)
 	%tmp2 = extractvalue %struct.__neon_int8x8x4_t %tmp1, 0
 	%tmp3 = extractvalue %struct.__neon_int8x8x4_t %tmp1, 2
@@ -126,7 +126,7 @@ define <8 x i16> @vld4Qi16_update(i16** %ptr) nounwind {
 ;CHECK-LABEL: vld4Qi16_update:
 ;CHECK: vld4.16 {d16, d18, d20, d22}, [r1:64]!
 ;CHECK: vld4.16 {d17, d19, d21, d23}, [r1:64]!
-	%A = load i16** %ptr
+	%A = load i16*, i16** %ptr
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = call %struct.__neon_int16x8x4_t @llvm.arm.neon.vld4.v8i16(i8* %tmp0, i32 8)
 	%tmp2 = extractvalue %struct.__neon_int16x8x4_t %tmp1, 0

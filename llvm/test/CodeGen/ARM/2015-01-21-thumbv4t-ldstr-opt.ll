@@ -12,10 +12,10 @@ define i32 @test1(i32* %p) {
   %4 = getelementptr inbounds i32, i32* %p, i32 4
 
 ; CHECK-NEXT: ldm [[NEWBASE]],
-  %5 = load i32* %1, align 4
-  %6 = load i32* %2, align 4
-  %7 = load i32* %3, align 4
-  %8 = load i32* %4, align 4
+  %5 = load i32, i32* %1, align 4
+  %6 = load i32, i32* %2, align 4
+  %7 = load i32, i32* %3, align 4
+  %8 = load i32, i32* %4, align 4
 
   %9 = add nsw i32 %5, %6
   %10 = add nsw i32 %9, %7
@@ -36,10 +36,10 @@ define i32 @test2(i32* %p) {
   %4 = getelementptr inbounds i32, i32* %p, i32 5
 
 ; CHECK-NEXT: ldm [[NEWBASE]],
-  %5 = load i32* %1, align 4
-  %6 = load i32* %2, align 4
-  %7 = load i32* %3, align 4
-  %8 = load i32* %4, align 4
+  %5 = load i32, i32* %1, align 4
+  %6 = load i32, i32* %2, align 4
+  %7 = load i32, i32* %3, align 4
+  %8 = load i32, i32* %4, align 4
 
   %9 = add nsw i32 %5, %6
   %10 = add nsw i32 %9, %7

@@ -9,7 +9,7 @@
 define void @floating_lits() {
 ; CHECK-LABEL: floating_lits:
 
-  %floatval = load float* @varfloat
+  %floatval = load float, float* @varfloat
   %newfloat = fadd float %floatval, 128.0
 ; CHECK: adrp x[[LITBASE:[0-9]+]], [[CURLIT:.LCPI[0-9]+_[0-9]+]]
 ; CHECK: ldr [[LIT128:s[0-9]+]], [x[[LITBASE]], {{#?}}:lo12:[[CURLIT]]]
@@ -26,7 +26,7 @@ define void @floating_lits() {
 
   store float %newfloat, float* @varfloat
 
-  %doubleval = load double* @vardouble
+  %doubleval = load double, double* @vardouble
   %newdouble = fadd double %doubleval, 129.0
 ; CHECK: adrp x[[LITBASE:[0-9]+]], [[CURLIT:.LCPI[0-9]+_[0-9]+]]
 ; CHECK: ldr [[LIT129:d[0-9]+]], [x[[LITBASE]], {{#?}}:lo12:[[CURLIT]]]

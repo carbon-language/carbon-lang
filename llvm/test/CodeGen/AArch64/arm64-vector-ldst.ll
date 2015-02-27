@@ -12,7 +12,7 @@ entry:
 ; CHECK-LABEL: t1:
 ; CHECK: ldr x[[REG:[0-9]+]], [x0]
 ; CHECK: str q0, [x[[REG]]]
-  %tmp1 = load %type1** %argtable, align 8
+  %tmp1 = load %type1*, %type1** %argtable, align 8
   %tmp2 = getelementptr inbounds %type1, %type1* %tmp1, i64 0, i32 0
   store <16 x i8> zeroinitializer, <16 x i8>* %tmp2, align 16
   ret void
@@ -23,7 +23,7 @@ entry:
 ; CHECK-LABEL: t2:
 ; CHECK: ldr x[[REG:[0-9]+]], [x0]
 ; CHECK: str d0, [x[[REG]]]
-  %tmp1 = load %type2** %argtable, align 8
+  %tmp1 = load %type2*, %type2** %argtable, align 8
   %tmp2 = getelementptr inbounds %type2, %type2* %tmp1, i64 0, i32 0
   store <8 x i8> zeroinitializer, <8 x i8>* %tmp2, align 8
   ret void
@@ -52,8 +52,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], [[SHIFTEDOFFSET]]]
   %arrayidx = getelementptr inbounds <2 x i64>, <2 x i64>* %array, i64 %offset
-  %tmp = load <2 x i64>* %arrayidx, align 16
-  %tmp1 = load <2 x i64>** @globalArray64x2, align 8
+  %tmp = load <2 x i64>, <2 x i64>* %arrayidx, align 16
+  %tmp1 = load <2 x i64>*, <2 x i64>** @globalArray64x2, align 8
   %arrayidx1 = getelementptr inbounds <2 x i64>, <2 x i64>* %tmp1, i64 %offset
   store <2 x i64> %tmp, <2 x i64>* %arrayidx1, align 16
   ret void
@@ -66,8 +66,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], #80]
   %arrayidx = getelementptr inbounds <2 x i64>, <2 x i64>* %array, i64 3
-  %tmp = load <2 x i64>* %arrayidx, align 16
-  %tmp1 = load <2 x i64>** @globalArray64x2, align 8
+  %tmp = load <2 x i64>, <2 x i64>* %arrayidx, align 16
+  %tmp1 = load <2 x i64>*, <2 x i64>** @globalArray64x2, align 8
   %arrayidx1 = getelementptr inbounds <2 x i64>, <2 x i64>* %tmp1, i64 5
   store <2 x i64> %tmp, <2 x i64>* %arrayidx1, align 16
   ret void
@@ -81,8 +81,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], [[SHIFTEDOFFSET]]]
   %arrayidx = getelementptr inbounds <4 x i32>, <4 x i32>* %array, i64 %offset
-  %tmp = load <4 x i32>* %arrayidx, align 16
-  %tmp1 = load <4 x i32>** @globalArray32x4, align 8
+  %tmp = load <4 x i32>, <4 x i32>* %arrayidx, align 16
+  %tmp1 = load <4 x i32>*, <4 x i32>** @globalArray32x4, align 8
   %arrayidx1 = getelementptr inbounds <4 x i32>, <4 x i32>* %tmp1, i64 %offset
   store <4 x i32> %tmp, <4 x i32>* %arrayidx1, align 16
   ret void
@@ -95,8 +95,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], #80]
   %arrayidx = getelementptr inbounds <4 x i32>, <4 x i32>* %array, i64 3
-  %tmp = load <4 x i32>* %arrayidx, align 16
-  %tmp1 = load <4 x i32>** @globalArray32x4, align 8
+  %tmp = load <4 x i32>, <4 x i32>* %arrayidx, align 16
+  %tmp1 = load <4 x i32>*, <4 x i32>** @globalArray32x4, align 8
   %arrayidx1 = getelementptr inbounds <4 x i32>, <4 x i32>* %tmp1, i64 5
   store <4 x i32> %tmp, <4 x i32>* %arrayidx1, align 16
   ret void
@@ -110,8 +110,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], [[SHIFTEDOFFSET]]]
   %arrayidx = getelementptr inbounds <8 x i16>, <8 x i16>* %array, i64 %offset
-  %tmp = load <8 x i16>* %arrayidx, align 16
-  %tmp1 = load <8 x i16>** @globalArray16x8, align 8
+  %tmp = load <8 x i16>, <8 x i16>* %arrayidx, align 16
+  %tmp1 = load <8 x i16>*, <8 x i16>** @globalArray16x8, align 8
   %arrayidx1 = getelementptr inbounds <8 x i16>, <8 x i16>* %tmp1, i64 %offset
   store <8 x i16> %tmp, <8 x i16>* %arrayidx1, align 16
   ret void
@@ -124,8 +124,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], #80]
   %arrayidx = getelementptr inbounds <8 x i16>, <8 x i16>* %array, i64 3
-  %tmp = load <8 x i16>* %arrayidx, align 16
-  %tmp1 = load <8 x i16>** @globalArray16x8, align 8
+  %tmp = load <8 x i16>, <8 x i16>* %arrayidx, align 16
+  %tmp1 = load <8 x i16>*, <8 x i16>** @globalArray16x8, align 8
   %arrayidx1 = getelementptr inbounds <8 x i16>, <8 x i16>* %tmp1, i64 5
   store <8 x i16> %tmp, <8 x i16>* %arrayidx1, align 16
   ret void
@@ -139,8 +139,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], [[SHIFTEDOFFSET]]]
   %arrayidx = getelementptr inbounds <16 x i8>, <16 x i8>* %array, i64 %offset
-  %tmp = load <16 x i8>* %arrayidx, align 16
-  %tmp1 = load <16 x i8>** @globalArray8x16, align 8
+  %tmp = load <16 x i8>, <16 x i8>* %arrayidx, align 16
+  %tmp1 = load <16 x i8>*, <16 x i8>** @globalArray8x16, align 8
   %arrayidx1 = getelementptr inbounds <16 x i8>, <16 x i8>* %tmp1, i64 %offset
   store <16 x i8> %tmp, <16 x i8>* %arrayidx1, align 16
   ret void
@@ -153,8 +153,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], #80]
   %arrayidx = getelementptr inbounds <16 x i8>, <16 x i8>* %array, i64 3
-  %tmp = load <16 x i8>* %arrayidx, align 16
-  %tmp1 = load <16 x i8>** @globalArray8x16, align 8
+  %tmp = load <16 x i8>, <16 x i8>* %arrayidx, align 16
+  %tmp1 = load <16 x i8>*, <16 x i8>** @globalArray8x16, align 8
   %arrayidx1 = getelementptr inbounds <16 x i8>, <16 x i8>* %tmp1, i64 5
   store <16 x i8> %tmp, <16 x i8>* %arrayidx1, align 16
   ret void
@@ -168,8 +168,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], [[SHIFTEDOFFSET]]]
   %arrayidx = getelementptr inbounds <1 x i64>, <1 x i64>* %array, i64 %offset
-  %tmp = load <1 x i64>* %arrayidx, align 8
-  %tmp1 = load <1 x i64>** @globalArray64x1, align 8
+  %tmp = load <1 x i64>, <1 x i64>* %arrayidx, align 8
+  %tmp1 = load <1 x i64>*, <1 x i64>** @globalArray64x1, align 8
   %arrayidx1 = getelementptr inbounds <1 x i64>, <1 x i64>* %tmp1, i64 %offset
   store <1 x i64> %tmp, <1 x i64>* %arrayidx1, align 8
   ret void
@@ -182,8 +182,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], #40]
   %arrayidx = getelementptr inbounds <1 x i64>, <1 x i64>* %array, i64 3
-  %tmp = load <1 x i64>* %arrayidx, align 8
-  %tmp1 = load <1 x i64>** @globalArray64x1, align 8
+  %tmp = load <1 x i64>, <1 x i64>* %arrayidx, align 8
+  %tmp1 = load <1 x i64>*, <1 x i64>** @globalArray64x1, align 8
   %arrayidx1 = getelementptr inbounds <1 x i64>, <1 x i64>* %tmp1, i64 5
   store <1 x i64> %tmp, <1 x i64>* %arrayidx1, align 8
   ret void
@@ -197,8 +197,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], [[SHIFTEDOFFSET]]]
   %arrayidx = getelementptr inbounds <2 x i32>, <2 x i32>* %array, i64 %offset
-  %tmp = load <2 x i32>* %arrayidx, align 8
-  %tmp1 = load <2 x i32>** @globalArray32x2, align 8
+  %tmp = load <2 x i32>, <2 x i32>* %arrayidx, align 8
+  %tmp1 = load <2 x i32>*, <2 x i32>** @globalArray32x2, align 8
   %arrayidx1 = getelementptr inbounds <2 x i32>, <2 x i32>* %tmp1, i64 %offset
   store <2 x i32> %tmp, <2 x i32>* %arrayidx1, align 8
   ret void
@@ -211,8 +211,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], #40]
   %arrayidx = getelementptr inbounds <2 x i32>, <2 x i32>* %array, i64 3
-  %tmp = load <2 x i32>* %arrayidx, align 8
-  %tmp1 = load <2 x i32>** @globalArray32x2, align 8
+  %tmp = load <2 x i32>, <2 x i32>* %arrayidx, align 8
+  %tmp1 = load <2 x i32>*, <2 x i32>** @globalArray32x2, align 8
   %arrayidx1 = getelementptr inbounds <2 x i32>, <2 x i32>* %tmp1, i64 5
   store <2 x i32> %tmp, <2 x i32>* %arrayidx1, align 8
   ret void
@@ -226,8 +226,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], [[SHIFTEDOFFSET]]]
   %arrayidx = getelementptr inbounds <4 x i16>, <4 x i16>* %array, i64 %offset
-  %tmp = load <4 x i16>* %arrayidx, align 8
-  %tmp1 = load <4 x i16>** @globalArray16x4, align 8
+  %tmp = load <4 x i16>, <4 x i16>* %arrayidx, align 8
+  %tmp1 = load <4 x i16>*, <4 x i16>** @globalArray16x4, align 8
   %arrayidx1 = getelementptr inbounds <4 x i16>, <4 x i16>* %tmp1, i64 %offset
   store <4 x i16> %tmp, <4 x i16>* %arrayidx1, align 8
   ret void
@@ -240,8 +240,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], #40]
   %arrayidx = getelementptr inbounds <4 x i16>, <4 x i16>* %array, i64 3
-  %tmp = load <4 x i16>* %arrayidx, align 8
-  %tmp1 = load <4 x i16>** @globalArray16x4, align 8
+  %tmp = load <4 x i16>, <4 x i16>* %arrayidx, align 8
+  %tmp1 = load <4 x i16>*, <4 x i16>** @globalArray16x4, align 8
   %arrayidx1 = getelementptr inbounds <4 x i16>, <4 x i16>* %tmp1, i64 5
   store <4 x i16> %tmp, <4 x i16>* %arrayidx1, align 8
   ret void
@@ -255,8 +255,8 @@ entry:
 ; CHECK: ldr [[BASE:x[0-9]+]],
 ; CHECK: str [[DEST]], {{\[}}[[BASE]], [[SHIFTEDOFFSET]]]
   %arrayidx = getelementptr inbounds <8 x i8>, <8 x i8>* %array, i64 %offset
-  %tmp = load <8 x i8>* %arrayidx, align 8
-  %tmp1 = load <8 x i8>** @globalArray8x8, align 8
+  %tmp = load <8 x i8>, <8 x i8>* %arrayidx, align 8
+  %tmp1 = load <8 x i8>*, <8 x i8>** @globalArray8x8, align 8
   %arrayidx1 = getelementptr inbounds <8 x i8>, <8 x i8>* %tmp1, i64 %offset
   store <8 x i8> %tmp, <8 x i8>* %arrayidx1, align 8
   ret void
@@ -270,7 +270,7 @@ define <1 x i64> @fct0() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct0:
 ; CHECK: ldur {{d[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <1 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <1 x i64>*), align 8
+  %0 = load <1 x i64>, <1 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <1 x i64>*), align 8
   ret <1 x i64> %0
 }
 
@@ -278,7 +278,7 @@ define <2 x i32> @fct1() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct1:
 ; CHECK: ldur {{d[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <2 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <2 x i32>*), align 8
+  %0 = load <2 x i32>, <2 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <2 x i32>*), align 8
   ret <2 x i32> %0
 }
 
@@ -286,7 +286,7 @@ define <4 x i16> @fct2() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct2:
 ; CHECK: ldur {{d[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <4 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <4 x i16>*), align 8
+  %0 = load <4 x i16>, <4 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <4 x i16>*), align 8
   ret <4 x i16> %0
 }
 
@@ -294,7 +294,7 @@ define <8 x i8> @fct3() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct3:
 ; CHECK: ldur {{d[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <8 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <8 x i8>*), align 8
+  %0 = load <8 x i8>, <8 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <8 x i8>*), align 8
   ret <8 x i8> %0
 }
 
@@ -302,7 +302,7 @@ define <2 x i64> @fct4() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct4:
 ; CHECK: ldur {{q[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <2 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <2 x i64>*), align 16
+  %0 = load <2 x i64>, <2 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <2 x i64>*), align 16
   ret <2 x i64> %0
 }
 
@@ -310,7 +310,7 @@ define <4 x i32> @fct5() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct5:
 ; CHECK: ldur {{q[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <4 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <4 x i32>*), align 16
+  %0 = load <4 x i32>, <4 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <4 x i32>*), align 16
   ret <4 x i32> %0
 }
 
@@ -318,7 +318,7 @@ define <8 x i16> @fct6() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct6:
 ; CHECK: ldur {{q[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <8 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <8 x i16>*), align 16
+  %0 = load <8 x i16>, <8 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <8 x i16>*), align 16
   ret <8 x i16> %0
 }
 
@@ -326,7 +326,7 @@ define <16 x i8> @fct7() nounwind readonly ssp {
 entry:
 ; CHECK-LABEL: fct7:
 ; CHECK: ldur {{q[0-9]+}}, [{{x[0-9]+}}, #3]
-  %0 = load <16 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <16 x i8>*), align 16
+  %0 = load <16 x i8>, <16 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <16 x i8>*), align 16
   ret <16 x i8> %0
 }
 
@@ -335,7 +335,7 @@ entry:
 ; CHECK-LABEL: fct8:
 ; CHECK: ldur [[DESTREG:d[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <1 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <1 x i64>*), align 8
+  %0 = load <1 x i64>, <1 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <1 x i64>*), align 8
   store <1 x i64> %0, <1 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <1 x i64>*), align 8
   ret void
 }
@@ -345,7 +345,7 @@ entry:
 ; CHECK-LABEL: fct9:
 ; CHECK: ldur [[DESTREG:d[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <2 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <2 x i32>*), align 8
+  %0 = load <2 x i32>, <2 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <2 x i32>*), align 8
   store <2 x i32> %0, <2 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <2 x i32>*), align 8
   ret void
 }
@@ -355,7 +355,7 @@ entry:
 ; CHECK-LABEL: fct10:
 ; CHECK: ldur [[DESTREG:d[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <4 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <4 x i16>*), align 8
+  %0 = load <4 x i16>, <4 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <4 x i16>*), align 8
   store <4 x i16> %0, <4 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <4 x i16>*), align 8
   ret void
 }
@@ -365,7 +365,7 @@ entry:
 ; CHECK-LABEL: fct11:
 ; CHECK: ldur [[DESTREG:d[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <8 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <8 x i8>*), align 8
+  %0 = load <8 x i8>, <8 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <8 x i8>*), align 8
   store <8 x i8> %0, <8 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <8 x i8>*), align 8
   ret void
 }
@@ -375,7 +375,7 @@ entry:
 ; CHECK-LABEL: fct12:
 ; CHECK: ldur [[DESTREG:q[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <2 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <2 x i64>*), align 16
+  %0 = load <2 x i64>, <2 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <2 x i64>*), align 16
   store <2 x i64> %0, <2 x i64>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <2 x i64>*), align 16
   ret void
 }
@@ -385,7 +385,7 @@ entry:
 ; CHECK-LABEL: fct13:
 ; CHECK: ldur [[DESTREG:q[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <4 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <4 x i32>*), align 16
+  %0 = load <4 x i32>, <4 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <4 x i32>*), align 16
   store <4 x i32> %0, <4 x i32>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <4 x i32>*), align 16
   ret void
 }
@@ -395,7 +395,7 @@ entry:
 ; CHECK-LABEL: fct14:
 ; CHECK: ldur [[DESTREG:q[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <8 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <8 x i16>*), align 16
+  %0 = load <8 x i16>, <8 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <8 x i16>*), align 16
   store <8 x i16> %0, <8 x i16>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <8 x i16>*), align 16
   ret void
 }
@@ -405,7 +405,7 @@ entry:
 ; CHECK-LABEL: fct15:
 ; CHECK: ldur [[DESTREG:q[0-9]+]], {{\[}}[[BASEREG:x[0-9]+]], #3]
 ; CHECK: stur [[DESTREG]], {{\[}}[[BASEREG]], #4]
-  %0 = load <16 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <16 x i8>*), align 16
+  %0 = load <16 x i8>, <16 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 3) to <16 x i8>*), align 16
   store <16 x i8> %0, <16 x i8>* bitcast (i8* getelementptr inbounds ([63 x i8]* @str, i64 0, i64 4) to <16 x i8>*), align 16
   ret void
 }
@@ -420,7 +420,7 @@ define <8 x i8> @fct16(i8* nocapture %sp0) {
 ; CHECK-NEXT: mul.8b v0, v[[REGNUM]], v[[REGNUM]]
 entry:
   %addr = getelementptr i8, i8* %sp0, i64 1
-  %pix_sp0.0.copyload = load i8* %addr, align 1
+  %pix_sp0.0.copyload = load i8, i8* %addr, align 1
   %vec = insertelement <8 x i8> undef, i8 %pix_sp0.0.copyload, i32 0
   %vmull.i = mul <8 x i8> %vec, %vec
   ret <8 x i8> %vmull.i
@@ -432,7 +432,7 @@ define <16 x i8> @fct17(i8* nocapture %sp0) {
 ; CHECK-NEXT: mul.16b v0, v[[REGNUM]], v[[REGNUM]]
 entry:
   %addr = getelementptr i8, i8* %sp0, i64 1
-  %pix_sp0.0.copyload = load i8* %addr, align 1
+  %pix_sp0.0.copyload = load i8, i8* %addr, align 1
   %vec = insertelement <16 x i8> undef, i8 %pix_sp0.0.copyload, i32 0
   %vmull.i = mul <16 x i8> %vec, %vec
   ret <16 x i8> %vmull.i
@@ -444,7 +444,7 @@ define <4 x i16> @fct18(i16* nocapture %sp0) {
 ; CHECK-NEXT: mul.4h v0, v[[REGNUM]], v[[REGNUM]]
 entry:
   %addr = getelementptr i16, i16* %sp0, i64 1
-  %pix_sp0.0.copyload = load i16* %addr, align 1
+  %pix_sp0.0.copyload = load i16, i16* %addr, align 1
   %vec = insertelement <4 x i16> undef, i16 %pix_sp0.0.copyload, i32 0
   %vmull.i = mul <4 x i16> %vec, %vec
   ret <4 x i16> %vmull.i
@@ -456,7 +456,7 @@ define <8 x i16> @fct19(i16* nocapture %sp0) {
 ; CHECK-NEXT: mul.8h v0, v[[REGNUM]], v[[REGNUM]]
 entry:
   %addr = getelementptr i16, i16* %sp0, i64 1
-  %pix_sp0.0.copyload = load i16* %addr, align 1
+  %pix_sp0.0.copyload = load i16, i16* %addr, align 1
   %vec = insertelement <8 x i16> undef, i16 %pix_sp0.0.copyload, i32 0
   %vmull.i = mul <8 x i16> %vec, %vec
   ret <8 x i16> %vmull.i
@@ -468,7 +468,7 @@ define <2 x i32> @fct20(i32* nocapture %sp0) {
 ; CHECK-NEXT: mul.2s v0, v[[REGNUM]], v[[REGNUM]]
 entry:
   %addr = getelementptr i32, i32* %sp0, i64 1
-  %pix_sp0.0.copyload = load i32* %addr, align 1
+  %pix_sp0.0.copyload = load i32, i32* %addr, align 1
   %vec = insertelement <2 x i32> undef, i32 %pix_sp0.0.copyload, i32 0
   %vmull.i = mul <2 x i32> %vec, %vec
   ret <2 x i32> %vmull.i
@@ -480,7 +480,7 @@ define <4 x i32> @fct21(i32* nocapture %sp0) {
 ; CHECK-NEXT: mul.4s v0, v[[REGNUM]], v[[REGNUM]]
 entry:
   %addr = getelementptr i32, i32* %sp0, i64 1
-  %pix_sp0.0.copyload = load i32* %addr, align 1
+  %pix_sp0.0.copyload = load i32, i32* %addr, align 1
   %vec = insertelement <4 x i32> undef, i32 %pix_sp0.0.copyload, i32 0
   %vmull.i = mul <4 x i32> %vec, %vec
   ret <4 x i32> %vmull.i
@@ -491,7 +491,7 @@ define <1 x i64> @fct22(i64* nocapture %sp0) {
 ; CHECK: ldr d0, [x0, #8]
 entry:
   %addr = getelementptr i64, i64* %sp0, i64 1
-  %pix_sp0.0.copyload = load i64* %addr, align 1
+  %pix_sp0.0.copyload = load i64, i64* %addr, align 1
   %vec = insertelement <1 x i64> undef, i64 %pix_sp0.0.copyload, i32 0
    ret <1 x i64> %vec
 }
@@ -501,7 +501,7 @@ define <2 x i64> @fct23(i64* nocapture %sp0) {
 ; CHECK: ldr d[[REGNUM:[0-9]+]], [x0, #8]
 entry:
   %addr = getelementptr i64, i64* %sp0, i64 1
-  %pix_sp0.0.copyload = load i64* %addr, align 1
+  %pix_sp0.0.copyload = load i64, i64* %addr, align 1
   %vec = insertelement <2 x i64> undef, i64 %pix_sp0.0.copyload, i32 0
   ret <2 x i64> %vec
 }
@@ -514,7 +514,7 @@ define <8 x i8> @fct24(i8* nocapture %sp0, i64 %offset) {
 ; CHECK-NEXT: mul.8b v0, v[[REGNUM]], v[[REGNUM]]
 entry:
   %addr = getelementptr i8, i8* %sp0, i64 %offset
-  %pix_sp0.0.copyload = load i8* %addr, align 1
+  %pix_sp0.0.copyload = load i8, i8* %addr, align 1
   %vec = insertelement <8 x i8> undef, i8 %pix_sp0.0.copyload, i32 0
   %vmull.i = mul <8 x i8> %vec, %vec
   ret <8 x i8> %vmull.i
@@ -526,7 +526,7 @@ define <16 x i8> @fct25(i8* nocapture %sp0, i64 %offset) {
 ; CHECK-NEXT: mul.16b v0, v[[REGNUM]], v[[REGNUM]]
 entry:
   %addr = getelementptr i8, i8* %sp0, i64 %offset
-  %pix_sp0.0.copyload = load i8* %addr, align 1
+  %pix_sp0.0.copyload = load i8, i8* %addr, align 1
   %vec = insertelement <16 x i8> undef, i8 %pix_sp0.0.copyload, i32 0
   %vmull.i = mul <16 x i8> %vec, %vec
   ret <16 x i8> %vmull.i
@@ -538,7 +538,7 @@ define <4 x i16> @fct26(i16* nocapture %sp0, i64 %offset) {
 ; CHECK-NEXT: mul.4h v0, v[[REGNUM]], v[[REGNUM]]
 entry:
   %addr = getelementptr i16, i16* %sp0, i64 %offset
-  %pix_sp0.0.copyload = load i16* %addr, align 1
+  %pix_sp0.0.copyload = load i16, i16* %addr, align 1
   %vec = insertelement <4 x i16> undef, i16 %pix_sp0.0.copyload, i32 0
   %vmull.i = mul <4 x i16> %vec, %vec
   ret <4 x i16> %vmull.i
@@ -550,7 +550,7 @@ define <8 x i16> @fct27(i16* nocapture %sp0, i64 %offset) {
 ; CHECK-NEXT: mul.8h v0, v[[REGNUM]], v[[REGNUM]]
 entry:
   %addr = getelementptr i16, i16* %sp0, i64 %offset
-  %pix_sp0.0.copyload = load i16* %addr, align 1
+  %pix_sp0.0.copyload = load i16, i16* %addr, align 1
   %vec = insertelement <8 x i16> undef, i16 %pix_sp0.0.copyload, i32 0
   %vmull.i = mul <8 x i16> %vec, %vec
   ret <8 x i16> %vmull.i
@@ -562,7 +562,7 @@ define <2 x i32> @fct28(i32* nocapture %sp0, i64 %offset) {
 ; CHECK-NEXT: mul.2s v0, v[[REGNUM]], v[[REGNUM]]
 entry:
   %addr = getelementptr i32, i32* %sp0, i64 %offset
-  %pix_sp0.0.copyload = load i32* %addr, align 1
+  %pix_sp0.0.copyload = load i32, i32* %addr, align 1
   %vec = insertelement <2 x i32> undef, i32 %pix_sp0.0.copyload, i32 0
   %vmull.i = mul <2 x i32> %vec, %vec
   ret <2 x i32> %vmull.i
@@ -574,7 +574,7 @@ define <4 x i32> @fct29(i32* nocapture %sp0, i64 %offset) {
 ; CHECK-NEXT: mul.4s v0, v[[REGNUM]], v[[REGNUM]]
 entry:
   %addr = getelementptr i32, i32* %sp0, i64 %offset
-  %pix_sp0.0.copyload = load i32* %addr, align 1
+  %pix_sp0.0.copyload = load i32, i32* %addr, align 1
   %vec = insertelement <4 x i32> undef, i32 %pix_sp0.0.copyload, i32 0
   %vmull.i = mul <4 x i32> %vec, %vec
   ret <4 x i32> %vmull.i
@@ -585,7 +585,7 @@ define <1 x i64> @fct30(i64* nocapture %sp0, i64 %offset) {
 ; CHECK: ldr d0, [x0, x1, lsl #3]
 entry:
   %addr = getelementptr i64, i64* %sp0, i64 %offset
-  %pix_sp0.0.copyload = load i64* %addr, align 1
+  %pix_sp0.0.copyload = load i64, i64* %addr, align 1
   %vec = insertelement <1 x i64> undef, i64 %pix_sp0.0.copyload, i32 0
    ret <1 x i64> %vec
 }
@@ -595,7 +595,7 @@ define <2 x i64> @fct31(i64* nocapture %sp0, i64 %offset) {
 ; CHECK: ldr d0, [x0, x1, lsl #3]
 entry:
   %addr = getelementptr i64, i64* %sp0, i64 %offset
-  %pix_sp0.0.copyload = load i64* %addr, align 1
+  %pix_sp0.0.copyload = load i64, i64* %addr, align 1
   %vec = insertelement <2 x i64> undef, i64 %pix_sp0.0.copyload, i32 0
   ret <2 x i64> %vec
 }

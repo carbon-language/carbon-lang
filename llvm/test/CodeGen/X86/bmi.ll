@@ -27,7 +27,7 @@ define i32 @t3(i32 %x) nounwind  {
 }
 
 define i32 @tzcnt32_load(i32* %x) nounwind  {
-  %x1 = load i32* %x
+  %x1 = load i32, i32* %x
   %tmp = tail call i32 @llvm.cttz.i32(i32 %x1, i1 false )
   ret i32 %tmp
 ; CHECK-LABEL: tzcnt32_load:
@@ -78,7 +78,7 @@ define i32 @andn32(i32 %x, i32 %y) nounwind readnone {
 }
 
 define i32 @andn32_load(i32 %x, i32* %y) nounwind readnone {
-  %y1 = load i32* %y
+  %y1 = load i32, i32* %y
   %tmp1 = xor i32 %x, -1
   %tmp2 = and i32 %y1, %tmp1
   ret i32 %tmp2
@@ -102,7 +102,7 @@ define i32 @bextr32(i32 %x, i32 %y) nounwind readnone {
 }
 
 define i32 @bextr32_load(i32* %x, i32 %y) nounwind readnone {
-  %x1 = load i32* %x
+  %x1 = load i32, i32* %x
   %tmp = tail call i32 @llvm.x86.bmi.bextr.32(i32 %x1, i32 %y)
   ret i32 %tmp
 ; CHECK-LABEL: bextr32_load:
@@ -120,7 +120,7 @@ define i32 @bextr32b(i32 %x) nounwind uwtable readnone ssp {
 }
 
 define i32 @bextr32b_load(i32* %x) nounwind uwtable readnone ssp {
-  %1 = load i32* %x
+  %1 = load i32, i32* %x
   %2 = lshr i32 %1, 4
   %3 = and i32 %2, 4095
   ret i32 %3
@@ -153,7 +153,7 @@ define i32 @bzhi32(i32 %x, i32 %y) nounwind readnone {
 }
 
 define i32 @bzhi32_load(i32* %x, i32 %y) nounwind readnone {
-  %x1 = load i32* %x
+  %x1 = load i32, i32* %x
   %tmp = tail call i32 @llvm.x86.bmi.bzhi.32(i32 %x1, i32 %y)
   ret i32 %tmp
 ; CHECK-LABEL: bzhi32_load:
@@ -184,7 +184,7 @@ entry:
 
 define i32 @bzhi32b_load(i32* %w, i8 zeroext %index) #0 {
 entry:
-  %x = load i32* %w
+  %x = load i32, i32* %w
   %conv = zext i8 %index to i32
   %shl = shl i32 1, %conv
   %sub = add nsw i32 %shl, -1
@@ -242,7 +242,7 @@ define i32 @blsi32(i32 %x) nounwind readnone {
 }
 
 define i32 @blsi32_load(i32* %x) nounwind readnone {
-  %x1 = load i32* %x
+  %x1 = load i32, i32* %x
   %tmp = sub i32 0, %x1
   %tmp2 = and i32 %x1, %tmp
   ret i32 %tmp2
@@ -267,7 +267,7 @@ define i32 @blsmsk32(i32 %x) nounwind readnone {
 }
 
 define i32 @blsmsk32_load(i32* %x) nounwind readnone {
-  %x1 = load i32* %x
+  %x1 = load i32, i32* %x
   %tmp = sub i32 %x1, 1
   %tmp2 = xor i32 %x1, %tmp
   ret i32 %tmp2
@@ -292,7 +292,7 @@ define i32 @blsr32(i32 %x) nounwind readnone {
 }
 
 define i32 @blsr32_load(i32* %x) nounwind readnone {
-  %x1 = load i32* %x
+  %x1 = load i32, i32* %x
   %tmp = sub i32 %x1, 1
   %tmp2 = and i32 %x1, %tmp
   ret i32 %tmp2
@@ -316,7 +316,7 @@ define i32 @pdep32(i32 %x, i32 %y) nounwind readnone {
 }
 
 define i32 @pdep32_load(i32 %x, i32* %y) nounwind readnone {
-  %y1 = load i32* %y
+  %y1 = load i32, i32* %y
   %tmp = tail call i32 @llvm.x86.bmi.pdep.32(i32 %x, i32 %y1)
   ret i32 %tmp
 ; CHECK-LABEL: pdep32_load:
@@ -342,7 +342,7 @@ define i32 @pext32(i32 %x, i32 %y) nounwind readnone {
 }
 
 define i32 @pext32_load(i32 %x, i32* %y) nounwind readnone {
-  %y1 = load i32* %y
+  %y1 = load i32, i32* %y
   %tmp = tail call i32 @llvm.x86.bmi.pext.32(i32 %x, i32 %y1)
   ret i32 %tmp
 ; CHECK-LABEL: pext32_load:

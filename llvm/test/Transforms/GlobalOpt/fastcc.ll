@@ -2,13 +2,13 @@
 
 define internal i32 @f(i32* %m) {
 ; CHECK-LABEL: define internal fastcc i32 @f
-  %v = load i32* %m
+  %v = load i32, i32* %m
   ret i32 %v
 }
 
 define internal x86_thiscallcc i32 @g(i32* %m) {
 ; CHECK-LABEL: define internal fastcc i32 @g
-  %v = load i32* %m
+  %v = load i32, i32* %m
   ret i32 %v
 }
 
@@ -16,13 +16,13 @@ define internal x86_thiscallcc i32 @g(i32* %m) {
 ; convention.
 define internal coldcc i32 @h(i32* %m) {
 ; CHECK-LABEL: define internal coldcc i32 @h
-  %v = load i32* %m
+  %v = load i32, i32* %m
   ret i32 %v
 }
 
 define internal i32 @j(i32* %m) {
 ; CHECK-LABEL: define internal i32 @j
-  %v = load i32* %m
+  %v = load i32, i32* %m
   ret i32 %v
 }
 

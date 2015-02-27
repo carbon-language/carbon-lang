@@ -70,7 +70,7 @@ define i32* @castconst(float) {
         %castsmall = trunc i64 1 to i32         ; <i32> [#uses=1]
         %usebig = add i32 %castbig, %castsmall          ; <i32> [#uses=0]
         %castglob = bitcast i32* @AConst to i64*                ; <i64*> [#uses=1]
-        %dummyl = load i64* %castglob           ; <i64> [#uses=0]
+        %dummyl = load i64, i64* %castglob           ; <i64> [#uses=0]
         %castnull = inttoptr i64 0 to i32*              ; <i32*> [#uses=1]
         ret i32* %castnull
 }
@@ -155,7 +155,7 @@ bb2:
         %cast116 = ptrtoint i32* %A to i64              ; <i64> [#uses=1]
         %reg116 = add i64 %cast116, %cast115            ; <i64> [#uses=1]
         %castPtr = inttoptr i64 %reg116 to i32*         ; <i32*> [#uses=1]
-        %reg118 = load i32* %castPtr            ; <i32> [#uses=1]
+        %reg118 = load i32, i32* %castPtr            ; <i32> [#uses=1]
         %cast117 = sext i32 %reg118 to i64              ; <i64> [#uses=2]
         %reg159 = add i64 1234567, %cast117             ; <i64> [#uses=0]
         %reg160 = add i64 7654321, %cast117             ; <i64> [#uses=0]
@@ -181,7 +181,7 @@ define void @checkNot(i1 %b, i32 %i) {
 ;
 define i32 @checkFoldGEP(%Domain* %D, i64 %idx) {
         %reg841 = getelementptr %Domain, %Domain* %D, i64 0, i32 1               ; <i32*> [#uses=1]
-        %reg820 = load i32* %reg841             ; <i32> [#uses=1]
+        %reg820 = load i32, i32* %reg841             ; <i32> [#uses=1]
         ret i32 %reg820
 }
 

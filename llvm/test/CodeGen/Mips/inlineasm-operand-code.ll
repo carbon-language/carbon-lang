@@ -125,7 +125,7 @@ entry:
 ;CHECK_BIG_32:       #APP
 ;CHECK_BIG_32:       or ${{[0-9]+}},$[[SECOND]],${{[0-9]+}}
 ;CHECK_BIG_32:       #NO_APP
-  %bosco = load i64* getelementptr inbounds (%union.u_tag* @uval, i32 0, i32 0), align 8
+  %bosco = load i64, i64* getelementptr inbounds (%union.u_tag* @uval, i32 0, i32 0), align 8
   %trunc1 = trunc i64 %bosco to i32
   tail call i32 asm sideeffect "or $0,${1:D},$2", "=r,r,r"(i64 %bosco, i32 %trunc1) nounwind
   ret i32 0
@@ -149,7 +149,7 @@ entry:
 ;CHECK_BIG_32:       #APP
 ;CHECK_BIG_32:       or ${{[0-9]+}},$[[SECOND]],${{[0-9]+}}
 ;CHECK_BIG_32:       #NO_APP
-  %bosco = load i64* getelementptr inbounds (%union.u_tag* @uval, i32 0, i32 0), align 8
+  %bosco = load i64, i64* getelementptr inbounds (%union.u_tag* @uval, i32 0, i32 0), align 8
   %trunc1 = trunc i64 %bosco to i32
   tail call i32 asm sideeffect "or $0,${1:L},$2", "=r,r,r"(i64 %bosco, i32 %trunc1) nounwind
   ret i32 0
@@ -173,7 +173,7 @@ entry:
 ;CHECK_BIG_32:       #APP
 ;CHECK_BIG_32:       or ${{[0-9]+}},$[[FIRST]],${{[0-9]+}}
 ;CHECK_BIG_32:       #NO_APP
-  %bosco = load i64* getelementptr inbounds (%union.u_tag* @uval, i32 0, i32 0), align 8
+  %bosco = load i64, i64* getelementptr inbounds (%union.u_tag* @uval, i32 0, i32 0), align 8
   %trunc1 = trunc i64 %bosco to i32
   tail call i32 asm sideeffect "or $0,${1:M},$2", "=r,r,r"(i64 %bosco, i32 %trunc1) nounwind
   ret i32 0

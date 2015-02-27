@@ -45,7 +45,7 @@ then.4:		; preds = %_ZNK7QString2atEi.exit
 	ret void
 
 endif.4:		; preds = %_ZNK7QString2atEi.exit
-	%tmp.115 = load i8* null		; <i8> [#uses=1]
+	%tmp.115 = load i8, i8* null		; <i8> [#uses=1]
 	br i1 false, label %loopexit.1, label %no_exit.0
 
 no_exit.0:		; preds = %no_exit.0, %endif.4

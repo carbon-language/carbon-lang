@@ -7,6 +7,6 @@ define i16 @f1(i16 *%src) {
 ; CHECK: bcr 1{{[45]}}, %r0
 ; CHECK: lh %r2, 0(%r2)
 ; CHECK: br %r14
-  %val = load atomic i16 *%src seq_cst, align 2
+  %val = load atomic i16 , i16 *%src seq_cst, align 2
   ret i16 %val
 }

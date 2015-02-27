@@ -13,7 +13,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.inc
   %i.02 = phi i64 [ %inc, %for.inc ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %p, i64 %i.02
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %for.inc, label %if.then
 
@@ -45,7 +45,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.inc
   %i.02 = phi i64 [ %inc, %for.inc ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %p, i64 %i.02
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %for.inc, label %if.then
 
@@ -79,7 +79,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.inc
   %i.02 = phi i64 [ %inc, %for.inc ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %p, i64 %i.02
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %for.inc, label %if.then
 
@@ -112,7 +112,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.inc
   %i.02 = phi i64 [ %inc, %for.inc ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %p, i64 %i.02
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %for.inc, label %if.then
 
@@ -145,7 +145,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.inc
   %i.02 = phi i64 [ %inc, %for.inc ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %p, i64 %i.02
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %for.inc, label %if.then
 

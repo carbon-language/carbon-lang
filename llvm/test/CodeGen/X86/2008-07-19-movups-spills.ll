@@ -75,38 +75,38 @@ define void @test1() {
 ; CHECK: movups
 ; CHECK: movups
 ; CHECK-NOT: movups
-	load <4 x float>* @0, align 1		; <<4 x float>>:1 [#uses=2]
-	load <4 x float>* @1, align 1		; <<4 x float>>:2 [#uses=3]
-	load <4 x float>* @2, align 1		; <<4 x float>>:3 [#uses=4]
-	load <4 x float>* @3, align 1		; <<4 x float>>:4 [#uses=5]
-	load <4 x float>* @4, align 1		; <<4 x float>>:5 [#uses=6]
-	load <4 x float>* @5, align 1		; <<4 x float>>:6 [#uses=7]
-	load <4 x float>* @6, align 1		; <<4 x float>>:7 [#uses=8]
-	load <4 x float>* @7, align 1		; <<4 x float>>:8 [#uses=9]
-	load <4 x float>* @8, align 1		; <<4 x float>>:9 [#uses=10]
-	load <4 x float>* @9, align 1		; <<4 x float>>:10 [#uses=11]
-	load <4 x float>* @10, align 1		; <<4 x float>>:11 [#uses=12]
-	load <4 x float>* @11, align 1		; <<4 x float>>:12 [#uses=13]
-	load <4 x float>* @12, align 1		; <<4 x float>>:13 [#uses=14]
-	load <4 x float>* @13, align 1		; <<4 x float>>:14 [#uses=15]
-	load <4 x float>* @14, align 1		; <<4 x float>>:15 [#uses=16]
-	load <4 x float>* @15, align 1		; <<4 x float>>:16 [#uses=17]
-	load <4 x float>* @16, align 1		; <<4 x float>>:17 [#uses=18]
-	load <4 x float>* @17, align 1		; <<4 x float>>:18 [#uses=19]
-	load <4 x float>* @18, align 1		; <<4 x float>>:19 [#uses=20]
-	load <4 x float>* @19, align 1		; <<4 x float>>:20 [#uses=21]
-	load <4 x float>* @20, align 1		; <<4 x float>>:21 [#uses=22]
-	load <4 x float>* @21, align 1		; <<4 x float>>:22 [#uses=23]
-	load <4 x float>* @22, align 1		; <<4 x float>>:23 [#uses=24]
-	load <4 x float>* @23, align 1		; <<4 x float>>:24 [#uses=25]
-	load <4 x float>* @24, align 1		; <<4 x float>>:25 [#uses=26]
-	load <4 x float>* @25, align 1		; <<4 x float>>:26 [#uses=27]
-	load <4 x float>* @26, align 1		; <<4 x float>>:27 [#uses=28]
-	load <4 x float>* @27, align 1		; <<4 x float>>:28 [#uses=29]
-	load <4 x float>* @28, align 1		; <<4 x float>>:29 [#uses=30]
-	load <4 x float>* @29, align 1		; <<4 x float>>:30 [#uses=31]
-	load <4 x float>* @30, align 1		; <<4 x float>>:31 [#uses=32]
-	load <4 x float>* @31, align 1		; <<4 x float>>:32 [#uses=33]
+	load <4 x float>, <4 x float>* @0, align 1		; <<4 x float>>:1 [#uses=2]
+	load <4 x float>, <4 x float>* @1, align 1		; <<4 x float>>:2 [#uses=3]
+	load <4 x float>, <4 x float>* @2, align 1		; <<4 x float>>:3 [#uses=4]
+	load <4 x float>, <4 x float>* @3, align 1		; <<4 x float>>:4 [#uses=5]
+	load <4 x float>, <4 x float>* @4, align 1		; <<4 x float>>:5 [#uses=6]
+	load <4 x float>, <4 x float>* @5, align 1		; <<4 x float>>:6 [#uses=7]
+	load <4 x float>, <4 x float>* @6, align 1		; <<4 x float>>:7 [#uses=8]
+	load <4 x float>, <4 x float>* @7, align 1		; <<4 x float>>:8 [#uses=9]
+	load <4 x float>, <4 x float>* @8, align 1		; <<4 x float>>:9 [#uses=10]
+	load <4 x float>, <4 x float>* @9, align 1		; <<4 x float>>:10 [#uses=11]
+	load <4 x float>, <4 x float>* @10, align 1		; <<4 x float>>:11 [#uses=12]
+	load <4 x float>, <4 x float>* @11, align 1		; <<4 x float>>:12 [#uses=13]
+	load <4 x float>, <4 x float>* @12, align 1		; <<4 x float>>:13 [#uses=14]
+	load <4 x float>, <4 x float>* @13, align 1		; <<4 x float>>:14 [#uses=15]
+	load <4 x float>, <4 x float>* @14, align 1		; <<4 x float>>:15 [#uses=16]
+	load <4 x float>, <4 x float>* @15, align 1		; <<4 x float>>:16 [#uses=17]
+	load <4 x float>, <4 x float>* @16, align 1		; <<4 x float>>:17 [#uses=18]
+	load <4 x float>, <4 x float>* @17, align 1		; <<4 x float>>:18 [#uses=19]
+	load <4 x float>, <4 x float>* @18, align 1		; <<4 x float>>:19 [#uses=20]
+	load <4 x float>, <4 x float>* @19, align 1		; <<4 x float>>:20 [#uses=21]
+	load <4 x float>, <4 x float>* @20, align 1		; <<4 x float>>:21 [#uses=22]
+	load <4 x float>, <4 x float>* @21, align 1		; <<4 x float>>:22 [#uses=23]
+	load <4 x float>, <4 x float>* @22, align 1		; <<4 x float>>:23 [#uses=24]
+	load <4 x float>, <4 x float>* @23, align 1		; <<4 x float>>:24 [#uses=25]
+	load <4 x float>, <4 x float>* @24, align 1		; <<4 x float>>:25 [#uses=26]
+	load <4 x float>, <4 x float>* @25, align 1		; <<4 x float>>:26 [#uses=27]
+	load <4 x float>, <4 x float>* @26, align 1		; <<4 x float>>:27 [#uses=28]
+	load <4 x float>, <4 x float>* @27, align 1		; <<4 x float>>:28 [#uses=29]
+	load <4 x float>, <4 x float>* @28, align 1		; <<4 x float>>:29 [#uses=30]
+	load <4 x float>, <4 x float>* @29, align 1		; <<4 x float>>:30 [#uses=31]
+	load <4 x float>, <4 x float>* @30, align 1		; <<4 x float>>:31 [#uses=32]
+	load <4 x float>, <4 x float>* @31, align 1		; <<4 x float>>:32 [#uses=33]
 	fmul <4 x float> %1, %1		; <<4 x float>>:33 [#uses=1]
 	fmul <4 x float> %33, %2		; <<4 x float>>:34 [#uses=1]
 	fmul <4 x float> %34, %3		; <<4 x float>>:35 [#uses=1]
@@ -708,38 +708,38 @@ define void @test2() "no-realign-stack" {
 ; CHECK: movups
 ; CHECK: movups
 ; CHECK-NOT: movups
-	load <4 x float>* @0, align 1
-	load <4 x float>* @1, align 1
-	load <4 x float>* @2, align 1
-	load <4 x float>* @3, align 1
-	load <4 x float>* @4, align 1
-	load <4 x float>* @5, align 1
-	load <4 x float>* @6, align 1
-	load <4 x float>* @7, align 1
-	load <4 x float>* @8, align 1
-	load <4 x float>* @9, align 1
-	load <4 x float>* @10, align 1
-	load <4 x float>* @11, align 1
-	load <4 x float>* @12, align 1
-	load <4 x float>* @13, align 1
-	load <4 x float>* @14, align 1
-	load <4 x float>* @15, align 1
-	load <4 x float>* @16, align 1
-	load <4 x float>* @17, align 1
-	load <4 x float>* @18, align 1
-	load <4 x float>* @19, align 1
-	load <4 x float>* @20, align 1
-	load <4 x float>* @21, align 1
-	load <4 x float>* @22, align 1
-	load <4 x float>* @23, align 1
-	load <4 x float>* @24, align 1
-	load <4 x float>* @25, align 1
-	load <4 x float>* @26, align 1
-	load <4 x float>* @27, align 1
-	load <4 x float>* @28, align 1
-	load <4 x float>* @29, align 1
-	load <4 x float>* @30, align 1
-	load <4 x float>* @31, align 1
+	load <4 x float>, <4 x float>* @0, align 1
+	load <4 x float>, <4 x float>* @1, align 1
+	load <4 x float>, <4 x float>* @2, align 1
+	load <4 x float>, <4 x float>* @3, align 1
+	load <4 x float>, <4 x float>* @4, align 1
+	load <4 x float>, <4 x float>* @5, align 1
+	load <4 x float>, <4 x float>* @6, align 1
+	load <4 x float>, <4 x float>* @7, align 1
+	load <4 x float>, <4 x float>* @8, align 1
+	load <4 x float>, <4 x float>* @9, align 1
+	load <4 x float>, <4 x float>* @10, align 1
+	load <4 x float>, <4 x float>* @11, align 1
+	load <4 x float>, <4 x float>* @12, align 1
+	load <4 x float>, <4 x float>* @13, align 1
+	load <4 x float>, <4 x float>* @14, align 1
+	load <4 x float>, <4 x float>* @15, align 1
+	load <4 x float>, <4 x float>* @16, align 1
+	load <4 x float>, <4 x float>* @17, align 1
+	load <4 x float>, <4 x float>* @18, align 1
+	load <4 x float>, <4 x float>* @19, align 1
+	load <4 x float>, <4 x float>* @20, align 1
+	load <4 x float>, <4 x float>* @21, align 1
+	load <4 x float>, <4 x float>* @22, align 1
+	load <4 x float>, <4 x float>* @23, align 1
+	load <4 x float>, <4 x float>* @24, align 1
+	load <4 x float>, <4 x float>* @25, align 1
+	load <4 x float>, <4 x float>* @26, align 1
+	load <4 x float>, <4 x float>* @27, align 1
+	load <4 x float>, <4 x float>* @28, align 1
+	load <4 x float>, <4 x float>* @29, align 1
+	load <4 x float>, <4 x float>* @30, align 1
+	load <4 x float>, <4 x float>* @31, align 1
 	fmul <4 x float> %1, %1
 	fmul <4 x float> %33, %2
 	fmul <4 x float> %34, %3

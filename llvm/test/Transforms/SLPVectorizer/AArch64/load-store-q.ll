@@ -15,8 +15,8 @@ target triple = "arm64-apple-ios5.0.0"
 define void @f(double* %p, double* %q) {
   %addr2 = getelementptr double, double* %q, i32 1
   %addr = getelementptr double, double* %p, i32 1
-  %x = load double* %p
-  %y = load double* %addr
+  %x = load double, double* %p
+  %y = load double, double* %addr
   call void @g()
   store double %x, double* %q
   store double %y, double* %addr2
@@ -40,7 +40,7 @@ loop:
   store double %p1, double* %q
   store double %p2, double* %addr2
 
-  %x = load double* %p
-  %y = load double* %addr
+  %x = load double, double* %p
+  %y = load double, double* %addr
   br label %loop
 }

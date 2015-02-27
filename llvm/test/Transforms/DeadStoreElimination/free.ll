@@ -10,7 +10,7 @@ declare noalias i8* @malloc(i64)
 ; CHECK-NEXT: @free
 ; CHECK-NEXT: ret void
 define void @test(i32* %Q, i32* %P) {
-        %DEAD = load i32* %Q            ; <i32> [#uses=1]
+        %DEAD = load i32, i32* %Q            ; <i32> [#uses=1]
         store i32 %DEAD, i32* %P
         %1 = bitcast i32* %P to i8*
         tail call void @free(i8* %1)

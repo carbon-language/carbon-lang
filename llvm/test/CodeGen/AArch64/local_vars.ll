@@ -49,7 +49,7 @@ define void @stack_local() {
 ; CHECK-LABEL: stack_local:
 ; CHECK: sub sp, sp, #16
 
-  %val = load i64* @var
+  %val = load i64, i64* @var
   store i64 %val, i64* %local_var
 ; CHECK-DAG: str {{x[0-9]+}}, [sp, #{{[0-9]+}}]
 

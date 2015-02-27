@@ -23,9 +23,9 @@ define void @test() {
 }
 
 define double @test2() {
-  %V1 = load double* getelementptr (%T* @G, i32 0, i32 0), align 16
-  %V2 = load double* getelementptr (%T* @G, i32 0, i32 1), align 8
-  %V3 = load double* getelementptr (%T* @G, i32 0, i32 2), align 16
+  %V1 = load double, double* getelementptr (%T* @G, i32 0, i32 0), align 16
+  %V2 = load double, double* getelementptr (%T* @G, i32 0, i32 1), align 8
+  %V3 = load double, double* getelementptr (%T* @G, i32 0, i32 2), align 16
   %R = fadd double %V1, %V2
   %R2 = fadd double %R, %V3
   ret double %R2

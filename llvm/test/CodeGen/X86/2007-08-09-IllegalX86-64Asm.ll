@@ -46,14 +46,14 @@ _ubyte_convert2_to_ctypes.exit:		; preds = %entry
 	]
 
 bb4:		; preds = %_ubyte_convert2_to_ctypes.exit, %cond_next.i
-	%tmp5 = load i8*** @PyArray_API, align 8		; <i8**> [#uses=1]
+	%tmp5 = load i8**, i8*** @PyArray_API, align 8		; <i8**> [#uses=1]
 	%tmp6 = getelementptr i8*, i8** %tmp5, i64 2		; <i8**> [#uses=1]
-	%tmp7 = load i8** %tmp6		; <i8*> [#uses=1]
+	%tmp7 = load i8*, i8** %tmp6		; <i8*> [#uses=1]
 	%tmp78 = bitcast i8* %tmp7 to %struct._typeobject*		; <%struct._typeobject*> [#uses=1]
 	%tmp9 = getelementptr %struct._typeobject, %struct._typeobject* %tmp78, i32 0, i32 12		; <%struct.PyNumberMethods**> [#uses=1]
-	%tmp10 = load %struct.PyNumberMethods** %tmp9		; <%struct.PyNumberMethods*> [#uses=1]
+	%tmp10 = load %struct.PyNumberMethods*, %struct.PyNumberMethods** %tmp9		; <%struct.PyNumberMethods*> [#uses=1]
 	%tmp11 = getelementptr %struct.PyNumberMethods, %struct.PyNumberMethods* %tmp10, i32 0, i32 5		; <%struct.PyObject* (%struct.PyObject*, %struct.PyObject*)**> [#uses=1]
-	%tmp12 = load %struct.PyObject* (%struct.PyObject*, %struct.PyObject*)** %tmp11		; <%struct.PyObject* (%struct.PyObject*, %struct.PyObject*)*> [#uses=1]
+	%tmp12 = load %struct.PyObject* (%struct.PyObject*, %struct.PyObject*)*, %struct.PyObject* (%struct.PyObject*, %struct.PyObject*)** %tmp11		; <%struct.PyObject* (%struct.PyObject*, %struct.PyObject*)*> [#uses=1]
 	%tmp15 = call %struct.PyObject* %tmp12( %struct.PyObject* %a, %struct.PyObject* %b )		; <%struct.PyObject*> [#uses=1]
 	ret %struct.PyObject* %tmp15
 
@@ -63,38 +63,38 @@ bb17:		; preds = %_ubyte_convert2_to_ctypes.exit, %cond_next.i
 	br i1 %tmp19, label %cond_next, label %UnifiedReturnBlock
 
 cond_next:		; preds = %bb17
-	%tmp22 = load i8*** @PyArray_API, align 8		; <i8**> [#uses=1]
+	%tmp22 = load i8**, i8*** @PyArray_API, align 8		; <i8**> [#uses=1]
 	%tmp23 = getelementptr i8*, i8** %tmp22, i64 10		; <i8**> [#uses=1]
-	%tmp24 = load i8** %tmp23		; <i8*> [#uses=1]
+	%tmp24 = load i8*, i8** %tmp23		; <i8*> [#uses=1]
 	%tmp2425 = bitcast i8* %tmp24 to %struct._typeobject*		; <%struct._typeobject*> [#uses=1]
 	%tmp26 = getelementptr %struct._typeobject, %struct._typeobject* %tmp2425, i32 0, i32 12		; <%struct.PyNumberMethods**> [#uses=1]
-	%tmp27 = load %struct.PyNumberMethods** %tmp26		; <%struct.PyNumberMethods*> [#uses=1]
+	%tmp27 = load %struct.PyNumberMethods*, %struct.PyNumberMethods** %tmp26		; <%struct.PyNumberMethods*> [#uses=1]
 	%tmp28 = getelementptr %struct.PyNumberMethods, %struct.PyNumberMethods* %tmp27, i32 0, i32 5		; <%struct.PyObject* (%struct.PyObject*, %struct.PyObject*)**> [#uses=1]
-	%tmp29 = load %struct.PyObject* (%struct.PyObject*, %struct.PyObject*)** %tmp28		; <%struct.PyObject* (%struct.PyObject*, %struct.PyObject*)*> [#uses=1]
+	%tmp29 = load %struct.PyObject* (%struct.PyObject*, %struct.PyObject*)*, %struct.PyObject* (%struct.PyObject*, %struct.PyObject*)** %tmp28		; <%struct.PyObject* (%struct.PyObject*, %struct.PyObject*)*> [#uses=1]
 	%tmp32 = call %struct.PyObject* %tmp29( %struct.PyObject* %a, %struct.PyObject* %b )		; <%struct.PyObject*> [#uses=1]
 	ret %struct.PyObject* %tmp32
 
 bb35:		; preds = %_ubyte_convert2_to_ctypes.exit, %cond_next.i
-	%tmp36 = load i8*** @PyUFunc_API, align 8		; <i8**> [#uses=1]
+	%tmp36 = load i8**, i8*** @PyUFunc_API, align 8		; <i8**> [#uses=1]
 	%tmp37 = getelementptr i8*, i8** %tmp36, i64 27		; <i8**> [#uses=1]
-	%tmp38 = load i8** %tmp37		; <i8*> [#uses=1]
+	%tmp38 = load i8*, i8** %tmp37		; <i8*> [#uses=1]
 	%tmp3839 = bitcast i8* %tmp38 to void ()*		; <void ()*> [#uses=1]
 	call void %tmp3839( )
-	%tmp40 = load i8* %arg2, align 1		; <i8> [#uses=4]
+	%tmp40 = load i8, i8* %arg2, align 1		; <i8> [#uses=4]
 	%tmp1.i = icmp eq i8 %tmp40, 0		; <i1> [#uses=2]
 	br i1 %tmp1.i, label %cond_true.i, label %cond_false.i
 
 cond_true.i:		; preds = %bb35
 	%tmp3.i196 = call i32 @feraiseexcept( i32 4 )		; <i32> [#uses=0]
-	%tmp46207 = load i8* %arg2, align 1		; <i8> [#uses=3]
-	%tmp48208 = load i8* %arg1, align 1		; <i8> [#uses=2]
+	%tmp46207 = load i8, i8* %arg2, align 1		; <i8> [#uses=3]
+	%tmp48208 = load i8, i8* %arg1, align 1		; <i8> [#uses=2]
 	%tmp1.i197210 = icmp eq i8 %tmp48208, 0		; <i1> [#uses=1]
 	%tmp4.i212 = icmp eq i8 %tmp46207, 0		; <i1> [#uses=1]
 	%tmp7.i198213 = or i1 %tmp1.i197210, %tmp4.i212		; <i1> [#uses=1]
 	br i1 %tmp7.i198213, label %cond_true.i200, label %cond_next17.i
 
 cond_false.i:		; preds = %bb35
-	%tmp42 = load i8* %arg1, align 1		; <i8> [#uses=3]
+	%tmp42 = load i8, i8* %arg1, align 1		; <i8> [#uses=3]
 	%tmp7.i = udiv i8 %tmp42, %tmp40		; <i8> [#uses=2]
 	%tmp1.i197 = icmp eq i8 %tmp42, 0		; <i1> [#uses=1]
 	%tmp7.i198 = or i1 %tmp1.i197, %tmp1.i		; <i1> [#uses=1]
@@ -120,18 +120,18 @@ cond_next17.i:		; preds = %cond_false.i, %cond_true.i
 ubyte_ctype_remainder.exit:		; preds = %cond_next17.i, %cond_true14.i, %cond_true.i200
 	%out2.0 = phi i8 [ %tmp20.i, %cond_next17.i ], [ 0, %cond_true14.i ], [ 0, %cond_true.i200 ]		; <i8> [#uses=1]
 	%out.2 = phi i8 [ %out.1, %cond_next17.i ], [ %out.0, %cond_true14.i ], [ %out.0, %cond_true.i200 ]		; <i8> [#uses=1]
-	%tmp52 = load i8*** @PyUFunc_API, align 8		; <i8**> [#uses=1]
+	%tmp52 = load i8**, i8*** @PyUFunc_API, align 8		; <i8**> [#uses=1]
 	%tmp53 = getelementptr i8*, i8** %tmp52, i64 28		; <i8**> [#uses=1]
-	%tmp54 = load i8** %tmp53		; <i8*> [#uses=1]
+	%tmp54 = load i8*, i8** %tmp53		; <i8*> [#uses=1]
 	%tmp5455 = bitcast i8* %tmp54 to i32 ()*		; <i32 ()*> [#uses=1]
 	%tmp56 = call i32 %tmp5455( )		; <i32> [#uses=2]
 	%tmp58 = icmp eq i32 %tmp56, 0		; <i1> [#uses=1]
 	br i1 %tmp58, label %cond_next89, label %cond_true61
 
 cond_true61:		; preds = %ubyte_ctype_remainder.exit
-	%tmp62 = load i8*** @PyUFunc_API, align 8		; <i8**> [#uses=1]
+	%tmp62 = load i8**, i8*** @PyUFunc_API, align 8		; <i8**> [#uses=1]
 	%tmp63 = getelementptr i8*, i8** %tmp62, i64 25		; <i8**> [#uses=1]
-	%tmp64 = load i8** %tmp63		; <i8*> [#uses=1]
+	%tmp64 = load i8*, i8** %tmp63		; <i8*> [#uses=1]
 	%tmp6465 = bitcast i8* %tmp64 to i32 (i8*, i32*, i32*, %struct.PyObject**)*		; <i32 (i8*, i32*, i32*, %struct.PyObject**)*> [#uses=1]
 	%tmp67 = call i32 %tmp6465( i8* getelementptr ([14 x i8]* @.str5, i32 0, i64 0), i32* %bufsize, i32* %errmask, %struct.PyObject** %errobj )		; <i32> [#uses=1]
 	%tmp68 = icmp slt i32 %tmp67, 0		; <i1> [#uses=1]
@@ -139,12 +139,12 @@ cond_true61:		; preds = %ubyte_ctype_remainder.exit
 
 cond_next73:		; preds = %cond_true61
 	store i32 1, i32* %first, align 4
-	%tmp74 = load i8*** @PyUFunc_API, align 8		; <i8**> [#uses=1]
+	%tmp74 = load i8**, i8*** @PyUFunc_API, align 8		; <i8**> [#uses=1]
 	%tmp75 = getelementptr i8*, i8** %tmp74, i64 29		; <i8**> [#uses=1]
-	%tmp76 = load i8** %tmp75		; <i8*> [#uses=1]
+	%tmp76 = load i8*, i8** %tmp75		; <i8*> [#uses=1]
 	%tmp7677 = bitcast i8* %tmp76 to i32 (i32, %struct.PyObject*, i32, i32*)*		; <i32 (i32, %struct.PyObject*, i32, i32*)*> [#uses=1]
-	%tmp79 = load %struct.PyObject** %errobj, align 8		; <%struct.PyObject*> [#uses=1]
-	%tmp80 = load i32* %errmask, align 4		; <i32> [#uses=1]
+	%tmp79 = load %struct.PyObject*, %struct.PyObject** %errobj, align 8		; <%struct.PyObject*> [#uses=1]
+	%tmp80 = load i32, i32* %errmask, align 4		; <i32> [#uses=1]
 	%tmp82 = call i32 %tmp7677( i32 %tmp80, %struct.PyObject* %tmp79, i32 %tmp56, i32* %first )		; <i32> [#uses=1]
 	%tmp83 = icmp eq i32 %tmp82, 0		; <i1> [#uses=1]
 	br i1 %tmp83, label %cond_next89, label %UnifiedReturnBlock
@@ -155,19 +155,19 @@ cond_next89:		; preds = %cond_next73, %ubyte_ctype_remainder.exit
 	br i1 %tmp92, label %UnifiedReturnBlock, label %cond_next97
 
 cond_next97:		; preds = %cond_next89
-	%tmp98 = load i8*** @PyArray_API, align 8		; <i8**> [#uses=1]
+	%tmp98 = load i8**, i8*** @PyArray_API, align 8		; <i8**> [#uses=1]
 	%tmp99 = getelementptr i8*, i8** %tmp98, i64 25		; <i8**> [#uses=1]
-	%tmp100 = load i8** %tmp99		; <i8*> [#uses=1]
+	%tmp100 = load i8*, i8** %tmp99		; <i8*> [#uses=1]
 	%tmp100101 = bitcast i8* %tmp100 to %struct._typeobject*		; <%struct._typeobject*> [#uses=2]
 	%tmp102 = getelementptr %struct._typeobject, %struct._typeobject* %tmp100101, i32 0, i32 38		; <%struct.PyObject* (%struct._typeobject*, i64)**> [#uses=1]
-	%tmp103 = load %struct.PyObject* (%struct._typeobject*, i64)** %tmp102		; <%struct.PyObject* (%struct._typeobject*, i64)*> [#uses=1]
+	%tmp103 = load %struct.PyObject* (%struct._typeobject*, i64)*, %struct.PyObject* (%struct._typeobject*, i64)** %tmp102		; <%struct.PyObject* (%struct._typeobject*, i64)*> [#uses=1]
 	%tmp108 = call %struct.PyObject* %tmp103( %struct._typeobject* %tmp100101, i64 0 )		; <%struct.PyObject*> [#uses=3]
 	%tmp110 = icmp eq %struct.PyObject* %tmp108, null		; <i1> [#uses=1]
 	br i1 %tmp110, label %cond_true113, label %cond_next135
 
 cond_true113:		; preds = %cond_next97
 	%tmp115 = getelementptr %struct.PyObject, %struct.PyObject* %tmp90, i32 0, i32 0		; <i64*> [#uses=2]
-	%tmp116 = load i64* %tmp115		; <i64> [#uses=1]
+	%tmp116 = load i64, i64* %tmp115		; <i64> [#uses=1]
 	%tmp117 = add i64 %tmp116, -1		; <i64> [#uses=2]
 	store i64 %tmp117, i64* %tmp115
 	%tmp123 = icmp eq i64 %tmp117, 0		; <i1> [#uses=1]
@@ -175,9 +175,9 @@ cond_true113:		; preds = %cond_next97
 
 cond_true126:		; preds = %cond_true113
 	%tmp128 = getelementptr %struct.PyObject, %struct.PyObject* %tmp90, i32 0, i32 1		; <%struct._typeobject**> [#uses=1]
-	%tmp129 = load %struct._typeobject** %tmp128		; <%struct._typeobject*> [#uses=1]
+	%tmp129 = load %struct._typeobject*, %struct._typeobject** %tmp128		; <%struct._typeobject*> [#uses=1]
 	%tmp130 = getelementptr %struct._typeobject, %struct._typeobject* %tmp129, i32 0, i32 6		; <void (%struct.PyObject*)**> [#uses=1]
-	%tmp131 = load void (%struct.PyObject*)** %tmp130		; <void (%struct.PyObject*)*> [#uses=1]
+	%tmp131 = load void (%struct.PyObject*)*, void (%struct.PyObject*)** %tmp130		; <void (%struct.PyObject*)*> [#uses=1]
 	call void %tmp131( %struct.PyObject* %tmp90 )
 	ret %struct.PyObject* null
 
@@ -188,19 +188,19 @@ cond_next135:		; preds = %cond_next97
 	%tmp140141 = bitcast %struct.PyObject* %tmp90 to %struct.PyTupleObject*		; <%struct.PyTupleObject*> [#uses=2]
 	%tmp143 = getelementptr %struct.PyTupleObject, %struct.PyTupleObject* %tmp140141, i32 0, i32 3, i64 0		; <%struct.PyObject**> [#uses=1]
 	store %struct.PyObject* %tmp108, %struct.PyObject** %tmp143
-	%tmp145 = load i8*** @PyArray_API, align 8		; <i8**> [#uses=1]
+	%tmp145 = load i8**, i8*** @PyArray_API, align 8		; <i8**> [#uses=1]
 	%tmp146 = getelementptr i8*, i8** %tmp145, i64 25		; <i8**> [#uses=1]
-	%tmp147 = load i8** %tmp146		; <i8*> [#uses=1]
+	%tmp147 = load i8*, i8** %tmp146		; <i8*> [#uses=1]
 	%tmp147148 = bitcast i8* %tmp147 to %struct._typeobject*		; <%struct._typeobject*> [#uses=2]
 	%tmp149 = getelementptr %struct._typeobject, %struct._typeobject* %tmp147148, i32 0, i32 38		; <%struct.PyObject* (%struct._typeobject*, i64)**> [#uses=1]
-	%tmp150 = load %struct.PyObject* (%struct._typeobject*, i64)** %tmp149		; <%struct.PyObject* (%struct._typeobject*, i64)*> [#uses=1]
+	%tmp150 = load %struct.PyObject* (%struct._typeobject*, i64)*, %struct.PyObject* (%struct._typeobject*, i64)** %tmp149		; <%struct.PyObject* (%struct._typeobject*, i64)*> [#uses=1]
 	%tmp155 = call %struct.PyObject* %tmp150( %struct._typeobject* %tmp147148, i64 0 )		; <%struct.PyObject*> [#uses=3]
 	%tmp157 = icmp eq %struct.PyObject* %tmp155, null		; <i1> [#uses=1]
 	br i1 %tmp157, label %cond_true160, label %cond_next182
 
 cond_true160:		; preds = %cond_next135
 	%tmp162 = getelementptr %struct.PyObject, %struct.PyObject* %tmp90, i32 0, i32 0		; <i64*> [#uses=2]
-	%tmp163 = load i64* %tmp162		; <i64> [#uses=1]
+	%tmp163 = load i64, i64* %tmp162		; <i64> [#uses=1]
 	%tmp164 = add i64 %tmp163, -1		; <i64> [#uses=2]
 	store i64 %tmp164, i64* %tmp162
 	%tmp170 = icmp eq i64 %tmp164, 0		; <i1> [#uses=1]
@@ -208,9 +208,9 @@ cond_true160:		; preds = %cond_next135
 
 cond_true173:		; preds = %cond_true160
 	%tmp175 = getelementptr %struct.PyObject, %struct.PyObject* %tmp90, i32 0, i32 1		; <%struct._typeobject**> [#uses=1]
-	%tmp176 = load %struct._typeobject** %tmp175		; <%struct._typeobject*> [#uses=1]
+	%tmp176 = load %struct._typeobject*, %struct._typeobject** %tmp175		; <%struct._typeobject*> [#uses=1]
 	%tmp177 = getelementptr %struct._typeobject, %struct._typeobject* %tmp176, i32 0, i32 6		; <void (%struct.PyObject*)**> [#uses=1]
-	%tmp178 = load void (%struct.PyObject*)** %tmp177		; <void (%struct.PyObject*)*> [#uses=1]
+	%tmp178 = load void (%struct.PyObject*)*, void (%struct.PyObject*)** %tmp177		; <void (%struct.PyObject*)*> [#uses=1]
 	call void %tmp178( %struct.PyObject* %tmp90 )
 	ret %struct.PyObject* null
 

@@ -33,7 +33,7 @@ for.body43:
   %bf.459 = phi i32 [ %inc44, %for.body43 ], [ %t1, %for.body7 ]
   %inc44 = add nsw i32 %bf.459, 1
   %arrayidx45 = getelementptr inbounds [121 x i32], [121 x i32]* @b, i32 0, i32 %bf.459
-  %t2 = load i32* %arrayidx45, align 4
+  %t2 = load i32, i32* %arrayidx45, align 4
   br label %for.body43
 }
 

@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 define i8 @atomic8_load_unordered(i8* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i8* %a unordered, align 1
+  %0 = load atomic i8, i8* %a unordered, align 1
   ret i8 %0
 }
 ; CHECK: atomic8_load_unordered
@@ -12,7 +12,7 @@ entry:
 
 define i8 @atomic8_load_monotonic(i8* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i8* %a monotonic, align 1
+  %0 = load atomic i8, i8* %a monotonic, align 1
   ret i8 %0
 }
 ; CHECK: atomic8_load_monotonic
@@ -20,7 +20,7 @@ entry:
 
 define i8 @atomic8_load_acquire(i8* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i8* %a acquire, align 1
+  %0 = load atomic i8, i8* %a acquire, align 1
   ret i8 %0
 }
 ; CHECK: atomic8_load_acquire
@@ -28,7 +28,7 @@ entry:
 
 define i8 @atomic8_load_seq_cst(i8* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i8* %a seq_cst, align 1
+  %0 = load atomic i8, i8* %a seq_cst, align 1
   ret i8 %0
 }
 ; CHECK: atomic8_load_seq_cst
@@ -388,7 +388,7 @@ entry:
 
 define i16 @atomic16_load_unordered(i16* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i16* %a unordered, align 2
+  %0 = load atomic i16, i16* %a unordered, align 2
   ret i16 %0
 }
 ; CHECK: atomic16_load_unordered
@@ -396,7 +396,7 @@ entry:
 
 define i16 @atomic16_load_monotonic(i16* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i16* %a monotonic, align 2
+  %0 = load atomic i16, i16* %a monotonic, align 2
   ret i16 %0
 }
 ; CHECK: atomic16_load_monotonic
@@ -404,7 +404,7 @@ entry:
 
 define i16 @atomic16_load_acquire(i16* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i16* %a acquire, align 2
+  %0 = load atomic i16, i16* %a acquire, align 2
   ret i16 %0
 }
 ; CHECK: atomic16_load_acquire
@@ -412,7 +412,7 @@ entry:
 
 define i16 @atomic16_load_seq_cst(i16* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i16* %a seq_cst, align 2
+  %0 = load atomic i16, i16* %a seq_cst, align 2
   ret i16 %0
 }
 ; CHECK: atomic16_load_seq_cst
@@ -772,7 +772,7 @@ entry:
 
 define i32 @atomic32_load_unordered(i32* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i32* %a unordered, align 4
+  %0 = load atomic i32, i32* %a unordered, align 4
   ret i32 %0
 }
 ; CHECK: atomic32_load_unordered
@@ -780,7 +780,7 @@ entry:
 
 define i32 @atomic32_load_monotonic(i32* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i32* %a monotonic, align 4
+  %0 = load atomic i32, i32* %a monotonic, align 4
   ret i32 %0
 }
 ; CHECK: atomic32_load_monotonic
@@ -788,7 +788,7 @@ entry:
 
 define i32 @atomic32_load_acquire(i32* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i32* %a acquire, align 4
+  %0 = load atomic i32, i32* %a acquire, align 4
   ret i32 %0
 }
 ; CHECK: atomic32_load_acquire
@@ -796,7 +796,7 @@ entry:
 
 define i32 @atomic32_load_seq_cst(i32* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i32* %a seq_cst, align 4
+  %0 = load atomic i32, i32* %a seq_cst, align 4
   ret i32 %0
 }
 ; CHECK: atomic32_load_seq_cst
@@ -1156,7 +1156,7 @@ entry:
 
 define i64 @atomic64_load_unordered(i64* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i64* %a unordered, align 8
+  %0 = load atomic i64, i64* %a unordered, align 8
   ret i64 %0
 }
 ; CHECK: atomic64_load_unordered
@@ -1164,7 +1164,7 @@ entry:
 
 define i64 @atomic64_load_monotonic(i64* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i64* %a monotonic, align 8
+  %0 = load atomic i64, i64* %a monotonic, align 8
   ret i64 %0
 }
 ; CHECK: atomic64_load_monotonic
@@ -1172,7 +1172,7 @@ entry:
 
 define i64 @atomic64_load_acquire(i64* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i64* %a acquire, align 8
+  %0 = load atomic i64, i64* %a acquire, align 8
   ret i64 %0
 }
 ; CHECK: atomic64_load_acquire
@@ -1180,7 +1180,7 @@ entry:
 
 define i64 @atomic64_load_seq_cst(i64* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i64* %a seq_cst, align 8
+  %0 = load atomic i64, i64* %a seq_cst, align 8
   ret i64 %0
 }
 ; CHECK: atomic64_load_seq_cst
@@ -1540,7 +1540,7 @@ entry:
 
 define i128 @atomic128_load_unordered(i128* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i128* %a unordered, align 16
+  %0 = load atomic i128, i128* %a unordered, align 16
   ret i128 %0
 }
 ; CHECK: atomic128_load_unordered
@@ -1548,7 +1548,7 @@ entry:
 
 define i128 @atomic128_load_monotonic(i128* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i128* %a monotonic, align 16
+  %0 = load atomic i128, i128* %a monotonic, align 16
   ret i128 %0
 }
 ; CHECK: atomic128_load_monotonic
@@ -1556,7 +1556,7 @@ entry:
 
 define i128 @atomic128_load_acquire(i128* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i128* %a acquire, align 16
+  %0 = load atomic i128, i128* %a acquire, align 16
   ret i128 %0
 }
 ; CHECK: atomic128_load_acquire
@@ -1564,7 +1564,7 @@ entry:
 
 define i128 @atomic128_load_seq_cst(i128* %a) nounwind uwtable {
 entry:
-  %0 = load atomic i128* %a seq_cst, align 16
+  %0 = load atomic i128, i128* %a seq_cst, align 16
   ret i128 %0
 }
 ; CHECK: atomic128_load_seq_cst

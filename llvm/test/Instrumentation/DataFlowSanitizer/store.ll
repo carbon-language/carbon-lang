@@ -18,7 +18,7 @@ define void @store0({} %v, {}* %p) {
 
 define void @store8(i8 %v, i8* %p) {
   ; NO_COMBINE_PTR_LABEL: @"dfs$store8"
-  ; NO_COMBINE_PTR_LABEL: load i16* {{.*}} @__dfsan_arg_tls
+  ; NO_COMBINE_PTR_LABEL: load i16, i16* {{.*}} @__dfsan_arg_tls
   ; NO_COMBINE_PTR_LABEL: ptrtoint i8* {{.*}} i64
   ; NO_COMBINE_PTR_LABEL: and i64
   ; NO_COMBINE_PTR_LABEL: mul i64
@@ -28,8 +28,8 @@ define void @store8(i8 %v, i8* %p) {
   ; NO_COMBINE_PTR_LABEL: store i8
 
   ; COMBINE_PTR_LABEL: @"dfs$store8"
-  ; COMBINE_PTR_LABEL: load i16*
-  ; COMBINE_PTR_LABEL: load i16*
+  ; COMBINE_PTR_LABEL: load i16, i16*
+  ; COMBINE_PTR_LABEL: load i16, i16*
   ; COMBINE_PTR_LABEL: icmp ne i16
   ; COMBINE_PTR_LABEL: call {{.*}} @__dfsan_union
   ; COMBINE_PTR_LABEL: ptrtoint i8* {{.*}} i64
@@ -46,7 +46,7 @@ define void @store8(i8 %v, i8* %p) {
 
 define void @store16(i16 %v, i16* %p) {
   ; NO_COMBINE_PTR_LABEL: @"dfs$store16"
-  ; NO_COMBINE_PTR_LABEL: load i16* {{.*}} @__dfsan_arg_tls
+  ; NO_COMBINE_PTR_LABEL: load i16, i16* {{.*}} @__dfsan_arg_tls
   ; NO_COMBINE_PTR_LABEL: ptrtoint i16* {{.*}} i64
   ; NO_COMBINE_PTR_LABEL: and i64
   ; NO_COMBINE_PTR_LABEL: mul i64
@@ -58,8 +58,8 @@ define void @store16(i16 %v, i16* %p) {
   ; NO_COMBINE_PTR_LABEL: store i16
 
   ; COMBINE_PTR_LABEL: @"dfs$store16"
-  ; COMBINE_PTR_LABEL: load i16* {{.*}} @__dfsan_arg_tls
-  ; COMBINE_PTR_LABEL: load i16* {{.*}} @__dfsan_arg_tls
+  ; COMBINE_PTR_LABEL: load i16, i16* {{.*}} @__dfsan_arg_tls
+  ; COMBINE_PTR_LABEL: load i16, i16* {{.*}} @__dfsan_arg_tls
   ; COMBINE_PTR_LABEL: icmp ne i16
   ; COMBINE_PTR_LABEL: call {{.*}} @__dfsan_union
   ; COMBINE_PTR_LABEL: ptrtoint i16* {{.*}} i64
@@ -78,7 +78,7 @@ define void @store16(i16 %v, i16* %p) {
 
 define void @store32(i32 %v, i32* %p) {
   ; NO_COMBINE_PTR_LABEL: @"dfs$store32"
-  ; NO_COMBINE_PTR_LABEL: load i16* {{.*}} @__dfsan_arg_tls
+  ; NO_COMBINE_PTR_LABEL: load i16, i16* {{.*}} @__dfsan_arg_tls
   ; NO_COMBINE_PTR_LABEL: ptrtoint i32* {{.*}} i64
   ; NO_COMBINE_PTR_LABEL: and i64
   ; NO_COMBINE_PTR_LABEL: mul i64
@@ -94,8 +94,8 @@ define void @store32(i32 %v, i32* %p) {
   ; NO_COMBINE_PTR_LABEL: store i32
 
   ; COMBINE_PTR_LABEL: @"dfs$store32"
-  ; COMBINE_PTR_LABEL: load i16* {{.*}} @__dfsan_arg_tls
-  ; COMBINE_PTR_LABEL: load i16* {{.*}} @__dfsan_arg_tls
+  ; COMBINE_PTR_LABEL: load i16, i16* {{.*}} @__dfsan_arg_tls
+  ; COMBINE_PTR_LABEL: load i16, i16* {{.*}} @__dfsan_arg_tls
   ; COMBINE_PTR_LABEL: icmp ne i16
   ; COMBINE_PTR_LABEL: call {{.*}} @__dfsan_union
   ; COMBINE_PTR_LABEL: ptrtoint i32* {{.*}} i64
@@ -118,7 +118,7 @@ define void @store32(i32 %v, i32* %p) {
 
 define void @store64(i64 %v, i64* %p) {
   ; NO_COMBINE_PTR_LABEL: @"dfs$store64"
-  ; NO_COMBINE_PTR_LABEL: load i16* {{.*}} @__dfsan_arg_tls
+  ; NO_COMBINE_PTR_LABEL: load i16, i16* {{.*}} @__dfsan_arg_tls
   ; NO_COMBINE_PTR_LABEL: ptrtoint i64* {{.*}} i64
   ; NO_COMBINE_PTR_LABEL: and i64
   ; NO_COMBINE_PTR_LABEL: mul i64
@@ -135,8 +135,8 @@ define void @store64(i64 %v, i64* %p) {
   ; NO_COMBINE_PTR_LABEL: store i64
 
   ; COMBINE_PTR_LABEL: @"dfs$store64"
-  ; COMBINE_PTR_LABEL: load i16* {{.*}} @__dfsan_arg_tls
-  ; COMBINE_PTR_LABEL: load i16* {{.*}} @__dfsan_arg_tls
+  ; COMBINE_PTR_LABEL: load i16, i16* {{.*}} @__dfsan_arg_tls
+  ; COMBINE_PTR_LABEL: load i16, i16* {{.*}} @__dfsan_arg_tls
   ; COMBINE_PTR_LABEL: icmp ne i16
   ; COMBINE_PTR_LABEL: call {{.*}} @__dfsan_union
   ; COMBINE_PTR_LABEL: ptrtoint i64* {{.*}} i64

@@ -22,7 +22,7 @@
 ; CHECK-NEXT:   br label %loop_begin.us.us
 
 ; CHECK:      loop_begin.us.us:                                 ; preds = %loop_begin.backedge.us.us, %.split.us.split.us
-; CHECK-NEXT:   %var_val.us.us = load i32* %var
+; CHECK-NEXT:   %var_val.us.us = load i32, i32* %var
 ; CHECK-NEXT:   switch i32 1, label %second_switch.us.us [
 ; CHECK-NEXT:     i32 1, label %inc.us.us
 
@@ -38,7 +38,7 @@
 ; CHECK-NEXT:   br label %loop_begin.us
 
 ; CHECK:      loop_begin.us:                                    ; preds = %loop_begin.backedge.us, %.split.us.split
-; CHECK-NEXT:   %var_val.us = load i32* %var
+; CHECK-NEXT:   %var_val.us = load i32, i32* %var
 ; CHECK-NEXT:   switch i32 1, label %second_switch.us [
 ; CHECK-NEXT:     i32 1, label %inc.us
 
@@ -65,7 +65,7 @@
 ; CHECK-NEXT:   br label %loop_begin.us1
 
 ; CHECK:      loop_begin.us1:                                   ; preds = %loop_begin.backedge.us6, %.split.split.us
-; CHECK-NEXT:   %var_val.us2 = load i32* %var
+; CHECK-NEXT:   %var_val.us2 = load i32, i32* %var
 ; CHECK-NEXT:   switch i32 %c, label %second_switch.us3 [
 ; CHECK-NEXT:     i32 1, label %loop_begin.inc_crit_edge.us
 ; CHECK-NEXT:   ]
@@ -86,7 +86,7 @@
 ; CHECK-NEXT:   br label %loop_begin
 
 ; CHECK:      loop_begin:                                       ; preds = %loop_begin.backedge, %.split.split
-; CHECK-NEXT:   %var_val = load i32* %var
+; CHECK-NEXT:   %var_val = load i32, i32* %var
 ; CHECK-NEXT:   switch i32 %c, label %second_switch [
 ; CHECK-NEXT:     i32 1, label %loop_begin.inc_crit_edge
 ; CHECK-NEXT:   ]
@@ -106,14 +106,14 @@
 define i32 @test(i32* %var) {
   %mem = alloca i32
   store i32 2, i32* %mem
-  %c = load i32* %mem
-  %d = load i32* %mem
+  %c = load i32, i32* %mem
+  %d = load i32, i32* %mem
 
   br label %loop_begin
 
 loop_begin:
 
-  %var_val = load i32* %var
+  %var_val = load i32, i32* %var
 
   switch i32 %c, label %second_switch [
       i32 1, label %inc

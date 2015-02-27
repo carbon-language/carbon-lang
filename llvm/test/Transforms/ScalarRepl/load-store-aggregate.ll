@@ -11,11 +11,11 @@ target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 define i32 @test(%struct.foo* %P) {
 entry:
 	%L = alloca %struct.foo, align 8		; <%struct.foo*> [#uses=2]
-        %V = load %struct.foo* %P
+        %V = load %struct.foo, %struct.foo* %P
         store %struct.foo %V, %struct.foo* %L
 
 	%tmp4 = getelementptr %struct.foo, %struct.foo* %L, i32 0, i32 0		; <i32*> [#uses=1]
-	%tmp5 = load i32* %tmp4		; <i32> [#uses=1]
+	%tmp5 = load i32, i32* %tmp4		; <i32> [#uses=1]
 	ret i32 %tmp5
 }
 
@@ -26,6 +26,6 @@ entry:
         store i32 %A, i32* %L.0
         %L.1 = getelementptr %struct.foo, %struct.foo* %L, i32 0, i32 1
         store i32 %B, i32* %L.1
-        %V = load %struct.foo* %L
+        %V = load %struct.foo, %struct.foo* %L
         ret %struct.foo %V
 }

@@ -106,12 +106,12 @@ entry:
 	%__priority_addr = alloca i32		; <i32*> [#uses=2]
 	store i32 %__initialize_p, i32* %__initialize_p_addr
 	store i32 %__priority, i32* %__priority_addr
-	%tmp = load i32* %__priority_addr		; <i32> [#uses=1]
+	%tmp = load i32, i32* %__priority_addr		; <i32> [#uses=1]
 	%tmp.upgrd.1 = icmp eq i32 %tmp, 65535		; <i1> [#uses=1]
 	br i1 %tmp.upgrd.1, label %cond_true, label %cond_next14
 
 cond_true:		; preds = %entry
-	%tmp8 = load i32* %__initialize_p_addr		; <i32> [#uses=1]
+	%tmp8 = load i32, i32* %__initialize_p_addr		; <i32> [#uses=1]
 	%tmp9 = icmp eq i32 %tmp8, 1		; <i1> [#uses=1]
 	br i1 %tmp9, label %cond_true10, label %cond_next14
 

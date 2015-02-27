@@ -10,7 +10,7 @@ declare x86_stdcallcc void @_D3nan5printFeZv(x86_fp80 %f)
 
 define i32 @main() {
 entry_nan.main:
-  %tmp = load x86_fp80* @_D3nan4rvale   ; <x86_fp80> [#uses=1]
+  %tmp = load x86_fp80, x86_fp80* @_D3nan4rvale   ; <x86_fp80> [#uses=1]
   call x86_stdcallcc void @_D3nan5printFeZv(x86_fp80 %tmp)
   call x86_stdcallcc void @_D3nan5printFeZv(x86_fp80 0xK7FFF8001234000000000)
   call x86_stdcallcc void @_D3nan5printFeZv(x86_fp80 0xK7FFFC001234000000400)

@@ -33,7 +33,7 @@ define void @test2() nounwind uwtable ssp {
   %new = alloca i32
   call void @otherf(i32* nocapture %old)
   store atomic i32 0, i32* @x unordered, align 4
-  %v = load i32* %old
+  %v = load i32, i32* %old
   store i32 %v, i32* %new
   call void @otherf(i32* nocapture %new)  
   ret void

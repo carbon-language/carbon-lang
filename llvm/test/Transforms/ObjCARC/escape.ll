@@ -47,13 +47,13 @@ entry:
   store i8* %tmp5, i8** %block.captured, align 8
   %tmp6 = bitcast <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block to i8*
   %tmp7 = call i8* @objc_retainBlock(i8* %tmp6) nounwind, !clang.arc.copy_on_escape !0
-  %tmp8 = load %struct.__block_byref_weakLogNTimes** %byref.forwarding, align 8
+  %tmp8 = load %struct.__block_byref_weakLogNTimes*, %struct.__block_byref_weakLogNTimes** %byref.forwarding, align 8
   %weakLogNTimes3 = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %tmp8, i64 0, i32 6
   %tmp9 = bitcast void (...)** %weakLogNTimes3 to i8**
   %tmp10 = call i8* @objc_storeWeak(i8** %tmp9, i8* %tmp7) nounwind
   %tmp11 = getelementptr inbounds i8, i8* %tmp7, i64 16
   %tmp12 = bitcast i8* %tmp11 to i8**
-  %tmp13 = load i8** %tmp12, align 8
+  %tmp13 = load i8*, i8** %tmp12, align 8
   %tmp14 = bitcast i8* %tmp13 to void (i8*, i32)*
   call void %tmp14(i8* %tmp7, i32 10) nounwind, !clang.arc.no_objc_arc_exceptions !0
   call void @objc_release(i8* %tmp7) nounwind, !clang.imprecise_release !0
@@ -102,13 +102,13 @@ entry:
   store i8* %tmp5, i8** %block.captured, align 8
   %tmp6 = bitcast <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block to i8*
   %tmp7 = call i8* @objc_retainBlock(i8* %tmp6) nounwind, !clang.arc.copy_on_escape !0
-  %tmp8 = load %struct.__block_byref_weakLogNTimes** %byref.forwarding, align 8
+  %tmp8 = load %struct.__block_byref_weakLogNTimes*, %struct.__block_byref_weakLogNTimes** %byref.forwarding, align 8
   %weakLogNTimes3 = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %tmp8, i64 0, i32 6
   %tmp9 = bitcast void (...)** %weakLogNTimes3 to i8**
   %tmp10 = call i8* @not_really_objc_storeWeak(i8** %tmp9, i8* %tmp7) nounwind
   %tmp11 = getelementptr inbounds i8, i8* %tmp7, i64 16
   %tmp12 = bitcast i8* %tmp11 to i8**
-  %tmp13 = load i8** %tmp12, align 8
+  %tmp13 = load i8*, i8** %tmp12, align 8
   %tmp14 = bitcast i8* %tmp13 to void (i8*, i32)*
   call void %tmp14(i8* %tmp7, i32 10) nounwind, !clang.arc.no_objc_arc_exceptions !0
   call void @objc_release(i8* %tmp7) nounwind, !clang.imprecise_release !0

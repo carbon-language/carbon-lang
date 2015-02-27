@@ -27,7 +27,7 @@ entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !24, metadata !{!"0x102"}), !dbg !26
-  %this1 = load %class.A** %this.addr
+  %this1 = load %class.A*, %class.A** %this.addr
   ret void, !dbg !27
 }
 

@@ -54,7 +54,7 @@ define i32 @AtomicSwap32(i32 signext %newval) nounwind {
 entry:
   %newval.addr = alloca i32, align 4
   store i32 %newval, i32* %newval.addr, align 4
-  %tmp = load i32* %newval.addr, align 4
+  %tmp = load i32, i32* %newval.addr, align 4
   %0 = atomicrmw xchg i32* @x, i32 %tmp monotonic
   ret i32 %0
 
@@ -74,7 +74,7 @@ define i32 @AtomicCmpSwap32(i32 signext %oldval, i32 signext %newval) nounwind {
 entry:
   %newval.addr = alloca i32, align 4
   store i32 %newval, i32* %newval.addr, align 4
-  %tmp = load i32* %newval.addr, align 4
+  %tmp = load i32, i32* %newval.addr, align 4
   %0 = cmpxchg i32* @x, i32 %oldval, i32 %tmp monotonic monotonic
   %1 = extractvalue { i32, i1 } %0, 0
   ret i32 %1

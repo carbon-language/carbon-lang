@@ -7,7 +7,7 @@ define i32 @test(float ** %tmp2, i32 %tmp12) nounwind {
 ; CHECK: orl $1, %{{.*}}
 ; CHECK: ret
 
-	%tmp3 = load float** %tmp2
+	%tmp3 = load float*, float** %tmp2
 	%tmp132 = shl i32 %tmp12, 2		; <i32> [#uses=1]
 	%tmp4 = bitcast float* %tmp3 to i8*		; <i8*> [#uses=1]
 	%ctg2 = getelementptr i8, i8* %tmp4, i32 %tmp132		; <i8*> [#uses=1]

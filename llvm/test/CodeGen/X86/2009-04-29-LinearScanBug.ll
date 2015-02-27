@@ -105,17 +105,17 @@
 define fastcc i32 @pf_state_compare_ext_gwy(%struct.pf_state_key* nocapture %a, %struct.pf_state_key* nocapture %b) nounwind optsize ssp {
 entry:
 	%0 = zext i8 0 to i32		; <i32> [#uses=2]
-	%1 = load i8* null, align 1		; <i8> [#uses=2]
+	%1 = load i8, i8* null, align 1		; <i8> [#uses=2]
 	%2 = zext i8 %1 to i32		; <i32> [#uses=1]
 	%3 = sub i32 %0, %2		; <i32> [#uses=1]
 	%4 = icmp eq i8 0, %1		; <i1> [#uses=1]
 	br i1 %4, label %bb1, label %bb79
 
 bb1:		; preds = %entry
-	%5 = load i8* null, align 4		; <i8> [#uses=2]
+	%5 = load i8, i8* null, align 4		; <i8> [#uses=2]
 	%6 = zext i8 %5 to i32		; <i32> [#uses=2]
 	%7 = getelementptr %struct.pf_state_key, %struct.pf_state_key* %b, i32 0, i32 3		; <i8*> [#uses=1]
-	%8 = load i8* %7, align 4		; <i8> [#uses=2]
+	%8 = load i8, i8* %7, align 4		; <i8> [#uses=2]
 	%9 = zext i8 %8 to i32		; <i32> [#uses=1]
 	%10 = sub i32 %6, %9		; <i32> [#uses=1]
 	%11 = icmp eq i8 %5, %8		; <i1> [#uses=1]
@@ -132,32 +132,32 @@ bb3:		; preds = %bb1
 	]
 
 bb4:		; preds = %bb3, %bb3
-	%12 = load i16* null, align 4		; <i16> [#uses=1]
+	%12 = load i16, i16* null, align 4		; <i16> [#uses=1]
 	%13 = zext i16 %12 to i32		; <i32> [#uses=1]
 	%14 = sub i32 0, %13		; <i32> [#uses=1]
 	br i1 false, label %bb23, label %bb79
 
 bb6:		; preds = %bb3
-	%15 = load i16* null, align 4		; <i16> [#uses=1]
+	%15 = load i16, i16* null, align 4		; <i16> [#uses=1]
 	%16 = zext i16 %15 to i32		; <i32> [#uses=1]
 	%17 = sub i32 0, %16		; <i32> [#uses=1]
 	ret i32 %17
 
 bb10:		; preds = %bb3
-	%18 = load i8* null, align 1		; <i8> [#uses=2]
+	%18 = load i8, i8* null, align 1		; <i8> [#uses=2]
 	%19 = zext i8 %18 to i32		; <i32> [#uses=1]
 	%20 = sub i32 0, %19		; <i32> [#uses=1]
 	%21 = icmp eq i8 0, %18		; <i1> [#uses=1]
 	br i1 %21, label %bb12, label %bb79
 
 bb12:		; preds = %bb10
-	%22 = load i16* null, align 4		; <i16> [#uses=1]
+	%22 = load i16, i16* null, align 4		; <i16> [#uses=1]
 	%23 = zext i16 %22 to i32		; <i32> [#uses=1]
 	%24 = sub i32 0, %23		; <i32> [#uses=1]
 	ret i32 %24
 
 bb17:		; preds = %bb3
-	%25 = load i8* null, align 1		; <i8> [#uses=2]
+	%25 = load i8, i8* null, align 1		; <i8> [#uses=2]
 	%26 = icmp eq i8 %25, 1		; <i1> [#uses=1]
 	br i1 %26, label %bb18, label %bb23
 
@@ -166,16 +166,16 @@ bb18:		; preds = %bb17
 	br i1 %27, label %bb19, label %bb23
 
 bb19:		; preds = %bb18
-	%28 = load i16* null, align 4		; <i16> [#uses=1]
+	%28 = load i16, i16* null, align 4		; <i16> [#uses=1]
 	%29 = zext i16 %28 to i32		; <i32> [#uses=1]
 	%30 = sub i32 0, %29		; <i32> [#uses=1]
 	br i1 false, label %bb23, label %bb79
 
 bb21:		; preds = %bb3
 	%31 = getelementptr %struct.pf_state_key, %struct.pf_state_key* %a, i32 0, i32 1, i32 1, i32 0		; <i32*> [#uses=1]
-	%32 = load i32* %31, align 4		; <i32> [#uses=2]
+	%32 = load i32, i32* %31, align 4		; <i32> [#uses=2]
 	%33 = getelementptr %struct.pf_state_key, %struct.pf_state_key* %b, i32 0, i32 1, i32 1, i32 0		; <i32*> [#uses=1]
-	%34 = load i32* %33, align 4		; <i32> [#uses=2]
+	%34 = load i32, i32* %33, align 4		; <i32> [#uses=2]
 	%35 = sub i32 %32, %34		; <i32> [#uses=1]
 	%36 = icmp eq i32 %32, %34		; <i1> [#uses=1]
 	br i1 %36, label %bb23, label %bb79
@@ -188,11 +188,11 @@ bb24:		; preds = %bb23
 	ret i32 1
 
 bb70:		; preds = %bb23
-	%37 = load i32 (%struct.pf_app_state*, %struct.pf_app_state*)** null, align 4		; <i32 (%struct.pf_app_state*, %struct.pf_app_state*)*> [#uses=3]
+	%37 = load i32 (%struct.pf_app_state*, %struct.pf_app_state*)*, i32 (%struct.pf_app_state*, %struct.pf_app_state*)** null, align 4		; <i32 (%struct.pf_app_state*, %struct.pf_app_state*)*> [#uses=3]
 	br i1 false, label %bb78, label %bb73
 
 bb73:		; preds = %bb70
-	%38 = load i32 (%struct.pf_app_state*, %struct.pf_app_state*)** null, align 4		; <i32 (%struct.pf_app_state*, %struct.pf_app_state*)*> [#uses=2]
+	%38 = load i32 (%struct.pf_app_state*, %struct.pf_app_state*)*, i32 (%struct.pf_app_state*, %struct.pf_app_state*)** null, align 4		; <i32 (%struct.pf_app_state*, %struct.pf_app_state*)*> [#uses=2]
 	%39 = icmp eq i32 (%struct.pf_app_state*, %struct.pf_app_state*)* %38, null		; <i1> [#uses=1]
 	br i1 %39, label %bb78, label %bb74
 

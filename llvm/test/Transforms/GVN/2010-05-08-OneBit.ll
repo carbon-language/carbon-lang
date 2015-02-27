@@ -31,7 +31,7 @@ l129.i.i:                                         ; preds = %k121.i.i
 k133.i.i:                                         ; preds = %k121.i.i
   %2 = getelementptr i8, i8* undef, i64 5             ; <i8*> [#uses=1]
   %3 = bitcast i8* %2 to i1*                      ; <i1*> [#uses=1]
-  %4 = load i1* %3                                ; <i1> [#uses=1]
+  %4 = load i1, i1* %3                                ; <i1> [#uses=1]
   br i1 %4, label %k151.i.i, label %l147.i.i
 
 l147.i.i:                                         ; preds = %k133.i.i

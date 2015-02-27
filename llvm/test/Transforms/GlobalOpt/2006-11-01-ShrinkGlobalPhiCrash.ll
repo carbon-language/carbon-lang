@@ -10,7 +10,7 @@ entry:
 
 cond_true16.i:          ; preds = %cond_true16.i, %entry
         %low.0.in.i.0 = phi i32* [ @nrow, %entry ], [ null, %cond_true16.i ]            ; <i32*> [#uses=1]
-        %low.0.i = load i32* %low.0.in.i.0              ; <i32> [#uses=0]
+        %low.0.i = load i32, i32* %low.0.in.i.0              ; <i32> [#uses=0]
         br label %cond_true16.i
 }
 

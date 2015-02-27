@@ -29,25 +29,25 @@ entry:
   store i32 %k, i32* %k.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %k.addr, metadata !13, metadata !{!"0x102"}), !dbg !14
   call void @llvm.dbg.declare(metadata i32* %k2, metadata !15, metadata !{!"0x102"}), !dbg !16
-  %0 = load i32* %k.addr, align 4, !dbg !16
+  %0 = load i32, i32* %k.addr, align 4, !dbg !16
   %call = call i32 @_Z8test_exti(i32 %0), !dbg !16
   store i32 %call, i32* %k2, align 4, !dbg !16
-  %1 = load i32* %k2, align 4, !dbg !17
+  %1 = load i32, i32* %k2, align 4, !dbg !17
   %cmp = icmp sgt i32 %1, 100, !dbg !17
   br i1 %cmp, label %if.then, label %if.end, !dbg !17
 
 if.then:                                          ; preds = %entry
-  %2 = load i32* %k2, align 4, !dbg !18
+  %2 = load i32, i32* %k2, align 4, !dbg !18
   store i32 %2, i32* %retval, !dbg !18
   br label %return, !dbg !18
 
 if.end:                                           ; preds = %entry
   store i32 0, i32* %retval, !dbg !19
-  %3 = load i32* %retval, !dbg !20                ; hand-edited
+  %3 = load i32, i32* %retval, !dbg !20                ; hand-edited
   ret i32 %3, !dbg !20                            ; hand-edited
 
 return:                                           ; preds = %if.end, %if.then
-  %4 = load i32* %retval, !dbg !20
+  %4 = load i32, i32* %retval, !dbg !20
   ret i32 %4, !dbg !20
 }
 
@@ -62,7 +62,7 @@ entry:
   %exn.slot = alloca i8*
   %ehselector.slot = alloca i32
   %e = alloca i32, align 4
-  %0 = load i32* @global_var, align 4, !dbg !21
+  %0 = load i32, i32* @global_var, align 4, !dbg !21
   %call = invoke i32 @_Z4testi(i32 %0)
           to label %invoke.cont unwind label %lpad, !dbg !21
 
@@ -79,17 +79,17 @@ lpad:                                             ; preds = %entry
   br label %catch.dispatch, !dbg !21
 
 catch.dispatch:                                   ; preds = %lpad
-  %sel = load i32* %ehselector.slot, !dbg !23
+  %sel = load i32, i32* %ehselector.slot, !dbg !23
   %4 = call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIi to i8*)) #2, !dbg !23
   %matches = icmp eq i32 %sel, %4, !dbg !23
   br i1 %matches, label %catch, label %eh.resume, !dbg !23
 
 catch:                                            ; preds = %catch.dispatch
   call void @llvm.dbg.declare(metadata i32* %e, metadata !24, metadata !{!"0x102"}), !dbg !25
-  %exn = load i8** %exn.slot, !dbg !23
+  %exn = load i8*, i8** %exn.slot, !dbg !23
   %5 = call i8* @__cxa_begin_catch(i8* %exn) #2, !dbg !23
   %6 = bitcast i8* %5 to i32*, !dbg !23
-  %7 = load i32* %6, align 4, !dbg !23
+  %7 = load i32, i32* %6, align 4, !dbg !23
   store i32 %7, i32* %e, align 4, !dbg !23
   store i32 0, i32* @global_var, align 4, !dbg !26
   call void @__cxa_end_catch() #2, !dbg !28
@@ -100,8 +100,8 @@ try.cont:                                         ; preds = %catch, %invoke.cont
   ret i32 0, !dbg !30
 
 eh.resume:                                        ; preds = %catch.dispatch
-  %exn1 = load i8** %exn.slot, !dbg !23
-  %sel2 = load i32* %ehselector.slot, !dbg !23
+  %exn1 = load i8*, i8** %exn.slot, !dbg !23
+  %sel2 = load i32, i32* %ehselector.slot, !dbg !23
   %lpad.val = insertvalue { i8*, i32 } undef, i8* %exn1, 0, !dbg !23
   %lpad.val3 = insertvalue { i8*, i32 } %lpad.val, i32 %sel2, 1, !dbg !23
   resume { i8*, i32 } %lpad.val3, !dbg !23

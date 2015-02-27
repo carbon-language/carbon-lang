@@ -14,7 +14,7 @@ entry:
 ; CHECK: @llvm.ppc.altivec.lvx
 ; CHECK: ret <4 x i32>
 
-  %v0 = load <4 x i32>* %h, align 8
+  %v0 = load <4 x i32>, <4 x i32>* %h, align 8
   %a = add <4 x i32> %v0, %vl
   ret <4 x i32> %a
 }
@@ -29,7 +29,7 @@ entry:
 ; CHECK-NOT: @llvm.ppc.altivec.lvx
 ; CHECK: ret <4 x i32>
 
-  %v0 = load <4 x i32>* %h, align 8
+  %v0 = load <4 x i32>, <4 x i32>* %h, align 8
   %a = add <4 x i32> %v0, %vl
   ret <4 x i32> %a
 }
@@ -42,7 +42,7 @@ entry:
   %hv = bitcast <4 x i32>* %h1 to i8*
   call void @llvm.ppc.altivec.stvx(<4 x i32> %d, i8* %hv)
 
-  %v0 = load <4 x i32>* %h, align 8
+  %v0 = load <4 x i32>, <4 x i32>* %h, align 8
   ret <4 x i32> %v0
 
 ; CHECK-LABEL: @test2
@@ -56,7 +56,7 @@ entry:
   %hv = bitcast <4 x i32>* %h1 to i8*
   call void @llvm.ppc.altivec.stvx(<4 x i32> %d, i8* %hv)
 
-  %v0 = load <4 x i32>* %h, align 8
+  %v0 = load <4 x i32>, <4 x i32>* %h, align 8
   ret <4 x i32> %v0
 
 ; CHECK-LABEL: @test2
@@ -76,7 +76,7 @@ entry:
 ; CHECK: @llvm.ppc.altivec.lvxl
 ; CHECK: ret <4 x i32>
 
-  %v0 = load <4 x i32>* %h, align 8
+  %v0 = load <4 x i32>, <4 x i32>* %h, align 8
   %a = add <4 x i32> %v0, %vl
   ret <4 x i32> %a
 }
@@ -91,7 +91,7 @@ entry:
 ; CHECK-NOT: @llvm.ppc.altivec.lvxl
 ; CHECK: ret <4 x i32>
 
-  %v0 = load <4 x i32>* %h, align 8
+  %v0 = load <4 x i32>, <4 x i32>* %h, align 8
   %a = add <4 x i32> %v0, %vl
   ret <4 x i32> %a
 }
@@ -104,7 +104,7 @@ entry:
   %hv = bitcast <4 x i32>* %h1 to i8*
   call void @llvm.ppc.altivec.stvxl(<4 x i32> %d, i8* %hv)
 
-  %v0 = load <4 x i32>* %h, align 8
+  %v0 = load <4 x i32>, <4 x i32>* %h, align 8
   ret <4 x i32> %v0
 
 ; CHECK-LABEL: @test2l
@@ -118,7 +118,7 @@ entry:
   %hv = bitcast <4 x i32>* %h1 to i8*
   call void @llvm.ppc.altivec.stvxl(<4 x i32> %d, i8* %hv)
 
-  %v0 = load <4 x i32>* %h, align 8
+  %v0 = load <4 x i32>, <4 x i32>* %h, align 8
   ret <4 x i32> %v0
 
 ; CHECK-LABEL: @test2l

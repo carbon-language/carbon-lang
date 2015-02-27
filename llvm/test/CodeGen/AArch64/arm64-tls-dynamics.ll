@@ -6,7 +6,7 @@
 define i32 @test_generaldynamic() {
 ; CHECK-LABEL: test_generaldynamic:
 
-  %val = load i32* @general_dynamic_var
+  %val = load i32, i32* @general_dynamic_var
   ret i32 %val
 
   ; FIXME: the adrp instructions are redundant (if harmless).
@@ -54,7 +54,7 @@ define i32* @test_generaldynamic_addr() {
 define i32 @test_localdynamic() {
 ; CHECK-LABEL: test_localdynamic:
 
-  %val = load i32* @local_dynamic_var
+  %val = load i32, i32* @local_dynamic_var
   ret i32 %val
 
 ; CHECK: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:_TLS_MODULE_BASE_
@@ -116,8 +116,8 @@ define i32* @test_localdynamic_addr() {
 define i32 @test_localdynamic_deduplicate() {
 ; CHECK-LABEL: test_localdynamic_deduplicate:
 
-  %val = load i32* @local_dynamic_var
-  %val2 = load i32* @local_dynamic_var2
+  %val = load i32, i32* @local_dynamic_var
+  %val2 = load i32, i32* @local_dynamic_var2
 
   %sum = add i32 %val, %val2
   ret i32 %sum

@@ -13,7 +13,7 @@ loop:                                             ; preds = %loop.cond
   br i1 undef, label %0, label %t1.exit
 
 ; <label>:0                                       ; preds = %loop
-  %1 = load <16 x i32> addrspace(1)* undef, align 64
+  %1 = load <16 x i32>, <16 x i32> addrspace(1)* undef, align 64
   %2 = shufflevector <16 x i32> <i32 0, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>, <16 x i32> %1, <16 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 16, i32 0, i32 0>
   store <16 x i32> %2, <16 x i32> addrspace(1)* undef, align 64
   br label %t1.exit
@@ -29,7 +29,7 @@ define void @t2() nounwind {
   br i1 undef, label %1, label %4
 
 ; <label>:1                                       ; preds = %0
-  %2 = load <16 x i32> addrspace(1)* undef, align 64
+  %2 = load <16 x i32>, <16 x i32> addrspace(1)* undef, align 64
   %3 = shufflevector <16 x i32> <i32 0, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>, <16 x i32> %2, <16 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 20, i32 0, i32 0, i32 0, i32 0>
   store <16 x i32> %3, <16 x i32> addrspace(1)* undef, align 64
   br label %4
@@ -50,7 +50,7 @@ loop:                                             ; preds = %loop.cond
 
 ; <label>:0                                       ; preds = %loop
   %1 = shufflevector <16 x i32> <i32 0, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>, <16 x i32> undef, <16 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 25, i32 0>
-  %2 = load <16 x i32> addrspace(1)* undef, align 64
+  %2 = load <16 x i32>, <16 x i32> addrspace(1)* undef, align 64
   %3 = shufflevector <16 x i32> <i32 0, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>, <16 x i32> %2, <16 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 28, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0>
   store <16 x i32> %3, <16 x i32> addrspace(1)* undef, align 64
   br label %t2.exit
@@ -64,7 +64,7 @@ return:                                           ; preds = %loop.cond
 
 define <3 x i64> @t4() nounwind {
 entry:
-  %0 = load <2 x i64> addrspace(1)* undef, align 16
+  %0 = load <2 x i64>, <2 x i64> addrspace(1)* undef, align 16
   %1 = extractelement <2 x i64> %0, i32 0
   %2 = insertelement <3 x i64> <i64 undef, i64 0, i64 0>, i64 %1, i32 0
   ret <3 x i64> %2

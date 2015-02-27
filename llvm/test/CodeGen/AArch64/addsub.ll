@@ -12,12 +12,12 @@ define void @add_small() {
 ; CHECK-LABEL: add_small:
 
 ; CHECK: add {{w[0-9]+}}, {{w[0-9]+}}, #4095
-  %val32 = load i32* @var_i32
+  %val32 = load i32, i32* @var_i32
   %newval32 = add i32 %val32, 4095
   store i32 %newval32, i32* @var_i32
 
 ; CHECK: add {{x[0-9]+}}, {{x[0-9]+}}, #52
-  %val64 = load i64* @var_i64
+  %val64 = load i64, i64* @var_i64
   %newval64 = add i64 %val64, 52
   store i64 %newval64, i64* @var_i64
 
@@ -29,12 +29,12 @@ define void @add_med() {
 ; CHECK-LABEL: add_med:
 
 ; CHECK: add {{w[0-9]+}}, {{w[0-9]+}}, {{#3567, lsl #12|#14610432}}
-  %val32 = load i32* @var_i32
+  %val32 = load i32, i32* @var_i32
   %newval32 = add i32 %val32, 14610432 ; =0xdef000
   store i32 %newval32, i32* @var_i32
 
 ; CHECK: add {{x[0-9]+}}, {{x[0-9]+}}, {{#4095, lsl #12|#16773120}}
-  %val64 = load i64* @var_i64
+  %val64 = load i64, i64* @var_i64
   %newval64 = add i64 %val64, 16773120 ; =0xfff000
   store i64 %newval64, i64* @var_i64
 
@@ -46,12 +46,12 @@ define void @sub_small() {
 ; CHECK-LABEL: sub_small:
 
 ; CHECK: sub {{w[0-9]+}}, {{w[0-9]+}}, #4095
-  %val32 = load i32* @var_i32
+  %val32 = load i32, i32* @var_i32
   %newval32 = sub i32 %val32, 4095
   store i32 %newval32, i32* @var_i32
 
 ; CHECK: sub {{x[0-9]+}}, {{x[0-9]+}}, #52
-  %val64 = load i64* @var_i64
+  %val64 = load i64, i64* @var_i64
   %newval64 = sub i64 %val64, 52
   store i64 %newval64, i64* @var_i64
 
@@ -63,12 +63,12 @@ define void @sub_med() {
 ; CHECK-LABEL: sub_med:
 
 ; CHECK: sub {{w[0-9]+}}, {{w[0-9]+}}, {{#3567, lsl #12|#14610432}}
-  %val32 = load i32* @var_i32
+  %val32 = load i32, i32* @var_i32
   %newval32 = sub i32 %val32, 14610432 ; =0xdef000
   store i32 %newval32, i32* @var_i32
 
 ; CHECK: sub {{x[0-9]+}}, {{x[0-9]+}}, {{#4095, lsl #12|#16773120}}
-  %val64 = load i64* @var_i64
+  %val64 = load i64, i64* @var_i64
   %newval64 = sub i64 %val64, 16773120 ; =0xfff000
   store i64 %newval64, i64* @var_i64
 
@@ -77,7 +77,7 @@ define void @sub_med() {
 
 define void @testing() {
 ; CHECK-LABEL: testing:
-  %val = load i32* @var_i32
+  %val = load i32, i32* @var_i32
 
 ; CHECK: cmp {{w[0-9]+}}, #4095
 ; CHECK: b.ne [[RET:.?LBB[0-9]+_[0-9]+]]

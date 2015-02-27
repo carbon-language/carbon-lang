@@ -33,9 +33,9 @@ entry:
 ; STATIC-N64: lw  ${{[0-9]+}}, %got_ofst(s1)($[[R1]])
 ; STATIC-N64: ld  ${{[0-9]+}}, %got_disp(g1)
 
-  %0 = load i32* @s1, align 4
+  %0 = load i32, i32* @s1, align 4
   tail call void @foo1(i32 %0) nounwind
-  %1 = load i32* @g1, align 4
+  %1 = load i32, i32* @g1, align 4
   store i32 %1, i32* @s1, align 4
   %add = add nsw i32 %1, 2
   store i32 %add, i32* @g1, align 4

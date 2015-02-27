@@ -356,7 +356,7 @@ B2:
   br label %BrBlock
 
 BrBlock:
-  %L = load i32* %P
+  %L = load i32, i32* %P
   %C = icmp eq i32 %L, 42
   br i1 %C, label %T, label %F
   

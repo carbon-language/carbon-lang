@@ -3,7 +3,7 @@
 ; Test the handling of loads and stores when no data layout is available.
 define void @f1(<4 x float> *%dest, <4 x float> *%src) {
 ; CHECK: @f1(
-; CHECK: %val = load <4 x float>* %src, align 4
+; CHECK: %val = load <4 x float>, <4 x float>* %src, align 4
 ; CHECK: %val.i0 = extractelement <4 x float> %val, i32 0
 ; CHECK: %add.i0 = fadd float %val.i0, %val.i0
 ; CHECK: %val.i1 = extractelement <4 x float> %val, i32 1
@@ -18,7 +18,7 @@ define void @f1(<4 x float> *%dest, <4 x float> *%src) {
 ; CHECK: %add = insertelement <4 x float> %add.upto2, float %add.i3, i32 3
 ; CHECK: store <4 x float> %add, <4 x float>* %dest, align 8
 ; CHECK: ret void
-  %val = load <4 x float> *%src, align 4
+  %val = load <4 x float> , <4 x float> *%src, align 4
   %add = fadd <4 x float> %val, %val
   store <4 x float> %add, <4 x float> *%dest, align 8
   ret void

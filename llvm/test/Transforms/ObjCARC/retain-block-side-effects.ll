@@ -6,7 +6,7 @@
 
 ; CHECK: %tmp16 = call i8* @objc_retainBlock(i8* %tmp15) [[NUW:#[0-9]+]]
 ; CHECK: %tmp17 = bitcast i8* %tmp16 to void ()*
-; CHECK: %tmp18 = load %struct.__block_byref_repeater** %byref.forwarding, align 8
+; CHECK: %tmp18 = load %struct.__block_byref_repeater*, %struct.__block_byref_repeater** %byref.forwarding, align 8
 ; CHECK: %repeater12 = getelementptr inbounds %struct.__block_byref_repeater, %struct.__block_byref_repeater* %tmp18, i64 0, i32 6
 ; CHECK: store void ()* %tmp17, void ()** %repeater12, align 8
 
@@ -29,9 +29,9 @@ entry:
   %tmp15 = bitcast <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0*, i8* }>* %block to i8*
   %tmp16 = call i8* @objc_retainBlock(i8* %tmp15) nounwind
   %tmp17 = bitcast i8* %tmp16 to void ()*
-  %tmp18 = load %struct.__block_byref_repeater** %byref.forwarding, align 8
+  %tmp18 = load %struct.__block_byref_repeater*, %struct.__block_byref_repeater** %byref.forwarding, align 8
   %repeater12 = getelementptr inbounds %struct.__block_byref_repeater, %struct.__block_byref_repeater* %tmp18, i64 0, i32 6
-  %tmp13 = load void ()** %repeater12, align 8
+  %tmp13 = load void ()*, void ()** %repeater12, align 8
   store void ()* %tmp17, void ()** %repeater12, align 8
   ret void
 }

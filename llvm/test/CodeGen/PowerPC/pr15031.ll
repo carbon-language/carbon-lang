@@ -300,7 +300,7 @@ define void @_ZN4llvm14MachineOperand12substPhysRegEjRKNS_18TargetRegisterInfoE(
 entry:
   %SubReg_TargetFlags.i = getelementptr inbounds %"class.llvm::MachineOperand", %"class.llvm::MachineOperand"* %this, i64 0, i32 1
   %0 = bitcast [3 x i8]* %SubReg_TargetFlags.i to i24*
-  %bf.load.i = load i24* %0, align 1
+  %bf.load.i = load i24, i24* %0, align 1
   %bf.lshr.i = lshr i24 %bf.load.i, 12
   %tobool = icmp eq i24 %bf.lshr.i, 0
   br i1 %tobool, label %if.end, label %if.then
@@ -309,7 +309,7 @@ if.then:                                          ; preds = %entry
   %bf.cast.i = zext i24 %bf.lshr.i to i32
   %add.ptr = getelementptr inbounds %"class.llvm::TargetRegisterInfo", %"class.llvm::TargetRegisterInfo"* %TRI, i64 0, i32 1
   %call3 = tail call zeroext i32 @_ZNK4llvm14MCRegisterInfo9getSubRegEjj(%"class.llvm::MCRegisterInfo"* %add.ptr, i32 zeroext %Reg, i32 zeroext %bf.cast.i)
-  %bf.load.i10 = load i24* %0, align 1
+  %bf.load.i10 = load i24, i24* %0, align 1
   %bf.clear.i = and i24 %bf.load.i10, 4095
   store i24 %bf.clear.i, i24* %0, align 1
   br label %if.end
@@ -317,31 +317,31 @@ if.then:                                          ; preds = %entry
 if.end:                                           ; preds = %entry, %if.then
   %Reg.addr.0 = phi i32 [ %call3, %if.then ], [ %Reg, %entry ]
   %RegNo.i.i = getelementptr inbounds %"class.llvm::MachineOperand", %"class.llvm::MachineOperand"* %this, i64 0, i32 2, i32 0
-  %1 = load i32* %RegNo.i.i, align 4
+  %1 = load i32, i32* %RegNo.i.i, align 4
   %cmp.i = icmp eq i32 %1, %Reg.addr.0
   br i1 %cmp.i, label %_ZN4llvm14MachineOperand6setRegEj.exit, label %if.end.i
 
 if.end.i:                                         ; preds = %if.end
   %ParentMI.i.i = getelementptr inbounds %"class.llvm::MachineOperand", %"class.llvm::MachineOperand"* %this, i64 0, i32 3
-  %2 = load %"class.llvm::MachineInstr"** %ParentMI.i.i, align 8
+  %2 = load %"class.llvm::MachineInstr"*, %"class.llvm::MachineInstr"** %ParentMI.i.i, align 8
   %tobool.i = icmp eq %"class.llvm::MachineInstr"* %2, null
   br i1 %tobool.i, label %if.end13.i, label %if.then3.i
 
 if.then3.i:                                       ; preds = %if.end.i
   %Parent.i.i = getelementptr inbounds %"class.llvm::MachineInstr", %"class.llvm::MachineInstr"* %2, i64 0, i32 2
-  %3 = load %"class.llvm::MachineBasicBlock"** %Parent.i.i, align 8
+  %3 = load %"class.llvm::MachineBasicBlock"*, %"class.llvm::MachineBasicBlock"** %Parent.i.i, align 8
   %tobool5.i = icmp eq %"class.llvm::MachineBasicBlock"* %3, null
   br i1 %tobool5.i, label %if.end13.i, label %if.then6.i
 
 if.then6.i:                                       ; preds = %if.then3.i
   %xParent.i.i = getelementptr inbounds %"class.llvm::MachineBasicBlock", %"class.llvm::MachineBasicBlock"* %3, i64 0, i32 4
-  %4 = load %"class.llvm::MachineFunction"** %xParent.i.i, align 8
+  %4 = load %"class.llvm::MachineFunction"*, %"class.llvm::MachineFunction"** %xParent.i.i, align 8
   %tobool8.i = icmp eq %"class.llvm::MachineFunction"* %4, null
   br i1 %tobool8.i, label %if.end13.i, label %if.then9.i
 
 if.then9.i:                                       ; preds = %if.then6.i
   %RegInfo.i.i = getelementptr inbounds %"class.llvm::MachineFunction", %"class.llvm::MachineFunction"* %4, i64 0, i32 5
-  %5 = load %"class.llvm::MachineRegisterInfo"** %RegInfo.i.i, align 8
+  %5 = load %"class.llvm::MachineRegisterInfo"*, %"class.llvm::MachineRegisterInfo"** %RegInfo.i.i, align 8
   tail call void @_ZN4llvm19MachineRegisterInfo27removeRegOperandFromUseListEPNS_14MachineOperandE(%"class.llvm::MachineRegisterInfo"* %5, %"class.llvm::MachineOperand"* %this)
   store i32 %Reg.addr.0, i32* %RegNo.i.i, align 4
   tail call void @_ZN4llvm19MachineRegisterInfo22addRegOperandToUseListEPNS_14MachineOperandE(%"class.llvm::MachineRegisterInfo"* %5, %"class.llvm::MachineOperand"* %this)

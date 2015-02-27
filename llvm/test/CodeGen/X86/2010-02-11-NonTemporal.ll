@@ -11,8 +11,8 @@ define void @sub_(i32* noalias %n) {
 	%i = alloca i32, align 4
 	%"$LCS_0" = alloca i64, align 8
 	%"$LCS_S2" = alloca <2 x double>, align 16
-	%r9 = load <2 x double>* %"$LCS_S2", align 8
-	%r10 = load i64* %"$LCS_0", align 8
+	%r9 = load <2 x double>, <2 x double>* %"$LCS_S2", align 8
+	%r10 = load i64, i64* %"$LCS_0", align 8
 	%r11 = inttoptr i64 %r10 to <2 x double>*
 	store <2 x double> %r9, <2 x double>* %r11, align 16, !nontemporal !0
 	br label %"file movnt.f90, line 18, bb5"

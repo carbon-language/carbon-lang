@@ -8,7 +8,7 @@ entry:
   br i1 %cmp8, label %for.end, label %for.body.lr.ph
 
 for.body.lr.ph:                                   ; preds = %entry
-  %.pre = load i8* %to, align 1
+  %.pre = load i8, i8* %to, align 1
   br label %for.body
 
 for.body:                                         ; preds = %for.body.lr.ph, %for.body
@@ -16,7 +16,7 @@ for.body:                                         ; preds = %for.body.lr.ph, %fo
   %i.010 = phi i32 [ 0, %for.body.lr.ph ], [ %inc, %for.body ]
   %from.addr.09 = phi i8* [ %from, %for.body.lr.ph ], [ %incdec.ptr, %for.body ]
   %incdec.ptr = getelementptr inbounds i8, i8* %from.addr.09, i32 1
-  %2 = load i8* %from.addr.09, align 1
+  %2 = load i8, i8* %from.addr.09, align 1
   %conv27 = zext i8 %2 to i32
   %conv36 = zext i8 %1 to i32
   %add = add nsw i32 %conv36, %conv27
@@ -44,7 +44,7 @@ entry:
   br i1 %cmp8, label %for.end, label %for.body.lr.ph
 
 for.body.lr.ph:                                   ; preds = %entry
-  %.pre = load i16* %to, align 2
+  %.pre = load i16, i16* %to, align 2
   br label %for.body
 
 for.body:                                         ; preds = %for.body.lr.ph, %for.body
@@ -52,7 +52,7 @@ for.body:                                         ; preds = %for.body.lr.ph, %fo
   %i.010 = phi i32 [ 0, %for.body.lr.ph ], [ %inc, %for.body ]
   %from.addr.09 = phi i16* [ %from, %for.body.lr.ph ], [ %incdec.ptr, %for.body ]
   %incdec.ptr = getelementptr inbounds i16, i16* %from.addr.09, i32 1
-  %2 = load i16* %from.addr.09, align 2
+  %2 = load i16, i16* %from.addr.09, align 2
   %conv27 = zext i16 %2 to i32
   %conv36 = zext i16 %1 to i32
   %add = add nsw i32 %conv36, %conv27

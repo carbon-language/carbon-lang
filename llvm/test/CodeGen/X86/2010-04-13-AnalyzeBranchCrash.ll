@@ -12,7 +12,7 @@ entry:
   ]
 
 if.then:                                          ; preds = %entry, %entry
-  %tmp69 = load float* null, align 4              ; <float> [#uses=1]
+  %tmp69 = load float, float* null, align 4              ; <float> [#uses=1]
   %cmp19 = icmp eq %1* null, %scroller            ; <i1> [#uses=2]
   %cond = select i1 %cmp19, float %tmp69, float 0.000000e+00 ; <float> [#uses=1]
   %call36 = call i64 bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i64 (i8*, i8*)*)(i8* undef, i8* undef) nounwind optsize ; <i64> [#uses=2]

@@ -2,7 +2,7 @@
 
 define i32 @test(i32* %P) {
         store i32 1, i32* %P
-        %V = load i32* %P               ; <i32> [#uses=1]
+        %V = load i32, i32* %P               ; <i32> [#uses=1]
         ret i32 %V
 }
 

@@ -296,7 +296,7 @@ bb9.i216.i:		; preds = %bb29.loopexit.i.i, %bb8.i.i
 
 bb15.i.i:		; preds = %bb16.preheader.i.i, %bb15.i.i
 	%j1.0212.i.i = phi i32 [ %1, %bb15.i.i ], [ 0, %bb16.preheader.i.i ]		; <i32> [#uses=2]
-	%tmp6.i.i195.i.i = load i32* undef, align 4		; <i32> [#uses=1]
+	%tmp6.i.i195.i.i = load i32, i32* undef, align 4		; <i32> [#uses=1]
 	%tmp231.i.i = mul i32 %0, %tmp6.i.i195.i.i		; <i32> [#uses=1]
 	%tmp13.i197.i.i = add i32 %j1.0212.i.i, %tmp231.i.i		; <i32> [#uses=0]
 	%1 = add i32 %j1.0212.i.i, 1		; <i32> [#uses=1]

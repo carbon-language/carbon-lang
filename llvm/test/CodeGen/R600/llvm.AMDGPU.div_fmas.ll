@@ -122,9 +122,9 @@ define void @test_div_fmas_f32_logical_cond_to_vcc(float addrspace(1)* %out, flo
   %gep.c = getelementptr float, float addrspace(1)* %gep.a, i32 2
   %gep.out = getelementptr float, float addrspace(1)* %out, i32 2
 
-  %a = load float addrspace(1)* %gep.a
-  %b = load float addrspace(1)* %gep.b
-  %c = load float addrspace(1)* %gep.c
+  %a = load float, float addrspace(1)* %gep.a
+  %b = load float, float addrspace(1)* %gep.b
+  %c = load float, float addrspace(1)* %gep.c
 
   %cmp0 = icmp eq i32 %tid, 0
   %cmp1 = icmp ne i32 %d, 0
@@ -159,15 +159,15 @@ entry:
   %gep.b = getelementptr float, float addrspace(1)* %gep.a, i32 1
   %gep.c = getelementptr float, float addrspace(1)* %gep.a, i32 2
 
-  %a = load float addrspace(1)* %gep.a
-  %b = load float addrspace(1)* %gep.b
-  %c = load float addrspace(1)* %gep.c
+  %a = load float, float addrspace(1)* %gep.a
+  %b = load float, float addrspace(1)* %gep.b
+  %c = load float, float addrspace(1)* %gep.c
 
   %cmp0 = icmp eq i32 %tid, 0
   br i1 %cmp0, label %bb, label %exit
 
 bb:
-  %val = load i32 addrspace(1)* %dummy
+  %val = load i32, i32 addrspace(1)* %dummy
   %cmp1 = icmp ne i32 %val, 0
   br label %exit
 

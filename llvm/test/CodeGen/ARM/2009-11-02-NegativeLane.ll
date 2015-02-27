@@ -8,7 +8,7 @@ entry:
 
 bb:                                               ; preds = %bb, %entry
 ; CHECK: vld1.16 {d16[], d17[]}
-  %0 = load i16* undef, align 2
+  %0 = load i16, i16* undef, align 2
   %1 = insertelement <8 x i16> undef, i16 %0, i32 2
   %2 = insertelement <8 x i16> %1, i16 undef, i32 3
   %3 = mul <8 x i16> %2, %2

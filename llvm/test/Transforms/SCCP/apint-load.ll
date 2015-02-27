@@ -7,19 +7,19 @@
 @Y = constant [2 x { i212, float }] [ { i212, float } { i212 12, float 1.0 }, 
                                      { i212, float } { i212 37, float 0x3FF3B2FEC0000000 } ]
 define i212 @test1() {
-	%B = load i212* @X
+	%B = load i212, i212* @X
 	ret i212 %B
 }
 
 define internal float @test2() {
 	%A = getelementptr [2 x { i212, float}], [2 x { i212, float}]* @Y, i32 0, i32 1, i32 1
-	%B = load float* %A
+	%B = load float, float* %A
 	ret float %B
 }
 
 define internal i212 @test3() {
 	%A = getelementptr [2 x { i212, float}], [2 x { i212, float}]* @Y, i32 0, i32 0, i32 0
-	%B = load i212* %A
+	%B = load i212, i212* %A
 	ret i212 %B
 }
 

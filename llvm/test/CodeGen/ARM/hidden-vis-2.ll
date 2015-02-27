@@ -7,6 +7,6 @@ entry:
 ; CHECK-LABEL: t:
 ; CHECK: ldr
 ; CHECK-NEXT: ldr
-	%0 = load i32* @x, align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* @x, align 4		; <i32> [#uses=1]
 	ret i32 %0
 }

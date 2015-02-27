@@ -91,7 +91,7 @@ define i64 @not_bswap() {
 ; CHECK64-LABEL: not_bswap:
 ; CHECK64-NOT: bswapq
 ; CHECK64: ret
-  %init = load i16* @var16
+  %init = load i16, i16* @var16
   %big = zext i16 %init to i64
 
   %hishifted = lshr i64 %big, 8
@@ -115,7 +115,7 @@ define i64 @not_useful_bswap() {
 ; CHECK64-NOT: bswapq
 ; CHECK64: ret
 
-  %init = load i8* @var8
+  %init = load i8, i8* @var8
   %big = zext i8 %init to i64
 
   %hishifted = lshr i64 %big, 8
@@ -140,7 +140,7 @@ define i64 @finally_useful_bswap() {
 ; CHECK64: shrq $48, [[REG]]
 ; CHECK64: ret
 
-  %init = load i16* @var16
+  %init = load i16, i16* @var16
   %big = zext i16 %init to i64
 
   %hishifted = lshr i64 %big, 8

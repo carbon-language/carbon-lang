@@ -4,7 +4,7 @@ target triple = "powerpc64-unknown-linux-gnu"
 
 define fastcc void @allocateSpace(i1 %cond1, i1 %cond2) nounwind {
 entry:
-  %0 = load i8** undef, align 8
+  %0 = load i8*, i8** undef, align 8
   br i1 undef, label %return, label %lor.lhs.false
 
 lor.lhs.false:                                    ; preds = %entry
@@ -30,7 +30,7 @@ if.then45:                                        ; preds = %while.body
   %arrayidx49 = getelementptr inbounds i8, i8* %0, i64 %idxprom48139
   %1 = bitcast i8* %arrayidx49 to i16*
   %2 = bitcast i8* %arrayidx18 to i16*
-  %3 = load i16* %1, align 1
+  %3 = load i16, i16* %1, align 1
   store i16 %3, i16* %2, align 1
   br label %return
 

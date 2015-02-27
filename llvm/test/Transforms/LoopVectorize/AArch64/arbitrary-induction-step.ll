@@ -11,8 +11,8 @@ target triple = "aarch64--linux-gnueabi"
 ;   }
 
 ; CHECK-LABEL: @ind_plus2(
-; CHECK: load <4 x i32>*
-; CHECK: load <4 x i32>*
+; CHECK: load <4 x i32>, <4 x i32>*
+; CHECK: load <4 x i32>, <4 x i32>*
 ; CHECK: mul nsw <4 x i32>
 ; CHECK: mul nsw <4 x i32>
 ; CHECK: add nsw <4 x i32>
@@ -21,7 +21,7 @@ target triple = "aarch64--linux-gnueabi"
 ; CHECK: icmp eq i64 %index.next, 512
 
 ; FORCE-VEC-LABEL: @ind_plus2(
-; FORCE-VEC: %wide.load = load <2 x i32>*
+; FORCE-VEC: %wide.load = load <2 x i32>, <2 x i32>*
 ; FORCE-VEC: mul nsw <2 x i32>
 ; FORCE-VEC: add nsw <2 x i32>
 ; FORCE-VEC: %index.next = add i64 %index, 2
@@ -35,7 +35,7 @@ for.body:                                         ; preds = %entry, %for.body
   %i = phi i32 [ 0, %entry ], [ %add1, %for.body ]
   %sum = phi i32 [ 0, %entry ], [ %add, %for.body ]
   %inc.ptr = getelementptr inbounds i32, i32* %A.addr, i64 1
-  %0 = load i32* %A.addr, align 4
+  %0 = load i32, i32* %A.addr, align 4
   %mul = mul nsw i32 %0, %i
   %add = add nsw i32 %mul, %sum
   %add1 = add nsw i32 %i, 2
@@ -55,8 +55,8 @@ for.end:                                          ; preds = %for.body
 ;   }
 
 ; CHECK-LABEL: @ind_minus2(
-; CHECK: load <4 x i32>*
-; CHECK: load <4 x i32>*
+; CHECK: load <4 x i32>, <4 x i32>*
+; CHECK: load <4 x i32>, <4 x i32>*
 ; CHECK: mul nsw <4 x i32>
 ; CHECK: mul nsw <4 x i32>
 ; CHECK: add nsw <4 x i32>
@@ -65,7 +65,7 @@ for.end:                                          ; preds = %for.body
 ; CHECK: icmp eq i64 %index.next, 512
 
 ; FORCE-VEC-LABEL: @ind_minus2(
-; FORCE-VEC: %wide.load = load <2 x i32>*
+; FORCE-VEC: %wide.load = load <2 x i32>, <2 x i32>*
 ; FORCE-VEC: mul nsw <2 x i32>
 ; FORCE-VEC: add nsw <2 x i32>
 ; FORCE-VEC: %index.next = add i64 %index, 2
@@ -79,7 +79,7 @@ for.body:                                         ; preds = %entry, %for.body
   %i = phi i32 [ 1024, %entry ], [ %sub, %for.body ]
   %sum = phi i32 [ 0, %entry ], [ %add, %for.body ]
   %inc.ptr = getelementptr inbounds i32, i32* %A.addr, i64 1
-  %0 = load i32* %A.addr, align 4
+  %0 = load i32, i32* %A.addr, align 4
   %mul = mul nsw i32 %0, %i
   %add = add nsw i32 %mul, %sum
   %sub = add nsw i32 %i, -2
@@ -102,10 +102,10 @@ for.end:                                          ; preds = %for.body
 ;   }
 
 ; CHECK-LABEL: @ptr_ind_plus2(
-; CHECK: load i32*
-; CHECK: load i32*
-; CHECK: load i32*
-; CHECK: load i32*
+; CHECK: load i32, i32*
+; CHECK: load i32, i32*
+; CHECK: load i32, i32*
+; CHECK: load i32, i32*
 ; CHECK: mul nsw i32
 ; CHECK: mul nsw i32
 ; CHECK: add nsw i32
@@ -114,13 +114,13 @@ for.end:                                          ; preds = %for.body
 ; CHECK: %21 = icmp eq i64 %index.next, 1024
 
 ; FORCE-VEC-LABEL: @ptr_ind_plus2(
-; FORCE-VEC: load i32*
+; FORCE-VEC: load i32, i32*
 ; FORCE-VEC: insertelement <2 x i32>
-; FORCE-VEC: load i32*
+; FORCE-VEC: load i32, i32*
 ; FORCE-VEC: insertelement <2 x i32>
-; FORCE-VEC: load i32*
+; FORCE-VEC: load i32, i32*
 ; FORCE-VEC: insertelement <2 x i32>
-; FORCE-VEC: load i32*
+; FORCE-VEC: load i32, i32*
 ; FORCE-VEC: insertelement <2 x i32>
 ; FORCE-VEC: mul nsw <2 x i32>
 ; FORCE-VEC: add nsw <2 x i32>
@@ -135,9 +135,9 @@ for.body:                                         ; preds = %for.body, %entry
   %sum = phi i32 [ 0, %entry ], [ %add, %for.body ]
   %i = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %inc.ptr = getelementptr inbounds i32, i32* %A.addr, i64 1
-  %0 = load i32* %A.addr, align 4
+  %0 = load i32, i32* %A.addr, align 4
   %inc.ptr1 = getelementptr inbounds i32, i32* %A.addr, i64 2
-  %1 = load i32* %inc.ptr, align 4
+  %1 = load i32, i32* %inc.ptr, align 4
   %mul = mul nsw i32 %1, %0
   %add = add nsw i32 %mul, %sum
   %inc = add nsw i32 %i, 1

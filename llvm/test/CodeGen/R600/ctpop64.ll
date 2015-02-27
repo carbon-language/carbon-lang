@@ -29,7 +29,7 @@ define void @s_ctpop_i64(i32 addrspace(1)* noalias %out, i64 %val) nounwind {
 ; GCN: buffer_store_dword [[RESULT]],
 ; GCN: s_endpgm
 define void @v_ctpop_i64(i32 addrspace(1)* noalias %out, i64 addrspace(1)* noalias %in) nounwind {
-  %val = load i64 addrspace(1)* %in, align 8
+  %val = load i64, i64 addrspace(1)* %in, align 8
   %ctpop = call i64 @llvm.ctpop.i64(i64 %val) nounwind readnone
   %truncctpop = trunc i64 %ctpop to i32
   store i32 %truncctpop, i32 addrspace(1)* %out, align 4
@@ -67,7 +67,7 @@ define void @s_ctpop_v4i64(<4 x i32> addrspace(1)* noalias %out, <4 x i64> %val)
 ; GCN: v_bcnt_u32_b32
 ; GCN: s_endpgm
 define void @v_ctpop_v2i64(<2 x i32> addrspace(1)* noalias %out, <2 x i64> addrspace(1)* noalias %in) nounwind {
-  %val = load <2 x i64> addrspace(1)* %in, align 16
+  %val = load <2 x i64>, <2 x i64> addrspace(1)* %in, align 16
   %ctpop = call <2 x i64> @llvm.ctpop.v2i64(<2 x i64> %val) nounwind readnone
   %truncctpop = trunc <2 x i64> %ctpop to <2 x i32>
   store <2 x i32> %truncctpop, <2 x i32> addrspace(1)* %out, align 8
@@ -85,7 +85,7 @@ define void @v_ctpop_v2i64(<2 x i32> addrspace(1)* noalias %out, <2 x i64> addrs
 ; GCN: v_bcnt_u32_b32
 ; GCN: s_endpgm
 define void @v_ctpop_v4i64(<4 x i32> addrspace(1)* noalias %out, <4 x i64> addrspace(1)* noalias %in) nounwind {
-  %val = load <4 x i64> addrspace(1)* %in, align 32
+  %val = load <4 x i64>, <4 x i64> addrspace(1)* %in, align 32
   %ctpop = call <4 x i64> @llvm.ctpop.v4i64(<4 x i64> %val) nounwind readnone
   %truncctpop = trunc <4 x i64> %ctpop to <4 x i32>
   store <4 x i32> %truncctpop, <4 x i32> addrspace(1)* %out, align 16
@@ -114,7 +114,7 @@ if:
 
 else:
   %tmp3 = getelementptr i64, i64 addrspace(1)* %in, i32 1
-  %tmp4 = load i64 addrspace(1)* %tmp3
+  %tmp4 = load i64, i64 addrspace(1)* %tmp3
   br label %endif
 
 endif:

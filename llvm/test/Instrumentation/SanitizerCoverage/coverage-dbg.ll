@@ -29,7 +29,7 @@ define i32 @_ZN1A1fEv(%struct.A* nocapture readonly %this) #0 align 2 {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.A* %this, i64 0, metadata !15, metadata !{!"0x102"}), !dbg !20
   %x = getelementptr inbounds %struct.A, %struct.A* %this, i64 0, i32 0, !dbg !21
-  %0 = load i32* %x, align 4, !dbg !21
+  %0 = load i32, i32* %x, align 4, !dbg !21
   ret i32 %0, !dbg !21
 }
 

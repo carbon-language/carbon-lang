@@ -169,7 +169,7 @@ entry:
 ; CHECK: sub
 ; CHECK: cmp
 ; CHECK: bge
-  %load = load i32* @t, align 4
+  %load = load i32, i32* @t, align 4
   %sub = sub i32 %load, 17
   %cmp = icmp slt i32 %sub, 0
   br i1 %cmp, label %if.then, label %if.else
@@ -191,7 +191,7 @@ entry:
 ; CHECK: sub
 ; CHECK: cmp
 ; CHECK: bhs
-  %load = load i32* @t, align 4
+  %load = load i32, i32* @t, align 4
   %sub = sub i32 %load, 17
   %cmp = icmp ult i32 %sub, 0
   br i1 %cmp, label %if.then, label %if.else

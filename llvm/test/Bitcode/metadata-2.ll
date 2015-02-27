@@ -77,7 +77,7 @@ entry:
 
 define internal void @_D5tango4core8BitManip16__moduleinfoCtorZ() nounwind {
 moduleinfoCtorEntry:
-	%current = load %ModuleReference** @_Dmodule_ref		; <%ModuleReference*> [#uses=1]
+	%current = load %ModuleReference*, %ModuleReference** @_Dmodule_ref		; <%ModuleReference*> [#uses=1]
 	store %ModuleReference* %current, %ModuleReference** getelementptr (%ModuleReference* @_D5tango4core8BitManip11__moduleRefZ, i32 0, i32 0)
 	store %ModuleReference* @_D5tango4core8BitManip11__moduleRefZ, %ModuleReference** @_Dmodule_ref
 	ret void

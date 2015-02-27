@@ -45,7 +45,7 @@ entry:
 bb5:		; preds = %bb5, %entry
 	%.pn = phi %struct.rec* [ %y.0, %bb5 ], [ undef, %entry ]		; <%struct.rec*> [#uses=1]
 	%y.0.in = getelementptr %struct.rec, %struct.rec* %.pn, i32 0, i32 0, i32 0, i32 1, i32 0		; <%struct.rec**> [#uses=1]
-	%y.0 = load %struct.rec** %y.0.in		; <%struct.rec*> [#uses=2]
+	%y.0 = load %struct.rec*, %struct.rec** %y.0.in		; <%struct.rec*> [#uses=2]
 	br i1 undef, label %bb5, label %bb6
 
 bb6:		; preds = %bb5
@@ -62,7 +62,7 @@ bb.i1:		; preds = %FontHalfXHeight.exit
 	br label %FontSize.exit
 
 FontSize.exit:		; preds = %bb.i1, %FontHalfXHeight.exit
-	%1 = load i32* undef, align 4		; <i32> [#uses=1]
+	%1 = load i32, i32* undef, align 4		; <i32> [#uses=1]
 	%2 = icmp ult i32 0, undef		; <i1> [#uses=1]
 	br i1 %2, label %bb.i5, label %FontName.exit
 
@@ -75,13 +75,13 @@ FontName.exit:		; preds = %bb.i5, %FontSize.exit
 	%4 = call  i32 @"\01_fwrite"(i8* getelementptr ([11 x i8]* @.str1842948, i32 0, i32 0), i32 1, i32 10, i8* undef) nounwind		; <i32> [#uses=0]
 	%5 = sub i32 %colmark, undef		; <i32> [#uses=1]
 	%6 = sub i32 %rowmark, undef		; <i32> [#uses=1]
-	%7 = load %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
+	%7 = load %struct.FILE*, %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
 	%8 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %7, i8* getelementptr ([17 x i8]* @.str212784, i32 0, i32 0), i32 %5, i32 %6) nounwind		; <i32> [#uses=0]
 	store i32 0, i32* @cpexists, align 4
 	%9 = getelementptr %struct.rec, %struct.rec* %y.0, i32 0, i32 0, i32 3, i32 0, i32 0, i32 1		; <i32*> [#uses=1]
-	%10 = load i32* %9, align 4		; <i32> [#uses=1]
+	%10 = load i32, i32* %9, align 4		; <i32> [#uses=1]
 	%11 = sub i32 0, %10		; <i32> [#uses=1]
-	%12 = load %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
+	%12 = load %struct.FILE*, %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
 	%13 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %12, i8* getelementptr ([17 x i8]* @.str212784, i32 0, i32 0), i32 undef, i32 %11) nounwind		; <i32> [#uses=0]
 	store i32 0, i32* @cpexists, align 4
 	br label %bb100.outer.outer
@@ -116,7 +116,7 @@ bb.i47:		; preds = %bb3.i52
 	br i1 undef, label %bb2.i51, label %bb2.i.i15.critedge
 
 bb2.i51:		; preds = %bb.i47, %StringBeginsWith.exit88, %bb.i80
-	%15 = load i8* undef, align 1		; <i8> [#uses=0]
+	%15 = load i8, i8* undef, align 1		; <i8> [#uses=0]
 	br i1 false, label %StringBeginsWith.exit55thread-split, label %bb3.i52
 
 bb3.i52:		; preds = %bb2.i51

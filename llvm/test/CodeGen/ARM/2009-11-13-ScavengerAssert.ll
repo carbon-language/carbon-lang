@@ -14,10 +14,10 @@ entry:
 
 bb:                                               ; preds = %entry
   %0 = getelementptr inbounds %bar, %bar* null, i32 0, i32 0, i32 0, i32 2 ; <float*> [#uses=2]
-  %1 = load float* undef, align 4                 ; <float> [#uses=1]
+  %1 = load float, float* undef, align 4                 ; <float> [#uses=1]
   %2 = fsub float 0.000000e+00, undef             ; <float> [#uses=2]
   %3 = fmul float 0.000000e+00, undef             ; <float> [#uses=1]
-  %4 = load float* %0, align 4                    ; <float> [#uses=3]
+  %4 = load float, float* %0, align 4                    ; <float> [#uses=3]
   %5 = fmul float %4, %2                          ; <float> [#uses=1]
   %6 = fsub float %3, %5                          ; <float> [#uses=1]
   %7 = fmul float %4, undef                       ; <float> [#uses=1]

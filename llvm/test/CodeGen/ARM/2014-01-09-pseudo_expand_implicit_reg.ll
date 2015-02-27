@@ -38,13 +38,13 @@ entry:
 define <8 x i8> @vtbx4(<8 x i8>* %A, %struct.__neon_int8x8x4_t* %B, <8 x i8>* %C) nounwind {
 ; CHECK: vtbx4:
 ; CHECK: VTBX4 {{.*}}, pred:14, pred:%noreg, %Q{{[0-9]+}}_Q{{[0-9]+}}<imp-use>
-	%tmp1 = load <8 x i8>* %A
-	%tmp2 = load %struct.__neon_int8x8x4_t* %B
+	%tmp1 = load <8 x i8>, <8 x i8>* %A
+	%tmp2 = load %struct.__neon_int8x8x4_t, %struct.__neon_int8x8x4_t* %B
         %tmp3 = extractvalue %struct.__neon_int8x8x4_t %tmp2, 0
         %tmp4 = extractvalue %struct.__neon_int8x8x4_t %tmp2, 1
         %tmp5 = extractvalue %struct.__neon_int8x8x4_t %tmp2, 2
         %tmp6 = extractvalue %struct.__neon_int8x8x4_t %tmp2, 3
-	%tmp7 = load <8 x i8>* %C
+	%tmp7 = load <8 x i8>, <8 x i8>* %C
 	%tmp8 = call <8 x i8> @llvm.arm.neon.vtbx4(<8 x i8> %tmp1, <8 x i8> %tmp3, <8 x i8> %tmp4, <8 x i8> %tmp5, <8 x i8> %tmp6, <8 x i8> %tmp7)
   call void @bar2(%struct.__neon_int8x8x4_t %tmp2, <8 x i8> %tmp8)
 	ret <8 x i8> %tmp8

@@ -11,7 +11,7 @@ declare float @llvm.AMDIL.fraction.f32(float) nounwind readnone
 ; SI: v_fract_f32
 ; EG: FRACT
 define void @fract_f32(float addrspace(1)* %out, float addrspace(1)* %src) nounwind {
-  %val = load float addrspace(1)* %src, align 4
+  %val = load float, float addrspace(1)* %src, align 4
   %fract = call float @llvm.AMDGPU.fract.f32(float %val) nounwind readnone
   store float %fract, float addrspace(1)* %out, align 4
   ret void
@@ -21,7 +21,7 @@ define void @fract_f32(float addrspace(1)* %out, float addrspace(1)* %src) nounw
 ; SI: v_fract_f32
 ; EG: FRACT
 define void @fract_f32_legacy_amdil(float addrspace(1)* %out, float addrspace(1)* %src) nounwind {
-  %val = load float addrspace(1)* %src, align 4
+  %val = load float, float addrspace(1)* %src, align 4
   %fract = call float @llvm.AMDIL.fraction.f32(float %val) nounwind readnone
   store float %fract, float addrspace(1)* %out, align 4
   ret void

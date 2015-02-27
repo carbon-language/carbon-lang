@@ -6,7 +6,7 @@
 
 define i64 @test_acreg_copy(i32 %a0, i32 %a1, i32 %a2, i32 %a3) {
 entry:
-  %0 = load i64* @g1, align 8
+  %0 = load i64, i64* @g1, align 8
   %1 = tail call i64 @llvm.mips.maddu(i64 %0, i32 %a0, i32 %a1)
   %2 = tail call i64 @llvm.mips.maddu(i64 %0, i32 %a2, i32 %a3)
   store i64 %1, i64* @g1, align 8
@@ -32,8 +32,8 @@ entry:
   %sext = sext <2 x i1> %cmp3 to <2 x i16>
   store <2 x i16> %sext, <2 x i16>* @g4, align 4
   tail call void @foo1()
-  %2 = load <2 x i16>* @g5, align 4
-  %3 = load <2 x i16>* @g6, align 4
+  %2 = load <2 x i16>, <2 x i16>* @g5, align 4
+  %3 = load <2 x i16>, <2 x i16>* @g6, align 4
   %or = select <2 x i1> %cmp3, <2 x i16> %2, <2 x i16> %3
   %4 = bitcast <2 x i16> %or to i32
   %.fca.0.insert = insertvalue { i32 } undef, i32 %4, 0

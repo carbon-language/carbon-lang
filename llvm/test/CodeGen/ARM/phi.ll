@@ -19,7 +19,7 @@ rblock:
 end:
 ; CHECK: ldr	r0, [r1, #4]
   %gep = phi i32* [%lbranch, %lblock], [%rbranch, %rblock]
-  %r = load i32* %gep
+  %r = load i32, i32* %gep
 ; CHECK-NEXT: bx	lr
   ret i32 %r
 }

@@ -24,7 +24,7 @@ define i32 @test(i32 %X, ...) {
         %tmp = va_arg i8** %ap, i32             ; <i32> [#uses=1]
 
         ; Demonstrate usage of llvm.va_copy and llvm_va_end
-        %apv = load i8** %ap            ; <i8*> [#uses=1]
+        %apv = load i8*, i8** %ap            ; <i8*> [#uses=1]
         %va0.upgrd.2 = bitcast i8** %aq to i8*          ; <i8*> [#uses=1]
         %va1.upgrd.3 = bitcast i8* %apv to i8*          ; <i8*> [#uses=1]
         call void @llvm.va_copy( i8* %va0.upgrd.2, i8* %va1.upgrd.3 )

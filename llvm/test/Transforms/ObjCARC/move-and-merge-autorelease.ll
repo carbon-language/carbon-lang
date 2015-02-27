@@ -35,10 +35,10 @@ declare i8* @objc_autorelease(i8*)
 
 define hidden %0* @foo(%1* %arg, %3* %arg3) {
 bb:
-  %tmp16 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_620", align 8
+  %tmp16 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_620", align 8
   %tmp17 = bitcast %3* %arg3 to i8*
   %tmp18 = call %4* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to %4* (i8*, i8*)*)(i8* %tmp17, i8* %tmp16)
-  %tmp19 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_622", align 8
+  %tmp19 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_622", align 8
   %tmp20 = bitcast %4* %tmp18 to i8*
   %tmp21 = call %5* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to %5* (i8*, i8*)*)(i8* %tmp20, i8* %tmp19)
   %tmp22 = bitcast %5* %tmp21 to i8*
@@ -48,11 +48,11 @@ bb:
   br i1 %tmp26, label %bb81, label %bb27
 
 bb27:                                             ; preds = %bb
-  %tmp29 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_11", align 8
+  %tmp29 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_11", align 8
   %tmp30 = bitcast %1* %arg to i8*
   %tmp31 = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %tmp30, i8* %tmp29)
   %tmp34 = call i8* @objc_retain(i8* %tmp31) nounwind
-  %tmp37 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_421455", align 8
+  %tmp37 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_421455", align 8
   %tmp39 = call %0* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to %0* (i8*, i8*)*)(i8* %tmp34, i8* %tmp37)
   %tmp40 = bitcast %0* %tmp39 to i8*
   %tmp41 = call i8* @objc_retain(i8* %tmp40) nounwind
@@ -61,7 +61,7 @@ bb27:                                             ; preds = %bb
   br i1 %tmp44, label %bb45, label %bb55
 
 bb45:                                             ; preds = %bb27
-  %tmp47 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_624", align 8
+  %tmp47 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_624", align 8
   %tmp49 = call %0* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to %0* (i8*, i8*)*)(i8* %tmp34, i8* %tmp47)
   %tmp51 = bitcast %0* %tmp49 to i8*
   %tmp52 = call i8* @objc_retain(i8* %tmp51) nounwind
@@ -74,14 +74,14 @@ bb55:                                             ; preds = %bb27, %bb45
   br i1 %tmp57, label %bb76, label %bb58
 
 bb58:                                             ; preds = %bb55
-  %tmp60 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_598", align 8
+  %tmp60 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_598", align 8
   %tmp61 = bitcast %0* %tmp13.0 to i8*
   %tmp62 = call signext i8 bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8 (i8*, i8*)*)(i8* %tmp61, i8* %tmp60)
   %tmp64 = icmp eq i8 %tmp62, 0
   br i1 %tmp64, label %bb76, label %bb65
 
 bb65:                                             ; preds = %bb58
-  %tmp68 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_626", align 8
+  %tmp68 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_626", align 8
   %tmp69 = bitcast %0* %tmp13.0 to i8*
   %tmp70 = call %0* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to %0* (i8*, i8*, %5*)*)(i8* %tmp69, i8* %tmp68, %5* %tmp24)
   %tmp72 = bitcast %0* %tmp70 to i8*

@@ -12,7 +12,7 @@ define i32 @test_load(i32* %a) sanitize_address {
 ; CHECK:   lshr i64 %[[LOAD_ADDR]], 3
 ; CHECK:   {{or|add}}
 ; CHECK:   %[[LOAD_SHADOW_PTR:[^ ]*]] = inttoptr
-; CHECK:   %[[LOAD_SHADOW:[^ ]*]] = load i8* %[[LOAD_SHADOW_PTR]]
+; CHECK:   %[[LOAD_SHADOW:[^ ]*]] = load i8, i8* %[[LOAD_SHADOW_PTR]]
 ; CHECK:   icmp ne i8
 ; CHECK:   br i1 %{{.*}}, label %{{.*}}, label %{{.*}}!prof ![[PROF:[0-9]+]]
 ;
@@ -28,13 +28,13 @@ define i32 @test_load(i32* %a) sanitize_address {
 ; CHECK:   unreachable
 ;
 ; The actual load.
-; CHECK:   %tmp1 = load i32* %a
+; CHECK:   %tmp1 = load i32, i32* %a
 ; CHECK:   ret i32 %tmp1
 
 
 
 entry:
-  %tmp1 = load i32* %a, align 4
+  %tmp1 = load i32, i32* %a, align 4
   ret i32 %tmp1
 }
 
@@ -45,7 +45,7 @@ define void @test_store(i32* %a) sanitize_address {
 ; CHECK:   lshr i64 %[[STORE_ADDR]], 3
 ; CHECK:   {{or|add}}
 ; CHECK:   %[[STORE_SHADOW_PTR:[^ ]*]] = inttoptr
-; CHECK:   %[[STORE_SHADOW:[^ ]*]] = load i8* %[[STORE_SHADOW_PTR]]
+; CHECK:   %[[STORE_SHADOW:[^ ]*]] = load i8, i8* %[[STORE_SHADOW_PTR]]
 ; CHECK:   icmp ne i8
 ; CHECK:   br i1 %{{.*}}, label %{{.*}}, label %{{.*}}
 ;
@@ -103,7 +103,7 @@ entry:
 
 define void @i40test(i40* %a, i40* %b) nounwind uwtable sanitize_address {
   entry:
-  %t = load i40* %a
+  %t = load i40, i40* %a
   store i40 %t, i40* %b, align 8
   ret void
 }
@@ -129,7 +129,7 @@ define void @i64test_align1(i64* %b) nounwind uwtable sanitize_address {
 
 define void @i80test(i80* %a, i80* %b) nounwind uwtable sanitize_address {
   entry:
-  %t = load i80* %a
+  %t = load i80, i80* %a
   store i80 %t, i80* %b, align 8
   ret void
 }
@@ -144,7 +144,7 @@ define void @i80test(i80* %a, i80* %b) nounwind uwtable sanitize_address {
 ; asan should not instrument functions with available_externally linkage.
 define available_externally i32 @f_available_externally(i32* %a) sanitize_address  {
 entry:
-  %tmp1 = load i32* %a
+  %tmp1 = load i32, i32* %a
   ret i32 %tmp1
 }
 ; CHECK-LABEL: @f_available_externally

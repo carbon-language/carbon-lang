@@ -16,7 +16,7 @@
 
 define arm_aapcs_vfpcc i32 @main() nounwind {
 entry:
-  %0 = load i32* @i, align 4
+  %0 = load i32, i32* @i, align 4
   switch i32 %0, label %bb2 [
     i32 12, label %bb
     i32 13, label %bb1

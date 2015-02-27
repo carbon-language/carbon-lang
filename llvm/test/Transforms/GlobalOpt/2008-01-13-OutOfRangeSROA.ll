@@ -11,6 +11,6 @@ define void @test(i32 %X) {
 
 define double @get(i32 %X) {
 	%P = getelementptr [16 x [31 x double]], [16 x [31 x double]]* @mm, i32 0, i32 0, i32 %X
-	%V = load double* %P
+	%V = load double, double* %P
 	ret double %V
 }

@@ -10,7 +10,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define fastcc void @init_net() nounwind {
 entry:
-  %0 = load i32* @numf2s, align 4                 ; <i32> [#uses=1]
+  %0 = load i32, i32* @numf2s, align 4                 ; <i32> [#uses=1]
   %mallocsize2 = shl i32 %0, 4                    ; <i32> [#uses=1]
   %malloccall3 = tail call i8* @malloc(i32 %mallocsize2) nounwind ; <i8*> [#uses=1]
   %1 = bitcast i8* %malloccall3 to %struct.xyz*   ; <%struct.xyz*> [#uses=1]
@@ -20,7 +20,7 @@ entry:
 
 define fastcc void @load_train(i8* %trainfile, i32 %mode, i32 %objects) nounwind {
 entry:
-  %0 = load %struct.xyz** @Y, align 8             ; <%struct.xyz*> [#uses=0]
+  %0 = load %struct.xyz*, %struct.xyz** @Y, align 8             ; <%struct.xyz*> [#uses=0]
   ret void
 }
 

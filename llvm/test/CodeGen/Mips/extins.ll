@@ -16,7 +16,7 @@ entry:
 ; 16-NOT: ins ${{[0-9]+}}
   %and = shl i32 %s, 5
   %shl = and i32 %and, 16352
-  %tmp3 = load i32* %d, align 4
+  %tmp3 = load i32, i32* %d, align 4
   %and5 = and i32 %tmp3, -16353
   %or = or i32 %and5, %shl
   store i32 %or, i32* %d, align 4

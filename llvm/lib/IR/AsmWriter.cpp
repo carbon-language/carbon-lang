@@ -2898,10 +2898,14 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << ", ";
     TypePrinter.print(I.getType(), Out);
   } else if (Operand) {   // Print the normal way.
-    if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&I)) {
+    if (const auto *GEP = dyn_cast<GetElementPtrInst>(&I)) {
       Out << ' ';
       TypePrinter.print(GEP->getSourceElementType(), Out);
       Out << ',';
+    } else if (const auto *LI = dyn_cast<LoadInst>(&I)) {
+      Out << ' ';
+      TypePrinter.print(LI->getType(), Out);
+      Out << ", ";
     }
 
     // PrintAllTypes - Instructions who have operands of all the same type

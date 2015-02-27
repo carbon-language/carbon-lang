@@ -5,22 +5,22 @@
 @var = external global i32
 
 define void @f() {
-  %val1 = load volatile i32* @var
-  %val2 = load volatile i32* @var
-  %val3 = load volatile i32* @var
-  %val4 = load volatile i32* @var
-  %val5 = load volatile i32* @var
-  %val6 = load volatile i32* @var
-  %val7 = load volatile i32* @var
-  %val8 = load volatile i32* @var
-  %val9 = load volatile i32* @var
-  %val10 = load volatile i32* @var
-  %val11 = load volatile i32* @var
-  %val12 = load volatile i32* @var
-  %val13 = load volatile i32* @var
-  %val14 = load volatile i32* @var
-  %val15 = load volatile i32* @var
-  %val16 = load volatile i32* @var
+  %val1 = load volatile i32, i32* @var
+  %val2 = load volatile i32, i32* @var
+  %val3 = load volatile i32, i32* @var
+  %val4 = load volatile i32, i32* @var
+  %val5 = load volatile i32, i32* @var
+  %val6 = load volatile i32, i32* @var
+  %val7 = load volatile i32, i32* @var
+  %val8 = load volatile i32, i32* @var
+  %val9 = load volatile i32, i32* @var
+  %val10 = load volatile i32, i32* @var
+  %val11 = load volatile i32, i32* @var
+  %val12 = load volatile i32, i32* @var
+  %val13 = load volatile i32, i32* @var
+  %val14 = load volatile i32, i32* @var
+  %val15 = load volatile i32, i32* @var
+  %val16 = load volatile i32, i32* @var
   store volatile i32 %val1, i32* @var
   store volatile i32 %val2, i32* @var
   store volatile i32 %val3, i32* @var

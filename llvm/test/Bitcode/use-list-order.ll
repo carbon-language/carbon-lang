@@ -79,13 +79,13 @@ entry:
 
 define i1 @loadb() {
 entry:
-  %b = load i1* @b
+  %b = load i1, i1* @b
   ret i1 %b
 }
 
 define i1 @loada() {
 entry:
-  %a = load i1* getelementptr ([4 x i1]* @a, i64 0, i64 2)
+  %a = load i1, i1* getelementptr ([4 x i1]* @a, i64 0, i64 2)
   ret i1 %a
 }
 
@@ -115,7 +115,7 @@ first:
 
 define i4 @globalAndFunctionFunctionUser() {
 entry:
-  %local = load i4* @globalAndFunction
+  %local = load i4, i4* @globalAndFunction
   ret i4 %local
 }
 

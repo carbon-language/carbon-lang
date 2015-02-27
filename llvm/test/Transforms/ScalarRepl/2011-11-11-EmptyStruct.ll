@@ -19,7 +19,7 @@ entry:
   %1 = bitcast %struct.S* %ret to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* %1, i64 8, i32 8, i1 false)
   %2 = bitcast %struct.S* %retval to double*
-  %3 = load double* %2, align 1
+  %3 = load double, double* %2, align 1
   ret double %3
 }
 

@@ -15,10 +15,10 @@ define void @exact(i32* %x) {
   %idx3 = getelementptr inbounds i32, i32* %x, i64 2
   %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
-  %load1 = load i32* %idx1, align 4
-  %load2 = load i32* %idx2, align 4
-  %load3 = load i32* %idx3, align 4
-  %load4 = load i32* %idx4, align 4
+  %load1 = load i32, i32* %idx1, align 4
+  %load2 = load i32, i32* %idx2, align 4
+  %load3 = load i32, i32* %idx3, align 4
+  %load4 = load i32, i32* %idx4, align 4
 
   %op1 = lshr exact i32 %load1, 1
   %op2 = lshr exact i32 %load2, 1
@@ -41,10 +41,10 @@ define void @not_exact(i32* %x) {
   %idx3 = getelementptr inbounds i32, i32* %x, i64 2
   %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
-  %load1 = load i32* %idx1, align 4
-  %load2 = load i32* %idx2, align 4
-  %load3 = load i32* %idx3, align 4
-  %load4 = load i32* %idx4, align 4
+  %load1 = load i32, i32* %idx1, align 4
+  %load2 = load i32, i32* %idx2, align 4
+  %load3 = load i32, i32* %idx3, align 4
+  %load4 = load i32, i32* %idx4, align 4
 
   %op1 = lshr exact i32 %load1, 1
   %op2 = lshr i32 %load2, 1
@@ -67,10 +67,10 @@ define void @nsw(i32* %x) {
   %idx3 = getelementptr inbounds i32, i32* %x, i64 2
   %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
-  %load1 = load i32* %idx1, align 4
-  %load2 = load i32* %idx2, align 4
-  %load3 = load i32* %idx3, align 4
-  %load4 = load i32* %idx4, align 4
+  %load1 = load i32, i32* %idx1, align 4
+  %load2 = load i32, i32* %idx2, align 4
+  %load3 = load i32, i32* %idx3, align 4
+  %load4 = load i32, i32* %idx4, align 4
 
   %op1 = add nsw i32 %load1, 1
   %op2 = add nsw i32 %load2, 1
@@ -93,10 +93,10 @@ define void @not_nsw(i32* %x) {
   %idx3 = getelementptr inbounds i32, i32* %x, i64 2
   %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
-  %load1 = load i32* %idx1, align 4
-  %load2 = load i32* %idx2, align 4
-  %load3 = load i32* %idx3, align 4
-  %load4 = load i32* %idx4, align 4
+  %load1 = load i32, i32* %idx1, align 4
+  %load2 = load i32, i32* %idx2, align 4
+  %load3 = load i32, i32* %idx3, align 4
+  %load4 = load i32, i32* %idx4, align 4
 
   %op1 = add nsw i32 %load1, 1
   %op2 = add nsw i32 %load2, 1
@@ -119,10 +119,10 @@ define void @nuw(i32* %x) {
   %idx3 = getelementptr inbounds i32, i32* %x, i64 2
   %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
-  %load1 = load i32* %idx1, align 4
-  %load2 = load i32* %idx2, align 4
-  %load3 = load i32* %idx3, align 4
-  %load4 = load i32* %idx4, align 4
+  %load1 = load i32, i32* %idx1, align 4
+  %load2 = load i32, i32* %idx2, align 4
+  %load3 = load i32, i32* %idx3, align 4
+  %load4 = load i32, i32* %idx4, align 4
 
   %op1 = add nuw i32 %load1, 1
   %op2 = add nuw i32 %load2, 1
@@ -145,10 +145,10 @@ define void @not_nuw(i32* %x) {
   %idx3 = getelementptr inbounds i32, i32* %x, i64 2
   %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
-  %load1 = load i32* %idx1, align 4
-  %load2 = load i32* %idx2, align 4
-  %load3 = load i32* %idx3, align 4
-  %load4 = load i32* %idx4, align 4
+  %load1 = load i32, i32* %idx1, align 4
+  %load2 = load i32, i32* %idx2, align 4
+  %load3 = load i32, i32* %idx3, align 4
+  %load4 = load i32, i32* %idx4, align 4
 
   %op1 = add nuw i32 %load1, 1
   %op2 = add i32 %load2, 1
@@ -171,10 +171,10 @@ define void @nnan(float* %x) {
   %idx3 = getelementptr inbounds float, float* %x, i64 2
   %idx4 = getelementptr inbounds float, float* %x, i64 3
 
-  %load1 = load float* %idx1, align 4
-  %load2 = load float* %idx2, align 4
-  %load3 = load float* %idx3, align 4
-  %load4 = load float* %idx4, align 4
+  %load1 = load float, float* %idx1, align 4
+  %load2 = load float, float* %idx2, align 4
+  %load3 = load float, float* %idx3, align 4
+  %load4 = load float, float* %idx4, align 4
 
   %op1 = fadd fast nnan float %load1, 1.0
   %op2 = fadd nnan ninf float %load2, 1.0
@@ -197,10 +197,10 @@ define void @not_nnan(float* %x) {
   %idx3 = getelementptr inbounds float, float* %x, i64 2
   %idx4 = getelementptr inbounds float, float* %x, i64 3
 
-  %load1 = load float* %idx1, align 4
-  %load2 = load float* %idx2, align 4
-  %load3 = load float* %idx3, align 4
-  %load4 = load float* %idx4, align 4
+  %load1 = load float, float* %idx1, align 4
+  %load2 = load float, float* %idx2, align 4
+  %load3 = load float, float* %idx3, align 4
+  %load4 = load float, float* %idx4, align 4
 
   %op1 = fadd nnan float %load1, 1.0
   %op2 = fadd ninf float %load2, 1.0
@@ -223,10 +223,10 @@ define void @only_fast(float* %x) {
   %idx3 = getelementptr inbounds float, float* %x, i64 2
   %idx4 = getelementptr inbounds float, float* %x, i64 3
 
-  %load1 = load float* %idx1, align 4
-  %load2 = load float* %idx2, align 4
-  %load3 = load float* %idx3, align 4
-  %load4 = load float* %idx4, align 4
+  %load1 = load float, float* %idx1, align 4
+  %load2 = load float, float* %idx2, align 4
+  %load3 = load float, float* %idx3, align 4
+  %load4 = load float, float* %idx4, align 4
 
   %op1 = fadd fast nnan float %load1, 1.0
   %op2 = fadd fast nnan ninf float %load2, 1.0
@@ -249,10 +249,10 @@ define void @only_arcp(float* %x) {
   %idx3 = getelementptr inbounds float, float* %x, i64 2
   %idx4 = getelementptr inbounds float, float* %x, i64 3
 
-  %load1 = load float* %idx1, align 4
-  %load2 = load float* %idx2, align 4
-  %load3 = load float* %idx3, align 4
-  %load4 = load float* %idx4, align 4
+  %load1 = load float, float* %idx1, align 4
+  %load2 = load float, float* %idx2, align 4
+  %load3 = load float, float* %idx3, align 4
+  %load4 = load float, float* %idx4, align 4
 
   %op1 = fadd fast float %load1, 1.0
   %op2 = fadd fast float %load2, 1.0
@@ -276,10 +276,10 @@ define void @addsub_all_nsw(i32* %x) {
   %idx3 = getelementptr inbounds i32, i32* %x, i64 2
   %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
-  %load1 = load i32* %idx1, align 4
-  %load2 = load i32* %idx2, align 4
-  %load3 = load i32* %idx3, align 4
-  %load4 = load i32* %idx4, align 4
+  %load1 = load i32, i32* %idx1, align 4
+  %load2 = load i32, i32* %idx2, align 4
+  %load3 = load i32, i32* %idx3, align 4
+  %load4 = load i32, i32* %idx4, align 4
 
   %op1 = add nsw i32 %load1, 1
   %op2 = sub nsw i32 %load2, 1
@@ -303,10 +303,10 @@ define void @addsub_some_nsw(i32* %x) {
   %idx3 = getelementptr inbounds i32, i32* %x, i64 2
   %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
-  %load1 = load i32* %idx1, align 4
-  %load2 = load i32* %idx2, align 4
-  %load3 = load i32* %idx3, align 4
-  %load4 = load i32* %idx4, align 4
+  %load1 = load i32, i32* %idx1, align 4
+  %load2 = load i32, i32* %idx2, align 4
+  %load3 = load i32, i32* %idx3, align 4
+  %load4 = load i32, i32* %idx4, align 4
 
   %op1 = add nsw i32 %load1, 1
   %op2 = sub nsw i32 %load2, 1
@@ -330,10 +330,10 @@ define void @addsub_no_nsw(i32* %x) {
   %idx3 = getelementptr inbounds i32, i32* %x, i64 2
   %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
-  %load1 = load i32* %idx1, align 4
-  %load2 = load i32* %idx2, align 4
-  %load3 = load i32* %idx3, align 4
-  %load4 = load i32* %idx4, align 4
+  %load1 = load i32, i32* %idx1, align 4
+  %load2 = load i32, i32* %idx2, align 4
+  %load3 = load i32, i32* %idx3, align 4
+  %load4 = load i32, i32* %idx4, align 4
 
   %op1 = add i32 %load1, 1
   %op2 = sub nsw i32 %load2, 1

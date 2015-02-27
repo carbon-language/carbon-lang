@@ -99,7 +99,7 @@ declare <2 x double> @llvm.x86.avx512.rsqrt28.sd(<2 x double>, <2 x double>, <2 
 
 define <2 x double> @test_rsqrt28_sd_maskz_mem(<2 x double> %a0, double* %ptr ) {
   ; CHECK: vrsqrt28sd (%rdi), %xmm0, %xmm0 {%k1} {z} # encoding: [0x62,0xf2,0xfd,0x89,0xcd,0x07]
-  %mem = load double * %ptr, align 8
+  %mem = load double , double * %ptr, align 8
   %mem_v = insertelement <2 x double> undef, double %mem, i32 0
   %res = call <2 x double> @llvm.x86.avx512.rsqrt28.sd(<2 x double> %a0, <2 x double> %mem_v, <2 x double> zeroinitializer, i8 7, i32 4) ; 
   ret <2 x double> %res
@@ -108,7 +108,7 @@ define <2 x double> @test_rsqrt28_sd_maskz_mem(<2 x double> %a0, double* %ptr ) 
 define <2 x double> @test_rsqrt28_sd_maskz_mem_offset(<2 x double> %a0, double* %ptr ) {
   ; CHECK: vrsqrt28sd 144(%rdi), %xmm0, %xmm0 {%k1} {z} # encoding: [0x62,0xf2,0xfd,0x89,0xcd,0x47,0x12]
   %ptr1 = getelementptr double, double* %ptr, i32 18
-  %mem = load double * %ptr1, align 8
+  %mem = load double , double * %ptr1, align 8
   %mem_v = insertelement <2 x double> undef, double %mem, i32 0
   %res = call <2 x double> @llvm.x86.avx512.rsqrt28.sd(<2 x double> %a0, <2 x double> %mem_v, <2 x double> zeroinitializer, i8 7, i32 4) ;
   ret <2 x double> %res

@@ -36,7 +36,7 @@ eh.resume:
 }
 
 define internal i32 @filt_g(i8*, i8*) {
-  %g = load i32* @g
+  %g = load i32, i32* @g
   ret i32 %g
 }
 

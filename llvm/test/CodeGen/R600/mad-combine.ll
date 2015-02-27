@@ -37,9 +37,9 @@ define void @combine_to_mad_f32_0(float addrspace(1)* noalias %out, float addrsp
   %gep.2 = getelementptr float, float addrspace(1)* %gep.0, i32 2
   %gep.out = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %a = load float addrspace(1)* %gep.0
-  %b = load float addrspace(1)* %gep.1
-  %c = load float addrspace(1)* %gep.2
+  %a = load float, float addrspace(1)* %gep.0
+  %b = load float, float addrspace(1)* %gep.1
+  %c = load float, float addrspace(1)* %gep.2
 
   %mul = fmul float %a, %b
   %fma = fadd float %mul, %c
@@ -76,10 +76,10 @@ define void @combine_to_mad_f32_0_2use(float addrspace(1)* noalias %out, float a
   %gep.out.0 = getelementptr float, float addrspace(1)* %out, i32 %tid
   %gep.out.1 = getelementptr float, float addrspace(1)* %gep.out.0, i32 1
 
-  %a = load float addrspace(1)* %gep.0
-  %b = load float addrspace(1)* %gep.1
-  %c = load float addrspace(1)* %gep.2
-  %d = load float addrspace(1)* %gep.3
+  %a = load float, float addrspace(1)* %gep.0
+  %b = load float, float addrspace(1)* %gep.1
+  %c = load float, float addrspace(1)* %gep.2
+  %d = load float, float addrspace(1)* %gep.3
 
   %mul = fmul float %a, %b
   %fma0 = fadd float %mul, %c
@@ -110,9 +110,9 @@ define void @combine_to_mad_f32_1(float addrspace(1)* noalias %out, float addrsp
   %gep.2 = getelementptr float, float addrspace(1)* %gep.0, i32 2
   %gep.out = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %a = load float addrspace(1)* %gep.0
-  %b = load float addrspace(1)* %gep.1
-  %c = load float addrspace(1)* %gep.2
+  %a = load float, float addrspace(1)* %gep.0
+  %b = load float, float addrspace(1)* %gep.1
+  %c = load float, float addrspace(1)* %gep.2
 
   %mul = fmul float %a, %b
   %fma = fadd float %c, %mul
@@ -140,9 +140,9 @@ define void @combine_to_mad_fsub_0_f32(float addrspace(1)* noalias %out, float a
   %gep.2 = getelementptr float, float addrspace(1)* %gep.0, i32 2
   %gep.out = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %a = load float addrspace(1)* %gep.0
-  %b = load float addrspace(1)* %gep.1
-  %c = load float addrspace(1)* %gep.2
+  %a = load float, float addrspace(1)* %gep.0
+  %b = load float, float addrspace(1)* %gep.1
+  %c = load float, float addrspace(1)* %gep.2
 
   %mul = fmul float %a, %b
   %fma = fsub float %mul, %c
@@ -179,10 +179,10 @@ define void @combine_to_mad_fsub_0_f32_2use(float addrspace(1)* noalias %out, fl
   %gep.out.0 = getelementptr float, float addrspace(1)* %out, i32 %tid
   %gep.out.1 = getelementptr float, float addrspace(1)* %gep.out.0, i32 1
 
-  %a = load float addrspace(1)* %gep.0
-  %b = load float addrspace(1)* %gep.1
-  %c = load float addrspace(1)* %gep.2
-  %d = load float addrspace(1)* %gep.3
+  %a = load float, float addrspace(1)* %gep.0
+  %b = load float, float addrspace(1)* %gep.1
+  %c = load float, float addrspace(1)* %gep.2
+  %d = load float, float addrspace(1)* %gep.3
 
   %mul = fmul float %a, %b
   %fma0 = fsub float %mul, %c
@@ -212,9 +212,9 @@ define void @combine_to_mad_fsub_1_f32(float addrspace(1)* noalias %out, float a
   %gep.2 = getelementptr float, float addrspace(1)* %gep.0, i32 2
   %gep.out = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %a = load float addrspace(1)* %gep.0
-  %b = load float addrspace(1)* %gep.1
-  %c = load float addrspace(1)* %gep.2
+  %a = load float, float addrspace(1)* %gep.0
+  %b = load float, float addrspace(1)* %gep.1
+  %c = load float, float addrspace(1)* %gep.2
 
   %mul = fmul float %a, %b
   %fma = fsub float %c, %mul
@@ -250,10 +250,10 @@ define void @combine_to_mad_fsub_1_f32_2use(float addrspace(1)* noalias %out, fl
   %gep.out.0 = getelementptr float, float addrspace(1)* %out, i32 %tid
   %gep.out.1 = getelementptr float, float addrspace(1)* %gep.out.0, i32 1
 
-  %a = load float addrspace(1)* %gep.0
-  %b = load float addrspace(1)* %gep.1
-  %c = load float addrspace(1)* %gep.2
-  %d = load float addrspace(1)* %gep.3
+  %a = load float, float addrspace(1)* %gep.0
+  %b = load float, float addrspace(1)* %gep.1
+  %c = load float, float addrspace(1)* %gep.2
+  %d = load float, float addrspace(1)* %gep.3
 
   %mul = fmul float %a, %b
   %fma0 = fsub float %c, %mul
@@ -284,9 +284,9 @@ define void @combine_to_mad_fsub_2_f32(float addrspace(1)* noalias %out, float a
   %gep.2 = getelementptr float, float addrspace(1)* %gep.0, i32 2
   %gep.out = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %a = load float addrspace(1)* %gep.0
-  %b = load float addrspace(1)* %gep.1
-  %c = load float addrspace(1)* %gep.2
+  %a = load float, float addrspace(1)* %gep.0
+  %b = load float, float addrspace(1)* %gep.1
+  %c = load float, float addrspace(1)* %gep.2
 
   %mul = fmul float %a, %b
   %mul.neg = fsub float -0.0, %mul
@@ -324,10 +324,10 @@ define void @combine_to_mad_fsub_2_f32_2uses_neg(float addrspace(1)* noalias %ou
   %gep.out.0 = getelementptr float, float addrspace(1)* %out, i32 %tid
   %gep.out.1 = getelementptr float, float addrspace(1)* %gep.out.0, i32 1
 
-  %a = load float addrspace(1)* %gep.0
-  %b = load float addrspace(1)* %gep.1
-  %c = load float addrspace(1)* %gep.2
-  %d = load float addrspace(1)* %gep.3
+  %a = load float, float addrspace(1)* %gep.0
+  %b = load float, float addrspace(1)* %gep.1
+  %c = load float, float addrspace(1)* %gep.2
+  %d = load float, float addrspace(1)* %gep.3
 
   %mul = fmul float %a, %b
   %mul.neg = fsub float -0.0, %mul
@@ -367,10 +367,10 @@ define void @combine_to_mad_fsub_2_f32_2uses_mul(float addrspace(1)* noalias %ou
   %gep.out.0 = getelementptr float, float addrspace(1)* %out, i32 %tid
   %gep.out.1 = getelementptr float, float addrspace(1)* %gep.out.0, i32 1
 
-  %a = load float addrspace(1)* %gep.0
-  %b = load float addrspace(1)* %gep.1
-  %c = load float addrspace(1)* %gep.2
-  %d = load float addrspace(1)* %gep.3
+  %a = load float, float addrspace(1)* %gep.0
+  %b = load float, float addrspace(1)* %gep.1
+  %c = load float, float addrspace(1)* %gep.2
+  %d = load float, float addrspace(1)* %gep.3
 
   %mul = fmul float %a, %b
   %mul.neg = fsub float -0.0, %mul
@@ -412,11 +412,11 @@ define void @aggressive_combine_to_mad_fsub_0_f32(float addrspace(1)* noalias %o
   %gep.4 = getelementptr float, float addrspace(1)* %gep.0, i32 4
   %gep.out = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %x = load float addrspace(1)* %gep.0
-  %y = load float addrspace(1)* %gep.1
-  %z = load float addrspace(1)* %gep.2
-  %u = load float addrspace(1)* %gep.3
-  %v = load float addrspace(1)* %gep.4
+  %x = load float, float addrspace(1)* %gep.0
+  %y = load float, float addrspace(1)* %gep.1
+  %z = load float, float addrspace(1)* %gep.2
+  %u = load float, float addrspace(1)* %gep.3
+  %v = load float, float addrspace(1)* %gep.4
 
   %tmp0 = fmul float %u, %v
   %tmp1 = call float @llvm.fma.f32(float %x, float %y, float %tmp0) #0
@@ -458,11 +458,11 @@ define void @aggressive_combine_to_mad_fsub_1_f32(float addrspace(1)* noalias %o
   %gep.4 = getelementptr float, float addrspace(1)* %gep.0, i32 4
   %gep.out = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %x = load float addrspace(1)* %gep.0
-  %y = load float addrspace(1)* %gep.1
-  %z = load float addrspace(1)* %gep.2
-  %u = load float addrspace(1)* %gep.3
-  %v = load float addrspace(1)* %gep.4
+  %x = load float, float addrspace(1)* %gep.0
+  %y = load float, float addrspace(1)* %gep.1
+  %z = load float, float addrspace(1)* %gep.2
+  %u = load float, float addrspace(1)* %gep.3
+  %v = load float, float addrspace(1)* %gep.4
 
   %tmp0 = fmul float %u, %v
   %tmp1 = call float @llvm.fma.f32(float %y, float %z, float %tmp0) #0
@@ -503,11 +503,11 @@ define void @aggressive_combine_to_mad_fsub_2_f32(float addrspace(1)* noalias %o
   %gep.4 = getelementptr float, float addrspace(1)* %gep.0, i32 4
   %gep.out = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %x = load float addrspace(1)* %gep.0
-  %y = load float addrspace(1)* %gep.1
-  %z = load float addrspace(1)* %gep.2
-  %u = load float addrspace(1)* %gep.3
-  %v = load float addrspace(1)* %gep.4
+  %x = load float, float addrspace(1)* %gep.0
+  %y = load float, float addrspace(1)* %gep.1
+  %z = load float, float addrspace(1)* %gep.2
+  %u = load float, float addrspace(1)* %gep.3
+  %v = load float, float addrspace(1)* %gep.4
 
   %tmp0 = fmul float %u, %v
   %tmp1 = call float @llvm.fmuladd.f32(float %x, float %y, float %tmp0) #0
@@ -549,11 +549,11 @@ define void @aggressive_combine_to_mad_fsub_3_f32(float addrspace(1)* noalias %o
   %gep.4 = getelementptr float, float addrspace(1)* %gep.0, i32 4
   %gep.out = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %x = load float addrspace(1)* %gep.0
-  %y = load float addrspace(1)* %gep.1
-  %z = load float addrspace(1)* %gep.2
-  %u = load float addrspace(1)* %gep.3
-  %v = load float addrspace(1)* %gep.4
+  %x = load float, float addrspace(1)* %gep.0
+  %y = load float, float addrspace(1)* %gep.1
+  %z = load float, float addrspace(1)* %gep.2
+  %u = load float, float addrspace(1)* %gep.3
+  %v = load float, float addrspace(1)* %gep.4
 
   %tmp0 = fmul float %u, %v
   %tmp1 = call float @llvm.fmuladd.f32(float %y, float %z, float %tmp0) #0

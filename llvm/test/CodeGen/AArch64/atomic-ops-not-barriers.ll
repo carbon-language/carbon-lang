@@ -4,7 +4,7 @@ define i32 @foo(i32* %var, i1 %cond) {
 ; CHECK-LABEL: foo:
   br i1 %cond, label %atomic_ver, label %simple_ver
 simple_ver:
-  %oldval = load i32* %var
+  %oldval = load i32, i32* %var
   %newval = add nsw i32 %oldval, -1
   store i32 %newval, i32* %var
   br label %somewhere

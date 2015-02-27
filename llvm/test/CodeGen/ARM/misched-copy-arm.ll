@@ -19,7 +19,7 @@ for.body:                                         ; preds = %entry, %for.body
   %s.05 = phi i32 [ %mul, %for.body ], [ 0, %entry ]
   %indvars.iv.next = add i32 %indvars.iv, %s
   %arrayidx = getelementptr inbounds i32, i32* %d, i32 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %mul = mul nsw i32 %0, %s.05
   %exitcond = icmp eq i32 %indvars.iv.next, %a
   br i1 %exitcond, label %for.end, label %for.body
@@ -65,7 +65,7 @@ if.end28:                                         ; preds = %if.then24, %while.c
   %dst.1 = phi %struct.rtx_def* [ undef, %if.then24 ], [ %dst.0, %while.cond ], [ %dst.0, %while.cond ]
   %arrayidx30 = getelementptr inbounds %struct.rtx_def, %struct.rtx_def* %dst.1, i32 0, i32 1, i32 0
   %rtx31 = bitcast %union.rtunion_def* %arrayidx30 to %struct.rtx_def**
-  %0 = load %struct.rtx_def** %rtx31, align 4
+  %0 = load %struct.rtx_def*, %struct.rtx_def** %rtx31, align 4
   br label %while.cond
 
 if.then46:                                        ; preds = %while.cond

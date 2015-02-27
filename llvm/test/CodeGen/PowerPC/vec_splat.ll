@@ -14,7 +14,7 @@ define void @splat(%f4* %P, %f4* %Q, float %X) nounwind {
         %tmp2 = insertelement %f4 %tmp, float %X, i32 1         ; <%f4> [#uses=1]
         %tmp4 = insertelement %f4 %tmp2, float %X, i32 2                ; <%f4> [#uses=1]
         %tmp6 = insertelement %f4 %tmp4, float %X, i32 3                ; <%f4> [#uses=1]
-        %q = load %f4* %Q               ; <%f4> [#uses=1]
+        %q = load %f4, %f4* %Q               ; <%f4> [#uses=1]
         %R = fadd %f4 %q, %tmp6          ; <%f4> [#uses=1]
         store %f4 %R, %f4* %P
         ret void
@@ -25,21 +25,21 @@ define void @splat_i4(%i4* %P, %i4* %Q, i32 %X) nounwind {
         %tmp2 = insertelement %i4 %tmp, i32 %X, i32 1           ; <%i4> [#uses=1]
         %tmp4 = insertelement %i4 %tmp2, i32 %X, i32 2          ; <%i4> [#uses=1]
         %tmp6 = insertelement %i4 %tmp4, i32 %X, i32 3          ; <%i4> [#uses=1]
-        %q = load %i4* %Q               ; <%i4> [#uses=1]
+        %q = load %i4, %i4* %Q               ; <%i4> [#uses=1]
         %R = add %i4 %q, %tmp6          ; <%i4> [#uses=1]
         store %i4 %R, %i4* %P
         ret void
 }
 
 define void @splat_imm_i32(%i4* %P, %i4* %Q, i32 %X) nounwind {
-        %q = load %i4* %Q               ; <%i4> [#uses=1]
+        %q = load %i4, %i4* %Q               ; <%i4> [#uses=1]
         %R = add %i4 %q, < i32 -1, i32 -1, i32 -1, i32 -1 >             ; <%i4> [#uses=1]
         store %i4 %R, %i4* %P
         ret void
 }
 
 define void @splat_imm_i16(%i4* %P, %i4* %Q, i32 %X) nounwind {
-        %q = load %i4* %Q               ; <%i4> [#uses=1]
+        %q = load %i4, %i4* %Q               ; <%i4> [#uses=1]
         %R = add %i4 %q, < i32 65537, i32 65537, i32 65537, i32 65537 >         ; <%i4> [#uses=1]
         store %i4 %R, %i4* %P
         ret void
@@ -60,7 +60,7 @@ define void @splat_h(i16 %tmp, <16 x i8>* %dst) nounwind {
 }
 
 define void @spltish(<16 x i8>* %A, <16 x i8>* %B) nounwind {
-        %tmp = load <16 x i8>* %B               ; <<16 x i8>> [#uses=1]
+        %tmp = load <16 x i8>, <16 x i8>* %B               ; <<16 x i8>> [#uses=1]
         %tmp.s = bitcast <16 x i8> %tmp to <16 x i8>            ; <<16 x i8>> [#uses=1]
         %tmp4 = sub <16 x i8> %tmp.s, bitcast (<8 x i16> < i16 15, i16 15, i16 15, i16 15, i16 15, i16
  15, i16 15, i16 15 > to <16 x i8>)             ; <<16 x i8>> [#uses=1]

@@ -22,7 +22,7 @@ bb94.us:		; preds = %bb71.us, %bb53.us
 	store i16 %tmp113.us, i16* null, align 2
 	br label %bb53.us
 bb71.us:		; preds = %bb53.us
-	%tmp80.us = load i8* null, align 1		; <i8> [#uses=1]
+	%tmp80.us = load i8, i8* null, align 1		; <i8> [#uses=1]
 	%tmp8081.us = zext i8 %tmp80.us to i32		; <i32> [#uses=1]
 	%tmp87.us = mul i32 %tmp8081.us, 0		; <i32> [#uses=1]
 	%tmp92.us = add i32 0, %tmp87.us		; <i32> [#uses=1]

@@ -22,7 +22,7 @@ bb:		; preds = %bb1, %bb1
 bb1:		; preds = %bb, %entry
 	%P.0.rec = phi i32 [ 0, %entry ], [ %indvar.next, %bb ]		; <i32> [#uses=2]
 	%P.0 = getelementptr i8, i8* %tmp1, i32 %P.0.rec		; <i8*> [#uses=3]
-	%tmp2 = load i8* %P.0, align 1		; <i8> [#uses=1]
+	%tmp2 = load i8, i8* %P.0, align 1		; <i8> [#uses=1]
 	switch i8 %tmp2, label %bb4 [
 		i8 12, label %bb
 		i8 42, label %bb

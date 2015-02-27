@@ -4,13 +4,13 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; Simple 3-pair chain with loads and stores
 define void @test1(double* %a, double* %b, double* %c) nounwind uwtable readonly {
 entry:
-  %i0 = load double* %a, align 8
-  %i1 = load double* %b, align 8
+  %i0 = load double, double* %a, align 8
+  %i1 = load double, double* %b, align 8
   %mul = fmul double %i0, %i1
   %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
-  %i3 = load double* %arrayidx3, align 8
+  %i3 = load double, double* %arrayidx3, align 8
   %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
-  %i4 = load double* %arrayidx4, align 8
+  %i4 = load double, double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
   store double %mul, double* %c, align 8
   %arrayidx5 = getelementptr inbounds double, double* %c, i64 1
@@ -19,8 +19,8 @@ entry:
 ; CHECK-LABEL: @test1(
 ; CHECK: %i0.v.i0 = bitcast double* %a to <2 x double>*
 ; CHECK: %i1.v.i0 = bitcast double* %b to <2 x double>*
-; CHECK: %i0 = load <2 x double>* %i0.v.i0, align 8
-; CHECK: %i1 = load <2 x double>* %i1.v.i0, align 8
+; CHECK: %i0 = load <2 x double>, <2 x double>* %i0.v.i0, align 8
+; CHECK: %i1 = load <2 x double>, <2 x double>* %i1.v.i0, align 8
 ; CHECK: %mul = fmul <2 x double> %i0, %i1
 ; CHECK: %0 = bitcast double* %c to <2 x double>*
 ; CHECK: store <2 x double> %mul, <2 x double>* %0, align 8

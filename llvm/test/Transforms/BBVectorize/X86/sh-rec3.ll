@@ -19,7 +19,7 @@ entry:
   %arraydecay3 = getelementptr inbounds [4 x i16], [4 x i16]* %Mc, i64 0, i64 0
   %arraydecay5 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 0
   call void @Gsm_Coder(%struct.gsm_state.2.8.39.44.45.55.56.57.58.59.62.63.64.65.74.75.76.77.80.87.92.93.94.95.96.97.110.111.112.113.114.128.130.135.136.137.138.139.140.141.142.143.144.145.148.149.150.151.152.169.170.177.178.179.184.185.186.187.188.201.208.209.219.220.221.223.224.225.230.231.232.233.235.236.237.238.245.246.248.249.272.274.279.280.281.282.283.286.293.298.299.314.315.316.317.318.319.320.321.322.323.324.325.326.327.328.329.330.331.332.333.334.335.336.337.338.339.340.341.342.343.344.345.346.347.348.349.350.351.352.353.565* %s, i16* %source, i16* %arraydecay, i16* %arraydecay1, i16* %arraydecay2, i16* %arraydecay3, i16* undef, i16* %arraydecay5) nounwind
-  %0 = load i64* %LARc28.sub, align 16
+  %0 = load i64, i64* %LARc28.sub, align 16
   %1 = trunc i64 %0 to i32
   %conv1 = lshr i32 %1, 2
   %and = and i32 %conv1, 15
@@ -39,21 +39,21 @@ entry:
   %incdec.ptr42 = getelementptr inbounds i8, i8* %c, i64 4
   store i8 0, i8* %incdec.ptr26, align 1
   %arrayidx52 = getelementptr inbounds [8 x i16], [8 x i16]* %tmpcast, i64 0, i64 7
-  %3 = load i16* %arrayidx52, align 2
+  %3 = load i16, i16* %arrayidx52, align 2
   %conv537 = trunc i16 %3 to i8
   %and54 = and i8 %conv537, 7
   %incdec.ptr57 = getelementptr inbounds i8, i8* %c, i64 5
   store i8 %and54, i8* %incdec.ptr42, align 1
   %incdec.ptr68 = getelementptr inbounds i8, i8* %c, i64 6
   store i8 0, i8* %incdec.ptr57, align 1
-  %4 = load i16* %arraydecay3, align 2
+  %4 = load i16, i16* %arraydecay3, align 2
   %conv748 = trunc i16 %4 to i8
   %and75 = shl i8 %conv748, 5
   %shl76 = and i8 %and75, 96
   %incdec.ptr84 = getelementptr inbounds i8, i8* %c, i64 7
   store i8 %shl76, i8* %incdec.ptr68, align 1
   %arrayidx94 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 1
-  %5 = load i16* %arrayidx94, align 2
+  %5 = load i16, i16* %arrayidx94, align 2
   %conv959 = trunc i16 %5 to i8
   %and96 = shl i8 %conv959, 1
   %shl97 = and i8 %and96, 14
@@ -62,7 +62,7 @@ entry:
   store i8 %or103, i8* %incdec.ptr84, align 1
   %arrayidx115 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 4
   %6 = bitcast i16* %arrayidx115 to i32*
-  %7 = load i32* %6, align 8
+  %7 = load i32, i32* %6, align 8
   %conv11610 = trunc i32 %7 to i8
   %and117 = and i8 %conv11610, 7
   %incdec.ptr120 = getelementptr inbounds i8, i8* %c, i64 9
@@ -77,11 +77,11 @@ entry:
   %incdec.ptr172 = getelementptr inbounds i8, i8* %c, i64 12
   store i8 0, i8* %incdec.ptr157, align 1
   %arrayidx173 = getelementptr inbounds [4 x i16], [4 x i16]* %Nc, i64 0, i64 1
-  %9 = load i16* %arrayidx173, align 2
+  %9 = load i16, i16* %arrayidx173, align 2
   %conv17412 = zext i16 %9 to i32
   %and175 = shl nuw nsw i32 %conv17412, 1
   %arrayidx177 = getelementptr inbounds [4 x i16], [4 x i16]* %bc, i64 0, i64 1
-  %10 = load i16* %arrayidx177, align 2
+  %10 = load i16, i16* %arrayidx177, align 2
   %conv17826 = zext i16 %10 to i32
   %shr17913 = lshr i32 %conv17826, 1
   %and180 = and i32 %shr17913, 1
@@ -90,14 +90,14 @@ entry:
   %incdec.ptr183 = getelementptr inbounds i8, i8* %c, i64 13
   store i8 %conv182, i8* %incdec.ptr172, align 1
   %arrayidx188 = getelementptr inbounds [4 x i16], [4 x i16]* %Mc, i64 0, i64 1
-  %11 = load i16* %arrayidx188, align 2
+  %11 = load i16, i16* %arrayidx188, align 2
   %conv18914 = trunc i16 %11 to i8
   %and190 = shl i8 %conv18914, 5
   %shl191 = and i8 %and190, 96
   %incdec.ptr199 = getelementptr inbounds i8, i8* %c, i64 14
   store i8 %shl191, i8* %incdec.ptr183, align 1
   %arrayidx209 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 14
-  %12 = load i16* %arrayidx209, align 4
+  %12 = load i16, i16* %arrayidx209, align 4
   %conv21015 = trunc i16 %12 to i8
   %and211 = shl i8 %conv21015, 1
   %shl212 = and i8 %and211, 14
@@ -106,7 +106,7 @@ entry:
   store i8 %or218, i8* %incdec.ptr199, align 1
   %arrayidx225 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 16
   %13 = bitcast i16* %arrayidx225 to i64*
-  %14 = load i64* %13, align 16
+  %14 = load i64, i64* %13, align 16
   %conv22616 = trunc i64 %14 to i8
   %and227 = shl i8 %conv22616, 3
   %shl228 = and i8 %and227, 56
@@ -120,17 +120,17 @@ entry:
   %arrayidx266 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 23
   %incdec.ptr272 = getelementptr inbounds i8, i8* %c, i64 18
   store i8 0, i8* %incdec.ptr251, align 1
-  %16 = load i16* %arrayidx266, align 2
+  %16 = load i16, i16* %arrayidx266, align 2
   %conv27418 = trunc i16 %16 to i8
   %and275 = shl i8 %conv27418, 6
   %incdec.ptr287 = getelementptr inbounds i8, i8* %c, i64 19
   store i8 %and275, i8* %incdec.ptr272, align 1
   %arrayidx288 = getelementptr inbounds [4 x i16], [4 x i16]* %Nc, i64 0, i64 2
-  %17 = load i16* %arrayidx288, align 2
+  %17 = load i16, i16* %arrayidx288, align 2
   %conv28919 = zext i16 %17 to i32
   %and290 = shl nuw nsw i32 %conv28919, 1
   %arrayidx292 = getelementptr inbounds [4 x i16], [4 x i16]* %bc, i64 0, i64 2
-  %18 = load i16* %arrayidx292, align 2
+  %18 = load i16, i16* %arrayidx292, align 2
   %conv29327 = zext i16 %18 to i32
   %shr29420 = lshr i32 %conv29327, 1
   %and295 = and i32 %shr29420, 1
@@ -145,7 +145,7 @@ entry:
   %incdec.ptr335 = getelementptr inbounds i8, i8* %c, i64 22
   store i8 0, i8* %incdec.ptr314, align 1
   %arrayidx340 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 29
-  %19 = load i16* %arrayidx340, align 2
+  %19 = load i16, i16* %arrayidx340, align 2
   %conv34122 = trunc i16 %19 to i8
   %and342 = shl i8 %conv34122, 3
   %shl343 = and i8 %and342, 56
@@ -153,7 +153,7 @@ entry:
   store i8 %shl343, i8* %incdec.ptr335, align 1
   %arrayidx355 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 32
   %20 = bitcast i16* %arrayidx355 to i32*
-  %21 = load i32* %20, align 16
+  %21 = load i32, i32* %20, align 16
   %conv35623 = shl i32 %21, 2
   %shl358 = and i32 %conv35623, 28
   %22 = lshr i32 %21, 17

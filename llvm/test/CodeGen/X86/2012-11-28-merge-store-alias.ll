@@ -21,7 +21,7 @@ define i32 @merge_stores_can() nounwind ssp {
 
   store i32 0, i32* %O1_1
   store i32 0, i32* %O1_2
-  %ret = load  i32* %ld_ptr  ; <--- does not alias.
+  %ret = load  i32,  i32* %ld_ptr  ; <--- does not alias.
   store i32 0, i32* %O1_3
   store i32 0, i32* %O1_4
 
@@ -44,7 +44,7 @@ define i32 @merge_stores_cant([10 x i32]* %in0, [10 x i32]* %in1) nounwind ssp {
 
   store i32 0, i32* %O1_1
   store i32 0, i32* %O1_2
-  %ret = load  i32* %ld_ptr  ;  <--- may alias
+  %ret = load  i32,  i32* %ld_ptr  ;  <--- may alias
   store i32 0, i32* %O1_3
   store i32 0, i32* %O1_4
 

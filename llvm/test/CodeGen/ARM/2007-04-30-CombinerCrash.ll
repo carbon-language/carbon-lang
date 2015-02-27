@@ -9,15 +9,15 @@ target triple = "arm-apple-darwin8"
 
 define fastcc void @EvaluateDevelopment() {
 entry:
-        %tmp7 = load i64* getelementptr (%struct.CHESS_POSITION* @search, i32 0, i32 7)         ; <i64> [#uses=1]
-        %tmp50 = load i64* getelementptr (%struct.CHESS_POSITION* @search, i32 0, i32 0)                ; <i64> [#uses=1]
-        %tmp52 = load i64* getelementptr (%struct.CHESS_POSITION* @search, i32 0, i32 1)                ; <i64> [#uses=1]
+        %tmp7 = load i64, i64* getelementptr (%struct.CHESS_POSITION* @search, i32 0, i32 7)         ; <i64> [#uses=1]
+        %tmp50 = load i64, i64* getelementptr (%struct.CHESS_POSITION* @search, i32 0, i32 0)                ; <i64> [#uses=1]
+        %tmp52 = load i64, i64* getelementptr (%struct.CHESS_POSITION* @search, i32 0, i32 1)                ; <i64> [#uses=1]
         %tmp53 = or i64 %tmp52, %tmp50          ; <i64> [#uses=1]
-        %tmp57.b = load i1* @rank_mask.1.b              ; <i1> [#uses=1]
+        %tmp57.b = load i1, i1* @rank_mask.1.b              ; <i1> [#uses=1]
         %tmp57 = select i1 %tmp57.b, i64 71776119061217280, i64 0               ; <i64> [#uses=1]
         %tmp58 = and i64 %tmp57, %tmp7          ; <i64> [#uses=1]
         %tmp59 = lshr i64 %tmp58, 8             ; <i64> [#uses=1]
-        %tmp63 = load i64* getelementptr ([8 x i64]* @file_mask, i32 0, i32 4)          ; <i64> [#uses=1]
+        %tmp63 = load i64, i64* getelementptr ([8 x i64]* @file_mask, i32 0, i32 4)          ; <i64> [#uses=1]
         %tmp64 = or i64 %tmp63, 0               ; <i64> [#uses=1]
         %tmp65 = and i64 %tmp59, %tmp53         ; <i64> [#uses=1]
         %tmp66 = and i64 %tmp65, %tmp64         ; <i64> [#uses=1]

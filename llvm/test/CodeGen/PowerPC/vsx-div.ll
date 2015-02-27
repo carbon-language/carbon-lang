@@ -7,7 +7,7 @@
 
 define void @test1() {
 entry:
-  %0 = load <4 x float>* @vf, align 16
+  %0 = load <4 x float>, <4 x float>* @vf, align 16
   %1 = tail call <4 x float> @llvm.ppc.vsx.xvdivsp(<4 x float> %0, <4 x float> %0)
   store <4 x float> %1, <4 x float>* @vf_res, align 16
   ret void
@@ -17,7 +17,7 @@ entry:
 
 define void @test2() {
 entry:
-  %0 = load <2 x double>* @vd, align 16
+  %0 = load <2 x double>, <2 x double>* @vd, align 16
   %1 = tail call <2 x double> @llvm.ppc.vsx.xvdivdp(<2 x double> %0, <2 x double> %0)
   store <2 x double> %1, <2 x double>* @vd_res, align 16
   ret void

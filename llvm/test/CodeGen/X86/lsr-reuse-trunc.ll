@@ -14,7 +14,7 @@
 
 define void @vvfloorf(float* nocapture %y, float* nocapture %x, i32* nocapture %n) nounwind {
 entry:
-  %0 = load i32* %n, align 4
+  %0 = load i32, i32* %n, align 4
   %1 = icmp sgt i32 %0, 0
   br i1 %1, label %bb, label %return
 
@@ -25,7 +25,7 @@ bb:
   %scevgep9 = bitcast float* %scevgep to <4 x float>*
   %scevgep10 = getelementptr float, float* %x, i64 %tmp
   %scevgep1011 = bitcast float* %scevgep10 to <4 x float>*
-  %2 = load <4 x float>* %scevgep1011, align 16
+  %2 = load <4 x float>, <4 x float>* %scevgep1011, align 16
   %3 = bitcast <4 x float> %2 to <4 x i32>
   %4 = and <4 x i32> %3, <i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647>
   %5 = bitcast <4 x i32> %4 to <4 x float>
@@ -48,7 +48,7 @@ bb:
   store <4 x float> %19, <4 x float>* %scevgep9, align 16
   %tmp12 = add i64 %tmp, 4
   %tmp13 = trunc i64 %tmp12 to i32
-  %20 = load i32* %n, align 4
+  %20 = load i32, i32* %n, align 4
   %21 = icmp sgt i32 %20, %tmp13
   %indvar.next = add i64 %indvar, 1
   br i1 %21, label %bb, label %return

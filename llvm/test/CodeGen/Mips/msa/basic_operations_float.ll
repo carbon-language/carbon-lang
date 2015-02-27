@@ -75,7 +75,7 @@ define void @const_v2f64() nounwind {
 define void @nonconst_v4f32() nounwind {
   ; MIPS32-LABEL: nonconst_v4f32:
 
-  %1 = load float *@f32
+  %1 = load float , float *@f32
   %2 = insertelement <4 x float> undef, float %1, i32 0
   %3 = insertelement <4 x float> %2, float %1, i32 1
   %4 = insertelement <4 x float> %3, float %1, i32 2
@@ -91,7 +91,7 @@ define void @nonconst_v4f32() nounwind {
 define void @nonconst_v2f64() nounwind {
   ; MIPS32-LABEL: nonconst_v2f64:
 
-  %1 = load double *@f64
+  %1 = load double , double *@f64
   %2 = insertelement <2 x double> undef, double %1, i32 0
   %3 = insertelement <2 x double> %2, double %1, i32 1
   store volatile <2 x double> %3, <2 x double>*@v2f64
@@ -105,7 +105,7 @@ define void @nonconst_v2f64() nounwind {
 define float @extract_v4f32() nounwind {
   ; MIPS32-LABEL: extract_v4f32:
 
-  %1 = load <4 x float>* @v4f32
+  %1 = load <4 x float>, <4 x float>* @v4f32
   ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]],
 
   %2 = fadd <4 x float> %1, %1
@@ -123,7 +123,7 @@ define float @extract_v4f32() nounwind {
 define float @extract_v4f32_elt0() nounwind {
   ; MIPS32-LABEL: extract_v4f32_elt0:
 
-  %1 = load <4 x float>* @v4f32
+  %1 = load <4 x float>, <4 x float>* @v4f32
   ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]],
 
   %2 = fadd <4 x float> %1, %1
@@ -141,7 +141,7 @@ define float @extract_v4f32_elt0() nounwind {
 define float @extract_v4f32_elt2() nounwind {
   ; MIPS32-LABEL: extract_v4f32_elt2:
 
-  %1 = load <4 x float>* @v4f32
+  %1 = load <4 x float>, <4 x float>* @v4f32
   ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]],
 
   %2 = fadd <4 x float> %1, %1
@@ -159,14 +159,14 @@ define float @extract_v4f32_elt2() nounwind {
 define float @extract_v4f32_vidx() nounwind {
   ; MIPS32-LABEL: extract_v4f32_vidx:
 
-  %1 = load <4 x float>* @v4f32
+  %1 = load <4 x float>, <4 x float>* @v4f32
   ; MIPS32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4f32)(
   ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = fadd <4 x float> %1, %1
   ; MIPS32-DAG: fadd.w [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
-  %3 = load i32* @i32
+  %3 = load i32, i32* @i32
   ; MIPS32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
@@ -180,7 +180,7 @@ define float @extract_v4f32_vidx() nounwind {
 define double @extract_v2f64() nounwind {
   ; MIPS32-LABEL: extract_v2f64:
 
-  %1 = load <2 x double>* @v2f64
+  %1 = load <2 x double>, <2 x double>* @v2f64
   ; MIPS32-DAG: ld.d [[R1:\$w[0-9]+]],
 
   %2 = fadd <2 x double> %1, %1
@@ -203,7 +203,7 @@ define double @extract_v2f64() nounwind {
 define double @extract_v2f64_elt0() nounwind {
   ; MIPS32-LABEL: extract_v2f64_elt0:
 
-  %1 = load <2 x double>* @v2f64
+  %1 = load <2 x double>, <2 x double>* @v2f64
   ; MIPS32-DAG: ld.d [[R1:\$w[0-9]+]],
 
   %2 = fadd <2 x double> %1, %1
@@ -224,14 +224,14 @@ define double @extract_v2f64_elt0() nounwind {
 define double @extract_v2f64_vidx() nounwind {
   ; MIPS32-LABEL: extract_v2f64_vidx:
 
-  %1 = load <2 x double>* @v2f64
+  %1 = load <2 x double>, <2 x double>* @v2f64
   ; MIPS32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2f64)(
   ; MIPS32-DAG: ld.d [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = fadd <2 x double> %1, %1
   ; MIPS32-DAG: fadd.d [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
-  %3 = load i32* @i32
+  %3 = load i32, i32* @i32
   ; MIPS32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
@@ -245,7 +245,7 @@ define double @extract_v2f64_vidx() nounwind {
 define void @insert_v4f32(float %a) nounwind {
   ; MIPS32-LABEL: insert_v4f32:
 
-  %1 = load <4 x float>* @v4f32
+  %1 = load <4 x float>, <4 x float>* @v4f32
   ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]],
 
   %2 = insertelement <4 x float> %1, float %a, i32 1
@@ -262,7 +262,7 @@ define void @insert_v4f32(float %a) nounwind {
 define void @insert_v2f64(double %a) nounwind {
   ; MIPS32-LABEL: insert_v2f64:
 
-  %1 = load <2 x double>* @v2f64
+  %1 = load <2 x double>, <2 x double>* @v2f64
   ; MIPS32-DAG: ld.d [[R1:\$w[0-9]+]],
 
   %2 = insertelement <2 x double> %1, double %a, i32 1
@@ -279,11 +279,11 @@ define void @insert_v2f64(double %a) nounwind {
 define void @insert_v4f32_vidx(float %a) nounwind {
   ; MIPS32-LABEL: insert_v4f32_vidx:
 
-  %1 = load <4 x float>* @v4f32
+  %1 = load <4 x float>, <4 x float>* @v4f32
   ; MIPS32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4f32)(
   ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
-  %2 = load i32* @i32
+  %2 = load i32, i32* @i32
   ; MIPS32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
@@ -305,11 +305,11 @@ define void @insert_v4f32_vidx(float %a) nounwind {
 define void @insert_v2f64_vidx(double %a) nounwind {
   ; MIPS32-LABEL: insert_v2f64_vidx:
 
-  %1 = load <2 x double>* @v2f64
+  %1 = load <2 x double>, <2 x double>* @v2f64
   ; MIPS32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2f64)(
   ; MIPS32-DAG: ld.d [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
-  %2 = load i32* @i32
+  %2 = load i32, i32* @i32
   ; MIPS32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 

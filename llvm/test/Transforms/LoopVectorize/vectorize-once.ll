@@ -29,7 +29,7 @@ entry:
 for.body.i:                                       ; preds = %entry, %for.body.i
   %__init.addr.05.i = phi i32 [ %add.i, %for.body.i ], [ 0, %entry ]
   %__first.addr.04.i = phi i32* [ %incdec.ptr.i, %for.body.i ], [ %A, %entry ]
-  %0 = load i32* %__first.addr.04.i, align 4
+  %0 = load i32, i32* %__first.addr.04.i, align 4
   %add.i = add nsw i32 %0, %__init.addr.05.i
   %incdec.ptr.i = getelementptr inbounds i32, i32* %__first.addr.04.i, i64 1
   %cmp.i = icmp eq i32* %incdec.ptr.i, %add.ptr
@@ -55,7 +55,7 @@ entry:
 for.body.i:                                       ; preds = %entry, %for.body.i
   %__init.addr.05.i = phi i32 [ %add.i, %for.body.i ], [ 0, %entry ]
   %__first.addr.04.i = phi i32* [ %incdec.ptr.i, %for.body.i ], [ %A, %entry ]
-  %0 = load i32* %__first.addr.04.i, align 4
+  %0 = load i32, i32* %__first.addr.04.i, align 4
   %add.i = add nsw i32 %0, %__init.addr.05.i
   %incdec.ptr.i = getelementptr inbounds i32, i32* %__first.addr.04.i, i64 1
   %cmp.i = icmp eq i32* %incdec.ptr.i, %add.ptr

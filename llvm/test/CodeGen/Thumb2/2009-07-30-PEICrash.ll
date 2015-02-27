@@ -31,7 +31,7 @@
 define void @jpeg_idct_float(%struct.jpeg_decompress_struct* nocapture %cinfo, %struct.jpeg_component_info* nocapture %compptr, i16* nocapture %coef_block, i8** nocapture %output_buf, i32 %output_col) nounwind {
 entry:
 	%workspace = alloca [64 x float], align 4		; <[64 x float]*> [#uses=11]
-	%0 = load i8** undef, align 4		; <i8*> [#uses=5]
+	%0 = load i8*, i8** undef, align 4		; <i8*> [#uses=5]
 	br label %bb
 
 bb:		; preds = %bb, %entry
@@ -55,11 +55,11 @@ bb:		; preds = %bb, %entry
 	%quantptr.118 = bitcast i8* %scevgep76 to float*		; <float*> [#uses=1]
 	%scevgep79 = getelementptr i16, i16* %coef_block, i32 %tmp41		; <i16*> [#uses=0]
 	%inptr.117 = getelementptr i16, i16* %coef_block, i32 %indvar		; <i16*> [#uses=1]
-	%1 = load i16* null, align 2		; <i16> [#uses=1]
-	%2 = load i16* undef, align 2		; <i16> [#uses=1]
-	%3 = load i16* %inptr.117, align 2		; <i16> [#uses=1]
+	%1 = load i16, i16* null, align 2		; <i16> [#uses=1]
+	%2 = load i16, i16* undef, align 2		; <i16> [#uses=1]
+	%3 = load i16, i16* %inptr.117, align 2		; <i16> [#uses=1]
 	%4 = sitofp i16 %3 to float		; <float> [#uses=1]
-	%5 = load float* %quantptr.118, align 4		; <float> [#uses=1]
+	%5 = load float, float* %quantptr.118, align 4		; <float> [#uses=1]
 	%6 = fmul float %4, %5		; <float> [#uses=1]
 	%7 = fsub float %6, undef		; <float> [#uses=2]
 	%8 = fmul float undef, 0x3FF6A09E60000000		; <float> [#uses=1]
@@ -70,7 +70,7 @@ bb:		; preds = %bb, %entry
 	%13 = sitofp i16 %1 to float		; <float> [#uses=1]
 	%14 = fmul float %13, undef		; <float> [#uses=2]
 	%15 = sitofp i16 %2 to float		; <float> [#uses=1]
-	%16 = load float* undef, align 4		; <float> [#uses=1]
+	%16 = load float, float* undef, align 4		; <float> [#uses=1]
 	%17 = fmul float %15, %16		; <float> [#uses=1]
 	%18 = fadd float %14, undef		; <float> [#uses=2]
 	%19 = fsub float %14, undef		; <float> [#uses=2]
@@ -124,12 +124,12 @@ bb8:		; preds = %bb8, %bb6
 	%scevgep28 = getelementptr [64 x float], [64 x float]* %workspace, i32 0, i32 %tmp2790		; <float*> [#uses=1]
 	%tmp3586 = or i32 %tmp, 7		; <i32> [#uses=0]
 	%wsptr.215 = getelementptr [64 x float], [64 x float]* %workspace, i32 0, i32 %tmp		; <float*> [#uses=1]
-	%40 = load i8** %scevgep, align 4		; <i8*> [#uses=4]
-	%41 = load float* %wsptr.215, align 4		; <float> [#uses=1]
-	%42 = load float* %scevgep24, align 4		; <float> [#uses=1]
+	%40 = load i8*, i8** %scevgep, align 4		; <i8*> [#uses=4]
+	%41 = load float, float* %wsptr.215, align 4		; <float> [#uses=1]
+	%42 = load float, float* %scevgep24, align 4		; <float> [#uses=1]
 	%43 = fadd float %41, %42		; <float> [#uses=1]
-	%44 = load float* %scevgep26, align 4		; <float> [#uses=1]
-	%45 = load float* %scevgep28, align 4		; <float> [#uses=1]
+	%44 = load float, float* %scevgep26, align 4		; <float> [#uses=1]
+	%45 = load float, float* %scevgep28, align 4		; <float> [#uses=1]
 	%46 = fadd float %44, %45		; <float> [#uses=1]
 	%47 = fsub float %43, %46		; <float> [#uses=2]
 	%48 = fsub float undef, 0.000000e+00		; <float> [#uses=1]
@@ -140,11 +140,11 @@ bb8:		; preds = %bb8, %bb6
 	%53 = and i32 %52, 1023		; <i32> [#uses=1]
 	%.sum14 = add i32 %53, 128		; <i32> [#uses=1]
 	%54 = getelementptr i8, i8* %0, i32 %.sum14		; <i8*> [#uses=1]
-	%55 = load i8* %54, align 1		; <i8> [#uses=1]
+	%55 = load i8, i8* %54, align 1		; <i8> [#uses=1]
 	store i8 %55, i8* null, align 1
 	%56 = getelementptr i8, i8* %40, i32 %.sum10		; <i8*> [#uses=1]
 	store i8 0, i8* %56, align 1
-	%57 = load i8* null, align 1		; <i8> [#uses=1]
+	%57 = load i8, i8* null, align 1		; <i8> [#uses=1]
 	%58 = getelementptr i8, i8* %40, i32 %.sum8		; <i8*> [#uses=1]
 	store i8 %57, i8* %58, align 1
 	%59 = fadd float undef, %48		; <float> [#uses=1]
@@ -154,7 +154,7 @@ bb8:		; preds = %bb8, %bb6
 	%63 = and i32 %62, 1023		; <i32> [#uses=1]
 	%.sum7 = add i32 %63, 128		; <i32> [#uses=1]
 	%64 = getelementptr i8, i8* %0, i32 %.sum7		; <i8*> [#uses=1]
-	%65 = load i8* %64, align 1		; <i8> [#uses=1]
+	%65 = load i8, i8* %64, align 1		; <i8> [#uses=1]
 	%66 = getelementptr i8, i8* %40, i32 %.sum6		; <i8*> [#uses=1]
 	store i8 %65, i8* %66, align 1
 	%67 = fptosi float undef to i32		; <i32> [#uses=1]
@@ -163,7 +163,7 @@ bb8:		; preds = %bb8, %bb6
 	%70 = and i32 %69, 1023		; <i32> [#uses=1]
 	%.sum5 = add i32 %70, 128		; <i32> [#uses=1]
 	%71 = getelementptr i8, i8* %0, i32 %.sum5		; <i8*> [#uses=1]
-	%72 = load i8* %71, align 1		; <i8> [#uses=1]
+	%72 = load i8, i8* %71, align 1		; <i8> [#uses=1]
 	store i8 %72, i8* undef, align 1
 	%73 = fadd float %47, undef		; <float> [#uses=1]
 	%74 = fptosi float %73 to i32		; <i32> [#uses=1]
@@ -172,7 +172,7 @@ bb8:		; preds = %bb8, %bb6
 	%77 = and i32 %76, 1023		; <i32> [#uses=1]
 	%.sum3 = add i32 %77, 128		; <i32> [#uses=1]
 	%78 = getelementptr i8, i8* %0, i32 %.sum3		; <i8*> [#uses=1]
-	%79 = load i8* %78, align 1		; <i8> [#uses=1]
+	%79 = load i8, i8* %78, align 1		; <i8> [#uses=1]
 	store i8 %79, i8* undef, align 1
 	%80 = fsub float %47, undef		; <float> [#uses=1]
 	%81 = fptosi float %80 to i32		; <i32> [#uses=1]
@@ -181,7 +181,7 @@ bb8:		; preds = %bb8, %bb6
 	%84 = and i32 %83, 1023		; <i32> [#uses=1]
 	%.sum1 = add i32 %84, 128		; <i32> [#uses=1]
 	%85 = getelementptr i8, i8* %0, i32 %.sum1		; <i8*> [#uses=1]
-	%86 = load i8* %85, align 1		; <i8> [#uses=1]
+	%86 = load i8, i8* %85, align 1		; <i8> [#uses=1]
 	%87 = getelementptr i8, i8* %40, i32 %.sum		; <i8*> [#uses=1]
 	store i8 %86, i8* %87, align 1
 	%88 = add i32 %ctr.116, 1		; <i32> [#uses=2]

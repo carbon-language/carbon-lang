@@ -23,12 +23,12 @@ target triple = "i686-apple-darwin8"
 define i32 @test(%struct.closure_type* %tmp18169) {
 	%tmp18174 = getelementptr %struct.closure_type, %struct.closure_type* %tmp18169, i32 0, i32 4, i32 0, i32 0		; <i32*> [#uses=2]
 	%tmp18269 = bitcast i32* %tmp18174  to %struct.STYLE*		; <%struct.STYLE*> [#uses=1]
-	%A = load i32* %tmp18174		; <i32> [#uses=1]
+	%A = load i32, i32* %tmp18174		; <i32> [#uses=1]
 
         %tmp18272 = getelementptr %struct.STYLE, %struct.STYLE* %tmp18269, i32 0, i32 0, i32 0, i32 2          ; <i16*> [#uses=1]
         store i16 123, i16* %tmp18272
 
-	%Q = load i32* %tmp18174		; <i32> [#uses=1]
+	%Q = load i32, i32* %tmp18174		; <i32> [#uses=1]
 	%Z = sub i32 %A, %Q		; <i32> [#uses=1]
 	ret i32 %Z
 }

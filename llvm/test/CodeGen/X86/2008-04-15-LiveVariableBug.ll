@@ -40,8 +40,8 @@
 
 define void @"-[AA BB:optionIndex:delegate:CC:contextInfo:]"(%struct.AA* %self, %struct._message_ref_t* %_cmd, %struct.NSError* %inError, i64 %inOptionIndex, %struct.NSObject* %inDelegate, %struct.objc_selector* %inDidRecoverSelector, i8* %inContextInfo) {
 entry:
-	%tmp105 = load %struct.NSArray** null, align 8		; <%struct.NSArray*> [#uses=1]
-	%tmp107 = load %struct.NSObject** null, align 8		; <%struct.NSObject*> [#uses=1]
+	%tmp105 = load %struct.NSArray*, %struct.NSArray** null, align 8		; <%struct.NSArray*> [#uses=1]
+	%tmp107 = load %struct.NSObject*, %struct.NSObject** null, align 8		; <%struct.NSObject*> [#uses=1]
 	call void null( %struct.NSObject* %tmp107, %struct._message_ref_t* @"\01L_OBJC_MESSAGE_REF_228", %struct.NSArray* %tmp105, i8 signext  0 )
 	%tmp111 = call %struct.NSObject* (%struct.NSObject*, %struct.objc_selector*, ...)* @objc_msgSend( %struct.NSObject* null, %struct.objc_selector* null, i32 0, i8* null )		; <%struct.NSObject*> [#uses=0]
 	ret void

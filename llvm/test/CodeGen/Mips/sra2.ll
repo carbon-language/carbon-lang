@@ -6,8 +6,8 @@
 
 define i32 @main() nounwind {
 entry:
-  %0 = load i32* @i, align 4
-  %1 = load i32* @j, align 4
+  %0 = load i32, i32* @i, align 4
+  %1 = load i32, i32* @j, align 4
   %shr = ashr i32 %0, %1
 ; 16:	srav	${{[0-9]+}}, ${{[0-9]+}}
   %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8]* @.str, i32 0, i32 0), i32 %shr)

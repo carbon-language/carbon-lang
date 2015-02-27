@@ -33,7 +33,7 @@ entry:
   %i = alloca i32, align 4
   store i32 %s, i32* %s.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %s.addr, metadata !10, metadata !{!"0x102"}), !dbg !11
-  %0 = load i32* %s.addr, align 4, !dbg !12
+  %0 = load i32, i32* %s.addr, align 4, !dbg !12
   %1 = zext i32 %0 to i64, !dbg !12
   %2 = call i8* @llvm.stacksave(), !dbg !12
   store i8* %2, i8** %saved_stack, !dbg !12
@@ -44,29 +44,29 @@ entry:
   br label %for.cond, !dbg !21
 
 for.cond:                                         ; preds = %for.inc, %entry
-  %3 = load i32* %i, align 4, !dbg !21
-  %4 = load i32* %s.addr, align 4, !dbg !21
+  %3 = load i32, i32* %i, align 4, !dbg !21
+  %4 = load i32, i32* %s.addr, align 4, !dbg !21
   %cmp = icmp slt i32 %3, %4, !dbg !21
   br i1 %cmp, label %for.body, label %for.end, !dbg !21
 
 for.body:                                         ; preds = %for.cond
-  %5 = load i32* %i, align 4, !dbg !23
-  %6 = load i32* %i, align 4, !dbg !23
+  %5 = load i32, i32* %i, align 4, !dbg !23
+  %6 = load i32, i32* %i, align 4, !dbg !23
   %mul = mul nsw i32 %5, %6, !dbg !23
-  %7 = load i32* %i, align 4, !dbg !23
+  %7 = load i32, i32* %i, align 4, !dbg !23
   %idxprom = sext i32 %7 to i64, !dbg !23
   %arrayidx = getelementptr inbounds i32, i32* %vla, i64 %idxprom, !dbg !23
   store i32 %mul, i32* %arrayidx, align 4, !dbg !23
   br label %for.inc, !dbg !25
 
 for.inc:                                          ; preds = %for.body
-  %8 = load i32* %i, align 4, !dbg !26
+  %8 = load i32, i32* %i, align 4, !dbg !26
   %inc = add nsw i32 %8, 1, !dbg !26
   store i32 %inc, i32* %i, align 4, !dbg !26
   br label %for.cond, !dbg !26
 
 for.end:                                          ; preds = %for.cond
-  %9 = load i8** %saved_stack, !dbg !27
+  %9 = load i8*, i8** %saved_stack, !dbg !27
   call void @llvm.stackrestore(i8* %9), !dbg !27
   ret void, !dbg !27
 }

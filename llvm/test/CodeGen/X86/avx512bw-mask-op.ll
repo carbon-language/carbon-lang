@@ -35,7 +35,7 @@ define i64 @mask64(i64 %x) {
 }
 
 define void @mask32_mem(i32* %ptr) {
-  %x = load i32* %ptr, align 4
+  %x = load i32, i32* %ptr, align 4
   %m0 = bitcast i32 %x to <32 x i1>
   %m1 = xor <32 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1,
                             i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1,
@@ -52,7 +52,7 @@ define void @mask32_mem(i32* %ptr) {
 }
 
 define void @mask64_mem(i64* %ptr) {
-  %x = load i64* %ptr, align 4
+  %x = load i64, i64* %ptr, align 4
   %m0 = bitcast i64 %x to <64 x i1>
   %m1 = xor <64 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1,
                             i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1,

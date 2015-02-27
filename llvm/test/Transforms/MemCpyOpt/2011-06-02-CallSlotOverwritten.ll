@@ -24,13 +24,13 @@ define i32 @foo() nounwind {
 
   %bit1 = bitcast %struct1* %x to i64*
   %bit2 = bitcast %struct2* %y to i64*
-  %load = load i64* %bit1, align 8
+  %load = load i64, i64* %bit1, align 8
   store i64 %load, i64* %bit2, align 8
 
-; CHECK: %load = load i64* %bit1, align 8
+; CHECK: %load = load i64, i64* %bit1, align 8
 ; CHECK: store i64 %load, i64* %bit2, align 8
 
   %gep1 = getelementptr %struct2, %struct2* %y, i32 0, i32 0, i32 0
-  %ret = load i32* %gep1
+  %ret = load i32, i32* %gep1
   ret i32 %ret
 }

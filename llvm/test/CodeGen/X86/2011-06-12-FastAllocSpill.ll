@@ -32,17 +32,17 @@ bb8:                                              ; preds = %bb23, %bb
   store i8* bitcast (%0* @0 to i8*), i8** %tmp15
   %tmp16 = bitcast %3* %tmp7 to void ()*
   store void ()* %tmp16, void ()** %tmp6, align 8
-  %tmp17 = load void ()** %tmp6, align 8
+  %tmp17 = load void ()*, void ()** %tmp6, align 8
   %tmp18 = bitcast void ()* %tmp17 to %6*
   %tmp19 = getelementptr inbounds %6, %6* %tmp18, i32 0, i32 3
   %tmp20 = bitcast %6* %tmp18 to i8*
-  %tmp21 = load i8** %tmp19
+  %tmp21 = load i8*, i8** %tmp19
   %tmp22 = bitcast i8* %tmp21 to void (i8*)*
   call void %tmp22(i8* %tmp20)
   br label %bb23
 
 bb23:                                             ; preds = %bb8
-  %tmp24 = load i64* %tmp5, align 8
+  %tmp24 = load i64, i64* %tmp5, align 8
   %tmp25 = add i64 %tmp24, 1
   store i64 %tmp25, i64* %tmp5, align 8
   %tmp26 = icmp ult i64 %tmp25, 10

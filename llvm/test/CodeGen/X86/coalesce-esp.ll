@@ -20,7 +20,7 @@ bb4:		; preds = %bb7.backedge, %entry
 	%scevgep24.sum = sub i32 undef, %indvar		; <i32> [#uses=2]
 	%scevgep25 = getelementptr i32, i32* %0, i32 %scevgep24.sum		; <i32*> [#uses=1]
 	%scevgep27 = getelementptr i32, i32* undef, i32 %scevgep24.sum		; <i32*> [#uses=1]
-	%1 = load i32* %scevgep27, align 4		; <i32> [#uses=0]
+	%1 = load i32, i32* %scevgep27, align 4		; <i32> [#uses=0]
 	br i1 undef, label %bb7.backedge, label %bb5
 
 bb5:		; preds = %bb4

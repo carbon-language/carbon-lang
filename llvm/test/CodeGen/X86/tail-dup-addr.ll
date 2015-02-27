@@ -10,7 +10,7 @@
 
 define void @foo() noreturn nounwind uwtable ssp {
 entry:
-  %tmp = load i32* @a, align 4
+  %tmp = load i32, i32* @a, align 4
   %foo = icmp eq i32 0, %tmp
   br i1 %foo, label %sw.bb, label %sw.default
 

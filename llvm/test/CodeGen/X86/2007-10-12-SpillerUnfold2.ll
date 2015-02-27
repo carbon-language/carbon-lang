@@ -22,12 +22,12 @@ cond_next245:		; preds = %cond_next127
 	br i1 false, label %cond_true267, label %cond_next391
 
 cond_true267:		; preds = %cond_next245
-	%tmp269 = load i8** %byteptr, align 4		; <i8*> [#uses=3]
-	%tmp270 = load i8* %tmp269, align 1		; <i8> [#uses=1]
+	%tmp269 = load i8*, i8** %byteptr, align 4		; <i8*> [#uses=3]
+	%tmp270 = load i8, i8* %tmp269, align 1		; <i8> [#uses=1]
 	%tmp270271 = zext i8 %tmp270 to i32		; <i32> [#uses=1]
 	%tmp272 = getelementptr i8, i8* %tmp269, i32 1		; <i8*> [#uses=2]
 	store i8* %tmp272, i8** %byteptr, align 4
-	%tmp276 = load i8* %tmp272, align 1		; <i8> [#uses=1]
+	%tmp276 = load i8, i8* %tmp272, align 1		; <i8> [#uses=1]
 	%tmp278 = getelementptr i8, i8* %tmp269, i32 2		; <i8*> [#uses=1]
 	store i8* %tmp278, i8** %byteptr, align 4
 	%tmp286 = icmp eq i32 %tmp270271, %markerPrefix		; <i1> [#uses=1]
@@ -42,7 +42,7 @@ cond_next327:		; preds = %cond_true267
 	br i1 false, label %cond_true343, label %cond_next391
 
 cond_true343:		; preds = %cond_next327
-	%tmp345 = load i8** %byteptr, align 4		; <i8*> [#uses=1]
+	%tmp345 = load i8*, i8** %byteptr, align 4		; <i8*> [#uses=1]
 	store i8* null, i8** %byteptr, align 4
 	store i8* %tmp345, i8** %byteptr, align 4
 	br label %cond_next391

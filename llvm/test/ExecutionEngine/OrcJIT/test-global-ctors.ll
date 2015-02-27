@@ -6,7 +6,7 @@
 
 define i32 @main() nounwind {
 entry:
-  %0 = load i32* @var, align 4
+  %0 = load i32, i32* @var, align 4
   ret i32 %0
 }
 

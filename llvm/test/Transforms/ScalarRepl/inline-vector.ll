@@ -30,20 +30,20 @@ for.body:                                         ; preds = %for.cond
   %tmp3 = bitcast %struct.Vector4* %vector to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp2, i8* %tmp3, i32 16, i32 16, i1 false)
   %0 = bitcast %struct.Vector4* %agg.tmp to [2 x i64]*
-  %1 = load [2 x i64]* %0, align 16
+  %1 = load [2 x i64], [2 x i64]* %0, align 16
   %tmp2.i = extractvalue [2 x i64] %1, 0
   %tmp3.i = zext i64 %tmp2.i to i128
   %tmp10.i = bitcast i128 %tmp3.i to <4 x float>
   %sub.i.i = fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %tmp10.i
   %2 = bitcast %struct.Vector4* %vector to <4 x float>*
   store <4 x float> %sub.i.i, <4 x float>* %2, align 16
-  %tmp4 = load i32* %i, align 4
+  %tmp4 = load i32, i32* %i, align 4
   %inc = add nsw i32 %tmp4, 1
   br label %for.cond
 
 for.end:                                          ; preds = %for.cond
   %x = getelementptr inbounds %struct.Vector4, %struct.Vector4* %vector, i32 0, i32 0
-  %tmp5 = load float* %x, align 16
+  %tmp5 = load float, float* %x, align 16
   %conv = fpext float %tmp5 to double
   %call = call i32 (...)* @printf(double %conv) nounwind
   ret void

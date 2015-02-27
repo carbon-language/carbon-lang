@@ -140,17 +140,17 @@ define i64 @reg_imm_alu(i64 %x, i64 %y, i64 %z) {
 ; CHECK: ldsh [%i3]
 ; CHECK: sth %
 define i64 @loads(i64* %p, i32* %q, i32* %r, i16* %s) {
-  %a = load i64* %p
+  %a = load i64, i64* %p
   %ai = add i64 1, %a
   store i64 %ai, i64* %p
-  %b = load i32* %q
+  %b = load i32, i32* %q
   %b2 = zext i32 %b to i64
   %bi = trunc i64 %ai to i32
   store i32 %bi, i32* %q
-  %c = load i32* %r
+  %c = load i32, i32* %r
   %c2 = sext i32 %c to i64
   store i64 %ai, i64* %p
-  %d = load i16* %s
+  %d = load i16, i16* %s
   %d2 = sext i16 %d to i64
   %di = trunc i64 %ai to i16
   store i16 %di, i16* %s
@@ -164,7 +164,7 @@ define i64 @loads(i64* %p, i32* %q, i32* %r, i16* %s) {
 ; CHECK: load_bool
 ; CHECK: ldub [%i0], %i0
 define i64 @load_bool(i1* %p) {
-  %a = load i1* %p
+  %a = load i1, i1* %p
   %b = zext i1 %a to i64
   ret i64 %b
 }
@@ -178,7 +178,7 @@ define i64 @load_bool(i1* %p) {
 define void @stores(i64* %p, i32* %q, i16* %r, i8* %s) {
   %p1 = getelementptr i64, i64* %p, i64 1
   %p2 = getelementptr i64, i64* %p, i64 2
-  %pv = load i64* %p1
+  %pv = load i64, i64* %p1
   store i64 %pv, i64* %p2
 
   %q2 = getelementptr i32, i32* %q, i32 -2
@@ -200,8 +200,8 @@ define void @stores(i64* %p, i32* %q, i16* %r, i8* %s) {
 ; CHECK: ldub [%i0], [[R:%[goli][0-7]]]
 ; CHECK: sll [[R]], [[R]], %i0
 define i8 @promote_shifts(i8* %p) {
-  %L24 = load i8* %p
-  %L32 = load i8* %p
+  %L24 = load i8, i8* %p
+  %L32 = load i8, i8* %p
   %B36 = shl i8 %L24, %L32
   ret i8 %B36
 }

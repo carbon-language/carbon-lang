@@ -65,12 +65,12 @@ lpad3:                                            ; preds = %if.then
   br label %ehcleanup
 
 if.end:                                           ; preds = %invoke.cont
-  %7 = load i8* %__owns_.i.i, align 8, !tbaa !6, !range !4
+  %7 = load i8, i8* %__owns_.i.i, align 8, !tbaa !6, !range !4
   %tobool.i.i = icmp eq i8 %7, 0
   br i1 %tobool.i.i, label %_ZNSt3__111unique_lockINS_5mutexEED1Ev.exit, label %if.then.i.i
 
 if.then.i.i:                                      ; preds = %if.end
-  %8 = load %"class.std::__1::mutex"** %__m_.i.i, align 8, !tbaa !5
+  %8 = load %"class.std::__1::mutex"*, %"class.std::__1::mutex"** %__m_.i.i, align 8, !tbaa !5
   call void @_ZNSt3__15mutex6unlockEv(%"class.std::__1::mutex"* %8) #5
   br label %_ZNSt3__111unique_lockINS_5mutexEED1Ev.exit
 
@@ -80,12 +80,12 @@ _ZNSt3__111unique_lockINS_5mutexEED1Ev.exit:      ; preds = %if.then.i.i, %if.en
 ehcleanup:                                        ; preds = %lpad3, %lpad
   %exn.slot.0 = phi i8* [ %5, %lpad3 ], [ %2, %lpad ]
   %ehselector.slot.0 = phi i32 [ %6, %lpad3 ], [ %3, %lpad ]
-  %9 = load i8* %__owns_.i.i, align 8, !tbaa !6, !range !4
+  %9 = load i8, i8* %__owns_.i.i, align 8, !tbaa !6, !range !4
   %tobool.i.i9 = icmp eq i8 %9, 0
   br i1 %tobool.i.i9, label %_ZNSt3__111unique_lockINS_5mutexEED1Ev.exit12, label %if.then.i.i11
 
 if.then.i.i11:                                    ; preds = %ehcleanup
-  %10 = load %"class.std::__1::mutex"** %__m_.i.i, align 8, !tbaa !5
+  %10 = load %"class.std::__1::mutex"*, %"class.std::__1::mutex"** %__m_.i.i, align 8, !tbaa !5
   call void @_ZNSt3__15mutex6unlockEv(%"class.std::__1::mutex"* %10) #5
   br label %_ZNSt3__111unique_lockINS_5mutexEED1Ev.exit12
 

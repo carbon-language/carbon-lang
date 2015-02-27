@@ -51,14 +51,14 @@ entry:
   store i32 %x, i32* %x.addr, align 4
   store i32 %y, i32* %y.addr, align 4
   store i64 %N, i64* %N.addr, align 8
-  %0 = load i32* %x.addr, align 4, !dbg !11
-  %1 = load i32* %y.addr, align 4, !dbg !11
+  %0 = load i32, i32* %x.addr, align 4, !dbg !11
+  %1 = load i32, i32* %y.addr, align 4, !dbg !11
   %cmp = icmp slt i32 %0, %1, !dbg !11
   br i1 %cmp, label %if.then, label %if.else, !dbg !11
 
 if.then:                                          ; preds = %entry
-  %2 = load i32* %y.addr, align 4, !dbg !13
-  %3 = load i32* %x.addr, align 4, !dbg !13
+  %2 = load i32, i32* %y.addr, align 4, !dbg !13
+  %3 = load i32, i32* %x.addr, align 4, !dbg !13
   %sub = sub nsw i32 %2, %3, !dbg !13
   %conv = sext i32 %sub to i64, !dbg !13
   store i64 %conv, i64* %retval, !dbg !13
@@ -69,16 +69,16 @@ if.else:                                          ; preds = %entry
   br label %for.cond, !dbg !15
 
 for.cond:                                         ; preds = %for.inc16, %if.else
-  %4 = load i64* %i, align 8, !dbg !15
-  %5 = load i64* %N.addr, align 8, !dbg !15
+  %4 = load i64, i64* %i, align 8, !dbg !15
+  %5 = load i64, i64* %N.addr, align 8, !dbg !15
   %cmp1 = icmp slt i64 %4, %5, !dbg !15
   br i1 %cmp1, label %for.body, label %for.end18, !dbg !15
 ; CHECK: edge for.cond -> for.body probability is 10 / 11 = 90.9091% [HOT edge]
 ; CHECK: edge for.cond -> for.end18 probability is 1 / 11 = 9.09091%
 
 for.body:                                         ; preds = %for.cond
-  %6 = load i64* %i, align 8, !dbg !18
-  %7 = load i64* %N.addr, align 8, !dbg !18
+  %6 = load i64, i64* %i, align 8, !dbg !18
+  %7 = load i64, i64* %N.addr, align 8, !dbg !18
   %div = sdiv i64 %7, 3, !dbg !18
   %cmp2 = icmp sgt i64 %6, %div, !dbg !18
   br i1 %cmp2, label %if.then3, label %if.end, !dbg !18
@@ -86,14 +86,14 @@ for.body:                                         ; preds = %for.cond
 ; CHECK: edge for.body -> if.end probability is 4 / 5 = 80%
 
 if.then3:                                         ; preds = %for.body
-  %8 = load i32* %x.addr, align 4, !dbg !21
+  %8 = load i32, i32* %x.addr, align 4, !dbg !21
   %dec = add nsw i32 %8, -1, !dbg !21
   store i32 %dec, i32* %x.addr, align 4, !dbg !21
   br label %if.end, !dbg !21
 
 if.end:                                           ; preds = %if.then3, %for.body
-  %9 = load i64* %i, align 8, !dbg !22
-  %10 = load i64* %N.addr, align 8, !dbg !22
+  %9 = load i64, i64* %i, align 8, !dbg !22
+  %10 = load i64, i64* %N.addr, align 8, !dbg !22
   %div4 = sdiv i64 %10, 4, !dbg !22
   %cmp5 = icmp sgt i64 %9, %div4, !dbg !22
   br i1 %cmp5, label %if.then6, label %if.else7, !dbg !22
@@ -101,10 +101,10 @@ if.end:                                           ; preds = %if.then3, %for.body
 ; CHECK: edge if.end -> if.else7 probability is 6339 / 6342 = 99.9527% [HOT edge]
 
 if.then6:                                         ; preds = %if.end
-  %11 = load i32* %y.addr, align 4, !dbg !24
+  %11 = load i32, i32* %y.addr, align 4, !dbg !24
   %inc = add nsw i32 %11, 1, !dbg !24
   store i32 %inc, i32* %y.addr, align 4, !dbg !24
-  %12 = load i32* %x.addr, align 4, !dbg !26
+  %12 = load i32, i32* %x.addr, align 4, !dbg !26
   %add = add nsw i32 %12, 3, !dbg !26
   store i32 %add, i32* %x.addr, align 4, !dbg !26
   br label %if.end15, !dbg !27
@@ -114,26 +114,26 @@ if.else7:                                         ; preds = %if.end
   br label %for.cond8, !dbg !28
 
 for.cond8:                                        ; preds = %for.inc, %if.else7
-  %13 = load i32* %j, align 4, !dbg !28
+  %13 = load i32, i32* %j, align 4, !dbg !28
   %conv9 = zext i32 %13 to i64, !dbg !28
-  %14 = load i64* %i, align 8, !dbg !28
+  %14 = load i64, i64* %i, align 8, !dbg !28
   %cmp10 = icmp slt i64 %conv9, %14, !dbg !28
   br i1 %cmp10, label %for.body11, label %for.end, !dbg !28
 ; CHECK: edge for.cond8 -> for.body11 probability is 16191 / 16192 = 99.9938% [HOT edge]
 ; CHECK: edge for.cond8 -> for.end probability is 1 / 16192 = 0.00617589%
 
 for.body11:                                       ; preds = %for.cond8
-  %15 = load i32* %j, align 4, !dbg !31
-  %16 = load i32* %x.addr, align 4, !dbg !31
+  %15 = load i32, i32* %j, align 4, !dbg !31
+  %16 = load i32, i32* %x.addr, align 4, !dbg !31
   %add12 = add i32 %16, %15, !dbg !31
   store i32 %add12, i32* %x.addr, align 4, !dbg !31
-  %17 = load i32* %y.addr, align 4, !dbg !33
+  %17 = load i32, i32* %y.addr, align 4, !dbg !33
   %sub13 = sub nsw i32 %17, 3, !dbg !33
   store i32 %sub13, i32* %y.addr, align 4, !dbg !33
   br label %for.inc, !dbg !34
 
 for.inc:                                          ; preds = %for.body11
-  %18 = load i32* %j, align 4, !dbg !28
+  %18 = load i32, i32* %j, align 4, !dbg !28
   %inc14 = add i32 %18, 1, !dbg !28
   store i32 %inc14, i32* %j, align 4, !dbg !28
   br label %for.cond8, !dbg !28
@@ -145,7 +145,7 @@ if.end15:                                         ; preds = %for.end, %if.then6
   br label %for.inc16, !dbg !35
 
 for.inc16:                                        ; preds = %if.end15
-  %19 = load i64* %i, align 8, !dbg !15
+  %19 = load i64, i64* %i, align 8, !dbg !15
   %inc17 = add nsw i64 %19, 1, !dbg !15
   store i64 %inc17, i64* %i, align 8, !dbg !15
   br label %for.cond, !dbg !15
@@ -154,15 +154,15 @@ for.end18:                                        ; preds = %for.cond
   br label %if.end19
 
 if.end19:                                         ; preds = %for.end18
-  %20 = load i32* %y.addr, align 4, !dbg !36
-  %21 = load i32* %x.addr, align 4, !dbg !36
+  %20 = load i32, i32* %y.addr, align 4, !dbg !36
+  %21 = load i32, i32* %x.addr, align 4, !dbg !36
   %mul = mul nsw i32 %20, %21, !dbg !36
   %conv20 = sext i32 %mul to i64, !dbg !36
   store i64 %conv20, i64* %retval, !dbg !36
   br label %return, !dbg !36
 
 return:                                           ; preds = %if.end19, %if.then
-  %22 = load i64* %retval, !dbg !37
+  %22 = load i64, i64* %retval, !dbg !37
   ret i64 %22, !dbg !37
 }
 
@@ -177,12 +177,12 @@ entry:
   store i32 5678, i32* %x, align 4, !dbg !38
   store i32 1234, i32* %y, align 4, !dbg !39
   store i64 999999, i64* %N, align 8, !dbg !40
-  %0 = load i32* %x, align 4, !dbg !41
-  %1 = load i32* %y, align 4, !dbg !41
-  %2 = load i64* %N, align 8, !dbg !41
-  %3 = load i32* %x, align 4, !dbg !41
-  %4 = load i32* %y, align 4, !dbg !41
-  %5 = load i64* %N, align 8, !dbg !41
+  %0 = load i32, i32* %x, align 4, !dbg !41
+  %1 = load i32, i32* %y, align 4, !dbg !41
+  %2 = load i64, i64* %N, align 8, !dbg !41
+  %3 = load i32, i32* %x, align 4, !dbg !41
+  %4 = load i32, i32* %y, align 4, !dbg !41
+  %5 = load i64, i64* %N, align 8, !dbg !41
   %call = call i64 @_Z3fooiil(i32 %3, i32 %4, i64 %5), !dbg !41
   %call1 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([24 x i8]* @.str, i32 0, i32 0), i32 %0, i32 %1, i64 %2, i64 %call), !dbg !41
   ret i32 0, !dbg !42

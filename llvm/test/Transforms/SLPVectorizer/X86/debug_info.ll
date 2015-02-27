@@ -15,7 +15,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 ;CHECK: @depth
 ;CHECK: getelementptr inbounds {{.*}}, !dbg ![[LOC:[0-9]+]]
 ;CHECK: bitcast double* {{.*}}, !dbg ![[LOC]]
-;CHECK: load <2 x double>* {{.*}}, !dbg ![[LOC]]
+;CHECK: load <2 x double>, <2 x double>* {{.*}}, !dbg ![[LOC]]
 ;CHECK: store <2 x double> {{.*}}, !dbg ![[LOC2:[0-9]+]]
 ;CHECK: ret
 ;CHECK: ![[LOC]] = !MDLocation(line: 4, scope:
@@ -33,9 +33,9 @@ entry:
 
 for.body.lr.ph:                                   ; preds = %entry
   %arrayidx = getelementptr inbounds double, double* %A, i64 4, !dbg !24
-  %0 = load double* %arrayidx, align 8, !dbg !24
+  %0 = load double, double* %arrayidx, align 8, !dbg !24
   %arrayidx1 = getelementptr inbounds double, double* %A, i64 5, !dbg !29
-  %1 = load double* %arrayidx1, align 8, !dbg !29
+  %1 = load double, double* %arrayidx1, align 8, !dbg !29
   br label %for.end, !dbg !23
 
 for.end:                                          ; preds = %for.body.lr.ph, %entry

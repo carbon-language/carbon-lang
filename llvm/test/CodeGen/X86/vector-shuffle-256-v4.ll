@@ -842,7 +842,7 @@ define <4 x i64> @insert_mem_and_zero_v4i64(i64* %ptr) {
 ; AVX2-NEXT:    vpxor %ymm1, %ymm1, %ymm1
 ; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3,4,5,6,7]
 ; AVX2-NEXT:    retq
-  %a = load i64* %ptr
+  %a = load i64, i64* %ptr
   %v = insertelement <4 x i64> undef, i64 %a, i64 0
   %shuffle = shufflevector <4 x i64> %v, <4 x i64> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
   ret <4 x i64> %shuffle
@@ -864,7 +864,7 @@ define <4 x double> @insert_mem_and_zero_v4f64(double* %ptr) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; ALL-NEXT:    retq
-  %a = load double* %ptr
+  %a = load double, double* %ptr
   %v = insertelement <4 x double> undef, double %a, i32 0
   %shuffle = shufflevector <4 x double> %v, <4 x double> zeroinitializer, <4 x i32> <i32 0, i32 5, i32 6, i32 7>
   ret <4 x double> %shuffle
@@ -875,7 +875,7 @@ define <4 x double> @splat_mem_v4f64(double* %ptr) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vbroadcastsd (%rdi), %ymm0
 ; ALL-NEXT:    retq
-  %a = load double* %ptr
+  %a = load double, double* %ptr
   %v = insertelement <4 x double> undef, double %a, i32 0
   %shuffle = shufflevector <4 x double> %v, <4 x double> undef, <4 x i32> <i32 0, i32 0, i32 0, i32 0>
   ret <4 x double> %shuffle
@@ -891,7 +891,7 @@ define <4 x i64> @splat_mem_v4i64(i64* %ptr) {
 ; AVX2:       # BB#0:
 ; AVX2-NEXT:    vbroadcastsd (%rdi), %ymm0
 ; AVX2-NEXT:    retq
-  %a = load i64* %ptr
+  %a = load i64, i64* %ptr
   %v = insertelement <4 x i64> undef, i64 %a, i64 0
   %shuffle = shufflevector <4 x i64> %v, <4 x i64> undef, <4 x i32> <i32 0, i32 0, i32 0, i32 0>
   ret <4 x i64> %shuffle
@@ -902,7 +902,7 @@ define <4 x double> @splat_mem_v4f64_2(double* %p) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vbroadcastsd (%rdi), %ymm0
 ; ALL-NEXT:    retq
-  %1 = load double* %p
+  %1 = load double, double* %p
   %2 = insertelement <2 x double> undef, double %1, i32 0
   %3 = shufflevector <2 x double> %2, <2 x double> undef, <4 x i32> zeroinitializer
   ret <4 x double> %3

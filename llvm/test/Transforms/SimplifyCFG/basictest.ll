@@ -50,7 +50,7 @@ define i8 @test6f() {
 ; CHECK: alloca i8, align 1
 ; CHECK-NEXT: call i8 @test6g
 ; CHECK-NEXT: icmp eq i8 %tmp, 0
-; CHECK-NEXT: load i8* %r, align 1{{$}}
+; CHECK-NEXT: load i8, i8* %r, align 1{{$}}
 
 bb0:
   %r = alloca i8, align 1
@@ -58,7 +58,7 @@ bb0:
   %tmp1 = icmp eq i8 %tmp, 0
   br i1 %tmp1, label %bb2, label %bb1
 bb1:
-  %tmp3 = load i8* %r, align 1, !range !2, !tbaa !1
+  %tmp3 = load i8, i8* %r, align 1, !range !2, !tbaa !1
   %tmp4 = icmp eq i8 %tmp3, 1
   br i1 %tmp4, label %bb2, label %bb3
 bb2:

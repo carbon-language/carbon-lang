@@ -83,13 +83,13 @@ entry:
 
 if:
   %gep.if = getelementptr i32, i32 addrspace(1)* %a, i32 %tid
-  %a.val = load i32 addrspace(1)* %gep.if
+  %a.val = load i32, i32 addrspace(1)* %gep.if
   %cmp.if = icmp eq i32 %a.val, 0
   br label %endif
 
 else:
   %gep.else = getelementptr i32, i32 addrspace(1)* %b, i32 %tid
-  %b.val = load i32 addrspace(1)* %gep.else
+  %b.val = load i32, i32 addrspace(1)* %gep.else
   %cmp.else = icmp slt i32 %b.val, 0
   br label %endif
 

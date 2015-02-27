@@ -90,12 +90,12 @@ define void @hasundef() unnamed_addr uwtable ssp align 2 {
 ; TOPDOWN: movzbl %al
 ; TOPDOWN: ret
 define void @testSubregTracking() nounwind uwtable ssp align 2 {
-  %tmp = load i8* undef, align 1
+  %tmp = load i8, i8* undef, align 1
   %tmp6 = sub i8 0, %tmp
-  %tmp7 = load i8* undef, align 1
+  %tmp7 = load i8, i8* undef, align 1
   %tmp8 = udiv i8 %tmp6, %tmp7
   %tmp9 = zext i8 %tmp8 to i64
-  %tmp10 = load i8* undef, align 1
+  %tmp10 = load i8, i8* undef, align 1
   %tmp11 = zext i8 %tmp10 to i64
   %tmp12 = mul i64 %tmp11, %tmp9
   %tmp13 = urem i8 %tmp6, %tmp7

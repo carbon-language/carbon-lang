@@ -2,7 +2,7 @@
 
 define void @single_access_no_preloop_no_offset(i32 *%arr, i32 *%a_len_ptr, i32 %n) {
  entry:
-  %len = load i32* %a_len_ptr, !range !0
+  %len = load i32, i32* %a_len_ptr, !range !0
   %first.itr.check = icmp sgt i32 %n, 0
   br i1 %first.itr.check, label %loop, label %exit
 
@@ -57,7 +57,7 @@ define void @single_access_no_preloop_no_offset(i32 *%arr, i32 *%a_len_ptr, i32 
 
 define void @single_access_no_preloop_with_offset(i32 *%arr, i32 *%a_len_ptr, i32 %n) {
  entry:
-  %len = load i32* %a_len_ptr, !range !0
+  %len = load i32, i32* %a_len_ptr, !range !0
   %first.itr.check = icmp sgt i32 %n, 0
   br i1 %first.itr.check, label %loop, label %exit
 

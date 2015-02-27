@@ -11,6 +11,6 @@ entry:
 	%tmp7 = getelementptr %struct..0anon, %struct..0anon* %c, i32 0, i32 0		; <<1 x i64>*> [#uses=1]
 	%tmp78 = bitcast <1 x i64>* %tmp7 to [2 x i32]*		; <[2 x i32]*> [#uses=1]
 	%tmp9 = getelementptr [2 x i32], [2 x i32]* %tmp78, i32 0, i32 0		; <i32*> [#uses=1]
-	%tmp10 = load i32* %tmp9, align 4		; <i32> [#uses=0]
+	%tmp10 = load i32, i32* %tmp9, align 4		; <i32> [#uses=0]
 	unreachable
 }

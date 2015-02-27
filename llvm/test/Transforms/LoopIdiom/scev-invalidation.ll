@@ -11,7 +11,7 @@ for.cond:                                         ; preds = %for.inc, %entry
   %backslashes.0 = phi i32 [ undef, %entry ], [ %backslashes.2, %for.inc ]
   %p.0 = phi i8* [ undef, %entry ], [ %incdec.ptr3, %for.inc ]
   %q.0 = phi i8* [ undef, %entry ], [ %q.2, %for.inc ]
-  %0 = load i8* %p.0, align 1
+  %0 = load i8, i8* %p.0, align 1
   switch i8 %0, label %while.cond.preheader [
     i8 0, label %for.cond4.preheader
     i8 92, label %for.inc

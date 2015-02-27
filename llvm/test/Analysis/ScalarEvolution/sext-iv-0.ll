@@ -24,7 +24,7 @@ bb1:		; preds = %bb1, %bb1.thread
 ; CHECK: %2
 ; CHECK-NEXT: -->  {-128,+,1}<nsw><%bb1>	Exits: 127
 	%3 = getelementptr double, double* %x, i64 %2		; <double*> [#uses=1]
-	%4 = load double* %3, align 8		; <double> [#uses=1]
+	%4 = load double, double* %3, align 8		; <double> [#uses=1]
 	%5 = fmul double %4, 3.900000e+00		; <double> [#uses=1]
 	%6 = sext i8 %0 to i64		; <i64> [#uses=1]
 	%7 = getelementptr double, double* %x, i64 %6		; <double*> [#uses=1]

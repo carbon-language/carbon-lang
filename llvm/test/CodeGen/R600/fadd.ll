@@ -33,8 +33,8 @@ define void @fadd_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %a, <2 x flo
 ; SI: v_add_f32
 define void @fadd_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
   %b_ptr = getelementptr <4 x float>, <4 x float> addrspace(1)* %in, i32 1
-  %a = load <4 x float> addrspace(1)* %in, align 16
-  %b = load <4 x float> addrspace(1)* %b_ptr, align 16
+  %a = load <4 x float>, <4 x float> addrspace(1)* %in, align 16
+  %b = load <4 x float>, <4 x float> addrspace(1)* %b_ptr, align 16
   %result = fadd <4 x float> %a, %b
   store <4 x float> %result, <4 x float> addrspace(1)* %out, align 16
   ret void

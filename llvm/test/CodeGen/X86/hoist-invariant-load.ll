@@ -15,7 +15,7 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %i.01 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
-  %0 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_", align 8, !invariant.load !0
+  %0 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_", align 8, !invariant.load !0
   %call = tail call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %x, i8* %0)
   %inc = add i32 %i.01, 1
   %exitcond = icmp eq i32 %inc, 10000

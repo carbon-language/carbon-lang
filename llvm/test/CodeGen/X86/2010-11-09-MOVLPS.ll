@@ -21,9 +21,9 @@ entry:
   store i8* %a, i8** %a_addr
   store %0* %b, %0** %b_addr
   store %0* %c, %0** %c_addr
-  %0 = load i8** %a_addr, align 64
-  %1 = load %0** %b_addr, align 64
-  %2 = load %0** %c_addr, align 64
+  %0 = load i8*, i8** %a_addr, align 64
+  %1 = load %0*, %0** %b_addr, align 64
+  %2 = load %0*, %0** %c_addr, align 64
   %"ssa point" = bitcast i32 0 to i32
   br label %"2"
 
@@ -31,10 +31,10 @@ entry:
   %3 = bitcast i8* %0 to <2 x i32>*
   %4 = getelementptr inbounds %0, %0* %1, i32 0, i32 0
   %5 = bitcast %"int[]"* %4 to <4 x float>*
-  %6 = load <4 x float>* %5, align 16
+  %6 = load <4 x float>, <4 x float>* %5, align 16
   %7 = bitcast <2 x i32>* %3 to <2 x float>*
   %8 = bitcast <2 x float>* %7 to double*
-  %9 = load double* %8
+  %9 = load double, double* %8
   %10 = insertelement <2 x double> undef, double %9, i32 0
   %11 = insertelement <2 x double> %10, double undef, i32 1
   %12 = bitcast <2 x double> %11 to <4 x float>
@@ -48,10 +48,10 @@ entry:
   %19 = bitcast i8* %18 to <2 x i32>*
   %20 = getelementptr inbounds %0, %0* %2, i32 0, i32 0
   %21 = bitcast %"int[]"* %20 to <4 x float>*
-  %22 = load <4 x float>* %21, align 16
+  %22 = load <4 x float>, <4 x float>* %21, align 16
   %23 = bitcast <2 x i32>* %19 to <2 x float>*
   %24 = bitcast <2 x float>* %23 to double*
-  %25 = load double* %24
+  %25 = load double, double* %24
   %26 = insertelement <2 x double> undef, double %25, i32 0
   %27 = insertelement <2 x double> %26, double undef, i32 1
   %28 = bitcast <2 x double> %27 to <4 x float>

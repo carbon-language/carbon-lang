@@ -8,7 +8,7 @@
 
 define void @foo() nounwind {
 entry:
-  %0 = load i64* bitcast (%struct.small* @s1 to i64*), align 1
+  %0 = load i64, i64* bitcast (%struct.small* @s1 to i64*), align 1
   call void @bar(i64 %0)
   ret void
 }

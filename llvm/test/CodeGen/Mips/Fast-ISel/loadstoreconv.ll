@@ -28,11 +28,11 @@
 define void @_Z3b_iv()  {
 entry:
 ; CHECK-LABEL:   .ent  _Z3b_iv
-  %0 = load i8* @b1, align 1
+  %0 = load i8, i8* @b1, align 1
   %tobool = trunc i8 %0 to i1
   %frombool = zext i1 %tobool to i8
   store i8 %frombool, i8* @b2, align 1
-  %1 = load i8* @b2, align 1
+  %1 = load i8, i8* @b2, align 1
   %tobool1 = trunc i8 %1 to i1
   %conv = zext i1 %tobool1 to i32
   store i32 %conv, i32* @i, align 4
@@ -51,10 +51,10 @@ define void @_Z4uc_iv()  {
 entry:
 ; CHECK-LABEL:  .ent  _Z4uc_iv
 
-  %0 = load i8* @uc1, align 1
+  %0 = load i8, i8* @uc1, align 1
   %conv = zext i8 %0 to i32
   store i32 %conv, i32* @i, align 4
-  %1 = load i8* @uc2, align 1
+  %1 = load i8, i8* @uc2, align 1
   %conv1 = zext i8 %1 to i32
 ; CHECK:   lbu  $[[REG1:[0-9]+]], 0(${{[0-9]+}})
 ; CHECK:  andi  ${{[0-9]+}}, $[[REG1]], 255
@@ -71,10 +71,10 @@ entry:
 ; mips32r2-LABEL:  .ent  _Z4sc_iv
 ; mips32-LABEL:  .ent  _Z4sc_iv
 
-  %0 = load i8* @sc1, align 1
+  %0 = load i8, i8* @sc1, align 1
   %conv = sext i8 %0 to i32
   store i32 %conv, i32* @i, align 4
-  %1 = load i8* @sc2, align 1
+  %1 = load i8, i8* @sc2, align 1
   %conv1 = sext i8 %1 to i32
   store i32 %conv1, i32* @j, align 4
 ; mips32r2:  lbu  $[[REG1:[0-9]+]], 0(${{[0-9]+}})
@@ -91,10 +91,10 @@ entry:
 define void @_Z4us_iv()  {
 entry:
 ; CHECK-LABEL:  .ent  _Z4us_iv
-  %0 = load i16* @us1, align 2
+  %0 = load i16, i16* @us1, align 2
   %conv = zext i16 %0 to i32
   store i32 %conv, i32* @i, align 4
-  %1 = load i16* @us2, align 2
+  %1 = load i16, i16* @us2, align 2
   %conv1 = zext i16 %1 to i32
   store i32 %conv1, i32* @j, align 4
   ret void
@@ -109,10 +109,10 @@ entry:
 ; mips32r2-LABEL:  .ent  _Z4ss_iv
 ; mips32=LABEL:  .ent  _Z4ss_iv
 
-  %0 = load i16* @ss1, align 2
+  %0 = load i16, i16* @ss1, align 2
   %conv = sext i16 %0 to i32
   store i32 %conv, i32* @i, align 4
-  %1 = load i16* @ss2, align 2
+  %1 = load i16, i16* @ss2, align 2
   %conv1 = sext i16 %1 to i32
   store i32 %conv1, i32* @j, align 4
 ; mips32r2:  lhu  $[[REG1:[0-9]+]], 0(${{[0-9]+}})
@@ -129,7 +129,7 @@ entry:
 define void @_Z4b_ssv()  {
 entry:
 ; CHECK-LABEL:  .ent  _Z4b_ssv
-  %0 = load i8* @b2, align 1
+  %0 = load i8, i8* @b2, align 1
   %tobool = trunc i8 %0 to i1
   %conv = zext i1 %tobool to i16
   store i16 %conv, i16* @ssi, align 2
@@ -143,10 +143,10 @@ entry:
 define void @_Z5uc_ssv()  {
 entry:
 ; CHECK-LABEL:  .ent  _Z5uc_ssv
-  %0 = load i8* @uc1, align 1
+  %0 = load i8, i8* @uc1, align 1
   %conv = zext i8 %0 to i16
   store i16 %conv, i16* @ssi, align 2
-  %1 = load i8* @uc2, align 1
+  %1 = load i8, i8* @uc2, align 1
   %conv1 = zext i8 %1 to i16
 ; CHECK:   lbu  $[[REG1:[0-9]+]], 0(${{[0-9]+}})
 ; CHECK:  andi  ${{[0-9]+}}, $[[REG1]], 255
@@ -161,10 +161,10 @@ define void @_Z5sc_ssv()  {
 entry:
 ; mips32r2-LABEL:  .ent  _Z5sc_ssv
 ; mips32-LABEL:  .ent  _Z5sc_ssv
-  %0 = load i8* @sc1, align 1
+  %0 = load i8, i8* @sc1, align 1
   %conv = sext i8 %0 to i16
   store i16 %conv, i16* @ssi, align 2
-  %1 = load i8* @sc2, align 1
+  %1 = load i8, i8* @sc2, align 1
   %conv1 = sext i8 %1 to i16
   store i16 %conv1, i16* @ssj, align 2
 ; mips32r2:  lbu  $[[REG1:[0-9]+]], 0(${{[0-9]+}})

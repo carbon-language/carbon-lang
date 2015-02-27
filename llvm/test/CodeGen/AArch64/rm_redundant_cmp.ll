@@ -15,8 +15,8 @@ define void @test_i16_2cmp_signed_1() {
 ; CHECK-NOT: cmp
 ; CHECK: b.ne
 entry:
-  %0 = load i16* getelementptr inbounds (%struct.s_signed_i16* @cost_s_i8_i16, i64 0, i32 1), align 2
-  %1 = load i16* getelementptr inbounds (%struct.s_signed_i16* @cost_s_i8_i16, i64 0, i32 2), align 2
+  %0 = load i16, i16* getelementptr inbounds (%struct.s_signed_i16* @cost_s_i8_i16, i64 0, i32 1), align 2
+  %1 = load i16, i16* getelementptr inbounds (%struct.s_signed_i16* @cost_s_i8_i16, i64 0, i32 2), align 2
   %cmp = icmp sgt i16 %0, %1
   br i1 %cmp, label %if.then, label %if.else
 
@@ -43,8 +43,8 @@ define void @test_i16_2cmp_signed_2() {
 ; CHECK-NOT: cmp
 ; CHECK: b.ge
 entry:
-  %0 = load i16* getelementptr inbounds (%struct.s_signed_i16* @cost_s_i8_i16, i64 0, i32 1), align 2
-  %1 = load i16* getelementptr inbounds (%struct.s_signed_i16* @cost_s_i8_i16, i64 0, i32 2), align 2
+  %0 = load i16, i16* getelementptr inbounds (%struct.s_signed_i16* @cost_s_i8_i16, i64 0, i32 1), align 2
+  %1 = load i16, i16* getelementptr inbounds (%struct.s_signed_i16* @cost_s_i8_i16, i64 0, i32 2), align 2
   %cmp = icmp sgt i16 %0, %1
   br i1 %cmp, label %if.then, label %if.else
 
@@ -71,8 +71,8 @@ define void @test_i16_2cmp_unsigned_1() {
 ; CHECK-NOT: cmp
 ; CHECK: b.ne
 entry:
-  %0 = load i16* getelementptr inbounds (%struct.s_unsigned_i16* @cost_u_i16, i64 0, i32 1), align 2
-  %1 = load i16* getelementptr inbounds (%struct.s_unsigned_i16* @cost_u_i16, i64 0, i32 2), align 2
+  %0 = load i16, i16* getelementptr inbounds (%struct.s_unsigned_i16* @cost_u_i16, i64 0, i32 1), align 2
+  %1 = load i16, i16* getelementptr inbounds (%struct.s_unsigned_i16* @cost_u_i16, i64 0, i32 2), align 2
   %cmp = icmp ugt i16 %0, %1
   br i1 %cmp, label %if.then, label %if.else
 
@@ -99,8 +99,8 @@ define void @test_i16_2cmp_unsigned_2() {
 ; CHECK-NOT: cmp
 ; CHECK: b.hs
 entry:
-  %0 = load i16* getelementptr inbounds (%struct.s_unsigned_i16* @cost_u_i16, i64 0, i32 1), align 2
-  %1 = load i16* getelementptr inbounds (%struct.s_unsigned_i16* @cost_u_i16, i64 0, i32 2), align 2
+  %0 = load i16, i16* getelementptr inbounds (%struct.s_unsigned_i16* @cost_u_i16, i64 0, i32 1), align 2
+  %1 = load i16, i16* getelementptr inbounds (%struct.s_unsigned_i16* @cost_u_i16, i64 0, i32 2), align 2
   %cmp = icmp ugt i16 %0, %1
   br i1 %cmp, label %if.then, label %if.else
 
@@ -136,8 +136,8 @@ define void @test_i8_2cmp_signed_1() {
 ; CHECK-NOT: cmp
 ; CHECK: b.ne
 entry:
-  %0 = load i8* getelementptr inbounds (%struct.s_signed_i8* @cost_s, i64 0, i32 1), align 2
-  %1 = load i8* getelementptr inbounds (%struct.s_signed_i8* @cost_s, i64 0, i32 2), align 2
+  %0 = load i8, i8* getelementptr inbounds (%struct.s_signed_i8* @cost_s, i64 0, i32 1), align 2
+  %1 = load i8, i8* getelementptr inbounds (%struct.s_signed_i8* @cost_s, i64 0, i32 2), align 2
   %cmp = icmp sgt i8 %0, %1
   br i1 %cmp, label %if.then, label %if.else
 
@@ -164,8 +164,8 @@ define void @test_i8_2cmp_signed_2() {
 ; CHECK-NOT: cmp
 ; CHECK: b.ge
 entry:
-  %0 = load i8* getelementptr inbounds (%struct.s_signed_i8* @cost_s, i64 0, i32 1), align 2
-  %1 = load i8* getelementptr inbounds (%struct.s_signed_i8* @cost_s, i64 0, i32 2), align 2
+  %0 = load i8, i8* getelementptr inbounds (%struct.s_signed_i8* @cost_s, i64 0, i32 1), align 2
+  %1 = load i8, i8* getelementptr inbounds (%struct.s_signed_i8* @cost_s, i64 0, i32 2), align 2
   %cmp = icmp sgt i8 %0, %1
   br i1 %cmp, label %if.then, label %if.else
 
@@ -192,8 +192,8 @@ define void @test_i8_2cmp_unsigned_1() {
 ; CHECK-NOT: cmp
 ; CHECK: b.ne
 entry:
-  %0 = load i8* getelementptr inbounds (%struct.s_unsigned_i8* @cost_u_i8, i64 0, i32 1), align 2
-  %1 = load i8* getelementptr inbounds (%struct.s_unsigned_i8* @cost_u_i8, i64 0, i32 2), align 2
+  %0 = load i8, i8* getelementptr inbounds (%struct.s_unsigned_i8* @cost_u_i8, i64 0, i32 1), align 2
+  %1 = load i8, i8* getelementptr inbounds (%struct.s_unsigned_i8* @cost_u_i8, i64 0, i32 2), align 2
   %cmp = icmp ugt i8 %0, %1
   br i1 %cmp, label %if.then, label %if.else
 
@@ -220,8 +220,8 @@ define void @test_i8_2cmp_unsigned_2() {
 ; CHECK-NOT: cmp
 ; CHECK: b.hs
 entry:
-  %0 = load i8* getelementptr inbounds (%struct.s_unsigned_i8* @cost_u_i8, i64 0, i32 1), align 2
-  %1 = load i8* getelementptr inbounds (%struct.s_unsigned_i8* @cost_u_i8, i64 0, i32 2), align 2
+  %0 = load i8, i8* getelementptr inbounds (%struct.s_unsigned_i8* @cost_u_i8, i64 0, i32 1), align 2
+  %1 = load i8, i8* getelementptr inbounds (%struct.s_unsigned_i8* @cost_u_i8, i64 0, i32 2), align 2
   %cmp = icmp ugt i8 %0, %1
   br i1 %cmp, label %if.then, label %if.else
 

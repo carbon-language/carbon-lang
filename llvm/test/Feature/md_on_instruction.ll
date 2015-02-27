@@ -8,7 +8,7 @@ entry:
 
 ; <label>:0                                       ; preds = %entry
   call void @llvm.dbg.region.end(metadata !0)
-  %1 = load i32* %retval, !dbg !3                  ; <i32> [#uses=1]
+  %1 = load i32, i32* %retval, !dbg !3                  ; <i32> [#uses=1]
   ret i32 %1, !dbg !3
 }
 

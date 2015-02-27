@@ -17,7 +17,7 @@
 
 define fastcc void @MinSize(%struct.rec* %x) nounwind {
 entry:
-	%tmp13 = load i8* undef, align 4		; <i8> [#uses=3]
+	%tmp13 = load i8, i8* undef, align 4		; <i8> [#uses=3]
 	%tmp14 = zext i8 %tmp13 to i32		; <i32> [#uses=2]
 	switch i32 %tmp14, label %bb1109 [
 		i32 42, label %bb246

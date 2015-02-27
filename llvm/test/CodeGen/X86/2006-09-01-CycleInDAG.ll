@@ -111,21 +111,21 @@ bb3502.exitStub:		; preds = %cond_true3632
 	ret void
 
 cond_true3632:		; preds = %newFuncRoot
-	%tmp3378 = load i32* %tmp3629		; <i32> [#uses=1]
+	%tmp3378 = load i32, i32* %tmp3629		; <i32> [#uses=1]
 	%tmp3379 = add i32 %tmp3378, -1		; <i32> [#uses=1]
 	%tmp3381 = getelementptr %struct.varray_head_tag, %struct.varray_head_tag* %stack3023.6, i32 0, i32 4		; <%struct.varray_data*> [#uses=1]
 	%tmp3382 = bitcast %struct.varray_data* %tmp3381 to [1 x i32]*		; <[1 x i32]*> [#uses=1]
 	%gep.upgrd.1 = zext i32 %tmp3379 to i64		; <i64> [#uses=1]
 	%tmp3383 = getelementptr [1 x i32], [1 x i32]* %tmp3382, i32 0, i64 %gep.upgrd.1		; <i32*> [#uses=1]
-	%tmp3384 = load i32* %tmp3383		; <i32> [#uses=1]
-	%tmp3387 = load i32* %tmp3629		; <i32> [#uses=1]
+	%tmp3384 = load i32, i32* %tmp3383		; <i32> [#uses=1]
+	%tmp3387 = load i32, i32* %tmp3629		; <i32> [#uses=1]
 	%tmp3388 = add i32 %tmp3387, -1		; <i32> [#uses=1]
 	store i32 %tmp3388, i32* %tmp3629
-	%tmp3391 = load %struct.varray_head_tag** @basic_block_info		; <%struct.varray_head_tag*> [#uses=1]
+	%tmp3391 = load %struct.varray_head_tag*, %struct.varray_head_tag** @basic_block_info		; <%struct.varray_head_tag*> [#uses=1]
 	%tmp3393 = getelementptr %struct.varray_head_tag, %struct.varray_head_tag* %tmp3391, i32 0, i32 4		; <%struct.varray_data*> [#uses=1]
 	%tmp3394 = bitcast %struct.varray_data* %tmp3393 to [1 x %struct.basic_block_def*]*		; <[1 x %struct.basic_block_def*]*> [#uses=1]
 	%tmp3395 = getelementptr [1 x %struct.basic_block_def*], [1 x %struct.basic_block_def*]* %tmp3394, i32 0, i32 %tmp3384		; <%struct.basic_block_def**> [#uses=1]
-	%tmp3396 = load %struct.basic_block_def** %tmp3395		; <%struct.basic_block_def*> [#uses=1]
+	%tmp3396 = load %struct.basic_block_def*, %struct.basic_block_def** %tmp3395		; <%struct.basic_block_def*> [#uses=1]
 	%tmp3397 = getelementptr %struct.basic_block_def, %struct.basic_block_def* %tmp3396, i32 0, i32 3		; <%struct.VEC_edge**> [#uses=1]
 	br label %bb3502.exitStub
 }

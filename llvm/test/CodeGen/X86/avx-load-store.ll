@@ -10,10 +10,10 @@
 define void @test_256_load(double* nocapture %d, float* nocapture %f, <4 x i64>* nocapture %i) nounwind uwtable ssp {
 entry:
   %0 = bitcast double* %d to <4 x double>*
-  %tmp1.i = load <4 x double>* %0, align 32
+  %tmp1.i = load <4 x double>, <4 x double>* %0, align 32
   %1 = bitcast float* %f to <8 x float>*
-  %tmp1.i17 = load <8 x float>* %1, align 32
-  %tmp1.i16 = load <4 x i64>* %i, align 32
+  %tmp1.i17 = load <8 x float>, <8 x float>* %1, align 32
+  %tmp1.i16 = load <4 x i64>, <4 x i64>* %i, align 32
   tail call void @dummy(<4 x double> %tmp1.i, <8 x float> %tmp1.i17, <4 x i64> %tmp1.i16) nounwind
   store <4 x double> %tmp1.i, <4 x double>* %0, align 32
   store <8 x float> %tmp1.i17, <8 x float>* %1, align 32
@@ -29,7 +29,7 @@ declare void @dummy(<4 x double>, <8 x float>, <4 x i64>)
 
 ; CHECK: mov00
 define <8 x float> @mov00(<8 x float> %v, float * %ptr) nounwind {
-  %val = load float* %ptr
+  %val = load float, float* %ptr
 ; CHECK: vinsertps
 ; CHECK: vinsertf128
   %i0 = insertelement <8 x float> zeroinitializer, float %val, i32 0
@@ -39,7 +39,7 @@ define <8 x float> @mov00(<8 x float> %v, float * %ptr) nounwind {
 
 ; CHECK: mov01
 define <4 x double> @mov01(<4 x double> %v, double * %ptr) nounwind {
-  %val = load double* %ptr
+  %val = load double, double* %ptr
 ; CHECK: vmovlpd
 ; CHECK: vinsertf128
   %i0 = insertelement <4 x double> zeroinitializer, double %val, i32 0
@@ -122,7 +122,7 @@ cif_mixed_test_any_check:                         ; preds = %cif_mask_mixed
 ; CHECK: vmovups
 ; CHECK: vmovups
 define void @add8i32(<8 x i32>* %ret, <8 x i32>* %bp) nounwind {
-  %b = load <8 x i32>* %bp, align 1
+  %b = load <8 x i32>, <8 x i32>* %bp, align 1
   %x = add <8 x i32> zeroinitializer, %b
   store <8 x i32> %x, <8 x i32>* %ret, align 1
   ret void
@@ -132,7 +132,7 @@ define void @add8i32(<8 x i32>* %ret, <8 x i32>* %bp) nounwind {
 ; CHECK: vmovaps ({{.*}}), %ymm{{.*}}
 ; CHECK: vmovaps %ymm{{.*}}, ({{.*}})
 define void @add4i64a64(<4 x i64>* %ret, <4 x i64>* %bp) nounwind {
-  %b = load <4 x i64>* %bp, align 64
+  %b = load <4 x i64>, <4 x i64>* %bp, align 64
   %x = add <4 x i64> zeroinitializer, %b
   store <4 x i64> %x, <4 x i64>* %ret, align 64
   ret void
@@ -144,7 +144,7 @@ define void @add4i64a64(<4 x i64>* %ret, <4 x i64>* %bp) nounwind {
 ; CHECK: vmovaps %xmm{{.*}}, {{.*}}({{.*}})
 ; CHECK: vmovaps %xmm{{.*}}, {{.*}}({{.*}})
 define void @add4i64a16(<4 x i64>* %ret, <4 x i64>* %bp) nounwind {
-  %b = load <4 x i64>* %bp, align 16
+  %b = load <4 x i64>, <4 x i64>* %bp, align 16
   %x = add <4 x i64> zeroinitializer, %b
   store <4 x i64> %x, <4 x i64>* %ret, align 16
   ret void

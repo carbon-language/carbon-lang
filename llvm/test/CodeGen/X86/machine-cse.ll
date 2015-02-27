@@ -147,7 +147,7 @@ define i32 @t2() {
   br i1 %c, label %a, label %b
 
 a:
-  %l = load i32* @t2_global
+  %l = load i32, i32* @t2_global
   ret i32 %l
 
 b:

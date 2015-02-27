@@ -5,7 +5,7 @@
 
 define void @func() nounwind {
 entry:
-  %tmp = load i32* undef, align 4
+  %tmp = load i32, i32* undef, align 4
   br label %bb1
 
 bb1:

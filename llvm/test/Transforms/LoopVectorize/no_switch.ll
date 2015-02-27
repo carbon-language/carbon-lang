@@ -22,7 +22,7 @@ for.body.preheader:                               ; preds = %entry
 for.body:                                         ; preds = %for.body.preheader, %for.inc
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc ], [ 0, %for.body.preheader ]
   %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv, !dbg !14
-  %0 = load i32* %arrayidx, align 4, !dbg !14, !tbaa !16
+  %0 = load i32, i32* %arrayidx, align 4, !dbg !14, !tbaa !16
   switch i32 %0, label %for.inc [
     i32 0, label %sw.bb
     i32 1, label %sw.bb3

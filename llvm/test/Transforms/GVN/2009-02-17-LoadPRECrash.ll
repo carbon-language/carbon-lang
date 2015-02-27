@@ -24,11 +24,11 @@ entry:
 	%addr = alloca %struct.rtx_def*		; <%struct.rtx_def**> [#uses=5]
 	%iftmp.1532 = alloca %struct.rtx_def*		; <%struct.rtx_def**> [#uses=3]
 	store %struct.rtx_def* %orig, %struct.rtx_def** null
-	%0 = load %struct.rtx_def** null, align 4		; <%struct.rtx_def*> [#uses=0]
+	%0 = load %struct.rtx_def*, %struct.rtx_def** null, align 4		; <%struct.rtx_def*> [#uses=0]
 	br i1 false, label %bb96, label %bb59
 
 bb59:		; preds = %entry
-	%1 = load %struct.rtx_def** %addr, align 4		; <%struct.rtx_def*> [#uses=1]
+	%1 = load %struct.rtx_def*, %struct.rtx_def** %addr, align 4		; <%struct.rtx_def*> [#uses=1]
 	%2 = call i32 @local_symbolic_operand(%struct.rtx_def* %1, i32 0) nounwind		; <i32> [#uses=0]
 	br i1 false, label %bb96, label %bb63
 
@@ -89,22 +89,22 @@ bb94:		; preds = %bb93, %bb92
 	unreachable
 
 bb96:		; preds = %bb59, %entry
-	%5 = load %struct.rtx_def** %addr, align 4		; <%struct.rtx_def*> [#uses=1]
+	%5 = load %struct.rtx_def*, %struct.rtx_def** %addr, align 4		; <%struct.rtx_def*> [#uses=1]
 	%6 = getelementptr %struct.rtx_def, %struct.rtx_def* %5, i32 0, i32 0		; <i16*> [#uses=1]
-	%7 = load i16* %6, align 2		; <i16> [#uses=0]
+	%7 = load i16, i16* %6, align 2		; <i16> [#uses=0]
 	br i1 false, label %bb147, label %bb97
 
 bb97:		; preds = %bb96
-	%8 = load %struct.rtx_def** %addr, align 4		; <%struct.rtx_def*> [#uses=0]
+	%8 = load %struct.rtx_def*, %struct.rtx_def** %addr, align 4		; <%struct.rtx_def*> [#uses=0]
 	br i1 false, label %bb147, label %bb99
 
 bb99:		; preds = %bb97
 	unreachable
 
 bb147:		; preds = %bb97, %bb96
-	%9 = load %struct.rtx_def** %addr, align 4		; <%struct.rtx_def*> [#uses=1]
+	%9 = load %struct.rtx_def*, %struct.rtx_def** %addr, align 4		; <%struct.rtx_def*> [#uses=1]
 	%10 = getelementptr %struct.rtx_def, %struct.rtx_def* %9, i32 0, i32 0		; <i16*> [#uses=1]
-	%11 = load i16* %10, align 2		; <i16> [#uses=0]
+	%11 = load i16, i16* %10, align 2		; <i16> [#uses=0]
 	br i1 false, label %bb164, label %bb148
 
 bb148:		; preds = %bb147
@@ -167,7 +167,7 @@ bb181:		; preds = %bb180, %bb170
 	unreachable
 
 bb211:		; preds = %bb168, %bb167
-	%14 = load %struct.rtx_def** %addr, align 4		; <%struct.rtx_def*> [#uses=0]
+	%14 = load %struct.rtx_def*, %struct.rtx_def** %addr, align 4		; <%struct.rtx_def*> [#uses=0]
 	%15 = getelementptr [1 x %struct.cgraph_rtl_info], [1 x %struct.cgraph_rtl_info]* null, i32 0, i32 0		; <%struct.cgraph_rtl_info*> [#uses=0]
 	store %struct.rtx_def* null, %struct.rtx_def** null, align 4
 	br i1 false, label %bb212, label %bb213
@@ -183,7 +183,7 @@ bb213:		; preds = %bb211
 bb214:		; preds = %bb213, %bb212
 	%16 = bitcast %struct.block_symbol* null to [1 x %struct.cgraph_rtl_info]*		; <[1 x %struct.cgraph_rtl_info]*> [#uses=1]
 	%17 = getelementptr [1 x %struct.cgraph_rtl_info], [1 x %struct.cgraph_rtl_info]* %16, i32 0, i32 1		; <%struct.cgraph_rtl_info*> [#uses=0]
-	%18 = load %struct.rtx_def** %iftmp.1532, align 4		; <%struct.rtx_def*> [#uses=0]
+	%18 = load %struct.rtx_def*, %struct.rtx_def** %iftmp.1532, align 4		; <%struct.rtx_def*> [#uses=0]
 	%19 = getelementptr %struct.rtx_def, %struct.rtx_def* null, i32 0, i32 3		; <%struct.u*> [#uses=1]
 	%20 = getelementptr %struct.u, %struct.u* %19, i32 0, i32 0		; <%struct.block_symbol*> [#uses=1]
 	%21 = bitcast %struct.block_symbol* %20 to [1 x i64]*		; <[1 x i64]*> [#uses=1]

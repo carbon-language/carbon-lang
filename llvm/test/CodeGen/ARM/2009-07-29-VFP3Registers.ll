@@ -12,7 +12,7 @@ bb:		; preds = %bb, %entry
 	br i1 undef, label %bb28, label %bb
 
 bb28:		; preds = %bb
-	%0 = load double* @a, align 4		; <double> [#uses=2]
+	%0 = load double, double* @a, align 4		; <double> [#uses=2]
 	%1 = fadd double %0, undef		; <double> [#uses=2]
 	br i1 undef, label %bb59, label %bb60
 

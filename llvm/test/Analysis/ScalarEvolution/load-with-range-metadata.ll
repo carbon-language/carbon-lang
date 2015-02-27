@@ -3,7 +3,7 @@
 define i32 @slt_trip_count_with_range(i32 *%ptr0, i32 *%ptr1) {
 ; CHECK-LABEL: slt_trip_count_with_range
  entry:
-  %limit = load i32* %ptr0, !range !0
+  %limit = load i32, i32* %ptr0, !range !0
   br label %loop
 
  loop:
@@ -20,7 +20,7 @@ define i32 @slt_trip_count_with_range(i32 *%ptr0, i32 *%ptr1) {
 define i32 @ult_trip_count_with_range(i32 *%ptr0, i32 *%ptr1) {
 ; CHECK-LABEL: ult_trip_count_with_range
  entry:
-  %limit = load i32* %ptr0, !range !0
+  %limit = load i32, i32* %ptr0, !range !0
   br label %loop
 
  loop:

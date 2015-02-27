@@ -6,8 +6,8 @@ entry:
   br i1 undef, label %return, label %bb
 
 bb:                                               ; preds = %bb, %entry
-  %0 = load float* undef, align 4                 ; <float> [#uses=1]
-  %1 = load float* null, align 4                  ; <float> [#uses=1]
+  %0 = load float, float* undef, align 4                 ; <float> [#uses=1]
+  %1 = load float, float* null, align 4                  ; <float> [#uses=1]
   %2 = insertelement <4 x float> undef, float undef, i32 1 ; <<4 x float>> [#uses=1]
   %3 = insertelement <4 x float> %2, float %1, i32 2 ; <<4 x float>> [#uses=2]
   %4 = insertelement <4 x float> undef, float %0, i32 2 ; <<4 x float>> [#uses=1]

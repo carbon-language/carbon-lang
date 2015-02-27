@@ -31,12 +31,12 @@ entry:
 	%1 = uitofp i32 %0 to double		; <double> [#uses=1]
 	%2 = fdiv double %1, 1.000000e+06		; <double> [#uses=1]
 	%3 = getelementptr %struct.lua_State, %struct.lua_State* %L, i32 0, i32 4		; <%struct.TValue**> [#uses=3]
-	%4 = load %struct.TValue** %3, align 4		; <%struct.TValue*> [#uses=2]
+	%4 = load %struct.TValue*, %struct.TValue** %3, align 4		; <%struct.TValue*> [#uses=2]
 	%5 = getelementptr %struct.TValue, %struct.TValue* %4, i32 0, i32 0, i32 0		; <double*> [#uses=1]
 	store double %2, double* %5, align 4
 	%6 = getelementptr %struct.TValue, %struct.TValue* %4, i32 0, i32 1		; <i32*> [#uses=1]
 	store i32 3, i32* %6, align 4
-	%7 = load %struct.TValue** %3, align 4		; <%struct.TValue*> [#uses=1]
+	%7 = load %struct.TValue*, %struct.TValue** %3, align 4		; <%struct.TValue*> [#uses=1]
 	%8 = getelementptr %struct.TValue, %struct.TValue* %7, i32 1		; <%struct.TValue*> [#uses=1]
 	store %struct.TValue* %8, %struct.TValue** %3, align 4
 	ret i32 1

@@ -48,7 +48,7 @@ define void @t1(%class.Complex* nocapture %out, i64 %out_start) {
 entry:
   %arrayidx = getelementptr inbounds %class.Complex, %class.Complex* %out, i64 %out_start
   %tmp = bitcast %class.Complex* %arrayidx to i64*
-  %tmp1 = load i64* %tmp, align 8
+  %tmp1 = load i64, i64* %tmp, align 8
   %t0.sroa.0.0.extract.trunc = trunc i64 %tmp1 to i32
   %tmp2 = bitcast i32 %t0.sroa.0.0.extract.trunc to float
   %t0.sroa.2.0.extract.shift = lshr i64 %tmp1, 32
@@ -57,11 +57,11 @@ entry:
   %add = add i64 %out_start, 8
   %arrayidx2 = getelementptr inbounds %class.Complex, %class.Complex* %out, i64 %add
   %i.i = getelementptr inbounds %class.Complex, %class.Complex* %arrayidx2, i64 0, i32 0
-  %tmp4 = load float* %i.i, align 4
+  %tmp4 = load float, float* %i.i, align 4
   %add.i = fadd float %tmp4, %tmp2
   %retval.sroa.0.0.vec.insert.i = insertelement <2 x float> undef, float %add.i, i32 0
   %r.i = getelementptr inbounds %class.Complex, %class.Complex* %arrayidx2, i64 0, i32 1
-  %tmp5 = load float* %r.i, align 4
+  %tmp5 = load float, float* %r.i, align 4
   %add5.i = fadd float %tmp5, %tmp3
   %retval.sroa.0.4.vec.insert.i = insertelement <2 x float> %retval.sroa.0.0.vec.insert.i, float %add5.i, i32 1
   %ref.tmp.sroa.0.0.cast = bitcast %class.Complex* %arrayidx to <2 x float>*
@@ -102,7 +102,7 @@ declare void @llvm.lifetime.end(i64, i8* nocapture)
 define i32 @t2(%class.Complex* nocapture %out, i64 %out_start) {
   %arrayidx = getelementptr inbounds %class.Complex, %class.Complex* %out, i64 %out_start
   %bitcast = bitcast %class.Complex* %arrayidx to i64*
-  %chunk64 = load i64* %bitcast, align 8
+  %chunk64 = load i64, i64* %bitcast, align 8
   %slice32_low = trunc i64 %chunk64 to i32
   %shift48 = lshr i64 %chunk64, 48
   %slice32_high = trunc i64 %shift48 to i32
@@ -127,7 +127,7 @@ define i32 @t2(%class.Complex* nocapture %out, i64 %out_start) {
 define i32 @t3(%class.Complex* nocapture %out, i64 %out_start) {
   %arrayidx = getelementptr inbounds %class.Complex, %class.Complex* %out, i64 %out_start
   %bitcast = bitcast %class.Complex* %arrayidx to i64*
-  %chunk64 = load i64* %bitcast, align 8
+  %chunk64 = load i64, i64* %bitcast, align 8
   %slice32_low = trunc i64 %chunk64 to i32
   %shift48 = lshr i64 %chunk64, 48
   %slice32_high = trunc i64 %shift48 to i32

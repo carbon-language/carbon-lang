@@ -15,16 +15,16 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK-LABEL: foo
 define i32 @foo() {
 entry:
-  %.pr = load i32* @b, align 4
+  %.pr = load i32, i32* @b, align 4
   %cmp10 = icmp slt i32 %.pr, 1
   br i1 %cmp10, label %for.cond1.preheader.lr.ph, label %entry.for.end9_crit_edge
 
 entry.for.end9_crit_edge:                         ; preds = %entry
-  %.pre = load i32* @c, align 4
+  %.pre = load i32, i32* @c, align 4
   br label %for.end9
 
 for.cond1.preheader.lr.ph:                        ; preds = %entry
-  %0 = load i32* @a, align 4
+  %0 = load i32, i32* @a, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %for.cond1.preheader.for.cond1.preheader.split_crit_edge, label %return.loopexit.split
 

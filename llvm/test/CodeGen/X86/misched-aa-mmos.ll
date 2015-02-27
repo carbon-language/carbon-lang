@@ -20,11 +20,11 @@ entry:
 cond.end.i:
   %significand.i18.i = getelementptr inbounds %c1, %c1* %temp_rhs, i64 0, i32 1
   %exponent.i = getelementptr inbounds %c1, %c1* %temp_rhs, i64 0, i32 2
-  %0 = load i16* %exponent.i, align 8
+  %0 = load i16, i16* %exponent.i, align 8
   %sub.i = add i16 %0, -1
   store i16 %sub.i, i16* %exponent.i, align 8
   %parts.i.i = bitcast %u1* %significand.i18.i to i64**
-  %1 = load i64** %parts.i.i, align 8
+  %1 = load i64*, i64** %parts.i.i, align 8
   %call5.i = call zeroext i1 @bar(i64* %1, i32 undef) #1
   unreachable
 

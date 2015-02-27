@@ -6,10 +6,10 @@
 define internal void @""(i8*) {
 ; <label>:1
         bitcast i8* %0 to i32*          ; <i32*>:2 [#uses=1]
-        load i32* %2, align 1           ; <i32>:3 [#uses=1]
+        load i32, i32* %2, align 1           ; <i32>:3 [#uses=1]
         getelementptr i8, i8* %0, i32 4             ; <i8*>:4 [#uses=1]
         bitcast i8* %4 to i32*          ; <i32*>:5 [#uses=1]
-        load i32* %5, align 1           ; <i32>:6 [#uses=1]
+        load i32, i32* %5, align 1           ; <i32>:6 [#uses=1]
         br label %7
 
 ; <label>:7             ; preds = %9, %1

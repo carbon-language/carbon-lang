@@ -21,7 +21,7 @@ loop:
 
 done:
   %tmp0 = getelementptr [16 x i32], [16 x i32]* %alloca, i32 0, i32 0
-  %tmp1 = load i32* %tmp0
+  %tmp1 = load i32, i32* %tmp0
   store i32 %tmp1, i32 addrspace(1)* %out
   ret void
 }

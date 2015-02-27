@@ -62,7 +62,7 @@ define <4 x i32> @test6(<4 x float> %a, <4 x float> %b, <4 x i32> %c) {
 define <4 x i32> @test7(<4 x float> %a, <4 x float> %b, <4 x i32>* %p) {
   %f = fcmp ult <4 x float> %a, %b
   %s = sext <4 x i1> %f to <4 x i32>
-  %l = load <4 x i32>* %p
+  %l = load <4 x i32>, <4 x i32>* %p
   %r = and <4 x i32> %l, %s
   ret <4 x i32> %r
 ; CHECK: test7

@@ -25,9 +25,9 @@ target triple = "x86_64-apple-macosx10.9.0"
 define i32 @main() #0 {
 entry:
   store i8 0, i8* @h, align 1
-  %0 = load i32* @j, align 4
+  %0 = load i32, i32* @j, align 4
   %tobool.i = icmp eq i32 %0, 0
-  %1 = load i32* @d, align 4
+  %1 = load i32, i32* @d, align 4
   %cmp3 = icmp sgt i32 %1, -1
   %.lobit = lshr i32 %1, 31
   %.lobit.not = xor i32 %.lobit, 1

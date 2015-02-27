@@ -9,20 +9,20 @@
 define i32 @test1(i32 %a) {
 entry:
   %tobool = icmp eq i32 %a, 0
-  %0 = load i32* @g0, align 4
+  %0 = load i32, i32* @g0, align 4
   br i1 %tobool, label %if.else, label %if.then
 
 if.then:
   %add = add nsw i32 %0, 1
   store i32 %add, i32* @g0, align 4
-  %1 = load i32* @g1, align 4
+  %1 = load i32, i32* @g1, align 4
   %add1 = add nsw i32 %1, 23
   br label %if.end
 
 if.else:
   %add2 = add nsw i32 %0, 11
   store i32 %add2, i32* @g0, align 4
-  %2 = load i32* @g1, align 4
+  %2 = load i32, i32* @g1, align 4
   %add3 = add nsw i32 %2, 23
   br label %if.end
 

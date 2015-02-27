@@ -10,7 +10,7 @@
 ; SI: s_endpgm
 define void @test_i8( i32 %s, i8 addrspace(1)* %out) #3 {
   %arrayidx = getelementptr inbounds [1 x i8], [1 x i8] addrspace(2)* @a, i32 0, i32 %s
-  %1 = load i8 addrspace(2)* %arrayidx, align 1
+  %1 = load i8, i8 addrspace(2)* %arrayidx, align 1
   store i8 %1, i8 addrspace(1)* %out
   ret void
 }
@@ -23,7 +23,7 @@ define void @test_i8( i32 %s, i8 addrspace(1)* %out) #3 {
 ; SI: s_endpgm
 define void @test_i16( i32 %s, i16 addrspace(1)* %out) #3 {
   %arrayidx = getelementptr inbounds [1 x i16], [1 x i16] addrspace(2)* @b, i32 0, i32 %s
-  %1 = load i16 addrspace(2)* %arrayidx, align 2
+  %1 = load i16, i16 addrspace(2)* %arrayidx, align 2
   store i16 %1, i16 addrspace(1)* %out
   ret void
 }
@@ -36,7 +36,7 @@ define void @test_i16( i32 %s, i16 addrspace(1)* %out) #3 {
 ; FUNC-LABEL: {{^}}struct_bar_gv_load:
 define void @struct_bar_gv_load(i8 addrspace(1)* %out, i32 %index) {
   %gep = getelementptr inbounds [1 x %struct.bar], [1 x %struct.bar] addrspace(2)* @struct_bar_gv, i32 0, i32 0, i32 1, i32 %index
-  %load = load i8 addrspace(2)* %gep, align 1
+  %load = load i8, i8 addrspace(2)* %gep, align 1
   store i8 %load, i8 addrspace(1)* %out, align 1
   ret void
 }
@@ -51,7 +51,7 @@ define void @struct_bar_gv_load(i8 addrspace(1)* %out, i32 %index) {
 ; FUNC-LABEL: {{^}}array_vector_gv_load:
 define void @array_vector_gv_load(<4 x i32> addrspace(1)* %out, i32 %index) {
   %gep = getelementptr inbounds [4 x <4 x i32>], [4 x <4 x i32>] addrspace(2)* @array_vector_gv, i32 0, i32 %index
-  %load = load <4 x i32> addrspace(2)* %gep, align 16
+  %load = load <4 x i32>, <4 x i32> addrspace(2)* %gep, align 16
   store <4 x i32> %load, <4 x i32> addrspace(1)* %out, align 16
   ret void
 }

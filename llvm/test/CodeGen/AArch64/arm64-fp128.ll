@@ -6,8 +6,8 @@
 define fp128 @test_add() {
 ; CHECK-LABEL: test_add:
 
-  %lhs = load fp128* @lhs, align 16
-  %rhs = load fp128* @rhs, align 16
+  %lhs = load fp128, fp128* @lhs, align 16
+  %rhs = load fp128, fp128* @rhs, align 16
 ; CHECK: ldr q0, [{{x[0-9]+}}, :lo12:lhs]
 ; CHECK: ldr q1, [{{x[0-9]+}}, :lo12:rhs]
 
@@ -19,8 +19,8 @@ define fp128 @test_add() {
 define fp128 @test_sub() {
 ; CHECK-LABEL: test_sub:
 
-  %lhs = load fp128* @lhs, align 16
-  %rhs = load fp128* @rhs, align 16
+  %lhs = load fp128, fp128* @lhs, align 16
+  %rhs = load fp128, fp128* @rhs, align 16
 ; CHECK: ldr q0, [{{x[0-9]+}}, :lo12:lhs]
 ; CHECK: ldr q1, [{{x[0-9]+}}, :lo12:rhs]
 
@@ -32,8 +32,8 @@ define fp128 @test_sub() {
 define fp128 @test_mul() {
 ; CHECK-LABEL: test_mul:
 
-  %lhs = load fp128* @lhs, align 16
-  %rhs = load fp128* @rhs, align 16
+  %lhs = load fp128, fp128* @lhs, align 16
+  %rhs = load fp128, fp128* @rhs, align 16
 ; CHECK: ldr q0, [{{x[0-9]+}}, :lo12:lhs]
 ; CHECK: ldr q1, [{{x[0-9]+}}, :lo12:rhs]
 
@@ -45,8 +45,8 @@ define fp128 @test_mul() {
 define fp128 @test_div() {
 ; CHECK-LABEL: test_div:
 
-  %lhs = load fp128* @lhs, align 16
-  %rhs = load fp128* @rhs, align 16
+  %lhs = load fp128, fp128* @lhs, align 16
+  %rhs = load fp128, fp128* @rhs, align 16
 ; CHECK: ldr q0, [{{x[0-9]+}}, :lo12:lhs]
 ; CHECK: ldr q1, [{{x[0-9]+}}, :lo12:rhs]
 
@@ -60,7 +60,7 @@ define fp128 @test_div() {
 
 define void @test_fptosi() {
 ; CHECK-LABEL: test_fptosi:
-  %val = load fp128* @lhs, align 16
+  %val = load fp128, fp128* @lhs, align 16
 
   %val32 = fptosi fp128 %val to i32
   store i32 %val32, i32* @var32
@@ -75,7 +75,7 @@ define void @test_fptosi() {
 
 define void @test_fptoui() {
 ; CHECK-LABEL: test_fptoui:
-  %val = load fp128* @lhs, align 16
+  %val = load fp128, fp128* @lhs, align 16
 
   %val32 = fptoui fp128 %val to i32
   store i32 %val32, i32* @var32
@@ -91,12 +91,12 @@ define void @test_fptoui() {
 define void @test_sitofp() {
 ; CHECK-LABEL: test_sitofp:
 
-  %src32 = load i32* @var32
+  %src32 = load i32, i32* @var32
   %val32 = sitofp i32 %src32 to fp128
   store volatile fp128 %val32, fp128* @lhs
 ; CHECK: bl __floatsitf
 
-  %src64 = load i64* @var64
+  %src64 = load i64, i64* @var64
   %val64 = sitofp i64 %src64 to fp128
   store volatile fp128 %val64, fp128* @lhs
 ; CHECK: bl __floatditf
@@ -107,12 +107,12 @@ define void @test_sitofp() {
 define void @test_uitofp() {
 ; CHECK-LABEL: test_uitofp:
 
-  %src32 = load i32* @var32
+  %src32 = load i32, i32* @var32
   %val32 = uitofp i32 %src32 to fp128
   store volatile fp128 %val32, fp128* @lhs
 ; CHECK: bl __floatunsitf
 
-  %src64 = load i64* @var64
+  %src64 = load i64, i64* @var64
   %val64 = uitofp i64 %src64 to fp128
   store volatile fp128 %val64, fp128* @lhs
 ; CHECK: bl __floatunditf
@@ -123,8 +123,8 @@ define void @test_uitofp() {
 define i1 @test_setcc1() {
 ; CHECK-LABEL: test_setcc1:
 
-  %lhs = load fp128* @lhs, align 16
-  %rhs = load fp128* @rhs, align 16
+  %lhs = load fp128, fp128* @lhs, align 16
+  %rhs = load fp128, fp128* @rhs, align 16
 ; CHECK: ldr q0, [{{x[0-9]+}}, :lo12:lhs]
 ; CHECK: ldr q1, [{{x[0-9]+}}, :lo12:rhs]
 
@@ -142,8 +142,8 @@ define i1 @test_setcc1() {
 define i1 @test_setcc2() {
 ; CHECK-LABEL: test_setcc2:
 
-  %lhs = load fp128* @lhs, align 16
-  %rhs = load fp128* @rhs, align 16
+  %lhs = load fp128, fp128* @lhs, align 16
+  %rhs = load fp128, fp128* @rhs, align 16
 ; CHECK: ldr q0, [{{x[0-9]+}}, :lo12:lhs]
 ; CHECK: ldr q1, [{{x[0-9]+}}, :lo12:rhs]
 
@@ -164,8 +164,8 @@ define i1 @test_setcc2() {
 define i32 @test_br_cc() {
 ; CHECK-LABEL: test_br_cc:
 
-  %lhs = load fp128* @lhs, align 16
-  %rhs = load fp128* @rhs, align 16
+  %lhs = load fp128, fp128* @lhs, align 16
+  %rhs = load fp128, fp128* @rhs, align 16
 ; CHECK: ldr q0, [{{x[0-9]+}}, :lo12:lhs]
 ; CHECK: ldr q1, [{{x[0-9]+}}, :lo12:rhs]
 
@@ -218,7 +218,7 @@ define void @test_select(i1 %cond, fp128 %lhs, fp128 %rhs) {
 define void @test_round() {
 ; CHECK-LABEL: test_round:
 
-  %val = load fp128* @lhs, align 16
+  %val = load fp128, fp128* @lhs, align 16
 
   %float = fptrunc fp128 %val to float
   store float %float, float* @varfloat, align 4
@@ -236,15 +236,15 @@ define void @test_round() {
 define void @test_extend() {
 ; CHECK-LABEL: test_extend:
 
-  %val = load fp128* @lhs, align 16
+  %val = load fp128, fp128* @lhs, align 16
 
-  %float = load float* @varfloat
+  %float = load float, float* @varfloat
   %fromfloat = fpext float %float to fp128
   store volatile fp128 %fromfloat, fp128* @lhs, align 16
 ; CHECK: bl __extendsftf2
 ; CHECK: str q0, [{{x[0-9]+}}, :lo12:lhs]
 
-  %double = load double* @vardouble
+  %double = load double, double* @vardouble
   %fromdouble = fpext double %double to fp128
   store volatile fp128 %fromdouble, fp128* @lhs, align 16
 ; CHECK: bl __extenddftf2

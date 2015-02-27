@@ -353,7 +353,7 @@ for.cond2:
   %tobool = icmp eq i32 %bit.0, 0
   br i1 %tobool, label %for.exit, label %for.body3, !prof !10
 for.body3:
-  %v3 = load i32* @max_regno, align 4
+  %v3 = load i32, i32* @max_regno, align 4
   %cmp4 = icmp eq i32 %i.1, %v3
   br i1 %cmp4, label %for.exit, label %for.inc, !prof !11
 for.inc:

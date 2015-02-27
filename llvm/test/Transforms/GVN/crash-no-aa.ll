@@ -9,7 +9,7 @@ define i32 @test1({i16, i32} *%P) {
   store i16 42, i16* %P2
 
   %P3 = getelementptr {i16, i32}, {i16, i32} *%P, i32 0, i32 1
-  %V = load i32* %P3
+  %V = load i32, i32* %P3
   ret i32 %V
 }
 

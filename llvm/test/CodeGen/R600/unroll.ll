@@ -31,7 +31,7 @@ loop.inc:
 
 exit:
   %2 = getelementptr [32 x i32], [32 x i32]* %0, i32 0, i32 5
-  %3 = load i32* %2
+  %3 = load i32, i32* %2
   store i32 %3, i32 addrspace(1)* %out
   ret void
 }

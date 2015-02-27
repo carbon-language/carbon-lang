@@ -14,7 +14,7 @@ define i32 @test1() {
 	%A = alloca %nested
 	%B = getelementptr %nested, %nested* %A, i32 0, i32 1, i32 0
 	%C = getelementptr i32, i32* %B, i32 2
-	%D = load i32* %C
+	%D = load i32, i32* %C
 	ret i32 %D
 }
 
@@ -25,7 +25,7 @@ define i32 @test2() {
 	%A = alloca %nested
 	%B = getelementptr %nested, %nested* %A, i32 0, i32 1, i32 0
 	%C = getelementptr i32, i32* %B, i32 4
-	%D = load i32* %C
+	%D = load i32, i32* %C
 	ret i32 %D
 }
 
@@ -37,7 +37,7 @@ define i32 @test3() {
 	%A = alloca %nested
 	%B = bitcast %nested* %A to i32*
 	%C = getelementptr i32, i32* %B, i32 2
-	%D = load i32* %C
+	%D = load i32, i32* %C
 	ret i32 %D
 }
 
@@ -48,6 +48,6 @@ define i32 @test4() {
 	%A = alloca %nested
 	%B = bitcast %nested* %A to i32*
 	%C = getelementptr i32, i32* %B, i32 -1
-	%D = load i32* %C
+	%D = load i32, i32* %C
 	ret i32 %D
 }

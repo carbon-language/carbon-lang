@@ -27,7 +27,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: nounwind sanitize_address
 define internal void @__cxx_global_var_init() #0 section ".text.startup" {
 entry:
-  %0 = load i32* @global, align 4
+  %0 = load i32, i32* @global, align 4
   store i32 %0, i32* @dyn_init_global, align 4
   ret void
 }

@@ -12,7 +12,7 @@ declare i32 @llvm.r600.read.tidig.x() readnone
 define void @mubuf_load0(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:
   %0 = getelementptr i32, i32 addrspace(1)* %in, i64 1
-  %1 = load i32 addrspace(1)* %0
+  %1 = load i32, i32 addrspace(1)* %0
   store i32 %1, i32 addrspace(1)* %out
   ret void
 }
@@ -23,7 +23,7 @@ entry:
 define void @mubuf_load1(i8 addrspace(1)* %out, i8 addrspace(1)* %in) {
 entry:
   %0 = getelementptr i8, i8 addrspace(1)* %in, i64 4095
-  %1 = load i8 addrspace(1)* %0
+  %1 = load i8, i8 addrspace(1)* %0
   store i8 %1, i8 addrspace(1)* %out
   ret void
 }
@@ -35,7 +35,7 @@ entry:
 define void @mubuf_load2(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:
   %0 = getelementptr i32, i32 addrspace(1)* %in, i64 1024
-  %1 = load i32 addrspace(1)* %0
+  %1 = load i32, i32 addrspace(1)* %0
   store i32 %1, i32 addrspace(1)* %out
   ret void
 }
@@ -48,7 +48,7 @@ define void @mubuf_load3(i32 addrspace(1)* %out, i32 addrspace(1)* %in, i64 %off
 entry:
   %0 = getelementptr i32, i32 addrspace(1)* %in, i64 %offset
   %1 = getelementptr i32, i32 addrspace(1)* %0, i64 1
-  %2 = load i32 addrspace(1)* %1
+  %2 = load i32, i32 addrspace(1)* %1
   store i32 %2, i32 addrspace(1)* %out
   ret void
 }
@@ -58,7 +58,7 @@ entry:
 define void @soffset_max_imm([6 x <16 x i8>] addrspace(2)* byval, [17 x <16 x i8>] addrspace(2)* byval, [16 x <4 x i32>] addrspace(2)* byval, [32 x <8 x i32>] addrspace(2)* byval, i32 inreg, i32 inreg, i32, i32, i32, i32, i32, i32, i32, i32) #1 {
 main_body:
   %tmp0 = getelementptr [6 x <16 x i8>], [6 x <16 x i8>] addrspace(2)* %0, i32 0, i32 0
-  %tmp1 = load <16 x i8> addrspace(2)* %tmp0
+  %tmp1 = load <16 x i8>, <16 x i8> addrspace(2)* %tmp0
   %tmp2 = shl i32 %6, 2
   %tmp3 = call i32 @llvm.SI.buffer.load.dword.i32.i32(<16 x i8> %tmp1, i32 %tmp2, i32 64, i32 0, i32 1, i32 0, i32 1, i32 0, i32 0)
   %tmp4 = add i32 %6, 16
@@ -77,7 +77,7 @@ main_body:
 define void @soffset_no_fold([6 x <16 x i8>] addrspace(2)* byval, [17 x <16 x i8>] addrspace(2)* byval, [16 x <4 x i32>] addrspace(2)* byval, [32 x <8 x i32>] addrspace(2)* byval, i32 inreg, i32 inreg, i32, i32, i32, i32, i32, i32, i32, i32) #1 {
 main_body:
   %tmp0 = getelementptr [6 x <16 x i8>], [6 x <16 x i8>] addrspace(2)* %0, i32 0, i32 0
-  %tmp1 = load <16 x i8> addrspace(2)* %tmp0
+  %tmp1 = load <16 x i8>, <16 x i8> addrspace(2)* %tmp0
   %tmp2 = shl i32 %6, 2
   %tmp3 = call i32 @llvm.SI.buffer.load.dword.i32.i32(<16 x i8> %tmp1, i32 %tmp2, i32 65, i32 0, i32 1, i32 0, i32 1, i32 0, i32 0)
   %tmp4 = add i32 %6, 16

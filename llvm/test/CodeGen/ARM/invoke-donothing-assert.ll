@@ -46,7 +46,7 @@ new.notnull.i.i:
   br label %cleanup
 
 cleanup:
-  %0 = load i32* %a, align 4
+  %0 = load i32, i32* %a, align 4
   %inc294 = add nsw i32 %0, 4
   store i32 %inc294, i32* %a, align 4
   br i1 false, label %_ZN3lol5ArrayIivvvvvvvED1Ev.exit, label %delete.notnull.i.i.i1409

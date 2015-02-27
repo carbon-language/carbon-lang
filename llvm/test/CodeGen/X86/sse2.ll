@@ -10,7 +10,7 @@ define void @test1(<2 x double>* %r, <2 x double>* %A, double %B) nounwind  {
 ; CHECK-NEXT:    movlpd {{[0-9]+}}(%esp), %xmm0
 ; CHECK-NEXT:    movapd %xmm0, (%eax)
 ; CHECK-NEXT:    retl
-	%tmp3 = load <2 x double>* %A, align 16
+	%tmp3 = load <2 x double>, <2 x double>* %A, align 16
 	%tmp7 = insertelement <2 x double> undef, double %B, i32 0
 	%tmp9 = shufflevector <2 x double> %tmp3, <2 x double> %tmp7, <2 x i32> < i32 2, i32 1 >
 	store <2 x double> %tmp9, <2 x double>* %r, align 16
@@ -26,7 +26,7 @@ define void @test2(<2 x double>* %r, <2 x double>* %A, double %B) nounwind  {
 ; CHECK-NEXT:    movhpd {{[0-9]+}}(%esp), %xmm0
 ; CHECK-NEXT:    movapd %xmm0, (%eax)
 ; CHECK-NEXT:    retl
-	%tmp3 = load <2 x double>* %A, align 16
+	%tmp3 = load <2 x double>, <2 x double>* %A, align 16
 	%tmp7 = insertelement <2 x double> undef, double %B, i32 0
 	%tmp9 = shufflevector <2 x double> %tmp3, <2 x double> %tmp7, <2 x i32> < i32 0, i32 2 >
 	store <2 x double> %tmp9, <2 x double>* %r, align 16
@@ -44,8 +44,8 @@ define void @test3(<4 x float>* %res, <4 x float>* %A, <4 x float>* %B) nounwind
 ; CHECK-NEXT:    unpcklps {{.*#+}} xmm0 = xmm0[0],mem[0],xmm0[1],mem[1]
 ; CHECK-NEXT:    movaps %xmm0, (%eax)
 ; CHECK-NEXT:    retl
-	%tmp = load <4 x float>* %B		; <<4 x float>> [#uses=2]
-	%tmp3 = load <4 x float>* %A		; <<4 x float>> [#uses=2]
+	%tmp = load <4 x float>, <4 x float>* %B		; <<4 x float>> [#uses=2]
+	%tmp3 = load <4 x float>, <4 x float>* %A		; <<4 x float>> [#uses=2]
 	%tmp.upgrd.1 = extractelement <4 x float> %tmp3, i32 0		; <float> [#uses=1]
 	%tmp7 = extractelement <4 x float> %tmp, i32 0		; <float> [#uses=1]
 	%tmp8 = extractelement <4 x float> %tmp3, i32 1		; <float> [#uses=1]
@@ -80,9 +80,9 @@ define <4 x i32> @test5(i8** %ptr) nounwind {
 ; CHECK-NEXT:    punpcklbw {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1],xmm1[2],xmm0[2],xmm1[3],xmm0[3],xmm1[4],xmm0[4],xmm1[5],xmm0[5],xmm1[6],xmm0[6],xmm1[7],xmm0[7]
 ; CHECK-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
 ; CHECK-NEXT:    retl
-	%tmp = load i8** %ptr		; <i8*> [#uses=1]
+	%tmp = load i8*, i8** %ptr		; <i8*> [#uses=1]
 	%tmp.upgrd.1 = bitcast i8* %tmp to float*		; <float*> [#uses=1]
-	%tmp.upgrd.2 = load float* %tmp.upgrd.1		; <float> [#uses=1]
+	%tmp.upgrd.2 = load float, float* %tmp.upgrd.1		; <float> [#uses=1]
 	%tmp.upgrd.3 = insertelement <4 x float> undef, float %tmp.upgrd.2, i32 0		; <<4 x float>> [#uses=1]
 	%tmp9 = insertelement <4 x float> %tmp.upgrd.3, float 0.000000e+00, i32 1		; <<4 x float>> [#uses=1]
 	%tmp10 = insertelement <4 x float> %tmp9, float 0.000000e+00, i32 2		; <<4 x float>> [#uses=1]
@@ -103,7 +103,7 @@ define void @test6(<4 x float>* %res, <4 x float>* %A) nounwind {
 ; CHECK-NEXT:    movaps (%ecx), %xmm0
 ; CHECK-NEXT:    movaps %xmm0, (%eax)
 ; CHECK-NEXT:    retl
-  %tmp1 = load <4 x float>* %A            ; <<4 x float>> [#uses=1]
+  %tmp1 = load <4 x float>, <4 x float>* %A            ; <<4 x float>> [#uses=1]
   %tmp2 = shufflevector <4 x float> %tmp1, <4 x float> undef, <4 x i32> < i32 0, i32 5, i32 6, i32 7 >          ; <<4 x float>> [#uses=1]
   store <4 x float> %tmp2, <4 x float>* %res
   ret void
@@ -129,10 +129,10 @@ define <2 x i64> @test8() nounwind {
 ; CHECK-NEXT:    movl L_x$non_lazy_ptr, %eax
 ; CHECK-NEXT:    movups (%eax), %xmm0
 ; CHECK-NEXT:    retl
-	%tmp = load i32* getelementptr ([4 x i32]* @x, i32 0, i32 0)		; <i32> [#uses=1]
-	%tmp3 = load i32* getelementptr ([4 x i32]* @x, i32 0, i32 1)		; <i32> [#uses=1]
-	%tmp5 = load i32* getelementptr ([4 x i32]* @x, i32 0, i32 2)		; <i32> [#uses=1]
-	%tmp7 = load i32* getelementptr ([4 x i32]* @x, i32 0, i32 3)		; <i32> [#uses=1]
+	%tmp = load i32, i32* getelementptr ([4 x i32]* @x, i32 0, i32 0)		; <i32> [#uses=1]
+	%tmp3 = load i32, i32* getelementptr ([4 x i32]* @x, i32 0, i32 1)		; <i32> [#uses=1]
+	%tmp5 = load i32, i32* getelementptr ([4 x i32]* @x, i32 0, i32 2)		; <i32> [#uses=1]
+	%tmp7 = load i32, i32* getelementptr ([4 x i32]* @x, i32 0, i32 3)		; <i32> [#uses=1]
 	%tmp.upgrd.1 = insertelement <4 x i32> undef, i32 %tmp, i32 0		; <<4 x i32>> [#uses=1]
 	%tmp13 = insertelement <4 x i32> %tmp.upgrd.1, i32 %tmp3, i32 1		; <<4 x i32>> [#uses=1]
 	%tmp14 = insertelement <4 x i32> %tmp13, i32 %tmp5, i32 2		; <<4 x i32>> [#uses=1]
@@ -186,7 +186,7 @@ define void @test12() nounwind {
 ; CHECK-NEXT:    addps %xmm1, %xmm0
 ; CHECK-NEXT:    movaps %xmm0, 0
 ; CHECK-NEXT:    retl
-  %tmp1 = load <4 x float>* null          ; <<4 x float>> [#uses=2]
+  %tmp1 = load <4 x float>, <4 x float>* null          ; <<4 x float>> [#uses=2]
   %tmp2 = shufflevector <4 x float> %tmp1, <4 x float> < float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00 >, <4 x i32> < i32 0, i32 1, i32 6, i32 7 >             ; <<4 x float>> [#uses=1]
   %tmp3 = shufflevector <4 x float> %tmp1, <4 x float> zeroinitializer, <4 x i32> < i32 2, i32 3, i32 6, i32 7 >                ; <<4 x float>> [#uses=1]
   %tmp4 = fadd <4 x float> %tmp2, %tmp3            ; <<4 x float>> [#uses=1]
@@ -205,8 +205,8 @@ define void @test13(<4 x float>* %res, <4 x float>* %A, <4 x float>* %B, <4 x fl
 ; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[0,2,1,3]
 ; CHECK-NEXT:    movaps %xmm0, (%eax)
 ; CHECK-NEXT:    retl
-  %tmp3 = load <4 x float>* %B            ; <<4 x float>> [#uses=1]
-  %tmp5 = load <4 x float>* %C            ; <<4 x float>> [#uses=1]
+  %tmp3 = load <4 x float>, <4 x float>* %B            ; <<4 x float>> [#uses=1]
+  %tmp5 = load <4 x float>, <4 x float>* %C            ; <<4 x float>> [#uses=1]
   %tmp11 = shufflevector <4 x float> %tmp3, <4 x float> %tmp5, <4 x i32> < i32 1, i32 4, i32 1, i32 5 >         ; <<4 x float>> [#uses=1]
   store <4 x float> %tmp11, <4 x float>* %res
   ret void
@@ -224,8 +224,8 @@ define <4 x float> @test14(<4 x float>* %x, <4 x float>* %y) nounwind {
 ; CHECK-NEXT:    subps %xmm1, %xmm2
 ; CHECK-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm2[0]
 ; CHECK-NEXT:    retl
-  %tmp = load <4 x float>* %y             ; <<4 x float>> [#uses=2]
-  %tmp5 = load <4 x float>* %x            ; <<4 x float>> [#uses=2]
+  %tmp = load <4 x float>, <4 x float>* %y             ; <<4 x float>> [#uses=2]
+  %tmp5 = load <4 x float>, <4 x float>* %x            ; <<4 x float>> [#uses=2]
   %tmp9 = fadd <4 x float> %tmp5, %tmp             ; <<4 x float>> [#uses=1]
   %tmp21 = fsub <4 x float> %tmp5, %tmp            ; <<4 x float>> [#uses=1]
   %tmp27 = shufflevector <4 x float> %tmp9, <4 x float> %tmp21, <4 x i32> < i32 0, i32 1, i32 4, i32 5 >                ; <<4 x float>> [#uses=1]
@@ -241,8 +241,8 @@ define <4 x float> @test15(<4 x float>* %x, <4 x float>* %y) nounwind {
 ; CHECK-NEXT:    unpckhpd {{.*#+}} xmm0 = xmm0[1],mem[1]
 ; CHECK-NEXT:    retl
 entry:
-  %tmp = load <4 x float>* %y             ; <<4 x float>> [#uses=1]
-  %tmp3 = load <4 x float>* %x            ; <<4 x float>> [#uses=1]
+  %tmp = load <4 x float>, <4 x float>* %y             ; <<4 x float>> [#uses=1]
+  %tmp3 = load <4 x float>, <4 x float>* %x            ; <<4 x float>> [#uses=1]
   %tmp4 = shufflevector <4 x float> %tmp3, <4 x float> %tmp, <4 x i32> < i32 2, i32 3, i32 6, i32 7 >           ; <<4 x float>> [#uses=1]
   ret <4 x float> %tmp4
 }
@@ -257,7 +257,7 @@ define  <2 x double> @test16(<4 x double> * nocapture %srcA, <2 x double>* nocap
 ; CHECK-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],mem[0]
 ; CHECK-NEXT:    retl
   %i5 = getelementptr inbounds <4 x double>, <4 x double>* %srcA, i32 3
-  %i6 = load <4 x double>* %i5, align 32
+  %i6 = load <4 x double>, <4 x double>* %i5, align 32
   %i7 = shufflevector <4 x double> %i6, <4 x double> undef, <2 x i32> <i32 0, i32 2>
   ret <2 x double> %i7
 }

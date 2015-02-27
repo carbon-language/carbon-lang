@@ -5,7 +5,7 @@
 
 define i32 @test() nounwind {
 entry:
-	%0 = load i32* @H, align 4		; <i32> [#uses=2]
+	%0 = load i32, i32* @H, align 4		; <i32> [#uses=2]
 	%1 = call i32 (...)* @foo() nounwind		; <i32> [#uses=1]
 	%2 = icmp ne i32 %1, 0		; <i1> [#uses=1]
 	br i1 %2, label %bb, label %bb1

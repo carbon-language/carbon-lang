@@ -104,15 +104,15 @@ define internal i8* @"\01-[A init]"(%0* %self, i8* %_cmd) #0 {
   call void @llvm.dbg.declare(metadata %0** %1, metadata !60, metadata !{!"0x102"}), !dbg !62
   store i8* %_cmd, i8** %2, align 8
   call void @llvm.dbg.declare(metadata i8** %2, metadata !63, metadata !{!"0x102"}), !dbg !62
-  %5 = load %0** %1, !dbg !65
+  %5 = load %0*, %0** %1, !dbg !65
   %6 = bitcast %0* %5 to i8*, !dbg !65
   %7 = getelementptr inbounds %struct._objc_super, %struct._objc_super* %3, i32 0, i32 0, !dbg !65
   store i8* %6, i8** %7, !dbg !65
-  %8 = load %struct._class_t** @"\01L_OBJC_CLASSLIST_SUP_REFS_$_", !dbg !65
+  %8 = load %struct._class_t*, %struct._class_t** @"\01L_OBJC_CLASSLIST_SUP_REFS_$_", !dbg !65
   %9 = bitcast %struct._class_t* %8 to i8*, !dbg !65
   %10 = getelementptr inbounds %struct._objc_super, %struct._objc_super* %3, i32 0, i32 1, !dbg !65
   store i8* %9, i8** %10, !dbg !65
-  %11 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_", !dbg !65, !invariant.load !67
+  %11 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_", !dbg !65, !invariant.load !67
   %12 = call i8* bitcast (i8* (%struct._objc_super*, i8*, ...)* @objc_msgSendSuper2 to i8* (%struct._objc_super*, i8*)*)(%struct._objc_super* %3, i8* %11), !dbg !65
   %13 = bitcast i8* %12 to %0*, !dbg !65
   store %0* %13, %0** %1, align 8, !dbg !65
@@ -131,14 +131,14 @@ define internal i8* @"\01-[A init]"(%0* %self, i8* %_cmd) #0 {
   %20 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 4, !dbg !68
   store %struct.__block_descriptor* bitcast ({ i64, i64, i8*, i8*, i8*, i64 }* @__block_descriptor_tmp to %struct.__block_descriptor*), %struct.__block_descriptor** %20, !dbg !68
   %21 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 5, !dbg !68
-  %22 = load %0** %1, align 8, !dbg !68
+  %22 = load %0*, %0** %1, align 8, !dbg !68
   store %0* %22, %0** %21, align 8, !dbg !68
   %23 = bitcast <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4 to void ()*, !dbg !68
   call void @run(void ()* %23), !dbg !68
   br label %24, !dbg !70
 
 ; <label>:24                                      ; preds = %15, %0
-  %25 = load %0** %1, align 8, !dbg !71
+  %25 = load %0*, %0** %1, align 8, !dbg !71
   %26 = bitcast %0* %25 to i8*, !dbg !71
   ret i8* %26, !dbg !71
 }
@@ -151,11 +151,11 @@ define internal void @run(void ()* %block) #0 {
   %1 = alloca void ()*, align 8
   store void ()* %block, void ()** %1, align 8
   call void @llvm.dbg.declare(metadata void ()** %1, metadata !72, metadata !{!"0x102"}), !dbg !73
-  %2 = load void ()** %1, align 8, !dbg !74
+  %2 = load void ()*, void ()** %1, align 8, !dbg !74
   %3 = bitcast void ()* %2 to %struct.__block_literal_generic*, !dbg !74
   %4 = getelementptr inbounds %struct.__block_literal_generic, %struct.__block_literal_generic* %3, i32 0, i32 3, !dbg !74
   %5 = bitcast %struct.__block_literal_generic* %3 to i8*, !dbg !74
-  %6 = load i8** %4, !dbg !74
+  %6 = load i8*, i8** %4, !dbg !74
   %7 = bitcast i8* %6 to void (i8*)*, !dbg !74
   call void %7(i8* %5), !dbg !74
   ret void, !dbg !75
@@ -166,7 +166,7 @@ define internal void @"__9-[A init]_block_invoke"(i8* %.block_descriptor) #0 {
   %2 = alloca <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, align 8
   %d = alloca %1*, align 8
   store i8* %.block_descriptor, i8** %1, align 8
-  %3 = load i8** %1
+  %3 = load i8*, i8** %1
   call void @llvm.dbg.value(metadata i8* %3, i64 0, metadata !76, metadata !{!"0x102"}), !dbg !88
   call void @llvm.dbg.declare(metadata i8* %.block_descriptor, metadata !76, metadata !{!"0x102"}), !dbg !88
   %4 = bitcast i8* %.block_descriptor to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !88
@@ -174,25 +174,25 @@ define internal void @"__9-[A init]_block_invoke"(i8* %.block_descriptor) #0 {
   %5 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 5, !dbg !88
   call void @llvm.dbg.declare(metadata <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** %2, metadata !89, metadata !111), !dbg !90
   call void @llvm.dbg.declare(metadata %1** %d, metadata !91, metadata !{!"0x102"}), !dbg !100
-  %6 = load %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_", !dbg !100
+  %6 = load %struct._class_t*, %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_", !dbg !100
   %7 = bitcast %struct._class_t* %6 to i8*, !dbg !100
-  %8 = load i8** getelementptr inbounds (%struct._message_ref_t* bitcast ({ i8* (i8*, %struct._message_ref_t*, ...)*, i8* }* @"\01l_objc_msgSend_fixup_alloc" to %struct._message_ref_t*), i32 0, i32 0), !dbg !100
+  %8 = load i8*, i8** getelementptr inbounds (%struct._message_ref_t* bitcast ({ i8* (i8*, %struct._message_ref_t*, ...)*, i8* }* @"\01l_objc_msgSend_fixup_alloc" to %struct._message_ref_t*), i32 0, i32 0), !dbg !100
   %9 = bitcast i8* %8 to i8* (i8*, i8*)*, !dbg !100
   %10 = call i8* %9(i8* %7, i8* bitcast ({ i8* (i8*, %struct._message_ref_t*, ...)*, i8* }* @"\01l_objc_msgSend_fixup_alloc" to i8*)), !dbg !100
   %11 = bitcast i8* %10 to %1*, !dbg !100
-  %12 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_", !dbg !100, !invariant.load !67
+  %12 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_", !dbg !100, !invariant.load !67
   %13 = bitcast %1* %11 to i8*, !dbg !100
   %14 = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %13, i8* %12), !dbg !100
   %15 = bitcast i8* %14 to %1*, !dbg !100
   store %1* %15, %1** %d, align 8, !dbg !100
-  %16 = load %1** %d, align 8, !dbg !101
+  %16 = load %1*, %1** %d, align 8, !dbg !101
   %17 = bitcast %1* %16 to i8*, !dbg !101
-  %18 = load i8** getelementptr inbounds (%struct._message_ref_t* bitcast ({ i8* (i8*, %struct._message_ref_t*, ...)*, i8* }* @"\01l_objc_msgSend_fixup_count" to %struct._message_ref_t*), i32 0, i32 0), !dbg !101
+  %18 = load i8*, i8** getelementptr inbounds (%struct._message_ref_t* bitcast ({ i8* (i8*, %struct._message_ref_t*, ...)*, i8* }* @"\01l_objc_msgSend_fixup_count" to %struct._message_ref_t*), i32 0, i32 0), !dbg !101
   %19 = bitcast i8* %18 to i32 (i8*, i8*)*, !dbg !101
   %20 = call i32 %19(i8* %17, i8* bitcast ({ i8* (i8*, %struct._message_ref_t*, ...)*, i8* }* @"\01l_objc_msgSend_fixup_count" to i8*)), !dbg !101
   %21 = add nsw i32 42, %20, !dbg !101
-  %22 = load %0** %5, align 8, !dbg !101
-  %23 = load i64* @"OBJC_IVAR_$_A.ivar", !dbg !101, !invariant.load !67
+  %22 = load %0*, %0** %5, align 8, !dbg !101
+  %23 = load i64, i64* @"OBJC_IVAR_$_A.ivar", !dbg !101, !invariant.load !67
   %24 = bitcast %0* %22 to i8*, !dbg !101
   %25 = getelementptr inbounds i8, i8* %24, i64 %23, !dbg !101
   %26 = bitcast i8* %25 to i32*, !dbg !101
@@ -213,13 +213,13 @@ define internal void @__copy_helper_block_(i8*, i8*) {
   call void @llvm.dbg.declare(metadata i8** %3, metadata !102, metadata !{!"0x102"}), !dbg !103
   store i8* %1, i8** %4, align 8
   call void @llvm.dbg.declare(metadata i8** %4, metadata !104, metadata !{!"0x102"}), !dbg !103
-  %5 = load i8** %4, !dbg !103
+  %5 = load i8*, i8** %4, !dbg !103
   %6 = bitcast i8* %5 to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !103
-  %7 = load i8** %3, !dbg !103
+  %7 = load i8*, i8** %3, !dbg !103
   %8 = bitcast i8* %7 to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !103
   %9 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %6, i32 0, i32 5, !dbg !103
   %10 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %8, i32 0, i32 5, !dbg !103
-  %11 = load %0** %9, !dbg !103
+  %11 = load %0*, %0** %9, !dbg !103
   %12 = bitcast %0* %11 to i8*, !dbg !103
   %13 = bitcast %0** %10 to i8*, !dbg !103
   call void @_Block_object_assign(i8* %13, i8* %12, i32 3) #3, !dbg !103
@@ -232,10 +232,10 @@ define internal void @__destroy_helper_block_(i8*) {
   %2 = alloca i8*, align 8
   store i8* %0, i8** %2, align 8
   call void @llvm.dbg.declare(metadata i8** %2, metadata !105, metadata !{!"0x102"}), !dbg !106
-  %3 = load i8** %2, !dbg !106
+  %3 = load i8*, i8** %2, !dbg !106
   %4 = bitcast i8* %3 to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !106
   %5 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 5, !dbg !106
-  %6 = load %0** %5, !dbg !106
+  %6 = load %0*, %0** %5, !dbg !106
   %7 = bitcast %0* %6 to i8*, !dbg !106
   call void @_Block_object_dispose(i8* %7, i32 3) #3, !dbg !106
   ret void, !dbg !106
@@ -248,13 +248,13 @@ define i32 @main() #0 {
   %a = alloca %0*, align 8
   store i32 0, i32* %1
   call void @llvm.dbg.declare(metadata %0** %a, metadata !107, metadata !{!"0x102"}), !dbg !108
-  %2 = load %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_5", !dbg !108
+  %2 = load %struct._class_t*, %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_5", !dbg !108
   %3 = bitcast %struct._class_t* %2 to i8*, !dbg !108
-  %4 = load i8** getelementptr inbounds (%struct._message_ref_t* bitcast ({ i8* (i8*, %struct._message_ref_t*, ...)*, i8* }* @"\01l_objc_msgSend_fixup_alloc" to %struct._message_ref_t*), i32 0, i32 0), !dbg !108
+  %4 = load i8*, i8** getelementptr inbounds (%struct._message_ref_t* bitcast ({ i8* (i8*, %struct._message_ref_t*, ...)*, i8* }* @"\01l_objc_msgSend_fixup_alloc" to %struct._message_ref_t*), i32 0, i32 0), !dbg !108
   %5 = bitcast i8* %4 to i8* (i8*, i8*)*, !dbg !108
   %6 = call i8* %5(i8* %3, i8* bitcast ({ i8* (i8*, %struct._message_ref_t*, ...)*, i8* }* @"\01l_objc_msgSend_fixup_alloc" to i8*)), !dbg !108
   %7 = bitcast i8* %6 to %0*, !dbg !108
-  %8 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_", !dbg !108, !invariant.load !67
+  %8 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_", !dbg !108, !invariant.load !67
   %9 = bitcast %0* %7 to i8*, !dbg !108
   %10 = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %9, i8* %8), !dbg !108
   %11 = bitcast i8* %10 to %0*, !dbg !108

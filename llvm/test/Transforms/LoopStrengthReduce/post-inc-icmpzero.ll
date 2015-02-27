@@ -35,7 +35,7 @@ do.body:                                          ; preds = %do.body, %entry
   %div = udiv i32 %i.addr.0, 10
   %idxprom = zext i32 %rem to i64
   %arrayidx = getelementptr inbounds [37 x i8], [37 x i8]* @.str, i64 0, i64 %idxprom
-  %tmp5 = load i8* %arrayidx, align 1
+  %tmp5 = load i8, i8* %arrayidx, align 1
   %conv = sext i8 %tmp5 to i16
   store i16 %conv, i16* %incdec.ptr, align 2
   %1 = icmp ugt i32 %i.addr.0, 9
@@ -59,9 +59,9 @@ do.end:                                           ; preds = %do.body
   br i1 %cmp2740, label %for.end, label %for.body.lr.ph
 
 for.body.lr.ph:                                   ; preds = %do.end
-  %tmp16 = load i32* %mLength, align 4
+  %tmp16 = load i32, i32* %mLength, align 4
   %mBegin = getelementptr inbounds %struct.Vector2, %struct.Vector2* %result, i64 0, i32 0
-  %tmp14 = load i16** %mBegin, align 8
+  %tmp14 = load i16*, i16** %mBegin, align 8
   %tmp48 = zext i32 %tmp16 to i64
   br label %for.body
 
@@ -73,7 +73,7 @@ for.body:                                         ; preds = %for.body, %for.body
   %incdec.ptr32 = getelementptr [33 x i16], [33 x i16]* %buffer, i64 1, i64 %tmp47
   %tmp49 = add i64 %tmp48, %indvar
   %dst.041 = getelementptr i16, i16* %tmp14, i64 %tmp49
-  %tmp29 = load i16* %p.042, align 2
+  %tmp29 = load i16, i16* %p.042, align 2
   store i16 %tmp29, i16* %dst.041, align 2
   %cmp27 = icmp eq i16* %incdec.ptr32, %add.ptr22
   %indvar.next = add i64 %indvar, 1
@@ -83,7 +83,7 @@ for.end.loopexit:                                 ; preds = %for.body
   br label %for.end
 
 for.end:                                          ; preds = %for.end.loopexit, %do.end
-  %tmp38 = load i32* %mLength, align 4
+  %tmp38 = load i32, i32* %mLength, align 4
   %add = add i32 %tmp38, %conv11
   store i32 %add, i32* %mLength, align 4
   ret void

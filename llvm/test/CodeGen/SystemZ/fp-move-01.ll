@@ -22,7 +22,7 @@ define void @f3(fp128 *%x) {
 ; CHECK-LABEL: f3:
 ; CHECK: lxr
 ; CHECK: axbr
-  %val = load volatile fp128 *%x
+  %val = load volatile fp128 , fp128 *%x
   %sum = fadd fp128 %val, %val
   store volatile fp128 %sum, fp128 *%x
   store volatile fp128 %val, fp128 *%x

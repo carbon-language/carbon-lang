@@ -79,7 +79,7 @@ if.then126:                                       ; preds = %if.end123
   %maskcond.i.i187 = icmp eq i64 %maskedptr.i.i186, 0
   tail call void @llvm.assume(i1 %maskcond.i.i187) #0
   %ret.0..sroa_cast.i.i188 = bitcast %type1* undef to i32*
-  %ret.0.copyload.i.i189 = load i32* %ret.0..sroa_cast.i.i188, align 2
+  %ret.0.copyload.i.i189 = load i32, i32* %ret.0..sroa_cast.i.i188, align 2
 
 ; CHECK: load {{.*}} align 2
 
@@ -117,7 +117,7 @@ for.body137.if.end146_crit_edge:                  ; preds = %for.body137
   br i1 undef, label %cond.false.i70, label %cond.end.i
 
 if.then140:                                       ; preds = %for.body137
-  %ret.0.copyload.i.i102 = load i32* %ret.0..sroa_cast.i.i106, align 2
+  %ret.0.copyload.i.i102 = load i32, i32* %ret.0..sroa_cast.i.i106, align 2
 
 ; CHECK: load {{.*}} align 2
 

@@ -10,7 +10,7 @@ define i32 @store_as0(i32* %x) {
 ; CHECK-LABEL: @store_as0(
 ; CHECK: call void @foo(
   %gep = getelementptr i32, i32* %x, i32 4
-  %y = load i32* %gep
+  %y = load i32, i32* %gep
   call void @foo(i32 %y) nounwind
   ret i32 %y
 }
@@ -19,7 +19,7 @@ define i32 @store_as1(i32 addrspace(1)* %x) {
 ; CHECK-LABEL: @store_as1(
 ; CHECK: call void @foo(
   %gep = getelementptr i32, i32 addrspace(1)* %x, i32 4
-  %y = load i32 addrspace(1)* %gep
+  %y = load i32, i32 addrspace(1)* %gep
   call void @foo(i32 %y) nounwind
   ret i32 %y
 }
@@ -28,7 +28,7 @@ define i32 @store_as2(i32 addrspace(2)* %x) {
 ; CHECK-LABEL: @store_as2(
 ; CHECK: call void @foo(
   %gep = getelementptr i32, i32 addrspace(2)* %x, i32 4
-  %y = load i32 addrspace(2)* %gep
+  %y = load i32, i32 addrspace(2)* %gep
   call void @foo(i32 %y) nounwind
   ret i32 %y
 }

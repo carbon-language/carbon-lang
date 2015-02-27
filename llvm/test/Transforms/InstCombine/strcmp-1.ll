@@ -13,7 +13,7 @@ declare i32 @strcmp(i8*, i8*)
 ; strcmp("", x) -> -*x
 define i32 @test1(i8* %str2) {
 ; CHECK-LABEL: @test1(
-; CHECK: %strcmpload = load i8* %str
+; CHECK: %strcmpload = load i8, i8* %str
 ; CHECK: %1 = zext i8 %strcmpload to i32
 ; CHECK: %2 = sub nsw i32 0, %1
 ; CHECK: ret i32 %2
@@ -27,7 +27,7 @@ define i32 @test1(i8* %str2) {
 ; strcmp(x, "") -> *x
 define i32 @test2(i8* %str1) {
 ; CHECK-LABEL: @test2(
-; CHECK: %strcmpload = load i8* %str
+; CHECK: %strcmpload = load i8, i8* %str
 ; CHECK: %1 = zext i8 %strcmpload to i32
 ; CHECK: ret i32 %1
 

@@ -5,7 +5,7 @@ define i32 @test1() {
 	%X = alloca { i32, float }		; <{ i32, float }*> [#uses=1]
 	%Y = getelementptr { i32, float }, { i32, float }* %X, i64 0, i32 0		; <i32*> [#uses=2]
 	store i32 0, i32* %Y
-	%Z = load i32* %Y		; <i32> [#uses=1]
+	%Z = load i32, i32* %Y		; <i32> [#uses=1]
 	ret i32 %Z
 ; CHECK-LABEL: @test1(
 ; CHECK-NOT: alloca
@@ -21,7 +21,7 @@ define i64 @test2(i64 %X) {
         br label %L2
         
 L2:
-	%Z = load i64* %B		; <i32> [#uses=1]
+	%Z = load i64, i64* %B		; <i32> [#uses=1]
 	ret i64 %Z
 ; CHECK-LABEL: @test2(
 ; CHECK-NOT: alloca

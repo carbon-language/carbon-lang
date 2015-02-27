@@ -21,7 +21,7 @@ entry:
   %1 = getelementptr inbounds %struct.Point_3, %struct.Point_3* %tmpcast, i64 0, i32 0
   %base.i.i.i = getelementptr inbounds %struct.PointC3, %struct.PointC3* %1, i64 0, i32 0
   %arrayidx.i.i.i.i = getelementptr inbounds %struct.array, %struct.array* %base.i.i.i, i64 0, i32 0, i64 0
-  %tmp5.i.i = load float* %arrayidx.i.i.i.i, align 4
+  %tmp5.i.i = load float, float* %arrayidx.i.i.i.i, align 4
   ret void
 }
 
@@ -35,7 +35,7 @@ entry:
   %tmpcast = bitcast {<2 x float>, float}* %ref.tmp2 to float*
   %0 = getelementptr {<2 x float>, float}, {<2 x float>, float}* %ref.tmp2, i64 0, i32 0
   store <2 x float> zeroinitializer, <2 x float>* %0, align 16
-  %tmp5.i.i = load float* %tmpcast, align 4
+  %tmp5.i.i = load float, float* %tmpcast, align 4
   ret void
 }
 
@@ -54,8 +54,8 @@ entry:
   %0 = getelementptr {<2 x float>, float}, {<2 x float>, float}* %ref.tmp2, i64 0, i32 0
   store <2 x float> zeroinitializer, <2 x float>* %0, align 16
   store float 1.0, float* %tmpcast2, align 4
-  %r1 = load float* %tmpcast, align 4
-  %r2 = load float* %tmpcast2, align 4
+  %r1 = load float, float* %tmpcast, align 4
+  %r2 = load float, float* %tmpcast2, align 4
   %r = fadd float %r1, %r2
   ret float %r
 }
@@ -70,6 +70,6 @@ entry:
   store { <2 x float>, <2 x float> } {<2 x float> <float 0.0, float 1.0>, <2 x float> <float 2.0, float 3.0>}, { <2 x float>, <2 x float> }* %ai, align 8
   %tmpcast = bitcast { <2 x float>, <2 x float> }* %ai to [4 x float]*
   %arrayidx = getelementptr inbounds [4 x float], [4 x float]* %tmpcast, i64 0, i64 3
-  %f = load float* %arrayidx, align 4
+  %f = load float, float* %arrayidx, align 4
   ret float %f
 }

@@ -16,8 +16,8 @@ define void @foo() nounwind {
 ; CHECK-ARMV8-LABEL: foo:
 ; CHECK-SOFTFLOAT-LABEL: foo:
 entry:
-  %0 = load i16* @x, align 2
-  %1 = load i16* @y, align 2
+  %0 = load i16, i16* @x, align 2
+  %1 = load i16, i16* @y, align 2
   %2 = tail call float @llvm.convert.from.fp16.f32(i16 %0)
 ; CHECK: __gnu_h2f_ieee
 ; CHECK-FP16: vcvtb.f32.f16

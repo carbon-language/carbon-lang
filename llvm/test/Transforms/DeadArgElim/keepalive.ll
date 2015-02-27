@@ -31,7 +31,7 @@ define void @caller() {
 ; We can't remove 'this' here, as that would put argmem in ecx instead of
 ; memory.
 define internal x86_thiscallcc i32 @unused_this(i32* %this, i32* inalloca %argmem) {
-	%v = load i32* %argmem
+	%v = load i32, i32* %argmem
 	ret i32 %v
 }
 ; CHECK-LABEL: define internal x86_thiscallcc i32 @unused_this(i32* %this, i32* inalloca %argmem)

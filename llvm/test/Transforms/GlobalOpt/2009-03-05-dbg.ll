@@ -33,7 +33,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 define i32 @bar() nounwind ssp {
 entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  %0 = load i32* @Stop, align 4, !dbg !13         ; <i32> [#uses=1]
+  %0 = load i32, i32* @Stop, align 4, !dbg !13         ; <i32> [#uses=1]
   %1 = icmp eq i32 %0, 1, !dbg !13                ; <i1> [#uses=1]
   br i1 %1, label %bb, label %bb1, !dbg !13
 

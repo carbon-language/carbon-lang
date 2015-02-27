@@ -9,7 +9,7 @@ BB:
   br label %CF
 
 CF:                                               ; preds = %CF80, %CF, %BB
-  %L5 = load i64* undef
+  %L5 = load i64, i64* undef
   store i8 %0, i8* %A4
   %Shuff7 = shufflevector <16 x i32> <i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1>, <16 x i32> %Shuff, <16 x i32> <i32 28, i32 30, i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14, i32 16, i32 undef, i32 20, i32 22, i32 24, i32 26>
   %PC10 = bitcast i8* %A4 to ppc_fp128*
@@ -19,13 +19,13 @@ CF77:                                             ; preds = %CF81, %CF83, %CF77,
   br i1 undef, label %CF77, label %CF82
 
 CF82:                                             ; preds = %CF82, %CF77
-  %L19 = load i64* undef
+  %L19 = load i64, i64* undef
   store <1 x ppc_fp128> zeroinitializer, <1 x ppc_fp128>* %A
   store i8 -65, i8* %A4
   br i1 undef, label %CF82, label %CF83
 
 CF83:                                             ; preds = %CF82
-  %L34 = load i64* undef
+  %L34 = load i64, i64* undef
   br i1 undef, label %CF77, label %CF81
 
 CF81:                                             ; preds = %CF83
@@ -54,7 +54,7 @@ define void @autogen_SD88042(i8*, i32*, i8) {
 BB:
   %A4 = alloca <2 x i1>
   %A = alloca <16 x float>
-  %L = load i8* %0
+  %L = load i8, i8* %0
   %Sl = select i1 false, <16 x float>* %A, <16 x float>* %A
   %PC = bitcast <2 x i1>* %A4 to i64*
   %Sl27 = select i1 false, i8 undef, i8 %L
@@ -66,7 +66,7 @@ CF:                                               ; preds = %CF78, %CF, %BB
 
 CF77:                                             ; preds = %CF80, %CF77, %CF
   store <16 x float> zeroinitializer, <16 x float>* %Sl
-  %L58 = load i32* %PC33
+  %L58 = load i32, i32* %PC33
   store i8 0, i8* %0
   br i1 undef, label %CF77, label %CF80
 
@@ -90,7 +90,7 @@ BB:
   %A1 = alloca i1
   %I8 = insertelement <1 x i32> <i32 -1>, i32 454855, i32 0
   %Cmp = icmp ult <4 x i64> <i64 -1, i64 -1, i64 -1, i64 -1>, undef
-  %L10 = load i64* %2
+  %L10 = load i64, i64* %2
   %E11 = extractelement <4 x i1> %Cmp, i32 2
   br label %CF72
 
@@ -103,7 +103,7 @@ CF72:                                             ; preds = %CF74, %CF72, %BB
 CF74:                                             ; preds = %CF72
   store i8 0, i8* %0
   %PC = bitcast i1* %A1 to i64*
-  %L31 = load i64* %PC
+  %L31 = load i64, i64* %PC
   store i64 477323, i64* %PC
   %Sl37 = select i1 false, i32* undef, i32* %1
   %Cmp38 = icmp ugt i1 undef, undef

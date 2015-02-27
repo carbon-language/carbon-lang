@@ -83,7 +83,7 @@ define <8 x i64> @orq_broadcast(<8 x i64> %a) nounwind {
 ; CHECK: ret
 define <16 x i32> @andd512fold(<16 x i32> %y, <16 x i32>* %x) {
 entry:
-  %a = load <16 x i32>* %x, align 4
+  %a = load <16 x i32>, <16 x i32>* %x, align 4
   %b = and <16 x i32> %y, %a
   ret <16 x i32> %b
 }
@@ -93,7 +93,7 @@ entry:
 ; CHECK: ret
 define <8 x i64> @andqbrst(<8 x i64> %p1, i64* %ap) {
 entry:
-  %a = load i64* %ap, align 8
+  %a = load i64, i64* %ap, align 8
   %b = insertelement <8 x i64> undef, i64 %a, i32 0
   %c = shufflevector <8 x i64> %b, <8 x i64> undef, <8 x i32> zeroinitializer
   %d = and <8 x i64> %p1, %c

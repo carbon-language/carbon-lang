@@ -14,11 +14,11 @@ define void @combine-sign-comparisons-by-cse(i32 *%arg) {
 ; CHECK: b.le
 
 entry:
-  %a = load i32* @a, align 4
-  %b = load i32* @b, align 4
-  %c = load i32* @c, align 4
-  %d = load i32* @d, align 4
-  %e = load i32* @e, align 4
+  %a = load i32, i32* @a, align 4
+  %b = load i32, i32* @b, align 4
+  %c = load i32, i32* @c, align 4
+  %d = load i32, i32* @d, align 4
+  %e = load i32, i32* @e, align 4
 
   %cmp = icmp slt i32 %a, %e
   br i1 %cmp, label %land.lhs.true, label %lor.lhs.false

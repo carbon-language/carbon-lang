@@ -14,11 +14,11 @@
 
 define %struct.NSManagedObjectContext* @"+[ListGenerator(Private) managedObjectContextWithModelURL:storeURL:]"(%struct.objc_object* %self, %struct._message_ref_t* %_cmd, %struct.NSURL* %modelURL, %struct.NSURL* %storeURL) {
 entry:
-	%tmp27 = load %struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)** getelementptr (%struct._message_ref_t* @"\01L_OBJC_MESSAGE_REF_2", i32 0, i32 0), align 8		; <%struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)*> [#uses=1]
+	%tmp27 = load %struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)*, %struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)** getelementptr (%struct._message_ref_t* @"\01L_OBJC_MESSAGE_REF_2", i32 0, i32 0), align 8		; <%struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)*> [#uses=1]
 	%tmp29 = call %struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)* %tmp27( %struct.objc_object* null, %struct._message_ref_t* @"\01L_OBJC_MESSAGE_REF_2" )		; <%struct.objc_object*> [#uses=0]
-	%tmp33 = load %struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)** getelementptr (%struct._message_ref_t* @"\01L_OBJC_MESSAGE_REF_6", i32 0, i32 0), align 8		; <%struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)*> [#uses=1]
-	%tmp34 = load %struct.NSString** @NSXMLStoreType, align 8		; <%struct.NSString*> [#uses=1]
-	%tmp40 = load %struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)** getelementptr (%struct._message_ref_t* @"\01L_OBJC_MESSAGE_REF_4", i32 0, i32 0), align 8		; <%struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)*> [#uses=1]
+	%tmp33 = load %struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)*, %struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)** getelementptr (%struct._message_ref_t* @"\01L_OBJC_MESSAGE_REF_6", i32 0, i32 0), align 8		; <%struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)*> [#uses=1]
+	%tmp34 = load %struct.NSString*, %struct.NSString** @NSXMLStoreType, align 8		; <%struct.NSString*> [#uses=1]
+	%tmp40 = load %struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)*, %struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)** getelementptr (%struct._message_ref_t* @"\01L_OBJC_MESSAGE_REF_4", i32 0, i32 0), align 8		; <%struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)*> [#uses=1]
 	%tmp42 = call %struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)* %tmp40( %struct.objc_object* null, %struct._message_ref_t* @"\01L_OBJC_MESSAGE_REF_4", i32 1 )		; <%struct.objc_object*> [#uses=0]
 	%tmp48 = call %struct.objc_object* (%struct.objc_object*, %struct._message_ref_t*, ...)* %tmp33( %struct.objc_object* null, %struct._message_ref_t* @"\01L_OBJC_MESSAGE_REF_6", %struct.NSString* %tmp34, i8* null, %struct.NSURL* null, %struct.objc_object* null, %struct.NSError** null )		; <%struct.objc_object*> [#uses=0]
 	unreachable

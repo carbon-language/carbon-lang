@@ -11,10 +11,10 @@ target triple = "x86_64-apple-macosx10.9.0"
 define void @f() {
 entry:
   %call = tail call i32 (...)* @g()
-  %0 = load i32* @c, align 4
+  %0 = load i32, i32* @c, align 4
   %lnot = icmp eq i32 %0, 0
   %lnot.ext = zext i1 %lnot to i32
-  %1 = load i16* @a, align 2
+  %1 = load i16, i16* @a, align 2
   %lnot2 = icmp eq i16 %1, 0
   %lnot.ext3 = zext i1 %lnot2 to i32
   %or = or i32 %lnot.ext3, %lnot.ext

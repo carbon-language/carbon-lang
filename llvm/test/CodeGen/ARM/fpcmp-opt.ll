@@ -13,8 +13,8 @@ entry:
 ; CHECK: vcmpe.f32 [[S1]], [[S0]]
 ; CHECK: vmrs APSR_nzcv, fpscr
 ; CHECK: beq
-  %0 = load float* %a
-  %1 = load float* %b
+  %0 = load float, float* %a
+  %1 = load float, float* %b
   %2 = fcmp une float %0, %1
   br i1 %2, label %bb1, label %bb2
 
@@ -41,7 +41,7 @@ entry:
 ; CHECK-NOT: vcmpe.f32
 ; CHECK-NOT: vmrs
 ; CHECK: bne
-  %0 = load double* %a
+  %0 = load double, double* %a
   %1 = fcmp oeq double %0, 0.000000e+00
   br i1 %1, label %bb1, label %bb2
 
@@ -64,7 +64,7 @@ entry:
 ; CHECK-NOT: vcmpe.f32
 ; CHECK-NOT: vmrs
 ; CHECK: bne
-  %0 = load float* %a
+  %0 = load float, float* %a
   %1 = fcmp oeq float %0, 0.000000e+00
   br i1 %1, label %bb1, label %bb2
 

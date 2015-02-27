@@ -3,13 +3,13 @@
 
 define i32 @test1(i32* nocapture %p, i8* nocapture %q) {
 ; CHECK-LABEL: test1
-; CHECK: %x = load i32* %p, align 4, !invariant.load !0
+; CHECK: %x = load i32, i32* %p, align 4, !invariant.load !0
 ; CHECK-NOT: %y = load
 entry:
-  %x = load i32* %p, align 4, !invariant.load !0
+  %x = load i32, i32* %p, align 4, !invariant.load !0
   %conv = trunc i32 %x to i8
   store i8 %conv, i8* %q, align 1
-  %y = load i32* %p, align 4, !invariant.load !0
+  %y = load i32, i32* %p, align 4, !invariant.load !0
   %add = add i32 %y, 1
   ret i32 %add
 }
@@ -19,10 +19,10 @@ define i32 @test2(i32* nocapture %p, i8* nocapture %q) {
 ; CHECK-NOT: !invariant.load
 ; CHECK-NOT: %y = load
 entry:
-  %x = load i32* %p, align 4
+  %x = load i32, i32* %p, align 4
   %conv = trunc i32 %x to i8
   store i8 %conv, i8* %q, align 1
-  %y = load i32* %p, align 4, !invariant.load !0
+  %y = load i32, i32* %p, align 4, !invariant.load !0
   %add = add i32 %y, 1
   ret i32 %add
 }
@@ -33,7 +33,7 @@ define i32 @test3(i1 %cnd, i32* %p, i32* %q) {
 ; CHECK-LABEL: test3
 ; CHECK-NOT: load
 entry:
-  %v1 = load i32* %p
+  %v1 = load i32, i32* %p
   br i1 %cnd, label %bb1, label %bb2
 
 bb1:
@@ -41,7 +41,7 @@ bb1:
   br label %bb2
 
 bb2:
-  %v2 = load i32* %p, !invariant.load !0
+  %v2 = load i32, i32* %p, !invariant.load !0
   %res = sub i32 %v1, %v2
   ret i32 %res
 }
@@ -52,7 +52,7 @@ define i32 @test4(i1 %cnd, i32* %p, i32* %q) {
 ; CHECK-LABEL: test4
 ; %v2 is redundant, but GVN currently doesn't catch that
 entry:
-  %v1 = load i32* %p, !invariant.load !0
+  %v1 = load i32, i32* %p, !invariant.load !0
   br i1 %cnd, label %bb1, label %bb2
 
 bb1:
@@ -60,7 +60,7 @@ bb1:
   br label %bb2
 
 bb2:
-  %v2 = load i32* %p
+  %v2 = load i32, i32* %p
   %res = sub i32 %v1, %v2
   ret i32 %res
 }

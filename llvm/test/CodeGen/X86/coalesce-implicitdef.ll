@@ -71,7 +71,7 @@ for.inc27.backedge:                               ; preds = %while.end, %if.then
   br i1 %tobool17, label %for.inc27.if.end30.loopexit56_crit_edge, label %while.condthread-pre-split
 
 if.then22:                                        ; preds = %while.end
-  %1 = load i16* %p2.1, align 2
+  %1 = load i16, i16* %p2.1, align 2
   %tobool23 = icmp eq i16 %1, 0
   br i1 %tobool23, label %for.inc27.backedge, label %label.loopexit
 
@@ -89,7 +89,7 @@ for.inc27.if.end30.loopexit56_crit_edge:          ; preds = %for.inc27.backedge
 if.end30:                                         ; preds = %for.inc27.if.end30.loopexit56_crit_edge, %label.loopexit, %label.preheader, %for.inc
   %i.0.load46 = phi i32 [ 0, %for.inc ], [ %i.0.load4669, %label.preheader ], [ %i.0.load4669, %label.loopexit ], [ %i.0.load4669, %for.inc27.if.end30.loopexit56_crit_edge ]
   %pi.4 = phi i32* [ %i, %for.inc ], [ %pi.3.ph, %label.preheader ], [ %pi.3.ph, %label.loopexit ], [ %pi.3.ph, %for.inc27.if.end30.loopexit56_crit_edge ]
-  %2 = load i32* %pi.4, align 4
+  %2 = load i32, i32* %pi.4, align 4
   %tobool31 = icmp eq i32 %2, 0
   br i1 %tobool31, label %for.inc34, label %label.preheader
 
@@ -100,7 +100,7 @@ for.inc34:                                        ; preds = %if.end30
 
 for.end36:                                        ; preds = %for.cond
   store i32 1, i32* %i, align 4
-  %3 = load i32* @c, align 4
+  %3 = load i32, i32* @c, align 4
   %tobool37 = icmp eq i32 %3, 0
   br i1 %tobool37, label %label.preheader, label %land.rhs
 
@@ -111,15 +111,15 @@ land.rhs:                                         ; preds = %for.end36
 label.preheader:                                  ; preds = %for.end36, %if.end30, %land.rhs
   %i.0.load4669 = phi i32 [ 1, %land.rhs ], [ %i.0.load46, %if.end30 ], [ 1, %for.end36 ]
   %pi.3.ph = phi i32* [ %pi.0, %land.rhs ], [ %pi.4, %if.end30 ], [ %pi.0, %for.end36 ]
-  %4 = load i32* @b, align 4
+  %4 = load i32, i32* @b, align 4
   %inc285863 = add nsw i32 %4, 1
   store i32 %inc285863, i32* @b, align 4
   %tobool175964 = icmp eq i32 %inc285863, 0
   br i1 %tobool175964, label %if.end30, label %while.condthread-pre-split.lr.ph.lr.ph
 
 while.condthread-pre-split.lr.ph.lr.ph:           ; preds = %label.preheader
-  %.pr50 = load i32* @d, align 4
+  %.pr50 = load i32, i32* @d, align 4
   %tobool19 = icmp eq i32 %.pr50, 0
-  %a.promoted.pre = load i32* @a, align 4
+  %a.promoted.pre = load i32, i32* @a, align 4
   br label %while.condthread-pre-split
 }

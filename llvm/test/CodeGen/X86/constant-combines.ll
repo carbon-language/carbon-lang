@@ -20,7 +20,7 @@ entry:
 
   %1 = getelementptr inbounds { float, float }, { float, float }* %arg, i64 0,  i32 0
   %2 = bitcast float* %1 to i64*
-  %3 = load i64* %2, align 8
+  %3 = load i64, i64* %2, align 8
   %4 = trunc i64 %3 to i32
   %5 = lshr i64 %3, 32
   %6 = trunc i64 %5 to i32

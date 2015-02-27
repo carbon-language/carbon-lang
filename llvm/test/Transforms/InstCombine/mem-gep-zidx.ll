@@ -9,7 +9,7 @@ define signext i32 @test1(i32 signext %x) #0 {
 entry:
   %idxprom = sext i32 %x to i64
   %arrayidx = getelementptr inbounds [1 x i32], [1 x i32]* @f.a, i64 0, i64 %idxprom
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   ret i32 %0
 
 ; CHECK-LABEL: @test1
@@ -37,7 +37,7 @@ entry:
   %idxprom = sext i32 %x to i64
   %p = select i1 %y, [1 x i32]* @f.a, [1 x i32]* @f.b
   %arrayidx = getelementptr inbounds [1 x i32], [1 x i32]* %p, i64 0, i64 %idxprom
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   ret i32 %0
 
 ; CHECK-LABEL: @test3

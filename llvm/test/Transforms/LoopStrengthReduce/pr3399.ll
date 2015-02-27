@@ -13,7 +13,7 @@ bb:		; preds = %bb5, %bb5.thread
 
 bb1:		; preds = %bb
 	%l_2.0.reg2mem.0 = sub i32 0, %indvar		; <i32> [#uses=1]
-	%0 = load volatile i32* @g_53, align 4		; <i32> [#uses=1]
+	%0 = load volatile i32, i32* @g_53, align 4		; <i32> [#uses=1]
 	%1 = trunc i32 %l_2.0.reg2mem.0 to i16		; <i16> [#uses=1]
 	%2 = trunc i32 %0 to i16		; <i16> [#uses=1]
 	%3 = mul i16 %2, %1		; <i16> [#uses=1]

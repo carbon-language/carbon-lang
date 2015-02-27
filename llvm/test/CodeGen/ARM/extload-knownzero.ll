@@ -8,7 +8,7 @@ entry:
   br i1 %tmp1, label %bb1, label %bb2
 bb1:
 ; CHECK: ldrh
-  %tmp2 = load i16* %ptr, align 2
+  %tmp2 = load i16, i16* %ptr, align 2
   br label %bb2
 bb2:
 ; CHECK-NOT: uxth

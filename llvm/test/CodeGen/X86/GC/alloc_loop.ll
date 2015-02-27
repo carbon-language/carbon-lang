@@ -31,8 +31,8 @@ entry:
 	store i8** %tmp.2, i8*** %B
 
 	;; *B = A;
-	%B.1 = load i8*** %B
-	%A.1 = load i8** %A
+	%B.1 = load i8**, i8*** %B
+	%A.1 = load i8*, i8** %A
 	call void @llvm.gcwrite(i8* %A.1, i8* %B.upgrd.1, i8** %B.1)
 	
 	br label %AllocLoop

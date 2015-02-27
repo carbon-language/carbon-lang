@@ -15,14 +15,14 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.Rect* %my_r0, metadata !0, metadata !{!"0x102"}), !dbg !15
   %1 = getelementptr inbounds %struct.Rect, %struct.Rect* %my_r0, i32 0, i32 0, !dbg !16 ; <%struct.Pt*> [#uses=1]
   %2 = getelementptr inbounds %struct.Pt, %struct.Pt* %1, i32 0, i32 0, !dbg !16 ; <double*> [#uses=1]
-  %3 = load double* %2, align 8, !dbg !16         ; <double> [#uses=1]
+  %3 = load double, double* %2, align 8, !dbg !16         ; <double> [#uses=1]
   store double %3, double* %0, align 8, !dbg !16
-  %4 = load double* %0, align 8, !dbg !16         ; <double> [#uses=1]
+  %4 = load double, double* %0, align 8, !dbg !16         ; <double> [#uses=1]
   store double %4, double* %retval, align 8, !dbg !16
   br label %return, !dbg !16
 
 return:                                           ; preds = %entry
-  %retval1 = load double* %retval, !dbg !16       ; <double> [#uses=1]
+  %retval1 = load double, double* %retval, !dbg !16       ; <double> [#uses=1]
   ret double %retval1, !dbg !16
 }
 

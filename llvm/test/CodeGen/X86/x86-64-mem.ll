@@ -17,7 +17,7 @@
 @bdst = internal global [500000 x i32] zeroinitializer, align 32		; <[500000 x i32]*> [#uses=0]
 
 define void @test1() nounwind {
-	%tmp = load i32* getelementptr ([0 x i32]* @src, i32 0, i32 0)		; <i32> [#uses=1]
+	%tmp = load i32, i32* getelementptr ([0 x i32]* @src, i32 0, i32 0)		; <i32> [#uses=1]
 	store i32 %tmp, i32* getelementptr ([0 x i32]* @dst, i32 0, i32 0)
 	ret void
 }

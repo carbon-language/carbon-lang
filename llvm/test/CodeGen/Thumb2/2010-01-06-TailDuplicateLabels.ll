@@ -20,7 +20,7 @@ target triple = "thumbv7-apple-darwin10"
 define %"struct.WTF::TCMalloc_ThreadCache"* @_ZN3WTF20TCMalloc_ThreadCache22CreateCacheIfNecessaryEv() nounwind {
 entry:
   %0 = tail call  i32 @pthread_mutex_lock(%struct.PlatformMutex* getelementptr inbounds (%struct.SpinLock* @_ZN3WTFL13pageheap_lockE, i32 0, i32 0)) nounwind
-  %.b24 = load i1* @_ZN3WTFL10tsd_initedE.b, align 4 ; <i1> [#uses=1]
+  %.b24 = load i1, i1* @_ZN3WTFL10tsd_initedE.b, align 4 ; <i1> [#uses=1]
   br i1 %.b24, label %bb5, label %bb6
 
 bb5:                                              ; preds = %entry
@@ -33,7 +33,7 @@ bb6:                                              ; preds = %bb5, %entry
 
 bb7:                                              ; preds = %bb11
   %2 = getelementptr inbounds %"struct.WTF::TCMalloc_ThreadCache", %"struct.WTF::TCMalloc_ThreadCache"* %h.0, i32 0, i32 1
-  %3 = load %struct._opaque_pthread_t** %2, align 4
+  %3 = load %struct._opaque_pthread_t*, %struct._opaque_pthread_t** %2, align 4
   %4 = tail call  i32 @pthread_equal(%struct._opaque_pthread_t* %3, %struct._opaque_pthread_t* %me.0) nounwind
   %5 = icmp eq i32 %4, 0
   br i1 %5, label %bb10, label %bb14
@@ -44,7 +44,7 @@ bb10:                                             ; preds = %bb7
 
 bb11:                                             ; preds = %bb10, %bb6
   %h.0.in = phi %"struct.WTF::TCMalloc_ThreadCache"** [ @_ZN3WTFL12thread_heapsE, %bb6 ], [ %6, %bb10 ] ; <%"struct.WTF::TCMalloc_ThreadCache"**> [#uses=1]
-  %h.0 = load %"struct.WTF::TCMalloc_ThreadCache"** %h.0.in, align 4 ; <%"struct.WTF::TCMalloc_ThreadCache"*> [#uses=4]
+  %h.0 = load %"struct.WTF::TCMalloc_ThreadCache"*, %"struct.WTF::TCMalloc_ThreadCache"** %h.0.in, align 4 ; <%"struct.WTF::TCMalloc_ThreadCache"*> [#uses=4]
   %7 = icmp eq %"struct.WTF::TCMalloc_ThreadCache"* %h.0, null
   br i1 %7, label %bb13, label %bb7
 
@@ -56,17 +56,17 @@ bb14:                                             ; preds = %bb13, %bb7
   %heap.1 = phi %"struct.WTF::TCMalloc_ThreadCache"* [ %8, %bb13 ], [ %h.0, %bb7 ] ; <%"struct.WTF::TCMalloc_ThreadCache"*> [#uses=4]
   %9 = tail call  i32 @pthread_mutex_unlock(%struct.PlatformMutex* getelementptr inbounds (%struct.SpinLock* @_ZN3WTFL13pageheap_lockE, i32 0, i32 0)) nounwind
   %10 = getelementptr inbounds %"struct.WTF::TCMalloc_ThreadCache", %"struct.WTF::TCMalloc_ThreadCache"* %heap.1, i32 0, i32 2
-  %11 = load i8* %10, align 4
+  %11 = load i8, i8* %10, align 4
   %toBool15not = icmp eq i8 %11, 0                ; <i1> [#uses=1]
   br i1 %toBool15not, label %bb19, label %bb22
 
 bb19:                                             ; preds = %bb14
-  %.b = load i1* @_ZN3WTFL10tsd_initedE.b, align 4 ; <i1> [#uses=1]
+  %.b = load i1, i1* @_ZN3WTFL10tsd_initedE.b, align 4 ; <i1> [#uses=1]
   br i1 %.b, label %bb21, label %bb22
 
 bb21:                                             ; preds = %bb19
   store i8 1, i8* %10, align 4
-  %12 = load i32* @_ZN3WTFL8heap_keyE, align 4
+  %12 = load i32, i32* @_ZN3WTFL8heap_keyE, align 4
   %13 = bitcast %"struct.WTF::TCMalloc_ThreadCache"* %heap.1 to i8*
   %14 = tail call  i32 @pthread_setspecific(i32 %12, i8* %13) nounwind
   ret %"struct.WTF::TCMalloc_ThreadCache"* %heap.1

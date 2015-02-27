@@ -7,7 +7,7 @@
 define i32 @func(%struct.type* %s) nounwind optsize ssp {
 entry:
   %tmp1 = getelementptr inbounds %struct.type, %struct.type* %s, i32 0, i32 1
-  %tmp2 = load i32* %tmp1, align 8
+  %tmp2 = load i32, i32* %tmp1, align 8
   %tmp3 = icmp eq i32 %tmp2, 10
   %tmp4 = getelementptr inbounds %struct.type, %struct.type* %s, i32 0, i32 40
   br i1 %tmp3, label %bb, label %entry.bb1_crit_edge

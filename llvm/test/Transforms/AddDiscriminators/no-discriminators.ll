@@ -18,8 +18,8 @@ entry:
   %i.addr = alloca i64, align 8
   store i64 %i, i64* %i.addr, align 8
   call void @llvm.dbg.declare(metadata i64* %i.addr, metadata !13, metadata !{}), !dbg !14
-  %0 = load i64* %i.addr, align 8, !dbg !15
-; CHECK:  %0 = load i64* %i.addr, align 8, !dbg !15
+  %0 = load i64, i64* %i.addr, align 8, !dbg !15
+; CHECK:  %0 = load i64, i64* %i.addr, align 8, !dbg !15
   %cmp = icmp slt i64 %0, 5, !dbg !15
 ; CHECK:  %cmp = icmp slt i64 %0, 5, !dbg !15
   br i1 %cmp, label %if.then, label %if.else, !dbg !15
@@ -34,7 +34,7 @@ if.else:                                          ; preds = %entry
   br label %return, !dbg !15
 
 return:                                           ; preds = %if.else, %if.then
-  %1 = load i32* %retval, !dbg !17
+  %1 = load i32, i32* %retval, !dbg !17
   ret i32 %1, !dbg !17
 }
 

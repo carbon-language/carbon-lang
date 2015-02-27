@@ -47,7 +47,7 @@ entry:
   %1 = bitcast %struct.Inner* %arrayidx to i8*, !dbg !28
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* %1, i64 16, i32 8, i1 false), !dbg !28
   %a = getelementptr inbounds %struct.Inner, %struct.Inner* %i1, i32 0, i32 0, !dbg !29
-  %2 = load i32* %a, align 4, !dbg !29
+  %2 = load i32, i32* %a, align 4, !dbg !29
   ret i32 %2, !dbg !29
 }
 

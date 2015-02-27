@@ -13,16 +13,16 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:32-i16:16:32-i32:32:32-i64:32:64-f
 define double @_erand48_r(%struct._reent* %r, i16* %xseed) nounwind {
 entry:
 	tail call void @__dorand48( %struct._reent* %r, i16* %xseed ) nounwind
-	load i16* %xseed, align 2		; <i16>:0 [#uses=1]
+	load i16, i16* %xseed, align 2		; <i16>:0 [#uses=1]
 	uitofp i16 %0 to double		; <double>:1 [#uses=1]
 	tail call double @ldexp( double %1, i32 -48 ) nounwind		; <double>:2 [#uses=1]
 	getelementptr i16, i16* %xseed, i32 1		; <i16*>:3 [#uses=1]
-	load i16* %3, align 2		; <i16>:4 [#uses=1]
+	load i16, i16* %3, align 2		; <i16>:4 [#uses=1]
 	uitofp i16 %4 to double		; <double>:5 [#uses=1]
 	tail call double @ldexp( double %5, i32 -32 ) nounwind		; <double>:6 [#uses=1]
 	fadd double %2, %6		; <double>:7 [#uses=1]
 	getelementptr i16, i16* %xseed, i32 2		; <i16*>:8 [#uses=1]
-	load i16* %8, align 2		; <i16>:9 [#uses=1]
+	load i16, i16* %8, align 2		; <i16>:9 [#uses=1]
 	uitofp i16 %9 to double		; <double>:10 [#uses=1]
 	tail call double @ldexp( double %10, i32 -16 ) nounwind		; <double>:11 [#uses=1]
 	fadd double %7, %11		; <double>:12 [#uses=1]
@@ -35,18 +35,18 @@ declare double @ldexp(double, i32)
 
 define double @erand48(i16* %xseed) nounwind {
 entry:
-	load %struct._reent** @_impure_ptr, align 4		; <%struct._reent*>:0 [#uses=1]
+	load %struct._reent*, %struct._reent** @_impure_ptr, align 4		; <%struct._reent*>:0 [#uses=1]
 	tail call void @__dorand48( %struct._reent* %0, i16* %xseed ) nounwind
-	load i16* %xseed, align 2		; <i16>:1 [#uses=1]
+	load i16, i16* %xseed, align 2		; <i16>:1 [#uses=1]
 	uitofp i16 %1 to double		; <double>:2 [#uses=1]
 	tail call double @ldexp( double %2, i32 -48 ) nounwind		; <double>:3 [#uses=1]
 	getelementptr i16, i16* %xseed, i32 1		; <i16*>:4 [#uses=1]
-	load i16* %4, align 2		; <i16>:5 [#uses=1]
+	load i16, i16* %4, align 2		; <i16>:5 [#uses=1]
 	uitofp i16 %5 to double		; <double>:6 [#uses=1]
 	tail call double @ldexp( double %6, i32 -32 ) nounwind		; <double>:7 [#uses=1]
 	fadd double %3, %7		; <double>:8 [#uses=1]
 	getelementptr i16, i16* %xseed, i32 2		; <i16*>:9 [#uses=1]
-	load i16* %9, align 2		; <i16>:10 [#uses=1]
+	load i16, i16* %9, align 2		; <i16>:10 [#uses=1]
 	uitofp i16 %10 to double		; <double>:11 [#uses=1]
 	tail call double @ldexp( double %11, i32 -16 ) nounwind		; <double>:12 [#uses=1]
 	fadd double %8, %12		; <double>:13 [#uses=1]

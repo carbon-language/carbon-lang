@@ -5,7 +5,7 @@ target datalayout = "e-p:64:64:64"
 ; GVN should preserve the TBAA tag on loads when doing PRE.
 
 ; CHECK-LABEL: @test(
-; CHECK: %tmp33.pre = load i16* %P, align 2, !tbaa !0
+; CHECK: %tmp33.pre = load i16, i16* %P, align 2, !tbaa !0
 ; CHECK: br label %for.body
 define void @test(i16 *%P, i16* %Q) nounwind {
 entry:
@@ -15,7 +15,7 @@ bb.nph:                                           ; preds = %entry
   br label %for.body
 
 for.body:                                         ; preds = %for.body, %bb.nph
-  %tmp33 = load i16* %P, align 2, !tbaa !0
+  %tmp33 = load i16, i16* %P, align 2, !tbaa !0
   store i16 %tmp33, i16* %Q
 
   store i16 0, i16* %P, align 2, !tbaa !0

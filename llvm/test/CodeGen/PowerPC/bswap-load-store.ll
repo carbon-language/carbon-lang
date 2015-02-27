@@ -15,7 +15,7 @@ define void @STWBRX(i32 %i, i8* %ptr, i32 %off) {
 define i32 @LWBRX(i8* %ptr, i32 %off) {
         %tmp1 = getelementptr i8, i8* %ptr, i32 %off                ; <i8*> [#uses=1]
         %tmp1.upgrd.2 = bitcast i8* %tmp1 to i32*               ; <i32*> [#uses=1]
-        %tmp = load i32* %tmp1.upgrd.2          ; <i32> [#uses=1]
+        %tmp = load i32, i32* %tmp1.upgrd.2          ; <i32> [#uses=1]
         %tmp14 = tail call i32 @llvm.bswap.i32( i32 %tmp )              ; <i32> [#uses=1]
         ret i32 %tmp14
 }
@@ -31,7 +31,7 @@ define void @STHBRX(i16 %s, i8* %ptr, i32 %off) {
 define i16 @LHBRX(i8* %ptr, i32 %off) {
         %tmp1 = getelementptr i8, i8* %ptr, i32 %off                ; <i8*> [#uses=1]
         %tmp1.upgrd.4 = bitcast i8* %tmp1 to i16*               ; <i16*> [#uses=1]
-        %tmp = load i16* %tmp1.upgrd.4          ; <i16> [#uses=1]
+        %tmp = load i16, i16* %tmp1.upgrd.4          ; <i16> [#uses=1]
         %tmp6 = call i16 @llvm.bswap.i16( i16 %tmp )            ; <i16> [#uses=1]
         ret i16 %tmp6
 }
@@ -47,7 +47,7 @@ define void @STDBRX(i64 %i, i8* %ptr, i64 %off) {
 define i64 @LDBRX(i8* %ptr, i64 %off) {
         %tmp1 = getelementptr i8, i8* %ptr, i64 %off                ; <i8*> [#uses=1]
         %tmp1.upgrd.2 = bitcast i8* %tmp1 to i64*               ; <i64*> [#uses=1]
-        %tmp = load i64* %tmp1.upgrd.2          ; <i64> [#uses=1]
+        %tmp = load i64, i64* %tmp1.upgrd.2          ; <i64> [#uses=1]
         %tmp14 = tail call i64 @llvm.bswap.i64( i64 %tmp )              ; <i64> [#uses=1]
         ret i64 %tmp14
 }

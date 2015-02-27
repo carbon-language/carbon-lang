@@ -20,9 +20,9 @@ entry:
 for.body:
   %indvars.iv = phi i64 [ %indvars.iv.next, %if.end14 ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %arrayidx2 = getelementptr inbounds i32, i32* %B, i64 %indvars.iv
-  %1 = load i32* %arrayidx2, align 4
+  %1 = load i32, i32* %arrayidx2, align 4
   %cmp3 = icmp sgt i32 %0, %1
   br i1 %cmp3, label %if.then, label %if.end14
 

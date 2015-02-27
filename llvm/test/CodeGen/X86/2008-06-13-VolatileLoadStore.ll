@@ -12,9 +12,9 @@ define i16 @f(i64 %x, double %y) {
 	store volatile double 0.000000e+00, double* @atomic2 ; one processor operation only
 	%b2 = bitcast double %y to i64		; <i64> [#uses=1]
 	store volatile i64 %b2, i64* @anything ; may transform to store of double
-	%l = load volatile i32* @ioport		; must not narrow
+	%l = load volatile i32, i32* @ioport		; must not narrow
 	%t = trunc i32 %l to i16		; <i16> [#uses=1]
-	%l2 = load volatile i32* @ioport		; must not narrow
+	%l2 = load volatile i32, i32* @ioport		; must not narrow
 	%tmp = lshr i32 %l2, 16		; <i32> [#uses=1]
 	%t2 = trunc i32 %tmp to i16		; <i16> [#uses=1]
 	%f = add i16 %t, %t2		; <i16> [#uses=1]

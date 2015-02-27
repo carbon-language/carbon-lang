@@ -68,7 +68,7 @@ define void @rotate_left_m32(i32 *%pa, i32 %b) {
 ; no store:
 ; CHECK-NOT: mov
 entry:
-  %a = load i32* %pa, align 16
+  %a = load i32, i32* %pa, align 16
   %and = and i32 %b, 31
   %shl = shl i32 %a, %and
   %0 = sub i32 0, %b
@@ -86,7 +86,7 @@ define void @rotate_right_m32(i32 *%pa, i32 %b) {
 ; no store:
 ; CHECK-NOT: mov
 entry:
-  %a = load i32* %pa, align 16
+  %a = load i32, i32* %pa, align 16
   %and = and i32 %b, 31
   %shl = lshr i32 %a, %and
   %0 = sub i32 0, %b
@@ -104,7 +104,7 @@ define void @rotate_left_m64(i64 *%pa, i64 %b) {
 ; no store:
 ; CHECK-NOT: mov
 entry:
-  %a = load i64* %pa, align 16
+  %a = load i64, i64* %pa, align 16
   %and = and i64 %b, 63
   %shl = shl i64 %a, %and
   %0 = sub i64 0, %b
@@ -122,7 +122,7 @@ define void @rotate_right_m64(i64 *%pa, i64 %b) {
 ; no store:
 ; CHECK-NOT: mov
 entry:
-  %a = load i64* %pa, align 16
+  %a = load i64, i64* %pa, align 16
   %and = and i64 %b, 63
   %shl = lshr i64 %a, %and
   %0 = sub i64 0, %b

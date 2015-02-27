@@ -9,7 +9,7 @@ bb30:
 	%l0 = phi i64 [ -2222, %bb8 ], [ %r23, %bb30 ]
 	%r2 = add i64 %s0, %B
 	%r3 = inttoptr i64 %r2 to <2 x double>*
-	%r4 = load <2 x double>* %r3, align 8
+	%r4 = load <2 x double>, <2 x double>* %r3, align 8
 	%r6 = bitcast <2 x double> %r4 to <2 x i64>
 	%r7 = bitcast <2 x double> zeroinitializer to <2 x i64>
 	%r8 = insertelement <2 x i64> undef, i64 9223372036854775807, i32 0

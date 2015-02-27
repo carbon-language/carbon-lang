@@ -14,7 +14,7 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 ; CHECK: callq *{{.*}}(%rbp)
 define void @foldCallOper(i32 (i32*, i32, i32**)* nocapture %p1) #0 {
 entry:
-  %0 = load i32*** @a, align 8
+  %0 = load i32**, i32*** @a, align 8
   br label %for.body.i
 
 for.body.i:                                       ; preds = %for.body.i, %entry
@@ -33,14 +33,14 @@ for.body3.i:                                      ; preds = %for.inc8.i, %for.bo
   br i1 %tobool.i, label %for.inc8.i, label %if.then.i
 
 if.then.i:                                        ; preds = %for.body3.i
-  %2 = load i32* %1, align 4
+  %2 = load i32, i32* %1, align 4
   store i32 %2, i32* @b, align 4
   br label %for.inc8.i
 
 for.inc8.i:                                       ; preds = %if.then.i, %for.body3.i
   %lftr.wideiv.i = trunc i64 %indvars.iv.i to i32
   %arrayidx4.phi.trans.insert.i = getelementptr inbounds [0 x i32*], [0 x i32*]* undef, i64 0, i64 %indvars.iv.i
-  %.pre.i = load i32** %arrayidx4.phi.trans.insert.i, align 8
+  %.pre.i = load i32*, i32** %arrayidx4.phi.trans.insert.i, align 8
   %phitmp.i = add i64 %indvars.iv.i, 1
   br label %for.body3.i
 }

@@ -36,24 +36,24 @@ declare i32 @calc(...)
 
 ; Function Attrs: nounwind ssp
 define internal void @calculate() #0 {
-  %1 = load i32* getelementptr inbounds ([5 x i32]* @bar, i64 0, i64 0), align 4
-  %2 = load i32* getelementptr inbounds ([5 x i32]* @baz, i64 0, i64 0), align 4
+  %1 = load i32, i32* getelementptr inbounds ([5 x i32]* @bar, i64 0, i64 0), align 4
+  %2 = load i32, i32* getelementptr inbounds ([5 x i32]* @baz, i64 0, i64 0), align 4
   %3 = mul nsw i32 %2, %1
   store i32 %3, i32* getelementptr inbounds ([5 x i32]* @foo, i64 0, i64 0), align 4
-  %4 = load i32* getelementptr inbounds ([5 x i32]* @bar, i64 0, i64 1), align 4
-  %5 = load i32* getelementptr inbounds ([5 x i32]* @baz, i64 0, i64 1), align 4
+  %4 = load i32, i32* getelementptr inbounds ([5 x i32]* @bar, i64 0, i64 1), align 4
+  %5 = load i32, i32* getelementptr inbounds ([5 x i32]* @baz, i64 0, i64 1), align 4
   %6 = mul nsw i32 %5, %4
   store i32 %6, i32* getelementptr inbounds ([5 x i32]* @foo, i64 0, i64 1), align 4
-  %7 = load i32* getelementptr inbounds ([5 x i32]* @bar, i64 0, i64 2), align 4
-  %8 = load i32* getelementptr inbounds ([5 x i32]* @baz, i64 0, i64 2), align 4
+  %7 = load i32, i32* getelementptr inbounds ([5 x i32]* @bar, i64 0, i64 2), align 4
+  %8 = load i32, i32* getelementptr inbounds ([5 x i32]* @baz, i64 0, i64 2), align 4
   %9 = mul nsw i32 %8, %7
   store i32 %9, i32* getelementptr inbounds ([5 x i32]* @foo, i64 0, i64 2), align 4
-  %10 = load i32* getelementptr inbounds ([5 x i32]* @bar, i64 0, i64 3), align 4
-  %11 = load i32* getelementptr inbounds ([5 x i32]* @baz, i64 0, i64 3), align 4
+  %10 = load i32, i32* getelementptr inbounds ([5 x i32]* @bar, i64 0, i64 3), align 4
+  %11 = load i32, i32* getelementptr inbounds ([5 x i32]* @baz, i64 0, i64 3), align 4
   %12 = mul nsw i32 %11, %10
   store i32 %12, i32* getelementptr inbounds ([5 x i32]* @foo, i64 0, i64 3), align 4
-  %13 = load i32* getelementptr inbounds ([5 x i32]* @bar, i64 0, i64 4), align 4
-  %14 = load i32* getelementptr inbounds ([5 x i32]* @baz, i64 0, i64 4), align 4
+  %13 = load i32, i32* getelementptr inbounds ([5 x i32]* @bar, i64 0, i64 4), align 4
+  %14 = load i32, i32* getelementptr inbounds ([5 x i32]* @baz, i64 0, i64 4), align 4
   %15 = mul nsw i32 %14, %13
   store i32 %15, i32* getelementptr inbounds ([5 x i32]* @foo, i64 0, i64 4), align 4
   ret void

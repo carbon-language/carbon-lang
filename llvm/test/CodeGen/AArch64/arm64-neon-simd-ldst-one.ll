@@ -126,7 +126,7 @@ define <16 x i8> @test_vld1q_dup_s8(i8* %a) {
 ; CHECK-LABEL: test_vld1q_dup_s8:
 ; CHECK: ld1r {{{ ?v[0-9]+.16b ?}}}, [x0]
 entry:
-  %0 = load i8* %a, align 1
+  %0 = load i8, i8* %a, align 1
   %1 = insertelement <16 x i8> undef, i8 %0, i32 0
   %lane = shufflevector <16 x i8> %1, <16 x i8> undef, <16 x i32> zeroinitializer
   ret <16 x i8> %lane
@@ -136,7 +136,7 @@ define <8 x i16> @test_vld1q_dup_s16(i16* %a) {
 ; CHECK-LABEL: test_vld1q_dup_s16:
 ; CHECK: ld1r {{{ ?v[0-9]+.8h ?}}}, [x0]
 entry:
-  %0 = load i16* %a, align 2
+  %0 = load i16, i16* %a, align 2
   %1 = insertelement <8 x i16> undef, i16 %0, i32 0
   %lane = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> zeroinitializer
   ret <8 x i16> %lane
@@ -146,7 +146,7 @@ define <4 x i32> @test_vld1q_dup_s32(i32* %a) {
 ; CHECK-LABEL: test_vld1q_dup_s32:
 ; CHECK: ld1r {{{ ?v[0-9]+.4s ?}}}, [x0]
 entry:
-  %0 = load i32* %a, align 4
+  %0 = load i32, i32* %a, align 4
   %1 = insertelement <4 x i32> undef, i32 %0, i32 0
   %lane = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> zeroinitializer
   ret <4 x i32> %lane
@@ -156,7 +156,7 @@ define <2 x i64> @test_vld1q_dup_s64(i64* %a) {
 ; CHECK-LABEL: test_vld1q_dup_s64:
 ; CHECK: ld1r {{{ ?v[0-9]+.2d ?}}}, [x0]
 entry:
-  %0 = load i64* %a, align 8
+  %0 = load i64, i64* %a, align 8
   %1 = insertelement <2 x i64> undef, i64 %0, i32 0
   %lane = shufflevector <2 x i64> %1, <2 x i64> undef, <2 x i32> zeroinitializer
   ret <2 x i64> %lane
@@ -166,7 +166,7 @@ define <4 x float> @test_vld1q_dup_f32(float* %a) {
 ; CHECK-LABEL: test_vld1q_dup_f32:
 ; CHECK: ld1r {{{ ?v[0-9]+.4s ?}}}, [x0]
 entry:
-  %0 = load float* %a, align 4
+  %0 = load float, float* %a, align 4
   %1 = insertelement <4 x float> undef, float %0, i32 0
   %lane = shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> zeroinitializer
   ret <4 x float> %lane
@@ -176,7 +176,7 @@ define <2 x double> @test_vld1q_dup_f64(double* %a) {
 ; CHECK-LABEL: test_vld1q_dup_f64:
 ; CHECK: ld1r {{{ ?v[0-9]+.2d ?}}}, [x0]
 entry:
-  %0 = load double* %a, align 8
+  %0 = load double, double* %a, align 8
   %1 = insertelement <2 x double> undef, double %0, i32 0
   %lane = shufflevector <2 x double> %1, <2 x double> undef, <2 x i32> zeroinitializer
   ret <2 x double> %lane
@@ -186,7 +186,7 @@ define <8 x i8> @test_vld1_dup_s8(i8* %a) {
 ; CHECK-LABEL: test_vld1_dup_s8:
 ; CHECK: ld1r {{{ ?v[0-9]+.8b ?}}}, [x0]
 entry:
-  %0 = load i8* %a, align 1
+  %0 = load i8, i8* %a, align 1
   %1 = insertelement <8 x i8> undef, i8 %0, i32 0
   %lane = shufflevector <8 x i8> %1, <8 x i8> undef, <8 x i32> zeroinitializer
   ret <8 x i8> %lane
@@ -196,7 +196,7 @@ define <4 x i16> @test_vld1_dup_s16(i16* %a) {
 ; CHECK-LABEL: test_vld1_dup_s16:
 ; CHECK: ld1r {{{ ?v[0-9]+.4h ?}}}, [x0]
 entry:
-  %0 = load i16* %a, align 2
+  %0 = load i16, i16* %a, align 2
   %1 = insertelement <4 x i16> undef, i16 %0, i32 0
   %lane = shufflevector <4 x i16> %1, <4 x i16> undef, <4 x i32> zeroinitializer
   ret <4 x i16> %lane
@@ -206,7 +206,7 @@ define <2 x i32> @test_vld1_dup_s32(i32* %a) {
 ; CHECK-LABEL: test_vld1_dup_s32:
 ; CHECK: ld1r {{{ ?v[0-9]+.2s ?}}}, [x0]
 entry:
-  %0 = load i32* %a, align 4
+  %0 = load i32, i32* %a, align 4
   %1 = insertelement <2 x i32> undef, i32 %0, i32 0
   %lane = shufflevector <2 x i32> %1, <2 x i32> undef, <2 x i32> zeroinitializer
   ret <2 x i32> %lane
@@ -216,7 +216,7 @@ define <1 x i64> @test_vld1_dup_s64(i64* %a) {
 ; CHECK-LABEL: test_vld1_dup_s64:
 ; CHECK: ldr {{d[0-9]+}}, [x0]
 entry:
-  %0 = load i64* %a, align 8
+  %0 = load i64, i64* %a, align 8
   %1 = insertelement <1 x i64> undef, i64 %0, i32 0
   ret <1 x i64> %1
 }
@@ -225,7 +225,7 @@ define <2 x float> @test_vld1_dup_f32(float* %a) {
 ; CHECK-LABEL: test_vld1_dup_f32:
 ; CHECK: ld1r {{{ ?v[0-9]+.2s ?}}}, [x0]
 entry:
-  %0 = load float* %a, align 4
+  %0 = load float, float* %a, align 4
   %1 = insertelement <2 x float> undef, float %0, i32 0
   %lane = shufflevector <2 x float> %1, <2 x float> undef, <2 x i32> zeroinitializer
   ret <2 x float> %lane
@@ -235,7 +235,7 @@ define <1 x double> @test_vld1_dup_f64(double* %a) {
 ; CHECK-LABEL: test_vld1_dup_f64:
 ; CHECK: ldr {{d[0-9]+}}, [x0]
 entry:
-  %0 = load double* %a, align 8
+  %0 = load double, double* %a, align 8
   %1 = insertelement <1 x double> undef, double %0, i32 0
   ret <1 x double> %1
 }
@@ -247,7 +247,7 @@ define <1 x i64> @testDUP.v1i64(i64* %a, i64* %b) #0 {
 ; CHECK: ldr {{x[0-9]+}}, [{{x[0-9]+}}]
 ; CHECK-DAG: fmov {{d[0-9]+}}, {{x[0-9]+}}
 ; CHECK-DAG: str {{x[0-9]+}}, [{{x[0-9]+}}]
-  %1 = load i64* %a, align 8
+  %1 = load i64, i64* %a, align 8
   store i64 %1, i64* %b, align 8
   %vecinit.i = insertelement <1 x i64> undef, i64 %1, i32 0
   ret <1 x i64> %vecinit.i
@@ -259,7 +259,7 @@ define <1 x double> @testDUP.v1f64(double* %a, double* %b) #0 {
 ; CHECK-LABEL: testDUP.v1f64:
 ; CHECK: ldr {{d[0-9]+}}, [{{x[0-9]+}}]
 ; CHECK: str {{d[0-9]+}}, [{{x[0-9]+}}]
-  %1 = load double* %a, align 8
+  %1 = load double, double* %a, align 8
   store double %1, double* %b, align 8
   %vecinit.i = insertelement <1 x double> undef, double %1, i32 0
   ret <1 x double> %vecinit.i
@@ -269,7 +269,7 @@ define <16 x i8> @test_vld1q_lane_s8(i8* %a, <16 x i8> %b) {
 ; CHECK-LABEL: test_vld1q_lane_s8:
 ; CHECK: ld1 { {{v[0-9]+}}.b }[{{[0-9]+}}], [x0]
 entry:
-  %0 = load i8* %a, align 1
+  %0 = load i8, i8* %a, align 1
   %vld1_lane = insertelement <16 x i8> %b, i8 %0, i32 15
   ret <16 x i8> %vld1_lane
 }
@@ -278,7 +278,7 @@ define <8 x i16> @test_vld1q_lane_s16(i16* %a, <8 x i16> %b) {
 ; CHECK-LABEL: test_vld1q_lane_s16:
 ; CHECK: ld1 { {{v[0-9]+}}.h }[{{[0-9]+}}], [x0]
 entry:
-  %0 = load i16* %a, align 2
+  %0 = load i16, i16* %a, align 2
   %vld1_lane = insertelement <8 x i16> %b, i16 %0, i32 7
   ret <8 x i16> %vld1_lane
 }
@@ -287,7 +287,7 @@ define <4 x i32> @test_vld1q_lane_s32(i32* %a, <4 x i32> %b) {
 ; CHECK-LABEL: test_vld1q_lane_s32:
 ; CHECK: ld1 { {{v[0-9]+}}.s }[{{[0-9]+}}], [x0]
 entry:
-  %0 = load i32* %a, align 4
+  %0 = load i32, i32* %a, align 4
   %vld1_lane = insertelement <4 x i32> %b, i32 %0, i32 3
   ret <4 x i32> %vld1_lane
 }
@@ -296,7 +296,7 @@ define <2 x i64> @test_vld1q_lane_s64(i64* %a, <2 x i64> %b) {
 ; CHECK-LABEL: test_vld1q_lane_s64:
 ; CHECK: ld1 { {{v[0-9]+}}.d }[{{[0-9]+}}], [x0]
 entry:
-  %0 = load i64* %a, align 8
+  %0 = load i64, i64* %a, align 8
   %vld1_lane = insertelement <2 x i64> %b, i64 %0, i32 1
   ret <2 x i64> %vld1_lane
 }
@@ -305,7 +305,7 @@ define <4 x float> @test_vld1q_lane_f32(float* %a, <4 x float> %b) {
 ; CHECK-LABEL: test_vld1q_lane_f32:
 ; CHECK: ld1 { {{v[0-9]+}}.s }[{{[0-9]+}}], [x0]
 entry:
-  %0 = load float* %a, align 4
+  %0 = load float, float* %a, align 4
   %vld1_lane = insertelement <4 x float> %b, float %0, i32 3
   ret <4 x float> %vld1_lane
 }
@@ -314,7 +314,7 @@ define <2 x double> @test_vld1q_lane_f64(double* %a, <2 x double> %b) {
 ; CHECK-LABEL: test_vld1q_lane_f64:
 ; CHECK: ld1 { {{v[0-9]+}}.d }[{{[0-9]+}}], [x0]
 entry:
-  %0 = load double* %a, align 8
+  %0 = load double, double* %a, align 8
   %vld1_lane = insertelement <2 x double> %b, double %0, i32 1
   ret <2 x double> %vld1_lane
 }
@@ -323,7 +323,7 @@ define <8 x i8> @test_vld1_lane_s8(i8* %a, <8 x i8> %b) {
 ; CHECK-LABEL: test_vld1_lane_s8:
 ; CHECK: ld1 { {{v[0-9]+}}.b }[{{[0-9]+}}], [x0]
 entry:
-  %0 = load i8* %a, align 1
+  %0 = load i8, i8* %a, align 1
   %vld1_lane = insertelement <8 x i8> %b, i8 %0, i32 7
   ret <8 x i8> %vld1_lane
 }
@@ -332,7 +332,7 @@ define <4 x i16> @test_vld1_lane_s16(i16* %a, <4 x i16> %b) {
 ; CHECK-LABEL: test_vld1_lane_s16:
 ; CHECK: ld1 { {{v[0-9]+}}.h }[{{[0-9]+}}], [x0]
 entry:
-  %0 = load i16* %a, align 2
+  %0 = load i16, i16* %a, align 2
   %vld1_lane = insertelement <4 x i16> %b, i16 %0, i32 3
   ret <4 x i16> %vld1_lane
 }
@@ -341,7 +341,7 @@ define <2 x i32> @test_vld1_lane_s32(i32* %a, <2 x i32> %b) {
 ; CHECK-LABEL: test_vld1_lane_s32:
 ; CHECK: ld1 { {{v[0-9]+}}.s }[{{[0-9]+}}], [x0]
 entry:
-  %0 = load i32* %a, align 4
+  %0 = load i32, i32* %a, align 4
   %vld1_lane = insertelement <2 x i32> %b, i32 %0, i32 1
   ret <2 x i32> %vld1_lane
 }
@@ -350,7 +350,7 @@ define <1 x i64> @test_vld1_lane_s64(i64* %a, <1 x i64> %b) {
 ; CHECK-LABEL: test_vld1_lane_s64:
 ; CHECK: ldr {{d[0-9]+}}, [x0]
 entry:
-  %0 = load i64* %a, align 8
+  %0 = load i64, i64* %a, align 8
   %vld1_lane = insertelement <1 x i64> undef, i64 %0, i32 0
   ret <1 x i64> %vld1_lane
 }
@@ -359,7 +359,7 @@ define <2 x float> @test_vld1_lane_f32(float* %a, <2 x float> %b) {
 ; CHECK-LABEL: test_vld1_lane_f32:
 ; CHECK: ld1 { {{v[0-9]+}}.s }[{{[0-9]+}}], [x0]
 entry:
-  %0 = load float* %a, align 4
+  %0 = load float, float* %a, align 4
   %vld1_lane = insertelement <2 x float> %b, float %0, i32 1
   ret <2 x float> %vld1_lane
 }
@@ -368,7 +368,7 @@ define <1 x double> @test_vld1_lane_f64(double* %a, <1 x double> %b) {
 ; CHECK-LABEL: test_vld1_lane_f64:
 ; CHECK: ldr {{d[0-9]+}}, [x0]
 entry:
-  %0 = load double* %a, align 8
+  %0 = load double, double* %a, align 8
   %vld1_lane = insertelement <1 x double> undef, double %0, i32 0
   ret <1 x double> %vld1_lane
 }

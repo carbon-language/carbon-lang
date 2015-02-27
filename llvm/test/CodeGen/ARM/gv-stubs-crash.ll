@@ -4,7 +4,7 @@
 @Exn = external hidden unnamed_addr constant { i8*, i8* }
 
 define hidden void @func(i32* %this, i32* %e) optsize align 2 {
-  %e.ld = load i32* %e, align 4
+  %e.ld = load i32, i32* %e, align 4
   %inv = invoke zeroext i1 @func2(i32* %this, i32 %e.ld) optsize
           to label %ret unwind label %lpad
 

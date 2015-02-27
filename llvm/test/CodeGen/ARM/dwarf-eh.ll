@@ -34,12 +34,12 @@ define void @f() uwtable {
   store i32 %7, i32* %2
   br label %8
 
-  %9 = load i32* %2
+  %9 = load i32, i32* %2
   %10 = call i32 @llvm.eh.typeid.for(i8* bitcast ({ i8*, i8* }* @_ZTI9exception to i8*)) nounwind
   %11 = icmp eq i32 %9, %10
   br i1 %11, label %12, label %17
 
-  %13 = load i8** %1
+  %13 = load i8*, i8** %1
   %14 = call i8* @__cxa_begin_catch(i8* %13) #3
   %15 = bitcast i8* %14 to %struct.exception*
   store %struct.exception* %15, %struct.exception** %e
@@ -48,8 +48,8 @@ define void @f() uwtable {
 
   ret void
 
-  %18 = load i8** %1
-  %19 = load i32* %2
+  %18 = load i8*, i8** %1
+  %19 = load i32, i32* %2
   %20 = insertvalue { i8*, i32 } undef, i8* %18, 0
   %21 = insertvalue { i8*, i32 } %20, i32 %19, 1
   resume { i8*, i32 } %21

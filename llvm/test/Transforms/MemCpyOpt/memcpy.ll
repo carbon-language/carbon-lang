@@ -196,7 +196,7 @@ define void @test10(%opaque* noalias nocapture sret %x, i32 %y) {
   %a = alloca i32, align 4
   store i32 %y, i32* %a
   call void @foo(i32* noalias nocapture %a)
-  %c = load i32* %a
+  %c = load i32, i32* %a
   %d = bitcast %opaque* %x to i32*
   store i32 %c, i32* %d
   ret void

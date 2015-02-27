@@ -20,7 +20,7 @@ bb1:                                              ; preds = %entry
   %1 = getelementptr inbounds %struct.ui, %struct.ui* %0, i32 0, i32 0
   store %struct.mo* undef, %struct.mo** %1, align 4
   %2 = getelementptr inbounds %struct.ui, %struct.ui* %0, i32 0, i32 5
-  %3 = load i64* %2, align 4
+  %3 = load i64, i64* %2, align 4
   %4 = call i32 @mo_create_nnm(%struct.mo* undef, i64 %3, i32** undef) nounwind
   br i1 undef, label %bb3, label %bb2
 

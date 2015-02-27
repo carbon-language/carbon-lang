@@ -62,17 +62,17 @@ entry:
 ; CHECK: mfc1 $6, $f[[F0]]
 
   %i2 = getelementptr inbounds %struct.S1, %struct.S1* %s1, i32 0, i32 5
-  %tmp = load i32* %i2, align 4
+  %tmp = load i32, i32* %i2, align 4
   %d = getelementptr inbounds %struct.S1, %struct.S1* %s1, i32 0, i32 4
-  %tmp1 = load double* %d, align 8
+  %tmp1 = load double, double* %d, align 8
   %ll = getelementptr inbounds %struct.S1, %struct.S1* %s1, i32 0, i32 3
-  %tmp2 = load i64* %ll, align 8
+  %tmp2 = load i64, i64* %ll, align 8
   %i = getelementptr inbounds %struct.S1, %struct.S1* %s1, i32 0, i32 2
-  %tmp3 = load i32* %i, align 4
+  %tmp3 = load i32, i32* %i, align 4
   %s = getelementptr inbounds %struct.S1, %struct.S1* %s1, i32 0, i32 1
-  %tmp4 = load i16* %s, align 2
+  %tmp4 = load i16, i16* %s, align 2
   %c = getelementptr inbounds %struct.S1, %struct.S1* %s1, i32 0, i32 0
-  %tmp5 = load i8* %c, align 1
+  %tmp5 = load i8, i8* %c, align 1
   tail call void @callee4(i32 %tmp, double %tmp1, i64 %tmp2, i32 %tmp3, i16 signext %tmp4, i8 signext %tmp5, float %f) nounwind
   ret void
 }
@@ -91,9 +91,9 @@ entry:
 ; CHECK: sw  $[[R0]], 24($sp)
 
   %arrayidx = getelementptr inbounds %struct.S2, %struct.S2* %s2, i32 0, i32 0, i32 0
-  %tmp = load i32* %arrayidx, align 4
+  %tmp = load i32, i32* %arrayidx, align 4
   %arrayidx2 = getelementptr inbounds %struct.S2, %struct.S2* %s2, i32 0, i32 0, i32 3
-  %tmp3 = load i32* %arrayidx2, align 4
+  %tmp3 = load i32, i32* %arrayidx2, align 4
   tail call void @callee4(i32 %tmp, double 2.000000e+00, i64 3, i32 %tmp3, i16 signext 4, i8 signext 5, float 6.000000e+00) nounwind
   ret void
 }
@@ -111,11 +111,11 @@ entry:
 ; CHECK: sw  $[[R1]], 24($sp)
 
   %i = getelementptr inbounds %struct.S1, %struct.S1* %s1, i32 0, i32 2
-  %tmp = load i32* %i, align 4
+  %tmp = load i32, i32* %i, align 4
   %i2 = getelementptr inbounds %struct.S1, %struct.S1* %s1, i32 0, i32 5
-  %tmp1 = load i32* %i2, align 4
+  %tmp1 = load i32, i32* %i2, align 4
   %c = getelementptr inbounds %struct.S3, %struct.S3* %s3, i32 0, i32 0
-  %tmp2 = load i8* %c, align 1
+  %tmp2 = load i8, i8* %c, align 1
   tail call void @callee4(i32 %tmp, double 2.000000e+00, i64 3, i32 %tmp1, i16 signext 4, i8 signext %tmp2, float 6.000000e+00) nounwind
   ret void
 }

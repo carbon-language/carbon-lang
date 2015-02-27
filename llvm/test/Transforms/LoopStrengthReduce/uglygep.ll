@@ -33,7 +33,7 @@ bb10:                                             ; preds = %bb9
 
 ; CHECK: bb14:
 ; CHECK-NEXT: store i8 undef, i8* [[SCEVGEP]]
-; CHECK-NEXT: %t6 = load float** undef
+; CHECK-NEXT: %t6 = load float*, float** undef
 ; Fold %t3's add within the address.
 ; CHECK-NEXT: [[SCEVGEP1:%[^ ]+]] = getelementptr float, float* %t6, i64 4
 ; CHECK-NEXT: [[SCEVGEP2:%[^ ]+]] = bitcast float* [[SCEVGEP1]] to i8*
@@ -44,7 +44,7 @@ bb10:                                             ; preds = %bb9
 bb14:                                             ; preds = %bb14, %bb10
   %t2 = getelementptr inbounds i8, i8* undef, i64 %t4 ; <i8*> [#uses=1]
   store i8 undef, i8* %t2
-  %t6 = load float** undef
+  %t6 = load float*, float** undef
   %t8 = bitcast float* %t6 to i8*              ; <i8*> [#uses=1]
   %t9 = getelementptr inbounds i8, i8* %t8, i64 %t3 ; <i8*> [#uses=1]
   store i8 undef, i8* %t9

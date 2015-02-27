@@ -155,7 +155,7 @@ entry:
   %new_a = bitcast %struct.B* %g4 to %struct.A*
 
   %g5 = getelementptr %struct.A, %struct.A* %new_a, i32 0, i32 1
-  %a_a = load i32* %g5, align 4
+  %a_a = load i32, i32* %g5, align 4
   ret i32 %a_a
 ; CHECK-LABEL:      @test12(
 ; CHECK:      getelementptr %struct.A, %struct.A* %a, i64 0, i32 1
@@ -363,7 +363,7 @@ define i32 @test21() {
         %pbob1 = alloca %intstruct
         %pbob2 = getelementptr %intstruct, %intstruct* %pbob1
         %pbobel = getelementptr %intstruct, %intstruct* %pbob2, i64 0, i32 0
-        %rval = load i32* %pbobel
+        %rval = load i32, i32* %pbobel
         ret i32 %rval
 ; CHECK-LABEL: @test21(
 ; CHECK: getelementptr %intstruct, %intstruct* %pbob1, i64 0, i32 0
@@ -395,8 +395,8 @@ define i1 @test23() {
 define void @test25() {
 entry:
         %tmp = getelementptr { i64, i64, i64, i64 }, { i64, i64, i64, i64 }* null, i32 0, i32 3         ; <i64*> [#uses=1]
-        %tmp.upgrd.1 = load i64* %tmp           ; <i64> [#uses=1]
-        %tmp8.ui = load i64* null               ; <i64> [#uses=1]
+        %tmp.upgrd.1 = load i64, i64* %tmp           ; <i64> [#uses=1]
+        %tmp8.ui = load i64, i64* null               ; <i64> [#uses=1]
         %tmp8 = bitcast i64 %tmp8.ui to i64             ; <i64> [#uses=1]
         %tmp9 = and i64 %tmp8, %tmp.upgrd.1             ; <i64> [#uses=1]
         %sext = trunc i64 %tmp9 to i32          ; <i32> [#uses=1]
@@ -427,14 +427,14 @@ define i1 @test26(i8* %arr) {
 define i32 @test27(%struct.compat_siginfo* %to, %struct.siginfo_t* %from) {
 entry:
 	%from_addr = alloca %struct.siginfo_t*
-	%tmp344 = load %struct.siginfo_t** %from_addr, align 8
+	%tmp344 = load %struct.siginfo_t*, %struct.siginfo_t** %from_addr, align 8
 	%tmp345 = getelementptr %struct.siginfo_t, %struct.siginfo_t* %tmp344, i32 0, i32 3
 	%tmp346 = getelementptr { { i32, i32, [0 x i8], %struct.sigval_t, i32 }, [88 x i8] }, { { i32, i32, [0 x i8], %struct.sigval_t, i32 }, [88 x i8] }* %tmp345, i32 0, i32 0
 	%tmp346347 = bitcast { i32, i32, [0 x i8], %struct.sigval_t, i32 }* %tmp346 to { i32, i32, %struct.sigval_t }*
 	%tmp348 = getelementptr { i32, i32, %struct.sigval_t }, { i32, i32, %struct.sigval_t }* %tmp346347, i32 0, i32 2
 	%tmp349 = getelementptr %struct.sigval_t, %struct.sigval_t* %tmp348, i32 0, i32 0
 	%tmp349350 = bitcast i8** %tmp349 to i32*
-	%tmp351 = load i32* %tmp349350, align 8
+	%tmp351 = load i32, i32* %tmp349350, align 8
 	%tmp360 = call i32 asm sideeffect "...",
         "=r,ir,*m,i,0,~{dirflag},~{fpsr},~{flags}"( i32 %tmp351,
          %struct.__large_struct* null, i32 -14, i32 0 )
@@ -482,9 +482,9 @@ declare i32 @printf(i8*, ...)
 	%T = type <{ i64, i64, i64 }>
 define i32 @test29(i8* %start, i32 %X) nounwind {
 entry:
-	%tmp3 = load i64* null
+	%tmp3 = load i64, i64* null
 	%add.ptr = getelementptr i8, i8* %start, i64 %tmp3
-	%tmp158 = load i32* null
+	%tmp158 = load i32, i32* null
 	%add.ptr159 = getelementptr %T, %T* null, i32 %tmp158
 	%add.ptr209 = getelementptr i8, i8* %start, i64 0
 	%add.ptr212 = getelementptr i8, i8* %add.ptr209, i32 %X
@@ -507,7 +507,7 @@ entry:
 	%1 = bitcast i32* %0 to [0 x i32]*
 	call void @test30f(i32* %0) nounwind
 	%2 = getelementptr [0 x i32], [0 x i32]* %1, i32 0, i32 %m
-	%3 = load i32* %2, align 4
+	%3 = load i32, i32* %2, align 4
 	ret i32 %3
 ; CHECK-LABEL: @test30(
 ; CHECK: getelementptr i32
@@ -537,7 +537,7 @@ define i8* @test32(i8* %v) {
 	%E = bitcast i8* %D to i8**
 	store i8* %v, i8** %E
 	%F = getelementptr [4 x i8*], [4 x i8*]* %A, i32 0, i32 2
-	%G = load i8** %F
+	%G = load i8*, i8** %F
 	ret i8* %G
 ; CHECK-LABEL: @test32(
 ; CHECK: %D = getelementptr [4 x i8*], [4 x i8*]* %A, i64 0, i64 1
@@ -599,7 +599,7 @@ entry:
 	%B = getelementptr %T2, %T2* %A, i64 0, i32 0
 
       	store i64 %V, i64* %mrv_gep
-	%C = load i8** %B, align 8
+	%C = load i8*, i8** %B, align 8
 	ret i8* %C
 ; CHECK-LABEL: @test34(
 ; CHECK: %[[C:.*]] = inttoptr i64 %V to i8*
@@ -695,7 +695,7 @@ declare void @three_gep_h(%three_gep_t2*)
 
 define void @test39(%struct.ham* %arg, i8 %arg1) nounwind {
   %tmp = getelementptr inbounds %struct.ham, %struct.ham* %arg, i64 0, i32 2
-  %tmp2 = load %struct.zot** %tmp, align 8
+  %tmp2 = load %struct.zot*, %struct.zot** %tmp, align 8
   %tmp3 = bitcast %struct.zot* %tmp2 to i8*
   %tmp4 = getelementptr inbounds i8, i8* %tmp3, i64 -8
   store i8 %arg1, i8* %tmp4, align 8
@@ -723,7 +723,7 @@ define i8 @test_gep_bitcast_as1(i32 addrspace(1)* %arr, i16 %N) {
   %cast = bitcast i32 addrspace(1)* %arr to i8 addrspace(1)*
   %V = mul i16 %N, 4
   %t = getelementptr i8, i8 addrspace(1)* %cast, i16 %V
-  %x = load i8 addrspace(1)* %t
+  %x = load i8, i8 addrspace(1)* %t
   ret i8 %x
 }
 
@@ -735,7 +735,7 @@ define i64 @test_gep_bitcast_array_same_size_element([100 x double]* %arr, i64 %
   %cast = bitcast [100 x double]* %arr to i64*
   %V = mul i64 %N, 8
   %t = getelementptr i64, i64* %cast, i64 %V
-  %x = load i64* %t
+  %x = load i64, i64* %t
   ret i64 %x
 }
 
@@ -745,11 +745,11 @@ define i64 @test_gep_bitcast_array_same_size_element_addrspacecast([100 x double
 ; CHECK: getelementptr [100 x double], [100 x double]* %arr, i64 0, i64 %V
 ; CHECK-NEXT: bitcast double*
 ; CHECK-NEXT: %t = addrspacecast i64*
-; CHECK: load i64 addrspace(3)* %t
+; CHECK: load i64, i64 addrspace(3)* %t
   %cast = addrspacecast [100 x double]* %arr to i64 addrspace(3)*
   %V = mul i64 %N, 8
   %t = getelementptr i64, i64 addrspace(3)* %cast, i64 %V
-  %x = load i64 addrspace(3)* %t
+  %x = load i64, i64 addrspace(3)* %t
   ret i64 %x
 }
 
@@ -761,7 +761,7 @@ define i8 @test_gep_bitcast_array_different_size_element([100 x double]* %arr, i
   %cast = bitcast [100 x double]* %arr to i8*
   %V = mul i64 %N, 8
   %t = getelementptr i8, i8* %cast, i64 %V
-  %x = load i8* %t
+  %x = load i8, i8* %t
   ret i8 %x
 }
 
@@ -772,7 +772,7 @@ define i64 @test_gep_bitcast_array_same_size_element_as1([100 x double] addrspac
   %cast = bitcast [100 x double] addrspace(1)* %arr to i64 addrspace(1)*
   %V = mul i16 %N, 8
   %t = getelementptr i64, i64 addrspace(1)* %cast, i16 %V
-  %x = load i64 addrspace(1)* %t
+  %x = load i64, i64 addrspace(1)* %t
   ret i64 %x
 }
 
@@ -783,7 +783,7 @@ define i8 @test_gep_bitcast_array_different_size_element_as1([100 x double] addr
   %cast = bitcast [100 x double] addrspace(1)* %arr to i8 addrspace(1)*
   %V = mul i16 %N, 8
   %t = getelementptr i8, i8 addrspace(1)* %cast, i16 %V
-  %x = load i8 addrspace(1)* %t
+  %x = load i8, i8 addrspace(1)* %t
   ret i8 %x
 }
 

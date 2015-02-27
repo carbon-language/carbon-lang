@@ -11,9 +11,9 @@ target datalayout = "e-p:64:64:64-n32:64"
 define internal fastcc void @someFunction(%struct.this_structure_s.0.5* nocapture %scratch, i32 %stage, i32 %cbSize) nounwind {
 entry:
   %0 = getelementptr inbounds %struct.this_structure_s.0.5, %struct.this_structure_s.0.5* %scratch, i32 0, i32 4, i32 %stage
-  %1 = load i8** %0, align 4
+  %1 = load i8*, i8** %0, align 4
   %2 = getelementptr inbounds %struct.this_structure_s.0.5, %struct.this_structure_s.0.5* %scratch, i32 0, i32 5, i32 %stage
-  %3 = load i8** %2, align 4
+  %3 = load i8*, i8** %2, align 4
   %4 = getelementptr inbounds %struct.this_structure_s.0.5, %struct.this_structure_s.0.5* %scratch, i32 0, i32 2, i32 0, i32 0
   %tmp11 = shl i32 %stage, 1
   %tmp1325 = or i32 %tmp11, 1
@@ -31,9 +31,9 @@ __label_D_1608:                                   ; preds = %__label_D_1608, %en
   %scevgep10 = getelementptr i32, i32* %4, i32 %tmp928
   %scevgep12 = getelementptr %struct.this_structure_s.0.5, %struct.this_structure_s.0.5* %scratch, i32 0, i32 9, i32 %tmp11, i32 %i.12
   %scevgep14 = getelementptr %struct.this_structure_s.0.5, %struct.this_structure_s.0.5* %scratch, i32 0, i32 9, i32 %tmp1325, i32 %i.12
-  %5 = load i8* %scevgep12, align 1
+  %5 = load i8, i8* %scevgep12, align 1
   %6 = sext i8 %5 to i32
-  %7 = load i8* %scevgep14, align 1
+  %7 = load i8, i8* %scevgep14, align 1
   %8 = sext i8 %7 to i32
   store i32 0, i32* %lvar_g.13, align 4
   store i32 %8, i32* %scevgep, align 4

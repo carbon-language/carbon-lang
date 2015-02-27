@@ -10,6 +10,6 @@ bb278:		; preds = %bb278, %entry
 	br i1 false, label %bb278, label %bb344
 
 bb344:		; preds = %bb278, %entry
-	%tmp38758 = load i16* null, align 2		; <i16> [#uses=0]
+	%tmp38758 = load i16, i16* null, align 2		; <i16> [#uses=0]
 	ret void
 }

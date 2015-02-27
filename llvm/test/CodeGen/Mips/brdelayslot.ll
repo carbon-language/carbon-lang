@@ -54,18 +54,18 @@ declare void @foo4(double)
 
 define void @foo5(i32 %a) nounwind {
 entry:
-  %0 = load i32* @g2, align 4
+  %0 = load i32, i32* @g2, align 4
   %tobool = icmp eq i32 %a, 0
   br i1 %tobool, label %if.else, label %if.then
 
 if.then:
-  %1 = load i32* @g1, align 4
+  %1 = load i32, i32* @g1, align 4
   %add = add nsw i32 %1, %0
   store i32 %add, i32* @g1, align 4
   br label %if.end
 
 if.else:
-  %2 = load i32* @g3, align 4
+  %2 = load i32, i32* @g3, align 4
   %sub = sub nsw i32 %2, %0
   store i32 %sub, i32* @g3, align 4
   br label %if.end
@@ -99,9 +99,9 @@ declare void @foo7(double, float)
 define i32 @foo8(i32 %a) nounwind {
 entry:
   store i32 %a, i32* @g1, align 4
-  %0 = load void ()** @foo9, align 4
+  %0 = load void ()*, void ()** @foo9, align 4
   tail call void %0() nounwind
-  %1 = load i32* @g1, align 4
+  %1 = load i32, i32* @g1, align 4
   %add = add nsw i32 %1, %a
   ret i32 %add
 }
@@ -145,7 +145,7 @@ for.body:                                         ; preds = %entry, %for.body
   %s.06 = phi i32 [ %add, %for.body ], [ 0, %entry ]
   %i.05 = phi i32 [ %inc, %for.body ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i32 %i.05
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %add = add nsw i32 %0, %s.06
   %inc = add nsw i32 %i.05, 1
   %exitcond = icmp eq i32 %inc, %n

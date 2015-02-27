@@ -11,7 +11,7 @@
 define i32 @bar() {
 ; MEDIUM: addis 3, 2, fooa@toc@ha
 ; LARGE: addis 3, 2, .LC1@toc@ha
-  %a = load i32* @fooa
+  %a = load i32, i32* @fooa
   ret i32 %a
 }
 
@@ -20,7 +20,7 @@ define i64 @bar2() {
 ; MEDIUM: addis 3, 2, foo2a@toc@ha
 ; MEDIUM: addi 3, 3, foo2a@toc@l
 ; LARGE: addis 3, 2, .LC3@toc@ha
-  %a = load i64* @foo2a
+  %a = load i64, i64* @foo2a
   ret i64 %a
 }
 

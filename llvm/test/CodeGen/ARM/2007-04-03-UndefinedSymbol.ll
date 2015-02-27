@@ -9,7 +9,7 @@
 define internal void @_ZN1B1iEv(%struct.B* %this) {
 entry:
 	%tmp1 = getelementptr %struct.B, %struct.B* %this, i32 0, i32 0		; <i32*> [#uses=1]
-	%tmp2 = load i32* %tmp1		; <i32> [#uses=1]
+	%tmp2 = load i32, i32* %tmp1		; <i32> [#uses=1]
 	%tmp4 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([7 x i8]* @str, i32 0, i32 0), i32 %tmp2 )		; <i32> [#uses=0]
 	ret void
 }
@@ -19,7 +19,7 @@ declare i32 @printf(i8*, ...)
 define internal void @_ZN1B1jEv(%struct.B* %this) {
 entry:
 	%tmp1 = getelementptr %struct.B, %struct.B* %this, i32 0, i32 0		; <i32*> [#uses=1]
-	%tmp2 = load i32* %tmp1		; <i32> [#uses=1]
+	%tmp2 = load i32, i32* %tmp1		; <i32> [#uses=1]
 	%tmp4 = tail call i32 (i8*, ...)* @printf( i8* getelementptr ([7 x i8]* @str1, i32 0, i32 0), i32 %tmp2 )		; <i32> [#uses=0]
 	ret void
 }
@@ -37,11 +37,11 @@ cond_true.i:		; preds = %entry
 	%b2.i = bitcast %struct.B* %b.i to i8*		; <i8*> [#uses=1]
 	%ctg23.i = getelementptr i8, i8* %b2.i, i32 ashr (i32 trunc (i64 lshr (i64 zext (i32 ptrtoint (void (%struct.B*)* @_ZN1B1iEv to i32) to i64), i64 32) to i32), i32 1)		; <i8*> [#uses=1]
 	%tmp121314.i = bitcast i8* %ctg23.i to i32 (...)***		; <i32 (...)***> [#uses=1]
-	%tmp15.i = load i32 (...)*** %tmp121314.i		; <i32 (...)**> [#uses=1]
+	%tmp15.i = load i32 (...)**, i32 (...)*** %tmp121314.i		; <i32 (...)**> [#uses=1]
 	%tmp151.i = bitcast i32 (...)** %tmp15.i to i8*		; <i8*> [#uses=1]
 	%ctg2.i = getelementptr i8, i8* %tmp151.i, i32 ptrtoint (void (%struct.B*)* @_ZN1B1iEv to i32)		; <i8*> [#uses=1]
 	%tmp2021.i = bitcast i8* %ctg2.i to i32 (...)**		; <i32 (...)**> [#uses=1]
-	%tmp22.i = load i32 (...)** %tmp2021.i		; <i32 (...)*> [#uses=1]
+	%tmp22.i = load i32 (...)*, i32 (...)** %tmp2021.i		; <i32 (...)*> [#uses=1]
 	%tmp2223.i = bitcast i32 (...)* %tmp22.i to void (%struct.B*)*		; <void (%struct.B*)*> [#uses=1]
 	br label %_Z3fooiM1BFvvE.exit
 
@@ -59,11 +59,11 @@ cond_true.i46:		; preds = %_Z3fooiM1BFvvE.exit
 	%b2.i35 = bitcast %struct.B* %b.i29 to i8*		; <i8*> [#uses=1]
 	%ctg23.i36 = getelementptr i8, i8* %b2.i35, i32 ashr (i32 trunc (i64 lshr (i64 zext (i32 ptrtoint (void (%struct.B*)* @_ZN1B1jEv to i32) to i64), i64 32) to i32), i32 1)		; <i8*> [#uses=1]
 	%tmp121314.i37 = bitcast i8* %ctg23.i36 to i32 (...)***		; <i32 (...)***> [#uses=1]
-	%tmp15.i38 = load i32 (...)*** %tmp121314.i37		; <i32 (...)**> [#uses=1]
+	%tmp15.i38 = load i32 (...)**, i32 (...)*** %tmp121314.i37		; <i32 (...)**> [#uses=1]
 	%tmp151.i41 = bitcast i32 (...)** %tmp15.i38 to i8*		; <i8*> [#uses=1]
 	%ctg2.i42 = getelementptr i8, i8* %tmp151.i41, i32 ptrtoint (void (%struct.B*)* @_ZN1B1jEv to i32)		; <i8*> [#uses=1]
 	%tmp2021.i43 = bitcast i8* %ctg2.i42 to i32 (...)**		; <i32 (...)**> [#uses=1]
-	%tmp22.i44 = load i32 (...)** %tmp2021.i43		; <i32 (...)*> [#uses=1]
+	%tmp22.i44 = load i32 (...)*, i32 (...)** %tmp2021.i43		; <i32 (...)*> [#uses=1]
 	%tmp2223.i45 = bitcast i32 (...)* %tmp22.i44 to void (%struct.B*)*		; <void (%struct.B*)*> [#uses=1]
 	br label %_Z3fooiM1BFvvE.exit56
 
@@ -81,11 +81,11 @@ cond_true.i18:		; preds = %_Z3fooiM1BFvvE.exit56
 	%b2.i7 = bitcast %struct.B* %b.i1 to i8*		; <i8*> [#uses=1]
 	%ctg23.i8 = getelementptr i8, i8* %b2.i7, i32 ashr (i32 trunc (i64 lshr (i64 zext (i32 ptrtoint (void (%struct.B*)* @_ZN1B1iEv to i32) to i64), i64 32) to i32), i32 1)		; <i8*> [#uses=1]
 	%tmp121314.i9 = bitcast i8* %ctg23.i8 to i32 (...)***		; <i32 (...)***> [#uses=1]
-	%tmp15.i10 = load i32 (...)*** %tmp121314.i9		; <i32 (...)**> [#uses=1]
+	%tmp15.i10 = load i32 (...)**, i32 (...)*** %tmp121314.i9		; <i32 (...)**> [#uses=1]
 	%tmp151.i13 = bitcast i32 (...)** %tmp15.i10 to i8*		; <i8*> [#uses=1]
 	%ctg2.i14 = getelementptr i8, i8* %tmp151.i13, i32 ptrtoint (void (%struct.B*)* @_ZN1B1iEv to i32)		; <i8*> [#uses=1]
 	%tmp2021.i15 = bitcast i8* %ctg2.i14 to i32 (...)**		; <i32 (...)**> [#uses=1]
-	%tmp22.i16 = load i32 (...)** %tmp2021.i15		; <i32 (...)*> [#uses=1]
+	%tmp22.i16 = load i32 (...)*, i32 (...)** %tmp2021.i15		; <i32 (...)*> [#uses=1]
 	%tmp2223.i17 = bitcast i32 (...)* %tmp22.i16 to void (%struct.B*)*		; <void (%struct.B*)*> [#uses=1]
 	br label %_Z3fooiM1BFvvE.exit28
 

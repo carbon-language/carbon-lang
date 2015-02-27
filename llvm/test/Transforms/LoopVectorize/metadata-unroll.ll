@@ -24,7 +24,7 @@ define void @inc(i32 %n) nounwind uwtable noinline ssp {
 .lr.ph:                                           ; preds = %0, %.lr.ph
   %indvars.iv = phi i64 [ %indvars.iv.next, %.lr.ph ], [ 0, %0 ]
   %2 = getelementptr inbounds [2048 x i32], [2048 x i32]* @a, i64 0, i64 %indvars.iv
-  %3 = load i32* %2, align 4
+  %3 = load i32, i32* %2, align 4
   %4 = trunc i64 %indvars.iv to i32
   %5 = add nsw i32 %3, %4
   store i32 %5, i32* %2, align 4

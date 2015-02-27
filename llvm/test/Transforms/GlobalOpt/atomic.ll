@@ -8,7 +8,7 @@
 
 define void @test1() {
 entry:
-  %0 = load atomic i8* bitcast (i64* @GV1 to i8*) acquire, align 8
+  %0 = load atomic i8, i8* bitcast (i64* @GV1 to i8*) acquire, align 8
   ret void
 }
 
@@ -20,6 +20,6 @@ entry:
 }
 define i32 @test2b() {
 entry:
-  %atomic-load = load atomic i32* @GV2 seq_cst, align 4
+  %atomic-load = load atomic i32, i32* @GV2 seq_cst, align 4
   ret i32 %atomic-load
 }

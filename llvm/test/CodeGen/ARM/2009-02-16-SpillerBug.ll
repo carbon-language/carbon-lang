@@ -87,7 +87,7 @@ bb394:		; preds = %bb122
 bb396:		; preds = %bb394, %bb131, %bb122, %bb122, %bb122, %bb122, %RESUME
 	%stop_link.3 = phi %struct.rec* [ null, %RESUME ], [ %stop_link.3, %bb394 ], [ %stop_link.3, %bb122 ], [ %stop_link.3, %bb122 ], [ %stop_link.3, %bb122 ], [ %stop_link.3, %bb122 ], [ %link.1, %bb131 ]		; <%struct.rec*> [#uses=7]
 	%headers_seen.1 = phi i32 [ 0, %RESUME ], [ %headers_seen.1, %bb394 ], [ 1, %bb122 ], [ 1, %bb122 ], [ 1, %bb122 ], [ 1, %bb122 ], [ %headers_seen.1, %bb131 ]		; <i32> [#uses=2]
-	%link.1 = load %struct.rec** null		; <%struct.rec*> [#uses=2]
+	%link.1 = load %struct.rec*, %struct.rec** null		; <%struct.rec*> [#uses=2]
 	%1 = icmp eq %struct.rec* %link.1, %hd		; <i1> [#uses=1]
 	br i1 %1, label %bb398, label %bb122
 

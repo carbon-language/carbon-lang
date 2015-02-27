@@ -10,7 +10,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds double, double* %b, i64 %indvars.iv
-  %0 = load double* %arrayidx, align 8
+  %0 = load double, double* %arrayidx, align 8
   %add = fadd double %0, 1.000000e+00
   %arrayidx2 = getelementptr inbounds double, double* %a, i64 %indvars.iv
   store double %add, double* %arrayidx2, align 8

@@ -23,9 +23,9 @@ entry:
   store i8* %asmresult, i8** %ret
   store i8* %asmresult1, i8** %p
   store i32 %asmresult2, i32* %t
-  %tmp = load i8** %ret                           ; <i8*> [#uses=1]
+  %tmp = load i8*, i8** %ret                           ; <i8*> [#uses=1]
   store i8* %tmp, i8** %retval
-  %1 = load i8** %retval                          ; <i8*> [#uses=1]
+  %1 = load i8*, i8** %retval                          ; <i8*> [#uses=1]
   ret i8* %1
 }
 

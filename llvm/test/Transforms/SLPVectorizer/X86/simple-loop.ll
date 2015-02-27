@@ -13,16 +13,16 @@ define i32 @rollable(i32* noalias nocapture %in, i32* noalias nocapture %out, i6
   %2 = shl i64 %i.019, 2
   %3 = getelementptr inbounds i32, i32* %in, i64 %2
 ;CHECK:load <4 x i32>
-  %4 = load i32* %3, align 4
+  %4 = load i32, i32* %3, align 4
   %5 = or i64 %2, 1
   %6 = getelementptr inbounds i32, i32* %in, i64 %5
-  %7 = load i32* %6, align 4
+  %7 = load i32, i32* %6, align 4
   %8 = or i64 %2, 2
   %9 = getelementptr inbounds i32, i32* %in, i64 %8
-  %10 = load i32* %9, align 4
+  %10 = load i32, i32* %9, align 4
   %11 = or i64 %2, 3
   %12 = getelementptr inbounds i32, i32* %in, i64 %11
-  %13 = load i32* %12, align 4
+  %13 = load i32, i32* %12, align 4
 ;CHECK:mul <4 x i32>
   %14 = mul i32 %4, 7
 ;CHECK:add <4 x i32>
@@ -62,16 +62,16 @@ define i32 @unrollable(i32* %in, i32* %out, i64 %n) nounwind ssp uwtable {
   %i.019 = phi i64 [ %26, %.lr.ph ], [ 0, %0 ]
   %2 = shl i64 %i.019, 2
   %3 = getelementptr inbounds i32, i32* %in, i64 %2
-  %4 = load i32* %3, align 4
+  %4 = load i32, i32* %3, align 4
   %5 = or i64 %2, 1
   %6 = getelementptr inbounds i32, i32* %in, i64 %5
-  %7 = load i32* %6, align 4
+  %7 = load i32, i32* %6, align 4
   %8 = or i64 %2, 2
   %9 = getelementptr inbounds i32, i32* %in, i64 %8
-  %10 = load i32* %9, align 4
+  %10 = load i32, i32* %9, align 4
   %11 = or i64 %2, 3
   %12 = getelementptr inbounds i32, i32* %in, i64 %11
-  %13 = load i32* %12, align 4
+  %13 = load i32, i32* %12, align 4
   %14 = mul i32 %4, 7
   %15 = add i32 %14, 7
   %16 = mul i32 %7, 7

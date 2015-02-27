@@ -18,7 +18,7 @@ target triple = "i386-apple-macosx10.9.0"
 ; CHECK-NOT: select i1 %tobool, i32* null, i32* select (i1 icmp eq (i64 urem (i64 2, i64 zext (i1 icmp eq (i32* bitcast (i8* @b to i32*), i32* @a) to i64)), i64 0), i32* null, i32* @a) 
 define i32* @can_trap1() {
 entry:
-  %0 = load i32* @a, align 4
+  %0 = load i32, i32* @a, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %exit, label %block1
 
@@ -38,7 +38,7 @@ exit:
 ; CHECK-NOT: select i1 %tobool, i32* select (i1 icmp eq (i64 urem (i64 2, i64 zext (i1 icmp eq (i32* bitcast (i8* @b to i32*), i32* @a) to i64)), i64 0), i32* null, i32* @a), i32* null
 define i32* @can_trap2() {
 entry:
-  %0 = load i32* @a, align 4
+  %0 = load i32, i32* @a, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %exit, label %block1
 
@@ -57,7 +57,7 @@ exit:
 ; CHECK: select i1 icmp eq (i32* bitcast (i8* @b to i32*), i32* @a), i32* select (i1 icmp eq (i64 add (i64 zext (i1 icmp eq (i32* bitcast (i8* @b to i32*), i32* @a) to i64), i64 2), i64 0), i32* null, i32* @a), i32* null
 define i32* @cannot_trap() {
 entry:
-  %0 = load i32* @a, align 4
+  %0 = load i32, i32* @a, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %exit, label %block1
 

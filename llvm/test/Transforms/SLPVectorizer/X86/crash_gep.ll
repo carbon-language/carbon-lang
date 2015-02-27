@@ -8,7 +8,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: nounwind uwtable
 define i32 @fn1() {
 entry:
-  %0 = load i64** @a, align 8
+  %0 = load i64*, i64** @a, align 8
   %add.ptr = getelementptr inbounds i64, i64* %0, i64 1
   %1 = ptrtoint i64* %add.ptr to i64
   %arrayidx = getelementptr inbounds i64, i64* %0, i64 2

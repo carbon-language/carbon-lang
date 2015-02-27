@@ -61,21 +61,21 @@
 
 define void @_ZNK18TriaObjectAccessorILi3ELi3EE10barycenterEv(%class.Point.1* noalias nocapture sret %agg.result, %class.TriaObjectAccessor.57* %this) #0 align 2 {
 entry:
-  %0 = load double* null, align 8
-  %1 = load double* undef, align 8
+  %0 = load double, double* null, align 8
+  %1 = load double, double* undef, align 8
   %call18 = tail call dereferenceable(24) %class.Point.1* @_ZNK18TriaObjectAccessorILi3ELi3EE6vertexEj(%class.TriaObjectAccessor.57* %this, i32 zeroext 6)
-  %2 = load double* undef, align 8
+  %2 = load double, double* undef, align 8
   %call21 = tail call dereferenceable(24) %class.Point.1* @_ZNK18TriaObjectAccessorILi3ELi3EE6vertexEj(%class.TriaObjectAccessor.57* %this, i32 zeroext 7)
-  %3 = load double* undef, align 8
+  %3 = load double, double* undef, align 8
   %call33 = tail call dereferenceable(24) %class.Point.1* @_ZNK18TriaObjectAccessorILi3ELi3EE6vertexEj(%class.TriaObjectAccessor.57* %this, i32 zeroext 3)
-  %4 = load double* null, align 8
-  %5 = load double* undef, align 8
+  %4 = load double, double* null, align 8
+  %5 = load double, double* undef, align 8
   %call45 = tail call dereferenceable(24) %class.Point.1* @_ZNK18TriaObjectAccessorILi3ELi3EE6vertexEj(%class.TriaObjectAccessor.57* %this, i32 zeroext 7)
-  %6 = load double* undef, align 8
+  %6 = load double, double* undef, align 8
   %call48 = tail call dereferenceable(24) %class.Point.1* @_ZNK18TriaObjectAccessorILi3ELi3EE6vertexEj(%class.TriaObjectAccessor.57* %this, i32 zeroext 0)
-  %7 = load double* undef, align 8
+  %7 = load double, double* undef, align 8
   %call66 = tail call dereferenceable(24) %class.Point.1* @_ZNK18TriaObjectAccessorILi3ELi3EE6vertexEj(%class.TriaObjectAccessor.57* %this, i32 zeroext 6)
-  %8 = load double* undef, align 8
+  %8 = load double, double* undef, align 8
   %mul334 = fmul double undef, 2.000000e+00
   %mul579 = fmul double %2, %5
   %mul597 = fmul double undef, %mul579

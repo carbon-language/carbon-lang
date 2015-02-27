@@ -75,6 +75,6 @@ entry:
   %2 = getelementptr inbounds [2 x i32], [2 x i32]* %array, i32 0, i32 1
   store i32 2, i32* %2, align 4
   %3 = getelementptr inbounds [2 x i32], [2 x i32]* %array, i32 0, i32 %a
-  %4 = load i32* %3, align 4
+  %4 = load i32, i32* %3, align 4
   ret i32 %4
 }

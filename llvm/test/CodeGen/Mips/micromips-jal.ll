@@ -7,8 +7,8 @@ entry:
   %b.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
   store i32 %b, i32* %b.addr, align 4
-  %0 = load i32* %a.addr, align 4
-  %1 = load i32* %b.addr, align 4
+  %0 = load i32, i32* %a.addr, align 4
+  %1 = load i32, i32* %b.addr, align 4
   %add = add nsw i32 %0, %1
   ret i32 %add
 }
@@ -20,11 +20,11 @@ entry:
   %y = alloca i32, align 4
   %z = alloca i32, align 4
   store i32 0, i32* %retval
-  %0 = load i32* %y, align 4
-  %1 = load i32* %z, align 4
+  %0 = load i32, i32* %y, align 4
+  %1 = load i32, i32* %z, align 4
   %call = call i32 @sum(i32 %0, i32 %1)
   store i32 %call, i32* %x, align 4
-  %2 = load i32* %x, align 4
+  %2 = load i32, i32* %x, align 4
   ret i32 %2
 }
 

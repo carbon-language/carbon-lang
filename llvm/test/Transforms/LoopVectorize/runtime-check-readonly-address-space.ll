@@ -15,9 +15,9 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %i.01 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32 addrspace(1)* %b, i64 %i.01
-  %0 = load i32 addrspace(1)* %arrayidx, align 4
+  %0 = load i32, i32 addrspace(1)* %arrayidx, align 4
   %arrayidx1 = getelementptr inbounds i32, i32 addrspace(1)* %c, i64 %i.01
-  %1 = load i32 addrspace(1)* %arrayidx1, align 4
+  %1 = load i32, i32 addrspace(1)* %arrayidx1, align 4
   %add = add nsw i32 %0, %1
   %arrayidx2 = getelementptr inbounds i32, i32 addrspace(1)* %a, i64 %i.01
   store i32 %add, i32 addrspace(1)* %arrayidx2, align 4
@@ -40,9 +40,9 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %i.01 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32* %b, i64 %i.01
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %arrayidx1 = getelementptr inbounds i32, i32* %c, i64 %i.01
-  %1 = load i32* %arrayidx1, align 4
+  %1 = load i32, i32* %arrayidx1, align 4
   %add = add nsw i32 %0, %1
   %arrayidx2 = getelementptr inbounds i32, i32 addrspace(1)* %a, i64 %i.01
   store i32 %add, i32 addrspace(1)* %arrayidx2, align 4
@@ -65,9 +65,9 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %i.01 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32 addrspace(1)* %b, i64 %i.01
-  %0 = load i32 addrspace(1)* %arrayidx, align 4
+  %0 = load i32, i32 addrspace(1)* %arrayidx, align 4
   %arrayidx1 = getelementptr inbounds i32, i32* %c, i64 %i.01
-  %1 = load i32* %arrayidx1, align 4
+  %1 = load i32, i32* %arrayidx1, align 4
   %add = add nsw i32 %0, %1
   %arrayidx2 = getelementptr inbounds i32, i32* %a, i64 %i.01
   store i32 %add, i32* %arrayidx2, align 4
@@ -90,9 +90,9 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %i.01 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32 addrspace(1)* %b, i64 %i.01
-  %0 = load i32 addrspace(1)* %arrayidx, align 4
+  %0 = load i32, i32 addrspace(1)* %arrayidx, align 4
   %arrayidx1 = getelementptr inbounds i32, i32 addrspace(1)* %c, i64 %i.01
-  %1 = load i32 addrspace(1)* %arrayidx1, align 4
+  %1 = load i32, i32 addrspace(1)* %arrayidx1, align 4
   %add = add nsw i32 %0, %1
   %arrayidx2 = getelementptr inbounds i32, i32* %a, i64 %i.01
   store i32 %add, i32* %arrayidx2, align 4
@@ -115,9 +115,9 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %i.01 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32 addrspace(1)* %b, i64 %i.01
-  %0 = load i32 addrspace(1)* %arrayidx, align 4
+  %0 = load i32, i32 addrspace(1)* %arrayidx, align 4
   %arrayidx1 = getelementptr inbounds i32, i32 addrspace(2)* %c, i64 %i.01
-  %1 = load i32 addrspace(2)* %arrayidx1, align 4
+  %1 = load i32, i32 addrspace(2)* %arrayidx1, align 4
   %add = add nsw i32 %0, %1
   %arrayidx2 = getelementptr inbounds i32, i32* %a, i64 %i.01
   store i32 %add, i32* %arrayidx2, align 4

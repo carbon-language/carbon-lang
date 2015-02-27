@@ -3,7 +3,7 @@
 @a = global i32 4
 
 define i1 @inner() {
-  %a1 = load volatile i32* @a
+  %a1 = load volatile i32, i32* @a
   %x1 = add i32 %a1, %a1
   %c = icmp eq i32 %x1, 0
 

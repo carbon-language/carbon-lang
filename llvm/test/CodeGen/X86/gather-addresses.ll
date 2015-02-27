@@ -35,8 +35,8 @@
 ; WIN: movhpd	(%rcx,%r[[REG4]],8), %xmm1
 
 define <4 x double> @foo(double* %p, <4 x i32>* %i, <4 x i32>* %h) nounwind {
-  %a = load <4 x i32>* %i
-  %b = load <4 x i32>* %h
+  %a = load <4 x i32>, <4 x i32>* %i
+  %b = load <4 x i32>, <4 x i32>* %h
   %j = and <4 x i32> %a, %b
   %d0 = extractelement <4 x i32> %j, i32 0
   %d1 = extractelement <4 x i32> %j, i32 1
@@ -46,10 +46,10 @@ define <4 x double> @foo(double* %p, <4 x i32>* %i, <4 x i32>* %h) nounwind {
   %q1 = getelementptr double, double* %p, i32 %d1
   %q2 = getelementptr double, double* %p, i32 %d2
   %q3 = getelementptr double, double* %p, i32 %d3
-  %r0 = load double* %q0
-  %r1 = load double* %q1
-  %r2 = load double* %q2
-  %r3 = load double* %q3
+  %r0 = load double, double* %q0
+  %r1 = load double, double* %q1
+  %r2 = load double, double* %q2
+  %r3 = load double, double* %q3
   %v0 = insertelement <4 x double> undef, double %r0, i32 0
   %v1 = insertelement <4 x double> %v0, double %r1, i32 1
   %v2 = insertelement <4 x double> %v1, double %r2, i32 2
@@ -67,8 +67,8 @@ define <4 x double> @foo(double* %p, <4 x i32>* %i, <4 x i32>* %h) nounwind {
 ; LIN32-DAG: {{(mov|and)}}l	8(%esp),
 ; LIN32-DAG: {{(mov|and)}}l	12(%esp),
 define <4 x i64> @old(double* %p, <4 x i32>* %i, <4 x i32>* %h, i64 %f) nounwind {
-  %a = load <4 x i32>* %i
-  %b = load <4 x i32>* %h
+  %a = load <4 x i32>, <4 x i32>* %i
+  %b = load <4 x i32>, <4 x i32>* %h
   %j = and <4 x i32> %a, %b
   %d0 = extractelement <4 x i32> %j, i32 0
   %d1 = extractelement <4 x i32> %j, i32 1

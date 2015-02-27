@@ -19,7 +19,7 @@ call:           ; preds = %entry
 
 cont:           ; preds = %call, %entry
         %P2 = phi i32* [ %P, %call ], [ null, %entry ]          ; <i32*> [#uses=1]
-        %V = load i32* %P2              ; <i32> [#uses=1]
+        %V = load i32, i32* %P2              ; <i32> [#uses=1]
         ret i32 %V
 
 N:              ; preds = %call

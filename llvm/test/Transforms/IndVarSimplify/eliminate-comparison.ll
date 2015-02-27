@@ -16,7 +16,7 @@ entry:
   br i1 %cmp9, label %pre, label %return
 
 pre:
-  %t3 = load i32* %p
+  %t3 = load i32, i32* %p
   %tobool.not = icmp ne i32 %t3, 0
   br label %loop
 
@@ -50,22 +50,22 @@ entry:
   br label %bb18
 
 bb13:
-  %tmp66 = load i64** %tmp65, align 4
+  %tmp66 = load i64*, i64** %tmp65, align 4
   %tmp68 = getelementptr inbounds i64, i64* %tmp66, i32 %i
-  %tmp69 = load i64* %tmp68, align 4
-  %tmp74 = load i64** %tmp73, align 4
+  %tmp69 = load i64, i64* %tmp68, align 4
+  %tmp74 = load i64*, i64** %tmp73, align 4
   %tmp76 = getelementptr inbounds i64, i64* %tmp74, i32 %i
-  %tmp77 = load i64* %tmp76, align 4
+  %tmp77 = load i64, i64* %tmp76, align 4
   %tmp78 = icmp ugt i64 %tmp69, %tmp77
   br i1 %tmp78, label %bb20.loopexit, label %bb15
 
 bb15:
-  %tmp83 = load i64** %tmp82, align 4
+  %tmp83 = load i64*, i64** %tmp82, align 4
   %tmp85 = getelementptr inbounds i64, i64* %tmp83, i32 %i
-  %tmp86 = load i64* %tmp85, align 4
-  %tmp91 = load i64** %tmp90, align 4
+  %tmp86 = load i64, i64* %tmp85, align 4
+  %tmp91 = load i64*, i64** %tmp90, align 4
   %tmp93 = getelementptr inbounds i64, i64* %tmp91, i32 %i
-  %tmp94 = load i64* %tmp93, align 4
+  %tmp94 = load i64, i64* %tmp93, align 4
   %tmp95 = icmp ult i64 %tmp86, %tmp94
   br i1 %tmp95, label %bb20.loopexit, label %bb17
 

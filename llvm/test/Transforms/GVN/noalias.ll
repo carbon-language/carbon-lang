@@ -2,21 +2,21 @@
 
 define i32 @test1(i32* %p, i32* %q) {
 ; CHECK-LABEL: @test1(i32* %p, i32* %q)
-; CHECK: load i32* %p
+; CHECK: load i32, i32* %p
 ; CHECK-NOT: noalias
 ; CHECK: %c = add i32 %a, %a
-  %a = load i32* %p, !noalias !0
-  %b = load i32* %p
+  %a = load i32, i32* %p, !noalias !0
+  %b = load i32, i32* %p
   %c = add i32 %a, %b
   ret i32 %c
 }
 
 define i32 @test2(i32* %p, i32* %q) {
 ; CHECK-LABEL: @test2(i32* %p, i32* %q)
-; CHECK: load i32* %p, !alias.scope !0
+; CHECK: load i32, i32* %p, !alias.scope !0
 ; CHECK: %c = add i32 %a, %a
-  %a = load i32* %p, !alias.scope !0
-  %b = load i32* %p, !alias.scope !0
+  %a = load i32, i32* %p, !alias.scope !0
+  %b = load i32, i32* %p, !alias.scope !0
   %c = add i32 %a, %b
   ret i32 %c
 }
@@ -27,10 +27,10 @@ define i32 @test2(i32* %p, i32* %q) {
 ; throw in between.
 define i32 @test3(i32* %p, i32* %q) {
 ; CHECK-LABEL: @test3(i32* %p, i32* %q)
-; CHECK: load i32* %p, !alias.scope !1
+; CHECK: load i32, i32* %p, !alias.scope !1
 ; CHECK: %c = add i32 %a, %a
-  %a = load i32* %p, !alias.scope !1
-  %b = load i32* %p, !alias.scope !2
+  %a = load i32, i32* %p, !alias.scope !1
+  %b = load i32, i32* %p, !alias.scope !2
   %c = add i32 %a, %b
   ret i32 %c
 }

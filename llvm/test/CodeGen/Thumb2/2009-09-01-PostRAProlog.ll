@@ -37,25 +37,25 @@ declare i32 @getchar() nounwind
 define internal i32 @transpose() nounwind readonly {
 ; CHECK: push
 entry:
-  %0 = load i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 1), align 4 ; <i32> [#uses=1]
+  %0 = load i32, i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 1), align 4 ; <i32> [#uses=1]
   %1 = shl i32 %0, 7                              ; <i32> [#uses=1]
-  %2 = load i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 2), align 4 ; <i32> [#uses=1]
+  %2 = load i32, i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 2), align 4 ; <i32> [#uses=1]
   %3 = or i32 %1, %2                              ; <i32> [#uses=1]
   %4 = shl i32 %3, 7                              ; <i32> [#uses=1]
-  %5 = load i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 3), align 4 ; <i32> [#uses=1]
+  %5 = load i32, i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 3), align 4 ; <i32> [#uses=1]
   %6 = or i32 %4, %5                              ; <i32> [#uses=3]
-  %7 = load i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 7), align 4 ; <i32> [#uses=1]
+  %7 = load i32, i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 7), align 4 ; <i32> [#uses=1]
   %8 = shl i32 %7, 7                              ; <i32> [#uses=1]
-  %9 = load i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 6), align 4 ; <i32> [#uses=1]
+  %9 = load i32, i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 6), align 4 ; <i32> [#uses=1]
   %10 = or i32 %8, %9                             ; <i32> [#uses=1]
   %11 = shl i32 %10, 7                            ; <i32> [#uses=1]
-  %12 = load i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 5), align 4 ; <i32> [#uses=1]
+  %12 = load i32, i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 5), align 4 ; <i32> [#uses=1]
   %13 = or i32 %11, %12                           ; <i32> [#uses=3]
   %14 = icmp ugt i32 %6, %13                      ; <i1> [#uses=2]
   %.pn2.in.i = select i1 %14, i32 %6, i32 %13     ; <i32> [#uses=1]
   %.pn1.in.i = select i1 %14, i32 %13, i32 %6     ; <i32> [#uses=1]
   %.pn2.i = shl i32 %.pn2.in.i, 7                 ; <i32> [#uses=1]
-  %.pn3.i = load i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 4) ; <i32> [#uses=1]
+  %.pn3.i = load i32, i32* getelementptr inbounds ([128 x i32]* @columns, i32 0, i32 4) ; <i32> [#uses=1]
   %.pn.in.in.i = or i32 %.pn2.i, %.pn3.i          ; <i32> [#uses=1]
   %.pn.in.i = zext i32 %.pn.in.in.i to i64        ; <i64> [#uses=1]
   %.pn.i = shl i64 %.pn.in.i, 21                  ; <i64> [#uses=1]
@@ -67,19 +67,19 @@ entry:
   %18 = trunc i64 %17 to i32                      ; <i32> [#uses=1]
   %19 = urem i32 %16, 179                         ; <i32> [#uses=1]
   %20 = or i32 %19, 131072                        ; <i32> [#uses=1]
-  %21 = load i32** @ht, align 4                   ; <i32*> [#uses=1]
+  %21 = load i32*, i32** @ht, align 4                   ; <i32*> [#uses=1]
   br label %bb5
 
 bb:                                               ; preds = %bb5
   %22 = getelementptr inbounds i32, i32* %21, i32 %x.0 ; <i32*> [#uses=1]
-  %23 = load i32* %22, align 4                    ; <i32> [#uses=1]
+  %23 = load i32, i32* %22, align 4                    ; <i32> [#uses=1]
   %24 = icmp eq i32 %23, %16                      ; <i1> [#uses=1]
   br i1 %24, label %bb1, label %bb2
 
 bb1:                                              ; preds = %bb
-  %25 = load i8** @he, align 4                    ; <i8*> [#uses=1]
+  %25 = load i8*, i8** @he, align 4                    ; <i8*> [#uses=1]
   %26 = getelementptr inbounds i8, i8* %25, i32 %x.0  ; <i8*> [#uses=1]
-  %27 = load i8* %26, align 1                     ; <i8> [#uses=1]
+  %27 = load i8, i8* %26, align 1                     ; <i8> [#uses=1]
   %28 = sext i8 %27 to i32                        ; <i32> [#uses=1]
   ret i32 %28
 

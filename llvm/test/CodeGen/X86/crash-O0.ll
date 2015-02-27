@@ -45,7 +45,7 @@ entry:
 ; CHECK: retq
 define i64 @addressModeWith32bitIndex(i32 %V) {
   %gep = getelementptr i64, i64* null, i32 %V
-  %load = load i64* %gep
+  %load = load i64, i64* %gep
   %sdiv = sdiv i64 0, %load
   ret i64 %sdiv
 }

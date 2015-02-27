@@ -9,7 +9,7 @@ entry:
 bb1:
 ; CHECK: %bb1
 ; CHECK: ldrh [[REG:w[0-9]+]]
-  %tmp2 = load i16* %ptr, align 2
+  %tmp2 = load i16, i16* %ptr, align 2
   br label %bb2
 bb2:
 ; CHECK: %bb2

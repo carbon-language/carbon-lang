@@ -12,7 +12,7 @@ define void @foo (i8* %v)
     indirectbr i8* undef, [label %preheader, label %stuff]
 
   stuff:
-    %0 = load i8* undef, align 1
+    %0 = load i8, i8* undef, align 1
     br label %loop
 
   return:

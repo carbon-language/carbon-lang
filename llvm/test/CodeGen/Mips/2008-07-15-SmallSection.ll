@@ -27,8 +27,8 @@ entry:
 
 define i32 @A1() nounwind {
 entry:
-  load i32* getelementptr (%struct.anon* @foo, i32 0, i32 0), align 8 
-  load i32* getelementptr (%struct.anon* @foo, i32 0, i32 1), align 4 
+  load i32, i32* getelementptr (%struct.anon* @foo, i32 0, i32 0), align 8 
+  load i32, i32* getelementptr (%struct.anon* @foo, i32 0, i32 1), align 4 
   add i32 %1, %0
   ret i32 %2
 }

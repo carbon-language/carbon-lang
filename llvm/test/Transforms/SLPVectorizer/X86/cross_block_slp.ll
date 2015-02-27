@@ -26,9 +26,9 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;CHECK: ret
 define i32 @foo(double* nocapture %A, float* nocapture %B, i32 %g) {
 entry:
-  %0 = load float* %B, align 4
+  %0 = load float, float* %B, align 4
   %arrayidx1 = getelementptr inbounds float, float* %B, i64 1
-  %1 = load float* %arrayidx1, align 4
+  %1 = load float, float* %arrayidx1, align 4
   %add = fadd float %0, 5.000000e+00
   %add2 = fadd float %1, 8.000000e+00
   %tobool = icmp eq i32 %g, 0
@@ -40,12 +40,12 @@ if.then:
 
 if.end:
   %conv = fpext float %add to double
-  %2 = load double* %A, align 8
+  %2 = load double, double* %A, align 8
   %add4 = fadd double %conv, %2
   store double %add4, double* %A, align 8
   %conv5 = fpext float %add2 to double
   %arrayidx6 = getelementptr inbounds double, double* %A, i64 1
-  %3 = load double* %arrayidx6, align 8
+  %3 = load double, double* %arrayidx6, align 8
   %add7 = fadd double %conv5, %3
   store double %add7, double* %arrayidx6, align 8
   ret i32 undef

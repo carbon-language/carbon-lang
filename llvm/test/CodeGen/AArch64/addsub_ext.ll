@@ -7,9 +7,9 @@
 
 define void @addsub_i8rhs() minsize {
 ; CHECK-LABEL: addsub_i8rhs:
-    %val8_tmp = load i8* @var8
-    %lhs32 = load i32* @var32
-    %lhs64 = load i64* @var64
+    %val8_tmp = load i8, i8* @var8
+    %lhs32 = load i32, i32* @var32
+    %lhs64 = load i64, i64* @var64
 
     ; Need this to prevent extension upon load and give a vanilla i8 operand.
     %val8 = add i8 %val8_tmp, 123
@@ -82,9 +82,9 @@ end:
 
 define void @addsub_i16rhs() minsize {
 ; CHECK-LABEL: addsub_i16rhs:
-    %val16_tmp = load i16* @var16
-    %lhs32 = load i32* @var32
-    %lhs64 = load i64* @var64
+    %val16_tmp = load i16, i16* @var16
+    %lhs32 = load i32, i32* @var32
+    %lhs64 = load i64, i64* @var64
 
     ; Need this to prevent extension upon load and give a vanilla i16 operand.
     %val16 = add i16 %val16_tmp, 123
@@ -160,8 +160,8 @@ end:
 ; in the face of "add/sub (shifted register)" so I don't intend to.
 define void @addsub_i32rhs() minsize {
 ; CHECK-LABEL: addsub_i32rhs:
-    %val32_tmp = load i32* @var32
-    %lhs64 = load i64* @var64
+    %val32_tmp = load i32, i32* @var32
+    %lhs64 = load i64, i64* @var64
 
     %val32 = add i32 %val32_tmp, 123
 

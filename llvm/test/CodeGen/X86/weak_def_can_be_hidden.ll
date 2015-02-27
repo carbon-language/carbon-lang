@@ -12,7 +12,7 @@
 ; CHECK-D89: .weak_definition _v1
 
 define i32 @f1() {
-  %x = load i32 * @v1
+  %x = load i32 , i32 * @v1
   ret i32 %x
 }
 
@@ -46,6 +46,6 @@ define i32* @f3() {
 ; CHECK-D89: .weak_definition _v4
 
 define i32 @f4() {
-  %x = load i32 * @v4
+  %x = load i32 , i32 * @v4
   ret i32 %x
 }

@@ -53,7 +53,7 @@ define void @trunc_shl_i64(i64 addrspace(1)* %out2, i32 addrspace(1)* %out, i64 
 ; SI: v_and_b32_e32 v{{[0-9]+}}, 1, v{{[0-9]+}}
 ; SI: v_cmp_eq_i32
 define void @trunc_i32_to_i1(i32 addrspace(1)* %out, i32 addrspace(1)* %ptr) {
-  %a = load i32 addrspace(1)* %ptr, align 4
+  %a = load i32, i32 addrspace(1)* %ptr, align 4
   %trunc = trunc i32 %a to i1
   %result = select i1 %trunc, i32 1, i32 0
   store i32 %result, i32 addrspace(1)* %out, align 4
@@ -91,7 +91,7 @@ define void @v_trunc_i64_to_i1(i32 addrspace(1)* %out, i64 addrspace(1)* %in) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %gep = getelementptr i64, i64 addrspace(1)* %in, i32 %tid
   %out.gep = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
-  %x = load i64 addrspace(1)* %gep
+  %x = load i64, i64 addrspace(1)* %gep
 
   %trunc = trunc i64 %x to i1
   %sel = select i1 %trunc, i32 63, i32 -12

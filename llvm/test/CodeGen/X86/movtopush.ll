@@ -196,7 +196,7 @@ bb:
 ; NORMAL-NEXT: addl $16, %esp
 define void @test7(i32* %ptr) optsize {
 entry:
-  %val = load i32* %ptr
+  %val = load i32, i32* %ptr
   call void @good(i32 1, i32 2, i32 %val, i32 4)
   ret void
 }
@@ -263,7 +263,7 @@ entry:
 define void @test10() optsize {
   %stack_fptr = alloca void (i32, i32, i32, i32)*
   store void (i32, i32, i32, i32)* @good, void (i32, i32, i32, i32)** %stack_fptr
-  %good_ptr = load volatile void (i32, i32, i32, i32)** %stack_fptr
+  %good_ptr = load volatile void (i32, i32, i32, i32)*, void (i32, i32, i32, i32)** %stack_fptr
   call void asm sideeffect "nop", "~{ax},~{bx},~{cx},~{dx},~{bp},~{si},~{di}"()
   call void (i32, i32, i32, i32)* %good_ptr(i32 1, i32 2, i32 3, i32 4)
   ret void
@@ -282,7 +282,7 @@ define void @test10() optsize {
 ; NORMAL-NEXT: addl $16, %esp
 @the_global = external global i32
 define void @test11() optsize {
-  %myload = load i32* @the_global
+  %myload = load i32, i32* @the_global
   store i32 42, i32* @the_global
   call void @good(i32 %myload, i32 2, i32 3, i32 4)
   ret void

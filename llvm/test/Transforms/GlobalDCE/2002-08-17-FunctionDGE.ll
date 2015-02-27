@@ -11,7 +11,7 @@
 
  ;; dies when %b dies.
 define internal i32 @foo() {
-        %ret = load i32* @foo.upgrd.1           ; <i32> [#uses=1]
+        %ret = load i32, i32* @foo.upgrd.1           ; <i32> [#uses=1]
         ret i32 %ret
 }
 

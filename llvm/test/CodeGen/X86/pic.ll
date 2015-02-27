@@ -7,7 +7,7 @@
 define void @test0() nounwind {
 entry:
     store i32* @dst, i32** @ptr
-    %tmp.s = load i32* @src
+    %tmp.s = load i32, i32* @src
     store i32 %tmp.s, i32* @dst
     ret void
     
@@ -29,7 +29,7 @@ entry:
 define void @test1() nounwind {
 entry:
     store i32* @dst2, i32** @ptr2
-    %tmp.s = load i32* @src2
+    %tmp.s = load i32, i32* @src2
     store i32 %tmp.s, i32* @dst2
     ret void
     
@@ -71,7 +71,7 @@ define void @test3() nounwind {
 entry:
     %tmp = call void(...)*(...)* @afoo()
     store void(...)* %tmp, void(...)** @pfoo
-    %tmp1 = load void(...)** @pfoo
+    %tmp1 = load void(...)*, void(...)** @pfoo
     call void(...)* %tmp1()
     ret void
 ; LINUX-LABEL: test3:
@@ -107,7 +107,7 @@ declare void @foo(...)
 define void @test5() nounwind {
 entry:
     store i32* @dst6, i32** @ptr6
-    %tmp.s = load i32* @src6
+    %tmp.s = load i32, i32* @src6
     store i32 %tmp.s, i32* @dst6
     ret void
     

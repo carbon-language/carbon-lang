@@ -21,7 +21,7 @@ green:
   %bigbase0 = bitcast i8* %base to i16*
   store i16 -1, i16* %bigbase0
 
-  %loaded = load i8* %phi
+  %loaded = load i8, i8* %phi
   ret i8 %loaded
 }
 
@@ -37,7 +37,7 @@ entry:
   %bigbase1 = bitcast i8* %base to i16*
   store i16 -1, i16* %bigbase1
 
-  %loaded = load i8* %sel
+  %loaded = load i8, i8* %sel
   ret i8 %loaded
 }
 
@@ -46,9 +46,9 @@ entry:
 ; CHECK: MayAlias:  double* %A, double* %Index
 define void @testr2(double* nocapture readonly %A, double* nocapture readonly %Index) {
   %arrayidx22 = getelementptr inbounds double, double* %Index, i64 2
-  %1 = load double* %arrayidx22
+  %1 = load double, double* %arrayidx22
   %arrayidx25 = getelementptr inbounds double, double* %A, i64 2
-  %2 = load double* %arrayidx25
+  %2 = load double, double* %arrayidx25
   %mul26 = fmul double %1, %2
   ret void
 }

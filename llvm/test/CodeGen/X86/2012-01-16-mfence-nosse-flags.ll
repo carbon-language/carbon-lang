@@ -5,7 +5,7 @@
 
 define void @baz() nounwind ssp {
 entry:
-  %0 = load i8** @ptr, align 4
+  %0 = load i8*, i8** @ptr, align 4
   %cmp = icmp eq i8* %0, null
   fence seq_cst
   br i1 %cmp, label %if.then, label %if.else

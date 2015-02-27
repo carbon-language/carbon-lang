@@ -86,22 +86,22 @@ declare void @llvm.arm.neon.vst2.v4f32(i8*, <4 x float>, <4 x float>, i32) nounw
 define void @f3(float* %p, float* %q) nounwind ssp {
 entry:
   %arrayidx = getelementptr inbounds float, float* %p, i32 3
-  %0 = load float* %arrayidx, align 4
+  %0 = load float, float* %arrayidx, align 4
   %vecins = insertelement <2 x float> undef, float %0, i32 1
   %tobool = icmp eq float* %q, null
   br i1 %tobool, label %if.else, label %if.then
 
 if.then:                                          ; preds = %entry
-  %1 = load float* %q, align 4
+  %1 = load float, float* %q, align 4
   %arrayidx2 = getelementptr inbounds float, float* %q, i32 1
-  %2 = load float* %arrayidx2, align 4
+  %2 = load float, float* %arrayidx2, align 4
   %add = fadd float %1, %2
   %vecins3 = insertelement <2 x float> %vecins, float %add, i32 0
   br label %if.end
 
 if.else:                                          ; preds = %entry
   %arrayidx4 = getelementptr inbounds float, float* %p, i32 2
-  %3 = load float* %arrayidx4, align 4
+  %3 = load float, float* %arrayidx4, align 4
   %vecins5 = insertelement <2 x float> %vecins, float %3, i32 0
   br label %if.end
 
@@ -129,9 +129,9 @@ entry:
   br i1 %tobool, label %if.end, label %if.then
 
 if.then:                                          ; preds = %entry
-  %1 = load float* %q, align 4
+  %1 = load float, float* %q, align 4
   %arrayidx1 = getelementptr inbounds float, float* %q, i32 1
-  %2 = load float* %arrayidx1, align 4
+  %2 = load float, float* %arrayidx1, align 4
   %add = fadd float %1, %2
   %vecins = insertelement <2 x float> %vld1, float %add, i32 1
   br label %if.end
@@ -165,12 +165,12 @@ entry:
 
 if.then:                                          ; preds = %entry
   %arrayidx = getelementptr inbounds float, float* %q, i32 1
-  %1 = load float* %arrayidx, align 4
+  %1 = load float, float* %arrayidx, align 4
   %add4 = fadd float %vecext, %1
-  %2 = load float* %q, align 4
+  %2 = load float, float* %q, align 4
   %add6 = fadd float %vecext1, %2
   %arrayidx7 = getelementptr inbounds float, float* %q, i32 2
-  %3 = load float* %arrayidx7, align 4
+  %3 = load float, float* %arrayidx7, align 4
   %add8 = fadd float %vecext2, %3
   br label %if.end
 
@@ -231,7 +231,7 @@ bb3:                                              ; preds = %bb12, %bb
   br i1 undef, label %bb10, label %bb12
 
 bb10:                                             ; preds = %bb3
-  %tmp11 = load <4 x float>* undef, align 8
+  %tmp11 = load <4 x float>, <4 x float>* undef, align 8
   br label %bb12
 
 bb12:                                             ; preds = %bb10, %bb3
@@ -333,7 +333,7 @@ for.body:                                         ; preds = %for.end, %entry
   br i1 undef, label %for.body29, label %for.end
 
 for.body29:                                       ; preds = %for.body29, %for.body
-  %0 = load <2 x double>* null, align 1
+  %0 = load <2 x double>, <2 x double>* null, align 1
   %splat40 = shufflevector <2 x double> %0, <2 x double> undef, <2 x i32> zeroinitializer
   %mul41 = fmul <2 x double> undef, %splat40
   %add42 = fadd <2 x double> undef, %mul41

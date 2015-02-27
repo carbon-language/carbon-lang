@@ -16,12 +16,12 @@ define i32 @foo() {
 entry:
 	%retval = alloca i32		; <i32*> [#uses=1]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
-	%tmp = load %struct.__res_state** @__libc_resp, align 4		; <%struct.__res_state*> [#uses=1]
+	%tmp = load %struct.__res_state*, %struct.__res_state** @__libc_resp, align 4		; <%struct.__res_state*> [#uses=1]
 	%tmp1 = getelementptr %struct.__res_state, %struct.__res_state* %tmp, i32 0, i32 0		; <i32*> [#uses=1]
 	store i32 0, i32* %tmp1, align 4
 	br label %return
 return:		; preds = %entry
-	%retval2 = load i32* %retval		; <i32> [#uses=1]
+	%retval2 = load i32, i32* %retval		; <i32> [#uses=1]
 	ret i32 %retval2
 }
 
@@ -31,11 +31,11 @@ define i32 @bar() {
 entry:
 	%retval = alloca i32		; <i32*> [#uses=1]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
-	%tmp = load %struct.__res_state** @__libc_resp, align 4		; <%struct.__res_state*> [#uses=1]
+	%tmp = load %struct.__res_state*, %struct.__res_state** @__libc_resp, align 4		; <%struct.__res_state*> [#uses=1]
 	%tmp1 = getelementptr %struct.__res_state, %struct.__res_state* %tmp, i32 0, i32 0		; <i32*> [#uses=1]
 	store i32 1, i32* %tmp1, align 4
 	br label %return
 return:		; preds = %entry
-	%retval2 = load i32* %retval		; <i32> [#uses=1]
+	%retval2 = load i32, i32* %retval		; <i32> [#uses=1]
 	ret i32 %retval2
 }

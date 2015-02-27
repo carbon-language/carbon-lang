@@ -59,7 +59,7 @@ define i32 @func_5_xxx(i32 %arg_1_xxx, i32 %arg_2_xxx, i32 %arg_3_xxx, i32 %arg_
   br label %5
 
 ; <label>:5                                       ; preds = %9, %0
-  %6 = load i32* %i, align 4
+  %6 = load i32, i32* %i, align 4
   %7 = icmp slt i32 %6, 10
   br i1 %7, label %8, label %12
 
@@ -67,24 +67,24 @@ define i32 @func_5_xxx(i32 %arg_1_xxx, i32 %arg_2_xxx, i32 %arg_3_xxx, i32 %arg_
   br label %9
 
 ; <label>:9                                       ; preds = %8
-  %10 = load i32* %i, align 4
+  %10 = load i32, i32* %i, align 4
   %11 = add nsw i32 %10, 1
   store i32 %11, i32* %i, align 4
   br label %5
 
 ; <label>:12                                      ; preds = %5
-  %13 = load i32* %local_1_xxx, align 4
-  %14 = load i32* %1, align 4
+  %13 = load i32, i32* %local_1_xxx, align 4
+  %14 = load i32, i32* %1, align 4
   %15 = add nsw i32 %13, %14
-  %16 = load i32* %local_2_xxx, align 4
+  %16 = load i32, i32* %local_2_xxx, align 4
   %17 = add nsw i32 %15, %16
-  %18 = load i32* %2, align 4
+  %18 = load i32, i32* %2, align 4
   %19 = add nsw i32 %17, %18
-  %20 = load i32* @func_5_xxx.static_local_3_xxx, align 4
+  %20 = load i32, i32* @func_5_xxx.static_local_3_xxx, align 4
   %21 = add nsw i32 %19, %20
-  %22 = load i32* %3, align 4
+  %22 = load i32, i32* %3, align 4
   %23 = add nsw i32 %21, %22
-  %24 = load i32* %4, align 4
+  %24 = load i32, i32* %4, align 4
   %25 = add nsw i32 %23, %24
   ret i32 %25
 }

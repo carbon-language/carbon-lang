@@ -19,7 +19,7 @@ bb:
   br label %bb2
 
 bb1:                                              ; preds = %bb11
-  %tmp = load i32* @global5, align 4
+  %tmp = load i32, i32* @global5, align 4
   br label %bb2
 
 bb2:                                              ; preds = %bb1, %bb
@@ -34,12 +34,12 @@ bb6:                                              ; preds = %bb2
   br label %bb8
 
 bb8:                                              ; preds = %bb6, %bb2
-  %tmp9 = load i32* @global7, align 4
+  %tmp9 = load i32, i32* @global7, align 4
   %tmp10 = icmp eq i32 %tmp9, 0
   br i1 %tmp10, label %bb11, label %bb15
 
 bb11:                                             ; preds = %bb8
-  %tmp12 = load i32* @global6, align 4
+  %tmp12 = load i32, i32* @global6, align 4
   %tmp13 = add nsw i32 %tmp12, 1
   store i32 %tmp13, i32* @global6, align 4
   %tmp14 = icmp slt i32 %tmp13, 42
@@ -71,7 +71,7 @@ define void @blam() {
 bb:
   store i32 ptrtoint (i32* @global to i32), i32* getelementptr inbounds (%struct.ham* @global8, i64 0, i32 0), align 4
   store i32 0, i32* @global9, align 4
-  %tmp = load i32* getelementptr inbounds (%struct.ham* @global8, i64 0, i32 0), align 4
+  %tmp = load i32, i32* getelementptr inbounds (%struct.ham* @global8, i64 0, i32 0), align 4
   br label %bb1
 
 bb1:                                              ; preds = %bb1, %bb

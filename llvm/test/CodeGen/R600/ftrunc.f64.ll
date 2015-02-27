@@ -14,7 +14,7 @@ declare <16 x double> @llvm.trunc.v16f64(<16 x double>) nounwind readnone
 ; SI: v_bfe_u32 {{v[0-9]+}}, {{v[0-9]+}}, 20, 11
 ; SI: s_endpgm
 define void @v_ftrunc_f64(double addrspace(1)* %out, double addrspace(1)* %in) {
-  %x = load double addrspace(1)* %in, align 8
+  %x = load double, double addrspace(1)* %in, align 8
   %y = call double @llvm.trunc.f64(double %x) nounwind readnone
   store double %y, double addrspace(1)* %out, align 8
   ret void

@@ -9,8 +9,8 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %i.02 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
-  %0 = load i128* %b, align 16
-  %1 = load i128* %c, align 16
+  %0 = load i128, i128* %b, align 16
+  %1 = load i128, i128* %c, align 16
   %shl = shl i128 %0, %1
   store i128 %shl, i128* %a, align 16
   %inc = add nsw i32 %i.02, 1
@@ -31,8 +31,8 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %i.02 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
-  %0 = load i128* %b, align 16
-  %1 = load i128* %c, align 16
+  %0 = load i128, i128* %b, align 16
+  %1 = load i128, i128* %c, align 16
   %shl = ashr i128 %0, %1
   store i128 %shl, i128* %a, align 16
   %inc = add nsw i32 %i.02, 1
@@ -53,8 +53,8 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %i.02 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
-  %0 = load i128* %b, align 16
-  %1 = load i128* %c, align 16
+  %0 = load i128, i128* %b, align 16
+  %1 = load i128, i128* %c, align 16
   %shl = lshr i128 %0, %1
   store i128 %shl, i128* %a, align 16
   %inc = add nsw i32 %i.02, 1

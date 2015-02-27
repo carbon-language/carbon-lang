@@ -202,7 +202,7 @@ entry:
   %this.addr = alloca %"struct.<anonymous namespace>::walrus"*, align 8
   store %"struct.<anonymous namespace>::walrus"* %this, %"struct.<anonymous namespace>::walrus"** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %"struct.<anonymous namespace>::walrus"** %this.addr, metadata !51, metadata !{!"0x102"}), !dbg !53
-  %this1 = load %"struct.<anonymous namespace>::walrus"** %this.addr
+  %this1 = load %"struct.<anonymous namespace>::walrus"*, %"struct.<anonymous namespace>::walrus"** %this.addr
   ret void, !dbg !54
 }
 

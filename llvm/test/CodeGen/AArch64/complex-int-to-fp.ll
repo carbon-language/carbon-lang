@@ -4,7 +4,7 @@
 ; CHECK: scvtf
 ; CHECK: ret
 define void @autogen_SD19655(<2 x i64>* %addr, <2 x float>* %addrfloat) {
-  %T = load <2 x i64>* %addr
+  %T = load <2 x i64>, <2 x i64>* %addr
   %F = sitofp <2 x i64> %T to <2 x float>
   store <2 x float> %F, <2 x float>* %addrfloat
   ret void

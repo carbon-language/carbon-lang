@@ -421,7 +421,7 @@ loop:
   store i8* %a, i8** %block, align 8
   %casted_block = bitcast i8** %block to void ()*
   call void @block_callee(void ()* %casted_block)
-  %reloaded_a = load i8** %block, align 8
+  %reloaded_a = load i8*, i8** %block, align 8
   call void @objc_release(i8* %reloaded_a) nounwind, !clang.imprecise_release !0
   br i1 undef, label %loop, label %exit
   

@@ -5,9 +5,9 @@
 
 define void @fcmp_sext(i32 addrspace(1)* %out, float addrspace(1)* %in) {
 entry:
-  %0 = load float addrspace(1)* %in
+  %0 = load float, float addrspace(1)* %in
   %arrayidx1 = getelementptr inbounds float, float addrspace(1)* %in, i32 1
-  %1 = load float addrspace(1)* %arrayidx1
+  %1 = load float, float addrspace(1)* %arrayidx1
   %cmp = fcmp oeq float %0, %1
   %sext = sext i1 %cmp to i32
   store i32 %sext, i32 addrspace(1)* %out

@@ -12,7 +12,7 @@ entry:
 ; CHECK-LABEL: foo:
 
 	%size = alloca i32, align 4
-	%0 = load i8** @__bar, align 4
+	%0 = load i8*, i8** @__bar, align 4
 	%1 = icmp eq i8* %0, null
 	br i1 %1, label %bb1, label %bb3
 ; CHECK: bne

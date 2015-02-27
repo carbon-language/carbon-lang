@@ -23,7 +23,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds float, float* %b, i64 %indvars.iv
-  %0 = load float* %arrayidx, align 4
+  %0 = load float, float* %arrayidx, align 4
   %cmp1 = fcmp ogt float %0, 1.000000e+02
   tail call void @llvm.assume(i1 %cmp1)
   %add = fadd float %0, 1.000000e+00
@@ -49,12 +49,12 @@ attributes #1 = { nounwind }
 define void @test2(%struct.data* nocapture readonly %d) #0 {
 entry:
   %b = getelementptr inbounds %struct.data, %struct.data* %d, i64 0, i32 1
-  %0 = load float** %b, align 8
+  %0 = load float*, float** %b, align 8
   %ptrint = ptrtoint float* %0 to i64
   %maskedptr = and i64 %ptrint, 31
   %maskcond = icmp eq i64 %maskedptr, 0
   %a = getelementptr inbounds %struct.data, %struct.data* %d, i64 0, i32 0
-  %1 = load float** %a, align 8
+  %1 = load float*, float** %a, align 8
   %ptrint2 = ptrtoint float* %1 to i64
   %maskedptr3 = and i64 %ptrint2, 31
   %maskcond4 = icmp eq i64 %maskedptr3, 0
@@ -85,7 +85,7 @@ for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   tail call void @llvm.assume(i1 %maskcond)
   %arrayidx = getelementptr inbounds float, float* %0, i64 %indvars.iv
-  %2 = load float* %arrayidx, align 4
+  %2 = load float, float* %arrayidx, align 4
   %add = fadd float %2, 1.000000e+00
   tail call void @llvm.assume(i1 %maskcond4)
   %arrayidx5 = getelementptr inbounds float, float* %1, i64 %indvars.iv

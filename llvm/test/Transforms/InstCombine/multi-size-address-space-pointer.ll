@@ -6,7 +6,7 @@ define i32 @test_as0(i32 addrspace(0)* %a) {
 ; CHECK-LABEL: @test_as0(
 ; CHECK: %arrayidx = getelementptr i32, i32* %a, i32 1
   %arrayidx = getelementptr i32, i32 addrspace(0)* %a, i64 1
-  %y = load i32 addrspace(0)* %arrayidx, align 4
+  %y = load i32, i32 addrspace(0)* %arrayidx, align 4
   ret i32 %y
 }
 
@@ -14,7 +14,7 @@ define i32 @test_as1(i32 addrspace(1)* %a) {
 ; CHECK-LABEL: @test_as1(
 ; CHECK: %arrayidx = getelementptr i32, i32 addrspace(1)* %a, i64 1
   %arrayidx = getelementptr i32, i32 addrspace(1)* %a, i32 1
-  %y = load i32 addrspace(1)* %arrayidx, align 4
+  %y = load i32, i32 addrspace(1)* %arrayidx, align 4
   ret i32 %y
 }
 
@@ -22,7 +22,7 @@ define i32 @test_as2(i32 addrspace(2)* %a) {
 ; CHECK-LABEL: @test_as2(
 ; CHECK: %arrayidx = getelementptr i32, i32 addrspace(2)* %a, i8 1
   %arrayidx = getelementptr i32, i32 addrspace(2)* %a, i32 1
-  %y = load i32 addrspace(2)* %arrayidx, align 4
+  %y = load i32, i32 addrspace(2)* %arrayidx, align 4
   ret i32 %y
 }
 
@@ -30,17 +30,17 @@ define i32 @test_as3(i32 addrspace(3)* %a) {
 ; CHECK-LABEL: @test_as3(
 ; CHECK: %arrayidx = getelementptr i32, i32 addrspace(3)* %a, i16 1
   %arrayidx = getelementptr i32, i32 addrspace(3)* %a, i32 1
-  %y = load i32 addrspace(3)* %arrayidx, align 4
+  %y = load i32, i32 addrspace(3)* %arrayidx, align 4
   ret i32 %y
 }
 
 define i32 @test_combine_ptrtoint(i32 addrspace(2)* %a) {
 ; CHECK-LABEL: @test_combine_ptrtoint(
-; CHECK-NEXT: %y = load i32 addrspace(2)* %a
+; CHECK-NEXT: %y = load i32, i32 addrspace(2)* %a
 ; CHECK-NEXT: ret i32 %y
   %cast = ptrtoint i32 addrspace(2)* %a to i8
   %castback = inttoptr i8 %cast to i32 addrspace(2)*
-  %y = load i32 addrspace(2)* %castback, align 4
+  %y = load i32, i32 addrspace(2)* %castback, align 4
   ret i32 %y
 }
 
@@ -55,12 +55,12 @@ define i8 @test_combine_inttoptr(i8 %a) {
 define i32 @test_combine_vector_ptrtoint(<2 x i32 addrspace(2)*> %a) {
 ; CHECK-LABEL: @test_combine_vector_ptrtoint(
 ; CHECK-NEXT: %p = extractelement <2 x i32 addrspace(2)*> %a, i32 0
-; CHECK-NEXT: %y = load i32 addrspace(2)* %p, align 4
+; CHECK-NEXT: %y = load i32, i32 addrspace(2)* %p, align 4
 ; CHECK-NEXT: ret i32 %y
   %cast = ptrtoint <2 x i32 addrspace(2)*> %a to <2 x i8>
   %castback = inttoptr <2 x i8> %cast to <2 x i32 addrspace(2)*>
   %p = extractelement <2 x i32 addrspace(2)*> %castback, i32 0
-  %y = load i32 addrspace(2)* %p, align 4
+  %y = load i32, i32 addrspace(2)* %p, align 4
   ret i32 %y
 }
 

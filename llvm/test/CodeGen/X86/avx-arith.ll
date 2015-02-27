@@ -38,7 +38,7 @@ entry:
 ; CHECK: vsubpd (%
 define <4 x double> @subpd256fold(<4 x double> %y, <4 x double>* nocapture %x) nounwind uwtable readonly ssp {
 entry:
-  %tmp2 = load <4 x double>* %x, align 32
+  %tmp2 = load <4 x double>, <4 x double>* %x, align 32
   %sub.i = fsub <4 x double> %y, %tmp2
   ret <4 x double> %sub.i
 }
@@ -53,7 +53,7 @@ entry:
 ; CHECK: vsubps (%
 define <8 x float> @subps256fold(<8 x float> %y, <8 x float>* nocapture %x) nounwind uwtable readonly ssp {
 entry:
-  %tmp2 = load <8 x float>* %x, align 32
+  %tmp2 = load <8 x float>, <8 x float>* %x, align 32
   %sub.i = fsub <8 x float> %y, %tmp2
   ret <8 x float> %sub.i
 }
@@ -264,7 +264,7 @@ declare <4 x float> @llvm.x86.sse.sqrt.ss(<4 x float>) nounwind readnone
 define <4 x float> @int_sqrt_ss() {
 ; CHECK: int_sqrt_ss
 ; CHECK: vsqrtss
- %x0 = load float addrspace(1)* undef, align 8
+ %x0 = load float, float addrspace(1)* undef, align 8
  %x1 = insertelement <4 x float> undef, float %x0, i32 0
  %x2 = call <4 x float> @llvm.x86.sse.sqrt.ss(<4 x float> %x1) nounwind
  ret <4 x float> %x2

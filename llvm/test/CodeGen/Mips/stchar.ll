@@ -17,16 +17,16 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 
 define void @p2() nounwind {
 entry:
-  %0 = load i16** @sp, align 4
-  %1 = load i16* %0, align 2
-  %2 = load i8** @cp, align 4
-  %3 = load i8* %2, align 1
+  %0 = load i16*, i16** @sp, align 4
+  %1 = load i16, i16* %0, align 2
+  %2 = load i8*, i8** @cp, align 4
+  %3 = load i8, i8* %2, align 1
   %conv.i = sext i16 %1 to i32
   %conv1.i = sext i8 %3 to i32
   %call.i = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0), i32 %conv.i, i32 %conv1.i) nounwind
-  %4 = load i16** @sp, align 4
+  %4 = load i16*, i16** @sp, align 4
   store i16 32, i16* %4, align 2
-  %5 = load i8** @cp, align 4
+  %5 = load i8*, i8** @cp, align 4
   store i8 97, i8* %5, align 1
   ret void
 }
@@ -40,12 +40,12 @@ entry:
   store i16* %s, i16** @sp, align 4
   store i8* %c, i8** @cp, align 4
   %call.i.i = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0), i32 16, i32 99) nounwind
-  %0 = load i16** @sp, align 4
+  %0 = load i16*, i16** @sp, align 4
   store i16 32, i16* %0, align 2
-  %1 = load i8** @cp, align 4
+  %1 = load i8*, i8** @cp, align 4
   store i8 97, i8* %1, align 1
-  %2 = load i16* %s, align 4
-  %3 = load i8* %c, align 4
+  %2 = load i16, i16* %s, align 4
+  %3 = load i8, i8* %c, align 4
   %conv.i = sext i16 %2 to i32
   %conv1.i = sext i8 %3 to i32
   %call.i = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0), i32 %conv.i, i32 %conv1.i) nounwind
@@ -70,12 +70,12 @@ entry:
   store i16* %s.i, i16** @sp, align 4
   store i8* %c.i, i8** @cp, align 4
   %call.i.i.i = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0), i32 16, i32 99) nounwind
-  %1 = load i16** @sp, align 4
+  %1 = load i16*, i16** @sp, align 4
   store i16 32, i16* %1, align 2
-  %2 = load i8** @cp, align 4
+  %2 = load i8*, i8** @cp, align 4
   store i8 97, i8* %2, align 1
-  %3 = load i16* %s.i, align 4
-  %4 = load i8* %c.i, align 4
+  %3 = load i16, i16* %s.i, align 4
+  %4 = load i8, i8* %c.i, align 4
   %conv.i.i = sext i16 %3 to i32
   %conv1.i.i = sext i8 %4 to i32
   %call.i.i = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8]* @.str, i32 0, i32 0), i32 %conv.i.i, i32 %conv1.i.i) nounwind

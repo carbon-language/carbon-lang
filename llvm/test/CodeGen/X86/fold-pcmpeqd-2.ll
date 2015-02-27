@@ -20,7 +20,7 @@
 
 define void @program_1(%struct._image2d_t* %dest, %struct._image2d_t* %t0, <4 x float> %p0, <4 x float> %p1, <4 x float> %p4, <4 x float> %p5, <4 x float> %p6) nounwind {
 entry:
-	%tmp3.i = load i32* null		; <i32> [#uses=1]
+	%tmp3.i = load i32, i32* null		; <i32> [#uses=1]
 	%cmp = icmp slt i32 0, %tmp3.i		; <i1> [#uses=1]
 	br i1 %cmp, label %forcond, label %ifthen
 
@@ -28,7 +28,7 @@ ifthen:		; preds = %entry
 	ret void
 
 forcond:		; preds = %entry
-	%tmp3.i536 = load i32* null		; <i32> [#uses=1]
+	%tmp3.i536 = load i32, i32* null		; <i32> [#uses=1]
 	%cmp12 = icmp slt i32 0, %tmp3.i536		; <i1> [#uses=1]
 	br i1 %cmp12, label %forbody, label %afterfor
 

@@ -14,13 +14,13 @@ entry:
 for.body:
   %stack.addr.02 = phi %struct.xx_stack* [ %0, %for.body ], [ %stack, %entry ]
   %next = getelementptr inbounds %struct.xx_stack, %struct.xx_stack* %stack.addr.02, i64 0, i32 1
-  %0 = load %struct.xx_stack** %next, align 8
+  %0 = load %struct.xx_stack*, %struct.xx_stack** %next, align 8
   %tobool = icmp eq %struct.xx_stack* %0, null
   br i1 %tobool, label %for.end, label %for.body
 
 for.end:
   %top.0.lcssa = phi %struct.xx_stack* [ undef, %entry ], [ %stack.addr.02, %for.body ]
   %first = getelementptr inbounds %struct.xx_stack, %struct.xx_stack* %top.0.lcssa, i64 0, i32 0
-  %1 = load i32* %first, align 4
+  %1 = load i32, i32* %first, align 4
   ret i32 %1
 }

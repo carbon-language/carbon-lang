@@ -10,7 +10,7 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, 
 %struct.test1 = type { float }
 
 ; CHECK: @test
-; CHECK: %[[LOAD:.*]] = load i32* %{{.*}}, align 4, !tbaa !0
+; CHECK: %[[LOAD:.*]] = load i32, i32* %{{.*}}, align 4, !tbaa !0
 ; CHECK: store i32 %[[LOAD:.*]], i32* %{{.*}}, align 4, !tbaa !0
 ; CHECK: ret
 define void @test1(%struct.test1* nocapture %a, %struct.test1* nocapture %b) {
@@ -31,7 +31,7 @@ define i32 (i8*, i32*, double*)*** @test2() {
   %tmp1 = bitcast %struct.test2* %tmp to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %tmp1, i8* undef, i64 8, i32 8, i1 false), !tbaa.struct !4
   %tmp2 = getelementptr %struct.test2, %struct.test2* %tmp, i32 0, i32 0
-  %tmp3 = load i32 (i8*, i32*, double*)*** %tmp2
+  %tmp3 = load i32 (i8*, i32*, double*)**, i32 (i8*, i32*, double*)*** %tmp2
   ret i32 (i8*, i32*, double*)*** %tmp2
 }
 

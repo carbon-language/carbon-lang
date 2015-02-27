@@ -95,7 +95,7 @@ define <16 x i8> @trunc_16i16_16i8(<16 x i16> %z) {
 ; CHECK: vpmovsxdq (%r{{[^,]*}}), %ymm{{.*}}
 ; CHECK: ret 
 define <4 x i64> @load_sext_test1(<4 x i32> *%ptr) {
- %X = load <4 x i32>* %ptr
+ %X = load <4 x i32>, <4 x i32>* %ptr
  %Y = sext <4 x i32> %X to <4 x i64>
  ret <4 x i64>%Y
 }
@@ -104,7 +104,7 @@ define <4 x i64> @load_sext_test1(<4 x i32> *%ptr) {
 ; CHECK: vpmovsxbq (%r{{[^,]*}}), %ymm{{.*}}
 ; CHECK: ret 
 define <4 x i64> @load_sext_test2(<4 x i8> *%ptr) {
- %X = load <4 x i8>* %ptr
+ %X = load <4 x i8>, <4 x i8>* %ptr
  %Y = sext <4 x i8> %X to <4 x i64>
  ret <4 x i64>%Y
 }
@@ -113,7 +113,7 @@ define <4 x i64> @load_sext_test2(<4 x i8> *%ptr) {
 ; CHECK: vpmovsxwq (%r{{[^,]*}}), %ymm{{.*}}
 ; CHECK: ret 
 define <4 x i64> @load_sext_test3(<4 x i16> *%ptr) {
- %X = load <4 x i16>* %ptr
+ %X = load <4 x i16>, <4 x i16>* %ptr
  %Y = sext <4 x i16> %X to <4 x i64>
  ret <4 x i64>%Y
 }
@@ -122,7 +122,7 @@ define <4 x i64> @load_sext_test3(<4 x i16> *%ptr) {
 ; CHECK: vpmovsxwd (%r{{[^,]*}}), %ymm{{.*}}
 ; CHECK: ret 
 define <8 x i32> @load_sext_test4(<8 x i16> *%ptr) {
- %X = load <8 x i16>* %ptr
+ %X = load <8 x i16>, <8 x i16>* %ptr
  %Y = sext <8 x i16> %X to <8 x i32>
  ret <8 x i32>%Y
 }
@@ -131,7 +131,7 @@ define <8 x i32> @load_sext_test4(<8 x i16> *%ptr) {
 ; CHECK: vpmovsxbd (%r{{[^,]*}}), %ymm{{.*}}
 ; CHECK: ret 
 define <8 x i32> @load_sext_test5(<8 x i8> *%ptr) {
- %X = load <8 x i8>* %ptr
+ %X = load <8 x i8>, <8 x i8>* %ptr
  %Y = sext <8 x i8> %X to <8 x i32>
  ret <8 x i32>%Y
 }

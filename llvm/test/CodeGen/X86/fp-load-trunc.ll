@@ -23,7 +23,7 @@ define <1 x float> @test1(<1 x double>* %p) nounwind {
 ; AVX-NEXT:    flds (%esp)
 ; AVX-NEXT:    popl %eax
 ; AVX-NEXT:    retl
-  %x = load <1 x double>* %p
+  %x = load <1 x double>, <1 x double>* %p
   %y = fptrunc <1 x double> %x to <1 x float>
   ret <1 x float> %y
 }
@@ -40,7 +40,7 @@ define <2 x float> @test2(<2 x double>* %p) nounwind {
 ; AVX-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; AVX-NEXT:    vcvtpd2psx (%eax), %xmm0
 ; AVX-NEXT:    retl
-  %x = load <2 x double>* %p
+  %x = load <2 x double>, <2 x double>* %p
   %y = fptrunc <2 x double> %x to <2 x float>
   ret <2 x float> %y
 }
@@ -59,7 +59,7 @@ define <4 x float> @test3(<4 x double>* %p) nounwind {
 ; AVX-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; AVX-NEXT:    vcvtpd2psy (%eax), %xmm0
 ; AVX-NEXT:    retl
-  %x = load <4 x double>* %p
+  %x = load <4 x double>, <4 x double>* %p
   %y = fptrunc <4 x double> %x to <4 x float>
   ret <4 x float> %y
 }
@@ -83,7 +83,7 @@ define <8 x float> @test4(<8 x double>* %p) nounwind {
 ; AVX-NEXT:    vcvtpd2psy 32(%eax), %xmm1
 ; AVX-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; AVX-NEXT:    retl
-  %x = load <8 x double>* %p
+  %x = load <8 x double>, <8 x double>* %p
   %y = fptrunc <8 x double> %x to <8 x float>
   ret <8 x float> %y
 }

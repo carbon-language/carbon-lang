@@ -5,7 +5,7 @@
 
 define void @t1() nounwind optsize ssp {
 entry:
-	%0 = load i32* bitcast (i16* getelementptr (%struct.bf* @bfi, i32 0, i32 1) to i32*), align 8
+	%0 = load i32, i32* bitcast (i16* getelementptr (%struct.bf* @bfi, i32 0, i32 1) to i32*), align 8
 	%1 = or i32 %0, 65536
 	store i32 %1, i32* bitcast (i16* getelementptr (%struct.bf* @bfi, i32 0, i32 1) to i32*), align 8
 	ret void
@@ -17,7 +17,7 @@ entry:
 
 define void @t2() nounwind optsize ssp {
 entry:
-	%0 = load i32* bitcast (i16* getelementptr (%struct.bf* @bfi, i32 0, i32 1) to i32*), align 8
+	%0 = load i32, i32* bitcast (i16* getelementptr (%struct.bf* @bfi, i32 0, i32 1) to i32*), align 8
 	%1 = or i32 %0, 16842752
 	store i32 %1, i32* bitcast (i16* getelementptr (%struct.bf* @bfi, i32 0, i32 1) to i32*), align 8
 	ret void

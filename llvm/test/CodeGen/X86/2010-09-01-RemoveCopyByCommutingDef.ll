@@ -8,7 +8,7 @@ define void @f(i32* %w, i32* %h, i8* %_this, i8* %image) nounwind ssp {
   %x1 = tail call i64 @g(i8* %_this, i8* %image) nounwind ; <i64> [#uses=3]
   %tmp1 = trunc i64 %x1 to i32                     ; <i32> [#uses=1]
 ; CHECK: movl (%r{{.*}}), %
-  %x4 = load i32* %h, align 4                      ; <i32> [#uses=1]
+  %x4 = load i32, i32* %h, align 4                      ; <i32> [#uses=1]
 
 ; The imull clobbers a 32-bit register.
 ; CHECK: imull %{{...}}, %e[[CLOBBER:..]]

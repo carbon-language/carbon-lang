@@ -13,7 +13,7 @@ define void @mov(i8 %a) nounwind {
 define void @and(i8 %a) nounwind {
 ; CHECK-LABEL: and:
 ; CHECK: and.b	r15, &foo
-	%1 = load i8* @foo
+	%1 = load i8, i8* @foo
 	%2 = and i8 %a, %1
 	store i8 %2, i8* @foo
 	ret void
@@ -22,7 +22,7 @@ define void @and(i8 %a) nounwind {
 define void @add(i8 %a) nounwind {
 ; CHECK-LABEL: add:
 ; CHECK: add.b	r15, &foo
-	%1 = load i8* @foo
+	%1 = load i8, i8* @foo
 	%2 = add i8 %a, %1
 	store i8 %2, i8* @foo
 	ret void
@@ -31,7 +31,7 @@ define void @add(i8 %a) nounwind {
 define void @bis(i8 %a) nounwind {
 ; CHECK-LABEL: bis:
 ; CHECK: bis.b	r15, &foo
-	%1 = load i8* @foo
+	%1 = load i8, i8* @foo
 	%2 = or i8 %a, %1
 	store i8 %2, i8* @foo
 	ret void
@@ -41,7 +41,7 @@ define void @bic(i8 zeroext %m) nounwind {
 ; CHECK-LABEL: bic:
 ; CHECK: bic.b   r15, &foo
         %1 = xor i8 %m, -1
-        %2 = load i8* @foo
+        %2 = load i8, i8* @foo
         %3 = and i8 %2, %1
         store i8 %3, i8* @foo
         ret void
@@ -50,7 +50,7 @@ define void @bic(i8 zeroext %m) nounwind {
 define void @xor(i8 %a) nounwind {
 ; CHECK-LABEL: xor:
 ; CHECK: xor.b	r15, &foo
-	%1 = load i8* @foo
+	%1 = load i8, i8* @foo
 	%2 = xor i8 %a, %1
 	store i8 %2, i8* @foo
 	ret void

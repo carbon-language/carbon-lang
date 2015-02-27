@@ -14,7 +14,7 @@ BB:
   %A2 = alloca float
   %A1 = alloca double
   %A = alloca double
-  %L = load i8* %0
+  %L = load i8, i8* %0
   store i8 97, i8* %0
   %E = extractelement <16 x i64> <i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1>, i32 14
   %Shuff = shufflevector <2 x i1> zeroinitializer, <2 x i1> zeroinitializer, <2 x i32> <i32 1, i32 3>
@@ -22,7 +22,7 @@ BB:
   %Tr = trunc <1 x i64> zeroinitializer to <1 x i8>
   %Sl = select i1 false, double* %A1, double* %A
   %Cmp = icmp ne <2 x i64> zeroinitializer, zeroinitializer
-  %L5 = load double* %Sl
+  %L5 = load double, double* %Sl
   store float -4.374162e+06, float* %A2
   %E6 = extractelement <4 x i64> zeroinitializer, i32 3
   %Shuff7 = shufflevector <4 x i64> zeroinitializer, <4 x i64> %I, <4 x i32> <i32 2, i32 4, i32 6, i32 undef>
@@ -34,7 +34,7 @@ BB:
   br label %CF72
 
 CF72:                                             ; preds = %CF72, %CF80, %CF78, %BB
-  %L11 = load double* %Sl
+  %L11 = load double, double* %Sl
   store double 0.000000e+00, double* %Sl
   %E12 = extractelement <2 x i1> zeroinitializer, i32 0
   br i1 %E12, label %CF72, label %CF80
@@ -49,7 +49,7 @@ CF80:                                             ; preds = %CF72
   br i1 %Cmp17, label %CF72, label %CF77
 
 CF77:                                             ; preds = %CF77, %CF80
-  %L18 = load double* %Sl
+  %L18 = load double, double* %Sl
   store double 0.000000e+00, double* %Sl
   %E19 = extractelement <2 x i1> zeroinitializer, i32 0
   br i1 %E19, label %CF77, label %CF78
@@ -60,7 +60,7 @@ CF78:                                             ; preds = %CF77
   %B22 = sdiv <4 x i64> %Shuff7, zeroinitializer
   %FC = uitofp i8 97 to double
   %Sl23 = select i1 %Cmp10, <2 x i1> zeroinitializer, <2 x i1> zeroinitializer
-  %L24 = load double* %Sl
+  %L24 = load double, double* %Sl
   store float %Sl16, float* %PC
   %E25 = extractelement <2 x i1> %Shuff, i32 1
   br i1 %E25, label %CF72, label %CF76
@@ -71,7 +71,7 @@ CF76:                                             ; preds = %CF78
   %B28 = mul <4 x i64> %I27, zeroinitializer
   %ZE = zext <8 x i1> zeroinitializer to <8 x i64>
   %Sl29 = select i1 %Cmp17, float -4.374162e+06, float -4.374162e+06
-  %L30 = load i8* %0
+  %L30 = load i8, i8* %0
   store double %L5, double* %Sl
   %E31 = extractelement <8 x i1> zeroinitializer, i32 5
   br label %CF
@@ -85,7 +85,7 @@ CF:                                               ; preds = %CF, %CF81, %CF76
   br i1 %Cmp36, label %CF, label %CF74
 
 CF74:                                             ; preds = %CF74, %CF
-  %L37 = load float* %PC
+  %L37 = load float, float* %PC
   store double 0.000000e+00, double* %Sl
   %E38 = extractelement <2 x i1> %Sl23, i32 1
   br i1 %E38, label %CF74, label %CF75
@@ -95,7 +95,7 @@ CF75:                                             ; preds = %CF75, %CF82, %CF74
   %I40 = insertelement <4 x i64> zeroinitializer, i64 %4, i32 2
   %Sl41 = select i1 %Cmp10, i32 0, i32 %3
   %Cmp42 = icmp ne <1 x i64> zeroinitializer, zeroinitializer
-  %L43 = load double* %Sl
+  %L43 = load double, double* %Sl
   store i64 %4, i64* %2
   %E44 = extractelement <2 x i1> %Shuff20, i32 1
   br i1 %E44, label %CF75, label %CF82
@@ -109,7 +109,7 @@ CF82:                                             ; preds = %CF75
   br i1 %Cmp49, label %CF75, label %CF81
 
 CF81:                                             ; preds = %CF82
-  %L50 = load i8* %0
+  %L50 = load i8, i8* %0
   store double %L43, double* %Sl
   %E51 = extractelement <4 x i64> %Shuff7, i32 3
   %Shuff52 = shufflevector <4 x float> %BC34, <4 x float> %BC34, <4 x i32> <i32 2, i32 4, i32 6, i32 0>
@@ -117,7 +117,7 @@ CF81:                                             ; preds = %CF82
   %B54 = fdiv double %L24, %L43
   %BC55 = bitcast <4 x i64> zeroinitializer to <4 x double>
   %Sl56 = select i1 false, i8 %5, i8 97
-  %L57 = load i8* %0
+  %L57 = load i8, i8* %0
   store i8 %L50, i8* %0
   %E58 = extractelement <2 x i1> %Shuff20, i32 1
   br i1 %E58, label %CF, label %CF73
@@ -129,7 +129,7 @@ CF73:                                             ; preds = %CF73, %CF81
   %PC62 = bitcast double* %A3 to float*
   %Sl63 = select i1 %Cmp10, <1 x i64> zeroinitializer, <1 x i64> zeroinitializer
   %Cmp64 = icmp ne <2 x i1> %Cmp, %Shuff
-  %L65 = load double* %A1
+  %L65 = load double, double* %A1
   store float -4.374162e+06, float* %PC62
   %E66 = extractelement <8 x i1> %I21, i32 3
   br i1 %E66, label %CF73, label %CF79

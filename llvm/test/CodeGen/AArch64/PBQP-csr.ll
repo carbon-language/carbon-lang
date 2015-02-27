@@ -23,15 +23,15 @@ entry:
   %na = getelementptr inbounds %rs, %rs* %r, i64 0, i32 0
   %0 = bitcast double* %x.i to i8*
   call void @llvm.memset.p0i8.i64(i8* %0, i8 0, i64 72, i32 8, i1 false)
-  %1 = load i32* %na, align 4
+  %1 = load i32, i32* %na, align 4
   %cmp70 = icmp sgt i32 %1, 0
   br i1 %cmp70, label %for.body.lr.ph, label %for.end
 
 for.body.lr.ph:                                   ; preds = %entry
   %fn = getelementptr inbounds %rs, %rs* %r, i64 0, i32 4
-  %2 = load %v** %fn, align 8
+  %2 = load %v*, %v** %fn, align 8
   %fs = getelementptr inbounds %rs, %rs* %r, i64 0, i32 5
-  %3 = load %v** %fs, align 8
+  %3 = load %v*, %v** %fs, align 8
   %4 = sext i32 %1 to i64
   br label %for.body
 
@@ -46,27 +46,27 @@ for.body:                                         ; preds = %for.body.lr.ph, %fo
   %x1.i = getelementptr inbounds %v, %v* %3, i64 %indvars.iv, i32 0
   %y.i56 = getelementptr inbounds %v, %v* %2, i64 %indvars.iv, i32 1
   %10 = bitcast double* %x.i54 to <2 x double>*
-  %11 = load <2 x double>* %10, align 8
+  %11 = load <2 x double>, <2 x double>* %10, align 8
   %y2.i = getelementptr inbounds %v, %v* %3, i64 %indvars.iv, i32 1
   %12 = bitcast double* %x1.i to <2 x double>*
-  %13 = load <2 x double>* %12, align 8
+  %13 = load <2 x double>, <2 x double>* %12, align 8
   %14 = fadd fast <2 x double> %13, %11
   %z.i57 = getelementptr inbounds %v, %v* %2, i64 %indvars.iv, i32 2
-  %15 = load double* %z.i57, align 8
+  %15 = load double, double* %z.i57, align 8
   %z4.i = getelementptr inbounds %v, %v* %3, i64 %indvars.iv, i32 2
-  %16 = load double* %z4.i, align 8
+  %16 = load double, double* %z4.i, align 8
   %add5.i = fadd fast double %16, %15
   %17 = fadd fast <2 x double> %6, %11
   %18 = bitcast double* %x.i to <2 x double>*
   store <2 x double> %17, <2 x double>* %18, align 8
-  %19 = load double* %x1.i, align 8
+  %19 = load double, double* %x1.i, align 8
   %20 = insertelement <2 x double> undef, double %15, i32 0
   %21 = insertelement <2 x double> %20, double %19, i32 1
   %22 = fadd fast <2 x double> %7, %21
   %23 = bitcast double* %z.i to <2 x double>*
   store <2 x double> %22, <2 x double>* %23, align 8
   %24 = bitcast double* %y2.i to <2 x double>*
-  %25 = load <2 x double>* %24, align 8
+  %25 = load <2 x double>, <2 x double>* %24, align 8
   %26 = fadd fast <2 x double> %8, %25
   %27 = bitcast double* %y.i62 to <2 x double>*
   store <2 x double> %26, <2 x double>* %27, align 8

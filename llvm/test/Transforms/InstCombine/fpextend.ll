@@ -5,7 +5,7 @@
 
 define void @test() nounwind  {
 entry:
-	%tmp = load float* @X, align 4		; <float> [#uses=1]
+	%tmp = load float, float* @X, align 4		; <float> [#uses=1]
 	%tmp1 = fpext float %tmp to double		; <double> [#uses=1]
 	%tmp3 = fadd double %tmp1, 0.000000e+00		; <double> [#uses=1]
 	%tmp34 = fptrunc double %tmp3 to float		; <float> [#uses=1]
@@ -15,9 +15,9 @@ entry:
 
 define void @test2() nounwind  {
 entry:
-	%tmp = load float* @X, align 4		; <float> [#uses=1]
+	%tmp = load float, float* @X, align 4		; <float> [#uses=1]
 	%tmp1 = fpext float %tmp to double		; <double> [#uses=1]
-	%tmp2 = load float* @Y, align 4		; <float> [#uses=1]
+	%tmp2 = load float, float* @Y, align 4		; <float> [#uses=1]
 	%tmp23 = fpext float %tmp2 to double		; <double> [#uses=1]
 	%tmp5 = fmul double %tmp1, %tmp23		; <double> [#uses=1]
 	%tmp56 = fptrunc double %tmp5 to float		; <float> [#uses=1]
@@ -27,9 +27,9 @@ entry:
 
 define void @test3() nounwind  {
 entry:
-	%tmp = load float* @X, align 4		; <float> [#uses=1]
+	%tmp = load float, float* @X, align 4		; <float> [#uses=1]
 	%tmp1 = fpext float %tmp to double		; <double> [#uses=1]
-	%tmp2 = load float* @Y, align 4		; <float> [#uses=1]
+	%tmp2 = load float, float* @Y, align 4		; <float> [#uses=1]
 	%tmp23 = fpext float %tmp2 to double		; <double> [#uses=1]
 	%tmp5 = fdiv double %tmp1, %tmp23		; <double> [#uses=1]
 	%tmp56 = fptrunc double %tmp5 to float		; <float> [#uses=1]
@@ -39,7 +39,7 @@ entry:
 
 define void @test4() nounwind  {
 entry:
-	%tmp = load float* @X, align 4		; <float> [#uses=1]
+	%tmp = load float, float* @X, align 4		; <float> [#uses=1]
 	%tmp1 = fpext float %tmp to double		; <double> [#uses=1]
 	%tmp2 = fsub double -0.000000e+00, %tmp1		; <double> [#uses=1]
 	%tmp34 = fptrunc double %tmp2 to float		; <float> [#uses=1]

@@ -42,7 +42,7 @@ loop_start:
   br label %while.condthread-pre-split.i
 
 while.condthread-pre-split.i:
-  %.pr.i = load i32* %p, align 4
+  %.pr.i = load i32, i32* %p, align 4
   br label %while.cond.i
 
 while.cond.i:

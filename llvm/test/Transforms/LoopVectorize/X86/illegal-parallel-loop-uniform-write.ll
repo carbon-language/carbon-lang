@@ -15,7 +15,7 @@ entry:
 
 for.end.us:                                       ; preds = %for.body3.us
   %arrayidx9.us = getelementptr inbounds i32, i32* %b, i64 %indvars.iv33
-  %0 = load i32* %arrayidx9.us, align 4, !llvm.mem.parallel_loop_access !3
+  %0 = load i32, i32* %arrayidx9.us, align 4, !llvm.mem.parallel_loop_access !3
   %add10.us = add nsw i32 %0, 3
   store i32 %add10.us, i32* %arrayidx9.us, align 4, !llvm.mem.parallel_loop_access !3
   %indvars.iv.next34 = add i64 %indvars.iv33, 1
@@ -29,7 +29,7 @@ for.body3.us:                                     ; preds = %for.body3.us, %for.
   %add4.us = add i32 %add.us, %1
   %idxprom.us = sext i32 %add4.us to i64
   %arrayidx.us = getelementptr inbounds i32, i32* %a, i64 %idxprom.us
-  %2 = load i32* %arrayidx.us, align 4, !llvm.mem.parallel_loop_access !3
+  %2 = load i32, i32* %arrayidx.us, align 4, !llvm.mem.parallel_loop_access !3
   %add5.us = add nsw i32 %2, 1
   store i32 %add5.us, i32* %arrayidx7.us, align 4, !llvm.mem.parallel_loop_access !3
   %indvars.iv.next30 = add i64 %indvars.iv29, 1

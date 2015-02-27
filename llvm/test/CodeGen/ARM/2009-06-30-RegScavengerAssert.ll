@@ -35,10 +35,10 @@ bb10:		; preds = %bb9
 	unreachable
 
 bb11:		; preds = %bb9
-	%0 = load i32* undef, align 4		; <i32> [#uses=2]
+	%0 = load i32, i32* undef, align 4		; <i32> [#uses=2]
 	%1 = add i32 %0, 1		; <i32> [#uses=2]
 	store i32 %1, i32* undef, align 4
-	%2 = load i32* undef, align 4		; <i32> [#uses=1]
+	%2 = load i32, i32* undef, align 4		; <i32> [#uses=1]
 	store i32 %2, i32* @nn, align 4
 	store i32 0, i32* @al_len, align 4
 	store i32 0, i32* @no_mat, align 4
@@ -48,9 +48,9 @@ bb11:		; preds = %bb9
 	%4 = sitofp i32 undef to double		; <double> [#uses=1]
 	%5 = fdiv double %4, 1.000000e+01		; <double> [#uses=1]
 	%6 = tail call  i32 (i8*, ...)* @printf(i8* getelementptr ([29 x i8]* @"\01LC12", i32 0, i32 0), double %5) nounwind		; <i32> [#uses=0]
-	%7 = load i32* @al_len, align 4		; <i32> [#uses=1]
-	%8 = load i32* @no_mat, align 4		; <i32> [#uses=1]
-	%9 = load i32* @no_mis, align 4		; <i32> [#uses=1]
+	%7 = load i32, i32* @al_len, align 4		; <i32> [#uses=1]
+	%8 = load i32, i32* @no_mat, align 4		; <i32> [#uses=1]
+	%9 = load i32, i32* @no_mis, align 4		; <i32> [#uses=1]
 	%10 = sub i32 %7, %8		; <i32> [#uses=1]
 	%11 = sub i32 %10, %9		; <i32> [#uses=1]
 	%12 = tail call  i32 (i8*, ...)* @printf(i8* getelementptr ([33 x i8]* @"\01LC16", i32 0, i32 0), i32 %11) nounwind		; <i32> [#uses=0]

@@ -2,9 +2,9 @@
 
 define i32* @fooOptnone(i32* %p, i32* %q, i32** %z) #0 {
 entry:
-  %r = load i32* %p
-  %s = load i32* %q
-  %y = load i32** %z
+  %r = load i32, i32* %p
+  %s = load i32, i32* %q
+  %y = load i32*, i32** %z
 
   %t0 = add i32 %r, %s
   %t1 = add i32 %t0, 1
@@ -21,9 +21,9 @@ entry:
 
 define i32* @fooNormal(i32* %p, i32* %q, i32** %z) #1 {
 entry:
-  %r = load i32* %p
-  %s = load i32* %q
-  %y = load i32** %z
+  %r = load i32, i32* %p
+  %s = load i32, i32* %q
+  %y = load i32*, i32** %z
 
   %t0 = add i32 %r, %s
   %t1 = add i32 %t0, 1

@@ -18,7 +18,7 @@ bb:		; preds = %bb4
 	br i1 icmp ne (i32* @i, i32* null), label %bb1, label %bb2
 
 bb1:		; preds = %bb
-	%0 = load i32* @i, align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* @i, align 4		; <i32> [#uses=1]
 	br label %bb3
 
 bb2:		; preds = %bb

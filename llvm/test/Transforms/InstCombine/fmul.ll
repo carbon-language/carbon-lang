@@ -74,7 +74,7 @@ define float @test7(float %x, float %y) {
 ; Don't crash when attempting to cast a constant FMul to an instruction.
 define void @test8(i32* %inout) {
 entry:
-  %0 = load i32* %inout, align 4
+  %0 = load i32, i32* %inout, align 4
   %conv = uitofp i32 %0 to float
   %vecinit = insertelement <4 x float> <float 0.000000e+00, float 0.000000e+00, float 0.000000e+00, float undef>, float %conv, i32 3
   %sub = fsub <4 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %vecinit

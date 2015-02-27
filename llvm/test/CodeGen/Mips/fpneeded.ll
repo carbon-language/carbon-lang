@@ -76,8 +76,8 @@ entry:
 define void @foo1() #0 {
 entry:
   store float 1.000000e+00, float* @zz, align 4
-  %0 = load float* @y, align 4
-  %1 = load float* @x, align 4
+  %0 = load float, float* @y, align 4
+  %1 = load float, float* @x, align 4
   %add = fadd float %0, %1
   store float %add, float* @z, align 4
   ret void
@@ -96,7 +96,7 @@ entry:
 
 define void @foo2() #0 {
 entry:
-  %0 = load float* @x, align 4
+  %0 = load float, float* @x, align 4
   call void @vf(float %0)
   ret void
 }

@@ -5,9 +5,9 @@ target datalayout = "e-m:e-p:64:64:64-i64:64-f80:128-n8:16:32:64-S128"
 define i32 @test_load_cast_combine_tbaa(float* %ptr) {
 ; Ensure (cast (load (...))) -> (load (cast (...))) preserves TBAA.
 ; CHECK-LABEL: @test_load_cast_combine_tbaa(
-; CHECK: load i32* %{{.*}}, !tbaa !0
+; CHECK: load i32, i32* %{{.*}}, !tbaa !0
 entry:
-  %l = load float* %ptr, !tbaa !0
+  %l = load float, float* %ptr, !tbaa !0
   %c = bitcast float %l to i32
   ret i32 %c
 }
@@ -15,9 +15,9 @@ entry:
 define i32 @test_load_cast_combine_noalias(float* %ptr) {
 ; Ensure (cast (load (...))) -> (load (cast (...))) preserves no-alias metadata.
 ; CHECK-LABEL: @test_load_cast_combine_noalias(
-; CHECK: load i32* %{{.*}}, !alias.scope !2, !noalias !1
+; CHECK: load i32, i32* %{{.*}}, !alias.scope !2, !noalias !1
 entry:
-  %l = load float* %ptr, !alias.scope !2, !noalias !1
+  %l = load float, float* %ptr, !alias.scope !2, !noalias !1
   %c = bitcast float %l to i32
   ret i32 %c
 }
@@ -27,11 +27,11 @@ define float @test_load_cast_combine_range(i32* %ptr) {
 ; would be nice to preserve or update it somehow but this is hard when moving
 ; between types.
 ; CHECK-LABEL: @test_load_cast_combine_range(
-; CHECK: load float* %{{.*}}
+; CHECK: load float, float* %{{.*}}
 ; CHECK-NOT: !range
 ; CHECK: ret float
 entry:
-  %l = load i32* %ptr, !range !5
+  %l = load i32, i32* %ptr, !range !5
   %c = bitcast i32 %l to float
   ret float %c
 }
@@ -39,9 +39,9 @@ entry:
 define i32 @test_load_cast_combine_invariant(float* %ptr) {
 ; Ensure (cast (load (...))) -> (load (cast (...))) preserves invariant metadata.
 ; CHECK-LABEL: @test_load_cast_combine_invariant(
-; CHECK: load i32* %{{.*}}, !invariant.load !3
+; CHECK: load i32, i32* %{{.*}}, !invariant.load !3
 entry:
-  %l = load float* %ptr, !invariant.load !3
+  %l = load float, float* %ptr, !invariant.load !3
   %c = bitcast float %l to i32
   ret i32 %c
 }
@@ -50,9 +50,9 @@ define i32 @test_load_cast_combine_nontemporal(float* %ptr) {
 ; Ensure (cast (load (...))) -> (load (cast (...))) preserves nontemporal
 ; metadata.
 ; CHECK-LABEL: @test_load_cast_combine_nontemporal(
-; CHECK: load i32* %{{.*}}, !nontemporal !4
+; CHECK: load i32, i32* %{{.*}}, !nontemporal !4
 entry:
-  %l = load float* %ptr, !nontemporal !4
+  %l = load float, float* %ptr, !nontemporal !4
   %c = bitcast float %l to i32
   ret i32 %c
 }
@@ -61,7 +61,7 @@ define void @test_load_cast_combine_loop(float* %src, i32* %dst, i32 %n) {
 ; Ensure (cast (load (...))) -> (load (cast (...))) preserves loop access
 ; metadata.
 ; CHECK-LABEL: @test_load_cast_combine_loop(
-; CHECK: load i32* %{{.*}}, !llvm.mem.parallel_loop_access !1
+; CHECK: load i32, i32* %{{.*}}, !llvm.mem.parallel_loop_access !1
 entry:
   br label %loop
 
@@ -69,7 +69,7 @@ loop:
   %i = phi i32 [ 0, %entry ], [ %i.next, %loop ]
   %src.gep = getelementptr inbounds float, float* %src, i32 %i
   %dst.gep = getelementptr inbounds i32, i32* %dst, i32 %i
-  %l = load float* %src.gep, !llvm.mem.parallel_loop_access !1
+  %l = load float, float* %src.gep, !llvm.mem.parallel_loop_access !1
   %c = bitcast float %l to i32
   store i32 %c, i32* %dst.gep
   %i.next = add i32 %i, 1
@@ -93,11 +93,11 @@ define void @test_load_cast_combine_nonnull(float** %ptr) {
 ; file, and no LABEL lines are to be added after this point.
 ;
 ; CHECK-LABEL: @test_load_cast_combine_nonnull(
-; CHECK: %[[V:.*]] = load i64* %{{.*}}, !range ![[MD:[0-9]+]]
+; CHECK: %[[V:.*]] = load i64, i64* %{{.*}}, !range ![[MD:[0-9]+]]
 ; CHECK-NOT: !nonnull
 ; CHECK: store i64 %[[V]], i64*
 entry:
-  %p = load float** %ptr, !nonnull !3
+  %p = load float*, float** %ptr, !nonnull !3
   %gep = getelementptr float*, float** %ptr, i32 42
   store float* %p, float** %gep
   ret void

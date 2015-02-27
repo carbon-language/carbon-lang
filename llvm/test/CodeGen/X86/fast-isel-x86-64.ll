@@ -20,7 +20,7 @@ define void @test2(i64 %x) nounwind ssp {
 entry:
   %x.addr = alloca i64, align 8
   store i64 %x, i64* %x.addr, align 8
-  %tmp = load i64* %x.addr, align 8
+  %tmp = load i64, i64* %x.addr, align 8
   %cmp = icmp sgt i64 %tmp, 42
   br i1 %cmp, label %if.then, label %if.end
 
@@ -53,7 +53,7 @@ define i64 @test3() nounwind {
 
 define i32 @test4(i64 %idxprom9) nounwind {
   %arrayidx10 = getelementptr inbounds [153 x i8], [153 x i8]* @rtx_length, i32 0, i64 %idxprom9
-  %tmp11 = load i8* %arrayidx10, align 1
+  %tmp11 = load i8, i8* %arrayidx10, align 1
   %conv = zext i8 %tmp11 to i32
   ret i32 %conv
 
@@ -212,7 +212,7 @@ declare void @foo() unnamed_addr ssp align 2
 ; w.r.t. the call.
 define i32 @test17(i32 *%P) ssp nounwind {
 entry:
-  %tmp = load i32* %P
+  %tmp = load i32, i32* %P
   %cmp = icmp ne i32 %tmp, 5
   call void @foo()
   br i1 %cmp, label %if.then, label %if.else

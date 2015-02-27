@@ -44,7 +44,7 @@ define void @bfe_i32_imm_arg_arg(i32 addrspace(1)* %out, i32 %src1, i32 %src2) n
 ; FUNC-LABEL: {{^}}v_bfe_print_arg:
 ; SI: v_bfe_i32 v{{[0-9]+}}, v{{[0-9]+}}, 2, 8
 define void @v_bfe_print_arg(i32 addrspace(1)* %out, i32 addrspace(1)* %src0) nounwind {
-  %load = load i32 addrspace(1)* %src0, align 4
+  %load = load i32, i32 addrspace(1)* %src0, align 4
   %bfe_i32 = call i32 @llvm.AMDGPU.bfe.i32(i32 %load, i32 2, i32 8) nounwind readnone
   store i32 %bfe_i32, i32 addrspace(1)* %out, align 4
   ret void
@@ -75,7 +75,7 @@ define void @bfe_i32_arg_0_width_imm_offset(i32 addrspace(1)* %out, i32 %src0, i
 ; SI: v_ashrrev_i32_e32 v{{[0-9]+}}, 1, v{{[0-9]+}}
 ; SI: s_endpgm
 define void @bfe_i32_test_6(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %x = load i32 addrspace(1)* %in, align 4
+  %x = load i32, i32 addrspace(1)* %in, align 4
   %shl = shl i32 %x, 31
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %shl, i32 1, i32 31)
   store i32 %bfe, i32 addrspace(1)* %out, align 4
@@ -89,7 +89,7 @@ define void @bfe_i32_test_6(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounw
 ; SI: buffer_store_dword [[VREG]],
 ; SI: s_endpgm
 define void @bfe_i32_test_7(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %x = load i32 addrspace(1)* %in, align 4
+  %x = load i32, i32 addrspace(1)* %in, align 4
   %shl = shl i32 %x, 31
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %shl, i32 0, i32 31)
   store i32 %bfe, i32 addrspace(1)* %out, align 4
@@ -102,7 +102,7 @@ define void @bfe_i32_test_7(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounw
 ; SI: v_bfe_i32 v{{[0-9]+}}, v{{[0-9]+}}, 0, 1
 ; SI: s_endpgm
 define void @bfe_i32_test_8(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %x = load i32 addrspace(1)* %in, align 4
+  %x = load i32, i32 addrspace(1)* %in, align 4
   %shl = shl i32 %x, 31
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %shl, i32 31, i32 1)
   store i32 %bfe, i32 addrspace(1)* %out, align 4
@@ -115,7 +115,7 @@ define void @bfe_i32_test_8(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounw
 ; SI-NOT: {{[^@]}}bfe
 ; SI: s_endpgm
 define void @bfe_i32_test_9(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %x = load i32 addrspace(1)* %in, align 4
+  %x = load i32, i32 addrspace(1)* %in, align 4
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %x, i32 31, i32 1)
   store i32 %bfe, i32 addrspace(1)* %out, align 4
   ret void
@@ -127,7 +127,7 @@ define void @bfe_i32_test_9(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounw
 ; SI-NOT: {{[^@]}}bfe
 ; SI: s_endpgm
 define void @bfe_i32_test_10(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %x = load i32 addrspace(1)* %in, align 4
+  %x = load i32, i32 addrspace(1)* %in, align 4
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %x, i32 1, i32 31)
   store i32 %bfe, i32 addrspace(1)* %out, align 4
   ret void
@@ -139,7 +139,7 @@ define void @bfe_i32_test_10(i32 addrspace(1)* %out, i32 addrspace(1)* %in) noun
 ; SI-NOT: {{[^@]}}bfe
 ; SI: s_endpgm
 define void @bfe_i32_test_11(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %x = load i32 addrspace(1)* %in, align 4
+  %x = load i32, i32 addrspace(1)* %in, align 4
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %x, i32 8, i32 24)
   store i32 %bfe, i32 addrspace(1)* %out, align 4
   ret void
@@ -151,7 +151,7 @@ define void @bfe_i32_test_11(i32 addrspace(1)* %out, i32 addrspace(1)* %in) noun
 ; SI-NOT: {{[^@]}}bfe
 ; SI: s_endpgm
 define void @bfe_i32_test_12(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %x = load i32 addrspace(1)* %in, align 4
+  %x = load i32, i32 addrspace(1)* %in, align 4
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %x, i32 24, i32 8)
   store i32 %bfe, i32 addrspace(1)* %out, align 4
   ret void
@@ -162,7 +162,7 @@ define void @bfe_i32_test_12(i32 addrspace(1)* %out, i32 addrspace(1)* %in) noun
 ; SI-NOT: {{[^@]}}bfe
 ; SI: s_endpgm
 define void @bfe_i32_test_13(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %x = load i32 addrspace(1)* %in, align 4
+  %x = load i32, i32 addrspace(1)* %in, align 4
   %shl = ashr i32 %x, 31
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %shl, i32 31, i32 1)
   store i32 %bfe, i32 addrspace(1)* %out, align 4 ret void
@@ -173,7 +173,7 @@ define void @bfe_i32_test_13(i32 addrspace(1)* %out, i32 addrspace(1)* %in) noun
 ; SI-NOT: {{[^@]}}bfe
 ; SI: s_endpgm
 define void @bfe_i32_test_14(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %x = load i32 addrspace(1)* %in, align 4
+  %x = load i32, i32 addrspace(1)* %in, align 4
   %shl = lshr i32 %x, 31
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %shl, i32 31, i32 1)
   store i32 %bfe, i32 addrspace(1)* %out, align 4 ret void
@@ -418,7 +418,7 @@ define void @bfe_i32_constant_fold_test_18(i32 addrspace(1)* %out) nounwind {
 ; XSI-NOT: SHR
 ; XSI: buffer_store_dword [[BFE]],
 define void @bfe_sext_in_reg_i24(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %x = load i32 addrspace(1)* %in, align 4
+  %x = load i32, i32 addrspace(1)* %in, align 4
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %x, i32 0, i32 24)
   %shl = shl i32 %bfe, 8
   %ashr = ashr i32 %shl, 8
@@ -434,7 +434,7 @@ define void @bfe_sext_in_reg_i24(i32 addrspace(1)* %out, i32 addrspace(1)* %in) 
 ; SI: v_ashrrev_i32_e32 [[TMP2:v[0-9]+]], 1, [[TMP1]]
 ; SI: buffer_store_dword [[TMP2]]
 define void @simplify_demanded_bfe_sdiv(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %src = load i32 addrspace(1)* %in, align 4
+  %src = load i32, i32 addrspace(1)* %in, align 4
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %src, i32 1, i32 16) nounwind readnone
   %div = sdiv i32 %bfe, 2
   store i32 %div, i32 addrspace(1)* %out, align 4

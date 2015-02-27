@@ -228,7 +228,7 @@ entry:
   unreachable
 
 "67":                                             ; preds = %"65"
-  %1 = load i32* undef, align 4                   ; <i32> [#uses=0]
+  %1 = load i32, i32* undef, align 4                   ; <i32> [#uses=0]
   br label %"100"
 
 "82":                                             ; preds = %"61", %"60", %"59"

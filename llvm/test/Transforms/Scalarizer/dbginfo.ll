@@ -19,14 +19,14 @@ define void @f1(<4 x i32>* nocapture %a, <4 x i32>* nocapture readonly %b, <4 x 
 ; CHECK: tail call void @llvm.dbg.value(metadata <4 x i32>* %a, i64 0, metadata !{{[0-9]+}}, metadata {{.*}}), !dbg !{{[0-9]+}}
 ; CHECK: tail call void @llvm.dbg.value(metadata <4 x i32>* %b, i64 0, metadata !{{[0-9]+}}, metadata {{.*}}), !dbg !{{[0-9]+}}
 ; CHECK: tail call void @llvm.dbg.value(metadata <4 x i32>* %c, i64 0, metadata !{{[0-9]+}}, metadata {{.*}}), !dbg !{{[0-9]+}}
-; CHECK: %bval.i0 = load i32* %b.i0, align 16, !dbg ![[TAG1:[0-9]+]], !tbaa ![[TAG2:[0-9]+]]
-; CHECK: %bval.i1 = load i32* %b.i1, align 4, !dbg ![[TAG1]], !tbaa ![[TAG2]]
-; CHECK: %bval.i2 = load i32* %b.i2, align 8, !dbg ![[TAG1]], !tbaa ![[TAG2]]
-; CHECK: %bval.i3 = load i32* %b.i3, align 4, !dbg ![[TAG1]], !tbaa ![[TAG2]]
-; CHECK: %cval.i0 = load i32* %c.i0, align 16, !dbg ![[TAG1]], !tbaa ![[TAG2]]
-; CHECK: %cval.i1 = load i32* %c.i1, align 4, !dbg ![[TAG1]], !tbaa ![[TAG2]]
-; CHECK: %cval.i2 = load i32* %c.i2, align 8, !dbg ![[TAG1]], !tbaa ![[TAG2]]
-; CHECK: %cval.i3 = load i32* %c.i3, align 4, !dbg ![[TAG1]], !tbaa ![[TAG2]]
+; CHECK: %bval.i0 = load i32, i32* %b.i0, align 16, !dbg ![[TAG1:[0-9]+]], !tbaa ![[TAG2:[0-9]+]]
+; CHECK: %bval.i1 = load i32, i32* %b.i1, align 4, !dbg ![[TAG1]], !tbaa ![[TAG2]]
+; CHECK: %bval.i2 = load i32, i32* %b.i2, align 8, !dbg ![[TAG1]], !tbaa ![[TAG2]]
+; CHECK: %bval.i3 = load i32, i32* %b.i3, align 4, !dbg ![[TAG1]], !tbaa ![[TAG2]]
+; CHECK: %cval.i0 = load i32, i32* %c.i0, align 16, !dbg ![[TAG1]], !tbaa ![[TAG2]]
+; CHECK: %cval.i1 = load i32, i32* %c.i1, align 4, !dbg ![[TAG1]], !tbaa ![[TAG2]]
+; CHECK: %cval.i2 = load i32, i32* %c.i2, align 8, !dbg ![[TAG1]], !tbaa ![[TAG2]]
+; CHECK: %cval.i3 = load i32, i32* %c.i3, align 4, !dbg ![[TAG1]], !tbaa ![[TAG2]]
 ; CHECK: %add.i0 = add i32 %bval.i0, %cval.i0, !dbg ![[TAG1]]
 ; CHECK: %add.i1 = add i32 %bval.i1, %cval.i1, !dbg ![[TAG1]]
 ; CHECK: %add.i2 = add i32 %bval.i2, %cval.i2, !dbg ![[TAG1]]
@@ -40,8 +40,8 @@ entry:
   tail call void @llvm.dbg.value(metadata <4 x i32>* %a, i64 0, metadata !15, metadata !{}), !dbg !20
   tail call void @llvm.dbg.value(metadata <4 x i32>* %b, i64 0, metadata !16, metadata !{}), !dbg !20
   tail call void @llvm.dbg.value(metadata <4 x i32>* %c, i64 0, metadata !17, metadata !{}), !dbg !20
-  %bval = load <4 x i32>* %b, align 16, !dbg !21, !tbaa !22
-  %cval = load <4 x i32>* %c, align 16, !dbg !21, !tbaa !22
+  %bval = load <4 x i32>, <4 x i32>* %b, align 16, !dbg !21, !tbaa !22
+  %cval = load <4 x i32>, <4 x i32>* %c, align 16, !dbg !21, !tbaa !22
   %add = add <4 x i32> %bval, %cval, !dbg !21
   store <4 x i32> %add, <4 x i32>* %a, align 16, !dbg !21, !tbaa !22
   ret void, !dbg !25

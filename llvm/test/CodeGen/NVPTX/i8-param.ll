@@ -13,7 +13,7 @@ define i8 @callee(i8 %a) {
 ; CHECK: .visible .func caller
 define void @caller(i8* %a) {
 ; CHECK: ld.u8
-  %val = load i8* %a
+  %val = load i8, i8* %a
   %ret = tail call i8 @callee(i8 %val)
 ; CHECK: ld.param.b32
   store i8 %ret, i8* %a

@@ -41,18 +41,18 @@ bb3:                                              ; preds = %bb2, %bb
   br i1 undef, label %bb5, label %bb4
 
 bb4:                                              ; preds = %bb3
-  %17 = load volatile i32* @uint8, align 4        ; <i32> [#uses=0]
+  %17 = load volatile i32, i32* @uint8, align 4        ; <i32> [#uses=0]
   br label %bb5
 
 bb5:                                              ; preds = %bb4, %bb3
-  %18 = load volatile i32* @uint8, align 4        ; <i32> [#uses=0]
+  %18 = load volatile i32, i32* @uint8, align 4        ; <i32> [#uses=0]
   %19 = sext i8 undef to i16                      ; <i16> [#uses=1]
   %20 = tail call i32 @func_24(i16 zeroext %19, i8 signext 1) nounwind; <i32> [#uses=0]
   br i1 undef, label %return, label %bb6.preheader
 
 bb6.preheader:                                    ; preds = %bb5
   %21 = sext i8 %p_52 to i32                      ; <i32> [#uses=1]
-  %22 = load volatile i32* @uint8, align 4        ; <i32> [#uses=0]
+  %22 = load volatile i32, i32* @uint8, align 4        ; <i32> [#uses=0]
   %23 = tail call i32 (...)* @safefuncts(i32 %21, i32 1) nounwind; <i32> [#uses=0]
   unreachable
 

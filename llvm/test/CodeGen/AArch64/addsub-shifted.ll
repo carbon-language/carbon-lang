@@ -6,63 +6,63 @@
 define void @test_lsl_arith(i32 %lhs32, i32 %rhs32, i64 %lhs64, i64 %rhs64) {
 ; CHECK-LABEL: test_lsl_arith:
 
-  %rhs1 = load volatile i32* @var32
+  %rhs1 = load volatile i32, i32* @var32
   %shift1 = shl i32 %rhs1, 18
   %val1 = add i32 %lhs32, %shift1
   store volatile i32 %val1, i32* @var32
 ; CHECK: add {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}, lsl #18
 
-  %rhs2 = load volatile i32* @var32
+  %rhs2 = load volatile i32, i32* @var32
   %shift2 = shl i32 %rhs2, 31
   %val2 = add i32 %shift2, %lhs32
   store volatile i32 %val2, i32* @var32
 ; CHECK: add {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}, lsl #31
 
-  %rhs3 = load volatile i32* @var32
+  %rhs3 = load volatile i32, i32* @var32
   %shift3 = shl i32 %rhs3, 5
   %val3 = sub i32 %lhs32, %shift3
   store volatile i32 %val3, i32* @var32
 ; CHECK: sub {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}, lsl #5
 
 ; Subtraction is not commutative!
-  %rhs4 = load volatile i32* @var32
+  %rhs4 = load volatile i32, i32* @var32
   %shift4 = shl i32 %rhs4, 19
   %val4 = sub i32 %shift4, %lhs32
   store volatile i32 %val4, i32* @var32
 ; CHECK-NOT: sub {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}, lsl #19
 
-  %lhs4a = load volatile i32* @var32
+  %lhs4a = load volatile i32, i32* @var32
   %shift4a = shl i32 %lhs4a, 15
   %val4a = sub i32 0, %shift4a
   store volatile i32 %val4a, i32* @var32
 ; CHECK: neg {{w[0-9]+}}, {{w[0-9]+}}, lsl #15
 
-  %rhs5 = load volatile i64* @var64
+  %rhs5 = load volatile i64, i64* @var64
   %shift5 = shl i64 %rhs5, 18
   %val5 = add i64 %lhs64, %shift5
   store volatile i64 %val5, i64* @var64
 ; CHECK: add {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}, lsl #18
 
-  %rhs6 = load volatile i64* @var64
+  %rhs6 = load volatile i64, i64* @var64
   %shift6 = shl i64 %rhs6, 31
   %val6 = add i64 %shift6, %lhs64
   store volatile i64 %val6, i64* @var64
 ; CHECK: add {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}, lsl #31
 
-  %rhs7 = load volatile i64* @var64
+  %rhs7 = load volatile i64, i64* @var64
   %shift7 = shl i64 %rhs7, 5
   %val7 = sub i64 %lhs64, %shift7
   store volatile i64 %val7, i64* @var64
 ; CHECK: sub {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}, lsl #5
 
 ; Subtraction is not commutative!
-  %rhs8 = load volatile i64* @var64
+  %rhs8 = load volatile i64, i64* @var64
   %shift8 = shl i64 %rhs8, 19
   %val8 = sub i64 %shift8, %lhs64
   store volatile i64 %val8, i64* @var64
 ; CHECK-NOT: sub {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}, lsl #19
 
-  %lhs8a = load volatile i64* @var64
+  %lhs8a = load volatile i64, i64* @var64
   %shift8a = shl i64 %lhs8a, 60
   %val8a = sub i64 0, %shift8a
   store volatile i64 %val8a, i64* @var64

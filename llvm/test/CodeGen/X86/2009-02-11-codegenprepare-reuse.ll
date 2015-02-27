@@ -6,7 +6,7 @@ target triple = "i386-apple-darwin9.6"
 
 define i32 @alac_decode_frame() nounwind {
 entry:
-	%tmp2 = load i8** null		; <i8*> [#uses=2]
+	%tmp2 = load i8*, i8** null		; <i8*> [#uses=2]
 	%tmp34 = getelementptr i8, i8* %tmp2, i32 4		; <i8*> [#uses=2]
 	%tmp5.i424 = bitcast i8* %tmp34 to i8**		; <i8**> [#uses=2]
 	%tmp15.i = getelementptr i8, i8* %tmp2, i32 12		; <i8*> [#uses=1]
@@ -17,9 +17,9 @@ if.then43:		; preds = %entry
 	ret i32 0
 
 if.end47:		; preds = %entry
-	%tmp5.i590 = load i8** %tmp5.i424		; <i8*> [#uses=0]
+	%tmp5.i590 = load i8*, i8** %tmp5.i424		; <i8*> [#uses=0]
 	store i32 19, i32* %0
-	%tmp6.i569 = load i8** %tmp5.i424		; <i8*> [#uses=0]
+	%tmp6.i569 = load i8*, i8** %tmp5.i424		; <i8*> [#uses=0]
 	%1 = call i32 asm "bswap   $0", "=r,0,~{dirflag},~{fpsr},~{flags}"(i32 0) nounwind		; <i32> [#uses=0]
 	br i1 false, label %bb.nph, label %if.then63
 

@@ -11,7 +11,7 @@
 
 define float @foox()  {
 entry:
-  %0 = load float* @x, align 4
+  %0 = load float, float* @x, align 4
   ret float %0
 ; 1: 	.ent	foox
 ; 1:	lw	$2, %lo(x)(${{[0-9]+}})
@@ -20,7 +20,7 @@ entry:
 
 define double @foodx()  {
 entry:
-  %0 = load double* @dx, align 8
+  %0 = load double, double* @dx, align 8
   ret double %0
 ; 1: 	.ent	foodx
 ; 1: 	lw	$2, %lo(dx)(${{[0-9]+}})
@@ -34,13 +34,13 @@ entry:
 define { float, float } @foocx()  {
 entry:
   %retval = alloca { float, float }, align 4
-  %cx.real = load float* getelementptr inbounds ({ float, float }* @cx, i32 0, i32 0)
-  %cx.imag = load float* getelementptr inbounds ({ float, float }* @cx, i32 0, i32 1)
+  %cx.real = load float, float* getelementptr inbounds ({ float, float }* @cx, i32 0, i32 0)
+  %cx.imag = load float, float* getelementptr inbounds ({ float, float }* @cx, i32 0, i32 1)
   %real = getelementptr inbounds { float, float }, { float, float }* %retval, i32 0, i32 0
   %imag = getelementptr inbounds { float, float }, { float, float }* %retval, i32 0, i32 1
   store float %cx.real, float* %real
   store float %cx.imag, float* %imag
-  %0 = load { float, float }* %retval
+  %0 = load { float, float }, { float, float }* %retval
   ret { float, float } %0
 ; 1: 	.ent	foocx
 ; 1: 	lw	$2, %lo(cx)(${{[0-9]+}})
@@ -53,13 +53,13 @@ entry:
 define { double, double } @foodcx()  {
 entry:
   %retval = alloca { double, double }, align 8
-  %dcx.real = load double* getelementptr inbounds ({ double, double }* @dcx, i32 0, i32 0)
-  %dcx.imag = load double* getelementptr inbounds ({ double, double }* @dcx, i32 0, i32 1)
+  %dcx.real = load double, double* getelementptr inbounds ({ double, double }* @dcx, i32 0, i32 0)
+  %dcx.imag = load double, double* getelementptr inbounds ({ double, double }* @dcx, i32 0, i32 1)
   %real = getelementptr inbounds { double, double }, { double, double }* %retval, i32 0, i32 0
   %imag = getelementptr inbounds { double, double }, { double, double }* %retval, i32 0, i32 1
   store double %dcx.real, double* %real
   store double %dcx.imag, double* %imag
-  %0 = load { double, double }* %retval
+  %0 = load { double, double }, { double, double }* %retval
   ret { double, double } %0
 ; 1: 	.ent	foodcx
 ; 1: 	lw	${{[0-9]}}, %lo(dcx)(${{[0-9]+}})

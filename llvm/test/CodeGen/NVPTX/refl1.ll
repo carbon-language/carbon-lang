@@ -5,7 +5,7 @@ target triple = "nvptx-nvidia-cuda"
 ; Function Attrs: nounwind
 ; CHECK: .entry foo
 define void @foo(float* nocapture %a) #0 {
-  %val = load float* %a
+  %val = load float, float* %a
   %tan = tail call fastcc float @__nv_fast_tanf(float %val)
   store float %tan, float* %a
   ret void

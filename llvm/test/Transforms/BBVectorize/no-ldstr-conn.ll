@@ -9,8 +9,8 @@ entry:
   %a1 = inttoptr i64 %a to i64*
   %a2 = getelementptr i64, i64* %a1, i64 1
   %a3 = getelementptr i64, i64* %a1, i64 2
-  %v2 = load i64* %a2, align 8
-  %v3 = load i64* %a3, align 8
+  %v2 = load i64, i64* %a2, align 8
+  %v3 = load i64, i64* %a3, align 8
   %v2a = add i64 %v2, 5
   %v3a = add i64 %v3, 7
   store i64 %v2a, i64* %a2, align 8

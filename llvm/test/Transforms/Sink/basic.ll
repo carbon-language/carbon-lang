@@ -8,11 +8,11 @@
 
 ;      CHECK-LABEL: @foo(
 ;      CHECK: true:
-; CHECK-NEXT: %l = load i32* @A
+; CHECK-NEXT: %l = load i32, i32* @A
 ; CHECK-NEXT: ret i32 %l
 
 define i32 @foo(i1 %z) {
-  %l = load i32* @A
+  %l = load i32, i32* @A
   store i32 0, i32* @B
   br i1 %z, label %true, label %false
 true:
@@ -28,7 +28,7 @@ false:
 ; CHECK-NEXT: store i32
 
 define i32 @foo2(i1 %z) {
-  %l = load volatile i32* @A
+  %l = load volatile i32, i32* @A
   store i32 0, i32* @B
   br i1 %z, label %true, label %false
 true:
@@ -79,7 +79,7 @@ if:
   store i32 0, i32* %0
   store i32 1, i32* %2
   %3 = getelementptr i32, i32* %0, i32 %b
-  %4 = load i32* %3
+  %4 = load i32, i32* %3
   ret i32 %4
 
 endif:
@@ -104,7 +104,7 @@ if:
   store i32 0, i32* %0
   store i32 1, i32* %2
   %3 = getelementptr i32, i32* %0, i32 %b
-  %4 = load i32* %3
+  %4 = load i32, i32* %3
   ret i32 %4
 
 endif:
@@ -135,7 +135,7 @@ if:
   store i32 0, i32* %0
   store i32 1, i32* %2
   %3 = getelementptr i32, i32* %0, i32 %b
-  %4 = load i32* %3
+  %4 = load i32, i32* %3
   ret i32 %4
 
 endif:

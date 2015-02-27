@@ -10,10 +10,10 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-
 ; CHECK-NOT: store <2 x double>
 define void @expensive_double_store(double* noalias %dst, double* noalias %src, i64 %count) {
 entry:
-  %0 = load double* %src, align 8
+  %0 = load double, double* %src, align 8
   store double %0, double* %dst, align 8
   %arrayidx2 = getelementptr inbounds double, double* %src, i64 1
-  %1 = load double* %arrayidx2, align 8
+  %1 = load double, double* %arrayidx2, align 8
   %arrayidx3 = getelementptr inbounds double, double* %dst, i64 1
   store double %1, double* %arrayidx3, align 8
   ret void

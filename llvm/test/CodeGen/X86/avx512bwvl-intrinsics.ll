@@ -830,7 +830,7 @@ define <2 x double> @test_mask_vfmsubadd128_pd(<2 x double> %a0, <2 x double> %a
 define <2 x double> @test_mask_vfmsubadd128rm_pd(<2 x double> %a0, <2 x double> %a1, <2 x double>* %ptr_a2, i8 %mask) {
   ; CHECK-LABEL: test_mask_vfmsubadd128rm_pd
   ; CHECK: vfmsubadd213pd (%rdi), %xmm1, %xmm0 {%k1} ## encoding: [0x62,0xf2,0xf5,0x09,0xa7,0x07]
-  %a2 = load <2 x double>* %ptr_a2
+  %a2 = load <2 x double>, <2 x double>* %ptr_a2
   %res = call <2 x double> @llvm.x86.fma.mask.vfmsubadd.pd.128(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2, i8 %mask) nounwind
   ret <2 x double> %res
 }
@@ -838,7 +838,7 @@ declare <8 x double> @llvm.x86.fma.mask.vfmsubadd.pd.512(<8 x double>, <8 x doub
 define <8 x double> @test_mask_vfmsubaddrm_pd(<8 x double> %a0, <8 x double> %a1, <8 x double>* %ptr_a2, i8 %mask) {
   ; CHECK-LABEL: test_mask_vfmsubaddrm_pd
   ; CHECK: vfmsubadd213pd  (%rdi), %zmm1, %zmm0 {%k1} ## encoding: [0x62,0xf2,0xf5,0x49,0xa7,0x07]
-  %a2 = load <8 x double>* %ptr_a2, align 8
+  %a2 = load <8 x double>, <8 x double>* %ptr_a2, align 8
   %res = call <8 x double> @llvm.x86.fma.mask.vfmsubadd.pd.512(<8 x double> %a0, <8 x double> %a1, <8 x double> %a2, i8 %mask, i32 4) nounwind
   ret <8 x double> %res
 }
@@ -860,7 +860,7 @@ define <4 x float> @test_mask_vfmadd128_ps_rz(<4 x float> %a0, <4 x float> %a1, 
 define <4 x float> @test_mask_vfmadd128_ps_rmk(<4 x float> %a0, <4 x float> %a1, <4 x float>* %ptr_a2, i8 %mask) {
   ; CHECK-LABEL: test_mask_vfmadd128_ps_rmk
   ; CHECK: vfmadd213ps	(%rdi), %xmm1, %xmm0 {%k1} ## encoding: [0x62,0xf2,0x75,0x09,0xa8,0x07]
-  %a2 = load <4 x float>* %ptr_a2
+  %a2 = load <4 x float>, <4 x float>* %ptr_a2
   %res = call <4 x float> @llvm.x86.fma.mask.vfmadd.ps.128(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2, i8 %mask) nounwind
   ret <4 x float> %res
 }
@@ -868,7 +868,7 @@ define <4 x float> @test_mask_vfmadd128_ps_rmk(<4 x float> %a0, <4 x float> %a1,
 define <4 x float> @test_mask_vfmadd128_ps_rmka(<4 x float> %a0, <4 x float> %a1, <4 x float>* %ptr_a2, i8 %mask) {
   ; CHECK-LABEL: test_mask_vfmadd128_ps_rmka
   ; CHECK: vfmadd213ps     (%rdi), %xmm1, %xmm0 {%k1} ## encoding: [0x62,0xf2,0x75,0x09,0xa8,0x07]
-  %a2 = load <4 x float>* %ptr_a2, align 8
+  %a2 = load <4 x float>, <4 x float>* %ptr_a2, align 8
   %res = call <4 x float> @llvm.x86.fma.mask.vfmadd.ps.128(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2, i8 %mask) nounwind
   ret <4 x float> %res
 }
@@ -876,7 +876,7 @@ define <4 x float> @test_mask_vfmadd128_ps_rmka(<4 x float> %a0, <4 x float> %a1
 define <4 x float> @test_mask_vfmadd128_ps_rmkz(<4 x float> %a0, <4 x float> %a1, <4 x float>* %ptr_a2) {
   ; CHECK-LABEL: test_mask_vfmadd128_ps_rmkz
   ; CHECK: vfmadd213ps	(%rdi), %xmm1, %xmm0 ## encoding: [0xc4,0xe2,0x71,0xa8,0x07]
-  %a2 = load <4 x float>* %ptr_a2
+  %a2 = load <4 x float>, <4 x float>* %ptr_a2
   %res = call <4 x float> @llvm.x86.fma.mask.vfmadd.ps.128(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2, i8 -1) nounwind
   ret <4 x float> %res
 }
@@ -884,7 +884,7 @@ define <4 x float> @test_mask_vfmadd128_ps_rmkz(<4 x float> %a0, <4 x float> %a1
 define <4 x float> @test_mask_vfmadd128_ps_rmkza(<4 x float> %a0, <4 x float> %a1, <4 x float>* %ptr_a2) {
   ; CHECK-LABEL: test_mask_vfmadd128_ps_rmkza
   ; CHECK: vfmadd213ps	(%rdi), %xmm1, %xmm0 ## encoding: [0xc4,0xe2,0x71,0xa8,0x07]
-  %a2 = load <4 x float>* %ptr_a2, align 4
+  %a2 = load <4 x float>, <4 x float>* %ptr_a2, align 4
   %res = call <4 x float> @llvm.x86.fma.mask.vfmadd.ps.128(<4 x float> %a0, <4 x float> %a1, <4 x float> %a2, i8 -1) nounwind
   ret <4 x float> %res
 }
@@ -892,7 +892,7 @@ define <4 x float> @test_mask_vfmadd128_ps_rmkza(<4 x float> %a0, <4 x float> %a
 define <4 x float> @test_mask_vfmadd128_ps_rmb(<4 x float> %a0, <4 x float> %a1, float* %ptr_a2, i8 %mask) {
   ; CHECK-LABEL: test_mask_vfmadd128_ps_rmb
   ; CHECK: vfmadd213ps	(%rdi){1to4}, %xmm1, %xmm0 {%k1} ## encoding: [0x62,0xf2,0x75,0x19,0xa8,0x07]
-  %q = load float* %ptr_a2
+  %q = load float, float* %ptr_a2
   %vecinit.i = insertelement <4 x float> undef, float %q, i32 0
   %vecinit2.i = insertelement <4 x float> %vecinit.i, float %q, i32 1
   %vecinit4.i = insertelement <4 x float> %vecinit2.i, float %q, i32 2
@@ -904,7 +904,7 @@ define <4 x float> @test_mask_vfmadd128_ps_rmb(<4 x float> %a0, <4 x float> %a1,
 define <4 x float> @test_mask_vfmadd128_ps_rmba(<4 x float> %a0, <4 x float> %a1, float* %ptr_a2, i8 %mask) {
   ; CHECK-LABEL: test_mask_vfmadd128_ps_rmba
   ; CHECK: vfmadd213ps	(%rdi){1to4}, %xmm1, %xmm0 {%k1} ## encoding: [0x62,0xf2,0x75,0x19,0xa8,0x07]
-  %q = load float* %ptr_a2, align 4
+  %q = load float, float* %ptr_a2, align 4
   %vecinit.i = insertelement <4 x float> undef, float %q, i32 0
   %vecinit2.i = insertelement <4 x float> %vecinit.i, float %q, i32 1
   %vecinit4.i = insertelement <4 x float> %vecinit2.i, float %q, i32 2
@@ -916,7 +916,7 @@ define <4 x float> @test_mask_vfmadd128_ps_rmba(<4 x float> %a0, <4 x float> %a1
 define <4 x float> @test_mask_vfmadd128_ps_rmbz(<4 x float> %a0, <4 x float> %a1, float* %ptr_a2) {
   ; CHECK-LABEL: test_mask_vfmadd128_ps_rmbz
   ; CHECK: vfmadd213ps	(%rdi){1to4}, %xmm1, %xmm0  ## encoding: [0x62,0xf2,0x75,0x18,0xa8,0x07]
-  %q = load float* %ptr_a2
+  %q = load float, float* %ptr_a2
   %vecinit.i = insertelement <4 x float> undef, float %q, i32 0
   %vecinit2.i = insertelement <4 x float> %vecinit.i, float %q, i32 1
   %vecinit4.i = insertelement <4 x float> %vecinit2.i, float %q, i32 2
@@ -928,7 +928,7 @@ define <4 x float> @test_mask_vfmadd128_ps_rmbz(<4 x float> %a0, <4 x float> %a1
 define <4 x float> @test_mask_vfmadd128_ps_rmbza(<4 x float> %a0, <4 x float> %a1, float* %ptr_a2) {
   ; CHECK-LABEL: test_mask_vfmadd128_ps_rmbza
   ; CHECK: vfmadd213ps	(%rdi){1to4}, %xmm1, %xmm0  ## encoding: [0x62,0xf2,0x75,0x18,0xa8,0x07]
-  %q = load float* %ptr_a2, align 4
+  %q = load float, float* %ptr_a2, align 4
   %vecinit.i = insertelement <4 x float> undef, float %q, i32 0
   %vecinit2.i = insertelement <4 x float> %vecinit.i, float %q, i32 1
   %vecinit4.i = insertelement <4 x float> %vecinit2.i, float %q, i32 2
@@ -954,7 +954,7 @@ define <2 x double> @test_mask_vfmadd128_pd_rz(<2 x double> %a0, <2 x double> %a
 define <2 x double> @test_mask_vfmadd128_pd_rmk(<2 x double> %a0, <2 x double> %a1, <2 x double>* %ptr_a2, i8 %mask) {
   ; CHECK-LABEL: test_mask_vfmadd128_pd_rmk
   ; CHECK: vfmadd213pd	(%rdi), %xmm1, %xmm0 {%k1} ## encoding: [0x62,0xf2,0xf5,0x09,0xa8,0x07]
-  %a2 = load <2 x double>* %ptr_a2
+  %a2 = load <2 x double>, <2 x double>* %ptr_a2
   %res = call <2 x double> @llvm.x86.fma.mask.vfmadd.pd.128(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2, i8 %mask) nounwind
   ret <2 x double> %res
 }
@@ -962,7 +962,7 @@ define <2 x double> @test_mask_vfmadd128_pd_rmk(<2 x double> %a0, <2 x double> %
 define <2 x double> @test_mask_vfmadd128_pd_rmkz(<2 x double> %a0, <2 x double> %a1, <2 x double>* %ptr_a2) {
   ; CHECK-LABEL: test_mask_vfmadd128_pd_rmkz
   ; CHECK: vfmadd213pd	(%rdi), %xmm1, %xmm0 ## encoding: [0xc4,0xe2,0xf1,0xa8,0x07]
-  %a2 = load <2 x double>* %ptr_a2
+  %a2 = load <2 x double>, <2 x double>* %ptr_a2
   %res = call <2 x double> @llvm.x86.fma.mask.vfmadd.pd.128(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2, i8 -1) nounwind
   ret <2 x double> %res
 }
@@ -984,7 +984,7 @@ define <4 x double> @test_mask_vfmadd256_pd_rz(<4 x double> %a0, <4 x double> %a
 define <4 x double> @test_mask_vfmadd256_pd_rmk(<4 x double> %a0, <4 x double> %a1, <4 x double>* %ptr_a2, i8 %mask) {
   ; CHECK-LABEL: test_mask_vfmadd256_pd_rmk
   ; CHECK: vfmadd213pd	(%rdi), %ymm1, %ymm0 {%k1} ## encoding: [0x62,0xf2,0xf5,0x29,0xa8,0x07]
-  %a2 = load <4 x double>* %ptr_a2
+  %a2 = load <4 x double>, <4 x double>* %ptr_a2
   %res = call <4 x double> @llvm.x86.fma.mask.vfmadd.pd.256(<4 x double> %a0, <4 x double> %a1, <4 x double> %a2, i8 %mask) nounwind
   ret <4 x double> %res
 }
@@ -992,7 +992,7 @@ define <4 x double> @test_mask_vfmadd256_pd_rmk(<4 x double> %a0, <4 x double> %
 define <4 x double> @test_mask_vfmadd256_pd_rmkz(<4 x double> %a0, <4 x double> %a1, <4 x double>* %ptr_a2) {
   ; CHECK-LABEL: test_mask_vfmadd256_pd_rmkz
   ; CHECK: vfmadd213pd	(%rdi), %ymm1, %ymm0 ## encoding: [0xc4,0xe2,0xf5,0xa8,0x07]
-  %a2 = load <4 x double>* %ptr_a2
+  %a2 = load <4 x double>, <4 x double>* %ptr_a2
   %res = call <4 x double> @llvm.x86.fma.mask.vfmadd.pd.256(<4 x double> %a0, <4 x double> %a1, <4 x double> %a2, i8 -1) nounwind
   ret <4 x double> %res
 }

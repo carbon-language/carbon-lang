@@ -30,13 +30,13 @@ define void @leaf() nounwind {
   br label %"@CFE_debug_label_0"
 
 "@CFE_debug_label_0":                             ; preds = %"file foo2.c, line 14, bb2"
-  %r = load %test** bitcast ([1 x i64]* @ptr to %test**), align 8 ; <%test*> [#uses=1]
+  %r = load %test*, %test** bitcast ([1 x i64]* @ptr to %test**), align 8 ; <%test*> [#uses=1]
   store %test* %r, %test** %p, align 8
   br label %"@CFE_debug_label_2"
 
 "@CFE_debug_label_2":                             ; preds = %"@CFE_debug_label_0"
-  %r1 = load %link** bitcast ([1 x i64]* @link_ptr to %link**), align 8 ; <%link*> [#uses=1]
-  %r2 = load %test** %p, align 8                  ; <%test*> [#uses=1]
+  %r1 = load %link*, %link** bitcast ([1 x i64]* @link_ptr to %link**), align 8 ; <%link*> [#uses=1]
+  %r2 = load %test*, %test** %p, align 8                  ; <%test*> [#uses=1]
   %r3 = ptrtoint %test* %r2 to i64                ; <i64> [#uses=1]
   %r4 = inttoptr i64 %r3 to %link**               ; <%link**> [#uses=1]
   %r5 = getelementptr %link*, %link** %r4, i64 1          ; <%link**> [#uses=1]
@@ -44,7 +44,7 @@ define void @leaf() nounwind {
   br label %"@CFE_debug_label_3"
 
 "@CFE_debug_label_3":                             ; preds = %"@CFE_debug_label_2"
-  %r6 = load %test** %p, align 8                  ; <%test*> [#uses=1]
+  %r6 = load %test*, %test** %p, align 8                  ; <%test*> [#uses=1]
   %r7 = ptrtoint %test* %r6 to i64                ; <i64> [#uses=1]
   %r8 = inttoptr i64 %r7 to %link*                ; <%link*> [#uses=1]
   %r9 = getelementptr %link, %link* %r8, i64 1           ; <%link*> [#uses=1]
@@ -52,7 +52,7 @@ define void @leaf() nounwind {
   br label %"@CFE_debug_label_4"
 
 "@CFE_debug_label_4":                             ; preds = %"@CFE_debug_label_3"
-  %r10 = load %test** %p, align 8                 ; <%test*> [#uses=1]
+  %r10 = load %test*, %test** %p, align 8                 ; <%test*> [#uses=1]
   %r11 = ptrtoint %test* %r10 to i64              ; <i64> [#uses=1]
   %r12 = inttoptr i64 %r11 to i32*                ; <i32*> [#uses=1]
   store i32 1, i32* %r12, align 4

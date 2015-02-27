@@ -15,6 +15,6 @@ define i32 @test3() {
 	%tmp = alloca i32, align 4
 	%a = alloca [805306369 x i8], align 16
 	store i32 0, i32* %tmp
-	%tmp1 = load i32* %tmp
+	%tmp1 = load i32, i32* %tmp
         ret i32 %tmp1
 }

@@ -43,19 +43,19 @@ entry:
   call void @llvm.memset.p0i8.i64(i8* %8, i8 0, i64 11104, i32 32, i1 false)
   %b = getelementptr inbounds %struct.S2760, %struct.S2760* %arg0, i32 0, i32 1
   %g = getelementptr inbounds %struct.anon, %struct.anon* %b, i32 0, i32 1
-  %9 = load i64* %g, align 8
-  %10 = load i64* getelementptr inbounds (%struct.S2760* @s2760, i32 0, i32 1, i32 1), align 8
+  %9 = load i64, i64* %g, align 8
+  %10 = load i64, i64* getelementptr inbounds (%struct.S2760* @s2760, i32 0, i32 1, i32 1), align 8
   %cmp = icmp ne i64 %9, %10
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:                                          ; preds = %entry
-  %11 = load i32* @fails, align 4
+  %11 = load i32, i32* @fails, align 4
   %inc = add nsw i32 %11, 1
   store i32 %inc, i32* @fails, align 4
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %entry
-  %12 = load i64* getelementptr inbounds (%struct.S2760* @s2760, i32 0, i32 1, i32 1), align 8
+  %12 = load i64, i64* getelementptr inbounds (%struct.S2760* @s2760, i32 0, i32 1, i32 1), align 8
   %b3 = getelementptr inbounds %struct.S2760, %struct.S2760* %ret, i32 0, i32 1
   %g4 = getelementptr inbounds %struct.anon, %struct.anon* %b3, i32 0, i32 1
   store i64 %12, i64* %g4, align 8

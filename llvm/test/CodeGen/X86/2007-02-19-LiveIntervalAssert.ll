@@ -6,9 +6,9 @@
 @stderr = external global %struct._IO_FILE*
 
 define void @__eprintf(i8* %string, i8* %expression, i32 %line, i8* %filename) {
-	%tmp = load %struct._IO_FILE** @stderr
+	%tmp = load %struct._IO_FILE*, %struct._IO_FILE** @stderr
 	%tmp5 = tail call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf( %struct._IO_FILE* %tmp, i8* %string, i8* %expression, i32 %line, i8* %filename )
-	%tmp6 = load %struct._IO_FILE** @stderr
+	%tmp6 = load %struct._IO_FILE*, %struct._IO_FILE** @stderr
 	%tmp7 = tail call i32 @fflush( %struct._IO_FILE* %tmp6 )
 	tail call void @abort( )
 	unreachable

@@ -11,12 +11,12 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.S* %s1, metadata !0, metadata !{!"0x102"}), !dbg !16
   %1 = call i32 @_ZN1S3fooEv(%struct.S* %s1) nounwind, !dbg !17 ; <i32> [#uses=1]
   store i32 %1, i32* %0, align 4, !dbg !17
-  %2 = load i32* %0, align 4, !dbg !17            ; <i32> [#uses=1]
+  %2 = load i32, i32* %0, align 4, !dbg !17            ; <i32> [#uses=1]
   store i32 %2, i32* %retval, align 4, !dbg !17
   br label %return, !dbg !17
 
 return:                                           ; preds = %entry
-  %retval1 = load i32* %retval, !dbg !17          ; <i32> [#uses=1]
+  %retval1 = load i32, i32* %retval, !dbg !17          ; <i32> [#uses=1]
   ret i32 %retval1, !dbg !16
 }
 
@@ -30,7 +30,7 @@ entry:
   br label %return, !dbg !21
 
 return:                                           ; preds = %entry
-  %retval1 = load i32* %retval, !dbg !21          ; <i32> [#uses=1]
+  %retval1 = load i32, i32* %retval, !dbg !21          ; <i32> [#uses=1]
   ret i32 %retval1, !dbg !22
 }
 

@@ -225,7 +225,7 @@ define void @add_inline_imm_neg_4.0_f32(float addrspace(1)* %out, float %x) {
 ; CHECK: v_add_f32_e32 [[REG:v[0-9]+]], 0.5, [[VAL]]
 ; CHECK: buffer_store_dword [[REG]]
 define void @commute_add_inline_imm_0.5_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
-  %x = load float addrspace(1)* %in
+  %x = load float, float addrspace(1)* %in
   %y = fadd float %x, 0.5
   store float %y, float addrspace(1)* %out
   ret void
@@ -236,7 +236,7 @@ define void @commute_add_inline_imm_0.5_f32(float addrspace(1)* %out, float addr
 ; CHECK: v_add_f32_e32 [[REG:v[0-9]+]], 0x44800000, [[VAL]]
 ; CHECK: buffer_store_dword [[REG]]
 define void @commute_add_literal_f32(float addrspace(1)* %out, float addrspace(1)* %in) {
-  %x = load float addrspace(1)* %in
+  %x = load float, float addrspace(1)* %in
   %y = fadd float %x, 1024.0
   store float %y, float addrspace(1)* %out
   ret void

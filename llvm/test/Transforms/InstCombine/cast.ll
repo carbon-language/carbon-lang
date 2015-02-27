@@ -731,8 +731,8 @@ define %s @test68(%s *%p, i64 %i) {
   %pp = getelementptr inbounds i8, i8* %q, i64 %o
 ; CHECK-NEXT: getelementptr %s, %s*
   %r = bitcast i8* %pp to %s*
-  %l = load %s* %r
-; CHECK-NEXT: load %s*
+  %l = load %s, %s* %r
+; CHECK-NEXT: load %s, %s*
   ret %s %l
 ; CHECK-NEXT: ret %s
 }
@@ -741,13 +741,13 @@ define %s @test68(%s *%p, i64 %i) {
 define %s @test68_addrspacecast(%s* %p, i64 %i) {
 ; CHECK-LABEL: @test68_addrspacecast(
 ; CHECK-NEXT: getelementptr %s, %s*
-; CHECK-NEXT: load %s*
+; CHECK-NEXT: load %s, %s*
 ; CHECK-NEXT: ret %s
   %o = mul i64 %i, 12
   %q = addrspacecast %s* %p to i8 addrspace(2)*
   %pp = getelementptr inbounds i8, i8 addrspace(2)* %q, i64 %o
   %r = addrspacecast i8 addrspace(2)* %pp to %s*
-  %l = load %s* %r
+  %l = load %s, %s* %r
   ret %s %l
 }
 
@@ -755,13 +755,13 @@ define %s @test68_addrspacecast_2(%s* %p, i64 %i) {
 ; CHECK-LABEL: @test68_addrspacecast_2(
 ; CHECK-NEXT: getelementptr %s, %s* %p
 ; CHECK-NEXT: addrspacecast
-; CHECK-NEXT: load %s addrspace(1)*
+; CHECK-NEXT: load %s, %s addrspace(1)*
 ; CHECK-NEXT: ret %s
   %o = mul i64 %i, 12
   %q = addrspacecast %s* %p to i8 addrspace(2)*
   %pp = getelementptr inbounds i8, i8 addrspace(2)* %q, i64 %o
   %r = addrspacecast i8 addrspace(2)* %pp to %s addrspace(1)*
-  %l = load %s addrspace(1)* %r
+  %l = load %s, %s addrspace(1)* %r
   ret %s %l
 }
 
@@ -772,8 +772,8 @@ define %s @test68_as1(%s addrspace(1)* %p, i32 %i) {
   %pp = getelementptr inbounds i8, i8 addrspace(1)* %q, i32 %o
 ; CHECK-NEXT: getelementptr %s, %s addrspace(1)*
   %r = bitcast i8 addrspace(1)* %pp to %s addrspace(1)*
-  %l = load %s addrspace(1)* %r
-; CHECK-NEXT: load %s addrspace(1)*
+  %l = load %s, %s addrspace(1)* %r
+; CHECK-NEXT: load %s, %s addrspace(1)*
   ret %s %l
 ; CHECK-NEXT: ret %s
 }
@@ -785,8 +785,8 @@ define double @test69(double *%p, i64 %i) {
   %pp = getelementptr inbounds i8, i8* %q, i64 %o
 ; CHECK-NEXT: getelementptr inbounds double, double*
   %r = bitcast i8* %pp to double*
-  %l = load double* %r
-; CHECK-NEXT: load double*
+  %l = load double, double* %r
+; CHECK-NEXT: load double, double*
   ret double %l
 ; CHECK-NEXT: ret double
 }
@@ -799,8 +799,8 @@ define %s @test70(%s *%p, i64 %i) {
   %pp = getelementptr inbounds i8, i8* %q, i64 %o
 ; CHECK-NEXT: getelementptr inbounds %s, %s*
   %r = bitcast i8* %pp to %s*
-  %l = load %s* %r
-; CHECK-NEXT: load %s*
+  %l = load %s, %s* %r
+; CHECK-NEXT: load %s, %s*
   ret %s %l
 ; CHECK-NEXT: ret %s
 }
@@ -813,8 +813,8 @@ define double @test71(double *%p, i64 %i) {
   %pp = getelementptr i8, i8* %q, i64 %o
 ; CHECK-NEXT: getelementptr double, double*
   %r = bitcast i8* %pp to double*
-  %l = load double* %r
-; CHECK-NEXT: load double*
+  %l = load double, double* %r
+; CHECK-NEXT: load double, double*
   ret double %l
 ; CHECK-NEXT: ret double
 }
@@ -828,8 +828,8 @@ define double @test72(double *%p, i32 %i) {
   %pp = getelementptr inbounds i8, i8* %q, i64 %o
 ; CHECK-NEXT: getelementptr inbounds double, double*
   %r = bitcast i8* %pp to double*
-  %l = load double* %r
-; CHECK-NEXT: load double*
+  %l = load double, double* %r
+; CHECK-NEXT: load double, double*
   ret double %l
 ; CHECK-NEXT: ret double
 }
@@ -843,8 +843,8 @@ define double @test73(double *%p, i128 %i) {
   %pp = getelementptr inbounds i8, i8* %q, i64 %o
 ; CHECK-NEXT: getelementptr double, double*
   %r = bitcast i8* %pp to double*
-  %l = load double* %r
-; CHECK-NEXT: load double*
+  %l = load double, double* %r
+; CHECK-NEXT: load double, double*
   ret double %l
 ; CHECK-NEXT: ret double
 }
@@ -855,8 +855,8 @@ define double @test74(double *%p, i64 %i) {
   %pp = getelementptr inbounds i64, i64* %q, i64 %i
 ; CHECK-NEXT: getelementptr inbounds double, double*
   %r = bitcast i64* %pp to double*
-  %l = load double* %r
-; CHECK-NEXT: load double*
+  %l = load double, double* %r
+; CHECK-NEXT: load double, double*
   ret double %l
 ; CHECK-NEXT: ret double
 }
@@ -882,8 +882,8 @@ define %s @test76(%s *%p, i64 %i, i64 %j) {
   %pp = getelementptr inbounds i8, i8* %q, i64 %o2
 ; CHECK-NEXT: getelementptr %s, %s* %p, i64 %o2
   %r = bitcast i8* %pp to %s*
-  %l = load %s* %r
-; CHECK-NEXT: load %s*
+  %l = load %s, %s* %r
+; CHECK-NEXT: load %s, %s*
   ret %s %l
 ; CHECK-NEXT: ret %s
 }
@@ -898,8 +898,8 @@ define %s @test77(%s *%p, i64 %i, i64 %j) {
   %pp = getelementptr inbounds i8, i8* %q, i64 %o2
 ; CHECK-NEXT: getelementptr inbounds %s, %s* %p, i64 %o2
   %r = bitcast i8* %pp to %s*
-  %l = load %s* %r
-; CHECK-NEXT: load %s*
+  %l = load %s, %s* %r
+; CHECK-NEXT: load %s, %s*
   ret %s %l
 ; CHECK-NEXT: ret %s
 }
@@ -926,8 +926,8 @@ define %s @test78(%s *%p, i64 %i, i64 %j, i32 %k, i32 %l, i128 %m, i128 %n) {
   %pp = getelementptr inbounds i8, i8* %q, i64 %h
 ; CHECK-NEXT: getelementptr %s, %s* %p, i64 %h
   %r = bitcast i8* %pp to %s*
-  %load = load %s* %r
-; CHECK-NEXT: load %s*
+  %load = load %s, %s* %r
+; CHECK-NEXT: load %s, %s*
   ret %s %load
 ; CHECK-NEXT: ret %s
 }
@@ -942,7 +942,7 @@ define %s @test79(%s *%p, i64 %i, i32 %j) {
 ; CHECK: bitcast
   %pp = getelementptr inbounds i8, i8* %q, i32 %c
   %r = bitcast i8* %pp to %s*
-  %l = load %s* %r
+  %l = load %s, %s* %r
   ret %s %l
 }
 
@@ -954,8 +954,8 @@ define double @test80([100 x double]* %p, i32 %i) {
   %pp = getelementptr i8, i8* %q, i32 %tmp
 ; CHECK-NEXT: getelementptr [100 x double], [100 x double]*
   %r = bitcast i8* %pp to double*
-  %l = load double* %r
-; CHECK-NEXT: load double*
+  %l = load double, double* %r
+; CHECK-NEXT: load double, double*
   ret double %l
 ; CHECK-NEXT: ret double
 }
@@ -963,13 +963,13 @@ define double @test80([100 x double]* %p, i32 %i) {
 define double @test80_addrspacecast([100 x double] addrspace(1)* %p, i32 %i) {
 ; CHECK-LABEL: @test80_addrspacecast(
 ; CHECK-NEXT: getelementptr [100 x double], [100 x double] addrspace(1)* %p
-; CHECK-NEXT: load double addrspace(1)*
+; CHECK-NEXT: load double, double addrspace(1)*
 ; CHECK-NEXT: ret double
   %tmp = shl nsw i32 %i, 3
   %q = addrspacecast [100 x double] addrspace(1)* %p to i8 addrspace(2)*
   %pp = getelementptr i8, i8 addrspace(2)* %q, i32 %tmp
   %r = addrspacecast i8 addrspace(2)* %pp to double addrspace(1)*
-  %l = load double addrspace(1)* %r
+  %l = load double, double addrspace(1)* %r
   ret double %l
 }
 
@@ -977,13 +977,13 @@ define double @test80_addrspacecast_2([100 x double] addrspace(1)* %p, i32 %i) {
 ; CHECK-LABEL: @test80_addrspacecast_2(
 ; CHECK-NEXT: getelementptr [100 x double], [100 x double] addrspace(1)*
 ; CHECK-NEXT: addrspacecast double addrspace(1)*
-; CHECK-NEXT: load double addrspace(3)*
+; CHECK-NEXT: load double, double addrspace(3)*
 ; CHECK-NEXT: ret double
   %tmp = shl nsw i32 %i, 3
   %q = addrspacecast [100 x double] addrspace(1)* %p to i8 addrspace(2)*
   %pp = getelementptr i8, i8 addrspace(2)* %q, i32 %tmp
   %r = addrspacecast i8 addrspace(2)* %pp to double addrspace(3)*
-  %l = load double addrspace(3)* %r
+  %l = load double, double addrspace(3)* %r
   ret double %l
 }
 
@@ -995,8 +995,8 @@ define double @test80_as1([100 x double] addrspace(1)* %p, i16 %i) {
   %pp = getelementptr i8, i8 addrspace(1)* %q, i16 %tmp
 ; CHECK-NEXT: getelementptr [100 x double], [100 x double] addrspace(1)*
   %r = bitcast i8 addrspace(1)* %pp to double addrspace(1)*
-  %l = load double addrspace(1)* %r
-; CHECK-NEXT: load double addrspace(1)*
+  %l = load double, double addrspace(1)* %r
+; CHECK-NEXT: load double, double addrspace(1)*
   ret double %l
 ; CHECK-NEXT: ret double
 }
@@ -1006,7 +1006,7 @@ define double @test81(double *%p, float %f) {
   %q = bitcast double* %p to i8*
   %pp = getelementptr i8, i8* %q, i64 %i
   %r = bitcast i8* %pp to double*
-  %l = load double* %r
+  %l = load double, double* %r
   ret double %l
 }
 

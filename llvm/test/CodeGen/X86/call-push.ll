@@ -12,7 +12,7 @@ define i32 @decode_byte(%struct.decode_t* %decode) nounwind {
 entry:
         %tmp2 = getelementptr %struct.decode_t, %struct.decode_t* %decode, i32 0, i32 4           ; <i16*> [#uses=1]
         %tmp23 = bitcast i16* %tmp2 to i32*             ; <i32*> [#uses=1]
-        %tmp4 = load i32* %tmp23                ; <i32> [#uses=1]
+        %tmp4 = load i32, i32* %tmp23                ; <i32> [#uses=1]
         %tmp514 = lshr i32 %tmp4, 24            ; <i32> [#uses=1]
         %tmp56 = trunc i32 %tmp514 to i8                ; <i8> [#uses=1]
         %tmp7 = icmp eq i8 %tmp56, 0            ; <i1> [#uses=1]

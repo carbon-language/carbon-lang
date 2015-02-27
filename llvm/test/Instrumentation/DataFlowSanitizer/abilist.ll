@@ -24,7 +24,7 @@ declare void @custom1(i32 %a, i32 %b)
 ; CHECK: define linkonce_odr { i32, i16 } @"dfsw$custom2"(i32, i32, i16, i16)
 ; CHECK: %[[LABELRETURN2:.*]] = alloca i16
 ; CHECK: %[[RV:.*]] = call i32 @__dfsw_custom2
-; CHECK: %[[RVSHADOW:.*]] = load i16* %[[LABELRETURN2]]
+; CHECK: %[[RVSHADOW:.*]] = load i16, i16* %[[LABELRETURN2]]
 ; CHECK: insertvalue {{.*}}[[RV]], 0
 ; CHECK: insertvalue {{.*}}[[RVSHADOW]], 1
 ; CHECK: ret { i32, i16 }

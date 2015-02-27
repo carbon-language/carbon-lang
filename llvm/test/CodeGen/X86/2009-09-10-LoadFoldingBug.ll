@@ -26,7 +26,7 @@ invcont:                                          ; preds = %entry
 
 invcont1:                                         ; preds = %invcont
   %6 = getelementptr inbounds %struct.ComplexType, %struct.ComplexType* %2, i64 0, i32 0 ; <i32*> [#uses=1]
-  %7 = load i32* %6, align 4                      ; <i32> [#uses=1]
+  %7 = load i32, i32* %6, align 4                      ; <i32> [#uses=1]
   invoke void @booleanAndDataReply(i32 %7, i32 undef, i32 %requestID, i32 undef, i64 undef, i32 undef)
           to label %invcont2 unwind label %lpad
 

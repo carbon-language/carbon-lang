@@ -23,20 +23,20 @@ target triple = "i386--netbsd"
 ; Function Attrs: nounwind uwtable
 define i64 @fn1() #0 {
 entry:
-  %0 = load i32* @a, align 4, !tbaa !1
+  %0 = load i32, i32* @a, align 4, !tbaa !1
   %1 = inttoptr i32 %0 to %struct.XXH_state64_t*
   %total_len = getelementptr inbounds %struct.XXH_state64_t, %struct.XXH_state64_t* %1, i32 0, i32 0
-  %2 = load i32* %total_len, align 4, !tbaa !5
+  %2 = load i32, i32* %total_len, align 4, !tbaa !5
   %tobool = icmp eq i32 %2, 0
   br i1 %tobool, label %if.else, label %if.then
 
 if.then:                                          ; preds = %entry
   %v3 = getelementptr inbounds %struct.XXH_state64_t, %struct.XXH_state64_t* %1, i32 0, i32 3
-  %3 = load i64* %v3, align 4, !tbaa !8
+  %3 = load i64, i64* %v3, align 4, !tbaa !8
   %v4 = getelementptr inbounds %struct.XXH_state64_t, %struct.XXH_state64_t* %1, i32 0, i32 4
-  %4 = load i64* %v4, align 4, !tbaa !9
+  %4 = load i64, i64* %v4, align 4, !tbaa !9
   %v2 = getelementptr inbounds %struct.XXH_state64_t, %struct.XXH_state64_t* %1, i32 0, i32 2
-  %5 = load i64* %v2, align 4, !tbaa !10
+  %5 = load i64, i64* %v2, align 4, !tbaa !10
   %shl = shl i64 %5, 1
   %or = or i64 %shl, %5
   %shl2 = shl i64 %3, 2
@@ -54,7 +54,7 @@ if.then:                                          ; preds = %entry
   br label %if.end
 
 if.else:                                          ; preds = %entry
-  %6 = load i64* @b, align 8, !tbaa !11
+  %6 = load i64, i64* @b, align 8, !tbaa !11
   %xor10 = xor i64 %6, -4417276706812531889
   %mul11 = mul nsw i64 %xor10, 400714785074694791
   br label %if.end

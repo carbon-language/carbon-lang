@@ -7,9 +7,9 @@ entry:
 	%tmp4 = fsub double -0.000000e+00, %z.1		; <double> [#uses=1]
 	call void @casinh( { double, double }* sret  %memtmp, double %tmp4, double %z.0 ) nounwind 
 	%tmp19 = getelementptr { double, double }, { double, double }* %memtmp, i32 0, i32 0		; <double*> [#uses=1]
-	%tmp20 = load double* %tmp19, align 8		; <double> [#uses=1]
+	%tmp20 = load double, double* %tmp19, align 8		; <double> [#uses=1]
 	%tmp22 = getelementptr { double, double }, { double, double }* %memtmp, i32 0, i32 1		; <double*> [#uses=1]
-	%tmp23 = load double* %tmp22, align 8		; <double> [#uses=1]
+	%tmp23 = load double, double* %tmp22, align 8		; <double> [#uses=1]
 	%tmp32 = fsub double -0.000000e+00, %tmp20		; <double> [#uses=1]
 	%tmp37 = getelementptr { double, double }, { double, double }* %agg.result, i32 0, i32 0		; <double*> [#uses=1]
 	store double %tmp23, double* %tmp37, align 8

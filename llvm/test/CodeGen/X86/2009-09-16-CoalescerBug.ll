@@ -32,7 +32,7 @@ lor.lhs.false:                                    ; preds = %for.body
   br i1 %cmp16, label %for.end41, label %for.cond17.preheader
 
 for.cond17.preheader:                             ; preds = %lor.lhs.false
-  %tmp24 = load i32* @boot_cpu_id                 ; <i32> [#uses=1]
+  %tmp24 = load i32, i32* @boot_cpu_id                 ; <i32> [#uses=1]
   %shr26 = ashr i32 %tmp24, %and                  ; <i32> [#uses=1]
   br label %for.body20
 

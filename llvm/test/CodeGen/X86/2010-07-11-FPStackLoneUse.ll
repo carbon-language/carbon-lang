@@ -10,7 +10,7 @@ target triple = "x86_64-apple-darwin10.0.0"
 
 define void @_ZN7QVectorIdE4fillERKdi(double* nocapture %t) nounwind ssp align 2 {
 entry:
-  %tmp2 = load double* %t                         ; <double> [#uses=1]
+  %tmp2 = load double, double* %t                         ; <double> [#uses=1]
   br i1 undef, label %if.end, label %if.then
 
 if.then:                                          ; preds = %entry

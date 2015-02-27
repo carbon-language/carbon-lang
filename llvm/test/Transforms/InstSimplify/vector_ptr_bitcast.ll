@@ -14,7 +14,7 @@ target datalayout = "e-i64:64-f80:128-n8:16:32:64-S128"
                                           align 8
 
 define i64 @fn() {
-  %x = load <2 x i8*>* bitcast (%mst* @a to <2 x i8*>*), align 8
+  %x = load <2 x i8*>, <2 x i8*>* bitcast (%mst* @a to <2 x i8*>*), align 8
   %b = extractelement <2 x i8*> %x, i32 0
   %c = ptrtoint i8* %b to i64
   ; CHECK-LABEL: @fn
@@ -23,7 +23,7 @@ define i64 @fn() {
 }
 
 define i64 @fn2() {
-  %x = load <4 x i32*>* bitcast (%mst2* @b to <4 x i32*>*), align 8
+  %x = load <4 x i32*>, <4 x i32*>* bitcast (%mst2* @b to <4 x i32*>*), align 8
   %b = extractelement <4 x i32*> %x, i32 0
   %c = extractelement <4 x i32*> %x, i32 3
   %d = ptrtoint i32* %b to i64

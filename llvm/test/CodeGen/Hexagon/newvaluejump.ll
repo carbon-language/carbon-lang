@@ -9,10 +9,10 @@ entry:
 ; CHECK: if (cmp.eq(r{{[0-9]+}}.new, #0)) jump{{.}}
   %addr1 = alloca i32, align 4
   %addr2 = alloca i32, align 4
-  %0 = load i32* @i, align 4
+  %0 = load i32, i32* @i, align 4
   store i32 %0, i32* %addr1, align 4
   call void @bar(i32 1, i32 2)
-  %1 = load i32* @j, align 4
+  %1 = load i32, i32* @j, align 4
   %tobool = icmp ne i32 %1, 0
   br i1 %tobool, label %if.then, label %if.else
 

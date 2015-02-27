@@ -60,7 +60,7 @@ define <2 x float> @vld2f(float* %A) nounwind {
 define <2 x float> @vld2f_update(float** %ptr) nounwind {
 ;CHECK-LABEL: vld2f_update:
 ;CHECK: vld2.32 {d16, d17}, [r1]!
-	%A = load float** %ptr
+	%A = load float*, float** %ptr
 	%tmp0 = bitcast float* %A to i8*
 	%tmp1 = call %struct.__neon_float32x2x2_t @llvm.arm.neon.vld2.v2f32(i8* %tmp0, i32 1)
 	%tmp2 = extractvalue %struct.__neon_float32x2x2_t %tmp1, 0
@@ -98,7 +98,7 @@ define <16 x i8> @vld2Qi8(i8* %A) nounwind {
 define <16 x i8> @vld2Qi8_update(i8** %ptr, i32 %inc) nounwind {
 ;CHECK-LABEL: vld2Qi8_update:
 ;CHECK: vld2.8 {d16, d17, d18, d19}, [r2:128], r1
-	%A = load i8** %ptr
+	%A = load i8*, i8** %ptr
 	%tmp1 = call %struct.__neon_int8x16x2_t @llvm.arm.neon.vld2.v16i8(i8* %A, i32 16)
         %tmp2 = extractvalue %struct.__neon_int8x16x2_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_int8x16x2_t %tmp1, 1

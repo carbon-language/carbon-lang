@@ -29,7 +29,7 @@ entry:
 ; ARMv7-ELF-NEXT: add r[[reg2]], pc
 ; ARMv7-ELF: ldr r[[reg3:[0-9]+]],
 ; ARMv7-ELF: ldr r[[reg2]], [r[[reg3]], r[[reg2]]]
-  %tmp = load i32* @g
+  %tmp = load i32, i32* @g
   ret i32 %tmp
 }
 
@@ -60,6 +60,6 @@ entry:
 ; ARMv7-ELF-NEXT: add r[[reg5]], pc
 ; ARMv7-ELF: ldr r[[reg6:[0-9]+]],
 ; ARMv7-ELF: ldr r[[reg5]], [r[[reg6]], r[[reg5]]]
-  %tmp = load i32* @i
+  %tmp = load i32, i32* @i
   ret i32 %tmp
 }

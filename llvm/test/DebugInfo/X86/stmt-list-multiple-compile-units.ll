@@ -61,7 +61,7 @@ entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %a.addr, metadata !15, metadata !{!"0x102"}), !dbg !16
-  %0 = load i32* %a.addr, align 4, !dbg !17
+  %0 = load i32, i32* %a.addr, align 4, !dbg !17
   %call = call i32 @fn(i32 %0), !dbg !17
   ret i32 %call, !dbg !17
 }
@@ -73,7 +73,7 @@ entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %a.addr, metadata !19, metadata !{!"0x102"}), !dbg !20
-  %0 = load i32* %a.addr, align 4, !dbg !21
+  %0 = load i32, i32* %a.addr, align 4, !dbg !21
   ret i32 %0, !dbg !21
 }
 

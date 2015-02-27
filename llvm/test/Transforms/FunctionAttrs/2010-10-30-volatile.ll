@@ -5,6 +5,6 @@
 
 define void @foo() {
 ; CHECK: void @foo() {
-  %tmp = load volatile i32* @g
+  %tmp = load volatile i32, i32* @g
   ret void
 }

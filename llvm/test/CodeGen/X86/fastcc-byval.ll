@@ -17,7 +17,7 @@ define fastcc i32 @bar() nounwind {
 	%a = getelementptr %struct.MVT, %struct.MVT* %V, i32 0, i32 0
 	store i32 1, i32* %a
 	call fastcc void @foo(%struct.MVT* byval %V) nounwind
-	%t = load i32* %a
+	%t = load i32, i32* %a
 	ret i32 %t
 }
 

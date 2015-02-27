@@ -12,13 +12,13 @@
 ; A test from pifft (after SLP-vectorization) that fails when we drop the chain on newly merged loads.
 define void @cftx020(double* nocapture %a) {
 entry:
-  %0 = load double* %a, align 8
+  %0 = load double, double* %a, align 8
   %arrayidx1 = getelementptr inbounds double, double* %a, i64 2
-  %1 = load double* %arrayidx1, align 8
+  %1 = load double, double* %arrayidx1, align 8
   %arrayidx2 = getelementptr inbounds double, double* %a, i64 1
-  %2 = load double* %arrayidx2, align 8
+  %2 = load double, double* %arrayidx2, align 8
   %arrayidx3 = getelementptr inbounds double, double* %a, i64 3
-  %3 = load double* %arrayidx3, align 8
+  %3 = load double, double* %arrayidx3, align 8
   %4 = insertelement <2 x double> undef, double %0, i32 0
   %5 = insertelement <2 x double> %4, double %3, i32 1
   %6 = insertelement <2 x double> undef, double %1, i32 0

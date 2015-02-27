@@ -24,7 +24,7 @@ for.body:                                         ; preds = %entry, %for.body
   %idxprom2 = sext i32 %shl1 to i64
   %arrayidx.sum = add nsw i64 %idxprom2, %idxprom
   %arrayidx3 = getelementptr inbounds [4096 x i32], [4096 x i32]* @phasor, i64 0, i64 %arrayidx.sum
-  %1 = load i32* %arrayidx3, align 4
+  %1 = load i32, i32* %arrayidx3, align 4
   %arrayidx5 = getelementptr inbounds i32, i32* %out, i64 %indvars.iv
   store i32 %1, i32* %arrayidx5, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 4

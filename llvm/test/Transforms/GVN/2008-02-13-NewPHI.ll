@@ -8,7 +8,7 @@ entry:
 	br label %bb33
 
 bb:		; preds = %bb33
-	%tmp27 = load float** %sx_addr, align 4		; <float*> [#uses=1]
+	%tmp27 = load float*, float** %sx_addr, align 4		; <float*> [#uses=1]
 	store float 0.000000e+00, float* %tmp27, align 4
 	store float* null, float** %sx_addr, align 4
 	br label %bb33
@@ -17,6 +17,6 @@ bb33:		; preds = %bb, %entry
 	br i1 false, label %bb, label %return
 
 return:		; preds = %bb33
-	%retval59 = load i32* null, align 4		; <i32> [#uses=1]
+	%retval59 = load i32, i32* null, align 4		; <i32> [#uses=1]
 	ret i32 %retval59
 }

@@ -10,7 +10,7 @@ define i32 @foo(i32 %x) nounwind ssp uwtable {
   %1 = alloca i32, align 4
   %2 = alloca i32, align 4
   store i32 %x, i32* %2, align 4
-  %3 = load i32* %2, align 4
+  %3 = load i32, i32* %2, align 4
   switch i32 %3, label %9 [
 ; CHECK: switch i32 %3, label %9
     i32 -3, label %4
@@ -63,6 +63,6 @@ define i32 @foo(i32 %x) nounwind ssp uwtable {
   br label %11
 
 ; <label>:11
-  %12 = load i32* %1
+  %12 = load i32, i32* %1
   ret i32 %12
 }

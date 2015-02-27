@@ -10,15 +10,15 @@ define i32 @foo() {
 entry:
 	%retval = alloca i32, align 4		; <i32*> [#uses=1]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
-	%tmp = load float* @f		; <float> [#uses=1]
+	%tmp = load float, float* @f		; <float> [#uses=1]
 	%tmp1 = fpext float %tmp to double		; <double> [#uses=1]
-	%tmp2 = load double* @d		; <double> [#uses=1]
+	%tmp2 = load double, double* @d		; <double> [#uses=1]
 	%tmp3 = fmul double %tmp1, %tmp2		; <double> [#uses=1]
 	%tmp4 = fpext double %tmp3 to fp128		; <fp128> [#uses=1]
 	store fp128 %tmp4, fp128* @ld
 	br label %return
 
 return:		; preds = %entry
-	%retval4 = load i32* %retval		; <i32> [#uses=1]
+	%retval4 = load i32, i32* %retval		; <i32> [#uses=1]
 	ret i32 %retval4
 }

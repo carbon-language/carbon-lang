@@ -25,9 +25,9 @@ entry:
 
 if.then:                                         ; preds = %entry
   %0 = getelementptr inbounds %class.D, %class.D* %address2, i64 0, i32 0, i64 0, i32 0
-  %1 = load float* %0, align 4 
+  %1 = load float, float* %0, align 4 
   %2 = getelementptr inbounds float, float* %0, i64 3
-  %3 = load float* %2, align 4 
+  %3 = load float, float* %2, align 4 
   %4 = getelementptr inbounds %class.D, %class.D* %address1, i64 0, i32 0, i64 0, i32 0
   store float %1, float* %4, align 4
   br label %if.end

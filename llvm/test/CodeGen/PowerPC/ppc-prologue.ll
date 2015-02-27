@@ -14,12 +14,12 @@ entry:
   store i32 %a, i32* %a_addr
   %1 = call i32 @_Z3barPi(i32* %a_addr)           ; <i32> [#uses=1]
   store i32 %1, i32* %0, align 4
-  %2 = load i32* %0, align 4                      ; <i32> [#uses=1]
+  %2 = load i32, i32* %0, align 4                      ; <i32> [#uses=1]
   store i32 %2, i32* %retval, align 4
   br label %return
 
 return:                                           ; preds = %entry
-  %retval1 = load i32* %retval                    ; <i32> [#uses=1]
+  %retval1 = load i32, i32* %retval                    ; <i32> [#uses=1]
   ret i32 %retval1
 }
 

@@ -8,7 +8,7 @@ target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 ; CHECK-NOT: stur
 define i8* @test(i32 %size) {
 entry:
-  %0 = load i8** @end_of_array, align 8
+  %0 = load i8*, i8** @end_of_array, align 8
   %conv = sext i32 %size to i64
   %and = and i64 %conv, -8
   %conv2 = trunc i64 %and to i32

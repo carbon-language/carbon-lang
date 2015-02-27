@@ -83,10 +83,10 @@ for.end:                                          ; preds = %for.body
   %sub = add nsw i32 %IntParI1, 4, !dbg !78
   %idxprom14 = sext i32 %sub to i64, !dbg !78
   %arrayidx17 = getelementptr inbounds [51 x i32], [51 x i32]* %Array2Par, i64 %idxprom, i64 %idxprom14, !dbg !78
-  %0 = load i32* %arrayidx17, align 4, !dbg !78
+  %0 = load i32, i32* %arrayidx17, align 4, !dbg !78
   %inc18 = add nsw i32 %0, 1, !dbg !78
   store i32 %inc18, i32* %arrayidx17, align 4, !dbg !78
-  %1 = load i32* %arrayidx, align 4, !dbg !79
+  %1 = load i32, i32* %arrayidx, align 4, !dbg !79
   %add22 = add nsw i32 %IntParI1, 25, !dbg !79
   %idxprom23 = sext i32 %add22 to i64, !dbg !79
   %arrayidx25 = getelementptr inbounds [51 x i32], [51 x i32]* %Array2Par, i64 %idxprom23, i64 %idxprom, !dbg !79

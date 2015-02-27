@@ -12,8 +12,8 @@ define void @shift_parts_left_128(i128* %val, i128* %amtptr) {
 ; CHECK: setp.gt.s32
 ; CHECK: selp.b64
 ; CHECK: shl.b64
-  %amt = load i128* %amtptr
-  %a = load i128* %val
+  %amt = load i128, i128* %amtptr
+  %a = load i128, i128* %val
   %val0 = shl i128 %a, %amt
   store i128 %val0, i128* %val
   ret void
@@ -30,8 +30,8 @@ define void @shift_parts_right_128(i128* %val, i128* %amtptr) {
 ; CHECK: setp.gt.s32
 ; CHECK: selp.b64
 ; CHECK: shr.s64
-  %amt = load i128* %amtptr
-  %a = load i128* %val
+  %amt = load i128, i128* %amtptr
+  %a = load i128, i128* %val
   %val0 = ashr i128 %a, %amt
   store i128 %val0, i128* %val
   ret void

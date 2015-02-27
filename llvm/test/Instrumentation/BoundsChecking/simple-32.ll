@@ -11,7 +11,7 @@ entry:
   %packed1 = alloca %struct.s2_packed, align 8
   %gep = getelementptr inbounds %struct.s2_packed, %struct.s2_packed* %packed1, i32 0, i32 4
   %ptr = bitcast i16* %gep to i32*
-  %val = load i32* %ptr, align 4
+  %val = load i32, i32* %ptr, align 4
   %valt = trunc i32 %val to i16
   ret i16 %valt
 }
@@ -23,7 +23,7 @@ entry:
   %packed1 = alloca %struct.s2_packed, align 8
   %gep = getelementptr inbounds %struct.s2_packed, %struct.s2_packed* %packed1, i32 0, i32 4
   %ptr = bitcast i16* %gep to i48*
-  %val = load i48* %ptr, align 4
+  %val = load i48, i48* %ptr, align 4
   %valt = trunc i48 %val to i16
   ret i16 %valt
 }

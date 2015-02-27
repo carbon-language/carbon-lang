@@ -21,7 +21,7 @@ entry:
   br i1 %tst, label %bb.nph96, label %bb3
 
 bb3:                                              ; preds = %entry
-  %1 = load i64* %0, align 4                      ; <i64> [#uses=0]
+  %1 = load i64, i64* %0, align 4                      ; <i64> [#uses=0]
   ret i8 42
 
 bb.nph96:                                         ; preds = %entry

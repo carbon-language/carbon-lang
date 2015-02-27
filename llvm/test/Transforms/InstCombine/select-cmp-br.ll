@@ -10,12 +10,12 @@ declare void @foobar()
 define void @test1(%C*) {
 entry:
   %1 = getelementptr inbounds %C, %C* %0, i64 0, i32 0, i32 0
-  %m = load i64** %1, align 8
+  %m = load i64*, i64** %1, align 8
   %2 = getelementptr inbounds %C, %C* %0, i64 1, i32 0, i32 0
-  %n = load i64** %2, align 8
+  %n = load i64*, i64** %2, align 8
   %3 = getelementptr inbounds i64, i64* %m, i64 9
   %4 = bitcast i64* %3 to i64 (%C*)**
-  %5 = load i64 (%C*)** %4, align 8
+  %5 = load i64 (%C*)*, i64 (%C*)** %4, align 8
   %6 = icmp eq i64* %m, %n
   %7 = select i1 %6, %C* %0, %C* null
   %8 = icmp eq %C* %7, null
@@ -41,12 +41,12 @@ entry:
 define void @test2(%C*) {
 entry:
   %1 = getelementptr inbounds %C, %C* %0, i64 0, i32 0, i32 0
-  %m = load i64** %1, align 8
+  %m = load i64*, i64** %1, align 8
   %2 = getelementptr inbounds %C, %C* %0, i64 1, i32 0, i32 0
-  %n = load i64** %2, align 8
+  %n = load i64*, i64** %2, align 8
   %3 = getelementptr inbounds i64, i64* %m, i64 9
   %4 = bitcast i64* %3 to i64 (%C*)**
-  %5 = load i64 (%C*)** %4, align 8
+  %5 = load i64 (%C*)*, i64 (%C*)** %4, align 8
   %6 = icmp eq i64* %m, %n
   %7 = select i1 %6, %C* null, %C* %0
   %8 = icmp eq %C* %7, null
@@ -72,12 +72,12 @@ entry:
 define void @test3(%C*) {
 entry:
   %1 = getelementptr inbounds %C, %C* %0, i64 0, i32 0, i32 0
-  %m = load i64** %1, align 8
+  %m = load i64*, i64** %1, align 8
   %2 = getelementptr inbounds %C, %C* %0, i64 1, i32 0, i32 0
-  %n = load i64** %2, align 8
+  %n = load i64*, i64** %2, align 8
   %3 = getelementptr inbounds i64, i64* %m, i64 9
   %4 = bitcast i64* %3 to i64 (%C*)**
-  %5 = load i64 (%C*)** %4, align 8
+  %5 = load i64 (%C*)*, i64 (%C*)** %4, align 8
   %6 = icmp eq i64* %m, %n
   %7 = select i1 %6, %C* %0, %C* null
   %8 = icmp ne %C* %7, null
@@ -103,12 +103,12 @@ entry:
 define void @test4(%C*) {
 entry:
   %1 = getelementptr inbounds %C, %C* %0, i64 0, i32 0, i32 0
-  %m = load i64** %1, align 8
+  %m = load i64*, i64** %1, align 8
   %2 = getelementptr inbounds %C, %C* %0, i64 1, i32 0, i32 0
-  %n = load i64** %2, align 8
+  %n = load i64*, i64** %2, align 8
   %3 = getelementptr inbounds i64, i64* %m, i64 9
   %4 = bitcast i64* %3 to i64 (%C*)**
-  %5 = load i64 (%C*)** %4, align 8
+  %5 = load i64 (%C*)*, i64 (%C*)** %4, align 8
   %6 = icmp eq i64* %m, %n
   %7 = select i1 %6, %C* null, %C* %0
   %8 = icmp ne %C* %7, null

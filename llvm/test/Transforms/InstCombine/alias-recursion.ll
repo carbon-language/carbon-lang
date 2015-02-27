@@ -19,6 +19,6 @@ for.body:                                         ; preds = %for.body, %entry
 
 for.end:                                          ; preds = %for.body, %entry
   %A = phi i32 (%class.A*)** [ bitcast (i8** @vtbl to i32 (%class.A*)**), %for.body ], [ null, %entry ]
-  %B = load i32 (%class.A*)** %A
+  %B = load i32 (%class.A*)*, i32 (%class.A*)** %A
   ret i32 (%class.A*)* %B
 }

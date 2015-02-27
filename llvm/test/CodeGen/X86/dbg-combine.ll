@@ -31,7 +31,7 @@ entry:
   %cleanup.dest.slot = alloca i32
   call void @llvm.dbg.declare(metadata i32* %elems, metadata !12, metadata !13), !dbg !14
   store i32 3, i32* %elems, align 4, !dbg !14
-  %0 = load i32* %elems, align 4, !dbg !15
+  %0 = load i32, i32* %elems, align 4, !dbg !15
   %1 = zext i32 %0 to i64, !dbg !16
   %2 = call i8* @llvm.stacksave(), !dbg !16
   store i8* %2, i8** %saved_stack, !dbg !16
@@ -43,16 +43,16 @@ entry:
   store i32 1, i32* %arrayidx1, align 4, !dbg !26
   %arrayidx2 = getelementptr inbounds i32, i32* %vla, i64 2, !dbg !27
   store i32 2, i32* %arrayidx2, align 4, !dbg !28
-  %3 = load i32* %elems, align 4, !dbg !29
+  %3 = load i32, i32* %elems, align 4, !dbg !29
   %4 = zext i32 %3 to i64, !dbg !30
   %vla3 = alloca i32, i64 %4, align 16, !dbg !30
   call void @llvm.dbg.declare(metadata i32* %vla3, metadata !31, metadata !21), !dbg !32
   %arrayidx4 = getelementptr inbounds i32, i32* %vla3, i64 0, !dbg !33
   store i32 1, i32* %arrayidx4, align 4, !dbg !34
   %arrayidx5 = getelementptr inbounds i32, i32* %vla3, i64 0, !dbg !35
-  %5 = load i32* %arrayidx5, align 4, !dbg !35
+  %5 = load i32, i32* %arrayidx5, align 4, !dbg !35
   store i32 1, i32* %cleanup.dest.slot
-  %6 = load i8** %saved_stack, !dbg !36
+  %6 = load i8*, i8** %saved_stack, !dbg !36
   call void @llvm.stackrestore(i8* %6), !dbg !36
   ret i32 %5, !dbg !36
 }

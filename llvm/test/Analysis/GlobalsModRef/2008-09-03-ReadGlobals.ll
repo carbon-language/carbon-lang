@@ -3,7 +3,7 @@
 @g = internal global i32 0		; <i32*> [#uses=2]
 
 define i32 @r() {
-	%tmp = load i32* @g		; <i32> [#uses=1]
+	%tmp = load i32, i32* @g		; <i32> [#uses=1]
 	ret i32 %tmp
 }
 

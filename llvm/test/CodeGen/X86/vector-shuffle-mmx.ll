@@ -19,7 +19,7 @@ define void @test0(<1 x i64>* %x) {
 ; X64-NEXT:    movq %xmm0, (%rdi)
 ; X64-NEXT:    retq
 entry:
-  %tmp2 = load <1 x i64>* %x
+  %tmp2 = load <1 x i64>, <1 x i64>* %x
   %tmp6 = bitcast <1 x i64> %tmp2 to <2 x i32>
   %tmp9 = shufflevector <2 x i32> %tmp6, <2 x i32> undef, <2 x i32> < i32 1, i32 1 >
   %tmp10 = bitcast <2 x i32> %tmp9 to <1 x i64>
@@ -97,7 +97,7 @@ define void @test2() nounwind {
 ; X64-NEXT:    movq %xmm0, (%rax)
 ; X64-NEXT:    retq
 entry:
-  %0 = load <2 x i32>* @tmp_V2i, align 8
+  %0 = load <2 x i32>, <2 x i32>* @tmp_V2i, align 8
   %1 = shufflevector <2 x i32> %0, <2 x i32> undef, <2 x i32> zeroinitializer
   store <2 x i32> %1, <2 x i32>* @tmp_V2i, align 8
   ret void

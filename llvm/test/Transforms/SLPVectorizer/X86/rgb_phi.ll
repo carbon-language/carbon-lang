@@ -33,11 +33,11 @@ target triple = "i386-apple-macosx10.9.0"
 
 define float @foo(float* nocapture readonly %A) {
 entry:
-  %0 = load float* %A, align 4
+  %0 = load float, float* %A, align 4
   %arrayidx1 = getelementptr inbounds float, float* %A, i64 1
-  %1 = load float* %arrayidx1, align 4
+  %1 = load float, float* %arrayidx1, align 4
   %arrayidx2 = getelementptr inbounds float, float* %A, i64 2
-  %2 = load float* %arrayidx2, align 4
+  %2 = load float, float* %arrayidx2, align 4
   br label %for.body
 
 for.body:                                         ; preds = %for.body.for.body_crit_edge, %entry
@@ -50,12 +50,12 @@ for.body:                                         ; preds = %for.body.for.body_c
   %add4 = fadd float %R.030, %mul
   %4 = add nsw i64 %indvars.iv, 1
   %arrayidx7 = getelementptr inbounds float, float* %A, i64 %4
-  %5 = load float* %arrayidx7, align 4
+  %5 = load float, float* %arrayidx7, align 4
   %mul8 = fmul float %5, 8.000000e+00
   %add9 = fadd float %G.031, %mul8
   %6 = add nsw i64 %indvars.iv, 2
   %arrayidx12 = getelementptr inbounds float, float* %A, i64 %6
-  %7 = load float* %arrayidx12, align 4
+  %7 = load float, float* %arrayidx12, align 4
   %mul13 = fmul float %7, 9.000000e+00
   %add14 = fadd float %B.032, %mul13
   %indvars.iv.next = add i64 %indvars.iv, 3
@@ -65,7 +65,7 @@ for.body:                                         ; preds = %for.body.for.body_c
 
 for.body.for.body_crit_edge:                      ; preds = %for.body
   %arrayidx3.phi.trans.insert = getelementptr inbounds float, float* %A, i64 %indvars.iv.next
-  %.pre = load float* %arrayidx3.phi.trans.insert, align 4
+  %.pre = load float, float* %arrayidx3.phi.trans.insert, align 4
   br label %for.body
 
 for.end:                                          ; preds = %for.body

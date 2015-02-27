@@ -6,6 +6,6 @@
 
 define i32 @main() {
 entry:
-	%tmp2 = load i32* getelementptr (%struct.anon* @teste, i32 0, i32 0), align 8		; <i32> [#uses=1]
+	%tmp2 = load i32, i32* getelementptr (%struct.anon* @teste, i32 0, i32 0), align 8		; <i32> [#uses=1]
 	ret i32 %tmp2
 }

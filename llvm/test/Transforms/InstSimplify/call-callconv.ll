@@ -42,7 +42,7 @@ define arm_aapcscc zeroext i1 @_strlen2(i8* %str) {
   %cmp = icmp ne i32 %call, 0
   ret i1 %cmp
 
-; CHECK: %[[STRLENFIRST:.*]] = load i8* %str
+; CHECK: %[[STRLENFIRST:.*]] = load i8, i8* %str
 ; CHECK: %[[CMP:.*]] = icmp ne i8 %[[STRLENFIRST]], 0
 ; CHECK: ret i1 %[[CMP]]
 }

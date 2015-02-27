@@ -25,7 +25,7 @@ ret_false:
 ; CHECK: btl
 
 define i32 @test3(i8* %ptr) nounwind {
-    %val = load i8* %ptr
+    %val = load i8, i8* %ptr
     %tmp = trunc i8 %val to i1
     br i1 %tmp, label %cond_true, label %cond_false
 cond_true:

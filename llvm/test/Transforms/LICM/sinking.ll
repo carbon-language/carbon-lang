@@ -93,7 +93,7 @@ Entry:
 	br label %Loop
 Loop:		; preds = %Loop, %Entry
 	%N_addr.0.pn = phi i32 [ %dec, %Loop ], [ %N, %Entry ]	
-	%tmp.6 = load i32* @X		; <i32> [#uses=1]
+	%tmp.6 = load i32, i32* @X		; <i32> [#uses=1]
 	%dec = add i32 %N_addr.0.pn, -1		; <i32> [#uses=1]
 	%tmp.1 = icmp ne i32 %N_addr.0.pn, 1		; <i1> [#uses=1]
 	br i1 %tmp.1, label %Loop, label %Out
@@ -101,7 +101,7 @@ Out:		; preds = %Loop
 	ret i32 %tmp.6
 ; CHECK-LABEL: @test5(
 ; CHECK:     Out:
-; CHECK-NEXT:  %tmp.6.le = load i32* @X
+; CHECK-NEXT:  %tmp.6.le = load i32, i32* @X
 ; CHECK-NEXT:  ret i32 %tmp.6.le
 }
 
@@ -119,14 +119,14 @@ define i32 @test6() {
 	br label %Loop
 Loop:
 	%dead = getelementptr %Ty, %Ty* @X2, i64 0, i32 0
-	%sunk2 = load i32* %dead
+	%sunk2 = load i32, i32* %dead
 	br i1 false, label %Loop, label %Out
 Out:		; preds = %Loop
 	ret i32 %sunk2
 ; CHECK-LABEL: @test6(
 ; CHECK:     Out:
 ; CHECK-NEXT:  %dead.le = getelementptr %Ty, %Ty* @X2, i64 0, i32 0
-; CHECK-NEXT:  %sunk2.le = load i32* %dead.le
+; CHECK-NEXT:  %sunk2.le = load i32, i32* %dead.le
 ; CHECK-NEXT:  ret i32 %sunk2.le
 }
 
@@ -174,7 +174,7 @@ Entry:
 Loop:		; preds = %Cont, %Entry
 	br i1 %C1, label %Cont, label %exit1
 Cont:		; preds = %Loop
-	%X = load i32* %P		; <i32> [#uses=2]
+	%X = load i32, i32* %P		; <i32> [#uses=2]
 	store i32 %X, i32* %Q
 	%V = add i32 %X, 1		; <i32> [#uses=1]
 	br i1 %C2, label %Loop, label %exit2
@@ -265,32 +265,32 @@ l1.header:
   br label %l2.header
 
 l2.header:
-  %x0 = load i1* %c, align 4
+  %x0 = load i1, i1* %c, align 4
   br i1 %x0, label %l1.latch, label %l3.preheader
 
 l3.preheader:
   br label %l3.header
 
 l3.header:
-  %x1 = load i1* %d, align 4
+  %x1 = load i1, i1* %d, align 4
   br i1 %x1, label %l2.latch, label %l4.preheader
 
 l4.preheader:
   br label %l4.header
 
 l4.header:
-  %x2 = load i1* %a
+  %x2 = load i1, i1* %a
   br i1 %x2, label %l3.latch, label %l4.body
 
 l4.body:
   call void @f(i32* %arrayidx.i)
-  %x3 = load i1* %b
+  %x3 = load i1, i1* %b
   %l = trunc i64 %iv to i32
   br i1 %x3, label %l4.latch, label %exit
 
 l4.latch:
   call void @g()
-  %x4 = load i1* %b, align 4
+  %x4 = load i1, i1* %b, align 4
   br i1 %x4, label %l4.header, label %exit
 
 l3.latch:

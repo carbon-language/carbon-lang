@@ -6,13 +6,13 @@
 
 define void @minmax(float* %result) nounwind optsize {
 entry:
-	%tmp2 = load float* %result, align 4		; <float> [#uses=6]
+	%tmp2 = load float, float* %result, align 4		; <float> [#uses=6]
 	%tmp4 = getelementptr float, float* %result, i32 2		; <float*> [#uses=5]
-	%tmp5 = load float* %tmp4, align 4		; <float> [#uses=10]
+	%tmp5 = load float, float* %tmp4, align 4		; <float> [#uses=10]
 	%tmp7 = getelementptr float, float* %result, i32 4		; <float*> [#uses=5]
-	%tmp8 = load float* %tmp7, align 4		; <float> [#uses=8]
+	%tmp8 = load float, float* %tmp7, align 4		; <float> [#uses=8]
 	%tmp10 = getelementptr float, float* %result, i32 6		; <float*> [#uses=3]
-	%tmp11 = load float* %tmp10, align 4		; <float> [#uses=8]
+	%tmp11 = load float, float* %tmp10, align 4		; <float> [#uses=8]
 	%tmp12 = fcmp olt float %tmp8, %tmp11		; <i1> [#uses=5]
 	br i1 %tmp12, label %bb, label %bb21
 
@@ -59,7 +59,7 @@ bb103:		; preds = %bb80, %bb72
 
 bb111:		; preds = %bb103, %bb80, %bb72, %bb50, %bb40, %bb26
 	%iftmp.0.0.in = phi float* [ %tmp10, %bb103 ], [ %result, %bb26 ], [ %result, %bb40 ], [ %result, %bb50 ], [ %tmp4.mux, %bb80 ], [ %tmp4.mux787, %bb72 ]		; <float*> [#uses=1]
-	%iftmp.0.0 = load float* %iftmp.0.0.in		; <float> [#uses=1]
+	%iftmp.0.0 = load float, float* %iftmp.0.0.in		; <float> [#uses=1]
 	%tmp125 = fcmp ogt float %tmp8, %tmp11		; <i1> [#uses=5]
 	br i1 %tmp125, label %bb128, label %bb136
 
@@ -106,15 +106,15 @@ bb218:		; preds = %bb195, %bb187
 
 bb226:		; preds = %bb218, %bb195, %bb187, %bb165, %bb155, %bb141
 	%iftmp.7.0.in = phi float* [ %tmp10, %bb218 ], [ %result, %bb141 ], [ %result, %bb155 ], [ %result, %bb165 ], [ %tmp4.mux789, %bb195 ], [ %tmp4.mux791, %bb187 ]		; <float*> [#uses=1]
-	%iftmp.7.0 = load float* %iftmp.7.0.in		; <float> [#uses=1]
+	%iftmp.7.0 = load float, float* %iftmp.7.0.in		; <float> [#uses=1]
 	%tmp229 = getelementptr float, float* %result, i32 1		; <float*> [#uses=7]
-	%tmp230 = load float* %tmp229, align 4		; <float> [#uses=6]
+	%tmp230 = load float, float* %tmp229, align 4		; <float> [#uses=6]
 	%tmp232 = getelementptr float, float* %result, i32 3		; <float*> [#uses=5]
-	%tmp233 = load float* %tmp232, align 4		; <float> [#uses=10]
+	%tmp233 = load float, float* %tmp232, align 4		; <float> [#uses=10]
 	%tmp235 = getelementptr float, float* %result, i32 5		; <float*> [#uses=5]
-	%tmp236 = load float* %tmp235, align 4		; <float> [#uses=8]
+	%tmp236 = load float, float* %tmp235, align 4		; <float> [#uses=8]
 	%tmp238 = getelementptr float, float* %result, i32 7		; <float*> [#uses=3]
-	%tmp239 = load float* %tmp238, align 4		; <float> [#uses=8]
+	%tmp239 = load float, float* %tmp238, align 4		; <float> [#uses=8]
 	%tmp240 = fcmp olt float %tmp236, %tmp239		; <i1> [#uses=5]
 	br i1 %tmp240, label %bb243, label %bb251
 
@@ -161,7 +161,7 @@ bb333:		; preds = %bb310, %bb302
 
 bb341:		; preds = %bb333, %bb310, %bb302, %bb280, %bb270, %bb256
 	%iftmp.14.0.in = phi float* [ %tmp238, %bb333 ], [ %tmp229, %bb280 ], [ %tmp229, %bb270 ], [ %tmp229, %bb256 ], [ %tmp232.mux, %bb310 ], [ %tmp232.mux794, %bb302 ]		; <float*> [#uses=1]
-	%iftmp.14.0 = load float* %iftmp.14.0.in		; <float> [#uses=1]
+	%iftmp.14.0 = load float, float* %iftmp.14.0.in		; <float> [#uses=1]
 	%tmp355 = fcmp ogt float %tmp236, %tmp239		; <i1> [#uses=5]
 	br i1 %tmp355, label %bb358, label %bb366
 
@@ -208,7 +208,7 @@ bb448:		; preds = %bb425, %bb417
 
 bb456:		; preds = %bb448, %bb425, %bb417, %bb395, %bb385, %bb371
 	%iftmp.21.0.in = phi float* [ %tmp238, %bb448 ], [ %tmp229, %bb395 ], [ %tmp229, %bb385 ], [ %tmp229, %bb371 ], [ %tmp232.mux796, %bb425 ], [ %tmp232.mux798, %bb417 ]		; <float*> [#uses=1]
-	%iftmp.21.0 = load float* %iftmp.21.0.in		; <float> [#uses=1]
+	%iftmp.21.0 = load float, float* %iftmp.21.0.in		; <float> [#uses=1]
 	%tmp458459 = fpext float %iftmp.21.0 to double		; <double> [#uses=1]
 	%tmp460461 = fpext float %iftmp.7.0 to double		; <double> [#uses=1]
 	%tmp462463 = fpext float %iftmp.14.0 to double		; <double> [#uses=1]

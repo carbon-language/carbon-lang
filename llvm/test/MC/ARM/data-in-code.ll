@@ -10,7 +10,7 @@
 ;; marking the data-in-code region.
 
 define void @foo(i32* %ptr) nounwind ssp {
-  %tmp = load i32* %ptr, align 4
+  %tmp = load i32, i32* %ptr, align 4
   switch i32 %tmp, label %default [
     i32 11, label %bb0
     i32 10, label %bb1

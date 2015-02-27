@@ -7,8 +7,8 @@ declare double @llvm.fabs.f64(double) #0
 ; SI: v_add_f64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], -v\[[0-9]+:[0-9]+\]}}
 define void @fsub_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                       double addrspace(1)* %in2) {
-  %r0 = load double addrspace(1)* %in1
-  %r1 = load double addrspace(1)* %in2
+  %r0 = load double, double addrspace(1)* %in1
+  %r1 = load double, double addrspace(1)* %in2
   %r2 = fsub double %r0, %r1
   store double %r2, double addrspace(1)* %out
   ret void
@@ -18,8 +18,8 @@ define void @fsub_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
 ; SI: v_add_f64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], -\|v\[[0-9]+:[0-9]+\]\|}}
 define void @fsub_fabs_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                            double addrspace(1)* %in2) {
-  %r0 = load double addrspace(1)* %in1
-  %r1 = load double addrspace(1)* %in2
+  %r0 = load double, double addrspace(1)* %in1
+  %r1 = load double, double addrspace(1)* %in2
   %r1.fabs = call double @llvm.fabs.f64(double %r1) #0
   %r2 = fsub double %r0, %r1.fabs
   store double %r2, double addrspace(1)* %out
@@ -30,8 +30,8 @@ define void @fsub_fabs_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
 ; SI: v_add_f64 {{v\[[0-9]+:[0-9]+\], |v\[[0-9]+:[0-9]+\]|, -v\[[0-9]+:[0-9]+\]}}
 define void @fsub_fabs_inv_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                                double addrspace(1)* %in2) {
-  %r0 = load double addrspace(1)* %in1
-  %r1 = load double addrspace(1)* %in2
+  %r0 = load double, double addrspace(1)* %in1
+  %r1 = load double, double addrspace(1)* %in2
   %r0.fabs = call double @llvm.fabs.f64(double %r0) #0
   %r2 = fsub double %r0.fabs, %r1
   store double %r2, double addrspace(1)* %out
@@ -86,8 +86,8 @@ define void @fsub_v2f64(<2 x double> addrspace(1)* %out, <2 x double> %a, <2 x d
 ; SI: v_add_f64 {{v\[[0-9]+:[0-9]+\], v\[[0-9]+:[0-9]+\], -v\[[0-9]+:[0-9]+\]}}
 define void @fsub_v4f64(<4 x double> addrspace(1)* %out, <4 x double> addrspace(1)* %in) {
   %b_ptr = getelementptr <4 x double>, <4 x double> addrspace(1)* %in, i32 1
-  %a = load <4 x double> addrspace(1)* %in
-  %b = load <4 x double> addrspace(1)* %b_ptr
+  %a = load <4 x double>, <4 x double> addrspace(1)* %in
+  %b = load <4 x double>, <4 x double> addrspace(1)* %b_ptr
   %result = fsub <4 x double> %a, %b
   store <4 x double> %result, <4 x double> addrspace(1)* %out
   ret void

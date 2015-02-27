@@ -2,7 +2,7 @@
 ; PR913
 
 define i32 @test(i32* %tmp1) {
-        %tmp.i = load i32* %tmp1                ; <i32> [#uses=1]
+        %tmp.i = load i32, i32* %tmp1                ; <i32> [#uses=1]
         %tmp = bitcast i32 %tmp.i to i32                ; <i32> [#uses=1]
         %tmp2.ui = lshr i32 %tmp, 5             ; <i32> [#uses=1]
         %tmp2 = bitcast i32 %tmp2.ui to i32             ; <i32> [#uses=1]

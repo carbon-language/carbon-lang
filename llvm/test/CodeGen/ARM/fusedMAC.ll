@@ -144,7 +144,7 @@ entry:
 define float @test_fnms_f32(float %a, float %b, float* %c) nounwind readnone ssp {
 ; CHECK: test_fnms_f32
 ; CHECK: vfnms.f32
-  %tmp1 = load float* %c, align 4
+  %tmp1 = load float, float* %c, align 4
   %tmp2 = fsub float -0.0, %tmp1
   %tmp3 = tail call float @llvm.fma.f32(float %a, float %b, float %tmp2) nounwind readnone
   ret float %tmp3 

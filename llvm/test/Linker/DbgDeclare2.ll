@@ -19,22 +19,22 @@ entry:
   br label %for.cond, !dbg !20
 
 for.cond:                                         ; preds = %for.inc, %entry
-  %0 = load i32* %i, align 4, !dbg !20
-  %1 = load i32* %argc.addr, align 4, !dbg !20
+  %0 = load i32, i32* %i, align 4, !dbg !20
+  %1 = load i32, i32* %argc.addr, align 4, !dbg !20
   %cmp = icmp slt i32 %0, %1, !dbg !20
   br i1 %cmp, label %for.body, label %for.end, !dbg !20
 
 for.body:                                         ; preds = %for.cond
-  %2 = load i32* %i, align 4, !dbg !21
+  %2 = load i32, i32* %i, align 4, !dbg !21
   %idxprom = sext i32 %2 to i64, !dbg !21
-  %3 = load i8*** %argv.addr, align 8, !dbg !21
+  %3 = load i8**, i8*** %argv.addr, align 8, !dbg !21
   %arrayidx = getelementptr inbounds i8*, i8** %3, i64 %idxprom, !dbg !21
-  %4 = load i8** %arrayidx, align 8, !dbg !21
+  %4 = load i8*, i8** %arrayidx, align 8, !dbg !21
   %call = call i32 @puts(i8* %4), !dbg !21
   br label %for.inc, !dbg !23
 
 for.inc:                                          ; preds = %for.body
-  %5 = load i32* %i, align 4, !dbg !20
+  %5 = load i32, i32* %i, align 4, !dbg !20
   %inc = add nsw i32 %5, 1, !dbg !20
   store i32 %inc, i32* %i, align 4, !dbg !20
   br label %for.cond, !dbg !20

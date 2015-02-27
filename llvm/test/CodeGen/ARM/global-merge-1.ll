@@ -55,12 +55,12 @@ declare i32 @calc(...) #1
 
 ; Function Attrs: nounwind ssp
 define internal void @calculate() #0 {
-  %1 = load <4 x i32>* bitcast ([5 x i32]* @bar to <4 x i32>*), align 4
-  %2 = load <4 x i32>* bitcast ([5 x i32]* @baz to <4 x i32>*), align 4
+  %1 = load <4 x i32>, <4 x i32>* bitcast ([5 x i32]* @bar to <4 x i32>*), align 4
+  %2 = load <4 x i32>, <4 x i32>* bitcast ([5 x i32]* @baz to <4 x i32>*), align 4
   %3 = mul <4 x i32> %2, %1
   store <4 x i32> %3, <4 x i32>* bitcast ([5 x i32]* @foo to <4 x i32>*), align 4
-  %4 = load i32* getelementptr inbounds ([5 x i32]* @bar, i32 0, i32 4), align 4, !tbaa !1
-  %5 = load i32* getelementptr inbounds ([5 x i32]* @baz, i32 0, i32 4), align 4, !tbaa !1
+  %4 = load i32, i32* getelementptr inbounds ([5 x i32]* @bar, i32 0, i32 4), align 4, !tbaa !1
+  %5 = load i32, i32* getelementptr inbounds ([5 x i32]* @baz, i32 0, i32 4), align 4, !tbaa !1
   %6 = mul nsw i32 %5, %4
   store i32 %6, i32* getelementptr inbounds ([5 x i32]* @foo, i32 0, i32 4), align 4, !tbaa !1
   ret void

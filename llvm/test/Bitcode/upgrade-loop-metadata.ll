@@ -10,7 +10,7 @@ entry:
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
-  %0 = load i32* %i, align 4
+  %0 = load i32, i32* %i, align 4
   %cmp = icmp slt i32 %0, 16
   br i1 %cmp, label %for.body, label %for.end, !llvm.loop !1
 
@@ -18,7 +18,7 @@ for.body:                                         ; preds = %for.cond
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body
-  %1 = load i32* %i, align 4
+  %1 = load i32, i32* %i, align 4
   %inc = add nsw i32 %1, 1
   store i32 %inc, i32* %i, align 4
   br label %for.cond

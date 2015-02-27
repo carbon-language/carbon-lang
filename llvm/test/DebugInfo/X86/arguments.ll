@@ -34,7 +34,7 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.foo* %f, metadata !19, metadata !{!"0x102"}), !dbg !20
   call void @llvm.dbg.declare(metadata %struct.foo* %g, metadata !21, metadata !{!"0x102"}), !dbg !20
   %i = getelementptr inbounds %struct.foo, %struct.foo* %f, i32 0, i32 0, !dbg !22
-  %0 = load i32* %i, align 4, !dbg !22
+  %0 = load i32, i32* %i, align 4, !dbg !22
   %inc = add nsw i32 %0, 1, !dbg !22
   store i32 %inc, i32* %i, align 4, !dbg !22
   ret void, !dbg !23

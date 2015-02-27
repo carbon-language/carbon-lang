@@ -19,7 +19,7 @@ for.body:
   %redux5 = phi i32 [ 0, %entry ], [ %inc.redux, %for.body ]
   %add.i = add i64 %add.i7, -1
   %kind_.i = getelementptr inbounds i32, i32* %ptr, i64 %add.i
-  %tmp.i1 = load i32* %kind_.i, align 4
+  %tmp.i1 = load i32, i32* %kind_.i, align 4
   %inc.redux = add i32 %tmp.i1, %redux5
   %inc4 = add i32 %i.06, 1
   %exitcond = icmp ne i32 %inc4, 1024
@@ -42,7 +42,7 @@ for.body:
   %redux5 = phi i32 [ 0, %entry ], [ %inc.redux, %for.body ]
   %add.i = add i128 %add.i7, -1
   %kind_.i = getelementptr inbounds i32, i32* %ptr, i128 %add.i
-  %tmp.i1 = load i32* %kind_.i, align 4
+  %tmp.i1 = load i32, i32* %kind_.i, align 4
   %inc.redux = add i32 %tmp.i1, %redux5
   %inc4 = add i32 %i.06, 1
   %exitcond = icmp ne i32 %inc4, 1024
@@ -66,7 +66,7 @@ for.body:
   %redux5 = phi i32 [ 0, %entry ], [ %inc.redux, %for.body ]
   %add.i = add i16 %add.i7, -1
   %kind_.i = getelementptr inbounds i32, i32* %ptr, i16 %add.i
-  %tmp.i1 = load i32* %kind_.i, align 4
+  %tmp.i1 = load i32, i32* %kind_.i, align 4
   %inc.redux = add i32 %tmp.i1, %redux5
   %inc4 = add i32 %i.06, 1
   %exitcond = icmp ne i32 %inc4, 1024

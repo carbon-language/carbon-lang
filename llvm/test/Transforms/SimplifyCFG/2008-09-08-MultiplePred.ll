@@ -4,7 +4,7 @@
 
 define i32 @func_127(i32 %p_129) nounwind {
 entry:
-	load i32* @g_103, align 4		; <i32>:0 [#uses=1]
+	load i32, i32* @g_103, align 4		; <i32>:0 [#uses=1]
 	icmp eq i32 %0, 0		; <i1>:1 [#uses=2]
 	br i1 %1, label %bb6.preheader, label %entry.return_crit_edge
 

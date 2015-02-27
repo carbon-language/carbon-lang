@@ -49,7 +49,7 @@ shortcirc_next.4:		; preds = %then.44
 
 no_exit.2:		; preds = %shortcirc_next.4
 	%tmp.897 = getelementptr i32, i32* %SubArrays.10, i64 0		; <i32*> [#uses=1]
-	%tmp.899 = load i32* %tmp.897		; <i32> [#uses=1]
+	%tmp.899 = load i32, i32* %tmp.897		; <i32> [#uses=1]
 	store i32 %tmp.899, i32* null
 	ret i32 0
 
@@ -79,7 +79,7 @@ shortcirc_next.8:		; preds = %shortcirc_next.7
 
 then.53:		; preds = %shortcirc_next.7, %label.17
 	%SubArrays.8 = phi i32* [ %SubArrays.10, %shortcirc_next.7 ], [ %SubArrays.10, %label.17 ]		; <i32*> [#uses=1]
-	%tmp.1023 = load i32* null		; <i32> [#uses=1]
+	%tmp.1023 = load i32, i32* null		; <i32> [#uses=1]
 	switch i32 %tmp.1023, label %loopentry.1 [
 	]
 

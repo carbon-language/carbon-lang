@@ -17,10 +17,10 @@ while.body:
   %ptr2_phi = phi i32* [ %ptr2, %entry ], [ %ptr2_inc, %while.body ]
   %result.09 = phi i32 [ 0 , %entry ], [ %add, %while.body ]
   %dec = add nsw i32 %num, -1
-  %0 = load i32* %ptr_phi, align 4
+  %0 = load i32, i32* %ptr_phi, align 4
   store i32 %0, i32* %ptr2_phi, align 4
-  %1 = load i32* %coeff, align 4
-  %2 = load i32* %ptr_phi, align 4
+  %1 = load i32, i32* %coeff, align 4
+  %2 = load i32, i32* %ptr_phi, align 4
   %mul = mul nsw i32 %1, %2
   %add = add nsw i32 %mul, %result.09
   %tobool = icmp eq i32 %dec, 0
@@ -52,10 +52,10 @@ while.body:
   %ptr2_phi = phi i32* [ %ptr_outer_phi2, %outer.while.header ], [ %ptr2_inc, %while.body ]
   %result.09 = phi i32 [ 0 , %outer.while.header ], [ %add, %while.body ]
   %dec = add nsw i32 %num, -1
-  %0 = load i32* %ptr_phi, align 4
+  %0 = load i32, i32* %ptr_phi, align 4
   store i32 %0, i32* %ptr2_phi, align 4
-  %1 = load i32* %coeff, align 4
-  %2 = load i32* %ptr_phi, align 4
+  %1 = load i32, i32* %coeff, align 4
+  %2 = load i32, i32* %ptr_phi, align 4
   %mul = mul nsw i32 %1, %2
   %add = add nsw i32 %mul, %result.09
   %tobool = icmp eq i32 %dec, 0

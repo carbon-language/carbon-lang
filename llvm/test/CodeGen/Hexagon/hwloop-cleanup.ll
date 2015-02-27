@@ -20,7 +20,7 @@ for.body:                                         ; preds = %for.body.preheader,
   %sum.03 = phi i32 [ %add, %for.body ], [ 0, %for.body.preheader ]
   %arrayidx.phi = phi i32* [ %arrayidx.inc, %for.body ], [ %b, %for.body.preheader ]
   %i.02 = phi i32 [ %inc, %for.body ], [ 0, %for.body.preheader ]
-  %0 = load i32* %arrayidx.phi, align 4
+  %0 = load i32, i32* %arrayidx.phi, align 4
   %add = add nsw i32 %0, %sum.03
   %inc = add nsw i32 %i.02, 1
   %exitcond = icmp eq i32 %inc, %n
@@ -50,7 +50,7 @@ for.body:
   %sum.02 = phi i32 [ 0, %entry ], [ %add, %for.body ]
   %arrayidx.phi = phi i32* [ %b, %entry ], [ %arrayidx.inc, %for.body ]
   %i.01 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
-  %0 = load i32* %arrayidx.phi, align 4
+  %0 = load i32, i32* %arrayidx.phi, align 4
   %add = add nsw i32 %0, %sum.02
   %inc = add nsw i32 %i.01, 1
   %exitcond = icmp eq i32 %inc, 40

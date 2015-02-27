@@ -6,7 +6,7 @@ define <8 x i8> @test_v8i8_pre_load(<8 x i8>* %addr) {
 ; CHECK-LABEL: test_v8i8_pre_load:
 ; CHECK: ldr d0, [x0, #40]!
   %newaddr = getelementptr <8 x i8>, <8 x i8>* %addr, i32 5
-  %val = load <8 x i8>* %newaddr, align 8
+  %val = load <8 x i8>, <8 x i8>* %newaddr, align 8
   store <8 x i8>* %newaddr, <8 x i8>** bitcast(i8** @ptr to <8 x i8>**)
   ret <8 x i8> %val
 }
@@ -15,7 +15,7 @@ define <8 x i8> @test_v8i8_post_load(<8 x i8>* %addr) {
 ; CHECK-LABEL: test_v8i8_post_load:
 ; CHECK: ldr d0, [x0], #40
   %newaddr = getelementptr <8 x i8>, <8 x i8>* %addr, i32 5
-  %val = load <8 x i8>* %addr, align 8
+  %val = load <8 x i8>, <8 x i8>* %addr, align 8
   store <8 x i8>* %newaddr, <8 x i8>** bitcast(i8** @ptr to <8 x i8>**)
   ret <8 x i8> %val
 }
@@ -42,7 +42,7 @@ define <4 x i16> @test_v4i16_pre_load(<4 x i16>* %addr) {
 ; CHECK-LABEL: test_v4i16_pre_load:
 ; CHECK: ldr d0, [x0, #40]!
   %newaddr = getelementptr <4 x i16>, <4 x i16>* %addr, i32 5
-  %val = load <4 x i16>* %newaddr, align 8
+  %val = load <4 x i16>, <4 x i16>* %newaddr, align 8
   store <4 x i16>* %newaddr, <4 x i16>** bitcast(i8** @ptr to <4 x i16>**)
   ret <4 x i16> %val
 }
@@ -51,7 +51,7 @@ define <4 x i16> @test_v4i16_post_load(<4 x i16>* %addr) {
 ; CHECK-LABEL: test_v4i16_post_load:
 ; CHECK: ldr d0, [x0], #40
   %newaddr = getelementptr <4 x i16>, <4 x i16>* %addr, i32 5
-  %val = load <4 x i16>* %addr, align 8
+  %val = load <4 x i16>, <4 x i16>* %addr, align 8
   store <4 x i16>* %newaddr, <4 x i16>** bitcast(i8** @ptr to <4 x i16>**)
   ret <4 x i16> %val
 }
@@ -78,7 +78,7 @@ define <2 x i32> @test_v2i32_pre_load(<2 x i32>* %addr) {
 ; CHECK-LABEL: test_v2i32_pre_load:
 ; CHECK: ldr d0, [x0, #40]!
   %newaddr = getelementptr <2 x i32>, <2 x i32>* %addr, i32 5
-  %val = load <2 x i32>* %newaddr, align 8
+  %val = load <2 x i32>, <2 x i32>* %newaddr, align 8
   store <2 x i32>* %newaddr, <2 x i32>** bitcast(i8** @ptr to <2 x i32>**)
   ret <2 x i32> %val
 }
@@ -87,7 +87,7 @@ define <2 x i32> @test_v2i32_post_load(<2 x i32>* %addr) {
 ; CHECK-LABEL: test_v2i32_post_load:
 ; CHECK: ldr d0, [x0], #40
   %newaddr = getelementptr <2 x i32>, <2 x i32>* %addr, i32 5
-  %val = load <2 x i32>* %addr, align 8
+  %val = load <2 x i32>, <2 x i32>* %addr, align 8
   store <2 x i32>* %newaddr, <2 x i32>** bitcast(i8** @ptr to <2 x i32>**)
   ret <2 x i32> %val
 }
@@ -114,7 +114,7 @@ define <2 x float> @test_v2f32_pre_load(<2 x float>* %addr) {
 ; CHECK-LABEL: test_v2f32_pre_load:
 ; CHECK: ldr d0, [x0, #40]!
   %newaddr = getelementptr <2 x float>, <2 x float>* %addr, i32 5
-  %val = load <2 x float>* %newaddr, align 8
+  %val = load <2 x float>, <2 x float>* %newaddr, align 8
   store <2 x float>* %newaddr, <2 x float>** bitcast(i8** @ptr to <2 x float>**)
   ret <2 x float> %val
 }
@@ -123,7 +123,7 @@ define <2 x float> @test_v2f32_post_load(<2 x float>* %addr) {
 ; CHECK-LABEL: test_v2f32_post_load:
 ; CHECK: ldr d0, [x0], #40
   %newaddr = getelementptr <2 x float>, <2 x float>* %addr, i32 5
-  %val = load <2 x float>* %addr, align 8
+  %val = load <2 x float>, <2 x float>* %addr, align 8
   store <2 x float>* %newaddr, <2 x float>** bitcast(i8** @ptr to <2 x float>**)
   ret <2 x float> %val
 }
@@ -150,7 +150,7 @@ define <1 x i64> @test_v1i64_pre_load(<1 x i64>* %addr) {
 ; CHECK-LABEL: test_v1i64_pre_load:
 ; CHECK: ldr d0, [x0, #40]!
   %newaddr = getelementptr <1 x i64>, <1 x i64>* %addr, i32 5
-  %val = load <1 x i64>* %newaddr, align 8
+  %val = load <1 x i64>, <1 x i64>* %newaddr, align 8
   store <1 x i64>* %newaddr, <1 x i64>** bitcast(i8** @ptr to <1 x i64>**)
   ret <1 x i64> %val
 }
@@ -159,7 +159,7 @@ define <1 x i64> @test_v1i64_post_load(<1 x i64>* %addr) {
 ; CHECK-LABEL: test_v1i64_post_load:
 ; CHECK: ldr d0, [x0], #40
   %newaddr = getelementptr <1 x i64>, <1 x i64>* %addr, i32 5
-  %val = load <1 x i64>* %addr, align 8
+  %val = load <1 x i64>, <1 x i64>* %addr, align 8
   store <1 x i64>* %newaddr, <1 x i64>** bitcast(i8** @ptr to <1 x i64>**)
   ret <1 x i64> %val
 }
@@ -186,7 +186,7 @@ define <16 x i8> @test_v16i8_pre_load(<16 x i8>* %addr) {
 ; CHECK-LABEL: test_v16i8_pre_load:
 ; CHECK: ldr q0, [x0, #80]!
   %newaddr = getelementptr <16 x i8>, <16 x i8>* %addr, i32 5
-  %val = load <16 x i8>* %newaddr, align 8
+  %val = load <16 x i8>, <16 x i8>* %newaddr, align 8
   store <16 x i8>* %newaddr, <16 x i8>** bitcast(i8** @ptr to <16 x i8>**)
   ret <16 x i8> %val
 }
@@ -195,7 +195,7 @@ define <16 x i8> @test_v16i8_post_load(<16 x i8>* %addr) {
 ; CHECK-LABEL: test_v16i8_post_load:
 ; CHECK: ldr q0, [x0], #80
   %newaddr = getelementptr <16 x i8>, <16 x i8>* %addr, i32 5
-  %val = load <16 x i8>* %addr, align 8
+  %val = load <16 x i8>, <16 x i8>* %addr, align 8
   store <16 x i8>* %newaddr, <16 x i8>** bitcast(i8** @ptr to <16 x i8>**)
   ret <16 x i8> %val
 }
@@ -222,7 +222,7 @@ define <8 x i16> @test_v8i16_pre_load(<8 x i16>* %addr) {
 ; CHECK-LABEL: test_v8i16_pre_load:
 ; CHECK: ldr q0, [x0, #80]!
   %newaddr = getelementptr <8 x i16>, <8 x i16>* %addr, i32 5
-  %val = load <8 x i16>* %newaddr, align 8
+  %val = load <8 x i16>, <8 x i16>* %newaddr, align 8
   store <8 x i16>* %newaddr, <8 x i16>** bitcast(i8** @ptr to <8 x i16>**)
   ret <8 x i16> %val
 }
@@ -231,7 +231,7 @@ define <8 x i16> @test_v8i16_post_load(<8 x i16>* %addr) {
 ; CHECK-LABEL: test_v8i16_post_load:
 ; CHECK: ldr q0, [x0], #80
   %newaddr = getelementptr <8 x i16>, <8 x i16>* %addr, i32 5
-  %val = load <8 x i16>* %addr, align 8
+  %val = load <8 x i16>, <8 x i16>* %addr, align 8
   store <8 x i16>* %newaddr, <8 x i16>** bitcast(i8** @ptr to <8 x i16>**)
   ret <8 x i16> %val
 }
@@ -258,7 +258,7 @@ define <4 x i32> @test_v4i32_pre_load(<4 x i32>* %addr) {
 ; CHECK-LABEL: test_v4i32_pre_load:
 ; CHECK: ldr q0, [x0, #80]!
   %newaddr = getelementptr <4 x i32>, <4 x i32>* %addr, i32 5
-  %val = load <4 x i32>* %newaddr, align 8
+  %val = load <4 x i32>, <4 x i32>* %newaddr, align 8
   store <4 x i32>* %newaddr, <4 x i32>** bitcast(i8** @ptr to <4 x i32>**)
   ret <4 x i32> %val
 }
@@ -267,7 +267,7 @@ define <4 x i32> @test_v4i32_post_load(<4 x i32>* %addr) {
 ; CHECK-LABEL: test_v4i32_post_load:
 ; CHECK: ldr q0, [x0], #80
   %newaddr = getelementptr <4 x i32>, <4 x i32>* %addr, i32 5
-  %val = load <4 x i32>* %addr, align 8
+  %val = load <4 x i32>, <4 x i32>* %addr, align 8
   store <4 x i32>* %newaddr, <4 x i32>** bitcast(i8** @ptr to <4 x i32>**)
   ret <4 x i32> %val
 }
@@ -295,7 +295,7 @@ define <4 x float> @test_v4f32_pre_load(<4 x float>* %addr) {
 ; CHECK-LABEL: test_v4f32_pre_load:
 ; CHECK: ldr q0, [x0, #80]!
   %newaddr = getelementptr <4 x float>, <4 x float>* %addr, i32 5
-  %val = load <4 x float>* %newaddr, align 8
+  %val = load <4 x float>, <4 x float>* %newaddr, align 8
   store <4 x float>* %newaddr, <4 x float>** bitcast(i8** @ptr to <4 x float>**)
   ret <4 x float> %val
 }
@@ -304,7 +304,7 @@ define <4 x float> @test_v4f32_post_load(<4 x float>* %addr) {
 ; CHECK-LABEL: test_v4f32_post_load:
 ; CHECK: ldr q0, [x0], #80
   %newaddr = getelementptr <4 x float>, <4 x float>* %addr, i32 5
-  %val = load <4 x float>* %addr, align 8
+  %val = load <4 x float>, <4 x float>* %addr, align 8
   store <4 x float>* %newaddr, <4 x float>** bitcast(i8** @ptr to <4 x float>**)
   ret <4 x float> %val
 }
@@ -332,7 +332,7 @@ define <2 x i64> @test_v2i64_pre_load(<2 x i64>* %addr) {
 ; CHECK-LABEL: test_v2i64_pre_load:
 ; CHECK: ldr q0, [x0, #80]!
   %newaddr = getelementptr <2 x i64>, <2 x i64>* %addr, i32 5
-  %val = load <2 x i64>* %newaddr, align 8
+  %val = load <2 x i64>, <2 x i64>* %newaddr, align 8
   store <2 x i64>* %newaddr, <2 x i64>** bitcast(i8** @ptr to <2 x i64>**)
   ret <2 x i64> %val
 }
@@ -341,7 +341,7 @@ define <2 x i64> @test_v2i64_post_load(<2 x i64>* %addr) {
 ; CHECK-LABEL: test_v2i64_post_load:
 ; CHECK: ldr q0, [x0], #80
   %newaddr = getelementptr <2 x i64>, <2 x i64>* %addr, i32 5
-  %val = load <2 x i64>* %addr, align 8
+  %val = load <2 x i64>, <2 x i64>* %addr, align 8
   store <2 x i64>* %newaddr, <2 x i64>** bitcast(i8** @ptr to <2 x i64>**)
   ret <2 x i64> %val
 }
@@ -369,7 +369,7 @@ define <2 x double> @test_v2f64_pre_load(<2 x double>* %addr) {
 ; CHECK-LABEL: test_v2f64_pre_load:
 ; CHECK: ldr q0, [x0, #80]!
   %newaddr = getelementptr <2 x double>, <2 x double>* %addr, i32 5
-  %val = load <2 x double>* %newaddr, align 8
+  %val = load <2 x double>, <2 x double>* %newaddr, align 8
   store <2 x double>* %newaddr, <2 x double>** bitcast(i8** @ptr to <2 x double>**)
   ret <2 x double> %val
 }
@@ -378,7 +378,7 @@ define <2 x double> @test_v2f64_post_load(<2 x double>* %addr) {
 ; CHECK-LABEL: test_v2f64_post_load:
 ; CHECK: ldr q0, [x0], #80
   %newaddr = getelementptr <2 x double>, <2 x double>* %addr, i32 5
-  %val = load <2 x double>* %addr, align 8
+  %val = load <2 x double>, <2 x double>* %addr, align 8
   store <2 x double>* %newaddr, <2 x double>** bitcast(i8** @ptr to <2 x double>**)
   ret <2 x double> %val
 }
@@ -5692,7 +5692,7 @@ declare void @llvm.aarch64.neon.st4lane.v1f64.p0f64(<1 x double>, <1 x double>, 
 define <16 x i8> @test_v16i8_post_imm_ld1r(i8* %bar, i8** %ptr) {
 ; CHECK-LABEL: test_v16i8_post_imm_ld1r:
 ; CHECK: ld1r.16b { v0 }, [x0], #1
-  %tmp1 = load i8* %bar
+  %tmp1 = load i8, i8* %bar
   %tmp2 = insertelement <16 x i8> <i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef>, i8 %tmp1, i32 0
   %tmp3 = insertelement <16 x i8> %tmp2, i8 %tmp1, i32 1
   %tmp4 = insertelement <16 x i8> %tmp3, i8 %tmp1, i32 2
@@ -5717,7 +5717,7 @@ define <16 x i8> @test_v16i8_post_imm_ld1r(i8* %bar, i8** %ptr) {
 define <16 x i8> @test_v16i8_post_reg_ld1r(i8* %bar, i8** %ptr, i64 %inc) {
 ; CHECK-LABEL: test_v16i8_post_reg_ld1r:
 ; CHECK: ld1r.16b { v0 }, [x0], x{{[0-9]+}}
-  %tmp1 = load i8* %bar
+  %tmp1 = load i8, i8* %bar
   %tmp2 = insertelement <16 x i8> <i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef>, i8 %tmp1, i32 0
   %tmp3 = insertelement <16 x i8> %tmp2, i8 %tmp1, i32 1
   %tmp4 = insertelement <16 x i8> %tmp3, i8 %tmp1, i32 2
@@ -5742,7 +5742,7 @@ define <16 x i8> @test_v16i8_post_reg_ld1r(i8* %bar, i8** %ptr, i64 %inc) {
 define <8 x i8> @test_v8i8_post_imm_ld1r(i8* %bar, i8** %ptr) {
 ; CHECK-LABEL: test_v8i8_post_imm_ld1r:
 ; CHECK: ld1r.8b { v0 }, [x0], #1
-  %tmp1 = load i8* %bar
+  %tmp1 = load i8, i8* %bar
   %tmp2 = insertelement <8 x i8> <i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef>, i8 %tmp1, i32 0
   %tmp3 = insertelement <8 x i8> %tmp2, i8 %tmp1, i32 1
   %tmp4 = insertelement <8 x i8> %tmp3, i8 %tmp1, i32 2
@@ -5759,7 +5759,7 @@ define <8 x i8> @test_v8i8_post_imm_ld1r(i8* %bar, i8** %ptr) {
 define <8 x i8> @test_v8i8_post_reg_ld1r(i8* %bar, i8** %ptr, i64 %inc) {
 ; CHECK-LABEL: test_v8i8_post_reg_ld1r:
 ; CHECK: ld1r.8b { v0 }, [x0], x{{[0-9]+}}
-  %tmp1 = load i8* %bar
+  %tmp1 = load i8, i8* %bar
   %tmp2 = insertelement <8 x i8> <i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef>, i8 %tmp1, i32 0
   %tmp3 = insertelement <8 x i8> %tmp2, i8 %tmp1, i32 1
   %tmp4 = insertelement <8 x i8> %tmp3, i8 %tmp1, i32 2
@@ -5776,7 +5776,7 @@ define <8 x i8> @test_v8i8_post_reg_ld1r(i8* %bar, i8** %ptr, i64 %inc) {
 define <8 x i16> @test_v8i16_post_imm_ld1r(i16* %bar, i16** %ptr) {
 ; CHECK-LABEL: test_v8i16_post_imm_ld1r:
 ; CHECK: ld1r.8h { v0 }, [x0], #2
-  %tmp1 = load i16* %bar
+  %tmp1 = load i16, i16* %bar
   %tmp2 = insertelement <8 x i16> <i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef>, i16 %tmp1, i32 0
   %tmp3 = insertelement <8 x i16> %tmp2, i16 %tmp1, i32 1
   %tmp4 = insertelement <8 x i16> %tmp3, i16 %tmp1, i32 2
@@ -5793,7 +5793,7 @@ define <8 x i16> @test_v8i16_post_imm_ld1r(i16* %bar, i16** %ptr) {
 define <8 x i16> @test_v8i16_post_reg_ld1r(i16* %bar, i16** %ptr, i64 %inc) {
 ; CHECK-LABEL: test_v8i16_post_reg_ld1r:
 ; CHECK: ld1r.8h { v0 }, [x0], x{{[0-9]+}}
-  %tmp1 = load i16* %bar
+  %tmp1 = load i16, i16* %bar
   %tmp2 = insertelement <8 x i16> <i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef>, i16 %tmp1, i32 0
   %tmp3 = insertelement <8 x i16> %tmp2, i16 %tmp1, i32 1
   %tmp4 = insertelement <8 x i16> %tmp3, i16 %tmp1, i32 2
@@ -5810,7 +5810,7 @@ define <8 x i16> @test_v8i16_post_reg_ld1r(i16* %bar, i16** %ptr, i64 %inc) {
 define <4 x i16> @test_v4i16_post_imm_ld1r(i16* %bar, i16** %ptr) {
 ; CHECK-LABEL: test_v4i16_post_imm_ld1r:
 ; CHECK: ld1r.4h { v0 }, [x0], #2
-  %tmp1 = load i16* %bar
+  %tmp1 = load i16, i16* %bar
   %tmp2 = insertelement <4 x i16> <i16 undef, i16 undef, i16 undef, i16 undef>, i16 %tmp1, i32 0
   %tmp3 = insertelement <4 x i16> %tmp2, i16 %tmp1, i32 1
   %tmp4 = insertelement <4 x i16> %tmp3, i16 %tmp1, i32 2
@@ -5823,7 +5823,7 @@ define <4 x i16> @test_v4i16_post_imm_ld1r(i16* %bar, i16** %ptr) {
 define <4 x i16> @test_v4i16_post_reg_ld1r(i16* %bar, i16** %ptr, i64 %inc) {
 ; CHECK-LABEL: test_v4i16_post_reg_ld1r:
 ; CHECK: ld1r.4h { v0 }, [x0], x{{[0-9]+}}
-  %tmp1 = load i16* %bar
+  %tmp1 = load i16, i16* %bar
   %tmp2 = insertelement <4 x i16> <i16 undef, i16 undef, i16 undef, i16 undef>, i16 %tmp1, i32 0
   %tmp3 = insertelement <4 x i16> %tmp2, i16 %tmp1, i32 1
   %tmp4 = insertelement <4 x i16> %tmp3, i16 %tmp1, i32 2
@@ -5836,7 +5836,7 @@ define <4 x i16> @test_v4i16_post_reg_ld1r(i16* %bar, i16** %ptr, i64 %inc) {
 define <4 x i32> @test_v4i32_post_imm_ld1r(i32* %bar, i32** %ptr) {
 ; CHECK-LABEL: test_v4i32_post_imm_ld1r:
 ; CHECK: ld1r.4s { v0 }, [x0], #4
-  %tmp1 = load i32* %bar
+  %tmp1 = load i32, i32* %bar
   %tmp2 = insertelement <4 x i32> <i32 undef, i32 undef, i32 undef, i32 undef>, i32 %tmp1, i32 0
   %tmp3 = insertelement <4 x i32> %tmp2, i32 %tmp1, i32 1
   %tmp4 = insertelement <4 x i32> %tmp3, i32 %tmp1, i32 2
@@ -5849,7 +5849,7 @@ define <4 x i32> @test_v4i32_post_imm_ld1r(i32* %bar, i32** %ptr) {
 define <4 x i32> @test_v4i32_post_reg_ld1r(i32* %bar, i32** %ptr, i64 %inc) {
 ; CHECK-LABEL: test_v4i32_post_reg_ld1r:
 ; CHECK: ld1r.4s { v0 }, [x0], x{{[0-9]+}}
-  %tmp1 = load i32* %bar
+  %tmp1 = load i32, i32* %bar
   %tmp2 = insertelement <4 x i32> <i32 undef, i32 undef, i32 undef, i32 undef>, i32 %tmp1, i32 0
   %tmp3 = insertelement <4 x i32> %tmp2, i32 %tmp1, i32 1
   %tmp4 = insertelement <4 x i32> %tmp3, i32 %tmp1, i32 2
@@ -5862,7 +5862,7 @@ define <4 x i32> @test_v4i32_post_reg_ld1r(i32* %bar, i32** %ptr, i64 %inc) {
 define <2 x i32> @test_v2i32_post_imm_ld1r(i32* %bar, i32** %ptr) {
 ; CHECK-LABEL: test_v2i32_post_imm_ld1r:
 ; CHECK: ld1r.2s { v0 }, [x0], #4
-  %tmp1 = load i32* %bar
+  %tmp1 = load i32, i32* %bar
   %tmp2 = insertelement <2 x i32> <i32 undef, i32 undef>, i32 %tmp1, i32 0
   %tmp3 = insertelement <2 x i32> %tmp2, i32 %tmp1, i32 1
   %tmp4 = getelementptr i32, i32* %bar, i64 1
@@ -5873,7 +5873,7 @@ define <2 x i32> @test_v2i32_post_imm_ld1r(i32* %bar, i32** %ptr) {
 define <2 x i32> @test_v2i32_post_reg_ld1r(i32* %bar, i32** %ptr, i64 %inc) {
 ; CHECK-LABEL: test_v2i32_post_reg_ld1r:
 ; CHECK: ld1r.2s { v0 }, [x0], x{{[0-9]+}}
-  %tmp1 = load i32* %bar
+  %tmp1 = load i32, i32* %bar
   %tmp2 = insertelement <2 x i32> <i32 undef, i32 undef>, i32 %tmp1, i32 0
   %tmp3 = insertelement <2 x i32> %tmp2, i32 %tmp1, i32 1
   %tmp4 = getelementptr i32, i32* %bar, i64 %inc
@@ -5884,7 +5884,7 @@ define <2 x i32> @test_v2i32_post_reg_ld1r(i32* %bar, i32** %ptr, i64 %inc) {
 define <2 x i64> @test_v2i64_post_imm_ld1r(i64* %bar, i64** %ptr) {
 ; CHECK-LABEL: test_v2i64_post_imm_ld1r:
 ; CHECK: ld1r.2d { v0 }, [x0], #8
-  %tmp1 = load i64* %bar
+  %tmp1 = load i64, i64* %bar
   %tmp2 = insertelement <2 x i64> <i64 undef, i64 undef>, i64 %tmp1, i32 0
   %tmp3 = insertelement <2 x i64> %tmp2, i64 %tmp1, i32 1
   %tmp4 = getelementptr i64, i64* %bar, i64 1
@@ -5895,7 +5895,7 @@ define <2 x i64> @test_v2i64_post_imm_ld1r(i64* %bar, i64** %ptr) {
 define <2 x i64> @test_v2i64_post_reg_ld1r(i64* %bar, i64** %ptr, i64 %inc) {
 ; CHECK-LABEL: test_v2i64_post_reg_ld1r:
 ; CHECK: ld1r.2d { v0 }, [x0], x{{[0-9]+}}
-  %tmp1 = load i64* %bar
+  %tmp1 = load i64, i64* %bar
   %tmp2 = insertelement <2 x i64> <i64 undef, i64 undef>, i64 %tmp1, i32 0
   %tmp3 = insertelement <2 x i64> %tmp2, i64 %tmp1, i32 1
   %tmp4 = getelementptr i64, i64* %bar, i64 %inc
@@ -5906,7 +5906,7 @@ define <2 x i64> @test_v2i64_post_reg_ld1r(i64* %bar, i64** %ptr, i64 %inc) {
 define <4 x float> @test_v4f32_post_imm_ld1r(float* %bar, float** %ptr) {
 ; CHECK-LABEL: test_v4f32_post_imm_ld1r:
 ; CHECK: ld1r.4s { v0 }, [x0], #4
-  %tmp1 = load float* %bar
+  %tmp1 = load float, float* %bar
   %tmp2 = insertelement <4 x float> <float undef, float undef, float undef, float undef>, float %tmp1, i32 0
   %tmp3 = insertelement <4 x float> %tmp2, float %tmp1, i32 1
   %tmp4 = insertelement <4 x float> %tmp3, float %tmp1, i32 2
@@ -5919,7 +5919,7 @@ define <4 x float> @test_v4f32_post_imm_ld1r(float* %bar, float** %ptr) {
 define <4 x float> @test_v4f32_post_reg_ld1r(float* %bar, float** %ptr, i64 %inc) {
 ; CHECK-LABEL: test_v4f32_post_reg_ld1r:
 ; CHECK: ld1r.4s { v0 }, [x0], x{{[0-9]+}}
-  %tmp1 = load float* %bar
+  %tmp1 = load float, float* %bar
   %tmp2 = insertelement <4 x float> <float undef, float undef, float undef, float undef>, float %tmp1, i32 0
   %tmp3 = insertelement <4 x float> %tmp2, float %tmp1, i32 1
   %tmp4 = insertelement <4 x float> %tmp3, float %tmp1, i32 2
@@ -5932,7 +5932,7 @@ define <4 x float> @test_v4f32_post_reg_ld1r(float* %bar, float** %ptr, i64 %inc
 define <2 x float> @test_v2f32_post_imm_ld1r(float* %bar, float** %ptr) {
 ; CHECK-LABEL: test_v2f32_post_imm_ld1r:
 ; CHECK: ld1r.2s { v0 }, [x0], #4
-  %tmp1 = load float* %bar
+  %tmp1 = load float, float* %bar
   %tmp2 = insertelement <2 x float> <float undef, float undef>, float %tmp1, i32 0
   %tmp3 = insertelement <2 x float> %tmp2, float %tmp1, i32 1
   %tmp4 = getelementptr float, float* %bar, i64 1
@@ -5943,7 +5943,7 @@ define <2 x float> @test_v2f32_post_imm_ld1r(float* %bar, float** %ptr) {
 define <2 x float> @test_v2f32_post_reg_ld1r(float* %bar, float** %ptr, i64 %inc) {
 ; CHECK-LABEL: test_v2f32_post_reg_ld1r:
 ; CHECK: ld1r.2s { v0 }, [x0], x{{[0-9]+}}
-  %tmp1 = load float* %bar
+  %tmp1 = load float, float* %bar
   %tmp2 = insertelement <2 x float> <float undef, float undef>, float %tmp1, i32 0
   %tmp3 = insertelement <2 x float> %tmp2, float %tmp1, i32 1
   %tmp4 = getelementptr float, float* %bar, i64 %inc
@@ -5954,7 +5954,7 @@ define <2 x float> @test_v2f32_post_reg_ld1r(float* %bar, float** %ptr, i64 %inc
 define <2 x double> @test_v2f64_post_imm_ld1r(double* %bar, double** %ptr) {
 ; CHECK-LABEL: test_v2f64_post_imm_ld1r:
 ; CHECK: ld1r.2d { v0 }, [x0], #8
-  %tmp1 = load double* %bar
+  %tmp1 = load double, double* %bar
   %tmp2 = insertelement <2 x double> <double undef, double undef>, double %tmp1, i32 0
   %tmp3 = insertelement <2 x double> %tmp2, double %tmp1, i32 1
   %tmp4 = getelementptr double, double* %bar, i64 1
@@ -5965,7 +5965,7 @@ define <2 x double> @test_v2f64_post_imm_ld1r(double* %bar, double** %ptr) {
 define <2 x double> @test_v2f64_post_reg_ld1r(double* %bar, double** %ptr, i64 %inc) {
 ; CHECK-LABEL: test_v2f64_post_reg_ld1r:
 ; CHECK: ld1r.2d { v0 }, [x0], x{{[0-9]+}}
-  %tmp1 = load double* %bar
+  %tmp1 = load double, double* %bar
   %tmp2 = insertelement <2 x double> <double undef, double undef>, double %tmp1, i32 0
   %tmp3 = insertelement <2 x double> %tmp2, double %tmp1, i32 1
   %tmp4 = getelementptr double, double* %bar, i64 %inc
@@ -5976,7 +5976,7 @@ define <2 x double> @test_v2f64_post_reg_ld1r(double* %bar, double** %ptr, i64 %
 define <16 x i8> @test_v16i8_post_imm_ld1lane(i8* %bar, i8** %ptr, <16 x i8> %A) {
 ; CHECK-LABEL: test_v16i8_post_imm_ld1lane:
 ; CHECK: ld1.b { v0 }[1], [x0], #1
-  %tmp1 = load i8* %bar
+  %tmp1 = load i8, i8* %bar
   %tmp2 = insertelement <16 x i8> %A, i8 %tmp1, i32 1
   %tmp3 = getelementptr i8, i8* %bar, i64 1
   store i8* %tmp3, i8** %ptr
@@ -5986,7 +5986,7 @@ define <16 x i8> @test_v16i8_post_imm_ld1lane(i8* %bar, i8** %ptr, <16 x i8> %A)
 define <16 x i8> @test_v16i8_post_reg_ld1lane(i8* %bar, i8** %ptr, i64 %inc, <16 x i8> %A) {
 ; CHECK-LABEL: test_v16i8_post_reg_ld1lane:
 ; CHECK: ld1.b { v0 }[1], [x0], x{{[0-9]+}}
-  %tmp1 = load i8* %bar
+  %tmp1 = load i8, i8* %bar
   %tmp2 = insertelement <16 x i8> %A, i8 %tmp1, i32 1
   %tmp3 = getelementptr i8, i8* %bar, i64 %inc
   store i8* %tmp3, i8** %ptr
@@ -5996,7 +5996,7 @@ define <16 x i8> @test_v16i8_post_reg_ld1lane(i8* %bar, i8** %ptr, i64 %inc, <16
 define <8 x i8> @test_v8i8_post_imm_ld1lane(i8* %bar, i8** %ptr, <8 x i8> %A) {
 ; CHECK-LABEL: test_v8i8_post_imm_ld1lane:
 ; CHECK: ld1.b { v0 }[1], [x0], #1
-  %tmp1 = load i8* %bar
+  %tmp1 = load i8, i8* %bar
   %tmp2 = insertelement <8 x i8> %A, i8 %tmp1, i32 1
   %tmp3 = getelementptr i8, i8* %bar, i64 1
   store i8* %tmp3, i8** %ptr
@@ -6006,7 +6006,7 @@ define <8 x i8> @test_v8i8_post_imm_ld1lane(i8* %bar, i8** %ptr, <8 x i8> %A) {
 define <8 x i8> @test_v8i8_post_reg_ld1lane(i8* %bar, i8** %ptr, i64 %inc, <8 x i8> %A) {
 ; CHECK-LABEL: test_v8i8_post_reg_ld1lane:
 ; CHECK: ld1.b { v0 }[1], [x0], x{{[0-9]+}}
-  %tmp1 = load i8* %bar
+  %tmp1 = load i8, i8* %bar
   %tmp2 = insertelement <8 x i8> %A, i8 %tmp1, i32 1
   %tmp3 = getelementptr i8, i8* %bar, i64 %inc
   store i8* %tmp3, i8** %ptr
@@ -6016,7 +6016,7 @@ define <8 x i8> @test_v8i8_post_reg_ld1lane(i8* %bar, i8** %ptr, i64 %inc, <8 x 
 define <8 x i16> @test_v8i16_post_imm_ld1lane(i16* %bar, i16** %ptr, <8 x i16> %A) {
 ; CHECK-LABEL: test_v8i16_post_imm_ld1lane:
 ; CHECK: ld1.h { v0 }[1], [x0], #2
-  %tmp1 = load i16* %bar
+  %tmp1 = load i16, i16* %bar
   %tmp2 = insertelement <8 x i16> %A, i16 %tmp1, i32 1
   %tmp3 = getelementptr i16, i16* %bar, i64 1
   store i16* %tmp3, i16** %ptr
@@ -6026,7 +6026,7 @@ define <8 x i16> @test_v8i16_post_imm_ld1lane(i16* %bar, i16** %ptr, <8 x i16> %
 define <8 x i16> @test_v8i16_post_reg_ld1lane(i16* %bar, i16** %ptr, i64 %inc, <8 x i16> %A) {
 ; CHECK-LABEL: test_v8i16_post_reg_ld1lane:
 ; CHECK: ld1.h { v0 }[1], [x0], x{{[0-9]+}}
-  %tmp1 = load i16* %bar
+  %tmp1 = load i16, i16* %bar
   %tmp2 = insertelement <8 x i16> %A, i16 %tmp1, i32 1
   %tmp3 = getelementptr i16, i16* %bar, i64 %inc
   store i16* %tmp3, i16** %ptr
@@ -6036,7 +6036,7 @@ define <8 x i16> @test_v8i16_post_reg_ld1lane(i16* %bar, i16** %ptr, i64 %inc, <
 define <4 x i16> @test_v4i16_post_imm_ld1lane(i16* %bar, i16** %ptr, <4 x i16> %A) {
 ; CHECK-LABEL: test_v4i16_post_imm_ld1lane:
 ; CHECK: ld1.h { v0 }[1], [x0], #2
-  %tmp1 = load i16* %bar
+  %tmp1 = load i16, i16* %bar
   %tmp2 = insertelement <4 x i16> %A, i16 %tmp1, i32 1
   %tmp3 = getelementptr i16, i16* %bar, i64 1
   store i16* %tmp3, i16** %ptr
@@ -6046,7 +6046,7 @@ define <4 x i16> @test_v4i16_post_imm_ld1lane(i16* %bar, i16** %ptr, <4 x i16> %
 define <4 x i16> @test_v4i16_post_reg_ld1lane(i16* %bar, i16** %ptr, i64 %inc, <4 x i16> %A) {
 ; CHECK-LABEL: test_v4i16_post_reg_ld1lane:
 ; CHECK: ld1.h { v0 }[1], [x0], x{{[0-9]+}}
-  %tmp1 = load i16* %bar
+  %tmp1 = load i16, i16* %bar
   %tmp2 = insertelement <4 x i16> %A, i16 %tmp1, i32 1
   %tmp3 = getelementptr i16, i16* %bar, i64 %inc
   store i16* %tmp3, i16** %ptr
@@ -6056,7 +6056,7 @@ define <4 x i16> @test_v4i16_post_reg_ld1lane(i16* %bar, i16** %ptr, i64 %inc, <
 define <4 x i32> @test_v4i32_post_imm_ld1lane(i32* %bar, i32** %ptr, <4 x i32> %A) {
 ; CHECK-LABEL: test_v4i32_post_imm_ld1lane:
 ; CHECK: ld1.s { v0 }[1], [x0], #4
-  %tmp1 = load i32* %bar
+  %tmp1 = load i32, i32* %bar
   %tmp2 = insertelement <4 x i32> %A, i32 %tmp1, i32 1
   %tmp3 = getelementptr i32, i32* %bar, i64 1
   store i32* %tmp3, i32** %ptr
@@ -6066,7 +6066,7 @@ define <4 x i32> @test_v4i32_post_imm_ld1lane(i32* %bar, i32** %ptr, <4 x i32> %
 define <4 x i32> @test_v4i32_post_reg_ld1lane(i32* %bar, i32** %ptr, i64 %inc, <4 x i32> %A) {
 ; CHECK-LABEL: test_v4i32_post_reg_ld1lane:
 ; CHECK: ld1.s { v0 }[1], [x0], x{{[0-9]+}}
-  %tmp1 = load i32* %bar
+  %tmp1 = load i32, i32* %bar
   %tmp2 = insertelement <4 x i32> %A, i32 %tmp1, i32 1
   %tmp3 = getelementptr i32, i32* %bar, i64 %inc
   store i32* %tmp3, i32** %ptr
@@ -6076,7 +6076,7 @@ define <4 x i32> @test_v4i32_post_reg_ld1lane(i32* %bar, i32** %ptr, i64 %inc, <
 define <2 x i32> @test_v2i32_post_imm_ld1lane(i32* %bar, i32** %ptr, <2 x i32> %A) {
 ; CHECK-LABEL: test_v2i32_post_imm_ld1lane:
 ; CHECK: ld1.s { v0 }[1], [x0], #4
-  %tmp1 = load i32* %bar
+  %tmp1 = load i32, i32* %bar
   %tmp2 = insertelement <2 x i32> %A, i32 %tmp1, i32 1
   %tmp3 = getelementptr i32, i32* %bar, i64 1
   store i32* %tmp3, i32** %ptr
@@ -6086,7 +6086,7 @@ define <2 x i32> @test_v2i32_post_imm_ld1lane(i32* %bar, i32** %ptr, <2 x i32> %
 define <2 x i32> @test_v2i32_post_reg_ld1lane(i32* %bar, i32** %ptr, i64 %inc, <2 x i32> %A) {
 ; CHECK-LABEL: test_v2i32_post_reg_ld1lane:
 ; CHECK: ld1.s { v0 }[1], [x0], x{{[0-9]+}}
-  %tmp1 = load i32* %bar
+  %tmp1 = load i32, i32* %bar
   %tmp2 = insertelement <2 x i32> %A, i32 %tmp1, i32 1
   %tmp3 = getelementptr i32, i32* %bar, i64 %inc
   store i32* %tmp3, i32** %ptr
@@ -6096,7 +6096,7 @@ define <2 x i32> @test_v2i32_post_reg_ld1lane(i32* %bar, i32** %ptr, i64 %inc, <
 define <2 x i64> @test_v2i64_post_imm_ld1lane(i64* %bar, i64** %ptr, <2 x i64> %A) {
 ; CHECK-LABEL: test_v2i64_post_imm_ld1lane:
 ; CHECK: ld1.d { v0 }[1], [x0], #8
-  %tmp1 = load i64* %bar
+  %tmp1 = load i64, i64* %bar
   %tmp2 = insertelement <2 x i64> %A, i64 %tmp1, i32 1
   %tmp3 = getelementptr i64, i64* %bar, i64 1
   store i64* %tmp3, i64** %ptr
@@ -6106,7 +6106,7 @@ define <2 x i64> @test_v2i64_post_imm_ld1lane(i64* %bar, i64** %ptr, <2 x i64> %
 define <2 x i64> @test_v2i64_post_reg_ld1lane(i64* %bar, i64** %ptr, i64 %inc, <2 x i64> %A) {
 ; CHECK-LABEL: test_v2i64_post_reg_ld1lane:
 ; CHECK: ld1.d { v0 }[1], [x0], x{{[0-9]+}}
-  %tmp1 = load i64* %bar
+  %tmp1 = load i64, i64* %bar
   %tmp2 = insertelement <2 x i64> %A, i64 %tmp1, i32 1
   %tmp3 = getelementptr i64, i64* %bar, i64 %inc
   store i64* %tmp3, i64** %ptr
@@ -6116,7 +6116,7 @@ define <2 x i64> @test_v2i64_post_reg_ld1lane(i64* %bar, i64** %ptr, i64 %inc, <
 define <4 x float> @test_v4f32_post_imm_ld1lane(float* %bar, float** %ptr, <4 x float> %A) {
 ; CHECK-LABEL: test_v4f32_post_imm_ld1lane:
 ; CHECK: ld1.s { v0 }[1], [x0], #4
-  %tmp1 = load float* %bar
+  %tmp1 = load float, float* %bar
   %tmp2 = insertelement <4 x float> %A, float %tmp1, i32 1
   %tmp3 = getelementptr float, float* %bar, i64 1
   store float* %tmp3, float** %ptr
@@ -6126,7 +6126,7 @@ define <4 x float> @test_v4f32_post_imm_ld1lane(float* %bar, float** %ptr, <4 x 
 define <4 x float> @test_v4f32_post_reg_ld1lane(float* %bar, float** %ptr, i64 %inc, <4 x float> %A) {
 ; CHECK-LABEL: test_v4f32_post_reg_ld1lane:
 ; CHECK: ld1.s { v0 }[1], [x0], x{{[0-9]+}}
-  %tmp1 = load float* %bar
+  %tmp1 = load float, float* %bar
   %tmp2 = insertelement <4 x float> %A, float %tmp1, i32 1
   %tmp3 = getelementptr float, float* %bar, i64 %inc
   store float* %tmp3, float** %ptr
@@ -6136,7 +6136,7 @@ define <4 x float> @test_v4f32_post_reg_ld1lane(float* %bar, float** %ptr, i64 %
 define <2 x float> @test_v2f32_post_imm_ld1lane(float* %bar, float** %ptr, <2 x float> %A) {
 ; CHECK-LABEL: test_v2f32_post_imm_ld1lane:
 ; CHECK: ld1.s { v0 }[1], [x0], #4
-  %tmp1 = load float* %bar
+  %tmp1 = load float, float* %bar
   %tmp2 = insertelement <2 x float> %A, float %tmp1, i32 1
   %tmp3 = getelementptr float, float* %bar, i64 1
   store float* %tmp3, float** %ptr
@@ -6146,7 +6146,7 @@ define <2 x float> @test_v2f32_post_imm_ld1lane(float* %bar, float** %ptr, <2 x 
 define <2 x float> @test_v2f32_post_reg_ld1lane(float* %bar, float** %ptr, i64 %inc, <2 x float> %A) {
 ; CHECK-LABEL: test_v2f32_post_reg_ld1lane:
 ; CHECK: ld1.s { v0 }[1], [x0], x{{[0-9]+}}
-  %tmp1 = load float* %bar
+  %tmp1 = load float, float* %bar
   %tmp2 = insertelement <2 x float> %A, float %tmp1, i32 1
   %tmp3 = getelementptr float, float* %bar, i64 %inc
   store float* %tmp3, float** %ptr
@@ -6156,7 +6156,7 @@ define <2 x float> @test_v2f32_post_reg_ld1lane(float* %bar, float** %ptr, i64 %
 define <2 x double> @test_v2f64_post_imm_ld1lane(double* %bar, double** %ptr, <2 x double> %A) {
 ; CHECK-LABEL: test_v2f64_post_imm_ld1lane:
 ; CHECK: ld1.d { v0 }[1], [x0], #8
-  %tmp1 = load double* %bar
+  %tmp1 = load double, double* %bar
   %tmp2 = insertelement <2 x double> %A, double %tmp1, i32 1
   %tmp3 = getelementptr double, double* %bar, i64 1
   store double* %tmp3, double** %ptr
@@ -6166,7 +6166,7 @@ define <2 x double> @test_v2f64_post_imm_ld1lane(double* %bar, double** %ptr, <2
 define <2 x double> @test_v2f64_post_reg_ld1lane(double* %bar, double** %ptr, i64 %inc, <2 x double> %A) {
 ; CHECK-LABEL: test_v2f64_post_reg_ld1lane:
 ; CHECK: ld1.d { v0 }[1], [x0], x{{[0-9]+}}
-  %tmp1 = load double* %bar
+  %tmp1 = load double, double* %bar
   %tmp2 = insertelement <2 x double> %A, double %tmp1, i32 1
   %tmp3 = getelementptr double, double* %bar, i64 %inc
   store double* %tmp3, double** %ptr

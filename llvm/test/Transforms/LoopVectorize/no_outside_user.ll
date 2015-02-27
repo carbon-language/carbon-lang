@@ -20,7 +20,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 
 define i32 @main()  {
 bb:
-  %b.promoted = load i32* @b, align 4
+  %b.promoted = load i32, i32* @b, align 4
   br label %.lr.ph.i
 
 .lr.ph.i:
@@ -56,7 +56,7 @@ f1.exit.loopexit:
 define i32 @test2()  {
 entry:
   store i32 0, i32* @x1, align 4
-  %0 = load i32* @x0, align 4
+  %0 = load i32, i32* @x0, align 4
   br label %for.cond1.preheader
 
 for.cond1.preheader:

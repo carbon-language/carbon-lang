@@ -5,7 +5,7 @@
 
 ; CHECK: @foo
 ; CHECK:      entry:
-; CHECK-NEXT:   %tmp3 = load double** @P, !tbaa !0
+; CHECK-NEXT:   %tmp3 = load double*, double** @P, !tbaa !0
 ; CHECK-NEXT:   br label %for.body
 
 @P = common global double* null
@@ -16,9 +16,9 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %i.07 = phi i64 [ %inc, %for.body ], [ 0, %entry ]
-  %tmp3 = load double** @P, !tbaa !1
+  %tmp3 = load double*, double** @P, !tbaa !1
   %scevgep = getelementptr double, double* %tmp3, i64 %i.07
-  %tmp4 = load double* %scevgep, !tbaa !2
+  %tmp4 = load double, double* %scevgep, !tbaa !2
   %mul = fmul double %tmp4, 2.300000e+00
   store double %mul, double* %scevgep, !tbaa !2
   %inc = add i64 %i.07, 1
@@ -49,9 +49,9 @@ entry:
   br label %loop
 
 loop:
-  %tmp51 = load i8** %p, !tbaa !4
+  %tmp51 = load i8*, i8** %p, !tbaa !4
   store i8* %tmp51, i8** %p
-  %tmp40 = load i8* %q, !tbaa !5
+  %tmp40 = load i8, i8* %q, !tbaa !5
   store i8 %tmp40, i8* %q
   br label %loop
 }

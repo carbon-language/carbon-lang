@@ -91,12 +91,12 @@ define void @bitcast_alias_scalar(float* noalias %source, float* noalias %dest) 
 entry:
 ; CHECK-LABEL: @bitcast_alias_scalar
 ; CHECK: bitcast float* %source to i32*
-; CHECK: load i32*
+; CHECK: load i32, i32*
 ; CHECK-NOT: fptoui
 ; CHECK-NOT: uitofp
 ; CHECK: bitcast float* %dest to i32*
 ; CHECK: store i32
-  %tmp = load float* %source, align 8
+  %tmp = load float, float* %source, align 8
   %call = call float @alias_i32_to_f32(float %tmp) nounwind
   store float %call, float* %dest, align 8
   ret void
@@ -107,12 +107,12 @@ define void @bitcast_alias_vector(<2 x float>* noalias %source, <2 x float>* noa
 entry:
 ; CHECK-LABEL: @bitcast_alias_vector
 ; CHECK: bitcast <2 x float>* %source to <2 x i32>*
-; CHECK: load <2 x i32>*
+; CHECK: load <2 x i32>, <2 x i32>*
 ; CHECK-NOT: fptoui
 ; CHECK-NOT: uitofp
 ; CHECK: bitcast <2 x float>* %dest to <2 x i32>*
 ; CHECK: store <2 x i32>
-  %tmp = load <2 x float>* %source, align 8
+  %tmp = load <2 x float>, <2 x float>* %source, align 8
   %call = call <2 x float> @alias_v2i32_to_v2f32(<2 x float> %tmp) nounwind
   store <2 x float> %call, <2 x float>* %dest, align 8
   ret void
@@ -123,11 +123,11 @@ define void @bitcast_alias_vector_scalar_same_size(<2 x float>* noalias %source,
 entry:
 ; CHECK-LABEL: @bitcast_alias_vector_scalar_same_size
 ; CHECK: bitcast <2 x float>* %source to i64*
-; CHECK: load i64*
+; CHECK: load i64, i64*
 ; CHECK: %call = call i64 @func_i64
 ; CHECK: bitcast <2 x float>* %dest to i64*
 ; CHECK: store i64
-  %tmp = load <2 x float>* %source, align 8
+  %tmp = load <2 x float>, <2 x float>* %source, align 8
   %call = call <2 x float> @alias_v2f32_to_i64(<2 x float> %tmp) nounwind
   store <2 x float> %call, <2 x float>* %dest, align 8
   ret void
@@ -137,11 +137,11 @@ define void @bitcast_alias_scalar_vector_same_size(i64* noalias %source, i64* no
 entry:
 ; CHECK-LABEL: @bitcast_alias_scalar_vector_same_size
 ; CHECK: bitcast i64* %source to <2 x float>*
-; CHECK: load <2 x float>*
+; CHECK: load <2 x float>, <2 x float>*
 ; CHECK: call <2 x float> @func_v2f32
 ; CHECK: bitcast i64* %dest to <2 x float>*
 ; CHECK: store <2 x float>
-  %tmp = load i64* %source, align 8
+  %tmp = load i64, i64* %source, align 8
   %call = call i64 @alias_i64_to_v2f32(i64 %tmp) nounwind
   store i64 %call, i64* %dest, align 8
   ret void
@@ -151,11 +151,11 @@ define void @bitcast_alias_vector_ptrs_same_size(<2 x i64*>* noalias %source, <2
 entry:
 ; CHECK-LABEL: @bitcast_alias_vector_ptrs_same_size
 ; CHECK: bitcast <2 x i64*>* %source to <2 x i32*>*
-; CHECK: load <2 x i32*>*
+; CHECK: load <2 x i32*>, <2 x i32*>*
 ; CHECK: call <2 x i32*> @func_v2i32p
 ; CHECK: bitcast <2 x i64*>* %dest to <2 x i32*>*
 ; CHECK: store <2 x i32*>
-  %tmp = load <2 x i64*>* %source, align 8
+  %tmp = load <2 x i64*>, <2 x i64*>* %source, align 8
   %call = call <2 x i64*> @alias_v2i32p_to_v2i64p(<2 x i64*> %tmp) nounwind
   store <2 x i64*> %call, <2 x i64*>* %dest, align 8
   ret void
@@ -169,7 +169,7 @@ entry:
 ; CHECK-NOT: fptoui
 ; CHECK: @alias_i64_to_f32
 ; CHECK-NOT: uitofp
-  %tmp = load float* %source, align 8
+  %tmp = load float, float* %source, align 8
   %call = call float @alias_i64_to_f32(float %tmp) nounwind
   store float %call, float* %dest, align 8
   ret void
@@ -181,7 +181,7 @@ entry:
 ; CHECK-NOT: fptoui <2 x float> %tmp to <2 x i64>
 ; CHECK: @alias_v2i64_to_v2f32
 ; CHECK-NOT: uitofp <2 x i64> %call to <2 x float>
-  %tmp = load <2 x float>* %source, align 8
+  %tmp = load <2 x float>, <2 x float>* %source, align 8
   %call = call <2 x float> @alias_v2i64_to_v2f32(<2 x float> %tmp) nounwind
   store <2 x float> %call, <2 x float>* %dest, align 8
   ret void
@@ -191,7 +191,7 @@ define void @bitcast_alias_vector_mismatched_number_elements(<4 x float>* noalia
 entry:
 ; CHECK-LABEL: @bitcast_alias_vector_mismatched_number_elements
 ; CHECK:  %call = call <4 x float> @alias_v2i32_to_v4f32
-  %tmp = load <4 x float>* %source, align 8
+  %tmp = load <4 x float>, <4 x float>* %source, align 8
   %call = call <4 x float> @alias_v2i32_to_v4f32(<4 x float> %tmp) nounwind
   store <4 x float> %call, <4 x float>* %dest, align 8
   ret void
@@ -201,7 +201,7 @@ define void @bitcast_alias_vector_scalar_mismatched_bit_size(<4 x float>* noalia
 entry:
 ; CHECK-LABEL: @bitcast_alias_vector_scalar_mismatched_bit_size
 ; CHECK:  %call = call <4 x float> @alias_v4f32_to_i64
-  %tmp = load <4 x float>* %source, align 8
+  %tmp = load <4 x float>, <4 x float>* %source, align 8
   %call = call <4 x float> @alias_v4f32_to_i64(<4 x float> %tmp) nounwind
   store <4 x float> %call, <4 x float>* %dest, align 8
   ret void
@@ -211,7 +211,7 @@ define void @bitcast_alias_vector_ptrs_scalar_mismatched_bit_size(<4 x i32*>* no
 entry:
 ; CHECK-LABEL: @bitcast_alias_vector_ptrs_scalar_mismatched_bit_size
 ; CHECK: @alias_v4i32p_to_i64
-  %tmp = load <4 x i32*>* %source, align 8
+  %tmp = load <4 x i32*>, <4 x i32*>* %source, align 8
   %call = call <4 x i32*> @alias_v4i32p_to_i64(<4 x i32*> %tmp) nounwind
   store <4 x i32*> %call, <4 x i32*>* %dest, align 8
   ret void
@@ -221,7 +221,7 @@ define void @bitcast_alias_scalar_vector_ptrs_same_size(i64* noalias %source, i6
 entry:
 ; CHECK-LABEL: @bitcast_alias_scalar_vector_ptrs_same_size
 ; CHECK: @alias_i64_to_v2i32p
-  %tmp = load i64* %source, align 8
+  %tmp = load i64, i64* %source, align 8
   %call = call i64 @alias_i64_to_v2i32p(i64 %tmp) nounwind
   store i64 %call, i64* %dest, align 8
   ret void
@@ -231,7 +231,7 @@ define void @bitcast_alias_scalar_vector_mismatched_bit_size(i64* noalias %sourc
 entry:
 ; CHECK-LABEL: @bitcast_alias_scalar_vector_mismatched_bit_size
 ; CHECK: call i64 @alias_i64_to_v4f32
-  %tmp = load i64* %source, align 8
+  %tmp = load i64, i64* %source, align 8
   %call = call i64 @alias_i64_to_v4f32(i64 %tmp) nounwind
   store i64 %call, i64* %dest, align 8
   ret void

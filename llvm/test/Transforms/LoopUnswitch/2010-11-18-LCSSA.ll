@@ -7,7 +7,7 @@ entry:
   br i1 true, label %for.end12, label %bb.nph
 
 bb.nph:                                           ; preds = %entry
-  %g_38.promoted = load i32* @g_38
+  %g_38.promoted = load i32, i32* @g_38
   br label %for.body
 
 for.body:                                         ; preds = %for.cond, %bb.nph

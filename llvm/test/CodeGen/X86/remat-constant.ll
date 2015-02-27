@@ -7,7 +7,7 @@ declare void @bar() nounwind
 declare void @qux(float %f) nounwind 
 
 define void @foo() nounwind  {
-  %f = load float* @a
+  %f = load float, float* @a
   call void @bar()
   call void @qux(float %f)
   call void @qux(float %f)

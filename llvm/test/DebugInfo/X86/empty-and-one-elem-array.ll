@@ -16,9 +16,9 @@ entry:
   %a1 = getelementptr inbounds %struct.bar, %struct.bar* %my_bar, i32 0, i32 0, !dbg !30
   store i32 5, i32* %a1, align 4, !dbg !30
   %a2 = getelementptr inbounds %struct.foo, %struct.foo* %my_foo, i32 0, i32 0, !dbg !31
-  %0 = load i32* %a2, align 4, !dbg !31
+  %0 = load i32, i32* %a2, align 4, !dbg !31
   %a3 = getelementptr inbounds %struct.bar, %struct.bar* %my_bar, i32 0, i32 0, !dbg !31
-  %1 = load i32* %a3, align 4, !dbg !31
+  %1 = load i32, i32* %a3, align 4, !dbg !31
   %add = add nsw i32 %0, %1, !dbg !31
   ret i32 %add, !dbg !31
 }

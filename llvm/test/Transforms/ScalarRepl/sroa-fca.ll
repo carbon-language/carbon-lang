@@ -6,7 +6,7 @@ define i64 @test({i32, i32} %A) {
 	%Y = bitcast i64* %X to {i32,i32}*
 	store {i32,i32} %A, {i32,i32}* %Y
 	
-	%Q = load i64* %X
+	%Q = load i64, i64* %X
 	ret i64 %Q
 }
 
@@ -15,7 +15,7 @@ define {i32,i32} @test2(i64 %A) {
 	%Y = bitcast i64* %X to {i32,i32}*
 	store i64 %A, i64* %X
 	
-	%Q = load {i32,i32}* %Y
+	%Q = load {i32,i32}, {i32,i32}* %Y
 	ret {i32,i32} %Q
 }
 

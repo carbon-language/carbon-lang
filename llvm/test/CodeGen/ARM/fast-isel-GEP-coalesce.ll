@@ -17,7 +17,7 @@ entry:
   store i32* getelementptr inbounds ([2 x [2 x [2 x [2 x [2 x i32]]]]]* @arr, i32 0, i32 1, i32 1, i32 1, i32 1, i32 1), i32** %addr, align 4
 ; ARM: add r0, r0, #124
 ; THUMB: adds r0, #124
-  %0 = load i32** %addr, align 4
+  %0 = load i32*, i32** %addr, align 4
   ret i32* %0
 }
 
@@ -30,7 +30,7 @@ entry:
 ; ARM: movw [[R:r[0-9]+]], #1148
 ; ARM: add r0, r{{[0-9]+}}, [[R]]
 ; THUMB: addw r0, r0, #1148
-  %0 = load i32** %addr, align 4
+  %0 = load i32*, i32** %addr, align 4
   ret i32* %0
 }
 
@@ -42,7 +42,7 @@ entry:
   store i32* getelementptr inbounds ([3 x [3 x %struct.A]]* @A, i32 0, i32 0, i32 1, i32 1, i32 0, i32 1), i32** %addr, align 4
 ; ARM: add r0, r0, #140
 ; THUMB: adds r0, #140
-  %0 = load i32** %addr, align 4
+  %0 = load i32*, i32** %addr, align 4
   ret i32* %0
 }
 
@@ -61,6 +61,6 @@ entry:
 ; ARM-NOT: add r{{[0-9]}}, r{{[0-9]}}, #4
 ; ARM: movw r{{[0-9]}}, #1284
 ; THUMB: addw r{{[0-9]}}, r{{[0-9]}}, #1284
-  %0 = load i32** %addr, align 4
+  %0 = load i32*, i32** %addr, align 4
   ret i32* %0
 }

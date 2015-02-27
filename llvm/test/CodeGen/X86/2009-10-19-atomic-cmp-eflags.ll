@@ -32,7 +32,7 @@ if.end.i:                                         ; preds = %entry
   br label %lt_init.exit
 
 lt_init.exit:                                     ; preds = %if.end.i, %if.then.i
-  %3 = load i32* %retval.i                        ; <i32> [#uses=1]
+  %3 = load i32, i32* %retval.i                        ; <i32> [#uses=1]
   call void asm sideeffect "cpuid", "~{ax},~{bx},~{cx},~{dx},~{memory},~{dirflag},~{fpsr},~{flags}"() nounwind
   %4 = call i64 @llvm.readcyclecounter() nounwind ; <i64> [#uses=1]
   %5 = sub i64 %4, %2                             ; <i64> [#uses=1]
@@ -50,7 +50,7 @@ if.then:                                          ; preds = %lt_init.exit
 
 if.end:                                           ; preds = %if.then, %lt_init.exit
   store i32 0, i32* %retval
-  %7 = load i32* %retval                          ; <i32> [#uses=1]
+  %7 = load i32, i32* %retval                          ; <i32> [#uses=1]
   tail call void asm sideeffect "cpuid", "~{ax},~{bx},~{cx},~{dx},~{memory},~{dirflag},~{fpsr},~{flags}"() nounwind
   %8 = tail call i64 @llvm.readcyclecounter() nounwind ; <i64> [#uses=1]
   %9 = sub i64 %8, %0                             ; <i64> [#uses=1]

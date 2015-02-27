@@ -10,7 +10,7 @@ define i32 @foo(%struct.x* byval  %a) nounwind  {
   %tmp2 = getelementptr %struct.x, %struct.x* %a, i32 0, i32 0		; <i32*> [#uses=2]
   store i32 1, i32* %tmp2, align 4
   store i32 2, i32* @g, align 4
-  %tmp4 = load i32* %tmp2, align 4		; <i32> [#uses=1]
+  %tmp4 = load i32, i32* %tmp2, align 4		; <i32> [#uses=1]
   ret i32 %tmp4
 }
 

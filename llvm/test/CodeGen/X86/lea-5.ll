@@ -18,7 +18,7 @@ while.cond:                                       ; preds = %while.cond, %entry
 
 ; CHECK: leaq	-40(%rsp,%r{{[^,]*}},4), %rax
 ; X32:   leal	-40(%rsp,%r{{[^,]*}},4), %eax
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %cmp1 = icmp eq i32 %0, 0
   %inc = add nsw i32 %d.addr.0, 1
 
@@ -45,7 +45,7 @@ while.cond:                                       ; preds = %while.cond, %entry
 
 ; CHECK: leaq	(%rsp,%r{{[^,]*}},4), %rax
 ; X32:   leal	(%rsp,%r{{[^,]*}},4), %eax
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %cmp1 = icmp eq i32 %0, 0
   %inc = add nsw i32 %d.addr.0, 1
 

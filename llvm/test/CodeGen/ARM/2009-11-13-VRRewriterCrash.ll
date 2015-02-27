@@ -11,7 +11,7 @@
 
 define arm_aapcs_vfpcc %bar* @aaa(%foo* nocapture %this, %quuz* %a, %quuz* %b, %quuz* %c, i8 zeroext %forced) {
 entry:
-  %0 = load %bar** undef, align 4                 ; <%bar*> [#uses=2]
+  %0 = load %bar*, %bar** undef, align 4                 ; <%bar*> [#uses=2]
   br i1 false, label %bb85, label %bb
 
 bb:                                               ; preds = %entry
@@ -43,10 +43,10 @@ bb3.i:                                            ; preds = %bb2.i, %bb
   %18 = fadd float %17, undef                     ; <float> [#uses=1]
   %19 = call arm_aapcs_vfpcc  float @sqrtf(float %18) readnone ; <float> [#uses=2]
   %20 = fcmp ogt float %19, 0x3F1A36E2E0000000    ; <i1> [#uses=1]
-  %21 = load float* %1, align 4                   ; <float> [#uses=2]
-  %22 = load float* %3, align 4                   ; <float> [#uses=2]
-  %23 = load float* undef, align 4                ; <float> [#uses=2]
-  %24 = load float* %4, align 4                   ; <float> [#uses=2]
+  %21 = load float, float* %1, align 4                   ; <float> [#uses=2]
+  %22 = load float, float* %3, align 4                   ; <float> [#uses=2]
+  %23 = load float, float* undef, align 4                ; <float> [#uses=2]
+  %24 = load float, float* %4, align 4                   ; <float> [#uses=2]
   %25 = fsub float %23, %24                       ; <float> [#uses=2]
   %26 = fmul float 0.000000e+00, %25              ; <float> [#uses=1]
   %27 = fsub float %26, undef                     ; <float> [#uses=1]
@@ -59,11 +59,11 @@ bb3.i:                                            ; preds = %bb2.i, %bb
   %34 = fadd float %32, %33                       ; <float> [#uses=1]
   %35 = fmul float %23, %31                       ; <float> [#uses=1]
   %36 = fadd float %34, %35                       ; <float> [#uses=1]
-  %37 = load float* %6, align 4                   ; <float> [#uses=2]
-  %38 = load float* %7, align 4                   ; <float> [#uses=2]
+  %37 = load float, float* %6, align 4                   ; <float> [#uses=2]
+  %38 = load float, float* %7, align 4                   ; <float> [#uses=2]
   %39 = fsub float %22, %38                       ; <float> [#uses=2]
-  %40 = load float* undef, align 4                ; <float> [#uses=1]
-  %41 = load float* null, align 4                 ; <float> [#uses=2]
+  %40 = load float, float* undef, align 4                ; <float> [#uses=1]
+  %41 = load float, float* null, align 4                 ; <float> [#uses=2]
   %42 = fmul float %41, undef                     ; <float> [#uses=1]
   %43 = fmul float undef, %39                     ; <float> [#uses=1]
   %44 = fsub float %42, %43                       ; <float> [#uses=1]
@@ -80,7 +80,7 @@ bb3.i:                                            ; preds = %bb2.i, %bb
   %55 = fmul float undef, undef                   ; <float> [#uses=1]
   %56 = fsub float %54, %55                       ; <float> [#uses=1]
   %57 = fmul float undef, %53                     ; <float> [#uses=1]
-  %58 = load float* undef, align 4                ; <float> [#uses=2]
+  %58 = load float, float* undef, align 4                ; <float> [#uses=2]
   %59 = fmul float %58, undef                     ; <float> [#uses=1]
   %60 = fsub float %57, %59                       ; <float> [#uses=1]
   %61 = fmul float %58, undef                     ; <float> [#uses=1]
@@ -100,7 +100,7 @@ bb3.i:                                            ; preds = %bb2.i, %bb
   br i1 %72, label %bb4.i97, label %ccc.exit98
 
 bb4.i97:                                          ; preds = %bb3.i
-  %73 = load %bar** undef, align 4                ; <%bar*> [#uses=0]
+  %73 = load %bar*, %bar** undef, align 4                ; <%bar*> [#uses=0]
   br label %ccc.exit98
 
 ccc.exit98:                                       ; preds = %bb4.i97, %bb3.i

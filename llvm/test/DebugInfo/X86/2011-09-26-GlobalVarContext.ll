@@ -8,9 +8,9 @@
 define i32 @f() nounwind {
   %LOC = alloca i32, align 4
   call void @llvm.dbg.declare(metadata i32* %LOC, metadata !15, metadata !{!"0x102"}), !dbg !17
-  %1 = load i32* @GLB, align 4, !dbg !18
+  %1 = load i32, i32* @GLB, align 4, !dbg !18
   store i32 %1, i32* %LOC, align 4, !dbg !18
-  %2 = load i32* @GLB, align 4, !dbg !19
+  %2 = load i32, i32* @GLB, align 4, !dbg !19
   ret i32 %2, !dbg !19
 }
 

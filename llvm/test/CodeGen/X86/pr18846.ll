@@ -21,31 +21,31 @@ for.body29:                                       ; preds = %for.body29, %entry
   br i1 undef, label %for.body29, label %for.body65
 
 for.body65:                                       ; preds = %for.body29
-  %0 = load float* undef, align 4, !tbaa !1
+  %0 = load float, float* undef, align 4, !tbaa !1
   %vecinit7.i4448 = insertelement <8 x float> undef, float %0, i32 7
-  %1 = load float* null, align 4, !tbaa !1
+  %1 = load float, float* null, align 4, !tbaa !1
   %vecinit7.i4304 = insertelement <8 x float> undef, float %1, i32 7
-  %2 = load float* undef, align 4, !tbaa !1
+  %2 = load float, float* undef, align 4, !tbaa !1
   %vecinit7.i4196 = insertelement <8 x float> undef, float %2, i32 7
   %3 = or i64 0, 16
   %add.ptr111.sum4096 = add i64 %3, 0
-  %4 = load <8 x float>* null, align 16, !tbaa !5
+  %4 = load <8 x float>, <8 x float>* null, align 16, !tbaa !5
   %add.ptr162 = getelementptr inbounds [65536 x float], [65536 x float]* null, i64 0, i64 %add.ptr111.sum4096
   %__v.i4158 = bitcast float* %add.ptr162 to <8 x float>*
-  %5 = load <8 x float>* %__v.i4158, align 16, !tbaa !5
+  %5 = load <8 x float>, <8 x float>* %__v.i4158, align 16, !tbaa !5
   %add.ptr158.sum40975066 = or i64 %add.ptr111.sum4096, 8
   %add.ptr183 = getelementptr inbounds [65536 x float], [65536 x float]* null, i64 0, i64 %add.ptr158.sum40975066
   %__v.i4162 = bitcast float* %add.ptr183 to <8 x float>*
-  %6 = load <8 x float>* %__v.i4162, align 16, !tbaa !5
+  %6 = load <8 x float>, <8 x float>* %__v.i4162, align 16, !tbaa !5
   %add.ptr200.sum40995067 = or i64 undef, 8
   %add.ptr225 = getelementptr inbounds [65536 x float], [65536 x float]* null, i64 0, i64 %add.ptr200.sum40995067
   %__v.i4167 = bitcast float* %add.ptr225 to <8 x float>*
-  %7 = load <8 x float>* %__v.i4167, align 4, !tbaa !5
-  %8 = load <8 x float>* undef, align 16, !tbaa !5
+  %7 = load <8 x float>, <8 x float>* %__v.i4167, align 4, !tbaa !5
+  %8 = load <8 x float>, <8 x float>* undef, align 16, !tbaa !5
   %add.ptr242.sum41015068 = or i64 0, 8
   %add.ptr267 = getelementptr inbounds [65536 x float], [65536 x float]* null, i64 0, i64 %add.ptr242.sum41015068
   %__v.i4171 = bitcast float* %add.ptr267 to <8 x float>*
-  %9 = load <8 x float>* %__v.i4171, align 4, !tbaa !5
+  %9 = load <8 x float>, <8 x float>* %__v.i4171, align 4, !tbaa !5
   %mul.i4690 = fmul <8 x float> %7, undef
   %add.i4665 = fadd <8 x float> undef, undef
   %mul.i4616 = fmul <8 x float> %8, undef
@@ -56,8 +56,8 @@ for.body65:                                       ; preds = %for.body29
   %mul.i4578 = fmul <8 x float> %9, undef
   %add.i4577 = fadd <8 x float> %add.i4593, %mul.i4578
   call void @llvm.x86.avx.storeu.ps.256(i8* undef, <8 x float> %add.i4577) #1
-  %10 = load <8 x float>* null, align 16, !tbaa !5
-  %11 = load <8 x float>* undef, align 16, !tbaa !5
+  %10 = load <8 x float>, <8 x float>* null, align 16, !tbaa !5
+  %11 = load <8 x float>, <8 x float>* undef, align 16, !tbaa !5
   %mul.i4564 = fmul <8 x float> %4, undef
   %add.i4563 = fadd <8 x float> %10, %mul.i4564
   %mul.i4560 = fmul <8 x float> %5, undef
@@ -107,7 +107,7 @@ for.body65:                                       ; preds = %for.body29
   call void @llvm.x86.avx.storeu.ps.256(i8* undef, <8 x float> %add.i4293) #1
   call void @llvm.x86.avx.storeu.ps.256(i8* undef, <8 x float> %add.i4291) #1
   call void @llvm.x86.avx.storeu.ps.256(i8* undef, <8 x float> %add.i4289) #1
-  %12 = load <8 x float>* undef, align 16, !tbaa !5
+  %12 = load <8 x float>, <8 x float>* undef, align 16, !tbaa !5
   %mul.i4274 = fmul <8 x float> undef, undef
   %add.i4273 = fadd <8 x float> %12, %mul.i4274
   %mul.i4258 = fmul <8 x float> %7, undef

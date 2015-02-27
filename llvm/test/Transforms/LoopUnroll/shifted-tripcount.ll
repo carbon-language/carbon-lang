@@ -16,8 +16,8 @@ for.body:                                         ; preds = %entry, %for.body
   %arrayidx7 = getelementptr double, double* %p, i64 %i.013 ; <double*> [#uses=2]
   %tmp16 = add i64 %i.013, 1                      ; <i64> [#uses=3]
   %arrayidx = getelementptr double, double* %p, i64 %tmp16 ; <double*> [#uses=1]
-  %tmp4 = load double* %arrayidx                  ; <double> [#uses=1]
-  %tmp8 = load double* %arrayidx7                 ; <double> [#uses=1]
+  %tmp4 = load double, double* %arrayidx                  ; <double> [#uses=1]
+  %tmp8 = load double, double* %arrayidx7                 ; <double> [#uses=1]
   %mul9 = fmul double %tmp8, %tmp4                ; <double> [#uses=1]
   store double %mul9, double* %arrayidx7
   %exitcond = icmp eq i64 %tmp16, %mul10          ; <i1> [#uses=1]

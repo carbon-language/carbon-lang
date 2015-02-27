@@ -45,7 +45,7 @@ define <4 x i64> @test256_4(<4 x i64> %x, <4 x i64> %y, <4 x i64> %x1) nounwind 
 ; CHECK: vmovdqa32
 ; CHECK: ret
 define <8 x i32> @test256_5(<8 x i32> %x, <8 x i32> %x1, <8 x i32>* %yp) nounwind {
-  %y = load <8 x i32>* %yp, align 4
+  %y = load <8 x i32>, <8 x i32>* %yp, align 4
   %mask = icmp eq <8 x i32> %x, %y
   %max = select <8 x i1> %mask, <8 x i32> %x, <8 x i32> %x1
   ret <8 x i32> %max
@@ -56,7 +56,7 @@ define <8 x i32> @test256_5(<8 x i32> %x, <8 x i32> %x1, <8 x i32>* %yp) nounwin
 ; CHECK: vmovdqa32
 ; CHECK: ret
 define <8 x i32> @test256_6(<8 x i32> %x, <8 x i32> %x1, <8 x i32>* %y.ptr) nounwind {
-  %y = load <8 x i32>* %y.ptr, align 4
+  %y = load <8 x i32>, <8 x i32>* %y.ptr, align 4
   %mask = icmp sgt <8 x i32> %x, %y
   %max = select <8 x i1> %mask, <8 x i32> %x, <8 x i32> %x1
   ret <8 x i32> %max
@@ -67,7 +67,7 @@ define <8 x i32> @test256_6(<8 x i32> %x, <8 x i32> %x1, <8 x i32>* %y.ptr) noun
 ; CHECK: vmovdqa32
 ; CHECK: ret
 define <8 x i32> @test256_7(<8 x i32> %x, <8 x i32> %x1, <8 x i32>* %y.ptr) nounwind {
-  %y = load <8 x i32>* %y.ptr, align 4
+  %y = load <8 x i32>, <8 x i32>* %y.ptr, align 4
   %mask = icmp sle <8 x i32> %x, %y
   %max = select <8 x i1> %mask, <8 x i32> %x, <8 x i32> %x1
   ret <8 x i32> %max
@@ -78,7 +78,7 @@ define <8 x i32> @test256_7(<8 x i32> %x, <8 x i32> %x1, <8 x i32>* %y.ptr) noun
 ; CHECK: vmovdqa32
 ; CHECK: ret
 define <8 x i32> @test256_8(<8 x i32> %x, <8 x i32> %x1, <8 x i32>* %y.ptr) nounwind {
-  %y = load <8 x i32>* %y.ptr, align 4
+  %y = load <8 x i32>, <8 x i32>* %y.ptr, align 4
   %mask = icmp ule <8 x i32> %x, %y
   %max = select <8 x i1> %mask, <8 x i32> %x, <8 x i32> %x1
   ret <8 x i32> %max
@@ -114,7 +114,7 @@ define <4 x i64> @test256_10(<4 x i64> %x, <4 x i64> %y, <4 x i64> %x1, <4 x i64
 ; CHECK: ret
 define <4 x i64> @test256_11(<4 x i64> %x, <4 x i64>* %y.ptr, <4 x i64> %x1, <4 x i64> %y1) nounwind {
   %mask1 = icmp sgt <4 x i64> %x1, %y1
-  %y = load <4 x i64>* %y.ptr, align 4
+  %y = load <4 x i64>, <4 x i64>* %y.ptr, align 4
   %mask0 = icmp sgt <4 x i64> %x, %y
   %mask = select <4 x i1> %mask0, <4 x i1> %mask1, <4 x i1> zeroinitializer
   %max = select <4 x i1> %mask, <4 x i64> %x, <4 x i64> %x1
@@ -127,7 +127,7 @@ define <4 x i64> @test256_11(<4 x i64> %x, <4 x i64>* %y.ptr, <4 x i64> %x1, <4 
 ; CHECK: ret
 define <8 x i32> @test256_12(<8 x i32> %x, <8 x i32>* %y.ptr, <8 x i32> %x1, <8 x i32> %y1) nounwind {
   %mask1 = icmp sge <8 x i32> %x1, %y1
-  %y = load <8 x i32>* %y.ptr, align 4
+  %y = load <8 x i32>, <8 x i32>* %y.ptr, align 4
   %mask0 = icmp ule <8 x i32> %x, %y
   %mask = select <8 x i1> %mask0, <8 x i1> %mask1, <8 x i1> zeroinitializer
   %max = select <8 x i1> %mask, <8 x i32> %x, <8 x i32> %x1
@@ -139,7 +139,7 @@ define <8 x i32> @test256_12(<8 x i32> %x, <8 x i32>* %y.ptr, <8 x i32> %x1, <8 
 ; CHECK: vmovdqa64
 ; CHECK: ret
 define <4 x i64> @test256_13(<4 x i64> %x, <4 x i64> %x1, i64* %yb.ptr) nounwind {
-  %yb = load i64* %yb.ptr, align 4
+  %yb = load i64, i64* %yb.ptr, align 4
   %y.0 = insertelement <4 x i64> undef, i64 %yb, i32 0
   %y = shufflevector <4 x i64> %y.0, <4 x i64> undef, <4 x i32> zeroinitializer
   %mask = icmp eq <4 x i64> %x, %y
@@ -152,7 +152,7 @@ define <4 x i64> @test256_13(<4 x i64> %x, <4 x i64> %x1, i64* %yb.ptr) nounwind
 ; CHECK: vmovdqa32
 ; CHECK: ret
 define <8 x i32> @test256_14(<8 x i32> %x, i32* %yb.ptr, <8 x i32> %x1) nounwind {
-  %yb = load i32* %yb.ptr, align 4
+  %yb = load i32, i32* %yb.ptr, align 4
   %y.0 = insertelement <8 x i32> undef, i32 %yb, i32 0
   %y = shufflevector <8 x i32> %y.0, <8 x i32> undef, <8 x i32> zeroinitializer
   %mask = icmp sle <8 x i32> %x, %y
@@ -166,7 +166,7 @@ define <8 x i32> @test256_14(<8 x i32> %x, i32* %yb.ptr, <8 x i32> %x1) nounwind
 ; CHECK: ret
 define <8 x i32> @test256_15(<8 x i32> %x, i32* %yb.ptr, <8 x i32> %x1, <8 x i32> %y1) nounwind {
   %mask1 = icmp sge <8 x i32> %x1, %y1
-  %yb = load i32* %yb.ptr, align 4
+  %yb = load i32, i32* %yb.ptr, align 4
   %y.0 = insertelement <8 x i32> undef, i32 %yb, i32 0
   %y = shufflevector <8 x i32> %y.0, <8 x i32> undef, <8 x i32> zeroinitializer
   %mask0 = icmp sgt <8 x i32> %x, %y
@@ -181,7 +181,7 @@ define <8 x i32> @test256_15(<8 x i32> %x, i32* %yb.ptr, <8 x i32> %x1, <8 x i32
 ; CHECK: ret
 define <4 x i64> @test256_16(<4 x i64> %x, i64* %yb.ptr, <4 x i64> %x1, <4 x i64> %y1) nounwind {
   %mask1 = icmp sge <4 x i64> %x1, %y1
-  %yb = load i64* %yb.ptr, align 4
+  %yb = load i64, i64* %yb.ptr, align 4
   %y.0 = insertelement <4 x i64> undef, i64 %yb, i32 0
   %y = shufflevector <4 x i64> %y.0, <4 x i64> undef, <4 x i32> zeroinitializer
   %mask0 = icmp sgt <4 x i64> %x, %y
@@ -235,7 +235,7 @@ define <2 x i64> @test128_4(<2 x i64> %x, <2 x i64> %y, <2 x i64> %x1) nounwind 
 ; CHECK: vmovdqa32
 ; CHECK: ret
 define <4 x i32> @test128_5(<4 x i32> %x, <4 x i32> %x1, <4 x i32>* %yp) nounwind {
-  %y = load <4 x i32>* %yp, align 4
+  %y = load <4 x i32>, <4 x i32>* %yp, align 4
   %mask = icmp eq <4 x i32> %x, %y
   %max = select <4 x i1> %mask, <4 x i32> %x, <4 x i32> %x1
   ret <4 x i32> %max
@@ -246,7 +246,7 @@ define <4 x i32> @test128_5(<4 x i32> %x, <4 x i32> %x1, <4 x i32>* %yp) nounwin
 ; CHECK: vmovdqa32
 ; CHECK: ret
 define <4 x i32> @test128_6(<4 x i32> %x, <4 x i32> %x1, <4 x i32>* %y.ptr) nounwind {
-  %y = load <4 x i32>* %y.ptr, align 4
+  %y = load <4 x i32>, <4 x i32>* %y.ptr, align 4
   %mask = icmp sgt <4 x i32> %x, %y
   %max = select <4 x i1> %mask, <4 x i32> %x, <4 x i32> %x1
   ret <4 x i32> %max
@@ -257,7 +257,7 @@ define <4 x i32> @test128_6(<4 x i32> %x, <4 x i32> %x1, <4 x i32>* %y.ptr) noun
 ; CHECK: vmovdqa32
 ; CHECK: ret
 define <4 x i32> @test128_7(<4 x i32> %x, <4 x i32> %x1, <4 x i32>* %y.ptr) nounwind {
-  %y = load <4 x i32>* %y.ptr, align 4
+  %y = load <4 x i32>, <4 x i32>* %y.ptr, align 4
   %mask = icmp sle <4 x i32> %x, %y
   %max = select <4 x i1> %mask, <4 x i32> %x, <4 x i32> %x1
   ret <4 x i32> %max
@@ -268,7 +268,7 @@ define <4 x i32> @test128_7(<4 x i32> %x, <4 x i32> %x1, <4 x i32>* %y.ptr) noun
 ; CHECK: vmovdqa32
 ; CHECK: ret
 define <4 x i32> @test128_8(<4 x i32> %x, <4 x i32> %x1, <4 x i32>* %y.ptr) nounwind {
-  %y = load <4 x i32>* %y.ptr, align 4
+  %y = load <4 x i32>, <4 x i32>* %y.ptr, align 4
   %mask = icmp ule <4 x i32> %x, %y
   %max = select <4 x i1> %mask, <4 x i32> %x, <4 x i32> %x1
   ret <4 x i32> %max
@@ -304,7 +304,7 @@ define <2 x i64> @test128_10(<2 x i64> %x, <2 x i64> %y, <2 x i64> %x1, <2 x i64
 ; CHECK: ret
 define <2 x i64> @test128_11(<2 x i64> %x, <2 x i64>* %y.ptr, <2 x i64> %x1, <2 x i64> %y1) nounwind {
   %mask1 = icmp sgt <2 x i64> %x1, %y1
-  %y = load <2 x i64>* %y.ptr, align 4
+  %y = load <2 x i64>, <2 x i64>* %y.ptr, align 4
   %mask0 = icmp sgt <2 x i64> %x, %y
   %mask = select <2 x i1> %mask0, <2 x i1> %mask1, <2 x i1> zeroinitializer
   %max = select <2 x i1> %mask, <2 x i64> %x, <2 x i64> %x1
@@ -317,7 +317,7 @@ define <2 x i64> @test128_11(<2 x i64> %x, <2 x i64>* %y.ptr, <2 x i64> %x1, <2 
 ; CHECK: ret
 define <4 x i32> @test128_12(<4 x i32> %x, <4 x i32>* %y.ptr, <4 x i32> %x1, <4 x i32> %y1) nounwind {
   %mask1 = icmp sge <4 x i32> %x1, %y1
-  %y = load <4 x i32>* %y.ptr, align 4
+  %y = load <4 x i32>, <4 x i32>* %y.ptr, align 4
   %mask0 = icmp ule <4 x i32> %x, %y
   %mask = select <4 x i1> %mask0, <4 x i1> %mask1, <4 x i1> zeroinitializer
   %max = select <4 x i1> %mask, <4 x i32> %x, <4 x i32> %x1
@@ -329,7 +329,7 @@ define <4 x i32> @test128_12(<4 x i32> %x, <4 x i32>* %y.ptr, <4 x i32> %x1, <4 
 ; CHECK: vmovdqa64
 ; CHECK: ret
 define <2 x i64> @test128_13(<2 x i64> %x, <2 x i64> %x1, i64* %yb.ptr) nounwind {
-  %yb = load i64* %yb.ptr, align 4
+  %yb = load i64, i64* %yb.ptr, align 4
   %y.0 = insertelement <2 x i64> undef, i64 %yb, i32 0
   %y = insertelement <2 x i64> %y.0, i64 %yb, i32 1
   %mask = icmp eq <2 x i64> %x, %y
@@ -342,7 +342,7 @@ define <2 x i64> @test128_13(<2 x i64> %x, <2 x i64> %x1, i64* %yb.ptr) nounwind
 ; CHECK: vmovdqa32
 ; CHECK: ret
 define <4 x i32> @test128_14(<4 x i32> %x, i32* %yb.ptr, <4 x i32> %x1) nounwind {
-  %yb = load i32* %yb.ptr, align 4
+  %yb = load i32, i32* %yb.ptr, align 4
   %y.0 = insertelement <4 x i32> undef, i32 %yb, i32 0
   %y = shufflevector <4 x i32> %y.0, <4 x i32> undef, <4 x i32> zeroinitializer
   %mask = icmp sle <4 x i32> %x, %y
@@ -356,7 +356,7 @@ define <4 x i32> @test128_14(<4 x i32> %x, i32* %yb.ptr, <4 x i32> %x1) nounwind
 ; CHECK: ret
 define <4 x i32> @test128_15(<4 x i32> %x, i32* %yb.ptr, <4 x i32> %x1, <4 x i32> %y1) nounwind {
   %mask1 = icmp sge <4 x i32> %x1, %y1
-  %yb = load i32* %yb.ptr, align 4
+  %yb = load i32, i32* %yb.ptr, align 4
   %y.0 = insertelement <4 x i32> undef, i32 %yb, i32 0
   %y = shufflevector <4 x i32> %y.0, <4 x i32> undef, <4 x i32> zeroinitializer
   %mask0 = icmp sgt <4 x i32> %x, %y
@@ -371,7 +371,7 @@ define <4 x i32> @test128_15(<4 x i32> %x, i32* %yb.ptr, <4 x i32> %x1, <4 x i32
 ; CHECK: ret
 define <2 x i64> @test128_16(<2 x i64> %x, i64* %yb.ptr, <2 x i64> %x1, <2 x i64> %y1) nounwind {
   %mask1 = icmp sge <2 x i64> %x1, %y1
-  %yb = load i64* %yb.ptr, align 4
+  %yb = load i64, i64* %yb.ptr, align 4
   %y.0 = insertelement <2 x i64> undef, i64 %yb, i32 0
   %y = insertelement <2 x i64> %y.0, i64 %yb, i32 1
   %mask0 = icmp sgt <2 x i64> %x, %y

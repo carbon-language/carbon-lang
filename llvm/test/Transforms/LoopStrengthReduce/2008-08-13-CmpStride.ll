@@ -22,7 +22,7 @@ return:		; preds = %bb
 define i32 @main() nounwind {
 entry:
 	tail call void @func_1( ) nounwind
-	load volatile i16* @g_3, align 2		; <i16>:0 [#uses=1]
+	load volatile i16, i16* @g_3, align 2		; <i16>:0 [#uses=1]
 	zext i16 %0 to i32		; <i32>:1 [#uses=1]
 	tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @"\01LC", i32 0, i32 0), i32 %1 ) nounwind		; <i32>:2 [#uses=0]
 	ret i32 0

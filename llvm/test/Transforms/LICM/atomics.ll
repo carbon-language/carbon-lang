@@ -7,7 +7,7 @@ entry:
 
 loop:
   %i = phi i32 [ %inc, %loop ], [ 0, %entry ]
-  %val = load atomic i32* %y unordered, align 4
+  %val = load atomic i32, i32* %y unordered, align 4
   %inc = add nsw i32 %i, 1
   %exitcond = icmp eq i32 %inc, %val
   br i1 %exitcond, label %end, label %loop
@@ -27,7 +27,7 @@ entry:
   br label %loop
 
 loop:
-  %val = load atomic i32* %y monotonic, align 4
+  %val = load atomic i32, i32* %y monotonic, align 4
   %exitcond = icmp ne i32 %val, 0
   br i1 %exitcond, label %end, label %loop
 
@@ -47,15 +47,15 @@ entry:
   br label %loop
 
 loop:
-  %vala = load atomic i32* %y monotonic, align 4
-  %valb = load atomic i32* %x unordered, align 4
+  %vala = load atomic i32, i32* %y monotonic, align 4
+  %valb = load atomic i32, i32* %x unordered, align 4
   %exitcond = icmp ne i32 %vala, %valb
   br i1 %exitcond, label %end, label %loop
 
 end:
   ret i32 %vala
 ; CHECK-LABEL: define i32 @test3(
-; CHECK: load atomic i32* %x unordered
+; CHECK: load atomic i32, i32* %x unordered
 ; CHECK-NEXT: br label %loop
 }
 
@@ -66,7 +66,7 @@ entry:
   br label %loop
 
 loop:
-  %vala = load atomic i32* %y monotonic, align 4
+  %vala = load atomic i32, i32* %y monotonic, align 4
   store atomic i32 %vala, i32* %x unordered, align 4
   %exitcond = icmp ne i32 %vala, 0
   br i1 %exitcond, label %end, label %loop
@@ -74,6 +74,6 @@ loop:
 end:
   ret i32 %vala
 ; CHECK-LABEL: define i32 @test4(
-; CHECK: load atomic i32* %y monotonic
+; CHECK: load atomic i32, i32* %y monotonic
 ; CHECK-NEXT: store atomic
 }

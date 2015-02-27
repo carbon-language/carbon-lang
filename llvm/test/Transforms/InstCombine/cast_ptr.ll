@@ -107,7 +107,7 @@ define i1 @test4_as2(i16 %A) {
 declare %op* @foo(%op* %X)
 
 define %unop* @test5(%op* %O) {
-        %tmp = load %unop* (%op*)** bitcast ([1 x %op* (%op*)*]* @Array to %unop* (%op*)**); <%unop* (%op*)*> [#uses=1]
+        %tmp = load %unop* (%op*)*, %unop* (%op*)** bitcast ([1 x %op* (%op*)*]* @Array to %unop* (%op*)**); <%unop* (%op*)*> [#uses=1]
         %tmp.2 = call %unop* %tmp( %op* %O )            ; <%unop*> [#uses=1]
         ret %unop* %tmp.2
 ; CHECK-LABEL: @test5(
@@ -122,8 +122,8 @@ define %unop* @test5(%op* %O) {
 define i8 @test6(i8 addrspace(1)* %source) {
 entry:
   %arrayidx223 = addrspacecast i8 addrspace(1)* %source to i8*
-  %tmp4 = load i8* %arrayidx223
+  %tmp4 = load i8, i8* %arrayidx223
   ret i8 %tmp4
 ; CHECK-LABEL: @test6(
-; CHECK: load i8* %arrayidx223
+; CHECK: load i8, i8* %arrayidx223
 }

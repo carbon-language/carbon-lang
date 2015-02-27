@@ -44,13 +44,13 @@ entry:
   %retval = alloca i32, align 4
   %tmp = alloca %struct.foo, align 1
   store i32 0, i32* %retval
-  %0 = load i32* @i, align 4, !dbg !23
+  %0 = load i32, i32* @i, align 4, !dbg !23
   store %struct.foo* %tmp, %struct.foo** %this.addr.i, align 8
   call void @llvm.dbg.declare(metadata %struct.foo** %this.addr.i, metadata !24, metadata !{!"0x102"}), !dbg !26
   store i32 %0, i32* %x.addr.i, align 4
   call void @llvm.dbg.declare(metadata i32* %x.addr.i, metadata !27, metadata !{!"0x102"}), !dbg !28
-  %this1.i = load %struct.foo** %this.addr.i
-  %1 = load i32* %x.addr.i, align 4, !dbg !28
+  %this1.i = load %struct.foo*, %struct.foo** %this.addr.i
+  %1 = load i32, i32* %x.addr.i, align 4, !dbg !28
   %add.i = add nsw i32 %1, 2, !dbg !28
   ret i32 %add.i, !dbg !23
 }

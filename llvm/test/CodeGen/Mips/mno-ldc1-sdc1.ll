@@ -111,7 +111,7 @@
 
 define double @test_ldc1() {
 entry:
-  %0 = load double* @g0, align 8
+  %0 = load double, double* @g0, align 8
   ret double %0
 }
 
@@ -213,7 +213,7 @@ entry:
 define double @test_ldxc1(double* nocapture readonly %a, i32 %i) {
 entry:
   %arrayidx = getelementptr inbounds double, double* %a, i32 %i
-  %0 = load double* %arrayidx, align 8
+  %0 = load double, double* %arrayidx, align 8
   ret double %0
 }
 

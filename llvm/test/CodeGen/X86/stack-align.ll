@@ -12,11 +12,11 @@ target triple = "i686-apple-darwin8"
 
 define void @test({ double, double }* byval  %z, double* %P) nounwind {
 entry:
-	%tmp3 = load double* @G, align 16		; <double> [#uses=1]
+	%tmp3 = load double, double* @G, align 16		; <double> [#uses=1]
 	%tmp4 = tail call double @fabs( double %tmp3 ) readnone	; <double> [#uses=1]
         store volatile double %tmp4, double* %P
 	%tmp = getelementptr { double, double }, { double, double }* %z, i32 0, i32 0		; <double*> [#uses=1]
-	%tmp1 = load volatile double* %tmp, align 8		; <double> [#uses=1]
+	%tmp1 = load volatile double, double* %tmp, align 8		; <double> [#uses=1]
 	%tmp2 = tail call double @fabs( double %tmp1 ) readnone	; <double> [#uses=1]
 	%tmp6 = fadd double %tmp4, %tmp2		; <double> [#uses=1]
 	store volatile double %tmp6, double* %P, align 8

@@ -236,7 +236,7 @@ define <16 x i16> @load_zext_16i8_to_16i16(<16 x i8> *%ptr) {
 ; AVX2-NEXT:    vpmovzxbw {{.*#+}} ymm0 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero,mem[8],zero,mem[9],zero,mem[10],zero,mem[11],zero,mem[12],zero,mem[13],zero,mem[14],zero,mem[15],zero
 ; AVX2-NEXT:    retq
 entry:
- %X = load <16 x i8>* %ptr
+ %X = load <16 x i8>, <16 x i8>* %ptr
  %Y = zext <16 x i8> %X to <16 x i16>
  ret <16 x i16> %Y
 }
@@ -280,7 +280,7 @@ define <8 x i32> @load_zext_8i16_to_8i32(<8 x i16> *%ptr) {
 ; AVX2-NEXT:    vpmovzxwd {{.*#+}} ymm0 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero,mem[4],zero,mem[5],zero,mem[6],zero,mem[7],zero
 ; AVX2-NEXT:    retq
 entry:
- %X = load <8 x i16>* %ptr
+ %X = load <8 x i16>, <8 x i16>* %ptr
  %Y = zext <8 x i16> %X to <8 x i32>
  ret <8 x i32>%Y
 }
@@ -324,7 +324,7 @@ define <4 x i64> @load_zext_4i32_to_4i64(<4 x i32> *%ptr) {
 ; AVX2-NEXT:    vpmovzxdq {{.*#+}} ymm0 = mem[0],zero,mem[1],zero,mem[2],zero,mem[3],zero
 ; AVX2-NEXT:    retq
 entry:
- %X = load <4 x i32>* %ptr
+ %X = load <4 x i32>, <4 x i32>* %ptr
  %Y = zext <4 x i32> %X to <4 x i64>
  ret <4 x i64>%Y
 }

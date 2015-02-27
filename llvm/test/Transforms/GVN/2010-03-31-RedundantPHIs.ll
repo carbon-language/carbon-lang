@@ -24,8 +24,8 @@ bb8:                                              ; preds = %bb12
   br i1 undef, label %bb9, label %bb10
 
 bb9:                                              ; preds = %bb8
-  %0 = load i8** undef, align 4                   ; <i8*> [#uses=0]
-  %1 = load i8** undef, align 4                   ; <i8*> [#uses=0]
+  %0 = load i8*, i8** undef, align 4                   ; <i8*> [#uses=0]
+  %1 = load i8*, i8** undef, align 4                   ; <i8*> [#uses=0]
   br label %bb11
 
 bb10:                                             ; preds = %bb8

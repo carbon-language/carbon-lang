@@ -6,7 +6,7 @@ define void @test(i64* %P) nounwind  {
 ; CHECK: movl 4(%esp), %[[REGISTER:.*]]
 ; CHECK-NOT: 4(%[[REGISTER]])
 ; CHECK: ret
-	%tmp1 = load i64* %P, align 8		; <i64> [#uses=1]
+	%tmp1 = load i64, i64* %P, align 8		; <i64> [#uses=1]
 	%tmp2 = xor i64 %tmp1, 1		; <i64> [#uses=1]
 	store i64 %tmp2, i64* %P, align 8
 	ret void

@@ -5,7 +5,7 @@
 
 define internal i16 @foo(i16 %i) nounwind {
 entry:
-  %0 = load i8** @nextaddr, align 4               ; <i8*> [#uses=2]
+  %0 = load i8*, i8** @nextaddr, align 4               ; <i8*> [#uses=2]
   %1 = icmp eq i8* %0, null                       ; <i1> [#uses=1]
   br i1 %1, label %bb3, label %bb2
 
@@ -15,7 +15,7 @@ bb2:                                              ; preds = %bb3, %entry
 
 bb3:                                              ; preds = %entry
   %2 = getelementptr inbounds [5 x i8*], [5 x i8*]* @C.0.2070, i16 0, i16 %i ; <i8**> [#uses=1]
-  %gotovar.4.0.pre = load i8** %2, align 4        ; <i8*> [#uses=1]
+  %gotovar.4.0.pre = load i8*, i8** %2, align 4        ; <i8*> [#uses=1]
   br label %bb2
 
 L5:                                               ; preds = %bb2

@@ -8,7 +8,7 @@ define void @foo() {
 entry:
         %ttype = alloca i32, align 4            ; <i32*> [#uses=1]
         %regs = alloca [1024 x %struct.__db_region], align 16           ; <[1024 x %struct.__db_region]*> [#uses=0]
-        %tmp = load i32* %ttype, align 4                ; <i32> [#uses=1]
+        %tmp = load i32, i32* %ttype, align 4                ; <i32> [#uses=1]
         %tmp1 = call i32 (...)* @bork( i32 %tmp )               ; <i32> [#uses=0]
         ret void
 

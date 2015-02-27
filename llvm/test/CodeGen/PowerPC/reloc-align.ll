@@ -24,7 +24,7 @@ entry:
 define internal fastcc signext i32 @func_90(%struct.S1* byval nocapture %p_91) #0 {
 entry:
   %0 = bitcast %struct.S1* %p_91 to i64*
-  %bf.load = load i64* %0, align 1
+  %bf.load = load i64, i64* %0, align 1
   %bf.shl = shl i64 %bf.load, 26
   %bf.ashr = ashr i64 %bf.shl, 54
   %bf.cast = trunc i64 %bf.ashr to i32

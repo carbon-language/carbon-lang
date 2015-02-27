@@ -25,9 +25,9 @@ bb1:
 
 bb2:
   %P = phi i32* [ @X, %bb ], [ @Y, %bb1 ]
-  %tmp1 = load i32* @Z, align 4
+  %tmp1 = load i32, i32* @Z, align 4
   store i32 123, i32* %P, align 4
-  %tmp2 = load i32* @Z, align 4
+  %tmp2 = load i32, i32* @Z, align 4
   br label %return
 
 return:
@@ -52,14 +52,14 @@ codeRepl:
   br i1 %targetBlock, label %for.body, label %bye
 
 for.body:
-  %1 = load i32* %jj7, align 4
+  %1 = load i32, i32* %jj7, align 4
   %idxprom4 = zext i32 %1 to i64
   %arrayidx5 = getelementptr inbounds [100 x i32], [100 x i32]* %oa5, i64 0, i64 %idxprom4
-  %2 = load i32* %arrayidx5, align 4
+  %2 = load i32, i32* %arrayidx5, align 4
   %sub6 = sub i32 %2, 6
   store i32 %sub6, i32* %arrayidx5, align 4
   ; %0 and %arrayidx5 can alias! It is not safe to DSE the above store.
-  %3 = load i32* %0, align 4
+  %3 = load i32, i32* %0, align 4
   store i32 %3, i32* %arrayidx5, align 4
   %sub11 = add i32 %1, -1
   %idxprom12 = zext i32 %sub11 to i64
@@ -68,7 +68,7 @@ for.body:
   br label %codeRepl
 
 bye:
-  %.reload = load i32* %jj7, align 4
+  %.reload = load i32, i32* %jj7, align 4
   ret i32 %.reload
 }
 

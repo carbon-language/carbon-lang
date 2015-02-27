@@ -4,7 +4,7 @@
 
 define i32 @main() nounwind {
 entry:
-	load void ()** @f, align 8		; <void ()*>:0 [#uses=1]
+	load void ()*, void ()** @f, align 8		; <void ()*>:0 [#uses=1]
 	tail call void %0( ) nounwind
 	ret i32 0
 }

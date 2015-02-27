@@ -27,7 +27,7 @@
 
 define i32 @fn2() {
 entry:
-  %.pr = load i32* @d, align 4
+  %.pr = load i32, i32* @d, align 4
   %phitmp = icmp eq i32 %.pr, 0
   br label %for.cond
 
@@ -36,11 +36,11 @@ for.cond:
   br i1 %0, label %for.cond, label %for.cond2thread-pre-split.preheader.i
 
 for.cond2thread-pre-split.preheader.i:
-  %1 = load i32* @g, align 4
-  %2 = load i32* @h, align 4
+  %1 = load i32, i32* @g, align 4
+  %2 = load i32, i32* @h, align 4
   %mul = mul nsw i32 %2, %1
-  %3 = load i8** @f, align 4
-  %.pr.pre.i = load i32* @b, align 4
+  %3 = load i8*, i8** @f, align 4
+  %.pr.pre.i = load i32, i32* @b, align 4
   br label %for.cond2thread-pre-split.i
 
 for.cond2thread-pre-split.i:
@@ -65,56 +65,56 @@ for.body4.i:
   %8 = phi i32 [ %inc.7.i, %for.body4.i ], [ %.pr.i, %for.body4.i.preheader ]
   %arrayidx.sum1 = add i32 %add.i, %8
   %arrayidx.i = getelementptr inbounds i8, i8* %3, i32 %arrayidx.sum1
-  %9 = load i8* %arrayidx.i, align 1
+  %9 = load i8, i8* %arrayidx.i, align 1
   %conv.i = sext i8 %9 to i32
   store i32 %conv.i, i32* @c, align 4
   %inc.i = add nsw i32 %8, 1
   store i32 %inc.i, i32* @b, align 4
   %arrayidx.sum2 = add i32 %add.i, %inc.i
   %arrayidx.1.i = getelementptr inbounds i8, i8* %3, i32 %arrayidx.sum2
-  %10 = load i8* %arrayidx.1.i, align 1
+  %10 = load i8, i8* %arrayidx.1.i, align 1
   %conv.1.i = sext i8 %10 to i32
   store i32 %conv.1.i, i32* @c, align 4
   %inc.1.i = add nsw i32 %8, 2
   store i32 %inc.1.i, i32* @b, align 4
   %arrayidx.sum3 = add i32 %add.i, %inc.1.i
   %arrayidx.2.i = getelementptr inbounds i8, i8* %3, i32 %arrayidx.sum3
-  %11 = load i8* %arrayidx.2.i, align 1
+  %11 = load i8, i8* %arrayidx.2.i, align 1
   %conv.2.i = sext i8 %11 to i32
   store i32 %conv.2.i, i32* @c, align 4
   %inc.2.i = add nsw i32 %8, 3
   store i32 %inc.2.i, i32* @b, align 4
   %arrayidx.sum4 = add i32 %add.i, %inc.2.i
   %arrayidx.3.i = getelementptr inbounds i8, i8* %3, i32 %arrayidx.sum4
-  %12 = load i8* %arrayidx.3.i, align 1
+  %12 = load i8, i8* %arrayidx.3.i, align 1
   %conv.3.i = sext i8 %12 to i32
   store i32 %conv.3.i, i32* @c, align 4
   %inc.3.i = add nsw i32 %8, 4
   store i32 %inc.3.i, i32* @b, align 4
   %arrayidx.sum5 = add i32 %add.i, %inc.3.i
   %arrayidx.4.i = getelementptr inbounds i8, i8* %3, i32 %arrayidx.sum5
-  %13 = load i8* %arrayidx.4.i, align 1
+  %13 = load i8, i8* %arrayidx.4.i, align 1
   %conv.4.i = sext i8 %13 to i32
   store i32 %conv.4.i, i32* @c, align 4
   %inc.4.i = add nsw i32 %8, 5
   store i32 %inc.4.i, i32* @b, align 4
   %arrayidx.sum6 = add i32 %add.i, %inc.4.i
   %arrayidx.5.i = getelementptr inbounds i8, i8* %3, i32 %arrayidx.sum6
-  %14 = load i8* %arrayidx.5.i, align 1
+  %14 = load i8, i8* %arrayidx.5.i, align 1
   %conv.5.i = sext i8 %14 to i32
   store i32 %conv.5.i, i32* @c, align 4
   %inc.5.i = add nsw i32 %8, 6
   store i32 %inc.5.i, i32* @b, align 4
   %arrayidx.sum7 = add i32 %add.i, %inc.5.i
   %arrayidx.6.i = getelementptr inbounds i8, i8* %3, i32 %arrayidx.sum7
-  %15 = load i8* %arrayidx.6.i, align 1
+  %15 = load i8, i8* %arrayidx.6.i, align 1
   %conv.6.i = sext i8 %15 to i32
   store i32 %conv.6.i, i32* @c, align 4
   %inc.6.i = add nsw i32 %8, 7
   store i32 %inc.6.i, i32* @b, align 4
   %arrayidx.sum8 = add i32 %add.i, %inc.6.i
   %arrayidx.7.i = getelementptr inbounds i8, i8* %3, i32 %arrayidx.sum8
-  %16 = load i8* %arrayidx.7.i, align 1
+  %16 = load i8, i8* %arrayidx.7.i, align 1
   %conv.7.i = sext i8 %16 to i32
   store i32 %conv.7.i, i32* @c, align 4
   %inc.7.i = add nsw i32 %8, 8
@@ -136,7 +136,7 @@ for.body4.ur.i:
   %20 = phi i32 [ %inc.ur.i, %for.body4.ur.i ], [ %.ph, %for.body4.ur.i.preheader ]
   %arrayidx.sum = add i32 %add.i, %20
   %arrayidx.ur.i = getelementptr inbounds i8, i8* %3, i32 %arrayidx.sum
-  %21 = load i8* %arrayidx.ur.i, align 1
+  %21 = load i8, i8* %arrayidx.ur.i, align 1
   %conv.ur.i = sext i8 %21 to i32
   store i32 %conv.ur.i, i32* @c, align 4
   %inc.ur.i = add nsw i32 %20, 1

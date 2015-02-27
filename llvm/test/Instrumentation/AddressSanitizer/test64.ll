@@ -3,7 +3,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-unknown-linux-gnu"
 define i32 @read_4_bytes(i32* %a) sanitize_address {
 entry:
-  %tmp1 = load i32* %a, align 4
+  %tmp1 = load i32, i32* %a, align 4
   ret i32 %tmp1
 }
 ; CHECK-LABEL: @read_4_bytes

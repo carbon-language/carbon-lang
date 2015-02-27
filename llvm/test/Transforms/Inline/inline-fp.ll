@@ -18,19 +18,19 @@ entry:
   call void @getY(i32* %responseY, i8* %valueY)
   call void @getZ(i32* %responseZ, i8* %valueZ)
 
-  %0 = load i32* %responseX
-  %1 = load i8* %valueX
+  %0 = load i32, i32* %responseX
+  %1 = load i8, i8* %valueX
   %call = call float @f_nofp(i32 %0, i8 zeroext %1)
-  %2 = load i32* %responseZ
-  %3 = load i8* %valueZ
+  %2 = load i32, i32* %responseZ
+  %3 = load i8, i8* %valueZ
   %call2 = call float @f_nofp(i32 %2, i8 zeroext %3)
   %call3 = call float @fabsf(float %call)
   %cmp = fcmp ogt float %call3, 0x3FC1EB8520000000
   br i1 %cmp, label %if.end12, label %if.else
 
 if.else:                                          ; preds = %entry
-  %4 = load i32* %responseY
-  %5 = load i8* %valueY
+  %4 = load i32, i32* %responseY
+  %5 = load i8, i8* %valueY
   %call1 = call float @f_nofp(i32 %4, i8 zeroext %5)
   %call4 = call float @fabsf(float %call1)
   %cmp5 = fcmp ogt float %call4, 0x3FC1EB8520000000
@@ -65,19 +65,19 @@ entry:
   call void @getY(i32* %responseY, i8* %valueY)
   call void @getZ(i32* %responseZ, i8* %valueZ)
 
-  %0 = load i32* %responseX
-  %1 = load i8* %valueX
+  %0 = load i32, i32* %responseX
+  %1 = load i8, i8* %valueX
   %call = call float @f_hasfp(i32 %0, i8 zeroext %1)
-  %2 = load i32* %responseZ
-  %3 = load i8* %valueZ
+  %2 = load i32, i32* %responseZ
+  %3 = load i8, i8* %valueZ
   %call2 = call float @f_hasfp(i32 %2, i8 zeroext %3)
   %call3 = call float @fabsf(float %call)
   %cmp = fcmp ogt float %call3, 0x3FC1EB8520000000
   br i1 %cmp, label %if.end12, label %if.else
 
 if.else:                                          ; preds = %entry
-  %4 = load i32* %responseY
-  %5 = load i8* %valueY
+  %4 = load i32, i32* %responseY
+  %5 = load i8, i8* %valueY
   %call1 = call float @f_hasfp(i32 %4, i8 zeroext %5)
   %call4 = call float @fabsf(float %call1)
   %cmp5 = fcmp ogt float %call4, 0x3FC1EB8520000000

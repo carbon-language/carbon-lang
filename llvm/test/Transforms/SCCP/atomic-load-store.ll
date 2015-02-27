@@ -6,7 +6,7 @@
 @C = internal constant i32 222
 
 define i32 @test1() {
-	%V = load atomic i32* @G seq_cst, align 4
+	%V = load atomic i32, i32* @G seq_cst, align 4
 	%C = icmp eq i32 %V, 17
 	br i1 %C, label %T, label %F
 T:
@@ -21,7 +21,7 @@ F:
 ; CHECK: ret i32 17
 
 define i32 @test2() {
-	%V = load atomic i32* @C seq_cst, align 4
+	%V = load atomic i32, i32* @C seq_cst, align 4
 	ret i32 %V
 }
 

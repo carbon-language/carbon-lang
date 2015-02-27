@@ -43,7 +43,7 @@ target triple = "mips-unknown-linux"
 
 define i32 @main() nounwind {
 entry:
-  %0 = load i32* @x, align 4
+  %0 = load i32, i32* @x, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %if.end, label %foo
 

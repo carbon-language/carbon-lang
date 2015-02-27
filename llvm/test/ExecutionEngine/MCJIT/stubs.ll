@@ -26,7 +26,7 @@ fail_block:
 
 define i1 @test() nounwind {
 entry:
-	%tmp = load i1 ()** @funcPtr
+	%tmp = load i1 ()*, i1 ()** @funcPtr
 	%eq = icmp eq i1 ()* %tmp, @test
 	ret i1 %eq
 }

@@ -139,7 +139,7 @@ bb345:                                            ; preds = %bb345, %bb339
   %indvar670 = phi i32 [ %tmp673, %bb345 ], [ 0, %bb339 ] ; <i32> [#uses=1]
   %tmp673 = add i32 %indvar670, 1                 ; <i32> [#uses=2]
   %scevgep674 = getelementptr [256 x i8], [256 x i8]* %last, i32 0, i32 %tmp673 ; <i8*> [#uses=1]
-  %5 = load i8* %scevgep674, align 1              ; <i8> [#uses=1]
+  %5 = load i8, i8* %scevgep674, align 1              ; <i8> [#uses=1]
   br i1 undef, label %bb347, label %bb345
 
 bb347:                                            ; preds = %bb345
@@ -167,7 +167,7 @@ bb366:                                            ; preds = %bb366, %bb360
   %indvar662 = phi i32 [ %tmp665, %bb366 ], [ 0, %bb360 ] ; <i32> [#uses=1]
   %tmp665 = add i32 %indvar662, 1                 ; <i32> [#uses=2]
   %scevgep666 = getelementptr [256 x i8], [256 x i8]* %last2, i32 0, i32 %tmp665 ; <i8*> [#uses=1]
-  %6 = load i8* %scevgep666, align 1              ; <i8> [#uses=0]
+  %6 = load i8, i8* %scevgep666, align 1              ; <i8> [#uses=0]
   br i1 false, label %bb368, label %bb366
 
 bb368:                                            ; preds = %bb366
@@ -189,7 +189,7 @@ bb376:                                            ; preds = %bb375
   ret void
 
 bb383:                                            ; preds = %bb373
-  %10 = load i8* undef, align 1                   ; <i8> [#uses=1]
+  %10 = load i8, i8* undef, align 1                   ; <i8> [#uses=1]
   %cond1 = icmp eq i8 %10, 46                     ; <i1> [#uses=1]
   br i1 %cond1, label %bb373, label %bb388
 
@@ -203,7 +203,7 @@ bb390:                                            ; preds = %isdigit1498.exit83,
 
 bb391:                                            ; preds = %bb390, %bb388
   %indvar724 = phi i32 [ %indvar.next725, %bb390 ], [ 0, %bb388 ] ; <i32> [#uses=2]
-  %11 = load i8* undef, align 1                   ; <i8> [#uses=0]
+  %11 = load i8, i8* undef, align 1                   ; <i8> [#uses=0]
   br i1 false, label %bb395, label %bb392
 
 bb392:                                            ; preds = %bb391

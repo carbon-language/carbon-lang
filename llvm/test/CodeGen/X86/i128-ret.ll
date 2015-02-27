@@ -4,7 +4,7 @@
 ; CHECK: movq 8([[A0]]), %rdx
 
 define i128 @test(i128 *%P) {
-        %A = load i128* %P
+        %A = load i128, i128* %P
         ret i128 %A
 }
 

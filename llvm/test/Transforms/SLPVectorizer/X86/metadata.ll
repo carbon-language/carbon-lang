@@ -12,13 +12,13 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 define void @test1(double* %a, double* %b, double* %c) {
 entry:
-  %i0 = load double* %a, align 8, !tbaa !4
-  %i1 = load double* %b, align 8, !tbaa !4
+  %i0 = load double, double* %a, align 8, !tbaa !4
+  %i1 = load double, double* %b, align 8, !tbaa !4
   %mul = fmul double %i0, %i1, !fpmath !0
   %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
-  %i3 = load double* %arrayidx3, align 8, !tbaa !4
+  %i3 = load double, double* %arrayidx3, align 8, !tbaa !4
   %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
-  %i4 = load double* %arrayidx4, align 8, !tbaa !4
+  %i4 = load double, double* %arrayidx4, align 8, !tbaa !4
   %mul5 = fmul double %i3, %i4, !fpmath !0
   store double %mul, double* %c, align 8, !tbaa !4
   %arrayidx5 = getelementptr inbounds double, double* %c, i64 1
@@ -35,13 +35,13 @@ entry:
 
 define void @test2(double* %a, double* %b, i8* %e) {
 entry:
-  %i0 = load double* %a, align 8, !tbaa !4
-  %i1 = load double* %b, align 8, !tbaa !4
+  %i0 = load double, double* %a, align 8, !tbaa !4
+  %i1 = load double, double* %b, align 8, !tbaa !4
   %mul = fmul double %i0, %i1, !fpmath !1
   %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
-  %i3 = load double* %arrayidx3, align 8, !tbaa !4
+  %i3 = load double, double* %arrayidx3, align 8, !tbaa !4
   %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
-  %i4 = load double* %arrayidx4, align 8, !tbaa !4
+  %i4 = load double, double* %arrayidx4, align 8, !tbaa !4
   %mul5 = fmul double %i3, %i4, !fpmath !1
   %c = bitcast i8* %e to double*
   store double %mul, double* %c, align 8, !tbaa !4

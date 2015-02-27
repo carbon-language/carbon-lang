@@ -9,18 +9,18 @@ target triple = "armv7-apple-darwin9"
 
 define %struct.tree* @tsp(%struct.tree* %t, i32 %nproc) nounwind {
 entry:
-  %t.idx51.val.i = load double* null              ; <double> [#uses=1]
+  %t.idx51.val.i = load double, double* null              ; <double> [#uses=1]
   br i1 undef, label %bb4.i, label %bb.i
 
 bb.i:                                             ; preds = %entry
   unreachable
 
 bb4.i:                                            ; preds = %entry
-  %0 = load %struct.tree** @g, align 4         ; <%struct.tree*> [#uses=2]
+  %0 = load %struct.tree*, %struct.tree** @g, align 4         ; <%struct.tree*> [#uses=2]
   %.idx45.i = getelementptr %struct.tree, %struct.tree* %0, i32 0, i32 1 ; <double*> [#uses=1]
-  %.idx45.val.i = load double* %.idx45.i          ; <double> [#uses=1]
+  %.idx45.val.i = load double, double* %.idx45.i          ; <double> [#uses=1]
   %.idx46.i = getelementptr %struct.tree, %struct.tree* %0, i32 0, i32 2 ; <double*> [#uses=1]
-  %.idx46.val.i = load double* %.idx46.i          ; <double> [#uses=1]
+  %.idx46.val.i = load double, double* %.idx46.i          ; <double> [#uses=1]
   %1 = fsub double 0.000000e+00, %.idx45.val.i    ; <double> [#uses=2]
   %2 = fmul double %1, %1                         ; <double> [#uses=1]
   %3 = fsub double %t.idx51.val.i, %.idx46.val.i  ; <double> [#uses=2]

@@ -16,11 +16,11 @@ bb.nph:		; preds = %entry
 
 bb:		; preds = %bb1, %bb.nph
 	%j.01 = phi i32 [ %8, %bb1 ], [ 0, %bb.nph ]		; <i32> [#uses=1]
-	load i32* %srcptr, align 4		; <i32>:1 [#uses=2]
+	load i32, i32* %srcptr, align 4		; <i32>:1 [#uses=2]
 	and i32 %1, 255		; <i32>:2 [#uses=1]
 	and i32 %1, -256		; <i32>:3 [#uses=1]
 	getelementptr [256 x i8], [256 x i8]* @lut, i32 0, i32 %2		; <i8*>:4 [#uses=1]
-	load i8* %4, align 1		; <i8>:5 [#uses=1]
+	load i8, i8* %4, align 1		; <i8>:5 [#uses=1]
 	zext i8 %5 to i32		; <i32>:6 [#uses=1]
 	or i32 %6, %3		; <i32>:7 [#uses=1]
 	store i32 %7, i32* %dstptr, align 4

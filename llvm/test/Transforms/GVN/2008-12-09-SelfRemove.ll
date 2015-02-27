@@ -14,7 +14,7 @@ entry:
 	br i1 false, label %return, label %bb
 
 bb:		; preds = %entry
-	%1 = load i8** %0, align 4		; <i8*> [#uses=0]
+	%1 = load i8*, i8** %0, align 4		; <i8*> [#uses=0]
 	%2 = getelementptr %struct.d_print_info, %struct.d_print_info* %dpi, i32 0, i32 1		; <i8**> [#uses=0]
 	br label %bb21
 

@@ -21,7 +21,7 @@
 
 define float @retfloat() nounwind {
 entry:
-        %0 = load volatile float* @float
+        %0 = load volatile float, float* @float
         ret float %0
 }
 
@@ -35,7 +35,7 @@ entry:
 
 define double @retdouble() nounwind {
 entry:
-        %0 = load volatile double* @double
+        %0 = load volatile double, double* @double
         ret double %0
 }
 

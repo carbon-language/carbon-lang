@@ -13,7 +13,7 @@ entry:
   %1 = extractelement <4 x i32> %0, i32 0
   call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !9, metadata !{!"0x102"}), !dbg !11
   call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !13, metadata !{!"0x102"}), !dbg !14
-  %tmp2 = load i32 addrspace(1)* %ip, align 4, !dbg !15
+  %tmp2 = load i32, i32 addrspace(1)* %ip, align 4, !dbg !15
   %tmp3 = add i32 0, %tmp2, !dbg !15
 ; CHECK:  ##DEBUG_VALUE: idx <- E{{..$}}
   call void @llvm.dbg.value(metadata i32 %tmp3, i64 0, metadata !13, metadata !{!"0x102"}), !dbg !15

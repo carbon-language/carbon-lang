@@ -18,7 +18,7 @@ bb56:                                             ; preds = %L_10
   br label %bb33
 
 bb33:                                             ; preds = %bb51, %bb56
-  %r111 = load i64* undef, align 8
+  %r111 = load i64, i64* undef, align 8
   br i1 undef, label %bb51, label %bb35
 
 bb35:                                             ; preds = %bb33

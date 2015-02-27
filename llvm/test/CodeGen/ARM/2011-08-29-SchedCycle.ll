@@ -32,7 +32,7 @@
 
 define void @t() nounwind {
 entry:
-  %tmp = load i64* undef, align 4
+  %tmp = load i64, i64* undef, align 4
   %tmp5 = udiv i64 %tmp, 30
   %tmp13 = and i64 %tmp5, 64739244643450880
   %tmp16 = sub i64 0, %tmp13

@@ -58,7 +58,7 @@ entry:
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
 	call void @llvm.dbg.func.start({ }* bitcast (%llvm.dbg.subprogram.type* @llvm.dbg.subprogram947 to { }*))
 	store %struct.__false_type* %this, %struct.__false_type** %this_addr
-	%0 = load %struct.__false_type** %this_addr, align 4		; <%struct.__false_type*> [#uses=1]
+	%0 = load %struct.__false_type*, %struct.__false_type** %this_addr, align 4		; <%struct.__false_type*> [#uses=1]
 	call void @_ZN9__gnu_cxx13new_allocatorIP5SceneED2Ev(%struct.__false_type* %0) nounwind
 	br label %bb
 

@@ -134,7 +134,7 @@ while.body392.lr.ph:                              ; preds = %do.body378
   br label %while.body392
 
 while.body392:                                    ; preds = %wait_on_buffer.exit1319, %while.body392.lr.ph
-  %0 = load i8** undef, align 8
+  %0 = load i8*, i8** undef, align 8
   %add.ptr399 = getelementptr inbounds i8, i8* %0, i64 -72
   %b_state.i.i1314 = bitcast i8* %add.ptr399 to i64*
   %tobool.i1316 = icmp eq i64 undef, 0
@@ -144,7 +144,7 @@ if.then.i1317:                                    ; preds = %while.body392
   unreachable
 
 wait_on_buffer.exit1319:                          ; preds = %while.body392
-  %1 = load volatile i64* %b_state.i.i1314, align 8
+  %1 = load volatile i64, i64* %b_state.i.i1314, align 8
   %conv.i.i1322 = and i64 %1, 1
   %lnot404 = icmp eq i64 %conv.i.i1322, 0
   %.err.4 = select i1 %lnot404, i32 -5, i32 undef

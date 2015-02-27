@@ -105,7 +105,7 @@ entry:
   %0 = tail call i32 @llvm.x86.sse.movmsk.ps(<4 x float> %x) nounwind
   %idxprom = sext i32 %0 to i64
   %arrayidx = getelementptr inbounds i32, i32* %indexTable, i64 %idxprom
-  %1 = load i32* %arrayidx, align 4
+  %1 = load i32, i32* %arrayidx, align 4
   ret i32 %1
 }
 
@@ -118,7 +118,7 @@ entry:
   %1 = tail call i32 @llvm.x86.sse2.movmsk.pd(<2 x double> %0) nounwind
   %idxprom = sext i32 %1 to i64
   %arrayidx = getelementptr inbounds i32, i32* %indexTable, i64 %idxprom
-  %2 = load i32* %arrayidx, align 4
+  %2 = load i32, i32* %arrayidx, align 4
   ret i32 %2
 }
 

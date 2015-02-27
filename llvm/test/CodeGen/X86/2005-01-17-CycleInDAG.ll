@@ -8,9 +8,9 @@
 @GLOBAL = external global i32           ; <i32*> [#uses=1]
 
 define i32 @test(i32* %P1, i32* %P2, i32* %P3) nounwind {
-        %L = load i32* @GLOBAL          ; <i32> [#uses=1]
+        %L = load i32, i32* @GLOBAL          ; <i32> [#uses=1]
         store i32 12, i32* %P2
-        %Y = load i32* %P3              ; <i32> [#uses=1]
+        %Y = load i32, i32* %P3              ; <i32> [#uses=1]
         %Z = sub i32 %Y, %L             ; <i32> [#uses=1]
         ret i32 %Z
 }

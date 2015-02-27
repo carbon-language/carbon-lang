@@ -10,9 +10,9 @@ bb.preheader:		; preds = %entry
 	br i1 false, label %cond_true48, label %cond_next80
 
 cond_true48:		; preds = %bb.preheader
-	%tmp = load i8* null		; <i8> [#uses=1]
+	%tmp = load i8, i8* null		; <i8> [#uses=1]
 	%tmp51 = zext i8 %tmp to i16		; <i16> [#uses=1]
-	%tmp99 = load i8* null		; <i8> [#uses=1]
+	%tmp99 = load i8, i8* null		; <i8> [#uses=1]
 	%tmp54 = bitcast i8 %tmp99 to i8		; <i8> [#uses=1]
 	%tmp54.upgrd.1 = zext i8 %tmp54 to i32		; <i32> [#uses=1]
 	%tmp55 = lshr i32 %tmp54.upgrd.1, 3		; <i32> [#uses=1]

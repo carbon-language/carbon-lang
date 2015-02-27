@@ -35,6 +35,6 @@ early.exit:
 
 if.end:
   %tmp = phi i32* [ %first.lcssa, %early.exit ], [ %first, %if.then ], [ %first, %entry ], [ undef, %if.else ]
-  %val = load i32* %tmp
+  %val = load i32, i32* %tmp
   ret i32 %val
 }

@@ -20,8 +20,8 @@
 declare i32 @printf(i8*, ...)
 
 define i32 @main() {
-        %a = load double* @A
-        %b = load double* @B
+        %a = load double, double* @A
+        %b = load double, double* @B
         %lt_r = fcmp olt double %a, %b
         %le_r = fcmp ole double %a, %b
         %gt_r = fcmp ogt double %a, %b

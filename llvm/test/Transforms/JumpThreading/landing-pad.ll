@@ -13,8 +13,8 @@
 define void @_ZN15EditCommandImpl5applyEv(%class.E* %this) uwtable align 2 {
 entry:
   %0 = bitcast %class.E* %this to void (%class.E*)***
-  %vtable = load void (%class.E*)*** %0, align 8
-  %1 = load void (%class.E*)** %vtable, align 8
+  %vtable = load void (%class.E*)**, void (%class.E*)*** %0, align 8
+  %1 = load void (%class.E*)*, void (%class.E*)** %vtable, align 8
   call void %1(%class.E* %this)
   ret void
 }
@@ -53,7 +53,7 @@ _ZN1DC1Ev.exit:                                   ; preds = %entry
   store i32 (...)** bitcast (i8** getelementptr inbounds ([3 x i8*]* @_ZTV1D, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, align 8
   %_ref.i.i.i = getelementptr inbounds i8, i8* %call, i64 8
   %1 = bitcast i8* %_ref.i.i.i to i32*
-  %2 = load i32* %1, align 4
+  %2 = load i32, i32* %1, align 4
   %inc.i.i.i = add nsw i32 %2, 1
   store i32 %inc.i.i.i, i32* %1, align 4
   %3 = bitcast i8* %call to %class.D*
@@ -76,7 +76,7 @@ lpad:                                             ; preds = %entry
 lpad1:                                            ; preds = %_ZN1DC1Ev.exit, %_ZN15EditCommandImpl5applyEv.exit
   %5 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
           cleanup
-  %6 = load i32* %1, align 4
+  %6 = load i32, i32* %1, align 4
   %tobool.i.i.i = icmp eq i32 %6, 0
   br i1 %tobool.i.i.i, label %_ZN1BI1DED1Ev.exit, label %if.then.i.i.i
 
@@ -101,7 +101,7 @@ entry:
   %m_ptr.i = getelementptr inbounds %class.B, %class.B* %this, i64 0, i32 0
   store %class.D* %p1, %class.D** %m_ptr.i, align 8
   %_ref.i.i = getelementptr inbounds %class.D, %class.D* %p1, i64 0, i32 0, i32 0, i32 1, i32 0, i32 0
-  %0 = load i32* %_ref.i.i, align 4
+  %0 = load i32, i32* %_ref.i.i, align 4
   %inc.i.i = add nsw i32 %0, 1
   store i32 %inc.i.i, i32* %_ref.i.i, align 4
   ret void
@@ -116,7 +116,7 @@ declare void @_ZdlPv()
 define %class.D* @_ZN1BI1DEptEv(%class.B* nocapture readonly %this) nounwind readonly uwtable align 2 {
 entry:
   %m_ptr = getelementptr inbounds %class.B, %class.B* %this, i64 0, i32 0
-  %0 = load %class.D** %m_ptr, align 8
+  %0 = load %class.D*, %class.D** %m_ptr, align 8
   ret %class.D* %0
 }
 
@@ -125,9 +125,9 @@ declare void @_ZN1D16deleteKeyPressedEv()
 define void @_ZN1BI1DED1Ev(%class.B* nocapture readonly %this) unnamed_addr uwtable align 2 {
 entry:
   %m_ptr.i = getelementptr inbounds %class.B, %class.B* %this, i64 0, i32 0
-  %0 = load %class.D** %m_ptr.i, align 8
+  %0 = load %class.D*, %class.D** %m_ptr.i, align 8
   %_ref.i.i = getelementptr inbounds %class.D, %class.D* %0, i64 0, i32 0, i32 0, i32 1, i32 0, i32 0
-  %1 = load i32* %_ref.i.i, align 4
+  %1 = load i32, i32* %_ref.i.i, align 4
   %tobool.i.i = icmp eq i32 %1, 0
   br i1 %tobool.i.i, label %_ZN1BI1DED2Ev.exit, label %if.then.i.i
 
@@ -147,9 +147,9 @@ declare hidden void @__clang_call_terminate()
 define void @_ZN1BI1DED2Ev(%class.B* nocapture readonly %this) unnamed_addr uwtable align 2 {
 entry:
   %m_ptr = getelementptr inbounds %class.B, %class.B* %this, i64 0, i32 0
-  %0 = load %class.D** %m_ptr, align 8
+  %0 = load %class.D*, %class.D** %m_ptr, align 8
   %_ref.i = getelementptr inbounds %class.D, %class.D* %0, i64 0, i32 0, i32 0, i32 1, i32 0, i32 0
-  %1 = load i32* %_ref.i, align 4
+  %1 = load i32, i32* %_ref.i, align 4
   %tobool.i = icmp eq i32 %1, 0
   br i1 %tobool.i, label %_ZN1AI1CE5derefEv.exit, label %if.then.i
 
@@ -167,7 +167,7 @@ _ZN1AI1CE5derefEv.exit:                           ; preds = %entry, %if.then.i
 define void @_ZN1AI1CE5derefEv(%class.A* nocapture readonly %this) nounwind uwtable align 2 {
 entry:
   %_ref = getelementptr inbounds %class.A, %class.A* %this, i64 0, i32 0
-  %0 = load i32* %_ref, align 4
+  %0 = load i32, i32* %_ref, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %if.end, label %if.then
 
@@ -187,7 +187,7 @@ entry:
   %m_ptr = getelementptr inbounds %class.B, %class.B* %this, i64 0, i32 0
   store %class.D* %p1, %class.D** %m_ptr, align 8
   %_ref.i = getelementptr inbounds %class.D, %class.D* %p1, i64 0, i32 0, i32 0, i32 1, i32 0, i32 0
-  %0 = load i32* %_ref.i, align 4
+  %0 = load i32, i32* %_ref.i, align 4
   %inc.i = add nsw i32 %0, 1
   store i32 %inc.i, i32* %_ref.i, align 4
   ret void
@@ -196,7 +196,7 @@ entry:
 define void @_ZN1AI1CE3refEv(%class.A* nocapture %this) nounwind uwtable align 2 {
 entry:
   %_ref = getelementptr inbounds %class.A, %class.A* %this, i64 0, i32 0
-  %0 = load i32* %_ref, align 4
+  %0 = load i32, i32* %_ref, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %_ref, align 4
   ret void

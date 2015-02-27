@@ -21,7 +21,7 @@ entry:
 	%4 = bitcast { i32, i32 }* %3 to i64*		; <i64*> [#uses=1]
 	store i64 %key_token2, i64* %4, align 4
 	%5 = call i32 (...)* @foo(%struct.Key* byval align 4 %iospec, i32* %ret) nounwind		; <i32> [#uses=0]
-	%6 = load i32* %ret, align 4		; <i32> [#uses=1]
+	%6 = load i32, i32* %ret, align 4		; <i32> [#uses=1]
 	ret i32 %6
 }
 

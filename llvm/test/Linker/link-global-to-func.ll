@@ -9,6 +9,6 @@
 @__eprintf = external global i8*		; <i8**> [#uses=1]
 
 define i8* @test() {
-	%A = load i8** @__eprintf		; <i8*> [#uses=1]
+	%A = load i8*, i8** @__eprintf		; <i8*> [#uses=1]
 	ret i8* %A
 }

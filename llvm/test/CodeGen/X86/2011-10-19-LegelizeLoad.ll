@@ -18,8 +18,8 @@ define i32 @main() nounwind uwtable {
 entry:
 ; CHECK: pmovsxbq  i(%rip), %
 ; CHECK: pmovsxbq  j(%rip), %
-  %0 = load <2 x i8>* @i, align 8
-  %1 = load <2 x i8>* @j, align 8
+  %0 = load <2 x i8>, <2 x i8>* @i, align 8
+  %1 = load <2 x i8>, <2 x i8>* @j, align 8
   %div = sdiv <2 x i8> %1, %0
   store <2 x i8> %div, <2 x i8>* getelementptr inbounds (%union.anon* @res, i32 0, i32 0), align 8
   ret i32 0

@@ -3,7 +3,7 @@
 ; RUN: llc -mtriple=thumbv7-apple-ios %s -o - -mattr=+neon | FileCheck --check-prefix=ASM %s
 
 ; IR-BOTH-LABEL: @simpleOneInstructionPromotion
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>, <2 x i32>* %addr1
 ; IR-BOTH-NEXT: [[VECTOR_OR:%[a-zA-Z_0-9-]+]] = or <2 x i32> [[LOAD]], <i32 undef, i32 1>
 ; IR-BOTH-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x i32> [[VECTOR_OR]], i32 1
 ; IR-BOTH-NEXT: store i32 [[EXTRACT]], i32* %dest
@@ -16,7 +16,7 @@
 ; ASM-NEXT: vst1.32 {[[LOAD]][1]}, [r1:32]
 ; ASM-NEXT: bx
 define void @simpleOneInstructionPromotion(<2 x i32>* %addr1, i32* %dest) {
-  %in1 = load <2 x i32>* %addr1, align 8
+  %in1 = load <2 x i32>, <2 x i32>* %addr1, align 8
   %extract = extractelement <2 x i32> %in1, i32 1
   %out = or i32 %extract, 1
   store i32 %out, i32* %dest, align 4
@@ -24,7 +24,7 @@ define void @simpleOneInstructionPromotion(<2 x i32>* %addr1, i32* %dest) {
 }
 
 ; IR-BOTH-LABEL: @unsupportedInstructionForPromotion
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>, <2 x i32>* %addr1
 ; IR-BOTH-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x i32> [[LOAD]], i32 0
 ; IR-BOTH-NEXT: [[CMP:%[a-zA-Z_0-9-]+]] = icmp eq i32 [[EXTRACT]], %in2
 ; IR-BOTH-NEXT: store i1 [[CMP]], i1* %dest
@@ -35,7 +35,7 @@ define void @simpleOneInstructionPromotion(<2 x i32>* %addr1, i32* %dest) {
 ; ASM: vmov.32 {{r[0-9]+}}, [[LOAD]]
 ; ASM: bx
 define void @unsupportedInstructionForPromotion(<2 x i32>* %addr1, i32 %in2, i1* %dest) {
-  %in1 = load <2 x i32>* %addr1, align 8
+  %in1 = load <2 x i32>, <2 x i32>* %addr1, align 8
   %extract = extractelement <2 x i32> %in1, i32 0
   %out = icmp eq i32 %extract, %in2
   store i1 %out, i1* %dest, align 4
@@ -44,7 +44,7 @@ define void @unsupportedInstructionForPromotion(<2 x i32>* %addr1, i32 %in2, i1*
 
 
 ; IR-BOTH-LABEL: @unsupportedChainInDifferentBBs
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>, <2 x i32>* %addr1
 ; IR-BOTH-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x i32> [[LOAD]], i32 0
 ; IR-BOTH-NEXT: br i1 %bool, label %bb2, label %end
 ; BB2
@@ -58,7 +58,7 @@ define void @unsupportedInstructionForPromotion(<2 x i32>* %addr1, i32 %in2, i1*
 ; ASM: bx
 define void @unsupportedChainInDifferentBBs(<2 x i32>* %addr1, i32* %dest, i1 %bool) {
 bb1:
-  %in1 = load <2 x i32>* %addr1, align 8
+  %in1 = load <2 x i32>, <2 x i32>* %addr1, align 8
   %extract = extractelement <2 x i32> %in1, i32 0
   br i1 %bool, label %bb2, label %end
 bb2: 
@@ -70,7 +70,7 @@ end:
 }
 
 ; IR-LABEL: @chainOfInstructionsToPromote
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>, <2 x i32>* %addr1
 ; IR-BOTH-NEXT: [[VECTOR_OR1:%[a-zA-Z_0-9-]+]] = or <2 x i32> [[LOAD]], <i32 1, i32 undef>
 ; IR-BOTH-NEXT: [[VECTOR_OR2:%[a-zA-Z_0-9-]+]] = or <2 x i32> [[VECTOR_OR1]], <i32 1, i32 undef>
 ; IR-BOTH-NEXT: [[VECTOR_OR3:%[a-zA-Z_0-9-]+]] = or <2 x i32> [[VECTOR_OR2]], <i32 1, i32 undef>
@@ -87,7 +87,7 @@ end:
 ; ASM-NOT: vmov.32 {{r[0-9]+}}, [[LOAD]]
 ; ASM: bx
 define void @chainOfInstructionsToPromote(<2 x i32>* %addr1, i32* %dest) {
-  %in1 = load <2 x i32>* %addr1, align 8
+  %in1 = load <2 x i32>, <2 x i32>* %addr1, align 8
   %extract = extractelement <2 x i32> %in1, i32 0
   %out1 = or i32 %extract, 1
   %out2 = or i32 %out1, 1
@@ -101,7 +101,7 @@ define void @chainOfInstructionsToPromote(<2 x i32>* %addr1, i32* %dest) {
 }
 
 ; IR-BOTH-LABEL: @unsupportedMultiUses
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>, <2 x i32>* %addr1
 ; IR-BOTH-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x i32> [[LOAD]], i32 1
 ; IR-BOTH-NEXT: [[OR:%[a-zA-Z_0-9-]+]] = or i32 [[EXTRACT]], 1
 ; IR-BOTH-NEXT: store i32 [[OR]], i32* %dest
@@ -112,7 +112,7 @@ define void @chainOfInstructionsToPromote(<2 x i32>* %addr1, i32* %dest) {
 ; ASM: vmov.32 {{r[0-9]+}}, [[LOAD]]
 ; ASM: bx
 define i32 @unsupportedMultiUses(<2 x i32>* %addr1, i32* %dest) {
-  %in1 = load <2 x i32>* %addr1, align 8
+  %in1 = load <2 x i32>, <2 x i32>* %addr1, align 8
   %extract = extractelement <2 x i32> %in1, i32 1
   %out = or i32 %extract, 1
   store i32 %out, i32* %dest, align 4
@@ -122,7 +122,7 @@ define i32 @unsupportedMultiUses(<2 x i32>* %addr1, i32* %dest) {
 ; Check that we promote we a splat constant when this is a division.
 ; The NORMAL mode does not promote anything as divisions are not legal.
 ; IR-BOTH-LABEL: @udivCase
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>, <2 x i32>* %addr1
 ; Scalar version:
 ; IR-NORMAL-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x i32> [[LOAD]], i32 1
 ; IR-NORMAL-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = udiv i32 [[EXTRACT]], 7
@@ -133,7 +133,7 @@ define i32 @unsupportedMultiUses(<2 x i32>* %addr1, i32* %dest) {
 ; IR-BOTH-NEXT: store i32 [[RES]], i32* %dest
 ; IR-BOTH-NEXT: ret
 define void @udivCase(<2 x i32>* %addr1, i32* %dest) {
-  %in1 = load <2 x i32>* %addr1, align 8
+  %in1 = load <2 x i32>, <2 x i32>* %addr1, align 8
   %extract = extractelement <2 x i32> %in1, i32 1
   %out = udiv i32 %extract, 7
   store i32 %out, i32* %dest, align 4
@@ -141,7 +141,7 @@ define void @udivCase(<2 x i32>* %addr1, i32* %dest) {
 }
 
 ; IR-BOTH-LABEL: @uremCase
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>, <2 x i32>* %addr1
 ; Scalar version:
 ; IR-NORMAL-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x i32> [[LOAD]], i32 1
 ; IR-NORMAL-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = urem i32 [[EXTRACT]], 7
@@ -152,7 +152,7 @@ define void @udivCase(<2 x i32>* %addr1, i32* %dest) {
 ; IR-BOTH-NEXT: store i32 [[RES]], i32* %dest
 ; IR-BOTH-NEXT: ret 
 define void @uremCase(<2 x i32>* %addr1, i32* %dest) {
-  %in1 = load <2 x i32>* %addr1, align 8
+  %in1 = load <2 x i32>, <2 x i32>* %addr1, align 8
   %extract = extractelement <2 x i32> %in1, i32 1
   %out = urem i32 %extract, 7
   store i32 %out, i32* %dest, align 4
@@ -160,7 +160,7 @@ define void @uremCase(<2 x i32>* %addr1, i32* %dest) {
 }
 
 ; IR-BOTH-LABEL: @sdivCase
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>, <2 x i32>* %addr1
 ; Scalar version:
 ; IR-NORMAL-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x i32> [[LOAD]], i32 1
 ; IR-NORMAL-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = sdiv i32 [[EXTRACT]], 7
@@ -171,7 +171,7 @@ define void @uremCase(<2 x i32>* %addr1, i32* %dest) {
 ; IR-BOTH-NEXT: store i32 [[RES]], i32* %dest
 ; IR-BOTH-NEXT: ret 
 define void @sdivCase(<2 x i32>* %addr1, i32* %dest) {
-  %in1 = load <2 x i32>* %addr1, align 8
+  %in1 = load <2 x i32>, <2 x i32>* %addr1, align 8
   %extract = extractelement <2 x i32> %in1, i32 1
   %out = sdiv i32 %extract, 7
   store i32 %out, i32* %dest, align 4
@@ -179,7 +179,7 @@ define void @sdivCase(<2 x i32>* %addr1, i32* %dest) {
 }
 
 ; IR-BOTH-LABEL: @sremCase
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>, <2 x i32>* %addr1
 ; Scalar version:
 ; IR-NORMAL-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x i32> [[LOAD]], i32 1
 ; IR-NORMAL-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = srem i32 [[EXTRACT]], 7
@@ -190,7 +190,7 @@ define void @sdivCase(<2 x i32>* %addr1, i32* %dest) {
 ; IR-BOTH-NEXT: store i32 [[RES]], i32* %dest
 ; IR-BOTH-NEXT: ret 
 define void @sremCase(<2 x i32>* %addr1, i32* %dest) {
-  %in1 = load <2 x i32>* %addr1, align 8
+  %in1 = load <2 x i32>, <2 x i32>* %addr1, align 8
   %extract = extractelement <2 x i32> %in1, i32 1
   %out = srem i32 %extract, 7
   store i32 %out, i32* %dest, align 4
@@ -198,7 +198,7 @@ define void @sremCase(<2 x i32>* %addr1, i32* %dest) {
 }
 
 ; IR-BOTH-LABEL: @fdivCase
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x float>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x float>, <2 x float>* %addr1
 ; Scalar version:  
 ; IR-NORMAL-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x float> [[LOAD]], i32 1
 ; IR-NORMAL-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = fdiv float [[EXTRACT]], 7.0
@@ -209,7 +209,7 @@ define void @sremCase(<2 x i32>* %addr1, i32* %dest) {
 ; IR-BOTH-NEXT: store float [[RES]], float* %dest
 ; IR-BOTH-NEXT: ret
 define void @fdivCase(<2 x float>* %addr1, float* %dest) {
-  %in1 = load <2 x float>* %addr1, align 8   
+  %in1 = load <2 x float>, <2 x float>* %addr1, align 8   
   %extract = extractelement <2 x float> %in1, i32 1
   %out = fdiv float %extract, 7.0
   store float %out, float* %dest, align 4
@@ -217,7 +217,7 @@ define void @fdivCase(<2 x float>* %addr1, float* %dest) {
 }
 
 ; IR-BOTH-LABEL: @fremCase
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x float>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x float>, <2 x float>* %addr1
 ; Scalar version:  
 ; IR-NORMAL-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x float> [[LOAD]], i32 1
 ; IR-NORMAL-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = frem float [[EXTRACT]], 7.0
@@ -228,7 +228,7 @@ define void @fdivCase(<2 x float>* %addr1, float* %dest) {
 ; IR-BOTH-NEXT: store float [[RES]], float* %dest
 ; IR-BOTH-NEXT: ret
 define void @fremCase(<2 x float>* %addr1, float* %dest) {
-  %in1 = load <2 x float>* %addr1, align 8   
+  %in1 = load <2 x float>, <2 x float>* %addr1, align 8   
   %extract = extractelement <2 x float> %in1, i32 1
   %out = frem float %extract, 7.0
   store float %out, float* %dest, align 4
@@ -238,13 +238,13 @@ define void @fremCase(<2 x float>* %addr1, float* %dest) {
 ; Check that we do not promote when we may introduce undefined behavior
 ; like division by zero.
 ; IR-BOTH-LABEL: @undefDivCase
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>, <2 x i32>* %addr1
 ; IR-BOTH-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x i32> [[LOAD]], i32 1
 ; IR-BOTH-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = udiv i32 7, [[EXTRACT]]
 ; IR-BOTH-NEXT: store i32 [[RES]], i32* %dest
 ; IR-BOTH-NEXT: ret
 define void @undefDivCase(<2 x i32>* %addr1, i32* %dest) {
-  %in1 = load <2 x i32>* %addr1, align 8
+  %in1 = load <2 x i32>, <2 x i32>* %addr1, align 8
   %extract = extractelement <2 x i32> %in1, i32 1
   %out = udiv i32 7, %extract
   store i32 %out, i32* %dest, align 4
@@ -255,13 +255,13 @@ define void @undefDivCase(<2 x i32>* %addr1, i32* %dest) {
 ; Check that we do not promote when we may introduce undefined behavior
 ; like division by zero.
 ; IR-BOTH-LABEL: @undefRemCase
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>, <2 x i32>* %addr1
 ; IR-BOTH-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x i32> [[LOAD]], i32 1
 ; IR-BOTH-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = srem i32 7, [[EXTRACT]]
 ; IR-BOTH-NEXT: store i32 [[RES]], i32* %dest
 ; IR-BOTH-NEXT: ret
 define void @undefRemCase(<2 x i32>* %addr1, i32* %dest) {
-  %in1 = load <2 x i32>* %addr1, align 8
+  %in1 = load <2 x i32>, <2 x i32>* %addr1, align 8
   %extract = extractelement <2 x i32> %in1, i32 1
   %out = srem i32 7, %extract
   store i32 %out, i32* %dest, align 4
@@ -271,7 +271,7 @@ define void @undefRemCase(<2 x i32>* %addr1, i32* %dest) {
 ; Check that we use an undef mask for undefined behavior if the fast-math
 ; flag is set.
 ; IR-BOTH-LABEL: @undefConstantFRemCaseWithFastMath
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x float>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x float>, <2 x float>* %addr1
 ; Scalar version:  
 ; IR-NORMAL-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x float> [[LOAD]], i32 1
 ; IR-NORMAL-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = frem nnan float [[EXTRACT]], 7.0
@@ -282,7 +282,7 @@ define void @undefRemCase(<2 x i32>* %addr1, i32* %dest) {
 ; IR-BOTH-NEXT: store float [[RES]], float* %dest
 ; IR-BOTH-NEXT: ret
 define void @undefConstantFRemCaseWithFastMath(<2 x float>* %addr1, float* %dest) {
-  %in1 = load <2 x float>* %addr1, align 8   
+  %in1 = load <2 x float>, <2 x float>* %addr1, align 8   
   %extract = extractelement <2 x float> %in1, i32 1
   %out = frem nnan float %extract, 7.0
   store float %out, float* %dest, align 4
@@ -292,7 +292,7 @@ define void @undefConstantFRemCaseWithFastMath(<2 x float>* %addr1, float* %dest
 ; Check that we use an undef mask for undefined behavior if the fast-math
 ; flag is set.
 ; IR-BOTH-LABEL: @undefVectorFRemCaseWithFastMath
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x float>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x float>, <2 x float>* %addr1
 ; Scalar version:  
 ; IR-NORMAL-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x float> [[LOAD]], i32 1
 ; IR-NORMAL-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = frem nnan float 7.000000e+00, [[EXTRACT]]
@@ -303,7 +303,7 @@ define void @undefConstantFRemCaseWithFastMath(<2 x float>* %addr1, float* %dest
 ; IR-BOTH-NEXT: store float [[RES]], float* %dest
 ; IR-BOTH-NEXT: ret
 define void @undefVectorFRemCaseWithFastMath(<2 x float>* %addr1, float* %dest) {
-  %in1 = load <2 x float>* %addr1, align 8   
+  %in1 = load <2 x float>, <2 x float>* %addr1, align 8   
   %extract = extractelement <2 x float> %in1, i32 1
   %out = frem nnan float 7.0, %extract
   store float %out, float* %dest, align 4
@@ -314,7 +314,7 @@ define void @undefVectorFRemCaseWithFastMath(<2 x float>* %addr1, float* %dest) 
 ; This requires the STRESS mode, as floating point value are
 ; not promote on armv7.
 ; IR-BOTH-LABEL: @simpleOneInstructionPromotionFloat
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x float>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x float>, <2 x float>* %addr1
 ; Scalar version: 
 ; IR-NORMAL-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x float> [[LOAD]], i32 1
 ; IR-NORMAL-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = fadd float [[EXTRACT]], 1.0
@@ -325,7 +325,7 @@ define void @undefVectorFRemCaseWithFastMath(<2 x float>* %addr1, float* %dest) 
 ; IR-BOTH-NEXT: store float [[RES]], float* %dest
 ; IR-BOTH-NEXT: ret
 define void @simpleOneInstructionPromotionFloat(<2 x float>* %addr1, float* %dest) {
-  %in1 = load <2 x float>* %addr1, align 8
+  %in1 = load <2 x float>, <2 x float>* %addr1, align 8
   %extract = extractelement <2 x float> %in1, i32 1
   %out = fadd float %extract, 1.0
   store float %out, float* %dest, align 4
@@ -337,7 +337,7 @@ define void @simpleOneInstructionPromotionFloat(<2 x float>* %addr1, float* %des
 ; This requires the STRESS modes, as variable index are expensive
 ; to lower.
 ; IR-BOTH-LABEL: @simpleOneInstructionPromotionVariableIdx
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <2 x i32>, <2 x i32>* %addr1
 ; Scalar version:
 ; IR-NORMAL-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <2 x i32> [[LOAD]], i32 %idx
 ; IR-NORMAL-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = or i32 [[EXTRACT]], 1
@@ -348,7 +348,7 @@ define void @simpleOneInstructionPromotionFloat(<2 x float>* %addr1, float* %des
 ; IR-BOTH-NEXT: store i32 [[RES]], i32* %dest
 ; IR-BOTH-NEXT: ret
 define void @simpleOneInstructionPromotionVariableIdx(<2 x i32>* %addr1, i32* %dest, i32 %idx) {
-  %in1 = load <2 x i32>* %addr1, align 8
+  %in1 = load <2 x i32>, <2 x i32>* %addr1, align 8
   %extract = extractelement <2 x i32> %in1, i32 %idx
   %out = or i32 %extract, 1
   store i32 %out, i32* %dest, align 4
@@ -360,7 +360,7 @@ define void @simpleOneInstructionPromotionVariableIdx(<2 x i32>* %addr1, i32* %d
 ; as legal or custom, althought the actual assembly is better if we were
 ; promoting it.
 ; IR-BOTH-LABEL: @simpleOneInstructionPromotion8x8
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <8 x i8>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <8 x i8>, <8 x i8>* %addr1
 ; Scalar version:  
 ; IR-NORMAL-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <8 x i8> [[LOAD]], i32 1
 ; IR-NORMAL-NEXT: [[RES:%[a-zA-Z_0-9-]+]] = or i8 [[EXTRACT]], 1
@@ -371,7 +371,7 @@ define void @simpleOneInstructionPromotionVariableIdx(<2 x i32>* %addr1, i32* %d
 ; IR-BOTH-NEXT: store i8 [[RES]], i8* %dest
 ; IR-BOTH-NEXT: ret
 define void @simpleOneInstructionPromotion8x8(<8 x i8>* %addr1, i8* %dest) {
-  %in1 = load <8 x i8>* %addr1, align 8
+  %in1 = load <8 x i8>, <8 x i8>* %addr1, align 8
   %extract = extractelement <8 x i8> %in1, i32 1
   %out = or i8 %extract, 1
   store i8 %out, i8* %dest, align 4
@@ -381,7 +381,7 @@ define void @simpleOneInstructionPromotion8x8(<8 x i8>* %addr1, i8* %dest) {
 ; Check that we optimized the sequence correctly when it can be
 ; lowered on a Q register.
 ; IR-BOTH-LABEL: @simpleOneInstructionPromotion
-; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <4 x i32>* %addr1
+; IR-BOTH: [[LOAD:%[a-zA-Z_0-9-]+]] = load <4 x i32>, <4 x i32>* %addr1
 ; IR-BOTH-NEXT: [[VECTOR_OR:%[a-zA-Z_0-9-]+]] = or <4 x i32> [[LOAD]], <i32 undef, i32 1, i32 undef, i32 undef>
 ; IR-BOTH-NEXT: [[EXTRACT:%[a-zA-Z_0-9-]+]] = extractelement <4 x i32> [[VECTOR_OR]], i32 1
 ; IR-BOTH-NEXT: store i32 [[EXTRACT]], i32* %dest
@@ -395,7 +395,7 @@ define void @simpleOneInstructionPromotion8x8(<8 x i8>* %addr1, i8* %dest) {
 ; ASM-NEXT: vst1.32 {[[LOAD]][1]}, [r1]
 ; ASM-NEXT: bx
 define void @simpleOneInstructionPromotion4x32(<4 x i32>* %addr1, i32* %dest) {
-  %in1 = load <4 x i32>* %addr1, align 8
+  %in1 = load <4 x i32>, <4 x i32>* %addr1, align 8
   %extract = extractelement <4 x i32> %in1, i32 1
   %out = or i32 %extract, 1
   store i32 %out, i32* %dest, align 1

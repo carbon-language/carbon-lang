@@ -17,7 +17,7 @@ bb5:		; preds = %bb5, %bb3.preheader
 	br i1 undef, label %bb11, label %bb5
 
 bb11:		; preds = %bb5
-	%0 = load i32* undef, align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* undef, align 4		; <i32> [#uses=1]
 	%1 = xor i32 %0, 123459876		; <i32> [#uses=1]
 	%2 = sdiv i32 %1, 127773		; <i32> [#uses=1]
 	%3 = mul i32 %2, 2836		; <i32> [#uses=1]

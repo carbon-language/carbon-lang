@@ -36,9 +36,9 @@ for.body.lr.ph:
 for.body:
   %indvars.iv = phi i64 [ %0, %for.body.lr.ph ], [ %indvars.iv.next, %if.end ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %1 = load i32* %arrayidx, align 4
+  %1 = load i32, i32* %arrayidx, align 4
   %arrayidx4 = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
-  %2 = load i32* %arrayidx4, align 4
+  %2 = load i32, i32* %arrayidx4, align 4
   %cmp5 = icmp sgt i32 %1, %2
   br i1 %cmp5, label %if.then, label %if.end
 
@@ -85,7 +85,7 @@ for.body:                                         ; preds = %entry, %for.inc
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc ], [ 0, %entry ]
   %sum.011 = phi i32 [ %sum.1, %for.inc ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %cmp1 = icmp sgt i32 %0, 30
   br i1 %cmp1, label %if.then, label %for.inc
 

@@ -13,9 +13,9 @@ target triple = "x86_64-apple-macosx10.8.0"
 ; CHECK: ret
 define i32 @test(double* nocapture %A, i8* nocapture %B) {
 entry:
-  %0 = load i8* %B, align 1
+  %0 = load i8, i8* %B, align 1
   %arrayidx1 = getelementptr inbounds i8, i8* %B, i64 1
-  %1 = load i8* %arrayidx1, align 1
+  %1 = load i8, i8* %arrayidx1, align 1
   %add = add i8 %0, 3
   %add4 = add i8 %1, 3
   %conv6 = sitofp i8 %add to double

@@ -10,8 +10,8 @@
 
 define void @llvm_mips_fexp2_w_test() nounwind {
 entry:
-  %0 = load <4 x float>* @llvm_mips_fexp2_w_ARG1
-  %1 = load <4 x i32>* @llvm_mips_fexp2_w_ARG2
+  %0 = load <4 x float>, <4 x float>* @llvm_mips_fexp2_w_ARG1
+  %1 = load <4 x i32>, <4 x i32>* @llvm_mips_fexp2_w_ARG2
   %2 = tail call <4 x float> @llvm.mips.fexp2.w(<4 x float> %0, <4 x i32> %1)
   store <4 x float> %2, <4 x float>* @llvm_mips_fexp2_w_RES
   ret void
@@ -32,8 +32,8 @@ declare <4 x float> @llvm.mips.fexp2.w(<4 x float>, <4 x i32>) nounwind
 
 define void @llvm_mips_fexp2_d_test() nounwind {
 entry:
-  %0 = load <2 x double>* @llvm_mips_fexp2_d_ARG1
-  %1 = load <2 x i64>* @llvm_mips_fexp2_d_ARG2
+  %0 = load <2 x double>, <2 x double>* @llvm_mips_fexp2_d_ARG1
+  %1 = load <2 x i64>, <2 x i64>* @llvm_mips_fexp2_d_ARG2
   %2 = tail call <2 x double> @llvm.mips.fexp2.d(<2 x double> %0, <2 x i64> %1)
   store <2 x double> %2, <2 x double>* @llvm_mips_fexp2_d_RES
   ret void

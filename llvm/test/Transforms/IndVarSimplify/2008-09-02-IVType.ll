@@ -19,7 +19,7 @@
 define signext i16 @ExtractBufferedBlocksIgnored(%struct.JPEGGlobals* %globp)  nounwind {
 entry:
 	%tmp4311 = getelementptr %struct.JPEGGlobals, %struct.JPEGGlobals* %globp, i32 0, i32 70		; <i32*> [#uses=1]
-	%tmp4412 = load i32* %tmp4311, align 16		; <i32> [#uses=2]
+	%tmp4412 = load i32, i32* %tmp4311, align 16		; <i32> [#uses=2]
 	%tmp4613 = icmp sgt i32 %tmp4412, 0		; <i1> [#uses=1]
 	br i1 %tmp4613, label %bb, label %bb49
 
@@ -27,9 +27,9 @@ bb:		; preds = %bb28, %entry
 	%component.09 = phi i16 [ 0, %entry ], [ %tmp37, %bb28 ]		; <i16> [#uses=2]
 	%tmp12 = sext i16 %component.09 to i32		; <i32> [#uses=2]
 	%tmp6 = getelementptr %struct.JPEGGlobals, %struct.JPEGGlobals* %globp, i32 0, i32 77, i32 %tmp12		; <i16**> [#uses=2]
-	%tmp7 = load i16** %tmp6, align 4		; <i16*> [#uses=2]
+	%tmp7 = load i16*, i16** %tmp6, align 4		; <i16*> [#uses=2]
 	%tmp235 = getelementptr %struct.JPEGGlobals, %struct.JPEGGlobals* %globp, i32 0, i32 71, i32 %tmp12		; <i32*> [#uses=1]
-	%tmp246 = load i32* %tmp235, align 4		; <i32> [#uses=2]
+	%tmp246 = load i32, i32* %tmp235, align 4		; <i32> [#uses=2]
 	%tmp267 = icmp sgt i32 %tmp246, 0		; <i1> [#uses=1]
 	br i1 %tmp267, label %bb8, label %bb28
 

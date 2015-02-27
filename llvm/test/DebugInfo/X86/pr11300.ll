@@ -19,7 +19,7 @@ entry:
   %x.addr = alloca %struct.foo*, align 8
   store %struct.foo* %x, %struct.foo** %x.addr, align 8
   call void @llvm.dbg.declare(metadata %struct.foo** %x.addr, metadata !23, metadata !{!"0x102"}), !dbg !24
-  %0 = load %struct.foo** %x.addr, align 8, !dbg !25
+  %0 = load %struct.foo*, %struct.foo** %x.addr, align 8, !dbg !25
   call void @_ZN3foo3barEv(%struct.foo* %0), !dbg !25
   ret void, !dbg !27
 }
@@ -31,7 +31,7 @@ entry:
   %this.addr = alloca %struct.foo*, align 8
   store %struct.foo* %this, %struct.foo** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %struct.foo** %this.addr, metadata !28, metadata !{!"0x102"}), !dbg !29
-  %this1 = load %struct.foo** %this.addr
+  %this1 = load %struct.foo*, %struct.foo** %this.addr
   ret void, !dbg !30
 }
 

@@ -11,7 +11,7 @@
 define i32 @_Z18read_response_sizev() #0 {
 entry:
   tail call void @llvm.dbg.value(metadata !22, i64 0, metadata !23, metadata !{!"0x102"}), !dbg !39
-  %0 = load i64* getelementptr inbounds ({ i64, [56 x i8] }* @a, i32 0, i32 0), align 8, !dbg !40
+  %0 = load i64, i64* getelementptr inbounds ({ i64, [56 x i8] }* @a, i32 0, i32 0), align 8, !dbg !40
   tail call void @llvm.dbg.value(metadata i32 undef, i64 0, metadata !64, metadata !{!"0x102"}), !dbg !71
   %1 = trunc i64 %0 to i32
   ret i32 %1

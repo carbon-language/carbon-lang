@@ -11,8 +11,8 @@ define i32 @_Z3fooi(i32 %a) {
 entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
-  %0 = load i32* %a.addr, align 4
-  %1 = load i32* %a.addr, align 4
+  %0 = load i32, i32* %a.addr, align 4
+  %1 = load i32, i32* %a.addr, align 4
   %call = call i32 @_Z4bar2i(i32 %1)
   %add = add nsw i32 %0, %call
   ret i32 %add
@@ -22,7 +22,7 @@ define i32 @_Z4bar2i(i32 %a) {
 entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
-  %0 = load i32* %a.addr, align 4
+  %0 = load i32, i32* %a.addr, align 4
   %mul = mul nsw i32 2, %0
   ret i32 %mul
 }

@@ -33,7 +33,7 @@ define void @test1(float %src, i16* %dest) {
 
 
 define float @test2(i16* nocapture %src) {
-  %1 = load i16* %src, align 2
+  %1 = load i16, i16* %src, align 2
   %2 = tail call float @llvm.convert.from.fp16.f32(i16 %1)
   ret float %2
 }
@@ -60,7 +60,7 @@ define float @test3(float %src) nounwind uwtable readnone {
 ; F16C: ret
 
 define double @test4(i16* nocapture %src) {
-  %1 = load i16* %src, align 2
+  %1 = load i16, i16* %src, align 2
   %2 = tail call double @llvm.convert.from.fp16.f64(i16 %1)
   ret double %2
 }

@@ -20,7 +20,7 @@ define void @set2() {
 
 define i1 @get() {
 ; CHECK-LABEL: @get(
-  %A = load i32 addrspace(1) * @G
+  %A = load i32, i32 addrspace(1) * @G
   %C = icmp slt i32 %A, 2
   ret i1 %C
 ; CHECK: ret i1 true

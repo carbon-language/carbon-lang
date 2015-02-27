@@ -30,7 +30,7 @@ for.body:                                         ; preds = %entry, %for.body
   %mul = shl i64 %i.02, 1
   %add13 = or i64 %mul, 1
   %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %add13
-  %0 = load i32* %arrayidx2, align 4
+  %0 = load i32, i32* %arrayidx2, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
@@ -68,7 +68,7 @@ for.body:                                         ; preds = %entry, %for.body
   %mul1 = shl i64 %i.02, 1
   %add23 = or i64 %mul1, 1
   %arrayidx3 = getelementptr inbounds i32, i32* %A, i64 %add23
-  %0 = load i32* %arrayidx3, align 4
+  %0 = load i32, i32* %arrayidx3, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
@@ -104,7 +104,7 @@ for.body:                                         ; preds = %entry, %for.body
   store i32 %conv, i32* %arrayidx, align 4
   %add = add i64 %i.02, 60
   %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %add
-  %0 = load i32* %arrayidx1, align 4
+  %0 = load i32, i32* %arrayidx1, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
@@ -140,7 +140,7 @@ for.body:                                         ; preds = %entry, %for.body
   store i32 %conv, i32* %arrayidx, align 4
   %add = add i64 %i.02, 60
   %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %add
-  %0 = load i32* %arrayidx1, align 4
+  %0 = load i32, i32* %arrayidx1, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
@@ -176,7 +176,7 @@ for.body:                                         ; preds = %entry, %for.body
   store i32 %conv, i32* %arrayidx, align 4
   %add = add i64 %i.02, 60
   %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %add
-  %0 = load i32* %arrayidx1, align 4
+  %0 = load i32, i32* %arrayidx1, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
@@ -212,7 +212,7 @@ for.body:                                         ; preds = %entry, %for.body
   store i32 %conv, i32* %arrayidx, align 4
   %add = add i64 %i.02, 60
   %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %add
-  %0 = load i32* %arrayidx1, align 4
+  %0 = load i32, i32* %arrayidx1, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
@@ -248,7 +248,7 @@ for.body:                                         ; preds = %entry, %for.body
   store i32 %conv, i32* %arrayidx, align 4
   %add = add i64 %i.02, 60
   %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %add
-  %0 = load i32* %arrayidx1, align 4
+  %0 = load i32, i32* %arrayidx1, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
@@ -284,7 +284,7 @@ for.body:                                         ; preds = %entry, %for.body
   store i32 %conv, i32* %arrayidx, align 4
   %add = add i64 %i.02, 60
   %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %add
-  %0 = load i32* %arrayidx1, align 4
+  %0 = load i32, i32* %arrayidx1, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
@@ -320,7 +320,7 @@ for.body:                                         ; preds = %entry, %for.body
   store i32 %conv, i32* %arrayidx, align 4
   %sub1 = sub i64 -60, %i.02
   %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %sub1
-  %0 = load i32* %arrayidx2, align 4
+  %0 = load i32, i32* %arrayidx2, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
@@ -356,7 +356,7 @@ for.body:                                         ; preds = %entry, %for.body
   store i32 %conv, i32* %arrayidx, align 4
   %sub1 = sub i64 -60, %i.02
   %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %sub1
-  %0 = load i32* %arrayidx2, align 4
+  %0 = load i32, i32* %arrayidx2, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
@@ -392,7 +392,7 @@ for.body:                                         ; preds = %entry, %for.body
   store i32 %conv, i32* %arrayidx, align 4
   %sub1 = sub i64 -60, %i.02
   %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %sub1
-  %0 = load i32* %arrayidx2, align 4
+  %0 = load i32, i32* %arrayidx2, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
@@ -428,7 +428,7 @@ for.body:                                         ; preds = %entry, %for.body
   store i32 %conv, i32* %arrayidx, align 4
   %sub1 = sub i64 -60, %i.02
   %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %sub1
-  %0 = load i32* %arrayidx2, align 4
+  %0 = load i32, i32* %arrayidx2, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
@@ -464,7 +464,7 @@ for.body:                                         ; preds = %entry, %for.body
   store i32 %conv, i32* %arrayidx, align 4
   %sub1 = sub i64 -60, %i.02
   %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %sub1
-  %0 = load i32* %arrayidx2, align 4
+  %0 = load i32, i32* %arrayidx2, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
@@ -500,7 +500,7 @@ for.body:                                         ; preds = %entry, %for.body
   store i32 %conv, i32* %arrayidx, align 4
   %sub1 = sub i64 -60, %i.02
   %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %sub1
-  %0 = load i32* %arrayidx2, align 4
+  %0 = load i32, i32* %arrayidx2, align 4
   %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1

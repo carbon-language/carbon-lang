@@ -8,7 +8,7 @@ define i32 @test0(<1 x i64>* %v4) {
 ; CHECK-NEXT:    addl $32, %eax
 ; CHECK-NEXT:    retq
 entry:
-  %v5 = load <1 x i64>* %v4, align 8
+  %v5 = load <1 x i64>, <1 x i64>* %v4, align 8
   %v12 = bitcast <1 x i64> %v5 to <4 x i16>
   %v13 = bitcast <4 x i16> %v12 to x86_mmx
   %v14 = tail call x86_mmx @llvm.x86.sse.pshuf.w(x86_mmx %v13, i8 -18)
@@ -30,7 +30,7 @@ define i32 @test1(i32* nocapture readonly %ptr) {
 ; CHECK-NEXT:    emms
 ; CHECK-NEXT:    retq
 entry:
-  %0 = load i32* %ptr, align 4
+  %0 = load i32, i32* %ptr, align 4
   %1 = insertelement <2 x i32> undef, i32 %0, i32 0
   %2 = insertelement <2 x i32> %1, i32 0, i32 1
   %3 = bitcast <2 x i32> %2 to x86_mmx
@@ -56,7 +56,7 @@ define i32 @test2(i32* nocapture readonly %ptr) {
 ; CHECK-NEXT:    retq
 entry:
   %0 = bitcast i32* %ptr to x86_mmx*
-  %1 = load x86_mmx* %0, align 8
+  %1 = load x86_mmx, x86_mmx* %0, align 8
   %2 = tail call x86_mmx @llvm.x86.sse.pshuf.w(x86_mmx %1, i8 -24)
   %3 = bitcast x86_mmx %2 to <4 x i16>
   %4 = bitcast <4 x i16> %3 to <1 x i64>

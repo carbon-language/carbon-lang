@@ -13,14 +13,14 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 define i32 @fn1() {
 entry:
-  %0 = load i32* getelementptr inbounds (%struct.DState* @b, i32 0, i32 0), align 4
-  %1 = load i32* getelementptr inbounds (%struct.DState* @b, i32 0, i32 1), align 4
-  %2 = load i32* @d, align 4
+  %0 = load i32, i32* getelementptr inbounds (%struct.DState* @b, i32 0, i32 0), align 4
+  %1 = load i32, i32* getelementptr inbounds (%struct.DState* @b, i32 0, i32 1), align 4
+  %2 = load i32, i32* @d, align 4
   %cond = icmp eq i32 %2, 0
   br i1 %cond, label %sw.bb, label %save_state_and_return
 
 sw.bb:                                            ; preds = %entry
-  %3 = load i32* @c, align 4
+  %3 = load i32, i32* @c, align 4
   %and = and i32 %3, 7
   store i32 %and, i32* @a, align 4
   switch i32 %and, label %if.end [

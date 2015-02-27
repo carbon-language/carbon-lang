@@ -20,7 +20,7 @@ target triple = "i386-apple-darwin7"
 define void @_Z12testfunctionR1A(%struct.A* %iter) {
 entry:
 	%0 = getelementptr %struct.A, %struct.A* %iter, i32 0, i32 0		; <i32*> [#uses=3]
-	%1 = load i32* %0, align 4		; <i32> [#uses=2]
+	%1 = load i32, i32* %0, align 4		; <i32> [#uses=2]
 	%2 = icmp eq i32 %1, 0		; <i1> [#uses=1]
 	br i1 %2, label %return, label %bb.nph
 
@@ -32,7 +32,7 @@ bb:		; preds = %bb3.backedge, %bb.nph
 	%.rle = phi i32 [ %1, %bb.nph ], [ %7, %bb3.backedge ]		; <i32> [#uses=1]
 	%4 = add i32 %.rle, 1		; <i32> [#uses=2]
 	store i32 %4, i32* %0, align 4
-	%5 = load i32* %3, align 4		; <i32> [#uses=1]
+	%5 = load i32, i32* %3, align 4		; <i32> [#uses=1]
 	%6 = icmp eq i32 %4, %5		; <i1> [#uses=1]
 	br i1 %6, label %bb1, label %bb3.backedge
 
@@ -44,7 +44,7 @@ bb3.backedge:		; preds = %bb, %bb1
 ; CHECK: bb3.backedge:
 ; CHECK-NEXT: phi
 ; CHECK-NEXT: icmp
-	%7 = load i32* %0, align 4		; <i32> [#uses=2]
+	%7 = load i32, i32* %0, align 4		; <i32> [#uses=2]
 	%8 = icmp eq i32 %7, 0		; <i1> [#uses=1]
 	br i1 %8, label %return, label %bb
 

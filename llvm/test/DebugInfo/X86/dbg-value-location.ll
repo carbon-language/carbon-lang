@@ -19,7 +19,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 define i32 @foo(i32 %dev, i64 %cmd, i8* %data, i32 %data2) nounwind optsize ssp {
 entry:
   call void @llvm.dbg.value(metadata i32 %dev, i64 0, metadata !12, metadata !{!"0x102"}), !dbg !13
-  %tmp.i = load i32* @dfm, align 4, !dbg !14
+  %tmp.i = load i32, i32* @dfm, align 4, !dbg !14
   %cmp.i = icmp eq i32 %tmp.i, 0, !dbg !14
   br i1 %cmp.i, label %if.else, label %if.end.i, !dbg !14
 

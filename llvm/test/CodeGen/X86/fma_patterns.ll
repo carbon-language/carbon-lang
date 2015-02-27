@@ -190,7 +190,7 @@ define float @test_x86_fnmsub_ss(float %a0, float %a1, float %a2) {
 ; CHECK_FMA4: vfmaddps     %xmm1, (%rdi), %xmm0, %xmm0
 ; CHECK_FMA4: ret
 define <4 x float> @test_x86_fmadd_ps_load(<4 x float>* %a0, <4 x float> %a1, <4 x float> %a2) {
-  %x = load <4 x float>* %a0
+  %x = load <4 x float>, <4 x float>* %a0
   %y = fmul <4 x float> %x, %a1
   %res = fadd <4 x float> %y, %a2
   ret <4 x float> %res
@@ -204,7 +204,7 @@ define <4 x float> @test_x86_fmadd_ps_load(<4 x float>* %a0, <4 x float> %a1, <4
 ; CHECK_FMA4: vfmsubps     %xmm1, (%rdi), %xmm0, %xmm0
 ; CHECK_FMA4: ret
 define <4 x float> @test_x86_fmsub_ps_load(<4 x float>* %a0, <4 x float> %a1, <4 x float> %a2) {
-  %x = load <4 x float>* %a0
+  %x = load <4 x float>, <4 x float>* %a0
   %y = fmul <4 x float> %x, %a1
   %res = fsub <4 x float> %y, %a2
   ret <4 x float> %res

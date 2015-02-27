@@ -95,7 +95,7 @@ loop:
   %i = phi i32 [%tid, %entry], [%i.inc, %loop]
   %gep.src = getelementptr i32, i32 addrspace(1)* %src, i32 %i
   %gep.dst = getelementptr i32, i32 addrspace(1)* %dst, i32 %i
-  %load = load i32 addrspace(1)* %src
+  %load = load i32, i32 addrspace(1)* %src
   store i32 %load, i32 addrspace(1)* %gep.dst
   %i.inc = add nsw i32 %i, 1
   %cmp = icmp eq i32 %limit, %i.inc
@@ -155,7 +155,7 @@ bb:
   %tmp = tail call i32 @llvm.r600.read.tidig.x() #0
   %tmp4 = sext i32 %tmp to i64
   %tmp5 = getelementptr inbounds i32, i32 addrspace(1)* %arg3, i64 %tmp4
-  %tmp6 = load i32 addrspace(1)* %tmp5, align 4
+  %tmp6 = load i32, i32 addrspace(1)* %tmp5, align 4
   %tmp7 = icmp sgt i32 %tmp6, 0
   %tmp8 = sext i32 %tmp6 to i64
   br i1 %tmp7, label %bb10, label %bb26
@@ -164,9 +164,9 @@ bb10:                                             ; preds = %bb, %bb20
   %tmp11 = phi i64 [ %tmp23, %bb20 ], [ 0, %bb ]
   %tmp12 = add nsw i64 %tmp11, %tmp4
   %tmp13 = getelementptr inbounds i32, i32 addrspace(1)* %arg1, i64 %tmp12
-  %tmp14 = load i32 addrspace(1)* %tmp13, align 4
+  %tmp14 = load i32, i32 addrspace(1)* %tmp13, align 4
   %tmp15 = getelementptr inbounds i32, i32 addrspace(1)* %arg2, i64 %tmp12
-  %tmp16 = load i32 addrspace(1)* %tmp15, align 4
+  %tmp16 = load i32, i32 addrspace(1)* %tmp15, align 4
   %tmp17 = icmp ne i32 %tmp14, -1
   %tmp18 = icmp ne i32 %tmp16, -1
   %tmp19 = and i1 %tmp17, %tmp18

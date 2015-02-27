@@ -92,7 +92,7 @@ entry:
   %this.addr = alloca %struct.C*, align 8
   store %struct.C* %this, %struct.C** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %struct.C** %this.addr, metadata !36, metadata !{!"0x102"}), !dbg !38
-  %this1 = load %struct.C** %this.addr
+  %this1 = load %struct.C*, %struct.C** %this.addr
   ret void, !dbg !39
 }
 

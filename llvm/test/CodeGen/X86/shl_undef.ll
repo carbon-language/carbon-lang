@@ -18,7 +18,7 @@ entry:
   %tmp0 = alloca i8
   %tmp1 = alloca i32
   store i8 1, i8* %tmp0
-  %tmp921.i7845 = load i8* %a0, align 1
+  %tmp921.i7845 = load i8, i8* %a0, align 1
   %tmp309 = xor i8 %tmp921.i7845, 104
   %tmp592 = zext i8 %tmp309 to i32
   %tmp862 = xor i32 1293461297, %tmp592
@@ -49,7 +49,7 @@ entry:
 ; shl undef, x -> 0
 define i32 @foo1_undef(i32* %a0) nounwind {
 entry:
-  %tmp1 = load i32* %a0, align 1
+  %tmp1 = load i32, i32* %a0, align 1
   %tmp2 = shl i32 undef, %tmp1;
   ret i32 %tmp2
 }

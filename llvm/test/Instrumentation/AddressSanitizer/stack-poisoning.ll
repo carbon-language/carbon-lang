@@ -12,7 +12,7 @@ entry:
 ; CHECK-PLAIN: ret void
 
 ; CHECK-UAR-LABEL: Bar
-; CHECK-UAR: load i32* @__asan_option_detect_stack_use_after_return
+; CHECK-UAR: load i32, i32* @__asan_option_detect_stack_use_after_return
 ; CHECK-UAR: label
 ; CHECK-UAR: call i64 @__asan_stack_malloc_1
 ; CHECK-UAR: label

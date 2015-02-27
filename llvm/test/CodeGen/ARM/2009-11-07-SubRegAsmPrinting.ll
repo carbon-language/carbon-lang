@@ -6,7 +6,7 @@ target triple = "armv7-eabi"
 
 define arm_aapcs_vfpcc void @foo() {
 entry:
-  %0 = load float* null, align 4                  ; <float> [#uses=2]
+  %0 = load float, float* null, align 4                  ; <float> [#uses=2]
   %1 = fmul float %0, undef                       ; <float> [#uses=2]
   %2 = fmul float 0.000000e+00, %1                ; <float> [#uses=2]
   %3 = fmul float %0, %1                          ; <float> [#uses=1]
@@ -18,7 +18,7 @@ entry:
   %7 = fsub float %2, undef                       ; <float> [#uses=1]
   %8 = fsub float 0.000000e+00, undef             ; <float> [#uses=3]
   %9 = fadd float %2, undef                       ; <float> [#uses=3]
-  %10 = load float* undef, align 8                ; <float> [#uses=3]
+  %10 = load float, float* undef, align 8                ; <float> [#uses=3]
   %11 = fmul float %8, %10                        ; <float> [#uses=1]
   %12 = fadd float undef, %11                     ; <float> [#uses=2]
   %13 = fmul float undef, undef                   ; <float> [#uses=1]
@@ -30,10 +30,10 @@ entry:
   %19 = fadd float %18, 0.000000e+00              ; <float> [#uses=1]
   %20 = fmul float undef, %10                     ; <float> [#uses=1]
   %21 = fadd float %19, %20                       ; <float> [#uses=1]
-  %22 = load float* undef, align 8                ; <float> [#uses=1]
+  %22 = load float, float* undef, align 8                ; <float> [#uses=1]
   %23 = fmul float %5, %22                        ; <float> [#uses=1]
   %24 = fadd float %23, undef                     ; <float> [#uses=1]
-  %25 = load float* undef, align 8                ; <float> [#uses=2]
+  %25 = load float, float* undef, align 8                ; <float> [#uses=2]
   %26 = fmul float %8, %25                        ; <float> [#uses=1]
   %27 = fadd float %24, %26                       ; <float> [#uses=1]
   %28 = fmul float %9, %25                        ; <float> [#uses=1]

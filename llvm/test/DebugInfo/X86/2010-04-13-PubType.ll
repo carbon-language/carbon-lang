@@ -17,12 +17,12 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.Y** %y_addr, metadata !14, metadata !{!"0x102"}), !dbg !13
   store %struct.Y* %y, %struct.Y** %y_addr
   store i32 0, i32* %0, align 4, !dbg !13
-  %1 = load i32* %0, align 4, !dbg !13            ; <i32> [#uses=1]
+  %1 = load i32, i32* %0, align 4, !dbg !13            ; <i32> [#uses=1]
   store i32 %1, i32* %retval, align 4, !dbg !13
   br label %return, !dbg !13
 
 return:                                           ; preds = %entry
-  %retval1 = load i32* %retval, !dbg !13          ; <i32> [#uses=1]
+  %retval1 = load i32, i32* %retval, !dbg !13          ; <i32> [#uses=1]
   ret i32 %retval1, !dbg !15
 }
 

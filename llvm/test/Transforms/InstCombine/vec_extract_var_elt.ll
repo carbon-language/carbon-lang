@@ -3,7 +3,7 @@
 define void @test (float %b, <8 x float> * %p)  {
 ; CHECK: extractelement
 ; CHECK: fptosi
-  %1 = load <8 x float> * %p
+  %1 = load <8 x float> , <8 x float> * %p
   %2 = bitcast <8 x float> %1 to <8 x i32>
   %3 = bitcast <8 x i32> %2 to <8 x float>
   %a = fptosi <8 x float> %3 to <8 x i32>

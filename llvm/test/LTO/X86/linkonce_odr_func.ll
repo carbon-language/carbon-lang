@@ -30,7 +30,7 @@ define linkonce_odr void @foo4() noinline {
 @v1 = linkonce_odr constant i32 32
 
 define i32 @useV1() {
-  %x = load i32* @v1
+  %x = load i32, i32* @v1
   ret i32 %x
 }
 
@@ -38,7 +38,7 @@ define i32 @useV1() {
 @v2 = linkonce_odr global i32 32
 
 define i32 @useV2() {
-  %x = load i32* @v2
+  %x = load i32, i32* @v2
   ret i32 %x
 }
 

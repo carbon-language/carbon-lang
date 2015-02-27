@@ -15,7 +15,7 @@ define i32 @main() nounwind readonly {
 ; CHECK: call void @llvm.dbg.value(metadata i64 72,
   call void @llvm.dbg.declare(metadata i64* %diff1, metadata !0, metadata !{!"0x102"})
   store i64 72, i64* %diff1, align 8
-  %v1 = load %struct.test** @TestArrayPtr, align 8 ; <%struct.test*> [#uses=1]
+  %v1 = load %struct.test*, %struct.test** @TestArrayPtr, align 8 ; <%struct.test*> [#uses=1]
   %v2 = ptrtoint %struct.test* %v1 to i64 ; <i64> [#uses=1]
   %v3 = sub i64 %v2, ptrtoint ([10 x %struct.test]* @TestArray to i64) ; <i64> [#uses=1]
   store i64 %v3, i64* %diff1, align 8

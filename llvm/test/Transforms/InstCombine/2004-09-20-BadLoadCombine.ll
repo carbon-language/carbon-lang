@@ -12,7 +12,7 @@ define i32 @test(i1 %C) {
         store i32 2, i32* %X2
         %Y = select i1 %C, i32* %X, i32* %X2            ; <i32*> [#uses=1]
         store i32 3, i32* %X
-        %Z = load i32* %Y               ; <i32> [#uses=1]
+        %Z = load i32, i32* %Y               ; <i32> [#uses=1]
         ret i32 %Z
 }
 

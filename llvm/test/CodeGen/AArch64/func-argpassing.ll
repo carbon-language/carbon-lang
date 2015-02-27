@@ -37,13 +37,13 @@ define void @take_struct(%myStruct* byval %structval) {
     %addr0 = getelementptr %myStruct, %myStruct* %structval, i64 0, i32 2
     %addr1 = getelementptr %myStruct, %myStruct* %structval, i64 0, i32 0
 
-    %val0 = load volatile i32* %addr0
+    %val0 = load volatile i32, i32* %addr0
     ; Some weird move means x0 is used for one access
 ; CHECK: ldr [[REG32:w[0-9]+]], [{{x[0-9]+|sp}}, #12]
     store volatile i32 %val0, i32* @var32
 ; CHECK: str [[REG32]], [{{x[0-9]+}}, {{#?}}:lo12:var32]
 
-    %val1 = load volatile i64* %addr1
+    %val1 = load volatile i64, i64* %addr1
 ; CHECK: ldr [[REG64:x[0-9]+]], [{{x[0-9]+|sp}}]
     store volatile i64 %val1, i64* @var64
 ; CHECK: str [[REG64]], [{{x[0-9]+}}, {{#?}}:lo12:var64]
@@ -58,13 +58,13 @@ define void @check_byval_align(i32* byval %ignore, %myStruct* byval align 16 %st
     %addr0 = getelementptr %myStruct, %myStruct* %structval, i64 0, i32 2
     %addr1 = getelementptr %myStruct, %myStruct* %structval, i64 0, i32 0
 
-    %val0 = load volatile i32* %addr0
+    %val0 = load volatile i32, i32* %addr0
     ; Some weird move means x0 is used for one access
 ; CHECK: ldr [[REG32:w[0-9]+]], [sp, #28]
     store i32 %val0, i32* @var32
 ; CHECK: str [[REG32]], [{{x[0-9]+}}, {{#?}}:lo12:var32]
 
-    %val1 = load volatile i64* %addr1
+    %val1 = load volatile i64, i64* %addr1
 ; CHECK: ldr [[REG64:x[0-9]+]], [sp, #16]
     store i64 %val1, i64* @var64
 ; CHECK: str [[REG64]], [{{x[0-9]+}}, {{#?}}:lo12:var64]
@@ -74,7 +74,7 @@ define void @check_byval_align(i32* byval %ignore, %myStruct* byval align 16 %st
 
 define i32 @return_int() {
 ; CHECK-LABEL: return_int:
-    %val = load i32* @var32
+    %val = load i32, i32* @var32
     ret i32 %val
 ; CHECK: ldr w0, [{{x[0-9]+}}, {{#?}}:lo12:var32]
     ; Make sure epilogue follows
@@ -94,7 +94,7 @@ define double @return_double() {
 define [2 x i64] @return_struct() {
 ; CHECK-LABEL: return_struct:
     %addr = bitcast %myStruct* @varstruct to [2 x i64]*
-    %val = load [2 x i64]* %addr
+    %val = load [2 x i64], [2 x i64]* %addr
     ret [2 x i64] %val
 ; CHECK: add x[[VARSTRUCT:[0-9]+]], {{x[0-9]+}}, :lo12:varstruct
 ; CHECK: ldp x0, x1, [x[[VARSTRUCT]]]
@@ -130,7 +130,7 @@ define i32 @struct_on_stack(i8 %var0, i16 %var1, i32 %var2, i64 %var3, i128 %var
                           double %notstacked) {
 ; CHECK-LABEL: struct_on_stack:
     %addr = getelementptr %myStruct, %myStruct* %struct, i64 0, i32 0
-    %val64 = load volatile i64* %addr
+    %val64 = load volatile i64, i64* %addr
     store volatile i64 %val64, i64* @var64
     ; Currently nothing on local stack, so struct should be at sp
 ; CHECK: ldr [[VAL64:x[0-9]+]], [sp]
@@ -141,7 +141,7 @@ define i32 @struct_on_stack(i8 %var0, i16 %var1, i32 %var2, i64 %var3, i128 %var
 ; CHECK: str d0, [{{x[0-9]+}}, {{#?}}:lo12:vardouble
 ; CHECK-NOFP-NOT: str d0,
 
-    %retval = load volatile i32* %stacked
+    %retval = load volatile i32, i32* %stacked
     ret i32 %retval
 ; CHECK-LE: ldr w0, [sp, #16]
 }

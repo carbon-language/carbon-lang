@@ -34,44 +34,44 @@ entry:
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
-  %2 = load i32* %i, align 4
+  %2 = load i32, i32* %i, align 4
   %cmp = icmp slt i32 %2, 8
   br i1 %cmp, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %3 = load i32* %i, align 4
+  %3 = load i32, i32* %i, align 4
   %idxprom = sext i32 %3 to i64
   %arrayidx = getelementptr inbounds [8 x i32], [8 x i32]* %x, i32 0, i64 %idxprom
-  %4 = load i32* %arrayidx, align 4
+  %4 = load i32, i32* %arrayidx, align 4
   %add = add nsw i32 %4, 1
   store i32 %add, i32* %xx, align 4
-  %5 = load i32* %xx, align 4
+  %5 = load i32, i32* %xx, align 4
   %add1 = add nsw i32 %5, 12
   store i32 %add1, i32* %xx, align 4
-  %6 = load i32* %xx, align 4
+  %6 = load i32, i32* %xx, align 4
   %add2 = add nsw i32 %6, 23
   store i32 %add2, i32* %xx, align 4
-  %7 = load i32* %xx, align 4
+  %7 = load i32, i32* %xx, align 4
   %add3 = add nsw i32 %7, 34
   store i32 %add3, i32* %xx, align 4
-  %8 = load i32* %i, align 4
+  %8 = load i32, i32* %i, align 4
   %idxprom4 = sext i32 %8 to i64
   %arrayidx5 = getelementptr inbounds [8 x i32], [8 x i32]* %y, i32 0, i64 %idxprom4
-  %9 = load i32* %arrayidx5, align 4
-  %10 = load i32* %yy, align 4
+  %9 = load i32, i32* %arrayidx5, align 4
+  %10 = load i32, i32* %yy, align 4
   %mul = mul nsw i32 %10, %9
   store i32 %mul, i32* %yy, align 4
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body
-  %11 = load i32* %i, align 4
+  %11 = load i32, i32* %i, align 4
   %inc = add nsw i32 %11, 1
   store i32 %inc, i32* %i, align 4
   br label %for.cond
 
 for.end:                                          ; preds = %for.cond
-  %12 = load i32* %xx, align 4
-  %13 = load i32* %yy, align 4
+  %12 = load i32, i32* %xx, align 4
+  %13 = load i32, i32* %yy, align 4
   %add6 = add nsw i32 %12, %13
   ret i32 %add6
 }

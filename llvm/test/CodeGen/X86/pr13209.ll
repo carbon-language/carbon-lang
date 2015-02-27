@@ -11,37 +11,37 @@ indirectgoto.preheader:
   %frombool.i5915.ph = phi i8 [ undef, %if.end51 ], [ %frombool.i5917, %jit_return ]
   br label %indirectgoto
 do.end165:
-  %tmp92 = load i8** %x, align 8
+  %tmp92 = load i8*, i8** %x, align 8
   br label %indirectgoto
 do.end209:
-  %tmp104 = load i8** %x, align 8
+  %tmp104 = load i8*, i8** %x, align 8
   br label %indirectgoto
 do.end220:
-  %tmp107 = load i8** %x, align 8
+  %tmp107 = load i8*, i8** %x, align 8
   br label %indirectgoto
 do.end231:
-  %tmp110 = load i8** %x, align 8
+  %tmp110 = load i8*, i8** %x, align 8
   br label %indirectgoto
 do.end242:
-  %tmp113 = load i8** %x, align 8
+  %tmp113 = load i8*, i8** %x, align 8
   br label %indirectgoto
 do.end253:
-  %tmp116 = load i8** %x, align 8
+  %tmp116 = load i8*, i8** %x, align 8
   br label %indirectgoto
 do.end286:
-  %tmp125 = load i8** %x, align 8
+  %tmp125 = load i8*, i8** %x, align 8
   br label %indirectgoto
 do.end297:
-  %tmp128 = load i8** %x, align 8
+  %tmp128 = load i8*, i8** %x, align 8
   br label %indirectgoto
 do.end308:
-  %tmp131 = load i8** %x, align 8
+  %tmp131 = load i8*, i8** %x, align 8
   br label %indirectgoto
 do.end429:
-  %tmp164 = load i8** %x, align 8
+  %tmp164 = load i8*, i8** %x, align 8
   br label %indirectgoto
 do.end440:
-  %tmp167 = load i8** %x, align 8
+  %tmp167 = load i8*, i8** %x, align 8
   br label %indirectgoto
 do.body482:
   br i1 false, label %indirectgoto, label %do.body495
@@ -55,16 +55,16 @@ inline_return:
 jit_return:
   br label %indirectgoto.preheader
 L_JSOP_UINT24:
-  %tmp864 = load i8** %x, align 8
+  %tmp864 = load i8*, i8** %x, align 8
   br label %indirectgoto
 L_JSOP_THROWING:
-  %tmp1201 = load i8** %x, align 8
+  %tmp1201 = load i8*, i8** %x, align 8
   br label %indirectgoto
 do.body4936:
-  %tmp1240 = load i8** %x, align 8
+  %tmp1240 = load i8*, i8** %x, align 8
   br label %indirectgoto
 do.body5184:
-  %tmp1340 = load i8** %x, align 8
+  %tmp1340 = load i8*, i8** %x, align 8
   br label %indirectgoto
 if.end5571:
   br  label %inline_return

@@ -22,7 +22,7 @@ bb1:
 ; CHECK: [[TMP:%.*]] = phi i8* [ getelementptr (i8* null, i64 undef), %bb10 ], [ null, %bb ]
 
 ; CHECK: bb1.bb15_crit_edge:
-; CHECK: %tmp17.pre = load i8* [[TMP]], align 1
+; CHECK: %tmp17.pre = load i8, i8* [[TMP]], align 1
 
 bb3:
   call void @isalnum()
@@ -32,22 +32,22 @@ bb5:
   br i1 undef, label %bb10, label %bb6
 
 bb6:
-  %tmp7 = load i8** %tmp, align 8
-  %tmp8 = load i8* %tmp7, align 1
+  %tmp7 = load i8*, i8** %tmp, align 8
+  %tmp8 = load i8, i8* %tmp7, align 1
   %tmp9 = zext i8 %tmp8 to i64
   br i1 undef, label %bb15, label %bb10
 
 bb10:
-  %tmp11 = load i8** %tmp, align 8
-  %tmp12 = load i8* %tmp11, align 1
+  %tmp11 = load i8*, i8** %tmp, align 8
+  %tmp12 = load i8, i8* %tmp11, align 1
   %tmp13 = zext i8 %tmp12 to i64
   %tmp14 = getelementptr inbounds i8, i8* null, i64 undef
   store i8* %tmp14, i8** %tmp, align 8
   br label %bb1
 
 bb15:
-  %tmp16 = load i8** %tmp, align 8
-  %tmp17 = load i8* %tmp16, align 1
+  %tmp16 = load i8*, i8** %tmp, align 8
+  %tmp17 = load i8, i8* %tmp16, align 1
   %tmp18 = icmp eq i8 %tmp17, 0
   br label %bb19
 

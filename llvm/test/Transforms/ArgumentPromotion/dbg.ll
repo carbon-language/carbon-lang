@@ -5,8 +5,8 @@
 declare void @sink(i32)
 
 define internal void @test(i32** %X) {
-  %1 = load i32** %X, align 8
-  %2 = load i32* %1, align 8
+  %1 = load i32*, i32** %X, align 8
+  %2 = load i32, i32* %1, align 8
   call void @sink(i32 %2)
   ret void
 }

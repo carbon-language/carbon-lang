@@ -8,9 +8,9 @@ target datalayout = "E-p:64:64:64-p1:16:16:16-a0:0:8-f32:32:32-f64:64:64-i1:8:8-
 
 ; CHECK-LABEL: @test1(
 define i16 @test1(i32* %P) {
-        %X = load i16* @B
+        %X = load i16, i16* @B
         store i32 7, i32* %P
-        %Y = load i16* @B
+        %Y = load i16, i16* @B
         %Z = sub i16 %Y, %X
         ret i16 %Z
 ; CHECK: ret i16 0
@@ -21,9 +21,9 @@ define i16 @test1(i32* %P) {
 define i16 @test1_as1(i32 addrspace(1)* %P) {
 ; CHECK-LABEL: @test1_as1(
 ; CHECK: ret i16 0
-  %X = load i16 addrspace(1)* @B_as1
+  %X = load i16, i16 addrspace(1)* @B_as1
   store i32 7, i32 addrspace(1)* %P
-  %Y = load i16 addrspace(1)* @B_as1
+  %Y = load i16, i16 addrspace(1)* @B_as1
   %Z = sub i16 %Y, %X
   ret i16 %Z
 }
@@ -39,10 +39,10 @@ define i8 @test2(i32 %tmp79, i32 %w.2, i32 %indvar89) nounwind {
   %tmp93 = add i32 %w.2, %indvar89
   %arrayidx416 = getelementptr [0 x i8], [0 x i8]* @window, i32 0, i32 %tmp93
 
-  %A = load i8* %arrayidx412, align 1
+  %A = load i8, i8* %arrayidx412, align 1
   store i8 4, i8* %arrayidx416, align 1
 
-  %B = load i8* %arrayidx412, align 1
+  %B = load i8, i8* %arrayidx412, align 1
   %C = sub i8 %A, %B
   ret i8 %C
 

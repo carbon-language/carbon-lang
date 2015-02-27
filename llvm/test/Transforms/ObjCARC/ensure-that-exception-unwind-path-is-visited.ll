@@ -36,8 +36,8 @@ target triple = "x86_64-apple-macosx10.9.0"
 
 define i32 @main() uwtable ssp {
 entry:
-  %tmp = load %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_", align 8, !dbg !37
-  %tmp1 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_", align 8, !dbg !37, !invariant.load !38
+  %tmp = load %struct._class_t*, %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_", align 8, !dbg !37
+  %tmp1 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_", align 8, !dbg !37, !invariant.load !38
   %tmp2 = bitcast %struct._class_t* %tmp to i8*, !dbg !37
 ; CHECK: call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %tmp2, i8* %tmp1)
   %call = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %tmp2, i8* %tmp1), !dbg !37, !clang.arc.no_objc_arc_exceptions !38
@@ -88,8 +88,8 @@ define internal fastcc void @ThrowFunc(i8* %obj) uwtable noinline ssp {
 entry:
   %tmp = call i8* @objc_retain(i8* %obj) nounwind
   call void @llvm.dbg.value(metadata i8* %obj, i64 0, metadata !32, metadata !{}), !dbg !55
-  %tmp1 = load %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_1", align 8, !dbg !56
-  %tmp2 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_5", align 8, !dbg !56, !invariant.load !38
+  %tmp1 = load %struct._class_t*, %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_1", align 8, !dbg !56
+  %tmp2 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_5", align 8, !dbg !56, !invariant.load !38
   %tmp3 = bitcast %struct._class_t* %tmp1 to i8*, !dbg !56
   call void (i8*, i8*, %0*, %0*, ...)* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, %0*, %0*, ...)*)(i8* %tmp3, i8* %tmp2, %0* bitcast (%struct.NSConstantString* @_unnamed_cfstring_3 to %0*), %0* bitcast (%struct.NSConstantString* @_unnamed_cfstring_3 to %0*)), !dbg !56, !clang.arc.no_objc_arc_exceptions !38
   call void @objc_release(i8* %obj) nounwind, !dbg !58, !clang.imprecise_release !38

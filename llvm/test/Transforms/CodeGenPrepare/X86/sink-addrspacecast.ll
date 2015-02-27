@@ -13,7 +13,7 @@ entry:
   br i1 %cond, label %if.then, label %fallthrough
 
 if.then:
-  %v = load i32 addrspace(1)* %casted, align 4
+  %v = load i32, i32 addrspace(1)* %casted, align 4
   br label %fallthrough
 
 fallthrough:

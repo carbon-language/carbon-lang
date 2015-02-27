@@ -5,7 +5,7 @@
 
 define i32 @_Z3foov() {
 entry:
-        %tmp.1 = load i32* @X.0         ; <i32> [#uses=1]
+        %tmp.1 = load i32, i32* @X.0         ; <i32> [#uses=1]
         ret i32 %tmp.1
 }
 

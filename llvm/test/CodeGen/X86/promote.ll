@@ -9,7 +9,7 @@ define i32 @mul_f(<4 x i8>* %A) {
 entry:
 ; CHECK: pmul
 ; CHECK-NOT: mulb
-  %0 = load <4 x i8>* %A, align 8
+  %0 = load <4 x i8>, <4 x i8>* %A, align 8
   %mul = mul <4 x i8> %0, %0
   store <4 x i8> %mul, <4 x i8>* undef
   ret i32 0
@@ -23,7 +23,7 @@ entry:
 ; CHECK: pmovzxbd
 ; CHECK: paddd
 ; CHECK: pshufb
-  %0 = load <4 x i8>* %A, align 8
+  %0 = load <4 x i8>, <4 x i8>* %A, align 8
   %add = add <4 x i8> %0, %0
   store <4 x i8> %add, <4 x i8>* undef
   ret i32 0

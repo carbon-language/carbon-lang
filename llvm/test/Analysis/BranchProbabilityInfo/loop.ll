@@ -88,7 +88,7 @@ entry:
 do.body:
   %i.0 = phi i32 [ 0, %entry ], [ %inc4, %if.end ]
   call void @g1()
-  %0 = load i32* %c, align 4
+  %0 = load i32, i32* %c, align 4
   %cmp = icmp slt i32 %0, 42
   br i1 %cmp, label %do.body1, label %if.end
 ; CHECK: edge do.body -> do.body1 probability is 16 / 32 = 50%
@@ -124,7 +124,7 @@ entry:
 do.body:
   %i.0 = phi i32 [ 0, %entry ], [ %inc4, %do.end ]
   call void @g1()
-  %0 = load i32* %c, align 4
+  %0 = load i32, i32* %c, align 4
   %cmp = icmp slt i32 %0, 42
   br i1 %cmp, label %return, label %do.body1
 ; CHECK: edge do.body -> return probability is 4 / 128
@@ -169,7 +169,7 @@ do.body:
 
 do.body1:
   %j.0 = phi i32 [ 0, %do.body ], [ %inc, %if.end ]
-  %0 = load i32* %c, align 4
+  %0 = load i32, i32* %c, align 4
   %cmp = icmp slt i32 %0, 42
   br i1 %cmp, label %return, label %if.end
 ; CHECK: edge do.body1 -> return probability is 4 / 128
@@ -214,7 +214,7 @@ do.body:
 do.body1:
   %j.0 = phi i32 [ 0, %do.body ], [ %inc, %do.cond ]
   call void @g2()
-  %0 = load i32* %c, align 4
+  %0 = load i32, i32* %c, align 4
   %cmp = icmp slt i32 %0, 42
   br i1 %cmp, label %return, label %do.cond
 ; CHECK: edge do.body1 -> return probability is 4 / 128
@@ -258,7 +258,7 @@ for.body.lr.ph:
 
 for.body:
   %i.011 = phi i32 [ 0, %for.body.lr.ph ], [ %inc6, %for.inc5 ]
-  %0 = load i32* %c, align 4
+  %0 = load i32, i32* %c, align 4
   %cmp1 = icmp eq i32 %0, %i.011
   br i1 %cmp1, label %for.inc5, label %if.end
 ; CHECK: edge for.body -> for.inc5 probability is 16 / 32 = 50%
@@ -319,21 +319,21 @@ for.body:
 
 for.body3:
   %j.017 = phi i32 [ 0, %for.body ], [ %inc, %for.inc ]
-  %0 = load i32* %c, align 4
+  %0 = load i32, i32* %c, align 4
   %cmp4 = icmp eq i32 %0, %j.017
   br i1 %cmp4, label %for.inc, label %if.end
 ; CHECK: edge for.body3 -> for.inc probability is 16 / 32 = 50%
 ; CHECK: edge for.body3 -> if.end probability is 16 / 32 = 50%
 
 if.end:
-  %1 = load i32* %arrayidx5, align 4
+  %1 = load i32, i32* %arrayidx5, align 4
   %cmp6 = icmp eq i32 %1, %j.017
   br i1 %cmp6, label %for.inc, label %if.end8
 ; CHECK: edge if.end -> for.inc probability is 16 / 32 = 50%
 ; CHECK: edge if.end -> if.end8 probability is 16 / 32 = 50%
 
 if.end8:
-  %2 = load i32* %arrayidx9, align 4
+  %2 = load i32, i32* %arrayidx9, align 4
   %cmp10 = icmp eq i32 %2, %j.017
   br i1 %cmp10, label %for.inc, label %if.end12
 ; CHECK: edge if.end8 -> for.inc probability is 16 / 32 = 50%

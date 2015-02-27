@@ -16,7 +16,7 @@ entry:
   %0 = alloca i32, align 4
   %1 = alloca i8*
   store volatile i32 %len, i32* %0, align 4
-  %2 = load i32* %0, align 4
+  %2 = load i32, i32* %0, align 4
   %3 = zext i32 %2 to i64
   %4 = alloca i8, i64 %3, align 32
   store volatile i8 0, i8* %4

@@ -26,7 +26,7 @@ entry:
   ;; Constructor has finished here.
   %inv = call {}* @llvm.invariant.start(i64 8, i8* %y)
   call void @_Z3barRKi(i32* %0) nounwind
-  %2 = load i32* %0, align 8
+  %2 = load i32, i32* %0, align 8
 
   ;; Destructor is run here.
   call void @llvm.invariant.end({}* %inv, i64 8, i8* %y)

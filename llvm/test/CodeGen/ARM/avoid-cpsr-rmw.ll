@@ -30,13 +30,13 @@ while.body:
 ; CHECK-NOT: muls
   %ptr1.addr.09 = phi i32* [ %add.ptr, %while.body ], [ %ptr1, %entry ]
   %ptr2.addr.08 = phi i32* [ %incdec.ptr, %while.body ], [ %ptr2, %entry ]
-  %0 = load i32* %ptr1.addr.09, align 4
+  %0 = load i32, i32* %ptr1.addr.09, align 4
   %arrayidx1 = getelementptr inbounds i32, i32* %ptr1.addr.09, i32 1
-  %1 = load i32* %arrayidx1, align 4
+  %1 = load i32, i32* %arrayidx1, align 4
   %arrayidx3 = getelementptr inbounds i32, i32* %ptr1.addr.09, i32 2
-  %2 = load i32* %arrayidx3, align 4
+  %2 = load i32, i32* %arrayidx3, align 4
   %arrayidx4 = getelementptr inbounds i32, i32* %ptr1.addr.09, i32 3
-  %3 = load i32* %arrayidx4, align 4
+  %3 = load i32, i32* %arrayidx4, align 4
   %add.ptr = getelementptr inbounds i32, i32* %ptr1.addr.09, i32 4
   %mul = mul i32 %1, %0
   %mul5 = mul i32 %mul, %2
@@ -64,13 +64,13 @@ while.body:
 ; CHECK: muls
   %ptr1.addr.09 = phi i32* [ %add.ptr, %while.body ], [ %ptr1, %entry ]
   %ptr2.addr.08 = phi i32* [ %incdec.ptr, %while.body ], [ %ptr2, %entry ]
-  %0 = load i32* %ptr1.addr.09, align 4
+  %0 = load i32, i32* %ptr1.addr.09, align 4
   %arrayidx1 = getelementptr inbounds i32, i32* %ptr1.addr.09, i32 1
-  %1 = load i32* %arrayidx1, align 4
+  %1 = load i32, i32* %arrayidx1, align 4
   %arrayidx3 = getelementptr inbounds i32, i32* %ptr1.addr.09, i32 2
-  %2 = load i32* %arrayidx3, align 4
+  %2 = load i32, i32* %arrayidx3, align 4
   %arrayidx4 = getelementptr inbounds i32, i32* %ptr1.addr.09, i32 3
-  %3 = load i32* %arrayidx4, align 4
+  %3 = load i32, i32* %arrayidx4, align 4
   %add.ptr = getelementptr inbounds i32, i32* %ptr1.addr.09, i32 4
   %mul = mul i32 %1, %0
   %mul5 = mul i32 %mul, %2
@@ -92,7 +92,7 @@ entry:
 ; CHECK: vmrs APSR_nzcv, fpscr
 ; CHECK: if.then
 ; CHECK-NOT: movs
-  %0 = load double* %q, align 4
+  %0 = load double, double* %q, align 4
   %cmp = fcmp olt double %0, 1.000000e+01
   %incdec.ptr1 = getelementptr inbounds i32, i32* %p, i32 1
   br i1 %cmp, label %if.then, label %if.else

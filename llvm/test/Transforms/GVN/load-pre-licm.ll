@@ -19,8 +19,8 @@ while.body5:
   %arrayidx9 = getelementptr [5001 x i32], [5001 x i32]* @sortlist, i32 0, i32 %tmp5
   %tmp6 = add i32 %indvar, 1
   %arrayidx = getelementptr [5001 x i32], [5001 x i32]* @sortlist, i32 0, i32 %tmp6
-  %tmp7 = load i32* %arrayidx, align 4
-  %tmp10 = load i32* %arrayidx9, align 4
+  %tmp7 = load i32, i32* %arrayidx, align 4
+  %tmp10 = load i32, i32* %arrayidx9, align 4
   %cmp11 = icmp sgt i32 %tmp7, %tmp10
   br i1 %cmp11, label %if.then, label %if.end
 

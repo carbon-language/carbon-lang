@@ -7,7 +7,7 @@ define void @table_reindex(%struct..apr_table_t* %t.1) {		; No predecessors!
 
 loopentry:		; preds = %0, %no_exit
 	%tmp.101 = getelementptr %struct..apr_table_t, %struct..apr_table_t* %t.1, i64 0, i32 0, i32 2
-	%tmp.11 = load i32* %tmp.101		; <i32> [#uses=0]
+	%tmp.11 = load i32, i32* %tmp.101		; <i32> [#uses=0]
 	br i1 false, label %no_exit, label %UnifiedExitNode
 
 no_exit:		; preds = %loopentry

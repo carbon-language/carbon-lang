@@ -8,7 +8,7 @@ target triple = "nvptx-nvidia-cuda"
 
 
 define void @foo(i1 %p, i32* %out) {
-  %ld = load i1 addrspace(1)* @mypred
+  %ld = load i1, i1 addrspace(1)* @mypred
   %val = zext i1 %ld to i32
   store i32 %val, i32* %out
   ret void

@@ -18,8 +18,8 @@ for.cond:                                         ; preds = %for.inc, %entry
   br i1 %lnot.i, label %for.end, label %for.body
 
 for.body:                                         ; preds = %for.cond
-  %0 = load i32* %coerce.val.ip9, align 4
-  %1 = load i32* %__value_, align 4
+  %0 = load i32, i32* %coerce.val.ip9, align 4
+  %1 = load i32, i32* %__value_, align 4
   %cmp = icmp eq i32 %0, %1
   br i1 %cmp, label %for.end, label %for.inc
 

@@ -18,12 +18,12 @@ for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 1, %entry ], [ %indvars.iv.next, %for.body ]
   %tmp = add nsw i64 %indvars.iv, -1
   %arrayidx = getelementptr inbounds double, double* %b, i64 %tmp
-  %tmp1 = load double* %arrayidx, align 8
+  %tmp1 = load double, double* %arrayidx, align 8
 ; The induction variable should carry the scaling factor: 1 * 8 = 8.
 ; CHECK: [[IVNEXT]] = add nuw nsw i64 [[IV]], 8
   %indvars.iv.next = add i64 %indvars.iv, 1
   %arrayidx2 = getelementptr inbounds double, double* %c, i64 %indvars.iv.next
-  %tmp2 = load double* %arrayidx2, align 8
+  %tmp2 = load double, double* %arrayidx2, align 8
   %mul = fmul double %tmp1, %tmp2
   %arrayidx4 = getelementptr inbounds double, double* %a, i64 %indvars.iv
   store double %mul, double* %arrayidx4, align 8

@@ -22,7 +22,7 @@ crc32_gentab.exit:                                ; preds = %for.cond1.preheader
 
 for.cond1.preheader.i2961.i:                      ; preds = %for.inc44.i2977.i, %crc32_gentab.exit
   call void @llvm.memset.p0i8.i64(i8* bitcast ([1 x [9 x i32]]* @g_62 to i8*), i8 -1, i64 36, i32 4, i1 false) #1
-  %0 = load i32* %retval.0.i.i.i, align 4
+  %0 = load i32, i32* %retval.0.i.i.i, align 4
   %tobool.i2967.i = icmp eq i32 %0, 0
   br label %for.body21.i2968.i
 

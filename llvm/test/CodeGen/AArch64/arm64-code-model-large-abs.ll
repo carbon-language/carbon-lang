@@ -18,7 +18,7 @@ define i8* @global_addr() {
 
 define i8 @global_i8() {
 ; CHECK-LABEL: global_i8:
-  %val = load i8* @var8
+  %val = load i8, i8* @var8
   ret i8 %val
 ; CHECK: movz x[[ADDR_REG:[0-9]+]], #:abs_g3:var8
 ; CHECK: movk x[[ADDR_REG]], #:abs_g2_nc:var8
@@ -29,7 +29,7 @@ define i8 @global_i8() {
 
 define i16 @global_i16() {
 ; CHECK-LABEL: global_i16:
-  %val = load i16* @var16
+  %val = load i16, i16* @var16
   ret i16 %val
 ; CHECK: movz x[[ADDR_REG:[0-9]+]], #:abs_g3:var16
 ; CHECK: movk x[[ADDR_REG]], #:abs_g2_nc:var16
@@ -40,7 +40,7 @@ define i16 @global_i16() {
 
 define i32 @global_i32() {
 ; CHECK-LABEL: global_i32:
-  %val = load i32* @var32
+  %val = load i32, i32* @var32
   ret i32 %val
 ; CHECK: movz x[[ADDR_REG:[0-9]+]], #:abs_g3:var32
 ; CHECK: movk x[[ADDR_REG]], #:abs_g2_nc:var32
@@ -51,7 +51,7 @@ define i32 @global_i32() {
 
 define i64 @global_i64() {
 ; CHECK-LABEL: global_i64:
-  %val = load i64* @var64
+  %val = load i64, i64* @var64
   ret i64 %val
 ; CHECK: movz x[[ADDR_REG:[0-9]+]], #:abs_g3:var64
 ; CHECK: movk x[[ADDR_REG]], #:abs_g2_nc:var64

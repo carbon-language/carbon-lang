@@ -120,7 +120,7 @@ while.body392.lr.ph:                              ; preds = %do.body378
   br label %while.body392
 
 while.body392:                                    ; preds = %wait_on_buffer.exit1319, %while.body392.lr.ph
-  %0 = load i8** undef, align 8
+  %0 = load i8*, i8** undef, align 8
   %add.ptr399 = getelementptr inbounds i8, i8* %0, i64 -72
   %b_state.i.i1314 = bitcast i8* %add.ptr399 to i64*
   %tobool.i1316 = icmp eq i64 undef, 0
@@ -130,13 +130,13 @@ if.then.i1317:                                    ; preds = %while.body392
   unreachable
 
 wait_on_buffer.exit1319:                          ; preds = %while.body392
-  %1 = load volatile i64* %b_state.i.i1314, align 8
+  %1 = load volatile i64, i64* %b_state.i.i1314, align 8
   %conv.i.i1322 = and i64 %1, 1
   %lnot404 = icmp eq i64 %conv.i.i1322, 0
   %.err.4 = select i1 %lnot404, i32 -5, i32 undef
   %2 = call i64 asm sideeffect "1:.long 0x7c0000a8 $| ((($0) & 0x1f) << 21) $| (((0) & 0x1f) << 16) $| ((($3) & 0x1f) << 11) $| (((0) & 0x1) << 0) \0Aandc $0,$0,$2\0Astdcx. $0,0,$3\0Abne- 1b\0A", "=&r,=*m,r,r,*m,~{cc},~{memory}"(i64* %b_state.i.i1314, i64 262144, i64* %b_state.i.i1314, i64* %b_state.i.i1314) #1
   %prev.i.i.i1325 = getelementptr inbounds i8, i8* %0, i64 8
-  %3 = load i32** null, align 8
+  %3 = load i32*, i32** null, align 8
   store i32* %3, i32** undef, align 8
   call void @__brelse(i32* undef) #1
   br i1 undef, label %while.end418, label %while.body392

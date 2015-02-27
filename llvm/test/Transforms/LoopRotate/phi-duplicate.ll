@@ -14,10 +14,10 @@ for.cond:                                         ; preds = %for.body, %entry
 
 for.body:                                         ; preds = %for.cond
   %arrayidx = getelementptr inbounds double, double* %G, i64 %j.0 ; <double*> [#uses=1]
-  %tmp3 = load double* %arrayidx                  ; <double> [#uses=1]
+  %tmp3 = load double, double* %arrayidx                  ; <double> [#uses=1]
   %sub = sub i64 %j.0, 1                          ; <i64> [#uses=1]
   %arrayidx6 = getelementptr inbounds double, double* %G, i64 %sub ; <double*> [#uses=1]
-  %tmp7 = load double* %arrayidx6                 ; <double> [#uses=1]
+  %tmp7 = load double, double* %arrayidx6                 ; <double> [#uses=1]
   %add = fadd double %tmp3, %tmp7                 ; <double> [#uses=1]
   %arrayidx10 = getelementptr inbounds double, double* %G, i64 %j.0 ; <double*> [#uses=1]
   store double %add, double* %arrayidx10

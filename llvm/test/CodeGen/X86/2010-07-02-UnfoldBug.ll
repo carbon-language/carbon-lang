@@ -61,7 +61,7 @@ bb22:                                             ; preds = %bb24.preheader
   br i1 undef, label %bb2.i.i, label %bb.i.i49
 
 bb.i.i49:                                         ; preds = %bb22
-  %0 = load float* undef, align 4                 ; <float> [#uses=1]
+  %0 = load float, float* undef, align 4                 ; <float> [#uses=1]
   %1 = insertelement <4 x float> undef, float %0, i32 0 ; <<4 x float>> [#uses=1]
   %2 = call <4 x float> @llvm.x86.sse.min.ss(<4 x float> <float 1.000000e+00, float undef, float undef, float undef>, <4 x float> %1) nounwind readnone ; <<4 x float>> [#uses=1]
   %3 = call <4 x float> @llvm.x86.sse.max.ss(<4 x float> %2, <4 x float> <float 0.000000e+00, float undef, float undef, float undef>) nounwind readnone ; <<4 x float>> [#uses=1]

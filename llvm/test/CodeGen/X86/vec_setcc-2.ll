@@ -26,7 +26,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %arrayidx1 = getelementptr inbounds <2 x i64>, <2 x i64>* %in, i64 %indvars.iv
-  %arrayidx1.val = load <2 x i64>* %arrayidx1, align 16
+  %arrayidx1.val = load <2 x i64>, <2 x i64>* %arrayidx1, align 16
   %0 = bitcast <2 x i64> %arrayidx1.val to <8 x i16>
   %cmp.i.i = icmp ult <8 x i16> %0, <i16 26, i16 26, i16 26, i16 26, i16 26, i16 26, i16 26, i16 26>
   %sext.i.i = sext <8 x i1> %cmp.i.i to <8 x i16>
@@ -55,7 +55,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %arrayidx1 = getelementptr inbounds <2 x i64>, <2 x i64>* %in, i64 %indvars.iv
-  %arrayidx1.val = load <2 x i64>* %arrayidx1, align 16
+  %arrayidx1.val = load <2 x i64>, <2 x i64>* %arrayidx1, align 16
   %0 = bitcast <2 x i64> %arrayidx1.val to <8 x i16>
   %cmp.i.i = icmp ult <8 x i16> %0, <i16 0, i16 26, i16 26, i16 26, i16 26, i16 26, i16 26, i16 26>
   %sext.i.i = sext <8 x i1> %cmp.i.i to <8 x i16>

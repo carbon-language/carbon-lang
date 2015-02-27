@@ -22,12 +22,12 @@ for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %0 = shl nsw i64 %indvars.iv, 1
   %arrayidx = getelementptr inbounds [2048 x i32], [2048 x i32]* @c, i64 0, i64 %0
-  %1 = load i32* %arrayidx, align 8
+  %1 = load i32, i32* %arrayidx, align 8
   %idxprom1 = sext i32 %1 to i64
   %arrayidx2 = getelementptr inbounds [2048 x i32], [2048 x i32]* @b, i64 0, i64 %idxprom1
-  %2 = load i32* %arrayidx2, align 4
+  %2 = load i32, i32* %arrayidx2, align 4
   %arrayidx4 = getelementptr inbounds [2048 x i32], [2048 x i32]* @d, i64 0, i64 %indvars.iv
-  %3 = load i32* %arrayidx4, align 4
+  %3 = load i32, i32* %arrayidx4, align 4
   %idxprom5 = sext i32 %3 to i64
   %arrayidx6 = getelementptr inbounds [2048 x i32], [2048 x i32]* @a, i64 0, i64 %idxprom5
   store i32 %2, i32* %arrayidx6, align 4

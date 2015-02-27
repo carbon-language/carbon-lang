@@ -18,7 +18,7 @@ bb:
 bb1:
   %i.0 = phi i64 [ 0, %bb ], [ %tmp4, %bb1 ]
   %tmp = getelementptr inbounds float, float* %x, i64 %i.0
-  %tmp2 = load float* %tmp, align 4
+  %tmp2 = load float, float* %tmp, align 4
   %tmp3 = fadd float %tmp2, 1.000000e+00
   store float %tmp3, float* %tmp, align 4
   %tmp4 = add nsw i64 %i.0, 1

@@ -8,6 +8,6 @@ define i32 @test() nounwind {
 	%Y = getelementptr [4 x i32], [4 x i32]* %X, i64 0, i64 0		; <i32*> [#uses=1]
         ; Must preserve arrayness!
 	%Z = getelementptr i32, i32* %Y, i64 1		; <i32*> [#uses=1]
-	%A = load i32* %Z		; <i32> [#uses=1]
+	%A = load i32, i32* %Z		; <i32> [#uses=1]
 	ret i32 %A
 }

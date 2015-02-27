@@ -36,7 +36,7 @@ entry:
   tail call void @llvm.dbg.value(metadata i32 %call, i64 0, metadata !10, metadata !16), !dbg !17
   store volatile i32 %call, i32* %c, align 4, !dbg !19
   tail call void @llvm.dbg.value(metadata i32* %c, i64 0, metadata !10, metadata !16), !dbg !17
-  %c.0.c.0. = load volatile i32* %c, align 4, !dbg !20
+  %c.0.c.0. = load volatile i32, i32* %c, align 4, !dbg !20
   ret i32 %c.0.c.0., !dbg !20
 }
 

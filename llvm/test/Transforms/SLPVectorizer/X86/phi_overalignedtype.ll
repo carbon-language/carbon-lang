@@ -12,22 +12,22 @@ define void @test(double* %i1, double* %i2, double* %o) {
 ; size is less than the alignment, and through various different GEP formations.
 
 entry:
-  %i1.0 = load double* %i1, align 16
+  %i1.0 = load double, double* %i1, align 16
   %i1.gep1 = getelementptr double, double* %i1, i64 1
-  %i1.1 = load double* %i1.gep1, align 16
-; CHECK: load double*
-; CHECK: load double*
+  %i1.1 = load double, double* %i1.gep1, align 16
+; CHECK: load double, double*
+; CHECK: load double, double*
 ; CHECK: insertelement <2 x double>
 ; CHECK: insertelement <2 x double>
   br i1 undef, label %then, label %end
 
 then:
   %i2.gep0 = getelementptr inbounds double, double* %i2, i64 0
-  %i2.0 = load double* %i2.gep0, align 16
+  %i2.0 = load double, double* %i2.gep0, align 16
   %i2.gep1 = getelementptr inbounds double, double* %i2, i64 1
-  %i2.1 = load double* %i2.gep1, align 16
-; CHECK: load double*
-; CHECK: load double*
+  %i2.1 = load double, double* %i2.gep1, align 16
+; CHECK: load double, double*
+; CHECK: load double, double*
 ; CHECK: insertelement <2 x double>
 ; CHECK: insertelement <2 x double>
   br label %end

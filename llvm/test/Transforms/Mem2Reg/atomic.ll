@@ -7,6 +7,6 @@ define i32 @test1(i32 %x) {
 ; CHECK: ret i32 %x
   %a = alloca i32
   store atomic i32 %x, i32* %a seq_cst, align 4
-  %r = load atomic i32* %a seq_cst, align 4
+  %r = load atomic i32, i32* %a seq_cst, align 4
   ret i32 %r
 }

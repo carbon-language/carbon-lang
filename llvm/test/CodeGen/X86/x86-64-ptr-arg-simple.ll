@@ -22,7 +22,7 @@ entry:
 
 define void @bar(i32* nocapture %pOut, i32* nocapture %pIn) nounwind {
 entry:
-  %0 = load i32* %pIn, align 4
+  %0 = load i32, i32* %pIn, align 4
   store i32 %0, i32* %pOut, align 4
   ret void
 }

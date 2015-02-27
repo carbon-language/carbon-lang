@@ -17,10 +17,10 @@ for.body:                                         ; preds = %entry, %for.body
 ; CHECK: -->  %sum.04{{ *}}Exits: 2450
   %i.03 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %arrayidx = getelementptr inbounds [50 x i32], [50 x i32]* @arr1, i32 0, i32 %i.03
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
 ; CHECK: -->  %0{{ *}}Exits: 50
   %arrayidx1 = getelementptr inbounds [50 x i32], [50 x i32]* @arr2, i32 0, i32 %i.03
-  %1 = load i32* %arrayidx1, align 4
+  %1 = load i32, i32* %arrayidx1, align 4
 ; CHECK: -->  %1{{ *}}Exits: 0
   %add = add i32 %0, %sum.04
   %add2 = add i32 %add, %1
@@ -52,10 +52,10 @@ for.body:                                         ; preds = %entry, %for.body
   %n.01 = phi %struct.ListNode* [ bitcast ({ %struct.ListNode*, i32, [4 x i8] }* @node5 to %struct.ListNode*), %entry ], [ %1, %for.body ]
 ; CHECK: -->  %n.01{{ *}}Exits: @node1
   %i = getelementptr inbounds %struct.ListNode, %struct.ListNode* %n.01, i64 0, i32 1
-  %0 = load i32* %i, align 4
+  %0 = load i32, i32* %i, align 4
   %add = add nsw i32 %0, %sum.02
   %next = getelementptr inbounds %struct.ListNode, %struct.ListNode* %n.01, i64 0, i32 0
-  %1 = load %struct.ListNode** %next, align 8
+  %1 = load %struct.ListNode*, %struct.ListNode** %next, align 8
 ; CHECK: -->  %1{{ *}}Exits: 0
   %cmp = icmp eq %struct.ListNode* %1, null
   br i1 %cmp, label %for.end, label %for.body

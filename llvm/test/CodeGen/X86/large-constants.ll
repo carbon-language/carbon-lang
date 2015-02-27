@@ -40,10 +40,10 @@ fail:
 
 define void @constant_expressions() {
 entry:
-  %0 = load i64* inttoptr (i64 add (i64 51250129900, i64 0) to i64*)
-  %1 = load i64* inttoptr (i64 add (i64 51250129900, i64 8) to i64*)
-  %2 = load i64* inttoptr (i64 add (i64 51250129900, i64 16) to i64*)
-  %3 = load i64* inttoptr (i64 add (i64 51250129900, i64 24) to i64*)
+  %0 = load i64, i64* inttoptr (i64 add (i64 51250129900, i64 0) to i64*)
+  %1 = load i64, i64* inttoptr (i64 add (i64 51250129900, i64 8) to i64*)
+  %2 = load i64, i64* inttoptr (i64 add (i64 51250129900, i64 16) to i64*)
+  %3 = load i64, i64* inttoptr (i64 add (i64 51250129900, i64 24) to i64*)
   %4 = add i64 %0, %1
   %5 = add i64 %2, %3
   %6 = add i64 %4, %5
@@ -54,10 +54,10 @@ entry:
 
 define void @constant_expressions2() {
 entry:
-  %0 = load i64* inttoptr (i64 51250129900 to i64*)
-  %1 = load i64* inttoptr (i64 51250129908 to i64*)
-  %2 = load i64* inttoptr (i64 51250129916 to i64*)
-  %3 = load i64* inttoptr (i64 51250129924 to i64*)
+  %0 = load i64, i64* inttoptr (i64 51250129900 to i64*)
+  %1 = load i64, i64* inttoptr (i64 51250129908 to i64*)
+  %2 = load i64, i64* inttoptr (i64 51250129916 to i64*)
+  %3 = load i64, i64* inttoptr (i64 51250129924 to i64*)
   %4 = add i64 %0, %1
   %5 = add i64 %2, %3
   %6 = add i64 %4, %5

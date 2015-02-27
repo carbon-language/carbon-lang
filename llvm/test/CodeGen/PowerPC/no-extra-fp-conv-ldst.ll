@@ -5,7 +5,7 @@ target triple = "powerpc64-unknown-linux-gnu"
 ; Function Attrs: nounwind readonly
 define double @test1(i64* nocapture readonly %x) #0 {
 entry:
-  %0 = load i64* %x, align 8
+  %0 = load i64, i64* %x, align 8
   %conv = sitofp i64 %0 to double
   ret double %conv
 
@@ -18,7 +18,7 @@ entry:
 ; Function Attrs: nounwind readonly
 define double @test2(i32* nocapture readonly %x) #0 {
 entry:
-  %0 = load i32* %x, align 4
+  %0 = load i32, i32* %x, align 4
   %conv = sitofp i32 %0 to double
   ret double %conv
 

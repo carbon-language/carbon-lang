@@ -9,7 +9,7 @@
 define zeroext i8 @absStoreByte() nounwind {
 ; CHECK: memb(##b){{ *}}={{ *}}r{{[0-9]+}}
 entry:
-  %0 = load i8* @b, align 1
+  %0 = load i8, i8* @b, align 1
   %conv = zext i8 %0 to i32
   %mul = mul nsw i32 100, %conv
   %conv1 = trunc i32 %mul to i8
@@ -20,7 +20,7 @@ entry:
 define signext i16 @absStoreHalf() nounwind {
 ; CHECK: memh(##c){{ *}}={{ *}}r{{[0-9]+}}
 entry:
-  %0 = load i16* @c, align 2
+  %0 = load i16, i16* @c, align 2
   %conv = sext i16 %0 to i32
   %mul = mul nsw i32 100, %conv
   %conv1 = trunc i32 %mul to i16
@@ -31,7 +31,7 @@ entry:
 define i32 @absStoreWord() nounwind {
 ; CHECK: memw(##a){{ *}}={{ *}}r{{[0-9]+}}
 entry:
-  %0 = load i32* @a, align 4
+  %0 = load i32, i32* @a, align 4
   %mul = mul nsw i32 100, %0
   store i32 %mul, i32* @a, align 4
   ret i32 %mul

@@ -41,7 +41,7 @@
 define i32* @cmov1(i32 signext %s) nounwind readonly {
 entry:
   %tobool = icmp ne i32 %s, 0
-  %tmp1 = load i32** @i3, align 4
+  %tmp1 = load i32*, i32** @i3, align 4
   %cond = select i1 %tobool, i32* getelementptr inbounds ([3 x i32]* @i1, i32 0, i32 0), i32* %tmp1
   ret i32* %cond
 }
@@ -81,8 +81,8 @@ entry:
 define i32 @cmov2(i32 signext %s) nounwind readonly {
 entry:
   %tobool = icmp ne i32 %s, 0
-  %tmp1 = load i32* @c, align 4
-  %tmp2 = load i32* @d, align 4
+  %tmp1 = load i32, i32* @c, align 4
+  %tmp2 = load i32, i32* @d, align 4
   %cond = select i1 %tobool, i32 %tmp1, i32 %tmp2
   ret i32 %cond
 }

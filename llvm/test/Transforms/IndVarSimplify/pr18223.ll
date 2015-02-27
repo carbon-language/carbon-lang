@@ -8,7 +8,7 @@
 
 define i32 @main() #0 {
 entry:
-  %0 = load i32* @c, align 4
+  %0 = load i32, i32* @c, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %for.body, label %exit
 

@@ -16,10 +16,10 @@ entry:
   %n = alloca i32, align 4
   %k7 = alloca i32, align 4
   %nf = alloca i32, align 4
-  %0 = load i32* %k7, align 4
+  %0 = load i32, i32* %k7, align 4
   %.neg1 = sub i32 0, %0
-  %n.promoted = load i32* %n, align 4
-  %nf.promoted = load i32* %nf, align 4
+  %n.promoted = load i32, i32* %n, align 4
+  %nf.promoted = load i32, i32* %nf, align 4
   br label %for.body
 
 for.body:

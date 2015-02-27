@@ -16,7 +16,7 @@ define void @test1(i16* nocapture %x, i16 %y) nounwind {
 }
 
 define i16 @test2(i16* %x) nounwind {
-  %load = load i16* %x, align 2
+  %load = load i16, i16* %x, align 2
   %bswap = call i16 @llvm.bswap.i16(i16 %load)
   ret i16 %bswap
 ; CHECK-LABEL: test2:
@@ -36,7 +36,7 @@ define void @test3(i32* nocapture %x, i32 %y) nounwind {
 }
 
 define i32 @test4(i32* %x) nounwind {
-  %load = load i32* %x, align 4
+  %load = load i32, i32* %x, align 4
   %bswap = call i32 @llvm.bswap.i32(i32 %load)
   ret i32 %bswap
 ; CHECK-LABEL: test4:
@@ -56,7 +56,7 @@ define void @test5(i64* %x, i64 %y) nounwind {
 }
 
 define i64 @test6(i64* %x) nounwind {
-  %load = load i64* %x, align 8
+  %load = load i64, i64* %x, align 8
   %bswap = call i64 @llvm.bswap.i64(i64 %load)
   ret i64 %bswap
 ; CHECK-LABEL: test6:

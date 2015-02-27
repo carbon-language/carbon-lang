@@ -5,7 +5,7 @@ define float @f(<4 x i16>* nocapture %in) {
   ; CHECK: vldr
   ; CHECK: vmovl.u16
   ; CHECK-NOT: vand
-  %1 = load <4 x i16>* %in
+  %1 = load <4 x i16>, <4 x i16>* %in
   ; CHECK: vcvt.f32.u32
   %2 = uitofp <4 x i16> %1 to <4 x float>
   %3 = extractelement <4 x float> %2, i32 0
@@ -21,7 +21,7 @@ define float @f(<4 x i16>* nocapture %in) {
 
 define float @g(<4 x i16>* nocapture %in) {
   ; CHECK: vldr
-  %1 = load <4 x i16>* %in
+  %1 = load <4 x i16>, <4 x i16>* %in
   ; CHECK-NOT: uxth
   %2 = extractelement <4 x i16> %1, i32 0
   ; CHECK: vcvt.f32.u32

@@ -42,7 +42,7 @@ then.1.i52:		; preds = %then.0.i40
 	ret void
 
 else.1.i56:		; preds = %then.0.i40
-	%tmp.28.i = load i32* @G		; <i32> [#uses=1]
+	%tmp.28.i = load i32, i32* @G		; <i32> [#uses=1]
 	%tmp.29.i = icmp eq i32 %tmp.28.i, 1		; <i1> [#uses=1]
 	br i1 %tmp.29.i, label %shortcirc_next.i, label %shortcirc_done.i
 

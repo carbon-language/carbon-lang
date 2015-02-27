@@ -14,7 +14,7 @@ define i32 @test(i32* %P) {
 ; CHECK-NEXT: ret i32 12
 	store i32 12, i32* @X
 	call double @doesnotmodX( double 1.000000e+00 )		; <double>:1 [#uses=0]
-	%V = load i32* @X		; <i32> [#uses=1]
+	%V = load i32, i32* @X		; <i32> [#uses=1]
 	ret i32 %V
 }
 

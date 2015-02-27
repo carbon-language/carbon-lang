@@ -18,6 +18,6 @@ T:
 	store i32 4, i32* %P
 	ret i32 141
 F:
-	%V = load i32* %P
+	%V = load i32, i32* %P
 	ret i32 %V
 }

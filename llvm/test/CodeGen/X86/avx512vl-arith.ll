@@ -14,7 +14,7 @@ define <4 x i64> @vpaddq256_test(<4 x i64> %i, <4 x i64> %j) nounwind readnone {
 ; CHECK: vpaddq (%rdi), %ymm{{.*}}
 ; CHECK: ret
 define <4 x i64> @vpaddq256_fold_test(<4 x i64> %i, <4 x i64>* %j) nounwind {
-  %tmp = load <4 x i64>* %j, align 4
+  %tmp = load <4 x i64>, <4 x i64>* %j, align 4
   %x = add <4 x i64> %i, %tmp
   ret <4 x i64> %x
 }
@@ -31,7 +31,7 @@ define <4 x i64> @vpaddq256_broadcast_test(<4 x i64> %i) nounwind {
 ; CHECK: vpaddq (%rdi){1to4}, %ymm{{.*}}
 ; CHECK: ret
 define <4 x i64> @vpaddq256_broadcast2_test(<4 x i64> %i, i64* %j.ptr) nounwind {
-  %j = load i64* %j.ptr
+  %j = load i64, i64* %j.ptr
   %j.0 = insertelement <4 x i64> undef, i64 %j, i32 0
   %j.v = shufflevector <4 x i64> %j.0, <4 x i64> undef, <4 x i32> zeroinitializer
   %x = add <4 x i64> %i, %j.v
@@ -50,7 +50,7 @@ define <8 x i32> @vpaddd256_test(<8 x i32> %i, <8 x i32> %j) nounwind readnone {
 ; CHECK: vpaddd (%rdi), %ymm{{.*}}
 ; CHECK: ret
 define <8 x i32> @vpaddd256_fold_test(<8 x i32> %i, <8 x i32>* %j) nounwind {
-  %tmp = load <8 x i32>* %j, align 4
+  %tmp = load <8 x i32>, <8 x i32>* %j, align 4
   %x = add <8 x i32> %i, %tmp
   ret <8 x i32> %x
 }
@@ -88,7 +88,7 @@ define <8 x i32> @vpaddd256_maskz_test(<8 x i32> %i, <8 x i32> %j, <8 x i32> %ma
 ; CHECK: ret
 define <8 x i32> @vpaddd256_mask_fold_test(<8 x i32> %i, <8 x i32>* %j.ptr, <8 x i32> %mask1) nounwind readnone {
   %mask = icmp ne <8 x i32> %mask1, zeroinitializer
-  %j = load <8 x i32>* %j.ptr
+  %j = load <8 x i32>, <8 x i32>* %j.ptr
   %x = add <8 x i32> %i, %j
   %r = select <8 x i1> %mask, <8 x i32> %x, <8 x i32> %i
   ret <8 x i32> %r
@@ -109,7 +109,7 @@ define <8 x i32> @vpaddd256_mask_broadcast_test(<8 x i32> %i, <8 x i32> %mask1) 
 ; CHECK: ret
 define <8 x i32> @vpaddd256_maskz_fold_test(<8 x i32> %i, <8 x i32>* %j.ptr, <8 x i32> %mask1) nounwind readnone {
   %mask = icmp ne <8 x i32> %mask1, zeroinitializer
-  %j = load <8 x i32>* %j.ptr
+  %j = load <8 x i32>, <8 x i32>* %j.ptr
   %x = add <8 x i32> %i, %j
   %r = select <8 x i1> %mask, <8 x i32> %x, <8 x i32> zeroinitializer
   ret <8 x i32> %r
@@ -341,7 +341,7 @@ define <4 x double> @test_mask_fold_vaddpd_256(<4 x double> %dst, <4 x double> %
                                          <4 x double>* %j,  <4 x i64> %mask1)
                                          nounwind {
   %mask = icmp ne <4 x i64> %mask1, zeroinitializer
-  %tmp = load <4 x double>* %j
+  %tmp = load <4 x double>, <4 x double>* %j
   %x = fadd <4 x double> %i, %tmp
   %r = select <4 x i1> %mask, <4 x double> %x, <4 x double> %dst
   ret <4 x double> %r
@@ -353,7 +353,7 @@ define <4 x double> @test_mask_fold_vaddpd_256(<4 x double> %dst, <4 x double> %
 define <4 x double> @test_maskz_fold_vaddpd_256(<4 x double> %i, <4 x double>* %j,
                                           <4 x i64> %mask1) nounwind {
   %mask = icmp ne <4 x i64> %mask1, zeroinitializer
-  %tmp = load <4 x double>* %j
+  %tmp = load <4 x double>, <4 x double>* %j
   %x = fadd <4 x double> %i, %tmp
   %r = select <4 x i1> %mask, <4 x double> %x, <4 x double> zeroinitializer
   ret <4 x double> %r
@@ -363,7 +363,7 @@ define <4 x double> @test_maskz_fold_vaddpd_256(<4 x double> %i, <4 x double>* %
 ; CHECK: vaddpd (%rdi){1to4}, %ymm{{.*}}
 ; CHECK: ret
 define <4 x double> @test_broadcast2_vaddpd_256(<4 x double> %i, double* %j) nounwind {
-  %tmp = load double* %j
+  %tmp = load double, double* %j
   %b = insertelement <4 x double> undef, double %tmp, i32 0
   %c = shufflevector <4 x double> %b, <4 x double> undef,
                      <4 x i32> zeroinitializer
@@ -377,7 +377,7 @@ define <4 x double> @test_broadcast2_vaddpd_256(<4 x double> %i, double* %j) nou
 define <4 x double> @test_mask_broadcast_vaddpd_256(<4 x double> %dst, <4 x double> %i,
                                           double* %j, <4 x i64> %mask1) nounwind {
   %mask = icmp ne <4 x i64> %mask1, zeroinitializer
-  %tmp = load double* %j
+  %tmp = load double, double* %j
   %b = insertelement <4 x double> undef, double %tmp, i32 0
   %c = shufflevector <4 x double> %b, <4 x double> undef,
                      <4 x i32> zeroinitializer
@@ -392,7 +392,7 @@ define <4 x double> @test_mask_broadcast_vaddpd_256(<4 x double> %dst, <4 x doub
 define <4 x double> @test_maskz_broadcast_vaddpd_256(<4 x double> %i, double* %j,
                                            <4 x i64> %mask1) nounwind {
   %mask = icmp ne <4 x i64> %mask1, zeroinitializer
-  %tmp = load double* %j
+  %tmp = load double, double* %j
   %b = insertelement <4 x double> undef, double %tmp, i32 0
   %c = shufflevector <4 x double> %b, <4 x double> undef,
                      <4 x i32> zeroinitializer
@@ -415,7 +415,7 @@ define <2 x i64> @vpaddq128_test(<2 x i64> %i, <2 x i64> %j) nounwind readnone {
 ; CHECK: vpaddq (%rdi), %xmm{{.*}}
 ; CHECK: ret
 define <2 x i64> @vpaddq128_fold_test(<2 x i64> %i, <2 x i64>* %j) nounwind {
-  %tmp = load <2 x i64>* %j, align 4
+  %tmp = load <2 x i64>, <2 x i64>* %j, align 4
   %x = add <2 x i64> %i, %tmp
   ret <2 x i64> %x
 }
@@ -424,7 +424,7 @@ define <2 x i64> @vpaddq128_fold_test(<2 x i64> %i, <2 x i64>* %j) nounwind {
 ; CHECK: vpaddq (%rdi){1to2}, %xmm{{.*}}
 ; CHECK: ret
 define <2 x i64> @vpaddq128_broadcast2_test(<2 x i64> %i, i64* %j) nounwind {
-  %tmp = load i64* %j
+  %tmp = load i64, i64* %j
   %j.0 = insertelement <2 x i64> undef, i64 %tmp, i32 0
   %j.1 = insertelement <2 x i64> %j.0, i64 %tmp, i32 1
   %x = add <2 x i64> %i, %j.1
@@ -443,7 +443,7 @@ define <4 x i32> @vpaddd128_test(<4 x i32> %i, <4 x i32> %j) nounwind readnone {
 ; CHECK: vpaddd (%rdi), %xmm{{.*}}
 ; CHECK: ret
 define <4 x i32> @vpaddd128_fold_test(<4 x i32> %i, <4 x i32>* %j) nounwind {
-  %tmp = load <4 x i32>* %j, align 4
+  %tmp = load <4 x i32>, <4 x i32>* %j, align 4
   %x = add <4 x i32> %i, %tmp
   ret <4 x i32> %x
 }
@@ -481,7 +481,7 @@ define <4 x i32> @vpaddd128_maskz_test(<4 x i32> %i, <4 x i32> %j, <4 x i32> %ma
 ; CHECK: ret
 define <4 x i32> @vpaddd128_mask_fold_test(<4 x i32> %i, <4 x i32>* %j.ptr, <4 x i32> %mask1) nounwind readnone {
   %mask = icmp ne <4 x i32> %mask1, zeroinitializer
-  %j = load <4 x i32>* %j.ptr
+  %j = load <4 x i32>, <4 x i32>* %j.ptr
   %x = add <4 x i32> %i, %j
   %r = select <4 x i1> %mask, <4 x i32> %x, <4 x i32> %i
   ret <4 x i32> %r
@@ -502,7 +502,7 @@ define <4 x i32> @vpaddd128_mask_broadcast_test(<4 x i32> %i, <4 x i32> %mask1) 
 ; CHECK: ret
 define <4 x i32> @vpaddd128_maskz_fold_test(<4 x i32> %i, <4 x i32>* %j.ptr, <4 x i32> %mask1) nounwind readnone {
   %mask = icmp ne <4 x i32> %mask1, zeroinitializer
-  %j = load <4 x i32>* %j.ptr
+  %j = load <4 x i32>, <4 x i32>* %j.ptr
   %x = add <4 x i32> %i, %j
   %r = select <4 x i1> %mask, <4 x i32> %x, <4 x i32> zeroinitializer
   ret <4 x i32> %r
@@ -735,7 +735,7 @@ define <2 x double> @test_mask_fold_vaddpd_128(<2 x double> %dst, <2 x double> %
                                          <2 x double>* %j,  <2 x i64> %mask1)
                                          nounwind {
   %mask = icmp ne <2 x i64> %mask1, zeroinitializer
-  %tmp = load <2 x double>* %j
+  %tmp = load <2 x double>, <2 x double>* %j
   %x = fadd <2 x double> %i, %tmp
   %r = select <2 x i1> %mask, <2 x double> %x, <2 x double> %dst
   ret <2 x double> %r
@@ -747,7 +747,7 @@ define <2 x double> @test_mask_fold_vaddpd_128(<2 x double> %dst, <2 x double> %
 define <2 x double> @test_maskz_fold_vaddpd_128(<2 x double> %i, <2 x double>* %j,
                                           <2 x i64> %mask1) nounwind {
   %mask = icmp ne <2 x i64> %mask1, zeroinitializer
-  %tmp = load <2 x double>* %j
+  %tmp = load <2 x double>, <2 x double>* %j
   %x = fadd <2 x double> %i, %tmp
   %r = select <2 x i1> %mask, <2 x double> %x, <2 x double> zeroinitializer
   ret <2 x double> %r
@@ -757,7 +757,7 @@ define <2 x double> @test_maskz_fold_vaddpd_128(<2 x double> %i, <2 x double>* %
 ; CHECK: vaddpd (%rdi){1to2}, %xmm{{.*}}
 ; CHECK: ret
 define <2 x double> @test_broadcast2_vaddpd_128(<2 x double> %i, double* %j) nounwind {
-  %tmp = load double* %j
+  %tmp = load double, double* %j
   %j.0 = insertelement <2 x double> undef, double %tmp, i64 0
   %j.1 = insertelement <2 x double> %j.0, double %tmp, i64 1
   %x = fadd <2 x double> %j.1, %i
@@ -771,7 +771,7 @@ define <2 x double> @test_mask_broadcast_vaddpd_128(<2 x double> %dst, <2 x doub
                                           double* %j, <2 x i64> %mask1)
                                           nounwind {
   %mask = icmp ne <2 x i64> %mask1, zeroinitializer
-  %tmp = load double* %j
+  %tmp = load double, double* %j
   %j.0 = insertelement <2 x double> undef, double %tmp, i64 0
   %j.1 = insertelement <2 x double> %j.0, double %tmp, i64 1
   %x = fadd <2 x double> %j.1, %i
@@ -785,7 +785,7 @@ define <2 x double> @test_mask_broadcast_vaddpd_128(<2 x double> %dst, <2 x doub
 define <2 x double> @test_maskz_broadcast_vaddpd_128(<2 x double> %i, double* %j,
                                            <2 x i64> %mask1) nounwind {
   %mask = icmp ne <2 x i64> %mask1, zeroinitializer
-  %tmp = load double* %j
+  %tmp = load double, double* %j
   %j.0 = insertelement <2 x double> undef, double %tmp, i64 0
   %j.1 = insertelement <2 x double> %j.0, double %tmp, i64 1
   %x = fadd <2 x double> %j.1, %i

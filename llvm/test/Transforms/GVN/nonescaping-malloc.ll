@@ -40,16 +40,16 @@ declare i32 @_ZN4llvm13StringMapImpl15LookupBucketForENS_9StringRefE(%"struct.ll
 define linkonce_odr %"struct.llvm::StringMapEntry<void*>"* @_ZN4llvm9StringMapIPvNS_15MallocAllocatorEE16GetOrCreateValueERKNS_9StringRefE(%"struct.llvm::StringMap<void*,llvm::MallocAllocator>"* %this, %"struct.llvm::StringRef"* nocapture %Key) ssp align 2 {
 entry:
   %elt = bitcast %"struct.llvm::StringRef"* %Key to i64*
-  %val = load i64* %elt
+  %val = load i64, i64* %elt
   %tmp = getelementptr inbounds %"struct.llvm::StringRef", %"struct.llvm::StringRef"* %Key, i64 0, i32 1
-  %val2 = load i64* %tmp
+  %val2 = load i64, i64* %tmp
   %tmp2.i = getelementptr inbounds %"struct.llvm::StringMap<void*,llvm::MallocAllocator>", %"struct.llvm::StringMap<void*,llvm::MallocAllocator>"* %this, i64 0, i32 0
   %tmp3.i = tail call i32 @_ZN4llvm13StringMapImpl15LookupBucketForENS_9StringRefE(%"struct.llvm::StringMapImpl"* %tmp2.i, i64 %val, i64 %val2)
   %tmp4.i = getelementptr inbounds %"struct.llvm::StringMap<void*,llvm::MallocAllocator>", %"struct.llvm::StringMap<void*,llvm::MallocAllocator>"* %this, i64 0, i32 0, i32 0
-  %tmp5.i = load %"struct.llvm::StringMapImpl::ItemBucket"** %tmp4.i, align 8
+  %tmp5.i = load %"struct.llvm::StringMapImpl::ItemBucket"*, %"struct.llvm::StringMapImpl::ItemBucket"** %tmp4.i, align 8
   %tmp6.i = zext i32 %tmp3.i to i64
   %tmp7.i = getelementptr inbounds %"struct.llvm::StringMapImpl::ItemBucket", %"struct.llvm::StringMapImpl::ItemBucket"* %tmp5.i, i64 %tmp6.i, i32 1
-  %tmp8.i = load %"struct.llvm::StringMapEntryBase"** %tmp7.i, align 8
+  %tmp8.i = load %"struct.llvm::StringMapEntryBase"*, %"struct.llvm::StringMapEntryBase"** %tmp7.i, align 8
   %tmp9.i = icmp eq %"struct.llvm::StringMapEntryBase"* %tmp8.i, null
   %tmp13.i = icmp eq %"struct.llvm::StringMapEntryBase"* %tmp8.i, inttoptr (i64 -1 to %"struct.llvm::StringMapEntryBase"*)
   %or.cond.i = or i1 %tmp9.i, %tmp13.i
@@ -87,7 +87,7 @@ _ZN4llvm14StringMapEntryIPvE6CreateINS_15MallocAllocatorES1_EEPS2_PKcS7_RT_T0_.e
   %tmp.i.i.i = getelementptr inbounds i8, i8* %tmp.i20.i.i, i64 8
   %1 = bitcast i8* %tmp.i.i.i to i8**
   store i8* null, i8** %1, align 8
-  %tmp22.i = load %"struct.llvm::StringMapEntryBase"** %tmp7.i, align 8
+  %tmp22.i = load %"struct.llvm::StringMapEntryBase"*, %"struct.llvm::StringMapEntryBase"** %tmp7.i, align 8
   %tmp24.i = icmp eq %"struct.llvm::StringMapEntryBase"* %tmp22.i, inttoptr (i64 -1 to %"struct.llvm::StringMapEntryBase"*)
   br i1 %tmp24.i, label %bb9.i, label %_ZN4llvm9StringMapIPvNS_15MallocAllocatorEE16GetOrCreateValueIS1_EERNS_14StringMapEntryIS1_EENS_9StringRefET_.exit
 
@@ -97,7 +97,7 @@ bb6.i:                                            ; preds = %entry
 
 bb9.i:                                            ; preds = %_ZN4llvm14StringMapEntryIPvE6CreateINS_15MallocAllocatorES1_EEPS2_PKcS7_RT_T0_.exit.i
   %tmp25.i = getelementptr inbounds %"struct.llvm::StringMap<void*,llvm::MallocAllocator>", %"struct.llvm::StringMap<void*,llvm::MallocAllocator>"* %this, i64 0, i32 0, i32 3
-  %tmp26.i = load i32* %tmp25.i, align 8
+  %tmp26.i = load i32, i32* %tmp25.i, align 8
   %tmp27.i = add i32 %tmp26.i, -1
   store i32 %tmp27.i, i32* %tmp25.i, align 8
   ret %"struct.llvm::StringMapEntry<void*>"* %tmp10.i.i

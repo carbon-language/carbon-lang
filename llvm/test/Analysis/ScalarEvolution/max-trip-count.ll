@@ -174,7 +174,7 @@ for.body.i:                                       ; preds = %for.cond.i, %entry
 
 for.cond.i:                                       ; preds = %for.body.i
   store i32 %add.i.i, i32* @a, align 4
-  %ld = load volatile i32* @b
+  %ld = load volatile i32, i32* @b
   %cmp.i = icmp ne i32 %ld, 0
   br i1 %cmp.i, label %for.body.i, label %bar.exit
 

@@ -11,7 +11,7 @@ for.body:                                         ; preds = %for.body, %entry
   %i.06 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %x.05 = phi i64 [ 0, %entry ], [ %conv1, %for.body ]
   %arrayidx = getelementptr inbounds double, double* %n, i32 %i.06
-  %0 = load double* %arrayidx, align 8
+  %0 = load double, double* %arrayidx, align 8
   %conv = sitofp i64 %x.05 to double
   %add = fadd double %conv, %0
   %conv1 = fptosi double %add to i64
@@ -31,7 +31,7 @@ for.end:                                          ; preds = %for.body
 
 define i32 @main(i32 %argc, i8** nocapture %argv) {
 entry:
-  %0 = load double* @init_value, align 8
+  %0 = load double, double* @init_value, align 8
   %conv = fptosi double %0 to i64
   %broadcast.splatinsert.i = insertelement <2 x i64> undef, i64 %conv, i32 0
   %broadcast.splat.i = shufflevector <2 x i64> %broadcast.splatinsert.i, <2 x i64> undef, <2 x i32> zeroinitializer

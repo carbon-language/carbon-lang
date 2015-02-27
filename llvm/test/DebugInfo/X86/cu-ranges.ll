@@ -30,7 +30,7 @@ entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %a.addr, metadata !13, metadata !{!"0x102"}), !dbg !14
-  %0 = load i32* %a.addr, align 4, !dbg !14
+  %0 = load i32, i32* %a.addr, align 4, !dbg !14
   %add = add nsw i32 %0, 1, !dbg !14
   ret i32 %add, !dbg !14
 }
@@ -44,7 +44,7 @@ entry:
   %b.addr = alloca i32, align 4
   store i32 %b, i32* %b.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %b.addr, metadata !15, metadata !{!"0x102"}), !dbg !16
-  %0 = load i32* %b.addr, align 4, !dbg !16
+  %0 = load i32, i32* %b.addr, align 4, !dbg !16
   %add = add nsw i32 %0, 2, !dbg !16
   ret i32 %add, !dbg !16
 }

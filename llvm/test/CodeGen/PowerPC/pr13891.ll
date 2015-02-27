@@ -10,7 +10,7 @@ define void @_Z5check3foos(%struct.foo* nocapture byval %f, i16 signext %i) noin
 ; CHECK: lha {{[0-9]+}}, {{[0-9]+}}(1)
 entry:
   %0 = bitcast %struct.foo* %f to i16*
-  %1 = load i16* %0, align 2
+  %1 = load i16, i16* %0, align 2
   %bf.val.sext = ashr i16 %1, 8
   %cmp = icmp eq i16 %bf.val.sext, %i
   br i1 %cmp, label %if.end, label %if.then

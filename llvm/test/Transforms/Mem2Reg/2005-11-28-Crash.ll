@@ -41,7 +41,7 @@ endif.3:		; preds = %then.3, %endif.1
 loopexit:		; preds = %loopentry
 	br label %endif.4
 then.4:		; No predecessors!
-	%tmp.61 = load i32* %flags		; <i32> [#uses=0]
+	%tmp.61 = load i32, i32* %flags		; <i32> [#uses=0]
 	br label %out
 dead_block_after_goto:		; No predecessors!
 	br label %endif.4

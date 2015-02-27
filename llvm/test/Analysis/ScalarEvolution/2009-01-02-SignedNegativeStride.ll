@@ -9,12 +9,12 @@
 
 define void @func_15() nounwind {
 entry:
-	%0 = load i16* @g_16, align 2		; <i16> [#uses=1]
+	%0 = load i16, i16* @g_16, align 2		; <i16> [#uses=1]
 	%1 = icmp sgt i16 %0, 0		; <i1> [#uses=1]
 	br i1 %1, label %bb2, label %bb.nph
 
 bb.nph:		; preds = %entry
-	%g_16.promoted = load i16* @g_16		; <i16> [#uses=1]
+	%g_16.promoted = load i16, i16* @g_16		; <i16> [#uses=1]
 	br label %bb
 
 bb:		; preds = %bb1, %bb.nph

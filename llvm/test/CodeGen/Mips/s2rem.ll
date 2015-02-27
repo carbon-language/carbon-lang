@@ -56,7 +56,7 @@ declare double @d() #1
 ; Function Attrs: nounwind
 define void @fft() #0 {
 entry:
-  %0 = load float* @x, align 4
+  %0 = load float, float* @x, align 4
   %call = call float @ff(float %0)
   store float %call, float* @x, align 4
   ret void
@@ -71,7 +71,7 @@ declare float @ff(float) #1
 ; Function Attrs: nounwind
 define void @vft() #0 {
 entry:
-  %0 = load float* @x, align 4
+  %0 = load float, float* @x, align 4
   call void @vf(float %0)
   ret void
 ; PIC: 	.ent	vft

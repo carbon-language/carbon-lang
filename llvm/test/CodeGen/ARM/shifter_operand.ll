@@ -43,8 +43,8 @@ entry:
         %tmp3 = inttoptr i32 %tmp2 to i32*
         %tmp4 = add i32 %base2, %tmp1
         %tmp5 = inttoptr i32 %tmp4 to i32*
-        %tmp6 = load i32* %tmp3
-        %tmp7 = load i32* %tmp5
+        %tmp6 = load i32, i32* %tmp3
+        %tmp7 = load i32, i32* %tmp5
         %tmp8 = add i32 %tmp7, %tmp6
         ret i32 %tmp8
 }
@@ -68,7 +68,7 @@ entry:
   %1 = bitcast i8* %0 to i32*
   %2 = sext i16 %addr to i32
   %3 = getelementptr inbounds i32, i32* %1, i32 %2
-  %4 = load i32* %3, align 4
+  %4 = load i32, i32* %3, align 4
   %5 = add nsw i32 %4, 1
   store i32 %5, i32* %3, align 4
   ret void

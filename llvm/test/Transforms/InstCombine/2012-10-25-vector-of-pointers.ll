@@ -20,7 +20,7 @@ bb2:                                              ; preds = %bb1
 
 bb3:                                              ; preds = %bb1
   %tmp4 = bitcast double** %tmp to <2 x double*>*
-  %tmp5 = load <2 x double*>* %tmp4, align 8
+  %tmp5 = load <2 x double*>, <2 x double*>* %tmp4, align 8
   %tmp6 = ptrtoint <2 x double*> %tmp5 to <2 x i64>
   %tmp7 = sub <2 x i64> zeroinitializer, %tmp6
   %tmp8 = ashr exact <2 x i64> %tmp7, <i64 3, i64 3>

@@ -30,7 +30,7 @@ entry:
   %p.addr = alloca i32*, align 8
   store i32* %p, i32** %p.addr, align 8
   call void @llvm.dbg.declare(metadata i32** %p.addr, metadata !19, metadata !{!"0x102"}), !dbg !20
-  %0 = load i32** %p.addr, align 8, !dbg !21
+  %0 = load i32*, i32** %p.addr, align 8, !dbg !21
   %arrayidx = getelementptr inbounds i32, i32* %0, i64 0, !dbg !21
   store i32 42, i32* %arrayidx, align 4, !dbg !21
   ret void, !dbg !22
@@ -57,7 +57,7 @@ entry:
   %arraydecay = getelementptr inbounds [4 x i32], [4 x i32]* %array, i32 0, i32 0, !dbg !31
   call void @f(i32* %arraydecay), !dbg !31
   %arrayidx = getelementptr inbounds [4 x i32], [4 x i32]* %array, i32 0, i64 0, !dbg !32
-  %1 = load i32* %arrayidx, align 4, !dbg !32
+  %1 = load i32, i32* %arrayidx, align 4, !dbg !32
   ret i32 %1, !dbg !32
 }
 

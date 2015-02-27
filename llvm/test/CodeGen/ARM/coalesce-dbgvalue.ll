@@ -28,7 +28,7 @@ for.cond1:                                        ; preds = %for.end9, %for.cond
 for.body2:                                        ; preds = %for.cond1
   store i32 %storemerge11, i32* @b, align 4, !dbg !26
   tail call void @llvm.dbg.value(metadata i32* null, i64 0, metadata !11, metadata !{!"0x102"}), !dbg !28
-  %0 = load i64* @a, align 8, !dbg !29
+  %0 = load i64, i64* @a, align 8, !dbg !29
   %xor = xor i64 %0, %e.1.ph, !dbg !29
   %conv3 = trunc i64 %xor to i32, !dbg !29
   tail call void @llvm.dbg.value(metadata i32 %conv3, i64 0, metadata !10, metadata !{!"0x102"}), !dbg !29
@@ -44,7 +44,7 @@ land.end:                                         ; preds = %land.rhs, %for.body
   %1 = phi i1 [ false, %for.body2 ], [ %tobool5, %land.rhs ]
   %land.ext = zext i1 %1 to i32
   %call6 = tail call i32 bitcast (i32 (...)* @fn2 to i32 (i32, i32*)*)(i32 %land.ext, i32* null) #3
-  %2 = load i32* @b, align 4, !dbg !26
+  %2 = load i32, i32* @b, align 4, !dbg !26
   %inc8 = add nsw i32 %2, 1, !dbg !26
   %phitmp = and i64 %xor, 4294967295, !dbg !26
   br label %for.cond1.outer, !dbg !26
@@ -52,7 +52,7 @@ land.end:                                         ; preds = %land.rhs, %for.body
 for.cond1.outer:                                  ; preds = %land.end, %for.cond1.preheader
   %storemerge11.ph = phi i32 [ %inc8, %land.end ], [ 0, %for.cond1.preheader ]
   %e.1.ph = phi i64 [ %phitmp, %land.end ], [ 0, %for.cond1.preheader ]
-  %3 = load i32* @d, align 4, !dbg !31
+  %3 = load i32, i32* @d, align 4, !dbg !31
   %tobool10 = icmp eq i32 %3, 0, !dbg !31
   br label %for.cond1
 

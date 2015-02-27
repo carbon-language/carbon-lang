@@ -93,7 +93,7 @@ define internal fastcc void @foo() #0 {
 entry:
   tail call void @llvm.dbg.value(metadata i32 1, i64 0, metadata !13, metadata !{!"0x102"}), !dbg !30
   tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !14, metadata !{!"0x102"}), !dbg !31
-  %c.promoted9 = load i32* @c, align 4, !dbg !32, !tbaa !33
+  %c.promoted9 = load i32, i32* @c, align 4, !dbg !32, !tbaa !33
   br label %for.cond1.preheader, !dbg !31
 
 for.cond1.preheader:                              ; preds = %for.inc16, %entry

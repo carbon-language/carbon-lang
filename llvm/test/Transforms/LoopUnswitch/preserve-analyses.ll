@@ -11,8 +11,8 @@ target triple = "armv6-apple-darwin9"
 
 define i32 @ineqn(i8* %s, i8* %p) nounwind readonly {
 entry:
-  %0 = load i32* @delim1, align 4                 ; <i32> [#uses=1]
-  %1 = load i32* @delim2, align 4                 ; <i32> [#uses=1]
+  %0 = load i32, i32* @delim1, align 4                 ; <i32> [#uses=1]
+  %1 = load i32, i32* @delim2, align 4                 ; <i32> [#uses=1]
   br label %bb8.outer
 
 bb:                                               ; preds = %bb8
@@ -61,7 +61,7 @@ bb8.outer:                                        ; preds = %bb8.outer.backedge,
 
 bb8:                                              ; preds = %bb8.outer, %bb8.backedge
   %p_addr.0 = phi i8* [ %p_addr.0.ph, %bb8.outer ], [ %3, %bb8.backedge ] ; <i8*> [#uses=3]
-  %7 = load i8* %p_addr.0, align 1                ; <i8> [#uses=2]
+  %7 = load i8, i8* %p_addr.0, align 1                ; <i8> [#uses=2]
   %8 = sext i8 %7 to i32                          ; <i32> [#uses=2]
   %9 = icmp eq i8 %7, 0                           ; <i1> [#uses=1]
   br i1 %9, label %bb10, label %bb

@@ -18,7 +18,7 @@ bb63.outer:		; preds = %bb73, %bb28
 bb35:		; preds = %cond_next60, %bb63.outer
 	%window.34 = phi i32 [ %tmp62, %cond_next60 ], [ 0, %bb63.outer ]		; <i32> [#uses=1]
 	%tmp44 = getelementptr [4 x i32], [4 x i32]* null, i32 0, i32 0		; <i32*> [#uses=1]
-	%tmp46 = load i32* %tmp44, align 4		; <i32> [#uses=0]
+	%tmp46 = load i32, i32* %tmp44, align 4		; <i32> [#uses=0]
 	br i1 false, label %cond_true50, label %cond_next60
 
 cond_true50:		; preds = %bb35

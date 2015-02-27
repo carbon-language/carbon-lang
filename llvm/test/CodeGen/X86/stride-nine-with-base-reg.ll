@@ -18,7 +18,7 @@ entry:
 bb:
 	%i.019.0 = phi i32 [ %indvar.next, %bb ], [ 0, %entry ]
 	%tmp2 = getelementptr [1000 x i8], [1000 x i8]* @B, i32 0, i32 %i.019.0
-	%tmp3 = load i8* %tmp2, align 4
+	%tmp3 = load i8, i8* %tmp2, align 4
 	%tmp4 = mul i8 %tmp3, 2
 	%tmp5 = getelementptr [1000 x i8], [1000 x i8]* @A, i32 0, i32 %i.019.0
 	store i8 %tmp4, i8* %tmp5, align 4

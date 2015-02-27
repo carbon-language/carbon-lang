@@ -6,7 +6,7 @@
 define  fastcc i32 @tailcallee(%struct.s* byval %a) nounwind {
 entry:
         %tmp2 = getelementptr %struct.s, %struct.s* %a, i32 0, i32 0
-        %tmp3 = load i32* %tmp2
+        %tmp3 = load i32, i32* %tmp2
         ret i32 %tmp3
 ; CHECK: tailcallee
 ; CHECK: movl 4(%esp), %eax

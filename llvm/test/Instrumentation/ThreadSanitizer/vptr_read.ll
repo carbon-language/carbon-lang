@@ -5,7 +5,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 define i8 @Foo(i8* %a) nounwind uwtable sanitize_thread {
 entry:
 ; CHECK: call void @__tsan_vptr_read
-  %0 = load i8* %a, align 8, !tbaa !0
+  %0 = load i8, i8* %a, align 8, !tbaa !0
   ret i8 %0
 }
 !0 = !{!2, !2, i64 0}

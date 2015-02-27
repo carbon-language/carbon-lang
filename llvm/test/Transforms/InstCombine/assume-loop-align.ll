@@ -19,14 +19,14 @@ entry:
   br label %for.body
 
 ; CHECK-LABEL: @foo
-; CHECK: load i32* {{.*}} align 64
+; CHECK: load i32, i32* {{.*}} align 64
 ; CHECK: store i32 {{.*}}  align 64
 ; CHECK: ret
 
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %add = add nsw i32 %0, 1
   %arrayidx5 = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   store i32 %add, i32* %arrayidx5, align 4

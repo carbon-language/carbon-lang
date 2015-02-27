@@ -13,7 +13,7 @@ target triple = "thumbv7-apple-ios"
 ; CHECK: mov sp, r4
 define void @f(double* nocapture %p) nounwind ssp {
 entry:
-  %0 = load double* %p, align 4
+  %0 = load double, double* %p, align 4
   tail call void asm sideeffect "", "~{d8},~{d9},~{d10},~{d11},~{d12},~{d13},~{d14},~{d15}"() nounwind
   tail call void @g() nounwind
   store double %0, double* %p, align 4

@@ -8,7 +8,7 @@ define i16 @movi_modimm_t1() nounwind {
   ; CHECK-NEXT:    movi	   v[[REG2:[0-9]+]].4s, #0x1
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 1, i16 0, i16 1, i16 0, i16 1, i16 0, i16 1, i16 0>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -20,7 +20,7 @@ define i16 @movi_modimm_t2() nounwind {
   ; CHECK-NEXT:    movi	   v[[REG2:[0-9]+]].4s, #0x1, lsl #8
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 256, i16 0, i16 256, i16 0, i16 256, i16 0, i16 256, i16 0>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -32,7 +32,7 @@ define i16 @movi_modimm_t3() nounwind {
   ; CHECK-NEXT:    movi	   v[[REG2:[0-9]+]].4s, #0x1, lsl #16
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 0, i16 1, i16 0, i16 1, i16 0, i16 1, i16 0, i16 1>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -44,7 +44,7 @@ define i16 @movi_modimm_t4() nounwind {
   ; CHECK-NEXT:    movi	   v[[REG2:[0-9]+]].4s, #0x1, lsl #24
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 0, i16 256, i16 0, i16 256, i16 0, i16 256, i16 0, i16 256>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -56,7 +56,7 @@ define i16 @movi_modimm_t5() nounwind {
   ; CHECK-NEXT:    movi	   v[[REG2:[0-9]+]].8h, #0x1
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -68,7 +68,7 @@ define i16 @movi_modimm_t6() nounwind {
   ; CHECK-NEXT:    movi	   v[[REG2:[0-9]+]].8h, #0x1, lsl #8
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 256, i16 256, i16 256, i16 256, i16 256, i16 256, i16 256, i16 256>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -80,7 +80,7 @@ define i16 @movi_modimm_t7() nounwind {
   ; CHECK-NEXT:    movi	   v[[REG2:[0-9]+]].4s, #0x1, msl #8
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 511, i16 0, i16 511, i16 0, i16 511, i16 0, i16 511, i16 0>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -92,7 +92,7 @@ define i16 @movi_modimm_t8() nounwind {
   ; CHECK-NEXT:    movi	   v[[REG2:[0-9]+]].4s, #0x1, msl #16
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 65535, i16 1, i16 65535, i16 1, i16 65535, i16 1, i16 65535, i16 1>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -104,7 +104,7 @@ define i16 @movi_modimm_t9() nounwind {
   ; CHECK-NEXT:    movi	   v[[REG2:[0-9]+]].16b, #0x1
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 257, i16 257, i16 257, i16 257, i16 257, i16 257, i16 257, i16 257>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -116,7 +116,7 @@ define i16 @movi_modimm_t10() nounwind {
   ; CHECK-NEXT:    movi	   v[[REG2:[0-9]+]].2d, #0x00ffff0000ffff
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 -1, i16 0, i16 -1, i16 0, i16 -1, i16 0, i16 -1, i16 0>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -128,7 +128,7 @@ define i16 @fmov_modimm_t11() nounwind {
   ; CHECK-NEXT:    fmov    v[[REG2:[0-9]+]].4s, #3.00000000
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 0, i16 16448, i16 0, i16 16448, i16 0, i16 16448, i16 0, i16 16448>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -140,7 +140,7 @@ define i16 @fmov_modimm_t12() nounwind {
   ; CHECK-NEXT:    fmov    v[[REG2:[0-9]+]].2d, #0.17968750
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 0, i16 0, i16 0, i16 16327, i16 0, i16 0, i16 0, i16 16327>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -152,7 +152,7 @@ define i16 @mvni_modimm_t1() nounwind {
   ; CHECK-NEXT:    mvni	   v[[REG2:[0-9]+]].4s, #0x1
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 65534, i16 65535, i16 65534, i16 65535, i16 65534, i16 65535, i16 65534, i16 65535>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -164,7 +164,7 @@ define i16 @mvni_modimm_t2() nounwind {
   ; CHECK-NEXT:    mvni	   v[[REG2:[0-9]+]].4s, #0x1, lsl #8
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 65279, i16 65535, i16 65279, i16 65535, i16 65279, i16 65535, i16 65279, i16 65535>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -176,7 +176,7 @@ define i16 @mvni_modimm_t3() nounwind {
   ; CHECK-NEXT:    mvni	   v[[REG2:[0-9]+]].4s, #0x1, lsl #16
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 65535, i16 65534, i16 65535, i16 65534, i16 65535, i16 65534, i16 65535, i16 65534>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -188,7 +188,7 @@ define i16 @mvni_modimm_t4() nounwind {
   ; CHECK-NEXT:    mvni	   v[[REG2:[0-9]+]].4s, #0x1, lsl #24
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 65535, i16 65279, i16 65535, i16 65279, i16 65535, i16 65279, i16 65535, i16 65279>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -200,7 +200,7 @@ define i16 @mvni_modimm_t5() nounwind {
   ; CHECK-NEXT:    mvni	   v[[REG2:[0-9]+]].8h, #0x1
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 65534, i16 65534, i16 65534, i16 65534, i16 65534, i16 65534, i16 65534, i16 65534>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -212,7 +212,7 @@ define i16 @mvni_modimm_t6() nounwind {
   ; CHECK-NEXT:    mvni	   v[[REG2:[0-9]+]].8h, #0x1, lsl #8
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 65279, i16 65279, i16 65279, i16 65279, i16 65279, i16 65279, i16 65279, i16 65279>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -224,7 +224,7 @@ define i16 @mvni_modimm_t7() nounwind {
   ; CHECK-NEXT:    mvni	   v[[REG2:[0-9]+]].4s, #0x1, msl #8
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 65024, i16 65535, i16 65024, i16 65535, i16 65024, i16 65535, i16 65024, i16 65535>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -236,7 +236,7 @@ define i16 @mvni_modimm_t8() nounwind {
   ; CHECK-NEXT:    mvni	   v[[REG2:[0-9]+]].4s, #0x1, msl #16
   ; CHECK-NEXT:    add	   v[[REG1]].8h, v[[REG1]].8h, v[[REG2]].8h
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = add <8 x i16> %in, <i16 0, i16 65534, i16 0, i16 65534, i16 0, i16 65534, i16 0, i16 65534>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -247,7 +247,7 @@ define i16 @bic_modimm_t1() nounwind {
   ; CHECK:         ld1     { v[[REG1:[0-9]+]].8h }, [x{{[0-9]+}}]
   ; CHECK-NEXT:    bic	   v[[REG2:[0-9]+]].4s, #0x1
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = and <8 x i16> %in, <i16 65534, i16 65535, i16 65534, i16 65535, i16 65534, i16 65535, i16 65534, i16 65535>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -258,7 +258,7 @@ define i16 @bic_modimm_t2() nounwind {
   ; CHECK:         ld1     { v[[REG1:[0-9]+]].8h }, [x{{[0-9]+}}]
   ; CHECK-NEXT:    bic	   v[[REG2:[0-9]+]].4s, #0x1, lsl #8
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = and <8 x i16> %in, <i16 65279, i16 65535, i16 65279, i16 65535, i16 65279, i16 65535, i16 65279, i16 65535>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -269,7 +269,7 @@ define i16 @bic_modimm_t3() nounwind {
   ; CHECK:         ld1     { v[[REG1:[0-9]+]].8h }, [x{{[0-9]+}}]
   ; CHECK-NEXT:    bic	   v[[REG2:[0-9]+]].4s, #0x1, lsl #16
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = and <8 x i16> %in, <i16 65535, i16 65534, i16 65535, i16 65534, i16 65535, i16 65534, i16 65535, i16 65534>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -280,7 +280,7 @@ define i16 @bic_modimm_t4() nounwind {
   ; CHECK:         ld1     { v[[REG1:[0-9]+]].8h }, [x{{[0-9]+}}]
   ; CHECK-NEXT:    bic	   v[[REG2:[0-9]+]].4s, #0x1, lsl #24
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = and <8 x i16> %in, <i16 65535, i16 65279, i16 65535, i16 65279, i16 65535, i16 65279, i16 65535, i16 65279>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -291,7 +291,7 @@ define i16 @bic_modimm_t5() nounwind {
   ; CHECK:         ld1     { v[[REG1:[0-9]+]].8h }, [x{{[0-9]+}}]
   ; CHECK-NEXT:    bic	   v[[REG2:[0-9]+]].8h, #0x1
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = and <8 x i16> %in, <i16 65534, i16 65534, i16 65534, i16 65534, i16 65534, i16 65534, i16 65534, i16 65534>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -302,7 +302,7 @@ define i16 @bic_modimm_t6() nounwind {
   ; CHECK:         ld1     { v[[REG1:[0-9]+]].8h }, [x{{[0-9]+}}]
   ; CHECK-NEXT:    bic	   v[[REG2:[0-9]+]].8h, #0x1, lsl #8
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = and <8 x i16> %in, <i16 65279, i16 65279, i16 65279, i16 65279, i16 65279, i16 65279, i16 65279, i16 65279>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -313,7 +313,7 @@ define i16 @orr_modimm_t1() nounwind {
   ; CHECK:         ld1     { v[[REG1:[0-9]+]].8h }, [x{{[0-9]+}}]
   ; CHECK-NEXT:    orr	   v[[REG2:[0-9]+]].4s, #0x1
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = or <8 x i16> %in, <i16 1, i16 0, i16 1, i16 0, i16 1, i16 0, i16 1, i16 0>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -324,7 +324,7 @@ define i16 @orr_modimm_t2() nounwind {
   ; CHECK:         ld1     { v[[REG1:[0-9]+]].8h }, [x{{[0-9]+}}]
   ; CHECK-NEXT:    orr     v[[REG2:[0-9]+]].4s, #0x1, lsl #8
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = or <8 x i16> %in, <i16 256, i16 0, i16 256, i16 0, i16 256, i16 0, i16 256, i16 0>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -335,7 +335,7 @@ define i16 @orr_modimm_t3() nounwind {
   ; CHECK:         ld1     { v[[REG1:[0-9]+]].8h }, [x{{[0-9]+}}]
   ; CHECK-NEXT:    orr	   v[[REG2:[0-9]+]].4s, #0x1, lsl #16
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = or <8 x i16> %in, <i16 0, i16 1, i16 0, i16 1, i16 0, i16 1, i16 0, i16 1>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -346,7 +346,7 @@ define i16 @orr_modimm_t4() nounwind {
   ; CHECK:         ld1     { v[[REG1:[0-9]+]].8h }, [x{{[0-9]+}}]
   ; CHECK-NEXT:    orr	   v[[REG2:[0-9]+]].4s, #0x1, lsl #24
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = or <8 x i16> %in, <i16 0, i16 256, i16 0, i16 256, i16 0, i16 256, i16 0, i16 256>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -357,7 +357,7 @@ define i16 @orr_modimm_t5() nounwind {
   ; CHECK:         ld1     { v[[REG1:[0-9]+]].8h }, [x{{[0-9]+}}]
   ; CHECK-NEXT:    orr	   v[[REG2:[0-9]+]].8h, #0x1
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = or <8 x i16> %in, <i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1, i16 1>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el
@@ -368,7 +368,7 @@ define i16 @orr_modimm_t6() nounwind {
   ; CHECK:         ld1     { v[[REG1:[0-9]+]].8h }, [x{{[0-9]+}}]
   ; CHECK-NEXT:    orr	   v[[REG2:[0-9]+]].8h, #0x1, lsl #8
   ; CHECK-NEXT:    umov	   w{{[0-9]+}}, v[[REG1]].h[0]
-  %in = load <8 x i16>* @vec_v8i16
+  %in = load <8 x i16>, <8 x i16>* @vec_v8i16
   %rv = or <8 x i16> %in, <i16 256, i16 256, i16 256, i16 256, i16 256, i16 256, i16 256, i16 256>
   %el = extractelement <8 x i16> %rv, i32 0
   ret i16 %el

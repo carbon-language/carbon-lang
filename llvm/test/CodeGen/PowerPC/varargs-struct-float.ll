@@ -11,7 +11,7 @@ entry:
   %coerce.dive = getelementptr %struct.Sf1, %struct.Sf1* %s, i32 0, i32 0
   store float %s.coerce, float* %coerce.dive, align 1
   %coerce.dive1 = getelementptr %struct.Sf1, %struct.Sf1* %s, i32 0, i32 0
-  %0 = load float* %coerce.dive1, align 1
+  %0 = load float, float* %coerce.dive1, align 1
   call void (i32, ...)* @testvaSf1(i32 1, float inreg %0)
   ret void
 }

@@ -19,7 +19,7 @@ define ptx_kernel void @t2(i1* %a, i8* %b) {
 ; PTX64: and.b16 %rs{{[0-9]+}}, %rs{{[0-9]+}}, 1;
 ; PTX64: setp.eq.b16 %p{{[0-9]+}}, %rs{{[0-9]+}}, 1;
 
-  %t1 = load i1* %a
+  %t1 = load i1, i1* %a
   %t2 = select i1 %t1, i8 1, i8 2
   store i8 %t2, i8* %b
   ret void

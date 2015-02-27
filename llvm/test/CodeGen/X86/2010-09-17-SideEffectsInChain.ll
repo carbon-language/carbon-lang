@@ -9,8 +9,8 @@ entry:
   %a = alloca [64 x i8]
   %b = getelementptr inbounds [64 x i8], [64 x i8]* %a, i64 0, i32 0
   %c = getelementptr inbounds [64 x i8], [64 x i8]* %a, i64 0, i32 30
-  %d = load i8* %b, align 8
-  %e = load i8* %c, align 8
+  %d = load i8, i8* %b, align 8
+  %e = load i8, i8* %c, align 8
   %f = bitcast [64 x i8]* %a to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %f, i8* %in, i64 64, i32 8, i1 false) nounwind
   store i8 %d, i8* %b, align 8

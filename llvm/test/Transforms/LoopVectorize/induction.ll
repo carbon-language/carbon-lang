@@ -52,10 +52,10 @@ for.body:
   %iv = phi i64 [ 0, %entry ], [ %iv.next, %for.body ]
   %ind.sum = add i64 %iv, %offset
   %arr.idx = getelementptr inbounds float, float* %a, i64 %ind.sum
-  %l1 = load float* %arr.idx, align 4
+  %l1 = load float, float* %arr.idx, align 4
   %ind.sum2 = add i64 %iv, %offset2
   %arr.idx2 = getelementptr inbounds float, float* %a, i64 %ind.sum2
-  %l2 = load float* %arr.idx2, align 4
+  %l2 = load float, float* %arr.idx2, align 4
   %m = fmul fast float %b, %l2
   %ad = fadd fast float %l1, %m
   store float %ad, float* %arr.idx, align 4
@@ -153,9 +153,9 @@ define i32 @max_i32_backedgetaken() nounwind readnone ssp uwtable {
 @c = common global i32 0, align 4
 define i32 @testoverflowcheck() {
 entry:
-  %.pr.i = load i8* @e, align 1
-  %0 = load i32* @d, align 4
-  %c.promoted.i = load i32* @c, align 4
+  %.pr.i = load i8, i8* @e, align 1
+  %0 = load i32, i32* @d, align 4
+  %c.promoted.i = load i32, i32* @c, align 4
   br label %cond.end.i
 
 cond.end.i:

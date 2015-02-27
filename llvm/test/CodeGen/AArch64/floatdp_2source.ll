@@ -5,7 +5,7 @@
 
 define void @testfloat() {
 ; CHECK-LABEL: testfloat:
-  %val1 = load float* @varfloat
+  %val1 = load float, float* @varfloat
 
   %val2 = fadd float %val1, %val1
 ; CHECK: fadd {{s[0-9]+}}, {{s[0-9]+}}, {{s[0-9]+}}
@@ -33,7 +33,7 @@ define void @testfloat() {
 
 define void @testdouble() {
 ; CHECK-LABEL: testdouble:
-  %val1 = load double* @vardouble
+  %val1 = load double, double* @vardouble
 
   %val2 = fadd double %val1, %val1
 ; CHECK: fadd {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}

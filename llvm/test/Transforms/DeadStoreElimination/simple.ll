@@ -6,7 +6,7 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, 
 declare i8* @llvm.init.trampoline(i8*, i8*, i8*)
 
 define void @test1(i32* %Q, i32* %P) {
-        %DEAD = load i32* %Q
+        %DEAD = load i32, i32* %Q
         store i32 %DEAD, i32* %P
         store i32 0, i32* %P
         ret void
@@ -31,17 +31,17 @@ define void @test2(i32 *%p, i32 *%q) {
 
 define i32 @test3(i32* %g_addr) nounwind {
 ; CHECK-LABEL: @test3(
-; CHECK: load i32* %g_addr
-  %g_value = load i32* %g_addr, align 4
+; CHECK: load i32, i32* %g_addr
+  %g_value = load i32, i32* %g_addr, align 4
   store i32 -1, i32* @g, align 4
   store i32 %g_value, i32* %g_addr, align 4
-  %tmp3 = load i32* @g, align 4
+  %tmp3 = load i32, i32* @g, align 4
   ret i32 %tmp3
 }
 
 
 define void @test4(i32* %Q) {
-        %a = load i32* %Q
+        %a = load i32, i32* %Q
         store volatile i32 %a, i32* %Q
         ret void
 ; CHECK-LABEL: @test4(
@@ -51,7 +51,7 @@ define void @test4(i32* %Q) {
 }
 
 define void @test5(i32* %Q) {
-        %a = load volatile i32* %Q
+        %a = load volatile i32, i32* %Q
         store i32 %a, i32* %Q
         ret void
 ; CHECK-LABEL: @test5(
@@ -87,7 +87,7 @@ define i32 @test8() {
         store i32 1234567, i32* %V
         %V2 = bitcast i32* %V to i8*
         store i8 0, i8* %V2
-        %X = load i32* %V
+        %X = load i32, i32* %V
         ret i32 %X
         
 ; CHECK-LABEL: @test8(
@@ -142,9 +142,9 @@ define void @test11() {
 ; PR2599 - load -> store to same address.
 define void @test12({ i32, i32 }* %x) nounwind  {
 	%tmp4 = getelementptr { i32, i32 }, { i32, i32 }* %x, i32 0, i32 0
-	%tmp5 = load i32* %tmp4, align 4
+	%tmp5 = load i32, i32* %tmp4, align 4
 	%tmp7 = getelementptr { i32, i32 }, { i32, i32 }* %x, i32 0, i32 1
-	%tmp8 = load i32* %tmp7, align 4
+	%tmp8 = load i32, i32* %tmp7, align 4
 	%tmp17 = sub i32 0, %tmp8
 	store i32 %tmp5, i32* %tmp4, align 4
 	store i32 %tmp17, i32* %tmp7, align 4
@@ -160,7 +160,7 @@ declare void @test13f()
 define i32* @test13() {
         %p = tail call i8* @malloc(i32 4)
         %P = bitcast i8* %p to i32*
-        %DEAD = load i32* %P
+        %DEAD = load i32, i32* %P
         %DEAD2 = add i32 %DEAD, 1
         store i32 %DEAD2, i32* %P
         call void @test13f( )
@@ -176,7 +176,7 @@ define i32 addrspace(1)* @test13_addrspacecast() {
   %p = tail call i8* @malloc(i32 4)
   %p.bc = bitcast i8* %p to i32*
   %P = addrspacecast i32* %p.bc to i32 addrspace(1)*
-  %DEAD = load i32 addrspace(1)* %P
+  %DEAD = load i32, i32 addrspace(1)* %P
   %DEAD2 = add i32 %DEAD, 1
   store i32 %DEAD2, i32 addrspace(1)* %P
   call void @test13f( )
@@ -195,7 +195,7 @@ declare noalias i8* @calloc(i32, i32)
 
 define void @test14(i32* %Q) {
         %P = alloca i32
-        %DEAD = load i32* %Q
+        %DEAD = load i32, i32* %Q
         store i32 %DEAD, i32* %P
         ret void
 
@@ -344,7 +344,7 @@ define void @test24([2 x i32]* %a, i32 %b, i32 %c) nounwind {
 ; CHECK: store i8 %tmp
 define i8* @test25(i8* %p) nounwind {
   %p.4 = getelementptr i8, i8* %p, i64 4
-  %tmp = load i8* %p.4, align 1
+  %tmp = load i8, i8* %p.4, align 1
   store i8 0, i8* %p.4, align 1
   %q = call i8* @strdup(i8* %p) nounwind optsize
   store i8 %tmp, i8* %p.4, align 1

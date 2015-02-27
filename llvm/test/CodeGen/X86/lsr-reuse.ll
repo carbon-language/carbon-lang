@@ -28,8 +28,8 @@ loop:
   %Ai = getelementptr inbounds double, double* %A, i64 %i
   %Bi = getelementptr inbounds double, double* %B, i64 %i
   %Ci = getelementptr inbounds double, double* %C, i64 %i
-  %t1 = load double* %Bi
-  %t2 = load double* %Ci
+  %t1 = load double, double* %Bi
+  %t2 = load double, double* %Ci
   %m = fmul double %t1, %t2
   store double %m, double* %Ai
   %i.next = add nsw i64 %i, 1
@@ -73,16 +73,16 @@ loop:
   %Ai = getelementptr inbounds double, double* %A, i64 %i
   %Bi = getelementptr inbounds double, double* %B, i64 %i
   %Ci = getelementptr inbounds double, double* %C, i64 %i
-  %t1 = load double* %Bi
-  %t2 = load double* %Ci
+  %t1 = load double, double* %Bi
+  %t2 = load double, double* %Ci
   %m = fmul double %t1, %t2
   store double %m, double* %Ai
   %j = add i64 %i, 256
   %Aj = getelementptr inbounds double, double* %A, i64 %j
   %Bj = getelementptr inbounds double, double* %B, i64 %j
   %Cj = getelementptr inbounds double, double* %C, i64 %j
-  %t3 = load double* %Bj
-  %t4 = load double* %Cj
+  %t3 = load double, double* %Bj
+  %t4 = load double, double* %Cj
   %o = fdiv double %t3, %t4
   store double %o, double* %Aj
   %i.next = add nsw i64 %i, 1
@@ -119,16 +119,16 @@ loop:
   %Ai = getelementptr inbounds double, double* %A, i64 %i
   %Bi = getelementptr inbounds double, double* %B, i64 %i
   %Ci = getelementptr inbounds double, double* %C, i64 %i
-  %t1 = load double* %Bi
-  %t2 = load double* %Ci
+  %t1 = load double, double* %Bi
+  %t2 = load double, double* %Ci
   %m = fmul double %t1, %t2
   store double %m, double* %Ai
   %j = sub i64 %i, 256
   %Aj = getelementptr inbounds double, double* %A, i64 %j
   %Bj = getelementptr inbounds double, double* %B, i64 %j
   %Cj = getelementptr inbounds double, double* %C, i64 %j
-  %t3 = load double* %Bj
-  %t4 = load double* %Cj
+  %t3 = load double, double* %Bj
+  %t4 = load double, double* %Cj
   %o = fdiv double %t3, %t4
   store double %o, double* %Aj
   %i.next = add nsw i64 %i, 1
@@ -165,16 +165,16 @@ loop:
   %Ak = getelementptr inbounds double, double* %A, i64 %k
   %Bk = getelementptr inbounds double, double* %B, i64 %k
   %Ck = getelementptr inbounds double, double* %C, i64 %k
-  %t1 = load double* %Bk
-  %t2 = load double* %Ck
+  %t1 = load double, double* %Bk
+  %t2 = load double, double* %Ck
   %m = fmul double %t1, %t2
   store double %m, double* %Ak
   %j = sub i64 %i, 256
   %Aj = getelementptr inbounds double, double* %A, i64 %j
   %Bj = getelementptr inbounds double, double* %B, i64 %j
   %Cj = getelementptr inbounds double, double* %C, i64 %j
-  %t3 = load double* %Bj
-  %t4 = load double* %Cj
+  %t3 = load double, double* %Bj
+  %t4 = load double, double* %Cj
   %o = fdiv double %t3, %t4
   store double %o, double* %Aj
   %i.next = add nsw i64 %i, 1
@@ -208,8 +208,8 @@ loop:
   %Ai = getelementptr inbounds double, double* %A, i64 %i
   %Bi = getelementptr inbounds double, double* %B, i64 %i
   %Ci = getelementptr inbounds double, double* %C, i64 %i
-  %t1 = load double* %Bi
-  %t2 = load double* %Ci
+  %t1 = load double, double* %Bi
+  %t2 = load double, double* %Ci
   %m = fmul double %t1, %t2
   store double %m, double* %Ai
   %i.next = add nsw i64 %i, 1
@@ -243,8 +243,8 @@ loop:
   %Ai = getelementptr inbounds double, double* %A, i64 %i
   %Bi = getelementptr inbounds double, double* %B, i64 %i
   %Ci = getelementptr inbounds double, double* %C, i64 %i
-  %t1 = load double* %Bi
-  %t2 = load double* %Ci
+  %t1 = load double, double* %Bi
+  %t2 = load double, double* %Ci
   %m = fmul double %t1, %t2
   store double %m, double* %Ai
   %i.next = add nsw i64 %i, 1
@@ -281,17 +281,17 @@ loop:
   %i = phi i64 [ 0, %entry ], [ %i.next, %loop ]
   %i5 = add i64 %i, 5
   %Ai = getelementptr double, double* %A, i64 %i5
-  %t2 = load double* %Ai
+  %t2 = load double, double* %Ai
   %Bi = getelementptr double, double* %B, i64 %i5
-  %t4 = load double* %Bi
+  %t4 = load double, double* %Bi
   %t5 = fadd double %t2, %t4
   %Ci = getelementptr double, double* %C, i64 %i5
   store double %t5, double* %Ci
   %i10 = add i64 %i, 10
   %Ai10 = getelementptr double, double* %A, i64 %i10
-  %t9 = load double* %Ai10
+  %t9 = load double, double* %Ai10
   %Bi10 = getelementptr double, double* %B, i64 %i10
-  %t11 = load double* %Bi10
+  %t11 = load double, double* %Bi10
   %t12 = fsub double %t9, %t11
   %Ci10 = getelementptr double, double* %C, i64 %i10
   store double %t12, double* %Ci10
@@ -328,17 +328,17 @@ loop:
   %i = phi i64 [ 0, %entry ], [ %i.next, %loop ]
   %i5 = add i64 %i, 5
   %Ai = getelementptr double, double* %A, i64 %i5
-  %t2 = load double* %Ai
+  %t2 = load double, double* %Ai
   %Bi = getelementptr double, double* %B, i64 %i5
-  %t4 = load double* %Bi
+  %t4 = load double, double* %Bi
   %t5 = fadd double %t2, %t4
   %Ci = getelementptr double, double* %C, i64 %i5
   store double %t5, double* %Ci
   %i10 = add i64 %i, 10
   %Ai10 = getelementptr double, double* %A, i64 %i10
-  %t9 = load double* %Ai10
+  %t9 = load double, double* %Ai10
   %Bi10 = getelementptr double, double* %B, i64 %i10
-  %t11 = load double* %Bi10
+  %t11 = load double, double* %Bi10
   %t12 = fsub double %t9, %t11
   %Ci10 = getelementptr double, double* %C, i64 %i10
   store double %t12, double* %Ci10
@@ -375,8 +375,8 @@ loop:
   %Ai = getelementptr inbounds double, double* %A, i64 %i
   %Bi = getelementptr inbounds double, double* %B, i64 %i
   %Ci = getelementptr inbounds double, double* %C, i64 %i
-  %t1 = load double* %Bi
-  %t2 = load double* %Ci
+  %t1 = load double, double* %Bi
+  %t2 = load double, double* %Ci
   %m = fmul double %t1, %t2
   store double %m, double* %Ai
   %i.next = add nsw i64 %i, 1
@@ -414,7 +414,7 @@ bb:                                               ; preds = %bb3, %bb.nph14
   %indvar16 = phi i64 [ 0, %bb.nph14 ], [ %indvar.next17, %bb3 ] ; <i64> [#uses=3]
   %s.113 = phi i32 [ 0, %bb.nph14 ], [ %s.0.lcssa, %bb3 ] ; <i32> [#uses=2]
   %scevgep2526 = getelementptr [123123 x %struct.anon], [123123 x %struct.anon]* @bars, i64 0, i64 %indvar16, i32 0 ; <i32*> [#uses=1]
-  %1 = load i32* %scevgep2526, align 4            ; <i32> [#uses=2]
+  %1 = load i32, i32* %scevgep2526, align 4            ; <i32> [#uses=2]
   %2 = icmp sgt i32 %1, 0                         ; <i1> [#uses=1]
   br i1 %2, label %bb.nph, label %bb3
 
@@ -426,7 +426,7 @@ bb1:                                              ; preds = %bb.nph, %bb1
   %indvar = phi i64 [ 0, %bb.nph ], [ %tmp19, %bb1 ] ; <i64> [#uses=2]
   %s.07 = phi i32 [ %s.113, %bb.nph ], [ %4, %bb1 ] ; <i32> [#uses=1]
   %c.08 = getelementptr [123123 x %struct.anon], [123123 x %struct.anon]* @bars, i64 0, i64 %indvar16, i32 1, i64 %indvar ; <i32*> [#uses=1]
-  %3 = load i32* %c.08, align 4                   ; <i32> [#uses=1]
+  %3 = load i32, i32* %c.08, align 4                   ; <i32> [#uses=1]
   %4 = add nsw i32 %3, %s.07                      ; <i32> [#uses=2]
   %tmp19 = add i64 %indvar, 1                     ; <i64> [#uses=2]
   %5 = icmp sgt i64 %tmp23, %tmp19                ; <i1> [#uses=1]
@@ -493,7 +493,7 @@ define void @test(float* %arg, i64 %arg1, float* nocapture %arg2, float* nocaptu
 bb:
   %t = alloca float, align 4                      ; <float*> [#uses=3]
   %t7 = alloca float, align 4                     ; <float*> [#uses=2]
-  %t8 = load float* %arg3                         ; <float> [#uses=8]
+  %t8 = load float, float* %arg3                         ; <float> [#uses=8]
   %t9 = ptrtoint float* %arg to i64               ; <i64> [#uses=1]
   %t10 = ptrtoint float* %arg4 to i64             ; <i64> [#uses=1]
   %t11 = xor i64 %t10, %t9                        ; <i64> [#uses=1]
@@ -507,7 +507,7 @@ bb:
   br i1 %t18, label %bb19, label %bb213
 
 bb19:                                             ; preds = %bb
-  %t20 = load float* %arg2                        ; <float> [#uses=1]
+  %t20 = load float, float* %arg2                        ; <float> [#uses=1]
   br label %bb21
 
 bb21:                                             ; preds = %bb32, %bb19
@@ -526,7 +526,7 @@ bb28:                                             ; preds = %bb21
   br i1 %t31, label %bb37, label %bb32
 
 bb32:                                             ; preds = %bb28
-  %t33 = load float* %t26                         ; <float> [#uses=1]
+  %t33 = load float, float* %t26                         ; <float> [#uses=1]
   %t34 = fmul float %t23, %t33                    ; <float> [#uses=1]
   store float %t34, float* %t25
   %t35 = fadd float %t23, %t8                     ; <float> [#uses=1]
@@ -604,10 +604,10 @@ bb68:                                             ; preds = %bb68, %bb61
   %t95 = bitcast float* %t94 to <4 x float>*      ; <<4 x float>*> [#uses=1]
   %t96 = mul i64 %t69, -16                        ; <i64> [#uses=1]
   %t97 = add i64 %t67, %t96                       ; <i64> [#uses=2]
-  %t98 = load <4 x float>* %t77                   ; <<4 x float>> [#uses=1]
-  %t99 = load <4 x float>* %t81                   ; <<4 x float>> [#uses=1]
-  %t100 = load <4 x float>* %t84                  ; <<4 x float>> [#uses=1]
-  %t101 = load <4 x float>* %t87                  ; <<4 x float>> [#uses=1]
+  %t98 = load <4 x float>, <4 x float>* %t77                   ; <<4 x float>> [#uses=1]
+  %t99 = load <4 x float>, <4 x float>* %t81                   ; <<4 x float>> [#uses=1]
+  %t100 = load <4 x float>, <4 x float>* %t84                  ; <<4 x float>> [#uses=1]
+  %t101 = load <4 x float>, <4 x float>* %t87                  ; <<4 x float>> [#uses=1]
   %t102 = fmul <4 x float> %t98, %t71             ; <<4 x float>> [#uses=1]
   %t103 = fadd <4 x float> %t71, %t55             ; <<4 x float>> [#uses=2]
   %t104 = fmul <4 x float> %t99, %t73             ; <<4 x float>> [#uses=1]
@@ -644,7 +644,7 @@ bb122:                                            ; preds = %bb118
   %t123 = add i64 %t22, -1                        ; <i64> [#uses=1]
   %t124 = getelementptr inbounds float, float* %arg, i64 %t123 ; <float*> [#uses=1]
   %t125 = bitcast float* %t124 to <4 x float>*    ; <<4 x float>*> [#uses=1]
-  %t126 = load <4 x float>* %t125                 ; <<4 x float>> [#uses=1]
+  %t126 = load <4 x float>, <4 x float>* %t125                 ; <<4 x float>> [#uses=1]
   %t127 = add i64 %t22, 16                        ; <i64> [#uses=1]
   %t128 = add i64 %t22, 3                         ; <i64> [#uses=1]
   %t129 = add i64 %t22, 7                         ; <i64> [#uses=1]
@@ -692,10 +692,10 @@ bb137:                                            ; preds = %bb137, %bb122
   %t169 = bitcast float* %t168 to <4 x float>*    ; <<4 x float>*> [#uses=1]
   %t170 = mul i64 %t138, -16                      ; <i64> [#uses=1]
   %t171 = add i64 %t136, %t170                    ; <i64> [#uses=2]
-  %t172 = load <4 x float>* %t148                 ; <<4 x float>> [#uses=2]
-  %t173 = load <4 x float>* %t151                 ; <<4 x float>> [#uses=2]
-  %t174 = load <4 x float>* %t154                 ; <<4 x float>> [#uses=2]
-  %t175 = load <4 x float>* %t157                 ; <<4 x float>> [#uses=2]
+  %t172 = load <4 x float>, <4 x float>* %t148                 ; <<4 x float>> [#uses=2]
+  %t173 = load <4 x float>, <4 x float>* %t151                 ; <<4 x float>> [#uses=2]
+  %t174 = load <4 x float>, <4 x float>* %t154                 ; <<4 x float>> [#uses=2]
+  %t175 = load <4 x float>, <4 x float>* %t157                 ; <<4 x float>> [#uses=2]
   %t176 = shufflevector <4 x float> %t143, <4 x float> %t172, <4 x i32> <i32 4, i32 1, i32 2, i32 3> ; <<4 x float>> [#uses=1]
   %t177 = shufflevector <4 x float> %t176, <4 x float> undef, <4 x i32> <i32 1, i32 2, i32 3, i32 0> ; <<4 x float>> [#uses=1]
   %t178 = shufflevector <4 x float> %t172, <4 x float> %t173, <4 x i32> <i32 4, i32 1, i32 2, i32 3> ; <<4 x float>> [#uses=1]
@@ -734,7 +734,7 @@ bb201:                                            ; preds = %bb201, %bb194
   %t203 = phi float [ %t208, %bb201 ], [ %t199, %bb194 ] ; <float> [#uses=2]
   %t204 = getelementptr float, float* %t198, i64 %t202   ; <float*> [#uses=1]
   %t205 = getelementptr float, float* %t197, i64 %t202   ; <float*> [#uses=1]
-  %t206 = load float* %t204                       ; <float> [#uses=1]
+  %t206 = load float, float* %t204                       ; <float> [#uses=1]
   %t207 = fmul float %t203, %t206                 ; <float> [#uses=1]
   store float %t207, float* %t205
   %t208 = fadd float %t203, %t8                   ; <float> [#uses=2]

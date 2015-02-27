@@ -11,13 +11,13 @@ define internal i10000* @test(i10000 %Arg) {
 define i10000 @caller()
 {
         %Y = call i10000* @test(i10000 -1)
-        %Z = load i10000* %Y
+        %Z = load i10000, i10000* %Y
         ret i10000 %Z 
 }
 
 define i10000 @caller2()
 {
         %Y = call i10000* @test(i10000 1)
-        %Z = load i10000* %Y
+        %Z = load i10000, i10000* %Y
         ret i10000 %Z 
 }

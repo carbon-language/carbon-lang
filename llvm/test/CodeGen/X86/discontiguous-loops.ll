@@ -39,7 +39,7 @@ ybb8:                                              ; preds = %ybb1
   br i1 %tmp9, label %bb10, label %ybb12
 
 bb10:                                             ; preds = %ybb8
-  %tmp11 = load i8** undef, align 8               ; <i8*> [#uses=1]
+  %tmp11 = load i8*, i8** undef, align 8               ; <i8*> [#uses=1]
   call void (i8*, ...)* @fatal(i8* getelementptr inbounds ([37 x i8]* @.str96, i64 0, i64 0), i8* %tmp11) nounwind
   unreachable
 

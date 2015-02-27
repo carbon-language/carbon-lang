@@ -155,7 +155,7 @@ lor.end:                                          ; preds = %entry, %entry, %ent
 define i1 @test6({ i32, i32 }* %I) {
 entry:
         %tmp.1.i = getelementptr { i32, i32 }, { i32, i32 }* %I, i64 0, i32 1         ; <i32*> [#uses=1]
-        %tmp.2.i = load i32* %tmp.1.i           ; <i32> [#uses=6]
+        %tmp.2.i = load i32, i32* %tmp.1.i           ; <i32> [#uses=6]
         %tmp.2 = icmp eq i32 %tmp.2.i, 14               ; <i1> [#uses=1]
         br i1 %tmp.2, label %shortcirc_done.4, label %shortcirc_next.0
 shortcirc_next.0:               ; preds = %entry

@@ -27,7 +27,7 @@ define i64 @testcase(%nested * noalias %p1, %nested * noalias %p2,
 ; CHECK; store i64 1
 
   store i64 2, i64* %ptr.64, align 8
-  %r = load i64* %either_ptr.64, align 8
+  %r = load i64, i64* %either_ptr.64, align 8
   store i64 1, i64* %ptr.64, align 8
   ret i64 %r
 }

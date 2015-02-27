@@ -13,7 +13,7 @@ bb:             ; preds = %bb4, %entry
   %mode.0 = phi i8 [ 0, %entry ], [ %indvar.next, %bb4 ]                ; <i8> [#uses=4]
   zext i8 %mode.0 to i32                ; <i32>:1 [#uses=1]
   getelementptr [4 x i32], [4 x i32]* @mode_table, i32 0, i32 %1           ; <i32*>:2 [#uses=1]
-  load i32* %2, align 4         ; <i32>:3 [#uses=1]
+  load i32, i32* %2, align 4         ; <i32>:3 [#uses=1]
   icmp eq i32 %3, %0            ; <i1>:4 [#uses=1]
   br i1 %4, label %bb1, label %bb2
 

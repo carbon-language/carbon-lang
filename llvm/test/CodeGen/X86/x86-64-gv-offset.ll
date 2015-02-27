@@ -5,8 +5,8 @@
 
 define i32 @main() nounwind  {
 entry:
-	%tmp2 = load float* getelementptr (%struct.x* @X, i32 0, i32 0), align 16		; <float> [#uses=1]
-	%tmp4 = load double* getelementptr (%struct.x* @X, i32 0, i32 1), align 8		; <double> [#uses=1]
+	%tmp2 = load float, float* getelementptr (%struct.x* @X, i32 0, i32 0), align 16		; <float> [#uses=1]
+	%tmp4 = load double, double* getelementptr (%struct.x* @X, i32 0, i32 1), align 8		; <double> [#uses=1]
 	tail call void @t( float %tmp2, double %tmp4 ) nounwind 
 	ret i32 0
 }

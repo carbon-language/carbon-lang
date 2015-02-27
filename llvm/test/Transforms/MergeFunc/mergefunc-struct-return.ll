@@ -18,7 +18,7 @@ define %kv1 @fn1() {
   %v2 = getelementptr %kv1, %kv1* %tmp, i32 0, i32 0
   store i32* null, i32** %v2
   call void @noop()
-  %v3 = load %kv1* %tmp
+  %v3 = load %kv1, %kv1* %tmp
   ret %kv1 %v3
 }
 
@@ -35,6 +35,6 @@ define %kv2 @fn2() {
   store i8* null, i8** %v2
   call void @noop()
 
-  %v3 = load %kv2* %tmp
+  %v3 = load %kv2, %kv2* %tmp
   ret %kv2 %v3
 }

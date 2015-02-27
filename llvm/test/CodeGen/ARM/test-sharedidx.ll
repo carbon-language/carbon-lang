@@ -24,10 +24,10 @@ for.body:                                         ; preds = %entry, %for.body.3
 ; CHECK: ldrb {{r[0-9]|lr}}, [{{r[0-9]|lr}}, {{r[0-9]|lr}}]!
   %i.09 = phi i32 [ %add5.3, %for.body.3 ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i8, i8* %a, i32 %i.09
-  %0 = load i8* %arrayidx, align 1
+  %0 = load i8, i8* %arrayidx, align 1
   %conv6 = zext i8 %0 to i32
   %arrayidx1 = getelementptr inbounds i8, i8* %b, i32 %i.09
-  %1 = load i8* %arrayidx1, align 1
+  %1 = load i8, i8* %arrayidx1, align 1
   %conv27 = zext i8 %1 to i32
   %add = add nsw i32 %conv27, %conv6
   %conv3 = trunc i32 %add to i8
@@ -45,10 +45,10 @@ for.body.1:                                       ; preds = %for.body
 ; CHECK: ldrb {{r[0-9]|lr}}, [{{r[0-9]|lr}}, {{r[0-9]|lr}}]!
 ; CHECK: ldrb {{r[0-9]|lr}}, [{{r[0-9]|lr}}, {{r[0-9]|lr}}]!
   %arrayidx.1 = getelementptr inbounds i8, i8* %a, i32 %add5
-  %2 = load i8* %arrayidx.1, align 1
+  %2 = load i8, i8* %arrayidx.1, align 1
   %conv6.1 = zext i8 %2 to i32
   %arrayidx1.1 = getelementptr inbounds i8, i8* %b, i32 %add5
-  %3 = load i8* %arrayidx1.1, align 1
+  %3 = load i8, i8* %arrayidx1.1, align 1
   %conv27.1 = zext i8 %3 to i32
   %add.1 = add nsw i32 %conv27.1, %conv6.1
   %conv3.1 = trunc i32 %add.1 to i8
@@ -63,10 +63,10 @@ for.body.2:                                       ; preds = %for.body.1
 ; CHECK: ldrb {{r[0-9]|lr}}, [{{r[0-9]|lr}}, {{r[0-9]|lr}}]!
 ; CHECK: ldrb {{r[0-9]|lr}}, [{{r[0-9]|lr}}, {{r[0-9]|lr}}]!
   %arrayidx.2 = getelementptr inbounds i8, i8* %a, i32 %add5.1
-  %4 = load i8* %arrayidx.2, align 1
+  %4 = load i8, i8* %arrayidx.2, align 1
   %conv6.2 = zext i8 %4 to i32
   %arrayidx1.2 = getelementptr inbounds i8, i8* %b, i32 %add5.1
-  %5 = load i8* %arrayidx1.2, align 1
+  %5 = load i8, i8* %arrayidx1.2, align 1
   %conv27.2 = zext i8 %5 to i32
   %add.2 = add nsw i32 %conv27.2, %conv6.2
   %conv3.2 = trunc i32 %add.2 to i8
@@ -81,10 +81,10 @@ for.body.3:                                       ; preds = %for.body.2
 ; CHECK: ldrb {{r[0-9]|lr}}, [{{r[0-9]|lr}}, {{r[0-9]|lr}}]!
 ; CHECK: ldrb {{r[0-9]|lr}}, [{{r[0-9]|lr}}, {{r[0-9]|lr}}]!
   %arrayidx.3 = getelementptr inbounds i8, i8* %a, i32 %add5.2
-  %6 = load i8* %arrayidx.3, align 1
+  %6 = load i8, i8* %arrayidx.3, align 1
   %conv6.3 = zext i8 %6 to i32
   %arrayidx1.3 = getelementptr inbounds i8, i8* %b, i32 %add5.2
-  %7 = load i8* %arrayidx1.3, align 1
+  %7 = load i8, i8* %arrayidx1.3, align 1
   %conv27.3 = zext i8 %7 to i32
   %add.3 = add nsw i32 %conv27.3, %conv6.3
   %conv3.3 = trunc i32 %add.3 to i8

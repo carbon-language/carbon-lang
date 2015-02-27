@@ -9,7 +9,7 @@ entry:
   br i1 %0, label %if, label %else
 
 if:
-  %1 = load i64 addrspace(1)* %in
+  %1 = load i64, i64 addrspace(1)* %in
   br label %endif
 
 else:

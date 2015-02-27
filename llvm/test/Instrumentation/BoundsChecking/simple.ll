@@ -51,7 +51,7 @@ define void @f4(i64 %x) nounwind {
   %2 = bitcast i8* %1 to i32*
   %idx = getelementptr inbounds i32, i32* %2, i64 8
 ; CHECK: trap
-  %3 = load i32* %idx, align 4
+  %3 = load i32, i32* %idx, align 4
   ret void
 }
 
@@ -59,7 +59,7 @@ define void @f4(i64 %x) nounwind {
 define void @f5(i64 %x) nounwind {
   %idx = getelementptr inbounds [8 x i8], [8 x i8]* @.str, i64 0, i64 %x
 ; CHECK: trap
-  %1 = load i8* %idx, align 4
+  %1 = load i8, i8* %idx, align 4
   ret void
 }
 
@@ -69,7 +69,7 @@ define void @f5_as1(i64 %x) nounwind {
   ; CHECK: sub i16
   ; CHECK icmp ult i16
 ; CHECK: trap
-  %1 = load i8 addrspace(1)* %idx, align 4
+  %1 = load i8, i8 addrspace(1)* %idx, align 4
   ret void
 }
 
@@ -77,7 +77,7 @@ define void @f5_as1(i64 %x) nounwind {
 define void @f6(i64 %x) nounwind {
   %1 = alloca i128
 ; CHECK-NOT: trap
-  %2 = load i128* %1, align 4
+  %2 = load i128, i128* %1, align 4
   ret void
 }
 
@@ -86,7 +86,7 @@ define void @f7(i64 %x) nounwind {
   %1 = alloca i128, i64 %x
 ; CHECK: mul i64 16,
 ; CHECK: trap
-  %2 = load i128* %1, align 4
+  %2 = load i128, i128* %1, align 4
   ret void
 }
 
@@ -96,7 +96,7 @@ define void @f8() nounwind {
   %2 = alloca i128
   %3 = select i1 undef, i128* %1, i128* %2
 ; CHECK-NOT: trap
-  %4 = load i128* %3, align 4
+  %4 = load i128, i128* %3, align 4
   ret void
 }
 
@@ -105,7 +105,7 @@ define void @f9(i128* %arg) nounwind {
   %1 = alloca i128
   %2 = select i1 undef, i128* %arg, i128* %1
 ; CHECK-NOT: trap
-  %3 = load i128* %2, align 4
+  %3 = load i128, i128* %2, align 4
   ret void
 }
 
@@ -117,7 +117,7 @@ define void @f10(i64 %x, i64 %y) nounwind {
 ; CHECK: select
 ; CHECK: select
 ; CHECK: trap
-  %4 = load i128* %3, align 4
+  %4 = load i128, i128* %3, align 4
   ret void
 }
 
@@ -126,7 +126,7 @@ define void @f11(i128* byval %x) nounwind {
   %1 = bitcast i128* %x to i8*
   %2 = getelementptr inbounds i8, i8* %1, i64 16
 ; CHECK: br label
-  %3 = load i8* %2, align 4
+  %3 = load i8, i8* %2, align 4
   ret void
 }
 
@@ -135,7 +135,7 @@ define void @f11_as1(i128 addrspace(1)* byval %x) nounwind {
   %1 = bitcast i128 addrspace(1)* %x to i8 addrspace(1)*
   %2 = getelementptr inbounds i8, i8 addrspace(1)* %1, i16 16
 ; CHECK: br label
-  %3 = load i8 addrspace(1)* %2, align 4
+  %3 = load i8, i8 addrspace(1)* %2, align 4
   ret void
 }
 
@@ -145,7 +145,7 @@ define i64 @f12(i64 %x, i64 %y) nounwind {
 ; CHECK: mul i64 %y, 8
   %2 = bitcast i8* %1 to i64*
   %3 = getelementptr inbounds i64, i64* %2, i64 %y
-  %4 = load i64* %3, align 8
+  %4 = load i64, i64* %3, align 8
   ret i64 %4
 }
 
@@ -159,7 +159,7 @@ dead:
   ; Self-refential GEPs can occur in dead code.
   %incdec.ptr = getelementptr inbounds i32, i32* %incdec.ptr, i64 1
   ; CHECK: %incdec.ptr = getelementptr inbounds i32, i32* %incdec.ptr
-  %l = load i32* %incdec.ptr
+  %l = load i32, i32* %incdec.ptr
   br label %alive
 
 alive:

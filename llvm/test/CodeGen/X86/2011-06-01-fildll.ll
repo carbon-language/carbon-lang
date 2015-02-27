@@ -7,7 +7,7 @@ define float @f(i64* nocapture %x) nounwind readonly ssp {
 entry:
 ; CHECK: movl
 ; CHECK-NOT: movl
-  %tmp1 = load i64* %x, align 4
+  %tmp1 = load i64, i64* %x, align 4
 ; CHECK: fildll
   %conv = sitofp i64 %tmp1 to float
   %add = fadd float %conv, 1.000000e+00

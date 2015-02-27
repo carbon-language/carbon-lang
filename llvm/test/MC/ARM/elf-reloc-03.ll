@@ -78,9 +78,9 @@ entry:
 
 define i32 @main() nounwind {
 entry:
-  %0 = load i32* @startval, align 4
+  %0 = load i32, i32* @startval, align 4
   %1 = getelementptr inbounds [10 x i32 (...)*], [10 x i32 (...)*]* @vtable, i32 0, i32 %0
-  %2 = load i32 (...)** %1, align 4
+  %2 = load i32 (...)*, i32 (...)** %1, align 4
   %3 = tail call i32 (...)* %2() nounwind
   tail call void @exit(i32 %3) noreturn nounwind
   unreachable

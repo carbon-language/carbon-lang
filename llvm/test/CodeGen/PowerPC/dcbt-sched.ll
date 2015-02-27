@@ -4,9 +4,9 @@ target triple = "powerpc64-unknown-linux-gnu"
 
 define i8 @test1(i8* noalias %a, i8* noalias %b, i8* noalias %c) nounwind {
 entry:
-  %q = load i8* %b
+  %q = load i8, i8* %b
   call void @llvm.prefetch(i8* %a, i32 0, i32 3, i32 1)
-  %r = load i8* %c
+  %r = load i8, i8* %c
   %s = add i8 %q, %r
   ret i8 %s
 }

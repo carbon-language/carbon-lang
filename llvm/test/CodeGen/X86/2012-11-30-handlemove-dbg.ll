@@ -18,7 +18,7 @@ define signext i16 @subdivp(%struct.node.0.27* nocapture %p, double %dsq, double
 entry:
   call void @llvm.dbg.declare(metadata %struct.hgstruct.2.29* %hg, metadata !4, metadata !{!"0x102"})
   %type = getelementptr inbounds %struct.node.0.27, %struct.node.0.27* %p, i64 0, i32 0
-  %0 = load i16* %type, align 2
+  %0 = load i16, i16* %type, align 2
   %cmp = icmp eq i16 %0, 1
   br i1 %cmp, label %return, label %for.cond.preheader
 

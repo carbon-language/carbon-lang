@@ -35,10 +35,10 @@ for.body:
   %mul = mul i32 %iv.trunc, %BStride
   %mul64 = zext i32 %mul to i64
   %arrayidx = getelementptr inbounds i32, i32* %B, i64 %mul64
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %mul2 = mul nsw i64 %indvars.iv, %CStride
   %arrayidx3 = getelementptr inbounds i32, i32* %C, i64 %mul2
-  %1 = load i32* %arrayidx3, align 4
+  %1 = load i32, i32* %arrayidx3, align 4
   %mul4 = mul nsw i32 %1, %0
   %mul3 = mul nsw i64 %indvars.iv, %AStride
   %arrayidx7 = getelementptr inbounds i32, i32* %A, i64 %mul3
@@ -77,7 +77,7 @@ for.body:
   %mul = mul nsw i32 %0, %conv
   %idxprom = sext i32 %mul to i64
   %arrayidx = getelementptr inbounds double, double* %x, i64 %idxprom
-  %1 = load double* %arrayidx, align 8
+  %1 = load double, double* %arrayidx, align 8
   %arrayidx3 = getelementptr inbounds double, double* %c, i64 %indvars.iv
   store double %1, double* %arrayidx3, align 8
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1

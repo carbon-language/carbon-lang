@@ -25,7 +25,7 @@ define void @test(i1 %C) {
 
   store %T* %MS, %T** %M
 
-  %AP = load %T** %M ; PartialAlias with %A, %B
+  %AP = load %T*, %T** %M ; PartialAlias with %A, %B
 
   ret void
 }

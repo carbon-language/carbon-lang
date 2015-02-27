@@ -10,7 +10,7 @@ entry:
   br label %exit
 
 unreachable:
-  %x = load i32* %p
+  %x = load i32, i32* %p
   br label %exit
 
 exit:

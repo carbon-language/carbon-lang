@@ -37,7 +37,7 @@ lpad:                                             ; preds = %entry
 catch:                                            ; preds = %lpad
   %3 = tail call i8* @__cxa_begin_catch(i8* %exn) nounwind
   %4 = bitcast i8* %3 to double*
-  %exn.scalar = load double* %4, align 8
+  %exn.scalar = load double, double* %4, align 8
   %add = fadd double %exn.scalar, %i2
   store double %add, double* @g1, align 8
   tail call void @__cxa_end_catch() nounwind

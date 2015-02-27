@@ -8,7 +8,7 @@ entry:
 ; SSE: movss ([[A0:%rdi|%rcx]]), %xmm0
 ; SSE: cvtss2sd %xmm0, %xmm0
 
-  %0 = load float* %x, align 4
+  %0 = load float, float* %x, align 4
   %1 = fpext float %0 to double
   ret double %1
 }
@@ -17,7 +17,7 @@ define float @t2(double* nocapture %x) nounwind readonly ssp optsize {
 entry:
 ; SSE-LABEL: t2:
 ; SSE: cvtsd2ss ([[A0]]), %xmm0
-  %0 = load double* %x, align 8
+  %0 = load double, double* %x, align 8
   %1 = fptrunc double %0 to float
   ret float %1
 }
@@ -27,7 +27,7 @@ entry:
 ; SSE-LABEL: squirtf:
 ; SSE: movss ([[A0]]), %xmm0
 ; SSE: sqrtss %xmm0, %xmm0
-  %z = load float* %x
+  %z = load float, float* %x
   %t = call float @llvm.sqrt.f32(float %z)
   ret float %t
 }
@@ -37,7 +37,7 @@ entry:
 ; SSE-LABEL: squirt:
 ; SSE: movsd ([[A0]]), %xmm0
 ; SSE: sqrtsd %xmm0, %xmm0
-  %z = load double* %x
+  %z = load double, double* %x
   %t = call double @llvm.sqrt.f64(double %z)
   ret double %t
 }
@@ -46,7 +46,7 @@ define float @squirtf_size(float* %x) nounwind optsize {
 entry:
 ; SSE-LABEL: squirtf_size:
 ; SSE: sqrtss ([[A0]]), %xmm0
-  %z = load float* %x
+  %z = load float, float* %x
   %t = call float @llvm.sqrt.f32(float %z)
   ret float %t
 }
@@ -55,7 +55,7 @@ define double @squirt_size(double* %x) nounwind optsize {
 entry:
 ; SSE-LABEL: squirt_size:
 ; SSE: sqrtsd ([[A0]]), %xmm0
-  %z = load double* %x
+  %z = load double, double* %x
   %t = call double @llvm.sqrt.f64(double %z)
   ret double %t
 }
@@ -120,13 +120,13 @@ for.end:                                          ; preds = %for.body, %entry
 ; SSE: cvtsi2sdq %{{r[0-9a-x]+}}, %[[REG]]
 define i64 @loopdep2(i64* nocapture %x, double* nocapture %y) nounwind {
 entry:
-  %vx = load i64* %x
+  %vx = load i64, i64* %x
   br label %loop
 loop:
   %i = phi i64 [ 1, %entry ], [ %inc, %loop ]
   %s1 = phi i64 [ %vx, %entry ], [ %s2, %loop ]
   %fi = sitofp i64 %i to double
-  %vy = load double* %y
+  %vy = load double, double* %y
   %fipy = fadd double %fi, %vy
   %iipy = fptosi double %fipy to i64
   %s2 = add i64 %s1, %iipy
@@ -159,16 +159,16 @@ for.cond1.preheader:                              ; preds = %for.inc14, %entry
 for.body3:
   %indvars.iv = phi i64 [ 0, %for.cond1.preheader ], [ %indvars.iv.next, %for.body3 ]
   %arrayidx = getelementptr inbounds [1024 x i32], [1024 x i32]* @v, i64 0, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %conv = sitofp i32 %0 to double
   %arrayidx5 = getelementptr inbounds [1024 x double], [1024 x double]* @x, i64 0, i64 %indvars.iv
-  %1 = load double* %arrayidx5, align 8
+  %1 = load double, double* %arrayidx5, align 8
   %mul = fmul double %conv, %1
   %arrayidx7 = getelementptr inbounds [1024 x double], [1024 x double]* @y, i64 0, i64 %indvars.iv
-  %2 = load double* %arrayidx7, align 8
+  %2 = load double, double* %arrayidx7, align 8
   %mul8 = fmul double %mul, %2
   %arrayidx10 = getelementptr inbounds [1024 x double], [1024 x double]* @z, i64 0, i64 %indvars.iv
-  %3 = load double* %arrayidx10, align 8
+  %3 = load double, double* %arrayidx10, align 8
   %mul11 = fmul double %mul8, %3
   %arrayidx13 = getelementptr inbounds [1024 x double], [1024 x double]* @w, i64 0, i64 %indvars.iv
   store double %mul11, double* %arrayidx13, align 8

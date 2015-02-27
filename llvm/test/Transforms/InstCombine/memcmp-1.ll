@@ -33,9 +33,9 @@ define i32 @test_simplify2(i8* %mem1, i8* %mem2) {
 define i32 @test_simplify3(i8* %mem1, i8* %mem2) {
 ; CHECK-LABEL: @test_simplify3(
   %ret = call i32 @memcmp(i8* %mem1, i8* %mem2, i32 1)
-; CHECK: [[LOAD1:%[a-z]+]] = load i8* %mem1, align 1
+; CHECK: [[LOAD1:%[a-z]+]] = load i8, i8* %mem1, align 1
 ; CHECK: [[ZEXT1:%[a-z]+]] = zext i8 [[LOAD1]] to i32
-; CHECK: [[LOAD2:%[a-z]+]] = load i8* %mem2, align 1
+; CHECK: [[LOAD2:%[a-z]+]] = load i8, i8* %mem2, align 1
 ; CHECK: [[ZEXT2:%[a-z]+]] = zext i8 [[LOAD2]] to i32
 ; CHECK: [[RET:%[a-z]+]] = sub nsw i32 [[ZEXT1]], [[ZEXT2]]
   ret i32 %ret

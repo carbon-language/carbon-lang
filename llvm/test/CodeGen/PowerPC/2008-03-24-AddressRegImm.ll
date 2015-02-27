@@ -6,7 +6,7 @@ entry:
 	%tmp28 = and i64 %tmp2627, -16384		; <i64> [#uses=2]
 	%tmp2829 = inttoptr i64 %tmp28 to i8*		; <i8*> [#uses=1]
 	%tmp37 = getelementptr i8, i8* %tmp2829, i64 42		; <i8*> [#uses=1]
-	%tmp40 = load i8* %tmp37, align 1		; <i8> [#uses=1]
+	%tmp40 = load i8, i8* %tmp37, align 1		; <i8> [#uses=1]
 	%tmp4041 = zext i8 %tmp40 to i64		; <i64> [#uses=1]
 	%tmp42 = shl i64 %tmp4041, 8		; <i64> [#uses=1]
 	%tmp47 = add i64 %tmp42, 0		; <i64> [#uses=1]

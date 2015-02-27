@@ -153,18 +153,18 @@ entry:
   %arraydecay22 = getelementptr inbounds [2 x i8], [2 x i8]* %small, i32 0, i32 0
   %arraydecay23 = getelementptr inbounds [8 x i32], [8 x i32]* %large2, i32 0, i32 0
   %arraydecay24 = getelementptr inbounds [2 x i16], [2 x i16]* %small2, i32 0, i32 0
-  %0 = load i32* %x, align 4
-  %1 = load i32* %y, align 4
-  %2 = load i32* %z, align 4
+  %0 = load i32, i32* %x, align 4
+  %1 = load i32, i32* %y, align 4
+  %2 = load i32, i32* %z, align 4
   %coerce.dive = getelementptr %struct.struct_large_char, %struct.struct_large_char* %a, i32 0, i32 0
   %3 = bitcast [8 x i8]* %coerce.dive to i64*
-  %4 = load i64* %3, align 1
+  %4 = load i64, i64* %3, align 1
   %coerce.dive25 = getelementptr %struct.struct_small_char, %struct.struct_small_char* %b, i32 0, i32 0
   %5 = bitcast [2 x i8]* %coerce.dive25 to i16*
-  %6 = load i16* %5, align 1
+  %6 = load i16, i16* %5, align 1
   %coerce.dive26 = getelementptr %struct.struct_small_nonchar, %struct.struct_small_nonchar* %d, i32 0, i32 0
   %7 = bitcast [2 x i16]* %coerce.dive26 to i32*
-  %8 = load i32* %7, align 1
+  %8 = load i32, i32* %7, align 1
   call void @takes_all(i64 %4, i16 %6, %struct.struct_large_nonchar* byval align 8 %c, i32 %8, i8* %arraydecay, i8* %arraydecay22, i32* %arraydecay23, i16* %arraydecay24, i32* %ptr, i32 %0, i32 %1, i32 %2)
   ret void
 }
@@ -297,18 +297,18 @@ entry:
   %arraydecay22 = getelementptr inbounds [2 x i8], [2 x i8]* %small, i32 0, i32 0
   %arraydecay23 = getelementptr inbounds [8 x i32], [8 x i32]* %large2, i32 0, i32 0
   %arraydecay24 = getelementptr inbounds [2 x i16], [2 x i16]* %small2, i32 0, i32 0
-  %0 = load i32* %x, align 4
-  %1 = load i32* %y, align 4
-  %2 = load i32* %z, align 4
+  %0 = load i32, i32* %x, align 4
+  %1 = load i32, i32* %y, align 4
+  %2 = load i32, i32* %z, align 4
   %coerce.dive = getelementptr %struct.struct_large_char, %struct.struct_large_char* %a, i32 0, i32 0
   %3 = bitcast [8 x i8]* %coerce.dive to i64*
-  %4 = load i64* %3, align 1
+  %4 = load i64, i64* %3, align 1
   %coerce.dive25 = getelementptr %struct.struct_small_char, %struct.struct_small_char* %b, i32 0, i32 0
   %5 = bitcast [2 x i8]* %coerce.dive25 to i16*
-  %6 = load i16* %5, align 1
+  %6 = load i16, i16* %5, align 1
   %coerce.dive26 = getelementptr %struct.struct_small_nonchar, %struct.struct_small_nonchar* %d, i32 0, i32 0
   %7 = bitcast [2 x i16]* %coerce.dive26 to i32*
-  %8 = load i32* %7, align 1
+  %8 = load i32, i32* %7, align 1
   call void @takes_all(i64 %4, i16 %6, %struct.struct_large_nonchar* byval align 8 %c, i32 %8, i8* %arraydecay, i8* %arraydecay22, i32* %arraydecay23, i16* %arraydecay24, i32* %ptr, i32 %0, i32 %1, i32 %2)
   ret void
 }
@@ -429,18 +429,18 @@ entry:
   %arraydecay22 = getelementptr inbounds [2 x i8], [2 x i8]* %small, i32 0, i32 0
   %arraydecay23 = getelementptr inbounds [8 x i32], [8 x i32]* %large2, i32 0, i32 0
   %arraydecay24 = getelementptr inbounds [2 x i16], [2 x i16]* %small2, i32 0, i32 0
-  %0 = load i32* %x, align 4
-  %1 = load i32* %y, align 4
-  %2 = load i32* %z, align 4
+  %0 = load i32, i32* %x, align 4
+  %1 = load i32, i32* %y, align 4
+  %2 = load i32, i32* %z, align 4
   %coerce.dive = getelementptr %struct.struct_large_char, %struct.struct_large_char* %a, i32 0, i32 0
   %3 = bitcast [8 x i8]* %coerce.dive to i64*
-  %4 = load i64* %3, align 1
+  %4 = load i64, i64* %3, align 1
   %coerce.dive25 = getelementptr %struct.struct_small_char, %struct.struct_small_char* %b, i32 0, i32 0
   %5 = bitcast [2 x i8]* %coerce.dive25 to i16*
-  %6 = load i16* %5, align 1
+  %6 = load i16, i16* %5, align 1
   %coerce.dive26 = getelementptr %struct.struct_small_nonchar, %struct.struct_small_nonchar* %d, i32 0, i32 0
   %7 = bitcast [2 x i16]* %coerce.dive26 to i32*
-  %8 = load i32* %7, align 1
+  %8 = load i32, i32* %7, align 1
   call void @takes_all(i64 %4, i16 %6, %struct.struct_large_nonchar* byval align 8 %c, i32 %8, i8* %arraydecay, i8* %arraydecay22, i32* %arraydecay23, i16* %arraydecay24, i32* %ptr, i32 %0, i32 %1, i32 %2)
   ret void
 }
@@ -464,7 +464,7 @@ entry:
   %arrayidx = getelementptr inbounds [8 x i8], [8 x i8]* %large, i32 0, i64 0
   store i8 %call1, i8* %arrayidx, align 1
   call void @end_large_char()
-  %0 = load i32* %x, align 4
+  %0 = load i32, i32* %x, align 4
   %arraydecay = getelementptr inbounds [8 x i8], [8 x i8]* %large, i32 0, i32 0
   call void @takes_two(i32 %0, i8* %arraydecay)
   ret void

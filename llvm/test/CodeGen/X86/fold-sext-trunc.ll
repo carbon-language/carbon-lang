@@ -9,8 +9,8 @@ declare void @func_28(i64, i64)
 
 define void @int322(i32 %foo) nounwind {
 entry:
-	%val = load i64* getelementptr (%0* bitcast (%struct.S1* @g_10 to %0*), i32 0, i32 0)		; <i64> [#uses=1]
-	%0 = load i32* getelementptr (%struct.S1* @g_10, i32 0, i32 1), align 4		; <i32> [#uses=1]
+	%val = load i64, i64* getelementptr (%0* bitcast (%struct.S1* @g_10 to %0*), i32 0, i32 0)		; <i64> [#uses=1]
+	%0 = load i32, i32* getelementptr (%struct.S1* @g_10, i32 0, i32 1), align 4		; <i32> [#uses=1]
 	%1 = sext i32 %0 to i64		; <i64> [#uses=1]
 	%tmp4.i = lshr i64 %val, 32		; <i64> [#uses=1]
 	%tmp5.i = trunc i64 %tmp4.i to i32		; <i32> [#uses=1]

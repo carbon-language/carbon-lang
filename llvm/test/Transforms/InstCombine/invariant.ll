@@ -11,6 +11,6 @@ define i8 @f() {
   %i = call {}* @llvm.invariant.start(i64 1, i8* %a) ; <{}*> [#uses=0]
   ; CHECK: call {}* @llvm.invariant.start
   call void @g(i8* %a)
-  %r = load i8* %a                                ; <i8> [#uses=1]
+  %r = load i8, i8* %a                                ; <i8> [#uses=1]
   ret i8 %r
 }

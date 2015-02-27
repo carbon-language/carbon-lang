@@ -34,7 +34,7 @@ bb35:		; preds = %bb24, %entry
 	%tmp56 = add i32 %tmp55, -1		; <i32> [#uses=1]
 	%tmp5657 = sitofp i32 %tmp56 to double		; <double> [#uses=1]
 	%tmp15.i49 = getelementptr %struct.Lattice, %struct.Lattice* %this, i32 0, i32 0, i32 0		; <double*> [#uses=1]
-	%tmp16.i50 = load double* %tmp15.i49, align 4		; <double> [#uses=1]
+	%tmp16.i50 = load double, double* %tmp15.i49, align 4		; <double> [#uses=1]
 	%tmp17.i = fmul double %tmp5657, %tmp16.i50		; <double> [#uses=1]
 	%tmp20.i39 = fadd double %tmp17.i, %tmp17.i63		; <double> [#uses=1]
 	%tmp20.i23 = fadd double %tmp20.i39, %tmp17.i76		; <double> [#uses=1]
@@ -47,11 +47,11 @@ bb58.preheader:		; preds = %bb35
 bb58:		; preds = %bb58, %bb58.preheader
 	%tmp20.i7 = getelementptr %struct.CompAtom, %struct.CompAtom* %d, i32 0, i32 2		; <i32*> [#uses=2]
 	%tmp25.i = getelementptr %struct.CompAtom, %struct.CompAtom* %tmp1819, i32 0, i32 2		; <i32*> [#uses=2]
-	%tmp74.i = load i32* %tmp20.i7, align 1		; <i32> [#uses=1]
+	%tmp74.i = load i32, i32* %tmp20.i7, align 1		; <i32> [#uses=1]
 	%tmp82.i = and i32 %tmp74.i, 134217728		; <i32> [#uses=1]
 	%tmp85.i = or i32 0, %tmp82.i		; <i32> [#uses=1]
 	store i32 %tmp85.i, i32* %tmp25.i, align 1
-	%tmp88.i = load i32* %tmp20.i7, align 1		; <i32> [#uses=1]
+	%tmp88.i = load i32, i32* %tmp20.i7, align 1		; <i32> [#uses=1]
 	%tmp95.i = and i32 %tmp88.i, -268435456		; <i32> [#uses=1]
 	%tmp97.i = or i32 0, %tmp95.i		; <i32> [#uses=1]
 	store i32 %tmp97.i, i32* %tmp25.i, align 1

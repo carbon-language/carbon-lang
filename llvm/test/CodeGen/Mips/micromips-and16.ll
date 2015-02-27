@@ -8,8 +8,8 @@ entry:
   %b = alloca i32, align 4
   %c = alloca i32, align 4
   store i32 0, i32* %retval
-  %0 = load i32* %b, align 4
-  %1 = load i32* %c, align 4
+  %0 = load i32, i32* %b, align 4
+  %1 = load i32, i32* %c, align 4
   %and = and i32 %0, %1
   store i32 %and, i32* %a, align 4
   ret i32 0

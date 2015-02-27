@@ -18,7 +18,7 @@ cond_true.i:            ; preds = %entry
 cond_continue.i:                ; preds = %cond_true.i, %entry
         %mem_tmp.i.0 = phi i32* [ %X, %cond_true.i ], [ %X2, %entry ]           ; <i32*> [#uses=1]
         store i32 3, i32* %X
-        %tmp.3 = load i32* %mem_tmp.i.0         ; <i32> [#uses=1]
+        %tmp.3 = load i32, i32* %mem_tmp.i.0         ; <i32> [#uses=1]
         ret i32 %tmp.3
 }
 

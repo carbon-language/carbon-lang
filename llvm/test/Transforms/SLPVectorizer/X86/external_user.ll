@@ -34,8 +34,8 @@ target triple = "x86_64-apple-macosx10.8.0"
 define double @ext_user(double* noalias nocapture %B, double* noalias nocapture %A, i32 %n, i32 %m) {
 entry:
   %arrayidx = getelementptr inbounds double, double* %A, i64 1
-  %0 = load double* %arrayidx, align 8
-  %1 = load double* %A, align 8
+  %0 = load double, double* %arrayidx, align 8
+  %1 = load double, double* %A, align 8
   br label %for.body
 
 for.body:                                         ; preds = %for.body, %entry
@@ -69,9 +69,9 @@ for.end:                                          ; preds = %for.body
 define i32 @needtogather(double *noalias %a, i32 *noalias %b,  float * noalias %c,
                 i32 * noalias %d) {
 entry:
-  %0 = load i32* %d, align 4
+  %0 = load i32, i32* %d, align 4
   %conv = sitofp i32 %0 to float
-  %1 = load float* %c
+  %1 = load float, float* %c
   %sub = fsub float 0.000000e+00, %1
   %mul = fmul float %sub, 0.000000e+00
   %add = fadd float %conv, %mul

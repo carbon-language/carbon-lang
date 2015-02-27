@@ -23,7 +23,7 @@ entry:
   %a2ptr = getelementptr [3 x i8], [3 x i8]* %a, i64 0, i32 2
   store i8 0, i8* %a2ptr
   %aiptr = bitcast [3 x i8]* %a to i24*
-  %ai = load i24* %aiptr
+  %ai = load i24, i24* %aiptr
 ; CHECK-NOT: store
 ; CHECK-NOT: load
 ; CHECK:      %[[ext2:.*]] = zext i8 0 to i24
@@ -41,11 +41,11 @@ entry:
   %biptr = bitcast [3 x i8]* %b to i24*
   store i24 %ai, i24* %biptr
   %b0ptr = getelementptr [3 x i8], [3 x i8]* %b, i64 0, i32 0
-  %b0 = load i8* %b0ptr
+  %b0 = load i8, i8* %b0ptr
   %b1ptr = getelementptr [3 x i8], [3 x i8]* %b, i64 0, i32 1
-  %b1 = load i8* %b1ptr
+  %b1 = load i8, i8* %b1ptr
   %b2ptr = getelementptr [3 x i8], [3 x i8]* %b, i64 0, i32 2
-  %b2 = load i8* %b2ptr
+  %b2 = load i8, i8* %b2ptr
 ; CHECK-NOT: store
 ; CHECK-NOT: load
 ; CHECK:      %[[shift0:.*]] = lshr i24 %[[insert0]], 16
@@ -102,7 +102,7 @@ entry:
 ; CHECK-NOT: load
 
   %aiptr = bitcast [7 x i8]* %a to i56*
-  %ai = load i56* %aiptr
+  %ai = load i56, i56* %aiptr
   %ret = zext i56 %ai to i64
   ret i64 %ret
 ; CHECK-NEXT: %[[ext4:.*]] = zext i16 1 to i56

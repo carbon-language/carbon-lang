@@ -31,7 +31,7 @@ entry:
 define i64 @callee2(%struct.pad* byval nocapture readnone %x, i32 signext %y, %struct.test* byval align 16 nocapture readonly %z) {
 entry:
   %x1 = getelementptr inbounds %struct.test, %struct.test* %z, i64 0, i32 0
-  %0 = load i64* %x1, align 16
+  %0 = load i64, i64* %x1, align 16
   ret i64 %0
 }
 ; CHECK-LABEL: @callee2

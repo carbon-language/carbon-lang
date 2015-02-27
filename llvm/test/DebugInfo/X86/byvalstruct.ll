@@ -74,7 +74,7 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.ImageInfo* %info, metadata !33, metadata !{!"0x102"}), !dbg !34
   store i64 %length, i64* %length.addr, align 8
   call void @llvm.dbg.declare(metadata i64* %length.addr, metadata !35, metadata !{!"0x102"}), !dbg !36
-  %0 = load i8** %retval, !dbg !37
+  %0 = load i8*, i8** %retval, !dbg !37
   ret i8* %0, !dbg !37
 }
 

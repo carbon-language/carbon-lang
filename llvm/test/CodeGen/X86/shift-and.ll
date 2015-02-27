@@ -38,7 +38,7 @@ define void @t3(i16 %t) nounwind {
 ; X64-NOT: andl
 ; X64: sarw
        %shamt = and i16 %t, 31
-       %tmp = load i16* @X
+       %tmp = load i16, i16* @X
        %tmp1 = ashr i16 %tmp, %shamt
        store i16 %tmp1, i16* @X
        ret void
@@ -71,7 +71,7 @@ entry:
 ; X64: decq
 ; X64: andq
   %shr = lshr i64 %key, 3
-  %0 = load i64* %val, align 8
+  %0 = load i64, i64* %val, align 8
   %sub = add i64 %0, 2305843009213693951
   %and = and i64 %sub, %shr
   ret i64 %and

@@ -35,7 +35,7 @@ while.body:
   %and = and <4 x i32> %x.02, <i32 127, i32 127, i32 127, i32 127>
   %incdec.ptr = getelementptr inbounds <4 x i32>, <4 x i32>* %p.addr.04, i64 1
   store <4 x i32> %and, <4 x i32>* %p.addr.04, align 16
-  %0 = load <4 x i32>* %incdec.ptr, align 16
+  %0 = load <4 x i32>, <4 x i32>* %incdec.ptr, align 16
   %add = shl <4 x i32> %0, <i32 1, i32 1, i32 1, i32 1>
   %tobool = icmp eq i32 %dec, 0
   br i1 %tobool, label %while.end, label %while.body

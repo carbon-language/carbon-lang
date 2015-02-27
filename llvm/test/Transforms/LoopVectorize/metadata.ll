@@ -10,7 +10,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds float, float* %b, i64 %indvars.iv
-  %0 = load float* %arrayidx, align 4, !tbaa !0
+  %0 = load float, float* %arrayidx, align 4, !tbaa !0
   %conv = fptosi float %0 to i32
   %arrayidx2 = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   store i32 %conv, i32* %arrayidx2, align 4, !tbaa !4
@@ -23,7 +23,7 @@ for.end:                                          ; preds = %for.body
 }
 
 ; CHECK-LABEL: @test1
-; CHECK: load <4 x float>* %{{.*}}, align 4, !tbaa ![[TFLT:[0-9]+]]
+; CHECK: load <4 x float>, <4 x float>* %{{.*}}, align 4, !tbaa ![[TFLT:[0-9]+]]
 ; CHECK: store <4 x i32> %{{.*}}, <4 x i32>* %{{.*}}, align 4, !tbaa ![[TINT:[0-9]+]]
 ; CHECK: ret i32 0
 

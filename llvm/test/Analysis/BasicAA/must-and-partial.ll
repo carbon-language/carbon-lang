@@ -20,7 +20,7 @@ green:
   %bigbase0 = bitcast i8* %base to i16*
   store i16 -1, i16* %bigbase0
 
-  %loaded = load i8* %phi
+  %loaded = load i8, i8* %phi
   ret i8 %loaded
 }
 
@@ -34,6 +34,6 @@ entry:
   %bigbase1 = bitcast i8* %base to i16*
   store i16 -1, i16* %bigbase1
 
-  %loaded = load i8* %sel
+  %loaded = load i8, i8* %sel
   ret i8 %loaded
 }

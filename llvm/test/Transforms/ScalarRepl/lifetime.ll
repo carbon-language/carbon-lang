@@ -30,7 +30,7 @@ define void @test2() {
   %B = bitcast i32* %A2 to i8*
   store i32 0, i32* %A2
   call void @llvm.lifetime.start(i64 -1, i8* %B)
-  %C = load i32* %A2
+  %C = load i32, i32* %A2
   ret void
 ; CHECK: ret void
 }
@@ -44,7 +44,7 @@ define void @test3() {
   %B = bitcast i32* %A2 to i8*
   store i32 0, i32* %A2
   call void @llvm.lifetime.start(i64 6, i8* %B)
-  %C = load i32* %A2
+  %C = load i32, i32* %A2
   ret void
 ; CHECK-NEXT: ret void
 }
@@ -58,7 +58,7 @@ define void @test4() {
   %B = bitcast i32* %A2 to i8*
   store i32 0, i32* %A2
   call void @llvm.lifetime.start(i64 1, i8* %B)
-  %C = load i32* %A2
+  %C = load i32, i32* %A2
   ret void
 ; CHECK-NEXT: ret void
 }
@@ -90,7 +90,7 @@ define void @test5() {
 ; CHECK: llvm.lifetime{{.*}}i64 1
 ; CHECK: llvm.lifetime{{.*}}i64 1
 ; CHECK: llvm.lifetime{{.*}}i64 1
-  %C = load i8* %A2
+  %C = load i8, i8* %A2
   ret void
 }
 

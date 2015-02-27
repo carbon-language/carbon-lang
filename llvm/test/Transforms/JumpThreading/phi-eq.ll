@@ -98,33 +98,33 @@ sw.default.i5:                                    ; preds = %get_filter_list.exi
 get_filter_list.exit6:                            ; preds = %sw.bb3.i4, %sw.bb2.i3, %sw.bb1.i2, %sw.bb.i1
   %1 = phi %struct._GList** [ @display_edited_filters, %sw.bb3.i4 ], [ @capture_edited_filters, %sw.bb2.i3 ], [ @display_filters, %sw.bb1.i2 ], [ @capture_filters, %sw.bb.i1 ]
 ; CHECK: %2 = load
-  %2 = load %struct._GList** %1, align 8
+  %2 = load %struct._GList*, %struct._GList** %1, align 8
 ; We should have jump-threading insert an additional load here for the value
 ; coming out of the first switch, which is picked up by a subsequent phi
-; CHECK: %.pr = load %struct._GList** %0
+; CHECK: %.pr = load %struct._GList*, %struct._GList** %0
 ; CHECK-NEXT:  br label %while.cond
   br label %while.cond
 
 ; CHECK: while.cond
 while.cond:                                       ; preds = %while.body, %get_filter_list.exit6
 ; CHECK: {{= phi .*%.pr}}
-  %3 = load %struct._GList** %0, align 8
+  %3 = load %struct._GList*, %struct._GList** %0, align 8
 ; CHECK: tobool
   %tobool = icmp ne %struct._GList* %3, null
   br i1 %tobool, label %while.body, label %while.end
 
 while.body:                                       ; preds = %while.cond
-  %4 = load %struct._GList** %0, align 8
-  %5 = load %struct._GList** %0, align 8
+  %4 = load %struct._GList*, %struct._GList** %0, align 8
+  %5 = load %struct._GList*, %struct._GList** %0, align 8
   %call2 = call %struct._GList* @g_list_first(%struct._GList* %5)
   %data.i = getelementptr inbounds %struct._GList, %struct._GList* %call2, i32 0, i32 0
-  %6 = load i8** %data.i, align 8
+  %6 = load i8*, i8** %data.i, align 8
   %7 = bitcast i8* %6 to %struct.filter_def*
   %name.i = getelementptr inbounds %struct.filter_def, %struct.filter_def* %7, i32 0, i32 0
-  %8 = load i8** %name.i, align 8
+  %8 = load i8*, i8** %name.i, align 8
   call void @g_free(i8* %8) nounwind
   %strval.i = getelementptr inbounds %struct.filter_def, %struct.filter_def* %7, i32 0, i32 1
-  %9 = load i8** %strval.i, align 8
+  %9 = load i8*, i8** %strval.i, align 8
   call void @g_free(i8* %9) nounwind
   %10 = bitcast %struct.filter_def* %7 to i8*
   call void @g_free(i8* %10) nounwind
@@ -136,7 +136,7 @@ while.end:                                        ; preds = %while.cond
   br label %do.body4
 
 do.body4:                                         ; preds = %while.end
-  %11 = load %struct._GList** %0, align 8
+  %11 = load %struct._GList*, %struct._GList** %0, align 8
   %call5 = call i32 @g_list_length(%struct._GList* %11)
   %cmp6 = icmp eq i32 %call5, 0
   br i1 %cmp6, label %if.then7, label %if.else8
@@ -161,13 +161,13 @@ while.cond11:                                     ; preds = %cond.end, %do.end10
 
 while.body13:                                     ; preds = %while.cond11
   %data = getelementptr inbounds %struct._GList, %struct._GList* %cond10, i32 0, i32 0
-  %12 = load i8** %data, align 8
+  %12 = load i8*, i8** %data, align 8
   %13 = bitcast i8* %12 to %struct.filter_def*
-  %14 = load %struct._GList** %0, align 8
+  %14 = load %struct._GList*, %struct._GList** %0, align 8
   %name = getelementptr inbounds %struct.filter_def, %struct.filter_def* %13, i32 0, i32 0
-  %15 = load i8** %name, align 8
+  %15 = load i8*, i8** %name, align 8
   %strval = getelementptr inbounds %struct.filter_def, %struct.filter_def* %13, i32 0, i32 1
-  %16 = load i8** %strval, align 8
+  %16 = load i8*, i8** %strval, align 8
   %call.i7 = call noalias i8* @g_malloc(i64 16) nounwind
   %17 = bitcast i8* %call.i7 to %struct.filter_def*
   %call1.i = call noalias i8* @g_strdup(i8* %15) nounwind
@@ -184,7 +184,7 @@ while.body13:                                     ; preds = %while.cond11
 
 cond.true:                                        ; preds = %while.body13
   %next = getelementptr inbounds %struct._GList, %struct._GList* %cond10, i32 0, i32 1
-  %19 = load %struct._GList** %next, align 8
+  %19 = load %struct._GList*, %struct._GList** %next, align 8
   br label %cond.end
 
 cond.false:                                       ; preds = %while.body13

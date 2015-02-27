@@ -6,7 +6,7 @@ define <4 x i16> @a(i32* %x1) nounwind {
 ; CHECK-NEXT:    movd %[[R]], %xmm0
 ; CHECK-NEXT:    retl
 
-  %x2 = load i32* %x1
+  %x2 = load i32, i32* %x1
   %x3 = lshr i32 %x2, 1
   %x = trunc i32 %x3 to i16
   %r = insertelement <4 x i16> zeroinitializer, i16 %x, i32 0
@@ -20,7 +20,7 @@ define <8 x i16> @b(i32* %x1) nounwind {
 ; CHECK-NEXT:    movd %e[[R]]x, %xmm0
 ; CHECK-NEXT:    retl
 
-  %x2 = load i32* %x1
+  %x2 = load i32, i32* %x1
   %x3 = lshr i32 %x2, 1
   %x = trunc i32 %x3 to i16
   %r = insertelement <8 x i16> zeroinitializer, i16 %x, i32 0
@@ -34,7 +34,7 @@ define <8 x i8> @c(i32* %x1) nounwind {
 ; CHECK-NEXT:    movd %e[[R]]x, %xmm0
 ; CHECK-NEXT:    retl
 
-  %x2 = load i32* %x1
+  %x2 = load i32, i32* %x1
   %x3 = lshr i32 %x2, 1
   %x = trunc i32 %x3 to i8
   %r = insertelement <8 x i8> zeroinitializer, i8 %x, i32 0
@@ -48,7 +48,7 @@ define <16 x i8> @d(i32* %x1) nounwind {
 ; CHECK-NEXT:    movd %e[[R]]x, %xmm0
 ; CHECK-NEXT:    retl
 
-  %x2 = load i32* %x1
+  %x2 = load i32, i32* %x1
   %x3 = lshr i32 %x2, 1
   %x = trunc i32 %x3 to i8
   %r = insertelement <16 x i8> zeroinitializer, i8 %x, i32 0

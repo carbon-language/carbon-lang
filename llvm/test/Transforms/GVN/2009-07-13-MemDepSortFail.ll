@@ -22,11 +22,11 @@ bb2:		; preds = %bb
 	br label %bb62
 
 bb9:		; preds = %bb
-	%0 = load i8* %sp.1, align 1		; <i8> [#uses=0]
+	%0 = load i8, i8* %sp.1, align 1		; <i8> [#uses=0]
 	br label %bb62
 
 bb51:		; preds = %bb
-	%1 = load i8* %sp.1, align 1		; <i8> [#uses=0]
+	%1 = load i8, i8* %sp.1, align 1		; <i8> [#uses=0]
 	ret i8* null
 
 bb62:		; preds = %bb9, %bb2, %bb

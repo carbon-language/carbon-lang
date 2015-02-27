@@ -19,8 +19,8 @@ entry:
 ; M3-LABEL: t:
 ; M3-NOT: ldrd
 
-	%0 = load i64** @b, align 4
-	%1 = load i64* %0, align 4
+	%0 = load i64*, i64** @b, align 4
+	%1 = load i64, i64* %0, align 4
 	%2 = mul i64 %1, %a
 	ret i64 %2
 }
@@ -57,8 +57,8 @@ bb:                                               ; preds = %bb, %entry
   %scevgep4 = getelementptr i32, i32* %b, i32 %i.03    ; <i32*> [#uses=1]
   %tmp = add i32 %i.03, 1                         ; <i32> [#uses=3]
   %scevgep5 = getelementptr i32, i32* %a, i32 %tmp     ; <i32*> [#uses=1]
-  %2 = load i32* %scevgep, align 4                ; <i32> [#uses=1]
-  %3 = load i32* %scevgep5, align 4               ; <i32> [#uses=1]
+  %2 = load i32, i32* %scevgep, align 4                ; <i32> [#uses=1]
+  %3 = load i32, i32* %scevgep5, align 4               ; <i32> [#uses=1]
   %4 = add nsw i32 %3, %2                         ; <i32> [#uses=1]
   store i32 %4, i32* %scevgep4, align 4
   %exitcond = icmp eq i32 %tmp, %0                ; <i1> [#uses=1]
@@ -84,8 +84,8 @@ entry:
 ; A8-NEXT: str [[FIELD1]], {{\[}}[[BASE]]{{\]}}
   %orig_blocks = alloca [256 x i16], align 2
   %0 = bitcast [256 x i16]* %orig_blocks to i8*call void @llvm.lifetime.start(i64 512, i8* %0) nounwind
-  %tmp1 = load i32* getelementptr inbounds (%struct.Test* @TestVar, i32 0, i32 1), align 4
-  %tmp2 = load i32* getelementptr inbounds (%struct.Test* @TestVar, i32 0, i32 2), align 4
+  %tmp1 = load i32, i32* getelementptr inbounds (%struct.Test* @TestVar, i32 0, i32 1), align 4
+  %tmp2 = load i32, i32* getelementptr inbounds (%struct.Test* @TestVar, i32 0, i32 2), align 4
   %add = add nsw i32 %tmp2, %tmp1
   store i32 %add, i32* getelementptr inbounds (%struct.Test* @TestVar, i32 0, i32 0), align 4
   call void @llvm.lifetime.end(i64 512, i8* %0) nounwind

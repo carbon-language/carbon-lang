@@ -14,13 +14,13 @@ entry:
   store i32 0, i32* %retval
   store double 1.540000e+01, double* %a, align 8
   store double 9.100000e+00, double* %b, align 8
-  %0 = load double* %a, align 8
-  %1 = load double* %b, align 8
+  %0 = load double, double* %a, align 8
+  %1 = load double, double* %b, align 8
   %add = fadd double %0, %1
   store double %add, double* %c, align 8
-  %2 = load double* %c, align 8
+  %2 = load double, double* %c, align 8
   %conv = fptosi double %2 to i32
   store i32 %conv, i32* %i, align 4
-  %3 = load i32* %i, align 4
+  %3 = load i32, i32* %i, align 4
   ret i32 %3
 }

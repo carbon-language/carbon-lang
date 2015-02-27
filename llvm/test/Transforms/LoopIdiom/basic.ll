@@ -150,7 +150,7 @@ for.body:                                         ; preds = %bb.nph, %for.body
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body ]
   %I.0.014 = getelementptr i8, i8* %Base, i64 %indvar
   %DestI = getelementptr i8, i8* %Dest, i64 %indvar
-  %V = load i8* %I.0.014, align 1
+  %V = load i8, i8* %I.0.014, align 1
   store i8 %V, i8* %DestI, align 1
   %indvar.next = add i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar.next, %Size
@@ -223,7 +223,7 @@ for.body:                                         ; preds = %bb.nph, %for.body
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body ]
   %I.0.014 = getelementptr i8, i8* %Base, i64 %indvar
   %DestI = getelementptr i8, i8* %Dest, i64 %indvar
-  %V = load i8* %I.0.014, align 1
+  %V = load i8, i8* %I.0.014, align 1
   store i8 %V, i8* %DestI, align 1
 
   ;; This store can clobber the input.
@@ -363,7 +363,7 @@ for.body:                                         ; preds = %for.inc, %for.body.
   %add = add nsw i32 %tmp5, 4
   %idxprom = sext i32 %add to i64
   %arrayidx = getelementptr inbounds [7 x i32], [7 x i32]* @g_50, i32 0, i64 %idxprom
-  %tmp2 = load i32* %arrayidx, align 4
+  %tmp2 = load i32, i32* %arrayidx, align 4
   %add4 = add nsw i32 %tmp5, 5
   %idxprom5 = sext i32 %add4 to i64
   %arrayidx6 = getelementptr inbounds [7 x i32], [7 x i32]* @g_50, i32 0, i64 %idxprom5
@@ -373,7 +373,7 @@ for.body:                                         ; preds = %for.inc, %for.body.
   br i1 %cmp, label %for.body, label %for.end
 
 for.end:                                          ; preds = %for.inc
-  %tmp8 = load i32* getelementptr inbounds ([7 x i32]* @g_50, i32 0, i64 6), align 4
+  %tmp8 = load i32, i32* getelementptr inbounds ([7 x i32]* @g_50, i32 0, i64 6), align 4
   ret i32 %tmp8
 ; CHECK-LABEL: @test14(
 ; CHECK: for.body:
@@ -404,7 +404,7 @@ entry:
 while.body:
   %phi.ptr = phi i32* [ %s, %entry ], [ %next.ptr, %while.body ]
   %src.ptr = getelementptr inbounds i32, i32* %phi.ptr, i64 1
-  %val = load i32* %src.ptr, align 4
+  %val = load i32, i32* %src.ptr, align 4
 ; CHECK: load
   %dst.ptr = getelementptr inbounds i32, i32* %phi.ptr, i64 0
   store i32 %val, i32* %dst.ptr, align 4

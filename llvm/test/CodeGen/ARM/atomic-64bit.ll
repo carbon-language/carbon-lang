@@ -214,7 +214,7 @@ define i64 @test8(i64* %ptr) {
 ; CHECK-THUMB: ldrexd [[REG1:[a-z0-9]+]], [[REG2:[a-z0-9]+]]
 ; CHECK-THUMB: dmb {{ish$}}
 
-  %r = load atomic i64* %ptr seq_cst, align 8
+  %r = load atomic i64, i64* %ptr seq_cst, align 8
   ret i64 %r
 }
 

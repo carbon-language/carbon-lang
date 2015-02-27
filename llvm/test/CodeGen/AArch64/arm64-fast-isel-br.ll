@@ -3,7 +3,7 @@
 define void @branch1() nounwind uwtable ssp {
   %x = alloca i32, align 4
   store i32 0, i32* %x, align 4
-  %1 = load i32* %x, align 4
+  %1 = load i32, i32* %x, align 4
   %2 = icmp ne i32 %1, 0
   br i1 %2, label %3, label %4
 
@@ -23,7 +23,7 @@ define void @branch2() nounwind uwtable ssp {
   store i32 1, i32* %y, align 4
   store i32 1, i32* %x, align 4
   store i32 0, i32* %z, align 4
-  %2 = load i32* %x, align 4
+  %2 = load i32, i32* %x, align 4
   %3 = icmp ne i32 %2, 0
   br i1 %3, label %4, label %5
 
@@ -32,12 +32,12 @@ define void @branch2() nounwind uwtable ssp {
   br label %14
 
 ; <label>:5                                       ; preds = %0
-  %6 = load i32* %y, align 4
+  %6 = load i32, i32* %y, align 4
   %7 = icmp ne i32 %6, 0
   br i1 %7, label %8, label %13
 
 ; <label>:8                                       ; preds = %5
-  %9 = load i32* %z, align 4
+  %9 = load i32, i32* %z, align 4
   %10 = icmp ne i32 %9, 0
   br i1 %10, label %11, label %12
 
@@ -53,7 +53,7 @@ define void @branch2() nounwind uwtable ssp {
   br label %14
 
 ; <label>:14                                      ; preds = %4, %11, %12, %13
-  %15 = load i32* %1
+  %15 = load i32, i32* %1
   ret void
 }
 
@@ -93,7 +93,7 @@ entry:
   store i16 %b, i16* %b.addr, align 2
   store i32 %c, i32* %c.addr, align 4
   store i64 %d, i64* %d.addr, align 8
-  %0 = load i16* %b.addr, align 2
+  %0 = load i16, i16* %b.addr, align 2
 ; CHECK: and w0, w0, #0x1
 ; CHECK: cmp w0, #0
 ; CHECK: b.eq LBB4_2
@@ -105,7 +105,7 @@ if.then:                                          ; preds = %entry
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %entry
-  %1 = load i32* %c.addr, align 4
+  %1 = load i32, i32* %c.addr, align 4
 ; CHECK: and w[[REG:[0-9]+]], w{{[0-9]+}}, #0x1
 ; CHECK: cmp w[[REG]], #0
 ; CHECK: b.eq LBB4_4
@@ -117,7 +117,7 @@ if.then3:                                         ; preds = %if.end
   br label %if.end4
 
 if.end4:                                          ; preds = %if.then3, %if.end
-  %2 = load i64* %d.addr, align 8
+  %2 = load i64, i64* %d.addr, align 8
 ; CHECK: cmp w{{[0-9]+}}, #0
 ; CHECK: b.eq LBB4_6
   %conv5 = trunc i64 %2 to i1
@@ -128,7 +128,7 @@ if.then7:                                         ; preds = %if.end4
   br label %if.end8
 
 if.end8:                                          ; preds = %if.then7, %if.end4
-  %3 = load i8* %a.addr, align 1
+  %3 = load i8, i8* %a.addr, align 1
   ret i8 %3
 }
 

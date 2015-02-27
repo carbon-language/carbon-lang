@@ -77,13 +77,13 @@ entry:
 
 define i32 @AtomicLoad(i32* %p) sanitize_memory {
 entry:
-  %0 = load atomic i32* %p seq_cst, align 16
+  %0 = load atomic i32, i32* %p seq_cst, align 16
   ret i32 %0
 }
 
 ; CHECK: @AtomicLoad
-; CHECK: load atomic i32* {{.*}} seq_cst, align 16
-; CHECK: [[SHADOW:%[01-9a-z_]+]] = load i32* {{.*}}, align 16
+; CHECK: load atomic i32, i32* {{.*}} seq_cst, align 16
+; CHECK: [[SHADOW:%[01-9a-z_]+]] = load i32, i32* {{.*}}, align 16
 ; CHECK: store i32 {{.*}}[[SHADOW]], {{.*}} @__msan_retval_tls
 ; CHECK: ret i32
 
@@ -92,13 +92,13 @@ entry:
 
 define i32 @AtomicLoadAcquire(i32* %p) sanitize_memory {
 entry:
-  %0 = load atomic i32* %p acquire, align 16
+  %0 = load atomic i32, i32* %p acquire, align 16
   ret i32 %0
 }
 
 ; CHECK: @AtomicLoadAcquire
-; CHECK: load atomic i32* {{.*}} acquire, align 16
-; CHECK: [[SHADOW:%[01-9a-z_]+]] = load i32* {{.*}}, align 16
+; CHECK: load atomic i32, i32* {{.*}} acquire, align 16
+; CHECK: [[SHADOW:%[01-9a-z_]+]] = load i32, i32* {{.*}}, align 16
 ; CHECK: store i32 {{.*}}[[SHADOW]], {{.*}} @__msan_retval_tls
 ; CHECK: ret i32
 
@@ -107,13 +107,13 @@ entry:
 
 define i32 @AtomicLoadMonotonic(i32* %p) sanitize_memory {
 entry:
-  %0 = load atomic i32* %p monotonic, align 16
+  %0 = load atomic i32, i32* %p monotonic, align 16
   ret i32 %0
 }
 
 ; CHECK: @AtomicLoadMonotonic
-; CHECK: load atomic i32* {{.*}} acquire, align 16
-; CHECK: [[SHADOW:%[01-9a-z_]+]] = load i32* {{.*}}, align 16
+; CHECK: load atomic i32, i32* {{.*}} acquire, align 16
+; CHECK: [[SHADOW:%[01-9a-z_]+]] = load i32, i32* {{.*}}, align 16
 ; CHECK: store i32 {{.*}}[[SHADOW]], {{.*}} @__msan_retval_tls
 ; CHECK: ret i32
 
@@ -122,13 +122,13 @@ entry:
 
 define i32 @AtomicLoadUnordered(i32* %p) sanitize_memory {
 entry:
-  %0 = load atomic i32* %p unordered, align 16
+  %0 = load atomic i32, i32* %p unordered, align 16
   ret i32 %0
 }
 
 ; CHECK: @AtomicLoadUnordered
-; CHECK: load atomic i32* {{.*}} acquire, align 16
-; CHECK: [[SHADOW:%[01-9a-z_]+]] = load i32* {{.*}}, align 16
+; CHECK: load atomic i32, i32* {{.*}} acquire, align 16
+; CHECK: [[SHADOW:%[01-9a-z_]+]] = load i32, i32* {{.*}}, align 16
 ; CHECK: store i32 {{.*}}[[SHADOW]], {{.*}} @__msan_retval_tls
 ; CHECK: ret i32
 

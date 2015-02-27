@@ -19,18 +19,18 @@ entry:
   store %struct.BG_CoordinateMapping_t* %map, %struct.BG_CoordinateMapping_t** %map.addr, align 8
   store i64* %numentries, i64** %numentries.addr, align 8
   store i64 1055, i64* %r0, align 8
-  %0 = load i64* %mapsize.addr, align 8
+  %0 = load i64, i64* %mapsize.addr, align 8
   store i64 %0, i64* %r3, align 8
-  %1 = load %struct.BG_CoordinateMapping_t** %map.addr, align 8
+  %1 = load %struct.BG_CoordinateMapping_t*, %struct.BG_CoordinateMapping_t** %map.addr, align 8
   %2 = ptrtoint %struct.BG_CoordinateMapping_t* %1 to i64
   store i64 %2, i64* %r4, align 8
-  %3 = load i64** %numentries.addr, align 8
+  %3 = load i64*, i64** %numentries.addr, align 8
   %4 = ptrtoint i64* %3 to i64
   store i64 %4, i64* %r5, align 8
-  %5 = load i64* %r0, align 8
-  %6 = load i64* %r3, align 8
-  %7 = load i64* %r4, align 8
-  %8 = load i64* %r5, align 8
+  %5 = load i64, i64* %r0, align 8
+  %6 = load i64, i64* %r3, align 8
+  %7 = load i64, i64* %r4, align 8
+  %8 = load i64, i64* %r5, align 8
   %9 = call { i64, i64, i64, i64 } asm sideeffect "sc", "={r0},={r3},={r4},={r5},{r0},{r3},{r4},{r5},~{r6},~{r7},~{r8},~{r9},~{r10},~{r11},~{r12},~{cr0},~{memory}"(i64 %5, i64 %6, i64 %7, i64 %8) #1, !srcloc !0
 
 ; CHECK-LABEL: @Kernel_RanksToCoords
@@ -52,9 +52,9 @@ entry:
   store i64 %asmresult1, i64* %r3, align 8
   store i64 %asmresult2, i64* %r4, align 8
   store i64 %asmresult3, i64* %r5, align 8
-  %10 = load i64* %r3, align 8
+  %10 = load i64, i64* %r3, align 8
   store i64 %10, i64* %tmp
-  %11 = load i64* %tmp
+  %11 = load i64, i64* %tmp
   %conv = trunc i64 %11 to i32
   ret i32 %conv
 }
@@ -87,7 +87,7 @@ entry:
 
 if.then:                                          ; preds = %entry
   call void @mtrace()
-  %.pre = load i32* %argc.addr, align 4
+  %.pre = load i32, i32* %argc.addr, align 4
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %entry

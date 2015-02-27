@@ -107,7 +107,7 @@ define void @seq_cst_fence() {
 }
 
 define i32 @atomic_load(i32* %p) {
-   %r = load atomic i32* %p seq_cst, align 4
+   %r = load atomic i32, i32* %p seq_cst, align 4
    ret i32 %r
    ; CHECK-LABEL: atomic_load:
    ; CHECK: ldar
@@ -116,21 +116,21 @@ define i32 @atomic_load(i32* %p) {
 define i8 @atomic_load_relaxed_8(i8* %p, i32 %off32) {
 ; CHECK-LABEL: atomic_load_relaxed_8:
   %ptr_unsigned = getelementptr i8, i8* %p, i32 4095
-  %val_unsigned = load atomic i8* %ptr_unsigned monotonic, align 1
+  %val_unsigned = load atomic i8, i8* %ptr_unsigned monotonic, align 1
 ; CHECK: ldrb {{w[0-9]+}}, [x0, #4095]
 
   %ptr_regoff = getelementptr i8, i8* %p, i32 %off32
-  %val_regoff = load atomic i8* %ptr_regoff unordered, align 1
+  %val_regoff = load atomic i8, i8* %ptr_regoff unordered, align 1
   %tot1 = add i8 %val_unsigned, %val_regoff
 ; CHECK: ldrb {{w[0-9]+}}, [x0, w1, sxtw]
 
   %ptr_unscaled = getelementptr i8, i8* %p, i32 -256
-  %val_unscaled = load atomic i8* %ptr_unscaled monotonic, align 1
+  %val_unscaled = load atomic i8, i8* %ptr_unscaled monotonic, align 1
   %tot2 = add i8 %tot1, %val_unscaled
 ; CHECK: ldurb {{w[0-9]+}}, [x0, #-256]
 
   %ptr_random = getelementptr i8, i8* %p, i32 1191936 ; 0x123000 (i.e. ADD imm)
-  %val_random = load atomic i8* %ptr_random unordered, align 1
+  %val_random = load atomic i8, i8* %ptr_random unordered, align 1
   %tot3 = add i8 %tot2, %val_random
 ; CHECK: add x[[ADDR:[0-9]+]], x0, #291, lsl #12
 ; CHECK: ldrb {{w[0-9]+}}, [x[[ADDR]]]
@@ -141,21 +141,21 @@ define i8 @atomic_load_relaxed_8(i8* %p, i32 %off32) {
 define i16 @atomic_load_relaxed_16(i16* %p, i32 %off32) {
 ; CHECK-LABEL: atomic_load_relaxed_16:
   %ptr_unsigned = getelementptr i16, i16* %p, i32 4095
-  %val_unsigned = load atomic i16* %ptr_unsigned monotonic, align 2
+  %val_unsigned = load atomic i16, i16* %ptr_unsigned monotonic, align 2
 ; CHECK: ldrh {{w[0-9]+}}, [x0, #8190]
 
   %ptr_regoff = getelementptr i16, i16* %p, i32 %off32
-  %val_regoff = load atomic i16* %ptr_regoff unordered, align 2
+  %val_regoff = load atomic i16, i16* %ptr_regoff unordered, align 2
   %tot1 = add i16 %val_unsigned, %val_regoff
 ; CHECK: ldrh {{w[0-9]+}}, [x0, w1, sxtw #1]
 
   %ptr_unscaled = getelementptr i16, i16* %p, i32 -128
-  %val_unscaled = load atomic i16* %ptr_unscaled monotonic, align 2
+  %val_unscaled = load atomic i16, i16* %ptr_unscaled monotonic, align 2
   %tot2 = add i16 %tot1, %val_unscaled
 ; CHECK: ldurh {{w[0-9]+}}, [x0, #-256]
 
   %ptr_random = getelementptr i16, i16* %p, i32 595968 ; 0x123000/2 (i.e. ADD imm)
-  %val_random = load atomic i16* %ptr_random unordered, align 2
+  %val_random = load atomic i16, i16* %ptr_random unordered, align 2
   %tot3 = add i16 %tot2, %val_random
 ; CHECK: add x[[ADDR:[0-9]+]], x0, #291, lsl #12
 ; CHECK: ldrh {{w[0-9]+}}, [x[[ADDR]]]
@@ -166,21 +166,21 @@ define i16 @atomic_load_relaxed_16(i16* %p, i32 %off32) {
 define i32 @atomic_load_relaxed_32(i32* %p, i32 %off32) {
 ; CHECK-LABEL: atomic_load_relaxed_32:
   %ptr_unsigned = getelementptr i32, i32* %p, i32 4095
-  %val_unsigned = load atomic i32* %ptr_unsigned monotonic, align 4
+  %val_unsigned = load atomic i32, i32* %ptr_unsigned monotonic, align 4
 ; CHECK: ldr {{w[0-9]+}}, [x0, #16380]
 
   %ptr_regoff = getelementptr i32, i32* %p, i32 %off32
-  %val_regoff = load atomic i32* %ptr_regoff unordered, align 4
+  %val_regoff = load atomic i32, i32* %ptr_regoff unordered, align 4
   %tot1 = add i32 %val_unsigned, %val_regoff
 ; CHECK: ldr {{w[0-9]+}}, [x0, w1, sxtw #2]
 
   %ptr_unscaled = getelementptr i32, i32* %p, i32 -64
-  %val_unscaled = load atomic i32* %ptr_unscaled monotonic, align 4
+  %val_unscaled = load atomic i32, i32* %ptr_unscaled monotonic, align 4
   %tot2 = add i32 %tot1, %val_unscaled
 ; CHECK: ldur {{w[0-9]+}}, [x0, #-256]
 
   %ptr_random = getelementptr i32, i32* %p, i32 297984 ; 0x123000/4 (i.e. ADD imm)
-  %val_random = load atomic i32* %ptr_random unordered, align 4
+  %val_random = load atomic i32, i32* %ptr_random unordered, align 4
   %tot3 = add i32 %tot2, %val_random
 ; CHECK: add x[[ADDR:[0-9]+]], x0, #291, lsl #12
 ; CHECK: ldr {{w[0-9]+}}, [x[[ADDR]]]
@@ -191,21 +191,21 @@ define i32 @atomic_load_relaxed_32(i32* %p, i32 %off32) {
 define i64 @atomic_load_relaxed_64(i64* %p, i32 %off32) {
 ; CHECK-LABEL: atomic_load_relaxed_64:
   %ptr_unsigned = getelementptr i64, i64* %p, i32 4095
-  %val_unsigned = load atomic i64* %ptr_unsigned monotonic, align 8
+  %val_unsigned = load atomic i64, i64* %ptr_unsigned monotonic, align 8
 ; CHECK: ldr {{x[0-9]+}}, [x0, #32760]
 
   %ptr_regoff = getelementptr i64, i64* %p, i32 %off32
-  %val_regoff = load atomic i64* %ptr_regoff unordered, align 8
+  %val_regoff = load atomic i64, i64* %ptr_regoff unordered, align 8
   %tot1 = add i64 %val_unsigned, %val_regoff
 ; CHECK: ldr {{x[0-9]+}}, [x0, w1, sxtw #3]
 
   %ptr_unscaled = getelementptr i64, i64* %p, i32 -32
-  %val_unscaled = load atomic i64* %ptr_unscaled monotonic, align 8
+  %val_unscaled = load atomic i64, i64* %ptr_unscaled monotonic, align 8
   %tot2 = add i64 %tot1, %val_unscaled
 ; CHECK: ldur {{x[0-9]+}}, [x0, #-256]
 
   %ptr_random = getelementptr i64, i64* %p, i32 148992 ; 0x123000/8 (i.e. ADD imm)
-  %val_random = load atomic i64* %ptr_random unordered, align 8
+  %val_random = load atomic i64, i64* %ptr_random unordered, align 8
   %tot3 = add i64 %tot2, %val_random
 ; CHECK: add x[[ADDR:[0-9]+]], x0, #291, lsl #12
 ; CHECK: ldr {{x[0-9]+}}, [x[[ADDR]]]

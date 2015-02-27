@@ -22,7 +22,7 @@ entry:
   store %class.A* %this, %class.A** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !59, metadata !{!"0x102"}), !dbg !61
   call void @llvm.dbg.declare(metadata %class.SVal* %v, metadata !62, metadata !{!"0x102\006"}), !dbg !61
-  %this1 = load %class.A** %this.addr
+  %this1 = load %class.A*, %class.A** %this.addr
   call void @_Z3barR4SVal(%class.SVal* %v), !dbg !61
   ret void, !dbg !61
 }

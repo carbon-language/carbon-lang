@@ -29,7 +29,7 @@ entry:
 
 define void @t3(<4 x float> %a, <4 x float> %b, <4 x float>* %c, <4 x float>* %d) {
 entry:
-	%tmp3 = load <4 x float>* %c		; <<4 x float>> [#uses=1]
+	%tmp3 = load <4 x float>, <4 x float>* %c		; <<4 x float>> [#uses=1]
 	%tmp11 = bitcast <4 x float> %a to <4 x i32>		; <<4 x i32>> [#uses=1]
 	%tmp12 = bitcast <4 x float> %b to <4 x i32>		; <<4 x i32>> [#uses=1]
 	%tmp13 = xor <4 x i32> %tmp11, < i32 -1, i32 -1, i32 -1, i32 -1 >		; <<4 x i32>> [#uses=1]

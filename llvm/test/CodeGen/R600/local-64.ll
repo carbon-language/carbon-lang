@@ -7,7 +7,7 @@
 ; BOTH: buffer_store_dword [[REG]],
 define void @local_i32_load(i32 addrspace(1)* %out, i32 addrspace(3)* %in) nounwind {
   %gep = getelementptr i32, i32 addrspace(3)* %in, i32 7
-  %val = load i32 addrspace(3)* %gep, align 4
+  %val = load i32, i32 addrspace(3)* %gep, align 4
   store i32 %val, i32 addrspace(1)* %out, align 4
   ret void
 }
@@ -16,7 +16,7 @@ define void @local_i32_load(i32 addrspace(1)* %out, i32 addrspace(3)* %in) nounw
 ; BOTH: ds_read_b32 [[REG:v[0-9]+]], v{{[0-9]+}}
 ; BOTH: buffer_store_dword [[REG]],
 define void @local_i32_load_0_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %in) nounwind {
-  %val = load i32 addrspace(3)* %in, align 4
+  %val = load i32, i32 addrspace(3)* %in, align 4
   store i32 %val, i32 addrspace(1)* %out, align 4
   ret void
 }
@@ -27,7 +27,7 @@ define void @local_i32_load_0_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %
 ; BOTH: buffer_store_byte [[REG]],
 define void @local_i8_load_i16_max_offset(i8 addrspace(1)* %out, i8 addrspace(3)* %in) nounwind {
   %gep = getelementptr i8, i8 addrspace(3)* %in, i32 65535
-  %val = load i8 addrspace(3)* %gep, align 4
+  %val = load i8, i8 addrspace(3)* %gep, align 4
   store i8 %val, i8 addrspace(1)* %out, align 4
   ret void
 }
@@ -42,7 +42,7 @@ define void @local_i8_load_i16_max_offset(i8 addrspace(1)* %out, i8 addrspace(3)
 ; BOTH: buffer_store_byte [[REG]],
 define void @local_i8_load_over_i16_max_offset(i8 addrspace(1)* %out, i8 addrspace(3)* %in) nounwind {
   %gep = getelementptr i8, i8 addrspace(3)* %in, i32 65536
-  %val = load i8 addrspace(3)* %gep, align 4
+  %val = load i8, i8 addrspace(3)* %gep, align 4
   store i8 %val, i8 addrspace(1)* %out, align 4
   ret void
 }
@@ -53,7 +53,7 @@ define void @local_i8_load_over_i16_max_offset(i8 addrspace(1)* %out, i8 addrspa
 ; BOTH: buffer_store_dwordx2 [[REG]],
 define void @local_i64_load(i64 addrspace(1)* %out, i64 addrspace(3)* %in) nounwind {
   %gep = getelementptr i64, i64 addrspace(3)* %in, i32 7
-  %val = load i64 addrspace(3)* %gep, align 8
+  %val = load i64, i64 addrspace(3)* %gep, align 8
   store i64 %val, i64 addrspace(1)* %out, align 8
   ret void
 }
@@ -62,7 +62,7 @@ define void @local_i64_load(i64 addrspace(1)* %out, i64 addrspace(3)* %in) nounw
 ; BOTH: ds_read_b64 [[REG:v\[[0-9]+:[0-9]+\]]], v{{[0-9]+}}
 ; BOTH: buffer_store_dwordx2 [[REG]],
 define void @local_i64_load_0_offset(i64 addrspace(1)* %out, i64 addrspace(3)* %in) nounwind {
-  %val = load i64 addrspace(3)* %in, align 8
+  %val = load i64, i64 addrspace(3)* %in, align 8
   store i64 %val, i64 addrspace(1)* %out, align 8
   ret void
 }
@@ -73,7 +73,7 @@ define void @local_i64_load_0_offset(i64 addrspace(1)* %out, i64 addrspace(3)* %
 ; BOTH: buffer_store_dwordx2 [[REG]],
 define void @local_f64_load(double addrspace(1)* %out, double addrspace(3)* %in) nounwind {
   %gep = getelementptr double, double addrspace(3)* %in, i32 7
-  %val = load double addrspace(3)* %gep, align 8
+  %val = load double, double addrspace(3)* %gep, align 8
   store double %val, double addrspace(1)* %out, align 8
   ret void
 }
@@ -82,7 +82,7 @@ define void @local_f64_load(double addrspace(1)* %out, double addrspace(3)* %in)
 ; BOTH: ds_read_b64 [[REG:v\[[0-9]+:[0-9]+\]]], v{{[0-9]+}}
 ; BOTH: buffer_store_dwordx2 [[REG]],
 define void @local_f64_load_0_offset(double addrspace(1)* %out, double addrspace(3)* %in) nounwind {
-  %val = load double addrspace(3)* %in, align 8
+  %val = load double, double addrspace(3)* %in, align 8
   store double %val, double addrspace(1)* %out, align 8
   ret void
 }

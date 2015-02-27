@@ -30,9 +30,9 @@ entry:
 
 if.else:                                          ; preds = %entry
   %arrayidx = getelementptr inbounds double, double* %A, i64 10
-  %0 = load double* %arrayidx, align 8
+  %0 = load double, double* %arrayidx, align 8
   %arrayidx1 = getelementptr inbounds double, double* %A, i64 11
-  %1 = load double* %arrayidx1, align 8
+  %1 = load double, double* %arrayidx1, align 8
   br label %if.end
 
 if.end:                                           ; preds = %entry, %if.else
@@ -70,8 +70,8 @@ if.end:                                           ; preds = %entry, %if.else
 define i32 @foo2(double* noalias nocapture %B, double* noalias nocapture %A, i32 %n, i32 %m) #0 {
 entry:
   %arrayidx = getelementptr inbounds double, double* %A, i64 1
-  %0 = load double* %arrayidx, align 8
-  %1 = load double* %A, align 8
+  %0 = load double, double* %arrayidx, align 8
+  %1 = load double, double* %A, align 8
   br label %for.body
 
 for.body:                                         ; preds = %for.body, %entry
@@ -123,15 +123,15 @@ for.end:                                          ; preds = %for.body
 
 define float @foo3(float* nocapture readonly %A) #0 {
 entry:
-  %0 = load float* %A, align 4
+  %0 = load float, float* %A, align 4
   %arrayidx1 = getelementptr inbounds float, float* %A, i64 1
-  %1 = load float* %arrayidx1, align 4
+  %1 = load float, float* %arrayidx1, align 4
   %arrayidx2 = getelementptr inbounds float, float* %A, i64 2
-  %2 = load float* %arrayidx2, align 4
+  %2 = load float, float* %arrayidx2, align 4
   %arrayidx3 = getelementptr inbounds float, float* %A, i64 3
-  %3 = load float* %arrayidx3, align 4
+  %3 = load float, float* %arrayidx3, align 4
   %arrayidx4 = getelementptr inbounds float, float* %A, i64 4
-  %4 = load float* %arrayidx4, align 4
+  %4 = load float, float* %arrayidx4, align 4
   br label %for.body
 
 for.body:                                         ; preds = %for.body, %entry
@@ -149,17 +149,17 @@ for.body:                                         ; preds = %for.body, %entry
   %add11 = fadd float %G.053, %mul10
   %7 = add nsw i64 %indvars.iv, 2
   %arrayidx14 = getelementptr inbounds float, float* %A, i64 %7
-  %8 = load float* %arrayidx14, align 4
+  %8 = load float, float* %arrayidx14, align 4
   %mul15 = fmul float %8, 9.000000e+00
   %add16 = fadd float %B.054, %mul15
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 3
   %arrayidx19 = getelementptr inbounds float, float* %A, i64 %indvars.iv.next
-  %9 = load float* %arrayidx19, align 4
+  %9 = load float, float* %arrayidx19, align 4
   %mul20 = fmul float %9, 1.000000e+01
   %add21 = fadd float %Y.055, %mul20
   %10 = add nsw i64 %indvars.iv, 4
   %arrayidx24 = getelementptr inbounds float, float* %A, i64 %10
-  %11 = load float* %arrayidx24, align 4
+  %11 = load float, float* %arrayidx24, align 4
   %mul25 = fmul float %11, 1.100000e+01
   %add26 = fadd float %P.056, %mul25
   %12 = trunc i64 %indvars.iv.next to i32
@@ -215,22 +215,22 @@ define void @test(x86_fp80* %i1, x86_fp80* %i2, x86_fp80* %o) {
 ; We disable the vectorization of x86_fp80 for now. 
 
 entry:
-  %i1.0 = load x86_fp80* %i1, align 16
+  %i1.0 = load x86_fp80, x86_fp80* %i1, align 16
   %i1.gep1 = getelementptr x86_fp80, x86_fp80* %i1, i64 1
-  %i1.1 = load x86_fp80* %i1.gep1, align 16
-; CHECK: load x86_fp80*
-; CHECK: load x86_fp80*
+  %i1.1 = load x86_fp80, x86_fp80* %i1.gep1, align 16
+; CHECK: load x86_fp80, x86_fp80*
+; CHECK: load x86_fp80, x86_fp80*
 ; CHECK-NOT: insertelement <2 x x86_fp80>
 ; CHECK-NOT: insertelement <2 x x86_fp80>
   br i1 undef, label %then, label %end
 
 then:
   %i2.gep0 = getelementptr inbounds x86_fp80, x86_fp80* %i2, i64 0
-  %i2.0 = load x86_fp80* %i2.gep0, align 16
+  %i2.0 = load x86_fp80, x86_fp80* %i2.gep0, align 16
   %i2.gep1 = getelementptr inbounds x86_fp80, x86_fp80* %i2, i64 1
-  %i2.1 = load x86_fp80* %i2.gep1, align 16
-; CHECK: load x86_fp80*
-; CHECK: load x86_fp80*
+  %i2.1 = load x86_fp80, x86_fp80* %i2.gep1, align 16
+; CHECK: load x86_fp80, x86_fp80*
+; CHECK: load x86_fp80, x86_fp80*
 ; CHECK-NOT: insertelement <2 x x86_fp80>
 ; CHECK-NOT: insertelement <2 x x86_fp80>
   br label %end

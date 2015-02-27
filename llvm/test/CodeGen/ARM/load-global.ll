@@ -45,6 +45,6 @@ define i32 @test1() {
 ; LINUX: ldr r0, [r1, r0]
 ; LINUX: ldr r0, [r0]
 ; LINUX: .long G(GOT)
-	%tmp = load i32* @G
+	%tmp = load i32, i32* @G
 	ret i32 %tmp
 }

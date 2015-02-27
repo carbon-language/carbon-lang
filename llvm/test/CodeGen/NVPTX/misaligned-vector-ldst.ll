@@ -10,7 +10,7 @@ define <4 x float> @t1(i8* %p1) {
 ; CHECK-NOT: ld.f32
 ; CHECK: ld.u8
   %cast = bitcast i8* %p1 to <4 x float>*
-  %r = load <4 x float>* %cast, align 1
+  %r = load <4 x float>, <4 x float>* %cast, align 1
   ret <4 x float> %r
 }
 
@@ -20,7 +20,7 @@ define <4 x float> @t2(i8* %p1) {
 ; CHECK-NOT: ld.v2
 ; CHECK: ld.f32
   %cast = bitcast i8* %p1 to <4 x float>*
-  %r = load <4 x float>* %cast, align 4
+  %r = load <4 x float>, <4 x float>* %cast, align 4
   ret <4 x float> %r
 }
 
@@ -29,7 +29,7 @@ define <4 x float> @t3(i8* %p1) {
 ; CHECK-NOT: ld.v4
 ; CHECK: ld.v2
   %cast = bitcast i8* %p1 to <4 x float>*
-  %r = load <4 x float>* %cast, align 8
+  %r = load <4 x float>, <4 x float>* %cast, align 8
   ret <4 x float> %r
 }
 
@@ -37,7 +37,7 @@ define <4 x float> @t3(i8* %p1) {
 define <4 x float> @t4(i8* %p1) {
 ; CHECK: ld.v4
   %cast = bitcast i8* %p1 to <4 x float>*
-  %r = load <4 x float>* %cast, align 16
+  %r = load <4 x float>, <4 x float>* %cast, align 16
   ret <4 x float> %r
 }
 

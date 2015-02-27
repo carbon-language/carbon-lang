@@ -53,10 +53,10 @@ entry:
   store i32 %filter_shift, i32* %filter_shift.addr, align 4, !tbaa !3
   store i32 %mask, i32* %mask.addr, align 4, !tbaa !3
   %arrayidx = getelementptr inbounds [9 x i8*], [9 x i8*]* @firtable, i32 0, i32 %firorder
-  %0 = load i8** %arrayidx, align 4, !tbaa !0
+  %0 = load i8*, i8** %arrayidx, align 4, !tbaa !0
   store i8* %0, i8** %firjump, align 4, !tbaa !0
   %arrayidx1 = getelementptr inbounds [5 x i8*], [5 x i8*]* @iirtable, i32 0, i32 %iirorder
-  %1 = load i8** %arrayidx1, align 4, !tbaa !0
+  %1 = load i8*, i8** %arrayidx1, align 4, !tbaa !0
   store i8* %1, i8** %iirjump, align 4, !tbaa !0
   %sub = sub nsw i32 0, %blocksize
   store i32 %sub, i32* %blocksize.addr, align 4, !tbaa !3

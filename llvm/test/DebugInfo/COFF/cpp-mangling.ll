@@ -18,7 +18,7 @@ define i32 @"\01?bar@foo@@YAHH@Z"(i32 %x) #0 {
 entry:
   %x.addr = alloca i32, align 4
   store i32 %x, i32* %x.addr, align 4
-  %0 = load i32* %x.addr, align 4, !dbg !11
+  %0 = load i32, i32* %x.addr, align 4, !dbg !11
   %mul = mul nsw i32 %0, 2, !dbg !11
   ret i32 %mul, !dbg !11
 }

@@ -22,7 +22,7 @@ entry:
 	store i32 3855, i32* %ort
 	store i32 3855, i32* %xort
 	store i32 4, i32* %temp
-	%tmp = load i32* %temp
+	%tmp = load i32, i32* %temp
         ; CHECK: lock
         ; CHECK: xaddl
   %0 = atomicrmw add i32* %val1, i32 %tmp monotonic

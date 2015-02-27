@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -show-mc-encoding | FileCheck %s
 
 define i32 @test1(i32 %X, i32* %y) nounwind {
-	%tmp = load i32* %y		; <i32> [#uses=1]
+	%tmp = load i32, i32* %y		; <i32> [#uses=1]
 	%tmp.upgrd.1 = icmp eq i32 %tmp, 0		; <i1> [#uses=1]
 	br i1 %tmp.upgrd.1, label %ReturnBlock, label %cond_true
 
@@ -15,7 +15,7 @@ ReturnBlock:		; preds = %0
 }
 
 define i32 @test2(i32 %X, i32* %y) nounwind {
-	%tmp = load i32* %y		; <i32> [#uses=1]
+	%tmp = load i32, i32* %y		; <i32> [#uses=1]
 	%tmp1 = shl i32 %tmp, 3		; <i32> [#uses=1]
 	%tmp1.upgrd.2 = icmp eq i32 %tmp1, 0		; <i1> [#uses=1]
 	br i1 %tmp1.upgrd.2, label %ReturnBlock, label %cond_true
@@ -30,7 +30,7 @@ ReturnBlock:		; preds = %0
 }
 
 define i8 @test2b(i8 %X, i8* %y) nounwind {
-	%tmp = load i8* %y		; <i8> [#uses=1]
+	%tmp = load i8, i8* %y		; <i8> [#uses=1]
 	%tmp1 = shl i8 %tmp, 3		; <i8> [#uses=1]
 	%tmp1.upgrd.2 = icmp eq i8 %tmp1, 0		; <i1> [#uses=1]
 	br i1 %tmp1.upgrd.2, label %ReturnBlock, label %cond_true
@@ -90,7 +90,7 @@ declare i32 @foo(...)
 define i32 @test6() nounwind align 2 {
   %A = alloca {i64, i64}, align 8
   %B = getelementptr inbounds {i64, i64}, {i64, i64}* %A, i64 0, i32 1
-  %C = load i64* %B
+  %C = load i64, i64* %B
   %D = icmp eq i64 %C, 0
   br i1 %D, label %T, label %F
 T:

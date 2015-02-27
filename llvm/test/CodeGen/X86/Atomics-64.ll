@@ -308,331 +308,331 @@ return:                                           ; preds = %entry
 
 define void @test_op_and_fetch() nounwind {
 entry:
-  %0 = load i8* @uc, align 1
+  %0 = load i8, i8* @uc, align 1
   %1 = zext i8 %0 to i32
   %2 = trunc i32 %1 to i8
   %3 = atomicrmw add i8* @sc, i8 %2 monotonic
   %4 = add i8 %3, %2
   store i8 %4, i8* @sc, align 1
-  %5 = load i8* @uc, align 1
+  %5 = load i8, i8* @uc, align 1
   %6 = zext i8 %5 to i32
   %7 = trunc i32 %6 to i8
   %8 = atomicrmw add i8* @uc, i8 %7 monotonic
   %9 = add i8 %8, %7
   store i8 %9, i8* @uc, align 1
-  %10 = load i8* @uc, align 1
+  %10 = load i8, i8* @uc, align 1
   %11 = zext i8 %10 to i32
   %12 = bitcast i8* bitcast (i16* @ss to i8*) to i16*
   %13 = trunc i32 %11 to i16
   %14 = atomicrmw add i16* %12, i16 %13 monotonic
   %15 = add i16 %14, %13
   store i16 %15, i16* @ss, align 2
-  %16 = load i8* @uc, align 1
+  %16 = load i8, i8* @uc, align 1
   %17 = zext i8 %16 to i32
   %18 = bitcast i8* bitcast (i16* @us to i8*) to i16*
   %19 = trunc i32 %17 to i16
   %20 = atomicrmw add i16* %18, i16 %19 monotonic
   %21 = add i16 %20, %19
   store i16 %21, i16* @us, align 2
-  %22 = load i8* @uc, align 1
+  %22 = load i8, i8* @uc, align 1
   %23 = zext i8 %22 to i32
   %24 = bitcast i8* bitcast (i32* @si to i8*) to i32*
   %25 = atomicrmw add i32* %24, i32 %23 monotonic
   %26 = add i32 %25, %23
   store i32 %26, i32* @si, align 4
-  %27 = load i8* @uc, align 1
+  %27 = load i8, i8* @uc, align 1
   %28 = zext i8 %27 to i32
   %29 = bitcast i8* bitcast (i32* @ui to i8*) to i32*
   %30 = atomicrmw add i32* %29, i32 %28 monotonic
   %31 = add i32 %30, %28
   store i32 %31, i32* @ui, align 4
-  %32 = load i8* @uc, align 1
+  %32 = load i8, i8* @uc, align 1
   %33 = zext i8 %32 to i64
   %34 = bitcast i8* bitcast (i64* @sl to i8*) to i64*
   %35 = atomicrmw add i64* %34, i64 %33 monotonic
   %36 = add i64 %35, %33
   store i64 %36, i64* @sl, align 8
-  %37 = load i8* @uc, align 1
+  %37 = load i8, i8* @uc, align 1
   %38 = zext i8 %37 to i64
   %39 = bitcast i8* bitcast (i64* @ul to i8*) to i64*
   %40 = atomicrmw add i64* %39, i64 %38 monotonic
   %41 = add i64 %40, %38
   store i64 %41, i64* @ul, align 8
-  %42 = load i8* @uc, align 1
+  %42 = load i8, i8* @uc, align 1
   %43 = zext i8 %42 to i64
   %44 = bitcast i8* bitcast (i64* @sll to i8*) to i64*
   %45 = atomicrmw add i64* %44, i64 %43 monotonic
   %46 = add i64 %45, %43
   store i64 %46, i64* @sll, align 8
-  %47 = load i8* @uc, align 1
+  %47 = load i8, i8* @uc, align 1
   %48 = zext i8 %47 to i64
   %49 = bitcast i8* bitcast (i64* @ull to i8*) to i64*
   %50 = atomicrmw add i64* %49, i64 %48 monotonic
   %51 = add i64 %50, %48
   store i64 %51, i64* @ull, align 8
-  %52 = load i8* @uc, align 1
+  %52 = load i8, i8* @uc, align 1
   %53 = zext i8 %52 to i32
   %54 = trunc i32 %53 to i8
   %55 = atomicrmw sub i8* @sc, i8 %54 monotonic
   %56 = sub i8 %55, %54
   store i8 %56, i8* @sc, align 1
-  %57 = load i8* @uc, align 1
+  %57 = load i8, i8* @uc, align 1
   %58 = zext i8 %57 to i32
   %59 = trunc i32 %58 to i8
   %60 = atomicrmw sub i8* @uc, i8 %59 monotonic
   %61 = sub i8 %60, %59
   store i8 %61, i8* @uc, align 1
-  %62 = load i8* @uc, align 1
+  %62 = load i8, i8* @uc, align 1
   %63 = zext i8 %62 to i32
   %64 = bitcast i8* bitcast (i16* @ss to i8*) to i16*
   %65 = trunc i32 %63 to i16
   %66 = atomicrmw sub i16* %64, i16 %65 monotonic
   %67 = sub i16 %66, %65
   store i16 %67, i16* @ss, align 2
-  %68 = load i8* @uc, align 1
+  %68 = load i8, i8* @uc, align 1
   %69 = zext i8 %68 to i32
   %70 = bitcast i8* bitcast (i16* @us to i8*) to i16*
   %71 = trunc i32 %69 to i16
   %72 = atomicrmw sub i16* %70, i16 %71 monotonic
   %73 = sub i16 %72, %71
   store i16 %73, i16* @us, align 2
-  %74 = load i8* @uc, align 1
+  %74 = load i8, i8* @uc, align 1
   %75 = zext i8 %74 to i32
   %76 = bitcast i8* bitcast (i32* @si to i8*) to i32*
   %77 = atomicrmw sub i32* %76, i32 %75 monotonic
   %78 = sub i32 %77, %75
   store i32 %78, i32* @si, align 4
-  %79 = load i8* @uc, align 1
+  %79 = load i8, i8* @uc, align 1
   %80 = zext i8 %79 to i32
   %81 = bitcast i8* bitcast (i32* @ui to i8*) to i32*
   %82 = atomicrmw sub i32* %81, i32 %80 monotonic
   %83 = sub i32 %82, %80
   store i32 %83, i32* @ui, align 4
-  %84 = load i8* @uc, align 1
+  %84 = load i8, i8* @uc, align 1
   %85 = zext i8 %84 to i64
   %86 = bitcast i8* bitcast (i64* @sl to i8*) to i64*
   %87 = atomicrmw sub i64* %86, i64 %85 monotonic
   %88 = sub i64 %87, %85
   store i64 %88, i64* @sl, align 8
-  %89 = load i8* @uc, align 1
+  %89 = load i8, i8* @uc, align 1
   %90 = zext i8 %89 to i64
   %91 = bitcast i8* bitcast (i64* @ul to i8*) to i64*
   %92 = atomicrmw sub i64* %91, i64 %90 monotonic
   %93 = sub i64 %92, %90
   store i64 %93, i64* @ul, align 8
-  %94 = load i8* @uc, align 1
+  %94 = load i8, i8* @uc, align 1
   %95 = zext i8 %94 to i64
   %96 = bitcast i8* bitcast (i64* @sll to i8*) to i64*
   %97 = atomicrmw sub i64* %96, i64 %95 monotonic
   %98 = sub i64 %97, %95
   store i64 %98, i64* @sll, align 8
-  %99 = load i8* @uc, align 1
+  %99 = load i8, i8* @uc, align 1
   %100 = zext i8 %99 to i64
   %101 = bitcast i8* bitcast (i64* @ull to i8*) to i64*
   %102 = atomicrmw sub i64* %101, i64 %100 monotonic
   %103 = sub i64 %102, %100
   store i64 %103, i64* @ull, align 8
-  %104 = load i8* @uc, align 1
+  %104 = load i8, i8* @uc, align 1
   %105 = zext i8 %104 to i32
   %106 = trunc i32 %105 to i8
   %107 = atomicrmw or i8* @sc, i8 %106 monotonic
   %108 = or i8 %107, %106
   store i8 %108, i8* @sc, align 1
-  %109 = load i8* @uc, align 1
+  %109 = load i8, i8* @uc, align 1
   %110 = zext i8 %109 to i32
   %111 = trunc i32 %110 to i8
   %112 = atomicrmw or i8* @uc, i8 %111 monotonic
   %113 = or i8 %112, %111
   store i8 %113, i8* @uc, align 1
-  %114 = load i8* @uc, align 1
+  %114 = load i8, i8* @uc, align 1
   %115 = zext i8 %114 to i32
   %116 = bitcast i8* bitcast (i16* @ss to i8*) to i16*
   %117 = trunc i32 %115 to i16
   %118 = atomicrmw or i16* %116, i16 %117 monotonic
   %119 = or i16 %118, %117
   store i16 %119, i16* @ss, align 2
-  %120 = load i8* @uc, align 1
+  %120 = load i8, i8* @uc, align 1
   %121 = zext i8 %120 to i32
   %122 = bitcast i8* bitcast (i16* @us to i8*) to i16*
   %123 = trunc i32 %121 to i16
   %124 = atomicrmw or i16* %122, i16 %123 monotonic
   %125 = or i16 %124, %123
   store i16 %125, i16* @us, align 2
-  %126 = load i8* @uc, align 1
+  %126 = load i8, i8* @uc, align 1
   %127 = zext i8 %126 to i32
   %128 = bitcast i8* bitcast (i32* @si to i8*) to i32*
   %129 = atomicrmw or i32* %128, i32 %127 monotonic
   %130 = or i32 %129, %127
   store i32 %130, i32* @si, align 4
-  %131 = load i8* @uc, align 1
+  %131 = load i8, i8* @uc, align 1
   %132 = zext i8 %131 to i32
   %133 = bitcast i8* bitcast (i32* @ui to i8*) to i32*
   %134 = atomicrmw or i32* %133, i32 %132 monotonic
   %135 = or i32 %134, %132
   store i32 %135, i32* @ui, align 4
-  %136 = load i8* @uc, align 1
+  %136 = load i8, i8* @uc, align 1
   %137 = zext i8 %136 to i64
   %138 = bitcast i8* bitcast (i64* @sl to i8*) to i64*
   %139 = atomicrmw or i64* %138, i64 %137 monotonic
   %140 = or i64 %139, %137
   store i64 %140, i64* @sl, align 8
-  %141 = load i8* @uc, align 1
+  %141 = load i8, i8* @uc, align 1
   %142 = zext i8 %141 to i64
   %143 = bitcast i8* bitcast (i64* @ul to i8*) to i64*
   %144 = atomicrmw or i64* %143, i64 %142 monotonic
   %145 = or i64 %144, %142
   store i64 %145, i64* @ul, align 8
-  %146 = load i8* @uc, align 1
+  %146 = load i8, i8* @uc, align 1
   %147 = zext i8 %146 to i64
   %148 = bitcast i8* bitcast (i64* @sll to i8*) to i64*
   %149 = atomicrmw or i64* %148, i64 %147 monotonic
   %150 = or i64 %149, %147
   store i64 %150, i64* @sll, align 8
-  %151 = load i8* @uc, align 1
+  %151 = load i8, i8* @uc, align 1
   %152 = zext i8 %151 to i64
   %153 = bitcast i8* bitcast (i64* @ull to i8*) to i64*
   %154 = atomicrmw or i64* %153, i64 %152 monotonic
   %155 = or i64 %154, %152
   store i64 %155, i64* @ull, align 8
-  %156 = load i8* @uc, align 1
+  %156 = load i8, i8* @uc, align 1
   %157 = zext i8 %156 to i32
   %158 = trunc i32 %157 to i8
   %159 = atomicrmw xor i8* @sc, i8 %158 monotonic
   %160 = xor i8 %159, %158
   store i8 %160, i8* @sc, align 1
-  %161 = load i8* @uc, align 1
+  %161 = load i8, i8* @uc, align 1
   %162 = zext i8 %161 to i32
   %163 = trunc i32 %162 to i8
   %164 = atomicrmw xor i8* @uc, i8 %163 monotonic
   %165 = xor i8 %164, %163
   store i8 %165, i8* @uc, align 1
-  %166 = load i8* @uc, align 1
+  %166 = load i8, i8* @uc, align 1
   %167 = zext i8 %166 to i32
   %168 = bitcast i8* bitcast (i16* @ss to i8*) to i16*
   %169 = trunc i32 %167 to i16
   %170 = atomicrmw xor i16* %168, i16 %169 monotonic
   %171 = xor i16 %170, %169
   store i16 %171, i16* @ss, align 2
-  %172 = load i8* @uc, align 1
+  %172 = load i8, i8* @uc, align 1
   %173 = zext i8 %172 to i32
   %174 = bitcast i8* bitcast (i16* @us to i8*) to i16*
   %175 = trunc i32 %173 to i16
   %176 = atomicrmw xor i16* %174, i16 %175 monotonic
   %177 = xor i16 %176, %175
   store i16 %177, i16* @us, align 2
-  %178 = load i8* @uc, align 1
+  %178 = load i8, i8* @uc, align 1
   %179 = zext i8 %178 to i32
   %180 = bitcast i8* bitcast (i32* @si to i8*) to i32*
   %181 = atomicrmw xor i32* %180, i32 %179 monotonic
   %182 = xor i32 %181, %179
   store i32 %182, i32* @si, align 4
-  %183 = load i8* @uc, align 1
+  %183 = load i8, i8* @uc, align 1
   %184 = zext i8 %183 to i32
   %185 = bitcast i8* bitcast (i32* @ui to i8*) to i32*
   %186 = atomicrmw xor i32* %185, i32 %184 monotonic
   %187 = xor i32 %186, %184
   store i32 %187, i32* @ui, align 4
-  %188 = load i8* @uc, align 1
+  %188 = load i8, i8* @uc, align 1
   %189 = zext i8 %188 to i64
   %190 = bitcast i8* bitcast (i64* @sl to i8*) to i64*
   %191 = atomicrmw xor i64* %190, i64 %189 monotonic
   %192 = xor i64 %191, %189
   store i64 %192, i64* @sl, align 8
-  %193 = load i8* @uc, align 1
+  %193 = load i8, i8* @uc, align 1
   %194 = zext i8 %193 to i64
   %195 = bitcast i8* bitcast (i64* @ul to i8*) to i64*
   %196 = atomicrmw xor i64* %195, i64 %194 monotonic
   %197 = xor i64 %196, %194
   store i64 %197, i64* @ul, align 8
-  %198 = load i8* @uc, align 1
+  %198 = load i8, i8* @uc, align 1
   %199 = zext i8 %198 to i64
   %200 = bitcast i8* bitcast (i64* @sll to i8*) to i64*
   %201 = atomicrmw xor i64* %200, i64 %199 monotonic
   %202 = xor i64 %201, %199
   store i64 %202, i64* @sll, align 8
-  %203 = load i8* @uc, align 1
+  %203 = load i8, i8* @uc, align 1
   %204 = zext i8 %203 to i64
   %205 = bitcast i8* bitcast (i64* @ull to i8*) to i64*
   %206 = atomicrmw xor i64* %205, i64 %204 monotonic
   %207 = xor i64 %206, %204
   store i64 %207, i64* @ull, align 8
-  %208 = load i8* @uc, align 1
+  %208 = load i8, i8* @uc, align 1
   %209 = zext i8 %208 to i32
   %210 = trunc i32 %209 to i8
   %211 = atomicrmw and i8* @sc, i8 %210 monotonic
   %212 = and i8 %211, %210
   store i8 %212, i8* @sc, align 1
-  %213 = load i8* @uc, align 1
+  %213 = load i8, i8* @uc, align 1
   %214 = zext i8 %213 to i32
   %215 = trunc i32 %214 to i8
   %216 = atomicrmw and i8* @uc, i8 %215 monotonic
   %217 = and i8 %216, %215
   store i8 %217, i8* @uc, align 1
-  %218 = load i8* @uc, align 1
+  %218 = load i8, i8* @uc, align 1
   %219 = zext i8 %218 to i32
   %220 = bitcast i8* bitcast (i16* @ss to i8*) to i16*
   %221 = trunc i32 %219 to i16
   %222 = atomicrmw and i16* %220, i16 %221 monotonic
   %223 = and i16 %222, %221
   store i16 %223, i16* @ss, align 2
-  %224 = load i8* @uc, align 1
+  %224 = load i8, i8* @uc, align 1
   %225 = zext i8 %224 to i32
   %226 = bitcast i8* bitcast (i16* @us to i8*) to i16*
   %227 = trunc i32 %225 to i16
   %228 = atomicrmw and i16* %226, i16 %227 monotonic
   %229 = and i16 %228, %227
   store i16 %229, i16* @us, align 2
-  %230 = load i8* @uc, align 1
+  %230 = load i8, i8* @uc, align 1
   %231 = zext i8 %230 to i32
   %232 = bitcast i8* bitcast (i32* @si to i8*) to i32*
   %233 = atomicrmw and i32* %232, i32 %231 monotonic
   %234 = and i32 %233, %231
   store i32 %234, i32* @si, align 4
-  %235 = load i8* @uc, align 1
+  %235 = load i8, i8* @uc, align 1
   %236 = zext i8 %235 to i32
   %237 = bitcast i8* bitcast (i32* @ui to i8*) to i32*
   %238 = atomicrmw and i32* %237, i32 %236 monotonic
   %239 = and i32 %238, %236
   store i32 %239, i32* @ui, align 4
-  %240 = load i8* @uc, align 1
+  %240 = load i8, i8* @uc, align 1
   %241 = zext i8 %240 to i64
   %242 = bitcast i8* bitcast (i64* @sl to i8*) to i64*
   %243 = atomicrmw and i64* %242, i64 %241 monotonic
   %244 = and i64 %243, %241
   store i64 %244, i64* @sl, align 8
-  %245 = load i8* @uc, align 1
+  %245 = load i8, i8* @uc, align 1
   %246 = zext i8 %245 to i64
   %247 = bitcast i8* bitcast (i64* @ul to i8*) to i64*
   %248 = atomicrmw and i64* %247, i64 %246 monotonic
   %249 = and i64 %248, %246
   store i64 %249, i64* @ul, align 8
-  %250 = load i8* @uc, align 1
+  %250 = load i8, i8* @uc, align 1
   %251 = zext i8 %250 to i64
   %252 = bitcast i8* bitcast (i64* @sll to i8*) to i64*
   %253 = atomicrmw and i64* %252, i64 %251 monotonic
   %254 = and i64 %253, %251
   store i64 %254, i64* @sll, align 8
-  %255 = load i8* @uc, align 1
+  %255 = load i8, i8* @uc, align 1
   %256 = zext i8 %255 to i64
   %257 = bitcast i8* bitcast (i64* @ull to i8*) to i64*
   %258 = atomicrmw and i64* %257, i64 %256 monotonic
   %259 = and i64 %258, %256
   store i64 %259, i64* @ull, align 8
-  %260 = load i8* @uc, align 1
+  %260 = load i8, i8* @uc, align 1
   %261 = zext i8 %260 to i32
   %262 = trunc i32 %261 to i8
   %263 = atomicrmw nand i8* @sc, i8 %262 monotonic
   %264 = xor i8 %263, -1
   %265 = and i8 %264, %262
   store i8 %265, i8* @sc, align 1
-  %266 = load i8* @uc, align 1
+  %266 = load i8, i8* @uc, align 1
   %267 = zext i8 %266 to i32
   %268 = trunc i32 %267 to i8
   %269 = atomicrmw nand i8* @uc, i8 %268 monotonic
   %270 = xor i8 %269, -1
   %271 = and i8 %270, %268
   store i8 %271, i8* @uc, align 1
-  %272 = load i8* @uc, align 1
+  %272 = load i8, i8* @uc, align 1
   %273 = zext i8 %272 to i32
   %274 = bitcast i8* bitcast (i16* @ss to i8*) to i16*
   %275 = trunc i32 %273 to i16
@@ -640,7 +640,7 @@ entry:
   %277 = xor i16 %276, -1
   %278 = and i16 %277, %275
   store i16 %278, i16* @ss, align 2
-  %279 = load i8* @uc, align 1
+  %279 = load i8, i8* @uc, align 1
   %280 = zext i8 %279 to i32
   %281 = bitcast i8* bitcast (i16* @us to i8*) to i16*
   %282 = trunc i32 %280 to i16
@@ -648,42 +648,42 @@ entry:
   %284 = xor i16 %283, -1
   %285 = and i16 %284, %282
   store i16 %285, i16* @us, align 2
-  %286 = load i8* @uc, align 1
+  %286 = load i8, i8* @uc, align 1
   %287 = zext i8 %286 to i32
   %288 = bitcast i8* bitcast (i32* @si to i8*) to i32*
   %289 = atomicrmw nand i32* %288, i32 %287 monotonic
   %290 = xor i32 %289, -1
   %291 = and i32 %290, %287
   store i32 %291, i32* @si, align 4
-  %292 = load i8* @uc, align 1
+  %292 = load i8, i8* @uc, align 1
   %293 = zext i8 %292 to i32
   %294 = bitcast i8* bitcast (i32* @ui to i8*) to i32*
   %295 = atomicrmw nand i32* %294, i32 %293 monotonic
   %296 = xor i32 %295, -1
   %297 = and i32 %296, %293
   store i32 %297, i32* @ui, align 4
-  %298 = load i8* @uc, align 1
+  %298 = load i8, i8* @uc, align 1
   %299 = zext i8 %298 to i64
   %300 = bitcast i8* bitcast (i64* @sl to i8*) to i64*
   %301 = atomicrmw nand i64* %300, i64 %299 monotonic
   %302 = xor i64 %301, -1
   %303 = and i64 %302, %299
   store i64 %303, i64* @sl, align 8
-  %304 = load i8* @uc, align 1
+  %304 = load i8, i8* @uc, align 1
   %305 = zext i8 %304 to i64
   %306 = bitcast i8* bitcast (i64* @ul to i8*) to i64*
   %307 = atomicrmw nand i64* %306, i64 %305 monotonic
   %308 = xor i64 %307, -1
   %309 = and i64 %308, %305
   store i64 %309, i64* @ul, align 8
-  %310 = load i8* @uc, align 1
+  %310 = load i8, i8* @uc, align 1
   %311 = zext i8 %310 to i64
   %312 = bitcast i8* bitcast (i64* @sll to i8*) to i64*
   %313 = atomicrmw nand i64* %312, i64 %311 monotonic
   %314 = xor i64 %313, -1
   %315 = and i64 %314, %311
   store i64 %315, i64* @sll, align 8
-  %316 = load i8* @uc, align 1
+  %316 = load i8, i8* @uc, align 1
   %317 = zext i8 %316 to i64
   %318 = bitcast i8* bitcast (i64* @ull to i8*) to i64*
   %319 = atomicrmw nand i64* %318, i64 %317 monotonic
@@ -698,28 +698,28 @@ return:                                           ; preds = %entry
 
 define void @test_compare_and_swap() nounwind {
 entry:
-  %0 = load i8* @sc, align 1
+  %0 = load i8, i8* @sc, align 1
   %1 = zext i8 %0 to i32
-  %2 = load i8* @uc, align 1
+  %2 = load i8, i8* @uc, align 1
   %3 = zext i8 %2 to i32
   %4 = trunc i32 %3 to i8
   %5 = trunc i32 %1 to i8
   %pair6 = cmpxchg i8* @sc, i8 %4, i8 %5 monotonic monotonic
   %6 = extractvalue { i8, i1 } %pair6, 0
   store i8 %6, i8* @sc, align 1
-  %7 = load i8* @sc, align 1
+  %7 = load i8, i8* @sc, align 1
   %8 = zext i8 %7 to i32
-  %9 = load i8* @uc, align 1
+  %9 = load i8, i8* @uc, align 1
   %10 = zext i8 %9 to i32
   %11 = trunc i32 %10 to i8
   %12 = trunc i32 %8 to i8
   %pair13 = cmpxchg i8* @uc, i8 %11, i8 %12 monotonic monotonic
   %13 = extractvalue { i8, i1 } %pair13, 0
   store i8 %13, i8* @uc, align 1
-  %14 = load i8* @sc, align 1
+  %14 = load i8, i8* @sc, align 1
   %15 = sext i8 %14 to i16
   %16 = zext i16 %15 to i32
-  %17 = load i8* @uc, align 1
+  %17 = load i8, i8* @uc, align 1
   %18 = zext i8 %17 to i32
   %19 = bitcast i8* bitcast (i16* @ss to i8*) to i16*
   %20 = trunc i32 %18 to i16
@@ -727,10 +727,10 @@ entry:
   %pair22 = cmpxchg i16* %19, i16 %20, i16 %21 monotonic monotonic
   %22 = extractvalue { i16, i1 } %pair22, 0
   store i16 %22, i16* @ss, align 2
-  %23 = load i8* @sc, align 1
+  %23 = load i8, i8* @sc, align 1
   %24 = sext i8 %23 to i16
   %25 = zext i16 %24 to i32
-  %26 = load i8* @uc, align 1
+  %26 = load i8, i8* @uc, align 1
   %27 = zext i8 %26 to i32
   %28 = bitcast i8* bitcast (i16* @us to i8*) to i16*
   %29 = trunc i32 %27 to i16
@@ -738,57 +738,57 @@ entry:
   %pair31 = cmpxchg i16* %28, i16 %29, i16 %30 monotonic monotonic
   %31 = extractvalue { i16, i1 } %pair31, 0
   store i16 %31, i16* @us, align 2
-  %32 = load i8* @sc, align 1
+  %32 = load i8, i8* @sc, align 1
   %33 = sext i8 %32 to i32
-  %34 = load i8* @uc, align 1
+  %34 = load i8, i8* @uc, align 1
   %35 = zext i8 %34 to i32
   %36 = bitcast i8* bitcast (i32* @si to i8*) to i32*
   %pair37 = cmpxchg i32* %36, i32 %35, i32 %33 monotonic monotonic
   %37 = extractvalue { i32, i1 } %pair37, 0
   store i32 %37, i32* @si, align 4
-  %38 = load i8* @sc, align 1
+  %38 = load i8, i8* @sc, align 1
   %39 = sext i8 %38 to i32
-  %40 = load i8* @uc, align 1
+  %40 = load i8, i8* @uc, align 1
   %41 = zext i8 %40 to i32
   %42 = bitcast i8* bitcast (i32* @ui to i8*) to i32*
   %pair43 = cmpxchg i32* %42, i32 %41, i32 %39 monotonic monotonic
   %43 = extractvalue { i32, i1 } %pair43, 0
   store i32 %43, i32* @ui, align 4
-  %44 = load i8* @sc, align 1
+  %44 = load i8, i8* @sc, align 1
   %45 = sext i8 %44 to i64
-  %46 = load i8* @uc, align 1
+  %46 = load i8, i8* @uc, align 1
   %47 = zext i8 %46 to i64
   %48 = bitcast i8* bitcast (i64* @sl to i8*) to i64*
   %pair49 = cmpxchg i64* %48, i64 %47, i64 %45 monotonic monotonic
   %49 = extractvalue { i64, i1 } %pair49, 0
   store i64 %49, i64* @sl, align 8
-  %50 = load i8* @sc, align 1
+  %50 = load i8, i8* @sc, align 1
   %51 = sext i8 %50 to i64
-  %52 = load i8* @uc, align 1
+  %52 = load i8, i8* @uc, align 1
   %53 = zext i8 %52 to i64
   %54 = bitcast i8* bitcast (i64* @ul to i8*) to i64*
   %pair55 = cmpxchg i64* %54, i64 %53, i64 %51 monotonic monotonic
   %55 = extractvalue { i64, i1 } %pair55, 0
   store i64 %55, i64* @ul, align 8
-  %56 = load i8* @sc, align 1
+  %56 = load i8, i8* @sc, align 1
   %57 = sext i8 %56 to i64
-  %58 = load i8* @uc, align 1
+  %58 = load i8, i8* @uc, align 1
   %59 = zext i8 %58 to i64
   %60 = bitcast i8* bitcast (i64* @sll to i8*) to i64*
   %pair61 = cmpxchg i64* %60, i64 %59, i64 %57 monotonic monotonic
   %61 = extractvalue { i64, i1 } %pair61, 0
   store i64 %61, i64* @sll, align 8
-  %62 = load i8* @sc, align 1
+  %62 = load i8, i8* @sc, align 1
   %63 = sext i8 %62 to i64
-  %64 = load i8* @uc, align 1
+  %64 = load i8, i8* @uc, align 1
   %65 = zext i8 %64 to i64
   %66 = bitcast i8* bitcast (i64* @ull to i8*) to i64*
   %pair67 = cmpxchg i64* %66, i64 %65, i64 %63 monotonic monotonic
   %67 = extractvalue { i64, i1 } %pair67, 0
   store i64 %67, i64* @ull, align 8
-  %68 = load i8* @sc, align 1
+  %68 = load i8, i8* @sc, align 1
   %69 = zext i8 %68 to i32
-  %70 = load i8* @uc, align 1
+  %70 = load i8, i8* @uc, align 1
   %71 = zext i8 %70 to i32
   %72 = trunc i32 %71 to i8
   %73 = trunc i32 %69 to i8
@@ -798,9 +798,9 @@ entry:
   %76 = zext i1 %75 to i8
   %77 = zext i8 %76 to i32
   store i32 %77, i32* @ui, align 4
-  %78 = load i8* @sc, align 1
+  %78 = load i8, i8* @sc, align 1
   %79 = zext i8 %78 to i32
-  %80 = load i8* @uc, align 1
+  %80 = load i8, i8* @uc, align 1
   %81 = zext i8 %80 to i32
   %82 = trunc i32 %81 to i8
   %83 = trunc i32 %79 to i8
@@ -810,10 +810,10 @@ entry:
   %86 = zext i1 %85 to i8
   %87 = zext i8 %86 to i32
   store i32 %87, i32* @ui, align 4
-  %88 = load i8* @sc, align 1
+  %88 = load i8, i8* @sc, align 1
   %89 = sext i8 %88 to i16
   %90 = zext i16 %89 to i32
-  %91 = load i8* @uc, align 1
+  %91 = load i8, i8* @uc, align 1
   %92 = zext i8 %91 to i32
   %93 = trunc i32 %92 to i8
   %94 = trunc i32 %90 to i8
@@ -823,10 +823,10 @@ entry:
   %97 = zext i1 %96 to i8
   %98 = zext i8 %97 to i32
   store i32 %98, i32* @ui, align 4
-  %99 = load i8* @sc, align 1
+  %99 = load i8, i8* @sc, align 1
   %100 = sext i8 %99 to i16
   %101 = zext i16 %100 to i32
-  %102 = load i8* @uc, align 1
+  %102 = load i8, i8* @uc, align 1
   %103 = zext i8 %102 to i32
   %104 = trunc i32 %103 to i8
   %105 = trunc i32 %101 to i8
@@ -836,9 +836,9 @@ entry:
   %108 = zext i1 %107 to i8
   %109 = zext i8 %108 to i32
   store i32 %109, i32* @ui, align 4
-  %110 = load i8* @sc, align 1
+  %110 = load i8, i8* @sc, align 1
   %111 = sext i8 %110 to i32
-  %112 = load i8* @uc, align 1
+  %112 = load i8, i8* @uc, align 1
   %113 = zext i8 %112 to i32
   %114 = trunc i32 %113 to i8
   %115 = trunc i32 %111 to i8
@@ -848,9 +848,9 @@ entry:
   %118 = zext i1 %117 to i8
   %119 = zext i8 %118 to i32
   store i32 %119, i32* @ui, align 4
-  %120 = load i8* @sc, align 1
+  %120 = load i8, i8* @sc, align 1
   %121 = sext i8 %120 to i32
-  %122 = load i8* @uc, align 1
+  %122 = load i8, i8* @uc, align 1
   %123 = zext i8 %122 to i32
   %124 = trunc i32 %123 to i8
   %125 = trunc i32 %121 to i8
@@ -860,9 +860,9 @@ entry:
   %128 = zext i1 %127 to i8
   %129 = zext i8 %128 to i32
   store i32 %129, i32* @ui, align 4
-  %130 = load i8* @sc, align 1
+  %130 = load i8, i8* @sc, align 1
   %131 = sext i8 %130 to i64
-  %132 = load i8* @uc, align 1
+  %132 = load i8, i8* @uc, align 1
   %133 = zext i8 %132 to i64
   %134 = trunc i64 %133 to i8
   %135 = trunc i64 %131 to i8
@@ -872,9 +872,9 @@ entry:
   %138 = zext i1 %137 to i8
   %139 = zext i8 %138 to i32
   store i32 %139, i32* @ui, align 4
-  %140 = load i8* @sc, align 1
+  %140 = load i8, i8* @sc, align 1
   %141 = sext i8 %140 to i64
-  %142 = load i8* @uc, align 1
+  %142 = load i8, i8* @uc, align 1
   %143 = zext i8 %142 to i64
   %144 = trunc i64 %143 to i8
   %145 = trunc i64 %141 to i8
@@ -884,9 +884,9 @@ entry:
   %148 = zext i1 %147 to i8
   %149 = zext i8 %148 to i32
   store i32 %149, i32* @ui, align 4
-  %150 = load i8* @sc, align 1
+  %150 = load i8, i8* @sc, align 1
   %151 = sext i8 %150 to i64
-  %152 = load i8* @uc, align 1
+  %152 = load i8, i8* @uc, align 1
   %153 = zext i8 %152 to i64
   %154 = trunc i64 %153 to i8
   %155 = trunc i64 %151 to i8
@@ -896,9 +896,9 @@ entry:
   %158 = zext i1 %157 to i8
   %159 = zext i8 %158 to i32
   store i32 %159, i32* @ui, align 4
-  %160 = load i8* @sc, align 1
+  %160 = load i8, i8* @sc, align 1
   %161 = sext i8 %160 to i64
-  %162 = load i8* @uc, align 1
+  %162 = load i8, i8* @uc, align 1
   %163 = zext i8 %162 to i64
   %164 = trunc i64 %163 to i8
   %165 = trunc i64 %161 to i8

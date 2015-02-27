@@ -9,7 +9,7 @@
 define i32* @t() align 2 nounwind {
 entry:
   %operation = alloca %struct.PPOperation, align 8 ; <%struct.PPOperation*> [#uses=2]
-  %0 = load i32*** null, align 4  ; [#uses=1]
+  %0 = load i32**, i32*** null, align 4  ; [#uses=1]
   %1 = ptrtoint i32** %0 to i32   ; <i32> [#uses=1]
   %2 = sub nsw i32 %1, undef                      ; <i32> [#uses=2]
   br i1 false, label %bb20, label %bb.nph380

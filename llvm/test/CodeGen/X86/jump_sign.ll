@@ -164,7 +164,7 @@ entry:
 ; PR://13046
 define void @func_o() nounwind uwtable {
 entry:
-  %0 = load i16* undef, align 2
+  %0 = load i16, i16* undef, align 2
   br i1 undef, label %if.then.i, label %if.end.i
 
 if.then.i:                                        ; preds = %entry
@@ -238,7 +238,7 @@ entry:
 ; CHECK: j
 ; CHECK-NOT: sub
 ; CHECK: ret
-  %0 = load i32* %offset, align 8
+  %0 = load i32, i32* %offset, align 8
   %cmp = icmp slt i32 %0, %size
   br i1 %cmp, label %return, label %if.end
 
@@ -287,10 +287,10 @@ entry:
 ; CHECK: andb
 ; CHECK: j
 ; CHECK: ret
-  %0 = load i32* @b, align 4
+  %0 = load i32, i32* @b, align 4
   %cmp = icmp ult i32 %0, %p1
   %conv = zext i1 %cmp to i32
-  %1 = load i32* @a, align 4
+  %1 = load i32, i32* @a, align 4
   %and = and i32 %conv, %1
   %conv1 = trunc i32 %and to i8
   %2 = urem i8 %conv1, 3

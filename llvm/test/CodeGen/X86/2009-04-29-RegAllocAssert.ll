@@ -71,7 +71,7 @@
 
 define fastcc void @dropCell(%struct.MemPage* nocapture %pPage, i32 %idx, i32 %sz) nounwind ssp {
 entry:
-	%0 = load i8** null, align 8		; <i8*> [#uses=4]
+	%0 = load i8*, i8** null, align 8		; <i8*> [#uses=4]
 	%1 = or i32 0, 0		; <i32> [#uses=1]
 	%2 = icmp slt i32 %sz, 4		; <i1> [#uses=1]
 	%size_addr.0.i = select i1 %2, i32 4, i32 %sz		; <i32> [#uses=1]

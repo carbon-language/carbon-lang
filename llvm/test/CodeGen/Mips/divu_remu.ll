@@ -8,8 +8,8 @@
 
 define void @test() nounwind {
 entry:
-  %0 = load i32* @iiii, align 4
-  %1 = load i32* @jjjj, align 4
+  %0 = load i32, i32* @iiii, align 4
+  %1 = load i32, i32* @jjjj, align 4
   %div = udiv i32 %0, %1
   store i32 %div, i32* @kkkk, align 4
   %rem = urem i32 %0, %1

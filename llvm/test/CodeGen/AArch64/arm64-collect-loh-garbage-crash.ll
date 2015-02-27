@@ -22,13 +22,13 @@ define void @foo() {
 entry:
   br label %if.then83
 if.then83:                                        ; preds = %if.end81
-  %tmp = load %"class.H4ISP::H4ISPDevice"** @pH4ISPDevice, align 8
+  %tmp = load %"class.H4ISP::H4ISPDevice"*, %"class.H4ISP::H4ISPDevice"** @pH4ISPDevice, align 8
   %call84 = call i32 @_ZN5H4ISP11H4ISPDevice32ISP_SelectBestMIPIFrequencyIndexEjPj(%"class.H4ISP::H4ISPDevice"* %tmp) #19
   tail call void asm sideeffect "", "~{x19},~{x20},~{x21},~{x22},~{x23},~{x24},~{x25},~{x26},~{x27}"()
-  %tmp2 = load %"class.H4ISP::H4ISPDevice"** @pH4ISPDevice, align 8
+  %tmp2 = load %"class.H4ISP::H4ISPDevice"*, %"class.H4ISP::H4ISPDevice"** @pH4ISPDevice, align 8
   tail call void asm sideeffect "", "~{x19},~{x20},~{x21},~{x22},~{x23},~{x24},~{x25},~{x26},~{x28}"()
   %pCameraManager.i268 = getelementptr inbounds %"class.H4ISP::H4ISPDevice", %"class.H4ISP::H4ISPDevice"* %tmp2, i64 0, i32 3
-  %tmp3 = load %"class.H4ISP::H4ISPCameraManager"** %pCameraManager.i268, align 8
+  %tmp3 = load %"class.H4ISP::H4ISPCameraManager"*, %"class.H4ISP::H4ISPCameraManager"** %pCameraManager.i268, align 8
   %tobool.i269 = icmp eq %"class.H4ISP::H4ISPCameraManager"* %tmp3, null
   br i1 %tobool.i269, label %if.then83, label %end
 end:

@@ -2,7 +2,7 @@
 
 define void @test1(i8* %ptr) {
 ; CHECK: test1
-  %A = load i8* %ptr
+  %A = load i8, i8* %ptr
   br label %bb
 bb:
   icmp ne i8* %ptr, null

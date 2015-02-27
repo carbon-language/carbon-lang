@@ -50,7 +50,7 @@ entry:
 
 define <4 x i1> @test4(<4 x i1> %a) nounwind {
 entry:
-  %q = load <4 x i1>* @Q, align 16
+  %q = load <4 x i1>, <4 x i1>* @Q, align 16
   %v = and <4 x i1> %a, %q
   ret <4 x i1> %v
 

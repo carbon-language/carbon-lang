@@ -14,7 +14,7 @@ entry:
   %tobool1. = or i1 %tobool1, %not.tobool
   %lor.ext = zext i1 %tobool1. to i32
   %conv = sitofp i32 %lor.ext to double
-  %1 = load double* @foo12.d4, align 8
+  %1 = load double, double* @foo12.d4, align 8
   %add = fadd double %conv, %1
   store double %add, double* @foo12.d4, align 8
   ret double %add

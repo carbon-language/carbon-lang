@@ -59,8 +59,8 @@ entry:
 ; CHECK-LABEL: caller38
 ; CHECK: ldr x1,
 ; CHECK: ldr x2,
-  %0 = load i64* bitcast (%struct.s38* @g38 to i64*), align 4
-  %1 = load i64* bitcast (%struct.s38* @g38_2 to i64*), align 4
+  %0 = load i64, i64* bitcast (%struct.s38* @g38 to i64*), align 4
+  %1 = load i64, i64* bitcast (%struct.s38* @g38_2 to i64*), align 4
   %call = tail call i32 @f38(i32 3, i64 %0, i64 %1) #5
   ret i32 %call
 }
@@ -76,8 +76,8 @@ entry:
 ; CHECK: stp {{x[0-9]+}}, {{x[0-9]+}}, [sp, #8]
 ; CHECK: movz w[[C:[0-9]+]], #0x9
 ; CHECK: str w[[C]], [sp]
-  %0 = load i64* bitcast (%struct.s38* @g38 to i64*), align 4
-  %1 = load i64* bitcast (%struct.s38* @g38_2 to i64*), align 4
+  %0 = load i64, i64* bitcast (%struct.s38* @g38 to i64*), align 4
+  %1 = load i64, i64* bitcast (%struct.s38* @g38_2 to i64*), align 4
   %call = tail call i32 @f38_stack(i32 1, i32 2, i32 3, i32 4, i32 5, i32 6,
                                    i32 7, i32 8, i32 9, i64 %0, i64 %1) #5
   ret i32 %call
@@ -112,8 +112,8 @@ entry:
 ; CHECK-LABEL: caller39
 ; CHECK: ldp x1, x2,
 ; CHECK: ldp x3, x4,
-  %0 = load i128* bitcast (%struct.s39* @g39 to i128*), align 16
-  %1 = load i128* bitcast (%struct.s39* @g39_2 to i128*), align 16
+  %0 = load i128, i128* bitcast (%struct.s39* @g39 to i128*), align 16
+  %1 = load i128, i128* bitcast (%struct.s39* @g39_2 to i128*), align 16
   %call = tail call i32 @f39(i32 3, i128 %0, i128 %1) #5
   ret i32 %call
 }
@@ -130,8 +130,8 @@ entry:
 ; CHECK: stp {{x[0-9]+}}, {{x[0-9]+}}, [sp, #16]
 ; CHECK: movz w[[C:[0-9]+]], #0x9
 ; CHECK: str w[[C]], [sp]
-  %0 = load i128* bitcast (%struct.s39* @g39 to i128*), align 16
-  %1 = load i128* bitcast (%struct.s39* @g39_2 to i128*), align 16
+  %0 = load i128, i128* bitcast (%struct.s39* @g39 to i128*), align 16
+  %1 = load i128, i128* bitcast (%struct.s39* @g39_2 to i128*), align 16
   %call = tail call i32 @f39_stack(i32 1, i32 2, i32 3, i32 4, i32 5, i32 6,
                                    i32 7, i32 8, i32 9, i128 %0, i128 %1) #5
   ret i32 %call
@@ -168,8 +168,8 @@ entry:
 ; CHECK-LABEL: caller40
 ; CHECK: ldp x1, x2,
 ; CHECK: ldp x3, x4,
-  %0 = load [2 x i64]* bitcast (%struct.s40* @g40 to [2 x i64]*), align 4
-  %1 = load [2 x i64]* bitcast (%struct.s40* @g40_2 to [2 x i64]*), align 4
+  %0 = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40 to [2 x i64]*), align 4
+  %1 = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40_2 to [2 x i64]*), align 4
   %call = tail call i32 @f40(i32 3, [2 x i64] %0, [2 x i64] %1) #5
   ret i32 %call
 }
@@ -186,8 +186,8 @@ entry:
 ; CHECK: stp {{x[0-9]+}}, {{x[0-9]+}}, [sp, #8]
 ; CHECK: movz w[[C:[0-9]+]], #0x9
 ; CHECK: str w[[C]], [sp]
-  %0 = load [2 x i64]* bitcast (%struct.s40* @g40 to [2 x i64]*), align 4
-  %1 = load [2 x i64]* bitcast (%struct.s40* @g40_2 to [2 x i64]*), align 4
+  %0 = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40 to [2 x i64]*), align 4
+  %1 = load [2 x i64], [2 x i64]* bitcast (%struct.s40* @g40_2 to [2 x i64]*), align 4
   %call = tail call i32 @f40_stack(i32 1, i32 2, i32 3, i32 4, i32 5, i32 6,
                          i32 7, i32 8, i32 9, [2 x i64] %0, [2 x i64] %1) #5
   ret i32 %call
@@ -222,8 +222,8 @@ entry:
 ; CHECK-LABEL: caller41
 ; CHECK: ldp x1, x2,
 ; CHECK: ldp x3, x4,
-  %0 = load i128* bitcast (%struct.s41* @g41 to i128*), align 16
-  %1 = load i128* bitcast (%struct.s41* @g41_2 to i128*), align 16
+  %0 = load i128, i128* bitcast (%struct.s41* @g41 to i128*), align 16
+  %1 = load i128, i128* bitcast (%struct.s41* @g41_2 to i128*), align 16
   %call = tail call i32 @f41(i32 3, i128 %0, i128 %1) #5
   ret i32 %call
 }
@@ -240,8 +240,8 @@ entry:
 ; CHECK: stp {{x[0-9]+}}, {{x[0-9]+}}, [sp, #16]
 ; CHECK: movz w[[C:[0-9]+]], #0x9
 ; CHECK: str w[[C]], [sp]
-  %0 = load i128* bitcast (%struct.s41* @g41 to i128*), align 16
-  %1 = load i128* bitcast (%struct.s41* @g41_2 to i128*), align 16
+  %0 = load i128, i128* bitcast (%struct.s41* @g41 to i128*), align 16
+  %1 = load i128, i128* bitcast (%struct.s41* @g41_2 to i128*), align 16
   %call = tail call i32 @f41_stack(i32 1, i32 2, i32 3, i32 4, i32 5, i32 6,
                             i32 7, i32 8, i32 9, i128 %0, i128 %1) #5
   ret i32 %call
@@ -261,14 +261,14 @@ entry:
 ; FAST: add w[[C:[0-9]+]], w[[A]], w0
 ; FAST: add {{w[0-9]+}}, w[[C]], w[[B]]
   %i1 = getelementptr inbounds %struct.s42, %struct.s42* %s1, i64 0, i32 0
-  %0 = load i32* %i1, align 4, !tbaa !0
+  %0 = load i32, i32* %i1, align 4, !tbaa !0
   %i2 = getelementptr inbounds %struct.s42, %struct.s42* %s2, i64 0, i32 0
-  %1 = load i32* %i2, align 4, !tbaa !0
+  %1 = load i32, i32* %i2, align 4, !tbaa !0
   %s = getelementptr inbounds %struct.s42, %struct.s42* %s1, i64 0, i32 1
-  %2 = load i16* %s, align 2, !tbaa !3
+  %2 = load i16, i16* %s, align 2, !tbaa !3
   %conv = sext i16 %2 to i32
   %s5 = getelementptr inbounds %struct.s42, %struct.s42* %s2, i64 0, i32 1
-  %3 = load i16* %s5, align 2, !tbaa !3
+  %3 = load i16, i16* %s5, align 2, !tbaa !3
   %conv6 = sext i16 %3 to i32
   %add = add i32 %0, %i
   %add3 = add i32 %add, %1
@@ -370,14 +370,14 @@ entry:
 ; FAST: add w[[C:[0-9]+]], w[[A]], w0
 ; FAST: add {{w[0-9]+}}, w[[C]], w[[B]]
   %i1 = getelementptr inbounds %struct.s43, %struct.s43* %s1, i64 0, i32 0
-  %0 = load i32* %i1, align 4, !tbaa !0
+  %0 = load i32, i32* %i1, align 4, !tbaa !0
   %i2 = getelementptr inbounds %struct.s43, %struct.s43* %s2, i64 0, i32 0
-  %1 = load i32* %i2, align 4, !tbaa !0
+  %1 = load i32, i32* %i2, align 4, !tbaa !0
   %s = getelementptr inbounds %struct.s43, %struct.s43* %s1, i64 0, i32 1
-  %2 = load i16* %s, align 2, !tbaa !3
+  %2 = load i16, i16* %s, align 2, !tbaa !3
   %conv = sext i16 %2 to i32
   %s5 = getelementptr inbounds %struct.s43, %struct.s43* %s2, i64 0, i32 1
-  %3 = load i16* %s5, align 2, !tbaa !3
+  %3 = load i16, i16* %s5, align 2, !tbaa !3
   %conv6 = sext i16 %3 to i32
   %add = add i32 %0, %i
   %add3 = add i32 %add, %1
@@ -493,7 +493,7 @@ entry:
 ; Load/Store opt is disabled with -O0, so the i128 is split.
 ; FAST: str {{x[0-9]+}}, [x[[ADDR]], #8]
 ; FAST: str {{x[0-9]+}}, [x[[ADDR]]]
-  %0 = load i128* bitcast (%struct.s41* @g41 to i128*), align 16
+  %0 = load i128, i128* bitcast (%struct.s41* @g41 to i128*), align 16
   %call = tail call i32 @callee_i128_split(i32 1, i32 2, i32 3, i32 4, i32 5,
                                            i32 6, i32 7, i128 %0, i32 8) #5
   ret i32 %call
@@ -514,7 +514,7 @@ entry:
 ; FAST: mov x[[R0:[0-9]+]], sp
 ; FAST: orr w[[R1:[0-9]+]], wzr, #0x8
 ; FAST: str w[[R1]], {{\[}}x[[R0]]{{\]}}
-  %0 = load i64* bitcast (%struct.s41* @g41 to i64*), align 16
+  %0 = load i64, i64* bitcast (%struct.s41* @g41 to i64*), align 16
   %call = tail call i32 @callee_i64(i32 1, i32 2, i32 3, i32 4, i32 5,
                                     i32 6, i32 7, i64 %0, i32 8) #5
   ret i32 %call

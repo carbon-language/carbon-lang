@@ -56,7 +56,7 @@ entry:
   tail call i8* @objc_retain(i8* %x)
   tail call i8* @objc_retain(i8* %x)
   store i8* %x, i8** %A, align 8
-  %y = load i8** %A
+  %y = load i8*, i8** %A
   call void @use_alloca(i8** %A)
   call void @objc_release(i8* %y), !clang.imprecise_release !0
   call void @use_pointer(i8* %x)
@@ -78,7 +78,7 @@ entry:
   tail call i8* @objc_retain(i8* %x)
   tail call i8* @objc_retain(i8* %x)
   store i8* %x, i8** %gep, align 8
-  %y = load i8** %A
+  %y = load i8*, i8** %A
   call void @use_alloca(i8** %A)
   call void @objc_release(i8* %y), !clang.imprecise_release !0
   call void @use_pointer(i8* %x)
@@ -101,7 +101,7 @@ entry:
   tail call i8* @objc_retain(i8* %x)
   tail call i8* @objc_retain(i8* %x)
   store i8* %x, i8** %gep, align 8
-  %y = load i8** %gep
+  %y = load i8*, i8** %gep
   call void @use_alloca(i8** %A)
   call void @objc_release(i8* %y), !clang.imprecise_release !0
   call void @use_pointer(i8* %x)
@@ -135,7 +135,7 @@ exit:
   tail call i8* @objc_retain(i8* %x)
   tail call i8* @objc_retain(i8* %x)
   store i8* %x, i8** %gep, align 8
-  %y = load i8** %gep
+  %y = load i8*, i8** %gep
   call void @use_alloca(i8** %A)
   call void @objc_release(i8* %y), !clang.imprecise_release !0
   call void @use_pointer(i8* %x)
@@ -168,7 +168,7 @@ exit:
   tail call i8* @objc_retain(i8* %x)
   tail call i8* @objc_retain(i8* %x)
   store i8* %x, i8** %gep, align 8
-  %y = load i8** %gep
+  %y = load i8*, i8** %gep
   call void @use_alloca(i8** %A)
   call void @objc_release(i8* %y), !clang.imprecise_release !0
   call void @use_pointer(i8* %x)
@@ -191,7 +191,7 @@ entry:
   tail call i8* @objc_retain(i8* %x)
   tail call i8* @objc_retain(i8* %x)
   store i8* %x, i8** %A, align 8
-  %y = load i8** %A
+  %y = load i8*, i8** %A
   call void @use_alloca(i8** %A)
   call void @objc_release(i8* %y), !clang.imprecise_release !0
   call void @use_pointer(i8* %x)
@@ -214,7 +214,7 @@ define void @test2a(i8* %x) {
 entry:
   %A = alloca i8*
   store i8* %x, i8** %A, align 8
-  %y = load i8** %A
+  %y = load i8*, i8** %A
   br label %bb1
 
 bb1:
@@ -246,7 +246,7 @@ entry:
   %gep1 = getelementptr i8*, i8** %A, i32 0
   store i8* %x, i8** %gep1, align 8
   %gep2 = getelementptr i8*, i8** %A, i32 0
-  %y = load i8** %gep2
+  %y = load i8*, i8** %gep2
   br label %bb1
 
 bb1:
@@ -278,7 +278,7 @@ entry:
   %gep1 = getelementptr i8*, i8** %A, i32 2
   store i8* %x, i8** %gep1, align 8
   %gep2 = getelementptr i8*, i8** %A, i32 2
-  %y = load i8** %gep2
+  %y = load i8*, i8** %gep2
   tail call i8* @objc_retain(i8* %x)
   br label %bb1
 
@@ -314,7 +314,7 @@ bb1:
   %gepbb11 = getelementptr i8*, i8** %Abb1, i32 2
   store i8* %x, i8** %gepbb11, align 8
   %gepbb12 = getelementptr i8*, i8** %Abb1, i32 2
-  %ybb1 = load i8** %gepbb12
+  %ybb1 = load i8*, i8** %gepbb12
   br label %bb3
 
 bb2:
@@ -322,7 +322,7 @@ bb2:
   %gepbb21 = getelementptr i8*, i8** %Abb2, i32 2
   store i8* %x, i8** %gepbb21, align 8
   %gepbb22 = getelementptr i8*, i8** %Abb2, i32 2
-  %ybb2 = load i8** %gepbb22
+  %ybb2 = load i8*, i8** %gepbb22
   br label %bb3
 
 bb3:
@@ -391,7 +391,7 @@ entry:
 arraydestroy.body:
   %arraydestroy.elementPast = phi i8** [ %gep, %entry ], [ %arraydestroy.element, %arraydestroy.body ]
   %arraydestroy.element = getelementptr inbounds i8*, i8** %arraydestroy.elementPast, i64 -1
-  %destroy_tmp = load i8** %arraydestroy.element, align 8
+  %destroy_tmp = load i8*, i8** %arraydestroy.element, align 8
   call void @objc_release(i8* %destroy_tmp), !clang.imprecise_release !0
   %objs_ptr = getelementptr inbounds [2 x i8*], [2 x i8*]* %objs, i64 0, i64 0
   %arraydestroy.cmp = icmp eq i8** %arraydestroy.element, %objs_ptr
@@ -404,7 +404,7 @@ arraydestroy.done:
 arraydestroy.body1:
   %arraydestroy.elementPast1 = phi i8** [ %gep1, %arraydestroy.done ], [ %arraydestroy.element1, %arraydestroy.body1 ]
   %arraydestroy.element1 = getelementptr inbounds i8*, i8** %arraydestroy.elementPast1, i64 -1
-  %destroy_tmp1 = load i8** %arraydestroy.element1, align 8
+  %destroy_tmp1 = load i8*, i8** %arraydestroy.element1, align 8
   call void @objc_release(i8* %destroy_tmp1), !clang.imprecise_release !0
   %keys_ptr = getelementptr inbounds [2 x i8*], [2 x i8*]* %keys, i64 0, i64 0
   %arraydestroy.cmp1 = icmp eq i8** %arraydestroy.element1, %keys_ptr
@@ -470,7 +470,7 @@ entry:
 arraydestroy.body:
   %arraydestroy.elementPast = phi i8** [ %gep, %entry ], [ %arraydestroy.element, %arraydestroy.body ]
   %arraydestroy.element = getelementptr inbounds i8*, i8** %arraydestroy.elementPast, i64 -1
-  %destroy_tmp = load i8** %arraydestroy.element, align 8
+  %destroy_tmp = load i8*, i8** %arraydestroy.element, align 8
   call void @objc_release(i8* %destroy_tmp), !clang.imprecise_release !0
   %objs_ptr = getelementptr inbounds [2 x i8*], [2 x i8*]* %objs, i64 0, i64 0
   %arraydestroy.cmp = icmp eq i8** %arraydestroy.element, %objs_ptr
@@ -483,7 +483,7 @@ arraydestroy.done:
 arraydestroy.body1:
   %arraydestroy.elementPast1 = phi i8** [ %gep1, %arraydestroy.done ], [ %arraydestroy.element1, %arraydestroy.body1 ]
   %arraydestroy.element1 = getelementptr inbounds i8*, i8** %arraydestroy.elementPast1, i64 -1
-  %destroy_tmp1 = load i8** %arraydestroy.element1, align 8
+  %destroy_tmp1 = load i8*, i8** %arraydestroy.element1, align 8
   call void @objc_release(i8* %destroy_tmp1), !clang.imprecise_release !0
   %keys_ptr = getelementptr inbounds [2 x i8*], [2 x i8*]* %keys, i64 0, i64 0
   %arraydestroy.cmp1 = icmp eq i8** %arraydestroy.element1, %keys_ptr

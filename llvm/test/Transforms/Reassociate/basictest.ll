@@ -28,9 +28,9 @@ define i32 @test2(i32 %reg109, i32 %reg1111) {
 @f = external global i32
 
 define void @test3() {
-  %A = load i32* @a
-  %B = load i32* @b
-  %C = load i32* @c
+  %A = load i32, i32* @a
+  %B = load i32, i32* @b
+  %C = load i32, i32* @c
   %t1 = add i32 %A, %B
   %t2 = add i32 %t1, %C
   %t3 = add i32 %C, %A
@@ -49,9 +49,9 @@ define void @test3() {
 }
 
 define void @test4() {
-  %A = load i32* @a
-  %B = load i32* @b
-  %C = load i32* @c
+  %A = load i32, i32* @a
+  %B = load i32, i32* @b
+  %C = load i32, i32* @c
   %t1 = add i32 %A, %B
   %t2 = add i32 %t1, %C
   %t3 = add i32 %C, %A
@@ -70,9 +70,9 @@ define void @test4() {
 }
 
 define void @test5() {
-  %A = load i32* @a
-  %B = load i32* @b
-  %C = load i32* @c
+  %A = load i32, i32* @a
+  %B = load i32, i32* @b
+  %C = load i32, i32* @c
   %t1 = add i32 %B, %A
   %t2 = add i32 %t1, %C
   %t3 = add i32 %C, %A
@@ -91,11 +91,11 @@ define void @test5() {
 }
 
 define i32 @test6() {
-  %tmp.0 = load i32* @a
-  %tmp.1 = load i32* @b
+  %tmp.0 = load i32, i32* @a
+  %tmp.1 = load i32, i32* @b
   ; (a+b)
   %tmp.2 = add i32 %tmp.0, %tmp.1
-  %tmp.4 = load i32* @c
+  %tmp.4 = load i32, i32* @c
   ; (a+b)+c
   %tmp.5 = add i32 %tmp.2, %tmp.4
   ; (a+c)

@@ -15,19 +15,19 @@ cond_true:		; preds = %cond_true, %entry
 	%tmp31 = add nsw i32 %tmp.10, -1		; <i32> [#uses=4]
 	%tmp32 = getelementptr i32, i32* %mpp, i32 %tmp31		; <i32*> [#uses=1]
 	%tmp34 = bitcast i32* %tmp32 to <16 x i8>*		; <i8*> [#uses=1]
-	%tmp = load <16 x i8>* %tmp34, align 1
+	%tmp = load <16 x i8>, <16 x i8>* %tmp34, align 1
 	%tmp42 = getelementptr i32, i32* %tpmm, i32 %tmp31		; <i32*> [#uses=1]
 	%tmp42.upgrd.1 = bitcast i32* %tmp42 to <4 x i32>*		; <<4 x i32>*> [#uses=1]
-	%tmp46 = load <4 x i32>* %tmp42.upgrd.1		; <<4 x i32>> [#uses=1]
+	%tmp46 = load <4 x i32>, <4 x i32>* %tmp42.upgrd.1		; <<4 x i32>> [#uses=1]
 	%tmp54 = bitcast <16 x i8> %tmp to <4 x i32>		; <<4 x i32>> [#uses=1]
 	%tmp55 = add <4 x i32> %tmp54, %tmp46		; <<4 x i32>> [#uses=2]
 	%tmp55.upgrd.2 = bitcast <4 x i32> %tmp55 to <2 x i64>		; <<2 x i64>> [#uses=1]
 	%tmp62 = getelementptr i32, i32* %ip, i32 %tmp31		; <i32*> [#uses=1]
 	%tmp65 = bitcast i32* %tmp62 to <16 x i8>*		; <i8*> [#uses=1]
-	%tmp66 = load <16 x i8>* %tmp65, align 1
+	%tmp66 = load <16 x i8>, <16 x i8>* %tmp65, align 1
 	%tmp73 = getelementptr i32, i32* %tpim, i32 %tmp31		; <i32*> [#uses=1]
 	%tmp73.upgrd.3 = bitcast i32* %tmp73 to <4 x i32>*		; <<4 x i32>*> [#uses=1]
-	%tmp77 = load <4 x i32>* %tmp73.upgrd.3		; <<4 x i32>> [#uses=1]
+	%tmp77 = load <4 x i32>, <4 x i32>* %tmp73.upgrd.3		; <<4 x i32>> [#uses=1]
 	%tmp87 = bitcast <16 x i8> %tmp66 to <4 x i32>		; <<4 x i32>> [#uses=1]
 	%tmp88 = add <4 x i32> %tmp87, %tmp77		; <<4 x i32>> [#uses=2]
 	%tmp88.upgrd.4 = bitcast <4 x i32> %tmp88 to <2 x i64>		; <<2 x i64>> [#uses=1]

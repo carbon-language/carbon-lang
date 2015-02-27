@@ -46,7 +46,7 @@ entry:
   %next = getelementptr inbounds i8, i8* %call, i64 8
   %tmp = bitcast i8* %next to %struct._list**
   %tmp2 = bitcast i8* %call to %struct._list*
-  %.pre78 = load i32* @ncol, align 4
+  %.pre78 = load i32, i32* @ncol, align 4
   br label %for.cond1.preheader
 
 for.cond1.preheader:                              ; preds = %for.inc32, %entry
@@ -60,7 +60,7 @@ for.body3:                                        ; preds = %if.end31, %for.cond
   %row.172 = phi i32 [ %row.3, %if.end31 ], [ 0, %for.cond1.preheader ]
   %col.071 = phi i32 [ %inc, %if.end31 ], [ 0, %for.cond1.preheader ]
   %call4 = tail call i32* @make_data()
-  %tmp5 = load i32* @ncol, align 4
+  %tmp5 = load i32, i32* @ncol, align 4
   %tobool14.i = icmp eq i32 %tmp5, 0
   br i1 %tobool14.i, label %while.cond.i, label %while.body.lr.ph.i
 
@@ -84,9 +84,9 @@ while.cond.i:                                     ; preds = %land.rhs.i, %while.
 
 land.rhs.i:                                       ; preds = %while.cond.i
   %arrayidx.i67 = getelementptr inbounds i32, i32* %call4, i64 %indvars.iv.next.i65
-  %tmp11 = load i32* %arrayidx.i67, align 4
+  %tmp11 = load i32, i32* %arrayidx.i67, align 4
   %arrayidx2.i68 = getelementptr inbounds i32, i32* %data, i64 %indvars.iv.next.i65
-  %tmp12 = load i32* %arrayidx2.i68, align 4
+  %tmp12 = load i32, i32* %arrayidx2.i68, align 4
   %cmp.i69 = icmp eq i32 %tmp11, %tmp12
   br i1 %cmp.i69, label %while.cond.i, label %equal_data.exit
 
@@ -96,14 +96,14 @@ equal_data.exit:                                  ; preds = %land.rhs.i
 
 if.then:                                          ; preds = %equal_data.exit
   %next7 = getelementptr inbounds %struct._list, %struct._list* %current.173, i64 0, i32 1
-  %tmp14 = load %struct._list** %next7, align 8
+  %tmp14 = load %struct._list*, %struct._list** %next7, align 8
   %next12 = getelementptr inbounds %struct._list, %struct._list* %tmp14, i64 0, i32 1
   store %struct._list* null, %struct._list** %next12, align 8
-  %tmp15 = load %struct._list** %next7, align 8
-  %tmp16 = load i32* %value, align 4
+  %tmp15 = load %struct._list*, %struct._list** %next7, align 8
+  %tmp16 = load i32, i32* %value, align 4
   %cmp14 = icmp eq i32 %tmp16, 1
   %.tmp16 = select i1 %cmp14, i32 0, i32 %tmp16
-  %tmp18 = load i32* %all, align 4
+  %tmp18 = load i32, i32* %all, align 4
   %tmp19 = or i32 %tmp18, %.tmp16
   %tmp20 = icmp eq i32 %tmp19, 0
   br i1 %tmp20, label %if.then19, label %if.end31
@@ -123,12 +123,12 @@ if.end31:                                         ; preds = %if.else, %if.then19
   %row.3 = phi i32 [ %.row.172, %if.else ], [ %row.172, %if.then ], [ 0, %if.then19 ]
   %current.2 = phi %struct._list* [ %current.173, %if.else ], [ %tmp15, %if.then ], [ %tmp15, %if.then19 ]
   %inc = add nsw i32 %col.1, 1
-  %tmp25 = load i32* @ncol, align 4
+  %tmp25 = load i32, i32* @ncol, align 4
   %cmp2 = icmp eq i32 %inc, %tmp25
   br i1 %cmp2, label %for.cond1.for.inc32_crit_edge, label %for.body3
 
 for.cond1.for.inc32_crit_edge:                    ; preds = %if.end31
-  %.pre79 = load i32* @nrow, align 4
+  %.pre79 = load i32, i32* @nrow, align 4
   br label %for.inc32
 
 for.inc32:                                        ; preds = %for.cond1.for.inc32_crit_edge, %for.cond1.preheader
@@ -140,6 +140,6 @@ for.inc32:                                        ; preds = %for.cond1.for.inc32
   br i1 %cmp, label %for.end34, label %for.cond1.preheader
 
 for.end34:                                        ; preds = %for.inc32
-  %.pre = load %struct._list** %tmp, align 8
+  %.pre = load %struct._list*, %struct._list** %tmp, align 8
   ret %struct._list* %.pre
 }

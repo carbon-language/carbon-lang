@@ -51,7 +51,7 @@ entry:
   %17 = lshr i64 %16, 3
   %18 = add i64 %17, 2147450880
   %19 = inttoptr i64 %18 to i8*
-  %20 = load i8* %19
+  %20 = load i8, i8* %19
   %21 = icmp ne i8 %20, 0
   call void @llvm.dbg.declare(metadata i32* %3, metadata !23, metadata !28)
   br i1 %21, label %22, label %28
@@ -91,8 +91,8 @@ declare void @_ZN1AC1Ev(%struct.A*) #2
 
 define internal void @asan.module_ctor()  "stack-protector-buffer-size"="1" {
   call void @__asan_init_v3()
-  %1 = load volatile i64* @__asan_mapping_offset
-  %2 = load volatile i64* @__asan_mapping_scale
+  %1 = load volatile i64, i64* @__asan_mapping_offset
+  %2 = load volatile i64, i64* @__asan_mapping_scale
   ret void
 }
 

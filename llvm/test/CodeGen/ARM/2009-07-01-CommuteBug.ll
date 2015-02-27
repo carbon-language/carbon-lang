@@ -30,9 +30,9 @@ bb11:		; preds = %bb9
 	br i1 undef, label %bb15, label %bb12
 
 bb12:		; preds = %bb11
-	%0 = load i32** @II, align 4		; <i32*> [#uses=1]
-	%1 = load i32** @JJ, align 4		; <i32*> [#uses=1]
-	%2 = load i32* @qr, align 4		; <i32> [#uses=1]
+	%0 = load i32*, i32** @II, align 4		; <i32*> [#uses=1]
+	%1 = load i32*, i32** @JJ, align 4		; <i32*> [#uses=1]
+	%2 = load i32, i32* @qr, align 4		; <i32> [#uses=1]
 	br label %bb228.i
 
 bb74.i:		; preds = %bb228.i
@@ -97,8 +97,8 @@ bb168.i:		; preds = %bb167.i, %bb163.i, %bb161.i, %bb160.i, %bb158.i
 	%ci.12.i = select i1 undef, i32 %fi.5.i, i32 undef		; <i32> [#uses=2]
 	%cj.11.i100 = select i1 undef, i32 %fj.4.i, i32 undef		; <i32> [#uses=2]
 	%c.14.i = select i1 undef, i32 %f.5.i, i32 undef		; <i32> [#uses=1]
-	%6 = load i32* %scevgep88.i, align 4		; <i32> [#uses=1]
-	%7 = load i32* %scevgep89.i, align 4		; <i32> [#uses=1]
+	%6 = load i32, i32* %scevgep88.i, align 4		; <i32> [#uses=1]
+	%7 = load i32, i32* %scevgep89.i, align 4		; <i32> [#uses=1]
 	store i32 %ci.12.i, i32* %scevgep88.i, align 4
 	store i32 %cj.11.i100, i32* %scevgep89.i, align 4
 	br i1 undef, label %bb211.i, label %bb218.i

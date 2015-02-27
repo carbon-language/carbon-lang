@@ -26,12 +26,12 @@ bb1.i:		; preds = %bb.i2, %entry
 	br i1 %0, label %bb2.i3, label %nactive_heaps.exit
 
 bb2.i3:		; preds = %bb1.i
-	%1 = load %struct.obj** null, align 4		; <%struct.obj*> [#uses=1]
+	%1 = load %struct.obj*, %struct.obj** null, align 4		; <%struct.obj*> [#uses=1]
 	%2 = icmp eq %struct.obj* %1, null		; <i1> [#uses=1]
 	br i1 %2, label %nactive_heaps.exit, label %bb.i2
 
 nactive_heaps.exit:		; preds = %bb2.i3, %bb1.i
-	%3 = load i32* @heap_size, align 4		; <i32> [#uses=1]
+	%3 = load i32, i32* @heap_size, align 4		; <i32> [#uses=1]
 	%4 = mul i32 %3, %m.0.i		; <i32> [#uses=1]
 	%5 = sub i32 %4, 0		; <i32> [#uses=1]
 	%6 = tail call i32 (i8*, i8*, ...)* @sprintf(i8* null, i8* getelementptr ([39 x i8]* @"\01LC85", i32 0, i32 0), i32 %m.0.i, i32 0, i32 %5, i32 0) nounwind		; <i32> [#uses=0]

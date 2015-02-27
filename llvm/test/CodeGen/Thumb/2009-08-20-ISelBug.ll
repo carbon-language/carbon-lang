@@ -19,14 +19,14 @@ entry:
 
 bb1:                                              ; preds = %entry
   %1 = getelementptr inbounds %struct.asl_file_t, %struct.asl_file_t* %s, i32 0, i32 11 ; <%struct.FILE**> [#uses=2]
-  %2 = load %struct.FILE** %1, align 4            ; <%struct.FILE*> [#uses=2]
+  %2 = load %struct.FILE*, %struct.FILE** %1, align 4            ; <%struct.FILE*> [#uses=2]
   %3 = icmp eq %struct.FILE* %2, null             ; <i1> [#uses=1]
   br i1 %3, label %bb13, label %bb3
 
 bb3:                                              ; preds = %bb1
   %4 = add nsw i64 %off, 8                        ; <i64> [#uses=1]
   %5 = getelementptr inbounds %struct.asl_file_t, %struct.asl_file_t* %s, i32 0, i32 10 ; <i32*> [#uses=1]
-  %6 = load i32* %5, align 4                      ; <i32> [#uses=1]
+  %6 = load i32, i32* %5, align 4                      ; <i32> [#uses=1]
   %7 = zext i32 %6 to i64                         ; <i64> [#uses=1]
   %8 = icmp sgt i64 %4, %7                        ; <i1> [#uses=1]
   br i1 %8, label %bb13, label %bb5
@@ -38,7 +38,7 @@ bb5:                                              ; preds = %bb3
 
 bb7:                                              ; preds = %bb5
   store i64 0, i64* %val, align 4
-  %11 = load %struct.FILE** %1, align 4           ; <%struct.FILE*> [#uses=1]
+  %11 = load %struct.FILE*, %struct.FILE** %1, align 4           ; <%struct.FILE*> [#uses=1]
   %val8 = bitcast i64* %val to i8*                ; <i8*> [#uses=1]
   %12 = call  i32 @fread(i8* noalias %val8, i32 8, i32 1, %struct.FILE* noalias %11) nounwind ; <i32> [#uses=1]
   %13 = icmp eq i32 %12, 1                        ; <i1> [#uses=1]
@@ -49,7 +49,7 @@ bb10:                                             ; preds = %bb7
   br i1 %14, label %bb13, label %bb11
 
 bb11:                                             ; preds = %bb10
-  %15 = load i64* %val, align 4                   ; <i64> [#uses=1]
+  %15 = load i64, i64* %val, align 4                   ; <i64> [#uses=1]
   %16 = call  i64 @asl_core_ntohq(i64 %15) nounwind ; <i64> [#uses=1]
   store i64 %16, i64* %out, align 4
   ret i32 0

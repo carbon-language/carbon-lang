@@ -267,8 +267,8 @@ entry:
   br i1 %cmp, label %if.then, label %if.end3
 
 if.then:
-  %0 = load i32* %a
-  %1 = load i32* %b
+  %0 = load i32, i32* %a
+  %1 = load i32, i32* %b
   %cmp1 = icmp eq i32 %0, %1
   br i1 %cmp1, label %return, label %if.end3
 

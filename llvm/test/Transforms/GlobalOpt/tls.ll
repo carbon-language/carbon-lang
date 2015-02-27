@@ -24,14 +24,14 @@ entry:
   store i32 0, i32* getelementptr inbounds ([100 x i32]* @x, i64 0, i64 1), align 4
 
   ; Read the value of @ip, which now points at x[1] for thread 2.
-  %0 = load i32** @ip, align 8
+  %0 = load i32*, i32** @ip, align 8
 
-  %1 = load i32* %0, align 4
+  %1 = load i32, i32* %0, align 4
   ret i32 %1
 
 ; CHECK-LABEL: @f(
 ; Make sure that the load from @ip hasn't been removed.
-; CHECK: load i32** @ip
+; CHECK: load i32*, i32** @ip
 ; CHECK: ret
 }
 

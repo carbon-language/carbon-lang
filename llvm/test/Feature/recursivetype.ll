@@ -43,7 +43,7 @@ declare i8* @malloc(i32)
 
 define void @InsertIntoListTail(%list** %L, i32 %Data) {
 bb1:
-        %reg116 = load %list** %L               ; <%list*> [#uses=1]
+        %reg116 = load %list*, %list** %L               ; <%list*> [#uses=1]
         %cast1004 = inttoptr i64 0 to %list*            ; <%list*> [#uses=1]
         %cond1000 = icmp eq %list* %reg116, %cast1004           ; <i1> [#uses=1]
         br i1 %cond1000, label %bb3, label %bb2
@@ -51,8 +51,8 @@ bb1:
 bb2:            ; preds = %bb2, %bb1
         %reg117 = phi %list** [ %reg118, %bb2 ], [ %L, %bb1 ]           ; <%list**> [#uses=1]
         %cast1010 = bitcast %list** %reg117 to %list***         ; <%list***> [#uses=1]
-        %reg118 = load %list*** %cast1010               ; <%list**> [#uses=3]
-        %reg109 = load %list** %reg118          ; <%list*> [#uses=1]
+        %reg118 = load %list**, %list*** %cast1010               ; <%list**> [#uses=3]
+        %reg109 = load %list*, %list** %reg118          ; <%list*> [#uses=1]
         %cast1005 = inttoptr i64 0 to %list*            ; <%list*> [#uses=1]
         %cond1001 = icmp ne %list* %reg109, %cast1005           ; <i1> [#uses=1]
         br i1 %cond1001, label %bb2, label %bb3
@@ -88,7 +88,7 @@ bb3:            ; preds = %bb2
 
 bb4:            ; preds = %bb2
         %idx = getelementptr %list, %list* %reg115, i64 0, i32 1               ; <i32*> [#uses=1]
-        %reg111 = load i32* %idx                ; <i32> [#uses=1]
+        %reg111 = load i32, i32* %idx                ; <i32> [#uses=1]
         %cond1013 = icmp ne i32 %reg111, %Data          ; <i1> [#uses=1]
         br i1 %cond1013, label %bb6, label %bb5
 
@@ -97,7 +97,7 @@ bb5:            ; preds = %bb4
 
 bb6:            ; preds = %bb4
         %idx2 = getelementptr %list, %list* %reg115, i64 0, i32 0              ; <%list**> [#uses=1]
-        %reg116 = load %list** %idx2            ; <%list*> [#uses=1]
+        %reg116 = load %list*, %list** %idx2            ; <%list*> [#uses=1]
         br label %bb2
 }
 

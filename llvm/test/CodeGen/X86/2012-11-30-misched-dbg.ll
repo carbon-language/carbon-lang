@@ -45,7 +45,7 @@ if.then3344:
 if.then4073:                                      ; preds = %if.then3344
   call void @llvm.dbg.declare(metadata [20 x i8]* %num14075, metadata !4, metadata !{!"0x102"})
   %arraydecay4078 = getelementptr inbounds [20 x i8], [20 x i8]* %num14075, i64 0, i64 0
-  %0 = load i32* undef, align 4
+  %0 = load i32, i32* undef, align 4
   %add4093 = add nsw i32 %0, 0
   %conv4094 = sitofp i32 %add4093 to float
   %div4095 = fdiv float %conv4094, 5.670000e+02

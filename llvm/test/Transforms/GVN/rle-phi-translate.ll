@@ -11,13 +11,13 @@ entry:
 	br i1 %t1, label %bb, label %bb1
 
 bb:
-	%t2 = load i32* %c, align 4
+	%t2 = load i32, i32* %c, align 4
 	%t3 = add i32 %t2, 1
 	store i32 %t3, i32* %g, align 4
 	br label %bb2
 
 bb1:		; preds = %entry
-	%t5 = load i32* %b, align 4
+	%t5 = load i32, i32* %b, align 4
 	%t6 = add i32 %t5, 1
 	store i32 %t6, i32* %g, align 4
 	br label %bb2
@@ -25,8 +25,8 @@ bb1:		; preds = %entry
 bb2:		; preds = %bb1, %bb
 	%c_addr.0 = phi i32* [ %g, %bb1 ], [ %c, %bb ]
 	%b_addr.0 = phi i32* [ %b, %bb1 ], [ %g, %bb ]
-	%cv = load i32* %c_addr.0, align 4
-	%bv = load i32* %b_addr.0, align 4
+	%cv = load i32, i32* %c_addr.0, align 4
+	%bv = load i32, i32* %b_addr.0, align 4
 ; CHECK: %bv = phi i32
 ; CHECK: %cv = phi i32
 ; CHECK-NOT: load
@@ -53,7 +53,7 @@ bb1:
 bb2:
   %d = phi i32* [ %c, %bb1 ], [ %b, %bb ]
   %d1 = bitcast i32* %d to i8*
-  %dv = load i8* %d1
+  %dv = load i8, i8* %d1
 ; CHECK: %dv = phi i8 [ 92, %bb1 ], [ 4, %bb ]
 ; CHECK-NOT: load
 ; CHECK: ret i8 %dv
@@ -79,7 +79,7 @@ bb2:
   %d = phi i32* [ %c, %bb1 ], [ %b, %bb ]
   %i = phi i32 [ 7, %bb1 ], [ 17, %bb ]
   %d1 = getelementptr i32, i32* %d, i32 %i
-  %dv = load i32* %d1
+  %dv = load i32, i32* %d1
 ; CHECK: %dv = phi i32 [ 82, %bb1 ], [ 4, %bb ]
 ; CHECK-NOT: load
 ; CHECK: ret i32 %dv
@@ -105,7 +105,7 @@ bb2:
   %d = phi i32* [ %c, %bb1 ], [ %b, %bb ]
   %i = phi i32 [ 7, %bb1 ], [ 0, %bb ]
   %d1 = getelementptr i32, i32* %d, i32 %i
-  %dv = load i32* %d1
+  %dv = load i32, i32* %d1
 ; CHECK: %dv = phi i32 [ 82, %bb1 ], [ 4, %bb ]
 ; CHECK-NOT: load
 ; CHECK: ret i32 %dv
@@ -130,8 +130,8 @@ for.body:
   %arrayidx6 = getelementptr double, double* %G, i64 %indvar
   %tmp = add i64 %indvar, 1
   %arrayidx = getelementptr double, double* %G, i64 %tmp
-  %tmp3 = load double* %arrayidx
-  %tmp7 = load double* %arrayidx6
+  %tmp3 = load double, double* %arrayidx
+  %tmp7 = load double, double* %arrayidx6
   %add = fadd double %tmp3, %tmp7
   store double %add, double* %arrayidx
   %exitcond = icmp eq i64 %tmp, 999

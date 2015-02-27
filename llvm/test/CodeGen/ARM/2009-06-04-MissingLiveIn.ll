@@ -136,7 +136,7 @@ bb138:		; preds = %bb77
 	br label %bb141
 
 bb139:		; preds = %bb141
-	%scevgep441442881 = load i16* undef		; <i16> [#uses=1]
+	%scevgep441442881 = load i16, i16* undef		; <i16> [#uses=1]
 	%1 = icmp ugt i16 %scevgep441442881, %0		; <i1> [#uses=1]
 	br i1 %1, label %bb141, label %bb142
 

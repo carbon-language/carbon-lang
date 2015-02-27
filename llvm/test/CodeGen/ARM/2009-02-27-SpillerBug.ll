@@ -28,12 +28,12 @@ bb53:		; preds = %bb52
 	br i1 %phitmp, label %bb55, label %bb52
 
 bb55:		; preds = %bb53
-	%4 = load double* @a, align 4		; <double> [#uses=10]
+	%4 = load double, double* @a, align 4		; <double> [#uses=10]
 	%5 = fadd double %4, 0.000000e+00		; <double> [#uses=16]
 	%6 = fcmp ogt double %k.4, 0.000000e+00		; <i1> [#uses=1]
 	%.pn404 = fmul double %4, %4		; <double> [#uses=4]
 	%.pn402 = fmul double %5, %5		; <double> [#uses=5]
-	%.pn165.in = load double* @N		; <double> [#uses=5]
+	%.pn165.in = load double, double* @N		; <double> [#uses=5]
 	%.pn198 = fmul double 0.000000e+00, %5		; <double> [#uses=1]
 	%.pn185 = fsub double -0.000000e+00, 0.000000e+00		; <double> [#uses=1]
 	%.pn147 = fsub double -0.000000e+00, 0.000000e+00		; <double> [#uses=1]

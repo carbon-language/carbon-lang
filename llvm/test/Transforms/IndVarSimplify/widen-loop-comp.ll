@@ -19,13 +19,13 @@ target triple = "aarch64--linux-gnu"
 define i32 @test1() {
 entry:
   store i32 -1, i32* @idx, align 4
-  %0 = load i32* @e, align 4
+  %0 = load i32, i32* @e, align 4
   %cmp4 = icmp slt i32 %0, 0
   br i1 %cmp4, label %for.end.loopexit, label %for.body.lr.ph
 
 for.body.lr.ph:
-  %1 = load i32** @ptr, align 8
-  %2 = load i32* @e, align 4
+  %1 = load i32*, i32** @ptr, align 8
+  %2 = load i32, i32* @e, align 4
   br label %for.body
 
 for.cond:
@@ -37,7 +37,7 @@ for.body:
   %i.05 = phi i32 [ 0, %for.body.lr.ph ], [ %inc, %for.cond ]
   %idxprom = sext i32 %i.05 to i64
   %arrayidx = getelementptr inbounds i32, i32* %1, i64 %idxprom
-  %3 = load i32* %arrayidx, align 4
+  %3 = load i32, i32* %arrayidx, align 4
   %tobool = icmp eq i32 %3, 0
   br i1 %tobool, label %if.then, label %for.cond
 
@@ -53,7 +53,7 @@ for.end.loopexit:
   br label %for.end
 
 for.end:
-  %4 = load i32* @idx, align 4
+  %4 = load i32, i32* @idx, align 4
   ret i32 %4
 }
 
@@ -82,10 +82,10 @@ for.body4.us:
   %storemerge14.us = phi i32 [ 0, %for.body4.lr.ph.us ], [ %inc.us, %for.body4.us ]
   %idxprom.us = sext i32 %storemerge14.us to i64
   %arrayidx6.us = getelementptr inbounds [8 x i8], [8 x i8]* %a, i64 %idxprom5.us, i64 %idxprom.us
-  %0 = load i8* %arrayidx6.us, align 1
+  %0 = load i8, i8* %arrayidx6.us, align 1
   %idxprom7.us = zext i8 %0 to i64
   %arrayidx8.us = getelementptr inbounds i8, i8* %b, i64 %idxprom7.us
-  %1 = load i8* %arrayidx8.us, align 1
+  %1 = load i8, i8* %arrayidx8.us, align 1
   store i8 %1, i8* %arrayidx6.us, align 1
   %inc.us = add nsw i32 %storemerge14.us, 1
   %cmp2.us = icmp slt i32 %inc.us, %conv
@@ -127,7 +127,7 @@ for.cond:
 for.body:
   %idxprom = sext i32 %i.0 to i64
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %idxprom
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %add = add nsw i32 %sum.0, %0
   %inc = add nsw i32 %i.0, 1
   br label %for.cond
@@ -181,7 +181,7 @@ for.cond:
 for.body:
   %idxprom = zext i32 %i.0 to i64
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %idxprom
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %add = add nsw i32 %sum.0, %0
   %inc = add nsw i32 %i.0, 1
   br label %for.cond

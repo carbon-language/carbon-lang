@@ -11,7 +11,7 @@ vector.body:                                      ; preds = %vector.body, %vecto
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
   %0 = getelementptr inbounds float, float* %f, i64 %index
   %1 = bitcast float* %0 to <4 x float>*
-  %wide.load = load <4 x float>* %1, align 4
+  %wide.load = load <4 x float>, <4 x float>* %1, align 4
   %2 = call <4 x float> @llvm.ceil.v4f32(<4 x float> %wide.load)
   store <4 x float> %2, <4 x float>* %1, align 4
   %index.next = add i64 %index, 4
@@ -39,7 +39,7 @@ vector.body:                                      ; preds = %vector.body, %vecto
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
   %0 = getelementptr inbounds float, float* %f, i64 %index
   %1 = bitcast float* %0 to <4 x float>*
-  %wide.load = load <4 x float>* %1, align 4
+  %wide.load = load <4 x float>, <4 x float>* %1, align 4
   %2 = call <4 x float> @llvm.nearbyint.v4f32(<4 x float> %wide.load)
   store <4 x float> %2, <4 x float>* %1, align 4
   %index.next = add i64 %index, 4
@@ -67,7 +67,7 @@ vector.body:                                      ; preds = %vector.body, %vecto
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
   %0 = getelementptr inbounds float, float* %f, i64 %index
   %1 = bitcast float* %0 to <4 x float>*
-  %wide.load = load <4 x float>* %1, align 4
+  %wide.load = load <4 x float>, <4 x float>* %1, align 4
   %2 = call <4 x float> @llvm.fmuladd.v4f32(<4 x float> %wide.load, <4 x float> %b, <4 x float> %c)
   store <4 x float> %2, <4 x float>* %1, align 4
   %index.next = add i64 %index, 4

@@ -11,16 +11,16 @@ declare i32 @foo(i32 %x) #0
 define void @sink_store(%struct.node* nocapture %r, i32 %index) {
 entry:
   %node.0.in16 = getelementptr inbounds %struct.node, %struct.node* %r, i64 0, i32 2
-  %node.017 = load %struct.node** %node.0.in16, align 8
+  %node.017 = load %struct.node*, %struct.node** %node.0.in16, align 8
   %index.addr = alloca i32, align 4
   store i32 %index, i32* %index.addr, align 4
-  %0 = load i32* %index.addr, align 4
+  %0 = load i32, i32* %index.addr, align 4
   %cmp = icmp slt i32 %0, 0
   br i1 %cmp, label %if.then, label %if.else
 
 ; CHECK: if.then
 if.then:                                          ; preds = %entry
-  %1 = load i32* %index.addr, align 4
+  %1 = load i32, i32* %index.addr, align 4
   %p1 = getelementptr inbounds %struct.node, %struct.node* %node.017, i32 0, i32 6
   ; CHECK-NOT: store i32
   store i32 %1, i32* %p1, align 4
@@ -28,7 +28,7 @@ if.then:                                          ; preds = %entry
   
 ; CHECK: if.else
 if.else:                                          ; preds = %entry
-  %2 = load i32* %index.addr, align 4
+  %2 = load i32, i32* %index.addr, align 4
   %add = add nsw i32 %2, 1
   %p3 = getelementptr inbounds %struct.node, %struct.node* %node.017, i32 0, i32 6
   ; CHECK-NOT: store i32

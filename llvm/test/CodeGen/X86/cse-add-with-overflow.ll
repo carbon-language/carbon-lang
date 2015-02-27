@@ -15,8 +15,8 @@
 
 define i64 @redundantadd(i64* %a0, i64* %a1) {
 entry:
-  %tmp8 = load i64* %a0, align 8
-  %tmp12 = load i64* %a1, align 8
+  %tmp8 = load i64, i64* %a0, align 8
+  %tmp12 = load i64, i64* %a1, align 8
   %tmp13 = icmp ult i64 %tmp12, -281474976710656
   br i1 %tmp13, label %exit1, label %body
 

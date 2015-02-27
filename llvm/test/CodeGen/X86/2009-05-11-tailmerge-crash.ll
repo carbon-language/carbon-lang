@@ -12,7 +12,7 @@ entry:
 	br label %bb
 
 bb:		; preds = %bb.i, %bb, %entry
-	%2 = load volatile i32* @g_9, align 4		; <i32> [#uses=2]
+	%2 = load volatile i32, i32* @g_9, align 4		; <i32> [#uses=2]
 	%3 = icmp sgt i32 %2, 1		; <i1> [#uses=1]
 	%4 = and i1 %3, %1		; <i1> [#uses=1]
 	br i1 %4, label %bb.i, label %bb

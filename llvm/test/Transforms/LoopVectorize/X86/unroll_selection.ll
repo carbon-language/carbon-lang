@@ -17,7 +17,7 @@ define void @reg_pressure(double* nocapture %A, i32 %n) nounwind uwtable ssp {
 ; <label>:2                                       ; preds = %2, %0
   %indvars.iv = phi i64 [ %indvars.iv.next, %2 ], [ %1, %0 ]
   %3 = getelementptr inbounds double, double* %A, i64 %indvars.iv
-  %4 = load double* %3, align 8
+  %4 = load double, double* %3, align 8
   %5 = fadd double %4, 3.000000e+00
   %6 = fmul double %4, 2.000000e+00
   %7 = fadd double %5, %6
@@ -59,7 +59,7 @@ define void @small_loop(i16* nocapture %A, i64 %n) nounwind uwtable ssp {
 .lr.ph:                                           ; preds = %0, %.lr.ph
   %i.01 = phi i64 [ %5, %.lr.ph ], [ 0, %0 ]
   %2 = getelementptr inbounds i16, i16* %A, i64 %i.01
-  %3 = load i16* %2, align 2
+  %3 = load i16, i16* %2, align 2
   %4 = xor i16 %3, 3
   store i16 %4, i16* %2, align 2
   %5 = add i64 %i.01, 1

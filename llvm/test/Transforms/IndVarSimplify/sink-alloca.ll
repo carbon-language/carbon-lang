@@ -19,7 +19,7 @@ while.cond:                                       ; preds = %while.cond, %entry
 
 while.end:                                        ; preds = %while.cond
   store volatile i32 0, i32* %result.i
-  %tmp.i = load volatile i32* %result.i           ; <i32> [#uses=0]
+  %tmp.i = load volatile i32, i32* %result.i           ; <i32> [#uses=0]
   ret i32 0
 }
 declare i32 @bar()

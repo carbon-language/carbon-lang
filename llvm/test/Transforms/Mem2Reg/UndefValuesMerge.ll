@@ -7,7 +7,7 @@ T:		; preds = %0
 	store i32 %i, i32* %I
 	br label %Cont
 Cont:		; preds = %T, %0
-	%Y = load i32* %I		; <i32> [#uses=1]
+	%Y = load i32, i32* %I		; <i32> [#uses=1]
 	ret i32 %Y
 }
 

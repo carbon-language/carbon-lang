@@ -8,7 +8,7 @@ entry:
   br i1 undef, label %for.body, label %for.end731
 
 for.body:                                         ; preds = %entry
-  %0 = load i32* undef, align 4
+  %0 = load i32, i32* undef, align 4
   %or31 = or i32 %0, 319143828
   store i32 %or31, i32* undef, align 4
   %cmp32 = icmp eq i32 319143828, %or31

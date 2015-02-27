@@ -10,7 +10,7 @@ declare <8 x float> @llvm.x86.avx2.gather.d.ps.256(<8 x float>, i8*, <8 x i32>, 
 ; Function Attrs: nounwind
 define <8 x float> @foo1(i8* noalias readonly %arr.ptr, <8 x i32>* noalias readonly %vix.ptr, i8* noalias %t2.ptr) #1 {
 allocas:
-  %vix = load <8 x i32>* %vix.ptr, align 4
+  %vix = load <8 x i32>, <8 x i32>* %vix.ptr, align 4
   %t1.ptr = getelementptr i8, i8* %arr.ptr, i8 4
   
   %v1 = tail call <8 x float> @llvm.x86.avx2.gather.d.ps.256(<8 x float> undef, i8* %arr.ptr, <8 x i32> %vix, <8 x float> <float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000>, i8 1) #2
@@ -31,7 +31,7 @@ allocas:
 ; Function Attrs: nounwind
 define <8 x float> @foo2(i8* noalias readonly %arr.ptr, <8 x i32>* noalias readonly %vix.ptr, i8* noalias %t2.ptr) #1 {
 allocas:
-  %vix = load <8 x i32>* %vix.ptr, align 4
+  %vix = load <8 x i32>, <8 x i32>* %vix.ptr, align 4
   %t1.ptr = getelementptr i8, i8* %arr.ptr, i8 4
   
   %v1 = tail call <8 x float> @llvm.x86.avx2.gather.d.ps.256(<8 x float> undef, i8* %arr.ptr, <8 x i32> %vix, <8 x float> <float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000, float 0xFFFFFFFFE0000000>, i8 1) #2

@@ -25,8 +25,8 @@ entry:
 ; CHECK: movq _b@TLVP(%rip),
 ; CHECK: callq *
 ; CHECK: subl (%rax), [[REGISTER]]
-  %0 = load i32* @a, align 4
-  %1 = load i32* @b, align 4
+  %0 = load i32, i32* @a, align 4
+  %1 = load i32, i32* @b, align 4
   %sub = sub nsw i32 %0, %1
   ret i32 %sub
 }

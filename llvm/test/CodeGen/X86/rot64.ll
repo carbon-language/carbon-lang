@@ -55,7 +55,7 @@ define i64 @xfoop(i64* %p) nounwind readnone {
 entry:
 ; BMI2-LABEL: xfoop:
 ; BMI2: rorxq $57, ({{.+}}), %{{.+}}
-	%x = load i64* %p
+	%x = load i64, i64* %p
 	%a = lshr i64 %x, 57
 	%b = shl i64 %x, 7
 	%c = or i64 %a, %b
@@ -84,7 +84,7 @@ define i64 @xunp(i64* %p) nounwind readnone {
 entry:
 ; BMI2-LABEL: xunp:
 ; BMI2: rorxq $7, ({{.+}}), %{{.+}}
-	%x = load i64* %p
+	%x = load i64, i64* %p
 	%a = lshr i64 %x, 7
 	%b = shl i64 %x, 57
 	%c = or i64 %a, %b

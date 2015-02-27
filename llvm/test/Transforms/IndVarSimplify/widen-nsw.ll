@@ -17,7 +17,7 @@ for.cond:                                         ; preds = %for.body, %entry
 for.body:                                         ; preds = %for.cond
   %idxprom = sext i32 %i.0 to i64
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %idxprom
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %add = add nsw i32 %sum.0, %0
   %inc = add nsw i32 %i.0, 1
   br label %for.cond

@@ -37,7 +37,7 @@ entry:
   %tmp = alloca i32*, align 8
   ; transitive escape
   store i32* %ptr, i32** %tmp, align 8
-  %0 = load i32** %tmp, align 8
+  %0 = load i32*, i32** %tmp, align 8
   store i32* %0, i32** @sink, align 8
   store i32 42, i32* %ptr, align 4
   ret void
@@ -79,7 +79,7 @@ entry:
   store i32 42, i32* %ptr, align 4
   ; transitive escape
   store i32* %ptr, i32** %tmp, align 8
-  %0 = load i32** %tmp, align 8
+  %0 = load i32*, i32** %tmp, align 8
   store i32* %0, i32** @sink, align 8
   ret void
 }

@@ -21,7 +21,7 @@
 
 define float @test1(float* %a) {
 entry:
-	%0 = load float* %a, align 4		; <float> [#uses=2]
+	%0 = load float, float* %a, align 4		; <float> [#uses=2]
 	%1 = fsub float -0.000000e+00, %0		; <float> [#uses=2]
 	%2 = fpext float %1 to double		; <double> [#uses=1]
 	%3 = fcmp olt double %2, 1.234000e+00		; <i1> [#uses=1]
@@ -48,7 +48,7 @@ entry:
 
 define float @test2(float* %a) {
 entry:
-	%0 = load float* %a, align 4		; <float> [#uses=2]
+	%0 = load float, float* %a, align 4		; <float> [#uses=2]
 	%1 = fmul float -1.000000e+00, %0		; <float> [#uses=2]
 	%2 = fpext float %1 to double		; <double> [#uses=1]
 	%3 = fcmp olt double %2, 1.234000e+00		; <i1> [#uses=1]

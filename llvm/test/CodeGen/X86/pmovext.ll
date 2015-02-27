@@ -8,7 +8,7 @@
 ;CHECK-NEXT: ret
 define void @intrin_pmov(i16* noalias %dest, i8* noalias %src) nounwind uwtable ssp {
   %1 = bitcast i8* %src to <2 x i64>*
-  %2 = load <2 x i64>* %1, align 16
+  %2 = load <2 x i64>, <2 x i64>* %1, align 16
   %3 = bitcast <2 x i64> %2 to <16 x i8>
   %4 = tail call <8 x i16> @llvm.x86.sse41.pmovzxbw(<16 x i8> %3) nounwind
   %5 = bitcast i16* %dest to i8*

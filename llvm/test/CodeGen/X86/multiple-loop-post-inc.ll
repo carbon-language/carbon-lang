@@ -19,7 +19,7 @@ define void @foo(float* %I, i64 %IS, float* nocapture %Start, float* nocapture %
 entry:
   %times4 = alloca float, align 4                 ; <float*> [#uses=3]
   %timesN = alloca float, align 4                 ; <float*> [#uses=2]
-  %0 = load float* %Step, align 4                 ; <float> [#uses=8]
+  %0 = load float, float* %Step, align 4                 ; <float> [#uses=8]
   %1 = ptrtoint float* %I to i64                  ; <i64> [#uses=1]
   %2 = ptrtoint float* %O to i64                  ; <i64> [#uses=1]
   %tmp = xor i64 %2, %1                           ; <i64> [#uses=1]
@@ -34,11 +34,11 @@ entry:
   br i1 %9, label %bb, label %return
 
 bb:                                               ; preds = %entry
-  %10 = load float* %Start, align 4               ; <float> [#uses=1]
+  %10 = load float, float* %Start, align 4               ; <float> [#uses=1]
   br label %bb2
 
 bb1:                                              ; preds = %bb3
-  %11 = load float* %I_addr.0, align 4            ; <float> [#uses=1]
+  %11 = load float, float* %I_addr.0, align 4            ; <float> [#uses=1]
   %12 = fmul float %11, %x.0                      ; <float> [#uses=1]
   store float %12, float* %O_addr.0, align 4
   %13 = fadd float %x.0, %0                       ; <float> [#uses=1]
@@ -127,10 +127,10 @@ bb5:                                              ; preds = %bb.nph43, %bb5
   %scevgep130131 = bitcast float* %scevgep130 to <4 x float>* ; <<4 x float>*> [#uses=1]
   %tmp132 = mul i64 %indvar102, -16               ; <i64> [#uses=1]
   %tmp136 = add i64 %tmp135, %tmp132              ; <i64> [#uses=2]
-  %36 = load <4 x float>* %scevgep106107, align 16 ; <<4 x float>> [#uses=1]
-  %37 = load <4 x float>* %scevgep113114, align 16 ; <<4 x float>> [#uses=1]
-  %38 = load <4 x float>* %scevgep117118, align 16 ; <<4 x float>> [#uses=1]
-  %39 = load <4 x float>* %scevgep121122, align 16 ; <<4 x float>> [#uses=1]
+  %36 = load <4 x float>, <4 x float>* %scevgep106107, align 16 ; <<4 x float>> [#uses=1]
+  %37 = load <4 x float>, <4 x float>* %scevgep113114, align 16 ; <<4 x float>> [#uses=1]
+  %38 = load <4 x float>, <4 x float>* %scevgep117118, align 16 ; <<4 x float>> [#uses=1]
+  %39 = load <4 x float>, <4 x float>* %scevgep121122, align 16 ; <<4 x float>> [#uses=1]
   %40 = fmul <4 x float> %36, %vX0.039            ; <<4 x float>> [#uses=1]
   %41 = fadd <4 x float> %vX0.039, %asmtmp.i18    ; <<4 x float>> [#uses=2]
   %42 = fmul <4 x float> %37, %vX1.036            ; <<4 x float>> [#uses=1]
@@ -168,7 +168,7 @@ bb.nph:                                           ; preds = %bb8
   %I_addr.0.sum = add i64 %14, -1                 ; <i64> [#uses=1]
   %49 = getelementptr inbounds float, float* %I, i64 %I_addr.0.sum ; <float*> [#uses=1]
   %50 = bitcast float* %49 to <4 x float>*        ; <<4 x float>*> [#uses=1]
-  %51 = load <4 x float>* %50, align 16           ; <<4 x float>> [#uses=1]
+  %51 = load <4 x float>, <4 x float>* %50, align 16           ; <<4 x float>> [#uses=1]
   %tmp54 = add i64 %14, 16                        ; <i64> [#uses=1]
   %tmp56 = add i64 %14, 3                         ; <i64> [#uses=1]
   %tmp60 = add i64 %14, 7                         ; <i64> [#uses=1]
@@ -216,10 +216,10 @@ bb9:                                              ; preds = %bb.nph, %bb9
   %scevgep8687 = bitcast float* %scevgep86 to <4 x float>* ; <<4 x float>*> [#uses=1]
   %tmp88 = mul i64 %indvar, -16                   ; <i64> [#uses=1]
   %tmp92 = add i64 %tmp91, %tmp88                 ; <i64> [#uses=2]
-  %52 = load <4 x float>* %scevgep5859, align 16  ; <<4 x float>> [#uses=2]
-  %53 = load <4 x float>* %scevgep6263, align 16  ; <<4 x float>> [#uses=2]
-  %54 = load <4 x float>* %scevgep6667, align 16  ; <<4 x float>> [#uses=2]
-  %55 = load <4 x float>* %scevgep7071, align 16  ; <<4 x float>> [#uses=2]
+  %52 = load <4 x float>, <4 x float>* %scevgep5859, align 16  ; <<4 x float>> [#uses=2]
+  %53 = load <4 x float>, <4 x float>* %scevgep6263, align 16  ; <<4 x float>> [#uses=2]
+  %54 = load <4 x float>, <4 x float>* %scevgep6667, align 16  ; <<4 x float>> [#uses=2]
+  %55 = load <4 x float>, <4 x float>* %scevgep7071, align 16  ; <<4 x float>> [#uses=2]
   %56 = shufflevector <4 x float> %vI0.019, <4 x float> %52, <4 x i32> <i32 4, i32 1, i32 2, i32 3> ; <<4 x float>> [#uses=1]
   %57 = shufflevector <4 x float> %56, <4 x float> undef, <4 x i32> <i32 1, i32 2, i32 3, i32 0> ; <<4 x float>> [#uses=1]
   %58 = shufflevector <4 x float> %52, <4 x float> %53, <4 x i32> <i32 4, i32 1, i32 2, i32 3> ; <<4 x float>> [#uses=1]
@@ -263,7 +263,7 @@ bb12:                                             ; preds = %bb11, %bb12
   %x.130 = phi float [ %77, %bb12 ], [ %73, %bb11 ] ; <float> [#uses=2]
   %I_addr.433 = getelementptr float, float* %I_addr.2, i64 %indvar94 ; <float*> [#uses=1]
   %O_addr.432 = getelementptr float, float* %O_addr.2, i64 %indvar94 ; <float*> [#uses=1]
-  %75 = load float* %I_addr.433, align 4          ; <float> [#uses=1]
+  %75 = load float, float* %I_addr.433, align 4          ; <float> [#uses=1]
   %76 = fmul float %75, %x.130                    ; <float> [#uses=1]
   store float %76, float* %O_addr.432, align 4
   %77 = fadd float %x.130, %0                     ; <float> [#uses=2]
@@ -293,7 +293,7 @@ outer:                                     ; preds = %bb1, %entry
 
 inner:                                       ; preds = %bb0, %if.end275
   %i8 = phi i32 [ %a, %outer ], [ %indvar.next159, %bb0 ] ; <i32> [#uses=2]
-  %t338 = load i32* undef                     ; <i32> [#uses=1]
+  %t338 = load i32, i32* undef                     ; <i32> [#uses=1]
   %t191 = mul i32 %i8, %t338        ; <i32> [#uses=1]
   %t179 = add i32 %i6, %t191        ; <i32> [#uses=1]
   br label %bb0

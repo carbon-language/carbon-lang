@@ -20,7 +20,7 @@ define void @f() {
 define void @g.upgrd.1() {
 ; CHECKV4: mov lr, pc
 ; CHECKV5: blx
-        %tmp = load i32 ()** @t         ; <i32 ()*> [#uses=1]
+        %tmp = load i32 ()*, i32 ()** @t         ; <i32 ()*> [#uses=1]
         %tmp.upgrd.2 = call i32 %tmp( )            ; <i32> [#uses=0]
         ret void
 }
@@ -30,10 +30,10 @@ define i32* @m_231b(i32, i32, i32*, i32*, i32*) nounwind {
 ; CHECKV4: bx r{{.*}}
 BB0:
   %5 = inttoptr i32 %0 to i32*                    ; <i32*> [#uses=1]
-  %t35 = load volatile i32* %5                    ; <i32> [#uses=1]
+  %t35 = load volatile i32, i32* %5                    ; <i32> [#uses=1]
   %6 = inttoptr i32 %t35 to i32**                 ; <i32**> [#uses=1]
   %7 = getelementptr i32*, i32** %6, i32 86             ; <i32**> [#uses=1]
-  %8 = load i32** %7                              ; <i32*> [#uses=1]
+  %8 = load i32*, i32** %7                              ; <i32*> [#uses=1]
   %9 = bitcast i32* %8 to i32* (i32, i32*, i32, i32*, i32*, i32*)* ; <i32* (i32, i32*, i32, i32*, i32*, i32*)*> [#uses=1]
   %10 = call i32* %9(i32 %0, i32* null, i32 %1, i32* %2, i32* %3, i32* %4) ; <i32*> [#uses=1]
   ret i32* %10

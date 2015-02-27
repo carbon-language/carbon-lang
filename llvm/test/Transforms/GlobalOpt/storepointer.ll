@@ -12,7 +12,7 @@ define void @init() {
 }
 
 define void @doit() {
-        %FP = load void ()** @G         ; <void ()*> [#uses=1]
+        %FP = load void ()*, void ()** @G         ; <void ()*> [#uses=1]
         call void %FP( )
         ret void
 }

@@ -8,7 +8,7 @@ define void @foo(i8* %P) {
 entry:
   %P_addr = alloca i8*
   store i8* %P, i8** %P_addr
-  %tmp = load i8** %P_addr, align 4
+  %tmp = load i8*, i8** %P_addr, align 4
   %tmp1 = getelementptr [4 x i8], [4 x i8]* @.str, i32 0, i32 0
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp, i8* %tmp1, i32 4, i32 1, i1 false)
   br label %return

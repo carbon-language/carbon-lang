@@ -18,12 +18,12 @@ entry:
   %b.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
   store i32 %b, i32* %b.addr, align 4
-  %0 = load i32* %a.addr, align 4, !dbg !10
+  %0 = load i32, i32* %a.addr, align 4, !dbg !10
   %tobool = icmp ne i32 %0, 0, !dbg !10
   br i1 %tobool, label %land.rhs, label %land.end, !dbg !11
 
 land.rhs:                                         ; preds = %entry
-  %1 = load i32* %b.addr, align 4, !dbg !12
+  %1 = load i32, i32* %b.addr, align 4, !dbg !12
   %tobool1 = icmp ne i32 %1, 0, !dbg !12
   br label %land.end
 

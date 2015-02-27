@@ -9,7 +9,7 @@
 
 define i32 @reload(%struct.rtx_def* %first, i32 %global, %struct.FILE* %dumpfile) {
 cond_next2835.1:		; preds = %cond_next2861
-	%tmp2922 = load i32* @n_spills, align 4		; <i32> [#uses=0]
+	%tmp2922 = load i32, i32* @n_spills, align 4		; <i32> [#uses=0]
 	br label %bb2928
 
 bb2928:		; preds = %cond_next2835.1, %cond_next2943
@@ -22,7 +22,7 @@ cond_next2943:		; preds = %cond_true2935, %bb2928
 	br i1 false, label %bb2982.preheader, label %bb2928
 
 bb2982.preheader:		; preds = %cond_next2943
-	%tmp298316 = load i32* @n_spills, align 4		; <i32> [#uses=0]
+	%tmp298316 = load i32, i32* @n_spills, align 4		; <i32> [#uses=0]
 	ret i32 %tmp298316
 
 }

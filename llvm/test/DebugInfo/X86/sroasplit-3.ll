@@ -27,7 +27,7 @@ entry:
   store float %s.coerce, float* %coerce.dive, align 1
   call void @llvm.dbg.declare(metadata %struct.S* %s, metadata !16, metadata !17), !dbg !18
   %f = getelementptr inbounds %struct.S, %struct.S* %s, i32 0, i32 0, !dbg !19
-  %0 = load float* %f, align 4, !dbg !19
+  %0 = load float, float* %f, align 4, !dbg !19
   ret float %0, !dbg !19
 }
 

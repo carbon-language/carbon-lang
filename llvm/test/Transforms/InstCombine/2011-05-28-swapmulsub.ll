@@ -7,14 +7,14 @@ entry:
   %on_off.addr = alloca i32, align 4
   %a = alloca i32, align 4
   store i32 %on_off, i32* %on_off.addr, align 4
-  %tmp = load i32* %on_off.addr, align 4
+  %tmp = load i32, i32* %on_off.addr, align 4
   %sub = sub i32 1, %tmp
 ; CHECK-NOT: mul i32
   %mul = mul i32 %sub, -2
 ; CHECK: shl
 ; CHECK-NEXT: add
   store i32 %mul, i32* %a, align 4
-  %tmp1 = load i32* %a, align 4
+  %tmp1 = load i32, i32* %a, align 4
   %conv = trunc i32 %tmp1 to i16
   ret i16 %conv
 }
@@ -26,15 +26,15 @@ entry:
   %a = alloca i32, align 4
   store i32 %on_off, i32* %on_off.addr, align 4
   store i32 %q, i32* %q.addr, align 4
-  %tmp = load i32* %q.addr, align 4
-  %tmp1 = load i32* %on_off.addr, align 4
+  %tmp = load i32, i32* %q.addr, align 4
+  %tmp1 = load i32, i32* %on_off.addr, align 4
   %sub = sub i32 %tmp, %tmp1
 ; CHECK-NOT: mul i32
   %mul = mul i32 %sub, -4
 ; CHECK: sub i32
 ; CHECK-NEXT: shl
   store i32 %mul, i32* %a, align 4
-  %tmp2 = load i32* %a, align 4
+  %tmp2 = load i32, i32* %a, align 4
   %conv = trunc i32 %tmp2 to i16
   ret i16 %conv
 }
@@ -44,14 +44,14 @@ entry:
   %on_off.addr = alloca i32, align 4
   %a = alloca i32, align 4
   store i32 %on_off, i32* %on_off.addr, align 4
-  %tmp = load i32* %on_off.addr, align 4
+  %tmp = load i32, i32* %on_off.addr, align 4
   %sub = sub i32 7, %tmp
 ; CHECK-NOT: mul i32
   %mul = mul i32 %sub, -4
 ; CHECK: shl
 ; CHECK-NEXT: add
   store i32 %mul, i32* %a, align 4
-  %tmp1 = load i32* %a, align 4
+  %tmp1 = load i32, i32* %a, align 4
   %conv = trunc i32 %tmp1 to i16
   ret i16 %conv
 }

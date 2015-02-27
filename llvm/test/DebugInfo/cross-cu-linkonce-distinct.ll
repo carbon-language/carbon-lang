@@ -53,7 +53,7 @@ define linkonce_odr i32 @_Z4funci(i32 %i) #0 {
   %1 = alloca i32, align 4
   store i32 %i, i32* %1, align 4
   call void @llvm.dbg.declare(metadata i32* %1, metadata !22, metadata !{!"0x102"}), !dbg !23
-  %2 = load i32* %1, align 4, !dbg !24
+  %2 = load i32, i32* %1, align 4, !dbg !24
   %3 = mul nsw i32 %2, 2, !dbg !24
   ret i32 %3, !dbg !24
 }

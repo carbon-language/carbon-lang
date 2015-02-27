@@ -9,12 +9,12 @@ define void @fu1(i32 %parm) nounwind ssp {
   %ptr = alloca double*, align 4
   store i32 %parm, i32* %1, align 4
   store double* null, double** %ptr, align 4
-  %2 = load i32* %1, align 4
+  %2 = load i32, i32* %1, align 4
   %3 = icmp ne i32 %2, 0
   br i1 %3, label %4, label %10
 
 ; <label>:4                                       ; preds = %0
-  %5 = load i32* %1, align 4
+  %5 = load i32, i32* %1, align 4
   %6 = shl nsw i32 %5, 3
 ; With "nsw", the alloca and its bitcast can be fused:
   %7 = add nsw i32 %6, 2048
@@ -25,7 +25,7 @@ define void @fu1(i32 %parm) nounwind ssp {
   store double* %9, double** %ptr, align 4
   br label %10
 ; <label>:10                                      ; preds = %4, %0
-  %11 = load double** %ptr, align 4
+  %11 = load double*, double** %ptr, align 4
   call void @bar(double* %11)
 ; CHECK: ret
   ret void
@@ -39,12 +39,12 @@ define void @fu2(i32 %parm) nounwind ssp {
   %ptr = alloca double*, align 4
   store i32 %parm, i32* %1, align 4
   store double* null, double** %ptr, align 4
-  %2 = load i32* %1, align 4
+  %2 = load i32, i32* %1, align 4
   %3 = icmp ne i32 %2, 0
   br i1 %3, label %4, label %10
 
 ; <label>:4                                       ; preds = %0
-  %5 = load i32* %1, align 4
+  %5 = load i32, i32* %1, align 4
   %6 = mul nsw i32 %5, 8
 ; Without "nsw", the alloca and its bitcast cannot be fused:
   %7 = add  i32 %6, 2048
@@ -57,7 +57,7 @@ define void @fu2(i32 %parm) nounwind ssp {
   br label %10
 
 ; <label>:10                                      ; preds = %4, %0
-  %11 = load double** %ptr, align 4
+  %11 = load double*, double** %ptr, align 4
   call void @bar(double* %11)
   ret void
 }

@@ -28,7 +28,7 @@ loop1:
   %zxt = zext i32 %i to i64
   %ofs = shl nuw nsw i64 %zxt, 3
   %gep = getelementptr i64, i64* %a, i64 %zxt
-  %v = load i64* %gep, align 8
+  %v = load i64, i64* %gep, align 8
   %truncv = trunc i64 %v to i32
   %adds = call { i32, i1 } @llvm.sadd.with.overflow.i32(i32 %s, i32 %truncv)
   %ovflows = extractvalue { i32, i1 } %adds, 1

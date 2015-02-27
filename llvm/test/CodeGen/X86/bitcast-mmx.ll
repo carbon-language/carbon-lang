@@ -64,8 +64,8 @@ define i64 @t3(<1 x i64>* %y, i32* %n) {
 ; CHECK-NEXT:    retq
 entry:
   %0 = bitcast <1 x i64>* %y to x86_mmx*
-  %1 = load x86_mmx* %0, align 8
-  %2 = load i32* %n, align 4
+  %1 = load x86_mmx, x86_mmx* %0, align 8
+  %2 = load i32, i32* %n, align 4
   %3 = tail call x86_mmx @llvm.x86.mmx.pslli.q(x86_mmx %1, i32 %2)
   %4 = bitcast x86_mmx %3 to i64
   ret i64 %4

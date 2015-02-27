@@ -112,7 +112,7 @@ entry:
   br i1 %u, label %if.then.i, label %_Z1xb.exit, !dbg !34
 
 if.then.i:                                        ; preds = %entry
-  %0 = load i32* @t, align 4, !dbg !35, !tbaa !36
+  %0 = load i32, i32* @t, align 4, !dbg !35, !tbaa !36
   tail call void @llvm.dbg.value(metadata i32 %0, i64 0, metadata !40, metadata !{!"0x102"}), !dbg !35
   tail call void @_Z1fi(i32 %0), !dbg !41
   br label %_Z1xb.exit, !dbg !42

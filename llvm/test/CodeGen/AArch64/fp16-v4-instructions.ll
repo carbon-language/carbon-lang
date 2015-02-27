@@ -52,7 +52,7 @@ define <4 x half> @load_h(<4 x half>* %a) {
 entry:
 ; CHECK-LABEL: load_h:
 ; CHECK: ldr d0, [x0]
-  %0 = load <4 x half>* %a, align 4
+  %0 = load <4 x half>, <4 x half>* %a, align 4
   ret <4 x half> %0
 }
 

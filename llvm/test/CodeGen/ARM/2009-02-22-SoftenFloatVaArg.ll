@@ -15,6 +15,6 @@ entry:
 	br label %return
 
 return:		; preds = %entry
-	%2 = load i32* %retval		; <i32> [#uses=1]
+	%2 = load i32, i32* %retval		; <i32> [#uses=1]
 	ret i32 %2
 }

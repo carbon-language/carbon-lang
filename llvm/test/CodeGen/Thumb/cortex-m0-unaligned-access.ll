@@ -8,6 +8,6 @@ define i32 @split_load(i32* %p) nounwind {
 ; V7M-LABEL: split_load
 ; V7M-NOT: ldrh
 ; V7M: bx lr
-  %val = load i32* %p, align 2
+  %val = load i32, i32* %p, align 2
   ret i32 %val
 }

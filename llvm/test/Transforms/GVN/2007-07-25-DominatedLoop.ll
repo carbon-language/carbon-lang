@@ -71,11 +71,11 @@ cond_true23.i:		; preds = %Perl_safefree.exit68
 	ret void
 
 cond_next150:		; preds = %Perl_safefree.exit68
-	%tmp16092 = load i32* @PL_sv_count, align 4		; <i32> [#uses=0]
+	%tmp16092 = load i32, i32* @PL_sv_count, align 4		; <i32> [#uses=0]
 	br label %cond_next165
 
 bb157:		; preds = %cond_next165
-	%tmp158 = load i32* @PL_sv_count, align 4		; <i32> [#uses=0]
+	%tmp158 = load i32, i32* @PL_sv_count, align 4		; <i32> [#uses=0]
 	br label %cond_next165
 
 cond_next165:		; preds = %bb157, %cond_next150

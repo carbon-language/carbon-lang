@@ -7,7 +7,7 @@ target triple = "aarch64--linux-gnu"
 @Foo = common global %struct.anon zeroinitializer, align 4
 
 ; CHECK-LABEL: @foo(
-; CHECK: load <4 x i32>*
+; CHECK: load <4 x i32>, <4 x i32>*
 ; CHECK: sdiv <4 x i32>
 ; CHECK: store <4 x i32>
 
@@ -18,7 +18,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds %struct.anon, %struct.anon* @Foo, i64 0, i32 2, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %div = sdiv i32 %0, 2
   %arrayidx2 = getelementptr inbounds %struct.anon, %struct.anon* @Foo, i64 0, i32 0, i64 %indvars.iv
   store i32 %div, i32* %arrayidx2, align 4

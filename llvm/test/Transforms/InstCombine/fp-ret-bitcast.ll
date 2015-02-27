@@ -13,11 +13,11 @@ define void @bork() nounwind  {
 entry:
 	%color = alloca %struct.NSArray*
 	%color.466 = alloca %struct.NSObject*
-	%tmp103 = load %struct.NSArray** %color, align 4
+	%tmp103 = load %struct.NSArray*, %struct.NSArray** %color, align 4
 	%tmp103104 = getelementptr %struct.NSArray, %struct.NSArray* %tmp103, i32 0, i32 0
 	store %struct.NSObject* %tmp103104, %struct.NSObject** %color.466, align 4
-	%tmp105 = load %struct.objc_selector** @"\01L_OBJC_SELECTOR_REFERENCES_81", align 4
-	%tmp106 = load %struct.NSObject** %color.466, align 4
+	%tmp105 = load %struct.objc_selector*, %struct.objc_selector** @"\01L_OBJC_SELECTOR_REFERENCES_81", align 4
+	%tmp106 = load %struct.NSObject*, %struct.NSObject** %color.466, align 4
 	%tmp107 = call float bitcast (void (%struct.NSObject*, ...)* @objc_msgSend_fpret to float (%struct.NSObject*, %struct.objc_selector*)*)( %struct.NSObject* %tmp106, %struct.objc_selector* %tmp105 ) nounwind
 	br label %exit
 

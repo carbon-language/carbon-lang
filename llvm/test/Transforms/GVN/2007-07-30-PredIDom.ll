@@ -269,6 +269,6 @@ bb970:		; preds = %entry
 	br label %return
 
 return:		; preds = %0, %cond_next967, %cond_next922, %cond_next879, %cond_next807, %cond_next630, %cond_next415, %cond_next267, %cond_next191, %bb
-	%retval980 = load i8** null		; <i8*> [#uses=1]
+	%retval980 = load i8*, i8** null		; <i8*> [#uses=1]
 	ret i8* %retval980
 }

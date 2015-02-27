@@ -29,14 +29,14 @@ bb.nph:                                           ; preds = %entry
 ; PIC: LBB0_
 ; PIC-NOT: LCPI0_0:
 ; PIC: .section
-  %.pre = load i32* @GV, align 4                  ; <i32> [#uses=1]
+  %.pre = load i32, i32* @GV, align 4                  ; <i32> [#uses=1]
   br label %bb
 
 bb:                                               ; preds = %bb, %bb.nph
   %1 = phi i32 [ %.pre, %bb.nph ], [ %3, %bb ]    ; <i32> [#uses=1]
   %i.03 = phi i32 [ 0, %bb.nph ], [ %4, %bb ]     ; <i32> [#uses=2]
   %scevgep = getelementptr i32, i32* %vals, i32 %i.03  ; <i32*> [#uses=1]
-  %2 = load i32* %scevgep, align 4                ; <i32> [#uses=1]
+  %2 = load i32, i32* %scevgep, align 4                ; <i32> [#uses=1]
   %3 = add nsw i32 %1, %2                         ; <i32> [#uses=2]
   store i32 %3, i32* @GV, align 4
   %4 = add i32 %i.03, 1                           ; <i32> [#uses=2]

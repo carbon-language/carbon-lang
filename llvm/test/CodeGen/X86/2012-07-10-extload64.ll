@@ -4,7 +4,7 @@
 define void @load_store(<4 x i16>* %in) {
 entry:
 ; CHECK: pmovzxwd
-  %A27 = load <4 x i16>* %in, align 4
+  %A27 = load <4 x i16>, <4 x i16>* %in, align 4
   %A28 = add <4 x i16> %A27, %A27
 ; CHECK: movlpd
   store <4 x i16> %A28, <4 x i16>* %in, align 4
@@ -25,7 +25,7 @@ BB:
 ;CHECK-LABEL: load_64:
 define <2 x i32> @load_64(<2 x i32>* %ptr) {
 BB:
-  %t = load <2 x i32>* %ptr
+  %t = load <2 x i32>, <2 x i32>* %ptr
   ret <2 x i32> %t
 ;CHECK: pmovzxdq
 ;CHECK: ret

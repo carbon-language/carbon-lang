@@ -152,7 +152,7 @@ define void @test_basic() #0 {
 }
 
 define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
-       %addend = load i32 * %closure
+       %addend = load i32 , i32 * %closure
        %result = add i32 %other, %addend
        %mem = alloca i32, i32 10
        call void @dummy_use (i32* %mem, i32 10)

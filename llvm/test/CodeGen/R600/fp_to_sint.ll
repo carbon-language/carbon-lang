@@ -44,7 +44,7 @@ define void @fp_to_sint_v2i32(<2 x i32> addrspace(1)* %out, <2 x float> %in) {
 ; SI: v_cvt_i32_f32_e32
 ; SI: v_cvt_i32_f32_e32
 define void @fp_to_sint_v4i32(<4 x i32> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
-  %value = load <4 x float> addrspace(1) * %in
+  %value = load <4 x float>, <4 x float> addrspace(1) * %in
   %result = fptosi <4 x float> %value to <4 x i32>
   store <4 x i32> %result, <4 x i32> addrspace(1)* %out
   ret void

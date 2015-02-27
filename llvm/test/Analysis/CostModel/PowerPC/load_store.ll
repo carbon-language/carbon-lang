@@ -19,26 +19,26 @@ define i32 @stores(i32 %arg) {
 }
 define i32 @loads(i32 %arg) {
   ; CHECK: cost of 1 {{.*}} load
-  load i8* undef, align 4
+  load i8, i8* undef, align 4
   ; CHECK: cost of 1 {{.*}} load
-  load i16* undef, align 4
+  load i16, i16* undef, align 4
   ; CHECK: cost of 1 {{.*}} load
-  load i32* undef, align 4
+  load i32, i32* undef, align 4
   ; CHECK: cost of 2 {{.*}} load
-  load i64* undef, align 4
+  load i64, i64* undef, align 4
   ; CHECK: cost of 4 {{.*}} load
-  load i128* undef, align 4
+  load i128, i128* undef, align 4
 
   ; FIXME: There actually are sub-vector Altivec loads, and so we could handle
   ; this with a small expense, but we don't currently.
   ; CHECK: cost of 48 {{.*}} load
-  load <4 x i16>* undef, align 2
+  load <4 x i16>, <4 x i16>* undef, align 2
 
   ; CHECK: cost of 1 {{.*}} load
-  load <4 x i32>* undef, align 4
+  load <4 x i32>, <4 x i32>* undef, align 4
 
   ; CHECK: cost of 46 {{.*}} load
-  load <3 x float>* undef, align 1
+  load <3 x float>, <3 x float>* undef, align 1
 
   ret i32 undef
 }

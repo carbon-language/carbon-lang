@@ -15,14 +15,14 @@ declare i64 @round(i64)
 ; CHECK: ret void
 define void @sin_libm(double* %a, double* %b, double* %c) {
 entry:
-  %i0 = load double* %a, align 8
-  %i1 = load double* %b, align 8
+  %i0 = load double, double* %a, align 8
+  %i1 = load double, double* %b, align 8
   %mul = fmul double %i0, %i1
   %call = tail call double @sin(double %mul) nounwind readnone
   %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
-  %i3 = load double* %arrayidx3, align 8
+  %i3 = load double, double* %arrayidx3, align 8
   %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
-  %i4 = load double* %arrayidx4, align 8
+  %i4 = load double, double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
   %call5 = tail call double @sin(double %mul5) nounwind readnone
   store double %call, double* %c, align 8
@@ -36,14 +36,14 @@ entry:
 ; CHECK: ret void
 define void @cos_libm(double* %a, double* %b, double* %c) {
 entry:
-  %i0 = load double* %a, align 8
-  %i1 = load double* %b, align 8
+  %i0 = load double, double* %a, align 8
+  %i1 = load double, double* %b, align 8
   %mul = fmul double %i0, %i1
   %call = tail call double @cos(double %mul) nounwind readnone
   %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
-  %i3 = load double* %arrayidx3, align 8
+  %i3 = load double, double* %arrayidx3, align 8
   %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
-  %i4 = load double* %arrayidx4, align 8
+  %i4 = load double, double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
   %call5 = tail call double @cos(double %mul5) nounwind readnone
   store double %call, double* %c, align 8
@@ -57,14 +57,14 @@ entry:
 ; CHECK: ret void
 define void @pow_libm(double* %a, double* %b, double* %c) {
 entry:
-  %i0 = load double* %a, align 8
-  %i1 = load double* %b, align 8
+  %i0 = load double, double* %a, align 8
+  %i1 = load double, double* %b, align 8
   %mul = fmul double %i0, %i1
   %call = tail call double @pow(double %mul,double %mul) nounwind readnone
   %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
-  %i3 = load double* %arrayidx3, align 8
+  %i3 = load double, double* %arrayidx3, align 8
   %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
-  %i4 = load double* %arrayidx4, align 8
+  %i4 = load double, double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
   %call5 = tail call double @pow(double %mul5,double %mul5) nounwind readnone
   store double %call, double* %c, align 8
@@ -79,14 +79,14 @@ entry:
 ; CHECK: ret void
 define void @exp2_libm(double* %a, double* %b, double* %c) {
 entry:
-  %i0 = load double* %a, align 8
-  %i1 = load double* %b, align 8
+  %i0 = load double, double* %a, align 8
+  %i1 = load double, double* %b, align 8
   %mul = fmul double %i0, %i1
   %call = tail call double @exp2(double %mul) nounwind readnone
   %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
-  %i3 = load double* %arrayidx3, align 8
+  %i3 = load double, double* %arrayidx3, align 8
   %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
-  %i4 = load double* %arrayidx4, align 8
+  %i4 = load double, double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
   %call5 = tail call double @exp2(double %mul5) nounwind readnone
   store double %call, double* %c, align 8
@@ -102,14 +102,14 @@ entry:
 ; CHECK: ret void
 define void @round_custom(i64* %a, i64* %b, i64* %c) {
 entry:
-  %i0 = load i64* %a, align 8
-  %i1 = load i64* %b, align 8
+  %i0 = load i64, i64* %a, align 8
+  %i1 = load i64, i64* %b, align 8
   %mul = mul i64 %i0, %i1
   %call = tail call i64 @round(i64 %mul) nounwind readnone
   %arrayidx3 = getelementptr inbounds i64, i64* %a, i64 1
-  %i3 = load i64* %arrayidx3, align 8
+  %i3 = load i64, i64* %arrayidx3, align 8
   %arrayidx4 = getelementptr inbounds i64, i64* %b, i64 1
-  %i4 = load i64* %arrayidx4, align 8
+  %i4 = load i64, i64* %arrayidx4, align 8
   %mul5 = mul i64 %i3, %i4
   %call5 = tail call i64 @round(i64 %mul5) nounwind readnone
   store i64 %call, i64* %c, align 8

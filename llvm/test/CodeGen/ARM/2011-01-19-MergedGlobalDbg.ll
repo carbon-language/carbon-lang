@@ -31,7 +31,7 @@ target triple = "thumbv7-apple-darwin10"
 define zeroext i8 @get1(i8 zeroext %a) nounwind optsize {
 entry:
   tail call void @llvm.dbg.value(metadata i8 %a, i64 0, metadata !10, metadata !{!"0x102"}), !dbg !30
-  %0 = load i8* @x1, align 4, !dbg !30
+  %0 = load i8, i8* @x1, align 4, !dbg !30
   tail call void @llvm.dbg.value(metadata i8 %0, i64 0, metadata !11, metadata !{!"0x102"}), !dbg !30
   store i8 %a, i8* @x1, align 4, !dbg !30
   ret i8 %0, !dbg !31
@@ -42,7 +42,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 define zeroext i8 @get2(i8 zeroext %a) nounwind optsize {
 entry:
   tail call void @llvm.dbg.value(metadata i8 %a, i64 0, metadata !18, metadata !{!"0x102"}), !dbg !32
-  %0 = load i8* @x2, align 4, !dbg !32
+  %0 = load i8, i8* @x2, align 4, !dbg !32
   tail call void @llvm.dbg.value(metadata i8 %0, i64 0, metadata !19, metadata !{!"0x102"}), !dbg !32
   store i8 %a, i8* @x2, align 4, !dbg !32
   ret i8 %0, !dbg !33
@@ -51,7 +51,7 @@ entry:
 define zeroext i8 @get3(i8 zeroext %a) nounwind optsize {
 entry:
   tail call void @llvm.dbg.value(metadata i8 %a, i64 0, metadata !21, metadata !{!"0x102"}), !dbg !34
-  %0 = load i8* @x3, align 4, !dbg !34
+  %0 = load i8, i8* @x3, align 4, !dbg !34
   tail call void @llvm.dbg.value(metadata i8 %0, i64 0, metadata !22, metadata !{!"0x102"}), !dbg !34
   store i8 %a, i8* @x3, align 4, !dbg !34
   ret i8 %0, !dbg !35
@@ -60,7 +60,7 @@ entry:
 define zeroext i8 @get4(i8 zeroext %a) nounwind optsize {
 entry:
   tail call void @llvm.dbg.value(metadata i8 %a, i64 0, metadata !24, metadata !{!"0x102"}), !dbg !36
-  %0 = load i8* @x4, align 4, !dbg !36
+  %0 = load i8, i8* @x4, align 4, !dbg !36
   tail call void @llvm.dbg.value(metadata i8 %0, i64 0, metadata !25, metadata !{!"0x102"}), !dbg !36
   store i8 %a, i8* @x4, align 4, !dbg !36
   ret i8 %0, !dbg !37
@@ -69,7 +69,7 @@ entry:
 define zeroext i8 @get5(i8 zeroext %a) nounwind optsize {
 entry:
   tail call void @llvm.dbg.value(metadata i8 %a, i64 0, metadata !27, metadata !{!"0x102"}), !dbg !38
-  %0 = load i8* @x5, align 4, !dbg !38
+  %0 = load i8, i8* @x5, align 4, !dbg !38
   tail call void @llvm.dbg.value(metadata i8 %0, i64 0, metadata !28, metadata !{!"0x102"}), !dbg !38
   store i8 %a, i8* @x5, align 4, !dbg !38
   ret i8 %0, !dbg !39

@@ -4,7 +4,7 @@ define i8 @f1(i8* %v) {
 entry:
 ; CHECK-LABEL: f1:
 ; CHECK: ldrb r0, [r0]
-        %tmp = load i8* %v
+        %tmp = load i8, i8* %v
         ret i8 %tmp
 }
 
@@ -13,7 +13,7 @@ entry:
 ; CHECK-LABEL: f2:
 ; CHECK: ldrb r0, [r0, #-1]
         %tmp2 = getelementptr i8, i8* %v, i8 1023
-        %tmp = load i8* %tmp2
+        %tmp = load i8, i8* %tmp2
         ret i8 %tmp
 }
 
@@ -24,7 +24,7 @@ entry:
 ; CHECK: ldrb r0, [r0, r1]
         %tmp1 = add i32 %base, 4096
         %tmp2 = inttoptr i32 %tmp1 to i8*
-        %tmp3 = load i8* %tmp2
+        %tmp3 = load i8, i8* %tmp2
         ret i8 %tmp3
 }
 
@@ -34,7 +34,7 @@ entry:
 ; CHECK: ldrb r0, [r0, #-128]
         %tmp1 = sub i32 %base, 128
         %tmp2 = inttoptr i32 %tmp1 to i8*
-        %tmp3 = load i8* %tmp2
+        %tmp3 = load i8, i8* %tmp2
         ret i8 %tmp3
 }
 
@@ -44,7 +44,7 @@ entry:
 ; CHECK: ldrb r0, [r0, r1]
         %tmp1 = add i32 %base, %offset
         %tmp2 = inttoptr i32 %tmp1 to i8*
-        %tmp3 = load i8* %tmp2
+        %tmp3 = load i8, i8* %tmp2
         ret i8 %tmp3
 }
 
@@ -55,7 +55,7 @@ entry:
         %tmp1 = shl i32 %offset, 2
         %tmp2 = add i32 %base, %tmp1
         %tmp3 = inttoptr i32 %tmp2 to i8*
-        %tmp4 = load i8* %tmp3
+        %tmp4 = load i8, i8* %tmp3
         ret i8 %tmp4
 }
 
@@ -67,6 +67,6 @@ entry:
         %tmp1 = lshr i32 %offset, 2
         %tmp2 = add i32 %base, %tmp1
         %tmp3 = inttoptr i32 %tmp2 to i8*
-        %tmp4 = load i8* %tmp3
+        %tmp4 = load i8, i8* %tmp3
         ret i8 %tmp4
 }

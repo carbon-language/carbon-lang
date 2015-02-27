@@ -12,7 +12,7 @@
 define void @simple_write2_one_val_f32(float addrspace(1)* %C, float addrspace(1)* %in) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %in.gep = getelementptr float, float addrspace(1)* %in, i32 %x.i
-  %val = load float addrspace(1)* %in.gep, align 4
+  %val = load float, float addrspace(1)* %in.gep, align 4
   %arrayidx0 = getelementptr inbounds [512 x float], [512 x float] addrspace(3)* @lds, i32 0, i32 %x.i
   store float %val, float addrspace(3)* %arrayidx0, align 4
   %add.x = add nsw i32 %x.i, 8
@@ -31,8 +31,8 @@ define void @simple_write2_two_val_f32(float addrspace(1)* %C, float addrspace(1
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %in.gep.0 = getelementptr float, float addrspace(1)* %in, i32 %x.i
   %in.gep.1 = getelementptr float, float addrspace(1)* %in.gep.0, i32 1
-  %val0 = load float addrspace(1)* %in.gep.0, align 4
-  %val1 = load float addrspace(1)* %in.gep.1, align 4
+  %val0 = load float, float addrspace(1)* %in.gep.0, align 4
+  %val1 = load float, float addrspace(1)* %in.gep.1, align 4
   %arrayidx0 = getelementptr inbounds [512 x float], [512 x float] addrspace(3)* @lds, i32 0, i32 %x.i
   store float %val0, float addrspace(3)* %arrayidx0, align 4
   %add.x = add nsw i32 %x.i, 8
@@ -50,8 +50,8 @@ define void @simple_write2_two_val_f32_volatile_0(float addrspace(1)* %C, float 
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %in0.gep = getelementptr float, float addrspace(1)* %in0, i32 %x.i
   %in1.gep = getelementptr float, float addrspace(1)* %in1, i32 %x.i
-  %val0 = load float addrspace(1)* %in0.gep, align 4
-  %val1 = load float addrspace(1)* %in1.gep, align 4
+  %val0 = load float, float addrspace(1)* %in0.gep, align 4
+  %val1 = load float, float addrspace(1)* %in1.gep, align 4
   %arrayidx0 = getelementptr inbounds [512 x float], [512 x float] addrspace(3)* @lds, i32 0, i32 %x.i
   store volatile float %val0, float addrspace(3)* %arrayidx0, align 4
   %add.x = add nsw i32 %x.i, 8
@@ -69,8 +69,8 @@ define void @simple_write2_two_val_f32_volatile_1(float addrspace(1)* %C, float 
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %in0.gep = getelementptr float, float addrspace(1)* %in0, i32 %x.i
   %in1.gep = getelementptr float, float addrspace(1)* %in1, i32 %x.i
-  %val0 = load float addrspace(1)* %in0.gep, align 4
-  %val1 = load float addrspace(1)* %in1.gep, align 4
+  %val0 = load float, float addrspace(1)* %in0.gep, align 4
+  %val1 = load float, float addrspace(1)* %in1.gep, align 4
   %arrayidx0 = getelementptr inbounds [512 x float], [512 x float] addrspace(3)* @lds, i32 0, i32 %x.i
   store float %val0, float addrspace(3)* %arrayidx0, align 4
   %add.x = add nsw i32 %x.i, 8
@@ -90,8 +90,8 @@ define void @simple_write2_two_val_subreg2_mixed_f32(float addrspace(1)* %C, <2 
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %in.gep.0 = getelementptr <2 x float>, <2 x float> addrspace(1)* %in, i32 %x.i
   %in.gep.1 = getelementptr <2 x float>, <2 x float> addrspace(1)* %in.gep.0, i32 1
-  %val0 = load <2 x float> addrspace(1)* %in.gep.0, align 8
-  %val1 = load <2 x float> addrspace(1)* %in.gep.1, align 8
+  %val0 = load <2 x float>, <2 x float> addrspace(1)* %in.gep.0, align 8
+  %val1 = load <2 x float>, <2 x float> addrspace(1)* %in.gep.1, align 8
   %val0.0 = extractelement <2 x float> %val0, i32 0
   %val1.1 = extractelement <2 x float> %val1, i32 1
   %arrayidx0 = getelementptr inbounds [512 x float], [512 x float] addrspace(3)* @lds, i32 0, i32 %x.i
@@ -110,7 +110,7 @@ define void @simple_write2_two_val_subreg2_mixed_f32(float addrspace(1)* %C, <2 
 define void @simple_write2_two_val_subreg2_f32(float addrspace(1)* %C, <2 x float> addrspace(1)* %in) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %in.gep = getelementptr <2 x float>, <2 x float> addrspace(1)* %in, i32 %x.i
-  %val = load <2 x float> addrspace(1)* %in.gep, align 8
+  %val = load <2 x float>, <2 x float> addrspace(1)* %in.gep, align 8
   %val0 = extractelement <2 x float> %val, i32 0
   %val1 = extractelement <2 x float> %val, i32 1
   %arrayidx0 = getelementptr inbounds [512 x float], [512 x float] addrspace(3)* @lds, i32 0, i32 %x.i
@@ -129,7 +129,7 @@ define void @simple_write2_two_val_subreg2_f32(float addrspace(1)* %C, <2 x floa
 define void @simple_write2_two_val_subreg4_f32(float addrspace(1)* %C, <4 x float> addrspace(1)* %in) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %in.gep = getelementptr <4 x float>, <4 x float> addrspace(1)* %in, i32 %x.i
-  %val = load <4 x float> addrspace(1)* %in.gep, align 16
+  %val = load <4 x float>, <4 x float> addrspace(1)* %in.gep, align 16
   %val0 = extractelement <4 x float> %val, i32 0
   %val1 = extractelement <4 x float> %val, i32 3
   %arrayidx0 = getelementptr inbounds [512 x float], [512 x float] addrspace(3)* @lds, i32 0, i32 %x.i
@@ -150,8 +150,8 @@ define void @simple_write2_two_val_max_offset_f32(float addrspace(1)* %C, float 
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %in.gep.0 = getelementptr float, float addrspace(1)* %in, i32 %x.i
   %in.gep.1 = getelementptr float, float addrspace(1)* %in.gep.0, i32 1
-  %val0 = load float addrspace(1)* %in.gep.0, align 4
-  %val1 = load float addrspace(1)* %in.gep.1, align 4
+  %val0 = load float, float addrspace(1)* %in.gep.0, align 4
+  %val1 = load float, float addrspace(1)* %in.gep.1, align 4
   %arrayidx0 = getelementptr inbounds [512 x float], [512 x float] addrspace(3)* @lds, i32 0, i32 %x.i
   store float %val0, float addrspace(3)* %arrayidx0, align 4
   %add.x = add nsw i32 %x.i, 255
@@ -168,8 +168,8 @@ define void @simple_write2_two_val_too_far_f32(float addrspace(1)* %C, float add
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %in0.gep = getelementptr float, float addrspace(1)* %in0, i32 %x.i
   %in1.gep = getelementptr float, float addrspace(1)* %in1, i32 %x.i
-  %val0 = load float addrspace(1)* %in0.gep, align 4
-  %val1 = load float addrspace(1)* %in1.gep, align 4
+  %val0 = load float, float addrspace(1)* %in0.gep, align 4
+  %val1 = load float, float addrspace(1)* %in1.gep, align 4
   %arrayidx0 = getelementptr inbounds [512 x float], [512 x float] addrspace(3)* @lds, i32 0, i32 %x.i
   store float %val0, float addrspace(3)* %arrayidx0, align 4
   %add.x = add nsw i32 %x.i, 257
@@ -186,8 +186,8 @@ define void @simple_write2_two_val_f32_x2(float addrspace(1)* %C, float addrspac
   %tid.x = tail call i32 @llvm.r600.read.tidig.x() #1
   %in0.gep = getelementptr float, float addrspace(1)* %in0, i32 %tid.x
   %in1.gep = getelementptr float, float addrspace(1)* %in1, i32 %tid.x
-  %val0 = load float addrspace(1)* %in0.gep, align 4
-  %val1 = load float addrspace(1)* %in1.gep, align 4
+  %val0 = load float, float addrspace(1)* %in0.gep, align 4
+  %val1 = load float, float addrspace(1)* %in1.gep, align 4
 
   %idx.0 = add nsw i32 %tid.x, 0
   %arrayidx0 = getelementptr inbounds [512 x float], [512 x float] addrspace(3)* @lds, i32 0, i32 %idx.0
@@ -216,8 +216,8 @@ define void @simple_write2_two_val_f32_x2_nonzero_base(float addrspace(1)* %C, f
   %tid.x = tail call i32 @llvm.r600.read.tidig.x() #1
   %in0.gep = getelementptr float, float addrspace(1)* %in0, i32 %tid.x
   %in1.gep = getelementptr float, float addrspace(1)* %in1, i32 %tid.x
-  %val0 = load float addrspace(1)* %in0.gep, align 4
-  %val1 = load float addrspace(1)* %in1.gep, align 4
+  %val0 = load float, float addrspace(1)* %in0.gep, align 4
+  %val1 = load float, float addrspace(1)* %in1.gep, align 4
 
   %idx.0 = add nsw i32 %tid.x, 3
   %arrayidx0 = getelementptr inbounds [512 x float], [512 x float] addrspace(3)* @lds, i32 0, i32 %idx.0
@@ -247,8 +247,8 @@ define void @write2_ptr_subreg_arg_two_val_f32(float addrspace(1)* %C, float add
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %in0.gep = getelementptr float, float addrspace(1)* %in0, i32 %x.i
   %in1.gep = getelementptr float, float addrspace(1)* %in1, i32 %x.i
-  %val0 = load float addrspace(1)* %in0.gep, align 4
-  %val1 = load float addrspace(1)* %in1.gep, align 4
+  %val0 = load float, float addrspace(1)* %in0.gep, align 4
+  %val1 = load float, float addrspace(1)* %in1.gep, align 4
 
   %index.0 = insertelement <2 x i32> undef, i32 %x.i, i32 0
   %index.1 = insertelement <2 x i32> %index.0, i32 8, i32 0
@@ -273,7 +273,7 @@ define void @write2_ptr_subreg_arg_two_val_f32(float addrspace(1)* %C, float add
 define void @simple_write2_one_val_f64(double addrspace(1)* %C, double addrspace(1)* %in) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %in.gep = getelementptr double, double addrspace(1)* %in, i32 %x.i
-  %val = load double addrspace(1)* %in.gep, align 8
+  %val = load double, double addrspace(1)* %in.gep, align 8
   %arrayidx0 = getelementptr inbounds [512 x double], [512 x double] addrspace(3)* @lds.f64, i32 0, i32 %x.i
   store double %val, double addrspace(3)* %arrayidx0, align 8
   %add.x = add nsw i32 %x.i, 8
@@ -291,7 +291,7 @@ define void @simple_write2_one_val_f64(double addrspace(1)* %C, double addrspace
 define void @misaligned_simple_write2_one_val_f64(double addrspace(1)* %C, double addrspace(1)* %in, double addrspace(3)* %lds) #0 {
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %in.gep = getelementptr double, double addrspace(1)* %in, i32 %x.i
-  %val = load double addrspace(1)* %in.gep, align 8
+  %val = load double, double addrspace(1)* %in.gep, align 8
   %arrayidx0 = getelementptr inbounds double, double addrspace(3)* %lds, i32 %x.i
   store double %val, double addrspace(3)* %arrayidx0, align 4
   %add.x = add nsw i32 %x.i, 7
@@ -310,8 +310,8 @@ define void @simple_write2_two_val_f64(double addrspace(1)* %C, double addrspace
   %x.i = tail call i32 @llvm.r600.read.tidig.x() #1
   %in.gep.0 = getelementptr double, double addrspace(1)* %in, i32 %x.i
   %in.gep.1 = getelementptr double, double addrspace(1)* %in.gep.0, i32 1
-  %val0 = load double addrspace(1)* %in.gep.0, align 8
-  %val1 = load double addrspace(1)* %in.gep.1, align 8
+  %val0 = load double, double addrspace(1)* %in.gep.0, align 8
+  %val1 = load double, double addrspace(1)* %in.gep.1, align 8
   %arrayidx0 = getelementptr inbounds [512 x double], [512 x double] addrspace(3)* @lds.f64, i32 0, i32 %x.i
   store double %val0, double addrspace(3)* %arrayidx0, align 8
   %add.x = add nsw i32 %x.i, 8
@@ -373,7 +373,7 @@ define void @store_misaligned64_constant_large_offsets() {
 define void @write2_sgemm_sequence(float addrspace(1)* %C, i32 %lda, i32 %ldb, float addrspace(1)* %in) #0 {
   %x.i = tail call i32 @llvm.r600.read.tgid.x() #1
   %y.i = tail call i32 @llvm.r600.read.tidig.y() #1
-  %val = load float addrspace(1)* %in
+  %val = load float, float addrspace(1)* %in
   %arrayidx44 = getelementptr inbounds [264 x float], [264 x float] addrspace(3)* @sgemm.lA, i32 0, i32 %x.i
   store float %val, float addrspace(3)* %arrayidx44, align 4
   %add47 = add nsw i32 %x.i, 1

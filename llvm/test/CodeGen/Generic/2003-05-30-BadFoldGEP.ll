@@ -22,7 +22,7 @@
 
 define internal i32 @OpenOutput(i8* %filename.1) {
 entry:
-        %tmp.0 = load %FileType** @Output               ; <%FileType*> [#uses=1]
+        %tmp.0 = load %FileType*, %FileType** @Output               ; <%FileType*> [#uses=1]
         %tmp.4 = getelementptr %FileType, %FileType* %tmp.0, i64 1         ; <%FileType*> [#uses=1]
         %addrOfGlobal = getelementptr [16 x %FileType], [16 x %FileType]* @OutputFiles, i64 0             ; <[16 x %FileType]*> [#uses=1]
         %constantGEP = getelementptr [16 x %FileType], [16 x %FileType]* %addrOfGlobal, i64 1             ; <[16 x %FileType]*> [#uses=1]

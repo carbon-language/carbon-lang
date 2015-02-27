@@ -21,7 +21,7 @@
 
 define i64 @foo(i64 %a) {
 entry:
-  %0 = load i64* @AGlobalVar, align 4
+  %0 = load i64, i64* @AGlobalVar, align 4
   %1 = add i64 %a, %0
   %2 = call i64 @bar(i64 %1)
   ret i64 %2

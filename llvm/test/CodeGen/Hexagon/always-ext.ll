@@ -24,8 +24,8 @@ entry:
   br i1 undef, label %for.body.us, label %for.end
 
 for.body.us:                                      ; preds = %entry
-  %0 = load %struct.CuTest.1.28.31.37.40.43.52.55.67.85.111** null, align 4
-  %1 = load i32* undef, align 4
+  %0 = load %struct.CuTest.1.28.31.37.40.43.52.55.67.85.111*, %struct.CuTest.1.28.31.37.40.43.52.55.67.85.111** null, align 4
+  %1 = load i32, i32* undef, align 4
   %cmp.i.us = icmp slt i32 %1, 1024
   br i1 %cmp.i.us, label %CuSuiteAdd.exit.us, label %cond.false6.i.us
 

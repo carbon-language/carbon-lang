@@ -20,15 +20,15 @@ entry:
   br i1 %cmp88, label %for.body.lr.ph, label %for.end
 
 for.body.lr.ph:
-  %0 = load i32** @b, align 8
-  %1 = load i32** @a, align 8
-  %2 = load i32** @c, align 8
+  %0 = load i32*, i32** @b, align 8
+  %1 = load i32*, i32** @a, align 8
+  %2 = load i32*, i32** @c, align 8
   br label %for.body
 
 for.body:
   %indvars.iv = phi i64 [ 0, %for.body.lr.ph ], [ %indvars.iv.next, %_ZL3fn3ii.exit58 ]
   %arrayidx = getelementptr inbounds i32, i32* %0, i64 %indvars.iv
-  %3 = load i32* %arrayidx, align 4  %4 = trunc i64 %indvars.iv to i32
+  %3 = load i32, i32* %arrayidx, align 4  %4 = trunc i64 %indvars.iv to i32
   %and.i = and i32 %4, 1
   %tobool.i.i = icmp eq i32 %and.i, 0
   br i1 %tobool.i.i, label %if.end.i, label %if.then.i
@@ -136,7 +136,7 @@ _ZL3fn3ii.exit:
   %p1.addr.0.i16.i = phi i32 [ %or.i14.i, %if.then.i15.i ], [ %p1.addr.3.i.i, %_Z3fn2iii.exit.i ]
   %arrayidx2 = getelementptr inbounds i32, i32* %1, i64 %indvars.iv
   store i32 %p1.addr.0.i16.i, i32* %arrayidx2, align 4  %arrayidx4 = getelementptr inbounds i32, i32* %0, i64 %indvars.iv
-  %10 = load i32* %arrayidx4, align 4  br i1 %tobool.i.i, label %_Z3fn1ii.exit.i26, label %if.then.i.i21
+  %10 = load i32, i32* %arrayidx4, align 4  br i1 %tobool.i.i, label %_Z3fn1ii.exit.i26, label %if.then.i.i21
 
 if.then.i.i21:
   %and.i.i18 = lshr i32 %10, 2

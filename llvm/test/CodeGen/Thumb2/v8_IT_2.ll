@@ -16,9 +16,9 @@ entry:
 	br label %tailrecurse
 
 tailrecurse:		; preds = %bb, %entry
-	%tmp6 = load %struct.quad_struct** null		; <%struct.quad_struct*> [#uses=1]
-	%tmp9 = load %struct.quad_struct** null		; <%struct.quad_struct*> [#uses=2]
-	%tmp12 = load %struct.quad_struct** null		; <%struct.quad_struct*> [#uses=1]
+	%tmp6 = load %struct.quad_struct*, %struct.quad_struct** null		; <%struct.quad_struct*> [#uses=1]
+	%tmp9 = load %struct.quad_struct*, %struct.quad_struct** null		; <%struct.quad_struct*> [#uses=2]
+	%tmp12 = load %struct.quad_struct*, %struct.quad_struct** null		; <%struct.quad_struct*> [#uses=1]
 	%tmp14 = icmp eq %struct.quad_struct* null, null		; <i1> [#uses=1]
 	%tmp17 = icmp eq %struct.quad_struct* %tmp6, null		; <i1> [#uses=1]
 	%tmp23 = icmp eq %struct.quad_struct* %tmp9, null		; <i1> [#uses=1]

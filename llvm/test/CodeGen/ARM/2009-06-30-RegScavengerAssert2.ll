@@ -33,17 +33,17 @@ bb10:		; preds = %bb9
 	unreachable
 
 bb11:		; preds = %bb9
-	%0 = load i32* undef, align 4		; <i32> [#uses=3]
+	%0 = load i32, i32* undef, align 4		; <i32> [#uses=3]
 	%1 = add i32 %0, 1		; <i32> [#uses=2]
 	store i32 %1, i32* undef, align 4
-	%2 = load i32* undef, align 4		; <i32> [#uses=2]
+	%2 = load i32, i32* undef, align 4		; <i32> [#uses=2]
 	%3 = sub i32 %2, %0		; <i32> [#uses=1]
 	store i32 0, i32* @no_mat, align 4
 	store i32 0, i32* @no_mis, align 4
 	%4 = getelementptr i8, i8* %B, i32 %0		; <i8*> [#uses=1]
 	tail call  void @diff(i8* undef, i8* %4, i32 undef, i32 %3, i32 undef, i32 undef) nounwind
 	%5 = tail call  i32 (i8*, ...)* @printf(i8* getelementptr ([33 x i8]* @"\01LC11", i32 0, i32 0), i32 %tmp13) nounwind		; <i32> [#uses=0]
-	%6 = load i32* @no_mis, align 4		; <i32> [#uses=1]
+	%6 = load i32, i32* @no_mis, align 4		; <i32> [#uses=1]
 	%7 = tail call  i32 (i8*, ...)* @printf(i8* getelementptr ([33 x i8]* @"\01LC15", i32 0, i32 0), i32 %6) nounwind		; <i32> [#uses=0]
 	%8 = tail call  i32 (i8*, ...)* @printf(i8* getelementptr ([47 x i8]* @"\01LC17", i32 0, i32 0), i32 undef, i32 %1, i32 undef, i32 %2) nounwind		; <i32> [#uses=0]
 	br i1 undef, label %bb15, label %bb12

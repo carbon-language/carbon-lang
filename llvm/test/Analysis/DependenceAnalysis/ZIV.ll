@@ -23,7 +23,7 @@ entry:
 
   %add1 = add i64 %n, 1
   %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %add1
-  %0 = load i32* %arrayidx2, align 4
+  %0 = load i32, i32* %arrayidx2, align 4
   store i32 %0, i32* %B, align 4
   ret void
 }
@@ -46,7 +46,7 @@ entry:
 
   %add = add i64 %n, 1
   %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %add
-  %0 = load i32* %arrayidx1, align 4
+  %0 = load i32, i32* %arrayidx1, align 4
   store i32 %0, i32* %B, align 4
   ret void
 }
@@ -68,7 +68,7 @@ entry:
 ; CHECK: da analyze - none!
 
   %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %m
-  %0 = load i32* %arrayidx1, align 4
+  %0 = load i32, i32* %arrayidx1, align 4
   store i32 %0, i32* %B, align 4
   ret void
 }

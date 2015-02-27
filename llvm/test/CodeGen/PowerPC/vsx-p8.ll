@@ -8,7 +8,7 @@ target triple = "powerpc64-unknown-linux-gnu"
 ; Unaligned loads/stores on P8 and later should use VSX where possible.
 
 define <2 x double> @test28u(<2 x double>* %a) {
-  %v = load <2 x double>* %a, align 8
+  %v = load <2 x double>, <2 x double>* %a, align 8
   ret <2 x double> %v
 
 ; CHECK-LABEL: @test28u
@@ -26,7 +26,7 @@ define void @test29u(<2 x double>* %a, <2 x double> %b) {
 }
 
 define <4 x float> @test32u(<4 x float>* %a) {
-  %v = load <4 x float>* %a, align 8
+  %v = load <4 x float>, <4 x float>* %a, align 8
   ret <4 x float> %v
 
 ; CHECK-REG-LABEL: @test32u

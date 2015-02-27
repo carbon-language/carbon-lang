@@ -19,18 +19,18 @@ entry:
 	store i32 %x, i32* %x_addr
 	%ap1 = bitcast i8** %ap to i8*		; <i8*> [#uses=1]
 	call void @llvm.va_start( i8* %ap1 )
-	%tmp = load i8** %ap, align 4		; <i8*> [#uses=1]
+	%tmp = load i8*, i8** %ap, align 4		; <i8*> [#uses=1]
 	store i8* %tmp, i8** %ap.0, align 4
-	%tmp2 = load i8** %ap.0, align 4		; <i8*> [#uses=1]
+	%tmp2 = load i8*, i8** %ap.0, align 4		; <i8*> [#uses=1]
 	%tmp3 = getelementptr i8, i8* %tmp2, i64 16		; <i8*> [#uses=1]
 	store i8* %tmp3, i8** %ap, align 4
-	%tmp4 = load i8** %ap.0, align 4		; <i8*> [#uses=1]
+	%tmp4 = load i8*, i8** %ap.0, align 4		; <i8*> [#uses=1]
 	%tmp45 = bitcast i8* %tmp4 to %struct.S2203*		; <%struct.S2203*> [#uses=1]
 	%tmp6 = getelementptr %struct.S2203, %struct.S2203* @s, i32 0, i32 0		; <%struct.u16qi*> [#uses=1]
 	%tmp7 = getelementptr %struct.S2203, %struct.S2203* %tmp45, i32 0, i32 0		; <%struct.u16qi*> [#uses=1]
 	%tmp8 = getelementptr %struct.u16qi, %struct.u16qi* %tmp6, i32 0, i32 0		; <<16 x i8>*> [#uses=1]
 	%tmp9 = getelementptr %struct.u16qi, %struct.u16qi* %tmp7, i32 0, i32 0		; <<16 x i8>*> [#uses=1]
-	%tmp10 = load <16 x i8>* %tmp9, align 4		; <<16 x i8>> [#uses=1]
+	%tmp10 = load <16 x i8>, <16 x i8>* %tmp9, align 4		; <<16 x i8>> [#uses=1]
 ; CHECK: lvsl
 ; CHECK: vperm
 ; CHECK-LE: lvsr

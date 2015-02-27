@@ -18,7 +18,7 @@ entry:
 for.body.i:                                       ; preds = %entry, %for.body.i
   %__init.addr.05.i = phi i32 [ %add.i, %for.body.i ], [ 0, %entry ]
   %__first.addr.04.i = phi i32* [ %incdec.ptr.i, %for.body.i ], [ %A, %entry ]
-  %0 = load i32* %__first.addr.04.i, align 4
+  %0 = load i32, i32* %__first.addr.04.i, align 4
   %q1 = extractelement <2 x i32> %q, i32 %n
   %q2 = add nsw i32 %0, %q1
   %add.i = add nsw i32 %q2, %__init.addr.05.i

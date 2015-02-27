@@ -3,7 +3,7 @@
 ; CHECK: vpbroadcastb (%
 define <16 x i8> @BB16(i8* %ptr) nounwind uwtable readnone ssp {
 entry:
-  %q = load i8* %ptr, align 4
+  %q = load i8, i8* %ptr, align 4
   %q0 = insertelement <16 x i8> undef, i8 %q, i32 0
   %q1 = insertelement <16 x i8> %q0, i8 %q, i32 1
   %q2 = insertelement <16 x i8> %q1, i8 %q, i32 2
@@ -25,7 +25,7 @@ entry:
 ; CHECK: vpbroadcastb (%
 define <32 x i8> @BB32(i8* %ptr) nounwind uwtable readnone ssp {
 entry:
-  %q = load i8* %ptr, align 4
+  %q = load i8, i8* %ptr, align 4
   %q0 = insertelement <32 x i8> undef, i8 %q, i32 0
   %q1 = insertelement <32 x i8> %q0, i8 %q, i32 1
   %q2 = insertelement <32 x i8> %q1, i8 %q, i32 2
@@ -65,7 +65,7 @@ entry:
 
 define <8 x i16> @W16(i16* %ptr) nounwind uwtable readnone ssp {
 entry:
-  %q = load i16* %ptr, align 4
+  %q = load i16, i16* %ptr, align 4
   %q0 = insertelement <8 x i16> undef, i16 %q, i32 0
   %q1 = insertelement <8 x i16> %q0, i16 %q, i32 1
   %q2 = insertelement <8 x i16> %q1, i16 %q, i32 2
@@ -79,7 +79,7 @@ entry:
 ; CHECK: vpbroadcastw (%
 define <16 x i16> @WW16(i16* %ptr) nounwind uwtable readnone ssp {
 entry:
-  %q = load i16* %ptr, align 4
+  %q = load i16, i16* %ptr, align 4
   %q0 = insertelement <16 x i16> undef, i16 %q, i32 0
   %q1 = insertelement <16 x i16> %q0, i16 %q, i32 1
   %q2 = insertelement <16 x i16> %q1, i16 %q, i32 2
@@ -101,7 +101,7 @@ entry:
 ; CHECK: vbroadcastss (%
 define <4 x i32> @D32(i32* %ptr) nounwind uwtable readnone ssp {
 entry:
-  %q = load i32* %ptr, align 4
+  %q = load i32, i32* %ptr, align 4
   %q0 = insertelement <4 x i32> undef, i32 %q, i32 0
   %q1 = insertelement <4 x i32> %q0, i32 %q, i32 1
   %q2 = insertelement <4 x i32> %q1, i32 %q, i32 2
@@ -111,7 +111,7 @@ entry:
 ; CHECK: vbroadcastss (%
 define <8 x i32> @DD32(i32* %ptr) nounwind uwtable readnone ssp {
 entry:
-  %q = load i32* %ptr, align 4
+  %q = load i32, i32* %ptr, align 4
   %q0 = insertelement <8 x i32> undef, i32 %q, i32 0
   %q1 = insertelement <8 x i32> %q0, i32 %q, i32 1
   %q2 = insertelement <8 x i32> %q1, i32 %q, i32 2
@@ -125,7 +125,7 @@ entry:
 ; CHECK: vpbroadcastq (%
 define <2 x i64> @Q64(i64* %ptr) nounwind uwtable readnone ssp {
 entry:
-  %q = load i64* %ptr, align 4
+  %q = load i64, i64* %ptr, align 4
   %q0 = insertelement <2 x i64> undef, i64 %q, i32 0
   %q1 = insertelement <2 x i64> %q0, i64 %q, i32 1
   ret <2 x i64> %q1
@@ -133,7 +133,7 @@ entry:
 ; CHECK: vbroadcastsd (%
 define <4 x i64> @QQ64(i64* %ptr) nounwind uwtable readnone ssp {
 entry:
-  %q = load i64* %ptr, align 4
+  %q = load i64, i64* %ptr, align 4
   %q0 = insertelement <4 x i64> undef, i64 %q, i32 0
   %q1 = insertelement <4 x i64> %q0, i64 %q, i32 1
   %q2 = insertelement <4 x i64> %q1, i64 %q, i32 2
@@ -145,7 +145,7 @@ entry:
 ; this used to crash
 define <2 x double> @I(double* %ptr) nounwind uwtable readnone ssp {
 entry:
-  %q = load double* %ptr, align 4
+  %q = load double, double* %ptr, align 4
   %vecinit.i = insertelement <2 x double> undef, double %q, i32 0
   %vecinit2.i = insertelement <2 x double> %vecinit.i, double %q, i32 1
   ret <2 x double> %vecinit2.i
@@ -431,8 +431,8 @@ eintry:
   %__b.addr.i = alloca <2 x i64>, align 16
   %vCr = alloca <2 x i64>, align 16
   store <2 x i64> zeroinitializer, <2 x i64>* %vCr, align 16
-  %tmp = load <2 x i64>* %vCr, align 16
-  %tmp2 = load i8* %cV_R.addr, align 4
+  %tmp = load <2 x i64>, <2 x i64>* %vCr, align 16
+  %tmp2 = load i8, i8* %cV_R.addr, align 4
   %splat.splatinsert = insertelement <16 x i8> undef, i8 %tmp2, i32 0
   %splat.splat = shufflevector <16 x i8> %splat.splatinsert, <16 x i8> undef, <16 x i32> zeroinitializer
   %tmp3 = bitcast <16 x i8> %splat.splat to <2 x i64>
@@ -450,8 +450,8 @@ eintry:
   %__b.addr.i = alloca <4 x i64>, align 16
   %vCr = alloca <4 x i64>, align 16
   store <4 x i64> zeroinitializer, <4 x i64>* %vCr, align 16
-  %tmp = load <4 x i64>* %vCr, align 16
-  %tmp2 = load i8* %cV_R.addr, align 4
+  %tmp = load <4 x i64>, <4 x i64>* %vCr, align 16
+  %tmp2 = load i8, i8* %cV_R.addr, align 4
   %splat.splatinsert = insertelement <32 x i8> undef, i8 %tmp2, i32 0
   %splat.splat = shufflevector <32 x i8> %splat.splatinsert, <32 x i8> undef, <32 x i32> zeroinitializer
   %tmp3 = bitcast <32 x i8> %splat.splat to <4 x i64>
@@ -469,8 +469,8 @@ entry:
   %__b.addr.i = alloca <2 x i64>, align 16
   %vCr = alloca <2 x i64>, align 16
   store <2 x i64> zeroinitializer, <2 x i64>* %vCr, align 16
-  %tmp = load <2 x i64>* %vCr, align 16
-  %tmp2 = load i16* %cV_R.addr, align 4
+  %tmp = load <2 x i64>, <2 x i64>* %vCr, align 16
+  %tmp2 = load i16, i16* %cV_R.addr, align 4
   %splat.splatinsert = insertelement <8 x i16> undef, i16 %tmp2, i32 0
   %splat.splat = shufflevector <8 x i16> %splat.splatinsert, <8 x i16> undef, <8 x i32> zeroinitializer
   %tmp3 = bitcast <8 x i16> %splat.splat to <2 x i64>
@@ -488,8 +488,8 @@ eintry:
   %__b.addr.i = alloca <4 x i64>, align 16
   %vCr = alloca <4 x i64>, align 16
   store <4 x i64> zeroinitializer, <4 x i64>* %vCr, align 16
-  %tmp = load <4 x i64>* %vCr, align 16
-  %tmp2 = load i16* %cV_R.addr, align 4
+  %tmp = load <4 x i64>, <4 x i64>* %vCr, align 16
+  %tmp2 = load i16, i16* %cV_R.addr, align 4
   %splat.splatinsert = insertelement <16 x i16> undef, i16 %tmp2, i32 0
   %splat.splat = shufflevector <16 x i16> %splat.splatinsert, <16 x i16> undef, <16 x i32> zeroinitializer
   %tmp3 = bitcast <16 x i16> %splat.splat to <4 x i64>
@@ -507,8 +507,8 @@ entry:
   %__b.addr.i = alloca <2 x i64>, align 16
   %vCr = alloca <2 x i64>, align 16
   store <2 x i64> zeroinitializer, <2 x i64>* %vCr, align 16
-  %tmp = load <2 x i64>* %vCr, align 16
-  %tmp2 = load i32* %cV_R.addr, align 4
+  %tmp = load <2 x i64>, <2 x i64>* %vCr, align 16
+  %tmp2 = load i32, i32* %cV_R.addr, align 4
   %splat.splatinsert = insertelement <4 x i32> undef, i32 %tmp2, i32 0
   %splat.splat = shufflevector <4 x i32> %splat.splatinsert, <4 x i32> undef, <4 x i32> zeroinitializer
   %tmp3 = bitcast <4 x i32> %splat.splat to <2 x i64>
@@ -526,8 +526,8 @@ eintry:
   %__b.addr.i = alloca <4 x i64>, align 16
   %vCr = alloca <4 x i64>, align 16
   store <4 x i64> zeroinitializer, <4 x i64>* %vCr, align 16
-  %tmp = load <4 x i64>* %vCr, align 16
-  %tmp2 = load i32* %cV_R.addr, align 4
+  %tmp = load <4 x i64>, <4 x i64>* %vCr, align 16
+  %tmp2 = load i32, i32* %cV_R.addr, align 4
   %splat.splatinsert = insertelement <8 x i32> undef, i32 %tmp2, i32 0
   %splat.splat = shufflevector <8 x i32> %splat.splatinsert, <8 x i32> undef, <8 x i32> zeroinitializer
   %tmp3 = bitcast <8 x i32> %splat.splat to <4 x i64>
@@ -545,8 +545,8 @@ entry:
   %__b.addr.i = alloca <2 x i64>, align 16
   %vCr = alloca <2 x i64>, align 16
   store <2 x i64> zeroinitializer, <2 x i64>* %vCr, align 16
-  %tmp = load <2 x i64>* %vCr, align 16
-  %tmp2 = load i64* %cV_R.addr, align 4
+  %tmp = load <2 x i64>, <2 x i64>* %vCr, align 16
+  %tmp2 = load i64, i64* %cV_R.addr, align 4
   %splat.splatinsert = insertelement <2 x i64> undef, i64 %tmp2, i32 0
   %splat.splat = shufflevector <2 x i64> %splat.splatinsert, <2 x i64> undef, <2 x i32> zeroinitializer
   store <2 x i64> %tmp, <2 x i64>* %__a.addr.i, align 16
@@ -563,8 +563,8 @@ eintry:
   %__b.addr.i = alloca <4 x i64>, align 16
   %vCr = alloca <4 x i64>, align 16
   store <4 x i64> zeroinitializer, <4 x i64>* %vCr, align 16
-  %tmp = load <4 x i64>* %vCr, align 16
-  %tmp2 = load i64* %cV_R.addr, align 4
+  %tmp = load <4 x i64>, <4 x i64>* %vCr, align 16
+  %tmp2 = load i64, i64* %cV_R.addr, align 4
   %splat.splatinsert = insertelement <4 x i64> undef, i64 %tmp2, i32 0
   %splat.splat = shufflevector <4 x i64> %splat.splatinsert, <4 x i64> undef, <4 x i32> zeroinitializer
   store <4 x i64> %tmp, <4 x i64>* %__a.addr.i, align 16

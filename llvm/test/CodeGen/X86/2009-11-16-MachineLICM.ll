@@ -25,13 +25,13 @@ bb:                                               ; preds = %bb, %bb.nph
   %tmp1318 = or i64 %tmp9, 3                      ; <i64> [#uses=1]
   %scevgep14 = getelementptr float, float* %x, i64 %tmp1318 ; <float*> [#uses=1]
   %x_addr.03 = getelementptr float, float* %x, i64 %tmp9 ; <float*> [#uses=1]
-  %1 = load float* getelementptr inbounds ([4 x float]* @g, i64 0, i64 0), align 16 ; <float> [#uses=1]
+  %1 = load float, float* getelementptr inbounds ([4 x float]* @g, i64 0, i64 0), align 16 ; <float> [#uses=1]
   store float %1, float* %x_addr.03, align 4
-  %2 = load float* getelementptr inbounds ([4 x float]* @g, i64 0, i64 1), align 4 ; <float> [#uses=1]
+  %2 = load float, float* getelementptr inbounds ([4 x float]* @g, i64 0, i64 1), align 4 ; <float> [#uses=1]
   store float %2, float* %scevgep, align 4
-  %3 = load float* getelementptr inbounds ([4 x float]* @g, i64 0, i64 2), align 8 ; <float> [#uses=1]
+  %3 = load float, float* getelementptr inbounds ([4 x float]* @g, i64 0, i64 2), align 8 ; <float> [#uses=1]
   store float %3, float* %scevgep12, align 4
-  %4 = load float* getelementptr inbounds ([4 x float]* @g, i64 0, i64 3), align 4 ; <float> [#uses=1]
+  %4 = load float, float* getelementptr inbounds ([4 x float]* @g, i64 0, i64 3), align 4 ; <float> [#uses=1]
   store float %4, float* %scevgep14, align 4
   %indvar.next = add i64 %indvar, 1               ; <i64> [#uses=2]
   %exitcond = icmp eq i64 %indvar.next, %tmp      ; <i1> [#uses=1]

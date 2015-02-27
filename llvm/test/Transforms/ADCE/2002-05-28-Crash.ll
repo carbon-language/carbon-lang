@@ -15,7 +15,7 @@
 
 define i32 @rx_bitset_empty(i32 %size, i32* %set) {
 bb1:
-        %reg110 = load i32* %set                ; <i32> [#uses=2]
+        %reg110 = load i32, i32* %set                ; <i32> [#uses=2]
         store i32 1, i32* %set
         %cast112 = sext i32 %size to i64                ; <i64> [#uses=1]
         %reg113 = add i64 %cast112, 31          ; <i64> [#uses=1]
@@ -26,7 +26,7 @@ bb1:
         %reg114-idxcast-offset = add i32 %reg114-idxcast, 1073741823            ; <i32> [#uses=1]
         %reg114-idxcast-offset.upgrd.1 = zext i32 %reg114-idxcast-offset to i64         ; <i64> [#uses=1]
         %reg124 = getelementptr i32, i32* %set, i64 %reg114-idxcast-offset.upgrd.1           ; <i32*> [#uses=1]
-        %reg125 = load i32* %reg124             ; <i32> [#uses=1]
+        %reg125 = load i32, i32* %reg124             ; <i32> [#uses=1]
         %cond232 = icmp ne i32 %reg125, 0               ; <i1> [#uses=1]
         br i1 %cond232, label %bb3, label %bb2
 
@@ -39,7 +39,7 @@ bb2:            ; preds = %bb2, %bb1
         %reg130-idxcast-offset = add i32 %reg130-idxcast, 1073741823            ; <i32> [#uses=1]
         %reg130-idxcast-offset.upgrd.2 = zext i32 %reg130-idxcast-offset to i64         ; <i64> [#uses=1]
         %reg118 = getelementptr i32, i32* %set, i64 %reg130-idxcast-offset.upgrd.2           ; <i32*> [#uses=1]
-        %reg119 = load i32* %reg118             ; <i32> [#uses=1]
+        %reg119 = load i32, i32* %reg118             ; <i32> [#uses=1]
         %cond233 = icmp eq i32 %reg119, 0               ; <i1> [#uses=1]
         br i1 %cond233, label %bb2, label %bb3
 

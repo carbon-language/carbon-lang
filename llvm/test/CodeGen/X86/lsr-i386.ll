@@ -22,7 +22,7 @@ entry:
 bb1:                                              ; preds = %bb6, %bb
   %indvar11 = phi i32 [ %indvar.next12, %bb6 ], [ 0, %entry ] ; <i32> [#uses=2]
   %tmp21 = add i32 %indvar11, 1                   ; <i32> [#uses=1]
-  %t = load i32* getelementptr inbounds (%struct.anon* @mp2grad_, i32 0, i32 1)
+  %t = load i32, i32* getelementptr inbounds (%struct.anon* @mp2grad_, i32 0, i32 1)
   %tmp15 = mul i32 %n, %t                      ; <i32> [#uses=1]
   %tmp16 = add i32 %tmp21, %tmp15                 ; <i32> [#uses=1]
   %tmp17 = shl i32 %tmp16, 3                      ; <i32> [#uses=1]

@@ -9,7 +9,7 @@ define void @t2() {
 ; CHECK: ldr	x[[ADDR:[0-9]+]], [x[[GOTADDR]], _t@GOTPAGEOFF]
 ; CHECK: ldr	x[[DEST:[0-9]+]], [x[[ADDR]]]
 ; CHECK: br	x[[DEST]]
-  %tmp = load i32 ()** @t
+  %tmp = load i32 ()*, i32 ()** @t
   %tmp.upgrd.2 = tail call i32 %tmp()
   ret void
 }

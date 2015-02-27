@@ -13,7 +13,7 @@ entry:
 ; CHECK: add x[[REG3:[0-9]+]], x[[REG1]], x[[REG2]]
 ; CHECK: ldr w0, [x[[REG3]]]
 ; CHECK: ret
-  %0 = load i32* getelementptr inbounds ([5001 x i32]* @sortlist, i32 0, i64 5000), align 4
+  %0 = load i32, i32* getelementptr inbounds ([5001 x i32]* @sortlist, i32 0, i64 5000), align 4
   ret i32 %0
 }
 
@@ -26,7 +26,7 @@ entry:
 ; CHECK: add x[[REG3:[0-9]+]], x[[REG1]], x[[REG2]]
 ; CHECK: ldr x0, [x[[REG3]]]
 ; CHECK: ret
-  %0 = load i64* getelementptr inbounds ([5001 x i64]* @sortlist2, i32 0, i64 5000), align 4
+  %0 = load i64, i64* getelementptr inbounds ([5001 x i64]* @sortlist2, i32 0, i64 5000), align 4
   ret i64 %0
 }
 
@@ -40,8 +40,8 @@ entry:
 ; CHECK: movz x[[REG:[0-9]+]], #0xb3a, lsl #32
 ; CHECK: movk x[[REG]], #0x73ce, lsl #16
 ; CHECK: movk x[[REG]], #0x2ff2
-  %0 = load i8** @pd2, align 8
+  %0 = load i8*, i8** @pd2, align 8
   %arrayidx = getelementptr inbounds i8, i8* %0, i64 12345678901234
-  %1 = load i8* %arrayidx, align 1
+  %1 = load i8, i8* %arrayidx, align 1
   ret i8 %1
 }

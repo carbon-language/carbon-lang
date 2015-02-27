@@ -16,7 +16,7 @@ bb:		; preds = %bb1, %bb1
 bb1:		; preds = %bb, %entry
 	%P.0.rec = phi i32 [ 0, %entry ], [ %indvar.next, %bb ]		; <i32> [#uses=3]
 	%P.0 = getelementptr i8, i8* %Q, i32 %P.0.rec		; <i8*> [#uses=2]
-	%0 = load i8* %P.0, align 1		; <i8> [#uses=1]
+	%0 = load i8, i8* %P.0, align 1		; <i8> [#uses=1]
 	switch i8 %0, label %bb3 [
 		i8 12, label %bb
 		i8 42, label %bb

@@ -73,7 +73,7 @@ bb61:                                             ; preds = %bb63, %bb58
 
 bb63:                                             ; preds = %bb61
   %tmp64 = getelementptr inbounds i8, i8* %tmp3, i64 %i.0.i
-  %tmp65 = load i8* %tmp64, align 1
+  %tmp65 = load i8, i8* %tmp64, align 1
   %tmp67 = add i64 %i.0.i, 1
   br i1 undef, label %_ZNK4llvm9StringRef4findEcm.exit.loopexit, label %bb61
 

@@ -11,7 +11,7 @@
 
 define void @foo(i64* %x, i64* %y) nounwind  {
 entry:
-	%tmp1 = load i64* %y, align 8		; <i64> [#uses=1]
+	%tmp1 = load i64, i64* %y, align 8		; <i64> [#uses=1]
 	store i64 %tmp1, i64* %x, align 8
 	ret void
 }

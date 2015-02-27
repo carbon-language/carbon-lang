@@ -11,14 +11,14 @@ entry:
   call void @llvm.dbg.declare(metadata i32* %i.addr, metadata !7, metadata !{!"0x102"}), !dbg !8
   call void @llvm.dbg.declare(metadata i32* %j, metadata !9, metadata !{!"0x102"}), !dbg !11
   store i32 2, i32* %j, align 4, !dbg !12
-  %tmp = load i32* %j, align 4, !dbg !13
+  %tmp = load i32, i32* %j, align 4, !dbg !13
   %inc = add nsw i32 %tmp, 1, !dbg !13
   store i32 %inc, i32* %j, align 4, !dbg !13
-  %tmp1 = load i32* %j, align 4, !dbg !14
-  %tmp2 = load i32* %i.addr, align 4, !dbg !14
+  %tmp1 = load i32, i32* %j, align 4, !dbg !14
+  %tmp2 = load i32, i32* %i.addr, align 4, !dbg !14
   %add = add nsw i32 %tmp1, %tmp2, !dbg !14
   store i32 %add, i32* %j, align 4, !dbg !14
-  %tmp3 = load i32* %j, align 4, !dbg !15
+  %tmp3 = load i32, i32* %j, align 4, !dbg !15
   ret i32 %tmp3, !dbg !15
 }
 

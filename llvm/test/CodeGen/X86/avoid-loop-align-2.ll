@@ -13,7 +13,7 @@ entry:
 
 bb.nph12:		; preds = %entry
 	%1 = icmp eq i32 %b, 0		; <i1> [#uses=1]
-	%2 = load i32** @x, align 8		; <i32*> [#uses=1]
+	%2 = load i32*, i32** @x, align 8		; <i32*> [#uses=1]
 	br i1 %1, label %bb2.preheader, label %bb2.preheader.us
 
 bb2.preheader.us:		; preds = %bb2.bb3_crit_edge.us, %bb.nph12
@@ -27,7 +27,7 @@ bb1.us:		; preds = %bb1.us, %bb2.preheader.us
 	%tmp17 = add i32 %indvar, %tmp16		; <i32> [#uses=1]
 	%tmp. = zext i32 %tmp17 to i64		; <i64> [#uses=1]
 	%3 = getelementptr i32, i32* %2, i64 %tmp.		; <i32*> [#uses=1]
-	%4 = load i32* %3, align 4		; <i32> [#uses=2]
+	%4 = load i32, i32* %3, align 4		; <i32> [#uses=2]
 	%indvar.next = add i32 %indvar, 1		; <i32> [#uses=2]
 	%exitcond = icmp eq i32 %indvar.next, %b		; <i1> [#uses=1]
 	br i1 %exitcond, label %bb2.bb3_crit_edge.us, label %bb1.us

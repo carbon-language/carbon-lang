@@ -9,7 +9,7 @@ target triple = "i386-pc-linux-gnu"
 
 define i32 @main() nounwind  {
 entry:
-	%l = load i32* @g_37, align 4		; <i32> [#uses=1]
+	%l = load i32, i32* @g_37, align 4		; <i32> [#uses=1]
 	%cmpa = icmp ne i32 %l, 0		; <i1> [#uses=3]
 	br i1 %cmpa, label %func_1.exit, label %mooseblock
 

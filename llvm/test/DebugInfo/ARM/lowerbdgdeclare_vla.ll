@@ -47,7 +47,7 @@ for.body:                                         ; preds = %entry, %for.body.fo
 
 for.body.for.body_crit_edge:                      ; preds = %for.body
   %arrayidx2.phi.trans.insert = getelementptr inbounds float, float* %vla, i32 %inc
-  %.pre = load float* %arrayidx2.phi.trans.insert, align 4, !dbg !31, !tbaa !26
+  %.pre = load float, float* %arrayidx2.phi.trans.insert, align 4, !dbg !31, !tbaa !26
   br label %for.body, !dbg !30
 
 for.end:                                          ; preds = %for.body, %entry

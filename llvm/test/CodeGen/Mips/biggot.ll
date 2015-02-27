@@ -20,7 +20,7 @@ entry:
 ; N64: daddu  $[[R3:[0-9]+]], $[[R2]], ${{[a-z0-9]+}}
 ; N64: ld  ${{[0-9]+}}, %call_lo(foo0)($[[R3]])
 
-  %0 = load i32* @v0, align 4
+  %0 = load i32, i32* @v0, align 4
   tail call void @foo0(i32 %0) nounwind
   ret void
 }

@@ -5,7 +5,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 
 define i32 @foo(i32 %i, i32* nocapture %c) nounwind uwtable readonly ssp {
   tail call void @llvm.dbg.value(metadata i32 %i, i64 0, metadata !6, metadata !{!"0x102"}), !dbg !12
-  %ab = load i32* %c, align 1, !dbg !14
+  %ab = load i32, i32* %c, align 1, !dbg !14
   tail call void @llvm.dbg.value(metadata i32* %c, i64 0, metadata !7, metadata !{!"0x102"}), !dbg !13
   tail call void @llvm.dbg.value(metadata i32 %ab, i64 0, metadata !10, metadata !{!"0x102"}), !dbg !14
   %cd = icmp eq i32 %i, 42, !dbg !15

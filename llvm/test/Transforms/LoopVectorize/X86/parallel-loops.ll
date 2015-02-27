@@ -21,15 +21,15 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %arrayidx2 = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %1 = load i32* %arrayidx2, align 4
+  %1 = load i32, i32* %arrayidx2, align 4
   %idxprom3 = sext i32 %1 to i64
   %arrayidx4 = getelementptr inbounds i32, i32* %a, i64 %idxprom3
   store i32 %0, i32* %arrayidx4, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   %arrayidx6 = getelementptr inbounds i32, i32* %b, i64 %indvars.iv.next
-  %2 = load i32* %arrayidx6, align 4
+  %2 = load i32, i32* %arrayidx6, align 4
   store i32 %2, i32* %arrayidx2, align 4
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp eq i32 %lftr.wideiv, 512
@@ -51,9 +51,9 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4, !llvm.mem.parallel_loop_access !3
+  %0 = load i32, i32* %arrayidx, align 4, !llvm.mem.parallel_loop_access !3
   %arrayidx2 = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %1 = load i32* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !3
+  %1 = load i32, i32* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !3
   %idxprom3 = sext i32 %1 to i64
   %arrayidx4 = getelementptr inbounds i32, i32* %a, i64 %idxprom3
   ; This store might have originated from inlining a function with a parallel
@@ -61,7 +61,7 @@ for.body:                                         ; preds = %for.body, %entry
   store i32 %0, i32* %arrayidx4, align 4, !llvm.mem.parallel_loop_access !5
   %indvars.iv.next = add i64 %indvars.iv, 1
   %arrayidx6 = getelementptr inbounds i32, i32* %b, i64 %indvars.iv.next
-  %2 = load i32* %arrayidx6, align 4, !llvm.mem.parallel_loop_access !3
+  %2 = load i32, i32* %arrayidx6, align 4, !llvm.mem.parallel_loop_access !3
   store i32 %2, i32* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !3
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp eq i32 %lftr.wideiv, 512
@@ -84,9 +84,9 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4, !llvm.mem.parallel_loop_access !6
+  %0 = load i32, i32* %arrayidx, align 4, !llvm.mem.parallel_loop_access !6
   %arrayidx2 = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %1 = load i32* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !6
+  %1 = load i32, i32* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !6
   %idxprom3 = sext i32 %1 to i64
   %arrayidx4 = getelementptr inbounds i32, i32* %a, i64 %idxprom3
   ; This refers to the loop marked with !7 which we are not in at the moment.
@@ -94,7 +94,7 @@ for.body:                                         ; preds = %for.body, %entry
   store i32 %0, i32* %arrayidx4, align 4, !llvm.mem.parallel_loop_access !7
   %indvars.iv.next = add i64 %indvars.iv, 1
   %arrayidx6 = getelementptr inbounds i32, i32* %b, i64 %indvars.iv.next
-  %2 = load i32* %arrayidx6, align 4, !llvm.mem.parallel_loop_access !6
+  %2 = load i32, i32* %arrayidx6, align 4, !llvm.mem.parallel_loop_access !6
   store i32 %2, i32* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !6
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp eq i32 %lftr.wideiv, 512

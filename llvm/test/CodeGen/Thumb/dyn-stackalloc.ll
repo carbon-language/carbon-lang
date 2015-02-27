@@ -12,7 +12,7 @@ define void @t1(%struct.state* %v) {
 ; CHECK: mov r[[R1:[0-9]+]], sp
 ; CHECK: subs r[[R2:[0-9]+]], r[[R1]], r[[R0]]
 ; CHECK: mov sp, r[[R2]]
-	%tmp6 = load i32* null
+	%tmp6 = load i32, i32* null
 	%tmp8 = alloca float, i32 %tmp6
 	store i32 1, i32* null
 	br i1 false, label %bb123.preheader, label %return
@@ -22,7 +22,7 @@ bb123.preheader:
 
 bb43:
 	call fastcc void @f1( float* %tmp8, float* null, i32 0 )
-	%tmp70 = load i32* null
+	%tmp70 = load i32, i32* null
 	%tmp85 = getelementptr float, float* %tmp8, i32 0
 	call fastcc void @f2( float* null, float* null, float* %tmp85, i32 %tmp70 )
 	ret void

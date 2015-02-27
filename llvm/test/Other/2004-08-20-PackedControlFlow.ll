@@ -16,7 +16,7 @@ B:              ; preds = %A
         br label %C
 
 A:              ; preds = %0
-        %t0 = load %v4f* @foo           ; <%v4f> [#uses=2]
+        %t0 = load %v4f, %v4f* @foo           ; <%v4f> [#uses=2]
         br label %B
 }
 

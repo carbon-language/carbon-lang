@@ -84,10 +84,10 @@ define void @test1({ i8*, void (i8*, i8*)* } %fn_arg) {
   %52 = bitcast i8* %51 to i64*
   call void asm sideeffect "std  31, $0", "=*m"(i64* %52)
   %53 = getelementptr { i8*, void (i8*, i8*)* }, { i8*, void (i8*, i8*)* }* %fn, i32 0, i32 1
-  %.funcptr = load void (i8*, i8*)** %53
+  %.funcptr = load void (i8*, i8*)*, void (i8*, i8*)** %53
   %54 = getelementptr { i8*, void (i8*, i8*)* }, { i8*, void (i8*, i8*)* }* %fn, i32 0, i32 0
-  %.ptr = load i8** %54
-  %55 = load i8** %sp
+  %.ptr = load i8*, i8** %54
+  %55 = load i8*, i8** %sp
   call void %.funcptr(i8* %.ptr, i8* %55)
   ret void
 }

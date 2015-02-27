@@ -49,7 +49,7 @@ entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !39, metadata !{!"0x102"}), !dbg !41
-  %this1 = load %class.A** %this.addr
+  %this1 = load %class.A*, %class.A** %this.addr
   call void @_ZN1AC2Ev(%class.A* %this1) #1, !dbg !42
   ret void, !dbg !42
 }
@@ -65,7 +65,7 @@ entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !44, metadata !{!"0x102"}), !dbg !45
-  %this1 = load %class.A** %this.addr
+  %this1 = load %class.A*, %class.A** %this.addr
   %0 = bitcast %class.A* %this1 to i8***, !dbg !46
   store i8** getelementptr inbounds ([4 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %0, !dbg !46
   ret void, !dbg !46

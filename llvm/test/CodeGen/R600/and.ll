@@ -11,8 +11,8 @@
 
 define void @test2(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
   %b_ptr = getelementptr <2 x i32>, <2 x i32> addrspace(1)* %in, i32 1
-  %a = load <2 x i32> addrspace(1) * %in
-  %b = load <2 x i32> addrspace(1) * %b_ptr
+  %a = load <2 x i32>, <2 x i32> addrspace(1) * %in
+  %b = load <2 x i32>, <2 x i32> addrspace(1) * %b_ptr
   %result = and <2 x i32> %a, %b
   store <2 x i32> %result, <2 x i32> addrspace(1)* %out
   ret void
@@ -31,8 +31,8 @@ define void @test2(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
 
 define void @test4(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
   %b_ptr = getelementptr <4 x i32>, <4 x i32> addrspace(1)* %in, i32 1
-  %a = load <4 x i32> addrspace(1) * %in
-  %b = load <4 x i32> addrspace(1) * %b_ptr
+  %a = load <4 x i32>, <4 x i32> addrspace(1) * %in
+  %b = load <4 x i32>, <4 x i32> addrspace(1) * %b_ptr
   %result = and <4 x i32> %a, %b
   store <4 x i32> %result, <4 x i32> addrspace(1)* %out
   ret void
@@ -57,8 +57,8 @@ define void @s_and_constant_i32(i32 addrspace(1)* %out, i32 %a) {
 ; FUNC-LABEL: {{^}}v_and_i32:
 ; SI: v_and_b32
 define void @v_and_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr) {
-  %a = load i32 addrspace(1)* %aptr, align 4
-  %b = load i32 addrspace(1)* %bptr, align 4
+  %a = load i32, i32 addrspace(1)* %aptr, align 4
+  %b = load i32, i32 addrspace(1)* %bptr, align 4
   %and = and i32 %a, %b
   store i32 %and, i32 addrspace(1)* %out, align 4
   ret void
@@ -67,7 +67,7 @@ define void @v_and_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr, i32 addr
 ; FUNC-LABEL: {{^}}v_and_constant_i32
 ; SI: v_and_b32_e32 v{{[0-9]+}}, 0x12d687, v{{[0-9]+}}
 define void @v_and_constant_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr) {
-  %a = load i32 addrspace(1)* %aptr, align 4
+  %a = load i32, i32 addrspace(1)* %aptr, align 4
   %and = and i32 %a, 1234567
   store i32 %and, i32 addrspace(1)* %out, align 4
   ret void
@@ -76,7 +76,7 @@ define void @v_and_constant_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr)
 ; FUNC-LABEL: {{^}}v_and_inline_imm_64_i32
 ; SI: v_and_b32_e32 v{{[0-9]+}}, 64, v{{[0-9]+}}
 define void @v_and_inline_imm_64_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr) {
-  %a = load i32 addrspace(1)* %aptr, align 4
+  %a = load i32, i32 addrspace(1)* %aptr, align 4
   %and = and i32 %a, 64
   store i32 %and, i32 addrspace(1)* %out, align 4
   ret void
@@ -85,7 +85,7 @@ define void @v_and_inline_imm_64_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %
 ; FUNC-LABEL: {{^}}v_and_inline_imm_neg_16_i32
 ; SI: v_and_b32_e32 v{{[0-9]+}}, -16, v{{[0-9]+}}
 define void @v_and_inline_imm_neg_16_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr) {
-  %a = load i32 addrspace(1)* %aptr, align 4
+  %a = load i32, i32 addrspace(1)* %aptr, align 4
   %and = and i32 %a, -16
   store i32 %and, i32 addrspace(1)* %out, align 4
   ret void
@@ -120,8 +120,8 @@ define void @s_and_constant_i64(i64 addrspace(1)* %out, i64 %a) {
 ; SI: v_and_b32
 ; SI: v_and_b32
 define void @v_and_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) {
-  %a = load i64 addrspace(1)* %aptr, align 8
-  %b = load i64 addrspace(1)* %bptr, align 8
+  %a = load i64, i64 addrspace(1)* %aptr, align 8
+  %b = load i64, i64 addrspace(1)* %bptr, align 8
   %and = and i64 %a, %b
   store i64 %and, i64 addrspace(1)* %out, align 8
   ret void
@@ -136,8 +136,8 @@ entry:
   br i1 %tmp0, label %if, label %endif
 
 if:
-  %a = load i64 addrspace(1)* %aptr, align 8
-  %b = load i64 addrspace(1)* %bptr, align 8
+  %a = load i64, i64 addrspace(1)* %aptr, align 8
+  %b = load i64, i64 addrspace(1)* %bptr, align 8
   %and = and i64 %a, %b
   br label %endif
 
@@ -151,7 +151,7 @@ endif:
 ; SI: v_and_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
 ; SI: v_and_b32_e32 {{v[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}
 define void @v_and_constant_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr) {
-  %a = load i64 addrspace(1)* %aptr, align 8
+  %a = load i64, i64 addrspace(1)* %aptr, align 8
   %and = and i64 %a, 1234567
   store i64 %and, i64 addrspace(1)* %out, align 8
   ret void
@@ -162,7 +162,7 @@ define void @v_and_constant_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr)
 ; SI: v_and_b32_e32 {{v[0-9]+}}, 64, {{v[0-9]+}}
 ; SI: v_and_b32_e32 {{v[0-9]+}}, 0, {{v[0-9]+}}
 define void @v_and_inline_imm_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr) {
-  %a = load i64 addrspace(1)* %aptr, align 8
+  %a = load i64, i64 addrspace(1)* %aptr, align 8
   %and = and i64 %a, 64
   store i64 %and, i64 addrspace(1)* %out, align 8
   ret void

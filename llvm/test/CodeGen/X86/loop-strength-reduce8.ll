@@ -54,8 +54,8 @@ entry:
 	call void @llvm.va_start(i8* %p1)
 	%0 = call fastcc %struct.tree_node* @make_node(i32 %code) nounwind		; <%struct.tree_node*> [#uses=2]
 	%1 = getelementptr [256 x i32], [256 x i32]* @tree_code_length, i32 0, i32 %code		; <i32*> [#uses=1]
-	%2 = load i32* %1, align 4		; <i32> [#uses=2]
-	%3 = load i32* @lineno, align 4		; <i32> [#uses=1]
+	%2 = load i32, i32* %1, align 4		; <i32> [#uses=2]
+	%3 = load i32, i32* @lineno, align 4		; <i32> [#uses=1]
 	%4 = bitcast %struct.tree_node* %0 to %struct.tree_exp*		; <%struct.tree_exp*> [#uses=2]
 	%5 = getelementptr %struct.tree_exp, %struct.tree_exp* %4, i32 0, i32 1		; <i32*> [#uses=1]
 	store i32 %3, i32* %5, align 4
@@ -64,11 +64,11 @@ entry:
 
 bb:		; preds = %bb, %entry
 	%i.01 = phi i32 [ %indvar.next, %bb ], [ 0, %entry ]		; <i32> [#uses=2]
-	%7 = load i8** %p, align 4		; <i8*> [#uses=2]
+	%7 = load i8*, i8** %p, align 4		; <i8*> [#uses=2]
 	%8 = getelementptr i8, i8* %7, i32 4		; <i8*> [#uses=1]
 	store i8* %8, i8** %p, align 4
 	%9 = bitcast i8* %7 to %struct.tree_node**		; <%struct.tree_node**> [#uses=1]
-	%10 = load %struct.tree_node** %9, align 4		; <%struct.tree_node*> [#uses=1]
+	%10 = load %struct.tree_node*, %struct.tree_node** %9, align 4		; <%struct.tree_node*> [#uses=1]
 	%11 = getelementptr %struct.tree_exp, %struct.tree_exp* %4, i32 0, i32 2, i32 %i.01		; <%struct.tree_node**> [#uses=1]
 	store %struct.tree_node* %10, %struct.tree_node** %11, align 4
 	%indvar.next = add i32 %i.01, 1		; <i32> [#uses=2]

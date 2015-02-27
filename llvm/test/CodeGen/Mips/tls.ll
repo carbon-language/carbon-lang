@@ -10,7 +10,7 @@
 
 define i32 @f1() nounwind {
 entry:
-  %tmp = load i32* @t1, align 4
+  %tmp = load i32, i32* @t1, align 4
   ret i32 %tmp
 
 ; PIC-LABEL:       f1:
@@ -33,7 +33,7 @@ entry:
 
 define i32 @f2() nounwind {
 entry:
-  %tmp = load i32* @t2, align 4
+  %tmp = load i32, i32* @t2, align 4
   ret i32 %tmp
 
 ; PIC-LABEL:       f2:
@@ -69,7 +69,7 @@ entry:
 ; PIC:   addu    $[[R1:[0-9]+]], $[[R0]], $2
 ; PIC:   lw      ${{[0-9]+}}, %dtprel_lo(f3.i)($[[R1]])
 
-  %0 = load i32* @f3.i, align 4
+  %0 = load i32, i32* @f3.i, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* @f3.i, align 4
   ret i32 %inc

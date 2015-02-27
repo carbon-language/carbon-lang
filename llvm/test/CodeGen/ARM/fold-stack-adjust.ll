@@ -82,7 +82,7 @@ define void @check_vfp_fold() minsize {
 
   %var = alloca i8, i32 16
 
-  %tmp = load %bigVec* @var
+  %tmp = load %bigVec, %bigVec* @var
   call void @bar(i8* %var)
   store %bigVec %tmp, %bigVec* @var
 
@@ -119,7 +119,7 @@ define arm_aapcs_vfpcc double @check_vfp_no_return_clobber() minsize {
 
   %var = alloca i8, i32 64
 
-  %tmp = load %bigVec* @var
+  %tmp = load %bigVec, %bigVec* @var
   call void @bar(i8* %var)
   store %bigVec %tmp, %bigVec* @var
 
@@ -152,7 +152,7 @@ define void @test_fold_point(i1 %tst) minsize {
 
   ; We want a long-lived floating register so that a callee-saved dN is used and
   ; there's both a vpop and a pop.
-  %live_val = load double* @dbl
+  %live_val = load double, double* @dbl
   br i1 %tst, label %true, label %end
 true:
   call void @bar(i8* %var)

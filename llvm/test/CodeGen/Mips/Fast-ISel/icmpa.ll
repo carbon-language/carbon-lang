@@ -14,8 +14,8 @@ define void @eq()  {
 entry:
 ; CHECK-LABEL:  .ent  eq
 
-  %0 = load i32* @c, align 4
-  %1 = load i32* @d, align 4
+  %0 = load i32, i32* @c, align 4
+  %1 = load i32, i32* @d, align 4
   %cmp = icmp eq i32 %0, %1
   %conv = zext i1 %cmp to i32
 ; CHECK-DAG:  lw	$[[REG_D_GOT:[0-9+]]], %got(d)(${{[0-9]+}})
@@ -35,8 +35,8 @@ entry:
 define void @ne()  {
 entry:
 ; CHECK-LABEL:  .ent  ne
-  %0 = load i32* @c, align 4
-  %1 = load i32* @d, align 4
+  %0 = load i32, i32* @c, align 4
+  %1 = load i32, i32* @d, align 4
   %cmp = icmp ne i32 %0, %1
   %conv = zext i1 %cmp to i32
 ; CHECK-DAG:  lw	$[[REG_D_GOT:[0-9+]]], %got(d)(${{[0-9]+}})
@@ -56,8 +56,8 @@ entry:
 define void @ugt()  {
 entry:
 ; CHECK-LABEL:  .ent  ugt
-  %0 = load i32* @uc, align 4
-  %1 = load i32* @ud, align 4
+  %0 = load i32, i32* @uc, align 4
+  %1 = load i32, i32* @ud, align 4
   %cmp = icmp ugt i32 %0, %1
   %conv = zext i1 %cmp to i32
 ; CHECK-DAG:  lw	$[[REG_UD_GOT:[0-9+]]], %got(ud)(${{[0-9]+}})
@@ -76,8 +76,8 @@ entry:
 define void @ult()  {
 entry:
 ; CHECK-LABEL:  .ent  ult
-  %0 = load i32* @uc, align 4
-  %1 = load i32* @ud, align 4
+  %0 = load i32, i32* @uc, align 4
+  %1 = load i32, i32* @ud, align 4
   %cmp = icmp ult i32 %0, %1
   %conv = zext i1 %cmp to i32
 ; CHECK-DAG:  lw	$[[REG_UD_GOT:[0-9+]]], %got(ud)(${{[0-9]+}})
@@ -95,8 +95,8 @@ entry:
 define void @uge()  {
 entry:
 ; CHECK-LABEL:  .ent  uge
-  %0 = load i32* @uc, align 4
-  %1 = load i32* @ud, align 4
+  %0 = load i32, i32* @uc, align 4
+  %1 = load i32, i32* @ud, align 4
   %cmp = icmp uge i32 %0, %1
   %conv = zext i1 %cmp to i32
 ; CHECK-DAG:  lw	$[[REG_UD_GOT:[0-9+]]], %got(ud)(${{[0-9]+}})
@@ -115,8 +115,8 @@ entry:
 define void @ule()  {
 entry:
 ; CHECK-LABEL:  .ent  ule
-  %0 = load i32* @uc, align 4
-  %1 = load i32* @ud, align 4
+  %0 = load i32, i32* @uc, align 4
+  %1 = load i32, i32* @ud, align 4
   %cmp = icmp ule i32 %0, %1
   %conv = zext i1 %cmp to i32
 ; CHECK-DAG:  lw	$[[REG_UD_GOT:[0-9+]]], %got(ud)(${{[0-9]+}})
@@ -135,8 +135,8 @@ entry:
 define void @sgt()  {
 entry:
 ; CHECK-LABEL:  .ent sgt
-  %0 = load i32* @c, align 4
-  %1 = load i32* @d, align 4
+  %0 = load i32, i32* @c, align 4
+  %1 = load i32, i32* @d, align 4
   %cmp = icmp sgt i32 %0, %1
   %conv = zext i1 %cmp to i32
 ; CHECK-DAG:  lw	$[[REG_D_GOT:[0-9+]]], %got(d)(${{[0-9]+}})
@@ -154,8 +154,8 @@ entry:
 define void @slt()  {
 entry:
 ; CHECK-LABEL:  .ent slt
-  %0 = load i32* @c, align 4
-  %1 = load i32* @d, align 4
+  %0 = load i32, i32* @c, align 4
+  %1 = load i32, i32* @d, align 4
   %cmp = icmp slt i32 %0, %1
   %conv = zext i1 %cmp to i32
 ; CHECK-DAG:  lw	$[[REG_D_GOT:[0-9+]]], %got(d)(${{[0-9]+}})
@@ -173,8 +173,8 @@ entry:
 define void @sge()  {
 entry:
 ; CHECK-LABEL:  .ent sge
-  %0 = load i32* @c, align 4
-  %1 = load i32* @d, align 4
+  %0 = load i32, i32* @c, align 4
+  %1 = load i32, i32* @d, align 4
   %cmp = icmp sge i32 %0, %1
   %conv = zext i1 %cmp to i32
   store i32 %conv, i32* @b1, align 4
@@ -193,8 +193,8 @@ entry:
 define void @sle()  {
 entry:
 ; CHECK-LABEL:  .ent sle
-  %0 = load i32* @c, align 4
-  %1 = load i32* @d, align 4
+  %0 = load i32, i32* @c, align 4
+  %1 = load i32, i32* @d, align 4
   %cmp = icmp sle i32 %0, %1
   %conv = zext i1 %cmp to i32
 ; CHECK-DAG:  lw	$[[REG_D_GOT:[0-9+]]], %got(d)(${{[0-9]+}})

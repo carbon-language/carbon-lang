@@ -11,7 +11,7 @@ target triple = "i386-apple-darwin7"
 
 define i32 @bar(i32** %P) nounwind {
 entry:
-	%0 = load i32** %P, align 4		; <i32*> [#uses=2]
+	%0 = load i32*, i32** %P, align 4		; <i32*> [#uses=2]
 	%1 = getelementptr i32, i32* %0, i32 1		; <i32*> [#uses=1]
 	%2 = icmp ugt i32* %1, inttoptr (i64 1233 to i32*)		; <i1> [#uses=1]
 	br i1 %2, label %bb1, label %bb
@@ -22,6 +22,6 @@ bb:		; preds = %entry
 
 bb1:		; preds = %entry, %bb
 	%3 = getelementptr i32, i32* %1, i32 1		; <i32*> [#uses=1]
-	%4 = load i32* %3, align 4		; <i32> [#uses=1]
+	%4 = load i32, i32* %3, align 4		; <i32> [#uses=1]
 	ret i32 %4
 }

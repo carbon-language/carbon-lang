@@ -3,7 +3,7 @@
 
 define void @main() {
 main_body:
-  %0 = load <4 x float> addrspace(9)* null
+  %0 = load <4 x float>, <4 x float> addrspace(9)* null
   %1 = extractelement <4 x float> %0, i32 3
   %2 = fptosi float %1 to i32
   %3 = bitcast i32 %2 to float
@@ -20,11 +20,11 @@ main_body:
   %14 = bitcast float %12 to i32
   %15 = add i32 %13, %14
   %16 = bitcast i32 %15 to float
-  %17 = load <4 x float> addrspace(9)* null
+  %17 = load <4 x float>, <4 x float> addrspace(9)* null
   %18 = extractelement <4 x float> %17, i32 0
-  %19 = load <4 x float> addrspace(9)* null
+  %19 = load <4 x float>, <4 x float> addrspace(9)* null
   %20 = extractelement <4 x float> %19, i32 1
-  %21 = load <4 x float> addrspace(9)* null
+  %21 = load <4 x float>, <4 x float> addrspace(9)* null
   %22 = extractelement <4 x float> %21, i32 2
   br label %LOOP
 

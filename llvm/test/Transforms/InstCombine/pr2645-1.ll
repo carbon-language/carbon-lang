@@ -15,7 +15,7 @@ define internal void @""(i8*, i32, i8*) {
 ; <label>:6             ; preds = %4
         %7 = getelementptr i8, i8* %2, i32 %.0              ; <i8*> [#uses=1]
         %8 = bitcast i8* %7 to <4 x i16>*               ; <<4 x i16>*> [#uses=1]
-        %9 = load <4 x i16>* %8, align 1                ; <<4 x i16>> [#uses=1]
+        %9 = load <4 x i16>, <4 x i16>* %8, align 1                ; <<4 x i16>> [#uses=1]
         %10 = bitcast <4 x i16> %9 to <1 x i64>         ; <<1 x i64>> [#uses=1]
         %11 = call <2 x i64> @foo(<1 x i64> %10)
 ; <<2 x i64>> [#uses=1]

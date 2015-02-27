@@ -12,38 +12,38 @@ define void @foo() {
 
   ; Create lots of live variables to exhaust the supply of
   ; caller-saved registers
-  %val1 = load volatile float* @var
-  %val2 = load volatile float* @var
-  %val3 = load volatile float* @var
-  %val4 = load volatile float* @var
-  %val5 = load volatile float* @var
-  %val6 = load volatile float* @var
-  %val7 = load volatile float* @var
-  %val8 = load volatile float* @var
-  %val9 = load volatile float* @var
-  %val10 = load volatile float* @var
-  %val11 = load volatile float* @var
-  %val12 = load volatile float* @var
-  %val13 = load volatile float* @var
-  %val14 = load volatile float* @var
-  %val15 = load volatile float* @var
-  %val16 = load volatile float* @var
-  %val17 = load volatile float* @var
-  %val18 = load volatile float* @var
-  %val19 = load volatile float* @var
-  %val20 = load volatile float* @var
-  %val21 = load volatile float* @var
-  %val22 = load volatile float* @var
-  %val23 = load volatile float* @var
-  %val24 = load volatile float* @var
-  %val25 = load volatile float* @var
-  %val26 = load volatile float* @var
-  %val27 = load volatile float* @var
-  %val28 = load volatile float* @var
-  %val29 = load volatile float* @var
-  %val30 = load volatile float* @var
-  %val31 = load volatile float* @var
-  %val32 = load volatile float* @var
+  %val1 = load volatile float, float* @var
+  %val2 = load volatile float, float* @var
+  %val3 = load volatile float, float* @var
+  %val4 = load volatile float, float* @var
+  %val5 = load volatile float, float* @var
+  %val6 = load volatile float, float* @var
+  %val7 = load volatile float, float* @var
+  %val8 = load volatile float, float* @var
+  %val9 = load volatile float, float* @var
+  %val10 = load volatile float, float* @var
+  %val11 = load volatile float, float* @var
+  %val12 = load volatile float, float* @var
+  %val13 = load volatile float, float* @var
+  %val14 = load volatile float, float* @var
+  %val15 = load volatile float, float* @var
+  %val16 = load volatile float, float* @var
+  %val17 = load volatile float, float* @var
+  %val18 = load volatile float, float* @var
+  %val19 = load volatile float, float* @var
+  %val20 = load volatile float, float* @var
+  %val21 = load volatile float, float* @var
+  %val22 = load volatile float, float* @var
+  %val23 = load volatile float, float* @var
+  %val24 = load volatile float, float* @var
+  %val25 = load volatile float, float* @var
+  %val26 = load volatile float, float* @var
+  %val27 = load volatile float, float* @var
+  %val28 = load volatile float, float* @var
+  %val29 = load volatile float, float* @var
+  %val30 = load volatile float, float* @var
+  %val31 = load volatile float, float* @var
+  %val32 = load volatile float, float* @var
 
   store volatile float %val1, float* @var
   store volatile float %val2, float* @var

@@ -29,7 +29,7 @@ while.cond.i:                                     ; preds = %while.body.i15795, 
   br i1 %boo2, label %indirectgoto, label %while.body.i15795
 
 while.body.i15795:                                ; preds = %while.cond.i
-  %tmp20.i = load i64* %incdec.ptr.i15793, align 8
+  %tmp20.i = load i64, i64* %incdec.ptr.i15793, align 8
   %boo1 = call i1 @foo()
   br i1 %boo1, label %while.cond.i, label %body_failed
 

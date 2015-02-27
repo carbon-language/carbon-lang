@@ -10,7 +10,7 @@ entry:
 	br label %bb11
 
 bb5:		; preds = %bb9
-	%0 = load %struct.Lit** %storemerge, align 8		; <%struct.Lit*> [#uses=0]
+	%0 = load %struct.Lit*, %struct.Lit** %storemerge, align 8		; <%struct.Lit*> [#uses=0]
 	%indvar.next8 = add i64 %storemerge.rec, 1		; <i64> [#uses=1]
 	br label %bb9
 
@@ -21,7 +21,7 @@ bb9:		; preds = %bb22, %bb5
 	br i1 %1, label %bb5, label %bb22
 
 bb11:		; preds = %bb22, %entry
-	%2 = load %struct.Cls** null, align 8		; <%struct.Cls*> [#uses=0]
+	%2 = load %struct.Cls*, %struct.Cls** null, align 8		; <%struct.Cls*> [#uses=0]
 	br label %bb22
 
 bb22:		; preds = %bb11, %bb9

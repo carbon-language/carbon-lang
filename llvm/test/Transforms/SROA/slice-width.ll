@@ -14,14 +14,14 @@ load_i32:
 ; CHECK-LABEL: load_i32:
 ; CHECK-NOT: bitcast {{.*}} to i1
 ; CHECK-NOT: zext i1
-  %r0 = load i32* %arg
+  %r0 = load i32, i32* %arg
   br label %load_i1
 
 load_i1:
 ; CHECK-LABEL: load_i1:
 ; CHECK: bitcast {{.*}} to i1
   %p1 = bitcast i32* %arg to i1*
-  %t1 = load i1* %p1
+  %t1 = load i1, i1* %p1
   ret void
 }
 
@@ -43,15 +43,15 @@ define void @memcpy_fp80_padding() {
 
   ; Access a slice of the alloca to trigger SROA.
   %mid_p = getelementptr %union.Foo, %union.Foo* %x, i32 0, i32 1
-  %elt = load i64* %mid_p
+  %elt = load i64, i64* %mid_p
   store i64 %elt, i64* @i64_sink
   ret void
 }
 ; CHECK-LABEL: define void @memcpy_fp80_padding
 ; CHECK: alloca x86_fp80
 ; CHECK: call void @llvm.memcpy.p0i8.p0i8.i32
-; CHECK: load i64* getelementptr inbounds (%union.Foo* @foo_copy_source, i64 0, i32 1)
-; CHECK: load i64* getelementptr inbounds (%union.Foo* @foo_copy_source, i64 0, i32 2)
+; CHECK: load i64, i64* getelementptr inbounds (%union.Foo* @foo_copy_source, i64 0, i32 1)
+; CHECK: load i64, i64* getelementptr inbounds (%union.Foo* @foo_copy_source, i64 0, i32 2)
 
 define void @memset_fp80_padding() {
   %x = alloca %union.Foo
@@ -62,7 +62,7 @@ define void @memset_fp80_padding() {
 
   ; Access a slice of the alloca to trigger SROA.
   %mid_p = getelementptr %union.Foo, %union.Foo* %x, i32 0, i32 1
-  %elt = load i64* %mid_p
+  %elt = load i64, i64* %mid_p
   store i64 %elt, i64* @i64_sink
   ret void
 }
@@ -90,7 +90,7 @@ entry:
   ; The following block does nothing; but appears to confuse SROA
   %unused1 = bitcast %S.vec3float* %tmp1 to %U.vec3float*
   %unused2 = getelementptr inbounds %U.vec3float, %U.vec3float* %unused1, i32 0, i32 0
-  %unused3 = load <4 x float>* %unused2, align 1
+  %unused3 = load <4 x float>, <4 x float>* %unused2, align 1
 
   ; Create a second temporary and copy %tmp1 into it
   %tmp2 = alloca %S.vec3float, align 4

@@ -53,7 +53,7 @@ define void @infer.sext.1(i32 %start, i1* %c) {
 ; CHECK: %idx.sext = sext i32 %idx to i64
 ; CHECK-NEXT:  -->  {(2 + (sext i32 (4 * %start) to i64)),+,2}<nsw><%loop>
   %idx.inc = add nsw i32 %idx, 2
-  %condition = load i1* %c
+  %condition = load i1, i1* %c
   br i1 %condition, label %exit, label %loop
 
  exit:
@@ -73,7 +73,7 @@ define void @infer.sext.2(i1* %c, i8 %start) {
 ; CHECK: %idx.sext = sext i8 %idx to i16
 ; CHECK-NEXT: -->  {(1 + (sext i8 %start to i16)),+,1}<nsw><%loop>
   %idx.inc = add nsw i8 %idx, 1
-  %condition = load volatile i1* %c
+  %condition = load volatile i1, i1* %c
   br i1 %condition, label %exit, label %loop
 
  exit:
@@ -93,7 +93,7 @@ define void @infer.zext.1(i1* %c, i8 %start) {
 ; CHECK: %idx.zext = zext i8 %idx to i16
 ; CHECK-NEXT: -->  {(1 + (zext i8 %start to i16)),+,1}<nuw><%loop>
   %idx.inc = add nuw i8 %idx, 1
-  %condition = load volatile i1* %c
+  %condition = load volatile i1, i1* %c
   br i1 %condition, label %exit, label %loop
 
  exit:

@@ -9,7 +9,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 define void @f() nounwind uwtable ssp {
 scalar.ph:
   store i8 0, i8* inttoptr (i64 1 to i8*), align 1
-  %0 = load i8* @a, align 1
+  %0 = load i8, i8* @a, align 1
   br label %for.body
 
 for.body:

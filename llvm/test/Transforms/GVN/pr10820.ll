@@ -11,7 +11,7 @@ entry:
 ; CHECK: store i32
   store i32 402662078, i32* bitcast (i31* @g to i32*), align 8
 ; CHECK-NOT: load i31
-  %0 = load i31* @g, align 8
+  %0 = load i31, i31* @g, align 8
 ; CHECK: store i31
   store i31 %0, i31* undef, align 1
   unreachable

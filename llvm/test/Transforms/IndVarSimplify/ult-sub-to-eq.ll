@@ -12,10 +12,10 @@ for.body:                                         ; preds = %entry, %for.body
   %add = add i32 %0, %sample
   %idxprom = zext i32 %add to i64
   %arrayidx = getelementptr inbounds float, float* %data, i64 %idxprom
-  %1 = load float* %arrayidx, align 4
+  %1 = load float, float* %arrayidx, align 4
   %mul = fmul float %1, %d
   %arrayidx2 = getelementptr inbounds float, float* %autoc, i64 %indvars.iv
-  %2 = load float* %arrayidx2, align 4
+  %2 = load float, float* %arrayidx2, align 4
   %add3 = fadd float %2, %mul
   store float %add3, float* %arrayidx2, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1

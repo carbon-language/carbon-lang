@@ -37,7 +37,7 @@ entry:
   store float %l, float* %l.addr, align 4
   store float %m, float* %m.addr, align 4
   store float %n, float* %n.addr, align 4
-  %0 = load float* %n.addr, align 4
+  %0 = load float, float* %n.addr, align 4
   ret float %0
 }
 
@@ -73,20 +73,20 @@ entry:
   store float 1.200000e+01, float* %l, align 4
   store float 1.300000e+01, float* %m, align 4
   store float 1.400000e+01, float* %n, align 4
-  %0 = load float* %a, align 4
-  %1 = load float* %b, align 4
-  %2 = load float* %c, align 4
-  %3 = load float* %d, align 4
-  %4 = load float* %e, align 4
-  %5 = load float* %f, align 4
-  %6 = load float* %g, align 4
-  %7 = load float* %h, align 4
-  %8 = load float* %i, align 4
-  %9 = load float* %j, align 4
-  %10 = load float* %k, align 4
-  %11 = load float* %l, align 4
-  %12 = load float* %m, align 4
-  %13 = load float* %n, align 4
+  %0 = load float, float* %a, align 4
+  %1 = load float, float* %b, align 4
+  %2 = load float, float* %c, align 4
+  %3 = load float, float* %d, align 4
+  %4 = load float, float* %e, align 4
+  %5 = load float, float* %f, align 4
+  %6 = load float, float* %g, align 4
+  %7 = load float, float* %h, align 4
+  %8 = load float, float* %i, align 4
+  %9 = load float, float* %j, align 4
+  %10 = load float, float* %k, align 4
+  %11 = load float, float* %l, align 4
+  %12 = load float, float* %m, align 4
+  %13 = load float, float* %n, align 4
   %call = call float @bar(float %0, float %1, float %2, float %3, float %4, float %5, float %6, float %7, float %8, float %9, float %10, float %11, float %12, float %13)
   ret float %call
 }

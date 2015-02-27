@@ -17,7 +17,7 @@ if.then:                                          ; preds = %entry
   br label %return
 
 if.end:                                           ; preds = %entry
-  %tmp5 = load i64** %__a.addr, align 8
+  %tmp5 = load i64*, i64** %__a.addr, align 8
   br label %return
 
 return:                                           ; preds = %if.end, %if.then
@@ -39,7 +39,7 @@ if.then:                                          ; preds = %entry
   br label %return
 
 if.end:                                           ; preds = %entry
-  %tmp5 = load i64** %__a.addr, align 8
+  %tmp5 = load i64*, i64** %__a.addr, align 8
   br label %return
 
 return:                                           ; preds = %if.end, %if.then
@@ -61,7 +61,7 @@ if.then:                                          ; preds = %entry
   br label %return
 
 if.end:                                           ; preds = %entry
-  %tmp5 = load i64** %__a.addr, align 8
+  %tmp5 = load i64*, i64** %__a.addr, align 8
   br label %return
 
 return:                                           ; preds = %if.end, %if.then
@@ -83,7 +83,7 @@ if.then:                                          ; preds = %entry
   br label %return
 
 if.end:                                           ; preds = %entry
-  %tmp5 = load i64** %__a.addr, align 8
+  %tmp5 = load i64*, i64** %__a.addr, align 8
   br label %return
 
 return:                                           ; preds = %if.end, %if.then

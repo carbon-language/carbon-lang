@@ -16,6 +16,6 @@ define i64 @test2(i64* %ptr) {
 ; CHECK-LABEL: test2
 ; CHECK: lock
 ; CHECK-NEXT: cmpxchg8b
-  %val = load atomic i64* %ptr seq_cst, align 8
+  %val = load atomic i64, i64* %ptr seq_cst, align 8
   ret i64 %val
 }

@@ -28,7 +28,7 @@ entry:
 }
 define void @cola(i64 *%x, i64 %y, i64* %z, i64 %u) nounwind readnone {
 entry:
-        %p = load i64* %x
+        %p = load i64, i64* %x
 	%t0 = add i64 %p, %y
 	%t1 = and i64 %t0, 4294967295
         %t2 = xor i64 %t1, %u
@@ -37,7 +37,7 @@ entry:
 }
 define void @yaks(i64 *%x, i64 %y, i64* %z, i64 %u) nounwind readnone {
 entry:
-        %p = load i64* %x
+        %p = load i64, i64* %x
 	%t0 = add i64 %p, %y
         %t1 = xor i64 %t0, %u
 	%t2 = and i64 %t1, 4294967295
@@ -46,8 +46,8 @@ entry:
 }
 define void @foo(i64 *%x, i64 *%y, i64* %z) nounwind readnone {
 entry:
-        %a = load i64* %x
-        %b = load i64* %y
+        %a = load i64, i64* %x
+        %b = load i64, i64* %y
 	%t0 = add i64 %a, %b
 	%t1 = and i64 %t0, 4294967295
         store i64 %t1, i64* %z
@@ -94,7 +94,7 @@ entry:
 }
 define void @scola(i64 *%x, i64 %y, i64* %z, i64 %u) nounwind readnone {
 entry:
-        %p = load i64* %x
+        %p = load i64, i64* %x
 	%t0 = sub i64 %p, %y
 	%t1 = and i64 %t0, 4294967295
         %t2 = xor i64 %t1, %u
@@ -103,7 +103,7 @@ entry:
 }
 define void @syaks(i64 *%x, i64 %y, i64* %z, i64 %u) nounwind readnone {
 entry:
-        %p = load i64* %x
+        %p = load i64, i64* %x
 	%t0 = sub i64 %p, %y
         %t1 = xor i64 %t0, %u
 	%t2 = and i64 %t1, 4294967295
@@ -112,8 +112,8 @@ entry:
 }
 define void @sfoo(i64 *%x, i64 *%y, i64* %z) nounwind readnone {
 entry:
-        %a = load i64* %x
-        %b = load i64* %y
+        %a = load i64, i64* %x
+        %b = load i64, i64* %y
 	%t0 = sub i64 %a, %b
 	%t1 = and i64 %t0, 4294967295
         store i64 %t1, i64* %z

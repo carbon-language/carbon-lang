@@ -47,7 +47,7 @@ bb:                                               ; preds = %bb.nph, %bb1
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %bb1 ] ; <i64> [#uses=2]
   %s.01 = phi i32 [ 0, %bb.nph ], [ %2, %bb1 ]    ; <i32> [#uses=1]
   %scevgep = getelementptr i32, i32* %p, i64 %indvar   ; <i32*> [#uses=1]
-  %1 = load i32* %scevgep, align 1                ; <i32> [#uses=1]
+  %1 = load i32, i32* %scevgep, align 1                ; <i32> [#uses=1]
   %2 = add nsw i32 %1, %s.01                      ; <i32> [#uses=2]
   br label %bb1
 
@@ -84,7 +84,7 @@ do.body:                                          ; preds = %do.cond, %if.end
   br i1 %cond2, label %exit, label %do.cond
 
 exit:                  ; preds = %do.body
-  %tmp7.i = load i32* undef, align 8
+  %tmp7.i = load i32, i32* undef, align 8
   br i1 undef, label %do.cond, label %land.lhs.true
 
 land.lhs.true:                                    ; preds = %exit

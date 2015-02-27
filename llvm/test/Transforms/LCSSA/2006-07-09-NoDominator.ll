@@ -14,7 +14,7 @@ then:		; preds = %no_exit
 	%tmp.21 = getelementptr %struct.SetJmpMapEntry, %struct.SetJmpMapEntry* %SJE.0, i32 0, i32 1		; <i32*> [#uses=0]
 	br label %return
 endif:		; preds = %no_exit
-	%tmp.25 = load %struct.SetJmpMapEntry** null		; <%struct.SetJmpMapEntry*> [#uses=1]
+	%tmp.25 = load %struct.SetJmpMapEntry*, %struct.SetJmpMapEntry** null		; <%struct.SetJmpMapEntry*> [#uses=1]
 	br label %loopentry
 loopexit:		; preds = %loopentry
 	br label %return

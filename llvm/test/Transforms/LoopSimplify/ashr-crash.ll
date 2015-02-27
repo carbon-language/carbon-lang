@@ -51,10 +51,10 @@ for.cond1:                                        ; preds = %for.cond, %for.body
   br i1 %cmp2, label %for.body3, label %for.inc7
 
 for.body3:                                        ; preds = %for.cond1
-  %0 = load i32* @c, align 4
+  %0 = load i32, i32* @c, align 4
   %cmp4 = icmp sge i32 %storemerge1, %0
   %conv = zext i1 %cmp4 to i32
-  %1 = load i32* @d, align 4
+  %1 = load i32, i32* @d, align 4
   %add = add nsw i32 %conv, %1
   %sext = shl i32 %add, 16
   %conv6 = ashr exact i32 %sext, 16
@@ -63,7 +63,7 @@ for.body3:                                        ; preds = %for.cond1
   br label %for.cond1
 
 for.inc7:                                         ; preds = %for.cond1
-  %2 = load i32* @d, align 4
+  %2 = load i32, i32* @d, align 4
   %inc8 = add nsw i32 %2, 1
   br label %for.cond
 

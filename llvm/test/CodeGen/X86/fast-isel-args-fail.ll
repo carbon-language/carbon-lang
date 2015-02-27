@@ -17,6 +17,6 @@ entry:
 ; WIN32: movl (%rcx), %eax
 ; WIN64: foo
 ; WIN64: movl (%rdi), %eax
-  %0 = load i32* %p, align 4
+  %0 = load i32, i32* %p, align 4
   ret i32 %0
 }

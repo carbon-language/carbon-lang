@@ -42,7 +42,7 @@ define i32 @main(i32 %argc, i8** nocapture readnone %argv) #0 {
   %2 = getelementptr inbounds [4 x i32], [4 x i32]* %array, i64 0, i64 0, !dbg !37
   call void @f(i32* %2), !dbg !37
   tail call void @llvm.dbg.value(metadata [4 x i32]* %array, i64 0, metadata !21, metadata !{!"0x102"}), !dbg !36
-  %3 = load i32* %2, align 16, !dbg !38, !tbaa !30
+  %3 = load i32, i32* %2, align 16, !dbg !38, !tbaa !30
   ret i32 %3, !dbg !38
 }
 

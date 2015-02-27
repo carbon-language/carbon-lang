@@ -34,7 +34,7 @@ define i32 @return_five_int(%struct.five* %f) #0 {
 entry:
   call void @llvm.dbg.declare(metadata %struct.five* %f, metadata !17, metadata !{!"0x102\006"}), !dbg !18
   %a = getelementptr inbounds %struct.five, %struct.five* %f, i32 0, i32 0, !dbg !19
-  %0 = load i32* %a, align 4, !dbg !19
+  %0 = load i32, i32* %a, align 4, !dbg !19
   ret i32 %0, !dbg !19
 }
 

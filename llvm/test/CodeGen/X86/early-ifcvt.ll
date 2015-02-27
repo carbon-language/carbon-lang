@@ -15,7 +15,7 @@ do.body:
   %n.addr.0 = phi i32 [ %n, %entry ], [ %dec, %do.cond ]
   %p.addr.0 = phi i32* [ %p, %entry ], [ %incdec.ptr, %do.cond ]
   %incdec.ptr = getelementptr inbounds i32, i32* %p.addr.0, i64 1
-  %0 = load i32* %p.addr.0, align 4
+  %0 = load i32, i32* %p.addr.0, align 4
   %cmp = icmp sgt i32 %0, %max.0
   br i1 %cmp, label %do.cond, label %if.else
 

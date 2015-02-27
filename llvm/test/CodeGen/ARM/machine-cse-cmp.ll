@@ -30,7 +30,7 @@ entry:
 ; CHECK: poplt
 ; CHECK-NOT: cmp
 ; CHECK: movle
-  %0 = load i32* @foo, align 4
+  %0 = load i32, i32* @foo, align 4
   %cmp28 = icmp sgt i32 %0, 0
   br i1 %cmp28, label %for.body.lr.ph, label %for.cond1.preheader
 
@@ -53,7 +53,7 @@ entry:
 ; CHECK-NOT: sub
 ; CHECK: cmp
 ; CHECK: blt
-%0 = load i32* %offset, align 4
+%0 = load i32, i32* %offset, align 4
 %cmp = icmp slt i32 %0, %size
 %s = sub nsw i32 %0, %size
 %size2 = sub nsw i32 %size, 0

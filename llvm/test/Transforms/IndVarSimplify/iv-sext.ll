@@ -8,7 +8,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 define void @t(float* %pTmp1, float* %peakWeight, float* %nrgReducePeakrate, i32 %bandEdgeIndex, float %tmp1) nounwind {
 entry:
-	%tmp = load float* %peakWeight, align 4		; <float> [#uses=1]
+	%tmp = load float, float* %peakWeight, align 4		; <float> [#uses=1]
 	%tmp2 = icmp sgt i32 %bandEdgeIndex, 0		; <i1> [#uses=1]
 	br i1 %tmp2, label %bb.nph22, label %return
 
@@ -34,12 +34,12 @@ bb1:		; preds = %bb
 	%tmp5 = add i32 %part.016, -1		; <i32> [#uses=1]
 	%tmp6 = sext i32 %tmp5 to i64		; <i64> [#uses=1]
 	%tmp7 = getelementptr float, float* %pTmp1, i64 %tmp6		; <float*> [#uses=1]
-	%tmp8 = load float* %tmp7, align 4		; <float> [#uses=1]
+	%tmp8 = load float, float* %tmp7, align 4		; <float> [#uses=1]
 	%tmp9 = fadd float %tmp8, %distERBlo.120		; <float> [#uses=1]
 	%tmp10 = add i32 %part.016, -1		; <i32> [#uses=1]
 	%tmp11 = sext i32 %tmp10 to i64		; <i64> [#uses=1]
 	%tmp12 = getelementptr float, float* %pTmp1, i64 %tmp11		; <float*> [#uses=1]
-	%tmp13 = load float* %tmp12, align 4		; <float> [#uses=1]
+	%tmp13 = load float, float* %tmp12, align 4		; <float> [#uses=1]
 	%tmp14 = fsub float %distERBhi.121, %tmp13		; <float> [#uses=1]
 	br label %bb3.preheader
 
@@ -58,11 +58,11 @@ bb2:		; preds = %bb3, %bb.nph
 	%peakCount.01 = phi float [ %tmp23, %bb3 ], [ %peakCount.117, %bb.nph ]		; <float> [#uses=1]
 	%tmp16 = sext i32 %loPart.02 to i64		; <i64> [#uses=1]
 	%tmp17 = getelementptr float, float* %pTmp1, i64 %tmp16		; <float*> [#uses=1]
-	%tmp18 = load float* %tmp17, align 4		; <float> [#uses=1]
+	%tmp18 = load float, float* %tmp17, align 4		; <float> [#uses=1]
 	%tmp19 = fsub float %distERBlo.03, %tmp18		; <float> [#uses=3]
 	%tmp20 = sext i32 %loPart.02 to i64		; <i64> [#uses=1]
 	%tmp21 = getelementptr float, float* %peakWeight, i64 %tmp20		; <float*> [#uses=1]
-	%tmp22 = load float* %tmp21, align 4		; <float> [#uses=1]
+	%tmp22 = load float, float* %tmp21, align 4		; <float> [#uses=1]
 	%tmp23 = fsub float %peakCount.01, %tmp22		; <float> [#uses=2]
 	%tmp24 = add i32 %loPart.02, 1		; <i32> [#uses=2]
 	br label %bb3
@@ -98,12 +98,12 @@ bb4:		; preds = %bb5, %bb.nph12
 	%peakCount.27 = phi float [ %tmp35, %bb5 ], [ %peakCount.0.lcssa, %bb.nph12 ]		; <float> [#uses=1]
 	%tmp27 = sext i32 %hiPart.08 to i64		; <i64> [#uses=1]
 	%tmp28 = getelementptr float, float* %pTmp1, i64 %tmp27		; <float*> [#uses=1]
-	%tmp29 = load float* %tmp28, align 4		; <float> [#uses=1]
+	%tmp29 = load float, float* %tmp28, align 4		; <float> [#uses=1]
 	%tmp30 = fadd float %tmp29, %distERBhi.29		; <float> [#uses=3]
 	%tmp31 = add i32 %hiPart.08, 1		; <i32> [#uses=4]
 	%tmp32 = sext i32 %tmp31 to i64		; <i64> [#uses=1]
 	%tmp33 = getelementptr float, float* %peakWeight, i64 %tmp32		; <float*> [#uses=1]
-	%tmp34 = load float* %tmp33, align 4		; <float> [#uses=1]
+	%tmp34 = load float, float* %tmp33, align 4		; <float> [#uses=1]
 	%tmp35 = fadd float %tmp34, %peakCount.27		; <float> [#uses=2]
 	br label %bb5
 

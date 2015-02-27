@@ -6,8 +6,8 @@
 
 define void @test() nounwind {
 entry:
-  %0 = load i32* @iiii, align 4
-  %1 = load i32* @jjjj, align 4
+  %0 = load i32, i32* @iiii, align 4
+  %1 = load i32, i32* @jjjj, align 4
   %div = sdiv i32 %0, %1
 ; 16:	div	$zero, ${{[0-9]+}}, ${{[0-9]+}}
 ; 16: 	mflo	${{[0-9]+}}

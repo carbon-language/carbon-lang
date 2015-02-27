@@ -15,7 +15,7 @@ define void @test(i64* nocapture %arr, i64 %arrsize, i64 %factor) nounwind uwtab
   %carry.02 = phi i128 [ 0, %.lr.ph ], [ %10, %3 ]
   %i.01 = phi i64 [ 0, %.lr.ph ], [ %11, %3 ]
   %4 = getelementptr inbounds i64, i64* %arr, i64 %i.01
-  %5 = load i64* %4, align 8
+  %5 = load i64, i64* %4, align 8
   %6 = sext i64 %5 to i128
   %7 = mul nsw i128 %6, %2
   %8 = add nsw i128 %7, %carry.02

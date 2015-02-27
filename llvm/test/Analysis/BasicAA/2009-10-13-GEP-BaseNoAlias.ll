@@ -23,9 +23,9 @@ bb1:
 
 bb2:
   %P = phi i32* [ %b, %bb ], [ @Y, %bb1 ]
-  %tmp1 = load i32* @Z, align 4
+  %tmp1 = load i32, i32* @Z, align 4
   store i32 123, i32* %P, align 4
-  %tmp2 = load i32* @Z, align 4
+  %tmp2 = load i32, i32* @Z, align 4
   br label %return
 
 return:

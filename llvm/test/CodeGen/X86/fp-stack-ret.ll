@@ -7,7 +7,7 @@
 ; CHECK: fldl
 ; CHECK-NEXT: ret
 define double @test1(double *%P) {
-        %A = load double* %P
+        %A = load double, double* %P
         ret double %A
 }
 

@@ -55,7 +55,7 @@ if.end:                                           ; preds = %if.else
   br label %return
 
 return:                                           ; preds = %if.end, %if.then
-  %3 = load i32* %retval
+  %3 = load i32, i32* %retval
   ret i32 %3
 
 ; FIXME: We should be saving VRSAVE on Darwin, but we're not!
@@ -128,7 +128,7 @@ if.end:                                           ; preds = %if.else
   br label %return
 
 return:                                           ; preds = %if.end, %if.then
-  %3 = load i32* %retval
+  %3 = load i32, i32* %retval
   ret i32 %3
 
 ; CHECK: @main2

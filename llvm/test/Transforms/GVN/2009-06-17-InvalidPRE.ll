@@ -21,7 +21,7 @@ bb2:    ; preds = %bb1
   %3 = getelementptr %struct.mbuf, %struct.mbuf* %m.0.ph, i32 0, i32 2    ; <i32*> [#uses=1]
   store i32 0, i32* %3, align 4
   %4 = getelementptr %struct.mbuf, %struct.mbuf* %m.0.ph, i32 0, i32 0    ; <%struct.mbuf**> [#uses=1]
-  %5 = load %struct.mbuf** %4, align 4    ; <%struct.mbuf*> [#uses=1]
+  %5 = load %struct.mbuf*, %struct.mbuf** %4, align 4    ; <%struct.mbuf*> [#uses=1]
   br label %bb4.outer
 
 bb4.outer:    ; preds = %bb4.preheader, %bb2
@@ -41,21 +41,21 @@ bb4:    ; preds = %bb4.outer, %bb3
   br i1 %12, label %bb1, label %bb7
 
 bb1:    ; preds = %bb4
-  %13 = load i32* %7, align 4    ; <i32> [#uses=3]
+  %13 = load i32, i32* %7, align 4    ; <i32> [#uses=3]
   %14 = icmp sgt i32 %13, %len.0    ; <i1> [#uses=1]
   br i1 %14, label %bb3, label %bb2
 
 bb3:    ; preds = %bb1
   %15 = sub i32 %13, %len.0    ; <i32> [#uses=1]
   store i32 %15, i32* %8, align 4
-  %16 = load i8** %9, align 4    ; <i8*> [#uses=1]
+  %16 = load i8*, i8** %9, align 4    ; <i8*> [#uses=1]
   %17 = getelementptr i8, i8* %16, i32 %len.0   ; <i8*> [#uses=1]
   store i8* %17, i8** %10, align 4
   br label %bb4
 
 bb7:    ; preds = %bb4
   %18 = getelementptr %struct.mbuf, %struct.mbuf* %mp, i32 0, i32 5   ; <i16*> [#uses=1]
-  %19 = load i16* %18, align 2    ; <i16> [#uses=1]
+  %19 = load i16, i16* %18, align 2    ; <i16> [#uses=1]
   %20 = zext i16 %19 to i32   ; <i32> [#uses=1]
   %21 = and i32 %20, 2    ; <i32> [#uses=1]
   %22 = icmp eq i32 %21, 0    ; <i1> [#uses=1]

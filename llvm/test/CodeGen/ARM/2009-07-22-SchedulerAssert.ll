@@ -67,7 +67,7 @@ bb18:		; preds = %bb18, %bb.nph
 bb22:		; preds = %bb18, %bb17
 	%0 = getelementptr i8, i8* null, i32 10		; <i8*> [#uses=1]
 	%1 = bitcast i8* %0 to i16*		; <i16*> [#uses=1]
-	%2 = load i16* %1, align 2		; <i16> [#uses=1]
+	%2 = load i16, i16* %1, align 2		; <i16> [#uses=1]
 	%3 = add i16 %2, 1		; <i16> [#uses=1]
 	%4 = zext i16 %3 to i32		; <i32> [#uses=1]
 	%5 = mul i32 %4, 3		; <i32> [#uses=1]

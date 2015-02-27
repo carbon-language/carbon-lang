@@ -12,7 +12,7 @@ bb.i:		; preds = %_ZNK11QModelIndex7isValidEv.exit.i
 
 _ZNK11QModelIndex7isValidEv.exit.i:		; preds = %bb.i, %entry
 	%result.0.i = phi i32 [ 0, %entry ], [ %indvar.next, %bb.i ]		; <i32> [#uses=2]
-	%0 = load i32** null, align 4		; <%struct.QAbstractItemDelegate*> [#uses=0]
+	%0 = load i32*, i32** null, align 4		; <%struct.QAbstractItemDelegate*> [#uses=0]
 	br i1 false, label %_ZN18qdesigner_internalL5levelEP18QAbstractItemModelRK11QModelIndex.exit, label %bb.i
 
 _ZN18qdesigner_internalL5levelEP18QAbstractItemModelRK11QModelIndex.exit:		; preds = %_ZNK11QModelIndex7isValidEv.exit.i

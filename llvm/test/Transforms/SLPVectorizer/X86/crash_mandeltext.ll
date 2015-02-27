@@ -55,9 +55,9 @@ for.end48:                                        ; preds = %for.end44
 
 define void @zot(%struct.hoge* %arg) {
 bb:
-  %tmp = load double* undef, align 8
+  %tmp = load double, double* undef, align 8
   %tmp1 = fsub double %tmp, undef
-  %tmp2 = load double* undef, align 8
+  %tmp2 = load double, double* undef, align 8
   %tmp3 = fsub double %tmp2, undef
   %tmp4 = fmul double %tmp3, undef
   %tmp5 = fmul double %tmp3, undef

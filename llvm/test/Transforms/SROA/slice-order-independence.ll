@@ -15,9 +15,9 @@ define void @skipped_inttype_first({ i16*, i32 }*) {
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %3, i8* %2, i32 16, i32 8, i1 false)
   %b = getelementptr inbounds { i16*, i32 }, { i16*, i32 }* %arg, i64 0, i32 0
   %pb0 = bitcast i16** %b to i63*
-  %b0 = load i63* %pb0
+  %b0 = load i63, i63* %pb0
   %pb1 = bitcast i16** %b to i8**
-  %b1 = load i8** %pb1
+  %b1 = load i8*, i8** %pb1
   ret void
 }
 
@@ -30,8 +30,8 @@ define void @skipped_inttype_last({ i16*, i32 }*) {
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %3, i8* %2, i32 16, i32 8, i1 false)
   %b = getelementptr inbounds { i16*, i32 }, { i16*, i32 }* %arg, i64 0, i32 0
   %pb1 = bitcast i16** %b to i8**
-  %b1 = load i8** %pb1
+  %b1 = load i8*, i8** %pb1
   %pb0 = bitcast i16** %b to i63*
-  %b0 = load i63* %pb0
+  %b0 = load i63, i63* %pb0
   ret void
 }

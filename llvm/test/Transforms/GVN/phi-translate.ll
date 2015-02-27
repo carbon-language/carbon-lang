@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64"
 
 ; CHECK-LABEL: @foo(
 ; CHECK: entry.end_crit_edge:
-; CHECK:   %n.pre = load i32* %q.phi.trans.insert
+; CHECK:   %n.pre = load i32, i32* %q.phi.trans.insert
 ; CHECK: then:
 ; CHECK:   store i32 %z
 ; CHECK: end:
@@ -26,6 +26,6 @@ then:
 end:
   %j = sext i32 %x to i64
   %q = getelementptr [100 x i32], [100 x i32]* @G, i64 0, i64 %j
-  %n = load i32* %q
+  %n = load i32, i32* %q
   ret i32 %n
 }

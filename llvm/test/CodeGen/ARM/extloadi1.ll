@@ -4,7 +4,7 @@
 
 define void @__mf_sigusr1_respond() {
 entry:
-        %tmp8.b = load i1* @handler_installed.6144.b            ; <i1> [#uses=1]
+        %tmp8.b = load i1, i1* @handler_installed.6144.b            ; <i1> [#uses=1]
         br i1 false, label %cond_true7, label %cond_next
 
 cond_next:              ; preds = %entry

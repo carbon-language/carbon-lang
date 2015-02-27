@@ -64,9 +64,9 @@ define i32 @foo_f() {
 ; CHECK-DAG: .globl	test
 define i32 @test() {
 entry:
-   %tmp = load i32* @foo1
-   %tmp1 = load i32* @foo2
-   %tmp0 = load i32* @bar_i
+   %tmp = load i32, i32* @foo1
+   %tmp1 = load i32, i32* @foo2
+   %tmp0 = load i32, i32* @bar_i
    %tmp2 = call i32 @foo_f()
    %tmp3 = add i32 %tmp, %tmp2
    %tmp4 = call %FunTy* @bar_f()

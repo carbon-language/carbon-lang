@@ -17,7 +17,7 @@ declare hidden fastcc void @_ZN3JSCL23returnToThrowTrampolineEPNS_12JSGlobalData
 ; CHECK: je
 define i32 @cti_op_eq(i8** nocapture %args) nounwind ssp {
 entry:
-  %0 = load i8** null, align 8
+  %0 = load i8*, i8** null, align 8
   %tmp13 = bitcast i8* %0 to %"class.JSC::CodeLocationCall"*
   %tobool.i.i.i = icmp ugt i8* undef, inttoptr (i64 281474976710655 to i8*)
   %or.cond.i = and i1 %tobool.i.i.i, undef
@@ -34,7 +34,7 @@ if.end.i:                                         ; preds = %entry
   br i1 undef, label %land.rhs.i121.i, label %_ZNK3JSC7JSValue8isStringEv.exit122.i
 
 land.rhs.i121.i:                                  ; preds = %if.end.i
-  %tmp.i.i117.i = load %"class.JSC::Structure"** undef, align 8
+  %tmp.i.i117.i = load %"class.JSC::Structure"*, %"class.JSC::Structure"** undef, align 8
   br label %_ZNK3JSC7JSValue8isStringEv.exit122.i
 
 _ZNK3JSC7JSValue8isStringEv.exit122.i:            ; preds = %land.rhs.i121.i, %if.end.i
@@ -48,7 +48,7 @@ if.then.i92.i:                                    ; preds = %_ZNK3JSC7JSValue8is
 
 _ZN3JSC7JSValue19equalSlowCaseInlineEPNS_9ExecStateES0_S0_.exit: ; preds = %_ZNK3JSC7JSValue8isStringEv.exit122.i, %if.then.i.i.i, %if.then.i
 
-  %1 = load i8** undef, align 8
+  %1 = load i8*, i8** undef, align 8
   br i1 undef, label %do.end39, label %do.body27
 
 do.body27:                                        ; preds = %_ZN3JSC7JSValue19equalSlowCaseInlineEPNS_9ExecStateES0_S0_.exit

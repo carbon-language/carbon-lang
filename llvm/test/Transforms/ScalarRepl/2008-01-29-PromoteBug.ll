@@ -13,7 +13,7 @@ entry:
 	%tmp16 = getelementptr [1 x %struct.T], [1 x %struct.T]* %s, i32 0, i32 0		; <%struct.T*> [#uses=1]
 	%tmp17 = getelementptr %struct.T, %struct.T* %tmp16, i32 0, i32 1		; <[3 x i8]*> [#uses=1]
 	%tmp1718 = bitcast [3 x i8]* %tmp17 to i32*		; <i32*> [#uses=1]
-	%tmp19 = load i32* %tmp1718, align 4		; <i32> [#uses=1]
+	%tmp19 = load i32, i32* %tmp1718, align 4		; <i32> [#uses=1]
 	%mask = and i32 %tmp19, 16777215		; <i32> [#uses=2]
 	%mask2324 = trunc i32 %mask to i8		; <i8> [#uses=1]
 	ret i8 %mask2324

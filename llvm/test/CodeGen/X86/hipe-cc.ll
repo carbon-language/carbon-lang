@@ -53,18 +53,18 @@ entry:
   ; CHECK-NEXT: movl  12(%esp), %ebp
   ; CHECK-NEXT: movl   8(%esp), %eax
   ; CHECK-NEXT: movl   4(%esp), %edx
-  %0 = load i32* %hp_var
-  %1 = load i32* %p_var
-  %2 = load i32* %arg0_var
-  %3 = load i32* %arg1_var
-  %4 = load i32* %arg2_var
+  %0 = load i32, i32* %hp_var
+  %1 = load i32, i32* %p_var
+  %2 = load i32, i32* %arg0_var
+  %3 = load i32, i32* %arg1_var
+  %4 = load i32, i32* %arg2_var
   ; CHECK:      jmp bar
   tail call cc 11 void @bar(i32 %0, i32 %1, i32 %2, i32 %3, i32 %4) nounwind
   ret void
 }
 
 define cc 11 void @baz() nounwind {
-  %tmp_clos = load i32* @clos
+  %tmp_clos = load i32, i32* @clos
   %tmp_clos2 = inttoptr i32 %tmp_clos to i32*
   %indirect_call = bitcast i32* %tmp_clos2 to void (i32, i32, i32)*
   ; CHECK:      movl $42, %eax

@@ -7,7 +7,7 @@ define i32 @test1(i32 %x) uwtable ssp {
 entry:
   %x.addr = alloca i32, align 4
   store atomic i32 %x, i32* %x.addr seq_cst, align 4
-  %r = load atomic i32* %x.addr seq_cst, align 4
+  %r = load atomic i32, i32* %x.addr seq_cst, align 4
   ret i32 %r
 }
 
@@ -15,7 +15,7 @@ entry:
 define i32 @test2(i32* %x) uwtable ssp {
 ; CHECK: define i32 @test2(i32* nocapture readonly %x) #1 {
 entry:
-  %r = load atomic i32* %x seq_cst, align 4
+  %r = load atomic i32, i32* %x seq_cst, align 4
   ret i32 %r
 }
 

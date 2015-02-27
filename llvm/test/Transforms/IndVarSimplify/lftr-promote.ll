@@ -18,7 +18,7 @@ bb2:		; preds = %bb3, %bb.nph
 	%i.01 = phi i32 [ %7, %bb3 ], [ 0, %bb.nph ]		; <i32> [#uses=3]
 	%1 = sext i32 %i.01 to i64		; <i64> [#uses=1]
 	%2 = getelementptr double, double* %p, i64 %1		; <double*> [#uses=1]
-	%3 = load double* %2, align 8		; <double> [#uses=1]
+	%3 = load double, double* %2, align 8		; <double> [#uses=1]
 	%4 = fmul double %3, 1.100000e+00		; <double> [#uses=1]
 	%5 = sext i32 %i.01 to i64		; <i64> [#uses=1]
 	%6 = getelementptr double, double* %p, i64 %5		; <double*> [#uses=1]

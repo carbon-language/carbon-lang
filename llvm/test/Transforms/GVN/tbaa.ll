@@ -81,9 +81,9 @@ define i32 @test8(i32* %p, i32* %q) {
 ; Since we know the location is invariant, we can forward the
 ; load across the potentially aliasing store.
 
-  %a = load i32* %q, !tbaa !10
+  %a = load i32, i32* %q, !tbaa !10
   store i32 15, i32* %p
-  %b = load i32* %q, !tbaa !10
+  %b = load i32, i32* %q, !tbaa !10
   %c = sub i32 %a, %b
   ret i32 %c
 }
@@ -94,9 +94,9 @@ define i32 @test9(i32* %p, i32* %q) {
 ; Since we know the location is invariant, we can forward the
 ; load across the potentially aliasing store (within the call).
 
-  %a = load i32* %q, !tbaa !10
+  %a = load i32, i32* %q, !tbaa !10
   call void @clobber()
-  %b = load i32* %q, !tbaa !10
+  %b = load i32, i32* %q, !tbaa !10
   %c = sub i32 %a, %b
   ret i32 %c
 }

@@ -46,7 +46,7 @@ define void @_Z3f131A(%struct.A* nocapture readonly %p1) #0 {
 entry:
   %agg.tmp = alloca %struct.A, align 8
   tail call void @llvm.dbg.declare(metadata %struct.A* %p1, metadata !30, metadata !46), !dbg !47
-  %0 = load i64* @a, align 8, !dbg !48, !tbaa !49
+  %0 = load i64, i64* @a, align 8, !dbg !48, !tbaa !49
   %call = tail call noalias i8* @_Znwm(i64 %0) #5, !dbg !53
   store i8* %call, i8** bitcast (i32** @b to i8**), align 8, !dbg !54, !tbaa !55
   %1 = getelementptr inbounds %struct.A, %struct.A* %agg.tmp, i64 0, i32 0, !dbg !57
@@ -74,7 +74,7 @@ entry:
   %0 = getelementptr inbounds %struct.A, %struct.A* %p1, i64 0, i32 0, !dbg !64
   %1 = getelementptr inbounds %struct.A, %struct.A* %agg.tmp.i, i64 0, i32 0, !dbg !65
   call void @llvm.lifetime.start(i64 24, i8* %1), !dbg !65
-  %2 = load i64* @a, align 8, !dbg !67, !tbaa !49
+  %2 = load i64, i64* @a, align 8, !dbg !67, !tbaa !49
   %call.i = tail call noalias i8* @_Znwm(i64 %2) #5, !dbg !68
   store i8* %call.i, i8** bitcast (i32** @b to i8**), align 8, !dbg !69, !tbaa !55
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %0, i64 24, i32 8, i1 false), !dbg !70
@@ -92,7 +92,7 @@ entry:
   tail call void @llvm.dbg.declare(metadata [15 x i8]* %agg.tmp.sroa.2, metadata !74, metadata !76), !dbg !77
   tail call void @llvm.dbg.declare(metadata [7 x i8]* %agg.tmp.sroa.4, metadata !74, metadata !78), !dbg !77
   tail call void @llvm.dbg.declare(metadata %struct.A* undef, metadata !38, metadata !79), !dbg !80
-  %0 = load i64* @a, align 8, !dbg !81, !tbaa !49
+  %0 = load i64, i64* @a, align 8, !dbg !81, !tbaa !49
   tail call void @llvm.dbg.value(metadata %struct.B* %d, i64 0, metadata !39, metadata !79), !dbg !82
   %call = call %struct.B* @_ZN1BC1El(%struct.B* %d, i64 %0), !dbg !82
   call void @llvm.dbg.value(metadata i8 1, i64 0, metadata !38, metadata !83), !dbg !80
@@ -102,7 +102,7 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.A* undef, metadata !74, metadata !46), !dbg !77
   %1 = getelementptr inbounds %struct.A, %struct.A* %agg.tmp.i.i, i64 0, i32 0, !dbg !85
   call void @llvm.lifetime.start(i64 24, i8* %1), !dbg !85
-  %2 = load i64* @a, align 8, !dbg !87, !tbaa !49
+  %2 = load i64, i64* @a, align 8, !dbg !87, !tbaa !49
   %call.i.i5 = invoke noalias i8* @_Znwm(i64 %2) #5
           to label %call.i.i.noexc unwind label %lpad, !dbg !88
 

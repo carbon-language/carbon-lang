@@ -42,7 +42,7 @@ entry:
   %arraydecay1 = getelementptr inbounds [100 x i32], [100 x i32]* %main_arr, i32 0, i32 0, !dbg !26
   %call = call i32 @sum_array(i32* %arraydecay1, i32 100), !dbg !26
   store i32 %call, i32* %val, align 4, !dbg !26
-  %0 = load i32* %val, align 4, !dbg !27
+  %0 = load i32, i32* %val, align 4, !dbg !27
   %call2 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([13 x i8]* @.str, i32 0, i32 0), i32 %0), !dbg !27
   ret i32 0, !dbg !28
 }

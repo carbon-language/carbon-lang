@@ -13,9 +13,9 @@ define void @test1() nounwind ssp {
   %i = alloca i8*, align 8
   %call = call i8* @malloc(i64 1)
   store i8* %call, i8** %i, align 8
-  %tmp = load i8** %i, align 8
+  %tmp = load i8*, i8** %i, align 8
   store i8 1, i8* %tmp
-  %tmp1 = load i8** %i, align 8
+  %tmp1 = load i8*, i8** %i, align 8
   call void @free(i8* %tmp1)
   ret void
 
@@ -37,9 +37,9 @@ entry:
   %arrayidx1 = getelementptr inbounds i32, i32* %p, i64 1
   store i32 %add, i32* %arrayidx1, align 4
   %arrayidx2 = getelementptr inbounds i32, i32* %p, i64 1
-  %0 = load i32* %arrayidx2, align 4
+  %0 = load i32, i32* %arrayidx2, align 4
   %arrayidx3 = getelementptr inbounds i32, i32* %p, i64 0
-  %1 = load i32* %arrayidx3, align 4
+  %1 = load i32, i32* %arrayidx3, align 4
   %mul = mul i32 2, %1
   %sub = sub i32 %0, %mul
   ret i32 %sub

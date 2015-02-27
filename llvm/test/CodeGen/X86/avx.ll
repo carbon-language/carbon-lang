@@ -34,7 +34,7 @@ define <4 x float> @insertps_from_vector_load(<4 x float> %a, <4 x float>* nocap
 ; CHECK-NOT: mov
 ; CHECK: insertps    $48
 ; CHECK-NEXT: ret
-  %1 = load <4 x float>* %pb, align 16
+  %1 = load <4 x float>, <4 x float>* %pb, align 16
   %2 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a, <4 x float> %1, i32 48)
   ret <4 x float> %2
 }
@@ -48,7 +48,7 @@ define <4 x float> @insertps_from_vector_load_offset(<4 x float> %a, <4 x float>
 ;; Try to match a bit more of the instr, since we need the load's offset.
 ; CHECK: insertps    $96, 4(%{{...}}), %
 ; CHECK-NEXT: ret
-  %1 = load <4 x float>* %pb, align 16
+  %1 = load <4 x float>, <4 x float>* %pb, align 16
   %2 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a, <4 x float> %1, i32 96)
   ret <4 x float> %2
 }
@@ -63,7 +63,7 @@ define <4 x float> @insertps_from_vector_load_offset_2(<4 x float> %a, <4 x floa
 ; CHECK: vinsertps    $192, 12(%{{...}},%{{...}}), %
 ; CHECK-NEXT: ret
   %1 = getelementptr inbounds <4 x float>, <4 x float>* %pb, i64 %index
-  %2 = load <4 x float>* %1, align 16
+  %2 = load <4 x float>, <4 x float>* %1, align 16
   %3 = tail call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %a, <4 x float> %2, i32 192)
   ret <4 x float> %3
 }
@@ -77,7 +77,7 @@ define <4 x float> @insertps_from_broadcast_loadf32(<4 x float> %a, float* nocap
 ; CHECK: insertps    $48
 ; CHECK-NEXT: ret
   %1 = getelementptr inbounds float, float* %fb, i64 %index
-  %2 = load float* %1, align 4
+  %2 = load float, float* %1, align 4
   %3 = insertelement <4 x float> undef, float %2, i32 0
   %4 = insertelement <4 x float> %3, float %2, i32 1
   %5 = insertelement <4 x float> %4, float %2, i32 2
@@ -93,7 +93,7 @@ define <4 x float> @insertps_from_broadcast_loadv4f32(<4 x float> %a, <4 x float
 ; CHECK-NOT: mov
 ; CHECK: insertps    $48
 ; CHECK-NEXT: ret
-  %1 = load <4 x float>* %b, align 4
+  %1 = load <4 x float>, <4 x float>* %b, align 4
   %2 = extractelement <4 x float> %1, i32 0
   %3 = insertelement <4 x float> undef, float %2, i32 0
   %4 = insertelement <4 x float> %3, float %2, i32 1
@@ -120,7 +120,7 @@ define <4 x float> @insertps_from_broadcast_multiple_use(<4 x float> %a, <4 x fl
 ; CHECK: vaddps
 ; CHECK-NEXT: ret
   %1 = getelementptr inbounds float, float* %fb, i64 %index
-  %2 = load float* %1, align 4
+  %2 = load float, float* %1, align 4
   %3 = insertelement <4 x float> undef, float %2, i32 0
   %4 = insertelement <4 x float> %3, float %2, i32 1
   %5 = insertelement <4 x float> %4, float %2, i32 2

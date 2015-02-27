@@ -190,8 +190,8 @@ define void @v_sext_in_reg_i1_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %
   %a.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
   %b.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
   %out.gep = getelementptr i64, i64 addrspace(1)* %out, i32 %tid
-  %a = load i64 addrspace(1)* %a.gep, align 8
-  %b = load i64 addrspace(1)* %b.gep, align 8
+  %a = load i64, i64 addrspace(1)* %a.gep, align 8
+  %b = load i64, i64 addrspace(1)* %b.gep, align 8
 
   %c = shl i64 %a, %b
   %shl = shl i64 %c, 63
@@ -211,8 +211,8 @@ define void @v_sext_in_reg_i8_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %
   %a.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
   %b.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
   %out.gep = getelementptr i64, i64 addrspace(1)* %out, i32 %tid
-  %a = load i64 addrspace(1)* %a.gep, align 8
-  %b = load i64 addrspace(1)* %b.gep, align 8
+  %a = load i64, i64 addrspace(1)* %a.gep, align 8
+  %b = load i64, i64 addrspace(1)* %b.gep, align 8
 
   %c = shl i64 %a, %b
   %shl = shl i64 %c, 56
@@ -232,8 +232,8 @@ define void @v_sext_in_reg_i16_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* 
   %a.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
   %b.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
   %out.gep = getelementptr i64, i64 addrspace(1)* %out, i32 %tid
-  %a = load i64 addrspace(1)* %a.gep, align 8
-  %b = load i64 addrspace(1)* %b.gep, align 8
+  %a = load i64, i64 addrspace(1)* %a.gep, align 8
+  %b = load i64, i64 addrspace(1)* %b.gep, align 8
 
   %c = shl i64 %a, %b
   %shl = shl i64 %c, 48
@@ -252,8 +252,8 @@ define void @v_sext_in_reg_i32_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* 
   %a.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
   %b.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
   %out.gep = getelementptr i64, i64 addrspace(1)* %out, i32 %tid
-  %a = load i64 addrspace(1)* %a.gep, align 8
-  %b = load i64 addrspace(1)* %b.gep, align 8
+  %a = load i64, i64 addrspace(1)* %a.gep, align 8
+  %b = load i64, i64 addrspace(1)* %b.gep, align 8
 
   %c = shl i64 %a, %b
   %shl = shl i64 %c, 32
@@ -428,8 +428,8 @@ define void @testcase_3(i8 addrspace(1)* %out, i8 %a) nounwind {
 ; SI: v_bfe_i32 [[EXTRACT:v[0-9]+]], {{v[0-9]+}}, 0, 8
 ; SI: v_bfe_i32 [[EXTRACT:v[0-9]+]], {{v[0-9]+}}, 0, 8
 define void @vgpr_sext_in_reg_v4i8_to_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %a, <4 x i32> addrspace(1)* %b) nounwind {
-  %loada = load <4 x i32> addrspace(1)* %a, align 16
-  %loadb = load <4 x i32> addrspace(1)* %b, align 16
+  %loada = load <4 x i32>, <4 x i32> addrspace(1)* %a, align 16
+  %loadb = load <4 x i32>, <4 x i32> addrspace(1)* %b, align 16
   %c = add <4 x i32> %loada, %loadb ; add to prevent folding into extload
   %shl = shl <4 x i32> %c, <i32 24, i32 24, i32 24, i32 24>
   %ashr = ashr <4 x i32> %shl, <i32 24, i32 24, i32 24, i32 24>
@@ -441,8 +441,8 @@ define void @vgpr_sext_in_reg_v4i8_to_v4i32(<4 x i32> addrspace(1)* %out, <4 x i
 ; SI: v_bfe_i32 [[EXTRACT:v[0-9]+]], {{v[0-9]+}}, 0, 16
 ; SI: v_bfe_i32 [[EXTRACT:v[0-9]+]], {{v[0-9]+}}, 0, 16
 define void @vgpr_sext_in_reg_v4i16_to_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %a, <4 x i32> addrspace(1)* %b) nounwind {
-  %loada = load <4 x i32> addrspace(1)* %a, align 16
-  %loadb = load <4 x i32> addrspace(1)* %b, align 16
+  %loada = load <4 x i32>, <4 x i32> addrspace(1)* %a, align 16
+  %loadb = load <4 x i32>, <4 x i32> addrspace(1)* %b, align 16
   %c = add <4 x i32> %loada, %loadb ; add to prevent folding into extload
   %shl = shl <4 x i32> %c, <i32 16, i32 16, i32 16, i32 16>
   %ashr = ashr <4 x i32> %shl, <i32 16, i32 16, i32 16, i32 16>
@@ -459,7 +459,7 @@ define void @vgpr_sext_in_reg_v4i16_to_v4i32(<4 x i32> addrspace(1)* %out, <4 x 
 ; SI: v_bfe_i32
 ; SI: buffer_store_short
 define void @sext_in_reg_to_illegal_type(i16 addrspace(1)* nocapture %out, i8 addrspace(1)* nocapture %src) nounwind {
-  %tmp5 = load i8 addrspace(1)* %src, align 1
+  %tmp5 = load i8, i8 addrspace(1)* %src, align 1
   %tmp2 = sext i8 %tmp5 to i32
   %tmp3 = tail call i32 @llvm.AMDGPU.imax(i32 %tmp2, i32 0) nounwind readnone
   %tmp4 = trunc i32 %tmp3 to i8
@@ -474,7 +474,7 @@ declare i32 @llvm.AMDGPU.bfe.i32(i32, i32, i32) nounwind readnone
 ; SI-NOT: {{[^@]}}bfe
 ; SI: s_endpgm
 define void @bfe_0_width(i32 addrspace(1)* %out, i32 addrspace(1)* %ptr) nounwind {
-  %load = load i32 addrspace(1)* %ptr, align 4
+  %load = load i32, i32 addrspace(1)* %ptr, align 4
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %load, i32 8, i32 0) nounwind readnone
   store i32 %bfe, i32 addrspace(1)* %out, align 4
   ret void
@@ -485,7 +485,7 @@ define void @bfe_0_width(i32 addrspace(1)* %out, i32 addrspace(1)* %ptr) nounwin
 ; SI-NOT: {{[^@]}}bfe
 ; SI: s_endpgm
 define void @bfe_8_bfe_8(i32 addrspace(1)* %out, i32 addrspace(1)* %ptr) nounwind {
-  %load = load i32 addrspace(1)* %ptr, align 4
+  %load = load i32, i32 addrspace(1)* %ptr, align 4
   %bfe0 = call i32 @llvm.AMDGPU.bfe.i32(i32 %load, i32 0, i32 8) nounwind readnone
   %bfe1 = call i32 @llvm.AMDGPU.bfe.i32(i32 %bfe0, i32 0, i32 8) nounwind readnone
   store i32 %bfe1, i32 addrspace(1)* %out, align 4
@@ -496,7 +496,7 @@ define void @bfe_8_bfe_8(i32 addrspace(1)* %out, i32 addrspace(1)* %ptr) nounwin
 ; SI: v_bfe_i32 v{{[0-9]+}}, v{{[0-9]+}}, 0, 8
 ; SI: s_endpgm
 define void @bfe_8_bfe_16(i32 addrspace(1)* %out, i32 addrspace(1)* %ptr) nounwind {
-  %load = load i32 addrspace(1)* %ptr, align 4
+  %load = load i32, i32 addrspace(1)* %ptr, align 4
   %bfe0 = call i32 @llvm.AMDGPU.bfe.i32(i32 %load, i32 0, i32 8) nounwind readnone
   %bfe1 = call i32 @llvm.AMDGPU.bfe.i32(i32 %bfe0, i32 0, i32 16) nounwind readnone
   store i32 %bfe1, i32 addrspace(1)* %out, align 4
@@ -509,7 +509,7 @@ define void @bfe_8_bfe_16(i32 addrspace(1)* %out, i32 addrspace(1)* %ptr) nounwi
 ; SI-NOT: {{[^@]}}bfe
 ; SI: s_endpgm
 define void @bfe_16_bfe_8(i32 addrspace(1)* %out, i32 addrspace(1)* %ptr) nounwind {
-  %load = load i32 addrspace(1)* %ptr, align 4
+  %load = load i32, i32 addrspace(1)* %ptr, align 4
   %bfe0 = call i32 @llvm.AMDGPU.bfe.i32(i32 %load, i32 0, i32 16) nounwind readnone
   %bfe1 = call i32 @llvm.AMDGPU.bfe.i32(i32 %bfe0, i32 0, i32 8) nounwind readnone
   store i32 %bfe1, i32 addrspace(1)* %out, align 4
@@ -545,7 +545,7 @@ define void @sext_in_reg_i8_to_i32_bfe_wrong(i32 addrspace(1)* %out, i32 %a, i32
 ; SI-NOT: {{[^@]}}bfe
 ; SI: s_endpgm
 define void @sextload_i8_to_i32_bfe(i32 addrspace(1)* %out, i8 addrspace(1)* %ptr) nounwind {
-  %load = load i8 addrspace(1)* %ptr, align 1
+  %load = load i8, i8 addrspace(1)* %ptr, align 1
   %sext = sext i8 %load to i32
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %sext, i32 0, i32 8) nounwind readnone
   %shl = shl i32 %bfe, 24
@@ -559,7 +559,7 @@ define void @sextload_i8_to_i32_bfe(i32 addrspace(1)* %out, i8 addrspace(1)* %pt
 ; SI-NOT: {{[^@]}}bfe
 ; SI: s_endpgm
 define void @sextload_i8_to_i32_bfe_0(i32 addrspace(1)* %out, i8 addrspace(1)* %ptr) nounwind {
-  %load = load i8 addrspace(1)* %ptr, align 1
+  %load = load i8, i8 addrspace(1)* %ptr, align 1
   %sext = sext i8 %load to i32
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %sext, i32 8, i32 0) nounwind readnone
   %shl = shl i32 %bfe, 24
@@ -574,7 +574,7 @@ define void @sextload_i8_to_i32_bfe_0(i32 addrspace(1)* %out, i8 addrspace(1)* %
 ; SI: v_bfe_i32 v{{[0-9]+}}, v{{[0-9]+}}, 0, 1
 ; SI: s_endpgm
 define void @sext_in_reg_i1_bfe_offset_0(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %x = load i32 addrspace(1)* %in, align 4
+  %x = load i32, i32 addrspace(1)* %in, align 4
   %shl = shl i32 %x, 31
   %shr = ashr i32 %shl, 31
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %shr, i32 0, i32 1)
@@ -589,7 +589,7 @@ define void @sext_in_reg_i1_bfe_offset_0(i32 addrspace(1)* %out, i32 addrspace(1
 ; SI: v_bfe_i32 v{{[0-9]+}}, v{{[0-9]+}}, 1, 1
 ; SI: s_endpgm
 define void @sext_in_reg_i1_bfe_offset_1(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %x = load i32 addrspace(1)* %in, align 4
+  %x = load i32, i32 addrspace(1)* %in, align 4
   %shl = shl i32 %x, 30
   %shr = ashr i32 %shl, 30
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %shr, i32 1, i32 1)
@@ -604,7 +604,7 @@ define void @sext_in_reg_i1_bfe_offset_1(i32 addrspace(1)* %out, i32 addrspace(1
 ; SI: v_bfe_i32 v{{[0-9]+}}, v{{[0-9]+}}, 1, 2
 ; SI: s_endpgm
 define void @sext_in_reg_i2_bfe_offset_1(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
-  %x = load i32 addrspace(1)* %in, align 4
+  %x = load i32, i32 addrspace(1)* %in, align 4
   %shl = shl i32 %x, 30
   %shr = ashr i32 %shl, 30
   %bfe = call i32 @llvm.AMDGPU.bfe.i32(i32 %shr, i32 1, i32 2)

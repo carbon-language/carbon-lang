@@ -6,8 +6,8 @@
 
 define void @foo() nounwind {
 entry:
-  %0 = load i32* @j, align 4
-  %1 = load i64* @k, align 8
+  %0 = load i32, i32* @j, align 4
+  %1 = load i64, i64* @k, align 8
   %conv = trunc i64 %1 to i32
   %2 = call i64 @llvm.hexagon.A2.combinew(i32 %0, i32 %conv)
   store i64 %2, i64* @k, align 8

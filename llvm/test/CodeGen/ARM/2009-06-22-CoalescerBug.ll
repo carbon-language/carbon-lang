@@ -5,9 +5,9 @@
 
 define void @simplify_unary_real(i8* nocapture %p) nounwind {
 entry:
-	%tmp121 = load i64* null, align 4		; <i64> [#uses=1]
+	%tmp121 = load i64, i64* null, align 4		; <i64> [#uses=1]
 	%0 = getelementptr %struct.rtx_def, %struct.rtx_def* null, i32 0, i32 3, i32 3, i32 0		; <i64*> [#uses=1]
-	%tmp122 = load i64* %0, align 4		; <i64> [#uses=1]
+	%tmp122 = load i64, i64* %0, align 4		; <i64> [#uses=1]
 	%1 = zext i64 undef to i192		; <i192> [#uses=2]
 	%2 = zext i64 %tmp121 to i192		; <i192> [#uses=1]
 	%3 = shl i192 %2, 64		; <i192> [#uses=2]

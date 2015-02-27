@@ -32,7 +32,7 @@ entry:
 
 
 if.else:
-  %0 = load i32* @x, align 4
+  %0 = load i32, i32* @x, align 4
   %cmp1 = icmp eq i32 %i, 2
   br i1 %cmp1, label %if.then2, label %return
 ; Now we call __tls_get_addr.
@@ -43,7 +43,7 @@ if.else:
 
 
 if.then2:
-  %1 = load i32* @y, align 4
+  %1 = load i32, i32* @y, align 4
   %add = add nsw i32 %1, %0
   br label %return
 ; This accesses TLS, but is dominated by the previous block,

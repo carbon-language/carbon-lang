@@ -9,7 +9,7 @@
 @var64 = external global i64, align 8
 
 define i8 @test_i8(i8 %new) {
-  %val = load i8* @var8, align 1
+  %val = load i8, i8* @var8, align 1
   store i8 %new, i8* @var8
   ret i8 %val
 ; CHECK-LABEL: test_i8:
@@ -31,7 +31,7 @@ define i8 @test_i8(i8 %new) {
 }
 
 define i16 @test_i16(i16 %new) {
-  %val = load i16* @var16, align 2
+  %val = load i16, i16* @var16, align 2
   store i16 %new, i16* @var16
   ret i16 %val
 ; CHECK-LABEL: test_i16:
@@ -44,7 +44,7 @@ define i16 @test_i16(i16 %new) {
 }
 
 define i32 @test_i32(i32 %new) {
-  %val = load i32* @var32, align 4
+  %val = load i32, i32* @var32, align 4
   store i32 %new, i32* @var32
   ret i32 %val
 ; CHECK-LABEL: test_i32:
@@ -57,7 +57,7 @@ define i32 @test_i32(i32 %new) {
 }
 
 define i64 @test_i64(i64 %new) {
-  %val = load i64* @var64, align 8
+  %val = load i64, i64* @var64, align 8
   store i64 %new, i64* @var64
   ret i64 %val
 ; CHECK-LABEL: test_i64:
@@ -83,8 +83,8 @@ define i64* @test_addr() {
 @protectedvar = protected global i32 0, align 4
 
 define i32 @test_vis() {
-  %lhs = load i32* @hiddenvar, align 4
-  %rhs = load i32* @protectedvar, align 4
+  %lhs = load i32, i32* @hiddenvar, align 4
+  %rhs = load i32, i32* @protectedvar, align 4
   %ret = add i32 %lhs, %rhs
   ret i32 %ret
 ; CHECK-PIC: adrp {{x[0-9]+}}, hiddenvar
@@ -97,7 +97,7 @@ define i32 @test_vis() {
 
 define i32 @test_default_align() {
   %addr = getelementptr [2 x i32], [2 x i32]* @var_default, i32 0, i32 0
-  %val = load i32* %addr
+  %val = load i32, i32* %addr
   ret i32 %val
 ; CHECK-LABEL: test_default_align:
 ; CHECK: adrp x[[HIREG:[0-9]+]], var_default
@@ -106,7 +106,7 @@ define i32 @test_default_align() {
 
 define i64 @test_default_unaligned() {
   %addr = bitcast [2 x i32]* @var_default to i64*
-  %val = load i64* %addr
+  %val = load i64, i64* %addr
   ret i64 %val
 ; CHECK-LABEL: test_default_unaligned:
 ; CHECK: adrp [[HIREG:x[0-9]+]], var_default

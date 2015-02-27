@@ -7,8 +7,8 @@
 define float @t(i32 %c) nounwind {
 entry:
   %0 = icmp sgt i32 %c, 1                         ; <i1> [#uses=1]
-  %1 = load float* @a, align 4                    ; <float> [#uses=2]
-  %2 = load float* @b, align 4                    ; <float> [#uses=2]
+  %1 = load float, float* @a, align 4                    ; <float> [#uses=2]
+  %2 = load float, float* @b, align 4                    ; <float> [#uses=2]
   br i1 %0, label %bb, label %bb1
 
 bb:                                               ; preds = %entry

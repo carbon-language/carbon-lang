@@ -83,7 +83,7 @@ bb45:		; preds = %bb43.preheader, %cli_calloc.exit54
 	br i1 undef, label %cli_calloc.exit70.thread, label %cli_calloc.exit70
 
 bb52:		; preds = %cli_calloc.exit
-	%0 = load i16* undef, align 4		; <i16> [#uses=1]
+	%0 = load i16, i16* undef, align 4		; <i16> [#uses=1]
 	%1 = icmp eq i16 %0, 0		; <i1> [#uses=1]
 	%iftmp.20.0 = select i1 %1, i8* %hexsig, i8* null		; <i8*> [#uses=1]
 	%2 = tail call  i32 @strlen(i8* %iftmp.20.0) nounwind readonly		; <i32> [#uses=0]

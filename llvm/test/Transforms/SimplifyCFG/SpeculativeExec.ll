@@ -34,11 +34,11 @@ define i8* @test4(i1* %dummy, i8* %a, i8* %b) {
 ; CHECK-LABEL: @test4(
 
 entry:
-  %cond1 = load volatile i1* %dummy
+  %cond1 = load volatile i1, i1* %dummy
   br i1 %cond1, label %if, label %end
 
 if:
-  %cond2 = load volatile i1* %dummy
+  %cond2 = load volatile i1, i1* %dummy
   br i1 %cond2, label %then, label %end
 
 then:

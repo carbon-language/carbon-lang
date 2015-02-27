@@ -180,7 +180,7 @@ define i32 @test_ubfx32(i32* %addr) {
 ; CHECK-LABEL: test_ubfx32:
 ; CHECK: ubfx {{w[0-9]+}}, {{w[0-9]+}}, #23, #3
 
-   %fields = load i32* %addr
+   %fields = load i32, i32* %addr
    %shifted = lshr i32 %fields, 23
    %masked = and i32 %shifted, 7
    ret i32 %masked
@@ -189,7 +189,7 @@ define i32 @test_ubfx32(i32* %addr) {
 define i64 @test_ubfx64(i64* %addr) {
 ; CHECK-LABEL: test_ubfx64:
 ; CHECK: ubfx {{x[0-9]+}}, {{x[0-9]+}}, #25, #10
-   %fields = load i64* %addr
+   %fields = load i64, i64* %addr
    %shifted = lshr i64 %fields, 25
    %masked = and i64 %shifted, 1023
    ret i64 %masked
@@ -199,7 +199,7 @@ define i32 @test_sbfx32(i32* %addr) {
 ; CHECK-LABEL: test_sbfx32:
 ; CHECK: sbfx {{w[0-9]+}}, {{w[0-9]+}}, #6, #3
 
-   %fields = load i32* %addr
+   %fields = load i32, i32* %addr
    %shifted = shl i32 %fields, 23
    %extended = ashr i32 %shifted, 29
    ret i32 %extended
@@ -209,7 +209,7 @@ define i64 @test_sbfx64(i64* %addr) {
 ; CHECK-LABEL: test_sbfx64:
 ; CHECK: sbfx {{x[0-9]+}}, {{x[0-9]+}}, #0, #63
 
-   %fields = load i64* %addr
+   %fields = load i64, i64* %addr
    %shifted = shl i64 %fields, 1
    %extended = ashr i64 %shifted, 1
    ret i64 %extended

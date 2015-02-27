@@ -5,7 +5,7 @@
 
 define fastcc void @sample_3d_linear(%struct.gl_texture_object* %tObj, %struct.gl_texture_image* %img, float %s, float %t, float %r, i8* %red, i8* %green, i8* %blue, i8* %alpha) {
 entry:
-	%tmp15 = load i32* null, align 4		; <i32> [#uses=1]
+	%tmp15 = load i32, i32* null, align 4		; <i32> [#uses=1]
 	%tmp16 = icmp eq i32 %tmp15, 10497		; <i1> [#uses=1]
 	%tmp2152 = call float @floorf( float 0.000000e+00 )		; <float> [#uses=0]
 	br i1 %tmp16, label %cond_true, label %cond_false

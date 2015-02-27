@@ -13,9 +13,9 @@ entry:
 ; CHECK: stp [[Q1:q[0-9]+]], [[Q2:q[0-9]+]], {{\[}}[[BASE:x[0-9]+]], #32]
 ; CHECK: stp [[Q1:q[0-9]+]], [[Q2:q[0-9]+]], {{\[}}[[BASE]]]
  %retval = alloca <16 x float>, align 16
- %0 = load <16 x float>* @T3_retval, align 16
+ %0 = load <16 x float>, <16 x float>* @T3_retval, align 16
  store <16 x float> %0, <16 x float>* %retval
- %1 = load <16 x float>* %retval
+ %1 = load <16 x float>, <16 x float>* %retval
  store <16 x float> %1, <16 x float>* %agg.result, align 16
  ret void
 }

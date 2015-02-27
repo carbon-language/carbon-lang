@@ -18,7 +18,7 @@ bb.i:                                             ; preds = %bb5.i
   %1 = shl nsw i32 %k_addr.0.i, 1
   %.sum8.i = add i32 %1, -1
   %2 = getelementptr inbounds [256 x i32], [256 x i32]* %heap, i32 0, i32 %.sum8.i
-  %3 = load i32* %2, align 4
+  %3 = load i32, i32* %2, align 4
   br i1 false, label %bb5.i, label %bb4.i
 
 bb4.i:                                            ; preds = %bb.i

@@ -21,7 +21,7 @@ bb:		; preds = %bb, %entry
 	%indvar = phi i16 [ 0, %entry ], [ %indvar.next, %bb ]		; <i16> [#uses=2]
 	%tmp = sub i16 0, %indvar		; <i16> [#uses=1]
 	%tmp27 = trunc i16 %tmp to i8		; <i8> [#uses=1]
-	load i32* @g_19, align 4		; <i32>:0 [#uses=2]
+	load i32, i32* @g_19, align 4		; <i32>:0 [#uses=2]
 	add i32 %0, 1		; <i32>:1 [#uses=1]
 	store i32 %1, i32* @g_19, align 4
 	trunc i32 %0 to i8		; <i8>:2 [#uses=1]
@@ -40,7 +40,7 @@ return:		; preds = %bb
 define i32 @main() nounwind {
 entry:
 	tail call void @func_1( ) nounwind
-	load i32* @g_19, align 4		; <i32>:0 [#uses=1]
+	load i32, i32* @g_19, align 4		; <i32>:0 [#uses=1]
 	tail call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @"\01LC", i32 0, i32 0), i32 %0 ) nounwind		; <i32>:1 [#uses=0]
 	ret i32 0
 }

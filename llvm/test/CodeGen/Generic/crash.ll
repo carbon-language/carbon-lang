@@ -13,15 +13,15 @@ inbounds ([0 x %struct.AVCodecTag]* @ff_codec_bmp_tags, i32 0, i32 0)]
 
 define void @Parse_Camera(%struct.CAMERA** nocapture %Camera_Ptr) nounwind {
 entry:
-%.pre = load %struct.CAMERA** %Camera_Ptr, align 4
+%.pre = load %struct.CAMERA*, %struct.CAMERA** %Camera_Ptr, align 4
 %0 = getelementptr inbounds %struct.CAMERA, %struct.CAMERA* %.pre, i32 0, i32 1, i32 0
 %1 = getelementptr inbounds %struct.CAMERA, %struct.CAMERA* %.pre, i32 0, i32 1, i32 2
 br label %bb32
 
 bb32:                                             ; preds = %bb6
-%2 = load double* %0, align 4
-%3 = load double* %1, align 4
-%4 = load double* %0, align 4
+%2 = load double, double* %0, align 4
+%3 = load double, double* %1, align 4
+%4 = load double, double* %0, align 4
 call void @Parse_Vector(double* %0) nounwind
 %5 = call i32 @llvm.objectsize.i32.p0i8(i8* undef, i1 false)
 %6 = icmp eq i32 %5, -1

@@ -10,7 +10,7 @@ entry:
   %hv = bitcast <4 x i32>* %h1 to i8*
   %vl = call <4 x i32> @llvm.ppc.altivec.lvx(i8* %hv)
 
-  %v0 = load <4 x i32>* %h, align 8
+  %v0 = load <4 x i32>, <4 x i32>* %h, align 8
 
   %a = add <4 x i32> %v0, %vl
   ret <4 x i32> %a
@@ -31,7 +31,7 @@ entry:
   %hv = bitcast <4 x i32>* %h1 to i8*
   call void @llvm.ppc.altivec.stvx(<4 x i32> %d, i8* %hv)
 
-  %v0 = load <4 x i32>* %h, align 8
+  %v0 = load <4 x i32>, <4 x i32>* %h, align 8
 
   ret <4 x i32> %v0
 

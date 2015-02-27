@@ -11,7 +11,7 @@ define i8 @mask8(i8 %x) {
 }
 
 define void @mask8_mem(i8* %ptr) {
-  %x = load i8* %ptr, align 4
+  %x = load i8, i8* %ptr, align 4
   %m0 = bitcast i8 %x to <8 x i1>
   %m1 = xor <8 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>
   %ret = bitcast <8 x i1> %m1 to i8

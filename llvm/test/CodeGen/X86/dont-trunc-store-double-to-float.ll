@@ -10,7 +10,7 @@ entry-block:
   %b = alloca float
 
   store double 3.140000e+00, double* %a
-  %0 = load double* %a
+  %0 = load double, double* %a
 
   %1 = fptrunc double %0 to float
 

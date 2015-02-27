@@ -7,9 +7,9 @@
 ; Chain and flag folding issues.
 define i32 @test1() nounwind ssp {
 entry:
-  %tmp5.i = load volatile i32* undef              ; <i32> [#uses=1]
+  %tmp5.i = load volatile i32, i32* undef              ; <i32> [#uses=1]
   %conv.i = zext i32 %tmp5.i to i64               ; <i64> [#uses=1]
-  %tmp12.i = load volatile i32* undef             ; <i32> [#uses=1]
+  %tmp12.i = load volatile i32, i32* undef             ; <i32> [#uses=1]
   %conv13.i = zext i32 %tmp12.i to i64            ; <i64> [#uses=1]
   %shl.i = shl i64 %conv13.i, 32                  ; <i64> [#uses=1]
   %or.i = or i64 %shl.i, %conv.i                  ; <i64> [#uses=1]
@@ -40,7 +40,7 @@ if.end:                                           ; preds = %land.end
 
 define void @test3() {
 dependentGraph243.exit:
-  %subject19 = load %pair* undef                     ; <%1> [#uses=1]
+  %subject19 = load %pair, %pair* undef                     ; <%1> [#uses=1]
   %0 = extractvalue %pair %subject19, 1              ; <double> [#uses=2]
   %1 = select i1 undef, double %0, double undef   ; <double> [#uses=1]
   %2 = select i1 undef, double %1, double %0      ; <double> [#uses=1]
@@ -52,7 +52,7 @@ dependentGraph243.exit:
 ; PR6605
 define i64 @test4(i8* %P) nounwind ssp {
 entry:
-  %tmp1 = load i8* %P                           ; <i8> [#uses=3]
+  %tmp1 = load i8, i8* %P                           ; <i8> [#uses=3]
   %tobool = icmp eq i8 %tmp1, 0                   ; <i1> [#uses=1]
   %tmp58 = sext i1 %tobool to i8                  ; <i8> [#uses=1]
   %mul.i = and i8 %tmp58, %tmp1                   ; <i8> [#uses=1]
@@ -76,7 +76,7 @@ declare i32 @safe(i32)
 ; PR6607
 define fastcc void @test5(i32 %FUNC) nounwind {
 foo:
-  %0 = load i8* undef, align 1                    ; <i8> [#uses=3]
+  %0 = load i8, i8* undef, align 1                    ; <i8> [#uses=3]
   %1 = sext i8 %0 to i32                          ; <i32> [#uses=2]
   %2 = zext i8 %0 to i32                          ; <i32> [#uses=1]
   %tmp1.i5037 = urem i32 %2, 10                   ; <i32> [#uses=1]
@@ -121,7 +121,7 @@ entry:
 
 bb14:
   %tmp0 = trunc i16 undef to i1
-  %tmp1 = load i8* undef, align 8
+  %tmp1 = load i8, i8* undef, align 8
   %tmp2 = shl i8 %tmp1, 4
   %tmp3 = lshr i8 %tmp2, 7
   %tmp4 = trunc i8 %tmp3 to i1
@@ -239,7 +239,7 @@ declare i64 @llvm.objectsize.i64.p0i8(i8*, i1) nounwind readnone
 
 define void @_ZNK4llvm17MipsFrameLowering12emitPrologueERNS_15MachineFunctionE() ssp align 2 {
 bb:
-  %tmp = load %t9** undef, align 4
+  %tmp = load %t9*, %t9** undef, align 4
   %tmp2 = getelementptr inbounds %t9, %t9* %tmp, i32 0, i32 0
   %tmp3 = getelementptr inbounds %t9, %t9* %tmp, i32 0, i32 0, i32 0, i32 0, i32 1
   br label %bb4
@@ -250,25 +250,25 @@ bb4:                                              ; preds = %bb37, %bb
   br i1 undef, label %bb34, label %bb7
 
 bb7:                                              ; preds = %bb4
-  %tmp8 = load i32* undef, align 4
+  %tmp8 = load i32, i32* undef, align 4
   %tmp9 = and i96 %tmp6, 4294967040
   %tmp10 = zext i32 %tmp8 to i96
   %tmp11 = shl nuw nsw i96 %tmp10, 32
   %tmp12 = or i96 %tmp9, %tmp11
   %tmp13 = or i96 %tmp12, 1
-  %tmp14 = load i32* undef, align 4
+  %tmp14 = load i32, i32* undef, align 4
   %tmp15 = and i96 %tmp5, 4294967040
   %tmp16 = zext i32 %tmp14 to i96
   %tmp17 = shl nuw nsw i96 %tmp16, 32
   %tmp18 = or i96 %tmp15, %tmp17
   %tmp19 = or i96 %tmp18, 1
-  %tmp20 = load i8* undef, align 1
+  %tmp20 = load i8, i8* undef, align 1
   %tmp21 = and i8 %tmp20, 1
   %tmp22 = icmp ne i8 %tmp21, 0
   %tmp23 = select i1 %tmp22, i96 %tmp19, i96 %tmp13
   %tmp24 = select i1 %tmp22, i96 %tmp13, i96 %tmp19
   store i96 %tmp24, i96* undef, align 4
-  %tmp25 = load %t13** %tmp3, align 4
+  %tmp25 = load %t13*, %t13** %tmp3, align 4
   %tmp26 = icmp eq %t13* %tmp25, undef
   br i1 %tmp26, label %bb28, label %bb27
 
@@ -281,7 +281,7 @@ bb28:                                             ; preds = %bb7
 
 bb29:                                             ; preds = %bb28, %bb27
   store i96 %tmp23, i96* undef, align 4
-  %tmp30 = load %t13** %tmp3, align 4
+  %tmp30 = load %t13*, %t13** %tmp3, align 4
   br i1 false, label %bb33, label %bb31
 
 bb31:                                             ; preds = %bb29
@@ -348,13 +348,13 @@ entry:
   br label %"4"
 
 "3":
-  %0 = load <2 x i32>* null, align 8
+  %0 = load <2 x i32>, <2 x i32>* null, align 8
   %1 = xor <2 x i32> zeroinitializer, %0
   %2 = and <2 x i32> %1, %6
   %3 = or <2 x i32> undef, %2
   %4 = and <2 x i32> %3, undef
   store <2 x i32> %4, <2 x i32>* undef
-  %5 = load <2 x i32>* undef, align 1
+  %5 = load <2 x i32>, <2 x i32>* undef, align 1
   br label %"4"
 
 "4":
@@ -378,7 +378,7 @@ entry:
 @__force_order = external hidden global i32, align 4
 define void @pr11078(i32* %pgd) nounwind {
 entry:
-  %t0 = load i32* %pgd, align 4
+  %t0 = load i32, i32* %pgd, align 4
   %and2 = and i32 %t0, 1
   %tobool = icmp eq i32 %and2, 0
   br i1 %tobool, label %if.then, label %if.end
@@ -405,7 +405,7 @@ while.body.preheader:                             ; preds = %entry
   br i1 undef, label %if.then3, label %if.end7
 
 if.then3:                                         ; preds = %while.body.preheader
-  %0 = load i32* undef, align 4
+  %0 = load i32, i32* undef, align 4
   br i1 undef, label %land.lhs.true.i255, label %if.end7
 
 land.lhs.true.i255:                               ; preds = %if.then3
@@ -434,7 +434,7 @@ return:                                           ; preds = %entry
 @.str = private unnamed_addr constant { [1 x i8], [63 x i8] } zeroinitializer, align 32
 define void @pr13188(i64* nocapture %this) uwtable ssp sanitize_address align 2 {
 entry:
-  %x7 = load i64* %this, align 8
+  %x7 = load i64, i64* %this, align 8
   %sub = add i64 %x7, -1
   %conv = uitofp i64 %sub to float
   %div = fmul float %conv, 5.000000e-01
@@ -450,12 +450,12 @@ declare void @_Z6PrintFz(...)
 
 define void @pr13943() nounwind uwtable ssp {
 entry:
-  %srcval = load i576* bitcast ([9 x i32*]* @fn1.g to i576*), align 16
+  %srcval = load i576, i576* bitcast ([9 x i32*]* @fn1.g to i576*), align 16
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
   %g.0 = phi i576 [ %srcval, %entry ], [ %ins, %for.inc ]
-  %0 = load i32* @e, align 4
+  %0 = load i32, i32* @e, align 4
   %1 = lshr i576 %g.0, 64
   %2 = trunc i576 %1 to i64
   %3 = inttoptr i64 %2 to i32*
@@ -510,9 +510,9 @@ bb4:                                              ; preds = %bb3
   unreachable
 
 bb5:                                              ; preds = %bb3
-  %tmp = load <4 x float>* undef, align 1
+  %tmp = load <4 x float>, <4 x float>* undef, align 1
   %tmp6 = bitcast <4 x float> %tmp to i128
-  %tmp7 = load <4 x float>* undef, align 1
+  %tmp7 = load <4 x float>, <4 x float>* undef, align 1
   %tmp8 = bitcast <4 x float> %tmp7 to i128
   br label %bb10
 
@@ -583,7 +583,7 @@ bb29:                                             ; preds = %bb28, %bb26, %bb25,
 }
 
 define void @pr14194() nounwind uwtable {
-  %tmp = load i64* undef, align 16
+  %tmp = load i64, i64* undef, align 16
   %tmp1 = trunc i64 %tmp to i32
   %tmp2 = lshr i64 %tmp, 32
   %tmp3 = trunc i64 %tmp2 to i32

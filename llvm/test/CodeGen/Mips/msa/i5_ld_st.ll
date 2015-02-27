@@ -81,7 +81,7 @@ declare <2 x i64> @llvm.mips.ld.d(i8*, i32) nounwind
 
 define void @llvm_mips_st_b_test() nounwind {
 entry:
-  %0 = load <16 x i8>* @llvm_mips_st_b_ARG
+  %0 = load <16 x i8>, <16 x i8>* @llvm_mips_st_b_ARG
   %1 = bitcast <16 x i8>* @llvm_mips_st_b_RES to i8*
   tail call void @llvm.mips.st.b(<16 x i8> %0, i8* %1, i32 16)
   ret void
@@ -99,7 +99,7 @@ declare void @llvm.mips.st.b(<16 x i8>, i8*, i32) nounwind
 
 define void @llvm_mips_st_h_test() nounwind {
 entry:
-  %0 = load <8 x i16>* @llvm_mips_st_h_ARG
+  %0 = load <8 x i16>, <8 x i16>* @llvm_mips_st_h_ARG
   %1 = bitcast <8 x i16>* @llvm_mips_st_h_RES to i8*
   tail call void @llvm.mips.st.h(<8 x i16> %0, i8* %1, i32 16)
   ret void
@@ -117,7 +117,7 @@ declare void @llvm.mips.st.h(<8 x i16>, i8*, i32) nounwind
 
 define void @llvm_mips_st_w_test() nounwind {
 entry:
-  %0 = load <4 x i32>* @llvm_mips_st_w_ARG
+  %0 = load <4 x i32>, <4 x i32>* @llvm_mips_st_w_ARG
   %1 = bitcast <4 x i32>* @llvm_mips_st_w_RES to i8*
   tail call void @llvm.mips.st.w(<4 x i32> %0, i8* %1, i32 16)
   ret void
@@ -135,7 +135,7 @@ declare void @llvm.mips.st.w(<4 x i32>, i8*, i32) nounwind
 
 define void @llvm_mips_st_d_test() nounwind {
 entry:
-  %0 = load <2 x i64>* @llvm_mips_st_d_ARG
+  %0 = load <2 x i64>, <2 x i64>* @llvm_mips_st_d_ARG
   %1 = bitcast <2 x i64>* @llvm_mips_st_d_RES to i8*
   tail call void @llvm.mips.st.d(<2 x i64> %0, i8* %1, i32 16)
   ret void

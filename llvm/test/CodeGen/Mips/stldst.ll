@@ -12,21 +12,21 @@
 
 define i32 @main() nounwind {
 entry:
-  %0 = load i32* @kkkk, align 4
-  %1 = load i32* @llll, align 4
+  %0 = load i32, i32* @kkkk, align 4
+  %1 = load i32, i32* @llll, align 4
   %add = add nsw i32 %0, 10
   %add1 = add nsw i32 %1, 10
-  %2 = load i32* @mmmm, align 4
+  %2 = load i32, i32* @mmmm, align 4
   %sub = add nsw i32 %2, -3
-  %3 = load i32* @nnnn, align 4
+  %3 = load i32, i32* @nnnn, align 4
   %add2 = add nsw i32 %3, 10
-  %4 = load i32* @oooo, align 4
+  %4 = load i32, i32* @oooo, align 4
   %add3 = add nsw i32 %4, 4
-  %5 = load i32* @pppp, align 4
+  %5 = load i32, i32* @pppp, align 4
   %sub4 = add nsw i32 %5, -5
-  %6 = load i32* @qqqq, align 4
+  %6 = load i32, i32* @qqqq, align 4
   %sub5 = add nsw i32 %6, -10
-  %7 = load i32* @rrrr, align 4
+  %7 = load i32, i32* @rrrr, align 4
   %add6 = add nsw i32 %7, 6
 
   %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([32 x i8]* @.str, i32 0, i32 0), i32 %sub5, i32 %add6, i32 %0, i32 %1, i32 %2, i32 %3, i32 %4, i32 %5, i32 %6, i32 %7) nounwind

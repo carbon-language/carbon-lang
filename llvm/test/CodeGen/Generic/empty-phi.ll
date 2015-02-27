@@ -11,7 +11,7 @@ bb1:
   br i1 %1, label %bb2, label %bb3
 
 bb2:
-  %load = load [0 x { i8*, i64, i64 }]* undef, align 8
+  %load = load [0 x { i8*, i64, i64 }], [0 x { i8*, i64, i64 }]* undef, align 8
   br label %bb1
 
 bb3:

@@ -61,7 +61,7 @@ define i32 @xfoop(i32* %p) nounwind readnone {
 entry:
 ; BMI2-LABEL: xfoop:
 ; BMI2: rorxl $25, ({{.+}}), %{{.+}}
-	%x = load i32* %p
+	%x = load i32, i32* %p
 	%a = lshr i32 %x, 25
 	%b = shl i32 %x, 7
 	%c = or i32 %a, %b
@@ -94,7 +94,7 @@ define i32 @xunp(i32* %p) nounwind readnone {
 entry:
 ; BMI2-LABEL: xunp:
 ; BMI2: rorxl $7, ({{.+}}), %{{.+}}
-	%x = load i32* %p
+	%x = load i32, i32* %p
 	%a = lshr i32 %x, 7
 	%b = shl i32 %x, 25
 	%c = or i32 %a, %b

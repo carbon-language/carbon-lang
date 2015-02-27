@@ -449,7 +449,7 @@ define <8 x i8> @ld1r_8b(i8* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.8b { v0 }, [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load i8* %bar
+  %tmp1 = load i8, i8* %bar
   %tmp2 = insertelement <8 x i8> <i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef>, i8 %tmp1, i32 0
   %tmp3 = insertelement <8 x i8> %tmp2, i8 %tmp1, i32 1
   %tmp4 = insertelement <8 x i8> %tmp3, i8 %tmp1, i32 2
@@ -466,7 +466,7 @@ define <16 x i8> @ld1r_16b(i8* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.16b { v0 }, [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load i8* %bar
+  %tmp1 = load i8, i8* %bar
   %tmp2 = insertelement <16 x i8> <i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef, i8 undef>, i8 %tmp1, i32 0
   %tmp3 = insertelement <16 x i8> %tmp2, i8 %tmp1, i32 1
   %tmp4 = insertelement <16 x i8> %tmp3, i8 %tmp1, i32 2
@@ -491,7 +491,7 @@ define <4 x i16> @ld1r_4h(i16* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.4h { v0 }, [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load i16* %bar
+  %tmp1 = load i16, i16* %bar
   %tmp2 = insertelement <4 x i16> <i16 undef, i16 undef, i16 undef, i16 undef>, i16 %tmp1, i32 0
   %tmp3 = insertelement <4 x i16> %tmp2, i16 %tmp1, i32 1
   %tmp4 = insertelement <4 x i16> %tmp3, i16 %tmp1, i32 2
@@ -504,7 +504,7 @@ define <8 x i16> @ld1r_8h(i16* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.8h { v0 }, [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load i16* %bar
+  %tmp1 = load i16, i16* %bar
   %tmp2 = insertelement <8 x i16> <i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef>, i16 %tmp1, i32 0
   %tmp3 = insertelement <8 x i16> %tmp2, i16 %tmp1, i32 1
   %tmp4 = insertelement <8 x i16> %tmp3, i16 %tmp1, i32 2
@@ -521,7 +521,7 @@ define <2 x i32> @ld1r_2s(i32* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.2s { v0 }, [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load i32* %bar
+  %tmp1 = load i32, i32* %bar
   %tmp2 = insertelement <2 x i32> <i32 undef, i32 undef>, i32 %tmp1, i32 0
   %tmp3 = insertelement <2 x i32> %tmp2, i32 %tmp1, i32 1
   ret <2 x i32> %tmp3
@@ -532,7 +532,7 @@ define <4 x i32> @ld1r_4s(i32* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.4s { v0 }, [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load i32* %bar
+  %tmp1 = load i32, i32* %bar
   %tmp2 = insertelement <4 x i32> <i32 undef, i32 undef, i32 undef, i32 undef>, i32 %tmp1, i32 0
   %tmp3 = insertelement <4 x i32> %tmp2, i32 %tmp1, i32 1
   %tmp4 = insertelement <4 x i32> %tmp3, i32 %tmp1, i32 2
@@ -545,7 +545,7 @@ define <2 x i64> @ld1r_2d(i64* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.2d { v0 }, [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load i64* %bar
+  %tmp1 = load i64, i64* %bar
   %tmp2 = insertelement <2 x i64> <i64 undef, i64 undef>, i64 %tmp1, i32 0
   %tmp3 = insertelement <2 x i64> %tmp2, i64 %tmp1, i32 1
   ret <2 x i64> %tmp3
@@ -804,7 +804,7 @@ define <16 x i8> @ld1_16b(<16 x i8> %V, i8* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1.b { v0 }[0], [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load i8* %bar
+  %tmp1 = load i8, i8* %bar
   %tmp2 = insertelement <16 x i8> %V, i8 %tmp1, i32 0
   ret <16 x i8> %tmp2
 }
@@ -814,7 +814,7 @@ define <8 x i16> @ld1_8h(<8 x i16> %V, i16* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1.h { v0 }[0], [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load i16* %bar
+  %tmp1 = load i16, i16* %bar
   %tmp2 = insertelement <8 x i16> %V, i16 %tmp1, i32 0
   ret <8 x i16> %tmp2
 }
@@ -824,7 +824,7 @@ define <4 x i32> @ld1_4s(<4 x i32> %V, i32* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1.s { v0 }[0], [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load i32* %bar
+  %tmp1 = load i32, i32* %bar
   %tmp2 = insertelement <4 x i32> %V, i32 %tmp1, i32 0
   ret <4 x i32> %tmp2
 }
@@ -834,7 +834,7 @@ define <4 x float> @ld1_4s_float(<4 x float> %V, float* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1.s { v0 }[0], [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load float* %bar
+  %tmp1 = load float, float* %bar
   %tmp2 = insertelement <4 x float> %V, float %tmp1, i32 0
   ret <4 x float> %tmp2
 }
@@ -844,7 +844,7 @@ define <2 x i64> @ld1_2d(<2 x i64> %V, i64* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1.d { v0 }[0], [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load i64* %bar
+  %tmp1 = load i64, i64* %bar
   %tmp2 = insertelement <2 x i64> %V, i64 %tmp1, i32 0
   ret <2 x i64> %tmp2
 }
@@ -854,7 +854,7 @@ define <2 x double> @ld1_2d_double(<2 x double> %V, double* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1.d { v0 }[0], [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load double* %bar
+  %tmp1 = load double, double* %bar
   %tmp2 = insertelement <2 x double> %V, double %tmp1, i32 0
   ret <2 x double> %tmp2
 }
@@ -864,7 +864,7 @@ define <1 x i64> @ld1_1d(<1 x i64>* %p) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ldr [[REG:d[0-9]+]], [x0]
 ; CHECK-NEXT: ret
-  %tmp = load <1 x i64>* %p, align 8
+  %tmp = load <1 x i64>, <1 x i64>* %p, align 8
   ret <1 x i64> %tmp
 }
 
@@ -873,7 +873,7 @@ define <8 x i8> @ld1_8b(<8 x i8> %V, i8* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1.b { v0 }[0], [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load i8* %bar
+  %tmp1 = load i8, i8* %bar
   %tmp2 = insertelement <8 x i8> %V, i8 %tmp1, i32 0
   ret <8 x i8> %tmp2
 }
@@ -883,7 +883,7 @@ define <4 x i16> @ld1_4h(<4 x i16> %V, i16* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1.h { v0 }[0], [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load i16* %bar
+  %tmp1 = load i16, i16* %bar
   %tmp2 = insertelement <4 x i16> %V, i16 %tmp1, i32 0
   ret <4 x i16> %tmp2
 }
@@ -893,7 +893,7 @@ define <2 x i32> @ld1_2s(<2 x i32> %V, i32* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1.s { v0 }[0], [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load i32* %bar
+  %tmp1 = load i32, i32* %bar
   %tmp2 = insertelement <2 x i32> %V, i32 %tmp1, i32 0
   ret <2 x i32> %tmp2
 }
@@ -903,7 +903,7 @@ define <2 x float> @ld1_2s_float(<2 x float> %V, float* %bar) {
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1.s { v0 }[0], [x0]
 ; CHECK-NEXT ret
-  %tmp1 = load float* %bar
+  %tmp1 = load float, float* %bar
   %tmp2 = insertelement <2 x float> %V, float %tmp1, i32 0
   ret <2 x float> %tmp2
 }
@@ -919,12 +919,12 @@ entry:
 ; CHECK-NEXT: str d[[RESREGNUM]], [x2]
 ; CHECK-NEXT: ret
   %tmp = bitcast i8* %a to i32*
-  %tmp1 = load i32* %tmp, align 4
+  %tmp1 = load i32, i32* %tmp, align 4
   %tmp2 = insertelement <2 x i32> undef, i32 %tmp1, i32 0
   %lane = shufflevector <2 x i32> %tmp2, <2 x i32> undef, <2 x i32> zeroinitializer
   %tmp3 = bitcast <2 x i32> %lane to <8 x i8>
   %tmp4 = bitcast i8* %b to i32*
-  %tmp5 = load i32* %tmp4, align 4
+  %tmp5 = load i32, i32* %tmp4, align 4
   %tmp6 = insertelement <2 x i32> undef, i32 %tmp5, i32 0
   %lane1 = shufflevector <2 x i32> %tmp6, <2 x i32> undef, <2 x i32> zeroinitializer
   %tmp7 = bitcast <2 x i32> %lane1 to <8 x i8>
@@ -946,7 +946,7 @@ entry:
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.4s { v0 }, [x0]
 ; CHECK-NEXT ret
-  %tmp = load float* %x, align 4
+  %tmp = load float, float* %x, align 4
   %tmp1 = insertelement <4 x float> undef, float %tmp, i32 0
   %tmp2 = insertelement <4 x float> %tmp1, float %tmp, i32 1
   %tmp3 = insertelement <4 x float> %tmp2, float %tmp, i32 2
@@ -960,7 +960,7 @@ entry:
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.2s { v0 }, [x0]
 ; CHECK-NEXT ret
-  %tmp = load float* %x, align 4
+  %tmp = load float, float* %x, align 4
   %tmp1 = insertelement <2 x float> undef, float %tmp, i32 0
   %tmp2 = insertelement <2 x float> %tmp1, float %tmp, i32 1
   ret <2 x float> %tmp2
@@ -972,7 +972,7 @@ entry:
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.2d { v0 }, [x0]
 ; CHECK-NEXT ret
-  %tmp = load double* %x, align 4
+  %tmp = load double, double* %x, align 4
   %tmp1 = insertelement <2 x double> undef, double %tmp, i32 0
   %tmp2 = insertelement <2 x double> %tmp1, double %tmp, i32 1
   ret <2 x double> %tmp2
@@ -984,7 +984,7 @@ entry:
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ldr d0, [x0]
 ; CHECK-NEXT ret
-  %tmp = load double* %x, align 4
+  %tmp = load double, double* %x, align 4
   %tmp1 = insertelement <1 x double> undef, double %tmp, i32 0
   ret <1 x double> %tmp1
 }
@@ -995,7 +995,7 @@ entry:
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.4s { v0 }, [x0]
 ; CHECK-NEXT ret
-  %tmp = load float* %x, align 4
+  %tmp = load float, float* %x, align 4
   %tmp1 = insertelement <4 x float> undef, float %tmp, i32 0
   %lane = shufflevector <4 x float> %tmp1, <4 x float> undef, <4 x i32> zeroinitializer
   ret <4 x float> %lane
@@ -1007,7 +1007,7 @@ entry:
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.2s { v0 }, [x0]
 ; CHECK-NEXT ret
-  %tmp = load float* %x, align 4
+  %tmp = load float, float* %x, align 4
   %tmp1 = insertelement <2 x float> undef, float %tmp, i32 0
   %lane = shufflevector <2 x float> %tmp1, <2 x float> undef, <2 x i32> zeroinitializer
   ret <2 x float> %lane
@@ -1019,7 +1019,7 @@ entry:
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ld1r.2d { v0 }, [x0]
 ; CHECK-NEXT ret
-  %tmp = load double* %x, align 4
+  %tmp = load double, double* %x, align 4
   %tmp1 = insertelement <2 x double> undef, double %tmp, i32 0
   %lane = shufflevector <2 x double> %tmp1, <2 x double> undef, <2 x i32> zeroinitializer
   ret <2 x double> %lane
@@ -1031,7 +1031,7 @@ entry:
 ; Make sure we are using the operands defined by the ABI
 ; CHECK: ldr d0, [x0]
 ; CHECK-NEXT ret
-  %tmp = load double* %x, align 4
+  %tmp = load double, double* %x, align 4
   %tmp1 = insertelement <1 x double> undef, double %tmp, i32 0
   %lane = shufflevector <1 x double> %tmp1, <1 x double> undef, <1 x i32> zeroinitializer
   ret <1 x double> %lane

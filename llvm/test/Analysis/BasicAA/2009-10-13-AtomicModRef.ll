@@ -5,9 +5,9 @@ define i8 @foo(i8* %ptr) {
   %P = getelementptr i8, i8* %ptr, i32 0
   %Q = getelementptr i8, i8* %ptr, i32 1
 ; CHECK: getelementptr
-  %X = load i8* %P
+  %X = load i8, i8* %P
   %Y = atomicrmw add i8* %Q, i8 1 monotonic
-  %Z = load i8* %P
+  %Z = load i8, i8* %P
 ; CHECK-NOT: = load
   %A = sub i8 %X, %Z
   ret i8 %A

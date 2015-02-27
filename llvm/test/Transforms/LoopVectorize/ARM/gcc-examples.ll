@@ -19,9 +19,9 @@ define void @example1() nounwind uwtable ssp {
 ; <label>:1                                       ; preds = %1, %0
   %indvars.iv = phi i64 [ 0, %0 ], [ %indvars.iv.next, %1 ]
   %2 = getelementptr inbounds [2048 x i32], [2048 x i32]* @b, i64 0, i64 %indvars.iv
-  %3 = load i32* %2, align 4
+  %3 = load i32, i32* %2, align 4
   %4 = getelementptr inbounds [2048 x i32], [2048 x i32]* @c, i64 0, i64 %indvars.iv
-  %5 = load i32* %4, align 4
+  %5 = load i32, i32* %4, align 4
   %6 = add nsw i32 %5, %3
   %7 = getelementptr inbounds [2048 x i32], [2048 x i32]* @a, i64 0, i64 %indvars.iv
   store i32 %6, i32* %7, align 4
@@ -45,7 +45,7 @@ define void @example10b(i16* noalias nocapture %sa, i16* noalias nocapture %sb, 
 ; <label>:1                                       ; preds = %1, %0
   %indvars.iv = phi i64 [ 0, %0 ], [ %indvars.iv.next, %1 ]
   %2 = getelementptr inbounds i16, i16* %sb, i64 %indvars.iv
-  %3 = load i16* %2, align 2
+  %3 = load i16, i16* %2, align 2
   %4 = sext i16 %3 to i32
   %5 = getelementptr inbounds i32, i32* %ia, i64 %indvars.iv
   store i32 %4, i32* %5, align 4

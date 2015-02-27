@@ -9,6 +9,6 @@ entry:
 	br label %bb
 
 bb:		; preds = %bb, %entry
-	%tmp10 = load %struct.INT2** @blkshifts, align 4		; <%struct.INT2*> [#uses=0]
+	%tmp10 = load %struct.INT2*, %struct.INT2** @blkshifts, align 4		; <%struct.INT2*> [#uses=0]
 	br label %bb
 }

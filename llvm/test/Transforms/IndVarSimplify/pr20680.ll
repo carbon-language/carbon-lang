@@ -13,9 +13,9 @@ define void @f() {
 ; CHECK-NEXT: %[[indvars_iv:.*]] = phi i32 [ %[[indvars_iv_next:.*]], %[[for_inc13:.*]] ], [ -14, %entry ]
 ; br i1 {{.*}}, label %[[for_inc13]], label %
 entry:
-  %0 = load i32* @a, align 4
+  %0 = load i32, i32* @a, align 4
   %tobool2 = icmp eq i32 %0, 0
-  %1 = load i32* @a, align 4
+  %1 = load i32, i32* @a, align 4
   %tobool = icmp eq i32 %1, 0
   br label %for.cond2.preheader
 
@@ -51,7 +51,7 @@ cond.false.us.us:                                 ; preds = %for.body3.us.us
 
 cond.end.us.us:                                   ; preds = %cond.false.us.us, %for.body3.us.us
   %cond.us.us = phi i32 [ %div, %cond.false.us.us ], [ %conv7, %for.body3.us.us ]
-  %4 = load i32* @b, align 4
+  %4 = load i32, i32* @b, align 4
   %cmp91.us.us = icmp slt i32 %4, 1
   br i1 %cmp91.us.us, label %for.inc.lr.ph.us.us, label %for.cond2.loopexit.us.us
 
@@ -87,7 +87,7 @@ cond.false.us:                                    ; preds = %for.body3.us
 
 cond.end.us:                                      ; preds = %cond.false.us, %for.body3.us
   %cond.us = phi i32 [ %div, %cond.false.us ], [ %conv7, %for.body3.us ]
-  %6 = load i32* @b, align 4
+  %6 = load i32, i32* @b, align 4
   %cmp91.us = icmp slt i32 %6, 1
   br i1 %cmp91.us, label %for.inc.lr.ph.us, label %for.cond2.loopexit.us
 
@@ -133,7 +133,7 @@ cond.false.us4:                                   ; preds = %for.body3.us3
 
 cond.end.us5:                                     ; preds = %cond.false.us4, %for.body3.us3
   %cond.us6 = phi i32 [ %div, %cond.false.us4 ], [ %conv7, %for.body3.us3 ]
-  %8 = load i32* @b, align 4
+  %8 = load i32, i32* @b, align 4
   %cmp91.us7 = icmp slt i32 %8, 1
   br i1 %cmp91.us7, label %for.inc.lr.ph.us12, label %for.cond2.loopexit.us11
 
@@ -177,7 +177,7 @@ cond.false:                                       ; preds = %for.body3
 
 cond.end:                                         ; preds = %cond.false, %for.body3
   %cond = phi i32 [ %div, %cond.false ], [ %conv7, %for.body3 ]
-  %10 = load i32* @b, align 4
+  %10 = load i32, i32* @b, align 4
   %cmp91 = icmp slt i32 %10, 1
   br i1 %cmp91, label %for.inc.lr.ph, label %for.cond2.loopexit
 

@@ -41,7 +41,7 @@ define i32 @foo(i32 %a, i32 %b) {
 
 ; CHECK-LABEL: define i32 @extract2gep(
 ; CHECK-NEXT: [[GEP:%[a-z0-9]+]] = getelementptr inbounds {{.*}}, {{.*}}* %pair, i32 0, i32 1
-; CHECK-NEXT: [[LOAD:%[A-Za-z0-9]+]] = load i32* [[GEP]]
+; CHECK-NEXT: [[LOAD:%[A-Za-z0-9]+]] = load i32, i32* [[GEP]]
 ; CHECK-NEXT: store
 ; CHECK-NEXT: br label %loop
 ; CHECK-NOT: extractvalue
@@ -52,7 +52,7 @@ define i32 @extract2gep({i32, i32}* %pair, i32* %P) {
         ; The load + extractvalue should be converted
         ; to an inbounds gep + smaller load.
         ; The new load should be in the same spot as the old load.
-        %L = load {i32, i32}* %pair
+        %L = load {i32, i32}, {i32, i32}* %pair
         store i32 0, i32* %P
         br label %loop
 
@@ -69,12 +69,12 @@ end:
 
 ; CHECK-LABEL: define i32 @doubleextract2gep(
 ; CHECK-NEXT: [[GEP:%[a-z0-9]+]] = getelementptr inbounds {{.*}}, {{.*}}* %arg, i32 0, i32 1, i32 1
-; CHECK-NEXT: [[LOAD:%[A-Za-z0-9]+]] = load i32* [[GEP]]
+; CHECK-NEXT: [[LOAD:%[A-Za-z0-9]+]] = load i32, i32* [[GEP]]
 ; CHECK-NEXT: ret i32 [[LOAD]]
 define i32 @doubleextract2gep({i32, {i32, i32}}* %arg) {
         ; The load + extractvalues should be converted
         ; to a 3-index inbounds gep + smaller load.
-        %L = load {i32, {i32, i32}}* %arg
+        %L = load {i32, {i32, i32}}, {i32, {i32, i32}}* %arg
         %E1 = extractvalue {i32, {i32, i32}} %L, 1
         %E2 = extractvalue {i32, i32} %E1, 1
         ret i32 %E2
@@ -88,7 +88,7 @@ define i32 @doubleextract2gep({i32, {i32, i32}}* %arg) {
 ; CHECK-NEXT: ret
 define i32 @nogep-multiuse({i32, i32}* %pair) {
         ; The load should be left unchanged since both parts are needed.
-        %L = load volatile {i32, i32}* %pair
+        %L = load volatile {i32, i32}, {i32, i32}* %pair
         %LHS = extractvalue {i32, i32} %L, 0
         %RHS = extractvalue {i32, i32} %L, 1
         %R = add i32 %LHS, %RHS
@@ -101,7 +101,7 @@ define i32 @nogep-multiuse({i32, i32}* %pair) {
 ; CHECK-NEXT: ret
 define i32 @nogep-volatile({i32, i32}* %pair) {
         ; The load volatile should be left unchanged.
-        %L = load volatile {i32, i32}* %pair
+        %L = load volatile {i32, i32}, {i32, i32}* %pair
         %E = extractvalue {i32, i32} %L, 1
         ret i32 %E
 }

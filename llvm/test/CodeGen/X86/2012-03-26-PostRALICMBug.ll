@@ -21,7 +21,7 @@ entry:
 
 if.end:                                           ; preds = %entry
   %size5 = getelementptr inbounds %struct.ref_s, %struct.ref_s* %op, i64 0, i32 2
-  %tmp6 = load i16* %size5, align 2
+  %tmp6 = load i16, i16* %size5, align 2
   %tobool1 = icmp eq i16 %tmp6, 0
   %1 = select i1 %tobool1, i32 1396, i32 -1910
   %index10 = add i32 %index9, %1
@@ -29,12 +29,12 @@ if.end:                                           ; preds = %entry
 
 while.body.lr.ph:                                 ; preds = %if.end
   %refs = bitcast %struct.ref_s* %op to %struct.ref_s**
-  %tmp9 = load %struct.ref_s** %refs, align 8
+  %tmp9 = load %struct.ref_s*, %struct.ref_s** %refs, align 8
   %tmp4 = zext i16 %tmp6 to i64
   %index13 = add i32 %index10, 1658
   %2 = sext i32 %index13 to i64
   %3 = getelementptr [3891 x i64], [3891 x i64]* @table, i64 0, i64 %2
-  %blockaddress14 = load i64* %3, align 8
+  %blockaddress14 = load i64, i64* %3, align 8
   %4 = inttoptr i64 %blockaddress14 to i8*
   indirectbr i8* %4, [label %while.body]
 
@@ -50,7 +50,7 @@ while.body:                                       ; preds = %while.body, %while.
   %tmp8 = select i1 %exitcond5, i64 13, i64 0
   %5 = sext i32 %index15 to i64
   %6 = getelementptr [3891 x i64], [3891 x i64]* @table, i64 0, i64 %5
-  %blockaddress16 = load i64* %6, align 8
+  %blockaddress16 = load i64, i64* %6, align 8
   %7 = inttoptr i64 %blockaddress16 to i8*
   indirectbr i8* %7, [label %return, label %while.body]
 

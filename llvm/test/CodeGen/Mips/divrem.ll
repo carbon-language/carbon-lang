@@ -220,8 +220,8 @@ entry:
 ; FIXME: It's not clear what this is supposed to test.
 define i32 @killFlags() {
 entry:
-  %0 = load i32* @g0, align 4
-  %1 = load i32* @g1, align 4
+  %0 = load i32, i32* @g0, align 4
+  %1 = load i32, i32* @g1, align 4
   %div = sdiv i32 %0, %1
   ret i32 %div
 }

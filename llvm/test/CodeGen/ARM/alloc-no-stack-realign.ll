@@ -31,9 +31,9 @@ entry:
 ; NO-REALIGN: vst1.32 {{{d[0-9]+, d[0-9]+}}}, [r[[R0]]:128]!
 ; NO-REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R0]]:128]
  %retval = alloca <16 x float>, align 16
- %0 = load <16 x float>* @T3_retval, align 16
+ %0 = load <16 x float>, <16 x float>* @T3_retval, align 16
  store <16 x float> %0, <16 x float>* %retval
- %1 = load <16 x float>* %retval
+ %1 = load <16 x float>, <16 x float>* %retval
  store <16 x float> %1, <16 x float>* %agg.result, align 16
  ret void
 }
@@ -66,9 +66,9 @@ entry:
 ; REALIGN: vst1.32 {{{d[0-9]+, d[0-9]+}}}, [r[[R0]]:128]!
 ; REALIGN: vst1.64 {{{d[0-9]+, d[0-9]+}}}, [r[[R0]]:128]
  %retval = alloca <16 x float>, align 16
- %0 = load <16 x float>* @T3_retval, align 16
+ %0 = load <16 x float>, <16 x float>* @T3_retval, align 16
  store <16 x float> %0, <16 x float>* %retval
- %1 = load <16 x float>* %retval
+ %1 = load <16 x float>, <16 x float>* %retval
  store <16 x float> %1, <16 x float>* %agg.result, align 16
  ret void
 }

@@ -215,7 +215,7 @@ entry:
   %this.addr = alloca %struct.C*, align 8
   store %struct.C* %this, %struct.C** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %struct.C** %this.addr, metadata !50, metadata !{!"0x102"}), !dbg !52
-  %this1 = load %struct.C** %this.addr
+  %this1 = load %struct.C*, %struct.C** %this.addr
   store i32 0, i32* @_ZN1C22static_member_variableE, align 4, !dbg !53
   ret void, !dbg !54
 }
@@ -226,7 +226,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 ; Function Attrs: nounwind uwtable
 define i32 @_ZN1C22static_member_functionEv() #0 align 2 {
 entry:
-  %0 = load i32* @_ZN1C22static_member_variableE, align 4, !dbg !55
+  %0 = load i32, i32* @_ZN1C22static_member_variableE, align 4, !dbg !55
   ret i32 %0, !dbg !55
 }
 
@@ -252,13 +252,13 @@ entry:
 ; Function Attrs: nounwind uwtable
 define i32 @_Z2f7v() #0 {
 entry:
-  %0 = load i32* @_ZN12_GLOBAL__N_11iE, align 4, !dbg !60
+  %0 = load i32, i32* @_ZN12_GLOBAL__N_11iE, align 4, !dbg !60
   %call = call i32* @_Z2f3v(), !dbg !60
-  %1 = load i32* %call, align 4, !dbg !60
+  %1 = load i32, i32* %call, align 4, !dbg !60
   %add = add nsw i32 %0, %1, !dbg !60
-  %2 = load i32* @_ZN12_GLOBAL__N_15inner1bE, align 4, !dbg !60
+  %2 = load i32, i32* @_ZN12_GLOBAL__N_15inner1bE, align 4, !dbg !60
   %add1 = add nsw i32 %add, %2, !dbg !60
-  %3 = load i32* @_ZN5outer12_GLOBAL__N_11cE, align 4, !dbg !60
+  %3 = load i32, i32* @_ZN5outer12_GLOBAL__N_11cE, align 4, !dbg !60
   %add2 = add nsw i32 %add1, %3, !dbg !60
   ret i32 %add2, !dbg !60
 }

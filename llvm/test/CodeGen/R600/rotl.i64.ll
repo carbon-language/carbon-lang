@@ -28,8 +28,8 @@ entry:
 ; BOTH: s_endpgm
 define void @v_rotl_i64(i64 addrspace(1)* %in, i64 addrspace(1)* %xptr, i64 addrspace(1)* %yptr) {
 entry:
-  %x = load i64 addrspace(1)* %xptr, align 8
-  %y = load i64 addrspace(1)* %yptr, align 8
+  %x = load i64, i64 addrspace(1)* %xptr, align 8
+  %y = load i64, i64 addrspace(1)* %yptr, align 8
   %tmp0 = shl i64 %x, %y
   %tmp1 = sub i64 64, %y
   %tmp2 = lshr i64 %x, %tmp1

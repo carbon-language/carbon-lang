@@ -17,7 +17,7 @@ for.cond:                                         ; preds = %for.body, %entry
 ; PR5981
 define i32 @test2() nounwind ssp {
 entry:
-  %0 = load i32* undef, align 4
+  %0 = load i32, i32* undef, align 4
   %1 = mul nsw i32 undef, %0
   %2 = mul nsw i32 undef, %0
   %3 = add nsw i32 undef, %1
@@ -50,7 +50,7 @@ _:
   br label %_33
 
 _33:                                              ; preds = %_33, %_
-  %tmp348 = load i8* %arg, align 1
+  %tmp348 = load i8, i8* %arg, align 1
   %tmp349 = lshr i8 %tmp348, 7
   %tmp350 = or i8 %tmp349, 42
   %tmp351 = add i8 %tmp350, -42
@@ -123,7 +123,7 @@ for.cond:                                         ; preds = %for.cond, %entry
 ; PR12963
 @a = external global i8
 define i8 @f0(i8 %x) {
-  %t0 = load i8* @a
+  %t0 = load i8, i8* @a
   %t1 = mul i8 %x, %x
   %t2 = mul i8 %t1, %t1
   %t3 = mul i8 %t2, %t2

@@ -21,7 +21,7 @@ bb.i19:                                           ; preds = %bb.i19, %bb3
 define void @test_illegal_build_vector() nounwind {
 entry:
   store <2 x i64> undef, <2 x i64>* undef, align 16
-  %0 = load <16 x i8>* undef, align 16            ; <<16 x i8>> [#uses=1]
+  %0 = load <16 x i8>, <16 x i8>* undef, align 16            ; <<16 x i8>> [#uses=1]
   %1 = or <16 x i8> zeroinitializer, %0           ; <<16 x i8>> [#uses=1]
   store <16 x i8> %1, <16 x i8>* undef, align 16
   ret void
@@ -63,7 +63,7 @@ bb2:
 ; Test trying to do a ShiftCombine on illegal types.
 ; The vector should be split first.
 define void @lshrIllegalType(<8 x i32>* %A) nounwind {
-       %tmp1 = load <8 x i32>* %A
+       %tmp1 = load <8 x i32>, <8 x i32>* %A
        %tmp2 = lshr <8 x i32> %tmp1, < i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3, i32 3>
        store <8 x i32> %tmp2, <8 x i32>* %A
        ret void
@@ -89,7 +89,7 @@ declare void @llvm.arm.neon.vst1.v8i8(i8*, <8 x i8>, i32) nounwind
 define void @i64_buildvector(i64* %ptr, <2 x i64>* %vp) nounwind {
 ; CHECK: i64_buildvector
 ; CHECK: vldr
-  %t0 = load i64* %ptr, align 4
+  %t0 = load i64, i64* %ptr, align 4
   %t1 = insertelement <2 x i64> undef, i64 %t0, i32 0
   store <2 x i64> %t1, <2 x i64>* %vp
   ret void
@@ -98,8 +98,8 @@ define void @i64_buildvector(i64* %ptr, <2 x i64>* %vp) nounwind {
 define void @i64_insertelement(i64* %ptr, <2 x i64>* %vp) nounwind {
 ; CHECK: i64_insertelement
 ; CHECK: vldr
-  %t0 = load i64* %ptr, align 4
-  %vec = load <2 x i64>* %vp
+  %t0 = load i64, i64* %ptr, align 4
+  %vec = load <2 x i64>, <2 x i64>* %vp
   %t1 = insertelement <2 x i64> %vec, i64 %t0, i32 0
   store <2 x i64> %t1, <2 x i64>* %vp
   ret void
@@ -108,7 +108,7 @@ define void @i64_insertelement(i64* %ptr, <2 x i64>* %vp) nounwind {
 define void @i64_extractelement(i64* %ptr, <2 x i64>* %vp) nounwind {
 ; CHECK: i64_extractelement
 ; CHECK: vstr
-  %vec = load <2 x i64>* %vp
+  %vec = load <2 x i64>, <2 x i64>* %vp
   %t1 = extractelement <2 x i64> %vec, i32 0
   store i64 %t1, i64* %ptr
   ret void
@@ -116,7 +116,7 @@ define void @i64_extractelement(i64* %ptr, <2 x i64>* %vp) nounwind {
 
 ; Test trying to do a AND Combine on illegal types.
 define void @andVec(<3 x i8>* %A) nounwind {
-  %tmp = load <3 x i8>* %A, align 4
+  %tmp = load <3 x i8>, <3 x i8>* %A, align 4
   %and = and <3 x i8> %tmp, <i8 7, i8 7, i8 7>
   store <3 x i8> %and, <3 x i8>* %A
   ret void
@@ -125,7 +125,7 @@ define void @andVec(<3 x i8>* %A) nounwind {
 
 ; Test trying to do an OR Combine on illegal types.
 define void @orVec(<3 x i8>* %A) nounwind {
-  %tmp = load <3 x i8>* %A, align 4
+  %tmp = load <3 x i8>, <3 x i8>* %A, align 4
   %or = or <3 x i8> %tmp, <i8 7, i8 7, i8 7>
   store <3 x i8> %or, <3 x i8>* %A
   ret void
@@ -146,7 +146,7 @@ define i16 @foldBuildVectors() {
 ; shuffles.
 ; CHECK-LABEL: reverse_v8i16:
 define void @reverse_v8i16(<8 x i16>* %loadaddr, <8 x i16>* %storeaddr) {
-  %v0 = load <8 x i16>* %loadaddr
+  %v0 = load <8 x i16>, <8 x i16>* %loadaddr
   ; CHECK: vrev64.16
   ; CHECK: vext.16
   %v1 = shufflevector <8 x i16> %v0, <8 x i16> undef,
@@ -159,7 +159,7 @@ define void @reverse_v8i16(<8 x i16>* %loadaddr, <8 x i16>* %storeaddr) {
 ; shuffles.
 ; CHECK-LABEL: reverse_v16i8:
 define void @reverse_v16i8(<16 x i8>* %loadaddr, <16 x i8>* %storeaddr) {
-  %v0 = load <16 x i8>* %loadaddr
+  %v0 = load <16 x i8>, <16 x i8>* %loadaddr
   ; CHECK: vrev64.8
   ; CHECK: vext.8
   %v1 = shufflevector <16 x i8> %v0, <16 x i8> undef,
@@ -180,9 +180,9 @@ define void @reverse_v16i8(<16 x i8>* %loadaddr, <16 x i8>* %storeaddr) {
 define <8 x i16> @t3(i8 zeroext %xf, i8* nocapture %sp0, i8* nocapture %sp1, i32* nocapture %outp) {
 entry:
   %pix_sp0.0.cast = bitcast i8* %sp0 to i32*
-  %pix_sp0.0.copyload = load i32* %pix_sp0.0.cast, align 1
+  %pix_sp0.0.copyload = load i32, i32* %pix_sp0.0.cast, align 1
   %pix_sp1.0.cast = bitcast i8* %sp1 to i32*
-  %pix_sp1.0.copyload = load i32* %pix_sp1.0.cast, align 1
+  %pix_sp1.0.copyload = load i32, i32* %pix_sp1.0.cast, align 1
   %vecinit = insertelement <2 x i32> undef, i32 %pix_sp0.0.copyload, i32 0
   %vecinit1 = insertelement <2 x i32> %vecinit, i32 %pix_sp1.0.copyload, i32 1
   %0 = bitcast <2 x i32> %vecinit1 to <8 x i8>
@@ -200,7 +200,7 @@ define <8 x i16> @t4(i8* nocapture %sp0) {
 ; CHECK: vld1.32 {{{d[0-9]+}}[0]}, [r0]
 entry:
   %pix_sp0.0.cast = bitcast i8* %sp0 to i32*
-  %pix_sp0.0.copyload = load i32* %pix_sp0.0.cast, align 1
+  %pix_sp0.0.copyload = load i32, i32* %pix_sp0.0.cast, align 1
   %vec = insertelement <2 x i32> undef, i32 %pix_sp0.0.copyload, i32 0
   %0 = bitcast <2 x i32> %vec to <8 x i8>
   %vmull.i = tail call <8 x i16> @llvm.arm.neon.vmullu.v8i16(<8 x i8> %0, <8 x i8> %0)
@@ -219,11 +219,11 @@ entry:
 define <8 x i16> @t5(i8* nocapture %sp0, i8* nocapture %sp1, i8* nocapture %sp2) {
 entry:
   %pix_sp0.0.cast = bitcast i8* %sp0 to i32*
-  %pix_sp0.0.copyload = load i32* %pix_sp0.0.cast, align 1
+  %pix_sp0.0.copyload = load i32, i32* %pix_sp0.0.cast, align 1
   %pix_sp1.0.cast = bitcast i8* %sp1 to i32*
-  %pix_sp1.0.copyload = load i32* %pix_sp1.0.cast, align 1
+  %pix_sp1.0.copyload = load i32, i32* %pix_sp1.0.cast, align 1
   %pix_sp2.0.cast = bitcast i8* %sp2 to i32*
-  %pix_sp2.0.copyload = load i32* %pix_sp2.0.cast, align 1
+  %pix_sp2.0.copyload = load i32, i32* %pix_sp2.0.cast, align 1
   %vec = insertelement <2 x i32> undef, i32 %pix_sp0.0.copyload, i32 1
   %vecinit1 = insertelement <2 x i32> %vec, i32 %pix_sp1.0.copyload, i32 0
   %vecinit2 = insertelement <2 x i32> %vec, i32 %pix_sp2.0.copyload, i32 0

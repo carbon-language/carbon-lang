@@ -7,7 +7,7 @@ target triple = "x86_64-apple-darwin13.3.0"
 
 define i32 @fn1() {
 entry:
-  %init = load double* @a, align 8
+  %init = load double, double* @a, align 8
   br label %loop
 
 loop:

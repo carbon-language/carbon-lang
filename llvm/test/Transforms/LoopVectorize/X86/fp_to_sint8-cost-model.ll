@@ -12,7 +12,7 @@ entry:
 for.body:
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds float, float* %b, i64 %indvars.iv
-  %tmp = load float* %arrayidx, align 4
+  %tmp = load float, float* %arrayidx, align 4
   %conv = fptosi float %tmp to i8
   %arrayidx2 = getelementptr inbounds i8, i8* %a, i64 %indvars.iv
   store i8 %conv, i8* %arrayidx2, align 4

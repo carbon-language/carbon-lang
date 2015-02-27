@@ -16,6 +16,6 @@ define i32 @f1(i32 *%src) {
 ; CHECK-FAST: bcr 14, %r0
 ; CHECK-FAST: l %r2, 0(%r2)
 ; CHECK-FAST: br %r14
-  %val = load volatile i32 *%src
+  %val = load volatile i32 , i32 *%src
   ret i32 %val
 }

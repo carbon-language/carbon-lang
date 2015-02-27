@@ -18,7 +18,7 @@ define void @callee(%struct.empty* noalias sret %agg.result, %struct.empty* byva
 entry:
   %a2.addr = alloca %struct.empty*, align 8
   store %struct.empty* %a2, %struct.empty** %a2.addr, align 8
-  %0 = load %struct.empty** %a2.addr, align 8
+  %0 = load %struct.empty*, %struct.empty** %a2.addr, align 8
   %1 = bitcast %struct.empty* %agg.result to i8*
   %2 = bitcast %struct.empty* %0 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %2, i64 0, i32 1, i1 false)

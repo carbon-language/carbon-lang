@@ -19,7 +19,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 ; CHECK: test_consecutive_store
 ; CHECK: The Widest type: 64 bits
 define void @test_consecutive_store(%0**, %0**, %0** nocapture) nounwind ssp uwtable align 2 {
-  %4 = load %0** %2, align 8
+  %4 = load %0*, %0** %2, align 8
   %5 = icmp eq %0** %0, %1
   br i1 %5, label %12, label %6
 
@@ -62,7 +62,7 @@ define void @test_nonconsecutive_store() nounwind ssp uwtable {
 ; <label>:3                                       ; preds = %3, %1
   %4 = phi i64 [ 0, %1 ], [ %11, %3 ]
   %5 = getelementptr inbounds [2048 x i16], [2048 x i16]* @q, i64 0, i64 %4
-  %6 = load i16* %5, align 2
+  %6 = load i16, i16* %5, align 2
   %7 = sext i16 %6 to i64
   %8 = add i64 %7, 1
   %9 = inttoptr i64 %8 to i32*
@@ -101,7 +101,7 @@ define i8 @test_consecutive_ptr_load() nounwind readonly ssp uwtable {
   %2 = phi i64 [ 0, %0 ], [ %10, %1 ]
   %3 = phi i8 [ 0, %0 ], [ %9, %1 ]
   %4 = getelementptr inbounds [1024 x i32*], [1024 x i32*]* @ia, i32 0, i64 %2
-  %5 = load i32** %4, align 4
+  %5 = load i32*, i32** %4, align 4
   %6 = ptrtoint i32* %5 to i64
   %7 = trunc i64 %6 to i8
   %8 = add i8 %3, 1
@@ -129,7 +129,7 @@ define void @test_nonconsecutive_ptr_load() nounwind ssp uwtable {
   %4 = phi i64 [ 0, %1 ], [ %10, %3 ]
   %5 = getelementptr inbounds [2048 x [8 x i32*]], [2048 x [8 x i32*]]* @p2, i64 0, i64 %4, i64 %2
   %6 = getelementptr inbounds [2048 x i16], [2048 x i16]* @q2, i64 0, i64 %4
-  %7 = load i32** %5, align 2
+  %7 = load i32*, i32** %5, align 2
   %8 = ptrtoint i32* %7 to i64
   %9 = trunc i64 %8 to i16
   store i16 %9, i16* %6, align 8

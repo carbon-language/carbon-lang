@@ -30,16 +30,16 @@ entry:
   store %struct.int16x8x2_t* %dst, %struct.int16x8x2_t** %dst_addr
   %2 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %__ax, i32 0, i32 0
   %3 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %tmp_addr, i32 0, i32 0
-  %4 = load <8 x i16>* %3, align 16
+  %4 = load <8 x i16>, <8 x i16>* %3, align 16
   store <8 x i16> %4, <8 x i16>* %2, align 16
   %5 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %__bx, i32 0, i32 0
   %6 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %tmp_addr, i32 0, i32 0
-  %7 = load <8 x i16>* %6, align 16
+  %7 = load <8 x i16>, <8 x i16>* %6, align 16
   store <8 x i16> %7, <8 x i16>* %5, align 16
   %8 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %__ax, i32 0, i32 0
-  %9 = load <8 x i16>* %8, align 16
+  %9 = load <8 x i16>, <8 x i16>* %8, align 16
   %10 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %__bx, i32 0, i32 0
-  %11 = load <8 x i16>* %10, align 16
+  %11 = load <8 x i16>, <8 x i16>* %10, align 16
   %12 = getelementptr inbounds %union..0anon, %union..0anon* %__rv, i32 0, i32 0
   %13 = bitcast %struct.int16x8x2_t* %12 to %struct.__neon_int16x8x2_t*
   %14 = shufflevector <8 x i16> %9, <8 x i16> %11, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
@@ -55,7 +55,7 @@ entry:
   %tmp21 = bitcast %struct.int16x8x2_t* %tmp2 to i8*
   %21 = bitcast %struct.int16x8x2_t* %0 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp21, i8* %21, i32 32, i32 16, i1 false)
-  %22 = load %struct.int16x8x2_t** %dst_addr, align 4
+  %22 = load %struct.int16x8x2_t*, %struct.int16x8x2_t** %dst_addr, align 4
   %23 = bitcast %struct.int16x8x2_t* %22 to i8*
   %tmp22 = bitcast %struct.int16x8x2_t* %tmp2 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %23, i8* %tmp22, i32 32, i32 16, i1 false)

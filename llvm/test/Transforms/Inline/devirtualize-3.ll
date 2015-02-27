@@ -17,7 +17,7 @@ entry:
   %tmp = getelementptr inbounds %struct.cont_t, %struct.cont_t* %cont, i32 0, i32 0 ; <void (i8*, i32)**> [#uses=1]
   %tmp1 = getelementptr inbounds %struct.cont_t, %struct.cont_t* %cont, i32 0, i32 0 ; <void (i8*, i32)**> [#uses=2]
   store void (i8*, i32)* bitcast (void (%struct.cont_t*, i32)* @quit to void (i8*, i32)*), void (i8*, i32)** %tmp1
-  %tmp2 = load void (i8*, i32)** %tmp1            ; <void (i8*, i32)*> [#uses=1]
+  %tmp2 = load void (i8*, i32)*, void (i8*, i32)** %tmp1            ; <void (i8*, i32)*> [#uses=1]
   store void (i8*, i32)* %tmp2, void (i8*, i32)** %tmp
   %tmp3 = getelementptr inbounds %struct.cont_t, %struct.cont_t* %cont, i32 0, i32 1 ; <i8**> [#uses=1]
   store i8* null, i8** %tmp3
@@ -51,14 +51,14 @@ entry:
 define internal void @foo2(%struct.foo_sf_t* %sf, i32 %y) nounwind ssp {
 entry:
   %tmp1 = getelementptr inbounds %struct.foo_sf_t, %struct.foo_sf_t* %sf, i32 0, i32 0 ; <%struct.cont_t**> [#uses=1]
-  %tmp2 = load %struct.cont_t** %tmp1             ; <%struct.cont_t*> [#uses=1]
+  %tmp2 = load %struct.cont_t*, %struct.cont_t** %tmp1             ; <%struct.cont_t*> [#uses=1]
   %tmp3 = getelementptr inbounds %struct.cont_t, %struct.cont_t* %tmp2, i32 0, i32 0 ; <void (i8*, i32)**> [#uses=1]
-  %tmp4 = load void (i8*, i32)** %tmp3            ; <void (i8*, i32)*> [#uses=1]
+  %tmp4 = load void (i8*, i32)*, void (i8*, i32)** %tmp3            ; <void (i8*, i32)*> [#uses=1]
   %tmp6 = getelementptr inbounds %struct.foo_sf_t, %struct.foo_sf_t* %sf, i32 0, i32 0 ; <%struct.cont_t**> [#uses=1]
-  %tmp7 = load %struct.cont_t** %tmp6             ; <%struct.cont_t*> [#uses=1]
+  %tmp7 = load %struct.cont_t*, %struct.cont_t** %tmp6             ; <%struct.cont_t*> [#uses=1]
   %conv = bitcast %struct.cont_t* %tmp7 to i8*    ; <i8*> [#uses=1]
   %tmp9 = getelementptr inbounds %struct.foo_sf_t, %struct.foo_sf_t* %sf, i32 0, i32 1 ; <i32*> [#uses=1]
-  %tmp10 = load i32* %tmp9                        ; <i32> [#uses=1]
+  %tmp10 = load i32, i32* %tmp9                        ; <i32> [#uses=1]
   %mul = mul i32 %tmp10, %y                       ; <i32> [#uses=1]
   call void %tmp4(i8* %conv, i32 %mul)
   ret void
@@ -67,9 +67,9 @@ entry:
 define internal void @bar(%struct.cont_t* %c, i32 %y) nounwind ssp {
 entry:
   %tmp1 = getelementptr inbounds %struct.cont_t, %struct.cont_t* %c, i32 0, i32 0 ; <void (i8*, i32)**> [#uses=1]
-  %tmp2 = load void (i8*, i32)** %tmp1            ; <void (i8*, i32)*> [#uses=1]
+  %tmp2 = load void (i8*, i32)*, void (i8*, i32)** %tmp1            ; <void (i8*, i32)*> [#uses=1]
   %tmp4 = getelementptr inbounds %struct.cont_t, %struct.cont_t* %c, i32 0, i32 1 ; <i8**> [#uses=1]
-  %tmp5 = load i8** %tmp4                         ; <i8*> [#uses=1]
+  %tmp5 = load i8*, i8** %tmp4                         ; <i8*> [#uses=1]
   %add = add nsw i32 %y, 5                        ; <i32> [#uses=1]
   call void %tmp2(i8* %tmp5, i32 %add)
   ret void

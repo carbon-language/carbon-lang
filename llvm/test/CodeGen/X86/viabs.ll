@@ -262,7 +262,7 @@ define <8 x i64> @test13(<8 x i64>* %a.ptr) nounwind {
 ; AVX512-LABEL: test13:
 ; AVX512: vpabsq (%
 ; AVX512-NEXT: ret
-        %a = load <8 x i64>* %a.ptr, align 8
+        %a = load <8 x i64>, <8 x i64>* %a.ptr, align 8
         %tmp1neg = sub <8 x i64> zeroinitializer, %a
         %b = icmp sle <8 x i64> %a, zeroinitializer
         %abs = select <8 x i1> %b, <8 x i64> %tmp1neg, <8 x i64> %a

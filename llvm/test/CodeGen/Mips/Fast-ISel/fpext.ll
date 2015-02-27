@@ -10,7 +10,7 @@
 ; Function Attrs: nounwind
 define void @dv() #0 {
 entry:
-  %0 = load float* @f, align 4
+  %0 = load float, float* @f, align 4
   %conv = fpext float %0 to double
 ; CHECK: cvt.d.s  $f{{[0-9]+}}, $f{{[0-9]+}}
   store double %conv, double* @d_f, align 8

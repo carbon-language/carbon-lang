@@ -36,15 +36,15 @@ entry:
   store %"struct.kc::impl_fileline_FileLine"* %this, %"struct.kc::impl_fileline_FileLine"** %this_addr
   store %"struct.kc::impl_casestring__Str"* %_file, %"struct.kc::impl_casestring__Str"** %_file_addr
   store i32 %_line, i32* %_line_addr
-  %0 = load %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
+  %0 = load %"struct.kc::impl_fileline_FileLine"*, %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
   %1 = getelementptr inbounds %"struct.kc::impl_fileline_FileLine", %"struct.kc::impl_fileline_FileLine"* %0, i32 0, i32 0
   call void @_ZN2kc13impl_filelineC2Ev() nounwind
-  %2 = load %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
+  %2 = load %"struct.kc::impl_fileline_FileLine"*, %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
   %3 = getelementptr inbounds %"struct.kc::impl_fileline_FileLine", %"struct.kc::impl_fileline_FileLine"* %2, i32 0, i32 0
   %4 = getelementptr inbounds %"struct.kc::impl_fileline", %"struct.kc::impl_fileline"* %3, i32 0, i32 0
   %5 = getelementptr inbounds %"struct.kc::impl_abstract_phylum", %"struct.kc::impl_abstract_phylum"* %4, i32 0, i32 0
   store i32 (...)** getelementptr inbounds ([13 x i32 (...)*]* @_ZTVN2kc22impl_fileline_FileLineE, i32 0, i32 2), i32 (...)*** %5, align 4
-  %6 = load %"struct.kc::impl_casestring__Str"** %_file_addr, align 4
+  %6 = load %"struct.kc::impl_casestring__Str"*, %"struct.kc::impl_casestring__Str"** %_file_addr, align 4
   %7 = icmp eq %"struct.kc::impl_casestring__Str"* %6, null
   br i1 %7, label %bb, label %bb1
 
@@ -57,20 +57,20 @@ invcont:                                          ; preds = %bb
   br label %bb2
 
 bb1:                                              ; preds = %entry
-  %9 = load %"struct.kc::impl_casestring__Str"** %_file_addr, align 4
+  %9 = load %"struct.kc::impl_casestring__Str"*, %"struct.kc::impl_casestring__Str"** %_file_addr, align 4
   store %"struct.kc::impl_casestring__Str"* %9, %"struct.kc::impl_casestring__Str"** %iftmp.99, align 4
   br label %bb2
 
 bb2:                                              ; preds = %bb1, %invcont
-  %10 = load %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
+  %10 = load %"struct.kc::impl_fileline_FileLine"*, %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
   %11 = getelementptr inbounds %"struct.kc::impl_fileline_FileLine", %"struct.kc::impl_fileline_FileLine"* %10, i32 0, i32 0
   %12 = getelementptr inbounds %"struct.kc::impl_fileline", %"struct.kc::impl_fileline"* %11, i32 0, i32 1
-  %13 = load %"struct.kc::impl_casestring__Str"** %iftmp.99, align 4
+  %13 = load %"struct.kc::impl_casestring__Str"*, %"struct.kc::impl_casestring__Str"** %iftmp.99, align 4
   store %"struct.kc::impl_casestring__Str"* %13, %"struct.kc::impl_casestring__Str"** %12, align 4
-  %14 = load %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
+  %14 = load %"struct.kc::impl_fileline_FileLine"*, %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
   %15 = getelementptr inbounds %"struct.kc::impl_fileline_FileLine", %"struct.kc::impl_fileline_FileLine"* %14, i32 0, i32 0
   %16 = getelementptr inbounds %"struct.kc::impl_fileline", %"struct.kc::impl_fileline"* %15, i32 0, i32 2
-  %17 = load i32* %_line_addr, align 4
+  %17 = load i32, i32* %_line_addr, align 4
   store i32 %17, i32* %16, align 4
   ret void
 
@@ -79,21 +79,21 @@ lpad:                                             ; preds = %bb
               cleanup
   %exn = extractvalue { i8*, i32 } %eh_ptr, 0
   store i8* %exn, i8** %eh_exception
-  %eh_ptr4 = load i8** %eh_exception
+  %eh_ptr4 = load i8*, i8** %eh_exception
   %eh_select5 = extractvalue { i8*, i32 } %eh_ptr, 1
   store i32 %eh_select5, i32* %eh_selector
-  %eh_select = load i32* %eh_selector
+  %eh_select = load i32, i32* %eh_selector
   store i32 %eh_select, i32* %save_filt.150, align 4
-  %eh_value = load i8** %eh_exception
+  %eh_value = load i8*, i8** %eh_exception
   store i8* %eh_value, i8** %save_eptr.149, align 4
-  %18 = load %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
+  %18 = load %"struct.kc::impl_fileline_FileLine"*, %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
   %19 = bitcast %"struct.kc::impl_fileline_FileLine"* %18 to %"struct.kc::impl_fileline"*
   call void @_ZN2kc13impl_filelineD2Ev(%"struct.kc::impl_fileline"* %19) nounwind
-  %20 = load i8** %save_eptr.149, align 4
+  %20 = load i8*, i8** %save_eptr.149, align 4
   store i8* %20, i8** %eh_exception, align 4
-  %21 = load i32* %save_filt.150, align 4
+  %21 = load i32, i32* %save_filt.150, align 4
   store i32 %21, i32* %eh_selector, align 4
-  %eh_ptr6 = load i8** %eh_exception
+  %eh_ptr6 = load i8*, i8** %eh_exception
   call void @_Unwind_Resume_or_Rethrow()
   unreachable
 }
@@ -105,7 +105,7 @@ entry:
   %this_addr = alloca %"struct.kc::impl_fileline"*, align 4
   %"alloca point" = bitcast i32 0 to i32
   store %"struct.kc::impl_fileline"* %this, %"struct.kc::impl_fileline"** %this_addr
-  %0 = load %"struct.kc::impl_fileline"** %this_addr, align 4
+  %0 = load %"struct.kc::impl_fileline"*, %"struct.kc::impl_fileline"** %this_addr, align 4
   %1 = getelementptr inbounds %"struct.kc::impl_fileline", %"struct.kc::impl_fileline"* %0, i32 0, i32 0
   %2 = getelementptr inbounds %"struct.kc::impl_abstract_phylum", %"struct.kc::impl_abstract_phylum"* %1, i32 0, i32 0
   store i32 (...)** getelementptr inbounds ([13 x i32 (...)*]* @_ZTVN2kc13impl_filelineE, i32 0, i32 2), i32 (...)*** %2, align 4
@@ -114,7 +114,7 @@ entry:
   br i1 %toBool, label %bb1, label %return
 
 bb1:                                              ; preds = %entry
-  %4 = load %"struct.kc::impl_fileline"** %this_addr, align 4
+  %4 = load %"struct.kc::impl_fileline"*, %"struct.kc::impl_fileline"** %this_addr, align 4
   %5 = bitcast %"struct.kc::impl_fileline"* %4 to i8*
   call void @_ZdlPv() nounwind
   br label %return
@@ -130,7 +130,7 @@ entry:
   %this_addr = alloca %"struct.kc::impl_fileline"*, align 4
   %"alloca point" = bitcast i32 0 to i32
   store %"struct.kc::impl_fileline"* %this, %"struct.kc::impl_fileline"** %this_addr
-  %0 = load %"struct.kc::impl_fileline"** %this_addr, align 4
+  %0 = load %"struct.kc::impl_fileline"*, %"struct.kc::impl_fileline"** %this_addr, align 4
   %1 = getelementptr inbounds %"struct.kc::impl_fileline", %"struct.kc::impl_fileline"* %0, i32 0, i32 0
   %2 = getelementptr inbounds %"struct.kc::impl_abstract_phylum", %"struct.kc::impl_abstract_phylum"* %1, i32 0, i32 0
   store i32 (...)** getelementptr inbounds ([13 x i32 (...)*]* @_ZTVN2kc13impl_filelineE, i32 0, i32 2), i32 (...)*** %2, align 4
@@ -139,7 +139,7 @@ entry:
   br i1 %toBool, label %bb1, label %return
 
 bb1:                                              ; preds = %entry
-  %4 = load %"struct.kc::impl_fileline"** %this_addr, align 4
+  %4 = load %"struct.kc::impl_fileline"*, %"struct.kc::impl_fileline"** %this_addr, align 4
   %5 = bitcast %"struct.kc::impl_fileline"* %4 to i8*
   call void @_ZdlPv() nounwind
   br label %return
@@ -162,15 +162,15 @@ entry:
   store %"struct.kc::impl_fileline_FileLine"* %this, %"struct.kc::impl_fileline_FileLine"** %this_addr
   store %"struct.kc::impl_casestring__Str"* %_file, %"struct.kc::impl_casestring__Str"** %_file_addr
   store i32 %_line, i32* %_line_addr
-  %0 = load %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
+  %0 = load %"struct.kc::impl_fileline_FileLine"*, %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
   %1 = getelementptr inbounds %"struct.kc::impl_fileline_FileLine", %"struct.kc::impl_fileline_FileLine"* %0, i32 0, i32 0
   call void @_ZN2kc13impl_filelineC2Ev() nounwind
-  %2 = load %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
+  %2 = load %"struct.kc::impl_fileline_FileLine"*, %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
   %3 = getelementptr inbounds %"struct.kc::impl_fileline_FileLine", %"struct.kc::impl_fileline_FileLine"* %2, i32 0, i32 0
   %4 = getelementptr inbounds %"struct.kc::impl_fileline", %"struct.kc::impl_fileline"* %3, i32 0, i32 0
   %5 = getelementptr inbounds %"struct.kc::impl_abstract_phylum", %"struct.kc::impl_abstract_phylum"* %4, i32 0, i32 0
   store i32 (...)** getelementptr inbounds ([13 x i32 (...)*]* @_ZTVN2kc22impl_fileline_FileLineE, i32 0, i32 2), i32 (...)*** %5, align 4
-  %6 = load %"struct.kc::impl_casestring__Str"** %_file_addr, align 4
+  %6 = load %"struct.kc::impl_casestring__Str"*, %"struct.kc::impl_casestring__Str"** %_file_addr, align 4
   %7 = icmp eq %"struct.kc::impl_casestring__Str"* %6, null
   br i1 %7, label %bb, label %bb1
 
@@ -183,20 +183,20 @@ invcont:                                          ; preds = %bb
   br label %bb2
 
 bb1:                                              ; preds = %entry
-  %9 = load %"struct.kc::impl_casestring__Str"** %_file_addr, align 4
+  %9 = load %"struct.kc::impl_casestring__Str"*, %"struct.kc::impl_casestring__Str"** %_file_addr, align 4
   store %"struct.kc::impl_casestring__Str"* %9, %"struct.kc::impl_casestring__Str"** %iftmp.99, align 4
   br label %bb2
 
 bb2:                                              ; preds = %bb1, %invcont
-  %10 = load %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
+  %10 = load %"struct.kc::impl_fileline_FileLine"*, %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
   %11 = getelementptr inbounds %"struct.kc::impl_fileline_FileLine", %"struct.kc::impl_fileline_FileLine"* %10, i32 0, i32 0
   %12 = getelementptr inbounds %"struct.kc::impl_fileline", %"struct.kc::impl_fileline"* %11, i32 0, i32 1
-  %13 = load %"struct.kc::impl_casestring__Str"** %iftmp.99, align 4
+  %13 = load %"struct.kc::impl_casestring__Str"*, %"struct.kc::impl_casestring__Str"** %iftmp.99, align 4
   store %"struct.kc::impl_casestring__Str"* %13, %"struct.kc::impl_casestring__Str"** %12, align 4
-  %14 = load %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
+  %14 = load %"struct.kc::impl_fileline_FileLine"*, %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
   %15 = getelementptr inbounds %"struct.kc::impl_fileline_FileLine", %"struct.kc::impl_fileline_FileLine"* %14, i32 0, i32 0
   %16 = getelementptr inbounds %"struct.kc::impl_fileline", %"struct.kc::impl_fileline"* %15, i32 0, i32 2
-  %17 = load i32* %_line_addr, align 4
+  %17 = load i32, i32* %_line_addr, align 4
   store i32 %17, i32* %16, align 4
   ret void
 
@@ -205,21 +205,21 @@ lpad:                                             ; preds = %bb
               cleanup
   %exn = extractvalue { i8*, i32 } %eh_ptr, 0
   store i8* %exn, i8** %eh_exception
-  %eh_ptr4 = load i8** %eh_exception
+  %eh_ptr4 = load i8*, i8** %eh_exception
   %eh_select5 = extractvalue { i8*, i32 } %eh_ptr, 1
   store i32 %eh_select5, i32* %eh_selector
-  %eh_select = load i32* %eh_selector
+  %eh_select = load i32, i32* %eh_selector
   store i32 %eh_select, i32* %save_filt.148, align 4
-  %eh_value = load i8** %eh_exception
+  %eh_value = load i8*, i8** %eh_exception
   store i8* %eh_value, i8** %save_eptr.147, align 4
-  %18 = load %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
+  %18 = load %"struct.kc::impl_fileline_FileLine"*, %"struct.kc::impl_fileline_FileLine"** %this_addr, align 4
   %19 = bitcast %"struct.kc::impl_fileline_FileLine"* %18 to %"struct.kc::impl_fileline"*
   call void @_ZN2kc13impl_filelineD2Ev(%"struct.kc::impl_fileline"* %19) nounwind
-  %20 = load i8** %save_eptr.147, align 4
+  %20 = load i8*, i8** %save_eptr.147, align 4
   store i8* %20, i8** %eh_exception, align 4
-  %21 = load i32* %save_filt.148, align 4
+  %21 = load i32, i32* %save_filt.148, align 4
   store i32 %21, i32* %eh_selector, align 4
-  %eh_ptr6 = load i8** %eh_exception
+  %eh_ptr6 = load i8*, i8** %eh_exception
   call void @_Unwind_Resume_or_Rethrow()
   unreachable
 }

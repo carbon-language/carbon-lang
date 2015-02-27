@@ -16,10 +16,10 @@ target triple = "thumbv7-apple-ios"
 ; CHECK:	.long	1123477881
 define void @func(float* nocapture %x, double* nocapture %y) nounwind ssp {
 entry:
-  %0 = load float* %x, align 4
+  %0 = load float, float* %x, align 4
   %add = fadd float %0, 0x405EDD2F20000000
   store float %add, float* %x, align 4
-  %1 = load double* %y, align 4
+  %1 = load double, double* %y, align 4
   %add1 = fadd double %1, 2.234560e+02
   store double %add1, double* %y, align 4
   ret void

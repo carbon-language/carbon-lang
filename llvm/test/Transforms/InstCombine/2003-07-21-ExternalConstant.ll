@@ -31,14 +31,14 @@ entry:
         %a.0 = alloca i32               ; <i32*> [#uses=2]
         %result = alloca i32            ; <i32*> [#uses=2]
         store i32 %a.1, i32* %a.0
-        %tmp.0 = load i32* %a.0         ; <i32> [#uses=1]
-        %tmp.1 = load i32* @silly               ; <i32> [#uses=1]
+        %tmp.0 = load i32, i32* %a.0         ; <i32> [#uses=1]
+        %tmp.1 = load i32, i32* @silly               ; <i32> [#uses=1]
         %tmp.2 = add i32 %tmp.0, %tmp.1         ; <i32> [#uses=1]
         store i32 %tmp.2, i32* %result
         br label %return
 
 return:         ; preds = %entry
-        %tmp.3 = load i32* %result              ; <i32> [#uses=1]
+        %tmp.3 = load i32, i32* %result              ; <i32> [#uses=1]
         ret i32 %tmp.3
 }
 

@@ -15,8 +15,8 @@ define void @fneg_fabs_fadd_f64(double addrspace(1)* %out, double %x, double %y)
 }
 
 define void @v_fneg_fabs_fadd_f64(double addrspace(1)* %out, double addrspace(1)* %xptr, double addrspace(1)* %yptr) {
-  %x = load double addrspace(1)* %xptr, align 8
-  %y = load double addrspace(1)* %xptr, align 8
+  %x = load double, double addrspace(1)* %xptr, align 8
+  %y = load double, double addrspace(1)* %xptr, align 8
   %fabs = call double @llvm.fabs.f64(double %x)
   %fsub = fsub double -0.000000e+00, %fabs
   %fadd = fadd double %y, %fsub

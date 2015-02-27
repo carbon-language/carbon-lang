@@ -7,7 +7,7 @@
 ; Function Attrs: nounwind optsize
 define i32 @foo() #0 {
 entry:
-  %0 = load i32* @i, align 4, !tbaa !1
+  %0 = load i32, i32* @i, align 4, !tbaa !1
   %cmp = icmp eq i32 %0, 0
   br i1 %cmp, label %if.then, label %if.else
 
@@ -32,7 +32,7 @@ if.end:                                           ; preds = %if.else, %if.then
 ; Function Attrs: nounwind optsize
 define i32 @goo() #0 {
 entry:
-  %0 = load i32* @i, align 4, !tbaa !1
+  %0 = load i32, i32* @i, align 4, !tbaa !1
   %cmp = icmp eq i32 %0, 0
   br i1 %cmp, label %if.then, label %if.else
 

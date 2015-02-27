@@ -18,7 +18,7 @@ define float @f2(float %f1, float *%ptr) {
 ; CHECK-LABEL: f2:
 ; CHECK: meeb %f0, 0(%r2)
 ; CHECK: br %r14
-  %f2 = load float *%ptr
+  %f2 = load float , float *%ptr
   %res = fmul float %f1, %f2
   ret float %res
 }
@@ -29,7 +29,7 @@ define float @f3(float %f1, float *%base) {
 ; CHECK: meeb %f0, 4092(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr float, float *%base, i64 1023
-  %f2 = load float *%ptr
+  %f2 = load float , float *%ptr
   %res = fmul float %f1, %f2
   ret float %res
 }
@@ -42,7 +42,7 @@ define float @f4(float %f1, float *%base) {
 ; CHECK: meeb %f0, 0(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr float, float *%base, i64 1024
-  %f2 = load float *%ptr
+  %f2 = load float , float *%ptr
   %res = fmul float %f1, %f2
   ret float %res
 }
@@ -54,7 +54,7 @@ define float @f5(float %f1, float *%base) {
 ; CHECK: meeb %f0, 0(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr float, float *%base, i64 -1
-  %f2 = load float *%ptr
+  %f2 = load float , float *%ptr
   %res = fmul float %f1, %f2
   ret float %res
 }
@@ -67,7 +67,7 @@ define float @f6(float %f1, float *%base, i64 %index) {
 ; CHECK: br %r14
   %ptr1 = getelementptr float, float *%base, i64 %index
   %ptr2 = getelementptr float, float *%ptr1, i64 100
-  %f2 = load float *%ptr2
+  %f2 = load float , float *%ptr2
   %res = fmul float %f1, %f2
   ret float %res
 }
@@ -89,17 +89,17 @@ define float @f7(float *%ptr0) {
   %ptr9 = getelementptr float, float *%ptr0, i64 18
   %ptr10 = getelementptr float, float *%ptr0, i64 20
 
-  %val0 = load float *%ptr0
-  %val1 = load float *%ptr1
-  %val2 = load float *%ptr2
-  %val3 = load float *%ptr3
-  %val4 = load float *%ptr4
-  %val5 = load float *%ptr5
-  %val6 = load float *%ptr6
-  %val7 = load float *%ptr7
-  %val8 = load float *%ptr8
-  %val9 = load float *%ptr9
-  %val10 = load float *%ptr10
+  %val0 = load float , float *%ptr0
+  %val1 = load float , float *%ptr1
+  %val2 = load float , float *%ptr2
+  %val3 = load float , float *%ptr3
+  %val4 = load float , float *%ptr4
+  %val5 = load float , float *%ptr5
+  %val6 = load float , float *%ptr6
+  %val7 = load float , float *%ptr7
+  %val8 = load float , float *%ptr8
+  %val9 = load float , float *%ptr9
+  %val10 = load float , float *%ptr10
 
   %ret = call float @foo()
 

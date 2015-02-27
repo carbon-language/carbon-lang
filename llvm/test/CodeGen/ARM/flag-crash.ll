@@ -6,12 +6,12 @@
 define fastcc void @func(%struct.gs_matrix* nocapture %pm1) nounwind {
 entry:
   %0 = getelementptr inbounds %struct.gs_matrix, %struct.gs_matrix* %pm1, i32 0, i32 6
-  %1 = load float* %0, align 4
+  %1 = load float, float* %0, align 4
   %2 = getelementptr inbounds %struct.gs_matrix, %struct.gs_matrix* %pm1, i32 0, i32 8
-  %3 = load float* %2, align 4
+  %3 = load float, float* %2, align 4
   %4 = getelementptr inbounds %struct.gs_matrix, %struct.gs_matrix* %pm1, i32 0, i32 2
   %5 = bitcast float* %4 to i32*
-  %6 = load i32* %5, align 4
+  %6 = load i32, i32* %5, align 4
   %7 = or i32 0, %6
   %.mask = and i32 %7, 2147483647
   %8 = icmp eq i32 %.mask, 0

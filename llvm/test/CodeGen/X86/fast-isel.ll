@@ -5,9 +5,9 @@
 
 define i32* @foo(i32* %p, i32* %q, i32** %z) nounwind {
 entry:
-  %r = load i32* %p
-  %s = load i32* %q
-  %y = load i32** %z
+  %r = load i32, i32* %p
+  %s = load i32, i32* %q
+  %y = load i32*, i32** %z
   br label %fast
 
 fast:
@@ -29,8 +29,8 @@ exit:
 
 define void @bar(double* %p, double* %q) nounwind {
 entry:
-  %r = load double* %p
-  %s = load double* %q
+  %r = load double, double* %p
+  %s = load double, double* %q
   br label %fast
 
 fast:
@@ -94,7 +94,7 @@ define void @mul_i8(i8 %a, i8* %p) nounwind {
 }
 
 define void @load_store_i1(i1* %p, i1* %q) nounwind {
-  %t = load i1* %p
+  %t = load i1, i1* %p
   store i1 %t, i1* %q
   ret void
 }
@@ -102,7 +102,7 @@ define void @load_store_i1(i1* %p, i1* %q) nounwind {
 @crash_test1x = external global <2 x i32>, align 8
 
 define void @crash_test1() nounwind ssp {
-  %tmp = load <2 x i32>* @crash_test1x, align 8
+  %tmp = load <2 x i32>, <2 x i32>* @crash_test1x, align 8
   %neg = xor <2 x i32> %tmp, <i32 -1, i32 -1>
   ret void
 }
@@ -113,7 +113,7 @@ define i64* @life() nounwind {
   %a1 = alloca i64*, align 8
   %a2 = bitcast i64** %a1 to i8*
   call void @llvm.lifetime.start(i64 -1, i8* %a2) nounwind      
-  %a3 = load i64** %a1, align 8
+  %a3 = load i64*, i64** %a1, align 8
   ret i64* %a3
 }
 

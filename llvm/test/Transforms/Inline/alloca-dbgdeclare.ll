@@ -43,7 +43,7 @@ entry:
 ; CHECK-NEXT:   call void @llvm.dbg.declare(metadata [20 x i8]* %agg.tmp.sroa.3.i,
   %agg.tmp.sroa.3 = alloca [20 x i8], align 4
   tail call void @llvm.dbg.declare(metadata [20 x i8]* %agg.tmp.sroa.3, metadata !46, metadata !48), !dbg !49
-  %agg.tmp.sroa.0.0.copyload = load i32* getelementptr inbounds (%struct.A* @b, i64 0, i32 0), align 8, !dbg !50
+  %agg.tmp.sroa.0.0.copyload = load i32, i32* getelementptr inbounds (%struct.A* @b, i64 0, i32 0), align 8, !dbg !50
   tail call void @llvm.dbg.value(metadata i32 %agg.tmp.sroa.0.0.copyload, i64 0, metadata !46, metadata !51), !dbg !49
   %agg.tmp.sroa.3.0..sroa_idx = getelementptr inbounds [20 x i8], [20 x i8]* %agg.tmp.sroa.3, i64 0, i64 0, !dbg !50
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %agg.tmp.sroa.3.0..sroa_idx, i8* getelementptr (i8* bitcast (%struct.A* @b to i8*), i64 4), i64 20, i32 4, i1 false), !dbg !50

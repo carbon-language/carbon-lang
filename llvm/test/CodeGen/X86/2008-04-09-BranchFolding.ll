@@ -16,7 +16,7 @@ bb140:		; preds = %entry
 bb17.i:		; preds = %bb140
 	ret %struct.tree_node* null
 bb143:		; preds = %entry
-	%tmp8.i43 = load %struct.tree_node** null, align 4		; <%struct.tree_node*> [#uses=1]
+	%tmp8.i43 = load %struct.tree_node*, %struct.tree_node** null, align 4		; <%struct.tree_node*> [#uses=1]
 	br i1 %tmp3.i40, label %bb160, label %bb9.i48
 bb9.i48:		; preds = %bb143
 	ret %struct.tree_node* null

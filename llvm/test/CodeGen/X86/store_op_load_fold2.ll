@@ -8,8 +8,8 @@ define internal fastcc i32 @dct_chroma(i32 %uv, i32 %cr_cbp) nounwind {
 cond_true2732.preheader:                ; preds = %entry
         %tmp2666 = getelementptr %struct.Macroblock, %struct.Macroblock* null, i32 0, i32 13                ; <i64*> [#uses=2]
         %tmp2674 = trunc i32 0 to i8            ; <i8> [#uses=1]
-        %tmp2667.us.us = load i64* %tmp2666             ; <i64> [#uses=1]
-        %tmp2670.us.us = load i64* null         ; <i64> [#uses=1]
+        %tmp2667.us.us = load i64, i64* %tmp2666             ; <i64> [#uses=1]
+        %tmp2670.us.us = load i64, i64* null         ; <i64> [#uses=1]
         %shift.upgrd.1 = zext i8 %tmp2674 to i64                ; <i64> [#uses=1]
         %tmp2675.us.us = shl i64 %tmp2670.us.us, %shift.upgrd.1         ; <i64> [#uses=1]
         %tmp2675not.us.us = xor i64 %tmp2675.us.us, -1          ; <i64> [#uses=1]

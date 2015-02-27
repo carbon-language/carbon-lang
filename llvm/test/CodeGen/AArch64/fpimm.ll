@@ -8,7 +8,7 @@
 define void @check_float() {
 ; CHECK-LABEL: check_float:
 
-  %val = load float* @varf32
+  %val = load float, float* @varf32
   %newval1 = fadd float %val, 8.5
   store volatile float %newval1, float* @varf32
 ; CHECK-DAG: fmov [[EIGHT5:s[0-9]+]], #8.5
@@ -24,7 +24,7 @@ define void @check_float() {
 define void @check_double() {
 ; CHECK-LABEL: check_double:
 
-  %val = load double* @varf64
+  %val = load double, double* @varf64
   %newval1 = fadd double %val, 8.5
   store volatile double %newval1, double* @varf64
 ; CHECK-DAG: fmov {{d[0-9]+}}, #8.5

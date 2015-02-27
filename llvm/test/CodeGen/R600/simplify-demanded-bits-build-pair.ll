@@ -31,7 +31,7 @@ define void @trunc_load_alloca_i64(i64 addrspace(1)* %out, i32 %a, i32 %b) {
   store i64 3935, i64* %gep2, align 8
   store i64 9342, i64* %gep3, align 8
   %gep = getelementptr i64, i64* %alloca, i32 %idx
-  %load = load i64* %gep, align 8
+  %load = load i64, i64* %gep, align 8
   %mask = and i64 %load, 4294967296
   %add = add i64 %mask, -1
   store i64 %add, i64 addrspace(1)* %out, align 4

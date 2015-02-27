@@ -9,7 +9,7 @@ target triple = "i386-apple-darwin9.6"
 
 define fastcc void @set_proof_and_disproof_numbers(%struct.node_t* nocapture %node) nounwind {
 entry:
-	%0 = load i8* null, align 1		; <i8> [#uses=1]
+	%0 = load i8, i8* null, align 1		; <i8> [#uses=1]
 	switch i8 %0, label %return [
 		i8 2, label %bb31
 		i8 0, label %bb80

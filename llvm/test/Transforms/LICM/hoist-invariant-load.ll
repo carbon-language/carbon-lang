@@ -15,18 +15,18 @@ entry:
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
-  %0 = load i32* %i, align 4
+  %0 = load i32, i32* %i, align 4
   %cmp = icmp ult i32 %0, 10000
   br i1 %cmp, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %1 = load i8** %x.addr, align 8
-  %2 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_", !invariant.load !0
+  %1 = load i8*, i8** %x.addr, align 8
+  %2 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_", !invariant.load !0
   %call = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %1, i8* %2)
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body
-  %3 = load i32* %i, align 4
+  %3 = load i32, i32* %i, align 4
   %inc = add i32 %3, 1
   store i32 %inc, i32* %i, align 4
   br label %for.cond

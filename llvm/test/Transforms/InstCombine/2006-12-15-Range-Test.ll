@@ -22,7 +22,7 @@ cond_next23.exitStub:           ; preds = %cond_true
 
 cond_true:              ; preds = %newFuncRoot
         %tmp15 = getelementptr [17 x i32], [17 x i32]* @r, i32 0, i32 %tmp12.reload         ; <i32*> [#uses=1]
-        %tmp16 = load i32* %tmp15               ; <i32> [#uses=4]
+        %tmp16 = load i32, i32* %tmp15               ; <i32> [#uses=4]
         %tmp18 = icmp slt i32 %tmp16, -31               ; <i1> [#uses=1]
         %tmp21 = icmp sgt i32 %tmp16, 31                ; <i1> [#uses=1]
         %bothcond = or i1 %tmp18, %tmp21                ; <i1> [#uses=1]

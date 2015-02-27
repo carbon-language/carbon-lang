@@ -20,7 +20,7 @@ bb:                                               ; preds = %bb, %entry
   %indvar = phi i16 [ 0, %entry ], [ %indvar.next, %bb ] ; <i16> [#uses=2]
   %tmp = sub i16 0, %indvar                       ; <i16> [#uses=1]
   %tmp27 = trunc i16 %tmp to i8                   ; <i8> [#uses=1]
-  %tmp1 = load i32* @g_19, align 4                ; <i32> [#uses=2]
+  %tmp1 = load i32, i32* @g_19, align 4                ; <i32> [#uses=2]
   %tmp2 = add i32 %tmp1, 1                        ; <i32> [#uses=1]
   store i32 %tmp2, i32* @g_19, align 4
   %tmp3 = trunc i32 %tmp1 to i8                   ; <i8> [#uses=1]

@@ -32,13 +32,13 @@ bb2:                                              ; preds = %bb1, %bb, %entry
   br i1 %tmp7, label %bb7, label %bb5
 
 bb5:                                              ; preds = %bb2
-  %tmp8 = load i8** %argv.0, align 8              ; <i8*> [#uses=1]
+  %tmp8 = load i8*, i8** %argv.0, align 8              ; <i8*> [#uses=1]
   %tmp9 = icmp eq i8* %tmp8, null                 ; <i1> [#uses=1]
   br i1 %tmp9, label %bb7, label %bb6
 
 bb6:                                              ; preds = %bb5
-  %tmp10 = load i8** %argv.0, align 8             ; <i8*> [#uses=1]
-  %tmp11 = load i8* %tmp10, align 1               ; <i8> [#uses=1]
+  %tmp10 = load i8*, i8** %argv.0, align 8             ; <i8*> [#uses=1]
+  %tmp11 = load i8, i8* %tmp10, align 1               ; <i8> [#uses=1]
   %tmp12 = icmp eq i8 %tmp11, 0                   ; <i1> [#uses=1]
   br i1 %tmp12, label %bb7, label %bb8
 
@@ -47,7 +47,7 @@ bb7:                                              ; preds = %bb6, %bb5, %bb2
   br label %bb9
 
 bb8:                                              ; preds = %bb6
-  %tmp13 = load i8** %argv.0, align 8             ; <i8*> [#uses=1]
+  %tmp13 = load i8*, i8** %argv.0, align 8             ; <i8*> [#uses=1]
   %tmp14 = call i64 @f5(i8* %tmp13) nounwind      ; <i64> [#uses=0]
   br label %bb9
 

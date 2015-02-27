@@ -24,8 +24,8 @@ entry:
   call void @llvm.dbg.declare(metadata i32* %argc.addr, metadata !14, metadata !{!"0x102"}), !dbg !15
   store i8** %argv, i8*** %argv.addr, align 8
   call void @llvm.dbg.declare(metadata i8*** %argv.addr, metadata !16, metadata !{!"0x102"}), !dbg !15
-  %0 = load i32* %argc.addr, align 4, !dbg !17
-  %1 = load i8*** %argv.addr, align 8, !dbg !17
+  %0 = load i32, i32* %argc.addr, align 4, !dbg !17
+  %1 = load i8**, i8*** %argv.addr, align 8, !dbg !17
   call void @test(i32 %0, i8** %1), !dbg !17
   ret i32 0, !dbg !19
 }

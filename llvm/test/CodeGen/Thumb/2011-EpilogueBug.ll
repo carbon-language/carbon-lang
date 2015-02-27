@@ -6,7 +6,7 @@
 
 define void @t1(%struct.state* %v) {
 ; CHECK: push {r4
-  %tmp6 = load i32* null
+  %tmp6 = load i32, i32* null
   %tmp8 = alloca float, i32 %tmp6
   store i32 1, i32* null
   br label %return

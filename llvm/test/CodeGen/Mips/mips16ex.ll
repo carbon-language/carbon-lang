@@ -33,18 +33,18 @@ lpad:                                             ; preds = %entry
   br label %catch.dispatch
 
 catch.dispatch:                                   ; preds = %lpad
-  %sel = load i32* %ehselector.slot
+  %sel = load i32, i32* %ehselector.slot
   %4 = call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIi to i8*)) nounwind
   %matches = icmp eq i32 %sel, %4
   br i1 %matches, label %catch, label %eh.resume
 
 catch:                                            ; preds = %catch.dispatch
-  %exn = load i8** %exn.slot
+  %exn = load i8*, i8** %exn.slot
   %5 = call i8* @__cxa_begin_catch(i8* %exn) nounwind
   %6 = bitcast i8* %5 to i32*
-  %exn.scalar = load i32* %6
+  %exn.scalar = load i32, i32* %6
   store i32 %exn.scalar, i32* %e, align 4
-  %7 = load i32* %e, align 4
+  %7 = load i32, i32* %e, align 4
   %call2 = invoke i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([15 x i8]* @.str1, i32 0, i32 0), i32 %7)
           to label %invoke.cont unwind label %lpad1
 
@@ -66,8 +66,8 @@ lpad1:                                            ; preds = %catch
   br label %eh.resume
 
 eh.resume:                                        ; preds = %lpad1, %catch.dispatch
-  %exn3 = load i8** %exn.slot
-  %sel4 = load i32* %ehselector.slot
+  %exn3 = load i8*, i8** %exn.slot
+  %sel4 = load i32, i32* %ehselector.slot
   %lpad.val = insertvalue { i8*, i32 } undef, i8* %exn3, 0
   %lpad.val5 = insertvalue { i8*, i32 } %lpad.val, i32 %sel4, 1
   resume { i8*, i32 } %lpad.val5

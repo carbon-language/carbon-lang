@@ -1126,8 +1126,8 @@ define i32 @test_x86_sse42_pcmpestri128_load(<16 x i8>* %a0, <16 x i8>* %a2) {
   ; CHECK: movl $7
   ; CHECK: vpcmpestri $7, (
   ; CHECK: movl
-  %1 = load <16 x i8>* %a0
-  %2 = load <16 x i8>* %a2
+  %1 = load <16 x i8>, <16 x i8>* %a0
+  %2 = load <16 x i8>, <16 x i8>* %a2
   %res = call i32 @llvm.x86.sse42.pcmpestri128(<16 x i8> %1, i32 7, <16 x i8> %2, i32 7, i8 7) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1204,7 +1204,7 @@ define <16 x i8> @test_x86_sse42_pcmpestrm128_load(<16 x i8> %a0, <16 x i8>* %a2
   ; CHECK: movl $7
   ; CHECK: vpcmpestrm $7,
   ; CHECK-NOT: vmov
-  %1 = load <16 x i8>* %a2
+  %1 = load <16 x i8>, <16 x i8>* %a2
   %res = call <16 x i8> @llvm.x86.sse42.pcmpestrm128(<16 x i8> %a0, i32 7, <16 x i8> %1, i32 7, i8 7) ; <<16 x i8>> [#uses=1]
   ret <16 x i8> %res
 }
@@ -1222,8 +1222,8 @@ declare i32 @llvm.x86.sse42.pcmpistri128(<16 x i8>, <16 x i8>, i8) nounwind read
 define i32 @test_x86_sse42_pcmpistri128_load(<16 x i8>* %a0, <16 x i8>* %a1) {
   ; CHECK: vpcmpistri $7, (
   ; CHECK: movl
-  %1 = load <16 x i8>* %a0
-  %2 = load <16 x i8>* %a1
+  %1 = load <16 x i8>, <16 x i8>* %a0
+  %2 = load <16 x i8>, <16 x i8>* %a1
   %res = call i32 @llvm.x86.sse42.pcmpistri128(<16 x i8> %1, <16 x i8> %2, i8 7) ; <i32> [#uses=1]
   ret i32 %res
 }
@@ -1286,7 +1286,7 @@ declare <16 x i8> @llvm.x86.sse42.pcmpistrm128(<16 x i8>, <16 x i8>, i8) nounwin
 define <16 x i8> @test_x86_sse42_pcmpistrm128_load(<16 x i8> %a0, <16 x i8>* %a1) {
   ; CHECK: vpcmpistrm $7, (
   ; CHECK-NOT: vmov
-  %1 = load <16 x i8>* %a1
+  %1 = load <16 x i8>, <16 x i8>* %a1
   %res = call <16 x i8> @llvm.x86.sse42.pcmpistrm128(<16 x i8> %a0, <16 x i8> %1, i8 7) ; <<16 x i8>> [#uses=1]
   ret <16 x i8> %res
 }
@@ -2330,7 +2330,7 @@ define <4 x float> @test_x86_avx_vpermilvar_ps(<4 x float> %a0, <4 x i32> %a1) {
 }
 define <4 x float> @test_x86_avx_vpermilvar_ps_load(<4 x float> %a0, <4 x i32>* %a1) {
   ; CHECK: vpermilps
-  %a2 = load <4 x i32>* %a1
+  %a2 = load <4 x i32>, <4 x i32>* %a1
   %res = call <4 x float> @llvm.x86.avx.vpermilvar.ps(<4 x float> %a0, <4 x i32> %a2) ; <<4 x float>> [#uses=1]
   ret <4 x float> %res
 }

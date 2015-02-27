@@ -29,7 +29,7 @@ while.body:
   %rem = and i32 %bit_addr.addr.01, 31
   %shl = shl i32 1, %rem
   %arrayidx = getelementptr inbounds i32, i32* %bitmap, i32 %shr
-  %tmp6 = load i32* %arrayidx, align 4
+  %tmp6 = load i32, i32* %arrayidx, align 4
   %xor = xor i32 %tmp6, %shl
   store i32 %xor, i32* %arrayidx, align 4
   %inc = add i32 %bit_addr.addr.01, 1

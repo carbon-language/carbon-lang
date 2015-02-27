@@ -12,7 +12,7 @@ vector.body:                                      ; preds = %vector.body, %vecto
   %vec.phi = phi <2 x i32> [ zeroinitializer, %vector.ph ], [ %12, %vector.body ]
   %0 = getelementptr inbounds i32, i32* %A, i64 %index
   %1 = bitcast i32* %0 to <2 x i32>*
-  %2 = load <2 x i32>* %1, align 4
+  %2 = load <2 x i32>, <2 x i32>* %1, align 4
   %3 = sext <2 x i32> %2 to <2 x i64>
   ;CHECK: cost of 1 {{.*}} extract
   %4 = extractelement <2 x i64> %3, i32 0
@@ -20,10 +20,10 @@ vector.body:                                      ; preds = %vector.body, %vecto
   ;CHECK: cost of 1 {{.*}} extract
   %6 = extractelement <2 x i64> %3, i32 1
   %7 = getelementptr inbounds i32, i32* %A, i64 %6
-  %8 = load i32* %5, align 4
+  %8 = load i32, i32* %5, align 4
   ;CHECK: cost of 1 {{.*}} insert
   %9 = insertelement <2 x i32> undef, i32 %8, i32 0
-  %10 = load i32* %7, align 4
+  %10 = load i32, i32* %7, align 4
   ;CHECK: cost of 1 {{.*}} insert
   %11 = insertelement <2 x i32> %9, i32 %10, i32 1
   %12 = add nsw <2 x i32> %11, %vec.phi

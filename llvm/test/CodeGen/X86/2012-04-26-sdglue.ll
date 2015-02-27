@@ -14,9 +14,9 @@
 ;CHECK: ret
 
 define void @func() nounwind ssp {
-  %tmp = load <4 x float>* null, align 1
+  %tmp = load <4 x float>, <4 x float>* null, align 1
   %tmp14 = getelementptr <4 x float>, <4 x float>* null, i32 2
-  %tmp15 = load <4 x float>* %tmp14, align 1
+  %tmp15 = load <4 x float>, <4 x float>* %tmp14, align 1
   %tmp16 = shufflevector <4 x float> %tmp, <4 x float> <float 0.000000e+00, float undef, float undef, float undef>, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 4, i32 4, i32 4>
   %tmp17 = call <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float> %tmp16, <4 x float> undef, i8 1)
   %tmp18 = bitcast <4 x float> %tmp to <16 x i8>

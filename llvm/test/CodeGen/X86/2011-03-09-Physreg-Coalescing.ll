@@ -12,7 +12,7 @@ declare fastcc i8* @save_string(i8* %d, i8* nocapture %s) nounwind
 
 define i32 @cvtchar(i8* nocapture %sp) nounwind {
   %temp.i = alloca [2 x i8], align 1
-  %tmp1 = load i8* %sp, align 1
+  %tmp1 = load i8, i8* %sp, align 1
   %div = udiv i8 %tmp1, 10
   %rem = urem i8 %div, 10
   %arrayidx.i = getelementptr inbounds [2 x i8], [2 x i8]* %temp.i, i32 0, i32 0

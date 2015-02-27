@@ -5,7 +5,7 @@
 define internal void @f(%struct.ss* byval  %b, i32* byval %X, i32 %i) nounwind  {
 entry:
 	%tmp = getelementptr %struct.ss, %struct.ss* %b, i32 0, i32 0
-	%tmp1 = load i32* %tmp, align 4
+	%tmp1 = load i32, i32* %tmp, align 4
 	%tmp2 = add i32 %tmp1, 1	
 	store i32 %tmp2, i32* %tmp, align 4
 

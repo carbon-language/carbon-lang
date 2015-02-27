@@ -4,7 +4,7 @@ define i32 @t1(i32* nocapture %ptr) nounwind readonly {
 entry:
 ; THUMB: t1
   %add.ptr = getelementptr inbounds i32, i32* %ptr, i32 -1
-  %0 = load i32* %add.ptr, align 4
+  %0 = load i32, i32* %add.ptr, align 4
 ; THUMB: ldr r{{[0-9]}}, [r0, #-4]
   ret i32 %0
 }
@@ -13,7 +13,7 @@ define i32 @t2(i32* nocapture %ptr) nounwind readonly {
 entry:
 ; THUMB: t2
   %add.ptr = getelementptr inbounds i32, i32* %ptr, i32 -63
-  %0 = load i32* %add.ptr, align 4
+  %0 = load i32, i32* %add.ptr, align 4
 ; THUMB: ldr r{{[0-9]}}, [r0, #-252]
   ret i32 %0
 }
@@ -22,7 +22,7 @@ define i32 @t3(i32* nocapture %ptr) nounwind readonly {
 entry:
 ; THUMB: t3
   %add.ptr = getelementptr inbounds i32, i32* %ptr, i32 -64
-  %0 = load i32* %add.ptr, align 4
+  %0 = load i32, i32* %add.ptr, align 4
 ; THUMB: ldr r{{[0-9]}}, [r0]
   ret i32 %0
 }
@@ -31,7 +31,7 @@ define zeroext i16 @t4(i16* nocapture %ptr) nounwind readonly {
 entry:
 ; THUMB: t4
   %add.ptr = getelementptr inbounds i16, i16* %ptr, i32 -1
-  %0 = load i16* %add.ptr, align 2
+  %0 = load i16, i16* %add.ptr, align 2
 ; THUMB: ldrh r{{[0-9]}}, [r0, #-2]
   ret i16 %0
 }
@@ -40,7 +40,7 @@ define zeroext i16 @t5(i16* nocapture %ptr) nounwind readonly {
 entry:
 ; THUMB: t5
   %add.ptr = getelementptr inbounds i16, i16* %ptr, i32 -127
-  %0 = load i16* %add.ptr, align 2
+  %0 = load i16, i16* %add.ptr, align 2
 ; THUMB: ldrh r{{[0-9]}}, [r0, #-254]
   ret i16 %0
 }
@@ -49,7 +49,7 @@ define zeroext i16 @t6(i16* nocapture %ptr) nounwind readonly {
 entry:
 ; THUMB: t6
   %add.ptr = getelementptr inbounds i16, i16* %ptr, i32 -128
-  %0 = load i16* %add.ptr, align 2
+  %0 = load i16, i16* %add.ptr, align 2
 ; THUMB: ldrh r{{[0-9]}}, [r0]
   ret i16 %0
 }
@@ -58,7 +58,7 @@ define zeroext i8 @t7(i8* nocapture %ptr) nounwind readonly {
 entry:
 ; THUMB: t7
   %add.ptr = getelementptr inbounds i8, i8* %ptr, i32 -1
-  %0 = load i8* %add.ptr, align 1
+  %0 = load i8, i8* %add.ptr, align 1
 ; THUMB: ldrb r{{[0-9]}}, [r0, #-1]
   ret i8 %0
 }
@@ -67,7 +67,7 @@ define zeroext i8 @t8(i8* nocapture %ptr) nounwind readonly {
 entry:
 ; THUMB: t8
   %add.ptr = getelementptr inbounds i8, i8* %ptr, i32 -255
-  %0 = load i8* %add.ptr, align 1
+  %0 = load i8, i8* %add.ptr, align 1
 ; THUMB: ldrb r{{[0-9]}}, [r0, #-255]
   ret i8 %0
 }
@@ -76,7 +76,7 @@ define zeroext i8 @t9(i8* nocapture %ptr) nounwind readonly {
 entry:
 ; THUMB: t9
   %add.ptr = getelementptr inbounds i8, i8* %ptr, i32 -256
-  %0 = load i8* %add.ptr, align 1
+  %0 = load i8, i8* %add.ptr, align 1
 ; THUMB: ldrb r{{[0-9]}}, [r0]
   ret i8 %0
 }

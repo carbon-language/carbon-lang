@@ -8,7 +8,7 @@ define void @foo() {
 }
 
 define i32 @bar() {
-        %X = load i32* @G               ; <i32> [#uses=1]
+        %X = load i32, i32* @G               ; <i32> [#uses=1]
         ret i32 %X
 }
 

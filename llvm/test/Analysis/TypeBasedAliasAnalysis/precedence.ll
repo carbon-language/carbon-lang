@@ -18,7 +18,7 @@ entry:
   store i32 0, i32* %x, !tbaa !0
   %0 = bitcast i32* %x to float*
   store float 0x4002666660000000, float* %0, !tbaa !3
-  %tmp3 = load i32* %x, !tbaa !0
+  %tmp3 = load i32, i32* %x, !tbaa !0
   ret i32 %tmp3
 }
 
@@ -35,7 +35,7 @@ entry:
   %0 = bitcast i64* %x to i8*
   %1 = getelementptr i8, i8* %0, i64 1
   store i8 1, i8* %1, !tbaa !5
-  %tmp3 = load i64* %x, !tbaa !4
+  %tmp3 = load i64, i64* %x, !tbaa !4
   ret i64 %tmp3
 }
 

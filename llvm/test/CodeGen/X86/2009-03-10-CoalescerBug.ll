@@ -8,7 +8,7 @@
 
 define i32 @pnoutrefresh(%struct.WINDOW* %win, i32 %pminrow, i32 %pmincol, i32 %sminrow, i32 %smincol, i32 %smaxrow, i32 %smaxcol) nounwind optsize ssp {
 entry:
-	%0 = load i16* null, align 4		; <i16> [#uses=2]
+	%0 = load i16, i16* null, align 4		; <i16> [#uses=2]
 	%1 = icmp sgt i16 0, %0		; <i1> [#uses=1]
 	br i1 %1, label %bb12, label %bb13
 

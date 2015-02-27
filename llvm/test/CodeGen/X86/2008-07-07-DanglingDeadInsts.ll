@@ -63,7 +63,7 @@ entry:
 	br i1 false, label %bb17.preheader, label %bb30
 
 bb17.preheader:		; preds = %entry
-	load i32* null, align 4		; <i32>:0 [#uses=0]
+	load i32, i32* null, align 4		; <i32>:0 [#uses=0]
 	br label %bb16
 
 bb16:		; preds = %bb16, %bb17.preheader

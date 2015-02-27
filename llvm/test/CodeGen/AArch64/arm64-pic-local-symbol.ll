@@ -7,7 +7,7 @@ define i32 @get() {
 ; CHECK: get:
 ; CHECK: adrp x{{[0-9]+}}, a
 ; CHECK-NEXT: ldr w{{[0-9]+}}, [x{{[0-9]}}, :lo12:a]
-  %res = load i32* @a, align 4
+  %res = load i32, i32* @a, align 4
   ret i32 %res
 }
 

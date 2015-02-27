@@ -13,13 +13,13 @@ entry:
 
 bb:                                               ; preds = %entry
   %1 = getelementptr inbounds %struct.SVal, %struct.SVal* %location, i32 0, i32 1, !dbg !29 ; <i32*> [#uses=1]
-  %2 = load i32* %1, align 8, !dbg !29            ; <i32> [#uses=1]
+  %2 = load i32, i32* %1, align 8, !dbg !29            ; <i32> [#uses=1]
   %3 = add i32 %2, %i, !dbg !29                   ; <i32> [#uses=1]
   br label %bb2, !dbg !29
 
 bb1:                                              ; preds = %entry
   %4 = getelementptr inbounds %struct.SVal, %struct.SVal* %location, i32 0, i32 1, !dbg !30 ; <i32*> [#uses=1]
-  %5 = load i32* %4, align 8, !dbg !30            ; <i32> [#uses=1]
+  %5 = load i32, i32* %4, align 8, !dbg !30            ; <i32> [#uses=1]
   %6 = sub i32 %5, 1, !dbg !30                    ; <i32> [#uses=1]
   br label %bb2, !dbg !30
 
@@ -58,11 +58,11 @@ entry:
   store i32 1, i32* %1, align 8, !dbg !42
   %2 = getelementptr inbounds %struct.SVal, %struct.SVal* %0, i32 0, i32 0, !dbg !43 ; <i8**> [#uses=1]
   %3 = getelementptr inbounds %struct.SVal, %struct.SVal* %v, i32 0, i32 0, !dbg !43 ; <i8**> [#uses=1]
-  %4 = load i8** %3, align 8, !dbg !43            ; <i8*> [#uses=1]
+  %4 = load i8*, i8** %3, align 8, !dbg !43            ; <i8*> [#uses=1]
   store i8* %4, i8** %2, align 8, !dbg !43
   %5 = getelementptr inbounds %struct.SVal, %struct.SVal* %0, i32 0, i32 1, !dbg !43 ; <i32*> [#uses=1]
   %6 = getelementptr inbounds %struct.SVal, %struct.SVal* %v, i32 0, i32 1, !dbg !43 ; <i32*> [#uses=1]
-  %7 = load i32* %6, align 8, !dbg !43            ; <i32> [#uses=1]
+  %7 = load i32, i32* %6, align 8, !dbg !43            ; <i32> [#uses=1]
   store i32 %7, i32* %5, align 8, !dbg !43
   %8 = call i32 @_Z3fooi4SVal(i32 2, %struct.SVal* noalias %0) nounwind, !dbg !43 ; <i32> [#uses=0]
   call void @llvm.dbg.value(metadata i32 %8, i64 0, metadata !44, metadata !{!"0x102"}), !dbg !43

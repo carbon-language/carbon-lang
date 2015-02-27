@@ -8,13 +8,13 @@ entry:
 	%tmp = alloca i32, align 4		; <i32*> [#uses=2]
 	store i32 %a, i32* %a_addr
 	store i32 0, i32* %tmp
-	%tmp1 = load i32* %tmp		; <i32> [#uses=1]
+	%tmp1 = load i32, i32* %tmp		; <i32> [#uses=1]
 	store i32 %tmp1, i32* %retval
 	call void @llvm.va_start(i8* null)
 	br label %return
 
 return:		; preds = %entry
-	%retval2 = load i32* %retval		; <i32> [#uses=1]
+	%retval2 = load i32, i32* %retval		; <i32> [#uses=1]
 	ret i32 %retval2
 ; EABI: add sp, sp, #12
 ; EABI: add sp, sp, #16

@@ -20,7 +20,7 @@ bb32:		; preds = %bb32, %cond_true
 	%i.2115.0 = phi i32 [ 0, %cond_true ], [ %indvar.next127, %bb32 ]		; <i32> [#uses=1]
 	%c.2112.0 = phi i32 [ 0, %cond_true ], [ %tmp49, %bb32 ]		; <i32> [#uses=1]
 	%tmp43 = getelementptr %struct.partition_def, %struct.partition_def* %part, i32 0, i32 1, i32 %c.2112.0, i32 1		; <%struct.partition_elem**> [#uses=1]
-	%tmp44 = load %struct.partition_elem** %tmp43		; <%struct.partition_elem*> [#uses=1]
+	%tmp44 = load %struct.partition_elem*, %struct.partition_elem** %tmp43		; <%struct.partition_elem*> [#uses=1]
 	%tmp4445 = ptrtoint %struct.partition_elem* %tmp44 to i32		; <i32> [#uses=1]
 	%tmp48 = sub i32 %tmp4445, 0		; <i32> [#uses=1]
 	%tmp49 = sdiv i32 %tmp48, 12		; <i32> [#uses=1]

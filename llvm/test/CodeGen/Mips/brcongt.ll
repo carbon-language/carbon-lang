@@ -7,8 +7,8 @@
 
 define void @test() nounwind {
 entry:
-  %0 = load i32* @i, align 4
-  %1 = load i32* @j, align 4
+  %0 = load i32, i32* @i, align 4
+  %1 = load i32, i32* @j, align 4
   %cmp = icmp sgt i32 %0, %1
   br i1 %cmp, label %if.end, label %if.then
 ; 16:	slt	${{[0-9]+}}, ${{[0-9]+}}

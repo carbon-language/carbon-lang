@@ -19,7 +19,7 @@ define void @foo() nounwind {
         call fastcc void @bar( %struct.foo* sret %memtmp ) nounwind
         %tmp4 = getelementptr %struct.foo, %struct.foo* %memtmp, i32 0, i32 0
 	%tmp5 = getelementptr [4 x i32], [4 x i32]* %tmp4, i32 0, i32 0
-        %tmp6 = load i32* %tmp5
+        %tmp6 = load i32, i32* %tmp5
         store i32 %tmp6, i32* @dst
         ret void
 }

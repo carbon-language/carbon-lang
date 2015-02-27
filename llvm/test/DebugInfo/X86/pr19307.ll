@@ -50,19 +50,19 @@ entry:
 
 lor.lhs.false:                                    ; preds = %entry
   %call1 = call i8* @_ZNSsixEm(%"class.std::basic_string"* %range, i64 6), !dbg !52
-  %0 = load i8* %call1, !dbg !52
+  %0 = load i8, i8* %call1, !dbg !52
   %conv = sext i8 %0 to i32, !dbg !52
   %cmp2 = icmp eq i32 %conv, 45, !dbg !52
   br i1 %cmp2, label %if.then, label %if.end, !dbg !52
 
 if.then:                                          ; preds = %lor.lhs.false, %entry
-  %1 = load i64** %offset.addr, align 8, !dbg !54
+  %1 = load i64*, i64** %offset.addr, align 8, !dbg !54
   store i64 1, i64* %1, align 8, !dbg !54
   br label %if.end, !dbg !54
 
 if.end:                                           ; preds = %if.then, %lor.lhs.false
   %call3 = call %"class.std::basic_string"* @_ZNSs5eraseEmm(%"class.std::basic_string"* %range, i64 0, i64 6), !dbg !55
-  %2 = load i64** %limit.addr, align 8, !dbg !56
+  %2 = load i64*, i64** %limit.addr, align 8, !dbg !56
   store i64 2, i64* %2, align 8, !dbg !56
   ret void, !dbg !57
 }

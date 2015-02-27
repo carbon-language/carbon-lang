@@ -28,7 +28,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds [40000 x i8], [40000 x i8] addrspace(1)* @Y, i64 0, i64 %indvars.iv
-  %0 = load i8 addrspace(1)* %arrayidx, align 1
+  %0 = load i8, i8 addrspace(1)* %arrayidx, align 1
   %add = add i8 %0, 1
   %arrayidx3 = getelementptr inbounds [40000 x i8], [40000 x i8]* @X, i64 0, i64 %indvars.iv
   store i8 %add, i8* %arrayidx3, align 1

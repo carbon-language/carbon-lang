@@ -7,7 +7,7 @@
 
 define i32 @f1() {
 entry:
-	%tmp1 = load i32* @i
+	%tmp1 = load i32, i32* @i
 	ret i32 %tmp1
 }
 
@@ -39,7 +39,7 @@ entry:
 
 define i32 @f3() {
 entry:
-	%tmp1 = load i32* @i		; <i32> [#uses=1]
+	%tmp1 = load i32, i32* @i		; <i32> [#uses=1]
 	ret i32 %tmp1
 }
 
@@ -68,8 +68,8 @@ entry:
 
 define i32 @f5() nounwind {
 entry:
-	%0 = load i32* @j, align 4
-	%1 = load i32* @k, align 4
+	%0 = load i32, i32* @j, align 4
+	%1 = load i32, i32* @k, align 4
 	%add = add nsw i32 %0, %1
 	ret i32 %add
 }

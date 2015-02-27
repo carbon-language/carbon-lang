@@ -11,7 +11,7 @@ define void @f() {
   store atomic i64 0, i64* %c seq_cst, align 8
   store atomic i64 0, i64* %d seq_cst, align 8
 
-  %e = load atomic i64* %d seq_cst, align 8
+  %e = load atomic i64, i64* %d seq_cst, align 8
 
   ret void
 }

@@ -17,6 +17,6 @@ bb36:		; preds = %bb19
 	store i16 0, i16* @g_56, align 2
 	br i1 false, label %bb44, label %bb3
 bb44:		; preds = %bb44, %bb36
-	%tmp46 = load i16* @g_56, align 2		; <i16> [#uses=0]
+	%tmp46 = load i16, i16* @g_56, align 2		; <i16> [#uses=0]
 	br i1 false, label %bb, label %bb44
 }

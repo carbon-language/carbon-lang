@@ -7,7 +7,7 @@
 
 define fastcc i32 @foo(i16* %eptr, i8* %ecode, %struct.foo_data* %md, i32 %ims) {
 entry:
-	%tmp36 = load i32* null, align 4		; <i32> [#uses=1]
+	%tmp36 = load i32, i32* null, align 4		; <i32> [#uses=1]
 	%tmp37 = icmp ult i32 0, %tmp36		; <i1> [#uses=1]
 	br i1 %tmp37, label %cond_next79, label %cond_true
 
@@ -15,7 +15,7 @@ cond_true:		; preds = %entry
 	ret i32 0
 
 cond_next79:		; preds = %entry
-	%tmp85 = load i32* null, align 4		; <i32> [#uses=1]
+	%tmp85 = load i32, i32* null, align 4		; <i32> [#uses=1]
 	%tmp86 = icmp ult i32 0, %tmp85		; <i1> [#uses=1]
 	br i1 %tmp86, label %cond_next130, label %cond_true89
 

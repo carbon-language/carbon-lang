@@ -9,10 +9,10 @@ define i8 @test(i8* %P) nounwind {
 ; CHECK: lifetime.end
 entry:
   call void @llvm.lifetime.start(i64 32, i8* %P)
-  %0 = load i8* %P
+  %0 = load i8, i8* %P
   store i8 1, i8* %P
   call void @llvm.lifetime.end(i64 32, i8* %P)
-  %1 = load i8* %P
+  %1 = load i8, i8* %P
   ret i8 %1
 }
 

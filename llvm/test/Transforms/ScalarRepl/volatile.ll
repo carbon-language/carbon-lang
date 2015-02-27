@@ -7,7 +7,7 @@ define i32 @voltest(i32 %T) {
 ; CHECK: store volatile
 
 	%C = getelementptr {i32,i32}, {i32,i32}* %A, i32 0, i32 1
-	%X = load volatile i32* %C
+	%X = load volatile i32, i32* %C
 ; CHECK: load volatile
 	ret i32 %X
 }

@@ -26,7 +26,7 @@ loop:
   %p.01.us.us = phi i8* [ null, %preheader ], [ %gep, %loop ]
   %s = phi i8 [0, %preheader], [%snext, %loop]
   %gep = getelementptr inbounds i8, i8* %p.01.us.us, i64 1
-  %snext = load i8* %gep
+  %snext = load i8, i8* %gep
   %cmp = icmp ult i8* %gep, %end
   br i1 %cmp, label %loop, label %exit
 
@@ -51,7 +51,7 @@ loop:
   %p.01.us.us = phi i8* [ %buf, %preheader ], [ %gep, %loop ]
   %s = phi i8 [0, %preheader], [%snext, %loop]
   %gep = getelementptr inbounds i8, i8* %p.01.us.us, i64 1
-  %snext = load i8* %gep
+  %snext = load i8, i8* %gep
   %cmp = icmp ult i8* %gep, %end
   br i1 %cmp, label %loop, label %exit
 
@@ -80,7 +80,7 @@ loop:
   %iv = phi i32 [ 0, %preheader ], [ %ivnext, %loop ]
   %s = phi i8 [0, %preheader], [%snext, %loop]
   %gep = getelementptr inbounds i8, i8* %p.01.us.us, i64 1
-  %snext = load i8* %gep
+  %snext = load i8, i8* %gep
   %ivnext = add i32 %iv, 1
   %cmp = icmp ult i32 %ivnext, %cnt
   br i1 %cmp, label %loop, label %exit
@@ -110,7 +110,7 @@ loop:
   %iv = phi i32 [ %bi, %preheader ], [ %ivnext, %loop ]
   %s = phi i8 [0, %preheader], [%snext, %loop]
   %gep = getelementptr inbounds i8, i8* %p.01.us.us, i64 1
-  %snext = load i8* %gep
+  %snext = load i8, i8* %gep
   %ivnext = add i32 %iv, 1
   %cmp = icmp ult i32 %ivnext, %cnt
   br i1 %cmp, label %loop, label %exit

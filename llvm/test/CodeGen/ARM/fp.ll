@@ -45,7 +45,7 @@ define double @h(double* %v) {
 ;CHECK: vldr
 ;CHECK-NEXT: vmov
 entry:
-        %tmp = load double* %v          ; <double> [#uses=1]
+        %tmp = load double, double* %v          ; <double> [#uses=1]
         ret double %tmp
 }
 

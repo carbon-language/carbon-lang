@@ -33,10 +33,10 @@ entry:
   %in1 = alloca i16, align 2
   store i16 0, i16* %out0, align 2
   store i16 1, i16* %in1, align 2
-  %tmp = load i16* %in1, align 2
+  %tmp = load i16, i16* %in1, align 2
   %0 = call i16 asm "foo $1,$0", "=r,<r"(i16 %tmp) nounwind
   store i16 %0, i16* %out0, align 2
-  %tmp1 = load i16* %in1, align 2
+  %tmp1 = load i16, i16* %in1, align 2
   %1 = call i16 asm "foo $1,$0", "=r,r<"(i16 %tmp1) nounwind
   store i16 %1, i16* %out0, align 2
   ret void
@@ -48,10 +48,10 @@ entry:
   %in1 = alloca i16, align 2
   store i16 0, i16* %out0, align 2
   store i16 1, i16* %in1, align 2
-  %tmp = load i16* %in1, align 2
+  %tmp = load i16, i16* %in1, align 2
   %0 = call i16 asm "foo $1,$0", "=r,>r"(i16 %tmp) nounwind
   store i16 %0, i16* %out0, align 2
-  %tmp1 = load i16* %in1, align 2
+  %tmp1 = load i16, i16* %in1, align 2
   %1 = call i16 asm "foo $1,$0", "=r,r>"(i16 %tmp1) nounwind
   store i16 %1, i16* %out0, align 2
   ret void
@@ -63,7 +63,7 @@ entry:
   %in1 = alloca i16, align 2
   store i16 0, i16* %out0, align 2
   store i16 1, i16* %in1, align 2
-  %tmp = load i16* %in1, align 2
+  %tmp = load i16, i16* %in1, align 2
   %0 = call i16 asm "foo $1,$0", "=r,r"(i16 %tmp) nounwind
   store i16 %0, i16* %out0, align 2
   ret void
@@ -120,10 +120,10 @@ entry:
   %in1 = alloca i16, align 2
   store i16 0, i16* %out0, align 2
   store i16 1, i16* %in1, align 2
-  %tmp = load i16* %in1, align 2
+  %tmp = load i16, i16* %in1, align 2
   %0 = call i16 asm "foo $1,$0", "=r,imr"(i16 %tmp) nounwind
   store i16 %0, i16* %out0, align 2
-  %tmp1 = load i16* @min1, align 2
+  %tmp1 = load i16, i16* @min1, align 2
   %1 = call i16 asm "foo $1,$0", "=r,imr"(i16 %tmp1) nounwind
   store i16 %1, i16* %out0, align 2
   %2 = call i16 asm "foo $1,$0", "=r,imr"(i16 1) nounwind
@@ -137,10 +137,10 @@ entry:
   %in1 = alloca i16, align 2
   store i16 0, i16* %out0, align 2
   store i16 1, i16* %in1, align 2
-  %tmp = load i16* %in1, align 2
+  %tmp = load i16, i16* %in1, align 2
   %0 = call i16 asm "foo $1,$0", "=r,X"(i16 %tmp) nounwind
   store i16 %0, i16* %out0, align 2
-  %tmp1 = load i16* @min1, align 2
+  %tmp1 = load i16, i16* @min1, align 2
   %1 = call i16 asm "foo $1,$0", "=r,X"(i16 %tmp1) nounwind
   store i16 %1, i16* %out0, align 2
   %2 = call i16 asm "foo $1,$0", "=r,X"(i16 1) nounwind
@@ -166,7 +166,7 @@ entry:
 
 define void @multi_m() nounwind {
 entry:
-  %tmp = load i16* @min1, align 2
+  %tmp = load i16, i16* @min1, align 2
   call void asm "foo $1,$0", "=*m|r,m|r"(i16* @mout0, i16 %tmp) nounwind
   ret void
 }
@@ -191,10 +191,10 @@ entry:
   %in1 = alloca i16, align 2
   store i16 0, i16* %out0, align 2
   store i16 1, i16* %in1, align 2
-  %tmp = load i16* %in1, align 2
+  %tmp = load i16, i16* %in1, align 2
   %0 = call i16 asm "foo $1,$0", "=r|r,r|<r"(i16 %tmp) nounwind
   store i16 %0, i16* %out0, align 2
-  %tmp1 = load i16* %in1, align 2
+  %tmp1 = load i16, i16* %in1, align 2
   %1 = call i16 asm "foo $1,$0", "=r|r,r|r<"(i16 %tmp1) nounwind
   store i16 %1, i16* %out0, align 2
   ret void
@@ -206,10 +206,10 @@ entry:
   %in1 = alloca i16, align 2
   store i16 0, i16* %out0, align 2
   store i16 1, i16* %in1, align 2
-  %tmp = load i16* %in1, align 2
+  %tmp = load i16, i16* %in1, align 2
   %0 = call i16 asm "foo $1,$0", "=r|r,r|>r"(i16 %tmp) nounwind
   store i16 %0, i16* %out0, align 2
-  %tmp1 = load i16* %in1, align 2
+  %tmp1 = load i16, i16* %in1, align 2
   %1 = call i16 asm "foo $1,$0", "=r|r,r|r>"(i16 %tmp1) nounwind
   store i16 %1, i16* %out0, align 2
   ret void
@@ -221,7 +221,7 @@ entry:
   %in1 = alloca i16, align 2
   store i16 0, i16* %out0, align 2
   store i16 1, i16* %in1, align 2
-  %tmp = load i16* %in1, align 2
+  %tmp = load i16, i16* %in1, align 2
   %0 = call i16 asm "foo $1,$0", "=r|r,r|m"(i16 %tmp) nounwind
   store i16 %0, i16* %out0, align 2
   ret void
@@ -278,10 +278,10 @@ entry:
   %in1 = alloca i16, align 2
   store i16 0, i16* %out0, align 2
   store i16 1, i16* %in1, align 2
-  %tmp = load i16* %in1, align 2
+  %tmp = load i16, i16* %in1, align 2
   %0 = call i16 asm "foo $1,$0", "=r|r,r|imr"(i16 %tmp) nounwind
   store i16 %0, i16* %out0, align 2
-  %tmp1 = load i16* @min1, align 2
+  %tmp1 = load i16, i16* @min1, align 2
   %1 = call i16 asm "foo $1,$0", "=r|r,r|imr"(i16 %tmp1) nounwind
   store i16 %1, i16* %out0, align 2
   %2 = call i16 asm "foo $1,$0", "=r|r,r|imr"(i16 1) nounwind
@@ -295,10 +295,10 @@ entry:
   %in1 = alloca i16, align 2
   store i16 0, i16* %out0, align 2
   store i16 1, i16* %in1, align 2
-  %tmp = load i16* %in1, align 2
+  %tmp = load i16, i16* %in1, align 2
   %0 = call i16 asm "foo $1,$0", "=r|r,r|X"(i16 %tmp) nounwind
   store i16 %0, i16* %out0, align 2
-  %tmp1 = load i16* @min1, align 2
+  %tmp1 = load i16, i16* @min1, align 2
   %1 = call i16 asm "foo $1,$0", "=r|r,r|X"(i16 %tmp1) nounwind
   store i16 %1, i16* %out0, align 2
   %2 = call i16 asm "foo $1,$0", "=r|r,r|X"(i16 1) nounwind

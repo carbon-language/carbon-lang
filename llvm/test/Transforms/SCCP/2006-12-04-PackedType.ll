@@ -104,13 +104,13 @@ target triple = "powerpc-apple-darwin8"
 define void @gldLLVMVecPointRender(%struct.GLDContextRec* %ctx) {
 entry:
 	%tmp.uip = getelementptr %struct.GLDContextRec, %struct.GLDContextRec* %ctx, i32 0, i32 22		; <i32*> [#uses=1]
-	%tmp = load i32* %tmp.uip		; <i32> [#uses=3]
+	%tmp = load i32, i32* %tmp.uip		; <i32> [#uses=3]
 	%tmp91 = lshr i32 %tmp, 5		; <i32> [#uses=1]
 	%tmp92 = trunc i32 %tmp91 to i1		; <i1> [#uses=1]
 	br i1 %tmp92, label %cond_true93, label %cond_next116
 cond_true93:		; preds = %entry
 	%tmp.upgrd.1 = getelementptr %struct.GLDContextRec, %struct.GLDContextRec* %ctx, i32 0, i32 31, i32 14		; <i32*> [#uses=1]
-	%tmp95 = load i32* %tmp.upgrd.1		; <i32> [#uses=1]
+	%tmp95 = load i32, i32* %tmp.upgrd.1		; <i32> [#uses=1]
 	%tmp95.upgrd.2 = sitofp i32 %tmp95 to float		; <float> [#uses=1]
 	%tmp108 = fmul float undef, %tmp95.upgrd.2		; <float> [#uses=1]
 	br label %cond_next116

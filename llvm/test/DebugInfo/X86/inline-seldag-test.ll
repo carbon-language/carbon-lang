@@ -28,10 +28,10 @@ entry:
   %y.addr.i = alloca i32, align 4
   %x = alloca i32, align 4
   call void @llvm.dbg.declare(metadata i32* %x, metadata !15, metadata !{!"0x102"}), !dbg !17
-  %0 = load volatile i32* %x, align 4, !dbg !18
+  %0 = load volatile i32, i32* %x, align 4, !dbg !18
   store i32 %0, i32* %y.addr.i, align 4
   call void @llvm.dbg.declare(metadata i32* %y.addr.i, metadata !19, metadata !{!"0x102"}), !dbg !20
-  %1 = load i32* %y.addr.i, align 4, !dbg !21
+  %1 = load i32, i32* %y.addr.i, align 4, !dbg !21
   %tobool.i = icmp ne i32 %1, 0, !dbg !21
   %cond.i = select i1 %tobool.i, i32 4, i32 7, !dbg !21
   store volatile i32 %cond.i, i32* %x, align 4, !dbg !18

@@ -238,32 +238,32 @@ entry:
   %frombool = zext i1 %b to i8
   store i8 %frombool, i8* %b.addr, align 1
   call void @llvm.dbg.declare(metadata i8* %b.addr, metadata !66, metadata !62), !dbg !67
-  %0 = load i8* %b.addr, align 1, !dbg !68
+  %0 = load i8, i8* %b.addr, align 1, !dbg !68
   %tobool = trunc i8 %0 to i1, !dbg !68
   br i1 %tobool, label %if.then, label %if.end, !dbg !68
 
 if.then:                                          ; preds = %entry
-  %1 = load i32* @_ZN1A1B1iE, align 4, !dbg !69
+  %1 = load i32, i32* @_ZN1A1B1iE, align 4, !dbg !69
   store i32 %1, i32* %retval, !dbg !69
   br label %return, !dbg !69
 
 if.end:                                           ; preds = %entry
-  %2 = load i32* @_ZN1A1B1iE, align 4, !dbg !70
-  %3 = load i32* @_ZN1A1B1iE, align 4, !dbg !70
+  %2 = load i32, i32* @_ZN1A1B1iE, align 4, !dbg !70
+  %3 = load i32, i32* @_ZN1A1B1iE, align 4, !dbg !70
   %add = add nsw i32 %2, %3, !dbg !70
-  %4 = load i32* @_ZN1A1B1iE, align 4, !dbg !70
+  %4 = load i32, i32* @_ZN1A1B1iE, align 4, !dbg !70
   %add1 = add nsw i32 %add, %4, !dbg !70
   store i32 %add1, i32* %retval, !dbg !70
   br label %return, !dbg !70
 
 return:                                           ; preds = %if.end, %if.then
-  %5 = load i32* %retval, !dbg !71
+  %5 = load i32, i32* %retval, !dbg !71
   ret i32 %5, !dbg !71
 }
 
 define internal void @__cxx_global_var_init1() section "__TEXT,__StaticInit,regular,pure_instructions" {
 entry:
-  %0 = load i32* @_ZN1A1B1iE, align 4, !dbg !72
+  %0 = load i32, i32* @_ZN1A1B1iE, align 4, !dbg !72
   store i32 %0, i32* @_ZN1A1B7var_fwdE, align 4, !dbg !72
   ret void, !dbg !72
 }

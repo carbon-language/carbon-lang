@@ -12,7 +12,7 @@ while.body:                                       ; preds = %while.cond
   br label %indirectgoto
 
 run_opcode:                                       ; preds = %indirectgoto
-  %tmp276 = load i8* undef                        ; <i8> [#uses=1]
+  %tmp276 = load i8, i8* undef                        ; <i8> [#uses=1]
   br label %indirectgoto
 
 if.else295:                                       ; preds = %divide_late

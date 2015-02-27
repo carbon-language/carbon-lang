@@ -87,7 +87,7 @@ define <8 x double> @fpext00(<8 x float> %b) nounwind {
 ; CHECK: ret
 define double @funcA(i64* nocapture %e) {
 entry:
-  %tmp1 = load i64* %e, align 8
+  %tmp1 = load i64, i64* %e, align 8
   %conv = sitofp i64 %tmp1 to double
   ret double %conv
 }
@@ -97,7 +97,7 @@ entry:
 ; CHECK: ret
 define double @funcB(i32* %e) {
 entry:
-  %tmp1 = load i32* %e, align 4
+  %tmp1 = load i32, i32* %e, align 4
   %conv = sitofp i32 %tmp1 to double
   ret double %conv
 }
@@ -107,7 +107,7 @@ entry:
 ; CHECK: ret
 define float @funcC(i32* %e) {
 entry:
-  %tmp1 = load i32* %e, align 4
+  %tmp1 = load i32, i32* %e, align 4
   %conv = sitofp i32 %tmp1 to float
   ret float %conv
 }
@@ -117,7 +117,7 @@ entry:
 ; CHECK: ret
 define float @i64tof32(i64* %e) {
 entry:
-  %tmp1 = load i64* %e, align 8
+  %tmp1 = load i64, i64* %e, align 8
   %conv = sitofp i64 %tmp1 to float
   ret float %conv
 }
@@ -129,7 +129,7 @@ define void @fpext() {
 entry:
   %f = alloca float, align 4
   %d = alloca double, align 8
-  %tmp = load float* %f, align 4
+  %tmp = load float, float* %f, align 4
   %conv = fpext float %tmp to double
   store double %conv, double* %d, align 8
   ret void
@@ -144,7 +144,7 @@ define void @fpround_scalar() nounwind uwtable {
 entry:
   %f = alloca float, align 4
   %d = alloca double, align 8
-  %tmp = load double* %d, align 8
+  %tmp = load double, double* %d, align 8
   %conv = fptrunc double %tmp to float
   store float %conv, float* %f, align 4
   ret void

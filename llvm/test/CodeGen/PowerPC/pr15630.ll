@@ -8,7 +8,7 @@ entry:
   %newval = alloca i8
   %ordering = alloca i32, align 4
   store i8 %newval_arg, i8* %newval
-  %tmp = load i8* %newval
+  %tmp = load i8, i8* %newval
   store atomic volatile i8 %tmp, i8* %val_arg seq_cst, align 1
   ret void
 }

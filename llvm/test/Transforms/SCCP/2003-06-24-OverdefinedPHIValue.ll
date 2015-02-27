@@ -3,7 +3,7 @@
 
 define void @cprop_test11(i32* %data.1) {
 entry:
-	%tmp.1 = load i32* %data.1		; <i32> [#uses=3]
+	%tmp.1 = load i32, i32* %data.1		; <i32> [#uses=3]
 	%tmp.41 = icmp sgt i32 %tmp.1, 1		; <i1> [#uses=1]
 	br i1 %tmp.41, label %no_exit, label %loopexit
 no_exit:		; preds = %endif, %then, %entry

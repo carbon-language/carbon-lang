@@ -20,7 +20,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %arrayidx, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
@@ -44,7 +44,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %arrayidx, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
@@ -72,7 +72,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %arrayidx, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
@@ -95,7 +95,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %arrayidx, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
@@ -125,7 +125,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %arrayidx, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
@@ -154,7 +154,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %arrayidx, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
@@ -191,7 +191,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %arrayidx, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
@@ -218,7 +218,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %arrayidx, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
@@ -246,7 +246,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %arrayidx, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1

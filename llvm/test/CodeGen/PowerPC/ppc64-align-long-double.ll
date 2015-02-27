@@ -14,7 +14,7 @@ target triple = "powerpc64-unknown-linux-gnu"
 define ppc_fp128 @test(%struct.S* byval %x) nounwind {
 entry:
   %b = getelementptr inbounds %struct.S, %struct.S* %x, i32 0, i32 1
-  %0 = load ppc_fp128* %b, align 16
+  %0 = load ppc_fp128, ppc_fp128* %b, align 16
   ret ppc_fp128 %0
 }
 

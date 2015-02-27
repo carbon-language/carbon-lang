@@ -75,7 +75,7 @@ for.body:                                         ; preds = %for.inc, %for.body.
   %add = add nsw i32 %tmp5, 4
   %idxprom = sext i32 %add to i64
   %arrayidx = getelementptr inbounds [7 x i32], [7 x i32] addrspace(2)* @g_50, i32 0, i64 %idxprom
-  %tmp2 = load i32 addrspace(2)* %arrayidx, align 4
+  %tmp2 = load i32, i32 addrspace(2)* %arrayidx, align 4
   %add4 = add nsw i32 %tmp5, 5
   %idxprom5 = sext i32 %add4 to i64
   %arrayidx6 = getelementptr inbounds [7 x i32], [7 x i32] addrspace(2)* @g_50, i32 0, i64 %idxprom5
@@ -85,7 +85,7 @@ for.body:                                         ; preds = %for.inc, %for.body.
   br i1 %cmp, label %for.body, label %for.end
 
 for.end:                                          ; preds = %for.inc
-  %tmp8 = load i32 addrspace(2)* getelementptr inbounds ([7 x i32] addrspace(2)* @g_50, i32 0, i64 6), align 4
+  %tmp8 = load i32, i32 addrspace(2)* getelementptr inbounds ([7 x i32] addrspace(2)* @g_50, i32 0, i64 6), align 4
   ret i32 %tmp8
 }
 

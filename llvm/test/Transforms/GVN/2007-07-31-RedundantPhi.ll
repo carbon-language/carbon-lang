@@ -17,6 +17,6 @@ cond_false470:		; preds = %cond_next449
 	br label %cond_next698
 
 cond_next698:		; preds = %cond_true492
-	%tmp701 = load i16* @img_width, align 2		; <i16> [#uses=0]
+	%tmp701 = load i16, i16* @img_width, align 2		; <i16> [#uses=0]
 	ret i32 0
 }

@@ -39,19 +39,19 @@ entry:
   tail call void @llvm.dbg.value(metadata %class.D* %this, i64 0, metadata !34, metadata !{!"0x102"}), !dbg !46
   tail call void @llvm.dbg.value(metadata %class.D* %d, i64 0, metadata !35, metadata !{!"0x102"}), !dbg !46
   %c1 = getelementptr inbounds %class.D, %class.D* %d, i64 0, i32 0, !dbg !47
-  %0 = load i32* %c1, align 4, !dbg !47
+  %0 = load i32, i32* %c1, align 4, !dbg !47
   %c12 = getelementptr inbounds %class.D, %class.D* %this, i64 0, i32 0, !dbg !47
   store i32 %0, i32* %c12, align 4, !dbg !47
   %c2 = getelementptr inbounds %class.D, %class.D* %d, i64 0, i32 1, !dbg !49
-  %1 = load i32* %c2, align 4, !dbg !49
+  %1 = load i32, i32* %c2, align 4, !dbg !49
   %c23 = getelementptr inbounds %class.D, %class.D* %this, i64 0, i32 1, !dbg !49
   store i32 %1, i32* %c23, align 4, !dbg !49
   %c3 = getelementptr inbounds %class.D, %class.D* %d, i64 0, i32 2, !dbg !50
-  %2 = load i32* %c3, align 4, !dbg !50
+  %2 = load i32, i32* %c3, align 4, !dbg !50
   %c34 = getelementptr inbounds %class.D, %class.D* %this, i64 0, i32 2, !dbg !50
   store i32 %2, i32* %c34, align 4, !dbg !50
   %c4 = getelementptr inbounds %class.D, %class.D* %d, i64 0, i32 3, !dbg !51
-  %3 = load i32* %c4, align 4, !dbg !51
+  %3 = load i32, i32* %c4, align 4, !dbg !51
   %c45 = getelementptr inbounds %class.D, %class.D* %this, i64 0, i32 3, !dbg !51
   store i32 %3, i32* %c45, align 4, !dbg !51
   ret void, !dbg !52

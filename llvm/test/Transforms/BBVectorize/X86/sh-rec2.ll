@@ -13,13 +13,13 @@ entry:
   %incdec.ptr157 = getelementptr inbounds i8, i8* %c, i64 11
   store i8 0, i8* %incdec.ptr136, align 1
   %arrayidx162 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 11
-  %0 = load i16* %arrayidx162, align 2
+  %0 = load i16, i16* %arrayidx162, align 2
   %conv1631 = trunc i16 %0 to i8
   %and164 = shl i8 %conv1631, 3
   %shl165 = and i8 %and164, 56
   %incdec.ptr172 = getelementptr inbounds i8, i8* %c, i64 12
   store i8 %shl165, i8* %incdec.ptr157, align 1
-  %1 = load i16* inttoptr (i64 2 to i16*), align 2
+  %1 = load i16, i16* inttoptr (i64 2 to i16*), align 2
   %conv1742 = trunc i16 %1 to i8
   %and175 = shl i8 %conv1742, 1
   %incdec.ptr183 = getelementptr inbounds i8, i8* %c, i64 13
@@ -29,13 +29,13 @@ entry:
   %arrayidx214 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 15
   %incdec.ptr220 = getelementptr inbounds i8, i8* %c, i64 15
   store i8 0, i8* %incdec.ptr199, align 1
-  %2 = load i16* %arrayidx214, align 2
+  %2 = load i16, i16* %arrayidx214, align 2
   %conv2223 = trunc i16 %2 to i8
   %and223 = shl i8 %conv2223, 6
   %incdec.ptr235 = getelementptr inbounds i8, i8* %c, i64 16
   store i8 %and223, i8* %incdec.ptr220, align 1
   %arrayidx240 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 19
-  %3 = load i16* %arrayidx240, align 2
+  %3 = load i16, i16* %arrayidx240, align 2
   %conv2414 = trunc i16 %3 to i8
   %and242 = shl i8 %conv2414, 2
   %shl243 = and i8 %and242, 28
@@ -44,7 +44,7 @@ entry:
   %incdec.ptr272 = getelementptr inbounds i8, i8* %c, i64 18
   store i8 0, i8* %incdec.ptr251, align 1
   %arrayidx282 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 25
-  %4 = load i16* %arrayidx282, align 2
+  %4 = load i16, i16* %arrayidx282, align 2
   %conv2835 = trunc i16 %4 to i8
   %and284 = and i8 %conv2835, 7
   %incdec.ptr287 = getelementptr inbounds i8, i8* %c, i64 19
@@ -54,14 +54,14 @@ entry:
   %incdec.ptr314 = getelementptr inbounds i8, i8* %c, i64 21
   store i8 0, i8* %incdec.ptr298, align 1
   %arrayidx319 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 26
-  %5 = load i16* %arrayidx319, align 4
+  %5 = load i16, i16* %arrayidx319, align 4
   %conv3206 = trunc i16 %5 to i8
   %and321 = shl i8 %conv3206, 4
   %shl322 = and i8 %and321, 112
   %incdec.ptr335 = getelementptr inbounds i8, i8* %c, i64 22
   store i8 %shl322, i8* %incdec.ptr314, align 1
   %arrayidx340 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 29
-  %6 = load i16* %arrayidx340, align 2
+  %6 = load i16, i16* %arrayidx340, align 2
   %conv3417 = trunc i16 %6 to i8
   %and342 = shl i8 %conv3417, 3
   %shl343 = and i8 %and342, 56
@@ -72,7 +72,7 @@ entry:
   %arrayidx381 = getelementptr inbounds [52 x i16], [52 x i16]* %xmc, i64 0, i64 36
   %incdec.ptr387 = getelementptr inbounds i8, i8* %c, i64 25
   store i8 0, i8* %incdec.ptr366, align 1
-  %7 = load i16* %arrayidx381, align 8
+  %7 = load i16, i16* %arrayidx381, align 8
   %conv3898 = trunc i16 %7 to i8
   %and390 = shl i8 %conv3898, 6
   store i8 %and390, i8* %incdec.ptr387, align 1

@@ -11,6 +11,6 @@ cond_next:		; preds = %entry
 	br label %bb19
 
 bb19:		; preds = %cond_next, %entry
-	%tmp29 = load i32* @bsLive, align 4		; <i32> [#uses=0]
+	%tmp29 = load i32, i32* @bsLive, align 4		; <i32> [#uses=0]
 	ret i32 0
 }

@@ -20,7 +20,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 define internal void @test1() {
 entry:
   store i32 1, i32* getelementptr inbounds ([2 x i32]* @xs, i64 0, i64 0)
-  %0 = load i32* getelementptr inbounds ([2 x i32]* @xs, i32 0, i64 0), align 4
+  %0 = load i32, i32* getelementptr inbounds ([2 x i32]* @xs, i32 0, i64 0), align 4
   store i32 %0, i32* getelementptr inbounds ([2 x i32]* @xs, i64 0, i64 1)
   ret void
 }
@@ -37,7 +37,7 @@ entry:
 define internal i32 @test2_helper(%closure* %this, i32 %b) {
 entry:
   %0 = getelementptr inbounds %closure, %closure* %this, i32 0, i32 0
-  %1 = load i32* %0, align 4
+  %1 = load i32, i32* %0, align 4
   %add = add nsw i32 %1, %b
   ret i32 %add
 }
@@ -85,7 +85,7 @@ entry:
 @test6_v2 = global i32 0, align 4
 ; CHECK: @test6_v2 = global i32 42, align 4
 define internal void @test6() {
-  %load = load { i32, i32 }* @test6_v1, align 8
+  %load = load { i32, i32 }, { i32, i32 }* @test6_v1, align 8
   %xv0 = extractvalue { i32, i32 } %load, 0
   %iv = insertvalue { i32, i32 } %load, i32 %xv0, 1
   %xv1 = extractvalue { i32, i32 } %iv, 1

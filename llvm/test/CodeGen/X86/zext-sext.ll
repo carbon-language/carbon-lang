@@ -9,14 +9,14 @@
 define void @func([40 x i16]* %a, i32* %b, i16** %c, i64* %d) nounwind {
 entry:
   %tmp103 = getelementptr inbounds [40 x i16], [40 x i16]* %a, i64 0, i64 4
-  %tmp104 = load i16* %tmp103, align 2
+  %tmp104 = load i16, i16* %tmp103, align 2
   %tmp105 = sext i16 %tmp104 to i32
-  %tmp106 = load i32* %b, align 4
+  %tmp106 = load i32, i32* %b, align 4
   %tmp107 = sub nsw i32 4, %tmp106
-  %tmp108 = load i16** %c, align 8
+  %tmp108 = load i16*, i16** %c, align 8
   %tmp109 = sext i32 %tmp107 to i64
   %tmp110 = getelementptr inbounds i16, i16* %tmp108, i64 %tmp109
-  %tmp111 = load i16* %tmp110, align 1
+  %tmp111 = load i16, i16* %tmp110, align 1
   %tmp112 = sext i16 %tmp111 to i32
   %tmp = mul i32 355244649, %tmp112
   %tmp1 = mul i32 %tmp, %tmp105
@@ -49,7 +49,7 @@ entry:
   %tmp19 = sub i64 %tmp18, 5386586244038704851
   %tmp20 = add i64 %tmp19, -1368057358110947217
   %tmp21 = mul i64 %tmp20, -422037402840850817
-  %tmp115 = load i64* %d, align 8
+  %tmp115 = load i64, i64* %d, align 8
   %alphaX = mul i64 468858157810230901, %tmp21
   %alphaXbetaY = add i64 %alphaX, %tmp115
   %transformed = add i64 %alphaXbetaY, 9040145182981852475

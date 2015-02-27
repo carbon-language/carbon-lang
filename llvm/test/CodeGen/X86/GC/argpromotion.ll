@@ -14,6 +14,6 @@ define internal i32 @f(i32* %xp) gc "example" {
 entry:
 	%var = alloca i8*
 	call void @llvm.gcroot(i8** %var, i8* null)
-	%x = load i32* %xp
+	%x = load i32, i32* %xp
 	ret i32 %x
 }

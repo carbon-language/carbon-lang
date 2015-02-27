@@ -8,7 +8,7 @@
 define void @smrd0(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
 entry:
   %0 = getelementptr i32, i32 addrspace(2)* %ptr, i64 1
-  %1 = load i32 addrspace(2)* %0
+  %1 = load i32, i32 addrspace(2)* %0
   store i32 %1, i32 addrspace(1)* %out
   ret void
 }
@@ -20,7 +20,7 @@ entry:
 define void @smrd1(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
 entry:
   %0 = getelementptr i32, i32 addrspace(2)* %ptr, i64 255
-  %1 = load i32 addrspace(2)* %0
+  %1 = load i32, i32 addrspace(2)* %0
   store i32 %1, i32 addrspace(1)* %out
   ret void
 }
@@ -34,7 +34,7 @@ entry:
 define void @smrd2(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
 entry:
   %0 = getelementptr i32, i32 addrspace(2)* %ptr, i64 256
-  %1 = load i32 addrspace(2)* %0
+  %1 = load i32, i32 addrspace(2)* %0
   store i32 %1, i32 addrspace(1)* %out
   ret void
 }
@@ -55,7 +55,7 @@ entry:
 define void @smrd3(i32 addrspace(1)* %out, i32 addrspace(2)* %ptr) {
 entry:
   %0 = getelementptr i32, i32 addrspace(2)* %ptr, i64 4294967296 ; 2 ^ 32
-  %1 = load i32 addrspace(2)* %0
+  %1 = load i32, i32 addrspace(2)* %0
   store i32 %1, i32 addrspace(1)* %out
   ret void
 }
@@ -67,7 +67,7 @@ entry:
 define void @smrd_load_const0(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
   %20 = getelementptr <16 x i8>, <16 x i8> addrspace(2)* %0, i32 0
-  %21 = load <16 x i8> addrspace(2)* %20
+  %21 = load <16 x i8>, <16 x i8> addrspace(2)* %20
   %22 = call float @llvm.SI.load.const(<16 x i8> %21, i32 16)
   call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 0, float %22, float %22, float %22, float %22)
   ret void
@@ -81,7 +81,7 @@ main_body:
 define void @smrd_load_const1(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
   %20 = getelementptr <16 x i8>, <16 x i8> addrspace(2)* %0, i32 0
-  %21 = load <16 x i8> addrspace(2)* %20
+  %21 = load <16 x i8>, <16 x i8> addrspace(2)* %20
   %22 = call float @llvm.SI.load.const(<16 x i8> %21, i32 1020)
   call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 0, float %22, float %22, float %22, float %22)
   ret void
@@ -96,7 +96,7 @@ main_body:
 define void @smrd_load_const2(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
   %20 = getelementptr <16 x i8>, <16 x i8> addrspace(2)* %0, i32 0
-  %21 = load <16 x i8> addrspace(2)* %20
+  %21 = load <16 x i8>, <16 x i8> addrspace(2)* %20
   %22 = call float @llvm.SI.load.const(<16 x i8> %21, i32 1024)
   call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 0, float %22, float %22, float %22, float %22)
   ret void

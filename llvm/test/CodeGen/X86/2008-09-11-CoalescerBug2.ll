@@ -18,11 +18,11 @@ entry:
 ; SOURCE-SCHED: subl
 ; SOURCE-SCHED: testb
 ; SOURCE-SCHED: jne
-	%0 = load i32* @g_5, align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* @g_5, align 4		; <i32> [#uses=1]
 	%1 = ashr i32 %0, 1		; <i32> [#uses=1]
 	%2 = icmp sgt i32 %1, 1		; <i1> [#uses=1]
 	%3 = zext i1 %2 to i32		; <i32> [#uses=1]
-	%4 = load i32* @g_73, align 4		; <i32> [#uses=1]
+	%4 = load i32, i32* @g_73, align 4		; <i32> [#uses=1]
 	%5 = zext i16 %p_46 to i64		; <i64> [#uses=1]
 	%6 = sub i64 0, %5		; <i64> [#uses=1]
 	%7 = trunc i64 %6 to i8		; <i8> [#uses=2]

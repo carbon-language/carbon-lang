@@ -25,7 +25,7 @@ bb52:                                             ; preds = %newFuncRoot
 ; CHECK: movne
 ; CHECK: moveq
 ; CHECK: pop
-  %0 = load i64* @posed, align 4                  ; <i64> [#uses=3]
+  %0 = load i64, i64* @posed, align 4                  ; <i64> [#uses=3]
   %1 = sub i64 %0, %.reload78                     ; <i64> [#uses=1]
   %2 = ashr i64 %1, 1                             ; <i64> [#uses=3]
   %3 = icmp eq i64 %2, 0                          ; <i1> [#uses=1]

@@ -39,10 +39,10 @@ bb134:                                            ; preds = %bb131
   unreachable
 
 bb135:                                            ; preds = %meshBB396
-  %uriHash.1.phi.load = load i32* undef
-  %.load120 = load i8*** %.SV116
-  %.phi24 = load i8* null
-  %.phi26 = load i8** null
+  %uriHash.1.phi.load = load i32, i32* undef
+  %.load120 = load i8**, i8*** %.SV116
+  %.phi24 = load i8, i8* null
+  %.phi26 = load i8*, i8** null
   store i8 %.phi24, i8* %.phi26, align 1
   %0 = getelementptr inbounds i8, i8* %.phi26, i32 1
   store i8* %0, i8** %.load120, align 4
@@ -52,7 +52,7 @@ bb135:                                            ; preds = %meshBB396
   %1 = mul i32 %uriHash.1.phi.load, 1000003
   %2 = xor i32 0, %1
   store i32 %2, i32* null
-  %3 = load i8* null, align 1
+  %3 = load i8, i8* null, align 1
   %4 = icmp eq i8 %3, 0
   store i8* %0, i8** undef
   br i1 %4, label %meshBB472, label %bb131

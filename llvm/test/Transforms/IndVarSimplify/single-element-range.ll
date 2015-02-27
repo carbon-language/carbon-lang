@@ -8,7 +8,7 @@ entry:
 	br i1 undef, label %return, label %bb
 
 bb:		; preds = %entry
-	%0 = load i8** undef, align 4		; <i8*> [#uses=2]
+	%0 = load i8*, i8** undef, align 4		; <i8*> [#uses=2]
 	%1 = ptrtoint i8* %0 to i32		; <i32> [#uses=1]
 	%2 = icmp sgt i8* %0, inttoptr (i32 1 to i8*)		; <i1> [#uses=1]
 	br i1 %2, label %bb1, label %bb5

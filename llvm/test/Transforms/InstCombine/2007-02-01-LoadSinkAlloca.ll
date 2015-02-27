@@ -11,14 +11,14 @@ entry:
 	%A = alloca i32
 	%B = alloca i32
 	%tmp = call i32 (...)* @bar( i32* %A )		; <i32> [#uses=0]
-	%T = load i32* %A		; <i32> [#uses=1]
+	%T = load i32, i32* %A		; <i32> [#uses=1]
 	%tmp2 = icmp eq i32 %C, 0		; <i1> [#uses=1]
 	br i1 %tmp2, label %cond_next, label %cond_true
 
 cond_true:		; preds = %entry
 	store i32 123, i32* %B
 	call i32 @test2( i32 123 )		; <i32>:0 [#uses=0]
-	%T1 = load i32* %B		; <i32> [#uses=1]
+	%T1 = load i32, i32* %B		; <i32> [#uses=1]
 	br label %cond_next
 
 cond_next:		; preds = %cond_true, %entry

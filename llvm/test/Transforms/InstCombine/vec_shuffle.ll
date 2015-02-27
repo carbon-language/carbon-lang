@@ -190,11 +190,11 @@ define void @test14(i16 %conv10) {
   %tmp = alloca <4 x i16>, align 8
   %vecinit6 = insertelement <4 x i16> undef, i16 23, i32 3
   store <4 x i16> %vecinit6, <4 x i16>* undef
-  %tmp1 = load <4 x i16>* undef
+  %tmp1 = load <4 x i16>, <4 x i16>* undef
   %vecinit11 = insertelement <4 x i16> undef, i16 %conv10, i32 3
   %div = udiv <4 x i16> %tmp1, %vecinit11
   store <4 x i16> %div, <4 x i16>* %tmp
-  %tmp4 = load <4 x i16>* %tmp
+  %tmp4 = load <4 x i16>, <4 x i16>* %tmp
   %tmp5 = shufflevector <4 x i16> %tmp4, <4 x i16> undef, <2 x i32> <i32 2, i32 0>
   %cmp = icmp ule <2 x i16> %tmp5, undef
   %sext = sext <2 x i1> %cmp to <2 x i16>

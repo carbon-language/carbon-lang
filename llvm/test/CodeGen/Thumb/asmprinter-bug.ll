@@ -16,13 +16,13 @@
 define void @adpcm_coder(i16* nocapture %indata, i8* nocapture %outdata, i32 %len, %struct.adpcm_state* nocapture %state) nounwind {
 entry:
 	%0 = getelementptr %struct.adpcm_state, %struct.adpcm_state* %state, i32 0, i32 0		; <i16*> [#uses=2]
-	%1 = load i16* %0, align 2		; <i16> [#uses=1]
+	%1 = load i16, i16* %0, align 2		; <i16> [#uses=1]
 	%2 = sext i16 %1 to i32		; <i32> [#uses=2]
 	%3 = getelementptr %struct.adpcm_state, %struct.adpcm_state* %state, i32 0, i32 1		; <i8*> [#uses=2]
-	%4 = load i8* %3, align 2		; <i8> [#uses=1]
+	%4 = load i8, i8* %3, align 2		; <i8> [#uses=1]
 	%5 = sext i8 %4 to i32		; <i32> [#uses=3]
 	%6 = getelementptr [89 x i32], [89 x i32]* @stepsizeTable, i32 0, i32 %5		; <i32*> [#uses=1]
-	%7 = load i32* %6, align 4		; <i32> [#uses=1]
+	%7 = load i32, i32* %6, align 4		; <i32> [#uses=1]
 	%8 = icmp sgt i32 %len, 0		; <i1> [#uses=1]
 	br i1 %8, label %bb, label %bb27
 
@@ -35,7 +35,7 @@ bb:		; preds = %bb25, %entry
 	%valpred.132 = phi i32 [ %2, %entry ], [ %valpred.2, %bb25 ]		; <i32> [#uses=2]
 	%step.031 = phi i32 [ %7, %entry ], [ %36, %bb25 ]		; <i32> [#uses=5]
 	%inp.038 = getelementptr i16, i16* %indata, i32 %indvar		; <i16*> [#uses=1]
-	%9 = load i16* %inp.038, align 2		; <i16> [#uses=1]
+	%9 = load i16, i16* %inp.038, align 2		; <i16> [#uses=1]
 	%10 = sext i16 %9 to i32		; <i32> [#uses=1]
 	%11 = sub i32 %10, %valpred.132		; <i32> [#uses=3]
 	%12 = icmp slt i32 %11, 0		; <i1> [#uses=1]
@@ -80,14 +80,14 @@ bb18:		; preds = %bb17, %bb16, %bb
 	%delta.2 = or i32 %delta.1, %25		; <i32> [#uses=1]
 	%29 = xor i32 %delta.2, 1		; <i32> [#uses=3]
 	%30 = getelementptr [16 x i32], [16 x i32]* @indexTable, i32 0, i32 %29		; <i32*> [#uses=1]
-	%31 = load i32* %30, align 4		; <i32> [#uses=1]
+	%31 = load i32, i32* %30, align 4		; <i32> [#uses=1]
 	%32 = add i32 %31, %index.033		; <i32> [#uses=2]
 	%33 = icmp slt i32 %32, 0		; <i1> [#uses=1]
 	%index.1 = select i1 %33, i32 0, i32 %32		; <i32> [#uses=2]
 	%34 = icmp sgt i32 %index.1, 88		; <i1> [#uses=1]
 	%index.2 = select i1 %34, i32 88, i32 %index.1		; <i32> [#uses=3]
 	%35 = getelementptr [89 x i32], [89 x i32]* @stepsizeTable, i32 0, i32 %index.2		; <i32*> [#uses=1]
-	%36 = load i32* %35, align 4		; <i32> [#uses=1]
+	%36 = load i32, i32* %35, align 4		; <i32> [#uses=1]
 	%37 = icmp eq i32 %bufferstep.035, 0		; <i1> [#uses=1]
 	br i1 %37, label %bb24, label %bb23
 
@@ -141,13 +141,13 @@ bb29:		; preds = %bb28, %bb27
 define void @adpcm_decoder(i8* nocapture %indata, i16* nocapture %outdata, i32 %len, %struct.adpcm_state* nocapture %state) nounwind {
 entry:
 	%0 = getelementptr %struct.adpcm_state, %struct.adpcm_state* %state, i32 0, i32 0		; <i16*> [#uses=2]
-	%1 = load i16* %0, align 2		; <i16> [#uses=1]
+	%1 = load i16, i16* %0, align 2		; <i16> [#uses=1]
 	%2 = sext i16 %1 to i32		; <i32> [#uses=2]
 	%3 = getelementptr %struct.adpcm_state, %struct.adpcm_state* %state, i32 0, i32 1		; <i8*> [#uses=2]
-	%4 = load i8* %3, align 2		; <i8> [#uses=1]
+	%4 = load i8, i8* %3, align 2		; <i8> [#uses=1]
 	%5 = sext i8 %4 to i32		; <i32> [#uses=3]
 	%6 = getelementptr [89 x i32], [89 x i32]* @stepsizeTable, i32 0, i32 %5		; <i32*> [#uses=1]
-	%7 = load i32* %6, align 4		; <i32> [#uses=1]
+	%7 = load i32, i32* %6, align 4		; <i32> [#uses=1]
 	%8 = icmp sgt i32 %len, 0		; <i1> [#uses=1]
 	br i1 %8, label %bb, label %bb22
 
@@ -164,7 +164,7 @@ bb:		; preds = %bb20, %entry
 	br i1 %9, label %bb2, label %bb3
 
 bb2:		; preds = %bb
-	%10 = load i8* %inp.131, align 1		; <i8> [#uses=1]
+	%10 = load i8, i8* %inp.131, align 1		; <i8> [#uses=1]
 	%11 = sext i8 %10 to i32		; <i32> [#uses=2]
 	%12 = getelementptr i8, i8* %inp.131, i32 1		; <i8*> [#uses=1]
 	%13 = ashr i32 %11, 4		; <i32> [#uses=1]
@@ -177,7 +177,7 @@ bb3:		; preds = %bb2, %bb
 	%delta.0 = and i32 %delta.0.in, 15		; <i32> [#uses=1]
 	%tmp = xor i32 %bufferstep.028, 1		; <i32> [#uses=1]
 	%14 = getelementptr [16 x i32], [16 x i32]* @indexTable, i32 0, i32 %delta.0		; <i32*> [#uses=1]
-	%15 = load i32* %14, align 4		; <i32> [#uses=1]
+	%15 = load i32, i32* %14, align 4		; <i32> [#uses=1]
 	%16 = add i32 %15, %index.026		; <i32> [#uses=2]
 	%17 = icmp slt i32 %16, 0		; <i1> [#uses=1]
 	%index.1 = select i1 %17, i32 0, i32 %16		; <i32> [#uses=2]
@@ -228,7 +228,7 @@ bb19:		; preds = %bb18
 bb20:		; preds = %bb19, %bb18, %bb13
 	%valpred.2 = phi i32 [ -32768, %bb19 ], [ 32767, %bb13 ], [ %valpred.0, %bb18 ]		; <i32> [#uses=3]
 	%34 = getelementptr [89 x i32], [89 x i32]* @stepsizeTable, i32 0, i32 %index.2		; <i32*> [#uses=1]
-	%35 = load i32* %34, align 4		; <i32> [#uses=1]
+	%35 = load i32, i32* %34, align 4		; <i32> [#uses=1]
 	%36 = trunc i32 %valpred.2 to i16		; <i16> [#uses=1]
 	store i16 %36, i16* %outp.030, align 2
 	%indvar.next = add i32 %indvar, 1		; <i32> [#uses=2]
@@ -270,10 +270,10 @@ bb3:		; preds = %bb2
 	br label %bb
 
 bb4:		; preds = %bb2
-	%6 = load %struct.FILE** @__stderrp, align 4		; <%struct.FILE*> [#uses=1]
-	%7 = load i16* getelementptr (%struct.adpcm_state* @state, i32 0, i32 0), align 4		; <i16> [#uses=1]
+	%6 = load %struct.FILE*, %struct.FILE** @__stderrp, align 4		; <%struct.FILE*> [#uses=1]
+	%7 = load i16, i16* getelementptr (%struct.adpcm_state* @state, i32 0, i32 0), align 4		; <i16> [#uses=1]
 	%8 = sext i16 %7 to i32		; <i32> [#uses=1]
-	%9 = load i8* getelementptr (%struct.adpcm_state* @state, i32 0, i32 1), align 2		; <i8> [#uses=1]
+	%9 = load i8, i8* getelementptr (%struct.adpcm_state* @state, i32 0, i32 1), align 2		; <i8> [#uses=1]
 	%10 = sext i8 %9 to i32		; <i32> [#uses=1]
 	%11 = tail call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %6, i8* getelementptr ([28 x i8]* @.str1, i32 0, i32 0), i32 %8, i32 %10) nounwind		; <i32> [#uses=0]
 	ret i32 0

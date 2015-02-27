@@ -18,7 +18,7 @@ for.body:
   %add174 = add nsw i32 %i2.115, %x
   %idxprom177 = sext i32 %add174 to i64
   %arrayidx179 = getelementptr inbounds double, double* %data, i64 %idxprom177
-  %tmp180 = load double* %arrayidx179, align 8
+  %tmp180 = load double, double* %arrayidx179, align 8
   %add249 = add nsw i32 %i2.115, %y
   %cmp168 = icmp sgt i32 %add249, %n
   br i1 %cmp168, label %exit, label %for.body

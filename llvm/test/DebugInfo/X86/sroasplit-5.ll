@@ -37,7 +37,7 @@ entry:
   call void @llvm.memset.p0i8.i64(i8* %0, i8 0, i64 8, i32 4, i1 false), !dbg !19
   call void @llvm.dbg.declare(metadata i32* %local, metadata !20, metadata !17), !dbg !21
   %1 = bitcast %struct.prog_src_register* %a to i32*, !dbg !21
-  %bf.load = load i32* %1, align 4, !dbg !21
+  %bf.load = load i32, i32* %1, align 4, !dbg !21
   %bf.shl = shl i32 %bf.load, 15, !dbg !21
   %bf.ashr = ashr i32 %bf.shl, 19, !dbg !21
   store i32 %bf.ashr, i32* %local, align 4, !dbg !21
@@ -45,7 +45,7 @@ entry:
   %3 = bitcast %struct.prog_src_register* %a to i8*, !dbg !22
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %2, i8* %3, i64 8, i32 4, i1 false), !dbg !22
   %4 = bitcast %struct.prog_src_register* %retval to i64*, !dbg !22
-  %5 = load i64* %4, align 1, !dbg !22
+  %5 = load i64, i64* %4, align 1, !dbg !22
   ret i64 %5, !dbg !22
 }
 

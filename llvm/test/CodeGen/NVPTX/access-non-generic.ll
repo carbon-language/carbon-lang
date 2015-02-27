@@ -18,7 +18,7 @@ define float @ld_st_shared_f32(i32 %i, float %v) {
 ; IR-NOT: addrspacecast
 ; PTX-LABEL: ld_st_shared_f32(
   ; load cast
-  %1 = load float* addrspacecast (float addrspace(3)* @scalar to float*), align 4
+  %1 = load float, float* addrspacecast (float addrspace(3)* @scalar to float*), align 4
 ; PTX: ld.shared.f32 %f{{[0-9]+}}, [scalar];
   ; store cast
   store float %v, float* addrspacecast (float addrspace(3)* @scalar to float*), align 4
@@ -29,7 +29,7 @@ define float @ld_st_shared_f32(i32 %i, float %v) {
 
   ; cast; load
   %2 = addrspacecast float addrspace(3)* @scalar to float*
-  %3 = load float* %2, align 4
+  %3 = load float, float* %2, align 4
 ; PTX: ld.shared.f32 %f{{[0-9]+}}, [scalar];
   ; cast; store
   store float %v, float* %2, align 4
@@ -38,7 +38,7 @@ define float @ld_st_shared_f32(i32 %i, float %v) {
 ; PTX: bar.sync 0;
 
   ; load gep cast
-  %4 = load float* getelementptr inbounds ([10 x float]* addrspacecast ([10 x float] addrspace(3)* @array to [10 x float]*), i32 0, i32 5), align 4
+  %4 = load float, float* getelementptr inbounds ([10 x float]* addrspacecast ([10 x float] addrspace(3)* @array to [10 x float]*), i32 0, i32 5), align 4
 ; PTX: ld.shared.f32 %f{{[0-9]+}}, [array+20];
   ; store gep cast
   store float %v, float* getelementptr inbounds ([10 x float]* addrspacecast ([10 x float] addrspace(3)* @array to [10 x float]*), i32 0, i32 5), align 4
@@ -48,7 +48,7 @@ define float @ld_st_shared_f32(i32 %i, float %v) {
 
   ; gep cast; load
   %5 = getelementptr inbounds [10 x float], [10 x float]* addrspacecast ([10 x float] addrspace(3)* @array to [10 x float]*), i32 0, i32 5
-  %6 = load float* %5, align 4
+  %6 = load float, float* %5, align 4
 ; PTX: ld.shared.f32 %f{{[0-9]+}}, [array+20];
   ; gep cast; store
   store float %v, float* %5, align 4
@@ -59,7 +59,7 @@ define float @ld_st_shared_f32(i32 %i, float %v) {
   ; cast; gep; load
   %7 = addrspacecast [10 x float] addrspace(3)* @array to [10 x float]*
   %8 = getelementptr inbounds [10 x float], [10 x float]* %7, i32 0, i32 %i
-  %9 = load float* %8, align 4
+  %9 = load float, float* %8, align 4
 ; PTX: ld.shared.f32 %f{{[0-9]+}}, [%{{(r|rl|rd)[0-9]+}}];
   ; cast; gep; store
   store float %v, float* %8, align 4
@@ -78,10 +78,10 @@ define float @ld_st_shared_f32(i32 %i, float %v) {
 ; addrspacecast with a bitcast.
 define i32 @ld_int_from_float() {
 ; IR-LABEL: @ld_int_from_float
-; IR: load i32 addrspace(3)* bitcast (float addrspace(3)* @scalar to i32 addrspace(3)*)
+; IR: load i32, i32 addrspace(3)* bitcast (float addrspace(3)* @scalar to i32 addrspace(3)*)
 ; PTX-LABEL: ld_int_from_float(
 ; PTX: ld.shared.u{{(32|64)}}
-  %1 = load i32* addrspacecast(float addrspace(3)* @scalar to i32*), align 4
+  %1 = load i32, i32* addrspacecast(float addrspace(3)* @scalar to i32*), align 4
   ret i32 %1
 }
 

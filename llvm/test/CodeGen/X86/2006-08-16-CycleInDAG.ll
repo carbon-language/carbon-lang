@@ -6,7 +6,7 @@
 	%struct.u = type { [1 x i64] }
 
 define void @test() {
-	%tmp = load i32* null		; <i32> [#uses=1]
+	%tmp = load i32, i32* null		; <i32> [#uses=1]
 	%tmp8 = call i32 @hash_rtx( )		; <i32> [#uses=1]
 	%tmp11 = urem i32 %tmp8, %tmp		; <i32> [#uses=1]
 	br i1 false, label %cond_next, label %return

@@ -19,7 +19,7 @@ bb:
   %list_addr.05 = phi %struct.list_head* [ %2, %bb ], [ %list, %entry ]
   %next.04 = phi %struct.list_head* [ %list_addr.05, %bb ], [ null, %entry ]
   %1 = getelementptr inbounds %struct.list_head, %struct.list_head* %list_addr.05, i32 0, i32 0
-  %2 = load %struct.list_head** %1, align 4
+  %2 = load %struct.list_head*, %struct.list_head** %1, align 4
   store %struct.list_head* %next.04, %struct.list_head** %1, align 4
   %3 = icmp eq %struct.list_head* %2, null
   br i1 %3, label %bb2, label %bb
@@ -46,7 +46,7 @@ bb1:                                              ; preds = %bb2.preheader, %bb1
   %sum.08 = phi i32 [ %2, %bb1 ], [ %sum.110, %bb2.preheader ] ; <i32> [#uses=1]
   %tmp17 = sub i32 %i.07, %indvar                 ; <i32> [#uses=1]
   %scevgep = getelementptr i32, i32* %src, i32 %tmp17  ; <i32*> [#uses=1]
-  %1 = load i32* %scevgep, align 4                ; <i32> [#uses=1]
+  %1 = load i32, i32* %scevgep, align 4                ; <i32> [#uses=1]
   %2 = add nsw i32 %1, %sum.08                    ; <i32> [#uses=2]
   %indvar.next = add i32 %indvar, 1               ; <i32> [#uses=2]
   %exitcond = icmp eq i32 %indvar.next, %size     ; <i1> [#uses=1]

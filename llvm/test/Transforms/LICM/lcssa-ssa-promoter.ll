@@ -44,7 +44,7 @@ inner.body.rhs:
 ; CHECK-NEXT: br label %inner.latch
 
 inner.latch:
-  %y_val = load i32* @y, align 4
+  %y_val = load i32, i32* @y, align 4
   %icmp = icmp eq i32 %y_val, 0
   br i1 %icmp, label %inner.exit, label %inner.header
 ; CHECK: inner.latch:

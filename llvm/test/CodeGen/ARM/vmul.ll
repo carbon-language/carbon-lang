@@ -3,8 +3,8 @@
 define <8 x i8> @vmuli8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: vmuli8:
 ;CHECK: vmul.i8
-	%tmp1 = load <8 x i8>* %A
-	%tmp2 = load <8 x i8>* %B
+	%tmp1 = load <8 x i8>, <8 x i8>* %A
+	%tmp2 = load <8 x i8>, <8 x i8>* %B
 	%tmp3 = mul <8 x i8> %tmp1, %tmp2
 	ret <8 x i8> %tmp3
 }
@@ -12,8 +12,8 @@ define <8 x i8> @vmuli8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <4 x i16> @vmuli16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: vmuli16:
 ;CHECK: vmul.i16
-	%tmp1 = load <4 x i16>* %A
-	%tmp2 = load <4 x i16>* %B
+	%tmp1 = load <4 x i16>, <4 x i16>* %A
+	%tmp2 = load <4 x i16>, <4 x i16>* %B
 	%tmp3 = mul <4 x i16> %tmp1, %tmp2
 	ret <4 x i16> %tmp3
 }
@@ -21,8 +21,8 @@ define <4 x i16> @vmuli16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <2 x i32> @vmuli32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: vmuli32:
 ;CHECK: vmul.i32
-	%tmp1 = load <2 x i32>* %A
-	%tmp2 = load <2 x i32>* %B
+	%tmp1 = load <2 x i32>, <2 x i32>* %A
+	%tmp2 = load <2 x i32>, <2 x i32>* %B
 	%tmp3 = mul <2 x i32> %tmp1, %tmp2
 	ret <2 x i32> %tmp3
 }
@@ -30,8 +30,8 @@ define <2 x i32> @vmuli32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <2 x float> @vmulf32(<2 x float>* %A, <2 x float>* %B) nounwind {
 ;CHECK-LABEL: vmulf32:
 ;CHECK: vmul.f32
-	%tmp1 = load <2 x float>* %A
-	%tmp2 = load <2 x float>* %B
+	%tmp1 = load <2 x float>, <2 x float>* %A
+	%tmp2 = load <2 x float>, <2 x float>* %B
 	%tmp3 = fmul <2 x float> %tmp1, %tmp2
 	ret <2 x float> %tmp3
 }
@@ -39,8 +39,8 @@ define <2 x float> @vmulf32(<2 x float>* %A, <2 x float>* %B) nounwind {
 define <8 x i8> @vmulp8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: vmulp8:
 ;CHECK: vmul.p8
-	%tmp1 = load <8 x i8>* %A
-	%tmp2 = load <8 x i8>* %B
+	%tmp1 = load <8 x i8>, <8 x i8>* %A
+	%tmp2 = load <8 x i8>, <8 x i8>* %B
 	%tmp3 = call <8 x i8> @llvm.arm.neon.vmulp.v8i8(<8 x i8> %tmp1, <8 x i8> %tmp2)
 	ret <8 x i8> %tmp3
 }
@@ -48,8 +48,8 @@ define <8 x i8> @vmulp8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <16 x i8> @vmulQi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 ;CHECK-LABEL: vmulQi8:
 ;CHECK: vmul.i8
-	%tmp1 = load <16 x i8>* %A
-	%tmp2 = load <16 x i8>* %B
+	%tmp1 = load <16 x i8>, <16 x i8>* %A
+	%tmp2 = load <16 x i8>, <16 x i8>* %B
 	%tmp3 = mul <16 x i8> %tmp1, %tmp2
 	ret <16 x i8> %tmp3
 }
@@ -57,8 +57,8 @@ define <16 x i8> @vmulQi8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 define <8 x i16> @vmulQi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ;CHECK-LABEL: vmulQi16:
 ;CHECK: vmul.i16
-	%tmp1 = load <8 x i16>* %A
-	%tmp2 = load <8 x i16>* %B
+	%tmp1 = load <8 x i16>, <8 x i16>* %A
+	%tmp2 = load <8 x i16>, <8 x i16>* %B
 	%tmp3 = mul <8 x i16> %tmp1, %tmp2
 	ret <8 x i16> %tmp3
 }
@@ -66,8 +66,8 @@ define <8 x i16> @vmulQi16(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 define <4 x i32> @vmulQi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 ;CHECK-LABEL: vmulQi32:
 ;CHECK: vmul.i32
-	%tmp1 = load <4 x i32>* %A
-	%tmp2 = load <4 x i32>* %B
+	%tmp1 = load <4 x i32>, <4 x i32>* %A
+	%tmp2 = load <4 x i32>, <4 x i32>* %B
 	%tmp3 = mul <4 x i32> %tmp1, %tmp2
 	ret <4 x i32> %tmp3
 }
@@ -75,8 +75,8 @@ define <4 x i32> @vmulQi32(<4 x i32>* %A, <4 x i32>* %B) nounwind {
 define <4 x float> @vmulQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
 ;CHECK-LABEL: vmulQf32:
 ;CHECK: vmul.f32
-	%tmp1 = load <4 x float>* %A
-	%tmp2 = load <4 x float>* %B
+	%tmp1 = load <4 x float>, <4 x float>* %A
+	%tmp2 = load <4 x float>, <4 x float>* %B
 	%tmp3 = fmul <4 x float> %tmp1, %tmp2
 	ret <4 x float> %tmp3
 }
@@ -84,8 +84,8 @@ define <4 x float> @vmulQf32(<4 x float>* %A, <4 x float>* %B) nounwind {
 define <16 x i8> @vmulQp8(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 ;CHECK-LABEL: vmulQp8:
 ;CHECK: vmul.p8
-	%tmp1 = load <16 x i8>* %A
-	%tmp2 = load <16 x i8>* %B
+	%tmp1 = load <16 x i8>, <16 x i8>* %A
+	%tmp2 = load <16 x i8>, <16 x i8>* %B
 	%tmp3 = call <16 x i8> @llvm.arm.neon.vmulp.v16i8(<16 x i8> %tmp1, <16 x i8> %tmp2)
 	ret <16 x i8> %tmp3
 }
@@ -150,8 +150,8 @@ entry:
 define <8 x i16> @vmulls8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: vmulls8:
 ;CHECK: vmull.s8
-	%tmp1 = load <8 x i8>* %A
-	%tmp2 = load <8 x i8>* %B
+	%tmp1 = load <8 x i8>, <8 x i8>* %A
+	%tmp2 = load <8 x i8>, <8 x i8>* %B
 	%tmp3 = sext <8 x i8> %tmp1 to <8 x i16>
 	%tmp4 = sext <8 x i8> %tmp2 to <8 x i16>
 	%tmp5 = mul <8 x i16> %tmp3, %tmp4
@@ -161,8 +161,8 @@ define <8 x i16> @vmulls8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <8 x i16> @vmulls8_int(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: vmulls8_int:
 ;CHECK: vmull.s8
-	%tmp1 = load <8 x i8>* %A
-	%tmp2 = load <8 x i8>* %B
+	%tmp1 = load <8 x i8>, <8 x i8>* %A
+	%tmp2 = load <8 x i8>, <8 x i8>* %B
 	%tmp3 = call <8 x i16> @llvm.arm.neon.vmulls.v8i16(<8 x i8> %tmp1, <8 x i8> %tmp2)
 	ret <8 x i16> %tmp3
 }
@@ -170,8 +170,8 @@ define <8 x i16> @vmulls8_int(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <4 x i32> @vmulls16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: vmulls16:
 ;CHECK: vmull.s16
-	%tmp1 = load <4 x i16>* %A
-	%tmp2 = load <4 x i16>* %B
+	%tmp1 = load <4 x i16>, <4 x i16>* %A
+	%tmp2 = load <4 x i16>, <4 x i16>* %B
 	%tmp3 = sext <4 x i16> %tmp1 to <4 x i32>
 	%tmp4 = sext <4 x i16> %tmp2 to <4 x i32>
 	%tmp5 = mul <4 x i32> %tmp3, %tmp4
@@ -181,8 +181,8 @@ define <4 x i32> @vmulls16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <4 x i32> @vmulls16_int(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: vmulls16_int:
 ;CHECK: vmull.s16
-	%tmp1 = load <4 x i16>* %A
-	%tmp2 = load <4 x i16>* %B
+	%tmp1 = load <4 x i16>, <4 x i16>* %A
+	%tmp2 = load <4 x i16>, <4 x i16>* %B
 	%tmp3 = call <4 x i32> @llvm.arm.neon.vmulls.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
 	ret <4 x i32> %tmp3
 }
@@ -190,8 +190,8 @@ define <4 x i32> @vmulls16_int(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <2 x i64> @vmulls32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: vmulls32:
 ;CHECK: vmull.s32
-	%tmp1 = load <2 x i32>* %A
-	%tmp2 = load <2 x i32>* %B
+	%tmp1 = load <2 x i32>, <2 x i32>* %A
+	%tmp2 = load <2 x i32>, <2 x i32>* %B
 	%tmp3 = sext <2 x i32> %tmp1 to <2 x i64>
 	%tmp4 = sext <2 x i32> %tmp2 to <2 x i64>
 	%tmp5 = mul <2 x i64> %tmp3, %tmp4
@@ -201,8 +201,8 @@ define <2 x i64> @vmulls32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <2 x i64> @vmulls32_int(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: vmulls32_int:
 ;CHECK: vmull.s32
-	%tmp1 = load <2 x i32>* %A
-	%tmp2 = load <2 x i32>* %B
+	%tmp1 = load <2 x i32>, <2 x i32>* %A
+	%tmp2 = load <2 x i32>, <2 x i32>* %B
 	%tmp3 = call <2 x i64> @llvm.arm.neon.vmulls.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
 	ret <2 x i64> %tmp3
 }
@@ -210,8 +210,8 @@ define <2 x i64> @vmulls32_int(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <8 x i16> @vmullu8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: vmullu8:
 ;CHECK: vmull.u8
-	%tmp1 = load <8 x i8>* %A
-	%tmp2 = load <8 x i8>* %B
+	%tmp1 = load <8 x i8>, <8 x i8>* %A
+	%tmp2 = load <8 x i8>, <8 x i8>* %B
 	%tmp3 = zext <8 x i8> %tmp1 to <8 x i16>
 	%tmp4 = zext <8 x i8> %tmp2 to <8 x i16>
 	%tmp5 = mul <8 x i16> %tmp3, %tmp4
@@ -221,8 +221,8 @@ define <8 x i16> @vmullu8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <8 x i16> @vmullu8_int(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: vmullu8_int:
 ;CHECK: vmull.u8
-	%tmp1 = load <8 x i8>* %A
-	%tmp2 = load <8 x i8>* %B
+	%tmp1 = load <8 x i8>, <8 x i8>* %A
+	%tmp2 = load <8 x i8>, <8 x i8>* %B
 	%tmp3 = call <8 x i16> @llvm.arm.neon.vmullu.v8i16(<8 x i8> %tmp1, <8 x i8> %tmp2)
 	ret <8 x i16> %tmp3
 }
@@ -230,8 +230,8 @@ define <8 x i16> @vmullu8_int(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <4 x i32> @vmullu16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: vmullu16:
 ;CHECK: vmull.u16
-	%tmp1 = load <4 x i16>* %A
-	%tmp2 = load <4 x i16>* %B
+	%tmp1 = load <4 x i16>, <4 x i16>* %A
+	%tmp2 = load <4 x i16>, <4 x i16>* %B
 	%tmp3 = zext <4 x i16> %tmp1 to <4 x i32>
 	%tmp4 = zext <4 x i16> %tmp2 to <4 x i32>
 	%tmp5 = mul <4 x i32> %tmp3, %tmp4
@@ -241,8 +241,8 @@ define <4 x i32> @vmullu16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <4 x i32> @vmullu16_int(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ;CHECK-LABEL: vmullu16_int:
 ;CHECK: vmull.u16
-	%tmp1 = load <4 x i16>* %A
-	%tmp2 = load <4 x i16>* %B
+	%tmp1 = load <4 x i16>, <4 x i16>* %A
+	%tmp2 = load <4 x i16>, <4 x i16>* %B
 	%tmp3 = call <4 x i32> @llvm.arm.neon.vmullu.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
 	ret <4 x i32> %tmp3
 }
@@ -250,8 +250,8 @@ define <4 x i32> @vmullu16_int(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <2 x i64> @vmullu32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: vmullu32:
 ;CHECK: vmull.u32
-	%tmp1 = load <2 x i32>* %A
-	%tmp2 = load <2 x i32>* %B
+	%tmp1 = load <2 x i32>, <2 x i32>* %A
+	%tmp2 = load <2 x i32>, <2 x i32>* %B
 	%tmp3 = zext <2 x i32> %tmp1 to <2 x i64>
 	%tmp4 = zext <2 x i32> %tmp2 to <2 x i64>
 	%tmp5 = mul <2 x i64> %tmp3, %tmp4
@@ -261,8 +261,8 @@ define <2 x i64> @vmullu32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <2 x i64> @vmullu32_int(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 ;CHECK-LABEL: vmullu32_int:
 ;CHECK: vmull.u32
-	%tmp1 = load <2 x i32>* %A
-	%tmp2 = load <2 x i32>* %B
+	%tmp1 = load <2 x i32>, <2 x i32>* %A
+	%tmp2 = load <2 x i32>, <2 x i32>* %B
 	%tmp3 = call <2 x i64> @llvm.arm.neon.vmullu.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
 	ret <2 x i64> %tmp3
 }
@@ -270,8 +270,8 @@ define <2 x i64> @vmullu32_int(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 define <8 x i16> @vmullp8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: vmullp8:
 ;CHECK: vmull.p8
-	%tmp1 = load <8 x i8>* %A
-	%tmp2 = load <8 x i8>* %B
+	%tmp1 = load <8 x i8>, <8 x i8>* %A
+	%tmp2 = load <8 x i8>, <8 x i8>* %B
 	%tmp3 = call <8 x i16> @llvm.arm.neon.vmullp.v8i16(<8 x i8> %tmp1, <8 x i8> %tmp2)
 	ret <8 x i16> %tmp3
 }
@@ -560,7 +560,7 @@ for.body33.lr.ph:                                 ; preds = %for.body
 for.body33:                                       ; preds = %for.body33, %for.body33.lr.ph
   %add45 = add i32 undef, undef
   %vld155 = tail call <16 x i8> @llvm.arm.neon.vld1.v16i8(i8* undef, i32 1)
-  %0 = load i32** undef, align 4
+  %0 = load i32*, i32** undef, align 4
   %shuffle.i250 = shufflevector <2 x i64> undef, <2 x i64> undef, <1 x i32> zeroinitializer
   %1 = bitcast <1 x i64> %shuffle.i250 to <8 x i8>
   %vmovl.i249 = zext <8 x i8> %1 to <8 x i16>
@@ -616,7 +616,7 @@ declare <8 x i8> @llvm.arm.neon.vqmovnu.v8i8(<8 x i16>) nounwind readnone
 ; PR15970
 define void @no_illegal_types_vmull_sext(<4 x i32> %a) {
 entry:
-  %wide.load283.i = load <4 x i8>* undef, align 1
+  %wide.load283.i = load <4 x i8>, <4 x i8>* undef, align 1
   %0 = sext <4 x i8> %wide.load283.i to <4 x i32>
   %1 = sub nsw <4 x i32> %0, %a
   %2 = mul nsw <4 x i32> %1, %1
@@ -626,7 +626,7 @@ entry:
 }
 define void @no_illegal_types_vmull_zext(<4 x i32> %a) {
 entry:
-  %wide.load283.i = load <4 x i8>* undef, align 1
+  %wide.load283.i = load <4 x i8>, <4 x i8>* undef, align 1
   %0 = zext <4 x i8> %wide.load283.i to <4 x i32>
   %1 = sub nsw <4 x i32> %0, %a
   %2 = mul nsw <4 x i32> %1, %1
@@ -642,8 +642,8 @@ define void @foo(<4 x float> * %a, <4 x float>* nocapture %dst, float* nocapture
 ;   and used a vector * scalar instruction.
 ; CHECK: vldr  {{s[0-9]+}}, [r2]
 ; CHECK: vmul.f32  q8, q8, d0[0]
-  %tmp = load float* %src, align 4
-  %tmp5 = load <4 x float>* %a, align 4
+  %tmp = load float, float* %src, align 4
+  %tmp5 = load <4 x float>, <4 x float>* %a, align 4
   %tmp6 = insertelement <4 x float> undef, float %tmp, i32 0
   %tmp7 = insertelement <4 x float> %tmp6, float %tmp, i32 1
   %tmp8 = insertelement <4 x float> %tmp7, float %tmp, i32 2

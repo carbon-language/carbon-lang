@@ -84,13 +84,13 @@ entry:
 ; CHECK-LABEL: cxiiiiconv
 ; mips32r2-LABEL:  cxiiiiconv
 ; mips32-LABEL:  cxiiiiconv
-  %0 = load i8* @c1, align 1
+  %0 = load i8, i8* @c1, align 1
   %conv = sext i8 %0 to i32
-  %1 = load i8* @uc1, align 1
+  %1 = load i8, i8* @uc1, align 1
   %conv1 = zext i8 %1 to i32
-  %2 = load i16* @s1, align 2
+  %2 = load i16, i16* @s1, align 2
   %conv2 = sext i16 %2 to i32
-  %3 = load i16* @us1, align 2
+  %3 = load i16, i16* @us1, align 2
   %conv3 = zext i16 %3 to i32
   call void @xiiii(i32 %conv, i32 %conv1, i32 %conv2, i32 %conv3)
 ; CHECK:        addu    $[[REG_GP:[0-9]+]], ${{[0-9]+}}, ${{[0-9+]}}

@@ -20,7 +20,7 @@ define void @immmem() nounwind {
 }
 
 define void @mem() nounwind {
-        %fooval = load i16* @foo
+        %fooval = load i16, i16* @foo
         call void asm sideeffect "bic\09$0,r2", "m"(i16 %fooval) nounwind
         ret void
 }

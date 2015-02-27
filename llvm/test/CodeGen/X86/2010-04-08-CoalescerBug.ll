@@ -15,7 +15,7 @@ entry:
 ; CHECK: addq $12, %rsi
   %BitValueArray = alloca [32 x i32], align 4
   %tmp2 = getelementptr inbounds %struct.F, %struct.F* %this, i64 0, i32 0
-  %tmp3 = load %struct.FC** %tmp2, align 8
+  %tmp3 = load %struct.FC*, %struct.FC** %tmp2, align 8
   %tmp4 = getelementptr inbounds %struct.FC, %struct.FC* %tmp3, i64 0, i32 1, i64 0
   %tmp5 = bitcast [32 x i32]* %BitValueArray to i8*
   %tmp6 = bitcast i32* %tmp4 to i8*

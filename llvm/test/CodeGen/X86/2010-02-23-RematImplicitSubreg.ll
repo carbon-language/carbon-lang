@@ -16,7 +16,7 @@ entry:
   br i1 undef, label %for.end, label %for.body
 
 for.body:                                         ; preds = %if.end40, %entry
-  %tmp6 = load i8* undef, align 2                 ; <i8> [#uses=3]
+  %tmp6 = load i8, i8* undef, align 2                 ; <i8> [#uses=3]
   %conv11 = sext i8 %tmp6 to i64                  ; <i64> [#uses=1]
   %cmp15 = icmp slt i64 %conv11, undef            ; <i1> [#uses=1]
   br i1 %cmp15, label %if.end, label %if.then
@@ -29,7 +29,7 @@ if.then:                                          ; preds = %for.body
 if.end:                                           ; preds = %if.then, %for.body
   %index.0 = phi i8 [ 0, %if.then ], [ %tmp6, %for.body ] ; <i8> [#uses=1]
   store i8 %index.0, i8* undef
-  %tmp24 = load i8* undef                         ; <i8> [#uses=2]
+  %tmp24 = load i8, i8* undef                         ; <i8> [#uses=2]
   br i1 undef, label %if.end40, label %if.then36
 
 if.then36:                                        ; preds = %if.end

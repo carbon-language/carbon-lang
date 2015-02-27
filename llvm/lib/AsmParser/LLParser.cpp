@@ -5241,7 +5241,11 @@ int LLParser::ParseLoad(Instruction *&Inst, PerFunctionState &PFS) {
     Lex.Lex();
   }
 
-  if (ParseTypeAndValue(Val, Loc, PFS) ||
+  Type *Ty = nullptr;
+  LocTy ExplicitTypeLoc = Lex.getLoc();
+  if (ParseType(Ty) ||
+      ParseToken(lltok::comma, "expected comma after load's type") ||
+      ParseTypeAndValue(Val, Loc, PFS) ||
       ParseScopeAndOrdering(isAtomic, Scope, Ordering) ||
       ParseOptionalCommaAlign(Alignment, AteExtraComma))
     return true;
@@ -5253,6 +5257,10 @@ int LLParser::ParseLoad(Instruction *&Inst, PerFunctionState &PFS) {
     return Error(Loc, "atomic load must have explicit non-zero alignment");
   if (Ordering == Release || Ordering == AcquireRelease)
     return Error(Loc, "atomic load cannot use Release ordering");
+
+  if (Ty != cast<PointerType>(Val->getType())->getElementType())
+    return Error(ExplicitTypeLoc,
+                 "explicit pointee type doesn't match operand's pointee type");
 
   Inst = new LoadInst(Val, "", isVolatile, Alignment, Ordering, Scope);
   return AteExtraComma ? InstExtraComma : InstNormal;

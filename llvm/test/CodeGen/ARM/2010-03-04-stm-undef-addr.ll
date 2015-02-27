@@ -9,10 +9,10 @@ stack_overflow:                                   ; preds = %0
 
 no_overflow:                                      ; preds = %0
   %frame = inttoptr i32 %1 to [17 x i32]*         ; <[17 x i32]*> [#uses=4]
-  %2 = load i32* null                             ; <i32> [#uses=2]
+  %2 = load i32, i32* null                             ; <i32> [#uses=2]
   %3 = getelementptr inbounds [17 x i32], [17 x i32]* %frame, i32 0, i32 14 ; <i32*> [#uses=1]
-  %4 = load i32* %3                               ; <i32> [#uses=2]
-  %5 = load [8 x i8]** undef                      ; <[8 x i8]*> [#uses=2]
+  %4 = load i32, i32* %3                               ; <i32> [#uses=2]
+  %5 = load [8 x i8]*, [8 x i8]** undef                      ; <[8 x i8]*> [#uses=2]
   br i1 undef, label %bci_13, label %bci_4
 
 bci_13:                                           ; preds = %no_overflow

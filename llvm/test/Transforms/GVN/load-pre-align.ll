@@ -25,7 +25,7 @@ for.cond.for.end_crit_edge:
   br label %for.end
 
 for.body:
-  %tmp3 = load i32* @p, align 8
+  %tmp3 = load i32, i32* @p, align 8
   %dec = add i32 %tmp3, -1
   store i32 %dec, i32* @p
   %cmp6 = icmp slt i32 %dec, 0
@@ -39,6 +39,6 @@ for.inc:
   br label %for.cond
 
 for.end:
-  %tmp9 = load i32* @p, align 8
+  %tmp9 = load i32, i32* @p, align 8
   ret i32 %tmp9
 }

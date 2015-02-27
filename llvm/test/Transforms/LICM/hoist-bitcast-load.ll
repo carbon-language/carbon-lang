@@ -4,7 +4,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 ; Make sure the basic alloca pointer hoisting works:
 ; CHECK-LABEL: @test1
-; CHECK: load i32* %c, align 4
+; CHECK: load i32, i32* %c, align 4
 ; CHECK: for.body:
 
 ; Function Attrs: nounwind uwtable
@@ -17,14 +17,14 @@ entry:
 for.body:                                         ; preds = %entry, %for.inc
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %cmp1 = icmp sgt i32 %0, 0
   br i1 %cmp1, label %if.then, label %for.inc
 
 if.then:                                          ; preds = %for.body
-  %1 = load i32* %c, align 4
+  %1 = load i32, i32* %c, align 4
   %arrayidx3 = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
-  %2 = load i32* %arrayidx3, align 4
+  %2 = load i32, i32* %arrayidx3, align 4
   %mul = mul nsw i32 %2, %1
   store i32 %mul, i32* %arrayidx, align 4
   br label %for.inc
@@ -42,7 +42,7 @@ for.end:                                          ; preds = %for.inc, %entry
 ; Make sure the basic alloca pointer hoisting works through a bitcast to a
 ; pointer to a smaller type:
 ; CHECK-LABEL: @test2
-; CHECK: load i32* %c, align 4
+; CHECK: load i32, i32* %c, align 4
 ; CHECK: for.body:
 
 ; Function Attrs: nounwind uwtable
@@ -56,14 +56,14 @@ entry:
 for.body:                                         ; preds = %entry, %for.inc
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %cmp1 = icmp sgt i32 %0, 0
   br i1 %cmp1, label %if.then, label %for.inc
 
 if.then:                                          ; preds = %for.body
-  %1 = load i32* %c, align 4
+  %1 = load i32, i32* %c, align 4
   %arrayidx3 = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
-  %2 = load i32* %arrayidx3, align 4
+  %2 = load i32, i32* %arrayidx3, align 4
   %mul = mul nsw i32 %2, %1
   store i32 %mul, i32* %arrayidx, align 4
   br label %for.inc
@@ -80,7 +80,7 @@ for.end:                                          ; preds = %for.inc, %entry
 
 ; Make sure the basic alloca pointer hoisting works through an addrspacecast
 ; CHECK-LABEL: @test2_addrspacecast
-; CHECK: load i32 addrspace(1)* %c, align 4
+; CHECK: load i32, i32 addrspace(1)* %c, align 4
 ; CHECK: for.body:
 
 ; Function Attrs: nounwind uwtable
@@ -94,14 +94,14 @@ entry:
 for.body:                                         ; preds = %entry, %for.inc
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32 addrspace(1)* %a, i64 %indvars.iv
-  %0 = load i32 addrspace(1)* %arrayidx, align 4
+  %0 = load i32, i32 addrspace(1)* %arrayidx, align 4
   %cmp1 = icmp sgt i32 %0, 0
   br i1 %cmp1, label %if.then, label %for.inc
 
 if.then:                                          ; preds = %for.body
-  %1 = load i32 addrspace(1)* %c, align 4
+  %1 = load i32, i32 addrspace(1)* %c, align 4
   %arrayidx3 = getelementptr inbounds i32, i32 addrspace(1)* %b, i64 %indvars.iv
-  %2 = load i32 addrspace(1)* %arrayidx3, align 4
+  %2 = load i32, i32 addrspace(1)* %arrayidx3, align 4
   %mul = mul nsw i32 %2, %1
   store i32 %mul, i32 addrspace(1)* %arrayidx, align 4
   br label %for.inc
@@ -119,7 +119,7 @@ for.end:                                          ; preds = %for.inc, %entry
 ; Make sure the basic alloca pointer hoisting works through a bitcast to a
 ; pointer to a smaller type (where the bitcast also needs to be hoisted):
 ; CHECK-LABEL: @test3
-; CHECK: load i32* %c, align 4
+; CHECK: load i32, i32* %c, align 4
 ; CHECK: for.body:
 
 ; Function Attrs: nounwind uwtable
@@ -132,15 +132,15 @@ entry:
 for.body:                                         ; preds = %entry, %for.inc
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %cmp1 = icmp sgt i32 %0, 0
   br i1 %cmp1, label %if.then, label %for.inc
 
 if.then:                                          ; preds = %for.body
   %c = bitcast i64* %ca to i32*
-  %1 = load i32* %c, align 4
+  %1 = load i32, i32* %c, align 4
   %arrayidx3 = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
-  %2 = load i32* %arrayidx3, align 4
+  %2 = load i32, i32* %arrayidx3, align 4
   %mul = mul nsw i32 %2, %1
   store i32 %mul, i32* %arrayidx, align 4
   br label %for.inc
@@ -159,7 +159,7 @@ for.end:                                          ; preds = %for.inc, %entry
 ; to a pointer to a larger type:
 ; CHECK-LABEL: @test4
 ; CHECK: for.body:
-; CHECK: load i32* %c, align 4
+; CHECK: load i32, i32* %c, align 4
 
 ; Function Attrs: nounwind uwtable
 define void @test4(i32* nocapture %a, i32* nocapture readonly %b, i32 %n) #0 {
@@ -172,14 +172,14 @@ entry:
 for.body:                                         ; preds = %entry, %for.inc
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %cmp1 = icmp sgt i32 %0, 0
   br i1 %cmp1, label %if.then, label %for.inc
 
 if.then:                                          ; preds = %for.body
-  %1 = load i32* %c, align 4
+  %1 = load i32, i32* %c, align 4
   %arrayidx3 = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
-  %2 = load i32* %arrayidx3, align 4
+  %2 = load i32, i32* %arrayidx3, align 4
   %mul = mul nsw i32 %2, %1
   store i32 %mul, i32* %arrayidx, align 4
   br label %for.inc
@@ -197,7 +197,7 @@ for.end:                                          ; preds = %for.inc, %entry
 ; Don't crash on bitcasts to unsized types.
 ; CHECK-LABEL: @test5
 ; CHECK: for.body:
-; CHECK: load i32* %c, align 4
+; CHECK: load i32, i32* %c, align 4
 
 %atype = type opaque
 
@@ -213,14 +213,14 @@ entry:
 for.body:                                         ; preds = %entry, %for.inc
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %cmp1 = icmp sgt i32 %0, 0
   br i1 %cmp1, label %if.then, label %for.inc
 
 if.then:                                          ; preds = %for.body
-  %1 = load i32* %c, align 4
+  %1 = load i32, i32* %c, align 4
   %arrayidx3 = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
-  %2 = load i32* %arrayidx3, align 4
+  %2 = load i32, i32* %arrayidx3, align 4
   %mul = mul nsw i32 %2, %1
   store i32 %mul, i32* %arrayidx, align 4
   br label %for.inc

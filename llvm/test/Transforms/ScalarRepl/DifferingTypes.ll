@@ -10,7 +10,7 @@ define i32 @testfunc(i32 %i, i8 %j) {
 	store i32 %i, i32* %I
 	%P = bitcast i32* %I to i8*		; <i8*> [#uses=1]
 	store i8 %j, i8* %P
-	%t = load i32* %I		; <i32> [#uses=1]
+	%t = load i32, i32* %I		; <i32> [#uses=1]
 	ret i32 %t
 }
 

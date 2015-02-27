@@ -16,7 +16,7 @@ loop:
 
 loop1:
   %cond = icmp eq i32* %var, null
-  %next.load = load i32** %next.ptr
+  %next.load = load i32*, i32** %next.ptr
   br i1 %cond, label %loop, label %loop2
 
 loop2:                                           ; preds = %loop1
@@ -42,8 +42,8 @@ loop:
 loop1:
   %var2 = sub i32 %var, 1
   %cond = icmp eq i32 %var2, 0
-  %next.load = load i32** %next.ptr
-  %next.var = load i32* %next.load
+  %next.load = load i32*, i32** %next.ptr
+  %next.var = load i32, i32* %next.load
   br i1 %cond, label %loop, label %loop2
 
 loop2:
@@ -70,8 +70,8 @@ loop2a:                                           ; preds = %loop1, %body, %entr
 loop1:                                            ; preds = %loop2a, %loop2b
   %var2 = sub i32 %var, 1
   %cond = icmp slt i32 %var2, 0
-  %next.load = load i32** %next.ptr
-  %next.var = load i32* %next.load
+  %next.load = load i32*, i32** %next.ptr
+  %next.var = load i32, i32* %next.load
   br i1 %cond, label %loop2a, label %loop2b
 
 loop2b:                                           ; preds = %loop1
@@ -97,8 +97,8 @@ loop2a:                                           ; preds = %loop1, %body, %entr
 loop1:                                            ; preds = %loop2a, %loop2b
   %var2 = sub i32 %var, 1
   %cond = icmp ult i32 %var2, %n
-  %next.load = load i32** %next.ptr
-  %next.var = load i32* %next.load
+  %next.load = load i32*, i32** %next.ptr
+  %next.var = load i32, i32* %next.load
   br i1 %cond, label %loop2a, label %loop2b
 
 loop2b:                                           ; preds = %loop1

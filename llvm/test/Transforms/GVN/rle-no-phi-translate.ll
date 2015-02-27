@@ -19,7 +19,7 @@ bb:		; preds = %entry
 
 bb2:		; preds = %bb1, %bb
 	%c_addr.0 = phi i32* [ %b, %entry ], [ %c, %bb ]		; <i32*> [#uses=1]
-	%cv = load i32* %c_addr.0, align 4		; <i32> [#uses=1]
+	%cv = load i32, i32* %c_addr.0, align 4		; <i32> [#uses=1]
 	ret i32 %cv
 ; CHECK: bb2:
 ; CHECK-NOT: load i32

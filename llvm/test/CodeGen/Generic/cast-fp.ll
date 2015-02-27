@@ -10,7 +10,7 @@
 declare i32 @printf(i8*, ...)
 
 define i32 @main() {
-	%a = load double* @A		; <double> [#uses=4]
+	%a = load double, double* @A		; <double> [#uses=4]
 	%a_fs = getelementptr [8 x i8], [8 x i8]* @a_fstr, i64 0, i64 0		; <i8*> [#uses=1]
 	call i32 (i8*, ...)* @printf( i8* %a_fs, double %a )		; <i32>:1 [#uses=0]
 	%a_d2l = fptosi double %a to i64		; <i64> [#uses=1]
@@ -23,7 +23,7 @@ define i32 @main() {
 	call i32 (i8*, ...)* @printf( i8* %a_ds, i8 %a_d2sb )		; <i32>:4 [#uses=0]
 	%a_d2i2sb = trunc i32 %a_d2i to i8		; <i8> [#uses=1]
 	call i32 (i8*, ...)* @printf( i8* %a_ds, i8 %a_d2i2sb )		; <i32>:5 [#uses=0]
-	%b = load i32* @B		; <i32> [#uses=2]
+	%b = load i32, i32* @B		; <i32> [#uses=2]
 	%b_ds = getelementptr [8 x i8], [8 x i8]* @b_dstr, i64 0, i64 0		; <i8*> [#uses=1]
 	call i32 (i8*, ...)* @printf( i8* %b_ds, i32 %b )		; <i32>:6 [#uses=0]
 	%b_i2d = sitofp i32 %b to double		; <double> [#uses=1]

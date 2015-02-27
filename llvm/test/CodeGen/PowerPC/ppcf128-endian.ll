@@ -9,7 +9,7 @@ define void @callee(ppc_fp128 %x) {
 entry:
   %x.addr = alloca ppc_fp128, align 16
   store ppc_fp128 %x, ppc_fp128* %x.addr, align 16
-  %0 = load ppc_fp128* %x.addr, align 16
+  %0 = load ppc_fp128, ppc_fp128* %x.addr, align 16
   store ppc_fp128 %0, ppc_fp128* @g, align 16
   ret void
 }
@@ -21,7 +21,7 @@ entry:
 
 define void @caller() {
 entry:
-  %0 = load ppc_fp128* @g, align 16
+  %0 = load ppc_fp128, ppc_fp128* @g, align 16
   call void @test(ppc_fp128 %0)
   ret void
 }
@@ -51,7 +51,7 @@ entry:
 
 define ppc_fp128 @result() {
 entry:
-  %0 = load ppc_fp128* @g, align 16
+  %0 = load ppc_fp128, ppc_fp128* @g, align 16
   ret ppc_fp128 %0
 }
 ; CHECK: @result

@@ -11,7 +11,7 @@ entry:
   unreachable
 
 for.cond:                                         ; preds = %for.cond
-  %tmp1.i = load i32** %l_72, align 8
+  %tmp1.i = load i32*, i32** %l_72, align 8
   store i32* %tmp1.i, i32** %l_72, align 8
   br label %for.cond
 
@@ -30,7 +30,7 @@ define i32 @test3() {
         %X = alloca { [4 x i32] }               ; <{ [4 x i32] }*> [#uses=1]
         %Y = getelementptr { [4 x i32] }, { [4 x i32] }* %X, i64 0, i32 0, i64 2               ; <i32*> [#uses=2]
         store i32 4, i32* %Y
-        %Z = load i32* %Y               ; <i32> [#uses=1]
+        %Z = load i32, i32* %Y               ; <i32> [#uses=1]
         ret i32 %Z
 }
 
@@ -102,11 +102,11 @@ bb9131:         ; preds = %bb1365
         ret void
 bb9875:         ; preds = %bb1365
         %source_ptr9884 = bitcast i8** %source_ptr to i8**              ; <i8**> [#uses=1]
-        %tmp9885 = load i8** %source_ptr9884            ; <i8*> [#uses=0]
+        %tmp9885 = load i8*, i8** %source_ptr9884            ; <i8*> [#uses=0]
         ret void
 bb10249:                ; preds = %bb1365
         %source_ptr10257 = bitcast i8** %source_ptr to i16**            ; <i16**> [#uses=1]
-        %tmp10258 = load i16** %source_ptr10257         ; <i16*> [#uses=0]
+        %tmp10258 = load i16*, i16** %source_ptr10257         ; <i16*> [#uses=0]
         ret void
 cond_next10377:         ; preds = %bb1365
         ret void
@@ -125,9 +125,9 @@ entry:
         %this_addr.i = alloca %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"*                ; <%"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"**> [#uses=3]
         %tmp = alloca %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>", align 4                ; <%"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"*> [#uses=1]
         store %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"* %tmp, %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"** %this_addr.i
-        %tmp.i = load %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"** %this_addr.i          ; <%"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"*> [#uses=1]
+        %tmp.i = load %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"*, %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"** %this_addr.i          ; <%"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"*> [#uses=1]
         %tmp.i.upgrd.1 = bitcast %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"* %tmp.i to %"struct.__gnu_cxx::bitmap_allocator<char>"*              ; <%"struct.__gnu_cxx::bitmap_allocator<char>"*> [#uses=0]
-        %tmp1.i = load %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"** %this_addr.i         ; <%"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"*> [#uses=1]
+        %tmp1.i = load %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"*, %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"** %this_addr.i         ; <%"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"*> [#uses=1]
         %tmp.i.upgrd.2 = getelementptr %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>", %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"* %tmp1.i, i32 0, i32 0         ; <%"struct.__gnu_cxx::bitmap_allocator<char>::_Alloc_block"**> [#uses=0]
         unreachable
 }
@@ -161,7 +161,7 @@ cond_next:              ; preds = %cond_true
         br i1 false, label %cond_next34, label %cond_next79
 
 cond_next34:            ; preds = %cond_next
-        %i.2.reload22 = load i32* null          ; <i32> [#uses=1]
+        %i.2.reload22 = load i32, i32* null          ; <i32> [#uses=1]
         %tmp51 = getelementptr %struct.aal_spanbucket_t, %struct.aal_spanbucket_t* %SB, i32 0, i32 2, i32 0, i32 0, i32 %i.2.reload22, i32 1      
         ; <i16*> [#uses=0]
         ret void
@@ -221,7 +221,7 @@ entry:
         %storetmp.i = bitcast %struct.singlebool* %a to i1*             ; <i1*> [#uses=1]
         store i1 true, i1* %storetmp.i
         %tmp = getelementptr %struct.singlebool, %struct.singlebool* %a, i64 0, i32 0               ; <i8*> [#uses=1]
-        %tmp1 = load i8* %tmp           ; <i8> [#uses=1]
+        %tmp1 = load i8, i8* %tmp           ; <i8> [#uses=1]
         ret i8 %tmp1
 }
 

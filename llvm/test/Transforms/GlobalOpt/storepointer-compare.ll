@@ -16,7 +16,7 @@ define void @init() {
 }
 
 define void @doit() {
-        %FP = load void ()** @G         ; <void ()*> [#uses=2]
+        %FP = load void ()*, void ()** @G         ; <void ()*> [#uses=2]
         %CC = icmp eq void ()* %FP, null                ; <i1> [#uses=1]
         br i1 %CC, label %isNull, label %DoCall
 

@@ -24,7 +24,7 @@ entry:
 ; CHECK: _test01
 define <8 x float> @test01(<4 x float> %a, <4 x float> %b, <8 x float> %c) nounwind uwtable ssp {
 entry:
-  %tmp = load <4 x float>* @x, align 16
+  %tmp = load <4 x float>, <4 x float>* @x, align 16
   ; CHECK: vzeroupper
   ; CHECK-NEXT: callq _do_sse
   %call = tail call <4 x float> @do_sse(<4 x float> %tmp) nounwind
@@ -73,7 +73,7 @@ for.body:
   %call5 = tail call <4 x float> @do_sse(<4 x float> %c.017) nounwind
   ; CHECK-NEXT: callq _do_sse
   %call7 = tail call <4 x float> @do_sse(<4 x float> %call5) nounwind
-  %tmp11 = load <8 x float>* @g, align 32
+  %tmp11 = load <8 x float>, <8 x float>* @g, align 32
   %0 = tail call <4 x float> @llvm.x86.avx.vextractf128.ps.256(<8 x float> %tmp11, i8 1) nounwind
   ; CHECK: vzeroupper
   ; CHECK-NEXT: callq _do_sse

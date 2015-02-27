@@ -18,7 +18,7 @@ define double @int_to_double_rm(i32* %a) {
 ; AVX: vcvtsi2sdl (%rdi), %xmm0, %xmm0
 ; ALL-NEXT: ret
 entry:
-  %0 = load i32* %a
+  %0 = load i32, i32* %a
   %1 = sitofp i32 %0 to double
   ret double %1
 }
@@ -39,7 +39,7 @@ define float @int_to_float_rm(i32* %a) {
 ; AVX: vcvtsi2ssl (%rdi), %xmm0, %xmm0
 ; ALL-NEXT: ret
 entry:
-  %0 = load i32* %a
+  %0 = load i32, i32* %a
   %1 = sitofp i32 %0 to float
   ret float %1
 }

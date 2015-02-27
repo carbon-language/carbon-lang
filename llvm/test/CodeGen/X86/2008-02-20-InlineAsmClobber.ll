@@ -8,7 +8,7 @@ target triple = "i386-apple-darwin8"
 
 define void @test() nounwind  {
 entry:
-	%tmp = load i32* @pixels, align 4		; <i32> [#uses=1]
+	%tmp = load i32, i32* @pixels, align 4		; <i32> [#uses=1]
 	%tmp1 = tail call i32 asm sideeffect "a: $0 $1", "=r,0,~{dirflag},~{fpsr},~{flags},~{ax}"( i32 %tmp ) nounwind 		; <i32> [#uses=1]
 	store i32 %tmp1, i32* @pixels, align 4
 	ret void

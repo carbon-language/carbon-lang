@@ -18,7 +18,7 @@ declare noalias i8* @malloc(i64)
 
 define i32 @baz() nounwind readonly noinline {
 bb1.thread:
-	%tmpLD1 = load %struct.foo** @X, align 4		; <%struct.foo*> [#uses=1]
+	%tmpLD1 = load %struct.foo*, %struct.foo** @X, align 4		; <%struct.foo*> [#uses=1]
 	br label %bb1
 
 bb1:		; preds = %bb1, %bb1.thread
@@ -26,14 +26,14 @@ bb1:		; preds = %bb1, %bb1.thread
 	%i.0.reg2mem.0 = phi i32 [ 0, %bb1.thread ], [ %indvar.next, %bb1 ]		; <i32> [#uses=2]
 	%sum.0.reg2mem.0 = phi i32 [ 0, %bb1.thread ], [ %tmp3, %bb1 ]		; <i32> [#uses=1]
 	%tmp1 = getelementptr %struct.foo, %struct.foo* %tmp, i32 %i.0.reg2mem.0, i32 0		; <i32*> [#uses=1]
-	%tmp2 = load i32* %tmp1, align 4		; <i32> [#uses=1]
+	%tmp2 = load i32, i32* %tmp1, align 4		; <i32> [#uses=1]
 	%tmp6 = add i32 %tmp2, %sum.0.reg2mem.0		; <i32> [#uses=2]
 	%tmp4 = getelementptr %struct.foo, %struct.foo* %tmp, i32 %i.0.reg2mem.0, i32 1		; <i32*> [#uses=1]
-        %tmp5 = load i32 * %tmp4
+        %tmp5 = load i32 , i32 * %tmp4
         %tmp3 = add i32 %tmp5, %tmp6
 	%indvar.next = add i32 %i.0.reg2mem.0, 1		; <i32> [#uses=2]
         
-      	%tmpLD2 = load %struct.foo** @X, align 4		; <%struct.foo*> [#uses=1]
+      	%tmpLD2 = load %struct.foo*, %struct.foo** @X, align 4		; <%struct.foo*> [#uses=1]
 
 	%exitcond = icmp eq i32 %indvar.next, 1200		; <i1> [#uses=1]
 	br i1 %exitcond, label %bb2, label %bb1

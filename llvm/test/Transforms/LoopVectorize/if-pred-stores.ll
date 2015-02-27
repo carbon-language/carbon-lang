@@ -41,8 +41,8 @@ entry:
 ; UNROLL:   %[[IND1:[a-zA-Z0-9]+]] = add i64 %{{.*}}, 1
 ; UNROLL:   %[[v0:[a-zA-Z0-9]+]] = getelementptr inbounds i32, i32* %f, i64 %[[IND]]
 ; UNROLL:   %[[v1:[a-zA-Z0-9]+]] = getelementptr inbounds i32, i32* %f, i64 %[[IND1]]
-; UNROLL:   %[[v2:[a-zA-Z0-9]+]] = load i32* %[[v0]], align 4
-; UNROLL:   %[[v3:[a-zA-Z0-9]+]] = load i32* %[[v1]], align 4
+; UNROLL:   %[[v2:[a-zA-Z0-9]+]] = load i32, i32* %[[v0]], align 4
+; UNROLL:   %[[v3:[a-zA-Z0-9]+]] = load i32, i32* %[[v1]], align 4
 ; UNROLL:   %[[v4:[a-zA-Z0-9]+]] = icmp sgt i32 %[[v2]], 100
 ; UNROLL:   %[[v5:[a-zA-Z0-9]+]] = icmp sgt i32 %[[v3]], 100
 ; UNROLL:   %[[v6:[a-zA-Z0-9]+]] = add nsw i32 %[[v2]], 20
@@ -67,7 +67,7 @@ entry:
 for.body:
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.inc ]
   %arrayidx = getelementptr inbounds i32, i32* %f, i64 %indvars.iv
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %cmp1 = icmp sgt i32 %0, 100
   br i1 %cmp1, label %if.then, label %for.inc
 
@@ -105,7 +105,7 @@ for.body14:
   %indvars.iv3 = phi i64 [ %indvars.iv.next4, %for.inc23 ], [ undef, %for.body9 ]
   %iNewChunks.120 = phi i32 [ %iNewChunks.2, %for.inc23 ], [ undef, %for.body9 ]
   %arrayidx16 = getelementptr inbounds [768 x i32], [768 x i32]* undef, i64 0, i64 %indvars.iv3
-  %tmp = load i32* %arrayidx16, align 4
+  %tmp = load i32, i32* %arrayidx16, align 4
   br i1 undef, label %if.then18, label %for.inc23
 
 if.then18:

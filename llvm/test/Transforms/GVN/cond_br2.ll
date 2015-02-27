@@ -30,7 +30,7 @@ entry:
   %add.ptr.i.i.i.i.i.i = bitcast %"union.llvm::SmallVectorBase::U"* %add.ptr.i.i.i.i2.i.i to i8*
   store i8* %add.ptr.i.i.i.i.i.i, i8** %CapacityX.i.i.i.i.i.i, align 16, !tbaa !4
   %EndX.i = getelementptr inbounds %"class.llvm::SmallVector", %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 1
-  %2 = load i8** %EndX.i, align 8, !tbaa !4
+  %2 = load i8*, i8** %EndX.i, align 8, !tbaa !4
   %CapacityX.i = getelementptr inbounds %"class.llvm::SmallVector", %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 2
   %cmp.i = icmp ult i8* %2, %add.ptr.i.i.i.i.i.i
   br i1 %cmp.i, label %Retry.i, label %if.end.i
@@ -51,18 +51,18 @@ if.end.i:                                         ; preds = %entry
           to label %.noexc unwind label %lpad
 
 .noexc:                                           ; preds = %if.end.i
-  %.pre.i = load i8** %EndX.i, align 8, !tbaa !4
+  %.pre.i = load i8*, i8** %EndX.i, align 8, !tbaa !4
   br label %Retry.i
 
 invoke.cont:                                      ; preds = %new.notnull.i, %Retry.i
   %add.ptr.i = getelementptr inbounds i8, i8* %3, i64 4
   store i8* %add.ptr.i, i8** %EndX.i, align 8, !tbaa !4
-  %6 = load i8** %CapacityX.i, align 16, !tbaa !4
+  %6 = load i8*, i8** %CapacityX.i, align 16, !tbaa !4
   %cmp.i8 = icmp ult i8* %add.ptr.i, %6
   br i1 %cmp.i8, label %new.notnull.i11, label %if.end.i14
 
 Retry.i10:                                        ; preds = %if.end.i14
-  %.pre.i13 = load i8** %EndX.i, align 8, !tbaa !4
+  %.pre.i13 = load i8*, i8** %EndX.i, align 8, !tbaa !4
   %new.isnull.i9 = icmp eq i8* %.pre.i13, null
   br i1 %new.isnull.i9, label %invoke.cont2, label %new.notnull.i11
 
@@ -85,7 +85,7 @@ invoke.cont2:                                     ; preds = %new.notnull.i11, %R
           to label %invoke.cont3 unwind label %lpad
 
 invoke.cont3:                                     ; preds = %invoke.cont2
-  %11 = load i8** %BeginX.i.i.i.i.i.i, align 16, !tbaa !4
+  %11 = load i8*, i8** %BeginX.i.i.i.i.i.i, align 16, !tbaa !4
   %cmp.i.i.i.i19 = icmp eq i8* %11, %1
   br i1 %cmp.i.i.i.i19, label %_ZN4llvm11SmallVectorIiLj8EED1Ev.exit21, label %if.then.i.i.i20
 
@@ -100,7 +100,7 @@ _ZN4llvm11SmallVectorIiLj8EED1Ev.exit21:          ; preds = %invoke.cont3, %if.t
 lpad:                                             ; preds = %if.end.i14, %if.end.i, %invoke.cont2
   %12 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
           cleanup
-  %13 = load i8** %BeginX.i.i.i.i.i.i, align 16, !tbaa !4
+  %13 = load i8*, i8** %BeginX.i.i.i.i.i.i, align 16, !tbaa !4
   %cmp.i.i.i.i = icmp eq i8* %13, %1
   br i1 %cmp.i.i.i.i, label %eh.resume, label %if.then.i.i.i
 

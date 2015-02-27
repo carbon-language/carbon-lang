@@ -17,7 +17,7 @@ entry:
 ; CHECK: vorr q9, q9, q10
 ; CHECK: vst1.32 {d18, d19}, [r0]
 vector.body:
-  %wide.load = load <4 x i32>* undef, align 4
+  %wide.load = load <4 x i32>, <4 x i32>* undef, align 4
   %0 = and <4 x i32> %wide.load, <i32 -16711936, i32 -16711936, i32 -16711936, i32 -16711936>
   %1 = sub <4 x i32> %wide.load, zeroinitializer
   %2 = and <4 x i32> %1, <i32 16711680, i32 16711680, i32 16711680, i32 16711680>

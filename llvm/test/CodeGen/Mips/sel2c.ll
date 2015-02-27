@@ -7,8 +7,8 @@
 ; Function Attrs: nounwind optsize
 define void @t() #0 {
 entry:
-  %0 = load i32* @i, align 4
-  %1 = load i32* @j, align 4
+  %0 = load i32, i32* @i, align 4
+  %1 = load i32, i32* @j, align 4
   %cmp = icmp ne i32 %0, %1
   %cond = select i1 %cmp, i32 1, i32 3
   store i32 %cond, i32* @k, align 4

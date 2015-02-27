@@ -6,20 +6,20 @@ target triple = "x86_64-unknown-linux-gnu"
 ; no sanitize_thread attribute here
 define i32 @read_4_bytes(i32* %a) {
 entry:
-  %tmp1 = load i32* %a, align 4
+  %tmp1 = load i32, i32* %a, align 4
   ret i32 %tmp1
 }
 
 ; CHECK: define i32 @read_4_bytes(i32* %a) {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   %tmp1 = load i32* %a, align 4
+; CHECK-NEXT:   %tmp1 = load i32, i32* %a, align 4
 ; CHECK: ret i32 %tmp1
 
 ; no sanitize_thread attribute here
 define i32 @read_4_bytes_and_call(i32* %a) {
 entry:
   call void @foo()
-  %tmp1 = load i32* %a, align 4
+  %tmp1 = load i32, i32* %a, align 4
   ret i32 %tmp1
 }
 
@@ -28,7 +28,7 @@ entry:
 ; CHECK-NEXT:   %0 = call i8* @llvm.returnaddress(i32 0)
 ; CHECK-NEXT:   call void @__tsan_func_entry(i8* %0)
 ; CHECK-NEXT:   call void @foo()
-; CHECK-NEXT:   %tmp1 = load i32* %a, align 4
+; CHECK-NEXT:   %tmp1 = load i32, i32* %a, align 4
 ; CHECK-NEXT:   call void @__tsan_func_exit()
 ; CHECK-NEXT:   ret i32 %tmp1
 

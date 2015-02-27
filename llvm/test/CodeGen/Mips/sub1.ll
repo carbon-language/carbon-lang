@@ -5,7 +5,7 @@
 
 define i32 @main() nounwind {
 entry:
-  %0 = load i32* @i, align 4
+  %0 = load i32, i32* @i, align 4
   %sub = sub nsw i32 %0, 5
 ; 16:	addiu	${{[0-9]+}}, -{{[0-9]+}}
   %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i32 %sub)

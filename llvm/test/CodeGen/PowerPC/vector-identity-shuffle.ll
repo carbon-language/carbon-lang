@@ -2,7 +2,7 @@
 ; RUN: llc < %s -march=ppc32 -mcpu=g5 | not grep vperm
 
 define void @test(<4 x float>* %tmp2.i) {
-        %tmp2.i.upgrd.1 = load <4 x float>* %tmp2.i             ; <<4 x float>> [#uses=4]
+        %tmp2.i.upgrd.1 = load <4 x float>, <4 x float>* %tmp2.i             ; <<4 x float>> [#uses=4]
         %xFloat0.48 = extractelement <4 x float> %tmp2.i.upgrd.1, i32 0      ; <float> [#uses=1]
         %inFloat0.49 = insertelement <4 x float> undef, float %xFloat0.48, i32 0              ; <<4 x float>> [#uses=1]
         %xFloat1.50 = extractelement <4 x float> %tmp2.i.upgrd.1, i32 1      ; <float> [#uses=1]

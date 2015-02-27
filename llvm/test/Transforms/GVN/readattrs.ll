@@ -9,7 +9,7 @@ define i8 @test() {
   %a = alloca i8
   store i8 1, i8* %a
   call void @use(i8* %a)
-  %b = load i8* %a
+  %b = load i8, i8* %a
   ret i8 %b
 ; CHECK-LABEL: define i8 @test(
 ; CHECK: call void @use(i8* %a)

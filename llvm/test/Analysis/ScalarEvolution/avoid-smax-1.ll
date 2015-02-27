@@ -36,7 +36,7 @@ bb6:		; preds = %bb7, %bb.nph7
 	%8 = shl i32 %x.06, 1		; <i32> [#uses=1]
 	%9 = add i32 %6, %8		; <i32> [#uses=1]
 	%10 = getelementptr i8, i8* %r, i32 %9		; <i8*> [#uses=1]
-	%11 = load i8* %10, align 1		; <i8> [#uses=1]
+	%11 = load i8, i8* %10, align 1		; <i8> [#uses=1]
 	%12 = getelementptr i8, i8* %j, i32 %7		; <i8*> [#uses=1]
 	store i8 %11, i8* %12, align 1
 	%13 = add i32 %x.06, 1		; <i32> [#uses=2]
@@ -103,7 +103,7 @@ bb14:		; preds = %bb15, %bb.nph3
 	%29 = shl i32 %x.12, 2		; <i32> [#uses=1]
 	%30 = add i32 %29, %25		; <i32> [#uses=1]
 	%31 = getelementptr i8, i8* %r, i32 %30		; <i8*> [#uses=1]
-	%32 = load i8* %31, align 1		; <i8> [#uses=1]
+	%32 = load i8, i8* %31, align 1		; <i8> [#uses=1]
 	%.sum = add i32 %26, %x.12		; <i32> [#uses=1]
 	%33 = getelementptr i8, i8* %j, i32 %.sum		; <i8*> [#uses=1]
 	store i8 %32, i8* %33, align 1
@@ -111,7 +111,7 @@ bb14:		; preds = %bb15, %bb.nph3
 	%35 = or i32 %34, 2		; <i32> [#uses=1]
 	%36 = add i32 %35, %25		; <i32> [#uses=1]
 	%37 = getelementptr i8, i8* %r, i32 %36		; <i8*> [#uses=1]
-	%38 = load i8* %37, align 1		; <i8> [#uses=1]
+	%38 = load i8, i8* %37, align 1		; <i8> [#uses=1]
 	%.sum6 = add i32 %27, %x.12		; <i32> [#uses=1]
 	%39 = getelementptr i8, i8* %j, i32 %.sum6		; <i8*> [#uses=1]
 	store i8 %38, i8* %39, align 1

@@ -10,14 +10,14 @@ entry:
 ; CHECK: r{{[0-9]+}}{{ *}}={{ *}}memw(#a)
 ; CHECK: r{{[0-9]+}}{{ *}}={{ *}}memw(#b)
 ; CHECK: if{{ *}}(p{{[0-3]}}) memw(##c){{ *}}={{ *}}r{{[0-9]+}}
-  %0 = load i32* @a, align 4
-  %1 = load i32* @b, align 4
+  %0 = load i32, i32* @a, align 4
+  %1 = load i32, i32* @b, align 4
   %add = add nsw i32 %1, %0
   %cmp = icmp eq i32 %0, %1
   br i1 %cmp, label %if.then, label %entry.if.end_crit_edge
 
 entry.if.end_crit_edge:
-  %.pre = load i32* @c, align 4
+  %.pre = load i32, i32* @c, align 4
   br label %if.end
 
 if.then:

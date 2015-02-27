@@ -22,7 +22,7 @@ entry:
 	br i1 %toBool, label %bb, label %bb5
 
 bb:		; preds = %entry
-	%tmp4 = load volatile i32* %v, align 4		; <i32> [#uses=1]
+	%tmp4 = load volatile i32, i32* %v, align 4		; <i32> [#uses=1]
 	store i32 %tmp4, i32* %tmp, align 4
 	br label %bb6
 
@@ -33,12 +33,12 @@ bb5:		; preds = %entry
 	br label %bb6
 
 bb6:		; preds = %bb5, %bb
-	%tmp7 = load i32* %tmp, align 4		; <i32> [#uses=1]
+	%tmp7 = load i32, i32* %tmp, align 4		; <i32> [#uses=1]
 	store i32 %tmp7, i32* %retval, align 4
 	br label %return
 
 return:		; preds = %bb6
-	%retval8 = load i32* %retval		; <i32> [#uses=1]
+	%retval8 = load i32, i32* %retval		; <i32> [#uses=1]
 	ret i32 %retval8
 }
 

@@ -9,7 +9,7 @@ define i32 @foo(i32 ()** noalias %p, i64* noalias %q) nounwind ssp {
 entry:
   store i32 ()* @bar, i32 ()** %p
   store i64 0, i64* %q
-  %tmp3 = load i32 ()** %p                        ; <i32 ()*> [#uses=1]
+  %tmp3 = load i32 ()*, i32 ()** %p                        ; <i32 ()*> [#uses=1]
   %call = call i32 %tmp3()                        ; <i32> [#uses=1]
   %X = add i32 %call, 4
   ret i32 %X
@@ -85,9 +85,9 @@ cast.notnull:                                     ; preds = %entry
 cast.end:                                         ; preds = %entry, %cast.notnull
   %3 = phi %struct.A* [ %2, %cast.notnull ], [ null, %entry ] ; <%struct.A*> [#uses=2]
   %4 = bitcast %struct.A* %3 to i32 (%struct.A*)*** ; <i32 (%struct.A*)***> [#uses=1]
-  %5 = load i32 (%struct.A*)*** %4                ; <i32 (%struct.A*)**> [#uses=1]
+  %5 = load i32 (%struct.A*)**, i32 (%struct.A*)*** %4                ; <i32 (%struct.A*)**> [#uses=1]
   %vfn = getelementptr inbounds i32 (%struct.A*)*, i32 (%struct.A*)** %5, i64 0 ; <i32 (%struct.A*)**> [#uses=1]
-  %6 = load i32 (%struct.A*)** %vfn               ; <i32 (%struct.A*)*> [#uses=1]
+  %6 = load i32 (%struct.A*)*, i32 (%struct.A*)** %vfn               ; <i32 (%struct.A*)*> [#uses=1]
   %call = call i32 %6(%struct.A* %3)              ; <i32> [#uses=1]
   ret i32 %call
 }

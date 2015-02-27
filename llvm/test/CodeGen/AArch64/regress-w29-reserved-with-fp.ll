@@ -7,15 +7,15 @@ define void @test_w29_reserved() {
 ; CHECK-LABEL: test_w29_reserved:
 ; CHECK: add x29, sp, #{{[0-9]+}}
 
-  %val1 = load volatile i32* @var
-  %val2 = load volatile i32* @var
-  %val3 = load volatile i32* @var
-  %val4 = load volatile i32* @var
-  %val5 = load volatile i32* @var
-  %val6 = load volatile i32* @var
-  %val7 = load volatile i32* @var
-  %val8 = load volatile i32* @var
-  %val9 = load volatile i32* @var
+  %val1 = load volatile i32, i32* @var
+  %val2 = load volatile i32, i32* @var
+  %val3 = load volatile i32, i32* @var
+  %val4 = load volatile i32, i32* @var
+  %val5 = load volatile i32, i32* @var
+  %val6 = load volatile i32, i32* @var
+  %val7 = load volatile i32, i32* @var
+  %val8 = load volatile i32, i32* @var
+  %val9 = load volatile i32, i32* @var
 
 ; CHECK-NOT: ldr w29,
 

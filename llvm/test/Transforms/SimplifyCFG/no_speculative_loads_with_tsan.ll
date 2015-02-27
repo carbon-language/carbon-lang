@@ -8,7 +8,7 @@ entry:
   br i1 %tobool, label %return, label %if.then
 
 if.then:                                          ; preds = %entry
-  %0 = load i32* @g, align 4
+  %0 = load i32, i32* @g, align 4
   br label %return
 
 return:                                           ; preds = %entry, %if.then
@@ -26,7 +26,7 @@ entry:
   br i1 %tobool, label %return, label %if.then
 
 if.then:                                          ; preds = %entry
-  %0 = load i32* @g, align 4
+  %0 = load i32, i32* @g, align 4
   br label %return
 
 return:                                           ; preds = %entry, %if.then
@@ -34,7 +34,7 @@ return:                                           ; preds = %entry, %if.then
   ret i32 %retval
 ; CHECK-LABEL: @TestTsan
 ; CHECK: br i1
-; CHECK: load i32* @g
+; CHECK: load i32, i32* @g
 ; CHECK: br label
 ; CHECK: ret i32
 }

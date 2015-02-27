@@ -21,7 +21,7 @@ define i32 @main(i32 %argc, i8** %argv) {
   %i = bitcast i32 0 to i32
   call void @multiply(i32 %i, i32 -1, i32 255) 
   %P = getelementptr [20 x i17], [20 x i17]* @ARRAY, i32 0, i32 0
-  %X = load i17* %P
+  %X = load i17, i17* %P
   %result = sext i17 %X to i32
   %fmt = getelementptr [4 x i8], [4 x i8]* @FORMAT, i32 0, i32 0
   call i32 (i8*,...)* @printf(i8* %fmt, i32 %result)

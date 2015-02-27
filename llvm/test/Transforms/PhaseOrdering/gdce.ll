@@ -27,7 +27,7 @@ entry:
   store i32 0, i32* %retval
   store i32 1, i32* %cleanup.dest.slot
   call void @_ZN4BaseD1Ev(%class.Base* %b)
-  %0 = load i32* %retval
+  %0 = load i32, i32* %retval
   ret i32 %0
 }
 
@@ -35,7 +35,7 @@ define linkonce_odr void @_ZN4BaseC1Ev(%class.Base* %this) unnamed_addr uwtable 
 entry:
   %this.addr = alloca %class.Base*, align 8
   store %class.Base* %this, %class.Base** %this.addr, align 8
-  %this1 = load %class.Base** %this.addr
+  %this1 = load %class.Base*, %class.Base** %this.addr
   call void @_ZN4BaseC2Ev(%class.Base* %this1)
   ret void
 }
@@ -44,7 +44,7 @@ define linkonce_odr void @_ZN4BaseD1Ev(%class.Base* %this) unnamed_addr uwtable 
 entry:
   %this.addr = alloca %class.Base*, align 8
   store %class.Base* %this, %class.Base** %this.addr, align 8
-  %this1 = load %class.Base** %this.addr
+  %this1 = load %class.Base*, %class.Base** %this.addr
   call void @_ZN4BaseD2Ev(%class.Base* %this1)
   ret void
 }
@@ -53,7 +53,7 @@ define linkonce_odr void @_ZN4BaseD2Ev(%class.Base* %this) unnamed_addr nounwind
 entry:
   %this.addr = alloca %class.Base*, align 8
   store %class.Base* %this, %class.Base** %this.addr, align 8
-  %this1 = load %class.Base** %this.addr
+  %this1 = load %class.Base*, %class.Base** %this.addr
   ret void
 }
 
@@ -61,7 +61,7 @@ define linkonce_odr void @_ZN4BaseC2Ev(%class.Base* %this) unnamed_addr nounwind
 entry:
   %this.addr = alloca %class.Base*, align 8
   store %class.Base* %this, %class.Base** %this.addr, align 8
-  %this1 = load %class.Base** %this.addr
+  %this1 = load %class.Base*, %class.Base** %this.addr
   %0 = bitcast %class.Base* %this1 to i8***
   store i8** getelementptr inbounds ([4 x i8*]* @_ZTV4Base, i64 0, i64 2), i8*** %0
   ret void
@@ -73,7 +73,7 @@ entry:
   %exn.slot = alloca i8*
   %ehselector.slot = alloca i32
   store %class.Base* %this, %class.Base** %this.addr, align 8
-  %this1 = load %class.Base** %this.addr
+  %this1 = load %class.Base*, %class.Base** %this.addr
   invoke void @_ZN4BaseD1Ev(%class.Base* %this1)
           to label %invoke.cont unwind label %lpad
 
@@ -94,8 +94,8 @@ lpad:                                             ; preds = %entry
   br label %eh.resume
 
 eh.resume:                                        ; preds = %lpad
-  %exn = load i8** %exn.slot
-  %sel = load i32* %ehselector.slot
+  %exn = load i8*, i8** %exn.slot
+  %sel = load i32, i32* %ehselector.slot
   %lpad.val = insertvalue { i8*, i32 } undef, i8* %exn, 0
   %lpad.val2 = insertvalue { i8*, i32 } %lpad.val, i32 %sel, 1
   resume { i8*, i32 } %lpad.val2

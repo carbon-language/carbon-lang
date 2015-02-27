@@ -16,7 +16,7 @@ define double @f2(float *%ptr) {
 ; CHECK-LABEL: f2:
 ; CHECK: ldeb %f0, 0(%r2)
 ; CHECK: br %r14
-  %val = load float *%ptr
+  %val = load float , float *%ptr
   %res = fpext float %val to double
   ret double %res
 }
@@ -27,7 +27,7 @@ define double @f3(float *%base) {
 ; CHECK: ldeb %f0, 4092(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr float, float *%base, i64 1023
-  %val = load float *%ptr
+  %val = load float , float *%ptr
   %res = fpext float %val to double
   ret double %res
 }
@@ -40,7 +40,7 @@ define double @f4(float *%base) {
 ; CHECK: ldeb %f0, 0(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr float, float *%base, i64 1024
-  %val = load float *%ptr
+  %val = load float , float *%ptr
   %res = fpext float %val to double
   ret double %res
 }
@@ -52,7 +52,7 @@ define double @f5(float *%base) {
 ; CHECK: ldeb %f0, 0(%r2)
 ; CHECK: br %r14
   %ptr = getelementptr float, float *%base, i64 -1
-  %val = load float *%ptr
+  %val = load float , float *%ptr
   %res = fpext float %val to double
   ret double %res
 }
@@ -65,7 +65,7 @@ define double @f6(float *%base, i64 %index) {
 ; CHECK: br %r14
   %ptr1 = getelementptr float, float *%base, i64 %index
   %ptr2 = getelementptr float, float *%ptr1, i64 100
-  %val = load float *%ptr2
+  %val = load float , float *%ptr2
   %res = fpext float %val to double
   ret double %res
 }
@@ -76,23 +76,23 @@ define void @f7(double *%ptr1, float *%ptr2) {
 ; CHECK-LABEL: f7:
 ; CHECK: ldeb {{%f[0-9]+}}, 16{{[04]}}(%r15)
 ; CHECK: br %r14
-  %val0 = load volatile float *%ptr2
-  %val1 = load volatile float *%ptr2
-  %val2 = load volatile float *%ptr2
-  %val3 = load volatile float *%ptr2
-  %val4 = load volatile float *%ptr2
-  %val5 = load volatile float *%ptr2
-  %val6 = load volatile float *%ptr2
-  %val7 = load volatile float *%ptr2
-  %val8 = load volatile float *%ptr2
-  %val9 = load volatile float *%ptr2
-  %val10 = load volatile float *%ptr2
-  %val11 = load volatile float *%ptr2
-  %val12 = load volatile float *%ptr2
-  %val13 = load volatile float *%ptr2
-  %val14 = load volatile float *%ptr2
-  %val15 = load volatile float *%ptr2
-  %val16 = load volatile float *%ptr2
+  %val0 = load volatile float , float *%ptr2
+  %val1 = load volatile float , float *%ptr2
+  %val2 = load volatile float , float *%ptr2
+  %val3 = load volatile float , float *%ptr2
+  %val4 = load volatile float , float *%ptr2
+  %val5 = load volatile float , float *%ptr2
+  %val6 = load volatile float , float *%ptr2
+  %val7 = load volatile float , float *%ptr2
+  %val8 = load volatile float , float *%ptr2
+  %val9 = load volatile float , float *%ptr2
+  %val10 = load volatile float , float *%ptr2
+  %val11 = load volatile float , float *%ptr2
+  %val12 = load volatile float , float *%ptr2
+  %val13 = load volatile float , float *%ptr2
+  %val14 = load volatile float , float *%ptr2
+  %val15 = load volatile float , float *%ptr2
+  %val16 = load volatile float , float *%ptr2
 
   %ext0 = fpext float %val0 to double
   %ext1 = fpext float %val1 to double

@@ -45,7 +45,7 @@ define void @_ZN30GIM_TRIANGLE_CALCULATION_CACHE18triangle_collisionERK9btVector
 entry:
   %arrayidx26 = getelementptr inbounds %class.GIM_TRIANGLE_CALCULATION_CACHE.9.34.69.94.119.144.179.189.264.284.332, %class.GIM_TRIANGLE_CALCULATION_CACHE.9.34.69.94.119.144.179.189.264.284.332* %this, i64 0, i32 2, i64 0, i32 0, i64 1
   %arrayidx36 = getelementptr inbounds %class.GIM_TRIANGLE_CALCULATION_CACHE.9.34.69.94.119.144.179.189.264.284.332, %class.GIM_TRIANGLE_CALCULATION_CACHE.9.34.69.94.119.144.179.189.264.284.332* %this, i64 0, i32 2, i64 0, i32 0, i64 2
-  %0 = load float* %arrayidx36, align 4
+  %0 = load float, float* %arrayidx36, align 4
   %add587 = fadd float undef, undef
   %sub600 = fsub float %add587, undef
   store float %sub600, float* undef, align 4

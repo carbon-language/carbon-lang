@@ -5,7 +5,7 @@ if.end:
   br label %block.i.i
 
 block.i.i:
-  %tmpbb = load i8* undef
+  %tmpbb = load i8, i8* undef
   %tmp54 = zext i8 %tmpbb to i64
   %tmp59 = and i64 %tmp54, 8
   %tmp60 = add i64 %tmp59, 3691045929300498764

@@ -85,7 +85,7 @@ define i32 @bar0(i32 %i) nounwind {
 ;define void @foo3() uwtable {
 ;  %fptr = alloca i32 (i32)*, align 8
 ;  store i32 (i32)* @bar0, i32 (i32)** %fptr, align 8
-;  %1 = load i32 (i32)** %fptr, align 8
+;  %1 = load i32 (i32)*, i32 (i32)** %fptr, align 8
 ;  %call = call i32 %1(i32 0)
 ;  ret void
 ;}

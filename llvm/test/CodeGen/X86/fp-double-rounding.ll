@@ -11,7 +11,7 @@ target triple = "x86_64--"
 ; UNSAFE-NOT: cvt
 define void @double_rounding(fp128* %x, float* %f) {
 entry:
-  %0 = load fp128* %x, align 16
+  %0 = load fp128, fp128* %x, align 16
   %1 = fptrunc fp128 %0 to double
   %2 = fptrunc double %1 to float
   store float %2, float* %f, align 4

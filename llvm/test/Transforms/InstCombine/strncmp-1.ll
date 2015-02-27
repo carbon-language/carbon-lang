@@ -13,7 +13,7 @@ declare i32 @strncmp(i8*, i8*, i32)
 ; strncmp("", x, n) -> -*x
 define i32 @test1(i8* %str2) {
 ; CHECK-LABEL: @test1(
-; CHECK: %strcmpload = load i8* %str
+; CHECK: %strcmpload = load i8, i8* %str
 ; CHECK: %1 = zext i8 %strcmpload to i32
 ; CHECK: %2 = sub nsw i32 0, %1
 ; CHECK: ret i32 %2
@@ -26,7 +26,7 @@ define i32 @test1(i8* %str2) {
 ; strncmp(x, "", n) -> *x
 define i32 @test2(i8* %str1) {
 ; CHECK-LABEL: @test2(
-; CHECK: %strcmpload = load i8* %str1
+; CHECK: %strcmpload = load i8, i8* %str1
 ; CHECK: %1 = zext i8 %strcmpload to i32
 ; CHECK: ret i32 %1
 
@@ -69,9 +69,9 @@ define i32 @test5() {
 ; strncmp(x,y,1) -> memcmp(x,y,1)
 define i32 @test6(i8* %str1, i8* %str2) {
 ; CHECK-LABEL: @test6(
-; CHECK: [[LOAD1:%[a-z]+]] = load i8* %str1, align 1
+; CHECK: [[LOAD1:%[a-z]+]] = load i8, i8* %str1, align 1
 ; CHECK: [[ZEXT1:%[a-z]+]] = zext i8 [[LOAD1]] to i32
-; CHECK: [[LOAD2:%[a-z]+]] = load i8* %str2, align 1
+; CHECK: [[LOAD2:%[a-z]+]] = load i8, i8* %str2, align 1
 ; CHECK: [[ZEXT2:%[a-z]+]] = zext i8 [[LOAD2]] to i32
 ; CHECK: [[RET:%[a-z]+]] = sub nsw i32 [[ZEXT1]], [[ZEXT2]]
 ; CHECK: ret i32 [[RET]]

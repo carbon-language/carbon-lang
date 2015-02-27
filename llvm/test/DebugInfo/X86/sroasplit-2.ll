@@ -53,7 +53,7 @@ define i32 @foo(i64 %outer.coerce0, i64 %outer.coerce1) #0 {
   %7 = bitcast %struct.Inner* %5 to i8*, !dbg !27
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %6, i8* %7, i64 8, i32 4, i1 false), !dbg !27
   %8 = getelementptr inbounds %struct.Inner, %struct.Inner* %i1, i32 0, i32 0, !dbg !28
-  %9 = load i32* %8, align 4, !dbg !28
+  %9 = load i32, i32* %8, align 4, !dbg !28
   ret i32 %9, !dbg !28
 }
 

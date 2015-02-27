@@ -8,7 +8,7 @@ target triple = "i386-unknown-linux-gnu"
 
 define i1 @PR6486() nounwind {
 ; CHECK-LABEL: @PR6486(
-  %tmp = load i32*** @g_177                       ; <i32**> [#uses=1]
+  %tmp = load i32**, i32*** @g_177                       ; <i32**> [#uses=1]
   %cmp = icmp ne i32** null, %tmp                 ; <i1> [#uses=1]
   %conv = zext i1 %cmp to i32                     ; <i32> [#uses=1]
   %cmp1 = icmp sle i32 0, %conv                   ; <i1> [#uses=1]

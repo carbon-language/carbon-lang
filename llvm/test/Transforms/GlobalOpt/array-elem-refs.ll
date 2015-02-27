@@ -11,9 +11,9 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Function Attrs: nounwind uwtable
 define signext i8 @foo() #0 {
 entry:
-  %0 = load i8*** @c, align 8
-  %1 = load i8** %0, align 8
-  %2 = load i8* %1, align 1
+  %0 = load i8**, i8*** @c, align 8
+  %1 = load i8*, i8** %0, align 8
+  %2 = load i8, i8* %1, align 1
   ret i8 %2
 
 ; CHECK-LABEL: @foo

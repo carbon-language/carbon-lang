@@ -21,7 +21,7 @@ if:		; preds = %entry
 else:		; preds = %entry
 	%tmp7 = add i32 %start_arg, 1		; <i32> [#uses=1]
 	%tmp8 = call fastcc i32 @no_tailrecelim_1(i32* %a_arg, i32 %a_len_arg, i32 %tmp7)		; <i32> [#uses=1]
-	%tmp9 = load i32* @extern_weak_global		; <i32> [#uses=1]
+	%tmp9 = load i32, i32* @extern_weak_global		; <i32> [#uses=1]
 	%tmp10 = add i32 %tmp9, %tmp8		; <i32> [#uses=1]
 	ret i32 %tmp10
 }
@@ -40,7 +40,7 @@ if:		; preds = %entry
 else:		; preds = %entry
 	%tmp7 = add i32 %start_arg, 1		; <i32> [#uses=1]
 	%tmp8 = call fastcc i32 @no_tailrecelim_2(i32* %a_arg, i32 %a_len_arg, i32 %tmp7)		; <i32> [#uses=1]
-	%tmp9 = load i32* %a_arg		; <i32> [#uses=1]
+	%tmp9 = load i32, i32* %a_arg		; <i32> [#uses=1]
 	%tmp10 = add i32 %tmp9, %tmp8		; <i32> [#uses=1]
 	ret i32 %tmp10
 }
@@ -58,7 +58,7 @@ if:		; preds = %entry
 else:		; preds = %entry
 	%tmp7 = add i32 %start_arg, 1		; <i32> [#uses=1]
 	%tmp8 = call fastcc i32 @no_tailrecelim_3(i32* %a_arg, i32 %a_len_arg, i32 %tmp7)		; <i32> [#uses=1]
-	%tmp9 = load volatile i32* %a_arg		; <i32> [#uses=1]
+	%tmp9 = load volatile i32, i32* %a_arg		; <i32> [#uses=1]
 	%tmp10 = add i32 %tmp9, %tmp8		; <i32> [#uses=1]
 	ret i32 %tmp10
 }

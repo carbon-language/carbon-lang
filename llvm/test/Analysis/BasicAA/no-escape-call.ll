@@ -12,9 +12,9 @@ entry:
 	store i8* %tmp2, i8** %tmp4, align 4
 	%tmp10 = getelementptr i8, i8* %tmp2, i32 10		; <i8*> [#uses=1]
 	store i8 42, i8* %tmp10, align 1
-	%tmp14 = load i8** %tmp4, align 4		; <i8*> [#uses=1]
+	%tmp14 = load i8*, i8** %tmp4, align 4		; <i8*> [#uses=1]
 	%tmp16 = getelementptr i8, i8* %tmp14, i32 10		; <i8*> [#uses=1]
-	%tmp17 = load i8* %tmp16, align 1		; <i8> [#uses=1]
+	%tmp17 = load i8, i8* %tmp16, align 1		; <i8> [#uses=1]
 	%tmp19 = icmp eq i8 %tmp17, 42		; <i1> [#uses=1]
 	ret i1 %tmp19
 }

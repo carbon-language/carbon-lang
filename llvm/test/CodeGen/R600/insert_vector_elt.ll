@@ -185,13 +185,13 @@ entry:
   br i1 %1, label %if, label %else
 
 if:
-  %2 = load i32 addrspace(1)* %in
+  %2 = load i32, i32 addrspace(1)* %in
   %3 = insertelement <2 x i32> %0, i32 %2, i32 1
   br label %endif
 
 else:
   %4 = getelementptr i32, i32 addrspace(1)* %in, i32 1
-  %5 = load i32 addrspace(1)* %4
+  %5 = load i32, i32 addrspace(1)* %4
   %6 = insertelement <2 x i32> %0, i32 %5, i32 1
   br label %endif
 

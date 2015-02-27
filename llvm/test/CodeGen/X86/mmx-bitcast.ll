@@ -7,7 +7,7 @@ define i64 @t0(x86_mmx* %p) {
 ; CHECK-NEXT:    paddq %mm0, %mm0
 ; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
-  %t = load x86_mmx* %p
+  %t = load x86_mmx, x86_mmx* %p
   %u = tail call x86_mmx @llvm.x86.mmx.padd.q(x86_mmx %t, x86_mmx %t)
   %s = bitcast x86_mmx %u to i64
   ret i64 %s
@@ -20,7 +20,7 @@ define i64 @t1(x86_mmx* %p) {
 ; CHECK-NEXT:    paddd %mm0, %mm0
 ; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
-  %t = load x86_mmx* %p
+  %t = load x86_mmx, x86_mmx* %p
   %u = tail call x86_mmx @llvm.x86.mmx.padd.d(x86_mmx %t, x86_mmx %t)
   %s = bitcast x86_mmx %u to i64
   ret i64 %s
@@ -33,7 +33,7 @@ define i64 @t2(x86_mmx* %p) {
 ; CHECK-NEXT:    paddw %mm0, %mm0
 ; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
-  %t = load x86_mmx* %p
+  %t = load x86_mmx, x86_mmx* %p
   %u = tail call x86_mmx @llvm.x86.mmx.padd.w(x86_mmx %t, x86_mmx %t)
   %s = bitcast x86_mmx %u to i64
   ret i64 %s
@@ -46,7 +46,7 @@ define i64 @t3(x86_mmx* %p) {
 ; CHECK-NEXT:    paddb %mm0, %mm0
 ; CHECK-NEXT:    movd %mm0, %rax
 ; CHECK-NEXT:    retq
-  %t = load x86_mmx* %p
+  %t = load x86_mmx, x86_mmx* %p
   %u = tail call x86_mmx @llvm.x86.mmx.padd.b(x86_mmx %t, x86_mmx %t)
   %s = bitcast x86_mmx %u to i64
   ret i64 %s

@@ -22,7 +22,7 @@ while.body:                                       ; preds = %while.body.backedge
 
 lor.lhs.false:                                    ; preds = %while.body
   %tmp20 = bitcast i32* %o.addr.0 to i32*         ; <i32*> [#uses=1]
-  %tmp22 = load i32* %tmp20                       ; <i32> [#uses=0]
+  %tmp22 = load i32, i32* %tmp20                       ; <i32> [#uses=0]
   br i1 undef, label %land.lhs.true24, label %if.end31
 
 land.lhs.true24:                                  ; preds = %lor.lhs.false
@@ -34,11 +34,11 @@ if.end31:                                         ; preds = %land.lhs.true24, %l
 
 if.end41:                                         ; preds = %if.end31
   %tmp43 = bitcast i32* %o.addr.0 to i32*         ; <i32*> [#uses=1]
-  %tmp45 = load i32* %tmp43                       ; <i32> [#uses=0]
+  %tmp45 = load i32, i32* %tmp43                       ; <i32> [#uses=0]
   br i1 undef, label %if.then50, label %if.else
 
 if.then50:                                        ; preds = %if.end41
-  %tmp53 = load i32** undef                       ; <i32*> [#uses=1]
+  %tmp53 = load i32*, i32** undef                       ; <i32*> [#uses=1]
   br label %while.body.backedge
 
 if.else:                                          ; preds = %if.end41
@@ -75,14 +75,14 @@ entry:
 
 bb69.i:                                           ; preds = %bb57.i.preheader
   %tmp4 = getelementptr inbounds [4 x %struct.attribute_spec*], [4 x %struct.attribute_spec*]* @attribute_tables, i32 0, i32 undef ; <%struct.attribute_spec**> [#uses=1]
-  %tmp3 = load %struct.attribute_spec** %tmp4, align 4 ; <%struct.attribute_spec*> [#uses=1]
+  %tmp3 = load %struct.attribute_spec*, %struct.attribute_spec** %tmp4, align 4 ; <%struct.attribute_spec*> [#uses=1]
   br label %bb65.i
 
 bb65.i:                                           ; preds = %bb65.i.preheader, %bb64.i
   %storemerge6.i = phi i32 [ 1, %bb64.i ], [ 0, %bb69.i ] ; <i32> [#uses=3]
   %scevgep14 = getelementptr inbounds %struct.attribute_spec, %struct.attribute_spec* %tmp3, i32 %storemerge6.i, i32 0 ; <i8**> [#uses=1]
-  %tmp2 = load i8** %scevgep14, align 4           ; <i8*> [#uses=0]
-  %tmp = load %struct.attribute_spec** %tmp4, align 4 ; <%struct.attribute_spec*> [#uses=1]
+  %tmp2 = load i8*, i8** %scevgep14, align 4           ; <i8*> [#uses=0]
+  %tmp = load %struct.attribute_spec*, %struct.attribute_spec** %tmp4, align 4 ; <%struct.attribute_spec*> [#uses=1]
   %scevgep1516 = getelementptr inbounds %struct.attribute_spec, %struct.attribute_spec* %tmp, i32 %storemerge6.i, i32 0 ; <i8**> [#uses=0]
   unreachable
 
@@ -101,7 +101,7 @@ bb66.i:                                           ; Unreachable
 
 define i32* @test3() {
 do.end17.i:
-  %tmp18.i = load i7** undef
+  %tmp18.i = load i7*, i7** undef
   %tmp1 = bitcast i7* %tmp18.i to i8*
   br i1 undef, label %do.body36.i, label %if.then21.i
 
@@ -110,12 +110,12 @@ if.then21.i:
   ret i32* undef
 
 do.body36.i:
-  %ivar38.i = load i64* @g 
+  %ivar38.i = load i64, i64* @g 
   %tmp3 = bitcast i7* %tmp18.i to i8*
   %add.ptr39.sum.i = add i64 %ivar38.i, 8
   %tmp40.i = getelementptr inbounds i8, i8* %tmp3, i64 %add.ptr39.sum.i
   %tmp4 = bitcast i8* %tmp40.i to i64*
-  %tmp41.i = load i64* %tmp4
+  %tmp41.i = load i64, i64* %tmp4
   br i1 undef, label %if.then48.i, label %do.body57.i
 
 if.then48.i:
@@ -123,13 +123,13 @@ if.then48.i:
   br label %do.body57.i
 
 do.body57.i:
-  %tmp58.i = load i7** undef
-  %ivar59.i = load i64* @g
+  %tmp58.i = load i7*, i7** undef
+  %ivar59.i = load i64, i64* @g
   %tmp5 = bitcast i7* %tmp58.i to i8*
   %add.ptr65.sum.i = add i64 %ivar59.i, 8
   %tmp66.i = getelementptr inbounds i8, i8* %tmp5, i64 %add.ptr65.sum.i
   %tmp6 = bitcast i8* %tmp66.i to i64*
-  %tmp67.i = load i64* %tmp6
+  %tmp67.i = load i64, i64* %tmp6
   ret i32* undef
 }
 
@@ -145,7 +145,7 @@ dead:
   %P2 = getelementptr i32, i32 *%P2, i32 52
   %Q2 = getelementptr i32, i32 *%Q2, i32 52
   store i32 4, i32* %P2
-  %A = load i32* %Q2
+  %A = load i32, i32* %Q2
   br i1 true, label %dead, label %dead2
   
 dead2:
@@ -156,10 +156,10 @@ dead2:
 ; PR9841
 define fastcc i8 @test5(i8* %P) nounwind {
 entry:
-  %0 = load i8* %P, align 2
+  %0 = load i8, i8* %P, align 2
 
   %Q = getelementptr i8, i8* %P, i32 1
-  %1 = load i8* %Q, align 1
+  %1 = load i8, i8* %Q, align 1
   ret i8 %1
 }
 
@@ -187,7 +187,7 @@ u1.bb:
   br label %unreachable.bb
 
 u2.bb:
-  %0 = load i32* undef, align 4
+  %0 = load i32, i32* undef, align 4
   %conv.i.i.i.i.i = zext i32 %0 to i64
   br label %u2.bb
 

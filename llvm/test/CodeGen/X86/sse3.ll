@@ -14,7 +14,7 @@ define void @t0(<8 x i16>* %dest, <8 x i16>* %old) nounwind {
 ; X64-NEXT:    movdqa %xmm0, (%rdi)
 ; X64-NEXT:    retq
 entry:
-	%tmp3 = load <8 x i16>* %old
+	%tmp3 = load <8 x i16>, <8 x i16>* %old
 	%tmp6 = shufflevector <8 x i16> %tmp3,
                 <8 x i16> < i16 1, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef >,
                 <8 x i32> < i32 8, i32 0, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef  >
@@ -31,8 +31,8 @@ define <8 x i16> @t1(<8 x i16>* %A, <8 x i16>* %B) nounwind {
 ; X64-NEXT:    andps (%rdi), %xmm0
 ; X64-NEXT:    orps %xmm1, %xmm0
 ; X64-NEXT:    retq
-	%tmp1 = load <8 x i16>* %A
-	%tmp2 = load <8 x i16>* %B
+	%tmp1 = load <8 x i16>, <8 x i16>* %A
+	%tmp2 = load <8 x i16>, <8 x i16>* %B
 	%tmp3 = shufflevector <8 x i16> %tmp1, <8 x i16> %tmp2, <8 x i32> < i32 8, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7 >
 	ret <8 x i16> %tmp3
 
@@ -112,7 +112,7 @@ define void @t8(<2 x i64>* %res, <2 x i64>* %A) nounwind {
 ; X64-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,6,5,4,7]
 ; X64-NEXT:    movdqa %xmm0, (%rdi)
 ; X64-NEXT:    retq
-	%tmp = load <2 x i64>* %A
+	%tmp = load <2 x i64>, <2 x i64>* %A
 	%tmp.upgrd.1 = bitcast <2 x i64> %tmp to <8 x i16>
 	%tmp0 = extractelement <8 x i16> %tmp.upgrd.1, i32 0
 	%tmp1 = extractelement <8 x i16> %tmp.upgrd.1, i32 1
@@ -142,9 +142,9 @@ define void @t9(<4 x float>* %r, <2 x i32>* %A) nounwind {
 ; X64-NEXT:    movhpd (%rsi), %xmm0
 ; X64-NEXT:    movapd %xmm0, (%rdi)
 ; X64-NEXT:    retq
-	%tmp = load <4 x float>* %r
+	%tmp = load <4 x float>, <4 x float>* %r
 	%tmp.upgrd.3 = bitcast <2 x i32>* %A to double*
-	%tmp.upgrd.4 = load double* %tmp.upgrd.3
+	%tmp.upgrd.4 = load double, double* %tmp.upgrd.3
 	%tmp.upgrd.5 = insertelement <2 x double> undef, double %tmp.upgrd.4, i32 0
 	%tmp5 = insertelement <2 x double> %tmp.upgrd.5, double undef, i32 1
 	%tmp6 = bitcast <2 x double> %tmp5 to <4 x float>
@@ -178,7 +178,7 @@ define void @t10() nounwind {
 ; X64-NEXT:    movq _g2@{{.*}}(%rip), %rax
 ; X64-NEXT:    movq %xmm0, (%rax)
 ; X64-NEXT:    retq
-  load <4 x i32>* @g1, align 16
+  load <4 x i32>, <4 x i32>* @g1, align 16
   bitcast <4 x i32> %1 to <8 x i16>
   shufflevector <8 x i16> %2, <8 x i16> undef, <8 x i32> < i32 0, i32 2, i32 4, i32 6, i32 undef, i32 undef, i32 undef, i32 undef >
   bitcast <8 x i16> %3 to <2 x i64>
@@ -273,9 +273,9 @@ define <4 x i32> @t17() nounwind {
 ; X64-NEXT:    andpd {{.*}}(%rip), %xmm0
 ; X64-NEXT:    retq
 entry:
-  %tmp1 = load <4 x float>* undef, align 16
+  %tmp1 = load <4 x float>, <4 x float>* undef, align 16
   %tmp2 = shufflevector <4 x float> %tmp1, <4 x float> undef, <4 x i32> <i32 4, i32 1, i32 2, i32 3>
-  %tmp3 = load <4 x float>* undef, align 16
+  %tmp3 = load <4 x float>, <4 x float>* undef, align 16
   %tmp4 = shufflevector <4 x float> %tmp2, <4 x float> undef, <4 x i32> <i32 undef, i32 undef, i32 0, i32 1>
   %tmp5 = bitcast <4 x float> %tmp3 to <4 x i32>
   %tmp6 = shufflevector <4 x i32> %tmp5, <4 x i32> undef, <4 x i32> <i32 undef, i32 undef, i32 0, i32 1>

@@ -9,7 +9,7 @@ target triple = "thumb-apple-darwin8"
 define zeroext i16 @__NSCharToUnicharCFWrapper(i8 zeroext  %ch)   {
 entry:
 	%iftmp.0.0.in.in = select i1 false, i16* @replacementUnichar, i16* null		; <i16*> [#uses=1]
-	%iftmp.0.0.in = load i16* %iftmp.0.0.in.in		; <i16> [#uses=1]
+	%iftmp.0.0.in = load i16, i16* %iftmp.0.0.in.in		; <i16> [#uses=1]
 	ret i16 %iftmp.0.0.in
 }
 

@@ -51,7 +51,7 @@ declare <4 x float> @llvm.x86.sse41.round.ss(<4 x float>, <4 x float>, i32)
 declare <4 x float> @f()
 
 define <4 x float> @test3(<4 x float> %A, float *%b, i32 %C) nounwind {
-  %a = load float *%b
+  %a = load float , float *%b
   %B = insertelement <4 x float> undef, float %a, i32 0
   %X = call <4 x float> @llvm.x86.sse41.round.ss(<4 x float> %A, <4 x float> %B, i32 4)
   ret <4 x float> %X
@@ -60,7 +60,7 @@ define <4 x float> @test3(<4 x float> %A, float *%b, i32 %C) nounwind {
 }
 
 define <4 x float> @test4(<4 x float> %A, float *%b, i32 %C) nounwind {
-  %a = load float *%b
+  %a = load float , float *%b
   %B = insertelement <4 x float> undef, float %a, i32 0
   %q = call <4 x float> @f()
   %X = call <4 x float> @llvm.x86.sse41.round.ss(<4 x float> %q, <4 x float> %B, i32 4)

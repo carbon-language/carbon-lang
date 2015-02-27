@@ -4,7 +4,7 @@ define i16 @f1(i16* %v) {
 entry:
 ; CHECK-LABEL: f1:
 ; CHECK: ldrh r0, [r0]
-        %tmp = load i16* %v
+        %tmp = load i16, i16* %v
         ret i16 %tmp
 }
 
@@ -13,7 +13,7 @@ entry:
 ; CHECK-LABEL: f2:
 ; CHECK: ldrh.w r0, [r0, #2046]
         %tmp2 = getelementptr i16, i16* %v, i16 1023
-        %tmp = load i16* %tmp2
+        %tmp = load i16, i16* %tmp2
         ret i16 %tmp
 }
 
@@ -23,7 +23,7 @@ entry:
 ; CHECK: mov.w r1, #4096
 ; CHECK: ldrh r0, [r0, r1]
         %tmp2 = getelementptr i16, i16* %v, i16 2048
-        %tmp = load i16* %tmp2
+        %tmp = load i16, i16* %tmp2
         ret i16 %tmp
 }
 
@@ -33,7 +33,7 @@ entry:
 ; CHECK: ldrh r0, [r0, #-128]
         %tmp1 = sub i32 %base, 128
         %tmp2 = inttoptr i32 %tmp1 to i16*
-        %tmp3 = load i16* %tmp2
+        %tmp3 = load i16, i16* %tmp2
         ret i16 %tmp3
 }
 
@@ -43,7 +43,7 @@ entry:
 ; CHECK: ldrh r0, [r0, r1]
         %tmp1 = add i32 %base, %offset
         %tmp2 = inttoptr i32 %tmp1 to i16*
-        %tmp3 = load i16* %tmp2
+        %tmp3 = load i16, i16* %tmp2
         ret i16 %tmp3
 }
 
@@ -54,7 +54,7 @@ entry:
         %tmp1 = shl i32 %offset, 2
         %tmp2 = add i32 %base, %tmp1
         %tmp3 = inttoptr i32 %tmp2 to i16*
-        %tmp4 = load i16* %tmp3
+        %tmp4 = load i16, i16* %tmp3
         ret i16 %tmp4
 }
 
@@ -66,6 +66,6 @@ entry:
         %tmp1 = lshr i32 %offset, 2
         %tmp2 = add i32 %base, %tmp1
         %tmp3 = inttoptr i32 %tmp2 to i16*
-        %tmp4 = load i16* %tmp3
+        %tmp4 = load i16, i16* %tmp3
         ret i16 %tmp4
 }

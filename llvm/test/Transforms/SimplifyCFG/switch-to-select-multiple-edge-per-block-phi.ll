@@ -20,12 +20,12 @@ define i32 @fn1() {
 ; CHECK: %switch.selectcmp1 = icmp eq i32 %1, 5
 ; CHECK: %switch.select2 = select i1 %switch.selectcmp1, i32 5, i32 %switch.select
 entry:
-  %0 = load i32* @b, align 4
+  %0 = load i32, i32* @b, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %if.end3, label %if.then
 
 if.then:
-  %1 = load i32* @a, align 4
+  %1 = load i32, i32* @a, align 4
   switch i32 %1, label %if.end3 [
     i32 5, label %return
     i32 0, label %return

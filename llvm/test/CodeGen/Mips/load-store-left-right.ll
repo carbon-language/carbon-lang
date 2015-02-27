@@ -43,7 +43,7 @@ entry:
 ; MIPS64R6:      ld $[[PTR:[0-9]+]], %got_disp(si)(
 ; MIPS64R6:      lw $2, 0($[[PTR]])
 
-  %0 = load i32* getelementptr inbounds (%struct.SI* @si, i32 0, i32 0), align 1
+  %0 = load i32, i32* getelementptr inbounds (%struct.SI* @si, i32 0, i32 0), align 1
   ret i32 %0
 }
 
@@ -100,7 +100,7 @@ entry:
 ; MIPS64R6:      ld $[[PTR:[0-9]+]], %got_disp(sll)(
 ; MIPS64R6:      ld $2, 0($[[PTR]])
 
-  %0 = load i64* getelementptr inbounds (%struct.SLL* @sll, i64 0, i32 0), align 1
+  %0 = load i64, i64* getelementptr inbounds (%struct.SLL* @sll, i64 0, i32 0), align 1
   ret i64 %0
 }
 
@@ -129,7 +129,7 @@ entry:
 ; MIPS64R6:      ld $[[PTR:[0-9]+]], %got_disp(si)(
 ; MIPS64R6:      lw $2, 0($[[PTR]])
 
-  %0 = load i32* getelementptr inbounds (%struct.SI* @si, i64 0, i32 0), align 1
+  %0 = load i32, i32* getelementptr inbounds (%struct.SI* @si, i64 0, i32 0), align 1
   %conv = sext i32 %0 to i64
   ret i64 %conv
 }
@@ -165,7 +165,7 @@ entry:
 ; MIPS64R6:      ld $[[PTR:[0-9]+]], %got_disp(sui)(
 ; MIPS64R6:      lwu $2, 0($[[PTR]])
 
-  %0 = load i32* getelementptr inbounds (%struct.SUI* @sui, i64 0, i32 0), align 1
+  %0 = load i32, i32* getelementptr inbounds (%struct.SUI* @sui, i64 0, i32 0), align 1
   %conv = zext i32 %0 to i64
   ret i64 %conv
 }
@@ -257,7 +257,7 @@ entry:
 ; ALL-DAG:       lbu $[[R1:[0-9]+]], 1($[[PTR]])
 ; ALL-DAG:       sb $[[R1]], 3($[[PTR]])
 
-  %0 = load %struct.S0* getelementptr inbounds (%struct.S0* @struct_s0, i32 0), align 1
+  %0 = load %struct.S0, %struct.S0* getelementptr inbounds (%struct.S0* @struct_s0, i32 0), align 1
   store %struct.S0 %0, %struct.S0* getelementptr inbounds (%struct.S0* @struct_s0, i32 1), align 1
   ret void
 }
@@ -300,7 +300,7 @@ entry:
 ; MIPS64R6-DAG:  lhu $[[R1:[0-9]+]], 2($[[PTR]])
 ; MIPS64R6-DAG:  sh $[[R1]], 6($[[PTR]])
 
-  %0 = load %struct.S1* getelementptr inbounds (%struct.S1* @struct_s1, i32 0), align 1
+  %0 = load %struct.S1, %struct.S1* getelementptr inbounds (%struct.S1* @struct_s1, i32 0), align 1
   store %struct.S1 %0, %struct.S1* getelementptr inbounds (%struct.S1* @struct_s1, i32 1), align 1
   ret void
 }
@@ -361,7 +361,7 @@ entry:
 ; MIPS64R6-DAG:  lw $[[R1:[0-9]+]], 4($[[PTR]])
 ; MIPS64R6-DAG:  sw $[[R1]],       12($[[PTR]])
 
-  %0 = load %struct.S2* getelementptr inbounds (%struct.S2* @struct_s2, i32 0), align 1
+  %0 = load %struct.S2, %struct.S2* getelementptr inbounds (%struct.S2* @struct_s2, i32 0), align 1
   store %struct.S2 %0, %struct.S2* getelementptr inbounds (%struct.S2* @struct_s2, i32 1), align 1
   ret void
 }

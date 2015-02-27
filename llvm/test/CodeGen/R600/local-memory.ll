@@ -36,7 +36,7 @@ entry:
   %.add = select i1 %cmp, i32 0, i32 %add
   call void @llvm.AMDGPU.barrier.local()
   %arrayidx1 = getelementptr inbounds [128 x i32], [128 x i32] addrspace(3)* @local_memory.local_mem, i32 0, i32 %.add
-  %0 = load i32 addrspace(3)* %arrayidx1, align 4
+  %0 = load i32, i32 addrspace(3)* %arrayidx1, align 4
   %arrayidx2 = getelementptr inbounds i32, i32 addrspace(1)* %out, i32 %y.i
   store i32 %0, i32 addrspace(1)* %arrayidx2, align 4
   ret void

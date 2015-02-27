@@ -11,7 +11,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds float, float* %a, i64 %indvars.iv
-  %0 = load float* %arrayidx, align 4
+  %0 = load float, float* %arrayidx, align 4
   %add = fadd float %0, 1.000000e+00
   store float %add, float* %arrayidx, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1

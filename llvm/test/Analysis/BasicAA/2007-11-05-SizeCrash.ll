@@ -17,7 +17,7 @@ entry:
         %tmp17 = getelementptr %struct.usb_hcd, %struct.usb_hcd* %hcd, i32 0, i32 2, i64 1      
         ; <i64*> [#uses=1]
         %tmp1718 = bitcast i64* %tmp17 to i32*          ; <i32*> [#uses=1]
-        %tmp19 = load i32* %tmp1718, align 4            ; <i32> [#uses=0]
+        %tmp19 = load i32, i32* %tmp1718, align 4            ; <i32> [#uses=0]
         br i1 false, label %cond_true34, label %done_okay
 
 cond_true34:            ; preds = %entry
@@ -25,7 +25,7 @@ cond_true34:            ; preds = %entry
 2305843009213693950            ; <i64*> [#uses=1]
         %tmp70 = bitcast i64* %tmp631 to %struct.device**
 
-        %tmp71 = load %struct.device** %tmp70, align 8
+        %tmp71 = load %struct.device*, %struct.device** %tmp70, align 8
 
         ret i32 undef
 

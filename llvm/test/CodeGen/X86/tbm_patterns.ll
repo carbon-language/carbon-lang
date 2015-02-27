@@ -15,7 +15,7 @@ entry:
   ; CHECK-LABEL: test_x86_tbm_bextri_u32_m:
   ; CHECK-NOT: mov
   ; CHECK: bextr $
-  %0 = load i32* %a
+  %0 = load i32, i32* %a
   %1 = lshr i32 %0, 4
   %2 = and i32 %1, 4095
   ret i32 %2
@@ -36,7 +36,7 @@ entry:
   ; CHECK-LABEL: test_x86_tbm_bextri_u64_m:
   ; CHECK-NOT: mov
   ; CHECK: bextr $
-  %0 = load i64* %a
+  %0 = load i64, i64* %a
   %1 = lshr i64 %0, 4
   %2 = and i64 %1, 4095
   ret i64 %2

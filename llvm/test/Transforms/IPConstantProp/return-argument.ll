@@ -4,7 +4,7 @@
 
 ;; This function returns its second argument on all return statements
 define internal i32* @incdec(i1 %C, i32* %V) {
-        %X = load i32* %V
+        %X = load i32, i32* %V
         br i1 %C, label %T, label %F
 
 T:              ; preds = %0

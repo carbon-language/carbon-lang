@@ -29,11 +29,11 @@ entry:
   store %struct.empty_base_t* %4, %struct.empty_base_t** %2, align 8
   call void @_ZN7empty_tC1Ev(%struct.empty_base_t* %1) nounwind
   %5 = call i32* @_ZN5boost15compressed_pairI7empty_tiE6secondEv(%"struct.boost::compressed_pair<empty_t,int>"* %x) ssp ; <i32*> [#uses=1]
-  %6 = load i32* %5, align 4                      ; <i32> [#uses=1]
+  %6 = load i32, i32* %5, align 4                      ; <i32> [#uses=1]
   %7 = icmp ne i32 %6, -3                         ; <i1> [#uses=1]
   %8 = zext i1 %7 to i8                           ; <i8> [#uses=1]
   store i8 %8, i8* %retval.1, align 1
-  %9 = load i8* %retval.1, align 1                ; <i8> [#uses=1]
+  %9 = load i8, i8* %retval.1, align 1                ; <i8> [#uses=1]
   %toBool = icmp ne i8 %9, 0                      ; <i1> [#uses=1]
   br i1 %toBool, label %bb, label %bb1
 
@@ -44,14 +44,14 @@ bb:                                               ; preds = %entry
 
 bb1:                                              ; preds = %entry
   store i32 0, i32* %0, align 4
-  %11 = load i32* %0, align 4                     ; <i32> [#uses=1]
+  %11 = load i32, i32* %0, align 4                     ; <i32> [#uses=1]
   store i32 %11, i32* %retval, align 4
   br label %return
 
 ; CHECK-NOT: x.second() was clobbered
 ; CHECK: ret i32
 return:                                           ; preds = %bb1
-  %retval2 = load i32* %retval                    ; <i32> [#uses=1]
+  %retval2 = load i32, i32* %retval                    ; <i32> [#uses=1]
   ret i32 %retval2
 }
 
@@ -71,7 +71,7 @@ entry:
   %this_addr = alloca %struct.empty_base_t*, align 8 ; <%struct.empty_base_t**> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   store %struct.empty_base_t* %this, %struct.empty_base_t** %this_addr
-  %0 = load %struct.empty_base_t** %this_addr, align 8 ; <%struct.empty_base_t*> [#uses=1]
+  %0 = load %struct.empty_base_t*, %struct.empty_base_t** %this_addr, align 8 ; <%struct.empty_base_t*> [#uses=1]
   call void @_ZN12empty_base_tC2Ev(%struct.empty_base_t* %0) nounwind
   br label %return
 
@@ -86,15 +86,15 @@ entry:
   %0 = alloca i32*                                ; <i32**> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   store %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"* %this, %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"** %this_addr
-  %1 = load %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"** %this_addr, align 8 ; <%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"*> [#uses=1]
+  %1 = load %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"*, %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"** %this_addr, align 8 ; <%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"*> [#uses=1]
   %2 = getelementptr inbounds %"struct.boost::details::compressed_pair_imp<empty_t,int,1>", %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"* %1, i32 0, i32 0 ; <i32*> [#uses=1]
   store i32* %2, i32** %0, align 8
-  %3 = load i32** %0, align 8                     ; <i32*> [#uses=1]
+  %3 = load i32*, i32** %0, align 8                     ; <i32*> [#uses=1]
   store i32* %3, i32** %retval, align 8
   br label %return
 
 return:                                           ; preds = %entry
-  %retval1 = load i32** %retval                   ; <i32*> [#uses=1]
+  %retval1 = load i32*, i32** %retval                   ; <i32*> [#uses=1]
   ret i32* %retval1
 }
 
@@ -105,16 +105,16 @@ entry:
   %0 = alloca i32*                                ; <i32**> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   store %"struct.boost::compressed_pair<empty_t,int>"* %this, %"struct.boost::compressed_pair<empty_t,int>"** %this_addr
-  %1 = load %"struct.boost::compressed_pair<empty_t,int>"** %this_addr, align 8 ; <%"struct.boost::compressed_pair<empty_t,int>"*> [#uses=1]
+  %1 = load %"struct.boost::compressed_pair<empty_t,int>"*, %"struct.boost::compressed_pair<empty_t,int>"** %this_addr, align 8 ; <%"struct.boost::compressed_pair<empty_t,int>"*> [#uses=1]
   %2 = getelementptr inbounds %"struct.boost::compressed_pair<empty_t,int>", %"struct.boost::compressed_pair<empty_t,int>"* %1, i32 0, i32 0 ; <%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"*> [#uses=1]
   %3 = call i32* @_ZN5boost7details19compressed_pair_impI7empty_tiLi1EE6secondEv(%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"* %2) nounwind ; <i32*> [#uses=1]
   store i32* %3, i32** %0, align 8
-  %4 = load i32** %0, align 8                     ; <i32*> [#uses=1]
+  %4 = load i32*, i32** %0, align 8                     ; <i32*> [#uses=1]
   store i32* %4, i32** %retval, align 8
   br label %return
 
 return:                                           ; preds = %entry
-  %retval1 = load i32** %retval                   ; <i32*> [#uses=1]
+  %retval1 = load i32*, i32** %retval                   ; <i32*> [#uses=1]
   ret i32* %retval1
 }
 
@@ -125,15 +125,15 @@ entry:
   %0 = alloca %struct.empty_base_t*               ; <%struct.empty_base_t**> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   store %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"* %this, %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"** %this_addr
-  %1 = load %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"** %this_addr, align 8 ; <%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"*> [#uses=1]
+  %1 = load %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"*, %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"** %this_addr, align 8 ; <%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"*> [#uses=1]
   %2 = bitcast %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"* %1 to %struct.empty_base_t* ; <%struct.empty_base_t*> [#uses=1]
   store %struct.empty_base_t* %2, %struct.empty_base_t** %0, align 8
-  %3 = load %struct.empty_base_t** %0, align 8    ; <%struct.empty_base_t*> [#uses=1]
+  %3 = load %struct.empty_base_t*, %struct.empty_base_t** %0, align 8    ; <%struct.empty_base_t*> [#uses=1]
   store %struct.empty_base_t* %3, %struct.empty_base_t** %retval, align 8
   br label %return
 
 return:                                           ; preds = %entry
-  %retval1 = load %struct.empty_base_t** %retval  ; <%struct.empty_base_t*> [#uses=1]
+  %retval1 = load %struct.empty_base_t*, %struct.empty_base_t** %retval  ; <%struct.empty_base_t*> [#uses=1]
   ret %struct.empty_base_t* %retval1
 }
 
@@ -144,16 +144,16 @@ entry:
   %0 = alloca %struct.empty_base_t*               ; <%struct.empty_base_t**> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   store %"struct.boost::compressed_pair<empty_t,int>"* %this, %"struct.boost::compressed_pair<empty_t,int>"** %this_addr
-  %1 = load %"struct.boost::compressed_pair<empty_t,int>"** %this_addr, align 8 ; <%"struct.boost::compressed_pair<empty_t,int>"*> [#uses=1]
+  %1 = load %"struct.boost::compressed_pair<empty_t,int>"*, %"struct.boost::compressed_pair<empty_t,int>"** %this_addr, align 8 ; <%"struct.boost::compressed_pair<empty_t,int>"*> [#uses=1]
   %2 = getelementptr inbounds %"struct.boost::compressed_pair<empty_t,int>", %"struct.boost::compressed_pair<empty_t,int>"* %1, i32 0, i32 0 ; <%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"*> [#uses=1]
   %3 = call %struct.empty_base_t* @_ZN5boost7details19compressed_pair_impI7empty_tiLi1EE5firstEv(%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"* %2) nounwind ; <%struct.empty_base_t*> [#uses=1]
   store %struct.empty_base_t* %3, %struct.empty_base_t** %0, align 8
-  %4 = load %struct.empty_base_t** %0, align 8    ; <%struct.empty_base_t*> [#uses=1]
+  %4 = load %struct.empty_base_t*, %struct.empty_base_t** %0, align 8    ; <%struct.empty_base_t*> [#uses=1]
   store %struct.empty_base_t* %4, %struct.empty_base_t** %retval, align 8
   br label %return
 
 return:                                           ; preds = %entry
-  %retval1 = load %struct.empty_base_t** %retval  ; <%struct.empty_base_t*> [#uses=1]
+  %retval1 = load %struct.empty_base_t*, %struct.empty_base_t** %retval  ; <%struct.empty_base_t*> [#uses=1]
   ret %struct.empty_base_t* %retval1
 }
 

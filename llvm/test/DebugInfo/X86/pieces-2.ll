@@ -33,7 +33,7 @@ define i32 @foo(%struct.Outer* byval align 8 %outer) #0 {
 entry:
   call void @llvm.dbg.declare(metadata %struct.Outer* %outer, metadata !25, metadata !{!"0x102"}), !dbg !26
   %i1.sroa.0.0..sroa_idx = getelementptr inbounds %struct.Outer, %struct.Outer* %outer, i64 0, i32 0, i64 1, i32 0, !dbg !27
-  %i1.sroa.0.0.copyload = load i32* %i1.sroa.0.0..sroa_idx, align 8, !dbg !27
+  %i1.sroa.0.0.copyload = load i32, i32* %i1.sroa.0.0..sroa_idx, align 8, !dbg !27
   call void @llvm.dbg.value(metadata i32 %i1.sroa.0.0.copyload, i64 0, metadata !28, metadata !29), !dbg !27
   %i1.sroa.2.0..sroa_raw_cast = bitcast %struct.Outer* %outer to i8*, !dbg !27
   %i1.sroa.2.0..sroa_raw_idx = getelementptr inbounds i8, i8* %i1.sroa.2.0..sroa_raw_cast, i64 20, !dbg !27

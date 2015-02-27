@@ -9,11 +9,11 @@ L.entry:
   %2 = mul i32 %0, 6
   %3 = getelementptr i8, i8* %1, i32 %2
   %4 = bitcast i8* %3 to <3 x i16>*
-  %5 = load <3 x i16>* %4, align 1
+  %5 = load <3 x i16>, <3 x i16>* %4, align 1
   %6 = bitcast i16* %sourceA to i8*
   %7 = getelementptr i8, i8* %6, i32 %2
   %8 = bitcast i8* %7 to <3 x i16>*
-  %9 = load <3 x i16>* %8, align 1
+  %9 = load <3 x i16>, <3 x i16>* %8, align 1
   %10 = or <3 x i16> %9, %5
   store <3 x i16> %10, <3 x i16>* %4, align 1
   ret void

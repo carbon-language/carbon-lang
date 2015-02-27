@@ -34,12 +34,12 @@ entry:
   br label %bb13
 
 bb:                                               ; preds = %bb13
-  %24 = load float* %A0r.0, align 4               ; <float> [#uses=1]
-  %25 = load float* %A0i.0, align 4               ; <float> [#uses=1]
-  %26 = load float* %A1r.0, align 4               ; <float> [#uses=2]
-  %27 = load float* %A1i.0, align 4               ; <float> [#uses=2]
-  %28 = load float* %A2r.0, align 4               ; <float> [#uses=2]
-  %29 = load float* %A2i.0, align 4               ; <float> [#uses=2]
+  %24 = load float, float* %A0r.0, align 4               ; <float> [#uses=1]
+  %25 = load float, float* %A0i.0, align 4               ; <float> [#uses=1]
+  %26 = load float, float* %A1r.0, align 4               ; <float> [#uses=2]
+  %27 = load float, float* %A1i.0, align 4               ; <float> [#uses=2]
+  %28 = load float, float* %A2r.0, align 4               ; <float> [#uses=2]
+  %29 = load float, float* %A2i.0, align 4               ; <float> [#uses=2]
   %30 = fadd float %26, %28                       ; <float> [#uses=2]
   %31 = fadd float %27, %29                       ; <float> [#uses=2]
   %32 = fsub float %26, %28                       ; <float> [#uses=1]

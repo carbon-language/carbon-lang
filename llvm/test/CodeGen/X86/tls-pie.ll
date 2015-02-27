@@ -15,7 +15,7 @@ define i32 @f1() {
 ; X64-NEXT: ret
 
 entry:
-	%tmp1 = load i32* @i
+	%tmp1 = load i32, i32* @i
 	ret i32 %tmp1
 }
 
@@ -49,7 +49,7 @@ define i32 @f3() {
 ; X64-NEXT: ret
 
 entry:
-	%tmp1 = load i32* @i2
+	%tmp1 = load i32, i32* @i2
 	ret i32 %tmp1
 }
 

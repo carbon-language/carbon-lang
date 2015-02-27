@@ -21,18 +21,18 @@ entry:
   store i32 %b, i32* %b.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %b.addr, metadata !8, metadata !{}), !dbg !9
   call void @llvm.dbg.declare(metadata i32* %c, metadata !10, metadata !{}), !dbg !12
-  %tmp = load i32* %a.addr, align 4, !dbg !13
+  %tmp = load i32, i32* %a.addr, align 4, !dbg !13
   store i32 %tmp, i32* %c, align 4, !dbg !13
-  %tmp1 = load i32* %a.addr, align 4, !dbg !14
-  %tmp2 = load i32* %b.addr, align 4, !dbg !14
+  %tmp1 = load i32, i32* %a.addr, align 4, !dbg !14
+  %tmp2 = load i32, i32* %b.addr, align 4, !dbg !14
   %add = add nsw i32 %tmp1, %tmp2, !dbg !14
   store i32 %add, i32* %a.addr, align 4, !dbg !14
-  %tmp3 = load i32* %c, align 4, !dbg !15
-  %tmp4 = load i32* %b.addr, align 4, !dbg !15
+  %tmp3 = load i32, i32* %c, align 4, !dbg !15
+  %tmp4 = load i32, i32* %b.addr, align 4, !dbg !15
   %sub = sub nsw i32 %tmp3, %tmp4, !dbg !15
   store i32 %sub, i32* %b.addr, align 4, !dbg !15
-  %tmp5 = load i32* %a.addr, align 4, !dbg !16
-  %tmp6 = load i32* %b.addr, align 4, !dbg !16
+  %tmp5 = load i32, i32* %a.addr, align 4, !dbg !16
+  %tmp6 = load i32, i32* %b.addr, align 4, !dbg !16
   %add7 = add nsw i32 %tmp5, %tmp6, !dbg !16
   ret i32 %add7, !dbg !16
 }

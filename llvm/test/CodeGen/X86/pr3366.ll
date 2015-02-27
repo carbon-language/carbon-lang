@@ -3,7 +3,7 @@
 
 define void @_ada_c34002a() nounwind {
 entry:
-  %0 = load i8* null, align 1
+  %0 = load i8, i8* null, align 1
   %1 = sdiv i8 90, %0
   %2 = icmp ne i8 %1, 3
   %3 = zext i1 %2 to i8

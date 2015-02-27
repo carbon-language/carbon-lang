@@ -14,7 +14,7 @@ define i32 @main() {
 
 loop:
   %storemerge1 = phi i8 [ 0, %0 ], [ %inc, %loop ]
-  %m = load volatile i32* getelementptr inbounds (%struct.S* @b, i64 0, i32 0), align 4
+  %m = load volatile i32, i32* getelementptr inbounds (%struct.S* @b, i64 0, i32 0), align 4
   %inc = add nuw i8 %storemerge1, 1
 ; CHECK:   %inc = add nuw i8 %storemerge1, 1
 ; CHECK-NEXT: -->  {1,+,1}<nuw><%loop>

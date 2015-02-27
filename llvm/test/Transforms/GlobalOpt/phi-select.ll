@@ -8,7 +8,7 @@
 
 define i32 @test1(i1 %C) {
         %P = select i1 %C, i32* @X, i32* @Y             ; <i32*> [#uses=1]
-        %V = load i32* %P               ; <i32> [#uses=1]
+        %V = load i32, i32* %P               ; <i32> [#uses=1]
         ret i32 %V
 }
 
@@ -21,7 +21,7 @@ T:              ; preds = %0
 
 Cont:           ; preds = %T, %0
         %P = phi i32* [ @X, %0 ], [ @Y, %T ]            ; <i32*> [#uses=1]
-        %V = load i32* %P               ; <i32> [#uses=1]
+        %V = load i32, i32* %P               ; <i32> [#uses=1]
         ret i32 %V
 }
 

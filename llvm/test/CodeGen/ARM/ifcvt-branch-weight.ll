@@ -4,7 +4,7 @@
 define internal zeroext i8 @bar(%struct.S* %x, %struct.S* nocapture %y) nounwind readonly {
 entry:
   %0 = getelementptr inbounds %struct.S, %struct.S* %x, i32 0, i32 1, i32 0
-  %1 = load i8* %0, align 1
+  %1 = load i8, i8* %0, align 1
   %2 = zext i8 %1 to i32
   %3 = and i32 %2, 112
   %4 = icmp eq i32 %3, 0
@@ -12,7 +12,7 @@ entry:
 
 bb:
   %5 = getelementptr inbounds %struct.S, %struct.S* %y, i32 0, i32 1, i32 0
-  %6 = load i8* %5, align 1
+  %6 = load i8, i8* %5, align 1
   %7 = zext i8 %6 to i32
   %8 = and i32 %7, 112
   %9 = icmp eq i32 %8, 0

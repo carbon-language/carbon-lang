@@ -54,7 +54,7 @@ bb9:                                              ; preds = %quantum_new_qureg.e
   unreachable
 
 bb.i37:                                           ; preds = %bb.i37, %bb11.thread
-  %0 = load i64* undef, align 8                   ; <i64> [#uses=1]
+  %0 = load i64, i64* undef, align 8                   ; <i64> [#uses=1]
   %1 = shl i64 %0, %.cast.i                       ; <i64> [#uses=1]
   store i64 %1, i64* undef, align 8
   br i1 undef, label %bb.i37, label %quantum_addscratch.exit

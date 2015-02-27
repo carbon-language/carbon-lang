@@ -6,7 +6,7 @@ define i8 @test() {
 ; CHECK: add {{x[0-9]+}}, {{x[0-9]+}}, :lo12:foo
 ; CHECK: ldrb w0, [{{x[0-9]+}}]
 entry:
-  %0 = load i8* bitcast (void (...)* @foo to i8*), align 1
+  %0 = load i8, i8* bitcast (void (...)* @foo to i8*), align 1
   ret i8 %0
 }
 

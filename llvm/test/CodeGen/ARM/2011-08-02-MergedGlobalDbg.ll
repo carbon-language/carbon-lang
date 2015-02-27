@@ -30,7 +30,7 @@ target triple = "thumbv7-apple-macosx10.7.0"
 
 define i32 @get1(i32 %a) nounwind optsize ssp {
   tail call void @llvm.dbg.value(metadata i32 %a, i64 0, metadata !10, metadata !{!"0x102"}), !dbg !30
-  %1 = load i32* @x1, align 4, !dbg !31
+  %1 = load i32, i32* @x1, align 4, !dbg !31
   tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !11, metadata !{!"0x102"}), !dbg !31
   store i32 %a, i32* @x1, align 4, !dbg !31
   ret i32 %1, !dbg !31
@@ -38,7 +38,7 @@ define i32 @get1(i32 %a) nounwind optsize ssp {
 
 define i32 @get2(i32 %a) nounwind optsize ssp {
   tail call void @llvm.dbg.value(metadata i32 %a, i64 0, metadata !13, metadata !{!"0x102"}), !dbg !32
-  %1 = load i32* @x2, align 4, !dbg !33
+  %1 = load i32, i32* @x2, align 4, !dbg !33
   tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !14, metadata !{!"0x102"}), !dbg !33
   store i32 %a, i32* @x2, align 4, !dbg !33
   ret i32 %1, !dbg !33
@@ -46,7 +46,7 @@ define i32 @get2(i32 %a) nounwind optsize ssp {
 
 define i32 @get3(i32 %a) nounwind optsize ssp {
   tail call void @llvm.dbg.value(metadata i32 %a, i64 0, metadata !16, metadata !{!"0x102"}), !dbg !34
-  %1 = load i32* @x3, align 4, !dbg !35
+  %1 = load i32, i32* @x3, align 4, !dbg !35
   tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !17, metadata !{!"0x102"}), !dbg !35
   store i32 %a, i32* @x3, align 4, !dbg !35
   ret i32 %1, !dbg !35
@@ -54,7 +54,7 @@ define i32 @get3(i32 %a) nounwind optsize ssp {
 
 define i32 @get4(i32 %a) nounwind optsize ssp {
   tail call void @llvm.dbg.value(metadata i32 %a, i64 0, metadata !19, metadata !{!"0x102"}), !dbg !36
-  %1 = load i32* @x4, align 4, !dbg !37
+  %1 = load i32, i32* @x4, align 4, !dbg !37
   tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !20, metadata !{!"0x102"}), !dbg !37
   store i32 %a, i32* @x4, align 4, !dbg !37
   ret i32 %1, !dbg !37
@@ -62,7 +62,7 @@ define i32 @get4(i32 %a) nounwind optsize ssp {
 
 define i32 @get5(i32 %a) nounwind optsize ssp {
   tail call void @llvm.dbg.value(metadata i32 %a, i64 0, metadata !27, metadata !{!"0x102"}), !dbg !38
-  %1 = load i32* @x5, align 4, !dbg !39
+  %1 = load i32, i32* @x5, align 4, !dbg !39
   tail call void @llvm.dbg.value(metadata i32 %1, i64 0, metadata !28, metadata !{!"0x102"}), !dbg !39
   store i32 %a, i32* @x5, align 4, !dbg !39
   ret i32 %1, !dbg !39

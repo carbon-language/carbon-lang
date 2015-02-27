@@ -11,6 +11,6 @@ entry:
         store i32 1, i32* getelementptr (%struct.B* @a, i32 0, i32 0, i32 0), align 8
         %tmp4 = getelementptr %struct.A, %struct.A* %b, i32 0, i32 0               ;<i32*> [#uses=1]
         store i32 0, i32* %tmp4, align 4
-        %tmp7 = load i32* getelementptr (%struct.B* @a, i32 0, i32 0, i32 0), align 8           ; <i32> [#uses=1]
+        %tmp7 = load i32, i32* getelementptr (%struct.B* @a, i32 0, i32 0, i32 0), align 8           ; <i32> [#uses=1]
         ret i32 %tmp7
 }

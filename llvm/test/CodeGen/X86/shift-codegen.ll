@@ -15,9 +15,9 @@ define void @fn1() {
 ; CHECK-NOT: lea
 ; CHECK: ret
 
-  %tmp = load i32* @Y             ; <i32> [#uses=1]
+  %tmp = load i32, i32* @Y             ; <i32> [#uses=1]
   %tmp1 = shl i32 %tmp, 3         ; <i32> [#uses=1]
-  %tmp2 = load i32* @X            ; <i32> [#uses=1]
+  %tmp2 = load i32, i32* @X            ; <i32> [#uses=1]
   %tmp3 = or i32 %tmp1, %tmp2             ; <i32> [#uses=1]
   store i32 %tmp3, i32* @X
   ret void

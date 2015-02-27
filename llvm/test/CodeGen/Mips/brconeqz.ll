@@ -5,7 +5,7 @@
 
 define void @test() nounwind {
 entry:
-  %0 = load i32* @i, align 4
+  %0 = load i32, i32* @i, align 4
   %cmp = icmp eq i32 %0, 0
   br i1 %cmp, label %if.end, label %if.then
 ; 16:	beqz	${{[0-9]+}}, $[[LABEL:[0-9A-Ba-b_]+]]

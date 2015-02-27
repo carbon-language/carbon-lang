@@ -9,9 +9,9 @@ define void @sample_test(<8 x i64> * %secondSource, <8 x i64> * %source, <8 x i6
 entry:
 
 ; Load %source
-  %s0 = load <8 x i64> * %source, align 64
+  %s0 = load <8 x i64> , <8 x i64> * %source, align 64
   %arrayidx64 = getelementptr inbounds <8 x i64>, <8 x i64> * %source, i32 6
-  %s120 = load <8 x i64> * %arrayidx64, align 64
+  %s120 = load <8 x i64> , <8 x i64> * %arrayidx64, align 64
   %s122 = bitcast <8 x i64> %s120 to i512
   %data.i.i677.48.extract.shift = lshr i512 %s122, 384
   %data.i.i677.48.extract.trunc = trunc i512 %data.i.i677.48.extract.shift to i64
@@ -33,9 +33,9 @@ entry:
   %s130 = insertelement <8 x i64> %s129, i64 %data.i.i677.56.extract.trunc, i32 7
 
 ; Load %secondSource
-  %s1 = load <8 x i64> * %secondSource, align 64
+  %s1 = load <8 x i64> , <8 x i64> * %secondSource, align 64
   %arrayidx67 = getelementptr inbounds <8 x i64>, <8 x i64> * %secondSource, i32 6
-  %s121 = load <8 x i64> * %arrayidx67, align 64
+  %s121 = load <8 x i64> , <8 x i64> * %arrayidx67, align 64
   %s131 = bitcast <8 x i64> %s121 to i512
   %data.i1.i676.48.extract.shift = lshr i512 %s131, 384
   %data.i1.i676.48.extract.trunc = trunc i512 %data.i1.i676.48.extract.shift to i64
@@ -64,7 +64,7 @@ entry:
   %arrayidx72 = getelementptr inbounds <8 x i64>, <8 x i64> * %dest, i32 6
   store <8 x i64> %vecinit49.i.i702, <8 x i64> * %arrayidx72, align 64
   %arrayidx78 = getelementptr inbounds <8 x i64>, <8 x i64> * %secondSource, i32 7
-  %s141 = load <8 x i64> * %arrayidx78, align 64
+  %s141 = load <8 x i64> , <8 x i64> * %arrayidx78, align 64
   %s151 = bitcast <8 x i64> %s141 to i512
   %data.i1.i649.32.extract.shift = lshr i512 %s151, 256
   %data.i1.i649.32.extract.trunc = trunc i512 %data.i1.i649.32.extract.shift to i64

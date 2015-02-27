@@ -8,7 +8,7 @@ define internal void @f(%struct.ss* byval  %b) nounwind  {
 ; CHECK-LABEL: define internal void @f(i32 %b.0, i64 %b.1)
 entry:
   %tmp = getelementptr %struct.ss, %struct.ss* %b, i32 0, i32 0		; <i32*> [#uses=2]
-  %tmp1 = load i32* %tmp, align 4		; <i32> [#uses=1]
+  %tmp1 = load i32, i32* %tmp, align 4		; <i32> [#uses=1]
   %tmp2 = add i32 %tmp1, 1		; <i32> [#uses=1]
   store i32 %tmp2, i32* %tmp, align 4
   ret void

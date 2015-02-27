@@ -18,10 +18,10 @@ define <2 x i64> @foo() nounwind {
 entry:
   %retval = alloca <3 x i32>, align 16
   %z = alloca <4 x i32>, align 16
-  %tmp = load <4 x i32>* %z
+  %tmp = load <4 x i32>, <4 x i32>* %z
   %tmp1 = shufflevector <4 x i32> %tmp, <4 x i32> undef, <3 x i32> <i32 0, i32 1, i32 2>
   store <3 x i32> %tmp1, <3 x i32>* %retval
   %0 = bitcast <3 x i32>* %retval to <2 x i64>*
-  %1 = load <2 x i64>* %0, align 1
+  %1 = load <2 x i64>, <2 x i64>* %0, align 1
   ret <2 x i64> %1
 }

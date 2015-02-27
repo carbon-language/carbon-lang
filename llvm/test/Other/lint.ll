@@ -19,11 +19,11 @@ define i32 @foo() noreturn {
 ; CHECK: Null pointer dereference
   store i32 0, i32* null
 ; CHECK: Null pointer dereference
-  %t = load i32* null
+  %t = load i32, i32* null
 ; CHECK: Undef pointer dereference
   store i32 0, i32* undef
 ; CHECK: Undef pointer dereference
-  %u = load i32* undef
+  %u = load i32, i32* undef
 ; CHECK: All-ones pointer dereference
   store i32 0, i32* inttoptr (i64 -1 to i32*)
 ; CHECK: Address one pointer dereference
@@ -61,7 +61,7 @@ define i32 @foo() noreturn {
 ; CHECK: Write to text section
   store i32 8, i32* bitcast (i32()* @foo to i32*)
 ; CHECK: Load from block address
-  %lb = load i32* bitcast (i8* blockaddress(@foo, %next) to i32*)
+  %lb = load i32, i32* bitcast (i8* blockaddress(@foo, %next) to i32*)
 ; CHECK: Call to block address
   call void()* bitcast (i8* blockaddress(@foo, %next) to void()*)()
 ; CHECK: Undefined behavior: Null pointer dereference
@@ -152,7 +152,7 @@ entry:
   store i32* %x, i32** %retval
   br label %next
 next:
-  %t0 = load i32** %retval
+  %t0 = load i32*, i32** %retval
   %t1 = insertvalue { i32, i32, i32* } zeroinitializer, i32* %t0, 2
   %t2 = extractvalue { i32, i32, i32* } %t1, 2
   br label %exit
@@ -172,7 +172,7 @@ entry:
 exit:
   %t3 = phi i32* [ %t4, %exit ]
   %t4 = bitcast i32* %t3 to i32*
-  %x = load volatile i32* %t3
+  %x = load volatile i32, i32* %t3
   br label %exit
 }
 

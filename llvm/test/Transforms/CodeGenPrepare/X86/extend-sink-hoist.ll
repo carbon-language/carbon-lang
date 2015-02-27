@@ -9,7 +9,7 @@ define i128 @sink(i64* %mem1, i64* %mem2) {
 ; CHECK-LABEL: block1:
 ; CHECK-NEXT: load
 block1:
-  %l1 = load i64* %mem1
+  %l1 = load i64, i64* %mem1
   %s1 = sext i64 %l1 to i128
   br label %block2
 
@@ -18,7 +18,7 @@ block1:
 ; CHECK-NEXT: load
 ; CHECK-NEXT: sext
 block2:
-  %l2 = load i64* %mem2
+  %l2 = load i64, i64* %mem2
   %s2 = sext i64 %l2 to i128
   %res = mul i128 %s1, %s2
   ret i128 %res
@@ -31,7 +31,7 @@ define i64 @hoist(i32* %mem1, i32* %mem2) {
 ; CHECK-NEXT: load
 ; CHECK-NEXT: sext
 block1:
-  %l1 = load i32* %mem1
+  %l1 = load i32, i32* %mem1
   br label %block2
 
 ; CHECK-LABEL: block2:
@@ -39,7 +39,7 @@ block1:
 ; CHECK-NEXT: sext
 block2:
   %s1 = sext i32 %l1 to i64
-  %l2 = load i32* %mem2
+  %l2 = load i32, i32* %mem2
   %s2 = sext i32 %l2 to i64
   %res = mul i64 %s1, %s2
   ret i64 %res

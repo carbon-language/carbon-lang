@@ -12,15 +12,15 @@ entry:
 	%retval = alloca i32		; <i32*> [#uses=2]
 	%0 = alloca i32		; <i32*> [#uses=2]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
-	%1 = load i8 (...)** @f, align 8		; <i8 (...)*> [#uses=1]
+	%1 = load i8 (...)*, i8 (...)** @f, align 8		; <i8 (...)*> [#uses=1]
 	%2 = icmp ne i8 (...)* %1, @kill		; <i1> [#uses=1]
 	%3 = zext i1 %2 to i32		; <i32> [#uses=1]
 	store i32 %3, i32* %0, align 4
-	%4 = load i32* %0, align 4		; <i32> [#uses=1]
+	%4 = load i32, i32* %0, align 4		; <i32> [#uses=1]
 	store i32 %4, i32* %retval, align 4
 	br label %return
 
 return:		; preds = %entry
-	%retval1 = load i32* %retval		; <i32> [#uses=1]
+	%retval1 = load i32, i32* %retval		; <i32> [#uses=1]
 	ret i32 %retval1
 }

@@ -16,8 +16,8 @@
 define void @frem_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
                       float addrspace(1)* %in2) #0 {
    %gep2 = getelementptr float, float addrspace(1)* %in2, i32 4
-   %r0 = load float addrspace(1)* %in1, align 4
-   %r1 = load float addrspace(1)* %gep2, align 4
+   %r0 = load float, float addrspace(1)* %in1, align 4
+   %r1 = load float, float addrspace(1)* %gep2, align 4
    %r2 = frem float %r0, %r1
    store float %r2, float addrspace(1)* %out, align 4
    ret void
@@ -35,8 +35,8 @@ define void @frem_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
 define void @unsafe_frem_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
                              float addrspace(1)* %in2) #1 {
    %gep2 = getelementptr float, float addrspace(1)* %in2, i32 4
-   %r0 = load float addrspace(1)* %in1, align 4
-   %r1 = load float addrspace(1)* %gep2, align 4
+   %r0 = load float, float addrspace(1)* %in1, align 4
+   %r1 = load float, float addrspace(1)* %gep2, align 4
    %r2 = frem float %r0, %r1
    store float %r2, float addrspace(1)* %out, align 4
    ret void
@@ -55,8 +55,8 @@ define void @unsafe_frem_f32(float addrspace(1)* %out, float addrspace(1)* %in1,
 ; GCN: s_endpgm
 define void @frem_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                       double addrspace(1)* %in2) #0 {
-   %r0 = load double addrspace(1)* %in1, align 8
-   %r1 = load double addrspace(1)* %in2, align 8
+   %r0 = load double, double addrspace(1)* %in1, align 8
+   %r1 = load double, double addrspace(1)* %in2, align 8
    %r2 = frem double %r0, %r1
    store double %r2, double addrspace(1)* %out, align 8
    ret void
@@ -71,8 +71,8 @@ define void @frem_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
 ; GCN: s_endpgm
 define void @unsafe_frem_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                              double addrspace(1)* %in2) #1 {
-   %r0 = load double addrspace(1)* %in1, align 8
-   %r1 = load double addrspace(1)* %in2, align 8
+   %r0 = load double, double addrspace(1)* %in1, align 8
+   %r1 = load double, double addrspace(1)* %in2, align 8
    %r2 = frem double %r0, %r1
    store double %r2, double addrspace(1)* %out, align 8
    ret void
@@ -81,8 +81,8 @@ define void @unsafe_frem_f64(double addrspace(1)* %out, double addrspace(1)* %in
 define void @frem_v2f32(<2 x float> addrspace(1)* %out, <2 x float> addrspace(1)* %in1,
                         <2 x float> addrspace(1)* %in2) #0 {
    %gep2 = getelementptr <2 x float>, <2 x float> addrspace(1)* %in2, i32 4
-   %r0 = load <2 x float> addrspace(1)* %in1, align 8
-   %r1 = load <2 x float> addrspace(1)* %gep2, align 8
+   %r0 = load <2 x float>, <2 x float> addrspace(1)* %in1, align 8
+   %r1 = load <2 x float>, <2 x float> addrspace(1)* %gep2, align 8
    %r2 = frem <2 x float> %r0, %r1
    store <2 x float> %r2, <2 x float> addrspace(1)* %out, align 8
    ret void
@@ -91,8 +91,8 @@ define void @frem_v2f32(<2 x float> addrspace(1)* %out, <2 x float> addrspace(1)
 define void @frem_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in1,
                         <4 x float> addrspace(1)* %in2) #0 {
    %gep2 = getelementptr <4 x float>, <4 x float> addrspace(1)* %in2, i32 4
-   %r0 = load <4 x float> addrspace(1)* %in1, align 16
-   %r1 = load <4 x float> addrspace(1)* %gep2, align 16
+   %r0 = load <4 x float>, <4 x float> addrspace(1)* %in1, align 16
+   %r1 = load <4 x float>, <4 x float> addrspace(1)* %gep2, align 16
    %r2 = frem <4 x float> %r0, %r1
    store <4 x float> %r2, <4 x float> addrspace(1)* %out, align 16
    ret void
@@ -101,8 +101,8 @@ define void @frem_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)
 define void @frem_v2f64(<2 x double> addrspace(1)* %out, <2 x double> addrspace(1)* %in1,
                         <2 x double> addrspace(1)* %in2) #0 {
    %gep2 = getelementptr <2 x double>, <2 x double> addrspace(1)* %in2, i32 4
-   %r0 = load <2 x double> addrspace(1)* %in1, align 16
-   %r1 = load <2 x double> addrspace(1)* %gep2, align 16
+   %r0 = load <2 x double>, <2 x double> addrspace(1)* %in1, align 16
+   %r1 = load <2 x double>, <2 x double> addrspace(1)* %gep2, align 16
    %r2 = frem <2 x double> %r0, %r1
    store <2 x double> %r2, <2 x double> addrspace(1)* %out, align 16
    ret void

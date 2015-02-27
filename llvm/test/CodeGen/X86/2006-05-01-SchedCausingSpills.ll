@@ -5,10 +5,10 @@
 
 
 define i32 @foo(<4 x float>* %a, <4 x float>* %b, <4 x float>* %c, <4 x float>* %d) {
-	%tmp44 = load <4 x float>* %a		; <<4 x float>> [#uses=9]
-	%tmp46 = load <4 x float>* %b		; <<4 x float>> [#uses=1]
-	%tmp48 = load <4 x float>* %c		; <<4 x float>> [#uses=1]
-	%tmp50 = load <4 x float>* %d		; <<4 x float>> [#uses=1]
+	%tmp44 = load <4 x float>, <4 x float>* %a		; <<4 x float>> [#uses=9]
+	%tmp46 = load <4 x float>, <4 x float>* %b		; <<4 x float>> [#uses=1]
+	%tmp48 = load <4 x float>, <4 x float>* %c		; <<4 x float>> [#uses=1]
+	%tmp50 = load <4 x float>, <4 x float>* %d		; <<4 x float>> [#uses=1]
 	%tmp51 = bitcast <4 x float> %tmp44 to <4 x i32>		; <<4 x i32>> [#uses=1]
 	%tmp = shufflevector <4 x i32> %tmp51, <4 x i32> undef, <4 x i32> < i32 3, i32 3, i32 3, i32 3 >		; <<4 x i32>> [#uses=2]
 	%tmp52 = bitcast <4 x i32> %tmp to <4 x float>		; <<4 x float>> [#uses=1]

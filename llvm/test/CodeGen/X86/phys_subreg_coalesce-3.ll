@@ -26,7 +26,7 @@ bb:                                               ; preds = %bb, %bb.nph
   %j.06 = sub i32 %j.03, %indvar                  ; <i32> [#uses=1]
   %tmp11 = sub i32 %tmp10, %indvar                ; <i32> [#uses=1]
   %scevgep = getelementptr i32, i32* %ptr, i32 %tmp11  ; <i32*> [#uses=1]
-  %1 = load i32* %scevgep, align 4                ; <i32> [#uses=1]
+  %1 = load i32, i32* %scevgep, align 4                ; <i32> [#uses=1]
   %2 = ashr i32 %j.06, %shifts                    ; <i32> [#uses=1]
   %3 = and i32 %2, 65535                          ; <i32> [#uses=1]
   %4 = getelementptr inbounds i32, i32* %quadrant, i32 %1 ; <i32*> [#uses=1]

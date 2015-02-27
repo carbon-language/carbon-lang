@@ -28,7 +28,7 @@ entry:
 
   %__src1.i = bitcast i8* %b to i32*              ; <i32*> [#uses=1]
   %__dest2.i = bitcast i8* %a to i32*             ; <i32*> [#uses=1]
-  %tmp.i = load i32* %__src1.i, align 1           ; <i32> [#uses=1]
+  %tmp.i = load i32, i32* %__src1.i, align 1           ; <i32> [#uses=1]
   store i32 %tmp.i, i32* %__dest2.i, align 1
   ret void
 }
@@ -44,7 +44,7 @@ entry:
 ; UNALIGNED-LABEL: hword:
 ; UNALIGNED: vld1.16
 ; UNALIGNED: vst1.16
-  %tmp = load double* %a, align 2
+  %tmp = load double, double* %a, align 2
   store double %tmp, double* %b, align 2
   ret void
 }
@@ -60,7 +60,7 @@ entry:
 ; UNALIGNED-LABEL: byte:
 ; UNALIGNED: vld1.8
 ; UNALIGNED: vst1.8
-  %tmp = load double* %a, align 1
+  %tmp = load double, double* %a, align 1
   store double %tmp, double* %b, align 1
   ret void
 }
@@ -76,7 +76,7 @@ entry:
 ; UNALIGNED: ldr
 ; UNALIGNED-NOT: strb
 ; UNALIGNED: str
-  %tmp = load i32* %a, align 1
+  %tmp = load i32, i32* %a, align 1
   store i32 %tmp, i32* %b, align 1
   ret void
 }

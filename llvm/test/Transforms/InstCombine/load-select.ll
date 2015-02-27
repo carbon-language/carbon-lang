@@ -11,6 +11,6 @@ define i32 @b(i32 %y) nounwind readonly {
 entry:
   %0 = icmp eq i32 %y, 0                          ; <i1> [#uses=1]
   %storemerge = select i1 %0, i32* getelementptr inbounds ([2 x i32]* @a, i32 0, i32 1), i32* getelementptr inbounds ([2 x i32]* @a, i32 0, i32 0) ; <i32*> [#uses=1]
-  %1 = load i32* %storemerge, align 4             ; <i32> [#uses=1]
+  %1 = load i32, i32* %storemerge, align 4             ; <i32> [#uses=1]
   ret i32 %1
 }

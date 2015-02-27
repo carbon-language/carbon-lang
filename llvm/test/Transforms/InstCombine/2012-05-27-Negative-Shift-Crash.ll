@@ -20,7 +20,7 @@ entry:
 
 define void @fn4() nounwind uwtable ssp {
 entry:
-  %0 = load i32* @d, align 4
+  %0 = load i32, i32* @d, align 4
   %cmp = icmp eq i32 %0, 0
   %conv = zext i1 %cmp to i32
   store i32 %conv, i32* @c, align 4
@@ -34,12 +34,12 @@ entry:
   store i32 %and, i32* @e, align 4
   %sub = add nsw i32 %and, -1
   store i32 %sub, i32* @f, align 4
-  %0 = load i32* @a, align 4
+  %0 = load i32, i32* @a, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %if.else, label %if.then
 
 if.then:                                          ; preds = %entry
-  %1 = load i32* @b, align 4
+  %1 = load i32, i32* @b, align 4
   %.lobit = lshr i32 %1, 31
   %2 = trunc i32 %.lobit to i8
   %.not = xor i8 %2, 1

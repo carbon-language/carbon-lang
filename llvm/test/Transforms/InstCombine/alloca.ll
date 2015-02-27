@@ -18,7 +18,7 @@ define void @test() {
         call void (...)* @use( i32* %Y )
         %Z = alloca {  }                ; <{  }*> [#uses=1]
         call void (...)* @use( {  }* %Z )
-        %size = load i32* @int
+        %size = load i32, i32* @int
         %A = alloca {{}}, i32 %size
         call void (...)* @use( {{}}* %A )
         ret void

@@ -22,9 +22,9 @@
 define void @getAffNeighbour(i32 %curr_mb_nr, i32 %xN, i32 %yN, i32 %is_chroma, %struct.PixelPos* %pix) nounwind {
 entry:
 	%Opq.sa.calc = add i32 0, 2		; <i32> [#uses=2]
-	%0 = load %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=3]
+	%0 = load %struct.ImageParameters*, %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=3]
 	%1 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %0, i64 0, i32 39		; <%struct.Macroblock**> [#uses=1]
-	%2 = load %struct.Macroblock** %1, align 8		; <%struct.Macroblock*> [#uses=24]
+	%2 = load %struct.Macroblock*, %struct.Macroblock** %1, align 8		; <%struct.Macroblock*> [#uses=24]
 	%3 = zext i32 %curr_mb_nr to i64		; <i64> [#uses=24]
 	%4 = sext i32 %is_chroma to i64		; <i64> [#uses=8]
 	br label %meshBB392
@@ -32,9 +32,9 @@ entry:
 entry.fragment:		; preds = %meshBB392
 	%Opq.sa.calc747 = add i32 %Opq.sa.calc921, 70		; <i32> [#uses=0]
 	%5 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %0, i64 0, i32 119, i64 %4, i64 0		; <i32*> [#uses=1]
-	%6 = load i32* %5, align 4		; <i32> [#uses=2]
+	%6 = load i32, i32* %5, align 4		; <i32> [#uses=2]
 	%7 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %0, i64 0, i32 119, i64 %4, i64 1		; <i32*> [#uses=1]
-	%8 = load i32* %7, align 4		; <i32> [#uses=5]
+	%8 = load i32, i32* %7, align 4		; <i32> [#uses=5]
 	br label %entry.fragment181
 
 entry.fragment181:		; preds = %entry.fragment
@@ -75,7 +75,7 @@ bb4:		; preds = %bb3
 bb5:		; preds = %meshBB428
 	%Opq.sa.calc470 = sub i32 %Opq.sa.calc897, -49		; <i32> [#uses=1]
 	%17 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 20		; <i32*> [#uses=1]
-	%18 = load i32* %17, align 4		; <i32> [#uses=1]
+	%18 = load i32, i32* %17, align 4		; <i32> [#uses=1]
 	br label %bb5.fragment
 
 bb5.fragment:		; preds = %bb5
@@ -92,7 +92,7 @@ bb6:		; preds = %bb5.fragment
 bb7:		; preds = %bb6
 	%Opq.sa.calc476 = add i32 %Opq.sa.calc873, -58		; <i32> [#uses=1]
 	%22 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 25		; <i32*> [#uses=1]
-	%23 = load i32* %22, align 8		; <i32> [#uses=1]
+	%23 = load i32, i32* %22, align 8		; <i32> [#uses=1]
 	%24 = add i32 %23, 1		; <i32> [#uses=1]
 	%25 = getelementptr %struct.PixelPos, %struct.PixelPos* %pix, i64 0, i32 1		; <i32*> [#uses=1]
 	br label %meshBB388
@@ -103,14 +103,14 @@ bb7.fragment:		; preds = %meshBB388
 	%Opq.sa.calc708 = xor i32 %Opq.sa.calc707, 474		; <i32> [#uses=0]
 	store i32 %.SV194.phi, i32* %.SV196.phi, align 4
 	%26 = getelementptr %struct.Macroblock, %struct.Macroblock* %.load17.SV.phi, i64 %.load36.SV.phi, i32 29		; <i32*> [#uses=1]
-	%27 = load i32* %26, align 8		; <i32> [#uses=2]
+	%27 = load i32, i32* %26, align 8		; <i32> [#uses=2]
 	store i32 %27, i32* %.load67.SV.phi, align 4
 	br label %bb96
 
 bb8:		; preds = %meshBB348
 	%Opq.sa.calc479 = sub i32 %Opq.sa.calc805, 141		; <i32> [#uses=1]
 	%28 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 22		; <i32*> [#uses=2]
-	%29 = load i32* %28, align 4		; <i32> [#uses=2]
+	%29 = load i32, i32* %28, align 4		; <i32> [#uses=2]
 	%30 = getelementptr %struct.PixelPos, %struct.PixelPos* %pix, i64 0, i32 1		; <i32*> [#uses=2]
 	br label %meshBB368
 
@@ -118,25 +118,25 @@ bb8.fragment:		; preds = %meshBB368
 	%Opq.sa.calc765 = sub i32 %Opq.sa.calc768, -115		; <i32> [#uses=2]
 	store i32 %.SV198.phi, i32* %.SV200.phi, align 4
 	%31 = getelementptr %struct.Macroblock, %struct.Macroblock* %.load16.SV.phi, i64 %.load35.SV.phi, i32 26		; <i32*> [#uses=2]
-	%32 = load i32* %31, align 4		; <i32> [#uses=4]
+	%32 = load i32, i32* %31, align 4		; <i32> [#uses=4]
 	store i32 %32, i32* %.load66.SV.phi, align 4
-	%33 = load i32* %31, align 4		; <i32> [#uses=1]
+	%33 = load i32, i32* %31, align 4		; <i32> [#uses=1]
 	%34 = icmp eq i32 %33, 0		; <i1> [#uses=1]
 	br i1 %34, label %bb96, label %bb9
 
 bb9:		; preds = %bb8.fragment
 	%Opq.sa.calc482 = xor i32 %Opq.sa.calc765, 163		; <i32> [#uses=0]
-	%35 = load %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
+	%35 = load %struct.ImageParameters*, %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
 	%36 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %35, i64 0, i32 39		; <%struct.Macroblock**> [#uses=1]
-	%37 = load %struct.Macroblock** %36, align 8		; <%struct.Macroblock*> [#uses=1]
-	%38 = load i32* %.SV76.phi, align 4		; <i32> [#uses=1]
+	%37 = load %struct.Macroblock*, %struct.Macroblock** %36, align 8		; <%struct.Macroblock*> [#uses=1]
+	%38 = load i32, i32* %.SV76.phi, align 4		; <i32> [#uses=1]
 	br label %bb9.fragment
 
 bb9.fragment:		; preds = %bb9
 	%Opq.sa.calc999 = add i32 %Opq.sa.calc765, -44		; <i32> [#uses=1]
 	%39 = sext i32 %38 to i64		; <i64> [#uses=1]
 	%40 = getelementptr %struct.Macroblock, %struct.Macroblock* %37, i64 %39, i32 20		; <i32*> [#uses=1]
-	%41 = load i32* %40, align 4		; <i32> [#uses=1]
+	%41 = load i32, i32* %40, align 4		; <i32> [#uses=1]
 	%42 = icmp eq i32 %41, 0		; <i1> [#uses=1]
 	br i1 %42, label %bb96, label %bb11
 
@@ -161,7 +161,7 @@ bb13:		; preds = %bb5.fragment
 
 bb13.fragment:		; preds = %meshBB360
 	%Opq.sa.calc870 = add i32 %Opq.sa.calc866, -129		; <i32> [#uses=3]
-	%47 = load i32* %.SV208.phi, align 8		; <i32> [#uses=3]
+	%47 = load i32, i32* %.SV208.phi, align 8		; <i32> [#uses=3]
 	br i1 %.load74.SV.phi, label %bb14, label %meshBB412
 
 bb14:		; preds = %bb13.fragment
@@ -173,25 +173,25 @@ bb14:		; preds = %bb13.fragment
 
 bb14.fragment:		; preds = %bb14
 	%Opq.sa.calc723 = sub i32 %Opq.sa.calc493, 117		; <i32> [#uses=4]
-	%50 = load i32* %49, align 8		; <i32> [#uses=4]
+	%50 = load i32, i32* %49, align 8		; <i32> [#uses=4]
 	store i32 %50, i32* %.SV52.phi1113, align 4
-	%51 = load i32* %49, align 8		; <i32> [#uses=1]
+	%51 = load i32, i32* %49, align 8		; <i32> [#uses=1]
 	%52 = icmp eq i32 %51, 0		; <i1> [#uses=1]
 	br i1 %52, label %meshBB, label %bb15
 
 bb15:		; preds = %bb14.fragment
 	%Opq.sa.calc496 = sub i32 %Opq.sa.calc723, -8		; <i32> [#uses=1]
-	%53 = load %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
+	%53 = load %struct.ImageParameters*, %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
 	%54 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %53, i64 0, i32 39		; <%struct.Macroblock**> [#uses=1]
-	%55 = load %struct.Macroblock** %54, align 8		; <%struct.Macroblock*> [#uses=1]
-	%56 = load i32* %.SV208.phi, align 8		; <i32> [#uses=1]
+	%55 = load %struct.Macroblock*, %struct.Macroblock** %54, align 8		; <%struct.Macroblock*> [#uses=1]
+	%56 = load i32, i32* %.SV208.phi, align 8		; <i32> [#uses=1]
 	br label %meshBB324
 
 bb15.fragment:		; preds = %meshBB324
 	%Opq.sa.calc925 = xor i32 %Opq.sa.calc750, 215		; <i32> [#uses=2]
 	%57 = sext i32 %.SV214.phi to i64		; <i64> [#uses=1]
 	%58 = getelementptr %struct.Macroblock, %struct.Macroblock* %.SV212.phi, i64 %57, i32 20		; <i32*> [#uses=1]
-	%59 = load i32* %58, align 4		; <i32> [#uses=1]
+	%59 = load i32, i32* %58, align 4		; <i32> [#uses=1]
 	%60 = icmp eq i32 %59, 0		; <i1> [#uses=1]
 	br i1 %60, label %bb16, label %bb96
 
@@ -216,7 +216,7 @@ bb19.fragment:		; preds = %bb19
 	%Opq.sa.calc880 = xor i32 %Opq.sa.calc932, 246		; <i32> [#uses=0]
 	store i32 %63, i32* %64, align 4
 	%65 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 29		; <i32*> [#uses=1]
-	%66 = load i32* %65, align 8		; <i32> [#uses=2]
+	%66 = load i32, i32* %65, align 8		; <i32> [#uses=2]
 	store i32 %66, i32* %.SV52.phi1186, align 4
 	br label %bb96
 
@@ -228,7 +228,7 @@ bb23:		; preds = %meshBB360
 	%Opq.sa.calc509 = xor i32 %Opq.sa.calc866, 70		; <i32> [#uses=1]
 	%Opq.sa.calc508 = sub i32 %Opq.sa.calc509, -19		; <i32> [#uses=0]
 	%67 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 20		; <i32*> [#uses=1]
-	%68 = load i32* %67, align 4		; <i32> [#uses=1]
+	%68 = load i32, i32* %67, align 4		; <i32> [#uses=1]
 	%69 = icmp eq i32 %68, 0		; <i1> [#uses=1]
 	%70 = and i32 %curr_mb_nr, 1		; <i32> [#uses=1]
 	%71 = icmp eq i32 %70, 0		; <i1> [#uses=2]
@@ -237,7 +237,7 @@ bb23:		; preds = %meshBB360
 bb23.fragment:		; preds = %bb23
 	%Opq.sa.calc847 = sub i32 %Opq.sa.calc866, -9		; <i32> [#uses=2]
 	%72 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 22		; <i32*> [#uses=3]
-	%73 = load i32* %72, align 4		; <i32> [#uses=3]
+	%73 = load i32, i32* %72, align 4		; <i32> [#uses=3]
 	%74 = getelementptr %struct.PixelPos, %struct.PixelPos* %pix, i64 0, i32 1		; <i32*> [#uses=3]
 	store i32 %73, i32* %74, align 4
 	br label %bb23.fragment182
@@ -247,9 +247,9 @@ bb23.fragment182:		; preds = %bb23.fragment
 	%Opq.sa.calc742 = add i32 %Opq.sa.calc744, %Opq.sa.calc847		; <i32> [#uses=1]
 	%Opq.sa.calc743 = add i32 %Opq.sa.calc742, -149		; <i32> [#uses=2]
 	%75 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 26		; <i32*> [#uses=2]
-	%76 = load i32* %75, align 4		; <i32> [#uses=3]
+	%76 = load i32, i32* %75, align 4		; <i32> [#uses=3]
 	store i32 %76, i32* %.SV52.phi1113, align 4
-	%77 = load i32* %75, align 4		; <i32> [#uses=1]
+	%77 = load i32, i32* %75, align 4		; <i32> [#uses=1]
 	%78 = icmp ne i32 %77, 0		; <i1> [#uses=2]
 	br i1 %69, label %meshBB344, label %meshBB432
 
@@ -264,10 +264,10 @@ bb25:		; preds = %bb24
 bb26:		; preds = %bb25
 	%Opq.sa.calc519 = xor i32 %Opq.sa.calc515, 23		; <i32> [#uses=2]
 	%Opq.sa.calc518 = xor i32 %Opq.sa.calc519, 84		; <i32> [#uses=1]
-	%79 = load %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
+	%79 = load %struct.ImageParameters*, %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
 	%80 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %79, i64 0, i32 39		; <%struct.Macroblock**> [#uses=1]
-	%81 = load %struct.Macroblock** %80, align 8		; <%struct.Macroblock*> [#uses=1]
-	%82 = load i32* %.SV99.phi, align 4		; <i32> [#uses=1]
+	%81 = load %struct.Macroblock*, %struct.Macroblock** %80, align 8		; <%struct.Macroblock*> [#uses=1]
+	%82 = load i32, i32* %.SV99.phi, align 4		; <i32> [#uses=1]
 	br label %meshBB340
 
 bb26.fragment:		; preds = %meshBB340
@@ -276,7 +276,7 @@ bb26.fragment:		; preds = %meshBB340
 	%Opq.sa.calc917 = add i32 %Opq.sa.calc916, -237		; <i32> [#uses=1]
 	%83 = sext i32 %.SV230.phi to i64		; <i64> [#uses=1]
 	%84 = getelementptr %struct.Macroblock, %struct.Macroblock* %.SV228.phi, i64 %83, i32 20		; <i32*> [#uses=1]
-	%85 = load i32* %84, align 4		; <i32> [#uses=1]
+	%85 = load i32, i32* %84, align 4		; <i32> [#uses=1]
 	%86 = icmp eq i32 %85, 0		; <i1> [#uses=1]
 	br i1 %86, label %meshBB420, label %meshBB356
 
@@ -308,17 +308,17 @@ bb32:		; preds = %bb24
 
 bb33:		; preds = %bb32
 	%Opq.sa.calc534 = sub i32 %Opq.sa.calc512, -75		; <i32> [#uses=2]
-	%92 = load %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
+	%92 = load %struct.ImageParameters*, %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
 	%93 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %92, i64 0, i32 39		; <%struct.Macroblock**> [#uses=1]
-	%94 = load %struct.Macroblock** %93, align 8		; <%struct.Macroblock*> [#uses=1]
-	%95 = load i32* %.SV99.phi, align 4		; <i32> [#uses=1]
+	%94 = load %struct.Macroblock*, %struct.Macroblock** %93, align 8		; <%struct.Macroblock*> [#uses=1]
+	%95 = load i32, i32* %.SV99.phi, align 4		; <i32> [#uses=1]
 	br label %bb33.fragment
 
 bb33.fragment:		; preds = %bb33
 	%Opq.sa.calc712 = add i32 %Opq.sa.calc534, -109		; <i32> [#uses=3]
 	%96 = sext i32 %95 to i64		; <i64> [#uses=1]
 	%97 = getelementptr %struct.Macroblock, %struct.Macroblock* %94, i64 %96, i32 20		; <i32*> [#uses=1]
-	%98 = load i32* %97, align 4		; <i32> [#uses=1]
+	%98 = load i32, i32* %97, align 4		; <i32> [#uses=1]
 	%99 = icmp eq i32 %98, 0		; <i1> [#uses=1]
 	br i1 %99, label %bb34, label %meshBB
 
@@ -372,17 +372,17 @@ bb40:		; preds = %bb39
 
 bb41:		; preds = %meshBB336
 	%Opq.sa.calc557 = sub i32 %Opq.sa.calc979, 143		; <i32> [#uses=1]
-	%108 = load %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
+	%108 = load %struct.ImageParameters*, %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
 	%109 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %108, i64 0, i32 39		; <%struct.Macroblock**> [#uses=1]
-	%110 = load %struct.Macroblock** %109, align 8		; <%struct.Macroblock*> [#uses=1]
-	%111 = load i32* %.SV99.phi1128, align 4		; <i32> [#uses=1]
+	%110 = load %struct.Macroblock*, %struct.Macroblock** %109, align 8		; <%struct.Macroblock*> [#uses=1]
+	%111 = load i32, i32* %.SV99.phi1128, align 4		; <i32> [#uses=1]
 	br label %bb41.fragment
 
 bb41.fragment:		; preds = %bb41
 	%Opq.sa.calc987 = xor i32 %Opq.sa.calc557, 213		; <i32> [#uses=4]
 	%112 = sext i32 %111 to i64		; <i64> [#uses=1]
 	%113 = getelementptr %struct.Macroblock, %struct.Macroblock* %110, i64 %112, i32 20		; <i32*> [#uses=1]
-	%114 = load i32* %113, align 4		; <i32> [#uses=1]
+	%114 = load i32, i32* %113, align 4		; <i32> [#uses=1]
 	%115 = icmp eq i32 %114, 0		; <i1> [#uses=1]
 	br i1 %115, label %bb42, label %bb96
 
@@ -415,17 +415,17 @@ bb48:		; preds = %bb39
 
 bb49:		; preds = %bb48
 	%Opq.sa.calc572 = add i32 %Opq.sa.calc798, 84		; <i32> [#uses=0]
-	%122 = load %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
+	%122 = load %struct.ImageParameters*, %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
 	%123 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %122, i64 0, i32 39		; <%struct.Macroblock**> [#uses=1]
-	%124 = load %struct.Macroblock** %123, align 8		; <%struct.Macroblock*> [#uses=1]
-	%125 = load i32* %.SV99.phi1037, align 4		; <i32> [#uses=1]
+	%124 = load %struct.Macroblock*, %struct.Macroblock** %123, align 8		; <%struct.Macroblock*> [#uses=1]
+	%125 = load i32, i32* %.SV99.phi1037, align 4		; <i32> [#uses=1]
 	br label %bb49.fragment
 
 bb49.fragment:		; preds = %bb49
 	%Opq.sa.calc860 = sub i32 %Opq.sa.calc569, 114		; <i32> [#uses=5]
 	%126 = sext i32 %125 to i64		; <i64> [#uses=1]
 	%127 = getelementptr %struct.Macroblock, %struct.Macroblock* %124, i64 %126, i32 20		; <i32*> [#uses=1]
-	%128 = load i32* %127, align 4		; <i32> [#uses=1]
+	%128 = load i32, i32* %127, align 4		; <i32> [#uses=1]
 	%129 = icmp eq i32 %128, 0		; <i1> [#uses=1]
 	br i1 %129, label %bb50, label %meshBB380
 
@@ -485,7 +485,7 @@ bb58:		; preds = %bb56.fragment
 bb59:		; preds = %bb58
 	%Opq.sa.calc599 = add i32 %Opq.sa.calc1002, 151		; <i32> [#uses=0]
 	%141 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 20		; <i32*> [#uses=1]
-	%142 = load i32* %141, align 4		; <i32> [#uses=1]
+	%142 = load i32, i32* %141, align 4		; <i32> [#uses=1]
 	br label %bb59.fragment
 
 bb59.fragment:		; preds = %bb59
@@ -502,7 +502,7 @@ bb60:		; preds = %bb59.fragment
 bb61:		; preds = %bb60
 	%Opq.sa.calc605 = xor i32 %Opq.sa.calc731, 57		; <i32> [#uses=1]
 	%146 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 23		; <i32*> [#uses=2]
-	%147 = load i32* %146, align 8		; <i32> [#uses=3]
+	%147 = load i32, i32* %146, align 8		; <i32> [#uses=3]
 	%148 = getelementptr %struct.PixelPos, %struct.PixelPos* %pix, i64 0, i32 1		; <i32*> [#uses=3]
 	br label %bb61.fragment
 
@@ -510,23 +510,23 @@ bb61.fragment:		; preds = %bb61
 	%Opq.sa.calc700 = sub i32 %Opq.sa.calc605, 108		; <i32> [#uses=3]
 	store i32 %147, i32* %148, align 4
 	%149 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 27		; <i32*> [#uses=4]
-	%150 = load i32* %149, align 8		; <i32> [#uses=1]
+	%150 = load i32, i32* %149, align 8		; <i32> [#uses=1]
 	%151 = icmp eq i32 %150, 0		; <i1> [#uses=1]
 	br i1 %151, label %bb65, label %bb62
 
 bb62:		; preds = %bb61.fragment
 	%Opq.sa.calc608 = add i32 %Opq.sa.calc700, -94		; <i32> [#uses=1]
-	%152 = load %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=2]
+	%152 = load %struct.ImageParameters*, %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=2]
 	%153 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %152, i64 0, i32 45		; <i32*> [#uses=1]
-	%154 = load i32* %153, align 4		; <i32> [#uses=1]
+	%154 = load i32, i32* %153, align 4		; <i32> [#uses=1]
 	%155 = icmp eq i32 %154, 1		; <i1> [#uses=1]
 	br i1 %155, label %bb63, label %bb64
 
 bb63:		; preds = %bb62
 	%Opq.sa.calc611 = add i32 %Opq.sa.calc700, -101		; <i32> [#uses=2]
 	%156 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %152, i64 0, i32 39		; <%struct.Macroblock**> [#uses=1]
-	%157 = load %struct.Macroblock** %156, align 8		; <%struct.Macroblock*> [#uses=1]
-	%158 = load i32* %146, align 8		; <i32> [#uses=1]
+	%157 = load %struct.Macroblock*, %struct.Macroblock** %156, align 8		; <%struct.Macroblock*> [#uses=1]
+	%158 = load i32, i32* %146, align 8		; <i32> [#uses=1]
 	br label %meshBB452
 
 bb63.fragment:		; preds = %meshBB452
@@ -534,7 +534,7 @@ bb63.fragment:		; preds = %meshBB452
 	%Opq.sa.calc890 = add i32 %Opq.sa.calc891, -3		; <i32> [#uses=2]
 	%159 = sext i32 %.SV266.phi to i64		; <i64> [#uses=1]
 	%160 = getelementptr %struct.Macroblock, %struct.Macroblock* %.SV264.phi, i64 %159, i32 20		; <i32*> [#uses=1]
-	%161 = load i32* %160, align 4		; <i32> [#uses=1]
+	%161 = load i32, i32* %160, align 4		; <i32> [#uses=1]
 	%162 = icmp eq i32 %161, 0		; <i1> [#uses=1]
 	br i1 %162, label %bb64, label %meshBB456
 
@@ -562,7 +562,7 @@ bb65:		; preds = %meshBB456, %bb64, %bb61.fragment
 	%Opq.link.SV618.phi = phi i32 [ %Opq.sa.calc816, %meshBB456 ], [ %Opq.sa.calc700, %bb61.fragment ], [ %Opq.sa.calc614, %bb64 ]		; <i32> [#uses=1]
 	%Opq.link.mask620 = and i32 %Opq.link.SV618.phi, 40		; <i32> [#uses=1]
 	%Opq.sa.calc617 = add i32 %Opq.link.mask620, -35		; <i32> [#uses=2]
-	%164 = load i32* %.SV152.phi1058, align 8		; <i32> [#uses=1]
+	%164 = load i32, i32* %.SV152.phi1058, align 8		; <i32> [#uses=1]
 	br label %meshBB436
 
 bb65.fragment:		; preds = %meshBB436
@@ -590,7 +590,7 @@ bb68:		; preds = %bb59.fragment
 
 bb68.fragment:		; preds = %meshBB344
 	%Opq.sa.calc784 = sub i32 %Opq.link.mask722, 3		; <i32> [#uses=5]
-	%168 = load i32* %.SV274.phi, align 8		; <i32> [#uses=3]
+	%168 = load i32, i32* %.SV274.phi, align 8		; <i32> [#uses=3]
 	br i1 %.load144.SV.phi, label %bb69, label %meshBB412
 
 bb69:		; preds = %bb68.fragment
@@ -604,18 +604,18 @@ bb69.fragment:		; preds = %bb69
 	%Opq.sa.calc996 = sub i32 %Opq.sa.calc784, -9		; <i32> [#uses=3]
 	%Opq.sa.calc994 = sub i32 %Opq.sa.calc996, %Opq.sa.calc784		; <i32> [#uses=1]
 	%Opq.sa.calc995 = sub i32 %Opq.sa.calc994, 3		; <i32> [#uses=2]
-	%171 = load i32* %170, align 8		; <i32> [#uses=3]
+	%171 = load i32, i32* %170, align 8		; <i32> [#uses=3]
 	store i32 %171, i32* %.SV52.phi1170, align 4
-	%172 = load i32* %170, align 8		; <i32> [#uses=1]
+	%172 = load i32, i32* %170, align 8		; <i32> [#uses=1]
 	%173 = icmp eq i32 %172, 0		; <i1> [#uses=1]
 	br i1 %173, label %meshBB396, label %meshBB400
 
 bb70:		; preds = %meshBB400
 	%Opq.sa.calc630 = add i32 %Opq.sa.calc824, -203		; <i32> [#uses=2]
-	%174 = load %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
+	%174 = load %struct.ImageParameters*, %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
 	%175 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %174, i64 0, i32 39		; <%struct.Macroblock**> [#uses=1]
-	%176 = load %struct.Macroblock** %175, align 8		; <%struct.Macroblock*> [#uses=1]
-	%177 = load i32* %.SV156.phi, align 8		; <i32> [#uses=1]
+	%176 = load %struct.Macroblock*, %struct.Macroblock** %175, align 8		; <%struct.Macroblock*> [#uses=1]
+	%177 = load i32, i32* %.SV156.phi, align 8		; <i32> [#uses=1]
 	br label %meshBB428
 
 bb70.fragment:		; preds = %meshBB428
@@ -623,7 +623,7 @@ bb70.fragment:		; preds = %meshBB428
 	%Opq.sa.calc738 = sub i32 %Opq.sa.calc739, 1		; <i32> [#uses=2]
 	%178 = sext i32 %.SV280.phi to i64		; <i64> [#uses=1]
 	%179 = getelementptr %struct.Macroblock, %struct.Macroblock* %.SV278.phi, i64 %178, i32 20		; <i32*> [#uses=1]
-	%180 = load i32* %179, align 4		; <i32> [#uses=1]
+	%180 = load i32, i32* %179, align 4		; <i32> [#uses=1]
 	%181 = icmp eq i32 %180, 0		; <i1> [#uses=1]
 	br i1 %181, label %meshBB452, label %meshBB356
 
@@ -648,7 +648,7 @@ bb74.fragment:		; preds = %bb74
 	%Opq.sa.calc1011 = sub i32 %Opq.sa.calc636, -19		; <i32> [#uses=0]
 	store i32 %184, i32* %185, align 4
 	%186 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 27		; <i32*> [#uses=1]
-	%187 = load i32* %186, align 8		; <i32> [#uses=2]
+	%187 = load i32, i32* %186, align 8		; <i32> [#uses=2]
 	store i32 %187, i32* %.SV52.phi1186, align 4
 	br label %bb96
 
@@ -660,9 +660,9 @@ bb76:		; preds = %bb58
 
 bb77:		; preds = %bb76
 	%Opq.sa.calc643 = add i32 %Opq.sa.calc640, 2		; <i32> [#uses=2]
-	%189 = load %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
+	%189 = load %struct.ImageParameters*, %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
 	%190 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %189, i64 0, i32 45		; <i32*> [#uses=1]
-	%191 = load i32* %190, align 4		; <i32> [#uses=1]
+	%191 = load i32, i32* %190, align 4		; <i32> [#uses=1]
 	%192 = icmp eq i32 %191, 2		; <i1> [#uses=1]
 	br i1 %192, label %meshBB416, label %bb79
 
@@ -670,7 +670,7 @@ bb78:		; preds = %meshBB416
 	%Opq.sa.calc647 = xor i32 %Opq.sa.calc971, 25		; <i32> [#uses=2]
 	%Opq.sa.calc646 = sub i32 %Opq.sa.calc647, 29		; <i32> [#uses=0]
 	%193 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 23		; <i32*> [#uses=1]
-	%194 = load i32* %193, align 8		; <i32> [#uses=1]
+	%194 = load i32, i32* %193, align 8		; <i32> [#uses=1]
 	%195 = add i32 %194, 1		; <i32> [#uses=1]
 	br label %bb78.fragment
 
@@ -703,7 +703,7 @@ bb83:		; preds = %bb56.fragment
 bb84:		; preds = %bb83
 	%Opq.sa.calc661 = xor i32 %Opq.sa.calc658, 22		; <i32> [#uses=1]
 	%199 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 20		; <i32*> [#uses=1]
-	%200 = load i32* %199, align 4		; <i32> [#uses=1]
+	%200 = load i32, i32* %199, align 4		; <i32> [#uses=1]
 	br label %meshBB400
 
 bb84.fragment:		; preds = %meshBB400
@@ -723,7 +723,7 @@ bb85:		; preds = %meshBB372
 bb86:		; preds = %meshBB336
 	%Opq.sa.calc670 = sub i32 %Opq.sa.calc979, 35		; <i32> [#uses=1]
 	%204 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 24		; <i32*> [#uses=1]
-	%205 = load i32* %204, align 4		; <i32> [#uses=1]
+	%205 = load i32, i32* %204, align 4		; <i32> [#uses=1]
 	%206 = add i32 %205, 1		; <i32> [#uses=1]
 	%207 = getelementptr %struct.PixelPos, %struct.PixelPos* %pix, i64 0, i32 1		; <i32*> [#uses=1]
 	br label %bb86.fragment
@@ -732,7 +732,7 @@ bb86.fragment:		; preds = %bb86
 	%Opq.sa.calc943 = xor i32 %Opq.sa.calc670, 123		; <i32> [#uses=2]
 	store i32 %206, i32* %207, align 4
 	%208 = getelementptr %struct.Macroblock, %struct.Macroblock* %2, i64 %3, i32 28		; <i32*> [#uses=1]
-	%209 = load i32* %208, align 4		; <i32> [#uses=2]
+	%209 = load i32, i32* %208, align 4		; <i32> [#uses=2]
 	store i32 %209, i32* %.SV52.phi1234, align 4
 	br label %meshBB424
 
@@ -749,7 +749,7 @@ bb89:		; preds = %bb84.fragment
 
 bb89.fragment:		; preds = %bb89
 	%Opq.sa.calc962 = add i32 %Opq.sa.calc677, -188		; <i32> [#uses=3]
-	%211 = load i32* %210, align 4		; <i32> [#uses=3]
+	%211 = load i32, i32* %210, align 4		; <i32> [#uses=3]
 	br i1 %203, label %bb90, label %meshBB408
 
 bb90:		; preds = %bb89.fragment
@@ -762,25 +762,25 @@ bb90:		; preds = %bb89.fragment
 bb90.fragment:		; preds = %bb90
 	%Opq.sa.calc773 = sub i32 %Opq.sa.calc680, 60		; <i32> [#uses=3]
 	%Opq.sa.calc772 = add i32 %Opq.sa.calc773, -25		; <i32> [#uses=2]
-	%214 = load i32* %213, align 4		; <i32> [#uses=3]
+	%214 = load i32, i32* %213, align 4		; <i32> [#uses=3]
 	store i32 %214, i32* %.SV52.phi1190, align 4
-	%215 = load i32* %213, align 4		; <i32> [#uses=1]
+	%215 = load i32, i32* %213, align 4		; <i32> [#uses=1]
 	%216 = icmp eq i32 %215, 0		; <i1> [#uses=1]
 	br i1 %216, label %meshBB416, label %meshBB368
 
 bb91:		; preds = %meshBB368
 	%Opq.sa.calc683 = sub i32 %Opq.sa.calc768, -7		; <i32> [#uses=0]
-	%217 = load %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
+	%217 = load %struct.ImageParameters*, %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
 	%218 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %217, i64 0, i32 39		; <%struct.Macroblock**> [#uses=1]
-	%219 = load %struct.Macroblock** %218, align 8		; <%struct.Macroblock*> [#uses=1]
-	%220 = load i32* %.SV170.phi, align 4		; <i32> [#uses=1]
+	%219 = load %struct.Macroblock*, %struct.Macroblock** %218, align 8		; <%struct.Macroblock*> [#uses=1]
+	%220 = load i32, i32* %.SV170.phi, align 4		; <i32> [#uses=1]
 	br label %bb91.fragment
 
 bb91.fragment:		; preds = %bb91
 	%Opq.sa.calc853 = xor i32 %Opq.sa.calc768, 8		; <i32> [#uses=1]
 	%221 = sext i32 %220 to i64		; <i64> [#uses=1]
 	%222 = getelementptr %struct.Macroblock, %struct.Macroblock* %219, i64 %221, i32 20		; <i32*> [#uses=1]
-	%223 = load i32* %222, align 4		; <i32> [#uses=1]
+	%223 = load i32, i32* %222, align 4		; <i32> [#uses=1]
 	%224 = icmp eq i32 %223, 0		; <i1> [#uses=1]
 	br i1 %224, label %bb92, label %bb96
 
@@ -805,7 +805,7 @@ bb95.fragment:		; preds = %meshBB384
 	%Opq.sa.calc841 = sub i32 %Opq.sa.calc901, 76		; <i32> [#uses=0]
 	store i32 %.SV306.phi, i32* %.SV308.phi, align 4
 	%229 = getelementptr %struct.Macroblock, %struct.Macroblock* %.load.SV.phi, i64 %.load20.SV.phi, i32 28		; <i32*> [#uses=1]
-	%230 = load i32* %229, align 4		; <i32> [#uses=2]
+	%230 = load i32, i32* %229, align 4		; <i32> [#uses=2]
 	store i32 %230, i32* %.load53.SV.phi, align 4
 	br label %bb96
 
@@ -826,13 +826,13 @@ bb97:		; preds = %meshBB424, %meshBB408, %meshBB352, %bb96, %bb21
 	%.SV70.phi1148 = phi i32 [ %.SV70.phi1195, %meshBB424 ], [ %.SV70.phi1215, %meshBB408 ], [ %.SV70.phi1138, %meshBB352 ], [ %.SV70.phi1085, %bb96 ], [ %.SV70.phi1027, %bb21 ]		; <i32> [#uses=1]
 	%yM.0.reg2mem.0.SV.phi = phi i32 [ -1, %meshBB424 ], [ -1, %meshBB408 ], [ -1, %meshBB352 ], [ %yM.0.SV.phi, %bb96 ], [ -1, %bb21 ]		; <i32> [#uses=1]
 	%Opq.sa.calc694 = xor i32 0, 243		; <i32> [#uses=1]
-	%232 = load %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
+	%232 = load %struct.ImageParameters*, %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
 	%233 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %232, i64 0, i32 45		; <i32*> [#uses=1]
 	br label %bb97.fragment
 
 bb97.fragment:		; preds = %bb97
 	%Opq.sa.calc928 = xor i32 %Opq.sa.calc694, 128		; <i32> [#uses=1]
-	%234 = load i32* %233, align 4		; <i32> [#uses=1]
+	%234 = load i32, i32* %233, align 4		; <i32> [#uses=1]
 	%235 = icmp eq i32 %234, 0		; <i1> [#uses=1]
 	br i1 %235, label %return, label %bb98
 
@@ -855,13 +855,13 @@ bb98.fragment:		; preds = %meshBB376
 	%Opq.sa.calc1008 = sub i32 %Opq.link.mask911, 13		; <i32> [#uses=1]
 	%241 = getelementptr %struct.PixelPos, %struct.PixelPos* %pix, i64 0, i32 4		; <i32*> [#uses=4]
 	%242 = getelementptr %struct.PixelPos, %struct.PixelPos* %pix, i64 0, i32 1		; <i32*> [#uses=1]
-	%243 = load i32* %242, align 4		; <i32> [#uses=1]
-	%244 = load void (i32, i32*, i32*)** @get_mb_block_pos, align 8		; <void (i32, i32*, i32*)*> [#uses=1]
+	%243 = load i32, i32* %242, align 4		; <i32> [#uses=1]
+	%244 = load void (i32, i32*, i32*)*, void (i32, i32*, i32*)** @get_mb_block_pos, align 8		; <void (i32, i32*, i32*)*> [#uses=1]
 	tail call void %244(i32 %243, i32* %241, i32* %.SV317.phi) nounwind
-	%245 = load i32* %241, align 4		; <i32> [#uses=1]
-	%246 = load %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
+	%245 = load i32, i32* %241, align 4		; <i32> [#uses=1]
+	%246 = load %struct.ImageParameters*, %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
 	%247 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %246, i64 0, i32 119, i64 %.load39.SV.phi, i64 0		; <i32*> [#uses=1]
-	%248 = load i32* %247, align 4		; <i32> [#uses=1]
+	%248 = load i32, i32* %247, align 4		; <i32> [#uses=1]
 	%249 = mul i32 %248, %245		; <i32> [#uses=2]
 	store i32 %249, i32* %241, align 4
 	br label %bb98.fragment183
@@ -869,15 +869,15 @@ bb98.fragment:		; preds = %meshBB376
 bb98.fragment183:		; preds = %bb98.fragment
 	%Opq.sa.calc777 = sub i32 %Opq.sa.calc1008, -158		; <i32> [#uses=1]
 	%Opq.sa.calc776 = sub i32 %Opq.sa.calc777, 46		; <i32> [#uses=0]
-	%250 = load i32* %.SV317.phi, align 4		; <i32> [#uses=1]
-	%251 = load %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
+	%250 = load i32, i32* %.SV317.phi, align 4		; <i32> [#uses=1]
+	%251 = load %struct.ImageParameters*, %struct.ImageParameters** @img, align 8		; <%struct.ImageParameters*> [#uses=1]
 	%252 = getelementptr %struct.ImageParameters, %struct.ImageParameters* %251, i64 0, i32 119, i64 %.load39.SV.phi, i64 1		; <i32*> [#uses=1]
-	%253 = load i32* %252, align 4		; <i32> [#uses=1]
+	%253 = load i32, i32* %252, align 4		; <i32> [#uses=1]
 	%254 = mul i32 %253, %250		; <i32> [#uses=1]
-	%255 = load i32* %.SV313.phi, align 4		; <i32> [#uses=1]
+	%255 = load i32, i32* %.SV313.phi, align 4		; <i32> [#uses=1]
 	%256 = add i32 %255, %249		; <i32> [#uses=1]
 	store i32 %256, i32* %241, align 4
-	%257 = load i32* %.SV315.phi, align 4		; <i32> [#uses=1]
+	%257 = load i32, i32* %.SV315.phi, align 4		; <i32> [#uses=1]
 	%258 = add i32 %257, %254		; <i32> [#uses=1]
 	store i32 %258, i32* %.SV317.phi, align 4
 	ret void

@@ -14,7 +14,7 @@ entry:
   %__f_addr = alloca void (i8*)*, align 8
   store void (i8*)* %__f, void (i8*)** %__f_addr
 
-  %0 = load void (i8*)** %__f_addr, align 8
+  %0 = load void (i8*)*, void (i8*)** %__f_addr, align 8
   call void %0(i8* undef)
   call i8* @f1(i8* undef) ssp
   unreachable

@@ -12,7 +12,7 @@ define i32 @f() {
 ; CHECK-PIC-LABEL: f:
 ; CHECK-PIC: __tls_get_addr
 entry:
-	%tmp1 = load i32* @i		; <i32> [#uses=1]
+	%tmp1 = load i32, i32* @i		; <i32> [#uses=1]
 	ret i32 %tmp1
 }
 

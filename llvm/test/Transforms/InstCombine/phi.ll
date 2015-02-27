@@ -149,11 +149,11 @@ entry:
   br i1 %c, label %bb1, label %bb
 
 bb:
-  %C = load i32* %B, align 1
+  %C = load i32, i32* %B, align 1
   br label %bb2
 
 bb1:
-  %D = load i32* %A, align 1
+  %D = load i32, i32* %A, align 1
   br label %bb2
 
 bb2:
@@ -162,7 +162,7 @@ bb2:
 ; CHECK-LABEL: @test9(
 ; CHECK:       bb2:
 ; CHECK-NEXT:        phi i32* [ %B, %bb ], [ %A, %bb1 ]
-; CHECK-NEXT:   %E = load i32* %{{[^,]*}}, align 1
+; CHECK-NEXT:   %E = load i32, i32* %{{[^,]*}}, align 1
 ; CHECK-NEXT:   ret i32 %E
 
 }
@@ -173,11 +173,11 @@ entry:
   br i1 %c, label %bb1, label %bb
 
 bb:
-  %C = load i32* %B, align 16
+  %C = load i32, i32* %B, align 16
   br label %bb2
 
 bb1:
-  %D = load i32* %A, align 32
+  %D = load i32, i32* %A, align 32
   br label %bb2
 
 bb2:
@@ -186,7 +186,7 @@ bb2:
 ; CHECK-LABEL: @test10(
 ; CHECK:       bb2:
 ; CHECK-NEXT:        phi i32* [ %B, %bb ], [ %A, %bb1 ]
-; CHECK-NEXT:   %E = load i32* %{{[^,]*}}, align 16
+; CHECK-NEXT:   %E = load i32, i32* %{{[^,]*}}, align 16
 ; CHECK-NEXT:   ret i32 %E
 }
 
@@ -375,30 +375,30 @@ entry:
   store i32 %flag, i32* %flag.addr
   store i32* %pointer2, i32** %pointer2.addr
   store i32 10, i32* %res
-  %tmp = load i32* %flag.addr                     ; <i32> [#uses=1]
+  %tmp = load i32, i32* %flag.addr                     ; <i32> [#uses=1]
   %tobool = icmp ne i32 %tmp, 0                   ; <i1> [#uses=1]
   br i1 %tobool, label %if.then, label %if.else
 
 return:                                           ; preds = %if.end
-  %tmp7 = load i32* %retval                       ; <i32> [#uses=1]
+  %tmp7 = load i32, i32* %retval                       ; <i32> [#uses=1]
   ret i32 %tmp7
 
 if.end:                                           ; preds = %if.else, %if.then
-  %tmp6 = load i32* %res                          ; <i32> [#uses=1]
+  %tmp6 = load i32, i32* %res                          ; <i32> [#uses=1]
   store i32 %tmp6, i32* %retval
   br label %return
 
 if.then:                                          ; preds = %entry
-  %tmp1 = load i32 addrspace(1)** %pointer1.addr  ; <i32 addrspace(1)*>
+  %tmp1 = load i32 addrspace(1)*, i32 addrspace(1)** %pointer1.addr  ; <i32 addrspace(1)*>
   %arrayidx = getelementptr i32, i32 addrspace(1)* %tmp1, i32 0 ; <i32 addrspace(1)*> [#uses=1]
-  %tmp2 = load i32 addrspace(1)* %arrayidx        ; <i32> [#uses=1]
+  %tmp2 = load i32, i32 addrspace(1)* %arrayidx        ; <i32> [#uses=1]
   store i32 %tmp2, i32* %res
   br label %if.end
 
 if.else:                                          ; preds = %entry
-  %tmp3 = load i32** %pointer2.addr               ; <i32*> [#uses=1]
+  %tmp3 = load i32*, i32** %pointer2.addr               ; <i32*> [#uses=1]
   %arrayidx4 = getelementptr i32, i32* %tmp3, i32 0    ; <i32*> [#uses=1]
-  %tmp5 = load i32* %arrayidx4                    ; <i32> [#uses=1]
+  %tmp5 = load i32, i32* %arrayidx4                    ; <i32> [#uses=1]
   store i32 %tmp5, i32* %res
   br label %if.end
 }

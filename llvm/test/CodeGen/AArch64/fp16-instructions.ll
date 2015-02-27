@@ -52,7 +52,7 @@ define half @load_h(half* %a) {
 entry:
 ; CHECK-LABEL: load_h:
 ; CHECK: ldr h0, [x0]
-  %0 = load half* %a, align 4
+  %0 = load half, half* %a, align 4
   ret half %0
 }
 

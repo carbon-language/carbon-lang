@@ -17,7 +17,7 @@ define i32 @g() readonly {
 
 ; CHECK: define i32 @h() #0
 define i32 @h() readnone {
-	%tmp = load i32* @x		; <i32> [#uses=1]
+	%tmp = load i32, i32* @x		; <i32> [#uses=1]
 	ret i32 %tmp
 }
 

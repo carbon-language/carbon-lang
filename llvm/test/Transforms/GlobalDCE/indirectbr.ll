@@ -10,7 +10,7 @@ entry:
 
 L1:
   %arrayidx = getelementptr inbounds [3 x i8*], [3 x i8*]* @L, i32 0, i32 %idx
-  %l = load i8** %arrayidx
+  %l = load i8*, i8** %arrayidx
   indirectbr i8* %l, [label %L1, label %L2]
 
 L2:

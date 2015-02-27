@@ -19,16 +19,16 @@ entry:
   %x = alloca i32, align 4
   %y = alloca i32, align 4
   store i32 %i, i32* %i.addr, align 4
-  %0 = load i32* %i.addr, align 4, !dbg !10
+  %0 = load i32, i32* %i.addr, align 4, !dbg !10
   %cmp = icmp slt i32 %0, 10, !dbg !10
   br i1 %cmp, label %if.then, label %if.end, !dbg !10
 
 if.then:                                          ; preds = %entry
-  %1 = load i32* %i.addr, align 4, !dbg !12
+  %1 = load i32, i32* %i.addr, align 4, !dbg !12
   store i32 %1, i32* %x, align 4, !dbg !12
 
-  %2 = load i32* %i.addr, align 4, !dbg !14
-; CHECK:  %2 = load i32* %i.addr, align 4, !dbg !15
+  %2 = load i32, i32* %i.addr, align 4, !dbg !14
+; CHECK:  %2 = load i32, i32* %i.addr, align 4, !dbg !15
 
   %sub = sub nsw i32 0, %2, !dbg !14
 ; CHECK:  %sub = sub nsw i32 0, %2, !dbg !15

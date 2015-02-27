@@ -14,8 +14,8 @@ entry:
   %z = alloca i64, align 8
   store i64 1, i64* %y, align 8
   store i64 11579764786944, i64* %z, align 8
-  %0 = load i64* %y, align 8
-  %1 = load i64* %z, align 8
+  %0 = load i64, i64* %y, align 8
+  %1 = load i64, i64* %z, align 8
   %sub = sub i64 %0, %1
   ret i64 %sub
 }

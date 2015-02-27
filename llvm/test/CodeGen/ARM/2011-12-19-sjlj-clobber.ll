@@ -22,13 +22,13 @@ bb:
   store i32 %b, i32* %tmp1, align 4
   store i8* %d, i8** %tmp2, align 4
   store i1 false, i1* %tmp3
-  %tmp7 = load i8** %c
+  %tmp7 = load i8*, i8** %c
   %tmp10 = invoke %0* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to %0* (i8*, i8*, %0*)*)(i8* %tmp7, i8* %d, %0* null)
           to label %bb11 unwind label %bb15
 
 bb11:                                             ; preds = %bb
   store %0* %tmp10, %0** %myException, align 4
-  %tmp12 = load %0** %myException, align 4
+  %tmp12 = load %0*, %0** %myException, align 4
   %tmp13 = bitcast %0* %tmp12 to i8*
   invoke void @objc_exception_throw(i8* %tmp13) noreturn
           to label %bb14 unwind label %bb15

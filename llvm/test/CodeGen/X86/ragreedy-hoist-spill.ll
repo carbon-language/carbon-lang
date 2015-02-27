@@ -340,7 +340,7 @@ while.cond1683.preheader:
 
 while.body1679:
   %oldc.43406 = phi i32 [ %inc, %syEchoch.exit3070 ], [ %oldc.1.lcssa, %for.body1664.lr.ph ]
-  %4 = load %struct.TMP.2** %echo.i3101, align 8, !tbaa !6
+  %4 = load %struct.TMP.2*, %struct.TMP.2** %echo.i3101, align 8, !tbaa !6
   %call.i3062 = call i32 @fileno(%struct.TMP.2* %4)
   br i1 undef, label %if.then.i3069, label %syEchoch.exit3070
 
@@ -362,7 +362,7 @@ while.end1693:
 for.body1723:
   %q.303203 = phi i8* [ getelementptr inbounds ([8192 x i8]* @syHistory, i64 0, i64 8189), %if.then1477 ], [ %incdec.ptr1730, %for.body1723 ]
   %add.ptr1728 = getelementptr i8, i8* %q.303203, i64 %idx.neg1727
-  %5 = load i8* %add.ptr1728, align 1, !tbaa !5
+  %5 = load i8, i8* %add.ptr1728, align 1, !tbaa !5
   %incdec.ptr1730 = getelementptr i8, i8* %q.303203, i64 -1
   br label %for.body1723
 

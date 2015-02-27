@@ -5,7 +5,7 @@ define void @test_load_store(half* %in, half* %out) {
 ; CHECK-LABEL: test_load_store:
 ; CHECK: movw (%rdi), [[TMP:%[a-z0-9]+]]
 ; CHECK: movw [[TMP]], (%rsi)
-  %val = load half* %in
+  %val = load half, half* %in
   store half %val, half* %out
   ret void
 }
@@ -13,7 +13,7 @@ define void @test_load_store(half* %in, half* %out) {
 define i16 @test_bitcast_from_half(half* %addr) {
 ; CHECK-LABEL: test_bitcast_from_half:
 ; CHECK: movzwl (%rdi), %eax
-  %val = load half* %addr
+  %val = load half, half* %addr
   %val_int = bitcast half %val to i16
   ret i16 %val_int
 }
@@ -31,7 +31,7 @@ define float @test_extend32(half* %addr) {
 
 ; CHECK-LIBCALL: jmp __gnu_h2f_ieee
 ; CHECK-FP16: vcvtph2ps
-  %val16 = load half* %addr
+  %val16 = load half, half* %addr
   %val32 = fpext half %val16 to float
   ret float %val32
 }
@@ -43,7 +43,7 @@ define double @test_extend64(half* %addr) {
 ; CHECK-LIBCALL: cvtss2sd
 ; CHECK-FP16: vcvtph2ps
 ; CHECK-FP16: vcvtss2sd
-  %val16 = load half* %addr
+  %val16 = load half, half* %addr
   %val32 = fpext half %val16 to double
   ret double %val32
 }

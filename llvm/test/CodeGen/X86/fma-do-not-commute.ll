@@ -18,8 +18,8 @@ entry:
 
 loop:
   %sum0 = phi float [ %fma, %loop ], [ %arg, %entry ]
-  %addrVal = load float* %addr, align 4
-  %addr2Val = load float* %addr2, align 4
+  %addrVal = load float, float* %addr, align 4
+  %addr2Val = load float, float* %addr2, align 4
   %fmul = fmul float %addrVal, %addr2Val
   %fma = fadd float %sum0, %fmul
   br i1 true, label %exit, label %loop

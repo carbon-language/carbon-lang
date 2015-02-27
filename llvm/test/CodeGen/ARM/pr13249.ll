@@ -6,7 +6,7 @@ bb:
 
 bb3:                                              ; preds = %bb3, %bb
   %tmp = phi i8* [ %tmp5, %bb3 ], [ %arg, %bb ]
-  %tmp4 = load i8* %tmp, align 1
+  %tmp4 = load i8, i8* %tmp, align 1
   %tmp5 = getelementptr inbounds i8, i8* %tmp, i32 1
   br i1 undef, label %bb3, label %bb7
 
@@ -18,7 +18,7 @@ bb7:                                              ; preds = %bb13, %bb3
   br i1 %tmp10, label %bb13, label %bb15
 
 bb13:                                             ; preds = %bb7
-  %tmp14 = load i8* %tmp12, align 1
+  %tmp14 = load i8, i8* %tmp12, align 1
   br label %bb7
 
 bb15:                                             ; preds = %bb7

@@ -112,7 +112,7 @@ for.loop.exit:
 
 define void @test_spec2006() {
   %h = alloca [1 x [2 x i32*]], align 16
-  %d.val = load i32* @d, align 4
+  %d.val = load i32, i32* @d, align 4
   %d.promoted = sext i32 %d.val to i64
   %1 = icmp slt i32 %d.val, 2
   br i1 %1, label %.lr.ph, label %3
@@ -168,7 +168,7 @@ for.loop.exit:
 
 define void @test_modulo_analysis_with_global() {
   %h = alloca [1 x [2 x i32*]], align 16
-  %b = load i32* @b, align 4
+  %b = load i32, i32* @b, align 4
   %b.promoted = sext i32 %b to i64
   br label %for.loop
 

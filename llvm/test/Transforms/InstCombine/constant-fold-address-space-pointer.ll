@@ -149,22 +149,22 @@ define i1 @constant_fold_inttoptr() {
 
 define float @constant_fold_bitcast_ftoi_load() {
 ; CHECK-LABEL: @constant_fold_bitcast_ftoi_load(
-; CHECK: load float addrspace(3)* bitcast (i32 addrspace(3)* @g to float addrspace(3)*), align 4
-  %a = load float addrspace(3)* bitcast (i32 addrspace(3)* @g to float addrspace(3)*), align 4
+; CHECK: load float, float addrspace(3)* bitcast (i32 addrspace(3)* @g to float addrspace(3)*), align 4
+  %a = load float, float addrspace(3)* bitcast (i32 addrspace(3)* @g to float addrspace(3)*), align 4
   ret float %a
 }
 
 define i32 @constant_fold_bitcast_itof_load() {
 ; CHECK-LABEL: @constant_fold_bitcast_itof_load(
-; CHECK: load i32 addrspace(3)* bitcast (float addrspace(3)* @g_float_as3 to i32 addrspace(3)*), align 4
-  %a = load i32 addrspace(3)* bitcast (float addrspace(3)* @g_float_as3 to i32 addrspace(3)*), align 4
+; CHECK: load i32, i32 addrspace(3)* bitcast (float addrspace(3)* @g_float_as3 to i32 addrspace(3)*), align 4
+  %a = load i32, i32 addrspace(3)* bitcast (float addrspace(3)* @g_float_as3 to i32 addrspace(3)*), align 4
   ret i32 %a
 }
 
 define <4 x float> @constant_fold_bitcast_vector_as() {
 ; CHECK-LABEL: @constant_fold_bitcast_vector_as(
-; CHECK: load <4 x float> addrspace(3)* @g_v4f_as3, align 16
-  %a = load <4 x float> addrspace(3)* bitcast (<4 x i32> addrspace(3)* bitcast (<4 x float> addrspace(3)* @g_v4f_as3 to <4 x i32> addrspace(3)*) to <4 x float> addrspace(3)*), align 4
+; CHECK: load <4 x float>, <4 x float> addrspace(3)* @g_v4f_as3, align 16
+  %a = load <4 x float>, <4 x float> addrspace(3)* bitcast (<4 x i32> addrspace(3)* bitcast (<4 x float> addrspace(3)* @g_v4f_as3 to <4 x i32> addrspace(3)*) to <4 x float> addrspace(3)*), align 4
   ret <4 x float> %a
 }
 
@@ -172,9 +172,9 @@ define <4 x float> @constant_fold_bitcast_vector_as() {
 
 define i32 @test_cast_gep_small_indices_as() {
 ; CHECK-LABEL: @test_cast_gep_small_indices_as(
-; CHECK: load i32 addrspace(3)* getelementptr inbounds ([10 x i32] addrspace(3)* @i32_array_as3, i16 0, i16 0), align 16
+; CHECK: load i32, i32 addrspace(3)* getelementptr inbounds ([10 x i32] addrspace(3)* @i32_array_as3, i16 0, i16 0), align 16
    %p = getelementptr [10 x i32], [10 x i32] addrspace(3)* @i32_array_as3, i7 0, i7 0
-   %x = load i32 addrspace(3)* %p, align 4
+   %x = load i32, i32 addrspace(3)* %p, align 4
    ret i32 %x
 }
 
@@ -189,17 +189,17 @@ define i32 @test_cast_gep_small_indices_as() {
 
 define i32 @test_cast_gep_large_indices_as() {
 ; CHECK-LABEL: @test_cast_gep_large_indices_as(
-; CHECK: load i32 addrspace(3)* getelementptr inbounds ([10 x i32] addrspace(3)* @i32_array_as3, i16 0, i16 0), align 16
+; CHECK: load i32, i32 addrspace(3)* getelementptr inbounds ([10 x i32] addrspace(3)* @i32_array_as3, i16 0, i16 0), align 16
    %p = getelementptr [10 x i32], [10 x i32] addrspace(3)* @i32_array_as3, i64 0, i64 0
-   %x = load i32 addrspace(3)* %p, align 4
+   %x = load i32, i32 addrspace(3)* %p, align 4
    ret i32 %x
 }
 
 define i32 @test_constant_cast_gep_struct_indices_as() {
 ; CHECK-LABEL: @test_constant_cast_gep_struct_indices_as(
-; CHECK: load i32 addrspace(3)* getelementptr inbounds (%struct.foo addrspace(3)* @constant_fold_global_ptr, i16 0, i32 2, i16 2), align 8
+; CHECK: load i32, i32 addrspace(3)* getelementptr inbounds (%struct.foo addrspace(3)* @constant_fold_global_ptr, i16 0, i32 2, i16 2), align 8
   %x = getelementptr %struct.foo, %struct.foo addrspace(3)* @constant_fold_global_ptr, i18 0, i32 2, i12 2
-  %y = load i32 addrspace(3)* %x, align 4
+  %y = load i32, i32 addrspace(3)* %x, align 4
   ret i32 %y
 }
 
@@ -209,7 +209,7 @@ define i32 @test_read_data_from_global_as3() {
 ; CHECK-LABEL: @test_read_data_from_global_as3(
 ; CHECK-NEXT: ret i32 2
   %x = getelementptr [5 x i32], [5 x i32] addrspace(3)* @constant_data_as3, i32 0, i32 1
-  %y = load i32 addrspace(3)* %x, align 4
+  %y = load i32, i32 addrspace(3)* %x, align 4
   ret i32 %y
 }
 
@@ -224,9 +224,9 @@ define i32 @test_read_data_from_global_as3() {
 define i32 @constant_through_array_as_ptrs() {
 ; CHECK-LABEL: @constant_through_array_as_ptrs(
 ; CHECK-NEXT: ret i32 34
-  %p = load i32 addrspace(1)* addrspace(2)* addrspace(0)* @indirect, align 4
-  %a = load i32 addrspace(1)* addrspace(2)* %p, align 4
-  %b = load i32 addrspace(1)* %a, align 4
+  %p = load i32 addrspace(1)* addrspace(2)*, i32 addrspace(1)* addrspace(2)* addrspace(0)* @indirect, align 4
+  %a = load i32 addrspace(1)*, i32 addrspace(1)* addrspace(2)* %p, align 4
+  %b = load i32, i32 addrspace(1)* %a, align 4
   ret i32 %b
 }
 
@@ -236,6 +236,6 @@ define float @canonicalize_addrspacecast(i32 %i) {
 ; CHECK-LABEL: @canonicalize_addrspacecast
 ; CHECK-NEXT: getelementptr inbounds float, float* addrspacecast (float addrspace(3)* bitcast ([0 x i8] addrspace(3)* @shared_mem to float addrspace(3)*) to float*), i32 %i
   %p = getelementptr inbounds float, float* addrspacecast ([0 x i8] addrspace(3)* @shared_mem to float*), i32 %i
-  %v = load float* %p
+  %v = load float, float* %p
   ret float %v
 }

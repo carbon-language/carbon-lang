@@ -19,7 +19,7 @@ lor.lhs.false:
 ; AGGRESSIVE-NOT: br i1
 
 cond.false:
-  %0 = load i32* %input, align 4
+  %0 = load i32, i32* %input, align 4
   br label %cond.end
 
 cond.end:

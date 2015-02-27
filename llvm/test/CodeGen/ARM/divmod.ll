@@ -47,7 +47,7 @@ define void @do_indent(i32 %cols) nounwind {
 entry:
 ; A8-LABEL: do_indent:
 ; SWIFT-LABEL: do_indent:
-  %0 = load i32* @flags, align 4
+  %0 = load i32, i32* @flags, align 4
   %1 = and i32 %0, 67108864
   %2 = icmp eq i32 %1, 0
   br i1 %2, label %bb1, label %bb
@@ -57,7 +57,7 @@ bb:
 ; SWIFT: sdiv
 ; SWIFT: mls
 ; SWIFT-NOT: bl __divmodsi4
-  %3 = load i32* @tabsize, align 4
+  %3 = load i32, i32* @tabsize, align 4
   %4 = srem i32 %cols, %3
   %5 = sdiv i32 %cols, %3
   %6 = tail call i32 @llvm.objectsize.i32.p0i8(i8* null, i1 false)

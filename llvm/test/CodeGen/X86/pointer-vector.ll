@@ -31,7 +31,7 @@ entry:
 ;CHECK: LOAD0
 define <4 x i8*> @LOAD0(<4 x i8*>* %p) nounwind {
 entry:
-  %G = load <4 x i8*>* %p
+  %G = load <4 x i8*>, <4 x i8*>* %p
 ;CHECK: movaps
   ret <4 x i8*> %G
 ;CHECK: ret
@@ -40,7 +40,7 @@ entry:
 ;CHECK: LOAD1
 define <4 x i8*> @LOAD1(<4 x i8*>* %p) nounwind {
 entry:
-  %G = load <4 x i8*>* %p
+  %G = load <4 x i8*>, <4 x i8*>* %p
 ;CHECK: movdqa
 ;CHECK: pshufd
 ;CHECK: movdqa
@@ -55,11 +55,11 @@ define <4 x i8*> @LOAD2(<4 x i8*>* %p) nounwind {
 entry:
   %I = alloca <4 x i8*>
 ;CHECK: sub
-  %G = load <4 x i8*>* %p
+  %G = load <4 x i8*>, <4 x i8*>* %p
 ;CHECK: movaps
   store <4 x i8*> %G, <4 x i8*>* %I
 ;CHECK: movaps
-  %Z = load <4 x i8*>* %I
+  %Z = load <4 x i8*>, <4 x i8*>* %I
   ret <4 x i8*> %Z
 ;CHECK: add
 ;CHECK: ret
@@ -68,7 +68,7 @@ entry:
 ;CHECK: INT2PTR0
 define <4 x i32> @INT2PTR0(<4 x i8*>* %p) nounwind {
 entry:
-  %G = load <4 x i8*>* %p
+  %G = load <4 x i8*>, <4 x i8*>* %p
 ;CHECK: movl
 ;CHECK: movaps
   %K = ptrtoint <4 x i8*> %G to <4 x i32>
@@ -79,7 +79,7 @@ entry:
 ;CHECK: INT2PTR1
 define <4 x i32*> @INT2PTR1(<4 x i8>* %p) nounwind {
 entry:
-  %G = load <4 x i8>* %p
+  %G = load <4 x i8>, <4 x i8>* %p
 ;CHECK: movl
 ;CHECK: pmovzxbd (%
   %K = inttoptr <4 x i8> %G to <4 x i32*>
@@ -90,7 +90,7 @@ entry:
 ;CHECK: BITCAST0
 define <4 x i32*> @BITCAST0(<4 x i8*>* %p) nounwind {
 entry:
-  %G = load <4 x i8*>* %p
+  %G = load <4 x i8*>, <4 x i8*>* %p
 ;CHECK: movl
   %T = bitcast <4 x i8*> %G to <4 x i32*>
 ;CHECK: movaps
@@ -101,7 +101,7 @@ entry:
 ;CHECK: BITCAST1
 define <2 x i32*> @BITCAST1(<2 x i8*>* %p) nounwind {
 entry:
-  %G = load <2 x i8*>* %p
+  %G = load <2 x i8*>, <2 x i8*>* %p
 ;CHECK: movl
 ;CHECK: pmovzxdq
   %T = bitcast <2 x i8*> %G to <2 x i32*>
@@ -112,8 +112,8 @@ entry:
 ;CHECK: ICMP0
 define <4 x i32> @ICMP0(<4 x i8*>* %p0, <4 x i8*>* %p1) nounwind {
 entry:
-  %g0 = load <4 x i8*>* %p0
-  %g1 = load <4 x i8*>* %p1
+  %g0 = load <4 x i8*>, <4 x i8*>* %p0
+  %g1 = load <4 x i8*>, <4 x i8*>* %p1
   %k = icmp sgt <4 x i8*> %g0, %g1
   ;CHECK: pcmpgtd
   %j = select <4 x i1> %k, <4 x i32> <i32 0, i32 1, i32 2, i32 4>, <4 x i32> <i32 9, i32 8, i32 7, i32 6>
@@ -124,8 +124,8 @@ entry:
 ;CHECK: ICMP1
 define <4 x i32> @ICMP1(<4 x i8*>* %p0, <4 x i8*>* %p1) nounwind {
 entry:
-  %g0 = load <4 x i8*>* %p0
-  %g1 = load <4 x i8*>* %p1
+  %g0 = load <4 x i8*>, <4 x i8*>* %p0
+  %g1 = load <4 x i8*>, <4 x i8*>* %p1
   %k = icmp eq <4 x i8*> %g0, %g1
   ;CHECK: pcmpeqd
   %j = select <4 x i1> %k, <4 x i32> <i32 0, i32 1, i32 2, i32 4>, <4 x i32> <i32 9, i32 8, i32 7, i32 6>

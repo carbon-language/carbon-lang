@@ -13,7 +13,7 @@ entry:
        %tok = call i32 (i1 ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0, i32* %base, i32* %ptr)
        %base-new = call i32* @llvm.experimental.gc.relocate.p0i32(i32 %tok, i32 4, i32 4)
        %ptr-new = call i32* @llvm.experimental.gc.relocate.p0i32(i32 %tok, i32 4, i32 5)
-       %ret = load i32* %ptr-new
+       %ret = load i32, i32* %ptr-new
        ret i32 %ret
 }
 
@@ -29,7 +29,7 @@ entry:
        %base-new = call i32* @llvm.experimental.gc.relocate.p0i32(i32 %tok, i32 4, i32 4)
        %ptr-new = call i32* @llvm.experimental.gc.relocate.p0i32(i32 %tok, i32 4, i32 5)
        %ptr2-new = call i32* @llvm.experimental.gc.relocate.p0i32(i32 %tok, i32 4, i32 6)
-       %ret = load i32* %ptr-new
+       %ret = load i32, i32* %ptr-new
        ret i32 %ret
 }
 
@@ -41,7 +41,7 @@ entry:
        %tok = call i32 (i1 ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0, i32* %base, i32* %ptr)
        %ptr-new = call i32* @llvm.experimental.gc.relocate.p0i32(i32 %tok, i32 4, i32 5)
        %base-new = call i32* @llvm.experimental.gc.relocate.p0i32(i32 %tok, i32 4, i32 4)
-       %ret = load i32* %ptr-new
+       %ret = load i32, i32* %ptr-new
        ret i32 %ret
 }
 
@@ -53,7 +53,7 @@ entry:
        %tok = call i32 (i1 ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0, [3 x i32]* %base, i32* %ptr)
        %base-new = call [3 x i32]* @llvm.experimental.gc.relocate.p0a3i32(i32 %tok, i32 4, i32 4)
        %ptr-new = call i32* @llvm.experimental.gc.relocate.p0i32(i32 %tok, i32 4, i32 5)
-       %ret = load i32* %ptr-new
+       %ret = load i32, i32* %ptr-new
        ret i32 %ret
 }
 
@@ -65,7 +65,7 @@ entry:
        %tok = call i32 (i1 ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0, [3 x i32]* %base, i32* %ptr)
        %base-new = call [3 x i32]* @llvm.experimental.gc.relocate.p0a3i32(i32 %tok, i32 4, i32 4)
        %ptr-new = call i32* @llvm.experimental.gc.relocate.p0i32(i32 %tok, i32 4, i32 5)
-       %ret = load i32* %ptr-new
+       %ret = load i32, i32* %ptr-new
        ret i32 %ret
 }
 
@@ -79,7 +79,7 @@ entry:
        %tok = call i32 (i1 ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_i1f(i1 ()* @return_i1, i32 0, i32 0, i32 0, i32* %base, i32* %ptr, i32* %ptr2)
        %ptr-new = call i32* @llvm.experimental.gc.relocate.p0i32(i32 %tok, i32 4, i32 5)
        %ptr2-new = call i32* @llvm.experimental.gc.relocate.p0i32(i32 %tok, i32 4, i32 6)
-       %ret = load i32* %ptr-new
+       %ret = load i32, i32* %ptr-new
        ret i32 %ret
 }
 

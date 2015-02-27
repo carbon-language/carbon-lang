@@ -19,9 +19,9 @@ define i32 @f(i32, i32) {
   ; CHECK: [[CALLCMP:%.*]] = icmp ne i16 [[CALLLABEL]], 0
   ; CHECK: br i1 [[CALLCMP]]
   %call = call i32 @g()
-  ; CHECK: [[LOCALLABEL:%.*]] = load i16* [[LOCALLABELALLOCA]]
+  ; CHECK: [[LOCALLABEL:%.*]] = load i16, i16* [[LOCALLABELALLOCA]]
   ; CHECK: [[LOCALCMP:%.*]] = icmp ne i16 [[LOCALLABEL]], 0
   ; CHECK: br i1 [[LOCALCMP]]
-  %load = load i32* %i
+  %load = load i32, i32* %i
   ret i32 %load
 }

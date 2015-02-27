@@ -7,7 +7,7 @@
 @A = external global i32                ; <i32*> [#uses=2]
 
 define i32 @test5(i32 %B, i8 %C) {
-        %tmp.1 = load i32* @A           ; <i32> [#uses=1]
+        %tmp.1 = load i32, i32* @A           ; <i32> [#uses=1]
         %shift.upgrd.1 = zext i8 %C to i32              ; <i32> [#uses=1]
         %tmp.2 = shl i32 %tmp.1, %shift.upgrd.1         ; <i32> [#uses=1]
         %tmp.3 = sub i8 32, %C          ; <i8> [#uses=1]

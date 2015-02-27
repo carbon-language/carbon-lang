@@ -19,13 +19,13 @@ internal constant %struct.__builtin_CFString {
 
 define %struct.__CFString* @_Z19SFLGetVisibilityKeyv() {
 entry:
-        %tmp1 = load %struct.__CFString** @_ZZ19SFLGetVisibilityKeyvE19_kSFLLVisibilityKey              ; <%struct.__CFString*> [#uses=1]
+        %tmp1 = load %struct.__CFString*, %struct.__CFString** @_ZZ19SFLGetVisibilityKeyvE19_kSFLLVisibilityKey              ; <%struct.__CFString*> [#uses=1]
         ret %struct.__CFString* %tmp1
 }
 
 define %struct.__CFString* @_Z22SFLGetAlwaysVisibleKeyv() {
 entry:
-        %tmp1 = load %struct.__CFString** @_ZZ22SFLGetAlwaysVisibleKeyvE22_kSFLLAlwaysVisibleKey                ; <%struct.__CFString*> [#uses=1]
+        %tmp1 = load %struct.__CFString*, %struct.__CFString** @_ZZ22SFLGetAlwaysVisibleKeyvE22_kSFLLAlwaysVisibleKey                ; <%struct.__CFString*> [#uses=1]
         %tmp2 = icmp eq %struct.__CFString* %tmp1, null         ; <i1> [#uses=1]
         br i1 %tmp2, label %cond_true, label %cond_next
 
@@ -34,25 +34,25 @@ cond_true:              ; preds = %entry
         br label %cond_next
 
 cond_next:              ; preds = %entry, %cond_true
-        %tmp4 = load %struct.__CFString** @_ZZ22SFLGetAlwaysVisibleKeyvE22_kSFLLAlwaysVisibleKey                ; <%struct.__CFString*> [#uses=1]
+        %tmp4 = load %struct.__CFString*, %struct.__CFString** @_ZZ22SFLGetAlwaysVisibleKeyvE22_kSFLLAlwaysVisibleKey                ; <%struct.__CFString*> [#uses=1]
         ret %struct.__CFString* %tmp4
 }
 
 define %struct.__CFString* @_Z21SFLGetNeverVisibleKeyv() {
 entry:
-        %tmp1 = load %struct.__CFString** @_ZZ21SFLGetNeverVisibleKeyvE21_kSFLLNeverVisibleKey          ; <%struct.__CFString*> [#uses=1]
+        %tmp1 = load %struct.__CFString*, %struct.__CFString** @_ZZ21SFLGetNeverVisibleKeyvE21_kSFLLNeverVisibleKey          ; <%struct.__CFString*> [#uses=1]
         ret %struct.__CFString* %tmp1
 }
 
 define %struct.__CFDictionary* @_ZN18SFLMutableListItem18GetPrefsDictionaryEv(%struct.SFLMutableListItem* %this) {
 entry:
         %tmp4 = getelementptr %struct.SFLMutableListItem, %struct.SFLMutableListItem* %this, i32 0, i32 0  ; <i16*> [#uses=1]
-        %tmp5 = load i16* %tmp4         ; <i16> [#uses=1]
+        %tmp5 = load i16, i16* %tmp4         ; <i16> [#uses=1]
         %tmp6 = icmp eq i16 %tmp5, 0            ; <i1> [#uses=1]
         br i1 %tmp6, label %cond_next22, label %cond_true
 
 cond_true:              ; preds = %entry
-        %tmp9 = load %struct.__CFString** @_ZZ22SFLGetAlwaysVisibleKeyvE22_kSFLLAlwaysVisibleKey                ; <%struct.__CFString*> [#uses=1]
+        %tmp9 = load %struct.__CFString*, %struct.__CFString** @_ZZ22SFLGetAlwaysVisibleKeyvE22_kSFLLAlwaysVisibleKey                ; <%struct.__CFString*> [#uses=1]
         %tmp10 = icmp eq %struct.__CFString* %tmp9, null                ; <i1> [#uses=1]
         br i1 %tmp10, label %cond_true13, label %cond_next22
 
@@ -62,8 +62,8 @@ cond_true13:            ; preds = %cond_true
 
 cond_next22:            ; preds = %entry, %cond_true13, %cond_true
         %iftmp.1.0.in = phi %struct.__CFString** [ @_ZZ22SFLGetAlwaysVisibleKeyvE22_kSFLLAlwaysVisibleKey, %cond_true ], [ @_ZZ22SFLGetAlwaysVisibleKeyvE22_kSFLLAlwaysVisibleKey, %cond_true13 ], [ @_ZZ21SFLGetNeverVisibleKeyvE21_kSFLLNeverVisibleKey, %entry ]             ; <%struct.__CFString**> [#uses=1]
-        %iftmp.1.0 = load %struct.__CFString** %iftmp.1.0.in            ; <%struct.__CFString*> [#uses=1]
-        %tmp24 = load %struct.__CFString** @_ZZ19SFLGetVisibilityKeyvE19_kSFLLVisibilityKey             ; <%struct.__CFString*> [#uses=1]
+        %iftmp.1.0 = load %struct.__CFString*, %struct.__CFString** %iftmp.1.0.in            ; <%struct.__CFString*> [#uses=1]
+        %tmp24 = load %struct.__CFString*, %struct.__CFString** @_ZZ19SFLGetVisibilityKeyvE19_kSFLLVisibilityKey             ; <%struct.__CFString*> [#uses=1]
         %tmp2728 = bitcast %struct.__CFString* %tmp24 to i8*            ; <i8*> [#uses=1]
         %tmp2930 = bitcast %struct.__CFString* %iftmp.1.0 to i8*               ; <i8*> [#uses=1]
         call void @_Z20CFDictionaryAddValuePKvS0_( i8* %tmp2728, i8* %tmp2930 )

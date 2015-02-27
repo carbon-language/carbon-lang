@@ -47,7 +47,7 @@ entry:
   %call.i = call zeroext i1 @_Z1fv(), !dbg !19
   %frombool.i = zext i1 %call.i to i8, !dbg !19
   store i8 %frombool.i, i8* %b.i, align 1, !dbg !19
-  %0 = load i8* %b.i, align 1, !dbg !19
+  %0 = load i8, i8* %b.i, align 1, !dbg !19
   %tobool.i = trunc i8 %0 to i1, !dbg !19
   br i1 %tobool.i, label %if.then.i, label %if.end.i, !dbg !19
 
@@ -60,12 +60,12 @@ if.end.i:                                         ; preds = %entry
   br label %_Z2f1v.exit, !dbg !22
 
 _Z2f1v.exit:                                      ; preds = %if.then.i, %if.end.i
-  %1 = load i32* %retval.i, !dbg !23
+  %1 = load i32, i32* %retval.i, !dbg !23
   call void @llvm.dbg.declare(metadata i8* %b.i3, metadata !24, metadata !{!"0x102"}), !dbg !27
   %call.i4 = call zeroext i1 @_Z1fv(), !dbg !27
   %frombool.i5 = zext i1 %call.i4 to i8, !dbg !27
   store i8 %frombool.i5, i8* %b.i3, align 1, !dbg !27
-  %2 = load i8* %b.i3, align 1, !dbg !27
+  %2 = load i8, i8* %b.i3, align 1, !dbg !27
   %tobool.i6 = trunc i8 %2 to i1, !dbg !27
   br i1 %tobool.i6, label %if.then.i7, label %if.end.i8, !dbg !27
 
@@ -78,7 +78,7 @@ if.end.i8:                                        ; preds = %_Z2f1v.exit
   br label %_Z2f2v.exit, !dbg !30
 
 _Z2f2v.exit:                                      ; preds = %if.then.i7, %if.end.i8
-  %3 = load i32* %retval.i2, !dbg !31
+  %3 = load i32, i32* %retval.i2, !dbg !31
   ret i32 0, !dbg !32
 }
 

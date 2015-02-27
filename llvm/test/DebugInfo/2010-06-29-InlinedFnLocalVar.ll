@@ -13,7 +13,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 
 define i32 @bar() nounwind ssp {
 entry:
-  %0 = load i32* @i, align 4, !dbg !17            ; <i32> [#uses=2]
+  %0 = load i32, i32* @i, align 4, !dbg !17            ; <i32> [#uses=2]
   tail call void @llvm.dbg.value(metadata i32 %0, i64 0, metadata !9, metadata !{!"0x102"}), !dbg !19
   tail call void @llvm.dbg.declare(metadata !29, metadata !10, metadata !{!"0x102"}), !dbg !21
   %1 = mul nsw i32 %0, %0, !dbg !22               ; <i32> [#uses=2]

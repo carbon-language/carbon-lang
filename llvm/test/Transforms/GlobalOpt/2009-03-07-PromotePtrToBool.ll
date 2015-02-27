@@ -12,6 +12,6 @@ entry:
 
 define i32* @get() nounwind {
 entry:
-	%0 = load i32** @X, align 4		; <i32*> [#uses=1]
+	%0 = load i32*, i32** @X, align 4		; <i32*> [#uses=1]
 	ret i32* %0
 }

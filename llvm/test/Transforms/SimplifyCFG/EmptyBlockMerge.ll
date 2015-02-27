@@ -6,7 +6,7 @@ declare void @foo()
 
 define void @cprop_test12(i32* %data) {
 bb0:
-	%reg108 = load i32* %data		; <i32> [#uses=2]
+	%reg108 = load i32, i32* %data		; <i32> [#uses=2]
 	%cond218 = icmp ne i32 %reg108, 5		; <i1> [#uses=1]
 	br i1 %cond218, label %bb3, label %bb2
 bb2:		; preds = %bb0

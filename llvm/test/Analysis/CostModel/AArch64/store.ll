@@ -14,9 +14,9 @@ define void @store() {
     ; CHECK: cost of 64 {{.*}} store
     store <4 x i8> undef, <4 x i8> * undef
     ; CHECK: cost of 16 {{.*}} load
-    load <2 x i8> * undef
+    load <2 x i8> , <2 x i8> * undef
     ; CHECK: cost of 64 {{.*}} load
-    load <4 x i8> * undef
+    load <4 x i8> , <4 x i8> * undef
 
     ret void
 }

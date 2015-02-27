@@ -13,7 +13,7 @@ then:           ; preds = %no_exit
         %tmp.20 = getelementptr %struct.SetJmpMapEntry, %struct.SetJmpMapEntry* %SJE.0.0, i32 0, i32 1          ; <i32*> [#uses=0]
         ret void
 endif:          ; preds = %no_exit
-        %tmp.24 = load %struct.SetJmpMapEntry** null            ; <%struct.SetJmpMapEntry*> [#uses=1]
+        %tmp.24 = load %struct.SetJmpMapEntry*, %struct.SetJmpMapEntry** null            ; <%struct.SetJmpMapEntry*> [#uses=1]
         br i1 false, label %UnifiedReturnBlock, label %no_exit
 UnifiedReturnBlock:             ; preds = %endif, %entry
         ret void

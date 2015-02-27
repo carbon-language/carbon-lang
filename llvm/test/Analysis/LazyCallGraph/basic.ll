@@ -118,10 +118,10 @@ define void @test2() {
 ; CHECK-NEXT: -> f1
 ; CHECK-NOT: ->
 
-  load i8** bitcast (void ()** @g to i8**)
-  load i8** bitcast (void ()** getelementptr ([4 x void ()*]* @g1, i32 0, i32 2) to i8**)
-  load i8** bitcast (void ()** getelementptr ({i8, void ()*, i8}* @g2, i32 0, i32 1) to i8**)
-  load i8** bitcast (void ()** @h to i8**)
+  load i8*, i8** bitcast (void ()** @g to i8**)
+  load i8*, i8** bitcast (void ()** getelementptr ([4 x void ()*]* @g1, i32 0, i32 2) to i8**)
+  load i8*, i8** bitcast (void ()** getelementptr ({i8, void ()*, i8}* @g2, i32 0, i32 1) to i8**)
+  load i8*, i8** bitcast (void ()** @h to i8**)
   ret void
 }
 

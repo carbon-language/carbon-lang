@@ -6,7 +6,7 @@ define void @test_load_store(half* %in, half* %out) {
 ; CHECK-LABEL: test_load_store:
 ; CHECK: ldrh [[TMP:r[0-9]+]], [r0]
 ; CHECK: strh [[TMP]], [r1]
-  %val = load half* %in
+  %val = load half, half* %in
   store half %val, half* %out
   ret void
 }
@@ -14,7 +14,7 @@ define void @test_load_store(half* %in, half* %out) {
 define i16 @test_bitcast_from_half(half* %addr) {
 ; CHECK-LABEL: test_bitcast_from_half:
 ; CHECK: ldrh r0, [r0]
-  %val = load half* %addr
+  %val = load half, half* %addr
   %val_int = bitcast half %val to i16
   ret i16 %val_int
 }
@@ -33,7 +33,7 @@ define float @test_extend32(half* %addr) {
 ; CHECK-OLD: b.w ___gnu_h2f_ieee
 ; CHECK-F16: vcvtb.f32.f16
 ; CHECK-V8: vcvtb.f32.f16
-  %val16 = load half* %addr
+  %val16 = load half, half* %addr
   %val32 = fpext half %val16 to float
   ret float %val32
 }
@@ -46,7 +46,7 @@ define double @test_extend64(half* %addr) {
 ; CHECK-F16: vcvtb.f32.f16
 ; CHECK-F16: vcvt.f64.f32
 ; CHECK-V8: vcvtb.f64.f16
-  %val16 = load half* %addr
+  %val16 = load half, half* %addr
   %val32 = fpext half %val16 to double
   ret double %val32
 }

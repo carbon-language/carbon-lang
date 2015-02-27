@@ -10,7 +10,7 @@
 define i32 @test_generaldynamic() {
 ; CHECK-LABEL: test_generaldynamic:
 
-  %val = load i32* @general_dynamic_var
+  %val = load i32, i32* @general_dynamic_var
   ret i32 %val
 
 ; CHECK: .tlsdesccall general_dynamic_var

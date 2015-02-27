@@ -28,10 +28,10 @@ loop:
   %4 = phi i64 [0, %entry], [%5, %loop]
   %5 = add i64 %2, %4
   %6 = getelementptr i8, i8 addrspace(1)* %in, i64 %5
-  %7 = load i8 addrspace(1)* %6, align 1
+  %7 = load i8, i8 addrspace(1)* %6, align 1
   %8 = or i64 %5, 1
   %9 = getelementptr i8, i8 addrspace(1)* %in, i64 %8
-  %10 = load i8 addrspace(1)* %9, align 1
+  %10 = load i8, i8 addrspace(1)* %9, align 1
   %11 = add i8 %7, %10
   %12 = sext i8 %11 to i32
   store i32 %12, i32 addrspace(1)* %out
@@ -59,18 +59,18 @@ entry:
   br i1 %0, label %if, label %else
 
 if:
-  %1 = load i32 addrspace(2)* addrspace(1)* %in
+  %1 = load i32 addrspace(2)*, i32 addrspace(2)* addrspace(1)* %in
   br label %endif
 
 else:
   %2 = getelementptr i32 addrspace(2)*, i32 addrspace(2)* addrspace(1)* %in
-  %3 = load i32 addrspace(2)* addrspace(1)* %2
+  %3 = load i32 addrspace(2)*, i32 addrspace(2)* addrspace(1)* %2
   br label %endif
 
 endif:
   %4 = phi i32 addrspace(2)*  [%1, %if], [%3, %else]
   %5 = getelementptr i32, i32 addrspace(2)* %4, i32 3000
-  %6 = load i32 addrspace(2)* %5
+  %6 = load i32, i32 addrspace(2)* %5
   store i32 %6, i32 addrspace(1)* %out
   ret void
 }
@@ -84,7 +84,7 @@ entry:
   %0 = call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %1 = add i32 %0, 4
   %2 = getelementptr [8 x i32], [8 x i32] addrspace(2)* %in, i32 %0, i32 4
-  %3 = load i32 addrspace(2)* %2
+  %3 = load i32, i32 addrspace(2)* %2
   store i32 %3, i32 addrspace(1)* %out
   ret void
 }
@@ -97,7 +97,7 @@ entry:
   %tmp0 = tail call i32 @llvm.r600.read.tidig.x() #1
   %tmp1 = getelementptr inbounds i32, i32 addrspace(2)* %in, i32 %tmp0
   %tmp2 = bitcast i32 addrspace(2)* %tmp1 to <8 x i32> addrspace(2)*
-  %tmp3 = load <8 x i32> addrspace(2)* %tmp2, align 4
+  %tmp3 = load <8 x i32>, <8 x i32> addrspace(2)* %tmp2, align 4
   store <8 x i32> %tmp3, <8 x i32> addrspace(1)* %out, align 32
   ret void
 }
@@ -112,7 +112,7 @@ entry:
   %tmp0 = tail call i32 @llvm.r600.read.tidig.x() #1
   %tmp1 = getelementptr inbounds i32, i32 addrspace(2)* %in, i32 %tmp0
   %tmp2 = bitcast i32 addrspace(2)* %tmp1 to <16 x i32> addrspace(2)*
-  %tmp3 = load <16 x i32> addrspace(2)* %tmp2, align 4
+  %tmp3 = load <16 x i32>, <16 x i32> addrspace(2)* %tmp2, align 4
   store <16 x i32> %tmp3, <16 x i32> addrspace(1)* %out, align 32
   ret void
 }

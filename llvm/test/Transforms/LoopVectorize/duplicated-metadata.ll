@@ -13,7 +13,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds float, float* %a, i64 %indvars.iv
-  %p = load float* %arrayidx, align 4
+  %p = load float, float* %arrayidx, align 4
   %mul = fmul float %p, 2.000000e+00
   store float %mul, float* %arrayidx, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1

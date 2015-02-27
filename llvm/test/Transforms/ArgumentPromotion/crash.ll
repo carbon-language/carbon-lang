@@ -51,9 +51,9 @@ init:
 define internal i32 @"clay_assign(Chain, Chain)"(%0* %c, %0* %d) {
 init:
   %0 = getelementptr %0, %0* %d, i32 0, i32 0
-  %1 = load %0** %0
+  %1 = load %0*, %0** %0
   %2 = getelementptr %0, %0* %c, i32 0, i32 0
-  %3 = load %0** %2
+  %3 = load %0*, %0** %2
   %4 = call i32 @"clay_assign(Chain, Chain)"(%0* %3, %0* %1)
   ret i32 0
 }

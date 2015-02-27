@@ -13,12 +13,12 @@ define void @onlystore() {
 
 define float @storeinit() {
         store float 1.000000e+00, float* getelementptr ({ i32, float, { double } }* @G, i32 0, i32 1)
-        %X = load float* getelementptr ({ i32, float, { double } }* @G, i32 0, i32 1)           ; <float> [#uses=1]
+        %X = load float, float* getelementptr ({ i32, float, { double } }* @G, i32 0, i32 1)           ; <float> [#uses=1]
         ret float %X
 }
 
 define double @constantize() {
-        %X = load double* getelementptr ({ i32, float, { double } }* @G, i32 0, i32 2, i32 0)           ; <double> [#uses=1]
+        %X = load double, double* getelementptr ({ i32, float, { double } }* @G, i32 0, i32 2, i32 0)           ; <double> [#uses=1]
         ret double %X
 }
 

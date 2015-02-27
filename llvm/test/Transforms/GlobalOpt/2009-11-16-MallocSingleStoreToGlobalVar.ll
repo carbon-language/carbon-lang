@@ -14,14 +14,14 @@ target triple = "x86_64-apple-darwin10.0"
 ; Derived from @DescribeChannel() in yacr2
 define void @test() nounwind ssp {
   store i64 2335, i64* @channelColumns, align 8
-  %1 = load i64* @channelColumns, align 8         ; <i64> [#uses=1]
+  %1 = load i64, i64* @channelColumns, align 8         ; <i64> [#uses=1]
   %2 = shl i64 %1, 3                              ; <i64> [#uses=1]
   %3 = add i64 %2, 8                              ; <i64> [#uses=1]
   %4 = call noalias i8* @malloc(i64 %3) nounwind  ; <i8*> [#uses=1]
 ; CHECK: call noalias i8* @malloc
   %5 = bitcast i8* %4 to i64*                     ; <i64*> [#uses=1]
   store i64* %5, i64** @TOP, align 8
-  %6 = load i64** @TOP, align 8                   ; <i64*> [#uses=1]
+  %6 = load i64*, i64** @TOP, align 8                   ; <i64*> [#uses=1]
   %7 = getelementptr inbounds i64, i64* %6, i64 13     ; <i64*> [#uses=1]
   store i64 0, i64* %7, align 8
   ret void

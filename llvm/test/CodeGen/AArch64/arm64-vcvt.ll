@@ -675,7 +675,7 @@ define void @autogen_SD28458(<8 x double> %val.f64, <8 x float>* %addr.f32) {
 ;CHECK: fcvt
 ;CHECK: ret
 define void @autogen_SD19225(<8 x double>* %addr.f64, <8 x float>* %addr.f32) {
-  %A = load <8 x float>* %addr.f32
+  %A = load <8 x float>, <8 x float>* %addr.f32
   %Tr53 = fpext <8 x float> %A to <8 x double>
   store <8 x double> %Tr53, <8 x double>* %addr.f64
   ret void

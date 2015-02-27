@@ -28,7 +28,7 @@ declare void @g(i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32,
 define void @do_something(i32 %i) #0 {
 entry:
   %data = alloca [8 x i8], align 1
-  %0 = load i32* @state, align 4
+  %0 = load i32, i32* @state, align 4
   %cmp = icmp eq i32 %0, 0
   br i1 %cmp, label %if.then, label %if.else
 

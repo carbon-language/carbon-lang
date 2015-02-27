@@ -24,20 +24,20 @@ for.body4:                                        ; preds = %for.body4, %for.con
   %lsr.iv46 = bitcast [16000 x double]* %lsr.iv4 to <4 x double>*
   %lsr.iv12 = bitcast [16000 x double]* %lsr.iv1 to <4 x double>*
   %scevgep11 = getelementptr <4 x double>, <4 x double>* %lsr.iv46, i64 -2
-  %i6 = load <4 x double>* %scevgep11, align 32
+  %i6 = load <4 x double>, <4 x double>* %scevgep11, align 32
   %add = fadd <4 x double> %i6, <double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00>
   store <4 x double> %add, <4 x double>* %lsr.iv12, align 32
   %scevgep10 = getelementptr <4 x double>, <4 x double>* %lsr.iv46, i64 -1
-  %i7 = load <4 x double>* %scevgep10, align 32
+  %i7 = load <4 x double>, <4 x double>* %scevgep10, align 32
   %add.4 = fadd <4 x double> %i7, <double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00>
   %scevgep9 = getelementptr <4 x double>, <4 x double>* %lsr.iv12, i64 1
   store <4 x double> %add.4, <4 x double>* %scevgep9, align 32
-  %i8 = load <4 x double>* %lsr.iv46, align 32
+  %i8 = load <4 x double>, <4 x double>* %lsr.iv46, align 32
   %add.8 = fadd <4 x double> %i8, <double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00>
   %scevgep8 = getelementptr <4 x double>, <4 x double>* %lsr.iv12, i64 2
   store <4 x double> %add.8, <4 x double>* %scevgep8, align 32
   %scevgep7 = getelementptr <4 x double>, <4 x double>* %lsr.iv46, i64 1
-  %i9 = load <4 x double>* %scevgep7, align 32
+  %i9 = load <4 x double>, <4 x double>* %scevgep7, align 32
   %add.12 = fadd <4 x double> %i9, <double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00>
   %scevgep3 = getelementptr <4 x double>, <4 x double>* %lsr.iv12, i64 3
   store <4 x double> %add.12, <4 x double>* %scevgep3, align 32

@@ -6,7 +6,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define void @func() nounwind uwtable {
 entry:
-  %0 = load i8* @c0, align 1
+  %0 = load i8, i8* @c0, align 1
   %tobool = icmp ne i8 %0, 0
   %conv = zext i1 %tobool to i8
   %storemerge = shl nuw nsw i8 %conv, %conv

@@ -20,7 +20,7 @@ if.then:                                          ; preds = %lor.end
   br i1 undef, label %return, label %if.end.i24
 
 if.end.i24:                                       ; preds = %if.then
-  %0 = load i32* undef, align 4
+  %0 = load i32, i32* undef, align 4
   %lnot.i.i16.i23 = icmp eq i32 %0, 0
   br i1 %lnot.i.i16.i23, label %if.end7.i37, label %test.exit27.i34
 

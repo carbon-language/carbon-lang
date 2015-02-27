@@ -21,7 +21,7 @@ for.body.preheader:                               ; preds = %entry
 for.body:                                         ; preds = %for.body.preheader, %for.body
   %i = phi i64 [ %i.next, %for.body ], [ 0, %for.body.preheader ] ; <i64> [#uses=2]
   %arrayidx = getelementptr double, double* %p, i64 %i    ; <double*> [#uses=2]
-  %t4 = load double* %arrayidx                    ; <double> [#uses=1]
+  %t4 = load double, double* %arrayidx                    ; <double> [#uses=1]
   %mul = fmul double %t4, 2.200000e+00            ; <double> [#uses=1]
   store double %mul, double* %arrayidx
   %i.next = add nsw i64 %i, 1                     ; <i64> [#uses=2]

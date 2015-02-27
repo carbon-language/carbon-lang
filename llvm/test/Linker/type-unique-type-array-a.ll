@@ -53,12 +53,12 @@ entry:
   store %class.A* %a, %class.A** %a.addr, align 8
   call void @llvm.dbg.declare(metadata %class.A** %a.addr, metadata !24, metadata !{!"0x102"}), !dbg !25
   call void @llvm.dbg.declare(metadata %struct.SA* %sa, metadata !26, metadata !{!"0x102"}), !dbg !27
-  %0 = load %class.A** %a.addr, align 8, !dbg !28
+  %0 = load %class.A*, %class.A** %a.addr, align 8, !dbg !28
   %1 = bitcast %struct.SA* %agg.tmp to i8*, !dbg !28
   %2 = bitcast %struct.SA* %sa to i8*, !dbg !28
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %2, i64 4, i32 4, i1 false), !dbg !28
   %coerce.dive1 = getelementptr %struct.SA, %struct.SA* %agg.tmp, i32 0, i32 0, !dbg !28
-  %3 = load i32* %coerce.dive1, !dbg !28
+  %3 = load i32, i32* %coerce.dive1, !dbg !28
   call void @_ZN1A5testAE2SA(%class.A* %0, i32 %3), !dbg !28
   ret void, !dbg !29
 }
@@ -76,7 +76,7 @@ entry:
   store %class.A* %this, %class.A** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !30, metadata !{!"0x102"}), !dbg !31
   call void @llvm.dbg.declare(metadata %struct.SA* %a, metadata !32, metadata !{!"0x102"}), !dbg !33
-  %this1 = load %class.A** %this.addr
+  %this1 = load %class.A*, %class.A** %this.addr
   ret void, !dbg !34
 }
 

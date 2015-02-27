@@ -10,13 +10,13 @@ entry:
   store double* %acc, double** %acc.addr, align 4
   store double %num, double* %num.addr, align 8
   store double %num2, double* %num2.addr, align 8
-  %0 = load double** %acc.addr, align 4
-  %1 = load double* %0
-  %2 = load double* %num.addr, align 8
+  %0 = load double*, double** %acc.addr, align 4
+  %1 = load double, double* %0
+  %2 = load double, double* %num.addr, align 8
   %add = fadd double %1, %2
-  %3 = load double* %num2.addr, align 8
+  %3 = load double, double* %num2.addr, align 8
   %sub = fsub double %add, %3
-  %4 = load double** %acc.addr, align 4
+  %4 = load double*, double** %acc.addr, align 4
   store double %sub, double* %4
   ret void
 }

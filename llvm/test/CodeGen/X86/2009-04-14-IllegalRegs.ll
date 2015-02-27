@@ -15,7 +15,7 @@ entry:
 	store i8 48, i8* %2, align 1
 	%3 = getelementptr %struct.X, %struct.X* %xxx, i32 0, i32 1		; <[32 x i8]*> [#uses=1]
 	%4 = getelementptr [32 x i8], [32 x i8]* %3, i32 0, i32 31		; <i8*> [#uses=1]
-	%5 = load i8* %4, align 1		; <i8> [#uses=1]
+	%5 = load i8, i8* %4, align 1		; <i8> [#uses=1]
 	%6 = getelementptr %struct.X, %struct.X* %xxx, i32 0, i32 1		; <[32 x i8]*> [#uses=1]
 	%7 = getelementptr [32 x i8], [32 x i8]* %6, i32 0, i32 0		; <i8*> [#uses=1]
 	store i8 %5, i8* %7, align 1
@@ -23,12 +23,12 @@ entry:
 	store i8 15, i8* %8, align 1
 	%9 = call i32 (...)* bitcast (i32 (%struct.X*, %struct.X*)* @f to i32 (...)*)(%struct.X* byval align 4 %xxx, %struct.X* byval align 4 %xxx) nounwind		; <i32> [#uses=1]
 	store i32 %9, i32* %0, align 4
-	%10 = load i32* %0, align 4		; <i32> [#uses=1]
+	%10 = load i32, i32* %0, align 4		; <i32> [#uses=1]
 	store i32 %10, i32* %retval, align 4
 	br label %return
 
 return:		; preds = %entry
-	%retval1 = load i32* %retval		; <i32> [#uses=1]
+	%retval1 = load i32, i32* %retval		; <i32> [#uses=1]
 	ret i32 %retval1
 }
 

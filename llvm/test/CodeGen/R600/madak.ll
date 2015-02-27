@@ -16,8 +16,8 @@ define void @madak_f32(float addrspace(1)* noalias %out, float addrspace(1)* noa
   %in.b.gep = getelementptr float, float addrspace(1)* %in.b, i32 %tid
   %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %a = load float addrspace(1)* %in.a.gep, align 4
-  %b = load float addrspace(1)* %in.b.gep, align 4
+  %a = load float, float addrspace(1)* %in.a.gep, align 4
+  %b = load float, float addrspace(1)* %in.b.gep, align 4
 
   %mul = fmul float %a, %b
   %madak = fadd float %mul, 10.0
@@ -47,9 +47,9 @@ define void @madak_2_use_f32(float addrspace(1)* noalias %out, float addrspace(1
   %out.gep.0 = getelementptr float, float addrspace(1)* %out, i32 %tid
   %out.gep.1 = getelementptr float, float addrspace(1)* %in.gep.0, i32 1
 
-  %a = load float addrspace(1)* %in.gep.0, align 4
-  %b = load float addrspace(1)* %in.gep.1, align 4
-  %c = load float addrspace(1)* %in.gep.2, align 4
+  %a = load float, float addrspace(1)* %in.gep.0, align 4
+  %b = load float, float addrspace(1)* %in.gep.1, align 4
+  %c = load float, float addrspace(1)* %in.gep.2, align 4
 
   %mul0 = fmul float %a, %b
   %mul1 = fmul float %a, %c
@@ -69,7 +69,7 @@ define void @madak_m_inline_imm_f32(float addrspace(1)* noalias %out, float addr
   %in.a.gep = getelementptr float, float addrspace(1)* %in.a, i32 %tid
   %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %a = load float addrspace(1)* %in.a.gep, align 4
+  %a = load float, float addrspace(1)* %in.a.gep, align 4
 
   %mul = fmul float 4.0, %a
   %madak = fadd float %mul, 10.0
@@ -90,8 +90,8 @@ define void @madak_inline_imm_f32(float addrspace(1)* noalias %out, float addrsp
   %in.b.gep = getelementptr float, float addrspace(1)* %in.b, i32 %tid
   %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %a = load float addrspace(1)* %in.a.gep, align 4
-  %b = load float addrspace(1)* %in.b.gep, align 4
+  %a = load float, float addrspace(1)* %in.a.gep, align 4
+  %b = load float, float addrspace(1)* %in.b.gep, align 4
 
   %mul = fmul float %a, %b
   %madak = fadd float %mul, 4.0
@@ -111,7 +111,7 @@ define void @s_v_madak_f32(float addrspace(1)* noalias %out, float addrspace(1)*
   %in.a.gep = getelementptr float, float addrspace(1)* %in.a, i32 %tid
   %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %a = load float addrspace(1)* %in.a.gep, align 4
+  %a = load float, float addrspace(1)* %in.a.gep, align 4
 
   %mul = fmul float %a, %b
   %madak = fadd float %mul, 10.0
@@ -130,7 +130,7 @@ define void @v_s_madak_f32(float addrspace(1)* noalias %out, float %a, float add
   %in.b.gep = getelementptr float, float addrspace(1)* %in.b, i32 %tid
   %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %b = load float addrspace(1)* %in.b.gep, align 4
+  %b = load float, float addrspace(1)* %in.b.gep, align 4
 
   %mul = fmul float %a, %b
   %madak = fadd float %mul, 10.0
@@ -159,8 +159,8 @@ define void @no_madak_src0_modifier_f32(float addrspace(1)* noalias %out, float 
   %in.b.gep = getelementptr float, float addrspace(1)* %in.b, i32 %tid
   %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %a = load float addrspace(1)* %in.a.gep, align 4
-  %b = load float addrspace(1)* %in.b.gep, align 4
+  %a = load float, float addrspace(1)* %in.a.gep, align 4
+  %b = load float, float addrspace(1)* %in.b.gep, align 4
 
   %a.fabs = call float @llvm.fabs.f32(float %a) nounwind readnone
 
@@ -181,8 +181,8 @@ define void @no_madak_src1_modifier_f32(float addrspace(1)* noalias %out, float 
   %in.b.gep = getelementptr float, float addrspace(1)* %in.b, i32 %tid
   %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
-  %a = load float addrspace(1)* %in.a.gep, align 4
-  %b = load float addrspace(1)* %in.b.gep, align 4
+  %a = load float, float addrspace(1)* %in.a.gep, align 4
+  %b = load float, float addrspace(1)* %in.b.gep, align 4
 
   %b.fabs = call float @llvm.fabs.f32(float %b) nounwind readnone
 

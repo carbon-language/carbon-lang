@@ -9,14 +9,14 @@ block1:
 block2:
  br label %block4
 ; CHECK: block2:
-; CHECK-NEXT: load i32* %p
+; CHECK-NEXT: load i32, i32* %p
 
 block3:
   store i32 0, i32* %p
   br label %block4
 
 block4:
-  %PRE = load i32* %p
+  %PRE = load i32, i32* %p
   ret i32 %PRE
 ; CHECK: block4:
 ; CHECK-NEXT: phi i32
@@ -32,7 +32,7 @@ block1:
 block2:
  br label %block4
 ; CHECK: block2:
-; CHECK-NEXT: load i32* %q
+; CHECK-NEXT: load i32, i32* %q
 
 block3:
   store i32 0, i32* %p
@@ -40,7 +40,7 @@ block3:
 
 block4:
   %P2 = phi i32* [%p, %block3], [%q, %block2]
-  %PRE = load i32* %P2
+  %PRE = load i32, i32* %P2
   ret i32 %PRE
 ; CHECK: block4:
 ; CHECK-NEXT: phi i32 [
@@ -59,7 +59,7 @@ block1:
 block2:
  br label %block4
 ; CHECK: block2:
-; CHECK-NEXT: load i32* %B
+; CHECK-NEXT: load i32, i32* %B
 
 block3:
   %A = getelementptr i32, i32* %p, i32 1
@@ -69,7 +69,7 @@ block3:
 block4:
   %P2 = phi i32* [%p, %block3], [%q, %block2]
   %P3 = getelementptr i32, i32* %P2, i32 1
-  %PRE = load i32* %P3
+  %PRE = load i32, i32* %P3
   ret i32 %PRE
 ; CHECK: block4:
 ; CHECK-NEXT: phi i32 [
@@ -87,7 +87,7 @@ block1:
 block2:
  br label %block4
 ; CHECK: block2:
-; CHECK:   load i32*
+; CHECK:   load i32, i32*
 ; CHECK:   br label %block4
 
 block3:
@@ -101,7 +101,7 @@ block3:
 block4:
   %P2 = phi i32* [%p, %block3], [%q, %block2]
   %P3 = getelementptr i32, i32* %P2, i32 1
-  %PRE = load i32* %P3
+  %PRE = load i32, i32* %P3
   ret i32 %PRE
 ; CHECK: block4:
 ; CHECK-NEXT: phi i32 [
@@ -127,7 +127,7 @@ bb.nph:
   br label %bb
 
 ; CHECK: bb.nph:
-; CHECK: load double*
+; CHECK: load double, double*
 ; CHECK: br label %bb
 
 bb:             
@@ -135,8 +135,8 @@ bb:
   %tmp6 = add i64 %indvar, 1                    
   %scevgep = getelementptr double, double* %G, i64 %tmp6
   %scevgep7 = getelementptr double, double* %G, i64 %indvar
-  %2 = load double* %scevgep7, align 8
-  %3 = load double* %scevgep, align 8 
+  %2 = load double, double* %scevgep7, align 8
+  %3 = load double, double* %scevgep, align 8 
   %4 = fadd double %2, %3             
   store double %4, double* %scevgep7, align 8
   %exitcond = icmp eq i64 %tmp6, %tmp 
@@ -144,8 +144,8 @@ bb:
 
 ; Should only be one load in the loop.
 ; CHECK: bb:
-; CHECK: load double*
-; CHECK-NOT: load double*
+; CHECK: load double, double*
+; CHECK-NOT: load double, double*
 ; CHECK: br i1 %exitcond
 
 return:                               
@@ -170,7 +170,7 @@ bb.nph:
   br label %bb
 
 ; CHECK: bb.nph:
-; CHECK: load double*
+; CHECK: load double, double*
 ; CHECK: br label %bb
 
 bb:             
@@ -178,8 +178,8 @@ bb:
   %tmp6 = add i64 %indvar, 1                    
   %scevgep = getelementptr double, double* %G, i64 %tmp6
   %scevgep7 = getelementptr double, double* %G, i64 %indvar
-  %2 = load double* %scevgep7, align 8
-  %3 = load double* %scevgep, align 8 
+  %2 = load double, double* %scevgep7, align 8
+  %3 = load double, double* %scevgep, align 8 
   %4 = fadd double %2, %3             
   store double %4, double* %scevgep, align 8
   %exitcond = icmp eq i64 %tmp6, %tmp 
@@ -187,8 +187,8 @@ bb:
 
 ; Should only be one load in the loop.
 ; CHECK: bb:
-; CHECK: load double*
-; CHECK-NOT: load double*
+; CHECK: load double, double*
+; CHECK-NOT: load double, double*
 ; CHECK: br i1 %exitcond
 
 return:                               
@@ -222,8 +222,8 @@ bb:
   %scevgep = getelementptr double, double* %G, i64 %tmp8  
   %tmp9 = add i64 %indvar, 1                      
   %scevgep10 = getelementptr double, double* %G, i64 %tmp9 
-  %3 = load double* %scevgep10, align 8           
-  %4 = load double* %scevgep, align 8             
+  %3 = load double, double* %scevgep10, align 8           
+  %4 = load double, double* %scevgep, align 8             
   %5 = fadd double %3, %4                         
   store double %5, double* %scevgep, align 8
   %exitcond = icmp eq i64 %tmp9, %tmp7            
@@ -231,8 +231,8 @@ bb:
 
 ; Should only be one load in the loop.
 ; CHECK: bb:
-; CHECK: load double*
-; CHECK-NOT: load double*
+; CHECK: load double, double*
+; CHECK-NOT: load double, double*
 ; CHECK: br i1 %exitcond
 
 return:                                           
@@ -249,7 +249,7 @@ block1:
 block2:
  br label %block4
 ; CHECK: block2:
-; CHECK:   load i32*
+; CHECK:   load i32, i32*
 ; CHECK:   br label %block4
 
 block3:
@@ -260,7 +260,7 @@ block3:
 block4:
   %P2 = phi i32* [%p, %block3], [%q, %block2]
   %P3 = getelementptr i32, i32* %P2, i32 1
-  %PRE = load i32* %P3
+  %PRE = load i32, i32* %P3
   ret i32 %PRE
 ; CHECK: block4:
 ; CHECK-NEXT: phi i32 [
@@ -288,7 +288,7 @@ bb.nph:
   br label %bb
 
 ; CHECK: bb.nph:
-; CHECK:   load double*
+; CHECK:   load double, double*
 ; CHECK:   br label %bb
 
 bb:                                               
@@ -297,8 +297,8 @@ bb:
   %scevgep = getelementptr double, double* %G, i64 %tmp8  
   %tmp9 = add i64 %indvar, 1                      
   %scevgep10 = getelementptr double, double* %G, i64 %tmp9 
-  %3 = load double* %scevgep10, align 8           
-  %4 = load double* %scevgep, align 8             
+  %3 = load double, double* %scevgep10, align 8           
+  %4 = load double, double* %scevgep, align 8             
   %5 = fadd double %3, %4                         
   store double %5, double* %scevgep, align 8
   %exitcond = icmp eq i64 %tmp9, %tmp7            
@@ -306,8 +306,8 @@ bb:
 
 ; Should only be one load in the loop.
 ; CHECK: bb:
-; CHECK: load double*
-; CHECK-NOT: load double*
+; CHECK: load double, double*
+; CHECK-NOT: load double, double*
 ; CHECK: br i1 %exitcond
 
 return:                                           
@@ -332,8 +332,8 @@ bb.nph:
   %tmp8 = add i64 %tmp, -1
   br label %bb
 ; CHECK: bb.nph:
-; CHECK:   load double*
-; CHECK:   load double*
+; CHECK:   load double, double*
+; CHECK:   load double, double*
 ; CHECK:   br label %bb
 
 
@@ -344,10 +344,10 @@ bb:
   %scevgep10 = getelementptr double, double* %G, i64 %tmp9
   %tmp11 = add i64 %indvar, 1
   %scevgep12 = getelementptr double, double* %G, i64 %tmp11
-  %2 = load double* %scevgep12, align 8
-  %3 = load double* %scevgep10, align 8
+  %2 = load double, double* %scevgep12, align 8
+  %3 = load double, double* %scevgep10, align 8
   %4 = fadd double %2, %3
-  %5 = load double* %scevgep, align 8
+  %5 = load double, double* %scevgep, align 8
   %6 = fadd double %4, %5
   store double %6, double* %scevgep12, align 8
   %exitcond = icmp eq i64 %tmp11, %tmp8
@@ -355,8 +355,8 @@ bb:
 
 ; Should only be one load in the loop.
 ; CHECK: bb:
-; CHECK: load double*
-; CHECK-NOT: load double*
+; CHECK: load double, double*
+; CHECK-NOT: load double, double*
 ; CHECK: br i1 %exitcond
 
 return:
@@ -372,7 +372,7 @@ block1:
 block2:
  %cond = icmp sgt i32 %N, 1
  br i1 %cond, label %block4, label %block5
-; CHECK: load i32* %p
+; CHECK: load i32, i32* %p
 ; CHECK-NEXT: br label %block4
 
 block3:
@@ -380,7 +380,7 @@ block3:
   br label %block4
 
 block4:
-  %PRE = load i32* %p
+  %PRE = load i32, i32* %p
   br label %block5
 
 block5:

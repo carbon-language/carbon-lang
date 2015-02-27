@@ -25,7 +25,7 @@ else:                                             ; preds = %2
 
 join:                                             ; preds = %then, %else
   %storemerge.in = phi i32* [ %retptr2, %else ], [ %retptr1, %then ]
-  %storemerge = load i32* %storemerge.in
+  %storemerge = load i32, i32* %storemerge.in
   %x3 = call i32 @extern_fn2(i32 %storemerge)
   ret void
 

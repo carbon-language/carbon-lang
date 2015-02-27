@@ -8,7 +8,7 @@
 define internal void @f(%struct.ss* byval  %b) nounwind  {
 entry:
 	%tmp = getelementptr %struct.ss, %struct.ss* %b, i32 0, i32 0		; <i32*> [#uses=2]
-	%tmp1 = load i32* %tmp, align 4		; <i32> [#uses=1]
+	%tmp1 = load i32, i32* %tmp, align 4		; <i32> [#uses=1]
 	%tmp2 = add i32 %tmp1, 1		; <i32> [#uses=1]
 	store i32 %tmp2, i32* %tmp, align 4
 	ret void
@@ -38,7 +38,7 @@ entry:
 define internal i32 @f2(%struct.ss* byval  %b) nounwind readonly {
 entry:
 	%tmp = getelementptr %struct.ss, %struct.ss* %b, i32 0, i32 0		; <i32*> [#uses=2]
-	%tmp1 = load i32* %tmp, align 4		; <i32> [#uses=1]
+	%tmp1 = load i32, i32* %tmp, align 4		; <i32> [#uses=1]
 	%tmp2 = add i32 %tmp1, 1		; <i32> [#uses=1]
 	ret i32 %tmp2
 }
@@ -113,7 +113,7 @@ define internal void @f5(%struct.S0* byval nocapture readonly align 4 %p) {
 entry:
 	store i32 0, i32* getelementptr inbounds (%struct.S0* @b, i64 0, i32 0), align 4
 	%f2 = getelementptr inbounds %struct.S0, %struct.S0* %p, i64 0, i32 0
-	%0 = load i32* %f2, align 4
+	%0 = load i32, i32* %f2, align 4
 	store i32 %0, i32* @a, align 4
 	ret void
 }
@@ -121,9 +121,9 @@ entry:
 define i32 @test5() {
 entry:
 	tail call void @f5(%struct.S0* byval align 4 @b)
-	%0 = load i32* @a, align 4
+	%0 = load i32, i32* @a, align 4
 	ret i32 %0
 ; CHECK: @test5()
 ; CHECK: store i32 0, i32* getelementptr inbounds (%struct.S0* @b, i64 0, i32 0), align 4
-; CHECK-NOT: load i32* getelementptr inbounds (%struct.S0* @b, i64 0, i32 0), align 4
+; CHECK-NOT: load i32, i32* getelementptr inbounds (%struct.S0* @b, i64 0, i32 0), align 4
 }

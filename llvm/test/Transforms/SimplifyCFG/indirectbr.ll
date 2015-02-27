@@ -17,7 +17,7 @@ entry:
   store i8* blockaddress(@indbrtest0, %BB1), i8** %P
   store i8* blockaddress(@indbrtest0, %BB2), i8** %P
   call void @foo()
-  %t = load i8** %Q
+  %t = load i8*, i8** %Q
   indirectbr i8* %t, [label %BB0, label %BB1, label %BB2, label %BB0, label %BB1, label %BB2]
 BB0:
   call void @A()
@@ -42,7 +42,7 @@ define void @indbrtest1(i8** %P, i8** %Q) {
 entry:
   store i8* blockaddress(@indbrtest1, %BB0), i8** %P
   call void @foo()
-  %t = load i8** %Q
+  %t = load i8*, i8** %Q
   indirectbr i8* %t, [label %BB0, label %BB0]
 BB0:
   call void @A()
@@ -193,7 +193,7 @@ escape-string.top:
 xlab8x:                                           ; preds = %xlab5x
   %xvaluex = call i32 @xselectorx()
   %xblkx.x = getelementptr [9 x i8*], [9 x i8*]* @xblkx.bbs, i32 0, i32 %xvaluex
-  %xblkx.load = load i8** %xblkx.x
+  %xblkx.load = load i8*, i8** %xblkx.x
   indirectbr i8* %xblkx.load, [label %xblkx.begin, label %xblkx.begin3, label %xblkx.begin4, label %xblkx.begin5, label %xblkx.begin6, label %xblkx.begin7, label %xblkx.begin8, label %xblkx.begin9, label %xblkx.end]
 
 xblkx.begin:

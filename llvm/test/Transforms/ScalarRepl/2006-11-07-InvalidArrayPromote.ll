@@ -12,7 +12,7 @@ define i32 @func(<4 x float> %v0, <4 x float> %v1) nounwind {
 	%tmp14 = getelementptr [2 x <4 x i32>], [2 x <4 x i32>]* %vsiidx, i32 0, i32 1		; <<4 x i32>*> [#uses=1]
 	store <4 x i32> %tmp10, <4 x i32>* %tmp14
 	%tmp15 = getelementptr [2 x <4 x i32>], [2 x <4 x i32>]* %vsiidx, i32 0, i32 0, i32 4		; <i32*> [#uses=1]
-	%tmp.upgrd.4 = load i32* %tmp15		; <i32> [#uses=1]
+	%tmp.upgrd.4 = load i32, i32* %tmp15		; <i32> [#uses=1]
 	ret i32 %tmp.upgrd.4
 }
 

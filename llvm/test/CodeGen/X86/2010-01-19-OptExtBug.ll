@@ -21,7 +21,7 @@ bb7:                                              ; preds = %bb6
   unreachable
 
 bb9:                                              ; preds = %bb6
-  %0 = load i8* undef, align 1                    ; <i8> [#uses=3]
+  %0 = load i8, i8* undef, align 1                    ; <i8> [#uses=3]
   br i1 undef, label %bb12, label %bb10
 
 bb10:                                             ; preds = %bb9

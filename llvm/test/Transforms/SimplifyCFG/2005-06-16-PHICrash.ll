@@ -30,7 +30,7 @@ endif.0:		; preds = %loopentry.0
 	%tmp.14 = sext i8 %tmp.1 to i32		; <i32> [#uses=1]
 	%tmp.16 = zext i8 %l_88173906 to i32		; <i32> [#uses=1]
 	%tmp.17 = icmp sgt i32 %tmp.14, %tmp.16		; <i1> [#uses=1]
-	%tmp.19 = load i32* @g_59182229		; <i32> [#uses=2]
+	%tmp.19 = load i32, i32* @g_59182229		; <i32> [#uses=2]
 	br i1 %tmp.17, label %cond_true, label %cond_false
 cond_true:		; preds = %endif.0
 	%tmp.20 = icmp ne i32 %tmp.19, 1		; <i1> [#uses=1]
@@ -53,7 +53,7 @@ loopentry.1:		; preds = %endif.3, %else.2
 	%tmp.29 = icmp sgt i32 %i.1.1, 99		; <i1> [#uses=1]
 	br i1 %tmp.29, label %endif.2, label %no_exit.1
 no_exit.1:		; preds = %loopentry.1
-	%tmp.30 = load i32* @g_38098584		; <i32> [#uses=1]
+	%tmp.30 = load i32, i32* @g_38098584		; <i32> [#uses=1]
 	%tmp.31 = icmp eq i32 %tmp.30, 0		; <i1> [#uses=1]
 	br i1 %tmp.31, label %else.3, label %then.3
 then.3:		; preds = %no_exit.1

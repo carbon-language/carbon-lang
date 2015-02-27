@@ -27,53 +27,53 @@ entry:
   %ptr1 = alloca i8
   store i8 2, i8* %ptr1
 
-; CHECK: %res1 = load i8* %ptr1
-  %res1 = load i8* %ptr1
+; CHECK: %res1 = load i8, i8* %ptr1
+  %res1 = load i8, i8* %ptr1
 
-; CHECK-NEXT: %res2 = load volatile i8* %ptr1
-  %res2 = load volatile i8* %ptr1
+; CHECK-NEXT: %res2 = load volatile i8, i8* %ptr1
+  %res2 = load volatile i8, i8* %ptr1
 
-; CHECK-NEXT: %res3 = load i8* %ptr1, align 1
-  %res3 = load i8* %ptr1, align 1
+; CHECK-NEXT: %res3 = load i8, i8* %ptr1, align 1
+  %res3 = load i8, i8* %ptr1, align 1
 
-; CHECK-NEXT: %res4 = load volatile i8* %ptr1, align 1
-  %res4 = load volatile i8* %ptr1, align 1
+; CHECK-NEXT: %res4 = load volatile i8, i8* %ptr1, align 1
+  %res4 = load volatile i8, i8* %ptr1, align 1
 
-; CHECK-NEXT: %res5 = load i8* %ptr1, !nontemporal !0
-  %res5 = load i8* %ptr1, !nontemporal !0
+; CHECK-NEXT: %res5 = load i8, i8* %ptr1, !nontemporal !0
+  %res5 = load i8, i8* %ptr1, !nontemporal !0
 
-; CHECK-NEXT: %res6 = load volatile i8* %ptr1, !nontemporal !0
-  %res6 = load volatile i8* %ptr1, !nontemporal !0
+; CHECK-NEXT: %res6 = load volatile i8, i8* %ptr1, !nontemporal !0
+  %res6 = load volatile i8, i8* %ptr1, !nontemporal !0
 
-; CHECK-NEXT: %res7 = load i8* %ptr1, align 1, !nontemporal !0
-  %res7 = load i8* %ptr1, align 1, !nontemporal !0
+; CHECK-NEXT: %res7 = load i8, i8* %ptr1, align 1, !nontemporal !0
+  %res7 = load i8, i8* %ptr1, align 1, !nontemporal !0
 
-; CHECK-NEXT: %res8 = load volatile i8* %ptr1, align 1, !nontemporal !0
-  %res8 = load volatile i8* %ptr1, align 1, !nontemporal !0
+; CHECK-NEXT: %res8 = load volatile i8, i8* %ptr1, align 1, !nontemporal !0
+  %res8 = load volatile i8, i8* %ptr1, align 1, !nontemporal !0
 
-; CHECK-NEXT: %res9 = load i8* %ptr1, !invariant.load !1
-  %res9 = load i8* %ptr1, !invariant.load !1
+; CHECK-NEXT: %res9 = load i8, i8* %ptr1, !invariant.load !1
+  %res9 = load i8, i8* %ptr1, !invariant.load !1
 
-; CHECK-NEXT: %res10 = load volatile i8* %ptr1, !invariant.load !1
-  %res10 = load volatile i8* %ptr1, !invariant.load !1
+; CHECK-NEXT: %res10 = load volatile i8, i8* %ptr1, !invariant.load !1
+  %res10 = load volatile i8, i8* %ptr1, !invariant.load !1
 
-; CHECK-NEXT: %res11 = load i8* %ptr1, align 1, !invariant.load !1
-  %res11 = load i8* %ptr1, align 1, !invariant.load !1
+; CHECK-NEXT: %res11 = load i8, i8* %ptr1, align 1, !invariant.load !1
+  %res11 = load i8, i8* %ptr1, align 1, !invariant.load !1
 
-; CHECK-NEXT: %res12 = load volatile i8* %ptr1, align 1, !invariant.load !1
-  %res12 = load volatile i8* %ptr1, align 1, !invariant.load !1
+; CHECK-NEXT: %res12 = load volatile i8, i8* %ptr1, align 1, !invariant.load !1
+  %res12 = load volatile i8, i8* %ptr1, align 1, !invariant.load !1
 
-; CHECK-NEXT: %res13 = load i8* %ptr1, {{[(!nontemporal !0, !invariant.load !1) | (!invariant.load !1, !nontemporal !0)]}}
-  %res13 = load i8* %ptr1, !nontemporal !0, !invariant.load !1
+; CHECK-NEXT: %res13 = load i8, i8* %ptr1, {{[(!nontemporal !0, !invariant.load !1) | (!invariant.load !1, !nontemporal !0)]}}
+  %res13 = load i8, i8* %ptr1, !nontemporal !0, !invariant.load !1
 
-; CHECK-NEXT: %res14 = load volatile i8* %ptr1, {{[(!nontemporal !0, !invariant.load !1) | (!invariant.load !1, !nontemporal !0)]}}
-  %res14 = load volatile i8* %ptr1, !nontemporal !0, !invariant.load !1
+; CHECK-NEXT: %res14 = load volatile i8, i8* %ptr1, {{[(!nontemporal !0, !invariant.load !1) | (!invariant.load !1, !nontemporal !0)]}}
+  %res14 = load volatile i8, i8* %ptr1, !nontemporal !0, !invariant.load !1
 
-; CHECK-NEXT: %res15 = load i8* %ptr1, align 1, {{[(!nontemporal !0, !invariant.load !1) | (!invariant.load !1, !nontemporal !0)]}}
-  %res15 = load i8* %ptr1, align 1, !nontemporal !0, !invariant.load !1
+; CHECK-NEXT: %res15 = load i8, i8* %ptr1, align 1, {{[(!nontemporal !0, !invariant.load !1) | (!invariant.load !1, !nontemporal !0)]}}
+  %res15 = load i8, i8* %ptr1, align 1, !nontemporal !0, !invariant.load !1
 
-; CHECK-NEXT: %res16 = load volatile i8* %ptr1, align 1, {{[(!nontemporal !0, !invariant.load !1) | (!invariant.load !1, !nontemporal !0)]}}
-  %res16 = load volatile i8* %ptr1, align 1, !nontemporal !0, !invariant.load !1
+; CHECK-NEXT: %res16 = load volatile i8, i8* %ptr1, align 1, {{[(!nontemporal !0, !invariant.load !1) | (!invariant.load !1, !nontemporal !0)]}}
+  %res16 = load volatile i8, i8* %ptr1, align 1, !nontemporal !0, !invariant.load !1
 
   ret void
 }
@@ -83,53 +83,53 @@ entry:
   %ptr1 = alloca i8
   store i8 2, i8* %ptr1
 
-; CHECK: %res1 = load atomic i8* %ptr1 unordered, align 1
-  %res1 = load atomic i8* %ptr1 unordered, align 1
+; CHECK: %res1 = load atomic i8, i8* %ptr1 unordered, align 1
+  %res1 = load atomic i8, i8* %ptr1 unordered, align 1
 
-; CHECK-NEXT: %res2 = load atomic i8* %ptr1 monotonic, align 1
-  %res2 = load atomic i8* %ptr1 monotonic, align 1
+; CHECK-NEXT: %res2 = load atomic i8, i8* %ptr1 monotonic, align 1
+  %res2 = load atomic i8, i8* %ptr1 monotonic, align 1
 
-; CHECK-NEXT: %res3 = load atomic i8* %ptr1 acquire, align 1
-  %res3 = load atomic i8* %ptr1 acquire, align 1
+; CHECK-NEXT: %res3 = load atomic i8, i8* %ptr1 acquire, align 1
+  %res3 = load atomic i8, i8* %ptr1 acquire, align 1
 
-; CHECK-NEXT: %res4 = load atomic i8* %ptr1 seq_cst, align 1
-  %res4 = load atomic i8* %ptr1 seq_cst, align 1
+; CHECK-NEXT: %res4 = load atomic i8, i8* %ptr1 seq_cst, align 1
+  %res4 = load atomic i8, i8* %ptr1 seq_cst, align 1
 
-; CHECK-NEXT: %res5 = load atomic volatile i8* %ptr1 unordered, align 1
-  %res5 = load atomic volatile i8* %ptr1 unordered, align 1
+; CHECK-NEXT: %res5 = load atomic volatile i8, i8* %ptr1 unordered, align 1
+  %res5 = load atomic volatile i8, i8* %ptr1 unordered, align 1
 
-; CHECK-NEXT: %res6 = load atomic volatile i8* %ptr1 monotonic, align 1
-  %res6 = load atomic volatile i8* %ptr1 monotonic, align 1
+; CHECK-NEXT: %res6 = load atomic volatile i8, i8* %ptr1 monotonic, align 1
+  %res6 = load atomic volatile i8, i8* %ptr1 monotonic, align 1
 
-; CHECK-NEXT: %res7 = load atomic volatile i8* %ptr1 acquire, align 1
-  %res7 = load atomic volatile i8* %ptr1 acquire, align 1
+; CHECK-NEXT: %res7 = load atomic volatile i8, i8* %ptr1 acquire, align 1
+  %res7 = load atomic volatile i8, i8* %ptr1 acquire, align 1
 
-; CHECK-NEXT: %res8 = load atomic volatile i8* %ptr1 seq_cst, align 1
-  %res8 = load atomic volatile i8* %ptr1 seq_cst, align 1
+; CHECK-NEXT: %res8 = load atomic volatile i8, i8* %ptr1 seq_cst, align 1
+  %res8 = load atomic volatile i8, i8* %ptr1 seq_cst, align 1
 
-; CHECK-NEXT: %res9 = load atomic i8* %ptr1 singlethread unordered, align 1
-  %res9 = load atomic i8* %ptr1 singlethread unordered, align 1
+; CHECK-NEXT: %res9 = load atomic i8, i8* %ptr1 singlethread unordered, align 1
+  %res9 = load atomic i8, i8* %ptr1 singlethread unordered, align 1
 
-; CHECK-NEXT: %res10 = load atomic i8* %ptr1 singlethread monotonic, align 1
-  %res10 = load atomic i8* %ptr1 singlethread monotonic, align 1
+; CHECK-NEXT: %res10 = load atomic i8, i8* %ptr1 singlethread monotonic, align 1
+  %res10 = load atomic i8, i8* %ptr1 singlethread monotonic, align 1
 
-; CHECK-NEXT: %res11 = load atomic i8* %ptr1 singlethread acquire, align 1
-  %res11 = load atomic i8* %ptr1 singlethread acquire, align 1
+; CHECK-NEXT: %res11 = load atomic i8, i8* %ptr1 singlethread acquire, align 1
+  %res11 = load atomic i8, i8* %ptr1 singlethread acquire, align 1
 
-; CHECK-NEXT: %res12 = load atomic i8* %ptr1 singlethread seq_cst, align 1
-  %res12 = load atomic i8* %ptr1 singlethread seq_cst, align 1
+; CHECK-NEXT: %res12 = load atomic i8, i8* %ptr1 singlethread seq_cst, align 1
+  %res12 = load atomic i8, i8* %ptr1 singlethread seq_cst, align 1
 
-; CHECK-NEXT: %res13 = load atomic volatile i8* %ptr1 singlethread unordered, align 1
-  %res13 = load atomic volatile i8* %ptr1 singlethread unordered, align 1
+; CHECK-NEXT: %res13 = load atomic volatile i8, i8* %ptr1 singlethread unordered, align 1
+  %res13 = load atomic volatile i8, i8* %ptr1 singlethread unordered, align 1
 
-; CHECK-NEXT: %res14 = load atomic volatile i8* %ptr1 singlethread monotonic, align 1
-  %res14 = load atomic volatile i8* %ptr1 singlethread monotonic, align 1
+; CHECK-NEXT: %res14 = load atomic volatile i8, i8* %ptr1 singlethread monotonic, align 1
+  %res14 = load atomic volatile i8, i8* %ptr1 singlethread monotonic, align 1
 
-; CHECK-NEXT: %res15 = load atomic volatile i8* %ptr1 singlethread acquire, align 1
-  %res15 = load atomic volatile i8* %ptr1 singlethread acquire, align 1
+; CHECK-NEXT: %res15 = load atomic volatile i8, i8* %ptr1 singlethread acquire, align 1
+  %res15 = load atomic volatile i8, i8* %ptr1 singlethread acquire, align 1
 
-; CHECK-NEXT: %res16 = load atomic volatile i8* %ptr1 singlethread seq_cst, align 1
-  %res16 = load atomic volatile i8* %ptr1 singlethread seq_cst, align 1
+; CHECK-NEXT: %res16 = load atomic volatile i8, i8* %ptr1 singlethread seq_cst, align 1
+  %res16 = load atomic volatile i8, i8* %ptr1 singlethread seq_cst, align 1
 
   ret void
 }

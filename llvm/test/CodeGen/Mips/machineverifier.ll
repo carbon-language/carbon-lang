@@ -6,7 +6,7 @@
 
 define void @foo() nounwind {
 entry:
-  %0 = load i32* @g, align 4
+  %0 = load i32, i32* @g, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %if.end, label %if.then
 

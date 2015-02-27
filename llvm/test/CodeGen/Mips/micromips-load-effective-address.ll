@@ -7,10 +7,10 @@ entry:
   %y.addr = alloca i32*, align 8
   store i32* %x, i32** %x.addr, align 8
   store i32* %y, i32** %y.addr, align 8
-  %0 = load i32** %x.addr, align 8
-  %1 = load i32* %0, align 4
-  %2 = load i32** %y.addr, align 8
-  %3 = load i32* %2, align 4
+  %0 = load i32*, i32** %x.addr, align 8
+  %1 = load i32, i32* %0, align 4
+  %2 = load i32*, i32** %y.addr, align 8
+  %3 = load i32, i32* %2, align 4
   %add = add nsw i32 %1, %3
   ret i32 %add
 }

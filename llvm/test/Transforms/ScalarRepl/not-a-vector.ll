@@ -13,7 +13,7 @@ define double @test(double %A, double %B) {
 	store double %B, double* %E
 
 	%F = getelementptr double, double* %C, i32 4
-	%G = load double* %F
+	%G = load double, double* %F
 	ret double %G
 }
 

@@ -13,13 +13,13 @@ internal constant %struct.__builtin_CFString { i32* getelementptr ([0 x i32]* @_
 
 define %struct.NSString* @"-[XCStringList stringRepresentation]"(%struct.XCStringList* %self, %struct..0objc_selector* %_cmd) nounwind {
 entry:
-	%0 = load i32* null, align 4		; <i32> [#uses=1]
+	%0 = load i32, i32* null, align 4		; <i32> [#uses=1]
 	%1 = and i32 %0, 16777215		; <i32> [#uses=1]
 	%2 = icmp eq i32 %1, 0		; <i1> [#uses=1]
 	br i1 %2, label %bb44, label %bb4
 
 bb4:		; preds = %entry
-	%3 = load %struct._XCStringListNode** null, align 4		; <%struct._XCStringListNode*> [#uses=2]
+	%3 = load %struct._XCStringListNode*, %struct._XCStringListNode** null, align 4		; <%struct._XCStringListNode*> [#uses=2]
 	%4 = icmp eq %struct._XCStringListNode* %3, null		; <i1> [#uses=1]
 	%5 = bitcast %struct._XCStringListNode* %3 to i32*		; <i32*> [#uses=1]
 	br label %bb37.outer
@@ -48,7 +48,7 @@ bb35.outer:		; preds = %bb34, %bb25.split
 	br label %bb35
 
 bb35:		; preds = %bb35, %bb35.outer
-	%9 = load i8* null, align 1		; <i8> [#uses=1]
+	%9 = load i8, i8* null, align 1		; <i8> [#uses=1]
 	switch i8 %9, label %bb35 [
 		i8 0, label %bb37.outer
 		i8 32, label %bb34
@@ -63,7 +63,7 @@ bb37.outer:		; preds = %bb35, %bb4
 	br i1 %4, label %bb39.split, label %bb37
 
 bb37:		; preds = %bb37.outer, %bb19
-	%10 = load i32* %5, align 4		; <i32> [#uses=1]
+	%10 = load i32, i32* %5, align 4		; <i32> [#uses=1]
 	br i1 false, label %bb6, label %bb19
 
 bb39.split:		; preds = %bb37.outer

@@ -48,7 +48,7 @@ first:
 
 define i1 @loada() {
 entry:
-  %a = load i1* getelementptr ([4 x i1]* @a, i64 0, i64 2)
+  %a = load i1, i1* getelementptr ([4 x i1]* @a, i64 0, i64 2)
   ret i1 %a
 }
 

@@ -14,7 +14,7 @@ entry:
 bb:
 	%i.019.0 = phi i32 [ %indvar.next, %bb ], [ 0, %entry ]
 	%tmp2 = getelementptr [1000 x float], [1000 x float]* @B, i32 0, i32 %i.019.0
-	%tmp3 = load float* %tmp2, align 4
+	%tmp3 = load float, float* %tmp2, align 4
 	%tmp4 = fmul float %tmp3, 2.000000e+00
 	%tmp5 = getelementptr [1000 x float], [1000 x float]* @A, i32 0, i32 %i.019.0
 	store float %tmp4, float* %tmp5, align 4

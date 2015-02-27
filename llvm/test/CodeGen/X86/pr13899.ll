@@ -26,25 +26,25 @@ declare <8 x float> @bar64(<8 x float> %i0, <8 x float> %i1,
                          <8 x float> %i8, <8 x float> %i9)
 
 define <8 x float> @foo64(<8 x float>* %p) {
-  %1 = load <8 x float>* %p
+  %1 = load <8 x float>, <8 x float>* %p
   %idx1 = getelementptr inbounds <8 x float>, <8 x float>* %p, i64 1
-  %2 = load <8 x float>* %idx1
+  %2 = load <8 x float>, <8 x float>* %idx1
   %idx2 = getelementptr inbounds <8 x float>, <8 x float>* %p, i64 2
-  %3 = load <8 x float>* %idx2
+  %3 = load <8 x float>, <8 x float>* %idx2
   %idx3 = getelementptr inbounds <8 x float>, <8 x float>* %p, i64 3
-  %4 = load <8 x float>* %idx3
+  %4 = load <8 x float>, <8 x float>* %idx3
   %idx4 = getelementptr inbounds <8 x float>, <8 x float>* %p, i64 4
-  %5 = load <8 x float>* %idx4
+  %5 = load <8 x float>, <8 x float>* %idx4
   %idx5 = getelementptr inbounds <8 x float>, <8 x float>* %p, i64 5
-  %6 = load <8 x float>* %idx5
+  %6 = load <8 x float>, <8 x float>* %idx5
   %idx6 = getelementptr inbounds <8 x float>, <8 x float>* %p, i64 6
-  %7 = load <8 x float>* %idx6
+  %7 = load <8 x float>, <8 x float>* %idx6
   %idx7 = getelementptr inbounds <8 x float>, <8 x float>* %p, i64 7
-  %8 = load <8 x float>* %idx7
+  %8 = load <8 x float>, <8 x float>* %idx7
   %idx8 = getelementptr inbounds <8 x float>, <8 x float>* %p, i64 8
-  %9 = load <8 x float>* %idx8
+  %9 = load <8 x float>, <8 x float>* %idx8
   %idx9 = getelementptr inbounds <8 x float>, <8 x float>* %p, i64 9
-  %10 = load <8 x float>* %idx9
+  %10 = load <8 x float>, <8 x float>* %idx9
   %r = tail call <8 x float> @bar64(<8 x float> %1, <8 x float> %2,
                                     <8 x float> %3, <8 x float> %4,
                                     <8 x float> %5, <8 x float> %6,

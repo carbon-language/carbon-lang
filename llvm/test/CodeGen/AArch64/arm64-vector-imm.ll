@@ -5,7 +5,7 @@ define <8 x i8> @v_orrimm(<8 x i8>* %A) nounwind {
 ; CHECK-NOT: mov
 ; CHECK-NOT: mvn
 ; CHECK: orr
-	%tmp1 = load <8 x i8>* %A
+	%tmp1 = load <8 x i8>, <8 x i8>* %A
 	%tmp3 = or <8 x i8> %tmp1, <i8 0, i8 0, i8 0, i8 1, i8 0, i8 0, i8 0, i8 1>
 	ret <8 x i8> %tmp3
 }
@@ -15,7 +15,7 @@ define <16 x i8> @v_orrimmQ(<16 x i8>* %A) nounwind {
 ; CHECK-NOT: mov
 ; CHECK-NOT: mvn
 ; CHECK: orr
-	%tmp1 = load <16 x i8>* %A
+	%tmp1 = load <16 x i8>, <16 x i8>* %A
 	%tmp3 = or <16 x i8> %tmp1, <i8 0, i8 0, i8 0, i8 1, i8 0, i8 0, i8 0, i8 1, i8 0, i8 0, i8 0, i8 1, i8 0, i8 0, i8 0, i8 1>
 	ret <16 x i8> %tmp3
 }
@@ -25,7 +25,7 @@ define <8 x i8> @v_bicimm(<8 x i8>* %A) nounwind {
 ; CHECK-NOT: mov
 ; CHECK-NOT: mvn
 ; CHECK: bic
-	%tmp1 = load <8 x i8>* %A
+	%tmp1 = load <8 x i8>, <8 x i8>* %A
 	%tmp3 = and <8 x i8> %tmp1, < i8 -1, i8 -1, i8 -1, i8 0, i8 -1, i8 -1, i8 -1, i8 0 >
 	ret <8 x i8> %tmp3
 }
@@ -35,7 +35,7 @@ define <16 x i8> @v_bicimmQ(<16 x i8>* %A) nounwind {
 ; CHECK-NOT: mov
 ; CHECK-NOT: mvn
 ; CHECK: bic
-	%tmp1 = load <16 x i8>* %A
+	%tmp1 = load <16 x i8>, <16 x i8>* %A
 	%tmp3 = and <16 x i8> %tmp1, < i8 -1, i8 -1, i8 -1, i8 0, i8 -1, i8 -1, i8 -1, i8 0, i8 -1, i8 -1, i8 -1, i8 0, i8 -1, i8 -1, i8 -1, i8 0 >
 	ret <16 x i8> %tmp3
 }

@@ -15,17 +15,17 @@ target triple = "x86_64-apple-macosx10.7"
 
 define void @f() nounwind uwtable ssp {
 entry:
-  %0 = load i32* undef, align 4
+  %0 = load i32, i32* undef, align 4
   %add = add i32 0, %0
   %conv1 = trunc i32 %add to i16
   %bf.value = and i16 %conv1, 255
   %1 = and i16 %bf.value, 255
   %2 = shl i16 %1, 8
-  %3 = load i16* undef, align 1
+  %3 = load i16, i16* undef, align 1
   %4 = and i16 %3, 255
   %5 = or i16 %4, %2
   store i16 %5, i16* undef, align 1
-  %6 = load i16* undef, align 1
+  %6 = load i16, i16* undef, align 1
   %7 = lshr i16 %6, 8
   %bf.clear2 = and i16 %7, 255
   %conv3 = zext i16 %bf.clear2 to i32

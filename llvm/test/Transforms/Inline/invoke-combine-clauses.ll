@@ -20,7 +20,7 @@ cont:
 lpad:
   %lp = landingpad i32 personality i8* null
       catch i8* @exception_inner
-  %cond = load i1* @condition
+  %cond = load i1, i1* @condition
   br i1 %cond, label %resume1, label %resume2
 resume1:
   resume i32 1

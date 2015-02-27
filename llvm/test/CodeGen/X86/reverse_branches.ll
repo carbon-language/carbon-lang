@@ -68,7 +68,7 @@ for.body20:
 do.body.i:
   %n.addr.0.i = phi i64 [ %dec.i, %do.cond.i ], [ 1000, %for.body20 ]
   %p.0.i = phi i8* [ %incdec.ptr.i, %do.cond.i ], [ %arraydecay24, %for.body20 ]
-  %2 = load i8* %p.0.i, align 1
+  %2 = load i8, i8* %p.0.i, align 1
   %cmp3.i = icmp eq i8 %2, 120
   br i1 %cmp3.i, label %exit, label %do.cond.i
 

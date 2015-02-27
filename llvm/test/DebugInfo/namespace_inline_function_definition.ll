@@ -40,10 +40,10 @@ entry:
   %i.addr.i = alloca i32, align 4
   %retval = alloca i32, align 4
   store i32 0, i32* %retval
-  %0 = load i32* @x, align 4, !dbg !16
+  %0 = load i32, i32* @x, align 4, !dbg !16
   store i32 %0, i32* %i.addr.i, align 4
   call void @llvm.dbg.declare(metadata i32* %i.addr.i, metadata !17, metadata !{!"0x102"}), !dbg !18
-  %1 = load i32* %i.addr.i, align 4, !dbg !18
+  %1 = load i32, i32* %i.addr.i, align 4, !dbg !18
   %mul.i = mul nsw i32 %1, 2, !dbg !18
   ret i32 %mul.i, !dbg !16
 }
@@ -54,7 +54,7 @@ entry:
   %i.addr = alloca i32, align 4
   store i32 %i, i32* %i.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %i.addr, metadata !17, metadata !{!"0x102"}), !dbg !19
-  %0 = load i32* %i.addr, align 4, !dbg !19
+  %0 = load i32, i32* %i.addr, align 4, !dbg !19
   %mul = mul nsw i32 %0, 2, !dbg !19
   ret i32 %mul, !dbg !19
 }

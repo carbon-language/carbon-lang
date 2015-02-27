@@ -31,7 +31,7 @@ define void @load-pre-indexed-word(%struct.word* %ptr) nounwind {
 ; CHECK: ldr w{{[0-9]+}}, [x{{[0-9]+}}, #32]!
 entry:
   %a = getelementptr inbounds %struct.word, %struct.word* %ptr, i64 0, i32 1, i32 0
-  %add = load i32* %a, align 4
+  %add = load i32, i32* %a, align 4
   br label %bar
 bar:
   %c = getelementptr inbounds %struct.word, %struct.word* %ptr, i64 0, i32 1
@@ -59,7 +59,7 @@ define void @load-pre-indexed-doubleword(%struct.doubleword* %ptr) nounwind {
 ; CHECK: ldr x{{[0-9]+}}, [x{{[0-9]+}}, #32]!
 entry:
   %a = getelementptr inbounds %struct.doubleword, %struct.doubleword* %ptr, i64 0, i32 1, i32 0
-  %add = load i64* %a, align 4
+  %add = load i64, i64* %a, align 4
   br label %bar
 bar:
   %c = getelementptr inbounds %struct.doubleword, %struct.doubleword* %ptr, i64 0, i32 1
@@ -87,7 +87,7 @@ define void @load-pre-indexed-quadword(%struct.quadword* %ptr) nounwind {
 ; CHECK: ldr q{{[0-9]+}}, [x{{[0-9]+}}, #32]!
 entry:
   %a = getelementptr inbounds %struct.quadword, %struct.quadword* %ptr, i64 0, i32 1, i32 0
-  %add = load fp128* %a, align 4
+  %add = load fp128, fp128* %a, align 4
   br label %bar
 bar:
   %c = getelementptr inbounds %struct.quadword, %struct.quadword* %ptr, i64 0, i32 1
@@ -115,7 +115,7 @@ define void @load-pre-indexed-float(%struct.float* %ptr) nounwind {
 ; CHECK: ldr s{{[0-9]+}}, [x{{[0-9]+}}, #32]!
 entry:
   %a = getelementptr inbounds %struct.float, %struct.float* %ptr, i64 0, i32 1, i32 0
-  %add = load float* %a, align 4
+  %add = load float, float* %a, align 4
   br label %bar
 bar:
   %c = getelementptr inbounds %struct.float, %struct.float* %ptr, i64 0, i32 1
@@ -143,7 +143,7 @@ define void @load-pre-indexed-double(%struct.double* %ptr) nounwind {
 ; CHECK: ldr d{{[0-9]+}}, [x{{[0-9]+}}, #32]!
 entry:
   %a = getelementptr inbounds %struct.double, %struct.double* %ptr, i64 0, i32 1, i32 0
-  %add = load double* %a, align 4
+  %add = load double, double* %a, align 4
   br label %bar
 bar:
   %c = getelementptr inbounds %struct.double, %struct.double* %ptr, i64 0, i32 1
@@ -186,7 +186,7 @@ define i32 @load-pre-indexed-word2(%pre.struct.i32** %this, i1 %cond,
 ; CHECK: ldr w{{[0-9]+}}, [x{{[0-9]+}}, #4]!
   br i1 %cond, label %if.then, label %if.end
 if.then:
-  %load1 = load %pre.struct.i32** %this
+  %load1 = load %pre.struct.i32*, %pre.struct.i32** %this
   %gep1 = getelementptr inbounds %pre.struct.i32, %pre.struct.i32* %load1, i64 0, i32 1
   br label %return
 if.end:
@@ -194,7 +194,7 @@ if.end:
   br label %return
 return:
   %retptr = phi i32* [ %gep1, %if.then ], [ %gep2, %if.end ]
-  %ret = load i32* %retptr
+  %ret = load i32, i32* %retptr
   ret i32 %ret
 }
 
@@ -204,7 +204,7 @@ define i64 @load-pre-indexed-doubleword2(%pre.struct.i64** %this, i1 %cond,
 ; CHECK: ldr x{{[0-9]+}}, [x{{[0-9]+}}, #8]!
   br i1 %cond, label %if.then, label %if.end
 if.then:
-  %load1 = load %pre.struct.i64** %this
+  %load1 = load %pre.struct.i64*, %pre.struct.i64** %this
   %gep1 = getelementptr inbounds %pre.struct.i64, %pre.struct.i64* %load1, i64 0, i32 1
   br label %return
 if.end:
@@ -212,7 +212,7 @@ if.end:
   br label %return
 return:
   %retptr = phi i64* [ %gep1, %if.then ], [ %gep2, %if.end ]
-  %ret = load i64* %retptr
+  %ret = load i64, i64* %retptr
   ret i64 %ret
 }
 
@@ -222,7 +222,7 @@ define <2 x i64> @load-pre-indexed-quadword2(%pre.struct.i128** %this, i1 %cond,
 ; CHECK: ldr q{{[0-9]+}}, [x{{[0-9]+}}, #16]!
   br i1 %cond, label %if.then, label %if.end
 if.then:
-  %load1 = load %pre.struct.i128** %this
+  %load1 = load %pre.struct.i128*, %pre.struct.i128** %this
   %gep1 = getelementptr inbounds %pre.struct.i128, %pre.struct.i128* %load1, i64 0, i32 1
   br label %return
 if.end:
@@ -230,7 +230,7 @@ if.end:
   br label %return
 return:
   %retptr = phi <2 x i64>* [ %gep1, %if.then ], [ %gep2, %if.end ]
-  %ret = load <2 x i64>* %retptr
+  %ret = load <2 x i64>, <2 x i64>* %retptr
   ret <2 x i64> %ret
 }
 
@@ -240,7 +240,7 @@ define float @load-pre-indexed-float2(%pre.struct.float** %this, i1 %cond,
 ; CHECK: ldr s{{[0-9]+}}, [x{{[0-9]+}}, #4]!
   br i1 %cond, label %if.then, label %if.end
 if.then:
-  %load1 = load %pre.struct.float** %this
+  %load1 = load %pre.struct.float*, %pre.struct.float** %this
   %gep1 = getelementptr inbounds %pre.struct.float, %pre.struct.float* %load1, i64 0, i32 1
   br label %return
 if.end:
@@ -248,7 +248,7 @@ if.end:
   br label %return
 return:
   %retptr = phi float* [ %gep1, %if.then ], [ %gep2, %if.end ]
-  %ret = load float* %retptr
+  %ret = load float, float* %retptr
   ret float %ret
 }
 
@@ -258,7 +258,7 @@ define double @load-pre-indexed-double2(%pre.struct.double** %this, i1 %cond,
 ; CHECK: ldr d{{[0-9]+}}, [x{{[0-9]+}}, #8]!
   br i1 %cond, label %if.then, label %if.end
 if.then:
-  %load1 = load %pre.struct.double** %this
+  %load1 = load %pre.struct.double*, %pre.struct.double** %this
   %gep1 = getelementptr inbounds %pre.struct.double, %pre.struct.double* %load1, i64 0, i32 1
   br label %return
 if.end:
@@ -266,7 +266,7 @@ if.end:
   br label %return
 return:
   %retptr = phi double* [ %gep1, %if.then ], [ %gep2, %if.end ]
-  %ret = load double* %retptr
+  %ret = load double, double* %retptr
   ret double %ret
 }
 
@@ -287,7 +287,7 @@ define void @store-pre-indexed-word2(%pre.struct.i32** %this, i1 %cond,
 ; CHECK: str w{{[0-9]+}}, [x{{[0-9]+}}, #4]!
   br i1 %cond, label %if.then, label %if.end
 if.then:
-  %load1 = load %pre.struct.i32** %this
+  %load1 = load %pre.struct.i32*, %pre.struct.i32** %this
   %gep1 = getelementptr inbounds %pre.struct.i32, %pre.struct.i32* %load1, i64 0, i32 1
   br label %return
 if.end:
@@ -306,7 +306,7 @@ define void @store-pre-indexed-doubleword2(%pre.struct.i64** %this, i1 %cond,
 ; CHECK: str x{{[0-9]+}}, [x{{[0-9]+}}, #8]!
   br i1 %cond, label %if.then, label %if.end
 if.then:
-  %load1 = load %pre.struct.i64** %this
+  %load1 = load %pre.struct.i64*, %pre.struct.i64** %this
   %gep1 = getelementptr inbounds %pre.struct.i64, %pre.struct.i64* %load1, i64 0, i32 1
   br label %return
 if.end:
@@ -325,7 +325,7 @@ define void @store-pre-indexed-quadword2(%pre.struct.i128** %this, i1 %cond,
 ; CHECK: str q{{[0-9]+}}, [x{{[0-9]+}}, #16]!
   br i1 %cond, label %if.then, label %if.end
 if.then:
-  %load1 = load %pre.struct.i128** %this
+  %load1 = load %pre.struct.i128*, %pre.struct.i128** %this
   %gep1 = getelementptr inbounds %pre.struct.i128, %pre.struct.i128* %load1, i64 0, i32 1
   br label %return
 if.end:
@@ -344,7 +344,7 @@ define void @store-pre-indexed-float2(%pre.struct.float** %this, i1 %cond,
 ; CHECK: str s{{[0-9]+}}, [x{{[0-9]+}}, #4]!
   br i1 %cond, label %if.then, label %if.end
 if.then:
-  %load1 = load %pre.struct.float** %this
+  %load1 = load %pre.struct.float*, %pre.struct.float** %this
   %gep1 = getelementptr inbounds %pre.struct.float, %pre.struct.float* %load1, i64 0, i32 1
   br label %return
 if.end:
@@ -363,7 +363,7 @@ define void @store-pre-indexed-double2(%pre.struct.double** %this, i1 %cond,
 ; CHECK: str d{{[0-9]+}}, [x{{[0-9]+}}, #8]!
   br i1 %cond, label %if.then, label %if.end
 if.then:
-  %load1 = load %pre.struct.double** %this
+  %load1 = load %pre.struct.double*, %pre.struct.double** %this
   %gep1 = getelementptr inbounds %pre.struct.double, %pre.struct.double* %load1, i64 0, i32 1
   br label %return
 if.end:
@@ -396,9 +396,9 @@ body:
   %iv2 = phi i32* [ %gep3, %body ], [ %gep1, %entry ]
   %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
   %gep2 = getelementptr i32, i32* %iv2, i64 -1
-  %load = load i32* %gep2
+  %load = load i32, i32* %gep2
   call void @use-word(i32 %load)
-  %load2 = load i32* %iv2
+  %load2 = load i32, i32* %iv2
   call void @use-word(i32 %load2)
   %iv.next = add i64 %iv, -4
   %gep3 = getelementptr i32, i32* %iv2, i64 4
@@ -420,9 +420,9 @@ body:
   %iv2 = phi i64* [ %gep3, %body ], [ %gep1, %entry ]
   %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
   %gep2 = getelementptr i64, i64* %iv2, i64 -1
-  %load = load i64* %gep2
+  %load = load i64, i64* %gep2
   call void @use-doubleword(i64 %load)
-  %load2 = load i64* %iv2
+  %load2 = load i64, i64* %iv2
   call void @use-doubleword(i64 %load2)
   %iv.next = add i64 %iv, -4
   %gep3 = getelementptr i64, i64* %iv2, i64 4
@@ -444,9 +444,9 @@ body:
   %iv2 = phi <2 x i64>* [ %gep3, %body ], [ %gep1, %entry ]
   %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
   %gep2 = getelementptr <2 x i64>, <2 x i64>* %iv2, i64 -1
-  %load = load <2 x i64>* %gep2
+  %load = load <2 x i64>, <2 x i64>* %gep2
   call void @use-quadword(<2 x i64> %load)
-  %load2 = load <2 x i64>* %iv2
+  %load2 = load <2 x i64>, <2 x i64>* %iv2
   call void @use-quadword(<2 x i64> %load2)
   %iv.next = add i64 %iv, -4
   %gep3 = getelementptr <2 x i64>, <2 x i64>* %iv2, i64 4
@@ -468,9 +468,9 @@ body:
   %iv2 = phi float* [ %gep3, %body ], [ %gep1, %entry ]
   %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
   %gep2 = getelementptr float, float* %iv2, i64 -1
-  %load = load float* %gep2
+  %load = load float, float* %gep2
   call void @use-float(float %load)
-  %load2 = load float* %iv2
+  %load2 = load float, float* %iv2
   call void @use-float(float %load2)
   %iv.next = add i64 %iv, -4
   %gep3 = getelementptr float, float* %iv2, i64 4
@@ -492,9 +492,9 @@ body:
   %iv2 = phi double* [ %gep3, %body ], [ %gep1, %entry ]
   %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
   %gep2 = getelementptr double, double* %iv2, i64 -1
-  %load = load double* %gep2
+  %load = load double, double* %gep2
   call void @use-double(double %load)
-  %load2 = load double* %iv2
+  %load2 = load double, double* %iv2
   call void @use-double(double %load2)
   %iv.next = add i64 %iv, -4
   %gep3 = getelementptr double, double* %iv2, i64 4
@@ -526,7 +526,7 @@ body:
   %iv2 = phi i32* [ %gep3, %body ], [ %gep1, %entry ]
   %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
   %gep2 = getelementptr i32, i32* %iv2, i64 -1
-  %load = load i32* %gep2
+  %load = load i32, i32* %gep2
   call void @use-word(i32 %load)
   store i32 %val, i32* %iv2
   %iv.next = add i64 %iv, -4
@@ -549,7 +549,7 @@ body:
   %iv2 = phi i64* [ %gep3, %body ], [ %gep1, %entry ]
   %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
   %gep2 = getelementptr i64, i64* %iv2, i64 -1
-  %load = load i64* %gep2
+  %load = load i64, i64* %gep2
   call void @use-doubleword(i64 %load)
   store i64 %val, i64* %iv2
   %iv.next = add i64 %iv, -4
@@ -572,7 +572,7 @@ body:
   %iv2 = phi <2 x i64>* [ %gep3, %body ], [ %gep1, %entry ]
   %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
   %gep2 = getelementptr <2 x i64>, <2 x i64>* %iv2, i64 -1
-  %load = load <2 x i64>* %gep2
+  %load = load <2 x i64>, <2 x i64>* %gep2
   call void @use-quadword(<2 x i64> %load)
   store <2 x i64> %val, <2 x i64>* %iv2
   %iv.next = add i64 %iv, -4
@@ -595,7 +595,7 @@ body:
   %iv2 = phi float* [ %gep3, %body ], [ %gep1, %entry ]
   %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
   %gep2 = getelementptr float, float* %iv2, i64 -1
-  %load = load float* %gep2
+  %load = load float, float* %gep2
   call void @use-float(float %load)
   store float %val, float* %iv2
   %iv.next = add i64 %iv, -4
@@ -618,7 +618,7 @@ body:
   %iv2 = phi double* [ %gep3, %body ], [ %gep1, %entry ]
   %iv = phi i64 [ %iv.next, %body ], [ %count, %entry ]
   %gep2 = getelementptr double, double* %iv2, i64 -1
-  %load = load double* %gep2
+  %load = load double, double* %gep2
   call void @use-double(double %load)
   store double %val, double* %iv2
   %iv.next = add i64 %iv, -4
@@ -656,10 +656,10 @@ for.body:
   %phi2 = phi i32* [ %gep3, %for.body ], [ %a, %0 ]
   %i = phi i64 [ %dec.i, %for.body], [ %count, %0 ]
   %gep1 = getelementptr i32, i32* %phi1, i64 -1
-  %load1 = load i32* %gep1
+  %load1 = load i32, i32* %gep1
   %gep2 = getelementptr i32, i32* %phi2, i64 -1
   store i32 %load1, i32* %gep2
-  %load2 = load i32* %phi1
+  %load2 = load i32, i32* %phi1
   store i32 %load2, i32* %phi2
   %dec.i = add nsw i64 %i, -1
   %gep3 = getelementptr i32, i32* %phi2, i64 -2
@@ -680,10 +680,10 @@ for.body:
   %phi2 = phi i64* [ %gep3, %for.body ], [ %a, %0 ]
   %i = phi i64 [ %dec.i, %for.body], [ %count, %0 ]
   %gep1 = getelementptr i64, i64* %phi1, i64 -1
-  %load1 = load i64* %gep1
+  %load1 = load i64, i64* %gep1
   %gep2 = getelementptr i64, i64* %phi2, i64 -1
   store i64 %load1, i64* %gep2
-  %load2 = load i64* %phi1
+  %load2 = load i64, i64* %phi1
   store i64 %load2, i64* %phi2
   %dec.i = add nsw i64 %i, -1
   %gep3 = getelementptr i64, i64* %phi2, i64 -2
@@ -704,10 +704,10 @@ for.body:
   %phi2 = phi <2 x i64>* [ %gep3, %for.body ], [ %a, %0 ]
   %i = phi i64 [ %dec.i, %for.body], [ %count, %0 ]
   %gep1 = getelementptr <2 x i64>, <2 x i64>* %phi1, i64 -1
-  %load1 = load <2 x i64>* %gep1
+  %load1 = load <2 x i64>, <2 x i64>* %gep1
   %gep2 = getelementptr <2 x i64>, <2 x i64>* %phi2, i64 -1
   store <2 x i64> %load1, <2 x i64>* %gep2
-  %load2 = load <2 x i64>* %phi1
+  %load2 = load <2 x i64>, <2 x i64>* %phi1
   store <2 x i64> %load2, <2 x i64>* %phi2
   %dec.i = add nsw i64 %i, -1
   %gep3 = getelementptr <2 x i64>, <2 x i64>* %phi2, i64 -2
@@ -728,10 +728,10 @@ for.body:
   %phi2 = phi float* [ %gep3, %for.body ], [ %a, %0 ]
   %i = phi i64 [ %dec.i, %for.body], [ %count, %0 ]
   %gep1 = getelementptr float, float* %phi1, i64 -1
-  %load1 = load float* %gep1
+  %load1 = load float, float* %gep1
   %gep2 = getelementptr float, float* %phi2, i64 -1
   store float %load1, float* %gep2
-  %load2 = load float* %phi1
+  %load2 = load float, float* %phi1
   store float %load2, float* %phi2
   %dec.i = add nsw i64 %i, -1
   %gep3 = getelementptr float, float* %phi2, i64 -2
@@ -752,10 +752,10 @@ for.body:
   %phi2 = phi double* [ %gep3, %for.body ], [ %a, %0 ]
   %i = phi i64 [ %dec.i, %for.body], [ %count, %0 ]
   %gep1 = getelementptr double, double* %phi1, i64 -1
-  %load1 = load double* %gep1
+  %load1 = load double, double* %gep1
   %gep2 = getelementptr double, double* %phi2, i64 -1
   store double %load1, double* %gep2
-  %load2 = load double* %phi1
+  %load2 = load double, double* %phi1
   store double %load2, double* %phi2
   %dec.i = add nsw i64 %i, -1
   %gep3 = getelementptr double, double* %phi2, i64 -2

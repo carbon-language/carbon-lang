@@ -14,7 +14,7 @@ entry:
   %a = alloca <4 x float>, align 16
   %p = bitcast <4 x float>* %a to i8*
   call void @llvm.memset.p0i8.i32(i8* %p, i8 0, i32 3, i32 16, i1 false)
-  %vec = load <4 x float>* %a, align 8
+  %vec = load <4 x float>, <4 x float>* %a, align 8
   %val = extractelement <4 x float> %vec, i32 0
   ret float %val
 }

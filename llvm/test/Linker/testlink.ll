@@ -76,15 +76,15 @@ declare i32 @foo(i32)
 declare void @print(i32)
 
 define void @main() {
-  %v1 = load i32* @MyVar
+  %v1 = load i32, i32* @MyVar
   call void @print(i32 %v1)
   %idx = getelementptr %intlist, %intlist* @MyIntList, i64 0, i32 1
-  %v2 = load i32* %idx
+  %v2 = load i32, i32* %idx
   call void @print(i32 %v2)
   %1 = call i32 @foo(i32 5)
-  %v3 = load i32* @MyVar
+  %v3 = load i32, i32* @MyVar
   call void @print(i32 %v3)
-  %v4 = load i32* %idx
+  %v4 = load i32, i32* %idx
   call void @print(i32 %v4)
   ret void
 }

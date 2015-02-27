@@ -34,7 +34,7 @@ entry:
 }
 
 ; CHECK: @test_cvtsi2sd
-; CHECK: [[Sa:%[_01-9a-z]+]] = load i32* {{.*}} @__msan_param_tls
+; CHECK: [[Sa:%[_01-9a-z]+]] = load i32, i32* {{.*}} @__msan_param_tls
 ; CHECK: [[Sout0:%[_01-9a-z]+]] = insertelement <2 x i64> <i64 -1, i64 -1>, i64 {{.*}}, i32 1
 ; Clear low half of result shadow
 ; CHECK: [[Sout:%[_01-9a-z]+]] = insertelement <2 x i64> {{.*}}[[Sout0]], i64 0, i32 0

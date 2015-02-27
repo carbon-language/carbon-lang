@@ -1906,7 +1906,7 @@ define <8 x float> @splat_mem_v8f32_2(float* %p) {
 ; ALL:       # BB#0:
 ; ALL-NEXT:    vbroadcastss (%rdi), %ymm0
 ; ALL-NEXT:    retq
-  %1 = load float* %p
+  %1 = load float, float* %p
   %2 = insertelement <4 x float> undef, float %1, i32 0
   %3 = shufflevector <4 x float> %2, <4 x float> undef, <8 x i32> zeroinitializer
   ret <8 x float> %3
@@ -2058,8 +2058,8 @@ define <8x float> @concat_v2f32_1(<2 x float>* %tmp64, <2 x float>* %tmp65) {
 ; ALL-NEXT:    vmovhpd (%rsi), %xmm0, %xmm0
 ; ALL-NEXT:    retq
 entry:
-  %tmp74 = load <2 x float>* %tmp65, align 8
-  %tmp72 = load <2 x float>* %tmp64, align 8
+  %tmp74 = load <2 x float>, <2 x float>* %tmp65, align 8
+  %tmp72 = load <2 x float>, <2 x float>* %tmp64, align 8
   %tmp73 = shufflevector <2 x float> %tmp72, <2 x float> undef, <8 x i32> <i32 0, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   %tmp75 = shufflevector <2 x float> %tmp74, <2 x float> undef, <8 x i32> <i32 0, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   %tmp76 = shufflevector <8 x float> %tmp73, <8 x float> %tmp75, <8 x i32> <i32 0, i32 1, i32 8, i32 9, i32 undef, i32 undef, i32 undef, i32 undef>
@@ -2073,8 +2073,8 @@ define <8x float> @concat_v2f32_2(<2 x float>* %tmp64, <2 x float>* %tmp65) {
 ; ALL-NEXT:    vmovhpd (%rsi), %xmm0, %xmm0
 ; ALL-NEXT:    retq
 entry:
-  %tmp74 = load <2 x float>* %tmp65, align 8
-  %tmp72 = load <2 x float>* %tmp64, align 8
+  %tmp74 = load <2 x float>, <2 x float>* %tmp65, align 8
+  %tmp72 = load <2 x float>, <2 x float>* %tmp64, align 8
   %tmp76 = shufflevector <2 x float> %tmp72, <2 x float> %tmp74, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <8 x float> %tmp76
 }
@@ -2086,8 +2086,8 @@ define <8x float> @concat_v2f32_3(<2 x float>* %tmp64, <2 x float>* %tmp65) {
 ; ALL-NEXT:    vmovhpd (%rsi), %xmm0, %xmm0
 ; ALL-NEXT:    retq
 entry:
-  %tmp74 = load <2 x float>* %tmp65, align 8
-  %tmp72 = load <2 x float>* %tmp64, align 8
+  %tmp74 = load <2 x float>, <2 x float>* %tmp65, align 8
+  %tmp72 = load <2 x float>, <2 x float>* %tmp64, align 8
   %tmp76 = shufflevector <2 x float> %tmp72, <2 x float> %tmp74, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
   %res = shufflevector <4 x float> %tmp76, <4 x float> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <8 x float> %res

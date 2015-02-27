@@ -19,17 +19,17 @@ entry:
   %0 = getelementptr inbounds %struct.gpm_t, %struct.gpm_t* %gpm, i32 0, i32 2, i32 0 ; <i8*> [#uses=1]
   %1 = getelementptr inbounds %struct.gpt_t, %struct.gpt_t* %gpt, i32 0, i32 9, i32 0 ; <i8*> [#uses=1]
   call void @uuid_LtoB(i8* %0, i8* %1) nounwind, !dbg !0
-  %a9 = load volatile i64* %data_addr.i18, align 8 ; <i64> [#uses=1]
+  %a9 = load volatile i64, i64* %data_addr.i18, align 8 ; <i64> [#uses=1]
   %a10 = call i64 @llvm.bswap.i64(i64 %a9) nounwind ; <i64> [#uses=1]
   %a11 = getelementptr inbounds %struct.gpt_t, %struct.gpt_t* %gpt, i32 0, i32 8, !dbg !7 ; <i64*> [#uses=1]
-  %a12 = load i64* %a11, align 4, !dbg !7         ; <i64> [#uses=1]
+  %a12 = load i64, i64* %a11, align 4, !dbg !7         ; <i64> [#uses=1]
   call void @llvm.dbg.declare(metadata i64* %data_addr.i17, metadata !8, metadata !{!"0x102"}) nounwind, !dbg !14
   store i64 %a12, i64* %data_addr.i17, align 8
   call void @llvm.dbg.value(metadata !6, i64 0, metadata !15, metadata !{!"0x102"}) nounwind
   call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !19, metadata !{!"0x102"}) nounwind
   call void @llvm.dbg.declare(metadata !6, metadata !23, metadata !{!"0x102"}) nounwind
   call void @llvm.dbg.value(metadata i64* %data_addr.i17, i64 0, metadata !34, metadata !{!"0x102"}) nounwind
-  %a13 = load volatile i64* %data_addr.i17, align 8 ; <i64> [#uses=1]
+  %a13 = load volatile i64, i64* %data_addr.i17, align 8 ; <i64> [#uses=1]
   %a14 = call i64 @llvm.bswap.i64(i64 %a13) nounwind ; <i64> [#uses=2]
   %a15 = add i64 %a10, %a14, !dbg !7              ; <i64> [#uses=1]
   %a16 = sub i64 %a15, %a14                       ; <i64> [#uses=1]

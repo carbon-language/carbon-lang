@@ -55,18 +55,18 @@ lpad:                                             ; preds = %entry
   br label %catch.dispatch
 
 catch.dispatch:                                   ; preds = %lpad
-  %sel = load i32* %ehselector.slot
+  %sel = load i32, i32* %ehselector.slot
   %3 = call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIi to i8*)) #3
   %matches = icmp eq i32 %sel, %3
   br i1 %matches, label %catch, label %eh.resume
 
 catch:                                            ; preds = %catch.dispatch
-  %exn11 = load i8** %exn.slot
+  %exn11 = load i8*, i8** %exn.slot
   %4 = call i8* @llvm.eh.begincatch(i8* %exn11) #3
   %5 = bitcast i8* %4 to i32*
-  %6 = load i32* %5, align 4
+  %6 = load i32, i32* %5, align 4
   store i32 %6, i32* %i, align 4
-  %7 = load i32* %i, align 4
+  %7 = load i32, i32* %i, align 4
   call void @_Z10handle_inti(i32 %7)
   br label %invoke.cont2
 
@@ -78,8 +78,8 @@ try.cont:                                         ; preds = %invoke.cont2, %invo
   ret void
 
 eh.resume:                                        ; preds = %catch.dispatch
-  %exn3 = load i8** %exn.slot
-  %sel4 = load i32* %ehselector.slot
+  %exn3 = load i8*, i8** %exn.slot
+  %sel4 = load i32, i32* %ehselector.slot
   %lpad.val = insertvalue { i8*, i32 } undef, i8* %exn3, 0
   %lpad.val5 = insertvalue { i8*, i32 } %lpad.val, i32 %sel4, 1
   resume { i8*, i32 } %lpad.val5
@@ -90,12 +90,12 @@ eh.resume:                                        ; preds = %catch.dispatch
 ; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1)
 ; CHECK:   %eh.data = bitcast i8* %eh.alloc to %struct._Z4testv.ehdata*
 ; CHECK:   %eh.obj.ptr = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 1
-; CHECK:   %eh.obj = load i8** %eh.obj.ptr
+; CHECK:   %eh.obj = load i8*, i8** %eh.obj.ptr
 ; CHECK:   %i = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 2
 ; CHECK:   %2 = bitcast i8* %eh.obj to i32*
-; CHECK:   %3 = load i32* %2, align 4
+; CHECK:   %3 = load i32, i32* %2, align 4
 ; CHECK:   store i32 %3, i32* %i, align 4
-; CHECK:   %4 = load i32* %i, align 4
+; CHECK:   %4 = load i32, i32* %i, align 4
 ; CHECK:   call void @_Z10handle_inti(i32 %4)
 ; CHECK:   ret i8* blockaddress(@_Z4testv, %try.cont)
 ; CHECK: }

@@ -44,7 +44,7 @@ define fastcc i32 @test4(i32* %d) {
 ; CHECK: ret
 
 entry:
-  %tmp4 = load i32* %d
+  %tmp4 = load i32, i32* %d
   %tmp512 = lshr i32 %tmp4, 24
   ret i32 %tmp512
 }
@@ -63,7 +63,7 @@ entry:
   %index = lshr i32 %i.zext, 11
   %index.zext = zext i32 %index to i64
   %val.ptr = getelementptr inbounds i32, i32* %arr, i64 %index.zext
-  %val = load i32* %val.ptr
+  %val = load i32, i32* %val.ptr
   %val.zext = zext i32 %val to i64
   %sum = add i64 %val.zext, %index.zext
   ret i64 %sum

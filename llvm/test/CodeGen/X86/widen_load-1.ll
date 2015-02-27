@@ -26,12 +26,12 @@ define void @reset(<2 x float>* noalias %garbage1) {
   store i32 0, i32* %changed, align 4
   %r2 = getelementptr float, float* bitcast ([20 x i64]* @compl to float*), i64 32 ; <float*> [#uses=1]
   %r3 = bitcast float* %r2 to <2 x float>*        ; <<2 x float>*> [#uses=1]
-  %r4 = load <2 x float>* %r3, align 4            ; <<2 x float>> [#uses=1]
+  %r4 = load <2 x float>, <2 x float>* %r3, align 4            ; <<2 x float>> [#uses=1]
   call void @killcommon(i32* %changed)
   br label %"file complex.c, line 34, bb4"
 
 "file complex.c, line 34, bb4":                   ; preds = %"file complex.c, line 27, bb13"
-  %r5 = load i32* %changed, align 4               ; <i32> [#uses=1]
+  %r5 = load i32, i32* %changed, align 4               ; <i32> [#uses=1]
   %r6 = icmp eq i32 %r5, 0                        ; <i1> [#uses=1]
   %r7 = zext i1 %r6 to i32                        ; <i32> [#uses=1]
   %r8 = icmp ne i32 %r7, 0                        ; <i1> [#uses=1]

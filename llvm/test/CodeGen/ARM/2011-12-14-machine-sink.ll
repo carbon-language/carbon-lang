@@ -15,13 +15,13 @@ for.cond:                                         ; preds = %for.body, %entry
 
 for.body:                                         ; preds = %for.cond
   %v.5 = select i1 undef, i32 undef, i32 0
-  %0 = load i8* undef, align 1
+  %0 = load i8, i8* undef, align 1
   %conv88 = zext i8 %0 to i32
   %sub89 = sub nsw i32 0, %conv88
   %v.8 = select i1 undef, i32 undef, i32 %sub89
-  %1 = load i8* null, align 1
+  %1 = load i8, i8* null, align 1
   %conv108 = zext i8 %1 to i32
-  %2 = load i8* undef, align 1
+  %2 = load i8, i8* undef, align 1
   %conv110 = zext i8 %2 to i32
   %sub111 = sub nsw i32 %conv108, %conv110
   %cmp112 = icmp slt i32 %sub111, 0

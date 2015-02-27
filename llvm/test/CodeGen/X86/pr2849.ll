@@ -13,20 +13,20 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define void @obshow() {
 entry:
-	%tmp = load %struct.HashEntry** @hash_table_begin, align 8
+	%tmp = load %struct.HashEntry*, %struct.HashEntry** @hash_table_begin, align 8
 	br i1 false, label %xlygetvalue.exit, label %xlygetvalue.exit
 
 xlygetvalue.exit:
 	%storemerge.in.i = phi %struct.NODE** [ null, %entry ], [ null, %entry ]
-	%storemerge.i = load %struct.NODE** %storemerge.in.i
+	%storemerge.i = load %struct.NODE*, %struct.NODE** %storemerge.in.i
 	%tmp1 = ptrtoint %struct.NODE** %storemerge.in.i to i64
 	%tmp2 = lshr i64 %tmp1, 3
 	%tmp3 = and i64 %tmp2, 2147483647
 	%tmp4 = getelementptr %struct.HashEntry, %struct.HashEntry* %tmp, i64 %tmp3, i32 0, i32 1
-	%tmp7 = load i8** %tmp4, align 8
+	%tmp7 = load i8*, i8** %tmp4, align 8
 	%tmp8 = getelementptr %struct.NODE, %struct.NODE* %storemerge.i, i64 0, i32 2
 	%tmp9 = bitcast %struct.anon* %tmp8 to %struct.NODE***
-	%tmp11 = load %struct.NODE*** %tmp9, align 8
+	%tmp11 = load %struct.NODE**, %struct.NODE*** %tmp9, align 8
 	%tmp12 = ptrtoint %struct.NODE** %tmp11 to i64
 	%tmp13 = lshr i64 %tmp12, 3
 	%tmp14 = and i64 %tmp13, 2147483647

@@ -10,7 +10,7 @@ declare void @f2()
 
 
 define void @test1() {
-  %1 = load i32* @x, align 4
+  %1 = load i32, i32* @x, align 4
   call void @f1(i32 %1)
   ret void
 

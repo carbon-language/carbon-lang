@@ -16,7 +16,7 @@ bb3.i15.i.i:                                      ; preds = %bb3.i15.i.i, %entry
   %tmp137 = sub i32 0, %indvar.i.i.i              ; <i32> [#uses=1]
   %scevgep13.i.i.i = getelementptr i32, i32* undef, i32 %tmp137 ; <i32*> [#uses=2]
   %scevgep1314.i.i.i = bitcast i32* %scevgep13.i.i.i to %struct.dwarf_fde** ; <%struct.dwarf_fde**> [#uses=1]
-  %0 = load %struct.dwarf_fde** %scevgep1314.i.i.i, align 4 ; <%struct.dwarf_fde*> [#uses=0]
+  %0 = load %struct.dwarf_fde*, %struct.dwarf_fde** %scevgep1314.i.i.i, align 4 ; <%struct.dwarf_fde*> [#uses=0]
   store i32 undef, i32* %scevgep13.i.i.i
   %indvar.next.i.i.i = add i32 %indvar.i.i.i, 1   ; <i32> [#uses=1]
   br label %bb3.i15.i.i

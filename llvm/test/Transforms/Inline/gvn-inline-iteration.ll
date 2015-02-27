@@ -8,7 +8,7 @@ define i32 @foo(i32 ()** noalias nocapture %p, i64* noalias nocapture %q) nounwi
 entry:
   store i32 ()* @bar, i32 ()** %p
   store i64 0, i64* %q
-  %tmp3 = load i32 ()** %p                        ; <i32 ()*> [#uses=1]
+  %tmp3 = load i32 ()*, i32 ()** %p                        ; <i32 ()*> [#uses=1]
   %call = tail call i32 %tmp3() nounwind          ; <i32> [#uses=1]
   ret i32 %call
 }

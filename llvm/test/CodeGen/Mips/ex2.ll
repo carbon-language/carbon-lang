@@ -22,7 +22,7 @@ entry:
   unreachable
 
 return:                                           ; No predecessors!
-  %1 = load i32* %retval
+  %1 = load i32, i32* %retval
   ret i32 %1
 }
 

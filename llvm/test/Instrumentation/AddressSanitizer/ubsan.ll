@@ -17,9 +17,9 @@ define void @_Z3BarP1A(%struct.A* %a) uwtable sanitize_address {
 ; CHECK-LABEL: define void @_Z3BarP1A
 entry:
   %0 = bitcast %struct.A* %a to void (%struct.A*)***
-  %vtable = load void (%struct.A*)*** %0, align 8
+  %vtable = load void (%struct.A*)**, void (%struct.A*)*** %0, align 8
 ; CHECK: __asan_report_load8
-  %1 = load void (%struct.A*)** %vtable, align 8
+  %1 = load void (%struct.A*)*, void (%struct.A*)** %vtable, align 8
 ; CHECK: __asan_report_load8
   %2 = ptrtoint void (%struct.A*)** %vtable to i64
   %3 = xor i64 %2, -303164226014115343, !nosanitize !0
@@ -34,7 +34,7 @@ entry:
   %12 = and i64 %11, 127, !nosanitize !0
   %13 = getelementptr inbounds [128 x i64], [128 x i64]* @__ubsan_vptr_type_cache, i64 0, i64 %12, !nosanitize !0
 ; CHECK-NOT: __asan_report_load8
-  %14 = load i64* %13, align 8, !nosanitize !0
+  %14 = load i64, i64* %13, align 8, !nosanitize !0
   %15 = icmp eq i64 %14, %11, !nosanitize !0
   br i1 %15, label %cont, label %handler.dynamic_type_cache_miss, !nosanitize !0
 

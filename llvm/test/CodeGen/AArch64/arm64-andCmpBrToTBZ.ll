@@ -29,7 +29,7 @@ _ZNK7WebCore4Node10hasTagNameERKNS_13QualifiedNameE.exit: ; preds = %lor.rhs.i.i
   br i1 %cmp.i.i.i.i, label %if.then3, label %if.end5
 
 if.then3:                                         ; preds = %_ZNK7WebCore4Node10hasTagNameERKNS_13QualifiedNameE.exit, %land.rhs.i
-  %tmp11 = load i8* %str14, align 8
+  %tmp11 = load i8, i8* %str14, align 8
   %tmp12 = and i8 %tmp11, 2
   %tmp13 = icmp ne i8 %tmp12, 0
   br label %return
@@ -55,7 +55,7 @@ if.then7:                                         ; preds = %_ZNK7WebCore4Node10
   br i1 %isTextField, label %if.then9, label %if.end12
 
 if.then9:                                         ; preds = %if.then7
-  %tmp23 = load i8* %str5, align 8
+  %tmp23 = load i8, i8* %str5, align 8
   %tmp24 = and i8 %tmp23, 2
   %tmp25 = icmp ne i8 %tmp24, 0
   br label %return

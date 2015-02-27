@@ -47,7 +47,7 @@ try.handler:                                      ; preds = %entry
 match:                                            ; preds = %try.handler
   %4 = call i8* @__cxa_begin_catch(i8* %exc1)     ; <i8*> [#uses=1]
   %5 = bitcast i8* %4 to i32*                     ; <i32*> [#uses=1]
-  %6 = load i32* %5                               ; <i32> [#uses=1]
+  %6 = load i32, i32* %5                               ; <i32> [#uses=1]
   store i32 %6, i32* %0
   %call = invoke i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), %struct.S* %s2)
           to label %invoke.cont2 unwind label %match.handler ; <i32> [#uses=0]
@@ -80,7 +80,7 @@ invoke.cont5:                                     ; preds = %match.end
   br label %cleanup.switch
 
 cleanup.switch:                                   ; preds = %invoke.cont5
-  %tmp = load i32* %cleanup.dst                   ; <i32> [#uses=1]
+  %tmp = load i32, i32* %cleanup.dst                   ; <i32> [#uses=1]
   switch i32 %tmp, label %cleanup.end [
     i32 1, label %cleanup.pad
     i32 2, label %cleanup.pad4
@@ -99,7 +99,7 @@ finally:                                          ; preds = %catch.next, %cleanu
   br label %cleanup.switch9
 
 cleanup.switch9:                                  ; preds = %finally
-  %tmp8 = load i32* %cleanup.dst7                 ; <i32> [#uses=1]
+  %tmp8 = load i32, i32* %cleanup.dst7                 ; <i32> [#uses=1]
   switch i32 %tmp8, label %cleanup.end10 [
     i32 1, label %finally.end
     i32 2, label %finally.throw
@@ -109,7 +109,7 @@ cleanup.end10:                                    ; preds = %cleanup.switch9
   br label %finally.end
 
 finally.throw:                                    ; preds = %cleanup.switch9
-  %8 = load i8** %_rethrow                        ; <i8*> [#uses=1]
+  %8 = load i8*, i8** %_rethrow                        ; <i8*> [#uses=1]
   call void @_Unwind_Resume_or_Rethrow(i8* %8)
   unreachable
 
@@ -117,9 +117,9 @@ finally.end:                                      ; preds = %cleanup.end10, %cle
   %tmp11 = getelementptr inbounds %struct.S, %struct.S* %s1, i32 0, i32 0 ; <[2 x i8*]*> [#uses=1]
   %arraydecay = getelementptr inbounds [2 x i8*], [2 x i8*]* %tmp11, i32 0, i32 0 ; <i8**> [#uses=1]
   %arrayidx = getelementptr inbounds i8*, i8** %arraydecay, i32 1 ; <i8**> [#uses=1]
-  %tmp12 = load i8** %arrayidx                    ; <i8*> [#uses=1]
+  %tmp12 = load i8*, i8** %arrayidx                    ; <i8*> [#uses=1]
   store i8* %tmp12, i8** %retval
-  %9 = load i8** %retval                          ; <i8*> [#uses=1]
+  %9 = load i8*, i8** %retval                          ; <i8*> [#uses=1]
   ret i8* %9
 }
 

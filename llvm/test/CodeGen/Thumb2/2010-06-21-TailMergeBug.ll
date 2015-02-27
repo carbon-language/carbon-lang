@@ -86,7 +86,7 @@ bb10:                                             ; preds = %bb9
 
 bb11:                                             ; preds = %bb10, %bb9
   %p.0 = phi i8* [ undef, %bb10 ], [ %p.1, %bb9 ] ; <i8*> [#uses=1]
-  %0 = load %struct.FILE** @finput, align 4       ; <%struct.FILE*> [#uses=1]
+  %0 = load %struct.FILE*, %struct.FILE** @finput, align 4       ; <%struct.FILE*> [#uses=1]
   %1 = tail call i32 @getc(%struct.FILE* %0) nounwind ; <i32> [#uses=0]
   br label %bb12
 
@@ -96,7 +96,7 @@ bb12:                                             ; preds = %bb11, %bb.i.i
   br i1 %2, label %bb.i.i2, label %bb1.i.i3
 
 bb.i.i2:                                          ; preds = %bb12
-  %3 = load i32* null, align 4                    ; <i32> [#uses=1]
+  %3 = load i32, i32* null, align 4                    ; <i32> [#uses=1]
   %4 = lshr i32 %3, 8                             ; <i32> [#uses=1]
   %.lobit.i1 = and i32 %4, 1                      ; <i32> [#uses=1]
   %.not = icmp ne i32 %.lobit.i1, 0               ; <i1> [#uses=1]

@@ -8,15 +8,15 @@ entry:
   br label %bb3
 
 bb:                                               ; preds = %bb3
-  %Scan.0.idx7.val = load i8** undef, align 4
+  %Scan.0.idx7.val = load i8*, i8** undef, align 4
   %.idx = getelementptr i8, i8* %Scan.0.idx7.val, i32 4
   %0 = bitcast i8* %.idx to i8**
-  %.idx.val = load i8** %0, align 4
+  %.idx.val = load i8*, i8** %0, align 4
   %1 = icmp eq i8* %.idx.val, %Key
   br i1 %1, label %bb5, label %bb2
 
 bb2:                                              ; preds = %bb
-  %Scan.0.idx8.val = load %struct.LIST_NODE.0.16** undef, align 4
+  %Scan.0.idx8.val = load %struct.LIST_NODE.0.16*, %struct.LIST_NODE.0.16** undef, align 4
   br label %bb3
 
 bb3:                                              ; preds = %bb2, %entry
@@ -34,7 +34,7 @@ entry:
   br i1 undef, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.body, %entry
-  %0 = load double* null, align 8
+  %0 = load double, double* null, align 8
   %cmp2.6 = fcmp ogt double %0, 0.000000e+00
   %idx.1.6 = select i1 %cmp2.6, i32 undef, i32 0
   %idx.1.7 = select i1 undef, i32 undef, i32 %idx.1.6

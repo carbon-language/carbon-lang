@@ -16,18 +16,18 @@ entry:
  %i2 = alloca i8*, align 8
  %b.i = alloca [16 x <2 x double>], align 16
  %conv = bitcast i8* %_stubArgs to i32*
- %tmp1 = load i32* %conv, align 4
+ %tmp1 = load i32, i32* %conv, align 4
  %ptr8 = getelementptr i8, i8* %_stubArgs, i64 16
  %i4 = bitcast i8* %ptr8 to <2 x double>*
  %ptr20 = getelementptr i8, i8* %_stubArgs, i64 48
  %i7 = bitcast i8* %ptr20 to <2 x double> addrspace(1)**
- %tmp21 = load <2 x double> addrspace(1)** %i7, align 8
+ %tmp21 = load <2 x double> addrspace(1)*, <2 x double> addrspace(1)** %i7, align 8
  %ptr28 = getelementptr i8, i8* %_stubArgs, i64 64
  %i9 = bitcast i8* %ptr28 to i32*
- %tmp29 = load i32* %i9, align 4
+ %tmp29 = load i32, i32* %i9, align 4
  %ptr32 = getelementptr i8, i8* %_stubArgs, i64 68
  %i10 = bitcast i8* %ptr32 to i32*
- %tmp33 = load i32* %i10, align 4
+ %tmp33 = load i32, i32* %i10, align 4
  %tmp17.i = mul i32 10, 20
  %tmp19.i = add i32 %tmp17.i, %tmp33
  %conv21.i = zext i32 %tmp19.i to i64
@@ -49,14 +49,14 @@ entry:
  %conv160.i = zext i32 %i39 to i64
  %tmp22.sum652.i = add i64 %conv160.i, %conv21.i
  %arrayidx161.i = getelementptr <2 x double>, <2 x double> addrspace(1)* %tmp21, i64 %tmp22.sum652.i
- %tmp162.i = load <2 x double> addrspace(1)* %arrayidx161.i, align 16
+ %tmp162.i = load <2 x double>, <2 x double> addrspace(1)* %arrayidx161.i, align 16
  %tmp222.i = add i32 %tmp154.i, 1
  %i43 = mul i32 %tmp222.i, %tmp29
  %i44 = add i32 %tmp158.i, %i43
  %conv228.i = zext i32 %i44 to i64
  %tmp22.sum656.i = add i64 %conv228.i, %conv21.i
  %arrayidx229.i = getelementptr <2 x double>, <2 x double> addrspace(1)* %tmp21, i64 %tmp22.sum656.i
- %tmp230.i = load <2 x double> addrspace(1)* %arrayidx229.i, align 16
+ %tmp230.i = load <2 x double>, <2 x double> addrspace(1)* %arrayidx229.i, align 16
  %cmp432.i = icmp ult i32 %tmp156.i, %tmp1
 
 ; %shl.i should not be sinked below the compare.

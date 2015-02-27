@@ -9,7 +9,7 @@ define void @foo() {
 entry:
 ;CHECK-LABEL: foo:
 ;CHECK: __floatsisf
-  %0 = load i32* @x, align 4
+  %0 = load i32, i32* @x, align 4
   %conv = sitofp i32 %0 to float
   store float %conv, float* bitcast (i32* @t to float*), align 4
   ret void

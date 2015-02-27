@@ -14,7 +14,7 @@ invcont2:
   br label %bb15
 
 bb15:
-  %B = load i32* %whichFlag
+  %B = load i32, i32* %whichFlag
   ret i32 %B
 
 lpad86:
@@ -33,11 +33,11 @@ entry:
   br label %bb15
 
 bb15:
-  %B = load i32* %whichFlag
+  %B = load i32, i32* %whichFlag
   ret i32 %B
 
 invcont2:
-  %C = load i32* %whichFlag
+  %C = load i32, i32* %whichFlag
   store i32 %C, i32* %whichFlag
   br label %bb15
 }

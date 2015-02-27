@@ -10,7 +10,7 @@
 ; CHECK: @C = internal alias i32* @A
 
 define i32 @main() {
-	%tmp = load i32* @C
+	%tmp = load i32, i32* @C
 	ret i32 %tmp
 }
 

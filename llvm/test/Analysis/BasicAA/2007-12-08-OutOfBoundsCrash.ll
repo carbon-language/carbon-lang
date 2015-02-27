@@ -14,7 +14,7 @@ target triple = "x86_64-unknown-linux-gnu"
 define i32 @ehci_pci_setup(%struct.usb_hcd* %hcd) {
 entry:
 	%tmp14 = getelementptr %struct.usb_hcd, %struct.usb_hcd* %hcd, i32 0, i32 0, i32 0		; <%struct.device**> [#uses=1]
-	%tmp15 = load %struct.device** %tmp14, align 8		; <%struct.device*> [#uses=0]
+	%tmp15 = load %struct.device*, %struct.device** %tmp14, align 8		; <%struct.device*> [#uses=0]
 	br i1 false, label %bb25, label %return
 
 bb25:		; preds = %entry
@@ -23,7 +23,7 @@ bb25:		; preds = %entry
 cond_true:		; preds = %bb25
 	%tmp601 = getelementptr %struct.usb_hcd, %struct.usb_hcd* %hcd, i32 0, i32 1, i64 2305843009213693951		; <i64*> [#uses=1]
 	%tmp67 = bitcast i64* %tmp601 to %struct.device**		; <%struct.device**> [#uses=1]
-	%tmp68 = load %struct.device** %tmp67, align 8		; <%struct.device*> [#uses=0]
+	%tmp68 = load %struct.device*, %struct.device** %tmp67, align 8		; <%struct.device*> [#uses=0]
 	ret i32 undef
 
 return:		; preds = %bb25, %entry

@@ -30,8 +30,8 @@ define void @bar() {
   %9 = phi double [ 1.800000e+01, %0 ], [ %10, %18 ], [ %10, %17 ], [ %10, %17 ]
   store double %9, double* %1, align 8
   store double %8, double* %2, align 8
-  %10 = load double* %3, align 8
-  %11 = load double* %4, align 8
+  %10 = load double, double* %3, align 8
+  %11 = load double, double* %4, align 8
   br i1 undef, label %12, label %13
 
 ; <label>:12                                      ; preds = %7

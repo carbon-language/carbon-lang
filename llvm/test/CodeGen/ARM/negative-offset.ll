@@ -8,9 +8,9 @@ entry:
 ;CHECK: ldr r{{.*}}, [r0, #-16]
 ;CHECK: ldr r{{.*}}, [r0, #-8]
   %arrayidx = getelementptr inbounds i32, i32* %p, i32 -4
-  %0 = load i32* %arrayidx, align 4
+  %0 = load i32, i32* %arrayidx, align 4
   %arrayidx1 = getelementptr inbounds i32, i32* %p, i32 -2
-  %1 = load i32* %arrayidx1, align 4
+  %1 = load i32, i32* %arrayidx1, align 4
   %add = add nsw i32 %1, %0
   ret i32 %add
 }

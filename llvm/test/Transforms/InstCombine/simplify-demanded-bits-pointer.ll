@@ -29,7 +29,7 @@ bb95:		; preds = %bb88
 	unreachable
 
 bb107:		; preds = %bb88
-	%0 = load i16* undef, align 8		; <i16> [#uses=1]
+	%0 = load i16, i16* undef, align 8		; <i16> [#uses=1]
 	%1 = icmp eq i16 %0, 38		; <i1> [#uses=1]
 	%src_eqv_here.0 = select i1 %1, %struct.rtx_def* null, %struct.rtx_def* null		; <%struct.rtx_def*> [#uses=1]
 	br i1 undef, label %bb127, label %bb125

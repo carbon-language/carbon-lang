@@ -60,7 +60,7 @@ entry:
   %this.addr = alloca %struct.C*, align 8
   store %struct.C* %this, %struct.C** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %struct.C** %this.addr, metadata !28, metadata !{!"0x102"}), !dbg !30
-  %this1 = load %struct.C** %this.addr
+  %this1 = load %struct.C*, %struct.C** %this.addr
   store i32 0, i32* @_ZN1C22static_member_variableE, align 4, !dbg !31
   ret void, !dbg !32
 }
@@ -69,7 +69,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 define i32 @_ZN1C22static_member_functionEv() nounwind uwtable align 2 {
 entry:
-  %0 = load i32* @_ZN1C22static_member_variableE, align 4, !dbg !33
+  %0 = load i32, i32* @_ZN1C22static_member_variableE, align 4, !dbg !33
   ret i32 %0, !dbg !33
 }
 

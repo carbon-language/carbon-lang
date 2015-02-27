@@ -25,9 +25,9 @@ target triple = "x86_64-apple-macosx10.7.0"
 ;CHECK: store <2 x double>
 ;CHECK: ret
 define i32 @bar(double* nocapture %A, i32 %d) {
-  %1 = load double* %A, align 8
+  %1 = load double, double* %A, align 8
   %2 = getelementptr inbounds double, double* %A, i64 1
-  %3 = load double* %2, align 8
+  %3 = load double, double* %2, align 8
   %4 = fptrunc double %1 to float
   %5 = fptrunc double %3 to float
   %6 = icmp eq i32 %d, 0

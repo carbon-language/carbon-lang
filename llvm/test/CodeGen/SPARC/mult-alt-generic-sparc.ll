@@ -33,10 +33,10 @@ entry:
   %in1 = alloca i32, align 4
   store i32 0, i32* %out0, align 4
   store i32 1, i32* %in1, align 4
-  %tmp = load i32* %in1, align 4
+  %tmp = load i32, i32* %in1, align 4
   %0 = call i32 asm "foo $1,$0", "=r,<r"(i32 %tmp) nounwind
   store i32 %0, i32* %out0, align 4
-  %tmp1 = load i32* %in1, align 4
+  %tmp1 = load i32, i32* %in1, align 4
   %1 = call i32 asm "foo $1,$0", "=r,r<"(i32 %tmp1) nounwind
   store i32 %1, i32* %out0, align 4
   ret void
@@ -48,10 +48,10 @@ entry:
   %in1 = alloca i32, align 4
   store i32 0, i32* %out0, align 4
   store i32 1, i32* %in1, align 4
-  %tmp = load i32* %in1, align 4
+  %tmp = load i32, i32* %in1, align 4
   %0 = call i32 asm "foo $1,$0", "=r,>r"(i32 %tmp) nounwind
   store i32 %0, i32* %out0, align 4
-  %tmp1 = load i32* %in1, align 4
+  %tmp1 = load i32, i32* %in1, align 4
   %1 = call i32 asm "foo $1,$0", "=r,r>"(i32 %tmp1) nounwind
   store i32 %1, i32* %out0, align 4
   ret void
@@ -63,7 +63,7 @@ entry:
   %in1 = alloca i32, align 4
   store i32 0, i32* %out0, align 4
   store i32 1, i32* %in1, align 4
-  %tmp = load i32* %in1, align 4
+  %tmp = load i32, i32* %in1, align 4
   %0 = call i32 asm "foo $1,$0", "=r,r"(i32 %tmp) nounwind
   store i32 %0, i32* %out0, align 4
   ret void
@@ -120,10 +120,10 @@ entry:
   %in1 = alloca i32, align 4
   store i32 0, i32* %out0, align 4
   store i32 1, i32* %in1, align 4
-  %tmp = load i32* %in1, align 4
+  %tmp = load i32, i32* %in1, align 4
   %0 = call i32 asm "foo $1,$0", "=r,imr"(i32 %tmp) nounwind
   store i32 %0, i32* %out0, align 4
-  %tmp1 = load i32* @min1, align 4
+  %tmp1 = load i32, i32* @min1, align 4
   %1 = call i32 asm "foo $1,$0", "=r,imr"(i32 %tmp1) nounwind
   store i32 %1, i32* %out0, align 4
   %2 = call i32 asm "foo $1,$0", "=r,imr"(i32 1) nounwind
@@ -137,10 +137,10 @@ entry:
   %in1 = alloca i32, align 4
   store i32 0, i32* %out0, align 4
   store i32 1, i32* %in1, align 4
-  %tmp = load i32* %in1, align 4
+  %tmp = load i32, i32* %in1, align 4
   %0 = call i32 asm "foo $1,$0", "=r,X"(i32 %tmp) nounwind
   store i32 %0, i32* %out0, align 4
-  %tmp1 = load i32* @min1, align 4
+  %tmp1 = load i32, i32* @min1, align 4
   %1 = call i32 asm "foo $1,$0", "=r,X"(i32 %tmp1) nounwind
   store i32 %1, i32* %out0, align 4
   %2 = call i32 asm "foo $1,$0", "=r,X"(i32 1) nounwind
@@ -166,7 +166,7 @@ entry:
 
 define void @multi_m() nounwind {
 entry:
-  %tmp = load i32* @min1, align 4
+  %tmp = load i32, i32* @min1, align 4
   call void asm "foo $1,$0", "=*m|r,m|r"(i32* @mout0, i32 %tmp) nounwind
   ret void
 }
@@ -191,10 +191,10 @@ entry:
   %in1 = alloca i32, align 4
   store i32 0, i32* %out0, align 4
   store i32 1, i32* %in1, align 4
-  %tmp = load i32* %in1, align 4
+  %tmp = load i32, i32* %in1, align 4
   %0 = call i32 asm "foo $1,$0", "=r|r,r|<r"(i32 %tmp) nounwind
   store i32 %0, i32* %out0, align 4
-  %tmp1 = load i32* %in1, align 4
+  %tmp1 = load i32, i32* %in1, align 4
   %1 = call i32 asm "foo $1,$0", "=r|r,r|r<"(i32 %tmp1) nounwind
   store i32 %1, i32* %out0, align 4
   ret void
@@ -206,10 +206,10 @@ entry:
   %in1 = alloca i32, align 4
   store i32 0, i32* %out0, align 4
   store i32 1, i32* %in1, align 4
-  %tmp = load i32* %in1, align 4
+  %tmp = load i32, i32* %in1, align 4
   %0 = call i32 asm "foo $1,$0", "=r|r,r|>r"(i32 %tmp) nounwind
   store i32 %0, i32* %out0, align 4
-  %tmp1 = load i32* %in1, align 4
+  %tmp1 = load i32, i32* %in1, align 4
   %1 = call i32 asm "foo $1,$0", "=r|r,r|r>"(i32 %tmp1) nounwind
   store i32 %1, i32* %out0, align 4
   ret void
@@ -221,7 +221,7 @@ entry:
   %in1 = alloca i32, align 4
   store i32 0, i32* %out0, align 4
   store i32 1, i32* %in1, align 4
-  %tmp = load i32* %in1, align 4
+  %tmp = load i32, i32* %in1, align 4
   %0 = call i32 asm "foo $1,$0", "=r|r,r|m"(i32 %tmp) nounwind
   store i32 %0, i32* %out0, align 4
   ret void
@@ -278,10 +278,10 @@ entry:
   %in1 = alloca i32, align 4
   store i32 0, i32* %out0, align 4
   store i32 1, i32* %in1, align 4
-  %tmp = load i32* %in1, align 4
+  %tmp = load i32, i32* %in1, align 4
   %0 = call i32 asm "foo $1,$0", "=r|r,r|imr"(i32 %tmp) nounwind
   store i32 %0, i32* %out0, align 4
-  %tmp1 = load i32* @min1, align 4
+  %tmp1 = load i32, i32* @min1, align 4
   %1 = call i32 asm "foo $1,$0", "=r|r,r|imr"(i32 %tmp1) nounwind
   store i32 %1, i32* %out0, align 4
   %2 = call i32 asm "foo $1,$0", "=r|r,r|imr"(i32 1) nounwind
@@ -295,10 +295,10 @@ entry:
   %in1 = alloca i32, align 4
   store i32 0, i32* %out0, align 4
   store i32 1, i32* %in1, align 4
-  %tmp = load i32* %in1, align 4
+  %tmp = load i32, i32* %in1, align 4
   %0 = call i32 asm "foo $1,$0", "=r|r,r|X"(i32 %tmp) nounwind
   store i32 %0, i32* %out0, align 4
-  %tmp1 = load i32* @min1, align 4
+  %tmp1 = load i32, i32* @min1, align 4
   %1 = call i32 asm "foo $1,$0", "=r|r,r|X"(i32 %tmp1) nounwind
   store i32 %1, i32* %out0, align 4
   %2 = call i32 asm "foo $1,$0", "=r|r,r|X"(i32 1) nounwind

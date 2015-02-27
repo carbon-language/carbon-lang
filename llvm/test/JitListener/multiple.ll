@@ -55,7 +55,7 @@ entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %a.addr, metadata !15, metadata !16), !dbg !17
-  %0 = load i32* %a.addr, align 4, !dbg !18
+  %0 = load i32, i32* %a.addr, align 4, !dbg !18
   ret i32 %0, !dbg !19
 }
 
@@ -69,7 +69,7 @@ entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %a.addr, metadata !20, metadata !16), !dbg !21
-  %0 = load i32* %a.addr, align 4, !dbg !22
+  %0 = load i32, i32* %a.addr, align 4, !dbg !22
   %cmp = icmp eq i32 %0, 0, !dbg !22
   br i1 %cmp, label %if.then, label %if.end, !dbg !24
 
@@ -78,13 +78,13 @@ if.then:                                          ; preds = %entry
   br label %return, !dbg !25
 
 if.end:                                           ; preds = %entry
-  %1 = load i32* %a.addr, align 4, !dbg !27
+  %1 = load i32, i32* %a.addr, align 4, !dbg !27
   %div = sdiv i32 100, %1, !dbg !28
   store i32 %div, i32* %retval, !dbg !29
   br label %return, !dbg !29
 
 return:                                           ; preds = %if.end, %if.then
-  %2 = load i32* %retval, !dbg !30
+  %2 = load i32, i32* %retval, !dbg !30
   ret i32 %2, !dbg !30
 }
 
@@ -95,7 +95,7 @@ entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %a.addr, metadata !31, metadata !16), !dbg !32
-  %0 = load i32* %a.addr, align 4, !dbg !33
+  %0 = load i32, i32* %a.addr, align 4, !dbg !33
   switch i32 %0, label %sw.default [
     i32 0, label %sw.bb
     i32 1, label %sw.bb1
@@ -114,7 +114,7 @@ sw.default:                                       ; preds = %entry
   br label %return, !dbg !38
 
 return:                                           ; preds = %sw.default, %sw.bb1, %sw.bb
-  %1 = load i32* %retval, !dbg !39
+  %1 = load i32, i32* %retval, !dbg !39
   ret i32 %1, !dbg !39
 }
 

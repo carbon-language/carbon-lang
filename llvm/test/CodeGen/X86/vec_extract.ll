@@ -12,7 +12,7 @@ define void @test1(<4 x float>* %F, float* %f) nounwind {
 ; CHECK-NEXT:    movss %xmm0, (%eax)
 ; CHECK-NEXT:    retl
 entry:
-	%tmp = load <4 x float>* %F		; <<4 x float>> [#uses=2]
+	%tmp = load <4 x float>, <4 x float>* %F		; <<4 x float>> [#uses=2]
 	%tmp7 = fadd <4 x float> %tmp, %tmp		; <<4 x float>> [#uses=1]
 	%tmp2 = extractelement <4 x float> %tmp7, i32 0		; <float> [#uses=1]
 	store float %tmp2, float* %f
@@ -32,7 +32,7 @@ define float @test2(<4 x float>* %F, float* %f) nounwind {
 ; CHECK-NEXT:    popl %eax
 ; CHECK-NEXT:    retl
 entry:
-	%tmp = load <4 x float>* %F		; <<4 x float>> [#uses=2]
+	%tmp = load <4 x float>, <4 x float>* %F		; <<4 x float>> [#uses=2]
 	%tmp7 = fadd <4 x float> %tmp, %tmp		; <<4 x float>> [#uses=1]
 	%tmp2 = extractelement <4 x float> %tmp7, i32 2		; <float> [#uses=1]
 	ret float %tmp2
@@ -47,7 +47,7 @@ define void @test3(float* %R, <4 x float>* %P1) nounwind {
 ; CHECK-NEXT:    movss %xmm0, (%eax)
 ; CHECK-NEXT:    retl
 entry:
-	%X = load <4 x float>* %P1		; <<4 x float>> [#uses=1]
+	%X = load <4 x float>, <4 x float>* %P1		; <<4 x float>> [#uses=1]
 	%tmp = extractelement <4 x float> %X, i32 3		; <float> [#uses=1]
 	store float %tmp, float* %R
 	ret void

@@ -79,11 +79,11 @@ bb54:		; preds = %entry
 	br label %bb69.loopexit
 
 bb59:		; preds = %bb63.preheader
-	%0 = load %struct..4sPragmaType** %3, align 4		; <%struct..4sPragmaType*> [#uses=0]
+	%0 = load %struct..4sPragmaType*, %struct..4sPragmaType** %3, align 4		; <%struct..4sPragmaType*> [#uses=0]
 	br label %bb65
 
 bb65:		; preds = %bb63.preheader, %bb59
-	%1 = load %struct..4sPragmaType** %4, align 4		; <%struct..4sPragmaType*> [#uses=0]
+	%1 = load %struct..4sPragmaType*, %struct..4sPragmaType** %4, align 4		; <%struct..4sPragmaType*> [#uses=0]
 	br i1 false, label %bb67, label %bb63.preheader
 
 bb67:		; preds = %bb65

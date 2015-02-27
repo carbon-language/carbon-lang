@@ -214,7 +214,7 @@ bb:		; preds = %cond_true
 	br label %bb3
 
 bb3:		; preds = %bb, %entry
-	%tmp5 = load i8** null		; <i8*> [#uses=1]
+	%tmp5 = load i8*, i8** null		; <i8*> [#uses=1]
 	%tmp = icmp ne i8* null, %tmp5		; <i1> [#uses=1]
 	br i1 %tmp, label %cond_true, label %cond_false
 

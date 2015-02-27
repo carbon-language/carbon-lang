@@ -48,7 +48,7 @@ lpad:                                             ; preds = %bb1.i.fragment.cl, 
   %.SV10.phi807 = phi i8* [ undef, %bb1.i.fragment.cl ], [ undef, %bb1.i.fragment ], [ undef, %bb5 ] ; <i8*> [#uses=1]
   %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
             cleanup
-  %1 = load i8* %.SV10.phi807, align 8            ; <i8> [#uses=0]
+  %1 = load i8, i8* %.SV10.phi807, align 8            ; <i8> [#uses=0]
   br i1 undef, label %meshBB81.bbcl.disp, label %bb13.fragment.bbcl.disp
 
 bb.i1:                                            ; preds = %bb.i.i.bbcl.disp

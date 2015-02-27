@@ -1,8 +1,8 @@
 ; RUN: llc < %s -mattr=-vsx -march=ppc32 -mattr=+altivec --enable-unsafe-fp-math | FileCheck %s
 
 define void @VXOR(<4 x float>* %P1, <4 x i32>* %P2, <4 x float>* %P3) {
-        %tmp = load <4 x float>* %P3            ; <<4 x float>> [#uses=1]
-        %tmp3 = load <4 x float>* %P1           ; <<4 x float>> [#uses=1]
+        %tmp = load <4 x float>, <4 x float>* %P3            ; <<4 x float>> [#uses=1]
+        %tmp3 = load <4 x float>, <4 x float>* %P1           ; <<4 x float>> [#uses=1]
         %tmp4 = fmul <4 x float> %tmp, %tmp3             ; <<4 x float>> [#uses=1]
         store <4 x float> %tmp4, <4 x float>* %P3
         store <4 x float> zeroinitializer, <4 x float>* %P1

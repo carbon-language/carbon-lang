@@ -18,9 +18,9 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %i.05 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %v.04 = phi i32 [ 0, %entry ], [ %add, %for.body ]
-  %1 = load i32** @g1, align 4
+  %1 = load i32*, i32** @g1, align 4
   %arrayidx = getelementptr inbounds i32, i32* %1, i32 %i.05
-  %2 = load i32* %arrayidx, align 4
+  %2 = load i32, i32* %arrayidx, align 4
   %call = call i32 @foo2(i32 %2, i32* %arraydecay)
   %add = add nsw i32 %call, %v.04
   %inc = add nsw i32 %i.05, 1

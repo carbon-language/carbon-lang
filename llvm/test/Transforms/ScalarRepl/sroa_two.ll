@@ -7,7 +7,7 @@ define i32 @test(i32 %X) {
 	%tmp.1 = getelementptr [2 x i32], [2 x i32]* %Arr, i32 0, i32 1		; <i32*> [#uses=1]
 	store i32 2, i32* %tmp.1
 	%tmp.3 = getelementptr [2 x i32], [2 x i32]* %Arr, i32 0, i32 %X		; <i32*> [#uses=1]
-	%tmp.4 = load i32* %tmp.3		; <i32> [#uses=1]
+	%tmp.4 = load i32, i32* %tmp.3		; <i32> [#uses=1]
 	ret i32 %tmp.4
 }
 

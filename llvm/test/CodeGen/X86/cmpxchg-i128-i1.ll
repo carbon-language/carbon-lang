@@ -62,7 +62,7 @@ define i128 @cmpxchg_use_eflags_and_val(i128* %addr, i128 %offset) {
 ; CHECK-NOT: cmpq
 ; CHECK: jne
 entry:
-  %init = load atomic i128* %addr seq_cst, align 16
+  %init = load atomic i128, i128* %addr seq_cst, align 16
   br label %loop
 
 loop:

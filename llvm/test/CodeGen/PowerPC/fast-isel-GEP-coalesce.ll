@@ -13,7 +13,7 @@ entry:
   %addr = alloca i32*, align 4
   store i32* getelementptr inbounds ([2 x [2 x [2 x [2 x [2 x i32]]]]]* @arr, i32 0, i32 1, i32 1, i32 1, i32 1, i32 1), i32** %addr, align 4
 ; ELF64: addi {{[0-9]+}}, {{[0-9]+}}, 124
-  %0 = load i32** %addr, align 4
+  %0 = load i32*, i32** %addr, align 4
   ret i32* %0
 }
 
@@ -23,7 +23,7 @@ entry:
   %addr = alloca i32*, align 4
   store i32* getelementptr inbounds ([3 x [3 x %struct.A]]* @A, i32 0, i32 2, i32 2, i32 3, i32 1, i32 2, i32 2), i32** %addr, align 4
 ; ELF64: addi {{[0-9]+}}, {{[0-9]+}}, 1148
-  %0 = load i32** %addr, align 4
+  %0 = load i32*, i32** %addr, align 4
   ret i32* %0
 }
 
@@ -33,7 +33,7 @@ entry:
   %addr = alloca i32*, align 4
   store i32* getelementptr inbounds ([3 x [3 x %struct.A]]* @A, i32 0, i32 0, i32 1, i32 1, i32 0, i32 1), i32** %addr, align 4
 ; ELF64: addi {{[0-9]+}}, {{[0-9]+}}, 140
-  %0 = load i32** %addr, align 4
+  %0 = load i32*, i32** %addr, align 4
   ret i32* %0
 }
 
@@ -43,6 +43,6 @@ entry:
   %addr = alloca i32*, align 4
   store i32* getelementptr inbounds ([2 x [2 x [2 x %struct.B]]]* @B, i32 0, i32 0, i32 0, i32 1, i32 1, i32 0, i32 0, i32 1, i32 3, i32 1, i32 2, i32 1), i32** %addr, align 4
 ; ELF64: addi {{[0-9]+}}, {{[0-9]+}}, 1284
-  %0 = load i32** %addr, align 4
+  %0 = load i32*, i32** %addr, align 4
   ret i32* %0
 }

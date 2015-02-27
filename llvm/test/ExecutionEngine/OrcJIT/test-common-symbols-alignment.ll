@@ -13,7 +13,7 @@ entry:
     %ptr = alloca i32, align 4
     store i32 0, i32* %retval
     store i32 ptrtoint (i32* @CS3 to i32), i32* %ptr, align 4
-    %0 = load i32* %ptr, align 4
+    %0 = load i32, i32* %ptr, align 4
     %and = and i32 %0, 15
     %tobool = icmp ne i32 %and, 0
     br i1 %tobool, label %if.then, label %if.else
@@ -27,6 +27,6 @@ if.else:                                          ; preds = %entry
     br label %return
 
 return:                                           ; preds = %if.else, %if.then
-    %1 = load i32* %retval
+    %1 = load i32, i32* %retval
     ret i32 %1
 }

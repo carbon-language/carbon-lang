@@ -7,7 +7,7 @@
 ; CHECK-NOT: vmul
 define void @t0() nounwind {
 entry:
-  %tmp = load float* @in, align 4
+  %tmp = load float, float* @in, align 4
   %vecinit.i = insertelement <2 x float> undef, float %tmp, i32 0
   %vecinit2.i = insertelement <2 x float> %vecinit.i, float %tmp, i32 1
   %mul.i = fmul <2 x float> %vecinit2.i, <float 8.000000e+00, float 8.000000e+00>
@@ -23,7 +23,7 @@ declare void @foo_int32x2_t(<2 x i32>)
 ; CHECK-NOT: vmul
 define void @t1() nounwind {
 entry:
-  %tmp = load float* @in, align 4
+  %tmp = load float, float* @in, align 4
   %vecinit.i = insertelement <2 x float> undef, float %tmp, i32 0
   %vecinit2.i = insertelement <2 x float> %vecinit.i, float %tmp, i32 1
   %mul.i = fmul <2 x float> %vecinit2.i, <float 8.000000e+00, float 8.000000e+00>
@@ -39,7 +39,7 @@ declare void @foo_uint32x2_t(<2 x i32>)
 ; CHECK: vmul
 define void @t2() nounwind {
 entry:
-  %tmp = load float* @in, align 4
+  %tmp = load float, float* @in, align 4
   %vecinit.i = insertelement <2 x float> undef, float %tmp, i32 0
   %vecinit2.i = insertelement <2 x float> %vecinit.i, float %tmp, i32 1
   %mul.i = fmul <2 x float> %vecinit2.i, <float 0x401B333340000000, float 0x401B333340000000>
@@ -53,7 +53,7 @@ entry:
 ; CHECK: vmul
 define void @t3() nounwind {
 entry:
-  %tmp = load float* @in, align 4
+  %tmp = load float, float* @in, align 4
   %vecinit.i = insertelement <2 x float> undef, float %tmp, i32 0
   %vecinit2.i = insertelement <2 x float> %vecinit.i, float %tmp, i32 1
   %mul.i = fmul <2 x float> %vecinit2.i, <float 0x4200000000000000, float 0x4200000000000000>
@@ -67,7 +67,7 @@ entry:
 ; CHECK-NOT: vmul
 define void @t4() nounwind {
 entry:
-  %tmp = load float* @in, align 4
+  %tmp = load float, float* @in, align 4
   %vecinit.i = insertelement <2 x float> undef, float %tmp, i32 0
   %vecinit2.i = insertelement <2 x float> %vecinit.i, float %tmp, i32 1
   %mul.i = fmul <2 x float> %vecinit2.i, <float 0x41F0000000000000, float 0x41F0000000000000>
@@ -81,7 +81,7 @@ entry:
 ; CHECK-NOT: vmul
 define void @t5() nounwind {
 entry:
-  %tmp = load float* @in, align 4
+  %tmp = load float, float* @in, align 4
   %vecinit.i = insertelement <4 x float> undef, float %tmp, i32 0
   %vecinit2.i = insertelement <4 x float> %vecinit.i, float %tmp, i32 1
   %vecinit4.i = insertelement <4 x float> %vecinit2.i, float %tmp, i32 2

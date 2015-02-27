@@ -20,15 +20,15 @@ target triple = "powerpc-unknown-linux-gnu"
 ; Function Attrs: nounwind readonly uwtable
 define i32 @fn1() #0 {
 entry:
-  %0 = load %struct.anon** @b, align 4
+  %0 = load %struct.anon*, %struct.anon** @b, align 4
   %1 = ptrtoint %struct.anon* %0 to i32
   %cmp = icmp sgt %struct.anon* %0, null
-  %2 = load %struct.anon.0** @a, align 4
+  %2 = load %struct.anon.0*, %struct.anon.0** @a, align 4
   br i1 %cmp, label %for.bodythread-pre-split, label %if.end8
 
 for.bodythread-pre-split:                         ; preds = %entry
   %aclass = getelementptr inbounds %struct.anon.0, %struct.anon.0* %2, i32 0, i32 0
-  %.pr = load i32* %aclass, align 4
+  %.pr = load i32, i32* %aclass, align 4
   br label %for.body
 
 for.body:                                         ; preds = %for.bodythread-pre-split, %for.body
@@ -52,9 +52,9 @@ while.cond:                                       ; preds = %while.body
 while.body:                                       ; preds = %while.body.lr.ph, %while.cond
   %j.110 = phi i32 [ %j.1.ph13, %while.body.lr.ph ], [ %inc7, %while.cond ]
   %aclass_index = getelementptr inbounds %struct.anon, %struct.anon* %0, i32 %j.110, i32 0
-  %3 = load i32* %aclass_index, align 4
+  %3 = load i32, i32* %aclass_index, align 4
   %aclass5 = getelementptr inbounds %struct.anon.0, %struct.anon.0* %2, i32 %3, i32 0
-  %4 = load i32* %aclass5, align 4
+  %4 = load i32, i32* %aclass5, align 4
   %tobool = icmp eq i32 %4, 0
   %inc7 = add nsw i32 %j.110, 1
   br i1 %tobool, label %while.cond, label %if.then6

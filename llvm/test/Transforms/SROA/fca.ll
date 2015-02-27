@@ -19,7 +19,7 @@ entry:
   %gep2 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %a, i32 0, i32 1
   store i32 %y, i32* %gep2
 
-  %result = load { i32, i32 }* %a
+  %result = load { i32, i32 }, { i32, i32 }* %a
   ret { i32, i32 } %result
 }
 
@@ -30,7 +30,7 @@ define { i32, i32 } @test1(i32 %x, i32 %y) {
 ; CHECK-LABEL: @test1(
 ; CHECK: alloca
 ; CHECK: alloca
-; CHECK: load volatile { i32, i32 }*
+; CHECK: load volatile { i32, i32 }, { i32, i32 }*
 ; CHECK: store volatile { i32, i32 }
 ; CHECK: ret { i32, i32 }
 
@@ -43,7 +43,7 @@ entry:
   %gep2 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %a, i32 0, i32 1
   store i32 %y, i32* %gep2
 
-  %result = load volatile { i32, i32 }* %a
+  %result = load volatile { i32, i32 }, { i32, i32 }* %a
   store volatile { i32, i32 } %result, { i32, i32 }* %b
   ret { i32, i32 } %result
 }

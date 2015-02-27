@@ -16,14 +16,14 @@ entry:
 	br label %bb11
 
 bb6:                                              ; preds = %bb11
-	%4 = load i8*** %3, align 4               ; <i8**> [#uses=1]
+	%4 = load i8**, i8*** %3, align 4               ; <i8**> [#uses=1]
 	%scevgep = getelementptr i8*, i8** %4, i32 %8  ; <i8**> [#uses=1]
-	%5 = load i8** %scevgep, align 4          ; <i8*> [#uses=1]
+	%5 = load i8*, i8** %scevgep, align 4          ; <i8*> [#uses=1]
 	br label %bb3.i
 
 bb3.i:                                            ; preds = %bb3.i, %bb6
 	%scevgep7.i = getelementptr i8, i8* %5, i32 0 ; <i8*> [#uses=1]
-	%6 = load i8* %scevgep7.i, align 1        ; <i8> [#uses=0]
+	%6 = load i8, i8* %scevgep7.i, align 1        ; <i8> [#uses=0]
 	br i1 undef, label %bb3.i, label %bb10
 
 bb10:                                             ; preds = %bb3.i

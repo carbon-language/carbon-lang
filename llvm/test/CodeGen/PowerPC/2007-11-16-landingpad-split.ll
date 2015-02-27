@@ -39,7 +39,7 @@ unwind:		; preds = %cond_true, %entry
         resume { i8*, i32 } %exn
 
 invcont23:		; preds = %cond_true
-	%tmp27 = load i64* %tmp26, align 8		; <i64> [#uses=1]
+	%tmp27 = load i64, i64* %tmp26, align 8		; <i64> [#uses=1]
 	%tmp28 = sub i64 %range_addr.1.0, %tmp27		; <i64> [#uses=1]
 	br label %bb30
 

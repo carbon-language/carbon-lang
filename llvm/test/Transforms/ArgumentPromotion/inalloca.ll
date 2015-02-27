@@ -9,8 +9,8 @@ define internal i32 @f(%struct.ss* inalloca  %s) {
 entry:
   %f0 = getelementptr %struct.ss, %struct.ss* %s, i32 0, i32 0
   %f1 = getelementptr %struct.ss, %struct.ss* %s, i32 0, i32 1
-  %a = load i32* %f0, align 4
-  %b = load i32* %f1, align 4
+  %a = load i32, i32* %f0, align 4
+  %b = load i32, i32* %f1, align 4
   %r = add i32 %a, %b
   ret i32 %r
 }

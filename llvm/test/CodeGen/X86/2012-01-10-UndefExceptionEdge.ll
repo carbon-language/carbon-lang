@@ -109,7 +109,7 @@ bb49:                                             ; preds = %bb49, %bb48
   %tmp51 = add i32 %tmp50, undef
   %tmp52 = add i32 %tmp50, undef
   %tmp53 = getelementptr i32, i32* %tmp13, i32 %tmp52
-  %tmp54 = load i32* %tmp53, align 4
+  %tmp54 = load i32, i32* %tmp53, align 4
   %tmp55 = add i32 %tmp50, 1
   %tmp56 = icmp eq i32 %tmp55, %tmp8
   br i1 %tmp56, label %bb57, label %bb49

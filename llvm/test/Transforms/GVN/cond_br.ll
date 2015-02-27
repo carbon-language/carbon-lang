@@ -5,11 +5,11 @@
 ; Function Attrs: nounwind ssp uwtable
 define void @foo(i32 %x) {
 ; CHECK: @foo(i32 %x)
-; CHECK: %.pre = load i32* @y
+; CHECK: %.pre = load i32, i32* @y
 ; CHECK: call void @bar(i32 %.pre)
 
   %t = sub i32 %x, %x
-  %.pre = load i32* @y, align 4
+  %.pre = load i32, i32* @y, align 4
   %cmp = icmp sgt i32 %t, 2
   br i1 %cmp, label %if.then, label %entry.if.end_crit_edge
 
@@ -29,11 +29,11 @@ if.end:                                           ; preds = %entry.if.end_crit_e
 
 define void @foo2(i32 %x) {
 ; CHECK: @foo2(i32 %x)
-; CHECK: %.pre = load i32* @y
+; CHECK: %.pre = load i32, i32* @y
 ; CHECK: tail call void @bar(i32 %.pre)
 entry:
   %t = sub i32 %x, %x
-  %.pre = load i32* @y, align 4
+  %.pre = load i32, i32* @y, align 4
   %cmp = icmp sgt i32 %t, 2
   br i1 %cmp, label %if.then, label %if.else
 

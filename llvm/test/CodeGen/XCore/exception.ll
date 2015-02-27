@@ -84,7 +84,7 @@ lpad:
   %2 = extractvalue { i8*, i32 } %0, 1
   %3 = call i8* @__cxa_begin_catch(i8* %1) nounwind
   %4 = bitcast i8* %3 to i32*
-  %5 = load i32* %4
+  %5 = load i32, i32* %4
   call void @__cxa_end_catch() nounwind
 
 ; CHECK: eq r0, r6, r5

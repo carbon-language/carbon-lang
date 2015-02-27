@@ -21,7 +21,7 @@ entry:
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %a.addr, metadata !12, metadata !13), !dbg !14
-  %0 = load i32* %a.addr, align 4, !dbg !15
+  %0 = load i32, i32* %a.addr, align 4, !dbg !15
   ret i32 %0, !dbg !16
 }
 

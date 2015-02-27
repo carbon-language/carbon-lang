@@ -13,7 +13,7 @@ body:
   %iv = phi i32 [ 0, %entry ], [ %next, %body ]
   %base = phi i32 [ 0, %entry ], [ %sum, %body ]
   %arrayidx = getelementptr inbounds i32, i32* %a, i32 %iv
-  %0 = load i32* %arrayidx
+  %0 = load i32, i32* %arrayidx
   %sum = add nsw i32 %0, %base
   %next = add i32 %iv, 1
   %exitcond = icmp eq i32 %next, %i

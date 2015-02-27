@@ -20,6 +20,6 @@ if.then.i.i.i.i.i237:
   unreachable
 
 bb0.exit257:
-  %0 = load <2 x i32*>* %Args.i, align 16
+  %0 = load <2 x i32*>, <2 x i32*>* %Args.i, align 16
   unreachable
 }

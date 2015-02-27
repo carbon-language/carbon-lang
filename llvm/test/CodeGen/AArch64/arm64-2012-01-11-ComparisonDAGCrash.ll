@@ -13,7 +13,7 @@ lor.lhs.false:
   br i1 undef, label %return, label %if.end
 
 if.end:
-  %tmp.i = load i64* undef, align 8
+  %tmp.i = load i64, i64* undef, align 8
   %and.i.i.i = and i64 %tmp.i, -16
   br i1 %IsArrow, label %if.else_crit_edge, label %if.end32
 

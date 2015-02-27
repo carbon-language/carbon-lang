@@ -23,15 +23,15 @@ entry:
   br i1 %tmp, label %noassert, label %assert
 
 assert:                                           ; preds = %entry
-  %tmp1 = load { i32, i8* }* @.modulefilename
+  %tmp1 = load { i32, i8* }, { i32, i8* }* @.modulefilename
   %0 = call i8* @_d_assert_msg({ i32, i8* } { i32 9, i8* getelementptr inbounds ([10 x i8]* @.str83, i32 0, i32 0) }, { i32, i8* } %tmp1, i32 1586)
   unreachable
 
 noassert:                                         ; preds = %entry
   %tmp2 = getelementptr %core.time.TickDuration, %core.time.TickDuration* %.this_arg, i32 0, i32 0
-  %tmp3 = load i64* %tmp2
+  %tmp3 = load i64, i64* %tmp2
   %tmp4 = sitofp i64 %tmp3 to ppc_fp128
-  %tmp5 = load i64* @_D4core4time12TickDuration11ticksPerSecyl
+  %tmp5 = load i64, i64* @_D4core4time12TickDuration11ticksPerSecyl
   %tmp6 = sitofp i64 %tmp5 to ppc_fp128
   %tmp7 = fdiv ppc_fp128 %tmp6, 0xM80000000000000000000000000000000
   %tmp8 = fdiv ppc_fp128 %tmp4, %tmp7

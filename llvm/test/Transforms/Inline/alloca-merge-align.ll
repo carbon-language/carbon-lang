@@ -9,11 +9,11 @@ define void @foo(%struct.s* byval nocapture readonly %a) {
 entry:
   %x = alloca [2 x i32], align 4
   %a1 = getelementptr inbounds %struct.s, %struct.s* %a, i64 0, i32 0
-  %0 = load i32* %a1, align 4
+  %0 = load i32, i32* %a1, align 4
   %arrayidx = getelementptr inbounds [2 x i32], [2 x i32]* %x, i64 0, i64 0
   store i32 %0, i32* %arrayidx, align 4
   %b = getelementptr inbounds %struct.s, %struct.s* %a, i64 0, i32 1
-  %1 = load i32* %b, align 4
+  %1 = load i32, i32* %b, align 4
   %arrayidx2 = getelementptr inbounds [2 x i32], [2 x i32]* %x, i64 0, i64 1
   store i32 %1, i32* %arrayidx2, align 4
   call void @bar(i32* %arrayidx) #2
@@ -24,11 +24,11 @@ define void @foo0(%struct.s* byval nocapture readonly %a) {
 entry:
   %x = alloca [2 x i32]
   %a1 = getelementptr inbounds %struct.s, %struct.s* %a, i64 0, i32 0
-  %0 = load i32* %a1, align 4
+  %0 = load i32, i32* %a1, align 4
   %arrayidx = getelementptr inbounds [2 x i32], [2 x i32]* %x, i64 0, i64 0
   store i32 %0, i32* %arrayidx, align 4
   %b = getelementptr inbounds %struct.s, %struct.s* %a, i64 0, i32 1
-  %1 = load i32* %b, align 4
+  %1 = load i32, i32* %b, align 4
   %arrayidx2 = getelementptr inbounds [2 x i32], [2 x i32]* %x, i64 0, i64 1
   store i32 %1, i32* %arrayidx2, align 4
   call void @bar(i32* %arrayidx) #2
@@ -39,11 +39,11 @@ define void @foo1(%struct.s* byval nocapture readonly %a) {
 entry:
   %x = alloca [2 x i32], align 1
   %a1 = getelementptr inbounds %struct.s, %struct.s* %a, i64 0, i32 0
-  %0 = load i32* %a1, align 4
+  %0 = load i32, i32* %a1, align 4
   %arrayidx = getelementptr inbounds [2 x i32], [2 x i32]* %x, i64 0, i64 0
   store i32 %0, i32* %arrayidx, align 4
   %b = getelementptr inbounds %struct.s, %struct.s* %a, i64 0, i32 1
-  %1 = load i32* %b, align 4
+  %1 = load i32, i32* %b, align 4
   %arrayidx2 = getelementptr inbounds [2 x i32], [2 x i32]* %x, i64 0, i64 1
   store i32 %1, i32* %arrayidx2, align 4
   call void @bar(i32* %arrayidx) #2
@@ -56,11 +56,11 @@ define void @goo(%struct.s* byval nocapture readonly %a) {
 entry:
   %x = alloca [2 x i32], align 32
   %a1 = getelementptr inbounds %struct.s, %struct.s* %a, i64 0, i32 0
-  %0 = load i32* %a1, align 4
+  %0 = load i32, i32* %a1, align 4
   %arrayidx = getelementptr inbounds [2 x i32], [2 x i32]* %x, i64 0, i64 0
   store i32 %0, i32* %arrayidx, align 32
   %b = getelementptr inbounds %struct.s, %struct.s* %a, i64 0, i32 1
-  %1 = load i32* %b, align 4
+  %1 = load i32, i32* %b, align 4
   %arrayidx2 = getelementptr inbounds [2 x i32], [2 x i32]* %x, i64 0, i64 1
   store i32 %1, i32* %arrayidx2, align 4
   call void @bar(i32* %arrayidx) #2

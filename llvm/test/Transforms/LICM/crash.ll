@@ -12,7 +12,7 @@ entry:
 
 for.body:                                         ; preds = %for.cond, %bb.nph
   store i8 0, i8* @g_12, align 1
-  %tmp6 = load i8* @g_12, align 1
+  %tmp6 = load i8, i8* @g_12, align 1
   br label %for.cond
 
 for.cond:                                         ; preds = %for.body
@@ -34,7 +34,7 @@ entry:
   br label %for.body
 
 for.body:                                         ; preds = %for.body, %entry
-  %tmp7 = load i32* @g_8, align 4
+  %tmp7 = load i32, i32* @g_8, align 4
   store i32* @g_8, i32** undef, align 16
   store i32 undef, i32* @g_8, align 4
   br label %for.body
@@ -48,7 +48,7 @@ entry:
 
 for.cond:                                         ; preds = %for.cond, %entry
   %tmp1 = getelementptr { i32*}, { i32*}* %__first, i32 0, i32 0
-  %tmp2 = load i32** %tmp1, align 4
+  %tmp2 = load i32*, i32** %tmp1, align 4
   %call = tail call i32* @test3helper(i32* %tmp2)
   %tmp3 = getelementptr { i32*}, { i32*}* %__first, i32 0, i32 0
   store i32* %call, i32** %tmp3, align 4

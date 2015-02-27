@@ -39,7 +39,7 @@ for.body4.i.i.i.i:                                ; preds = %for.cond1.i.i.i.i
   br label %for.cond1.i.i.i.i
 
 func_39.exit.i.i:                                 ; preds = %for.cond1.i.i.i.i
-  %l_8191.sroa.0.0.copyload.i.i = load i64* %0, align 1
+  %l_8191.sroa.0.0.copyload.i.i = load i64, i64* %0, align 1
   br label %for.cond1.i.i.i
 
 for.cond1.i.i.i:                                  ; preds = %safe_div_func_uint32_t_u_u.exit.i.i.i, %func_39.exit.i.i

@@ -11,7 +11,7 @@
 define i32 @reti() {
 entry:
 ; CHECK-LABEL: reti:
-  %0 = load i32* @i, align 4
+  %0 = load i32, i32* @i, align 4
   ret i32 %0
 ; CHECK:        lui     $[[REG_GPa:[0-9]+]], %hi(_gp_disp)
 ; CHECK:        addiu   $[[REG_GPb:[0-9]+]], $[[REG_GPa]], %lo(_gp_disp)
@@ -25,7 +25,7 @@ entry:
 define signext i16 @rets() {
 entry:
 ; CHECK-LABEL: rets:
-  %0 = load i16* @s, align 2
+  %0 = load i16, i16* @s, align 2
   ret i16 %0
 ; CHECK:        lui     $[[REG_GPa:[0-9]+]], %hi(_gp_disp)
 ; CHECK:        addiu   $[[REG_GPb:[0-9]+]], $[[REG_GPa]], %lo(_gp_disp)
@@ -40,7 +40,7 @@ entry:
 define signext i8 @retc() {
 entry:
 ; CHECK-LABEL: retc:
-  %0 = load i8* @c, align 1
+  %0 = load i8, i8* @c, align 1
   ret i8 %0
 ; CHECK:        lui     $[[REG_GPa:[0-9]+]], %hi(_gp_disp)
 ; CHECK:        addiu   $[[REG_GPb:[0-9]+]], $[[REG_GPa]], %lo(_gp_disp)
@@ -55,7 +55,7 @@ entry:
 define float @retf() {
 entry:
 ; CHECK-LABEL: retf:
-  %0 = load float* @f, align 4
+  %0 = load float, float* @f, align 4
   ret float %0
 ; CHECK:        lui     $[[REG_GPa:[0-9]+]], %hi(_gp_disp)
 ; CHECK:        addiu   $[[REG_GPb:[0-9]+]], $[[REG_GPa]], %lo(_gp_disp)
@@ -69,7 +69,7 @@ entry:
 define double @retd() {
 entry:
 ; CHECK-LABEL: retd:
-  %0 = load double* @d, align 8
+  %0 = load double, double* @d, align 8
   ret double %0
 ; CHECK:        lui     $[[REG_GPa:[0-9]+]], %hi(_gp_disp)
 ; CHECK:        addiu   $[[REG_GPb:[0-9]+]], $[[REG_GPa]], %lo(_gp_disp)

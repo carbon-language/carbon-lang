@@ -19,7 +19,7 @@ define i32 @main() {
 			to label %invcont unwind label %lpad
 
 invcont:
-	%retval = load i32* %a, align 4
+	%retval = load i32, i32* %a, align 4
 	ret i32 %retval
 
 lpad:

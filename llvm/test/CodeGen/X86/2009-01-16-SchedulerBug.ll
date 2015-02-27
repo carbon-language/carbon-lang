@@ -10,12 +10,12 @@ declare { i32, i1 } @llvm.sadd.with.overflow.i32(i32, i32) nounwind
 
 define fastcc %XXV* @bar(%CF* %call_frame, %XXV** %exception) nounwind {
 prologue:
-	%param_x = load %XXV** null		; <%XXV*> [#uses=1]
+	%param_x = load %XXV*, %XXV** null		; <%XXV*> [#uses=1]
 	%unique_1.i = ptrtoint %XXV* %param_x to i1		; <i1> [#uses=1]
 	br i1 %unique_1.i, label %NextVerify42, label %FailedVerify
 
 NextVerify42:		; preds = %prologue
-	%param_y = load %XXV** null		; <%XXV*> [#uses=1]
+	%param_y = load %XXV*, %XXV** null		; <%XXV*> [#uses=1]
 	%unique_1.i58 = ptrtoint %XXV* %param_y to i1		; <i1> [#uses=1]
 	br i1 %unique_1.i58, label %function_setup.cont, label %FailedVerify
 

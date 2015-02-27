@@ -51,7 +51,7 @@ E:
 	br i1 %C, label %T, label %F
 T:		; preds = %A, %E
 	call void @f3( )
-	%XX = load i32* %AP		; <i32> [#uses=1]
+	%XX = load i32, i32* %AP		; <i32> [#uses=1]
 	store i32 %XX, i32* %BP
 	br i1 %C, label %B, label %A
 A:		; preds = %T

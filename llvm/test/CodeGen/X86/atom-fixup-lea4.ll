@@ -10,7 +10,7 @@ define linkonce_odr void @_ZN12ValueWrapperIS_IS_IS_IdEEEEC2Ev(%struct.ValueWrap
 entry:
   %this.addr = alloca %struct.ValueWrapper.6*, align 8
   store %struct.ValueWrapper.6* %this, %struct.ValueWrapper.6** %this.addr, align 8
-  %this1 = load %struct.ValueWrapper.6** %this.addr
+  %this1 = load %struct.ValueWrapper.6*, %struct.ValueWrapper.6** %this.addr
   %value = getelementptr inbounds %struct.ValueWrapper.6, %struct.ValueWrapper.6* %this1, i32 0, i32 0
   call void @_ZN12ValueWrapperIS_IS_IdEEEC2Ev(%struct.ValueWrapper.7* %value)
   ret void

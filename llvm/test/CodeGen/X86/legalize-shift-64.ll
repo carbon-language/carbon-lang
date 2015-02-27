@@ -71,7 +71,7 @@ define i32 @test6() {
   %t = alloca i64, align 8
   store i32 1, i32* %x, align 4
   store i64 1, i64* %t, align 8  ;; DEAD
-  %load = load i32* %x, align 4
+  %load = load i32, i32* %x, align 4
   %shl = shl i32 %load, 8
   %add = add i32 %shl, -224
   %sh_prom = zext i32 %add to i64

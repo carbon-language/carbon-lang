@@ -8,12 +8,12 @@
 
 define fastcc void @nodeOverwriteCell(%struct.Rtree* nocapture %pRtree, %struct.RtreeNode* nocapture %pNode, %struct.RtreeCell* nocapture %pCell, i32 %iCell) nounwind ssp {
 entry:
-  %0 = load i8** undef, align 8                   ; <i8*> [#uses=2]
-  %1 = load i32* undef, align 8                   ; <i32> [#uses=1]
+  %0 = load i8*, i8** undef, align 8                   ; <i8*> [#uses=2]
+  %1 = load i32, i32* undef, align 8                   ; <i32> [#uses=1]
   %2 = mul i32 %1, %iCell                         ; <i32> [#uses=1]
   %3 = add nsw i32 %2, 4                          ; <i32> [#uses=1]
   %4 = sext i32 %3 to i64                         ; <i64> [#uses=2]
-  %5 = load i64* null, align 8                    ; <i64> [#uses=2]
+  %5 = load i64, i64* null, align 8                    ; <i64> [#uses=2]
   %6 = lshr i64 %5, 48                            ; <i64> [#uses=1]
   %7 = trunc i64 %6 to i8                         ; <i8> [#uses=1]
   store i8 %7, i8* undef, align 1
@@ -36,12 +36,12 @@ bb:                                               ; preds = %bb, %bb.nph
   %tmp = shl i64 %indvar, 2                       ; <i64> [#uses=1]
   %tmp26 = add i64 %tmp, %tmp25                   ; <i64> [#uses=1]
   %scevgep27 = getelementptr i8, i8* %0, i64 %tmp26   ; <i8*> [#uses=1]
-  %12 = load i32* %scevgep12, align 4             ; <i32> [#uses=1]
+  %12 = load i32, i32* %scevgep12, align 4             ; <i32> [#uses=1]
   %13 = lshr i32 %12, 24                          ; <i32> [#uses=1]
   %14 = trunc i32 %13 to i8                       ; <i8> [#uses=1]
   store i8 %14, i8* undef, align 1
   store i8 undef, i8* %scevgep27, align 1
-  %15 = load i32* %11, align 4                    ; <i32> [#uses=1]
+  %15 = load i32, i32* %11, align 4                    ; <i32> [#uses=1]
   %16 = shl i32 %15, 1                            ; <i32> [#uses=1]
   %17 = icmp sgt i32 %16, undef                   ; <i1> [#uses=1]
   %indvar.next = add i64 %indvar, 1               ; <i64> [#uses=1]

@@ -21,14 +21,14 @@ entry:
 	%mem_tmp.1 = alloca i32		; <i32*> [#uses=3]
 	store i32 0, i32* %mem_tmp.0
 	store i32 1, i32* %mem_tmp.1
-	%tmp.1.i = load i32* %mem_tmp.1		; <i32> [#uses=1]
-	%tmp.3.i = load i32* %mem_tmp.0		; <i32> [#uses=1]
+	%tmp.1.i = load i32, i32* %mem_tmp.1		; <i32> [#uses=1]
+	%tmp.3.i = load i32, i32* %mem_tmp.0		; <i32> [#uses=1]
 	%tmp.4.i = icmp sle i32 %tmp.1.i, %tmp.3.i		; <i1> [#uses=1]
 	br i1 %tmp.4.i, label %cond_true.i, label %cond_continue.i
 cond_true.i:		; preds = %entry
 	br label %cond_continue.i
 cond_continue.i:		; preds = %cond_true.i, %entry
 	%mem_tmp.i.0 = phi i32* [ %mem_tmp.1, %cond_true.i ], [ %mem_tmp.0, %entry ]		; <i32*> [#uses=1]
-	%tmp.3 = load i32* %mem_tmp.i.0		; <i32> [#uses=1]
+	%tmp.3 = load i32, i32* %mem_tmp.i.0		; <i32> [#uses=1]
 	ret i32 %tmp.3
 }

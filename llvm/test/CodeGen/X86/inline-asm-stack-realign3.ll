@@ -15,7 +15,7 @@ doit:
   br label %skip
 
 skip:
-  %0 = load i32* %r, align 128
+  %0 = load i32, i32* %r, align 128
   ret i32 %0
 }
 

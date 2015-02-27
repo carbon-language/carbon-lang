@@ -21,15 +21,15 @@ declare void @take_floats(float %val1, float %val2)
 
 define void @simple_args() {
 ; CHECK-LABEL: simple_args:
-  %char1 = load i8* @var8
-  %char2 = load i8* @var8_2
+  %char1 = load i8, i8* @var8
+  %char2 = load i8, i8* @var8_2
   call void @take_i8s(i8 %char1, i8 %char2)
 ; CHECK-DAG: ldrb w0, [{{x[0-9]+}}, {{#?}}:lo12:var8]
 ; CHECK-DAG: ldrb w1, [{{x[0-9]+}}, {{#?}}:lo12:var8_2]
 ; CHECK: bl take_i8s
 
-  %float1 = load float* @varfloat
-  %float2 = load float* @varfloat_2
+  %float1 = load float, float* @varfloat
+  %float2 = load float, float* @varfloat_2
   call void @take_floats(float %float1, float %float2)
 ; CHECK-DAG: ldr s1, [{{x[0-9]+}}, {{#?}}:lo12:varfloat_2]
 ; CHECK-DAG: ldr s0, [{{x[0-9]+}}, {{#?}}:lo12:varfloat]
@@ -124,7 +124,7 @@ declare void @check_i128_regalign(i32 %val0, i128 %val1)
 
 define void @check_i128_align() {
 ; CHECK-LABEL: check_i128_align:
-  %val = load i128* @var128
+  %val = load i128, i128* @var128
   call void @check_i128_stackalign(i32 0, i32 1, i32 2, i32 3,
                                    i32 4, i32 5, i32 6, i32 7,
                                    i32 42, i128 %val)
@@ -152,7 +152,7 @@ define void @check_i128_align() {
 
 define void @check_indirect_call() {
 ; CHECK-LABEL: check_indirect_call:
-  %func = load void()** @fptr
+  %func = load void()*, void()** @fptr
   call void %func()
 ; CHECK: ldr [[FPTR:x[0-9]+]], [{{x[0-9]+}}, {{#?}}:lo12:fptr]
 ; CHECK: blr [[FPTR]]

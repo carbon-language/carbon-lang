@@ -31,7 +31,7 @@ define i32 @foo(i32 %n, i32* nocapture %A) {
   %5 = shl nsw i32 %4, 1
   %6 = sext i32 %5 to i64
   %7 = getelementptr inbounds i32, i32* %A, i64 %6
-  %8 = load i32* %7, align 4
+  %8 = load i32, i32* %7, align 4
   %9 = add nsw i32 %8, %sum.01
   %indvars.iv.next = add i64 %indvars.iv, -1
   %10 = trunc i64 %indvars.iv.next to i32

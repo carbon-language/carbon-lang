@@ -6,7 +6,7 @@ define void @test(i32 %count) {
 entry:
         br label %forcond
 
-; CHECK:  %tmp3 = load float** @a
+; CHECK:  %tmp3 = load float*, float** @a
 ; CHECK:  br label %forcond
 
 forcond:
@@ -19,7 +19,7 @@ forcond:
 ; CHECK:  br i1 %cmp, label %forbody, label %afterfor
 
 forbody:
-        %tmp3 = load float** @a
+        %tmp3 = load float*, float** @a
         %arrayidx = getelementptr float, float* %tmp3, i32 %i.0
         %tmp7 = uitofp i32 %i.0 to float
         store float %tmp7, float* %arrayidx

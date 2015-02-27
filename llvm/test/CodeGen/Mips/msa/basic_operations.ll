@@ -258,7 +258,7 @@ define void @nonconst_v2i64(i64 %a, i64 %b) nounwind {
 define i32 @extract_sext_v16i8() nounwind {
   ; MIPS32-AE-LABEL: extract_sext_v16i8:
 
-  %1 = load <16 x i8>* @v16i8
+  %1 = load <16 x i8>, <16 x i8>* @v16i8
   ; MIPS32-AE-DAG: ld.b [[R1:\$w[0-9]+]],
 
   %2 = add <16 x i8> %1, %1
@@ -277,7 +277,7 @@ define i32 @extract_sext_v16i8() nounwind {
 define i32 @extract_sext_v8i16() nounwind {
   ; MIPS32-AE-LABEL: extract_sext_v8i16:
 
-  %1 = load <8 x i16>* @v8i16
+  %1 = load <8 x i16>, <8 x i16>* @v8i16
   ; MIPS32-AE-DAG: ld.h [[R1:\$w[0-9]+]],
 
   %2 = add <8 x i16> %1, %1
@@ -296,7 +296,7 @@ define i32 @extract_sext_v8i16() nounwind {
 define i32 @extract_sext_v4i32() nounwind {
   ; MIPS32-AE-LABEL: extract_sext_v4i32:
 
-  %1 = load <4 x i32>* @v4i32
+  %1 = load <4 x i32>, <4 x i32>* @v4i32
   ; MIPS32-AE-DAG: ld.w [[R1:\$w[0-9]+]],
 
   %2 = add <4 x i32> %1, %1
@@ -312,7 +312,7 @@ define i32 @extract_sext_v4i32() nounwind {
 define i64 @extract_sext_v2i64() nounwind {
   ; MIPS32-AE-LABEL: extract_sext_v2i64:
 
-  %1 = load <2 x i64>* @v2i64
+  %1 = load <2 x i64>, <2 x i64>* @v2i64
   ; MIPS32-AE-DAG: ld.d [[R1:\$w[0-9]+]],
 
   %2 = add <2 x i64> %1, %1
@@ -331,7 +331,7 @@ define i64 @extract_sext_v2i64() nounwind {
 define i32 @extract_zext_v16i8() nounwind {
   ; MIPS32-AE-LABEL: extract_zext_v16i8:
 
-  %1 = load <16 x i8>* @v16i8
+  %1 = load <16 x i8>, <16 x i8>* @v16i8
   ; MIPS32-AE-DAG: ld.b [[R1:\$w[0-9]+]],
 
   %2 = add <16 x i8> %1, %1
@@ -349,7 +349,7 @@ define i32 @extract_zext_v16i8() nounwind {
 define i32 @extract_zext_v8i16() nounwind {
   ; MIPS32-AE-LABEL: extract_zext_v8i16:
 
-  %1 = load <8 x i16>* @v8i16
+  %1 = load <8 x i16>, <8 x i16>* @v8i16
   ; MIPS32-AE-DAG: ld.h [[R1:\$w[0-9]+]],
 
   %2 = add <8 x i16> %1, %1
@@ -367,7 +367,7 @@ define i32 @extract_zext_v8i16() nounwind {
 define i32 @extract_zext_v4i32() nounwind {
   ; MIPS32-AE-LABEL: extract_zext_v4i32:
 
-  %1 = load <4 x i32>* @v4i32
+  %1 = load <4 x i32>, <4 x i32>* @v4i32
   ; MIPS32-AE-DAG: ld.w [[R1:\$w[0-9]+]],
 
   %2 = add <4 x i32> %1, %1
@@ -383,7 +383,7 @@ define i32 @extract_zext_v4i32() nounwind {
 define i64 @extract_zext_v2i64() nounwind {
   ; MIPS32-AE-LABEL: extract_zext_v2i64:
 
-  %1 = load <2 x i64>* @v2i64
+  %1 = load <2 x i64>, <2 x i64>* @v2i64
   ; MIPS32-AE-DAG: ld.d [[R1:\$w[0-9]+]],
 
   %2 = add <2 x i64> %1, %1
@@ -401,14 +401,14 @@ define i64 @extract_zext_v2i64() nounwind {
 define i32 @extract_sext_v16i8_vidx() nounwind {
   ; MIPS32-AE-LABEL: extract_sext_v16i8_vidx:
 
-  %1 = load <16 x i8>* @v16i8
+  %1 = load <16 x i8>, <16 x i8>* @v16i8
   ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v16i8)(
   ; MIPS32-AE-DAG: ld.b [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <16 x i8> %1, %1
   ; MIPS32-AE-DAG: addv.b [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
-  %3 = load i32* @i32
+  %3 = load i32, i32* @i32
   ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
@@ -425,14 +425,14 @@ define i32 @extract_sext_v16i8_vidx() nounwind {
 define i32 @extract_sext_v8i16_vidx() nounwind {
   ; MIPS32-AE-LABEL: extract_sext_v8i16_vidx:
 
-  %1 = load <8 x i16>* @v8i16
+  %1 = load <8 x i16>, <8 x i16>* @v8i16
   ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v8i16)(
   ; MIPS32-AE-DAG: ld.h [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <8 x i16> %1, %1
   ; MIPS32-AE-DAG: addv.h [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
-  %3 = load i32* @i32
+  %3 = load i32, i32* @i32
   ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
@@ -449,14 +449,14 @@ define i32 @extract_sext_v8i16_vidx() nounwind {
 define i32 @extract_sext_v4i32_vidx() nounwind {
   ; MIPS32-AE-LABEL: extract_sext_v4i32_vidx:
 
-  %1 = load <4 x i32>* @v4i32
+  %1 = load <4 x i32>, <4 x i32>* @v4i32
   ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4i32)(
   ; MIPS32-AE-DAG: ld.w [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <4 x i32> %1, %1
   ; MIPS32-AE-DAG: addv.w [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
-  %3 = load i32* @i32
+  %3 = load i32, i32* @i32
   ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
@@ -472,14 +472,14 @@ define i32 @extract_sext_v4i32_vidx() nounwind {
 define i64 @extract_sext_v2i64_vidx() nounwind {
   ; MIPS32-AE-LABEL: extract_sext_v2i64_vidx:
 
-  %1 = load <2 x i64>* @v2i64
+  %1 = load <2 x i64>, <2 x i64>* @v2i64
   ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2i64)(
   ; MIPS32-AE-DAG: ld.d [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <2 x i64> %1, %1
   ; MIPS32-AE-DAG: addv.d [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
-  %3 = load i32* @i32
+  %3 = load i32, i32* @i32
   ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
@@ -497,14 +497,14 @@ define i64 @extract_sext_v2i64_vidx() nounwind {
 define i32 @extract_zext_v16i8_vidx() nounwind {
   ; MIPS32-AE-LABEL: extract_zext_v16i8_vidx:
 
-  %1 = load <16 x i8>* @v16i8
+  %1 = load <16 x i8>, <16 x i8>* @v16i8
   ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v16i8)(
   ; MIPS32-AE-DAG: ld.b [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <16 x i8> %1, %1
   ; MIPS32-AE-DAG: addv.b [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
-  %3 = load i32* @i32
+  %3 = load i32, i32* @i32
   ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
@@ -521,14 +521,14 @@ define i32 @extract_zext_v16i8_vidx() nounwind {
 define i32 @extract_zext_v8i16_vidx() nounwind {
   ; MIPS32-AE-LABEL: extract_zext_v8i16_vidx:
 
-  %1 = load <8 x i16>* @v8i16
+  %1 = load <8 x i16>, <8 x i16>* @v8i16
   ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v8i16)(
   ; MIPS32-AE-DAG: ld.h [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <8 x i16> %1, %1
   ; MIPS32-AE-DAG: addv.h [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
-  %3 = load i32* @i32
+  %3 = load i32, i32* @i32
   ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
@@ -545,14 +545,14 @@ define i32 @extract_zext_v8i16_vidx() nounwind {
 define i32 @extract_zext_v4i32_vidx() nounwind {
   ; MIPS32-AE-LABEL: extract_zext_v4i32_vidx:
 
-  %1 = load <4 x i32>* @v4i32
+  %1 = load <4 x i32>, <4 x i32>* @v4i32
   ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4i32)(
   ; MIPS32-AE-DAG: ld.w [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <4 x i32> %1, %1
   ; MIPS32-AE-DAG: addv.w [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
-  %3 = load i32* @i32
+  %3 = load i32, i32* @i32
   ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
@@ -568,14 +568,14 @@ define i32 @extract_zext_v4i32_vidx() nounwind {
 define i64 @extract_zext_v2i64_vidx() nounwind {
   ; MIPS32-AE-LABEL: extract_zext_v2i64_vidx:
 
-  %1 = load <2 x i64>* @v2i64
+  %1 = load <2 x i64>, <2 x i64>* @v2i64
   ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2i64)(
   ; MIPS32-AE-DAG: ld.d [[R1:\$w[0-9]+]], 0([[PTR_V]])
 
   %2 = add <2 x i64> %1, %1
   ; MIPS32-AE-DAG: addv.d [[R2:\$w[0-9]+]], [[R1]], [[R1]]
 
-  %3 = load i32* @i32
+  %3 = load i32, i32* @i32
   ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
@@ -593,7 +593,7 @@ define i64 @extract_zext_v2i64_vidx() nounwind {
 define void @insert_v16i8(i32 %a) nounwind {
   ; MIPS32-AE-LABEL: insert_v16i8:
 
-  %1 = load <16 x i8>* @v16i8
+  %1 = load <16 x i8>, <16 x i8>* @v16i8
   ; MIPS32-AE-DAG: ld.b [[R1:\$w[0-9]+]],
 
   %a2 = trunc i32 %a to i8
@@ -615,7 +615,7 @@ define void @insert_v16i8(i32 %a) nounwind {
 define void @insert_v8i16(i32 %a) nounwind {
   ; MIPS32-AE-LABEL: insert_v8i16:
 
-  %1 = load <8 x i16>* @v8i16
+  %1 = load <8 x i16>, <8 x i16>* @v8i16
   ; MIPS32-AE-DAG: ld.h [[R1:\$w[0-9]+]],
 
   %a2 = trunc i32 %a to i16
@@ -637,7 +637,7 @@ define void @insert_v8i16(i32 %a) nounwind {
 define void @insert_v4i32(i32 %a) nounwind {
   ; MIPS32-AE-LABEL: insert_v4i32:
 
-  %1 = load <4 x i32>* @v4i32
+  %1 = load <4 x i32>, <4 x i32>* @v4i32
   ; MIPS32-AE-DAG: ld.w [[R1:\$w[0-9]+]],
 
   ; MIPS32-AE-NOT: andi
@@ -656,7 +656,7 @@ define void @insert_v4i32(i32 %a) nounwind {
 define void @insert_v2i64(i64 %a) nounwind {
   ; MIPS32-AE-LABEL: insert_v2i64:
 
-  %1 = load <2 x i64>* @v2i64
+  %1 = load <2 x i64>, <2 x i64>* @v2i64
   ; MIPS32-AE-DAG: ld.w [[R1:\$w[0-9]+]],
 
   ; MIPS32-AE-NOT: andi
@@ -676,10 +676,10 @@ define void @insert_v2i64(i64 %a) nounwind {
 define void @insert_v16i8_vidx(i32 %a) nounwind {
   ; MIPS32-AE: insert_v16i8_vidx:
 
-  %1 = load <16 x i8>* @v16i8
+  %1 = load <16 x i8>, <16 x i8>* @v16i8
   ; MIPS32-AE-DAG: ld.b [[R1:\$w[0-9]+]],
 
-  %2 = load i32* @i32
+  %2 = load i32, i32* @i32
   ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
@@ -705,10 +705,10 @@ define void @insert_v16i8_vidx(i32 %a) nounwind {
 define void @insert_v8i16_vidx(i32 %a) nounwind {
   ; MIPS32-AE: insert_v8i16_vidx:
 
-  %1 = load <8 x i16>* @v8i16
+  %1 = load <8 x i16>, <8 x i16>* @v8i16
   ; MIPS32-AE-DAG: ld.h [[R1:\$w[0-9]+]],
 
-  %2 = load i32* @i32
+  %2 = load i32, i32* @i32
   ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
@@ -735,10 +735,10 @@ define void @insert_v8i16_vidx(i32 %a) nounwind {
 define void @insert_v4i32_vidx(i32 %a) nounwind {
   ; MIPS32-AE: insert_v4i32_vidx:
 
-  %1 = load <4 x i32>* @v4i32
+  %1 = load <4 x i32>, <4 x i32>* @v4i32
   ; MIPS32-AE-DAG: ld.w [[R1:\$w[0-9]+]],
 
-  %2 = load i32* @i32
+  %2 = load i32, i32* @i32
   ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 
@@ -762,10 +762,10 @@ define void @insert_v4i32_vidx(i32 %a) nounwind {
 define void @insert_v2i64_vidx(i64 %a) nounwind {
   ; MIPS32-AE: insert_v2i64_vidx:
 
-  %1 = load <2 x i64>* @v2i64
+  %1 = load <2 x i64>, <2 x i64>* @v2i64
   ; MIPS32-AE-DAG: ld.w [[R1:\$w[0-9]+]],
 
-  %2 = load i32* @i32
+  %2 = load i32, i32* @i32
   ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
   ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
 

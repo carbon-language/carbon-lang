@@ -26,7 +26,7 @@ entry:
 ;CHECK-NEXT: movl
   %A2 = getelementptr i32, <4 x i32*> %param, <4 x i32> <i32 1, i32 2, i32 3, i32 4>
   %k = extractelement <4 x i32*> %A2, i32 3
-  %v = load i32* %k
+  %v = load i32, i32* %k
   ret i32 %v
 ;CHECK: ret
 }
@@ -39,7 +39,7 @@ entry:
 ;CHECK-NEXT: vpadd
   %A2 = getelementptr i32, <4 x i32*> %param, <4 x i32> %off
   %k = extractelement <4 x i32*> %A2, i32 3
-  %v = load i32* %k
+  %v = load i32, i32* %k
   ret i32 %v
 ;CHECK: ret
 }

@@ -8,7 +8,7 @@ target triple = "msp430-generic-generic"
 define void @mov() nounwind {
 ; CHECK-LABEL: mov:
 ; CHECK: mov.b	&bar, &foo
-        %1 = load i8* @bar
+        %1 = load i8, i8* @bar
         store i8 %1, i8* @foo
         ret void
 }
@@ -16,8 +16,8 @@ define void @mov() nounwind {
 define void @add() nounwind {
 ; CHECK-LABEL: add:
 ; CHECK: add.b	&bar, &foo
-	%1 = load i8* @bar
-	%2 = load i8* @foo
+	%1 = load i8, i8* @bar
+	%2 = load i8, i8* @foo
 	%3 = add i8 %2, %1
 	store i8 %3, i8* @foo
 	ret void
@@ -26,8 +26,8 @@ define void @add() nounwind {
 define void @and() nounwind {
 ; CHECK-LABEL: and:
 ; CHECK: and.b	&bar, &foo
-	%1 = load i8* @bar
-	%2 = load i8* @foo
+	%1 = load i8, i8* @bar
+	%2 = load i8, i8* @foo
 	%3 = and i8 %2, %1
 	store i8 %3, i8* @foo
 	ret void
@@ -36,8 +36,8 @@ define void @and() nounwind {
 define void @bis() nounwind {
 ; CHECK-LABEL: bis:
 ; CHECK: bis.b	&bar, &foo
-	%1 = load i8* @bar
-	%2 = load i8* @foo
+	%1 = load i8, i8* @bar
+	%2 = load i8, i8* @foo
 	%3 = or i8 %2, %1
 	store i8 %3, i8* @foo
 	ret void
@@ -46,8 +46,8 @@ define void @bis() nounwind {
 define void @xor() nounwind {
 ; CHECK-LABEL: xor:
 ; CHECK: xor.b	&bar, &foo
-	%1 = load i8* @bar
-	%2 = load i8* @foo
+	%1 = load i8, i8* @bar
+	%2 = load i8, i8* @foo
 	%3 = xor i8 %2, %1
 	store i8 %3, i8* @foo
 	ret void

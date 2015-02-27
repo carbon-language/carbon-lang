@@ -164,7 +164,7 @@ define <8 x half> @load_h(<8 x half>* %a) {
 entry:
 ; CHECK-LABEL: load_h:
 ; CHECK: ldr q0, [x0]
-  %0 = load <8 x half>* %a, align 4
+  %0 = load <8 x half>, <8 x half>* %a, align 4
   ret <8 x half> %0
 }
 

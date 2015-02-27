@@ -7,7 +7,7 @@
 define i32 @f1(i32 %y) {
 ; CHECK: f1
 ; CHECK: smulbt
-        %tmp = load i16* @x             ; <i16> [#uses=1]
+        %tmp = load i16, i16* @x             ; <i16> [#uses=1]
         %tmp1 = add i16 %tmp, 2         ; <i16> [#uses=1]
         %tmp2 = sext i16 %tmp1 to i32           ; <i32> [#uses=1]
         %tmp3 = ashr i32 %y, 16         ; <i32> [#uses=1]

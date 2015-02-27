@@ -18,7 +18,7 @@ bb:
   call void @llvm.lifetime.start(i64 16, i8* %tmp8)
   store <4 x float> %arg1, <4 x float>* %tmp, align 16
   %tmp17 = bitcast <4 x float>* %tmp to <3 x float>*
-  %tmp18 = load <3 x float>* %tmp17
+  %tmp18 = load <3 x float>, <3 x float>* %tmp17
   %tmp20 = bitcast <4 x float>* %tmp to i8*
   call void @llvm.lifetime.end(i64 16, i8* %tmp20)
   call void @wombat3(<3 x float> %tmp18)

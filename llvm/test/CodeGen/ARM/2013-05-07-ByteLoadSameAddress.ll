@@ -8,45 +8,45 @@ entry:
         %sub19 = sub i32 %add, %Width
         %sub20 = add i32 %sub19, -1
         %arrayidx21 = getelementptr inbounds i8, i8* %call1, i32 %sub20
-        %0 = load i8* %arrayidx21, align 1
+        %0 = load i8, i8* %arrayidx21, align 1
         %conv22 = zext i8 %0 to i32
         %arrayidx25 = getelementptr inbounds i8, i8* %call1, i32 %sub19
-        %1 = load i8* %arrayidx25, align 1
+        %1 = load i8, i8* %arrayidx25, align 1
         %conv26 = zext i8 %1 to i32
         %mul23189 = add i32 %conv26, %conv22
         %add30 = add i32 %sub19, 1
         %arrayidx31 = getelementptr inbounds i8, i8* %call1, i32 %add30
-        %2 = load i8* %arrayidx31, align 1
+        %2 = load i8, i8* %arrayidx31, align 1
         %conv32 = zext i8 %2 to i32
 ; CHECK: ldrb r{{[0-9]*}}, [r{{[0-9]*}}, #-1]
 ; CHECK-NEXT: ldrb r{{[0-9]*}}, [r{{[0-9]*}}, #1]
         %add28190 = add i32 %mul23189, %conv32
         %sub35 = add i32 %add, -1
         %arrayidx36 = getelementptr inbounds i8, i8* %call1, i32 %sub35
-        %3 = load i8* %arrayidx36, align 1
+        %3 = load i8, i8* %arrayidx36, align 1
         %conv37 = zext i8 %3 to i32
         %add34191 = add i32 %add28190, %conv37
         %arrayidx40 = getelementptr inbounds i8, i8* %call1, i32 %add
-        %4 = load i8* %arrayidx40, align 1
+        %4 = load i8, i8* %arrayidx40, align 1
         %conv41 = zext i8 %4 to i32
         %mul42 = mul nsw i32 %conv41, 255
         %add44 = add i32 %add, 1
         %arrayidx45 = getelementptr inbounds i8, i8* %call1, i32 %add44
-        %5 = load i8* %arrayidx45, align 1
+        %5 = load i8, i8* %arrayidx45, align 1
         %conv46 = zext i8 %5 to i32
 ; CHECK: ldrb r{{[0-9]*}}, [r{{[0-9]*}}, #-1]
 ; CHECK-NEXT: ldrb r{{[0-9]*}}, [r{{[0-9]*}}, #1]
         %add49 = add i32 %add, %Width
         %sub50 = add i32 %add49, -1
         %arrayidx51 = getelementptr inbounds i8, i8* %call1, i32 %sub50
-        %6 = load i8* %arrayidx51, align 1
+        %6 = load i8, i8* %arrayidx51, align 1
         %conv52 = zext i8 %6 to i32
         %arrayidx56 = getelementptr inbounds i8, i8* %call1, i32 %add49
-        %7 = load i8* %arrayidx56, align 1
+        %7 = load i8, i8* %arrayidx56, align 1
         %conv57 = zext i8 %7 to i32
         %add61 = add i32 %add49, 1
         %arrayidx62 = getelementptr inbounds i8, i8* %call1, i32 %add61
-        %8 = load i8* %arrayidx62, align 1
+        %8 = load i8, i8* %arrayidx62, align 1
         %conv63 = zext i8 %8 to i32
 ; CHECK: ldrb r{{[0-9]*}}, [r{{[0-9]*}}, #-1]
 ; CHECK-NEXT: ldrb{{[.w]*}} r{{[0-9]*}}, [r{{[0-9]*}}, #1]

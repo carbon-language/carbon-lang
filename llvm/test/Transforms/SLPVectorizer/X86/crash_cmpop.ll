@@ -13,7 +13,7 @@ for.body:
   %s1.055 = phi float [ 0.000000e+00, %entry ], [ %cond.i40, %for.body ]
   %s0.054 = phi float [ 0.000000e+00, %entry ], [ %cond.i44, %for.body ]
   %arrayidx = getelementptr inbounds float, float* %src, i64 %indvars.iv
-  %0 = load float* %arrayidx, align 4
+  %0 = load float, float* %arrayidx, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %arrayidx2 = getelementptr inbounds float, float* %dest, i64 %indvars.iv
   store float %acc1.056, float* %arrayidx2, align 4

@@ -7,7 +7,7 @@
 ; Function Attrs: nounwind optsize
 define void @foo()  {
 entry:
-  %0 = load double* @x, align 8
+  %0 = load double, double* @x, align 8
   %conv = fptoui double %0 to i32
   store i32 %conv, i32* @y, align 4
 ; pic1:	lw	${{[0-9]+}}, %call16(__fixunsdfsi)(${{[0-9]+}})

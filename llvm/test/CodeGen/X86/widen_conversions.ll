@@ -12,7 +12,7 @@ define <4 x i32> @zext_v4i8_to_v4i32(<4 x i8>* %ptr) {
 ; CHECK-NEXT: punpcklwd %[[Z]], %[[X]]
 ; CHECK-NEXT: ret
 
-  %val = load <4 x i8>* %ptr
+  %val = load <4 x i8>, <4 x i8>* %ptr
   %ext = zext <4 x i8> %val to <4 x i32>
   ret <4 x i32> %ext
 }

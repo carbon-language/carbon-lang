@@ -39,7 +39,7 @@ lpad:                                             ; preds = %entry
   br label %catch
 
 catch:                                            ; preds = %lpad
-  %exn = load i8** %exn.slot
+  %exn = load i8*, i8** %exn.slot
   %3 = call i8* @llvm.eh.begincatch(i8* %exn) #3
   call void @_Z16handle_exceptionv()
   br label %invoke.cont2
@@ -57,7 +57,7 @@ try.cont:                                         ; preds = %invoke.cont2, %invo
 ; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1)
 ; CHECK:   %eh.data = bitcast i8* %eh.alloc to %struct._Z4testv.ehdata*
 ; CHECK:   %eh.obj.ptr = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 1
-; CHECK:   %eh.obj = load i8** %eh.obj.ptr
+; CHECK:   %eh.obj = load i8*, i8** %eh.obj.ptr
 ; CHECK:   call void @_Z16handle_exceptionv()
 ; CHECK:   ret i8* blockaddress(@_Z4testv, %try.cont)
 ; CHECK: }

@@ -20,7 +20,7 @@ entry:
   br i1 %tobool, label %if.end, label %if.then
 
 if.then:                                          ; preds = %entry
-  %tmp1 = load void (...)** @caller.sf1, align 4
+  %tmp1 = load void (...)*, void (...)** @caller.sf1, align 4
   tail call void (...)* %tmp1() nounwind
   br label %if.end
 
@@ -30,7 +30,7 @@ if.end:                                           ; preds = %entry, %if.then
 ; CHECK: lw  $[[R3:[0-9]+]], %got(caller.sf1)
 ; CHECK: sw  ${{[0-9]+}}, %lo(caller.sf1)($[[R3]])
   %tobool3 = icmp ne i32 %a0, 0
-  %tmp4 = load void (...)** @gf1, align 4
+  %tmp4 = load void (...)*, void (...)** @gf1, align 4
   %cond = select i1 %tobool3, void (...)* %tmp4, void (...)* bitcast (void ()* @sf2 to void (...)*)
   store void (...)* %cond, void (...)** @caller.sf1, align 4
   ret void

@@ -22,7 +22,7 @@ for.body:
   %0 = phi i32 [0, %entry], [%4, %for.body]
   %1 = getelementptr i8, i8 addrspace(3)* %in, i32 %0
   %2 = getelementptr i8, i8* %dest, i32 %0
-  %3 = load i8 addrspace(3)* %1
+  %3 = load i8, i8 addrspace(3)* %1
   store i8 %3, i8* %2
   %4 = add i32 %0, 1
   %5 = icmp eq i32 %4, %size

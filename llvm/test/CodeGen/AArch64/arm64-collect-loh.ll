@@ -12,7 +12,7 @@
 ; Function Attrs: noinline nounwind ssp
 define void @foo(i32 %t) {
 entry:
-  %tmp = load i32* @a, align 4
+  %tmp = load i32, i32* @a, align 4
   %add = add nsw i32 %tmp, %t
   store i32 %add, i32* @a, align 4
   ret void
@@ -32,22 +32,22 @@ entry:
   br i1 %cmp, label %if.then, label %if.end4
 
 if.then:                                          ; preds = %entry
-  %tmp = load i32* @a, align 4
+  %tmp = load i32, i32* @a, align 4
   %add = add nsw i32 %tmp, %t
   %cmp1 = icmp sgt i32 %add, 12
   br i1 %cmp1, label %if.then2, label %if.end4
 
 if.then2:                                         ; preds = %if.then
   tail call void @foo(i32 %add)
-  %tmp1 = load i32* @a, align 4
+  %tmp1 = load i32, i32* @a, align 4
   br label %if.end4
 
 if.end4:                                          ; preds = %if.then2, %if.then, %entry
   %t.addr.0 = phi i32 [ %tmp1, %if.then2 ], [ %t, %if.then ], [ %t, %entry ]
-  %tmp2 = load i32* @b, align 4
+  %tmp2 = load i32, i32* @b, align 4
   %add5 = add nsw i32 %tmp2, %t.addr.0
   tail call void @foo(i32 %add5)
-  %tmp3 = load i32* @b, align 4
+  %tmp3 = load i32, i32* @b, align 4
   %add6 = add nsw i32 %tmp3, %t.addr.0
   ret i32 %add6
 }

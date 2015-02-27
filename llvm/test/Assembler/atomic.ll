@@ -3,10 +3,10 @@
 ; Basic smoke test for atomic operations.
 
 define void @f(i32* %x) {
-  ; CHECK: load atomic i32* %x unordered, align 4
-  load atomic i32* %x unordered, align 4
-  ; CHECK: load atomic volatile i32* %x singlethread acquire, align 4
-  load atomic volatile i32* %x singlethread acquire, align 4
+  ; CHECK: load atomic i32, i32* %x unordered, align 4
+  load atomic i32, i32* %x unordered, align 4
+  ; CHECK: load atomic volatile i32, i32* %x singlethread acquire, align 4
+  load atomic volatile i32, i32* %x singlethread acquire, align 4
   ; CHECK: store atomic i32 3, i32* %x release, align 4
   store atomic i32 3, i32* %x release, align 4
   ; CHECK: store atomic volatile i32 3, i32* %x singlethread monotonic, align 4

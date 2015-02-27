@@ -107,7 +107,7 @@ define i32 @test12(i32 %a, i32 %b) {
 ; PR2642
 define internal void @test13(<4 x float>*) {
 ; CHECK-LABEL: @test13(
-	load <4 x float>* %0, align 1
+	load <4 x float>, <4 x float>* %0, align 1
 	fmul <4 x float> %2, < float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00 >
 	store <4 x float> %3, <4 x float>* %0, align 1
 	ret void

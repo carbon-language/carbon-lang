@@ -19,7 +19,7 @@ invcont64:                                        ; preds = %bb58
   br i1 undef, label %invcont65, label %bb.i.i
 
 bb.i.i:                                           ; preds = %invcont64
-  %1 = load <4 x float>* undef, align 16          ; <<4 x float>> [#uses=5]
+  %1 = load <4 x float>, <4 x float>* undef, align 16          ; <<4 x float>> [#uses=5]
   br i1 undef, label %bb.nph.i.i, label %invcont65
 
 bb.nph.i.i:                                       ; preds = %bb.i.i

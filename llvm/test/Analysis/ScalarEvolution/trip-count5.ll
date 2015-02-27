@@ -9,7 +9,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 define float @t(float* %pTmp1, float* %peakWeight, float* %nrgReducePeakrate, i32 %bim) nounwind {
 entry:
-	%tmp3 = load float* %peakWeight, align 4		; <float> [#uses=2]
+	%tmp3 = load float, float* %peakWeight, align 4		; <float> [#uses=2]
 	%tmp2538 = icmp sgt i32 %bim, 0		; <i1> [#uses=1]
 	br i1 %tmp2538, label %bb.nph, label %bb4
 
@@ -22,12 +22,12 @@ bb:		; preds = %bb1, %bb.nph
 	%peakCount.034 = phi float [ %tmp19, %bb1 ], [ %tmp3, %bb.nph ]		; <float> [#uses=1]
 	%tmp6 = sext i32 %hiPart.035 to i64		; <i64> [#uses=1]
 	%tmp7 = getelementptr float, float* %pTmp1, i64 %tmp6		; <float*> [#uses=1]
-	%tmp8 = load float* %tmp7, align 4		; <float> [#uses=1]
+	%tmp8 = load float, float* %tmp7, align 4		; <float> [#uses=1]
 	%tmp10 = fadd float %tmp8, %distERBhi.036		; <float> [#uses=3]
 	%tmp12 = add i32 %hiPart.035, 1		; <i32> [#uses=3]
 	%tmp15 = sext i32 %tmp12 to i64		; <i64> [#uses=1]
 	%tmp16 = getelementptr float, float* %peakWeight, i64 %tmp15		; <float*> [#uses=1]
-	%tmp17 = load float* %tmp16, align 4		; <float> [#uses=1]
+	%tmp17 = load float, float* %tmp16, align 4		; <float> [#uses=1]
 	%tmp19 = fadd float %tmp17, %peakCount.034		; <float> [#uses=2]
 	br label %bb1
 

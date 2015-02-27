@@ -54,7 +54,7 @@ bb4:
   %l.09 = phi i32 [ %tmp28, %bb4 ], [ 0, %entry ]
   %scevgep = getelementptr %s1, %s1* %this, i32 0, i32 11, i32 %l.09
   %scevgep10 = getelementptr i32, i32* %rowbytes, i32 %l.09
-  %tmp27 = load i32* %scevgep10, align 4
+  %tmp27 = load i32, i32* %scevgep10, align 4
   store i32 %tmp27, i32* %scevgep, align 4
   %tmp28 = add i32 %l.09, 1
   %exitcond = icmp eq i32 %tmp28, %levels

@@ -7,7 +7,7 @@ define void @general_affine_expressions(i32 *%arr, i32 *%a_len_ptr, i32 %n,
                                         i32 %scale, i32 %offset) {
 ; CHECK-NOT: constrained Loop at depth
  entry:
-  %len = load i32* %a_len_ptr, !range !0
+  %len = load i32, i32* %a_len_ptr, !range !0
   %first.itr.check = icmp sgt i32 %n, 0
   br i1 %first.itr.check, label %loop, label %exit
 

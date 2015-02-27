@@ -24,7 +24,7 @@ bb2:                                              ; preds = %bb1
 define internal i32 @func10(%.qux.2496* nocapture %this) align 2 {
 bb:
   %tmp = getelementptr inbounds %.qux.2496, %.qux.2496* %this, i32 0, i32 1, i32 1
-  %tmp1 = load i32* %tmp, align 4
+  %tmp1 = load i32, i32* %tmp, align 4
   ret i32 %tmp1
 }
 
@@ -51,6 +51,6 @@ bb:
 ; CHECK: %[[V3:.+]] = tail call i32 @func10(%.qux.2496* %[[V2]])
 ; CHECK: %{{.*}} = inttoptr i32 %[[V3]] to i8*
   %tmp = getelementptr inbounds %.qux.2585, %.qux.2585* %this, i32 0, i32 2
-  %tmp1 = load i8** %tmp, align 4
+  %tmp1 = load i8*, i8** %tmp, align 4
   ret i8* %tmp1
 }

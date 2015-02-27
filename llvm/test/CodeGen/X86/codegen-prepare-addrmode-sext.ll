@@ -20,7 +20,7 @@ define i8 @twoArgsPromotion(i32 %arg1, i32 %arg2) {
   %add = add nsw i32 %arg1, %arg2 
   %sextadd = sext i32 %add to i64
   %base = inttoptr i64 %sextadd to i8*
-  %res = load i8* %base
+  %res = load i8, i8* %base
   ret i8 %res
 }
 
@@ -36,7 +36,7 @@ define i8 @twoArgsNoPromotion(i32 %arg1, i32 %arg2, i8* %base) {
   %add = add nsw i32 %arg1, %arg2 
   %sextadd = sext i32 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %sextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }
 
@@ -49,7 +49,7 @@ define i8 @noPromotion(i32 %arg1, i32 %arg2, i8* %base) {
   %add = add i32 %arg1, %arg2 
   %sextadd = sext i32 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %sextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }
 
@@ -63,7 +63,7 @@ define i8 @oneArgPromotion(i32 %arg1, i8* %base) {
   %add = add nsw i32 %arg1, 1 
   %sextadd = sext i32 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %sextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }
 
@@ -78,7 +78,7 @@ define i8 @oneArgPromotionZExt(i8 %arg1, i8* %base) {
   %add = add nsw i32 %zext, 1 
   %sextadd = sext i32 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %sextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }
 
@@ -100,7 +100,7 @@ define i8 @oneArgPromotionCstZExt(i8* %base) {
   %add = add nsw i32 %cst, 1
   %sextadd = sext i32 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %sextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }
 
@@ -117,7 +117,7 @@ define i8 @oneArgPromotionBlockTrunc1(i32 %arg1, i8* %base) {
   %add = add nsw i8 %trunc, 1 
   %sextadd = sext i8 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %sextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }
 
@@ -136,7 +136,7 @@ define i8 @oneArgPromotionBlockTrunc2(i16 %arg1, i8* %base) {
   %add = add nsw i8 %trunc, 1 
   %sextadd = sext i8 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %sextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }
 
@@ -153,7 +153,7 @@ define i8 @oneArgPromotionPassTruncKeepSExt(i1 %arg1, i8* %base) {
   %add = add nsw i8 %trunc, 1 
   %sextadd = sext i8 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %sextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }
 
@@ -165,14 +165,14 @@ define i8 @oneArgPromotionPassTruncKeepSExt(i1 %arg1, i8* %base) {
 ; CHECK: [[PROMOTED:%[a-zA-Z_0-9-]+]] = add nsw i64 [[ARG1SEXT]], 1
 ; CHECK: [[TRUNC:%[a-zA-Z_0-9-]+]] = trunc i64 [[PROMOTED]] to i8
 ; CHECK: [[GEP:%[a-zA-Z_0-9-]+]] = getelementptr inbounds i8, i8* %base, i64 [[PROMOTED]]
-; CHECK: [[LOAD:%[a-zA-Z_0-9-]+]] = load i8* [[GEP]]
+; CHECK: [[LOAD:%[a-zA-Z_0-9-]+]] = load i8, i8* [[GEP]]
 ; CHECK: add i8 [[LOAD]], [[TRUNC]]
 ; CHECK: ret
 define i8 @oneArgPromotionTruncInsert(i8 %arg1, i8* %base) {
   %add = add nsw i8 %arg1, 1 
   %sextadd = sext i8 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %sextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   %finalres = add i8 %res, %add
   ret i8 %finalres
 }
@@ -189,7 +189,7 @@ define i8 @oneArgPromotionLargerType(i128 %arg1, i8* %base) {
   %add = add nsw i8 %trunc, 1 
   %sextadd = sext i8 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %sextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   %finalres = add i8 %res, %add
   ret i8 %finalres
 }
@@ -203,7 +203,7 @@ define i8 @oneArgPromotionLargerType(i128 %arg1, i8* %base) {
 ; CHECK: [[PROMOTED:%[a-zA-Z_0-9-]+]] = add nsw i64 [[ARG1SEXT]], 1
 ; CHECK: [[TRUNC:%[a-zA-Z_0-9-]+]] = trunc i64 [[PROMOTED]] to i8
 ; CHECK: [[GEP:%[a-zA-Z_0-9-]+]] = getelementptr inbounds i8, i8* %base, i64 [[PROMOTED]]
-; CHECK: [[LOAD:%[a-zA-Z_0-9-]+]] = load i8* [[GEP]]
+; CHECK: [[LOAD:%[a-zA-Z_0-9-]+]] = load i8, i8* [[GEP]]
 ; CHECK: [[ADDRES:%[a-zA-Z_0-9-]+]] = add i8 [[LOAD]], [[TRUNC]]
 ; CHECK: add i8 [[ADDRES]], [[TRUNC]]
 ; CHECK: ret
@@ -211,7 +211,7 @@ define i8 @oneArgPromotionTruncInsertSeveralUse(i8 %arg1, i8* %base) {
   %add = add nsw i8 %arg1, 1 
   %sextadd = sext i8 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %sextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   %almostfinalres = add i8 %res, %add
   %finalres = add i8 %almostfinalres, %add
   ret i8 %finalres
@@ -223,7 +223,7 @@ define i8 @oneArgPromotionTruncInsertSeveralUse(i8 %arg1, i8* %base) {
 ; CHECK: [[ARG1SEXT:%[a-zA-Z_0-9-]+]] = sext i8 %arg1 to i64
 ; CHECK: [[PROMOTED:%[a-zA-Z_0-9-]+]] = add nsw i64 [[ARG1SEXT]], 1
 ; CHECK: [[GEP:%[a-zA-Z_0-9-]+]] = getelementptr inbounds i8, i8* %base, i64 [[PROMOTED]]
-; CHECK: [[LOAD:%[a-zA-Z_0-9-]+]] = load i8* [[GEP]]
+; CHECK: [[LOAD:%[a-zA-Z_0-9-]+]] = load i8, i8* [[GEP]]
 ; CHECK: [[ADDRES:%[a-zA-Z_0-9-]+]] = zext i8 [[LOAD]] to i64
 ; CHECK: add i64 [[ADDRES]], [[PROMOTED]]
 ; CHECK: ret
@@ -231,7 +231,7 @@ define i64 @oneArgPromotionSExtSeveralUse(i8 %arg1, i8* %base) {
   %add = add nsw i8 %arg1, 1 
   %sextadd = sext i8 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %sextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   %almostfinalres = zext i8 %res to i64
   %finalres = add i64 %almostfinalres, %sextadd
   ret i64 %finalres
@@ -264,7 +264,7 @@ define i8 @twoArgsPromotionNest(i32 %arg1, i32 %arg2, i8* %base) {
   %promotableadd2 = add nsw i32 %promotableadd1, %promotableadd1 
   %sextadd = sext i32 %promotableadd2 to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %sextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }
 
@@ -287,7 +287,7 @@ define i8 @twoArgsNoPromotionRemove(i1 %arg1, i8 %arg2, i8* %base) {
   %add = add nsw i8 %trunc, %arg2 
   %sextadd = sext i8 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %sextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }
 
@@ -313,11 +313,11 @@ define i8 @twoArgsNoPromotionRemove(i1 %arg1, i8 %arg2, i8* %base) {
 ; BB then
 ; CHECK: [[BASE1:%[a-zA-Z_0-9-]+]] = add i64 [[SEXTADD]], 48
 ; CHECK: [[ADDR1:%[a-zA-Z_0-9-]+]] = inttoptr i64 [[BASE1]] to i32*
-; CHECK: load i32* [[ADDR1]]
+; CHECK: load i32, i32* [[ADDR1]]
 ; BB else
 ; CHECK: [[BASE2:%[a-zA-Z_0-9-]+]] = add i64 [[SEXTADD]], 48
 ; CHECK: [[ADDR2:%[a-zA-Z_0-9-]+]] = inttoptr i64 [[BASE2]] to i32*
-; CHECK: load i32* [[ADDR2]]
+; CHECK: load i32, i32* [[ADDR2]]
 ; CHECK: ret
 ; CHECK-GEP-LABEL: @checkProfitability
 ; CHECK-GEP-NOT: {{%[a-zA-Z_0-9-]+}} = sext i32 %arg1 to i64
@@ -330,13 +330,13 @@ define i8 @twoArgsNoPromotionRemove(i1 %arg1, i8 %arg2, i8* %base) {
 ; CHECK-GEP: [[BCC1:%[a-zA-Z_0-9-]+]] = bitcast i32* [[BASE1]] to i8*
 ; CHECK-GEP: [[FULL1:%[a-zA-Z_0-9-]+]] = getelementptr i8, i8* [[BCC1]], i64 48
 ; CHECK-GEP: [[ADDR1:%[a-zA-Z_0-9-]+]] = bitcast i8* [[FULL1]] to i32*
-; CHECK-GEP: load i32* [[ADDR1]]
+; CHECK-GEP: load i32, i32* [[ADDR1]]
 ; BB else
 ; CHECK-GEP: [[BASE2:%[a-zA-Z_0-9-]+]] = inttoptr i64 [[SEXTADD]] to i32*
 ; CHECK-GEP: [[BCC2:%[a-zA-Z_0-9-]+]] = bitcast i32* [[BASE2]] to i8*
 ; CHECK-GEP: [[FULL2:%[a-zA-Z_0-9-]+]] = getelementptr i8, i8* [[BCC2]], i64 48
 ; CHECK-GEP: [[ADDR2:%[a-zA-Z_0-9-]+]] = bitcast i8* [[FULL2]] to i32*
-; CHECK-GEP: load i32* [[ADDR2]]
+; CHECK-GEP: load i32, i32* [[ADDR2]]
 ; CHECK-GEP: ret
 define i32 @checkProfitability(i32 %arg1, i32 %arg2, i1 %test) {
   %shl = shl nsw i32 %arg1, 1
@@ -346,16 +346,16 @@ define i32 @checkProfitability(i32 %arg1, i32 %arg2, i1 %test) {
   %arrayidx1 = getelementptr i32, i32* %tmpptr, i64 12
   br i1 %test, label %then, label %else
 then: 
-  %res1 = load i32* %arrayidx1
+  %res1 = load i32, i32* %arrayidx1
   br label %end
 else:
-  %res2 = load i32* %arrayidx1
+  %res2 = load i32, i32* %arrayidx1
   br label %end
 end:
   %tmp = phi i32 [%res1, %then], [%res2, %else]
   %res = add i32 %tmp, %add1
   %addr = inttoptr i32 %res to i32*
-  %final = load i32* %addr
+  %final = load i32, i32* %addr
   ret i32 %final
 }
 
@@ -377,7 +377,7 @@ end:
 ; CHECK-NEXT: [[ADD:%[a-zA-Z_0-9-]+]] = add i64 [[BASE]], [[PROMOTED_CONV]]
 ; CHECK-NEXT: [[ADDR:%[a-zA-Z_0-9-]+]] = add i64 [[ADD]], 7
 ; CHECK-NEXT: [[CAST:%[a-zA-Z_0-9-]+]] = inttoptr i64 [[ADDR]] to i8*
-; CHECK-NEXT: load i8* [[CAST]], align 1
+; CHECK-NEXT: load i8, i8* [[CAST]], align 1
 define signext i16 @fn3(%struct.dns_packet* nocapture readonly %P) {
 entry:
   %tmp = getelementptr inbounds %struct.dns_packet, %struct.dns_packet* %P, i64 0, i32 2
@@ -389,7 +389,7 @@ while.body.i.i:                                   ; preds = %while.body.i.i, %en
   %inc.i.i = add i16 %src.addr.0.i.i, 1
   %idxprom.i.i = sext i16 %src.addr.0.i.i to i64
   %arrayidx.i.i = getelementptr inbounds [0 x i8], [0 x i8]* %data.i.i, i64 0, i64 %idxprom.i.i
-  %tmp1 = load i8* %arrayidx.i.i, align 1
+  %tmp1 = load i8, i8* %arrayidx.i.i, align 1
   %conv2.i.i = zext i8 %tmp1 to i32
   %and.i.i = and i32 %conv2.i.i, 15
   store i32 %and.i.i, i32* @a, align 4
@@ -402,7 +402,7 @@ fn1.exit.i:                                       ; preds = %while.body.i.i
   %sub.i = add nsw i32 %conv.i, -1
   %idxprom.i = sext i32 %sub.i to i64
   %arrayidx.i = getelementptr inbounds [0 x i8], [0 x i8]* %data.i.i, i64 0, i64 %idxprom.i
-  %tmp2 = load i8* %arrayidx.i, align 1
+  %tmp2 = load i8, i8* %arrayidx.i, align 1
   %conv2.i = sext i8 %tmp2 to i16
   store i16 %conv2.i, i16* @b, align 2
   %sub4.i = sub nsw i32 0, %conv.i
@@ -412,7 +412,7 @@ fn1.exit.i:                                       ; preds = %while.body.i.i
 
 if.then.i:                                        ; preds = %fn1.exit.i
   %end.i = getelementptr inbounds %struct.dns_packet, %struct.dns_packet* %P, i64 0, i32 1
-  %tmp3 = load i32* %end.i, align 4
+  %tmp3 = load i32, i32* %end.i, align 4
   %sub7.i = add i32 %tmp3, 65535
   %conv8.i = trunc i32 %sub7.i to i16
   br label %fn2.exit
@@ -433,7 +433,7 @@ define i8 @noPromotionFlag(i32 %arg1, i32 %arg2) {
   %add = add nsw i32 %arg1, %arg2 
   %zextadd = zext i32 %add to i64
   %base = inttoptr i64 %zextadd to i8*
-  %res = load i8* %base
+  %res = load i8, i8* %base
   ret i8 %res
 }
 
@@ -448,7 +448,7 @@ define i8 @twoArgsPromotionZExt(i32 %arg1, i32 %arg2) {
   %add = add nuw i32 %arg1, %arg2 
   %zextadd = zext i32 %add to i64
   %base = inttoptr i64 %zextadd to i8*
-  %res = load i8* %base
+  %res = load i8, i8* %base
   ret i8 %res
 }
 
@@ -462,7 +462,7 @@ define i8 @oneArgPromotionNegativeCstZExt(i8 %arg1, i8* %base) {
   %add = add nuw i8 %arg1, -1 
   %zextadd = zext i8 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %zextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }
 
@@ -477,7 +477,7 @@ define i8 @oneArgPromotionZExtZExt(i8 %arg1, i8* %base) {
   %add = add nuw i32 %zext, 1 
   %zextadd = zext i32 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %zextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }
 
@@ -496,7 +496,7 @@ define i8 @oneArgPromotionBlockTruncZExt(i1 %arg1, i8* %base) {
   %add = add nuw i8 %trunc, 1 
   %zextadd = zext i8 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %zextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }
 
@@ -513,7 +513,7 @@ define i8 @oneArgPromotionPassTruncZExt(i1 %arg1, i8* %base) {
   %add = add nuw i8 %trunc, 1 
   %zextadd = zext i8 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %zextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }
 
@@ -529,6 +529,6 @@ define i8 @oneArgPromotionBlockSExtZExt(i1 %arg1, i8* %base) {
   %add = add nuw i8 %sextarg1, 1 
   %zextadd = zext i8 %add to i64
   %arrayidx = getelementptr inbounds i8, i8* %base, i64 %zextadd
-  %res = load i8* %arrayidx
+  %res = load i8, i8* %arrayidx
   ret i8 %res
 }

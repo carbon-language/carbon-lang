@@ -20,7 +20,7 @@ stack_restore:		; preds = %cond_next20.i
 	ret i32 0
 
 cond_next21.i.i23.i:		; preds = %cond_next20.i
-	%tmp6.i4.i = load i32* bitcast (void (i32)** @indirect1 to i32*), align 4		; <i32> [#uses=0]
+	%tmp6.i4.i = load i32, i32* bitcast (void (i32)** @indirect1 to i32*), align 4		; <i32> [#uses=0]
 	ret i32 0
 }
 

@@ -20,7 +20,7 @@ target triple = "i686-pc-linux-gnu"
 	%"struct.QString::Data" = type { %struct.QBasicAtomic, i32, i32, i16*, i8, i8, [1 x i16] }
 
 define i1 @_ZNK12QImageWriter8canWriteEv() {
-	%tmp62 = load %struct.QImageWriterPrivate** null		; <%struct.QImageWriterPrivate*> [#uses=1]
+	%tmp62 = load %struct.QImageWriterPrivate*, %struct.QImageWriterPrivate** null		; <%struct.QImageWriterPrivate*> [#uses=1]
 	%tmp = getelementptr %struct.QImageWriterPrivate, %struct.QImageWriterPrivate* %tmp62, i32 0, i32 9		; <%struct.QString*> [#uses=1]
 	%tmp75 = call %struct.QString* @_ZN7QStringaSERKS_( %struct.QString* %tmp, %struct.QString* null )		; <%struct.QString*> [#uses=0]
 	call void asm sideeffect "lock\0Adecl $0\0Asetne 1", "=*m"( i32* null )

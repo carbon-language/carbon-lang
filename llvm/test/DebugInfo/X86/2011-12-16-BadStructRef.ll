@@ -33,8 +33,8 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.bar** %this.addr, metadata !58, metadata !{!"0x102"}), !dbg !59
   store i32 %x, i32* %x.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %x.addr, metadata !60, metadata !{!"0x102"}), !dbg !61
-  %this1 = load %struct.bar** %this.addr
-  %0 = load i32* %x.addr, align 4, !dbg !62
+  %this1 = load %struct.bar*, %struct.bar** %this.addr
+  %0 = load i32, i32* %x.addr, align 4, !dbg !62
   call void @_ZN3barC2Ei(%struct.bar* %this1, i32 %0), !dbg !62
   ret void, !dbg !62
 }
@@ -47,9 +47,9 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.bar** %this.addr, metadata !63, metadata !{!"0x102"}), !dbg !64
   store i32 %x, i32* %x.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %x.addr, metadata !65, metadata !{!"0x102"}), !dbg !66
-  %this1 = load %struct.bar** %this.addr
+  %this1 = load %struct.bar*, %struct.bar** %this.addr
   %b = getelementptr inbounds %struct.bar, %struct.bar* %this1, i32 0, i32 0, !dbg !67
-  %0 = load i32* %x.addr, align 4, !dbg !67
+  %0 = load i32, i32* %x.addr, align 4, !dbg !67
   call void @_ZN3bazC1Ei(%struct.baz* %b, i32 %0), !dbg !67
   %1 = getelementptr inbounds %struct.bar, %struct.bar* %this1, i32 0, i32 1, !dbg !67
   %b2 = getelementptr inbounds %struct.bar, %struct.bar* %this1, i32 0, i32 0, !dbg !67
@@ -65,8 +65,8 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.baz** %this.addr, metadata !70, metadata !{!"0x102"}), !dbg !71
   store i32 %a, i32* %a.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %a.addr, metadata !72, metadata !{!"0x102"}), !dbg !73
-  %this1 = load %struct.baz** %this.addr
-  %0 = load i32* %a.addr, align 4, !dbg !74
+  %this1 = load %struct.baz*, %struct.baz** %this.addr
+  %0 = load i32, i32* %a.addr, align 4, !dbg !74
   call void @_ZN3bazC2Ei(%struct.baz* %this1, i32 %0), !dbg !74
   ret void, !dbg !74
 }
@@ -79,9 +79,9 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.baz** %this.addr, metadata !75, metadata !{!"0x102"}), !dbg !76
   store i32 %a, i32* %a.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %a.addr, metadata !77, metadata !{!"0x102"}), !dbg !78
-  %this1 = load %struct.baz** %this.addr
+  %this1 = load %struct.baz*, %struct.baz** %this.addr
   %h = getelementptr inbounds %struct.baz, %struct.baz* %this1, i32 0, i32 0, !dbg !79
-  %0 = load i32* %a.addr, align 4, !dbg !79
+  %0 = load i32, i32* %a.addr, align 4, !dbg !79
   store i32 %0, i32* %h, align 4, !dbg !79
   ret void, !dbg !80
 }

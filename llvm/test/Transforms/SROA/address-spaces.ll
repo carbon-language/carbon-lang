@@ -10,7 +10,7 @@ declare void @llvm.memcpy.p1i8.p1i8.i32(i8 addrspace(1)* nocapture, i8 addrspace
 ; Make sure an illegal bitcast isn't introduced
 define void @test_address_space_1_1(<2 x i64> addrspace(1)* %a, i16 addrspace(1)* %b) {
 ; CHECK-LABEL: @test_address_space_1_1(
-; CHECK: load <2 x i64> addrspace(1)* %a, align 2
+; CHECK: load <2 x i64>, <2 x i64> addrspace(1)* %a, align 2
 ; CHECK: store <2 x i64> {{.*}}, <2 x i64> addrspace(1)* {{.*}}, align 2
 ; CHECK: ret void
   %aa = alloca <2 x i64>, align 16
@@ -24,7 +24,7 @@ define void @test_address_space_1_1(<2 x i64> addrspace(1)* %a, i16 addrspace(1)
 
 define void @test_address_space_1_0(<2 x i64> addrspace(1)* %a, i16* %b) {
 ; CHECK-LABEL: @test_address_space_1_0(
-; CHECK: load <2 x i64> addrspace(1)* %a, align 2
+; CHECK: load <2 x i64>, <2 x i64> addrspace(1)* %a, align 2
 ; CHECK: store <2 x i64> {{.*}}, <2 x i64>* {{.*}}, align 2
 ; CHECK: ret void
   %aa = alloca <2 x i64>, align 16
@@ -38,7 +38,7 @@ define void @test_address_space_1_0(<2 x i64> addrspace(1)* %a, i16* %b) {
 
 define void @test_address_space_0_1(<2 x i64>* %a, i16 addrspace(1)* %b) {
 ; CHECK-LABEL: @test_address_space_0_1(
-; CHECK: load <2 x i64>* %a, align 2
+; CHECK: load <2 x i64>, <2 x i64>* %a, align 2
 ; CHECK: store <2 x i64> {{.*}}, <2 x i64> addrspace(1)* {{.*}}, align 2
 ; CHECK: ret void
   %aa = alloca <2 x i64>, align 16

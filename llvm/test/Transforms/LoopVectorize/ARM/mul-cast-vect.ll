@@ -16,9 +16,9 @@ target triple = "armv7--linux-gnueabihf"
 
 define void @direct(%T432* %loadaddr, %T432* %loadaddr2, %T432* %storeaddr) {
 ; COST: function 'direct':
-  %v0 = load %T432* %loadaddr
+  %v0 = load %T432, %T432* %loadaddr
 ; ASM: vld1.64
-  %v1 = load %T432* %loadaddr2
+  %v1 = load %T432, %T432* %loadaddr2
 ; ASM: vld1.64
   %r3 = mul %T432 %v0, %v1 
 ; COST: cost of 2 for instruction: {{.*}} mul <4 x i32>
@@ -30,9 +30,9 @@ define void @direct(%T432* %loadaddr, %T432* %loadaddr2, %T432* %storeaddr) {
 
 define void @ups1632(%T416* %loadaddr, %T416* %loadaddr2, %T432* %storeaddr) {
 ; COST: function 'ups1632':
-  %v0 = load %T416* %loadaddr
+  %v0 = load %T416, %T416* %loadaddr
 ; ASM: vldr
-  %v1 = load %T416* %loadaddr2
+  %v1 = load %T416, %T416* %loadaddr2
 ; ASM: vldr
   %r1 = sext %T416 %v0 to %T432
   %r2 = sext %T416 %v1 to %T432
@@ -47,9 +47,9 @@ define void @ups1632(%T416* %loadaddr, %T416* %loadaddr2, %T432* %storeaddr) {
 
 define void @upu1632(%T416* %loadaddr, %T416* %loadaddr2, %T432* %storeaddr) {
 ; COST: function 'upu1632':
-  %v0 = load %T416* %loadaddr
+  %v0 = load %T416, %T416* %loadaddr
 ; ASM: vldr
-  %v1 = load %T416* %loadaddr2
+  %v1 = load %T416, %T416* %loadaddr2
 ; ASM: vldr
   %r1 = zext %T416 %v0 to %T432
   %r2 = zext %T416 %v1 to %T432
@@ -64,9 +64,9 @@ define void @upu1632(%T416* %loadaddr, %T416* %loadaddr2, %T432* %storeaddr) {
 
 define void @ups3264(%T232* %loadaddr, %T232* %loadaddr2, %T264* %storeaddr) {
 ; COST: function 'ups3264':
-  %v0 = load %T232* %loadaddr
+  %v0 = load %T232, %T232* %loadaddr
 ; ASM: vldr
-  %v1 = load %T232* %loadaddr2
+  %v1 = load %T232, %T232* %loadaddr2
 ; ASM: vldr
   %r3 = mul %T232 %v0, %v1 
 ; ASM: vmul.i32
@@ -81,9 +81,9 @@ define void @ups3264(%T232* %loadaddr, %T232* %loadaddr2, %T264* %storeaddr) {
 
 define void @upu3264(%T232* %loadaddr, %T232* %loadaddr2, %T264* %storeaddr) {
 ; COST: function 'upu3264':
-  %v0 = load %T232* %loadaddr
+  %v0 = load %T232, %T232* %loadaddr
 ; ASM: vldr
-  %v1 = load %T232* %loadaddr2
+  %v1 = load %T232, %T232* %loadaddr2
 ; ASM: vldr
   %r3 = mul %T232 %v0, %v1 
 ; ASM: vmul.i32
@@ -98,9 +98,9 @@ define void @upu3264(%T232* %loadaddr, %T232* %loadaddr2, %T264* %storeaddr) {
 
 define void @dn3216(%T432* %loadaddr, %T432* %loadaddr2, %T416* %storeaddr) {
 ; COST: function 'dn3216':
-  %v0 = load %T432* %loadaddr
+  %v0 = load %T432, %T432* %loadaddr
 ; ASM: vld1.64
-  %v1 = load %T432* %loadaddr2
+  %v1 = load %T432, %T432* %loadaddr2
 ; ASM: vld1.64
   %r3 = mul %T432 %v0, %v1 
 ; ASM: vmul.i32

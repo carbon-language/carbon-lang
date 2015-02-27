@@ -24,7 +24,7 @@ entry:
   store i32 %0, i32* %b, align 4
   %ap2 = bitcast i8** %ap to i8*
   call void @llvm.va_end(i8* %ap2)
-  %tmp = load i32* %b, align 4
+  %tmp = load i32, i32* %b, align 4
   ret i32 %tmp
 
 ; CHECK-LABEL: va1:
@@ -50,7 +50,7 @@ entry:
   store double %0, double* %b, align 8
   %ap2 = bitcast i8** %ap to i8*
   call void @llvm.va_end(i8* %ap2)
-  %tmp = load double* %b, align 8
+  %tmp = load double, double* %b, align 8
   ret double %tmp
 
 ; CHECK-LABEL: va2:
@@ -78,7 +78,7 @@ entry:
   store i32 %0, i32* %b, align 4
   %ap2 = bitcast i8** %ap to i8*
   call void @llvm.va_end(i8* %ap2)
-  %tmp = load i32* %b, align 4
+  %tmp = load i32, i32* %b, align 4
   ret i32 %tmp
 
 ; CHECK-LABEL: va3:
@@ -101,7 +101,7 @@ entry:
   store double %0, double* %b, align 8
   %ap2 = bitcast i8** %ap to i8*
   call void @llvm.va_end(i8* %ap2)
-  %tmp = load double* %b, align 8
+  %tmp = load double, double* %b, align 8
   ret double %tmp
 
 ; CHECK-LABEL: va4:
@@ -129,7 +129,7 @@ entry:
   store i32 %0, i32* %d, align 4
   %ap2 = bitcast i8** %ap to i8*
   call void @llvm.va_end(i8* %ap2)
-  %tmp = load i32* %d, align 4
+  %tmp = load i32, i32* %d, align 4
   ret i32 %tmp
 
 ; CHECK-LABEL: va5:
@@ -155,7 +155,7 @@ entry:
   store double %0, double* %d, align 8
   %ap2 = bitcast i8** %ap to i8*
   call void @llvm.va_end(i8* %ap2)
-  %tmp = load double* %d, align 8
+  %tmp = load double, double* %d, align 8
   ret double %tmp
 
 ; CHECK-LABEL: va6:
@@ -183,7 +183,7 @@ entry:
   store i32 %0, i32* %c, align 4
   %ap2 = bitcast i8** %ap to i8*
   call void @llvm.va_end(i8* %ap2)
-  %tmp = load i32* %c, align 4
+  %tmp = load i32, i32* %c, align 4
   ret i32 %tmp
 
 ; CHECK-LABEL: va7:
@@ -206,7 +206,7 @@ entry:
   store double %0, double* %c, align 8
   %ap2 = bitcast i8** %ap to i8*
   call void @llvm.va_end(i8* %ap2)
-  %tmp = load double* %c, align 8
+  %tmp = load double, double* %c, align 8
   ret double %tmp
 
 ; CHECK-LABEL: va8:
@@ -232,7 +232,7 @@ entry:
   store i32 %0, i32* %d, align 4
   %ap2 = bitcast i8** %ap to i8*
   call void @llvm.va_end(i8* %ap2)
-  %tmp = load i32* %d, align 4
+  %tmp = load i32, i32* %d, align 4
   ret i32 %tmp
 
 ; CHECK-LABEL: va9:
@@ -257,7 +257,7 @@ entry:
   store double %0, double* %d, align 8
   %ap2 = bitcast i8** %ap to i8*
   call void @llvm.va_end(i8* %ap2)
-  %tmp = load double* %d, align 8
+  %tmp = load double, double* %d, align 8
   ret double %tmp
 
 ; CHECK-LABEL: va10:

@@ -33,9 +33,9 @@ entry:
   %byref.size = getelementptr inbounds %struct.__block_byref_x, %struct.__block_byref_x* %x, i32 0, i32 3, !dbg !24
   store i32 32, i32* %byref.size, !dbg !24
   %forwarding = getelementptr inbounds %struct.__block_byref_x, %struct.__block_byref_x* %x, i32 0, i32 1, !dbg !25
-  %0 = load %struct.__block_byref_x** %forwarding, !dbg !25
+  %0 = load %struct.__block_byref_x*, %struct.__block_byref_x** %forwarding, !dbg !25
   %x1 = getelementptr inbounds %struct.__block_byref_x, %struct.__block_byref_x* %0, i32 0, i32 4, !dbg !25
-  %1 = load i32* %x1, align 4, !dbg !25
+  %1 = load i32, i32* %x1, align 4, !dbg !25
   call void @bar(i32 %1), !dbg !25
   %2 = bitcast %struct.__block_byref_x* %x to i8*, !dbg !26
   call void @_Block_object_dispose(i8* %2, i32 8) #3, !dbg !26

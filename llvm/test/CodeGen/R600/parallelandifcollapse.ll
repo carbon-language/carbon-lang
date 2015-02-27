@@ -23,14 +23,14 @@ entry:
   %c1 = alloca i32, align 4
   %d1 = alloca i32, align 4
   %data = alloca i32, align 4
-  %0 = load i32* %a0, align 4
-  %1 = load i32* %b0, align 4
+  %0 = load i32, i32* %a0, align 4
+  %1 = load i32, i32* %b0, align 4
   %cmp = icmp ne i32 %0, %1
   br i1 %cmp, label %land.lhs.true, label %if.end
 
 land.lhs.true:                                    ; preds = %entry
-  %2 = load i32* %c0, align 4
-  %3 = load i32* %d0, align 4
+  %2 = load i32, i32* %c0, align 4
+  %3 = load i32, i32* %d0, align 4
   %cmp1 = icmp ne i32 %2, %3
   br i1 %cmp1, label %if.then, label %if.end
 
@@ -39,14 +39,14 @@ if.then:                                          ; preds = %land.lhs.true
   br label %if.end
 
 if.end:                                           ; preds = %if.then, %land.lhs.true, %entry
-  %4 = load i32* %a1, align 4
-  %5 = load i32* %b1, align 4
+  %4 = load i32, i32* %a1, align 4
+  %5 = load i32, i32* %b1, align 4
   %cmp2 = icmp ne i32 %4, %5
   br i1 %cmp2, label %land.lhs.true3, label %if.end6
 
 land.lhs.true3:                                   ; preds = %if.end
-  %6 = load i32* %c1, align 4
-  %7 = load i32* %d1, align 4
+  %6 = load i32, i32* %c1, align 4
+  %7 = load i32, i32* %d1, align 4
   %cmp4 = icmp ne i32 %6, %7
   br i1 %cmp4, label %if.then5, label %if.end6
 

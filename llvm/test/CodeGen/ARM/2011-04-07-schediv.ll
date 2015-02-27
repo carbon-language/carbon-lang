@@ -21,7 +21,7 @@ bb:                                               ; preds = %entry, %bb
   %uglygep = getelementptr i8, i8* %src_copy_start6, i32 %tmp
   %src_copy_start_addr.04 = bitcast i8* %uglygep to float*
   %dst_copy_start_addr.03 = getelementptr float, float* %dst_copy_start, i32 %j.05
-  %1 = load float* %src_copy_start_addr.04, align 4
+  %1 = load float, float* %src_copy_start_addr.04, align 4
   store float %1, float* %dst_copy_start_addr.03, align 4
   %2 = add i32 %j.05, 1
   %exitcond = icmp eq i32 %2, %src_width

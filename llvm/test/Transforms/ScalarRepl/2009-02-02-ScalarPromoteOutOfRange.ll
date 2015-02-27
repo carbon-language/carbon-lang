@@ -11,6 +11,6 @@ define i32 @f(i32 %x, i32 %y) {
        store i32 %x, i32* %cast
        %second = getelementptr %pair, %pair* %instance, i32 0, i32 1
        store i32 %y, i32* %second
-       %v = load i32* %cast
+       %v = load i32, i32* %cast
        ret i32 %v
 }
