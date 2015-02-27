@@ -58,8 +58,6 @@ void ARMException::endModule() {
 void ARMException::beginFunction(const MachineFunction *MF) {
   if (Asm->MAI->getExceptionHandlingType() == ExceptionHandling::ARM)
     getTargetStreamer().emitFnStart();
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
-                                                Asm->getFunctionNumber()));
   // See if we need call frame info.
   AsmPrinter::CFIMoveType MoveType = Asm->needsCFIMoves();
   assert(MoveType != AsmPrinter::CFI_M_EH &&
@@ -84,8 +82,6 @@ void ARMException::endFunction(const MachineFunction *) {
       MMI->getLandingPads().empty())
     ATS.emitCantUnwind();
   else {
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",
-                                                  Asm->getFunctionNumber()));
     if (!MMI->getLandingPads().empty()) {
       // Emit references to personality.
       if (const Function *Personality = MMI->getPersonality()) {

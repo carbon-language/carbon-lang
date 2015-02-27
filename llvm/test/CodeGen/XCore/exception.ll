@@ -39,10 +39,10 @@ entry:
   unreachable
 }
 
-; CHECK-LABEL: fn_catch
+; CHECK-LABEL: fn_catch:
+; CHECK-NEXT: [[START:.L[a-zA-Z0-9_]+]]
 ; CHECK: .cfi_startproc
 ; CHECK: .cfi_personality 0, __gxx_personality_v0
-; CHECK: [[START:.L[a-zA-Z0-9_]+]]
 ; CHECK: .cfi_lsda 0, [[LSDA:.L[a-zA-Z0-9_]+]]
 ; CHECK: entsp 4
 ; CHECK: .cfi_def_cfa_offset 16
@@ -91,8 +91,8 @@ lpad:
 ; CHECK: bf r0, [[RETURN]]
 ; CHECK: mov r0, r4
 ; CHECK: bl _Unwind_Resume
-; CHECK: .cfi_endproc
 ; CHECK: [[END:.L[a-zA-Z0-9_]+]]
+; CHECK: .cfi_endproc
   %6 = icmp eq i32 %5, %2
   br i1 %6, label %Resume, label %Exit
 Resume:

@@ -160,6 +160,12 @@ MCSymbol *MCContext::CreateSymbol(StringRef Name) {
   return Result;
 }
 
+MCSymbol *MCContext::createTempSymbol(const Twine &Name) {
+  SmallString<128> NameSV;
+  raw_svector_ostream(NameSV) << MAI->getPrivateGlobalPrefix() << Name;
+  return CreateSymbol(NameSV);
+}
+
 MCSymbol *MCContext::GetOrCreateSymbol(const Twine &Name) {
   SmallString<128> NameSV;
   return GetOrCreateSymbol(Name.toStringRef(NameSV));

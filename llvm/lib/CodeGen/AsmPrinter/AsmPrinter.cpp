@@ -109,6 +109,8 @@ AsmPrinter::AsmPrinter(TargetMachine &tm, std::unique_ptr<MCStreamer> Streamer)
   LI = nullptr;
   MF = nullptr;
   CurrentFnSym = CurrentFnSymForSize = nullptr;
+  CurrentFnBegin = nullptr;
+  CurrentFnEnd = nullptr;
   GCMetadataPrinters = nullptr;
   VerboseAsm = OutStreamer.isVerboseAsm();
 }
@@ -554,6 +556,19 @@ void AsmPrinter::EmitFunctionHeader() {
     OutStreamer.EmitLabel(DeadBlockSyms[i]);
   }
 
+  if (!MMI->getLandingPads().empty()) {
+    CurrentFnBegin = createTempSymbol("eh_func_begin", getFunctionNumber());
+
+    if (MAI->useAssignmentForEHBegin()) {
+      MCSymbol *CurPos = OutContext.CreateTempSymbol();
+      OutStreamer.EmitLabel(CurPos);
+      OutStreamer.EmitAssignment(CurrentFnBegin,
+                                 MCSymbolRefExpr::Create(CurPos, OutContext));
+    } else {
+      OutStreamer.EmitLabel(CurrentFnBegin);
+    }
+  }
+
   // Emit pre-function debug and/or EH information.
   for (const HandlerInfo &HI : Handlers) {
     NamedRegionTimer T(HI.TimerName, HI.TimerGroupName, TimePassesIsEnabled);
@@ -866,6 +881,12 @@ void AsmPrinter::EmitFunctionBody() {
 
   // Emit target-specific gunk after the function body.
   EmitFunctionBodyEnd();
+
+  if (!MMI->getLandingPads().empty()) {
+    // Create a symbol for the end of function.
+    CurrentFnEnd = createTempSymbol("eh_func_end", getFunctionNumber());
+    OutStreamer.EmitLabel(CurrentFnEnd);
+  }
 
   // If the target wants a .size directive for the size of the function, emit
   // it.
@@ -2273,6 +2294,9 @@ MCSymbol *AsmPrinter::GetTempSymbol(const Twine &Name) const {
                                       Name);
 }
 
+MCSymbol *AsmPrinter::createTempSymbol(const Twine &Name, unsigned ID) const {
+  return OutContext.createTempSymbol(Name + Twine(ID));
+}
 
 MCSymbol *AsmPrinter::GetBlockAddressSymbol(const BlockAddress *BA) const {
   return MMI->getAddrLabelSymbol(BA->getBasicBlock());

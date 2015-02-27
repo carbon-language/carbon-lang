@@ -552,16 +552,14 @@ void EHStreamer::emitExceptionTable() {
          I = CallSites.begin(), E = CallSites.end(); I != E; ++I) {
       const CallSiteEntry &S = *I;
 
-      MCSymbol *EHFuncBeginSym =
-        Asm->GetTempSymbol("eh_func_begin", Asm->getFunctionNumber());
+      MCSymbol *EHFuncBeginSym = Asm->getFunctionBegin();
 
       MCSymbol *BeginLabel = S.BeginLabel;
       if (!BeginLabel)
         BeginLabel = EHFuncBeginSym;
       MCSymbol *EndLabel = S.EndLabel;
       if (!EndLabel)
-        EndLabel = Asm->GetTempSymbol("eh_func_end", Asm->getFunctionNumber());
-
+        EndLabel = Asm->getFunctionEnd();
 
       // Offset of the call site relative to the previous call site, counted in
       // number of 16-byte bundles. The first call site is counted relative to

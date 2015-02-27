@@ -80,9 +80,6 @@ void Win64Exception::beginFunction(const MachineFunction *MF) {
   const MCSymbol *PersHandlerSym =
       TLOF.getCFIPersonalitySymbol(Per, *Asm->Mang, Asm->TM, MMI);
   Asm->OutStreamer.EmitWinEHHandler(PersHandlerSym, true, true);
-
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
-                                                Asm->getFunctionNumber()));
 }
 
 /// endFunction - Gather and emit post-function exception information.
@@ -90,9 +87,6 @@ void Win64Exception::beginFunction(const MachineFunction *MF) {
 void Win64Exception::endFunction(const MachineFunction *) {
   if (!shouldEmitPersonality && !shouldEmitMoves)
     return;
-
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_end",
-                                                Asm->getFunctionNumber()));
 
   // Map all labels and get rid of any dead landing pads.
   MMI->TidyLandingPads();
@@ -170,10 +164,8 @@ void Win64Exception::emitCSpecificHandlerTable() {
   SmallVector<CallSiteEntry, 64> CallSites;
   computeCallSiteTable(CallSites, LandingPads, FirstActions);
 
-  MCSymbol *EHFuncBeginSym =
-      Asm->GetTempSymbol("eh_func_begin", Asm->getFunctionNumber());
-  MCSymbol *EHFuncEndSym =
-      Asm->GetTempSymbol("eh_func_end", Asm->getFunctionNumber());
+  MCSymbol *EHFuncBeginSym = Asm->getFunctionBegin();
+  MCSymbol *EHFuncEndSym = Asm->getFunctionEnd();
 
   // Emit the number of table entries.
   unsigned NumEntries = 0;

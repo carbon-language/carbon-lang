@@ -5,8 +5,8 @@
 define i64 @patchpoint_invoke(i64 %p1, i64 %p2) {
 entry:
 ; CHECK-LABEL: patchpoint_invoke:
+; CHECK-NEXT:  [[FUNC_BEGIN:.L.*]]:
 ; CHECK-NEXT: .cfi_startproc
-; CHECK:      [[FUNC_BEGIN:.L.*]]:
 ; CHECK:      .cfi_lsda 3, [[EXCEPTION_LABEL:.L[^ ]*]]
 ; CHECK:      pushq %rbp
 
