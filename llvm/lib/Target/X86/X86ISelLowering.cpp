@@ -19149,7 +19149,9 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
   // Note that even with AVX we prefer the PSHUFD form of shuffle for integer
   // vectors because it can have a load folded into it that UNPCK cannot. This
   // doesn't preclude something switching to the shorter encoding post-RA.
-  if (FloatDomain) {
+  //
+  // FIXME: Should teach these routines about AVX vector widths.
+  if (FloatDomain && VT.getSizeInBits() == 128) {
     if (Mask.equals(0, 0) || Mask.equals(1, 1)) {
       bool Lo = Mask.equals(0, 0);
       unsigned Shuffle;
@@ -19213,7 +19215,7 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
   // We always canonicalize the 8 x i16 and 16 x i8 shuffles into their UNPCK
   // variants as none of these have single-instruction variants that are
   // superior to the UNPCK formulation.
-  if (!FloatDomain &&
+  if (!FloatDomain && VT.getSizeInBits() == 128 &&
       (Mask.equals(0, 0, 1, 1, 2, 2, 3, 3) ||
        Mask.equals(4, 4, 5, 5, 6, 6, 7, 7) ||
        Mask.equals(0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7) ||
@@ -19254,9 +19256,9 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
   // in practice PSHUFB tends to be *very* fast so we're more aggressive.
   if ((Depth >= 3 || HasPSHUFB) && Subtarget->hasSSSE3()) {
     SmallVector<SDValue, 16> PSHUFBMask;
-    assert(Mask.size() <= 16 && "Can't shuffle elements smaller than bytes!");
-    int Ratio = 16 / Mask.size();
-    for (unsigned i = 0; i < 16; ++i) {
+    int NumBytes = VT.getSizeInBits() / 8;
+    int Ratio = NumBytes / Mask.size();
+    for (int i = 0; i < NumBytes; ++i) {
       if (Mask[i / Ratio] == SM_SentinelUndef) {
         PSHUFBMask.push_back(DAG.getUNDEF(MVT::i8));
         continue;
@@ -19266,12 +19268,13 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
                   : 255;
       PSHUFBMask.push_back(DAG.getConstant(M, MVT::i8));
     }
-    Op = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Input);
+    MVT ByteVT = MVT::getVectorVT(MVT::i8, NumBytes);
+    Op = DAG.getNode(ISD::BITCAST, DL, ByteVT, Input);
     DCI.AddToWorklist(Op.getNode());
     SDValue PSHUFBMaskOp =
-        DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, PSHUFBMask);
+        DAG.getNode(ISD::BUILD_VECTOR, DL, ByteVT, PSHUFBMask);
     DCI.AddToWorklist(PSHUFBMaskOp.getNode());
-    Op = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, Op, PSHUFBMaskOp);
+    Op = DAG.getNode(X86ISD::PSHUFB, DL, ByteVT, Op, PSHUFBMaskOp);
     DCI.AddToWorklist(Op.getNode());
     DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Op),
                   /*AddTo*/ true);
@@ -19329,10 +19332,6 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
   MVT VT = Op.getSimpleValueType();
   if (!VT.isVector())
     return false; // Bail if we hit a non-vector.
-  // FIXME: This routine should be taught about 256-bit shuffles, or a 256-bit
-  // version should be added.
-  if (VT.getSizeInBits() != 128)
-    return false;
 
   assert(Root.getSimpleValueType().isVector() &&
          "Shuffles operate on vector types!");
@@ -19924,10 +19923,6 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
         PerformTargetShuffleCombine(SDValue(N, 0), DAG, DCI, Subtarget);
     if (Shuffle.getNode())
       return Shuffle;
-
-    // Only handle 128 wide vector from here on.
-    if (!VT.is128BitVector())
-      return SDValue();
 
     // Try recursively combining arbitrary sequences of x86 shuffle
     // instructions into higher-order shuffles. We do this after combining
