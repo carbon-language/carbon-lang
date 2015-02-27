@@ -24,7 +24,7 @@ public:
   CComPtr<IDiaSymbol> getDiaSymbol() const { return Symbol; }
 
   std::unique_ptr<IPDBEnumSymbols>
-  DIARawSymbol::findChildren(PDB_SymType Type) const override;
+  findChildren(PDB_SymType Type) const override;
   std::unique_ptr<IPDBEnumSymbols>
   findChildren(PDB_SymType Type, StringRef Name,
                PDB_NameSearchFlags Flags) const override;
