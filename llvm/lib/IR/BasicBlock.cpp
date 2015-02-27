@@ -102,14 +102,14 @@ void BasicBlock::eraseFromParent() {
   getParent()->getBasicBlockList().erase(this);
 }
 
-/// moveBefore - Unlink this basic block from its current function and
+/// Unlink this basic block from its current function and
 /// insert it into the function that MovePos lives in, right before MovePos.
 void BasicBlock::moveBefore(BasicBlock *MovePos) {
   MovePos->getParent()->getBasicBlockList().splice(MovePos,
                        getParent()->getBasicBlockList(), this);
 }
 
-/// moveAfter - Unlink this basic block from its current function and
+/// Unlink this basic block from its current function and
 /// insert it into the function that MovePos lives in, right after MovePos.
 void BasicBlock::moveAfter(BasicBlock *MovePos) {
   Function::iterator I = MovePos;
@@ -210,7 +210,7 @@ void BasicBlock::dropAllReferences() {
     I->dropAllReferences();
 }
 
-/// getSinglePredecessor - If this basic block has a single predecessor block,
+/// If this basic block has a single predecessor block,
 /// return the block, otherwise return a null pointer.
 BasicBlock *BasicBlock::getSinglePredecessor() {
   pred_iterator PI = pred_begin(this), E = pred_end(this);
@@ -220,7 +220,7 @@ BasicBlock *BasicBlock::getSinglePredecessor() {
   return (PI == E) ? ThePred : nullptr /*multiple preds*/;
 }
 
-/// getUniquePredecessor - If this basic block has a unique predecessor block,
+/// If this basic block has a unique predecessor block,
 /// return the block, otherwise return a null pointer.
 /// Note that unique predecessor doesn't mean single edge, there can be
 /// multiple edges from the unique predecessor to this block (for example
@@ -253,7 +253,7 @@ BasicBlock *BasicBlock::getUniqueSuccessor() {
   return SuccBB;
 }
 
-/// removePredecessor - This method is used to notify a BasicBlock that the
+/// This method is used to notify a BasicBlock that the
 /// specified Predecessor of the block is no longer able to reach it.  This is
 /// actually not used to update the Predecessor list, but is actually used to
 /// update the PHI nodes that reside in the block.  Note that this should be
@@ -330,7 +330,7 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
 }
 
 
-/// splitBasicBlock - This splits a basic block into two at the specified
+/// This splits a basic block into two at the specified
 /// instruction.  Note that all instructions BEFORE the specified iterator stay
 /// as part of the original basic block, an unconditional branch is added to
 /// the new BB, and the rest of the instructions in the BB are moved to the new
@@ -401,14 +401,13 @@ void BasicBlock::replaceSuccessorsPhiUsesWith(BasicBlock *New) {
   }
 }
 
-/// isLandingPad - Return true if this basic block is a landing pad. I.e., it's
+/// Return true if this basic block is a landing pad. I.e., it's
 /// the destination of the 'unwind' edge of an invoke instruction.
 bool BasicBlock::isLandingPad() const {
   return isa<LandingPadInst>(getFirstNonPHI());
 }
 
-/// getLandingPadInst() - Return the landingpad instruction associated with
-/// the landing pad.
+/// Return the landingpad instruction associated with the landing pad.
 LandingPadInst *BasicBlock::getLandingPadInst() {
   return dyn_cast<LandingPadInst>(getFirstNonPHI());
 }
