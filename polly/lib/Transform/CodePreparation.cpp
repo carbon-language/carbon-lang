@@ -201,15 +201,13 @@ void CodePreparation::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool CodePreparation::runOnFunction(Function &F) {
-  if (PollyModelPHINodes)
-    return false;
-
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   SE = &getAnalysis<ScalarEvolution>();
 
   splitEntryBlockForAlloca(&F.getEntryBlock(), this);
 
-  eliminatePHINodes(F);
+  if (!PollyModelPHINodes)
+    eliminatePHINodes(F);
 
   return false;
 }
