@@ -471,6 +471,17 @@ protected:
     Builder.defineMacro("__ELF__");
     if (Opts.POSIXThreads)
       Builder.defineMacro("_REENTRANT");
+
+    switch (Triple.getArch()) {
+    default:
+      break;
+    case llvm::Triple::arm:
+    case llvm::Triple::armeb:
+    case llvm::Triple::thumb:
+    case llvm::Triple::thumbeb:
+      Builder.defineMacro("__ARM_DWARF_EH__");
+      break;
+    }
   }
 public:
   BitrigTargetInfo(const llvm::Triple &Triple) : OSTargetInfo<Target>(Triple) {
@@ -3827,8 +3838,9 @@ class ARMTargetInfo : public TargetInfo {
     DoubleAlign = LongLongAlign = LongDoubleAlign = SuitableAlign = 64;
     const llvm::Triple &T = getTriple();
 
-    // size_t is unsigned long on MachO-derived environments and NetBSD.
-    if (T.isOSBinFormatMachO() || T.getOS() == llvm::Triple::NetBSD)
+    // size_t is unsigned long on MachO-derived environments, NetBSD and Bitrig.
+    if (T.isOSBinFormatMachO() || T.getOS() == llvm::Triple::NetBSD ||
+        T.getOS() == llvm::Triple::Bitrig)
       SizeType = UnsignedLong;
     else
       SizeType = UnsignedInt;

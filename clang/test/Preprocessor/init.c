@@ -2165,6 +2165,13 @@
 // ARM-DARWIN-NO-EABI-NOT: #define __ARM_EABI__ 1
 // ARM-DARWIN-EABI: #define __ARM_EABI__ 1
 
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=armv7-bitrig-gnueabihf < /dev/null | FileCheck -check-prefix ARM-BITRIG %s
+// ARM-BITRIG:#define __ARM_DWARF_EH__ 1
+// ARM-BITRIG:#define __SIZEOF_SIZE_T__ 4
+// ARM-BITRIG:#define __SIZE_MAX__ 4294967295U
+// ARM-BITRIG:#define __SIZE_TYPE__ long unsigned int
+// ARM-BITRIG:#define __SIZE_WIDTH__ 32
+
 // Check that -mhwdiv works properly for targets which don't have the hwdiv feature enabled by default.
 
 // RUN: %clang -target arm -mhwdiv=arm -x c -E -dM %s -o - | FileCheck --check-prefix=ARMHWDIV-ARM %s
