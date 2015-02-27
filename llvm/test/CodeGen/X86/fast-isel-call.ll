@@ -1,4 +1,4 @@
-; RUN: llc < %s -O0 -fast-isel-abort -march=x86 | FileCheck %s
+; RUN: llc < %s -O0 -fast-isel-abort=1 -march=x86 | FileCheck %s
 
 %struct.s = type {i32, i32, i32}
 

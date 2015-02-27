@@ -1,5 +1,5 @@
 ; RUN: llc < %s                             -mtriple=x86_64-apple-darwin10 | FileCheck %s --check-prefix=SDAG
-; RUN: llc < %s -fast-isel -fast-isel-abort -mtriple=x86_64-apple-darwin10 | FileCheck %s --check-prefix=FAST
+; RUN: llc < %s -fast-isel -fast-isel-abort=1 -mtriple=x86_64-apple-darwin10 | FileCheck %s --check-prefix=FAST
 
 define zeroext i1 @fcmp_oeq(float %x, float %y) {
 ; SDAG-LABEL: fcmp_oeq

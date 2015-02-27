@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=x86_64-none-linux -fast-isel -fast-isel-abort -mattr=+sse2 < %s | FileCheck %s
-; RUN: llc -mtriple=i686-none-linux -fast-isel -fast-isel-abort -mattr=+sse2 < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-none-linux -fast-isel -fast-isel-abort=1 -mattr=+sse2 < %s | FileCheck %s
+; RUN: llc -mtriple=i686-none-linux -fast-isel -fast-isel-abort=1 -mattr=+sse2 < %s | FileCheck %s
 
 define i32 @test_store_32(i32* nocapture %addr, i32 %value) {
 entry:

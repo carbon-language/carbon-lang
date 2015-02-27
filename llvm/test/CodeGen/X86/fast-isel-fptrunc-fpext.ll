@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+sse2 -fast-isel -fast-isel-abort | FileCheck %s --check-prefix=ALL --check-prefix=SSE
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx -fast-isel -fast-isel-abort | FileCheck %s --check-prefix=ALL --check-prefix=AVX
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+sse2 -fast-isel -fast-isel-abort=1 | FileCheck %s --check-prefix=ALL --check-prefix=SSE
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx -fast-isel -fast-isel-abort=1 | FileCheck %s --check-prefix=ALL --check-prefix=AVX
 ;
 ; Verify that fast-isel doesn't select legacy SSE instructions on targets that
 ; feature AVX.

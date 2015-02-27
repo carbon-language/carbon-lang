@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel -fast-isel-abort -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel -fast-isel-abort=1 -verify-machineinstrs < %s | FileCheck %s
 
 ; Test that we don't abort fast-isle for ret
 define <8 x i8> @ret_v8i8(<8 x i8> %a, <8 x i8> %b) {

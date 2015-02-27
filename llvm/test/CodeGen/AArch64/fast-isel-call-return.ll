@@ -1,4 +1,4 @@
-; RUN: llc -fast-isel -fast-isel-abort -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -fast-isel -fast-isel-abort=1 -verify-machineinstrs < %s | FileCheck %s
 target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128"
 target triple = "aarch64-linux-gnu"
 

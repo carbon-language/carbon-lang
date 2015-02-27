@@ -1,8 +1,8 @@
 ; FIXME: FastISel currently returns false if it hits code that uses VSX
-; registers and with -fast-isel-abort turned on the test case will then fail.
+; registers and with -fast-isel-abort=1 turned on the test case will then fail.
 ; When fastisel better supports VSX fix up this test case.
 ;
-; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel -fast-isel-abort -mattr=-vsx -mtriple=powerpc64-unknown-linux-gnu -mcpu=pwr7 | FileCheck %s --check-prefix=ELF64
+; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel -fast-isel-abort=1 -mattr=-vsx -mtriple=powerpc64-unknown-linux-gnu -mcpu=pwr7 | FileCheck %s --check-prefix=ELF64
 
 ; This test verifies that load/store instructions are properly generated,
 ; and that they pass MI verification.

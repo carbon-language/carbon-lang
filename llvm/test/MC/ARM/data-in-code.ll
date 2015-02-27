@@ -1,8 +1,8 @@
-;; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort \
+;; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort=1 \
 ;; RUN:   -mtriple=armv7-linux-gnueabi -filetype=obj %s -o - | \
 ;; RUN:   llvm-readobj -t | FileCheck -check-prefix=ARM %s
 
-;; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort \
+;; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort=1 \
 ;; RUN:   -mtriple=thumbv7-linux-gnueabi -filetype=obj %s -o - | \
 ;; RUN:   llvm-readobj -t | FileCheck -check-prefix=TMB %s
 

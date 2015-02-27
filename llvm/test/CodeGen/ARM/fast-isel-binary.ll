@@ -1,6 +1,6 @@
-; RUN: llc < %s -O0 -fast-isel-abort -verify-machineinstrs -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios | FileCheck %s --check-prefix=ARM
-; RUN: llc < %s -O0 -fast-isel-abort -verify-machineinstrs -relocation-model=dynamic-no-pic -mtriple=armv7-linux-gnueabi | FileCheck %s --check-prefix=ARM
-; RUN: llc < %s -O0 -fast-isel-abort -verify-machineinstrs -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=THUMB
+; RUN: llc < %s -O0 -fast-isel-abort=1 -verify-machineinstrs -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios | FileCheck %s --check-prefix=ARM
+; RUN: llc < %s -O0 -fast-isel-abort=1 -verify-machineinstrs -relocation-model=dynamic-no-pic -mtriple=armv7-linux-gnueabi | FileCheck %s --check-prefix=ARM
+; RUN: llc < %s -O0 -fast-isel-abort=1 -verify-machineinstrs -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=THUMB
 
 ; Test add with non-legal types
 

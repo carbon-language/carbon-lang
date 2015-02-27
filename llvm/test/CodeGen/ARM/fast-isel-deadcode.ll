@@ -1,4 +1,4 @@
-; RUN: llc < %s -O0 -fast-isel-abort -verify-machineinstrs -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=THUMB
+; RUN: llc < %s -O0 -fast-isel-abort=1 -verify-machineinstrs -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=THUMB
 
 ; Target-specific selector can't properly handle the double because it isn't
 ; being passed via a register, so the materialized arguments become dead code.

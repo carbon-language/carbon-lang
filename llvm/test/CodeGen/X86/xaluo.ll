@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=x86_64-darwin-unknown                             < %s | FileCheck %s --check-prefix=CHECK --check-prefix=SDAG
-; RUN: llc -mtriple=x86_64-darwin-unknown -fast-isel -fast-isel-abort < %s | FileCheck %s --check-prefix=CHECK --check-prefix=FAST
+; RUN: llc -mtriple=x86_64-darwin-unknown -fast-isel -fast-isel-abort=1 < %s | FileCheck %s --check-prefix=CHECK --check-prefix=FAST
 
 ;
 ; Get the actual value of the overflow bit.

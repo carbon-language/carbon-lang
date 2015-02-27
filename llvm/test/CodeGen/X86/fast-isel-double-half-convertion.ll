@@ -1,4 +1,4 @@
-; RUN: llc -fast-isel -fast-isel-abort -mtriple=x86_64-unknown-unknown -mattr=+f16c < %s
+; RUN: llc -fast-isel -fast-isel-abort=1 -mtriple=x86_64-unknown-unknown -mattr=+f16c < %s
 
 ; XFAIL: *
 

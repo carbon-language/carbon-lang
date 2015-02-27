@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel=0                  -verify-machineinstrs < %s | FileCheck %s
-; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel=1 -fast-isel-abort -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel=1 -fast-isel-abort=1 -verify-machineinstrs < %s | FileCheck %s
 
 ; AND
 define zeroext i1 @and_rr_i1(i1 signext %a, i1 signext %b) {

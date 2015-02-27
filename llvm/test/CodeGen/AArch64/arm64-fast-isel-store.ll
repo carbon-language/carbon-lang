@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=aarch64-unknown-unknown                             -verify-machineinstrs < %s | FileCheck %s
-; RUN: llc -mtriple=aarch64-unknown-unknown -fast-isel -fast-isel-abort -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-unknown-unknown -fast-isel -fast-isel-abort=1 -verify-machineinstrs < %s | FileCheck %s
 
 define void @store_i8(i8* %a) {
 ; CHECK-LABEL: store_i8

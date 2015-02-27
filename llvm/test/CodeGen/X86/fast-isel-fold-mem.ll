@@ -1,5 +1,5 @@
 ; RUN: llc < %s                             -mtriple=x86_64-apple-darwin | FileCheck %s
-; RUN: llc < %s -fast-isel -fast-isel-abort -mtriple=x86_64-apple-darwin | FileCheck %s
+; RUN: llc < %s -fast-isel -fast-isel-abort=1 -mtriple=x86_64-apple-darwin | FileCheck %s
 
 define i64 @fold_load(i64* %a, i64 %b) {
 ; CHECK-LABEL: fold_load

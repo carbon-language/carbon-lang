@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin10                             | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -fast-isel -fast-isel-abort | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -fast-isel -fast-isel-abort=1 | FileCheck %s
 
 ; Test all the cmp predicates that can feed an integer conditional move.
 

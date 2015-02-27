@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=aarch64-apple-darwin                                                   -verify-machineinstrs < %s | FileCheck %s
-; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel -fast-isel-abort -fast-isel-abort-args -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel -fast-isel-abort=2 -verify-machineinstrs < %s | FileCheck %s
 
 ; Vector Integer Add
 define <8 x i8> @add_v8i8_rr(<8 x i8> %a, <8 x i8> %b) {

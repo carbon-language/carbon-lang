@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=x86_64-unknown-unknown -mcpu=generic -mattr=+sse2 -O0 --fast-isel-abort < %s | FileCheck %s --check-prefix=ALL --check-prefix=SSE2
-; RUN: llc -mtriple=x86_64-unknown-unknown -mcpu=generic -mattr=+avx -O0 --fast-isel-abort < %s | FileCheck %s --check-prefix=ALL --check-prefix=AVX
+; RUN: llc -mtriple=x86_64-unknown-unknown -mcpu=generic -mattr=+sse2 -O0 --fast-isel-abort=1 < %s | FileCheck %s --check-prefix=ALL --check-prefix=SSE2
+; RUN: llc -mtriple=x86_64-unknown-unknown -mcpu=generic -mattr=+avx -O0 --fast-isel-abort=1 < %s | FileCheck %s --check-prefix=ALL --check-prefix=AVX
 
 
 define double @int_to_double_rr(i32 %a) {

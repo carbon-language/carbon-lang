@@ -1,4 +1,4 @@
-; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios
+; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios
 
 ; This test ensures HandlePHINodesInSuccessorBlocks() is able to promote basic
 ; non-legal integer types (i.e., i1, i8, i16).

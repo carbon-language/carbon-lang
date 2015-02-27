@@ -1,10 +1,10 @@
-; RUN: llc < %s -O0 -fast-isel-abort -mtriple=armv7-apple-ios -verify-machineinstrs | FileCheck %s --check-prefix=v7
-; RUN: llc < %s -O0 -fast-isel-abort -mtriple=armv7-linux-gnueabi -verify-machineinstrs | FileCheck %s --check-prefix=v7
-; RUN: llc < %s -O0 -fast-isel-abort -mtriple=armv4t-apple-ios -verify-machineinstrs | FileCheck %s --check-prefix=prev6
-; RUN: llc < %s -O0 -fast-isel-abort -mtriple=armv4t-linux-gnueabi -verify-machineinstrs | FileCheck %s --check-prefix=prev6
-; RUN: llc < %s -O0 -fast-isel-abort -mtriple=armv5-apple-ios -verify-machineinstrs | FileCheck %s --check-prefix=prev6
-; RUN: llc < %s -O0 -fast-isel-abort -mtriple=armv5-linux-gnueabi -verify-machineinstrs | FileCheck %s --check-prefix=prev6
-; RUN: llc < %s -O0 -fast-isel-abort -mtriple=thumbv7-apple-ios -verify-machineinstrs | FileCheck %s --check-prefix=v7
+; RUN: llc < %s -O0 -fast-isel-abort=1 -mtriple=armv7-apple-ios -verify-machineinstrs | FileCheck %s --check-prefix=v7
+; RUN: llc < %s -O0 -fast-isel-abort=1 -mtriple=armv7-linux-gnueabi -verify-machineinstrs | FileCheck %s --check-prefix=v7
+; RUN: llc < %s -O0 -fast-isel-abort=1 -mtriple=armv4t-apple-ios -verify-machineinstrs | FileCheck %s --check-prefix=prev6
+; RUN: llc < %s -O0 -fast-isel-abort=1 -mtriple=armv4t-linux-gnueabi -verify-machineinstrs | FileCheck %s --check-prefix=prev6
+; RUN: llc < %s -O0 -fast-isel-abort=1 -mtriple=armv5-apple-ios -verify-machineinstrs | FileCheck %s --check-prefix=prev6
+; RUN: llc < %s -O0 -fast-isel-abort=1 -mtriple=armv5-linux-gnueabi -verify-machineinstrs | FileCheck %s --check-prefix=prev6
+; RUN: llc < %s -O0 -fast-isel-abort=1 -mtriple=thumbv7-apple-ios -verify-machineinstrs | FileCheck %s --check-prefix=v7
 
 ; Can't test pre-ARMv6 Thumb because ARM FastISel currently only supports
 ; Thumb2. The ARMFastISel::ARMEmitIntExt code should work for Thumb by always

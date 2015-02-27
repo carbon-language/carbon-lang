@@ -1,4 +1,4 @@
-; RUN: llc < %s -fast-isel -fast-isel-abort -mtriple=x86_64-apple-darwin10                  | FileCheck %s
+; RUN: llc < %s -fast-isel -fast-isel-abort=1 -mtriple=x86_64-apple-darwin10                  | FileCheck %s
 
 ; Test conditional move for the supported types (i16, i32, and i32) and
 ; conditon input (argument or cmp). Currently i8 is not supported.

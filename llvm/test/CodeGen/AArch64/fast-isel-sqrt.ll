@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=arm64-apple-darwin                             -verify-machineinstrs < %s | FileCheck %s
-; RUN: llc -mtriple=arm64-apple-darwin -fast-isel -fast-isel-abort -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=arm64-apple-darwin -fast-isel -fast-isel-abort=1 -verify-machineinstrs < %s | FileCheck %s
 
 define float @test_sqrt_f32(float %a) {
 ; CHECK-LABEL: test_sqrt_f32

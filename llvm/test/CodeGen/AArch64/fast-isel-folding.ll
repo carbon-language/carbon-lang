@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=aarch64-apple-darwin -O0 -fast-isel-abort -verify-machineinstrs < %s
+; RUN: llc -mtriple=aarch64-apple-darwin -O0 -fast-isel-abort=1 -verify-machineinstrs < %s
 
 ; Test that we don't fold the shift.
 define i64 @fold_shift_test(i64 %a, i1 %c) {

@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=aarch64-apple-darwin                             -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK --check-prefix=SDAG
-; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel -fast-isel-abort -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK --check-prefix=FAST
+; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel -fast-isel-abort=1 -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK --check-prefix=FAST
 
 ; Load / Store Base Register only
 define zeroext i1 @load_breg_i1(i1* %a) {

@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin -mcpu=corei7                             < %s | FileCheck %s
-; RUN: llc -mtriple=x86_64-apple-darwin -mcpu=corei7 -fast-isel -fast-isel-abort < %s | FileCheck %s --check-prefix=FAST
+; RUN: llc -mtriple=x86_64-apple-darwin -mcpu=corei7 -fast-isel -fast-isel-abort=1 < %s | FileCheck %s --check-prefix=FAST
 
 ; Test the webkit_jscc calling convention.
 ; One argument will be passed in register, the other will be pushed on the stack.

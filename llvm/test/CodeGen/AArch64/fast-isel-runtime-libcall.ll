@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel -fast-isel-abort -code-model=small -verify-machineinstrs < %s | FileCheck %s --check-prefix=SMALL
-; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel -fast-isel-abort -code-model=large -verify-machineinstrs < %s | FileCheck %s --check-prefix=LARGE
+; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel -fast-isel-abort=1 -code-model=small -verify-machineinstrs < %s | FileCheck %s --check-prefix=SMALL
+; RUN: llc -mtriple=aarch64-apple-darwin -fast-isel -fast-isel-abort=1 -code-model=large -verify-machineinstrs < %s | FileCheck %s --check-prefix=LARGE
 
 define float @frem_f32(float %a, float %b) {
 ; SMALL-LABEL: frem_f32

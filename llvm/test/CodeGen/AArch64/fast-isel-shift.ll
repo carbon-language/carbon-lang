@@ -1,4 +1,4 @@
-; RUN: llc -fast-isel -fast-isel-abort -mtriple=aarch64-apple-darwin -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -fast-isel -fast-isel-abort=1 -mtriple=aarch64-apple-darwin -verify-machineinstrs < %s | FileCheck %s
 
 ; CHECK-LABEL: asr_zext_i1_i16
 ; CHECK:       uxth {{w[0-9]*}}, wzr

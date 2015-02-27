@@ -1,4 +1,4 @@
-; RUN: llc < %s -fast-isel -fast-isel-abort -mtriple=x86_64-apple-darwin10 | FileCheck %s
+; RUN: llc < %s -fast-isel -fast-isel-abort=1 -mtriple=x86_64-apple-darwin10 | FileCheck %s
 
 define i32 @fcmp_oeq1(float %x) {
 ; CHECK-LABEL: fcmp_oeq1

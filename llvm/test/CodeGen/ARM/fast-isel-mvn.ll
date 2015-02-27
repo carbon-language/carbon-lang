@@ -1,8 +1,8 @@
-; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=dynamic-no-pic -arm-use-movt=false -mtriple=armv7-apple-ios     < %s | FileCheck %s --check-prefix=CHECK --check-prefix=ARM
-; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=dynamic-no-pic -arm-use-movt=false -mtriple=armv7-linux-gnueabi < %s | FileCheck %s --check-prefix=CHECK --check-prefix=ARM
-; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=dynamic-no-pic -arm-use-movt=false -mtriple=thumbv7-apple-ios   < %s | FileCheck %s --check-prefix=CHECK --check-prefix=ARM
-; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=dynamic-no-pic -arm-use-movt=true  -mtriple=thumbv7-apple-ios   < %s | FileCheck %s --check-prefix=CHECK --check-prefix=THUMB
-; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=dynamic-no-pic -arm-use-movt=true  -mtriple=armv7-apple-ios     < %s | FileCheck %s --check-prefix=MOVT
+; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort=1 -relocation-model=dynamic-no-pic -arm-use-movt=false -mtriple=armv7-apple-ios     < %s | FileCheck %s --check-prefix=CHECK --check-prefix=ARM
+; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort=1 -relocation-model=dynamic-no-pic -arm-use-movt=false -mtriple=armv7-linux-gnueabi < %s | FileCheck %s --check-prefix=CHECK --check-prefix=ARM
+; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort=1 -relocation-model=dynamic-no-pic -arm-use-movt=false -mtriple=thumbv7-apple-ios   < %s | FileCheck %s --check-prefix=CHECK --check-prefix=ARM
+; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort=1 -relocation-model=dynamic-no-pic -arm-use-movt=true  -mtriple=thumbv7-apple-ios   < %s | FileCheck %s --check-prefix=CHECK --check-prefix=THUMB
+; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort=1 -relocation-model=dynamic-no-pic -arm-use-movt=true  -mtriple=armv7-apple-ios     < %s | FileCheck %s --check-prefix=MOVT
 ; rdar://10412592
 
 define void @t1() nounwind {

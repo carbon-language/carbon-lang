@@ -1,4 +1,4 @@
-; RUN: llc -fast-isel -fast-isel-abort -verify-machineinstrs -mtriple=aarch64-apple-darwin < %s | FileCheck %s
+; RUN: llc -fast-isel -fast-isel-abort=1 -verify-machineinstrs -mtriple=aarch64-apple-darwin < %s | FileCheck %s
 
 define zeroext i8 @test_mul8(i8 %lhs, i8 %rhs) {
 ; CHECK-LABEL: test_mul8:

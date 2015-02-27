@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=x86_64-none-linux -fast-isel -fast-isel-abort -verify-machineinstrs < %s | FileCheck %s
-; RUN: llc -mtriple=i686-none-linux -fast-isel -fast-isel-abort -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-none-linux -fast-isel -fast-isel-abort=1 -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=i686-none-linux -fast-isel -fast-isel-abort=1 -verify-machineinstrs < %s | FileCheck %s
 
 define i8 @test_sdiv8(i8 %dividend, i8 %divisor) nounwind {
 entry:

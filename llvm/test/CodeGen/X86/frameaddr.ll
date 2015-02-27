@@ -1,12 +1,12 @@
 ; RUN: llc < %s -march=x86                                | FileCheck %s --check-prefix=CHECK-32
-; RUN: llc < %s -march=x86    -fast-isel -fast-isel-abort | FileCheck %s --check-prefix=CHECK-32
+; RUN: llc < %s -march=x86    -fast-isel -fast-isel-abort=1 | FileCheck %s --check-prefix=CHECK-32
 ; RUN: llc < %s -mtriple=x86_64-pc-win32 -fast-isel | FileCheck %s --check-prefix=CHECK-W64
 ; RUN: llc < %s -mtriple=x86_64-unknown                             | FileCheck %s --check-prefix=CHECK-64
-; RUN: llc < %s -mtriple=x86_64-unknown -fast-isel -fast-isel-abort | FileCheck %s --check-prefix=CHECK-64
+; RUN: llc < %s -mtriple=x86_64-unknown -fast-isel -fast-isel-abort=1 | FileCheck %s --check-prefix=CHECK-64
 ; RUN: llc < %s -mtriple=x86_64-gnux32                    | FileCheck %s --check-prefix=CHECK-X32ABI
-; RUN: llc < %s -mtriple=x86_64-gnux32 -fast-isel -fast-isel-abort | FileCheck %s --check-prefix=CHECK-X32ABI
+; RUN: llc < %s -mtriple=x86_64-gnux32 -fast-isel -fast-isel-abort=1 | FileCheck %s --check-prefix=CHECK-X32ABI
 ; RUN: llc < %s -mtriple=x86_64-nacl                    | FileCheck %s --check-prefix=CHECK-NACL64
-; RUN: llc < %s -mtriple=x86_64-nacl -fast-isel -fast-isel-abort | FileCheck %s --check-prefix=CHECK-NACL64
+; RUN: llc < %s -mtriple=x86_64-nacl -fast-isel -fast-isel-abort=1 | FileCheck %s --check-prefix=CHECK-NACL64
 
 define i8* @test1() nounwind {
 entry:

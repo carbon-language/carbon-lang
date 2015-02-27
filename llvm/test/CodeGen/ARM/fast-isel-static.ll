@@ -1,7 +1,7 @@
-; RUN: llc < %s -mtriple=thumbv7-apple-ios -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=static -arm-long-calls | FileCheck -check-prefix=CHECK-LONG %s
-; RUN: llc < %s -mtriple=armv7-linux-gnueabi -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=static -arm-long-calls | FileCheck -check-prefix=CHECK-LONG %s
-; RUN: llc < %s -mtriple=thumbv7-apple-ios -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=static | FileCheck -check-prefix=CHECK-NORM %s
-; RUN: llc < %s -mtriple=armv7-linux-gnueabi -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=static | FileCheck -check-prefix=CHECK-NORM %s
+; RUN: llc < %s -mtriple=thumbv7-apple-ios -O0 -verify-machineinstrs -fast-isel-abort=1 -relocation-model=static -arm-long-calls | FileCheck -check-prefix=CHECK-LONG %s
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -O0 -verify-machineinstrs -fast-isel-abort=1 -relocation-model=static -arm-long-calls | FileCheck -check-prefix=CHECK-LONG %s
+; RUN: llc < %s -mtriple=thumbv7-apple-ios -O0 -verify-machineinstrs -fast-isel-abort=1 -relocation-model=static | FileCheck -check-prefix=CHECK-NORM %s
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -O0 -verify-machineinstrs -fast-isel-abort=1 -relocation-model=static | FileCheck -check-prefix=CHECK-NORM %s
 
 define void @myadd(float* %sum, float* %addend) nounwind {
 entry:

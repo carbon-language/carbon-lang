@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=-avx,+sse2                             | FileCheck %s --check-prefix=SSE2
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=-avx,+sse2 -fast-isel -fast-isel-abort | FileCheck %s --check-prefix=SSE2
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=-avx,+sse2 -fast-isel -fast-isel-abort=1 | FileCheck %s --check-prefix=SSE2
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=-avx2,+avx                             | FileCheck %s --check-prefix=AVX
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=-avx2,+avx -fast-isel -fast-isel-abort | FileCheck %s --check-prefix=AVX
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=-avx2,+avx -fast-isel -fast-isel-abort=1 | FileCheck %s --check-prefix=AVX
 
 define float @test_sqrt_f32(float %a) {
 ; SSE2-LABEL: test_sqrt_f32

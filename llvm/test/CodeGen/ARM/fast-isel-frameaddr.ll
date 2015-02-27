@@ -1,7 +1,7 @@
-; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort -mtriple=armv7-apple-ios | FileCheck %s --check-prefix=DARWIN-ARM
-; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort -mtriple=armv7-linux-gnueabi | FileCheck %s --check-prefix=LINUX-ARM
-; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=DARWIN-THUMB2
-; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort -mtriple=thumbv7-linux-gnueabi | FileCheck %s --check-prefix=LINUX-THUMB2
+; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -mtriple=armv7-apple-ios | FileCheck %s --check-prefix=DARWIN-ARM
+; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -mtriple=armv7-linux-gnueabi | FileCheck %s --check-prefix=LINUX-ARM
+; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=DARWIN-THUMB2
+; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort=1 -mtriple=thumbv7-linux-gnueabi | FileCheck %s --check-prefix=LINUX-THUMB2
 
 define i8* @frameaddr_index0() nounwind {
 entry:
