@@ -50,7 +50,9 @@ entry:
 }
 ; CHECK-LABEL: @caller2
 ; CHECK: std 3, [[OFF:[0-9]+]](1)
-; CHECK: ld [[REG:[0-9]+]], [[OFF]](1)
-; CHECK: std [[REG]], 128(1)
+; CHECK: addi [[REG1:[0-9]+]], 1, [[OFF]]
+; CHECK: lxvw4x [[REG2:[0-9]+]], 0, [[REG1]]
+; CHECK: li [[REG3:[0-9]+]], 128
+; CHECK: stxvw4x 0, 1, [[REG3]]
 ; CHECK: bl test2
 
