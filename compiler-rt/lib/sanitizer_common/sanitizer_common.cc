@@ -16,6 +16,7 @@
 #include "sanitizer_flags.h"
 #include "sanitizer_libc.h"
 #include "sanitizer_placement_new.h"
+#include "sanitizer_symbolizer.h"
 
 namespace __sanitizer {
 
@@ -230,15 +231,18 @@ void ReportErrorSummary(const char *error_message) {
   __sanitizer_report_error_summary(buff.data());
 }
 
-void ReportErrorSummary(const char *error_type, const char *file,
-                        int line, const char *function) {
+void ReportErrorSummary(const char *error_type, const AddressInfo &info) {
   if (!common_flags()->print_summary)
     return;
   InternalScopedString buff(kMaxSummaryLength);
-  buff.append("%s %s:%d %s", error_type,
-              file ? StripPathPrefix(file, common_flags()->strip_path_prefix)
-                   : "??",
-              line, function ? function : "??");
+  buff.append(
+      "%s %s:%d", error_type,
+      info.file ? StripPathPrefix(info.file, common_flags()->strip_path_prefix)
+                : "??",
+      info.line);
+  if (info.column > 0)
+    buff.append(":%d", info.column);
+  buff.append(" %s", info.function ? info.function : "??");
   ReportErrorSummary(buff.data());
 }
 

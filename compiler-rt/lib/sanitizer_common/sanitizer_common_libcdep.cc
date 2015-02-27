@@ -44,20 +44,14 @@ void SetSandboxingCallback(void (*f)()) {
 void ReportErrorSummary(const char *error_type, StackTrace *stack) {
   if (!common_flags()->print_summary)
     return;
-#if !SANITIZER_GO
-  if (stack->size > 0 && Symbolizer::GetOrInit()->CanReturnFileLineInfo()) {
-    // Currently, we include the first stack frame into the report summary.
-    // Maybe sometimes we need to choose another frame (e.g. skip memcpy/etc).
-    uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
-    SymbolizedStack *frame = Symbolizer::GetOrInit()->SymbolizePC(pc);
-    const AddressInfo &ai = frame->info;
-    ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
-    frame->ClearAll();
-  }
-#else
-  AddressInfo ai;
-  ReportErrorSummary(error_type, ai.file, ai.line, ai.function);
-#endif
+  if (stack->size == 0 || !Symbolizer::GetOrInit()->CanReturnFileLineInfo())
+    return;
+  // Currently, we include the first stack frame into the report summary.
+  // Maybe sometimes we need to choose another frame (e.g. skip memcpy/etc).
+  uptr pc = StackTrace::GetPreviousInstructionPc(stack->trace[0]);
+  SymbolizedStack *frame = Symbolizer::GetOrInit()->SymbolizePC(pc);
+  ReportErrorSummary(error_type, frame->info);
+  frame->ClearAll();
 }
 
 static void (*SoftRssLimitExceededCallback)(bool exceeded);

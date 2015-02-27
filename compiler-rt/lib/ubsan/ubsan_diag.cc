@@ -49,8 +49,13 @@ static void MaybeReportErrorSummary(Location Loc) {
   if (Loc.isSourceLocation()) {
     SourceLocation SLoc = Loc.getSourceLocation();
     if (!SLoc.isInvalid()) {
-      ReportErrorSummary("undefined-behavior", SLoc.getFilename(),
-                         SLoc.getLine(), "");
+      AddressInfo AI;
+      AI.file = internal_strdup(SLoc.getFilename());
+      AI.line = SLoc.getLine();
+      AI.column = SLoc.getColumn();
+      AI.function = internal_strdup("");  // Avoid printing ?? as function name.
+      ReportErrorSummary("undefined-behavior", AI);
+      AI.Clear();
       return;
     }
   }

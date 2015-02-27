@@ -335,10 +335,8 @@ void PrintReport(const ReportDesc *rep) {
     Printf("  And %d more similar thread leaks.\n\n", rep->count - 1);
 
   if (ReportStack *stack = ChooseSummaryStack(rep)) {
-    if (SymbolizedStack *frame = SkipTsanInternalFrames(stack->frames)) {
-      const AddressInfo &info = frame->info;
-      ReportErrorSummary(rep_typ_str, info.file, info.line, info.function);
-    }
+    if (SymbolizedStack *frame = SkipTsanInternalFrames(stack->frames))
+      ReportErrorSummary(rep_typ_str, frame->info);
   }
 
   Printf("==================\n");

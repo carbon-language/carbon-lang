@@ -25,6 +25,7 @@
 
 namespace __sanitizer {
 struct StackTrace;
+struct AddressInfo;
 
 // Constants.
 const uptr kWordSize = SANITIZER_WORDSIZE / 8;
@@ -288,9 +289,9 @@ const int kMaxSummaryLength = 1024;
 // and pass it to __sanitizer_report_error_summary.
 void ReportErrorSummary(const char *error_message);
 // Same as above, but construct error_message as:
-//   error_type file:line function
-void ReportErrorSummary(const char *error_type, const char *file,
-                        int line, const char *function);
+//   error_type file:line[:column][ function]
+void ReportErrorSummary(const char *error_type, const AddressInfo &info);
+// Same as above, but obtains AddressInfo by symbolizing top stack trace frame.
 void ReportErrorSummary(const char *error_type, StackTrace *trace);
 
 // Math
