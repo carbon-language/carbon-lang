@@ -220,6 +220,7 @@ const MCPhysReg *
 X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   bool HasAVX = Subtarget.hasAVX();
   bool HasAVX512 = Subtarget.hasAVX512();
+  bool CallsEHReturn = MF->getMMI().callsEHReturn();
 
   assert(MF && "MachineFunction required");
   switch (MF->getFunction()->getCallingConv()) {
@@ -253,11 +254,16 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     if (Is64Bit)
       return CSR_64_MostRegs_SaveList;
     break;
+  case CallingConv::X86_64_Win64:
+    return CSR_Win64_SaveList;
+  case CallingConv::X86_64_SysV:
+    if (CallsEHReturn)
+      return CSR_64EHRet_SaveList;
+    return CSR_64_SaveList;
   default:
     break;
   }
 
-  bool CallsEHReturn = MF->getMMI().callsEHReturn();
   if (Is64Bit) {
     if (IsWin64)
       return CSR_Win64_SaveList;
@@ -308,6 +314,10 @@ X86RegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
     break;
   default:
     break;
+  case CallingConv::X86_64_Win64:
+    return CSR_Win64_RegMask;
+  case CallingConv::X86_64_SysV:
+    return CSR_64_RegMask;
   }
 
   // Unlike getCalleeSavedRegs(), we don't have MMI so we can't check
