@@ -1018,59 +1018,6 @@ bool AsmPrinter::doFinalization(Module &M) {
     EmitVisibility(Name, V, false);
   }
 
-  // Get information about jump-instruction tables to print.
-  JumpInstrTableInfo *JITI = getAnalysisIfAvailable<JumpInstrTableInfo>();
-
-  if (JITI && !JITI->getTables().empty()) {
-    // Since we're at the module level we can't use a function specific
-    // MCSubtargetInfo - instead create one with the module defaults.
-    std::unique_ptr<MCSubtargetInfo> STI(TM.getTarget().createMCSubtargetInfo(
-        TM.getTargetTriple(), TM.getTargetCPU(), TM.getTargetFeatureString()));
-    unsigned Arch = Triple(getTargetTriple()).getArch();
-    bool IsThumb = (Arch == Triple::thumb || Arch == Triple::thumbeb);
-    const TargetInstrInfo *TII = TM.getSubtargetImpl()->getInstrInfo();
-    MCInst TrapInst;
-    TII->getTrap(TrapInst);
-    unsigned LogAlignment = llvm::Log2_64(JITI->entryByteAlignment());
-
-    // Emit the right section for these functions.
-    OutStreamer.SwitchSection(OutContext.getObjectFileInfo()->getTextSection());
-    for (const auto &KV : JITI->getTables()) {
-      uint64_t Count = 0;
-      for (const auto &FunPair : KV.second) {
-        // Emit the function labels to make this be a function entry point.
-        MCSymbol *FunSym =
-          OutContext.GetOrCreateSymbol(FunPair.second->getName());
-        EmitAlignment(LogAlignment);
-        if (IsThumb)
-          OutStreamer.EmitThumbFunc(FunSym);
-        if (MAI->hasDotTypeDotSizeDirective())
-          OutStreamer.EmitSymbolAttribute(FunSym, MCSA_ELF_TypeFunction);
-        OutStreamer.EmitLabel(FunSym);
-
-        // Emit the jump instruction to transfer control to the original
-        // function.
-        MCInst JumpToFun;
-        MCSymbol *TargetSymbol =
-          OutContext.GetOrCreateSymbol(FunPair.first->getName());
-        const MCSymbolRefExpr *TargetSymRef =
-          MCSymbolRefExpr::Create(TargetSymbol, MCSymbolRefExpr::VK_PLT,
-                                  OutContext);
-        TII->getUnconditionalBranch(JumpToFun, TargetSymRef);
-        OutStreamer.EmitInstruction(JumpToFun, *STI);
-        ++Count;
-      }
-
-      // Emit enough padding instructions to fill up to the next power of two.
-      uint64_t Remaining = NextPowerOf2(Count) - Count;
-      for (uint64_t C = 0; C < Remaining; ++C) {
-        EmitAlignment(LogAlignment);
-        OutStreamer.EmitInstruction(TrapInst, *STI);
-      }
-
-    }
-  }
-
   // Emit module flags.
   SmallVector<Module::ModuleFlagEntry, 8> ModuleFlags;
   M.getModuleFlagsMetadata(ModuleFlags);

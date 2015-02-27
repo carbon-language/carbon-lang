@@ -159,10 +159,6 @@ namespace llvm {
   //
   FunctionPass *createMemDepPrinter();
 
-  // createJumpInstrTableInfoPass - This creates a pass that stores information
-  // about the jump tables created by JumpInstrTables
-  ImmutablePass *createJumpInstrTableInfoPass();
-
   //===--------------------------------------------------------------------===//
   //
   // createMemDerefPrinter - This pass collects memory dereferenceability

@@ -150,8 +150,6 @@ void initializeInstCountPass(PassRegistry&);
 void initializeInstNamerPass(PassRegistry&);
 void initializeInternalizePassPass(PassRegistry&);
 void initializeIntervalPartitionPass(PassRegistry&);
-void initializeJumpInstrTableInfoPass(PassRegistry&);
-void initializeJumpInstrTablesPass(PassRegistry&);
 void initializeJumpThreadingPass(PassRegistry&);
 void initializeLCSSAPass(PassRegistry&);
 void initializeLICMPass(PassRegistry&);

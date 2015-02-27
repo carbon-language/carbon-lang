@@ -91,8 +91,6 @@ namespace {
       (void) llvm::createIndVarSimplifyPass();
       (void) llvm::createInstructionCombiningPass();
       (void) llvm::createInternalizePass();
-      (void) llvm::createJumpInstrTableInfoPass();
-      (void) llvm::createJumpInstrTablesPass();
       (void) llvm::createLCSSAPass();
       (void) llvm::createLICMPass();
       (void) llvm::createLazyValueInfoPass();
