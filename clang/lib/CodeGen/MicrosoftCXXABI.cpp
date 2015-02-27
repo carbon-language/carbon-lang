@@ -467,6 +467,10 @@ private:
     return GetVBaseOffsetFromVBPtr(CGF, Base, VBPOffset, VBTOffset, VBPtr);
   }
 
+  std::pair<llvm::Value *, llvm::Value *>
+  performBaseAdjustment(CodeGenFunction &CGF, llvm::Value *Value,
+                        QualType SrcRecordTy);
+
   /// \brief Performs a full virtual base adjustment.  Used to dereference
   /// pointers to members of virtual bases.
   llvm::Value *AdjustVirtualBase(CodeGenFunction &CGF, const Expr *E,
@@ -691,31 +695,25 @@ void MicrosoftCXXABI::emitRethrow(CodeGenFunction &CGF, bool isNoReturn) {
     CGF.EmitRuntimeCallOrInvoke(Fn, Args);
 }
 
-/// \brief Gets the offset to the virtual base that contains the vfptr for
-/// MS-ABI polymorphic types.
-static llvm::Value *getPolymorphicOffset(CodeGenFunction &CGF,
-                                         const CXXRecordDecl *RD,
-                                         llvm::Value *Value) {
-  const ASTContext &Context = RD->getASTContext();
-  for (const CXXBaseSpecifier &Base : RD->vbases())
-    if (Context.getASTRecordLayout(Base.getType()->getAsCXXRecordDecl())
-            .hasExtendableVFPtr())
-      return CGF.CGM.getCXXABI().GetVirtualBaseClassOffset(
-          CGF, Value, RD, Base.getType()->getAsCXXRecordDecl());
-  llvm_unreachable("One of our vbases should be polymorphic.");
-}
-
-static std::pair<llvm::Value *, llvm::Value *>
-performBaseAdjustment(CodeGenFunction &CGF, llvm::Value *Value,
-                      QualType SrcRecordTy) {
+std::pair<llvm::Value *, llvm::Value *>
+MicrosoftCXXABI::performBaseAdjustment(CodeGenFunction &CGF, llvm::Value *Value,
+                                       QualType SrcRecordTy) {
   Value = CGF.Builder.CreateBitCast(Value, CGF.Int8PtrTy);
   const CXXRecordDecl *SrcDecl = SrcRecordTy->getAsCXXRecordDecl();
+  const ASTContext &Context = CGF.getContext();
 
-  if (CGF.getContext().getASTRecordLayout(SrcDecl).hasExtendableVFPtr())
+  if (Context.getASTRecordLayout(SrcDecl).hasExtendableVFPtr())
     return std::make_pair(Value, llvm::ConstantInt::get(CGF.Int32Ty, 0));
 
   // Perform a base adjustment.
-  llvm::Value *Offset = getPolymorphicOffset(CGF, SrcDecl, Value);
+  const CXXBaseSpecifier *PolymorphicBase = std::find_if(
+      SrcDecl->vbases_begin(), SrcDecl->vbases_end(),
+      [&](const CXXBaseSpecifier &Base) {
+        const CXXRecordDecl *BaseDecl = Base.getType()->getAsCXXRecordDecl();
+        return Context.getASTRecordLayout(BaseDecl).hasExtendableVFPtr();
+      });
+  llvm::Value *Offset = GetVirtualBaseClassOffset(
+      CGF, Value, SrcDecl, PolymorphicBase->getType()->getAsCXXRecordDecl());
   Value = CGF.Builder.CreateInBoundsGEP(Value, Offset);
   Offset = CGF.Builder.CreateTrunc(Offset, CGF.Int32Ty);
   return std::make_pair(Value, Offset);
