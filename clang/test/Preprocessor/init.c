@@ -6584,6 +6584,9 @@
 // PPC-DARWIN:#define __powerpc__ 1
 // PPC-DARWIN:#define __ppc__ 1
 //
+// RUN: %clang_cc1 -x cl -E -dM -ffreestanding -triple=amdgcn < /dev/null | FileCheck -check-prefix AMDGCN %s
+// AMDGCN:#define cl_khr_fp64 1
+
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=s390x-none-none -fno-signed-char < /dev/null | FileCheck -check-prefix S390X %s
 //
 // S390X:#define __BIGGEST_ALIGNMENT__ 8

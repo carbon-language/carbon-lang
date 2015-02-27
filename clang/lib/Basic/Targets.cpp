@@ -1645,6 +1645,8 @@ public:
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
     Builder.defineMacro("__R600__");
+    if (GPU >= GK_SOUTHERN_ISLANDS && Opts.OpenCL)
+      Builder.defineMacro("cl_khr_fp64");
   }
 
   BuiltinVaListKind getBuiltinVaListKind() const override {
