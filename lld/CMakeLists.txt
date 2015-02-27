@@ -1,8 +1,3 @@
-# If we are not building as a part of LLVM, build lld as a standalone project,
-# using LLVM as an external library.
-
-cmake_minimum_required(VERSION 2.8)
-
 set(LLD_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(LLD_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -71,20 +66,6 @@ if (LLD_USE_VTUNE)
   endif()
 endif()
 
-# lld requires c++11 to build. Make sure that we have a compiler and standard
-# library combination that can do that.
-if (NOT MSVC)
-  # gcc and clang require the -std=c++0x or -std=c++11 flag.
-  if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang" AND
-      NOT ("${CMAKE_CXX_FLAGS}" MATCHES ".*-std=(c|gnu)\\+\\+(0x|11|1y).*"))
-    message(FATAL_ERROR
-      "lld requires c++11. Clang and gcc require -std=c++0x or -std=c++11 to "
-      "enter this mode. Please set CMAKE_CXX_FLAGS accordingly.")
-  endif()
-elseif (MSVC_VERSION LESS 1700)
-  message(FATAL_ERROR "The selected compiler does not support c++11 which is "
-          "required to build lld.")
-endif()
 
 if (MSVC)
   add_definitions(-wd4530) # Suppress 'warning C4530: C++ exception handler used, but unwind semantics are not enabled.'
