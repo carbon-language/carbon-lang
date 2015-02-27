@@ -7,8 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Dumps VTables resident in object files and archives.  Note, it currently only
-// supports MS-ABI style object files.
+// Dumps VTables resident in object files and archives.
 //
 //===----------------------------------------------------------------------===//
 
@@ -153,13 +152,32 @@ static void dumpVTables(const ObjectFile *Obj) {
     uint64_t AlwaysZero;
     StringRef MangledName;
   };
+  struct ThrowInfo {
+    uint32_t Flags;
+  };
+  struct CatchableTypeArray {
+    uint32_t NumEntries;
+  };
+  struct CatchableType {
+    uint32_t Flags;
+    uint32_t NonVirtualBaseAdjustmentOffset;
+    int32_t VirtualBasePointerOffset;
+    uint32_t VirtualBaseAdjustmentOffset;
+    uint32_t SizeOrOffset;
+    StringRef Symbols[2];
+  };
   std::map<std::pair<StringRef, uint64_t>, StringRef> VFTableEntries;
+  std::map<std::pair<StringRef, uint64_t>, StringRef> TIEntries;
+  std::map<std::pair<StringRef, uint64_t>, StringRef> CTAEntries;
   std::map<StringRef, ArrayRef<little32_t>> VBTables;
   std::map<StringRef, CompleteObjectLocator> COLs;
   std::map<StringRef, ClassHierarchyDescriptor> CHDs;
   std::map<std::pair<StringRef, uint64_t>, StringRef> BCAEntries;
   std::map<StringRef, BaseClassDescriptor> BCDs;
   std::map<StringRef, TypeDescriptor> TDs;
+  std::map<StringRef, ThrowInfo> TIs;
+  std::map<StringRef, CatchableTypeArray> CTAs;
+  std::map<StringRef, CatchableType> CTs;
 
   std::map<std::pair<StringRef, uint64_t>, StringRef> VTableSymEntries;
   std::map<std::pair<StringRef, uint64_t>, int64_t> VTableDataEntries;
@@ -265,6 +283,39 @@ static void dumpVTables(const ObjectFile *Obj) {
         return;
       TDs[SymName] = TD;
     }
+    // Throw descriptors in the MS-ABI start with '_TI'
+    else if (SymName.startswith("_TI") || SymName.startswith("__TI")) {
+      ThrowInfo TI;
+      TI.Flags = *reinterpret_cast<const little32_t *>(SymContents.data());
+      collectRelocationOffsets(Obj, Sec, SecAddress, SymAddress, SymSize,
+                               SymName, TIEntries);
+      TIs[SymName] = TI;
+    }
+    // Catchable type arrays in the MS-ABI start with _CTA or __CTA.
+    else if (SymName.startswith("_CTA") || SymName.startswith("__CTA")) {
+      CatchableTypeArray CTA;
+      CTA.NumEntries =
+          *reinterpret_cast<const little32_t *>(SymContents.data());
+      collectRelocationOffsets(Obj, Sec, SecAddress, SymAddress, SymSize,
+                               SymName, CTAEntries);
+      CTAs[SymName] = CTA;
+    }
+    // Catchable types in the MS-ABI start with _CT or __CT.
+    else if (SymName.startswith("_CT") || SymName.startswith("__CT")) {
+      const little32_t *DataPtr =
+          reinterpret_cast<const little32_t *>(SymContents.data());
+      CatchableType CT;
+      CT.Flags = DataPtr[0];
+      CT.NonVirtualBaseAdjustmentOffset = DataPtr[2];
+      CT.VirtualBasePointerOffset = DataPtr[3];
+      CT.VirtualBaseAdjustmentOffset = DataPtr[4];
+      CT.SizeOrOffset = DataPtr[5];
+      StringRef *I = std::begin(CT.Symbols), *E = std::end(CT.Symbols);
+      if (collectRelocatedSymbols(Obj, Sec, SecAddress, SymAddress, SymSize, I,
+                                  E))
+        return;
+      CTs[SymName] = CT;
+    }
     // Construction vtables in the Itanium ABI start with '_ZTT' or '__ZTT'.
     else if (SymName.startswith("_ZTT") || SymName.startswith("__ZTT")) {
       collectRelocationOffsets(Obj, Sec, SecAddress, SymAddress, SymSize,
@@ -355,6 +406,60 @@ static void dumpVTables(const ObjectFile *Obj) {
     outs().write_escaped(TD.MangledName.rtrim(StringRef("\0", 1)),
                          /*UseHexEscapes=*/true)
         << '\n';
+  }
+  for (const std::pair<StringRef, ThrowInfo> &TIPair : TIs) {
+    StringRef TIName = TIPair.first;
+    const ThrowInfo &TI = TIPair.second;
+    auto dumpThrowInfoFlag = [&](const char *Name, uint32_t Flag) {
+      outs() << TIName << "[Flags." << Name
+             << "]: " << (TI.Flags & Flag ? "true" : "false") << '\n';
+    };
+    auto dumpThrowInfoSymbol = [&](const char *Name, int Offset) {
+      outs() << TIName << '[' << Name << "]: ";
+      auto Entry = TIEntries.find(std::make_pair(TIName, Offset));
+      outs() << (Entry == TIEntries.end() ? "null" : Entry->second) << '\n';
+    };
+    outs() << TIName << "[Flags]: " << TI.Flags << '\n';
+    dumpThrowInfoFlag("Const", 1);
+    dumpThrowInfoFlag("Volatile", 2);
+    dumpThrowInfoSymbol("CleanupFn", 4);
+    dumpThrowInfoSymbol("ForwardCompat", 8);
+    dumpThrowInfoSymbol("CatchableTypeArray", 12);
+  }
+  for (const std::pair<StringRef, CatchableTypeArray> &CTAPair : CTAs) {
+    StringRef CTAName = CTAPair.first;
+    const CatchableTypeArray &CTA = CTAPair.second;
+
+    outs() << CTAName << "[NumEntries]: " << CTA.NumEntries << '\n';
+
+    unsigned Idx = 0;
+    for (auto I = CTAEntries.lower_bound(std::make_pair(CTAName, 0)),
+              E = CTAEntries.upper_bound(std::make_pair(CTAName, UINT64_MAX));
+         I != E; ++I)
+      outs() << CTAName << '[' << Idx++ << "]: " << I->second << '\n';
+  }
+  for (const std::pair<StringRef, CatchableType> &CTPair : CTs) {
+    StringRef CTName = CTPair.first;
+    const CatchableType &CT = CTPair.second;
+    auto dumpCatchableTypeFlag = [&](const char *Name, uint32_t Flag) {
+      outs() << CTName << "[Flags." << Name
+             << "]: " << (CT.Flags & Flag ? "true" : "false") << '\n';
+    };
+    outs() << CTName << "[Flags]: " << CT.Flags << '\n';
+    dumpCatchableTypeFlag("ScalarType", 1);
+    dumpCatchableTypeFlag("VirtualInheritance", 4);
+    outs() << CTName << "[TypeDescriptor]: " << CT.Symbols[0] << '\n';
+    outs() << CTName << "[NonVirtualBaseAdjustmentOffset]: "
+           << CT.NonVirtualBaseAdjustmentOffset << '\n';
+    outs() << CTName
+           << "[VirtualBasePointerOffset]: " << CT.VirtualBasePointerOffset
+           << '\n';
+    outs() << CTName << "[VirtualBaseAdjustmentOffset]: "
+           << CT.VirtualBaseAdjustmentOffset << '\n';
+    outs() << CTName << "[SizeOrOffset]: " << CT.SizeOrOffset << '\n';
+    outs() << CTName
+           << "[CopyCtor]: " << (CT.Symbols[1].empty() ? "null" : CT.Symbols[1])
+           << '\n';
   }
   for (const std::pair<std::pair<StringRef, uint64_t>, StringRef> &VTTPair :
        VTTEntries) {
