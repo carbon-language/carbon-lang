@@ -392,10 +392,9 @@ bool TailCallElim::runTRE(Function &F) {
   SmallVector<PHINode*, 8> ArgumentPHIs;
   bool MadeChange = false;
 
-  // CanTRETailMarkedCall - If false, we cannot perform TRE on tail calls
-  // marked with the 'tail' attribute, because doing so would cause the stack
-  // size to increase (real TRE would deallocate variable sized allocas, TRE
-  // doesn't).
+  // If false, we cannot perform TRE on tail calls marked with the 'tail'
+  // attribute, because doing so would cause the stack size to increase (real
+  // TRE would deallocate variable sized allocas, TRE doesn't).
   bool CanTRETailMarkedCall = CanTRE(F);
 
   // Change any tail recursive calls to loops.
@@ -445,7 +444,7 @@ bool TailCallElim::runTRE(Function &F) {
 }
 
 
-/// CanMoveAboveCall - Return true if it is safe to move the specified
+/// Return true if it is safe to move the specified
 /// instruction from after the call to before the call, assuming that all
 /// instructions between the call and this instruction are movable.
 ///
@@ -480,13 +479,11 @@ bool TailCallElim::CanMoveAboveCall(Instruction *I, CallInst *CI) {
   return true;
 }
 
-// isDynamicConstant - Return true if the specified value is the same when the
-// return would exit as it was when the initial iteration of the recursive
-// function was executed.
-//
-// We currently handle static constants and arguments that are not modified as
-// part of the recursion.
-//
+/// Return true if the specified value is the same when the return would exit
+/// as it was when the initial iteration of the recursive function was executed.
+///
+/// We currently handle static constants and arguments that are not modified as
+/// part of the recursion.
 static bool isDynamicConstant(Value *V, CallInst *CI, ReturnInst *RI) {
   if (isa<Constant>(V)) return true; // Static constants are always dyn consts
 
@@ -518,10 +515,9 @@ static bool isDynamicConstant(Value *V, CallInst *CI, ReturnInst *RI) {
   return false;
 }
 
-// getCommonReturnValue - Check to see if the function containing the specified
-// tail call consistently returns the same runtime-constant value at all exit
-// points except for IgnoreRI.  If so, return the returned value.
-//
+/// Check to see if the function containing the specified tail call consistently
+/// returns the same runtime-constant value at all exit points except for
+/// IgnoreRI. If so, return the returned value.
 static Value *getCommonReturnValue(ReturnInst *IgnoreRI, CallInst *CI) {
   Function *F = CI->getParent()->getParent();
   Value *ReturnedValue = nullptr;
@@ -545,10 +541,9 @@ static Value *getCommonReturnValue(ReturnInst *IgnoreRI, CallInst *CI) {
   return ReturnedValue;
 }
 
-/// CanTransformAccumulatorRecursion - If the specified instruction can be
-/// transformed using accumulator recursion elimination, return the constant
-/// which is the start of the accumulator value.  Otherwise return null.
-///
+/// If the specified instruction can be transformed using accumulator recursion
+/// elimination, return the constant which is the start of the accumulator
+/// value.  Otherwise return null.
 Value *TailCallElim::CanTransformAccumulatorRecursion(Instruction *I,
                                                       CallInst *CI) {
   if (!I->isAssociative() || !I->isCommutative()) return nullptr;
