@@ -6,7 +6,7 @@ entry:
   %0 = load i32* %c, align 4
 ; CHECK-NOT: mov	 w{{[0-9]*}}, w0
   %add = add nsw i32 %0, %acc
-  %arrayidx1 = getelementptr inbounds i32* %c, i64 1
+  %arrayidx1 = getelementptr inbounds i32, i32* %c, i64 1
   %1 = load i32* %arrayidx1, align 4
   %add2 = add nsw i32 %add, %1
   ret i32 %add2

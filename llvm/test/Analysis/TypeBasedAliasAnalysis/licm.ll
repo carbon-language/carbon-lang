@@ -17,7 +17,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %i.07 = phi i64 [ %inc, %for.body ], [ 0, %entry ]
   %tmp3 = load double** @P, !tbaa !1
-  %scevgep = getelementptr double* %tmp3, i64 %i.07
+  %scevgep = getelementptr double, double* %tmp3, i64 %i.07
   %tmp4 = load double* %scevgep, !tbaa !2
   %mul = fmul double %tmp4, 2.300000e+00
   store double %mul, double* %scevgep, !tbaa !2

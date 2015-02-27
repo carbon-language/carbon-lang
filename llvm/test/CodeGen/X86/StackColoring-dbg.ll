@@ -11,7 +11,7 @@ define void @foo() nounwind uwtable ssp {
 entry:
   %x.i = alloca i8, align 1
   %y.i = alloca [256 x i8], align 16
-  %0 = getelementptr inbounds [256 x i8]* %y.i, i64 0, i64 0
+  %0 = getelementptr inbounds [256 x i8], [256 x i8]* %y.i, i64 0, i64 0
   br label %for.body
 
 for.body:

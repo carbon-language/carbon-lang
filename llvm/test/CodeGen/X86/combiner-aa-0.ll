@@ -11,7 +11,7 @@ define void @foo() nounwind {
 	%t3 = shl i32 1, %t2		; <i32> [#uses=1]
 	%t4 = xor i32 %t3, %t1		; <i32> [#uses=1]
 	store i32 %t4, i32* null, align 4
-	%t5 = getelementptr %struct.Hash_Key* @g_flipV_hashkey, i64 0, i32 0, i64 0		; <i32*> [#uses=2]
+	%t5 = getelementptr %struct.Hash_Key, %struct.Hash_Key* @g_flipV_hashkey, i64 0, i32 0, i64 0		; <i32*> [#uses=2]
 	%t6 = load i32* %t5, align 4		; <i32> [#uses=1]
 	%t7 = shl i32 1, undef		; <i32> [#uses=1]
 	%t8 = xor i32 %t7, %t6		; <i32> [#uses=1]

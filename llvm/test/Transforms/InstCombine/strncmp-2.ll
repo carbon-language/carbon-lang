@@ -13,8 +13,8 @@ define i16 @test_nosimplify() {
 ; CHECK: call i16 @strncmp
 ; CHECK: ret i16 %temp1
 
-  %str1 = getelementptr inbounds [5 x i8]* @hell, i32 0, i32 0
-  %str2 = getelementptr inbounds [6 x i8]* @hello, i32 0, i32 0
+  %str1 = getelementptr inbounds [5 x i8], [5 x i8]* @hell, i32 0, i32 0
+  %str2 = getelementptr inbounds [6 x i8], [6 x i8]* @hello, i32 0, i32 0
   %temp1 = call i16 @strncmp(i8* %str1, i8* %str2, i32 10)
   ret i16 %temp1
 }

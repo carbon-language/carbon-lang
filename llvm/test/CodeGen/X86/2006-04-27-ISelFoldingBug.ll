@@ -17,7 +17,7 @@ label.0:                ; preds = %newFuncRoot
         %inc.1 = add i32 %tmp.35, 1             ; <i32> [#uses=2]
         store i32 %inc.1, i32* @last
         %tmp.36 = load i8** @block              ; <i8*> [#uses=1]
-        %tmp.38 = getelementptr i8* %tmp.36, i32 %inc.1         ; <i8*> [#uses=1]
+        %tmp.38 = getelementptr i8, i8* %tmp.36, i32 %inc.1         ; <i8*> [#uses=1]
         %tmp.40 = trunc i32 %tmp.21.reload to i8                ; <i8> [#uses=1]
         store i8 %tmp.40, i8* %tmp.38
         %tmp.910 = load i32* @last              ; <i32> [#uses=1]

@@ -12,7 +12,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %sum.04 = phi float [ 0.000000e+00, %entry ], [ %add, %for.body ]
-  %arrayidx = getelementptr inbounds float* %A, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds float, float* %A, i64 %indvars.iv
   %0 = load float* %arrayidx, align 4
   %add = fadd fast float %sum.04, %0
   %indvars.iv.next = add i64 %indvars.iv, 1
@@ -34,7 +34,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %sum.04 = phi float [ 0.000000e+00, %entry ], [ %sub, %for.body ]
-  %arrayidx = getelementptr inbounds float* %A, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds float, float* %A, i64 %indvars.iv
   %0 = load float* %arrayidx, align 4
   %sub = fsub fast float %sum.04, %0
   %indvars.iv.next = add i64 %indvars.iv, 1

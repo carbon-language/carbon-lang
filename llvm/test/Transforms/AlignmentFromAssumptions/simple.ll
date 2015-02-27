@@ -22,7 +22,7 @@ entry:
   %maskedptr = and i64 %offsetptr, 31
   %maskcond = icmp eq i64 %maskedptr, 0
   tail call void @llvm.assume(i1 %maskcond)
-  %arrayidx = getelementptr inbounds i32* %a, i64 2
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 2
   %0 = load i32* %arrayidx, align 4
   ret i32 %0
 
@@ -38,7 +38,7 @@ entry:
   %maskedptr = and i64 %offsetptr, 31
   %maskcond = icmp eq i64 %maskedptr, 0
   tail call void @llvm.assume(i1 %maskcond)
-  %arrayidx = getelementptr inbounds i32* %a, i64 -1
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 -1
   %0 = load i32* %arrayidx, align 4
   ret i32 %0
 
@@ -72,7 +72,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %r.06 = phi i32 [ 0, %entry ], [ %add, %for.body ]
-  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, %r.06
   %indvars.iv.next = add i64 %indvars.iv, 8
@@ -100,7 +100,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ 4, %entry ], [ %indvars.iv.next, %for.body ]
   %r.06 = phi i32 [ 0, %entry ], [ %add, %for.body ]
-  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, %r.06
   %indvars.iv.next = add i64 %indvars.iv, 8
@@ -128,7 +128,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %r.06 = phi i32 [ 0, %entry ], [ %add, %for.body ]
-  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, %r.06
   %indvars.iv.next = add i64 %indvars.iv, 4
@@ -156,7 +156,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ -4, %entry ], [ %indvars.iv.next, %for.body ]
   %r.06 = phi i32 [ 0, %entry ], [ %add, %for.body ]
-  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, %r.06
   %indvars.iv.next = add i64 %indvars.iv, 4

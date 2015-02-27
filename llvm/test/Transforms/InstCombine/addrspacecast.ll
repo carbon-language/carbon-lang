@@ -104,7 +104,7 @@ define <4 x float addrspace(2)*> @combine_addrspacecast_types_vector(<4 x i32 ad
 
 define i32 @canonicalize_addrspacecast([16 x i32] addrspace(1)* %arr) {
 ; CHECK-LABEL: @canonicalize_addrspacecast(
-; CHECK-NEXT: getelementptr inbounds [16 x i32] addrspace(1)* %arr, i32 0, i32 0
+; CHECK-NEXT: getelementptr inbounds [16 x i32], [16 x i32] addrspace(1)* %arr, i32 0, i32 0
 ; CHECK-NEXT: addrspacecast i32 addrspace(1)* %{{[a-zA-Z0-9]+}} to i32*
 ; CHECK-NEXT: load i32*
 ; CHECK-NEXT: ret i32
@@ -133,7 +133,7 @@ entry:
 loop.body:
   %i = phi i32 [ 0, %entry ], [ %i.inc, %loop.body ]
   %sum = phi i32 [ 0, %entry ], [ %sum.inc, %loop.body]
-  %ptr = getelementptr i8* %alloca, i32 %i
+  %ptr = getelementptr i8, i8* %alloca, i32 %i
   %load = load i8* %ptr
   %ext = zext i8 %load to i32
   %sum.inc = add i32 %sum, %ext

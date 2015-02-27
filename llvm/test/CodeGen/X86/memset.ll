@@ -7,7 +7,7 @@
 define void @t() nounwind  {
 entry:
 	%up_mvd = alloca [8 x %struct.x]		; <[8 x %struct.x]*> [#uses=2]
-	%up_mvd116 = getelementptr [8 x %struct.x]* %up_mvd, i32 0, i32 0		; <%struct.x*> [#uses=1]
+	%up_mvd116 = getelementptr [8 x %struct.x], [8 x %struct.x]* %up_mvd, i32 0, i32 0		; <%struct.x*> [#uses=1]
 	%tmp110117 = bitcast [8 x %struct.x]* %up_mvd to i8*		; <i8*> [#uses=1]
 
 	call void @llvm.memset.p0i8.i64(i8* %tmp110117, i8 0, i64 32, i32 8, i1 false)

@@ -9,7 +9,7 @@ define i32 @fn1() #0 {
 entry:
   %0 = load i32** @a, align 4, !tbaa !4
   %1 = load i32* %0, align 4, !tbaa !5
-  %arrayidx1 = getelementptr inbounds i32* %0, i32 1
+  %arrayidx1 = getelementptr inbounds i32, i32* %0, i32 1
   %2 = load i32* %arrayidx1, align 4, !tbaa !5
   br label %do.body
 

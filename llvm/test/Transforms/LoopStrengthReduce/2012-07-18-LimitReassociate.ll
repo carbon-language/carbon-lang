@@ -50,12 +50,12 @@ bb5:                                              ; preds = %bb
 
 bb6:                                              ; preds = %bb
   tail call void @zot(i8* getelementptr inbounds (%struct.jim* @global3, i64 0, i32 5, i64 0), i8* getelementptr inbounds (%struct.jim* @global3, i64 0, i32 3, i64 1), i64 undef, i32 1, i1 false) nounwind
-  %tmp7 = getelementptr inbounds %struct.jim* @global3, i64 0, i32 5, i64 undef
+  %tmp7 = getelementptr inbounds %struct.jim, %struct.jim* @global3, i64 0, i32 5, i64 undef
   store i8 0, i8* %tmp7, align 1
   %tmp8 = add nsw i32 0, 1
   %tmp9 = sext i32 %tmp8 to i64
   %tmp10 = add i64 %tmp9, 1
-  %tmp11 = getelementptr inbounds %struct.jim* @global3, i64 0, i32 3, i64 %tmp10
+  %tmp11 = getelementptr inbounds %struct.jim, %struct.jim* @global3, i64 0, i32 3, i64 %tmp10
   %tmp12 = sub i64 2047, %tmp9
   %tmp13 = icmp eq i32 undef, 1
   br i1 %tmp13, label %bb14, label %bb15
@@ -76,7 +76,7 @@ bb17:                                             ; preds = %bb26, %bb15
   br i1 %tmp21, label %bb22, label %bb32
 
 bb22:                                             ; preds = %bb17
-  %tmp23 = getelementptr inbounds %struct.jim* @global3, i64 0, i32 3, i64 0
+  %tmp23 = getelementptr inbounds %struct.jim, %struct.jim* @global3, i64 0, i32 3, i64 0
   %tmp24 = load i8* %tmp23, align 1
   %tmp25 = icmp eq i8 %tmp24, 58
   br i1 %tmp25, label %bb30, label %bb26
@@ -98,12 +98,12 @@ bb32:                                             ; preds = %bb30, %bb26, %bb17
 
 bb33:                                             ; preds = %bb30
   tail call void @zot(i8* getelementptr inbounds (%struct.jim* @global3, i64 0, i32 5, i64 0), i8* %tmp11, i64 undef, i32 1, i1 false) nounwind
-  %tmp34 = getelementptr inbounds %struct.jim* @global3, i64 0, i32 5, i64 undef
+  %tmp34 = getelementptr inbounds %struct.jim, %struct.jim* @global3, i64 0, i32 5, i64 undef
   store i8 0, i8* %tmp34, align 1
   %tmp35 = add nsw i32 %tmp19, 1
   %tmp36 = sext i32 %tmp35 to i64
   %tmp37 = add i64 %tmp36, %tmp10
-  %tmp38 = getelementptr inbounds %struct.jim* @global3, i64 0, i32 3, i64 %tmp37
+  %tmp38 = getelementptr inbounds %struct.jim, %struct.jim* @global3, i64 0, i32 3, i64 %tmp37
   %tmp39 = sub i64 %tmp12, %tmp36
   br i1 false, label %bb40, label %bb41
 
@@ -145,7 +145,7 @@ bb58:                                             ; preds = %bb55, %bb52, %bb43
 bb59:                                             ; preds = %bb55
   %tmp60 = sext i32 %tmp45 to i64
   tail call void @zot(i8* getelementptr inbounds (%struct.jim* @global3, i64 0, i32 5, i64 0), i8* %tmp38, i64 %tmp60, i32 1, i1 false) nounwind
-  %tmp61 = getelementptr inbounds %struct.jim* @global3, i64 0, i32 5, i64 %tmp60
+  %tmp61 = getelementptr inbounds %struct.jim, %struct.jim* @global3, i64 0, i32 5, i64 %tmp60
   store i8 0, i8* %tmp61, align 1
   %tmp62 = add nsw i32 %tmp45, 1
   %tmp63 = sext i32 %tmp62 to i64
@@ -461,7 +461,7 @@ bb221:                                            ; preds = %bb230, %bb219
 
 bb226:                                            ; preds = %bb221
   %tmp227 = add i64 %tmp222, %tmp216
-  %tmp228 = getelementptr inbounds %struct.jim* @global3, i64 0, i32 3, i64 %tmp227
+  %tmp228 = getelementptr inbounds %struct.jim, %struct.jim* @global3, i64 0, i32 3, i64 %tmp227
   %tmp229 = load i8* %tmp228, align 1
   br i1 false, label %bb233, label %bb230
 

@@ -28,7 +28,7 @@ bb243:		; preds = %bb307
 
 bb307:		; preds = %bb243, %bb52
 	%sx_addr.2.pn = phi float* [ %sx_addr.5, %bb243 ], [ null, %bb52 ]		; <float*> [#uses=1]
-	%sx_addr.5 = getelementptr float* %sx_addr.2.pn, i32 %incx		; <float*> [#uses=1]
+	%sx_addr.5 = getelementptr float, float* %sx_addr.2.pn, i32 %incx		; <float*> [#uses=1]
 	br i1 false, label %bb243, label %bb310
 
 bb310:		; preds = %bb307

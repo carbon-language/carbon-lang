@@ -11,7 +11,7 @@ entry:
 
 bb:		; preds = %bb6
 	%tmp2 = load volatile i32* %DataIn		; <i32> [#uses=1]
-	%tmp3 = getelementptr [64 x i32]* %buffer, i32 0, i32 %i.0		; <i32*> [#uses=1]
+	%tmp3 = getelementptr [64 x i32], [64 x i32]* %buffer, i32 0, i32 %i.0		; <i32*> [#uses=1]
 	store i32 %tmp2, i32* %tmp3
 	%tmp5 = add i32 %i.0, 1		; <i32> [#uses=1]
 	br label %bb6
@@ -26,7 +26,7 @@ bb6:		; preds = %bb, %entry
 bb12:		; preds = %bb22
 	%tmp14 = mul i32 %j.1, 8		; <i32> [#uses=1]
 	%tmp16 = add i32 %tmp14, %i.1		; <i32> [#uses=1]
-	%tmp17 = getelementptr [64 x i32]* %buffer, i32 0, i32 %tmp16		; <i32*> [#uses=1]
+	%tmp17 = getelementptr [64 x i32], [64 x i32]* %buffer, i32 0, i32 %tmp16		; <i32*> [#uses=1]
 	%tmp18 = load i32* %tmp17		; <i32> [#uses=1]
 	store volatile i32 %tmp18, i32* %DataOut
 	%tmp21 = add i32 %j.1, 1		; <i32> [#uses=1]

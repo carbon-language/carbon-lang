@@ -61,21 +61,21 @@ if.then:                                          ; preds = %entry
 
 if.end:                                           ; preds = %entry
   call void @llvm.dbg.declare(metadata %struct.p* %y, metadata !28, metadata !29), !dbg !30
-  %s = getelementptr inbounds %struct.p* %y, i32 0, i32 0, !dbg !30
+  %s = getelementptr inbounds %struct.p, %struct.p* %y, i32 0, i32 0, !dbg !30
   %0 = load i64* @t, align 8, !dbg !30
   store i64 %0, i64* %s, align 8, !dbg !30
-  %t = getelementptr inbounds %struct.p* %y, i32 0, i32 1, !dbg !30
+  %t = getelementptr inbounds %struct.p, %struct.p* %y, i32 0, i32 1, !dbg !30
   %1 = load i64* @t, align 8, !dbg !30
   store i64 %1, i64* %t, align 8, !dbg !30
   call void @llvm.dbg.declare(metadata %struct.r* %r, metadata !31, metadata !29), !dbg !32
-  %i = getelementptr inbounds %struct.r* %r, i32 0, i32 0, !dbg !32
+  %i = getelementptr inbounds %struct.r, %struct.r* %r, i32 0, i32 0, !dbg !32
   store i32 0, i32* %i, align 4, !dbg !32
-  %x = getelementptr inbounds %struct.r* %r, i32 0, i32 1, !dbg !32
-  %s1 = getelementptr inbounds %struct.p* %x, i32 0, i32 0, !dbg !32
+  %x = getelementptr inbounds %struct.r, %struct.r* %r, i32 0, i32 1, !dbg !32
+  %s1 = getelementptr inbounds %struct.p, %struct.p* %x, i32 0, i32 0, !dbg !32
   store i64 0, i64* %s1, align 8, !dbg !32
-  %t2 = getelementptr inbounds %struct.p* %x, i32 0, i32 1, !dbg !32
+  %t2 = getelementptr inbounds %struct.p, %struct.p* %x, i32 0, i32 1, !dbg !32
   store i64 0, i64* %t2, align 8, !dbg !32
-  %y3 = getelementptr inbounds %struct.r* %r, i32 0, i32 2, !dbg !32
+  %y3 = getelementptr inbounds %struct.r, %struct.r* %r, i32 0, i32 2, !dbg !32
   %2 = bitcast %struct.p* %y3 to i8*, !dbg !32
   %3 = bitcast %struct.p* %y to i8*, !dbg !32
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %2, i8* %3, i64 16, i32 8, i1 false), !dbg !32

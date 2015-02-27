@@ -14,7 +14,7 @@ target triple = "i386-apple-darwin9.5"
 
 define fastcc i32 @bar() nounwind {
 	%V = alloca %struct.MVT
-	%a = getelementptr %struct.MVT* %V, i32 0, i32 0
+	%a = getelementptr %struct.MVT, %struct.MVT* %V, i32 0, i32 0
 	store i32 1, i32* %a
 	call fastcc void @foo(%struct.MVT* byval %V) nounwind
 	%t = load i32* %a

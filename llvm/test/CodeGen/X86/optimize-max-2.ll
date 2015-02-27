@@ -19,7 +19,7 @@ entry:
 
 bb4:		; preds = %bb4, %entry
 	%i.07 = phi i64 [ 0, %entry ], [ %2, %bb4 ]		; <i64> [#uses=2]
-	%scevgep = getelementptr double* %p, i64 %i.07		; <double*> [#uses=2]
+	%scevgep = getelementptr double, double* %p, i64 %i.07		; <double*> [#uses=2]
 	%0 = load double* %scevgep, align 8		; <double> [#uses=1]
 	%1 = fmul double %0, 2.000000e+00		; <double> [#uses=1]
 	store double %1, double* %scevgep, align 8

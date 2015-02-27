@@ -10,7 +10,7 @@ bb534.preheader:		; preds = %entry
 	ret %struct.TypHeader* null
 
 bb556.preheader:		; preds = %entry
-	%tmp56119 = getelementptr %struct.TypHeader* %hdR, i32 0, i32 0		; <i32*> [#uses=1]
+	%tmp56119 = getelementptr %struct.TypHeader, %struct.TypHeader* %hdR, i32 0, i32 0		; <i32*> [#uses=1]
 	%tmp56220 = load i32* %tmp56119		; <i32> [#uses=0]
 	br i1 false, label %bb.nph23, label %bb675.preheader
 
@@ -29,8 +29,8 @@ bb675.outer:		; preds = %bb675.preheader, %bb684
 	br i1 false, label %bb684, label %bb656
 
 bb675.preheader:		; preds = %bb556.preheader
-	%tmp67711 = getelementptr %struct.TypHeader* %hdR, i32 0, i32 0		; <i32*> [#uses=1]
-	%tmp677 = getelementptr %struct.TypHeader* %hdR, i32 0, i32 0		; <i32*> [#uses=1]
+	%tmp67711 = getelementptr %struct.TypHeader, %struct.TypHeader* %hdR, i32 0, i32 0		; <i32*> [#uses=1]
+	%tmp677 = getelementptr %struct.TypHeader, %struct.TypHeader* %hdR, i32 0, i32 0		; <i32*> [#uses=1]
 	br label %bb675.outer
 
 bb924.preheader:		; preds = %bb684

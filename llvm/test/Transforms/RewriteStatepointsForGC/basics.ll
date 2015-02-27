@@ -38,7 +38,7 @@ define i8 @test3(i8 addrspace(1)* %obj) gc "statepoint-example" {
 ; CHECK-NEXT: load i8 addrspace(1)* %derived.relocated
 ; CHECK-NEXT: load i8 addrspace(1)* %obj.relocated
 entry:
-  %derived = getelementptr i8 addrspace(1)* %obj, i64 10
+  %derived = getelementptr i8, i8 addrspace(1)* %obj, i64 10
   call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
 
   %a = load i8 addrspace(1)* %derived

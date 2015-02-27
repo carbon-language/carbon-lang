@@ -11,13 +11,13 @@ define void @onlystore() {
 }
 
 define void @storeinit(i32 %i) {
-        %Ptr = getelementptr { i32, [4 x float] }* @G, i32 0, i32 1, i32 %i             ; <float*> [#uses=1]
+        %Ptr = getelementptr { i32, [4 x float] }, { i32, [4 x float] }* @G, i32 0, i32 1, i32 %i             ; <float*> [#uses=1]
         store float 1.000000e+00, float* %Ptr
         ret void
 }
 
 define float @readval(i32 %i) {
-        %Ptr = getelementptr { i32, [4 x float] }* @G, i32 0, i32 1, i32 %i             ; <float*> [#uses=1]
+        %Ptr = getelementptr { i32, [4 x float] }, { i32, [4 x float] }* @G, i32 0, i32 1, i32 %i             ; <float*> [#uses=1]
         %V = load float* %Ptr           ; <float> [#uses=1]
         ret float %V
 }

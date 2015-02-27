@@ -13,7 +13,7 @@ entry:
 do.body:
   %ptr.addr.0 = phi i8* [ %ptr, %entry ], [ %incdec.ptr, %do.body ]
   %len.addr.0 = phi i32 [ %len, %entry ], [ %dec, %do.body ]
-  %incdec.ptr = getelementptr inbounds i8* %ptr.addr.0, i32 1
+  %incdec.ptr = getelementptr inbounds i8, i8* %ptr.addr.0, i32 1
   store i8 0, i8* %ptr.addr.0, align 1
   %dec = add nsw i32 %len.addr.0, -1
   %tobool = icmp eq i32 %len.addr.0, 0

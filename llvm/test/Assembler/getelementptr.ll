@@ -22,8 +22,8 @@
 ; See if i92 indices work too.
 define i32 *@test({i32, i32}* %t, i92 %n) {
 ; CHECK: @test
-; CHECK: %B = getelementptr { i32, i32 }* %t, i92 %n, i32 0
-  %B = getelementptr {i32, i32}* %t, i92 %n, i32 0
+; CHECK: %B = getelementptr { i32, i32 }, { i32, i32 }* %t, i92 %n, i32 0
+  %B = getelementptr {i32, i32}, {i32, i32}* %t, i92 %n, i32 0
   ret i32* %B
 }
 
@@ -33,12 +33,12 @@ define i32 *@test({i32, i32}* %t, i92 %n) {
 
 ; Verify that struct GEP works with a vector of pointers.
 define <2 x i32*> @test7(<2 x {i32, i32}*> %a) {
-  %w = getelementptr <2 x {i32, i32}*> %a, <2 x i32> <i32 5, i32 9>, <2 x i32> zeroinitializer
+  %w = getelementptr {i32, i32}, <2 x {i32, i32}*> %a, <2 x i32> <i32 5, i32 9>, <2 x i32> zeroinitializer
   ret <2 x i32*> %w
 }
 
 ; Verify that array GEP works with a vector of pointers.
 define <2 x i8*> @test8(<2 x [2 x i8]*> %a) {
-  %w = getelementptr <2 x  [2 x i8]*> %a, <2 x i32> <i32 0, i32 0>, <2 x i8> <i8 0, i8 1>
+  %w = getelementptr  [2 x i8], <2 x  [2 x i8]*> %a, <2 x i32> <i32 0, i32 0>, <2 x i8> <i8 0, i8 1>
   ret <2 x i8*> %w
 }

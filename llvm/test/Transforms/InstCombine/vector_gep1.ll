@@ -17,26 +17,26 @@ define <2 x i1> @test2(<2 x i8*> %a) {
 }
 
 define <2 x i1> @test3(<2 x i8*> %a) {
-  %g = getelementptr <2 x i8*> %a, <2 x i32> <i32 1, i32 0>
+  %g = getelementptr i8, <2 x i8*> %a, <2 x i32> <i32 1, i32 0>
   %B = icmp ult <2 x i8*> %g, zeroinitializer
   ret <2 x i1> %B
 }
 
 define <1 x i1> @test4(<1 x i8*> %a) {
-  %g = getelementptr <1 x i8*> %a, <1 x i32> <i32 1>
+  %g = getelementptr i8, <1 x i8*> %a, <1 x i32> <i32 1>
   %B = icmp ult <1 x i8*> %g, zeroinitializer
   ret <1 x i1> %B
 }
 
 define <2 x i1> @test5(<2 x i8*> %a) {
-  %w = getelementptr <2 x i8*> %a, <2 x i32> zeroinitializer
-  %e = getelementptr <2 x i8*> %w, <2 x i32> <i32 5, i32 9>
-  %g = getelementptr <2 x i8*> %e, <2 x i32> <i32 1, i32 0>
+  %w = getelementptr i8, <2 x i8*> %a, <2 x i32> zeroinitializer
+  %e = getelementptr i8, <2 x i8*> %w, <2 x i32> <i32 5, i32 9>
+  %g = getelementptr i8, <2 x i8*> %e, <2 x i32> <i32 1, i32 0>
   %B = icmp ult <2 x i8*> %g, zeroinitializer
   ret <2 x i1> %B
 }
 
 define <2 x i32*> @test7(<2 x {i32, i32}*> %a) {
-  %w = getelementptr <2 x {i32, i32}*> %a, <2 x i32> <i32 5, i32 9>, <2 x i32> zeroinitializer
+  %w = getelementptr {i32, i32}, <2 x {i32, i32}*> %a, <2 x i32> <i32 5, i32 9>, <2 x i32> zeroinitializer
   ret <2 x i32*> %w
 }

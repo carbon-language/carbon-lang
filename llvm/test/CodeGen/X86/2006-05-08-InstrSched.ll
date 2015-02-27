@@ -6,7 +6,7 @@
 
 define void @test() {
 	%tmp = load i16** @A		; <i16*> [#uses=1]
-	%tmp1 = getelementptr i16* %tmp, i32 1		; <i16*> [#uses=1]
+	%tmp1 = getelementptr i16, i16* %tmp, i32 1		; <i16*> [#uses=1]
 	%tmp.upgrd.1 = load i16* %tmp1		; <i16> [#uses=1]
 	%tmp3 = zext i16 %tmp.upgrd.1 to i32		; <i32> [#uses=1]
 	%tmp.upgrd.2 = load i32* @B		; <i32> [#uses=1]

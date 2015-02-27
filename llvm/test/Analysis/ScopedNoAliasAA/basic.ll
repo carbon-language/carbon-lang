@@ -6,10 +6,10 @@ define void @foo1(float* nocapture %a, float* nocapture readonly %c) #0 {
 entry:
 ; CHECK-LABEL: Function: foo1
   %0 = load float* %c, align 4, !alias.scope !1
-  %arrayidx.i = getelementptr inbounds float* %a, i64 5
+  %arrayidx.i = getelementptr inbounds float, float* %a, i64 5
   store float %0, float* %arrayidx.i, align 4, !noalias !1
   %1 = load float* %c, align 4
-  %arrayidx = getelementptr inbounds float* %a, i64 7
+  %arrayidx = getelementptr inbounds float, float* %a, i64 7
   store float %1, float* %arrayidx, align 4
   ret void
 

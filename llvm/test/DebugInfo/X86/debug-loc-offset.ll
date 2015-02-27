@@ -79,7 +79,7 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.A* %a, metadata !24, metadata !{!"0x102\006"}), !dbg !25
   call void @llvm.dbg.declare(metadata i32* %z, metadata !26, metadata !{!"0x102"}), !dbg !27
   store i32 2, i32* %z, align 4, !dbg !27
-  %var = getelementptr inbounds %struct.A* %a, i32 0, i32 1, !dbg !28
+  %var = getelementptr inbounds %struct.A, %struct.A* %a, i32 0, i32 1, !dbg !28
   %0 = load i32* %var, align 4, !dbg !28
   %cmp = icmp sgt i32 %0, 2, !dbg !28
   br i1 %cmp, label %if.then, label %if.end, !dbg !28

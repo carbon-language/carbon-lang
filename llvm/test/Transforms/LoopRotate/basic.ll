@@ -13,7 +13,7 @@ entry:
 for.cond:                                         ; preds = %for.body, %entry
   %i.0 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %cmp = icmp slt i32 %i.0, 100
-  %arrayidx = getelementptr inbounds [20 x i32]* %array, i64 0, i64 0
+  %arrayidx = getelementptr inbounds [20 x i32], [20 x i32]* %array, i64 0, i64 0
   br i1 %cmp, label %for.body, label %for.end
 
 ; CHECK: for.body:

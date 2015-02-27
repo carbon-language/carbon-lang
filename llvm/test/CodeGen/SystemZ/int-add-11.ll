@@ -66,7 +66,7 @@ define void @f6(i32 *%base) {
 ; CHECK-LABEL: f6:
 ; CHECK: asi 524284(%r2), 1
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 131071
+  %ptr = getelementptr i32, i32 *%base, i64 131071
   %val = load i32 *%ptr
   %add = add i32 %val, 1
   store i32 %add, i32 *%ptr
@@ -80,7 +80,7 @@ define void @f7(i32 *%base) {
 ; CHECK: agfi %r2, 524288
 ; CHECK: asi 0(%r2), 1
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 131072
+  %ptr = getelementptr i32, i32 *%base, i64 131072
   %val = load i32 *%ptr
   %add = add i32 %val, 1
   store i32 %add, i32 *%ptr
@@ -92,7 +92,7 @@ define void @f8(i32 *%base) {
 ; CHECK-LABEL: f8:
 ; CHECK: asi -524288(%r2), 1
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 -131072
+  %ptr = getelementptr i32, i32 *%base, i64 -131072
   %val = load i32 *%ptr
   %add = add i32 %val, 1
   store i32 %add, i32 *%ptr
@@ -106,7 +106,7 @@ define void @f9(i32 *%base) {
 ; CHECK: agfi %r2, -524292
 ; CHECK: asi 0(%r2), 1
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 -131073
+  %ptr = getelementptr i32, i32 *%base, i64 -131073
   %val = load i32 *%ptr
   %add = add i32 %val, 1
   store i32 %add, i32 *%ptr

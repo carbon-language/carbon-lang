@@ -48,7 +48,7 @@ while.cond238.preheader:                          ; preds = %lor.lhs.false227, %
 while.cond238:                                    ; preds = %land.rhs243, %while.cond238.preheader
   %1 = phi i64 [ %indvar.next15, %land.rhs243 ], [ 0, %while.cond238.preheader ]
   %tmp36 = add i64 %tmp16, %1
-  %s.3 = getelementptr i8* %s.1, i64 %tmp36
+  %s.3 = getelementptr i8, i8* %s.1, i64 %tmp36
   %cmp241 = icmp ult i8* %s.3, %end
   indirectbr i8* undef, [label %land.rhs243, label %while.end256]
 
@@ -75,7 +75,7 @@ if.end340:                                        ; preds = %while.end334
   indirectbr i8* undef, [label %PREMATURE, label %if.end348]
 
 if.end348:                                        ; preds = %if.end340
-  %incdec.ptr356 = getelementptr inbounds i8* undef, i64 2
+  %incdec.ptr356 = getelementptr inbounds i8, i8* undef, i64 2
   indirectbr i8* undef, [label %while.cond179]
 
 if.else386:                                       ; preds = %if.else

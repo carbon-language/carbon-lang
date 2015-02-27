@@ -36,7 +36,7 @@ define i8 addrspace(1)* @test_as1_array(i16 addrspace(1)* %x) {
 ; CHECK-NEXT: %2 = inttoptr i16 %1 to i8 addrspace(1)*
 ; CHECK-NEXT: ret i8 addrspace(1)* %2
   %as_ptr_array = alloca [4 x i16 addrspace(1)*]
-  %elem1 = getelementptr [4 x i16 addrspace(1)*]* %as_ptr_array, i32 0, i32 1
+  %elem1 = getelementptr [4 x i16 addrspace(1)*], [4 x i16 addrspace(1)*]* %as_ptr_array, i32 0, i32 1
   store i16 addrspace(1)* %x, i16 addrspace(1)** %elem1
   %elem1.cast = bitcast i16 addrspace(1)** %elem1 to i8 addrspace(1)**
   %tmp = load i8 addrspace(1)** %elem1.cast
@@ -54,16 +54,16 @@ define void @test2(i64 %Op.0) {
 	%tmp.upgrd.2 = call i64 @_Z3foov( )		; <i64> [#uses=1]
 	%tmp1.upgrd.3 = bitcast %struct.Val* %tmp1 to i64*		; <i64*> [#uses=1]
 	store i64 %tmp.upgrd.2, i64* %tmp1.upgrd.3
-	%tmp.upgrd.4 = getelementptr %struct.Val* %tmp, i32 0, i32 0		; <i32**> [#uses=1]
-	%tmp2 = getelementptr %struct.Val* %tmp1, i32 0, i32 0		; <i32**> [#uses=1]
+	%tmp.upgrd.4 = getelementptr %struct.Val, %struct.Val* %tmp, i32 0, i32 0		; <i32**> [#uses=1]
+	%tmp2 = getelementptr %struct.Val, %struct.Val* %tmp1, i32 0, i32 0		; <i32**> [#uses=1]
 	%tmp.upgrd.5 = load i32** %tmp2		; <i32*> [#uses=1]
 	store i32* %tmp.upgrd.5, i32** %tmp.upgrd.4
-	%tmp3 = getelementptr %struct.Val* %tmp, i32 0, i32 1		; <i32*> [#uses=1]
-	%tmp4 = getelementptr %struct.Val* %tmp1, i32 0, i32 1		; <i32*> [#uses=1]
+	%tmp3 = getelementptr %struct.Val, %struct.Val* %tmp, i32 0, i32 1		; <i32*> [#uses=1]
+	%tmp4 = getelementptr %struct.Val, %struct.Val* %tmp1, i32 0, i32 1		; <i32*> [#uses=1]
 	%tmp.upgrd.6 = load i32* %tmp4		; <i32> [#uses=1]
 	store i32 %tmp.upgrd.6, i32* %tmp3
 	%tmp7 = bitcast %struct.Val* %tmp to { i64 }*		; <{ i64 }*> [#uses=1]
-	%tmp8 = getelementptr { i64 }* %tmp7, i32 0, i32 0		; <i64*> [#uses=1]
+	%tmp8 = getelementptr { i64 }, { i64 }* %tmp7, i32 0, i32 0		; <i64*> [#uses=1]
 	%tmp9 = load i64* %tmp8		; <i64> [#uses=1]
 	call void @_Z3bar3ValS_( i64 %Op.0, i64 %tmp9 )
 	ret void

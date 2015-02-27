@@ -8,14 +8,14 @@
 
 define void @func([40 x i16]* %a, i32* %b, i16** %c, i64* %d) nounwind {
 entry:
-  %tmp103 = getelementptr inbounds [40 x i16]* %a, i64 0, i64 4
+  %tmp103 = getelementptr inbounds [40 x i16], [40 x i16]* %a, i64 0, i64 4
   %tmp104 = load i16* %tmp103, align 2
   %tmp105 = sext i16 %tmp104 to i32
   %tmp106 = load i32* %b, align 4
   %tmp107 = sub nsw i32 4, %tmp106
   %tmp108 = load i16** %c, align 8
   %tmp109 = sext i32 %tmp107 to i64
-  %tmp110 = getelementptr inbounds i16* %tmp108, i64 %tmp109
+  %tmp110 = getelementptr inbounds i16, i16* %tmp108, i64 %tmp109
   %tmp111 = load i16* %tmp110, align 1
   %tmp112 = sext i16 %tmp111 to i32
   %tmp = mul i32 355244649, %tmp112

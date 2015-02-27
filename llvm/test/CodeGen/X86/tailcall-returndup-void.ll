@@ -7,7 +7,7 @@ declare ghccc void @sEH_info(i64* noalias nocapture, i64* noalias nocapture, i64
 
 define ghccc void @rBM_info(i64* noalias nocapture %Base_Arg, i64* noalias nocapture %Sp_Arg, i64* noalias nocapture %Hp_Arg, i64 %R1_Arg, i64 %R2_Arg, i64 %R3_Arg) nounwind align 8 {
 c263:
-  %ln265 = getelementptr inbounds i64* %Sp_Arg, i64 -2
+  %ln265 = getelementptr inbounds i64, i64* %Sp_Arg, i64 -2
   %ln266 = ptrtoint i64* %ln265 to i64
   %ln268 = icmp ult i64 %ln266, %R3_Arg
   br i1 %ln268, label %c26a, label %n26p
@@ -29,7 +29,7 @@ rBL_info.exit:                                    ; preds = %c1ZP.i, %n1ZQ.i
   ret void
 
 c26a:                                             ; preds = %c263
-  %ln27h = getelementptr inbounds i64* %Base_Arg, i64 -2
+  %ln27h = getelementptr inbounds i64, i64* %Base_Arg, i64 -2
   %ln27j = load i64* %ln27h, align 8
   %ln27k = inttoptr i64 %ln27j to void (i64*, i64*, i64*, i64, i64, i64)*
   tail call ghccc void %ln27k(i64* %Base_Arg, i64* %Sp_Arg, i64* %Hp_Arg, i64 %R1_Arg, i64 %R2_Arg, i64 %R3_Arg) nounwind

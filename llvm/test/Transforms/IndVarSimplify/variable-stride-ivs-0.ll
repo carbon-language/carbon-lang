@@ -6,17 +6,17 @@
 
 define void @vnum_test8(i32* %data) {
 entry:
-        %tmp.1 = getelementptr i32* %data, i32 3                ; <i32*> [#uses=1]
+        %tmp.1 = getelementptr i32, i32* %data, i32 3                ; <i32*> [#uses=1]
         %tmp.2 = load i32* %tmp.1               ; <i32> [#uses=2]
-        %tmp.4 = getelementptr i32* %data, i32 4                ; <i32*> [#uses=1]
+        %tmp.4 = getelementptr i32, i32* %data, i32 4                ; <i32*> [#uses=1]
         %tmp.5 = load i32* %tmp.4               ; <i32> [#uses=2]
-        %tmp.8 = getelementptr i32* %data, i32 2                ; <i32*> [#uses=1]
+        %tmp.8 = getelementptr i32, i32* %data, i32 2                ; <i32*> [#uses=1]
         %tmp.9 = load i32* %tmp.8               ; <i32> [#uses=3]
         %tmp.125 = icmp sgt i32 %tmp.2, 0               ; <i1> [#uses=1]
         br i1 %tmp.125, label %no_exit.preheader, label %return
 
 no_exit.preheader:              ; preds = %entry
-        %tmp.16 = getelementptr i32* %data, i32 %tmp.9          ; <i32*> [#uses=1]
+        %tmp.16 = getelementptr i32, i32* %data, i32 %tmp.9          ; <i32*> [#uses=1]
         br label %no_exit
 
 ; CHECK: store i32 0

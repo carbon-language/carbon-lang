@@ -7,7 +7,7 @@
 define void @off01(i64 %i) nounwind {
 entry:
 	%.sum = add i64 %i, 16
-	%0 = getelementptr [131072 x i32]* @dst, i64 0, i64 %.sum
+	%0 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %.sum
 	store i32* %0, i32** @ptr, align 8
 	ret void
 }

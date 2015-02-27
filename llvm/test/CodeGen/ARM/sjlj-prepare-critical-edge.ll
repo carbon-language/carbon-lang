@@ -109,7 +109,7 @@ new.notnull.i.i.i.i:                              ; preds = %do.body.i.i.i
 
 _ZNSt3__116allocator_traitsINS_9allocatorIcEEE9constructIccEEvRS2_PT_RKT0_.exit.i.i.i: ; preds = %new.notnull.i.i.i.i, %do.body.i.i.i
   %1 = phi i8* [ null, %do.body.i.i.i ], [ %0, %new.notnull.i.i.i.i ]
-  %incdec.ptr.i.i.i = getelementptr inbounds i8* %1, i32 1
+  %incdec.ptr.i.i.i = getelementptr inbounds i8, i8* %1, i32 1
   %lsr.iv.next = add i32 %lsr.iv, 1
   %cmp.i16.i.i = icmp eq i32 %lsr.iv.next, 0
   br i1 %cmp.i16.i.i, label %invoke.cont, label %do.body.i.i.i

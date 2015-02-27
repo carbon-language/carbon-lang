@@ -16,7 +16,7 @@ define void @test1() nounwind {
 ; CHECK: call
 ; CHECK-NOT: lea
   %arr = alloca [1024 x i8], align 16
-  %arr_ptr = getelementptr inbounds [1024 x i8]* %arr, i8 0, i8 0
+  %arr_ptr = getelementptr inbounds [1024 x i8], [1024 x i8]* %arr, i8 0, i8 0
   call void @use_arr(i8* %arr_ptr)
   ret void
 }

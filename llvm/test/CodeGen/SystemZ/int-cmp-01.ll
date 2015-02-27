@@ -21,7 +21,7 @@ define void @f2(i32 %lhs, i16 *%src, i32 *%dst) {
 ; CHECK-LABEL: f2:
 ; CHECK: ch %r2, 4094(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 2047
+  %ptr = getelementptr i16, i16 *%src, i64 2047
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i32
   %cond = icmp slt i32 %lhs, %rhs
@@ -35,7 +35,7 @@ define void @f3(i32 %lhs, i16 *%src, i32 *%dst) {
 ; CHECK-LABEL: f3:
 ; CHECK: chy %r2, 4096(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 2048
+  %ptr = getelementptr i16, i16 *%src, i64 2048
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i32
   %cond = icmp slt i32 %lhs, %rhs
@@ -49,7 +49,7 @@ define void @f4(i32 %lhs, i16 *%src, i32 *%dst) {
 ; CHECK-LABEL: f4:
 ; CHECK: chy %r2, 524286(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 262143
+  %ptr = getelementptr i16, i16 *%src, i64 262143
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i32
   %cond = icmp slt i32 %lhs, %rhs
@@ -65,7 +65,7 @@ define void @f5(i32 %lhs, i16 *%src, i32 *%dst) {
 ; CHECK: agfi %r3, 524288
 ; CHECK: ch %r2, 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 262144
+  %ptr = getelementptr i16, i16 *%src, i64 262144
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i32
   %cond = icmp slt i32 %lhs, %rhs
@@ -79,7 +79,7 @@ define void @f6(i32 %lhs, i16 *%src, i32 *%dst) {
 ; CHECK-LABEL: f6:
 ; CHECK: chy %r2, -2(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 -1
+  %ptr = getelementptr i16, i16 *%src, i64 -1
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i32
   %cond = icmp slt i32 %lhs, %rhs
@@ -93,7 +93,7 @@ define void @f7(i32 %lhs, i16 *%src, i32 *%dst) {
 ; CHECK-LABEL: f7:
 ; CHECK: chy %r2, -524288(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 -262144
+  %ptr = getelementptr i16, i16 *%src, i64 -262144
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i32
   %cond = icmp slt i32 %lhs, %rhs
@@ -109,7 +109,7 @@ define void @f8(i32 %lhs, i16 *%src, i32 *%dst) {
 ; CHECK: agfi %r3, -524290
 ; CHECK: ch %r2, 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 -262145
+  %ptr = getelementptr i16, i16 *%src, i64 -262145
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i32
   %cond = icmp slt i32 %lhs, %rhs

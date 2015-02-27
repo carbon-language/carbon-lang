@@ -20,7 +20,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %sum.02 = phi i32 [ %add, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, %sum.02
   %indvars.iv.next = add i64 %indvars.iv, 1
@@ -47,7 +47,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %sum.01 = phi i32 [ 0, %entry ], [ %add, %for.body ]
-  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, %sum.01
   %indvars.iv.next = add i64 %indvars.iv, 1
@@ -96,7 +96,7 @@ for.body:                                         ; preds = %for.body, %entry
   %p.addr.05 = phi i16* [ %incdec.ptr, %for.body ], [ %p, %entry ]
   %len.addr.04 = phi i32 [ %sub, %for.body ], [ %len, %entry ]
   %res.03 = phi i32 [ %add, %for.body ], [ 0, %entry ]
-  %incdec.ptr = getelementptr inbounds i16* %p.addr.05, i64 1
+  %incdec.ptr = getelementptr inbounds i16, i16* %p.addr.05, i64 1
   %0 = load i16* %p.addr.05, align 2
   %conv = zext i16 %0 to i32
   %add = add i32 %conv, %res.03

@@ -8,8 +8,8 @@ entry:
 
   %t0 = add i32 %r, %s
   %t1 = add i32 %t0, 1
-  %t2 = getelementptr i32* %y, i32 1
-  %t3 = getelementptr i32* %t2, i32 %t1
+  %t2 = getelementptr i32, i32* %y, i32 1
+  %t3 = getelementptr i32, i32* %t2, i32 %t1
 
   ret i32* %t3
 
@@ -27,8 +27,8 @@ entry:
 
   %t0 = add i32 %r, %s
   %t1 = add i32 %t0, 1
-  %t2 = getelementptr i32* %y, i32 1
-  %t3 = getelementptr i32* %t2, i32 %t1
+  %t2 = getelementptr i32, i32* %y, i32 1
+  %t3 = getelementptr i32, i32* %t2, i32 %t1
 
   ret i32* %t3
 

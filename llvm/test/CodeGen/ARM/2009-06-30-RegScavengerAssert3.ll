@@ -84,9 +84,9 @@ bb167.i:		; preds = %bb163.i
 bb168.i:		; preds = %bb167.i, %bb163.i, %bb161.i, %bb160.i, %bb158.i
 	%fi.5.i = phi i32 [ undef, %bb167.i ], [ %ci.910.i, %bb158.i ], [ undef, %bb160.i ], [ %ci.910.i, %bb161.i ], [ undef, %bb163.i ]		; <i32> [#uses=1]
 	%fj.4.i = phi i32 [ undef, %bb167.i ], [ undef, %bb158.i ], [ %fj.515.i, %bb160.i ], [ undef, %bb161.i ], [ %fj.515.i, %bb163.i ]		; <i32> [#uses=2]
-	%scevgep88.i = getelementptr i32* null, i32 %i.121.i		; <i32*> [#uses=3]
+	%scevgep88.i = getelementptr i32, i32* null, i32 %i.121.i		; <i32*> [#uses=3]
 	%4 = load i32* %scevgep88.i, align 4		; <i32> [#uses=2]
-	%scevgep89.i = getelementptr i32* %0, i32 %i.121.i		; <i32*> [#uses=3]
+	%scevgep89.i = getelementptr i32, i32* %0, i32 %i.121.i		; <i32*> [#uses=3]
 	%5 = load i32* %scevgep89.i, align 4		; <i32> [#uses=1]
 	%ci.10.i = select i1 undef, i32 %pi.316.i, i32 %i.121.i		; <i32> [#uses=0]
 	%cj.9.i = select i1 undef, i32 %pj.317.i, i32 undef		; <i32> [#uses=0]

@@ -12,8 +12,8 @@ define i32 @test1() {
 ; CHECK-NOT: = i160
 ; CHECK: ret i32 undef
 	%A = alloca %nested
-	%B = getelementptr %nested* %A, i32 0, i32 1, i32 0
-	%C = getelementptr i32* %B, i32 2
+	%B = getelementptr %nested, %nested* %A, i32 0, i32 1, i32 0
+	%C = getelementptr i32, i32* %B, i32 2
 	%D = load i32* %C
 	ret i32 %D
 }
@@ -23,8 +23,8 @@ define i32 @test2() {
 ; CHECK-LABEL: @test2(
 ; CHECK: i160
 	%A = alloca %nested
-	%B = getelementptr %nested* %A, i32 0, i32 1, i32 0
-	%C = getelementptr i32* %B, i32 4
+	%B = getelementptr %nested, %nested* %A, i32 0, i32 1, i32 0
+	%C = getelementptr i32, i32* %B, i32 4
 	%D = load i32* %C
 	ret i32 %D
 }
@@ -36,7 +36,7 @@ define i32 @test3() {
 ; CHECK: ret i32 undef
 	%A = alloca %nested
 	%B = bitcast %nested* %A to i32*
-	%C = getelementptr i32* %B, i32 2
+	%C = getelementptr i32, i32* %B, i32 2
 	%D = load i32* %C
 	ret i32 %D
 }
@@ -47,7 +47,7 @@ define i32 @test4() {
 ; CHECK: i160
 	%A = alloca %nested
 	%B = bitcast %nested* %A to i32*
-	%C = getelementptr i32* %B, i32 -1
+	%C = getelementptr i32, i32* %B, i32 -1
 	%D = load i32* %C
 	ret i32 %D
 }

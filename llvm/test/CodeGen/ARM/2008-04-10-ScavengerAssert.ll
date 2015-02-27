@@ -108,7 +108,7 @@ declare fastcc i32 @init_outer_loop(%struct.lame_global_flags*, double*, %struct
 
 define fastcc void @outer_loop(%struct.lame_global_flags* %gfp, double* %xr, i32 %targ_bits, double* %best_noise, %struct.III_psy_xmin* %l3_xmin, i32* %l3_enc, %struct.III_scalefac_t* %scalefac, %struct.gr_info* %cod_info, i32 %ch) {
 entry:
-	%cod_info.182 = getelementptr %struct.gr_info* %cod_info, i32 0, i32 1		; <i32*> [#uses=1]
+	%cod_info.182 = getelementptr %struct.gr_info, %struct.gr_info* %cod_info, i32 0, i32 1		; <i32*> [#uses=1]
 	br label %bb
 bb:		; preds = %bb226, %entry
 	%save_cod_info.1.1 = phi i32 [ undef, %entry ], [ %save_cod_info.1.1, %bb226 ]		; <i32> [#uses=2]
@@ -148,15 +148,15 @@ bb226.backedge.i:		; preds = %cond_next215.i, %bb151.i
 bb155.i:		; preds = %cond_next215.i, %bb151.i
 	%indvar90.i = phi i32 [ %indvar.next91.i, %cond_next215.i ], [ 0, %bb151.i ]		; <i32> [#uses=2]
 	%sfb.3.reg2mem.0.i = add i32 %indvar90.i, %tmp37.i55		; <i32> [#uses=4]
-	%tmp161.i = getelementptr [4 x [21 x double]]* null, i32 0, i32 %tmp15747.i, i32 %sfb.3.reg2mem.0.i		; <double*> [#uses=1]
+	%tmp161.i = getelementptr [4 x [21 x double]], [4 x [21 x double]]* null, i32 0, i32 %tmp15747.i, i32 %sfb.3.reg2mem.0.i		; <double*> [#uses=1]
 	%tmp162.i74 = load double* %tmp161.i, align 4		; <double> [#uses=0]
 	br i1 false, label %cond_true167.i, label %cond_next215.i
 cond_true167.i:		; preds = %bb155.i
-	%tmp173.i = getelementptr %struct.III_scalefac_t* null, i32 0, i32 1, i32 %sfb.3.reg2mem.0.i, i32 %i.154.i		; <i32*> [#uses=1]
+	%tmp173.i = getelementptr %struct.III_scalefac_t, %struct.III_scalefac_t* null, i32 0, i32 1, i32 %sfb.3.reg2mem.0.i, i32 %i.154.i		; <i32*> [#uses=1]
 	store i32 0, i32* %tmp173.i, align 4
-	%tmp182.1.i = getelementptr [14 x i32]* @scalefac_band.1, i32 0, i32 %sfb.3.reg2mem.0.i		; <i32*> [#uses=0]
+	%tmp182.1.i = getelementptr [14 x i32], [14 x i32]* @scalefac_band.1, i32 0, i32 %sfb.3.reg2mem.0.i		; <i32*> [#uses=0]
 	%tmp185.i78 = add i32 %sfb.3.reg2mem.0.i, 1		; <i32> [#uses=1]
-	%tmp187.1.i = getelementptr [14 x i32]* @scalefac_band.1, i32 0, i32 %tmp185.i78		; <i32*> [#uses=1]
+	%tmp187.1.i = getelementptr [14 x i32], [14 x i32]* @scalefac_band.1, i32 0, i32 %tmp185.i78		; <i32*> [#uses=1]
 	%tmp188.i = load i32* %tmp187.1.i, align 4		; <i32> [#uses=1]
 	%tmp21153.i = icmp slt i32 0, %tmp188.i		; <i1> [#uses=1]
 	br i1 %tmp21153.i, label %bb190.preheader.i, label %cond_next215.i
@@ -190,9 +190,9 @@ bb231:		; preds = %bb226
 
 define fastcc void @outer_loop2(%struct.lame_global_flags* %gfp, double* %xr, i32 %targ_bits, double* %best_noise, %struct.III_psy_xmin* %l3_xmin, i32* %l3_enc, %struct.III_scalefac_t* %scalefac, %struct.gr_info* %cod_info, i32 %ch) {
 entry:
-	%cod_info.20128.1 = getelementptr %struct.gr_info* %cod_info, i32 0, i32 20, i32 1		; <i32*> [#uses=1]
-	%cod_info.20128.2 = getelementptr %struct.gr_info* %cod_info, i32 0, i32 20, i32 2		; <i32*> [#uses=1]
-	%cod_info.20128.3 = getelementptr %struct.gr_info* %cod_info, i32 0, i32 20, i32 3		; <i32*> [#uses=1]
+	%cod_info.20128.1 = getelementptr %struct.gr_info, %struct.gr_info* %cod_info, i32 0, i32 20, i32 1		; <i32*> [#uses=1]
+	%cod_info.20128.2 = getelementptr %struct.gr_info, %struct.gr_info* %cod_info, i32 0, i32 20, i32 2		; <i32*> [#uses=1]
+	%cod_info.20128.3 = getelementptr %struct.gr_info, %struct.gr_info* %cod_info, i32 0, i32 20, i32 3		; <i32*> [#uses=1]
 	br label %bb
 bb:		; preds = %bb226, %entry
 	%save_cod_info.19.1 = phi i32* [ undef, %entry ], [ %save_cod_info.19.0, %bb226 ]		; <i32*> [#uses=1]

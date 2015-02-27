@@ -17,12 +17,12 @@ target triple = "x86_64-apple-macosx10.9.0"
 
 ;define fastcc void @bar() {
 define void @bar() {
-  %1 = getelementptr inbounds %0* undef, i64 0, i32 1, i32 0
-  %2 = getelementptr inbounds %0* undef, i64 0, i32 1, i32 1
-  %3 = getelementptr inbounds %0* undef, i64 0, i32 1, i32 0
-  %4 = getelementptr inbounds %0* undef, i64 0, i32 1, i32 1
-  %5 = getelementptr inbounds %0* undef, i64 0, i32 1, i32 0
-  %6 = getelementptr inbounds %0* undef, i64 0, i32 1, i32 1
+  %1 = getelementptr inbounds %0, %0* undef, i64 0, i32 1, i32 0
+  %2 = getelementptr inbounds %0, %0* undef, i64 0, i32 1, i32 1
+  %3 = getelementptr inbounds %0, %0* undef, i64 0, i32 1, i32 0
+  %4 = getelementptr inbounds %0, %0* undef, i64 0, i32 1, i32 1
+  %5 = getelementptr inbounds %0, %0* undef, i64 0, i32 1, i32 0
+  %6 = getelementptr inbounds %0, %0* undef, i64 0, i32 1, i32 1
   br label %7
 
 ; <label>:7                                       ; preds = %18, %17, %17, %0

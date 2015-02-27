@@ -11,7 +11,7 @@ target triple = "x86_64-apple-macosx10.6.0"
 define void @z0(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
   %add = add i64 %n, 1
-  %arrayidx = getelementptr inbounds i32* %A, i64 %add
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %add
   store i32 0, i32* %arrayidx, align 4
 
 ; CHECK: da analyze - none!
@@ -22,7 +22,7 @@ entry:
 ; CHECK: da analyze - none!
 
   %add1 = add i64 %n, 1
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 %add1
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %add1
   %0 = load i32* %arrayidx2, align 4
   store i32 %0, i32* %B, align 4
   ret void
@@ -34,7 +34,7 @@ entry:
 
 define void @z1(i32* %A, i32* %B, i64 %n) nounwind uwtable ssp {
 entry:
-  %arrayidx = getelementptr inbounds i32* %A, i64 %n
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %n
   store i32 0, i32* %arrayidx, align 4
 
 ; CHECK: da analyze - none!
@@ -45,7 +45,7 @@ entry:
 ; CHECK: da analyze - none!
 
   %add = add i64 %n, 1
-  %arrayidx1 = getelementptr inbounds i32* %A, i64 %add
+  %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %add
   %0 = load i32* %arrayidx1, align 4
   store i32 %0, i32* %B, align 4
   ret void
@@ -57,7 +57,7 @@ entry:
 
 define void @z2(i32* %A, i32* %B, i64 %n, i64 %m) nounwind uwtable ssp {
 entry:
-  %arrayidx = getelementptr inbounds i32* %A, i64 %n
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %n
   store i32 0, i32* %arrayidx, align 4
 
 ; CHECK: da analyze - none!
@@ -67,7 +67,7 @@ entry:
 ; CHECK: da analyze - confused!
 ; CHECK: da analyze - none!
 
-  %arrayidx1 = getelementptr inbounds i32* %A, i64 %m
+  %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %m
   %0 = load i32* %arrayidx1, align 4
   store i32 %0, i32* %B, align 4
   ret void

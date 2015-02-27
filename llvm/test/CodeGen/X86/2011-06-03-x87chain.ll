@@ -22,7 +22,7 @@ entry:
   %mul = mul nsw i32 %y, %x
   %sub = add nsw i32 %mul, -1
   %idxprom = sext i32 %sub to i64
-  %arrayidx = getelementptr inbounds i64* %a, i64 %idxprom
+  %arrayidx = getelementptr inbounds i64, i64* %a, i64 %idxprom
   %tmp4 = load i64* %arrayidx, align 8
 ; CHECK: fildll
   %conv = sitofp i64 %tmp4 to float

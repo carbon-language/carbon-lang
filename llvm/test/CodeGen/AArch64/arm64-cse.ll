@@ -25,7 +25,7 @@ if.end:
  %s2 = sub nsw i32 %s, %size
  %s3 = sub nsw i32 %sub, %s2
  store i32 %s3, i32* %offset, align 4
- %add.ptr = getelementptr inbounds i8* %base, i32 %sub
+ %add.ptr = getelementptr inbounds i8, i8* %base, i32 %sub
  br label %return
 
 return:
@@ -50,7 +50,7 @@ entry:
 if.end:
  %sub = sub nsw i32 %0, 1
  store i32 %sub, i32* %offset, align 4
- %add.ptr = getelementptr inbounds i8* %base, i32 %sub
+ %add.ptr = getelementptr inbounds i8, i8* %base, i32 %sub
  br label %return
 
 return:

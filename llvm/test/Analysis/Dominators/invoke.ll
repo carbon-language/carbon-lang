@@ -7,7 +7,7 @@ define void @f() {
   invoke void @__dynamic_cast()
           to label %bb1 unwind label %bb2
 bb1:
-  %Hidden = getelementptr inbounds i32* %v1, i64 1
+  %Hidden = getelementptr inbounds i32, i32* %v1, i64 1
   ret void
 bb2:
   %lpad.loopexit80 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)

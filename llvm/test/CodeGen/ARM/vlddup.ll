@@ -101,7 +101,7 @@ define <4 x i16> @vld2dupi16_update(i16** %ptr) nounwind {
 	%tmp3 = extractvalue %struct.__neon_int4x16x2_t %tmp0, 1
 	%tmp4 = shufflevector <4 x i16> %tmp3, <4 x i16> undef, <4 x i32> zeroinitializer
 	%tmp5 = add <4 x i16> %tmp2, %tmp4
-	%tmp6 = getelementptr i16* %A, i32 2
+	%tmp6 = getelementptr i16, i16* %A, i32 2
 	store i16* %tmp6, i16** %ptr
 	ret <4 x i16> %tmp5
 }
@@ -140,7 +140,7 @@ define <8 x i8> @vld3dupi8_update(i8** %ptr, i32 %inc) nounwind {
 	%tmp6 = shufflevector <8 x i8> %tmp5, <8 x i8> undef, <8 x i32> zeroinitializer
 	%tmp7 = add <8 x i8> %tmp2, %tmp4
 	%tmp8 = add <8 x i8> %tmp7, %tmp6
-	%tmp9 = getelementptr i8* %A, i32 %inc
+	%tmp9 = getelementptr i8, i8* %A, i32 %inc
 	store i8* %tmp9, i8** %ptr
 	ret <8 x i8> %tmp8
 }
@@ -185,7 +185,7 @@ define <4 x i16> @vld4dupi16_update(i16** %ptr) nounwind {
 	%tmp9 = add <4 x i16> %tmp2, %tmp4
 	%tmp10 = add <4 x i16> %tmp6, %tmp8
 	%tmp11 = add <4 x i16> %tmp9, %tmp10
-	%tmp12 = getelementptr i16* %A, i32 4
+	%tmp12 = getelementptr i16, i16* %A, i32 4
 	store i16* %tmp12, i16** %ptr
 	ret <4 x i16> %tmp11
 }

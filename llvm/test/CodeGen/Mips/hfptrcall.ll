@@ -34,8 +34,8 @@ entry:
 define { float, float } @scv() #0 {
 entry:
   %retval = alloca { float, float }, align 4
-  %real = getelementptr inbounds { float, float }* %retval, i32 0, i32 0
-  %imag = getelementptr inbounds { float, float }* %retval, i32 0, i32 1
+  %real = getelementptr inbounds { float, float }, { float, float }* %retval, i32 0, i32 0
+  %imag = getelementptr inbounds { float, float }, { float, float }* %retval, i32 0, i32 1
   store float 5.000000e+00, float* %real
   store float 9.900000e+01, float* %imag
   %0 = load { float, float }* %retval
@@ -50,8 +50,8 @@ entry:
 define { double, double } @dcv() #0 {
 entry:
   %retval = alloca { double, double }, align 8
-  %real = getelementptr inbounds { double, double }* %retval, i32 0, i32 0
-  %imag = getelementptr inbounds { double, double }* %retval, i32 0, i32 1
+  %real = getelementptr inbounds { double, double }, { double, double }* %retval, i32 0, i32 0
+  %imag = getelementptr inbounds { double, double }, { double, double }* %retval, i32 0, i32 1
   store double 0x416BC8B0A0000000, double* %real
   store double 0x41CDCCB763800000, double* %imag
   %0 = load { double, double }* %retval

@@ -13,7 +13,7 @@ entry:
   %0 = bitcast double* %__x.addr.i to i8*
   %1 = bitcast %0* %__u.i to i8*
   store double %d1, double* %__x.addr.i, align 8
-  %__f.i = getelementptr inbounds %0* %__u.i, i64 0, i32 0
+  %__f.i = getelementptr inbounds %0, %0* %__u.i, i64 0, i32 0
   store double %d1, double* %__f.i, align 8
   %tmp = bitcast double %d1 to i64
 ; CHECK-NOT: shr
@@ -32,7 +32,7 @@ entry:
   %0 = bitcast double* %__x.addr.i to i8*
   %1 = bitcast %0* %__u.i to i8*
   store double %add, double* %__x.addr.i, align 8
-  %__f.i = getelementptr inbounds %0* %__u.i, i64 0, i32 0
+  %__f.i = getelementptr inbounds %0, %0* %__u.i, i64 0, i32 0
   store double %add, double* %__f.i, align 8
   %tmp = bitcast double %add to i64
 ; CHECK-NOT: shr
@@ -50,7 +50,7 @@ entry:
   %0 = bitcast float* %__x.addr.i to i8*
   %1 = bitcast %union.anon* %__u.i to i8*
   store float %f1, float* %__x.addr.i, align 4
-  %__f.i = getelementptr inbounds %union.anon* %__u.i, i64 0, i32 0
+  %__f.i = getelementptr inbounds %union.anon, %union.anon* %__u.i, i64 0, i32 0
   store float %f1, float* %__f.i, align 4
   %2 = bitcast float %f1 to i32
 ; CHECK-NOT: shr
@@ -68,7 +68,7 @@ entry:
   %0 = bitcast float* %__x.addr.i to i8*
   %1 = bitcast %union.anon* %__u.i to i8*
   store float %add, float* %__x.addr.i, align 4
-  %__f.i = getelementptr inbounds %union.anon* %__u.i, i64 0, i32 0
+  %__f.i = getelementptr inbounds %union.anon, %union.anon* %__u.i, i64 0, i32 0
   store float %add, float* %__f.i, align 4
   %2 = bitcast float %add to i32
 ; CHECK-NOT: shr
@@ -104,7 +104,7 @@ entry:
 ; CHECK-NOT: movslq
   %0 = tail call i32 @llvm.x86.sse.movmsk.ps(<4 x float> %x) nounwind
   %idxprom = sext i32 %0 to i64
-  %arrayidx = getelementptr inbounds i32* %indexTable, i64 %idxprom
+  %arrayidx = getelementptr inbounds i32, i32* %indexTable, i64 %idxprom
   %1 = load i32* %arrayidx, align 4
   ret i32 %1
 }
@@ -117,7 +117,7 @@ entry:
   %0 = bitcast <4 x float> %x to <2 x double>
   %1 = tail call i32 @llvm.x86.sse2.movmsk.pd(<2 x double> %0) nounwind
   %idxprom = sext i32 %1 to i64
-  %arrayidx = getelementptr inbounds i32* %indexTable, i64 %idxprom
+  %arrayidx = getelementptr inbounds i32, i32* %indexTable, i64 %idxprom
   %2 = load i32* %arrayidx, align 4
   ret i32 %2
 }

@@ -22,7 +22,7 @@ entry:
 define void @_ZN1DC1Ev(%class.D* nocapture %this) unnamed_addr uwtable align 2 {
 entry:
   call void @_ZN24CompositeEditCommandImplC2Ev()
-  %0 = getelementptr inbounds %class.D* %this, i64 0, i32 0, i32 0, i32 0
+  %0 = getelementptr inbounds %class.D, %class.D* %this, i64 0, i32 0, i32 0, i32 0
   store i32 (...)** bitcast (i8** getelementptr inbounds ([3 x i8*]* @_ZTV1D, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, align 8
   ret void
 }
@@ -30,7 +30,7 @@ entry:
 define void @_ZN1DC2Ev(%class.D* nocapture %this) unnamed_addr uwtable align 2 {
 entry:
   call void @_ZN24CompositeEditCommandImplC2Ev()
-  %0 = getelementptr inbounds %class.D* %this, i64 0, i32 0, i32 0, i32 0
+  %0 = getelementptr inbounds %class.D, %class.D* %this, i64 0, i32 0, i32 0, i32 0
   store i32 (...)** bitcast (i8** getelementptr inbounds ([3 x i8*]* @_ZTV1D, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, align 8
   ret void
 }
@@ -51,7 +51,7 @@ entry:
 _ZN1DC1Ev.exit:                                   ; preds = %entry
   %0 = bitcast i8* %call to i32 (...)***
   store i32 (...)** bitcast (i8** getelementptr inbounds ([3 x i8*]* @_ZTV1D, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, align 8
-  %_ref.i.i.i = getelementptr inbounds i8* %call, i64 8
+  %_ref.i.i.i = getelementptr inbounds i8, i8* %call, i64 8
   %1 = bitcast i8* %_ref.i.i.i to i32*
   %2 = load i32* %1, align 4
   %inc.i.i.i = add nsw i32 %2, 1
@@ -98,9 +98,9 @@ terminate.lpad:                                   ; No predecessors!
 
 define void @_ZN1BI1DEC1EPS0_(%class.B* nocapture %this, %class.D* %p1) unnamed_addr uwtable align 2 {
 entry:
-  %m_ptr.i = getelementptr inbounds %class.B* %this, i64 0, i32 0
+  %m_ptr.i = getelementptr inbounds %class.B, %class.B* %this, i64 0, i32 0
   store %class.D* %p1, %class.D** %m_ptr.i, align 8
-  %_ref.i.i = getelementptr inbounds %class.D* %p1, i64 0, i32 0, i32 0, i32 1, i32 0, i32 0
+  %_ref.i.i = getelementptr inbounds %class.D, %class.D* %p1, i64 0, i32 0, i32 0, i32 1, i32 0, i32 0
   %0 = load i32* %_ref.i.i, align 4
   %inc.i.i = add nsw i32 %0, 1
   store i32 %inc.i.i, i32* %_ref.i.i, align 4
@@ -115,7 +115,7 @@ declare void @_ZdlPv()
 
 define %class.D* @_ZN1BI1DEptEv(%class.B* nocapture readonly %this) nounwind readonly uwtable align 2 {
 entry:
-  %m_ptr = getelementptr inbounds %class.B* %this, i64 0, i32 0
+  %m_ptr = getelementptr inbounds %class.B, %class.B* %this, i64 0, i32 0
   %0 = load %class.D** %m_ptr, align 8
   ret %class.D* %0
 }
@@ -124,9 +124,9 @@ declare void @_ZN1D16deleteKeyPressedEv()
 
 define void @_ZN1BI1DED1Ev(%class.B* nocapture readonly %this) unnamed_addr uwtable align 2 {
 entry:
-  %m_ptr.i = getelementptr inbounds %class.B* %this, i64 0, i32 0
+  %m_ptr.i = getelementptr inbounds %class.B, %class.B* %this, i64 0, i32 0
   %0 = load %class.D** %m_ptr.i, align 8
-  %_ref.i.i = getelementptr inbounds %class.D* %0, i64 0, i32 0, i32 0, i32 1, i32 0, i32 0
+  %_ref.i.i = getelementptr inbounds %class.D, %class.D* %0, i64 0, i32 0, i32 0, i32 1, i32 0, i32 0
   %1 = load i32* %_ref.i.i, align 4
   %tobool.i.i = icmp eq i32 %1, 0
   br i1 %tobool.i.i, label %_ZN1BI1DED2Ev.exit, label %if.then.i.i
@@ -146,9 +146,9 @@ declare hidden void @__clang_call_terminate()
 
 define void @_ZN1BI1DED2Ev(%class.B* nocapture readonly %this) unnamed_addr uwtable align 2 {
 entry:
-  %m_ptr = getelementptr inbounds %class.B* %this, i64 0, i32 0
+  %m_ptr = getelementptr inbounds %class.B, %class.B* %this, i64 0, i32 0
   %0 = load %class.D** %m_ptr, align 8
-  %_ref.i = getelementptr inbounds %class.D* %0, i64 0, i32 0, i32 0, i32 1, i32 0, i32 0
+  %_ref.i = getelementptr inbounds %class.D, %class.D* %0, i64 0, i32 0, i32 0, i32 1, i32 0, i32 0
   %1 = load i32* %_ref.i, align 4
   %tobool.i = icmp eq i32 %1, 0
   br i1 %tobool.i, label %_ZN1AI1CE5derefEv.exit, label %if.then.i
@@ -166,7 +166,7 @@ _ZN1AI1CE5derefEv.exit:                           ; preds = %entry, %if.then.i
 
 define void @_ZN1AI1CE5derefEv(%class.A* nocapture readonly %this) nounwind uwtable align 2 {
 entry:
-  %_ref = getelementptr inbounds %class.A* %this, i64 0, i32 0
+  %_ref = getelementptr inbounds %class.A, %class.A* %this, i64 0, i32 0
   %0 = load i32* %_ref, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %if.end, label %if.then
@@ -184,9 +184,9 @@ if.end:                                           ; preds = %entry, %if.then
 
 define void @_ZN1BI1DEC2EPS0_(%class.B* nocapture %this, %class.D* %p1) unnamed_addr uwtable align 2 {
 entry:
-  %m_ptr = getelementptr inbounds %class.B* %this, i64 0, i32 0
+  %m_ptr = getelementptr inbounds %class.B, %class.B* %this, i64 0, i32 0
   store %class.D* %p1, %class.D** %m_ptr, align 8
-  %_ref.i = getelementptr inbounds %class.D* %p1, i64 0, i32 0, i32 0, i32 1, i32 0, i32 0
+  %_ref.i = getelementptr inbounds %class.D, %class.D* %p1, i64 0, i32 0, i32 0, i32 1, i32 0, i32 0
   %0 = load i32* %_ref.i, align 4
   %inc.i = add nsw i32 %0, 1
   store i32 %inc.i, i32* %_ref.i, align 4
@@ -195,7 +195,7 @@ entry:
 
 define void @_ZN1AI1CE3refEv(%class.A* nocapture %this) nounwind uwtable align 2 {
 entry:
-  %_ref = getelementptr inbounds %class.A* %this, i64 0, i32 0
+  %_ref = getelementptr inbounds %class.A, %class.A* %this, i64 0, i32 0
   %0 = load i32* %_ref, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %_ref, align 4

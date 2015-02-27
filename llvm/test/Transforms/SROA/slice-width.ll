@@ -42,7 +42,7 @@ define void @memcpy_fp80_padding() {
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %x_i8, i8* bitcast (%union.Foo* @foo_copy_source to i8*), i32 32, i32 16, i1 false)
 
   ; Access a slice of the alloca to trigger SROA.
-  %mid_p = getelementptr %union.Foo* %x, i32 0, i32 1
+  %mid_p = getelementptr %union.Foo, %union.Foo* %x, i32 0, i32 1
   %elt = load i64* %mid_p
   store i64 %elt, i64* @i64_sink
   ret void
@@ -61,7 +61,7 @@ define void @memset_fp80_padding() {
   call void @llvm.memset.p0i8.i32(i8* %x_i8, i8 -1, i32 32, i32 16, i1 false)
 
   ; Access a slice of the alloca to trigger SROA.
-  %mid_p = getelementptr %union.Foo* %x, i32 0, i32 1
+  %mid_p = getelementptr %union.Foo, %union.Foo* %x, i32 0, i32 1
   %elt = load i64* %mid_p
   store i64 %elt, i64* @i64_sink
   ret void
@@ -89,7 +89,7 @@ entry:
 
   ; The following block does nothing; but appears to confuse SROA
   %unused1 = bitcast %S.vec3float* %tmp1 to %U.vec3float*
-  %unused2 = getelementptr inbounds %U.vec3float* %unused1, i32 0, i32 0
+  %unused2 = getelementptr inbounds %U.vec3float, %U.vec3float* %unused1, i32 0, i32 0
   %unused3 = load <4 x float>* %unused2, align 1
 
   ; Create a second temporary and copy %tmp1 into it

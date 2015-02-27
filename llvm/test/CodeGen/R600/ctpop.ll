@@ -261,7 +261,7 @@ define void @v_ctpop_i32_add_var_inv(i32 addrspace(1)* noalias %out, i32 addrspa
 define void @v_ctpop_i32_add_vvar_inv(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noalias %in, i32 addrspace(1)* noalias %constptr) nounwind {
   %val = load i32 addrspace(1)* %in, align 4
   %ctpop = call i32 @llvm.ctpop.i32(i32 %val) nounwind readnone
-  %gep = getelementptr i32 addrspace(1)* %constptr, i32 4
+  %gep = getelementptr i32, i32 addrspace(1)* %constptr, i32 4
   %const = load i32 addrspace(1)* %gep, align 4
   %add = add i32 %const, %ctpop
   store i32 %add, i32 addrspace(1)* %out, align 4
@@ -289,7 +289,7 @@ if:
   br label %endif
 
 else:
-  %tmp3 = getelementptr i32 addrspace(1)* %in, i32 1
+  %tmp3 = getelementptr i32, i32 addrspace(1)* %in, i32 1
   %tmp4 = load i32 addrspace(1)* %tmp3
   br label %endif
 

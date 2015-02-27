@@ -13,7 +13,7 @@ entry:
 define <4 x double> @bar(<4 x double>* %a) {
 entry:
   %r = load <4 x double>* %a, align 8
-  %b = getelementptr <4 x double>* %a, i32 16
+  %b = getelementptr <4 x double>, <4 x double>* %a, i32 16
   %s = load <4 x double>* %b, align 32
   %t = fadd <4 x double> %r, %s
   ret <4 x double> %t
@@ -26,7 +26,7 @@ entry:
 define <4 x double> @bar1(<4 x double>* %a) {
 entry:
   %r = load <4 x double>* %a, align 8
-  %b = getelementptr <4 x double>* %a, i32 16
+  %b = getelementptr <4 x double>, <4 x double>* %a, i32 16
   %s = load <4 x double>* %b, align 8
   %t = fadd <4 x double> %r, %s
   ret <4 x double> %t
@@ -35,7 +35,7 @@ entry:
 define <4 x double> @bar2(<4 x double>* %a) {
 entry:
   %r = load <4 x double>* %a, align 8
-  %b = getelementptr <4 x double>* %a, i32 1
+  %b = getelementptr <4 x double>, <4 x double>* %a, i32 1
   %s = load <4 x double>* %b, align 32
   %t = fadd <4 x double> %r, %s
   ret <4 x double> %t
@@ -44,7 +44,7 @@ entry:
 define <4 x double> @bar3(<4 x double>* %a) {
 entry:
   %r = load <4 x double>* %a, align 8
-  %b = getelementptr <4 x double>* %a, i32 1
+  %b = getelementptr <4 x double>, <4 x double>* %a, i32 1
   %s = load <4 x double>* %b, align 8
   %t = fadd <4 x double> %r, %s
   ret <4 x double> %t
@@ -53,9 +53,9 @@ entry:
 define <4 x double> @bar4(<4 x double>* %a) {
 entry:
   %r = load <4 x double>* %a, align 8
-  %b = getelementptr <4 x double>* %a, i32 1
+  %b = getelementptr <4 x double>, <4 x double>* %a, i32 1
   %s = load <4 x double>* %b, align 8
-  %c = getelementptr <4 x double>* %b, i32 1
+  %c = getelementptr <4 x double>, <4 x double>* %b, i32 1
   %t = load <4 x double>* %c, align 8
   %u = fadd <4 x double> %r, %s
   %v = fadd <4 x double> %u, %t

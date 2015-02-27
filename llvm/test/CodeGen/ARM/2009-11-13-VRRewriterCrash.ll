@@ -21,13 +21,13 @@ bb2.i:                                            ; preds = %bb
   br label %bb3.i
 
 bb3.i:                                            ; preds = %bb2.i, %bb
-  %1 = getelementptr inbounds %quuz* %a, i32 0, i32 1, i32 0, i32 0 ; <float*> [#uses=1]
+  %1 = getelementptr inbounds %quuz, %quuz* %a, i32 0, i32 1, i32 0, i32 0 ; <float*> [#uses=1]
   %2 = fsub float 0.000000e+00, undef             ; <float> [#uses=1]
-  %3 = getelementptr inbounds %quuz* %b, i32 0, i32 1, i32 0, i32 1 ; <float*> [#uses=1]
-  %4 = getelementptr inbounds %quuz* %b, i32 0, i32 1, i32 0, i32 2 ; <float*> [#uses=1]
+  %3 = getelementptr inbounds %quuz, %quuz* %b, i32 0, i32 1, i32 0, i32 1 ; <float*> [#uses=1]
+  %4 = getelementptr inbounds %quuz, %quuz* %b, i32 0, i32 1, i32 0, i32 2 ; <float*> [#uses=1]
   %5 = fsub float 0.000000e+00, undef             ; <float> [#uses=1]
-  %6 = getelementptr inbounds %quuz* %c, i32 0, i32 1, i32 0, i32 0 ; <float*> [#uses=1]
-  %7 = getelementptr inbounds %quuz* %c, i32 0, i32 1, i32 0, i32 1 ; <float*> [#uses=1]
+  %6 = getelementptr inbounds %quuz, %quuz* %c, i32 0, i32 1, i32 0, i32 0 ; <float*> [#uses=1]
+  %7 = getelementptr inbounds %quuz, %quuz* %c, i32 0, i32 1, i32 0, i32 1 ; <float*> [#uses=1]
   %8 = fsub float undef, undef                    ; <float> [#uses=1]
   %9 = fmul float 0.000000e+00, %8                ; <float> [#uses=1]
   %10 = fmul float %5, 0.000000e+00               ; <float> [#uses=1]
@@ -36,7 +36,7 @@ bb3.i:                                            ; preds = %bb2.i, %bb
   %13 = fmul float 0.000000e+00, undef            ; <float> [#uses=1]
   %14 = fsub float %12, %13                       ; <float> [#uses=2]
   store float %14, float* undef
-  %15 = getelementptr inbounds %bar* %0, i32 0, i32 0, i32 0, i32 3 ; <float*> [#uses=1]
+  %15 = getelementptr inbounds %bar, %bar* %0, i32 0, i32 0, i32 0, i32 3 ; <float*> [#uses=1]
   store float 0.000000e+00, float* %15
   %16 = fmul float %11, %11                       ; <float> [#uses=1]
   %17 = fadd float %16, 0.000000e+00              ; <float> [#uses=1]

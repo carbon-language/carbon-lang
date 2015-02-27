@@ -4,7 +4,7 @@ target triple = "powerpc64-unknown-linux-gnu"
 
 define i32 @test1(i64 %add, i64* %ptr) nounwind {
 entry:
-  %p1 = getelementptr i64* %ptr, i64 144115188075855
+  %p1 = getelementptr i64, i64* %ptr, i64 144115188075855
   br label %for.cond2.preheader
 
 for.cond2.preheader:
@@ -14,10 +14,10 @@ for.cond2.preheader:
 for.body4:
   %lsr.iv = phi i32 [ %lsr.iv.next, %for.body4 ], [ 16000, %for.cond2.preheader ]
   %i0 = phi i64* [ %p1, %for.cond2.preheader ], [ %i6, %for.body4 ]
-  %i6 = getelementptr i64* %i0, i64 400000
-  %i7 = getelementptr i64* %i6, i64 300000
-  %i8 = getelementptr i64* %i6, i64 200000
-  %i9 = getelementptr i64* %i6, i64 100000
+  %i6 = getelementptr i64, i64* %i0, i64 400000
+  %i7 = getelementptr i64, i64* %i6, i64 300000
+  %i8 = getelementptr i64, i64* %i6, i64 200000
+  %i9 = getelementptr i64, i64* %i6, i64 100000
   store i64 %add, i64* %i6, align 32
   store i64 %add, i64* %i7, align 32
   store i64 %add, i64* %i8, align 32

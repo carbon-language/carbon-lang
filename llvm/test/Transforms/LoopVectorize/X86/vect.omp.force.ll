@@ -35,10 +35,10 @@ for.body.preheader:
 
 for.body:
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %for.body.preheader ]
-  %arrayidx = getelementptr inbounds float* %B, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds float, float* %B, i64 %indvars.iv
   %0 = load float* %arrayidx, align 4, !llvm.mem.parallel_loop_access !1
   %call = tail call float @llvm.sin.f32(float %0)
-  %arrayidx2 = getelementptr inbounds float* %A, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds float, float* %A, i64 %indvars.iv
   store float %call, float* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !1
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
@@ -69,10 +69,10 @@ for.body.preheader:
 
 for.body:
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %for.body.preheader ]
-  %arrayidx = getelementptr inbounds float* %B, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds float, float* %B, i64 %indvars.iv
   %0 = load float* %arrayidx, align 4, !llvm.mem.parallel_loop_access !3
   %call = tail call float @llvm.sin.f32(float %0)
-  %arrayidx2 = getelementptr inbounds float* %A, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds float, float* %A, i64 %indvars.iv
   store float %call, float* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !3
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32

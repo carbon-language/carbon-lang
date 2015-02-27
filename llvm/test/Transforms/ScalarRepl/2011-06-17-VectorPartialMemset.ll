@@ -29,7 +29,7 @@ entry:
   %p = bitcast { <4 x float> }* %a to i8*
   call void @llvm.memset.p0i8.i32(i8* %p, i8 0, i32 16, i32 16, i1 false)
   %q = bitcast { <4 x float> }* %a to [2 x <2 x float>]*
-  %arrayidx = getelementptr inbounds [2 x <2 x float>]* %q, i32 0, i32 0
+  %arrayidx = getelementptr inbounds [2 x <2 x float>], [2 x <2 x float>]* %q, i32 0, i32 0
   store <2 x float> undef, <2 x float>* %arrayidx, align 8
   ret void
 }

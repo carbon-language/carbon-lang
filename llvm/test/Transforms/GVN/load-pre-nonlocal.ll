@@ -31,12 +31,12 @@ for.body:
   %s.09 = phi i32 [ 0, %for.body.lr.ph ], [ %add, %for.body ]
   %p.08 = phi i32* [ %0, %for.body.lr.ph ], [ %incdec.ptr, %for.body ]
   %2 = load i32* %p.08, align 4, !tbaa !5
-  %arrayidx = getelementptr inbounds i32* %1, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %1, i64 %indvars.iv
   store i32 %2, i32* %arrayidx, align 4, !tbaa !5
   %3 = load volatile i32* %p.08, align 4, !tbaa !5
   %add = add nsw i32 %3, %s.09
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
-  %incdec.ptr = getelementptr inbounds i32* %p.08, i64 1
+  %incdec.ptr = getelementptr inbounds i32, i32* %p.08, i64 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp ne i32 %lftr.wideiv, %n
   br i1 %exitcond, label %for.body, label %for.cond.for.end_crit_edge
@@ -66,14 +66,14 @@ if.then:
   br label %if.end
 
 if.else:
-  %arrayidx = getelementptr inbounds i32* %b, i64 2
+  %arrayidx = getelementptr inbounds i32, i32* %b, i64 2
   store i32 10, i32* %arrayidx, align 4, !tbaa !5
   br label %if.end
 
 if.end:
   %i.0 = phi i32 [ %0, %if.then ], [ 0, %if.else ]
   %p.0 = phi i32* [ getelementptr inbounds (%struct.S1* @s1, i64 0, i32 0), %if.then ], [ %b, %if.else ]
-  %add.ptr = getelementptr inbounds i32* %p.0, i64 1
+  %add.ptr = getelementptr inbounds i32, i32* %p.0, i64 1
   %1 = load i32* %add.ptr, align 4, !tbaa !5
   %add1 = add nsw i32 %1, %i.0
   ret i32 %add1

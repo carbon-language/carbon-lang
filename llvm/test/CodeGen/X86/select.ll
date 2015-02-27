@@ -62,7 +62,7 @@ define signext i8 @test4(i8* nocapture %P, double %F) nounwind readonly {
 entry:
 	%0 = fcmp olt double %F, 4.200000e+01		; <i1> [#uses=1]
 	%iftmp.0.0 = select i1 %0, i32 4, i32 0		; <i32> [#uses=1]
-	%1 = getelementptr i8* %P, i32 %iftmp.0.0		; <i8*> [#uses=1]
+	%1 = getelementptr i8, i8* %P, i32 %iftmp.0.0		; <i8*> [#uses=1]
 	%2 = load i8* %1, align 1		; <i8> [#uses=1]
 	ret i8 %2
 ; CHECK-LABEL: test4:

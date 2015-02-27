@@ -25,7 +25,7 @@ for.cond:                                         ; preds = %for.body, %lbl_818
 
 for.body:                                         ; preds = %for.cond
   %idxprom = sext i32 %0 to i64
-  %arrayidx = getelementptr inbounds [0 x i32]* getelementptr inbounds ([1 x [0 x i32]]* @g_244, i32 0, i64 0), i32 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [0 x i32], [0 x i32]* getelementptr inbounds ([1 x [0 x i32]]* @g_244, i32 0, i64 0), i32 0, i64 %idxprom
   %1 = load i32* %arrayidx, align 1
   store i32 %1, i32* @func_21_l_773, align 4
   store i32 1, i32* @g_814, align 4

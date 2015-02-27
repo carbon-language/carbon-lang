@@ -15,12 +15,12 @@ define void @example1() nounwind uwtable ssp {
 
 ; <label>:1                                       ; preds = %1, %0
   %indvars.iv = phi i64 [ 0, %0 ], [ %indvars.iv.next, %1 ]
-  %2 = getelementptr inbounds [2048 x i32]* @b, i64 0, i64 %indvars.iv
+  %2 = getelementptr inbounds [2048 x i32], [2048 x i32]* @b, i64 0, i64 %indvars.iv
   %3 = load i32* %2, align 4
-  %4 = getelementptr inbounds [2048 x i32]* @c, i64 0, i64 %indvars.iv
+  %4 = getelementptr inbounds [2048 x i32], [2048 x i32]* @c, i64 0, i64 %indvars.iv
   %5 = load i32* %4, align 4
   %6 = add nsw i32 %5, %3
-  %7 = getelementptr inbounds [2048 x i32]* @a, i64 0, i64 %indvars.iv
+  %7 = getelementptr inbounds [2048 x i32], [2048 x i32]* @a, i64 0, i64 %indvars.iv
   store i32 %6, i32* %7, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32

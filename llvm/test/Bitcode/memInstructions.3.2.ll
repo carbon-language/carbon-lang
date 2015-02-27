@@ -313,14 +313,14 @@ entry:
 
 define void @getelementptr({i8, i8}* %s, <4 x i8*> %ptrs, <4 x i64> %offsets ){
 entry:
-; CHECK: %res1 = getelementptr { i8, i8 }* %s, i32 1, i32 1
-  %res1 = getelementptr {i8, i8}* %s, i32 1, i32 1
+; CHECK: %res1 = getelementptr { i8, i8 }, { i8, i8 }* %s, i32 1, i32 1
+  %res1 = getelementptr {i8, i8}, {i8, i8}* %s, i32 1, i32 1
 
-; CHECK-NEXT: %res2 = getelementptr inbounds { i8, i8 }* %s, i32 1, i32 1
-  %res2 = getelementptr inbounds {i8, i8}* %s, i32 1, i32 1
+; CHECK-NEXT: %res2 = getelementptr inbounds { i8, i8 }, { i8, i8 }* %s, i32 1, i32 1
+  %res2 = getelementptr inbounds {i8, i8}, {i8, i8}* %s, i32 1, i32 1
 
-; CHECK-NEXT: %res3 = getelementptr <4 x i8*> %ptrs, <4 x i64> %offsets
-  %res3 = getelementptr <4 x i8*> %ptrs, <4 x i64> %offsets
+; CHECK-NEXT: %res3 = getelementptr i8, <4 x i8*> %ptrs, <4 x i64> %offsets
+  %res3 = getelementptr i8, <4 x i8*> %ptrs, <4 x i64> %offsets
 
   ret void
 }

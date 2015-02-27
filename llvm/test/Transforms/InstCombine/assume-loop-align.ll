@@ -25,10 +25,10 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
-  %arrayidx = getelementptr inbounds i32* %b, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, 1
-  %arrayidx5 = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %arrayidx5 = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   store i32 %add, i32* %arrayidx5, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 16
   %1 = trunc i64 %indvars.iv.next to i32

@@ -16,7 +16,7 @@ entry:
   %div = sdiv i32 %x, %y
   store i32 %div, i32* %P, align 4
   %rem = srem i32 %x, %y
-  %arrayidx6 = getelementptr inbounds i32* %P, i32 1
+  %arrayidx6 = getelementptr inbounds i32, i32* %P, i32 1
   store i32 %rem, i32* %arrayidx6, align 4
   ret void
 }
@@ -34,7 +34,7 @@ entry:
   %div = udiv i32 %x, %y
   store i32 %div, i32* %P, align 4
   %rem = urem i32 %x, %y
-  %arrayidx6 = getelementptr inbounds i32* %P, i32 1
+  %arrayidx6 = getelementptr inbounds i32, i32* %P, i32 1
   store i32 %rem, i32* %arrayidx6, align 4
   ret void
 }
@@ -66,7 +66,7 @@ bb:
 
 bb1:
   %line_indent_len.0 = phi i32 [ %4, %bb ], [ 0, %entry ]
-  %8 = getelementptr inbounds i8* null, i32 %line_indent_len.0
+  %8 = getelementptr inbounds i8, i8* null, i32 %line_indent_len.0
   store i8 0, i8* %8, align 1
   ret void
 }

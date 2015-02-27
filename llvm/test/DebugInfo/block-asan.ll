@@ -24,17 +24,17 @@ define void @foo() #0 {
 entry:
   %x = alloca %struct.__block_byref_x, align 8
   call void @llvm.dbg.declare(metadata %struct.__block_byref_x* %x, metadata !12, metadata !22), !dbg !23
-  %byref.isa = getelementptr inbounds %struct.__block_byref_x* %x, i32 0, i32 0, !dbg !24
+  %byref.isa = getelementptr inbounds %struct.__block_byref_x, %struct.__block_byref_x* %x, i32 0, i32 0, !dbg !24
   store i8* null, i8** %byref.isa, !dbg !24
-  %byref.forwarding = getelementptr inbounds %struct.__block_byref_x* %x, i32 0, i32 1, !dbg !24
+  %byref.forwarding = getelementptr inbounds %struct.__block_byref_x, %struct.__block_byref_x* %x, i32 0, i32 1, !dbg !24
   store %struct.__block_byref_x* %x, %struct.__block_byref_x** %byref.forwarding, !dbg !24
-  %byref.flags = getelementptr inbounds %struct.__block_byref_x* %x, i32 0, i32 2, !dbg !24
+  %byref.flags = getelementptr inbounds %struct.__block_byref_x, %struct.__block_byref_x* %x, i32 0, i32 2, !dbg !24
   store i32 0, i32* %byref.flags, !dbg !24
-  %byref.size = getelementptr inbounds %struct.__block_byref_x* %x, i32 0, i32 3, !dbg !24
+  %byref.size = getelementptr inbounds %struct.__block_byref_x, %struct.__block_byref_x* %x, i32 0, i32 3, !dbg !24
   store i32 32, i32* %byref.size, !dbg !24
-  %forwarding = getelementptr inbounds %struct.__block_byref_x* %x, i32 0, i32 1, !dbg !25
+  %forwarding = getelementptr inbounds %struct.__block_byref_x, %struct.__block_byref_x* %x, i32 0, i32 1, !dbg !25
   %0 = load %struct.__block_byref_x** %forwarding, !dbg !25
-  %x1 = getelementptr inbounds %struct.__block_byref_x* %0, i32 0, i32 4, !dbg !25
+  %x1 = getelementptr inbounds %struct.__block_byref_x, %struct.__block_byref_x* %0, i32 0, i32 4, !dbg !25
   %1 = load i32* %x1, align 4, !dbg !25
   call void @bar(i32 %1), !dbg !25
   %2 = bitcast %struct.__block_byref_x* %x to i8*, !dbg !26

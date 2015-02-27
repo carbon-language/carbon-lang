@@ -488,7 +488,7 @@ entry:
   %8 = bitcast double %7 to <8 x i8>
   %9 = add <8 x i8> %6, %8
   %10 = mul <8 x i8> %9, %2
-  %11 = getelementptr inbounds %struct.uint8x8_t* %dst, i32 0, i32 0
+  %11 = getelementptr inbounds %struct.uint8x8_t, %struct.uint8x8_t* %dst, i32 0, i32 0
   store <8 x i8> %10, <8 x i8>* %11, align 8
   ret void
 }
@@ -510,7 +510,7 @@ entry:
   %8 = bitcast double %7 to <8 x i8>
   %9 = add <8 x i8> %6, %8
   %10 = mul <8 x i8> %2, %9
-  %11 = getelementptr inbounds %struct.uint8x8_t* %dst, i32 0, i32 0
+  %11 = getelementptr inbounds %struct.uint8x8_t, %struct.uint8x8_t* %dst, i32 0, i32 0
   store <8 x i8> %10, <8 x i8>* %11, align 8
   ret void
 }

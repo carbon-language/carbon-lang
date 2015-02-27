@@ -87,7 +87,7 @@ entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   store %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"* %this, %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"** %this_addr
   %1 = load %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"** %this_addr, align 8 ; <%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"*> [#uses=1]
-  %2 = getelementptr inbounds %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"* %1, i32 0, i32 0 ; <i32*> [#uses=1]
+  %2 = getelementptr inbounds %"struct.boost::details::compressed_pair_imp<empty_t,int,1>", %"struct.boost::details::compressed_pair_imp<empty_t,int,1>"* %1, i32 0, i32 0 ; <i32*> [#uses=1]
   store i32* %2, i32** %0, align 8
   %3 = load i32** %0, align 8                     ; <i32*> [#uses=1]
   store i32* %3, i32** %retval, align 8
@@ -106,7 +106,7 @@ entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   store %"struct.boost::compressed_pair<empty_t,int>"* %this, %"struct.boost::compressed_pair<empty_t,int>"** %this_addr
   %1 = load %"struct.boost::compressed_pair<empty_t,int>"** %this_addr, align 8 ; <%"struct.boost::compressed_pair<empty_t,int>"*> [#uses=1]
-  %2 = getelementptr inbounds %"struct.boost::compressed_pair<empty_t,int>"* %1, i32 0, i32 0 ; <%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"*> [#uses=1]
+  %2 = getelementptr inbounds %"struct.boost::compressed_pair<empty_t,int>", %"struct.boost::compressed_pair<empty_t,int>"* %1, i32 0, i32 0 ; <%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"*> [#uses=1]
   %3 = call i32* @_ZN5boost7details19compressed_pair_impI7empty_tiLi1EE6secondEv(%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"* %2) nounwind ; <i32*> [#uses=1]
   store i32* %3, i32** %0, align 8
   %4 = load i32** %0, align 8                     ; <i32*> [#uses=1]
@@ -145,7 +145,7 @@ entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   store %"struct.boost::compressed_pair<empty_t,int>"* %this, %"struct.boost::compressed_pair<empty_t,int>"** %this_addr
   %1 = load %"struct.boost::compressed_pair<empty_t,int>"** %this_addr, align 8 ; <%"struct.boost::compressed_pair<empty_t,int>"*> [#uses=1]
-  %2 = getelementptr inbounds %"struct.boost::compressed_pair<empty_t,int>"* %1, i32 0, i32 0 ; <%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"*> [#uses=1]
+  %2 = getelementptr inbounds %"struct.boost::compressed_pair<empty_t,int>", %"struct.boost::compressed_pair<empty_t,int>"* %1, i32 0, i32 0 ; <%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"*> [#uses=1]
   %3 = call %struct.empty_base_t* @_ZN5boost7details19compressed_pair_impI7empty_tiLi1EE5firstEv(%"struct.boost::details::compressed_pair_imp<empty_t,int,1>"* %2) nounwind ; <%struct.empty_base_t*> [#uses=1]
   store %struct.empty_base_t* %3, %struct.empty_base_t** %0, align 8
   %4 = load %struct.empty_base_t** %0, align 8    ; <%struct.empty_base_t*> [#uses=1]

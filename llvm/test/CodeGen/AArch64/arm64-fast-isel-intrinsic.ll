@@ -142,7 +142,7 @@ define void @test_distant_memcpy(i8* %dst) {
 ; ARM64: ldrb [[BYTE:w[0-9]+]], [x[[ADDR]]]
 ; ARM64: strb [[BYTE]], [x0]
   %array = alloca i8, i32 8192
-  %elem = getelementptr i8* %array, i32 8000
+  %elem = getelementptr i8, i8* %array, i32 8000
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %dst, i8* %elem, i64 1, i32 1, i1 false)
   ret void
 }

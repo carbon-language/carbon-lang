@@ -46,7 +46,7 @@ entry:
 
 define %struct.__CFDictionary* @_ZN18SFLMutableListItem18GetPrefsDictionaryEv(%struct.SFLMutableListItem* %this) {
 entry:
-        %tmp4 = getelementptr %struct.SFLMutableListItem* %this, i32 0, i32 0  ; <i16*> [#uses=1]
+        %tmp4 = getelementptr %struct.SFLMutableListItem, %struct.SFLMutableListItem* %this, i32 0, i32 0  ; <i16*> [#uses=1]
         %tmp5 = load i16* %tmp4         ; <i16> [#uses=1]
         %tmp6 = icmp eq i16 %tmp5, 0            ; <i1> [#uses=1]
         br i1 %tmp6, label %cond_next22, label %cond_true

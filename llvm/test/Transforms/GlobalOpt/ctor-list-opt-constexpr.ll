@@ -16,7 +16,7 @@ target triple = "x86_64-apple-darwin10.0.0"
 ; arbitrary constant expression, the code generator can't handle it.
 define internal void @init1() {
 entry:
-  %tmp = getelementptr inbounds %struct.foo* @X, i32 0, i32 0
+  %tmp = getelementptr inbounds %struct.foo, %struct.foo* @X, i32 0, i32 0
   store i32* inttoptr (i64 sdiv (i64 ptrtoint (i32* @G to i64), i64 ptrtoint (i32* @H to i64)) to i32*), i32** %tmp, align 8
   ret void
 }
@@ -26,7 +26,7 @@ entry:
 ; PR11705 - ptrtoint isn't safe in general in global initializers.
 define internal void @init2() {
 entry:
-  %tmp = getelementptr inbounds %struct.bar* @X2, i32 0, i32 0
+  %tmp = getelementptr inbounds %struct.bar, %struct.bar* @X2, i32 0, i32 0
   store i128 ptrtoint (i32* @G to i128), i128* %tmp, align 16
   ret void
 }

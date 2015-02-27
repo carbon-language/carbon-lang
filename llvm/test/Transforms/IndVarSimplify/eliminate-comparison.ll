@@ -27,7 +27,7 @@ loop:
   br i1 %cond, label %if.then, label %for.inc
 
 if.then:
-  %arrayidx = getelementptr [0 x double]* @X, i64 0, i64 %i
+  %arrayidx = getelementptr [0 x double], [0 x double]* @X, i64 0, i64 %i
   store double 3.200000e+00, double* %arrayidx
   br label %for.inc
 
@@ -51,20 +51,20 @@ entry:
 
 bb13:
   %tmp66 = load i64** %tmp65, align 4
-  %tmp68 = getelementptr inbounds i64* %tmp66, i32 %i
+  %tmp68 = getelementptr inbounds i64, i64* %tmp66, i32 %i
   %tmp69 = load i64* %tmp68, align 4
   %tmp74 = load i64** %tmp73, align 4
-  %tmp76 = getelementptr inbounds i64* %tmp74, i32 %i
+  %tmp76 = getelementptr inbounds i64, i64* %tmp74, i32 %i
   %tmp77 = load i64* %tmp76, align 4
   %tmp78 = icmp ugt i64 %tmp69, %tmp77
   br i1 %tmp78, label %bb20.loopexit, label %bb15
 
 bb15:
   %tmp83 = load i64** %tmp82, align 4
-  %tmp85 = getelementptr inbounds i64* %tmp83, i32 %i
+  %tmp85 = getelementptr inbounds i64, i64* %tmp83, i32 %i
   %tmp86 = load i64* %tmp85, align 4
   %tmp91 = load i64** %tmp90, align 4
-  %tmp93 = getelementptr inbounds i64* %tmp91, i32 %i
+  %tmp93 = getelementptr inbounds i64, i64* %tmp91, i32 %i
   %tmp94 = load i64* %tmp93, align 4
   %tmp95 = icmp ult i64 %tmp86, %tmp94
   br i1 %tmp95, label %bb20.loopexit, label %bb17

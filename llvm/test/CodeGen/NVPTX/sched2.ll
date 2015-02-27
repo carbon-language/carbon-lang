@@ -12,13 +12,13 @@ define void @foo(<2 x i32>* %a) {
 ; CHECK-NEXT: add.s32
 ; CHECK-NEXT: add.s32
 ; CHECK-NEXT: add.s32
-  %ptr0 = getelementptr <2 x i32>* %a, i32 0
+  %ptr0 = getelementptr <2 x i32>, <2 x i32>* %a, i32 0
   %val0 = load <2 x i32>* %ptr0
-  %ptr1 = getelementptr <2 x i32>* %a, i32 1
+  %ptr1 = getelementptr <2 x i32>, <2 x i32>* %a, i32 1
   %val1 = load <2 x i32>* %ptr1
-  %ptr2 = getelementptr <2 x i32>* %a, i32 2
+  %ptr2 = getelementptr <2 x i32>, <2 x i32>* %a, i32 2
   %val2 = load <2 x i32>* %ptr2
-  %ptr3 = getelementptr <2 x i32>* %a, i32 3
+  %ptr3 = getelementptr <2 x i32>, <2 x i32>* %a, i32 3
   %val3 = load <2 x i32>* %ptr3
 
   %t0 = add <2 x i32> %val0, %val1

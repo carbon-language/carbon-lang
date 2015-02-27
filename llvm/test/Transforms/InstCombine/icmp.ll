@@ -244,7 +244,7 @@ define i1 @test23(i32 %x) nounwind {
 ; CHECK:    %cmp = icmp eq i64 %i, 1000
 ; CHECK:   ret i1 %cmp
 define i1 @test24(i64 %i) {
-  %p1 = getelementptr inbounds i32* getelementptr inbounds ([1000 x i32]* @X, i64 0, i64 0), i64 %i
+  %p1 = getelementptr inbounds i32, i32* getelementptr inbounds ([1000 x i32]* @X, i64 0, i64 0), i64 %i
   %cmp = icmp eq i32* %p1, getelementptr inbounds ([1000 x i32]* @X, i64 1, i64 0)
   ret i1 %cmp
 }
@@ -256,7 +256,7 @@ define i1 @test24(i64 %i) {
 ; CHECK: %cmp = icmp eq i16 %1, 1000
 ; CHECK: ret i1 %cmp
 define i1 @test24_as1(i64 %i) {
-  %p1 = getelementptr inbounds i32 addrspace(1)* getelementptr inbounds ([1000 x i32] addrspace(1)* @X_as1, i64 0, i64 0), i64 %i
+  %p1 = getelementptr inbounds i32, i32 addrspace(1)* getelementptr inbounds ([1000 x i32] addrspace(1)* @X_as1, i64 0, i64 0), i64 %i
   %cmp = icmp eq i32 addrspace(1)* %p1, getelementptr inbounds ([1000 x i32] addrspace(1)* @X_as1, i64 1, i64 0)
   ret i1 %cmp
 }
@@ -619,8 +619,8 @@ declare i32 @test58_d(i64)
 
 define i1 @test59(i8* %foo) {
   %bit = bitcast i8* %foo to i32*
-  %gep1 = getelementptr inbounds i32* %bit, i64 2
-  %gep2 = getelementptr inbounds i8* %foo, i64 10
+  %gep1 = getelementptr inbounds i32, i32* %bit, i64 2
+  %gep2 = getelementptr inbounds i8, i8* %foo, i64 10
   %cast1 = bitcast i32* %gep1 to i8*
   %cmp = icmp ult i8* %cast1, %gep2
   %use = ptrtoint i8* %cast1 to i64
@@ -632,23 +632,23 @@ define i1 @test59(i8* %foo) {
 
 define i1 @test59_as1(i8 addrspace(1)* %foo) {
   %bit = bitcast i8 addrspace(1)* %foo to i32 addrspace(1)*
-  %gep1 = getelementptr inbounds i32 addrspace(1)* %bit, i64 2
-  %gep2 = getelementptr inbounds i8 addrspace(1)* %foo, i64 10
+  %gep1 = getelementptr inbounds i32, i32 addrspace(1)* %bit, i64 2
+  %gep2 = getelementptr inbounds i8, i8 addrspace(1)* %foo, i64 10
   %cast1 = bitcast i32 addrspace(1)* %gep1 to i8 addrspace(1)*
   %cmp = icmp ult i8 addrspace(1)* %cast1, %gep2
   %use = ptrtoint i8 addrspace(1)* %cast1 to i64
   %call = call i32 @test58_d(i64 %use) nounwind
   ret i1 %cmp
 ; CHECK: @test59_as1
-; CHECK: %[[GEP:.+]] = getelementptr inbounds i8 addrspace(1)* %foo, i16 8
+; CHECK: %[[GEP:.+]] = getelementptr inbounds i8, i8 addrspace(1)* %foo, i16 8
 ; CHECK: ptrtoint i8 addrspace(1)* %[[GEP]] to i16
 ; CHECK: ret i1 true
 }
 
 define i1 @test60(i8* %foo, i64 %i, i64 %j) {
   %bit = bitcast i8* %foo to i32*
-  %gep1 = getelementptr inbounds i32* %bit, i64 %i
-  %gep2 = getelementptr inbounds i8* %foo, i64 %j
+  %gep1 = getelementptr inbounds i32, i32* %bit, i64 %i
+  %gep2 = getelementptr inbounds i8, i8* %foo, i64 %j
   %cast1 = bitcast i32* %gep1 to i8*
   %cmp = icmp ult i8* %cast1, %gep2
   ret i1 %cmp
@@ -660,8 +660,8 @@ define i1 @test60(i8* %foo, i64 %i, i64 %j) {
 
 define i1 @test60_as1(i8 addrspace(1)* %foo, i64 %i, i64 %j) {
   %bit = bitcast i8 addrspace(1)* %foo to i32 addrspace(1)*
-  %gep1 = getelementptr inbounds i32 addrspace(1)* %bit, i64 %i
-  %gep2 = getelementptr inbounds i8 addrspace(1)* %foo, i64 %j
+  %gep1 = getelementptr inbounds i32, i32 addrspace(1)* %bit, i64 %i
+  %gep2 = getelementptr inbounds i8, i8 addrspace(1)* %foo, i64 %j
   %cast1 = bitcast i32 addrspace(1)* %gep1 to i8 addrspace(1)*
   %cmp = icmp ult i8 addrspace(1)* %cast1, %gep2
   ret i1 %cmp
@@ -677,8 +677,8 @@ define i1 @test60_as1(i8 addrspace(1)* %foo, i64 %i, i64 %j) {
 ; bitcast. This uses the same sized addrspace.
 define i1 @test60_addrspacecast(i8* %foo, i64 %i, i64 %j) {
   %bit = addrspacecast i8* %foo to i32 addrspace(3)*
-  %gep1 = getelementptr inbounds i32 addrspace(3)* %bit, i64 %i
-  %gep2 = getelementptr inbounds i8* %foo, i64 %j
+  %gep1 = getelementptr inbounds i32, i32 addrspace(3)* %bit, i64 %i
+  %gep2 = getelementptr inbounds i8, i8* %foo, i64 %j
   %cast1 = addrspacecast i32 addrspace(3)* %gep1 to i8*
   %cmp = icmp ult i8* %cast1, %gep2
   ret i1 %cmp
@@ -690,8 +690,8 @@ define i1 @test60_addrspacecast(i8* %foo, i64 %i, i64 %j) {
 
 define i1 @test60_addrspacecast_smaller(i8* %foo, i16 %i, i64 %j) {
   %bit = addrspacecast i8* %foo to i32 addrspace(1)*
-  %gep1 = getelementptr inbounds i32 addrspace(1)* %bit, i16 %i
-  %gep2 = getelementptr inbounds i8* %foo, i64 %j
+  %gep1 = getelementptr inbounds i32, i32 addrspace(1)* %bit, i16 %i
+  %gep2 = getelementptr inbounds i8, i8* %foo, i64 %j
   %cast1 = addrspacecast i32 addrspace(1)* %gep1 to i8*
   %cmp = icmp ult i8* %cast1, %gep2
   ret i1 %cmp
@@ -704,8 +704,8 @@ define i1 @test60_addrspacecast_smaller(i8* %foo, i16 %i, i64 %j) {
 
 define i1 @test60_addrspacecast_larger(i8 addrspace(1)* %foo, i32 %i, i16 %j) {
   %bit = addrspacecast i8 addrspace(1)* %foo to i32 addrspace(2)*
-  %gep1 = getelementptr inbounds i32 addrspace(2)* %bit, i32 %i
-  %gep2 = getelementptr inbounds i8 addrspace(1)* %foo, i16 %j
+  %gep1 = getelementptr inbounds i32, i32 addrspace(2)* %bit, i32 %i
+  %gep2 = getelementptr inbounds i8, i8 addrspace(1)* %foo, i16 %j
   %cast1 = addrspacecast i32 addrspace(2)* %gep1 to i8 addrspace(1)*
   %cmp = icmp ult i8 addrspace(1)* %cast1, %gep2
   ret i1 %cmp
@@ -718,8 +718,8 @@ define i1 @test60_addrspacecast_larger(i8 addrspace(1)* %foo, i32 %i, i16 %j) {
 
 define i1 @test61(i8* %foo, i64 %i, i64 %j) {
   %bit = bitcast i8* %foo to i32*
-  %gep1 = getelementptr i32* %bit, i64 %i
-  %gep2 = getelementptr  i8* %foo, i64 %j
+  %gep1 = getelementptr i32, i32* %bit, i64 %i
+  %gep2 = getelementptr  i8,  i8* %foo, i64 %j
   %cast1 = bitcast i32* %gep1 to i8*
   %cmp = icmp ult i8* %cast1, %gep2
   ret i1 %cmp
@@ -731,8 +731,8 @@ define i1 @test61(i8* %foo, i64 %i, i64 %j) {
 
 define i1 @test61_as1(i8 addrspace(1)* %foo, i16 %i, i16 %j) {
   %bit = bitcast i8 addrspace(1)* %foo to i32 addrspace(1)*
-  %gep1 = getelementptr i32 addrspace(1)* %bit, i16 %i
-  %gep2 = getelementptr i8 addrspace(1)* %foo, i16 %j
+  %gep1 = getelementptr i32, i32 addrspace(1)* %bit, i16 %i
+  %gep2 = getelementptr i8, i8 addrspace(1)* %foo, i16 %j
   %cast1 = bitcast i32 addrspace(1)* %gep1 to i8 addrspace(1)*
   %cmp = icmp ult i8 addrspace(1)* %cast1, %gep2
   ret i1 %cmp
@@ -743,8 +743,8 @@ define i1 @test61_as1(i8 addrspace(1)* %foo, i16 %i, i16 %j) {
 }
 
 define i1 @test62(i8* %a) {
-  %arrayidx1 = getelementptr inbounds i8* %a, i64 1
-  %arrayidx2 = getelementptr inbounds i8* %a, i64 10
+  %arrayidx1 = getelementptr inbounds i8, i8* %a, i64 1
+  %arrayidx2 = getelementptr inbounds i8, i8* %a, i64 10
   %cmp = icmp slt i8* %arrayidx1, %arrayidx2
   ret i1 %cmp
 ; CHECK-LABEL: @test62(
@@ -754,8 +754,8 @@ define i1 @test62(i8* %a) {
 define i1 @test62_as1(i8 addrspace(1)* %a) {
 ; CHECK-LABEL: @test62_as1(
 ; CHECK-NEXT: ret i1 true
-  %arrayidx1 = getelementptr inbounds i8 addrspace(1)* %a, i64 1
-  %arrayidx2 = getelementptr inbounds i8 addrspace(1)* %a, i64 10
+  %arrayidx1 = getelementptr inbounds i8, i8 addrspace(1)* %a, i64 1
+  %arrayidx2 = getelementptr inbounds i8, i8 addrspace(1)* %a, i64 10
   %cmp = icmp slt i8 addrspace(1)* %arrayidx1, %arrayidx2
   ret i1 %cmp
 }
@@ -1115,8 +1115,8 @@ define i1 @icmp_add_and_shr_ne_0(i32 %X) {
 ; CHECK-LABEL: define i1 @test71(
 ; CHECK-NEXT: ret i1 false
 define i1 @test71(i8* %x) {
-  %a = getelementptr i8* %x, i64 8
-  %b = getelementptr inbounds i8* %x, i64 8
+  %a = getelementptr i8, i8* %x, i64 8
+  %b = getelementptr inbounds i8, i8* %x, i64 8
   %c = icmp ugt i8* %a, %b
   ret i1 %c
 }
@@ -1124,8 +1124,8 @@ define i1 @test71(i8* %x) {
 define i1 @test71_as1(i8 addrspace(1)* %x) {
 ; CHECK-LABEL: @test71_as1(
 ; CHECK-NEXT: ret i1 false
-  %a = getelementptr i8 addrspace(1)* %x, i64 8
-  %b = getelementptr inbounds i8 addrspace(1)* %x, i64 8
+  %a = getelementptr i8, i8 addrspace(1)* %x, i64 8
+  %b = getelementptr inbounds i8, i8 addrspace(1)* %x, i64 8
   %c = icmp ugt i8 addrspace(1)* %a, %b
   ret i1 %c
 }

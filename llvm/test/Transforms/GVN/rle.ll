@@ -143,7 +143,7 @@ define signext i16 @memset_to_i16_local(i16* %A) nounwind ssp {
 entry:
   %conv = bitcast i16* %A to i8* 
   tail call void @llvm.memset.p0i8.i64(i8* %conv, i8 1, i64 200, i32 1, i1 false)
-  %arrayidx = getelementptr inbounds i16* %A, i64 42
+  %arrayidx = getelementptr inbounds i16, i16* %A, i64 42
   %tmp2 = load i16* %arrayidx
   ret i16 %tmp2
 ; CHECK-LABEL: @memset_to_i16_local(
@@ -156,7 +156,7 @@ define float @memset_to_float_local(float* %A, i8 %Val) nounwind ssp {
 entry:
   %conv = bitcast float* %A to i8*                ; <i8*> [#uses=1]
   tail call void @llvm.memset.p0i8.i64(i8* %conv, i8 %Val, i64 400, i32 1, i1 false)
-  %arrayidx = getelementptr inbounds float* %A, i64 42 ; <float*> [#uses=1]
+  %arrayidx = getelementptr inbounds float, float* %A, i64 42 ; <float*> [#uses=1]
   %tmp2 = load float* %arrayidx                   ; <float> [#uses=1]
   ret float %tmp2
 ; CHECK-LABEL: @memset_to_float_local(
@@ -183,7 +183,7 @@ F:
   br label %Cont
 
 Cont:
-  %P2 = getelementptr i16* %P, i32 4
+  %P2 = getelementptr i16, i16* %P, i32 4
   %A = load i16* %P2
   ret i16 %A
 
@@ -202,7 +202,7 @@ define float @memcpy_to_float_local(float* %A) nounwind ssp {
 entry:
   %conv = bitcast float* %A to i8*                ; <i8*> [#uses=1]
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %conv, i8* bitcast ({i32, float, i32 }* @GCst to i8*), i64 12, i32 1, i1 false)
-  %arrayidx = getelementptr inbounds float* %A, i64 1 ; <float*> [#uses=1]
+  %arrayidx = getelementptr inbounds float, float* %A, i64 1 ; <float*> [#uses=1]
   %tmp2 = load float* %arrayidx                   ; <float> [#uses=1]
   ret float %tmp2
 ; CHECK-LABEL: @memcpy_to_float_local(
@@ -215,7 +215,7 @@ define float @memcpy_to_float_local_as1(float* %A) nounwind ssp {
 entry:
   %conv = bitcast float* %A to i8*                ; <i8*> [#uses=1]
   tail call void @llvm.memcpy.p0i8.p1i8.i64(i8* %conv, i8 addrspace(1)* bitcast ({i32, float, i32 } addrspace(1)* @GCst_as1 to i8 addrspace(1)*), i64 12, i32 1, i1 false)
-  %arrayidx = getelementptr inbounds float* %A, i64 1 ; <float*> [#uses=1]
+  %arrayidx = getelementptr inbounds float, float* %A, i64 1 ; <float*> [#uses=1]
   %tmp2 = load float* %arrayidx                   ; <float> [#uses=1]
   ret float %tmp2
 ; CHECK-LABEL: @memcpy_to_float_local_as1(
@@ -309,7 +309,7 @@ define i8 @coerce_offset0(i32 %V, i32* %P) {
   store i32 %V, i32* %P
    
   %P2 = bitcast i32* %P to i8*
-  %P3 = getelementptr i8* %P2, i32 2
+  %P3 = getelementptr i8, i8* %P2, i32 2
 
   %A = load i8* %P3
   ret i8 %A
@@ -322,7 +322,7 @@ define i8 @coerce_offset0_addrspacecast(i32 %V, i32* %P) {
   store i32 %V, i32* %P
 
   %P2 = addrspacecast i32* %P to i8 addrspace(1)*
-  %P3 = getelementptr i8 addrspace(1)* %P2, i32 2
+  %P3 = getelementptr i8, i8 addrspace(1)* %P2, i32 2
 
   %A = load i8 addrspace(1)* %P3
   ret i8 %A
@@ -335,7 +335,7 @@ define i8 @coerce_offset0_addrspacecast(i32 %V, i32* %P) {
 define i8 @coerce_offset_nonlocal0(i32* %P, i1 %cond) {
   %P2 = bitcast i32* %P to float*
   %P3 = bitcast i32* %P to i8*
-  %P4 = getelementptr i8* %P3, i32 2
+  %P4 = getelementptr i8, i8* %P3, i32 2
   br i1 %cond, label %T, label %F
 T:
   store i32 57005, i32* %P
@@ -360,7 +360,7 @@ Cont:
 ;; non-local i32 -> i8 partial redundancy load forwarding.
 define i8 @coerce_offset_pre0(i32* %P, i1 %cond) {
   %P3 = bitcast i32* %P to i8*
-  %P4 = getelementptr i8* %P3, i32 2
+  %P4 = getelementptr i8, i8* %P3, i32 2
   br i1 %cond, label %T, label %F
 T:
   store i32 42, i32* %P
@@ -427,13 +427,13 @@ F1:
   br i1 %cond2, label %T1, label %TY
   
 T1:
-  %P2 = getelementptr i32* %P, i32 %A
+  %P2 = getelementptr i32, i32* %P, i32 %A
   %x = load i32* %P2
   %cond = call i1 @cond2()
   br i1 %cond, label %TX, label %F
   
 F:
-  %P3 = getelementptr i32* %P, i32 2
+  %P3 = getelementptr i32, i32* %P, i32 2
   store i32 17, i32* %P3
   
   store i32 42, i32* %P2  ; Provides "P[A]".
@@ -464,7 +464,7 @@ block2:
  br label %block4
 
 block3:
-  %p2 = getelementptr i32* %p, i32 43
+  %p2 = getelementptr i32, i32* %p, i32 43
   store i32 97, i32* %p2
   br label %block4
 
@@ -481,7 +481,7 @@ block5:
   br i1 %cmpxy, label %block6, label %exit
   
 block6:
-  %C = getelementptr i32* %p, i32 %B
+  %C = getelementptr i32, i32* %p, i32 %B
   br i1 %cmpxy, label %block7, label %exit
   
 block7:
@@ -498,16 +498,16 @@ exit:
 define i8 @phi_trans4(i8* %p) {
 ; CHECK-LABEL: @phi_trans4(
 entry:
-  %X3 = getelementptr i8* %p, i32 192
+  %X3 = getelementptr i8, i8* %p, i32 192
   store i8 192, i8* %X3
   
-  %X = getelementptr i8* %p, i32 4
+  %X = getelementptr i8, i8* %p, i32 4
   %Y = load i8* %X
   br label %loop
 
 loop:
   %i = phi i32 [4, %entry], [192, %loop]
-  %X2 = getelementptr i8* %p, i32 %i
+  %X2 = getelementptr i8, i8* %p, i32 %i
   %Y2 = load i8* %X2
   
 ; CHECK: loop:
@@ -529,28 +529,28 @@ define i8 @phi_trans5(i8* %p) {
 ; CHECK-LABEL: @phi_trans5(
 entry:
   
-  %X4 = getelementptr i8* %p, i32 2
+  %X4 = getelementptr i8, i8* %p, i32 2
   store i8 19, i8* %X4
   
-  %X = getelementptr i8* %p, i32 4
+  %X = getelementptr i8, i8* %p, i32 4
   %Y = load i8* %X
   br label %loop
 
 loop:
   %i = phi i32 [4, %entry], [3, %cont]
-  %X2 = getelementptr i8* %p, i32 %i
+  %X2 = getelementptr i8, i8* %p, i32 %i
   %Y2 = load i8* %X2  ; Ensure this load is not being incorrectly replaced.
   %cond = call i1 @cond2()
   br i1 %cond, label %cont, label %out
 
 cont:
-  %Z = getelementptr i8* %X2, i32 -1
+  %Z = getelementptr i8, i8* %X2, i32 -1
   %Z2 = bitcast i8 *%Z to i32*
   store i32 50462976, i32* %Z2  ;; (1 << 8) | (2 << 16) | (3 << 24)
 
 
 ; CHECK: store i32
-; CHECK-NEXT: getelementptr i8* %p, i32 3
+; CHECK-NEXT: getelementptr i8, i8* %p, i32 3
 ; CHECK-NEXT: load i8*
   br label %loop
   
@@ -566,7 +566,7 @@ entry:
   %x = alloca [256 x i32], align 4                ; <[256 x i32]*> [#uses=2]
   %tmp = bitcast [256 x i32]* %x to i8*           ; <i8*> [#uses=1]
   call void @llvm.memset.p0i8.i64(i8* %tmp, i8 0, i64 1024, i32 4, i1 false)
-  %arraydecay = getelementptr inbounds [256 x i32]* %x, i32 0, i32 0 ; <i32*>
+  %arraydecay = getelementptr inbounds [256 x i32], [256 x i32]* %x, i32 0, i32 0 ; <i32*>
   %tmp1 = load i32* %arraydecay                   ; <i32> [#uses=1]
   ret i32 %tmp1
 ; CHECK-LABEL: @memset_to_load(
@@ -582,7 +582,7 @@ define i32 @load_load_partial_alias(i8* %P) nounwind ssp {
 entry:
   %0 = bitcast i8* %P to i32*
   %tmp2 = load i32* %0
-  %add.ptr = getelementptr inbounds i8* %P, i64 1
+  %add.ptr = getelementptr inbounds i8, i8* %P, i64 1
   %tmp5 = load i8* %add.ptr
   %conv = zext i8 %tmp5 to i32
   %add = add nsw i32 %tmp2, %conv
@@ -608,7 +608,7 @@ entry:
   br i1 %cmp, label %land.lhs.true, label %if.end
 
 land.lhs.true:                                    ; preds = %entry
-  %arrayidx4 = getelementptr inbounds i8* %P, i64 1
+  %arrayidx4 = getelementptr inbounds i8, i8* %P, i64 1
   %tmp5 = load i8* %arrayidx4, align 1
   %conv6 = zext i8 %tmp5 to i32
   ret i32 %conv6

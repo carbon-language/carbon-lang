@@ -12,7 +12,7 @@ define i16 @f2(i16* %v) {
 entry:
 ; CHECK-LABEL: f2:
 ; CHECK: ldrh.w r0, [r0, #2046]
-        %tmp2 = getelementptr i16* %v, i16 1023
+        %tmp2 = getelementptr i16, i16* %v, i16 1023
         %tmp = load i16* %tmp2
         ret i16 %tmp
 }
@@ -22,7 +22,7 @@ entry:
 ; CHECK-LABEL: f3:
 ; CHECK: mov.w r1, #4096
 ; CHECK: ldrh r0, [r0, r1]
-        %tmp2 = getelementptr i16* %v, i16 2048
+        %tmp2 = getelementptr i16, i16* %v, i16 2048
         %tmp = load i16* %tmp2
         ret i16 %tmp
 }

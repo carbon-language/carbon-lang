@@ -9,7 +9,7 @@ entry:
 	br i1 undef, label %return, label %if.end
 
 if.end:		; preds = %entry
-	%tmp35 = getelementptr %struct.re_pattern_buffer* %bufp, i64 0, i32 3		; <i64*> [#uses=1]
+	%tmp35 = getelementptr %struct.re_pattern_buffer, %struct.re_pattern_buffer* %bufp, i64 0, i32 3		; <i64*> [#uses=1]
 	store i64 %syntax, i64* %tmp35
 	store i32 undef, i32* undef
 	br i1 undef, label %if.then66, label %if.end102
@@ -80,7 +80,7 @@ while.cond979.preheader:		; preds = %if.then842, %land.lhs.true838, %cond.end834
 	%startoffset.0.ph = phi i32 [ 0, %cond.end834 ], [ 0, %land.lhs.true838 ], [ %conv851, %if.then842 ]		; <i32> [#uses=2]
 	%laststart.7.ph = phi i8* [ %laststart.2, %cond.end834 ], [ %laststart.2, %land.lhs.true838 ], [ %laststart.2, %if.then842 ]		; <i8*> [#uses=3]
 	%b.4.ph = phi i8* [ %b.1, %cond.end834 ], [ %b.1, %land.lhs.true838 ], [ %b.1, %if.then842 ]		; <i8*> [#uses=3]
-	%ctg29688 = getelementptr i8* %b.4.ph, i64 6		; <i8*> [#uses=1]
+	%ctg29688 = getelementptr i8, i8* %b.4.ph, i64 6		; <i8*> [#uses=1]
 	br label %while.cond979
 
 while.cond979:		; preds = %if.end1006, %while.cond979.preheader
@@ -102,21 +102,21 @@ while.end1088:		; preds = %while.cond979
 if.then1091:		; preds = %while.end1088
 	store i8 undef, i8* undef
 	%idx.ext1132.pre = zext i32 %startoffset.0.ph to i64		; <i64> [#uses=1]
-	%add.ptr1133.pre = getelementptr i8* %laststart.7.ph, i64 %idx.ext1132.pre		; <i8*> [#uses=1]
+	%add.ptr1133.pre = getelementptr i8, i8* %laststart.7.ph, i64 %idx.ext1132.pre		; <i8*> [#uses=1]
 	%sub.ptr.lhs.cast1135.pre = ptrtoint i8* %add.ptr1133.pre to i64		; <i64> [#uses=1]
 	br label %if.end1126
 
 if.else1101:		; preds = %while.end1088
 	%cond1109 = select i1 undef, i32 18, i32 14		; <i32> [#uses=1]
 	%idx.ext1112 = zext i32 %startoffset.0.ph to i64		; <i64> [#uses=1]
-	%add.ptr1113 = getelementptr i8* %laststart.7.ph, i64 %idx.ext1112		; <i8*> [#uses=2]
+	%add.ptr1113 = getelementptr i8, i8* %laststart.7.ph, i64 %idx.ext1112		; <i8*> [#uses=2]
 	%sub.ptr.rhs.cast1121 = ptrtoint i8* %add.ptr1113 to i64		; <i64> [#uses=1]
 	call fastcc void @insert_op1(i32 %cond1109, i8* %add.ptr1113, i32 undef, i8* %b.4.ph) ssp
 	br label %if.end1126
 
 if.end1126:		; preds = %if.else1101, %if.then1091
 	%sub.ptr.lhs.cast1135.pre-phi = phi i64 [ %sub.ptr.rhs.cast1121, %if.else1101 ], [ %sub.ptr.lhs.cast1135.pre, %if.then1091 ]		; <i64> [#uses=1]
-	%add.ptr1128 = getelementptr i8* %b.4.ph, i64 3		; <i8*> [#uses=1]
+	%add.ptr1128 = getelementptr i8, i8* %b.4.ph, i64 3		; <i8*> [#uses=1]
 	%sub.ptr.rhs.cast1136 = ptrtoint i8* %add.ptr1128 to i64		; <i64> [#uses=1]
 	%sub.ptr.sub1137 = sub i64 %sub.ptr.lhs.cast1135.pre-phi, %sub.ptr.rhs.cast1136		; <i64> [#uses=1]
 	%sub.ptr.sub11378527 = trunc i64 %sub.ptr.sub1137 to i32		; <i32> [#uses=1]

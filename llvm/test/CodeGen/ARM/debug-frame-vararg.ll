@@ -119,7 +119,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %i.05 = phi i32 [ %inc, %for.body ], [ 0, %entry ]
   %ap.cur = load i8** %vl, align 4
-  %ap.next = getelementptr i8* %ap.cur, i32 4
+  %ap.next = getelementptr i8, i8* %ap.cur, i32 4
   store i8* %ap.next, i8** %vl, align 4
   %0 = bitcast i8* %ap.cur to i32*
   %1 = load i32* %0, align 4

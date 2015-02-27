@@ -9,20 +9,20 @@ entry:
 
 vector.body:                                      ; preds = %vector.body, %entry
   %index = phi i64 [ 0, %entry ], [ %index.next, %vector.body ]
-  %0 = getelementptr inbounds double* %b, i64 %index
+  %0 = getelementptr inbounds double, double* %b, i64 %index
   %1 = bitcast double* %0 to <2 x double>*
   %wide.load = load <2 x double>* %1, align 8
   %.sum9 = or i64 %index, 2
-  %2 = getelementptr double* %b, i64 %.sum9
+  %2 = getelementptr double, double* %b, i64 %.sum9
   %3 = bitcast double* %2 to <2 x double>*
   %wide.load8 = load <2 x double>* %3, align 8
   %4 = fadd <2 x double> %wide.load, <double 1.000000e+00, double 1.000000e+00>
   %5 = fadd <2 x double> %wide.load8, <double 1.000000e+00, double 1.000000e+00>
-  %6 = getelementptr inbounds double* %a, i64 %index
+  %6 = getelementptr inbounds double, double* %a, i64 %index
   %7 = bitcast double* %6 to <2 x double>*
   store <2 x double> %4, <2 x double>* %7, align 8
   %.sum10 = or i64 %index, 2
-  %8 = getelementptr double* %a, i64 %.sum10
+  %8 = getelementptr double, double* %a, i64 %.sum10
   %9 = bitcast double* %8 to <2 x double>*
   store <2 x double> %5, <2 x double>* %9, align 8
   %index.next = add i64 %index, 4
@@ -45,12 +45,12 @@ entry:
 
 vector.body:                                      ; preds = %vector.body, %entry
   %index = phi i64 [ 0, %entry ], [ %index.next, %vector.body ]
-  %v0 = getelementptr inbounds double* %b, i64 %index
+  %v0 = getelementptr inbounds double, double* %b, i64 %index
   %v1 = bitcast double* %v0 to <2 x double>*
   %wide.load = load <2 x double>* %v1, align 8
   %v4 = fadd <2 x double> %wide.load, <double 1.000000e+00, double 1.000000e+00>
   %v5 = fmul <2 x double> %v4, <double 8.000000e+00, double 8.000000e+00>
-  %v6 = getelementptr inbounds double* %a, i64 %index
+  %v6 = getelementptr inbounds double, double* %a, i64 %index
   %v7 = bitcast double* %v6 to <2 x double>*
   store <2 x double> %v5, <2 x double>* %v7, align 8
   %index.next = add i64 %index, 2
@@ -84,17 +84,17 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %reduction.026 = phi i16 [ %add14, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr inbounds i16* %arr, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i16, i16* %arr, i64 %indvars.iv
   %0 = load i16* %arrayidx, align 2
   %add = add i16 %0, %reduction.026
   %sext = mul i64 %indvars.iv, 12884901888
   %idxprom3 = ashr exact i64 %sext, 32
-  %arrayidx4 = getelementptr inbounds i16* %arr, i64 %idxprom3
+  %arrayidx4 = getelementptr inbounds i16, i16* %arr, i64 %idxprom3
   %1 = load i16* %arrayidx4, align 2
   %add7 = add i16 %add, %1
   %sext28 = mul i64 %indvars.iv, 21474836480
   %idxprom10 = ashr exact i64 %sext28, 32
-  %arrayidx11 = getelementptr inbounds i16* %arr, i64 %idxprom10
+  %arrayidx11 = getelementptr inbounds i16, i16* %arr, i64 %idxprom10
   %2 = load i16* %arrayidx11, align 2
   %add14 = add i16 %add7, %2
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1

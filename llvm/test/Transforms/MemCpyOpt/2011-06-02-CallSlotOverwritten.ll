@@ -17,9 +17,9 @@ define i32 @foo() nounwind {
   call void @bar(%struct1* sret %x) nounwind
 ; CHECK: call void @bar(%struct1* sret %x)
 
-  %gepn1 = getelementptr inbounds %struct2* %y, i32 0, i32 0, i32 0
+  %gepn1 = getelementptr inbounds %struct2, %struct2* %y, i32 0, i32 0, i32 0
   store i32 0, i32* %gepn1, align 8
-  %gepn2 = getelementptr inbounds %struct2* %y, i32 0, i32 0, i32 1
+  %gepn2 = getelementptr inbounds %struct2, %struct2* %y, i32 0, i32 0, i32 1
   store i32 0, i32* %gepn2, align 4
 
   %bit1 = bitcast %struct1* %x to i64*
@@ -30,7 +30,7 @@ define i32 @foo() nounwind {
 ; CHECK: %load = load i64* %bit1, align 8
 ; CHECK: store i64 %load, i64* %bit2, align 8
 
-  %gep1 = getelementptr %struct2* %y, i32 0, i32 0, i32 0
+  %gep1 = getelementptr %struct2, %struct2* %y, i32 0, i32 0, i32 0
   %ret = load i32* %gep1
   ret i32 %ret
 }

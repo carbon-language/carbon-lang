@@ -27,8 +27,8 @@ bb39:		; preds = %bb39, %bb40.preheader
 	br i1 false, label %bb39, label %bb49.outer
 
 bb49.outer:		; preds = %bb39, %bb40.preheader
-	getelementptr %struct.res_state* %state, i32 0, i32 3		; <i32*>:1 [#uses=0]
-	getelementptr %struct.res_state* %state, i32 0, i32 7		; <i32*>:2 [#uses=0]
+	getelementptr %struct.res_state, %struct.res_state* %state, i32 0, i32 3		; <i32*>:1 [#uses=0]
+	getelementptr %struct.res_state, %struct.res_state* %state, i32 0, i32 7		; <i32*>:2 [#uses=0]
 	%base10.1 = select i1 false, float* null, float* null		; <float*> [#uses=1]
 	br label %bb74
 
@@ -43,7 +43,7 @@ bb71:		; preds = %bb74, %bb69
 
 bb73:		; preds = %bb71
 	%.rec = add i32 %base10.2.ph.rec, 1		; <i32> [#uses=2]
-	getelementptr float* %base10.1, i32 %.rec		; <float*>:4 [#uses=1]
+	getelementptr float, float* %base10.1, i32 %.rec		; <float*>:4 [#uses=1]
 	br label %bb74
 
 bb74:		; preds = %bb73, %bb71, %bb49.outer
@@ -89,7 +89,7 @@ entry:
 define i32 @vorbis_comment_query_count(%struct.vorbis_comment* %vc, i8* %tag) nounwind  {
 entry:
 	%strlen = call i32 @strlen( i8* null )		; <i32> [#uses=1]
-	%endptr = getelementptr i8* null, i32 %strlen		; <i8*> [#uses=0]
+	%endptr = getelementptr i8, i8* null, i32 %strlen		; <i8*> [#uses=0]
 	unreachable
 }
 

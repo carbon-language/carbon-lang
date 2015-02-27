@@ -46,7 +46,7 @@ cond_false:		; preds = %entry
 	br label %cond_next
 
 cond_next:		; preds = %cond_false, %cond_true
-	%tmp5 = getelementptr [10 x i8]* @.str, i32 0, i32 0		; <i8*> [#uses=1]
+	%tmp5 = getelementptr [10 x i8], [10 x i8]* @.str, i32 0, i32 0		; <i8*> [#uses=1]
 	%tmp6 = load i32* %iftmp.0, align 4		; <i32> [#uses=1]
 	%tmp7 = call i32 (i8*, ...)* @printf( i8* noalias  %tmp5, i32 %tmp6 ) nounwind 		; <i32> [#uses=0]
 	br label %return

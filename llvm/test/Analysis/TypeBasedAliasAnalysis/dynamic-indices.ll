@@ -12,7 +12,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; CHECK: define void @vrlh(
 
 ; CHECK: for.end:
-; CHECK:   %arrayidx31 = getelementptr inbounds %union.vector_t* %t, i64 0, i32 0, i64 1
+; CHECK:   %arrayidx31 = getelementptr inbounds %union.vector_t, %union.vector_t* %t, i64 0, i32 0, i64 1
 ; CHECK:   %tmp32 = load i64* %arrayidx31, align 8, !tbaa [[TAG:!.*]]
 
 define void @vrlh(%union.vector_t* %va, %union.vector_t* %vb, %union.vector_t* %vd) nounwind {
@@ -25,21 +25,21 @@ for.body:                                         ; preds = %entry, %for.body
   %sub = sub nsw i32 7, %i.01
   %idxprom = sext i32 %sub to i64
   %half = bitcast %union.vector_t* %vb to [8 x i16]*
-  %arrayidx = getelementptr inbounds [8 x i16]* %half, i64 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [8 x i16], [8 x i16]* %half, i64 0, i64 %idxprom
   %tmp4 = load i16* %arrayidx, align 2, !tbaa !0
   %conv = zext i16 %tmp4 to i32
   %and = and i32 %conv, 15
   %sub6 = sub nsw i32 7, %i.01
   %idxprom7 = sext i32 %sub6 to i64
   %half9 = bitcast %union.vector_t* %va to [8 x i16]*
-  %arrayidx10 = getelementptr inbounds [8 x i16]* %half9, i64 0, i64 %idxprom7
+  %arrayidx10 = getelementptr inbounds [8 x i16], [8 x i16]* %half9, i64 0, i64 %idxprom7
   %tmp11 = load i16* %arrayidx10, align 2, !tbaa !0
   %conv12 = zext i16 %tmp11 to i32
   %shl = shl i32 %conv12, %and
   %sub15 = sub nsw i32 7, %i.01
   %idxprom16 = sext i32 %sub15 to i64
   %half18 = bitcast %union.vector_t* %va to [8 x i16]*
-  %arrayidx19 = getelementptr inbounds [8 x i16]* %half18, i64 0, i64 %idxprom16
+  %arrayidx19 = getelementptr inbounds [8 x i16], [8 x i16]* %half18, i64 0, i64 %idxprom16
   %tmp20 = load i16* %arrayidx19, align 2, !tbaa !0
   %conv21 = zext i16 %tmp20 to i32
   %sub23 = sub nsw i32 16, %and
@@ -49,20 +49,20 @@ for.body:                                         ; preds = %entry, %for.body
   %sub26 = sub nsw i32 7, %i.01
   %idxprom27 = sext i32 %sub26 to i64
   %half28 = bitcast %union.vector_t* %t to [8 x i16]*
-  %arrayidx29 = getelementptr inbounds [8 x i16]* %half28, i64 0, i64 %idxprom27
+  %arrayidx29 = getelementptr inbounds [8 x i16], [8 x i16]* %half28, i64 0, i64 %idxprom27
   store i16 %conv24, i16* %arrayidx29, align 2, !tbaa !0
   %inc = add nsw i32 %i.01, 1
   %cmp = icmp slt i32 %inc, 8
   br i1 %cmp, label %for.body, label %for.end
 
 for.end:                                          ; preds = %for.body
-  %arrayidx31 = getelementptr inbounds %union.vector_t* %t, i64 0, i32 0, i64 1
+  %arrayidx31 = getelementptr inbounds %union.vector_t, %union.vector_t* %t, i64 0, i32 0, i64 1
   %tmp32 = load i64* %arrayidx31, align 8, !tbaa !3
-  %arrayidx35 = getelementptr inbounds %union.vector_t* %vd, i64 0, i32 0, i64 1
+  %arrayidx35 = getelementptr inbounds %union.vector_t, %union.vector_t* %vd, i64 0, i32 0, i64 1
   store i64 %tmp32, i64* %arrayidx35, align 8, !tbaa !3
-  %arrayidx37 = getelementptr inbounds %union.vector_t* %t, i64 0, i32 0, i64 0
+  %arrayidx37 = getelementptr inbounds %union.vector_t, %union.vector_t* %t, i64 0, i32 0, i64 0
   %tmp38 = load i64* %arrayidx37, align 8, !tbaa !3
-  %arrayidx41 = getelementptr inbounds %union.vector_t* %vd, i64 0, i32 0, i64 0
+  %arrayidx41 = getelementptr inbounds %union.vector_t, %union.vector_t* %vd, i64 0, i32 0, i64 0
   store i64 %tmp38, i64* %arrayidx41, align 8, !tbaa !3
   ret void
 }
@@ -75,13 +75,13 @@ for.end:                                          ; preds = %for.body
 
 define i32 @test0(%struct.X* %a) nounwind {
 entry:
-  %i = getelementptr inbounds %struct.X* %a, i64 0, i32 0
+  %i = getelementptr inbounds %struct.X, %struct.X* %a, i64 0, i32 0
   store i32 0, i32* %i, align 4, !tbaa !4
   br label %for.body
 
 for.body:                                         ; preds = %entry, %for.body
   %i2.01 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
-  %f = getelementptr inbounds %struct.X* %a, i64 %i2.01, i32 1
+  %f = getelementptr inbounds %struct.X, %struct.X* %a, i64 %i2.01, i32 1
   %tmp6 = load float* %f, align 4, !tbaa !5
   %mul = fmul float %tmp6, 0x40019999A0000000
   store float %mul, float* %f, align 4, !tbaa !5
@@ -90,7 +90,7 @@ for.body:                                         ; preds = %entry, %for.body
   br i1 %cmp, label %for.body, label %for.end
 
 for.end:                                          ; preds = %for.body
-  %i9 = getelementptr inbounds %struct.X* %a, i64 0, i32 0
+  %i9 = getelementptr inbounds %struct.X, %struct.X* %a, i64 0, i32 0
   %tmp10 = load i32* %i9, align 4, !tbaa !4
   ret i32 %tmp10
 }
@@ -103,13 +103,13 @@ for.end:                                          ; preds = %for.body
 
 define float @test1(%struct.X* %a) nounwind {
 entry:
-  %f = getelementptr inbounds %struct.X* %a, i64 0, i32 1
+  %f = getelementptr inbounds %struct.X, %struct.X* %a, i64 0, i32 1
   store float 0x3FD3333340000000, float* %f, align 4, !tbaa !5
   br label %for.body
 
 for.body:                                         ; preds = %entry, %for.body
   %i.01 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
-  %i5 = getelementptr inbounds %struct.X* %a, i64 %i.01, i32 0
+  %i5 = getelementptr inbounds %struct.X, %struct.X* %a, i64 %i.01, i32 0
   %tmp6 = load i32* %i5, align 4, !tbaa !4
   %mul = mul nsw i32 %tmp6, 3
   store i32 %mul, i32* %i5, align 4, !tbaa !4
@@ -118,7 +118,7 @@ for.body:                                         ; preds = %entry, %for.body
   br i1 %cmp, label %for.body, label %for.end
 
 for.end:                                          ; preds = %for.body
-  %f9 = getelementptr inbounds %struct.X* %a, i64 0, i32 1
+  %f9 = getelementptr inbounds %struct.X, %struct.X* %a, i64 0, i32 1
   %tmp10 = load float* %f9, align 4, !tbaa !5
   ret float %tmp10
 }

@@ -29,7 +29,7 @@ define double @f3(double *%base) {
 ; CHECK-LABEL: f3:
 ; CHECK: sqdb %f0, 4088(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 511
+  %ptr = getelementptr double, double *%base, i64 511
   %val = load double *%ptr
   %res = call double @llvm.sqrt.f64(double %val)
   ret double %res
@@ -42,7 +42,7 @@ define double @f4(double *%base) {
 ; CHECK: aghi %r2, 4096
 ; CHECK: sqdb %f0, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 512
+  %ptr = getelementptr double, double *%base, i64 512
   %val = load double *%ptr
   %res = call double @llvm.sqrt.f64(double %val)
   ret double %res
@@ -54,7 +54,7 @@ define double @f5(double *%base) {
 ; CHECK: aghi %r2, -8
 ; CHECK: sqdb %f0, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 -1
+  %ptr = getelementptr double, double *%base, i64 -1
   %val = load double *%ptr
   %res = call double @llvm.sqrt.f64(double %val)
   ret double %res
@@ -66,8 +66,8 @@ define double @f6(double *%base, i64 %index) {
 ; CHECK: sllg %r1, %r3, 3
 ; CHECK: sqdb %f0, 800(%r1,%r2)
 ; CHECK: br %r14
-  %ptr1 = getelementptr double *%base, i64 %index
-  %ptr2 = getelementptr double *%ptr1, i64 100
+  %ptr1 = getelementptr double, double *%base, i64 %index
+  %ptr2 = getelementptr double, double *%ptr1, i64 100
   %val = load double *%ptr2
   %res = call double @llvm.sqrt.f64(double %val)
   ret double %res

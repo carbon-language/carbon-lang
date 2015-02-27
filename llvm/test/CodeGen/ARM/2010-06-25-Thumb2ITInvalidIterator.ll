@@ -21,7 +21,7 @@ entry:
 
 while.cond:                                       ; preds = %while.body, %entry
   %0 = phi i32 [ 0, %entry ], [ %inc, %while.body ] ; <i32> [#uses=3]
-  %buf.addr.0 = getelementptr i8* %buf, i32 %0    ; <i8*> [#uses=1]
+  %buf.addr.0 = getelementptr i8, i8* %buf, i32 %0    ; <i8*> [#uses=1]
   %cmp7 = icmp ult i32 %0, %nbytes.addr.0, !dbg !20 ; <i1> [#uses=1]
   br i1 %cmp7, label %land.rhs, label %while.end, !dbg !20
 

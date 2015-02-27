@@ -23,7 +23,7 @@ bb123.preheader:
 bb43:
 	call fastcc void @f1( float* %tmp8, float* null, i32 0 )
 	%tmp70 = load i32* null
-	%tmp85 = getelementptr float* %tmp8, i32 0
+	%tmp85 = getelementptr float, float* %tmp8, i32 0
 	call fastcc void @f2( float* null, float* null, float* %tmp85, i32 %tmp70 )
 	ret void
 
@@ -60,7 +60,7 @@ define void @t2(%struct.comment* %vc, i8* %tag, i8* %contents) {
 	%tmp6 = alloca i8, i32 %tmp5
 	%tmp9 = call i8* @strcpy( i8* %tmp6, i8* %tag )
 	%tmp6.len = call i32 @strlen( i8* %tmp6 )
-	%tmp6.indexed = getelementptr i8* %tmp6, i32 %tmp6.len
+	%tmp6.indexed = getelementptr i8, i8* %tmp6, i32 %tmp6.len
 	call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp6.indexed, i8* getelementptr inbounds ([2 x i8]* @str215, i32 0, i32 0), i32 2, i32 1, i1 false)
 	%tmp15 = call i8* @strcat( i8* %tmp6, i8* %contents )
 	call fastcc void @comment_add( %struct.comment* %vc, i8* %tmp6 )

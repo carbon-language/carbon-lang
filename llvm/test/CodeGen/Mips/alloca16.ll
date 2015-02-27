@@ -40,33 +40,33 @@ entry:
   %5 = load i32* @jjjj, align 4
   %6 = load i32* @iiii, align 4
   %7 = load i32** %ip, align 4
-  %arrayidx = getelementptr inbounds i32* %7, i32 %6
+  %arrayidx = getelementptr inbounds i32, i32* %7, i32 %6
   store i32 %5, i32* %arrayidx, align 4
   %8 = load i32* @kkkk, align 4
   %9 = load i32* @jjjj, align 4
   %10 = load i32** %ip, align 4
-  %arrayidx1 = getelementptr inbounds i32* %10, i32 %9
+  %arrayidx1 = getelementptr inbounds i32, i32* %10, i32 %9
   store i32 %8, i32* %arrayidx1, align 4
   %11 = load i32* @iiii, align 4
   %12 = load i32* @kkkk, align 4
   %13 = load i32** %ip, align 4
-  %arrayidx2 = getelementptr inbounds i32* %13, i32 %12
+  %arrayidx2 = getelementptr inbounds i32, i32* %13, i32 %12
   store i32 %11, i32* %arrayidx2, align 4
   %14 = load i32** %ip, align 4
-  %arrayidx3 = getelementptr inbounds i32* %14, i32 25
+  %arrayidx3 = getelementptr inbounds i32, i32* %14, i32 25
   %15 = load i32* %arrayidx3, align 4
   store i32 %15, i32* @riii, align 4
   %16 = load i32** %ip, align 4
-  %arrayidx4 = getelementptr inbounds i32* %16, i32 35
+  %arrayidx4 = getelementptr inbounds i32, i32* %16, i32 35
   %17 = load i32* %arrayidx4, align 4
   store i32 %17, i32* @rjjj, align 4
   %18 = load i32** %ip, align 4
-  %arrayidx5 = getelementptr inbounds i32* %18, i32 100
+  %arrayidx5 = getelementptr inbounds i32, i32* %18, i32 100
   %19 = load i32* %arrayidx5, align 4
   store i32 %19, i32* @rkkk, align 4
   %20 = load i32* @t, align 4
   %21 = load i32** %ip, align 4
-  %arrayidx6 = getelementptr inbounds i32* %21, i32 %20
+  %arrayidx6 = getelementptr inbounds i32, i32* %21, i32 %20
   %22 = load i32* %arrayidx6, align 4
 ; 16: 	addiu $sp, -16
   call void @temp(i32 %22)

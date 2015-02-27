@@ -7,7 +7,7 @@ target datalayout = "e-p:32:32:32-p1:16:16:16-p2:8:8:8-i1:8:32-i8:8:32-i16:16:32
 ; Check that we can find inttoptr -> illegal bitcasts when hidden
 ; inside constantexpr pointer operands
 define i32 addrspace(2)* @illegal_bitcast_inttoptr_as_1_to_2_inside_gep() {
-  %cast = getelementptr i32 addrspace(2)* bitcast (i32 addrspace(1)* inttoptr (i32 1234 to i32 addrspace(1)*) to i32 addrspace(2)*), i32 3
+  %cast = getelementptr i32, i32 addrspace(2)* bitcast (i32 addrspace(1)* inttoptr (i32 1234 to i32 addrspace(1)*) to i32 addrspace(2)*), i32 3
   ret i32 addrspace(2)* %cast
 }
 

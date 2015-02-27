@@ -43,7 +43,7 @@ bb11:		; preds = %bb9
 	store i32 0, i32* @al_len, align 4
 	store i32 0, i32* @no_mat, align 4
 	store i32 0, i32* @no_mis, align 4
-	%3 = getelementptr i8* %B, i32 %0		; <i8*> [#uses=1]
+	%3 = getelementptr i8, i8* %B, i32 %0		; <i8*> [#uses=1]
 	tail call  void @diff(i8* undef, i8* %3, i32 undef, i32 undef, i32 undef, i32 undef) nounwind
 	%4 = sitofp i32 undef to double		; <double> [#uses=1]
 	%5 = fdiv double %4, 1.000000e+01		; <double> [#uses=1]

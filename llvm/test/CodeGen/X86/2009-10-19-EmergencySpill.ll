@@ -20,9 +20,9 @@ entry:
   %8 = lshr i64 %5, 8                             ; <i64> [#uses=1]
   %9 = trunc i64 %8 to i8                         ; <i8> [#uses=1]
   %.sum4 = add i64 %4, 6                          ; <i64> [#uses=1]
-  %10 = getelementptr inbounds i8* %0, i64 %.sum4 ; <i8*> [#uses=1]
+  %10 = getelementptr inbounds i8, i8* %0, i64 %.sum4 ; <i8*> [#uses=1]
   store i8 %9, i8* %10, align 1
-  %11 = getelementptr inbounds %struct.Rtree* %pRtree, i64 0, i32 3 ; <i32*> [#uses=1]
+  %11 = getelementptr inbounds %struct.Rtree, %struct.Rtree* %pRtree, i64 0, i32 3 ; <i32*> [#uses=1]
   br i1 undef, label %bb.nph, label %bb2
 
 bb.nph:                                           ; preds = %entry
@@ -31,11 +31,11 @@ bb.nph:                                           ; preds = %entry
 
 bb:                                               ; preds = %bb, %bb.nph
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %bb ] ; <i64> [#uses=3]
-  %scevgep = getelementptr %struct.RtreeCell* %pCell, i64 0, i32 1, i64 %indvar ; <%union.RtreeCoord*> [#uses=1]
+  %scevgep = getelementptr %struct.RtreeCell, %struct.RtreeCell* %pCell, i64 0, i32 1, i64 %indvar ; <%union.RtreeCoord*> [#uses=1]
   %scevgep12 = bitcast %union.RtreeCoord* %scevgep to i32* ; <i32*> [#uses=1]
   %tmp = shl i64 %indvar, 2                       ; <i64> [#uses=1]
   %tmp26 = add i64 %tmp, %tmp25                   ; <i64> [#uses=1]
-  %scevgep27 = getelementptr i8* %0, i64 %tmp26   ; <i8*> [#uses=1]
+  %scevgep27 = getelementptr i8, i8* %0, i64 %tmp26   ; <i8*> [#uses=1]
   %12 = load i32* %scevgep12, align 4             ; <i32> [#uses=1]
   %13 = lshr i32 %12, 24                          ; <i32> [#uses=1]
   %14 = trunc i32 %13 to i8                       ; <i8> [#uses=1]
@@ -48,7 +48,7 @@ bb:                                               ; preds = %bb, %bb.nph
   br i1 %17, label %bb, label %bb2
 
 bb2:                                              ; preds = %bb, %entry
-  %18 = getelementptr inbounds %struct.RtreeNode* %pNode, i64 0, i32 3 ; <i32*> [#uses=1]
+  %18 = getelementptr inbounds %struct.RtreeNode, %struct.RtreeNode* %pNode, i64 0, i32 3 ; <i32*> [#uses=1]
   store i32 1, i32* %18, align 4
   ret void
 }

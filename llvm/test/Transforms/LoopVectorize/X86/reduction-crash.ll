@@ -20,11 +20,11 @@ bb2:                                              ; preds = %bb
 bb3:                                              ; preds = %bb3, %bb2
   %tmp4 = phi double [ %tmp9, %bb3 ], [ %tmp, %bb2 ]
   %tmp5 = phi i32 [ %tmp8, %bb3 ], [ 0, %bb2 ]
-  %tmp6 = getelementptr inbounds [16 x double]* undef, i32 0, i32 %tmp5
+  %tmp6 = getelementptr inbounds [16 x double], [16 x double]* undef, i32 0, i32 %tmp5
   %tmp7 = load double* %tmp6, align 4
   %tmp8 = add nsw i32 %tmp5, 1
   %tmp9 = fadd fast double %tmp4, undef
-  %tmp10 = getelementptr inbounds float* %arg, i32 %tmp5
+  %tmp10 = getelementptr inbounds float, float* %arg, i32 %tmp5
   store float undef, float* %tmp10, align 4
   %tmp11 = icmp eq i32 %tmp8, %arg1
   br i1 %tmp11, label %bb12, label %bb3

@@ -21,9 +21,9 @@ for.cond:                                         ; preds = %for.inc, %entry
 
 for.body:                                         ; preds = %for.cond
   store i32 0, i32* %p.addr.0, align 4
-  %add.ptr = getelementptr inbounds i32* %p.addr.0, i64 %div
+  %add.ptr = getelementptr inbounds i32, i32* %p.addr.0, i64 %div
   store i32 1, i32* %add.ptr, align 4
-  %add.ptr1 = getelementptr inbounds i32* %add.ptr, i64 %div
+  %add.ptr1 = getelementptr inbounds i32, i32* %add.ptr, i64 %div
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body
@@ -50,9 +50,9 @@ for.cond:                                         ; preds = %for.inc, %entry
 
 for.body:                                         ; preds = %for.cond
   store i32 0, i32* %p.addr.0, align 4
-  %add.ptr = getelementptr inbounds i32* %p.addr.0, i64 %div
+  %add.ptr = getelementptr inbounds i32, i32* %p.addr.0, i64 %div
   store i32 1, i32* %add.ptr, align 4
-  %add.ptr1 = getelementptr inbounds i32* %add.ptr, i64 %div
+  %add.ptr1 = getelementptr inbounds i32, i32* %add.ptr, i64 %div
   br label %for.inc
 
 for.inc:                                          ; preds = %for.body

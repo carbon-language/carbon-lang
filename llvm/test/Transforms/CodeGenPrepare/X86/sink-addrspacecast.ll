@@ -8,7 +8,7 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK: add i64 %sunkaddr, 40
 define void @load_cast_gep(i1 %cond, i64* %base) {
 entry:
-  %addr = getelementptr inbounds i64* %base, i64 5
+  %addr = getelementptr inbounds i64, i64* %base, i64 5
   %casted = addrspacecast i64* %addr to i32 addrspace(1)*
   br i1 %cond, label %if.then, label %fallthrough
 
@@ -25,7 +25,7 @@ fallthrough:
 define void @store_gep_cast(i1 %cond, i64* %base) {
 entry:
   %casted = addrspacecast i64* %base to i32 addrspace(1)*
-  %addr = getelementptr inbounds i32 addrspace(1)* %casted, i64 5
+  %addr = getelementptr inbounds i32, i32 addrspace(1)* %casted, i64 5
   br i1 %cond, label %if.then, label %fallthrough
 
 if.then:

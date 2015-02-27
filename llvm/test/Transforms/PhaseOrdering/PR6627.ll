@@ -15,21 +15,21 @@ entry:
   br i1 %cmp, label %land.lhs.true, label %if.end
 
 land.lhs.true:                                    ; preds = %entry
-  %arrayidx4 = getelementptr inbounds i8* %arrayidx, i64 1
+  %arrayidx4 = getelementptr inbounds i8, i8* %arrayidx, i64 1
   %tmp5 = load i8* %arrayidx4, align 1
   %conv6 = zext i8 %tmp5 to i32
   %cmp7 = icmp eq i32 %conv6, 69
   br i1 %cmp7, label %land.lhs.true9, label %if.end
 
 land.lhs.true9:                                   ; preds = %land.lhs.true
-  %arrayidx12 = getelementptr inbounds i8* %arrayidx, i64 2
+  %arrayidx12 = getelementptr inbounds i8, i8* %arrayidx, i64 2
   %tmp13 = load i8* %arrayidx12, align 1
   %conv14 = zext i8 %tmp13 to i32
   %cmp15 = icmp eq i32 %conv14, 76
   br i1 %cmp15, label %land.lhs.true17, label %if.end
 
 land.lhs.true17:                                  ; preds = %land.lhs.true9
-  %arrayidx20 = getelementptr inbounds i8* %arrayidx, i64 3
+  %arrayidx20 = getelementptr inbounds i8, i8* %arrayidx, i64 3
   %tmp21 = load i8* %arrayidx20, align 1
   %conv22 = zext i8 %tmp21 to i32
   %cmp23 = icmp eq i32 %conv22, 70
@@ -59,21 +59,21 @@ entry:
   br i1 %cmp, label %land.lhs.true, label %if.end
 
 land.lhs.true:                                    ; preds = %entry
-  %arrayidx4 = getelementptr inbounds i8* %arrayidx, i64 1
+  %arrayidx4 = getelementptr inbounds i8, i8* %arrayidx, i64 1
   %tmp5 = load i8* %arrayidx4, align 1
   %conv6 = zext i8 %tmp5 to i32
   %cmp7 = icmp eq i32 %conv6, 69
   br i1 %cmp7, label %land.lhs.true9, label %if.end
 
 land.lhs.true9:                                   ; preds = %land.lhs.true
-  %arrayidx12 = getelementptr inbounds i8* %arrayidx, i64 2
+  %arrayidx12 = getelementptr inbounds i8, i8* %arrayidx, i64 2
   %tmp13 = load i8* %arrayidx12, align 1
   %conv14 = zext i8 %tmp13 to i32
   %cmp15 = icmp eq i32 %conv14, 76
   br i1 %cmp15, label %land.lhs.true17, label %if.end
 
 land.lhs.true17:                                  ; preds = %land.lhs.true9
-  %arrayidx20 = getelementptr inbounds i8* %arrayidx, i64 3
+  %arrayidx20 = getelementptr inbounds i8, i8* %arrayidx, i64 3
   %tmp21 = load i8* %arrayidx20, align 1
   %conv22 = zext i8 %tmp21 to i32
   %cmp23 = icmp eq i32 %conv22, 70

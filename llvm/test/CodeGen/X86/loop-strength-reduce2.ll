@@ -18,7 +18,7 @@ bb:		; preds = %bb, %entry
 	%tmp.16 = add i32 %tmp.15, %tmp.		; <i32> [#uses=2]
 	%k_addr.0.0 = bitcast i32 %tmp.16 to i32		; <i32> [#uses=1]
 	%gep.upgrd.1 = zext i32 %tmp.16 to i64		; <i64> [#uses=1]
-	%tmp = getelementptr [8193 x i8]* @flags2, i32 0, i64 %gep.upgrd.1		; <i8*> [#uses=1]
+	%tmp = getelementptr [8193 x i8], [8193 x i8]* @flags2, i32 0, i64 %gep.upgrd.1		; <i8*> [#uses=1]
 	store i8 0, i8* %tmp
 	%k_addr.0 = add i32 %k_addr.0.0, %i		; <i32> [#uses=1]
 	%tmp.upgrd.2 = icmp sgt i32 %k_addr.0, 8192		; <i1> [#uses=1]

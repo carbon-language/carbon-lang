@@ -35,7 +35,7 @@ entry:
 
   %add = fadd float %x, %y
   %0 = load %struct.anon** @a, align 4
-  %x1 = getelementptr inbounds %struct.anon* %0, i32 0, i32 0
+  %x1 = getelementptr inbounds %struct.anon, %struct.anon* %0, i32 0, i32 0
   store float %add, float* %x1, align 1
   ret void
 }
@@ -67,7 +67,7 @@ entry:
   %0 = alloca %class.TAlignTest*, align 4
   store %class.TAlignTest* %this, %class.TAlignTest** %0, align 4
   %1 = load %class.TAlignTest** %0
-  %2 = getelementptr inbounds %class.TAlignTest* %1, i32 0, i32 1
+  %2 = getelementptr inbounds %class.TAlignTest, %class.TAlignTest* %1, i32 0, i32 1
   %3 = load float* %2, align 1
   %4 = fcmp une float %3, 0.000000e+00
 ; ARM: ldr r[[R:[0-9]+]], [r0, #2]

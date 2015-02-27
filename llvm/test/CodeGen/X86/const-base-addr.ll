@@ -11,11 +11,11 @@ define i32 @test1() nounwind {
 ; CHECK-NEXT:   movl  4(%rcx), %eax
 ; CHECK-NEXT:   addl  8(%rcx), %eax
 ; CHECK-NEXT:   addl  12(%rcx), %eax
-  %addr1 = getelementptr %T* inttoptr (i64 123456789012345678 to %T*), i32 0, i32 1
+  %addr1 = getelementptr %T, %T* inttoptr (i64 123456789012345678 to %T*), i32 0, i32 1
   %tmp1 = load i32* %addr1
-  %addr2 = getelementptr %T* inttoptr (i64 123456789012345678 to %T*), i32 0, i32 2
+  %addr2 = getelementptr %T, %T* inttoptr (i64 123456789012345678 to %T*), i32 0, i32 2
   %tmp2 = load i32* %addr2
-  %addr3 = getelementptr %T* inttoptr (i64 123456789012345678 to %T*), i32 0, i32 3
+  %addr3 = getelementptr %T, %T* inttoptr (i64 123456789012345678 to %T*), i32 0, i32 3
   %tmp3 = load i32* %addr3
   %tmp4 = add i32 %tmp1, %tmp2
   %tmp5 = add i32 %tmp3, %tmp4

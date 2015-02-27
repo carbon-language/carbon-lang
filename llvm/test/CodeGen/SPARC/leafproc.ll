@@ -70,11 +70,11 @@ define i32 @leaf_proc_with_local_array(i32 %a, i32 %b, i32 %c) {
 entry:
   %array = alloca [2 x i32], align 4
   %0 = sub nsw i32 %b, %c
-  %1 = getelementptr inbounds [2 x i32]* %array, i32 0, i32 0
+  %1 = getelementptr inbounds [2 x i32], [2 x i32]* %array, i32 0, i32 0
   store i32 1, i32* %1, align 4
-  %2 = getelementptr inbounds [2 x i32]* %array, i32 0, i32 1
+  %2 = getelementptr inbounds [2 x i32], [2 x i32]* %array, i32 0, i32 1
   store i32 2, i32* %2, align 4
-  %3 = getelementptr inbounds [2 x i32]* %array, i32 0, i32 %a
+  %3 = getelementptr inbounds [2 x i32], [2 x i32]* %array, i32 0, i32 %a
   %4 = load i32* %3, align 4
   ret i32 %4
 }

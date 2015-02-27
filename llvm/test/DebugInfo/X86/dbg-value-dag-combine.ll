@@ -17,7 +17,7 @@ entry:
   %tmp3 = add i32 0, %tmp2, !dbg !15
 ; CHECK:  ##DEBUG_VALUE: idx <- E{{..$}}
   call void @llvm.dbg.value(metadata i32 %tmp3, i64 0, metadata !13, metadata !{!"0x102"}), !dbg !15
-  %arrayidx = getelementptr i32 addrspace(1)* %ip, i32 %1, !dbg !16
+  %arrayidx = getelementptr i32, i32 addrspace(1)* %ip, i32 %1, !dbg !16
   store i32 %tmp3, i32 addrspace(1)* %arrayidx, align 4, !dbg !16
   ret void, !dbg !17
 }

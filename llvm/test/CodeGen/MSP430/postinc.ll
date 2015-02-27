@@ -10,7 +10,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %i.010 = phi i16 [ 0, %entry ], [ %inc, %for.body ] ; <i16> [#uses=2]
   %sum.09 = phi i16 [ 0, %entry ], [ %add, %for.body ] ; <i16> [#uses=1]
-  %arrayidx = getelementptr i16* %a, i16 %i.010   ; <i16*> [#uses=1]
+  %arrayidx = getelementptr i16, i16* %a, i16 %i.010   ; <i16*> [#uses=1]
 ; CHECK-LABEL: add:
 ; CHECK: add.w @r{{[0-9]+}}+, r{{[0-9]+}}
   %tmp4 = load i16* %arrayidx                     ; <i16> [#uses=1]
@@ -32,7 +32,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %i.010 = phi i16 [ 0, %entry ], [ %inc, %for.body ] ; <i16> [#uses=2]
   %sum.09 = phi i16 [ 0, %entry ], [ %add, %for.body ] ; <i16> [#uses=1]
-  %arrayidx = getelementptr i16* %a, i16 %i.010   ; <i16*> [#uses=1]
+  %arrayidx = getelementptr i16, i16* %a, i16 %i.010   ; <i16*> [#uses=1]
 ; CHECK-LABEL: sub:
 ; CHECK: sub.w @r{{[0-9]+}}+, r{{[0-9]+}}
   %tmp4 = load i16* %arrayidx                     ; <i16> [#uses=1]
@@ -54,7 +54,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %i.010 = phi i16 [ 0, %entry ], [ %inc, %for.body ] ; <i16> [#uses=2]
   %sum.09 = phi i16 [ 0, %entry ], [ %add, %for.body ] ; <i16> [#uses=1]
-  %arrayidx = getelementptr i16* %a, i16 %i.010   ; <i16*> [#uses=1]
+  %arrayidx = getelementptr i16, i16* %a, i16 %i.010   ; <i16*> [#uses=1]
 ; CHECK-LABEL: or:
 ; CHECK: bis.w @r{{[0-9]+}}+, r{{[0-9]+}}
   %tmp4 = load i16* %arrayidx                     ; <i16> [#uses=1]
@@ -76,7 +76,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %i.010 = phi i16 [ 0, %entry ], [ %inc, %for.body ] ; <i16> [#uses=2]
   %sum.09 = phi i16 [ 0, %entry ], [ %add, %for.body ] ; <i16> [#uses=1]
-  %arrayidx = getelementptr i16* %a, i16 %i.010   ; <i16*> [#uses=1]
+  %arrayidx = getelementptr i16, i16* %a, i16 %i.010   ; <i16*> [#uses=1]
 ; CHECK-LABEL: xor:
 ; CHECK: xor.w @r{{[0-9]+}}+, r{{[0-9]+}}
   %tmp4 = load i16* %arrayidx                     ; <i16> [#uses=1]
@@ -98,7 +98,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %i.010 = phi i16 [ 0, %entry ], [ %inc, %for.body ] ; <i16> [#uses=2]
   %sum.09 = phi i16 [ 0, %entry ], [ %add, %for.body ] ; <i16> [#uses=1]
-  %arrayidx = getelementptr i16* %a, i16 %i.010   ; <i16*> [#uses=1]
+  %arrayidx = getelementptr i16, i16* %a, i16 %i.010   ; <i16*> [#uses=1]
 ; CHECK-LABEL: and:
 ; CHECK: and.w @r{{[0-9]+}}+, r{{[0-9]+}}
   %tmp4 = load i16* %arrayidx                     ; <i16> [#uses=1]

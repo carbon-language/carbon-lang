@@ -5,9 +5,9 @@ target triple = "powerpc64-unknown-linux-gnu"
 
 define i8* @test(i8* %base, i8 %val) {
 entry:
-  %arrayidx = getelementptr inbounds i8* %base, i32 -1
+  %arrayidx = getelementptr inbounds i8, i8* %base, i32 -1
   store i8 %val, i8* %arrayidx, align 1
-  %arrayidx2 = getelementptr inbounds i8* %base, i32 1
+  %arrayidx2 = getelementptr inbounds i8, i8* %base, i32 1
   store i8 %val, i8* %arrayidx2, align 1
   ret i8* %arrayidx
 }
@@ -19,9 +19,9 @@ entry:
 
 define i64* @test64(i64* %base, i64 %val) {
 entry:
-  %arrayidx = getelementptr inbounds i64* %base, i32 -1
+  %arrayidx = getelementptr inbounds i64, i64* %base, i32 -1
   store i64 %val, i64* %arrayidx, align 8
-  %arrayidx2 = getelementptr inbounds i64* %base, i32 1
+  %arrayidx2 = getelementptr inbounds i64, i64* %base, i32 1
   store i64 %val, i64* %arrayidx2, align 8
   ret i64* %arrayidx
 }

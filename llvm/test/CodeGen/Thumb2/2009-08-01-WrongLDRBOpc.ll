@@ -22,7 +22,7 @@ bb4.preheader.i:		; preds = %entry
 	br i1 undef, label %tbl.exit, label %bb.i.preheader
 
 bb.i.preheader:		; preds = %bb4.preheader.i
-	%line3.i.i.i = getelementptr [200 x i8]* %line.i.i.i, i32 0, i32 0		; <i8*> [#uses=1]
+	%line3.i.i.i = getelementptr [200 x i8], [200 x i8]* %line.i.i.i, i32 0, i32 0		; <i8*> [#uses=1]
 	br label %bb.i
 
 bb.i:		; preds = %bb4.backedge.i, %bb.i.preheader
@@ -53,16 +53,16 @@ bb36.i.i.i:		; preds = %bb35.preheader.i.i.i
 
 bb.i171.i.i:		; preds = %bb3.i176.i.i, %bb36.i.i.i, %bb5.i185.i.i
 	%2 = phi i32 [ %4, %bb3.i176.i.i ], [ 0, %bb36.i.i.i ], [ 0, %bb5.i185.i.i ]		; <i32> [#uses=6]
-	%scevgep16.i.i.i = getelementptr [20 x i32]* @sep, i32 0, i32 %2		; <i32*> [#uses=1]
-	%scevgep18.i.i.i = getelementptr [20 x [10 x i8]]* @cll, i32 0, i32 %2, i32 0		; <i8*> [#uses=0]
+	%scevgep16.i.i.i = getelementptr [20 x i32], [20 x i32]* @sep, i32 0, i32 %2		; <i32*> [#uses=1]
+	%scevgep18.i.i.i = getelementptr [20 x [10 x i8]], [20 x [10 x i8]]* @cll, i32 0, i32 %2, i32 0		; <i8*> [#uses=0]
 	store i32 -1, i32* %scevgep16.i.i.i, align 4
 	br label %bb1.i175.i.i
 
 bb1.i175.i.i:		; preds = %bb1.i175.i.i, %bb.i171.i.i
 	%i.03.i172.i.i = phi i32 [ 0, %bb.i171.i.i ], [ %3, %bb1.i175.i.i ]		; <i32> [#uses=4]
-	%scevgep11.i.i.i = getelementptr [100 x [20 x i32]]* @lefline, i32 0, i32 %i.03.i172.i.i, i32 %2		; <i32*> [#uses=1]
-	%scevgep12.i.i.i = getelementptr [100 x [20 x [4 x i8]]]* @vsize, i32 0, i32 %i.03.i172.i.i, i32 %2, i32 0		; <i8*> [#uses=1]
-	%scevgep13.i.i.i = getelementptr [100 x [20 x [4 x i8]]]* @csize, i32 0, i32 %i.03.i172.i.i, i32 %2, i32 0		; <i8*> [#uses=0]
+	%scevgep11.i.i.i = getelementptr [100 x [20 x i32]], [100 x [20 x i32]]* @lefline, i32 0, i32 %i.03.i172.i.i, i32 %2		; <i32*> [#uses=1]
+	%scevgep12.i.i.i = getelementptr [100 x [20 x [4 x i8]]], [100 x [20 x [4 x i8]]]* @vsize, i32 0, i32 %i.03.i172.i.i, i32 %2, i32 0		; <i8*> [#uses=1]
+	%scevgep13.i.i.i = getelementptr [100 x [20 x [4 x i8]]], [100 x [20 x [4 x i8]]]* @csize, i32 0, i32 %i.03.i172.i.i, i32 %2, i32 0		; <i8*> [#uses=0]
 	store i8 0, i8* %scevgep12.i.i.i, align 1
 	store i32 0, i32* %scevgep11.i.i.i, align 4
 	store i32 108, i32* undef, align 4

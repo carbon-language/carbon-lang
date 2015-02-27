@@ -109,7 +109,7 @@ entry:
   br i1 %cmp, label %cast.end, label %cast.notnull
 
 cast.notnull:                                     ; preds = %entry
-  %add.ptr = getelementptr inbounds i8* %call, i64 4
+  %add.ptr = getelementptr inbounds i8, i8* %call, i64 4
   br label %cast.end
 
 cast.end:                                         ; preds = %cast.notnull, %entry
@@ -132,7 +132,7 @@ entry:
   br i1 %cmp, label %cast.end, label %cast.notnull
 
 cast.notnull:                                     ; preds = %entry
-  %add.ptr = getelementptr inbounds i8* %call, i64 4
+  %add.ptr = getelementptr inbounds i8, i8* %call, i64 4
   br label %cast.end
 
 cast.end:                                         ; preds = %cast.notnull, %entry
@@ -152,7 +152,7 @@ entry:
   br i1 %cmp, label %cast.end, label %cast.notnull
 
 cast.notnull:                                     ; preds = %entry
-  %add.ptr = getelementptr inbounds i8* %call, i64 4
+  %add.ptr = getelementptr inbounds i8, i8* %call, i64 4
   br label %cast.end
 
 cast.end:                                         ; preds = %cast.notnull, %entry

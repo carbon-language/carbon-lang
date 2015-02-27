@@ -14,7 +14,7 @@ declare i64 @strspn(i8*, i8*)
 
 define i64 @test_simplify1(i8* %str) {
 ; CHECK-LABEL: @test_simplify1(
-  %pat = getelementptr [1 x i8]* @null, i32 0, i32 0
+  %pat = getelementptr [1 x i8], [1 x i8]* @null, i32 0, i32 0
 
   %ret = call i64 @strspn(i8* %str, i8* %pat)
   ret i64 %ret
@@ -25,7 +25,7 @@ define i64 @test_simplify1(i8* %str) {
 
 define i64 @test_simplify2(i8* %pat) {
 ; CHECK-LABEL: @test_simplify2(
-  %str = getelementptr [1 x i8]* @null, i32 0, i32 0
+  %str = getelementptr [1 x i8], [1 x i8]* @null, i32 0, i32 0
 
   %ret = call i64 @strspn(i8* %str, i8* %pat)
   ret i64 %ret
@@ -36,8 +36,8 @@ define i64 @test_simplify2(i8* %pat) {
 
 define i64 @test_simplify3() {
 ; CHECK-LABEL: @test_simplify3(
-  %str = getelementptr [6 x i8]* @abcba, i32 0, i32 0
-  %pat = getelementptr [4 x i8]* @abc, i32 0, i32 0
+  %str = getelementptr [6 x i8], [6 x i8]* @abcba, i32 0, i32 0
+  %pat = getelementptr [4 x i8], [4 x i8]* @abc, i32 0, i32 0
 
   %ret = call i64 @strspn(i8* %str, i8* %pat)
   ret i64 %ret

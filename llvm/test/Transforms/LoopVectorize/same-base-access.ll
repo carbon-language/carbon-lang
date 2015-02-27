@@ -36,18 +36,18 @@ define i32 @kernel11(double* %x, double* %y, i32 %n) nounwind uwtable ssp {
   %10 = sub nsw i32 %9, 1
   %11 = sext i32 %10 to i64
   %12 = load double** %1, align 8
-  %13 = getelementptr inbounds double* %12, i64 %11
+  %13 = getelementptr inbounds double, double* %12, i64 %11
   %14 = load double* %13, align 8
   %15 = load i32* %k, align 4
   %16 = sext i32 %15 to i64
   %17 = load double** %2, align 8
-  %18 = getelementptr inbounds double* %17, i64 %16
+  %18 = getelementptr inbounds double, double* %17, i64 %16
   %19 = load double* %18, align 8
   %20 = fadd double %14, %19
   %21 = load i32* %k, align 4
   %22 = sext i32 %21 to i64
   %23 = load double** %1, align 8
-  %24 = getelementptr inbounds double* %23, i64 %22
+  %24 = getelementptr inbounds double, double* %23, i64 %22
   store double %20, double* %24, align 8
   br label %25
 
@@ -86,7 +86,7 @@ define i32 @func2(i32* nocapture %a) nounwind uwtable ssp {
 ; <label>:1                                       ; preds = %7, %0
   %indvars.iv = phi i64 [ 0, %0 ], [ %indvars.iv.next, %7 ]
   %2 = mul nsw i64 %indvars.iv, 7
-  %3 = getelementptr inbounds i32* %a, i64 %2
+  %3 = getelementptr inbounds i32, i32* %a, i64 %2
   %4 = load i32* %3, align 4
   %5 = icmp sgt i32 %4, 3
   br i1 %5, label %6, label %7

@@ -12,13 +12,13 @@
 define void @ldst_8bit(i8* %base, i32 %off32, i64 %off64) minsize {
 ; CHECK-LABEL: ldst_8bit:
 
-   %addr8_sxtw = getelementptr i8* %base, i32 %off32
+   %addr8_sxtw = getelementptr i8, i8* %base, i32 %off32
    %val8_sxtw = load volatile i8* %addr8_sxtw
    %val32_signed = sext i8 %val8_sxtw to i32
    store volatile i32 %val32_signed, i32* @var_32bit
 ; CHECK: ldrsb {{w[0-9]+}}, [{{x[0-9]+}}, {{[wx][0-9]+}}, sxtw]
 
-  %addr_lsl = getelementptr i8* %base, i64 %off64
+  %addr_lsl = getelementptr i8, i8* %base, i64 %off64
   %val8_lsl = load volatile i8* %addr_lsl
   %val32_unsigned = zext i8 %val8_lsl to i32
   store volatile i32 %val32_unsigned, i32* @var_32bit
@@ -40,13 +40,13 @@ define void @ldst_8bit(i8* %base, i32 %off32, i64 %off64) minsize {
 define void @ldst_16bit(i16* %base, i32 %off32, i64 %off64) minsize {
 ; CHECK-LABEL: ldst_16bit:
 
-   %addr8_sxtwN = getelementptr i16* %base, i32 %off32
+   %addr8_sxtwN = getelementptr i16, i16* %base, i32 %off32
    %val8_sxtwN = load volatile i16* %addr8_sxtwN
    %val32_signed = sext i16 %val8_sxtwN to i32
    store volatile i32 %val32_signed, i32* @var_32bit
 ; CHECK: ldrsh {{w[0-9]+}}, [{{x[0-9]+}}, {{[xw][0-9]+}}, sxtw #1]
 
-  %addr_lslN = getelementptr i16* %base, i64 %off64
+  %addr_lslN = getelementptr i16, i16* %base, i64 %off64
   %val8_lslN = load volatile i16* %addr_lslN
   %val32_unsigned = zext i16 %val8_lslN to i32
   store volatile i32 %val32_unsigned, i32* @var_32bit
@@ -94,12 +94,12 @@ define void @ldst_16bit(i16* %base, i32 %off32, i64 %off64) minsize {
 define void @ldst_32bit(i32* %base, i32 %off32, i64 %off64) minsize {
 ; CHECK-LABEL: ldst_32bit:
 
-   %addr_sxtwN = getelementptr i32* %base, i32 %off32
+   %addr_sxtwN = getelementptr i32, i32* %base, i32 %off32
    %val_sxtwN = load volatile i32* %addr_sxtwN
    store volatile i32 %val_sxtwN, i32* @var_32bit
 ; CHECK: ldr {{w[0-9]+}}, [{{x[0-9]+}}, {{[xw][0-9]+}}, sxtw #2]
 
-  %addr_lslN = getelementptr i32* %base, i64 %off64
+  %addr_lslN = getelementptr i32, i32* %base, i64 %off64
   %val_lslN = load volatile i32* %addr_lslN
   store volatile i32 %val_lslN, i32* @var_32bit
 ; CHECK: ldr {{w[0-9]+}}, [{{x[0-9]+}}, {{x[0-9]+}}, lsl #2]
@@ -146,12 +146,12 @@ define void @ldst_32bit(i32* %base, i32 %off32, i64 %off64) minsize {
 define void @ldst_64bit(i64* %base, i32 %off32, i64 %off64) minsize {
 ; CHECK-LABEL: ldst_64bit:
 
-   %addr_sxtwN = getelementptr i64* %base, i32 %off32
+   %addr_sxtwN = getelementptr i64, i64* %base, i32 %off32
    %val_sxtwN = load volatile i64* %addr_sxtwN
    store volatile i64 %val_sxtwN, i64* @var_64bit
 ; CHECK: ldr {{x[0-9]+}}, [{{x[0-9]+}}, {{[xw][0-9]+}}, sxtw #3]
 
-  %addr_lslN = getelementptr i64* %base, i64 %off64
+  %addr_lslN = getelementptr i64, i64* %base, i64 %off64
   %val_lslN = load volatile i64* %addr_lslN
   store volatile i64 %val_lslN, i64* @var_64bit
 ; CHECK: ldr {{x[0-9]+}}, [{{x[0-9]+}}, {{x[0-9]+}}, lsl #3]
@@ -194,13 +194,13 @@ define void @ldst_64bit(i64* %base, i32 %off32, i64 %off64) minsize {
 define void @ldst_float(float* %base, i32 %off32, i64 %off64) minsize {
 ; CHECK-LABEL: ldst_float:
 
-   %addr_sxtwN = getelementptr float* %base, i32 %off32
+   %addr_sxtwN = getelementptr float, float* %base, i32 %off32
    %val_sxtwN = load volatile float* %addr_sxtwN
    store volatile float %val_sxtwN, float* @var_float
 ; CHECK: ldr {{s[0-9]+}}, [{{x[0-9]+}}, {{[xw][0-9]+}}, sxtw #2]
 ; CHECK-NOFP-NOT: ldr {{s[0-9]+}},
 
-  %addr_lslN = getelementptr float* %base, i64 %off64
+  %addr_lslN = getelementptr float, float* %base, i64 %off64
   %val_lslN = load volatile float* %addr_lslN
   store volatile float %val_lslN, float* @var_float
 ; CHECK: ldr {{s[0-9]+}}, [{{x[0-9]+}}, {{x[0-9]+}}, lsl #2]
@@ -247,13 +247,13 @@ define void @ldst_float(float* %base, i32 %off32, i64 %off64) minsize {
 define void @ldst_double(double* %base, i32 %off32, i64 %off64) minsize {
 ; CHECK-LABEL: ldst_double:
 
-   %addr_sxtwN = getelementptr double* %base, i32 %off32
+   %addr_sxtwN = getelementptr double, double* %base, i32 %off32
    %val_sxtwN = load volatile double* %addr_sxtwN
    store volatile double %val_sxtwN, double* @var_double
 ; CHECK: ldr {{d[0-9]+}}, [{{x[0-9]+}}, {{[xw][0-9]+}}, sxtw #3]
 ; CHECK-NOFP-NOT: ldr {{d[0-9]+}},
 
-  %addr_lslN = getelementptr double* %base, i64 %off64
+  %addr_lslN = getelementptr double, double* %base, i64 %off64
   %val_lslN = load volatile double* %addr_lslN
   store volatile double %val_lslN, double* @var_double
 ; CHECK: ldr {{d[0-9]+}}, [{{x[0-9]+}}, {{x[0-9]+}}, lsl #3]
@@ -301,13 +301,13 @@ define void @ldst_double(double* %base, i32 %off32, i64 %off64) minsize {
 define void @ldst_128bit(fp128* %base, i32 %off32, i64 %off64) minsize {
 ; CHECK-LABEL: ldst_128bit:
 
-   %addr_sxtwN = getelementptr fp128* %base, i32 %off32
+   %addr_sxtwN = getelementptr fp128, fp128* %base, i32 %off32
    %val_sxtwN = load volatile fp128* %addr_sxtwN
    store volatile fp128 %val_sxtwN, fp128* %base
 ; CHECK: ldr {{q[0-9]+}}, [{{x[0-9]+}}, {{[xw][0-9]+}}, sxtw #4]
 ; CHECK-NOFP-NOT: ldr {{q[0-9]+}}, [{{x[0-9]+}}, {{[xw][0-9]+}}, sxtw #4]
 
-  %addr_lslN = getelementptr fp128* %base, i64 %off64
+  %addr_lslN = getelementptr fp128, fp128* %base, i64 %off64
   %val_lslN = load volatile fp128* %addr_lslN
   store volatile fp128 %val_lslN, fp128* %base
 ; CHECK: ldr {{q[0-9]+}}, [{{x[0-9]+}}, {{x[0-9]+}}, lsl #4]

@@ -10,7 +10,7 @@ define i16 @callee(%struct.Foo* byval %f) nounwind {
 entry:
 ; CHECK-LABEL: callee:
 ; CHECK: mov.w 2(r1), r15
-  %0 = getelementptr inbounds %struct.Foo* %f, i32 0, i32 0
+  %0 = getelementptr inbounds %struct.Foo, %struct.Foo* %f, i32 0, i32 0
   %1 = load i16* %0, align 2
   ret i16 %1
 }

@@ -15,13 +15,13 @@ define i32 @test1() {
 }
 
 define float @test2() {
-	%A = getelementptr [2 x { i32, float }]* @Y, i64 0, i64 1, i32 1		; <float*> [#uses=1]
+	%A = getelementptr [2 x { i32, float }], [2 x { i32, float }]* @Y, i64 0, i64 1, i32 1		; <float*> [#uses=1]
 	%B = load float* %A		; <float> [#uses=1]
 	ret float %B
 }
 
 define i32 @test3() {
-	%A = getelementptr [2 x { i32, float }]* @Y, i64 0, i64 0, i32 0		; <i32*> [#uses=1]
+	%A = getelementptr [2 x { i32, float }], [2 x { i32, float }]* @Y, i64 0, i64 0, i32 0		; <i32*> [#uses=1]
 	%B = load i32* %A
 	ret i32 %B
 }

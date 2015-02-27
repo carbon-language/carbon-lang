@@ -16,7 +16,7 @@ entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   store i32 %y, i32* %y_addr
   %0 = load i32* %y_addr, align 4                 ; <i32> [#uses=1]
-  %1 = getelementptr inbounds [0 x i32]* @x, i32 0, i32 %0 ; <i32*> [#uses=1]
+  %1 = getelementptr inbounds [0 x i32], [0 x i32]* @x, i32 0, i32 %0 ; <i32*> [#uses=1]
   call void asm sideeffect "isync\0A\09eieio\0A\09stw $1, $0", "=*o,r,~{memory}"(i32* %1, i32 0) nounwind
   br label %return
 

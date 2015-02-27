@@ -9,7 +9,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; CHECK: PartialAlias:  i16* %bigbase0, i8* %phi
 define i8 @test0(i8* %base, i1 %x) {
 entry:
-  %baseplusone = getelementptr i8* %base, i64 1
+  %baseplusone = getelementptr i8, i8* %base, i64 1
   br i1 %x, label %red, label %green
 red:
   br label %green
@@ -27,7 +27,7 @@ green:
 ; CHECK: PartialAlias:  i16* %bigbase1, i8* %sel
 define i8 @test1(i8* %base, i1 %x) {
 entry:
-  %baseplusone = getelementptr i8* %base, i64 1
+  %baseplusone = getelementptr i8, i8* %base, i64 1
   %sel = select i1 %x, i8* %baseplusone, i8* %base
   store i8 0, i8* %sel
 

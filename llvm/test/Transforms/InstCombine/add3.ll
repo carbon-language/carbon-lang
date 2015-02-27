@@ -12,7 +12,7 @@ EntryBlock:
         store i32 1, i32* %1
         add i32 %.val24, -16
         inttoptr i32 %2 to i32*
-        getelementptr i32* %3, i32 1
+        getelementptr i32, i32* %3, i32 1
         load i32* %4
         tail call i32 @callee( i32 %5 )
         ret void

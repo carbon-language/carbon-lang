@@ -12,7 +12,7 @@
 ; SI: v_mul_lo_i32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 
 define void @test_mul_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
-  %b_ptr = getelementptr <2 x i32> addrspace(1)* %in, i32 1
+  %b_ptr = getelementptr <2 x i32>, <2 x i32> addrspace(1)* %in, i32 1
   %a = load <2 x i32> addrspace(1) * %in
   %b = load <2 x i32> addrspace(1) * %b_ptr
   %result = mul <2 x i32> %a, %b
@@ -32,7 +32,7 @@ define void @test_mul_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)
 ; SI: v_mul_lo_i32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 
 define void @v_mul_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
-  %b_ptr = getelementptr <4 x i32> addrspace(1)* %in, i32 1
+  %b_ptr = getelementptr <4 x i32>, <4 x i32> addrspace(1)* %in, i32 1
   %a = load <4 x i32> addrspace(1) * %in
   %b = load <4 x i32> addrspace(1) * %b_ptr
   %result = mul <4 x i32> %a, %b
@@ -123,7 +123,7 @@ define void @s_mul_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
 ; FUNC-LABEL: {{^}}v_mul_i32:
 ; SI: v_mul_lo_i32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
 define void @v_mul_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
-  %b_ptr = getelementptr i32 addrspace(1)* %in, i32 1
+  %b_ptr = getelementptr i32, i32 addrspace(1)* %in, i32 1
   %a = load i32 addrspace(1)* %in
   %b = load i32 addrspace(1)* %b_ptr
   %result = mul i32 %a, %b

@@ -24,7 +24,7 @@ bb54:		; preds = %bb5
 bb118:		; preds = %bb5, %bb5, %bb5, %bb5
 	%tmp125 = load i8** null, align 8		; <i8*> [#uses=1]
 	%tmp125126 = bitcast i8* %tmp125 to %struct.S2259*		; <%struct.S2259*> [#uses=1]
-	%tmp128 = getelementptr %struct.S2259* %tmp125126, i32 0, i32 0		; <<4 x i16>*> [#uses=1]
+	%tmp128 = getelementptr %struct.S2259, %struct.S2259* %tmp125126, i32 0, i32 0		; <<4 x i16>*> [#uses=1]
 	%tmp129 = load <4 x i16>* %tmp128, align 8		; <<4 x i16>> [#uses=1]
 	store <4 x i16> %tmp129, <4 x i16>* null, align 8
 	ret void

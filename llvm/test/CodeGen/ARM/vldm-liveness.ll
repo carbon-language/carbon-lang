@@ -22,13 +22,13 @@ define arm_aapcs_vfpcc <4 x float> @foo(float* %ptr) {
 ; CHECK: vldr s3, [r0, #8]
 ; CHECK: vldmia r0, {s0, s1}
 ; CHECK: vldr s2, [r0, #16]
-   %off0 = getelementptr float* %ptr, i32 0
+   %off0 = getelementptr float, float* %ptr, i32 0
    %val0 = load float* %off0
-   %off1 = getelementptr float* %ptr, i32 1
+   %off1 = getelementptr float, float* %ptr, i32 1
    %val1 = load float* %off1
-   %off4 = getelementptr float* %ptr, i32 4
+   %off4 = getelementptr float, float* %ptr, i32 4
    %val4 = load float* %off4
-   %off2 = getelementptr float* %ptr, i32 2
+   %off2 = getelementptr float, float* %ptr, i32 2
    %val2 = load float* %off2
 
    %vec1 = insertelement <4 x float> undef, float %val0, i32 0

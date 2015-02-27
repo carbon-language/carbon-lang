@@ -32,8 +32,8 @@ bb.nph:
 
 bb:                                               ; preds = %bb, %bb.nph
   %0 = phi i32 [ 0, %bb.nph ], [ %1, %bb ]        ; <i32> [#uses=4]
-  %scevgep = getelementptr [16 x i32]* @sbuf, i32 0, i32 %0 ; <i32*> [#uses=1]
-  %scevgep5 = getelementptr [16 x i32]* @dbuf, i32 0, i32 %0 ; <i32*> [#uses=1]
+  %scevgep = getelementptr [16 x i32], [16 x i32]* @sbuf, i32 0, i32 %0 ; <i32*> [#uses=1]
+  %scevgep5 = getelementptr [16 x i32], [16 x i32]* @dbuf, i32 0, i32 %0 ; <i32*> [#uses=1]
   store i32 %0, i32* %scevgep, align 4
   store i32 -1, i32* %scevgep5, align 4
   %1 = add nsw i32 %0, 1                          ; <i32> [#uses=2]
@@ -70,8 +70,8 @@ declare void @llvm.arm.neon.vst1.v4f32(i8*, <4 x float>, i32) nounwind
 %class = type { i8*, %class*, i32 }
 define void @f11101911(%class* %this, i32 %num) ssp align 2 {
 entry:
-  %p1 = getelementptr inbounds %class* %this, i32 0, i32 1
-  %p2 = getelementptr inbounds %class* %this, i32 0, i32 2
+  %p1 = getelementptr inbounds %class, %class* %this, i32 0, i32 1
+  %p2 = getelementptr inbounds %class, %class* %this, i32 0, i32 2
   tail call void asm sideeffect "", "~{r1},~{r3},~{r5},~{r11},~{r13}"() nounwind
   store %class* %this, %class** %p1, align 4
   store i32 %num, i32* %p2, align 4

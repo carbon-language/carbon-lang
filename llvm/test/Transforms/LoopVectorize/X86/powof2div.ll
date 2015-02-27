@@ -17,10 +17,10 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
-  %arrayidx = getelementptr inbounds %struct.anon* @Foo, i64 0, i32 2, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds %struct.anon, %struct.anon* @Foo, i64 0, i32 2, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %div = sdiv i32 %0, 2
-  %arrayidx2 = getelementptr inbounds %struct.anon* @Foo, i64 0, i32 0, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds %struct.anon, %struct.anon* @Foo, i64 0, i32 0, i64 %indvars.iv
   store i32 %div, i32* %arrayidx2, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 100

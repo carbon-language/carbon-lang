@@ -32,7 +32,7 @@ entry:
   %10 = xor i64 %9, %8, !nosanitize !0
   %11 = mul i64 %10, -7070675565921424023, !nosanitize !0
   %12 = and i64 %11, 127, !nosanitize !0
-  %13 = getelementptr inbounds [128 x i64]* @__ubsan_vptr_type_cache, i64 0, i64 %12, !nosanitize !0
+  %13 = getelementptr inbounds [128 x i64], [128 x i64]* @__ubsan_vptr_type_cache, i64 0, i64 %12, !nosanitize !0
 ; CHECK-NOT: __asan_report_load8
   %14 = load i64* %13, align 8, !nosanitize !0
   %15 = icmp eq i64 %14, %11, !nosanitize !0

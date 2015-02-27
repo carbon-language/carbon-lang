@@ -47,7 +47,7 @@ define i32 @f5(i8 *%src) {
 ; CHECK-LABEL: f5:
 ; CHECK: llc %r2, 524287(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 524287
+  %ptr = getelementptr i8, i8 *%src, i64 524287
   %byte = load i8 *%ptr
   %ext = zext i8 %byte to i32
   ret i32 %ext
@@ -60,7 +60,7 @@ define i32 @f6(i8 *%src) {
 ; CHECK: agfi %r2, 524288
 ; CHECK: llc %r2, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 524288
+  %ptr = getelementptr i8, i8 *%src, i64 524288
   %byte = load i8 *%ptr
   %ext = zext i8 %byte to i32
   ret i32 %ext
@@ -71,7 +71,7 @@ define i32 @f7(i8 *%src) {
 ; CHECK-LABEL: f7:
 ; CHECK: llc %r2, -1(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 -1
+  %ptr = getelementptr i8, i8 *%src, i64 -1
   %byte = load i8 *%ptr
   %ext = zext i8 %byte to i32
   ret i32 %ext
@@ -82,7 +82,7 @@ define i32 @f8(i8 *%src) {
 ; CHECK-LABEL: f8:
 ; CHECK: llc %r2, -524288(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 -524288
+  %ptr = getelementptr i8, i8 *%src, i64 -524288
   %byte = load i8 *%ptr
   %ext = zext i8 %byte to i32
   ret i32 %ext
@@ -95,7 +95,7 @@ define i32 @f9(i8 *%src) {
 ; CHECK: agfi %r2, -524289
 ; CHECK: llc %r2, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 -524289
+  %ptr = getelementptr i8, i8 *%src, i64 -524289
   %byte = load i8 *%ptr
   %ext = zext i8 %byte to i32
   ret i32 %ext

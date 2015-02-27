@@ -37,7 +37,7 @@ define i64 @f3(i64 %a, i64 %b, float %f1, float *%base) {
 ; CHECK-NEXT: je
 ; CHECK: lgr %r2, %r3
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 1023
+  %ptr = getelementptr float, float *%base, i64 1023
   %f2 = load float *%ptr
   %cond = fcmp oeq float %f1, %f2
   %res = select i1 %cond, i64 %a, i64 %b
@@ -53,7 +53,7 @@ define i64 @f4(i64 %a, i64 %b, float %f1, float *%base) {
 ; CHECK-NEXT: je
 ; CHECK: lgr %r2, %r3
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 1024
+  %ptr = getelementptr float, float *%base, i64 1024
   %f2 = load float *%ptr
   %cond = fcmp oeq float %f1, %f2
   %res = select i1 %cond, i64 %a, i64 %b
@@ -68,7 +68,7 @@ define i64 @f5(i64 %a, i64 %b, float %f1, float *%base) {
 ; CHECK-NEXT: je
 ; CHECK: lgr %r2, %r3
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 -1
+  %ptr = getelementptr float, float *%base, i64 -1
   %f2 = load float *%ptr
   %cond = fcmp oeq float %f1, %f2
   %res = select i1 %cond, i64 %a, i64 %b
@@ -83,8 +83,8 @@ define i64 @f6(i64 %a, i64 %b, float %f1, float *%base, i64 %index) {
 ; CHECK-NEXT: je
 ; CHECK: lgr %r2, %r3
 ; CHECK: br %r14
-  %ptr1 = getelementptr float *%base, i64 %index
-  %ptr2 = getelementptr float *%ptr1, i64 100
+  %ptr1 = getelementptr float, float *%base, i64 %index
+  %ptr2 = getelementptr float, float *%ptr1, i64 100
   %f2 = load float *%ptr2
   %cond = fcmp oeq float %f1, %f2
   %res = select i1 %cond, i64 %a, i64 %b
@@ -97,16 +97,16 @@ define float @f7(float *%ptr0) {
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: ceb {{%f[0-9]+}}, 16{{[04]}}(%r15)
 ; CHECK: br %r14
-  %ptr1 = getelementptr float *%ptr0, i64 2
-  %ptr2 = getelementptr float *%ptr0, i64 4
-  %ptr3 = getelementptr float *%ptr0, i64 6
-  %ptr4 = getelementptr float *%ptr0, i64 8
-  %ptr5 = getelementptr float *%ptr0, i64 10
-  %ptr6 = getelementptr float *%ptr0, i64 12
-  %ptr7 = getelementptr float *%ptr0, i64 14
-  %ptr8 = getelementptr float *%ptr0, i64 16
-  %ptr9 = getelementptr float *%ptr0, i64 18
-  %ptr10 = getelementptr float *%ptr0, i64 20
+  %ptr1 = getelementptr float, float *%ptr0, i64 2
+  %ptr2 = getelementptr float, float *%ptr0, i64 4
+  %ptr3 = getelementptr float, float *%ptr0, i64 6
+  %ptr4 = getelementptr float, float *%ptr0, i64 8
+  %ptr5 = getelementptr float, float *%ptr0, i64 10
+  %ptr6 = getelementptr float, float *%ptr0, i64 12
+  %ptr7 = getelementptr float, float *%ptr0, i64 14
+  %ptr8 = getelementptr float, float *%ptr0, i64 16
+  %ptr9 = getelementptr float, float *%ptr0, i64 18
+  %ptr10 = getelementptr float, float *%ptr0, i64 20
 
   %val0 = load float *%ptr0
   %val1 = load float *%ptr1

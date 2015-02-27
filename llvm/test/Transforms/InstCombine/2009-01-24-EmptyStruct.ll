@@ -11,7 +11,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define void @handle_event(%struct.inode* %bar) nounwind {
 entry:
-	%0 = getelementptr %struct.inode* %bar, i64 -1, i32 1, i32 1		; <%struct.rwlock_t*> [#uses=1]
+	%0 = getelementptr %struct.inode, %struct.inode* %bar, i64 -1, i32 1, i32 1		; <%struct.rwlock_t*> [#uses=1]
 	%1 = bitcast %struct.rwlock_t* %0 to i32*		; <i32*> [#uses=1]
 	store i32 1, i32* %1, align 4
 	ret void

@@ -24,7 +24,7 @@ no_vectors:
   ret i32 0
 
 spill_vectors:
-  %vp1 = getelementptr <4 x i32>* %vp0, i32 1
+  %vp1 = getelementptr <4 x i32>, <4 x i32>* %vp0, i32 1
   %v0 = load <4 x i32>* %vp0
   %v1 = load <4 x i32>* %vp1
   %vicmp = icmp slt <4 x i32> %v0, %v1
@@ -49,7 +49,7 @@ no_vectors:
   ret i32 0
 
 spill_vectors:
-  %vp1 = getelementptr <4 x i32>* %vp0, i32 1
+  %vp1 = getelementptr <4 x i32>, <4 x i32>* %vp0, i32 1
   %v0 = load <4 x i32>* %vp0
   %v1 = load <4 x i32>* %vp1
   %vicmp = icmp slt <4 x i32> %v0, %v1
@@ -77,7 +77,7 @@ no_vectors:
   ret i32 0
 
 spill_vectors:
-  %vp1 = getelementptr <4 x i32>* %vp0, i32 1
+  %vp1 = getelementptr <4 x i32>, <4 x i32>* %vp0, i32 1
   %v0 = load <4 x i32>* %vp0
   %v1 = load <4 x i32>* %vp1
   %vicmp = icmp slt <4 x i32> %v0, %v1

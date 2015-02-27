@@ -22,7 +22,7 @@ define void @test() nounwind ssp {
   %5 = bitcast i8* %4 to i64*                     ; <i64*> [#uses=1]
   store i64* %5, i64** @TOP, align 8
   %6 = load i64** @TOP, align 8                   ; <i64*> [#uses=1]
-  %7 = getelementptr inbounds i64* %6, i64 13     ; <i64*> [#uses=1]
+  %7 = getelementptr inbounds i64, i64* %6, i64 13     ; <i64*> [#uses=1]
   store i64 0, i64* %7, align 8
   ret void
 }

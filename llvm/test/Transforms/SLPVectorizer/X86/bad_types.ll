@@ -16,7 +16,7 @@ entry:
   %b.cast = bitcast x86_mmx %b to i64
   %a.and = and i64 %a.cast, 42
   %b.and = and i64 %b.cast, 42
-  %gep = getelementptr i64* %ptr, i32 1
+  %gep = getelementptr i64, i64* %ptr, i32 1
   store i64 %a.and, i64* %ptr
   store i64 %b.and, i64* %gep
   ret void

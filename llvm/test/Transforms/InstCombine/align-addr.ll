@@ -21,7 +21,7 @@ bb:
   %i = phi i64 [ %indvar.next, %bb ], [ 20, %entry ]
   %j = mul i64 %i, %v
   %h = add i64 %j, %z
-  %t8 = getelementptr double* %e, i64 %h
+  %t8 = getelementptr double, double* %e, i64 %h
   %p = bitcast double* %t8 to <2 x double>*
   store <2 x double><double 0.0, double 0.0>, <2 x double>* %p, align 8
   %indvar.next = add i64 %i, 1

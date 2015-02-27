@@ -35,9 +35,9 @@ bb6:		; preds = %bb7, %bb.nph7
 	%7 = add i32 %x.06, %4		; <i32> [#uses=1]
 	%8 = shl i32 %x.06, 1		; <i32> [#uses=1]
 	%9 = add i32 %6, %8		; <i32> [#uses=1]
-	%10 = getelementptr i8* %r, i32 %9		; <i8*> [#uses=1]
+	%10 = getelementptr i8, i8* %r, i32 %9		; <i8*> [#uses=1]
 	%11 = load i8* %10, align 1		; <i8> [#uses=1]
-	%12 = getelementptr i8* %j, i32 %7		; <i8*> [#uses=1]
+	%12 = getelementptr i8, i8* %j, i32 %7		; <i8*> [#uses=1]
 	store i8 %11, i8* %12, align 1
 	%13 = add i32 %x.06, 1		; <i32> [#uses=2]
 	br label %bb7
@@ -102,18 +102,18 @@ bb14:		; preds = %bb15, %bb.nph3
 	%x.12 = phi i32 [ %40, %bb15 ], [ 0, %bb.nph3 ]		; <i32> [#uses=5]
 	%29 = shl i32 %x.12, 2		; <i32> [#uses=1]
 	%30 = add i32 %29, %25		; <i32> [#uses=1]
-	%31 = getelementptr i8* %r, i32 %30		; <i8*> [#uses=1]
+	%31 = getelementptr i8, i8* %r, i32 %30		; <i8*> [#uses=1]
 	%32 = load i8* %31, align 1		; <i8> [#uses=1]
 	%.sum = add i32 %26, %x.12		; <i32> [#uses=1]
-	%33 = getelementptr i8* %j, i32 %.sum		; <i8*> [#uses=1]
+	%33 = getelementptr i8, i8* %j, i32 %.sum		; <i8*> [#uses=1]
 	store i8 %32, i8* %33, align 1
 	%34 = shl i32 %x.12, 2		; <i32> [#uses=1]
 	%35 = or i32 %34, 2		; <i32> [#uses=1]
 	%36 = add i32 %35, %25		; <i32> [#uses=1]
-	%37 = getelementptr i8* %r, i32 %36		; <i8*> [#uses=1]
+	%37 = getelementptr i8, i8* %r, i32 %36		; <i8*> [#uses=1]
 	%38 = load i8* %37, align 1		; <i8> [#uses=1]
 	%.sum6 = add i32 %27, %x.12		; <i32> [#uses=1]
-	%39 = getelementptr i8* %j, i32 %.sum6		; <i8*> [#uses=1]
+	%39 = getelementptr i8, i8* %j, i32 %.sum6		; <i8*> [#uses=1]
 	store i8 %38, i8* %39, align 1
 	%40 = add i32 %x.12, 1		; <i32> [#uses=2]
 	br label %bb15
@@ -168,10 +168,10 @@ bb23:		; preds = %bb24, %bb.nph
 	%y.21 = phi i32 [ %57, %bb24 ], [ 0, %bb.nph ]		; <i32> [#uses=3]
 	%53 = mul i32 %y.21, %50		; <i32> [#uses=1]
 	%.sum1 = add i32 %53, %51		; <i32> [#uses=1]
-	%54 = getelementptr i8* %r, i32 %.sum1		; <i8*> [#uses=1]
+	%54 = getelementptr i8, i8* %r, i32 %.sum1		; <i8*> [#uses=1]
 	%55 = mul i32 %y.21, %w		; <i32> [#uses=1]
 	%.sum5 = add i32 %55, %.sum3		; <i32> [#uses=1]
-	%56 = getelementptr i8* %j, i32 %.sum5		; <i8*> [#uses=1]
+	%56 = getelementptr i8, i8* %j, i32 %.sum5		; <i8*> [#uses=1]
 	tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %56, i8* %54, i32 %w, i32 1, i1 false)
 	%57 = add i32 %y.21, 1		; <i32> [#uses=2]
 	br label %bb24
@@ -186,7 +186,7 @@ bb24.bb26_crit_edge:		; preds = %bb24
 bb26:		; preds = %bb24.bb26_crit_edge, %bb22
 	%59 = mul i32 %x, %w		; <i32> [#uses=1]
 	%.sum4 = add i32 %.sum3, %59		; <i32> [#uses=1]
-	%60 = getelementptr i8* %j, i32 %.sum4		; <i8*> [#uses=1]
+	%60 = getelementptr i8, i8* %j, i32 %.sum4		; <i8*> [#uses=1]
 	%61 = mul i32 %x, %w		; <i32> [#uses=1]
 	%62 = sdiv i32 %61, 2		; <i32> [#uses=1]
 	tail call void @llvm.memset.p0i8.i32(i8* %60, i8 -128, i32 %62, i32 1, i1 false)
@@ -204,9 +204,9 @@ bb.nph11:		; preds = %bb29
 bb30:		; preds = %bb31, %bb.nph11
 	%y.310 = phi i32 [ %70, %bb31 ], [ 0, %bb.nph11 ]		; <i32> [#uses=3]
 	%66 = mul i32 %y.310, %64		; <i32> [#uses=1]
-	%67 = getelementptr i8* %r, i32 %66		; <i8*> [#uses=1]
+	%67 = getelementptr i8, i8* %r, i32 %66		; <i8*> [#uses=1]
 	%68 = mul i32 %y.310, %w		; <i32> [#uses=1]
-	%69 = getelementptr i8* %j, i32 %68		; <i8*> [#uses=1]
+	%69 = getelementptr i8, i8* %j, i32 %68		; <i8*> [#uses=1]
 	tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %69, i8* %67, i32 %w, i32 1, i1 false)
 	%70 = add i32 %y.310, 1		; <i32> [#uses=2]
 	br label %bb31
@@ -220,7 +220,7 @@ bb31.bb33_crit_edge:		; preds = %bb31
 
 bb33:		; preds = %bb31.bb33_crit_edge, %bb29
 	%72 = mul i32 %x, %w		; <i32> [#uses=1]
-	%73 = getelementptr i8* %j, i32 %72		; <i8*> [#uses=1]
+	%73 = getelementptr i8, i8* %j, i32 %72		; <i8*> [#uses=1]
 	%74 = mul i32 %x, %w		; <i32> [#uses=1]
 	%75 = sdiv i32 %74, 2		; <i32> [#uses=1]
 	tail call void @llvm.memset.p0i8.i32(i8* %73, i8 -128, i32 %75, i32 1, i1 false)

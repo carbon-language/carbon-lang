@@ -28,8 +28,8 @@ define void @_Z19getClosestDiagonal3ii(%0* noalias sret, i32, i32) nounwind {
   call void @llvm.dbg.value(metadata double %storemerge, i64 0, metadata !91, metadata !{!"0x102"}), !dbg !0
   %v_7 = icmp eq i32 %2, 1, !dbg !92                ; <i1> [#uses=1]
   %storemerge2 = select i1 %v_7, double 1.000000e+00, double -1.000000e+00 ; <double> [#uses=3]
-  %v_8 = getelementptr inbounds %0* %0, i32 0, i32 0, i32 0 ; <double*> [#uses=1]
-  %v_10 = getelementptr inbounds %0* %0, i32 0, i32 0, i32 2 ; <double*> [#uses=1]
+  %v_8 = getelementptr inbounds %0, %0* %0, i32 0, i32 0, i32 0 ; <double*> [#uses=1]
+  %v_10 = getelementptr inbounds %0, %0* %0, i32 0, i32 0, i32 2 ; <double*> [#uses=1]
   %v_11 = fmul double %storemerge1, %storemerge1, !dbg !93 ; <double> [#uses=1]
   %v_15 = tail call double @sqrt(double %v_11) nounwind readonly, !dbg !93 ; <double> [#uses=1]
   %v_16 = fdiv double 1.000000e+00, %v_15, !dbg !93   ; <double> [#uses=3]

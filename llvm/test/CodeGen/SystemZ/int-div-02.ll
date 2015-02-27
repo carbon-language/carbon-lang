@@ -100,7 +100,7 @@ define i32 @f7(i32 %dummy, i32 %a, i32 *%src) {
 ; CHECK-LABEL: f7:
 ; CHECK: dl %r2, 524284(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 131071
+  %ptr = getelementptr i32, i32 *%src, i64 131071
   %b = load i32 *%ptr
   %rem = urem i32 %a, %b
   ret i32 %rem
@@ -113,7 +113,7 @@ define i32 @f8(i32 %dummy, i32 %a, i32 *%src) {
 ; CHECK: agfi %r4, 524288
 ; CHECK: dl %r2, 0(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 131072
+  %ptr = getelementptr i32, i32 *%src, i64 131072
   %b = load i32 *%ptr
   %rem = urem i32 %a, %b
   ret i32 %rem
@@ -124,7 +124,7 @@ define i32 @f9(i32 %dummy, i32 %a, i32 *%src) {
 ; CHECK-LABEL: f9:
 ; CHECK: dl %r2, -4(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 -1
+  %ptr = getelementptr i32, i32 *%src, i64 -1
   %b = load i32 *%ptr
   %rem = urem i32 %a, %b
   ret i32 %rem
@@ -135,7 +135,7 @@ define i32 @f10(i32 %dummy, i32 %a, i32 *%src) {
 ; CHECK-LABEL: f10:
 ; CHECK: dl %r2, -524288(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 -131072
+  %ptr = getelementptr i32, i32 *%src, i64 -131072
   %b = load i32 *%ptr
   %rem = urem i32 %a, %b
   ret i32 %rem
@@ -148,7 +148,7 @@ define i32 @f11(i32 %dummy, i32 %a, i32 *%src) {
 ; CHECK: agfi %r4, -524292
 ; CHECK: dl %r2, 0(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 -131073
+  %ptr = getelementptr i32, i32 *%src, i64 -131073
   %b = load i32 *%ptr
   %rem = urem i32 %a, %b
   ret i32 %rem
@@ -173,15 +173,15 @@ define i32 @f13(i32 *%ptr0) {
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: dl {{%r[0-9]+}}, 16{{[04]}}(%r15)
 ; CHECK: br %r14
-  %ptr1 = getelementptr i32 *%ptr0, i64 2
-  %ptr2 = getelementptr i32 *%ptr0, i64 4
-  %ptr3 = getelementptr i32 *%ptr0, i64 6
-  %ptr4 = getelementptr i32 *%ptr0, i64 8
-  %ptr5 = getelementptr i32 *%ptr0, i64 10
-  %ptr6 = getelementptr i32 *%ptr0, i64 12
-  %ptr7 = getelementptr i32 *%ptr0, i64 14
-  %ptr8 = getelementptr i32 *%ptr0, i64 16
-  %ptr9 = getelementptr i32 *%ptr0, i64 18
+  %ptr1 = getelementptr i32, i32 *%ptr0, i64 2
+  %ptr2 = getelementptr i32, i32 *%ptr0, i64 4
+  %ptr3 = getelementptr i32, i32 *%ptr0, i64 6
+  %ptr4 = getelementptr i32, i32 *%ptr0, i64 8
+  %ptr5 = getelementptr i32, i32 *%ptr0, i64 10
+  %ptr6 = getelementptr i32, i32 *%ptr0, i64 12
+  %ptr7 = getelementptr i32, i32 *%ptr0, i64 14
+  %ptr8 = getelementptr i32, i32 *%ptr0, i64 16
+  %ptr9 = getelementptr i32, i32 *%ptr0, i64 18
 
   %val0 = load i32 *%ptr0
   %val1 = load i32 *%ptr1

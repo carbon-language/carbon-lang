@@ -34,7 +34,7 @@ for.i:
 for.j:
   %j = phi i64 [ 0, %for.i ], [ %j.inc, %for.j ]
   %vlaarrayidx.sum = add i64 %j, %tmp
-  %arrayidx = getelementptr inbounds double* %A, i64 %vlaarrayidx.sum
+  %arrayidx = getelementptr inbounds double, double* %A, i64 %vlaarrayidx.sum
   %val = load double* %arrayidx
   store double %val, double* %arrayidx
   %j.inc = add nsw i64 %j, 1

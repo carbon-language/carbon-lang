@@ -13,6 +13,6 @@ bb22:		; preds = %bb23, %bb22, %entry
 bb23:		; preds = %bb23, %bb22
 	%sortv.233 = phi i32* [ getelementptr ([256 x i32]* @sort_value, i32 0, i32 0), %bb22 ], [ %sortv.2, %bb23 ]		; <i32*> [#uses=1]
 	%0 = load i32* %sortv.233, align 4		; <i32> [#uses=0]
-	%sortv.2 = getelementptr [256 x i32]* @sort_value, i32 0, i32 0		; <i32*> [#uses=1]
+	%sortv.2 = getelementptr [256 x i32], [256 x i32]* @sort_value, i32 0, i32 0		; <i32*> [#uses=1]
 	br i1 false, label %bb23, label %bb22
 }

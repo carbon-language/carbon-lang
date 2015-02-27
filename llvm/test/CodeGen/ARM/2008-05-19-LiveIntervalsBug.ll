@@ -28,7 +28,7 @@ cond_true.i29:		; preds = %entry
 
 bb.i8.us.i:		; preds = %get_mem2Dpel.exit.i.us.i, %cond_true.i29
 	%j.04.i.us.i = phi i32 [ %indvar.next39.i, %get_mem2Dpel.exit.i.us.i ], [ 0, %cond_true.i29 ]		; <i32> [#uses=2]
-	%tmp13.i.us.i = getelementptr i16*** null, i32 %j.04.i.us.i		; <i16***> [#uses=0]
+	%tmp13.i.us.i = getelementptr i16**, i16*** null, i32 %j.04.i.us.i		; <i16***> [#uses=0]
 	%tmp15.i.i.us.i = tail call i8* @calloc( i32 0, i32 2 )		; <i8*> [#uses=0]
 	store i16* null, i16** null, align 4
 	br label %bb.i.i.us.i

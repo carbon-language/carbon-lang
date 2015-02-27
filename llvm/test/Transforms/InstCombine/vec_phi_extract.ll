@@ -16,7 +16,7 @@ loop:
   %end = icmp ult i32 %elt, %limit
   %3 = add i32 10, %elt
   %4 = sext i32 %elt to i64
-  %5 = getelementptr i32* %ptr, i64 %4
+  %5 = getelementptr i32, i32* %ptr, i64 %4
   store i32 %3, i32* %5
   %inc = add <16 x i32> %2, <i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16, i32 16>
   br i1 %end, label %loop, label %ret

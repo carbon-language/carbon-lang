@@ -18,28 +18,28 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;CHECK-NOT: store <3 x i8>
 ;CHECK: ret
 define i32 @foo(i8* noalias nocapture %A, float* noalias nocapture %B, float %T) {
-  %1 = getelementptr inbounds float* %B, i64 10
+  %1 = getelementptr inbounds float, float* %B, i64 10
   %2 = load float* %1, align 4
   %3 = fmul float %2, %T
   %4 = fpext float %3 to double
   %5 = fadd double %4, 4.000000e+00
   %6 = fptosi double %5 to i8
   store i8 %6, i8* %A, align 1
-  %7 = getelementptr inbounds float* %B, i64 11
+  %7 = getelementptr inbounds float, float* %B, i64 11
   %8 = load float* %7, align 4
   %9 = fmul float %8, %T
   %10 = fpext float %9 to double
   %11 = fadd double %10, 5.000000e+00
   %12 = fptosi double %11 to i8
-  %13 = getelementptr inbounds i8* %A, i64 1
+  %13 = getelementptr inbounds i8, i8* %A, i64 1
   store i8 %12, i8* %13, align 1
-  %14 = getelementptr inbounds float* %B, i64 12
+  %14 = getelementptr inbounds float, float* %B, i64 12
   %15 = load float* %14, align 4
   %16 = fmul float %15, %T
   %17 = fpext float %16 to double
   %18 = fadd double %17, 6.000000e+00
   %19 = fptosi double %18 to i8
-  %20 = getelementptr inbounds i8* %A, i64 2
+  %20 = getelementptr inbounds i8, i8* %A, i64 2
   store i8 %19, i8* %20, align 1
   ret i32 undef
 }

@@ -10,7 +10,7 @@ define i16 @f1(i16 %a, i16* %v) {
 define i16 @f2(i16 %a, i16* %v) {
 ; CHECK-LABEL: f2:
 ; CHECK: strh.w r0, [r1, #4092]
-        %tmp2 = getelementptr i16* %v, i32 2046
+        %tmp2 = getelementptr i16, i16* %v, i32 2046
         store i16 %a, i16* %tmp2
         ret i16 %a
 }
@@ -18,7 +18,7 @@ define i16 @f2(i16 %a, i16* %v) {
 define i16 @f2a(i16 %a, i16* %v) {
 ; CHECK-LABEL: f2a:
 ; CHECK: strh r0, [r1, #-128]
-        %tmp2 = getelementptr i16* %v, i32 -64
+        %tmp2 = getelementptr i16, i16* %v, i32 -64
         store i16 %a, i16* %tmp2
         ret i16 %a
 }
@@ -27,7 +27,7 @@ define i16 @f3(i16 %a, i16* %v) {
 ; CHECK-LABEL: f3:
 ; CHECK: mov.w r2, #4096
 ; CHECK: strh r0, [r1, r2]
-        %tmp2 = getelementptr i16* %v, i32 2048
+        %tmp2 = getelementptr i16, i16* %v, i32 2048
         store i16 %a, i16* %tmp2
         ret i16 %a
 }

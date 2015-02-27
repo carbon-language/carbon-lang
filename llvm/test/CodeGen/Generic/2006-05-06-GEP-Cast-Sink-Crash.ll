@@ -9,7 +9,7 @@ declare void @fprintf(i32, ...)
 
 define void @OUTPUT_TABLE(%struct.SYMBOL_TABLE_ENTRY* %SYM_TAB) {
 entry:
-	%tmp11 = getelementptr %struct.SYMBOL_TABLE_ENTRY* %SYM_TAB, i32 0, i32 1, i32 0		; <i8*> [#uses=2]
+	%tmp11 = getelementptr %struct.SYMBOL_TABLE_ENTRY, %struct.SYMBOL_TABLE_ENTRY* %SYM_TAB, i32 0, i32 1, i32 0		; <i8*> [#uses=2]
 	%tmp.i = bitcast i8* %tmp11 to i8*		; <i8*> [#uses=1]
 	br label %bb.i
 

@@ -51,7 +51,7 @@ for.body8:                                        ; preds = %for.body8.lr.ph, %f
   %add10 = add i32 %add9, %2
   store i32 %add10, i32* @f, align 4, !tbaa !5
   %idx.ext = sext i32 %add10 to i64
-  %add.ptr = getelementptr inbounds i32* @a, i64 %idx.ext
+  %add.ptr = getelementptr inbounds i32, i32* @a, i64 %idx.ext
   %tobool129 = icmp eq i32 %i.213, 0
   br i1 %tobool129, label %for.inc19, label %for.body13.lr.ph
 
@@ -62,9 +62,9 @@ for.body13.lr.ph:                                 ; preds = %for.body8
 for.body13:                                       ; preds = %for.body13.lr.ph, %for.body13
   %indvars.iv = phi i64 [ %3, %for.body13.lr.ph ], [ %indvars.iv.next, %for.body13 ]
   %add.ptr.sum = add i64 %idx.ext, %indvars.iv
-  %arrayidx = getelementptr inbounds i32* @a, i64 %add.ptr.sum
+  %arrayidx = getelementptr inbounds i32, i32* @a, i64 %add.ptr.sum
   %4 = load i32* %arrayidx, align 4, !tbaa !5
-  %arrayidx15 = getelementptr inbounds i32* %0, i64 %indvars.iv
+  %arrayidx15 = getelementptr inbounds i32, i32* %0, i64 %indvars.iv
   store i32 %4, i32* %arrayidx15, align 4, !tbaa !5
   %indvars.iv.next = add i64 %indvars.iv, 1
   %5 = trunc i64 %indvars.iv.next to i32

@@ -22,12 +22,12 @@ for.body.preheader:                               ; preds = %entry
 
 for.body:                                         ; preds = %for.body.preheader, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %for.body.preheader ]
-  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
-  %arrayidx2 = getelementptr inbounds i32* %b, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
   %1 = load i32* %arrayidx2, align 4
   %add = add nsw i32 %1, %0
-  %arrayidx4 = getelementptr inbounds i32* %c, i64 %indvars.iv
+  %arrayidx4 = getelementptr inbounds i32, i32* %c, i64 %indvars.iv
   store i32 %add, i32* %arrayidx4, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32

@@ -20,7 +20,7 @@ define fastcc i8* @1(i8*) nounwind {
 	%8 = sext i32 %5 to i64		; <i64> [#uses=1]
 	%9 = sext i32 %7 to i64		; <i64> [#uses=1]
 	%10 = sub i64 %8, %9		; <i64> [#uses=1]
-	%11 = getelementptr i8* %0, i64 %10		; <i8*> [#uses=1]
+	%11 = getelementptr i8, i8* %0, i64 %10		; <i8*> [#uses=1]
 	%12 = icmp sgt i32 %7, 0		; <i1> [#uses=1]
 	br i1 %12, label %13, label %14
 

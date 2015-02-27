@@ -15,12 +15,12 @@ define void @align(i32* %a, i32* %b, i32* %c) nounwind uwtable ssp {
 
 ; <label>:1                                       ; preds = %1, %0
   %indvars.iv = phi i64 [ 0, %0 ], [ %indvars.iv.next, %1 ]
-  %2 = getelementptr inbounds i32* %b, i64 %indvars.iv
+  %2 = getelementptr inbounds i32, i32* %b, i64 %indvars.iv
   %3 = load i32* %2
-  %4 = getelementptr inbounds i32* %c, i64 %indvars.iv
+  %4 = getelementptr inbounds i32, i32* %c, i64 %indvars.iv
   %5 = load i32* %4
   %6 = add nsw i32 %5, %3
-  %7 = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %7 = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   store i32 %6, i32* %7
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32

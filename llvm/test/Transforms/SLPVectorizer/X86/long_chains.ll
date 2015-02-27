@@ -14,7 +14,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 define i32 @test(double* nocapture %A, i8* nocapture %B) {
 entry:
   %0 = load i8* %B, align 1
-  %arrayidx1 = getelementptr inbounds i8* %B, i64 1
+  %arrayidx1 = getelementptr inbounds i8, i8* %B, i64 1
   %1 = load i8* %arrayidx1, align 1
   %add = add i8 %0, 3
   %add4 = add i8 %1, 3
@@ -41,7 +41,7 @@ entry:
   %mul25 = fmul double %add22, %add22
   %add26 = fadd double %mul25, 1.000000e+00
   store double %add24, double* %A, align 8
-  %arrayidx28 = getelementptr inbounds double* %A, i64 1
+  %arrayidx28 = getelementptr inbounds double, double* %A, i64 1
   store double %add26, double* %arrayidx28, align 8
   ret i32 undef
 }

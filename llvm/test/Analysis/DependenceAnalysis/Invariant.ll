@@ -19,9 +19,9 @@ for.cond1.preheader:
 for.body3:
   %j.02 = phi i32 [ 0, %for.cond1.preheader ], [ %add8, %for.body3 ]
   %res.11 = phi float [ %res.03, %for.cond1.preheader ], [ %add.res.1, %for.body3 ]
-  %arrayidx4 = getelementptr inbounds [40 x float]* %rr, i32 %j.02, i32 %j.02
+  %arrayidx4 = getelementptr inbounds [40 x float], [40 x float]* %rr, i32 %j.02, i32 %j.02
   %0 = load float* %arrayidx4, align 4
-  %arrayidx6 = getelementptr inbounds [40 x float]* %rr, i32 %i.04, i32 %j.02
+  %arrayidx6 = getelementptr inbounds [40 x float], [40 x float]* %rr, i32 %i.04, i32 %j.02
   %1 = load float* %arrayidx6, align 4
   %add = fadd float %0, %1
   %cmp7 = fcmp ogt float %add, %g

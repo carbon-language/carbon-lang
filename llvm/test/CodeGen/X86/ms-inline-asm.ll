@@ -44,12 +44,12 @@ entry:
 define i32 @t18() nounwind {
 entry:
   %foo = alloca %struct.t18_type, align 4
-  %a = getelementptr inbounds %struct.t18_type* %foo, i32 0, i32 0
+  %a = getelementptr inbounds %struct.t18_type, %struct.t18_type* %foo, i32 0, i32 0
   store i32 1, i32* %a, align 4
-  %b = getelementptr inbounds %struct.t18_type* %foo, i32 0, i32 1
+  %b = getelementptr inbounds %struct.t18_type, %struct.t18_type* %foo, i32 0, i32 1
   store i32 2, i32* %b, align 4
   call void asm sideeffect inteldialect "lea ebx, foo\0A\09mov eax, [ebx].0\0A\09mov [ebx].4, ecx", "~{eax},~{dirflag},~{fpsr},~{flags}"() nounwind
-  %b1 = getelementptr inbounds %struct.t18_type* %foo, i32 0, i32 1
+  %b1 = getelementptr inbounds %struct.t18_type, %struct.t18_type* %foo, i32 0, i32 1
   %0 = load i32* %b1, align 4
   ret i32 %0
 ; CHECK: t18

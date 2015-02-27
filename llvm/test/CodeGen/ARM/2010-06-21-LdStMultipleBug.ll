@@ -19,7 +19,7 @@ entry:
 
 bb:                                               ; preds = %bb445, %entry
   %2 = load %struct.cellbox** undef, align 4      ; <%struct.cellbox*> [#uses=2]
-  %3 = getelementptr inbounds %struct.cellbox* %2, i32 0, i32 3 ; <i32*> [#uses=1]
+  %3 = getelementptr inbounds %struct.cellbox, %struct.cellbox* %2, i32 0, i32 3 ; <i32*> [#uses=1]
   store i32 undef, i32* %3, align 4
   %4 = load i32* undef, align 4                   ; <i32> [#uses=3]
   %5 = icmp eq i32 undef, 1                       ; <i1> [#uses=1]
@@ -31,9 +31,9 @@ bb10:                                             ; preds = %bb
 bb11:                                             ; preds = %bb10
   %6 = load %struct.tilebox** undef, align 4      ; <%struct.tilebox*> [#uses=3]
   %7 = load %struct.termbox** null, align 4       ; <%struct.termbox*> [#uses=1]
-  %8 = getelementptr inbounds %struct.tilebox* %6, i32 0, i32 13 ; <i32*> [#uses=1]
+  %8 = getelementptr inbounds %struct.tilebox, %struct.tilebox* %6, i32 0, i32 13 ; <i32*> [#uses=1]
   %9 = load i32* %8, align 4                      ; <i32> [#uses=3]
-  %10 = getelementptr inbounds %struct.tilebox* %6, i32 0, i32 15 ; <i32*> [#uses=1]
+  %10 = getelementptr inbounds %struct.tilebox, %struct.tilebox* %6, i32 0, i32 15 ; <i32*> [#uses=1]
   %11 = load i32* %10, align 4                    ; <i32> [#uses=1]
   br i1 false, label %bb12, label %bb13
 
@@ -67,7 +67,7 @@ bb21:                                             ; preds = %bb13
   %25 = zext i1 %not.461 to i32                   ; <i32> [#uses=1]
   %iftmp.43.0 = add i32 %23, %iftmp.41.0.neg      ; <i32> [#uses=1]
   %26 = add i32 %iftmp.43.0, %25                  ; <i32> [#uses=1]
-  %27 = getelementptr inbounds %struct.tilebox* %6, i32 0, i32 10 ; <i32*> [#uses=1]
+  %27 = getelementptr inbounds %struct.tilebox, %struct.tilebox* %6, i32 0, i32 10 ; <i32*> [#uses=1]
   store i32 %26, i32* %27, align 4
   %28 = fptosi double undef to i32                ; <i32> [#uses=1]
   %iftmp.45.0 = add i32 %28, %iftmp.40.0.neg      ; <i32> [#uses=1]
@@ -92,7 +92,7 @@ bb36:                                             ; preds = %bb43.loopexit, %bb3
   %iftmp.47.0 = add i32 %39, %iftmp.40.0.neg      ; <i32> [#uses=1]
   %40 = add i32 %iftmp.47.0, 0                    ; <i32> [#uses=1]
   store i32 %40, i32* undef, align 4
-  %41 = getelementptr inbounds %struct.termbox* %termptr.0478, i32 0, i32 0 ; <%struct.termbox**> [#uses=1]
+  %41 = getelementptr inbounds %struct.termbox, %struct.termbox* %termptr.0478, i32 0, i32 0 ; <%struct.termbox**> [#uses=1]
   %42 = load %struct.termbox** %41, align 4       ; <%struct.termbox*> [#uses=2]
   %43 = icmp eq %struct.termbox* %42, null        ; <i1> [#uses=1]
   br i1 %43, label %bb52.loopexit, label %bb36
@@ -127,9 +127,9 @@ bb248:                                            ; preds = %bb322, %bb.nph485
   br i1 %45, label %bb322, label %bb249
 
 bb249:                                            ; preds = %bb248
-  %46 = getelementptr inbounds %struct.cellbox* %2, i32 0, i32 21, i32 undef ; <%struct.tilebox**> [#uses=1]
+  %46 = getelementptr inbounds %struct.cellbox, %struct.cellbox* %2, i32 0, i32 21, i32 undef ; <%struct.tilebox**> [#uses=1]
   %47 = load %struct.tilebox** %46, align 4       ; <%struct.tilebox*> [#uses=1]
-  %48 = getelementptr inbounds %struct.tilebox* %47, i32 0, i32 11 ; <i32*> [#uses=1]
+  %48 = getelementptr inbounds %struct.tilebox, %struct.tilebox* %47, i32 0, i32 11 ; <i32*> [#uses=1]
   store i32 undef, i32* %48, align 4
   unreachable
 

@@ -26,7 +26,7 @@ define double @f3(float *%base) {
 ; CHECK-LABEL: f3:
 ; CHECK: ldeb %f0, 4092(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 1023
+  %ptr = getelementptr float, float *%base, i64 1023
   %val = load float *%ptr
   %res = fpext float %val to double
   ret double %res
@@ -39,7 +39,7 @@ define double @f4(float *%base) {
 ; CHECK: aghi %r2, 4096
 ; CHECK: ldeb %f0, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 1024
+  %ptr = getelementptr float, float *%base, i64 1024
   %val = load float *%ptr
   %res = fpext float %val to double
   ret double %res
@@ -51,7 +51,7 @@ define double @f5(float *%base) {
 ; CHECK: aghi %r2, -4
 ; CHECK: ldeb %f0, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 -1
+  %ptr = getelementptr float, float *%base, i64 -1
   %val = load float *%ptr
   %res = fpext float %val to double
   ret double %res
@@ -63,8 +63,8 @@ define double @f6(float *%base, i64 %index) {
 ; CHECK: sllg %r1, %r3, 2
 ; CHECK: ldeb %f0, 400(%r1,%r2)
 ; CHECK: br %r14
-  %ptr1 = getelementptr float *%base, i64 %index
-  %ptr2 = getelementptr float *%ptr1, i64 100
+  %ptr1 = getelementptr float, float *%base, i64 %index
+  %ptr2 = getelementptr float, float *%ptr1, i64 100
   %val = load float *%ptr2
   %res = fpext float %val to double
   ret double %res

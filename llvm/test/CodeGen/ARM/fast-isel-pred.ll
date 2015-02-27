@@ -51,9 +51,9 @@ entry:
   %tmp = load i64* %data, align 4
   %tmp1 = load i8** %p.addr, align 4
   %tmp2 = load i32* %offset.addr, align 4
-  %add.ptr = getelementptr i8* %tmp1, i32 %tmp2
+  %add.ptr = getelementptr i8, i8* %tmp1, i32 %tmp2
   %0 = bitcast i8* %add.ptr to i64*
-  %arrayidx = getelementptr inbounds i64* %0, i32 0
+  %arrayidx = getelementptr inbounds i64, i64* %0, i32 0
   store i64 %tmp, i64* %arrayidx
   ret void
 }

@@ -19,19 +19,19 @@ bb2.i:                                            ; preds = %bb
   br label %bb3.i
 
 bb3.i:                                            ; preds = %bb2.i, %bb
-  %0 = getelementptr inbounds %quuz* %a, i32 0, i32 1, i32 0, i32 0 ; <float*> [#uses=0]
+  %0 = getelementptr inbounds %quuz, %quuz* %a, i32 0, i32 1, i32 0, i32 0 ; <float*> [#uses=0]
   %1 = fsub float 0.000000e+00, undef             ; <float> [#uses=1]
-  %2 = getelementptr inbounds %quuz* %b, i32 0, i32 1, i32 0, i32 1 ; <float*> [#uses=2]
+  %2 = getelementptr inbounds %quuz, %quuz* %b, i32 0, i32 1, i32 0, i32 1 ; <float*> [#uses=2]
   %3 = load float* %2, align 4                    ; <float> [#uses=1]
-  %4 = getelementptr inbounds %quuz* %a, i32 0, i32 1, i32 0, i32 1 ; <float*> [#uses=1]
+  %4 = getelementptr inbounds %quuz, %quuz* %a, i32 0, i32 1, i32 0, i32 1 ; <float*> [#uses=1]
   %5 = fsub float %3, undef                       ; <float> [#uses=2]
-  %6 = getelementptr inbounds %quuz* %b, i32 0, i32 1, i32 0, i32 2 ; <float*> [#uses=2]
+  %6 = getelementptr inbounds %quuz, %quuz* %b, i32 0, i32 1, i32 0, i32 2 ; <float*> [#uses=2]
   %7 = load float* %6, align 4                    ; <float> [#uses=1]
   %8 = fsub float %7, undef                       ; <float> [#uses=1]
-  %9 = getelementptr inbounds %quuz* %c, i32 0, i32 1, i32 0, i32 0 ; <float*> [#uses=2]
+  %9 = getelementptr inbounds %quuz, %quuz* %c, i32 0, i32 1, i32 0, i32 0 ; <float*> [#uses=2]
   %10 = load float* %9, align 4                   ; <float> [#uses=1]
   %11 = fsub float %10, undef                     ; <float> [#uses=2]
-  %12 = getelementptr inbounds %quuz* %c, i32 0, i32 1, i32 0, i32 1 ; <float*> [#uses=2]
+  %12 = getelementptr inbounds %quuz, %quuz* %c, i32 0, i32 1, i32 0, i32 1 ; <float*> [#uses=2]
   %13 = load float* %12, align 4                  ; <float> [#uses=1]
   %14 = fsub float %13, undef                     ; <float> [#uses=1]
   %15 = load float* undef, align 4                ; <float> [#uses=1]
@@ -44,10 +44,10 @@ bb3.i:                                            ; preds = %bb2.i, %bb
   %22 = fmul float %5, %11                        ; <float> [#uses=1]
   %23 = fsub float %21, %22                       ; <float> [#uses=2]
   store float %18, float* undef
-  %24 = getelementptr inbounds %bar* null, i32 0, i32 0, i32 0, i32 1 ; <float*> [#uses=2]
+  %24 = getelementptr inbounds %bar, %bar* null, i32 0, i32 0, i32 0, i32 1 ; <float*> [#uses=2]
   store float %20, float* %24
   store float %23, float* undef
-  %25 = getelementptr inbounds %bar* null, i32 0, i32 0, i32 0, i32 3 ; <float*> [#uses=0]
+  %25 = getelementptr inbounds %bar, %bar* null, i32 0, i32 0, i32 0, i32 3 ; <float*> [#uses=0]
   %26 = fmul float %18, %18                       ; <float> [#uses=1]
   %27 = fadd float %26, undef                     ; <float> [#uses=1]
   %28 = fadd float %27, undef                     ; <float> [#uses=1]

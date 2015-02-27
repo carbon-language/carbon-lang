@@ -405,7 +405,7 @@ entry:
 define i32 @test_large_stack() {
 entry:
   %buffer1 = alloca [16384 x i8], align 8
-  %buffer1.sub = getelementptr inbounds [16384 x i8]* %buffer1, i32 0, i32 0
+  %buffer1.sub = getelementptr inbounds [16384 x i8], [16384 x i8]* %buffer1, i32 0, i32 0
   %0 = call i32 @use_buf(i32 16384, i8* %buffer1.sub)
   ret i32 %0
 }

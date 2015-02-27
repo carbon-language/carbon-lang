@@ -27,10 +27,10 @@ entry:
 loop:
   %4 = phi i64 [0, %entry], [%5, %loop]
   %5 = add i64 %2, %4
-  %6 = getelementptr i8 addrspace(1)* %in, i64 %5
+  %6 = getelementptr i8, i8 addrspace(1)* %in, i64 %5
   %7 = load i8 addrspace(1)* %6, align 1
   %8 = or i64 %5, 1
-  %9 = getelementptr i8 addrspace(1)* %in, i64 %8
+  %9 = getelementptr i8, i8 addrspace(1)* %in, i64 %8
   %10 = load i8 addrspace(1)* %9, align 1
   %11 = add i8 %7, %10
   %12 = sext i8 %11 to i32
@@ -63,13 +63,13 @@ if:
   br label %endif
 
 else:
-  %2 = getelementptr i32 addrspace(2)* addrspace(1)* %in
+  %2 = getelementptr i32 addrspace(2)*, i32 addrspace(2)* addrspace(1)* %in
   %3 = load i32 addrspace(2)* addrspace(1)* %2
   br label %endif
 
 endif:
   %4 = phi i32 addrspace(2)*  [%1, %if], [%3, %else]
-  %5 = getelementptr i32 addrspace(2)* %4, i32 3000
+  %5 = getelementptr i32, i32 addrspace(2)* %4, i32 3000
   %6 = load i32 addrspace(2)* %5
   store i32 %6, i32 addrspace(1)* %out
   ret void
@@ -83,7 +83,7 @@ define void @smrd_valu2(i32 addrspace(1)* %out, [8 x i32] addrspace(2)* %in) {
 entry:
   %0 = call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %1 = add i32 %0, 4
-  %2 = getelementptr [8 x i32] addrspace(2)* %in, i32 %0, i32 4
+  %2 = getelementptr [8 x i32], [8 x i32] addrspace(2)* %in, i32 %0, i32 4
   %3 = load i32 addrspace(2)* %2
   store i32 %3, i32 addrspace(1)* %out
   ret void
@@ -95,7 +95,7 @@ entry:
 define void @s_load_imm_v8i32(<8 x i32> addrspace(1)* %out, i32 addrspace(2)* nocapture readonly %in) {
 entry:
   %tmp0 = tail call i32 @llvm.r600.read.tidig.x() #1
-  %tmp1 = getelementptr inbounds i32 addrspace(2)* %in, i32 %tmp0
+  %tmp1 = getelementptr inbounds i32, i32 addrspace(2)* %in, i32 %tmp0
   %tmp2 = bitcast i32 addrspace(2)* %tmp1 to <8 x i32> addrspace(2)*
   %tmp3 = load <8 x i32> addrspace(2)* %tmp2, align 4
   store <8 x i32> %tmp3, <8 x i32> addrspace(1)* %out, align 32
@@ -110,7 +110,7 @@ entry:
 define void @s_load_imm_v16i32(<16 x i32> addrspace(1)* %out, i32 addrspace(2)* nocapture readonly %in) {
 entry:
   %tmp0 = tail call i32 @llvm.r600.read.tidig.x() #1
-  %tmp1 = getelementptr inbounds i32 addrspace(2)* %in, i32 %tmp0
+  %tmp1 = getelementptr inbounds i32, i32 addrspace(2)* %in, i32 %tmp0
   %tmp2 = bitcast i32 addrspace(2)* %tmp1 to <16 x i32> addrspace(2)*
   %tmp3 = load <16 x i32> addrspace(2)* %tmp2, align 4
   store <16 x i32> %tmp3, <16 x i32> addrspace(1)* %out, align 32

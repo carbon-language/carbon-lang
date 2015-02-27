@@ -10,7 +10,7 @@ declare i8 @strstr(i8*, i8*)
 
 define i8 @test_no_simplify1(i8* %str) {
 ; CHECK-LABEL: @test_no_simplify1(
-  %pat = getelementptr inbounds [1 x i8]* @null, i32 0, i32 0
+  %pat = getelementptr inbounds [1 x i8], [1 x i8]* @null, i32 0, i32 0
   %ret = call i8 @strstr(i8* %str, i8* %pat)
 ; CHECK-NEXT: call i8 @strstr
   ret i8 %ret

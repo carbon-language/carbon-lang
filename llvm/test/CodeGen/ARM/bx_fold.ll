@@ -6,7 +6,7 @@ entry:
 
 bb:		; preds = %bb1
 	%gep.upgrd.1 = zext i32 %indvar to i64		; <i64> [#uses=1]
-	%tmp7 = getelementptr i8* %L, i64 %gep.upgrd.1		; <i8*> [#uses=1]
+	%tmp7 = getelementptr i8, i8* %L, i64 %gep.upgrd.1		; <i8*> [#uses=1]
 	store i8 0, i8* %tmp7
 	%indvar.next = add i32 %indvar, 1		; <i32> [#uses=1]
 	br label %bb1

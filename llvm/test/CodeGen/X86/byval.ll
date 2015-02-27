@@ -11,7 +11,7 @@
 
 define i64 @f(%struct.s* byval %a) {
 entry:
-	%tmp2 = getelementptr %struct.s* %a, i32 0, i32 0
+	%tmp2 = getelementptr %struct.s, %struct.s* %a, i32 0, i32 0
 	%tmp3 = load i64* %tmp2, align 8
 	ret i64 %tmp3
 }

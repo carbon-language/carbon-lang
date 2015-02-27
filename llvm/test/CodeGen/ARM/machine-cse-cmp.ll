@@ -70,7 +70,7 @@ if.end:
 ; CHECK-NOT: sub
 ; CHECK: str
 store i32 %s3, i32* %offset, align 4
-%add.ptr = getelementptr inbounds i8* %base, i32 %sub
+%add.ptr = getelementptr inbounds i8, i8* %base, i32 %sub
 br label %return
 
 return:

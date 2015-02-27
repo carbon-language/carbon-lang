@@ -14,7 +14,7 @@ blah.i:		; preds = %cond_true.i, %entry
 	br i1 %tmp3.i, label %clear_modes.exit, label %cond_true.i
 
 cond_true.i:		; preds = %blah.i
-	%tmp1.i = getelementptr %struct.decision* null, i32 0, i32 0		; <i8*> [#uses=1]
+	%tmp1.i = getelementptr %struct.decision, %struct.decision* null, i32 0, i32 0		; <i8*> [#uses=1]
 	store i8 0, i8* %tmp1.i
 	br label %blah.i
 
@@ -33,7 +33,7 @@ loop.head:              ; preds = %cond.true, %entry
         br i1 %tmp3.i, label %cond.true, label %exit
 
 cond.true:              ; preds = %loop.head
-        %ptr.i = getelementptr i8* %ptr, i32 0          ; <i8*> [#uses=2]
+        %ptr.i = getelementptr i8, i8* %ptr, i32 0          ; <i8*> [#uses=2]
         store i8 0, i8* %ptr.i
         br label %loop.head
 
@@ -50,7 +50,7 @@ loop.head:              ; preds = %cond.true, %entry
         br i1 %tmp3.i, label %exit, label %cond.true
 
 cond.true:              ; preds = %loop.head
-        %ptr.i = getelementptr i8* %p, i32 0          ; <i8*> [#uses=2]
+        %ptr.i = getelementptr i8, i8* %p, i32 0          ; <i8*> [#uses=2]
         store i8 0, i8* %ptr.i
         br label %loop.head
 

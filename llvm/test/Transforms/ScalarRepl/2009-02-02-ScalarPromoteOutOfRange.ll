@@ -6,10 +6,10 @@ target triple = "i386-pc-linux-gnu"
 
 define i32 @f(i32 %x, i32 %y) {
        %instance = alloca %pair
-       %first = getelementptr %pair* %instance, i32 0, i32 0
+       %first = getelementptr %pair, %pair* %instance, i32 0, i32 0
        %cast = bitcast [1 x i32]* %first to i32*
        store i32 %x, i32* %cast
-       %second = getelementptr %pair* %instance, i32 0, i32 1
+       %second = getelementptr %pair, %pair* %instance, i32 0, i32 1
        store i32 %y, i32* %second
        %v = load i32* %cast
        ret i32 %v

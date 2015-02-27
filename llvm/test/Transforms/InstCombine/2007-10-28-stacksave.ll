@@ -23,7 +23,7 @@ lab:		; preds = %cleanup31, %entry
 	%tmp17 = mul i32 %tmp5, 4		; <i32> [#uses=1]
 	%tmp18 = alloca i8, i32 %tmp17		; <i8*> [#uses=1]
 	%tmp1819 = bitcast i8* %tmp18 to i32*		; <i32*> [#uses=2]
-	%tmp21 = getelementptr i32* %tmp1819, i32 0		; <i32*> [#uses=1]
+	%tmp21 = getelementptr i32, i32* %tmp1819, i32 0		; <i32*> [#uses=1]
 	store i32 1, i32* %tmp21, align 4
 	%tmp2223 = bitcast i32* %tmp1819 to i8*		; <i8*> [#uses=1]
 	store volatile i8* %tmp2223, i8** @p, align 4

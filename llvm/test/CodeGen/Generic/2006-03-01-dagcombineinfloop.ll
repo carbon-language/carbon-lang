@@ -36,14 +36,14 @@ cond_next12:		; preds = %cond_true92
 
 cond_next18:		; preds = %cond_next12, %cond_true
 	%tmp20 = bitcast %struct.tree_node* %tmp2 to %struct.tree_type*		; <%struct.tree_type*> [#uses=1]
-	%tmp21 = getelementptr %struct.tree_type* %tmp20, i32 0, i32 17		; <%struct.tree_node**> [#uses=1]
+	%tmp21 = getelementptr %struct.tree_type, %struct.tree_type* %tmp20, i32 0, i32 17		; <%struct.tree_node**> [#uses=1]
 	%tmp22 = load %struct.tree_node** %tmp21		; <%struct.tree_node*> [#uses=6]
 	%tmp24 = icmp eq %struct.tree_node* %tmp22, %tmp23		; <i1> [#uses=1]
 	br i1 %tmp24, label %return, label %cond_next28
 
 cond_next28:		; preds = %cond_next18
 	%tmp30 = bitcast %struct.tree_node* %tmp2 to %struct.tree_common*		; <%struct.tree_common*> [#uses=1]
-	%tmp = getelementptr %struct.tree_common* %tmp30, i32 0, i32 2		; <i8*> [#uses=1]
+	%tmp = getelementptr %struct.tree_common, %struct.tree_common* %tmp30, i32 0, i32 2		; <i8*> [#uses=1]
 	%tmp.upgrd.1 = bitcast i8* %tmp to i32*		; <i32*> [#uses=1]
 	%tmp.upgrd.2 = load i32* %tmp.upgrd.1		; <i32> [#uses=1]
 	%tmp32 = trunc i32 %tmp.upgrd.2 to i8		; <i8> [#uses=1]
@@ -81,10 +81,10 @@ cond_true92.preheader:		; preds = %entry
 cond_true92:		; preds = %cond_true92.preheader, %cond_next84, %cond_true34
 	%t.0.0 = phi %struct.tree_node* [ %parms, %cond_true92.preheader ], [ %tmp6, %cond_true34 ], [ %tmp6, %cond_next84 ]		; <%struct.tree_node*> [#uses=2]
 	%tmp.upgrd.4 = bitcast %struct.tree_node* %t.0.0 to %struct.tree_list*		; <%struct.tree_list*> [#uses=1]
-	%tmp.upgrd.5 = getelementptr %struct.tree_list* %tmp.upgrd.4, i32 0, i32 2		; <%struct.tree_node**> [#uses=1]
+	%tmp.upgrd.5 = getelementptr %struct.tree_list, %struct.tree_list* %tmp.upgrd.4, i32 0, i32 2		; <%struct.tree_node**> [#uses=1]
 	%tmp2 = load %struct.tree_node** %tmp.upgrd.5		; <%struct.tree_node*> [#uses=5]
 	%tmp4 = bitcast %struct.tree_node* %t.0.0 to %struct.tree_common*		; <%struct.tree_common*> [#uses=1]
-	%tmp5 = getelementptr %struct.tree_common* %tmp4, i32 0, i32 0		; <%struct.tree_node**> [#uses=1]
+	%tmp5 = getelementptr %struct.tree_common, %struct.tree_common* %tmp4, i32 0, i32 0		; <%struct.tree_node**> [#uses=1]
 	%tmp6 = load %struct.tree_node** %tmp5		; <%struct.tree_node*> [#uses=3]
 	%tmp.upgrd.6 = icmp eq %struct.tree_node* %tmp6, null		; <i1> [#uses=3]
 	br i1 %tmp.upgrd.6, label %cond_true, label %cond_next12

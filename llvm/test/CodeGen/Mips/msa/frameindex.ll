@@ -102,9 +102,9 @@ define void @loadstore_v8i16_unaligned() nounwind {
 
   %1 = alloca [2 x <8 x i16>]
   %2 = bitcast [2 x <8 x i16>]* %1 to i8*
-  %3 = getelementptr i8* %2, i32 1
+  %3 = getelementptr i8, i8* %2, i32 1
   %4 = bitcast i8* %3 to [2 x <8 x i16>]*
-  %5 = getelementptr [2 x <8 x i16>]* %4, i32 0, i32 0
+  %5 = getelementptr [2 x <8 x i16>], [2 x <8 x i16>]* %4, i32 0, i32 0
 
   %6 = load volatile <8 x i16>* %5
   ; MIPS32-AE: addiu [[BASE:\$([0-9]+|gp)]], $sp, 1
@@ -205,9 +205,9 @@ define void @loadstore_v4i32_unaligned() nounwind {
 
   %1 = alloca [2 x <4 x i32>]
   %2 = bitcast [2 x <4 x i32>]* %1 to i8*
-  %3 = getelementptr i8* %2, i32 1
+  %3 = getelementptr i8, i8* %2, i32 1
   %4 = bitcast i8* %3 to [2 x <4 x i32>]*
-  %5 = getelementptr [2 x <4 x i32>]* %4, i32 0, i32 0
+  %5 = getelementptr [2 x <4 x i32>], [2 x <4 x i32>]* %4, i32 0, i32 0
 
   %6 = load volatile <4 x i32>* %5
   ; MIPS32-AE: addiu [[BASE:\$([0-9]+|gp)]], $sp, 1
@@ -308,9 +308,9 @@ define void @loadstore_v2i64_unaligned() nounwind {
 
   %1 = alloca [2 x <2 x i64>]
   %2 = bitcast [2 x <2 x i64>]* %1 to i8*
-  %3 = getelementptr i8* %2, i32 1
+  %3 = getelementptr i8, i8* %2, i32 1
   %4 = bitcast i8* %3 to [2 x <2 x i64>]*
-  %5 = getelementptr [2 x <2 x i64>]* %4, i32 0, i32 0
+  %5 = getelementptr [2 x <2 x i64>], [2 x <2 x i64>]* %4, i32 0, i32 0
 
   %6 = load volatile <2 x i64>* %5
   ; MIPS32-AE: addiu [[BASE:\$([0-9]+|gp)]], $sp, 1

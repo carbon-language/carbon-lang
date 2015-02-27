@@ -20,7 +20,7 @@ entry:
   call void @llvm.dbg.declare(metadata i32* %.addr, metadata !36, metadata !{!"0x102"}), !dbg !35
   call void @llvm.dbg.declare(metadata %class.A* %a, metadata !21, metadata !{!"0x102"}), !dbg !23
   call void @_ZN1AC1Ev(%class.A* %a), !dbg !24
-  %m_a = getelementptr inbounds %class.A* %a, i32 0, i32 0, !dbg !25
+  %m_a = getelementptr inbounds %class.A, %class.A* %a, i32 0, i32 0, !dbg !25
   %1 = load i32* %m_a, align 4, !dbg !25
   ret i32 %1, !dbg !25
 }
@@ -43,7 +43,7 @@ entry:
   store %class.A* %this, %class.A** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !30, metadata !{!"0x102"}), !dbg !31
   %this1 = load %class.A** %this.addr
-  %m_a = getelementptr inbounds %class.A* %this1, i32 0, i32 0, !dbg !32
+  %m_a = getelementptr inbounds %class.A, %class.A* %this1, i32 0, i32 0, !dbg !32
   store i32 0, i32* %m_a, align 4, !dbg !32
   ret void, !dbg !34
 }

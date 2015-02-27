@@ -25,14 +25,14 @@ for.body.lr.ph:                                   ; preds = %entry
 vector.body:                                      ; preds = %for.body.lr.ph, %vector.body
   %index = phi i64 [ %index.next, %vector.body ], [ %0, %for.body.lr.ph ]
   %3 = add i64 %index, 2
-  %4 = getelementptr inbounds i32* %B, i64 %3
+  %4 = getelementptr inbounds i32, i32* %B, i64 %3
   ;CHECK: cost of 0 {{.*}} bitcast
   %5 = bitcast i32* %4 to <8 x i32>*
   ;CHECK: cost of 2 {{.*}} load
   %6 = load <8 x i32>* %5, align 4
   ;CHECK: cost of 4 {{.*}} mul
   %7 = mul nsw <8 x i32> %6, <i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5, i32 5>
-  %8 = getelementptr inbounds i32* %A, i64 %index
+  %8 = getelementptr inbounds i32, i32* %A, i64 %index
   %9 = bitcast i32* %8 to <8 x i32>*
   ;CHECK: cost of 2 {{.*}} load
   %10 = load <8 x i32>* %9, align 4
@@ -52,12 +52,12 @@ middle.block:                                     ; preds = %vector.body, %for.b
 for.body:                                         ; preds = %middle.block, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ %end.idx.rnd.down, %middle.block ]
   %13 = add nsw i64 %indvars.iv, 2
-  %arrayidx = getelementptr inbounds i32* %B, i64 %13
+  %arrayidx = getelementptr inbounds i32, i32* %B, i64 %13
   ;CHECK: cost of 1 {{.*}} load
   %14 = load i32* %arrayidx, align 4
   ;CHECK: cost of 1 {{.*}} mul
   %mul = mul nsw i32 %14, 5
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   ;CHECK: cost of 1 {{.*}} load
   %15 = load i32* %arrayidx2, align 4
   %add3 = add nsw i32 %15, %mul

@@ -11,7 +11,7 @@ define void @test(i8* %PTR) {
 	br label %Loop
 Loop:		; preds = %Loop, %0
 	%INDVAR = phi i32 [ 0, %0 ], [ %INDVAR2, %Loop ]		; <i32> [#uses=2]
-	%STRRED = getelementptr i8* %PTR, i32 %INDVAR		; <i8*> [#uses=1]
+	%STRRED = getelementptr i8, i8* %PTR, i32 %INDVAR		; <i8*> [#uses=1]
 	store i8 0, i8* %STRRED
 	%INDVAR2 = add i32 %INDVAR, 1		; <i32> [#uses=2]
         ;; cannot eliminate indvar

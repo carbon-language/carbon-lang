@@ -16,18 +16,18 @@ entry:
 
 bb.nph4945:		; preds = %entry
 	%2 = bitcast [2 x %struct.vv_t]* null to i64*		; <i64*> [#uses=6]
-	%3 = getelementptr [2 x i64]* null, i32 0, i32 1		; <i64*> [#uses=6]
+	%3 = getelementptr [2 x i64], [2 x i64]* null, i32 0, i32 1		; <i64*> [#uses=6]
 	%4 = bitcast %struct.vv_t* null to i64*		; <i64*> [#uses=5]
-	%5 = getelementptr [2 x i64]* null, i32 0, i32 1		; <i64*> [#uses=3]
+	%5 = getelementptr [2 x i64], [2 x i64]* null, i32 0, i32 1		; <i64*> [#uses=3]
 	br label %bb2326
 
 bb2217:		; preds = %bb2326
 	%6 = or i64 0, 0		; <i64> [#uses=2]
 	%7 = fptosi float 0.000000e+00 to i32		; <i32> [#uses=1]
 	%8 = fptosi float 0.000000e+00 to i32		; <i32> [#uses=1]
-	%9 = getelementptr float* null, i32 2		; <float*> [#uses=1]
+	%9 = getelementptr float, float* null, i32 2		; <float*> [#uses=1]
 	%10 = load float* %9, align 4		; <float> [#uses=1]
-	%11 = getelementptr float* null, i32 3		; <float*> [#uses=1]
+	%11 = getelementptr float, float* null, i32 3		; <float*> [#uses=1]
 	%12 = load float* %11, align 4		; <float> [#uses=1]
 	%13 = fmul float %10, 6.553500e+04		; <float> [#uses=1]
 	%14 = fadd float %13, 5.000000e-01		; <float> [#uses=1]
@@ -63,10 +63,10 @@ bb2265:		; preds = %bb2264, %bb2262, %bb2217
 	%34 = and i64 %33, 281470681743360		; <i64> [#uses=1]
 	store i64 %6, i64* %2, align 16
 	store i64 %31, i64* %3, align 8
-	%35 = getelementptr i8* null, i32 0		; <i8*> [#uses=1]
+	%35 = getelementptr i8, i8* null, i32 0		; <i8*> [#uses=1]
 	%36 = bitcast i8* %35 to float*		; <float*> [#uses=4]
 	%37 = load float* %36, align 4		; <float> [#uses=1]
-	%38 = getelementptr float* %36, i32 1		; <float*> [#uses=1]
+	%38 = getelementptr float, float* %36, i32 1		; <float*> [#uses=1]
 	%39 = load float* %38, align 4		; <float> [#uses=1]
 	%40 = fmul float %37, 6.553500e+04		; <float> [#uses=1]
 	%41 = fadd float %40, 5.000000e-01		; <float> [#uses=1]
@@ -84,9 +84,9 @@ bb2277:		; preds = %bb2274, %bb2265
 	%f1582.0 = phi float [ 0.000000e+00, %bb2265 ], [ %43, %bb2274 ]		; <float> [#uses=1]
 	%47 = fptosi float 0.000000e+00 to i32		; <i32> [#uses=1]
 	%48 = fptosi float %f1582.0 to i32		; <i32> [#uses=1]
-	%49 = getelementptr float* %36, i32 2		; <float*> [#uses=1]
+	%49 = getelementptr float, float* %36, i32 2		; <float*> [#uses=1]
 	%50 = load float* %49, align 4		; <float> [#uses=1]
-	%51 = getelementptr float* %36, i32 3		; <float*> [#uses=1]
+	%51 = getelementptr float, float* %36, i32 3		; <float*> [#uses=1]
 	%52 = load float* %51, align 4		; <float> [#uses=1]
 	%53 = fmul float %50, 6.553500e+04		; <float> [#uses=1]
 	%54 = fadd float %53, 5.000000e-01		; <float> [#uses=1]
@@ -106,10 +106,10 @@ bb2277:		; preds = %bb2274, %bb2265
 	%68 = or i64 %64, %62		; <i64> [#uses=1]
 	%69 = or i64 %68, %66		; <i64> [#uses=1]
 	%70 = or i64 %69, %67		; <i64> [#uses=2]
-	%71 = getelementptr i8* null, i32 0		; <i8*> [#uses=1]
+	%71 = getelementptr i8, i8* null, i32 0		; <i8*> [#uses=1]
 	%72 = bitcast i8* %71 to float*		; <float*> [#uses=4]
 	%73 = load float* %72, align 4		; <float> [#uses=1]
-	%74 = getelementptr float* %72, i32 1		; <float*> [#uses=1]
+	%74 = getelementptr float, float* %72, i32 1		; <float*> [#uses=1]
 	%75 = load float* %74, align 4		; <float> [#uses=1]
 	%76 = fmul float %73, 6.553500e+04		; <float> [#uses=1]
 	%77 = fadd float %76, 5.000000e-01		; <float> [#uses=3]
@@ -130,9 +130,9 @@ bb2295:		; preds = %bb2294, %bb2292, %bb2277
 	%82 = fcmp olt float %79, 0.000000e+00		; <i1> [#uses=0]
 	%83 = fptosi float %f0569.0 to i32		; <i32> [#uses=1]
 	%84 = fptosi float 0.000000e+00 to i32		; <i32> [#uses=1]
-	%85 = getelementptr float* %72, i32 2		; <float*> [#uses=1]
+	%85 = getelementptr float, float* %72, i32 2		; <float*> [#uses=1]
 	%86 = load float* %85, align 4		; <float> [#uses=1]
-	%87 = getelementptr float* %72, i32 3		; <float*> [#uses=1]
+	%87 = getelementptr float, float* %72, i32 3		; <float*> [#uses=1]
 	%88 = load float* %87, align 4		; <float> [#uses=1]
 	%89 = fmul float %86, 6.553500e+04		; <float> [#uses=1]
 	%90 = fadd float %89, 5.000000e-01		; <float> [#uses=1]
@@ -185,7 +185,7 @@ bb2317:		; preds = %bb2315
 	unreachable
 
 bb2318:		; preds = %bb2315
-	%126 = getelementptr %struct.CGLSI* %src, i32 %indvar5021, i32 8		; <%struct.vv_t*> [#uses=1]
+	%126 = getelementptr %struct.CGLSI, %struct.CGLSI* %src, i32 %indvar5021, i32 8		; <%struct.vv_t*> [#uses=1]
 	%127 = bitcast %struct.vv_t* %126 to i64*		; <i64*> [#uses=1]
 	%128 = load i64* %127, align 8		; <i64> [#uses=1]
 	%129 = trunc i64 %128 to i32		; <i32> [#uses=4]
@@ -206,12 +206,12 @@ bb2318:		; preds = %bb2315
 	unreachable
 
 bb2319:		; preds = %bb2326
-	%141 = getelementptr %struct.CGLSI* %src, i32 %indvar5021, i32 2		; <i8**> [#uses=1]
+	%141 = getelementptr %struct.CGLSI, %struct.CGLSI* %src, i32 %indvar5021, i32 2		; <i8**> [#uses=1]
 	%142 = load i8** %141, align 4		; <i8*> [#uses=4]
-	%143 = getelementptr i8* %142, i32 0		; <i8*> [#uses=1]
+	%143 = getelementptr i8, i8* %142, i32 0		; <i8*> [#uses=1]
 	%144 = call i32 (...)* @_u16_sf32( double 0.000000e+00, double 6.553500e+04, double 5.000000e-01, i8* %143 ) nounwind		; <i32> [#uses=1]
 	%145 = sext i32 %144 to i64		; <i64> [#uses=2]
-	%146 = getelementptr i8* %142, i32 0		; <i8*> [#uses=1]
+	%146 = getelementptr i8, i8* %142, i32 0		; <i8*> [#uses=1]
 	%147 = call i32 (...)* @_u16_sf32( double 0.000000e+00, double 6.553500e+04, double 5.000000e-01, i8* %146 ) nounwind		; <i32> [#uses=1]
 	%148 = sext i32 %147 to i64		; <i64> [#uses=2]
 	%149 = shl i64 %145, 48		; <i64> [#uses=0]
@@ -219,10 +219,10 @@ bb2319:		; preds = %bb2326
 	%151 = and i64 %150, 281470681743360		; <i64> [#uses=0]
 	store i64 %145, i64* %2, align 16
 	store i64 %148, i64* %3, align 8
-	%152 = getelementptr i8* %142, i32 0		; <i8*> [#uses=1]
+	%152 = getelementptr i8, i8* %142, i32 0		; <i8*> [#uses=1]
 	%153 = call i32 (...)* @_u16_sf32( double 0.000000e+00, double 6.553500e+04, double 5.000000e-01, i8* %152 ) nounwind		; <i32> [#uses=1]
 	%154 = sext i32 %153 to i64		; <i64> [#uses=0]
-	%155 = getelementptr i8* %142, i32 0		; <i8*> [#uses=1]
+	%155 = getelementptr i8, i8* %142, i32 0		; <i8*> [#uses=1]
 	%156 = call i32 (...)* @_u16_sf32( double 0.000000e+00, double 6.553500e+04, double 5.000000e-01, i8* %155 ) nounwind		; <i32> [#uses=0]
 	unreachable
 
@@ -233,9 +233,9 @@ bb2325:		; preds = %bb2326, %bb2295
 bb2326:		; preds = %bb2325, %bb.nph4945
 	%indvar5021 = phi i32 [ 0, %bb.nph4945 ], [ %indvar.next5145, %bb2325 ]		; <i32> [#uses=6]
 	%157 = icmp slt i32 %indvar5021, %n		; <i1> [#uses=0]
-	%158 = getelementptr %struct.CGLSI* %src, i32 %indvar5021, i32 10		; <%struct.xx_t**> [#uses=1]
+	%158 = getelementptr %struct.CGLSI, %struct.CGLSI* %src, i32 %indvar5021, i32 10		; <%struct.xx_t**> [#uses=1]
 	%159 = load %struct.xx_t** %158, align 4		; <%struct.xx_t*> [#uses=5]
-	%160 = getelementptr %struct.CGLSI* %src, i32 %indvar5021, i32 1		; <i32*> [#uses=1]
+	%160 = getelementptr %struct.CGLSI, %struct.CGLSI* %src, i32 %indvar5021, i32 1		; <i32*> [#uses=1]
 	%161 = load i32* %160, align 4		; <i32> [#uses=1]
 	%162 = and i32 %161, 255		; <i32> [#uses=1]
 	switch i32 %162, label %bb2325 [

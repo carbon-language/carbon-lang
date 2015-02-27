@@ -99,10 +99,10 @@ entry:
   inttoptr i8 1 to i8*
   ; CHECK-NEXT: bitcast i32 1 to <2 x i16>
   bitcast i32 1 to <2 x i16>
-  ; CHECK-NEXT: getelementptr i32* @X, i32 0
-  getelementptr i32* @X, i32 0
-  ; CHECK-NEXT: getelementptr inbounds i32* @X, i32 0
-  getelementptr inbounds i32* @X, i32 0
+  ; CHECK-NEXT: getelementptr i32, i32* @X, i32 0
+  getelementptr i32, i32* @X, i32 0
+  ; CHECK-NEXT: getelementptr inbounds i32, i32* @X, i32 0
+  getelementptr inbounds i32, i32* @X, i32 0
   ; CHECK: select i1 true, i32 1, i32 0
   select i1 true ,i32 1, i32 0
   ; CHECK-NEXT: icmp eq i32 1, 0

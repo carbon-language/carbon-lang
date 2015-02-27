@@ -10,7 +10,7 @@ declare i32 @strlen(i8*, i32)
 
 define i32 @test_no_simplify1() {
 ; CHECK-LABEL: @test_no_simplify1(
-  %hello_p = getelementptr [6 x i8]* @hello, i32 0, i32 0
+  %hello_p = getelementptr [6 x i8], [6 x i8]* @hello, i32 0, i32 0
   %hello_l = call i32 @strlen(i8* %hello_p, i32 187)
 ; CHECK-NEXT: %hello_l = call i32 @strlen
   ret i32 %hello_l

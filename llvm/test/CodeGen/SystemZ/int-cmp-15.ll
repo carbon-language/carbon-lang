@@ -127,7 +127,7 @@ define double @f11(double %a, double %b, i8 *%src) {
 ; CHECK-LABEL: f11:
 ; CHECK: cli 4095(%r2), 127
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 4095
+  %ptr = getelementptr i8, i8 *%src, i64 4095
   %val = load i8 *%ptr
   %cond = icmp ult i8 %val, 127
   %res = select i1 %cond, double %a, double %b
@@ -139,7 +139,7 @@ define double @f12(double %a, double %b, i8 *%src) {
 ; CHECK-LABEL: f12:
 ; CHECK: cliy 4096(%r2), 127
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 4096
+  %ptr = getelementptr i8, i8 *%src, i64 4096
   %val = load i8 *%ptr
   %cond = icmp ult i8 %val, 127
   %res = select i1 %cond, double %a, double %b
@@ -151,7 +151,7 @@ define double @f13(double %a, double %b, i8 *%src) {
 ; CHECK-LABEL: f13:
 ; CHECK: cliy 524287(%r2), 127
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 524287
+  %ptr = getelementptr i8, i8 *%src, i64 524287
   %val = load i8 *%ptr
   %cond = icmp ult i8 %val, 127
   %res = select i1 %cond, double %a, double %b
@@ -165,7 +165,7 @@ define double @f14(double %a, double %b, i8 *%src) {
 ; CHECK: agfi %r2, 524288
 ; CHECK: cli 0(%r2), 127
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 524288
+  %ptr = getelementptr i8, i8 *%src, i64 524288
   %val = load i8 *%ptr
   %cond = icmp ult i8 %val, 127
   %res = select i1 %cond, double %a, double %b
@@ -177,7 +177,7 @@ define double @f15(double %a, double %b, i8 *%src) {
 ; CHECK-LABEL: f15:
 ; CHECK: cliy -1(%r2), 127
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 -1
+  %ptr = getelementptr i8, i8 *%src, i64 -1
   %val = load i8 *%ptr
   %cond = icmp ult i8 %val, 127
   %res = select i1 %cond, double %a, double %b
@@ -189,7 +189,7 @@ define double @f16(double %a, double %b, i8 *%src) {
 ; CHECK-LABEL: f16:
 ; CHECK: cliy -524288(%r2), 127
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 -524288
+  %ptr = getelementptr i8, i8 *%src, i64 -524288
   %val = load i8 *%ptr
   %cond = icmp ult i8 %val, 127
   %res = select i1 %cond, double %a, double %b
@@ -203,7 +203,7 @@ define double @f17(double %a, double %b, i8 *%src) {
 ; CHECK: agfi %r2, -524289
 ; CHECK: cli 0(%r2), 127
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 -524289
+  %ptr = getelementptr i8, i8 *%src, i64 -524289
   %val = load i8 *%ptr
   %cond = icmp ult i8 %val, 127
   %res = select i1 %cond, double %a, double %b

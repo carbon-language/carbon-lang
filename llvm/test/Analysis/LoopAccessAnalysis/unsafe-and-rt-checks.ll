@@ -16,11 +16,11 @@ target triple = "x86_64-apple-macosx10.10.0"
 
 ; CHECK: Run-time memory checks:
 ; CHECK-NEXT: 0:
-; CHECK-NEXT:   %arrayidxA_plus_2 = getelementptr inbounds i16* %a, i64 %add
-; CHECK-NEXT:   %arrayidxB = getelementptr inbounds i16* %b, i64 %storemerge3
+; CHECK-NEXT:   %arrayidxA_plus_2 = getelementptr inbounds i16, i16* %a, i64 %add
+; CHECK-NEXT:   %arrayidxB = getelementptr inbounds i16, i16* %b, i64 %storemerge3
 ; CHECK-NEXT: 1:
-; CHECK-NEXT:   %arrayidxA_plus_2 = getelementptr inbounds i16* %a, i64 %add
-; CHECK-NEXT:   %arrayidxC = getelementptr inbounds i16* %c, i64 %storemerge3
+; CHECK-NEXT:   %arrayidxA_plus_2 = getelementptr inbounds i16, i16* %a, i64 %add
+; CHECK-NEXT:   %arrayidxC = getelementptr inbounds i16, i16* %c, i64 %storemerge3
 
 @n = global i32 20, align 4
 @B = common global i16* null, align 8
@@ -37,20 +37,20 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %storemerge3 = phi i64 [ 0, %entry ], [ %add, %for.body ]
 
-  %arrayidxA = getelementptr inbounds i16* %a, i64 %storemerge3
+  %arrayidxA = getelementptr inbounds i16, i16* %a, i64 %storemerge3
   %loadA = load i16* %arrayidxA, align 2
 
-  %arrayidxB = getelementptr inbounds i16* %b, i64 %storemerge3
+  %arrayidxB = getelementptr inbounds i16, i16* %b, i64 %storemerge3
   %loadB = load i16* %arrayidxB, align 2
 
-  %arrayidxC = getelementptr inbounds i16* %c, i64 %storemerge3
+  %arrayidxC = getelementptr inbounds i16, i16* %c, i64 %storemerge3
   %loadC = load i16* %arrayidxC, align 2
 
   %mul = mul i16 %loadB, %loadA
   %mul1 = mul i16 %mul, %loadC
 
   %add = add nuw nsw i64 %storemerge3, 1
-  %arrayidxA_plus_2 = getelementptr inbounds i16* %a, i64 %add
+  %arrayidxA_plus_2 = getelementptr inbounds i16, i16* %a, i64 %add
   store i16 %mul1, i16* %arrayidxA_plus_2, align 2
 
   %exitcond = icmp eq i64 %add, 20

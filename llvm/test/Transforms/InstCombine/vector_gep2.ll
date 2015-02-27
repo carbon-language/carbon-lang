@@ -5,7 +5,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define <2 x i8*> @testa(<2 x i8*> %a) {
 ; CHECK-LABEL: @testa(
-  %g = getelementptr <2 x i8*> %a, <2 x i32> <i32 0, i32 1>
-; CHECK: getelementptr <2 x i8*> %a, <2 x i64> <i64 0, i64 1>
+  %g = getelementptr i8, <2 x i8*> %a, <2 x i32> <i32 0, i32 1>
+; CHECK: getelementptr i8, <2 x i8*> %a, <2 x i64> <i64 0, i64 1>
   ret <2 x i8*> %g
 }

@@ -21,7 +21,7 @@ define void @setcc_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> %a, <2 x i32> %
 ; R600-DAG: SETE_INT * T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
 
 define void @setcc_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
-  %b_ptr = getelementptr <4 x i32> addrspace(1)* %in, i32 1
+  %b_ptr = getelementptr <4 x i32>, <4 x i32> addrspace(1)* %in, i32 1
   %a = load <4 x i32> addrspace(1) * %in
   %b = load <4 x i32> addrspace(1) * %b_ptr
   %result = icmp eq <4 x i32> %a, %b
@@ -344,9 +344,9 @@ entry:
 ; SI: s_endpgm
 define void @v3i32_eq(<3 x i32> addrspace(1)* %out, <3 x i32> addrspace(1)* %ptra, <3 x i32> addrspace(1)* %ptrb) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep.a = getelementptr <3 x i32> addrspace(1)* %ptra, i32 %tid
-  %gep.b = getelementptr <3 x i32> addrspace(1)* %ptrb, i32 %tid
-  %gep.out = getelementptr <3 x i32> addrspace(1)* %out, i32 %tid
+  %gep.a = getelementptr <3 x i32>, <3 x i32> addrspace(1)* %ptra, i32 %tid
+  %gep.b = getelementptr <3 x i32>, <3 x i32> addrspace(1)* %ptrb, i32 %tid
+  %gep.out = getelementptr <3 x i32>, <3 x i32> addrspace(1)* %out, i32 %tid
   %a = load <3 x i32> addrspace(1)* %gep.a
   %b = load <3 x i32> addrspace(1)* %gep.b
   %cmp = icmp eq <3 x i32> %a, %b
@@ -365,9 +365,9 @@ define void @v3i32_eq(<3 x i32> addrspace(1)* %out, <3 x i32> addrspace(1)* %ptr
 ; SI: s_endpgm
 define void @v3i8_eq(<3 x i8> addrspace(1)* %out, <3 x i8> addrspace(1)* %ptra, <3 x i8> addrspace(1)* %ptrb) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep.a = getelementptr <3 x i8> addrspace(1)* %ptra, i32 %tid
-  %gep.b = getelementptr <3 x i8> addrspace(1)* %ptrb, i32 %tid
-  %gep.out = getelementptr <3 x i8> addrspace(1)* %out, i32 %tid
+  %gep.a = getelementptr <3 x i8>, <3 x i8> addrspace(1)* %ptra, i32 %tid
+  %gep.b = getelementptr <3 x i8>, <3 x i8> addrspace(1)* %ptrb, i32 %tid
+  %gep.out = getelementptr <3 x i8>, <3 x i8> addrspace(1)* %out, i32 %tid
   %a = load <3 x i8> addrspace(1)* %gep.a
   %b = load <3 x i8> addrspace(1)* %gep.b
   %cmp = icmp eq <3 x i8> %a, %b

@@ -13,14 +13,14 @@ entry:
 
 loop:
   %inc = phi i32 [0, %entry], [%inc.i, %loop]
-  %ptr = getelementptr [16 x i32]* %alloca, i32 0, i32 %inc
+  %ptr = getelementptr [16 x i32], [16 x i32]* %alloca, i32 0, i32 %inc
   store i32 %inc, i32* %ptr
   %inc.i = add i32 %inc, 1
   %cnd = icmp uge i32 %inc.i, 16
   br i1 %cnd, label %done, label %loop
 
 done:
-  %tmp0 = getelementptr [16 x i32]* %alloca, i32 0, i32 0
+  %tmp0 = getelementptr [16 x i32], [16 x i32]* %alloca, i32 0, i32 0
   %tmp1 = load i32* %tmp0
   store i32 %tmp1, i32 addrspace(1)* %out
   ret void

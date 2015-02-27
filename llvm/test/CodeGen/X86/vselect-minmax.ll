@@ -11,8 +11,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -46,8 +46,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -81,8 +81,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -116,8 +116,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -151,8 +151,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -186,8 +186,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -221,8 +221,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -256,8 +256,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -291,8 +291,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -326,8 +326,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -361,8 +361,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -396,8 +396,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -431,8 +431,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -466,8 +466,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -501,8 +501,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -536,8 +536,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -571,8 +571,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -606,8 +606,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -641,8 +641,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -676,8 +676,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -711,8 +711,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -746,8 +746,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -781,8 +781,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -816,8 +816,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -851,8 +851,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -880,8 +880,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -909,8 +909,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -938,8 +938,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -967,8 +967,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -996,8 +996,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -1025,8 +1025,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -1054,8 +1054,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -1083,8 +1083,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -1112,8 +1112,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -1141,8 +1141,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -1170,8 +1170,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -1199,8 +1199,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -1228,8 +1228,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -1257,8 +1257,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -1286,8 +1286,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -1315,8 +1315,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -1344,8 +1344,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -1373,8 +1373,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -1402,8 +1402,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -1431,8 +1431,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -1460,8 +1460,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -1489,8 +1489,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -1518,8 +1518,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -1547,8 +1547,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -1582,8 +1582,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -1617,8 +1617,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -1652,8 +1652,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -1687,8 +1687,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -1722,8 +1722,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -1757,8 +1757,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -1792,8 +1792,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <16 x i8>*
   %ptr.b = bitcast i8* %gep.b to <16 x i8>*
   %load.a = load <16 x i8>* %ptr.a, align 2
@@ -1827,8 +1827,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -1862,8 +1862,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -1897,8 +1897,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -1932,8 +1932,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -1967,8 +1967,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -2002,8 +2002,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -2037,8 +2037,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -2072,8 +2072,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <8 x i16>*
   %ptr.b = bitcast i16* %gep.b to <8 x i16>*
   %load.a = load <8 x i16>* %ptr.a, align 2
@@ -2107,8 +2107,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -2142,8 +2142,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -2177,8 +2177,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -2212,8 +2212,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -2247,8 +2247,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -2282,8 +2282,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -2317,8 +2317,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -2352,8 +2352,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i32>*
   %ptr.b = bitcast i32* %gep.b to <4 x i32>*
   %load.a = load <4 x i32>* %ptr.a, align 2
@@ -2387,8 +2387,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -2416,8 +2416,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -2445,8 +2445,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -2474,8 +2474,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -2503,8 +2503,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -2532,8 +2532,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -2561,8 +2561,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -2590,8 +2590,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <32 x i8>*
   %ptr.b = bitcast i8* %gep.b to <32 x i8>*
   %load.a = load <32 x i8>* %ptr.a, align 2
@@ -2619,8 +2619,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -2648,8 +2648,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -2677,8 +2677,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -2706,8 +2706,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -2735,8 +2735,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -2764,8 +2764,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -2793,8 +2793,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -2822,8 +2822,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <16 x i16>*
   %ptr.b = bitcast i16* %gep.b to <16 x i16>*
   %load.a = load <16 x i16>* %ptr.a, align 2
@@ -2851,8 +2851,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -2880,8 +2880,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -2909,8 +2909,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -2938,8 +2938,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -2967,8 +2967,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -2996,8 +2996,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -3025,8 +3025,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -3054,8 +3054,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i32>*
   %ptr.b = bitcast i32* %gep.b to <8 x i32>*
   %load.a = load <8 x i32>* %ptr.a, align 2
@@ -3085,8 +3085,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -3111,8 +3111,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -3137,8 +3137,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -3163,8 +3163,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -3189,8 +3189,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -3215,8 +3215,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -3241,8 +3241,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -3267,8 +3267,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -3293,8 +3293,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -3319,8 +3319,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -3345,8 +3345,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -3371,8 +3371,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -3397,8 +3397,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -3423,8 +3423,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -3449,8 +3449,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -3475,8 +3475,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -3501,8 +3501,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -3527,8 +3527,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -3553,8 +3553,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -3579,8 +3579,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -3605,8 +3605,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -3631,8 +3631,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -3657,8 +3657,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -3683,8 +3683,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -3709,8 +3709,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -3735,8 +3735,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -3761,8 +3761,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -3787,8 +3787,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -3813,8 +3813,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -3839,8 +3839,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -3865,8 +3865,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -3891,8 +3891,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -3917,8 +3917,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -3943,8 +3943,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -3969,8 +3969,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -3995,8 +3995,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -4021,8 +4021,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -4047,8 +4047,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -4073,8 +4073,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -4099,8 +4099,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i8* %a, i64 %index
-  %gep.b = getelementptr inbounds i8* %b, i64 %index
+  %gep.a = getelementptr inbounds i8, i8* %a, i64 %index
+  %gep.b = getelementptr inbounds i8, i8* %b, i64 %index
   %ptr.a = bitcast i8* %gep.a to <64 x i8>*
   %ptr.b = bitcast i8* %gep.b to <64 x i8>*
   %load.a = load <64 x i8>* %ptr.a, align 2
@@ -4125,8 +4125,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -4151,8 +4151,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -4177,8 +4177,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -4203,8 +4203,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -4229,8 +4229,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -4255,8 +4255,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -4281,8 +4281,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -4307,8 +4307,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i16* %a, i64 %index
-  %gep.b = getelementptr inbounds i16* %b, i64 %index
+  %gep.a = getelementptr inbounds i16, i16* %a, i64 %index
+  %gep.b = getelementptr inbounds i16, i16* %b, i64 %index
   %ptr.a = bitcast i16* %gep.a to <32 x i16>*
   %ptr.b = bitcast i16* %gep.b to <32 x i16>*
   %load.a = load <32 x i16>* %ptr.a, align 2
@@ -4333,8 +4333,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -4359,8 +4359,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -4385,8 +4385,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -4411,8 +4411,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -4437,8 +4437,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -4463,8 +4463,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -4489,8 +4489,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -4515,8 +4515,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <16 x i32>*
   %ptr.b = bitcast i32* %gep.b to <16 x i32>*
   %load.a = load <16 x i32>* %ptr.a, align 2
@@ -4543,8 +4543,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -4569,8 +4569,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -4595,8 +4595,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -4621,8 +4621,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -4647,8 +4647,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -4673,8 +4673,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -4699,8 +4699,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -4725,8 +4725,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <8 x i64>*
   %ptr.b = bitcast i32* %gep.b to <8 x i64>*
   %load.a = load <8 x i64>* %ptr.a, align 2
@@ -4751,8 +4751,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -4777,8 +4777,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -4803,8 +4803,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -4829,8 +4829,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -4855,8 +4855,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -4881,8 +4881,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -4907,8 +4907,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -4933,8 +4933,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -4959,8 +4959,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -4985,8 +4985,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -5011,8 +5011,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -5037,8 +5037,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -5063,8 +5063,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -5089,8 +5089,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -5115,8 +5115,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -5141,8 +5141,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <4 x i64>*
   %ptr.b = bitcast i32* %gep.b to <4 x i64>*
   %load.a = load <4 x i64>* %ptr.a, align 2
@@ -5167,8 +5167,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5193,8 +5193,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5219,8 +5219,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5245,8 +5245,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5271,8 +5271,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5297,8 +5297,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5323,8 +5323,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5349,8 +5349,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5375,8 +5375,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5401,8 +5401,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5427,8 +5427,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5453,8 +5453,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5479,8 +5479,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5505,8 +5505,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5531,8 +5531,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2
@@ -5557,8 +5557,8 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %gep.a = getelementptr inbounds i32* %a, i64 %index
-  %gep.b = getelementptr inbounds i32* %b, i64 %index
+  %gep.a = getelementptr inbounds i32, i32* %a, i64 %index
+  %gep.b = getelementptr inbounds i32, i32* %b, i64 %index
   %ptr.a = bitcast i32* %gep.a to <2 x i64>*
   %ptr.b = bitcast i32* %gep.b to <2 x i64>*
   %load.a = load <2 x i64>* %ptr.a, align 2

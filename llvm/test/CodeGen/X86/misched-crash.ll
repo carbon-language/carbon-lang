@@ -26,7 +26,7 @@ if.then24:                                        ; preds = %land.lhs.true21
 
 for.body34.i:                                     ; preds = %for.inc39.i, %if.then24
   %index.178.i = phi i64 [ %add21.i, %if.then24 ], [ %inc41.i, %for.inc39.i ]
-  %arrayidx35.i = getelementptr inbounds i8* %plane, i64 %index.178.i
+  %arrayidx35.i = getelementptr inbounds i8, i8* %plane, i64 %index.178.i
   %1 = load i8* %arrayidx35.i, align 1
   %tobool36.i = icmp eq i8 %1, 0
   br i1 %tobool36.i, label %for.inc39.i, label %return

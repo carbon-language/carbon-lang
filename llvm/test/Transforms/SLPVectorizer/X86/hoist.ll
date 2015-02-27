@@ -30,22 +30,22 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %i.024 = phi i32 [ 0, %entry ], [ %add10, %for.body ]
-  %arrayidx = getelementptr inbounds i32* %A, i32 %i.024
+  %arrayidx = getelementptr inbounds i32, i32* %A, i32 %i.024
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, %n
   store i32 %add, i32* %arrayidx, align 4
   %add121 = or i32 %i.024, 1
-  %arrayidx2 = getelementptr inbounds i32* %A, i32 %add121
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i32 %add121
   %1 = load i32* %arrayidx2, align 4
   %add3 = add nsw i32 %1, %k
   store i32 %add3, i32* %arrayidx2, align 4
   %add422 = or i32 %i.024, 2
-  %arrayidx5 = getelementptr inbounds i32* %A, i32 %add422
+  %arrayidx5 = getelementptr inbounds i32, i32* %A, i32 %add422
   %2 = load i32* %arrayidx5, align 4
   %add6 = add nsw i32 %2, %n
   store i32 %add6, i32* %arrayidx5, align 4
   %add723 = or i32 %i.024, 3
-  %arrayidx8 = getelementptr inbounds i32* %A, i32 %add723
+  %arrayidx8 = getelementptr inbounds i32, i32* %A, i32 %add723
   %3 = load i32* %arrayidx8, align 4
   %add9 = add nsw i32 %3, %k
   store i32 %add9, i32* %arrayidx8, align 4

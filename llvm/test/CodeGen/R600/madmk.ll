@@ -10,9 +10,9 @@ declare float @llvm.fabs.f32(float) nounwind readnone
 ; GCN: v_madmk_f32 {{v[0-9]+}}, [[VA]], [[VB]], 0x41200000
 define void @madmk_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep.0 = getelementptr float addrspace(1)* %in, i32 %tid
-  %gep.1 = getelementptr float addrspace(1)* %gep.0, i32 1
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %gep.0 = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %gep.1 = getelementptr float, float addrspace(1)* %gep.0, i32 1
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %a = load float addrspace(1)* %gep.0, align 4
   %b = load float addrspace(1)* %gep.1, align 4
@@ -34,12 +34,12 @@ define void @madmk_f32(float addrspace(1)* noalias %out, float addrspace(1)* noa
 define void @madmk_2_use_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
 
-  %in.gep.0 = getelementptr float addrspace(1)* %in, i32 %tid
-  %in.gep.1 = getelementptr float addrspace(1)* %in.gep.0, i32 1
-  %in.gep.2 = getelementptr float addrspace(1)* %in.gep.0, i32 2
+  %in.gep.0 = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %in.gep.1 = getelementptr float, float addrspace(1)* %in.gep.0, i32 1
+  %in.gep.2 = getelementptr float, float addrspace(1)* %in.gep.0, i32 2
 
-  %out.gep.0 = getelementptr float addrspace(1)* %out, i32 %tid
-  %out.gep.1 = getelementptr float addrspace(1)* %in.gep.0, i32 1
+  %out.gep.0 = getelementptr float, float addrspace(1)* %out, i32 %tid
+  %out.gep.1 = getelementptr float, float addrspace(1)* %in.gep.0, i32 1
 
   %a = load float addrspace(1)* %in.gep.0, align 4
   %b = load float addrspace(1)* %in.gep.1, align 4
@@ -62,9 +62,9 @@ define void @madmk_2_use_f32(float addrspace(1)* noalias %out, float addrspace(1
 ; GCN: v_mad_f32 {{v[0-9]+}}, 4.0, [[VA]], [[VB]]
 define void @madmk_inline_imm_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep.0 = getelementptr float addrspace(1)* %in, i32 %tid
-  %gep.1 = getelementptr float addrspace(1)* %gep.0, i32 1
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %gep.0 = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %gep.1 = getelementptr float, float addrspace(1)* %gep.0, i32 1
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %a = load float addrspace(1)* %gep.0, align 4
   %b = load float addrspace(1)* %gep.1, align 4
@@ -81,7 +81,7 @@ define void @madmk_inline_imm_f32(float addrspace(1)* noalias %out, float addrsp
 ; GCN: s_endpgm
 define void @s_s_madmk_f32(float addrspace(1)* noalias %out, float %a, float %b) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %mul = fmul float %a, 10.0
   %madmk = fadd float %mul, %b
@@ -95,8 +95,8 @@ define void @s_s_madmk_f32(float addrspace(1)* noalias %out, float %a, float %b)
 ; GCN: s_endpgm
 define void @v_s_madmk_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in, float %b) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep.0 = getelementptr float addrspace(1)* %in, i32 %tid
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %gep.0 = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
   %a = load float addrspace(1)* %gep.0, align 4
 
   %mul = fmul float %a, 10.0
@@ -111,8 +111,8 @@ define void @v_s_madmk_f32(float addrspace(1)* noalias %out, float addrspace(1)*
 ; GCN: s_endpgm
 define void @scalar_vector_madmk_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in, float %a) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep.0 = getelementptr float addrspace(1)* %in, i32 %tid
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %gep.0 = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
   %b = load float addrspace(1)* %gep.0, align 4
 
   %mul = fmul float %a, 10.0
@@ -127,9 +127,9 @@ define void @scalar_vector_madmk_f32(float addrspace(1)* noalias %out, float add
 ; GCN: v_mad_f32 {{v[0-9]+}}, |{{v[0-9]+}}|, {{v[0-9]+}}, {{[sv][0-9]+}}
 define void @no_madmk_src0_modifier_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep.0 = getelementptr float addrspace(1)* %in, i32 %tid
-  %gep.1 = getelementptr float addrspace(1)* %gep.0, i32 1
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %gep.0 = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %gep.1 = getelementptr float, float addrspace(1)* %gep.0, i32 1
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %a = load float addrspace(1)* %gep.0, align 4
   %b = load float addrspace(1)* %gep.1, align 4
@@ -148,9 +148,9 @@ define void @no_madmk_src0_modifier_f32(float addrspace(1)* noalias %out, float 
 ; GCN: v_mad_f32 {{v[0-9]+}}, {{v[0-9]+}}, {{v[0-9]+}}, |{{[sv][0-9]+}}|
 define void @no_madmk_src2_modifier_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep.0 = getelementptr float addrspace(1)* %in, i32 %tid
-  %gep.1 = getelementptr float addrspace(1)* %gep.0, i32 1
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %gep.0 = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %gep.1 = getelementptr float, float addrspace(1)* %gep.0, i32 1
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %a = load float addrspace(1)* %gep.0, align 4
   %b = load float addrspace(1)* %gep.1, align 4
@@ -169,8 +169,8 @@ define void @no_madmk_src2_modifier_f32(float addrspace(1)* noalias %out, float 
 ; GCN: v_mad_f32 {{v[0-9]+}}, [[VK]], [[A]], 2.0
 define void @madmk_add_inline_imm_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep.0 = getelementptr float addrspace(1)* %in, i32 %tid
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %gep.0 = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %a = load float addrspace(1)* %gep.0, align 4
 

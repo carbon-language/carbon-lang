@@ -65,7 +65,7 @@ for.body:
   %mul = mul i64 %0, %row
   %add = add i64 %mul, %i.0
   %1 = load i8** @horzPlane, align 8
-  %arrayidx = getelementptr inbounds i8* %1, i64 %add
+  %arrayidx = getelementptr inbounds i8, i8* %1, i64 %add
   %2 = load i8* %arrayidx, align 1
   %tobool = icmp eq i8 %2, 0
   br i1 %tobool, label %for.inc, label %for.end

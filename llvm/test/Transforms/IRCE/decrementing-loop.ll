@@ -16,7 +16,7 @@ define void @decrementing_loop(i32 *%arr, i32 *%a_len_ptr, i32 %n) {
   br i1 %abc, label %in.bounds, label %out.of.bounds, !prof !1
 
  in.bounds:
-  %addr = getelementptr i32* %arr, i32 %idx
+  %addr = getelementptr i32, i32* %arr, i32 %idx
   store i32 0, i32* %addr
   %next = icmp sgt i32 %idx.dec, -1
   br i1 %next, label %loop, label %exit

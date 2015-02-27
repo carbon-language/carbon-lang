@@ -17,7 +17,7 @@ target triple = "arm64-apple-ios"
 ; CHECK-NOT: str
 define void @test(%"struct.SU"* nocapture %su) {
 entry:
-  %r1 = getelementptr inbounds %"struct.SU"* %su, i64 1, i32 5
+  %r1 = getelementptr inbounds %"struct.SU", %"struct.SU"* %su, i64 1, i32 5
   %r2 = bitcast %"struct.BO"* %r1 to i48*
   %r3 = load i48* %r2, align 8
   %r4 = and i48 %r3, -4294967296

@@ -194,7 +194,7 @@ define void @f11(i8 *%base, i8 %alt, i32 %limit) {
 ; CHECK: stc %r3, 4095(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%base, i64 4095
+  %ptr = getelementptr i8, i8 *%base, i64 4095
   %cond = icmp ult i32 %limit, 420
   %orig = load i8 *%ptr
   %res = select i1 %cond, i8 %orig, i8 %alt
@@ -211,7 +211,7 @@ define void @f12(i8 *%base, i8 %alt, i32 %limit) {
 ; CHECK: stcy %r3, 4096(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%base, i64 4096
+  %ptr = getelementptr i8, i8 *%base, i64 4096
   %cond = icmp ult i32 %limit, 420
   %orig = load i8 *%ptr
   %res = select i1 %cond, i8 %orig, i8 %alt
@@ -228,7 +228,7 @@ define void @f13(i8 *%base, i8 %alt, i32 %limit) {
 ; CHECK: stcy %r3, 524287(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%base, i64 524287
+  %ptr = getelementptr i8, i8 *%base, i64 524287
   %cond = icmp ult i32 %limit, 420
   %orig = load i8 *%ptr
   %res = select i1 %cond, i8 %orig, i8 %alt
@@ -247,7 +247,7 @@ define void @f14(i8 *%base, i8 %alt, i32 %limit) {
 ; CHECK: stc %r3, 0(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%base, i64 524288
+  %ptr = getelementptr i8, i8 *%base, i64 524288
   %cond = icmp ult i32 %limit, 420
   %orig = load i8 *%ptr
   %res = select i1 %cond, i8 %orig, i8 %alt
@@ -264,7 +264,7 @@ define void @f15(i8 *%base, i8 %alt, i32 %limit) {
 ; CHECK: stcy %r3, -524288(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%base, i64 -524288
+  %ptr = getelementptr i8, i8 *%base, i64 -524288
   %cond = icmp ult i32 %limit, 420
   %orig = load i8 *%ptr
   %res = select i1 %cond, i8 %orig, i8 %alt
@@ -283,7 +283,7 @@ define void @f16(i8 *%base, i8 %alt, i32 %limit) {
 ; CHECK: stc %r3, 0(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%base, i64 -524289
+  %ptr = getelementptr i8, i8 *%base, i64 -524289
   %cond = icmp ult i32 %limit, 420
   %orig = load i8 *%ptr
   %res = select i1 %cond, i8 %orig, i8 %alt

@@ -16,7 +16,7 @@ define double @f2(double *%src) {
 ; CHECK-LABEL: f2:
 ; CHECK: ld %f0, 4088(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr double *%src, i64 511
+  %ptr = getelementptr double, double *%src, i64 511
   %val = load double *%ptr
   ret double %val
 }
@@ -26,7 +26,7 @@ define double @f3(double *%src) {
 ; CHECK-LABEL: f3:
 ; CHECK: ldy %f0, 4096(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr double *%src, i64 512
+  %ptr = getelementptr double, double *%src, i64 512
   %val = load double *%ptr
   ret double %val
 }
@@ -36,7 +36,7 @@ define double @f4(double *%src) {
 ; CHECK-LABEL: f4:
 ; CHECK: ldy %f0, 524280(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr double *%src, i64 65535
+  %ptr = getelementptr double, double *%src, i64 65535
   %val = load double *%ptr
   ret double %val
 }
@@ -48,7 +48,7 @@ define double @f5(double *%src) {
 ; CHECK: agfi %r2, 524288
 ; CHECK: ld %f0, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr double *%src, i64 65536
+  %ptr = getelementptr double, double *%src, i64 65536
   %val = load double *%ptr
   ret double %val
 }
@@ -58,7 +58,7 @@ define double @f6(double *%src) {
 ; CHECK-LABEL: f6:
 ; CHECK: ldy %f0, -8(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr double *%src, i64 -1
+  %ptr = getelementptr double, double *%src, i64 -1
   %val = load double *%ptr
   ret double %val
 }
@@ -68,7 +68,7 @@ define double @f7(double *%src) {
 ; CHECK-LABEL: f7:
 ; CHECK: ldy %f0, -524288(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr double *%src, i64 -65536
+  %ptr = getelementptr double, double *%src, i64 -65536
   %val = load double *%ptr
   ret double %val
 }
@@ -80,7 +80,7 @@ define double @f8(double *%src) {
 ; CHECK: agfi %r2, -524296
 ; CHECK: ld %f0, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr double *%src, i64 -65537
+  %ptr = getelementptr double, double *%src, i64 -65537
   %val = load double *%ptr
   ret double %val
 }

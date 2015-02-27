@@ -29,9 +29,9 @@ entry:
 
 for.body:
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
-  %arrayidx = getelementptr inbounds float* %B, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds float, float* %B, i64 %indvars.iv
   %0 = load float* %arrayidx, align 4, !llvm.mem.parallel_loop_access !1
-  %arrayidx2 = getelementptr inbounds float* %A, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds float, float* %A, i64 %indvars.iv
   %1 = load float* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !1
   %add = fadd fast float %0, %1
   store float %add, float* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !1
@@ -55,9 +55,9 @@ entry:
 
 for.body:
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
-  %arrayidx = getelementptr inbounds float* %B, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds float, float* %B, i64 %indvars.iv
   %0 = load float* %arrayidx, align 4, !llvm.mem.parallel_loop_access !3
-  %arrayidx2 = getelementptr inbounds float* %A, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds float, float* %A, i64 %indvars.iv
   %1 = load float* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !3
   %add = fadd fast float %0, %1
   store float %add, float* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !3

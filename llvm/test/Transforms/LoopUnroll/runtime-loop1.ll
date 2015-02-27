@@ -16,7 +16,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %sum.02 = phi i32 [ %add, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, %sum.02
   %indvars.iv.next = add i64 %indvars.iv, 1

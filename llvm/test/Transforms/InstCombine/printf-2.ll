@@ -14,7 +14,7 @@ declare void @printf(i8*, ...)
 
 define void @test_simplify1() {
 ; CHECK-LABEL: @test_simplify1(
-  %fmt = getelementptr [2 x i8]* @h, i32 0, i32 0
+  %fmt = getelementptr [2 x i8], [2 x i8]* @h, i32 0, i32 0
   call void (i8*, ...)* @printf(i8* %fmt)
 ; CHECK-NEXT: call i32 @putchar(i32 104)
   ret void
@@ -23,7 +23,7 @@ define void @test_simplify1() {
 
 define void @test_simplify2() {
 ; CHECK-LABEL: @test_simplify2(
-  %fmt = getelementptr [13 x i8]* @hello_world, i32 0, i32 0
+  %fmt = getelementptr [13 x i8], [13 x i8]* @hello_world, i32 0, i32 0
   call void (i8*, ...)* @printf(i8* %fmt)
 ; CHECK-NEXT: call i32 @puts(i8* getelementptr inbounds ([12 x i8]* @str, i32 0, i32 0))
   ret void
@@ -32,8 +32,8 @@ define void @test_simplify2() {
 
 define void @test_simplify6() {
 ; CHECK-LABEL: @test_simplify6(
-  %fmt = getelementptr [4 x i8]* @percent_s, i32 0, i32 0
-  %str = getelementptr [13 x i8]* @hello_world, i32 0, i32 0
+  %fmt = getelementptr [4 x i8], [4 x i8]* @percent_s, i32 0, i32 0
+  %str = getelementptr [13 x i8], [13 x i8]* @hello_world, i32 0, i32 0
   call void (i8*, ...)* @printf(i8* %fmt, i8* %str)
 ; CHECK-NEXT: call i32 @puts(i8* getelementptr inbounds ([13 x i8]* @hello_world, i32 0, i32 0))
   ret void

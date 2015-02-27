@@ -18,7 +18,7 @@ define void @h(i8*) nounwind ssp {
   store i8* %0, i8** %2
   %3 = load i8** %2
   %4 = bitcast i8* %3 to { i32, i32 }*
-  %5 = getelementptr { i32, i32 }* %4, i32 0, i32 0
+  %5 = getelementptr { i32, i32 }, { i32, i32 }* %4, i32 0, i32 0
   %6 = load i32* %5
   %7 = srem i32 %6, 2
   %8 = icmp slt i32 %6, 2
@@ -28,7 +28,7 @@ define void @h(i8*) nounwind ssp {
 
 ; <label>:11                                      ; preds = %1
   %12 = zext i1 %10 to i32
-  %13 = getelementptr [4 x i32]* @JT, i32 0, i32 %12
+  %13 = getelementptr [4 x i32], [4 x i32]* @JT, i32 0, i32 %12
   %14 = load i32* %13
   %15 = add i32 %14, ptrtoint (i8* blockaddress(@h, %11) to i32)
   %16 = inttoptr i32 %15 to i8*

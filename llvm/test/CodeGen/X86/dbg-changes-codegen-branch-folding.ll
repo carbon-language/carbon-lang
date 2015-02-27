@@ -67,12 +67,12 @@ if.end:                                           ; preds = %entry, %if.then
   tail call void @llvm.dbg.value(metadata %struct.AAA3* %var1, i64 0, metadata !33, metadata !{!"0x102"}), !dbg !55
   tail call void @llvm.dbg.value(metadata %struct.AAA3* %var1, i64 0, metadata !56, metadata !{!"0x102"}), !dbg !57
   tail call void @llvm.dbg.value(metadata !58, i64 0, metadata !59, metadata !{!"0x102"}), !dbg !60
-  %arraydecay.i = getelementptr inbounds %struct.AAA3* %var1, i64 0, i32 0, i64 0, !dbg !61
+  %arraydecay.i = getelementptr inbounds %struct.AAA3, %struct.AAA3* %var1, i64 0, i32 0, i64 0, !dbg !61
   call void @_Z3fooPcjPKc(i8* %arraydecay.i, i32 4, i8* getelementptr inbounds ([1 x i8]* @.str, i64 0, i64 0)), !dbg !61
   call void @llvm.dbg.value(metadata %struct.AAA3* %var2, i64 0, metadata !34, metadata !{!"0x102"}), !dbg !63
   call void @llvm.dbg.value(metadata %struct.AAA3* %var2, i64 0, metadata !64, metadata !{!"0x102"}), !dbg !65
   call void @llvm.dbg.value(metadata !58, i64 0, metadata !66, metadata !{!"0x102"}), !dbg !67
-  %arraydecay.i5 = getelementptr inbounds %struct.AAA3* %var2, i64 0, i32 0, i64 0, !dbg !68
+  %arraydecay.i5 = getelementptr inbounds %struct.AAA3, %struct.AAA3* %var2, i64 0, i32 0, i64 0, !dbg !68
   call void @_Z3fooPcjPKc(i8* %arraydecay.i5, i32 4, i8* getelementptr inbounds ([1 x i8]* @.str, i64 0, i64 0)), !dbg !68
   %tobool1 = icmp eq i32 %param1, 0, !dbg !69
   call void @llvm.dbg.value(metadata %struct.AAA3* %var2, i64 0, metadata !34, metadata !{!"0x102"}), !dbg !63

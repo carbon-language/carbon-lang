@@ -26,7 +26,7 @@ define i32 @f3(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK-LABEL: f3:
 ; CHECK: lao %r2, %r4, 524284(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i32 131071
+  %ptr = getelementptr i32, i32 *%src, i32 131071
   %res = atomicrmw or i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }
@@ -37,7 +37,7 @@ define i32 @f4(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: agfi %r3, 524288
 ; CHECK: lao %r2, %r4, 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i32 131072
+  %ptr = getelementptr i32, i32 *%src, i32 131072
   %res = atomicrmw or i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }
@@ -47,7 +47,7 @@ define i32 @f5(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK-LABEL: f5:
 ; CHECK: lao %r2, %r4, -524288(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i32 -131072
+  %ptr = getelementptr i32, i32 *%src, i32 -131072
   %res = atomicrmw or i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }
@@ -58,7 +58,7 @@ define i32 @f6(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: agfi %r3, -524292
 ; CHECK: lao %r2, %r4, 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i32 -131073
+  %ptr = getelementptr i32, i32 *%src, i32 -131073
   %res = atomicrmw or i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }

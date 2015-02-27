@@ -29,7 +29,7 @@ entry:
   %this1 = load %class.A** %this.addr
   %0 = bitcast %class.A* %this1 to i8***, !dbg !72
   store i8** getelementptr inbounds ([4 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %0, !dbg !72
-  %m_int = getelementptr inbounds %class.A* %this1, i32 0, i32 1, !dbg !72
+  %m_int = getelementptr inbounds %class.A, %class.A* %this1, i32 0, i32 1, !dbg !72
   %1 = load i32* %i.addr, align 4, !dbg !72
   store i32 %1, i32* %m_int, align 4, !dbg !72
   ret void, !dbg !73
@@ -50,9 +50,9 @@ entry:
   %this1 = load %class.A** %this.addr
   %0 = bitcast %class.A* %this1 to i8***, !dbg !78
   store i8** getelementptr inbounds ([4 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %0, !dbg !78
-  %m_int = getelementptr inbounds %class.A* %this1, i32 0, i32 1, !dbg !78
+  %m_int = getelementptr inbounds %class.A, %class.A* %this1, i32 0, i32 1, !dbg !78
   %1 = load %class.A** %rhs.addr, align 8, !dbg !78
-  %m_int2 = getelementptr inbounds %class.A* %1, i32 0, i32 1, !dbg !78
+  %m_int2 = getelementptr inbounds %class.A, %class.A* %1, i32 0, i32 1, !dbg !78
   %2 = load i32* %m_int2, align 4, !dbg !78
   store i32 %2, i32* %m_int, align 4, !dbg !78
   ret void, !dbg !79
@@ -69,9 +69,9 @@ entry:
   call void @llvm.dbg.declare(metadata %class.A** %rhs.addr, metadata !82, metadata !{!"0x102"}), !dbg !83
   %this1 = load %class.A** %this.addr
   %0 = load %class.A** %rhs.addr, align 8, !dbg !84
-  %m_int = getelementptr inbounds %class.A* %0, i32 0, i32 1, !dbg !84
+  %m_int = getelementptr inbounds %class.A, %class.A* %0, i32 0, i32 1, !dbg !84
   %1 = load i32* %m_int, align 4, !dbg !84
-  %m_int2 = getelementptr inbounds %class.A* %this1, i32 0, i32 1, !dbg !84
+  %m_int2 = getelementptr inbounds %class.A, %class.A* %this1, i32 0, i32 1, !dbg !84
   store i32 %1, i32* %m_int2, align 4, !dbg !84
   ret %class.A* %this1, !dbg !85
 }
@@ -83,7 +83,7 @@ entry:
   store %class.A* %this, %class.A** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !86, metadata !{!"0x102"}), !dbg !87
   %this1 = load %class.A** %this.addr
-  %m_int = getelementptr inbounds %class.A* %this1, i32 0, i32 1, !dbg !88
+  %m_int = getelementptr inbounds %class.A, %class.A* %this1, i32 0, i32 1, !dbg !88
   %0 = load i32* %m_int, align 4, !dbg !88
   ret i32 %0, !dbg !88
 }

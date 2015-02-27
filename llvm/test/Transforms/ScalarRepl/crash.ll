@@ -22,13 +22,13 @@ if.end:                                           ; No predecessors!
 
 define void @test2() {
   %E = alloca { { i32, float, double, i64 }, { i32, float, double, i64 } }        ; <{ { i32, float, double, i64 }, { i32, float, double, i64 } }*> [#uses=1]
-  %tmp.151 = getelementptr { { i32, float, double, i64 }, { i32, float, double, i64 } }* %E, i64 0, i32 1, i32 3          ; <i64*> [#uses=0]
+  %tmp.151 = getelementptr { { i32, float, double, i64 }, { i32, float, double, i64 } }, { { i32, float, double, i64 }, { i32, float, double, i64 } }* %E, i64 0, i32 1, i32 3          ; <i64*> [#uses=0]
   ret void
 }
 
 define i32 @test3() {
         %X = alloca { [4 x i32] }               ; <{ [4 x i32] }*> [#uses=1]
-        %Y = getelementptr { [4 x i32] }* %X, i64 0, i32 0, i64 2               ; <i32*> [#uses=2]
+        %Y = getelementptr { [4 x i32] }, { [4 x i32] }* %X, i64 0, i32 0, i64 2               ; <i32*> [#uses=2]
         store i32 4, i32* %Y
         %Z = load i32* %Y               ; <i32> [#uses=1]
         ret i32 %Z
@@ -128,7 +128,7 @@ entry:
         %tmp.i = load %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"** %this_addr.i          ; <%"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"*> [#uses=1]
         %tmp.i.upgrd.1 = bitcast %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"* %tmp.i to %"struct.__gnu_cxx::bitmap_allocator<char>"*              ; <%"struct.__gnu_cxx::bitmap_allocator<char>"*> [#uses=0]
         %tmp1.i = load %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"** %this_addr.i         ; <%"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"*> [#uses=1]
-        %tmp.i.upgrd.2 = getelementptr %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"* %tmp1.i, i32 0, i32 0         ; <%"struct.__gnu_cxx::bitmap_allocator<char>::_Alloc_block"**> [#uses=0]
+        %tmp.i.upgrd.2 = getelementptr %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>", %"struct.__gnu_cxx::balloc::_Inclusive_between<__gnu_cxx::bitmap_allocator<char>::_Alloc_block*>"* %tmp1.i, i32 0, i32 0         ; <%"struct.__gnu_cxx::bitmap_allocator<char>::_Alloc_block"**> [#uses=0]
         unreachable
 }
 
@@ -162,7 +162,7 @@ cond_next:              ; preds = %cond_true
 
 cond_next34:            ; preds = %cond_next
         %i.2.reload22 = load i32* null          ; <i32> [#uses=1]
-        %tmp51 = getelementptr %struct.aal_spanbucket_t* %SB, i32 0, i32 2, i32 0, i32 0, i32 %i.2.reload22, i32 1      
+        %tmp51 = getelementptr %struct.aal_spanbucket_t, %struct.aal_spanbucket_t* %SB, i32 0, i32 2, i32 0, i32 0, i32 %i.2.reload22, i32 1      
         ; <i16*> [#uses=0]
         ret void
 
@@ -180,7 +180,7 @@ cond_next79:            ; preds = %cond_next, %entry
 define void @test8() {
 entry:
         %v = alloca %struct.c37304a__vrec
-        %0 = getelementptr %struct.c37304a__vrec* %v, i32 0, i32 0             
+        %0 = getelementptr %struct.c37304a__vrec, %struct.c37304a__vrec* %v, i32 0, i32 0             
         store i8 8, i8* %0, align 1
         unreachable
 }
@@ -193,7 +193,7 @@ entry:
 define i32 @test9() {
 entry:
         %.compoundliteral = alloca %0           
-        %tmp228 = getelementptr %0* %.compoundliteral, i32 0, i32 7
+        %tmp228 = getelementptr %0, %0* %.compoundliteral, i32 0, i32 7
         %tmp229 = bitcast [0 x i16]* %tmp228 to i8*             
         call void @llvm.memset.p0i8.i64(i8* %tmp229, i8 0, i64 0, i32 2, i1 false)
         unreachable
@@ -207,7 +207,7 @@ declare void @llvm.memset.i64(i8* nocapture, i8, i64, i32) nounwind
 define void @test10() {
 entry:
         %w = alloca %wrapper, align 8           ; <%wrapper*> [#uses=1]
-        %0 = getelementptr %wrapper* %w, i64 0, i32 0           ; <i1*>
+        %0 = getelementptr %wrapper, %wrapper* %w, i64 0, i32 0           ; <i1*>
         store i1 true, i1* %0
         ret void
 }
@@ -220,7 +220,7 @@ entry:
         %a = alloca %struct.singlebool, align 1         ; <%struct.singlebool*> [#uses=2]
         %storetmp.i = bitcast %struct.singlebool* %a to i1*             ; <i1*> [#uses=1]
         store i1 true, i1* %storetmp.i
-        %tmp = getelementptr %struct.singlebool* %a, i64 0, i32 0               ; <i8*> [#uses=1]
+        %tmp = getelementptr %struct.singlebool, %struct.singlebool* %a, i64 0, i32 0               ; <i8*> [#uses=1]
         %tmp1 = load i8* %tmp           ; <i8> [#uses=1]
         ret i8 %tmp1
 }
@@ -246,7 +246,7 @@ define void @test12() {
 bb4.i:
         %malloccall = tail call i8* @malloc(i32 0)
         %0 = bitcast i8* %malloccall to [0 x %struct.Item]*
-        %.sub.i.c.i = getelementptr [0 x %struct.Item]* %0, i32 0, i32 0                ; <%struct.Item*> [#uses=0]
+        %.sub.i.c.i = getelementptr [0 x %struct.Item], [0 x %struct.Item]* %0, i32 0, i32 0                ; <%struct.Item*> [#uses=0]
         unreachable
 }
 declare noalias i8* @malloc(i32)
@@ -268,13 +268,13 @@ define fastcc void @test() optsize inlinehint ssp align 2 {
 entry:
   %alloc.0.0 = alloca <4 x float>, align 16
   %bitcast = bitcast <4 x float>* %alloc.0.0 to [4 x float]*
-  %idx3 = getelementptr inbounds [4 x float]* %bitcast, i32 0, i32 3
+  %idx3 = getelementptr inbounds [4 x float], [4 x float]* %bitcast, i32 0, i32 3
   store float 0.000000e+00, float* %idx3, align 4
   br label %for.body10
 
 for.body10:                                       ; preds = %for.body10, %entry
   %loopidx = phi i32 [ 0, %entry ], [ undef, %for.body10 ]
-  %unusedidx = getelementptr inbounds <4 x float>* %alloc.0.0, i32 0, i32 %loopidx
+  %unusedidx = getelementptr inbounds <4 x float>, <4 x float>* %alloc.0.0, i32 0, i32 %loopidx
   br i1 undef, label %for.end, label %for.body10
 
 for.end:                                          ; preds = %for.body10

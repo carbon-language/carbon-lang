@@ -35,8 +35,8 @@ for.body:                                         ; preds = %for.cond
   %idxprom = sext i32 %1 to i64
   %2 = load i32* @b, align 4
   %idxprom1 = sext i32 %2 to i64
-  %arrayidx = getelementptr inbounds [1 x [3 x i8]]* @f, i32 0, i64 %idxprom1
-  %arrayidx2 = getelementptr inbounds [3 x i8]* %arrayidx, i32 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [1 x [3 x i8]], [1 x [3 x i8]]* @f, i32 0, i64 %idxprom1
+  %arrayidx2 = getelementptr inbounds [3 x i8], [3 x i8]* %arrayidx, i32 0, i64 %idxprom
   store i8 0, i8* %arrayidx2, align 1
   store i32 0, i32* @e, align 4
   br label %for.cond3
@@ -60,7 +60,7 @@ if.then:                                          ; preds = %for.body5
 if.end:                                           ; preds = %if.then, %for.body5
   %6 = load i32* @e, align 4
   %idxprom6 = sext i32 %6 to i64
-  %arrayidx7 = getelementptr inbounds [3 x i8]* getelementptr inbounds ([1 x [3 x i8]]* @f, i32 0, i64 0), i32 0, i64 %idxprom6
+  %arrayidx7 = getelementptr inbounds [3 x i8], [3 x i8]* getelementptr inbounds ([1 x [3 x i8]]* @f, i32 0, i64 0), i32 0, i64 %idxprom6
   store i8 1, i8* %arrayidx7, align 1
   br label %for.inc
 

@@ -26,14 +26,14 @@ declare void @_ZN10xalanc_1_814FormatterToXML17writeParentTagEndEv(%"struct.xala
 
 define void @_ZN10xalanc_1_814FormatterToXML5cdataEPKtj(%"struct.xalanc_1_8::FormatterToXML"* %this, i16* %ch, i32 %length) {
 entry:
-	%0 = getelementptr %"struct.xalanc_1_8::FormatterToXML"* %this, i32 0, i32 13		; <i8*> [#uses=1]
+	%0 = getelementptr %"struct.xalanc_1_8::FormatterToXML", %"struct.xalanc_1_8::FormatterToXML"* %this, i32 0, i32 13		; <i8*> [#uses=1]
 	br i1 undef, label %bb4, label %bb
 
 bb:		; preds = %entry
 	store i8 0, i8* %0, align 1
-	%1 = getelementptr %"struct.xalanc_1_8::FormatterToXML"* %this, i32 0, i32 0, i32 0, i32 0		; <i32 (...)***> [#uses=1]
+	%1 = getelementptr %"struct.xalanc_1_8::FormatterToXML", %"struct.xalanc_1_8::FormatterToXML"* %this, i32 0, i32 0, i32 0, i32 0		; <i32 (...)***> [#uses=1]
 	%2 = load i32 (...)*** %1, align 4		; <i32 (...)**> [#uses=1]
-	%3 = getelementptr i32 (...)** %2, i32 11		; <i32 (...)**> [#uses=1]
+	%3 = getelementptr i32 (...)*, i32 (...)** %2, i32 11		; <i32 (...)**> [#uses=1]
 	%4 = load i32 (...)** %3, align 4		; <i32 (...)*> [#uses=1]
 	%5 = bitcast i32 (...)* %4 to void (%"struct.xalanc_1_8::FormatterToXML"*, i16*, i32)*		; <void (%"struct.xalanc_1_8::FormatterToXML"*, i16*, i32)*> [#uses=1]
 	tail call  void %5(%"struct.xalanc_1_8::FormatterToXML"* %this, i16* %ch, i32 %length)

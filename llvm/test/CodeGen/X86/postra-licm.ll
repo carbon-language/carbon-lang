@@ -101,8 +101,8 @@ bb35:                                             ; preds = %bb34
   unreachable
 
 bb39.preheader:                                   ; preds = %bb34
-  %7 = getelementptr inbounds %struct.epoch_t* undef, i32 %indvar54, i32 3 ; <i32*> [#uses=1]
-  %8 = getelementptr inbounds %struct.epoch_t* undef, i32 %indvar54, i32 2 ; <i32*> [#uses=0]
+  %7 = getelementptr inbounds %struct.epoch_t, %struct.epoch_t* undef, i32 %indvar54, i32 3 ; <i32*> [#uses=1]
+  %8 = getelementptr inbounds %struct.epoch_t, %struct.epoch_t* undef, i32 %indvar54, i32 2 ; <i32*> [#uses=0]
   br i1 false, label %bb42, label %bb45
 
 bb42:                                             ; preds = %bb39.preheader
@@ -162,18 +162,18 @@ bb.nph:                                           ; preds = %entry
 bb:                                               ; preds = %bb, %bb.nph
   %tmp9 = mul i64 undef, undef                    ; <i64> [#uses=2]
   %tmp12 = add i64 %tmp11, %tmp9                  ; <i64> [#uses=1]
-  %scevgep13 = getelementptr i8* %bufp, i64 %tmp12 ; <i8*> [#uses=1]
+  %scevgep13 = getelementptr i8, i8* %bufp, i64 %tmp12 ; <i8*> [#uses=1]
   %tmp15 = add i64 %tmp14, %tmp9                  ; <i64> [#uses=1]
-  %scevgep16 = getelementptr i8* %bufp, i64 %tmp15 ; <i8*> [#uses=1]
+  %scevgep16 = getelementptr i8, i8* %bufp, i64 %tmp15 ; <i8*> [#uses=1]
   %0 = load i8* undef, align 1                    ; <i8> [#uses=1]
   %1 = zext i8 %0 to i32                          ; <i32> [#uses=1]
-  %2 = getelementptr inbounds [16 x i16]* @map_4_to_16, i64 0, i64 0 ; <i16*> [#uses=1]
+  %2 = getelementptr inbounds [16 x i16], [16 x i16]* @map_4_to_16, i64 0, i64 0 ; <i16*> [#uses=1]
   %3 = load i16* %2, align 2                      ; <i16> [#uses=1]
   %4 = trunc i16 %3 to i8                         ; <i8> [#uses=1]
   store i8 %4, i8* undef, align 1
   %5 = and i32 %1, 15                             ; <i32> [#uses=1]
   %6 = zext i32 %5 to i64                         ; <i64> [#uses=1]
-  %7 = getelementptr inbounds [16 x i16]* @map_4_to_16, i64 0, i64 %6 ; <i16*> [#uses=1]
+  %7 = getelementptr inbounds [16 x i16], [16 x i16]* @map_4_to_16, i64 0, i64 %6 ; <i16*> [#uses=1]
   %8 = load i16* %7, align 2                      ; <i16> [#uses=2]
   %9 = lshr i16 %8, 8                             ; <i16> [#uses=1]
   %10 = trunc i16 %9 to i8                        ; <i8> [#uses=1]

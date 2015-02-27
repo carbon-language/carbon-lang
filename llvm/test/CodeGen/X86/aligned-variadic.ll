@@ -8,12 +8,12 @@
 define void @bar(%struct.Baz* byval nocapture readnone align 8 %x, ...) {
 entry:
   %va = alloca [1 x %struct.__va_list_tag], align 16
-  %arraydecay = getelementptr inbounds [1 x %struct.__va_list_tag]* %va, i64 0, i64 0
+  %arraydecay = getelementptr inbounds [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %va, i64 0, i64 0
   %arraydecay1 = bitcast [1 x %struct.__va_list_tag]* %va to i8*
   call void @llvm.va_start(i8* %arraydecay1)
-  %overflow_arg_area_p = getelementptr inbounds [1 x %struct.__va_list_tag]* %va, i64 0, i64 0, i32 2
+  %overflow_arg_area_p = getelementptr inbounds [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %va, i64 0, i64 0, i32 2
   %overflow_arg_area = load i8** %overflow_arg_area_p, align 8
-  %overflow_arg_area.next = getelementptr i8* %overflow_arg_area, i64 24
+  %overflow_arg_area.next = getelementptr i8, i8* %overflow_arg_area, i64 24
   store i8* %overflow_arg_area.next, i8** %overflow_arg_area_p, align 8
 ; X32: leal    68(%esp), [[REG:%.*]]
 ; X32: movl    [[REG]], 16(%esp)

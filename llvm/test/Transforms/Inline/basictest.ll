@@ -25,7 +25,7 @@ define internal %T* @test2f(i1 %cond, %T* %P) {
   br i1 %cond, label %T, label %F
   
 T:
-  %A = getelementptr %T* %P, i32 0, i32 0
+  %A = getelementptr %T, %T* %P, i32 0, i32 0
   store i32 42, i32* %A
   ret %T* %P
   
@@ -37,7 +37,7 @@ define i32 @test2(i1 %cond) {
   %A = alloca %T
   
   %B = call %T* @test2f(i1 %cond, %T* %A)
-  %C = getelementptr %T* %B, i32 0, i32 0
+  %C = getelementptr %T, %T* %B, i32 0, i32 0
   %D = load i32* %C
   ret i32 %D
   

@@ -20,7 +20,7 @@ loop:
   %l0 = load i8* %phi
   call void @bar(i8 %l0)
   %l1 = load i8* %phi
-  %next = getelementptr inbounds i8* %phi, i8 %l1
+  %next = getelementptr inbounds i8, i8* %phi, i8 %l1
   br label %loop
 }
 

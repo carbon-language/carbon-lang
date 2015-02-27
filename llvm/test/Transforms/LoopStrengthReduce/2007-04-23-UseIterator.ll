@@ -24,7 +24,7 @@ bb16:		; preds = %cond_next102, %bb16.preheader
 
 cond_next102:		; preds = %bb16
 	%tmp138145.rec = add i32 %ABC.2146.0.rec, 3		; <i32> [#uses=1]
-	%tmp138145 = getelementptr i8* %ABC, i32 %tmp138145.rec		; <i8*> [#uses=4]
+	%tmp138145 = getelementptr i8, i8* %ABC, i32 %tmp138145.rec		; <i8*> [#uses=4]
 	%indvar.next = add i32 %indvar, 1		; <i32> [#uses=1]
 	switch i8 0, label %bb129.loopexit [
 		 i8 0, label %UnifiedReturnBlock.loopexit

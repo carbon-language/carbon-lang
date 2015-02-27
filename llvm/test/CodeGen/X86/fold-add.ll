@@ -17,7 +17,7 @@ entry:
 	%1 = zext i32 %cur_match to i64		; <i64> [#uses=1]
 	%2 = sext i32 %0 to i64		; <i64> [#uses=1]
 	%.sum3 = add i64 %1, %2		; <i64> [#uses=1]
-	%3 = getelementptr [65536 x i8]* @window, i64 0, i64 %.sum3		; <i8*> [#uses=1]
+	%3 = getelementptr [65536 x i8], [65536 x i8]* @window, i64 0, i64 %.sum3		; <i8*> [#uses=1]
 	%4 = load i8* %3, align 1		; <i8> [#uses=1]
 	%5 = icmp eq i8 %4, 0		; <i1> [#uses=1]
 	br i1 %5, label %bb5, label %bb23

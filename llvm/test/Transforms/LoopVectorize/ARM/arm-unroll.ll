@@ -20,7 +20,7 @@ define i32 @foo(i32* nocapture %A, i32 %n) nounwind readonly ssp {
 .lr.ph:                                           ; preds = %0, %.lr.ph
   %i.02 = phi i32 [ %5, %.lr.ph ], [ 0, %0 ]
   %sum.01 = phi i32 [ %4, %.lr.ph ], [ 0, %0 ]
-  %2 = getelementptr inbounds i32* %A, i32 %i.02
+  %2 = getelementptr inbounds i32, i32* %A, i32 %i.02
   %3 = load i32* %2, align 4
   %4 = add nsw i32 %3, %sum.01
   %5 = add nsw i32 %i.02, 1
@@ -48,7 +48,7 @@ define i32 @register_limit(i32* nocapture %A, i32 %n) {
   %sum.04 = phi i32 [ %8, %.lr.ph ], [ 0, %0 ]
   %sum.05 = phi i32 [ %9, %.lr.ph ], [ 0, %0 ]
   %sum.06 = phi i32 [ %10, %.lr.ph ], [ 0, %0 ]
-  %2 = getelementptr inbounds i32* %A, i32 %i.02
+  %2 = getelementptr inbounds i32, i32* %A, i32 %i.02
   %3 = load i32* %2, align 4
   %4 = add nsw i32 %3, %sum.01
   %5 = add nsw i32 %i.02, 1

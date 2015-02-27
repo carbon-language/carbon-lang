@@ -10,7 +10,7 @@ define i64 @test1(i32* nocapture readonly noalias %a, i32* nocapture readonly no
 
   %load1 = load i32* %a, align 4
   %conv = zext i32 %load1 to i64
-  %arrayidx1 = getelementptr inbounds i32* %a, i64 1
+  %arrayidx1 = getelementptr inbounds i32, i32* %a, i64 1
   store i32 %load1, i32* %b, align 4
   %load2 = load i32* %arrayidx1, align 4
   %conv2 = zext i32 %load2 to i64
@@ -28,7 +28,7 @@ define i64 @test2(i32* nocapture readonly %a, i32* nocapture readonly %b) {
 
   %load1 = load i32* %a, align 4
   %conv = zext i32 %load1 to i64
-  %arrayidx1 = getelementptr inbounds i32* %a, i64 1
+  %arrayidx1 = getelementptr inbounds i32, i32* %a, i64 1
   store i32 %load1, i32* %b, align 4
   %load2 = load i32* %arrayidx1, align 4
   %conv2 = zext i32 %load2 to i64

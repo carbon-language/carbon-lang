@@ -8,8 +8,8 @@ declare void @use(i32) readonly
 define void @test(i32* %p, i32 %index) {
 ; CHECK-LABEL: @test
 ; CHECK-NEXT: %1 = sext i32 %index to i64
-; CHECK-NEXT: %addr = getelementptr i32* %p, i64 %1
-  %addr = getelementptr i32* %p, i32 %index
+; CHECK-NEXT: %addr = getelementptr i32, i32* %p, i64 %1
+  %addr = getelementptr i32, i32* %p, i32 %index
   %val = load i32* %addr
   call void @use(i32 %val)
   ret void
@@ -18,9 +18,9 @@ define void @test(i32* %p, i32 %index) {
 define void @test2(i32* %p, i32 %index) {
 ; CHECK-LABEL: @test2
 ; CHECK-NEXT: %i = zext i32 %index to i64
-; CHECK-NEXT: %addr = getelementptr i32* %p, i64 %i
+; CHECK-NEXT: %addr = getelementptr i32, i32* %p, i64 %i
   %i = zext i32 %index to i64
-  %addr = getelementptr i32* %p, i64 %i
+  %addr = getelementptr i32, i32* %p, i64 %i
   %val = load i32* %addr
   call void @use(i32 %val)
   ret void
@@ -31,10 +31,10 @@ define void @test3(i32* %p, i32 %index) {
 ; CHECK-LABEL: @test3
 ; CHECK:   zext
 ; CHECK-NOT: sext
-  %addr_begin = getelementptr i32* %p, i64 40
-  %addr_fixed = getelementptr i32* %addr_begin, i64 48
+  %addr_begin = getelementptr i32, i32* %p, i64 40
+  %addr_fixed = getelementptr i32, i32* %addr_begin, i64 48
   %val_fixed = load i32* %addr_fixed, !range !0
-  %addr = getelementptr i32* %addr_begin, i32 %val_fixed
+  %addr = getelementptr i32, i32* %addr_begin, i32 %val_fixed
   %val = load i32* %addr
   call void @use(i32 %val)
   ret void
@@ -44,11 +44,11 @@ define void @test4(i32* %p, i32 %index) {
 ; CHECK-LABEL: @test4
 ; CHECK:   zext
 ; CHECK-NOT: sext
-  %addr_begin = getelementptr i32* %p, i64 40
-  %addr_fixed = getelementptr i32* %addr_begin, i64 48
+  %addr_begin = getelementptr i32, i32* %p, i64 40
+  %addr_fixed = getelementptr i32, i32* %addr_begin, i64 48
   %val_fixed = load i32* %addr_fixed, !range !0
   %i = sext i32 %val_fixed to i64
-  %addr = getelementptr i32* %addr_begin, i64 %i
+  %addr = getelementptr i32, i32* %addr_begin, i64 %i
   %val = load i32* %addr
   call void @use(i32 %val)
   ret void

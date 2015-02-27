@@ -25,9 +25,9 @@ define void @test_umad24(i32 addrspace(1)* %out, i32 %src0, i32 %src1, i32 %src2
 ; SI: buffer_store_dword [[RESULT]]
 define void @commute_umad24(i32 addrspace(1)* %out, i32 addrspace(1)* %in) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %out.gep = getelementptr i32 addrspace(1)* %out, i32 %tid
-  %src0.gep = getelementptr i32 addrspace(1)* %out, i32 %tid
-  %src2.gep = getelementptr i32 addrspace(1)* %src0.gep, i32 1
+  %out.gep = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
+  %src0.gep = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
+  %src2.gep = getelementptr i32, i32 addrspace(1)* %src0.gep, i32 1
 
   %src0 = load i32 addrspace(1)* %src0.gep, align 4
   %src2 = load i32 addrspace(1)* %src2.gep, align 4

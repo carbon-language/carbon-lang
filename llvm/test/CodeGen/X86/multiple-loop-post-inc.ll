@@ -49,8 +49,8 @@ bb2:                                              ; preds = %bb1, %bb
   %14 = phi i64 [ %indvar.next53, %bb1 ], [ 0, %bb ] ; <i64> [#uses=21]
   %x.0 = phi float [ %13, %bb1 ], [ %10, %bb ]    ; <float> [#uses=6]
   %N_addr.0 = sub i64 %N, %14                     ; <i64> [#uses=4]
-  %O_addr.0 = getelementptr float* %O, i64 %14    ; <float*> [#uses=4]
-  %I_addr.0 = getelementptr float* %I, i64 %14    ; <float*> [#uses=3]
+  %O_addr.0 = getelementptr float, float* %O, i64 %14    ; <float*> [#uses=4]
+  %I_addr.0 = getelementptr float, float* %I, i64 %14    ; <float*> [#uses=3]
   %15 = icmp slt i64 %N_addr.0, 1                 ; <i1> [#uses=1]
   br i1 %15, label %bb4, label %bb3
 
@@ -105,25 +105,25 @@ bb5:                                              ; preds = %bb.nph43, %bb5
   %vX1.036 = phi <4 x float> [ %32, %bb.nph43 ], [ %47, %bb5 ] ; <<4 x float>> [#uses=2]
   %tmp104 = shl i64 %indvar102, 4                 ; <i64> [#uses=5]
   %tmp105 = add i64 %14, %tmp104                  ; <i64> [#uses=2]
-  %scevgep106 = getelementptr float* %I, i64 %tmp105 ; <float*> [#uses=1]
+  %scevgep106 = getelementptr float, float* %I, i64 %tmp105 ; <float*> [#uses=1]
   %scevgep106107 = bitcast float* %scevgep106 to <4 x float>* ; <<4 x float>*> [#uses=1]
   %tmp109 = add i64 %tmp108, %tmp104              ; <i64> [#uses=2]
   %tmp112 = add i64 %tmp111, %tmp104              ; <i64> [#uses=2]
-  %scevgep113 = getelementptr float* %I, i64 %tmp112 ; <float*> [#uses=1]
+  %scevgep113 = getelementptr float, float* %I, i64 %tmp112 ; <float*> [#uses=1]
   %scevgep113114 = bitcast float* %scevgep113 to <4 x float>* ; <<4 x float>*> [#uses=1]
   %tmp116 = add i64 %tmp115, %tmp104              ; <i64> [#uses=2]
-  %scevgep117 = getelementptr float* %I, i64 %tmp116 ; <float*> [#uses=1]
+  %scevgep117 = getelementptr float, float* %I, i64 %tmp116 ; <float*> [#uses=1]
   %scevgep117118 = bitcast float* %scevgep117 to <4 x float>* ; <<4 x float>*> [#uses=1]
   %tmp120 = add i64 %tmp119, %tmp104              ; <i64> [#uses=2]
-  %scevgep121 = getelementptr float* %I, i64 %tmp120 ; <float*> [#uses=1]
+  %scevgep121 = getelementptr float, float* %I, i64 %tmp120 ; <float*> [#uses=1]
   %scevgep121122 = bitcast float* %scevgep121 to <4 x float>* ; <<4 x float>*> [#uses=1]
-  %scevgep123 = getelementptr float* %O, i64 %tmp105 ; <float*> [#uses=1]
+  %scevgep123 = getelementptr float, float* %O, i64 %tmp105 ; <float*> [#uses=1]
   %scevgep123124 = bitcast float* %scevgep123 to <4 x float>* ; <<4 x float>*> [#uses=1]
-  %scevgep126 = getelementptr float* %O, i64 %tmp112 ; <float*> [#uses=1]
+  %scevgep126 = getelementptr float, float* %O, i64 %tmp112 ; <float*> [#uses=1]
   %scevgep126127 = bitcast float* %scevgep126 to <4 x float>* ; <<4 x float>*> [#uses=1]
-  %scevgep128 = getelementptr float* %O, i64 %tmp116 ; <float*> [#uses=1]
+  %scevgep128 = getelementptr float, float* %O, i64 %tmp116 ; <float*> [#uses=1]
   %scevgep128129 = bitcast float* %scevgep128 to <4 x float>* ; <<4 x float>*> [#uses=1]
-  %scevgep130 = getelementptr float* %O, i64 %tmp120 ; <float*> [#uses=1]
+  %scevgep130 = getelementptr float, float* %O, i64 %tmp120 ; <float*> [#uses=1]
   %scevgep130131 = bitcast float* %scevgep130 to <4 x float>* ; <<4 x float>*> [#uses=1]
   %tmp132 = mul i64 %indvar102, -16               ; <i64> [#uses=1]
   %tmp136 = add i64 %tmp135, %tmp132              ; <i64> [#uses=2]
@@ -149,8 +149,8 @@ bb5:                                              ; preds = %bb.nph43, %bb5
 
 bb6.bb7_crit_edge:                                ; preds = %bb5
   call void asm sideeffect "# Stop.", "~{dirflag},~{fpsr},~{flags}"() nounwind
-  %scevgep110 = getelementptr float* %I, i64 %tmp109 ; <float*> [#uses=1]
-  %scevgep125 = getelementptr float* %O, i64 %tmp109 ; <float*> [#uses=1]
+  %scevgep110 = getelementptr float, float* %I, i64 %tmp109 ; <float*> [#uses=1]
+  %scevgep125 = getelementptr float, float* %O, i64 %tmp109 ; <float*> [#uses=1]
   br label %bb7
 
 bb7:                                              ; preds = %bb6.bb7_crit_edge, %bb6.preheader
@@ -166,7 +166,7 @@ bb8:                                              ; preds = %bb4
 
 bb.nph:                                           ; preds = %bb8
   %I_addr.0.sum = add i64 %14, -1                 ; <i64> [#uses=1]
-  %49 = getelementptr inbounds float* %I, i64 %I_addr.0.sum ; <float*> [#uses=1]
+  %49 = getelementptr inbounds float, float* %I, i64 %I_addr.0.sum ; <float*> [#uses=1]
   %50 = bitcast float* %49 to <4 x float>*        ; <<4 x float>*> [#uses=1]
   %51 = load <4 x float>* %50, align 16           ; <<4 x float>> [#uses=1]
   %tmp54 = add i64 %14, 16                        ; <i64> [#uses=1]
@@ -191,28 +191,28 @@ bb9:                                              ; preds = %bb.nph, %bb9
   %tmp51 = shl i64 %indvar, 4                     ; <i64> [#uses=9]
   %tmp55 = add i64 %tmp54, %tmp51                 ; <i64> [#uses=2]
   %tmp57 = add i64 %tmp56, %tmp51                 ; <i64> [#uses=1]
-  %scevgep58 = getelementptr float* %I, i64 %tmp57 ; <float*> [#uses=1]
+  %scevgep58 = getelementptr float, float* %I, i64 %tmp57 ; <float*> [#uses=1]
   %scevgep5859 = bitcast float* %scevgep58 to <4 x float>* ; <<4 x float>*> [#uses=1]
   %tmp61 = add i64 %tmp60, %tmp51                 ; <i64> [#uses=1]
-  %scevgep62 = getelementptr float* %I, i64 %tmp61 ; <float*> [#uses=1]
+  %scevgep62 = getelementptr float, float* %I, i64 %tmp61 ; <float*> [#uses=1]
   %scevgep6263 = bitcast float* %scevgep62 to <4 x float>* ; <<4 x float>*> [#uses=1]
   %tmp65 = add i64 %tmp64, %tmp51                 ; <i64> [#uses=1]
-  %scevgep66 = getelementptr float* %I, i64 %tmp65 ; <float*> [#uses=1]
+  %scevgep66 = getelementptr float, float* %I, i64 %tmp65 ; <float*> [#uses=1]
   %scevgep6667 = bitcast float* %scevgep66 to <4 x float>* ; <<4 x float>*> [#uses=1]
   %tmp69 = add i64 %tmp68, %tmp51                 ; <i64> [#uses=1]
-  %scevgep70 = getelementptr float* %I, i64 %tmp69 ; <float*> [#uses=1]
+  %scevgep70 = getelementptr float, float* %I, i64 %tmp69 ; <float*> [#uses=1]
   %scevgep7071 = bitcast float* %scevgep70 to <4 x float>* ; <<4 x float>*> [#uses=1]
   %tmp72 = add i64 %14, %tmp51                    ; <i64> [#uses=1]
-  %scevgep73 = getelementptr float* %O, i64 %tmp72 ; <float*> [#uses=1]
+  %scevgep73 = getelementptr float, float* %O, i64 %tmp72 ; <float*> [#uses=1]
   %scevgep7374 = bitcast float* %scevgep73 to <4 x float>* ; <<4 x float>*> [#uses=1]
   %tmp77 = add i64 %tmp76, %tmp51                 ; <i64> [#uses=1]
-  %scevgep78 = getelementptr float* %O, i64 %tmp77 ; <float*> [#uses=1]
+  %scevgep78 = getelementptr float, float* %O, i64 %tmp77 ; <float*> [#uses=1]
   %scevgep7879 = bitcast float* %scevgep78 to <4 x float>* ; <<4 x float>*> [#uses=1]
   %tmp81 = add i64 %tmp80, %tmp51                 ; <i64> [#uses=1]
-  %scevgep82 = getelementptr float* %O, i64 %tmp81 ; <float*> [#uses=1]
+  %scevgep82 = getelementptr float, float* %O, i64 %tmp81 ; <float*> [#uses=1]
   %scevgep8283 = bitcast float* %scevgep82 to <4 x float>* ; <<4 x float>*> [#uses=1]
   %tmp85 = add i64 %tmp84, %tmp51                 ; <i64> [#uses=1]
-  %scevgep86 = getelementptr float* %O, i64 %tmp85 ; <float*> [#uses=1]
+  %scevgep86 = getelementptr float, float* %O, i64 %tmp85 ; <float*> [#uses=1]
   %scevgep8687 = bitcast float* %scevgep86 to <4 x float>* ; <<4 x float>*> [#uses=1]
   %tmp88 = mul i64 %indvar, -16                   ; <i64> [#uses=1]
   %tmp92 = add i64 %tmp91, %tmp88                 ; <i64> [#uses=2]
@@ -245,8 +245,8 @@ bb9:                                              ; preds = %bb.nph, %bb9
   br i1 %72, label %bb9, label %bb10.bb11.loopexit_crit_edge
 
 bb10.bb11.loopexit_crit_edge:                     ; preds = %bb9
-  %scevgep = getelementptr float* %I, i64 %tmp55  ; <float*> [#uses=1]
-  %scevgep75 = getelementptr float* %O, i64 %tmp55 ; <float*> [#uses=1]
+  %scevgep = getelementptr float, float* %I, i64 %tmp55  ; <float*> [#uses=1]
+  %scevgep75 = getelementptr float, float* %O, i64 %tmp55 ; <float*> [#uses=1]
   br label %bb11
 
 bb11:                                             ; preds = %bb8, %bb10.bb11.loopexit_crit_edge, %bb7
@@ -261,8 +261,8 @@ bb11:                                             ; preds = %bb8, %bb10.bb11.loo
 bb12:                                             ; preds = %bb11, %bb12
   %indvar94 = phi i64 [ %indvar.next95, %bb12 ], [ 0, %bb11 ] ; <i64> [#uses=3]
   %x.130 = phi float [ %77, %bb12 ], [ %73, %bb11 ] ; <float> [#uses=2]
-  %I_addr.433 = getelementptr float* %I_addr.2, i64 %indvar94 ; <float*> [#uses=1]
-  %O_addr.432 = getelementptr float* %O_addr.2, i64 %indvar94 ; <float*> [#uses=1]
+  %I_addr.433 = getelementptr float, float* %I_addr.2, i64 %indvar94 ; <float*> [#uses=1]
+  %O_addr.432 = getelementptr float, float* %O_addr.2, i64 %indvar94 ; <float*> [#uses=1]
   %75 = load float* %I_addr.433, align 4          ; <float> [#uses=1]
   %76 = fmul float %75, %x.130                    ; <float> [#uses=1]
   store float %76, float* %O_addr.432, align 4

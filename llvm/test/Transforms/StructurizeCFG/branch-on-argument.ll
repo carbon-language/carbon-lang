@@ -28,7 +28,7 @@ entry:
 
 for.body:
   %i = phi i32 [0, %entry], [%i.inc, %end.loop]
-  %ptr = getelementptr i32 addrspace(1)* %out, i32 %i
+  %ptr = getelementptr i32, i32 addrspace(1)* %out, i32 %i
   store i32 %i, i32 addrspace(1)* %ptr, align 4
   br i1 %arg, label %mid.loop, label %end.loop
 

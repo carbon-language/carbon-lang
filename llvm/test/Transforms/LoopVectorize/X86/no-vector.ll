@@ -8,7 +8,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %i.06 = phi i32 [ %inc, %for.body ], [ 0, %entry ]
   %r.05 = phi i32 [ %xor, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr inbounds i8* %s, i32 %i.06
+  %arrayidx = getelementptr inbounds i8, i8* %s, i32 %i.06
   %0 = load i8* %arrayidx, align 1
   %conv = sext i8 %0 to i32
   %xor = xor i32 %conv, %r.05

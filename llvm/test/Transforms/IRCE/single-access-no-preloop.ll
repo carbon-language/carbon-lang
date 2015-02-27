@@ -13,7 +13,7 @@ define void @single_access_no_preloop_no_offset(i32 *%arr, i32 *%a_len_ptr, i32 
   br i1 %abc, label %in.bounds, label %out.of.bounds, !prof !1
 
  in.bounds:
-  %addr = getelementptr i32* %arr, i32 %idx
+  %addr = getelementptr i32, i32* %arr, i32 %idx
   store i32 0, i32* %addr
   %next = icmp slt i32 %idx.next, %n
   br i1 %next, label %loop, label %exit
@@ -49,7 +49,7 @@ define void @single_access_no_preloop_no_offset(i32 *%arr, i32 *%a_len_ptr, i32 
 ; CHECK-NEXT: br i1 %abc.postloop, label %in.bounds.postloop, label %out.of.bounds
 
 ; CHECK-LABEL: in.bounds.postloop:
-; CHECK-NEXT: %addr.postloop = getelementptr i32* %arr, i32 %idx.postloop
+; CHECK-NEXT: %addr.postloop = getelementptr i32, i32* %arr, i32 %idx.postloop
 ; CHECK-NEXT: store i32 0, i32* %addr.postloop
 ; CHECK-NEXT: %next.postloop = icmp slt i32 %idx.next.postloop, %n
 ; CHECK-NEXT: br i1 %next.postloop, label %loop.postloop, label %exit.loopexit
@@ -69,7 +69,7 @@ define void @single_access_no_preloop_with_offset(i32 *%arr, i32 *%a_len_ptr, i3
   br i1 %abc, label %in.bounds, label %out.of.bounds, !prof !1
 
  in.bounds:
-  %addr = getelementptr i32* %arr, i32 %idx.for.abc
+  %addr = getelementptr i32, i32* %arr, i32 %idx.for.abc
   store i32 0, i32* %addr
   %next = icmp slt i32 %idx.next, %n
   br i1 %next, label %loop, label %exit

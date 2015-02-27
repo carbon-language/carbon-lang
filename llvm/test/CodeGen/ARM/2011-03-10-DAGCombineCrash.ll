@@ -17,9 +17,9 @@ bb:                                               ; preds = %entry
 bb1:                                              ; preds = %entry
   %0 = call %struct.ui* @vn_pp_to_ui(i32* undef) nounwind
   call void @llvm.memset.p0i8.i32(i8* undef, i8 0, i32 40, i32 4, i1 false)
-  %1 = getelementptr inbounds %struct.ui* %0, i32 0, i32 0
+  %1 = getelementptr inbounds %struct.ui, %struct.ui* %0, i32 0, i32 0
   store %struct.mo* undef, %struct.mo** %1, align 4
-  %2 = getelementptr inbounds %struct.ui* %0, i32 0, i32 5
+  %2 = getelementptr inbounds %struct.ui, %struct.ui* %0, i32 0, i32 5
   %3 = load i64* %2, align 4
   %4 = call i32 @mo_create_nnm(%struct.mo* undef, i64 %3, i32** undef) nounwind
   br i1 undef, label %bb3, label %bb2

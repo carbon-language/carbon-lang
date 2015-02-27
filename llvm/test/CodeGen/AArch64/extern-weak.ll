@@ -31,7 +31,7 @@ define i32()* @foo() {
 @arr_var = extern_weak global [10 x i32]
 
 define i32* @bar() {
-  %addr = getelementptr [10 x i32]* @arr_var, i32 0, i32 5
+  %addr = getelementptr [10 x i32], [10 x i32]* @arr_var, i32 0, i32 5
 
 
 ; CHECK: adrp x[[ADDRHI:[0-9]+]], :got:arr_var

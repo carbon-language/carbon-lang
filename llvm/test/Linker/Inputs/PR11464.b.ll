@@ -3,7 +3,7 @@
 
 define i32 @bug_a(%bug_type* %fp) nounwind uwtable {
 entry:
-  %d_stream = getelementptr inbounds %bug_type* %fp, i64 0, i32 0
+  %d_stream = getelementptr inbounds %bug_type, %bug_type* %fp, i64 0, i32 0
   ret i32 0
 }
 

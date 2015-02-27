@@ -21,23 +21,23 @@ target triple = "i386-apple-macosx10.8.0"
 
 define i32 @test(double* nocapture %G) {
 entry:
-  %arrayidx = getelementptr inbounds double* %G, i64 5
+  %arrayidx = getelementptr inbounds double, double* %G, i64 5
   %0 = load double* %arrayidx, align 8
   %mul = fmul double %0, 4.000000e+00
   %add = fadd double %mul, 1.000000e+00
   store double %add, double* %G, align 8
-  %arrayidx2 = getelementptr inbounds double* %G, i64 6
+  %arrayidx2 = getelementptr inbounds double, double* %G, i64 6
   %1 = load double* %arrayidx2, align 8
   %mul3 = fmul double %1, 3.000000e+00
   %add4 = fadd double %mul3, 6.000000e+00
-  %arrayidx5 = getelementptr inbounds double* %G, i64 1
+  %arrayidx5 = getelementptr inbounds double, double* %G, i64 1
   store double %add4, double* %arrayidx5, align 8
   %add8 = fadd double %mul, 7.000000e+00
-  %arrayidx9 = getelementptr inbounds double* %G, i64 2
+  %arrayidx9 = getelementptr inbounds double, double* %G, i64 2
   store double %add8, double* %arrayidx9, align 8
   %mul11 = fmul double %1, 4.000000e+00
   %add12 = fadd double %mul11, 8.000000e+00
-  %arrayidx13 = getelementptr inbounds double* %G, i64 3
+  %arrayidx13 = getelementptr inbounds double, double* %G, i64 3
   store double %add12, double* %arrayidx13, align 8
   ret i32 undef
 }
@@ -61,19 +61,19 @@ entry:
   %mul1 = fmul double %conv, %mul
   %add = fadd double %mul1, 6.000000e+00
   store double %add, double* %A, align 8
-  %arrayidx3 = getelementptr inbounds double* %A, i64 1
+  %arrayidx3 = getelementptr inbounds double, double* %A, i64 1
   %1 = load double* %arrayidx3, align 8
   %mul4 = fmul double %1, 7.700000e+00
   %mul6 = fmul double %conv, %mul4
   %add7 = fadd double %mul6, 2.000000e+00
   store double %add7, double* %arrayidx3, align 8
-  %arrayidx9 = getelementptr inbounds double* %A, i64 2
+  %arrayidx9 = getelementptr inbounds double, double* %A, i64 2
   %2 = load double* %arrayidx9, align 8
   %mul10 = fmul double %2, 7.600000e+00
   %mul12 = fmul double %conv, %mul10
   %add13 = fadd double %mul12, 3.000000e+00
   store double %add13, double* %arrayidx9, align 8
-  %arrayidx15 = getelementptr inbounds double* %A, i64 3
+  %arrayidx15 = getelementptr inbounds double, double* %A, i64 3
   %3 = load double* %arrayidx15, align 8
   %mul16 = fmul double %3, 7.400000e+00
   %mul18 = fmul double %conv, %mul16
@@ -101,7 +101,7 @@ entry:
 ; CHECK: ret
 define i32 @test2(double* nocapture %G, i32 %k) {
   %1 = icmp eq i32 %k, 0
-  %2 = getelementptr inbounds double* %G, i64 5
+  %2 = getelementptr inbounds double, double* %G, i64 5
   %3 = load double* %2, align 8
   %4 = fmul double %3, 4.000000e+00
   br i1 %1, label %12, label %5
@@ -109,23 +109,23 @@ define i32 @test2(double* nocapture %G, i32 %k) {
 ; <label>:5                                       ; preds = %0
   %6 = fadd double %4, 1.000000e+00
   store double %6, double* %G, align 8
-  %7 = getelementptr inbounds double* %G, i64 6
+  %7 = getelementptr inbounds double, double* %G, i64 6
   %8 = load double* %7, align 8
   %9 = fmul double %8, 3.000000e+00
   %10 = fadd double %9, 6.000000e+00
-  %11 = getelementptr inbounds double* %G, i64 1
+  %11 = getelementptr inbounds double, double* %G, i64 1
   store double %10, double* %11, align 8
   br label %20
 
 ; <label>:12                                      ; preds = %0
   %13 = fadd double %4, 7.000000e+00
-  %14 = getelementptr inbounds double* %G, i64 2
+  %14 = getelementptr inbounds double, double* %G, i64 2
   store double %13, double* %14, align 8
-  %15 = getelementptr inbounds double* %G, i64 6
+  %15 = getelementptr inbounds double, double* %G, i64 6
   %16 = load double* %15, align 8
   %17 = fmul double %16, 3.000000e+00
   %18 = fadd double %17, 8.000000e+00
-  %19 = getelementptr inbounds double* %G, i64 3
+  %19 = getelementptr inbounds double, double* %G, i64 3
   store double %18, double* %19, align 8
   br label %20
 
@@ -153,19 +153,19 @@ entry:
   %mul1 = fmul double %conv, %mul
   %add = fadd double %mul1, 6.000000e+00
   store double %add, double* %A, align 8
-  %arrayidx3 = getelementptr inbounds double* %A, i64 1
+  %arrayidx3 = getelementptr inbounds double, double* %A, i64 1
   %1 = load double* %arrayidx3, align 8
   %mul4 = fmul double %1, 7.900000e+00
   %mul6 = fmul double %conv, %mul4
   %add7 = fadd double %mul6, 6.000000e+00
   store double %add7, double* %arrayidx3, align 8
-  %arrayidx9 = getelementptr inbounds double* %A, i64 2
+  %arrayidx9 = getelementptr inbounds double, double* %A, i64 2
   %2 = load double* %arrayidx9, align 8
   %mul10 = fmul double %2, 7.900000e+00
   %mul12 = fmul double %conv, %mul10
   %add13 = fadd double %mul12, 6.000000e+00
   store double %add13, double* %arrayidx9, align 8
-  %arrayidx15 = getelementptr inbounds double* %A, i64 3
+  %arrayidx15 = getelementptr inbounds double, double* %A, i64 3
   %3 = load double* %arrayidx15, align 8
   %mul16 = fmul double %3, 7.900000e+00
   %mul18 = fmul double %conv, %mul16
@@ -193,7 +193,7 @@ entry:
   %conv = sitofp i32 %n to double
   %mul = fmul double %conv, %0
   store double %mul, double* %A, align 8
-  %arrayidx2 = getelementptr inbounds double* %A, i64 1
+  %arrayidx2 = getelementptr inbounds double, double* %A, i64 1
   %1 = load double* %arrayidx2, align 8
   %mul4 = fmul double %conv, %1
   store double %mul4, double* %arrayidx2, align 8
@@ -201,11 +201,11 @@ entry:
   br i1 %cmp, label %return, label %if.end
 
 if.end:                                           ; preds = %entry
-  %arrayidx7 = getelementptr inbounds double* %A, i64 2
+  %arrayidx7 = getelementptr inbounds double, double* %A, i64 2
   %2 = load double* %arrayidx7, align 8
   %mul9 = fmul double %conv, %2
   store double %mul9, double* %arrayidx7, align 8
-  %arrayidx11 = getelementptr inbounds double* %A, i64 3
+  %arrayidx11 = getelementptr inbounds double, double* %A, i64 3
   %3 = load double* %arrayidx11, align 8
   %add = add nsw i32 %n, 4
   %conv12 = sitofp i32 %add to double
@@ -227,13 +227,13 @@ entry:
   br i1 undef, label %if.end13, label %if.end13
 
 sw.epilog7:                                       ; No predecessors!
-  %.in = getelementptr inbounds %class.B.53.55* %this, i64 0, i32 0, i32 1
+  %.in = getelementptr inbounds %class.B.53.55, %class.B.53.55* %this, i64 0, i32 0, i32 1
   %0 = load double* %.in, align 8
   %add = fadd double undef, 0.000000e+00
   %add6 = fadd double %add, %0
   %1 = load double* @a, align 8
   %add8 = fadd double %1, 0.000000e+00
-  %_dy = getelementptr inbounds %class.B.53.55* %this, i64 0, i32 0, i32 2
+  %_dy = getelementptr inbounds %class.B.53.55, %class.B.53.55* %this, i64 0, i32 0, i32 2
   %2 = load double* %_dy, align 8
   %add10 = fadd double %add8, %2
   br i1 undef, label %if.then12, label %if.end13

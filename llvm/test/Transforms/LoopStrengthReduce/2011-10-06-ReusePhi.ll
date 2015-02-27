@@ -19,8 +19,8 @@ target triple = "x86-apple-darwin"
 ; CHECK-NOT: phi
 ; CHECK: bitcast float* {{.*}} to i8*
 ; CHECK: bitcast float* {{.*}} to i8*
-; CHECK: getelementptr i8*
-; CHECK: getelementptr i8*
+; CHECK: getelementptr i8, i8*
+; CHECK: getelementptr i8, i8*
 
 define float @test(float* nocapture %A, float* nocapture %B, i32 %N, i32 %IA, i32 %IB) nounwind uwtable readonly ssp {
 entry:
@@ -41,8 +41,8 @@ while.body:                                       ; preds = %while.body.lr.ph, %
   %1 = load float* %B.addr.04, align 4
   %mul = fmul float %0, %1
   %add = fadd float %Sum0.02, %mul
-  %add.ptr = getelementptr inbounds float* %A.addr.05, i64 %idx.ext
-  %add.ptr3 = getelementptr inbounds float* %B.addr.04, i64 %idx.ext2
+  %add.ptr = getelementptr inbounds float, float* %A.addr.05, i64 %idx.ext
+  %add.ptr3 = getelementptr inbounds float, float* %B.addr.04, i64 %idx.ext2
   %sub = add nsw i32 %N.addr.03, -1
   %cmp = icmp sgt i32 %sub, 0
   br i1 %cmp, label %while.body, label %while.end

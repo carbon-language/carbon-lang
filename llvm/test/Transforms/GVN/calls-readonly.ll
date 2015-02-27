@@ -20,7 +20,7 @@ bb1:                                              ; preds = %bb, %entry
   %4 = tail call i32 @strlen(i8* %P)              ; <i32> [#uses=1]
   %5 = add i32 %x_addr.0, %0                      ; <i32> [#uses=1]
   %.sum = sub i32 %5, %4                          ; <i32> [#uses=1]
-  %6 = getelementptr i8* %3, i32 %.sum            ; <i8*> [#uses=1]
+  %6 = getelementptr i8, i8* %3, i32 %.sum            ; <i8*> [#uses=1]
   ret i8* %6
 }
 

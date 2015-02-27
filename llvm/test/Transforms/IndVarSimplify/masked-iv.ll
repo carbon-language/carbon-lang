@@ -16,7 +16,7 @@ bb.preheader:		; preds = %entry
 bb:		; preds = %bb, %bb.preheader
 	%i.01 = phi i64 [ %t6, %bb ], [ %a, %bb.preheader ]		; <i64> [#uses=3]
 	%t1 = and i64 %i.01, 255		; <i64> [#uses=1]
-	%t2 = getelementptr i64* %A, i64 %t1		; <i64*> [#uses=1]
+	%t2 = getelementptr i64, i64* %A, i64 %t1		; <i64*> [#uses=1]
 	store i64 %i.01, i64* %t2, align 8
 	%t6 = add i64 %i.01, %s		; <i64> [#uses=1]
 	br label %bb

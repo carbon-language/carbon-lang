@@ -20,16 +20,16 @@ define i32 @test_simplify1() {
 ; CHECK-NOT: call i8* @strncpy
 ; CHECK: call i32 @puts
   %target = alloca [1024 x i8]
-  %arg1 = getelementptr [1024 x i8]* %target, i32 0, i32 0
+  %arg1 = getelementptr [1024 x i8], [1024 x i8]* %target, i32 0, i32 0
   store i8 0, i8* %arg1
 
-  %arg2 = getelementptr [6 x i8]* @hello, i32 0, i32 0
+  %arg2 = getelementptr [6 x i8], [6 x i8]* @hello, i32 0, i32 0
   %rslt1 = call i8* @strncpy(i8* %arg1, i8* %arg2, i32 6)
 
-  %arg3 = getelementptr [1 x i8]* @null, i32 0, i32 0
+  %arg3 = getelementptr [1 x i8], [1 x i8]* @null, i32 0, i32 0
   %rslt2 = call i8* @strncpy(i8* %rslt1, i8* %arg3, i32 42)
 
-  %arg4 = getelementptr [7 x i8]* @null_hello, i32 0, i32 0
+  %arg4 = getelementptr [7 x i8], [7 x i8]* @null_hello, i32 0, i32 0
   %rslt3 = call i8* @strncpy(i8* %rslt2, i8* %arg4, i32 42)
 
   call i32 @puts( i8* %rslt3 )
@@ -40,8 +40,8 @@ define i32 @test_simplify1() {
 
 define void @test_simplify2() {
 ; CHECK-LABEL: @test_simplify2(
-  %dst = getelementptr [32 x i8]* @a, i32 0, i32 0
-  %src = getelementptr [1 x i8]* @null, i32 0, i32 0
+  %dst = getelementptr [32 x i8], [32 x i8]* @a, i32 0, i32 0
+  %src = getelementptr [1 x i8], [1 x i8]* @null, i32 0, i32 0
 
   call i8* @strncpy(i8* %dst, i8* %src, i32 32)
 ; CHECK: call void @llvm.memset.p0i8.i32
@@ -52,8 +52,8 @@ define void @test_simplify2() {
 
 define i8* @test_simplify3() {
 ; CHECK-LABEL: @test_simplify3(
-  %dst = getelementptr [32 x i8]* @a, i32 0, i32 0
-  %src = getelementptr [6 x i8]* @hello, i32 0, i32 0
+  %dst = getelementptr [32 x i8], [32 x i8]* @a, i32 0, i32 0
+  %src = getelementptr [6 x i8], [6 x i8]* @hello, i32 0, i32 0
 
   %ret = call i8* @strncpy(i8* %dst, i8* %src, i32 0)
   ret i8* %ret
@@ -64,8 +64,8 @@ define i8* @test_simplify3() {
 
 define void @test_simplify4() {
 ; CHECK-LABEL: @test_simplify4(
-  %dst = getelementptr [32 x i8]* @a, i32 0, i32 0
-  %src = getelementptr [6 x i8]* @hello, i32 0, i32 0
+  %dst = getelementptr [32 x i8], [32 x i8]* @a, i32 0, i32 0
+  %src = getelementptr [6 x i8], [6 x i8]* @hello, i32 0, i32 0
 
   call i8* @strncpy(i8* %dst, i8* %src, i32 6)
 ; CHECK: call void @llvm.memcpy.p0i8.p0i8.i32
@@ -76,8 +76,8 @@ define void @test_simplify4() {
 
 define void @test_no_simplify1() {
 ; CHECK-LABEL: @test_no_simplify1(
-  %dst = getelementptr [32 x i8]* @a, i32 0, i32 0
-  %src = getelementptr [32 x i8]* @b, i32 0, i32 0
+  %dst = getelementptr [32 x i8], [32 x i8]* @a, i32 0, i32 0
+  %src = getelementptr [32 x i8], [32 x i8]* @b, i32 0, i32 0
 
   call i8* @strncpy(i8* %dst, i8* %src, i32 32)
 ; CHECK: call i8* @strncpy
@@ -86,8 +86,8 @@ define void @test_no_simplify1() {
 
 define void @test_no_simplify2() {
 ; CHECK-LABEL: @test_no_simplify2(
-  %dst = getelementptr [32 x i8]* @a, i32 0, i32 0
-  %src = getelementptr [6 x i8]* @hello, i32 0, i32 0
+  %dst = getelementptr [32 x i8], [32 x i8]* @a, i32 0, i32 0
+  %src = getelementptr [6 x i8], [6 x i8]* @hello, i32 0, i32 0
 
   call i8* @strncpy(i8* %dst, i8* %src, i32 8)
 ; CHECK: call i8* @strncpy

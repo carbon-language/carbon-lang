@@ -12,7 +12,7 @@ entry:
 
 bb:		; preds = %bb, %entry
 	%i.035.0 = phi i32 [ 0, %entry ], [ %indvar.next, %bb ]		; <i32> [#uses=2]
-	%tmp8 = getelementptr float* %tmp56, i32 %i.035.0		; <float*> [#uses=2]
+	%tmp8 = getelementptr float, float* %tmp56, i32 %i.035.0		; <float*> [#uses=2]
 	%tmp101112 = bitcast float* %tmp8 to i8*		; <i8*> [#uses=1]
 	%tmp1617 = bitcast float* %tmp8 to i32*		; <i32*> [#uses=1]
 	%tmp21 = tail call i32 asm "lwbrx $0, $2, $1", "=r,r,bO,*m"( i8* %tmp101112, i32 0, i32* %tmp1617 )		; <i32> [#uses=0]

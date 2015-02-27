@@ -34,8 +34,8 @@ define void @add_floats(float %val1, float %val2) {
 ; with memcpy.
 define void @take_struct(%myStruct* byval %structval) {
 ; CHECK-LABEL: take_struct:
-    %addr0 = getelementptr %myStruct* %structval, i64 0, i32 2
-    %addr1 = getelementptr %myStruct* %structval, i64 0, i32 0
+    %addr0 = getelementptr %myStruct, %myStruct* %structval, i64 0, i32 2
+    %addr1 = getelementptr %myStruct, %myStruct* %structval, i64 0, i32 0
 
     %val0 = load volatile i32* %addr0
     ; Some weird move means x0 is used for one access
@@ -55,8 +55,8 @@ define void @take_struct(%myStruct* byval %structval) {
 define void @check_byval_align(i32* byval %ignore, %myStruct* byval align 16 %structval) {
 ; CHECK-LABEL: check_byval_align:
 
-    %addr0 = getelementptr %myStruct* %structval, i64 0, i32 2
-    %addr1 = getelementptr %myStruct* %structval, i64 0, i32 0
+    %addr0 = getelementptr %myStruct, %myStruct* %structval, i64 0, i32 2
+    %addr1 = getelementptr %myStruct, %myStruct* %structval, i64 0, i32 0
 
     %val0 = load volatile i32* %addr0
     ; Some weird move means x0 is used for one access
@@ -108,9 +108,9 @@ define [2 x i64] @return_struct() {
 ; if LLVM does it to %myStruct too. So this is the simplest check
 define void @return_large_struct(%myStruct* sret %retval) {
 ; CHECK-LABEL: return_large_struct:
-    %addr0 = getelementptr %myStruct* %retval, i64 0, i32 0
-    %addr1 = getelementptr %myStruct* %retval, i64 0, i32 1
-    %addr2 = getelementptr %myStruct* %retval, i64 0, i32 2
+    %addr0 = getelementptr %myStruct, %myStruct* %retval, i64 0, i32 0
+    %addr1 = getelementptr %myStruct, %myStruct* %retval, i64 0, i32 1
+    %addr2 = getelementptr %myStruct, %myStruct* %retval, i64 0, i32 2
 
     store i64 42, i64* %addr0
     store i8 2, i8* %addr1
@@ -129,7 +129,7 @@ define i32 @struct_on_stack(i8 %var0, i16 %var1, i32 %var2, i64 %var3, i128 %var
                           i32* %var6, %myStruct* byval %struct, i32* byval %stacked,
                           double %notstacked) {
 ; CHECK-LABEL: struct_on_stack:
-    %addr = getelementptr %myStruct* %struct, i64 0, i32 0
+    %addr = getelementptr %myStruct, %myStruct* %struct, i64 0, i32 0
     %val64 = load volatile i64* %addr
     store volatile i64 %val64, i64* @var64
     ; Currently nothing on local stack, so struct should be at sp

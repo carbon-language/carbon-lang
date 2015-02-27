@@ -335,10 +335,10 @@ entry:
 define void @vecload2(i32 addrspace(1)* nocapture %out, i32 addrspace(2)* nocapture %mem) #0 {
 entry:
   %0 = load i32 addrspace(2)* %mem, align 4
-  %arrayidx1.i = getelementptr inbounds i32 addrspace(2)* %mem, i64 1
+  %arrayidx1.i = getelementptr inbounds i32, i32 addrspace(2)* %mem, i64 1
   %1 = load i32 addrspace(2)* %arrayidx1.i, align 4
   store i32 %0, i32 addrspace(1)* %out, align 4
-  %arrayidx1 = getelementptr inbounds i32 addrspace(1)* %out, i64 1
+  %arrayidx1 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 1
   store i32 %1, i32 addrspace(1)* %arrayidx1, align 4
   ret void
 }
@@ -362,11 +362,11 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 define void @i128-const-store(i32 addrspace(1)* %out) {
 entry:
   store i32 1, i32 addrspace(1)* %out, align 4
-  %arrayidx2 = getelementptr inbounds i32 addrspace(1)* %out, i64 1
+  %arrayidx2 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 1
   store i32 1, i32 addrspace(1)* %arrayidx2, align 4
-  %arrayidx4 = getelementptr inbounds i32 addrspace(1)* %out, i64 2
+  %arrayidx4 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 2
   store i32 2, i32 addrspace(1)* %arrayidx4, align 4
-  %arrayidx6 = getelementptr inbounds i32 addrspace(1)* %out, i64 3
+  %arrayidx6 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 3
   store i32 2, i32 addrspace(1)* %arrayidx6, align 4
   ret void
 }

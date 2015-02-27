@@ -44,7 +44,7 @@ cond.true43:                                      ; preds = %for.body14
   unreachable
 
 cond.false45:                                     ; preds = %for.body14
-  %add.ptr = getelementptr inbounds i8* %path, i64 %conv30
+  %add.ptr = getelementptr inbounds i8, i8* %path, i64 %conv30
   unreachable
 
 if.end56:                                         ; preds = %for.cond10, %entry

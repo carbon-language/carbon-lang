@@ -5,17 +5,17 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 define void @f1(<4 x i32>* nocapture %a, <4 x i32>* nocapture readonly %b, <4 x i32>* nocapture readonly %c) #0 {
 ; CHECK: @f1(
 ; CHECK: %a.i0 = bitcast <4 x i32>* %a to i32*
-; CHECK: %a.i1 = getelementptr i32* %a.i0, i32 1
-; CHECK: %a.i2 = getelementptr i32* %a.i0, i32 2
-; CHECK: %a.i3 = getelementptr i32* %a.i0, i32 3
+; CHECK: %a.i1 = getelementptr i32, i32* %a.i0, i32 1
+; CHECK: %a.i2 = getelementptr i32, i32* %a.i0, i32 2
+; CHECK: %a.i3 = getelementptr i32, i32* %a.i0, i32 3
 ; CHECK: %c.i0 = bitcast <4 x i32>* %c to i32*
-; CHECK: %c.i1 = getelementptr i32* %c.i0, i32 1
-; CHECK: %c.i2 = getelementptr i32* %c.i0, i32 2
-; CHECK: %c.i3 = getelementptr i32* %c.i0, i32 3
+; CHECK: %c.i1 = getelementptr i32, i32* %c.i0, i32 1
+; CHECK: %c.i2 = getelementptr i32, i32* %c.i0, i32 2
+; CHECK: %c.i3 = getelementptr i32, i32* %c.i0, i32 3
 ; CHECK: %b.i0 = bitcast <4 x i32>* %b to i32*
-; CHECK: %b.i1 = getelementptr i32* %b.i0, i32 1
-; CHECK: %b.i2 = getelementptr i32* %b.i0, i32 2
-; CHECK: %b.i3 = getelementptr i32* %b.i0, i32 3
+; CHECK: %b.i1 = getelementptr i32, i32* %b.i0, i32 1
+; CHECK: %b.i2 = getelementptr i32, i32* %b.i0, i32 2
+; CHECK: %b.i3 = getelementptr i32, i32* %b.i0, i32 3
 ; CHECK: tail call void @llvm.dbg.value(metadata <4 x i32>* %a, i64 0, metadata !{{[0-9]+}}, metadata {{.*}}), !dbg !{{[0-9]+}}
 ; CHECK: tail call void @llvm.dbg.value(metadata <4 x i32>* %b, i64 0, metadata !{{[0-9]+}}, metadata {{.*}}), !dbg !{{[0-9]+}}
 ; CHECK: tail call void @llvm.dbg.value(metadata <4 x i32>* %c, i64 0, metadata !{{[0-9]+}}, metadata {{.*}}), !dbg !{{[0-9]+}}

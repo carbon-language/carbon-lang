@@ -92,7 +92,7 @@ loop.begin:
 loop:
 ; CHECK: loop
   %.sum = add i64 %i.01, -2
-  %v = getelementptr inbounds i8* null, i64 %.sum
+  %v = getelementptr inbounds i8, i8* null, i64 %.sum
   %r = tail call i32 @check(i8* %v)
   %c = icmp eq i32 %r, 0
   br i1 %c, label %loop.end, label %abort.now

@@ -17,9 +17,9 @@ entry:
 
 "<bb 3>":
   %i_15 = phi i32 [ 0, %entry ], [ %i_19, %"<bb 3>" ]
-  %pp3 = getelementptr float* %A, i32 %i_15
+  %pp3 = getelementptr float, float* %A, i32 %i_15
   %D.1396_10 = load float* %pp3, align 4
-  %pp24 = getelementptr float* %B, i32 %i_15
+  %pp24 = getelementptr float, float* %B, i32 %i_15
   %D.1398_15 = load float* %pp24, align 4
   %D.1399_17 = fadd float %D.1398_15, %K
   %D.1400_18 = fmul float %D.1396_10, %D.1399_17
@@ -43,9 +43,9 @@ entry:
 
 "<bb 3>":
   %i_15 = phi i32 [ 0, %entry ], [ %i_19, %"<bb 3>" ]
-  %pp3 = getelementptr float addrspace(5) * %A, i32 %i_15
+  %pp3 = getelementptr float, float addrspace(5) * %A, i32 %i_15
   %D.1396_10 = load float addrspace(5) * %pp3, align 4
-  %pp24 = getelementptr float* %B, i32 %i_15
+  %pp24 = getelementptr float, float* %B, i32 %i_15
   %D.1398_15 = load float* %pp24, align 4
   %D.1399_17 = fadd float %D.1398_15, %K
   %D.1400_18 = fmul float %D.1396_10, %D.1399_17

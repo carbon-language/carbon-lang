@@ -34,7 +34,7 @@ define i64 @f3(i64 %easy, i64 *%base, i64 %limit) {
 ; CHECK: clgfi %r4, 42
 ; CHECK: locghe %r2, 524280(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%base, i64 65535
+  %ptr = getelementptr i64, i64 *%base, i64 65535
   %cond = icmp ult i64 %limit, 42
   %other = load i64 *%ptr
   %res = select i1 %cond, i64 %easy, i64 %other
@@ -48,7 +48,7 @@ define i64 @f4(i64 %easy, i64 *%base, i64 %limit) {
 ; CHECK: clgfi %r4, 42
 ; CHECK: locghe %r2, 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%base, i64 65536
+  %ptr = getelementptr i64, i64 *%base, i64 65536
   %cond = icmp ult i64 %limit, 42
   %other = load i64 *%ptr
   %res = select i1 %cond, i64 %easy, i64 %other
@@ -61,7 +61,7 @@ define i64 @f5(i64 %easy, i64 *%base, i64 %limit) {
 ; CHECK: clgfi %r4, 42
 ; CHECK: locghe %r2, -524288(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%base, i64 -65536
+  %ptr = getelementptr i64, i64 *%base, i64 -65536
   %cond = icmp ult i64 %limit, 42
   %other = load i64 *%ptr
   %res = select i1 %cond, i64 %easy, i64 %other
@@ -75,7 +75,7 @@ define i64 @f6(i64 %easy, i64 *%base, i64 %limit) {
 ; CHECK: clgfi %r4, 42
 ; CHECK: locghe %r2, 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%base, i64 -65537
+  %ptr = getelementptr i64, i64 *%base, i64 -65537
   %cond = icmp ult i64 %limit, 42
   %other = load i64 *%ptr
   %res = select i1 %cond, i64 %easy, i64 %other

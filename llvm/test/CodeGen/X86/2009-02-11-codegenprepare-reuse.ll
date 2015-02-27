@@ -7,9 +7,9 @@ target triple = "i386-apple-darwin9.6"
 define i32 @alac_decode_frame() nounwind {
 entry:
 	%tmp2 = load i8** null		; <i8*> [#uses=2]
-	%tmp34 = getelementptr i8* %tmp2, i32 4		; <i8*> [#uses=2]
+	%tmp34 = getelementptr i8, i8* %tmp2, i32 4		; <i8*> [#uses=2]
 	%tmp5.i424 = bitcast i8* %tmp34 to i8**		; <i8**> [#uses=2]
-	%tmp15.i = getelementptr i8* %tmp2, i32 12		; <i8*> [#uses=1]
+	%tmp15.i = getelementptr i8, i8* %tmp2, i32 12		; <i8*> [#uses=1]
 	%0 = bitcast i8* %tmp15.i to i32*		; <i32*> [#uses=1]
 	br i1 false, label %if.then43, label %if.end47
 

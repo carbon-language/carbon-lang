@@ -15,7 +15,7 @@ target triple = "i386-unknown-freebsd10.0"
 ;   Inner recurrence:
 ; CHECK: %lsr.iv = phi i32
 ;   Outer step (relative to inner recurrence):
-; CHECK: %scevgep = getelementptr i1* %{{.*}}, i32 %lsr.iv
+; CHECK: %scevgep = getelementptr i1, i1* %{{.*}}, i32 %lsr.iv
 ;   Outer use:
 ; CHECK: %lsr.iv3 = phi [121 x i32]* [ %lsr.iv1, %for.body43.preheader ]
 define void @vb() nounwind {
@@ -32,7 +32,7 @@ for.body7:
 for.body43:
   %bf.459 = phi i32 [ %inc44, %for.body43 ], [ %t1, %for.body7 ]
   %inc44 = add nsw i32 %bf.459, 1
-  %arrayidx45 = getelementptr inbounds [121 x i32]* @b, i32 0, i32 %bf.459
+  %arrayidx45 = getelementptr inbounds [121 x i32], [121 x i32]* @b, i32 0, i32 %bf.459
   %t2 = load i32* %arrayidx45, align 4
   br label %for.body43
 }

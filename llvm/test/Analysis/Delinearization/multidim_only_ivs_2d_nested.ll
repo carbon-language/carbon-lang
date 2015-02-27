@@ -53,7 +53,7 @@ for.body9.lr.ph.us.us:                            ; preds = %for.cond7.preheader
 for.body9.us.us:                                  ; preds = %for.body9.us.us, %for.body9.lr.ph.us.us
   %j.021.us.us = phi i64 [ 0, %for.body9.lr.ph.us.us ], [ %inc.us.us, %for.body9.us.us ]
   %arrayidx.sum.us.us = add i64 %j.021.us.us, %0
-  %arrayidx10.us.us = getelementptr inbounds double* %vla.us, i64 %arrayidx.sum.us.us
+  %arrayidx10.us.us = getelementptr inbounds double, double* %vla.us, i64 %arrayidx.sum.us.us
   store double 1.000000e+00, double* %arrayidx10.us.us, align 8
   %inc.us.us = add nsw i64 %j.021.us.us, 1
   %exitcond50 = icmp eq i64 %inc.us.us, %indvars.iv48

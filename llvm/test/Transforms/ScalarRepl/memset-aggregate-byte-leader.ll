@@ -12,8 +12,8 @@ target triple = "powerpc-apple-darwin8.8.0"
 define i32 @test1(%struct.foo* %P) {
 entry:
 	%L = alloca %struct.foo, align 2		; <%struct.foo*> [#uses=1]
-	%L2 = getelementptr %struct.foo* %L, i32 0, i32 0		; <i8*> [#uses=2]
-	%tmp13 = getelementptr %struct.foo* %P, i32 0, i32 0		; <i8*> [#uses=1]
+	%L2 = getelementptr %struct.foo, %struct.foo* %L, i32 0, i32 0		; <i8*> [#uses=2]
+	%tmp13 = getelementptr %struct.foo, %struct.foo* %P, i32 0, i32 0		; <i8*> [#uses=1]
 	call void @llvm.memcpy.p0i8.p0i8.i32( i8* %L2, i8* %tmp13, i32 2, i32 1, i1 false)
 	%tmp5 = load i8* %L2		; <i8> [#uses=1]
 	%tmp56 = sext i8 %tmp5 to i32		; <i32> [#uses=1]

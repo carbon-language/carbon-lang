@@ -24,7 +24,7 @@ bb3:                                              ; preds = %bb2, %bb
 ; CHECK: bb10:
 ; CHECK-NEXT: %t7 = icmp eq i64 %t4, 0
 ; Host %t2 computation outside the loop.
-; CHECK-NEXT: [[SCEVGEP:%[^ ]+]] = getelementptr i8* undef, i64 %t4
+; CHECK-NEXT: [[SCEVGEP:%[^ ]+]] = getelementptr i8, i8* undef, i64 %t4
 ; CHECK-NEXT: br label %bb14
 bb10:                                             ; preds = %bb9
   %t7 = icmp eq i64 %t4, 0                    ; <i1> [#uses=1]
@@ -35,18 +35,18 @@ bb10:                                             ; preds = %bb9
 ; CHECK-NEXT: store i8 undef, i8* [[SCEVGEP]]
 ; CHECK-NEXT: %t6 = load float** undef
 ; Fold %t3's add within the address.
-; CHECK-NEXT: [[SCEVGEP1:%[^ ]+]] = getelementptr float* %t6, i64 4
+; CHECK-NEXT: [[SCEVGEP1:%[^ ]+]] = getelementptr float, float* %t6, i64 4
 ; CHECK-NEXT: [[SCEVGEP2:%[^ ]+]] = bitcast float* [[SCEVGEP1]] to i8*
 ; Use the induction variable (%t4) to access the right element
-; CHECK-NEXT: [[ADDRESS:%[^ ]+]] = getelementptr i8* [[SCEVGEP2]], i64 %t4
+; CHECK-NEXT: [[ADDRESS:%[^ ]+]] = getelementptr i8, i8* [[SCEVGEP2]], i64 %t4
 ; CHECK-NEXT: store i8 undef, i8* [[ADDRESS]]
 ; CHECK-NEXT: br label %bb14
 bb14:                                             ; preds = %bb14, %bb10
-  %t2 = getelementptr inbounds i8* undef, i64 %t4 ; <i8*> [#uses=1]
+  %t2 = getelementptr inbounds i8, i8* undef, i64 %t4 ; <i8*> [#uses=1]
   store i8 undef, i8* %t2
   %t6 = load float** undef
   %t8 = bitcast float* %t6 to i8*              ; <i8*> [#uses=1]
-  %t9 = getelementptr inbounds i8* %t8, i64 %t3 ; <i8*> [#uses=1]
+  %t9 = getelementptr inbounds i8, i8* %t8, i64 %t3 ; <i8*> [#uses=1]
   store i8 undef, i8* %t9
   br label %bb14
 }

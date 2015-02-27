@@ -23,7 +23,7 @@ define void @f3(i32 *%dst, i32 %val) {
 ; CHECK-LABEL: f3:
 ; CHECK: st %r3, 4092(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%dst, i64 1023
+  %ptr = getelementptr i32, i32 *%dst, i64 1023
   store i32 %val, i32 *%ptr
   ret void
 }
@@ -33,7 +33,7 @@ define void @f4(i32 *%dst, i32 %val) {
 ; CHECK-LABEL: f4:
 ; CHECK: sty %r3, 4096(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%dst, i64 1024
+  %ptr = getelementptr i32, i32 *%dst, i64 1024
   store i32 %val, i32 *%ptr
   ret void
 }
@@ -43,7 +43,7 @@ define void @f5(i32 *%dst, i32 %val) {
 ; CHECK-LABEL: f5:
 ; CHECK: sty %r3, 524284(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%dst, i64 131071
+  %ptr = getelementptr i32, i32 *%dst, i64 131071
   store i32 %val, i32 *%ptr
   ret void
 }
@@ -55,7 +55,7 @@ define void @f6(i32 *%dst, i32 %val) {
 ; CHECK: agfi %r2, 524288
 ; CHECK: st %r3, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%dst, i64 131072
+  %ptr = getelementptr i32, i32 *%dst, i64 131072
   store i32 %val, i32 *%ptr
   ret void
 }
@@ -65,7 +65,7 @@ define void @f7(i32 *%dst, i32 %val) {
 ; CHECK-LABEL: f7:
 ; CHECK: sty %r3, -4(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%dst, i64 -1
+  %ptr = getelementptr i32, i32 *%dst, i64 -1
   store i32 %val, i32 *%ptr
   ret void
 }
@@ -75,7 +75,7 @@ define void @f8(i32 *%dst, i32 %val) {
 ; CHECK-LABEL: f8:
 ; CHECK: sty %r3, -524288(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%dst, i64 -131072
+  %ptr = getelementptr i32, i32 *%dst, i64 -131072
   store i32 %val, i32 *%ptr
   ret void
 }
@@ -87,7 +87,7 @@ define void @f9(i32 *%dst, i32 %val) {
 ; CHECK: agfi %r2, -524292
 ; CHECK: st %r3, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%dst, i64 -131073
+  %ptr = getelementptr i32, i32 *%dst, i64 -131073
   store i32 %val, i32 *%ptr
   ret void
 }

@@ -3,7 +3,7 @@
 ; RUN: llc -march=r600 -mcpu=redwood < %s
 
 define void @srem_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
-  %den_ptr = getelementptr i32 addrspace(1)* %in, i32 1
+  %den_ptr = getelementptr i32, i32 addrspace(1)* %in, i32 1
   %num = load i32 addrspace(1) * %in
   %den = load i32 addrspace(1) * %den_ptr
   %result = srem i32 %num, %den
@@ -32,7 +32,7 @@ define void @srem_i32_7(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 }
 
 define void @srem_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
-  %den_ptr = getelementptr <2 x i32> addrspace(1)* %in, i32 1
+  %den_ptr = getelementptr <2 x i32>, <2 x i32> addrspace(1)* %in, i32 1
   %num = load <2 x i32> addrspace(1) * %in
   %den = load <2 x i32> addrspace(1) * %den_ptr
   %result = srem <2 x i32> %num, %den
@@ -48,7 +48,7 @@ define void @srem_v2i32_4(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* 
 }
 
 define void @srem_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
-  %den_ptr = getelementptr <4 x i32> addrspace(1)* %in, i32 1
+  %den_ptr = getelementptr <4 x i32>, <4 x i32> addrspace(1)* %in, i32 1
   %num = load <4 x i32> addrspace(1) * %in
   %den = load <4 x i32> addrspace(1) * %den_ptr
   %result = srem <4 x i32> %num, %den
@@ -64,7 +64,7 @@ define void @srem_v4i32_4(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* 
 }
 
 define void @srem_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
-  %den_ptr = getelementptr i64 addrspace(1)* %in, i64 1
+  %den_ptr = getelementptr i64, i64 addrspace(1)* %in, i64 1
   %num = load i64 addrspace(1) * %in
   %den = load i64 addrspace(1) * %den_ptr
   %result = srem i64 %num, %den
@@ -80,7 +80,7 @@ define void @srem_i64_4(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
 }
 
 define void @srem_v2i64(<2 x i64> addrspace(1)* %out, <2 x i64> addrspace(1)* %in) {
-  %den_ptr = getelementptr <2 x i64> addrspace(1)* %in, i64 1
+  %den_ptr = getelementptr <2 x i64>, <2 x i64> addrspace(1)* %in, i64 1
   %num = load <2 x i64> addrspace(1) * %in
   %den = load <2 x i64> addrspace(1) * %den_ptr
   %result = srem <2 x i64> %num, %den
@@ -96,7 +96,7 @@ define void @srem_v2i64_4(<2 x i64> addrspace(1)* %out, <2 x i64> addrspace(1)* 
 }
 
 define void @srem_v4i64(<4 x i64> addrspace(1)* %out, <4 x i64> addrspace(1)* %in) {
-  %den_ptr = getelementptr <4 x i64> addrspace(1)* %in, i64 1
+  %den_ptr = getelementptr <4 x i64>, <4 x i64> addrspace(1)* %in, i64 1
   %num = load <4 x i64> addrspace(1) * %in
   %den = load <4 x i64> addrspace(1) * %den_ptr
   %result = srem <4 x i64> %num, %den

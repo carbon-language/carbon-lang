@@ -45,7 +45,7 @@ define void @f3(double *%base, double %alt, i32 %limit) {
 ; CHECK: std %f0, 4088(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 511
+  %ptr = getelementptr double, double *%base, i64 511
   %cond = icmp ult i32 %limit, 420
   %orig = load double *%ptr
   %res = select i1 %cond, double %orig, double %alt
@@ -62,7 +62,7 @@ define void @f4(double *%base, double %alt, i32 %limit) {
 ; CHECK: stdy %f0, 4096(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 512
+  %ptr = getelementptr double, double *%base, i64 512
   %cond = icmp ult i32 %limit, 420
   %orig = load double *%ptr
   %res = select i1 %cond, double %orig, double %alt
@@ -79,7 +79,7 @@ define void @f5(double *%base, double %alt, i32 %limit) {
 ; CHECK: stdy %f0, 524280(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 65535
+  %ptr = getelementptr double, double *%base, i64 65535
   %cond = icmp ult i32 %limit, 420
   %orig = load double *%ptr
   %res = select i1 %cond, double %orig, double %alt
@@ -98,7 +98,7 @@ define void @f6(double *%base, double %alt, i32 %limit) {
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 65536
+  %ptr = getelementptr double, double *%base, i64 65536
   %cond = icmp ult i32 %limit, 420
   %orig = load double *%ptr
   %res = select i1 %cond, double %orig, double %alt
@@ -115,7 +115,7 @@ define void @f7(double *%base, double %alt, i32 %limit) {
 ; CHECK: stdy %f0, -524288(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 -65536
+  %ptr = getelementptr double, double *%base, i64 -65536
   %cond = icmp ult i32 %limit, 420
   %orig = load double *%ptr
   %res = select i1 %cond, double %orig, double %alt
@@ -134,7 +134,7 @@ define void @f8(double *%base, double %alt, i32 %limit) {
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 -65537
+  %ptr = getelementptr double, double *%base, i64 -65537
   %cond = icmp ult i32 %limit, 420
   %orig = load double *%ptr
   %res = select i1 %cond, double %orig, double %alt

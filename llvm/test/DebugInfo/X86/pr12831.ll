@@ -22,11 +22,11 @@ entry:
   store %class.BPLFunctionWriter* %this, %class.BPLFunctionWriter** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %class.BPLFunctionWriter** %this.addr, metadata !133, metadata !{!"0x102"}), !dbg !135
   %this1 = load %class.BPLFunctionWriter** %this.addr
-  %MW = getelementptr inbounds %class.BPLFunctionWriter* %this1, i32 0, i32 0, !dbg !136
+  %MW = getelementptr inbounds %class.BPLFunctionWriter, %class.BPLFunctionWriter* %this1, i32 0, i32 0, !dbg !136
   %0 = load %struct.BPLModuleWriter** %MW, align 8, !dbg !136
   call void @"_ZN8functionIFvvEEC1IZN17BPLFunctionWriter9writeExprEvE3$_0EET_"(%class.function* %agg.tmp), !dbg !136
   call void @_ZN15BPLModuleWriter14writeIntrinsicE8functionIFvvEE(%struct.BPLModuleWriter* %0), !dbg !136
-  %MW3 = getelementptr inbounds %class.BPLFunctionWriter* %this1, i32 0, i32 0, !dbg !138
+  %MW3 = getelementptr inbounds %class.BPLFunctionWriter, %class.BPLFunctionWriter* %this1, i32 0, i32 0, !dbg !138
   %1 = load %struct.BPLModuleWriter** %MW3, align 8, !dbg !138
   call void @"_ZN8functionIFvvEEC1IZN17BPLFunctionWriter9writeExprEvE3$_1_0EET_"(%class.function* %agg.tmp4), !dbg !138
   call void @_ZN15BPLModuleWriter14writeIntrinsicE8functionIFvvEE(%struct.BPLModuleWriter* %1), !dbg !138

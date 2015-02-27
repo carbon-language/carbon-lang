@@ -23,7 +23,7 @@ bb1084:		; preds = %cond_next416
 	br i1 false, label %cond_true1092, label %cond_next1102
 
 cond_true1092:		; preds = %bb1084
-	%tmp1094 = getelementptr %struct.rtx_def* %tmp1085, i32 0, i32 3		; <%struct.u*> [#uses=1]
+	%tmp1094 = getelementptr %struct.rtx_def, %struct.rtx_def* %tmp1085, i32 0, i32 3		; <%struct.u*> [#uses=1]
 	%tmp10981099 = bitcast %struct.u* %tmp1094 to %struct.rtx_def**		; <%struct.rtx_def**> [#uses=2]
 	%tmp1101 = load %struct.rtx_def** %tmp10981099		; <%struct.rtx_def*> [#uses=1]
 	store %struct.rtx_def* %tmp1101, %struct.rtx_def** %ad_addr

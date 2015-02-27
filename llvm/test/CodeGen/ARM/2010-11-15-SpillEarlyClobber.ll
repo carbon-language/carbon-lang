@@ -34,11 +34,11 @@ bb28.i:                                           ; preds = %bb28.i, %bb27.i
 
 presymmetry.exit:                                 ; preds = %bb28.i
   %tmp175387 = or i32 undef, 12
-  %scevgep101.i = getelementptr i32* %in, i32 undef
+  %scevgep101.i = getelementptr i32, i32* %in, i32 undef
   %tmp189401 = or i32 undef, 7
-  %scevgep97.i = getelementptr i32* %in, i32 undef
+  %scevgep97.i = getelementptr i32, i32* %in, i32 undef
   %tmp198410 = or i32 undef, 1
-  %scevgep.i48 = getelementptr i32* %in, i32 undef
+  %scevgep.i48 = getelementptr i32, i32* %in, i32 undef
   %0 = load i32* %scevgep.i48, align 4
   %1 = add nsw i32 %0, 0
   store i32 %1, i32* undef, align 4

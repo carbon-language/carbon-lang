@@ -12,12 +12,12 @@ entry:
 	%iospec = alloca %struct.Key		; <%struct.Key*> [#uses=3]
 	%ret = alloca i32		; <i32*> [#uses=2]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
-	%0 = getelementptr %struct.Key* %iospec, i32 0, i32 0		; <{ i32, i32 }*> [#uses=2]
-	%1 = getelementptr { i32, i32 }* %0, i32 0, i32 0		; <i32*> [#uses=1]
+	%0 = getelementptr %struct.Key, %struct.Key* %iospec, i32 0, i32 0		; <{ i32, i32 }*> [#uses=2]
+	%1 = getelementptr { i32, i32 }, { i32, i32 }* %0, i32 0, i32 0		; <i32*> [#uses=1]
 	store i32 0, i32* %1, align 4
-	%2 = getelementptr { i32, i32 }* %0, i32 0, i32 1		; <i32*> [#uses=1]
+	%2 = getelementptr { i32, i32 }, { i32, i32 }* %0, i32 0, i32 1		; <i32*> [#uses=1]
 	store i32 0, i32* %2, align 4
-	%3 = getelementptr %struct.Key* %iospec, i32 0, i32 0		; <{ i32, i32 }*> [#uses=1]
+	%3 = getelementptr %struct.Key, %struct.Key* %iospec, i32 0, i32 0		; <{ i32, i32 }*> [#uses=1]
 	%4 = bitcast { i32, i32 }* %3 to i64*		; <i64*> [#uses=1]
 	store i64 %key_token2, i64* %4, align 4
 	%5 = call i32 (...)* @foo(%struct.Key* byval align 4 %iospec, i32* %ret) nounwind		; <i32> [#uses=0]

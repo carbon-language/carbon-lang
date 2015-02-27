@@ -23,7 +23,7 @@ bb94:		; preds = %bb79
 bb103:		; preds = %bb79
 	ret i32 0
 bb130.preheader:		; preds = %bb94
-	%tmp134 = getelementptr %struct.cpp_string* %from, i32 0, i32 1		; <i8**> [#uses=0]
+	%tmp134 = getelementptr %struct.cpp_string, %struct.cpp_string* %from, i32 0, i32 1		; <i8**> [#uses=0]
 	ret i32 0
 bb729:		; preds = %bb94
 	call fastcc void @emit_numeric_escape( i32 %pfile, i32 0, %struct._cpp_strbuf* null, i32 %wide ) nounwind 

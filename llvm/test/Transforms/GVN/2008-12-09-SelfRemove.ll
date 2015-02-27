@@ -10,12 +10,12 @@ target triple = "i386-apple-darwin9.5"
 
 define void @d_print_mod_list(%struct.d_print_info* %dpi, %struct.d_print_mod* %mods, i32 %suffix) nounwind {
 entry:
-	%0 = getelementptr %struct.d_print_info* %dpi, i32 0, i32 1		; <i8**> [#uses=1]
+	%0 = getelementptr %struct.d_print_info, %struct.d_print_info* %dpi, i32 0, i32 1		; <i8**> [#uses=1]
 	br i1 false, label %return, label %bb
 
 bb:		; preds = %entry
 	%1 = load i8** %0, align 4		; <i8*> [#uses=0]
-	%2 = getelementptr %struct.d_print_info* %dpi, i32 0, i32 1		; <i8**> [#uses=0]
+	%2 = getelementptr %struct.d_print_info, %struct.d_print_info* %dpi, i32 0, i32 1		; <i8**> [#uses=0]
 	br label %bb21
 
 bb21:		; preds = %bb21, %bb

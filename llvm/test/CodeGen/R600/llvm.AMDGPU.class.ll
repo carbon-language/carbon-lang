@@ -134,8 +134,8 @@ define void @test_class_9bit_mask_f32(i32 addrspace(1)* %out, float %a) #0 {
 ; SI: s_endpgm
 define void @v_test_class_full_mask_f32(i32 addrspace(1)* %out, float addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.in = getelementptr float addrspace(1)* %in, i32 %tid
-  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep.in = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %a = load float addrspace(1)* %gep.in
 
   %result = call i1 @llvm.AMDGPU.class.f32(float %a, i32 511) #1
@@ -152,8 +152,8 @@ define void @v_test_class_full_mask_f32(i32 addrspace(1)* %out, float addrspace(
 ; SI: s_endpgm
 define void @test_class_inline_imm_constant_dynamic_mask_f32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.in = getelementptr i32 addrspace(1)* %in, i32 %tid
-  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep.in = getelementptr i32, i32 addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %b = load i32 addrspace(1)* %gep.in
 
   %result = call i1 @llvm.AMDGPU.class.f32(float 1.0, i32 %b) #1
@@ -172,8 +172,8 @@ define void @test_class_inline_imm_constant_dynamic_mask_f32(i32 addrspace(1)* %
 ; SI: s_endpgm
 define void @test_class_lit_constant_dynamic_mask_f32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.in = getelementptr i32 addrspace(1)* %in, i32 %tid
-  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep.in = getelementptr i32, i32 addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %b = load i32 addrspace(1)* %gep.in
 
   %result = call i1 @llvm.AMDGPU.class.f32(float 1024.0, i32 %b) #1
@@ -290,8 +290,8 @@ define void @test_class_full_mask_f64(i32 addrspace(1)* %out, double %a) #0 {
 ; SI: s_endpgm
 define void @v_test_class_full_mask_f64(i32 addrspace(1)* %out, double addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.in = getelementptr double addrspace(1)* %in, i32 %tid
-  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep.in = getelementptr double, double addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %a = load double addrspace(1)* %in
 
   %result = call i1 @llvm.AMDGPU.class.f64(double %a, i32 511) #1
@@ -306,8 +306,8 @@ define void @v_test_class_full_mask_f64(i32 addrspace(1)* %out, double addrspace
 ; SI: s_endpgm
 define void @test_class_inline_imm_constant_dynamic_mask_f64(i32 addrspace(1)* %out, i32 addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.in = getelementptr i32 addrspace(1)* %in, i32 %tid
-  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep.in = getelementptr i32, i32 addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %b = load i32 addrspace(1)* %gep.in
 
   %result = call i1 @llvm.AMDGPU.class.f64(double 1.0, i32 %b) #1
@@ -321,8 +321,8 @@ define void @test_class_inline_imm_constant_dynamic_mask_f64(i32 addrspace(1)* %
 ; SI: s_endpgm
 define void @test_class_lit_constant_dynamic_mask_f64(i32 addrspace(1)* %out, i32 addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.in = getelementptr i32 addrspace(1)* %in, i32 %tid
-  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep.in = getelementptr i32, i32 addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %b = load i32 addrspace(1)* %gep.in
 
   %result = call i1 @llvm.AMDGPU.class.f64(double 1024.0, i32 %b) #1
@@ -338,8 +338,8 @@ define void @test_class_lit_constant_dynamic_mask_f64(i32 addrspace(1)* %out, i3
 ; SI: s_endpgm
 define void @test_fold_or_class_f32_0(i32 addrspace(1)* %out, float addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.in = getelementptr float addrspace(1)* %in, i32 %tid
-  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep.in = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %a = load float addrspace(1)* %gep.in
 
   %class0 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 1) #1
@@ -358,8 +358,8 @@ define void @test_fold_or_class_f32_0(i32 addrspace(1)* %out, float addrspace(1)
 ; SI: s_endpgm
 define void @test_fold_or3_class_f32_0(i32 addrspace(1)* %out, float addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.in = getelementptr float addrspace(1)* %in, i32 %tid
-  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep.in = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %a = load float addrspace(1)* %gep.in
 
   %class0 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 1) #1
@@ -381,8 +381,8 @@ define void @test_fold_or3_class_f32_0(i32 addrspace(1)* %out, float addrspace(1
 ; SI: s_endpgm
 define void @test_fold_or_all_tests_class_f32_0(i32 addrspace(1)* %out, float addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.in = getelementptr float addrspace(1)* %in, i32 %tid
-  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep.in = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %a = load float addrspace(1)* %gep.in
 
   %class0 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 1) #1
@@ -416,8 +416,8 @@ define void @test_fold_or_all_tests_class_f32_0(i32 addrspace(1)* %out, float ad
 ; SI: s_endpgm
 define void @test_fold_or_class_f32_1(i32 addrspace(1)* %out, float addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.in = getelementptr float addrspace(1)* %in, i32 %tid
-  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep.in = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %a = load float addrspace(1)* %gep.in
 
   %class0 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 4) #1
@@ -436,8 +436,8 @@ define void @test_fold_or_class_f32_1(i32 addrspace(1)* %out, float addrspace(1)
 ; SI: s_endpgm
 define void @test_fold_or_class_f32_2(i32 addrspace(1)* %out, float addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.in = getelementptr float addrspace(1)* %in, i32 %tid
-  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep.in = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %a = load float addrspace(1)* %gep.in
 
   %class0 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 7) #1
@@ -456,8 +456,8 @@ define void @test_fold_or_class_f32_2(i32 addrspace(1)* %out, float addrspace(1)
 ; SI: s_endpgm
 define void @test_no_fold_or_class_f32_0(i32 addrspace(1)* %out, float addrspace(1)* %in, float %b) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.in = getelementptr float addrspace(1)* %in, i32 %tid
-  %gep.out = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep.in = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %gep.out = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %a = load float addrspace(1)* %gep.in
 
   %class0 = call i1 @llvm.AMDGPU.class.f32(float %a, i32 4) #1

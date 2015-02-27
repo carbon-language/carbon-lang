@@ -31,7 +31,7 @@ entry:
 	%11 = load volatile i32* @g9, align 4		; <i32> [#uses=1]
 	%12 = load volatile i32* @g10, align 4		; <i32> [#uses=1]
 	%13 = load volatile i32* @g11, align 4		; <i32> [#uses=2]
-	%14 = getelementptr [100 x i32]* %x, i32 0, i32 50		; <i32*> [#uses=1]
+	%14 = getelementptr [100 x i32], [100 x i32]* %x, i32 0, i32 50		; <i32*> [#uses=1]
 	store i32 %13, i32* %14, align 4
 	store volatile i32 %13, i32* @g11, align 4
 	store volatile i32 %12, i32* @g10, align 4
@@ -45,7 +45,7 @@ entry:
 	store volatile i32 %4, i32* @g2, align 4
 	store volatile i32 %3, i32* @g1, align 4
 	store volatile i32 %2, i32* @g0, align 4
-	%x1 = getelementptr [100 x i32]* %x, i32 0, i32 0		; <i32*> [#uses=1]
+	%x1 = getelementptr [100 x i32], [100 x i32]* %x, i32 0, i32 0		; <i32*> [#uses=1]
 	call void @g(i32* %x1, i32* %1) nounwind
 	ret void
 }
@@ -103,15 +103,15 @@ declare void @g(i32*, i32*)
 define void @ScavengeSlots(i32 %r0, i32 %r1, i32 %r2, i32 %r3, i32 %r4) nounwind {
 entry:
   %Data = alloca [100000 x i32]
-  %i0 = getelementptr inbounds [100000 x i32]* %Data, i32 0, i32 80000
+  %i0 = getelementptr inbounds [100000 x i32], [100000 x i32]* %Data, i32 0, i32 80000
   store volatile i32 %r0, i32* %i0
-  %i1 = getelementptr inbounds [100000 x i32]* %Data, i32 0, i32 81000
+  %i1 = getelementptr inbounds [100000 x i32], [100000 x i32]* %Data, i32 0, i32 81000
   store volatile i32 %r1, i32* %i1
-  %i2 = getelementptr inbounds [100000 x i32]* %Data, i32 0, i32 82000
+  %i2 = getelementptr inbounds [100000 x i32], [100000 x i32]* %Data, i32 0, i32 82000
   store volatile i32 %r2, i32* %i2
-  %i3 = getelementptr inbounds [100000 x i32]* %Data, i32 0, i32 83000
+  %i3 = getelementptr inbounds [100000 x i32], [100000 x i32]* %Data, i32 0, i32 83000
   store volatile i32 %r3, i32* %i3
-  %i4 = getelementptr inbounds [100000 x i32]* %Data, i32 0, i32 84000
+  %i4 = getelementptr inbounds [100000 x i32], [100000 x i32]* %Data, i32 0, i32 84000
   store volatile i32 %r4, i32* %i4
   ret void
 }

@@ -29,7 +29,7 @@ entry:
 			to label %bb30.preheader unwind label %unwind
 
 bb30.preheader:		; preds = %entry
-	%tmp26 = getelementptr %struct.Range* %effectiveRange, i64 0, i32 1		; <i64*> [#uses=1]
+	%tmp26 = getelementptr %struct.Range, %struct.Range* %effectiveRange, i64 0, i32 1		; <i64*> [#uses=1]
 	br label %bb30
 
 unwind:		; preds = %cond_true, %entry

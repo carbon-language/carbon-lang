@@ -10,7 +10,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %i.06 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %x.05 = phi i64 [ 0, %entry ], [ %conv1, %for.body ]
-  %arrayidx = getelementptr inbounds double* %n, i32 %i.06
+  %arrayidx = getelementptr inbounds double, double* %n, i32 %i.06
   %0 = load double* %arrayidx, align 8
   %conv = sitofp i64 %x.05 to double
   %add = fadd double %conv, %0
@@ -39,11 +39,11 @@ entry:
 
 vector.body.i:                                    ; preds = %vector.body.i, %entry
   %index.i = phi i32 [ 0, %entry ], [ %index.next.i, %vector.body.i ]
-  %next.gep.i = getelementptr [8000 x i64]* @data64, i32 0, i32 %index.i
+  %next.gep.i = getelementptr [8000 x i64], [8000 x i64]* @data64, i32 0, i32 %index.i
   %1 = bitcast i64* %next.gep.i to <2 x i64>*
   store <2 x i64> %broadcast.splat.i, <2 x i64>* %1, align 8
   %next.gep.sum24.i = or i32 %index.i, 2
-  %2 = getelementptr [8000 x i64]* @data64, i32 0, i32 %next.gep.sum24.i
+  %2 = getelementptr [8000 x i64], [8000 x i64]* @data64, i32 0, i32 %next.gep.sum24.i
   %3 = bitcast i64* %2 to <2 x i64>*
   store <2 x i64> %broadcast.splat.i, <2 x i64>* %3, align 8
   %index.next.i = add i32 %index.i, 4

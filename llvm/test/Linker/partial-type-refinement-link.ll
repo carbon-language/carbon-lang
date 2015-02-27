@@ -15,6 +15,6 @@
 
 define void @f(%"SmallVImpl<const PI*>"* %this) {
 entry:
-  %x = getelementptr inbounds %"SmallVImpl<const PI*>"* %this, i64 0, i32 1
+  %x = getelementptr inbounds %"SmallVImpl<const PI*>", %"SmallVImpl<const PI*>"* %this, i64 0, i32 1
   ret void
 }

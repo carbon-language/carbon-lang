@@ -29,7 +29,7 @@ land.lhs.true.i:                                  ; preds = %_ZN12StringSwitchI5
   %retval.0.i.pre161 = phi i32 [ undef, %bb.nph ], [ %retval.0.i.pre, %_ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit134 ] ; <i32> [#uses=3]
   %indvar = phi i64 [ 0, %bb.nph ], [ %tmp146, %_ZN12StringSwitchI5ColorE4CaseILj7EEERS1_RAT__KcRKS0_.exit134 ] ; <i64> [#uses=1]
   %tmp146 = add i64 %indvar, 1                    ; <i64> [#uses=3]
-  %arrayidx = getelementptr i8** %argv, i64 %tmp146 ; <i8**> [#uses=1]
+  %arrayidx = getelementptr i8*, i8** %argv, i64 %tmp146 ; <i8**> [#uses=1]
   %tmp6 = load i8** %arrayidx, align 8            ; <i8*> [#uses=8]
   %call.i.i = call i64 @strlen(i8* %tmp6) nounwind ; <i64> [#uses=1]
   %conv.i.i = trunc i64 %call.i.i to i32          ; <i32> [#uses=6]\

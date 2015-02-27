@@ -39,7 +39,7 @@ if.then.i:                                        ; preds = %for.body3.i
 
 for.inc8.i:                                       ; preds = %if.then.i, %for.body3.i
   %lftr.wideiv.i = trunc i64 %indvars.iv.i to i32
-  %arrayidx4.phi.trans.insert.i = getelementptr inbounds [0 x i32*]* undef, i64 0, i64 %indvars.iv.i
+  %arrayidx4.phi.trans.insert.i = getelementptr inbounds [0 x i32*], [0 x i32*]* undef, i64 0, i64 %indvars.iv.i
   %.pre.i = load i32** %arrayidx4.phi.trans.insert.i, align 8
   %phitmp.i = add i64 %indvars.iv.i, 1
   br label %for.body3.i

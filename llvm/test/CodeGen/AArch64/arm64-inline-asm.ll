@@ -136,7 +136,7 @@ entry:
   ; CHECK-LABEL: t10:
   %data = alloca <2 x float>, align 8
   %a = alloca [2 x float], align 4
-  %arraydecay = getelementptr inbounds [2 x float]* %a, i32 0, i32 0
+  %arraydecay = getelementptr inbounds [2 x float], [2 x float]* %a, i32 0, i32 0
   %0 = load <2 x float>* %data, align 8
   call void asm sideeffect "ldr ${1:q}, [$0]\0A", "r,w"(float* %arraydecay, <2 x float> %0) nounwind
   ; CHECK: ldr {{q[0-9]+}}, [{{x[0-9]+}}]

@@ -28,7 +28,7 @@ define i64 @f3(i64 %a, i64 *%src) {
 ; CHECK-LABEL: f3:
 ; CHECK: msg %r2, 524280(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 65535
+  %ptr = getelementptr i64, i64 *%src, i64 65535
   %b = load i64 *%ptr
   %mul = mul i64 %a, %b
   ret i64 %mul
@@ -41,7 +41,7 @@ define i64 @f4(i64 %a, i64 *%src) {
 ; CHECK: agfi %r3, 524288
 ; CHECK: msg %r2, 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 65536
+  %ptr = getelementptr i64, i64 *%src, i64 65536
   %b = load i64 *%ptr
   %mul = mul i64 %a, %b
   ret i64 %mul
@@ -52,7 +52,7 @@ define i64 @f5(i64 %a, i64 *%src) {
 ; CHECK-LABEL: f5:
 ; CHECK: msg %r2, -8(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -1
+  %ptr = getelementptr i64, i64 *%src, i64 -1
   %b = load i64 *%ptr
   %mul = mul i64 %a, %b
   ret i64 %mul
@@ -63,7 +63,7 @@ define i64 @f6(i64 %a, i64 *%src) {
 ; CHECK-LABEL: f6:
 ; CHECK: msg %r2, -524288(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -65536
+  %ptr = getelementptr i64, i64 *%src, i64 -65536
   %b = load i64 *%ptr
   %mul = mul i64 %a, %b
   ret i64 %mul
@@ -76,7 +76,7 @@ define i64 @f7(i64 %a, i64 *%src) {
 ; CHECK: agfi %r3, -524296
 ; CHECK: msg %r2, 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -65537
+  %ptr = getelementptr i64, i64 *%src, i64 -65537
   %b = load i64 *%ptr
   %mul = mul i64 %a, %b
   ret i64 %mul
@@ -101,15 +101,15 @@ define i64 @f9(i64 *%ptr0) {
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: msg %r2, 160(%r15)
 ; CHECK: br %r14
-  %ptr1 = getelementptr i64 *%ptr0, i64 2
-  %ptr2 = getelementptr i64 *%ptr0, i64 4
-  %ptr3 = getelementptr i64 *%ptr0, i64 6
-  %ptr4 = getelementptr i64 *%ptr0, i64 8
-  %ptr5 = getelementptr i64 *%ptr0, i64 10
-  %ptr6 = getelementptr i64 *%ptr0, i64 12
-  %ptr7 = getelementptr i64 *%ptr0, i64 14
-  %ptr8 = getelementptr i64 *%ptr0, i64 16
-  %ptr9 = getelementptr i64 *%ptr0, i64 18
+  %ptr1 = getelementptr i64, i64 *%ptr0, i64 2
+  %ptr2 = getelementptr i64, i64 *%ptr0, i64 4
+  %ptr3 = getelementptr i64, i64 *%ptr0, i64 6
+  %ptr4 = getelementptr i64, i64 *%ptr0, i64 8
+  %ptr5 = getelementptr i64, i64 *%ptr0, i64 10
+  %ptr6 = getelementptr i64, i64 *%ptr0, i64 12
+  %ptr7 = getelementptr i64, i64 *%ptr0, i64 14
+  %ptr8 = getelementptr i64, i64 *%ptr0, i64 16
+  %ptr9 = getelementptr i64, i64 *%ptr0, i64 18
 
   %val0 = load i64 *%ptr0
   %val1 = load i64 *%ptr1

@@ -150,7 +150,7 @@ define double @f10(i8 *%src, double %a, double %b) {
 ; CHECK: tm 4095(%r2), 1
 ; CHECK: je {{\.L.*}}
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 4095
+  %ptr = getelementptr i8, i8 *%src, i64 4095
   %byte = load i8 *%ptr
   %and = and i8 %byte, 1
   %cmp = icmp eq i8 %and, 0
@@ -164,7 +164,7 @@ define double @f11(i8 *%src, double %a, double %b) {
 ; CHECK: tmy 4096(%r2), 1
 ; CHECK: je {{\.L.*}}
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 4096
+  %ptr = getelementptr i8, i8 *%src, i64 4096
   %byte = load i8 *%ptr
   %and = and i8 %byte, 1
   %cmp = icmp eq i8 %and, 0
@@ -178,7 +178,7 @@ define double @f12(i8 *%src, double %a, double %b) {
 ; CHECK: tmy 524287(%r2), 1
 ; CHECK: je {{\.L.*}}
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 524287
+  %ptr = getelementptr i8, i8 *%src, i64 524287
   %byte = load i8 *%ptr
   %and = and i8 %byte, 1
   %cmp = icmp eq i8 %and, 0
@@ -193,7 +193,7 @@ define double @f13(i8 *%src, double %a, double %b) {
 ; CHECK: tm 0(%r2), 1
 ; CHECK: je {{\.L.*}}
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 524288
+  %ptr = getelementptr i8, i8 *%src, i64 524288
   %byte = load i8 *%ptr
   %and = and i8 %byte, 1
   %cmp = icmp eq i8 %and, 0
@@ -207,7 +207,7 @@ define double @f14(i8 *%src, double %a, double %b) {
 ; CHECK: tmy -524288(%r2), 1
 ; CHECK: je {{\.L.*}}
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 -524288
+  %ptr = getelementptr i8, i8 *%src, i64 -524288
   %byte = load i8 *%ptr
   %and = and i8 %byte, 1
   %cmp = icmp eq i8 %and, 0
@@ -222,7 +222,7 @@ define double @f15(i8 *%src, double %a, double %b) {
 ; CHECK: tm 0(%r2), 1
 ; CHECK: je {{\.L.*}}
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 -524289
+  %ptr = getelementptr i8, i8 *%src, i64 -524289
   %byte = load i8 *%ptr
   %and = and i8 %byte, 1
   %cmp = icmp eq i8 %and, 0
@@ -236,7 +236,7 @@ define double @f16(i8 *%src, i64 %index, double %a, double %b) {
 ; CHECK: tm 0({{%r[1-5]}}), 1
 ; CHECK: je {{\.L.*}}
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 %index
+  %ptr = getelementptr i8, i8 *%src, i64 %index
   %byte = load i8 *%ptr
   %and = and i8 %byte, 1
   %cmp = icmp eq i8 %and, 0

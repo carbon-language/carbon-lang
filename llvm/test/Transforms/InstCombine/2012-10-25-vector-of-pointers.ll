@@ -9,7 +9,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 define void @widget(%struct.hoge* nocapture %arg) nounwind uwtable ssp {
 bb:
-  %tmp = getelementptr inbounds %struct.hoge* %arg, i64 0, i32 0
+  %tmp = getelementptr inbounds %struct.hoge, %struct.hoge* %arg, i64 0, i32 0
   br i1 undef, label %bb1, label %bb17
 
 bb1:                                              ; preds = %bb

@@ -19,7 +19,7 @@ define i64 @f2(i64 *%src) {
 ; CHECK-LABEL: f2:
 ; CHECK: lrvg %r2, 524280(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 65535
+  %ptr = getelementptr i64, i64 *%src, i64 65535
   %a = load i64 *%ptr
   %swapped = call i64 @llvm.bswap.i64(i64 %a)
   ret i64 %swapped
@@ -32,7 +32,7 @@ define i64 @f3(i64 *%src) {
 ; CHECK: agfi %r2, 524288
 ; CHECK: lrvg %r2, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 65536
+  %ptr = getelementptr i64, i64 *%src, i64 65536
   %a = load i64 *%ptr
   %swapped = call i64 @llvm.bswap.i64(i64 %a)
   ret i64 %swapped
@@ -43,7 +43,7 @@ define i64 @f4(i64 *%src) {
 ; CHECK-LABEL: f4:
 ; CHECK: lrvg %r2, -8(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -1
+  %ptr = getelementptr i64, i64 *%src, i64 -1
   %a = load i64 *%ptr
   %swapped = call i64 @llvm.bswap.i64(i64 %a)
   ret i64 %swapped
@@ -54,7 +54,7 @@ define i64 @f5(i64 *%src) {
 ; CHECK-LABEL: f5:
 ; CHECK: lrvg %r2, -524288(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -65536
+  %ptr = getelementptr i64, i64 *%src, i64 -65536
   %a = load i64 *%ptr
   %swapped = call i64 @llvm.bswap.i64(i64 %a)
   ret i64 %swapped
@@ -67,7 +67,7 @@ define i64 @f6(i64 *%src) {
 ; CHECK: agfi %r2, -524296
 ; CHECK: lrvg %r2, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -65537
+  %ptr = getelementptr i64, i64 *%src, i64 -65537
   %a = load i64 *%ptr
   %swapped = call i64 @llvm.bswap.i64(i64 %a)
   ret i64 %swapped

@@ -14,8 +14,8 @@ inbounds ([0 x %struct.AVCodecTag]* @ff_codec_bmp_tags, i32 0, i32 0)]
 define void @Parse_Camera(%struct.CAMERA** nocapture %Camera_Ptr) nounwind {
 entry:
 %.pre = load %struct.CAMERA** %Camera_Ptr, align 4
-%0 = getelementptr inbounds %struct.CAMERA* %.pre, i32 0, i32 1, i32 0
-%1 = getelementptr inbounds %struct.CAMERA* %.pre, i32 0, i32 1, i32 2
+%0 = getelementptr inbounds %struct.CAMERA, %struct.CAMERA* %.pre, i32 0, i32 1, i32 0
+%1 = getelementptr inbounds %struct.CAMERA, %struct.CAMERA* %.pre, i32 0, i32 1, i32 2
 br label %bb32
 
 bb32:                                             ; preds = %bb6
@@ -50,14 +50,14 @@ for.body.i:                                       ; preds = %for.body.i, %entry
   br i1 undef, label %func_74.exit.for.cond29.thread_crit_edge, label %for.body.i
 
 func_74.exit.for.cond29.thread_crit_edge:         ; preds = %for.body.i
-  %f13576.pre = getelementptr inbounds %struct.S0* undef, i64 0, i32 1
+  %f13576.pre = getelementptr inbounds %struct.S0, %struct.S0* undef, i64 0, i32 1
   store i8 0, i8* %f13576.pre, align 4
   br label %lbl_468
 
 lbl_468:                                          ; preds = %lbl_468, %func_74.exit.for.cond29.thread_crit_edge
   %f13577.ph = phi i8* [ %f13576.pre, %func_74.exit.for.cond29.thread_crit_edge ], [ %f135.pre, %lbl_468 ]
   store i8 1, i8* %f13577.ph, align 1
-  %f135.pre = getelementptr inbounds %struct.S0* undef, i64 0, i32 1
+  %f135.pre = getelementptr inbounds %struct.S0, %struct.S0* undef, i64 0, i32 1
   br i1 undef, label %lbl_468, label %for.end74
 
 for.end74:                                        ; preds = %lbl_468

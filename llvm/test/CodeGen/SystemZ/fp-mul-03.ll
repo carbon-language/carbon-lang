@@ -28,7 +28,7 @@ define double @f3(double %f1, double *%base) {
 ; CHECK-LABEL: f3:
 ; CHECK: mdb %f0, 4088(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 511
+  %ptr = getelementptr double, double *%base, i64 511
   %f2 = load double *%ptr
   %res = fmul double %f1, %f2
   ret double %res
@@ -41,7 +41,7 @@ define double @f4(double %f1, double *%base) {
 ; CHECK: aghi %r2, 4096
 ; CHECK: mdb %f0, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 512
+  %ptr = getelementptr double, double *%base, i64 512
   %f2 = load double *%ptr
   %res = fmul double %f1, %f2
   ret double %res
@@ -53,7 +53,7 @@ define double @f5(double %f1, double *%base) {
 ; CHECK: aghi %r2, -8
 ; CHECK: mdb %f0, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 -1
+  %ptr = getelementptr double, double *%base, i64 -1
   %f2 = load double *%ptr
   %res = fmul double %f1, %f2
   ret double %res
@@ -65,8 +65,8 @@ define double @f6(double %f1, double *%base, i64 %index) {
 ; CHECK: sllg %r1, %r3, 3
 ; CHECK: mdb %f0, 800(%r1,%r2)
 ; CHECK: br %r14
-  %ptr1 = getelementptr double *%base, i64 %index
-  %ptr2 = getelementptr double *%ptr1, i64 100
+  %ptr1 = getelementptr double, double *%base, i64 %index
+  %ptr2 = getelementptr double, double *%ptr1, i64 100
   %f2 = load double *%ptr2
   %res = fmul double %f1, %f2
   ret double %res
@@ -78,16 +78,16 @@ define double @f7(double *%ptr0) {
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: mdb %f0, 160(%r15)
 ; CHECK: br %r14
-  %ptr1 = getelementptr double *%ptr0, i64 2
-  %ptr2 = getelementptr double *%ptr0, i64 4
-  %ptr3 = getelementptr double *%ptr0, i64 6
-  %ptr4 = getelementptr double *%ptr0, i64 8
-  %ptr5 = getelementptr double *%ptr0, i64 10
-  %ptr6 = getelementptr double *%ptr0, i64 12
-  %ptr7 = getelementptr double *%ptr0, i64 14
-  %ptr8 = getelementptr double *%ptr0, i64 16
-  %ptr9 = getelementptr double *%ptr0, i64 18
-  %ptr10 = getelementptr double *%ptr0, i64 20
+  %ptr1 = getelementptr double, double *%ptr0, i64 2
+  %ptr2 = getelementptr double, double *%ptr0, i64 4
+  %ptr3 = getelementptr double, double *%ptr0, i64 6
+  %ptr4 = getelementptr double, double *%ptr0, i64 8
+  %ptr5 = getelementptr double, double *%ptr0, i64 10
+  %ptr6 = getelementptr double, double *%ptr0, i64 12
+  %ptr7 = getelementptr double, double *%ptr0, i64 14
+  %ptr8 = getelementptr double, double *%ptr0, i64 16
+  %ptr9 = getelementptr double, double *%ptr0, i64 18
+  %ptr10 = getelementptr double, double *%ptr0, i64 20
 
   %val0 = load double *%ptr0
   %val1 = load double *%ptr1

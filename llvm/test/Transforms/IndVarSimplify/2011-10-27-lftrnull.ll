@@ -40,7 +40,7 @@ if.else.i124:                                     ; preds = %for.body21.i
   br label %if.end.i126
 
 if.end.i126:                                      ; preds = %if.else.i124, %for.body21.i
-  %incdec.ptr.i = getelementptr inbounds i8* %destYPixelPtr.010.i, i32 1
+  %incdec.ptr.i = getelementptr inbounds i8, i8* %destYPixelPtr.010.i, i32 1
   %inc.i125 = add i32 %x.09.i, 1
   %cmp19.i = icmp ult i32 %inc.i125, undef
   br i1 %cmp19.i, label %for.body21.i, label %for.end.i129

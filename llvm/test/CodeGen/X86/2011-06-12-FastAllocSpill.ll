@@ -28,13 +28,13 @@ bb:
   br label %bb8
 
 bb8:                                              ; preds = %bb23, %bb
-  %tmp15 = getelementptr inbounds %3* %tmp7, i32 0, i32 4
+  %tmp15 = getelementptr inbounds %3, %3* %tmp7, i32 0, i32 4
   store i8* bitcast (%0* @0 to i8*), i8** %tmp15
   %tmp16 = bitcast %3* %tmp7 to void ()*
   store void ()* %tmp16, void ()** %tmp6, align 8
   %tmp17 = load void ()** %tmp6, align 8
   %tmp18 = bitcast void ()* %tmp17 to %6*
-  %tmp19 = getelementptr inbounds %6* %tmp18, i32 0, i32 3
+  %tmp19 = getelementptr inbounds %6, %6* %tmp18, i32 0, i32 3
   %tmp20 = bitcast %6* %tmp18 to i8*
   %tmp21 = load i8** %tmp19
   %tmp22 = bitcast i8* %tmp21 to void (i8*)*

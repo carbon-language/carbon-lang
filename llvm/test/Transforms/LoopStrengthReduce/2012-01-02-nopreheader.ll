@@ -35,7 +35,7 @@ bb7.lr.ph.us:                                     ; preds = %bb9.us, %bb8.prehea
 bb7.us:                                           ; preds = %bb7.lr.ph.us, %bb7.us
   %j.01.us = phi i32 [ 0, %bb7.lr.ph.us ], [ %1, %bb7.us ]
   %tmp31 = add i32 %tmp30, %j.01.us
-  %scevgep9 = getelementptr float* %a, i32 %tmp31
+  %scevgep9 = getelementptr float, float* %a, i32 %tmp31
   store float undef, float* %scevgep9, align 1
   %1 = add nsw i32 %j.01.us, 1
   indirectbr i8* undef, [label %bb9.us, label %bb7.us]
@@ -74,7 +74,7 @@ bb8.preheader:                                    ; preds = %bb9, %bb3
 
 bb7:                                              ; preds = %bb8.preheader, %bb7
   %indvar = phi i32 [ 0, %bb8.preheader ], [ %indvar.next, %bb7 ]
-  %scevgep = getelementptr [200 x i32]* %Array2, i32 %tmp26, i32 %indvar
+  %scevgep = getelementptr [200 x i32], [200 x i32]* %Array2, i32 %tmp26, i32 %indvar
   store i32 undef, i32* %scevgep, align 4
   %indvar.next = add i32 %indvar, 1
   indirectbr i8* undef, [label %bb9, label %bb7]

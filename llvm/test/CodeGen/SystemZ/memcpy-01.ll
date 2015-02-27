@@ -126,8 +126,8 @@ define void @f11(i8 *%srcbase, i8 *%destbase) {
 ; CHECK: mvc 512(256,[[NEWDEST]]), 0([[NEWSRC]])
 ; CHECK: mvc 768(255,[[NEWDEST]]), 256([[NEWSRC]])
 ; CHECK: br %r14
-  %dest = getelementptr i8 *%srcbase, i64 4000
-  %src = getelementptr i8* %destbase, i64 3500
+  %dest = getelementptr i8, i8 *%srcbase, i64 4000
+  %src = getelementptr i8, i8* %destbase, i64 3500
   call void @llvm.memcpy.p0i8.p0i8.i64(i8 *%dest, i8 *%src, i64 1279, i32 1,
                                        i1 false)
   ret void
@@ -146,8 +146,8 @@ define void @f12() {
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: br %r14
   %arr = alloca [6000 x i8]
-  %dest = getelementptr [6000 x i8] *%arr, i64 0, i64 3900
-  %src = getelementptr [6000 x i8] *%arr, i64 0, i64 1924
+  %dest = getelementptr [6000 x i8], [6000 x i8] *%arr, i64 0, i64 3900
+  %src = getelementptr [6000 x i8], [6000 x i8] *%arr, i64 0, i64 1924
   call void @foo(i8 *%dest, i8 *%src)
   call void @llvm.memcpy.p0i8.p0i8.i64(i8 *%dest, i8 *%src, i64 1279, i32 1,
                                        i1 false)
@@ -168,8 +168,8 @@ define void @f13() {
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: br %r14
   %arr = alloca [6000 x i8]
-  %dest = getelementptr [6000 x i8] *%arr, i64 0, i64 24
-  %src = getelementptr [6000 x i8] *%arr, i64 0, i64 3650
+  %dest = getelementptr [6000 x i8], [6000 x i8] *%arr, i64 0, i64 24
+  %src = getelementptr [6000 x i8], [6000 x i8] *%arr, i64 0, i64 3650
   call void @foo(i8 *%dest, i8 *%src)
   call void @llvm.memcpy.p0i8.p0i8.i64(i8 *%dest, i8 *%src, i64 1279, i32 1,
                                        i1 false)
@@ -225,8 +225,8 @@ define void @f16() {
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: br %r14
   %arr = alloca [3200 x i8]
-  %dest = getelementptr [3200 x i8] *%arr, i64 0, i64 1600
-  %src = getelementptr [3200 x i8] *%arr, i64 0, i64 0
+  %dest = getelementptr [3200 x i8], [3200 x i8] *%arr, i64 0, i64 1600
+  %src = getelementptr [3200 x i8], [3200 x i8] *%arr, i64 0, i64 0
   call void @foo(i8 *%dest, i8 *%src)
   call void @llvm.memcpy.p0i8.p0i8.i64(i8 *%dest, i8 *%src, i64 1537, i32 1,
                                        i1 false)

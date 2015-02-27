@@ -7,10 +7,10 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define void @test_with_zext() {
   %1 = tail call i8* @malloc(i64 120)
-  %a = getelementptr inbounds i8* %1, i64 8
-  %2 = getelementptr inbounds i8* %1, i64 16
+  %a = getelementptr inbounds i8, i8* %1, i64 8
+  %2 = getelementptr inbounds i8, i8* %1, i64 16
   %3 = zext i32 3 to i64
-  %b = getelementptr inbounds i8* %2, i64 %3
+  %b = getelementptr inbounds i8, i8* %2, i64 %3
   ret void
 }
 
@@ -19,10 +19,10 @@ define void @test_with_zext() {
 
 define void @test_with_lshr(i64 %i) {
   %1 = tail call i8* @malloc(i64 120)
-  %a = getelementptr inbounds i8* %1, i64 8
-  %2 = getelementptr inbounds i8* %1, i64 16
+  %a = getelementptr inbounds i8, i8* %1, i64 8
+  %2 = getelementptr inbounds i8, i8* %1, i64 16
   %3 = lshr i64 %i, 2
-  %b = getelementptr inbounds i8* %2, i64 %3
+  %b = getelementptr inbounds i8, i8* %2, i64 %3
   ret void
 }
 
@@ -34,10 +34,10 @@ define void @test_with_a_loop(i8* %mem) {
 
 for.loop:
   %i = phi i32 [ 0, %0 ], [ %i.plus1, %for.loop ]
-  %a = getelementptr inbounds i8* %mem, i64 8
-  %a.plus1 = getelementptr inbounds i8* %mem, i64 16
+  %a = getelementptr inbounds i8, i8* %mem, i64 8
+  %a.plus1 = getelementptr inbounds i8, i8* %mem, i64 16
   %i.64 = zext i32 %i to i64
-  %b = getelementptr inbounds i8* %a.plus1, i64 %i.64
+  %b = getelementptr inbounds i8, i8* %a.plus1, i64 %i.64
   %i.plus1 = add nuw nsw i32 %i, 1
   %cmp = icmp eq i32 %i.plus1, 10
   br i1 %cmp, label %for.loop.exit, label %for.loop
@@ -55,12 +55,12 @@ define void @test_with_varying_base_pointer_in_loop(i8* %mem.orig) {
 for.loop:
   %mem = phi i8* [ %mem.orig, %0 ], [ %mem.plus1, %for.loop ]
   %i = phi i32 [ 0, %0 ], [ %i.plus1, %for.loop ]
-  %a = getelementptr inbounds i8* %mem, i64 8
-  %a.plus1 = getelementptr inbounds i8* %mem, i64 16
+  %a = getelementptr inbounds i8, i8* %mem, i64 8
+  %a.plus1 = getelementptr inbounds i8, i8* %mem, i64 16
   %i.64 = zext i32 %i to i64
-  %b = getelementptr inbounds i8* %a.plus1, i64 %i.64
+  %b = getelementptr inbounds i8, i8* %a.plus1, i64 %i.64
   %i.plus1 = add nuw nsw i32 %i, 1
-  %mem.plus1 = getelementptr inbounds i8* %mem, i64 8
+  %mem.plus1 = getelementptr inbounds i8, i8* %mem, i64 8
   %cmp = icmp eq i32 %i.plus1, 10
   br i1 %cmp, label %for.loop.exit, label %for.loop
 
@@ -74,10 +74,10 @@ for.loop.exit:
 define void @test_sign_extension(i32 %p) {
   %1 = tail call i8* @malloc(i64 120)
   %p.64 = zext i32 %p to i64
-  %a = getelementptr inbounds i8* %1, i64 %p.64
+  %a = getelementptr inbounds i8, i8* %1, i64 %p.64
   %p.minus1 = add i32 %p, -1
   %p.minus1.64 = zext i32 %p.minus1 to i64
-  %b.i8 = getelementptr inbounds i8* %1, i64 %p.minus1.64
+  %b.i8 = getelementptr inbounds i8, i8* %1, i64 %p.minus1.64
   %b.i64 = bitcast i8* %b.i8 to i64*
   ret void
 }
@@ -91,13 +91,13 @@ define void @test_fe_tools([8 x i32]* %values) {
 for.loop:
   %i = phi i32 [ 0, %reorder ], [ %i.next, %for.loop ]
   %idxprom = zext i32 %i to i64
-  %b = getelementptr inbounds [8 x i32]* %values, i64 0, i64 %idxprom
+  %b = getelementptr inbounds [8 x i32], [8 x i32]* %values, i64 0, i64 %idxprom
   %i.next = add nuw nsw i32 %i, 1
   %1 = icmp eq i32 %i.next, 10
   br i1 %1, label %for.loop.exit, label %for.loop
 
 reorder:
-  %a = getelementptr inbounds [8 x i32]* %values, i64 0, i64 1
+  %a = getelementptr inbounds [8 x i32], [8 x i32]* %values, i64 0, i64 1
   br label %for.loop
 
 for.loop.exit:
@@ -123,13 +123,13 @@ define void @test_spec2006() {
 ; <label>:2                                       ; preds = %.lr.ph, %2
   %i = phi i32 [ %d.val, %.lr.ph ], [ %i.plus1, %2 ]
   %i.promoted = sext i32 %i to i64
-  %x = getelementptr inbounds [1 x [2 x i32*]]* %h, i64 0, i64 %d.promoted, i64 %i.promoted
+  %x = getelementptr inbounds [1 x [2 x i32*]], [1 x [2 x i32*]]* %h, i64 0, i64 %d.promoted, i64 %i.promoted
   %i.plus1 = add nsw i32 %i, 1
   %cmp = icmp slt i32 %i.plus1, 2
   br i1 %cmp, label %2, label %3
 
 ; <label>:3                                      ; preds = %._crit_edge, %0
-  %y = getelementptr inbounds [1 x [2 x i32*]]* %h, i64 0, i64 0, i64 1
+  %y = getelementptr inbounds [1 x [2 x i32*]], [1 x [2 x i32*]]* %h, i64 0, i64 0, i64 1
   ret void
 }
 
@@ -138,8 +138,8 @@ define void @test_spec2006() {
 
 define void @test_modulo_analysis_easy_case(i64 %i) {
   %h = alloca [1 x [2 x i32*]], align 16
-  %x = getelementptr inbounds [1 x [2 x i32*]]* %h, i64 0, i64 %i, i64 0
-  %y = getelementptr inbounds [1 x [2 x i32*]]* %h, i64 0, i64 0, i64 1
+  %x = getelementptr inbounds [1 x [2 x i32*]], [1 x [2 x i32*]]* %h, i64 0, i64 %i, i64 0
+  %y = getelementptr inbounds [1 x [2 x i32*]], [1 x [2 x i32*]]* %h, i64 0, i64 0, i64 1
   ret void
 }
 
@@ -153,8 +153,8 @@ define void @test_modulo_analysis_in_loop() {
 for.loop:
   %i = phi i32 [ 0, %0 ], [ %i.plus1, %for.loop ]
   %i.promoted = sext i32 %i to i64
-  %x = getelementptr inbounds [1 x [2 x i32*]]* %h, i64 0, i64 %i.promoted, i64 0
-  %y = getelementptr inbounds [1 x [2 x i32*]]* %h, i64 0, i64 0, i64 1
+  %x = getelementptr inbounds [1 x [2 x i32*]], [1 x [2 x i32*]]* %h, i64 0, i64 %i.promoted, i64 0
+  %y = getelementptr inbounds [1 x [2 x i32*]], [1 x [2 x i32*]]* %h, i64 0, i64 0, i64 1
   %i.plus1 = add nsw i32 %i, 1
   %cmp = icmp slt i32 %i.plus1, 2
   br i1 %cmp, label %for.loop, label %for.loop.exit
@@ -175,8 +175,8 @@ define void @test_modulo_analysis_with_global() {
 for.loop:
   %i = phi i32 [ 0, %0 ], [ %i.plus1, %for.loop ]
   %i.promoted = sext i32 %i to i64
-  %x = getelementptr inbounds [1 x [2 x i32*]]* %h, i64 0, i64 %i.promoted, i64 %b.promoted
-  %y = getelementptr inbounds [1 x [2 x i32*]]* %h, i64 0, i64 0, i64 1
+  %x = getelementptr inbounds [1 x [2 x i32*]], [1 x [2 x i32*]]* %h, i64 0, i64 %i.promoted, i64 %b.promoted
+  %y = getelementptr inbounds [1 x [2 x i32*]], [1 x [2 x i32*]]* %h, i64 0, i64 0, i64 1
   %i.plus1 = add nsw i32 %i, 1
   %cmp = icmp slt i32 %i.plus1, 2
   br i1 %cmp, label %for.loop, label %for.loop.exit
@@ -188,10 +188,10 @@ for.loop.exit:
 ; CHECK-LABEL: test_const_eval
 ; CHECK: NoAlias: i8* %a, i8* %b
 define void @test_const_eval(i8* %ptr, i64 %offset) {
-  %a = getelementptr inbounds i8* %ptr, i64 %offset
-  %a.dup = getelementptr inbounds i8* %ptr, i64 %offset
+  %a = getelementptr inbounds i8, i8* %ptr, i64 %offset
+  %a.dup = getelementptr inbounds i8, i8* %ptr, i64 %offset
   %three = zext i32 3 to i64
-  %b = getelementptr inbounds i8* %a.dup, i64 %three
+  %b = getelementptr inbounds i8, i8* %a.dup, i64 %three
   ret void
 }
 
@@ -200,8 +200,8 @@ define void @test_const_eval(i8* %ptr, i64 %offset) {
 define void @test_const_eval_scaled(i8* %ptr) {
   %three = zext i32 3 to i64
   %six = mul i64 %three, 2
-  %a = getelementptr inbounds i8* %ptr, i64 %six
-  %b = getelementptr inbounds i8* %ptr, i64 6
+  %a = getelementptr inbounds i8, i8* %ptr, i64 %six
+  %b = getelementptr inbounds i8, i8* %ptr, i64 6
   ret void
 }
 

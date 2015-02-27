@@ -25,8 +25,8 @@ if.then366:                                       ; preds = %lor.end, %lor.end
   unreachable
 
 if.end371:                                        ; preds = %lor.end
-  %arrayidx56.2.i = getelementptr [4 x %struct.pix_pos]* %pix_a.i294, i32 0, i32 2 ; <%struct.pix_pos*> [#uses=1]
-  %arrayidx56.3.i = getelementptr [4 x %struct.pix_pos]* %pix_a.i294, i32 0, i32 3 ; <%struct.pix_pos*> [#uses=1]
+  %arrayidx56.2.i = getelementptr [4 x %struct.pix_pos], [4 x %struct.pix_pos]* %pix_a.i294, i32 0, i32 2 ; <%struct.pix_pos*> [#uses=1]
+  %arrayidx56.3.i = getelementptr [4 x %struct.pix_pos], [4 x %struct.pix_pos]* %pix_a.i294, i32 0, i32 3 ; <%struct.pix_pos*> [#uses=1]
   br i1 undef, label %for.body1857, label %for.end4557
 
 for.body1857:                                     ; preds = %if.end371
@@ -101,11 +101,11 @@ for.inc3040:                                      ; preds = %for.inc3040, %for.c
 if.then3689:                                      ; preds = %for.cond2882.preheader
   %add3695 = add nsw i32 %mul3693, %shl1959       ; <i32> [#uses=1]
   %mul3697 = shl i32 %add3695, 2                  ; <i32> [#uses=2]
-  %arrayidx3705 = getelementptr inbounds i16* undef, i32 1 ; <i16*> [#uses=1]
+  %arrayidx3705 = getelementptr inbounds i16, i16* undef, i32 1 ; <i16*> [#uses=1]
   %tmp3706 = load i16* %arrayidx3705              ; <i16> [#uses=1]
   %conv3707 = sext i16 %tmp3706 to i32            ; <i32> [#uses=1]
   %add3708 = add nsw i32 %conv3707, %mul3697      ; <i32> [#uses=1]
-  %arrayidx3724 = getelementptr inbounds i16* null, i32 1 ; <i16*> [#uses=1]
+  %arrayidx3724 = getelementptr inbounds i16, i16* null, i32 1 ; <i16*> [#uses=1]
   %tmp3725 = load i16* %arrayidx3724              ; <i16> [#uses=1]
   %conv3726 = sext i16 %tmp3725 to i32            ; <i32> [#uses=1]
   %add3727 = add nsw i32 %conv3726, %mul3697      ; <i32> [#uses=1]
@@ -118,7 +118,7 @@ if.else3728:                                      ; preds = %for.cond2882.prehea
   %tmp3746 = load i16* undef                      ; <i16> [#uses=1]
   %conv3747 = sext i16 %tmp3746 to i32            ; <i32> [#uses=1]
   %add3748 = add nsw i32 %conv3747, %mul3737      ; <i32> [#uses=1]
-  %arrayidx3765 = getelementptr inbounds i16* null, i32 1 ; <i16*> [#uses=1]
+  %arrayidx3765 = getelementptr inbounds i16, i16* null, i32 1 ; <i16*> [#uses=1]
   %tmp3766 = load i16* %arrayidx3765              ; <i16> [#uses=1]
   %conv3767 = sext i16 %tmp3766 to i32            ; <i32> [#uses=1]
   %add3768 = add nsw i32 %conv3767, %mul3737      ; <i32> [#uses=1]

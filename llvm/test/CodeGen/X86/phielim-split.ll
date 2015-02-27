@@ -18,7 +18,7 @@ entry:
 
 for.cond:                                         ; preds = %entry, %for.cond
   %p.addr.0 = phi i8* [ %incdec.ptr, %for.cond ], [ %p, %entry ]
-  %incdec.ptr = getelementptr inbounds i8* %p.addr.0, i64 1
+  %incdec.ptr = getelementptr inbounds i8, i8* %p.addr.0, i64 1
   %0 = load i8* %p.addr.0, align 1
   %tobool = icmp eq i8 %0, 0
   br i1 %tobool, label %for.cond, label %if.end2

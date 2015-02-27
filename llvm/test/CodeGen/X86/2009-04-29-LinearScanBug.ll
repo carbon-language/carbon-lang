@@ -114,7 +114,7 @@ entry:
 bb1:		; preds = %entry
 	%5 = load i8* null, align 4		; <i8> [#uses=2]
 	%6 = zext i8 %5 to i32		; <i32> [#uses=2]
-	%7 = getelementptr %struct.pf_state_key* %b, i32 0, i32 3		; <i8*> [#uses=1]
+	%7 = getelementptr %struct.pf_state_key, %struct.pf_state_key* %b, i32 0, i32 3		; <i8*> [#uses=1]
 	%8 = load i8* %7, align 4		; <i8> [#uses=2]
 	%9 = zext i8 %8 to i32		; <i32> [#uses=1]
 	%10 = sub i32 %6, %9		; <i32> [#uses=1]
@@ -172,9 +172,9 @@ bb19:		; preds = %bb18
 	br i1 false, label %bb23, label %bb79
 
 bb21:		; preds = %bb3
-	%31 = getelementptr %struct.pf_state_key* %a, i32 0, i32 1, i32 1, i32 0		; <i32*> [#uses=1]
+	%31 = getelementptr %struct.pf_state_key, %struct.pf_state_key* %a, i32 0, i32 1, i32 1, i32 0		; <i32*> [#uses=1]
 	%32 = load i32* %31, align 4		; <i32> [#uses=2]
-	%33 = getelementptr %struct.pf_state_key* %b, i32 0, i32 1, i32 1, i32 0		; <i32*> [#uses=1]
+	%33 = getelementptr %struct.pf_state_key, %struct.pf_state_key* %b, i32 0, i32 1, i32 1, i32 0		; <i32*> [#uses=1]
 	%34 = load i32* %33, align 4		; <i32> [#uses=2]
 	%35 = sub i32 %32, %34		; <i32> [#uses=1]
 	%36 = icmp eq i32 %32, %34		; <i1> [#uses=1]

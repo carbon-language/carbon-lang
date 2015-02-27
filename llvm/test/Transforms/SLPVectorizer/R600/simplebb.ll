@@ -13,13 +13,13 @@ define void @test1_as_3_3_3(double addrspace(3)* %a, double addrspace(3)* %b, do
   %i0 = load double addrspace(3)* %a, align 8
   %i1 = load double addrspace(3)* %b, align 8
   %mul = fmul double %i0, %i1
-  %arrayidx3 = getelementptr inbounds double addrspace(3)* %a, i64 1
+  %arrayidx3 = getelementptr inbounds double, double addrspace(3)* %a, i64 1
   %i3 = load double addrspace(3)* %arrayidx3, align 8
-  %arrayidx4 = getelementptr inbounds double addrspace(3)* %b, i64 1
+  %arrayidx4 = getelementptr inbounds double, double addrspace(3)* %b, i64 1
   %i4 = load double addrspace(3)* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
   store double %mul, double addrspace(3)* %c, align 8
-  %arrayidx5 = getelementptr inbounds double addrspace(3)* %c, i64 1
+  %arrayidx5 = getelementptr inbounds double, double addrspace(3)* %c, i64 1
   store double %mul5, double addrspace(3)* %arrayidx5, align 8
   ret void
 }
@@ -33,13 +33,13 @@ define void @test1_as_3_0_0(double addrspace(3)* %a, double* %b, double* %c) {
   %i0 = load double addrspace(3)* %a, align 8
   %i1 = load double* %b, align 8
   %mul = fmul double %i0, %i1
-  %arrayidx3 = getelementptr inbounds double addrspace(3)* %a, i64 1
+  %arrayidx3 = getelementptr inbounds double, double addrspace(3)* %a, i64 1
   %i3 = load double addrspace(3)* %arrayidx3, align 8
-  %arrayidx4 = getelementptr inbounds double* %b, i64 1
+  %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
   %i4 = load double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
   store double %mul, double* %c, align 8
-  %arrayidx5 = getelementptr inbounds double* %c, i64 1
+  %arrayidx5 = getelementptr inbounds double, double* %c, i64 1
   store double %mul5, double* %arrayidx5, align 8
   ret void
 }
@@ -53,13 +53,13 @@ define void @test1_as_0_0_3(double* %a, double* %b, double addrspace(3)* %c) {
   %i0 = load double* %a, align 8
   %i1 = load double* %b, align 8
   %mul = fmul double %i0, %i1
-  %arrayidx3 = getelementptr inbounds double* %a, i64 1
+  %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
   %i3 = load double* %arrayidx3, align 8
-  %arrayidx4 = getelementptr inbounds double* %b, i64 1
+  %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
   %i4 = load double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
   store double %mul, double addrspace(3)* %c, align 8
-  %arrayidx5 = getelementptr inbounds double addrspace(3)* %c, i64 1
+  %arrayidx5 = getelementptr inbounds double, double addrspace(3)* %c, i64 1
   store double %mul5, double addrspace(3)* %arrayidx5, align 8
   ret void
 }

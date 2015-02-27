@@ -16,8 +16,8 @@
 ; CHECK-DAG: ds_read_b32 v{{[0-9]+}}, [[VREG2]] offset:20
 define void @do_as_ptr_calcs(%struct.foo addrspace(3)* nocapture %ptr) nounwind {
 entry:
-  %x = getelementptr inbounds %struct.foo addrspace(3)* %ptr, i32 0, i32 1, i32 0
-  %y = getelementptr inbounds %struct.foo addrspace(3)* %ptr, i32 0, i32 1, i32 2
+  %x = getelementptr inbounds %struct.foo, %struct.foo addrspace(3)* %ptr, i32 0, i32 1, i32 0
+  %y = getelementptr inbounds %struct.foo, %struct.foo addrspace(3)* %ptr, i32 0, i32 1, i32 2
   br label %bb32
 
 bb32:

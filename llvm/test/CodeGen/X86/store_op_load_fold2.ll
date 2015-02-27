@@ -6,7 +6,7 @@ target datalayout = "e-p:32:32"
 
 define internal fastcc i32 @dct_chroma(i32 %uv, i32 %cr_cbp) nounwind {
 cond_true2732.preheader:                ; preds = %entry
-        %tmp2666 = getelementptr %struct.Macroblock* null, i32 0, i32 13                ; <i64*> [#uses=2]
+        %tmp2666 = getelementptr %struct.Macroblock, %struct.Macroblock* null, i32 0, i32 13                ; <i64*> [#uses=2]
         %tmp2674 = trunc i32 0 to i8            ; <i8> [#uses=1]
         %tmp2667.us.us = load i64* %tmp2666             ; <i64> [#uses=1]
         %tmp2670.us.us = load i64* null         ; <i64> [#uses=1]

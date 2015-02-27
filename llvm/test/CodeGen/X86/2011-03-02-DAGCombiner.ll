@@ -22,11 +22,11 @@ entry:
   %6 = lshr i32 %5, 3
   %bf.clear = and i32 %6, 15
   %conv = sitofp i32 %bf.clear to float
-  %f = getelementptr inbounds %struct.anon* %F, i32 0, i32 0
+  %f = getelementptr inbounds %struct.anon, %struct.anon* %F, i32 0, i32 0
   %tmp = load float* %f, align 4
   %sub = fsub float %tmp, %conv
   store float %sub, float* %f, align 4
-  %ld = getelementptr inbounds %struct.anon* %F, i32 0, i32 1
+  %ld = getelementptr inbounds %struct.anon, %struct.anon* %F, i32 0, i32 1
   %tmp1 = load x86_fp80* %ld, align 16
   %7 = bitcast %0* %K to i32*
   %8 = load i32* %7, align 4

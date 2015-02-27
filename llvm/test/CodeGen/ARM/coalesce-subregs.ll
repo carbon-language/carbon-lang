@@ -16,7 +16,7 @@ entry:
   %0 = bitcast float* %p to i8*
   %vld2 = tail call { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32(i8* %0, i32 4)
   %vld221 = extractvalue { <4 x float>, <4 x float> } %vld2, 1
-  %add.ptr = getelementptr inbounds float* %p, i32 8
+  %add.ptr = getelementptr inbounds float, float* %p, i32 8
   %1 = bitcast float* %add.ptr to i8*
   tail call void @llvm.arm.neon.vst2.v4f32(i8* %1, <4 x float> %vld221, <4 x float> undef, i32 4)
   ret void
@@ -29,7 +29,7 @@ entry:
   %0 = bitcast float* %p to i8*
   %vld2 = tail call { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32(i8* %0, i32 4)
   %vld221 = extractvalue { <4 x float>, <4 x float> } %vld2, 1
-  %add.ptr = getelementptr inbounds float* %p, i32 8
+  %add.ptr = getelementptr inbounds float, float* %p, i32 8
   %1 = bitcast float* %add.ptr to i8*
   %vld22 = tail call { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32(i8* %1, i32 4)
   %vld2215 = extractvalue { <4 x float>, <4 x float> } %vld22, 0
@@ -50,7 +50,7 @@ do.body:                                          ; preds = %do.body, %entry
   %qq0.0.1.0 = phi <4 x float> [ %vld224, %entry ], [ %vld2216, %do.body ]
   %c.addr.0 = phi i32 [ %c, %entry ], [ %dec, %do.body ]
   %p.addr.0 = phi float* [ %p, %entry ], [ %add.ptr, %do.body ]
-  %add.ptr = getelementptr inbounds float* %p.addr.0, i32 8
+  %add.ptr = getelementptr inbounds float, float* %p.addr.0, i32 8
   %1 = bitcast float* %add.ptr to i8*
   %vld22 = tail call { <4 x float>, <4 x float> } @llvm.arm.neon.vld2.v4f32(i8* %1, i32 4)
   %vld2215 = extractvalue { <4 x float>, <4 x float> } %vld22, 0
@@ -85,7 +85,7 @@ declare void @llvm.arm.neon.vst2.v4f32(i8*, <4 x float>, <4 x float>, i32) nounw
 ; CHECK-NOT: vorr
 define void @f3(float* %p, float* %q) nounwind ssp {
 entry:
-  %arrayidx = getelementptr inbounds float* %p, i32 3
+  %arrayidx = getelementptr inbounds float, float* %p, i32 3
   %0 = load float* %arrayidx, align 4
   %vecins = insertelement <2 x float> undef, float %0, i32 1
   %tobool = icmp eq float* %q, null
@@ -93,21 +93,21 @@ entry:
 
 if.then:                                          ; preds = %entry
   %1 = load float* %q, align 4
-  %arrayidx2 = getelementptr inbounds float* %q, i32 1
+  %arrayidx2 = getelementptr inbounds float, float* %q, i32 1
   %2 = load float* %arrayidx2, align 4
   %add = fadd float %1, %2
   %vecins3 = insertelement <2 x float> %vecins, float %add, i32 0
   br label %if.end
 
 if.else:                                          ; preds = %entry
-  %arrayidx4 = getelementptr inbounds float* %p, i32 2
+  %arrayidx4 = getelementptr inbounds float, float* %p, i32 2
   %3 = load float* %arrayidx4, align 4
   %vecins5 = insertelement <2 x float> %vecins, float %3, i32 0
   br label %if.end
 
 if.end:                                           ; preds = %if.else, %if.then
   %x.0 = phi <2 x float> [ %vecins3, %if.then ], [ %vecins5, %if.else ]
-  %add.ptr = getelementptr inbounds float* %p, i32 4
+  %add.ptr = getelementptr inbounds float, float* %p, i32 4
   %4 = bitcast float* %add.ptr to i8*
   tail call void @llvm.arm.neon.vst1.v2f32(i8* %4, <2 x float> %x.0, i32 4)
   ret void
@@ -130,7 +130,7 @@ entry:
 
 if.then:                                          ; preds = %entry
   %1 = load float* %q, align 4
-  %arrayidx1 = getelementptr inbounds float* %q, i32 1
+  %arrayidx1 = getelementptr inbounds float, float* %q, i32 1
   %2 = load float* %arrayidx1, align 4
   %add = fadd float %1, %2
   %vecins = insertelement <2 x float> %vld1, float %add, i32 1
@@ -164,12 +164,12 @@ entry:
   br i1 %tobool, label %if.end, label %if.then
 
 if.then:                                          ; preds = %entry
-  %arrayidx = getelementptr inbounds float* %q, i32 1
+  %arrayidx = getelementptr inbounds float, float* %q, i32 1
   %1 = load float* %arrayidx, align 4
   %add4 = fadd float %vecext, %1
   %2 = load float* %q, align 4
   %add6 = fadd float %vecext1, %2
-  %arrayidx7 = getelementptr inbounds float* %q, i32 2
+  %arrayidx7 = getelementptr inbounds float, float* %q, i32 2
   %3 = load float* %arrayidx7, align 4
   %add8 = fadd float %vecext2, %3
   br label %if.end

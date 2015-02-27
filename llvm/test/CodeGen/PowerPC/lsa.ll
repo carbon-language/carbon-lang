@@ -13,12 +13,12 @@ entry:
   call void @llvm.lifetime.start(i64 32800, i8* %1) #0
   %2 = bitcast [8200 x i32]* %q to i8*
   call void @llvm.lifetime.start(i64 32800, i8* %2) #0
-  %arraydecay = getelementptr inbounds [8200 x i32]* %q, i64 0, i64 0
-  %arraydecay1 = getelementptr inbounds [8200 x i32]* %v, i64 0, i64 0
-  %arraydecay2 = getelementptr inbounds [8200 x i32]* %w, i64 0, i64 0
+  %arraydecay = getelementptr inbounds [8200 x i32], [8200 x i32]* %q, i64 0, i64 0
+  %arraydecay1 = getelementptr inbounds [8200 x i32], [8200 x i32]* %v, i64 0, i64 0
+  %arraydecay2 = getelementptr inbounds [8200 x i32], [8200 x i32]* %w, i64 0, i64 0
   call void @bar(i32* %arraydecay, i32* %arraydecay1, i32* %arraydecay2) #0
   %3 = load i32* %arraydecay2, align 4
-  %arrayidx3 = getelementptr inbounds [8200 x i32]* %w, i64 0, i64 1
+  %arrayidx3 = getelementptr inbounds [8200 x i32], [8200 x i32]* %w, i64 0, i64 1
   %4 = load i32* %arrayidx3, align 4
 
 ; CHECK: @foo

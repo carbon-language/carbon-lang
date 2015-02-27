@@ -11,9 +11,9 @@ target triple = "x86_64-unknown-linux-gnu"
 define i32 @main(i32 %argc, i8** nocapture %argv) nounwind uwtable {
 entry:
   %f = alloca %struct.foo, align 4
-  %x.i = getelementptr inbounds %struct.foo* %f, i64 0, i32 0
+  %x.i = getelementptr inbounds %struct.foo, %struct.foo* %f, i64 0, i32 0
   store i32 1, i32* %x.i, align 4
-  %y.i = getelementptr inbounds %struct.foo* %f, i64 0, i32 1
+  %y.i = getelementptr inbounds %struct.foo, %struct.foo* %f, i64 0, i32 1
   br label %while.cond.i
 
 ; CHECK: while.cond.i:

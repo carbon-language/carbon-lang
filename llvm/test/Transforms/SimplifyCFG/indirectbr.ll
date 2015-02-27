@@ -192,7 +192,7 @@ escape-string.top:
 
 xlab8x:                                           ; preds = %xlab5x
   %xvaluex = call i32 @xselectorx()
-  %xblkx.x = getelementptr [9 x i8*]* @xblkx.bbs, i32 0, i32 %xvaluex
+  %xblkx.x = getelementptr [9 x i8*], [9 x i8*]* @xblkx.bbs, i32 0, i32 %xvaluex
   %xblkx.load = load i8** %xblkx.x
   indirectbr i8* %xblkx.load, [label %xblkx.begin, label %xblkx.begin3, label %xblkx.begin4, label %xblkx.begin5, label %xblkx.begin6, label %xblkx.begin7, label %xblkx.begin8, label %xblkx.begin9, label %xblkx.end]
 

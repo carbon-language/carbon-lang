@@ -260,14 +260,14 @@ entry:
 ; FAST: ldr w[[B:[0-9]+]], [x2]
 ; FAST: add w[[C:[0-9]+]], w[[A]], w0
 ; FAST: add {{w[0-9]+}}, w[[C]], w[[B]]
-  %i1 = getelementptr inbounds %struct.s42* %s1, i64 0, i32 0
+  %i1 = getelementptr inbounds %struct.s42, %struct.s42* %s1, i64 0, i32 0
   %0 = load i32* %i1, align 4, !tbaa !0
-  %i2 = getelementptr inbounds %struct.s42* %s2, i64 0, i32 0
+  %i2 = getelementptr inbounds %struct.s42, %struct.s42* %s2, i64 0, i32 0
   %1 = load i32* %i2, align 4, !tbaa !0
-  %s = getelementptr inbounds %struct.s42* %s1, i64 0, i32 1
+  %s = getelementptr inbounds %struct.s42, %struct.s42* %s1, i64 0, i32 1
   %2 = load i16* %s, align 2, !tbaa !3
   %conv = sext i16 %2 to i32
-  %s5 = getelementptr inbounds %struct.s42* %s2, i64 0, i32 1
+  %s5 = getelementptr inbounds %struct.s42, %struct.s42* %s2, i64 0, i32 1
   %3 = load i16* %s5, align 2, !tbaa !3
   %conv6 = sext i16 %3 to i32
   %add = add i32 %0, %i
@@ -369,14 +369,14 @@ entry:
 ; FAST: ldr w[[B:[0-9]+]], [x2]
 ; FAST: add w[[C:[0-9]+]], w[[A]], w0
 ; FAST: add {{w[0-9]+}}, w[[C]], w[[B]]
-  %i1 = getelementptr inbounds %struct.s43* %s1, i64 0, i32 0
+  %i1 = getelementptr inbounds %struct.s43, %struct.s43* %s1, i64 0, i32 0
   %0 = load i32* %i1, align 4, !tbaa !0
-  %i2 = getelementptr inbounds %struct.s43* %s2, i64 0, i32 0
+  %i2 = getelementptr inbounds %struct.s43, %struct.s43* %s2, i64 0, i32 0
   %1 = load i32* %i2, align 4, !tbaa !0
-  %s = getelementptr inbounds %struct.s43* %s1, i64 0, i32 1
+  %s = getelementptr inbounds %struct.s43, %struct.s43* %s1, i64 0, i32 1
   %2 = load i16* %s, align 2, !tbaa !3
   %conv = sext i16 %2 to i32
-  %s5 = getelementptr inbounds %struct.s43* %s2, i64 0, i32 1
+  %s5 = getelementptr inbounds %struct.s43, %struct.s43* %s2, i64 0, i32 1
   %3 = load i16* %s5, align 2, !tbaa !3
   %conv6 = sext i16 %3 to i32
   %add = add i32 %0, %i

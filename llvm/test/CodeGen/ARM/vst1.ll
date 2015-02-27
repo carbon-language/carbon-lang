@@ -44,7 +44,7 @@ define void @vst1f_update(float** %ptr, <2 x float>* %B) nounwind {
 	%tmp0 = bitcast float* %A to i8*
 	%tmp1 = load <2 x float>* %B
 	call void @llvm.arm.neon.vst1.v2f32(i8* %tmp0, <2 x float> %tmp1, i32 1)
-	%tmp2 = getelementptr float* %A, i32 2
+	%tmp2 = getelementptr float, float* %A, i32 2
 	store float* %tmp2, float** %ptr
 	ret void
 }
@@ -85,7 +85,7 @@ define void @vst1Qi16_update(i16** %ptr, <8 x i16>* %B, i32 %inc) nounwind {
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <8 x i16>* %B
 	call void @llvm.arm.neon.vst1.v8i16(i8* %tmp0, <8 x i16> %tmp1, i32 8)
-	%tmp2 = getelementptr i16* %A, i32 %inc
+	%tmp2 = getelementptr i16, i16* %A, i32 %inc
 	store i16* %tmp2, i16** %ptr
 	ret void
 }

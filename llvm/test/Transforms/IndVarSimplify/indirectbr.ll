@@ -32,7 +32,7 @@ bb14:                                             ; preds = %bb14, %bb7.preheade
 bb16:                                             ; preds = %bb16, %bb14, %bb7.preheader
   %S.31.0 = phi i64 [ %3, %bb16 ], [ 1, %bb7.preheader ], [ 1, %bb14 ] ; <i64> [#uses=2]
   %0 = add nsw i64 %S.31.0, -1                    ; <i64> [#uses=1]
-  %1 = getelementptr inbounds [3 x double]* undef, i64 0, i64 %0 ; <double*> [#uses=1]
+  %1 = getelementptr inbounds [3 x double], [3 x double]* undef, i64 0, i64 %0 ; <double*> [#uses=1]
   %2 = load double* %1, align 8                   ; <double> [#uses=0]
   %3 = add nsw i64 %S.31.0, 1                     ; <i64> [#uses=1]
   br label %bb16

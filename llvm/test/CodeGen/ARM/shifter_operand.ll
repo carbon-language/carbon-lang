@@ -67,7 +67,7 @@ entry:
   %0 = tail call i8* (...)* @malloc(i32 undef) nounwind
   %1 = bitcast i8* %0 to i32*
   %2 = sext i16 %addr to i32
-  %3 = getelementptr inbounds i32* %1, i32 %2
+  %3 = getelementptr inbounds i32, i32* %1, i32 %2
   %4 = load i32* %3, align 4
   %5 = add nsw i32 %4, 1
   store i32 %5, i32* %3, align 4

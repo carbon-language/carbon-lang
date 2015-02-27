@@ -8,8 +8,8 @@
 ; CHECK-NOT: call void @barrier
 define void @noduplicate(i32 %cond, i32* %out) {
 entry:
-  %out1 = getelementptr i32* %out, i32 1
-  %out2 = getelementptr i32* %out, i32 2
+  %out1 = getelementptr i32, i32* %out, i32 1
+  %out2 = getelementptr i32, i32* %out, i32 2
   %cmp = icmp eq i32 %cond, 0
   br i1 %cmp, label %if.then, label %if.end
 

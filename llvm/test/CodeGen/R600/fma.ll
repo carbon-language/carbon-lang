@@ -64,9 +64,9 @@ define void @fma_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)*
 ; SI: v_fma_f32 {{v[0-9]+}}, 2.0, {{v[0-9]+}}, {{v[0-9]+}}
 define void @fma_commute_mul_inline_imm_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in.a, float addrspace(1)* noalias %in.b) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %in.a.gep = getelementptr float addrspace(1)* %in.a, i32 %tid
-  %in.b.gep = getelementptr float addrspace(1)* %in.b, i32 %tid
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %in.a.gep = getelementptr float, float addrspace(1)* %in.a, i32 %tid
+  %in.b.gep = getelementptr float, float addrspace(1)* %in.b, i32 %tid
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %a = load float addrspace(1)* %in.a.gep, align 4
   %b = load float addrspace(1)* %in.b.gep, align 4
@@ -79,9 +79,9 @@ define void @fma_commute_mul_inline_imm_f32(float addrspace(1)* noalias %out, fl
 ; FUNC-LABEL: @fma_commute_mul_s_f32
 define void @fma_commute_mul_s_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in.a, float addrspace(1)* noalias %in.b, float %b) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %in.a.gep = getelementptr float addrspace(1)* %in.a, i32 %tid
-  %in.b.gep = getelementptr float addrspace(1)* %in.b, i32 %tid
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %in.a.gep = getelementptr float, float addrspace(1)* %in.a, i32 %tid
+  %in.b.gep = getelementptr float, float addrspace(1)* %in.b, i32 %tid
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %a = load float addrspace(1)* %in.a.gep, align 4
   %c = load float addrspace(1)* %in.b.gep, align 4

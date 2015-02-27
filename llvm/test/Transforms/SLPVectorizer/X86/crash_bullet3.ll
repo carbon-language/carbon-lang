@@ -59,9 +59,9 @@ if.end332:                                        ; preds = %if.then329, %if.end
   %dy276.1 = phi float [ undef, %if.then329 ], [ undef, %if.end327 ], [ 0x3F847AE140000000, %if.then291 ]
   %sub334 = fsub float %add294, %dx272.1
   %sub338 = fsub float %add297, %dy276.1
-  %arrayidx.i.i606 = getelementptr inbounds %class.btVector3.23.221.463.485.507.573.595.683.727.749.815.837.991.1585.1607.1629.1651.1849.2047.2069.2091.2113* %vertices, i64 0, i32 0, i64 0
+  %arrayidx.i.i606 = getelementptr inbounds %class.btVector3.23.221.463.485.507.573.595.683.727.749.815.837.991.1585.1607.1629.1651.1849.2047.2069.2091.2113, %class.btVector3.23.221.463.485.507.573.595.683.727.749.815.837.991.1585.1607.1629.1651.1849.2047.2069.2091.2113* %vertices, i64 0, i32 0, i64 0
   store float %sub334, float* %arrayidx.i.i606, align 4
-  %arrayidx3.i607 = getelementptr inbounds %class.btVector3.23.221.463.485.507.573.595.683.727.749.815.837.991.1585.1607.1629.1651.1849.2047.2069.2091.2113* %vertices, i64 0, i32 0, i64 1
+  %arrayidx3.i607 = getelementptr inbounds %class.btVector3.23.221.463.485.507.573.595.683.727.749.815.837.991.1585.1607.1629.1651.1849.2047.2069.2091.2113, %class.btVector3.23.221.463.485.507.573.595.683.727.749.815.837.991.1585.1607.1629.1651.1849.2047.2069.2091.2113* %vertices, i64 0, i32 0, i64 1
   store float %sub338, float* %arrayidx3.i607, align 4
   br label %return
 

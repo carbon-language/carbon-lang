@@ -47,7 +47,7 @@ entry:
   store %struct.foo* %this, %struct.foo** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %struct.foo** %this.addr, metadata !34, metadata !36), !dbg !37
   %this1 = load %struct.foo** %this.addr
-  %b = getelementptr inbounds %struct.foo* %this1, i32 0, i32 0, !dbg !38
+  %b = getelementptr inbounds %struct.foo, %struct.foo* %this1, i32 0, i32 0, !dbg !38
   call void @_ZN4baseC2Ev(%struct.base* %b) #2, !dbg !38
   ret void, !dbg !38
 }
@@ -59,7 +59,7 @@ entry:
   store %struct.foo* %this, %struct.foo** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %struct.foo** %this.addr, metadata !39, metadata !36), !dbg !40
   %this1 = load %struct.foo** %this.addr
-  %b = getelementptr inbounds %struct.foo* %this1, i32 0, i32 0, !dbg !41
+  %b = getelementptr inbounds %struct.foo, %struct.foo* %this1, i32 0, i32 0, !dbg !41
   call void @_ZN4baseD1Ev(%struct.base* %b), !dbg !41
   ret void, !dbg !43
 }

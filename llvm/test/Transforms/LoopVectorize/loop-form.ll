@@ -21,7 +21,7 @@ for.cond:
 
 for.body:
   %iprom = sext i32 %i to i64
-  %b = getelementptr inbounds %struct.X* undef, i64 %iprom, i32 1
+  %b = getelementptr inbounds %struct.X, %struct.X* undef, i64 %iprom, i32 1
   store i16 0, i16* %b, align 4
   %inc = add nsw i32 %i, 1
   br label %for.cond

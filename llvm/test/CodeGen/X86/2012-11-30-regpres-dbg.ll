@@ -21,7 +21,7 @@ if.then:                                          ; preds = %entry
 
 if.end:                                           ; preds = %entry
   call void @llvm.dbg.declare(metadata %struct.btCompoundLeafCallback* %callback, metadata !3, metadata !{!"0x102"})
-  %m = getelementptr inbounds %struct.btCompoundLeafCallback* %callback, i64 0, i32 1
+  %m = getelementptr inbounds %struct.btCompoundLeafCallback, %struct.btCompoundLeafCallback* %callback, i64 0, i32 1
   store i32 0, i32* undef, align 8
   %cmp12447 = icmp sgt i32 undef, 0
   br i1 %cmp12447, label %for.body.lr.ph, label %invoke.cont44

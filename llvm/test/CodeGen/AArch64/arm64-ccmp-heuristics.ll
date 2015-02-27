@@ -30,22 +30,22 @@ for.body:                                         ; preds = %for.inc, %entry
   %i.092 = phi i64 [ 1, %entry ], [ %inc53, %for.inc ]
   %numLeft.091 = phi i32 [ 0, %entry ], [ %numLeft.1, %for.inc ]
   %2 = load i8** @mazeRoute, align 8, !tbaa !3
-  %arrayidx = getelementptr inbounds i8* %2, i64 %i.092
+  %arrayidx = getelementptr inbounds i8, i8* %2, i64 %i.092
   %3 = load i8* %arrayidx, align 1, !tbaa !1
   %tobool = icmp eq i8 %3, 0
   br i1 %tobool, label %for.inc, label %if.then
 
 if.then:                                          ; preds = %for.body
   %4 = load i64** @TOP, align 8, !tbaa !3
-  %arrayidx1 = getelementptr inbounds i64* %4, i64 %i.092
+  %arrayidx1 = getelementptr inbounds i64, i64* %4, i64 %i.092
   %5 = load i64* %arrayidx1, align 8, !tbaa !0
   %6 = load i64** @netsAssign, align 8, !tbaa !3
-  %arrayidx2 = getelementptr inbounds i64* %6, i64 %5
+  %arrayidx2 = getelementptr inbounds i64, i64* %6, i64 %5
   %7 = load i64* %arrayidx2, align 8, !tbaa !0
   %8 = load i64** @BOT, align 8, !tbaa !3
-  %arrayidx3 = getelementptr inbounds i64* %8, i64 %i.092
+  %arrayidx3 = getelementptr inbounds i64, i64* %8, i64 %i.092
   %9 = load i64* %arrayidx3, align 8, !tbaa !0
-  %arrayidx4 = getelementptr inbounds i64* %6, i64 %9
+  %arrayidx4 = getelementptr inbounds i64, i64* %6, i64 %9
   %10 = load i64* %arrayidx4, align 8, !tbaa !0
   %cmp5 = icmp ugt i64 %i.092, 1
   %cmp6 = icmp ugt i64 %10, 1
@@ -65,14 +65,14 @@ land.lhs.true7.if.else_crit_edge:                 ; preds = %land.lhs.true7
 
 if.then9:                                         ; preds = %land.lhs.true7
   %12 = load i8** @mazeRoute, align 8, !tbaa !3
-  %arrayidx10 = getelementptr inbounds i8* %12, i64 %i.092
+  %arrayidx10 = getelementptr inbounds i8, i8* %12, i64 %i.092
   store i8 0, i8* %arrayidx10, align 1, !tbaa !1
   %13 = load i64** @TOP, align 8, !tbaa !3
-  %arrayidx11 = getelementptr inbounds i64* %13, i64 %i.092
+  %arrayidx11 = getelementptr inbounds i64, i64* %13, i64 %i.092
   %14 = load i64* %arrayidx11, align 8, !tbaa !0
   tail call fastcc void @CleanNet(i64 %14)
   %15 = load i64** @BOT, align 8, !tbaa !3
-  %arrayidx12 = getelementptr inbounds i64* %15, i64 %i.092
+  %arrayidx12 = getelementptr inbounds i64, i64* %15, i64 %i.092
   %16 = load i64* %arrayidx12, align 8, !tbaa !0
   tail call fastcc void @CleanNet(i64 %16)
   br label %for.inc
@@ -92,14 +92,14 @@ land.lhs.true16:                                  ; preds = %if.else
 
 if.then20:                                        ; preds = %land.lhs.true16
   %19 = load i8** @mazeRoute, align 8, !tbaa !3
-  %arrayidx21 = getelementptr inbounds i8* %19, i64 %i.092
+  %arrayidx21 = getelementptr inbounds i8, i8* %19, i64 %i.092
   store i8 0, i8* %arrayidx21, align 1, !tbaa !1
   %20 = load i64** @TOP, align 8, !tbaa !3
-  %arrayidx22 = getelementptr inbounds i64* %20, i64 %i.092
+  %arrayidx22 = getelementptr inbounds i64, i64* %20, i64 %i.092
   %21 = load i64* %arrayidx22, align 8, !tbaa !0
   tail call fastcc void @CleanNet(i64 %21)
   %22 = load i64** @BOT, align 8, !tbaa !3
-  %arrayidx23 = getelementptr inbounds i64* %22, i64 %i.092
+  %arrayidx23 = getelementptr inbounds i64, i64* %22, i64 %i.092
   %23 = load i64* %arrayidx23, align 8, !tbaa !0
   tail call fastcc void @CleanNet(i64 %23)
   br label %for.inc
@@ -120,14 +120,14 @@ land.lhs.true28:                                  ; preds = %land.lhs.true26
 
 if.then32:                                        ; preds = %land.lhs.true28
   %25 = load i8** @mazeRoute, align 8, !tbaa !3
-  %arrayidx33 = getelementptr inbounds i8* %25, i64 %i.092
+  %arrayidx33 = getelementptr inbounds i8, i8* %25, i64 %i.092
   store i8 0, i8* %arrayidx33, align 1, !tbaa !1
   %26 = load i64** @TOP, align 8, !tbaa !3
-  %arrayidx34 = getelementptr inbounds i64* %26, i64 %i.092
+  %arrayidx34 = getelementptr inbounds i64, i64* %26, i64 %i.092
   %27 = load i64* %arrayidx34, align 8, !tbaa !0
   tail call fastcc void @CleanNet(i64 %27)
   %28 = load i64** @BOT, align 8, !tbaa !3
-  %arrayidx35 = getelementptr inbounds i64* %28, i64 %i.092
+  %arrayidx35 = getelementptr inbounds i64, i64* %28, i64 %i.092
   %29 = load i64* %arrayidx35, align 8, !tbaa !0
   tail call fastcc void @CleanNet(i64 %29)
   br label %for.inc
@@ -150,14 +150,14 @@ land.lhs.true40:                                  ; preds = %land.lhs.true38
 
 if.then44:                                        ; preds = %land.lhs.true40
   %32 = load i8** @mazeRoute, align 8, !tbaa !3
-  %arrayidx45 = getelementptr inbounds i8* %32, i64 %i.092
+  %arrayidx45 = getelementptr inbounds i8, i8* %32, i64 %i.092
   store i8 0, i8* %arrayidx45, align 1, !tbaa !1
   %33 = load i64** @TOP, align 8, !tbaa !3
-  %arrayidx46 = getelementptr inbounds i64* %33, i64 %i.092
+  %arrayidx46 = getelementptr inbounds i64, i64* %33, i64 %i.092
   %34 = load i64* %arrayidx46, align 8, !tbaa !0
   tail call fastcc void @CleanNet(i64 %34)
   %35 = load i64** @BOT, align 8, !tbaa !3
-  %arrayidx47 = getelementptr inbounds i64* %35, i64 %i.092
+  %arrayidx47 = getelementptr inbounds i64, i64* %35, i64 %i.092
   %36 = load i64* %arrayidx47, align 8, !tbaa !0
   tail call fastcc void @CleanNet(i64 %36)
   br label %for.inc

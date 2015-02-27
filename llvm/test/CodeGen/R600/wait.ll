@@ -8,7 +8,7 @@
 ; CHECK: s_endpgm
 define void @main(<16 x i8> addrspace(2)* inreg %arg, <16 x i8> addrspace(2)* inreg %arg1, <32 x i8> addrspace(2)* inreg %arg2, <16 x i8> addrspace(2)* inreg %arg3, <16 x i8> addrspace(2)* inreg %arg4, i32 inreg %arg5, i32 %arg6, i32 %arg7, i32 %arg8, i32 %arg9, float addrspace(2)* inreg %constptr) #0 {
 main_body:
-  %tmp = getelementptr <16 x i8> addrspace(2)* %arg3, i32 0
+  %tmp = getelementptr <16 x i8>, <16 x i8> addrspace(2)* %arg3, i32 0
   %tmp10 = load <16 x i8> addrspace(2)* %tmp, !tbaa !0
   %tmp11 = call <4 x float> @llvm.SI.vs.load.input(<16 x i8> %tmp10, i32 0, i32 %arg6)
   %tmp12 = extractelement <4 x float> %tmp11, i32 0
@@ -17,7 +17,7 @@ main_body:
   %tmp14 = extractelement <4 x float> %tmp11, i32 2
 ;  %tmp15 = extractelement <4 x float> %tmp11, i32 3
   %tmp15 = load float addrspace(2)* %constptr, align 4 ; Force waiting for expcnt and lgkmcnt
-  %tmp16 = getelementptr <16 x i8> addrspace(2)* %arg3, i32 1
+  %tmp16 = getelementptr <16 x i8>, <16 x i8> addrspace(2)* %arg3, i32 1
   %tmp17 = load <16 x i8> addrspace(2)* %tmp16, !tbaa !0
   %tmp18 = call <4 x float> @llvm.SI.vs.load.input(<16 x i8> %tmp17, i32 0, i32 %arg6)
   %tmp19 = extractelement <4 x float> %tmp18, i32 0

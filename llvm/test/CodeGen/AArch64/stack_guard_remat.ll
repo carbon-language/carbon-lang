@@ -30,7 +30,7 @@ entry:
   %a1 = alloca [256 x i32], align 4
   %0 = bitcast [256 x i32]* %a1 to i8*
   call void @llvm.lifetime.start(i64 1024, i8* %0)
-  %arraydecay = getelementptr inbounds [256 x i32]* %a1, i64 0, i64 0
+  %arraydecay = getelementptr inbounds [256 x i32], [256 x i32]* %a1, i64 0, i64 0
   call void @foo3(i32* %arraydecay)
   call void asm sideeffect "foo2", "~{w0},~{w1},~{w2},~{w3},~{w4},~{w5},~{w6},~{w7},~{w8},~{w9},~{w10},~{w11},~{w12},~{w13},~{w14},~{w15},~{w16},~{w17},~{w18},~{w19},~{w20},~{w21},~{w22},~{w23},~{w24},~{w25},~{w26},~{w27},~{w28},~{w29},~{w30}"()
   call void @llvm.lifetime.end(i64 1024, i8* %0)

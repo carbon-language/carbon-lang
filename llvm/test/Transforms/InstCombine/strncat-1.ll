@@ -17,19 +17,19 @@ define i32 @main() {
 ; CHECK: call i32 @puts
 
   %target = alloca [1024 x i8]
-  %arg1 = getelementptr [1024 x i8]* %target, i32 0, i32 0
+  %arg1 = getelementptr [1024 x i8], [1024 x i8]* %target, i32 0, i32 0
   store i8 0, i8* %arg1
 
   ; rslt1 = strncat(target, "hello\00")
-  %arg2 = getelementptr [6 x i8]* @hello, i32 0, i32 0
+  %arg2 = getelementptr [6 x i8], [6 x i8]* @hello, i32 0, i32 0
   %rslt1 = call i8* @strncat(i8* %arg1, i8* %arg2, i32 6)
 
   ; rslt2 = strncat(rslt1, "\00")
-  %arg3 = getelementptr [1 x i8]* @null, i32 0, i32 0
+  %arg3 = getelementptr [1 x i8], [1 x i8]* @null, i32 0, i32 0
   %rslt2 = call i8* @strncat(i8* %rslt1, i8* %arg3, i32 42)
 
   ; rslt3 = strncat(rslt2, "\00hello\00")
-  %arg4 = getelementptr [7 x i8]* @null_hello, i32 0, i32 0
+  %arg4 = getelementptr [7 x i8], [7 x i8]* @null_hello, i32 0, i32 0
   %rslt3 = call i8* @strncat(i8* %rslt2, i8* %arg4, i32 42)
 
   call i32 @puts(i8* %rslt3)

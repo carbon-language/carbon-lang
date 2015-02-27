@@ -114,55 +114,55 @@ entry:
   store i32 %call3, i32* %ptr, align 4
   call void @end_addrof()
   %call4 = call signext i16 @get_small_nonchar()
-  %arrayidx = getelementptr inbounds [2 x i16]* %small2, i32 0, i64 0
+  %arrayidx = getelementptr inbounds [2 x i16], [2 x i16]* %small2, i32 0, i64 0
   store i16 %call4, i16* %arrayidx, align 2
   call void @end_small_nonchar()
   %call5 = call i32 @get_large_nonchar()
-  %arrayidx6 = getelementptr inbounds [8 x i32]* %large2, i32 0, i64 0
+  %arrayidx6 = getelementptr inbounds [8 x i32], [8 x i32]* %large2, i32 0, i64 0
   store i32 %call5, i32* %arrayidx6, align 4
   call void @end_large_nonchar()
   %call7 = call signext i8 @get_small_char()
-  %arrayidx8 = getelementptr inbounds [2 x i8]* %small, i32 0, i64 0
+  %arrayidx8 = getelementptr inbounds [2 x i8], [2 x i8]* %small, i32 0, i64 0
   store i8 %call7, i8* %arrayidx8, align 1
   call void @end_small_char()
   %call9 = call signext i8 @get_large_char()
-  %arrayidx10 = getelementptr inbounds [8 x i8]* %large, i32 0, i64 0
+  %arrayidx10 = getelementptr inbounds [8 x i8], [8 x i8]* %large, i32 0, i64 0
   store i8 %call9, i8* %arrayidx10, align 1
   call void @end_large_char()
   %call11 = call signext i8 @get_struct_large_char()
-  %foo = getelementptr inbounds %struct.struct_large_char* %a, i32 0, i32 0
-  %arrayidx12 = getelementptr inbounds [8 x i8]* %foo, i32 0, i64 0
+  %foo = getelementptr inbounds %struct.struct_large_char, %struct.struct_large_char* %a, i32 0, i32 0
+  %arrayidx12 = getelementptr inbounds [8 x i8], [8 x i8]* %foo, i32 0, i64 0
   store i8 %call11, i8* %arrayidx12, align 1
   call void @end_struct_large_char()
   %call13 = call signext i8 @get_struct_small_char()
-  %foo14 = getelementptr inbounds %struct.struct_small_char* %b, i32 0, i32 0
-  %arrayidx15 = getelementptr inbounds [2 x i8]* %foo14, i32 0, i64 0
+  %foo14 = getelementptr inbounds %struct.struct_small_char, %struct.struct_small_char* %b, i32 0, i32 0
+  %arrayidx15 = getelementptr inbounds [2 x i8], [2 x i8]* %foo14, i32 0, i64 0
   store i8 %call13, i8* %arrayidx15, align 1
   call void @end_struct_small_char()
   %call16 = call i32 @get_struct_large_nonchar()
-  %foo17 = getelementptr inbounds %struct.struct_large_nonchar* %c, i32 0, i32 0
-  %arrayidx18 = getelementptr inbounds [8 x i32]* %foo17, i32 0, i64 0
+  %foo17 = getelementptr inbounds %struct.struct_large_nonchar, %struct.struct_large_nonchar* %c, i32 0, i32 0
+  %arrayidx18 = getelementptr inbounds [8 x i32], [8 x i32]* %foo17, i32 0, i64 0
   store i32 %call16, i32* %arrayidx18, align 4
   call void @end_struct_large_nonchar()
   %call19 = call signext i16 @get_struct_small_nonchar()
-  %foo20 = getelementptr inbounds %struct.struct_small_nonchar* %d, i32 0, i32 0
-  %arrayidx21 = getelementptr inbounds [2 x i16]* %foo20, i32 0, i64 0
+  %foo20 = getelementptr inbounds %struct.struct_small_nonchar, %struct.struct_small_nonchar* %d, i32 0, i32 0
+  %arrayidx21 = getelementptr inbounds [2 x i16], [2 x i16]* %foo20, i32 0, i64 0
   store i16 %call19, i16* %arrayidx21, align 2
   call void @end_struct_small_nonchar()
-  %arraydecay = getelementptr inbounds [8 x i8]* %large, i32 0, i32 0
-  %arraydecay22 = getelementptr inbounds [2 x i8]* %small, i32 0, i32 0
-  %arraydecay23 = getelementptr inbounds [8 x i32]* %large2, i32 0, i32 0
-  %arraydecay24 = getelementptr inbounds [2 x i16]* %small2, i32 0, i32 0
+  %arraydecay = getelementptr inbounds [8 x i8], [8 x i8]* %large, i32 0, i32 0
+  %arraydecay22 = getelementptr inbounds [2 x i8], [2 x i8]* %small, i32 0, i32 0
+  %arraydecay23 = getelementptr inbounds [8 x i32], [8 x i32]* %large2, i32 0, i32 0
+  %arraydecay24 = getelementptr inbounds [2 x i16], [2 x i16]* %small2, i32 0, i32 0
   %0 = load i32* %x, align 4
   %1 = load i32* %y, align 4
   %2 = load i32* %z, align 4
-  %coerce.dive = getelementptr %struct.struct_large_char* %a, i32 0, i32 0
+  %coerce.dive = getelementptr %struct.struct_large_char, %struct.struct_large_char* %a, i32 0, i32 0
   %3 = bitcast [8 x i8]* %coerce.dive to i64*
   %4 = load i64* %3, align 1
-  %coerce.dive25 = getelementptr %struct.struct_small_char* %b, i32 0, i32 0
+  %coerce.dive25 = getelementptr %struct.struct_small_char, %struct.struct_small_char* %b, i32 0, i32 0
   %5 = bitcast [2 x i8]* %coerce.dive25 to i16*
   %6 = load i16* %5, align 1
-  %coerce.dive26 = getelementptr %struct.struct_small_nonchar* %d, i32 0, i32 0
+  %coerce.dive26 = getelementptr %struct.struct_small_nonchar, %struct.struct_small_nonchar* %d, i32 0, i32 0
   %7 = bitcast [2 x i16]* %coerce.dive26 to i32*
   %8 = load i32* %7, align 1
   call void @takes_all(i64 %4, i16 %6, %struct.struct_large_nonchar* byval align 8 %c, i32 %8, i8* %arraydecay, i8* %arraydecay22, i32* %arraydecay23, i16* %arraydecay24, i32* %ptr, i32 %0, i32 %1, i32 %2)
@@ -258,55 +258,55 @@ entry:
   store i32 %call3, i32* %ptr, align 4
   call void @end_addrof()
   %call4 = call signext i16 @get_small_nonchar()
-  %arrayidx = getelementptr inbounds [2 x i16]* %small2, i32 0, i64 0
+  %arrayidx = getelementptr inbounds [2 x i16], [2 x i16]* %small2, i32 0, i64 0
   store i16 %call4, i16* %arrayidx, align 2
   call void @end_small_nonchar()
   %call5 = call i32 @get_large_nonchar()
-  %arrayidx6 = getelementptr inbounds [8 x i32]* %large2, i32 0, i64 0
+  %arrayidx6 = getelementptr inbounds [8 x i32], [8 x i32]* %large2, i32 0, i64 0
   store i32 %call5, i32* %arrayidx6, align 4
   call void @end_large_nonchar()
   %call7 = call signext i8 @get_small_char()
-  %arrayidx8 = getelementptr inbounds [2 x i8]* %small, i32 0, i64 0
+  %arrayidx8 = getelementptr inbounds [2 x i8], [2 x i8]* %small, i32 0, i64 0
   store i8 %call7, i8* %arrayidx8, align 1
   call void @end_small_char()
   %call9 = call signext i8 @get_large_char()
-  %arrayidx10 = getelementptr inbounds [8 x i8]* %large, i32 0, i64 0
+  %arrayidx10 = getelementptr inbounds [8 x i8], [8 x i8]* %large, i32 0, i64 0
   store i8 %call9, i8* %arrayidx10, align 1
   call void @end_large_char()
   %call11 = call signext i8 @get_struct_large_char()
-  %foo = getelementptr inbounds %struct.struct_large_char* %a, i32 0, i32 0
-  %arrayidx12 = getelementptr inbounds [8 x i8]* %foo, i32 0, i64 0
+  %foo = getelementptr inbounds %struct.struct_large_char, %struct.struct_large_char* %a, i32 0, i32 0
+  %arrayidx12 = getelementptr inbounds [8 x i8], [8 x i8]* %foo, i32 0, i64 0
   store i8 %call11, i8* %arrayidx12, align 1
   call void @end_struct_large_char()
   %call13 = call signext i8 @get_struct_small_char()
-  %foo14 = getelementptr inbounds %struct.struct_small_char* %b, i32 0, i32 0
-  %arrayidx15 = getelementptr inbounds [2 x i8]* %foo14, i32 0, i64 0
+  %foo14 = getelementptr inbounds %struct.struct_small_char, %struct.struct_small_char* %b, i32 0, i32 0
+  %arrayidx15 = getelementptr inbounds [2 x i8], [2 x i8]* %foo14, i32 0, i64 0
   store i8 %call13, i8* %arrayidx15, align 1
   call void @end_struct_small_char()
   %call16 = call i32 @get_struct_large_nonchar()
-  %foo17 = getelementptr inbounds %struct.struct_large_nonchar* %c, i32 0, i32 0
-  %arrayidx18 = getelementptr inbounds [8 x i32]* %foo17, i32 0, i64 0
+  %foo17 = getelementptr inbounds %struct.struct_large_nonchar, %struct.struct_large_nonchar* %c, i32 0, i32 0
+  %arrayidx18 = getelementptr inbounds [8 x i32], [8 x i32]* %foo17, i32 0, i64 0
   store i32 %call16, i32* %arrayidx18, align 4
   call void @end_struct_large_nonchar()
   %call19 = call signext i16 @get_struct_small_nonchar()
-  %foo20 = getelementptr inbounds %struct.struct_small_nonchar* %d, i32 0, i32 0
-  %arrayidx21 = getelementptr inbounds [2 x i16]* %foo20, i32 0, i64 0
+  %foo20 = getelementptr inbounds %struct.struct_small_nonchar, %struct.struct_small_nonchar* %d, i32 0, i32 0
+  %arrayidx21 = getelementptr inbounds [2 x i16], [2 x i16]* %foo20, i32 0, i64 0
   store i16 %call19, i16* %arrayidx21, align 2
   call void @end_struct_small_nonchar()
-  %arraydecay = getelementptr inbounds [8 x i8]* %large, i32 0, i32 0
-  %arraydecay22 = getelementptr inbounds [2 x i8]* %small, i32 0, i32 0
-  %arraydecay23 = getelementptr inbounds [8 x i32]* %large2, i32 0, i32 0
-  %arraydecay24 = getelementptr inbounds [2 x i16]* %small2, i32 0, i32 0
+  %arraydecay = getelementptr inbounds [8 x i8], [8 x i8]* %large, i32 0, i32 0
+  %arraydecay22 = getelementptr inbounds [2 x i8], [2 x i8]* %small, i32 0, i32 0
+  %arraydecay23 = getelementptr inbounds [8 x i32], [8 x i32]* %large2, i32 0, i32 0
+  %arraydecay24 = getelementptr inbounds [2 x i16], [2 x i16]* %small2, i32 0, i32 0
   %0 = load i32* %x, align 4
   %1 = load i32* %y, align 4
   %2 = load i32* %z, align 4
-  %coerce.dive = getelementptr %struct.struct_large_char* %a, i32 0, i32 0
+  %coerce.dive = getelementptr %struct.struct_large_char, %struct.struct_large_char* %a, i32 0, i32 0
   %3 = bitcast [8 x i8]* %coerce.dive to i64*
   %4 = load i64* %3, align 1
-  %coerce.dive25 = getelementptr %struct.struct_small_char* %b, i32 0, i32 0
+  %coerce.dive25 = getelementptr %struct.struct_small_char, %struct.struct_small_char* %b, i32 0, i32 0
   %5 = bitcast [2 x i8]* %coerce.dive25 to i16*
   %6 = load i16* %5, align 1
-  %coerce.dive26 = getelementptr %struct.struct_small_nonchar* %d, i32 0, i32 0
+  %coerce.dive26 = getelementptr %struct.struct_small_nonchar, %struct.struct_small_nonchar* %d, i32 0, i32 0
   %7 = bitcast [2 x i16]* %coerce.dive26 to i32*
   %8 = load i32* %7, align 1
   call void @takes_all(i64 %4, i16 %6, %struct.struct_large_nonchar* byval align 8 %c, i32 %8, i8* %arraydecay, i8* %arraydecay22, i32* %arraydecay23, i16* %arraydecay24, i32* %ptr, i32 %0, i32 %1, i32 %2)
@@ -390,55 +390,55 @@ entry:
   store i32 %call3, i32* %ptr, align 4
   call void @end_addrof()
   %call4 = call signext i16 @get_small_nonchar()
-  %arrayidx = getelementptr inbounds [2 x i16]* %small2, i32 0, i64 0
+  %arrayidx = getelementptr inbounds [2 x i16], [2 x i16]* %small2, i32 0, i64 0
   store i16 %call4, i16* %arrayidx, align 2
   call void @end_small_nonchar()
   %call5 = call i32 @get_large_nonchar()
-  %arrayidx6 = getelementptr inbounds [8 x i32]* %large2, i32 0, i64 0
+  %arrayidx6 = getelementptr inbounds [8 x i32], [8 x i32]* %large2, i32 0, i64 0
   store i32 %call5, i32* %arrayidx6, align 4
   call void @end_large_nonchar()
   %call7 = call signext i8 @get_small_char()
-  %arrayidx8 = getelementptr inbounds [2 x i8]* %small, i32 0, i64 0
+  %arrayidx8 = getelementptr inbounds [2 x i8], [2 x i8]* %small, i32 0, i64 0
   store i8 %call7, i8* %arrayidx8, align 1
   call void @end_small_char()
   %call9 = call signext i8 @get_large_char()
-  %arrayidx10 = getelementptr inbounds [8 x i8]* %large, i32 0, i64 0
+  %arrayidx10 = getelementptr inbounds [8 x i8], [8 x i8]* %large, i32 0, i64 0
   store i8 %call9, i8* %arrayidx10, align 1
   call void @end_large_char()
   %call11 = call signext i8 @get_struct_large_char()
-  %foo = getelementptr inbounds %struct.struct_large_char* %a, i32 0, i32 0
-  %arrayidx12 = getelementptr inbounds [8 x i8]* %foo, i32 0, i64 0
+  %foo = getelementptr inbounds %struct.struct_large_char, %struct.struct_large_char* %a, i32 0, i32 0
+  %arrayidx12 = getelementptr inbounds [8 x i8], [8 x i8]* %foo, i32 0, i64 0
   store i8 %call11, i8* %arrayidx12, align 1
   call void @end_struct_large_char()
   %call13 = call signext i8 @get_struct_small_char()
-  %foo14 = getelementptr inbounds %struct.struct_small_char* %b, i32 0, i32 0
-  %arrayidx15 = getelementptr inbounds [2 x i8]* %foo14, i32 0, i64 0
+  %foo14 = getelementptr inbounds %struct.struct_small_char, %struct.struct_small_char* %b, i32 0, i32 0
+  %arrayidx15 = getelementptr inbounds [2 x i8], [2 x i8]* %foo14, i32 0, i64 0
   store i8 %call13, i8* %arrayidx15, align 1
   call void @end_struct_small_char()
   %call16 = call i32 @get_struct_large_nonchar()
-  %foo17 = getelementptr inbounds %struct.struct_large_nonchar* %c, i32 0, i32 0
-  %arrayidx18 = getelementptr inbounds [8 x i32]* %foo17, i32 0, i64 0
+  %foo17 = getelementptr inbounds %struct.struct_large_nonchar, %struct.struct_large_nonchar* %c, i32 0, i32 0
+  %arrayidx18 = getelementptr inbounds [8 x i32], [8 x i32]* %foo17, i32 0, i64 0
   store i32 %call16, i32* %arrayidx18, align 4
   call void @end_struct_large_nonchar()
   %call19 = call signext i16 @get_struct_small_nonchar()
-  %foo20 = getelementptr inbounds %struct.struct_small_nonchar* %d, i32 0, i32 0
-  %arrayidx21 = getelementptr inbounds [2 x i16]* %foo20, i32 0, i64 0
+  %foo20 = getelementptr inbounds %struct.struct_small_nonchar, %struct.struct_small_nonchar* %d, i32 0, i32 0
+  %arrayidx21 = getelementptr inbounds [2 x i16], [2 x i16]* %foo20, i32 0, i64 0
   store i16 %call19, i16* %arrayidx21, align 2
   call void @end_struct_small_nonchar()
-  %arraydecay = getelementptr inbounds [8 x i8]* %large, i32 0, i32 0
-  %arraydecay22 = getelementptr inbounds [2 x i8]* %small, i32 0, i32 0
-  %arraydecay23 = getelementptr inbounds [8 x i32]* %large2, i32 0, i32 0
-  %arraydecay24 = getelementptr inbounds [2 x i16]* %small2, i32 0, i32 0
+  %arraydecay = getelementptr inbounds [8 x i8], [8 x i8]* %large, i32 0, i32 0
+  %arraydecay22 = getelementptr inbounds [2 x i8], [2 x i8]* %small, i32 0, i32 0
+  %arraydecay23 = getelementptr inbounds [8 x i32], [8 x i32]* %large2, i32 0, i32 0
+  %arraydecay24 = getelementptr inbounds [2 x i16], [2 x i16]* %small2, i32 0, i32 0
   %0 = load i32* %x, align 4
   %1 = load i32* %y, align 4
   %2 = load i32* %z, align 4
-  %coerce.dive = getelementptr %struct.struct_large_char* %a, i32 0, i32 0
+  %coerce.dive = getelementptr %struct.struct_large_char, %struct.struct_large_char* %a, i32 0, i32 0
   %3 = bitcast [8 x i8]* %coerce.dive to i64*
   %4 = load i64* %3, align 1
-  %coerce.dive25 = getelementptr %struct.struct_small_char* %b, i32 0, i32 0
+  %coerce.dive25 = getelementptr %struct.struct_small_char, %struct.struct_small_char* %b, i32 0, i32 0
   %5 = bitcast [2 x i8]* %coerce.dive25 to i16*
   %6 = load i16* %5, align 1
-  %coerce.dive26 = getelementptr %struct.struct_small_nonchar* %d, i32 0, i32 0
+  %coerce.dive26 = getelementptr %struct.struct_small_nonchar, %struct.struct_small_nonchar* %d, i32 0, i32 0
   %7 = bitcast [2 x i16]* %coerce.dive26 to i32*
   %8 = load i32* %7, align 1
   call void @takes_all(i64 %4, i16 %6, %struct.struct_large_nonchar* byval align 8 %c, i32 %8, i8* %arraydecay, i8* %arraydecay22, i32* %arraydecay23, i16* %arraydecay24, i32* %ptr, i32 %0, i32 %1, i32 %2)
@@ -461,11 +461,11 @@ entry:
   store i32 %call, i32* %x, align 4
   call void @end_scalar1()
   %call1 = call signext i8 @get_large_char()
-  %arrayidx = getelementptr inbounds [8 x i8]* %large, i32 0, i64 0
+  %arrayidx = getelementptr inbounds [8 x i8], [8 x i8]* %large, i32 0, i64 0
   store i8 %call1, i8* %arrayidx, align 1
   call void @end_large_char()
   %0 = load i32* %x, align 4
-  %arraydecay = getelementptr inbounds [8 x i8]* %large, i32 0, i32 0
+  %arraydecay = getelementptr inbounds [8 x i8], [8 x i8]* %large, i32 0, i32 0
   call void @takes_two(i32 %0, i8* %arraydecay)
   ret void
 }

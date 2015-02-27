@@ -7,7 +7,7 @@ define void @func(i8* %i) nounwind ssp {
 ; CHECK: @__strcpy_chk(i8* %arraydecay, i8* %i, i64 32)
 entry:
   %s = alloca [32 x i8], align 16
-  %arraydecay = getelementptr inbounds [32 x i8]* %s, i32 0, i32 0
+  %arraydecay = getelementptr inbounds [32 x i8], [32 x i8]* %s, i32 0, i32 0
   %call = call i8* @__strcpy_chk(i8* %arraydecay, i8* %i, i64 32)
   call void @func2(i8* %arraydecay)
   ret void

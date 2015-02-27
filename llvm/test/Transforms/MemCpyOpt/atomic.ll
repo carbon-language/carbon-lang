@@ -16,9 +16,9 @@ define void @test1() nounwind uwtable ssp {
   %x = alloca [101 x i32], align 16
   %bc = bitcast [101 x i32]* %x to i8*
   call void @llvm.memset.p0i8.i64(i8* %bc, i8 0, i64 400, i32 16, i1 false)
-  %gep1 = getelementptr inbounds [101 x i32]* %x, i32 0, i32 100
+  %gep1 = getelementptr inbounds [101 x i32], [101 x i32]* %x, i32 0, i32 100
   store atomic i32 0, i32* %gep1 unordered, align 4
-  %gep2 = getelementptr inbounds [101 x i32]* %x, i32 0, i32 0
+  %gep2 = getelementptr inbounds [101 x i32], [101 x i32]* %x, i32 0, i32 0
   call void @otherf(i32* %gep2)
   ret void
 }

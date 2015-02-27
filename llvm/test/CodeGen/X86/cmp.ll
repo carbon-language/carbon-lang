@@ -89,7 +89,7 @@ declare i32 @foo(...)
 
 define i32 @test6() nounwind align 2 {
   %A = alloca {i64, i64}, align 8
-  %B = getelementptr inbounds {i64, i64}* %A, i64 0, i32 1
+  %B = getelementptr inbounds {i64, i64}, {i64, i64}* %A, i64 0, i32 1
   %C = load i64* %B
   %D = icmp eq i64 %C, 0
   br i1 %D, label %T, label %F

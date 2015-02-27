@@ -13,7 +13,7 @@ entry:
   br i1 undef, label %bb85, label %bb
 
 bb:                                               ; preds = %entry
-  %0 = getelementptr inbounds %bar* null, i32 0, i32 0, i32 0, i32 2 ; <float*> [#uses=2]
+  %0 = getelementptr inbounds %bar, %bar* null, i32 0, i32 0, i32 0, i32 2 ; <float*> [#uses=2]
   %1 = load float* undef, align 4                 ; <float> [#uses=1]
   %2 = fsub float 0.000000e+00, undef             ; <float> [#uses=2]
   %3 = fmul float 0.000000e+00, undef             ; <float> [#uses=1]

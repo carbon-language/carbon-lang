@@ -19,13 +19,13 @@ target triple = "i386-apple-darwin7"
 
 define void @_Z12testfunctionR1A(%struct.A* %iter) {
 entry:
-	%0 = getelementptr %struct.A* %iter, i32 0, i32 0		; <i32*> [#uses=3]
+	%0 = getelementptr %struct.A, %struct.A* %iter, i32 0, i32 0		; <i32*> [#uses=3]
 	%1 = load i32* %0, align 4		; <i32> [#uses=2]
 	%2 = icmp eq i32 %1, 0		; <i1> [#uses=1]
 	br i1 %2, label %return, label %bb.nph
 
 bb.nph:		; preds = %entry
-	%3 = getelementptr %struct.A* %iter, i32 0, i32 1		; <i32*> [#uses=1]
+	%3 = getelementptr %struct.A, %struct.A* %iter, i32 0, i32 1		; <i32*> [#uses=1]
 	br label %bb
 
 bb:		; preds = %bb3.backedge, %bb.nph

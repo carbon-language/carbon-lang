@@ -12,17 +12,17 @@ entry:
 	%0 = alloca i8, i32 undef, align 4        ; <i8*> [#uses=2]
 	%1 = call  i8* @__strcpy_chk(i8* %0, i8* %tag, i32 -1) nounwind; <i8*> [#uses=0]
 	%2 = call  i8* @__strcat_chk(i8* %0, i8* getelementptr ([2 x i8]* @.str16, i32 0, i32 0), i32 -1) nounwind; <i8*> [#uses=0]
-	%3 = getelementptr %struct.vorbis_comment* %vc, i32 0, i32 0; <i8***> [#uses=1]
+	%3 = getelementptr %struct.vorbis_comment, %struct.vorbis_comment* %vc, i32 0, i32 0; <i8***> [#uses=1]
 	br label %bb11
 
 bb6:                                              ; preds = %bb11
 	%4 = load i8*** %3, align 4               ; <i8**> [#uses=1]
-	%scevgep = getelementptr i8** %4, i32 %8  ; <i8**> [#uses=1]
+	%scevgep = getelementptr i8*, i8** %4, i32 %8  ; <i8**> [#uses=1]
 	%5 = load i8** %scevgep, align 4          ; <i8*> [#uses=1]
 	br label %bb3.i
 
 bb3.i:                                            ; preds = %bb3.i, %bb6
-	%scevgep7.i = getelementptr i8* %5, i32 0 ; <i8*> [#uses=1]
+	%scevgep7.i = getelementptr i8, i8* %5, i32 0 ; <i8*> [#uses=1]
 	%6 = load i8* %scevgep7.i, align 1        ; <i8> [#uses=0]
 	br i1 undef, label %bb3.i, label %bb10
 

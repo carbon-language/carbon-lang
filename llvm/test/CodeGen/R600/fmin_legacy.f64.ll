@@ -16,8 +16,8 @@ define void @test_fmin_legacy_f64(<4 x double> addrspace(1)* %out, <4 x double> 
 ; FUNC-LABEL: @test_fmin_legacy_ule_f64
 define void @test_fmin_legacy_ule_f64(double addrspace(1)* %out, double addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.0 = getelementptr double addrspace(1)* %in, i32 %tid
-  %gep.1 = getelementptr double addrspace(1)* %gep.0, i32 1
+  %gep.0 = getelementptr double, double addrspace(1)* %in, i32 %tid
+  %gep.1 = getelementptr double, double addrspace(1)* %gep.0, i32 1
 
   %a = load double addrspace(1)* %gep.0, align 8
   %b = load double addrspace(1)* %gep.1, align 8
@@ -31,8 +31,8 @@ define void @test_fmin_legacy_ule_f64(double addrspace(1)* %out, double addrspac
 ; FUNC-LABEL: @test_fmin_legacy_ole_f64
 define void @test_fmin_legacy_ole_f64(double addrspace(1)* %out, double addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.0 = getelementptr double addrspace(1)* %in, i32 %tid
-  %gep.1 = getelementptr double addrspace(1)* %gep.0, i32 1
+  %gep.0 = getelementptr double, double addrspace(1)* %in, i32 %tid
+  %gep.1 = getelementptr double, double addrspace(1)* %gep.0, i32 1
 
   %a = load double addrspace(1)* %gep.0, align 8
   %b = load double addrspace(1)* %gep.1, align 8
@@ -46,8 +46,8 @@ define void @test_fmin_legacy_ole_f64(double addrspace(1)* %out, double addrspac
 ; FUNC-LABEL: @test_fmin_legacy_olt_f64
 define void @test_fmin_legacy_olt_f64(double addrspace(1)* %out, double addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.0 = getelementptr double addrspace(1)* %in, i32 %tid
-  %gep.1 = getelementptr double addrspace(1)* %gep.0, i32 1
+  %gep.0 = getelementptr double, double addrspace(1)* %in, i32 %tid
+  %gep.1 = getelementptr double, double addrspace(1)* %gep.0, i32 1
 
   %a = load double addrspace(1)* %gep.0, align 8
   %b = load double addrspace(1)* %gep.1, align 8
@@ -61,8 +61,8 @@ define void @test_fmin_legacy_olt_f64(double addrspace(1)* %out, double addrspac
 ; FUNC-LABEL: @test_fmin_legacy_ult_f64
 define void @test_fmin_legacy_ult_f64(double addrspace(1)* %out, double addrspace(1)* %in) #0 {
   %tid = call i32 @llvm.r600.read.tidig.x() #1
-  %gep.0 = getelementptr double addrspace(1)* %in, i32 %tid
-  %gep.1 = getelementptr double addrspace(1)* %gep.0, i32 1
+  %gep.0 = getelementptr double, double addrspace(1)* %in, i32 %tid
+  %gep.1 = getelementptr double, double addrspace(1)* %gep.0, i32 1
 
   %a = load double addrspace(1)* %gep.0, align 8
   %b = load double addrspace(1)* %gep.1, align 8

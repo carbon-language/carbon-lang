@@ -13,12 +13,12 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 
 define void @shuffle_operands1(double * noalias %from, double * noalias %to,
                                double %v1, double %v2) {
-  %from_1 = getelementptr double *%from, i64 1
+  %from_1 = getelementptr double, double *%from, i64 1
   %v0_1 = load double * %from
   %v0_2 = load double * %from_1
   %v1_1 = fadd double %v0_1, %v1
   %v1_2 = fadd double %v2, %v0_2
-  %to_2 = getelementptr double * %to, i64 1
+  %to_2 = getelementptr double, double * %to, i64 1
   store double %v1_1, double *%to
   store double %v1_2, double *%to_2
   ret void
@@ -35,12 +35,12 @@ br label %lp
 
 lp:
   %p = phi double [ 1.000000e+00, %lp ], [ 0.000000e+00, %entry ]
-  %from_1 = getelementptr double *%from, i64 1
+  %from_1 = getelementptr double, double *%from, i64 1
   %v0_1 = load double * %from
   %v0_2 = load double * %from_1
   %v1_1 = fadd double %v0_1, %p
   %v1_2 = fadd double %v0_1, %v0_2
-  %to_2 = getelementptr double * %to, i64 1
+  %to_2 = getelementptr double, double * %to, i64 1
   store double %v1_1, double *%to
   store double %v1_2, double *%to_2
 br i1 undef, label %lp, label %ext
@@ -60,12 +60,12 @@ br label %lp
 
 lp:
   %p = phi double [ 1.000000e+00, %lp ], [ 0.000000e+00, %entry ]
-  %from_1 = getelementptr double *%from, i64 1
+  %from_1 = getelementptr double, double *%from, i64 1
   %v0_1 = load double * %from
   %v0_2 = load double * %from_1
   %v1_1 = fadd double %p, %v0_1
   %v1_2 = fadd double %v0_2, %v0_1
-  %to_2 = getelementptr double * %to, i64 1
+  %to_2 = getelementptr double, double * %to, i64 1
   store double %v1_1, double *%to
   store double %v1_2, double *%to_2
 br i1 undef, label %lp, label %ext
@@ -85,12 +85,12 @@ br label %lp
 
 lp:
   %p = phi double [ 1.000000e+00, %lp ], [ 0.000000e+00, %entry ]
-  %from_1 = getelementptr double *%from, i64 1
+  %from_1 = getelementptr double, double *%from, i64 1
   %v0_1 = load double * %from
   %v0_2 = load double * %from_1
   %v1_1 = fadd double %p, %v0_1
   %v1_2 = fadd double %v0_1, %v0_2
-  %to_2 = getelementptr double * %to, i64 1
+  %to_2 = getelementptr double, double * %to, i64 1
   store double %v1_1, double *%to
   store double %v1_2, double *%to_2
 br i1 undef, label %lp, label %ext
@@ -111,12 +111,12 @@ br label %lp
 
 lp:
   %p = phi double [ 1.000000e+00, %lp ], [ 0.000000e+00, %entry ]
-  %from_1 = getelementptr double *%from, i64 1
+  %from_1 = getelementptr double, double *%from, i64 1
   %v0_1 = load double * %from
   %v0_2 = load double * %from_1
   %v1_1 = fadd double %v0_2, %v0_1
   %v1_2 = fadd double %p, %v0_1
-  %to_2 = getelementptr double * %to, i64 1
+  %to_2 = getelementptr double, double * %to, i64 1
   store double %v1_1, double *%to
   store double %v1_2, double *%to_2
 br i1 undef, label %lp, label %ext
@@ -136,12 +136,12 @@ br label %lp
 
 lp:
   %p = phi double [ 1.000000e+00, %lp ], [ 0.000000e+00, %entry ]
-  %from_1 = getelementptr double *%from, i64 1
+  %from_1 = getelementptr double, double *%from, i64 1
   %v0_1 = load double * %from
   %v0_2 = load double * %from_1
   %v1_1 = fadd double %v0_1, %v0_2
   %v1_2 = fadd double %p, %v0_1
-  %to_2 = getelementptr double * %to, i64 1
+  %to_2 = getelementptr double, double * %to, i64 1
   store double %v1_1, double *%to
   store double %v1_2, double *%to_2
 br i1 undef, label %lp, label %ext
@@ -162,12 +162,12 @@ br label %lp
 
 lp:
   %p = phi double [ 1.000000e+00, %lp ], [ 0.000000e+00, %entry ]
-  %from_1 = getelementptr double *%from, i64 1
+  %from_1 = getelementptr double, double *%from, i64 1
   %v0_1 = load double * %from
   %v0_2 = load double * %from_1
   %v1_1 = fadd double %v0_1, %v0_2
   %v1_2 = fadd double %v0_1, %p
-  %to_2 = getelementptr double * %to, i64 1
+  %to_2 = getelementptr double, double * %to, i64 1
   store double %v1_1, double *%to
   store double %v1_2, double *%to_2
 br i1 undef, label %lp, label %ext
@@ -200,28 +200,28 @@ for.body3:
   %1 = phi float [ %0, %for.cond1.preheader ], [ %10, %for.body3 ]
   %indvars.iv = phi i64 [ 0, %for.cond1.preheader ], [ %indvars.iv.next, %for.body3 ]
   %2 = add nsw i64 %indvars.iv, 1
-  %arrayidx = getelementptr inbounds [32000 x float]* @a, i64 0, i64 %2
+  %arrayidx = getelementptr inbounds [32000 x float], [32000 x float]* @a, i64 0, i64 %2
   %3 = load float* %arrayidx, align 4
-  %arrayidx5 = getelementptr inbounds [32000 x float]* @a, i64 0, i64 %indvars.iv
+  %arrayidx5 = getelementptr inbounds [32000 x float], [32000 x float]* @a, i64 0, i64 %indvars.iv
   %mul6 = fmul float %3, %1
   store float %mul6, float* %arrayidx5, align 4
   %4 = add nsw i64 %indvars.iv, 2
-  %arrayidx11 = getelementptr inbounds [32000 x float]* @a, i64 0, i64 %4
+  %arrayidx11 = getelementptr inbounds [32000 x float], [32000 x float]* @a, i64 0, i64 %4
   %5 = load float* %arrayidx11, align 4
   %mul15 = fmul float %5, %3
   store float %mul15, float* %arrayidx, align 4
   %6 = add nsw i64 %indvars.iv, 3
-  %arrayidx21 = getelementptr inbounds [32000 x float]* @a, i64 0, i64 %6
+  %arrayidx21 = getelementptr inbounds [32000 x float], [32000 x float]* @a, i64 0, i64 %6
   %7 = load float* %arrayidx21, align 4
   %mul25 = fmul float %7, %5
   store float %mul25, float* %arrayidx11, align 4
   %8 = add nsw i64 %indvars.iv, 4
-  %arrayidx31 = getelementptr inbounds [32000 x float]* @a, i64 0, i64 %8
+  %arrayidx31 = getelementptr inbounds [32000 x float], [32000 x float]* @a, i64 0, i64 %8
   %9 = load float* %arrayidx31, align 4
   %mul35 = fmul float %9, %7
   store float %mul35, float* %arrayidx21, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 5
-  %arrayidx41 = getelementptr inbounds [32000 x float]* @a, i64 0, i64 %indvars.iv.next
+  %arrayidx41 = getelementptr inbounds [32000 x float], [32000 x float]* @a, i64 0, i64 %indvars.iv.next
   %10 = load float* %arrayidx41, align 4
   %mul45 = fmul float %10, %9
   store float %mul45, float* %arrayidx31, align 4
@@ -245,12 +245,12 @@ define void @load_reorder_double(double* nocapture %c, double* noalias nocapture
   %2 = load double* %b
   %3 = fadd double %1, %2
   store double %3, double* %c
-  %4 = getelementptr inbounds double* %b, i64 1
+  %4 = getelementptr inbounds double, double* %b, i64 1
   %5 = load double* %4
-  %6 = getelementptr inbounds double* %a, i64 1
+  %6 = getelementptr inbounds double, double* %a, i64 1
   %7 = load double* %6
   %8 = fadd double %5, %7
-  %9 = getelementptr inbounds double* %c, i64 1
+  %9 = getelementptr inbounds double, double* %c, i64 1
   store double %8, double* %9
   ret void
 }
@@ -269,26 +269,26 @@ define void @load_reorder_float(float* nocapture %c, float* noalias nocapture re
   %2 = load float* %b
   %3 = fadd float %1, %2
   store float %3, float* %c
-  %4 = getelementptr inbounds float* %b, i64 1
+  %4 = getelementptr inbounds float, float* %b, i64 1
   %5 = load float* %4
-  %6 = getelementptr inbounds float* %a, i64 1
+  %6 = getelementptr inbounds float, float* %a, i64 1
   %7 = load float* %6
   %8 = fadd float %5, %7
-  %9 = getelementptr inbounds float* %c, i64 1
+  %9 = getelementptr inbounds float, float* %c, i64 1
   store float %8, float* %9
-  %10 = getelementptr inbounds float* %a, i64 2
+  %10 = getelementptr inbounds float, float* %a, i64 2
   %11 = load float* %10
-  %12 = getelementptr inbounds float* %b, i64 2
+  %12 = getelementptr inbounds float, float* %b, i64 2
   %13 = load float* %12
   %14 = fadd float %11, %13
-  %15 = getelementptr inbounds float* %c, i64 2
+  %15 = getelementptr inbounds float, float* %c, i64 2
   store float %14, float* %15
-  %16 = getelementptr inbounds float* %a, i64 3
+  %16 = getelementptr inbounds float, float* %a, i64 3
   %17 = load float* %16
-  %18 = getelementptr inbounds float* %b, i64 3
+  %18 = getelementptr inbounds float, float* %b, i64 3
   %19 = load float* %18
   %20 = fadd float %17, %19
-  %21 = getelementptr inbounds float* %c, i64 3
+  %21 = getelementptr inbounds float, float* %c, i64 3
   store float %20, float* %21
   ret void
 }
@@ -310,35 +310,35 @@ define void @opcode_reorder(float* noalias nocapture %a, float* noalias nocaptur
   %4 = load float* %d
   %5 = fadd float %3, %4
   store float %5, float* %a
-  %6 = getelementptr inbounds float* %d, i64 1
+  %6 = getelementptr inbounds float, float* %d, i64 1
   %7 = load float* %6
-  %8 = getelementptr inbounds float* %b, i64 1
+  %8 = getelementptr inbounds float, float* %b, i64 1
   %9 = load float* %8
-  %10 = getelementptr inbounds float* %c, i64 1
+  %10 = getelementptr inbounds float, float* %c, i64 1
   %11 = load float* %10
   %12 = fadd float %9, %11
   %13 = fadd float %7, %12
-  %14 = getelementptr inbounds float* %a, i64 1
+  %14 = getelementptr inbounds float, float* %a, i64 1
   store float %13, float* %14
-  %15 = getelementptr inbounds float* %b, i64 2
+  %15 = getelementptr inbounds float, float* %b, i64 2
   %16 = load float* %15
-  %17 = getelementptr inbounds float* %c, i64 2
+  %17 = getelementptr inbounds float, float* %c, i64 2
   %18 = load float* %17
   %19 = fadd float %16, %18
-  %20 = getelementptr inbounds float* %d, i64 2
+  %20 = getelementptr inbounds float, float* %d, i64 2
   %21 = load float* %20
   %22 = fadd float %19, %21
-  %23 = getelementptr inbounds float* %a, i64 2
+  %23 = getelementptr inbounds float, float* %a, i64 2
   store float %22, float* %23
-  %24 = getelementptr inbounds float* %b, i64 3
+  %24 = getelementptr inbounds float, float* %b, i64 3
   %25 = load float* %24
-  %26 = getelementptr inbounds float* %c, i64 3
+  %26 = getelementptr inbounds float, float* %c, i64 3
   %27 = load float* %26
   %28 = fadd float %25, %27
-  %29 = getelementptr inbounds float* %d, i64 3
+  %29 = getelementptr inbounds float, float* %d, i64 3
   %30 = load float* %29
   %31 = fadd float %28, %30
-  %32 = getelementptr inbounds float* %a, i64 3
+  %32 = getelementptr inbounds float, float* %a, i64 3
   store float %31, float* %32
   ret void
 }

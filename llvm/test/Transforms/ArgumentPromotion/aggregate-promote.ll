@@ -9,8 +9,8 @@ target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:1
     i32 25 }            ; <%QuadTy*> [#uses=1]
 
 define internal i32 @test(%QuadTy* %P) {
-        %A = getelementptr %QuadTy* %P, i64 0, i32 3            ; <i32*> [#uses=1]
-        %B = getelementptr %QuadTy* %P, i64 0, i32 2            ; <i32*> [#uses=1]
+        %A = getelementptr %QuadTy, %QuadTy* %P, i64 0, i32 3            ; <i32*> [#uses=1]
+        %B = getelementptr %QuadTy, %QuadTy* %P, i64 0, i32 2            ; <i32*> [#uses=1]
         %a = load i32* %A               ; <i32> [#uses=1]
         %b = load i32* %B               ; <i32> [#uses=1]
         %V = add i32 %a, %b             ; <i32> [#uses=1]

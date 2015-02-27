@@ -12,9 +12,9 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
-  %arrayidx = getelementptr inbounds double* %in1, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds double, double* %in1, i64 %indvars.iv
   %0 = load double* %arrayidx, align 8
-  %arrayidx2 = getelementptr inbounds double* %in2, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds double, double* %in2, i64 %indvars.iv
   %1 = load double* %arrayidx2, align 8
   %mul = fmul double %0, %0
   %mul3 = fmul double %0, %1
@@ -28,16 +28,16 @@ for.body:                                         ; preds = %for.body, %entry
   %add10 = fadd double %add9, %0
   %mul11 = fmul double %mul8, %add10
   %add12 = fadd double %add7, %mul11
-  %arrayidx14 = getelementptr inbounds double* %out, i64 %indvars.iv
+  %arrayidx14 = getelementptr inbounds double, double* %out, i64 %indvars.iv
   store double %add12, double* %arrayidx14, align 8
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
   %exitcond = icmp eq i32 %lftr.wideiv, 10
   br i1 %exitcond, label %for.end, label %for.body
 ; CHECK: %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
-; CHECK: %arrayidx = getelementptr inbounds double* %in1, i64 %indvars.iv
+; CHECK: %arrayidx = getelementptr inbounds double, double* %in1, i64 %indvars.iv
 ; CHECK: %0 = load double* %arrayidx, align 8
-; CHECK: %arrayidx2 = getelementptr inbounds double* %in2, i64 %indvars.iv
+; CHECK: %arrayidx2 = getelementptr inbounds double, double* %in2, i64 %indvars.iv
 ; CHECK: %1 = load double* %arrayidx2, align 8
 ; CHECK: %mul = fmul double %0, %0
 ; CHECK: %mul3 = fmul double %0, %1
@@ -55,18 +55,18 @@ for.body:                                         ; preds = %for.body, %entry
 ; CHECK: %mul6.v.r2 = extractelement <2 x double> %mul6, i32 1
 ; CHECK: %add7 = fadd double %add, %mul6.v.r1
 ; CHECK: %add12 = fadd double %add7, %mul6.v.r2
-; CHECK: %arrayidx14 = getelementptr inbounds double* %out, i64 %indvars.iv
+; CHECK: %arrayidx14 = getelementptr inbounds double, double* %out, i64 %indvars.iv
 ; CHECK: store double %add12, double* %arrayidx14, align 8
 ; CHECK: %indvars.iv.next = add i64 %indvars.iv, 1
 ; CHECK: %lftr.wideiv = trunc i64 %indvars.iv.next to i32
 ; CHECK: %exitcond = icmp eq i32 %lftr.wideiv, 10
 ; CHECK: br i1 %exitcond, label %for.end, label %for.body
 ; CHECK-UNRL: %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next.1, %for.body ]
-; CHECK-UNRL: %arrayidx = getelementptr inbounds double* %in1, i64 %indvars.iv
+; CHECK-UNRL: %arrayidx = getelementptr inbounds double, double* %in1, i64 %indvars.iv
 ; CHECK-UNRL: %0 = bitcast double* %arrayidx to <2 x double>*
-; CHECK-UNRL: %arrayidx2 = getelementptr inbounds double* %in2, i64 %indvars.iv
+; CHECK-UNRL: %arrayidx2 = getelementptr inbounds double, double* %in2, i64 %indvars.iv
 ; CHECK-UNRL: %1 = bitcast double* %arrayidx2 to <2 x double>*
-; CHECK-UNRL: %arrayidx14 = getelementptr inbounds double* %out, i64 %indvars.iv
+; CHECK-UNRL: %arrayidx14 = getelementptr inbounds double, double* %out, i64 %indvars.iv
 ; CHECK-UNRL: %2 = load <2 x double>* %0, align 8
 ; CHECK-UNRL: %3 = load <2 x double>* %1, align 8
 ; CHECK-UNRL: %mul = fmul <2 x double> %2, %2

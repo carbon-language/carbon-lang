@@ -30,7 +30,7 @@ entry:
 
 define i64 @callee2(%struct.pad* byval nocapture readnone %x, i32 signext %y, %struct.test* byval align 16 nocapture readonly %z) {
 entry:
-  %x1 = getelementptr inbounds %struct.test* %z, i64 0, i32 0
+  %x1 = getelementptr inbounds %struct.test, %struct.test* %z, i64 0, i32 0
   %0 = load i64* %x1, align 16
   ret i64 %0
 }
@@ -43,7 +43,7 @@ declare i64 @test2(%struct.pad* byval, i32 signext, %struct.test* byval align 16
 define void @caller2(i64 %z) {
 entry:
   %tmp = alloca %struct.test, align 16
-  %.compoundliteral.sroa.0.0..sroa_idx = getelementptr inbounds %struct.test* %tmp, i64 0, i32 0
+  %.compoundliteral.sroa.0.0..sroa_idx = getelementptr inbounds %struct.test, %struct.test* %tmp, i64 0, i32 0
   store i64 %z, i64* %.compoundliteral.sroa.0.0..sroa_idx, align 16
   %call = call i64 @test2(%struct.pad* byval @gp, i32 signext 0, %struct.test* byval align 16 %tmp)
   ret void

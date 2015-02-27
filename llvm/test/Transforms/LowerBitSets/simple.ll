@@ -60,7 +60,7 @@ define i1 @foo(i32* %p) {
   ; CHECK: br i1 [[R6]]
 
   ; CHECK: [[R8:%[^ ]*]] = lshr i32 [[R5]], 5
-  ; CHECK: [[R9:%[^ ]*]] = getelementptr i32* bitcast ([9 x i8]* @bitset1.bits to i32*), i32 [[R8]]
+  ; CHECK: [[R9:%[^ ]*]] = getelementptr i32, i32* bitcast ([9 x i8]* @bitset1.bits to i32*), i32 [[R8]]
   ; CHECK: [[R10:%[^ ]*]] = load i32* [[R9]]
   ; CHECK: [[R11:%[^ ]*]] = and i32 [[R5]], 31
   ; CHECK: [[R12:%[^ ]*]] = shl i32 1, [[R11]]
@@ -106,7 +106,7 @@ define i1 @baz(i32* %p) {
   ; CHECK: br i1 [[T6]]
 
   ; CHECK: [[T8:%[^ ]*]] = lshr i32 [[T5]], 5
-  ; CHECK: [[T9:%[^ ]*]] = getelementptr i32* bitcast ([9 x i8]* @bitset3.bits to i32*), i32 [[T8]]
+  ; CHECK: [[T9:%[^ ]*]] = getelementptr i32, i32* bitcast ([9 x i8]* @bitset3.bits to i32*), i32 [[T8]]
   ; CHECK: [[T10:%[^ ]*]] = load i32* [[T9]]
   ; CHECK: [[T11:%[^ ]*]] = and i32 [[T5]], 31
   ; CHECK: [[T12:%[^ ]*]] = shl i32 1, [[T11]]

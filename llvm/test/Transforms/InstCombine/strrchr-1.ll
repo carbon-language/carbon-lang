@@ -14,7 +14,7 @@ define void @test_simplify1() {
 ; CHECK-NOT: call i8* @strrchr
 ; CHECK: ret void
 
-  %str = getelementptr [14 x i8]* @hello, i32 0, i32 0
+  %str = getelementptr [14 x i8], [14 x i8]* @hello, i32 0, i32 0
   %dst = call i8* @strrchr(i8* %str, i32 119)
   store i8* %dst, i8** @chp
   ret void
@@ -25,7 +25,7 @@ define void @test_simplify2() {
 ; CHECK-NOT: call i8* @strrchr
 ; CHECK: ret void
 
-  %str = getelementptr [1 x i8]* @null, i32 0, i32 0
+  %str = getelementptr [1 x i8], [1 x i8]* @null, i32 0, i32 0
   %dst = call i8* @strrchr(i8* %str, i32 119)
   store i8* %dst, i8** @chp
   ret void
@@ -36,7 +36,7 @@ define void @test_simplify3() {
 ; CHECK-NOT: call i8* @strrchr
 ; CHECK: ret void
 
-  %src = getelementptr [14 x i8]* @hello, i32 0, i32 0
+  %src = getelementptr [14 x i8], [14 x i8]* @hello, i32 0, i32 0
   %dst = call i8* @strrchr(i8* %src, i32 0)
   store i8* %dst, i8** @chp
   ret void
@@ -47,7 +47,7 @@ define void @test_simplify4() {
 ; CHECK-NOT: call i8* @strrchr
 ; CHECK: ret void
 
-  %src = getelementptr [14 x i8]* @hello, i32 0, i32 0
+  %src = getelementptr [14 x i8], [14 x i8]* @hello, i32 0, i32 0
   %dst = call i8* @strrchr(i8* %src, i32 65280)
   store i8* %dst, i8** @chp
   ret void
@@ -58,7 +58,7 @@ define void @test_nosimplify1(i32 %chr) {
 ; CHECK: call i8* @strrchr
 ; CHECK: ret void
 
-  %src = getelementptr [14 x i8]* @hello, i32 0, i32 0
+  %src = getelementptr [14 x i8], [14 x i8]* @hello, i32 0, i32 0
   %dst = call i8* @strrchr(i8* %src, i32 %chr)
   store i8* %dst, i8** @chp
   ret void

@@ -69,7 +69,7 @@ target triple = "i386-apple-darwin9"
 
 define i32 @foo(%struct.State* %dst, <4 x float>* %prgrm, <4 x float>** %buffs, %struct._VMConstants* %cnstn, %struct.PPStreamToken* %pstrm, %struct.PluginBufferData* %gpctx, %struct.VMTextures* %txtrs, %struct.VMGPStack* %gpstk) nounwind {
 bb266.i:
-	getelementptr <4 x float>* null, i32 11		; <<4 x float>*>:0 [#uses=1]
+	getelementptr <4 x float>, <4 x float>* null, i32 11		; <<4 x float>*>:0 [#uses=1]
 	load <4 x float>* %0, align 16		; <<4 x float>>:1 [#uses=1]
 	shufflevector <4 x float> %1, <4 x float> undef, <4 x i32> < i32 0, i32 1, i32 1, i32 1 >		; <<4 x float>>:2 [#uses=1]
 	shufflevector <4 x float> %2, <4 x float> undef, <4 x i32> < i32 0, i32 4, i32 1, i32 5 >		; <<4 x float>>:3 [#uses=1]

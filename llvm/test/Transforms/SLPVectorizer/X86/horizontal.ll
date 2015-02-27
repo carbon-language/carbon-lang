@@ -32,21 +32,21 @@ for.body:
   %i.033 = phi i64 [ 0, %for.body.lr.ph ], [ %inc, %for.body ]
   %sum.032 = phi float [ 0.000000e+00, %for.body.lr.ph ], [ %add17, %for.body ]
   %mul = shl nsw i64 %i.033, 2
-  %arrayidx = getelementptr inbounds float* %A, i64 %mul
+  %arrayidx = getelementptr inbounds float, float* %A, i64 %mul
   %1 = load float* %arrayidx, align 4
   %mul2 = fmul float %1, 7.000000e+00
   %add28 = or i64 %mul, 1
-  %arrayidx4 = getelementptr inbounds float* %A, i64 %add28
+  %arrayidx4 = getelementptr inbounds float, float* %A, i64 %add28
   %2 = load float* %arrayidx4, align 4
   %mul5 = fmul float %2, 7.000000e+00
   %add6 = fadd fast float %mul2, %mul5
   %add829 = or i64 %mul, 2
-  %arrayidx9 = getelementptr inbounds float* %A, i64 %add829
+  %arrayidx9 = getelementptr inbounds float, float* %A, i64 %add829
   %3 = load float* %arrayidx9, align 4
   %mul10 = fmul float %3, 7.000000e+00
   %add11 = fadd fast float %add6, %mul10
   %add1330 = or i64 %mul, 3
-  %arrayidx14 = getelementptr inbounds float* %A, i64 %add1330
+  %arrayidx14 = getelementptr inbounds float, float* %A, i64 %add1330
   %4 = load float* %arrayidx14, align 4
   %mul15 = fmul float %4, 7.000000e+00
   %add16 = fadd fast float %add11, %mul15
@@ -86,11 +86,11 @@ entry:
 
 for.body.lr.ph:
   %0 = load float* %B, align 4
-  %arrayidx4 = getelementptr inbounds float* %B, i64 1
+  %arrayidx4 = getelementptr inbounds float, float* %B, i64 1
   %1 = load float* %arrayidx4, align 4
-  %arrayidx9 = getelementptr inbounds float* %B, i64 2
+  %arrayidx9 = getelementptr inbounds float, float* %B, i64 2
   %2 = load float* %arrayidx9, align 4
-  %arrayidx15 = getelementptr inbounds float* %B, i64 3
+  %arrayidx15 = getelementptr inbounds float, float* %B, i64 3
   %3 = load float* %arrayidx15, align 4
   %4 = sext i32 %n to i64
   br label %for.body
@@ -99,21 +99,21 @@ for.body:
   %i.040 = phi i64 [ 0, %for.body.lr.ph ], [ %inc, %for.body ]
   %sum.039 = phi float [ 0.000000e+00, %for.body.lr.ph ], [ %mul21, %for.body ]
   %mul = shl nsw i64 %i.040, 2
-  %arrayidx2 = getelementptr inbounds float* %A, i64 %mul
+  %arrayidx2 = getelementptr inbounds float, float* %A, i64 %mul
   %5 = load float* %arrayidx2, align 4
   %mul3 = fmul float %0, %5
   %add35 = or i64 %mul, 1
-  %arrayidx6 = getelementptr inbounds float* %A, i64 %add35
+  %arrayidx6 = getelementptr inbounds float, float* %A, i64 %add35
   %6 = load float* %arrayidx6, align 4
   %mul7 = fmul float %1, %6
   %add8 = fadd fast float %mul3, %mul7
   %add1136 = or i64 %mul, 2
-  %arrayidx12 = getelementptr inbounds float* %A, i64 %add1136
+  %arrayidx12 = getelementptr inbounds float, float* %A, i64 %add1136
   %7 = load float* %arrayidx12, align 4
   %mul13 = fmul float %2, %7
   %add14 = fadd fast float %add8, %mul13
   %add1737 = or i64 %mul, 3
-  %arrayidx18 = getelementptr inbounds float* %A, i64 %add1737
+  %arrayidx18 = getelementptr inbounds float, float* %A, i64 %add1737
   %8 = load float* %arrayidx18, align 4
   %mul19 = fmul float %3, %8
   %add20 = fadd fast float %add14, %mul19
@@ -158,21 +158,21 @@ entry:
 
 for.body.lr.ph:
   %0 = load float* %B, align 4
-  %arrayidx4 = getelementptr inbounds float* %B, i64 1
+  %arrayidx4 = getelementptr inbounds float, float* %B, i64 1
   %1 = load float* %arrayidx4, align 4
-  %arrayidx9 = getelementptr inbounds float* %B, i64 2
+  %arrayidx9 = getelementptr inbounds float, float* %B, i64 2
   %2 = load float* %arrayidx9, align 4
-  %arrayidx15 = getelementptr inbounds float* %B, i64 3
+  %arrayidx15 = getelementptr inbounds float, float* %B, i64 3
   %3 = load float* %arrayidx15, align 4
-  %arrayidx21 = getelementptr inbounds float* %B, i64 4
+  %arrayidx21 = getelementptr inbounds float, float* %B, i64 4
   %4 = load float* %arrayidx21, align 4
-  %arrayidx27 = getelementptr inbounds float* %B, i64 5
+  %arrayidx27 = getelementptr inbounds float, float* %B, i64 5
   %5 = load float* %arrayidx27, align 4
-  %arrayidx33 = getelementptr inbounds float* %B, i64 6
+  %arrayidx33 = getelementptr inbounds float, float* %B, i64 6
   %6 = load float* %arrayidx33, align 4
-  %arrayidx39 = getelementptr inbounds float* %B, i64 7
+  %arrayidx39 = getelementptr inbounds float, float* %B, i64 7
   %7 = load float* %arrayidx39, align 4
-  %arrayidx45 = getelementptr inbounds float* %B, i64 8
+  %arrayidx45 = getelementptr inbounds float, float* %B, i64 8
   %8 = load float* %arrayidx45, align 4
   %9 = sext i32 %n to i64
   br label %for.body
@@ -181,46 +181,46 @@ for.body:
   %i.083 = phi i64 [ 0, %for.body.lr.ph ], [ %inc, %for.body ]
   %sum.082 = phi float [ 0.000000e+00, %for.body.lr.ph ], [ %add51, %for.body ]
   %mul = mul nsw i64 %i.083, 6
-  %arrayidx2 = getelementptr inbounds float* %A, i64 %mul
+  %arrayidx2 = getelementptr inbounds float, float* %A, i64 %mul
   %10 = load float* %arrayidx2, align 4
   %mul3 = fmul fast float %0, %10
   %add80 = or i64 %mul, 1
-  %arrayidx6 = getelementptr inbounds float* %A, i64 %add80
+  %arrayidx6 = getelementptr inbounds float, float* %A, i64 %add80
   %11 = load float* %arrayidx6, align 4
   %mul7 = fmul fast float %1, %11
   %add8 = fadd fast float %mul3, %mul7
   %add11 = add nsw i64 %mul, 2
-  %arrayidx12 = getelementptr inbounds float* %A, i64 %add11
+  %arrayidx12 = getelementptr inbounds float, float* %A, i64 %add11
   %12 = load float* %arrayidx12, align 4
   %mul13 = fmul fast float %2, %12
   %add14 = fadd fast float %add8, %mul13
   %add17 = add nsw i64 %mul, 3
-  %arrayidx18 = getelementptr inbounds float* %A, i64 %add17
+  %arrayidx18 = getelementptr inbounds float, float* %A, i64 %add17
   %13 = load float* %arrayidx18, align 4
   %mul19 = fmul fast float %3, %13
   %add20 = fadd fast float %add14, %mul19
   %add23 = add nsw i64 %mul, 4
-  %arrayidx24 = getelementptr inbounds float* %A, i64 %add23
+  %arrayidx24 = getelementptr inbounds float, float* %A, i64 %add23
   %14 = load float* %arrayidx24, align 4
   %mul25 = fmul fast float %4, %14
   %add26 = fadd fast float %add20, %mul25
   %add29 = add nsw i64 %mul, 5
-  %arrayidx30 = getelementptr inbounds float* %A, i64 %add29
+  %arrayidx30 = getelementptr inbounds float, float* %A, i64 %add29
   %15 = load float* %arrayidx30, align 4
   %mul31 = fmul fast float %5, %15
   %add32 = fadd fast float %add26, %mul31
   %add35 = add nsw i64 %mul, 6
-  %arrayidx36 = getelementptr inbounds float* %A, i64 %add35
+  %arrayidx36 = getelementptr inbounds float, float* %A, i64 %add35
   %16 = load float* %arrayidx36, align 4
   %mul37 = fmul fast float %6, %16
   %add38 = fadd fast float %add32, %mul37
   %add41 = add nsw i64 %mul, 7
-  %arrayidx42 = getelementptr inbounds float* %A, i64 %add41
+  %arrayidx42 = getelementptr inbounds float, float* %A, i64 %add41
   %17 = load float* %arrayidx42, align 4
   %mul43 = fmul fast float %7, %17
   %add44 = fadd fast float %add38, %mul43
   %add47 = add nsw i64 %mul, 8
-  %arrayidx48 = getelementptr inbounds float* %A, i64 %add47
+  %arrayidx48 = getelementptr inbounds float, float* %A, i64 %add47
   %18 = load float* %arrayidx48, align 4
   %mul49 = fmul fast float %8, %18
   %add50 = fadd fast float %add44, %mul49
@@ -260,11 +260,11 @@ entry:
 
 for.body.lr.ph:
   %0 = load float* %B, align 4
-  %arrayidx4 = getelementptr inbounds float* %B, i64 1
+  %arrayidx4 = getelementptr inbounds float, float* %B, i64 1
   %1 = load float* %arrayidx4, align 4
-  %arrayidx10 = getelementptr inbounds float* %B, i64 2
+  %arrayidx10 = getelementptr inbounds float, float* %B, i64 2
   %2 = load float* %arrayidx10, align 4
-  %arrayidx16 = getelementptr inbounds float* %B, i64 3
+  %arrayidx16 = getelementptr inbounds float, float* %B, i64 3
   %3 = load float* %arrayidx16, align 4
   %4 = sext i32 %n to i64
   br label %for.body
@@ -273,22 +273,22 @@ for.body:
   %i.043 = phi i64 [ 0, %for.body.lr.ph ], [ %inc, %for.body ]
   %sum.042 = phi float [ 0.000000e+00, %for.body.lr.ph ], [ %add21, %for.body ]
   %mul = shl nsw i64 %i.043, 2
-  %arrayidx2 = getelementptr inbounds float* %A, i64 %mul
+  %arrayidx2 = getelementptr inbounds float, float* %A, i64 %mul
   %5 = load float* %arrayidx2, align 4
   %mul3 = fmul fast float %0, %5
   %add = fadd fast float %sum.042, %mul3
   %add638 = or i64 %mul, 1
-  %arrayidx7 = getelementptr inbounds float* %A, i64 %add638
+  %arrayidx7 = getelementptr inbounds float, float* %A, i64 %add638
   %6 = load float* %arrayidx7, align 4
   %mul8 = fmul fast float %1, %6
   %add9 = fadd fast float %add, %mul8
   %add1239 = or i64 %mul, 2
-  %arrayidx13 = getelementptr inbounds float* %A, i64 %add1239
+  %arrayidx13 = getelementptr inbounds float, float* %A, i64 %add1239
   %7 = load float* %arrayidx13, align 4
   %mul14 = fmul fast float %2, %7
   %add15 = fadd fast float %add9, %mul14
   %add1840 = or i64 %mul, 3
-  %arrayidx19 = getelementptr inbounds float* %A, i64 %add1840
+  %arrayidx19 = getelementptr inbounds float, float* %A, i64 %add1840
   %8 = load float* %arrayidx19, align 4
   %mul20 = fmul fast float %3, %8
   %add21 = fadd fast float %add15, %mul20
@@ -326,9 +326,9 @@ entry:
   br i1 %cmp37, label %for.body.lr.ph, label %for.end
 
 for.body.lr.ph:
-  %arrayidx4 = getelementptr inbounds float* %B, i64 1
-  %arrayidx9 = getelementptr inbounds float* %B, i64 2
-  %arrayidx15 = getelementptr inbounds float* %B, i64 3
+  %arrayidx4 = getelementptr inbounds float, float* %B, i64 1
+  %arrayidx9 = getelementptr inbounds float, float* %B, i64 2
+  %arrayidx15 = getelementptr inbounds float, float* %B, i64 3
   %0 = sext i32 %n to i64
   br label %for.body
 
@@ -337,29 +337,29 @@ for.body:
   %C.addr.038 = phi float* [ %C, %for.body.lr.ph ], [ %incdec.ptr, %for.body ]
   %1 = load float* %B, align 4
   %mul = shl nsw i64 %i.039, 2
-  %arrayidx2 = getelementptr inbounds float* %A, i64 %mul
+  %arrayidx2 = getelementptr inbounds float, float* %A, i64 %mul
   %2 = load float* %arrayidx2, align 4
   %mul3 = fmul fast float %1, %2
   %3 = load float* %arrayidx4, align 4
   %add34 = or i64 %mul, 1
-  %arrayidx6 = getelementptr inbounds float* %A, i64 %add34
+  %arrayidx6 = getelementptr inbounds float, float* %A, i64 %add34
   %4 = load float* %arrayidx6, align 4
   %mul7 = fmul fast float %3, %4
   %add8 = fadd fast float %mul3, %mul7
   %5 = load float* %arrayidx9, align 4
   %add1135 = or i64 %mul, 2
-  %arrayidx12 = getelementptr inbounds float* %A, i64 %add1135
+  %arrayidx12 = getelementptr inbounds float, float* %A, i64 %add1135
   %6 = load float* %arrayidx12, align 4
   %mul13 = fmul fast float %5, %6
   %add14 = fadd fast float %add8, %mul13
   %7 = load float* %arrayidx15, align 4
   %add1736 = or i64 %mul, 3
-  %arrayidx18 = getelementptr inbounds float* %A, i64 %add1736
+  %arrayidx18 = getelementptr inbounds float, float* %A, i64 %add1736
   %8 = load float* %arrayidx18, align 4
   %mul19 = fmul fast float %7, %8
   %add20 = fadd fast float %add14, %mul19
   store float %add20, float* %C.addr.038, align 4
-  %incdec.ptr = getelementptr inbounds float* %C.addr.038, i64 1
+  %incdec.ptr = getelementptr inbounds float, float* %C.addr.038, i64 1
   %inc = add nsw i64 %i.039, 1
   %exitcond = icmp eq i64 %inc, %0
   br i1 %exitcond, label %for.end, label %for.body
@@ -390,7 +390,7 @@ entry:
 
 for.body.lr.ph:
   %0 = load double* %B, align 8
-  %arrayidx4 = getelementptr inbounds double* %B, i64 1
+  %arrayidx4 = getelementptr inbounds double, double* %B, i64 1
   %1 = load double* %arrayidx4, align 8
   %2 = sext i32 %n to i64
   br label %for.body
@@ -398,15 +398,15 @@ for.body.lr.ph:
 for.body:
   %i.018 = phi i64 [ 0, %for.body.lr.ph ], [ %inc, %for.body ]
   %mul = shl nsw i64 %i.018, 2
-  %arrayidx2 = getelementptr inbounds double* %A, i64 %mul
+  %arrayidx2 = getelementptr inbounds double, double* %A, i64 %mul
   %3 = load double* %arrayidx2, align 8
   %mul3 = fmul fast double %0, %3
   %add16 = or i64 %mul, 1
-  %arrayidx6 = getelementptr inbounds double* %A, i64 %add16
+  %arrayidx6 = getelementptr inbounds double, double* %A, i64 %add16
   %4 = load double* %arrayidx6, align 8
   %mul7 = fmul fast double %1, %4
   %add8 = fadd fast double %mul3, %mul7
-  %arrayidx9 = getelementptr inbounds double* %C, i64 %i.018
+  %arrayidx9 = getelementptr inbounds double, double* %C, i64 %i.018
   store double %add8, double* %arrayidx9, align 8
   %inc = add nsw i64 %i.018, 1
   %exitcond = icmp eq i64 %inc, %2

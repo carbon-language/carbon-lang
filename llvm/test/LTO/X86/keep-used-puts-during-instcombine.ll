@@ -15,7 +15,7 @@ target triple = "x86_64-apple-darwin11"
 
 define i32 @uses_printf(i32 %i) {
 entry:
-  %s = getelementptr [13 x i8]* @str, i64 0, i64 0
+  %s = getelementptr [13 x i8], [13 x i8]* @str, i64 0, i64 0
   call i32 (i8*, ...)* @printf(i8* %s)
   ret i32 0
 }

@@ -12,7 +12,7 @@ entry:
 bb:             ; preds = %bb, %entry
         %indvar = phi i32 [ 0, %entry ], [ %indvar.next, %bb ]          ; <i32> [#uses=2]
         %i_addr.09.0 = sub i32 %i, %indvar              ; <i32> [#uses=1]
-        %tmp2 = getelementptr i32* %P, i32 %i_addr.09.0         ; <i32*> [#uses=1]
+        %tmp2 = getelementptr i32, i32* %P, i32 %i_addr.09.0         ; <i32*> [#uses=1]
         store i32 %A, i32* %tmp2
         %indvar.next = add i32 %indvar, 1               ; <i32> [#uses=2]
         icmp eq i32 %indvar.next, %i            ; <i1>:1 [#uses=1]
@@ -34,7 +34,7 @@ entry:
 bb:             ; preds = %bb, %entry
         %indvar = phi i32 [ 0, %entry ], [ %indvar.next, %bb ]          ; <i32> [#uses=2]
         %i_addr.09.0 = sub i32 %i, %indvar              ; <i32> [#uses=1]
-        %tmp2 = getelementptr i32* %P, i32 %i_addr.09.0         ; <i32*> [#uses=1]
+        %tmp2 = getelementptr i32, i32* %P, i32 %i_addr.09.0         ; <i32*> [#uses=1]
         store i32 %A, i32* %tmp2
         store i32 %indvar, i32* null
         %indvar.next = add i32 %indvar, 1               ; <i32> [#uses=2]

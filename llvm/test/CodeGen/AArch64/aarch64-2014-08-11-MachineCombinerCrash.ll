@@ -8,11 +8,11 @@ entry:
   br label %for.body, !dbg !39
 
 for.body:                                         ; preds = %for.body, %entry
-  %arrayidx5 = getelementptr inbounds i32* null, i64 1, !dbg !43
+  %arrayidx5 = getelementptr inbounds i32, i32* null, i64 1, !dbg !43
   %0 = load i32* null, align 4, !dbg !45, !tbaa !46
   %s1 = sub nsw i32 0, %0, !dbg !50
   %n1 = sext i32 %s1 to i64, !dbg !50
-  %arrayidx21 = getelementptr inbounds i32* null, i64 3, !dbg !51
+  %arrayidx21 = getelementptr inbounds i32, i32* null, i64 3, !dbg !51
   %add53 = add nsw i64 %n1, 0, !dbg !52
   %add55 = add nsw i64 %n1, 0, !dbg !53
   %mul63 = mul nsw i64 %add53, -20995, !dbg !54

@@ -117,10 +117,10 @@ define void @test_div_fmas_f32_imm_true_cond_to_vcc(float addrspace(1)* %out, fl
 ; SI: s_endpgm
 define void @test_div_fmas_f32_logical_cond_to_vcc(float addrspace(1)* %out, float addrspace(1)* %in, i32 %d) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep.a = getelementptr float addrspace(1)* %in, i32 %tid
-  %gep.b = getelementptr float addrspace(1)* %gep.a, i32 1
-  %gep.c = getelementptr float addrspace(1)* %gep.a, i32 2
-  %gep.out = getelementptr float addrspace(1)* %out, i32 2
+  %gep.a = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %gep.b = getelementptr float, float addrspace(1)* %gep.a, i32 1
+  %gep.c = getelementptr float, float addrspace(1)* %gep.a, i32 2
+  %gep.out = getelementptr float, float addrspace(1)* %out, i32 2
 
   %a = load float addrspace(1)* %gep.a
   %b = load float addrspace(1)* %gep.b
@@ -154,10 +154,10 @@ define void @test_div_fmas_f32_logical_cond_to_vcc(float addrspace(1)* %out, flo
 define void @test_div_fmas_f32_i1_phi_vcc(float addrspace(1)* %out, float addrspace(1)* %in, i32 addrspace(1)* %dummy) nounwind {
 entry:
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep.out = getelementptr float addrspace(1)* %out, i32 2
-  %gep.a = getelementptr float addrspace(1)* %in, i32 %tid
-  %gep.b = getelementptr float addrspace(1)* %gep.a, i32 1
-  %gep.c = getelementptr float addrspace(1)* %gep.a, i32 2
+  %gep.out = getelementptr float, float addrspace(1)* %out, i32 2
+  %gep.a = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %gep.b = getelementptr float, float addrspace(1)* %gep.a, i32 1
+  %gep.c = getelementptr float, float addrspace(1)* %gep.a, i32 2
 
   %a = load float addrspace(1)* %gep.a
   %b = load float addrspace(1)* %gep.b

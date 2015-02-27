@@ -35,11 +35,11 @@ entry:
   %2 = bitcast %struct._Unwind_Context* %cur_context to i8*
   %3 = bitcast %struct._Unwind_Context* %this_context to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %2, i8* %3, i64 240, i32 8, i1 false)
-  %personality = getelementptr inbounds %struct._Unwind_FrameState* %fs, i64 0, i32 6
-  %retaddr_column.i = getelementptr inbounds %struct._Unwind_FrameState* %fs, i64 0, i32 9
-  %flags.i.i.i.i = getelementptr inbounds %struct._Unwind_Context* %cur_context, i64 0, i32 5
-  %ra.i = getelementptr inbounds %struct._Unwind_Context* %cur_context, i64 0, i32 2
-  %exception_class = getelementptr inbounds %struct._Unwind_Exception* %exc, i64 0, i32 0
+  %personality = getelementptr inbounds %struct._Unwind_FrameState, %struct._Unwind_FrameState* %fs, i64 0, i32 6
+  %retaddr_column.i = getelementptr inbounds %struct._Unwind_FrameState, %struct._Unwind_FrameState* %fs, i64 0, i32 9
+  %flags.i.i.i.i = getelementptr inbounds %struct._Unwind_Context, %struct._Unwind_Context* %cur_context, i64 0, i32 5
+  %ra.i = getelementptr inbounds %struct._Unwind_Context, %struct._Unwind_Context* %cur_context, i64 0, i32 2
+  %exception_class = getelementptr inbounds %struct._Unwind_Exception, %struct._Unwind_Exception* %exc, i64 0, i32 0
   br label %while.body
 
 while.body:                                       ; preds = %uw_update_context.exit, %entry
@@ -76,9 +76,9 @@ cond.true.i.i.i:                                  ; preds = %if.end13
 cond.end.i.i.i:                                   ; preds = %if.end13
   %sext.i = shl i64 %6, 32
   %idxprom.i.i.i = ashr exact i64 %sext.i, 32
-  %arrayidx.i.i.i = getelementptr inbounds [18 x i8]* @dwarf_reg_size_table, i64 0, i64 %idxprom.i.i.i
+  %arrayidx.i.i.i = getelementptr inbounds [18 x i8], [18 x i8]* @dwarf_reg_size_table, i64 0, i64 %idxprom.i.i.i
   %7 = load i8* %arrayidx.i.i.i, align 1
-  %arrayidx2.i.i.i = getelementptr inbounds %struct._Unwind_Context* %cur_context, i64 0, i32 0, i64 %idxprom.i.i.i
+  %arrayidx2.i.i.i = getelementptr inbounds %struct._Unwind_Context, %struct._Unwind_Context* %cur_context, i64 0, i32 0, i64 %idxprom.i.i.i
   %8 = load i8** %arrayidx2.i.i.i, align 8
   %9 = load i64* %flags.i.i.i.i, align 8
   %and.i.i.i.i = and i64 %9, 4611686018427387904
@@ -86,7 +86,7 @@ cond.end.i.i.i:                                   ; preds = %if.end13
   br i1 %tobool.i.i.i, label %if.end.i.i.i, label %land.lhs.true.i.i.i
 
 land.lhs.true.i.i.i:                              ; preds = %cond.end.i.i.i
-  %arrayidx4.i.i.i = getelementptr inbounds %struct._Unwind_Context* %cur_context, i64 0, i32 8, i64 %idxprom.i.i.i
+  %arrayidx4.i.i.i = getelementptr inbounds %struct._Unwind_Context, %struct._Unwind_Context* %cur_context, i64 0, i32 8, i64 %idxprom.i.i.i
   %10 = load i8* %arrayidx4.i.i.i, align 1
   %tobool6.i.i.i = icmp eq i8 %10, 0
   br i1 %tobool6.i.i.i, label %if.end.i.i.i, label %if.then.i.i.i
@@ -115,17 +115,17 @@ uw_update_context.exit:                           ; preds = %if.then10.i.i.i, %i
   br label %while.body
 
 while.end:                                        ; preds = %if.then4
-  %private_1 = getelementptr inbounds %struct._Unwind_Exception* %exc, i64 0, i32 2
+  %private_1 = getelementptr inbounds %struct._Unwind_Exception, %struct._Unwind_Exception* %exc, i64 0, i32 2
   store i64 0, i64* %private_1, align 8
   %15 = load i8** %ra.i, align 8
   %16 = ptrtoint i8* %15 to i64
-  %private_2 = getelementptr inbounds %struct._Unwind_Exception* %exc, i64 0, i32 3
+  %private_2 = getelementptr inbounds %struct._Unwind_Exception, %struct._Unwind_Exception* %exc, i64 0, i32 3
   store i64 %16, i64* %private_2, align 8
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %2, i8* %3, i64 240, i32 8, i1 false)
   %17 = bitcast %struct._Unwind_FrameState* %fs.i to i8*
   call void @llvm.lifetime.start(i64 -1, i8* %17)
-  %personality.i = getelementptr inbounds %struct._Unwind_FrameState* %fs.i, i64 0, i32 6
-  %retaddr_column.i22 = getelementptr inbounds %struct._Unwind_FrameState* %fs.i, i64 0, i32 9
+  %personality.i = getelementptr inbounds %struct._Unwind_FrameState, %struct._Unwind_FrameState* %fs.i, i64 0, i32 6
+  %retaddr_column.i22 = getelementptr inbounds %struct._Unwind_FrameState, %struct._Unwind_FrameState* %fs.i, i64 0, i32 9
   br label %while.body.i
 
 while.body.i:                                     ; preds = %uw_update_context.exit44, %while.end
@@ -172,9 +172,9 @@ cond.true.i.i.i25:                                ; preds = %cond.end.i
 cond.end.i.i.i33:                                 ; preds = %cond.end.i
   %sext.i26 = shl i64 %23, 32
   %idxprom.i.i.i27 = ashr exact i64 %sext.i26, 32
-  %arrayidx.i.i.i28 = getelementptr inbounds [18 x i8]* @dwarf_reg_size_table, i64 0, i64 %idxprom.i.i.i27
+  %arrayidx.i.i.i28 = getelementptr inbounds [18 x i8], [18 x i8]* @dwarf_reg_size_table, i64 0, i64 %idxprom.i.i.i27
   %24 = load i8* %arrayidx.i.i.i28, align 1
-  %arrayidx2.i.i.i29 = getelementptr inbounds %struct._Unwind_Context* %cur_context, i64 0, i32 0, i64 %idxprom.i.i.i27
+  %arrayidx2.i.i.i29 = getelementptr inbounds %struct._Unwind_Context, %struct._Unwind_Context* %cur_context, i64 0, i32 0, i64 %idxprom.i.i.i27
   %25 = load i8** %arrayidx2.i.i.i29, align 8
   %26 = load i64* %flags.i.i.i.i, align 8
   %and.i.i.i.i31 = and i64 %26, 4611686018427387904
@@ -182,7 +182,7 @@ cond.end.i.i.i33:                                 ; preds = %cond.end.i
   br i1 %tobool.i.i.i32, label %if.end.i.i.i39, label %land.lhs.true.i.i.i36
 
 land.lhs.true.i.i.i36:                            ; preds = %cond.end.i.i.i33
-  %arrayidx4.i.i.i34 = getelementptr inbounds %struct._Unwind_Context* %cur_context, i64 0, i32 8, i64 %idxprom.i.i.i27
+  %arrayidx4.i.i.i34 = getelementptr inbounds %struct._Unwind_Context, %struct._Unwind_Context* %cur_context, i64 0, i32 8, i64 %idxprom.i.i.i27
   %27 = load i8* %arrayidx4.i.i.i34, align 1
   %tobool6.i.i.i35 = icmp eq i8 %27, 0
   br i1 %tobool6.i.i.i35, label %if.end.i.i.i39, label %if.then.i.i.i37

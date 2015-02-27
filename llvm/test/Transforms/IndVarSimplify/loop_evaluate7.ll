@@ -30,7 +30,7 @@ bb21:		; preds = %bb23
 	br i1 %2, label %bb22, label %overflow2
 
 bb22:		; preds = %bb21
-	%3 = getelementptr i8* %q.0, i32 1		; <i8*> [#uses=1]
+	%3 = getelementptr i8, i8* %q.0, i32 1		; <i8*> [#uses=1]
 	br label %bb23
 
 bb23:		; preds = %bb22, %bb20

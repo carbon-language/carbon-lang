@@ -19,7 +19,7 @@ define i32 @f2(i32 %lhs, i16 *%src) {
 ; CHECK-LABEL: f2:
 ; CHECK: ah %r2, 4094(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 2047
+  %ptr = getelementptr i16, i16 *%src, i64 2047
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i32
   %res = add i32 %lhs, %rhs
@@ -31,7 +31,7 @@ define i32 @f3(i32 %lhs, i16 *%src) {
 ; CHECK-LABEL: f3:
 ; CHECK: ahy %r2, 4096(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 2048
+  %ptr = getelementptr i16, i16 *%src, i64 2048
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i32
   %res = add i32 %lhs, %rhs
@@ -43,7 +43,7 @@ define i32 @f4(i32 %lhs, i16 *%src) {
 ; CHECK-LABEL: f4:
 ; CHECK: ahy %r2, 524286(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 262143
+  %ptr = getelementptr i16, i16 *%src, i64 262143
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i32
   %res = add i32 %lhs, %rhs
@@ -57,7 +57,7 @@ define i32 @f5(i32 %lhs, i16 *%src) {
 ; CHECK: agfi %r3, 524288
 ; CHECK: ah %r2, 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 262144
+  %ptr = getelementptr i16, i16 *%src, i64 262144
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i32
   %res = add i32 %lhs, %rhs
@@ -69,7 +69,7 @@ define i32 @f6(i32 %lhs, i16 *%src) {
 ; CHECK-LABEL: f6:
 ; CHECK: ahy %r2, -2(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 -1
+  %ptr = getelementptr i16, i16 *%src, i64 -1
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i32
   %res = add i32 %lhs, %rhs
@@ -81,7 +81,7 @@ define i32 @f7(i32 %lhs, i16 *%src) {
 ; CHECK-LABEL: f7:
 ; CHECK: ahy %r2, -524288(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 -262144
+  %ptr = getelementptr i16, i16 *%src, i64 -262144
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i32
   %res = add i32 %lhs, %rhs
@@ -95,7 +95,7 @@ define i32 @f8(i32 %lhs, i16 *%src) {
 ; CHECK: agfi %r3, -524290
 ; CHECK: ah %r2, 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 -262145
+  %ptr = getelementptr i16, i16 *%src, i64 -262145
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i32
   %res = add i32 %lhs, %rhs

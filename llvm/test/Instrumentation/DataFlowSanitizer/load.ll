@@ -65,7 +65,7 @@ define i16 @load16(i16* %p) {
   ; NO_COMBINE_PTR_LABEL: and i64
   ; NO_COMBINE_PTR_LABEL: mul i64
   ; NO_COMBINE_PTR_LABEL: inttoptr i64 {{.*}} i16*
-  ; NO_COMBINE_PTR_LABEL: getelementptr i16*
+  ; NO_COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; NO_COMBINE_PTR_LABEL: load i16*
   ; NO_COMBINE_PTR_LABEL: load i16*
   ; NO_COMBINE_PTR_LABEL: icmp ne i16
@@ -139,7 +139,7 @@ define i64 @load64(i64* %p) {
   ; COMBINE_PTR_LABEL: store i16 {{.*}} @__dfsan_retval_tls
   ; COMBINE_PTR_LABEL: ret i64
   ; COMBINE_PTR_LABEL: call {{.*}} @__dfsan_union_load
-  ; COMBINE_PTR_LABEL: getelementptr i64* {{.*}} i64
+  ; COMBINE_PTR_LABEL: getelementptr i64, i64* {{.*}} i64
   ; COMBINE_PTR_LABEL: load i64*
   ; COMBINE_PTR_LABEL: icmp eq i64
 
@@ -159,7 +159,7 @@ define i64 @load64(i64* %p) {
   ; NO_COMBINE_PTR_LABEL: store i16 {{.*}} @__dfsan_retval_tls
   ; NO_COMBINE_PTR_LABEL: ret i64
   ; NO_COMBINE_PTR_LABEL: call {{.*}} @__dfsan_union_load
-  ; NO_COMBINE_PTR_LABEL: getelementptr i64* {{.*}} i64
+  ; NO_COMBINE_PTR_LABEL: getelementptr i64, i64* {{.*}} i64
   ; NO_COMBINE_PTR_LABEL: load i64*
   ; NO_COMBINE_PTR_LABEL: icmp eq i64
 

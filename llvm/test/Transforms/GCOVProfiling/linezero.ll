@@ -50,7 +50,7 @@ for.body:                                         ; preds = %for.cond
 
 for.inc:                                          ; preds = %for.body
   %7 = load i8** %__begin, align 8, !dbg !40
-  %incdec.ptr = getelementptr inbounds i8* %7, i32 1, !dbg !40
+  %incdec.ptr = getelementptr inbounds i8, i8* %7, i32 1, !dbg !40
   store i8* %incdec.ptr, i8** %__begin, align 8, !dbg !40
   br label %for.cond, !dbg !40
 

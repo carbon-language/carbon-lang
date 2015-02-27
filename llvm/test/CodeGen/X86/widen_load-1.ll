@@ -24,7 +24,7 @@ define void @reset(<2 x float>* noalias %garbage1) {
 
 "file complex.c, line 27, bb13":                  ; preds = %"file complex.c, line 27, bb1"
   store i32 0, i32* %changed, align 4
-  %r2 = getelementptr float* bitcast ([20 x i64]* @compl to float*), i64 32 ; <float*> [#uses=1]
+  %r2 = getelementptr float, float* bitcast ([20 x i64]* @compl to float*), i64 32 ; <float*> [#uses=1]
   %r3 = bitcast float* %r2 to <2 x float>*        ; <<2 x float>*> [#uses=1]
   %r4 = load <2 x float>* %r3, align 4            ; <<2 x float>> [#uses=1]
   call void @killcommon(i32* %changed)

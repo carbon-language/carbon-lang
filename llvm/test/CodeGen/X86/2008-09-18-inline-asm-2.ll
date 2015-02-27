@@ -32,9 +32,9 @@ target triple = "i386-apple-darwin8"
 
 define i32 @get(%struct.foo* %c, i8* %state) nounwind {
 entry:
-	%0 = getelementptr %struct.foo* %c, i32 0, i32 0		; <i32*> [#uses=2]
-	%1 = getelementptr %struct.foo* %c, i32 0, i32 1		; <i32*> [#uses=2]
-	%2 = getelementptr %struct.foo* %c, i32 0, i32 2		; <i8**> [#uses=2]
+	%0 = getelementptr %struct.foo, %struct.foo* %c, i32 0, i32 0		; <i32*> [#uses=2]
+	%1 = getelementptr %struct.foo, %struct.foo* %c, i32 0, i32 1		; <i32*> [#uses=2]
+	%2 = getelementptr %struct.foo, %struct.foo* %c, i32 0, i32 2		; <i8**> [#uses=2]
 	%3 = load i32* %0, align 4		; <i32> [#uses=1]
 	%4 = load i32* %1, align 4		; <i32> [#uses=1]
 	%5 = load i8* %state, align 1		; <i8> [#uses=1]

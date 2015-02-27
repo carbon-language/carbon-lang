@@ -11,7 +11,7 @@ declare i32 @llvm.r600.read.tidig.x() #1
 ; SI: s_endpgm
 define void @shl_2_add_9_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) #0 {
   %tid.x = tail call i32 @llvm.r600.read.tidig.x() #1
-  %ptr = getelementptr i32 addrspace(1)* %in, i32 %tid.x
+  %ptr = getelementptr i32, i32 addrspace(1)* %in, i32 %tid.x
   %val = load i32 addrspace(1)* %ptr, align 4
   %add = add i32 %val, 9
   %result = shl i32 %add, 2
@@ -27,7 +27,7 @@ define void @shl_2_add_9_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) #0 {
 ; SI: s_endpgm
 define void @shl_2_add_9_i32_2_add_uses(i32 addrspace(1)* %out0, i32 addrspace(1)* %out1, i32 addrspace(1)* %in) #0 {
   %tid.x = tail call i32 @llvm.r600.read.tidig.x() #1
-  %ptr = getelementptr i32 addrspace(1)* %in, i32 %tid.x
+  %ptr = getelementptr i32, i32 addrspace(1)* %in, i32 %tid.x
   %val = load i32 addrspace(1)* %ptr, align 4
   %add = add i32 %val, 9
   %result = shl i32 %add, 2
@@ -45,7 +45,7 @@ define void @shl_2_add_9_i32_2_add_uses(i32 addrspace(1)* %out0, i32 addrspace(1
 ; SI: s_endpgm
 define void @shl_2_add_999_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) #0 {
   %tid.x = tail call i32 @llvm.r600.read.tidig.x() #1
-  %ptr = getelementptr i32 addrspace(1)* %in, i32 %tid.x
+  %ptr = getelementptr i32, i32 addrspace(1)* %in, i32 %tid.x
   %val = load i32 addrspace(1)* %ptr, align 4
   %shl = add i32 %val, 999
   %result = shl i32 %shl, 2

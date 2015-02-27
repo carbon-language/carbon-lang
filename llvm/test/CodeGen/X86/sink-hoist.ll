@@ -49,7 +49,7 @@ entry:
 
 bb:
   %i.03 = phi i64 [ 0, %entry ], [ %3, %bb ]
-  %scevgep = getelementptr double* %p, i64 %i.03
+  %scevgep = getelementptr double, double* %p, i64 %i.03
   %1 = load double* %scevgep, align 8
   %2 = fdiv double 3.200000e+00, %1
   store double %2, double* %scevgep, align 8
@@ -127,8 +127,8 @@ bb:                                               ; preds = %bb60
   %tmp58 = bitcast <4 x i32> %tmp57 to <4 x float> ; <<4 x float>> [#uses=1]
   %4 = bitcast float* %y_addr.0 to <4 x float>*   ; <<4 x float>*> [#uses=1]
   store <4 x float> %tmp58, <4 x float>* %4, align 16
-  %5 = getelementptr float* %x_addr.0, i64 4      ; <float*> [#uses=1]
-  %6 = getelementptr float* %y_addr.0, i64 4      ; <float*> [#uses=1]
+  %5 = getelementptr float, float* %x_addr.0, i64 4      ; <float*> [#uses=1]
+  %6 = getelementptr float, float* %y_addr.0, i64 4      ; <float*> [#uses=1]
   %7 = add i32 %i.0, 4                            ; <i32> [#uses=1]
   %8 = load i32* %n, align 4                      ; <i32> [#uses=1]
   %9 = icmp sgt i32 %8, %7                        ; <i1> [#uses=1]

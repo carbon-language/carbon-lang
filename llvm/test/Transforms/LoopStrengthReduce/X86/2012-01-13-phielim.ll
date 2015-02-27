@@ -27,14 +27,14 @@ while.body.i:                                     ; preds = %cond.true29.i, %whi
 for.body.i:                                       ; preds = %for.body.i, %while.body.i
   %indvars.iv.i = phi i64 [ 0, %while.body.i ], [ %indvars.iv.next.i, %for.body.i ]
   %add.ptr.sum = add i64 %add.ptr.sum.i, %indvars.iv.i
-  %arrayidx22.i = getelementptr inbounds i8* %base, i64 %add.ptr.sum
+  %arrayidx22.i = getelementptr inbounds i8, i8* %base, i64 %add.ptr.sum
   %0 = load i8* %arrayidx22.i, align 1
   %indvars.iv.next.i = add i64 %indvars.iv.i, 1
   %cmp = call i1 @check() nounwind
   br i1 %cmp, label %for.end.i, label %for.body.i
 
 for.end.i:                                        ; preds = %for.body.i
-  %add.ptr.i144 = getelementptr inbounds i8* %base, i64 %add.ptr.sum.i
+  %add.ptr.i144 = getelementptr inbounds i8, i8* %base, i64 %add.ptr.sum.i
   %cmp2 = tail call i1 @foo(i8* %add.ptr.i144, i8* %add.ptr.i144, i8* undef) nounwind
   br i1 %cmp2, label %cond.true29.i, label %cond.false35.i
 
@@ -75,12 +75,12 @@ for.cond468:                                      ; preds = %if.then477, %entry
   br i1 %cmp469, label %for.body471, label %for.inc498
 
 for.body471:                                      ; preds = %for.cond468
-  %first = getelementptr inbounds [5000 x %struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771]* @tags, i64 0, i64 %indvars.iv1163, i32 1
+  %first = getelementptr inbounds [5000 x %struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771], [5000 x %struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771]* @tags, i64 0, i64 %indvars.iv1163, i32 1
   %1 = load i32* %first, align 4
   br i1 undef, label %if.then477, label %for.inc498
 
 if.then477:                                       ; preds = %for.body471
-  %last = getelementptr inbounds [5000 x %struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771]* @tags, i64 0, i64 %indvars.iv1163, i32 2
+  %last = getelementptr inbounds [5000 x %struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771], [5000 x %struct.anon.7.91.199.307.415.475.559.643.751.835.943.1003.1111.1219.1351.1375.1399.1435.1471.1483.1519.1531.1651.1771]* @tags, i64 0, i64 %indvars.iv1163, i32 2
   %indvars.iv.next1164 = add i64 %indvars.iv1163, 1
   br label %for.cond468
 
@@ -118,14 +118,14 @@ for.body3.us.i:                                   ; preds = %meshBB, %for.body3.
   %0 = add nsw i64 %indvars.iv.i.SV.phi, %indvars.iv8.i.SV.phi26
   %1 = trunc i64 %0 to i32
   %mul.i.us.i = mul nsw i32 0, %1
-  %arrayidx5.us.i = getelementptr inbounds double* %u, i64 %indvars.iv.i.SV.phi
+  %arrayidx5.us.i = getelementptr inbounds double, double* %u, i64 %indvars.iv.i.SV.phi
   %2 = load double* %arrayidx5.us.i, align 8
   %indvars.iv.next.i = add i64 %indvars.iv.i.SV.phi, 1
   br i1 undef, label %for.inc8.us.i, label %meshBB
 
 for.body3.lr.ph.us.i:                             ; preds = %meshBB1, %meshBB
   %indvars.iv8.i.SV.phi26 = phi i64 [ undef, %meshBB1 ], [ %indvars.iv8.i.SV.phi24, %meshBB ]
-  %arrayidx.us.i = getelementptr inbounds double* undef, i64 %indvars.iv8.i.SV.phi26
+  %arrayidx.us.i = getelementptr inbounds double, double* undef, i64 %indvars.iv8.i.SV.phi26
   %3 = add i64 %indvars.iv8.i.SV.phi26, 1
   br label %for.body3.us.i
 

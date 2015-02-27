@@ -17,14 +17,14 @@ bb6:                                              ; preds = %bb5
   br i1 undef, label %bb8, label %bb7
 
 bb7:                                              ; preds = %bb6
-  %1 = getelementptr inbounds %struct.SV* %0, i32 0, i32 0 ; <i8**> [#uses=1]
+  %1 = getelementptr inbounds %struct.SV, %struct.SV* %0, i32 0, i32 0 ; <i8**> [#uses=1]
   %2 = load i8** %1, align 4                      ; <i8*> [#uses=1]
-  %3 = getelementptr inbounds i8* %2, i32 12      ; <i8*> [#uses=1]
+  %3 = getelementptr inbounds i8, i8* %2, i32 12      ; <i8*> [#uses=1]
   %4 = bitcast i8* %3 to i32*                     ; <i32*> [#uses=1]
   %5 = load i32* %4, align 4                      ; <i32> [#uses=1]
   %storemerge5 = xor i32 %5, -1                   ; <i32> [#uses=1]
   call  void @Perl_sv_setiv(%struct.SV* undef, i32 %storemerge5) nounwind
-  %6 = getelementptr inbounds %struct.SV* undef, i32 0, i32 2 ; <i32*> [#uses=1]
+  %6 = getelementptr inbounds %struct.SV, %struct.SV* undef, i32 0, i32 2 ; <i32*> [#uses=1]
   %7 = load i32* %6, align 4                      ; <i32> [#uses=1]
   %8 = and i32 %7, 16384                          ; <i32> [#uses=1]
   %9 = icmp eq i32 %8, 0                          ; <i1> [#uses=1]
@@ -53,7 +53,7 @@ bb1.i:                                            ; preds = %bb13
   br label %Perl_sv_setuv.exit
 
 Perl_sv_setuv.exit:                               ; preds = %bb1.i, %bb.i
-  %11 = getelementptr inbounds %struct.SV* undef, i32 0, i32 2 ; <i32*> [#uses=1]
+  %11 = getelementptr inbounds %struct.SV, %struct.SV* undef, i32 0, i32 2 ; <i32*> [#uses=1]
   %12 = load i32* %11, align 4                    ; <i32> [#uses=1]
   %13 = and i32 %12, 16384                        ; <i32> [#uses=1]
   %14 = icmp eq i32 %13, 0                        ; <i1> [#uses=1]

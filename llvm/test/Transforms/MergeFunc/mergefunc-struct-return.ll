@@ -13,9 +13,9 @@ declare void @noop()
 define %kv1 @fn1() {
 ; CHECK-LABEL: @fn1(
   %tmp = alloca %kv1
-  %v1 = getelementptr %kv1* %tmp, i32 0, i32 0
+  %v1 = getelementptr %kv1, %kv1* %tmp, i32 0, i32 0
   store i32* null, i32** %v1
-  %v2 = getelementptr %kv1* %tmp, i32 0, i32 0
+  %v2 = getelementptr %kv1, %kv1* %tmp, i32 0, i32 0
   store i32* null, i32** %v2
   call void @noop()
   %v3 = load %kv1* %tmp
@@ -29,9 +29,9 @@ define %kv2 @fn2() {
 ; CHECK: %3 = bitcast i32* %2 to i8*
 ; CHECK: %4 = insertvalue %kv2 undef, i8* %3, 0
   %tmp = alloca %kv2
-  %v1 = getelementptr %kv2* %tmp, i32 0, i32 0
+  %v1 = getelementptr %kv2, %kv2* %tmp, i32 0, i32 0
   store i8* null, i8** %v1
-  %v2 = getelementptr %kv2* %tmp, i32 0, i32 0
+  %v2 = getelementptr %kv2, %kv2* %tmp, i32 0, i32 0
   store i8* null, i8** %v2
   call void @noop()
 

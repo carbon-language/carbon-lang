@@ -106,11 +106,11 @@ define internal i8* @"\01-[A init]"(%0* %self, i8* %_cmd) #0 {
   call void @llvm.dbg.declare(metadata i8** %2, metadata !63, metadata !{!"0x102"}), !dbg !62
   %5 = load %0** %1, !dbg !65
   %6 = bitcast %0* %5 to i8*, !dbg !65
-  %7 = getelementptr inbounds %struct._objc_super* %3, i32 0, i32 0, !dbg !65
+  %7 = getelementptr inbounds %struct._objc_super, %struct._objc_super* %3, i32 0, i32 0, !dbg !65
   store i8* %6, i8** %7, !dbg !65
   %8 = load %struct._class_t** @"\01L_OBJC_CLASSLIST_SUP_REFS_$_", !dbg !65
   %9 = bitcast %struct._class_t* %8 to i8*, !dbg !65
-  %10 = getelementptr inbounds %struct._objc_super* %3, i32 0, i32 1, !dbg !65
+  %10 = getelementptr inbounds %struct._objc_super, %struct._objc_super* %3, i32 0, i32 1, !dbg !65
   store i8* %9, i8** %10, !dbg !65
   %11 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_", !dbg !65, !invariant.load !67
   %12 = call i8* bitcast (i8* (%struct._objc_super*, i8*, ...)* @objc_msgSendSuper2 to i8* (%struct._objc_super*, i8*)*)(%struct._objc_super* %3, i8* %11), !dbg !65
@@ -120,17 +120,17 @@ define internal i8* @"\01-[A init]"(%0* %self, i8* %_cmd) #0 {
   br i1 %14, label %15, label %24, !dbg !65
 
 ; <label>:15                                      ; preds = %0
-  %16 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 0, !dbg !68
+  %16 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 0, !dbg !68
   store i8* bitcast (i8** @_NSConcreteStackBlock to i8*), i8** %16, !dbg !68
-  %17 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 1, !dbg !68
+  %17 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 1, !dbg !68
   store i32 -1040187392, i32* %17, !dbg !68
-  %18 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 2, !dbg !68
+  %18 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 2, !dbg !68
   store i32 0, i32* %18, !dbg !68
-  %19 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 3, !dbg !68
+  %19 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 3, !dbg !68
   store i8* bitcast (void (i8*)* @"__9-[A init]_block_invoke" to i8*), i8** %19, !dbg !68
-  %20 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 4, !dbg !68
+  %20 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 4, !dbg !68
   store %struct.__block_descriptor* bitcast ({ i64, i64, i8*, i8*, i8*, i64 }* @__block_descriptor_tmp to %struct.__block_descriptor*), %struct.__block_descriptor** %20, !dbg !68
-  %21 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 5, !dbg !68
+  %21 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 5, !dbg !68
   %22 = load %0** %1, align 8, !dbg !68
   store %0* %22, %0** %21, align 8, !dbg !68
   %23 = bitcast <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4 to void ()*, !dbg !68
@@ -153,7 +153,7 @@ define internal void @run(void ()* %block) #0 {
   call void @llvm.dbg.declare(metadata void ()** %1, metadata !72, metadata !{!"0x102"}), !dbg !73
   %2 = load void ()** %1, align 8, !dbg !74
   %3 = bitcast void ()* %2 to %struct.__block_literal_generic*, !dbg !74
-  %4 = getelementptr inbounds %struct.__block_literal_generic* %3, i32 0, i32 3, !dbg !74
+  %4 = getelementptr inbounds %struct.__block_literal_generic, %struct.__block_literal_generic* %3, i32 0, i32 3, !dbg !74
   %5 = bitcast %struct.__block_literal_generic* %3 to i8*, !dbg !74
   %6 = load i8** %4, !dbg !74
   %7 = bitcast i8* %6 to void (i8*)*, !dbg !74
@@ -171,7 +171,7 @@ define internal void @"__9-[A init]_block_invoke"(i8* %.block_descriptor) #0 {
   call void @llvm.dbg.declare(metadata i8* %.block_descriptor, metadata !76, metadata !{!"0x102"}), !dbg !88
   %4 = bitcast i8* %.block_descriptor to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !88
   store <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** %2, align 8, !dbg !88
-  %5 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 5, !dbg !88
+  %5 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 5, !dbg !88
   call void @llvm.dbg.declare(metadata <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>** %2, metadata !89, metadata !111), !dbg !90
   call void @llvm.dbg.declare(metadata %1** %d, metadata !91, metadata !{!"0x102"}), !dbg !100
   %6 = load %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_", !dbg !100
@@ -194,7 +194,7 @@ define internal void @"__9-[A init]_block_invoke"(i8* %.block_descriptor) #0 {
   %22 = load %0** %5, align 8, !dbg !101
   %23 = load i64* @"OBJC_IVAR_$_A.ivar", !dbg !101, !invariant.load !67
   %24 = bitcast %0* %22 to i8*, !dbg !101
-  %25 = getelementptr inbounds i8* %24, i64 %23, !dbg !101
+  %25 = getelementptr inbounds i8, i8* %24, i64 %23, !dbg !101
   %26 = bitcast i8* %25 to i32*, !dbg !101
   store i32 %21, i32* %26, align 4, !dbg !101
   ret void, !dbg !90
@@ -217,8 +217,8 @@ define internal void @__copy_helper_block_(i8*, i8*) {
   %6 = bitcast i8* %5 to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !103
   %7 = load i8** %3, !dbg !103
   %8 = bitcast i8* %7 to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !103
-  %9 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %6, i32 0, i32 5, !dbg !103
-  %10 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %8, i32 0, i32 5, !dbg !103
+  %9 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %6, i32 0, i32 5, !dbg !103
+  %10 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %8, i32 0, i32 5, !dbg !103
   %11 = load %0** %9, !dbg !103
   %12 = bitcast %0* %11 to i8*, !dbg !103
   %13 = bitcast %0** %10 to i8*, !dbg !103
@@ -234,7 +234,7 @@ define internal void @__destroy_helper_block_(i8*) {
   call void @llvm.dbg.declare(metadata i8** %2, metadata !105, metadata !{!"0x102"}), !dbg !106
   %3 = load i8** %2, !dbg !106
   %4 = bitcast i8* %3 to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>*, !dbg !106
-  %5 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 5, !dbg !106
+  %5 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, %0* }>* %4, i32 0, i32 5, !dbg !106
   %6 = load %0** %5, !dbg !106
   %7 = bitcast %0* %6 to i8*, !dbg !106
   call void @_Block_object_dispose(i8* %7, i32 3) #3, !dbg !106

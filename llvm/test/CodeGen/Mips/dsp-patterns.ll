@@ -6,7 +6,7 @@
 
 define zeroext i8 @test_lbux(i8* nocapture %b, i32 %i) {
 entry:
-  %add.ptr = getelementptr inbounds i8* %b, i32 %i
+  %add.ptr = getelementptr inbounds i8, i8* %b, i32 %i
   %0 = load i8* %add.ptr, align 1
   ret i8 %0
 }
@@ -16,7 +16,7 @@ entry:
 
 define signext i16 @test_lhx(i16* nocapture %b, i32 %i) {
 entry:
-  %add.ptr = getelementptr inbounds i16* %b, i32 %i
+  %add.ptr = getelementptr inbounds i16, i16* %b, i32 %i
   %0 = load i16* %add.ptr, align 2
   ret i16 %0
 }
@@ -26,7 +26,7 @@ entry:
 
 define i32 @test_lwx(i32* nocapture %b, i32 %i) {
 entry:
-  %add.ptr = getelementptr inbounds i32* %b, i32 %i
+  %add.ptr = getelementptr inbounds i32, i32* %b, i32 %i
   %0 = load i32* %add.ptr, align 4
   ret i32 %0
 }

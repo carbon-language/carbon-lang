@@ -22,7 +22,7 @@ define void @test(i32* %Q, i32* %P) {
 ; CHECK-NEXT: @free
 ; CHECK-NEXT: ret void
 define void @test2({i32, i32}* %P) {
-	%Q = getelementptr {i32, i32} *%P, i32 0, i32 1
+	%Q = getelementptr {i32, i32}, {i32, i32} *%P, i32 0, i32 1
 	store i32 4, i32* %Q
         %1 = bitcast {i32, i32}* %P to i8*
         tail call void @free(i8* %1)
@@ -35,7 +35,7 @@ define void @test2({i32, i32}* %P) {
 define void @test3() {
   %m = call i8* @malloc(i64 24)
   store i8 0, i8* %m
-  %m1 = getelementptr i8* %m, i64 1
+  %m1 = getelementptr i8, i8* %m, i64 1
   store i8 1, i8* %m1
   call void @free(i8* %m)
   ret void

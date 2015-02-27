@@ -133,7 +133,7 @@ entry:
   %dim31 = insertelement <4 x i32> %dim30, i32 %a, i32 2
   %dim32 = insertelement <4 x i32> %dim31, i32 %a, i32 3
 
-  %offset_ptr = getelementptr <4 x float>* null, i32 1
+  %offset_ptr = getelementptr <4 x float>, <4 x float>* null, i32 1
   %offset_int = ptrtoint <4 x float>* %offset_ptr to i64
   %sizeof32 = trunc i64 %offset_int to i32
 

@@ -22,7 +22,7 @@ entry:
   unreachable
 
 "8":                                              ; preds = %"4"
-  %8 = getelementptr inbounds i8* undef, i32 %6
+  %8 = getelementptr inbounds i8, i8* undef, i32 %6
   br i1 undef, label %"13", label %"12"
 
 "12":                                             ; preds = %"8", %entry

@@ -36,7 +36,7 @@ for.cond:
 for.body:
   %i.05 = phi i32 [ 0, %for.body.lr.ph ], [ %inc, %for.cond ]
   %idxprom = sext i32 %i.05 to i64
-  %arrayidx = getelementptr inbounds i32* %1, i64 %idxprom
+  %arrayidx = getelementptr inbounds i32, i32* %1, i64 %idxprom
   %3 = load i32* %arrayidx, align 4
   %tobool = icmp eq i32 %3, 0
   br i1 %tobool, label %if.then, label %for.cond
@@ -81,10 +81,10 @@ for.inc13.us:
 for.body4.us:
   %storemerge14.us = phi i32 [ 0, %for.body4.lr.ph.us ], [ %inc.us, %for.body4.us ]
   %idxprom.us = sext i32 %storemerge14.us to i64
-  %arrayidx6.us = getelementptr inbounds [8 x i8]* %a, i64 %idxprom5.us, i64 %idxprom.us
+  %arrayidx6.us = getelementptr inbounds [8 x i8], [8 x i8]* %a, i64 %idxprom5.us, i64 %idxprom.us
   %0 = load i8* %arrayidx6.us, align 1
   %idxprom7.us = zext i8 %0 to i64
-  %arrayidx8.us = getelementptr inbounds i8* %b, i64 %idxprom7.us
+  %arrayidx8.us = getelementptr inbounds i8, i8* %b, i64 %idxprom7.us
   %1 = load i8* %arrayidx8.us, align 1
   store i8 %1, i8* %arrayidx6.us, align 1
   %inc.us = add nsw i32 %storemerge14.us, 1
@@ -126,7 +126,7 @@ for.cond:
 
 for.body:
   %idxprom = sext i32 %i.0 to i64
-  %arrayidx = getelementptr inbounds i32* %a, i64 %idxprom
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %idxprom
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %sum.0, %0
   %inc = add nsw i32 %i.0, 1
@@ -180,7 +180,7 @@ for.cond:
 
 for.body:
   %idxprom = zext i32 %i.0 to i64
-  %arrayidx = getelementptr inbounds i32* %a, i64 %idxprom
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %idxprom
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %sum.0, %0
   %inc = add nsw i32 %i.0, 1

@@ -49,8 +49,8 @@ entry:
   %0 = load i64* @a, align 8, !dbg !48, !tbaa !49
   %call = tail call noalias i8* @_Znwm(i64 %0) #5, !dbg !53
   store i8* %call, i8** bitcast (i32** @b to i8**), align 8, !dbg !54, !tbaa !55
-  %1 = getelementptr inbounds %struct.A* %agg.tmp, i64 0, i32 0, !dbg !57
-  %2 = getelementptr inbounds %struct.A* %p1, i64 0, i32 0, !dbg !57
+  %1 = getelementptr inbounds %struct.A, %struct.A* %agg.tmp, i64 0, i32 0, !dbg !57
+  %2 = getelementptr inbounds %struct.A, %struct.A* %p1, i64 0, i32 0, !dbg !57
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %2, i64 24, i32 8, i1 false), !dbg !57, !tbaa.struct !58
   call void @_Z2f91A(%struct.A* %agg.tmp), !dbg !61
   ret void, !dbg !62
@@ -71,8 +71,8 @@ define void @_Z3f111A(%struct.A* nocapture readonly %p1) #0 {
 entry:
   %agg.tmp.i = alloca %struct.A, align 8
   tail call void @llvm.dbg.declare(metadata %struct.A* %p1, metadata !33, metadata !46), !dbg !63
-  %0 = getelementptr inbounds %struct.A* %p1, i64 0, i32 0, !dbg !64
-  %1 = getelementptr inbounds %struct.A* %agg.tmp.i, i64 0, i32 0, !dbg !65
+  %0 = getelementptr inbounds %struct.A, %struct.A* %p1, i64 0, i32 0, !dbg !64
+  %1 = getelementptr inbounds %struct.A, %struct.A* %agg.tmp.i, i64 0, i32 0, !dbg !65
   call void @llvm.lifetime.start(i64 24, i8* %1), !dbg !65
   %2 = load i64* @a, align 8, !dbg !67, !tbaa !49
   %call.i = tail call noalias i8* @_Znwm(i64 %2) #5, !dbg !68
@@ -100,22 +100,22 @@ entry:
   call void @llvm.dbg.value(metadata i8 1, i64 0, metadata !74, metadata !83), !dbg !77
   call void @llvm.dbg.value(metadata i8 1, i64 0, metadata !74, metadata !84), !dbg !77
   call void @llvm.dbg.declare(metadata %struct.A* undef, metadata !74, metadata !46), !dbg !77
-  %1 = getelementptr inbounds %struct.A* %agg.tmp.i.i, i64 0, i32 0, !dbg !85
+  %1 = getelementptr inbounds %struct.A, %struct.A* %agg.tmp.i.i, i64 0, i32 0, !dbg !85
   call void @llvm.lifetime.start(i64 24, i8* %1), !dbg !85
   %2 = load i64* @a, align 8, !dbg !87, !tbaa !49
   %call.i.i5 = invoke noalias i8* @_Znwm(i64 %2) #5
           to label %call.i.i.noexc unwind label %lpad, !dbg !88
 
 call.i.i.noexc:                                   ; preds = %entry
-  %agg.tmp.sroa.4.17..sroa_idx = getelementptr inbounds [7 x i8]* %agg.tmp.sroa.4, i64 0, i64 0, !dbg !89
-  %agg.tmp.sroa.2.1..sroa_idx = getelementptr inbounds [15 x i8]* %agg.tmp.sroa.2, i64 0, i64 0, !dbg !89
+  %agg.tmp.sroa.4.17..sroa_idx = getelementptr inbounds [7 x i8], [7 x i8]* %agg.tmp.sroa.4, i64 0, i64 0, !dbg !89
+  %agg.tmp.sroa.2.1..sroa_idx = getelementptr inbounds [15 x i8], [15 x i8]* %agg.tmp.sroa.2, i64 0, i64 0, !dbg !89
   store i8* %call.i.i5, i8** bitcast (i32** @b to i8**), align 8, !dbg !90, !tbaa !55
   store i8 1, i8* %1, align 8, !dbg !91
-  %agg.tmp.sroa.2.0..sroa_raw_idx = getelementptr inbounds i8* %1, i64 1, !dbg !91
+  %agg.tmp.sroa.2.0..sroa_raw_idx = getelementptr inbounds i8, i8* %1, i64 1, !dbg !91
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %agg.tmp.sroa.2.0..sroa_raw_idx, i8* %agg.tmp.sroa.2.1..sroa_idx, i64 15, i32 1, i1 false), !dbg !91
-  %agg.tmp.sroa.3.0..sroa_idx = getelementptr inbounds %struct.A* %agg.tmp.i.i, i64 0, i32 2, !dbg !91
+  %agg.tmp.sroa.3.0..sroa_idx = getelementptr inbounds %struct.A, %struct.A* %agg.tmp.i.i, i64 0, i32 2, !dbg !91
   store i8 1, i8* %agg.tmp.sroa.3.0..sroa_idx, align 8, !dbg !91
-  %agg.tmp.sroa.4.0..sroa_raw_idx = getelementptr inbounds i8* %1, i64 17, !dbg !91
+  %agg.tmp.sroa.4.0..sroa_raw_idx = getelementptr inbounds i8, i8* %1, i64 17, !dbg !91
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %agg.tmp.sroa.4.0..sroa_raw_idx, i8* %agg.tmp.sroa.4.17..sroa_idx, i64 7, i32 1, i1 false), !dbg !91
   invoke void @_Z2f91A(%struct.A* %agg.tmp.i.i)
           to label %invoke.cont unwind label %lpad, !dbg !92

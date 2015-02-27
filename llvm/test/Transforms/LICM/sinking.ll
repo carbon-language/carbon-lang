@@ -118,14 +118,14 @@ Out:		; preds = %Loop
 define i32 @test6() {
 	br label %Loop
 Loop:
-	%dead = getelementptr %Ty* @X2, i64 0, i32 0
+	%dead = getelementptr %Ty, %Ty* @X2, i64 0, i32 0
 	%sunk2 = load i32* %dead
 	br i1 false, label %Loop, label %Out
 Out:		; preds = %Loop
 	ret i32 %sunk2
 ; CHECK-LABEL: @test6(
 ; CHECK:     Out:
-; CHECK-NEXT:  %dead.le = getelementptr %Ty* @X2, i64 0, i32 0
+; CHECK-NEXT:  %dead.le = getelementptr %Ty, %Ty* @X2, i64 0, i32 0
 ; CHECK-NEXT:  %sunk2.le = load i32* %dead.le
 ; CHECK-NEXT:  ret i32 %sunk2.le
 }
@@ -242,7 +242,7 @@ Out:		; preds = %Loop
 define void @test11() {
 	br label %Loop
 Loop:
-	%dead = getelementptr %Ty* @X2, i64 0, i32 0
+	%dead = getelementptr %Ty, %Ty* @X2, i64 0, i32 0
 	br i1 false, label %Loop, label %Out
 Out:
 	ret void
@@ -261,7 +261,7 @@ entry:
 
 l1.header:
   %iv = phi i64 [ %iv.next, %l1.latch ], [ 0, %entry ]
-  %arrayidx.i = getelementptr inbounds [1 x i32]* @c, i64 0, i64 %iv
+  %arrayidx.i = getelementptr inbounds [1 x i32], [1 x i32]* @c, i64 0, i64 %iv
   br label %l2.header
 
 l2.header:

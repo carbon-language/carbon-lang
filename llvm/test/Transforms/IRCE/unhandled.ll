@@ -22,7 +22,7 @@ define void @general_affine_expressions(i32 *%arr, i32 *%a_len_ptr, i32 %n,
   br i1 %abc, label %in.bounds, label %out.of.bounds
 
  in.bounds:
-  %addr = getelementptr i32* %arr, i32 %array.idx
+  %addr = getelementptr i32, i32* %arr, i32 %array.idx
   store i32 0, i32* %addr
   %next = icmp slt i32 %idx.next, %n
   br i1 %next, label %loop, label %exit

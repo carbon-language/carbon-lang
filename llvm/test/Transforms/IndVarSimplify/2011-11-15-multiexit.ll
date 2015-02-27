@@ -20,12 +20,12 @@ if.then:                                          ; preds = %entry
 
 do.body:                                          ; preds = %if.else, %if.then
   %firstIV = phi i32* [ %incdec.ptr2, %if.else ], [ %first, %if.then ]
-  %incdec.ptr1 = getelementptr inbounds i32* %firstIV, i64 1
+  %incdec.ptr1 = getelementptr inbounds i32, i32* %firstIV, i64 1
   %cmp1 = icmp eq i32* %incdec.ptr1, %last
   br i1 %cmp1, label %early.exit, label %if.else
 
 if.else:                                        ; preds = %do.body
-  %incdec.ptr2 = getelementptr inbounds i32* %firstIV, i64 2
+  %incdec.ptr2 = getelementptr inbounds i32, i32* %firstIV, i64 2
   %cmp2 = icmp eq i32* %incdec.ptr2, %last
   br i1 %cmp2, label %if.end, label %do.body
 

@@ -42,7 +42,7 @@ body:
 ; CHECK: retq
 define void @test2(double** %call1559, i64 %indvars.iv4198, <4 x i1> %tmp1895) {
 bb:
-  %arrayidx1928 = getelementptr inbounds double** %call1559, i64 %indvars.iv4198
+  %arrayidx1928 = getelementptr inbounds double*, double** %call1559, i64 %indvars.iv4198
   %tmp1888 = load double** %arrayidx1928, align 8
   %predphi.v.v = select <4 x i1> %tmp1895, <4 x double> <double -5.000000e-01, double -5.000000e-01, double -5.000000e-01, double -5.000000e-01>, <4 x double> <double 5.000000e-01, double 5.000000e-01, double 5.000000e-01, double 5.000000e-01>
   %tmp1900 = bitcast double* %tmp1888 to <4 x double>*

@@ -15,7 +15,7 @@ bb49:                                             ; preds = %bb48, %entry
 
 bb10:                                             ; preds = %bb49
   %tmp326 = mul nsw i32 %tmp1, %tmp2              ; <i32> [#uses=1]
-  %tmp351 = getelementptr inbounds i8* %x_addr.0, i32 %tmp326 ; <i8*> [#uses=1]
+  %tmp351 = getelementptr inbounds i8, i8* %x_addr.0, i32 %tmp326 ; <i8*> [#uses=1]
   br i1 false, label %bb.nph, label %bb48
 
 bb.nph:                                           ; preds = %bb10
@@ -25,7 +25,7 @@ bb23:                                             ; preds = %bb28, %bb.nph
   %pOriginHi.01 = phi i8* [ %tmp351, %bb.nph ], [ %pOriginHi.0, %bb28 ] ; <i8*> [#uses=2]
   %tmp378 = bitcast i8* %pOriginHi.01 to i8*      ; <i8*> [#uses=1]
   store i8* %tmp378, i8** null
-  %tmp385 = getelementptr inbounds i8* %pOriginHi.01, i32 %tmp2 ; <i8*> [#uses=1]
+  %tmp385 = getelementptr inbounds i8, i8* %pOriginHi.01, i32 %tmp2 ; <i8*> [#uses=1]
   br label %bb28
 
 bb28:                                             ; preds = %bb23
@@ -36,6 +36,6 @@ bb28.bb48_crit_edge:                              ; preds = %bb28
   br label %bb48
 
 bb48:                                             ; preds = %bb28.bb48_crit_edge, %bb10
-  %tmp481 = getelementptr inbounds i8* %x_addr.0, i32 1 ; <i8*> [#uses=1]
+  %tmp481 = getelementptr inbounds i8, i8* %x_addr.0, i32 1 ; <i8*> [#uses=1]
   br label %bb49
 }

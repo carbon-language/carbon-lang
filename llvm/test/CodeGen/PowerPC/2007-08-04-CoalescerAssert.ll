@@ -22,7 +22,7 @@ cond_true28:		; preds = %cond_false, %cond_true
 
 cond_next30:		; preds = %cond_true28, %cond_false, %cond_true
 	%iftmp.0.043.1 = phi %struct._obstack_chunk* [ %iftmp.0.043.0, %cond_true28 ], [ null, %cond_true ], [ %tmp22, %cond_false ]		; <%struct._obstack_chunk*> [#uses=1]
-	%tmp41 = getelementptr %struct._obstack_chunk* %iftmp.0.043.1, i32 0, i32 0		; <i8**> [#uses=1]
+	%tmp41 = getelementptr %struct._obstack_chunk, %struct._obstack_chunk* %iftmp.0.043.1, i32 0, i32 0		; <i8**> [#uses=1]
 	store i8* null, i8** %tmp41, align 8
 	ret i32 undef
 }

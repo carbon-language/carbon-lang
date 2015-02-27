@@ -33,8 +33,8 @@ bb10:		; preds = %bb9
 
 bb11:		; preds = %bb9
 	store i32 0, i32* @no_mis, align 4
-	%1 = getelementptr i8* %A, i32 0		; <i8*> [#uses=1]
-	%2 = getelementptr i8* %B, i32 0		; <i8*> [#uses=1]
+	%1 = getelementptr i8, i8* %A, i32 0		; <i8*> [#uses=1]
+	%2 = getelementptr i8, i8* %B, i32 0		; <i8*> [#uses=1]
 	tail call  void @diff(i8* %1, i8* %2, i32 undef, i32 undef, i32 undef, i32 undef) nounwind
 	br i1 undef, label %bb15, label %bb12
 
@@ -95,7 +95,7 @@ bb168.i:		; preds = %bb167.i, %bb163.i, %bb161.i, %bb160.i, %bb158.i
 	%fi.5.i = phi i32 [ %fi.614.i, %bb167.i ], [ %ci.910.i, %bb158.i ], [ %fi.614.i, %bb160.i ], [ %ci.910.i, %bb161.i ], [ %fi.614.i, %bb163.i ]		; <i32> [#uses=2]
 	%fj.4.i = phi i32 [ %cj.811.i, %bb167.i ], [ %cj.811.i, %bb158.i ], [ %fj.515.i, %bb160.i ], [ %cj.811.i, %bb161.i ], [ %fj.515.i, %bb163.i ]		; <i32> [#uses=2]
 	%f.5.i = phi i32 [ %7, %bb167.i ], [ %8, %bb158.i ], [ %7, %bb160.i ], [ %7, %bb161.i ], [ %7, %bb163.i ]		; <i32> [#uses=2]
-	%scevgep88.i = getelementptr i32* %3, i32 undef		; <i32*> [#uses=1]
+	%scevgep88.i = getelementptr i32, i32* %3, i32 undef		; <i32*> [#uses=1]
 	%ci.10.i = select i1 undef, i32 %pi.316.i, i32 undef		; <i32> [#uses=0]
 	%ci.12.i = select i1 undef, i32 %fi.5.i, i32 undef		; <i32> [#uses=1]
 	%cj.11.i100 = select i1 undef, i32 %fj.4.i, i32 undef		; <i32> [#uses=1]
@@ -110,7 +110,7 @@ bb218.i:		; preds = %bb211.i, %bb168.i
 	br i1 undef, label %bb220.i, label %bb158.i
 
 bb220.i:		; preds = %bb218.i, %bb153.i
-	%11 = getelementptr i32* null, i32 %6		; <i32*> [#uses=1]
+	%11 = getelementptr i32, i32* null, i32 %6		; <i32*> [#uses=1]
 	store i32 undef, i32* %11, align 4
 	br i1 undef, label %bb221.i, label %bb228.i
 

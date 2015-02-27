@@ -7,11 +7,11 @@ declare i8* @llvm.returnaddress(i32)
 
 define i32* @wrong-t2stmia-size-reduction(i32* %addr, i32 %val0) minsize {
   store i32 %val0, i32* %addr
-  %addr1 = getelementptr i32* %addr, i32 1
+  %addr1 = getelementptr i32, i32* %addr, i32 1
   %lr = call i8* @llvm.returnaddress(i32 0)
   %lr32 = ptrtoint i8* %lr to i32
   store i32 %lr32, i32* %addr1
-  %addr2 = getelementptr i32* %addr1, i32 1
+  %addr2 = getelementptr i32, i32* %addr1, i32 1
   ret i32* %addr2
 }
 

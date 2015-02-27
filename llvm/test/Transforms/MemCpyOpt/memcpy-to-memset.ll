@@ -9,7 +9,7 @@ define void @test1() nounwind {
   %arr = alloca [3 x i32], align 4
   %arr_i8 = bitcast [3 x i32]* %arr to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %arr_i8, i8* bitcast ([3 x i32]* @cst to i8*), i64 12, i32 4, i1 false)
-  %arraydecay = getelementptr inbounds [3 x i32]* %arr, i64 0, i64 0
+  %arraydecay = getelementptr inbounds [3 x i32], [3 x i32]* %arr, i64 0, i64 0
   call void @foo(i32* %arraydecay) nounwind
   ret void
 ; CHECK-LABEL: @test1(

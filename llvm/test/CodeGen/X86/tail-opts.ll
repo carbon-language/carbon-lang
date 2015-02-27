@@ -126,11 +126,11 @@ altret:
 
 define i1 @dont_merge_oddly(float* %result) nounwind {
 entry:
-  %tmp4 = getelementptr float* %result, i32 2
+  %tmp4 = getelementptr float, float* %result, i32 2
   %tmp5 = load float* %tmp4, align 4
-  %tmp7 = getelementptr float* %result, i32 4
+  %tmp7 = getelementptr float, float* %result, i32 4
   %tmp8 = load float* %tmp7, align 4
-  %tmp10 = getelementptr float* %result, i32 6
+  %tmp10 = getelementptr float, float* %result, i32 6
   %tmp11 = load float* %tmp10, align 4
   %tmp12 = fcmp olt float %tmp8, %tmp11
   br i1 %tmp12, label %bb, label %bb21
@@ -200,7 +200,7 @@ bb2.i:                                            ; preds = %bb
 
 lvalue_p.exit:                                    ; preds = %bb.i
   %tmp21 = load %union.tree_node** null, align 8  ; <%union.tree_node*> [#uses=3]
-  %tmp22 = getelementptr inbounds %union.tree_node* %tmp21, i64 0, i32 0, i32 0, i64 0 ; <i8*> [#uses=1]
+  %tmp22 = getelementptr inbounds %union.tree_node, %union.tree_node* %tmp21, i64 0, i32 0, i32 0, i64 0 ; <i8*> [#uses=1]
   %tmp23 = load i8* %tmp22, align 8               ; <i8> [#uses=1]
   %tmp24 = zext i8 %tmp23 to i32                  ; <i32> [#uses=1]
   switch i32 %tmp24, label %lvalue_p.exit4 [
@@ -209,10 +209,10 @@ lvalue_p.exit:                                    ; preds = %bb.i
   ]
 
 bb.i1:                                            ; preds = %lvalue_p.exit
-  %tmp25 = getelementptr inbounds %union.tree_node* %tmp21, i64 0, i32 0, i32 2 ; <i32*> [#uses=1]
+  %tmp25 = getelementptr inbounds %union.tree_node, %union.tree_node* %tmp21, i64 0, i32 0, i32 2 ; <i32*> [#uses=1]
   %tmp26 = bitcast i32* %tmp25 to %union.tree_node** ; <%union.tree_node**> [#uses=1]
   %tmp27 = load %union.tree_node** %tmp26, align 8 ; <%union.tree_node*> [#uses=2]
-  %tmp28 = getelementptr inbounds %union.tree_node* %tmp27, i64 0, i32 0, i32 0, i64 16 ; <i8*> [#uses=1]
+  %tmp28 = getelementptr inbounds %union.tree_node, %union.tree_node* %tmp27, i64 0, i32 0, i32 0, i64 16 ; <i8*> [#uses=1]
   %tmp29 = load i8* %tmp28, align 8               ; <i8> [#uses=1]
   %tmp30 = zext i8 %tmp29 to i32                  ; <i32> [#uses=1]
   switch i32 %tmp30, label %lvalue_p.exit4 [
@@ -226,10 +226,10 @@ bb.i.i:                                           ; preds = %bb.i1
   br label %lvalue_p.exit4
 
 bb2.i.i2:                                         ; preds = %bb.i1
-  %tmp35 = getelementptr inbounds %union.tree_node* %tmp27, i64 0, i32 0, i32 0, i64 8 ; <i8*> [#uses=1]
+  %tmp35 = getelementptr inbounds %union.tree_node, %union.tree_node* %tmp27, i64 0, i32 0, i32 0, i64 8 ; <i8*> [#uses=1]
   %tmp36 = bitcast i8* %tmp35 to %union.tree_node** ; <%union.tree_node**> [#uses=1]
   %tmp37 = load %union.tree_node** %tmp36, align 8 ; <%union.tree_node*> [#uses=1]
-  %tmp38 = getelementptr inbounds %union.tree_node* %tmp37, i64 0, i32 0, i32 0, i64 16 ; <i8*> [#uses=1]
+  %tmp38 = getelementptr inbounds %union.tree_node, %union.tree_node* %tmp37, i64 0, i32 0, i32 0, i64 16 ; <i8*> [#uses=1]
   %tmp39 = load i8* %tmp38, align 8               ; <i8> [#uses=1]
   switch i8 %tmp39, label %bb2 [
     i8 16, label %lvalue_p.exit4
@@ -237,10 +237,10 @@ bb2.i.i2:                                         ; preds = %bb.i1
   ]
 
 bb2.i3:                                           ; preds = %lvalue_p.exit
-  %tmp40 = getelementptr inbounds %union.tree_node* %tmp21, i64 0, i32 0, i32 0, i64 8 ; <i8*> [#uses=1]
+  %tmp40 = getelementptr inbounds %union.tree_node, %union.tree_node* %tmp21, i64 0, i32 0, i32 0, i64 8 ; <i8*> [#uses=1]
   %tmp41 = bitcast i8* %tmp40 to %union.tree_node** ; <%union.tree_node**> [#uses=1]
   %tmp42 = load %union.tree_node** %tmp41, align 8 ; <%union.tree_node*> [#uses=1]
-  %tmp43 = getelementptr inbounds %union.tree_node* %tmp42, i64 0, i32 0, i32 0, i64 16 ; <i8*> [#uses=1]
+  %tmp43 = getelementptr inbounds %union.tree_node, %union.tree_node* %tmp42, i64 0, i32 0, i32 0, i64 16 ; <i8*> [#uses=1]
   %tmp44 = load i8* %tmp43, align 8               ; <i8> [#uses=1]
   switch i8 %tmp44, label %bb2 [
     i8 16, label %lvalue_p.exit4

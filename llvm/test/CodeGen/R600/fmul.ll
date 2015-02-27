@@ -42,7 +42,7 @@ entry:
 ; SI: v_mul_f32
 ; SI: v_mul_f32
 define void @fmul_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
-  %b_ptr = getelementptr <4 x float> addrspace(1)* %in, i32 1
+  %b_ptr = getelementptr <4 x float>, <4 x float> addrspace(1)* %in, i32 1
   %a = load <4 x float> addrspace(1) * %in
   %b = load <4 x float> addrspace(1) * %b_ptr
   %result = fmul <4 x float> %a, %b

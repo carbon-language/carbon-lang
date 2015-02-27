@@ -5,6 +5,6 @@
 ; CHECK: getelementptr index type missmatch
 
 define <2 x i32> @test(<2 x i32*> %a) {
-  %w = getelementptr <2 x i32*> %a, i32 2
+  %w = getelementptr i32, <2 x i32*> %a, i32 2
   ret <2 x i32> %w
 }

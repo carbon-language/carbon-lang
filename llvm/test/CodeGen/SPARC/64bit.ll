@@ -176,20 +176,20 @@ define i64 @load_bool(i1* %p) {
 ; CHECK: sth [[R]], [%i2+40]
 ; CHECK: stb [[R]], [%i3+-20]
 define void @stores(i64* %p, i32* %q, i16* %r, i8* %s) {
-  %p1 = getelementptr i64* %p, i64 1
-  %p2 = getelementptr i64* %p, i64 2
+  %p1 = getelementptr i64, i64* %p, i64 1
+  %p2 = getelementptr i64, i64* %p, i64 2
   %pv = load i64* %p1
   store i64 %pv, i64* %p2
 
-  %q2 = getelementptr i32* %q, i32 -2
+  %q2 = getelementptr i32, i32* %q, i32 -2
   %qv = trunc i64 %pv to i32
   store i32 %qv, i32* %q2
 
-  %r2 = getelementptr i16* %r, i16 20
+  %r2 = getelementptr i16, i16* %r, i16 20
   %rv = trunc i64 %pv to i16
   store i16 %rv, i16* %r2
 
-  %s2 = getelementptr i8* %s, i8 -20
+  %s2 = getelementptr i8, i8* %s, i8 -20
   %sv = trunc i64 %pv to i8
   store i8 %sv, i8* %s2
 
@@ -230,7 +230,7 @@ define i64 @unsigned_divide(i64 %a, i64 %b) {
 define void @access_fi() {
 entry:
   %b = alloca [32 x i8], align 1
-  %arraydecay = getelementptr inbounds [32 x i8]* %b, i64 0, i64 0
+  %arraydecay = getelementptr inbounds [32 x i8], [32 x i8]* %b, i64 0, i64 0
   call void @g(i8* %arraydecay) #2
   ret void
 }
@@ -281,7 +281,7 @@ define double @bitcast_f64_i64(i64 %x) {
 define i64 @store_zero(i64* nocapture %a, i64* nocapture %b) {
 entry:
   store i64 0, i64* %a, align 8
-  %0 = getelementptr inbounds i64* %b, i32 1
+  %0 = getelementptr inbounds i64, i64* %b, i32 1
   store i64 0, i64* %0, align 8
   ret i64 0
 }

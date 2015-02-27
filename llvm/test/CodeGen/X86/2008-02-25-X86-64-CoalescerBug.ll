@@ -13,7 +13,7 @@ bb53:		; preds = %entry
 	%tmp55 = call %struct.YY** @AA( i64 1, %struct.XX* %uen )		; <%struct.YY**> [#uses=3]
 	%tmp2728128 = load %struct.XX** null		; <%struct.XX*> [#uses=1]
 	%tmp61 = load %struct.YY** %tmp55, align 8		; <%struct.YY*> [#uses=1]
-	%tmp62 = getelementptr %struct.YY* %tmp61, i32 0, i32 0		; <i64*> [#uses=1]
+	%tmp62 = getelementptr %struct.YY, %struct.YY* %tmp61, i32 0, i32 0		; <i64*> [#uses=1]
 	%tmp63 = load i64* %tmp62, align 8		; <i64> [#uses=1]
 	%tmp6566 = zext i16 %tmp45 to i64		; <i64> [#uses=1]
 	%tmp67 = shl i64 %tmp6566, 1		; <i64> [#uses=1]

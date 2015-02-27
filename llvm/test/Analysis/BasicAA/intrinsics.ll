@@ -21,13 +21,13 @@ entry:
 
 ; CHECK:      define <8 x i16> @test1(i8* %p, <8 x i16> %y) {
 ; CHECK-NEXT: entry:
-; CHECK-NEXT:   %q = getelementptr i8* %p, i64 16
+; CHECK-NEXT:   %q = getelementptr i8, i8* %p, i64 16
 ; CHECK-NEXT:   %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) [[ATTR]]
 ; CHECK-NEXT:   call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16)
 ; CHECK-NEXT:   %c = add <8 x i16> %a, %a
 define <8 x i16> @test1(i8* %p, <8 x i16> %y) {
 entry:
-  %q = getelementptr i8* %p, i64 16
+  %q = getelementptr i8, i8* %p, i64 16
   %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) nounwind
   call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16)
   %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) nounwind

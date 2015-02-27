@@ -5,7 +5,7 @@
 
 define void @foo() {
   %Blah = alloca [58 x i8]
-  %tmp.0 = getelementptr [58 x i8]* %Blah, i32 0, i32 0
+  %tmp.0 = getelementptr [58 x i8], [58 x i8]* %Blah, i32 0, i32 0
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp.0, i8* getelementptr inbounds ([58 x i8]* @G1, i32 0, i32 0), i32 58, i32 1, i1 false)
   ret void
 }

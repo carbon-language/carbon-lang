@@ -74,7 +74,7 @@ define void @set_stored_macroblock_parameters() #1 {
 entry:
   %0 = load %structB** @img, align 4
   %1 = load i32* undef, align 4
-  %mb_data = getelementptr inbounds %structB* %0, i32 0, i32 61
+  %mb_data = getelementptr inbounds %structB, %structB* %0, i32 0, i32 61
   %2 = load %structK** %mb_data, align 4
   br label %for.body
 
@@ -110,7 +110,7 @@ for.body119:                                      ; preds = %for.body119, %for.c
 
 if.end164:                                        ; preds = %for.body119, %for.cond47.preheader, %if.end43
   store i32*** null, i32**** @cofDC, align 4
-  %mb_type = getelementptr inbounds %structK* %2, i32 %1, i32 8
+  %mb_type = getelementptr inbounds %structK, %structK* %2, i32 %1, i32 8
   br i1 undef, label %if.end230, label %if.then169
 
 if.then169:                                       ; preds = %if.end164
@@ -124,7 +124,7 @@ for.cond210.preheader:                            ; preds = %if.then169
 
 if.end230:                                        ; preds = %if.end164
   tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* undef, i8* bitcast ([4 x i32]* @b8mode to i8*), i32 16, i32 4, i1 false)
-  %b8pdir = getelementptr inbounds %structK* %2, i32 %1, i32 15
+  %b8pdir = getelementptr inbounds %structK, %structK* %2, i32 %1, i32 15
   %3 = bitcast [4 x i32]* %b8pdir to i8*
   tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %3, i8* bitcast ([4 x i32]* @b8pdir to i8*), i32 16, i32 4, i1 false)
   br i1 undef, label %if.end236, label %if.then233
@@ -152,7 +152,7 @@ if.then248:                                       ; preds = %land.lhs.true246
 if.end249:                                        ; preds = %if.then248, %land.lhs.true246, %if.end236
   %5 = load i32* @luma_transform_size_8x8_flag, align 4
   %6 = load %structA** @rdopt, align 4
-  %luma_transform_size_8x8_flag264 = getelementptr inbounds %structA* %6, i32 0, i32 21
+  %luma_transform_size_8x8_flag264 = getelementptr inbounds %structA, %structA* %6, i32 0, i32 21
   store i32 %5, i32* %luma_transform_size_8x8_flag264, align 4
   %7 = load i32* undef, align 4
   %add281 = add nsw i32 %7, 0
@@ -161,22 +161,22 @@ if.end249:                                        ; preds = %if.then248, %land.l
 for.body285:                                      ; preds = %for.inc503, %if.end249
   %8 = phi %structB* [ undef, %if.end249 ], [ %.pre1155, %for.inc503 ]
   %i.21103 = phi i32 [ 0, %if.end249 ], [ %inc504, %for.inc503 ]
-  %block_x286 = getelementptr inbounds %structB* %8, i32 0, i32 37
+  %block_x286 = getelementptr inbounds %structB, %structB* %8, i32 0, i32 37
   %9 = load i32* %block_x286, align 4
   %add287 = add nsw i32 %9, %i.21103
   %shr289 = ashr i32 %i.21103, 1
   %add290 = add nsw i32 %shr289, 0
-  %arrayidx292 = getelementptr inbounds %structK* %2, i32 %1, i32 15, i32 %add290
+  %arrayidx292 = getelementptr inbounds %structK, %structK* %2, i32 %1, i32 15, i32 %add290
   %10 = load %structM** @enc_picture, align 4
-  %ref_idx = getelementptr inbounds %structM* %10, i32 0, i32 35
+  %ref_idx = getelementptr inbounds %structM, %structM* %10, i32 0, i32 35
   %11 = load i8**** %ref_idx, align 4
   %12 = load i8*** %11, align 4
-  %arrayidx313 = getelementptr inbounds i8** %12, i32 %add281
+  %arrayidx313 = getelementptr inbounds i8*, i8** %12, i32 %add281
   %13 = load i8** %arrayidx313, align 4
-  %arrayidx314 = getelementptr inbounds i8* %13, i32 %add287
+  %arrayidx314 = getelementptr inbounds i8, i8* %13, i32 %add287
   store i8 -1, i8* %arrayidx314, align 1
   %14 = load %structB** @img, align 4
-  %MbaffFrameFlag327 = getelementptr inbounds %structB* %14, i32 0, i32 100
+  %MbaffFrameFlag327 = getelementptr inbounds %structB, %structB* %14, i32 0, i32 100
   %15 = load i32* %MbaffFrameFlag327, align 4
   %tobool328 = icmp eq i32 %15, 0
   br i1 %tobool328, label %if.end454, label %if.then329

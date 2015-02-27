@@ -11,7 +11,7 @@ define void @test() nounwind {
 entry:
   %u = alloca %union.anon, align 16
   %u164 = bitcast %union.anon* %u to [4 x i32]*
-  %arrayidx165 = getelementptr inbounds [4 x i32]* %u164, i32 0, i32 0
+  %arrayidx165 = getelementptr inbounds [4 x i32], [4 x i32]* %u164, i32 0, i32 0
   store i32 undef, i32* %arrayidx165, align 4
   %v186 = bitcast %union.anon* %u to <4 x float>*
   store <4 x float> undef, <4 x float>* %v186, align 16

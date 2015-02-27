@@ -22,7 +22,7 @@ bb2.outer.i:                                      ; preds = %bb9.i, %bb2
 bb1.i:                                            ; preds = %bb1.i, %bb2.outer.i
   %indvar5.i = phi i64 [ %tmp, %bb1.i ], [ 0, %bb2.outer.i ] ; <i64> [#uses=1]
   %tmp = add i64 %indvar5.i, 1                    ; <i64> [#uses=2]
-  %scevgep.i = getelementptr double* undef, i64 %tmp ; <double*> [#uses=0]
+  %scevgep.i = getelementptr double, double* undef, i64 %tmp ; <double*> [#uses=0]
   br i1 undef, label %bb1.i, label %bb5.preheader.i
 
 bb5.preheader.i:                                  ; preds = %bb1.i, %bb2.outer.i

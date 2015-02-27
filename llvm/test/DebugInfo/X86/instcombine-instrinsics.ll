@@ -34,7 +34,7 @@ define void @init() #0 {
   store %struct.i14* null, %struct.i14** %p, align 8, !dbg !18
   %1 = call i32 @foo(%struct.i14** %p), !dbg !19
   %2 = load %struct.i14** %p, align 8, !dbg !20
-  %3 = getelementptr inbounds %struct.i14* %2, i32 0, i32 0, !dbg !20
+  %3 = getelementptr inbounds %struct.i14, %struct.i14* %2, i32 0, i32 0, !dbg !20
   %4 = load i64* %3, align 8, !dbg !20
   %5 = or i64 %4, 4, !dbg !20
   store i64 %5, i64* %3, align 8, !dbg !20

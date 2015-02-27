@@ -16,7 +16,7 @@ for.body.lr.ph:
 for.body:
   %indvars.iv = phi i64 [ 0, %for.body.lr.ph ], [ %indvars.iv.next, %for.body ]
   %count.09 = phi i32 [ 190, %for.body.lr.ph ], [ %inc, %for.body ]
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %count.09, i32* %arrayidx2, align 4
   %inc = add nsw i32 %count.09, 1
   %indvars.iv.next = add i64 %indvars.iv, 1
@@ -51,10 +51,10 @@ entry:
 for.body:
   %iv = phi i64 [ 0, %entry ], [ %iv.next, %for.body ]
   %ind.sum = add i64 %iv, %offset
-  %arr.idx = getelementptr inbounds float* %a, i64 %ind.sum
+  %arr.idx = getelementptr inbounds float, float* %a, i64 %ind.sum
   %l1 = load float* %arr.idx, align 4
   %ind.sum2 = add i64 %iv, %offset2
-  %arr.idx2 = getelementptr inbounds float* %a, i64 %ind.sum2
+  %arr.idx2 = getelementptr inbounds float, float* %a, i64 %ind.sum2
   %l2 = load float* %arr.idx2, align 4
   %m = fmul fast float %b, %l2
   %ad = fadd fast float %l1, %m

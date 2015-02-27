@@ -20,8 +20,8 @@ define i32 @_Z5test1v() nounwind uwtable ssp {
   %2 = load i32* %b.01, align 4
   %3 = shl nsw i32 %2, 1
   store i32 %3, i32* %p.02, align 4
-  %4 = getelementptr inbounds i32* %p.02, i64 -1
-  %5 = getelementptr inbounds i32* %b.01, i64 1
+  %4 = getelementptr inbounds i32, i32* %p.02, i64 -1
+  %5 = getelementptr inbounds i32, i32* %b.01, i64 1
   %6 = icmp eq i32* %4, getelementptr ([36 x i32]* @A, i64 128102389400760775, i64 3)
   br i1 %6, label %7, label %1
 
@@ -42,8 +42,8 @@ define i32 @_Z5test2v() nounwind uwtable ssp {
   %b.01 = phi i32* [ getelementptr inbounds ([36 x i32]* @B, i64 0, i64 2), %0 ], [ %4, %1 ]
   %2 = load i32* %b.01, align 4
   store i32 %2, i32* %p.02, align 4
-  %3 = getelementptr inbounds i32* %p.02, i64 -1
-  %4 = getelementptr inbounds i32* %b.01, i64 1
+  %3 = getelementptr inbounds i32, i32* %p.02, i64 -1
+  %4 = getelementptr inbounds i32, i32* %b.01, i64 1
   %5 = icmp eq i32* %4, getelementptr inbounds ([36 x i32]* @A, i64 0, i64 18)
   br i1 %5, label %6, label %1
 
@@ -64,8 +64,8 @@ define i32 @_Z5test3v() nounwind uwtable ssp {
   %b.01 = phi i32* [ getelementptr inbounds ([36 x i32]* @B, i64 0, i64 5), %0 ], [ %4, %1 ]
   %2 = load i32* %b.01, align 4
   store i32 %2, i32* %p.02, align 4
-  %3 = getelementptr inbounds i32* %p.02, i64 -1
-  %4 = getelementptr inbounds i32* %b.01, i64 1
+  %3 = getelementptr inbounds i32, i32* %p.02, i64 -1
+  %4 = getelementptr inbounds i32, i32* %b.01, i64 1
   %5 = icmp eq i32* %3, getelementptr ([36 x i32]* @A, i64 128102389400760775, i64 3)
   br i1 %5, label %6, label %1
 

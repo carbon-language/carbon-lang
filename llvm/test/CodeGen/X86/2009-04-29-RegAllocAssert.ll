@@ -83,18 +83,18 @@ bb3.i:		; preds = %bb3.i, %entry
 	br i1 %or.cond.i, label %bb5.i, label %bb3.i
 
 bb5.i:		; preds = %bb3.i
-	%4 = getelementptr i8* %0, i64 0		; <i8*> [#uses=1]
+	%4 = getelementptr i8, i8* %0, i64 0		; <i8*> [#uses=1]
 	store i8 0, i8* %4, align 1
-	%5 = getelementptr i8* %0, i64 0		; <i8*> [#uses=1]
+	%5 = getelementptr i8, i8* %0, i64 0		; <i8*> [#uses=1]
 	store i8 0, i8* %5, align 1
 	%6 = add i32 %1, 2		; <i32> [#uses=1]
 	%7 = zext i32 %6 to i64		; <i64> [#uses=2]
-	%8 = getelementptr i8* %0, i64 %7		; <i8*> [#uses=1]
+	%8 = getelementptr i8, i8* %0, i64 %7		; <i8*> [#uses=1]
 	%9 = lshr i32 %size_addr.0.i, 8		; <i32> [#uses=1]
 	%10 = trunc i32 %9 to i8		; <i8> [#uses=1]
 	store i8 %10, i8* %8, align 1
 	%.sum31.i = add i64 %7, 1		; <i64> [#uses=1]
-	%11 = getelementptr i8* %0, i64 %.sum31.i		; <i8*> [#uses=1]
+	%11 = getelementptr i8, i8* %0, i64 %.sum31.i		; <i8*> [#uses=1]
 	store i8 0, i8* %11, align 1
 	br label %bb11.outer.i
 
@@ -111,7 +111,7 @@ bb:		; preds = %bb12.i
 	br label %bb2
 
 bb2:		; preds = %bb, %bb12.i
-	%14 = getelementptr %struct.MemPage* %pPage, i64 0, i32 1		; <i8*> [#uses=1]
+	%14 = getelementptr %struct.MemPage, %struct.MemPage* %pPage, i64 0, i32 1		; <i8*> [#uses=1]
 	store i8 1, i8* %14, align 1
 	ret void
 }

@@ -12,9 +12,9 @@ entry:
   %num_times_2 = shl i64 %num, 1
   %num_times_2_plus_4 = add i64 %num_times_2, 4
   %i8_ptr = bitcast i16* %i16_ptr to i8*
-  %i8_ptr_num_times_2_plus_4 = getelementptr i8* %i8_ptr, i64 %num_times_2_plus_4
+  %i8_ptr_num_times_2_plus_4 = getelementptr i8, i8* %i8_ptr, i64 %num_times_2_plus_4
   %num_times_neg2 = mul i64 %num, -2
   %num_times_neg2_minus_4 = add i64 %num_times_neg2, -4
-  %addr = getelementptr i8* %i8_ptr_num_times_2_plus_4, i64 %num_times_neg2_minus_4
+  %addr = getelementptr i8, i8* %i8_ptr_num_times_2_plus_4, i64 %num_times_neg2_minus_4
   ret i8* %addr
 }

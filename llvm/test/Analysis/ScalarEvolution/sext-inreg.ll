@@ -16,7 +16,7 @@ bb:		; preds = %bb, %entry
 	%t2 = ashr i64 %t1, 7		; <i32> [#uses=1]
 	%s1 = shl i64 %i.01, 5		; <i32> [#uses=1]
 	%s2 = ashr i64 %s1, 5		; <i32> [#uses=1]
-	%t3 = getelementptr i64* %x, i64 %i.01		; <i64*> [#uses=1]
+	%t3 = getelementptr i64, i64* %x, i64 %i.01		; <i64*> [#uses=1]
 	store i64 0, i64* %t3, align 1
 	%indvar.next = add i64 %i.01, 199		; <i32> [#uses=2]
 	%exitcond = icmp eq i64 %indvar.next, %n		; <i1> [#uses=1]

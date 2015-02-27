@@ -41,7 +41,7 @@ bb10:
   %tmp11 = load i8** %tmp, align 8
   %tmp12 = load i8* %tmp11, align 1
   %tmp13 = zext i8 %tmp12 to i64
-  %tmp14 = getelementptr inbounds i8* null, i64 undef
+  %tmp14 = getelementptr inbounds i8, i8* null, i64 undef
   store i8* %tmp14, i8** %tmp, align 8
   br label %bb1
 

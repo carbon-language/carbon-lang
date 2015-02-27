@@ -37,12 +37,12 @@ define void @f1(i32 *%ptr0) {
 ; CHECK-NOT: %r15
 ; CHECK: lmg
 ; CHECK: br %r14
-  %ptr1 = getelementptr i32 *%ptr0, i32 2
-  %ptr2 = getelementptr i32 *%ptr0, i32 4
-  %ptr3 = getelementptr i32 *%ptr0, i32 6
-  %ptr4 = getelementptr i32 *%ptr0, i32 8
-  %ptr5 = getelementptr i32 *%ptr0, i32 10
-  %ptr6 = getelementptr i32 *%ptr0, i32 12
+  %ptr1 = getelementptr i32, i32 *%ptr0, i32 2
+  %ptr2 = getelementptr i32, i32 *%ptr0, i32 4
+  %ptr3 = getelementptr i32, i32 *%ptr0, i32 6
+  %ptr4 = getelementptr i32, i32 *%ptr0, i32 8
+  %ptr5 = getelementptr i32, i32 *%ptr0, i32 10
+  %ptr6 = getelementptr i32, i32 *%ptr0, i32 12
 
   %val0 = load i32 *%ptr0
   %val1 = load i32 *%ptr1
@@ -73,14 +73,14 @@ define void @f2(i32 *%ptr0) {
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: mvc [[OFFSET2]](4,{{%r[0-9]+}}), [[OFFSET1]](%r15)
 ; CHECK: br %r14
-  %ptr1 = getelementptr i32 *%ptr0, i64 2
-  %ptr2 = getelementptr i32 *%ptr0, i64 4
-  %ptr3 = getelementptr i32 *%ptr0, i64 6
-  %ptr4 = getelementptr i32 *%ptr0, i64 8
-  %ptr5 = getelementptr i32 *%ptr0, i64 10
-  %ptr6 = getelementptr i32 *%ptr0, i64 12
-  %ptr7 = getelementptr i32 *%ptr0, i64 14
-  %ptr8 = getelementptr i32 *%ptr0, i64 16
+  %ptr1 = getelementptr i32, i32 *%ptr0, i64 2
+  %ptr2 = getelementptr i32, i32 *%ptr0, i64 4
+  %ptr3 = getelementptr i32, i32 *%ptr0, i64 6
+  %ptr4 = getelementptr i32, i32 *%ptr0, i64 8
+  %ptr5 = getelementptr i32, i32 *%ptr0, i64 10
+  %ptr6 = getelementptr i32, i32 *%ptr0, i64 12
+  %ptr7 = getelementptr i32, i32 *%ptr0, i64 14
+  %ptr8 = getelementptr i32, i32 *%ptr0, i64 16
 
   %val0 = load i32 *%ptr0
   %val1 = load i32 *%ptr1
@@ -115,14 +115,14 @@ define void @f3(i64 *%ptr0) {
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: mvc [[OFFSET]](8,{{%r[0-9]+}}), 160(%r15)
 ; CHECK: br %r14
-  %ptr1 = getelementptr i64 *%ptr0, i64 2
-  %ptr2 = getelementptr i64 *%ptr0, i64 4
-  %ptr3 = getelementptr i64 *%ptr0, i64 6
-  %ptr4 = getelementptr i64 *%ptr0, i64 8
-  %ptr5 = getelementptr i64 *%ptr0, i64 10
-  %ptr6 = getelementptr i64 *%ptr0, i64 12
-  %ptr7 = getelementptr i64 *%ptr0, i64 14
-  %ptr8 = getelementptr i64 *%ptr0, i64 16
+  %ptr1 = getelementptr i64, i64 *%ptr0, i64 2
+  %ptr2 = getelementptr i64, i64 *%ptr0, i64 4
+  %ptr3 = getelementptr i64, i64 *%ptr0, i64 6
+  %ptr4 = getelementptr i64, i64 *%ptr0, i64 8
+  %ptr5 = getelementptr i64, i64 *%ptr0, i64 10
+  %ptr6 = getelementptr i64, i64 *%ptr0, i64 12
+  %ptr7 = getelementptr i64, i64 *%ptr0, i64 14
+  %ptr8 = getelementptr i64, i64 *%ptr0, i64 16
 
   %val0 = load i64 *%ptr0
   %val1 = load i64 *%ptr1
@@ -160,15 +160,15 @@ define void @f4(float *%ptr0) {
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: mvc [[OFFSET2]](4,{{%r[0-9]+}}), [[OFFSET1]](%r15)
 ; CHECK: br %r14
-  %ptr1 = getelementptr float *%ptr0, i64 2
-  %ptr2 = getelementptr float *%ptr0, i64 4
-  %ptr3 = getelementptr float *%ptr0, i64 6
-  %ptr4 = getelementptr float *%ptr0, i64 8
-  %ptr5 = getelementptr float *%ptr0, i64 10
-  %ptr6 = getelementptr float *%ptr0, i64 12
-  %ptr7 = getelementptr float *%ptr0, i64 14
-  %ptr8 = getelementptr float *%ptr0, i64 16
-  %ptr9 = getelementptr float *%ptr0, i64 18
+  %ptr1 = getelementptr float, float *%ptr0, i64 2
+  %ptr2 = getelementptr float, float *%ptr0, i64 4
+  %ptr3 = getelementptr float, float *%ptr0, i64 6
+  %ptr4 = getelementptr float, float *%ptr0, i64 8
+  %ptr5 = getelementptr float, float *%ptr0, i64 10
+  %ptr6 = getelementptr float, float *%ptr0, i64 12
+  %ptr7 = getelementptr float, float *%ptr0, i64 14
+  %ptr8 = getelementptr float, float *%ptr0, i64 16
+  %ptr9 = getelementptr float, float *%ptr0, i64 18
 
   %val0 = load float *%ptr0
   %val1 = load float *%ptr1
@@ -204,15 +204,15 @@ define void @f5(double *%ptr0) {
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: mvc [[OFFSET]](8,{{%r[0-9]+}}), 160(%r15)
 ; CHECK: br %r14
-  %ptr1 = getelementptr double *%ptr0, i64 2
-  %ptr2 = getelementptr double *%ptr0, i64 4
-  %ptr3 = getelementptr double *%ptr0, i64 6
-  %ptr4 = getelementptr double *%ptr0, i64 8
-  %ptr5 = getelementptr double *%ptr0, i64 10
-  %ptr6 = getelementptr double *%ptr0, i64 12
-  %ptr7 = getelementptr double *%ptr0, i64 14
-  %ptr8 = getelementptr double *%ptr0, i64 16
-  %ptr9 = getelementptr double *%ptr0, i64 18
+  %ptr1 = getelementptr double, double *%ptr0, i64 2
+  %ptr2 = getelementptr double, double *%ptr0, i64 4
+  %ptr3 = getelementptr double, double *%ptr0, i64 6
+  %ptr4 = getelementptr double, double *%ptr0, i64 8
+  %ptr5 = getelementptr double, double *%ptr0, i64 10
+  %ptr6 = getelementptr double, double *%ptr0, i64 12
+  %ptr7 = getelementptr double, double *%ptr0, i64 14
+  %ptr8 = getelementptr double, double *%ptr0, i64 16
+  %ptr9 = getelementptr double, double *%ptr0, i64 18
 
   %val0 = load double *%ptr0
   %val1 = load double *%ptr1
@@ -246,14 +246,14 @@ define void @f6(i32 *%ptr0) {
 ; CHECK-LABEL: f6:
 ; CHECK-NOT: mvc
 ; CHECK: br %r14
-  %ptr1 = getelementptr i32 *%ptr0, i64 2
-  %ptr2 = getelementptr i32 *%ptr0, i64 4
-  %ptr3 = getelementptr i32 *%ptr0, i64 6
-  %ptr4 = getelementptr i32 *%ptr0, i64 8
-  %ptr5 = getelementptr i32 *%ptr0, i64 10
-  %ptr6 = getelementptr i32 *%ptr0, i64 12
-  %ptr7 = getelementptr i32 *%ptr0, i64 14
-  %ptr8 = getelementptr i32 *%ptr0, i64 16
+  %ptr1 = getelementptr i32, i32 *%ptr0, i64 2
+  %ptr2 = getelementptr i32, i32 *%ptr0, i64 4
+  %ptr3 = getelementptr i32, i32 *%ptr0, i64 6
+  %ptr4 = getelementptr i32, i32 *%ptr0, i64 8
+  %ptr5 = getelementptr i32, i32 *%ptr0, i64 10
+  %ptr6 = getelementptr i32, i32 *%ptr0, i64 12
+  %ptr7 = getelementptr i32, i32 *%ptr0, i64 14
+  %ptr8 = getelementptr i32, i32 *%ptr0, i64 16
 
   %val0 = load atomic i32 *%ptr0 unordered, align 4
   %val1 = load atomic i32 *%ptr1 unordered, align 4
@@ -285,14 +285,14 @@ define void @f7(i32 *%ptr0) {
 ; CHECK-LABEL: f7:
 ; CHECK-NOT: mvc
 ; CHECK: br %r14
-  %ptr1 = getelementptr i32 *%ptr0, i64 2
-  %ptr2 = getelementptr i32 *%ptr0, i64 4
-  %ptr3 = getelementptr i32 *%ptr0, i64 6
-  %ptr4 = getelementptr i32 *%ptr0, i64 8
-  %ptr5 = getelementptr i32 *%ptr0, i64 10
-  %ptr6 = getelementptr i32 *%ptr0, i64 12
-  %ptr7 = getelementptr i32 *%ptr0, i64 14
-  %ptr8 = getelementptr i32 *%ptr0, i64 16
+  %ptr1 = getelementptr i32, i32 *%ptr0, i64 2
+  %ptr2 = getelementptr i32, i32 *%ptr0, i64 4
+  %ptr3 = getelementptr i32, i32 *%ptr0, i64 6
+  %ptr4 = getelementptr i32, i32 *%ptr0, i64 8
+  %ptr5 = getelementptr i32, i32 *%ptr0, i64 10
+  %ptr6 = getelementptr i32, i32 *%ptr0, i64 12
+  %ptr7 = getelementptr i32, i32 *%ptr0, i64 14
+  %ptr8 = getelementptr i32, i32 *%ptr0, i64 16
 
   %val0 = load volatile i32 *%ptr0
   %val1 = load volatile i32 *%ptr1

@@ -21,10 +21,10 @@ invoke.cont:                                      ; preds = %invoke.cont, %cond.
   br i1 undef, label %arrayctor.cont, label %invoke.cont
 
 arrayctor.cont:                                   ; preds = %invoke.cont
-  %agg.tmp99208.sroa.0.0.idx = getelementptr inbounds %struct.Ray.5.11.53.113.119.137.149.185.329.389.416* undef, i64 0, i32 0, i32 0
-  %agg.tmp99208.sroa.1.8.idx388 = getelementptr inbounds %struct.Ray.5.11.53.113.119.137.149.185.329.389.416* undef, i64 0, i32 0, i32 1
-  %agg.tmp101211.sroa.0.0.idx = getelementptr inbounds %struct.Ray.5.11.53.113.119.137.149.185.329.389.416* undef, i64 0, i32 1, i32 0
-  %agg.tmp101211.sroa.1.8.idx390 = getelementptr inbounds %struct.Ray.5.11.53.113.119.137.149.185.329.389.416* undef, i64 0, i32 1, i32 1
+  %agg.tmp99208.sroa.0.0.idx = getelementptr inbounds %struct.Ray.5.11.53.113.119.137.149.185.329.389.416, %struct.Ray.5.11.53.113.119.137.149.185.329.389.416* undef, i64 0, i32 0, i32 0
+  %agg.tmp99208.sroa.1.8.idx388 = getelementptr inbounds %struct.Ray.5.11.53.113.119.137.149.185.329.389.416, %struct.Ray.5.11.53.113.119.137.149.185.329.389.416* undef, i64 0, i32 0, i32 1
+  %agg.tmp101211.sroa.0.0.idx = getelementptr inbounds %struct.Ray.5.11.53.113.119.137.149.185.329.389.416, %struct.Ray.5.11.53.113.119.137.149.185.329.389.416* undef, i64 0, i32 1, i32 0
+  %agg.tmp101211.sroa.1.8.idx390 = getelementptr inbounds %struct.Ray.5.11.53.113.119.137.149.185.329.389.416, %struct.Ray.5.11.53.113.119.137.149.185.329.389.416* undef, i64 0, i32 1, i32 1
   br label %for.cond36.preheader
 
 for.cond36.preheader:                             ; preds = %_Z5clampd.exit.1, %arrayctor.cont
@@ -89,9 +89,9 @@ if.then38:                                        ; preds = %entry
   %add4.i698 = fadd double undef, %add4.i719
   %mul.i.i679 = fmul double undef, %add.i695
   %mul2.i.i680 = fmul double undef, %add4.i698
-  %agg.tmp74663.sroa.0.0.idx = getelementptr inbounds %struct.Ray.5.11.53.95.137.191.197.203.239.257.263.269.275.281.287.293.383.437.443.455.461.599.601* undef, i64 0, i32 1, i32 0
+  %agg.tmp74663.sroa.0.0.idx = getelementptr inbounds %struct.Ray.5.11.53.95.137.191.197.203.239.257.263.269.275.281.287.293.383.437.443.455.461.599.601, %struct.Ray.5.11.53.95.137.191.197.203.239.257.263.269.275.281.287.293.383.437.443.455.461.599.601* undef, i64 0, i32 1, i32 0
   store double %mul.i.i679, double* %agg.tmp74663.sroa.0.0.idx, align 8
-  %agg.tmp74663.sroa.1.8.idx943 = getelementptr inbounds %struct.Ray.5.11.53.95.137.191.197.203.239.257.263.269.275.281.287.293.383.437.443.455.461.599.601* undef, i64 0, i32 1, i32 1
+  %agg.tmp74663.sroa.1.8.idx943 = getelementptr inbounds %struct.Ray.5.11.53.95.137.191.197.203.239.257.263.269.275.281.287.293.383.437.443.455.461.599.601, %struct.Ray.5.11.53.95.137.191.197.203.239.257.263.269.275.281.287.293.383.437.443.455.461.599.601* undef, i64 0, i32 1, i32 1
   store double %mul2.i.i680, double* %agg.tmp74663.sroa.1.8.idx943, align 8
   br label %return
 

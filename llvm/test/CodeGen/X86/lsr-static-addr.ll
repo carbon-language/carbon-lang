@@ -29,7 +29,7 @@ entry:
 
 for.body:
   %i.06 = phi i64 [ %inc, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr [0 x double]* @A, i64 0, i64 %i.06
+  %arrayidx = getelementptr [0 x double], [0 x double]* @A, i64 0, i64 %i.06
   %tmp3 = load double* %arrayidx, align 8
   %mul = fmul double %tmp3, 2.300000e+00
   store double %mul, double* %arrayidx, align 8

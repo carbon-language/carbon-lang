@@ -14,7 +14,7 @@ entry:
 
 for.body:                                         ; preds = %entry, %if.end
   %indvars.iv = phi i64 [ %indvars.iv.next, %if.end ], [ 0, %entry ]
-  %arrayidx = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %tobool = icmp eq i32 %0, 0
   br i1 %tobool, label %if.end, label %if.then

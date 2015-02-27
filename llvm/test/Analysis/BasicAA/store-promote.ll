@@ -36,10 +36,10 @@ define i32 @test2(i1 %c) {
 
 Loop:           ; preds = %Loop, %0
         %AVal = load i32* @A            ; <i32> [#uses=2]
-        %C0 = getelementptr [2 x i32]* @C, i64 0, i64 0         ; <i32*> [#uses=1]
+        %C0 = getelementptr [2 x i32], [2 x i32]* @C, i64 0, i64 0         ; <i32*> [#uses=1]
         store i32 %AVal, i32* %C0
         %BVal = load i32* @B            ; <i32> [#uses=2]
-        %C1 = getelementptr [2 x i32]* @C, i64 0, i64 1         ; <i32*> [#uses=1]
+        %C1 = getelementptr [2 x i32], [2 x i32]* @C, i64 0, i64 1         ; <i32*> [#uses=1]
         store i32 %BVal, i32* %C1
         br i1 %c, label %Out, label %Loop
 

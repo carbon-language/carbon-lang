@@ -34,32 +34,32 @@ for.cond2.preheader:                              ; preds = %for.end, %entry
 
 for.body4:                                        ; preds = %for.body4, %for.cond2.preheader
   %indvars.iv = phi i64 [ 0, %for.cond2.preheader ], [ %indvars.iv.next.15, %for.body4 ]
-  %arrayidx = getelementptr inbounds [16000 x double]* @Y, i64 0, i64 %indvars.iv
-  %arrayidx6 = getelementptr inbounds [16000 x double]* @X, i64 0, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds [16000 x double], [16000 x double]* @Y, i64 0, i64 %indvars.iv
+  %arrayidx6 = getelementptr inbounds [16000 x double], [16000 x double]* @X, i64 0, i64 %indvars.iv
   %0 = bitcast double* %arrayidx to <1 x double>*
   %1 = load <1 x double>* %0, align 32
   %add = fadd <1 x double> %1, <double 1.000000e+00>
   %2 = bitcast double* %arrayidx6 to <1 x double>*
   store <1 x double> %add, <1 x double>* %2, align 32
   %indvars.iv.next.322 = or i64 %indvars.iv, 4
-  %arrayidx.4 = getelementptr inbounds [16000 x double]* @Y, i64 0, i64 %indvars.iv.next.322
-  %arrayidx6.4 = getelementptr inbounds [16000 x double]* @X, i64 0, i64 %indvars.iv.next.322
+  %arrayidx.4 = getelementptr inbounds [16000 x double], [16000 x double]* @Y, i64 0, i64 %indvars.iv.next.322
+  %arrayidx6.4 = getelementptr inbounds [16000 x double], [16000 x double]* @X, i64 0, i64 %indvars.iv.next.322
   %3 = bitcast double* %arrayidx.4 to <1 x double>*
   %4 = load <1 x double>* %3, align 32
   %add.4 = fadd <1 x double> %4, <double 1.000000e+00>
   %5 = bitcast double* %arrayidx6.4 to <1 x double>*
   store <1 x double> %add.4, <1 x double>* %5, align 32
   %indvars.iv.next.726 = or i64 %indvars.iv, 8
-  %arrayidx.8 = getelementptr inbounds [16000 x double]* @Y, i64 0, i64 %indvars.iv.next.726
-  %arrayidx6.8 = getelementptr inbounds [16000 x double]* @X, i64 0, i64 %indvars.iv.next.726
+  %arrayidx.8 = getelementptr inbounds [16000 x double], [16000 x double]* @Y, i64 0, i64 %indvars.iv.next.726
+  %arrayidx6.8 = getelementptr inbounds [16000 x double], [16000 x double]* @X, i64 0, i64 %indvars.iv.next.726
   %6 = bitcast double* %arrayidx.8 to <1 x double>*
   %7 = load <1 x double>* %6, align 32
   %add.8 = fadd <1 x double> %7, <double 1.000000e+00>
   %8 = bitcast double* %arrayidx6.8 to <1 x double>*
   store <1 x double> %add.8, <1 x double>* %8, align 32
   %indvars.iv.next.1130 = or i64 %indvars.iv, 12
-  %arrayidx.12 = getelementptr inbounds [16000 x double]* @Y, i64 0, i64 %indvars.iv.next.1130
-  %arrayidx6.12 = getelementptr inbounds [16000 x double]* @X, i64 0, i64 %indvars.iv.next.1130
+  %arrayidx.12 = getelementptr inbounds [16000 x double], [16000 x double]* @Y, i64 0, i64 %indvars.iv.next.1130
+  %arrayidx6.12 = getelementptr inbounds [16000 x double], [16000 x double]* @X, i64 0, i64 %indvars.iv.next.1130
   %9 = bitcast double* %arrayidx.12 to <1 x double>*
   %10 = load <1 x double>* %9, align 32
   %add.12 = fadd <1 x double> %10, <double 1.000000e+00>

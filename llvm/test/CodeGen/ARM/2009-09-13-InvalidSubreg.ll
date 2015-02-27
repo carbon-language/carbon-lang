@@ -15,7 +15,7 @@ define arm_aapcs_vfpcc i8 @foo(%struct.fr* nocapture %this, %struct.obb* %box) n
 entry:
   %val.i.i = load <4 x float>* undef              ; <<4 x float>> [#uses=1]
   %val2.i.i = load <4 x float>* null              ; <<4 x float>> [#uses=1]
-  %elt3.i.i = getelementptr inbounds %struct.obb* %box, i32 0, i32 0, i32 2, i32 0 ; <<4 x float>*> [#uses=1]
+  %elt3.i.i = getelementptr inbounds %struct.obb, %struct.obb* %box, i32 0, i32 0, i32 2, i32 0 ; <<4 x float>*> [#uses=1]
   %val4.i.i = load <4 x float>* %elt3.i.i         ; <<4 x float>> [#uses=1]
   %0 = shufflevector <2 x float> undef, <2 x float> zeroinitializer, <4 x i32> <i32 0, i32 1, i32 2, i32 3> ; <<4 x float>> [#uses=1]
   %1 = fadd <4 x float> undef, zeroinitializer    ; <<4 x float>> [#uses=1]

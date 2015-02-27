@@ -6,10 +6,10 @@
 
 define i32 @func(%struct.type* %s) nounwind optsize ssp {
 entry:
-  %tmp1 = getelementptr inbounds %struct.type* %s, i32 0, i32 1
+  %tmp1 = getelementptr inbounds %struct.type, %struct.type* %s, i32 0, i32 1
   %tmp2 = load i32* %tmp1, align 8
   %tmp3 = icmp eq i32 %tmp2, 10
-  %tmp4 = getelementptr inbounds %struct.type* %s, i32 0, i32 40
+  %tmp4 = getelementptr inbounds %struct.type, %struct.type* %s, i32 0, i32 40
   br i1 %tmp3, label %bb, label %entry.bb1_crit_edge
 
 entry.bb1_crit_edge:
@@ -27,7 +27,7 @@ bb:
 
   %tmp5 = bitcast i32* %tmp4 to i8*
   call void @llvm.memset.p0i8.i64(i8* %tmp5, i8 0, i64 84, i32 4, i1 false)
-  %tmp6 = getelementptr inbounds %struct.type* %s, i32 0, i32 62
+  %tmp6 = getelementptr inbounds %struct.type, %struct.type* %s, i32 0, i32 62
   store i32* null, i32** %tmp6, align 8
   br label %bb1
 

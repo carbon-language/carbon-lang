@@ -27,7 +27,7 @@ entry:
   %sa = alloca %struct.SA, align 4
   %b.addr = alloca %class.B*, align 8
   %agg.tmp = alloca %struct.SA, align 4
-  %coerce.dive = getelementptr %struct.SA* %sa, i32 0, i32 0
+  %coerce.dive = getelementptr %struct.SA, %struct.SA* %sa, i32 0, i32 0
   store i32 %sa.coerce, i32* %coerce.dive
   store %class.B* %b, %class.B** %b.addr, align 8
   call void @llvm.dbg.declare(metadata %class.B** %b.addr, metadata !24, metadata !{!"0x102"}), !dbg !25
@@ -36,7 +36,7 @@ entry:
   %1 = bitcast %struct.SA* %agg.tmp to i8*, !dbg !28
   %2 = bitcast %struct.SA* %sa to i8*, !dbg !28
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %1, i8* %2, i64 4, i32 4, i1 false), !dbg !28
-  %coerce.dive1 = getelementptr %struct.SA* %agg.tmp, i32 0, i32 0, !dbg !28
+  %coerce.dive1 = getelementptr %struct.SA, %struct.SA* %agg.tmp, i32 0, i32 0, !dbg !28
   %3 = load i32* %coerce.dive1, !dbg !28
   call void @_ZN1B5testBE2SA(%class.B* %0, i32 %3), !dbg !28
   ret void, !dbg !29
@@ -50,7 +50,7 @@ define linkonce_odr void @_ZN1B5testBE2SA(%class.B* %this, i32 %sa.coerce) #2 al
 entry:
   %sa = alloca %struct.SA, align 4
   %this.addr = alloca %class.B*, align 8
-  %coerce.dive = getelementptr %struct.SA* %sa, i32 0, i32 0
+  %coerce.dive = getelementptr %struct.SA, %struct.SA* %sa, i32 0, i32 0
   store i32 %sa.coerce, i32* %coerce.dive
   store %class.B* %this, %class.B** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %class.B** %this.addr, metadata !30, metadata !{!"0x102"}), !dbg !31

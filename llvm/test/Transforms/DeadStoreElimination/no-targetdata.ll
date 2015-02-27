@@ -12,7 +12,7 @@ entry:
 ; CHECK: tail call void @llvm.memcpy.p0i8.p0i8.i64
 ; CHECK: ret void
 
-  %arrayidx = getelementptr i8* %buf, i64 18
+  %arrayidx = getelementptr i8, i8* %buf, i64 18
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %arrayidx, i8* %buf, i64 18, i32 1, i1 false)
   store i8 1, i8* %arrayidx, align 1
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %buf, i8* %arrayidx, i64 18, i32 1, i1 false)

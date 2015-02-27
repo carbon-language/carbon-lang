@@ -31,7 +31,7 @@ define i32 @test2(i32 %X, i32 %Y) {
 define i32 @store_zero(i32* %a, i32* %b) {
 entry:
   store i32 0, i32* %a, align 4
-  %0 = getelementptr inbounds i32* %b, i32 1
+  %0 = getelementptr inbounds i32, i32* %b, i32 1
   store i32 0, i32* %0, align 4
   ret i32 0
 }

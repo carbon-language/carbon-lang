@@ -7,7 +7,7 @@
 
 @a = internal global double 3.4
 define double* @foo() nounwind {
-  %a = getelementptr double* @a, i64 0
+  %a = getelementptr double, double* @a, i64 0
   ret double* %a
   
 ; PIC64:    leaq	a(%rip)

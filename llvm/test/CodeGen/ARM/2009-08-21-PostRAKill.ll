@@ -17,9 +17,9 @@ bb.i:                                             ; preds = %entry
 
 bb4.i:                                            ; preds = %entry
   %0 = load %struct.tree** @g, align 4         ; <%struct.tree*> [#uses=2]
-  %.idx45.i = getelementptr %struct.tree* %0, i32 0, i32 1 ; <double*> [#uses=1]
+  %.idx45.i = getelementptr %struct.tree, %struct.tree* %0, i32 0, i32 1 ; <double*> [#uses=1]
   %.idx45.val.i = load double* %.idx45.i          ; <double> [#uses=1]
-  %.idx46.i = getelementptr %struct.tree* %0, i32 0, i32 2 ; <double*> [#uses=1]
+  %.idx46.i = getelementptr %struct.tree, %struct.tree* %0, i32 0, i32 2 ; <double*> [#uses=1]
   %.idx46.val.i = load double* %.idx46.i          ; <double> [#uses=1]
   %1 = fsub double 0.000000e+00, %.idx45.val.i    ; <double> [#uses=2]
   %2 = fmul double %1, %1                         ; <double> [#uses=1]

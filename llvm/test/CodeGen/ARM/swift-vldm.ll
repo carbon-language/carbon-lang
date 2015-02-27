@@ -12,9 +12,9 @@ declare fastcc void @force_register(double %d0, double %d1, double %d2, double %
 
 define void @test_vldm(double* %x, double * %y) {
 entry:
-  %addr1 = getelementptr double * %x, i32 1
-  %addr2 = getelementptr double * %x, i32 2
-  %addr3 = getelementptr double * %x, i32 3
+  %addr1 = getelementptr double, double * %x, i32 1
+  %addr2 = getelementptr double, double * %x, i32 2
+  %addr3 = getelementptr double, double * %x, i32 3
   %d0 = load double * %y
   %d1 = load double * %x
   %d2 = load double * %addr1

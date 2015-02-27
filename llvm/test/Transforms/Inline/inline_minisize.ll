@@ -11,13 +11,13 @@ entry:
   %tmp = load i32* %a.addr, align 4
   %idxprom = sext i32 %tmp to i64
   %tmp1 = load i32** @data, align 8
-  %arrayidx = getelementptr inbounds i32* %tmp1, i64 %idxprom
+  %arrayidx = getelementptr inbounds i32, i32* %tmp1, i64 %idxprom
   %tmp2 = load i32* %arrayidx, align 4
   %tmp3 = load i32* %a.addr, align 4
   %add = add nsw i32 %tmp3, 1
   %idxprom1 = sext i32 %add to i64
   %tmp4 = load i32** @data, align 8
-  %arrayidx2 = getelementptr inbounds i32* %tmp4, i64 %idxprom1
+  %arrayidx2 = getelementptr inbounds i32, i32* %tmp4, i64 %idxprom1
   %tmp5 = load i32* %arrayidx2, align 4
   %mul = mul nsw i32 %tmp2, %tmp5
   store i32 %mul, i32* %res, align 4
@@ -35,7 +35,7 @@ for.body:                                         ; preds = %for.cond
   %tmp8 = load i32* %i, align 4
   %idxprom3 = sext i32 %tmp8 to i64
   %tmp9 = load i32** @data, align 8
-  %arrayidx4 = getelementptr inbounds i32* %tmp9, i64 %idxprom3
+  %arrayidx4 = getelementptr inbounds i32, i32* %tmp9, i64 %idxprom3
   call void @fct0(i32* %arrayidx4)
   br label %for.inc
 
@@ -59,7 +59,7 @@ for.body7:                                        ; preds = %for.cond5
   %tmp13 = load i32* %i, align 4
   %idxprom8 = sext i32 %tmp13 to i64
   %tmp14 = load i32** @data, align 8
-  %arrayidx9 = getelementptr inbounds i32* %tmp14, i64 %idxprom8
+  %arrayidx9 = getelementptr inbounds i32, i32* %tmp14, i64 %idxprom8
   call void @fct0(i32* %arrayidx9)
   br label %for.inc10
 
@@ -83,7 +83,7 @@ for.body15:                                       ; preds = %for.cond13
   %tmp18 = load i32* %i, align 4
   %idxprom16 = sext i32 %tmp18 to i64
   %tmp19 = load i32** @data, align 8
-  %arrayidx17 = getelementptr inbounds i32* %tmp19, i64 %idxprom16
+  %arrayidx17 = getelementptr inbounds i32, i32* %tmp19, i64 %idxprom16
   call void @fct0(i32* %arrayidx17)
   br label %for.inc18
 
@@ -110,14 +110,14 @@ entry:
   %shl = shl i32 %tmp, 1
   %idxprom = sext i32 %shl to i64
   %tmp1 = load i32** @data, align 8
-  %arrayidx = getelementptr inbounds i32* %tmp1, i64 %idxprom
+  %arrayidx = getelementptr inbounds i32, i32* %tmp1, i64 %idxprom
   %tmp2 = load i32* %arrayidx, align 4
   %tmp3 = load i32* %a.addr, align 4
   %shl1 = shl i32 %tmp3, 1
   %add = add nsw i32 %shl1, 13
   %idxprom2 = sext i32 %add to i64
   %tmp4 = load i32** @data, align 8
-  %arrayidx3 = getelementptr inbounds i32* %tmp4, i64 %idxprom2
+  %arrayidx3 = getelementptr inbounds i32, i32* %tmp4, i64 %idxprom2
   %tmp5 = load i32* %arrayidx3, align 4
   %mul = mul nsw i32 %tmp2, %tmp5
   store i32 %mul, i32* %res, align 4
@@ -135,7 +135,7 @@ for.body:                                         ; preds = %for.cond
   %tmp8 = load i32* %i, align 4
   %idxprom4 = sext i32 %tmp8 to i64
   %tmp9 = load i32** @data, align 8
-  %arrayidx5 = getelementptr inbounds i32* %tmp9, i64 %idxprom4
+  %arrayidx5 = getelementptr inbounds i32, i32* %tmp9, i64 %idxprom4
   call void @fct0(i32* %arrayidx5)
   br label %for.inc
 
@@ -159,7 +159,7 @@ for.body8:                                        ; preds = %for.cond6
   %tmp13 = load i32* %i, align 4
   %idxprom9 = sext i32 %tmp13 to i64
   %tmp14 = load i32** @data, align 8
-  %arrayidx10 = getelementptr inbounds i32* %tmp14, i64 %idxprom9
+  %arrayidx10 = getelementptr inbounds i32, i32* %tmp14, i64 %idxprom9
   call void @fct0(i32* %arrayidx10)
   br label %for.inc11
 
@@ -183,7 +183,7 @@ for.body16:                                       ; preds = %for.cond14
   %tmp18 = load i32* %i, align 4
   %idxprom17 = sext i32 %tmp18 to i64
   %tmp19 = load i32** @data, align 8
-  %arrayidx18 = getelementptr inbounds i32* %tmp19, i64 %idxprom17
+  %arrayidx18 = getelementptr inbounds i32, i32* %tmp19, i64 %idxprom17
   call void @fct0(i32* %arrayidx18)
   br label %for.inc19
 

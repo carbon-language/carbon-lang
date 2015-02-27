@@ -12,10 +12,10 @@
 ; CHECK-NOT:   May:
 
 define void @test() {
-  %D = getelementptr %T* @G, i64 0, i32 0
-  %E = getelementptr %T* @G, i64 0, i32 1, i64 5
-  %F = getelementptr i32* getelementptr (%T* @G, i64 0, i32 0), i64 0
-  %X = getelementptr [10 x i8]* getelementptr (%T* @G, i64 0, i32 1), i64 0, i64 5
+  %D = getelementptr %T, %T* @G, i64 0, i32 0
+  %E = getelementptr %T, %T* @G, i64 0, i32 1, i64 5
+  %F = getelementptr i32, i32* getelementptr (%T* @G, i64 0, i32 0), i64 0
+  %X = getelementptr [10 x i8], [10 x i8]* getelementptr (%T* @G, i64 0, i32 1), i64 0, i64 5
 
   ret void
 }

@@ -18,8 +18,8 @@ define zeroext i1 @no_offsets() {
 ; Comparing past-the-end addresses of two distinct globals. Never equal.
 
 define zeroext i1 @both_past_the_end() {
-  %x = getelementptr i32* @opte_a, i32 1
-  %y = getelementptr i32* @opte_b, i32 1
+  %x = getelementptr i32, i32* @opte_a, i32 1
+  %y = getelementptr i32, i32* @opte_b, i32 1
   %t = icmp eq i32* %x, %y
   ret i1 %t
   ; CHECK: both_past_the_end(
@@ -31,7 +31,7 @@ define zeroext i1 @both_past_the_end() {
 ; of another. Can't fold this.
 
 define zeroext i1 @just_one_past_the_end() {
-  %x = getelementptr i32* @opte_a, i32 1
+  %x = getelementptr i32, i32* @opte_a, i32 1
   %t = icmp eq i32* %x, @opte_b
   ret i1 %t
   ; CHECK: just_one_past_the_end(
@@ -54,8 +54,8 @@ define zeroext i1 @no_alloca_offsets() {
 define zeroext i1 @both_past_the_end_alloca() {
   %m = alloca i32
   %n = alloca i32
-  %x = getelementptr i32* %m, i32 1
-  %y = getelementptr i32* %n, i32 1
+  %x = getelementptr i32, i32* %m, i32 1
+  %y = getelementptr i32, i32* %n, i32 1
   %t = icmp eq i32* %x, %y
   ret i1 %t
   ; CHECK: both_past_the_end_alloca(
@@ -69,7 +69,7 @@ define zeroext i1 @both_past_the_end_alloca() {
 define zeroext i1 @just_one_past_the_end_alloca() {
   %m = alloca i32
   %n = alloca i32
-  %x = getelementptr i32* %m, i32 1
+  %x = getelementptr i32, i32* %m, i32 1
   %t = icmp eq i32* %x, %n
   ret i1 %t
   ; CHECK: just_one_past_the_end_alloca(

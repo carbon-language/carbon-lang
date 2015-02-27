@@ -11,7 +11,7 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %indvar = phi i64 [ 0, %entry ], [ %indvar.next, %for.body ]
-  %arrayidx = getelementptr double* %a, i64 %indvar
+  %arrayidx = getelementptr double, double* %a, i64 %indvar
 ; CHECK: call void @llvm.memset{{.+}} !dbg 
   store double 0.000000e+00, double* %arrayidx, align 8, !dbg !15
   %indvar.next = add i64 %indvar, 1

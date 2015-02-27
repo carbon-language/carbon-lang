@@ -19,19 +19,19 @@ entry:
   %sv = alloca %"class.llvm::SmallVector", align 16
   %0 = bitcast %"class.llvm::SmallVector"* %sv to i8*
   call void @llvm.lifetime.start(i64 64, i8* %0) #1
-  %BeginX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 0
-  %FirstEl.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 3
+  %BeginX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SmallVector", %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 0
+  %FirstEl.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SmallVector", %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 3
   %1 = bitcast %"union.llvm::SmallVectorBase::U"* %FirstEl.i.i.i.i.i.i to i8*
   store i8* %1, i8** %BeginX.i.i.i.i.i.i, align 16, !tbaa !4
-  %EndX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 1
+  %EndX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SmallVector", %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 1
   store i8* %1, i8** %EndX.i.i.i.i.i.i, align 8, !tbaa !4
-  %CapacityX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 2
-  %add.ptr.i.i.i.i2.i.i = getelementptr inbounds %"union.llvm::SmallVectorBase::U"* %FirstEl.i.i.i.i.i.i, i64 2
+  %CapacityX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SmallVector", %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 2
+  %add.ptr.i.i.i.i2.i.i = getelementptr inbounds %"union.llvm::SmallVectorBase::U", %"union.llvm::SmallVectorBase::U"* %FirstEl.i.i.i.i.i.i, i64 2
   %add.ptr.i.i.i.i.i.i = bitcast %"union.llvm::SmallVectorBase::U"* %add.ptr.i.i.i.i2.i.i to i8*
   store i8* %add.ptr.i.i.i.i.i.i, i8** %CapacityX.i.i.i.i.i.i, align 16, !tbaa !4
-  %EndX.i = getelementptr inbounds %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 1
+  %EndX.i = getelementptr inbounds %"class.llvm::SmallVector", %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 1
   %2 = load i8** %EndX.i, align 8, !tbaa !4
-  %CapacityX.i = getelementptr inbounds %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 2
+  %CapacityX.i = getelementptr inbounds %"class.llvm::SmallVector", %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0, i32 2
   %cmp.i = icmp ult i8* %2, %add.ptr.i.i.i.i.i.i
   br i1 %cmp.i, label %Retry.i, label %if.end.i
 
@@ -46,7 +46,7 @@ new.notnull.i:                                    ; preds = %Retry.i
   br label %invoke.cont
 
 if.end.i:                                         ; preds = %entry
-  %5 = getelementptr inbounds %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0
+  %5 = getelementptr inbounds %"class.llvm::SmallVector", %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0
   invoke void @_ZN4llvm15SmallVectorBase8grow_podEmm(%"class.llvm::SmallVectorBase"* %5, i64 0, i64 4)
           to label %.noexc unwind label %lpad
 
@@ -55,7 +55,7 @@ if.end.i:                                         ; preds = %entry
   br label %Retry.i
 
 invoke.cont:                                      ; preds = %new.notnull.i, %Retry.i
-  %add.ptr.i = getelementptr inbounds i8* %3, i64 4
+  %add.ptr.i = getelementptr inbounds i8, i8* %3, i64 4
   store i8* %add.ptr.i, i8** %EndX.i, align 8, !tbaa !4
   %6 = load i8** %CapacityX.i, align 16, !tbaa !4
   %cmp.i8 = icmp ult i8* %add.ptr.i, %6
@@ -73,13 +73,13 @@ new.notnull.i11:                                  ; preds = %invoke.cont, %Retry
   br label %invoke.cont2
 
 if.end.i14:                                       ; preds = %invoke.cont
-  %9 = getelementptr inbounds %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0
+  %9 = getelementptr inbounds %"class.llvm::SmallVector", %"class.llvm::SmallVector"* %sv, i64 0, i32 0, i32 0, i32 0, i32 0
   invoke void @_ZN4llvm15SmallVectorBase8grow_podEmm(%"class.llvm::SmallVectorBase"* %9, i64 0, i64 4)
           to label %Retry.i10 unwind label %lpad
 
 invoke.cont2:                                     ; preds = %new.notnull.i11, %Retry.i10
   %10 = phi i8* [ null, %Retry.i10 ], [ %7, %new.notnull.i11 ]
-  %add.ptr.i12 = getelementptr inbounds i8* %10, i64 4
+  %add.ptr.i12 = getelementptr inbounds i8, i8* %10, i64 4
   store i8* %add.ptr.i12, i8** %EndX.i, align 8, !tbaa !4
   invoke void @_Z1gRN4llvm11SmallVectorIiLj8EEE(%"class.llvm::SmallVector"* %sv)
           to label %invoke.cont3 unwind label %lpad

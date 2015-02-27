@@ -190,7 +190,7 @@ if:
   br label %endif
 
 else:
-  %4 = getelementptr i32 addrspace(1)* %in, i32 1
+  %4 = getelementptr i32, i32 addrspace(1)* %in, i32 1
   %5 = load i32 addrspace(1)* %4
   %6 = insertelement <2 x i32> %0, i32 %5, i32 1
   br label %endif

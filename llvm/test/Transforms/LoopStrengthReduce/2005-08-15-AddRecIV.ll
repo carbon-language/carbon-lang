@@ -50,7 +50,7 @@ loopentry.4:		; preds = %loopentry.4, %loopexit.3
 	%tmp. = add i32 %indvar340, %indvar342		; <i32> [#uses=1]
 	%tmp.526 = load i32** null		; <i32*> [#uses=1]
 	%gep.upgrd.1 = zext i32 %tmp. to i64		; <i64> [#uses=1]
-	%tmp.528 = getelementptr i32* %tmp.526, i64 %gep.upgrd.1		; <i32*> [#uses=1]
+	%tmp.528 = getelementptr i32, i32* %tmp.526, i64 %gep.upgrd.1		; <i32*> [#uses=1]
 	store i32 0, i32* %tmp.528
 	%indvar.next341 = add i32 %indvar340, 1		; <i32> [#uses=1]
 	br label %loopentry.4

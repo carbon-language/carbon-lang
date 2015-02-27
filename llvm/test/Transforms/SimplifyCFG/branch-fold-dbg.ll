@@ -24,7 +24,7 @@ BB2:                                              ; preds = %BB1
 ;CHECK-NEXT: icmp eq
 
 BB3:                                              ; preds = %BB2
-  %6 = getelementptr inbounds [5 x %0]* @0, i32 0, i32 %0, !dbg !6
+  %6 = getelementptr inbounds [5 x %0], [5 x %0]* @0, i32 0, i32 %0, !dbg !6
   call void @llvm.dbg.value(metadata %0* %6, i64 0, metadata !7, metadata !{}), !dbg !12
   %7 = icmp eq %0* %6, null, !dbg !13
   br i1 %7, label %BB5, label %BB4, !dbg !13

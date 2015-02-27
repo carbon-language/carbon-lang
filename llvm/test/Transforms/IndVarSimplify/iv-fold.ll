@@ -13,11 +13,11 @@ entry:
 while.body:
   %0 = phi i32 [ 0, %entry ], [ %inc.2, %while.body ]
   %shr = lshr i32 %0, 5
-  %arrayidx = getelementptr inbounds i32* %bitmap, i32 %shr
+  %arrayidx = getelementptr inbounds i32, i32* %bitmap, i32 %shr
   %tmp6 = load i32* %arrayidx, align 4
   %inc.1 = add i32 %0, 1
   %shr.1 = lshr i32 %inc.1, 5
-  %arrayidx.1 = getelementptr inbounds i32* %bitmap, i32 %shr.1
+  %arrayidx.1 = getelementptr inbounds i32, i32* %bitmap, i32 %shr.1
   %tmp6.1 = load i32* %arrayidx.1, align 4
   %inc.2 = add i32 %inc.1, 1
   %exitcond.3 = icmp eq i32 %inc.2, 128
@@ -40,11 +40,11 @@ entry:
 while.body:
   %0 = phi i32 [ 0, %entry ], [ %inc.3, %while.body ]
   %shr = lshr i32 %0, 5
-  %arrayidx = getelementptr inbounds i32* %bitmap, i32 %shr
+  %arrayidx = getelementptr inbounds i32, i32* %bitmap, i32 %shr
   %tmp6 = load i32* %arrayidx, align 4
   %inc.1 = add i32 %0, 1
   %shr.1 = lshr i32 %inc.1, 5
-  %arrayidx.1 = getelementptr inbounds i32* %bitmap, i32 %shr.1
+  %arrayidx.1 = getelementptr inbounds i32, i32* %bitmap, i32 %shr.1
   %tmp6.1 = load i32* %arrayidx.1, align 4
   %inc.3 = add i32 %inc.1, 2
   %exitcond.3 = icmp eq i32 %inc.3, 96

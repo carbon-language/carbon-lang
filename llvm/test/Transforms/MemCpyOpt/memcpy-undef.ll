@@ -7,12 +7,12 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 define i32 @test1(%struct.foo* nocapture %foobie) nounwind noinline ssp uwtable {
   %bletch.sroa.1 = alloca [7 x i8], align 1
-  %1 = getelementptr inbounds %struct.foo* %foobie, i64 0, i32 0
+  %1 = getelementptr inbounds %struct.foo, %struct.foo* %foobie, i64 0, i32 0
   store i8 98, i8* %1, align 4
-  %2 = getelementptr inbounds %struct.foo* %foobie, i64 0, i32 1, i64 0
-  %3 = getelementptr inbounds [7 x i8]* %bletch.sroa.1, i64 0, i64 0
+  %2 = getelementptr inbounds %struct.foo, %struct.foo* %foobie, i64 0, i32 1, i64 0
+  %3 = getelementptr inbounds [7 x i8], [7 x i8]* %bletch.sroa.1, i64 0, i64 0
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %2, i8* %3, i64 7, i32 1, i1 false)
-  %4 = getelementptr inbounds %struct.foo* %foobie, i64 0, i32 2
+  %4 = getelementptr inbounds %struct.foo, %struct.foo* %foobie, i64 0, i32 2
   store i32 20, i32* %4, align 4
   ret i32 undef
 

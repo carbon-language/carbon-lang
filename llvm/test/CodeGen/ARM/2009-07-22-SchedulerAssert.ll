@@ -65,7 +65,7 @@ bb18:		; preds = %bb18, %bb.nph
 	br i1 undef, label %bb18, label %bb22
 
 bb22:		; preds = %bb18, %bb17
-	%0 = getelementptr i8* null, i32 10		; <i8*> [#uses=1]
+	%0 = getelementptr i8, i8* null, i32 10		; <i8*> [#uses=1]
 	%1 = bitcast i8* %0 to i16*		; <i16*> [#uses=1]
 	%2 = load i16* %1, align 2		; <i16> [#uses=1]
 	%3 = add i16 %2, 1		; <i16> [#uses=1]

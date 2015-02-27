@@ -38,10 +38,10 @@ entry:
   %block = bitcast i8* %.block_descriptor to <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, void (...)* }>*, !dbg !67
   store <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, void (...)* }>* %block, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, void (...)* }>** %block.addr, align 8
   call void @llvm.dbg.declare(metadata <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, void (...)* }>** %block.addr, metadata !68, metadata !69), !dbg !70
-  %block.capture.addr = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, void (...)* }>* %block, i32 0, i32 5, !dbg !71
+  %block.capture.addr = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, void (...)* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, void (...)* }>* %block, i32 0, i32 5, !dbg !71
   %1 = load void (...)** %block.capture.addr, align 8, !dbg !71
   %block.literal = bitcast void (...)* %1 to %struct.__block_literal_generic*, !dbg !71
-  %2 = getelementptr inbounds %struct.__block_literal_generic* %block.literal, i32 0, i32 3, !dbg !71
+  %2 = getelementptr inbounds %struct.__block_literal_generic, %struct.__block_literal_generic* %block.literal, i32 0, i32 3, !dbg !71
   %3 = bitcast %struct.__block_literal_generic* %block.literal to i8*, !dbg !71
   %4 = load i8** %2, !dbg !71
   %5 = bitcast i8* %4 to void (i8*, ...)*, !dbg !71

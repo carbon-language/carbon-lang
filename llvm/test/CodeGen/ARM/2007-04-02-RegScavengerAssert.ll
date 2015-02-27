@@ -40,7 +40,7 @@ cond_true33.us.cond_true46.us_crit_edge:		; preds = %cond_next.us
 	br label %cond_next51.us
 
 cond_next.us:		; preds = %bb.preheader
-	%tmp37.us = getelementptr %struct.X_Y* %cinfo, i32 0, i32 17, i32 %tbl.014.us		; <%struct.H_TBL**> [#uses=3]
+	%tmp37.us = getelementptr %struct.X_Y, %struct.X_Y* %cinfo, i32 0, i32 17, i32 %tbl.014.us		; <%struct.H_TBL**> [#uses=3]
 	%tmp4524.us = load %struct.H_TBL** %tmp37.us		; <%struct.H_TBL*> [#uses=1]
 	icmp eq %struct.H_TBL* %tmp4524.us, null		; <i1>:0 [#uses=1]
 	br i1 %0, label %cond_true33.us.cond_true46.us_crit_edge, label %cond_next51.us

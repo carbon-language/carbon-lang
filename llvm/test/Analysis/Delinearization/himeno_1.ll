@@ -35,23 +35,23 @@
 
 define void @jacobi(i32 %nn, %struct.Mat* nocapture %a, %struct.Mat* nocapture %p) nounwind uwtable {
 entry:
-  %p.rows.ptr = getelementptr inbounds %struct.Mat* %p, i64 0, i32 2
+  %p.rows.ptr = getelementptr inbounds %struct.Mat, %struct.Mat* %p, i64 0, i32 2
   %p.rows = load i32* %p.rows.ptr
   %p.rows.sub = add i32 %p.rows, -1
   %p.rows.sext = sext i32 %p.rows.sub to i64
-  %p.cols.ptr = getelementptr inbounds %struct.Mat* %p, i64 0, i32 3
+  %p.cols.ptr = getelementptr inbounds %struct.Mat, %struct.Mat* %p, i64 0, i32 3
   %p.cols = load i32* %p.cols.ptr
   %p.cols.sub = add i32 %p.cols, -1
   %p.cols.sext = sext i32 %p.cols.sub to i64
-  %p.deps.ptr = getelementptr inbounds %struct.Mat* %p, i64 0, i32 4
+  %p.deps.ptr = getelementptr inbounds %struct.Mat, %struct.Mat* %p, i64 0, i32 4
   %p.deps = load i32* %p.deps.ptr
   %p.deps.sub = add i32 %p.deps, -1
   %p.deps.sext = sext i32 %p.deps.sub to i64
-  %a.cols.ptr = getelementptr inbounds %struct.Mat* %a, i64 0, i32 3
+  %a.cols.ptr = getelementptr inbounds %struct.Mat, %struct.Mat* %a, i64 0, i32 3
   %a.cols = load i32* %a.cols.ptr
-  %a.deps.ptr = getelementptr inbounds %struct.Mat* %a, i64 0, i32 4
+  %a.deps.ptr = getelementptr inbounds %struct.Mat, %struct.Mat* %a, i64 0, i32 4
   %a.deps = load i32* %a.deps.ptr
-  %a.base.ptr = getelementptr inbounds %struct.Mat* %a, i64 0, i32 0
+  %a.base.ptr = getelementptr inbounds %struct.Mat, %struct.Mat* %a, i64 0, i32 0
   %a.base = load float** %a.base.ptr, align 8
   br label %for.i
 
@@ -71,7 +71,7 @@ for.k:                                            ; preds = %for.k, %for.j
   %tmp2 = add i64 %tmp1, %j
   %tmp3 = mul i64 %tmp2, %a.deps.sext
   %tmp4 = add nsw i64 %k, %tmp3
-  %arrayidx = getelementptr inbounds float* %a.base, i64 %tmp4
+  %arrayidx = getelementptr inbounds float, float* %a.base, i64 %tmp4
   store float 1.000000e+00, float* %arrayidx
   %k.inc = add nsw i64 %k, 1
   %k.exitcond = icmp eq i64 %k.inc, %p.deps.sext

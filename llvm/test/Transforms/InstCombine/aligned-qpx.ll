@@ -6,7 +6,7 @@ declare <4 x double> @llvm.ppc.qpx.qvlfs(i8*) #1
 
 define <4 x double> @test1(<4 x float>* %h) #0 {
 entry:
-  %h1 = getelementptr <4 x float>* %h, i64 1
+  %h1 = getelementptr <4 x float>, <4 x float>* %h, i64 1
   %hv = bitcast <4 x float>* %h1 to i8*
   %vl = call <4 x double> @llvm.ppc.qpx.qvlfs(i8* %hv)
 
@@ -22,7 +22,7 @@ entry:
 
 define <4 x double> @test1a(<4 x float>* align 16 %h) #0 {
 entry:
-  %h1 = getelementptr <4 x float>* %h, i64 1
+  %h1 = getelementptr <4 x float>, <4 x float>* %h, i64 1
   %hv = bitcast <4 x float>* %h1 to i8*
   %vl = call <4 x double> @llvm.ppc.qpx.qvlfs(i8* %hv)
 
@@ -40,7 +40,7 @@ declare void @llvm.ppc.qpx.qvstfs(<4 x double>, i8*) #0
 
 define <4 x float> @test2(<4 x float>* %h, <4 x double> %d) #0 {
 entry:
-  %h1 = getelementptr <4 x float>* %h, i64 1
+  %h1 = getelementptr <4 x float>, <4 x float>* %h, i64 1
   %hv = bitcast <4 x float>* %h1 to i8*
   call void @llvm.ppc.qpx.qvstfs(<4 x double> %d, i8* %hv)
 
@@ -54,7 +54,7 @@ entry:
 
 define <4 x float> @test2a(<4 x float>* align 16 %h, <4 x double> %d) #0 {
 entry:
-  %h1 = getelementptr <4 x float>* %h, i64 1
+  %h1 = getelementptr <4 x float>, <4 x float>* %h, i64 1
   %hv = bitcast <4 x float>* %h1 to i8*
   call void @llvm.ppc.qpx.qvstfs(<4 x double> %d, i8* %hv)
 
@@ -70,7 +70,7 @@ declare <4 x double> @llvm.ppc.qpx.qvlfd(i8*) #1
 
 define <4 x double> @test1l(<4 x double>* %h) #0 {
 entry:
-  %h1 = getelementptr <4 x double>* %h, i64 1
+  %h1 = getelementptr <4 x double>, <4 x double>* %h, i64 1
   %hv = bitcast <4 x double>* %h1 to i8*
   %vl = call <4 x double> @llvm.ppc.qpx.qvlfd(i8* %hv)
 
@@ -85,7 +85,7 @@ entry:
 
 define <4 x double> @test1ln(<4 x double>* align 16 %h) #0 {
 entry:
-  %h1 = getelementptr <4 x double>* %h, i64 1
+  %h1 = getelementptr <4 x double>, <4 x double>* %h, i64 1
   %hv = bitcast <4 x double>* %h1 to i8*
   %vl = call <4 x double> @llvm.ppc.qpx.qvlfd(i8* %hv)
 
@@ -100,7 +100,7 @@ entry:
 
 define <4 x double> @test1la(<4 x double>* align 32 %h) #0 {
 entry:
-  %h1 = getelementptr <4 x double>* %h, i64 1
+  %h1 = getelementptr <4 x double>, <4 x double>* %h, i64 1
   %hv = bitcast <4 x double>* %h1 to i8*
   %vl = call <4 x double> @llvm.ppc.qpx.qvlfd(i8* %hv)
 
@@ -117,7 +117,7 @@ declare void @llvm.ppc.qpx.qvstfd(<4 x double>, i8*) #0
 
 define <4 x double> @test2l(<4 x double>* %h, <4 x double> %d) #0 {
 entry:
-  %h1 = getelementptr <4 x double>* %h, i64 1
+  %h1 = getelementptr <4 x double>, <4 x double>* %h, i64 1
   %hv = bitcast <4 x double>* %h1 to i8*
   call void @llvm.ppc.qpx.qvstfd(<4 x double> %d, i8* %hv)
 
@@ -131,7 +131,7 @@ entry:
 
 define <4 x double> @test2ln(<4 x double>* align 16 %h, <4 x double> %d) #0 {
 entry:
-  %h1 = getelementptr <4 x double>* %h, i64 1
+  %h1 = getelementptr <4 x double>, <4 x double>* %h, i64 1
   %hv = bitcast <4 x double>* %h1 to i8*
   call void @llvm.ppc.qpx.qvstfd(<4 x double> %d, i8* %hv)
 
@@ -145,7 +145,7 @@ entry:
 
 define <4 x double> @test2la(<4 x double>* align 32 %h, <4 x double> %d) #0 {
 entry:
-  %h1 = getelementptr <4 x double>* %h, i64 1
+  %h1 = getelementptr <4 x double>, <4 x double>* %h, i64 1
   %hv = bitcast <4 x double>* %h1 to i8*
   call void @llvm.ppc.qpx.qvstfd(<4 x double> %d, i8* %hv)
 

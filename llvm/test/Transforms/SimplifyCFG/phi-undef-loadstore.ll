@@ -105,7 +105,7 @@ if.then4:                                         ; preds = %if.else
 
 if.end7:                                          ; preds = %if.else, %if.then4, %if.then
   %x.0 = phi i32* [ %a, %if.then ], [ null, %if.then4 ], [ null, %if.else ]
-  %gep = getelementptr i32* %x.0, i32 10
+  %gep = getelementptr i32, i32* %x.0, i32 10
   %tmp9 = load i32* %gep
   %tmp10 = or i32 %tmp9, 1
   store i32 %tmp10, i32* %gep

@@ -9,7 +9,7 @@
 
 define internal i32* @"\01-[Example1 whatever]"() nounwind optsize ssp {
 entry:
-	%0 = getelementptr %struct.A* @"_ZZ20-[Example1 whatever]E4C.91", i64 0, i32 0		; <i32**> [#uses=1]
+	%0 = getelementptr %struct.A, %struct.A* @"_ZZ20-[Example1 whatever]E4C.91", i64 0, i32 0		; <i32**> [#uses=1]
 	%1 = load i32** %0, align 8		; <i32*> [#uses=1]
 	ret i32* %1
 }

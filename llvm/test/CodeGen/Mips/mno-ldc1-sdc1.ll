@@ -212,7 +212,7 @@ entry:
 
 define double @test_ldxc1(double* nocapture readonly %a, i32 %i) {
 entry:
-  %arrayidx = getelementptr inbounds double* %a, i32 %i
+  %arrayidx = getelementptr inbounds double, double* %a, i32 %i
   %0 = load double* %arrayidx, align 8
   ret double %0
 }
@@ -243,7 +243,7 @@ entry:
 
 define void @test_sdxc1(double %b, double* nocapture %a, i32 %i) {
 entry:
-  %arrayidx = getelementptr inbounds double* %a, i32 %i
+  %arrayidx = getelementptr inbounds double, double* %a, i32 %i
   store double %b, double* %arrayidx, align 8
   ret void
 }

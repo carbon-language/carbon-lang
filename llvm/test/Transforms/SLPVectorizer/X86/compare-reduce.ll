@@ -21,13 +21,13 @@ entry:
 for.body:                                         ; preds = %for.inc, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.inc ]
   %0 = shl nsw i64 %indvars.iv, 1
-  %arrayidx = getelementptr inbounds double* %A, i64 %0
+  %arrayidx = getelementptr inbounds double, double* %A, i64 %0
   %1 = load double* %arrayidx, align 8
   %mul1 = fmul double %conv, %1
   %mul2 = fmul double %mul1, 7.000000e+00
   %add = fadd double %mul2, 5.000000e+00
   %2 = or i64 %0, 1
-  %arrayidx6 = getelementptr inbounds double* %A, i64 %2
+  %arrayidx6 = getelementptr inbounds double, double* %A, i64 %2
   %3 = load double* %arrayidx6, align 8
   %mul8 = fmul double %conv, %3
   %mul9 = fmul double %mul8, 4.000000e+00

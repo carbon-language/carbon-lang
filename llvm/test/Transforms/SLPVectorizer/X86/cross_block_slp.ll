@@ -27,7 +27,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 define i32 @foo(double* nocapture %A, float* nocapture %B, i32 %g) {
 entry:
   %0 = load float* %B, align 4
-  %arrayidx1 = getelementptr inbounds float* %B, i64 1
+  %arrayidx1 = getelementptr inbounds float, float* %B, i64 1
   %1 = load float* %arrayidx1, align 4
   %add = fadd float %0, 5.000000e+00
   %add2 = fadd float %1, 8.000000e+00
@@ -44,7 +44,7 @@ if.end:
   %add4 = fadd double %conv, %2
   store double %add4, double* %A, align 8
   %conv5 = fpext float %add2 to double
-  %arrayidx6 = getelementptr inbounds double* %A, i64 1
+  %arrayidx6 = getelementptr inbounds double, double* %A, i64 1
   %3 = load double* %arrayidx6, align 8
   %add7 = fadd double %conv5, %3
   store double %add7, double* %arrayidx6, align 8

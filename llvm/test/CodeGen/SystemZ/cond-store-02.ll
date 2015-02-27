@@ -194,7 +194,7 @@ define void @f11(i16 *%base, i16 %alt, i32 %limit) {
 ; CHECK: sth %r3, 4094(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%base, i64 2047
+  %ptr = getelementptr i16, i16 *%base, i64 2047
   %cond = icmp ult i32 %limit, 420
   %orig = load i16 *%ptr
   %res = select i1 %cond, i16 %orig, i16 %alt
@@ -211,7 +211,7 @@ define void @f12(i16 *%base, i16 %alt, i32 %limit) {
 ; CHECK: sthy %r3, 4096(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%base, i64 2048
+  %ptr = getelementptr i16, i16 *%base, i64 2048
   %cond = icmp ult i32 %limit, 420
   %orig = load i16 *%ptr
   %res = select i1 %cond, i16 %orig, i16 %alt
@@ -228,7 +228,7 @@ define void @f13(i16 *%base, i16 %alt, i32 %limit) {
 ; CHECK: sthy %r3, 524286(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%base, i64 262143
+  %ptr = getelementptr i16, i16 *%base, i64 262143
   %cond = icmp ult i32 %limit, 420
   %orig = load i16 *%ptr
   %res = select i1 %cond, i16 %orig, i16 %alt
@@ -247,7 +247,7 @@ define void @f14(i16 *%base, i16 %alt, i32 %limit) {
 ; CHECK: sth %r3, 0(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%base, i64 262144
+  %ptr = getelementptr i16, i16 *%base, i64 262144
   %cond = icmp ult i32 %limit, 420
   %orig = load i16 *%ptr
   %res = select i1 %cond, i16 %orig, i16 %alt
@@ -264,7 +264,7 @@ define void @f15(i16 *%base, i16 %alt, i32 %limit) {
 ; CHECK: sthy %r3, -524288(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%base, i64 -262144
+  %ptr = getelementptr i16, i16 *%base, i64 -262144
   %cond = icmp ult i32 %limit, 420
   %orig = load i16 *%ptr
   %res = select i1 %cond, i16 %orig, i16 %alt
@@ -283,7 +283,7 @@ define void @f16(i16 *%base, i16 %alt, i32 %limit) {
 ; CHECK: sth %r3, 0(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%base, i64 -262145
+  %ptr = getelementptr i16, i16 *%base, i64 -262145
   %cond = icmp ult i32 %limit, 420
   %orig = load i16 *%ptr
   %res = select i1 %cond, i16 %orig, i16 %alt

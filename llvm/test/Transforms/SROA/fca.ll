@@ -14,9 +14,9 @@ entry:
 
   store { i32, i32 } undef, { i32, i32 }* %a
 
-  %gep1 = getelementptr inbounds { i32, i32 }* %a, i32 0, i32 0
+  %gep1 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %a, i32 0, i32 0
   store i32 %x, i32* %gep1
-  %gep2 = getelementptr inbounds { i32, i32 }* %a, i32 0, i32 1
+  %gep2 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %a, i32 0, i32 1
   store i32 %y, i32* %gep2
 
   %result = load { i32, i32 }* %a
@@ -38,9 +38,9 @@ entry:
   %a = alloca { i32, i32 }
   %b = alloca { i32, i32 }
 
-  %gep1 = getelementptr inbounds { i32, i32 }* %a, i32 0, i32 0
+  %gep1 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %a, i32 0, i32 0
   store i32 %x, i32* %gep1
-  %gep2 = getelementptr inbounds { i32, i32 }* %a, i32 0, i32 1
+  %gep2 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %a, i32 0, i32 1
   store i32 %y, i32* %gep2
 
   %result = load volatile { i32, i32 }* %a

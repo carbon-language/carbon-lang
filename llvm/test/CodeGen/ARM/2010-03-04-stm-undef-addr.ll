@@ -10,7 +10,7 @@ stack_overflow:                                   ; preds = %0
 no_overflow:                                      ; preds = %0
   %frame = inttoptr i32 %1 to [17 x i32]*         ; <[17 x i32]*> [#uses=4]
   %2 = load i32* null                             ; <i32> [#uses=2]
-  %3 = getelementptr inbounds [17 x i32]* %frame, i32 0, i32 14 ; <i32*> [#uses=1]
+  %3 = getelementptr inbounds [17 x i32], [17 x i32]* %frame, i32 0, i32 14 ; <i32*> [#uses=1]
   %4 = load i32* %3                               ; <i32> [#uses=2]
   %5 = load [8 x i8]** undef                      ; <[8 x i8]*> [#uses=2]
   br i1 undef, label %bci_13, label %bci_4
@@ -33,11 +33,11 @@ no_exception:                                     ; preds = %bci_46
   ret void
 
 bci_35:                                           ; preds = %bci_30
-  %7 = getelementptr inbounds [17 x i32]* %frame, i32 0, i32 15 ; <i32*> [#uses=1]
+  %7 = getelementptr inbounds [17 x i32], [17 x i32]* %frame, i32 0, i32 15 ; <i32*> [#uses=1]
   store i32 %2, i32* %7
-  %8 = getelementptr inbounds [17 x i32]* %frame, i32 0, i32 14 ; <i32*> [#uses=1]
+  %8 = getelementptr inbounds [17 x i32], [17 x i32]* %frame, i32 0, i32 14 ; <i32*> [#uses=1]
   store i32 %4, i32* %8
-  %9 = getelementptr inbounds [17 x i32]* %frame, i32 0, i32 13 ; <i32*> [#uses=1]
+  %9 = getelementptr inbounds [17 x i32], [17 x i32]* %frame, i32 0, i32 13 ; <i32*> [#uses=1]
   %10 = bitcast i32* %9 to [8 x i8]**             ; <[8 x i8]**> [#uses=1]
   store [8 x i8]* %5, [8 x i8]** %10
   call void inttoptr (i32 13839116 to void ([788 x i8]*, i32)*)([788 x i8]* %thread, i32 7)

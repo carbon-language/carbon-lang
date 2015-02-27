@@ -16,9 +16,9 @@ entry:
 while.body5:
   %indvar = phi i32 [ 0, %entry ], [ %tmp6, %if.end ]
   %tmp5 = add i32 %indvar, 2
-  %arrayidx9 = getelementptr [5001 x i32]* @sortlist, i32 0, i32 %tmp5
+  %arrayidx9 = getelementptr [5001 x i32], [5001 x i32]* @sortlist, i32 0, i32 %tmp5
   %tmp6 = add i32 %indvar, 1
-  %arrayidx = getelementptr [5001 x i32]* @sortlist, i32 0, i32 %tmp6
+  %arrayidx = getelementptr [5001 x i32], [5001 x i32]* @sortlist, i32 0, i32 %tmp6
   %tmp7 = load i32* %arrayidx, align 4
   %tmp10 = load i32* %arrayidx9, align 4
   %cmp11 = icmp sgt i32 %tmp7, %tmp10

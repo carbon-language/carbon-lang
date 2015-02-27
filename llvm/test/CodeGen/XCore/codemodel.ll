@@ -96,9 +96,9 @@ entry:
 ; LARGE: retsp 0
 define i32 @f(i32* %i) {
 entry:
-  %0 = getelementptr inbounds i32* %i, i32 16383
+  %0 = getelementptr inbounds i32, i32* %i, i32 16383
   %1 = load i32* %0
-  %2 = getelementptr inbounds i32* %i, i32 16384
+  %2 = getelementptr inbounds i32, i32* %i, i32 16384
   %3 = load i32* %2
   %4 = add nsw i32 %1, %3
   %5 = load i32* getelementptr inbounds ([100 x i32]* @l, i32 0, i32 0)

@@ -20,7 +20,7 @@ for.body60:
   %tmp5 = add i64 %iy.067, %0
   %tmp6 = mul i64 %tmp5, undef
   %arrayidx69.sum = add i64 undef, %tmp6
-  %arrayidx70 = getelementptr inbounds double* %Ey, i64 %arrayidx69.sum
+  %arrayidx70 = getelementptr inbounds double, double* %Ey, i64 %arrayidx69.sum
   %1 = load double* %arrayidx70, align 8
   %inc = add nsw i64 %ix.062, 1
   br i1 false, label %for.body60, label %for.end

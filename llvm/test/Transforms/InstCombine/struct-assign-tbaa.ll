@@ -30,7 +30,7 @@ define i32 (i8*, i32*, double*)*** @test2() {
   %tmp = alloca %struct.test2, align 8
   %tmp1 = bitcast %struct.test2* %tmp to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %tmp1, i8* undef, i64 8, i32 8, i1 false), !tbaa.struct !4
-  %tmp2 = getelementptr %struct.test2* %tmp, i32 0, i32 0
+  %tmp2 = getelementptr %struct.test2, %struct.test2* %tmp, i32 0, i32 0
   %tmp3 = load i32 (i8*, i32*, double*)*** %tmp2
   ret i32 (i8*, i32*, double*)*** %tmp2
 }

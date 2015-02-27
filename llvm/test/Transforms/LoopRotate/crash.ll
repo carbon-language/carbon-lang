@@ -125,7 +125,7 @@ entry:
 	br label %bb15
 bb6:		; preds = %bb15
 	%gep.upgrd.1 = zext i32 %offset.1 to i64		; <i64> [#uses=1]
-	%tmp11 = getelementptr i8* %msg, i64 %gep.upgrd.1		; <i8*> [#uses=0]
+	%tmp11 = getelementptr i8, i8* %msg, i64 %gep.upgrd.1		; <i8*> [#uses=0]
 	br label %bb15
 bb15:		; preds = %bb6, %entry
 	%offset.1 = add i32 0, 1		; <i32> [#uses=2]

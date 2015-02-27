@@ -8,7 +8,7 @@ bb.nph:                                           ; preds = %entry
 
 for.body:                                         ; preds = %bb.nph, %for.body
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body ]
-  %I.0.014 = getelementptr i8* %Base, i64 %indvar
+  %I.0.014 = getelementptr i8, i8* %Base, i64 %indvar
   store i8 0, i8* %I.0.014, align 1
   %indvar.next = add i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar.next, %Size
@@ -29,7 +29,7 @@ bb.nph:                                           ; preds = %entry
 
 for.body:                                         ; preds = %bb.nph, %for.body
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body.cont ]
-  %I.0.014 = getelementptr i8* %Base, i64 %indvar
+  %I.0.014 = getelementptr i8, i8* %Base, i64 %indvar
   store i8 0, i8* %I.0.014, align 1
   %indvar.next = add i64 %indvar, 1
   br label %for.body.cont
@@ -52,7 +52,7 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %i.011 = phi i64 [ %inc, %for.body ], [ 0, %entry ]
-  %add.ptr.i = getelementptr i32* %Base, i64 %i.011
+  %add.ptr.i = getelementptr i32, i32* %Base, i64 %i.011
   store i32 16843009, i32* %add.ptr.i, align 4
   %inc = add nsw i64 %i.011, 1
   %exitcond = icmp eq i64 %inc, %Size
@@ -75,7 +75,7 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %i.011 = phi i64 [ %inc, %for.body ], [ 0, %entry ]
-  %add.ptr.i = getelementptr i32* %Base, i64 %i.011
+  %add.ptr.i = getelementptr i32, i32* %Base, i64 %i.011
   store i32 16843009, i32* %add.ptr.i, align 4
   
   store i8 42, i8* %MayAlias
@@ -94,12 +94,12 @@ for.end:                                          ; preds = %entry
 ;; TODO: We should be able to promote this memset.  Not yet though.
 define void @test4(i8* %Base) nounwind ssp {
 bb.nph:                                           ; preds = %entry
-  %Base100 = getelementptr i8* %Base, i64 1000
+  %Base100 = getelementptr i8, i8* %Base, i64 1000
   br label %for.body
 
 for.body:                                         ; preds = %bb.nph, %for.body
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body ]
-  %I.0.014 = getelementptr i8* %Base, i64 %indvar
+  %I.0.014 = getelementptr i8, i8* %Base, i64 %indvar
   store i8 0, i8* %I.0.014, align 1
   
   ;; Store beyond the range memset, should be safe to promote.
@@ -123,7 +123,7 @@ bb.nph:                                           ; preds = %entry
 
 for.body:                                         ; preds = %bb.nph, %for.body
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body ]
-  %I.0.014 = getelementptr i8* %Base, i64 %indvar
+  %I.0.014 = getelementptr i8, i8* %Base, i64 %indvar
   
   %V = trunc i64 %indvar to i8
   store i8 %V, i8* %I.0.014, align 1
@@ -148,8 +148,8 @@ bb.nph:
 
 for.body:                                         ; preds = %bb.nph, %for.body
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body ]
-  %I.0.014 = getelementptr i8* %Base, i64 %indvar
-  %DestI = getelementptr i8* %Dest, i64 %indvar
+  %I.0.014 = getelementptr i8, i8* %Base, i64 %indvar
+  %DestI = getelementptr i8, i8* %Dest, i64 %indvar
   %V = load i8* %I.0.014, align 1
   store i8 %V, i8* %DestI, align 1
   %indvar.next = add i64 %indvar, 1
@@ -175,7 +175,7 @@ for.body:                                         ; preds = %bb.nph, %for.body
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body.cont ]
   br label %for.body.cont
 for.body.cont:
-  %I.0.014 = getelementptr i8* %Base, i64 %indvar
+  %I.0.014 = getelementptr i8, i8* %Base, i64 %indvar
   store i8 0, i8* %I.0.014, align 1
   %indvar.next = add i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar.next, %Size
@@ -195,7 +195,7 @@ bb.nph:                                           ; preds = %entry
 
 for.body:                                         ; preds = %bb.nph, %for.body
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body ]
-  %PI = getelementptr i64* %Ptr, i64 %indvar
+  %PI = getelementptr i64, i64* %Ptr, i64 %indvar
   store i64 0, i64 *%PI
   %indvar.next = add i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar.next, 1
@@ -221,8 +221,8 @@ bb.nph:
 
 for.body:                                         ; preds = %bb.nph, %for.body
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body ]
-  %I.0.014 = getelementptr i8* %Base, i64 %indvar
-  %DestI = getelementptr i8* %Dest, i64 %indvar
+  %I.0.014 = getelementptr i8, i8* %Base, i64 %indvar
+  %DestI = getelementptr i8, i8* %Dest, i64 %indvar
   %V = load i8* %I.0.014, align 1
   store i8 %V, i8* %DestI, align 1
 
@@ -254,7 +254,7 @@ for.body5:                                        ; preds = %for.body5, %bb.nph
   %mul = mul nsw i32 %i.04, 100
   %add = add nsw i32 %j.02, %mul
   %idxprom = sext i32 %add to i64
-  %arrayidx = getelementptr inbounds i8* %X, i64 %idxprom
+  %arrayidx = getelementptr inbounds i8, i8* %X, i64 %idxprom
   store i8 0, i8* %arrayidx, align 1
   %inc = add nsw i32 %j.02, 1
   %cmp4 = icmp eq i32 %inc, 100
@@ -283,7 +283,7 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %indvar = phi i64 [ 0, %entry ], [ %indvar.next, %for.body ]
-  %arrayidx = getelementptr i32* %P, i64 %indvar
+  %arrayidx = getelementptr i32, i32* %P, i64 %indvar
   store i32 1, i32* %arrayidx, align 4
   %indvar.next = add i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar.next, 10000
@@ -306,7 +306,7 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %indvar = phi i64 [ 0, %entry ], [ %indvar.next, %for.body ]
-  %arrayidx = getelementptr i32** %P, i64 %indvar
+  %arrayidx = getelementptr i32*, i32** %P, i64 %indvar
   store i32* null, i32** %arrayidx, align 4
   %indvar.next = add i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar.next, 10000
@@ -332,7 +332,7 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %indvar = phi i64 [ 0, %entry ], [ %indvar.next, %for.body ]
-  %arrayidx = getelementptr i32** %P, i64 %indvar
+  %arrayidx = getelementptr i32*, i32** %P, i64 %indvar
   store i32* @G, i32** %arrayidx, align 4
   %indvar.next = add i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar.next, 10000
@@ -362,11 +362,11 @@ for.body:                                         ; preds = %for.inc, %for.body.
   %tmp5 = phi i32 [ %inc, %for.body ], [ 0, %entry ]
   %add = add nsw i32 %tmp5, 4
   %idxprom = sext i32 %add to i64
-  %arrayidx = getelementptr inbounds [7 x i32]* @g_50, i32 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [7 x i32], [7 x i32]* @g_50, i32 0, i64 %idxprom
   %tmp2 = load i32* %arrayidx, align 4
   %add4 = add nsw i32 %tmp5, 5
   %idxprom5 = sext i32 %add4 to i64
-  %arrayidx6 = getelementptr inbounds [7 x i32]* @g_50, i32 0, i64 %idxprom5
+  %arrayidx6 = getelementptr inbounds [7 x i32], [7 x i32]* @g_50, i32 0, i64 %idxprom5
   store i32 %tmp2, i32* %arrayidx6, align 4
   %inc = add nsw i32 %tmp5, 1
   %cmp = icmp slt i32 %inc, 2
@@ -393,7 +393,7 @@ define void @PR14241(i32* %s, i64 %size) {
 
 entry:
   %end.idx = add i64 %size, -1
-  %end.ptr = getelementptr inbounds i32* %s, i64 %end.idx
+  %end.ptr = getelementptr inbounds i32, i32* %s, i64 %end.idx
   br label %while.body
 ; CHECK-NOT: memcpy
 ;
@@ -403,13 +403,13 @@ entry:
 
 while.body:
   %phi.ptr = phi i32* [ %s, %entry ], [ %next.ptr, %while.body ]
-  %src.ptr = getelementptr inbounds i32* %phi.ptr, i64 1
+  %src.ptr = getelementptr inbounds i32, i32* %phi.ptr, i64 1
   %val = load i32* %src.ptr, align 4
 ; CHECK: load
-  %dst.ptr = getelementptr inbounds i32* %phi.ptr, i64 0
+  %dst.ptr = getelementptr inbounds i32, i32* %phi.ptr, i64 0
   store i32 %val, i32* %dst.ptr, align 4
 ; CHECK: store
-  %next.ptr = getelementptr inbounds i32* %phi.ptr, i64 1
+  %next.ptr = getelementptr inbounds i32, i32* %phi.ptr, i64 1
   %cmp = icmp eq i32* %next.ptr, %end.ptr
   br i1 %cmp, label %exit, label %while.body
 

@@ -24,14 +24,14 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %i.01 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %idxprom = sext i32 %i.01 to i64
-  %arrayidx = getelementptr inbounds float* %0, i64 %idxprom
+  %arrayidx = getelementptr inbounds float, float* %0, i64 %idxprom
   %3 = load float* %arrayidx, align 4
   %idxprom5 = sext i32 %i.01 to i64
-  %arrayidx6 = getelementptr inbounds float* %1, i64 %idxprom5
+  %arrayidx6 = getelementptr inbounds float, float* %1, i64 %idxprom5
   %4 = load float* %arrayidx6, align 4
   %add = fadd float %3, %4
   %idxprom7 = sext i32 %i.01 to i64
-  %arrayidx8 = getelementptr inbounds float* %2, i64 %idxprom7
+  %arrayidx8 = getelementptr inbounds float, float* %2, i64 %idxprom7
   store float %add, float* %arrayidx8, align 4
   %inc = add nsw i32 %i.01, 1
   %cmp = icmp slt i32 %inc, 1000

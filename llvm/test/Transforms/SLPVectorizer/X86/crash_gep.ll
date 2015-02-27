@@ -9,9 +9,9 @@ target triple = "x86_64-unknown-linux-gnu"
 define i32 @fn1() {
 entry:
   %0 = load i64** @a, align 8
-  %add.ptr = getelementptr inbounds i64* %0, i64 1
+  %add.ptr = getelementptr inbounds i64, i64* %0, i64 1
   %1 = ptrtoint i64* %add.ptr to i64
-  %arrayidx = getelementptr inbounds i64* %0, i64 2
+  %arrayidx = getelementptr inbounds i64, i64* %0, i64 2
   store i64 %1, i64* %arrayidx, align 8
   %2 = ptrtoint i64* %arrayidx to i64
   store i64 %2, i64* %add.ptr, align 8

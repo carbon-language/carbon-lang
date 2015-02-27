@@ -15,7 +15,7 @@ loop2:                                            ; preds = %loop1, %loop2.backe
   %indvar414 = phi i64 [ %indvar.next415, %loop2.backedge ], [ 0, %loop1 ]
   %tmp473 = mul i64 %indvar414, -4
   %tmp485 = add i64 %tmp484, %tmp473
-  %storemerge4 = getelementptr i8* %a, i64 %tmp485
+  %storemerge4 = getelementptr i8, i8* %a, i64 %tmp485
   %0 = icmp ugt i8* %storemerge4, %a
   br i1 false, label %loop2.exit, label %loop2.backedge
 

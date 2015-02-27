@@ -47,22 +47,22 @@ codeRepl80.exitStub:                              ; preds = %"<bb 34>"
   ret i1 false
 
 "<bb 34>":                                        ; preds = %newFuncRoot
-  %tmp128 = getelementptr inbounds %struct.__st_parameter_dt* %memtmp3, i32 0, i32 0
-  %tmp129 = getelementptr inbounds %struct.__st_parameter_common* %tmp128, i32 0, i32 2
+  %tmp128 = getelementptr inbounds %struct.__st_parameter_dt, %struct.__st_parameter_dt* %memtmp3, i32 0, i32 0
+  %tmp129 = getelementptr inbounds %struct.__st_parameter_common, %struct.__st_parameter_common* %tmp128, i32 0, i32 2
   store i8* getelementptr inbounds ([11 x i8]* @.cst4, i64 0, i64 0), i8** %tmp129, align 8
-  %tmp130 = getelementptr inbounds %struct.__st_parameter_dt* %memtmp3, i32 0, i32 0
-  %tmp131 = getelementptr inbounds %struct.__st_parameter_common* %tmp130, i32 0, i32 3
+  %tmp130 = getelementptr inbounds %struct.__st_parameter_dt, %struct.__st_parameter_dt* %memtmp3, i32 0, i32 0
+  %tmp131 = getelementptr inbounds %struct.__st_parameter_common, %struct.__st_parameter_common* %tmp130, i32 0, i32 3
   store i32 31495, i32* %tmp131, align 4
-  %tmp132 = getelementptr inbounds %struct.__st_parameter_dt* %memtmp3, i32 0, i32 5
+  %tmp132 = getelementptr inbounds %struct.__st_parameter_dt, %struct.__st_parameter_dt* %memtmp3, i32 0, i32 5
   store i8* getelementptr inbounds ([214 x i8]* @.cst823, i64 0, i64 0), i8** %tmp132, align 8
-  %tmp133 = getelementptr inbounds %struct.__st_parameter_dt* %memtmp3, i32 0, i32 6
+  %tmp133 = getelementptr inbounds %struct.__st_parameter_dt, %struct.__st_parameter_dt* %memtmp3, i32 0, i32 6
   store i32 214, i32* %tmp133, align 4
-  %tmp134 = getelementptr inbounds %struct.__st_parameter_dt* %memtmp3, i32 0, i32 0
-  %tmp135 = getelementptr inbounds %struct.__st_parameter_common* %tmp134, i32 0, i32 0
+  %tmp134 = getelementptr inbounds %struct.__st_parameter_dt, %struct.__st_parameter_dt* %memtmp3, i32 0, i32 0
+  %tmp135 = getelementptr inbounds %struct.__st_parameter_common, %struct.__st_parameter_common* %tmp134, i32 0, i32 0
   store i32 4096, i32* %tmp135, align 4
   %iounit.8748_288 = load i32* @__main1_MOD_iounit, align 4
-  %tmp136 = getelementptr inbounds %struct.__st_parameter_dt* %memtmp3, i32 0, i32 0
-  %tmp137 = getelementptr inbounds %struct.__st_parameter_common* %tmp136, i32 0, i32 1
+  %tmp136 = getelementptr inbounds %struct.__st_parameter_dt, %struct.__st_parameter_dt* %memtmp3, i32 0, i32 0
+  %tmp137 = getelementptr inbounds %struct.__st_parameter_common, %struct.__st_parameter_common* %tmp136, i32 0, i32 1
   store i32 %iounit.8748_288, i32* %tmp137, align 4
   call void @_gfortran_st_write(%struct.__st_parameter_dt* %memtmp3) nounwind
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_integer_write to void (%struct.__st_parameter_dt*, i32*, i32)*)(%struct.__st_parameter_dt* %memtmp3, i32* @j.4580, i32 4) nounwind
@@ -89,7 +89,7 @@ codeRepl80.exitStub:                              ; preds = %"<bb 34>"
   %D.75818_308 = add nsw i64 %D.75816_306, %D.75817_307
   %tmp138 = bitcast i8* %D.75807_289 to [0 x float]*
   %tmp139 = bitcast [0 x float]* %tmp138 to float*
-  %D.75819_309 = getelementptr inbounds float* %tmp139, i64 %D.75818_308
+  %D.75819_309 = getelementptr inbounds float, float* %tmp139, i64 %D.75818_308
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_real_write to void (%struct.__st_parameter_dt*, float*, i32)*)(%struct.__st_parameter_dt* %memtmp3, float* %D.75819_309, i32 4) nounwind
 ; CHECK: @_gfortran_transfer_real_write
   %D.75820_310 = load i8** getelementptr inbounds (%struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 0), align 8
@@ -114,7 +114,7 @@ codeRepl80.exitStub:                              ; preds = %"<bb 34>"
   %D.75831_329 = add nsw i64 %D.75829_327, %D.75830_328
   %tmp140 = bitcast i8* %D.75820_310 to [0 x [1 x i8]]*
   %tmp141 = bitcast [0 x [1 x i8]]* %tmp140 to [1 x i8]*
-  %D.75832_330 = getelementptr inbounds [1 x i8]* %tmp141, i64 %D.75831_329
+  %D.75832_330 = getelementptr inbounds [1 x i8], [1 x i8]* %tmp141, i64 %D.75831_329
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_character_write to void (%struct.__st_parameter_dt*, [1 x i8]*, i32)*)(%struct.__st_parameter_dt* %memtmp3, [1 x i8]* %D.75832_330, i32 1) nounwind
 ; CHECK: @_gfortran_transfer_character_write
   %D.75833_331 = load i8** getelementptr inbounds (%"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 0), align 8
@@ -139,7 +139,7 @@ codeRepl80.exitStub:                              ; preds = %"<bb 34>"
   %D.75844_350 = add nsw i64 %D.75842_348, %D.75843_349
   %tmp142 = bitcast i8* %D.75833_331 to [0 x i32]*
   %tmp143 = bitcast [0 x i32]* %tmp142 to i32*
-  %D.75845_351 = getelementptr inbounds i32* %tmp143, i64 %D.75844_350
+  %D.75845_351 = getelementptr inbounds i32, i32* %tmp143, i64 %D.75844_350
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_integer_write to void (%struct.__st_parameter_dt*, i32*, i32)*)(%struct.__st_parameter_dt* %memtmp3, i32* %D.75845_351, i32 4) nounwind
 ; CHECK: @_gfortran_transfer_integer_write
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_real_write to void (%struct.__st_parameter_dt*, float*, i32)*)(%struct.__st_parameter_dt* %memtmp3, float* @xr1.4592, i32 4) nounwind
@@ -172,7 +172,7 @@ codeRepl80.exitStub:                              ; preds = %"<bb 34>"
   %D.75848_371 = add nsw i64 %D.75847_369, %D.75817_370
   %tmp144 = bitcast i8* %D.75807_352 to [0 x float]*
   %tmp145 = bitcast [0 x float]* %tmp144 to float*
-  %D.75849_372 = getelementptr inbounds float* %tmp145, i64 %D.75848_371
+  %D.75849_372 = getelementptr inbounds float, float* %tmp145, i64 %D.75848_371
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_real_write to void (%struct.__st_parameter_dt*, float*, i32)*)(%struct.__st_parameter_dt* %memtmp3, float* %D.75849_372, i32 4) nounwind
 ; CHECK: @_gfortran_transfer_real_write
   %D.75820_373 = load i8** getelementptr inbounds (%struct.array4_unknown* @__main1_MOD_mclmsg, i64 0, i32 0), align 8
@@ -197,7 +197,7 @@ codeRepl80.exitStub:                              ; preds = %"<bb 34>"
   %D.75852_392 = add nsw i64 %D.75851_390, %D.75830_391
   %tmp146 = bitcast i8* %D.75820_373 to [0 x [1 x i8]]*
   %tmp147 = bitcast [0 x [1 x i8]]* %tmp146 to [1 x i8]*
-  %D.75853_393 = getelementptr inbounds [1 x i8]* %tmp147, i64 %D.75852_392
+  %D.75853_393 = getelementptr inbounds [1 x i8], [1 x i8]* %tmp147, i64 %D.75852_392
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_character_write to void (%struct.__st_parameter_dt*, [1 x i8]*, i32)*)(%struct.__st_parameter_dt* %memtmp3, [1 x i8]* %D.75853_393, i32 1) nounwind
 ; CHECK: @_gfortran_transfer_character_write
   %D.75833_394 = load i8** getelementptr inbounds (%"struct.array4_integer(kind=4).73"* @__main1_MOD_mxdate, i64 0, i32 0), align 8
@@ -222,7 +222,7 @@ codeRepl80.exitStub:                              ; preds = %"<bb 34>"
   %D.75856_413 = add nsw i64 %D.75855_411, %D.75843_412
   %tmp148 = bitcast i8* %D.75833_394 to [0 x i32]*
   %tmp149 = bitcast [0 x i32]* %tmp148 to i32*
-  %D.75857_414 = getelementptr inbounds i32* %tmp149, i64 %D.75856_413
+  %D.75857_414 = getelementptr inbounds i32, i32* %tmp149, i64 %D.75856_413
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_integer_write to void (%struct.__st_parameter_dt*, i32*, i32)*)(%struct.__st_parameter_dt* %memtmp3, i32* %D.75857_414, i32 4) nounwind
 ; CHECK: @_gfortran_transfer_integer_write
   call void bitcast (void (%struct.__st_parameter_dt*, i8*, i32)* @_gfortran_transfer_real_write to void (%struct.__st_parameter_dt*, float*, i32)*)(%struct.__st_parameter_dt* %memtmp3, float* @xr2.4593, i32 4) nounwind

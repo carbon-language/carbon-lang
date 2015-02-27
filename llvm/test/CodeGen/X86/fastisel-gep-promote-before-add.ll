@@ -10,7 +10,7 @@ entry:
 
   ; CHECK-LABEL: _gep_promotion:
   ; CHECK: movzbl ({{.*}})
-  %arrayidx = getelementptr inbounds i8* %0, i8 %add
+  %arrayidx = getelementptr inbounds i8, i8* %0, i8 %add
 
   %1 = load i8* %arrayidx, align 1
   ret i8 %1
@@ -29,7 +29,7 @@ entry:
   %add = add i8 %xor, -127 ; %xor + 0x81
   %1 = load i8** %ptr.addr, align 8
 
-  %arrayidx = getelementptr inbounds i8* %1, i8 %add
+  %arrayidx = getelementptr inbounds i8, i8* %1, i8 %add
 
   %2 = load i8* %arrayidx, align 1
   ret i8 %2

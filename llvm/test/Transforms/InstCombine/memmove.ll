@@ -19,11 +19,11 @@ define void @test2(i8* %A, i32 %N) {
 }
 
 define i32 @test3() {
-	%h_p = getelementptr [2 x i8]* @h, i32 0, i32 0		; <i8*> [#uses=1]
-	%hel_p = getelementptr [4 x i8]* @hel, i32 0, i32 0		; <i8*> [#uses=1]
-	%hello_u_p = getelementptr [8 x i8]* @hello_u, i32 0, i32 0		; <i8*> [#uses=1]
+	%h_p = getelementptr [2 x i8], [2 x i8]* @h, i32 0, i32 0		; <i8*> [#uses=1]
+	%hel_p = getelementptr [4 x i8], [4 x i8]* @hel, i32 0, i32 0		; <i8*> [#uses=1]
+	%hello_u_p = getelementptr [8 x i8], [8 x i8]* @hello_u, i32 0, i32 0		; <i8*> [#uses=1]
 	%target = alloca [1024 x i8]		; <[1024 x i8]*> [#uses=1]
-	%target_p = getelementptr [1024 x i8]* %target, i32 0, i32 0		; <i8*> [#uses=3]
+	%target_p = getelementptr [1024 x i8], [1024 x i8]* %target, i32 0, i32 0		; <i8*> [#uses=3]
         call void @llvm.memmove.p0i8.p0i8.i32(i8* %target_p, i8* %h_p, i32 2, i32 2, i1 false)
         call void @llvm.memmove.p0i8.p0i8.i32(i8* %target_p, i8* %hel_p, i32 4, i32 4, i1 false)
         call void @llvm.memmove.p0i8.p0i8.i32(i8* %target_p, i8* %hello_u_p, i32 8, i32 8, i1 false)

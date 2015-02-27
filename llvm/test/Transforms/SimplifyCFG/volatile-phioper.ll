@@ -29,7 +29,7 @@ while.body:                                       ; preds = %entry, %if.then, %w
   %Addr.017 = phi i8* [ %incdec.ptr, %while.body ], [ null, %if.then ], [ null, %entry ]
   %x.016 = phi i8 [ %inc, %while.body ], [ 0, %if.then ], [ 0, %entry ]
   %inc = add i8 %x.016, 1
-  %incdec.ptr = getelementptr inbounds i8* %Addr.017, i64 1
+  %incdec.ptr = getelementptr inbounds i8, i8* %Addr.017, i64 1
   store volatile i8 %x.016, i8* %Addr.017, align 1
   %0 = ptrtoint i8* %incdec.ptr to i64
   %1 = trunc i64 %0 to i32

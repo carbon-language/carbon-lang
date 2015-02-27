@@ -11,9 +11,9 @@ for.body.lr.ph:
 
 for.body:                                      ; preds = %for.body, %for.body.lr.ph
   %i = phi i64 [ 0, %for.body.lr.ph ], [ %i.next, %for.body ]
-  %a = getelementptr inbounds double* %t, i64 %i
+  %a = getelementptr inbounds double, double* %t, i64 %i
   %i.next = add nuw nsw i64 %i, 1
-  %a.next = getelementptr inbounds double* %t, i64 %i.next
+  %a.next = getelementptr inbounds double, double* %t, i64 %i.next
   %t1 = load double* %a, align 8
   %t2 = load double* %a.next, align 8
   store double %t1, double* %a.next, align 8

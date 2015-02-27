@@ -9,7 +9,7 @@ entry:
         %2 = sub i32 %1, %0
         %3 = ptrtoint i8* %L to i32
 	%4 = sub i32 %2, %3         	; <i32> [#uses=1]
-	%5 = getelementptr i8* %a, i32 %4		; <i8*> [#uses=1]
+	%5 = getelementptr i8, i8* %a, i32 %4		; <i8*> [#uses=1]
 	br label %return
 
 return:		; preds = %bb3

@@ -10,7 +10,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %i.06 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %x.05 = phi ppc_fp128 [ %d, %entry ], [ %conv, %for.body ]
-  %arrayidx = getelementptr inbounds ppc_fp128* %n, i32 %i.06
+  %arrayidx = getelementptr inbounds ppc_fp128, ppc_fp128* %n, i32 %i.06
   %0 = load ppc_fp128* %arrayidx, align 8
   %conv = tail call ppc_fp128 @copysignl(ppc_fp128 %x.05, ppc_fp128 %d) nounwind readonly
   %inc = add nsw i32 %i.06, 1

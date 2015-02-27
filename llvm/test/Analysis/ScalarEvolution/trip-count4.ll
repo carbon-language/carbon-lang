@@ -12,7 +12,7 @@ loop:		; preds = %loop, %entry
 	%indvar = phi i64 [ %n, %entry ], [ %indvar.next, %loop ]		; <i64> [#uses=4]
 	%s0 = shl i64 %indvar, 8		; <i64> [#uses=1]
 	%indvar.i8 = ashr i64 %s0, 8		; <i64> [#uses=1]
-	%t0 = getelementptr double* %d, i64 %indvar.i8		; <double*> [#uses=2]
+	%t0 = getelementptr double, double* %d, i64 %indvar.i8		; <double*> [#uses=2]
 	%t1 = load double* %t0		; <double> [#uses=1]
 	%t2 = fmul double %t1, 1.000000e-01		; <double> [#uses=1]
 	store double %t2, double* %t0

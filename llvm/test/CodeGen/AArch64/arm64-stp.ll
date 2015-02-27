@@ -6,7 +6,7 @@
 ; CHECK: stp w0, w1, [x2]
 define void @stp_int(i32 %a, i32 %b, i32* nocapture %p) nounwind {
   store i32 %a, i32* %p, align 4
-  %add.ptr = getelementptr inbounds i32* %p, i64 1
+  %add.ptr = getelementptr inbounds i32, i32* %p, i64 1
   store i32 %b, i32* %add.ptr, align 4
   ret void
 }
@@ -15,7 +15,7 @@ define void @stp_int(i32 %a, i32 %b, i32* nocapture %p) nounwind {
 ; CHECK: stp x0, x1, [x2]
 define void @stp_long(i64 %a, i64 %b, i64* nocapture %p) nounwind {
   store i64 %a, i64* %p, align 8
-  %add.ptr = getelementptr inbounds i64* %p, i64 1
+  %add.ptr = getelementptr inbounds i64, i64* %p, i64 1
   store i64 %b, i64* %add.ptr, align 8
   ret void
 }
@@ -24,7 +24,7 @@ define void @stp_long(i64 %a, i64 %b, i64* nocapture %p) nounwind {
 ; CHECK: stp s0, s1, [x0]
 define void @stp_float(float %a, float %b, float* nocapture %p) nounwind {
   store float %a, float* %p, align 4
-  %add.ptr = getelementptr inbounds float* %p, i64 1
+  %add.ptr = getelementptr inbounds float, float* %p, i64 1
   store float %b, float* %add.ptr, align 4
   ret void
 }
@@ -33,7 +33,7 @@ define void @stp_float(float %a, float %b, float* nocapture %p) nounwind {
 ; CHECK: stp d0, d1, [x0]
 define void @stp_double(double %a, double %b, double* nocapture %p) nounwind {
   store double %a, double* %p, align 8
-  %add.ptr = getelementptr inbounds double* %p, i64 1
+  %add.ptr = getelementptr inbounds double, double* %p, i64 1
   store double %b, double* %add.ptr, align 8
   ret void
 }
@@ -43,9 +43,9 @@ define void @stur_int(i32 %a, i32 %b, i32* nocapture %p) nounwind {
 ; STUR_CHK: stur_int
 ; STUR_CHK: stp w{{[0-9]+}}, {{w[0-9]+}}, [x{{[0-9]+}}, #-8]
 ; STUR_CHK-NEXT: ret
-  %p1 = getelementptr inbounds i32* %p, i32 -1
+  %p1 = getelementptr inbounds i32, i32* %p, i32 -1
   store i32 %a, i32* %p1, align 2
-  %p2 = getelementptr inbounds i32* %p, i32 -2
+  %p2 = getelementptr inbounds i32, i32* %p, i32 -2
   store i32 %b, i32* %p2, align 2
   ret void
 }
@@ -54,9 +54,9 @@ define void @stur_long(i64 %a, i64 %b, i64* nocapture %p) nounwind {
 ; STUR_CHK: stur_long
 ; STUR_CHK: stp x{{[0-9]+}}, {{x[0-9]+}}, [x{{[0-9]+}}, #-16]
 ; STUR_CHK-NEXT: ret
-  %p1 = getelementptr inbounds i64* %p, i32 -1
+  %p1 = getelementptr inbounds i64, i64* %p, i32 -1
   store i64 %a, i64* %p1, align 2
-  %p2 = getelementptr inbounds i64* %p, i32 -2
+  %p2 = getelementptr inbounds i64, i64* %p, i32 -2
   store i64 %b, i64* %p2, align 2
   ret void
 }
@@ -65,9 +65,9 @@ define void @stur_float(float %a, float %b, float* nocapture %p) nounwind {
 ; STUR_CHK: stur_float
 ; STUR_CHK: stp s{{[0-9]+}}, {{s[0-9]+}}, [x{{[0-9]+}}, #-8]
 ; STUR_CHK-NEXT: ret
-  %p1 = getelementptr inbounds float* %p, i32 -1
+  %p1 = getelementptr inbounds float, float* %p, i32 -1
   store float %a, float* %p1, align 2
-  %p2 = getelementptr inbounds float* %p, i32 -2
+  %p2 = getelementptr inbounds float, float* %p, i32 -2
   store float %b, float* %p2, align 2
   ret void
 }
@@ -76,9 +76,9 @@ define void @stur_double(double %a, double %b, double* nocapture %p) nounwind {
 ; STUR_CHK: stur_double
 ; STUR_CHK: stp d{{[0-9]+}}, {{d[0-9]+}}, [x{{[0-9]+}}, #-16]
 ; STUR_CHK-NEXT: ret
-  %p1 = getelementptr inbounds double* %p, i32 -1
+  %p1 = getelementptr inbounds double, double* %p, i32 -1
   store double %a, double* %p1, align 2
-  %p2 = getelementptr inbounds double* %p, i32 -2
+  %p2 = getelementptr inbounds double, double* %p, i32 -2
   store double %b, double* %p2, align 2
   ret void
 }

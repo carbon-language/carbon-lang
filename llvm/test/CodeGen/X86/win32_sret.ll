@@ -94,7 +94,7 @@ entry:
 ; LINUX-LABEL:     sret4:
 ; LINUX:     retl $4
 
-  %x = getelementptr inbounds %struct.S4* %agg.result, i32 0, i32 0
+  %x = getelementptr inbounds %struct.S4, %struct.S4* %agg.result, i32 0, i32 0
   store i32 42, i32* %x, align 4
   ret void
 }
@@ -107,7 +107,7 @@ entry:
   %this.addr = alloca %class.C5*, align 4
   store %class.C5* %this, %class.C5** %this.addr, align 4
   %this1 = load %class.C5** %this.addr
-  %x = getelementptr inbounds %struct.S5* %agg.result, i32 0, i32 0
+  %x = getelementptr inbounds %struct.S5, %struct.S5* %agg.result, i32 0, i32 0
   store i32 42, i32* %x, align 4
   ret void
 ; WIN32-LABEL:     {{^}}"?foo@C5@@QAE?AUS5@@XZ":
@@ -209,8 +209,8 @@ define void @test7_f(%struct.test7* %x) nounwind {
 }
 
 define x86_thiscallcc void @test7_g(%struct.test7* %in, %struct.test7* sret %out) {
-  %s = getelementptr %struct.test7* %in, i32 0, i32 0
-  %d = getelementptr %struct.test7* %out, i32 0, i32 0
+  %s = getelementptr %struct.test7, %struct.test7* %in, i32 0, i32 0
+  %d = getelementptr %struct.test7, %struct.test7* %out, i32 0, i32 0
   %v = load i32* %s
   store i32 %v, i32* %d
   call void @clobber_eax()

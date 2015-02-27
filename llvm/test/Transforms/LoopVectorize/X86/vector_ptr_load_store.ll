@@ -29,7 +29,7 @@ define void @test_consecutive_store(%0**, %0**, %0** nocapture) nounwind ssp uwt
 ; <label>:7                                       ; preds = %7, %6
   %8 = phi %0** [ %0, %6 ], [ %9, %7 ]
   store %0* %4, %0** %8, align 8
-  %9 = getelementptr inbounds %0** %8, i64 1
+  %9 = getelementptr inbounds %0*, %0** %8, i64 1
   %10 = icmp eq %0** %9, %1
   br i1 %10, label %11, label %7
 
@@ -61,12 +61,12 @@ define void @test_nonconsecutive_store() nounwind ssp uwtable {
 
 ; <label>:3                                       ; preds = %3, %1
   %4 = phi i64 [ 0, %1 ], [ %11, %3 ]
-  %5 = getelementptr inbounds [2048 x i16]* @q, i64 0, i64 %4
+  %5 = getelementptr inbounds [2048 x i16], [2048 x i16]* @q, i64 0, i64 %4
   %6 = load i16* %5, align 2
   %7 = sext i16 %6 to i64
   %8 = add i64 %7, 1
   %9 = inttoptr i64 %8 to i32*
-  %10 = getelementptr inbounds [2048 x [8 x i32*]]* @p, i64 0, i64 %4, i64 %2
+  %10 = getelementptr inbounds [2048 x [8 x i32*]], [2048 x [8 x i32*]]* @p, i64 0, i64 %4, i64 %2
   store i32* %9, i32** %10, align 8
   %11 = add i64 %4, 1
   %12 = trunc i64 %11 to i32
@@ -100,7 +100,7 @@ define i8 @test_consecutive_ptr_load() nounwind readonly ssp uwtable {
 ; <label>:1                                       ; preds = %1, %0
   %2 = phi i64 [ 0, %0 ], [ %10, %1 ]
   %3 = phi i8 [ 0, %0 ], [ %9, %1 ]
-  %4 = getelementptr inbounds [1024 x i32*]* @ia, i32 0, i64 %2
+  %4 = getelementptr inbounds [1024 x i32*], [1024 x i32*]* @ia, i32 0, i64 %2
   %5 = load i32** %4, align 4
   %6 = ptrtoint i32* %5 to i64
   %7 = trunc i64 %6 to i8
@@ -127,8 +127,8 @@ define void @test_nonconsecutive_ptr_load() nounwind ssp uwtable {
 
 ; <label>:3                                       ; preds = %3, %1
   %4 = phi i64 [ 0, %1 ], [ %10, %3 ]
-  %5 = getelementptr inbounds [2048 x [8 x i32*]]* @p2, i64 0, i64 %4, i64 %2
-  %6 = getelementptr inbounds [2048 x i16]* @q2, i64 0, i64 %4
+  %5 = getelementptr inbounds [2048 x [8 x i32*]], [2048 x [8 x i32*]]* @p2, i64 0, i64 %4, i64 %2
+  %6 = getelementptr inbounds [2048 x i16], [2048 x i16]* @q2, i64 0, i64 %4
   %7 = load i32** %5, align 2
   %8 = ptrtoint i32* %7 to i64
   %9 = trunc i64 %8 to i16

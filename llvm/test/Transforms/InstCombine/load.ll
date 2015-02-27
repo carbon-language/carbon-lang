@@ -23,7 +23,7 @@ define i32 @test1() {
 ; CHECK-LABEL: @test2(
 ; CHECK-NOT: load
 define float @test2() {
-	%A = getelementptr [2 x { i32, float }]* @Y, i64 0, i64 1, i32 1		; <float*> [#uses=1]
+	%A = getelementptr [2 x { i32, float }], [2 x { i32, float }]* @Y, i64 0, i64 1, i32 1		; <float*> [#uses=1]
 	%B = load float* %A		; <float> [#uses=1]
 	ret float %B
 }
@@ -31,7 +31,7 @@ define float @test2() {
 ; CHECK-LABEL: @test3(
 ; CHECK-NOT: load
 define i32 @test3() {
-	%A = getelementptr [2 x { i32, float }]* @Y, i64 0, i64 0, i32 0		; <i32*> [#uses=1]
+	%A = getelementptr [2 x { i32, float }], [2 x { i32, float }]* @Y, i64 0, i64 0, i32 0		; <i32*> [#uses=1]
 	%B = load i32* %A		; <i32> [#uses=1]
 	ret i32 %B
 }
@@ -39,7 +39,7 @@ define i32 @test3() {
 ; CHECK-LABEL: @test4(
 ; CHECK-NOT: load
 define i32 @test4() {
-	%A = getelementptr [2 x { i32, float }]* @Z, i64 0, i64 1, i32 0		; <i32*> [#uses=1]
+	%A = getelementptr [2 x { i32, float }], [2 x { i32, float }]* @Z, i64 0, i64 1, i32 0		; <i32*> [#uses=1]
 	%B = load i32* %A		; <i32> [#uses=1]
 	ret i32 %B
 }
@@ -55,7 +55,7 @@ define i32 @test5(i1 %C) {
 ; CHECK-LABEL: @test7(
 ; CHECK-NOT: load
 define i32 @test7(i32 %X) {
-	%V = getelementptr i32* null, i32 %X		; <i32*> [#uses=1]
+	%V = getelementptr i32, i32* null, i32 %X		; <i32*> [#uses=1]
 	%R = load i32* %V		; <i32> [#uses=1]
 	ret i32 %R
 }
@@ -96,9 +96,9 @@ C:		; preds = %F, %T
 ; CHECK-LABEL: @test11(
 ; CHECK-NOT: load
 define double @test11(double* %p) {
-  %t0 = getelementptr double* %p, i32 1
+  %t0 = getelementptr double, double* %p, i32 1
   store double 2.0, double* %t0
-  %t1 = getelementptr double* %p, i32 1
+  %t1 = getelementptr double, double* %p, i32 1
   %x = load double* %t1
   ret double %x
 }

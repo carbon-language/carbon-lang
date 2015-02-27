@@ -12,9 +12,9 @@ define void @f1(i8 *%ptr) {
 ; CHECK: iilf [[REG:%r[0-5]]], 66051
 ; CHECK: st [[REG]], 0(%r2)
 ; CHECK: br %r14
-  %off1 = getelementptr i8 *%ptr, i64 1
-  %off2 = getelementptr i8 *%ptr, i64 2
-  %off3 = getelementptr i8 *%ptr, i64 3
+  %off1 = getelementptr i8, i8 *%ptr, i64 1
+  %off2 = getelementptr i8, i8 *%ptr, i64 2
+  %off3 = getelementptr i8, i8 *%ptr, i64 3
   store i8 0, i8 *%ptr
   store i8 1, i8 *%off1
   store i8 2, i8 *%off2

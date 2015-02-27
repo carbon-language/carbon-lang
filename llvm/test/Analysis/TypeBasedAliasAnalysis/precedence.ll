@@ -33,7 +33,7 @@ define i64 @offset(i64* %x) nounwind {
 entry:
   store i64 0, i64* %x, !tbaa !4
   %0 = bitcast i64* %x to i8*
-  %1 = getelementptr i8* %0, i64 1
+  %1 = getelementptr i8, i8* %0, i64 1
   store i8 1, i8* %1, !tbaa !5
   %tmp3 = load i64* %x, !tbaa !4
   ret i64 %tmp3

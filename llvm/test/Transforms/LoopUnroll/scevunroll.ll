@@ -19,7 +19,7 @@ while.body:
   %iv = phi i64 [ 10, %entry ], [ %iv.next, %while.body ]
   %sum = phi i32 [ 0, %entry ], [ %sum.next, %while.body ]
   %iv.next = add i64 %iv, -1
-  %adr = getelementptr inbounds i32* %base, i64 %iv.next
+  %adr = getelementptr inbounds i32, i32* %base, i64 %iv.next
   %tmp = load i32* %adr, align 8
   %sum.next = add i32 %sum, %tmp
   %iv.narrow = trunc i64 %iv.next to i32
@@ -46,7 +46,7 @@ entry:
 loop:
   %iv = phi i64 [ 0, %entry ], [ %inc, %tail ]
   %s = phi i64 [ 0, %entry ], [ %s.next, %tail ]
-  %adr = getelementptr i64* %base, i64 %iv
+  %adr = getelementptr i64, i64* %base, i64 %iv
   %val = load i64* %adr
   %s.next = add i64 %s, %val
   %inc = add i64 %iv, 1
@@ -67,7 +67,7 @@ exit2:
 ; SCEV properly unrolls multi-exit loops.
 ;
 ; CHECK-LABEL: @multiExit(
-; CHECK: getelementptr i32* %base, i32 10
+; CHECK: getelementptr i32, i32* %base, i32 10
 ; CHECK-NEXT: load i32*
 ; CHECK: br i1 false, label %l2.10, label %exit1
 ; CHECK: l2.10:
@@ -81,7 +81,7 @@ l1:
   %iv2 = phi i32 [ 0, %entry ], [ %inc2, %l2 ]
   %inc1 = add i32 %iv1, 1
   %inc2 = add i32 %iv2, 1
-  %adr = getelementptr i32* %base, i32 %iv1
+  %adr = getelementptr i32, i32* %base, i32 %iv1
   %val = load i32* %adr
   %cmp1 = icmp slt i32 %iv1, 5
   br i1 %cmp1, label %l2, label %exit1
@@ -112,7 +112,7 @@ l1:
   %iv2 = phi i32 [ 0, %entry ], [ %inc2, %l3 ]
   %inc1 = add i32 %iv1, 1
   %inc2 = add i32 %iv2, 1
-  %adr = getelementptr i32* %base, i32 %iv1
+  %adr = getelementptr i32, i32* %base, i32 %iv1
   %val = load i32* %adr
   %cmp1 = icmp slt i32 %iv1, 5
   br i1 %cmp1, label %l2, label %exit1

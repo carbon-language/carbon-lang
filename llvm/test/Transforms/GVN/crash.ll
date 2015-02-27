@@ -74,16 +74,16 @@ entry:
   br label %bb69.i
 
 bb69.i:                                           ; preds = %bb57.i.preheader
-  %tmp4 = getelementptr inbounds [4 x %struct.attribute_spec*]* @attribute_tables, i32 0, i32 undef ; <%struct.attribute_spec**> [#uses=1]
+  %tmp4 = getelementptr inbounds [4 x %struct.attribute_spec*], [4 x %struct.attribute_spec*]* @attribute_tables, i32 0, i32 undef ; <%struct.attribute_spec**> [#uses=1]
   %tmp3 = load %struct.attribute_spec** %tmp4, align 4 ; <%struct.attribute_spec*> [#uses=1]
   br label %bb65.i
 
 bb65.i:                                           ; preds = %bb65.i.preheader, %bb64.i
   %storemerge6.i = phi i32 [ 1, %bb64.i ], [ 0, %bb69.i ] ; <i32> [#uses=3]
-  %scevgep14 = getelementptr inbounds %struct.attribute_spec* %tmp3, i32 %storemerge6.i, i32 0 ; <i8**> [#uses=1]
+  %scevgep14 = getelementptr inbounds %struct.attribute_spec, %struct.attribute_spec* %tmp3, i32 %storemerge6.i, i32 0 ; <i8**> [#uses=1]
   %tmp2 = load i8** %scevgep14, align 4           ; <i8*> [#uses=0]
   %tmp = load %struct.attribute_spec** %tmp4, align 4 ; <%struct.attribute_spec*> [#uses=1]
-  %scevgep1516 = getelementptr inbounds %struct.attribute_spec* %tmp, i32 %storemerge6.i, i32 0 ; <i8**> [#uses=0]
+  %scevgep1516 = getelementptr inbounds %struct.attribute_spec, %struct.attribute_spec* %tmp, i32 %storemerge6.i, i32 0 ; <i8**> [#uses=0]
   unreachable
 
 bb64.i:                                           ; Unreachable
@@ -113,7 +113,7 @@ do.body36.i:
   %ivar38.i = load i64* @g 
   %tmp3 = bitcast i7* %tmp18.i to i8*
   %add.ptr39.sum.i = add i64 %ivar38.i, 8
-  %tmp40.i = getelementptr inbounds i8* %tmp3, i64 %add.ptr39.sum.i
+  %tmp40.i = getelementptr inbounds i8, i8* %tmp3, i64 %add.ptr39.sum.i
   %tmp4 = bitcast i8* %tmp40.i to i64*
   %tmp41.i = load i64* %tmp4
   br i1 undef, label %if.then48.i, label %do.body57.i
@@ -127,7 +127,7 @@ do.body57.i:
   %ivar59.i = load i64* @g
   %tmp5 = bitcast i7* %tmp58.i to i8*
   %add.ptr65.sum.i = add i64 %ivar59.i, 8
-  %tmp66.i = getelementptr inbounds i8* %tmp5, i64 %add.ptr65.sum.i
+  %tmp66.i = getelementptr inbounds i8, i8* %tmp5, i64 %add.ptr65.sum.i
   %tmp6 = bitcast i8* %tmp66.i to i64*
   %tmp67.i = load i64* %tmp6
   ret i32* undef
@@ -142,8 +142,8 @@ entry:
   ret i32 0
   
 dead:
-  %P2 = getelementptr i32 *%P2, i32 52
-  %Q2 = getelementptr i32 *%Q2, i32 52
+  %P2 = getelementptr i32, i32 *%P2, i32 52
+  %Q2 = getelementptr i32, i32 *%Q2, i32 52
   store i32 4, i32* %P2
   %A = load i32* %Q2
   br i1 true, label %dead, label %dead2
@@ -158,7 +158,7 @@ define fastcc i8 @test5(i8* %P) nounwind {
 entry:
   %0 = load i8* %P, align 2
 
-  %Q = getelementptr i8* %P, i32 1
+  %Q = getelementptr i8, i8* %P, i32 1
   %1 = load i8* %Q, align 1
   ret i8 %1
 }
@@ -178,11 +178,11 @@ entry:
 ;; Unreachable code.
 
 unreachable.bb:
-  %gep.val = getelementptr inbounds %struct.type* %gep.val, i64 1
+  %gep.val = getelementptr inbounds %struct.type, %struct.type* %gep.val, i64 1
   br i1 undef, label %u2.bb, label %u1.bb
 
 u1.bb:
-  %tmp1 = getelementptr inbounds %struct.type* %gep.val, i64 0, i32 0
+  %tmp1 = getelementptr inbounds %struct.type, %struct.type* %gep.val, i64 0, i32 0
   store i64 -1, i64* %tmp1, align 8
   br label %unreachable.bb
 

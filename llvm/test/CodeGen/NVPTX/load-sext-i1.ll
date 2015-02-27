@@ -6,7 +6,7 @@ target triple = "nvptx-nvidia-cuda"
 define void @main(i1* %a1, i32 %a2, i32* %arg3) {
 ; CHECK: ld.u8
 ; CHECK-NOT: ld.u1
-  %t1 = getelementptr i1* %a1, i32 %a2
+  %t1 = getelementptr i1, i1* %a1, i32 %a2
   %t2 = load i1* %t1
   %t3 = sext i1 %t2 to i32
   store i32 %t3, i32* %arg3

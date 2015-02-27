@@ -145,7 +145,7 @@ define <2 x i32> @vld2lanei32_update(i32** %ptr, <2 x i32>* %B) nounwind {
 	%tmp3 = extractvalue %struct.__neon_int32x2x2_t %tmp2, 0
 	%tmp4 = extractvalue %struct.__neon_int32x2x2_t %tmp2, 1
 	%tmp5 = add <2 x i32> %tmp3, %tmp4
-	%tmp6 = getelementptr i32* %A, i32 2
+	%tmp6 = getelementptr i32, i32* %A, i32 2
 	store i32* %tmp6, i32** %ptr
 	ret <2 x i32> %tmp5
 }
@@ -302,7 +302,7 @@ define <8 x i16> @vld3laneQi16_update(i16** %ptr, <8 x i16>* %B, i32 %inc) nounw
 	%tmp5 = extractvalue %struct.__neon_int16x8x3_t %tmp2, 2
 	%tmp6 = add <8 x i16> %tmp3, %tmp4
 	%tmp7 = add <8 x i16> %tmp5, %tmp6
-	%tmp8 = getelementptr i16* %A, i32 %inc
+	%tmp8 = getelementptr i16, i16* %A, i32 %inc
 	store i16* %tmp8, i16** %ptr
 	ret <8 x i16> %tmp7
 }
@@ -383,7 +383,7 @@ define <8 x i8> @vld4lanei8_update(i8** %ptr, <8 x i8>* %B) nounwind {
 	%tmp7 = add <8 x i8> %tmp3, %tmp4
 	%tmp8 = add <8 x i8> %tmp5, %tmp6
 	%tmp9 = add <8 x i8> %tmp7, %tmp8
-	%tmp10 = getelementptr i8* %A, i32 4
+	%tmp10 = getelementptr i8, i8* %A, i32 4
 	store i8* %tmp10, i8** %ptr
 	ret <8 x i8> %tmp9
 }

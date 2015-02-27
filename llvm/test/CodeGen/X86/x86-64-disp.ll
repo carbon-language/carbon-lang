@@ -8,7 +8,7 @@ target triple = "x86_64-unknown-linux-gnu"
 @call_used_regs = external global [53 x i8], align 32
 
 define fastcc void @foo() nounwind {
-	%t = getelementptr [53 x i8]* @call_used_regs, i64 0, i64 4294967295
+	%t = getelementptr [53 x i8], [53 x i8]* @call_used_regs, i64 0, i64 4294967295
 	store i8 1, i8* %t, align 1
 	ret void
 }

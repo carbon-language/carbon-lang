@@ -21,10 +21,10 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr inbounds float* %b, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds float, float* %b, i64 %indvars.iv
   %0 = load float* %arrayidx, align 4
   %mul = fmul float %0, 3.000000e+00
-  %arrayidx2 = getelementptr inbounds float* %a, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds float, float* %a, i64 %indvars.iv
   store float %mul, float* %arrayidx2, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
@@ -47,10 +47,10 @@ entry:
 for.body:
   %iv = phi i64 [ 0, %entry ], [ %iv.next, %for.body ]
   %ind.sum = add i64 %iv, %offset
-  %arr.idx = getelementptr inbounds float* %a, i64 %ind.sum
+  %arr.idx = getelementptr inbounds float, float* %a, i64 %ind.sum
   %l1 = load float* %arr.idx, align 4
   %ind.sum2 = add i64 %iv, %offset2
-  %arr.idx2 = getelementptr inbounds float* %a, i64 %ind.sum2
+  %arr.idx2 = getelementptr inbounds float, float* %a, i64 %ind.sum2
   %l2 = load float* %arr.idx2, align 4
   %m = fmul fast float %b, %l2
   %ad = fadd fast float %l1, %m

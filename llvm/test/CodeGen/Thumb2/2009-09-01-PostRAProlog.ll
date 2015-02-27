@@ -71,14 +71,14 @@ entry:
   br label %bb5
 
 bb:                                               ; preds = %bb5
-  %22 = getelementptr inbounds i32* %21, i32 %x.0 ; <i32*> [#uses=1]
+  %22 = getelementptr inbounds i32, i32* %21, i32 %x.0 ; <i32*> [#uses=1]
   %23 = load i32* %22, align 4                    ; <i32> [#uses=1]
   %24 = icmp eq i32 %23, %16                      ; <i1> [#uses=1]
   br i1 %24, label %bb1, label %bb2
 
 bb1:                                              ; preds = %bb
   %25 = load i8** @he, align 4                    ; <i8*> [#uses=1]
-  %26 = getelementptr inbounds i8* %25, i32 %x.0  ; <i8*> [#uses=1]
+  %26 = getelementptr inbounds i8, i8* %25, i32 %x.0  ; <i8*> [#uses=1]
   %27 = load i8* %26, align 1                     ; <i8> [#uses=1]
   %28 = sext i8 %27 to i32                        ; <i32> [#uses=1]
   ret i32 %28

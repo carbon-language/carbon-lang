@@ -8,7 +8,7 @@ target triple = "armv7-eabi"
 define arm_aapcs_vfpcc void @bar(%foo* noalias sret %agg.result, <4 x float> %quat.0) nounwind {
 entry:
   %quat_addr = alloca %foo, align 16              ; <%foo*> [#uses=2]
-  %0 = getelementptr inbounds %foo* %quat_addr, i32 0, i32 0 ; <<4 x float>*> [#uses=1]
+  %0 = getelementptr inbounds %foo, %foo* %quat_addr, i32 0, i32 0 ; <<4 x float>*> [#uses=1]
   store <4 x float> %quat.0, <4 x float>* %0
   %1 = call arm_aapcs_vfpcc  <4 x float> @quux(%foo* %quat_addr) nounwind ; <<4 x float>> [#uses=3]
   %2 = fmul <4 x float> %1, %1                    ; <<4 x float>> [#uses=2]

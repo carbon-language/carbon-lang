@@ -10,7 +10,7 @@ entry:
 if:
   %id = call i32 @llvm.r600.read.tidig.x()
   %offset = add i32 %fold, %id
-  %tmp1 = getelementptr i32 addrspace(1)* %out, i32 %offset
+  %tmp1 = getelementptr i32, i32 addrspace(1)* %out, i32 %offset
   store i32 0, i32 addrspace(1)* %tmp1
   br label %endif
 

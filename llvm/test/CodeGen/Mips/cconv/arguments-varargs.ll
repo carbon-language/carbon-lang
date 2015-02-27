@@ -119,12 +119,12 @@ entry:
 
   call void asm sideeffect "# ANCHOR1", ""()
   %arg1 = va_arg i8** %ap, i16
-  %e1 = getelementptr [3 x i16]* @hwords, i32 0, i32 1
+  %e1 = getelementptr [3 x i16], [3 x i16]* @hwords, i32 0, i32 1
   store volatile i16 %arg1, i16* %e1, align 2
 
   call void asm sideeffect "# ANCHOR2", ""()
   %arg2 = va_arg i8** %ap, i16
-  %e2 = getelementptr [3 x i16]* @hwords, i32 0, i32 2
+  %e2 = getelementptr [3 x i16], [3 x i16]* @hwords, i32 0, i32 2
   store volatile i16 %arg2, i16* %e2, align 2
 
   call void @llvm.va_end(i8* %ap2)
@@ -237,12 +237,12 @@ entry:
 
   call void asm sideeffect "# ANCHOR1", ""()
   %arg1 = va_arg i8** %ap, i32
-  %e1 = getelementptr [3 x i32]* @words, i32 0, i32 1
+  %e1 = getelementptr [3 x i32], [3 x i32]* @words, i32 0, i32 1
   store volatile i32 %arg1, i32* %e1, align 4
 
   call void asm sideeffect "# ANCHOR2", ""()
   %arg2 = va_arg i8** %ap, i32
-  %e2 = getelementptr [3 x i32]* @words, i32 0, i32 2
+  %e2 = getelementptr [3 x i32], [3 x i32]* @words, i32 0, i32 2
   store volatile i32 %arg2, i32* %e2, align 4
 
   call void @llvm.va_end(i8* %ap2)
@@ -364,12 +364,12 @@ entry:
 
   call void asm sideeffect "# ANCHOR1", ""()
   %arg1 = va_arg i8** %ap, i64
-  %e1 = getelementptr [3 x i64]* @dwords, i32 0, i32 1
+  %e1 = getelementptr [3 x i64], [3 x i64]* @dwords, i32 0, i32 1
   store volatile i64 %arg1, i64* %e1, align 8
 
   call void asm sideeffect "# ANCHOR2", ""()
   %arg2 = va_arg i8** %ap, i64
-  %e2 = getelementptr [3 x i64]* @dwords, i32 0, i32 2
+  %e2 = getelementptr [3 x i64], [3 x i64]* @dwords, i32 0, i32 2
   store volatile i64 %arg2, i64* %e2, align 8
 
   call void @llvm.va_end(i8* %ap2)
@@ -482,12 +482,12 @@ entry:
 
   call void asm sideeffect "# ANCHOR1", ""()
   %arg1 = va_arg i8** %ap, i16
-  %e1 = getelementptr [3 x i16]* @hwords, i32 0, i32 1
+  %e1 = getelementptr [3 x i16], [3 x i16]* @hwords, i32 0, i32 1
   store volatile i16 %arg1, i16* %e1, align 2
 
   call void asm sideeffect "# ANCHOR2", ""()
   %arg2 = va_arg i8** %ap, i16
-  %e2 = getelementptr [3 x i16]* @hwords, i32 0, i32 2
+  %e2 = getelementptr [3 x i16], [3 x i16]* @hwords, i32 0, i32 2
   store volatile i16 %arg2, i16* %e2, align 2
 
   call void @llvm.va_end(i8* %ap2)
@@ -600,12 +600,12 @@ entry:
 
   call void asm sideeffect "# ANCHOR1", ""()
   %arg1 = va_arg i8** %ap, i32
-  %e1 = getelementptr [3 x i32]* @words, i32 0, i32 1
+  %e1 = getelementptr [3 x i32], [3 x i32]* @words, i32 0, i32 1
   store volatile i32 %arg1, i32* %e1, align 4
 
   call void asm sideeffect "# ANCHOR2", ""()
   %arg2 = va_arg i8** %ap, i32
-  %e2 = getelementptr [3 x i32]* @words, i32 0, i32 2
+  %e2 = getelementptr [3 x i32], [3 x i32]* @words, i32 0, i32 2
   store volatile i32 %arg2, i32* %e2, align 4
 
   call void @llvm.va_end(i8* %ap2)
@@ -727,12 +727,12 @@ entry:
 
   call void asm sideeffect "# ANCHOR1", ""()
   %arg1 = va_arg i8** %ap, i64
-  %e1 = getelementptr [3 x i64]* @dwords, i32 0, i32 1
+  %e1 = getelementptr [3 x i64], [3 x i64]* @dwords, i32 0, i32 1
   store volatile i64 %arg1, i64* %e1, align 8
 
   call void asm sideeffect "# ANCHOR2", ""()
   %arg2 = va_arg i8** %ap, i64
-  %e2 = getelementptr [3 x i64]* @dwords, i32 0, i32 2
+  %e2 = getelementptr [3 x i64], [3 x i64]* @dwords, i32 0, i32 2
   store volatile i64 %arg2, i64* %e2, align 8
 
   call void @llvm.va_end(i8* %ap2)
@@ -844,12 +844,12 @@ entry:
 
   call void asm sideeffect "# ANCHOR1", ""()
   %arg1 = va_arg i8** %ap, i16
-  %e1 = getelementptr [3 x i16]* @hwords, i32 0, i32 1
+  %e1 = getelementptr [3 x i16], [3 x i16]* @hwords, i32 0, i32 1
   store volatile i16 %arg1, i16* %e1, align 2
 
   call void asm sideeffect "# ANCHOR2", ""()
   %arg2 = va_arg i8** %ap, i16
-  %e2 = getelementptr [3 x i16]* @hwords, i32 0, i32 2
+  %e2 = getelementptr [3 x i16], [3 x i16]* @hwords, i32 0, i32 2
   store volatile i16 %arg2, i16* %e2, align 2
 
   call void @llvm.va_end(i8* %ap2)
@@ -961,12 +961,12 @@ entry:
 
   call void asm sideeffect "# ANCHOR1", ""()
   %arg1 = va_arg i8** %ap, i32
-  %e1 = getelementptr [3 x i32]* @words, i32 0, i32 1
+  %e1 = getelementptr [3 x i32], [3 x i32]* @words, i32 0, i32 1
   store volatile i32 %arg1, i32* %e1, align 4
 
   call void asm sideeffect "# ANCHOR2", ""()
   %arg2 = va_arg i8** %ap, i32
-  %e2 = getelementptr [3 x i32]* @words, i32 0, i32 2
+  %e2 = getelementptr [3 x i32], [3 x i32]* @words, i32 0, i32 2
   store volatile i32 %arg2, i32* %e2, align 4
 
   call void @llvm.va_end(i8* %ap2)
@@ -1087,12 +1087,12 @@ entry:
 
   call void asm sideeffect "# ANCHOR1", ""()
   %arg1 = va_arg i8** %ap, i64
-  %e1 = getelementptr [3 x i64]* @dwords, i32 0, i32 1
+  %e1 = getelementptr [3 x i64], [3 x i64]* @dwords, i32 0, i32 1
   store volatile i64 %arg1, i64* %e1, align 8
 
   call void asm sideeffect "# ANCHOR2", ""()
   %arg2 = va_arg i8** %ap, i64
-  %e2 = getelementptr [3 x i64]* @dwords, i32 0, i32 2
+  %e2 = getelementptr [3 x i64], [3 x i64]* @dwords, i32 0, i32 2
   store volatile i64 %arg2, i64* %e2, align 8
 
   call void @llvm.va_end(i8* %ap2)

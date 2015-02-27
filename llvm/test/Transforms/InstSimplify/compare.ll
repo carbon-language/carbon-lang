@@ -24,7 +24,7 @@ define i1 @bitcast() {
 define i1 @gep() {
 ; CHECK-LABEL: @gep(
   %a = alloca [3 x i8], align 8
-  %x = getelementptr inbounds [3 x i8]* %a, i32 0, i32 0
+  %x = getelementptr inbounds [3 x i8], [3 x i8]* %a, i32 0, i32 0
   %cmp = icmp eq i8* %x, null
   ret i1 %cmp
 ; CHECK-NEXT: ret i1 false
@@ -33,8 +33,8 @@ define i1 @gep() {
 define i1 @gep2() {
 ; CHECK-LABEL: @gep2(
   %a = alloca [3 x i8], align 8
-  %x = getelementptr inbounds [3 x i8]* %a, i32 0, i32 0
-  %y = getelementptr inbounds [3 x i8]* %a, i32 0, i32 0
+  %x = getelementptr inbounds [3 x i8], [3 x i8]* %a, i32 0, i32 0
+  %y = getelementptr inbounds [3 x i8], [3 x i8]* %a, i32 0, i32 0
   %cmp = icmp eq i8* %x, %y
   ret i1 %cmp
 ; CHECK-NEXT: ret i1 true
@@ -48,8 +48,8 @@ define i1 @gep2() {
 define i1 @gep3() {
 ; CHECK-LABEL: @gep3(
   %x = alloca %gept, align 8
-  %a = getelementptr %gept* %x, i64 0, i32 0
-  %b = getelementptr %gept* %x, i64 0, i32 1
+  %a = getelementptr %gept, %gept* %x, i64 0, i32 0
+  %b = getelementptr %gept, %gept* %x, i64 0, i32 1
   %equal = icmp eq i32* %a, %b
   ret i1 %equal
 ; CHECK-NEXT: ret i1 false
@@ -58,8 +58,8 @@ define i1 @gep3() {
 define i1 @gep4() {
 ; CHECK-LABEL: @gep4(
   %x = alloca %gept, align 8
-  %a = getelementptr %gept* @gepy, i64 0, i32 0
-  %b = getelementptr %gept* @gepy, i64 0, i32 1
+  %a = getelementptr %gept, %gept* @gepy, i64 0, i32 0
+  %b = getelementptr %gept, %gept* @gepy, i64 0, i32 1
   %equal = icmp eq i32* %a, %b
   ret i1 %equal
 ; CHECK-NEXT: ret i1 false
@@ -68,8 +68,8 @@ define i1 @gep4() {
 define i1 @gep5() {
 ; CHECK-LABEL: @gep5(
   %x = alloca %gept, align 8
-  %a = getelementptr inbounds %gept* %x, i64 0, i32 1
-  %b = getelementptr %gept* @gepy, i64 0, i32 0
+  %a = getelementptr inbounds %gept, %gept* %x, i64 0, i32 1
+  %b = getelementptr %gept, %gept* @gepy, i64 0, i32 0
   %equal = icmp eq i32* %a, %b
   ret i1 %equal
 ; CHECK-NEXT: ret i1 false
@@ -78,8 +78,8 @@ define i1 @gep5() {
 define i1 @gep6(%gept* %x) {
 ; Same as @gep3 but potentially null.
 ; CHECK-LABEL: @gep6(
-  %a = getelementptr %gept* %x, i64 0, i32 0
-  %b = getelementptr %gept* %x, i64 0, i32 1
+  %a = getelementptr %gept, %gept* %x, i64 0, i32 0
+  %b = getelementptr %gept, %gept* %x, i64 0, i32 1
   %equal = icmp eq i32* %a, %b
   ret i1 %equal
 ; CHECK-NEXT: ret i1 false
@@ -87,8 +87,8 @@ define i1 @gep6(%gept* %x) {
 
 define i1 @gep7(%gept* %x) {
 ; CHECK-LABEL: @gep7(
-  %a = getelementptr %gept* %x, i64 0, i32 0
-  %b = getelementptr %gept* @gepz, i64 0, i32 0
+  %a = getelementptr %gept, %gept* %x, i64 0, i32 0
+  %b = getelementptr %gept, %gept* @gepz, i64 0, i32 0
   %equal = icmp eq i32* %a, %b
   ret i1 %equal
 ; CHECK: ret i1 %equal
@@ -96,8 +96,8 @@ define i1 @gep7(%gept* %x) {
 
 define i1 @gep8(%gept* %x) {
 ; CHECK-LABEL: @gep8(
-  %a = getelementptr %gept* %x, i32 1
-  %b = getelementptr %gept* %x, i32 -1
+  %a = getelementptr %gept, %gept* %x, i32 1
+  %b = getelementptr %gept, %gept* %x, i32 -1
   %equal = icmp ugt %gept* %a, %b
   ret i1 %equal
 ; CHECK: ret i1 %equal
@@ -109,14 +109,14 @@ define i1 @gep9(i8* %ptr) {
 ; CHECK: ret i1 true
 
 entry:
-  %first1 = getelementptr inbounds i8* %ptr, i32 0
-  %first2 = getelementptr inbounds i8* %first1, i32 1
-  %first3 = getelementptr inbounds i8* %first2, i32 2
-  %first4 = getelementptr inbounds i8* %first3, i32 4
-  %last1 = getelementptr inbounds i8* %first2, i32 48
-  %last2 = getelementptr inbounds i8* %last1, i32 8
-  %last3 = getelementptr inbounds i8* %last2, i32 -4
-  %last4 = getelementptr inbounds i8* %last3, i32 -4
+  %first1 = getelementptr inbounds i8, i8* %ptr, i32 0
+  %first2 = getelementptr inbounds i8, i8* %first1, i32 1
+  %first3 = getelementptr inbounds i8, i8* %first2, i32 2
+  %first4 = getelementptr inbounds i8, i8* %first3, i32 4
+  %last1 = getelementptr inbounds i8, i8* %first2, i32 48
+  %last2 = getelementptr inbounds i8, i8* %last1, i32 8
+  %last3 = getelementptr inbounds i8, i8* %last2, i32 -4
+  %last4 = getelementptr inbounds i8, i8* %last3, i32 -4
   %first.int = ptrtoint i8* %first4 to i32
   %last.int = ptrtoint i8* %last4 to i32
   %cmp = icmp ne i32 %last.int, %first.int
@@ -129,10 +129,10 @@ define i1 @gep10(i8* %ptr) {
 ; CHECK: ret i1 true
 
 entry:
-  %first1 = getelementptr inbounds i8* %ptr, i32 -2
-  %first2 = getelementptr inbounds i8* %first1, i32 44
-  %last1 = getelementptr inbounds i8* %ptr, i32 48
-  %last2 = getelementptr inbounds i8* %last1, i32 -6
+  %first1 = getelementptr inbounds i8, i8* %ptr, i32 -2
+  %first2 = getelementptr inbounds i8, i8* %first1, i32 44
+  %last1 = getelementptr inbounds i8, i8* %ptr, i32 48
+  %last2 = getelementptr inbounds i8, i8* %last1, i32 -6
   %first.int = ptrtoint i8* %first2 to i32
   %last.int = ptrtoint i8* %last2 to i32
   %cmp = icmp eq i32 %last.int, %first.int
@@ -145,9 +145,9 @@ define i1 @gep11(i8* %ptr) {
 ; CHECK: ret i1 true
 
 entry:
-  %first1 = getelementptr inbounds i8* %ptr, i32 -2
-  %last1 = getelementptr inbounds i8* %ptr, i32 48
-  %last2 = getelementptr inbounds i8* %last1, i32 -6
+  %first1 = getelementptr inbounds i8, i8* %ptr, i32 -2
+  %last1 = getelementptr inbounds i8, i8* %ptr, i32 48
+  %last2 = getelementptr inbounds i8, i8* %last1, i32 -6
   %cmp = icmp ult i8* %first1, %last2
   ret i1 %cmp
 }
@@ -158,9 +158,9 @@ define i1 @gep12(i8* %ptr) {
 ; CHECK: ret i1 %cmp
 
 entry:
-  %first1 = getelementptr inbounds i8* %ptr, i32 -2
-  %last1 = getelementptr inbounds i8* %ptr, i32 48
-  %last2 = getelementptr inbounds i8* %last1, i32 -6
+  %first1 = getelementptr inbounds i8, i8* %ptr, i32 -2
+  %last1 = getelementptr inbounds i8, i8* %ptr, i32 48
+  %last2 = getelementptr inbounds i8, i8* %last1, i32 -6
   %cmp = icmp slt i8* %first1, %last2
   ret i1 %cmp
 }
@@ -168,7 +168,7 @@ entry:
 define i1 @gep13(i8* %ptr) {
 ; CHECK-LABEL: @gep13(
 ; We can prove this GEP is non-null because it is inbounds.
-  %x = getelementptr inbounds i8* %ptr, i32 1
+  %x = getelementptr inbounds i8, i8* %ptr, i32 1
   %cmp = icmp eq i8* %x, null
   ret i1 %cmp
 ; CHECK-NEXT: ret i1 false
@@ -178,7 +178,7 @@ define i1 @gep14({ {}, i8 }* %ptr) {
 ; CHECK-LABEL: @gep14(
 ; We can't simplify this because the offset of one in the GEP actually doesn't
 ; move the pointer.
-  %x = getelementptr inbounds { {}, i8 }* %ptr, i32 0, i32 1
+  %x = getelementptr inbounds { {}, i8 }, { {}, i8 }* %ptr, i32 0, i32 1
   %cmp = icmp eq i8* %x, null
   ret i1 %cmp
 ; CHECK-NOT: ret i1 false
@@ -188,7 +188,7 @@ define i1 @gep15({ {}, [4 x {i8, i8}]}* %ptr, i32 %y) {
 ; CHECK-LABEL: @gep15(
 ; We can prove this GEP is non-null even though there is a user value, as we
 ; would necessarily violate inbounds on one side or the other.
-  %x = getelementptr inbounds { {}, [4 x {i8, i8}]}* %ptr, i32 0, i32 1, i32 %y, i32 1
+  %x = getelementptr inbounds { {}, [4 x {i8, i8}]}, { {}, [4 x {i8, i8}]}* %ptr, i32 0, i32 1, i32 %y, i32 1
   %cmp = icmp eq i8* %x, null
   ret i1 %cmp
 ; CHECK-NEXT: ret i1 false
@@ -199,7 +199,7 @@ define i1 @gep16(i8* %ptr, i32 %a) {
 ; We can prove this GEP is non-null because it is inbounds and because we know
 ; %b is non-zero even though we don't know its value.
   %b = or i32 %a, 1
-  %x = getelementptr inbounds i8* %ptr, i32 %b
+  %x = getelementptr inbounds i8, i8* %ptr, i32 %b
   %cmp = icmp eq i8* %x, null
   ret i1 %cmp
 ; CHECK-NEXT: ret i1 false
@@ -687,7 +687,7 @@ define <2 x i1> @vectorselectcrash(i32 %arg1) {
 ; PR12013
 define i1 @alloca_compare(i64 %idx) {
   %sv = alloca { i32, i32, [124 x i32] }
-  %1 = getelementptr inbounds { i32, i32, [124 x i32] }* %sv, i32 0, i32 2, i64 %idx
+  %1 = getelementptr inbounds { i32, i32, [124 x i32] }, { i32, i32, [124 x i32] }* %sv, i32 0, i32 2, i64 %idx
   %2 = icmp eq i32* %1, null
   ret i1 %2
   ; CHECK: alloca_compare
@@ -699,7 +699,7 @@ define i1 @infinite_gep() {
   ret i1 1
 
 unreachableblock:
-  %X = getelementptr i32 *%X, i32 1
+  %X = getelementptr i32, i32 *%X, i32 1
   %Y = icmp eq i32* %X, null
   ret i1 %Y
 }
@@ -744,7 +744,7 @@ define i1 @alloca_gep(i64 %a, i64 %b) {
 ; We can prove this GEP is non-null because it is inbounds and the pointer
 ; is non-null.
   %strs = alloca [1000 x [1001 x i8]], align 16
-  %x = getelementptr inbounds [1000 x [1001 x i8]]* %strs, i64 0, i64 %a, i64 %b
+  %x = getelementptr inbounds [1000 x [1001 x i8]], [1000 x [1001 x i8]]* %strs, i64 0, i64 %a, i64 %b
   %cmp = icmp eq i8* %x, null
   ret i1 %cmp
 ; CHECK-NEXT: ret i1 false
@@ -753,10 +753,10 @@ define i1 @alloca_gep(i64 %a, i64 %b) {
 define i1 @non_inbounds_gep_compare(i64* %a) {
 ; CHECK-LABEL: @non_inbounds_gep_compare(
 ; Equality compares with non-inbounds GEPs can be folded.
-  %x = getelementptr i64* %a, i64 42
-  %y = getelementptr inbounds i64* %x, i64 -42
-  %z = getelementptr i64* %a, i64 -42
-  %w = getelementptr inbounds i64* %z, i64 42
+  %x = getelementptr i64, i64* %a, i64 42
+  %y = getelementptr inbounds i64, i64* %x, i64 -42
+  %z = getelementptr i64, i64* %a, i64 -42
+  %w = getelementptr inbounds i64, i64* %z, i64 42
   %cmp = icmp eq i64* %y, %w
   ret i1 %cmp
 ; CHECK-NEXT: ret i1 true
@@ -765,8 +765,8 @@ define i1 @non_inbounds_gep_compare(i64* %a) {
 define i1 @non_inbounds_gep_compare2(i64* %a) {
 ; CHECK-LABEL: @non_inbounds_gep_compare2(
 ; Equality compares with non-inbounds GEPs can be folded.
-  %x = getelementptr i64* %a, i64 4294967297
-  %y = getelementptr i64* %a, i64 1
+  %x = getelementptr i64, i64* %a, i64 4294967297
+  %y = getelementptr i64, i64* %a, i64 1
   %cmp = icmp eq i64* %y, %y
   ret i1 %cmp
 ; CHECK-NEXT: ret i1 true

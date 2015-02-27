@@ -26,16 +26,16 @@ bb:                                               ; preds = %bb, %bb.nph
   %4 = add i8 %3, %iftmp.0.0                      ; <i8> [#uses=1]
   %5 = shl i8 %4, 2                               ; <i8> [#uses=1]
   %6 = zext i8 %5 to i64                          ; <i64> [#uses=4]
-  %7 = getelementptr inbounds i32* %array, i64 %6 ; <i32*> [#uses=1]
+  %7 = getelementptr inbounds i32, i32* %array, i64 %6 ; <i32*> [#uses=1]
   store i32 %r0, i32* %7, align 4
   %8 = or i64 %6, 2                               ; <i64> [#uses=1]
-  %9 = getelementptr inbounds i32* %array, i64 %8 ; <i32*> [#uses=1]
+  %9 = getelementptr inbounds i32, i32* %array, i64 %8 ; <i32*> [#uses=1]
   store i32 %r0, i32* %9, align 4
   %10 = or i64 %6, 1                              ; <i64> [#uses=1]
-  %11 = getelementptr inbounds i32* %array, i64 %10 ; <i32*> [#uses=1]
+  %11 = getelementptr inbounds i32, i32* %array, i64 %10 ; <i32*> [#uses=1]
   store i32 %r0, i32* %11, align 4
   %12 = or i64 %6, 3                              ; <i64> [#uses=1]
-  %13 = getelementptr inbounds i32* %array, i64 %12 ; <i32*> [#uses=1]
+  %13 = getelementptr inbounds i32, i32* %array, i64 %12 ; <i32*> [#uses=1]
   store i32 %r0, i32* %13, align 4
   %14 = add nsw i8 %j.010, 1                      ; <i8> [#uses=2]
   %15 = add i8 %iftmp.0.0, 1                      ; <i8> [#uses=1]
@@ -69,16 +69,16 @@ for.body:                                         ; preds = %for.body, %bb.nph
   %mul22 = shl i8 %inc.k.addr.1, 4                ; <i8> [#uses=1]
   %add23 = add i8 %mul22, %mul                    ; <i8> [#uses=1]
   %idxprom = zext i8 %add23 to i64                ; <i64> [#uses=4]
-  %arrayidx = getelementptr inbounds i32* %array, i64 %idxprom ; <i32*> [#uses=1]
+  %arrayidx = getelementptr inbounds i32, i32* %array, i64 %idxprom ; <i32*> [#uses=1]
   store i32 %r0, i32* %arrayidx
   %add3356 = or i64 %idxprom, 2                   ; <i64> [#uses=1]
-  %arrayidx36 = getelementptr inbounds i32* %array, i64 %add3356 ; <i32*> [#uses=1]
+  %arrayidx36 = getelementptr inbounds i32, i32* %array, i64 %add3356 ; <i32*> [#uses=1]
   store i32 %r0, i32* %arrayidx36
   %add4058 = or i64 %idxprom, 1                   ; <i64> [#uses=1]
-  %arrayidx43 = getelementptr inbounds i32* %array, i64 %add4058 ; <i32*> [#uses=1]
+  %arrayidx43 = getelementptr inbounds i32, i32* %array, i64 %add4058 ; <i32*> [#uses=1]
   store i32 %r0, i32* %arrayidx43
   %add4760 = or i64 %idxprom, 3                   ; <i64> [#uses=1]
-  %arrayidx50 = getelementptr inbounds i32* %array, i64 %add4760 ; <i32*> [#uses=1]
+  %arrayidx50 = getelementptr inbounds i32, i32* %array, i64 %add4760 ; <i32*> [#uses=1]
   store i32 %r0, i32* %arrayidx50
   %inc52 = add nsw i8 %j.065, 1                   ; <i8> [#uses=2]
   %add = add i8 %cond, 1                          ; <i8> [#uses=1]

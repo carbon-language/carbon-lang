@@ -266,7 +266,7 @@ entry:
   store %class.RagDoll* %this1, %class.RagDoll** %retval
   %0 = bitcast %class.RagDoll* %this1 to i8***
   store i8** getelementptr inbounds ([4 x i8*]* @_ZTV7RagDoll, i64 0, i64 2), i8*** %0
-  %m_ownerWorld = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 1
+  %m_ownerWorld = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 1
   %1 = load %class.btDynamicsWorld** %ownerWorld.addr, align 4
   store %class.btDynamicsWorld* %1, %class.btDynamicsWorld** %m_ownerWorld, align 4
   %call = call i8* @_ZN13btConvexShapenwEm(i32 56)
@@ -280,8 +280,8 @@ entry:
 
 invoke.cont:                                      ; preds = %entry
   %5 = bitcast %class.btCapsuleShape* %2 to %class.btCollisionShape*
-  %m_shapes = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes, i32 0, i32 0
+  %m_shapes = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes, i32 0, i32 0
   store %class.btCollisionShape* %5, %class.btCollisionShape** %arrayidx, align 4
   %call5 = call i8* @_ZN13btConvexShapenwEm(i32 56)
   %6 = bitcast i8* %call5 to %class.btCapsuleShape*
@@ -294,8 +294,8 @@ invoke.cont:                                      ; preds = %entry
 
 invoke.cont9:                                     ; preds = %invoke.cont
   %9 = bitcast %class.btCapsuleShape* %6 to %class.btCollisionShape*
-  %m_shapes12 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx13 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes12, i32 0, i32 1
+  %m_shapes12 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx13 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes12, i32 0, i32 1
   store %class.btCollisionShape* %9, %class.btCollisionShape** %arrayidx13, align 4
   %call14 = call i8* @_ZN13btConvexShapenwEm(i32 56)
   %10 = bitcast i8* %call14 to %class.btCapsuleShape*
@@ -308,8 +308,8 @@ invoke.cont9:                                     ; preds = %invoke.cont
 
 invoke.cont18:                                    ; preds = %invoke.cont9
   %13 = bitcast %class.btCapsuleShape* %10 to %class.btCollisionShape*
-  %m_shapes21 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx22 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes21, i32 0, i32 2
+  %m_shapes21 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx22 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes21, i32 0, i32 2
   store %class.btCollisionShape* %13, %class.btCollisionShape** %arrayidx22, align 4
   %call23 = call i8* @_ZN13btConvexShapenwEm(i32 56)
   %14 = bitcast i8* %call23 to %class.btCapsuleShape*
@@ -322,8 +322,8 @@ invoke.cont18:                                    ; preds = %invoke.cont9
 
 invoke.cont27:                                    ; preds = %invoke.cont18
   %17 = bitcast %class.btCapsuleShape* %14 to %class.btCollisionShape*
-  %m_shapes30 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx31 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes30, i32 0, i32 3
+  %m_shapes30 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx31 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes30, i32 0, i32 3
   store %class.btCollisionShape* %17, %class.btCollisionShape** %arrayidx31, align 4
   %call32 = call i8* @_ZN13btConvexShapenwEm(i32 56)
   %18 = bitcast i8* %call32 to %class.btCapsuleShape*
@@ -336,8 +336,8 @@ invoke.cont27:                                    ; preds = %invoke.cont18
 
 invoke.cont36:                                    ; preds = %invoke.cont27
   %21 = bitcast %class.btCapsuleShape* %18 to %class.btCollisionShape*
-  %m_shapes39 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx40 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes39, i32 0, i32 4
+  %m_shapes39 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx40 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes39, i32 0, i32 4
   store %class.btCollisionShape* %21, %class.btCollisionShape** %arrayidx40, align 4
   %call41 = call i8* @_ZN13btConvexShapenwEm(i32 56)
   %22 = bitcast i8* %call41 to %class.btCapsuleShape*
@@ -350,8 +350,8 @@ invoke.cont36:                                    ; preds = %invoke.cont27
 
 invoke.cont45:                                    ; preds = %invoke.cont36
   %25 = bitcast %class.btCapsuleShape* %22 to %class.btCollisionShape*
-  %m_shapes48 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx49 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes48, i32 0, i32 5
+  %m_shapes48 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx49 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes48, i32 0, i32 5
   store %class.btCollisionShape* %25, %class.btCollisionShape** %arrayidx49, align 4
   %call50 = call i8* @_ZN13btConvexShapenwEm(i32 56)
   %26 = bitcast i8* %call50 to %class.btCapsuleShape*
@@ -364,8 +364,8 @@ invoke.cont45:                                    ; preds = %invoke.cont36
 
 invoke.cont54:                                    ; preds = %invoke.cont45
   %29 = bitcast %class.btCapsuleShape* %26 to %class.btCollisionShape*
-  %m_shapes57 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx58 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes57, i32 0, i32 6
+  %m_shapes57 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx58 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes57, i32 0, i32 6
   store %class.btCollisionShape* %29, %class.btCollisionShape** %arrayidx58, align 4
   %call59 = call i8* @_ZN13btConvexShapenwEm(i32 56)
   %30 = bitcast i8* %call59 to %class.btCapsuleShape*
@@ -378,8 +378,8 @@ invoke.cont54:                                    ; preds = %invoke.cont45
 
 invoke.cont63:                                    ; preds = %invoke.cont54
   %33 = bitcast %class.btCapsuleShape* %30 to %class.btCollisionShape*
-  %m_shapes66 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx67 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes66, i32 0, i32 7
+  %m_shapes66 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx67 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes66, i32 0, i32 7
   store %class.btCollisionShape* %33, %class.btCollisionShape** %arrayidx67, align 4
   %call68 = call i8* @_ZN13btConvexShapenwEm(i32 56)
   %34 = bitcast i8* %call68 to %class.btCapsuleShape*
@@ -392,8 +392,8 @@ invoke.cont63:                                    ; preds = %invoke.cont54
 
 invoke.cont72:                                    ; preds = %invoke.cont63
   %37 = bitcast %class.btCapsuleShape* %34 to %class.btCollisionShape*
-  %m_shapes75 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx76 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes75, i32 0, i32 8
+  %m_shapes75 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx76 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes75, i32 0, i32 8
   store %class.btCollisionShape* %37, %class.btCollisionShape** %arrayidx76, align 4
   %call77 = call i8* @_ZN13btConvexShapenwEm(i32 56)
   %38 = bitcast i8* %call77 to %class.btCapsuleShape*
@@ -406,8 +406,8 @@ invoke.cont72:                                    ; preds = %invoke.cont63
 
 invoke.cont81:                                    ; preds = %invoke.cont72
   %41 = bitcast %class.btCapsuleShape* %38 to %class.btCollisionShape*
-  %m_shapes84 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx85 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes84, i32 0, i32 9
+  %m_shapes84 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx85 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes84, i32 0, i32 9
   store %class.btCollisionShape* %41, %class.btCollisionShape** %arrayidx85, align 4
   %call86 = call i8* @_ZN13btConvexShapenwEm(i32 56)
   %42 = bitcast i8* %call86 to %class.btCapsuleShape*
@@ -420,8 +420,8 @@ invoke.cont81:                                    ; preds = %invoke.cont72
 
 invoke.cont90:                                    ; preds = %invoke.cont81
   %45 = bitcast %class.btCapsuleShape* %42 to %class.btCollisionShape*
-  %m_shapes93 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx94 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes93, i32 0, i32 10
+  %m_shapes93 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx94 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes93, i32 0, i32 10
   store %class.btCollisionShape* %45, %class.btCollisionShape** %arrayidx94, align 4
   %call95 = call %class.btTransform* @_ZN11btTransformC1Ev(%class.btTransform* %offset)
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %offset)
@@ -436,12 +436,12 @@ invoke.cont90:                                    ; preds = %invoke.cont81
   call void @_ZmlRKfRK9btVector3(%class.btVector3* sret %ref.tmp, float* %scale.addr, %class.btVector3* %ref.tmp97)
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %transform, %class.btVector3* %ref.tmp)
   call void @_ZNK11btTransformmlERKS_(%class.btTransform* sret %ref.tmp102, %class.btTransform* %offset, %class.btTransform* %transform)
-  %m_shapes103 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx104 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes103, i32 0, i32 0
+  %m_shapes103 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx104 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes103, i32 0, i32 0
   %47 = load %class.btCollisionShape** %arrayidx104, align 4
   %call105 = call %class.btRigidBody* @_ZN7RagDoll20localCreateRigidBodyEfRK11btTransformP16btCollisionShape(%class.RagDoll* %this1, float 1.000000e+00, %class.btTransform* %ref.tmp102, %class.btCollisionShape* %47)
-  %m_bodies = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx106 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies, i32 0, i32 0
+  %m_bodies = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx106 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies, i32 0, i32 0
   store %class.btRigidBody* %call105, %class.btRigidBody** %arrayidx106, align 4
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %transform)
   store float 0.000000e+00, float* %ref.tmp109, align 4
@@ -451,12 +451,12 @@ invoke.cont90:                                    ; preds = %invoke.cont81
   call void @_ZmlRKfRK9btVector3(%class.btVector3* sret %ref.tmp107, float* %scale.addr, %class.btVector3* %ref.tmp108)
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %transform, %class.btVector3* %ref.tmp107)
   call void @_ZNK11btTransformmlERKS_(%class.btTransform* sret %ref.tmp113, %class.btTransform* %offset, %class.btTransform* %transform)
-  %m_shapes114 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx115 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes114, i32 0, i32 1
+  %m_shapes114 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx115 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes114, i32 0, i32 1
   %48 = load %class.btCollisionShape** %arrayidx115, align 4
   %call116 = call %class.btRigidBody* @_ZN7RagDoll20localCreateRigidBodyEfRK11btTransformP16btCollisionShape(%class.RagDoll* %this1, float 1.000000e+00, %class.btTransform* %ref.tmp113, %class.btCollisionShape* %48)
-  %m_bodies117 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx118 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies117, i32 0, i32 1
+  %m_bodies117 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx118 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies117, i32 0, i32 1
   store %class.btRigidBody* %call116, %class.btRigidBody** %arrayidx118, align 4
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %transform)
   store float 0.000000e+00, float* %ref.tmp121, align 4
@@ -466,12 +466,12 @@ invoke.cont90:                                    ; preds = %invoke.cont81
   call void @_ZmlRKfRK9btVector3(%class.btVector3* sret %ref.tmp119, float* %scale.addr, %class.btVector3* %ref.tmp120)
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %transform, %class.btVector3* %ref.tmp119)
   call void @_ZNK11btTransformmlERKS_(%class.btTransform* sret %ref.tmp125, %class.btTransform* %offset, %class.btTransform* %transform)
-  %m_shapes126 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx127 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes126, i32 0, i32 2
+  %m_shapes126 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx127 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes126, i32 0, i32 2
   %49 = load %class.btCollisionShape** %arrayidx127, align 4
   %call128 = call %class.btRigidBody* @_ZN7RagDoll20localCreateRigidBodyEfRK11btTransformP16btCollisionShape(%class.RagDoll* %this1, float 1.000000e+00, %class.btTransform* %ref.tmp125, %class.btCollisionShape* %49)
-  %m_bodies129 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx130 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies129, i32 0, i32 2
+  %m_bodies129 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx130 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies129, i32 0, i32 2
   store %class.btRigidBody* %call128, %class.btRigidBody** %arrayidx130, align 4
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %transform)
   store float 0xBFC70A3D80000000, float* %ref.tmp133, align 4
@@ -481,12 +481,12 @@ invoke.cont90:                                    ; preds = %invoke.cont81
   call void @_ZmlRKfRK9btVector3(%class.btVector3* sret %ref.tmp131, float* %scale.addr, %class.btVector3* %ref.tmp132)
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %transform, %class.btVector3* %ref.tmp131)
   call void @_ZNK11btTransformmlERKS_(%class.btTransform* sret %ref.tmp137, %class.btTransform* %offset, %class.btTransform* %transform)
-  %m_shapes138 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx139 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes138, i32 0, i32 3
+  %m_shapes138 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx139 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes138, i32 0, i32 3
   %50 = load %class.btCollisionShape** %arrayidx139, align 4
   %call140 = call %class.btRigidBody* @_ZN7RagDoll20localCreateRigidBodyEfRK11btTransformP16btCollisionShape(%class.RagDoll* %this1, float 1.000000e+00, %class.btTransform* %ref.tmp137, %class.btCollisionShape* %50)
-  %m_bodies141 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx142 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies141, i32 0, i32 3
+  %m_bodies141 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx142 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies141, i32 0, i32 3
   store %class.btRigidBody* %call140, %class.btRigidBody** %arrayidx142, align 4
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %transform)
   store float 0xBFC70A3D80000000, float* %ref.tmp145, align 4
@@ -496,12 +496,12 @@ invoke.cont90:                                    ; preds = %invoke.cont81
   call void @_ZmlRKfRK9btVector3(%class.btVector3* sret %ref.tmp143, float* %scale.addr, %class.btVector3* %ref.tmp144)
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %transform, %class.btVector3* %ref.tmp143)
   call void @_ZNK11btTransformmlERKS_(%class.btTransform* sret %ref.tmp149, %class.btTransform* %offset, %class.btTransform* %transform)
-  %m_shapes150 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx151 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes150, i32 0, i32 4
+  %m_shapes150 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx151 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes150, i32 0, i32 4
   %51 = load %class.btCollisionShape** %arrayidx151, align 4
   %call152 = call %class.btRigidBody* @_ZN7RagDoll20localCreateRigidBodyEfRK11btTransformP16btCollisionShape(%class.RagDoll* %this1, float 1.000000e+00, %class.btTransform* %ref.tmp149, %class.btCollisionShape* %51)
-  %m_bodies153 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx154 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies153, i32 0, i32 4
+  %m_bodies153 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx154 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies153, i32 0, i32 4
   store %class.btRigidBody* %call152, %class.btRigidBody** %arrayidx154, align 4
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %transform)
   store float 0x3FC70A3D80000000, float* %ref.tmp157, align 4
@@ -511,12 +511,12 @@ invoke.cont90:                                    ; preds = %invoke.cont81
   call void @_ZmlRKfRK9btVector3(%class.btVector3* sret %ref.tmp155, float* %scale.addr, %class.btVector3* %ref.tmp156)
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %transform, %class.btVector3* %ref.tmp155)
   call void @_ZNK11btTransformmlERKS_(%class.btTransform* sret %ref.tmp161, %class.btTransform* %offset, %class.btTransform* %transform)
-  %m_shapes162 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx163 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes162, i32 0, i32 5
+  %m_shapes162 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx163 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes162, i32 0, i32 5
   %52 = load %class.btCollisionShape** %arrayidx163, align 4
   %call164 = call %class.btRigidBody* @_ZN7RagDoll20localCreateRigidBodyEfRK11btTransformP16btCollisionShape(%class.RagDoll* %this1, float 1.000000e+00, %class.btTransform* %ref.tmp161, %class.btCollisionShape* %52)
-  %m_bodies165 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx166 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies165, i32 0, i32 5
+  %m_bodies165 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx166 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies165, i32 0, i32 5
   store %class.btRigidBody* %call164, %class.btRigidBody** %arrayidx166, align 4
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %transform)
   store float 0x3FC70A3D80000000, float* %ref.tmp169, align 4
@@ -526,12 +526,12 @@ invoke.cont90:                                    ; preds = %invoke.cont81
   call void @_ZmlRKfRK9btVector3(%class.btVector3* sret %ref.tmp167, float* %scale.addr, %class.btVector3* %ref.tmp168)
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %transform, %class.btVector3* %ref.tmp167)
   call void @_ZNK11btTransformmlERKS_(%class.btTransform* sret %ref.tmp173, %class.btTransform* %offset, %class.btTransform* %transform)
-  %m_shapes174 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx175 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes174, i32 0, i32 6
+  %m_shapes174 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx175 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes174, i32 0, i32 6
   %53 = load %class.btCollisionShape** %arrayidx175, align 4
   %call176 = call %class.btRigidBody* @_ZN7RagDoll20localCreateRigidBodyEfRK11btTransformP16btCollisionShape(%class.RagDoll* %this1, float 1.000000e+00, %class.btTransform* %ref.tmp173, %class.btCollisionShape* %53)
-  %m_bodies177 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx178 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies177, i32 0, i32 6
+  %m_bodies177 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx178 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies177, i32 0, i32 6
   store %class.btRigidBody* %call176, %class.btRigidBody** %arrayidx178, align 4
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %transform)
   store float 0xBFD6666660000000, float* %ref.tmp181, align 4
@@ -543,12 +543,12 @@ invoke.cont90:                                    ; preds = %invoke.cont81
   %call185 = call %class.btMatrix3x3* @_ZN11btTransform8getBasisEv(%class.btTransform* %transform)
   call void @_ZN11btMatrix3x311setEulerZYXEfff(%class.btMatrix3x3* %call185, float 0.000000e+00, float 0.000000e+00, float 0x3FF921FB60000000)
   call void @_ZNK11btTransformmlERKS_(%class.btTransform* sret %ref.tmp186, %class.btTransform* %offset, %class.btTransform* %transform)
-  %m_shapes187 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx188 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes187, i32 0, i32 7
+  %m_shapes187 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx188 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes187, i32 0, i32 7
   %54 = load %class.btCollisionShape** %arrayidx188, align 4
   %call189 = call %class.btRigidBody* @_ZN7RagDoll20localCreateRigidBodyEfRK11btTransformP16btCollisionShape(%class.RagDoll* %this1, float 1.000000e+00, %class.btTransform* %ref.tmp186, %class.btCollisionShape* %54)
-  %m_bodies190 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx191 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies190, i32 0, i32 7
+  %m_bodies190 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx191 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies190, i32 0, i32 7
   store %class.btRigidBody* %call189, %class.btRigidBody** %arrayidx191, align 4
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %transform)
   store float 0xBFE6666660000000, float* %ref.tmp194, align 4
@@ -560,12 +560,12 @@ invoke.cont90:                                    ; preds = %invoke.cont81
   %call198 = call %class.btMatrix3x3* @_ZN11btTransform8getBasisEv(%class.btTransform* %transform)
   call void @_ZN11btMatrix3x311setEulerZYXEfff(%class.btMatrix3x3* %call198, float 0.000000e+00, float 0.000000e+00, float 0x3FF921FB60000000)
   call void @_ZNK11btTransformmlERKS_(%class.btTransform* sret %ref.tmp199, %class.btTransform* %offset, %class.btTransform* %transform)
-  %m_shapes200 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx201 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes200, i32 0, i32 8
+  %m_shapes200 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx201 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes200, i32 0, i32 8
   %55 = load %class.btCollisionShape** %arrayidx201, align 4
   %call202 = call %class.btRigidBody* @_ZN7RagDoll20localCreateRigidBodyEfRK11btTransformP16btCollisionShape(%class.RagDoll* %this1, float 1.000000e+00, %class.btTransform* %ref.tmp199, %class.btCollisionShape* %55)
-  %m_bodies203 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx204 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies203, i32 0, i32 8
+  %m_bodies203 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx204 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies203, i32 0, i32 8
   store %class.btRigidBody* %call202, %class.btRigidBody** %arrayidx204, align 4
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %transform)
   store float 0x3FD6666660000000, float* %ref.tmp207, align 4
@@ -577,12 +577,12 @@ invoke.cont90:                                    ; preds = %invoke.cont81
   %call211 = call %class.btMatrix3x3* @_ZN11btTransform8getBasisEv(%class.btTransform* %transform)
   call void @_ZN11btMatrix3x311setEulerZYXEfff(%class.btMatrix3x3* %call211, float 0.000000e+00, float 0.000000e+00, float 0xBFF921FB60000000)
   call void @_ZNK11btTransformmlERKS_(%class.btTransform* sret %ref.tmp212, %class.btTransform* %offset, %class.btTransform* %transform)
-  %m_shapes213 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx214 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes213, i32 0, i32 9
+  %m_shapes213 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx214 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes213, i32 0, i32 9
   %56 = load %class.btCollisionShape** %arrayidx214, align 4
   %call215 = call %class.btRigidBody* @_ZN7RagDoll20localCreateRigidBodyEfRK11btTransformP16btCollisionShape(%class.RagDoll* %this1, float 1.000000e+00, %class.btTransform* %ref.tmp212, %class.btCollisionShape* %56)
-  %m_bodies216 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx217 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies216, i32 0, i32 9
+  %m_bodies216 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx217 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies216, i32 0, i32 9
   store %class.btRigidBody* %call215, %class.btRigidBody** %arrayidx217, align 4
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %transform)
   store float 0x3FE6666660000000, float* %ref.tmp220, align 4
@@ -594,12 +594,12 @@ invoke.cont90:                                    ; preds = %invoke.cont81
   %call224 = call %class.btMatrix3x3* @_ZN11btTransform8getBasisEv(%class.btTransform* %transform)
   call void @_ZN11btMatrix3x311setEulerZYXEfff(%class.btMatrix3x3* %call224, float 0.000000e+00, float 0.000000e+00, float 0xBFF921FB60000000)
   call void @_ZNK11btTransformmlERKS_(%class.btTransform* sret %ref.tmp225, %class.btTransform* %offset, %class.btTransform* %transform)
-  %m_shapes226 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 2
-  %arrayidx227 = getelementptr inbounds [11 x %class.btCollisionShape*]* %m_shapes226, i32 0, i32 10
+  %m_shapes226 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 2
+  %arrayidx227 = getelementptr inbounds [11 x %class.btCollisionShape*], [11 x %class.btCollisionShape*]* %m_shapes226, i32 0, i32 10
   %57 = load %class.btCollisionShape** %arrayidx227, align 4
   %call228 = call %class.btRigidBody* @_ZN7RagDoll20localCreateRigidBodyEfRK11btTransformP16btCollisionShape(%class.RagDoll* %this1, float 1.000000e+00, %class.btTransform* %ref.tmp225, %class.btCollisionShape* %57)
-  %m_bodies229 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx230 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies229, i32 0, i32 10
+  %m_bodies229 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx230 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies229, i32 0, i32 10
   store %class.btRigidBody* %call228, %class.btRigidBody** %arrayidx230, align 4
   store i32 0, i32* %i, align 4
   br label %for.cond
@@ -611,19 +611,19 @@ for.cond:                                         ; preds = %for.inc, %invoke.co
 
 for.body:                                         ; preds = %for.cond
   %59 = load i32* %i, align 4
-  %m_bodies231 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx232 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies231, i32 0, i32 %59
+  %m_bodies231 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx232 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies231, i32 0, i32 %59
   %60 = load %class.btRigidBody** %arrayidx232, align 4
   call void @_ZN11btRigidBody10setDampingEff(%class.btRigidBody* %60, float 0x3FA99999A0000000, float 0x3FEB333340000000)
   %61 = load i32* %i, align 4
-  %m_bodies233 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx234 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies233, i32 0, i32 %61
+  %m_bodies233 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx234 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies233, i32 0, i32 %61
   %62 = load %class.btRigidBody** %arrayidx234, align 4
   %63 = bitcast %class.btRigidBody* %62 to %class.btCollisionObject*
   call void @_ZN17btCollisionObject19setDeactivationTimeEf(%class.btCollisionObject* %63, float 0x3FE99999A0000000)
   %64 = load i32* %i, align 4
-  %m_bodies235 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx236 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies235, i32 0, i32 %64
+  %m_bodies235 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx236 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies235, i32 0, i32 %64
   %65 = load %class.btRigidBody** %arrayidx236, align 4
   call void @_ZN11btRigidBody21setSleepingThresholdsEff(%class.btRigidBody* %65, float 0x3FF99999A0000000, float 2.500000e+00)
   br label %for.inc
@@ -800,11 +800,11 @@ for.end:                                          ; preds = %for.cond
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %localB, %class.btVector3* %ref.tmp247)
   %call253 = call noalias i8* @_Znwm(i32 780)
   %100 = bitcast i8* %call253 to %class.btHingeConstraint*
-  %m_bodies254 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx255 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies254, i32 0, i32 0
+  %m_bodies254 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx255 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies254, i32 0, i32 0
   %101 = load %class.btRigidBody** %arrayidx255, align 4
-  %m_bodies256 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx257 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies256, i32 0, i32 1
+  %m_bodies256 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx257 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies256, i32 0, i32 1
   %102 = load %class.btRigidBody** %arrayidx257, align 4
   %call260 = invoke %class.btHingeConstraint* @_ZN17btHingeConstraintC1ER11btRigidBodyS1_RK11btTransformS4_b(%class.btHingeConstraint* %100, %class.btRigidBody* %101, %class.btRigidBody* %102, %class.btTransform* %localA, %class.btTransform* %localB, i1 zeroext false)
           to label %invoke.cont259 unwind label %lpad258
@@ -815,17 +815,17 @@ invoke.cont259:                                   ; preds = %for.end
   call void @_ZN17btHingeConstraint8setLimitEfffff(%class.btHingeConstraint* %103, float 0xBFE921FB60000000, float 0x3FF921FB60000000, float 0x3FECCCCCC0000000, float 0x3FD3333340000000, float 1.000000e+00)
   %104 = load %class.btHingeConstraint** %hingeC, align 4
   %105 = bitcast %class.btHingeConstraint* %104 to %class.btTypedConstraint*
-  %m_joints = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx261 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints, i32 0, i32 0
+  %m_joints = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx261 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints, i32 0, i32 0
   store %class.btTypedConstraint* %105, %class.btTypedConstraint** %arrayidx261, align 4
-  %m_ownerWorld262 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 1
+  %m_ownerWorld262 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 1
   %106 = load %class.btDynamicsWorld** %m_ownerWorld262, align 4
   %107 = bitcast %class.btDynamicsWorld* %106 to void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)***
   %vtable = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*** %107
-  %vfn = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable, i64 10
+  %vfn = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*, void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable, i64 10
   %108 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vfn
-  %m_joints263 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx264 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints263, i32 0, i32 0
+  %m_joints263 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx264 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints263, i32 0, i32 0
   %109 = load %class.btTypedConstraint** %arrayidx264, align 4
   call void %108(%class.btDynamicsWorld* %106, %class.btTypedConstraint* %109, i1 zeroext true)
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %localA)
@@ -848,11 +848,11 @@ invoke.cont259:                                   ; preds = %for.end
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %localB, %class.btVector3* %ref.tmp273)
   %call279 = call noalias i8* @_Znwm(i32 628)
   %110 = bitcast i8* %call279 to %class.btConeTwistConstraint*
-  %m_bodies280 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx281 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies280, i32 0, i32 1
+  %m_bodies280 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx281 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies280, i32 0, i32 1
   %111 = load %class.btRigidBody** %arrayidx281, align 4
-  %m_bodies282 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx283 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies282, i32 0, i32 2
+  %m_bodies282 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx283 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies282, i32 0, i32 2
   %112 = load %class.btRigidBody** %arrayidx283, align 4
   %call286 = invoke %class.btConeTwistConstraint* @_ZN21btConeTwistConstraintC1ER11btRigidBodyS1_RK11btTransformS4_(%class.btConeTwistConstraint* %110, %class.btRigidBody* %111, %class.btRigidBody* %112, %class.btTransform* %localA, %class.btTransform* %localB)
           to label %invoke.cont285 unwind label %lpad284
@@ -863,17 +863,17 @@ invoke.cont285:                                   ; preds = %invoke.cont259
   call void @_ZN21btConeTwistConstraint8setLimitEffffff(%class.btConeTwistConstraint* %113, float 0x3FE921FB60000000, float 0x3FE921FB60000000, float 0x3FF921FB60000000, float 1.000000e+00, float 0x3FD3333340000000, float 1.000000e+00)
   %114 = load %class.btConeTwistConstraint** %coneC, align 4
   %115 = bitcast %class.btConeTwistConstraint* %114 to %class.btTypedConstraint*
-  %m_joints287 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx288 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints287, i32 0, i32 1
+  %m_joints287 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx288 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints287, i32 0, i32 1
   store %class.btTypedConstraint* %115, %class.btTypedConstraint** %arrayidx288, align 4
-  %m_ownerWorld289 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 1
+  %m_ownerWorld289 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 1
   %116 = load %class.btDynamicsWorld** %m_ownerWorld289, align 4
   %117 = bitcast %class.btDynamicsWorld* %116 to void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)***
   %vtable290 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*** %117
-  %vfn291 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable290, i64 10
+  %vfn291 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*, void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable290, i64 10
   %118 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vfn291
-  %m_joints292 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx293 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints292, i32 0, i32 1
+  %m_joints292 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx293 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints292, i32 0, i32 1
   %119 = load %class.btTypedConstraint** %arrayidx293, align 4
   call void %118(%class.btDynamicsWorld* %116, %class.btTypedConstraint* %119, i1 zeroext true)
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %localA)
@@ -896,11 +896,11 @@ invoke.cont285:                                   ; preds = %invoke.cont259
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %localB, %class.btVector3* %ref.tmp302)
   %call308 = call noalias i8* @_Znwm(i32 628)
   %120 = bitcast i8* %call308 to %class.btConeTwistConstraint*
-  %m_bodies309 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx310 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies309, i32 0, i32 0
+  %m_bodies309 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx310 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies309, i32 0, i32 0
   %121 = load %class.btRigidBody** %arrayidx310, align 4
-  %m_bodies311 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx312 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies311, i32 0, i32 3
+  %m_bodies311 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx312 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies311, i32 0, i32 3
   %122 = load %class.btRigidBody** %arrayidx312, align 4
   %call315 = invoke %class.btConeTwistConstraint* @_ZN21btConeTwistConstraintC1ER11btRigidBodyS1_RK11btTransformS4_(%class.btConeTwistConstraint* %120, %class.btRigidBody* %121, %class.btRigidBody* %122, %class.btTransform* %localA, %class.btTransform* %localB)
           to label %invoke.cont314 unwind label %lpad313
@@ -911,17 +911,17 @@ invoke.cont314:                                   ; preds = %invoke.cont285
   call void @_ZN21btConeTwistConstraint8setLimitEffffff(%class.btConeTwistConstraint* %123, float 0x3FE921FB60000000, float 0x3FE921FB60000000, float 0.000000e+00, float 1.000000e+00, float 0x3FD3333340000000, float 1.000000e+00)
   %124 = load %class.btConeTwistConstraint** %coneC, align 4
   %125 = bitcast %class.btConeTwistConstraint* %124 to %class.btTypedConstraint*
-  %m_joints316 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx317 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints316, i32 0, i32 2
+  %m_joints316 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx317 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints316, i32 0, i32 2
   store %class.btTypedConstraint* %125, %class.btTypedConstraint** %arrayidx317, align 4
-  %m_ownerWorld318 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 1
+  %m_ownerWorld318 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 1
   %126 = load %class.btDynamicsWorld** %m_ownerWorld318, align 4
   %127 = bitcast %class.btDynamicsWorld* %126 to void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)***
   %vtable319 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*** %127
-  %vfn320 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable319, i64 10
+  %vfn320 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*, void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable319, i64 10
   %128 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vfn320
-  %m_joints321 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx322 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints321, i32 0, i32 2
+  %m_joints321 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx322 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints321, i32 0, i32 2
   %129 = load %class.btTypedConstraint** %arrayidx322, align 4
   call void %128(%class.btDynamicsWorld* %126, %class.btTypedConstraint* %129, i1 zeroext true)
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %localA)
@@ -944,11 +944,11 @@ invoke.cont314:                                   ; preds = %invoke.cont285
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %localB, %class.btVector3* %ref.tmp331)
   %call337 = call noalias i8* @_Znwm(i32 780)
   %130 = bitcast i8* %call337 to %class.btHingeConstraint*
-  %m_bodies338 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx339 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies338, i32 0, i32 3
+  %m_bodies338 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx339 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies338, i32 0, i32 3
   %131 = load %class.btRigidBody** %arrayidx339, align 4
-  %m_bodies340 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx341 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies340, i32 0, i32 4
+  %m_bodies340 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx341 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies340, i32 0, i32 4
   %132 = load %class.btRigidBody** %arrayidx341, align 4
   %call344 = invoke %class.btHingeConstraint* @_ZN17btHingeConstraintC1ER11btRigidBodyS1_RK11btTransformS4_b(%class.btHingeConstraint* %130, %class.btRigidBody* %131, %class.btRigidBody* %132, %class.btTransform* %localA, %class.btTransform* %localB, i1 zeroext false)
           to label %invoke.cont343 unwind label %lpad342
@@ -959,17 +959,17 @@ invoke.cont343:                                   ; preds = %invoke.cont314
   call void @_ZN17btHingeConstraint8setLimitEfffff(%class.btHingeConstraint* %133, float 0.000000e+00, float 0x3FF921FB60000000, float 0x3FECCCCCC0000000, float 0x3FD3333340000000, float 1.000000e+00)
   %134 = load %class.btHingeConstraint** %hingeC, align 4
   %135 = bitcast %class.btHingeConstraint* %134 to %class.btTypedConstraint*
-  %m_joints345 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx346 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints345, i32 0, i32 3
+  %m_joints345 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx346 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints345, i32 0, i32 3
   store %class.btTypedConstraint* %135, %class.btTypedConstraint** %arrayidx346, align 4
-  %m_ownerWorld347 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 1
+  %m_ownerWorld347 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 1
   %136 = load %class.btDynamicsWorld** %m_ownerWorld347, align 4
   %137 = bitcast %class.btDynamicsWorld* %136 to void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)***
   %vtable348 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*** %137
-  %vfn349 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable348, i64 10
+  %vfn349 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*, void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable348, i64 10
   %138 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vfn349
-  %m_joints350 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx351 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints350, i32 0, i32 3
+  %m_joints350 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx351 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints350, i32 0, i32 3
   %139 = load %class.btTypedConstraint** %arrayidx351, align 4
   call void %138(%class.btDynamicsWorld* %136, %class.btTypedConstraint* %139, i1 zeroext true)
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %localA)
@@ -992,11 +992,11 @@ invoke.cont343:                                   ; preds = %invoke.cont314
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %localB, %class.btVector3* %ref.tmp360)
   %call366 = call noalias i8* @_Znwm(i32 628)
   %140 = bitcast i8* %call366 to %class.btConeTwistConstraint*
-  %m_bodies367 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx368 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies367, i32 0, i32 0
+  %m_bodies367 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx368 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies367, i32 0, i32 0
   %141 = load %class.btRigidBody** %arrayidx368, align 4
-  %m_bodies369 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx370 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies369, i32 0, i32 5
+  %m_bodies369 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx370 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies369, i32 0, i32 5
   %142 = load %class.btRigidBody** %arrayidx370, align 4
   %call373 = invoke %class.btConeTwistConstraint* @_ZN21btConeTwistConstraintC1ER11btRigidBodyS1_RK11btTransformS4_(%class.btConeTwistConstraint* %140, %class.btRigidBody* %141, %class.btRigidBody* %142, %class.btTransform* %localA, %class.btTransform* %localB)
           to label %invoke.cont372 unwind label %lpad371
@@ -1007,17 +1007,17 @@ invoke.cont372:                                   ; preds = %invoke.cont343
   call void @_ZN21btConeTwistConstraint8setLimitEffffff(%class.btConeTwistConstraint* %143, float 0x3FE921FB60000000, float 0x3FE921FB60000000, float 0.000000e+00, float 1.000000e+00, float 0x3FD3333340000000, float 1.000000e+00)
   %144 = load %class.btConeTwistConstraint** %coneC, align 4
   %145 = bitcast %class.btConeTwistConstraint* %144 to %class.btTypedConstraint*
-  %m_joints374 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx375 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints374, i32 0, i32 4
+  %m_joints374 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx375 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints374, i32 0, i32 4
   store %class.btTypedConstraint* %145, %class.btTypedConstraint** %arrayidx375, align 4
-  %m_ownerWorld376 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 1
+  %m_ownerWorld376 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 1
   %146 = load %class.btDynamicsWorld** %m_ownerWorld376, align 4
   %147 = bitcast %class.btDynamicsWorld* %146 to void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)***
   %vtable377 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*** %147
-  %vfn378 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable377, i64 10
+  %vfn378 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*, void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable377, i64 10
   %148 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vfn378
-  %m_joints379 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx380 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints379, i32 0, i32 4
+  %m_joints379 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx380 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints379, i32 0, i32 4
   %149 = load %class.btTypedConstraint** %arrayidx380, align 4
   call void %148(%class.btDynamicsWorld* %146, %class.btTypedConstraint* %149, i1 zeroext true)
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %localA)
@@ -1040,11 +1040,11 @@ invoke.cont372:                                   ; preds = %invoke.cont343
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %localB, %class.btVector3* %ref.tmp389)
   %call395 = call noalias i8* @_Znwm(i32 780)
   %150 = bitcast i8* %call395 to %class.btHingeConstraint*
-  %m_bodies396 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx397 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies396, i32 0, i32 5
+  %m_bodies396 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx397 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies396, i32 0, i32 5
   %151 = load %class.btRigidBody** %arrayidx397, align 4
-  %m_bodies398 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx399 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies398, i32 0, i32 6
+  %m_bodies398 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx399 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies398, i32 0, i32 6
   %152 = load %class.btRigidBody** %arrayidx399, align 4
   %call402 = invoke %class.btHingeConstraint* @_ZN17btHingeConstraintC1ER11btRigidBodyS1_RK11btTransformS4_b(%class.btHingeConstraint* %150, %class.btRigidBody* %151, %class.btRigidBody* %152, %class.btTransform* %localA, %class.btTransform* %localB, i1 zeroext false)
           to label %invoke.cont401 unwind label %lpad400
@@ -1055,17 +1055,17 @@ invoke.cont401:                                   ; preds = %invoke.cont372
   call void @_ZN17btHingeConstraint8setLimitEfffff(%class.btHingeConstraint* %153, float 0.000000e+00, float 0x3FF921FB60000000, float 0x3FECCCCCC0000000, float 0x3FD3333340000000, float 1.000000e+00)
   %154 = load %class.btHingeConstraint** %hingeC, align 4
   %155 = bitcast %class.btHingeConstraint* %154 to %class.btTypedConstraint*
-  %m_joints403 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx404 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints403, i32 0, i32 5
+  %m_joints403 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx404 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints403, i32 0, i32 5
   store %class.btTypedConstraint* %155, %class.btTypedConstraint** %arrayidx404, align 4
-  %m_ownerWorld405 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 1
+  %m_ownerWorld405 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 1
   %156 = load %class.btDynamicsWorld** %m_ownerWorld405, align 4
   %157 = bitcast %class.btDynamicsWorld* %156 to void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)***
   %vtable406 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*** %157
-  %vfn407 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable406, i64 10
+  %vfn407 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*, void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable406, i64 10
   %158 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vfn407
-  %m_joints408 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx409 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints408, i32 0, i32 5
+  %m_joints408 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx409 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints408, i32 0, i32 5
   %159 = load %class.btTypedConstraint** %arrayidx409, align 4
   call void %158(%class.btDynamicsWorld* %156, %class.btTypedConstraint* %159, i1 zeroext true)
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %localA)
@@ -1088,11 +1088,11 @@ invoke.cont401:                                   ; preds = %invoke.cont372
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %localB, %class.btVector3* %ref.tmp418)
   %call424 = call noalias i8* @_Znwm(i32 628)
   %160 = bitcast i8* %call424 to %class.btConeTwistConstraint*
-  %m_bodies425 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx426 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies425, i32 0, i32 1
+  %m_bodies425 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx426 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies425, i32 0, i32 1
   %161 = load %class.btRigidBody** %arrayidx426, align 4
-  %m_bodies427 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx428 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies427, i32 0, i32 7
+  %m_bodies427 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx428 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies427, i32 0, i32 7
   %162 = load %class.btRigidBody** %arrayidx428, align 4
   %call431 = invoke %class.btConeTwistConstraint* @_ZN21btConeTwistConstraintC1ER11btRigidBodyS1_RK11btTransformS4_(%class.btConeTwistConstraint* %160, %class.btRigidBody* %161, %class.btRigidBody* %162, %class.btTransform* %localA, %class.btTransform* %localB)
           to label %invoke.cont430 unwind label %lpad429
@@ -1103,17 +1103,17 @@ invoke.cont430:                                   ; preds = %invoke.cont401
   call void @_ZN21btConeTwistConstraint8setLimitEffffff(%class.btConeTwistConstraint* %163, float 0x3FF921FB60000000, float 0x3FF921FB60000000, float 0.000000e+00, float 1.000000e+00, float 0x3FD3333340000000, float 1.000000e+00)
   %164 = load %class.btConeTwistConstraint** %coneC, align 4
   %165 = bitcast %class.btConeTwistConstraint* %164 to %class.btTypedConstraint*
-  %m_joints432 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx433 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints432, i32 0, i32 6
+  %m_joints432 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx433 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints432, i32 0, i32 6
   store %class.btTypedConstraint* %165, %class.btTypedConstraint** %arrayidx433, align 4
-  %m_ownerWorld434 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 1
+  %m_ownerWorld434 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 1
   %166 = load %class.btDynamicsWorld** %m_ownerWorld434, align 4
   %167 = bitcast %class.btDynamicsWorld* %166 to void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)***
   %vtable435 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*** %167
-  %vfn436 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable435, i64 10
+  %vfn436 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*, void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable435, i64 10
   %168 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vfn436
-  %m_joints437 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx438 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints437, i32 0, i32 6
+  %m_joints437 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx438 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints437, i32 0, i32 6
   %169 = load %class.btTypedConstraint** %arrayidx438, align 4
   call void %168(%class.btDynamicsWorld* %166, %class.btTypedConstraint* %169, i1 zeroext true)
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %localA)
@@ -1136,11 +1136,11 @@ invoke.cont430:                                   ; preds = %invoke.cont401
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %localB, %class.btVector3* %ref.tmp447)
   %call453 = call noalias i8* @_Znwm(i32 780)
   %170 = bitcast i8* %call453 to %class.btHingeConstraint*
-  %m_bodies454 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx455 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies454, i32 0, i32 7
+  %m_bodies454 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx455 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies454, i32 0, i32 7
   %171 = load %class.btRigidBody** %arrayidx455, align 4
-  %m_bodies456 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx457 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies456, i32 0, i32 8
+  %m_bodies456 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx457 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies456, i32 0, i32 8
   %172 = load %class.btRigidBody** %arrayidx457, align 4
   %call460 = invoke %class.btHingeConstraint* @_ZN17btHingeConstraintC1ER11btRigidBodyS1_RK11btTransformS4_b(%class.btHingeConstraint* %170, %class.btRigidBody* %171, %class.btRigidBody* %172, %class.btTransform* %localA, %class.btTransform* %localB, i1 zeroext false)
           to label %invoke.cont459 unwind label %lpad458
@@ -1151,17 +1151,17 @@ invoke.cont459:                                   ; preds = %invoke.cont430
   call void @_ZN17btHingeConstraint8setLimitEfffff(%class.btHingeConstraint* %173, float 0xBFF921FB60000000, float 0.000000e+00, float 0x3FECCCCCC0000000, float 0x3FD3333340000000, float 1.000000e+00)
   %174 = load %class.btHingeConstraint** %hingeC, align 4
   %175 = bitcast %class.btHingeConstraint* %174 to %class.btTypedConstraint*
-  %m_joints461 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx462 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints461, i32 0, i32 7
+  %m_joints461 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx462 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints461, i32 0, i32 7
   store %class.btTypedConstraint* %175, %class.btTypedConstraint** %arrayidx462, align 4
-  %m_ownerWorld463 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 1
+  %m_ownerWorld463 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 1
   %176 = load %class.btDynamicsWorld** %m_ownerWorld463, align 4
   %177 = bitcast %class.btDynamicsWorld* %176 to void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)***
   %vtable464 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*** %177
-  %vfn465 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable464, i64 10
+  %vfn465 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*, void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable464, i64 10
   %178 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vfn465
-  %m_joints466 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx467 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints466, i32 0, i32 7
+  %m_joints466 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx467 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints466, i32 0, i32 7
   %179 = load %class.btTypedConstraint** %arrayidx467, align 4
   call void %178(%class.btDynamicsWorld* %176, %class.btTypedConstraint* %179, i1 zeroext true)
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %localA)
@@ -1184,11 +1184,11 @@ invoke.cont459:                                   ; preds = %invoke.cont430
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %localB, %class.btVector3* %ref.tmp476)
   %call482 = call noalias i8* @_Znwm(i32 628)
   %180 = bitcast i8* %call482 to %class.btConeTwistConstraint*
-  %m_bodies483 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx484 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies483, i32 0, i32 1
+  %m_bodies483 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx484 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies483, i32 0, i32 1
   %181 = load %class.btRigidBody** %arrayidx484, align 4
-  %m_bodies485 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx486 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies485, i32 0, i32 9
+  %m_bodies485 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx486 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies485, i32 0, i32 9
   %182 = load %class.btRigidBody** %arrayidx486, align 4
   %call489 = invoke %class.btConeTwistConstraint* @_ZN21btConeTwistConstraintC1ER11btRigidBodyS1_RK11btTransformS4_(%class.btConeTwistConstraint* %180, %class.btRigidBody* %181, %class.btRigidBody* %182, %class.btTransform* %localA, %class.btTransform* %localB)
           to label %invoke.cont488 unwind label %lpad487
@@ -1199,17 +1199,17 @@ invoke.cont488:                                   ; preds = %invoke.cont459
   call void @_ZN21btConeTwistConstraint8setLimitEffffff(%class.btConeTwistConstraint* %183, float 0x3FF921FB60000000, float 0x3FF921FB60000000, float 0.000000e+00, float 1.000000e+00, float 0x3FD3333340000000, float 1.000000e+00)
   %184 = load %class.btConeTwistConstraint** %coneC, align 4
   %185 = bitcast %class.btConeTwistConstraint* %184 to %class.btTypedConstraint*
-  %m_joints490 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx491 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints490, i32 0, i32 8
+  %m_joints490 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx491 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints490, i32 0, i32 8
   store %class.btTypedConstraint* %185, %class.btTypedConstraint** %arrayidx491, align 4
-  %m_ownerWorld492 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 1
+  %m_ownerWorld492 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 1
   %186 = load %class.btDynamicsWorld** %m_ownerWorld492, align 4
   %187 = bitcast %class.btDynamicsWorld* %186 to void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)***
   %vtable493 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*** %187
-  %vfn494 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable493, i64 10
+  %vfn494 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*, void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable493, i64 10
   %188 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vfn494
-  %m_joints495 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx496 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints495, i32 0, i32 8
+  %m_joints495 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx496 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints495, i32 0, i32 8
   %189 = load %class.btTypedConstraint** %arrayidx496, align 4
   call void %188(%class.btDynamicsWorld* %186, %class.btTypedConstraint* %189, i1 zeroext true)
   call void @_ZN11btTransform11setIdentityEv(%class.btTransform* %localA)
@@ -1232,11 +1232,11 @@ invoke.cont488:                                   ; preds = %invoke.cont459
   call void @_ZN11btTransform9setOriginERK9btVector3(%class.btTransform* %localB, %class.btVector3* %ref.tmp505)
   %call511 = call noalias i8* @_Znwm(i32 780)
   %190 = bitcast i8* %call511 to %class.btHingeConstraint*
-  %m_bodies512 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx513 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies512, i32 0, i32 9
+  %m_bodies512 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx513 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies512, i32 0, i32 9
   %191 = load %class.btRigidBody** %arrayidx513, align 4
-  %m_bodies514 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 3
-  %arrayidx515 = getelementptr inbounds [11 x %class.btRigidBody*]* %m_bodies514, i32 0, i32 10
+  %m_bodies514 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 3
+  %arrayidx515 = getelementptr inbounds [11 x %class.btRigidBody*], [11 x %class.btRigidBody*]* %m_bodies514, i32 0, i32 10
   %192 = load %class.btRigidBody** %arrayidx515, align 4
   %call518 = invoke %class.btHingeConstraint* @_ZN17btHingeConstraintC1ER11btRigidBodyS1_RK11btTransformS4_b(%class.btHingeConstraint* %190, %class.btRigidBody* %191, %class.btRigidBody* %192, %class.btTransform* %localA, %class.btTransform* %localB, i1 zeroext false)
           to label %invoke.cont517 unwind label %lpad516
@@ -1247,17 +1247,17 @@ invoke.cont517:                                   ; preds = %invoke.cont488
   call void @_ZN17btHingeConstraint8setLimitEfffff(%class.btHingeConstraint* %193, float 0xBFF921FB60000000, float 0.000000e+00, float 0x3FECCCCCC0000000, float 0x3FD3333340000000, float 1.000000e+00)
   %194 = load %class.btHingeConstraint** %hingeC, align 4
   %195 = bitcast %class.btHingeConstraint* %194 to %class.btTypedConstraint*
-  %m_joints519 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx520 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints519, i32 0, i32 9
+  %m_joints519 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx520 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints519, i32 0, i32 9
   store %class.btTypedConstraint* %195, %class.btTypedConstraint** %arrayidx520, align 4
-  %m_ownerWorld521 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 1
+  %m_ownerWorld521 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 1
   %196 = load %class.btDynamicsWorld** %m_ownerWorld521, align 4
   %197 = bitcast %class.btDynamicsWorld* %196 to void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)***
   %vtable522 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*** %197
-  %vfn523 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable522, i64 10
+  %vfn523 = getelementptr inbounds void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)*, void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vtable522, i64 10
   %198 = load void (%class.btDynamicsWorld*, %class.btTypedConstraint*, i1)** %vfn523
-  %m_joints524 = getelementptr inbounds %class.RagDoll* %this1, i32 0, i32 4
-  %arrayidx525 = getelementptr inbounds [10 x %class.btTypedConstraint*]* %m_joints524, i32 0, i32 9
+  %m_joints524 = getelementptr inbounds %class.RagDoll, %class.RagDoll* %this1, i32 0, i32 4
+  %arrayidx525 = getelementptr inbounds [10 x %class.btTypedConstraint*], [10 x %class.btTypedConstraint*]* %m_joints524, i32 0, i32 9
   %199 = load %class.btTypedConstraint** %arrayidx525, align 4
   call void %198(%class.btDynamicsWorld* %196, %class.btTypedConstraint* %199, i1 zeroext true)
   %200 = load %class.RagDoll** %retval

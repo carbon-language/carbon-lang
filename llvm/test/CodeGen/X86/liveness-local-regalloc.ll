@@ -49,7 +49,7 @@ bb6:                                              ; preds = %.loopexit
 
 bb8:                                              ; preds = %.loopexit
   %tmp9 = sext i32 %.04 to i64                    ; <i64> [#uses=1]
-  %tmp10 = getelementptr inbounds %0* %arg, i64 0, i32 11, i64 %tmp9 ; <i8*> [#uses=1]
+  %tmp10 = getelementptr inbounds %0, %0* %arg, i64 0, i32 11, i64 %tmp9 ; <i8*> [#uses=1]
   store i8 0, i8* %tmp10, align 1
   ret void
 

@@ -13,10 +13,10 @@ define i32 @read_only_func(i32* nocapture %A, i32* nocapture %B, i32 %n) nounwin
 .lr.ph:                                           ; preds = %0, %.lr.ph
   %indvars.iv = phi i64 [ %indvars.iv.next, %.lr.ph ], [ 0, %0 ]
   %sum.02 = phi i32 [ %9, %.lr.ph ], [ 0, %0 ]
-  %2 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %2 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   %3 = load i32* %2, align 4
   %4 = add nsw i64 %indvars.iv, 13
-  %5 = getelementptr inbounds i32* %B, i64 %4
+  %5 = getelementptr inbounds i32, i32* %B, i64 %4
   %6 = load i32* %5, align 4
   %7 = shl i32 %6, 1
   %8 = add i32 %3, %sum.02

@@ -305,8 +305,8 @@ entry:
 
 for.body.lr.ph:
   %cmp216 = icmp sgt i32 %b, 0
-  %arrayidx5 = getelementptr inbounds i32* %c, i64 1
-  %arrayidx9 = getelementptr inbounds i32* %c, i64 2
+  %arrayidx5 = getelementptr inbounds i32, i32* %c, i64 1
+  %arrayidx9 = getelementptr inbounds i32, i32* %c, i64 2
   br label %for.body
 ; CHECK: edge for.body.lr.ph -> for.body probability is 16 / 16 = 100%
 

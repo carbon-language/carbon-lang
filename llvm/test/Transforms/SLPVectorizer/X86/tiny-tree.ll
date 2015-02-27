@@ -19,12 +19,12 @@ for.body:                                         ; preds = %entry, %for.body
   %src.addr.013 = phi double* [ %add.ptr, %for.body ], [ %src, %entry ]
   %0 = load double* %src.addr.013, align 8
   store double %0, double* %dst.addr.014, align 8
-  %arrayidx2 = getelementptr inbounds double* %src.addr.013, i64 1
+  %arrayidx2 = getelementptr inbounds double, double* %src.addr.013, i64 1
   %1 = load double* %arrayidx2, align 8
-  %arrayidx3 = getelementptr inbounds double* %dst.addr.014, i64 1
+  %arrayidx3 = getelementptr inbounds double, double* %dst.addr.014, i64 1
   store double %1, double* %arrayidx3, align 8
-  %add.ptr = getelementptr inbounds double* %src.addr.013, i64 %i.015
-  %add.ptr4 = getelementptr inbounds double* %dst.addr.014, i64 %i.015
+  %add.ptr = getelementptr inbounds double, double* %src.addr.013, i64 %i.015
+  %add.ptr4 = getelementptr inbounds double, double* %dst.addr.014, i64 %i.015
   %inc = add i64 %i.015, 1
   %exitcond = icmp eq i64 %inc, %count
   br i1 %exitcond, label %for.end, label %for.body
@@ -49,20 +49,20 @@ for.body:                                         ; preds = %entry, %for.body
   %src.addr.021 = phi float* [ %add.ptr, %for.body ], [ %src, %entry ]
   %0 = load float* %src.addr.021, align 4
   store float %0, float* %dst.addr.022, align 4
-  %arrayidx2 = getelementptr inbounds float* %src.addr.021, i64 1
+  %arrayidx2 = getelementptr inbounds float, float* %src.addr.021, i64 1
   %1 = load float* %arrayidx2, align 4
-  %arrayidx3 = getelementptr inbounds float* %dst.addr.022, i64 1
+  %arrayidx3 = getelementptr inbounds float, float* %dst.addr.022, i64 1
   store float %1, float* %arrayidx3, align 4
-  %arrayidx4 = getelementptr inbounds float* %src.addr.021, i64 2
+  %arrayidx4 = getelementptr inbounds float, float* %src.addr.021, i64 2
   %2 = load float* %arrayidx4, align 4
-  %arrayidx5 = getelementptr inbounds float* %dst.addr.022, i64 2
+  %arrayidx5 = getelementptr inbounds float, float* %dst.addr.022, i64 2
   store float %2, float* %arrayidx5, align 4
-  %arrayidx6 = getelementptr inbounds float* %src.addr.021, i64 3
+  %arrayidx6 = getelementptr inbounds float, float* %src.addr.021, i64 3
   %3 = load float* %arrayidx6, align 4
-  %arrayidx7 = getelementptr inbounds float* %dst.addr.022, i64 3
+  %arrayidx7 = getelementptr inbounds float, float* %dst.addr.022, i64 3
   store float %3, float* %arrayidx7, align 4
-  %add.ptr = getelementptr inbounds float* %src.addr.021, i64 %i.023
-  %add.ptr8 = getelementptr inbounds float* %dst.addr.022, i64 %i.023
+  %add.ptr = getelementptr inbounds float, float* %src.addr.021, i64 %i.023
+  %add.ptr8 = getelementptr inbounds float, float* %dst.addr.022, i64 %i.023
   %inc = add i64 %i.023, 1
   %exitcond = icmp eq i64 %inc, %count
   br i1 %exitcond, label %for.end, label %for.body
@@ -87,12 +87,12 @@ for.body:                                         ; preds = %entry, %for.body
   %src.addr.013 = phi double* [ %add.ptr, %for.body ], [ %src, %entry ]
   %0 = load double* %src.addr.013, align 8
   store double %0, double* %dst.addr.014, align 8
-  %arrayidx2 = getelementptr inbounds double* %src.addr.013, i64 2
+  %arrayidx2 = getelementptr inbounds double, double* %src.addr.013, i64 2
   %1 = load double* %arrayidx2, align 8
-  %arrayidx3 = getelementptr inbounds double* %dst.addr.014, i64 1 
+  %arrayidx3 = getelementptr inbounds double, double* %dst.addr.014, i64 1 
   store double %1, double* %arrayidx3, align 8
-  %add.ptr = getelementptr inbounds double* %src.addr.013, i64 %i.015
-  %add.ptr4 = getelementptr inbounds double* %dst.addr.014, i64 %i.015
+  %add.ptr = getelementptr inbounds double, double* %src.addr.013, i64 %i.015
+  %add.ptr4 = getelementptr inbounds double, double* %dst.addr.014, i64 %i.015
   %inc = add i64 %i.015, 1
   %exitcond = icmp eq i64 %inc, %count
   br i1 %exitcond, label %for.end, label %for.body
@@ -117,20 +117,20 @@ for.body:                                         ; preds = %entry, %for.body
   %src.addr.021 = phi float* [ %add.ptr, %for.body ], [ %src, %entry ]
   %0 = load float* %src.addr.021, align 4
   store float %0, float* %dst.addr.022, align 4
-  %arrayidx2 = getelementptr inbounds float* %src.addr.021, i64 4 
+  %arrayidx2 = getelementptr inbounds float, float* %src.addr.021, i64 4 
   %1 = load float* %arrayidx2, align 4
-  %arrayidx3 = getelementptr inbounds float* %dst.addr.022, i64 1
+  %arrayidx3 = getelementptr inbounds float, float* %dst.addr.022, i64 1
   store float %1, float* %arrayidx3, align 4
-  %arrayidx4 = getelementptr inbounds float* %src.addr.021, i64 2
+  %arrayidx4 = getelementptr inbounds float, float* %src.addr.021, i64 2
   %2 = load float* %arrayidx4, align 4
-  %arrayidx5 = getelementptr inbounds float* %dst.addr.022, i64 2
+  %arrayidx5 = getelementptr inbounds float, float* %dst.addr.022, i64 2
   store float %2, float* %arrayidx5, align 4
-  %arrayidx6 = getelementptr inbounds float* %src.addr.021, i64 3
+  %arrayidx6 = getelementptr inbounds float, float* %src.addr.021, i64 3
   %3 = load float* %arrayidx6, align 4
-  %arrayidx7 = getelementptr inbounds float* %dst.addr.022, i64 3
+  %arrayidx7 = getelementptr inbounds float, float* %dst.addr.022, i64 3
   store float %3, float* %arrayidx7, align 4
-  %add.ptr = getelementptr inbounds float* %src.addr.021, i64 %i.023
-  %add.ptr8 = getelementptr inbounds float* %dst.addr.022, i64 %i.023
+  %add.ptr = getelementptr inbounds float, float* %src.addr.021, i64 %i.023
+  %add.ptr8 = getelementptr inbounds float, float* %dst.addr.022, i64 %i.023
   %inc = add i64 %i.023, 1
   %exitcond = icmp eq i64 %inc, %count
   br i1 %exitcond, label %for.end, label %for.body
@@ -143,13 +143,13 @@ for.end:                                          ; preds = %for.body, %entry
 ; CHECK-LABEL: store_splat
 ; CHECK: store <4 x float>
 define void @store_splat(float*, float) {
-  %3 = getelementptr inbounds float* %0, i64 0
+  %3 = getelementptr inbounds float, float* %0, i64 0
   store float %1, float* %3, align 4
-  %4 = getelementptr inbounds float* %0, i64 1
+  %4 = getelementptr inbounds float, float* %0, i64 1
   store float %1, float* %4, align 4
-  %5 = getelementptr inbounds float* %0, i64 2
+  %5 = getelementptr inbounds float, float* %0, i64 2
   store float %1, float* %5, align 4
-  %6 = getelementptr inbounds float* %0, i64 3
+  %6 = getelementptr inbounds float, float* %0, i64 3
   store float %1, float* %6, align 4
   ret void
 }

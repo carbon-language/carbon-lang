@@ -20,9 +20,9 @@ define i32 @lb() {
 }
 
 define i32 @lc() {
-	%g = getelementptr %0* @c, i32 0, i32 0		; <i32*> [#uses=1]
+	%g = getelementptr %0, %0* @c, i32 0, i32 0		; <i32*> [#uses=1]
 	%u = load i32* %g		; <i32> [#uses=1]
-	%h = getelementptr %0* @c, i32 0, i32 1		; <i32*> [#uses=1]
+	%h = getelementptr %0, %0* @c, i32 0, i32 1		; <i32*> [#uses=1]
 	%v = load i32* %h		; <i32> [#uses=1]
 	%r = add i32 %u, %v
 	ret i32 %r

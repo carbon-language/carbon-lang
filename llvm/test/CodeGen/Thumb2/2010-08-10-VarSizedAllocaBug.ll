@@ -14,7 +14,7 @@ entry:
 
 bb:                                               ; preds = %entry
   %1 = alloca [1000 x i8], align 4                ; <[1000 x i8]*> [#uses=1]
-  %.sub = getelementptr inbounds [1000 x i8]* %1, i32 0, i32 0 ; <i8*> [#uses=2]
+  %.sub = getelementptr inbounds [1000 x i8], [1000 x i8]* %1, i32 0, i32 0 ; <i8*> [#uses=2]
   %2 = call i32 (i8*, i32, i32, i8*, ...)* @__sprintf_chk(i8* %.sub, i32 0, i32 1000, i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i32 %i) nounwind ; <i32> [#uses=0]
   %3 = load i8* %.sub, align 4                    ; <i8> [#uses=1]
   %4 = sext i8 %3 to i32                          ; <i32> [#uses=1]

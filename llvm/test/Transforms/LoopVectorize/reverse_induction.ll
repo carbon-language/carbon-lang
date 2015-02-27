@@ -18,7 +18,7 @@ for.body:
   %i.06 = phi i32 [ 0, %entry ], [ %inc4, %for.body ]
   %redux5 = phi i32 [ 0, %entry ], [ %inc.redux, %for.body ]
   %add.i = add i64 %add.i7, -1
-  %kind_.i = getelementptr inbounds i32* %ptr, i64 %add.i
+  %kind_.i = getelementptr inbounds i32, i32* %ptr, i64 %add.i
   %tmp.i1 = load i32* %kind_.i, align 4
   %inc.redux = add i32 %tmp.i1, %redux5
   %inc4 = add i32 %i.06, 1
@@ -41,7 +41,7 @@ for.body:
   %i.06 = phi i32 [ 0, %entry ], [ %inc4, %for.body ]
   %redux5 = phi i32 [ 0, %entry ], [ %inc.redux, %for.body ]
   %add.i = add i128 %add.i7, -1
-  %kind_.i = getelementptr inbounds i32* %ptr, i128 %add.i
+  %kind_.i = getelementptr inbounds i32, i32* %ptr, i128 %add.i
   %tmp.i1 = load i32* %kind_.i, align 4
   %inc.redux = add i32 %tmp.i1, %redux5
   %inc4 = add i32 %i.06, 1
@@ -65,7 +65,7 @@ for.body:
   %i.06 = phi i32 [ 0, %entry ], [ %inc4, %for.body ]
   %redux5 = phi i32 [ 0, %entry ], [ %inc.redux, %for.body ]
   %add.i = add i16 %add.i7, -1
-  %kind_.i = getelementptr inbounds i32* %ptr, i16 %add.i
+  %kind_.i = getelementptr inbounds i32, i32* %ptr, i16 %add.i
   %tmp.i1 = load i32* %kind_.i, align 4
   %inc.redux = add i32 %tmp.i1, %redux5
   %inc4 = add i32 %i.06, 1
@@ -109,7 +109,7 @@ while.body:
   %forward_induction.05 = phi i8 [ 0, %entry ], [ %inc, %while.body ]
   %inc = add i8 %forward_induction.05, 1
   %conv = zext i8 %inc to i32
-  %arrayidx = getelementptr inbounds [1024 x i32]* @a, i64 0, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds [1024 x i32], [1024 x i32]* @a, i64 0, i64 %indvars.iv
   store i32 %conv, i32* %arrayidx, align 4
   %indvars.iv.next = add i64 %indvars.iv, -1
   %0 = trunc i64 %indvars.iv to i32
@@ -136,7 +136,7 @@ while.body:
   %forward_induction.05 = phi i8 [ -127, %entry ], [ %inc, %while.body ]
   %inc = add i8 %forward_induction.05, 1
   %conv = sext i8 %inc to i32
-  %arrayidx = getelementptr inbounds [1024 x i32]* @a, i64 0, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds [1024 x i32], [1024 x i32]* @a, i64 0, i64 %indvars.iv
   store i32 %conv, i32* %arrayidx, align 4
   %indvars.iv.next = add i64 %indvars.iv, -1
   %0 = trunc i64 %indvars.iv to i32

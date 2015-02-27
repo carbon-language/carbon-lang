@@ -18,13 +18,13 @@ target triple = "thumbv7-apple-ios"
 define void @Compute_Axis_Rotation_Transform(%struct.Transform_Struct.0.11.12.17.43.46.56.58.60* nocapture %transform, double* nocapture %V1, double %angle) nounwind {
 entry:
   store double 1.000000e+00, double* null, align 4
-  %arrayidx5.1.i = getelementptr inbounds %struct.Transform_Struct.0.11.12.17.43.46.56.58.60* %transform, i32 0, i32 0, i32 0, i32 1
+  %arrayidx5.1.i = getelementptr inbounds %struct.Transform_Struct.0.11.12.17.43.46.56.58.60, %struct.Transform_Struct.0.11.12.17.43.46.56.58.60* %transform, i32 0, i32 0, i32 0, i32 1
   store double 0.000000e+00, double* %arrayidx5.1.i, align 4
-  %arrayidx5.2.i = getelementptr inbounds %struct.Transform_Struct.0.11.12.17.43.46.56.58.60* %transform, i32 0, i32 0, i32 0, i32 2
+  %arrayidx5.2.i = getelementptr inbounds %struct.Transform_Struct.0.11.12.17.43.46.56.58.60, %struct.Transform_Struct.0.11.12.17.43.46.56.58.60* %transform, i32 0, i32 0, i32 0, i32 2
   store double 0.000000e+00, double* %arrayidx5.2.i, align 4
-  %arrayidx5.114.i = getelementptr inbounds %struct.Transform_Struct.0.11.12.17.43.46.56.58.60* %transform, i32 0, i32 0, i32 1, i32 0
+  %arrayidx5.114.i = getelementptr inbounds %struct.Transform_Struct.0.11.12.17.43.46.56.58.60, %struct.Transform_Struct.0.11.12.17.43.46.56.58.60* %transform, i32 0, i32 0, i32 1, i32 0
   store double 0.000000e+00, double* %arrayidx5.114.i, align 4
-  %arrayidx5.1.1.i = getelementptr inbounds %struct.Transform_Struct.0.11.12.17.43.46.56.58.60* %transform, i32 0, i32 0, i32 1, i32 1
+  %arrayidx5.1.1.i = getelementptr inbounds %struct.Transform_Struct.0.11.12.17.43.46.56.58.60, %struct.Transform_Struct.0.11.12.17.43.46.56.58.60* %transform, i32 0, i32 0, i32 1, i32 1
   store double 1.000000e+00, double* %arrayidx5.1.1.i, align 4
   store double 0.000000e+00, double* null, align 4
   store double 1.000000e+00, double* null, align 4
@@ -32,7 +32,7 @@ entry:
   %call = tail call double @cos(double %angle) nounwind readnone
   %call1 = tail call double @sin(double %angle) nounwind readnone
   %0 = load double* %V1, align 4
-  %arrayidx2 = getelementptr inbounds double* %V1, i32 1
+  %arrayidx2 = getelementptr inbounds double, double* %V1, i32 1
   %1 = load double* %arrayidx2, align 4
   %mul = fmul double %0, %1
   %sub = fsub double 1.000000e+00, %call

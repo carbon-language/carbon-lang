@@ -18,8 +18,8 @@ for.body:                                         ; preds = %for.body, %entry
   %add3 = add i32 %factor, %conv
   store i32 %add3, i32* %arrayidx.phi, align 4
 
-  %arrayidx.inc = getelementptr i32* %arrayidx.phi, i32 1
-  %arrayidx1.inc = getelementptr i16* %arrayidx1.phi, i32 1
+  %arrayidx.inc = getelementptr i32, i32* %arrayidx.phi, i32 1
+  %arrayidx1.inc = getelementptr i16, i16* %arrayidx1.phi, i32 1
   %lsr.iv.next = add i32 %lsr.iv, -1
   %exitcond = icmp eq i32 %lsr.iv.next, 0
   br i1 %exitcond, label %for.end, label %for.body

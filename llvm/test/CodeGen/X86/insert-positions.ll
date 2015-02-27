@@ -41,7 +41,7 @@ for.end.i.i.i:                                    ; preds = %land.rhs.i.i.i, %fo
   %idx.ext.i.i.i = sext i32 %i.0.i.i.i to i64     ; <i64> [#uses=1]
   %sub.ptr72.sum.i.i.i = xor i64 %idx.ext.i.i.i, -1 ; <i64> [#uses=1]
   %pos.addr.1.sum155.i.i.i = add i64 %tmp154.i.i.i, %sub.ptr72.sum.i.i.i ; <i64> [#uses=1]
-  %arrayidx76.i.i.i = getelementptr inbounds i8* undef, i64 %pos.addr.1.sum155.i.i.i ; <i8*> [#uses=0]
+  %arrayidx76.i.i.i = getelementptr inbounds i8, i8* undef, i64 %pos.addr.1.sum155.i.i.i ; <i8*> [#uses=0]
   br label %while.cond.backedge.i.i.i
 }
 

@@ -5,7 +5,7 @@
 declare i32 @printf(i8*, ...)
 
 define i32 @main() {
-        %f = getelementptr [4 x i8]* @.str_1, i64 0, i64 0              ; <i8*> [#uses=3]
+        %f = getelementptr [4 x i8], [4 x i8]* @.str_1, i64 0, i64 0              ; <i8*> [#uses=3]
         %d = add i32 1, 0               ; <i32> [#uses=3]
         call i32 (i8*, ...)* @printf( i8* %f, i32 %d )          ; <i32>:1 [#uses=0]
         %e = add i32 38, 2              ; <i32> [#uses=2]

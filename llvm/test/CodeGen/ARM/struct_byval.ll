@@ -80,7 +80,7 @@ define void @f4(%struct.SmallStruct* nocapture byval %s) nounwind optsize {
 ; THUMB-LABEL: f4
 ; THUMB: blx _consumestruct
 entry:
-  %addr = getelementptr inbounds %struct.SmallStruct* %s, i32 0, i32 0
+  %addr = getelementptr inbounds %struct.SmallStruct, %struct.SmallStruct* %s, i32 0, i32 0
   %0 = bitcast i32* %addr to i8*
   tail call void @consumestruct(i8* %0, i32 80) optsize
   ret void
@@ -104,7 +104,7 @@ define void @f6(i32 %a, i32 %b, i32 %c, i32 %d, %struct.SmallStruct* nocapture b
 ; THUMB-LABEL: f6
 ; THUMB: b.w _consumestruct
 entry:
-  %addr = getelementptr inbounds %struct.SmallStruct* %s, i32 0, i32 0
+  %addr = getelementptr inbounds %struct.SmallStruct, %struct.SmallStruct* %s, i32 0, i32 0
   %0 = bitcast i32* %addr to i8*
   tail call void @consumestruct(i8* %0, i32 80) optsize
   ret void

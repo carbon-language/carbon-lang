@@ -41,18 +41,18 @@ define i32 @foo(i64 %outer.coerce0, i64 %outer.coerce1) #0 {
   %outer = alloca %struct.Outer, align 8
   %i1 = alloca %struct.Inner, align 4
   %1 = bitcast %struct.Outer* %outer to { i64, i64 }*
-  %2 = getelementptr { i64, i64 }* %1, i32 0, i32 0
+  %2 = getelementptr { i64, i64 }, { i64, i64 }* %1, i32 0, i32 0
   store i64 %outer.coerce0, i64* %2
-  %3 = getelementptr { i64, i64 }* %1, i32 0, i32 1
+  %3 = getelementptr { i64, i64 }, { i64, i64 }* %1, i32 0, i32 1
   store i64 %outer.coerce1, i64* %3
   call void @llvm.dbg.declare(metadata %struct.Outer* %outer, metadata !24, metadata !2), !dbg !25
   call void @llvm.dbg.declare(metadata %struct.Inner* %i1, metadata !26, metadata !2), !dbg !27
-  %4 = getelementptr inbounds %struct.Outer* %outer, i32 0, i32 0, !dbg !27
-  %5 = getelementptr inbounds [2 x %struct.Inner]* %4, i32 0, i64 1, !dbg !27
+  %4 = getelementptr inbounds %struct.Outer, %struct.Outer* %outer, i32 0, i32 0, !dbg !27
+  %5 = getelementptr inbounds [2 x %struct.Inner], [2 x %struct.Inner]* %4, i32 0, i64 1, !dbg !27
   %6 = bitcast %struct.Inner* %i1 to i8*, !dbg !27
   %7 = bitcast %struct.Inner* %5 to i8*, !dbg !27
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %6, i8* %7, i64 8, i32 4, i1 false), !dbg !27
-  %8 = getelementptr inbounds %struct.Inner* %i1, i32 0, i32 0, !dbg !28
+  %8 = getelementptr inbounds %struct.Inner, %struct.Inner* %i1, i32 0, i32 0, !dbg !28
   %9 = load i32* %8, align 4, !dbg !28
   ret i32 %9, !dbg !28
 }

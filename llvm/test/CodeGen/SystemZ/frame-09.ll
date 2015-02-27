@@ -102,7 +102,7 @@ define void @f3(i32 *%ptr) {
   store volatile i32 %add10, i32 *%ptr
   store volatile i32 %add12, i32 *%ptr
   store volatile i32 %add13, i32 *%ptr
-  %final = getelementptr i32 *%ptr, i32 1
+  %final = getelementptr i32, i32 *%ptr, i32 1
   store volatile i32 %add14, i32 *%final
   ret void
 }
@@ -124,7 +124,7 @@ define void @f4(i64 %x) {
 ; CHECK: lmg %r11, %r15, 524280(%r11)
 ; CHECK: br %r14
   %y = alloca [65502 x i64], align 8
-  %ptr = getelementptr inbounds [65502 x i64]* %y, i64 0, i64 0
+  %ptr = getelementptr inbounds [65502 x i64], [65502 x i64]* %y, i64 0, i64 0
   store volatile i64 %x, i64* %ptr
   ret void
 }
@@ -144,7 +144,7 @@ define void @f5(i64 %x) {
 ; CHECK: lmg %r11, %r15, 524280(%r11)
 ; CHECK: br %r14
   %y = alloca [65503 x i64], align 8
-  %ptr = getelementptr inbounds [65503 x i64]* %y, i64 0, i64 0
+  %ptr = getelementptr inbounds [65503 x i64], [65503 x i64]* %y, i64 0, i64 0
   store volatile i64 %x, i64* %ptr
   ret void
 }

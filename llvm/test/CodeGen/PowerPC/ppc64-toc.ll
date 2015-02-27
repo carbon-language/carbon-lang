@@ -45,7 +45,7 @@ define i32 @access_double_array(double %a, i32 %i) nounwind readonly {
 entry:
 ; CHECK-LABEL: access_double_array:
   %idxprom = sext i32 %i to i64
-  %arrayidx = getelementptr inbounds [32 x double]* @double_array, i64 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [32 x double], [32 x double]* @double_array, i64 0, i64 %idxprom
   %0 = load double* %arrayidx, align 8
 ; CHECK: ld {{[0-9]+}}, .LC{{[0-9]+}}@toc(2)
   %cmp = fcmp oeq double %0, %a

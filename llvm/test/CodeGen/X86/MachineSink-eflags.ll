@@ -17,15 +17,15 @@ entry:
  %b.i = alloca [16 x <2 x double>], align 16
  %conv = bitcast i8* %_stubArgs to i32*
  %tmp1 = load i32* %conv, align 4
- %ptr8 = getelementptr i8* %_stubArgs, i64 16
+ %ptr8 = getelementptr i8, i8* %_stubArgs, i64 16
  %i4 = bitcast i8* %ptr8 to <2 x double>*
- %ptr20 = getelementptr i8* %_stubArgs, i64 48
+ %ptr20 = getelementptr i8, i8* %_stubArgs, i64 48
  %i7 = bitcast i8* %ptr20 to <2 x double> addrspace(1)**
  %tmp21 = load <2 x double> addrspace(1)** %i7, align 8
- %ptr28 = getelementptr i8* %_stubArgs, i64 64
+ %ptr28 = getelementptr i8, i8* %_stubArgs, i64 64
  %i9 = bitcast i8* %ptr28 to i32*
  %tmp29 = load i32* %i9, align 4
- %ptr32 = getelementptr i8* %_stubArgs, i64 68
+ %ptr32 = getelementptr i8, i8* %_stubArgs, i64 68
  %i10 = bitcast i8* %ptr32 to i32*
  %tmp33 = load i32* %i10, align 4
  %tmp17.i = mul i32 10, 20
@@ -35,8 +35,8 @@ entry:
  %tmp42.i = add i32 %tmp6.i, 17
  %tmp44.i = insertelement <2 x i32> undef, i32 %tmp42.i, i32 1
  %tmp96676677.i = or i32 17, -4
- %ptr4438.i = getelementptr inbounds [16 x <2 x double>]* %b.i, i64 0, i64 0
- %arrayidx4506.i = getelementptr [16 x <2 x double>]* %b.i, i64 0, i64 4
+ %ptr4438.i = getelementptr inbounds [16 x <2 x double>], [16 x <2 x double>]* %b.i, i64 0, i64 0
+ %arrayidx4506.i = getelementptr [16 x <2 x double>], [16 x <2 x double>]* %b.i, i64 0, i64 4
  %tmp52.i = insertelement <2 x i32> %tmp44.i, i32 0, i32 0
  %tmp78.i = extractelement <2 x i32> %tmp44.i, i32 1
  %tmp97.i = add i32 %tmp78.i, %tmp96676677.i
@@ -48,14 +48,14 @@ entry:
  %i39 = add i32 %tmp158.i, %i38
  %conv160.i = zext i32 %i39 to i64
  %tmp22.sum652.i = add i64 %conv160.i, %conv21.i
- %arrayidx161.i = getelementptr <2 x double> addrspace(1)* %tmp21, i64 %tmp22.sum652.i
+ %arrayidx161.i = getelementptr <2 x double>, <2 x double> addrspace(1)* %tmp21, i64 %tmp22.sum652.i
  %tmp162.i = load <2 x double> addrspace(1)* %arrayidx161.i, align 16
  %tmp222.i = add i32 %tmp154.i, 1
  %i43 = mul i32 %tmp222.i, %tmp29
  %i44 = add i32 %tmp158.i, %i43
  %conv228.i = zext i32 %i44 to i64
  %tmp22.sum656.i = add i64 %conv228.i, %conv21.i
- %arrayidx229.i = getelementptr <2 x double> addrspace(1)* %tmp21, i64 %tmp22.sum656.i
+ %arrayidx229.i = getelementptr <2 x double>, <2 x double> addrspace(1)* %tmp21, i64 %tmp22.sum656.i
  %tmp230.i = load <2 x double> addrspace(1)* %arrayidx229.i, align 16
  %cmp432.i = icmp ult i32 %tmp156.i, %tmp1
 

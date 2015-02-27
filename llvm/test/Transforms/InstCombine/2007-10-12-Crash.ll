@@ -14,7 +14,7 @@ entry:
 
 bb29:		; preds = %bb62
 	%tmp322 = bitcast %struct.Ray* %tmp3 to %struct.Vec*		; <%struct.Vec*> [#uses=1]
-	%tmp322.0 = getelementptr %struct.Vec* %tmp322, i32 0, i32 0		; <double*> [#uses=1]
+	%tmp322.0 = getelementptr %struct.Vec, %struct.Vec* %tmp322, i32 0, i32 0		; <double*> [#uses=1]
 	store double 0.000000e+00, double* %tmp322.0
 	%tmp57 = call double @_Z9ray_traceRK3VecRK3RayRK5Scene( %struct.Vec* null, %struct.Ray* %tmp3, %struct.Scene* null )		; <double> [#uses=0]
 	br label %bb62

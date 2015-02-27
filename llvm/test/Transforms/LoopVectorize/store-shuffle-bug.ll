@@ -30,13 +30,13 @@ entry:
 for.body:
   %indvars.iv = phi i64 [ 93, %entry ], [ %indvars.iv.next, %for.body ]
   %0 = add i64 %indvars.iv, 1
-  %arrayidx = getelementptr inbounds [100 x i32]* @uf, i64 0, i64 %0
-  %arrayidx3 = getelementptr inbounds [100 x i32]* @xi, i64 0, i64 %0
+  %arrayidx = getelementptr inbounds [100 x i32], [100 x i32]* @uf, i64 0, i64 %0
+  %arrayidx3 = getelementptr inbounds [100 x i32], [100 x i32]* @xi, i64 0, i64 %0
   %1 = load i32* %arrayidx3, align 4
   %2 = load i32* %arrayidx, align 4
   %add4 = add nsw i32 %2, %1
   store i32 %add4, i32* %arrayidx, align 4
-  %arrayidx7 = getelementptr inbounds [100 x i32]* @q, i64 0, i64 %0
+  %arrayidx7 = getelementptr inbounds [100 x i32], [100 x i32]* @q, i64 0, i64 %0
   %3 = load i32* %arrayidx7, align 4
   %add8 = add nsw i32 %add4, %3
   store i32 %add8, i32* %arrayidx, align 4

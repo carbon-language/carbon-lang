@@ -41,7 +41,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 define void @doSomething(%struct.bar* nocapture readonly %b) #0 {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.bar* %b, i64 0, metadata !15, metadata !{!"0x102"}), !dbg !25
-  %a1 = getelementptr inbounds %struct.bar* %b, i64 0, i32 0, !dbg !26
+  %a1 = getelementptr inbounds %struct.bar, %struct.bar* %b, i64 0, i32 0, !dbg !26
   %0 = load i32* %a1, align 4, !dbg !26, !tbaa !27
   tail call void @llvm.dbg.value(metadata i32 %0, i64 0, metadata !16, metadata !{!"0x102"}), !dbg !26
   %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32 %0) #4, !dbg !32

@@ -26,8 +26,8 @@ for.body:
 ; DELIN: da analyze - anti [=|<]!
 ; DELIN: da analyze - none!
   %i = phi i64 [ 0, %entry ], [ %i.inc, %for.body ]
-  %a.addr = getelementptr [100 x [100 x i32]]* %a, i64 0, i64 %i, i64 %i
-  %a.addr.2 = getelementptr [100 x [100 x i32]]* %a, i64 0, i64 %i, i32 5
+  %a.addr = getelementptr [100 x [100 x i32]], [100 x [100 x i32]]* %a, i64 0, i64 %i, i64 %i
+  %a.addr.2 = getelementptr [100 x [100 x i32]], [100 x [100 x i32]]* %a, i64 0, i64 %i, i32 5
   %0 = load i32* %a.addr, align 4
   %1 = add i32 %0, 1
   store i32 %1, i32* %a.addr.2, align 4

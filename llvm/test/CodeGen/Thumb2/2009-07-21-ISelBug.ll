@@ -8,12 +8,12 @@ entry:
 ; CHECK-LABEL: t:
 ; CHECK: add r7, sp, #12
 	%1 = load i8** undef, align 4		; <i8*> [#uses=3]
-	%2 = getelementptr i8* %1, i32 4		; <i8*> [#uses=1]
-	%3 = getelementptr i8* %1, i32 8		; <i8*> [#uses=1]
+	%2 = getelementptr i8, i8* %1, i32 4		; <i8*> [#uses=1]
+	%3 = getelementptr i8, i8* %1, i32 8		; <i8*> [#uses=1]
 	%4 = bitcast i8* %2 to i32*		; <i32*> [#uses=1]
 	%5 = load i32* %4, align 4		; <i32> [#uses=1]
 	%6 = trunc i32 %5 to i8		; <i8> [#uses=1]
-	%7 = getelementptr i8* %1, i32 12		; <i8*> [#uses=1]
+	%7 = getelementptr i8, i8* %1, i32 12		; <i8*> [#uses=1]
 	%8 = bitcast i8* %3 to i32*		; <i32*> [#uses=1]
 	%9 = load i32* %8, align 4		; <i32> [#uses=1]
 	%10 = trunc i32 %9 to i16		; <i16> [#uses=1]

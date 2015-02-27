@@ -100,6 +100,6 @@ bb48.3:                                           ; preds = %bb49.2
   br label %bb49.3
 
 bb48.4:                                           ; preds = %bb49.3
-  %0 = getelementptr inbounds [5 x i64*]* undef, i32 0, i32 %c_ix.0.3 ; <i64**> [#uses=0]
+  %0 = getelementptr inbounds [5 x i64*], [5 x i64*]* undef, i32 0, i32 %c_ix.0.3 ; <i64**> [#uses=0]
   br label %bb51
 }

@@ -22,8 +22,8 @@ define void @test1(float %a, i32* %b) nounwind {
 define void @test2(float %a, i32* %b, i32 %i) nounwind {
 ; CHECK-LABEL: @test2
 ; CHECK-LS-LABEL: @test2
-        %tmp.2 = getelementptr i32* %b, i32 1           ; <i32*> [#uses=1]
-        %tmp.5 = getelementptr i32* %b, i32 %i          ; <i32*> [#uses=1]
+        %tmp.2 = getelementptr i32, i32* %b, i32 1           ; <i32*> [#uses=1]
+        %tmp.5 = getelementptr i32, i32* %b, i32 %i          ; <i32*> [#uses=1]
         %tmp.7 = fptosi float %a to i32         ; <i32> [#uses=3]
         store i32 %tmp.7, i32* %tmp.5
         store i32 %tmp.7, i32* %tmp.2

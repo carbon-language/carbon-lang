@@ -44,11 +44,11 @@ cond.false:                                       ; preds = %for.end, %for.inc, 
   unreachable
 
 _ZNK4llvm12AttributeSet3endEj.exit:               ; preds = %for.end
-  %second.i.i.i = getelementptr inbounds %"struct.std::pair.241.2040.3839.6152.6923.7694.8465.9493.10007.10264.18507"* undef, i32 %I.099.lcssa129, i32 1
+  %second.i.i.i = getelementptr inbounds %"struct.std::pair.241.2040.3839.6152.6923.7694.8465.9493.10007.10264.18507", %"struct.std::pair.241.2040.3839.6152.6923.7694.8465.9493.10007.10264.18507"* undef, i32 %I.099.lcssa129, i32 1
   %0 = load %"class.llvm::AttributeSetNode.230.2029.3828.6141.6912.7683.8454.9482.9996.10253.18506"** %second.i.i.i, align 4, !tbaa !2
-  %NumAttrs.i.i.i = getelementptr inbounds %"class.llvm::AttributeSetNode.230.2029.3828.6141.6912.7683.8454.9482.9996.10253.18506"* %0, i32 0, i32 1
+  %NumAttrs.i.i.i = getelementptr inbounds %"class.llvm::AttributeSetNode.230.2029.3828.6141.6912.7683.8454.9482.9996.10253.18506", %"class.llvm::AttributeSetNode.230.2029.3828.6141.6912.7683.8454.9482.9996.10253.18506"* %0, i32 0, i32 1
   %1 = load i32* %NumAttrs.i.i.i, align 4, !tbaa !8
-  %add.ptr.i.i.i55 = getelementptr inbounds %"class.llvm::Attribute.222.2021.3820.6133.6904.7675.8446.9474.9988.10245.18509"* undef, i32 %1
+  %add.ptr.i.i.i55 = getelementptr inbounds %"class.llvm::Attribute.222.2021.3820.6133.6904.7675.8446.9474.9988.10245.18509", %"class.llvm::Attribute.222.2021.3820.6133.6904.7675.8446.9474.9988.10245.18509"* undef, i32 %1
   br i1 undef, label %return, label %for.body11
 
 for.cond9:                                        ; preds = %_ZNK4llvm9Attribute13getKindAsEnumEv.exit
@@ -70,7 +70,7 @@ _ZNK4llvm9Attribute15isEnumAttributeEv.exit:      ; preds = %for.body11
   ]
 
 _ZNK4llvm9Attribute13getKindAsEnumEv.exit:        ; preds = %_ZNK4llvm9Attribute15isEnumAttributeEv.exit, %_ZNK4llvm9Attribute15isEnumAttributeEv.exit
-  %incdec.ptr = getelementptr inbounds %"class.llvm::Attribute.222.2021.3820.6133.6904.7675.8446.9474.9988.10245.18509"* %I5.096, i32 1
+  %incdec.ptr = getelementptr inbounds %"class.llvm::Attribute.222.2021.3820.6133.6904.7675.8446.9474.9988.10245.18509", %"class.llvm::Attribute.222.2021.3820.6133.6904.7675.8446.9474.9988.10245.18509"* %I5.096, i32 1
   br i1 undef, label %for.cond9, label %return
 
 cond.false21:                                     ; preds = %_ZNK4llvm9Attribute15isEnumAttributeEv.exit, %for.body11

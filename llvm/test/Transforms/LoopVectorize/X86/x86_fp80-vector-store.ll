@@ -17,7 +17,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %conv = sitofp i32 1 to x86_fp80
-  %arrayidx = getelementptr inbounds [1024 x x86_fp80]* @x, i64 0, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds [1024 x x86_fp80], [1024 x x86_fp80]* @x, i64 0, i64 %indvars.iv
   store x86_fp80 %conv, x86_fp80* %arrayidx, align 16
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32

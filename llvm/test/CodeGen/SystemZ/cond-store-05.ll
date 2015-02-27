@@ -45,7 +45,7 @@ define void @f3(float *%base, float %alt, i32 %limit) {
 ; CHECK: ste %f0, 4092(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 1023
+  %ptr = getelementptr float, float *%base, i64 1023
   %cond = icmp ult i32 %limit, 420
   %orig = load float *%ptr
   %res = select i1 %cond, float %orig, float %alt
@@ -62,7 +62,7 @@ define void @f4(float *%base, float %alt, i32 %limit) {
 ; CHECK: stey %f0, 4096(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 1024
+  %ptr = getelementptr float, float *%base, i64 1024
   %cond = icmp ult i32 %limit, 420
   %orig = load float *%ptr
   %res = select i1 %cond, float %orig, float %alt
@@ -79,7 +79,7 @@ define void @f5(float *%base, float %alt, i32 %limit) {
 ; CHECK: stey %f0, 524284(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 131071
+  %ptr = getelementptr float, float *%base, i64 131071
   %cond = icmp ult i32 %limit, 420
   %orig = load float *%ptr
   %res = select i1 %cond, float %orig, float %alt
@@ -98,7 +98,7 @@ define void @f6(float *%base, float %alt, i32 %limit) {
 ; CHECK: ste %f0, 0(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 131072
+  %ptr = getelementptr float, float *%base, i64 131072
   %cond = icmp ult i32 %limit, 420
   %orig = load float *%ptr
   %res = select i1 %cond, float %orig, float %alt
@@ -115,7 +115,7 @@ define void @f7(float *%base, float %alt, i32 %limit) {
 ; CHECK: stey %f0, -524288(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 -131072
+  %ptr = getelementptr float, float *%base, i64 -131072
   %cond = icmp ult i32 %limit, 420
   %orig = load float *%ptr
   %res = select i1 %cond, float %orig, float %alt
@@ -134,7 +134,7 @@ define void @f8(float *%base, float %alt, i32 %limit) {
 ; CHECK: ste %f0, 0(%r2)
 ; CHECK: [[LABEL]]:
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 -131073
+  %ptr = getelementptr float, float *%base, i64 -131073
   %cond = icmp ult i32 %limit, 420
   %orig = load float *%ptr
   %res = select i1 %cond, float %orig, float %alt

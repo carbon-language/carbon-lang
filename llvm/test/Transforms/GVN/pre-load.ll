@@ -52,7 +52,7 @@ block4:
 define i32 @test3(i32* %p, i32* %q, i32** %Hack, i1 %C) {
 ; CHECK-LABEL: @test3(
 block1:
-  %B = getelementptr i32* %q, i32 1
+  %B = getelementptr i32, i32* %q, i32 1
   store i32* %B, i32** %Hack
 	br i1 %C, label %block2, label %block3
 
@@ -62,13 +62,13 @@ block2:
 ; CHECK-NEXT: load i32* %B
 
 block3:
-  %A = getelementptr i32* %p, i32 1
+  %A = getelementptr i32, i32* %p, i32 1
   store i32 0, i32* %A
   br label %block4
 
 block4:
   %P2 = phi i32* [%p, %block3], [%q, %block2]
-  %P3 = getelementptr i32* %P2, i32 1
+  %P3 = getelementptr i32, i32* %P2, i32 1
   %PRE = load i32* %P3
   ret i32 %PRE
 ; CHECK: block4:
@@ -91,16 +91,16 @@ block2:
 ; CHECK:   br label %block4
 
 block3:
-  %B = getelementptr i32* %q, i32 1
+  %B = getelementptr i32, i32* %q, i32 1
   store i32* %B, i32** %Hack
 
-  %A = getelementptr i32* %p, i32 1
+  %A = getelementptr i32, i32* %p, i32 1
   store i32 0, i32* %A
   br label %block4
 
 block4:
   %P2 = phi i32* [%p, %block3], [%q, %block2]
-  %P3 = getelementptr i32* %P2, i32 1
+  %P3 = getelementptr i32, i32* %P2, i32 1
   %PRE = load i32* %P3
   ret i32 %PRE
 ; CHECK: block4:
@@ -133,8 +133,8 @@ bb.nph:
 bb:             
   %indvar = phi i64 [ 0, %bb.nph ], [ %tmp6, %bb ]
   %tmp6 = add i64 %indvar, 1                    
-  %scevgep = getelementptr double* %G, i64 %tmp6
-  %scevgep7 = getelementptr double* %G, i64 %indvar
+  %scevgep = getelementptr double, double* %G, i64 %tmp6
+  %scevgep7 = getelementptr double, double* %G, i64 %indvar
   %2 = load double* %scevgep7, align 8
   %3 = load double* %scevgep, align 8 
   %4 = fadd double %2, %3             
@@ -176,8 +176,8 @@ bb.nph:
 bb:             
   %indvar = phi i64 [ 0, %bb.nph ], [ %tmp6, %bb ]
   %tmp6 = add i64 %indvar, 1                    
-  %scevgep = getelementptr double* %G, i64 %tmp6
-  %scevgep7 = getelementptr double* %G, i64 %indvar
+  %scevgep = getelementptr double, double* %G, i64 %tmp6
+  %scevgep7 = getelementptr double, double* %G, i64 %indvar
   %2 = load double* %scevgep7, align 8
   %3 = load double* %scevgep, align 8 
   %4 = fadd double %2, %3             
@@ -205,7 +205,7 @@ return:
 ; This requires phi translation of the adds.
 define void @test7(i32 %N, double* nocapture %G) nounwind ssp {
 entry:
-  %0 = getelementptr inbounds double* %G, i64 1   
+  %0 = getelementptr inbounds double, double* %G, i64 1   
   store double 1.000000e+00, double* %0, align 8
   %1 = add i32 %N, -1                             
   %2 = icmp sgt i32 %1, 1                         
@@ -219,9 +219,9 @@ bb.nph:
 bb:                                               
   %indvar = phi i64 [ 0, %bb.nph ], [ %tmp9, %bb ] 
   %tmp8 = add i64 %indvar, 2                      
-  %scevgep = getelementptr double* %G, i64 %tmp8  
+  %scevgep = getelementptr double, double* %G, i64 %tmp8  
   %tmp9 = add i64 %indvar, 1                      
-  %scevgep10 = getelementptr double* %G, i64 %tmp9 
+  %scevgep10 = getelementptr double, double* %G, i64 %tmp9 
   %3 = load double* %scevgep10, align 8           
   %4 = load double* %scevgep, align 8             
   %5 = fadd double %3, %4                         
@@ -253,13 +253,13 @@ block2:
 ; CHECK:   br label %block4
 
 block3:
-  %A = getelementptr i32* %p, i32 1
+  %A = getelementptr i32, i32* %p, i32 1
   store i32 0, i32* %A
   br label %block4
 
 block4:
   %P2 = phi i32* [%p, %block3], [%q, %block2]
-  %P3 = getelementptr i32* %P2, i32 1
+  %P3 = getelementptr i32, i32* %P2, i32 1
   %PRE = load i32* %P3
   ret i32 %PRE
 ; CHECK: block4:
@@ -294,9 +294,9 @@ bb.nph:
 bb:                                               
   %indvar = phi i64 [ 0, %bb.nph ], [ %tmp9, %bb ] 
   %tmp8 = add i64 %indvar, 2                      
-  %scevgep = getelementptr double* %G, i64 %tmp8  
+  %scevgep = getelementptr double, double* %G, i64 %tmp8  
   %tmp9 = add i64 %indvar, 1                      
-  %scevgep10 = getelementptr double* %G, i64 %tmp9 
+  %scevgep10 = getelementptr double, double* %G, i64 %tmp9 
   %3 = load double* %scevgep10, align 8           
   %4 = load double* %scevgep, align 8             
   %5 = fadd double %3, %4                         
@@ -339,11 +339,11 @@ bb.nph:
 
 bb:
   %indvar = phi i64 [ 0, %bb.nph ], [ %tmp11, %bb ]
-  %scevgep = getelementptr double* %G, i64 %indvar
+  %scevgep = getelementptr double, double* %G, i64 %indvar
   %tmp9 = add i64 %indvar, 2
-  %scevgep10 = getelementptr double* %G, i64 %tmp9
+  %scevgep10 = getelementptr double, double* %G, i64 %tmp9
   %tmp11 = add i64 %indvar, 1
-  %scevgep12 = getelementptr double* %G, i64 %tmp11
+  %scevgep12 = getelementptr double, double* %G, i64 %tmp11
   %2 = load double* %scevgep12, align 8
   %3 = load double* %scevgep10, align 8
   %4 = fadd double %2, %3

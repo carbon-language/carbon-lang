@@ -45,16 +45,16 @@ entry:
 	store %struct.trie_s* %t, %struct.trie_s** %t_addr
 	store %struct.FILE* %f, %struct.FILE** %f_addr
 	store i32 0, i32* %wstate
-	%tmp = getelementptr %struct.charsequence* %cs, i64 0, i32 0		; <i8**> [#uses=1]
-	%tmp1 = getelementptr %struct.charsequence* @C.0.2294, i64 0, i32 0		; <i8**> [#uses=1]
+	%tmp = getelementptr %struct.charsequence, %struct.charsequence* %cs, i64 0, i32 0		; <i8**> [#uses=1]
+	%tmp1 = getelementptr %struct.charsequence, %struct.charsequence* @C.0.2294, i64 0, i32 0		; <i8**> [#uses=1]
 	%tmp.upgrd.5 = load i8** %tmp1		; <i8*> [#uses=1]
 	store i8* %tmp.upgrd.5, i8** %tmp
-	%tmp.upgrd.6 = getelementptr %struct.charsequence* %cs, i64 0, i32 1		; <i32*> [#uses=1]
-	%tmp2 = getelementptr %struct.charsequence* @C.0.2294, i64 0, i32 1		; <i32*> [#uses=1]
+	%tmp.upgrd.6 = getelementptr %struct.charsequence, %struct.charsequence* %cs, i64 0, i32 1		; <i32*> [#uses=1]
+	%tmp2 = getelementptr %struct.charsequence, %struct.charsequence* @C.0.2294, i64 0, i32 1		; <i32*> [#uses=1]
 	%tmp.upgrd.7 = load i32* %tmp2		; <i32> [#uses=1]
 	store i32 %tmp.upgrd.7, i32* %tmp.upgrd.6
-	%tmp3 = getelementptr %struct.charsequence* %cs, i64 0, i32 2		; <i32*> [#uses=1]
-	%tmp4 = getelementptr %struct.charsequence* @C.0.2294, i64 0, i32 2		; <i32*> [#uses=1]
+	%tmp3 = getelementptr %struct.charsequence, %struct.charsequence* %cs, i64 0, i32 2		; <i32*> [#uses=1]
+	%tmp4 = getelementptr %struct.charsequence, %struct.charsequence* @C.0.2294, i64 0, i32 2		; <i32*> [#uses=1]
 	%tmp5 = load i32* %tmp4		; <i32> [#uses=1]
 	store i32 %tmp5, i32* %tmp3
 	br label %bb33

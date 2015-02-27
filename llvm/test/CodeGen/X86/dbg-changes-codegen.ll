@@ -63,7 +63,7 @@ if.then.i:                                        ; preds = %entry
   br label %_ZN7Flibble3barEP6Wibble.exit
 
 _ZN7Flibble3barEP6Wibble.exit:                    ; preds = %entry, %if.then.i
-  %x.i = getelementptr inbounds %struct.Wibble* %0, i64 0, i32 0
+  %x.i = getelementptr inbounds %struct.Wibble, %struct.Wibble* %0, i64 0, i32 0
   store i32 0, i32* %x.i, align 4
   ret void
 }

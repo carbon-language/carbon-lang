@@ -32,7 +32,7 @@ BB0:
   %5 = inttoptr i32 %0 to i32*                    ; <i32*> [#uses=1]
   %t35 = load volatile i32* %5                    ; <i32> [#uses=1]
   %6 = inttoptr i32 %t35 to i32**                 ; <i32**> [#uses=1]
-  %7 = getelementptr i32** %6, i32 86             ; <i32**> [#uses=1]
+  %7 = getelementptr i32*, i32** %6, i32 86             ; <i32**> [#uses=1]
   %8 = load i32** %7                              ; <i32*> [#uses=1]
   %9 = bitcast i32* %8 to i32* (i32, i32*, i32, i32*, i32*, i32*)* ; <i32* (i32, i32*, i32, i32*, i32*, i32*)*> [#uses=1]
   %10 = call i32* %9(i32 %0, i32* null, i32 %1, i32* %2, i32* %3, i32* %4) ; <i32*> [#uses=1]

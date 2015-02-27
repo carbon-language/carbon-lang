@@ -10,12 +10,12 @@ entry:
 	%tmp = alloca i32		; <i32*> [#uses=2]
 	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
 	store i16 %b, i16* %b_addr
-	%tmp1 = getelementptr %struct.S* %s, i32 0, i32 0		; <i16*> [#uses=1]
+	%tmp1 = getelementptr %struct.S, %struct.S* %s, i32 0, i32 0		; <i16*> [#uses=1]
 	%tmp2 = load i16* %b_addr, align 2		; <i16> [#uses=1]
 	store i16 %tmp2, i16* %tmp1, align 2
-	%tmp3 = getelementptr %struct.S* %s, i32 0, i32 0		; <i16*> [#uses=1]
+	%tmp3 = getelementptr %struct.S, %struct.S* %s, i32 0, i32 0		; <i16*> [#uses=1]
 	%tmp34 = bitcast i16* %tmp3 to [2 x i1]*		; <[2 x i1]*> [#uses=1]
-	%tmp5 = getelementptr [2 x i1]* %tmp34, i32 0, i32 1		; <i1*> [#uses=1]
+	%tmp5 = getelementptr [2 x i1], [2 x i1]* %tmp34, i32 0, i32 1		; <i1*> [#uses=1]
 	%tmp6 = load i1* %tmp5, align 1		; <i1> [#uses=1]
 	%tmp67 = zext i1 %tmp6 to i32		; <i32> [#uses=1]
 	store i32 %tmp67, i32* %tmp, align 4

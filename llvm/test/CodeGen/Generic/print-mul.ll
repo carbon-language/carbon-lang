@@ -12,9 +12,9 @@ define i32 @main() {
 entry:
 	%a = load i32* @A		; <i32> [#uses=2]
 	%b = load i32* @B		; <i32> [#uses=1]
-	%a_s = getelementptr [8 x i8]* @a_str, i64 0, i64 0		; <i8*> [#uses=1]
-	%b_s = getelementptr [8 x i8]* @b_str, i64 0, i64 0		; <i8*> [#uses=1]
-	%a_mul_s = getelementptr [13 x i8]* @a_mul_str, i64 0, i64 0		; <i8*> [#uses=1]
+	%a_s = getelementptr [8 x i8], [8 x i8]* @a_str, i64 0, i64 0		; <i8*> [#uses=1]
+	%b_s = getelementptr [8 x i8], [8 x i8]* @b_str, i64 0, i64 0		; <i8*> [#uses=1]
+	%a_mul_s = getelementptr [13 x i8], [13 x i8]* @a_mul_str, i64 0, i64 0		; <i8*> [#uses=1]
 	call i32 (i8*, ...)* @printf( i8* %a_s, i32 %a )		; <i32>:0 [#uses=0]
 	call i32 (i8*, ...)* @printf( i8* %b_s, i32 %b )		; <i32>:1 [#uses=0]
 	br label %shl_test

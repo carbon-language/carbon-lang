@@ -20,25 +20,25 @@ entry:
   store i32 %u, i32* %u.addr, align 4
   %mul = mul nsw i32 %u, 3
   %idxprom = sext i32 %mul to i64
-  %arrayidx = getelementptr inbounds [2000 x double]* @A, i32 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [2000 x double], [2000 x double]* @A, i32 0, i64 %idxprom
   %0 = load double* %arrayidx, align 8
-  %arrayidx4 = getelementptr inbounds [2000 x double]* @B, i32 0, i64 %idxprom
+  %arrayidx4 = getelementptr inbounds [2000 x double], [2000 x double]* @B, i32 0, i64 %idxprom
   %1 = load double* %arrayidx4, align 8
   %add5 = fadd double %0, %1
   store double %add5, double* %arrayidx, align 8
   %add11 = add nsw i32 %mul, 1
   %idxprom12 = sext i32 %add11 to i64
-  %arrayidx13 = getelementptr inbounds [2000 x double]* @A, i32 0, i64 %idxprom12
+  %arrayidx13 = getelementptr inbounds [2000 x double], [2000 x double]* @A, i32 0, i64 %idxprom12
   %2 = load double* %arrayidx13, align 8
-  %arrayidx17 = getelementptr inbounds [2000 x double]* @B, i32 0, i64 %idxprom12
+  %arrayidx17 = getelementptr inbounds [2000 x double], [2000 x double]* @B, i32 0, i64 %idxprom12
   %3 = load double* %arrayidx17, align 8
   %add18 = fadd double %2, %3
   store double %add18, double* %arrayidx13, align 8
   %add24 = add nsw i32 %mul, 2
   %idxprom25 = sext i32 %add24 to i64
-  %arrayidx26 = getelementptr inbounds [2000 x double]* @A, i32 0, i64 %idxprom25
+  %arrayidx26 = getelementptr inbounds [2000 x double], [2000 x double]* @A, i32 0, i64 %idxprom25
   %4 = load double* %arrayidx26, align 8
-  %arrayidx30 = getelementptr inbounds [2000 x double]* @B, i32 0, i64 %idxprom25
+  %arrayidx30 = getelementptr inbounds [2000 x double], [2000 x double]* @B, i32 0, i64 %idxprom25
   %5 = load double* %arrayidx30, align 8
   %add31 = fadd double %4, %5
   store double %add31, double* %arrayidx26, align 8
@@ -57,17 +57,17 @@ entry:
   store i32 %u, i32* %u.addr, align 4
   %mul = mul nsw i32 %u, 2
   %idxprom = sext i32 %mul to i64
-  %arrayidx = getelementptr inbounds [2000 x double]* @A, i32 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [2000 x double], [2000 x double]* @A, i32 0, i64 %idxprom
   %0 = load double* %arrayidx, align 8
-  %arrayidx4 = getelementptr inbounds [2000 x double]* @B, i32 0, i64 %idxprom
+  %arrayidx4 = getelementptr inbounds [2000 x double], [2000 x double]* @B, i32 0, i64 %idxprom
   %1 = load double* %arrayidx4, align 8
   %add5 = fadd double %0, %1
   store double %add5, double* %arrayidx, align 8
   %add11 = add nsw i32 %mul, 1
   %idxprom12 = sext i32 %add11 to i64
-  %arrayidx13 = getelementptr inbounds [2000 x double]* @A, i32 0, i64 %idxprom12
+  %arrayidx13 = getelementptr inbounds [2000 x double], [2000 x double]* @A, i32 0, i64 %idxprom12
   %2 = load double* %arrayidx13, align 8
-  %arrayidx17 = getelementptr inbounds [2000 x double]* @B, i32 0, i64 %idxprom12
+  %arrayidx17 = getelementptr inbounds [2000 x double], [2000 x double]* @B, i32 0, i64 %idxprom12
   %3 = load double* %arrayidx17, align 8
   %add18 = fadd double %2, %3
   store double %add18, double* %arrayidx13, align 8
@@ -84,33 +84,33 @@ entry:
   store i32 %u, i32* %u.addr, align 4
   %mul = mul nsw i32 %u, 4
   %idxprom = sext i32 %mul to i64
-  %arrayidx = getelementptr inbounds [2000 x float]* @C, i32 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [2000 x float], [2000 x float]* @C, i32 0, i64 %idxprom
   %0 = load float* %arrayidx, align 4
-  %arrayidx4 = getelementptr inbounds [2000 x float]* @D, i32 0, i64 %idxprom
+  %arrayidx4 = getelementptr inbounds [2000 x float], [2000 x float]* @D, i32 0, i64 %idxprom
   %1 = load float* %arrayidx4, align 4
   %add5 = fadd float %0, %1
   store float %add5, float* %arrayidx, align 4
   %add11 = add nsw i32 %mul, 1
   %idxprom12 = sext i32 %add11 to i64
-  %arrayidx13 = getelementptr inbounds [2000 x float]* @C, i32 0, i64 %idxprom12
+  %arrayidx13 = getelementptr inbounds [2000 x float], [2000 x float]* @C, i32 0, i64 %idxprom12
   %2 = load float* %arrayidx13, align 4
-  %arrayidx17 = getelementptr inbounds [2000 x float]* @D, i32 0, i64 %idxprom12
+  %arrayidx17 = getelementptr inbounds [2000 x float], [2000 x float]* @D, i32 0, i64 %idxprom12
   %3 = load float* %arrayidx17, align 4
   %add18 = fadd float %2, %3
   store float %add18, float* %arrayidx13, align 4
   %add24 = add nsw i32 %mul, 2
   %idxprom25 = sext i32 %add24 to i64
-  %arrayidx26 = getelementptr inbounds [2000 x float]* @C, i32 0, i64 %idxprom25
+  %arrayidx26 = getelementptr inbounds [2000 x float], [2000 x float]* @C, i32 0, i64 %idxprom25
   %4 = load float* %arrayidx26, align 4
-  %arrayidx30 = getelementptr inbounds [2000 x float]* @D, i32 0, i64 %idxprom25
+  %arrayidx30 = getelementptr inbounds [2000 x float], [2000 x float]* @D, i32 0, i64 %idxprom25
   %5 = load float* %arrayidx30, align 4
   %add31 = fadd float %4, %5
   store float %add31, float* %arrayidx26, align 4
   %add37 = add nsw i32 %mul, 3
   %idxprom38 = sext i32 %add37 to i64
-  %arrayidx39 = getelementptr inbounds [2000 x float]* @C, i32 0, i64 %idxprom38
+  %arrayidx39 = getelementptr inbounds [2000 x float], [2000 x float]* @C, i32 0, i64 %idxprom38
   %6 = load float* %arrayidx39, align 4
-  %arrayidx43 = getelementptr inbounds [2000 x float]* @D, i32 0, i64 %idxprom38
+  %arrayidx43 = getelementptr inbounds [2000 x float], [2000 x float]* @D, i32 0, i64 %idxprom38
   %7 = load float* %arrayidx43, align 4
   %add44 = fadd float %6, %7
   store float %add44, float* %arrayidx39, align 4
@@ -142,12 +142,12 @@ for.body:                                         ; preds = %for.body.lr.ph, %fo
   %1 = phi double [ 0.000000e+00, %for.body.lr.ph ], [ %add7, %for.body ]
   %mul = mul nsw i32 %0, 2
   %idxprom = sext i32 %mul to i64
-  %arrayidx = getelementptr inbounds double* %A, i64 %idxprom
+  %arrayidx = getelementptr inbounds double, double* %A, i64 %idxprom
   %2 = load double* %arrayidx, align 8
   %mul1 = fmul double 7.000000e+00, %2
   %add = add nsw i32 %mul, 1
   %idxprom3 = sext i32 %add to i64
-  %arrayidx4 = getelementptr inbounds double* %A, i64 %idxprom3
+  %arrayidx4 = getelementptr inbounds double, double* %A, i64 %idxprom3
   %3 = load double* %arrayidx4, align 8
   %mul5 = fmul double 7.000000e+00, %3
   %add6 = fadd double %mul1, %mul5

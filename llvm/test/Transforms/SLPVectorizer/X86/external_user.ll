@@ -33,7 +33,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 define double @ext_user(double* noalias nocapture %B, double* noalias nocapture %A, i32 %n, i32 %m) {
 entry:
-  %arrayidx = getelementptr inbounds double* %A, i64 1
+  %arrayidx = getelementptr inbounds double, double* %A, i64 1
   %0 = load double* %arrayidx, align 8
   %1 = load double* %A, align 8
   br label %for.body
@@ -54,7 +54,7 @@ for.body:                                         ; preds = %for.body, %entry
 
 for.end:                                          ; preds = %for.body
   store double %add5, double* %B, align 8
-  %arrayidx7 = getelementptr inbounds double* %B, i64 1
+  %arrayidx7 = getelementptr inbounds double, double* %B, i64 1
   store double %add4, double* %arrayidx7, align 8
   ret double %mul3
 }

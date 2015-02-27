@@ -6,8 +6,8 @@
 define void @v64_v8i8_1(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v64_v8i8_1:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <8 x i8>*
   %vo  = bitcast i8* %po to <8 x i8>*
 ;CHECK: vld1.8
@@ -24,8 +24,8 @@ entry:
 define void @v64_v4i16_1(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v64_v4i16_1:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <4 x i16>*
   %vo  = bitcast i8* %po to <4 x i16>*
 ;CHECK: vld1.8
@@ -42,8 +42,8 @@ entry:
 define void @v64_v2i32_1(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v64_v2i32_1:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <2 x i32>*
   %vo  = bitcast i8* %po to <2 x i32>*
 ;CHECK: vld1.8
@@ -60,8 +60,8 @@ entry:
 define void @v64_v2f32_1(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v64_v2f32_1:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <2 x float>*
   %vo  = bitcast i8* %po to <2 x float>*
 ;CHECK: vld1.8
@@ -78,8 +78,8 @@ entry:
 define void @v128_v16i8_1(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v16i8_1:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <16 x i8>*
   %vo  = bitcast i8* %po to <16 x i8>*
 ;CHECK: vld1.8
@@ -96,8 +96,8 @@ entry:
 define void @v128_v8i16_1(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v8i16_1:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <8 x i16>*
   %vo  = bitcast i8* %po to <8 x i16>*
 ;CHECK: vld1.8
@@ -114,8 +114,8 @@ entry:
 define void @v128_v4i32_1(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v4i32_1:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <4 x i32>*
   %vo  = bitcast i8* %po to <4 x i32>*
 ;CHECK: vld1.8
@@ -132,8 +132,8 @@ entry:
 define void @v128_v2i64_1(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v2i64_1:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <2 x i64>*
   %vo  = bitcast i8* %po to <2 x i64>*
 ;CHECK: vld1.8
@@ -150,8 +150,8 @@ entry:
 define void @v128_v4f32_1(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v4f32_1:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <4 x float>*
   %vo  = bitcast i8* %po to <4 x float>*
 ;CHECK: vld1.8
@@ -168,8 +168,8 @@ entry:
 define void @v64_v8i8_2(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v64_v8i8_2:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <8 x i8>*
   %vo  = bitcast i8* %po to <8 x i8>*
 ;CHECK: vld1.16
@@ -186,8 +186,8 @@ entry:
 define void @v64_v4i16_2(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v64_v4i16_2:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <4 x i16>*
   %vo  = bitcast i8* %po to <4 x i16>*
 ;CHECK: vld1.16
@@ -204,8 +204,8 @@ entry:
 define void @v64_v2i32_2(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v64_v2i32_2:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <2 x i32>*
   %vo  = bitcast i8* %po to <2 x i32>*
 ;CHECK: vld1.16
@@ -222,8 +222,8 @@ entry:
 define void @v64_v2f32_2(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v64_v2f32_2:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <2 x float>*
   %vo  = bitcast i8* %po to <2 x float>*
 ;CHECK: vld1.16
@@ -240,8 +240,8 @@ entry:
 define void @v128_v16i8_2(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v16i8_2:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <16 x i8>*
   %vo  = bitcast i8* %po to <16 x i8>*
 ;CHECK: vld1.16
@@ -258,8 +258,8 @@ entry:
 define void @v128_v8i16_2(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v8i16_2:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <8 x i16>*
   %vo  = bitcast i8* %po to <8 x i16>*
 ;CHECK: vld1.16
@@ -276,8 +276,8 @@ entry:
 define void @v128_v4i32_2(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v4i32_2:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <4 x i32>*
   %vo  = bitcast i8* %po to <4 x i32>*
 ;CHECK: vld1.16
@@ -294,8 +294,8 @@ entry:
 define void @v128_v2i64_2(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v2i64_2:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <2 x i64>*
   %vo  = bitcast i8* %po to <2 x i64>*
 ;CHECK: vld1.16
@@ -312,8 +312,8 @@ entry:
 define void @v128_v4f32_2(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v4f32_2:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <4 x float>*
   %vo  = bitcast i8* %po to <4 x float>*
 ;CHECK: vld1.16
@@ -330,8 +330,8 @@ entry:
 define void @v64_v8i8_4(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v64_v8i8_4:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <8 x i8>*
   %vo  = bitcast i8* %po to <8 x i8>*
 ;CHECK: vldr
@@ -348,8 +348,8 @@ entry:
 define void @v64_v4i16_4(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v64_v4i16_4:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <4 x i16>*
   %vo  = bitcast i8* %po to <4 x i16>*
 ;CHECK: vldr
@@ -366,8 +366,8 @@ entry:
 define void @v64_v2i32_4(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v64_v2i32_4:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <2 x i32>*
   %vo  = bitcast i8* %po to <2 x i32>*
 ;CHECK: vldr
@@ -384,8 +384,8 @@ entry:
 define void @v64_v2f32_4(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v64_v2f32_4:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <2 x float>*
   %vo  = bitcast i8* %po to <2 x float>*
 ;CHECK: vldr
@@ -402,8 +402,8 @@ entry:
 define void @v128_v16i8_4(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v16i8_4:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <16 x i8>*
   %vo  = bitcast i8* %po to <16 x i8>*
 ;CHECK: vld1.32
@@ -420,8 +420,8 @@ entry:
 define void @v128_v8i16_4(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v8i16_4:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <8 x i16>*
   %vo  = bitcast i8* %po to <8 x i16>*
 ;CHECK: vld1.32
@@ -438,8 +438,8 @@ entry:
 define void @v128_v4i32_4(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v4i32_4:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <4 x i32>*
   %vo  = bitcast i8* %po to <4 x i32>*
 ;CHECK: vld1.32
@@ -456,8 +456,8 @@ entry:
 define void @v128_v2i64_4(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v2i64_4:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <2 x i64>*
   %vo  = bitcast i8* %po to <2 x i64>*
 ;CHECK: vld1.32
@@ -474,8 +474,8 @@ entry:
 define void @v128_v4f32_4(i8* noalias nocapture %out, i8* noalias nocapture %in) nounwind {
 ;CHECK-LABEL: v128_v4f32_4:
 entry:
-  %po = getelementptr i8* %out, i32 0
-  %pi = getelementptr i8* %in,  i32 0
+  %po = getelementptr i8, i8* %out, i32 0
+  %pi = getelementptr i8, i8* %in,  i32 0
   %vi  = bitcast i8* %pi to <4 x float>*
   %vo  = bitcast i8* %po to <4 x float>*
 ;CHECK: vld1.32

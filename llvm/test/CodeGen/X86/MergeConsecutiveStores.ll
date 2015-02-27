@@ -17,24 +17,24 @@ define void @merge_const_store(i32 %count, %struct.A* nocapture %p) nounwind uwt
 .lr.ph:
   %i.02 = phi i32 [ %10, %.lr.ph ], [ 0, %0 ]
   %.01 = phi %struct.A* [ %11, %.lr.ph ], [ %p, %0 ]
-  %2 = getelementptr inbounds %struct.A* %.01, i64 0, i32 0
+  %2 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 0
   store i8 1, i8* %2, align 1
-  %3 = getelementptr inbounds %struct.A* %.01, i64 0, i32 1
+  %3 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 1
   store i8 2, i8* %3, align 1
-  %4 = getelementptr inbounds %struct.A* %.01, i64 0, i32 2
+  %4 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 2
   store i8 3, i8* %4, align 1
-  %5 = getelementptr inbounds %struct.A* %.01, i64 0, i32 3
+  %5 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 3
   store i8 4, i8* %5, align 1
-  %6 = getelementptr inbounds %struct.A* %.01, i64 0, i32 4
+  %6 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 4
   store i8 5, i8* %6, align 1
-  %7 = getelementptr inbounds %struct.A* %.01, i64 0, i32 5
+  %7 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 5
   store i8 6, i8* %7, align 1
-  %8 = getelementptr inbounds %struct.A* %.01, i64 0, i32 6
+  %8 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 6
   store i8 7, i8* %8, align 1
-  %9 = getelementptr inbounds %struct.A* %.01, i64 0, i32 7
+  %9 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 7
   store i8 8, i8* %9, align 1
   %10 = add nsw i32 %i.02, 1
-  %11 = getelementptr inbounds %struct.A* %.01, i64 1
+  %11 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 1
   %exitcond = icmp eq i32 %10, %count
   br i1 %exitcond, label %._crit_edge, label %.lr.ph
 ._crit_edge:
@@ -51,24 +51,24 @@ define void @merge_const_store_no_vec(i32 %count, %struct.B* nocapture %p) noimp
 .lr.ph:
   %i.02 = phi i32 [ %10, %.lr.ph ], [ 0, %0 ]
   %.01 = phi %struct.B* [ %11, %.lr.ph ], [ %p, %0 ]
-  %2 = getelementptr inbounds %struct.B* %.01, i64 0, i32 0
+  %2 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 0
   store i32 0, i32* %2, align 4
-  %3 = getelementptr inbounds %struct.B* %.01, i64 0, i32 1
+  %3 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 1
   store i32 0, i32* %3, align 4
-  %4 = getelementptr inbounds %struct.B* %.01, i64 0, i32 2
+  %4 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 2
   store i32 0, i32* %4, align 4
-  %5 = getelementptr inbounds %struct.B* %.01, i64 0, i32 3
+  %5 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 3
   store i32 0, i32* %5, align 4
-  %6 = getelementptr inbounds %struct.B* %.01, i64 0, i32 4
+  %6 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 4
   store i32 0, i32* %6, align 4
-  %7 = getelementptr inbounds %struct.B* %.01, i64 0, i32 5
+  %7 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 5
   store i32 0, i32* %7, align 4
-  %8 = getelementptr inbounds %struct.B* %.01, i64 0, i32 6
+  %8 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 6
   store i32 0, i32* %8, align 4
-  %9 = getelementptr inbounds %struct.B* %.01, i64 0, i32 7
+  %9 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 7
   store i32 0, i32* %9, align 4
   %10 = add nsw i32 %i.02, 1
-  %11 = getelementptr inbounds %struct.B* %.01, i64 1
+  %11 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 1
   %exitcond = icmp eq i32 %10, %count
   br i1 %exitcond, label %._crit_edge, label %.lr.ph
 ._crit_edge:
@@ -85,24 +85,24 @@ define void @merge_const_store_vec(i32 %count, %struct.B* nocapture %p) nounwind
 .lr.ph:
   %i.02 = phi i32 [ %10, %.lr.ph ], [ 0, %0 ]
   %.01 = phi %struct.B* [ %11, %.lr.ph ], [ %p, %0 ]
-  %2 = getelementptr inbounds %struct.B* %.01, i64 0, i32 0
+  %2 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 0
   store i32 0, i32* %2, align 4
-  %3 = getelementptr inbounds %struct.B* %.01, i64 0, i32 1
+  %3 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 1
   store i32 0, i32* %3, align 4
-  %4 = getelementptr inbounds %struct.B* %.01, i64 0, i32 2
+  %4 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 2
   store i32 0, i32* %4, align 4
-  %5 = getelementptr inbounds %struct.B* %.01, i64 0, i32 3
+  %5 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 3
   store i32 0, i32* %5, align 4
-  %6 = getelementptr inbounds %struct.B* %.01, i64 0, i32 4
+  %6 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 4
   store i32 0, i32* %6, align 4
-  %7 = getelementptr inbounds %struct.B* %.01, i64 0, i32 5
+  %7 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 5
   store i32 0, i32* %7, align 4
-  %8 = getelementptr inbounds %struct.B* %.01, i64 0, i32 6
+  %8 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 6
   store i32 0, i32* %8, align 4
-  %9 = getelementptr inbounds %struct.B* %.01, i64 0, i32 7
+  %9 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 7
   store i32 0, i32* %9, align 4
   %10 = add nsw i32 %i.02, 1
-  %11 = getelementptr inbounds %struct.B* %.01, i64 1
+  %11 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 1
   %exitcond = icmp eq i32 %10, %count
   br i1 %exitcond, label %._crit_edge, label %.lr.ph
 ._crit_edge:
@@ -123,24 +123,24 @@ define void @merge_nonconst_store(i32 %count, i8 %zz, %struct.A* nocapture %p) n
 .lr.ph:
   %i.02 = phi i32 [ %10, %.lr.ph ], [ 0, %0 ]
   %.01 = phi %struct.A* [ %11, %.lr.ph ], [ %p, %0 ]
-  %2 = getelementptr inbounds %struct.A* %.01, i64 0, i32 0
+  %2 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 0
   store i8 1, i8* %2, align 1
-  %3 = getelementptr inbounds %struct.A* %.01, i64 0, i32 1
+  %3 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 1
   store i8 2, i8* %3, align 1
-  %4 = getelementptr inbounds %struct.A* %.01, i64 0, i32 2
+  %4 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 2
   store i8 3, i8* %4, align 1
-  %5 = getelementptr inbounds %struct.A* %.01, i64 0, i32 3
+  %5 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 3
   store i8 4, i8* %5, align 1
-  %6 = getelementptr inbounds %struct.A* %.01, i64 0, i32 4
+  %6 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 4
   store i8 %zz, i8* %6, align 1                     ;  <----------- Not a const;
-  %7 = getelementptr inbounds %struct.A* %.01, i64 0, i32 5
+  %7 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 5
   store i8 6, i8* %7, align 1
-  %8 = getelementptr inbounds %struct.A* %.01, i64 0, i32 6
+  %8 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 6
   store i8 7, i8* %8, align 1
-  %9 = getelementptr inbounds %struct.A* %.01, i64 0, i32 7
+  %9 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 7
   store i8 8, i8* %9, align 1
   %10 = add nsw i32 %i.02, 1
-  %11 = getelementptr inbounds %struct.A* %.01, i64 1
+  %11 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 1
   %exitcond = icmp eq i32 %10, %count
   br i1 %exitcond, label %._crit_edge, label %.lr.ph
 ._crit_edge:
@@ -159,8 +159,8 @@ define void @merge_loads_i16(i32 %count, %struct.A* noalias nocapture %q, %struc
   br i1 %1, label %.lr.ph, label %._crit_edge
 
 .lr.ph:                                           ; preds = %0
-  %2 = getelementptr inbounds %struct.A* %q, i64 0, i32 0
-  %3 = getelementptr inbounds %struct.A* %q, i64 0, i32 1
+  %2 = getelementptr inbounds %struct.A, %struct.A* %q, i64 0, i32 0
+  %3 = getelementptr inbounds %struct.A, %struct.A* %q, i64 0, i32 1
   br label %4
 
 ; <label>:4                                       ; preds = %4, %.lr.ph
@@ -168,12 +168,12 @@ define void @merge_loads_i16(i32 %count, %struct.A* noalias nocapture %q, %struc
   %.01 = phi %struct.A* [ %p, %.lr.ph ], [ %10, %4 ]
   %5 = load i8* %2, align 1
   %6 = load i8* %3, align 1
-  %7 = getelementptr inbounds %struct.A* %.01, i64 0, i32 0
+  %7 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 0
   store i8 %5, i8* %7, align 1
-  %8 = getelementptr inbounds %struct.A* %.01, i64 0, i32 1
+  %8 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 1
   store i8 %6, i8* %8, align 1
   %9 = add nsw i32 %i.02, 1
-  %10 = getelementptr inbounds %struct.A* %.01, i64 1
+  %10 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 1
   %exitcond = icmp eq i32 %9, %count
   br i1 %exitcond, label %._crit_edge, label %4
 
@@ -193,21 +193,21 @@ define void @no_merge_loads(i32 %count, %struct.A* noalias nocapture %q, %struct
   br i1 %1, label %.lr.ph, label %._crit_edge
 
 .lr.ph:                                           ; preds = %0
-  %2 = getelementptr inbounds %struct.A* %q, i64 0, i32 0
-  %3 = getelementptr inbounds %struct.A* %q, i64 0, i32 1
+  %2 = getelementptr inbounds %struct.A, %struct.A* %q, i64 0, i32 0
+  %3 = getelementptr inbounds %struct.A, %struct.A* %q, i64 0, i32 1
   br label %a4
 
 a4:                                       ; preds = %4, %.lr.ph
   %i.02 = phi i32 [ 0, %.lr.ph ], [ %a9, %a4 ]
   %.01 = phi %struct.A* [ %p, %.lr.ph ], [ %a10, %a4 ]
   %a5 = load i8* %2, align 1
-  %a7 = getelementptr inbounds %struct.A* %.01, i64 0, i32 0
+  %a7 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 0
   store i8 %a5, i8* %a7, align 1
-  %a8 = getelementptr inbounds %struct.A* %.01, i64 0, i32 1
+  %a8 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 0, i32 1
   %a6 = load i8* %3, align 1
   store i8 %a6, i8* %a8, align 1
   %a9 = add nsw i32 %i.02, 1
-  %a10 = getelementptr inbounds %struct.A* %.01, i64 1
+  %a10 = getelementptr inbounds %struct.A, %struct.A* %.01, i64 1
   %exitcond = icmp eq i32 %a9, %count
   br i1 %exitcond, label %._crit_edge, label %a4
 
@@ -227,8 +227,8 @@ define void @merge_loads_integer(i32 %count, %struct.B* noalias nocapture %q, %s
   br i1 %1, label %.lr.ph, label %._crit_edge
 
 .lr.ph:                                           ; preds = %0
-  %2 = getelementptr inbounds %struct.B* %q, i64 0, i32 0
-  %3 = getelementptr inbounds %struct.B* %q, i64 0, i32 1
+  %2 = getelementptr inbounds %struct.B, %struct.B* %q, i64 0, i32 0
+  %3 = getelementptr inbounds %struct.B, %struct.B* %q, i64 0, i32 1
   br label %4
 
 ; <label>:4                                       ; preds = %4, %.lr.ph
@@ -236,12 +236,12 @@ define void @merge_loads_integer(i32 %count, %struct.B* noalias nocapture %q, %s
   %.01 = phi %struct.B* [ %p, %.lr.ph ], [ %10, %4 ]
   %5 = load i32* %2
   %6 = load i32* %3
-  %7 = getelementptr inbounds %struct.B* %.01, i64 0, i32 0
+  %7 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 0
   store i32 %5, i32* %7
-  %8 = getelementptr inbounds %struct.B* %.01, i64 0, i32 1
+  %8 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 1
   store i32 %6, i32* %8
   %9 = add nsw i32 %i.02, 1
-  %10 = getelementptr inbounds %struct.B* %.01, i64 1
+  %10 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 1
   %exitcond = icmp eq i32 %9, %count
   br i1 %exitcond, label %._crit_edge, label %4
 
@@ -261,19 +261,19 @@ define void @merge_loads_vector(i32 %count, %struct.B* noalias nocapture %q, %st
   br i1 %a1, label %.lr.ph, label %._crit_edge
 
 .lr.ph:                                           ; preds = %0
-  %a2 = getelementptr inbounds %struct.B* %q, i64 0, i32 0
-  %a3 = getelementptr inbounds %struct.B* %q, i64 0, i32 1
-  %a4 = getelementptr inbounds %struct.B* %q, i64 0, i32 2
-  %a5 = getelementptr inbounds %struct.B* %q, i64 0, i32 3
+  %a2 = getelementptr inbounds %struct.B, %struct.B* %q, i64 0, i32 0
+  %a3 = getelementptr inbounds %struct.B, %struct.B* %q, i64 0, i32 1
+  %a4 = getelementptr inbounds %struct.B, %struct.B* %q, i64 0, i32 2
+  %a5 = getelementptr inbounds %struct.B, %struct.B* %q, i64 0, i32 3
   br label %block4
 
 block4:                                       ; preds = %4, %.lr.ph
   %i.02 = phi i32 [ 0, %.lr.ph ], [ %c9, %block4 ]
   %.01 = phi %struct.B* [ %p, %.lr.ph ], [ %c10, %block4 ]
-  %a7 = getelementptr inbounds %struct.B* %.01, i64 0, i32 0
-  %a8 = getelementptr inbounds %struct.B* %.01, i64 0, i32 1
-  %a9 = getelementptr inbounds %struct.B* %.01, i64 0, i32 2
-  %a10 = getelementptr inbounds %struct.B* %.01, i64 0, i32 3
+  %a7 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 0
+  %a8 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 1
+  %a9 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 2
+  %a10 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 3
   %b1 = load i32* %a2
   %b2 = load i32* %a3
   %b3 = load i32* %a4
@@ -283,7 +283,7 @@ block4:                                       ; preds = %4, %.lr.ph
   store i32 %b3, i32* %a9
   store i32 %b4, i32* %a10
   %c9 = add nsw i32 %i.02, 1
-  %c10 = getelementptr inbounds %struct.B* %.01, i64 1
+  %c10 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 1
   %exitcond = icmp eq i32 %c9, %count
   br i1 %exitcond, label %._crit_edge, label %block4
 
@@ -308,19 +308,19 @@ define void @merge_loads_no_align(i32 %count, %struct.B* noalias nocapture %q, %
   br i1 %a1, label %.lr.ph, label %._crit_edge
 
 .lr.ph:                                           ; preds = %0
-  %a2 = getelementptr inbounds %struct.B* %q, i64 0, i32 0
-  %a3 = getelementptr inbounds %struct.B* %q, i64 0, i32 1
-  %a4 = getelementptr inbounds %struct.B* %q, i64 0, i32 2
-  %a5 = getelementptr inbounds %struct.B* %q, i64 0, i32 3
+  %a2 = getelementptr inbounds %struct.B, %struct.B* %q, i64 0, i32 0
+  %a3 = getelementptr inbounds %struct.B, %struct.B* %q, i64 0, i32 1
+  %a4 = getelementptr inbounds %struct.B, %struct.B* %q, i64 0, i32 2
+  %a5 = getelementptr inbounds %struct.B, %struct.B* %q, i64 0, i32 3
   br label %block4
 
 block4:                                       ; preds = %4, %.lr.ph
   %i.02 = phi i32 [ 0, %.lr.ph ], [ %c9, %block4 ]
   %.01 = phi %struct.B* [ %p, %.lr.ph ], [ %c10, %block4 ]
-  %a7 = getelementptr inbounds %struct.B* %.01, i64 0, i32 0
-  %a8 = getelementptr inbounds %struct.B* %.01, i64 0, i32 1
-  %a9 = getelementptr inbounds %struct.B* %.01, i64 0, i32 2
-  %a10 = getelementptr inbounds %struct.B* %.01, i64 0, i32 3
+  %a7 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 0
+  %a8 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 1
+  %a9 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 2
+  %a10 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 0, i32 3
   %b1 = load i32* %a2, align 1
   %b2 = load i32* %a3, align 1
   %b3 = load i32* %a4, align 1
@@ -330,7 +330,7 @@ block4:                                       ; preds = %4, %.lr.ph
   store i32 %b3, i32* %a9, align 1
   store i32 %b4, i32* %a10, align 1
   %c9 = add nsw i32 %i.02, 1
-  %c10 = getelementptr inbounds %struct.B* %.01, i64 1
+  %c10 = getelementptr inbounds %struct.B, %struct.B* %.01, i64 1
   %exitcond = icmp eq i32 %c9, %count
   br i1 %exitcond, label %._crit_edge, label %block4
 
@@ -350,17 +350,17 @@ define void @MergeLoadStoreBaseIndexOffset(i64* %a, i8* %b, i8* %c, i32 %n) {
   %.09 = phi i32 [ %n, %0 ], [ %11, %1 ]
   %.08 = phi i8* [ %b, %0 ], [ %10, %1 ]
   %.0 = phi i64* [ %a, %0 ], [ %2, %1 ]
-  %2 = getelementptr inbounds i64* %.0, i64 1
+  %2 = getelementptr inbounds i64, i64* %.0, i64 1
   %3 = load i64* %.0, align 1
-  %4 = getelementptr inbounds i8* %c, i64 %3
+  %4 = getelementptr inbounds i8, i8* %c, i64 %3
   %5 = load i8* %4, align 1
   %6 = add i64 %3, 1
-  %7 = getelementptr inbounds i8* %c, i64 %6
+  %7 = getelementptr inbounds i8, i8* %c, i64 %6
   %8 = load i8* %7, align 1
   store i8 %5, i8* %.08, align 1
-  %9 = getelementptr inbounds i8* %.08, i64 1
+  %9 = getelementptr inbounds i8, i8* %.08, i64 1
   store i8 %8, i8* %9, align 1
-  %10 = getelementptr inbounds i8* %.08, i64 2
+  %10 = getelementptr inbounds i8, i8* %.08, i64 2
   %11 = add nsw i32 %.09, -1
   %12 = icmp eq i32 %11, 0
   br i1 %12, label %13, label %1
@@ -382,18 +382,18 @@ define void @MergeLoadStoreBaseIndexOffsetSext(i8* %a, i8* %b, i8* %c, i32 %n) {
   %.09 = phi i32 [ %n, %0 ], [ %12, %1 ]
   %.08 = phi i8* [ %b, %0 ], [ %11, %1 ]
   %.0 = phi i8* [ %a, %0 ], [ %2, %1 ]
-  %2 = getelementptr inbounds i8* %.0, i64 1
+  %2 = getelementptr inbounds i8, i8* %.0, i64 1
   %3 = load i8* %.0, align 1
   %4 = sext i8 %3 to i64
-  %5 = getelementptr inbounds i8* %c, i64 %4
+  %5 = getelementptr inbounds i8, i8* %c, i64 %4
   %6 = load i8* %5, align 1
   %7 = add i64 %4, 1
-  %8 = getelementptr inbounds i8* %c, i64 %7
+  %8 = getelementptr inbounds i8, i8* %c, i64 %7
   %9 = load i8* %8, align 1
   store i8 %6, i8* %.08, align 1
-  %10 = getelementptr inbounds i8* %.08, i64 1
+  %10 = getelementptr inbounds i8, i8* %.08, i64 1
   store i8 %9, i8* %10, align 1
-  %11 = getelementptr inbounds i8* %.08, i64 2
+  %11 = getelementptr inbounds i8, i8* %.08, i64 2
   %12 = add nsw i32 %.09, -1
   %13 = icmp eq i32 %12, 0
   br i1 %13, label %14, label %1
@@ -414,19 +414,19 @@ define void @loadStoreBaseIndexOffsetSextNoSex(i8* %a, i8* %b, i8* %c, i32 %n) {
   %.09 = phi i32 [ %n, %0 ], [ %12, %1 ]
   %.08 = phi i8* [ %b, %0 ], [ %11, %1 ]
   %.0 = phi i8* [ %a, %0 ], [ %2, %1 ]
-  %2 = getelementptr inbounds i8* %.0, i64 1
+  %2 = getelementptr inbounds i8, i8* %.0, i64 1
   %3 = load i8* %.0, align 1
   %4 = sext i8 %3 to i64
-  %5 = getelementptr inbounds i8* %c, i64 %4
+  %5 = getelementptr inbounds i8, i8* %c, i64 %4
   %6 = load i8* %5, align 1
   %7 = add i8 %3, 1
   %wrap.4 = sext i8 %7 to i64
-  %8 = getelementptr inbounds i8* %c, i64 %wrap.4
+  %8 = getelementptr inbounds i8, i8* %c, i64 %wrap.4
   %9 = load i8* %8, align 1
   store i8 %6, i8* %.08, align 1
-  %10 = getelementptr inbounds i8* %.08, i64 1
+  %10 = getelementptr inbounds i8, i8* %.08, i64 1
   store i8 %9, i8* %10, align 1
-  %11 = getelementptr inbounds i8* %.08, i64 2
+  %11 = getelementptr inbounds i8, i8* %.08, i64 2
   %12 = add nsw i32 %.09, -1
   %13 = icmp eq i32 %12, 0
   br i1 %13, label %14, label %1
@@ -445,13 +445,13 @@ define void @merge_vec_element_store(<8 x float> %v, float* %ptr) {
   %vecext5 = extractelement <8 x float> %v, i32 5
   %vecext6 = extractelement <8 x float> %v, i32 6
   %vecext7 = extractelement <8 x float> %v, i32 7
-  %arrayidx1 = getelementptr inbounds float* %ptr, i64 1
-  %arrayidx2 = getelementptr inbounds float* %ptr, i64 2
-  %arrayidx3 = getelementptr inbounds float* %ptr, i64 3
-  %arrayidx4 = getelementptr inbounds float* %ptr, i64 4
-  %arrayidx5 = getelementptr inbounds float* %ptr, i64 5
-  %arrayidx6 = getelementptr inbounds float* %ptr, i64 6
-  %arrayidx7 = getelementptr inbounds float* %ptr, i64 7
+  %arrayidx1 = getelementptr inbounds float, float* %ptr, i64 1
+  %arrayidx2 = getelementptr inbounds float, float* %ptr, i64 2
+  %arrayidx3 = getelementptr inbounds float, float* %ptr, i64 3
+  %arrayidx4 = getelementptr inbounds float, float* %ptr, i64 4
+  %arrayidx5 = getelementptr inbounds float, float* %ptr, i64 5
+  %arrayidx6 = getelementptr inbounds float, float* %ptr, i64 6
+  %arrayidx7 = getelementptr inbounds float, float* %ptr, i64 7
   store float %vecext0, float* %ptr, align 4
   store float %vecext1, float* %arrayidx1, align 4
   store float %vecext2, float* %arrayidx2, align 4
@@ -472,10 +472,10 @@ define void @merge_vec_element_store(<8 x float> %v, float* %ptr) {
 ; We could merge stores (and loads) like this...
 
 define void @merge_vec_element_and_scalar_load([6 x i64]* %array) {
-  %idx0 = getelementptr inbounds [6 x i64]* %array, i64 0, i64 0
-  %idx1 = getelementptr inbounds [6 x i64]* %array, i64 0, i64 1
-  %idx4 = getelementptr inbounds [6 x i64]* %array, i64 0, i64 4
-  %idx5 = getelementptr inbounds [6 x i64]* %array, i64 0, i64 5
+  %idx0 = getelementptr inbounds [6 x i64], [6 x i64]* %array, i64 0, i64 0
+  %idx1 = getelementptr inbounds [6 x i64], [6 x i64]* %array, i64 0, i64 1
+  %idx4 = getelementptr inbounds [6 x i64], [6 x i64]* %array, i64 0, i64 4
+  %idx5 = getelementptr inbounds [6 x i64], [6 x i64]* %array, i64 0, i64 5
 
   %a0 = load i64* %idx0, align 8
   store i64 %a0, i64* %idx4, align 8

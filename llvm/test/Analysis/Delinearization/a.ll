@@ -52,7 +52,7 @@ for.k:                                  ; preds = %for.k, %for.j
   %mul.us.us = mul nsw i64 %k.029.us.us, 5
   %arrayidx.sum.us.us = add i64 %mul.us.us, 7
   %arrayidx10.sum.us.us = add i64 %arrayidx.sum.us.us, %tmp27.us.us
-  %arrayidx11.us.us = getelementptr inbounds i32* %A, i64 %arrayidx10.sum.us.us
+  %arrayidx11.us.us = getelementptr inbounds i32, i32* %A, i64 %arrayidx10.sum.us.us
   store i32 1, i32* %arrayidx11.us.us, align 4
   %inc.us.us = add nsw i64 %k.029.us.us, 1
   %exitcond = icmp eq i64 %inc.us.us, %o

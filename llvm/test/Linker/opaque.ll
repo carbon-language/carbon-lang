@@ -11,7 +11,7 @@
 ; CHECK-DAG: @g2 = external global %A
 ; CHECK-DAG: @g3 = external global %B.1
 
-; CHECK-DAG: getelementptr %A* null, i32 0
+; CHECK-DAG: getelementptr %A, %A* null, i32 0
 
 %A = type opaque
 %B = type { %C, %C, %B* }

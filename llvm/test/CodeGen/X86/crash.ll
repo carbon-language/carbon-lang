@@ -174,12 +174,12 @@ for.body22:                                       ; preds = %for.body22, %bb.nph
   %l_75.077 = phi i64 [ %ins, %for.body22 ], [ undef, %bb.nph81 ]
   %tmp110 = trunc i64 %l_75.077 to i32
   %tmp111 = and i32 %tmp110, 65535
-  %arrayidx32.0 = getelementptr [9 x [5 x [2 x %struct.S0]]]* undef, i32 0, i32 %l_74.0, i32 %tmp98, i32 %tmp111, i32 0
+  %arrayidx32.0 = getelementptr [9 x [5 x [2 x %struct.S0]]], [9 x [5 x [2 x %struct.S0]]]* undef, i32 0, i32 %l_74.0, i32 %tmp98, i32 %tmp111, i32 0
   store i8 1, i8* %arrayidx32.0, align 4
   %tmp106 = shl i32 %tmp110, 2
   %tmp107 = and i32 %tmp106, 262140
   %scevgep99.sum114 = or i32 %tmp107, 1
-  %arrayidx32.1.1 = getelementptr [9 x [5 x [2 x %struct.S0]]]* undef, i32 0, i32 %l_74.0, i32 %tmp98, i32 0, i32 1, i32 %scevgep99.sum114
+  %arrayidx32.1.1 = getelementptr [9 x [5 x [2 x %struct.S0]]], [9 x [5 x [2 x %struct.S0]]]* undef, i32 0, i32 %l_74.0, i32 %tmp98, i32 0, i32 1, i32 %scevgep99.sum114
   store i8 0, i8* %arrayidx32.1.1, align 1
   %ins = or i64 undef, undef
   br label %for.body22
@@ -240,8 +240,8 @@ declare i64 @llvm.objectsize.i64.p0i8(i8*, i1) nounwind readnone
 define void @_ZNK4llvm17MipsFrameLowering12emitPrologueERNS_15MachineFunctionE() ssp align 2 {
 bb:
   %tmp = load %t9** undef, align 4
-  %tmp2 = getelementptr inbounds %t9* %tmp, i32 0, i32 0
-  %tmp3 = getelementptr inbounds %t9* %tmp, i32 0, i32 0, i32 0, i32 0, i32 1
+  %tmp2 = getelementptr inbounds %t9, %t9* %tmp, i32 0, i32 0
+  %tmp3 = getelementptr inbounds %t9, %t9* %tmp, i32 0, i32 0, i32 0, i32 0, i32 1
   br label %bb4
 
 bb4:                                              ; preds = %bb37, %bb
@@ -285,7 +285,7 @@ bb29:                                             ; preds = %bb28, %bb27
   br i1 false, label %bb33, label %bb31
 
 bb31:                                             ; preds = %bb29
-  %tmp32 = getelementptr inbounds %t13* %tmp30, i32 1
+  %tmp32 = getelementptr inbounds %t13, %t13* %tmp30, i32 1
   store %t13* %tmp32, %t13** %tmp3, align 4
   br label %bb37
 

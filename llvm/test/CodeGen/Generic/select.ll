@@ -180,7 +180,7 @@ define void @checkNot(i1 %b, i32 %i) {
 ; Test case for folding getelementptr into a load/store
 ;
 define i32 @checkFoldGEP(%Domain* %D, i64 %idx) {
-        %reg841 = getelementptr %Domain* %D, i64 0, i32 1               ; <i32*> [#uses=1]
+        %reg841 = getelementptr %Domain, %Domain* %D, i64 0, i32 1               ; <i32*> [#uses=1]
         %reg820 = load i32* %reg841             ; <i32> [#uses=1]
         ret i32 %reg820
 }

@@ -49,10 +49,10 @@ entry:
   %19 = bitcast i8* %18 to [0 x i8]*, !dbg !13    ; <[0 x i8]*> [#uses=1]
   store [0 x i8]* %19, [0 x i8]** %str.0, align 8, !dbg !13
   %20 = load [0 x i8]** %str.0, align 8, !dbg !15 ; <[0 x i8]*> [#uses=1]
-  %21 = getelementptr inbounds [0 x i8]* %20, i64 0, i64 0, !dbg !15 ; <i8*> [#uses=1]
+  %21 = getelementptr inbounds [0 x i8], [0 x i8]* %20, i64 0, i64 0, !dbg !15 ; <i8*> [#uses=1]
   store i8 0, i8* %21, align 1, !dbg !15
   %22 = load [0 x i8]** %str.0, align 8, !dbg !16 ; <[0 x i8]*> [#uses=1]
-  %23 = getelementptr inbounds [0 x i8]* %22, i64 0, i64 0, !dbg !16 ; <i8*> [#uses=1]
+  %23 = getelementptr inbounds [0 x i8], [0 x i8]* %22, i64 0, i64 0, !dbg !16 ; <i8*> [#uses=1]
   %24 = load i8* %23, align 1, !dbg !16           ; <i8> [#uses=1]
   %25 = sext i8 %24 to i32, !dbg !16              ; <i32> [#uses=1]
   store i32 %25, i32* %0, align 4, !dbg !16

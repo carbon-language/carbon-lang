@@ -16,7 +16,7 @@ define void @f1(i8 *%ptr1) {
 ; CHECK-LABEL: f1:
 ; CHECK: mvc 1(1,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i8 *%ptr1, i64 1
+  %ptr2 = getelementptr i8, i8 *%ptr1, i64 1
   %val = load i8 *%ptr1
   store i8 %val, i8 *%ptr2
   ret void
@@ -27,7 +27,7 @@ define void @f2(i8 *%ptr1) {
 ; CHECK-LABEL: f2:
 ; CHECK: mvc 1(1,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i8 *%ptr1, i64 1
+  %ptr2 = getelementptr i8, i8 *%ptr1, i64 1
   %val = load i8 *%ptr1
   %ext = zext i8 %val to i32
   %trunc = trunc i32 %ext to i8
@@ -40,7 +40,7 @@ define void @f3(i8 *%ptr1) {
 ; CHECK-LABEL: f3:
 ; CHECK: mvc 1(1,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i8 *%ptr1, i64 1
+  %ptr2 = getelementptr i8, i8 *%ptr1, i64 1
   %val = load i8 *%ptr1
   %ext = zext i8 %val to i64
   %trunc = trunc i64 %ext to i8
@@ -53,7 +53,7 @@ define void @f4(i8 *%ptr1) {
 ; CHECK-LABEL: f4:
 ; CHECK: mvc 1(1,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i8 *%ptr1, i64 1
+  %ptr2 = getelementptr i8, i8 *%ptr1, i64 1
   %val = load i8 *%ptr1
   %ext = sext i8 %val to i32
   %trunc = trunc i32 %ext to i8
@@ -66,7 +66,7 @@ define void @f5(i8 *%ptr1) {
 ; CHECK-LABEL: f5:
 ; CHECK: mvc 1(1,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i8 *%ptr1, i64 1
+  %ptr2 = getelementptr i8, i8 *%ptr1, i64 1
   %val = load i8 *%ptr1
   %ext = sext i8 %val to i64
   %trunc = trunc i64 %ext to i8
@@ -79,7 +79,7 @@ define void @f6(i16 *%ptr1) {
 ; CHECK-LABEL: f6:
 ; CHECK: mvc 2(2,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i16 *%ptr1, i64 1
+  %ptr2 = getelementptr i16, i16 *%ptr1, i64 1
   %val = load i16 *%ptr1
   store i16 %val, i16 *%ptr2
   ret void
@@ -90,7 +90,7 @@ define void @f7(i16 *%ptr1) {
 ; CHECK-LABEL: f7:
 ; CHECK: mvc 2(2,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i16 *%ptr1, i64 1
+  %ptr2 = getelementptr i16, i16 *%ptr1, i64 1
   %val = load i16 *%ptr1
   %ext = zext i16 %val to i32
   %trunc = trunc i32 %ext to i16
@@ -103,7 +103,7 @@ define void @f8(i16 *%ptr1) {
 ; CHECK-LABEL: f8:
 ; CHECK: mvc 2(2,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i16 *%ptr1, i64 1
+  %ptr2 = getelementptr i16, i16 *%ptr1, i64 1
   %val = load i16 *%ptr1
   %ext = zext i16 %val to i64
   %trunc = trunc i64 %ext to i16
@@ -116,7 +116,7 @@ define void @f9(i16 *%ptr1) {
 ; CHECK-LABEL: f9:
 ; CHECK: mvc 2(2,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i16 *%ptr1, i64 1
+  %ptr2 = getelementptr i16, i16 *%ptr1, i64 1
   %val = load i16 *%ptr1
   %ext = sext i16 %val to i32
   %trunc = trunc i32 %ext to i16
@@ -129,7 +129,7 @@ define void @f10(i16 *%ptr1) {
 ; CHECK-LABEL: f10:
 ; CHECK: mvc 2(2,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i16 *%ptr1, i64 1
+  %ptr2 = getelementptr i16, i16 *%ptr1, i64 1
   %val = load i16 *%ptr1
   %ext = sext i16 %val to i64
   %trunc = trunc i64 %ext to i16
@@ -142,7 +142,7 @@ define void @f11(i32 *%ptr1) {
 ; CHECK-LABEL: f11:
 ; CHECK: mvc 4(4,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i32 *%ptr1, i64 1
+  %ptr2 = getelementptr i32, i32 *%ptr1, i64 1
   %val = load i32 *%ptr1
   store i32 %val, i32 *%ptr2
   ret void
@@ -153,7 +153,7 @@ define void @f12(i32 *%ptr1) {
 ; CHECK-LABEL: f12:
 ; CHECK: mvc 4(4,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i32 *%ptr1, i64 1
+  %ptr2 = getelementptr i32, i32 *%ptr1, i64 1
   %val = load i32 *%ptr1
   %ext = zext i32 %val to i64
   %trunc = trunc i64 %ext to i32
@@ -166,7 +166,7 @@ define void @f13(i32 *%ptr1) {
 ; CHECK-LABEL: f13:
 ; CHECK: mvc 4(4,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i32 *%ptr1, i64 1
+  %ptr2 = getelementptr i32, i32 *%ptr1, i64 1
   %val = load i32 *%ptr1
   %ext = sext i32 %val to i64
   %trunc = trunc i64 %ext to i32
@@ -179,7 +179,7 @@ define void @f14(i64 *%ptr1) {
 ; CHECK-LABEL: f14:
 ; CHECK: mvc 8(8,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i64 *%ptr1, i64 1
+  %ptr2 = getelementptr i64, i64 *%ptr1, i64 1
   %val = load i64 *%ptr1
   store i64 %val, i64 *%ptr2
   ret void
@@ -190,7 +190,7 @@ define void @f15(float *%ptr1) {
 ; CHECK-LABEL: f15:
 ; CHECK: mvc 4(4,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr float *%ptr1, i64 1
+  %ptr2 = getelementptr float, float *%ptr1, i64 1
   %val = load float *%ptr1
   store float %val, float *%ptr2
   ret void
@@ -201,7 +201,7 @@ define void @f16(double *%ptr1) {
 ; CHECK-LABEL: f16:
 ; CHECK: mvc 8(8,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr double *%ptr1, i64 1
+  %ptr2 = getelementptr double, double *%ptr1, i64 1
   %val = load double *%ptr1
   store double %val, double *%ptr2
   ret void
@@ -212,7 +212,7 @@ define void @f17(fp128 *%ptr1) {
 ; CHECK-LABEL: f17:
 ; CHECK: mvc 16(16,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr fp128 *%ptr1, i64 1
+  %ptr2 = getelementptr fp128, fp128 *%ptr1, i64 1
   %val = load fp128 *%ptr1
   store fp128 %val, fp128 *%ptr2
   ret void
@@ -223,7 +223,7 @@ define void @f18(i64 *%ptr1) {
 ; CHECK-LABEL: f18:
 ; CHECK-NOT: mvc
 ; CHECK: br %r14
-  %ptr2 = getelementptr i64 *%ptr1, i64 1
+  %ptr2 = getelementptr i64, i64 *%ptr1, i64 1
   %val = load volatile i64 *%ptr1
   store i64 %val, i64 *%ptr2
   ret void
@@ -234,7 +234,7 @@ define void @f19(i64 *%ptr1) {
 ; CHECK-LABEL: f19:
 ; CHECK-NOT: mvc
 ; CHECK: br %r14
-  %ptr2 = getelementptr i64 *%ptr1, i64 1
+  %ptr2 = getelementptr i64, i64 *%ptr1, i64 1
   %val = load i64 *%ptr1
   store volatile i64 %val, i64 *%ptr2
   ret void
@@ -359,7 +359,7 @@ define void @f30(i64 *%ptr1) {
 ; CHECK-LABEL: f30:
 ; CHECK: mvc 8(8,%r2), 0(%r2)
 ; CHECK: br %r14
-  %ptr2 = getelementptr i64 *%ptr1, i64 1
+  %ptr2 = getelementptr i64, i64 *%ptr1, i64 1
   %val = load i64 *%ptr1, align 1
   store i64 %val, i64 *%ptr2, align 1
   ret void

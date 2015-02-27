@@ -16,7 +16,7 @@ define float @f2(float *%src) {
 ; CHECK-LABEL: f2:
 ; CHECK: le %f0, 4092(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%src, i64 1023
+  %ptr = getelementptr float, float *%src, i64 1023
   %val = load float *%ptr
   ret float %val
 }
@@ -26,7 +26,7 @@ define float @f3(float *%src) {
 ; CHECK-LABEL: f3:
 ; CHECK: ley %f0, 4096(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%src, i64 1024
+  %ptr = getelementptr float, float *%src, i64 1024
   %val = load float *%ptr
   ret float %val
 }
@@ -36,7 +36,7 @@ define float @f4(float *%src) {
 ; CHECK-LABEL: f4:
 ; CHECK: ley %f0, 524284(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%src, i64 131071
+  %ptr = getelementptr float, float *%src, i64 131071
   %val = load float *%ptr
   ret float %val
 }
@@ -48,7 +48,7 @@ define float @f5(float *%src) {
 ; CHECK: agfi %r2, 524288
 ; CHECK: le %f0, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%src, i64 131072
+  %ptr = getelementptr float, float *%src, i64 131072
   %val = load float *%ptr
   ret float %val
 }
@@ -58,7 +58,7 @@ define float @f6(float *%src) {
 ; CHECK-LABEL: f6:
 ; CHECK: ley %f0, -4(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%src, i64 -1
+  %ptr = getelementptr float, float *%src, i64 -1
   %val = load float *%ptr
   ret float %val
 }
@@ -68,7 +68,7 @@ define float @f7(float *%src) {
 ; CHECK-LABEL: f7:
 ; CHECK: ley %f0, -524288(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%src, i64 -131072
+  %ptr = getelementptr float, float *%src, i64 -131072
   %val = load float *%ptr
   ret float %val
 }
@@ -80,7 +80,7 @@ define float @f8(float *%src) {
 ; CHECK: agfi %r2, -524292
 ; CHECK: le %f0, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%src, i64 -131073
+  %ptr = getelementptr float, float *%src, i64 -131073
   %val = load float *%ptr
   ret float %val
 }

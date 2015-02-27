@@ -31,7 +31,7 @@ if.end:                                           ; preds = %if.then, %entry
   store i1 false, i1* %nrvo, !dbg !36
   call void @llvm.dbg.declare(metadata %class.A* %agg.result, metadata !37, metadata !{!"0x102"}), !dbg !39
   %tmp2 = load i32* %j, align 4, !dbg !40
-  %x = getelementptr inbounds %class.A* %agg.result, i32 0, i32 0, !dbg !40
+  %x = getelementptr inbounds %class.A, %class.A* %agg.result, i32 0, i32 0, !dbg !40
   store i32 %tmp2, i32* %x, align 4, !dbg !40
   store i1 true, i1* %nrvo, !dbg !41
   store i32 1, i32* %cleanup.dest.slot
@@ -64,7 +64,7 @@ entry:
   store %class.A* %this, %class.A** %this.addr, align 8
   call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !46, metadata !{!"0x102"}), !dbg !47
   %this1 = load %class.A** %this.addr
-  %x = getelementptr inbounds %class.A* %this1, i32 0, i32 0, !dbg !48
+  %x = getelementptr inbounds %class.A, %class.A* %this1, i32 0, i32 0, !dbg !48
   store i32 1, i32* %x, align 4, !dbg !48
   ret void, !dbg !48
 }

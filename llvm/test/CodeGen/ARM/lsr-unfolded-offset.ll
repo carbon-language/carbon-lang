@@ -23,8 +23,8 @@ entry:
 outer.loop:                                 ; preds = %for.inc69, %entry
   %overlap.081 = phi i32 [ %overlap.4, %for.inc69 ], [ 0, %entry ]
   %0 = phi i32 [ %inc71, %for.inc69 ], [ 0, %entry ]
-  %offset = getelementptr %struct.partition_entry* %part, i32 %0, i32 2
-  %len = getelementptr %struct.partition_entry* %part, i32 %0, i32 3
+  %offset = getelementptr %struct.partition_entry, %struct.partition_entry* %part, i32 %0, i32 2
+  %len = getelementptr %struct.partition_entry, %struct.partition_entry* %part, i32 %0, i32 3
   %tmp5 = load i64* %offset, align 4
   %tmp15 = load i64* %len, align 4
   %add = add nsw i64 %tmp15, %tmp5
@@ -37,8 +37,8 @@ inner.loop:                                       ; preds = %for.inc, %outer.loo
   br i1 %cmp23, label %for.inc, label %if.end
 
 if.end:                                           ; preds = %inner.loop
-  %len39 = getelementptr %struct.partition_entry* %part, i32 %1, i32 3
-  %offset28 = getelementptr %struct.partition_entry* %part, i32 %1, i32 2
+  %len39 = getelementptr %struct.partition_entry, %struct.partition_entry* %part, i32 %1, i32 3
+  %offset28 = getelementptr %struct.partition_entry, %struct.partition_entry* %part, i32 %1, i32 2
   %tmp29 = load i64* %offset28, align 4
   %tmp40 = load i64* %len39, align 4
   %add41 = add nsw i64 %tmp40, %tmp29

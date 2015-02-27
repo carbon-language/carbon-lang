@@ -54,7 +54,7 @@ entry:
   %0 = load i32* %__a.addr.i, align 4
   %1 = load <4 x i32>** %__b.addr.i, align 8
   %2 = bitcast <4 x i32>* %1 to i8*
-  %3 = getelementptr i8* %2, i32 %0
+  %3 = getelementptr i8, i8* %2, i32 %0
   %4 = call <4 x i32> @llvm.ppc.vsx.lxvw4x(i8* %3)
   store <4 x i32> %4, <4 x i32>* @res_vsi, align 16
   store i32 0, i32* %__a.addr.i31, align 4
@@ -62,7 +62,7 @@ entry:
   %5 = load i32* %__a.addr.i31, align 4
   %6 = load <4 x i32>** %__b.addr.i32, align 8
   %7 = bitcast <4 x i32>* %6 to i8*
-  %8 = getelementptr i8* %7, i32 %5
+  %8 = getelementptr i8, i8* %7, i32 %5
   %9 = call <4 x i32> @llvm.ppc.vsx.lxvw4x(i8* %8)
   store <4 x i32> %9, <4 x i32>* @res_vui, align 16
   store i32 0, i32* %__a.addr.i29, align 4
@@ -70,7 +70,7 @@ entry:
   %10 = load i32* %__a.addr.i29, align 4
   %11 = load <4 x float>** %__b.addr.i30, align 8
   %12 = bitcast <4 x float>* %11 to i8*
-  %13 = getelementptr i8* %12, i32 %10
+  %13 = getelementptr i8, i8* %12, i32 %10
   %14 = call <4 x i32> @llvm.ppc.vsx.lxvw4x(i8* %13)
   %15 = bitcast <4 x i32> %14 to <4 x float>
   store <4 x float> %15, <4 x float>* @res_vf, align 16
@@ -79,7 +79,7 @@ entry:
   %16 = load i32* %__a.addr.i27, align 4
   %17 = load <2 x i64>** %__b.addr.i28, align 8
   %18 = bitcast <2 x i64>* %17 to i8*
-  %19 = getelementptr i8* %18, i32 %16
+  %19 = getelementptr i8, i8* %18, i32 %16
   %20 = call <2 x double> @llvm.ppc.vsx.lxvd2x(i8* %19)
   %21 = bitcast <2 x double> %20 to <2 x i64>
   store <2 x i64> %21, <2 x i64>* @res_vsll, align 16
@@ -88,7 +88,7 @@ entry:
   %22 = load i32* %__a.addr.i25, align 4
   %23 = load <2 x i64>** %__b.addr.i26, align 8
   %24 = bitcast <2 x i64>* %23 to i8*
-  %25 = getelementptr i8* %24, i32 %22
+  %25 = getelementptr i8, i8* %24, i32 %22
   %26 = call <2 x double> @llvm.ppc.vsx.lxvd2x(i8* %25)
   %27 = bitcast <2 x double> %26 to <2 x i64>
   store <2 x i64> %27, <2 x i64>* @res_vull, align 16
@@ -97,7 +97,7 @@ entry:
   %28 = load i32* %__a.addr.i23, align 4
   %29 = load <2 x double>** %__b.addr.i24, align 8
   %30 = bitcast <2 x double>* %29 to i8*
-  %31 = getelementptr i8* %30, i32 %28
+  %31 = getelementptr i8, i8* %30, i32 %28
   %32 = call <2 x double> @llvm.ppc.vsx.lxvd2x(i8* %31)
   store <2 x double> %32, <2 x double>* @res_vd, align 16
   %33 = load <4 x i32>* @vsi, align 16
@@ -108,7 +108,7 @@ entry:
   %35 = load i32* %__b.addr.i21, align 4
   %36 = load <4 x i32>** %__c.addr.i22, align 8
   %37 = bitcast <4 x i32>* %36 to i8*
-  %38 = getelementptr i8* %37, i32 %35
+  %38 = getelementptr i8, i8* %37, i32 %35
   call void @llvm.ppc.vsx.stxvw4x(<4 x i32> %34, i8* %38)
   %39 = load <4 x i32>* @vui, align 16
   store <4 x i32> %39, <4 x i32>* %__a.addr.i17, align 16
@@ -118,7 +118,7 @@ entry:
   %41 = load i32* %__b.addr.i18, align 4
   %42 = load <4 x i32>** %__c.addr.i19, align 8
   %43 = bitcast <4 x i32>* %42 to i8*
-  %44 = getelementptr i8* %43, i32 %41
+  %44 = getelementptr i8, i8* %43, i32 %41
   call void @llvm.ppc.vsx.stxvw4x(<4 x i32> %40, i8* %44)
   %45 = load <4 x float>* @vf, align 16
   store <4 x float> %45, <4 x float>* %__a.addr.i14, align 16
@@ -129,7 +129,7 @@ entry:
   %48 = load i32* %__b.addr.i15, align 4
   %49 = load <4 x float>** %__c.addr.i16, align 8
   %50 = bitcast <4 x float>* %49 to i8*
-  %51 = getelementptr i8* %50, i32 %48
+  %51 = getelementptr i8, i8* %50, i32 %48
   call void @llvm.ppc.vsx.stxvw4x(<4 x i32> %47, i8* %51) #1
   %52 = load <2 x i64>* @vsll, align 16
   store <2 x i64> %52, <2 x i64>* %__a.addr.i11, align 16
@@ -140,7 +140,7 @@ entry:
   %55 = load i32* %__b.addr.i12, align 4
   %56 = load <2 x i64>** %__c.addr.i13, align 8
   %57 = bitcast <2 x i64>* %56 to i8*
-  %58 = getelementptr i8* %57, i32 %55
+  %58 = getelementptr i8, i8* %57, i32 %55
   call void @llvm.ppc.vsx.stxvd2x(<2 x double> %54, i8* %58)
   %59 = load <2 x i64>* @vull, align 16
   store <2 x i64> %59, <2 x i64>* %__a.addr.i8, align 16
@@ -151,7 +151,7 @@ entry:
   %62 = load i32* %__b.addr.i9, align 4
   %63 = load <2 x i64>** %__c.addr.i10, align 8
   %64 = bitcast <2 x i64>* %63 to i8*
-  %65 = getelementptr i8* %64, i32 %62
+  %65 = getelementptr i8, i8* %64, i32 %62
   call void @llvm.ppc.vsx.stxvd2x(<2 x double> %61, i8* %65)
   %66 = load <2 x double>* @vd, align 16
   store <2 x double> %66, <2 x double>* %__a.addr.i6, align 16
@@ -161,7 +161,7 @@ entry:
   %68 = load i32* %__b.addr.i7, align 4
   %69 = load <2 x double>** %__c.addr.i, align 8
   %70 = bitcast <2 x double>* %69 to i8*
-  %71 = getelementptr i8* %70, i32 %68
+  %71 = getelementptr i8, i8* %70, i32 %68
   call void @llvm.ppc.vsx.stxvd2x(<2 x double> %67, i8* %71)
   ret void
 }

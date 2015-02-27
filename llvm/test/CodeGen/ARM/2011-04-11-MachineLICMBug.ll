@@ -18,7 +18,7 @@ for.body:
 ; CHECK: mov{{.*}} r{{[0-9]+}}, #{{[01]}}
 ; CHECK: mov{{.*}} r{{[0-9]+}}, #{{[01]}}
 ; CHECK-NOT: mov r{{[0-9]+}}, #{{[01]}}
-  %arrayidx = getelementptr i32* %A, i32 %0
+  %arrayidx = getelementptr i32, i32* %A, i32 %0
   %tmp4 = load i32* %arrayidx, align 4
   %cmp6 = icmp eq i32 %tmp4, %value
   br i1 %cmp6, label %return, label %for.inc

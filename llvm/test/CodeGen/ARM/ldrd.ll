@@ -53,10 +53,10 @@ entry:
 
 bb:                                               ; preds = %bb, %entry
   %i.03 = phi i32 [ %tmp, %bb ], [ 0, %entry ]    ; <i32> [#uses=3]
-  %scevgep = getelementptr i32* %a, i32 %i.03     ; <i32*> [#uses=1]
-  %scevgep4 = getelementptr i32* %b, i32 %i.03    ; <i32*> [#uses=1]
+  %scevgep = getelementptr i32, i32* %a, i32 %i.03     ; <i32*> [#uses=1]
+  %scevgep4 = getelementptr i32, i32* %b, i32 %i.03    ; <i32*> [#uses=1]
   %tmp = add i32 %i.03, 1                         ; <i32> [#uses=3]
-  %scevgep5 = getelementptr i32* %a, i32 %tmp     ; <i32*> [#uses=1]
+  %scevgep5 = getelementptr i32, i32* %a, i32 %tmp     ; <i32*> [#uses=1]
   %2 = load i32* %scevgep, align 4                ; <i32> [#uses=1]
   %3 = load i32* %scevgep5, align 4               ; <i32> [#uses=1]
   %4 = add nsw i32 %3, %2                         ; <i32> [#uses=1]

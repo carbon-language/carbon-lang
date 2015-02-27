@@ -89,8 +89,8 @@ define void @s_trunc_i64_to_i1(i32 addrspace(1)* %out, i64 %x) {
 ; SI: v_cndmask_b32_e64 {{v[0-9]+}}, -12, 63, [[CMP]]
 define void @v_trunc_i64_to_i1(i32 addrspace(1)* %out, i64 addrspace(1)* %in) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep = getelementptr i64 addrspace(1)* %in, i32 %tid
-  %out.gep = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep = getelementptr i64, i64 addrspace(1)* %in, i32 %tid
+  %out.gep = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %x = load i64 addrspace(1)* %gep
 
   %trunc = trunc i64 %x to i1

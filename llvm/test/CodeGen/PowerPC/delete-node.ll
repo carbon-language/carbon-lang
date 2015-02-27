@@ -12,7 +12,7 @@ bb1:            ; preds = %bb1, %entry
         %0 = load i16* null, align 2            ; <i16> [#uses=1]
         %1 = ashr i16 %0, 4             ; <i16> [#uses=1]
         %2 = sext i16 %1 to i32         ; <i32> [#uses=1]
-        %3 = getelementptr i8* null, i32 %2             ; <i8*> [#uses=1]
+        %3 = getelementptr i8, i8* null, i32 %2             ; <i8*> [#uses=1]
         %4 = load i8* %3, align 1               ; <i8> [#uses=1]
         %5 = zext i8 %4 to i32          ; <i32> [#uses=1]
         %6 = shl i32 %5, 24             ; <i32> [#uses=1]

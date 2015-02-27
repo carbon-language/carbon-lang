@@ -14,7 +14,7 @@ bb19:           ; preds = %entry
 bb12.i:         ; preds = %bb12.i, %bb19
         %i.0.i = phi i32 [ %tmp11.i, %bb12.i ], [ 0, %bb19 ]            ; <i32> [#uses=2]
         %gep.upgrd.1 = zext i32 %i.0.i to i64           ; <i64> [#uses=1]
-        %tmp9.i = getelementptr [256 x i32]* %RMask.i, i32 0, i64 %gep.upgrd.1          ; <i32*> [#uses=1]
+        %tmp9.i = getelementptr [256 x i32], [256 x i32]* %RMask.i, i32 0, i64 %gep.upgrd.1          ; <i32*> [#uses=1]
         store i32 0, i32* %tmp9.i
         %tmp11.i = add i32 %i.0.i, 1            ; <i32> [#uses=1]
         br label %bb12.i

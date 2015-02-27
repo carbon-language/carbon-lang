@@ -8,7 +8,7 @@ entry:
 
 bb41:		; preds = %bb82
 	%tmp = load i8* %opt.0, align 1		; <i8> [#uses=0]
-	%tmp1 = getelementptr i8* %opt.0, i32 1		; <i8*> [#uses=2]
+	%tmp1 = getelementptr i8, i8* %opt.0, i32 1		; <i8*> [#uses=2]
 	switch i32 0, label %bb81 [
 		i32 102, label %bb82
 		i32 110, label %bb79
@@ -30,6 +30,6 @@ bb82:		; preds = %bb84, %bb79, %bb41
 	br i1 false, label %bb84, label %bb41
 
 bb84:		; preds = %bb82, %entry
-	%tmp3 = getelementptr i8* null, i32 1		; <i8*> [#uses=1]
+	%tmp3 = getelementptr i8, i8* null, i32 1		; <i8*> [#uses=1]
 	br label %bb82
 }

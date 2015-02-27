@@ -16,13 +16,13 @@ define void @multiple_access_no_preloop(
   br i1 %abc.a, label %in.bounds.a, label %out.of.bounds, !prof !1
 
  in.bounds.a:
-  %addr.a = getelementptr i32* %arr_a, i32 %idx
+  %addr.a = getelementptr i32, i32* %arr_a, i32 %idx
   store i32 0, i32* %addr.a
   %abc.b = icmp slt i32 %idx, %len.b
   br i1 %abc.b, label %in.bounds.b, label %out.of.bounds, !prof !1
 
  in.bounds.b:
-  %addr.b = getelementptr i32* %arr_b, i32 %idx
+  %addr.b = getelementptr i32, i32* %arr_b, i32 %idx
   store i32 -1, i32* %addr.b
   %next = icmp slt i32 %idx.next, %n
   br i1 %next, label %loop, label %exit

@@ -17,41 +17,41 @@ define void @test0() nounwind {
 entry:
   %weakLogNTimes = alloca %struct.__block_byref_weakLogNTimes, align 8
   %block = alloca <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>, align 8
-  %byref.isa = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 0
+  %byref.isa = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 0
   store i8* null, i8** %byref.isa, align 8
-  %byref.forwarding = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 1
+  %byref.forwarding = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 1
   store %struct.__block_byref_weakLogNTimes* %weakLogNTimes, %struct.__block_byref_weakLogNTimes** %byref.forwarding, align 8
-  %byref.flags = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 2
+  %byref.flags = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 2
   store i32 33554432, i32* %byref.flags, align 8
-  %byref.size = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 3
+  %byref.size = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 3
   store i32 48, i32* %byref.size, align 4
-  %tmp1 = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 4
+  %tmp1 = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 4
   store i8* bitcast (void (i8*, i8*)* @__Block_byref_object_copy_ to i8*), i8** %tmp1, align 8
-  %tmp2 = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 5
+  %tmp2 = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 5
   store i8* bitcast (void (i8*)* @__Block_byref_object_dispose_ to i8*), i8** %tmp2, align 8
-  %weakLogNTimes1 = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 6
+  %weakLogNTimes1 = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 6
   %tmp3 = bitcast void (...)** %weakLogNTimes1 to i8**
   %tmp4 = call i8* @objc_initWeak(i8** %tmp3, i8* null) nounwind
-  %block.isa = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 0
+  %block.isa = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 0
   store i8* null, i8** %block.isa, align 8
-  %block.flags = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 1
+  %block.flags = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 1
   store i32 1107296256, i32* %block.flags, align 8
-  %block.reserved = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 2
+  %block.reserved = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 2
   store i32 0, i32* %block.reserved, align 4
-  %block.invoke = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 3
+  %block.invoke = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 3
   store i8* bitcast (void (i8*, i32)* @__main_block_invoke_0 to i8*), i8** %block.invoke, align 8
-  %block.descriptor = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 4
+  %block.descriptor = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 4
   store %struct.__block_descriptor* null, %struct.__block_descriptor** %block.descriptor, align 8
-  %block.captured = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 5
+  %block.captured = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 5
   %tmp5 = bitcast %struct.__block_byref_weakLogNTimes* %weakLogNTimes to i8*
   store i8* %tmp5, i8** %block.captured, align 8
   %tmp6 = bitcast <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block to i8*
   %tmp7 = call i8* @objc_retainBlock(i8* %tmp6) nounwind, !clang.arc.copy_on_escape !0
   %tmp8 = load %struct.__block_byref_weakLogNTimes** %byref.forwarding, align 8
-  %weakLogNTimes3 = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %tmp8, i64 0, i32 6
+  %weakLogNTimes3 = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %tmp8, i64 0, i32 6
   %tmp9 = bitcast void (...)** %weakLogNTimes3 to i8**
   %tmp10 = call i8* @objc_storeWeak(i8** %tmp9, i8* %tmp7) nounwind
-  %tmp11 = getelementptr inbounds i8* %tmp7, i64 16
+  %tmp11 = getelementptr inbounds i8, i8* %tmp7, i64 16
   %tmp12 = bitcast i8* %tmp11 to i8**
   %tmp13 = load i8** %tmp12, align 8
   %tmp14 = bitcast i8* %tmp13 to void (i8*, i32)*
@@ -72,41 +72,41 @@ define void @test1() nounwind {
 entry:
   %weakLogNTimes = alloca %struct.__block_byref_weakLogNTimes, align 8
   %block = alloca <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>, align 8
-  %byref.isa = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 0
+  %byref.isa = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 0
   store i8* null, i8** %byref.isa, align 8
-  %byref.forwarding = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 1
+  %byref.forwarding = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 1
   store %struct.__block_byref_weakLogNTimes* %weakLogNTimes, %struct.__block_byref_weakLogNTimes** %byref.forwarding, align 8
-  %byref.flags = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 2
+  %byref.flags = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 2
   store i32 33554432, i32* %byref.flags, align 8
-  %byref.size = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 3
+  %byref.size = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 3
   store i32 48, i32* %byref.size, align 4
-  %tmp1 = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 4
+  %tmp1 = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 4
   store i8* bitcast (void (i8*, i8*)* @__Block_byref_object_copy_ to i8*), i8** %tmp1, align 8
-  %tmp2 = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 5
+  %tmp2 = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 5
   store i8* bitcast (void (i8*)* @__Block_byref_object_dispose_ to i8*), i8** %tmp2, align 8
-  %weakLogNTimes1 = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 6
+  %weakLogNTimes1 = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %weakLogNTimes, i64 0, i32 6
   %tmp3 = bitcast void (...)** %weakLogNTimes1 to i8**
   %tmp4 = call i8* @objc_initWeak(i8** %tmp3, i8* null) nounwind
-  %block.isa = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 0
+  %block.isa = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 0
   store i8* null, i8** %block.isa, align 8
-  %block.flags = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 1
+  %block.flags = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 1
   store i32 1107296256, i32* %block.flags, align 8
-  %block.reserved = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 2
+  %block.reserved = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 2
   store i32 0, i32* %block.reserved, align 4
-  %block.invoke = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 3
+  %block.invoke = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 3
   store i8* bitcast (void (i8*, i32)* @__main_block_invoke_0 to i8*), i8** %block.invoke, align 8
-  %block.descriptor = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 4
+  %block.descriptor = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 4
   store %struct.__block_descriptor* null, %struct.__block_descriptor** %block.descriptor, align 8
-  %block.captured = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 5
+  %block.captured = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block, i64 0, i32 5
   %tmp5 = bitcast %struct.__block_byref_weakLogNTimes* %weakLogNTimes to i8*
   store i8* %tmp5, i8** %block.captured, align 8
   %tmp6 = bitcast <{ i8*, i32, i32, i8*, %struct.__block_descriptor*, i8* }>* %block to i8*
   %tmp7 = call i8* @objc_retainBlock(i8* %tmp6) nounwind, !clang.arc.copy_on_escape !0
   %tmp8 = load %struct.__block_byref_weakLogNTimes** %byref.forwarding, align 8
-  %weakLogNTimes3 = getelementptr inbounds %struct.__block_byref_weakLogNTimes* %tmp8, i64 0, i32 6
+  %weakLogNTimes3 = getelementptr inbounds %struct.__block_byref_weakLogNTimes, %struct.__block_byref_weakLogNTimes* %tmp8, i64 0, i32 6
   %tmp9 = bitcast void (...)** %weakLogNTimes3 to i8**
   %tmp10 = call i8* @not_really_objc_storeWeak(i8** %tmp9, i8* %tmp7) nounwind
-  %tmp11 = getelementptr inbounds i8* %tmp7, i64 16
+  %tmp11 = getelementptr inbounds i8, i8* %tmp7, i64 16
   %tmp12 = bitcast i8* %tmp11 to i8**
   %tmp13 = load i8** %tmp12, align 8
   %tmp14 = bitcast i8* %tmp13 to void (i8*, i32)*

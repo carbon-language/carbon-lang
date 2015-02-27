@@ -7,9 +7,9 @@ entry:
         br i1 %tmp.41, label %no_exit.preheader, label %return
 
 no_exit.preheader:              ; preds = %entry
-        %tmp.11 = getelementptr i32* %data.1, i64 1             ; <i32*> [#uses=1]
+        %tmp.11 = getelementptr i32, i32* %data.1, i64 1             ; <i32*> [#uses=1]
         %tmp.22-idxcast = sext i32 %idx.1 to i64                ; <i64> [#uses=1]
-        %tmp.28 = getelementptr i32* %data.1, i64 %tmp.22-idxcast               ; <i32*> [#uses=1]
+        %tmp.28 = getelementptr i32, i32* %data.1, i64 %tmp.22-idxcast               ; <i32*> [#uses=1]
         br label %no_exit
 
 no_exit:                ; preds = %endif, %no_exit.preheader

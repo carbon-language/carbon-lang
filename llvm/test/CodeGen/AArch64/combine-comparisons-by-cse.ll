@@ -237,7 +237,7 @@ declare %struct.Struct* @Update(%struct.Struct*) #1
 ; no checks for this case, it just should be processed without errors
 define void @combine_non_adjacent_cmp_br(%struct.Struct* nocapture readonly %hdCall) #0 {
 entry:
-  %size = getelementptr inbounds %struct.Struct* %hdCall, i64 0, i32 0
+  %size = getelementptr inbounds %struct.Struct, %struct.Struct* %hdCall, i64 0, i32 0
   %0 = load i64* %size, align 8
   br label %land.rhs
 
@@ -374,7 +374,7 @@ entry:
   br i1 %cmp, label %land.lhs.true, label %if.end
 
 land.lhs.true:                                    ; preds = %entry
-  %arrayidx = getelementptr inbounds i8** %argv, i64 1
+  %arrayidx = getelementptr inbounds i8*, i8** %argv, i64 1
   %0 = load i8** %arrayidx, align 8
   %cmp1 = icmp eq i8* %0, null
   br i1 %cmp1, label %if.end, label %return

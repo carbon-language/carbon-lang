@@ -2,14 +2,14 @@
 
 define void @ifconvertstore(i32 %m, i32* %A, i32* %B, i32 %C, i32 %D) {
 entry:
-  %arrayidx = getelementptr inbounds i32* %B, i64 0
+  %arrayidx = getelementptr inbounds i32, i32* %B, i64 0
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, %C
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 0
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 0
 
 ; First store to the location.
   store i32 %add, i32* %arrayidx2, align 4
-  %arrayidx4 = getelementptr inbounds i32* %B, i64 1
+  %arrayidx4 = getelementptr inbounds i32, i32* %B, i64 1
   %1 = load i32* %arrayidx4, align 4
   %add5 = add nsw i32 %1, %D
   %cmp6 = icmp sgt i32 %add5, %C
@@ -30,14 +30,14 @@ ret.end:
 
 define void @noifconvertstore1(i32 %m, i32* %A, i32* %B, i32 %C, i32 %D) {
 entry:
-  %arrayidx = getelementptr inbounds i32* %B, i64 0
+  %arrayidx = getelementptr inbounds i32, i32* %B, i64 0
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, %C
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 0
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 0
 
 ; Store to a different location.
   store i32 %add, i32* %arrayidx, align 4
-  %arrayidx4 = getelementptr inbounds i32* %B, i64 1
+  %arrayidx4 = getelementptr inbounds i32, i32* %B, i64 1
   %1 = load i32* %arrayidx4, align 4
   %add5 = add nsw i32 %1, %D
   %cmp6 = icmp sgt i32 %add5, %C
@@ -57,15 +57,15 @@ declare void @unknown_fun()
 
 define void @noifconvertstore2(i32 %m, i32* %A, i32* %B, i32 %C, i32 %D) {
 entry:
-  %arrayidx = getelementptr inbounds i32* %B, i64 0
+  %arrayidx = getelementptr inbounds i32, i32* %B, i64 0
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, %C
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 0
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 0
 
 ; First store to the location.
   store i32 %add, i32* %arrayidx2, align 4
   call void @unknown_fun()
-  %arrayidx4 = getelementptr inbounds i32* %B, i64 1
+  %arrayidx4 = getelementptr inbounds i32, i32* %B, i64 1
   %1 = load i32* %arrayidx4, align 4
   %add5 = add nsw i32 %1, %D
   %cmp6 = icmp sgt i32 %add5, %C
@@ -83,14 +83,14 @@ ret.end:
 
 define void @noifconvertstore_volatile(i32 %m, i32* %A, i32* %B, i32 %C, i32 %D) {
 entry:
-  %arrayidx = getelementptr inbounds i32* %B, i64 0
+  %arrayidx = getelementptr inbounds i32, i32* %B, i64 0
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, %C
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 0
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 0
 
 ; First store to the location.
   store i32 %add, i32* %arrayidx2, align 4
-  %arrayidx4 = getelementptr inbounds i32* %B, i64 1
+  %arrayidx4 = getelementptr inbounds i32, i32* %B, i64 1
   %1 = load i32* %arrayidx4, align 4
   %add5 = add nsw i32 %1, %D
   %cmp6 = icmp sgt i32 %add5, %C

@@ -91,7 +91,7 @@ bb1567:                                           ; preds = %cond_true1254
   %tmp1595.upgrd.7 = trunc i64 %tmp1595 to i32    ; <i32> [#uses=1]
   %tmp1596 = and i32 %tmp1595.upgrd.7, 255        ; <i32> [#uses=1]
   %gep.upgrd.8 = zext i32 %tmp1596 to i64         ; <i64> [#uses=1]
-  %tmp1598 = getelementptr [64 x [256 x i32]]* @bishop_mobility_rr45, i32 0, i32 %tmp1572, i64 %gep.upgrd.8 ; <i32*> [#uses=1]
+  %tmp1598 = getelementptr [64 x [256 x i32]], [64 x [256 x i32]]* @bishop_mobility_rr45, i32 0, i32 %tmp1572, i64 %gep.upgrd.8 ; <i32*> [#uses=1]
   %tmp1599 = load i32* %tmp1598                   ; <i32> [#uses=1]
   %tmp1602 = sub i32 0, %tmp1599                  ; <i32> [#uses=1]
   br i1 undef, label %cond_next1637, label %cond_true1607

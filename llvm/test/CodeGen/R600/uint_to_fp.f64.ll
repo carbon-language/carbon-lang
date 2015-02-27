@@ -11,7 +11,7 @@ declare i32 @llvm.r600.read.tidig.x() nounwind readnone
 ; SI: buffer_store_dwordx2 [[RESULT]]
 define void @v_uint_to_fp_i64_to_f64(double addrspace(1)* %out, i64 addrspace(1)* %in) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep = getelementptr i64 addrspace(1)* %in, i32 %tid
+  %gep = getelementptr i64, i64 addrspace(1)* %in, i32 %tid
   %val = load i64 addrspace(1)* %gep, align 8
   %result = uitofp i64 %val to double
   store double %result, double addrspace(1)* %out

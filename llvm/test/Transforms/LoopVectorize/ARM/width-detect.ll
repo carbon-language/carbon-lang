@@ -13,7 +13,7 @@ define float @foo_F32(float* nocapture %A, i32 %n) nounwind uwtable readonly ssp
 .lr.ph:                                           ; preds = %0, %.lr.ph
   %indvars.iv = phi i64 [ %indvars.iv.next, %.lr.ph ], [ 0, %0 ]
   %prod.01 = phi float [ %4, %.lr.ph ], [ 0.000000e+00, %0 ]
-  %2 = getelementptr inbounds float* %A, i64 %indvars.iv
+  %2 = getelementptr inbounds float, float* %A, i64 %indvars.iv
   %3 = load float* %2, align 8
   %4 = fmul fast float %prod.01, %3
   %indvars.iv.next = add i64 %indvars.iv, 1
@@ -36,7 +36,7 @@ define signext i8 @foo_I8(i8* nocapture %A, i32 %n) nounwind uwtable readonly ss
 .lr.ph:                                           ; preds = %0, %.lr.ph
   %indvars.iv = phi i64 [ %indvars.iv.next, %.lr.ph ], [ 0, %0 ]
   %red.01 = phi i8 [ %4, %.lr.ph ], [ 0, %0 ]
-  %2 = getelementptr inbounds i8* %A, i64 %indvars.iv
+  %2 = getelementptr inbounds i8, i8* %A, i64 %indvars.iv
   %3 = load i8* %2, align 1
   %4 = xor i8 %3, %red.01
   %indvars.iv.next = add i64 %indvars.iv, 1

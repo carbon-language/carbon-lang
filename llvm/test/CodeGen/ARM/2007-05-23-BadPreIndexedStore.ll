@@ -17,10 +17,10 @@ cond_false:		; preds = %entry
 bb140:		; preds = %bb140, %cond_false
 	%indvar = phi i32 [ 0, %cond_false ], [ %indvar.next, %bb140 ]		; <i32> [#uses=2]
 	%edge.230.0.rec = shl i32 %indvar, 1		; <i32> [#uses=3]
-	%edge.230.0 = getelementptr %struct.shape_edge_t* null, i32 %edge.230.0.rec		; <%struct.shape_edge_t*> [#uses=1]
+	%edge.230.0 = getelementptr %struct.shape_edge_t, %struct.shape_edge_t* null, i32 %edge.230.0.rec		; <%struct.shape_edge_t*> [#uses=1]
 	%edge.230.0.sum6970 = or i32 %edge.230.0.rec, 1		; <i32> [#uses=2]
-	%tmp154 = getelementptr %struct.shape_edge_t* null, i32 %edge.230.0.sum6970		; <%struct.shape_edge_t*> [#uses=1]
-	%tmp11.i5 = getelementptr %struct.shape_edge_t* null, i32 %edge.230.0.sum6970, i32 0		; <%struct.shape_edge_t**> [#uses=1]
+	%tmp154 = getelementptr %struct.shape_edge_t, %struct.shape_edge_t* null, i32 %edge.230.0.sum6970		; <%struct.shape_edge_t*> [#uses=1]
+	%tmp11.i5 = getelementptr %struct.shape_edge_t, %struct.shape_edge_t* null, i32 %edge.230.0.sum6970, i32 0		; <%struct.shape_edge_t**> [#uses=1]
 	store %struct.shape_edge_t* %edge.230.0, %struct.shape_edge_t** %tmp11.i5
 	store %struct.shape_edge_t* %tmp154, %struct.shape_edge_t** null
 	%tmp16254.0.rec = add i32 %edge.230.0.rec, 2		; <i32> [#uses=1]

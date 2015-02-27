@@ -125,11 +125,11 @@ Exit:           ; preds = %Loop
 
 define i32* @test8({ i32, i32 } *%A, i1 %b) {
 BB0:
-        %X = getelementptr inbounds { i32, i32 } *%A, i32 0, i32 1
+        %X = getelementptr inbounds { i32, i32 }, { i32, i32 } *%A, i32 0, i32 1
         br i1 %b, label %BB1, label %BB2
 
 BB1:
-        %Y = getelementptr { i32, i32 } *%A, i32 0, i32 1
+        %Y = getelementptr { i32, i32 }, { i32, i32 } *%A, i32 0, i32 1
         br label %BB2
 
 BB2:
@@ -139,7 +139,7 @@ BB2:
 ; CHECK-LABEL: @test8(
 ; CHECK-NOT: phi
 ; CHECK: BB2:
-; CHECK-NEXT: %B = getelementptr { i32, i32 }* %A 
+; CHECK-NEXT: %B = getelementptr { i32, i32 }, { i32, i32 }* %A 
 ; CHECK-NEXT: ret i32* %B
 }
 
@@ -390,14 +390,14 @@ if.end:                                           ; preds = %if.else, %if.then
 
 if.then:                                          ; preds = %entry
   %tmp1 = load i32 addrspace(1)** %pointer1.addr  ; <i32 addrspace(1)*>
-  %arrayidx = getelementptr i32 addrspace(1)* %tmp1, i32 0 ; <i32 addrspace(1)*> [#uses=1]
+  %arrayidx = getelementptr i32, i32 addrspace(1)* %tmp1, i32 0 ; <i32 addrspace(1)*> [#uses=1]
   %tmp2 = load i32 addrspace(1)* %arrayidx        ; <i32> [#uses=1]
   store i32 %tmp2, i32* %res
   br label %if.end
 
 if.else:                                          ; preds = %entry
   %tmp3 = load i32** %pointer2.addr               ; <i32*> [#uses=1]
-  %arrayidx4 = getelementptr i32* %tmp3, i32 0    ; <i32*> [#uses=1]
+  %arrayidx4 = getelementptr i32, i32* %tmp3, i32 0    ; <i32*> [#uses=1]
   %tmp5 = load i32* %arrayidx4                    ; <i32> [#uses=1]
   store i32 %tmp5, i32* %res
   br label %if.end

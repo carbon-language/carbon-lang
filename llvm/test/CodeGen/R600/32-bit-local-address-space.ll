@@ -26,7 +26,7 @@ entry:
 ; SI: ds_read_b32 [[VPTR]]
 define void @local_address_gep(i32 addrspace(1)* %out, i32 addrspace(3)* %in, i32 %offset) {
 entry:
-  %0 = getelementptr i32 addrspace(3)* %in, i32 %offset
+  %0 = getelementptr i32, i32 addrspace(3)* %in, i32 %offset
   %1 = load i32 addrspace(3)* %0
   store i32 %1, i32 addrspace(1)* %out
   ret void
@@ -37,7 +37,7 @@ entry:
 ; SI: ds_read_b32 v{{[0-9]+}}, [[VPTR]] offset:4
 define void @local_address_gep_const_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:
-  %0 = getelementptr i32 addrspace(3)* %in, i32 1
+  %0 = getelementptr i32, i32 addrspace(3)* %in, i32 1
   %1 = load i32 addrspace(3)* %0
   store i32 %1, i32 addrspace(1)* %out
   ret void
@@ -50,7 +50,7 @@ entry:
 ; SI: ds_read_b32 [[VPTR]]
 define void @local_address_gep_large_const_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:
-  %0 = getelementptr i32 addrspace(3)* %in, i32 16385
+  %0 = getelementptr i32, i32 addrspace(3)* %in, i32 16385
   %1 = load i32 addrspace(3)* %0
   store i32 %1, i32 addrspace(1)* %out
   ret void
@@ -72,7 +72,7 @@ define void @null_32bit_lds_ptr(i32 addrspace(1)* %out, i32 addrspace(3)* %lds) 
 ; SI-NEXT: s_add_i32
 ; SI: ds_read_b32
 define void @mul_32bit_ptr(float addrspace(1)* %out, [3 x float] addrspace(3)* %lds, i32 %tid) {
-  %ptr = getelementptr [3 x float] addrspace(3)* %lds, i32 %tid, i32 0
+  %ptr = getelementptr [3 x float], [3 x float] addrspace(3)* %lds, i32 %tid, i32 0
   %val = load float addrspace(3)* %ptr
   store float %val, float addrspace(1)* %out
   ret void
@@ -112,7 +112,7 @@ define void @local_address_store(i32 addrspace(3)* %out, i32 %val) {
 ; SI: v_mov_b32_e32 [[ADDR:v[0-9]+]], [[SADDR]]
 ; SI: ds_write_b32 [[ADDR]], v{{[0-9]+}}
 define void @local_address_gep_store(i32 addrspace(3)* %out, i32, i32 %val, i32 %offset) {
-  %gep = getelementptr i32 addrspace(3)* %out, i32 %offset
+  %gep = getelementptr i32, i32 addrspace(3)* %out, i32 %offset
   store i32 %val, i32 addrspace(3)* %gep, align 4
   ret void
 }
@@ -122,7 +122,7 @@ define void @local_address_gep_store(i32 addrspace(3)* %out, i32, i32 %val, i32 
 ; SI: v_mov_b32_e32 [[VAL:v[0-9]+]], s{{[0-9]+}}
 ; SI: ds_write_b32 [[VPTR]], [[VAL]] offset:4
 define void @local_address_gep_const_offset_store(i32 addrspace(3)* %out, i32 %val) {
-  %gep = getelementptr i32 addrspace(3)* %out, i32 1
+  %gep = getelementptr i32, i32 addrspace(3)* %out, i32 1
   store i32 %val, i32 addrspace(3)* %gep, align 4
   ret void
 }
@@ -133,7 +133,7 @@ define void @local_address_gep_const_offset_store(i32 addrspace(3)* %out, i32 %v
 ; SI: v_mov_b32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
 ; SI: ds_write_b32 [[VPTR]], v{{[0-9]+$}}
 define void @local_address_gep_large_const_offset_store(i32 addrspace(3)* %out, i32 %val) {
-  %gep = getelementptr i32 addrspace(3)* %out, i32 16385
+  %gep = getelementptr i32, i32 addrspace(3)* %out, i32 16385
   store i32 %val, i32 addrspace(3)* %gep, align 4
   ret void
 }

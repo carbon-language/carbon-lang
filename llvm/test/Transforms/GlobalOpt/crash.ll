@@ -31,7 +31,7 @@ entry:
   unreachable
 
 bb.nph.i: 
-  %scevgep.i539 = getelementptr i8* %C, i64 4
+  %scevgep.i539 = getelementptr i8, i8* %C, i64 4
   unreachable
 
 xx:

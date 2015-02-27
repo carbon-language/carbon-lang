@@ -42,7 +42,7 @@ entry:
   %1 = fadd double %0, 5.555552e+05, !dbg !35
   tail call void @llvm.dbg.value(metadata double %1, i64 0, metadata !24, metadata !{!"0x102"}), !dbg !35
   %2 = tail call i32 @puts(i8* getelementptr inbounds ([6 x i8]* @.str1, i32 0, i32 0)) nounwind, !dbg !36
-  %3 = getelementptr inbounds i8* bitcast (i32 (i32, i8**)* @main to i8*), i32 %argc, !dbg !37
+  %3 = getelementptr inbounds i8, i8* bitcast (i32 (i32, i8**)* @main to i8*), i32 %argc, !dbg !37
   %4 = trunc i32 %argc to i8, !dbg !37
   %5 = add i8 %4, 97, !dbg !37
   tail call void @llvm.dbg.value(metadata i8* %3, i64 0, metadata !19, metadata !{!"0x102"}) nounwind, !dbg !38

@@ -4,7 +4,7 @@ target triple = "powerpc64-unknown-linux-gnu"
 
 define i32* @test1() {
         %X = alloca { i32, i32 }
-        %Y = getelementptr {i32,i32}* %X, i32 0, i32 1
+        %Y = getelementptr {i32,i32}, {i32,i32}* %X, i32 0, i32 1
         ret i32* %Y
 
 ; CHECK-LABEL: @test1
@@ -14,7 +14,7 @@ define i32* @test1() {
 
 define i32* @test2() {
         %X = alloca { i32, i32, i32, i32 }
-        %Y = getelementptr {i32,i32,i32,i32}* %X, i32 0, i32 3
+        %Y = getelementptr {i32,i32,i32,i32}, {i32,i32,i32,i32}* %X, i32 0, i32 3
         ret i32* %Y
 
 ; CHECK-LABEL: @test2

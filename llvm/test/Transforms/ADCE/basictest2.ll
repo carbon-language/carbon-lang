@@ -27,7 +27,7 @@ define i32 @spec_getc(i32 %fd) {
 	br i1 %cond266, label %bb3, label %bb2
 
 bb2:		; preds = %0
-	%cast273 = getelementptr [17 x i8]* @.LC12, i64 0, i64 0		; <i8*> [#uses=0]
+	%cast273 = getelementptr [17 x i8], [17 x i8]* @.LC12, i64 0, i64 0		; <i8*> [#uses=0]
 	br label %bb3
 
 bb3:		; preds = %bb2, %0
@@ -35,8 +35,8 @@ bb3:		; preds = %bb2, %0
 	br label %bb5
 
 bb4:		; No predecessors!
-	%reg111 = getelementptr [20 x %FILE]* @__iob, i64 0, i64 1, i32 3		; <i8*> [#uses=1]
-	%cast274 = getelementptr [34 x i8]* @.LC9, i64 0, i64 0		; <i8*> [#uses=0]
+	%reg111 = getelementptr [20 x %FILE], [20 x %FILE]* @__iob, i64 0, i64 1, i32 3		; <i8*> [#uses=1]
+	%cast274 = getelementptr [34 x i8], [34 x i8]* @.LC9, i64 0, i64 0		; <i8*> [#uses=0]
 	%cast282 = bitcast i8* %reg111 to %FILE*		; <%FILE*> [#uses=0]
 	call void @exit( i32 1 )
 	br label %UnifiedExitNode
@@ -44,10 +44,10 @@ bb4:		; No predecessors!
 bb5:		; preds = %bb3
 	%reg107-idxcast1 = sext i32 %fd to i64		; <i64> [#uses=2]
 	%reg107-idxcast2 = sext i32 %fd to i64		; <i64> [#uses=1]
-	%reg1311 = getelementptr [3 x %spec_fd_t]* @spec_fd, i64 0, i64 %reg107-idxcast2		; <%spec_fd_t*> [#uses=1]
-	%idx1 = getelementptr [3 x %spec_fd_t]* @spec_fd, i64 0, i64 %reg107-idxcast1, i32 2		; <i32*> [#uses=1]
+	%reg1311 = getelementptr [3 x %spec_fd_t], [3 x %spec_fd_t]* @spec_fd, i64 0, i64 %reg107-idxcast2		; <%spec_fd_t*> [#uses=1]
+	%idx1 = getelementptr [3 x %spec_fd_t], [3 x %spec_fd_t]* @spec_fd, i64 0, i64 %reg107-idxcast1, i32 2		; <i32*> [#uses=1]
 	%reg1321 = load i32* %idx1		; <i32> [#uses=3]
-	%idx2 = getelementptr %spec_fd_t* %reg1311, i64 0, i32 1		; <i32*> [#uses=1]
+	%idx2 = getelementptr %spec_fd_t, %spec_fd_t* %reg1311, i64 0, i32 1		; <i32*> [#uses=1]
 	%reg1331 = load i32* %idx2		; <i32> [#uses=1]
 	%cond270 = icmp slt i32 %reg1321, %reg1331		; <i1> [#uses=1]
 	br i1 %cond270, label %bb9, label %bb6
@@ -58,7 +58,7 @@ bb6:		; preds = %bb5
 	br i1 %cond271, label %bb8, label %bb7
 
 bb7:		; preds = %bb6
-	%cast277 = getelementptr [4 x i8]* @.LC10, i64 0, i64 0		; <i8*> [#uses=0]
+	%cast277 = getelementptr [4 x i8], [4 x i8]* @.LC10, i64 0, i64 0		; <i8*> [#uses=0]
 	br label %bb8
 
 bb8:		; preds = %bb7, %bb6
@@ -66,21 +66,21 @@ bb8:		; preds = %bb7, %bb6
 
 bb9:		; preds = %bb5
 	%reg107-idxcast3 = sext i32 %fd to i64		; <i64> [#uses=1]
-	%idx3 = getelementptr [3 x %spec_fd_t]* @spec_fd, i64 0, i64 %reg107-idxcast3, i32 3		; <i8**> [#uses=1]
+	%idx3 = getelementptr [3 x %spec_fd_t], [3 x %spec_fd_t]* @spec_fd, i64 0, i64 %reg107-idxcast3, i32 3		; <i8**> [#uses=1]
 	%reg1601 = load i8** %idx3		; <i8*> [#uses=1]
 	%reg132-idxcast1 = sext i32 %reg1321 to i64		; <i64> [#uses=1]
-	%idx4 = getelementptr i8* %reg1601, i64 %reg132-idxcast1		; <i8*> [#uses=1]
+	%idx4 = getelementptr i8, i8* %reg1601, i64 %reg132-idxcast1		; <i8*> [#uses=1]
 	%reg1621 = load i8* %idx4		; <i8> [#uses=2]
 	%cast108 = zext i8 %reg1621 to i64		; <i64> [#uses=0]
 	%reg157 = add i32 %reg1321, 1		; <i32> [#uses=1]
-	%idx5 = getelementptr [3 x %spec_fd_t]* @spec_fd, i64 0, i64 %reg107-idxcast1, i32 2		; <i32*> [#uses=1]
+	%idx5 = getelementptr [3 x %spec_fd_t], [3 x %spec_fd_t]* @spec_fd, i64 0, i64 %reg107-idxcast1, i32 2		; <i32*> [#uses=1]
 	store i32 %reg157, i32* %idx5
 	%reg163 = load i32* @dbglvl		; <i32> [#uses=1]
 	%cond272 = icmp sle i32 %reg163, 4		; <i1> [#uses=1]
 	br i1 %cond272, label %bb11, label %bb10
 
 bb10:		; preds = %bb9
-	%cast279 = getelementptr [4 x i8]* @.LC11, i64 0, i64 0		; <i8*> [#uses=0]
+	%cast279 = getelementptr [4 x i8], [4 x i8]* @.LC11, i64 0, i64 0		; <i8*> [#uses=0]
 	br label %bb11
 
 bb11:		; preds = %bb10, %bb9

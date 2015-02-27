@@ -13,7 +13,7 @@ entry:
   br i1 %cmp, label %while.cond.preheader, label %bb.nph53
 
 while.cond.preheader:                             ; preds = %entry
-  %arrayidx = getelementptr inbounds i8** %argv, i64 1 ; <i8**> [#uses=1]
+  %arrayidx = getelementptr inbounds i8*, i8** %argv, i64 1 ; <i8**> [#uses=1]
   %tmp2 = load i8** %arrayidx                     ; <i8*> [#uses=1]
   %call = tail call i32 @atoi(i8* %tmp2) nounwind ; <i32> [#uses=2]
   %tobool51 = icmp eq i32 %call, 0                ; <i1> [#uses=1]
@@ -35,7 +35,7 @@ bb.nph:                                           ; preds = %while.cond.loopexit
 for.body:                                         ; preds = %for.body, %bb.nph
   %indvar = phi i64 [ 0, %bb.nph ], [ %indvar.next, %for.body ] ; <i64> [#uses=2]
   %tmp = add i64 %indvar, 2                       ; <i64> [#uses=1]
-  %arrayidx10 = getelementptr [8193 x i8]* @main.flags, i64 0, i64 %tmp ; <i8*> [#uses=1]
+  %arrayidx10 = getelementptr [8193 x i8], [8193 x i8]* @main.flags, i64 0, i64 %tmp ; <i8*> [#uses=1]
   store i8 1, i8* %arrayidx10
   %indvar.next = add i64 %indvar, 1               ; <i64> [#uses=2]
   %exitcond = icmp eq i64 %indvar.next, 8191      ; <i1> [#uses=1]
@@ -49,7 +49,7 @@ for.body15:                                       ; preds = %for.body, %for.inc3
   %tmp71 = add i64 %tmp70, 6                      ; <i64> [#uses=1]
   %tmp73 = shl i64 %indvar57, 1                   ; <i64> [#uses=1]
   %add = add i64 %tmp73, 4                        ; <i64> [#uses=2]
-  %arrayidx17 = getelementptr [8193 x i8]* @main.flags, i64 0, i64 %tmp68 ; <i8*> [#uses=1]
+  %arrayidx17 = getelementptr [8193 x i8], [8193 x i8]* @main.flags, i64 0, i64 %tmp68 ; <i8*> [#uses=1]
   %tmp18 = load i8* %arrayidx17                   ; <i8> [#uses=1]
   %tobool19 = icmp eq i8 %tmp18, 0                ; <i1> [#uses=1]
   br i1 %tobool19, label %for.inc35, label %if.then
@@ -62,7 +62,7 @@ for.body25:                                       ; preds = %if.then, %for.body2
   %indvar55 = phi i64 [ %indvar.next56, %for.body25 ], [ 0, %if.then ] ; <i64> [#uses=2]
   %tmp60 = mul i64 %tmp68, %indvar55              ; <i64> [#uses=2]
   %tmp75 = add i64 %add, %tmp60                   ; <i64> [#uses=1]
-  %arrayidx27 = getelementptr [8193 x i8]* @main.flags, i64 0, i64 %tmp75 ; <i8*> [#uses=1]
+  %arrayidx27 = getelementptr [8193 x i8], [8193 x i8]* @main.flags, i64 0, i64 %tmp75 ; <i8*> [#uses=1]
   store i8 0, i8* %arrayidx27
   %add31 = add i64 %tmp71, %tmp60                 ; <i64> [#uses=1]
   %cmp24 = icmp slt i64 %add31, 8193              ; <i1> [#uses=1]

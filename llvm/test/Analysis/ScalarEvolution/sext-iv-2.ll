@@ -32,7 +32,7 @@ bb1:		; preds = %bb2, %bb.nph
 	%tmp4 = mul i32 %tmp3, %i.02		; <i32> [#uses=1]
 	%tmp5 = sext i32 %i.02 to i64		; <i64> [#uses=1]
 	%tmp6 = sext i32 %j.01 to i64		; <i64> [#uses=1]
-	%tmp7 = getelementptr [32 x [256 x i32]]* @table, i64 0, i64 %tmp5, i64 %tmp6		; <i32*> [#uses=1]
+	%tmp7 = getelementptr [32 x [256 x i32]], [32 x [256 x i32]]* @table, i64 0, i64 %tmp5, i64 %tmp6		; <i32*> [#uses=1]
 	store i32 %tmp4, i32* %tmp7, align 4
 	%tmp8 = add i32 %j.01, 1		; <i32> [#uses=2]
 	br label %bb2

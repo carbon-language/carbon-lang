@@ -23,7 +23,7 @@ for.body:                                         ; preds = %for.body.preheader,
 ; CHECK: phi i32
   %mul = mul nsw i32 %i.06, %i.06
   %0 = sext i32 %i.06 to i64
-  %arrayidx = getelementptr inbounds i32* %output, i64 %0
+  %arrayidx = getelementptr inbounds i32, i32* %output, i64 %0
   store i32 %mul, i32* %arrayidx, align 4
   %add = add nsw i32 %i.06, 3
   %cmp = icmp slt i32 %add, %n

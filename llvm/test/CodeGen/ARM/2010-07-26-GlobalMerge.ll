@@ -29,7 +29,7 @@ declare void @_Unwind_SjLj_Resume(i8*)
 
 define internal void @_ZN1AD1Ev(%struct.A* nocapture %this) nounwind ssp align 2 {
 entry:
-  %tmp.i = getelementptr inbounds %struct.A* %this, i32 0, i32 0 ; <i32*> [#uses=1]
+  %tmp.i = getelementptr inbounds %struct.A, %struct.A* %this, i32 0, i32 0 ; <i32*> [#uses=1]
   %tmp2.i = load i32* %tmp.i                      ; <i32> [#uses=1]
   %call.i = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([9 x i8]* @.str4, i32 0, i32 0), i32 %tmp2.i) nounwind ; <i32> [#uses=0]
   %tmp3.i = load i32* @d                          ; <i32> [#uses=1]

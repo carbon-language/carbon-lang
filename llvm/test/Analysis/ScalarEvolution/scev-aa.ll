@@ -19,9 +19,9 @@ entry:
 
 bb:
   %i = phi i64 [ 0, %entry ], [ %i.next, %bb ]
-  %pi = getelementptr double* %p, i64 %i
+  %pi = getelementptr double, double* %p, i64 %i
   %i.next = add i64 %i, 1
-  %pi.next = getelementptr double* %p, i64 %i.next
+  %pi.next = getelementptr double, double* %p, i64 %i.next
   %x = load double* %pi
   %y = load double* %pi.next
   %z = fmul double %x, %y
@@ -58,9 +58,9 @@ bb:
   %i.next = add i64 %i, 1
 
   %e = add i64 %i, %j
-  %pi.j = getelementptr double* %p, i64 %e
+  %pi.j = getelementptr double, double* %p, i64 %e
   %f = add i64 %i.next, %j
-  %pi.next.j = getelementptr double* %p, i64 %f
+  %pi.next.j = getelementptr double, double* %p, i64 %f
   %x = load double* %pi.j
   %y = load double* %pi.next.j
   %z = fmul double %x, %y
@@ -68,7 +68,7 @@ bb:
 
   %o = add i64 %j, 91
   %g = add i64 %i, %o
-  %pi.j.next = getelementptr double* %p, i64 %g
+  %pi.j.next = getelementptr double, double* %p, i64 %g
   %a = load double* %pi.j.next
   %b = fmul double %x, %a
   store double %b, double* %pi.j.next
@@ -115,9 +115,9 @@ bb:
   %i.next = add i64 %i, 1
 
   %e = add i64 %i, %j
-  %pi.j = getelementptr double* %p, i64 %e
+  %pi.j = getelementptr double, double* %p, i64 %e
   %f = add i64 %i.next, %j
-  %pi.next.j = getelementptr double* %p, i64 %f
+  %pi.next.j = getelementptr double, double* %p, i64 %f
   %x = load double* %pi.j
   %y = load double* %pi.next.j
   %z = fmul double %x, %y
@@ -125,7 +125,7 @@ bb:
 
   %o = add i64 %j, %n
   %g = add i64 %i, %o
-  %pi.j.next = getelementptr double* %p, i64 %g
+  %pi.j.next = getelementptr double, double* %p, i64 %g
   %a = load double* %pi.j.next
   %b = fmul double %x, %a
   store double %b, double* %pi.j.next
@@ -161,12 +161,12 @@ return:
 define void @foo() {
 entry:
   %A = alloca %struct.A
-  %B = getelementptr %struct.A* %A, i32 0, i32 0
+  %B = getelementptr %struct.A, %struct.A* %A, i32 0, i32 0
   %Q = bitcast %struct.B* %B to %struct.A*
-  %Z = getelementptr %struct.A* %Q, i32 0, i32 1
-  %C = getelementptr %struct.B* %B, i32 1
+  %Z = getelementptr %struct.A, %struct.A* %Q, i32 0, i32 1
+  %C = getelementptr %struct.B, %struct.B* %B, i32 1
   %X = bitcast %struct.B* %C to i32*
-  %Y = getelementptr %struct.A* %A, i32 0, i32 1
+  %Y = getelementptr %struct.A, %struct.A* %A, i32 0, i32 1
   ret void
 }
 
@@ -181,12 +181,12 @@ entry:
 
 define void @bar() {
   %M = alloca %struct.A
-  %N = getelementptr %struct.A* %M, i32 0, i32 0
+  %N = getelementptr %struct.A, %struct.A* %M, i32 0, i32 0
   %O = bitcast %struct.B* %N to %struct.A*
-  %P = getelementptr %struct.A* %O, i32 0, i32 1
-  %R = getelementptr %struct.B* %N, i32 1
+  %P = getelementptr %struct.A, %struct.A* %O, i32 0, i32 1
+  %R = getelementptr %struct.B, %struct.B* %N, i32 1
   %W = bitcast %struct.B* %R to i32*
-  %V = getelementptr %struct.A* %M, i32 0, i32 1
+  %V = getelementptr %struct.A, %struct.A* %M, i32 0, i32 1
   ret void
 }
 
@@ -200,7 +200,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %i = phi i64 [ %inc, %for.body ], [ 0, %entry ] ; <i64> [#uses=2]
   %inc = add nsw i64 %i, 1                         ; <i64> [#uses=2]
-  %arrayidx = getelementptr inbounds i64* %p, i64 %inc
+  %arrayidx = getelementptr inbounds i64, i64* %p, i64 %inc
   store i64 0, i64* %arrayidx
   %tmp6 = load i64* %p                            ; <i64> [#uses=1]
   %cmp = icmp slt i64 %inc, %tmp6                 ; <i1> [#uses=1]

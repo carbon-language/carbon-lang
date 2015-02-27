@@ -26,7 +26,7 @@ entry:
 
 loopentry:              ; preds = %loopentry, %entry
         %i = phi i64 [ 0, %entry ], [ %inc.i, %loopentry ]              ; <i64> [#uses=3]
-        %cptr = getelementptr [6 x i8]* @yy_ec, i64 0, i64 %i           ; <i8*> [#uses=1]
+        %cptr = getelementptr [6 x i8], [6 x i8]* @yy_ec, i64 0, i64 %i           ; <i8*> [#uses=1]
         %c = load i8* %cptr             ; <i8> [#uses=1]
         %ignore = call i32 (i8*, ...)* @printf( i8* getelementptr ([8 x i8]* @.str_3, i64 0, i64 0), i64 %i )        ; <i32> [#uses=0]
         %ignore2 = call i32 (i8*, ...)* @printf( i8* getelementptr ([4 x i8]* @.str_4, i64 0, i64 0), i8 %c )        ; <i32> [#uses=0]

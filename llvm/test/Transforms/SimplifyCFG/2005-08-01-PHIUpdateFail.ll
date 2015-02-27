@@ -58,7 +58,7 @@ then.2.i:		; preds = %endif.1.i, %then.1.i
 getfree.exit:		; preds = %endif.1.i, %then.1.i
 	ret void
 endif.1:		; preds = %read_min.exit
-	%tmp.27.i = getelementptr i32* null, i32 0		; <i32*> [#uses=0]
+	%tmp.27.i = getelementptr i32, i32* null, i32 0		; <i32*> [#uses=0]
 	br i1 false, label %loopexit.0.i15, label %no_exit.0.i14
 no_exit.0.i14:		; preds = %endif.1
 	ret void

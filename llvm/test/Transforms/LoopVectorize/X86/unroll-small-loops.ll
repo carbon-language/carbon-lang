@@ -26,7 +26,7 @@ define i32 @foo(i32* nocapture %A) nounwind uwtable ssp {
 
 ; <label>:1                                       ; preds = %1, %0
   %indvars.iv = phi i64 [ 0, %0 ], [ %indvars.iv.next, %1 ]
-  %2 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %2 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   %3 = load i32* %2, align 4
   %4 = add nsw i32 %3, 6
   store i32 %4, i32* %2, align 4
@@ -57,7 +57,7 @@ define i32 @bar(i32* nocapture %A, i32 %n) nounwind uwtable ssp {
 
 .lr.ph:                                           ; preds = %0, %.lr.ph
   %indvars.iv = phi i64 [ %indvars.iv.next, %.lr.ph ], [ 0, %0 ]
-  %2 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %2 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   %3 = load i32* %2, align 4
   %4 = add nsw i32 %3, 6
   store i32 %4, i32* %2, align 4
@@ -86,10 +86,10 @@ entry:
 
 for.body:
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
-  %arrayidx = getelementptr inbounds float* %B, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds float, float* %B, i64 %indvars.iv
   %0 = load float* %arrayidx, align 4
   %mul = fmul float %0, %N
-  %arrayidx2 = getelementptr inbounds float* %A, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds float, float* %A, i64 %indvars.iv
   store float %mul, float* %arrayidx2, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 256

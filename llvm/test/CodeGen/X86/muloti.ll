@@ -41,16 +41,16 @@ entry:
   %coerce1 = alloca i128, align 16
   %b.addr = alloca i128, align 16
   %0 = bitcast i128* %coerce to %0*
-  %1 = getelementptr %0* %0, i32 0, i32 0
+  %1 = getelementptr %0, %0* %0, i32 0, i32 0
   store i64 %a.coerce0, i64* %1
-  %2 = getelementptr %0* %0, i32 0, i32 1
+  %2 = getelementptr %0, %0* %0, i32 0, i32 1
   store i64 %a.coerce1, i64* %2
   %a = load i128* %coerce, align 16
   store i128 %a, i128* %a.addr, align 16
   %3 = bitcast i128* %coerce1 to %0*
-  %4 = getelementptr %0* %3, i32 0, i32 0
+  %4 = getelementptr %0, %0* %3, i32 0, i32 0
   store i64 %b.coerce0, i64* %4
-  %5 = getelementptr %0* %3, i32 0, i32 1
+  %5 = getelementptr %0, %0* %3, i32 0, i32 1
   store i64 %b.coerce1, i64* %5
   %b = load i128* %coerce1, align 16
   store i128 %b, i128* %b.addr, align 16

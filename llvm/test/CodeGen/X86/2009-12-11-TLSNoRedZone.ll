@@ -39,7 +39,7 @@ define void @leaf() nounwind {
   %r2 = load %test** %p, align 8                  ; <%test*> [#uses=1]
   %r3 = ptrtoint %test* %r2 to i64                ; <i64> [#uses=1]
   %r4 = inttoptr i64 %r3 to %link**               ; <%link**> [#uses=1]
-  %r5 = getelementptr %link** %r4, i64 1          ; <%link**> [#uses=1]
+  %r5 = getelementptr %link*, %link** %r4, i64 1          ; <%link**> [#uses=1]
   store %link* %r1, %link** %r5, align 8
   br label %"@CFE_debug_label_3"
 
@@ -47,7 +47,7 @@ define void @leaf() nounwind {
   %r6 = load %test** %p, align 8                  ; <%test*> [#uses=1]
   %r7 = ptrtoint %test* %r6 to i64                ; <i64> [#uses=1]
   %r8 = inttoptr i64 %r7 to %link*                ; <%link*> [#uses=1]
-  %r9 = getelementptr %link* %r8, i64 1           ; <%link*> [#uses=1]
+  %r9 = getelementptr %link, %link* %r8, i64 1           ; <%link*> [#uses=1]
   store %link* %r9, %link** bitcast ([1 x i64]* @link_ptr to %link**), align 8
   br label %"@CFE_debug_label_4"
 

@@ -35,12 +35,12 @@ entry:
 ; PR4908
 define void @test2(<1 x i16>* nocapture %b, i32* nocapture %c) nounwind ssp {
 entry:
-  %arrayidx = getelementptr inbounds <1 x i16>* %b, i64 undef ; <<1 x i16>*>
+  %arrayidx = getelementptr inbounds <1 x i16>, <1 x i16>* %b, i64 undef ; <<1 x i16>*>
   %tmp2 = load <1 x i16>* %arrayidx               ; <<1 x i16>> [#uses=1]
   %tmp6 = bitcast <1 x i16> %tmp2 to i16          ; <i16> [#uses=1]
   %tmp7 = zext i16 %tmp6 to i32                   ; <i32> [#uses=1]
   %ins = or i32 0, %tmp7                          ; <i32> [#uses=1]
-  %arrayidx20 = getelementptr inbounds i32* %c, i64 undef ; <i32*> [#uses=1]
+  %arrayidx20 = getelementptr inbounds i32, i32* %c, i64 undef ; <i32*> [#uses=1]
   store i32 %ins, i32* %arrayidx20
   ret void
 }
@@ -79,8 +79,8 @@ define void @bar3(i1, i1) nounwind align 2 {
   br i1 %1, label %10, label %3
 
 ; <label>:3                                       ; preds = %2
-  %4 = getelementptr inbounds %t0* null, i64 0, i32 1 ; <i32*> [#uses=0]
-  %5 = getelementptr inbounds %t1* null, i64 0, i32 4 ; <i32**> [#uses=1]
+  %4 = getelementptr inbounds %t0, %t0* null, i64 0, i32 1 ; <i32*> [#uses=0]
+  %5 = getelementptr inbounds %t1, %t1* null, i64 0, i32 4 ; <i32**> [#uses=1]
   %6 = load i32** %5, align 8                     ; <i32*> [#uses=1]
   %7 = icmp ne i32* %6, null                      ; <i1> [#uses=1]
   %8 = zext i1 %7 to i32                          ; <i32> [#uses=1]
@@ -182,7 +182,7 @@ cont:                                             ; preds = %ehcleanup
   resume { i8*, i32 } %exc1
 
 cond.false:                                       ; preds = %entry
-  %tmp4 = getelementptr inbounds %class.RuleBasedBreakIterator* %this, i32 0, i32 0 ; <i64 ()**> [#uses=1]
+  %tmp4 = getelementptr inbounds %class.RuleBasedBreakIterator, %class.RuleBasedBreakIterator* %this, i32 0, i32 0 ; <i64 ()**> [#uses=1]
   %tmp5 = load i64 ()** %tmp4                     ; <i64 ()*> [#uses=1]
   %call = invoke i64 %tmp5()
           to label %cond.end unwind label %ehcleanup ; <i64> [#uses=1]
@@ -258,9 +258,9 @@ entry:
 %s2 = type { i64 }
 define void @test13() nounwind ssp {
 entry:
-  %0 = getelementptr inbounds %s1* null, i64 0, i32 2, i64 0, i32 0
+  %0 = getelementptr inbounds %s1, %s1* null, i64 0, i32 2, i64 0, i32 0
   %1 = bitcast i64* %0 to i32*
-  %2 = getelementptr inbounds %s1* null, i64 0, i32 2, i64 1, i32 0
+  %2 = getelementptr inbounds %s1, %s1* null, i64 0, i32 2, i64 1, i32 0
   %.pre = load i32* %1, align 8
   %3 = lshr i32 %.pre, 19
   %brmerge = or i1 undef, undef
@@ -349,7 +349,7 @@ define double @test16(i32 %a) nounwind {
 
 define %struct.basic_ios *@test17() ssp {
 entry:
-  %add.ptr.i = getelementptr i8* null, i64 undef
+  %add.ptr.i = getelementptr i8, i8* null, i64 undef
   %0 = bitcast i8* %add.ptr.i to %struct.basic_ios*
   ret %struct.basic_ios* %0
 }

@@ -31,7 +31,7 @@ bb:		; preds = %bb, %bb.preheader
 	%i.0.reg2mem.0 = phi i32 [ 0, %bb.preheader ], [ %indvar.next, %bb ]		; <i32> [#uses=2]
 	%tmp = call i8* @llvm.stacksave( )		; <i8*> [#uses=1]
 	%tmp23 = alloca i8, i32 %size		; <i8*> [#uses=2]
-	%tmp27 = getelementptr i8* %tmp23, i32 %tmp25		; <i8*> [#uses=1]
+	%tmp27 = getelementptr i8, i8* %tmp23, i32 %tmp25		; <i8*> [#uses=1]
 	store i8 0, i8* %tmp27, align 1
 	%tmp28 = call i8* @llvm.stacksave( )		; <i8*> [#uses=1]
 	%tmp52 = alloca i8, i32 %size		; <i8*> [#uses=1]

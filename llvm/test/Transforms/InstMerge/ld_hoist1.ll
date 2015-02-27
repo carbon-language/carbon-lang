@@ -15,12 +15,12 @@ for.body.lr.ph:                                   ; preds = %entry
 
 ; CHECK-LABEL: for.body
 ; CHECK: load
-; CHECK:  %2 = getelementptr inbounds i32* %in, i64 %indvars.iv
+; CHECK:  %2 = getelementptr inbounds i32, i32* %in, i64 %indvars.iv
 ; CHECK:  %3 = load i32* %2, align 4
 
 for.body:                                         ; preds = %for.body.lr.ph, %for.inc
   %indvars.iv = phi i64 [ 0, %for.body.lr.ph ], [ %indvars.iv.next, %for.inc ]
-  %arrayidx = getelementptr inbounds i32* %trigger, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %trigger, i64 %indvars.iv
   %1 = load i32* %arrayidx, align 4
   %cmp1 = icmp sgt i32 %1, 0
   br i1 %cmp1, label %if.then, label %if.else
@@ -28,21 +28,21 @@ for.body:                                         ; preds = %for.body.lr.ph, %fo
 ; CHECK-LABEL: if.then
 if.then:                                          ; preds = %for.body
 ; This load should be hoisted
-  %arrayidx3 = getelementptr inbounds i32* %in, i64 %indvars.iv
+  %arrayidx3 = getelementptr inbounds i32, i32* %in, i64 %indvars.iv
   %2 = load i32* %arrayidx3, align 4
   %conv = sitofp i32 %2 to float
   %add = fadd float %conv, 5.000000e-01
-  %arrayidx5 = getelementptr inbounds float* %out, i64 %indvars.iv
+  %arrayidx5 = getelementptr inbounds float, float* %out, i64 %indvars.iv
   store float %add, float* %arrayidx5, align 4
   br label %for.inc
 
 if.else:                                          ; preds = %for.body
-  %arrayidx7 = getelementptr inbounds float* %out, i64 %indvars.iv
+  %arrayidx7 = getelementptr inbounds float, float* %out, i64 %indvars.iv
   %3 = load float* %arrayidx7, align 4
   %div = fdiv float %3, 3.000000e+00
   store float %div, float* %arrayidx7, align 4
 ; This load should be hoisted in spite of store 
-  %arrayidx9 = getelementptr inbounds i32* %in, i64 %indvars.iv
+  %arrayidx9 = getelementptr inbounds i32, i32* %in, i64 %indvars.iv
   %4 = load i32* %arrayidx9, align 4
   %conv10 = sitofp i32 %4 to float
   %add13 = fadd float %div, %conv10

@@ -24,13 +24,13 @@ target triple = "x86_64-apple-macosx10.9.0"
 define i32 @foo(i32* nocapture %A) #0 {
 entry:
   %0 = load i32* %A, align 4
-  %arrayidx1 = getelementptr inbounds i32* %A, i64 1
+  %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 1
   %1 = load i32* %arrayidx1, align 4
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 2
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 2
   %2 = load i32* %arrayidx2, align 4
-  %arrayidx3 = getelementptr inbounds i32* %A, i64 3
+  %arrayidx3 = getelementptr inbounds i32, i32* %A, i64 3
   %3 = load i32* %arrayidx3, align 4
-  %arrayidx4 = getelementptr inbounds i32* %A, i64 13
+  %arrayidx4 = getelementptr inbounds i32, i32* %A, i64 13
   %4 = load i32* %arrayidx4, align 4
   %cmp24 = icmp sgt i32 %4, 0
   br i1 %cmp24, label %for.body, label %for.end

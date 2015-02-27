@@ -15,7 +15,7 @@ define i32 @cvtchar(i8* nocapture %sp) nounwind {
   %tmp1 = load i8* %sp, align 1
   %div = udiv i8 %tmp1, 10
   %rem = urem i8 %div, 10
-  %arrayidx.i = getelementptr inbounds [2 x i8]* %temp.i, i32 0, i32 0
+  %arrayidx.i = getelementptr inbounds [2 x i8], [2 x i8]* %temp.i, i32 0, i32 0
   store i8 %rem, i8* %arrayidx.i, align 1
   %call.i = call fastcc i8* @save_string(i8* %sp, i8* %arrayidx.i) nounwind
   ret i32 undef

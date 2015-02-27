@@ -30,7 +30,7 @@ bb441:		; preds = %cond_next330
 
 cond_next472:		; preds = %cond_next330
 	%tmp490 = load %struct.tree_node** null		; <%struct.tree_node*> [#uses=1]
-	%tmp492 = getelementptr %struct.tree_node* %tmp490, i32 0, i32 0, i32 0, i32 3		; <i8*> [#uses=1]
+	%tmp492 = getelementptr %struct.tree_node, %struct.tree_node* %tmp490, i32 0, i32 0, i32 0, i32 3		; <i8*> [#uses=1]
 	%tmp492.upgrd.1 = bitcast i8* %tmp492 to i32*		; <i32*> [#uses=1]
 	%tmp493 = load i32* %tmp492.upgrd.1		; <i32> [#uses=1]
 	%tmp495 = trunc i32 %tmp493 to i8		; <i8> [#uses=1]

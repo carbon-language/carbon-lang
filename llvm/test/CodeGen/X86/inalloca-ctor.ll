@@ -11,7 +11,7 @@ declare void @Foo_ctor(%Foo* %this)
 define void @g() {
 entry:
   %args = alloca inalloca %frame
-  %c = getelementptr %frame* %args, i32 0, i32 2
+  %c = getelementptr %frame, %frame* %args, i32 0, i32 2
 ; CHECK: movl    $20, %eax
 ; CHECK: calll   __chkstk
 ; CHECK: movl %esp,
@@ -20,10 +20,10 @@ entry:
 ; CHECK-NEXT: pushl
 ; CHECK-NEXT: calll _Foo_ctor
 ; CHECK: addl $4, %esp
-  %b = getelementptr %frame* %args, i32 0, i32 1
+  %b = getelementptr %frame, %frame* %args, i32 0, i32 1
   store i32 42, i32* %b
 ; CHECK: movl $42,
-  %a = getelementptr %frame* %args, i32 0, i32 0
+  %a = getelementptr %frame, %frame* %args, i32 0, i32 0
   call void @Foo_ctor(%Foo* %a)
 ; CHECK-NEXT: pushl
 ; CHECK-NEXT: calll _Foo_ctor

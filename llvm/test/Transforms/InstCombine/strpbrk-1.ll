@@ -14,7 +14,7 @@ declare i8* @strpbrk(i8*, i8*)
 
 define i8* @test_simplify1(i8* %str) {
 ; CHECK-LABEL: @test_simplify1(
-  %pat = getelementptr [1 x i8]* @null, i32 0, i32 0
+  %pat = getelementptr [1 x i8], [1 x i8]* @null, i32 0, i32 0
 
   %ret = call i8* @strpbrk(i8* %str, i8* %pat)
   ret i8* %ret
@@ -25,7 +25,7 @@ define i8* @test_simplify1(i8* %str) {
 
 define i8* @test_simplify2(i8* %pat) {
 ; CHECK-LABEL: @test_simplify2(
-  %str = getelementptr [1 x i8]* @null, i32 0, i32 0
+  %str = getelementptr [1 x i8], [1 x i8]* @null, i32 0, i32 0
 
   %ret = call i8* @strpbrk(i8* %str, i8* %pat)
   ret i8* %ret
@@ -36,8 +36,8 @@ define i8* @test_simplify2(i8* %pat) {
 
 define i8* @test_simplify3() {
 ; CHECK-LABEL: @test_simplify3(
-  %str = getelementptr [12 x i8]* @hello, i32 0, i32 0
-  %pat = getelementptr [2 x i8]* @w, i32 0, i32 0
+  %str = getelementptr [12 x i8], [12 x i8]* @hello, i32 0, i32 0
+  %pat = getelementptr [2 x i8], [2 x i8]* @w, i32 0, i32 0
 
   %ret = call i8* @strpbrk(i8* %str, i8* %pat)
   ret i8* %ret
@@ -48,7 +48,7 @@ define i8* @test_simplify3() {
 
 define i8* @test_simplify4(i8* %str) {
 ; CHECK-LABEL: @test_simplify4(
-  %pat = getelementptr [2 x i8]* @w, i32 0, i32 0
+  %pat = getelementptr [2 x i8], [2 x i8]* @w, i32 0, i32 0
 
   %ret = call i8* @strpbrk(i8* %str, i8* %pat)
 ; CHECK-NEXT: [[VAR:%[a-z]+]] = call i8* @strchr(i8* %str, i32 119)

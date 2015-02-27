@@ -8,7 +8,7 @@ entry:
   br i1 %cmp, label %if.then, label %if.end
 
 if.then:
-  %incdec.ptr = getelementptr %ST* %x, i32 0, i32 1
+  %incdec.ptr = getelementptr %ST, %ST* %x, i32 0, i32 1
   br label %if.end
 
 if.end:

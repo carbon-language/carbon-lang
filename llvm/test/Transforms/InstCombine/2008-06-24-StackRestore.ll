@@ -27,7 +27,7 @@ bb44:		; preds = %bb44, %entry
 	%tmp27 = alloca i32, i32 %tmp5		; <i32*> [#uses=3]
 	%tmpcast = bitcast i32* %tmp27 to i8*		; <i8*> [#uses=1]
 	store i32 1, i32* %tmp27, align 4
-	%tmp34 = getelementptr i32* %tmp27, i32 %tmp4		; <i32*> [#uses=1]
+	%tmp34 = getelementptr i32, i32* %tmp27, i32 %tmp4		; <i32*> [#uses=1]
 	store i32 2, i32* %tmp34, align 4
 	store volatile i8* %tmpcast, i8** @p, align 4
 	%exitcond = icmp eq i32 %tmp3857, 999999		; <i1> [#uses=1]

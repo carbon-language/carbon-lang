@@ -16,8 +16,8 @@ target triple = "x86_64-apple-macosx10.8.0"
 define void @f() {
   %1 = alloca [0 x i8], align 1
   %2 = alloca [0 x i8], align 1024
-  %3 = getelementptr inbounds [0 x i8]* %1, i64 0, i64 0
-  %4 = getelementptr inbounds [0 x i8]* %2, i64 0, i64 0
+  %3 = getelementptr inbounds [0 x i8], [0 x i8]* %1, i64 0, i64 0
+  %4 = getelementptr inbounds [0 x i8], [0 x i8]* %2, i64 0, i64 0
   store i8* %3, i8** @x, align 8
   store i8* %4, i8** @y, align 8
   ret void

@@ -54,7 +54,7 @@ codeRepl:
 for.body:
   %1 = load i32* %jj7, align 4
   %idxprom4 = zext i32 %1 to i64
-  %arrayidx5 = getelementptr inbounds [100 x i32]* %oa5, i64 0, i64 %idxprom4
+  %arrayidx5 = getelementptr inbounds [100 x i32], [100 x i32]* %oa5, i64 0, i64 %idxprom4
   %2 = load i32* %arrayidx5, align 4
   %sub6 = sub i32 %2, 6
   store i32 %sub6, i32* %arrayidx5, align 4
@@ -63,7 +63,7 @@ for.body:
   store i32 %3, i32* %arrayidx5, align 4
   %sub11 = add i32 %1, -1
   %idxprom12 = zext i32 %sub11 to i64
-  %arrayidx13 = getelementptr inbounds [100 x i32]* %oa5, i64 0, i64 %idxprom12
+  %arrayidx13 = getelementptr inbounds [100 x i32], [100 x i32]* %oa5, i64 0, i64 %idxprom12
   call void @inc(i32* %jj7)
   br label %codeRepl
 

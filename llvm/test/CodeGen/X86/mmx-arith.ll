@@ -178,9 +178,9 @@ bb26:
 ; X32:  adcl
   %i.037.0 = phi i32 [ 0, %entry ], [ %tmp25, %bb26 ]
   %sum.035.0 = phi <1 x i64> [ zeroinitializer, %entry ], [ %tmp22, %bb26 ]
-  %tmp13 = getelementptr <1 x i64>* %b, i32 %i.037.0
+  %tmp13 = getelementptr <1 x i64>, <1 x i64>* %b, i32 %i.037.0
   %tmp14 = load <1 x i64>* %tmp13
-  %tmp18 = getelementptr <1 x i64>* %a, i32 %i.037.0
+  %tmp18 = getelementptr <1 x i64>, <1 x i64>* %a, i32 %i.037.0
   %tmp19 = load <1 x i64>* %tmp18
   %tmp21 = add <1 x i64> %tmp19, %tmp14
   %tmp22 = add <1 x i64> %tmp21, %sum.035.0

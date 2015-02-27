@@ -13,21 +13,21 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %i.016 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
-  %arrayidx = getelementptr inbounds i32* %A, i64 %i.016
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %i.016
   %0 = load i32* %arrayidx, align 4
-  %arrayidx1 = getelementptr inbounds i32* %B, i64 %i.016
+  %arrayidx1 = getelementptr inbounds i32, i32* %B, i64 %i.016
   %1 = load i32* %arrayidx1, align 4
   %add = add nsw i32 %1, %0
-  %arrayidx2 = getelementptr inbounds i32* %C, i64 %i.016
+  %arrayidx2 = getelementptr inbounds i32, i32* %C, i64 %i.016
   %2 = load i32* %arrayidx2, align 4
   %add3 = add nsw i32 %add, %2
-  %arrayidx4 = getelementptr inbounds i32* %E, i64 %i.016
+  %arrayidx4 = getelementptr inbounds i32, i32* %E, i64 %i.016
   %3 = load i32* %arrayidx4, align 4
   %add5 = add nsw i32 %add3, %3
-  %arrayidx6 = getelementptr inbounds i32* %F, i64 %i.016
+  %arrayidx6 = getelementptr inbounds i32, i32* %F, i64 %i.016
   %4 = load i32* %arrayidx6, align 4
   %add7 = add nsw i32 %add5, %4
-  %arrayidx8 = getelementptr inbounds i32* %out, i64 %i.016
+  %arrayidx8 = getelementptr inbounds i32, i32* %out, i64 %i.016
   store i32 %add7, i32* %arrayidx8, align 4
   %inc = add i64 %i.016, 1
   %exitcond = icmp eq i64 %inc, 256
@@ -47,21 +47,21 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %i.037 = phi i64 [ 0, %entry ], [ %inc, %for.body ]
-  %arrayidx = getelementptr inbounds i32* %A, i64 %i.037
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %i.037
   %0 = load i32* %arrayidx, align 4
-  %arrayidx1 = getelementptr inbounds i32* %B, i64 %i.037
+  %arrayidx1 = getelementptr inbounds i32, i32* %B, i64 %i.037
   %1 = load i32* %arrayidx1, align 4
   %add = add nsw i32 %1, %0
-  %arrayidx2 = getelementptr inbounds i32* %C, i64 %i.037
+  %arrayidx2 = getelementptr inbounds i32, i32* %C, i64 %i.037
   %2 = load i32* %arrayidx2, align 4
   %add3 = add nsw i32 %add, %2
-  %arrayidx4 = getelementptr inbounds i32* %E, i64 %i.037
+  %arrayidx4 = getelementptr inbounds i32, i32* %E, i64 %i.037
   %3 = load i32* %arrayidx4, align 4
   %add5 = add nsw i32 %add3, %3
-  %arrayidx6 = getelementptr inbounds i32* %F, i64 %i.037
+  %arrayidx6 = getelementptr inbounds i32, i32* %F, i64 %i.037
   %4 = load i32* %arrayidx6, align 4
   %add7 = add nsw i32 %add5, %4
-  %arrayidx8 = getelementptr inbounds i32* %out, i64 %i.037
+  %arrayidx8 = getelementptr inbounds i32, i32* %out, i64 %i.037
   store i32 %add7, i32* %arrayidx8, align 4
   %5 = load i32* %arrayidx, align 4
   %6 = load i32* %arrayidx1, align 4
@@ -72,7 +72,7 @@ for.body:                                         ; preds = %for.body, %entry
   %add15 = add nsw i32 %add13, %8
   %9 = load i32* %arrayidx6, align 4
   %add17 = add nsw i32 %add15, %9
-  %arrayidx18 = getelementptr inbounds i32* %out2, i64 %i.037
+  %arrayidx18 = getelementptr inbounds i32, i32* %out2, i64 %i.037
   store i32 %add17, i32* %arrayidx18, align 4
   %inc = add i64 %i.037, 1
   %exitcond = icmp eq i64 %inc, 256

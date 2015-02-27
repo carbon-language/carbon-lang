@@ -34,7 +34,7 @@ bb249:		; preds = %bb246
 	br i1 %tmp3240, label %bb974, label %bb269
 
 bb269:
-	%tmp3424 = getelementptr %struct.rec* %x, i32 0, i32 0, i32 0, i32 0, i32 1		; <%struct.rec**> [#uses=0]
+	%tmp3424 = getelementptr %struct.rec, %struct.rec* %x, i32 0, i32 0, i32 0, i32 0, i32 1		; <%struct.rec**> [#uses=0]
 	unreachable
 
 bb974:

@@ -38,7 +38,7 @@ if.then:                                          ; preds = %entry
 
 if.else:                                          ; preds = %entry
   tail call fastcc void @send_int(i32 %i)
-  %arrayidx = getelementptr inbounds [8 x i8]* %data, i32 0, i32 0
+  %arrayidx = getelementptr inbounds [8 x i8], [8 x i8]* %data, i32 0, i32 0
   call void @zero_char(i8* %arrayidx)
   br label %if.end
 

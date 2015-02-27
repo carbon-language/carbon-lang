@@ -29,7 +29,7 @@ bb9:                                              ; preds = %bb7
   br label %bb11
 
 bb11:                                             ; preds = %bb9, %bb7
-  %1 = getelementptr i32* undef, i32 0
+  %1 = getelementptr i32, i32* undef, i32 0
   store i32 0, i32* %1
   ret void
 }

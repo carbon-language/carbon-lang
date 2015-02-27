@@ -20,7 +20,7 @@ bb:                                               ; preds = %bb8
   br i1 %2, label %bb10, label %bb2
 
 bb2:                                              ; preds = %bb
-  %3 = getelementptr inbounds i8* %p_addr.0, i32 1 ; <i8*> [#uses=3]
+  %3 = getelementptr inbounds i8, i8* %p_addr.0, i32 1 ; <i8*> [#uses=3]
   switch i32 %ineq.0.ph, label %bb8.backedge [
     i32 0, label %bb3
     i32 1, label %bb6

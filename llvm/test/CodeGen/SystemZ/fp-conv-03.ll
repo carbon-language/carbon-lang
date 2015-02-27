@@ -34,7 +34,7 @@ define void @f3(fp128 *%dst, float *%base) {
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: std %f2, 8(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 1023
+  %ptr = getelementptr float, float *%base, i64 1023
   %val = load float *%ptr
   %res = fpext float %val to fp128
   store fp128 %res, fp128 *%dst
@@ -50,7 +50,7 @@ define void @f4(fp128 *%dst, float *%base) {
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: std %f2, 8(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 1024
+  %ptr = getelementptr float, float *%base, i64 1024
   %val = load float *%ptr
   %res = fpext float %val to fp128
   store fp128 %res, fp128 *%dst
@@ -65,7 +65,7 @@ define void @f5(fp128 *%dst, float *%base) {
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: std %f2, 8(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 -1
+  %ptr = getelementptr float, float *%base, i64 -1
   %val = load float *%ptr
   %res = fpext float %val to fp128
   store fp128 %res, fp128 *%dst
@@ -80,8 +80,8 @@ define void @f6(fp128 *%dst, float *%base, i64 %index) {
 ; CHECK: std %f0, 0(%r2)
 ; CHECK: std %f2, 8(%r2)
 ; CHECK: br %r14
-  %ptr1 = getelementptr float *%base, i64 %index
-  %ptr2 = getelementptr float *%ptr1, i64 100
+  %ptr1 = getelementptr float, float *%base, i64 %index
+  %ptr2 = getelementptr float, float *%ptr1, i64 100
   %val = load float *%ptr2
   %res = fpext float %val to fp128
   store fp128 %res, fp128 *%dst

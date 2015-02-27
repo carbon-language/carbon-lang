@@ -8,7 +8,7 @@
 
 define %"struct.kc::impl_ID"* @_ZN2kc18f_typeofunpsubtermEPNS_15impl_unpsubtermEPNS_7impl_IDE(%"struct.kc::impl_Ccode_option"* %a_unpsubterm, %"struct.kc::impl_ID"* %a_operator) {
 entry:
-	%tmp8 = getelementptr %"struct.kc::impl_Ccode_option"* %a_unpsubterm, i32 0, i32 0, i32 0		; <i32 (...)***> [#uses=0]
+	%tmp8 = getelementptr %"struct.kc::impl_Ccode_option", %"struct.kc::impl_Ccode_option"* %a_unpsubterm, i32 0, i32 0, i32 0		; <i32 (...)***> [#uses=0]
 	br i1 false, label %bb41, label %bb55
 
 bb41:		; preds = %entry

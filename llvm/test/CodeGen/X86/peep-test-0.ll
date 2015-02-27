@@ -9,7 +9,7 @@ entry:
 bb:
 	%indvar = phi i64 [ %n, %entry ], [ %indvar.next, %bb ]
 	%i.03 = add i64 %indvar, %n
-	%0 = getelementptr double* %d, i64 %i.03
+	%0 = getelementptr double, double* %d, i64 %i.03
 	%1 = load double* %0, align 8
 	%2 = fmul double %1, 3.000000e+00
 	store double %2, double* %0, align 8

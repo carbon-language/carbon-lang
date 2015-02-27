@@ -52,7 +52,7 @@ entry:
   %str2.i = alloca %struct.string, align 4
   %0 = bitcast %struct.string* %str2.i to i8*, !dbg !26
   %1 = load %struct.string** @str, align 4
-  %mem = getelementptr inbounds %struct.string* %1, i32 0, i32 0
+  %mem = getelementptr inbounds %struct.string, %struct.string* %1, i32 0, i32 0
   br label %for.body
 
 for.body:                                         ; preds = %for.body, %entry

@@ -7,7 +7,7 @@ define void @copy_if_shared_r() {
 	%tmp = load i32* null		; <i32> [#uses=1]
 	%tmp56 = and i32 %tmp, 255		; <i32> [#uses=1]
 	%gep.upgrd.1 = zext i32 %tmp56 to i64		; <i64> [#uses=1]
-	%tmp8 = getelementptr [0 x i32]* @tree_code_type, i32 0, i64 %gep.upgrd.1	; <i32*> [#uses=1]
+	%tmp8 = getelementptr [0 x i32], [0 x i32]* @tree_code_type, i32 0, i64 %gep.upgrd.1	; <i32*> [#uses=1]
 	%tmp9 = load i32* %tmp8		; <i32> [#uses=1]
 	%tmp10 = add i32 %tmp9, -1		; <i32> [#uses=1]
 	%tmp.upgrd.2 = icmp ugt i32 %tmp10, 2		; <i1> [#uses=1]

@@ -13,8 +13,8 @@ while.cond40:
     i8 0, label %if.then59
   ]
 while.body51:                                     ; preds = %land.end50
-  %incdec.ptr = getelementptr inbounds i8* %tmp.1, i64 1
-  %scevgep = getelementptr i8* %indvars.iv194, i64 1
+  %incdec.ptr = getelementptr inbounds i8, i8* %tmp.1, i64 1
+  %scevgep = getelementptr i8, i8* %indvars.iv194, i64 1
   br label %while.cond40
 if.then59:                                        ; preds = %while.end
   br i1 undef, label %if.then64, label %if.end113
@@ -29,7 +29,7 @@ while.cond132.preheader:                          ; preds = %if.end113
   %cmp133173 = icmp eq i8* %tmp.1, %tmp.4
   br i1 %cmp133173, label %while.cond40.preheader, label %while.body139.lr.ph
 while.body139.lr.ph:                              ; preds = %while.cond132.preheader
-  %scevgep198 = getelementptr i8* %indvars.iv194, i64 0
+  %scevgep198 = getelementptr i8, i8* %indvars.iv194, i64 0
   %scevgep198199 = ptrtoint i8* %scevgep198 to i64
   br label %while.body139
 while.body139:                                    ; preds = %while.body139, %while.body139.lr.ph

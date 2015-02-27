@@ -21,7 +21,7 @@ define internal i32 @func1(i32* %ptr, { i32, i32 }* nocapture %method) align 2 {
 }
 
 define internal i32 @func10(%.qux.2496* nocapture %this) align 2 {
-  %1 = getelementptr inbounds %.qux.2496* %this, i32 0, i32 1, i32 1
+  %1 = getelementptr inbounds %.qux.2496, %.qux.2496* %this, i32 0, i32 1, i32 1
   %2 = load i32* %1, align 4
   ret i32 %2
 }
@@ -35,12 +35,12 @@ define internal i32* @func33(%.qux.2585* nocapture %this) align 2 {
 }
 
 define internal i32* @func34(%.qux.2585* nocapture %this) align 2 {
-  %1 = getelementptr inbounds %.qux.2585* %this, i32 0
+  %1 = getelementptr inbounds %.qux.2585, %.qux.2585* %this, i32 0
   ret i32* undef
 }
 
 define internal i8* @func35(%.qux.2585* nocapture %this) align 2 {
-  %1 = getelementptr inbounds %.qux.2585* %this, i32 0, i32 2
+  %1 = getelementptr inbounds %.qux.2585, %.qux.2585* %this, i32 0, i32 2
   %2 = load i8** %1, align 4
   ret i8* %2
 }

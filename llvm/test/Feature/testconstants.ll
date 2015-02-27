@@ -11,7 +11,7 @@ define [2 x i32]* @testfunction(i32 %i0, i32 %j0) {
 }
 
 define i8* @otherfunc(i32, double) {
-        %somestr = getelementptr [11 x i8]* @somestr, i64 0, i64 0              ; <i8*> [#uses=1]
+        %somestr = getelementptr [11 x i8], [11 x i8]* @somestr, i64 0, i64 0              ; <i8*> [#uses=1]
         ret i8* %somestr
 }
 

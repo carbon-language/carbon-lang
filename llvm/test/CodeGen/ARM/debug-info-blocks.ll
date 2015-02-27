@@ -35,15 +35,15 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
   store %0* %loadedMydata, %0** %1, align 4
   call void @llvm.dbg.declare(metadata %0** %1, metadata !130, metadata !{!"0x102"}), !dbg !131
   %2 = bitcast %struct.CR* %bounds to %1*
-  %3 = getelementptr %1* %2, i32 0, i32 0
+  %3 = getelementptr %1, %1* %2, i32 0, i32 0
   store [4 x i32] %bounds.coerce0, [4 x i32]* %3
   call void @llvm.dbg.declare(metadata %struct.CR* %bounds, metadata !132, metadata !{!"0x102"}), !dbg !133
   %4 = bitcast %struct.CR* %data to %1*
-  %5 = getelementptr %1* %4, i32 0, i32 0
+  %5 = getelementptr %1, %1* %4, i32 0, i32 0
   store [4 x i32] %data.coerce0, [4 x i32]* %5
   call void @llvm.dbg.declare(metadata %struct.CR* %data, metadata !134, metadata !{!"0x102"}), !dbg !135
   %6 = bitcast i8* %.block_descriptor to %2*
-  %7 = getelementptr inbounds %2* %6, i32 0, i32 6
+  %7 = getelementptr inbounds %2, %2* %6, i32 0, i32 6
   call void @llvm.dbg.declare(metadata %2* %6, metadata !136, metadata !163), !dbg !137
   call void @llvm.dbg.declare(metadata %2* %6, metadata !138, metadata !164), !dbg !137
   call void @llvm.dbg.declare(metadata %2* %6, metadata !139, metadata !165), !dbg !140
@@ -52,39 +52,39 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
   %10 = bitcast %0* %8 to i8*, !dbg !141
   %11 = call i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*, i8*)*)(i8* %10, i8* %9), !dbg !141
   %12 = bitcast i8* %11 to %0*, !dbg !141
-  %13 = getelementptr inbounds %2* %6, i32 0, i32 5, !dbg !141
+  %13 = getelementptr inbounds %2, %2* %6, i32 0, i32 5, !dbg !141
   %14 = load i8** %13, !dbg !141
   %15 = bitcast i8* %14 to %struct.__block_byref_mydata*, !dbg !141
-  %16 = getelementptr inbounds %struct.__block_byref_mydata* %15, i32 0, i32 1, !dbg !141
+  %16 = getelementptr inbounds %struct.__block_byref_mydata, %struct.__block_byref_mydata* %15, i32 0, i32 1, !dbg !141
   %17 = load %struct.__block_byref_mydata** %16, !dbg !141
-  %18 = getelementptr inbounds %struct.__block_byref_mydata* %17, i32 0, i32 6, !dbg !141
+  %18 = getelementptr inbounds %struct.__block_byref_mydata, %struct.__block_byref_mydata* %17, i32 0, i32 6, !dbg !141
   store %0* %12, %0** %18, align 4, !dbg !141
-  %19 = getelementptr inbounds %2* %6, i32 0, i32 6, !dbg !143
+  %19 = getelementptr inbounds %2, %2* %6, i32 0, i32 6, !dbg !143
   %20 = load %3** %19, align 4, !dbg !143
   %21 = load i32* @"OBJC_IVAR_$_MyWork._data", !dbg !143
   %22 = bitcast %3* %20 to i8*, !dbg !143
-  %23 = getelementptr inbounds i8* %22, i32 %21, !dbg !143
+  %23 = getelementptr inbounds i8, i8* %22, i32 %21, !dbg !143
   %24 = bitcast i8* %23 to %struct.CR*, !dbg !143
   %25 = bitcast %struct.CR* %24 to i8*, !dbg !143
   %26 = bitcast %struct.CR* %data to i8*, !dbg !143
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %25, i8* %26, i32 16, i32 4, i1 false), !dbg !143
-  %27 = getelementptr inbounds %2* %6, i32 0, i32 6, !dbg !144
+  %27 = getelementptr inbounds %2, %2* %6, i32 0, i32 6, !dbg !144
   %28 = load %3** %27, align 4, !dbg !144
   %29 = load i32* @"OBJC_IVAR_$_MyWork._bounds", !dbg !144
   %30 = bitcast %3* %28 to i8*, !dbg !144
-  %31 = getelementptr inbounds i8* %30, i32 %29, !dbg !144
+  %31 = getelementptr inbounds i8, i8* %30, i32 %29, !dbg !144
   %32 = bitcast i8* %31 to %struct.CR*, !dbg !144
   %33 = bitcast %struct.CR* %32 to i8*, !dbg !144
   %34 = bitcast %struct.CR* %bounds to i8*, !dbg !144
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %33, i8* %34, i32 16, i32 4, i1 false), !dbg !144
-  %35 = getelementptr inbounds %2* %6, i32 0, i32 6, !dbg !145
+  %35 = getelementptr inbounds %2, %2* %6, i32 0, i32 6, !dbg !145
   %36 = load %3** %35, align 4, !dbg !145
-  %37 = getelementptr inbounds %2* %6, i32 0, i32 5, !dbg !145
+  %37 = getelementptr inbounds %2, %2* %6, i32 0, i32 5, !dbg !145
   %38 = load i8** %37, !dbg !145
   %39 = bitcast i8* %38 to %struct.__block_byref_mydata*, !dbg !145
-  %40 = getelementptr inbounds %struct.__block_byref_mydata* %39, i32 0, i32 1, !dbg !145
+  %40 = getelementptr inbounds %struct.__block_byref_mydata, %struct.__block_byref_mydata* %39, i32 0, i32 1, !dbg !145
   %41 = load %struct.__block_byref_mydata** %40, !dbg !145
-  %42 = getelementptr inbounds %struct.__block_byref_mydata* %41, i32 0, i32 6, !dbg !145
+  %42 = getelementptr inbounds %struct.__block_byref_mydata, %struct.__block_byref_mydata* %41, i32 0, i32 6, !dbg !145
   %43 = load %0** %42, align 4, !dbg !145
   %44 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_222", !dbg !145
   %45 = bitcast %3* %36 to i8*, !dbg !145

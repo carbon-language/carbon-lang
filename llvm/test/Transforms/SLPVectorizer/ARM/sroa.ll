@@ -44,9 +44,9 @@ entry:
   %3 = bitcast i64 %b.sroa.3.12.insert.insert to double
   %add = fadd double %0, %2
   %add3 = fadd double %1, %3
-  %re.i.i = getelementptr inbounds %class.Complex* %agg.result, i32 0, i32 0
+  %re.i.i = getelementptr inbounds %class.Complex, %class.Complex* %agg.result, i32 0, i32 0
   store double %add, double* %re.i.i, align 4
-  %im.i.i = getelementptr inbounds %class.Complex* %agg.result, i32 0, i32 1
+  %im.i.i = getelementptr inbounds %class.Complex, %class.Complex* %agg.result, i32 0, i32 1
   store double %add3, double* %im.i.i, align 4
   ret void
 }

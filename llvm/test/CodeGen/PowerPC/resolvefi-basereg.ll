@@ -59,15 +59,15 @@ if.end:                                           ; preds = %if.then, %entry
   store i32 0, i32* %j, align 4
   %2 = load i32* %i, align 4
   %idxprom = sext i32 %2 to i64
-  %arrayidx = getelementptr inbounds [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [32 x i8*], [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom
   store i8* bitcast (i32** getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 0, i64 1) to i8*), i8** %arrayidx, align 8
   %3 = load i32* %i, align 4
   %idxprom1 = sext i32 %3 to i64
-  %arrayidx2 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom1
+  %arrayidx2 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom1
   store i64 8, i64* %arrayidx2, align 8
   %4 = load i32* %i, align 4
   %idxprom3 = sext i32 %4 to i64
-  %arrayidx4 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom3
+  %arrayidx4 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom3
   store i64 8, i64* %arrayidx4, align 8
   store i32* getelementptr inbounds ([256 x i32]* @intarray, i32 0, i64 190), i32** getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 0, i64 1), align 8
   store i32* getelementptr inbounds ([256 x i32]* @intarray, i32 0, i64 241), i32** getelementptr inbounds ([5 x %struct.S1998]* @a1998, i32 0, i64 2, i32 0, i64 1), align 8
@@ -76,15 +76,15 @@ if.end:                                           ; preds = %if.then, %entry
   store i32 %inc5, i32* %i, align 4
   %6 = load i32* %i, align 4
   %idxprom6 = sext i32 %6 to i64
-  %arrayidx7 = getelementptr inbounds [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom6
+  %arrayidx7 = getelementptr inbounds [32 x i8*], [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom6
   store i8* bitcast (i64* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 1) to i8*), i8** %arrayidx7, align 8
   %7 = load i32* %i, align 4
   %idxprom8 = sext i32 %7 to i64
-  %arrayidx9 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom8
+  %arrayidx9 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom8
   store i64 8, i64* %arrayidx9, align 8
   %8 = load i32* %i, align 4
   %idxprom10 = sext i32 %8 to i64
-  %arrayidx11 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom10
+  %arrayidx11 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom10
   store i64 8, i64* %arrayidx11, align 8
   store i64 -3866974208859106459, i64* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 1), align 8
   store i64 -185376695371304091, i64* getelementptr inbounds ([5 x %struct.S1998]* @a1998, i32 0, i64 2, i32 1), align 8
@@ -93,15 +93,15 @@ if.end:                                           ; preds = %if.then, %entry
   store i32 %inc12, i32* %i, align 4
   %10 = load i32* %i, align 4
   %idxprom13 = sext i32 %10 to i64
-  %arrayidx14 = getelementptr inbounds [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom13
+  %arrayidx14 = getelementptr inbounds [32 x i8*], [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom13
   store i8* bitcast (i64* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 2) to i8*), i8** %arrayidx14, align 8
   %11 = load i32* %i, align 4
   %idxprom15 = sext i32 %11 to i64
-  %arrayidx16 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom15
+  %arrayidx16 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom15
   store i64 8, i64* %arrayidx16, align 8
   %12 = load i32* %i, align 4
   %idxprom17 = sext i32 %12 to i64
-  %arrayidx18 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom17
+  %arrayidx18 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom17
   store i64 8, i64* %arrayidx18, align 8
   store i64 -963638028680427187, i64* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 2), align 8
   store i64 7510542175772455554, i64* getelementptr inbounds ([5 x %struct.S1998]* @a1998, i32 0, i64 2, i32 2), align 8
@@ -110,15 +110,15 @@ if.end:                                           ; preds = %if.then, %entry
   store i32 %inc19, i32* %i, align 4
   %14 = load i32* %i, align 4
   %idxprom20 = sext i32 %14 to i64
-  %arrayidx21 = getelementptr inbounds [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom20
+  %arrayidx21 = getelementptr inbounds [32 x i8*], [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom20
   store i8* bitcast (double* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 3) to i8*), i8** %arrayidx21, align 8
   %15 = load i32* %i, align 4
   %idxprom22 = sext i32 %15 to i64
-  %arrayidx23 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom22
+  %arrayidx23 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom22
   store i64 8, i64* %arrayidx23, align 8
   %16 = load i32* %i, align 4
   %idxprom24 = sext i32 %16 to i64
-  %arrayidx25 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom24
+  %arrayidx25 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom24
   store i64 16, i64* %arrayidx25, align 8
   store double 0xC0F8783300000000, double* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 3), align 16
   store double 0xC10DF3CCC0000000, double* getelementptr inbounds ([5 x %struct.S1998]* @a1998, i32 0, i64 2, i32 3), align 16
@@ -127,15 +127,15 @@ if.end:                                           ; preds = %if.then, %entry
   store i32 %inc26, i32* %i, align 4
   %18 = load i32* %i, align 4
   %idxprom27 = sext i32 %18 to i64
-  %arrayidx28 = getelementptr inbounds [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom27
+  %arrayidx28 = getelementptr inbounds [32 x i8*], [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom27
   store i8* bitcast (i16* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 4) to i8*), i8** %arrayidx28, align 8
   %19 = load i32* %i, align 4
   %idxprom29 = sext i32 %19 to i64
-  %arrayidx30 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom29
+  %arrayidx30 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom29
   store i64 2, i64* %arrayidx30, align 8
   %20 = load i32* %i, align 4
   %idxprom31 = sext i32 %20 to i64
-  %arrayidx32 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom31
+  %arrayidx32 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom31
   store i64 2, i64* %arrayidx32, align 8
   store i16 -15897, i16* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 4), align 2
   store i16 30935, i16* getelementptr inbounds ([5 x %struct.S1998]* @a1998, i32 0, i64 2, i32 4), align 2
@@ -149,15 +149,15 @@ if.end:                                           ; preds = %if.then, %entry
   store i32 %inc34, i32* %j, align 4
   %23 = load i32* %i, align 4
   %idxprom35 = sext i32 %23 to i64
-  %arrayidx36 = getelementptr inbounds [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom35
+  %arrayidx36 = getelementptr inbounds [32 x i8*], [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom35
   store i8* bitcast (double* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 6, i64 4, i32 0, i64 0) to i8*), i8** %arrayidx36, align 8
   %24 = load i32* %i, align 4
   %idxprom37 = sext i32 %24 to i64
-  %arrayidx38 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom37
+  %arrayidx38 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom37
   store i64 8, i64* %arrayidx38, align 8
   %25 = load i32* %i, align 4
   %idxprom39 = sext i32 %25 to i64
-  %arrayidx40 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom39
+  %arrayidx40 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom39
   store i64 8, i64* %arrayidx40, align 8
   store double 0xC0FC765780000000, double* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 6, i64 4, i32 0, i64 0), align 8
   store double 0xC1025CD7A0000000, double* getelementptr inbounds ([5 x %struct.S1998]* @a1998, i32 0, i64 2, i32 6, i64 4, i32 0, i64 0), align 8
@@ -205,15 +205,15 @@ if.end:                                           ; preds = %if.then, %entry
   store i32 %inc61, i32* %j, align 4
   %31 = load i32* %i, align 4
   %idxprom62 = sext i32 %31 to i64
-  %arrayidx63 = getelementptr inbounds [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom62
+  %arrayidx63 = getelementptr inbounds [32 x i8*], [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom62
   store i8* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 6, i64 4, i32 5, i64 5), i8** %arrayidx63, align 8
   %32 = load i32* %i, align 4
   %idxprom64 = sext i32 %32 to i64
-  %arrayidx65 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom64
+  %arrayidx65 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom64
   store i64 1, i64* %arrayidx65, align 8
   %33 = load i32* %i, align 4
   %idxprom66 = sext i32 %33 to i64
-  %arrayidx67 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom66
+  %arrayidx67 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom66
   store i64 1, i64* %arrayidx67, align 8
   store i8 -83, i8* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 6, i64 4, i32 5, i64 5), align 1
   store i8 -67, i8* getelementptr inbounds ([5 x %struct.S1998]* @a1998, i32 0, i64 2, i32 6, i64 4, i32 5, i64 5), align 1
@@ -222,15 +222,15 @@ if.end:                                           ; preds = %if.then, %entry
   store i32 %inc68, i32* %i, align 4
   %35 = load i32* %i, align 4
   %idxprom69 = sext i32 %35 to i64
-  %arrayidx70 = getelementptr inbounds [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom69
+  %arrayidx70 = getelementptr inbounds [32 x i8*], [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom69
   store i8* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 6, i64 4, i32 5, i64 1), i8** %arrayidx70, align 8
   %36 = load i32* %i, align 4
   %idxprom71 = sext i32 %36 to i64
-  %arrayidx72 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom71
+  %arrayidx72 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom71
   store i64 1, i64* %arrayidx72, align 8
   %37 = load i32* %i, align 4
   %idxprom73 = sext i32 %37 to i64
-  %arrayidx74 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom73
+  %arrayidx74 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom73
   store i64 1, i64* %arrayidx74, align 8
   store i8 34, i8* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 6, i64 4, i32 5, i64 1), align 1
   store i8 64, i8* getelementptr inbounds ([5 x %struct.S1998]* @a1998, i32 0, i64 2, i32 6, i64 4, i32 5, i64 1), align 1
@@ -239,15 +239,15 @@ if.end:                                           ; preds = %if.then, %entry
   store i32 %inc75, i32* %i, align 4
   %39 = load i32* %i, align 4
   %idxprom76 = sext i32 %39 to i64
-  %arrayidx77 = getelementptr inbounds [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom76
+  %arrayidx77 = getelementptr inbounds [32 x i8*], [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom76
   store i8* bitcast (i32* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 6, i64 4, i32 6, i64 3) to i8*), i8** %arrayidx77, align 8
   %40 = load i32* %i, align 4
   %idxprom78 = sext i32 %40 to i64
-  %arrayidx79 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom78
+  %arrayidx79 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom78
   store i64 4, i64* %arrayidx79, align 8
   %41 = load i32* %i, align 4
   %idxprom80 = sext i32 %41 to i64
-  %arrayidx81 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom80
+  %arrayidx81 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom80
   store i64 4, i64* %arrayidx81, align 8
   store i32 -3, i32* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 6, i64 4, i32 6, i64 3), align 4
   store i32 -3, i32* getelementptr inbounds ([5 x %struct.S1998]* @a1998, i32 0, i64 2, i32 6, i64 4, i32 6, i64 3), align 4
@@ -256,15 +256,15 @@ if.end:                                           ; preds = %if.then, %entry
   store i32 %inc82, i32* %i, align 4
   %43 = load i32* %i, align 4
   %idxprom83 = sext i32 %43 to i64
-  %arrayidx84 = getelementptr inbounds [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom83
+  %arrayidx84 = getelementptr inbounds [32 x i8*], [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom83
   store i8* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 6, i64 4, i32 7), i8** %arrayidx84, align 8
   %44 = load i32* %i, align 4
   %idxprom85 = sext i32 %44 to i64
-  %arrayidx86 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom85
+  %arrayidx86 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom85
   store i64 1, i64* %arrayidx86, align 8
   %45 = load i32* %i, align 4
   %idxprom87 = sext i32 %45 to i64
-  %arrayidx88 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom87
+  %arrayidx88 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom87
   store i64 1, i64* %arrayidx88, align 8
   store i8 106, i8* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 6, i64 4, i32 7), align 1
   store i8 -102, i8* getelementptr inbounds ([5 x %struct.S1998]* @a1998, i32 0, i64 2, i32 6, i64 4, i32 7), align 1
@@ -273,15 +273,15 @@ if.end:                                           ; preds = %if.then, %entry
   store i32 %inc89, i32* %i, align 4
   %47 = load i32* %i, align 4
   %idxprom90 = sext i32 %47 to i64
-  %arrayidx91 = getelementptr inbounds [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom90
+  %arrayidx91 = getelementptr inbounds [32 x i8*], [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom90
   store i8* bitcast (i16* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 7) to i8*), i8** %arrayidx91, align 8
   %48 = load i32* %i, align 4
   %idxprom92 = sext i32 %48 to i64
-  %arrayidx93 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom92
+  %arrayidx93 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom92
   store i64 2, i64* %arrayidx93, align 8
   %49 = load i32* %i, align 4
   %idxprom94 = sext i32 %49 to i64
-  %arrayidx95 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom94
+  %arrayidx95 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom94
   store i64 2, i64* %arrayidx95, align 8
   store i16 29665, i16* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 7), align 2
   store i16 7107, i16* getelementptr inbounds ([5 x %struct.S1998]* @a1998, i32 0, i64 2, i32 7), align 2
@@ -290,15 +290,15 @@ if.end:                                           ; preds = %if.then, %entry
   store i32 %inc96, i32* %i, align 4
   %51 = load i32* %i, align 4
   %idxprom97 = sext i32 %51 to i64
-  %arrayidx98 = getelementptr inbounds [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom97
+  %arrayidx98 = getelementptr inbounds [32 x i8*], [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom97
   store i8* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 8), i8** %arrayidx98, align 8
   %52 = load i32* %i, align 4
   %idxprom99 = sext i32 %52 to i64
-  %arrayidx100 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom99
+  %arrayidx100 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom99
   store i64 1, i64* %arrayidx100, align 8
   %53 = load i32* %i, align 4
   %idxprom101 = sext i32 %53 to i64
-  %arrayidx102 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom101
+  %arrayidx102 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom101
   store i64 1, i64* %arrayidx102, align 8
   store i8 52, i8* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 8), align 1
   store i8 -86, i8* getelementptr inbounds ([5 x %struct.S1998]* @a1998, i32 0, i64 2, i32 8), align 1
@@ -307,15 +307,15 @@ if.end:                                           ; preds = %if.then, %entry
   store i32 %inc103, i32* %i, align 4
   %55 = load i32* %i, align 4
   %idxprom104 = sext i32 %55 to i64
-  %arrayidx105 = getelementptr inbounds [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom104
+  %arrayidx105 = getelementptr inbounds [32 x i8*], [32 x i8*]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 5), i32 0, i64 %idxprom104
   store i8* bitcast (i32* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 9) to i8*), i8** %arrayidx105, align 8
   %56 = load i32* %i, align 4
   %idxprom106 = sext i32 %56 to i64
-  %arrayidx107 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom106
+  %arrayidx107 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 7), i32 0, i64 %idxprom106
   store i64 4, i64* %arrayidx107, align 8
   %57 = load i32* %i, align 4
   %idxprom108 = sext i32 %57 to i64
-  %arrayidx109 = getelementptr inbounds [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom108
+  %arrayidx109 = getelementptr inbounds [32 x i64], [32 x i64]* getelementptr inbounds (%struct.Info* @info, i32 0, i32 11), i32 0, i64 %idxprom108
   store i64 4, i64* %arrayidx109, align 8
   store i32 -54118453, i32* getelementptr inbounds (%struct.S1998* @s1998, i32 0, i32 9), align 4
   store i32 1668755823, i32* getelementptr inbounds ([5 x %struct.S1998]* @a1998, i32 0, i64 2, i32 9), align 4

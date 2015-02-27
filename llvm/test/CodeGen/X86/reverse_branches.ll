@@ -30,9 +30,9 @@ for.cond1:
   br i1 %cmp2, label %for.body3, label %for.inc9
 
 for.body3:
-  %arraydecay = getelementptr inbounds [1000 x [1001 x i8]]* %strs, i64 0, i64 %indvars.iv50, i64 0
+  %arraydecay = getelementptr inbounds [1000 x [1001 x i8]], [1000 x [1001 x i8]]* %strs, i64 0, i64 %indvars.iv50, i64 0
   %call = call i8* @memchr(i8* %arraydecay, i32 120, i64 1000)
-  %add.ptr = getelementptr inbounds [1000 x [1001 x i8]]* %strs, i64 0, i64 %indvars.iv50, i64 %indvars.iv50
+  %add.ptr = getelementptr inbounds [1000 x [1001 x i8]], [1000 x [1001 x i8]]* %strs, i64 0, i64 %indvars.iv50, i64 %indvars.iv50
   %cmp7 = icmp eq i8* %call, %add.ptr
   %indvars.iv.next51 = add i64 %indvars.iv50, 1
   br i1 %cmp7, label %for.cond1, label %if.then
@@ -62,7 +62,7 @@ for.cond18:
   br i1 %cmp19, label %for.body20, label %for.inc38
 
 for.body20:
-  %arraydecay24 = getelementptr inbounds [1000 x [1001 x i8]]* %strs, i64 0, i64 %indvars.iv, i64 0
+  %arraydecay24 = getelementptr inbounds [1000 x [1001 x i8]], [1000 x [1001 x i8]]* %strs, i64 0, i64 %indvars.iv, i64 0
   br label %do.body.i
 
 do.body.i:
@@ -73,13 +73,13 @@ do.body.i:
   br i1 %cmp3.i, label %exit, label %do.cond.i
 
 do.cond.i:
-  %incdec.ptr.i = getelementptr inbounds i8* %p.0.i, i64 1
+  %incdec.ptr.i = getelementptr inbounds i8, i8* %p.0.i, i64 1
   %dec.i = add i64 %n.addr.0.i, -1
   %cmp5.i = icmp eq i64 %dec.i, 0
   br i1 %cmp5.i, label %if.then32, label %do.body.i
 
 exit:
-  %add.ptr30 = getelementptr inbounds [1000 x [1001 x i8]]* %strs, i64 0, i64 %indvars.iv, i64 %indvars.iv
+  %add.ptr30 = getelementptr inbounds [1000 x [1001 x i8]], [1000 x [1001 x i8]]* %strs, i64 0, i64 %indvars.iv, i64 %indvars.iv
   %cmp31 = icmp eq i8* %p.0.i, %add.ptr30
   %indvars.iv.next = add i64 %indvars.iv, 1
   br i1 %cmp31, label %for.cond18, label %if.then32

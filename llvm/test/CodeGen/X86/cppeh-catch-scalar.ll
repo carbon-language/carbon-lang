@@ -31,7 +31,7 @@ target triple = "x86_64-pc-windows-msvc"
 ; CHECK:   %exn.slot = alloca i8*
 ; CHECK:   %ehselector.slot = alloca i32
 ; CHECK-NOT:  %i = alloca i32, align 4
-; CHECK:  %i = getelementptr inbounds %struct._Z4testv.ehdata* %eh.data, i32 0, i32 2
+; CHECK:  %i = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 2
 
 ; Function Attrs: uwtable
 define void @_Z4testv() #0 {
@@ -89,9 +89,9 @@ eh.resume:                                        ; preds = %catch.dispatch
 ; CHECK: catch.entry:
 ; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1)
 ; CHECK:   %eh.data = bitcast i8* %eh.alloc to %struct._Z4testv.ehdata*
-; CHECK:   %eh.obj.ptr = getelementptr inbounds %struct._Z4testv.ehdata* %eh.data, i32 0, i32 1
+; CHECK:   %eh.obj.ptr = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 1
 ; CHECK:   %eh.obj = load i8** %eh.obj.ptr
-; CHECK:   %i = getelementptr inbounds %struct._Z4testv.ehdata* %eh.data, i32 0, i32 2
+; CHECK:   %i = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 2
 ; CHECK:   %2 = bitcast i8* %eh.obj to i32*
 ; CHECK:   %3 = load i32* %2, align 4
 ; CHECK:   store i32 %3, i32* %i, align 4

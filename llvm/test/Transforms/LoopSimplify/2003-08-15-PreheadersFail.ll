@@ -10,7 +10,7 @@ define i32 @_yylex() {
 loopentry.0:		; preds = %else.26, %0
 	store i32* getelementptr ([16386 x i32]* @yy_state_buf, i64 0, i64 0), i32** @yy_state_ptr
 	%tmp.35 = load i32** @yy_state_ptr		; <i32*> [#uses=2]
-	%inc.0 = getelementptr i32* %tmp.35, i64 1		; <i32*> [#uses=1]
+	%inc.0 = getelementptr i32, i32* %tmp.35, i64 1		; <i32*> [#uses=1]
 	store i32* %inc.0, i32** @yy_state_ptr
 	%tmp.36 = load i32* null		; <i32> [#uses=1]
 	store i32 %tmp.36, i32* %tmp.35
@@ -19,7 +19,7 @@ loopexit.2:		; preds = %else.26, %loopexit.2, %loopentry.0
 	store i8* null, i8** null
 	%tmp.91 = load i32* null		; <i32> [#uses=1]
 	%tmp.92 = sext i32 %tmp.91 to i64		; <i64> [#uses=1]
-	%tmp.93 = getelementptr [787 x i16]* @yy_base, i64 0, i64 %tmp.92		; <i16*> [#uses=1]
+	%tmp.93 = getelementptr [787 x i16], [787 x i16]* @yy_base, i64 0, i64 %tmp.92		; <i16*> [#uses=1]
 	%tmp.94 = load i16* %tmp.93		; <i16> [#uses=1]
 	%tmp.95 = icmp ne i16 %tmp.94, 4394		; <i1> [#uses=1]
 	br i1 %tmp.95, label %loopexit.2, label %yy_find_action

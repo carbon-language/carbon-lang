@@ -31,7 +31,7 @@ define <8 x i8> @vld4i8_update(i8** %ptr, i32 %inc) nounwind {
 	%tmp2 = extractvalue %struct.__neon_int8x8x4_t %tmp1, 0
 	%tmp3 = extractvalue %struct.__neon_int8x8x4_t %tmp1, 2
 	%tmp4 = add <8 x i8> %tmp2, %tmp3
-	%tmp5 = getelementptr i8* %A, i32 %inc
+	%tmp5 = getelementptr i8, i8* %A, i32 %inc
 	store i8* %tmp5, i8** %ptr
 	ret <8 x i8> %tmp4
 }
@@ -88,7 +88,7 @@ define <1 x i64> @vld4i64_update(i64** %ptr, i64* %A) nounwind {
 ;CHECK: vld1.64 {d16, d17, d18, d19}, [r1:256]!
         %tmp0 = bitcast i64* %A to i8*
         %tmp1 = call %struct.__neon_int64x1x4_t @llvm.arm.neon.vld4.v1i64(i8* %tmp0, i32 64)
-        %tmp5 = getelementptr i64* %A, i32 4
+        %tmp5 = getelementptr i64, i64* %A, i32 4
         store i64* %tmp5, i64** %ptr
         %tmp2 = extractvalue %struct.__neon_int64x1x4_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_int64x1x4_t %tmp1, 2
@@ -132,7 +132,7 @@ define <8 x i16> @vld4Qi16_update(i16** %ptr) nounwind {
 	%tmp2 = extractvalue %struct.__neon_int16x8x4_t %tmp1, 0
 	%tmp3 = extractvalue %struct.__neon_int16x8x4_t %tmp1, 2
 	%tmp4 = add <8 x i16> %tmp2, %tmp3
-	%tmp5 = getelementptr i16* %A, i32 32
+	%tmp5 = getelementptr i16, i16* %A, i32 32
 	store i16* %tmp5, i16** %ptr
 	ret <8 x i16> %tmp4
 }

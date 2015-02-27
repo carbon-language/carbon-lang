@@ -28,7 +28,7 @@ bb7:                                              ; preds = %bb2
 
 bb8:                                              ; preds = %bb7, %entry
   %2 = phi i32 [ 0, %entry ], [ %1, %bb7 ]        ; <i32> [#uses=3]
-  %scevgep22 = getelementptr %struct.iovec* %iov, i32 %2, i32 0; <i8**> [#uses=0]
+  %scevgep22 = getelementptr %struct.iovec, %struct.iovec* %iov, i32 %2, i32 0; <i8**> [#uses=0]
   %3 = load i32* %nr_segs, align 4                ; <i32> [#uses=1]
   %4 = icmp ult i32 %2, %3                        ; <i1> [#uses=1]
   br i1 %4, label %bb, label %bb9

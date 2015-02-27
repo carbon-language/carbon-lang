@@ -1659,7 +1659,7 @@ true:
 
 done:
   %g = bitcast i8* %p to i8*
-  %h = getelementptr i8* %g, i64 0
+  %h = getelementptr i8, i8* %g, i64 0
   call void @objc_release(i8* %g)
   ret void
 }
@@ -1688,7 +1688,7 @@ true:
 
 done:
   %g = bitcast i8* %p to i8*
-  %h = getelementptr i8* %g, i64 0
+  %h = getelementptr i8, i8* %g, i64 0
   call void @objc_release(i8* %g)
   ret void
 }
@@ -1713,7 +1713,7 @@ true:
 
 done:
   %g = bitcast i8* %p to i8*
-  %h = getelementptr i8* %g, i64 0
+  %h = getelementptr i8, i8* %g, i64 0
   call void @objc_release(i8* %g)
   ret void
 }
@@ -1732,7 +1732,7 @@ true:
 
 done:
   %g = bitcast i8* %p to i8*
-  %h = getelementptr i8* %g, i64 0
+  %h = getelementptr i8, i8* %g, i64 0
   call void @objc_release(i8* %g), !clang.imprecise_release !0
   ret void
 }
@@ -1760,7 +1760,7 @@ true:
 
 done:
   %g = bitcast i8* %p to i8*
-  %h = getelementptr i8* %g, i64 0
+  %h = getelementptr i8, i8* %g, i64 0
   call void @objc_release(i8* %g)
   ret void
 }
@@ -1780,7 +1780,7 @@ true:
 
 done:
   %g = bitcast i8* %p to i8*
-  %h = getelementptr i8* %g, i64 0
+  %h = getelementptr i8, i8* %g, i64 0
   call void @objc_release(i8* %g), !clang.imprecise_release !0
   ret void
 }
@@ -2682,28 +2682,28 @@ invoke.cont:
   tail call void @llvm.dbg.value(metadata {}* %self, i64 0, metadata !0, metadata !{})
   tail call void @llvm.dbg.value(metadata {}* %self, i64 0, metadata !0, metadata !{})
   %ivar = load i64* @"OBJC_IVAR_$_A.myZ", align 8
-  %add.ptr = getelementptr i8* %0, i64 %ivar
+  %add.ptr = getelementptr i8, i8* %0, i64 %ivar
   %tmp1 = bitcast i8* %add.ptr to float*
   %tmp2 = load float* %tmp1, align 4
   %conv = fpext float %tmp2 to double
   %add.ptr.sum = add i64 %ivar, 4
-  %tmp6 = getelementptr inbounds i8* %0, i64 %add.ptr.sum
+  %tmp6 = getelementptr inbounds i8, i8* %0, i64 %add.ptr.sum
   %2 = bitcast i8* %tmp6 to float*
   %tmp7 = load float* %2, align 4
   %conv8 = fpext float %tmp7 to double
   %add.ptr.sum36 = add i64 %ivar, 8
-  %tmp12 = getelementptr inbounds i8* %0, i64 %add.ptr.sum36
+  %tmp12 = getelementptr inbounds i8, i8* %0, i64 %add.ptr.sum36
   %arrayidx = bitcast i8* %tmp12 to float*
   %tmp13 = load float* %arrayidx, align 4
   %conv14 = fpext float %tmp13 to double
   %tmp12.sum = add i64 %ivar, 12
-  %arrayidx19 = getelementptr inbounds i8* %0, i64 %tmp12.sum
+  %arrayidx19 = getelementptr inbounds i8, i8* %0, i64 %tmp12.sum
   %3 = bitcast i8* %arrayidx19 to float*
   %tmp20 = load float* %3, align 4
   %conv21 = fpext float %tmp20 to double
   %call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([33 x i8]* @.str4, i64 0, i64 0), double %conv, double %conv8, double %conv14, double %conv21)
   %ivar23 = load i64* @"OBJC_IVAR_$_A.myZ", align 8
-  %add.ptr24 = getelementptr i8* %0, i64 %ivar23
+  %add.ptr24 = getelementptr i8, i8* %0, i64 %ivar23
   %4 = bitcast i8* %add.ptr24 to i128*
   %srcval = load i128* %4, align 4
   tail call void @objc_release(i8* %0) nounwind

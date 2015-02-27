@@ -14,11 +14,11 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK ret
 define fastcc i32 @_Dmain(%"char[][]" %unnamed) {
 entry:
-        %tmp = getelementptr [7 x i8]* @.str, i32 0, i32 0              ; <i8*> [#uses=1]
+        %tmp = getelementptr [7 x i8], [7 x i8]* @.str, i32 0, i32 0              ; <i8*> [#uses=1]
         br i1 undef, label %foreachbody, label %foreachend
 
 foreachbody:            ; preds = %entry
-        %tmp4 = getelementptr i8* %tmp, i32 undef               ; <i8*> [#uses=1]
+        %tmp4 = getelementptr i8, i8* %tmp, i32 undef               ; <i8*> [#uses=1]
         %tmp5 = load i8* %tmp4          ; <i8> [#uses=0]
         unreachable
 

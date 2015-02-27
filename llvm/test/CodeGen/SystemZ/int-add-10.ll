@@ -71,7 +71,7 @@ define void @f5(i128 *%aptr, i32 *%bsrc) {
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 127
-  %ptr = getelementptr i32 *%bsrc, i64 131071
+  %ptr = getelementptr i32, i32 *%bsrc, i64 131071
   %b = load i32 *%ptr
   %bext = zext i32 %b to i128
   %add = add i128 %xor, %bext
@@ -89,7 +89,7 @@ define void @f6(i128 *%aptr, i32 *%bsrc) {
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 127
-  %ptr = getelementptr i32 *%bsrc, i64 131072
+  %ptr = getelementptr i32, i32 *%bsrc, i64 131072
   %b = load i32 *%ptr
   %bext = zext i32 %b to i128
   %add = add i128 %xor, %bext
@@ -105,7 +105,7 @@ define void @f7(i128 *%aptr, i32 *%bsrc) {
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 127
-  %ptr = getelementptr i32 *%bsrc, i128 -1
+  %ptr = getelementptr i32, i32 *%bsrc, i128 -1
   %b = load i32 *%ptr
   %bext = zext i32 %b to i128
   %add = add i128 %xor, %bext
@@ -121,7 +121,7 @@ define void @f8(i128 *%aptr, i32 *%bsrc) {
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 127
-  %ptr = getelementptr i32 *%bsrc, i128 -131072
+  %ptr = getelementptr i32, i32 *%bsrc, i128 -131072
   %b = load i32 *%ptr
   %bext = zext i32 %b to i128
   %add = add i128 %xor, %bext
@@ -139,7 +139,7 @@ define void @f9(i128 *%aptr, i32 *%bsrc) {
 ; CHECK: br %r14
   %a = load i128 *%aptr
   %xor = xor i128 %a, 127
-  %ptr = getelementptr i32 *%bsrc, i128 -131073
+  %ptr = getelementptr i32, i32 *%bsrc, i128 -131073
   %b = load i32 *%ptr
   %bext = zext i32 %b to i128
   %add = add i128 %xor, %bext

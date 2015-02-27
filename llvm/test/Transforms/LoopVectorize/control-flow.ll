@@ -30,7 +30,7 @@ for.body.preheader:                               ; preds = %entry
 
 for.body:                                         ; preds = %for.body.preheader, %if.else
   %indvars.iv = phi i64 [ %indvars.iv.next, %if.else ], [ 0, %for.body.preheader ]
-  %arrayidx = getelementptr inbounds i32* %A, i64 %indvars.iv, !dbg !12
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv, !dbg !12
   %0 = load i32* %arrayidx, align 4, !dbg !12, !tbaa !15
   %cmp1 = icmp sgt i32 %0, 10, !dbg !12
   br i1 %cmp1, label %end.loopexit, label %if.else, !dbg !12

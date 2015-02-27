@@ -9,7 +9,7 @@ target triple = "arm64-apple-ios7.0.0"
 ; Function Attrs: nounwind ssp
 define void @f(double* %P1) #0 {
 entry:
-  %arrayidx4 = getelementptr inbounds double* %P1, i64 1
+  %arrayidx4 = getelementptr inbounds double, double* %P1, i64 1
   %0 = load double* %arrayidx4, align 8, !tbaa !1
   %1 = load double* %P1, align 8, !tbaa !1
   %2 = insertelement <2 x double> undef, double %0, i32 0

@@ -5,7 +5,7 @@
 define i32 @bar(%struct.a* nocapture %b) nounwind ssp {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.a* %b, i64 0, metadata !6, metadata !{!"0x102"}), !dbg !13
-  %tmp1 = getelementptr inbounds %struct.a* %b, i64 0, i32 0, !dbg !14
+  %tmp1 = getelementptr inbounds %struct.a, %struct.a* %b, i64 0, i32 0, !dbg !14
   %tmp2 = load i32* %tmp1, align 4, !dbg !14
   tail call void @llvm.dbg.value(metadata i32 %tmp2, i64 0, metadata !11, metadata !{!"0x102"}), !dbg !14
   %call = tail call i32 (...)* @foo(i32 %tmp2) nounwind , !dbg !18

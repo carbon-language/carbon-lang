@@ -34,7 +34,7 @@ entry:
   %0 = bitcast i8* %call to %struct.Foo*
   store %struct.Foo* %0, %struct.Foo** %f, align 8, !tbaa !4
   %1 = load %struct.Foo** %f, align 8, !tbaa !4
-  %i = getelementptr inbounds %struct.Foo* %1, i32 0, i32 0
+  %i = getelementptr inbounds %struct.Foo, %struct.Foo* %1, i32 0, i32 0
   store i64 1, i64* %i, align 8, !tbaa !6
   store i32 0, i32* %i1, align 4, !tbaa !0
   br label %for.cond
@@ -59,7 +59,7 @@ new.cont:
   %7 = phi %struct.Bar* [ %6, %new.notnull ], [ null, %for.body ]
   store %struct.Bar* %7, %struct.Bar** %b, align 8, !tbaa !4
   %8 = load %struct.Bar** %b, align 8, !tbaa !4
-  %p = getelementptr inbounds %struct.Bar* %8, i32 0, i32 0
+  %p = getelementptr inbounds %struct.Bar, %struct.Bar* %8, i32 0, i32 0
   store i8* null, i8** %p, align 8, !tbaa !9
   %9 = load %struct.Foo** %f, align 8, !tbaa !4
   %10 = bitcast %struct.Foo* %9 to i8*
@@ -76,7 +76,7 @@ new.cont4:
   %13 = load i32* %i1, align 4, !tbaa !0
   %conv = sext i32 %13 to i64
   %14 = load %struct.Foo** %f, align 8, !tbaa !4
-  %i5 = getelementptr inbounds %struct.Foo* %14, i32 0, i32 0
+  %i5 = getelementptr inbounds %struct.Foo, %struct.Foo* %14, i32 0, i32 0
   store i64 %conv, i64* %i5, align 8, !tbaa !6
   br label %for.inc
 
@@ -88,7 +88,7 @@ for.inc:
 
 for.end:
   %16 = load %struct.Foo** %f, align 8, !tbaa !4
-  %i6 = getelementptr inbounds %struct.Foo* %16, i32 0, i32 0
+  %i6 = getelementptr inbounds %struct.Foo, %struct.Foo* %16, i32 0, i32 0
   %17 = load i64* %i6, align 8, !tbaa !6
   ret i64 %17
 }

@@ -32,7 +32,7 @@ for.body:                                         ; preds = %for.body, %entry
   %tmp13 = add nsw <8 x i8> %tmp9, %tmp12
   %tmp16 = shufflevector <32 x i8> %1, <32 x i8> undef, <8 x i32> <i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
   %tmp17 = add nsw <8 x i8> %tmp13, %tmp16
-  %scevgep = getelementptr <8 x i8> addrspace(1)* %result, i32 %i.01
+  %scevgep = getelementptr <8 x i8>, <8 x i8> addrspace(1)* %result, i32 %i.01
   %2 = bitcast <8 x i8> %tmp17 to <2 x i32>
   %3 = bitcast <8 x i8> addrspace(1)* %scevgep to <2 x i32> addrspace(1)*
   store <2 x i32> %2, <2 x i32> addrspace(1)* %3, align 8

@@ -8,9 +8,9 @@
 
 define i32 @t(%TRp* inreg %rp) nounwind optsize ssp {
 entry:
-  %handler = getelementptr inbounds %TRp* %rp, i32 0, i32 1
+  %handler = getelementptr inbounds %TRp, %TRp* %rp, i32 0, i32 1
   %0 = load %TRH** %handler, align 4
-  %sync = getelementptr inbounds %TRH* %0, i32 0, i32 4
+  %sync = getelementptr inbounds %TRH, %TRH* %0, i32 0, i32 4
   %sync12 = load {}** %sync, align 4
   %1 = bitcast {}* %sync12 to i32 (%TRp*)*
   %call = tail call i32 %1(%TRp* inreg %rp) nounwind optsize
@@ -25,7 +25,7 @@ entry:
 
 define { <2 x float>, <2 x float> } @t2(%btConeShape* %this) unnamed_addr uwtable ssp align 2 {
 entry:
-  %0 = getelementptr inbounds %btConeShape* %this, i64 0, i32 0
+  %0 = getelementptr inbounds %btConeShape, %btConeShape* %this, i64 0, i32 0
   br i1 undef, label %if.then, label %if.end17
 
 if.then:                                          ; preds = %entry

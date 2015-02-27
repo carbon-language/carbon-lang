@@ -7,11 +7,11 @@
 define void @minmax(float* %result) nounwind optsize {
 entry:
 	%tmp2 = load float* %result, align 4		; <float> [#uses=6]
-	%tmp4 = getelementptr float* %result, i32 2		; <float*> [#uses=5]
+	%tmp4 = getelementptr float, float* %result, i32 2		; <float*> [#uses=5]
 	%tmp5 = load float* %tmp4, align 4		; <float> [#uses=10]
-	%tmp7 = getelementptr float* %result, i32 4		; <float*> [#uses=5]
+	%tmp7 = getelementptr float, float* %result, i32 4		; <float*> [#uses=5]
 	%tmp8 = load float* %tmp7, align 4		; <float> [#uses=8]
-	%tmp10 = getelementptr float* %result, i32 6		; <float*> [#uses=3]
+	%tmp10 = getelementptr float, float* %result, i32 6		; <float*> [#uses=3]
 	%tmp11 = load float* %tmp10, align 4		; <float> [#uses=8]
 	%tmp12 = fcmp olt float %tmp8, %tmp11		; <i1> [#uses=5]
 	br i1 %tmp12, label %bb, label %bb21
@@ -107,13 +107,13 @@ bb218:		; preds = %bb195, %bb187
 bb226:		; preds = %bb218, %bb195, %bb187, %bb165, %bb155, %bb141
 	%iftmp.7.0.in = phi float* [ %tmp10, %bb218 ], [ %result, %bb141 ], [ %result, %bb155 ], [ %result, %bb165 ], [ %tmp4.mux789, %bb195 ], [ %tmp4.mux791, %bb187 ]		; <float*> [#uses=1]
 	%iftmp.7.0 = load float* %iftmp.7.0.in		; <float> [#uses=1]
-	%tmp229 = getelementptr float* %result, i32 1		; <float*> [#uses=7]
+	%tmp229 = getelementptr float, float* %result, i32 1		; <float*> [#uses=7]
 	%tmp230 = load float* %tmp229, align 4		; <float> [#uses=6]
-	%tmp232 = getelementptr float* %result, i32 3		; <float*> [#uses=5]
+	%tmp232 = getelementptr float, float* %result, i32 3		; <float*> [#uses=5]
 	%tmp233 = load float* %tmp232, align 4		; <float> [#uses=10]
-	%tmp235 = getelementptr float* %result, i32 5		; <float*> [#uses=5]
+	%tmp235 = getelementptr float, float* %result, i32 5		; <float*> [#uses=5]
 	%tmp236 = load float* %tmp235, align 4		; <float> [#uses=8]
-	%tmp238 = getelementptr float* %result, i32 7		; <float*> [#uses=3]
+	%tmp238 = getelementptr float, float* %result, i32 7		; <float*> [#uses=3]
 	%tmp239 = load float* %tmp238, align 4		; <float> [#uses=8]
 	%tmp240 = fcmp olt float %tmp236, %tmp239		; <i1> [#uses=5]
 	br i1 %tmp240, label %bb243, label %bb251

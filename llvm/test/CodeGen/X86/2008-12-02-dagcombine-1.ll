@@ -11,7 +11,7 @@ entry:
         %4 = ptrtoint i8* %L to i32
         %5 = add i32 %4, %3
 	%6 = add i32 %5, %1         	; <i32> [#uses=1]
-	%7 = getelementptr i8* %a, i32 %6		; <i8*> [#uses=1]
+	%7 = getelementptr i8, i8* %a, i32 %6		; <i8*> [#uses=1]
 	br label %return
 
 return:		; preds = %bb3

@@ -23,7 +23,7 @@ define i32 @func() nounwind ssp {
   %5 = zext i1 %3 to i32
   %6 = mul i32 %5, 287
   %7 = add i32 %6, 2
-  %8 = getelementptr [2 x i32]* @DWJumpTable2808, i32 0, i32 %5
+  %8 = getelementptr [2 x i32], [2 x i32]* @DWJumpTable2808, i32 0, i32 %5
   %9 = load i32* %8
   %10 = add i32 %9, ptrtoint (i8* blockaddress(@func, %4) to i32)
   %11 = inttoptr i32 %10 to i8*

@@ -66,7 +66,7 @@ entry:
 
   %B2 = ptrtoint i8* %B to i64
   %C = sub i64 0, %B2
-  %D = getelementptr i8* %A, i64 %C
+  %D = getelementptr i8, i8* %A, i64 %C
   %E = ptrtoint i8* %D to i64
 
   ret i64 %E
@@ -85,7 +85,7 @@ entry:
 
   %B2 = ptrtoint i8 addrspace(1)* %B to i16
   %C = sub i16 0, %B2
-  %D = getelementptr i8 addrspace(1)* %A, i16 %C
+  %D = getelementptr i8, i8 addrspace(1)* %A, i16 %C
   %E = ptrtoint i8 addrspace(1)* %D to i16
 
   ret i16 %E

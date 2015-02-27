@@ -18,14 +18,14 @@ entry:
   br i1 %0, label %bb13, label %bb1
 
 bb1:                                              ; preds = %entry
-  %1 = getelementptr inbounds %struct.asl_file_t* %s, i32 0, i32 11 ; <%struct.FILE**> [#uses=2]
+  %1 = getelementptr inbounds %struct.asl_file_t, %struct.asl_file_t* %s, i32 0, i32 11 ; <%struct.FILE**> [#uses=2]
   %2 = load %struct.FILE** %1, align 4            ; <%struct.FILE*> [#uses=2]
   %3 = icmp eq %struct.FILE* %2, null             ; <i1> [#uses=1]
   br i1 %3, label %bb13, label %bb3
 
 bb3:                                              ; preds = %bb1
   %4 = add nsw i64 %off, 8                        ; <i64> [#uses=1]
-  %5 = getelementptr inbounds %struct.asl_file_t* %s, i32 0, i32 10 ; <i32*> [#uses=1]
+  %5 = getelementptr inbounds %struct.asl_file_t, %struct.asl_file_t* %s, i32 0, i32 10 ; <i32*> [#uses=1]
   %6 = load i32* %5, align 4                      ; <i32> [#uses=1]
   %7 = zext i32 %6 to i64                         ; <i64> [#uses=1]
   %8 = icmp sgt i64 %4, %7                        ; <i1> [#uses=1]

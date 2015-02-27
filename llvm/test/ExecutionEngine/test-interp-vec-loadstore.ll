@@ -72,7 +72,7 @@ define i32 @main() {
   ; if TRUE print message
   br i1 %res_i, label %Print_int, label %Double
 Print_int:
-  %ptr0 = getelementptr [17 x i8]* @msg_int, i32 0, i32 0
+  %ptr0 = getelementptr [17 x i8], [17 x i8]* @msg_int, i32 0, i32 0
   call i32 (i8*,...)* @printf(i8* %ptr0)
   br label %Double
 Double:
@@ -116,7 +116,7 @@ Double:
 
   br i1 %res_double, label %Print_double, label %Float
 Print_double:
-  %ptr1 = getelementptr [20 x i8]* @msg_double, i32 0, i32 0
+  %ptr1 = getelementptr [20 x i8], [20 x i8]* @msg_double, i32 0, i32 0
   call i32 (i8*,...)* @printf(i8* %ptr1)
   br label %Float
 Float:
@@ -160,7 +160,7 @@ Float:
 
   br i1 %res_float, label %Print_float, label %Exit
 Print_float:
-  %ptr2 = getelementptr [19 x i8]* @msg_float, i32 0, i32 0
+  %ptr2 = getelementptr [19 x i8], [19 x i8]* @msg_float, i32 0, i32 0
   call i32 (i8*,...)* @printf(i8* %ptr2)
   br label %Exit
 Exit:

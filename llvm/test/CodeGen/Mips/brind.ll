@@ -26,7 +26,7 @@ L3:                                               ; preds = %L2, %L3
   %i.2 = phi i32 [ %i.1, %L2 ], [ %inc, %L3 ]
   %puts7 = tail call i32 @puts(i8* getelementptr inbounds ([2 x i8]* @str7, i32 0, i32 0))
   %inc = add i32 %i.2, 1
-  %arrayidx = getelementptr inbounds [5 x i8*]* @main.L, i32 0, i32 %i.2
+  %arrayidx = getelementptr inbounds [5 x i8*], [5 x i8*]* @main.L, i32 0, i32 %i.2
   %0 = load i8** %arrayidx, align 4
   indirectbr i8* %0, [label %L1, label %L2, label %L3, label %L4]
 ; 16: 	jrc	 ${{[0-9]+}}

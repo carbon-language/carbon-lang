@@ -45,7 +45,7 @@ entry:
   %conv1 = fptrunc double %add to float, !dbg !38
   tail call void @llvm.dbg.value(metadata float %conv1, i64 0, metadata !22, metadata !{!"0x102"}), !dbg !38
   %call = tail call i32 @puts(i8* getelementptr inbounds ([6 x i8]* @.str1, i32 0, i32 0)) nounwind optsize, !dbg !39
-  %add.ptr = getelementptr i8* bitcast (i32 (i32, i8**)* @main to i8*), i32 %argc, !dbg !40
+  %add.ptr = getelementptr i8, i8* bitcast (i32 (i32, i8**)* @main to i8*), i32 %argc, !dbg !40
   %add5 = add nsw i32 %argc, 97, !dbg !40
   %conv6 = trunc i32 %add5 to i8, !dbg !40
   tail call void @llvm.dbg.value(metadata i8* %add.ptr, i64 0, metadata !8, metadata !{!"0x102"}) nounwind, !dbg !41

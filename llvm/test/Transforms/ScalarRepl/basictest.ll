@@ -3,7 +3,7 @@ target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 
 define i32 @test1() {
 	%X = alloca { i32, float }		; <{ i32, float }*> [#uses=1]
-	%Y = getelementptr { i32, float }* %X, i64 0, i32 0		; <i32*> [#uses=2]
+	%Y = getelementptr { i32, float }, { i32, float }* %X, i64 0, i32 0		; <i32*> [#uses=2]
 	store i32 0, i32* %Y
 	%Z = load i32* %Y		; <i32> [#uses=1]
 	ret i32 %Z

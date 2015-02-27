@@ -5,7 +5,7 @@
 ; CHECK: ldr {{.*!}}
 ; CHECK-NOT: ldr
 define i32* @test1(i32* %X, i32* %dest) {
-        %Y = getelementptr i32* %X, i32 4               ; <i32*> [#uses=2]
+        %Y = getelementptr i32, i32* %X, i32 4               ; <i32*> [#uses=2]
         %A = load i32* %Y               ; <i32> [#uses=1]
         store i32 %A, i32* %dest
         ret i32* %Y

@@ -32,7 +32,7 @@ then:		; preds = %no_exit
 	%tmp.9 = load i8** %p_addr		; <i8*> [#uses=1]
 	%tmp.10 = load i32* %i		; <i32> [#uses=1]
 	%tmp.11 = sub i32 %tmp.10, 1		; <i32> [#uses=1]
-	%tmp.12 = getelementptr i8* %tmp.9, i32 %tmp.11		; <i8*> [#uses=1]
+	%tmp.12 = getelementptr i8, i8* %tmp.9, i32 %tmp.11		; <i8*> [#uses=1]
 	%tmp.13 = load i32* %out		; <i32> [#uses=1]
 	%tmp.14 = trunc i32 %tmp.13 to i8		; <i8> [#uses=1]
 	store i8 %tmp.14, i8* %tmp.12

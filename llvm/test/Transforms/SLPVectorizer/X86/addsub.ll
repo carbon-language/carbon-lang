@@ -264,15 +264,15 @@ define void @reorder_alt_rightsubTree(double* nocapture %c, double* noalias noca
   %4 = load double* %d
   %5 = fsub double %3, %4
   store double %5, double* %c
-  %6 = getelementptr inbounds double* %d, i64 1
+  %6 = getelementptr inbounds double, double* %d, i64 1
   %7 = load double* %6
-  %8 = getelementptr inbounds double* %a, i64 1
+  %8 = getelementptr inbounds double, double* %a, i64 1
   %9 = load double* %8
-  %10 = getelementptr inbounds double* %b, i64 1
+  %10 = getelementptr inbounds double, double* %b, i64 1
   %11 = load double* %10
   %12 = fadd double %9, %11
   %13 = fadd double %7, %12
-  %14 = getelementptr inbounds double* %c, i64 1
+  %14 = getelementptr inbounds double, double* %c, i64 1
   store double %13, double* %14
   ret void
 }

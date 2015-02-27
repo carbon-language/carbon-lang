@@ -17,13 +17,13 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 define signext i16 @subdivp(%struct.node.0.27* nocapture %p, double %dsq, double %tolsq, %struct.hgstruct.2.29* nocapture byval align 8 %hg) nounwind uwtable readonly ssp {
 entry:
   call void @llvm.dbg.declare(metadata %struct.hgstruct.2.29* %hg, metadata !4, metadata !{!"0x102"})
-  %type = getelementptr inbounds %struct.node.0.27* %p, i64 0, i32 0
+  %type = getelementptr inbounds %struct.node.0.27, %struct.node.0.27* %p, i64 0, i32 0
   %0 = load i16* %type, align 2
   %cmp = icmp eq i16 %0, 1
   br i1 %cmp, label %return, label %for.cond.preheader
 
 for.cond.preheader:                               ; preds = %entry
-  %arrayidx6.1 = getelementptr inbounds %struct.hgstruct.2.29* %hg, i64 0, i32 1, i64 1
+  %arrayidx6.1 = getelementptr inbounds %struct.hgstruct.2.29, %struct.hgstruct.2.29* %hg, i64 0, i32 1, i64 1
   %cmp22 = fcmp olt double 0.000000e+00, %dsq
   %conv24 = zext i1 %cmp22 to i16
   br label %return

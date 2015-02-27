@@ -10,7 +10,7 @@ entry:
         br label %bb3
 
 bb:             ; preds = %bb3
-        %tmp = getelementptr [1000 x i32]* @A, i32 0, i32 %i.0          ; <i32*> [#uses=1]
+        %tmp = getelementptr [1000 x i32], [1000 x i32]* @A, i32 0, i32 %i.0          ; <i32*> [#uses=1]
         store i32 123, i32* %tmp
         %tmp4 = mul i32 %i.0, 4         ; <i32> [#uses=1]
         %tmp5 = or i32 %tmp4, 1

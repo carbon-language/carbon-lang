@@ -5,11 +5,11 @@
 
 define fastcc void @func(%struct.gs_matrix* nocapture %pm1) nounwind {
 entry:
-  %0 = getelementptr inbounds %struct.gs_matrix* %pm1, i32 0, i32 6
+  %0 = getelementptr inbounds %struct.gs_matrix, %struct.gs_matrix* %pm1, i32 0, i32 6
   %1 = load float* %0, align 4
-  %2 = getelementptr inbounds %struct.gs_matrix* %pm1, i32 0, i32 8
+  %2 = getelementptr inbounds %struct.gs_matrix, %struct.gs_matrix* %pm1, i32 0, i32 8
   %3 = load float* %2, align 4
-  %4 = getelementptr inbounds %struct.gs_matrix* %pm1, i32 0, i32 2
+  %4 = getelementptr inbounds %struct.gs_matrix, %struct.gs_matrix* %pm1, i32 0, i32 2
   %5 = bitcast float* %4 to i32*
   %6 = load i32* %5, align 4
   %7 = or i32 0, %6

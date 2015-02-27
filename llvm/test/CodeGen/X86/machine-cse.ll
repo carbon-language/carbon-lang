@@ -11,7 +11,7 @@ entry:
 ; CHECK-LABEL: t:
 ; CHECK: leaq (%rax,%rax,4)
   %0 = zext i32 %base to i64
-  %1 = getelementptr inbounds %struct.s2* null, i64 %0
+  %1 = getelementptr inbounds %struct.s2, %struct.s2* null, i64 %0
   br i1 undef, label %bb1, label %bb2
 
 bb1:
@@ -19,7 +19,7 @@ bb1:
 ; CHECK-NOT: shlq $9
 ; CHECK-NOT: leaq
 ; CHECK: call
-  %2 = getelementptr inbounds %struct.s2* null, i64 %0, i32 0
+  %2 = getelementptr inbounds %struct.s2, %struct.s2* null, i64 %0, i32 0
   call void @bar(i32* %2) nounwind
   unreachable
 
@@ -126,7 +126,7 @@ do.body:
   br i1 %cmp3, label %return, label %do.cond
 
 do.cond:
-  %incdec.ptr = getelementptr inbounds i8* %p.0, i64 1
+  %incdec.ptr = getelementptr inbounds i8, i8* %p.0, i64 1
   %dec = add i64 %n.addr.0, -1
   %cmp6 = icmp eq i64 %dec, 0
   br i1 %cmp6, label %return, label %do.body

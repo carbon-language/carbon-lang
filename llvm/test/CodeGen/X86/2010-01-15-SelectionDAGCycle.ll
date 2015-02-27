@@ -15,7 +15,7 @@ define void @numvec_(i32* noalias %ncelet, i32* noalias %ncel, i32* noalias %nfa
 	%r1295 = extractelement <4 x i32> %r1258, i32 3		; <i32> [#uses=1]
 	%r1296 = sext i32 %r1295 to i64		; <i64> [#uses=1]
 	%r1297 = add i64 %r1296, -1		; <i64> [#uses=1]
-	%r1298183 = getelementptr [0 x i32]* %ismbs, i64 0, i64 %r1297		; <i32*> [#uses=1]
+	%r1298183 = getelementptr [0 x i32], [0 x i32]* %ismbs, i64 0, i64 %r1297		; <i32*> [#uses=1]
 	%r1298184 = load i32* %r1298183, align 4		; <i32> [#uses=1]
 	%r1301 = extractelement <4 x i32> %r1037, i32 3		; <i32> [#uses=1]
 	%r1302 = mul i32 %r1298184, %r1301		; <i32> [#uses=1]

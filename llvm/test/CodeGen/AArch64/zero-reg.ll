@@ -21,7 +21,7 @@ define void @test_sp(i32 %val) {
 ; Important correctness point here is that LLVM doesn't try to use xzr
 ; as an addressing register: "str w0, [xzr]" is not a valid A64
 ; instruction (0b11111 in the Rn field would mean "sp").
-  %addr = getelementptr i32* null, i64 0
+  %addr = getelementptr i32, i32* null, i64 0
   store i32 %val, i32* %addr
 ; CHECK: str {{w[0-9]+}}, [{{x[0-9]+|sp}}]
 

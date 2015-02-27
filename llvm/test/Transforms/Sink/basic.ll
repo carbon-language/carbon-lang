@@ -75,10 +75,10 @@ entry:
   br i1 %1, label %if, label %endif
 
 if:
-  %2 = getelementptr i32* %0, i32 1
+  %2 = getelementptr i32, i32* %0, i32 1
   store i32 0, i32* %0
   store i32 1, i32* %2
-  %3 = getelementptr i32* %0, i32 %b
+  %3 = getelementptr i32, i32* %0, i32 %b
   %4 = load i32* %3
   ret i32 %4
 
@@ -100,10 +100,10 @@ entry:
   br i1 %1, label %if, label %endif
 
 if:
-  %2 = getelementptr i32* %0, i32 1
+  %2 = getelementptr i32, i32* %0, i32 1
   store i32 0, i32* %0
   store i32 1, i32* %2
-  %3 = getelementptr i32* %0, i32 %b
+  %3 = getelementptr i32, i32* %0, i32 %b
   %4 = load i32* %3
   ret i32 %4
 
@@ -131,10 +131,10 @@ if0:
   br i1 %1, label %if, label %endif
 
 if:
-  %2 = getelementptr i32* %0, i32 1
+  %2 = getelementptr i32, i32* %0, i32 1
   store i32 0, i32* %0
   store i32 1, i32* %2
-  %3 = getelementptr i32* %0, i32 %b
+  %3 = getelementptr i32, i32* %0, i32 %b
   %4 = load i32* %3
   ret i32 %4
 

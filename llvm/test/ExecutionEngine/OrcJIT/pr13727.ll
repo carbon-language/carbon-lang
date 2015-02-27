@@ -34,7 +34,7 @@ entry:
   %0 = load i32* @zero_int, align 4
   %add = add nsw i32 %0, 5
   %idxprom = sext i32 %add to i64
-  %arrayidx = getelementptr inbounds [10 x i32]* @zero_arr, i32 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [10 x i32], [10 x i32]* @zero_arr, i32 0, i64 %idxprom
   store i32 40, i32* %arrayidx, align 4
   %1 = load double* @zero_double, align 8
   %cmp = fcmp olt double %1, 1.100000e+00
@@ -44,7 +44,7 @@ if.then:                                          ; preds = %entry
   %2 = load i32* @zero_int, align 4
   %add1 = add nsw i32 %2, 2
   %idxprom2 = sext i32 %add1 to i64
-  %arrayidx3 = getelementptr inbounds [10 x i32]* @zero_arr, i32 0, i64 %idxprom2
+  %arrayidx3 = getelementptr inbounds [10 x i32], [10 x i32]* @zero_arr, i32 0, i64 %idxprom2
   store i32 70, i32* %arrayidx3, align 4
   br label %if.end
 
@@ -61,16 +61,16 @@ for.body:                                         ; preds = %for.cond
   %4 = load i32* %i, align 4
   %sub = sub nsw i32 %4, 1
   %idxprom5 = sext i32 %sub to i64
-  %arrayidx6 = getelementptr inbounds [10 x i32]* @zero_arr, i32 0, i64 %idxprom5
+  %arrayidx6 = getelementptr inbounds [10 x i32], [10 x i32]* @zero_arr, i32 0, i64 %idxprom5
   %5 = load i32* %arrayidx6, align 4
   %6 = load i32* %i, align 4
   %idxprom7 = sext i32 %6 to i64
-  %arrayidx8 = getelementptr inbounds [10 x i32]* @zero_arr, i32 0, i64 %idxprom7
+  %arrayidx8 = getelementptr inbounds [10 x i32], [10 x i32]* @zero_arr, i32 0, i64 %idxprom7
   %7 = load i32* %arrayidx8, align 4
   %add9 = add nsw i32 %5, %7
   %8 = load i32* %i, align 4
   %idxprom10 = sext i32 %8 to i64
-  %arrayidx11 = getelementptr inbounds [10 x i32]* @zero_arr, i32 0, i64 %idxprom10
+  %arrayidx11 = getelementptr inbounds [10 x i32], [10 x i32]* @zero_arr, i32 0, i64 %idxprom10
   store i32 %add9, i32* %arrayidx11, align 4
   br label %for.inc
 

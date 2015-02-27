@@ -11,7 +11,7 @@ define i32 @test(i32* %X, i32 %B) {
 ; CHECK: ret
 
 	; This gep should be sunk out of this block into the load/store users.
-	%P = getelementptr i32* %X, i32 %B
+	%P = getelementptr i32, i32* %X, i32 %B
 	%G = icmp ult i32 %B, 1234
 	br i1 %G, label %T, label %F
 T:

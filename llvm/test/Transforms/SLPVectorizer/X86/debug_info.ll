@@ -32,18 +32,18 @@ entry:
   br i1 %cmp8, label %for.body.lr.ph, label %for.end, !dbg !23
 
 for.body.lr.ph:                                   ; preds = %entry
-  %arrayidx = getelementptr inbounds double* %A, i64 4, !dbg !24
+  %arrayidx = getelementptr inbounds double, double* %A, i64 4, !dbg !24
   %0 = load double* %arrayidx, align 8, !dbg !24
-  %arrayidx1 = getelementptr inbounds double* %A, i64 5, !dbg !29
+  %arrayidx1 = getelementptr inbounds double, double* %A, i64 5, !dbg !29
   %1 = load double* %arrayidx1, align 8, !dbg !29
   br label %for.end, !dbg !23
 
 for.end:                                          ; preds = %for.body.lr.ph, %entry
   %y1.0.lcssa = phi double [ %1, %for.body.lr.ph ], [ 1.000000e+00, %entry ]
   %y0.0.lcssa = phi double [ %0, %for.body.lr.ph ], [ 0.000000e+00, %entry ]
-  %arrayidx2 = getelementptr inbounds double* %A, i64 8, !dbg !30
+  %arrayidx2 = getelementptr inbounds double, double* %A, i64 8, !dbg !30
   store double %y0.0.lcssa, double* %arrayidx2, align 8, !dbg !30
-  %arrayidx3 = getelementptr inbounds double* %A, i64 9, !dbg !30
+  %arrayidx3 = getelementptr inbounds double, double* %A, i64 9, !dbg !30
   store double %y1.0.lcssa, double* %arrayidx3, align 8, !dbg !30
   ret i32 undef, !dbg !31
 }

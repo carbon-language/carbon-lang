@@ -66,7 +66,7 @@ cond_true20:		; preds = %cond_next13
 	ret i32 1
 cond_next27:		; preds = %cond_next13
 	%tmp29 = load %struct.anon** %num		; <%struct.anon*> [#uses=1]
-	%tmp30 = getelementptr %struct.anon* %tmp29, i32 0, i32 2		; <i32*> [#uses=1]
+	%tmp30 = getelementptr %struct.anon, %struct.anon* %tmp29, i32 0, i32 2		; <i32*> [#uses=1]
 	%tmp31 = load i32* %tmp30		; <i32> [#uses=2]
 	%tmp33 = icmp sge i32 %tmp31, %scale		; <i1> [#uses=1]
 	%max = select i1 %tmp33, i32 %tmp31, i32 %scale		; <i32> [#uses=4]
@@ -75,7 +75,7 @@ cond_next27:		; preds = %cond_next13
 	call void @init_num( %struct.anon** %guess1 )
 	%tmp36 = call %struct.anon* @new_num( i32 1, i32 1 )		; <%struct.anon*> [#uses=2]
 	store %struct.anon* %tmp36, %struct.anon** %point5
-	%tmp.upgrd.3 = getelementptr %struct.anon* %tmp36, i32 0, i32 4, i32 1		; <i8*> [#uses=1]
+	%tmp.upgrd.3 = getelementptr %struct.anon, %struct.anon* %tmp36, i32 0, i32 4, i32 1		; <i8*> [#uses=1]
 	store i8 5, i8* %tmp.upgrd.3
 	%tmp39 = icmp slt i32 %tmp17, 0		; <i1> [#uses=1]
 	br i1 %tmp39, label %cond_true40, label %cond_false43
@@ -87,14 +87,14 @@ cond_true40:		; preds = %cond_next27
 cond_false43:		; preds = %cond_next27
 	call void @int2num( %struct.anon** %guess, i32 10 )
 	%tmp45 = load %struct.anon** %num		; <%struct.anon*> [#uses=1]
-	%tmp46 = getelementptr %struct.anon* %tmp45, i32 0, i32 1		; <i32*> [#uses=1]
+	%tmp46 = getelementptr %struct.anon, %struct.anon* %tmp45, i32 0, i32 1		; <i32*> [#uses=1]
 	%tmp47 = load i32* %tmp46		; <i32> [#uses=1]
 	call void @int2num( %struct.anon** %guess1, i32 %tmp47 )
 	%tmp48 = load %struct.anon** %guess1		; <%struct.anon*> [#uses=1]
 	%tmp49 = load %struct.anon** %point5		; <%struct.anon*> [#uses=1]
 	call void @bc_multiply( %struct.anon* %tmp48, %struct.anon* %tmp49, %struct.anon** %guess1, i32 %max )
 	%tmp51 = load %struct.anon** %guess1		; <%struct.anon*> [#uses=1]
-	%tmp52 = getelementptr %struct.anon* %tmp51, i32 0, i32 2		; <i32*> [#uses=1]
+	%tmp52 = getelementptr %struct.anon, %struct.anon* %tmp51, i32 0, i32 2		; <i32*> [#uses=1]
 	store i32 0, i32* %tmp52
 	%tmp53 = load %struct.anon** %guess		; <%struct.anon*> [#uses=1]
 	%tmp54 = load %struct.anon** %guess1		; <%struct.anon*> [#uses=1]

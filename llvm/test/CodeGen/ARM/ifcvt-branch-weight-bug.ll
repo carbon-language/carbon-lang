@@ -50,7 +50,7 @@ if.else.i.i:
   br label %_ZN1M6spliceEv.exit
 
 _ZN1M6spliceEv.exit:
-  %LIS = getelementptr inbounds %classK* %this, i32 0, i32 1
+  %LIS = getelementptr inbounds %classK, %classK* %this, i32 0, i32 1
   call void @_ZN1F10handleMoveEb(%classF* %LIS, i1 zeroext false)
   unreachable
 }

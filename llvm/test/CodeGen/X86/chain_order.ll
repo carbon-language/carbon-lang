@@ -13,11 +13,11 @@
 define void @cftx020(double* nocapture %a) {
 entry:
   %0 = load double* %a, align 8
-  %arrayidx1 = getelementptr inbounds double* %a, i64 2
+  %arrayidx1 = getelementptr inbounds double, double* %a, i64 2
   %1 = load double* %arrayidx1, align 8
-  %arrayidx2 = getelementptr inbounds double* %a, i64 1
+  %arrayidx2 = getelementptr inbounds double, double* %a, i64 1
   %2 = load double* %arrayidx2, align 8
-  %arrayidx3 = getelementptr inbounds double* %a, i64 3
+  %arrayidx3 = getelementptr inbounds double, double* %a, i64 3
   %3 = load double* %arrayidx3, align 8
   %4 = insertelement <2 x double> undef, double %0, i32 0
   %5 = insertelement <2 x double> %4, double %3, i32 1

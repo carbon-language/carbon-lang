@@ -15,7 +15,7 @@
 ;VI: v_lshlrev_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 
 define void @shl_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
-  %b_ptr = getelementptr <2 x i32> addrspace(1)* %in, i32 1
+  %b_ptr = getelementptr <2 x i32>, <2 x i32> addrspace(1)* %in, i32 1
   %a = load <2 x i32> addrspace(1) * %in
   %b = load <2 x i32> addrspace(1) * %b_ptr
   %result = shl <2 x i32> %a, %b
@@ -42,7 +42,7 @@ define void @shl_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in
 ;VI: v_lshlrev_b32_e32 v{{[0-9]+, v[0-9]+, v[0-9]+}}
 
 define void @shl_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
-  %b_ptr = getelementptr <4 x i32> addrspace(1)* %in, i32 1
+  %b_ptr = getelementptr <4 x i32>, <4 x i32> addrspace(1)* %in, i32 1
   %a = load <4 x i32> addrspace(1) * %in
   %b = load <4 x i32> addrspace(1) * %b_ptr
   %result = shl <4 x i32> %a, %b
@@ -69,7 +69,7 @@ define void @shl_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in
 ;VI: v_lshlrev_b64 {{v\[[0-9]+:[0-9]+\], v[0-9]+, v\[[0-9]+:[0-9]+\]}}
 
 define void @shl_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
-  %b_ptr = getelementptr i64 addrspace(1)* %in, i64 1
+  %b_ptr = getelementptr i64, i64 addrspace(1)* %in, i64 1
   %a = load i64 addrspace(1) * %in
   %b = load i64 addrspace(1) * %b_ptr
   %result = shl i64 %a, %b
@@ -108,7 +108,7 @@ define void @shl_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
 ;VI: v_lshlrev_b64 {{v\[[0-9]+:[0-9]+\], v[0-9]+, v\[[0-9]+:[0-9]+\]}}
 
 define void @shl_v2i64(<2 x i64> addrspace(1)* %out, <2 x i64> addrspace(1)* %in) {
-  %b_ptr = getelementptr <2 x i64> addrspace(1)* %in, i64 1
+  %b_ptr = getelementptr <2 x i64>, <2 x i64> addrspace(1)* %in, i64 1
   %a = load <2 x i64> addrspace(1) * %in
   %b = load <2 x i64> addrspace(1) * %b_ptr
   %result = shl <2 x i64> %a, %b
@@ -171,7 +171,7 @@ define void @shl_v2i64(<2 x i64> addrspace(1)* %out, <2 x i64> addrspace(1)* %in
 ;VI: v_lshlrev_b64 {{v\[[0-9]+:[0-9]+\], v[0-9]+, v\[[0-9]+:[0-9]+\]}}
 
 define void @shl_v4i64(<4 x i64> addrspace(1)* %out, <4 x i64> addrspace(1)* %in) {
-  %b_ptr = getelementptr <4 x i64> addrspace(1)* %in, i64 1
+  %b_ptr = getelementptr <4 x i64>, <4 x i64> addrspace(1)* %in, i64 1
   %a = load <4 x i64> addrspace(1) * %in
   %b = load <4 x i64> addrspace(1) * %b_ptr
   %result = shl <4 x i64> %a, %b

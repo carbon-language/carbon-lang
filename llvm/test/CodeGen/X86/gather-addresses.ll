@@ -42,10 +42,10 @@ define <4 x double> @foo(double* %p, <4 x i32>* %i, <4 x i32>* %h) nounwind {
   %d1 = extractelement <4 x i32> %j, i32 1
   %d2 = extractelement <4 x i32> %j, i32 2
   %d3 = extractelement <4 x i32> %j, i32 3
-  %q0 = getelementptr double* %p, i32 %d0
-  %q1 = getelementptr double* %p, i32 %d1
-  %q2 = getelementptr double* %p, i32 %d2
-  %q3 = getelementptr double* %p, i32 %d3
+  %q0 = getelementptr double, double* %p, i32 %d0
+  %q1 = getelementptr double, double* %p, i32 %d1
+  %q2 = getelementptr double, double* %p, i32 %d2
+  %q3 = getelementptr double, double* %p, i32 %d3
   %r0 = load double* %q0
   %r1 = load double* %q1
   %r2 = load double* %q2

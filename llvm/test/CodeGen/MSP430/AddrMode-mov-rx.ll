@@ -21,7 +21,7 @@ define i16 @am2() nounwind {
 @bar = internal constant [2 x i8] [ i8 32, i8 64 ]
 
 define i8 @am3(i16 %n) nounwind {
-	%1 = getelementptr [2 x i8]* @bar, i16 0, i16 %n
+	%1 = getelementptr [2 x i8], [2 x i8]* @bar, i16 0, i16 %n
 	%2 = load i8* %1
 	ret i8 %2
 }
@@ -36,7 +36,7 @@ define i16 @am4() nounwind {
 ; CHECK:		mov.w	&32, r15
 
 define i16 @am5(i16* %a) nounwind {
-	%1 = getelementptr i16* %a, i16 2
+	%1 = getelementptr i16, i16* %a, i16 2
 	%2 = load i16* %1
 	ret i16 %2
 }
@@ -57,8 +57,8 @@ define i16 @am6() nounwind {
 @duh = internal constant %T { i16 16, [2 x i8][i8 32, i8 64 ] }
 
 define i8 @am7(i16 %n) nounwind {
-	%1 = getelementptr %T* @duh, i32 0, i32 1
-	%2 = getelementptr [2 x i8]* %1, i16 0, i16 %n
+	%1 = getelementptr %T, %T* @duh, i32 0, i32 1
+	%2 = getelementptr [2 x i8], [2 x i8]* %1, i16 0, i16 %n
 	%3= load i8* %2
 	ret i8 %3
 }

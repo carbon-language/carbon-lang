@@ -54,8 +54,8 @@ entry:
 vector.body:                                      ; preds = %vector.body, %entry
   %index = phi i64 [ 0, %entry ], [ %index.next, %vector.body ]
   %induction45 = or i64 %index, 1
-  %0 = getelementptr inbounds i32* %a, i64 %index
-  %1 = getelementptr inbounds i32* %a, i64 %induction45
+  %0 = getelementptr inbounds i32, i32* %a, i64 %index
+  %1 = getelementptr inbounds i32, i32* %a, i64 %induction45
   %2 = load i32* %0, align 4
   %3 = load i32* %1, align 4
   %4 = add nsw i32 %2, 4
@@ -92,7 +92,7 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
-  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, 4
   %mul = mul nsw i32 %add, 3

@@ -12,7 +12,7 @@ declare double @strcspn(i8*, i8*)
 
 define double @test_no_simplify1(i8* %pat) {
 ; CHECK-LABEL: @test_no_simplify1(
-  %str = getelementptr [1 x i8]* @null, i32 0, i32 0
+  %str = getelementptr [1 x i8], [1 x i8]* @null, i32 0, i32 0
 
   %ret = call double @strcspn(i8* %str, i8* %pat)
 ; CHECK-NEXT: call double @strcspn

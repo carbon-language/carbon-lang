@@ -41,8 +41,8 @@ entry:
   call void @llvm.memset.p0i8.i64(i8* %7, i8 0, i64 11104, i32 32, i1 false)
   %8 = bitcast %struct.S2760* %b2 to i8*
   call void @llvm.memset.p0i8.i64(i8* %8, i8 0, i64 11104, i32 32, i1 false)
-  %b = getelementptr inbounds %struct.S2760* %arg0, i32 0, i32 1
-  %g = getelementptr inbounds %struct.anon* %b, i32 0, i32 1
+  %b = getelementptr inbounds %struct.S2760, %struct.S2760* %arg0, i32 0, i32 1
+  %g = getelementptr inbounds %struct.anon, %struct.anon* %b, i32 0, i32 1
   %9 = load i64* %g, align 8
   %10 = load i64* getelementptr inbounds (%struct.S2760* @s2760, i32 0, i32 1, i32 1), align 8
   %cmp = icmp ne i64 %9, %10
@@ -56,8 +56,8 @@ if.then:                                          ; preds = %entry
 
 if.end:                                           ; preds = %if.then, %entry
   %12 = load i64* getelementptr inbounds (%struct.S2760* @s2760, i32 0, i32 1, i32 1), align 8
-  %b3 = getelementptr inbounds %struct.S2760* %ret, i32 0, i32 1
-  %g4 = getelementptr inbounds %struct.anon* %b3, i32 0, i32 1
+  %b3 = getelementptr inbounds %struct.S2760, %struct.S2760* %ret, i32 0, i32 1
+  %g4 = getelementptr inbounds %struct.anon, %struct.anon* %b3, i32 0, i32 1
   store i64 %12, i64* %g4, align 8
   %13 = bitcast %struct.S2760* %agg.result to i8*
   %14 = bitcast %struct.S2760* %ret to i8*

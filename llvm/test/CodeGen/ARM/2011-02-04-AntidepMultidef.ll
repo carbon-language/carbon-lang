@@ -19,7 +19,7 @@ bb3:                                              ; preds = %bb, %entry
   br i1 %tst, label %bb46, label %bb8
 
 bb8:                                              ; preds = %bb3
-  %1 = getelementptr inbounds i8* %0, i32 0
+  %1 = getelementptr inbounds i8, i8* %0, i32 0
   store i8 0, i8* %1, align 1
   %2 = call i32 @ptou() nounwind
   ; CHECK: umull [[REGISTER:lr|r[0-9]+]],

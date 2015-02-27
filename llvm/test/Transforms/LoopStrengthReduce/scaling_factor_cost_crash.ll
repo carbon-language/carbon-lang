@@ -55,7 +55,7 @@ define void @scalingFactorCrash() {
 ; <label>:16                                      ; preds = %16, %15
   %17 = phi i32 [ %21, %16 ], [ undef, %15 ]
   %18 = sub i32 %17, 1623127498
-  %19 = getelementptr inbounds i32* undef, i32 %18
+  %19 = getelementptr inbounds i32, i32* undef, i32 %18
   store i32 undef, i32* %19, align 4
   %20 = add i32 %17, 1623127499
   %21 = add i32 %20, -1623127498

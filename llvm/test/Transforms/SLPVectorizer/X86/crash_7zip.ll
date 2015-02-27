@@ -8,8 +8,8 @@ target triple = "x86_64-apple-macosx10.8.0"
 
 define fastcc void @LzmaDec_DecodeReal2(%struct.CLzmaDec.1.28.55.82.103.124.145.166.181.196.229.259.334* %p) {
 entry:
-  %range20.i = getelementptr inbounds %struct.CLzmaDec.1.28.55.82.103.124.145.166.181.196.229.259.334* %p, i64 0, i32 4
-  %code21.i = getelementptr inbounds %struct.CLzmaDec.1.28.55.82.103.124.145.166.181.196.229.259.334* %p, i64 0, i32 5
+  %range20.i = getelementptr inbounds %struct.CLzmaDec.1.28.55.82.103.124.145.166.181.196.229.259.334, %struct.CLzmaDec.1.28.55.82.103.124.145.166.181.196.229.259.334* %p, i64 0, i32 4
+  %code21.i = getelementptr inbounds %struct.CLzmaDec.1.28.55.82.103.124.145.166.181.196.229.259.334, %struct.CLzmaDec.1.28.55.82.103.124.145.166.181.196.229.259.334* %p, i64 0, i32 5
   br label %do.body66.i
 
 do.body66.i:                                      ; preds = %do.cond.i, %entry

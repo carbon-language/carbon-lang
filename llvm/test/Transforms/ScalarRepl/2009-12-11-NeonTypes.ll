@@ -25,30 +25,30 @@ entry:
   %tmp2 = alloca %struct.int16x8x2_t
   %0 = alloca %struct.int16x8x2_t
   %"alloca point" = bitcast i32 0 to i32
-  %1 = getelementptr inbounds %struct.int16x8_t* %tmp_addr, i32 0, i32 0
+  %1 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %tmp_addr, i32 0, i32 0
   store <8 x i16> %tmp.0, <8 x i16>* %1
   store %struct.int16x8x2_t* %dst, %struct.int16x8x2_t** %dst_addr
-  %2 = getelementptr inbounds %struct.int16x8_t* %__ax, i32 0, i32 0
-  %3 = getelementptr inbounds %struct.int16x8_t* %tmp_addr, i32 0, i32 0
+  %2 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %__ax, i32 0, i32 0
+  %3 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %tmp_addr, i32 0, i32 0
   %4 = load <8 x i16>* %3, align 16
   store <8 x i16> %4, <8 x i16>* %2, align 16
-  %5 = getelementptr inbounds %struct.int16x8_t* %__bx, i32 0, i32 0
-  %6 = getelementptr inbounds %struct.int16x8_t* %tmp_addr, i32 0, i32 0
+  %5 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %__bx, i32 0, i32 0
+  %6 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %tmp_addr, i32 0, i32 0
   %7 = load <8 x i16>* %6, align 16
   store <8 x i16> %7, <8 x i16>* %5, align 16
-  %8 = getelementptr inbounds %struct.int16x8_t* %__ax, i32 0, i32 0
+  %8 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %__ax, i32 0, i32 0
   %9 = load <8 x i16>* %8, align 16
-  %10 = getelementptr inbounds %struct.int16x8_t* %__bx, i32 0, i32 0
+  %10 = getelementptr inbounds %struct.int16x8_t, %struct.int16x8_t* %__bx, i32 0, i32 0
   %11 = load <8 x i16>* %10, align 16
-  %12 = getelementptr inbounds %union..0anon* %__rv, i32 0, i32 0
+  %12 = getelementptr inbounds %union..0anon, %union..0anon* %__rv, i32 0, i32 0
   %13 = bitcast %struct.int16x8x2_t* %12 to %struct.__neon_int16x8x2_t*
   %14 = shufflevector <8 x i16> %9, <8 x i16> %11, <8 x i32> <i32 0, i32 8, i32 2, i32 10, i32 4, i32 12, i32 6, i32 14>
-  %15 = getelementptr inbounds %struct.__neon_int16x8x2_t* %13, i32 0, i32 0
+  %15 = getelementptr inbounds %struct.__neon_int16x8x2_t, %struct.__neon_int16x8x2_t* %13, i32 0, i32 0
   store <8 x i16> %14, <8 x i16>* %15
   %16 = shufflevector <8 x i16> %9, <8 x i16> %11, <8 x i32> <i32 1, i32 9, i32 3, i32 11, i32 5, i32 13, i32 7, i32 15>
-  %17 = getelementptr inbounds %struct.__neon_int16x8x2_t* %13, i32 0, i32 1
+  %17 = getelementptr inbounds %struct.__neon_int16x8x2_t, %struct.__neon_int16x8x2_t* %13, i32 0, i32 1
   store <8 x i16> %16, <8 x i16>* %17
-  %18 = getelementptr inbounds %union..0anon* %__rv, i32 0, i32 0
+  %18 = getelementptr inbounds %union..0anon, %union..0anon* %__rv, i32 0, i32 0
   %19 = bitcast %struct.int16x8x2_t* %0 to i8*
   %20 = bitcast %struct.int16x8x2_t* %18 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %19, i8* %20, i32 32, i32 16, i1 false)

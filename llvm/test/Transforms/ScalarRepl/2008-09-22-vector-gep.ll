@@ -12,11 +12,11 @@ target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 define void @main(%struct.two* %D, i16 %V) {
 entry:
 	%S = alloca %struct.two
-        %S.2 = getelementptr %struct.two* %S, i32 0, i32 1
+        %S.2 = getelementptr %struct.two, %struct.two* %S, i32 0, i32 1
         store i16 %V, i16* %S.2
         ; This gep is effectively a bitcast to i8*, but is sometimes generated
         ; because the type of the first element in %struct.two is i8.
-	%tmpS = getelementptr %struct.two* %S, i32 0, i32 0, i32 0 
+	%tmpS = getelementptr %struct.two, %struct.two* %S, i32 0, i32 0, i32 0 
 	%tmpD = bitcast %struct.two* %D to i8*
         call void @llvm.memmove.p0i8.p0i8.i32(i8* %tmpD, i8* %tmpS, i32 4, i32 1, i1 false)
         ret void

@@ -21,7 +21,7 @@ bb56:           ; preds = %bb62, %bb54
         %indvar202 = trunc i64 %p_addr.0.pn.rec to i32          ; <i32>[#uses=1]
         %frac_bits.0 = mul i32 %indvar202, %shift.0             ; <i32>[#uses=1]
         %p_addr.6.rec = add i64 %p_addr.0.pn.rec, 1             ; <i64>[#uses=2]
-        %p_addr.6 = getelementptr i8* null, i64 %p_addr.6.rec           ; <i8*>[#uses=1]
+        %p_addr.6 = getelementptr i8, i8* null, i64 %p_addr.6.rec           ; <i8*>[#uses=1]
         br i1 false, label %bb66, label %bb62
 
 bb62:           ; preds = %bb56

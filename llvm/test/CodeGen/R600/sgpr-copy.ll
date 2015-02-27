@@ -9,7 +9,7 @@
 
 define void @phi1(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
-  %20 = getelementptr <16 x i8> addrspace(2)* %0, i32 0
+  %20 = getelementptr <16 x i8>, <16 x i8> addrspace(2)* %0, i32 0
   %21 = load <16 x i8> addrspace(2)* %20, !tbaa !1
   %22 = call float @llvm.SI.load.const(<16 x i8> %21, i32 0)
   %23 = call float @llvm.SI.load.const(<16 x i8> %21, i32 16)
@@ -33,7 +33,7 @@ ENDIF:                                            ; preds = %main_body, %ELSE
 ; CHECK-LABEL: {{^}}phi2:
 define void @phi2(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
-  %20 = getelementptr <16 x i8> addrspace(2)* %0, i32 0
+  %20 = getelementptr <16 x i8>, <16 x i8> addrspace(2)* %0, i32 0
   %21 = load <16 x i8> addrspace(2)* %20, !tbaa !1
   %22 = call float @llvm.SI.load.const(<16 x i8> %21, i32 16)
   %23 = call float @llvm.SI.load.const(<16 x i8> %21, i32 32)
@@ -50,9 +50,9 @@ main_body:
   %34 = call float @llvm.SI.load.const(<16 x i8> %21, i32 84)
   %35 = call float @llvm.SI.load.const(<16 x i8> %21, i32 88)
   %36 = call float @llvm.SI.load.const(<16 x i8> %21, i32 92)
-  %37 = getelementptr <32 x i8> addrspace(2)* %2, i32 0
+  %37 = getelementptr <32 x i8>, <32 x i8> addrspace(2)* %2, i32 0
   %38 = load <32 x i8> addrspace(2)* %37, !tbaa !1
-  %39 = getelementptr <16 x i8> addrspace(2)* %1, i32 0
+  %39 = getelementptr <16 x i8>, <16 x i8> addrspace(2)* %1, i32 0
   %40 = load <16 x i8> addrspace(2)* %39, !tbaa !1
   %41 = call float @llvm.SI.fs.interp(i32 0, i32 0, i32 %3, <2 x i32> %5)
   %42 = call float @llvm.SI.fs.interp(i32 1, i32 0, i32 %3, <2 x i32> %5)
@@ -154,7 +154,7 @@ ENDIF24:                                          ; preds = %ENDIF, %IF25
 
 define void @loop(<16 x i8> addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
-  %20 = getelementptr <16 x i8> addrspace(2)* %0, i32 0
+  %20 = getelementptr <16 x i8>, <16 x i8> addrspace(2)* %0, i32 0
   %21 = load <16 x i8> addrspace(2)* %20, !tbaa !1
   %22 = call float @llvm.SI.load.const(<16 x i8> %21, i32 0)
   %23 = call float @llvm.SI.load.const(<16 x i8> %21, i32 4)
@@ -236,12 +236,12 @@ declare i32 @llvm.SI.packf16(float, float) #1
 define void @sample_v3([17 x <16 x i8>] addrspace(2)* byval, [32 x <16 x i8>] addrspace(2)* byval, [16 x <32 x i8>] addrspace(2)* byval, float inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 
 entry:
-  %21 = getelementptr [17 x <16 x i8>] addrspace(2)* %0, i64 0, i32 0
+  %21 = getelementptr [17 x <16 x i8>], [17 x <16 x i8>] addrspace(2)* %0, i64 0, i32 0
   %22 = load <16 x i8> addrspace(2)* %21, !tbaa !2
   %23 = call float @llvm.SI.load.const(<16 x i8> %22, i32 16)
-  %24 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 0
+  %24 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 0
   %25 = load <32 x i8> addrspace(2)* %24, !tbaa !2
-  %26 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 0
+  %26 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 0
   %27 = load <16 x i8> addrspace(2)* %26, !tbaa !2
   %28 = fcmp oeq float %23, 0.0
   br i1 %28, label %if, label %else
@@ -334,12 +334,12 @@ attributes #0 = { "ShaderType"="0" }
 ; CHECK: s_endpgm
 define void @sample_rsrc([6 x <16 x i8>] addrspace(2)* byval %arg, [17 x <16 x i8>] addrspace(2)* byval %arg1, [16 x <4 x i32>] addrspace(2)* byval %arg2, [32 x <8 x i32>] addrspace(2)* byval %arg3, float inreg %arg4, i32 inreg %arg5, <2 x i32> %arg6, <2 x i32> %arg7, <2 x i32> %arg8, <3 x i32> %arg9, <2 x i32> %arg10, <2 x i32> %arg11, <2 x i32> %arg12, float %arg13, float %arg14, float %arg15, float %arg16, float %arg17, float %arg18, i32 %arg19, float %arg20, float %arg21) #0 {
 bb:
-  %tmp = getelementptr [17 x <16 x i8>] addrspace(2)* %arg1, i32 0, i32 0
+  %tmp = getelementptr [17 x <16 x i8>], [17 x <16 x i8>] addrspace(2)* %arg1, i32 0, i32 0
   %tmp22 = load <16 x i8> addrspace(2)* %tmp, !tbaa !0
   %tmp23 = call float @llvm.SI.load.const(<16 x i8> %tmp22, i32 16)
-  %tmp25 = getelementptr [32 x <8 x i32>] addrspace(2)* %arg3, i32 0, i32 0
+  %tmp25 = getelementptr [32 x <8 x i32>], [32 x <8 x i32>] addrspace(2)* %arg3, i32 0, i32 0
   %tmp26 = load <8 x i32> addrspace(2)* %tmp25, !tbaa !0
-  %tmp27 = getelementptr [16 x <4 x i32>] addrspace(2)* %arg2, i32 0, i32 0
+  %tmp27 = getelementptr [16 x <4 x i32>], [16 x <4 x i32>] addrspace(2)* %arg2, i32 0, i32 0
   %tmp28 = load <4 x i32> addrspace(2)* %tmp27, !tbaa !0
   %tmp29 = call float @llvm.SI.fs.interp(i32 0, i32 0, i32 %arg5, <2 x i32> %arg7)
   %tmp30 = call float @llvm.SI.fs.interp(i32 1, i32 0, i32 %arg5, <2 x i32> %arg7)

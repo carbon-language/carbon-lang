@@ -7,8 +7,8 @@ target triple = "i386-apple-darwin8"
 define void @foo(%struct.x* byval align 4  %X) nounwind  {
 ; CHECK: store i32 2, i32* %tmp1
 entry:
-	%tmp = getelementptr %struct.x* %X, i32 0, i32 0		; <[4 x i32]*> [#uses=1]
-	%tmp1 = getelementptr [4 x i32]* %tmp, i32 0, i32 3		; <i32*> [#uses=1]
+	%tmp = getelementptr %struct.x, %struct.x* %X, i32 0, i32 0		; <[4 x i32]*> [#uses=1]
+	%tmp1 = getelementptr [4 x i32], [4 x i32]* %tmp, i32 0, i32 3		; <i32*> [#uses=1]
 	store i32 2, i32* %tmp1, align 4
 	%tmp2 = call i32 (...)* @bar( %struct.x* byval align 4  %X ) nounwind 		; <i32> [#uses=0]
 	br label %return

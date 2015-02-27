@@ -11,7 +11,7 @@ entry:
   br label %bb
 
 bb:                                               ; preds = %bb, %entry
-  %String2Loc9 = getelementptr inbounds [31 x i8]* %String2Loc, i64 0, i64 0
+  %String2Loc9 = getelementptr inbounds [31 x i8], [31 x i8]* %String2Loc, i64 0, i64 0
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %String2Loc9, i8* getelementptr inbounds ([31 x i8]* @.str3, i64 0, i64 0), i64 31, i32 1, i1 false)
   br label %bb
 

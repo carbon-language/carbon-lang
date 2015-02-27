@@ -36,7 +36,7 @@ define void @vst3i32_update(i32** %ptr, <2 x i32>* %B) nounwind {
 	%tmp0 = bitcast i32* %A to i8*
 	%tmp1 = load <2 x i32>* %B
 	call void @llvm.arm.neon.vst3.v2i32(i8* %tmp0, <2 x i32> %tmp1, <2 x i32> %tmp1, <2 x i32> %tmp1, i32 1)
-	%tmp2 = getelementptr i32* %A, i32 6
+	%tmp2 = getelementptr i32, i32* %A, i32 6
 	store i32* %tmp2, i32** %ptr
 	ret void
 }
@@ -68,7 +68,7 @@ define void @vst3i64_update(i64** %ptr, <1 x i64>* %B) nounwind {
         %tmp0 = bitcast i64* %A to i8*
         %tmp1 = load <1 x i64>* %B
         call void @llvm.arm.neon.vst3.v1i64(i8* %tmp0, <1 x i64> %tmp1, <1 x i64> %tmp1, <1 x i64> %tmp1, i32 1)
-        %tmp2 = getelementptr i64* %A, i32 3
+        %tmp2 = getelementptr i64, i64* %A, i32 3
         store i64* %tmp2, i64** %ptr
         ret void
 }
@@ -103,7 +103,7 @@ define void @vst3Qi16_update(i16** %ptr, <8 x i16>* %B) nounwind {
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <8 x i16>* %B
 	call void @llvm.arm.neon.vst3.v8i16(i8* %tmp0, <8 x i16> %tmp1, <8 x i16> %tmp1, <8 x i16> %tmp1, i32 1)
-	%tmp2 = getelementptr i16* %A, i32 24
+	%tmp2 = getelementptr i16, i16* %A, i32 24
 	store i16* %tmp2, i16** %ptr
 	ret void
 }

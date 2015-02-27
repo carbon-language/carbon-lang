@@ -150,7 +150,7 @@ entry:
 
 bb:		; preds = %cond_next97
 	%tmp1 = load i32* @numi		; <i32> [#uses=1]
-	%tmp2 = getelementptr [44 x i8]* @.str43, i32 0, i32 0		; <i8*> [#uses=1]
+	%tmp2 = getelementptr [44 x i8], [44 x i8]* @.str43, i32 0, i32 0		; <i8*> [#uses=1]
 	%tmp3 = call i32 (i8*, ...)* @printf( i8* %tmp2, i32 %tmp1 )		; <i32> [#uses=0]
 	store i32 0, i32* %i
 	br label %bb13
@@ -158,10 +158,10 @@ bb:		; preds = %cond_next97
 bb4:		; preds = %bb13
 	%tmp5 = load i32* %i		; <i32> [#uses=1]
 	%tmp6 = load i32* %i		; <i32> [#uses=1]
-	%tmp7 = getelementptr [17 x i32]* @trialx, i32 0, i32 %tmp6		; <i32*> [#uses=1]
+	%tmp7 = getelementptr [17 x i32], [17 x i32]* @trialx, i32 0, i32 %tmp6		; <i32*> [#uses=1]
 	%tmp8 = load i32* %tmp7		; <i32> [#uses=1]
 	%tmp9 = call i32 @userfun( i32 %tmp8 )		; <i32> [#uses=1]
-	%tmp10 = getelementptr [17 x i32]* @correct_result, i32 0, i32 %tmp5		; <i32*> [#uses=1]
+	%tmp10 = getelementptr [17 x i32], [17 x i32]* @correct_result, i32 0, i32 %tmp5		; <i32*> [#uses=1]
 	store i32 %tmp9, i32* %tmp10
 	%tmp11 = load i32* %i		; <i32> [#uses=1]
 	%tmp12 = add i32 %tmp11, 1		; <i32> [#uses=1]
@@ -181,35 +181,35 @@ bb17:		; preds = %bb13
 
 bb18:		; preds = %bb49
 	%tmp19 = load i32* %i		; <i32> [#uses=1]
-	%tmp20 = getelementptr [5 x { i32, [3 x i32] }]* @pgm, i32 0, i32 %tmp19		; <{ i32, [3 x i32] }*> [#uses=1]
-	%tmp21 = getelementptr { i32, [3 x i32] }* %tmp20, i32 0, i32 0		; <i32*> [#uses=1]
+	%tmp20 = getelementptr [5 x { i32, [3 x i32] }], [5 x { i32, [3 x i32] }]* @pgm, i32 0, i32 %tmp19		; <{ i32, [3 x i32] }*> [#uses=1]
+	%tmp21 = getelementptr { i32, [3 x i32] }, { i32, [3 x i32] }* %tmp20, i32 0, i32 0		; <i32*> [#uses=1]
 	store i32 0, i32* %tmp21
 	%tmp22 = load i32* %i		; <i32> [#uses=1]
-	%tmp23 = getelementptr [13 x %struct.anon]* @isa, i32 0, i32 0		; <%struct.anon*> [#uses=1]
-	%tmp24 = getelementptr %struct.anon* %tmp23, i32 0, i32 3		; <[3 x i32]*> [#uses=1]
-	%tmp25 = getelementptr [3 x i32]* %tmp24, i32 0, i32 0		; <i32*> [#uses=1]
+	%tmp23 = getelementptr [13 x %struct.anon], [13 x %struct.anon]* @isa, i32 0, i32 0		; <%struct.anon*> [#uses=1]
+	%tmp24 = getelementptr %struct.anon, %struct.anon* %tmp23, i32 0, i32 3		; <[3 x i32]*> [#uses=1]
+	%tmp25 = getelementptr [3 x i32], [3 x i32]* %tmp24, i32 0, i32 0		; <i32*> [#uses=1]
 	%tmp26 = load i32* %tmp25		; <i32> [#uses=1]
-	%tmp27 = getelementptr [5 x { i32, [3 x i32] }]* @pgm, i32 0, i32 %tmp22		; <{ i32, [3 x i32] }*> [#uses=1]
-	%tmp28 = getelementptr { i32, [3 x i32] }* %tmp27, i32 0, i32 1		; <[3 x i32]*> [#uses=1]
-	%tmp29 = getelementptr [3 x i32]* %tmp28, i32 0, i32 0		; <i32*> [#uses=1]
+	%tmp27 = getelementptr [5 x { i32, [3 x i32] }], [5 x { i32, [3 x i32] }]* @pgm, i32 0, i32 %tmp22		; <{ i32, [3 x i32] }*> [#uses=1]
+	%tmp28 = getelementptr { i32, [3 x i32] }, { i32, [3 x i32] }* %tmp27, i32 0, i32 1		; <[3 x i32]*> [#uses=1]
+	%tmp29 = getelementptr [3 x i32], [3 x i32]* %tmp28, i32 0, i32 0		; <i32*> [#uses=1]
 	store i32 %tmp26, i32* %tmp29
 	%tmp30 = load i32* %i		; <i32> [#uses=1]
-	%tmp31 = getelementptr [13 x %struct.anon]* @isa, i32 0, i32 0		; <%struct.anon*> [#uses=1]
-	%tmp32 = getelementptr %struct.anon* %tmp31, i32 0, i32 3		; <[3 x i32]*> [#uses=1]
-	%tmp33 = getelementptr [3 x i32]* %tmp32, i32 0, i32 1		; <i32*> [#uses=1]
+	%tmp31 = getelementptr [13 x %struct.anon], [13 x %struct.anon]* @isa, i32 0, i32 0		; <%struct.anon*> [#uses=1]
+	%tmp32 = getelementptr %struct.anon, %struct.anon* %tmp31, i32 0, i32 3		; <[3 x i32]*> [#uses=1]
+	%tmp33 = getelementptr [3 x i32], [3 x i32]* %tmp32, i32 0, i32 1		; <i32*> [#uses=1]
 	%tmp34 = load i32* %tmp33		; <i32> [#uses=1]
-	%tmp35 = getelementptr [5 x { i32, [3 x i32] }]* @pgm, i32 0, i32 %tmp30		; <{ i32, [3 x i32] }*> [#uses=1]
-	%tmp36 = getelementptr { i32, [3 x i32] }* %tmp35, i32 0, i32 1		; <[3 x i32]*> [#uses=1]
-	%tmp37 = getelementptr [3 x i32]* %tmp36, i32 0, i32 1		; <i32*> [#uses=1]
+	%tmp35 = getelementptr [5 x { i32, [3 x i32] }], [5 x { i32, [3 x i32] }]* @pgm, i32 0, i32 %tmp30		; <{ i32, [3 x i32] }*> [#uses=1]
+	%tmp36 = getelementptr { i32, [3 x i32] }, { i32, [3 x i32] }* %tmp35, i32 0, i32 1		; <[3 x i32]*> [#uses=1]
+	%tmp37 = getelementptr [3 x i32], [3 x i32]* %tmp36, i32 0, i32 1		; <i32*> [#uses=1]
 	store i32 %tmp34, i32* %tmp37
 	%tmp38 = load i32* %i		; <i32> [#uses=1]
-	%tmp39 = getelementptr [13 x %struct.anon]* @isa, i32 0, i32 0		; <%struct.anon*> [#uses=1]
-	%tmp40 = getelementptr %struct.anon* %tmp39, i32 0, i32 3		; <[3 x i32]*> [#uses=1]
-	%tmp41 = getelementptr [3 x i32]* %tmp40, i32 0, i32 2		; <i32*> [#uses=1]
+	%tmp39 = getelementptr [13 x %struct.anon], [13 x %struct.anon]* @isa, i32 0, i32 0		; <%struct.anon*> [#uses=1]
+	%tmp40 = getelementptr %struct.anon, %struct.anon* %tmp39, i32 0, i32 3		; <[3 x i32]*> [#uses=1]
+	%tmp41 = getelementptr [3 x i32], [3 x i32]* %tmp40, i32 0, i32 2		; <i32*> [#uses=1]
 	%tmp42 = load i32* %tmp41		; <i32> [#uses=1]
-	%tmp43 = getelementptr [5 x { i32, [3 x i32] }]* @pgm, i32 0, i32 %tmp38		; <{ i32, [3 x i32] }*> [#uses=1]
-	%tmp44 = getelementptr { i32, [3 x i32] }* %tmp43, i32 0, i32 1		; <[3 x i32]*> [#uses=1]
-	%tmp45 = getelementptr [3 x i32]* %tmp44, i32 0, i32 2		; <i32*> [#uses=1]
+	%tmp43 = getelementptr [5 x { i32, [3 x i32] }], [5 x { i32, [3 x i32] }]* @pgm, i32 0, i32 %tmp38		; <{ i32, [3 x i32] }*> [#uses=1]
+	%tmp44 = getelementptr { i32, [3 x i32] }, { i32, [3 x i32] }* %tmp43, i32 0, i32 1		; <[3 x i32]*> [#uses=1]
+	%tmp45 = getelementptr [3 x i32], [3 x i32]* %tmp44, i32 0, i32 2		; <i32*> [#uses=1]
 	store i32 %tmp42, i32* %tmp45
 	%tmp46 = load i32* %i		; <i32> [#uses=1]
 	call void @fix_operands( i32 %tmp46 )
@@ -229,7 +229,7 @@ bb49:		; preds = %bb18, %bb17
 bb55:		; preds = %bb49
 	%tmp56 = call i32 @search( )		; <i32> [#uses=1]
 	store i32 %tmp56, i32* %num_sol
-	%tmp57 = getelementptr [21 x i8]* @.str44, i32 0, i32 0		; <i8*> [#uses=1]
+	%tmp57 = getelementptr [21 x i8], [21 x i8]* @.str44, i32 0, i32 0		; <i8*> [#uses=1]
 	%tmp58 = load i32* %num_sol		; <i32> [#uses=1]
 	%tmp59 = call i32 (i8*, ...)* @printf( i8* %tmp57, i32 %tmp58 )		; <i32> [#uses=0]
 	%tmp60 = load i32* @counters		; <i32> [#uses=1]
@@ -240,19 +240,19 @@ bb55:		; preds = %bb49
 
 cond_true:		; preds = %bb55
 	store i32 0, i32* %total
-	%tmp64 = getelementptr [12 x i8]* @.str45, i32 0, i32 0		; <i8*> [#uses=1]
+	%tmp64 = getelementptr [12 x i8], [12 x i8]* @.str45, i32 0, i32 0		; <i8*> [#uses=1]
 	%tmp65 = call i32 (i8*, ...)* @printf( i8* %tmp64 )		; <i32> [#uses=0]
 	store i32 0, i32* %i
 	br label %bb79
 
 bb66:		; preds = %bb79
 	%tmp67 = load i32* %i		; <i32> [#uses=1]
-	%tmp68 = getelementptr [5 x i32]* @counter, i32 0, i32 %tmp67		; <i32*> [#uses=1]
+	%tmp68 = getelementptr [5 x i32], [5 x i32]* @counter, i32 0, i32 %tmp67		; <i32*> [#uses=1]
 	%tmp69 = load i32* %tmp68		; <i32> [#uses=1]
-	%tmp70 = getelementptr [5 x i8]* @.str46, i32 0, i32 0		; <i8*> [#uses=1]
+	%tmp70 = getelementptr [5 x i8], [5 x i8]* @.str46, i32 0, i32 0		; <i8*> [#uses=1]
 	%tmp71 = call i32 (i8*, ...)* @printf( i8* %tmp70, i32 %tmp69 )		; <i32> [#uses=0]
 	%tmp72 = load i32* %i		; <i32> [#uses=1]
-	%tmp73 = getelementptr [5 x i32]* @counter, i32 0, i32 %tmp72		; <i32*> [#uses=1]
+	%tmp73 = getelementptr [5 x i32], [5 x i32]* @counter, i32 0, i32 %tmp72		; <i32*> [#uses=1]
 	%tmp74 = load i32* %tmp73		; <i32> [#uses=1]
 	%tmp75 = load i32* %total		; <i32> [#uses=1]
 	%tmp76 = add i32 %tmp74, %tmp75		; <i32> [#uses=1]
@@ -271,7 +271,7 @@ bb79:		; preds = %bb66, %cond_true
 	br i1 %toBool84, label %bb66, label %bb85
 
 bb85:		; preds = %bb79
-	%tmp86 = getelementptr [12 x i8]* @.str47, i32 0, i32 0		; <i8*> [#uses=1]
+	%tmp86 = getelementptr [12 x i8], [12 x i8]* @.str47, i32 0, i32 0		; <i8*> [#uses=1]
 	%tmp87 = load i32* %total		; <i32> [#uses=1]
 	%tmp88 = call i32 (i8*, ...)* @printf( i8* %tmp86, i32 %tmp87 )		; <i32> [#uses=0]
 	br label %cond_next

@@ -13,8 +13,8 @@ entry:
   %0 = alloca double                              ; <double*> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
   call void @llvm.dbg.declare(metadata %struct.Rect* %my_r0, metadata !0, metadata !{!"0x102"}), !dbg !15
-  %1 = getelementptr inbounds %struct.Rect* %my_r0, i32 0, i32 0, !dbg !16 ; <%struct.Pt*> [#uses=1]
-  %2 = getelementptr inbounds %struct.Pt* %1, i32 0, i32 0, !dbg !16 ; <double*> [#uses=1]
+  %1 = getelementptr inbounds %struct.Rect, %struct.Rect* %my_r0, i32 0, i32 0, !dbg !16 ; <%struct.Pt*> [#uses=1]
+  %2 = getelementptr inbounds %struct.Pt, %struct.Pt* %1, i32 0, i32 0, !dbg !16 ; <double*> [#uses=1]
   %3 = load double* %2, align 8, !dbg !16         ; <double> [#uses=1]
   store double %3, double* %0, align 8, !dbg !16
   %4 = load double* %0, align 8, !dbg !16         ; <double> [#uses=1]

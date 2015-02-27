@@ -72,7 +72,7 @@ bb.i:		; preds = %bb7.i
 	%tmp = add i32 %j.0.i, 1		; <i32> [#uses=5]
 	store i32 0, i32* %q, align 4
 	%tmp1 = sext i32 %tmp to i64		; <i64> [#uses=1]
-	%tmp2 = getelementptr [9 x i32]* %a, i64 0, i64 %tmp1		; <i32*> [#uses=1]
+	%tmp2 = getelementptr [9 x i32], [9 x i32]* %a, i64 0, i64 %tmp1		; <i32*> [#uses=1]
 	%tmp3 = load i32* %tmp2, align 4		; <i32> [#uses=1]
 	%tmp4 = icmp eq i32 %tmp3, 0		; <i1> [#uses=1]
 	br i1 %tmp4, label %bb.i.bb7.i.backedge_crit_edge, label %bb1.i
@@ -80,7 +80,7 @@ bb.i:		; preds = %bb7.i
 bb1.i:		; preds = %bb.i
 	%tmp5 = add i32 %j.0.i, 2		; <i32> [#uses=1]
 	%tmp6 = sext i32 %tmp5 to i64		; <i64> [#uses=1]
-	%tmp7 = getelementptr [17 x i32]* %b, i64 0, i64 %tmp6		; <i32*> [#uses=1]
+	%tmp7 = getelementptr [17 x i32], [17 x i32]* %b, i64 0, i64 %tmp6		; <i32*> [#uses=1]
 	%tmp8 = load i32* %tmp7, align 4		; <i32> [#uses=1]
 	%tmp9 = icmp eq i32 %tmp8, 0		; <i1> [#uses=1]
 	br i1 %tmp9, label %bb1.i.bb7.i.backedge_crit_edge, label %bb2.i
@@ -88,24 +88,24 @@ bb1.i:		; preds = %bb.i
 bb2.i:		; preds = %bb1.i
 	%tmp10 = sub i32 7, %j.0.i		; <i32> [#uses=1]
 	%tmp11 = sext i32 %tmp10 to i64		; <i64> [#uses=1]
-	%tmp12 = getelementptr [15 x i32]* %c, i64 0, i64 %tmp11		; <i32*> [#uses=1]
+	%tmp12 = getelementptr [15 x i32], [15 x i32]* %c, i64 0, i64 %tmp11		; <i32*> [#uses=1]
 	%tmp13 = load i32* %tmp12, align 4		; <i32> [#uses=1]
 	%tmp14 = icmp eq i32 %tmp13, 0		; <i1> [#uses=1]
 	br i1 %tmp14, label %bb2.i.bb7.i.backedge_crit_edge, label %bb3.i
 
 bb3.i:		; preds = %bb2.i
-	%tmp15 = getelementptr [9 x i32]* %x1, i64 0, i64 1		; <i32*> [#uses=1]
+	%tmp15 = getelementptr [9 x i32], [9 x i32]* %x1, i64 0, i64 1		; <i32*> [#uses=1]
 	store i32 %tmp, i32* %tmp15, align 4
 	%tmp16 = sext i32 %tmp to i64		; <i64> [#uses=1]
-	%tmp17 = getelementptr [9 x i32]* %a, i64 0, i64 %tmp16		; <i32*> [#uses=1]
+	%tmp17 = getelementptr [9 x i32], [9 x i32]* %a, i64 0, i64 %tmp16		; <i32*> [#uses=1]
 	store i32 0, i32* %tmp17, align 4
 	%tmp18 = add i32 %j.0.i, 2		; <i32> [#uses=1]
 	%tmp19 = sext i32 %tmp18 to i64		; <i64> [#uses=1]
-	%tmp20 = getelementptr [17 x i32]* %b, i64 0, i64 %tmp19		; <i32*> [#uses=1]
+	%tmp20 = getelementptr [17 x i32], [17 x i32]* %b, i64 0, i64 %tmp19		; <i32*> [#uses=1]
 	store i32 0, i32* %tmp20, align 4
 	%tmp21 = sub i32 7, %j.0.i		; <i32> [#uses=1]
 	%tmp22 = sext i32 %tmp21 to i64		; <i64> [#uses=1]
-	%tmp23 = getelementptr [15 x i32]* %c, i64 0, i64 %tmp22		; <i32*> [#uses=1]
+	%tmp23 = getelementptr [15 x i32], [15 x i32]* %c, i64 0, i64 %tmp22		; <i32*> [#uses=1]
 	store i32 0, i32* %tmp23, align 4
 	call void @Try(i32 2, i32* %q, i32* %b9, i32* %a10, i32* %c11, i32* %x1.sub) nounwind
 	%tmp24 = load i32* %q, align 4		; <i32> [#uses=1]
@@ -114,15 +114,15 @@ bb3.i:		; preds = %bb2.i
 
 bb5.i:		; preds = %bb3.i
 	%tmp26 = sext i32 %tmp to i64		; <i64> [#uses=1]
-	%tmp27 = getelementptr [9 x i32]* %a, i64 0, i64 %tmp26		; <i32*> [#uses=1]
+	%tmp27 = getelementptr [9 x i32], [9 x i32]* %a, i64 0, i64 %tmp26		; <i32*> [#uses=1]
 	store i32 1, i32* %tmp27, align 4
 	%tmp28 = add i32 %j.0.i, 2		; <i32> [#uses=1]
 	%tmp29 = sext i32 %tmp28 to i64		; <i64> [#uses=1]
-	%tmp30 = getelementptr [17 x i32]* %b, i64 0, i64 %tmp29		; <i32*> [#uses=1]
+	%tmp30 = getelementptr [17 x i32], [17 x i32]* %b, i64 0, i64 %tmp29		; <i32*> [#uses=1]
 	store i32 1, i32* %tmp30, align 4
 	%tmp31 = sub i32 7, %j.0.i		; <i32> [#uses=1]
 	%tmp32 = sext i32 %tmp31 to i64		; <i64> [#uses=1]
-	%tmp33 = getelementptr [15 x i32]* %c, i64 0, i64 %tmp32		; <i32*> [#uses=1]
+	%tmp33 = getelementptr [15 x i32], [15 x i32]* %c, i64 0, i64 %tmp32		; <i32*> [#uses=1]
 	store i32 1, i32* %tmp33, align 4
 	br label %bb7.i.backedge
 

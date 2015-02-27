@@ -19,7 +19,7 @@ prologue:
 
 bb5:		; preds = %prologue
 	%tmp10 = zext i32 %tmp6 to i64		; <i64> [#uses=1]
-	%tmp11 = getelementptr %"struct.XXC::ArrayStorage"* %tmp9, i64 0, i32 5, i64 %tmp10		; <%XXValue**> [#uses=1]
+	%tmp11 = getelementptr %"struct.XXC::ArrayStorage", %"struct.XXC::ArrayStorage"* %tmp9, i64 0, i32 5, i64 %tmp10		; <%XXValue**> [#uses=1]
 	%tmp12 = load %XXValue** %tmp11, align 8		; <%XXValue*> [#uses=1]
 	ret %XXValue* %tmp12
 }

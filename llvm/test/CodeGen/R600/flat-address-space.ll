@@ -166,7 +166,7 @@ define void @zextload_flat_i16(i32 addrspace(1)* noalias %out, i16 addrspace(1)*
 define void @store_flat_scratch(i32 addrspace(1)* noalias %out, i32) #0 {
   %alloca = alloca i32, i32 9, align 4
   %x = call i32 @llvm.r600.read.tidig.x() #3
-  %pptr = getelementptr i32* %alloca, i32 %x
+  %pptr = getelementptr i32, i32* %alloca, i32 %x
   %fptr = addrspacecast i32* %pptr to i32 addrspace(4)*
   store i32 %x, i32 addrspace(4)* %fptr
   ; Dummy call

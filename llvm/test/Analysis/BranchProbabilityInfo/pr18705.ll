@@ -22,22 +22,22 @@ while.body:
   %d.addr.010 = phi i32* [ %d, %while.body.lr.ph ], [ %incdec.ptr4, %if.end ]
   %c.addr.09 = phi i32* [ %c, %while.body.lr.ph ], [ %c.addr.1, %if.end ]
   %indvars.iv.next = add nsw i64 %indvars.iv, -1
-  %arrayidx = getelementptr inbounds float* %f0, i64 %indvars.iv.next
+  %arrayidx = getelementptr inbounds float, float* %f0, i64 %indvars.iv.next
   %1 = load float* %arrayidx, align 4
-  %arrayidx2 = getelementptr inbounds float* %f1, i64 %indvars.iv.next
+  %arrayidx2 = getelementptr inbounds float, float* %f1, i64 %indvars.iv.next
   %2 = load float* %arrayidx2, align 4
   %cmp = fcmp une float %1, %2
   br i1 %cmp, label %if.then, label %if.else
 
 if.then:
-  %incdec.ptr = getelementptr inbounds i32* %b.addr.011, i64 1
+  %incdec.ptr = getelementptr inbounds i32, i32* %b.addr.011, i64 1
   %3 = load i32* %b.addr.011, align 4
   %add = add nsw i32 %3, 12
   store i32 %add, i32* %b.addr.011, align 4
   br label %if.end
 
 if.else:
-  %incdec.ptr3 = getelementptr inbounds i32* %c.addr.09, i64 1
+  %incdec.ptr3 = getelementptr inbounds i32, i32* %c.addr.09, i64 1
   %4 = load i32* %c.addr.09, align 4
   %sub = add nsw i32 %4, -13
   store i32 %sub, i32* %c.addr.09, align 4
@@ -46,7 +46,7 @@ if.else:
 if.end:
   %c.addr.1 = phi i32* [ %c.addr.09, %if.then ], [ %incdec.ptr3, %if.else ]
   %b.addr.1 = phi i32* [ %incdec.ptr, %if.then ], [ %b.addr.011, %if.else ]
-  %incdec.ptr4 = getelementptr inbounds i32* %d.addr.010, i64 1
+  %incdec.ptr4 = getelementptr inbounds i32, i32* %d.addr.010, i64 1
   store i32 14, i32* %d.addr.010, align 4
   %5 = trunc i64 %indvars.iv.next to i32
   %tobool = icmp eq i32 %5, 0

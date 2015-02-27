@@ -19,11 +19,11 @@ bb:		; preds = %bb1, %bb.nph
 ; CHECK: %i.01
 ; CHECK-NEXT: -->  {0,+,1}<nuw><nsw><%bb>
 	%tmp2 = sext i32 %i.01 to i64		; <i64> [#uses=1]
-	%tmp3 = getelementptr double* %p, i64 %tmp2		; <double*> [#uses=1]
+	%tmp3 = getelementptr double, double* %p, i64 %tmp2		; <double*> [#uses=1]
 	%tmp4 = load double* %tmp3, align 8		; <double> [#uses=1]
 	%tmp5 = fmul double %tmp4, 9.200000e+00		; <double> [#uses=1]
 	%tmp6 = sext i32 %i.01 to i64		; <i64> [#uses=1]
-	%tmp7 = getelementptr double* %p, i64 %tmp6		; <double*> [#uses=1]
+	%tmp7 = getelementptr double, double* %p, i64 %tmp6		; <double*> [#uses=1]
 ; CHECK: %tmp7
 ; CHECK-NEXT:   -->  {%p,+,8}<%bb>
 	store double %tmp5, double* %tmp7, align 8
@@ -36,7 +36,7 @@ bb1:		; preds = %bb
 	%phitmp = sext i32 %tmp8 to i64		; <i64> [#uses=1]
 ; CHECK: %phitmp
 ; CHECK-NEXT: -->  {1,+,1}<nuw><nsw><%bb>
-	%tmp9 = getelementptr double* %p, i64 %phitmp		; <double*> [#uses=1]
+	%tmp9 = getelementptr double, double* %p, i64 %phitmp		; <double*> [#uses=1]
 ; CHECK: %tmp9
 ; CHECK-NEXT:  -->  {(8 + %p),+,8}<%bb>
 	%tmp10 = load double* %tmp9, align 8		; <double> [#uses=1]
@@ -64,7 +64,7 @@ for.body.i.i:                                     ; preds = %for.body.i.i, %for.
 ; CHECK: %__first.addr.02.i.i
 ; CHECK-NEXT: -->  {%begin,+,4}<nuw><%for.body.i.i>
   store i32 0, i32* %__first.addr.02.i.i, align 4
-  %ptrincdec.i.i = getelementptr inbounds i32* %__first.addr.02.i.i, i64 1
+  %ptrincdec.i.i = getelementptr inbounds i32, i32* %__first.addr.02.i.i, i64 1
 ; CHECK: %ptrincdec.i.i
 ; CHECK-NEXT: -->  {(4 + %begin),+,4}<nuw><%for.body.i.i>
   %cmp.i.i = icmp eq i32* %ptrincdec.i.i, %end
@@ -90,10 +90,10 @@ for.body.i.i:                                     ; preds = %entry, %for.body.i.
   %tmp = add nsw i64 %indvar.i.i, 1
 ; CHECK: %tmp =
 ; CHECK: {1,+,1}<nuw><nsw><%for.body.i.i>
-  %ptrincdec.i.i = getelementptr inbounds i32* %begin, i64 %tmp
+  %ptrincdec.i.i = getelementptr inbounds i32, i32* %begin, i64 %tmp
 ; CHECK: %ptrincdec.i.i =
 ; CHECK: {(4 + %begin),+,4}<nsw><%for.body.i.i>
-  %__first.addr.08.i.i = getelementptr inbounds i32* %begin, i64 %indvar.i.i
+  %__first.addr.08.i.i = getelementptr inbounds i32, i32* %begin, i64 %indvar.i.i
 ; CHECK: %__first.addr.08.i.i
 ; CHECK: {%begin,+,4}<nsw><%for.body.i.i>
   store i32 0, i32* %__first.addr.08.i.i, align 4
@@ -127,14 +127,14 @@ exit:
 ; CHECK: -->  {(4 + %arg),+,4}<nuw><%bb1>		Exits: (8 + %arg)<nsw>
 define i32 @PR12375(i32* readnone %arg) {
 bb:
-  %tmp = getelementptr inbounds i32* %arg, i64 2
+  %tmp = getelementptr inbounds i32, i32* %arg, i64 2
   br label %bb1
 
 bb1:                                              ; preds = %bb1, %bb
   %tmp2 = phi i32* [ %arg, %bb ], [ %tmp5, %bb1 ]
   %tmp3 = phi i32 [ 0, %bb ], [ %tmp4, %bb1 ]
   %tmp4 = add nsw i32 %tmp3, 1
-  %tmp5 = getelementptr inbounds i32* %tmp2, i64 1
+  %tmp5 = getelementptr inbounds i32, i32* %tmp2, i64 1
   %tmp6 = icmp ult i32* %tmp5, %tmp
   br i1 %tmp6, label %bb1, label %bb7
 
@@ -151,7 +151,7 @@ bb:
 bb2:                                              ; preds = %bb2, %bb
   %tmp = phi i32* [ %arg, %bb ], [ %tmp4, %bb2 ]
   %tmp3 = icmp ult i32* %tmp, %arg1
-  %tmp4 = getelementptr inbounds i32* %tmp, i64 1
+  %tmp4 = getelementptr inbounds i32, i32* %tmp, i64 1
   br i1 %tmp3, label %bb2, label %bb5
 
 bb5:                                              ; preds = %bb2

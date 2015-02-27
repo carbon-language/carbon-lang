@@ -48,7 +48,7 @@ entry:
 ; CHECK-LABEL: t2:
 ; CHECK: ldur w0, [x0, #-4]
 ; CHECK: ret
-  %0 = getelementptr i32 *%ptr, i32 -1
+  %0 = getelementptr i32, i32 *%ptr, i32 -1
   %1 = load i32* %0, align 4
   ret i32 %1
 }
@@ -58,7 +58,7 @@ entry:
 ; CHECK-LABEL: t3:
 ; CHECK: ldur w0, [x0, #-256]
 ; CHECK: ret
-  %0 = getelementptr i32 *%ptr, i32 -64
+  %0 = getelementptr i32, i32 *%ptr, i32 -64
   %1 = load i32* %0, align 4
   ret i32 %1
 }
@@ -68,7 +68,7 @@ entry:
 ; CHECK-LABEL: t4:
 ; CHECK: stur wzr, [x0, #-4]
 ; CHECK: ret
-  %0 = getelementptr i32 *%ptr, i32 -1
+  %0 = getelementptr i32, i32 *%ptr, i32 -1
   store i32 0, i32* %0, align 4
   ret void
 }
@@ -78,7 +78,7 @@ entry:
 ; CHECK-LABEL: t5:
 ; CHECK: stur wzr, [x0, #-256]
 ; CHECK: ret
-  %0 = getelementptr i32 *%ptr, i32 -64
+  %0 = getelementptr i32, i32 *%ptr, i32 -64
   store i32 0, i32* %0, align 4
   ret void
 }

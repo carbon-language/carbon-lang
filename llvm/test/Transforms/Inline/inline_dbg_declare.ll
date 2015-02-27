@@ -47,7 +47,7 @@ entry:
   store float* %dst, float** %dst.addr, align 4
   call void @llvm.dbg.declare(metadata float** %dst.addr, metadata !20, metadata !17), !dbg !21
   %0 = load float** %dst.addr, align 4, !dbg !22
-  %arrayidx = getelementptr inbounds float* %0, i32 0, !dbg !22
+  %arrayidx = getelementptr inbounds float, float* %0, i32 0, !dbg !22
   %1 = load float* %arrayidx, align 4, !dbg !22
   %call = call float @foo(float %1), !dbg !22
 
@@ -55,7 +55,7 @@ entry:
 ; CHECK: void @llvm.dbg.declare(metadata float* [[x_addr_i]], metadata [[m23:![0-9]+]], metadata !17), !dbg [[m24:![0-9]+]]
 
   %2 = load float** %dst.addr, align 4, !dbg !22
-  %arrayidx1 = getelementptr inbounds float* %2, i32 0, !dbg !22
+  %arrayidx1 = getelementptr inbounds float, float* %2, i32 0, !dbg !22
   store float %call, float* %arrayidx1, align 4, !dbg !22
   ret void, !dbg !23
 }

@@ -19,9 +19,9 @@ if.then60:                                        ; preds = %if.then40
   br i1 undef, label %if.then67, label %if.end95
 
 if.then67:                                        ; preds = %if.then60
-  %op_next71 = getelementptr inbounds %struct.op* %tmp27, i32 0, i32 0
+  %op_next71 = getelementptr inbounds %struct.op, %struct.op* %tmp27, i32 0, i32 0
   store %struct.op* %tmp27, %struct.op** %op_next71, align 4
-  %0 = getelementptr inbounds %struct.op* %tmp27, i32 1, i32 0
+  %0 = getelementptr inbounds %struct.op, %struct.op* %tmp27, i32 1, i32 0
   br label %if.end95
 
 if.end95:                                         ; preds = %if.else92, %if.then67

@@ -12,9 +12,9 @@ declare float @llvm.fabs.f32(float) nounwind readnone
 ; GCN: v_madak_f32 {{v[0-9]+}}, [[VB]], [[VA]], 0x41200000
 define void @madak_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in.a, float addrspace(1)* noalias %in.b) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %in.a.gep = getelementptr float addrspace(1)* %in.a, i32 %tid
-  %in.b.gep = getelementptr float addrspace(1)* %in.b, i32 %tid
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %in.a.gep = getelementptr float, float addrspace(1)* %in.a, i32 %tid
+  %in.b.gep = getelementptr float, float addrspace(1)* %in.b, i32 %tid
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %a = load float addrspace(1)* %in.a.gep, align 4
   %b = load float addrspace(1)* %in.b.gep, align 4
@@ -40,12 +40,12 @@ define void @madak_f32(float addrspace(1)* noalias %out, float addrspace(1)* noa
 define void @madak_2_use_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
 
-  %in.gep.0 = getelementptr float addrspace(1)* %in, i32 %tid
-  %in.gep.1 = getelementptr float addrspace(1)* %in.gep.0, i32 1
-  %in.gep.2 = getelementptr float addrspace(1)* %in.gep.0, i32 2
+  %in.gep.0 = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %in.gep.1 = getelementptr float, float addrspace(1)* %in.gep.0, i32 1
+  %in.gep.2 = getelementptr float, float addrspace(1)* %in.gep.0, i32 2
 
-  %out.gep.0 = getelementptr float addrspace(1)* %out, i32 %tid
-  %out.gep.1 = getelementptr float addrspace(1)* %in.gep.0, i32 1
+  %out.gep.0 = getelementptr float, float addrspace(1)* %out, i32 %tid
+  %out.gep.1 = getelementptr float, float addrspace(1)* %in.gep.0, i32 1
 
   %a = load float addrspace(1)* %in.gep.0, align 4
   %b = load float addrspace(1)* %in.gep.1, align 4
@@ -66,8 +66,8 @@ define void @madak_2_use_f32(float addrspace(1)* noalias %out, float addrspace(1
 ; GCN: v_madak_f32 {{v[0-9]+}}, 4.0, [[VA]], 0x41200000
 define void @madak_m_inline_imm_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in.a) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %in.a.gep = getelementptr float addrspace(1)* %in.a, i32 %tid
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %in.a.gep = getelementptr float, float addrspace(1)* %in.a, i32 %tid
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %a = load float addrspace(1)* %in.a.gep, align 4
 
@@ -86,9 +86,9 @@ define void @madak_m_inline_imm_f32(float addrspace(1)* noalias %out, float addr
 ; GCN: v_mad_f32 {{v[0-9]+}}, [[VA]], [[VB]], 4.0
 define void @madak_inline_imm_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in.a, float addrspace(1)* noalias %in.b) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %in.a.gep = getelementptr float addrspace(1)* %in.a, i32 %tid
-  %in.b.gep = getelementptr float addrspace(1)* %in.b, i32 %tid
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %in.a.gep = getelementptr float, float addrspace(1)* %in.a, i32 %tid
+  %in.b.gep = getelementptr float, float addrspace(1)* %in.b, i32 %tid
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %a = load float addrspace(1)* %in.a.gep, align 4
   %b = load float addrspace(1)* %in.b.gep, align 4
@@ -108,8 +108,8 @@ define void @madak_inline_imm_f32(float addrspace(1)* noalias %out, float addrsp
 ; GCN: v_mad_f32 {{v[0-9]+}}, [[SB]], [[VA]], [[VK]]
 define void @s_v_madak_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in.a, float %b) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %in.a.gep = getelementptr float addrspace(1)* %in.a, i32 %tid
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %in.a.gep = getelementptr float, float addrspace(1)* %in.a, i32 %tid
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %a = load float addrspace(1)* %in.a.gep, align 4
 
@@ -127,8 +127,8 @@ define void @s_v_madak_f32(float addrspace(1)* noalias %out, float addrspace(1)*
 ; GCN: v_mad_f32 {{v[0-9]+}}, [[VA]], [[SB]], [[VK]]
 define void @v_s_madak_f32(float addrspace(1)* noalias %out, float %a, float addrspace(1)* noalias %in.b) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %in.b.gep = getelementptr float addrspace(1)* %in.b, i32 %tid
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %in.b.gep = getelementptr float, float addrspace(1)* %in.b, i32 %tid
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %b = load float addrspace(1)* %in.b.gep, align 4
 
@@ -155,9 +155,9 @@ define void @s_s_madak_f32(float addrspace(1)* %out, float %a, float %b) nounwin
 ; GCN: s_endpgm
 define void @no_madak_src0_modifier_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in.a, float addrspace(1)* noalias %in.b) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %in.a.gep = getelementptr float addrspace(1)* %in.a, i32 %tid
-  %in.b.gep = getelementptr float addrspace(1)* %in.b, i32 %tid
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %in.a.gep = getelementptr float, float addrspace(1)* %in.a, i32 %tid
+  %in.b.gep = getelementptr float, float addrspace(1)* %in.b, i32 %tid
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %a = load float addrspace(1)* %in.a.gep, align 4
   %b = load float addrspace(1)* %in.b.gep, align 4
@@ -177,9 +177,9 @@ define void @no_madak_src0_modifier_f32(float addrspace(1)* noalias %out, float 
 ; GCN: s_endpgm
 define void @no_madak_src1_modifier_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in.a, float addrspace(1)* noalias %in.b) nounwind {
   %tid = tail call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %in.a.gep = getelementptr float addrspace(1)* %in.a, i32 %tid
-  %in.b.gep = getelementptr float addrspace(1)* %in.b, i32 %tid
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
+  %in.a.gep = getelementptr float, float addrspace(1)* %in.a, i32 %tid
+  %in.b.gep = getelementptr float, float addrspace(1)* %in.b, i32 %tid
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %a = load float addrspace(1)* %in.a.gep, align 4
   %b = load float addrspace(1)* %in.b.gep, align 4

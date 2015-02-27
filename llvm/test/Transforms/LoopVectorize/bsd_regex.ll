@@ -24,7 +24,7 @@ entry:
 for.body:
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %0 = shl nsw i64 %indvars.iv, 2
-  %arrayidx = getelementptr inbounds i32* %A, i64 %0
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %0
   store i32 4, i32* %arrayidx, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32

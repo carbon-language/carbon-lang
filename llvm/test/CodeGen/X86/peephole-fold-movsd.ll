@@ -17,9 +17,9 @@ define void @foo1(double %a.coerce0, double %a.coerce1, double %b.coerce0, doubl
   %1 = alloca <2 x double>, align 16
   %tmpcast = bitcast <2 x double>* %1 to %struct.S1*
   call void @foo3(%struct.S1* %tmpcast) #2
-  %p2 = getelementptr inbounds %struct.S1* %tmpcast, i64 0, i32 0
+  %p2 = getelementptr inbounds %struct.S1, %struct.S1* %tmpcast, i64 0, i32 0
   %2 = load double* %p2, align 16
-  %p3 = getelementptr inbounds %struct.S1* %tmpcast, i64 0, i32 1
+  %p3 = getelementptr inbounds %struct.S1, %struct.S1* %tmpcast, i64 0, i32 1
   %3 = load double* %p3, align 8
   %4 = insertelement <2 x double> undef, double %2, i32 0
   %5 = insertelement <2 x double> %4, double 0.000000e+00, i32 1

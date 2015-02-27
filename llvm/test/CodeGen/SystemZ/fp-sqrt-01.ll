@@ -29,7 +29,7 @@ define float @f3(float *%base) {
 ; CHECK-LABEL: f3:
 ; CHECK: sqeb %f0, 4092(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 1023
+  %ptr = getelementptr float, float *%base, i64 1023
   %val = load float *%ptr
   %res = call float @llvm.sqrt.f32(float %val)
   ret float %res
@@ -42,7 +42,7 @@ define float @f4(float *%base) {
 ; CHECK: aghi %r2, 4096
 ; CHECK: sqeb %f0, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 1024
+  %ptr = getelementptr float, float *%base, i64 1024
   %val = load float *%ptr
   %res = call float @llvm.sqrt.f32(float %val)
   ret float %res
@@ -54,7 +54,7 @@ define float @f5(float *%base) {
 ; CHECK: aghi %r2, -4
 ; CHECK: sqeb %f0, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr float *%base, i64 -1
+  %ptr = getelementptr float, float *%base, i64 -1
   %val = load float *%ptr
   %res = call float @llvm.sqrt.f32(float %val)
   ret float %res
@@ -66,8 +66,8 @@ define float @f6(float *%base, i64 %index) {
 ; CHECK: sllg %r1, %r3, 2
 ; CHECK: sqeb %f0, 400(%r1,%r2)
 ; CHECK: br %r14
-  %ptr1 = getelementptr float *%base, i64 %index
-  %ptr2 = getelementptr float *%ptr1, i64 100
+  %ptr1 = getelementptr float, float *%base, i64 %index
+  %ptr2 = getelementptr float, float *%ptr1, i64 100
   %val = load float *%ptr2
   %res = call float @llvm.sqrt.f32(float %val)
   ret float %res

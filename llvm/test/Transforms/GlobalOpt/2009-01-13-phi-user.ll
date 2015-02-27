@@ -12,9 +12,9 @@ entry:
 	br label %bb1
 
 bb:		; preds = %bb1
-	%0 = getelementptr %struct.node* %t.0, i64 0, i32 1		; <i32*> [#uses=1]
+	%0 = getelementptr %struct.node, %struct.node* %t.0, i64 0, i32 1		; <i32*> [#uses=1]
 	%1 = load i32* %0, align 4		; <i32> [#uses=1]
-	%2 = getelementptr %struct.node* %t.0, i64 0, i32 0		; <%struct.node**> [#uses=1]
+	%2 = getelementptr %struct.node, %struct.node* %t.0, i64 0, i32 0		; <%struct.node**> [#uses=1]
 	br label %bb1
 
 bb1:		; preds = %bb, %entry

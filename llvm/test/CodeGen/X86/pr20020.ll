@@ -17,7 +17,7 @@ entry:
   br i1 %cmp4, label %for.body.preheader, label %for.end38
 
 for.body.preheader:                               ; preds = %entry
-  %gep = getelementptr %struct.planet* %bodies, i64 1, i32 1
+  %gep = getelementptr %struct.planet, %struct.planet* %bodies, i64 1, i32 1
   %gep13 = bitcast double* %gep to %struct.planet*
   %0 = add i32 %nbodies, -1
   br label %for.body
@@ -32,9 +32,9 @@ for.body:                                         ; preds = %for.body.preheader,
   br i1 %cmp22, label %for.body3.lr.ph, label %for.inc20
 
 for.body3.lr.ph:                                  ; preds = %for.body
-  %x = getelementptr inbounds %struct.planet* %bodies, i64 %iv9, i32 0
-  %y = getelementptr inbounds %struct.planet* %bodies, i64 %iv9, i32 1
-  %vx = getelementptr inbounds %struct.planet* %bodies, i64 %iv9, i32 2
+  %x = getelementptr inbounds %struct.planet, %struct.planet* %bodies, i64 %iv9, i32 0
+  %y = getelementptr inbounds %struct.planet, %struct.planet* %bodies, i64 %iv9, i32 1
+  %vx = getelementptr inbounds %struct.planet, %struct.planet* %bodies, i64 %iv9, i32 2
   br label %for.body3
 
 for.body3:                                        ; preds = %for.body3, %for.body3.lr.ph
@@ -42,7 +42,7 @@ for.body3:                                        ; preds = %for.body3, %for.bod
   %iv15 = phi %struct.planet* [ %gep16, %for.body3 ], [ %iv, %for.body3.lr.ph ]
   %iv1517 = bitcast %struct.planet* %iv15 to double*
   %2 = load double* %x, align 8
-  %gep18 = getelementptr double* %iv1517, i64 -1
+  %gep18 = getelementptr double, double* %iv1517, i64 -1
   %3 = load double* %gep18, align 8
   %sub = fsub double %2, %3
   %4 = load double* %y, align 8
@@ -51,14 +51,14 @@ for.body3:                                        ; preds = %for.body3, %for.bod
   %add10 = fadd double %sub, %sub8
   %call = tail call double @sqrt(double %sub8) #2
   store double %add10, double* %vx, align 8
-  %gep16 = getelementptr %struct.planet* %iv15, i64 1
+  %gep16 = getelementptr %struct.planet, %struct.planet* %iv15, i64 1
   %iv.next21 = add i32 %iv20, -1
   %exitcond = icmp eq i32 %iv.next21, 0
   br i1 %exitcond, label %for.inc20, label %for.body3
 
 for.inc20:                                        ; preds = %for.body3, %for.body
   %lftr.wideiv11 = trunc i64 %iv.next10 to i32
-  %gep14 = getelementptr %struct.planet* %iv, i64 1
+  %gep14 = getelementptr %struct.planet, %struct.planet* %iv, i64 1
   %iv.next = add i32 %iv19, -1
   %exitcond12 = icmp eq i32 %lftr.wideiv11, %nbodies
   br i1 %exitcond12, label %for.end38, label %for.body

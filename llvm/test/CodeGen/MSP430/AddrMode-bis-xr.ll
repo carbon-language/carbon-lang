@@ -25,7 +25,7 @@ define void @am2(i16 %x) nounwind {
 @bar = external global [2 x i8]
 
 define void @am3(i16 %i, i8 %x) nounwind {
-	%1 = getelementptr [2 x i8]* @bar, i16 0, i16 %i
+	%1 = getelementptr [2 x i8], [2 x i8]* @bar, i16 0, i16 %i
 	%2 = load i8* %1
 	%3 = or i8 %x, %2
 	store i8 %3, i8* %1
@@ -44,7 +44,7 @@ define void @am4(i16 %x) nounwind {
 ; CHECK:		bis.w	r15, &32
 
 define void @am5(i16* %a, i16 %x) readonly {
-	%1 = getelementptr inbounds i16* %a, i16 2
+	%1 = getelementptr inbounds i16, i16* %a, i16 2
 	%2 = load i16* %1
 	%3 = or i16 %x, %2
 	store i16 %3, i16* %1
@@ -69,8 +69,8 @@ define void @am6(i16 %x) nounwind {
 @duh = external global %T
 
 define void @am7(i16 %n, i8 %x) nounwind {
-	%1 = getelementptr %T* @duh, i32 0, i32 1
-	%2 = getelementptr [2 x i8]* %1, i16 0, i16 %n
+	%1 = getelementptr %T, %T* @duh, i32 0, i32 1
+	%2 = getelementptr [2 x i8], [2 x i8]* %1, i16 0, i16 %n
 	%3 = load i8* %2
 	%4 = or i8 %x, %3
 	store i8 %4, i8* %2

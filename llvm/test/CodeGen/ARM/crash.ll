@@ -17,7 +17,7 @@ bb1:
 
 bb2:
   %tmp120 = add i32 %tmp119, 0
-  %scevgep810.i = getelementptr %struct.foo* null, i32 %tmp120, i32 1
+  %scevgep810.i = getelementptr %struct.foo, %struct.foo* null, i32 %tmp120, i32 1
   store i32 undef, i32* %scevgep810.i, align 4
   br i1 undef, label %bb2, label %bb3
 

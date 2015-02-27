@@ -44,7 +44,7 @@ bb135:                                            ; preds = %meshBB396
   %.phi24 = load i8* null
   %.phi26 = load i8** null
   store i8 %.phi24, i8* %.phi26, align 1
-  %0 = getelementptr inbounds i8* %.phi26, i32 1
+  %0 = getelementptr inbounds i8, i8* %.phi26, i32 1
   store i8* %0, i8** %.load120, align 4
   ; CHECK: mul [[REGISTER:lr|r[0-9]+]],
   ; CHECK-NOT: [[REGISTER]],

@@ -57,10 +57,10 @@ define void @rsq_f32_sgpr(float addrspace(1)* noalias %out, float %val) nounwind
 ; SI: s_endpgm
 define void @rsqrt_fmul(float addrspace(1)* %out, float addrspace(1)* %in) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %out.gep = getelementptr float addrspace(1)* %out, i32 %tid
-  %gep.0 = getelementptr float addrspace(1)* %in, i32 %tid
-  %gep.1 = getelementptr float addrspace(1)* %gep.0, i32 1
-  %gep.2 = getelementptr float addrspace(1)* %gep.0, i32 2
+  %out.gep = getelementptr float, float addrspace(1)* %out, i32 %tid
+  %gep.0 = getelementptr float, float addrspace(1)* %in, i32 %tid
+  %gep.1 = getelementptr float, float addrspace(1)* %gep.0, i32 1
+  %gep.2 = getelementptr float, float addrspace(1)* %gep.0, i32 2
 
   %a = load float addrspace(1)* %gep.0
   %b = load float addrspace(1)* %gep.1

@@ -16,12 +16,12 @@ entry:
   %zz = alloca i32, align 4
   %z = alloca i32, align 4
   %0 = load i32* @i, align 4
-  %arrayidx = getelementptr inbounds [512 x i32]* %y, i32 0, i32 10
+  %arrayidx = getelementptr inbounds [512 x i32], [512 x i32]* %y, i32 0, i32 10
   store i32 %0, i32* %arrayidx, align 4
   %1 = load i32* @i, align 4
   store i32 %1, i32* %x, align 8
   call void @p(i32* %x)
-  %arrayidx1 = getelementptr inbounds [512 x i32]* %y, i32 0, i32 10
+  %arrayidx1 = getelementptr inbounds [512 x i32], [512 x i32]* %y, i32 0, i32 10
   call void @p(i32* %arrayidx1)
   ret void
 }

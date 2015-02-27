@@ -21,7 +21,7 @@ bb1:            ; preds = %bb0
 
 bb2:            ; preds = %bb2, %bb1
         %reg109 = phi %node_t* [ %reg110, %bb2 ], [ %reg107, %bb1 ]             ; <%node_t*> [#uses=1]
-        %reg212 = getelementptr %node_t* %reg109, i64 0, i32 1          ; <%node_t**> [#uses=1]
+        %reg212 = getelementptr %node_t, %node_t* %reg109, i64 0, i32 1          ; <%node_t**> [#uses=1]
         %reg110 = load %node_t** %reg212                ; <%node_t*> [#uses=2]
         %cond213 = icmp ne %node_t* %reg110, null               ; <i1> [#uses=1]
         br i1 %cond213, label %bb2, label %bb3

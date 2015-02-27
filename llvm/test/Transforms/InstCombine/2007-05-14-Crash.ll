@@ -10,7 +10,7 @@ target triple = "powerpc-apple-darwin8.8.0"
 define i8* @foo(%struct.anon* %deviceRef, %struct.abc* %pCap) {
 entry:
         %tmp1 = bitcast %struct.anon* %deviceRef to %struct.def*            
-        %tmp3 = getelementptr %struct.def* %tmp1, i32 0, i32 1               
+        %tmp3 = getelementptr %struct.def, %struct.def* %tmp1, i32 0, i32 1               
         %tmp35 = bitcast %struct.abc* %tmp3 to i8*           
         ret i8* %tmp35
 }

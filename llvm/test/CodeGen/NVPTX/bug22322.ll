@@ -27,11 +27,11 @@ _ZL11compute_vecRK6float3jb.exit:
   %ret_vec.sroa.8.i.val = load float* %ret_vec.sroa.8.i, align 4
   %11 = select i1 %10, float 0.000000e+00, float %ret_vec.sroa.8.i.val
   call void @llvm.lifetime.end(i64 4, i8* %6)
-  %12 = getelementptr inbounds %class.float3* %dst, i64 %5, i32 0
+  %12 = getelementptr inbounds %class.float3, %class.float3* %dst, i64 %5, i32 0
   store float 0.000000e+00, float* %12, align 4
-  %13 = getelementptr inbounds %class.float3* %dst, i64 %5, i32 1
+  %13 = getelementptr inbounds %class.float3, %class.float3* %dst, i64 %5, i32 1
   store float %11, float* %13, align 4
-  %14 = getelementptr inbounds %class.float3* %dst, i64 %5, i32 2
+  %14 = getelementptr inbounds %class.float3, %class.float3* %dst, i64 %5, i32 2
   store float 0.000000e+00, float* %14, align 4
   ret void
 }

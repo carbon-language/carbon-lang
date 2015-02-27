@@ -37,7 +37,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.body.for.body_crit_edge
   %0 = phi float [ %.pre, %for.body.for.body_crit_edge ], [ %r, %entry ]
   %i.09 = phi i32 [ %inc, %for.body.for.body_crit_edge ], [ 0, %entry ]
-  %arrayidx2 = getelementptr inbounds float* %vla, i32 %i.09, !dbg !31
+  %arrayidx2 = getelementptr inbounds float, float* %vla, i32 %i.09, !dbg !31
   %div = fdiv float %0, %r, !dbg !31
   store float %div, float* %arrayidx2, align 4, !dbg !31, !tbaa !26
   %inc = add nsw i32 %i.09, 1, !dbg !30
@@ -46,7 +46,7 @@ for.body:                                         ; preds = %entry, %for.body.fo
   br i1 %exitcond, label %for.end, label %for.body.for.body_crit_edge, !dbg !30
 
 for.body.for.body_crit_edge:                      ; preds = %for.body
-  %arrayidx2.phi.trans.insert = getelementptr inbounds float* %vla, i32 %inc
+  %arrayidx2.phi.trans.insert = getelementptr inbounds float, float* %vla, i32 %inc
   %.pre = load float* %arrayidx2.phi.trans.insert, align 4, !dbg !31, !tbaa !26
   br label %for.body, !dbg !30
 

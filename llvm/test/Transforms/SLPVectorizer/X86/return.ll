@@ -41,12 +41,12 @@ entry:
 define double @return2(double* nocapture readonly %x) {
 entry:
   %x0 = load double* %x, align 4
-  %arrayidx1 = getelementptr inbounds double* %x, i32 2
+  %arrayidx1 = getelementptr inbounds double, double* %x, i32 2
   %x2 = load double* %arrayidx1, align 4
   %add3 = fadd double %x0, %x2
-  %arrayidx2 = getelementptr inbounds double* %x, i32 1
+  %arrayidx2 = getelementptr inbounds double, double* %x, i32 1
   %x1 = load double* %arrayidx2, align 4
-  %arrayidx3 = getelementptr inbounds double* %x, i32 3
+  %arrayidx3 = getelementptr inbounds double, double* %x, i32 3
   %x3 = load double* %arrayidx3, align 4
   %add4 = fadd double %x1, %x3
   %add5 = fadd double %add3, %add4

@@ -10,7 +10,7 @@ entry:
   store i32 %target, i32* %target.addr, align 4
   %0 = load i32* %target.addr, align 4
   %idxprom = zext i32 %0 to i64
-  %arrayidx = getelementptr inbounds [2 x i8*]* @fn.table, i32 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [2 x i8*], [2 x i8*]* @fn.table, i32 0, i64 %idxprom
   %1 = load i8** %arrayidx, align 8
   br label %indirectgoto
 

@@ -11,7 +11,7 @@ if:
   br label %end
 else:
   %tmp3 = call i8* @llvm.returnaddress(i32 0)
-  %ptr = getelementptr inbounds i8* %tmp3, i64 -16
+  %ptr = getelementptr inbounds i8, i8* %tmp3, i64 -16
   %ld = load i8* %ptr, align 4
   %tmp2 = inttoptr i8 %ld to i8*
   br label %end

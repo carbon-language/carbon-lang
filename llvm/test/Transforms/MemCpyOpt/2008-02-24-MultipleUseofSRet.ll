@@ -8,9 +8,9 @@ target triple = "i386-pc-linux-gnu"
 
 define internal fastcc void @initialize(%0* noalias nocapture sret %agg.result) nounwind {
 entry:
-  %agg.result.03 = getelementptr %0* %agg.result, i32 0, i32 0
+  %agg.result.03 = getelementptr %0, %0* %agg.result, i32 0, i32 0
   store x86_fp80 0xK00000000000000000000, x86_fp80* %agg.result.03
-  %agg.result.15 = getelementptr %0* %agg.result, i32 0, i32 1
+  %agg.result.15 = getelementptr %0, %0* %agg.result, i32 0, i32 1
   store x86_fp80 0xK00000000000000000000, x86_fp80* %agg.result.15
   ret void
 }

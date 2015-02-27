@@ -19,7 +19,7 @@ define void @f2(i32 *%dst, i32 %a) {
 ; CHECK-LABEL: f2:
 ; CHECK: strv %r3, 524284(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%dst, i64 131071
+  %ptr = getelementptr i32, i32 *%dst, i64 131071
   %swapped = call i32 @llvm.bswap.i32(i32 %a)
   store i32 %swapped, i32 *%ptr
   ret void
@@ -32,7 +32,7 @@ define void @f3(i32 *%dst, i32 %a) {
 ; CHECK: agfi %r2, 524288
 ; CHECK: strv %r3, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%dst, i64 131072
+  %ptr = getelementptr i32, i32 *%dst, i64 131072
   %swapped = call i32 @llvm.bswap.i32(i32 %a)
   store i32 %swapped, i32 *%ptr
   ret void
@@ -43,7 +43,7 @@ define void @f4(i32 *%dst, i32 %a) {
 ; CHECK-LABEL: f4:
 ; CHECK: strv %r3, -4(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%dst, i64 -1
+  %ptr = getelementptr i32, i32 *%dst, i64 -1
   %swapped = call i32 @llvm.bswap.i32(i32 %a)
   store i32 %swapped, i32 *%ptr
   ret void
@@ -54,7 +54,7 @@ define void @f5(i32 *%dst, i32 %a) {
 ; CHECK-LABEL: f5:
 ; CHECK: strv %r3, -524288(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%dst, i64 -131072
+  %ptr = getelementptr i32, i32 *%dst, i64 -131072
   %swapped = call i32 @llvm.bswap.i32(i32 %a)
   store i32 %swapped, i32 *%ptr
   ret void
@@ -67,7 +67,7 @@ define void @f6(i32 *%dst, i32 %a) {
 ; CHECK: agfi %r2, -524292
 ; CHECK: strv %r3, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%dst, i64 -131073
+  %ptr = getelementptr i32, i32 *%dst, i64 -131073
   %swapped = call i32 @llvm.bswap.i32(i32 %a)
   store i32 %swapped, i32 *%ptr
   ret void

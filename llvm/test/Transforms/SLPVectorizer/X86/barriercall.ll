@@ -14,15 +14,15 @@ entry:
   store i32 %add, i32* %A, align 4
   %mul1 = mul nsw i32 %n, 9
   %add2 = add nsw i32 %mul1, 9
-  %arrayidx3 = getelementptr inbounds i32* %A, i64 1
+  %arrayidx3 = getelementptr inbounds i32, i32* %A, i64 1
   store i32 %add2, i32* %arrayidx3, align 4
   %mul4 = shl i32 %n, 3
   %add5 = add nsw i32 %mul4, 9
-  %arrayidx6 = getelementptr inbounds i32* %A, i64 2
+  %arrayidx6 = getelementptr inbounds i32, i32* %A, i64 2
   store i32 %add5, i32* %arrayidx6, align 4
   %mul7 = mul nsw i32 %n, 10
   %add8 = add nsw i32 %mul7, 9
-  %arrayidx9 = getelementptr inbounds i32* %A, i64 3
+  %arrayidx9 = getelementptr inbounds i32, i32* %A, i64 3
   store i32 %add8, i32* %arrayidx9, align 4
   ret i32 undef
 }

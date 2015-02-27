@@ -12,11 +12,11 @@ entry:
   %i0 = load double* %a 
   %i1 = load double* %b 
   %mul = fmul double %i0, %i1
-  %store1 = getelementptr inbounds [3 x double]* %agg.tmp.i.i.sroa.0, i64 0, i64 1
-  %store2 = getelementptr inbounds [3 x double]* %agg.tmp.i.i.sroa.0, i64 0, i64 2
-  %arrayidx3 = getelementptr inbounds double* %a, i64 1
+  %store1 = getelementptr inbounds [3 x double], [3 x double]* %agg.tmp.i.i.sroa.0, i64 0, i64 1
+  %store2 = getelementptr inbounds [3 x double], [3 x double]* %agg.tmp.i.i.sroa.0, i64 0, i64 2
+  %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
   %i3 = load double* %arrayidx3, align 8
-  %arrayidx4 = getelementptr inbounds double* %b, i64 1
+  %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
   %i4 = load double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
 ; CHECK: store <2 x double> %[[V1:[0-9]+]], <2 x double>* %[[V2:[0-9]+]], align 8
@@ -38,18 +38,18 @@ entry:
 define void @test2(float * %a, float * %b) {
 entry:
   %l0 = load float* %a
-  %a1 = getelementptr inbounds float* %a, i64 1
+  %a1 = getelementptr inbounds float, float* %a, i64 1
   %l1 = load float* %a1
-  %a2 = getelementptr inbounds float* %a, i64 2
+  %a2 = getelementptr inbounds float, float* %a, i64 2
   %l2 = load float* %a2
-  %a3 = getelementptr inbounds float* %a, i64 3
+  %a3 = getelementptr inbounds float, float* %a, i64 3
   %l3 = load float* %a3
   store float %l0, float* %b
-  %b1 = getelementptr inbounds float* %b, i64 1
+  %b1 = getelementptr inbounds float, float* %b, i64 1
   store float %l1, float* %b1
-  %b2 = getelementptr inbounds float* %b, i64 2
+  %b2 = getelementptr inbounds float, float* %b, i64 2
   store float %l2, float* %b2
-  %b3 = getelementptr inbounds float* %b, i64 3
+  %b3 = getelementptr inbounds float, float* %b, i64 3
   store float %l3, float* %b3
   ret void
 }

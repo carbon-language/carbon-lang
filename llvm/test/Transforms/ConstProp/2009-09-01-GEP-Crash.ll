@@ -18,7 +18,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define void @init_hrtimers_cpu(i32 %cpu) nounwind noredzone section ".cpuinit.text" {
 entry:
-  %tmp3 = getelementptr %struct.hrtimer_cpu_base* bitcast (%1* @per_cpu__hrtimer_bases to %struct.hrtimer_cpu_base*), i32 0, i32 0 ; <%0*> [#uses=1]
+  %tmp3 = getelementptr %struct.hrtimer_cpu_base, %struct.hrtimer_cpu_base* bitcast (%1* @per_cpu__hrtimer_bases to %struct.hrtimer_cpu_base*), i32 0, i32 0 ; <%0*> [#uses=1]
   %tmp5 = bitcast %0* %tmp3 to i8*                ; <i8*> [#uses=0]
   unreachable
 }

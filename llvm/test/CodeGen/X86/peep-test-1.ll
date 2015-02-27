@@ -9,7 +9,7 @@ define void @foo(i32 %n, double* nocapture %p) nounwind {
 bb:
 	%indvar = phi i32 [ 0, %0 ], [ %indvar.next, %bb ]
 	%i.03 = sub i32 %n, %indvar
-	%1 = getelementptr double* %p, i32 %i.03
+	%1 = getelementptr double, double* %p, i32 %i.03
 	%2 = load double* %1, align 4
 	%3 = fmul double %2, 2.930000e+00
 	store double %3, double* %1, align 4

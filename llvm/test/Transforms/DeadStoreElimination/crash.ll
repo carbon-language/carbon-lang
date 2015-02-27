@@ -28,14 +28,14 @@ bb:                                               ; preds = %bb, %entry
 define fastcc i32 @test2() nounwind ssp {
 bb14:                                             ; preds = %bb4
   %0 = bitcast i8* undef to i8**                  ; <i8**> [#uses=1]
-  %1 = getelementptr inbounds i8** %0, i64 undef  ; <i8**> [#uses=1]
+  %1 = getelementptr inbounds i8*, i8** %0, i64 undef  ; <i8**> [#uses=1]
   %2 = bitcast i8** %1 to i16*                    ; <i16*> [#uses=2]
-  %3 = getelementptr inbounds i16* %2, i64 undef  ; <i16*> [#uses=1]
+  %3 = getelementptr inbounds i16, i16* %2, i64 undef  ; <i16*> [#uses=1]
   %4 = bitcast i16* %3 to i8*                     ; <i8*> [#uses=1]
-  %5 = getelementptr inbounds i8* %4, i64 undef   ; <i8*> [#uses=1]
-  %6 = getelementptr inbounds i16* %2, i64 undef  ; <i16*> [#uses=1]
+  %5 = getelementptr inbounds i8, i8* %4, i64 undef   ; <i8*> [#uses=1]
+  %6 = getelementptr inbounds i16, i16* %2, i64 undef  ; <i16*> [#uses=1]
   store i16 undef, i16* %6, align 2
-  %7 = getelementptr inbounds i8* %5, i64 undef   ; <i8*> [#uses=1]
+  %7 = getelementptr inbounds i8, i8* %5, i64 undef   ; <i8*> [#uses=1]
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %7, i8* undef, i64 undef, i32 1, i1 false)
   unreachable
 }
@@ -49,8 +49,8 @@ entry:
   ret i32 0
   
 dead:
-  %P2 = getelementptr i32 *%P2, i32 52
-  %Q2 = getelementptr i32 *%Q2, i32 52
+  %P2 = getelementptr i32, i32 *%P2, i32 52
+  %Q2 = getelementptr i32, i32 *%Q2, i32 52
   store i32 4, i32* %P2
   store i32 4, i32* %Q2
   br label %dead
@@ -65,7 +65,7 @@ dead:
 define void @test4(%struct.f393a00_2__windmill* %a, %struct.f393a00_2__windmill* %b) {
 entry:
 	%t = alloca %struct.f393a00_2__windmill		; <%struct.f393a00_2__windmill*> [#uses=1]
-	%0 = getelementptr %struct.f393a00_2__windmill* %t, i32 0, i32 0, i32 0		; <%struct.ada__tags__dispatch_table**> [#uses=1]
+	%0 = getelementptr %struct.f393a00_2__windmill, %struct.f393a00_2__windmill* %t, i32 0, i32 0, i32 0		; <%struct.ada__tags__dispatch_table**> [#uses=1]
 	%1 = load %struct.ada__tags__dispatch_table** null, align 4		; <%struct.ada__tags__dispatch_table*> [#uses=1]
 	%2 = load %struct.ada__tags__dispatch_table** %0, align 8		; <%struct.ada__tags__dispatch_table*> [#uses=1]
 	store %struct.ada__tags__dispatch_table* %2, %struct.ada__tags__dispatch_table** null, align 4

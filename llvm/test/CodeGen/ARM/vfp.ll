@@ -114,7 +114,7 @@ define void @test_cmp(float* %glob, i32 %X) {
 ;CHECK-LABEL: test_cmp:
 entry:
 	%tmp = load float* %glob		; <float> [#uses=2]
-	%tmp3 = getelementptr float* %glob, i32 2		; <float*> [#uses=1]
+	%tmp3 = getelementptr float, float* %glob, i32 2		; <float*> [#uses=1]
 	%tmp4 = load float* %tmp3		; <float> [#uses=2]
 	%tmp.upgrd.1 = fcmp oeq float %tmp, %tmp4		; <i1> [#uses=1]
 	%tmp5 = fcmp uno float %tmp, %tmp4		; <i1> [#uses=1]

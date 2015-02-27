@@ -25,7 +25,7 @@ entry:
 ; Function Attrs: nounwind
 define void @_Z4funcv(%struct.CS* noalias sret %agg.result) #0 {
 entry:
-  %a_ = getelementptr inbounds %struct.CS* %agg.result, i32 0, i32 0
+  %a_ = getelementptr inbounds %struct.CS, %struct.CS* %agg.result, i32 0, i32 0
   store i32 0, i32* %a_, align 4
   ret void
 }

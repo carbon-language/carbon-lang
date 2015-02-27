@@ -113,7 +113,7 @@ if:
   br label %endif
 
 else:
-  %tmp3 = getelementptr i64 addrspace(1)* %in, i32 1
+  %tmp3 = getelementptr i64, i64 addrspace(1)* %in, i32 1
   %tmp4 = load i64 addrspace(1)* %tmp3
   br label %endif
 

@@ -9,7 +9,7 @@ entry:
 ; CHECK: move  $4, $[[T0]]
 ; CHECK: move  $4, $[[T2]]
   %tmp1 = alloca i8, i32 %size, align 4
-  %add.ptr = getelementptr inbounds i8* %tmp1, i32 5
+  %add.ptr = getelementptr inbounds i8, i8* %tmp1, i32 5
   store i8 97, i8* %add.ptr, align 1
   %tmp4 = alloca i8, i32 %size, align 4
   call void @foo2(double 1.000000e+00, double 2.000000e+00, i32 3) nounwind
@@ -39,17 +39,17 @@ entry:
 if.then:                                          ; preds = %entry
 ; CHECK: addiu $4, $[[T0]], 40
 
-  %add.ptr = getelementptr inbounds i8* %tmp1, i32 40
+  %add.ptr = getelementptr inbounds i8, i8* %tmp1, i32 40
   %1 = bitcast i8* %add.ptr to i32*
   call void @foo3(i32* %1) nounwind
-  %arrayidx15.pre = getelementptr inbounds i8* %tmp1, i32 12
+  %arrayidx15.pre = getelementptr inbounds i8, i8* %tmp1, i32 12
   %.pre = bitcast i8* %arrayidx15.pre to i32*
   br label %if.end
 
 if.else:                                          ; preds = %entry
 ; CHECK: addiu $4, $[[T0]], 12
 
-  %add.ptr5 = getelementptr inbounds i8* %tmp1, i32 12
+  %add.ptr5 = getelementptr inbounds i8, i8* %tmp1, i32 12
   %2 = bitcast i8* %add.ptr5 to i32*
   call void @foo3(i32* %2) nounwind
   br label %if.end
@@ -60,20 +60,20 @@ if.end:                                           ; preds = %if.else, %if.then
 
   %.pre-phi = phi i32* [ %2, %if.else ], [ %.pre, %if.then ]
   %tmp7 = load i32* %0, align 4
-  %arrayidx9 = getelementptr inbounds i8* %tmp1, i32 4
+  %arrayidx9 = getelementptr inbounds i8, i8* %tmp1, i32 4
   %3 = bitcast i8* %arrayidx9 to i32*
   %tmp10 = load i32* %3, align 4
-  %arrayidx12 = getelementptr inbounds i8* %tmp1, i32 8
+  %arrayidx12 = getelementptr inbounds i8, i8* %tmp1, i32 8
   %4 = bitcast i8* %arrayidx12 to i32*
   %tmp13 = load i32* %4, align 4
   %tmp16 = load i32* %.pre-phi, align 4
-  %arrayidx18 = getelementptr inbounds i8* %tmp1, i32 16
+  %arrayidx18 = getelementptr inbounds i8, i8* %tmp1, i32 16
   %5 = bitcast i8* %arrayidx18 to i32*
   %tmp19 = load i32* %5, align 4
-  %arrayidx21 = getelementptr inbounds i8* %tmp1, i32 20
+  %arrayidx21 = getelementptr inbounds i8, i8* %tmp1, i32 20
   %6 = bitcast i8* %arrayidx21 to i32*
   %tmp22 = load i32* %6, align 4
-  %arrayidx24 = getelementptr inbounds i8* %tmp1, i32 24
+  %arrayidx24 = getelementptr inbounds i8, i8* %tmp1, i32 24
   %7 = bitcast i8* %arrayidx24 to i32*
   %tmp25 = load i32* %7, align 4
   %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([22 x i8]* @.str, i32 0, i32 0), i32 %tmp7, i32 %tmp10, i32 %tmp13, i32 %tmp16, i32 %tmp19, i32 %tmp22, i32 %tmp25) nounwind

@@ -29,7 +29,7 @@ for.j:
   %j = phi i64 [ 0, %for.i ], [ %j.inc, %for.j ]
   %prodj = mul i64 %j, 2
   %vlaarrayidx.sum = add i64 %prodj, %tmp
-  %arrayidx = getelementptr inbounds double* %A, i64 %vlaarrayidx.sum
+  %arrayidx = getelementptr inbounds double, double* %A, i64 %vlaarrayidx.sum
   store double 1.0, double* %arrayidx
   %j.inc = add nsw i64 %j, 1
   %j.exitcond = icmp eq i64 %j.inc, %m

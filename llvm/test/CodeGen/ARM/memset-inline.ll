@@ -19,7 +19,7 @@ entry:
 ; CHECK: vst1.16 {d{{[0-9]+}}, d{{[0-9]+}}}, [r1]
 ; CHECK: vst1.32 {d{{[0-9]+}}, d{{[0-9]+}}}, [r0]
   %buf = alloca [26 x i8], align 1
-  %0 = getelementptr inbounds [26 x i8]* %buf, i32 0, i32 0
+  %0 = getelementptr inbounds [26 x i8], [26 x i8]* %buf, i32 0, i32 0
   call void @llvm.memset.p0i8.i32(i8* %0, i8 0, i32 26, i32 1, i1 false)
   call void @something(i8* %0) nounwind
   ret void

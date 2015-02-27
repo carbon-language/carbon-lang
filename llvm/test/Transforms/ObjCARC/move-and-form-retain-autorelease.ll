@@ -168,7 +168,7 @@ bb57:                                             ; preds = %bb55, %bb46
   %tmp70 = tail call %14* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to %14* (i8*, i8*, %23*, %18*)*)(i8* %tmp69, i8* %tmp68, %23* %tmp67, %18* %tmp47)
   %tmp71 = bitcast %14* %tmp70 to i8*
   ; hack to prevent the optimize from using objc_retainAutoreleasedReturnValue.
-  %tmp71x = getelementptr i8* %tmp71, i64 1
+  %tmp71x = getelementptr i8, i8* %tmp71, i64 1
   %tmp72 = tail call i8* @objc_retain(i8* %tmp71x) nounwind
   %tmp73 = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_402", align 8
   tail call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, i8)*)(i8* %tmp72, i8* %tmp73, i8 signext 1)

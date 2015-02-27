@@ -43,7 +43,7 @@ declare noalias i32* @make_data()
 define %struct._list* @make_list(i32* nocapture readonly %data, i32* nocapture %value, i32* nocapture %all) {
 entry:
   %call = tail call i8* @malloc(i64 16)
-  %next = getelementptr inbounds i8* %call, i64 8
+  %next = getelementptr inbounds i8, i8* %call, i64 8
   %tmp = bitcast i8* %next to %struct._list**
   %tmp2 = bitcast i8* %call to %struct._list*
   %.pre78 = load i32* @ncol, align 4
@@ -83,9 +83,9 @@ while.cond.i:                                     ; preds = %land.rhs.i, %while.
   br i1 %tobool.i66, label %if.else, label %land.rhs.i
 
 land.rhs.i:                                       ; preds = %while.cond.i
-  %arrayidx.i67 = getelementptr inbounds i32* %call4, i64 %indvars.iv.next.i65
+  %arrayidx.i67 = getelementptr inbounds i32, i32* %call4, i64 %indvars.iv.next.i65
   %tmp11 = load i32* %arrayidx.i67, align 4
-  %arrayidx2.i68 = getelementptr inbounds i32* %data, i64 %indvars.iv.next.i65
+  %arrayidx2.i68 = getelementptr inbounds i32, i32* %data, i64 %indvars.iv.next.i65
   %tmp12 = load i32* %arrayidx2.i68, align 4
   %cmp.i69 = icmp eq i32 %tmp11, %tmp12
   br i1 %cmp.i69, label %while.cond.i, label %equal_data.exit
@@ -95,9 +95,9 @@ equal_data.exit:                                  ; preds = %land.rhs.i
   br i1 %cmp3.i, label %if.else, label %if.then
 
 if.then:                                          ; preds = %equal_data.exit
-  %next7 = getelementptr inbounds %struct._list* %current.173, i64 0, i32 1
+  %next7 = getelementptr inbounds %struct._list, %struct._list* %current.173, i64 0, i32 1
   %tmp14 = load %struct._list** %next7, align 8
-  %next12 = getelementptr inbounds %struct._list* %tmp14, i64 0, i32 1
+  %next12 = getelementptr inbounds %struct._list, %struct._list* %tmp14, i64 0, i32 1
   store %struct._list* null, %struct._list** %next12, align 8
   %tmp15 = load %struct._list** %next7, align 8
   %tmp16 = load i32* %value, align 4

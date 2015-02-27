@@ -30,7 +30,7 @@
 ; COMMON: buffer_store_dwordx2 [[RESULT]]
 ; COMMON: s_endpgm
 define void @fdiv_f64(double addrspace(1)* %out, double addrspace(1)* %in) nounwind {
-  %gep.1 = getelementptr double addrspace(1)* %in, i32 1
+  %gep.1 = getelementptr double, double addrspace(1)* %in, i32 1
   %num = load double addrspace(1)* %in
   %den = load double addrspace(1)* %gep.1
   %result = fdiv double %num, %den
@@ -63,7 +63,7 @@ define void @fdiv_f64_s_s(double addrspace(1)* %out, double %num, double %den) n
 
 ; COMMON-LABEL: {{^}}v_fdiv_v2f64:
 define void @v_fdiv_v2f64(<2 x double> addrspace(1)* %out, <2 x double> addrspace(1)* %in) nounwind {
-  %gep.1 = getelementptr <2 x double> addrspace(1)* %in, i32 1
+  %gep.1 = getelementptr <2 x double>, <2 x double> addrspace(1)* %in, i32 1
   %num = load <2 x double> addrspace(1)* %in
   %den = load <2 x double> addrspace(1)* %gep.1
   %result = fdiv <2 x double> %num, %den
@@ -80,7 +80,7 @@ define void @s_fdiv_v2f64(<2 x double> addrspace(1)* %out, <2 x double> %num, <2
 
 ; COMMON-LABEL: {{^}}v_fdiv_v4f64:
 define void @v_fdiv_v4f64(<4 x double> addrspace(1)* %out, <4 x double> addrspace(1)* %in) nounwind {
-  %gep.1 = getelementptr <4 x double> addrspace(1)* %in, i32 1
+  %gep.1 = getelementptr <4 x double>, <4 x double> addrspace(1)* %in, i32 1
   %num = load <4 x double> addrspace(1)* %in
   %den = load <4 x double> addrspace(1)* %gep.1
   %result = fdiv <4 x double> %num, %den

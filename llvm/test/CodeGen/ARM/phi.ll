@@ -9,11 +9,11 @@ entry:
   br i1 %a, label %lblock, label %rblock
 
 lblock:
-  %lbranch = getelementptr i32* %b, i32 1
+  %lbranch = getelementptr i32, i32* %b, i32 1
   br label %end
 
 rblock:
-  %rbranch = getelementptr i32* %b, i32 1
+  %rbranch = getelementptr i32, i32* %b, i32 1
   br label %end
   
 end:

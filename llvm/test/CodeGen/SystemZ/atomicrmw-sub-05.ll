@@ -28,7 +28,7 @@ define i32 @f3(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: lcr [[NEG:%r[0-5]]], %r4
 ; CHECK: laa %r2, [[NEG]], 524284(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i32 131071
+  %ptr = getelementptr i32, i32 *%src, i32 131071
   %res = atomicrmw sub i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }
@@ -40,7 +40,7 @@ define i32 @f4(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK-DAG: agfi %r3, 524288
 ; CHECK: laa %r2, [[NEG]], 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i32 131072
+  %ptr = getelementptr i32, i32 *%src, i32 131072
   %res = atomicrmw sub i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }
@@ -51,7 +51,7 @@ define i32 @f5(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: lcr [[NEG:%r[0-5]]], %r4
 ; CHECK: laa %r2, [[NEG]], -524288(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i32 -131072
+  %ptr = getelementptr i32, i32 *%src, i32 -131072
   %res = atomicrmw sub i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }
@@ -63,7 +63,7 @@ define i32 @f6(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK-DAG: agfi %r3, -524292
 ; CHECK: laa %r2, [[NEG]], 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i32 -131073
+  %ptr = getelementptr i32, i32 *%src, i32 -131073
   %res = atomicrmw sub i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }

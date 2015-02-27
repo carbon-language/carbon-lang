@@ -8,7 +8,7 @@ define i32* @earlyclobber-str-post(i32* %addr) nounwind {
 ; CHECK-NOT: str r[[REG:[0-9]+]], [r[[REG]]], #4
   %val = ptrtoint i32* %addr to i32
   store i32 %val, i32* %addr
-  %new = getelementptr i32* %addr, i32 1
+  %new = getelementptr i32, i32* %addr, i32 1
   ret i32* %new
 }
 
@@ -18,7 +18,7 @@ define i16* @earlyclobber-strh-post(i16* %addr) nounwind {
   %val = ptrtoint i16* %addr to i32
   %tr = trunc i32 %val to i16
   store i16 %tr, i16* %addr
-  %new = getelementptr i16* %addr, i32 1
+  %new = getelementptr i16, i16* %addr, i32 1
   ret i16* %new
 }
 
@@ -28,6 +28,6 @@ define i8* @earlyclobber-strb-post(i8* %addr) nounwind {
   %val = ptrtoint i8* %addr to i32
   %tr = trunc i32 %val to i8
   store i8 %tr, i8* %addr
-  %new = getelementptr i8* %addr, i32 1
+  %new = getelementptr i8, i8* %addr, i32 1
   ret i8* %new
 }

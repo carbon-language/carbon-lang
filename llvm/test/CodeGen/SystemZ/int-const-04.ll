@@ -70,7 +70,7 @@ define void @f8(i16 *%a) {
 ; CHECK-LABEL: f8:
 ; CHECK: mvhhi 4094(%r2), 42
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%a, i64 2047
+  %ptr = getelementptr i16, i16 *%a, i64 2047
   store i16 42, i16 *%ptr
   ret void
 }
@@ -82,7 +82,7 @@ define void @f9(i16 *%a) {
 ; CHECK: lhi [[TMP:%r[0-5]]], 42
 ; CHECK: sthy [[TMP]], 4096(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%a, i64 2048
+  %ptr = getelementptr i16, i16 *%a, i64 2048
   store i16 42, i16 *%ptr
   ret void
 }
@@ -93,7 +93,7 @@ define void @f10(i16 *%a) {
 ; CHECK: lhi [[TMP:%r[0-5]]], 42
 ; CHECK: sthy [[TMP]], -2(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%a, i64 -1
+  %ptr = getelementptr i16, i16 *%a, i64 -1
   store i16 42, i16 *%ptr
   ret void
 }

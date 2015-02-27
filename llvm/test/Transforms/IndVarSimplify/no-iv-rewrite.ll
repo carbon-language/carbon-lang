@@ -28,7 +28,7 @@ loop:
   %i.02 = phi i32 [ 0, %ph ], [ %iinc, %loop ]
   %s.01 = phi i32 [ 0, %ph ], [ %sinc, %loop ]
   %ofs = sext i32 %i.02 to i64
-  %adr = getelementptr inbounds i32* %arr, i64 %ofs
+  %adr = getelementptr inbounds i32, i32* %arr, i64 %ofs
   %val = load i32* %adr
   %sinc = add nsw i32 %s.01, %val
   %iinc = add nsw i32 %i.02, 1
@@ -69,7 +69,7 @@ loop:
   %i.02 = phi i32 [ 0, %ph ], [ %iinc, %loop ]
   %s.01 = phi i64 [ 0, %ph ], [ %sinc, %loop ]
   %ofs = sext i32 %i.02 to i64
-  %adr = getelementptr inbounds i32* %arr, i64 %ofs
+  %adr = getelementptr inbounds i32, i32* %arr, i64 %ofs
   %val = load i32* %adr
   %vall = sext i32 %val to i64
   %sinc = add nsw i64 %s.01, %vall
@@ -106,15 +106,15 @@ ph:
 ; CHECK-NOT: add
 ;
 ; Preserve gep inboundsness, and don't factor it.
-; CHECK: getelementptr inbounds i32* %ptriv, i32 1
+; CHECK: getelementptr inbounds i32, i32* %ptriv, i32 1
 ; CHECK-NOT: add
 ; CHECK: exit:
 loop:
   %ptriv = phi i32* [ %first, %ph ], [ %ptrpost, %loop ]
   %ofs = sext i32 %idx to i64
-  %adr = getelementptr inbounds i32* %ptriv, i64 %ofs
+  %adr = getelementptr inbounds i32, i32* %ptriv, i64 %ofs
   store i32 3, i32* %adr
-  %ptrpost = getelementptr inbounds i32* %ptriv, i32 1
+  %ptrpost = getelementptr inbounds i32, i32* %ptriv, i32 1
   %cond = icmp ne i32* %ptrpost, %last
   br i1 %cond, label %loop, label %exit
 
@@ -143,11 +143,11 @@ entry:
 loop:
   %iv = phi i32 [%start, %entry], [%next, %loop]
   %p = phi %structI* [%base, %entry], [%pinc, %loop]
-  %adr = getelementptr %structI* %p, i32 0, i32 0
+  %adr = getelementptr %structI, %structI* %p, i32 0, i32 0
   store i32 3, i32* %adr
   %pp = bitcast %structI* %p to i32*
   store i32 4, i32* %pp
-  %pinc = getelementptr %structI* %p, i32 1
+  %pinc = getelementptr %structI, %structI* %p, i32 1
   %next = add i32 %iv, 1
   %cond = icmp ne i32 %next, %limit
   br i1 %cond, label %loop, label %exit
@@ -170,7 +170,7 @@ loop:
   %idx = phi i32 [ 0, %entry ], [ %idx.next, %loop.inc ]
   %max = phi i32 [ 0, %entry ], [ %max.next, %loop.inc ]
   %idxprom = sext i32 %idx to i64
-  %adr = getelementptr inbounds i32* %base, i64 %idxprom
+  %adr = getelementptr inbounds i32, i32* %base, i64 %idxprom
   %val = load i32* %adr
   %cmp19 = icmp sgt i32 %val, %max
   br i1 %cmp19, label %if.then, label %if.else
@@ -239,7 +239,7 @@ entry:
 loop:
   %iv = phi i32 [ 0, %entry], [ %iv.next, %loop ]
   %t1 = sext i32 %iv to i64
-  %adr = getelementptr i64* %base, i64 %t1
+  %adr = getelementptr i64, i64* %base, i64 %t1
   %val = load i64* %adr
   %t2 = or i32 %iv, 1
   %t3 = sext i32 %t2 to i64
@@ -333,7 +333,7 @@ return:
 
 define void @congruentgepiv(%structIF* %base) nounwind uwtable ssp {
 entry:
-  %first = getelementptr inbounds %structIF* %base, i64 0, i32 0
+  %first = getelementptr inbounds %structIF, %structIF* %base, i64 0, i32 0
   br label %loop
 
 ; CHECK: loop:
@@ -349,8 +349,8 @@ loop:
   br i1 undef, label %latch, label %exit
 
 latch:                         ; preds = %for.inc50.i
-  %ptr.inc = getelementptr inbounds %structIF* %ptr.iv, i64 1
-  %next.inc = getelementptr inbounds %structIF* %ptr.inc, i64 0, i32 0
+  %ptr.inc = getelementptr inbounds %structIF, %structIF* %ptr.iv, i64 1
+  %next.inc = getelementptr inbounds %structIF, %structIF* %ptr.inc, i64 0, i32 0
   br label %loop
 
 exit:

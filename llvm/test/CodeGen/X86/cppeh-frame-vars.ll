@@ -55,16 +55,16 @@ $"\01??_R0H@8" = comdat any
 ; CHECK:   %frame.alloc = call i8* @llvm.frameallocate(i32 80)
 ; CHECK:   %eh.data = bitcast i8* %frame.alloc to %"struct.\01?test@@YAXXZ.ehdata"*
 ; CHECK-NOT:  %NumExceptions = alloca i32, align 4
-; CHECK:   %NumExceptions = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
+; CHECK:   %NumExceptions = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
 ; CHECK-NOT:  %ExceptionVal = alloca [10 x i32], align 16
-; CHECK:   %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4
+; CHECK:   %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4
 ; CHECK-NOT:  %Data = alloca %struct.SomeData, align 4
-; CHECK:   %Data = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 6
-; CHECK:   %i = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 5
+; CHECK:   %Data = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 6
+; CHECK:   %i = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 5
 ; CHECK:   %exn.slot = alloca i8*
 ; CHECK:   %ehselector.slot = alloca i32
 ; CHECK-NOT:  %e = alloca i32, align 4
-; CHECK:   %e = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 2
+; CHECK:   %e = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 2
 
 ; Function Attrs: uwtable
 define void @"\01?test@@YAXXZ"() #0 {
@@ -93,7 +93,7 @@ for.body:                                         ; preds = %for.cond
 
 invoke.cont:                                      ; preds = %for.body
   %2 = load i32* %i, align 4
-  %a = getelementptr inbounds %struct.SomeData* %Data, i32 0, i32 0
+  %a = getelementptr inbounds %struct.SomeData, %struct.SomeData* %Data, i32 0, i32 0
   %3 = load i32* %a, align 4
   %add = add nsw i32 %3, %2
   store i32 %add, i32* %a, align 4
@@ -123,7 +123,7 @@ catch:                                            ; preds = %catch.dispatch
   %11 = load i32* %e, align 4
   %12 = load i32* %NumExceptions, align 4
   %idxprom = sext i32 %12 to i64
-  %arrayidx = getelementptr inbounds [10 x i32]* %ExceptionVal, i32 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [10 x i32], [10 x i32]* %ExceptionVal, i32 0, i64 %idxprom
   store i32 %11, i32* %arrayidx, align 4
   %13 = load i32* %NumExceptions, align 4
   %inc = add nsw i32 %13, 1
@@ -135,7 +135,7 @@ catch:                                            ; preds = %catch.dispatch
 
 if.then:                                          ; preds = %catch
   %16 = load i32* %e, align 4
-  %b = getelementptr inbounds %struct.SomeData* %Data, i32 0, i32 1
+  %b = getelementptr inbounds %struct.SomeData, %struct.SomeData* %Data, i32 0, i32 1
   %17 = load i32* %b, align 4
   %add2 = add nsw i32 %17, %16
   store i32 %add2, i32* %b, align 4
@@ -143,7 +143,7 @@ if.then:                                          ; preds = %catch
 
 if.else:                                          ; preds = %catch
   %18 = load i32* %e, align 4
-  %a3 = getelementptr inbounds %struct.SomeData* %Data, i32 0, i32 0
+  %a3 = getelementptr inbounds %struct.SomeData, %struct.SomeData* %Data, i32 0, i32 0
   %19 = load i32* %a3, align 4
   %add4 = add nsw i32 %19, %18
   store i32 %add4, i32* %a3, align 4
@@ -166,7 +166,7 @@ for.inc:                                          ; preds = %try.cont
 
 for.end:                                          ; preds = %for.cond
   %22 = load i32* %NumExceptions, align 4
-  %arraydecay = getelementptr inbounds [10 x i32]* %ExceptionVal, i32 0, i32 0
+  %arraydecay = getelementptr inbounds [10 x i32], [10 x i32]* %ExceptionVal, i32 0, i32 0
   call void @"\01?dump@@YAXPEAHHAEAUSomeData@@@Z"(i32* %arraydecay, i32 %22, %struct.SomeData* dereferenceable(8) %Data)
   ret void
 
@@ -183,20 +183,20 @@ eh.resume:                                        ; preds = %catch.dispatch
 ; CHECK: catch.entry:
 ; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1)
 ; CHECK:   %eh.data = bitcast i8* %eh.alloc to %"struct.\01?test@@YAXXZ.ehdata"*
-; CHECK:   %eh.obj.ptr = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 1
+; CHECK:   %eh.obj.ptr = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 1
 ; CHECK:   %eh.obj = load i8** %eh.obj.ptr
-; CHECK:   %e = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 2
-; CHECK:   %NumExceptions = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
-; CHECK:   %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4
-; CHECK:   %i = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 5
-; CHECK:   %Data = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 6
+; CHECK:   %e = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 2
+; CHECK:   %NumExceptions = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
+; CHECK:   %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4
+; CHECK:   %i = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 5
+; CHECK:   %Data = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 6
 ; CHECK:   %2 = bitcast i8* %eh.obj to i32*
 ; CHECK:   %3 = load i32* %2, align 4
 ; CHECK:   store i32 %3, i32* %e, align 4
 ; CHECK:   %4 = load i32* %e, align 4
 ; CHECK:   %5 = load i32* %NumExceptions, align 4
 ; CHECK:   %idxprom = sext i32 %5 to i64
-; CHECK:   %arrayidx = getelementptr inbounds [10 x i32]* %ExceptionVal, i32 0, i64 %idxprom
+; CHECK:   %arrayidx = getelementptr inbounds [10 x i32], [10 x i32]* %ExceptionVal, i32 0, i64 %idxprom
 ; CHECK:   store i32 %4, i32* %arrayidx, align 4
 ; CHECK:   %6 = load i32* %NumExceptions, align 4
 ; CHECK:   %inc = add nsw i32 %6, 1
@@ -208,7 +208,7 @@ eh.resume:                                        ; preds = %catch.dispatch
 ;
 ; CHECK: if.then:                                          ; preds = %catch.entry
 ; CHECK:   %9 = load i32* %e, align 4
-; CHECK:   %b = getelementptr inbounds %struct.SomeData* %Data, i32 0, i32 1
+; CHECK:   %b = getelementptr inbounds %struct.SomeData, %struct.SomeData* %Data, i32 0, i32 1
 ; CHECK:   %10 = load i32* %b, align 4
 ; CHECK:   %add2 = add nsw i32 %10, %9
 ; CHECK:   store i32 %add2, i32* %b, align 4
@@ -216,7 +216,7 @@ eh.resume:                                        ; preds = %catch.dispatch
 ;
 ; CHECK: if.else:                                          ; preds = %catch.entry
 ; CHECK:   %11 = load i32* %e, align 4
-; CHECK:   %a3 = getelementptr inbounds %struct.SomeData* %Data, i32 0, i32 0
+; CHECK:   %a3 = getelementptr inbounds %struct.SomeData, %struct.SomeData* %Data, i32 0, i32 0
 ; CHECK:   %12 = load i32* %a3, align 4
 ; CHECK:   %add4 = add nsw i32 %12, %11
 ; CHECK:   store i32 %add4, i32* %a3, align 4

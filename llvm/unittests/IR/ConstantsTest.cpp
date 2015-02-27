@@ -248,9 +248,9 @@ TEST(ConstantsTest, AsInstructionsTest) {
   // FIXME: getGetElementPtr() actually creates an inbounds ConstantGEP,
   //        not a normal one!
   //CHECK(ConstantExpr::getGetElementPtr(Global, V, false),
-  //      "getelementptr i32** @dummy, i32 1");
+  //      "getelementptr i32*, i32** @dummy, i32 1");
   CHECK(ConstantExpr::getInBoundsGetElementPtr(Global, V),
-        "getelementptr inbounds i32** @dummy, i32 1");
+        "getelementptr inbounds i32*, i32** @dummy, i32 1");
 
   CHECK(ConstantExpr::getExtractElement(P6, One), "extractelement <2 x i16> "
         P6STR ", i32 1");

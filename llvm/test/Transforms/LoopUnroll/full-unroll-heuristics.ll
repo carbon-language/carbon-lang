@@ -24,14 +24,14 @@
 
 ; If the absolute threshold is too low, or if we can't optimize away requested
 ; percent of instructions, we shouldn't unroll:
-; TEST1: %array_const_idx = getelementptr inbounds [9 x i32]* @known_constant, i64 0, i64 %iv
-; TEST3: %array_const_idx = getelementptr inbounds [9 x i32]* @known_constant, i64 0, i64 %iv
+; TEST1: %array_const_idx = getelementptr inbounds [9 x i32], [9 x i32]* @known_constant, i64 0, i64 %iv
+; TEST3: %array_const_idx = getelementptr inbounds [9 x i32], [9 x i32]* @known_constant, i64 0, i64 %iv
 
 ; Otherwise, we should:
-; TEST2-NOT: %array_const_idx = getelementptr inbounds [9 x i32]* @known_constant, i64 0, i64 %iv
+; TEST2-NOT: %array_const_idx = getelementptr inbounds [9 x i32], [9 x i32]* @known_constant, i64 0, i64 %iv
 
 ; Also, we should unroll if the 'unroll-threshold' is big enough:
-; TEST4-NOT: %array_const_idx = getelementptr inbounds [9 x i32]* @known_constant, i64 0, i64 %iv
+; TEST4-NOT: %array_const_idx = getelementptr inbounds [9 x i32], [9 x i32]* @known_constant, i64 0, i64 %iv
 
 ; And check that we don't crash when we're not allowed to do any analysis.
 ; RUN: opt < %s -loop-unroll -unroll-max-iteration-count-to-analyze=0 -disable-output
@@ -46,9 +46,9 @@ entry:
 loop:                                                ; preds = %loop, %entry
   %iv = phi i64 [ 0, %entry ], [ %inc, %loop ]
   %r  = phi i32 [ 0, %entry ], [ %add, %loop ]
-  %arrayidx = getelementptr inbounds i32* %src, i64 %iv
+  %arrayidx = getelementptr inbounds i32, i32* %src, i64 %iv
   %src_element = load i32* %arrayidx, align 4
-  %array_const_idx = getelementptr inbounds [9 x i32]* @known_constant, i64 0, i64 %iv
+  %array_const_idx = getelementptr inbounds [9 x i32], [9 x i32]* @known_constant, i64 0, i64 %iv
   %const_array_element = load i32* %array_const_idx, align 4
   %mul = mul nsw i32 %src_element, %const_array_element
   %add = add nsw i32 %mul, %r

@@ -47,7 +47,7 @@ define float @ld_st_shared_f32(i32 %i, float %v) {
 ; PTX: bar.sync 0;
 
   ; gep cast; load
-  %5 = getelementptr inbounds [10 x float]* addrspacecast ([10 x float] addrspace(3)* @array to [10 x float]*), i32 0, i32 5
+  %5 = getelementptr inbounds [10 x float], [10 x float]* addrspacecast ([10 x float] addrspace(3)* @array to [10 x float]*), i32 0, i32 5
   %6 = load float* %5, align 4
 ; PTX: ld.shared.f32 %f{{[0-9]+}}, [array+20];
   ; gep cast; store
@@ -58,7 +58,7 @@ define float @ld_st_shared_f32(i32 %i, float %v) {
 
   ; cast; gep; load
   %7 = addrspacecast [10 x float] addrspace(3)* @array to [10 x float]*
-  %8 = getelementptr inbounds [10 x float]* %7, i32 0, i32 %i
+  %8 = getelementptr inbounds [10 x float], [10 x float]* %7, i32 0, i32 %i
   %9 = load float* %8, align 4
 ; PTX: ld.shared.f32 %f{{[0-9]+}}, [%{{(r|rl|rd)[0-9]+}}];
   ; cast; gep; store

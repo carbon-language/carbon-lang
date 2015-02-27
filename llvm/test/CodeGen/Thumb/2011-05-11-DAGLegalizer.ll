@@ -25,26 +25,26 @@ entry:
 do.body:                                          ; preds = %entry
   %tmp = load i8** @kkkkkk, align 4
   %tmp1 = load %struct.MMMMMMMMMMMM** %aidData.addr
-  %eph = getelementptr inbounds %struct.MMMMMMMMMMMM* %tmp1, i32 0, i32 0
-  %arrayidx = getelementptr inbounds [4 x %struct.RRRRRRRR]* %eph, i32 0, i32 0
+  %eph = getelementptr inbounds %struct.MMMMMMMMMMMM, %struct.MMMMMMMMMMMM* %tmp1, i32 0, i32 0
+  %arrayidx = getelementptr inbounds [4 x %struct.RRRRRRRR], [4 x %struct.RRRRRRRR]* %eph, i32 0, i32 0
   %tmp2 = bitcast %struct.RRRRRRRR* %agg.tmp to i8*
   %tmp3 = bitcast %struct.RRRRRRRR* %arrayidx to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp2, i8* %tmp3, i32 312, i32 4, i1 false)
   %tmp5 = load %struct.MMMMMMMMMMMM** %aidData.addr
-  %eph6 = getelementptr inbounds %struct.MMMMMMMMMMMM* %tmp5, i32 0, i32 0
-  %arrayidx7 = getelementptr inbounds [4 x %struct.RRRRRRRR]* %eph6, i32 0, i32 1
+  %eph6 = getelementptr inbounds %struct.MMMMMMMMMMMM, %struct.MMMMMMMMMMMM* %tmp5, i32 0, i32 0
+  %arrayidx7 = getelementptr inbounds [4 x %struct.RRRRRRRR], [4 x %struct.RRRRRRRR]* %eph6, i32 0, i32 1
   %tmp8 = bitcast %struct.RRRRRRRR* %agg.tmp4 to i8*
   %tmp9 = bitcast %struct.RRRRRRRR* %arrayidx7 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp8, i8* %tmp9, i32 312, i32 4, i1 false)
   %tmp11 = load %struct.MMMMMMMMMMMM** %aidData.addr
-  %eph12 = getelementptr inbounds %struct.MMMMMMMMMMMM* %tmp11, i32 0, i32 0
-  %arrayidx13 = getelementptr inbounds [4 x %struct.RRRRRRRR]* %eph12, i32 0, i32 2
+  %eph12 = getelementptr inbounds %struct.MMMMMMMMMMMM, %struct.MMMMMMMMMMMM* %tmp11, i32 0, i32 0
+  %arrayidx13 = getelementptr inbounds [4 x %struct.RRRRRRRR], [4 x %struct.RRRRRRRR]* %eph12, i32 0, i32 2
   %tmp14 = bitcast %struct.RRRRRRRR* %agg.tmp10 to i8*
   %tmp15 = bitcast %struct.RRRRRRRR* %arrayidx13 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp14, i8* %tmp15, i32 312, i32 4, i1 false)
   %tmp17 = load %struct.MMMMMMMMMMMM** %aidData.addr
-  %eph18 = getelementptr inbounds %struct.MMMMMMMMMMMM* %tmp17, i32 0, i32 0
-  %arrayidx19 = getelementptr inbounds [4 x %struct.RRRRRRRR]* %eph18, i32 0, i32 3
+  %eph18 = getelementptr inbounds %struct.MMMMMMMMMMMM, %struct.MMMMMMMMMMMM* %tmp17, i32 0, i32 0
+  %arrayidx19 = getelementptr inbounds [4 x %struct.RRRRRRRR], [4 x %struct.RRRRRRRR]* %eph18, i32 0, i32 3
   %tmp20 = bitcast %struct.RRRRRRRR* %agg.tmp16 to i8*
   %tmp21 = bitcast %struct.RRRRRRRR* %arrayidx19 to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp20, i8* %tmp21, i32 312, i32 4, i1 false)

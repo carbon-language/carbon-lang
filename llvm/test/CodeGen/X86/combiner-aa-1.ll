@@ -14,7 +14,7 @@ define i32 @._ZN8lam_node18resolve_name_clashEP8arg_nodeP9alst_node._ZNK8lam_nod
 comb_entry:
   %.SV59 = alloca %struct.node*                   ; <%struct.node**> [#uses=1]
   %0 = load i32 (...)*** null, align 4            ; <i32 (...)**> [#uses=1]
-  %1 = getelementptr inbounds i32 (...)** %0, i32 3 ; <i32 (...)**> [#uses=1]
+  %1 = getelementptr inbounds i32 (...)*, i32 (...)** %0, i32 3 ; <i32 (...)**> [#uses=1]
   %2 = load i32 (...)** %1, align 4               ; <i32 (...)*> [#uses=1]
   store %struct.node* undef, %struct.node** %.SV59
   %3 = bitcast i32 (...)* %2 to i32 (%struct.node*)* ; <i32 (%struct.node*)*> [#uses=1]

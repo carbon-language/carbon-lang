@@ -6,8 +6,8 @@
 define i32 @a() {
 entry:
         %c = alloca %struct.anon                ; <%struct.anon*> [#uses=2]
-        %tmp = getelementptr %struct.anon* %c, i32 0, i32 0             ; <i32*> [#uses=1]
-        %tmp1 = getelementptr i32* %tmp, i32 1          ; <i32*> [#uses=2]
+        %tmp = getelementptr %struct.anon, %struct.anon* %c, i32 0, i32 0             ; <i32*> [#uses=1]
+        %tmp1 = getelementptr i32, i32* %tmp, i32 1          ; <i32*> [#uses=2]
         %tmp2 = load i32* %tmp1, align 4                ; <i32> [#uses=1]
         %tmp3 = or i32 %tmp2, 11                ; <i32> [#uses=1]
         %tmp4 = and i32 %tmp3, -21              ; <i32> [#uses=1]

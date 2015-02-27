@@ -16,7 +16,7 @@ define i64 @f2(i64 *%src) {
 ; CHECK-LABEL: f2:
 ; CHECK: lg %r2, 524280(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 65535
+  %ptr = getelementptr i64, i64 *%src, i64 65535
   %val = load i64 *%ptr
   ret i64 %val
 }
@@ -28,7 +28,7 @@ define i64 @f3(i64 *%src) {
 ; CHECK: agfi %r2, 524288
 ; CHECK: lg %r2, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 65536
+  %ptr = getelementptr i64, i64 *%src, i64 65536
   %val = load i64 *%ptr
   ret i64 %val
 }
@@ -38,7 +38,7 @@ define i64 @f4(i64 *%src) {
 ; CHECK-LABEL: f4:
 ; CHECK: lg %r2, -8(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -1
+  %ptr = getelementptr i64, i64 *%src, i64 -1
   %val = load i64 *%ptr
   ret i64 %val
 }
@@ -48,7 +48,7 @@ define i64 @f5(i64 *%src) {
 ; CHECK-LABEL: f5:
 ; CHECK: lg %r2, -524288(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -65536
+  %ptr = getelementptr i64, i64 *%src, i64 -65536
   %val = load i64 *%ptr
   ret i64 %val
 }
@@ -60,7 +60,7 @@ define i64 @f6(i64 *%src) {
 ; CHECK: agfi %r2, -524296
 ; CHECK: lg %r2, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -65537
+  %ptr = getelementptr i64, i64 *%src, i64 -65537
   %val = load i64 *%ptr
   ret i64 %val
 }

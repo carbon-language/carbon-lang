@@ -13,8 +13,8 @@ target triple = "arm64-apple-ios5.0.0"
 ; CHECK: store double
 ; CHECK: store double
 define void @f(double* %p, double* %q) {
-  %addr2 = getelementptr double* %q, i32 1
-  %addr = getelementptr double* %p, i32 1
+  %addr2 = getelementptr double, double* %q, i32 1
+  %addr = getelementptr double, double* %p, i32 1
   %x = load double* %p
   %y = load double* %addr
   call void @g()
@@ -35,8 +35,8 @@ entry:
 loop:
   %p1 = phi double [0.0, %entry], [%x, %loop]
   %p2 = phi double [0.0, %entry], [%y, %loop]
-  %addr2 = getelementptr double* %q, i32 1
-  %addr = getelementptr double* %p, i32 1
+  %addr2 = getelementptr double, double* %q, i32 1
+  %addr = getelementptr double, double* %p, i32 1
   store double %p1, double* %q
   store double %p2, double* %addr2
 

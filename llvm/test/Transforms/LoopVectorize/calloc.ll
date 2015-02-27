@@ -22,7 +22,7 @@ for.body.lr.ph:                                   ; preds = %entry
 for.body:                                         ; preds = %for.body, %for.body.lr.ph
   %i.030 = phi i64 [ 0, %for.body.lr.ph ], [ %inc, %for.body ]
   %shr = lshr i64 %i.030, 1
-  %arrayidx = getelementptr inbounds i8* %bytes, i64 %shr
+  %arrayidx = getelementptr inbounds i8, i8* %bytes, i64 %shr
   %1 = load i8* %arrayidx, align 1
   %conv = zext i8 %1 to i32
   %and = shl i64 %i.030, 2
@@ -37,7 +37,7 @@ for.body:                                         ; preds = %for.body, %for.body
   %cond = select i1 %cmp15, i32 87, i32 48
   %add17 = add nsw i32 %cond, %shr11
   %conv18 = trunc i32 %add17 to i8
-  %arrayidx19 = getelementptr inbounds i8* %call, i64 %i.030
+  %arrayidx19 = getelementptr inbounds i8, i8* %call, i64 %i.030
   store i8 %conv18, i8* %arrayidx19, align 1
   %inc = add i64 %i.030, 1
   %exitcond = icmp eq i64 %inc, %0

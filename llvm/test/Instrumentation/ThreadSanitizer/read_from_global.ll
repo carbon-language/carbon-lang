@@ -28,7 +28,7 @@ entry:
 define i32 @read_from_const_global_array(i32 %idx) nounwind uwtable sanitize_thread readnone {
 entry:
   %idxprom = sext i32 %idx to i64
-  %arrayidx = getelementptr inbounds [10 x i32]* @const_global_array, i64 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [10 x i32], [10 x i32]* @const_global_array, i64 0, i64 %idxprom
   %0 = load i32* %arrayidx, align 4
   ret i32 %0
 }

@@ -53,7 +53,7 @@ _ZN3JSC7JSValue19equalSlowCaseInlineEPNS_9ExecStateES0_S0_.exit: ; preds = %_ZNK
 
 do.body27:                                        ; preds = %_ZN3JSC7JSValue19equalSlowCaseInlineEPNS_9ExecStateES0_S0_.exit
   %tmp30 = bitcast i8* %1 to %"class.JSC::JSGlobalData"*
-  %2 = getelementptr inbounds i8** %args, i64 -1
+  %2 = getelementptr inbounds i8*, i8** %args, i64 -1
   %3 = bitcast i8** %2 to %"class.JSC::FunctionPtr"*
   tail call fastcc void @_ZN3JSCL23returnToThrowTrampolineEPNS_12JSGlobalDataENS_16ReturnAddressPtrERS2_(%"class.JSC::JSGlobalData"* %tmp30, i8* undef, %"class.JSC::FunctionPtr"* %3)
   unreachable

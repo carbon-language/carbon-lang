@@ -44,7 +44,7 @@ entry:
 
 bb5:		; preds = %bb5, %entry
 	%.pn = phi %struct.rec* [ %y.0, %bb5 ], [ undef, %entry ]		; <%struct.rec*> [#uses=1]
-	%y.0.in = getelementptr %struct.rec* %.pn, i32 0, i32 0, i32 0, i32 1, i32 0		; <%struct.rec**> [#uses=1]
+	%y.0.in = getelementptr %struct.rec, %struct.rec* %.pn, i32 0, i32 0, i32 0, i32 1, i32 0		; <%struct.rec**> [#uses=1]
 	%y.0 = load %struct.rec** %y.0.in		; <%struct.rec*> [#uses=2]
 	br i1 undef, label %bb5, label %bb6
 
@@ -78,7 +78,7 @@ FontName.exit:		; preds = %bb.i5, %FontSize.exit
 	%7 = load %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
 	%8 = call  i32 (%struct.FILE*, i8*, ...)* @fprintf(%struct.FILE* %7, i8* getelementptr ([17 x i8]* @.str212784, i32 0, i32 0), i32 %5, i32 %6) nounwind		; <i32> [#uses=0]
 	store i32 0, i32* @cpexists, align 4
-	%9 = getelementptr %struct.rec* %y.0, i32 0, i32 0, i32 3, i32 0, i32 0, i32 1		; <i32*> [#uses=1]
+	%9 = getelementptr %struct.rec, %struct.rec* %y.0, i32 0, i32 0, i32 3, i32 0, i32 0, i32 1		; <i32*> [#uses=1]
 	%10 = load i32* %9, align 4		; <i32> [#uses=1]
 	%11 = sub i32 0, %10		; <i32> [#uses=1]
 	%12 = load %struct.FILE** @out_fp, align 4		; <%struct.FILE*> [#uses=1]
@@ -88,7 +88,7 @@ FontName.exit:		; preds = %bb.i5, %FontSize.exit
 
 bb100.outer.outer:		; preds = %bb79.critedge, %bb1.i3, %FontName.exit
 	%x_addr.0.ph.ph = phi %struct.rec* [ %x, %FontName.exit ], [ null, %bb79.critedge ], [ null, %bb1.i3 ]		; <%struct.rec*> [#uses=1]
-	%14 = getelementptr %struct.rec* %x_addr.0.ph.ph, i32 0, i32 0, i32 1, i32 0		; <%struct.FILE_POS*> [#uses=0]
+	%14 = getelementptr %struct.rec, %struct.rec* %x_addr.0.ph.ph, i32 0, i32 0, i32 1, i32 0		; <%struct.FILE_POS*> [#uses=0]
 	br label %bb100.outer
 
 bb.i80:		; preds = %bb3.i85

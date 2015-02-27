@@ -51,7 +51,7 @@ define void @f5(i8 *%src) {
 ; CHECK-LABEL: f5:
 ; CHECK: ni 4095(%r2), 127
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 4095
+  %ptr = getelementptr i8, i8 *%src, i64 4095
   %val = load i8 *%ptr
   %and = and i8 %val, 127
   store i8 %and, i8 *%ptr
@@ -63,7 +63,7 @@ define void @f6(i8 *%src) {
 ; CHECK-LABEL: f6:
 ; CHECK: niy 4096(%r2), 127
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 4096
+  %ptr = getelementptr i8, i8 *%src, i64 4096
   %val = load i8 *%ptr
   %and = and i8 %val, 127
   store i8 %and, i8 *%ptr
@@ -75,7 +75,7 @@ define void @f7(i8 *%src) {
 ; CHECK-LABEL: f7:
 ; CHECK: niy 524287(%r2), 127
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 524287
+  %ptr = getelementptr i8, i8 *%src, i64 524287
   %val = load i8 *%ptr
   %and = and i8 %val, 127
   store i8 %and, i8 *%ptr
@@ -89,7 +89,7 @@ define void @f8(i8 *%src) {
 ; CHECK: agfi %r2, 524288
 ; CHECK: ni 0(%r2), 127
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 524288
+  %ptr = getelementptr i8, i8 *%src, i64 524288
   %val = load i8 *%ptr
   %and = and i8 %val, 127
   store i8 %and, i8 *%ptr
@@ -101,7 +101,7 @@ define void @f9(i8 *%src) {
 ; CHECK-LABEL: f9:
 ; CHECK: niy -1(%r2), 127
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 -1
+  %ptr = getelementptr i8, i8 *%src, i64 -1
   %val = load i8 *%ptr
   %and = and i8 %val, 127
   store i8 %and, i8 *%ptr
@@ -113,7 +113,7 @@ define void @f10(i8 *%src) {
 ; CHECK-LABEL: f10:
 ; CHECK: niy -524288(%r2), 127
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 -524288
+  %ptr = getelementptr i8, i8 *%src, i64 -524288
   %val = load i8 *%ptr
   %and = and i8 %val, 127
   store i8 %and, i8 *%ptr
@@ -127,7 +127,7 @@ define void @f11(i8 *%src) {
 ; CHECK: agfi %r2, -524289
 ; CHECK: ni 0(%r2), 127
 ; CHECK: br %r14
-  %ptr = getelementptr i8 *%src, i64 -524289
+  %ptr = getelementptr i8, i8 *%src, i64 -524289
   %val = load i8 *%ptr
   %and = and i8 %val, 127
   store i8 %and, i8 *%ptr

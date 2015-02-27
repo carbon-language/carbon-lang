@@ -16,7 +16,7 @@ define i32 @array_at_plus_one(i32 %n) nounwind uwtable ssp {
 .lr.ph:                                           ; preds = %0, %.lr.ph
   %indvars.iv = phi i64 [ %indvars.iv.next, %.lr.ph ], [ 0, %0 ]
   %2 = add nsw i64 %indvars.iv, 12
-  %3 = getelementptr inbounds [1024 x i32]* @array, i64 0, i64 %2
+  %3 = getelementptr inbounds [1024 x i32], [1024 x i32]* @array, i64 0, i64 %2
   %4 = trunc i64 %indvars.iv to i32
   store i32 %4, i32* %3, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1

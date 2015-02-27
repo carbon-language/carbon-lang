@@ -24,7 +24,7 @@ for.body:                                         ; preds = %for.cond
   br i1 %cmp, label %for.end, label %for.inc
 
 for.inc:                                          ; preds = %for.body
-  %incdec.ptr.i = getelementptr inbounds i32* %coerce.val.ip9, i64 1
+  %incdec.ptr.i = getelementptr inbounds i32, i32* %coerce.val.ip9, i64 1
   br label %for.cond
 
 for.end:                                          ; preds = %for.cond, %for.body

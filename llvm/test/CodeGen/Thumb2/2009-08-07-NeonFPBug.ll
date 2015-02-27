@@ -36,7 +36,7 @@ bb:		; preds = %bb, %entry
 	%0 = load float* undef, align 4		; <float> [#uses=1]
 	%1 = fmul float undef, %0		; <float> [#uses=2]
 	%tmp73 = add i32 0, 224		; <i32> [#uses=1]
-	%scevgep74 = getelementptr i8* null, i32 %tmp73		; <i8*> [#uses=1]
+	%scevgep74 = getelementptr i8, i8* null, i32 %tmp73		; <i8*> [#uses=1]
 	%scevgep7475 = bitcast i8* %scevgep74 to float*		; <float*> [#uses=1]
 	%2 = load float* null, align 4		; <float> [#uses=1]
 	%3 = fmul float 0.000000e+00, %2		; <float> [#uses=2]

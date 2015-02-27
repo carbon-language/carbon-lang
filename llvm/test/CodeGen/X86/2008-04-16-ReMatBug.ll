@@ -15,7 +15,7 @@ bb:		; preds = %entry
 bb28:		; preds = %entry
 	br i1 false, label %bb37, label %done
 bb37:		; preds = %bb28
-	%tmp46 = getelementptr %struct.GENV_t* %tmp12, i32 0, i32 10		; <i16*> [#uses=1]
+	%tmp46 = getelementptr %struct.GENV_t, %struct.GENV_t* %tmp12, i32 0, i32 10		; <i16*> [#uses=1]
 	store i16 0, i16* %tmp46, align 4
 	br i1 false, label %bb74, label %bb92
 bb74:		; preds = %bb37

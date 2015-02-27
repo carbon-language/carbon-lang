@@ -14,7 +14,7 @@
 ; FUNC-LABEL: {{^}}sdiv_i32:
 ; EG: CF_END
 define void @sdiv_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
-  %den_ptr = getelementptr i32 addrspace(1)* %in, i32 1
+  %den_ptr = getelementptr i32, i32 addrspace(1)* %in, i32 1
   %num = load i32 addrspace(1) * %in
   %den = load i32 addrspace(1) * %den_ptr
   %result = sdiv i32 %num, %den
@@ -51,7 +51,7 @@ define void @slow_sdiv_i32_3435(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 }
 
 define void @sdiv_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
-  %den_ptr = getelementptr <2 x i32> addrspace(1)* %in, i32 1
+  %den_ptr = getelementptr <2 x i32>, <2 x i32> addrspace(1)* %in, i32 1
   %num = load <2 x i32> addrspace(1) * %in
   %den = load <2 x i32> addrspace(1) * %den_ptr
   %result = sdiv <2 x i32> %num, %den
@@ -67,7 +67,7 @@ define void @sdiv_v2i32_4(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* 
 }
 
 define void @sdiv_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
-  %den_ptr = getelementptr <4 x i32> addrspace(1)* %in, i32 1
+  %den_ptr = getelementptr <4 x i32>, <4 x i32> addrspace(1)* %in, i32 1
   %num = load <4 x i32> addrspace(1) * %in
   %den = load <4 x i32> addrspace(1) * %den_ptr
   %result = sdiv <4 x i32> %num, %den

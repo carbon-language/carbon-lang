@@ -36,7 +36,7 @@ define i8 @test1() {
 
 define i8 @test2(i8* %P) {
 ; CHECK-LABEL: @test2
-  %P2 = getelementptr i8* %P, i32 127
+  %P2 = getelementptr i8, i8* %P, i32 127
   store i8 1, i8* %P2  ;; Not dead across memset
   call void @llvm.memset.p0i8.i8(i8* %P, i8 2, i8 127, i32 0, i1 false)
   %A = load i8* %P2
@@ -46,7 +46,7 @@ define i8 @test2(i8* %P) {
 
 define i8 @test2a(i8* %P) {
 ; CHECK-LABEL: @test2
-  %P2 = getelementptr i8* %P, i32 126
+  %P2 = getelementptr i8, i8* %P, i32 126
 
   ;; FIXME: DSE isn't zapping this dead store.
   store i8 1, i8* %P2  ;; Dead, clobbered by memset.
@@ -64,7 +64,7 @@ define void @test3(i8* %P, i8 %X) {
 ; CHECK-NOT: %Y
   %Y = add i8 %X, 1     ;; Dead, because the only use (the store) is dead.
 
-  %P2 = getelementptr i8* %P, i32 2
+  %P2 = getelementptr i8, i8* %P, i32 2
   store i8 %Y, i8* %P2  ;; Not read by lifetime.end, should be removed.
 ; CHECK: store i8 2, i8* %P2
   call void @llvm.lifetime.end(i64 1, i8* %P)
@@ -78,7 +78,7 @@ define void @test3a(i8* %P, i8 %X) {
 ; CHECK-LABEL: @test3a
   %Y = add i8 %X, 1     ;; Dead, because the only use (the store) is dead.
 
-  %P2 = getelementptr i8* %P, i32 2
+  %P2 = getelementptr i8, i8* %P, i32 2
   store i8 %Y, i8* %P2
 ; CHECK-NEXT: call void @llvm.lifetime.end
   call void @llvm.lifetime.end(i64 10, i8* %P)
@@ -135,7 +135,7 @@ define i32 @test7() nounwind uwtable ssp {
 entry:
   %x = alloca i32, align 4
   store i32 0, i32* %x, align 4
-  %add.ptr = getelementptr inbounds i32* %x, i64 1
+  %add.ptr = getelementptr inbounds i32, i32* %x, i64 1
   call void @test7decl(i32* %add.ptr)
   %tmp = load i32* %x, align 4
   ret i32 %tmp

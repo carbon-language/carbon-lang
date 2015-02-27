@@ -39,7 +39,7 @@ bb25.split:		; preds = %bb19
 	br label %bb35.outer
 
 bb34:		; preds = %bb35, %bb35, %bb35, %bb35
-	%8 = getelementptr i8* %bufptr.0.lcssa, i32 %totalLength.0.ph		; <i8*> [#uses=1]
+	%8 = getelementptr i8, i8* %bufptr.0.lcssa, i32 %totalLength.0.ph		; <i8*> [#uses=1]
 	store i8 92, i8* %8, align 1
 	br label %bb35.outer
 

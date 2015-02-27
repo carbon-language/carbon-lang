@@ -281,9 +281,9 @@ if.end85:
 
 sw.bb.i.i:
   %ref.tr.i.i = phi %str1* [ %0, %sw.bb.i.i ], [ undef, %entry ]
-  %operands.i.i = getelementptr inbounds %str1* %ref.tr.i.i, i64 0, i32 0, i32 2
+  %operands.i.i = getelementptr inbounds %str1, %str1* %ref.tr.i.i, i64 0, i32 0, i32 2
   %arrayidx.i.i = bitcast i32* %operands.i.i to %str1**
   %0 = load %str1** %arrayidx.i.i, align 8
-  %code1.i.i.phi.trans.insert = getelementptr inbounds %str1* %0, i64 0, i32 0, i32 0, i64 16
+  %code1.i.i.phi.trans.insert = getelementptr inbounds %str1, %str1* %0, i64 0, i32 0, i32 0, i64 16
   br label %sw.bb.i.i
 }

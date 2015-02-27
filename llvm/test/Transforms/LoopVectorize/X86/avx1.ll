@@ -12,7 +12,7 @@ define i32 @read_mod_write_single_ptr(float* nocapture %a, i32 %n) nounwind uwta
 
 .lr.ph:                                           ; preds = %0, %.lr.ph
   %indvars.iv = phi i64 [ %indvars.iv.next, %.lr.ph ], [ 0, %0 ]
-  %2 = getelementptr inbounds float* %a, i64 %indvars.iv
+  %2 = getelementptr inbounds float, float* %a, i64 %indvars.iv
   %3 = load float* %2, align 4
   %4 = fmul float %3, 3.000000e+00
   store float %4, float* %2, align 4
@@ -35,7 +35,7 @@ define i32 @read_mod_i64(i64* nocapture %a, i32 %n) nounwind uwtable ssp {
 
 .lr.ph:                                           ; preds = %0, %.lr.ph
   %indvars.iv = phi i64 [ %indvars.iv.next, %.lr.ph ], [ 0, %0 ]
-  %2 = getelementptr inbounds i64* %a, i64 %indvars.iv
+  %2 = getelementptr inbounds i64, i64* %a, i64 %indvars.iv
   %3 = load i64* %2, align 4
   %4 = add i64 %3, 3
   store i64 %4, i64* %2, align 4

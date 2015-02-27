@@ -17,7 +17,7 @@ define i32 @bar(i32* nocapture %A, i32 %n) nounwind uwtable ssp {
 
 .lr.ph:                                           ; preds = %0, %.lr.ph
   %indvars.iv = phi i64 [ %indvars.iv.next, %.lr.ph ], [ 0, %0 ]
-  %2 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %2 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   %3 = load i32* %2, align 4
   %4 = add nsw i32 %3, 6
   store i32 %4, i32* %2, align 4

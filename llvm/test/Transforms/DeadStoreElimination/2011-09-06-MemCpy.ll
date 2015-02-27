@@ -68,12 +68,12 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, 
 define void @_ZSt9iter_swapIPSt4pairIPN4llvm10BasicBlockEjES5_EvT_T0_(%struct.pair.162* %__a, %struct.pair.162* %__b) nounwind uwtable inlinehint {
 entry:
   %memtmp = alloca %struct.pair.162, align 8
-  %0 = getelementptr inbounds %struct.pair.162* %memtmp, i64 0, i32 0
-  %1 = getelementptr inbounds %struct.pair.162* %__a, i64 0, i32 0
+  %0 = getelementptr inbounds %struct.pair.162, %struct.pair.162* %memtmp, i64 0, i32 0
+  %1 = getelementptr inbounds %struct.pair.162, %struct.pair.162* %__a, i64 0, i32 0
   %2 = load %struct.BasicBlock** %1, align 8
   store %struct.BasicBlock* %2, %struct.BasicBlock** %0, align 8
-  %3 = getelementptr inbounds %struct.pair.162* %memtmp, i64 0, i32 1
-  %4 = getelementptr inbounds %struct.pair.162* %__a, i64 0, i32 1
+  %3 = getelementptr inbounds %struct.pair.162, %struct.pair.162* %memtmp, i64 0, i32 1
+  %4 = getelementptr inbounds %struct.pair.162, %struct.pair.162* %__a, i64 0, i32 1
   %5 = load i32* %4, align 4
   store i32 %5, i32* %3, align 8
   %6 = bitcast %struct.pair.162* %__a to i8*

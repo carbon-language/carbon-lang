@@ -37,7 +37,7 @@ define i64 @f3(i64 %a, i64 %b, double %f1, double *%base) {
 ; CHECK-NEXT: je
 ; CHECK: lgr %r2, %r3
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 511
+  %ptr = getelementptr double, double *%base, i64 511
   %f2 = load double *%ptr
   %cond = fcmp oeq double %f1, %f2
   %res = select i1 %cond, i64 %a, i64 %b
@@ -53,7 +53,7 @@ define i64 @f4(i64 %a, i64 %b, double %f1, double *%base) {
 ; CHECK-NEXT: je
 ; CHECK: lgr %r2, %r3
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 512
+  %ptr = getelementptr double, double *%base, i64 512
   %f2 = load double *%ptr
   %cond = fcmp oeq double %f1, %f2
   %res = select i1 %cond, i64 %a, i64 %b
@@ -68,7 +68,7 @@ define i64 @f5(i64 %a, i64 %b, double %f1, double *%base) {
 ; CHECK-NEXT: je
 ; CHECK: lgr %r2, %r3
 ; CHECK: br %r14
-  %ptr = getelementptr double *%base, i64 -1
+  %ptr = getelementptr double, double *%base, i64 -1
   %f2 = load double *%ptr
   %cond = fcmp oeq double %f1, %f2
   %res = select i1 %cond, i64 %a, i64 %b
@@ -83,8 +83,8 @@ define i64 @f6(i64 %a, i64 %b, double %f1, double *%base, i64 %index) {
 ; CHECK-NEXT: je
 ; CHECK: lgr %r2, %r3
 ; CHECK: br %r14
-  %ptr1 = getelementptr double *%base, i64 %index
-  %ptr2 = getelementptr double *%ptr1, i64 100
+  %ptr1 = getelementptr double, double *%base, i64 %index
+  %ptr2 = getelementptr double, double *%ptr1, i64 100
   %f2 = load double *%ptr2
   %cond = fcmp oeq double %f1, %f2
   %res = select i1 %cond, i64 %a, i64 %b
@@ -97,16 +97,16 @@ define double @f7(double *%ptr0) {
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: cdb {{%f[0-9]+}}, 160(%r15)
 ; CHECK: br %r14
-  %ptr1 = getelementptr double *%ptr0, i64 2
-  %ptr2 = getelementptr double *%ptr0, i64 4
-  %ptr3 = getelementptr double *%ptr0, i64 6
-  %ptr4 = getelementptr double *%ptr0, i64 8
-  %ptr5 = getelementptr double *%ptr0, i64 10
-  %ptr6 = getelementptr double *%ptr0, i64 12
-  %ptr7 = getelementptr double *%ptr0, i64 14
-  %ptr8 = getelementptr double *%ptr0, i64 16
-  %ptr9 = getelementptr double *%ptr0, i64 18
-  %ptr10 = getelementptr double *%ptr0, i64 20
+  %ptr1 = getelementptr double, double *%ptr0, i64 2
+  %ptr2 = getelementptr double, double *%ptr0, i64 4
+  %ptr3 = getelementptr double, double *%ptr0, i64 6
+  %ptr4 = getelementptr double, double *%ptr0, i64 8
+  %ptr5 = getelementptr double, double *%ptr0, i64 10
+  %ptr6 = getelementptr double, double *%ptr0, i64 12
+  %ptr7 = getelementptr double, double *%ptr0, i64 14
+  %ptr8 = getelementptr double, double *%ptr0, i64 16
+  %ptr9 = getelementptr double, double *%ptr0, i64 18
+  %ptr10 = getelementptr double, double *%ptr0, i64 20
 
   %val0 = load double *%ptr0
   %val1 = load double *%ptr1

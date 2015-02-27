@@ -72,27 +72,27 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, 
 
 define internal i32 @callee1(%struct.s1* byval %v1, %struct.s2* byval %v2, %struct.s3* byval %v3, %struct.s4* byval %v4, %struct.s5* byval %v5, %struct.s6* byval %v6, %struct.s7* byval %v7) nounwind {
 entry:
-  %a = getelementptr inbounds %struct.s1* %v1, i32 0, i32 0
+  %a = getelementptr inbounds %struct.s1, %struct.s1* %v1, i32 0, i32 0
   %0 = load i8* %a, align 1
   %conv = zext i8 %0 to i32
-  %a1 = getelementptr inbounds %struct.s2* %v2, i32 0, i32 0
+  %a1 = getelementptr inbounds %struct.s2, %struct.s2* %v2, i32 0, i32 0
   %1 = load i16* %a1, align 2
   %conv2 = sext i16 %1 to i32
   %add = add nsw i32 %conv, %conv2
-  %a3 = getelementptr inbounds %struct.s3* %v3, i32 0, i32 0
+  %a3 = getelementptr inbounds %struct.s3, %struct.s3* %v3, i32 0, i32 0
   %2 = load i16* %a3, align 2
   %conv4 = sext i16 %2 to i32
   %add5 = add nsw i32 %add, %conv4
-  %a6 = getelementptr inbounds %struct.s4* %v4, i32 0, i32 0
+  %a6 = getelementptr inbounds %struct.s4, %struct.s4* %v4, i32 0, i32 0
   %3 = load i32* %a6, align 4
   %add7 = add nsw i32 %add5, %3
-  %a8 = getelementptr inbounds %struct.s5* %v5, i32 0, i32 0
+  %a8 = getelementptr inbounds %struct.s5, %struct.s5* %v5, i32 0, i32 0
   %4 = load i32* %a8, align 4
   %add9 = add nsw i32 %add7, %4
-  %a10 = getelementptr inbounds %struct.s6* %v6, i32 0, i32 0
+  %a10 = getelementptr inbounds %struct.s6, %struct.s6* %v6, i32 0, i32 0
   %5 = load i32* %a10, align 4
   %add11 = add nsw i32 %add9, %5
-  %a12 = getelementptr inbounds %struct.s7* %v7, i32 0, i32 0
+  %a12 = getelementptr inbounds %struct.s7, %struct.s7* %v7, i32 0, i32 0
   %6 = load i32* %a12, align 4
   %add13 = add nsw i32 %add11, %6
   ret i32 %add13
@@ -159,27 +159,27 @@ entry:
 
 define internal i32 @callee2(%struct.t1* byval %v1, %struct.t2* byval %v2, %struct.t3* byval %v3, %struct.t4* byval %v4, %struct.t5* byval %v5, %struct.t6* byval %v6, %struct.t7* byval %v7) nounwind {
 entry:
-  %a = getelementptr inbounds %struct.t1* %v1, i32 0, i32 0
+  %a = getelementptr inbounds %struct.t1, %struct.t1* %v1, i32 0, i32 0
   %0 = load i8* %a, align 1
   %conv = zext i8 %0 to i32
-  %a1 = getelementptr inbounds %struct.t2* %v2, i32 0, i32 0
+  %a1 = getelementptr inbounds %struct.t2, %struct.t2* %v2, i32 0, i32 0
   %1 = load i16* %a1, align 1
   %conv2 = sext i16 %1 to i32
   %add = add nsw i32 %conv, %conv2
-  %a3 = getelementptr inbounds %struct.t3* %v3, i32 0, i32 0
+  %a3 = getelementptr inbounds %struct.t3, %struct.t3* %v3, i32 0, i32 0
   %2 = load i16* %a3, align 1
   %conv4 = sext i16 %2 to i32
   %add5 = add nsw i32 %add, %conv4
-  %a6 = getelementptr inbounds %struct.t4* %v4, i32 0, i32 0
+  %a6 = getelementptr inbounds %struct.t4, %struct.t4* %v4, i32 0, i32 0
   %3 = load i32* %a6, align 1
   %add7 = add nsw i32 %add5, %3
-  %a8 = getelementptr inbounds %struct.t5* %v5, i32 0, i32 0
+  %a8 = getelementptr inbounds %struct.t5, %struct.t5* %v5, i32 0, i32 0
   %4 = load i32* %a8, align 1
   %add9 = add nsw i32 %add7, %4
-  %a10 = getelementptr inbounds %struct.t6* %v6, i32 0, i32 0
+  %a10 = getelementptr inbounds %struct.t6, %struct.t6* %v6, i32 0, i32 0
   %5 = load i32* %a10, align 1
   %add11 = add nsw i32 %add9, %5
-  %a12 = getelementptr inbounds %struct.t7* %v7, i32 0, i32 0
+  %a12 = getelementptr inbounds %struct.t7, %struct.t7* %v7, i32 0, i32 0
   %6 = load i32* %a12, align 1
   %add13 = add nsw i32 %add11, %6
   ret i32 %add13

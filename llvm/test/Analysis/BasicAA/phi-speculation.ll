@@ -8,7 +8,7 @@ target datalayout =
 ; CHECK: NoAlias: i32* %ptr2_phi, i32* %ptr_phi
 define i32 @test_noalias_1(i32* %ptr2, i32 %count, i32* %coeff) {
 entry:
-  %ptr = getelementptr inbounds i32* %ptr2, i64 1
+  %ptr = getelementptr inbounds i32, i32* %ptr2, i64 1
   br label %while.body
 
 while.body:
@@ -24,8 +24,8 @@ while.body:
   %mul = mul nsw i32 %1, %2
   %add = add nsw i32 %mul, %result.09
   %tobool = icmp eq i32 %dec, 0
-  %ptr_inc = getelementptr inbounds i32* %ptr_phi, i64 1
-  %ptr2_inc = getelementptr inbounds i32* %ptr2_phi, i64 1
+  %ptr_inc = getelementptr inbounds i32, i32* %ptr_phi, i64 1
+  %ptr2_inc = getelementptr inbounds i32, i32* %ptr2_phi, i64 1
   br i1 %tobool, label %the_exit, label %while.body
 
 the_exit:
@@ -37,7 +37,7 @@ the_exit:
 ; CHECK: NoAlias: i32* %ptr2_phi, i32* %ptr_phi
 define i32 @test_noalias_2(i32* %ptr2, i32 %count, i32* %coeff) {
 entry:
-  %ptr = getelementptr inbounds i32* %ptr2, i64 1
+  %ptr = getelementptr inbounds i32, i32* %ptr2, i64 1
   br label %outer.while.header
 
 outer.while.header:
@@ -59,13 +59,13 @@ while.body:
   %mul = mul nsw i32 %1, %2
   %add = add nsw i32 %mul, %result.09
   %tobool = icmp eq i32 %dec, 0
-  %ptr_inc = getelementptr inbounds i32* %ptr_phi, i64 1
-  %ptr2_inc = getelementptr inbounds i32* %ptr2_phi, i64 1
+  %ptr_inc = getelementptr inbounds i32, i32* %ptr_phi, i64 1
+  %ptr2_inc = getelementptr inbounds i32, i32* %ptr2_phi, i64 1
   br i1 %tobool, label %outer.while.backedge, label %while.body
 
 outer.while.backedge:
-  %ptr_inc_outer = getelementptr inbounds i32* %ptr_phi, i64 1
-  %ptr2_inc_outer = getelementptr inbounds i32* %ptr2_phi, i64 1
+  %ptr_inc_outer = getelementptr inbounds i32, i32* %ptr_phi, i64 1
+  %ptr2_inc_outer = getelementptr inbounds i32, i32* %ptr2_phi, i64 1
   %dec.outer = add nsw i32 %num.outer, -1
   %br.cond = icmp eq i32 %dec.outer, 0
   br i1 %br.cond, label %the_exit, label %outer.while.header

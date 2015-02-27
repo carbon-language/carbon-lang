@@ -26,7 +26,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 ;CHECK: ret
 define i32 @bar(double* nocapture %A, i32 %d) {
   %1 = load double* %A, align 8
-  %2 = getelementptr inbounds double* %A, i64 1
+  %2 = getelementptr inbounds double, double* %A, i64 1
   %3 = load double* %2, align 8
   %4 = fptrunc double %1 to float
   %5 = fptrunc double %3 to float
@@ -42,11 +42,11 @@ define i32 @bar(double* nocapture %A, i32 %d) {
   %11 = fadd float %5, 5.000000e+00
   %12 = fpext float %10 to double
   %13 = fadd double %12, 9.000000e+00
-  %14 = getelementptr inbounds double* %A, i64 8
+  %14 = getelementptr inbounds double, double* %A, i64 8
   store double %13, double* %14, align 8
   %15 = fpext float %11 to double
   %16 = fadd double %15, 5.000000e+00
-  %17 = getelementptr inbounds double* %A, i64 9
+  %17 = getelementptr inbounds double, double* %A, i64 9
   store double %16, double* %17, align 8
   ret i32 undef
 }

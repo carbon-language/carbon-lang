@@ -11,7 +11,7 @@
 
 define fastcc void @foo(%pp* nocapture byval %p_arg) {
 entry:
-        %tmp2 = getelementptr %pp* %p_arg, i64 0, i32 0         ; <%cc*> [#uses=
+        %tmp2 = getelementptr %pp, %pp* %p_arg, i64 0, i32 0         ; <%cc*> [#uses=
         %tmp3 = load %cc* %tmp2         ; <%cc> [#uses=1]
         %tmp34 = extractvalue %cc %tmp3, 0              ; <%crd> [#uses=1]
         %tmp345 = extractvalue %crd %tmp34, 0           ; <i64> [#uses=1]

@@ -17,14 +17,14 @@ for.body:                                         ; preds = %for.body, %entry
   %arrayidx.phi = phi i32* [ %a, %entry ], [ %arrayidx.inc, %for.body ]
   %i.02 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %b.addr.01 = phi i32* [ %b, %entry ], [ %incdec.ptr, %for.body ]
-  %incdec.ptr = getelementptr inbounds i32* %b.addr.01, i32 1, !dbg !21
+  %incdec.ptr = getelementptr inbounds i32, i32* %b.addr.01, i32 1, !dbg !21
   tail call void @llvm.dbg.value(metadata i32* %incdec.ptr, i64 0, metadata !14, metadata !{!"0x102"}), !dbg !21
   %0 = load i32* %b.addr.01, align 4, !dbg !21
   store i32 %0, i32* %arrayidx.phi, align 4, !dbg !21
   %inc = add nsw i32 %i.02, 1, !dbg !26
   tail call void @llvm.dbg.value(metadata i32 %inc, i64 0, metadata !15, metadata !{!"0x102"}), !dbg !26
   %exitcond = icmp eq i32 %inc, 10, !dbg !19
-  %arrayidx.inc = getelementptr i32* %arrayidx.phi, i32 1
+  %arrayidx.inc = getelementptr i32, i32* %arrayidx.phi, i32 1
   br i1 %exitcond, label %for.end, label %for.body, !dbg !19
 
 for.end:                                          ; preds = %for.body

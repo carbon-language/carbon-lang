@@ -20,10 +20,10 @@ bb3.preheader:
 
 bb3:
 	%i.0 = phi i32 [ %7, %bb3 ], [ 0, %bb3.preheader ]
-	getelementptr i32* %p, i32 %i.0
+	getelementptr i32, i32* %p, i32 %i.0
 	load i32* %3, align 4
 	add i32 %4, 1
-	getelementptr i32* %p, i32 %i.0
+	getelementptr i32, i32* %p, i32 %i.0
 	store i32 %5, i32* %6, align 4
 	add i32 %i.0, 1
 	icmp slt i32 %7, %n

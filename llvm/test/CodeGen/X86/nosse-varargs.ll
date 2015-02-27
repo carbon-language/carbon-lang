@@ -12,25 +12,25 @@ entry:
 	%ap = alloca [1 x %struct.__va_list_tag], align 8		; <[1 x %struct.__va_list_tag]*> [#uses=4]
 	%ap12 = bitcast [1 x %struct.__va_list_tag]* %ap to i8*		; <i8*> [#uses=2]
 	call void @llvm.va_start(i8* %ap12)
-	%0 = getelementptr [1 x %struct.__va_list_tag]* %ap, i64 0, i64 0, i32 0		; <i32*> [#uses=2]
+	%0 = getelementptr [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %ap, i64 0, i64 0, i32 0		; <i32*> [#uses=2]
 	%1 = load i32* %0, align 8		; <i32> [#uses=3]
 	%2 = icmp ult i32 %1, 48		; <i1> [#uses=1]
 	br i1 %2, label %bb, label %bb3
 
 bb:		; preds = %entry
-	%3 = getelementptr [1 x %struct.__va_list_tag]* %ap, i64 0, i64 0, i32 3		; <i8**> [#uses=1]
+	%3 = getelementptr [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %ap, i64 0, i64 0, i32 3		; <i8**> [#uses=1]
 	%4 = load i8** %3, align 8		; <i8*> [#uses=1]
 	%5 = inttoptr i32 %1 to i8*		; <i8*> [#uses=1]
 	%6 = ptrtoint i8* %5 to i64		; <i64> [#uses=1]
-	%ctg2 = getelementptr i8* %4, i64 %6		; <i8*> [#uses=1]
+	%ctg2 = getelementptr i8, i8* %4, i64 %6		; <i8*> [#uses=1]
 	%7 = add i32 %1, 8		; <i32> [#uses=1]
 	store i32 %7, i32* %0, align 8
 	br label %bb4
 
 bb3:		; preds = %entry
-	%8 = getelementptr [1 x %struct.__va_list_tag]* %ap, i64 0, i64 0, i32 2		; <i8**> [#uses=2]
+	%8 = getelementptr [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %ap, i64 0, i64 0, i32 2		; <i8**> [#uses=2]
 	%9 = load i8** %8, align 8		; <i8*> [#uses=2]
-	%10 = getelementptr i8* %9, i64 8		; <i8*> [#uses=1]
+	%10 = getelementptr i8, i8* %9, i64 8		; <i8*> [#uses=1]
 	store i8* %10, i8** %8, align 8
 	br label %bb4
 

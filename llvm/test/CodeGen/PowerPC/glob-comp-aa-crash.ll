@@ -23,17 +23,17 @@ entry:
   %ref.tmp = alloca %"class.std::__exception_ptr::exception_ptr", align 8
   %tmp = alloca { i64, i64 }, align 8
   %agg.tmp = alloca %"class.std::__exception_ptr::exception_ptr", align 8
-  %__mut_ = getelementptr inbounds %"class.std::__1::__assoc_sub_state"* %this, i64 0, i32 2
-  %__m_.i.i = getelementptr inbounds %"class.std::__1::unique_lock"* %__lk, i64 0, i32 0
+  %__mut_ = getelementptr inbounds %"class.std::__1::__assoc_sub_state", %"class.std::__1::__assoc_sub_state"* %this, i64 0, i32 2
+  %__m_.i.i = getelementptr inbounds %"class.std::__1::unique_lock", %"class.std::__1::unique_lock"* %__lk, i64 0, i32 0
   store %"class.std::__1::mutex"* %__mut_, %"class.std::__1::mutex"** %__m_.i.i, align 8, !tbaa !5
-  %__owns_.i.i = getelementptr inbounds %"class.std::__1::unique_lock"* %__lk, i64 0, i32 1
+  %__owns_.i.i = getelementptr inbounds %"class.std::__1::unique_lock", %"class.std::__1::unique_lock"* %__lk, i64 0, i32 1
   store i8 1, i8* %__owns_.i.i, align 8, !tbaa !6
   call void @_ZNSt3__15mutex4lockEv(%"class.std::__1::mutex"* %__mut_) #4
   invoke void @_ZNSt3__117__assoc_sub_state10__sub_waitERNS_11unique_lockINS_5mutexEEE(%"class.std::__1::__assoc_sub_state"* %this, %"class.std::__1::unique_lock"* %__lk) #4
           to label %invoke.cont unwind label %lpad
 
 invoke.cont:                                      ; preds = %entry
-  %__exception_ = getelementptr inbounds %"class.std::__1::__assoc_sub_state"* %this, i64 0, i32 1
+  %__exception_ = getelementptr inbounds %"class.std::__1::__assoc_sub_state", %"class.std::__1::__assoc_sub_state"* %this, i64 0, i32 1
   %0 = bitcast { i64, i64 }* %tmp to i8*
   call void @llvm.memset.p0i8.i64(i8* %0, i8 0, i64 16, i32 8, i1 false)
   call void @_ZNSt15__exception_ptr13exception_ptrC1EMS0_FvvE(%"class.std::__exception_ptr::exception_ptr"* %ref.tmp, { i64, i64 }* byval %tmp) #5

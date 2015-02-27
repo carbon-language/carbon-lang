@@ -14,7 +14,7 @@ define void @test_nosimplify1() {
 ; CHECK: call i8 @strchr
 ; CHECK: ret void
 
-  %str = getelementptr [14 x i8]* @hello, i32 0, i32 0
+  %str = getelementptr [14 x i8], [14 x i8]* @hello, i32 0, i32 0
   %dst = call i8 @strchr(i8* %str, i32 119)
   store i8 %dst, i8* @chr
   ret void

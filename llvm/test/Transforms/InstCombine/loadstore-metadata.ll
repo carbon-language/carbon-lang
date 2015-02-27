@@ -67,8 +67,8 @@ entry:
 
 loop:
   %i = phi i32 [ 0, %entry ], [ %i.next, %loop ]
-  %src.gep = getelementptr inbounds float* %src, i32 %i
-  %dst.gep = getelementptr inbounds i32* %dst, i32 %i
+  %src.gep = getelementptr inbounds float, float* %src, i32 %i
+  %dst.gep = getelementptr inbounds i32, i32* %dst, i32 %i
   %l = load float* %src.gep, !llvm.mem.parallel_loop_access !1
   %c = bitcast float %l to i32
   store i32 %c, i32* %dst.gep
@@ -98,7 +98,7 @@ define void @test_load_cast_combine_nonnull(float** %ptr) {
 ; CHECK: store i64 %[[V]], i64*
 entry:
   %p = load float** %ptr, !nonnull !3
-  %gep = getelementptr float** %ptr, i32 42
+  %gep = getelementptr float*, float** %ptr, i32 42
   store float* %p, float** %gep
   ret void
 }

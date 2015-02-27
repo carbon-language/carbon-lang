@@ -9,11 +9,11 @@ target triple = "i686-apple-darwin8"
 define void @Foo(%struct.__mpz_struct* %base) {
 entry:
         %want = alloca [1 x %struct.__mpz_struct], align 16             ; <[1 x %struct.__mpz_struct]*> [#uses=4]
-        %want1 = getelementptr [1 x %struct.__mpz_struct]* %want, i32 0, i32 0          ; <%struct.__mpz_struct*> [#uses=1]
+        %want1 = getelementptr [1 x %struct.__mpz_struct], [1 x %struct.__mpz_struct]* %want, i32 0, i32 0          ; <%struct.__mpz_struct*> [#uses=1]
         call void @__gmpz_init( %struct.__mpz_struct* %want1 )
-        %want27 = getelementptr [1 x %struct.__mpz_struct]* %want, i32 0, i32 0         ; <%struct.__mpz_struct*> [#uses=1]
-        %want3 = getelementptr [1 x %struct.__mpz_struct]* %want, i32 0, i32 0          ; <%struct.__mpz_struct*> [#uses=1]
-        %want2 = getelementptr [1 x %struct.__mpz_struct]* %want, i32 0, i32 0          ; <%struct.__mpz_struct*> [#uses=2]
+        %want27 = getelementptr [1 x %struct.__mpz_struct], [1 x %struct.__mpz_struct]* %want, i32 0, i32 0         ; <%struct.__mpz_struct*> [#uses=1]
+        %want3 = getelementptr [1 x %struct.__mpz_struct], [1 x %struct.__mpz_struct]* %want, i32 0, i32 0          ; <%struct.__mpz_struct*> [#uses=1]
+        %want2 = getelementptr [1 x %struct.__mpz_struct], [1 x %struct.__mpz_struct]* %want, i32 0, i32 0          ; <%struct.__mpz_struct*> [#uses=2]
         br label %bb
 
 bb:             ; preds = %bb, %entry

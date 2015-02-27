@@ -39,7 +39,7 @@ entry:
   store i32 %i, i32* %i.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %i.addr, metadata !30, metadata !{!"0x102"}), !dbg !31
   %this1 = load %class.A** %this.addr
-  %a = getelementptr inbounds %class.A* %this1, i32 0, i32 0, !dbg !31
+  %a = getelementptr inbounds %class.A, %class.A* %this1, i32 0, i32 0, !dbg !31
   %0 = load i32* %i.addr, align 4, !dbg !31
   store i32 %0, i32* %a, align 4, !dbg !31
   ret void, !dbg !31

@@ -12,17 +12,17 @@
 %struct.foo = type { i32, [40 x i8] }
 
 define hidden void @func(i8* %Data) nounwind ssp {
-  %1 = getelementptr inbounds i8* %Data, i32 12
+  %1 = getelementptr inbounds i8, i8* %Data, i32 12
   %2 = bitcast i8* %1 to %"myclass"*
   tail call void @abc(%"myclass"* %2) nounwind
   tail call void @def(%"myclass"* %2) nounwind
-  %3 = getelementptr inbounds i8* %Data, i32 8
+  %3 = getelementptr inbounds i8, i8* %Data, i32 8
   %4 = bitcast i8* %3 to i8**
   %5 = load i8** %4, align 4
   tail call void @ghi(i8* %5) nounwind
   %6 = bitcast i8* %Data to void (i8*)**
   %7 = load void (i8*)** %6, align 4
-  %8 = getelementptr inbounds i8* %Data, i32 4
+  %8 = getelementptr inbounds i8, i8* %Data, i32 4
   %9 = bitcast i8* %8 to i8**
   %10 = load i8** %9, align 4
   %11 = icmp eq i8* %Data, null

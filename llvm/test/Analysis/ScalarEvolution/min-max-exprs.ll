@@ -34,7 +34,7 @@ bb2:                                              ; preds = %bb1
 ;                  min(N, i+3)
 ; CHECK:           select i1 %tmp4, i64 %tmp5, i64 %tmp6
 ; CHECK-NEXT:  --> (-1 + (-1 * ((-1 + (-1 * (sext i32 {3,+,1}<nw><%bb1> to i64))) smax (-1 + (-1 * (sext i32 %N to i64))))))
-  %tmp11 = getelementptr inbounds i32* %A, i64 %tmp9
+  %tmp11 = getelementptr inbounds i32, i32* %A, i64 %tmp9
   %tmp12 = load i32* %tmp11, align 4
   %tmp13 = shl nsw i32 %tmp12, 1
   %tmp14 = icmp sge i32 3, %i.0
@@ -43,7 +43,7 @@ bb2:                                              ; preds = %bb1
 ;                  max(0, i - 3)
 ; CHECK:           select i1 %tmp14, i64 0, i64 %tmp17
 ; CHECK-NEXT: -->  (-3 + (3 smax {0,+,1}<nuw><nsw><%bb1>))
-  %tmp21 = getelementptr inbounds i32* %A, i64 %tmp19
+  %tmp21 = getelementptr inbounds i32, i32* %A, i64 %tmp19
   store i32 %tmp13, i32* %tmp21, align 4
   %tmp23 = add nuw nsw i32 %i.0, 1
   br label %bb1

@@ -32,9 +32,9 @@ bb6:                                              ; preds = %bb7, %bb.nph7
   %7 = add i32 %x.06, %4
   %8 = shl i32 %x.06, 1
   %9 = add i32 %6, %8
-  %10 = getelementptr i8* %r, i32 %9
+  %10 = getelementptr i8, i8* %r, i32 %9
   %11 = load i8* %10, align 1
-  %12 = getelementptr i8* %j, i32 %7
+  %12 = getelementptr i8, i8* %j, i32 %7
   store i8 %11, i8* %12, align 1
   br label %bb7
 
@@ -103,18 +103,18 @@ bb14:                                             ; preds = %bb15, %bb.nph3
   %x.12 = phi i32 [ 0, %bb.nph3 ], [ %indvar.next, %bb15 ]
   %25 = shl i32 %x.12, 2
   %26 = add i32 %25, %21
-  %27 = getelementptr i8* %r, i32 %26
+  %27 = getelementptr i8, i8* %r, i32 %26
   %28 = load i8* %27, align 1
   %.sum = add i32 %22, %x.12
-  %29 = getelementptr i8* %j, i32 %.sum
+  %29 = getelementptr i8, i8* %j, i32 %.sum
   store i8 %28, i8* %29, align 1
   %30 = shl i32 %x.12, 2
   %31 = or i32 %30, 2
   %32 = add i32 %31, %21
-  %33 = getelementptr i8* %r, i32 %32
+  %33 = getelementptr i8, i8* %r, i32 %32
   %34 = load i8* %33, align 1
   %.sum6 = add i32 %23, %x.12
-  %35 = getelementptr i8* %j, i32 %.sum6
+  %35 = getelementptr i8, i8* %j, i32 %.sum6
   store i8 %34, i8* %35, align 1
   br label %bb15
 
@@ -169,10 +169,10 @@ bb23:                                             ; preds = %bb24, %bb.nph
   %y.21 = phi i32 [ 0, %bb.nph ], [ %indvar.next5, %bb24 ]
   %45 = mul i32 %y.21, %42
   %.sum1 = add i32 %45, %43
-  %46 = getelementptr i8* %r, i32 %.sum1
+  %46 = getelementptr i8, i8* %r, i32 %.sum1
   %47 = mul i32 %y.21, %w
   %.sum5 = add i32 %47, %.sum3
-  %48 = getelementptr i8* %j, i32 %.sum5
+  %48 = getelementptr i8, i8* %j, i32 %.sum5
   tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %48, i8* %46, i32 %w, i32 1, i1 false)
   br label %bb24
 
@@ -187,7 +187,7 @@ bb24.bb26_crit_edge:                              ; preds = %bb24
 bb26:                                             ; preds = %bb24.bb26_crit_edge, %bb22
   %49 = mul i32 %x, %w
   %.sum4 = add i32 %.sum3, %49
-  %50 = getelementptr i8* %j, i32 %.sum4
+  %50 = getelementptr i8, i8* %j, i32 %.sum4
   %51 = mul i32 %x, %w
   %52 = sdiv i32 %51, 2
   tail call void @llvm.memset.p0i8.i32(i8* %50, i8 -128, i32 %52, i32 1, i1 false)
@@ -205,9 +205,9 @@ bb.nph11:                                         ; preds = %bb29
 bb30:                                             ; preds = %bb31, %bb.nph11
   %y.310 = phi i32 [ 0, %bb.nph11 ], [ %indvar.next13, %bb31 ]
   %56 = mul i32 %y.310, %54
-  %57 = getelementptr i8* %r, i32 %56
+  %57 = getelementptr i8, i8* %r, i32 %56
   %58 = mul i32 %y.310, %w
-  %59 = getelementptr i8* %j, i32 %58
+  %59 = getelementptr i8, i8* %j, i32 %58
   tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %59, i8* %57, i32 %w, i32 1, i1 false)
   br label %bb31
 
@@ -221,7 +221,7 @@ bb31.bb33_crit_edge:                              ; preds = %bb31
 
 bb33:                                             ; preds = %bb31.bb33_crit_edge, %bb29
   %60 = mul i32 %x, %w
-  %61 = getelementptr i8* %j, i32 %60
+  %61 = getelementptr i8, i8* %j, i32 %60
   %62 = mul i32 %x, %w
   %63 = sdiv i32 %62, 2
   tail call void @llvm.memset.p0i8.i32(i8* %61, i8 -128, i32 %63, i32 1, i1 false)
@@ -257,9 +257,9 @@ bb6:                                              ; preds = %bb7, %bb.nph7
   %7 = add i32 %x.06, %4
   %8 = shl i32 %x.06, 1
   %9 = add i32 %6, %8
-  %10 = getelementptr i8* %r, i32 %9
+  %10 = getelementptr i8, i8* %r, i32 %9
   %11 = load i8* %10, align 1
-  %12 = getelementptr i8* %j, i32 %7
+  %12 = getelementptr i8, i8* %j, i32 %7
   store i8 %11, i8* %12, align 1
   br label %bb7
 
@@ -328,18 +328,18 @@ bb14:                                             ; preds = %bb15, %bb.nph3
   %x.12 = phi i32 [ 0, %bb.nph3 ], [ %indvar.next, %bb15 ]
   %25 = shl i32 %x.12, 2
   %26 = add i32 %25, %21
-  %27 = getelementptr i8* %r, i32 %26
+  %27 = getelementptr i8, i8* %r, i32 %26
   %28 = load i8* %27, align 1
   %.sum = add i32 %22, %x.12
-  %29 = getelementptr i8* %j, i32 %.sum
+  %29 = getelementptr i8, i8* %j, i32 %.sum
   store i8 %28, i8* %29, align 1
   %30 = shl i32 %x.12, 2
   %31 = or i32 %30, 2
   %32 = add i32 %31, %21
-  %33 = getelementptr i8* %r, i32 %32
+  %33 = getelementptr i8, i8* %r, i32 %32
   %34 = load i8* %33, align 1
   %.sum6 = add i32 %23, %x.12
-  %35 = getelementptr i8* %j, i32 %.sum6
+  %35 = getelementptr i8, i8* %j, i32 %.sum6
   store i8 %34, i8* %35, align 1
   br label %bb15
 
@@ -394,10 +394,10 @@ bb23:                                             ; preds = %bb24, %bb.nph
   %y.21 = phi i32 [ 0, %bb.nph ], [ %indvar.next5, %bb24 ]
   %45 = mul i32 %y.21, %42
   %.sum1 = add i32 %45, %43
-  %46 = getelementptr i8* %r, i32 %.sum1
+  %46 = getelementptr i8, i8* %r, i32 %.sum1
   %47 = mul i32 %y.21, %w
   %.sum5 = add i32 %47, %.sum3
-  %48 = getelementptr i8* %j, i32 %.sum5
+  %48 = getelementptr i8, i8* %j, i32 %.sum5
   tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %48, i8* %46, i32 %w, i32 1, i1 false)
   br label %bb24
 
@@ -412,7 +412,7 @@ bb24.bb26_crit_edge:                              ; preds = %bb24
 bb26:                                             ; preds = %bb24.bb26_crit_edge, %bb22
   %49 = mul i32 %x, %w
   %.sum4 = add i32 %.sum3, %49
-  %50 = getelementptr i8* %j, i32 %.sum4
+  %50 = getelementptr i8, i8* %j, i32 %.sum4
   %51 = mul i32 %x, %w
   %52 = udiv i32 %51, 2
   tail call void @llvm.memset.p0i8.i32(i8* %50, i8 -128, i32 %52, i32 1, i1 false)
@@ -430,9 +430,9 @@ bb.nph11:                                         ; preds = %bb29
 bb30:                                             ; preds = %bb31, %bb.nph11
   %y.310 = phi i32 [ 0, %bb.nph11 ], [ %indvar.next13, %bb31 ]
   %56 = mul i32 %y.310, %54
-  %57 = getelementptr i8* %r, i32 %56
+  %57 = getelementptr i8, i8* %r, i32 %56
   %58 = mul i32 %y.310, %w
-  %59 = getelementptr i8* %j, i32 %58
+  %59 = getelementptr i8, i8* %j, i32 %58
   tail call void @llvm.memcpy.p0i8.p0i8.i32(i8* %59, i8* %57, i32 %w, i32 1, i1 false)
   br label %bb31
 
@@ -446,7 +446,7 @@ bb31.bb33_crit_edge:                              ; preds = %bb31
 
 bb33:                                             ; preds = %bb31.bb33_crit_edge, %bb29
   %60 = mul i32 %x, %w
-  %61 = getelementptr i8* %j, i32 %60
+  %61 = getelementptr i8, i8* %j, i32 %60
   %62 = mul i32 %x, %w
   %63 = udiv i32 %62, 2
   tail call void @llvm.memset.p0i8.i32(i8* %61, i8 -128, i32 %63, i32 1, i1 false)

@@ -14,7 +14,7 @@ entry:
   br i1 %cmp27, label %for.body3.lr.ph.us, label %for.end15
 
 for.end.us:                                       ; preds = %for.body3.us
-  %arrayidx9.us = getelementptr inbounds i32* %b, i64 %indvars.iv33
+  %arrayidx9.us = getelementptr inbounds i32, i32* %b, i64 %indvars.iv33
   %0 = load i32* %arrayidx9.us, align 4, !llvm.mem.parallel_loop_access !3
   %add10.us = add nsw i32 %0, 3
   store i32 %add10.us, i32* %arrayidx9.us, align 4, !llvm.mem.parallel_loop_access !3
@@ -28,7 +28,7 @@ for.body3.us:                                     ; preds = %for.body3.us, %for.
   %1 = trunc i64 %indvars.iv29 to i32
   %add4.us = add i32 %add.us, %1
   %idxprom.us = sext i32 %add4.us to i64
-  %arrayidx.us = getelementptr inbounds i32* %a, i64 %idxprom.us
+  %arrayidx.us = getelementptr inbounds i32, i32* %a, i64 %idxprom.us
   %2 = load i32* %arrayidx.us, align 4, !llvm.mem.parallel_loop_access !3
   %add5.us = add nsw i32 %2, 1
   store i32 %add5.us, i32* %arrayidx7.us, align 4, !llvm.mem.parallel_loop_access !3
@@ -41,7 +41,7 @@ for.body3.lr.ph.us:                               ; preds = %for.end.us, %entry
   %indvars.iv33 = phi i64 [ %indvars.iv.next34, %for.end.us ], [ 0, %entry ]
   %3 = trunc i64 %indvars.iv33 to i32
   %add.us = add i32 %3, %k
-  %arrayidx7.us = getelementptr inbounds i32* %a, i64 %indvars.iv33
+  %arrayidx7.us = getelementptr inbounds i32, i32* %a, i64 %indvars.iv33
   br label %for.body3.us
 
 for.end15:                                        ; preds = %for.end.us, %entry

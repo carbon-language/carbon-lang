@@ -245,7 +245,7 @@ entry:
 if.end:
   %sub = sub nsw i32 %0, %size
   store i32 %sub, i32* %offset, align 8
-  %add.ptr = getelementptr inbounds i8* %base, i32 %sub
+  %add.ptr = getelementptr inbounds i8, i8* %base, i32 %sub
   br label %return
 
 return:

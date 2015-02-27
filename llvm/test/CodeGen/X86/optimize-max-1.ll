@@ -13,7 +13,7 @@ entry:
 
 bb:		; preds = %bb, %entry
 	%i.0 = phi i64 [ 0, %entry ], [ %0, %bb ]		; <i64> [#uses=2]
-	%scevgep = getelementptr double* %p, i64 %i.0		; <double*> [#uses=1]
+	%scevgep = getelementptr double, double* %p, i64 %i.0		; <double*> [#uses=1]
 	store double 0.000000e+00, double* %scevgep, align 8
 	%0 = add i64 %i.0, 1		; <i64> [#uses=2]
 	%exitcond = icmp eq i64 %0, %smax		; <i1> [#uses=1]
@@ -31,7 +31,7 @@ entry:
 
 bb:		; preds = %bb, %entry
 	%i.0 = phi i64 [ 0, %entry ], [ %0, %bb ]		; <i64> [#uses=2]
-	%scevgep = getelementptr double* %p, i64 %i.0		; <double*> [#uses=1]
+	%scevgep = getelementptr double, double* %p, i64 %i.0		; <double*> [#uses=1]
 	store double 0.000000e+00, double* %scevgep, align 8
 	%0 = add i64 %i.0, 1		; <i64> [#uses=2]
 	%exitcond = icmp eq i64 %0, %smax		; <i1> [#uses=1]
@@ -49,7 +49,7 @@ entry:
 
 bb:		; preds = %bb, %entry
 	%i.0 = phi i64 [ 0, %entry ], [ %0, %bb ]		; <i64> [#uses=2]
-	%scevgep = getelementptr double* %p, i64 %i.0		; <double*> [#uses=1]
+	%scevgep = getelementptr double, double* %p, i64 %i.0		; <double*> [#uses=1]
 	store double 0.000000e+00, double* %scevgep, align 8
 	%0 = add i64 %i.0, 1		; <i64> [#uses=2]
 	%exitcond = icmp eq i64 %0, %umax		; <i1> [#uses=1]
@@ -67,7 +67,7 @@ entry:
 
 bb:		; preds = %bb, %entry
 	%i.0 = phi i64 [ 0, %entry ], [ %0, %bb ]		; <i64> [#uses=2]
-	%scevgep = getelementptr double* %p, i64 %i.0		; <double*> [#uses=1]
+	%scevgep = getelementptr double, double* %p, i64 %i.0		; <double*> [#uses=1]
 	store double 0.000000e+00, double* %scevgep, align 8
 	%0 = add i64 %i.0, 1		; <i64> [#uses=2]
 	%exitcond = icmp eq i64 %0, %umax		; <i1> [#uses=1]

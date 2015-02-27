@@ -31,7 +31,7 @@ define i32 @foo() noreturn {
 ; CHECK: Memory reference address is misaligned
   store i8 0, i8* %buf, align 2
 ; CHECK: Memory reference address is misaligned
-  %gep = getelementptr {i8, i8}* %buf2, i32 0, i32 1
+  %gep = getelementptr {i8, i8}, {i8, i8}* %buf2, i32 0, i32 1
   store i8 0, i8* %gep, align 2
 ; CHECK: Division by zero
   %sd = sdiv i32 2, 0
@@ -84,11 +84,11 @@ define i32 @foo() noreturn {
   %wider = bitcast i8* %buf to i16*
   store i16 0, i16* %wider
 ; CHECK: Undefined behavior: Buffer overflow
-  %inner = getelementptr {i8, i8}* %buf2, i32 0, i32 1
+  %inner = getelementptr {i8, i8}, {i8, i8}* %buf2, i32 0, i32 1
   %wider2 = bitcast i8* %inner to i16*
   store i16 0, i16* %wider2
 ; CHECK: Undefined behavior: Buffer overflow
-  %before = getelementptr i8* %buf, i32 -1
+  %before = getelementptr i8, i8* %buf, i32 -1
   %wider3 = bitcast i8* %before to i16*
   store i16 0, i16* %wider3
 
@@ -140,7 +140,7 @@ define void @use_tail(i8* %valist) {
 ; CHECK: Unusual: Returning alloca value
 define i8* @return_local(i32 %n, i32 %m) {
   %t = alloca i8, i32 %n
-  %s = getelementptr i8* %t, i32 %m
+  %s = getelementptr i8, i8* %t, i32 %m
   ret i8* %s
 }
 

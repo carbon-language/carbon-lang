@@ -6,11 +6,11 @@ target triple = "i686-apple-darwin8"
 define i32 @main(i32 %argc, i8** %argv) {
 entry:
 	%c = alloca %struct..0anon		; <%struct..0anon*> [#uses=2]
-	%tmp2 = getelementptr %struct..0anon* %c, i32 0, i32 0		; <<1 x i64>*> [#uses=1]
+	%tmp2 = getelementptr %struct..0anon, %struct..0anon* %c, i32 0, i32 0		; <<1 x i64>*> [#uses=1]
 	store <1 x i64> zeroinitializer, <1 x i64>* %tmp2, align 8
-	%tmp7 = getelementptr %struct..0anon* %c, i32 0, i32 0		; <<1 x i64>*> [#uses=1]
+	%tmp7 = getelementptr %struct..0anon, %struct..0anon* %c, i32 0, i32 0		; <<1 x i64>*> [#uses=1]
 	%tmp78 = bitcast <1 x i64>* %tmp7 to [2 x i32]*		; <[2 x i32]*> [#uses=1]
-	%tmp9 = getelementptr [2 x i32]* %tmp78, i32 0, i32 0		; <i32*> [#uses=1]
+	%tmp9 = getelementptr [2 x i32], [2 x i32]* %tmp78, i32 0, i32 0		; <i32*> [#uses=1]
 	%tmp10 = load i32* %tmp9, align 4		; <i32> [#uses=0]
 	unreachable
 }

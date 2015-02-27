@@ -656,7 +656,7 @@ entry:
   %x.addr = alloca i32, align 4
   %va = alloca [1 x %struct.__va_list_tag], align 16
   store i32 %x, i32* %x.addr, align 4
-  %arraydecay = getelementptr inbounds [1 x %struct.__va_list_tag]* %va, i32 0, i32 0
+  %arraydecay = getelementptr inbounds [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %va, i32 0, i32 0
   %arraydecay1 = bitcast %struct.__va_list_tag* %arraydecay to i8*
   call void @llvm.va_start(i8* %arraydecay1)
   ret void
@@ -836,7 +836,7 @@ entry:
   %0 = bitcast %struct.StructByVal* %s to i8*
   %agg.tmp.sroa.0.0..sroa_cast = bitcast %struct.StructByVal* %s to i64*
   %agg.tmp.sroa.0.0.copyload = load i64* %agg.tmp.sroa.0.0..sroa_cast, align 4
-  %agg.tmp.sroa.2.0..sroa_idx = getelementptr inbounds %struct.StructByVal* %s, i64 0, i32 2
+  %agg.tmp.sroa.2.0..sroa_idx = getelementptr inbounds %struct.StructByVal, %struct.StructByVal* %s, i64 0, i32 2
   %agg.tmp.sroa.2.0..sroa_cast = bitcast i32* %agg.tmp.sroa.2.0..sroa_idx to i64*
   %agg.tmp.sroa.2.0.copyload = load i64* %agg.tmp.sroa.2.0..sroa_cast, align 4
   %1 = bitcast %struct.StructByVal* %agg.tmp2 to i8*

@@ -22,20 +22,20 @@ entry:
   %mul238 = add i32 %m, %n
   %add = mul i32 %0, %mul238
   store i32 %add, i32* %B, align 4
-  %arrayidx4 = getelementptr inbounds i32* %A, i64 1
+  %arrayidx4 = getelementptr inbounds i32, i32* %A, i64 1
   %1 = load i32* %arrayidx4, align 4
   %add8 = mul i32 %1, %mul238
-  %arrayidx9 = getelementptr inbounds i32* %B, i64 1
+  %arrayidx9 = getelementptr inbounds i32, i32* %B, i64 1
   store i32 %add8, i32* %arrayidx9, align 4
-  %arrayidx10 = getelementptr inbounds i32* %A, i64 2
+  %arrayidx10 = getelementptr inbounds i32, i32* %A, i64 2
   %2 = load i32* %arrayidx10, align 4
   %add14 = mul i32 %2, %mul238
-  %arrayidx15 = getelementptr inbounds i32* %B, i64 2
+  %arrayidx15 = getelementptr inbounds i32, i32* %B, i64 2
   store i32 %add14, i32* %arrayidx15, align 4
-  %arrayidx16 = getelementptr inbounds i32* %A, i64 3
+  %arrayidx16 = getelementptr inbounds i32, i32* %A, i64 3
   %3 = load i32* %arrayidx16, align 4
   %add20 = mul i32 %3, %mul238
-  %arrayidx21 = getelementptr inbounds i32* %B, i64 3
+  %arrayidx21 = getelementptr inbounds i32, i32* %B, i64 3
   store i32 %add20, i32* %arrayidx21, align 4
   ret i32 0
 }
@@ -60,20 +60,20 @@ entry:
   %mul238 = add i32 %m, %n
   %add = mul i32 %0, %mul238
   store i32 %add, i32* %B, align 4
-  %arrayidx4 = getelementptr inbounds i32* %A, i64 1
+  %arrayidx4 = getelementptr inbounds i32, i32* %A, i64 1
   %1 = load i32* %arrayidx4, align 4
   %add8 = mul i32 %1, %mul238
-  %arrayidx9 = getelementptr inbounds i32* %B, i64 1
+  %arrayidx9 = getelementptr inbounds i32, i32* %B, i64 1
   store i32 %add8, i32* %arrayidx9, align 4
-  %arrayidx10 = getelementptr inbounds i32* %A, i64 2
+  %arrayidx10 = getelementptr inbounds i32, i32* %A, i64 2
   %2 = load i32* %arrayidx10, align 4
   %add14 = mul i32 %2, %mul238
-  %arrayidx15 = getelementptr inbounds i32* %B, i64 2
+  %arrayidx15 = getelementptr inbounds i32, i32* %B, i64 2
   store i32 %add14, i32* %arrayidx15, align 4
-  %arrayidx16 = getelementptr inbounds i32* %A, i64 3
+  %arrayidx16 = getelementptr inbounds i32, i32* %A, i64 3
   %3 = load i32* %arrayidx16, align 4
   %add20 = mul i32 %3, %mul238
-  %arrayidx21 = getelementptr inbounds i32* %B, i64 3
+  %arrayidx21 = getelementptr inbounds i32, i32* %B, i64 3
   store i32 %add20, i32* %arrayidx21, align 4
   ret i32 %0  ;<--------- This value has multiple users
 }
@@ -90,20 +90,20 @@ entry:
   %mul238 = add i32 %m, %n
   %add = mul i32 %0, %mul238
   store i32 %add, i32* %B, align 4
-  %arrayidx4 = getelementptr inbounds i32* %A, i64 1
+  %arrayidx4 = getelementptr inbounds i32, i32* %A, i64 1
   %1 = load i32* %arrayidx4, align 4
   %add8 = mul i32 %1, %mul238
-  %arrayidx9 = getelementptr inbounds i32* %B, i64 1
+  %arrayidx9 = getelementptr inbounds i32, i32* %B, i64 1
   store i32 %add8, i32* %arrayidx9, align 4
-  %arrayidx10 = getelementptr inbounds i32* %A, i64 2
+  %arrayidx10 = getelementptr inbounds i32, i32* %A, i64 2
   %2 = load i32* %arrayidx10, align 4
   %add14 = mul i32 %2, %mul238
-  %arrayidx15 = getelementptr inbounds i32* %B, i64 2
+  %arrayidx15 = getelementptr inbounds i32, i32* %B, i64 2
   store i32 %add14, i32* %arrayidx15, align 4
-  %arrayidx16 = getelementptr inbounds i32* %A, i64 3
+  %arrayidx16 = getelementptr inbounds i32, i32* %A, i64 3
   %3 = load i32* %arrayidx16, align 4
   %add20 = mul i32 %3, %mul238
-  %arrayidx21 = getelementptr inbounds i32* %B, i64 3
+  %arrayidx21 = getelementptr inbounds i32, i32* %B, i64 3
   store i32 %add20, i32* %arrayidx21, align 4
   ret i32 %1  ;<--------- This value has multiple users
 }

@@ -11,7 +11,7 @@ bb.nph:		; preds = %entry
 while.body:		; preds = %for.end, %bb.nph
 	%indvar2787 = phi i64 [ 0, %bb.nph ], [ %indvar.next2788, %for.end ]		; <i64> [#uses=2]
 	%tmp2791 = mul i64 %indvar2787, 44		; <i64> [#uses=0]
-	%ctg22996 = getelementptr i8* %in, i64 0		; <i8*> [#uses=1]
+	%ctg22996 = getelementptr i8, i8* %in, i64 0		; <i8*> [#uses=1]
 	%conv = zext i32 undef to i64		; <i64> [#uses=1]
 	%conv11 = zext i32 undef to i64		; <i64> [#uses=1]
 	%tmp18 = load i32* undef		; <i32> [#uses=1]
@@ -164,11 +164,11 @@ entry:
 	br i1 undef, label %while.end, label %bb.nph
 
 bb.nph:		; preds = %entry
-	%arrayidx5 = getelementptr i32* %arr, i64 1		; <i32*> [#uses=1]
-	%arrayidx9 = getelementptr i32* %arr, i64 2		; <i32*> [#uses=2]
-	%arrayidx13 = getelementptr i32* %arr, i64 3		; <i32*> [#uses=2]
-	%arrayidx25 = getelementptr i32* %arr, i64 6		; <i32*> [#uses=1]
-	%arrayidx29 = getelementptr i32* %arr, i64 7		; <i32*> [#uses=1]
+	%arrayidx5 = getelementptr i32, i32* %arr, i64 1		; <i32*> [#uses=1]
+	%arrayidx9 = getelementptr i32, i32* %arr, i64 2		; <i32*> [#uses=2]
+	%arrayidx13 = getelementptr i32, i32* %arr, i64 3		; <i32*> [#uses=2]
+	%arrayidx25 = getelementptr i32, i32* %arr, i64 6		; <i32*> [#uses=1]
+	%arrayidx29 = getelementptr i32, i32* %arr, i64 7		; <i32*> [#uses=1]
 	br label %while.body
 
 while.body:		; preds = %for.end, %bb.nph

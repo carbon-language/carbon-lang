@@ -98,7 +98,7 @@ lor.lhs.false:                                    ; preds = %for.body
   %add106 = trunc i64 %tmp43 to i32               ; <i32> [#uses=1]
   %add112 = trunc i64 %tmp45 to i32               ; <i32> [#uses=1]
   %add118 = trunc i64 %tmp47 to i32               ; <i32> [#uses=1]
-  %tmp10 = getelementptr %struct.Bu* %bu, i64 %indvar, i32 2 ; <i32*> [#uses=1]
+  %tmp10 = getelementptr %struct.Bu, %struct.Bu* %bu, i64 %indvar, i32 2 ; <i32*> [#uses=1]
   %tmp11 = load i32* %tmp10                       ; <i32> [#uses=0]
   tail call void undef(i32 %add22)
   tail call void undef(i32 %add28)

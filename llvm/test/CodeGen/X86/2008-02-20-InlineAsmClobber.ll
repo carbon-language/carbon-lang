@@ -20,7 +20,7 @@ entry:
 
 define void @test2(i16* %block, i8* %pixels, i32 %line_size) nounwind  {
 entry:
-	%tmp1 = getelementptr i16* %block, i32 64		; <i16*> [#uses=1]
+	%tmp1 = getelementptr i16, i16* %block, i32 64		; <i16*> [#uses=1]
 	%tmp3 = tail call i8* asm sideeffect "b: $0 $1 $2", "=r,r,0,~{dirflag},~{fpsr},~{flags},~{ax}"( i16* %tmp1, i8* %pixels ) nounwind 		; <i8*> [#uses=0]
 	ret void
 }

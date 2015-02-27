@@ -2,7 +2,7 @@
 ; CHECK: bb1:
 ; CHECK: load double* [[IV:%[^,]+]]
 ; CHECK: store double {{.*}}, double* [[IV]]
-; CHECK: getelementptr double*
+; CHECK: getelementptr double, double*
 ; CHECK-NOT: cast
 ; CHECK: br {{.*}} label %bb1
 
@@ -30,11 +30,11 @@ bb1:		; preds = %bb2, %bb.nph
 	%tmp3 = add i64 %j.01, %tmp1		; <i64> [#uses=1]
 	%tmp4 = add i64 %j.01, %tmp2		; <i64> [#uses=1]
         %z0 = add i64 %tmp3, 5203
-	%tmp5 = getelementptr double* %p, i64 %z0		; <double*> [#uses=1]
+	%tmp5 = getelementptr double, double* %p, i64 %z0		; <double*> [#uses=1]
 	%tmp6 = load double* %tmp5, align 8		; <double> [#uses=1]
 	%tmp7 = fdiv double %tmp6, 2.100000e+00		; <double> [#uses=1]
         %z1 = add i64 %tmp4, 5203
-	%tmp8 = getelementptr double* %p, i64 %z1		; <double*> [#uses=1]
+	%tmp8 = getelementptr double, double* %p, i64 %z1		; <double*> [#uses=1]
 	store double %tmp7, double* %tmp8, align 8
 	%tmp9 = add i64 %j.01, 1		; <i64> [#uses=2]
 	br label %bb2

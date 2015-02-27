@@ -17,7 +17,7 @@ define i64 @f2(i64 %cmp, i64 %swap, i64 *%src) {
 ; CHECK-LABEL: f2:
 ; CHECK: csg %r2, %r3, 524280(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 65535
+  %ptr = getelementptr i64, i64 *%src, i64 65535
   %pairval = cmpxchg i64 *%ptr, i64 %cmp, i64 %swap seq_cst seq_cst
   %val = extractvalue { i64, i1 } %pairval, 0
   ret i64 %val
@@ -30,7 +30,7 @@ define i64 @f3(i64 %cmp, i64 %swap, i64 *%src) {
 ; CHECK: agfi %r4, 524288
 ; CHECK: csg %r2, %r3, 0(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 65536
+  %ptr = getelementptr i64, i64 *%src, i64 65536
   %pairval = cmpxchg i64 *%ptr, i64 %cmp, i64 %swap seq_cst seq_cst
   %val = extractvalue { i64, i1 } %pairval, 0
   ret i64 %val
@@ -41,7 +41,7 @@ define i64 @f4(i64 %cmp, i64 %swap, i64 *%src) {
 ; CHECK-LABEL: f4:
 ; CHECK: csg %r2, %r3, -8(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -1
+  %ptr = getelementptr i64, i64 *%src, i64 -1
   %pairval = cmpxchg i64 *%ptr, i64 %cmp, i64 %swap seq_cst seq_cst
   %val = extractvalue { i64, i1 } %pairval, 0
   ret i64 %val
@@ -52,7 +52,7 @@ define i64 @f5(i64 %cmp, i64 %swap, i64 *%src) {
 ; CHECK-LABEL: f5:
 ; CHECK: csg %r2, %r3, -524288(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -65536
+  %ptr = getelementptr i64, i64 *%src, i64 -65536
   %pairval = cmpxchg i64 *%ptr, i64 %cmp, i64 %swap seq_cst seq_cst
   %val = extractvalue { i64, i1 } %pairval, 0
   ret i64 %val
@@ -65,7 +65,7 @@ define i64 @f6(i64 %cmp, i64 %swap, i64 *%src) {
 ; CHECK: agfi %r4, -524296
 ; CHECK: csg %r2, %r3, 0(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -65537
+  %ptr = getelementptr i64, i64 *%src, i64 -65537
   %pairval = cmpxchg i64 *%ptr, i64 %cmp, i64 %swap seq_cst seq_cst
   %val = extractvalue { i64, i1 } %pairval, 0
   ret i64 %val

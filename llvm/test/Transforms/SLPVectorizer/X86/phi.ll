@@ -29,9 +29,9 @@ entry:
   br i1 %tobool, label %if.else, label %if.end
 
 if.else:                                          ; preds = %entry
-  %arrayidx = getelementptr inbounds double* %A, i64 10
+  %arrayidx = getelementptr inbounds double, double* %A, i64 10
   %0 = load double* %arrayidx, align 8
-  %arrayidx1 = getelementptr inbounds double* %A, i64 11
+  %arrayidx1 = getelementptr inbounds double, double* %A, i64 11
   %1 = load double* %arrayidx1, align 8
   br label %if.end
 
@@ -39,7 +39,7 @@ if.end:                                           ; preds = %entry, %if.else
   %A0.0 = phi double [ %0, %if.else ], [ 3.000000e+00, %entry ]
   %A1.0 = phi double [ %1, %if.else ], [ 5.000000e+00, %entry ]
   store double %A0.0, double* %A, align 8
-  %arrayidx3 = getelementptr inbounds double* %A, i64 1
+  %arrayidx3 = getelementptr inbounds double, double* %A, i64 1
   store double %A1.0, double* %arrayidx3, align 8
   ret i32 undef
 }
@@ -69,7 +69,7 @@ if.end:                                           ; preds = %entry, %if.else
 ;CHECK: ret
 define i32 @foo2(double* noalias nocapture %B, double* noalias nocapture %A, i32 %n, i32 %m) #0 {
 entry:
-  %arrayidx = getelementptr inbounds double* %A, i64 1
+  %arrayidx = getelementptr inbounds double, double* %A, i64 1
   %0 = load double* %arrayidx, align 8
   %1 = load double* %A, align 8
   br label %for.body
@@ -90,7 +90,7 @@ for.body:                                         ; preds = %for.body, %entry
 
 for.end:                                          ; preds = %for.body
   store double %add5, double* %B, align 8
-  %arrayidx7 = getelementptr inbounds double* %B, i64 1
+  %arrayidx7 = getelementptr inbounds double, double* %B, i64 1
   store double %add4, double* %arrayidx7, align 8
   ret i32 0
 }
@@ -124,13 +124,13 @@ for.end:                                          ; preds = %for.body
 define float @foo3(float* nocapture readonly %A) #0 {
 entry:
   %0 = load float* %A, align 4
-  %arrayidx1 = getelementptr inbounds float* %A, i64 1
+  %arrayidx1 = getelementptr inbounds float, float* %A, i64 1
   %1 = load float* %arrayidx1, align 4
-  %arrayidx2 = getelementptr inbounds float* %A, i64 2
+  %arrayidx2 = getelementptr inbounds float, float* %A, i64 2
   %2 = load float* %arrayidx2, align 4
-  %arrayidx3 = getelementptr inbounds float* %A, i64 3
+  %arrayidx3 = getelementptr inbounds float, float* %A, i64 3
   %3 = load float* %arrayidx3, align 4
-  %arrayidx4 = getelementptr inbounds float* %A, i64 4
+  %arrayidx4 = getelementptr inbounds float, float* %A, i64 4
   %4 = load float* %arrayidx4, align 4
   br label %for.body
 
@@ -148,17 +148,17 @@ for.body:                                         ; preds = %for.body, %entry
   %mul10 = fmul float %5, 8.000000e+00
   %add11 = fadd float %G.053, %mul10
   %7 = add nsw i64 %indvars.iv, 2
-  %arrayidx14 = getelementptr inbounds float* %A, i64 %7
+  %arrayidx14 = getelementptr inbounds float, float* %A, i64 %7
   %8 = load float* %arrayidx14, align 4
   %mul15 = fmul float %8, 9.000000e+00
   %add16 = fadd float %B.054, %mul15
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 3
-  %arrayidx19 = getelementptr inbounds float* %A, i64 %indvars.iv.next
+  %arrayidx19 = getelementptr inbounds float, float* %A, i64 %indvars.iv.next
   %9 = load float* %arrayidx19, align 4
   %mul20 = fmul float %9, 1.000000e+01
   %add21 = fadd float %Y.055, %mul20
   %10 = add nsw i64 %indvars.iv, 4
-  %arrayidx24 = getelementptr inbounds float* %A, i64 %10
+  %arrayidx24 = getelementptr inbounds float, float* %A, i64 %10
   %11 = load float* %arrayidx24, align 4
   %mul25 = fmul float %11, 1.100000e+01
   %add26 = fadd float %P.056, %mul25
@@ -216,7 +216,7 @@ define void @test(x86_fp80* %i1, x86_fp80* %i2, x86_fp80* %o) {
 
 entry:
   %i1.0 = load x86_fp80* %i1, align 16
-  %i1.gep1 = getelementptr x86_fp80* %i1, i64 1
+  %i1.gep1 = getelementptr x86_fp80, x86_fp80* %i1, i64 1
   %i1.1 = load x86_fp80* %i1.gep1, align 16
 ; CHECK: load x86_fp80*
 ; CHECK: load x86_fp80*
@@ -225,9 +225,9 @@ entry:
   br i1 undef, label %then, label %end
 
 then:
-  %i2.gep0 = getelementptr inbounds x86_fp80* %i2, i64 0
+  %i2.gep0 = getelementptr inbounds x86_fp80, x86_fp80* %i2, i64 0
   %i2.0 = load x86_fp80* %i2.gep0, align 16
-  %i2.gep1 = getelementptr inbounds x86_fp80* %i2, i64 1
+  %i2.gep1 = getelementptr inbounds x86_fp80, x86_fp80* %i2, i64 1
   %i2.1 = load x86_fp80* %i2.gep1, align 16
 ; CHECK: load x86_fp80*
 ; CHECK: load x86_fp80*
@@ -242,7 +242,7 @@ end:
 ; CHECK-NOT: extractelement <2 x x86_fp80>
 ; CHECK-NOT: extractelement <2 x x86_fp80>
   store x86_fp80 %phi0, x86_fp80* %o, align 16
-  %o.gep1 = getelementptr inbounds x86_fp80* %o, i64 1
+  %o.gep1 = getelementptr inbounds x86_fp80, x86_fp80* %o, i64 1
   store x86_fp80 %phi1, x86_fp80* %o.gep1, align 16
   ret void
 }

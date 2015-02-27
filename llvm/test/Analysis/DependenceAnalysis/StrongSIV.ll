@@ -28,12 +28,12 @@ for.body:                                         ; preds = %for.body.preheader,
   %indvars.iv = phi i64 [ 0, %for.body.preheader ], [ %indvars.iv.next, %for.body ]
   %B.addr.02 = phi i32* [ %incdec.ptr, %for.body ], [ %B, %for.body.preheader ]
   %0 = add nsw i64 %indvars.iv, 2
-  %arrayidx = getelementptr inbounds i32* %A, i64 %0
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %0
   %1 = trunc i64 %indvars.iv to i32
   store i32 %1, i32* %arrayidx, align 4
-  %arrayidx3 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %arrayidx3 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   %2 = load i32* %arrayidx3, align 4
-  %incdec.ptr = getelementptr inbounds i32* %B.addr.02, i64 1
+  %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.02, i64 1
   store i32 %2, i32* %B.addr.02, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   %exitcond = icmp ne i64 %indvars.iv.next, %n
@@ -72,11 +72,11 @@ for.body:                                         ; preds = %for.body.preheader,
   %B.addr.02 = phi i32* [ %incdec.ptr, %for.body ], [ %B, %for.body.preheader ]
   %conv2 = trunc i64 %i.03 to i32
   %add = add nsw i64 %i.03, 2
-  %arrayidx = getelementptr inbounds i32* %A, i64 %add
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %add
   store i32 %conv2, i32* %arrayidx, align 4
-  %arrayidx3 = getelementptr inbounds i32* %A, i64 %i.03
+  %arrayidx3 = getelementptr inbounds i32, i32* %A, i64 %i.03
   %1 = load i32* %arrayidx3, align 4
-  %incdec.ptr = getelementptr inbounds i32* %B.addr.02, i64 1
+  %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.02, i64 1
   store i32 %1, i32* %B.addr.02, align 4
   %inc = add nsw i64 %i.03, 1
   %exitcond = icmp ne i64 %inc, %0
@@ -114,11 +114,11 @@ for.body:                                         ; preds = %for.body.preheader,
   %B.addr.02 = phi i32* [ %incdec.ptr, %for.body ], [ %B, %for.body.preheader ]
   %conv = trunc i64 %i.03 to i32
   %add = add i64 %i.03, 2
-  %arrayidx = getelementptr inbounds i32* %A, i64 %add
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %add
   store i32 %conv, i32* %arrayidx, align 4
-  %arrayidx1 = getelementptr inbounds i32* %A, i64 %i.03
+  %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %i.03
   %0 = load i32* %arrayidx1, align 4
-  %incdec.ptr = getelementptr inbounds i32* %B.addr.02, i64 1
+  %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.02, i64 1
   store i32 %0, i32* %B.addr.02, align 4
   %inc = add i64 %i.03, 1
   %exitcond = icmp ne i64 %inc, %n
@@ -155,12 +155,12 @@ for.body:                                         ; preds = %for.body.preheader,
   %indvars.iv = phi i64 [ 0, %for.body.preheader ], [ %indvars.iv.next, %for.body ]
   %B.addr.02 = phi i32* [ %incdec.ptr, %for.body ], [ %B, %for.body.preheader ]
   %0 = add nsw i64 %indvars.iv, 2
-  %arrayidx = getelementptr inbounds i32* %A, i64 %0
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %0
   %1 = trunc i64 %indvars.iv to i32
   store i32 %1, i32* %arrayidx, align 4
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   %2 = load i32* %arrayidx2, align 4
-  %incdec.ptr = getelementptr inbounds i32* %B.addr.02, i64 1
+  %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.02, i64 1
   store i32 %2, i32* %B.addr.02, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
@@ -195,11 +195,11 @@ for.body:                                         ; preds = %entry, %for.body
   %B.addr.01 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.body ]
   %conv = trunc i64 %i.02 to i32
   %add = add i64 %i.02, 19
-  %arrayidx = getelementptr inbounds i32* %A, i64 %add
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %add
   store i32 %conv, i32* %arrayidx, align 4
-  %arrayidx1 = getelementptr inbounds i32* %A, i64 %i.02
+  %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %i.02
   %0 = load i32* %arrayidx1, align 4
-  %incdec.ptr = getelementptr inbounds i32* %B.addr.01, i64 1
+  %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
   %exitcond = icmp ne i64 %inc, 19
@@ -230,11 +230,11 @@ for.body:                                         ; preds = %entry, %for.body
   %B.addr.01 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.body ]
   %conv = trunc i64 %i.02 to i32
   %add = add i64 %i.02, 19
-  %arrayidx = getelementptr inbounds i32* %A, i64 %add
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %add
   store i32 %conv, i32* %arrayidx, align 4
-  %arrayidx1 = getelementptr inbounds i32* %A, i64 %i.02
+  %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %i.02
   %0 = load i32* %arrayidx1, align 4
-  %incdec.ptr = getelementptr inbounds i32* %B.addr.01, i64 1
+  %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
   %exitcond = icmp ne i64 %inc, 20
@@ -266,12 +266,12 @@ for.body:                                         ; preds = %entry, %for.body
   %conv = trunc i64 %i.02 to i32
   %mul = shl i64 %i.02, 1
   %add = add i64 %mul, 6
-  %arrayidx = getelementptr inbounds i32* %A, i64 %add
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %add
   store i32 %conv, i32* %arrayidx, align 4
   %mul1 = shl i64 %i.02, 1
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 %mul1
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %mul1
   %0 = load i32* %arrayidx2, align 4
-  %incdec.ptr = getelementptr inbounds i32* %B.addr.01, i64 1
+  %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
   %exitcond = icmp ne i64 %inc, 20
@@ -303,12 +303,12 @@ for.body:                                         ; preds = %entry, %for.body
   %conv = trunc i64 %i.02 to i32
   %mul = shl i64 %i.02, 1
   %add = add i64 %mul, 7
-  %arrayidx = getelementptr inbounds i32* %A, i64 %add
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %add
   store i32 %conv, i32* %arrayidx, align 4
   %mul1 = shl i64 %i.02, 1
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 %mul1
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %mul1
   %0 = load i32* %arrayidx2, align 4
-  %incdec.ptr = getelementptr inbounds i32* %B.addr.01, i64 1
+  %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
   %exitcond = icmp ne i64 %inc, 20
@@ -339,11 +339,11 @@ for.body:                                         ; preds = %entry, %for.body
   %B.addr.01 = phi i32* [ %B, %entry ], [ %incdec.ptr, %for.body ]
   %conv = trunc i64 %i.02 to i32
   %add = add i64 %i.02, %n
-  %arrayidx = getelementptr inbounds i32* %A, i64 %add
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %add
   store i32 %conv, i32* %arrayidx, align 4
-  %arrayidx1 = getelementptr inbounds i32* %A, i64 %i.02
+  %arrayidx1 = getelementptr inbounds i32, i32* %A, i64 %i.02
   %0 = load i32* %arrayidx1, align 4
-  %incdec.ptr = getelementptr inbounds i32* %B.addr.01, i64 1
+  %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
   %exitcond = icmp ne i64 %inc, 20
@@ -378,13 +378,13 @@ for.body:                                         ; preds = %for.body.preheader,
   %B.addr.02 = phi i32* [ %incdec.ptr, %for.body ], [ %B, %for.body.preheader ]
   %conv = trunc i64 %i.03 to i32
   %add = add i64 %i.03, %n
-  %arrayidx = getelementptr inbounds i32* %A, i64 %add
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %add
   store i32 %conv, i32* %arrayidx, align 4
   %mul = shl i64 %n, 1
   %add1 = add i64 %i.03, %mul
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 %add1
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %add1
   %0 = load i32* %arrayidx2, align 4
-  %incdec.ptr = getelementptr inbounds i32* %B.addr.02, i64 1
+  %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.02, i64 1
   store i32 %0, i32* %B.addr.02, align 4
   %inc = add i64 %i.03, 1
   %exitcond = icmp ne i64 %inc, %n
@@ -419,13 +419,13 @@ for.body:                                         ; preds = %entry, %for.body
   %conv = trunc i64 %i.02 to i32
   %mul = mul i64 %i.02, %n
   %add = add i64 %mul, 5
-  %arrayidx = getelementptr inbounds i32* %A, i64 %add
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %add
   store i32 %conv, i32* %arrayidx, align 4
   %mul1 = mul i64 %i.02, %n
   %add2 = add i64 %mul1, 5
-  %arrayidx3 = getelementptr inbounds i32* %A, i64 %add2
+  %arrayidx3 = getelementptr inbounds i32, i32* %A, i64 %add2
   %0 = load i32* %arrayidx3, align 4
-  %incdec.ptr = getelementptr inbounds i32* %B.addr.01, i64 1
+  %incdec.ptr = getelementptr inbounds i32, i32* %B.addr.01, i64 1
   store i32 %0, i32* %B.addr.01, align 4
   %inc = add i64 %i.02, 1
   %exitcond = icmp ne i64 %inc, 1000

@@ -27,10 +27,10 @@ forcond:		; preds = %forinc, %entry
 forbody:		; preds = %forcond
 	%tmp2 = load i32* %i		; <i32> [#uses=1]
 	%tmp3 = load <5 x i16>** %dst.addr		; <<5 x i16>*> [#uses=1]
-	%arrayidx = getelementptr <5 x i16>* %tmp3, i32 %tmp2		; <<5 x i16>*> [#uses=1]
+	%arrayidx = getelementptr <5 x i16>, <5 x i16>* %tmp3, i32 %tmp2		; <<5 x i16>*> [#uses=1]
 	%tmp4 = load i32* %i		; <i32> [#uses=1]
 	%tmp5 = load <5 x i16>** %src.addr		; <<5 x i16>*> [#uses=1]
-	%arrayidx6 = getelementptr <5 x i16>* %tmp5, i32 %tmp4		; <<5 x i16>*> [#uses=1]
+	%arrayidx6 = getelementptr <5 x i16>, <5 x i16>* %tmp5, i32 %tmp4		; <<5 x i16>*> [#uses=1]
 	%tmp7 = load <5 x i16>* %arrayidx6		; <<5 x i16>> [#uses=1]
 	%sub = sub <5 x i16> %tmp7, < i16 271, i16 271, i16 271, i16 271, i16 271 >		; <<5 x i16>> [#uses=1]
 	%mul = mul <5 x i16> %sub, < i16 2, i16 4, i16 2, i16 2, i16 2 >		; <<5 x i16>> [#uses=1]

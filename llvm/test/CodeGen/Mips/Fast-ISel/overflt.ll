@@ -13,7 +13,7 @@ define void @foo() {
 entry:
 ; CHECK-LABEL:   .ent  foo
   %0 = load float** @y, align 4
-  %arrayidx = getelementptr inbounds float* %0, i32 64000
+  %arrayidx = getelementptr inbounds float, float* %0, i32 64000
   store float 5.500000e+00, float* %arrayidx, align 4
 ; CHECK:        lui     $[[REG_FPCONST_INT:[0-9]+]], 16560
 ; CHECK:        mtc1    $[[REG_FPCONST_INT]], $f[[REG_FPCONST:[0-9]+]]
@@ -32,7 +32,7 @@ define void @goo() {
 entry:
 ; CHECK-LABEL:   .ent  goo
   %0 = load float** @y, align 4
-  %arrayidx = getelementptr inbounds float* %0, i32 64000
+  %arrayidx = getelementptr inbounds float, float* %0, i32 64000
   %1 = load float* %arrayidx, align 4
   store float %1, float* @result, align 4
 ; CHECK-DAG:    lw      $[[REG_RESULT:[0-9]+]], %got(result)(${{[0-9]+}})

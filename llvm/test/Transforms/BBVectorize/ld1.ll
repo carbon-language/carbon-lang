@@ -8,12 +8,12 @@ entry:
   %mul = fmul double %i0, %i1
   %i2 = load double* %c, align 8
   %add = fadd double %mul, %i2
-  %arrayidx3 = getelementptr inbounds double* %a, i64 1
+  %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
   %i3 = load double* %arrayidx3, align 8
-  %arrayidx4 = getelementptr inbounds double* %b, i64 1
+  %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
   %i4 = load double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
-  %arrayidx6 = getelementptr inbounds double* %c, i64 1
+  %arrayidx6 = getelementptr inbounds double, double* %c, i64 1
   %i5 = load double* %arrayidx6, align 8
   %add7 = fadd double %mul5, %i5
   %mul9 = fmul double %add, %i1

@@ -20,7 +20,7 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv2 = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr inbounds float* %a, i64 %indvars.iv2
+  %arrayidx = getelementptr inbounds float, float* %a, i64 %indvars.iv2
   %0 = load float* %arrayidx, align 4
   %mul = fmul float %0, %0
   store float %mul, float* %arrayidx, align 4
@@ -42,13 +42,13 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv2 = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %0 = add nsw i64 %indvars.iv2, -5
-  %arrayidx = getelementptr inbounds float* %a, i64 %0
+  %arrayidx = getelementptr inbounds float, float* %a, i64 %0
   %1 = load float* %arrayidx, align 4
   %2 = add nsw i64 %indvars.iv2, 2
-  %arrayidx2 = getelementptr inbounds float* %a, i64 %2
+  %arrayidx2 = getelementptr inbounds float, float* %a, i64 %2
   %3 = load float* %arrayidx2, align 4
   %mul = fmul float %1, %3
-  %arrayidx4 = getelementptr inbounds float* %a, i64 %indvars.iv2
+  %arrayidx4 = getelementptr inbounds float, float* %a, i64 %indvars.iv2
   store float %mul, float* %arrayidx4, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv2, 1
   %cmp2 = icmp sgt i64 %indvars.iv.next, %size

@@ -20,13 +20,13 @@ forcond:
 
 forbody:
         %tmp3 = load float** @a
-        %arrayidx = getelementptr float* %tmp3, i32 %i.0
+        %arrayidx = getelementptr float, float* %tmp3, i32 %i.0
         %tmp7 = uitofp i32 %i.0 to float
         store float %tmp7, float* %arrayidx
         %inc = add i32 %i.0, 1
         br label %forcond
 
-; CHECK:  %arrayidx = getelementptr float* %tmp3, i32 %i.0
+; CHECK:  %arrayidx = getelementptr float, float* %tmp3, i32 %i.0
 ; CHECK:  %tmp7 = uitofp i32 %i.0 to float
 ; CHECK:  store float %tmp7, float* %arrayidx
 ; CHECK:  %inc = add i32 %i.0, 1

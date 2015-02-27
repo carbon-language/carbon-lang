@@ -6,12 +6,12 @@ define void @ptriv_as2(i8 addrspace(2)* %base, i32 %n) nounwind {
 ; CHECK-LABEL: @ptriv_as2(
 entry:
   %idx.trunc = trunc i32 %n to i8
-  %add.ptr = getelementptr inbounds i8 addrspace(2)* %base, i8 %idx.trunc
+  %add.ptr = getelementptr inbounds i8, i8 addrspace(2)* %base, i8 %idx.trunc
   %cmp1 = icmp ult i8 addrspace(2)* %base, %add.ptr
   br i1 %cmp1, label %for.body, label %for.end
 
 ; Make sure the added GEP has the right index type
-; CHECK: %lftr.limit = getelementptr i8 addrspace(2)* %base, i8
+; CHECK: %lftr.limit = getelementptr i8, i8 addrspace(2)* %base, i8
 
 ; CHECK: for.body:
 ; CHECK: phi i8 addrspace(2)*
@@ -26,7 +26,7 @@ for.body:
   %sub.ptr.rhs.cast = ptrtoint i8 addrspace(2)* %base to i8
   %sub.ptr.sub = sub i8 %sub.ptr.lhs.cast, %sub.ptr.rhs.cast
   store i8 %sub.ptr.sub, i8 addrspace(2)* %p.02
-  %incdec.ptr = getelementptr inbounds i8 addrspace(2)* %p.02, i32 1
+  %incdec.ptr = getelementptr inbounds i8, i8 addrspace(2)* %p.02, i32 1
   %cmp = icmp ult i8 addrspace(2)* %incdec.ptr, %add.ptr
   br i1 %cmp, label %for.body, label %for.end
 
@@ -38,12 +38,12 @@ define void @ptriv_as3(i8 addrspace(3)* %base, i32 %n) nounwind {
 ; CHECK-LABEL: @ptriv_as3(
 entry:
   %idx.trunc = trunc i32 %n to i16
-  %add.ptr = getelementptr inbounds i8 addrspace(3)* %base, i16 %idx.trunc
+  %add.ptr = getelementptr inbounds i8, i8 addrspace(3)* %base, i16 %idx.trunc
   %cmp1 = icmp ult i8 addrspace(3)* %base, %add.ptr
   br i1 %cmp1, label %for.body, label %for.end
 
 ; Make sure the added GEP has the right index type
-; CHECK: %lftr.limit = getelementptr i8 addrspace(3)* %base, i16
+; CHECK: %lftr.limit = getelementptr i8, i8 addrspace(3)* %base, i16
 
 ; CHECK: for.body:
 ; CHECK: phi i8 addrspace(3)*
@@ -59,7 +59,7 @@ for.body:
   %sub.ptr.sub = sub i16 %sub.ptr.lhs.cast, %sub.ptr.rhs.cast
   %conv = trunc i16 %sub.ptr.sub to i8
   store i8 %conv, i8 addrspace(3)* %p.02
-  %incdec.ptr = getelementptr inbounds i8 addrspace(3)* %p.02, i32 1
+  %incdec.ptr = getelementptr inbounds i8, i8 addrspace(3)* %p.02, i32 1
   %cmp = icmp ult i8 addrspace(3)* %incdec.ptr, %add.ptr
   br i1 %cmp, label %for.body, label %for.end
 

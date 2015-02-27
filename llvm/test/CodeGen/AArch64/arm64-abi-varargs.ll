@@ -159,11 +159,11 @@ entry:
   %0 = va_arg i8** %args, i32
   store i32 %0, i32* %vc, align 4
   %ap.cur = load i8** %args
-  %1 = getelementptr i8* %ap.cur, i32 15
+  %1 = getelementptr i8, i8* %ap.cur, i32 15
   %2 = ptrtoint i8* %1 to i64
   %3 = and i64 %2, -16
   %ap.align = inttoptr i64 %3 to i8*
-  %ap.next = getelementptr i8* %ap.align, i32 16
+  %ap.next = getelementptr i8, i8* %ap.align, i32 16
   store i8* %ap.next, i8** %args
   %4 = bitcast i8* %ap.align to %struct.s41*
   %5 = bitcast %struct.s41* %vs to i8*

@@ -12,9 +12,9 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;CHECK: ret
 define i32 @foo (i64* %so) nounwind uwtable ssp {
 entry:
-  %used = getelementptr inbounds i64* %so, i32 3
+  %used = getelementptr inbounds i64, i64* %so, i32 3
   store i64 0, i64* %used, align 8
-  %fill = getelementptr inbounds i64* %so, i32 2
+  %fill = getelementptr inbounds i64, i64* %so, i32 2
   %L = load i64* %fill, align 8
   store i64 0, i64* %fill, align 8
   %cmp28 = icmp sgt i64 %L, 0

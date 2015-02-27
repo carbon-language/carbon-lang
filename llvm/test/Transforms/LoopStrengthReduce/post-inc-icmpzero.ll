@@ -23,18 +23,18 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 define void @_Z15IntegerToStringjjR7Vector2(i32 %i, i32 %radix, %struct.Vector2* nocapture %result) nounwind noinline {
 entry:
   %buffer = alloca [33 x i16], align 16
-  %add.ptr = getelementptr inbounds [33 x i16]* %buffer, i64 0, i64 33
+  %add.ptr = getelementptr inbounds [33 x i16], [33 x i16]* %buffer, i64 0, i64 33
   br label %do.body
 
 do.body:                                          ; preds = %do.body, %entry
   %0 = phi i64 [ %indvar.next44, %do.body ], [ 0, %entry ]
   %i.addr.0 = phi i32 [ %div, %do.body ], [ %i, %entry ]
   %tmp51 = sub i64 32, %0
-  %incdec.ptr = getelementptr [33 x i16]* %buffer, i64 0, i64 %tmp51
+  %incdec.ptr = getelementptr [33 x i16], [33 x i16]* %buffer, i64 0, i64 %tmp51
   %rem = urem i32 %i.addr.0, 10
   %div = udiv i32 %i.addr.0, 10
   %idxprom = zext i32 %rem to i64
-  %arrayidx = getelementptr inbounds [37 x i8]* @.str, i64 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [37 x i8], [37 x i8]* @.str, i64 0, i64 %idxprom
   %tmp5 = load i8* %arrayidx, align 1
   %conv = sext i8 %tmp5 to i16
   store i16 %conv, i16* %incdec.ptr, align 2
@@ -50,17 +50,17 @@ do.end:                                           ; preds = %do.body
   %sub.ptr.sub = sub i64 %sub.ptr.lhs.cast, %sub.ptr.rhs.cast
   %sub.ptr.div39 = lshr exact i64 %sub.ptr.sub, 1
   %conv11 = trunc i64 %sub.ptr.div39 to i32
-  %mLength = getelementptr inbounds %struct.Vector2* %result, i64 0, i32 2
+  %mLength = getelementptr inbounds %struct.Vector2, %struct.Vector2* %result, i64 0, i32 2
   %idx.ext21 = bitcast i64 %sub.ptr.div39 to i64
   %incdec.ptr.sum = add i64 %idx.ext21, -1
   %cp.0.sum = sub i64 %incdec.ptr.sum, %0
-  %add.ptr22 = getelementptr [33 x i16]* %buffer, i64 1, i64 %cp.0.sum
+  %add.ptr22 = getelementptr [33 x i16], [33 x i16]* %buffer, i64 1, i64 %cp.0.sum
   %cmp2740 = icmp eq i64 %idx.ext21, 0
   br i1 %cmp2740, label %for.end, label %for.body.lr.ph
 
 for.body.lr.ph:                                   ; preds = %do.end
   %tmp16 = load i32* %mLength, align 4
-  %mBegin = getelementptr inbounds %struct.Vector2* %result, i64 0, i32 0
+  %mBegin = getelementptr inbounds %struct.Vector2, %struct.Vector2* %result, i64 0, i32 0
   %tmp14 = load i16** %mBegin, align 8
   %tmp48 = zext i32 %tmp16 to i64
   br label %for.body
@@ -68,11 +68,11 @@ for.body.lr.ph:                                   ; preds = %do.end
 for.body:                                         ; preds = %for.body, %for.body.lr.ph
   %indvar = phi i64 [ 0, %for.body.lr.ph ], [ %indvar.next, %for.body ]
   %tmp46 = add i64 %tmp51, %indvar
-  %p.042 = getelementptr [33 x i16]* %buffer, i64 0, i64 %tmp46
+  %p.042 = getelementptr [33 x i16], [33 x i16]* %buffer, i64 0, i64 %tmp46
   %tmp47 = sub i64 %indvar, %0
-  %incdec.ptr32 = getelementptr [33 x i16]* %buffer, i64 1, i64 %tmp47
+  %incdec.ptr32 = getelementptr [33 x i16], [33 x i16]* %buffer, i64 1, i64 %tmp47
   %tmp49 = add i64 %tmp48, %indvar
-  %dst.041 = getelementptr i16* %tmp14, i64 %tmp49
+  %dst.041 = getelementptr i16, i16* %tmp14, i64 %tmp49
   %tmp29 = load i16* %p.042, align 2
   store i16 %tmp29, i16* %dst.041, align 2
   %cmp27 = icmp eq i16* %incdec.ptr32, %add.ptr22

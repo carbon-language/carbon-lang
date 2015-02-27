@@ -22,7 +22,7 @@ bb:
 bb38:                                             ; preds = %bb200, %bb
   %tmp39 = phi i64 [ %tmp201, %bb200 ], [ 0, %bb ]
   %tmp40 = sub i64 0, %tmp39
-  %tmp47 = getelementptr [5 x %0]* @pgm, i64 0, i64 %tmp40, i32 0
+  %tmp47 = getelementptr [5 x %0], [5 x %0]* @pgm, i64 0, i64 %tmp40, i32 0
   %tmp34 = load i32* %tmp47, align 16
   %tmp203 = icmp slt i32 %tmp34, 12
   br i1 %tmp203, label %bb215, label %bb200
@@ -32,19 +32,19 @@ bb200:                                            ; preds = %bb38
   br label %bb38
 
 bb215:                                            ; preds = %bb38
-  %tmp50 = getelementptr [5 x %0]* @pgm, i64 0, i64 %tmp40, i32 1, i64 2
-  %tmp49 = getelementptr [5 x %0]* @pgm, i64 0, i64 %tmp40, i32 1, i64 1
-  %tmp48 = getelementptr [5 x %0]* @pgm, i64 0, i64 %tmp40, i32 1, i64 0
+  %tmp50 = getelementptr [5 x %0], [5 x %0]* @pgm, i64 0, i64 %tmp40, i32 1, i64 2
+  %tmp49 = getelementptr [5 x %0], [5 x %0]* @pgm, i64 0, i64 %tmp40, i32 1, i64 1
+  %tmp48 = getelementptr [5 x %0], [5 x %0]* @pgm, i64 0, i64 %tmp40, i32 1, i64 0
   %tmp216 = add nsw i32 %tmp34, 1
   store i32 %tmp216, i32* %tmp47, align 16
   %tmp217 = sext i32 %tmp216 to i64
-  %tmp218 = getelementptr inbounds [13 x %1]* @isa, i64 0, i64 %tmp217, i32 3, i64 0
+  %tmp218 = getelementptr inbounds [13 x %1], [13 x %1]* @isa, i64 0, i64 %tmp217, i32 3, i64 0
   %tmp219 = load i32* %tmp218, align 8
   store i32 %tmp219, i32* %tmp48, align 4
-  %tmp220 = getelementptr inbounds [13 x %1]* @isa, i64 0, i64 %tmp217, i32 3, i64 1
+  %tmp220 = getelementptr inbounds [13 x %1], [13 x %1]* @isa, i64 0, i64 %tmp217, i32 3, i64 1
   %tmp221 = load i32* %tmp220, align 4
   store i32 %tmp221, i32* %tmp49, align 4
-  %tmp222 = getelementptr inbounds [13 x %1]* @isa, i64 0, i64 %tmp217, i32 3, i64 2
+  %tmp222 = getelementptr inbounds [13 x %1], [13 x %1]* @isa, i64 0, i64 %tmp217, i32 3, i64 2
   %tmp223 = load i32* %tmp222, align 8
   store i32 %tmp223, i32* %tmp50, align 4
   ret void

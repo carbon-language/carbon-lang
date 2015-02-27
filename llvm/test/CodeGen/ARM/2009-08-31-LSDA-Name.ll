@@ -62,7 +62,7 @@ entry:
   %0 = call i8* @_Znwm(i32 4)
   %1 = bitcast i8* %0 to i32*
   %2 = load %struct.A** %this_addr, align 4
-  %3 = getelementptr inbounds %struct.A* %2, i32 0, i32 0
+  %3 = getelementptr inbounds %struct.A, %struct.A* %2, i32 0, i32 0
   store i32* %1, i32** %3, align 4
   br label %return
 
@@ -78,7 +78,7 @@ entry:
   %"alloca point" = bitcast i32 0 to i32
   store %struct.A* %this, %struct.A** %this_addr
   %0 = load %struct.A** %this_addr, align 4
-  %1 = getelementptr inbounds %struct.A* %0, i32 0, i32 0
+  %1 = getelementptr inbounds %struct.A, %struct.A* %0, i32 0, i32 0
   %2 = load i32** %1, align 4
   %3 = bitcast i32* %2 to i8*
   call void @_ZdlPv(i8* %3) nounwind

@@ -38,7 +38,7 @@ for.k:
   %tmp.us.us = add i64 %j, %tmp
   %tmp17.us.us = mul i64 %tmp.us.us, %n_zext
   %subscript = add i64 %tmp17.us.us, %k
-  %idx = getelementptr inbounds double* %A, i64 %subscript
+  %idx = getelementptr inbounds double, double* %A, i64 %subscript
   store double 1.0, double* %idx
   br label %for.k.inc
 

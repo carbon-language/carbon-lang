@@ -37,7 +37,7 @@ define i64 @f4(i16 *%src) {
 ; CHECK-LABEL: f4:
 ; CHECK: lgh %r2, 524286(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 262143
+  %ptr = getelementptr i16, i16 *%src, i64 262143
   %half = load i16 *%ptr
   %ext = sext i16 %half to i64
   ret i64 %ext
@@ -50,7 +50,7 @@ define i64 @f5(i16 *%src) {
 ; CHECK: agfi %r2, 524288
 ; CHECK: lgh %r2, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 262144
+  %ptr = getelementptr i16, i16 *%src, i64 262144
   %half = load i16 *%ptr
   %ext = sext i16 %half to i64
   ret i64 %ext
@@ -61,7 +61,7 @@ define i64 @f6(i16 *%src) {
 ; CHECK-LABEL: f6:
 ; CHECK: lgh %r2, -2(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 -1
+  %ptr = getelementptr i16, i16 *%src, i64 -1
   %half = load i16 *%ptr
   %ext = sext i16 %half to i64
   ret i64 %ext
@@ -72,7 +72,7 @@ define i64 @f7(i16 *%src) {
 ; CHECK-LABEL: f7:
 ; CHECK: lgh %r2, -524288(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 -262144
+  %ptr = getelementptr i16, i16 *%src, i64 -262144
   %half = load i16 *%ptr
   %ext = sext i16 %half to i64
   ret i64 %ext
@@ -85,7 +85,7 @@ define i64 @f8(i16 *%src) {
 ; CHECK: agfi %r2, -524290
 ; CHECK: lgh %r2, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 -262145
+  %ptr = getelementptr i16, i16 *%src, i64 -262145
   %half = load i16 *%ptr
   %ext = sext i16 %half to i64
   ret i64 %ext

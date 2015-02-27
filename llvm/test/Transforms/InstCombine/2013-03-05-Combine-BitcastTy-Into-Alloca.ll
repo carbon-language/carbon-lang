@@ -32,12 +32,12 @@ entry:
   %bf.set10 = or i96 %bf.set5, %bf.clear
   %retval.0.cast7 = bitcast %struct._my_struct* %retval to i96*
   store i96 %bf.set10, i96* %retval.0.cast7, align 8
-  %retval.12.idx8 = getelementptr inbounds %struct._my_struct* %retval, i64 0, i32 1
+  %retval.12.idx8 = getelementptr inbounds %struct._my_struct, %struct._my_struct* %retval, i64 0, i32 1
   %retval.12.cast9 = bitcast [4 x i8]* %retval.12.idx8 to i32*
   store i32 %k.sroa.1.12.copyload, i32* %retval.12.cast9, align 4
   %trunc = trunc i96 %bf.set10 to i64
   %.fca.0.insert = insertvalue { i64, i64 } undef, i64 %trunc, 0
-  %retval.8.idx12 = getelementptr inbounds %struct._my_struct* %retval, i64 0, i32 0, i64 8
+  %retval.8.idx12 = getelementptr inbounds %struct._my_struct, %struct._my_struct* %retval, i64 0, i32 0, i64 8
   %retval.8.cast13 = bitcast i8* %retval.8.idx12 to i64*
   %retval.8.load14 = load i64* %retval.8.cast13, align 8
   %.fca.1.insert = insertvalue { i64, i64 } %.fca.0.insert, i64 %retval.8.load14, 1

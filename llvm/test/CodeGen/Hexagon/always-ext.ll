@@ -34,7 +34,7 @@ cond.false6.i.us:                                 ; preds = %for.body.us
   unreachable
 
 CuSuiteAdd.exit.us:                               ; preds = %for.body.us
-  %arrayidx.i.us = getelementptr inbounds %struct.CuSuite.2.29.32.38.41.44.53.56.68.86.112* null, i32 0, i32 1, i32 %1
+  %arrayidx.i.us = getelementptr inbounds %struct.CuSuite.2.29.32.38.41.44.53.56.68.86.112, %struct.CuSuite.2.29.32.38.41.44.53.56.68.86.112* null, i32 0, i32 1, i32 %1
   store %struct.CuTest.1.28.31.37.40.43.52.55.67.85.111* %0, %struct.CuTest.1.28.31.37.40.43.52.55.67.85.111** %arrayidx.i.us, align 4
   call void @llvm.trap()
   unreachable

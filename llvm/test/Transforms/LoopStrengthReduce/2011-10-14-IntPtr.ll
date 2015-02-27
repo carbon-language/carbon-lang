@@ -22,6 +22,6 @@ for.end:                                          ; preds = %for.end.critedge, %
 for.body83:                                       ; preds = %for.body83, %for.end
   %ptr.0157 = phi i8* [ %add.ptr96, %for.body83 ], [ null, %for.end ]
   store i8 undef, i8* %ptr.0157, align 1
-  %add.ptr96 = getelementptr inbounds i8* %ptr.0157, i32 %cond
+  %add.ptr96 = getelementptr inbounds i8, i8* %ptr.0157, i32 %cond
   br label %for.body83
 }

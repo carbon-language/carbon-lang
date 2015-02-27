@@ -10,7 +10,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; CHECK: vldmia
 define void @test(i64* %src) #0 {
 entry:
-  %arrayidx39 = getelementptr inbounds i64* %src, i32 13
+  %arrayidx39 = getelementptr inbounds i64, i64* %src, i32 13
   %vecinit285 = shufflevector <16 x i64> undef, <16 x i64> <i64 15, i64 16, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef, i64 undef>, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 16, i32 17>
   store <16 x i64> %vecinit285, <16 x i64>* undef, align 128
   %0 = load i64* undef, align 8

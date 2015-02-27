@@ -98,7 +98,7 @@ for.cond:                                         ; preds = %for.body, %entry
 
 for.body:                                         ; preds = %for.cond
   %idxprom = sext i32 %0 to i64
-  %arrayidx = getelementptr inbounds float* %a, i64 %idxprom
+  %arrayidx = getelementptr inbounds float, float* %a, i64 %idxprom
   store float 0.000000e+00, float* %arrayidx, align 4, !tbaa !3
   %1 = load i32* %gi, align 4, !tbaa !0
   %inc = add nsw i32 %1, 1

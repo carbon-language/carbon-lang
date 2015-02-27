@@ -17,7 +17,7 @@ bb1:		; preds = %entry
 bb.i:		; preds = %bb.i, %bb1
 	%indvar.i = phi i32 [ 0, %bb1 ], [ %2, %bb.i ]		; <i32> [#uses=3]
 	%tmp39 = add i32 %indvar.i, %tmp38		; <i32> [#uses=1]
-	%p_addr.0.i = getelementptr i8* undef, i32 %tmp39		; <i8*> [#uses=1]
+	%p_addr.0.i = getelementptr i8, i8* undef, i32 %tmp39		; <i8*> [#uses=1]
 	%0 = load i8* %p_addr.0.i, align 1		; <i8> [#uses=1]
 	%1 = icmp slt i8 %0, 0		; <i1> [#uses=1]
 	%2 = add i32 %indvar.i, 1		; <i32> [#uses=1]
@@ -26,7 +26,7 @@ bb.i:		; preds = %bb.i, %bb1
 read_uleb128.exit:		; preds = %bb.i
 	%.sum40 = add i32 %indvar.i, undef		; <i32> [#uses=1]
 	%.sum31 = add i32 %.sum40, 2		; <i32> [#uses=1]
-	%scevgep.i = getelementptr %struct.dwarf_cie* %cie, i32 0, i32 3, i32 %.sum31		; <i8*> [#uses=1]
+	%scevgep.i = getelementptr %struct.dwarf_cie, %struct.dwarf_cie* %cie, i32 0, i32 3, i32 %.sum31		; <i8*> [#uses=1]
 	%3 = call  i8* @read_sleb128(i8* %scevgep.i, i32* undef)		; <i8*> [#uses=0]
 	unreachable
 

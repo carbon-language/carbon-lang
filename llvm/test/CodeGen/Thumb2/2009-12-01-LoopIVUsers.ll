@@ -103,7 +103,7 @@ bb4:                                              ; preds = %bb5
   %34 = load i8** %dpt, align 4                   ; <i8*> [#uses=1]
   store i8 %33, i8* %34, align 1
   %35 = load i8** %dpt, align 4                   ; <i8*> [#uses=1]
-  %36 = getelementptr inbounds i8* %35, i64 1     ; <i8*> [#uses=1]
+  %36 = getelementptr inbounds i8, i8* %35, i64 1     ; <i8*> [#uses=1]
   store i8* %36, i8** %dpt, align 4
   %37 = load i32* %j, align 4                     ; <i32> [#uses=1]
   %38 = add nsw i32 %37, 1                        ; <i32> [#uses=1]

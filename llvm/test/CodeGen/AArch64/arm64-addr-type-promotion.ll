@@ -29,10 +29,10 @@ define zeroext i8 @fullGtU(i32 %i1, i32 %i2) {
 entry:
   %idxprom = sext i32 %i1 to i64
   %tmp = load i8** @block, align 8
-  %arrayidx = getelementptr inbounds i8* %tmp, i64 %idxprom
+  %arrayidx = getelementptr inbounds i8, i8* %tmp, i64 %idxprom
   %tmp1 = load i8* %arrayidx, align 1
   %idxprom1 = sext i32 %i2 to i64
-  %arrayidx2 = getelementptr inbounds i8* %tmp, i64 %idxprom1
+  %arrayidx2 = getelementptr inbounds i8, i8* %tmp, i64 %idxprom1
   %tmp2 = load i8* %arrayidx2, align 1
   %cmp = icmp eq i8 %tmp1, %tmp2
   br i1 %cmp, label %if.end, label %if.then
@@ -46,10 +46,10 @@ if.end:                                           ; preds = %entry
   %inc = add nsw i32 %i1, 1
   %inc10 = add nsw i32 %i2, 1
   %idxprom11 = sext i32 %inc to i64
-  %arrayidx12 = getelementptr inbounds i8* %tmp, i64 %idxprom11
+  %arrayidx12 = getelementptr inbounds i8, i8* %tmp, i64 %idxprom11
   %tmp3 = load i8* %arrayidx12, align 1
   %idxprom13 = sext i32 %inc10 to i64
-  %arrayidx14 = getelementptr inbounds i8* %tmp, i64 %idxprom13
+  %arrayidx14 = getelementptr inbounds i8, i8* %tmp, i64 %idxprom13
   %tmp4 = load i8* %arrayidx14, align 1
   %cmp17 = icmp eq i8 %tmp3, %tmp4
   br i1 %cmp17, label %if.end25, label %if.then19
@@ -63,10 +63,10 @@ if.end25:                                         ; preds = %if.end
   %inc26 = add nsw i32 %i1, 2
   %inc27 = add nsw i32 %i2, 2
   %idxprom28 = sext i32 %inc26 to i64
-  %arrayidx29 = getelementptr inbounds i8* %tmp, i64 %idxprom28
+  %arrayidx29 = getelementptr inbounds i8, i8* %tmp, i64 %idxprom28
   %tmp5 = load i8* %arrayidx29, align 1
   %idxprom30 = sext i32 %inc27 to i64
-  %arrayidx31 = getelementptr inbounds i8* %tmp, i64 %idxprom30
+  %arrayidx31 = getelementptr inbounds i8, i8* %tmp, i64 %idxprom30
   %tmp6 = load i8* %arrayidx31, align 1
   %cmp34 = icmp eq i8 %tmp5, %tmp6
   br i1 %cmp34, label %return, label %if.then36

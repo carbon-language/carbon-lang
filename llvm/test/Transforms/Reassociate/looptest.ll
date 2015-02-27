@@ -33,7 +33,7 @@ bb4:		; preds = %bb4, %bb3
 	%reg117 = phi i32 [ %reg118, %bb4 ], [ 0, %bb3 ]		; <i32> [#uses=2]
 	%reg113 = add i32 %reg115, %reg117		; <i32> [#uses=1]
 	%reg114 = add i32 %reg113, %reg116		; <i32> [#uses=1]
-	%cast227 = getelementptr [4 x i8]* @.LC0, i64 0, i64 0		; <i8*> [#uses=1]
+	%cast227 = getelementptr [4 x i8], [4 x i8]* @.LC0, i64 0, i64 0		; <i8*> [#uses=1]
 	call i32 (i8*, ...)* @printf( i8* %cast227, i32 %reg114 )		; <i32>:0 [#uses=0]
 	%reg118 = add i32 %reg117, 1		; <i32> [#uses=2]
 	%cond224 = icmp ne i32 %reg118, %Num		; <i1> [#uses=1]

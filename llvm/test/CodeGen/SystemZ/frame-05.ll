@@ -73,7 +73,7 @@ define void @f1(i32 *%ptr) {
   store volatile i32 %add11, i32 *%ptr
   store volatile i32 %add12, i32 *%ptr
   store volatile i32 %add13, i32 *%ptr
-  %final = getelementptr i32 *%ptr, i32 1
+  %final = getelementptr i32, i32 *%ptr, i32 1
   store volatile i32 %add14, i32 *%final
   ret void
 }
@@ -138,7 +138,7 @@ define void @f2(i32 *%ptr) {
   store volatile i32 %add11, i32 *%ptr
   store volatile i32 %add12, i32 *%ptr
   store volatile i32 %add13, i32 *%ptr
-  %final = getelementptr i32 *%ptr, i32 1
+  %final = getelementptr i32, i32 *%ptr, i32 1
   store volatile i32 %add14, i32 *%final
   ret void
 }
@@ -180,7 +180,7 @@ define void @f3(i32 *%ptr) {
   store volatile i32 %add3, i32 *%ptr
   store volatile i32 %add4, i32 *%ptr
   store volatile i32 %add5, i32 *%ptr
-  %final = getelementptr i32 *%ptr, i32 1
+  %final = getelementptr i32, i32 *%ptr, i32 1
   store volatile i32 %add14, i32 *%final
   ret void
 }
@@ -213,7 +213,7 @@ define void @f4(i32 *%ptr) {
   store volatile i32 %add1, i32 *%ptr
   store volatile i32 %add3, i32 *%ptr
   store volatile i32 %add4, i32 *%ptr
-  %final = getelementptr i32 *%ptr, i32 1
+  %final = getelementptr i32, i32 *%ptr, i32 1
   store volatile i32 %add5, i32 *%final
   ret void
 }

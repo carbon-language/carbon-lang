@@ -20,7 +20,7 @@ loop.header:
   br label %loop.body
 
 loop.body:
-  %ptr = getelementptr [32 x i32]* %0, i32 0, i32 %counter
+  %ptr = getelementptr [32 x i32], [32 x i32]* %0, i32 0, i32 %counter
   store i32 %counter, i32* %ptr
   br label %loop.inc
 
@@ -30,7 +30,7 @@ loop.inc:
   br i1 %1, label  %exit, label %loop.header
 
 exit:
-  %2 = getelementptr [32 x i32]* %0, i32 0, i32 5
+  %2 = getelementptr [32 x i32], [32 x i32]* %0, i32 0, i32 5
   %3 = load i32* %2
   store i32 %3, i32 addrspace(1)* %out
   ret void

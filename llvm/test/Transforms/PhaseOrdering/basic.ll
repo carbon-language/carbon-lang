@@ -31,14 +31,14 @@ define void @test1() nounwind ssp {
 define i32 @test2(i32 %a, i32* %p) nounwind uwtable ssp {
 entry:
   %div = udiv i32 %a, 4
-  %arrayidx = getelementptr inbounds i32* %p, i64 0
+  %arrayidx = getelementptr inbounds i32, i32* %p, i64 0
   store i32 %div, i32* %arrayidx, align 4
   %add = add i32 %div, %div
-  %arrayidx1 = getelementptr inbounds i32* %p, i64 1
+  %arrayidx1 = getelementptr inbounds i32, i32* %p, i64 1
   store i32 %add, i32* %arrayidx1, align 4
-  %arrayidx2 = getelementptr inbounds i32* %p, i64 1
+  %arrayidx2 = getelementptr inbounds i32, i32* %p, i64 1
   %0 = load i32* %arrayidx2, align 4
-  %arrayidx3 = getelementptr inbounds i32* %p, i64 0
+  %arrayidx3 = getelementptr inbounds i32, i32* %p, i64 0
   %1 = load i32* %arrayidx3, align 4
   %mul = mul i32 2, %1
   %sub = sub i32 %0, %mul

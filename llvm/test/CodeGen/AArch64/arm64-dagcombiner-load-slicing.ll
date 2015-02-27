@@ -14,7 +14,7 @@
 ; CHECK: ret
 define void @test(%class.Complex* nocapture %out, i64 %out_start) {
 entry:
-  %arrayidx = getelementptr inbounds %class.Complex* %out, i64 %out_start
+  %arrayidx = getelementptr inbounds %class.Complex, %class.Complex* %out, i64 %out_start
   %0 = bitcast %class.Complex* %arrayidx to i64*
   %1 = load i64* %0, align 4
   %t0.sroa.0.0.extract.trunc = trunc i64 %1 to i32
@@ -23,12 +23,12 @@ entry:
   %t0.sroa.2.0.extract.trunc = trunc i64 %t0.sroa.2.0.extract.shift to i32
   %3 = bitcast i32 %t0.sroa.2.0.extract.trunc to float
   %add = add i64 %out_start, 8
-  %arrayidx2 = getelementptr inbounds %class.Complex* %out, i64 %add
-  %i.i = getelementptr inbounds %class.Complex* %arrayidx2, i64 0, i32 0
+  %arrayidx2 = getelementptr inbounds %class.Complex, %class.Complex* %out, i64 %add
+  %i.i = getelementptr inbounds %class.Complex, %class.Complex* %arrayidx2, i64 0, i32 0
   %4 = load float* %i.i, align 4
   %add.i = fadd float %4, %2
   %retval.sroa.0.0.vec.insert.i = insertelement <2 x float> undef, float %add.i, i32 0
-  %r.i = getelementptr inbounds %class.Complex* %arrayidx2, i64 0, i32 1
+  %r.i = getelementptr inbounds %class.Complex, %class.Complex* %arrayidx2, i64 0, i32 1
   %5 = load float* %r.i, align 4
   %add5.i = fadd float %5, %3
   %retval.sroa.0.4.vec.insert.i = insertelement <2 x float> %retval.sroa.0.0.vec.insert.i, float %add5.i, i32 1
@@ -46,7 +46,7 @@ entry:
 ; CHECK: ret
 define void @test_int(%class.Complex_int* nocapture %out, i64 %out_start) {
 entry:
-  %arrayidx = getelementptr inbounds %class.Complex_int* %out, i64 %out_start
+  %arrayidx = getelementptr inbounds %class.Complex_int, %class.Complex_int* %out, i64 %out_start
   %0 = bitcast %class.Complex_int* %arrayidx to i64*
   %1 = load i64* %0, align 4
   %t0.sroa.0.0.extract.trunc = trunc i64 %1 to i32
@@ -55,12 +55,12 @@ entry:
   %t0.sroa.2.0.extract.trunc = trunc i64 %t0.sroa.2.0.extract.shift to i32
   %3 = bitcast i32 %t0.sroa.2.0.extract.trunc to i32
   %add = add i64 %out_start, 8
-  %arrayidx2 = getelementptr inbounds %class.Complex_int* %out, i64 %add
-  %i.i = getelementptr inbounds %class.Complex_int* %arrayidx2, i64 0, i32 0
+  %arrayidx2 = getelementptr inbounds %class.Complex_int, %class.Complex_int* %out, i64 %add
+  %i.i = getelementptr inbounds %class.Complex_int, %class.Complex_int* %arrayidx2, i64 0, i32 0
   %4 = load i32* %i.i, align 4
   %add.i = add i32 %4, %2
   %retval.sroa.0.0.vec.insert.i = insertelement <2 x i32> undef, i32 %add.i, i32 0
-  %r.i = getelementptr inbounds %class.Complex_int* %arrayidx2, i64 0, i32 1
+  %r.i = getelementptr inbounds %class.Complex_int, %class.Complex_int* %arrayidx2, i64 0, i32 1
   %5 = load i32* %r.i, align 4
   %add5.i = add i32 %5, %3
   %retval.sroa.0.4.vec.insert.i = insertelement <2 x i32> %retval.sroa.0.0.vec.insert.i, i32 %add5.i, i32 1
@@ -78,7 +78,7 @@ entry:
 ; CHECK: ret
 define void @test_long(%class.Complex_long* nocapture %out, i64 %out_start) {
 entry:
-  %arrayidx = getelementptr inbounds %class.Complex_long* %out, i64 %out_start
+  %arrayidx = getelementptr inbounds %class.Complex_long, %class.Complex_long* %out, i64 %out_start
   %0 = bitcast %class.Complex_long* %arrayidx to i128*
   %1 = load i128* %0, align 4
   %t0.sroa.0.0.extract.trunc = trunc i128 %1 to i64
@@ -87,12 +87,12 @@ entry:
   %t0.sroa.2.0.extract.trunc = trunc i128 %t0.sroa.2.0.extract.shift to i64
   %3 = bitcast i64 %t0.sroa.2.0.extract.trunc to i64
   %add = add i64 %out_start, 8
-  %arrayidx2 = getelementptr inbounds %class.Complex_long* %out, i64 %add
-  %i.i = getelementptr inbounds %class.Complex_long* %arrayidx2, i32 0, i32 0
+  %arrayidx2 = getelementptr inbounds %class.Complex_long, %class.Complex_long* %out, i64 %add
+  %i.i = getelementptr inbounds %class.Complex_long, %class.Complex_long* %arrayidx2, i32 0, i32 0
   %4 = load i64* %i.i, align 4
   %add.i = add i64 %4, %2
   %retval.sroa.0.0.vec.insert.i = insertelement <2 x i64> undef, i64 %add.i, i32 0
-  %r.i = getelementptr inbounds %class.Complex_long* %arrayidx2, i32 0, i32 1
+  %r.i = getelementptr inbounds %class.Complex_long, %class.Complex_long* %arrayidx2, i32 0, i32 1
   %5 = load i64* %r.i, align 4
   %add5.i = add i64 %5, %3
   %retval.sroa.0.4.vec.insert.i = insertelement <2 x i64> %retval.sroa.0.0.vec.insert.i, i64 %add5.i, i32 1

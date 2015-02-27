@@ -51,7 +51,7 @@ for.body6.us.us:                                  ; preds = %for.body6.us.us, %f
   %k.019.us.us = phi i64 [ 0, %for.body6.lr.ph.us.us ], [ %inc.us.us, %for.body6.us.us ]
   %arrayidx.sum.us.us = add i64 %k.019.us.us, 7
   %arrayidx9.sum.us.us = add i64 %arrayidx.sum.us.us, %tmp17.us.us
-  %arrayidx10.us.us = getelementptr inbounds double* %A, i64 %arrayidx9.sum.us.us
+  %arrayidx10.us.us = getelementptr inbounds double, double* %A, i64 %arrayidx9.sum.us.us
   store double 1.000000e+00, double* %arrayidx10.us.us, align 8
   %inc.us.us = add nsw i64 %k.019.us.us, 1
   %exitcond = icmp eq i64 %inc.us.us, %o

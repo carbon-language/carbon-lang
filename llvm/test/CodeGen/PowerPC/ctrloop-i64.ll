@@ -10,7 +10,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %i.06 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %x.05 = phi i64 [ 0, %entry ], [ %conv1, %for.body ]
-  %arrayidx = getelementptr inbounds i64* %n, i32 %i.06
+  %arrayidx = getelementptr inbounds i64, i64* %n, i32 %i.06
   %0 = load i64* %arrayidx, align 8
   %conv = udiv i64 %x.05, %d
   %conv1 = add i64 %conv, %0
@@ -32,7 +32,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %i.06 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %x.05 = phi i64 [ 0, %entry ], [ %conv1, %for.body ]
-  %arrayidx = getelementptr inbounds i64* %n, i32 %i.06
+  %arrayidx = getelementptr inbounds i64, i64* %n, i32 %i.06
   %0 = load i64* %arrayidx, align 8
   %conv = sdiv i64 %x.05, %d
   %conv1 = add i64 %conv, %0
@@ -54,7 +54,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %i.06 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %x.05 = phi i64 [ 0, %entry ], [ %conv1, %for.body ]
-  %arrayidx = getelementptr inbounds i64* %n, i32 %i.06
+  %arrayidx = getelementptr inbounds i64, i64* %n, i32 %i.06
   %0 = load i64* %arrayidx, align 8
   %conv = urem i64 %x.05, %d
   %conv1 = add i64 %conv, %0
@@ -76,7 +76,7 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %i.06 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   %x.05 = phi i64 [ 0, %entry ], [ %conv1, %for.body ]
-  %arrayidx = getelementptr inbounds i64* %n, i32 %i.06
+  %arrayidx = getelementptr inbounds i64, i64* %n, i32 %i.06
   %0 = load i64* %arrayidx, align 8
   %conv = srem i64 %x.05, %d
   %conv1 = add i64 %conv, %0

@@ -38,7 +38,7 @@ define void @test2() {
 ; CHECK-NOT: alloca
 define void @test3() {
         %A = alloca { i32 }             ; <{ i32 }*> [#uses=1]
-        %B = getelementptr { i32 }* %A, i32 0, i32 0            ; <i32*> [#uses=1]
+        %B = getelementptr { i32 }, { i32 }* %A, i32 0, i32 0            ; <i32*> [#uses=1]
         store i32 123, i32* %B
         ret void
 }
@@ -62,16 +62,16 @@ define void @test5() {
 entry:
   %a = alloca { i32 }
   %b = alloca i32*
-  %a.1 = getelementptr { i32 }* %a, i32 0, i32 0
+  %a.1 = getelementptr { i32 }, { i32 }* %a, i32 0, i32 0
   store i32 123, i32* %a.1
   store i32* %a.1, i32** %b
   %b.1 = bitcast i32** %b to i32*
   store i32 123, i32* %b.1
-  %a.2 = getelementptr { i32 }* %a, i32 0, i32 0
+  %a.2 = getelementptr { i32 }, { i32 }* %a, i32 0, i32 0
   store atomic i32 2, i32* %a.2 unordered, align 4
-  %a.3 = getelementptr { i32 }* %a, i32 0, i32 0
+  %a.3 = getelementptr { i32 }, { i32 }* %a, i32 0, i32 0
   store atomic i32 3, i32* %a.3 release, align 4
-  %a.4 = getelementptr { i32 }* %a, i32 0, i32 0
+  %a.4 = getelementptr { i32 }, { i32 }* %a, i32 0, i32 0
   store atomic i32 4, i32* %a.4 seq_cst, align 4
   ret void
 }
@@ -89,7 +89,7 @@ define void @test6() {
 entry:
   %a = alloca { i32 }
   %b = alloca i32
-  %a.1 = getelementptr { i32 }* %a, i32 0, i32 0
+  %a.1 = getelementptr { i32 }, { i32 }* %a, i32 0, i32 0
   store volatile i32 123, i32* %a.1
   tail call void @f(i32* %b)
   ret void
@@ -116,15 +116,15 @@ declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, 
 define void @test8() {
 ; CHECK-LABEL: @test8(
 ; CHECK: alloca [100 x i32]
-; CHECK: getelementptr inbounds [100 x i32]* %x1, i64 0, i64 0
+; CHECK: getelementptr inbounds [100 x i32], [100 x i32]* %x1, i64 0, i64 0
 
 ; P32-LABEL: @test8(
 ; P32: alloca [100 x i32]
-; P32: getelementptr inbounds [100 x i32]* %x1, i32 0, i32 0
+; P32: getelementptr inbounds [100 x i32], [100 x i32]* %x1, i32 0, i32 0
 
 ; NODL-LABEL: @test8(
 ; NODL: alloca [100 x i32]
-; NODL: getelementptr inbounds [100 x i32]* %x1, i64 0, i64 0
+; NODL: getelementptr inbounds [100 x i32], [100 x i32]* %x1, i64 0, i64 0
   %x = alloca i32, i32 100
   call void (...)* @use(i32* %x)
   ret void
@@ -142,7 +142,7 @@ entry:
   %inalloca.save = call i8* @llvm.stacksave()
   %argmem = alloca inalloca <{ %struct_type }>
 ; CHECK: alloca inalloca i64, align 8
-  %0 = getelementptr inbounds <{ %struct_type }>* %argmem, i32 0, i32 0
+  %0 = getelementptr inbounds <{ %struct_type }>, <{ %struct_type }>* %argmem, i32 0, i32 0
   %1 = bitcast %struct_type* %0 to i8*
   %2 = bitcast %struct_type* %a to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %1, i8* %2, i32 8, i32 4, i1 false)

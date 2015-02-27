@@ -43,8 +43,8 @@ bb14:                                             ; preds = %bb8
   ret i8 1
 
 bb27.outer108:                                    ; preds = %bb13, %bb27.outer
-  %I.2.ph109 = getelementptr i8* %I.2.ph, i64 undef ; <i8*> [#uses=1]
-  %scevgep = getelementptr i8* %I.2.ph, i64 undef ; <i8*> [#uses=0]
+  %I.2.ph109 = getelementptr i8, i8* %I.2.ph, i64 undef ; <i8*> [#uses=1]
+  %scevgep = getelementptr i8, i8* %I.2.ph, i64 undef ; <i8*> [#uses=0]
   br label %bb8
 
 bb56:                                             ; preds = %bb10, %bb8, %bb8, %entry

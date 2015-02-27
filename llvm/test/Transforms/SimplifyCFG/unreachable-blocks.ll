@@ -10,7 +10,7 @@ entry:
 
 while_block:                                      ; preds = %and_if_cont2, %and_if_cont
   %newlen = sub i32 %newlen, 1
-  %newptr = getelementptr i8* %newptr, i64 1
+  %newptr = getelementptr i8, i8* %newptr, i64 1
   %test = icmp sgt i32 %newlen, 0
   br i1 %test, label %and_if1, label %and_if_cont2
 

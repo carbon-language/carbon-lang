@@ -8,39 +8,39 @@ entry:
   br i1 undef, label %return, label %if.end10
 
 if.end10:                                         ; preds = %entry
-  %incdec.ptr = getelementptr inbounds i8* %call, i64 undef
+  %incdec.ptr = getelementptr inbounds i8, i8* %call, i64 undef
   %call17 = call i32 @ptou() nounwind
-  %incdec.ptr26.1 = getelementptr inbounds i8* %incdec.ptr, i64 -2
+  %incdec.ptr26.1 = getelementptr inbounds i8, i8* %incdec.ptr, i64 -2
   store i8 undef, i8* %incdec.ptr26.1, align 1
   %div27.1 = udiv i32 %call17, 100
   %rem.2 = urem i32 %div27.1, 10
   %add2230.2 = or i32 %rem.2, 48
   %conv25.2 = trunc i32 %add2230.2 to i8
-  %incdec.ptr26.2 = getelementptr inbounds i8* %incdec.ptr, i64 -3
+  %incdec.ptr26.2 = getelementptr inbounds i8, i8* %incdec.ptr, i64 -3
   store i8 %conv25.2, i8* %incdec.ptr26.2, align 1
-  %incdec.ptr26.3 = getelementptr inbounds i8* %incdec.ptr, i64 -4
+  %incdec.ptr26.3 = getelementptr inbounds i8, i8* %incdec.ptr, i64 -4
   store i8 undef, i8* %incdec.ptr26.3, align 1
   %div27.3 = udiv i32 %call17, 10000
   %rem.4 = urem i32 %div27.3, 10
   %add2230.4 = or i32 %rem.4, 48
   %conv25.4 = trunc i32 %add2230.4 to i8
-  %incdec.ptr26.4 = getelementptr inbounds i8* %incdec.ptr, i64 -5
+  %incdec.ptr26.4 = getelementptr inbounds i8, i8* %incdec.ptr, i64 -5
   store i8 %conv25.4, i8* %incdec.ptr26.4, align 1
   %div27.4 = udiv i32 %call17, 100000
   %rem.5 = urem i32 %div27.4, 10
   %add2230.5 = or i32 %rem.5, 48
   %conv25.5 = trunc i32 %add2230.5 to i8
-  %incdec.ptr26.5 = getelementptr inbounds i8* %incdec.ptr, i64 -6
+  %incdec.ptr26.5 = getelementptr inbounds i8, i8* %incdec.ptr, i64 -6
   store i8 %conv25.5, i8* %incdec.ptr26.5, align 1
-  %incdec.ptr26.6 = getelementptr inbounds i8* %incdec.ptr, i64 -7
+  %incdec.ptr26.6 = getelementptr inbounds i8, i8* %incdec.ptr, i64 -7
   store i8 0, i8* %incdec.ptr26.6, align 1
-  %incdec.ptr26.7 = getelementptr inbounds i8* %incdec.ptr, i64 -8
+  %incdec.ptr26.7 = getelementptr inbounds i8, i8* %incdec.ptr, i64 -8
   store i8 undef, i8* %incdec.ptr26.7, align 1
   %div27.7 = udiv i32 %call17, 100000000
   %rem.8 = urem i32 %div27.7, 10
   %add2230.8 = or i32 %rem.8, 48
   %conv25.8 = trunc i32 %add2230.8 to i8
-  %incdec.ptr26.8 = getelementptr inbounds i8* %incdec.ptr, i64 -9
+  %incdec.ptr26.8 = getelementptr inbounds i8, i8* %incdec.ptr, i64 -9
   store i8 %conv25.8, i8* %incdec.ptr26.8, align 1
   unreachable
 

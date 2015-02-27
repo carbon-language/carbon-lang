@@ -114,9 +114,9 @@ finally.throw:                                    ; preds = %cleanup.switch9
   unreachable
 
 finally.end:                                      ; preds = %cleanup.end10, %cleanup.switch9
-  %tmp11 = getelementptr inbounds %struct.S* %s1, i32 0, i32 0 ; <[2 x i8*]*> [#uses=1]
-  %arraydecay = getelementptr inbounds [2 x i8*]* %tmp11, i32 0, i32 0 ; <i8**> [#uses=1]
-  %arrayidx = getelementptr inbounds i8** %arraydecay, i32 1 ; <i8**> [#uses=1]
+  %tmp11 = getelementptr inbounds %struct.S, %struct.S* %s1, i32 0, i32 0 ; <[2 x i8*]*> [#uses=1]
+  %arraydecay = getelementptr inbounds [2 x i8*], [2 x i8*]* %tmp11, i32 0, i32 0 ; <i8**> [#uses=1]
+  %arrayidx = getelementptr inbounds i8*, i8** %arraydecay, i32 1 ; <i8**> [#uses=1]
   %tmp12 = load i8** %arrayidx                    ; <i8*> [#uses=1]
   store i8* %tmp12, i8** %retval
   %9 = load i8** %retval                          ; <i8*> [#uses=1]

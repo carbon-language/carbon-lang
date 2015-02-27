@@ -13,7 +13,7 @@ define internal void @""(i8*, i32, i8*) {
         br i1 %5, label %6, label %20
 
 ; <label>:6             ; preds = %4
-        %7 = getelementptr i8* %2, i32 %.0              ; <i8*> [#uses=1]
+        %7 = getelementptr i8, i8* %2, i32 %.0              ; <i8*> [#uses=1]
         %8 = bitcast i8* %7 to <4 x i16>*               ; <<4 x i16>*> [#uses=1]
         %9 = load <4 x i16>* %8, align 1                ; <<4 x i16>> [#uses=1]
         %10 = bitcast <4 x i16> %9 to <1 x i64>         ; <<1 x i64>> [#uses=1]
@@ -24,7 +24,7 @@ define internal void @""(i8*, i32, i8*) {
         %14 = shufflevector <8 x i16> %13, <8 x i16> %13, <8 x i32> < i32 0, i32 0, i32 1, i32 1, i32 2, i32 2, i32 3, i32 3 >          ; <<8 x i16>> [#uses=1]
         %15 = bitcast <8 x i16> %14 to <4 x i32>                ; <<4 x i32>> [#uses=1]
         %16 = sitofp <4 x i32> %15 to <4 x float>               ; <<4 x float>> [#uses=1]
-        %17 = getelementptr i8* %0, i32 %.0             ; <i8*> [#uses=1]
+        %17 = getelementptr i8, i8* %0, i32 %.0             ; <i8*> [#uses=1]
         %18 = bitcast i8* %17 to <4 x float>*           ; <<4 x float>*> [#uses=1]
         store <4 x float> %16, <4 x float>* %18, align 1
         %19 = add i32 %.0, 1            ; <i32> [#uses=1]

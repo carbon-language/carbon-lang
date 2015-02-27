@@ -7,11 +7,11 @@
 define i32 @foo(i32* %a) nounwind optsize {
 entry:
   %0 = load i32* %a, align 4
-  %arrayidx1 = getelementptr inbounds i32* %a, i32 1
+  %arrayidx1 = getelementptr inbounds i32, i32* %a, i32 1
   %1 = load i32* %arrayidx1, align 4
-  %arrayidx2 = getelementptr inbounds i32* %a, i32 2
+  %arrayidx2 = getelementptr inbounds i32, i32* %a, i32 2
   %2 = load i32* %arrayidx2, align 4
-  %add.ptr = getelementptr inbounds i32* %a, i32 3
+  %add.ptr = getelementptr inbounds i32, i32* %a, i32 3
 ;Make sure we do not have a duplicated register in the front of the reg list
 ;EXPECTED:  ldm [[BASE:r[0-9]+]]!, {[[REG:r[0-9]+]], {{r[0-9]+}},
 ;CHECK-NOT: ldm [[BASE:r[0-9]+]]!, {[[REG:r[0-9]+]], [[REG]],

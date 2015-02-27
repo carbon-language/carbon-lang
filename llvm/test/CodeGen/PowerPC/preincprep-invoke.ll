@@ -35,7 +35,7 @@ invoke.cont4:                                     ; preds = %invoke.cont
 
 for.cond.i.i30:                                   ; preds = %for.cond.i.i30, %invoke.cont4
   %indvars.iv.i.i26 = phi i64 [ %indvars.iv.next.i.i29, %for.cond.i.i30 ], [ 0, %invoke.cont4 ]
-  %arrayidx.i.i27 = getelementptr inbounds i8* %call7, i64 %indvars.iv.i.i26
+  %arrayidx.i.i27 = getelementptr inbounds i8, i8* %call7, i64 %indvars.iv.i.i26
   %0 = load i8* %arrayidx.i.i27, align 1
   %indvars.iv.next.i.i29 = add nuw nsw i64 %indvars.iv.i.i26, 1
   br label %for.cond.i.i30

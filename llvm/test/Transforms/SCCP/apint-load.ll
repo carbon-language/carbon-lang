@@ -12,13 +12,13 @@ define i212 @test1() {
 }
 
 define internal float @test2() {
-	%A = getelementptr [2 x { i212, float}]* @Y, i32 0, i32 1, i32 1
+	%A = getelementptr [2 x { i212, float}], [2 x { i212, float}]* @Y, i32 0, i32 1, i32 1
 	%B = load float* %A
 	ret float %B
 }
 
 define internal i212 @test3() {
-	%A = getelementptr [2 x { i212, float}]* @Y, i32 0, i32 0, i32 0
+	%A = getelementptr [2 x { i212, float}], [2 x { i212, float}]* @Y, i32 0, i32 0, i32 0
 	%B = load i212* %A
 	ret i212 %B
 }

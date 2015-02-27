@@ -17,7 +17,7 @@ entry:
   br i1 %cmp, label %cond.true, label %while.cond.preheader
 
 cond.true:                                        ; preds = %entry
-  %arrayidx = getelementptr inbounds i8** %argv, i64 1 ; <i8**> [#uses=1]
+  %arrayidx = getelementptr inbounds i8*, i8** %argv, i64 1 ; <i8**> [#uses=1]
   %tmp2 = load i8** %arrayidx                     ; <i8*> [#uses=1]
   %call = tail call i32 @atoi(i8* %tmp2) nounwind readonly ; <i32> [#uses=1]
   br label %while.cond.preheader
@@ -59,7 +59,7 @@ bb.nph:                                           ; preds = %for.cond.preheader
 
 for.body:                                         ; preds = %bb.nph, %for.cond
   %i.02 = phi i64 [ 2, %bb.nph ], [ %inc, %for.cond ] ; <i64> [#uses=2]
-  %arrayidx10 = getelementptr inbounds [8193 x i8]* @main.flags, i64 0, i64 %i.02 ; <i8*> [#uses=1]
+  %arrayidx10 = getelementptr inbounds [8193 x i8], [8193 x i8]* @main.flags, i64 0, i64 %i.02 ; <i8*> [#uses=1]
   store i8 1, i8* %arrayidx10
   %inc = add nsw i64 %i.02, 1                     ; <i64> [#uses=2]
   br label %for.cond
@@ -81,7 +81,7 @@ bb.nph16:                                         ; preds = %for.cond12.loopexit
 for.body15:                                       ; preds = %bb.nph16, %for.cond12
   %count.212 = phi i32 [ 0, %bb.nph16 ], [ %count.1, %for.cond12 ] ; <i32> [#uses=2]
   %i.17 = phi i64 [ 2, %bb.nph16 ], [ %inc37, %for.cond12 ] ; <i64> [#uses=4]
-  %arrayidx17 = getelementptr inbounds [8193 x i8]* @main.flags, i64 0, i64 %i.17 ; <i8*> [#uses=1]
+  %arrayidx17 = getelementptr inbounds [8193 x i8], [8193 x i8]* @main.flags, i64 0, i64 %i.17 ; <i8*> [#uses=1]
   %tmp18 = load i8* %arrayidx17                   ; <i8> [#uses=1]
   %tobool19 = icmp eq i8 %tmp18, 0                ; <i1> [#uses=1]
   br i1 %tobool19, label %for.inc35, label %if.then
@@ -103,7 +103,7 @@ bb.nph5:                                          ; preds = %if.then
 
 for.body25:                                       ; preds = %bb.nph5, %for.cond22
   %k.04 = phi i64 [ %add, %bb.nph5 ], [ %add31, %for.cond22 ] ; <i64> [#uses=2]
-  %arrayidx27 = getelementptr inbounds [8193 x i8]* @main.flags, i64 0, i64 %k.04 ; <i8*> [#uses=1]
+  %arrayidx27 = getelementptr inbounds [8193 x i8], [8193 x i8]* @main.flags, i64 0, i64 %k.04 ; <i8*> [#uses=1]
   store i8 0, i8* %arrayidx27
   %add31 = add nsw i64 %k.04, %i.17               ; <i64> [#uses=2]
   br label %for.cond22
@@ -146,7 +146,7 @@ for.body.preheader:                               ; preds = %entry
 
 for.body:                                         ; preds = %for.body.preheader, %for.body
   %i.03 = phi i64 [ %inc, %for.body ], [ 0, %for.body.preheader ] ; <i64> [#uses=2]
-  %arrayidx = getelementptr inbounds double* %p, i64 %i.03 ; <double*> [#uses=1]
+  %arrayidx = getelementptr inbounds double, double* %p, i64 %i.03 ; <double*> [#uses=1]
   store double 0.000000e+00, double* %arrayidx
   %inc = add i64 %i.03, 1                         ; <i64> [#uses=2]
   %divx = udiv i64 %n, 7                           ; <i64> [#uses=1]

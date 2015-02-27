@@ -66,7 +66,7 @@ define <2 x float> @vld2f_update(float** %ptr) nounwind {
 	%tmp2 = extractvalue %struct.__neon_float32x2x2_t %tmp1, 0
 	%tmp3 = extractvalue %struct.__neon_float32x2x2_t %tmp1, 1
 	%tmp4 = fadd <2 x float> %tmp2, %tmp3
-	%tmp5 = getelementptr float* %A, i32 4
+	%tmp5 = getelementptr float, float* %A, i32 4
 	store float* %tmp5, float** %ptr
 	ret <2 x float> %tmp4
 }
@@ -103,7 +103,7 @@ define <16 x i8> @vld2Qi8_update(i8** %ptr, i32 %inc) nounwind {
         %tmp2 = extractvalue %struct.__neon_int8x16x2_t %tmp1, 0
         %tmp3 = extractvalue %struct.__neon_int8x16x2_t %tmp1, 1
         %tmp4 = add <16 x i8> %tmp2, %tmp3
-	%tmp5 = getelementptr i8* %A, i32 %inc
+	%tmp5 = getelementptr i8, i8* %A, i32 %inc
 	store i8* %tmp5, i8** %ptr
 	ret <16 x i8> %tmp4
 }

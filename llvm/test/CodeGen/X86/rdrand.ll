@@ -69,7 +69,7 @@ while.body:                                       ; preds = %entry, %while.body
   %p.addr.03 = phi i32* [ %incdec.ptr, %while.body ], [ %p, %entry ]
   %n.addr.02 = phi i32 [ %dec, %while.body ], [ %n, %entry ]
   %dec = add nsw i32 %n.addr.02, -1
-  %incdec.ptr = getelementptr inbounds i32* %p.addr.03, i64 1
+  %incdec.ptr = getelementptr inbounds i32, i32* %p.addr.03, i64 1
   %rand = tail call { i32, i32 } @llvm.x86.rdrand.32() nounwind
   %v1 = extractvalue { i32, i32 } %rand, 0
   store i32 %v1, i32* %p.addr.03, align 4

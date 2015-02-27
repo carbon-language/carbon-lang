@@ -14,11 +14,11 @@ define void @PR22524({ float, float }* %arg) {
 ; 
 ; CHECK-LABEL: PR22524:
 entry:
-  %0 = getelementptr inbounds { float, float }* %arg,  i32 0, i32 1
+  %0 = getelementptr inbounds { float, float }, { float, float }* %arg,  i32 0, i32 1
   store float 0.000000e+00, float* %0, align 4
 ; CHECK: movl $0, 4(%rdi)
 
-  %1 = getelementptr inbounds { float, float }* %arg, i64 0,  i32 0
+  %1 = getelementptr inbounds { float, float }, { float, float }* %arg, i64 0,  i32 0
   %2 = bitcast float* %1 to i64*
   %3 = load i64* %2, align 8
   %4 = trunc i64 %3 to i32

@@ -13,7 +13,7 @@ define void @test(double* %i1, double* %i2, double* %o) {
 
 entry:
   %i1.0 = load double* %i1, align 16
-  %i1.gep1 = getelementptr double* %i1, i64 1
+  %i1.gep1 = getelementptr double, double* %i1, i64 1
   %i1.1 = load double* %i1.gep1, align 16
 ; CHECK: load double*
 ; CHECK: load double*
@@ -22,9 +22,9 @@ entry:
   br i1 undef, label %then, label %end
 
 then:
-  %i2.gep0 = getelementptr inbounds double* %i2, i64 0
+  %i2.gep0 = getelementptr inbounds double, double* %i2, i64 0
   %i2.0 = load double* %i2.gep0, align 16
-  %i2.gep1 = getelementptr inbounds double* %i2, i64 1
+  %i2.gep1 = getelementptr inbounds double, double* %i2, i64 1
   %i2.1 = load double* %i2.gep1, align 16
 ; CHECK: load double*
 ; CHECK: load double*
@@ -39,7 +39,7 @@ end:
 ; CHECK: extractelement <2 x double>
 ; CHECK: extractelement <2 x double>
   store double %phi0, double* %o, align 16
-  %o.gep1 = getelementptr inbounds double* %o, i64 1
+  %o.gep1 = getelementptr inbounds double, double* %o, i64 1
   store double %phi1, double* %o.gep1, align 16
   ret void
 }

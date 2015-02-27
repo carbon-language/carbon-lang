@@ -23,7 +23,7 @@ define void @store8(i8 %v, i8* %p) {
   ; NO_COMBINE_PTR_LABEL: and i64
   ; NO_COMBINE_PTR_LABEL: mul i64
   ; NO_COMBINE_PTR_LABEL: inttoptr i64 {{.*}} i16*
-  ; NO_COMBINE_PTR_LABEL: getelementptr i16*
+  ; NO_COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; NO_COMBINE_PTR_LABEL: store i16
   ; NO_COMBINE_PTR_LABEL: store i8
 
@@ -36,7 +36,7 @@ define void @store8(i8 %v, i8* %p) {
   ; COMBINE_PTR_LABEL: and i64
   ; COMBINE_PTR_LABEL: mul i64
   ; COMBINE_PTR_LABEL: inttoptr i64 {{.*}} i16*
-  ; COMBINE_PTR_LABEL: getelementptr i16*
+  ; COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; COMBINE_PTR_LABEL: store i16
   ; COMBINE_PTR_LABEL: store i8
 
@@ -51,9 +51,9 @@ define void @store16(i16 %v, i16* %p) {
   ; NO_COMBINE_PTR_LABEL: and i64
   ; NO_COMBINE_PTR_LABEL: mul i64
   ; NO_COMBINE_PTR_LABEL: inttoptr i64 {{.*}} i16*
-  ; NO_COMBINE_PTR_LABEL: getelementptr i16*
+  ; NO_COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; NO_COMBINE_PTR_LABEL: store i16
-  ; NO_COMBINE_PTR_LABEL: getelementptr i16*
+  ; NO_COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; NO_COMBINE_PTR_LABEL: store i16
   ; NO_COMBINE_PTR_LABEL: store i16
 
@@ -66,9 +66,9 @@ define void @store16(i16 %v, i16* %p) {
   ; COMBINE_PTR_LABEL: and i64
   ; COMBINE_PTR_LABEL: mul i64
   ; COMBINE_PTR_LABEL: inttoptr i64 {{.*}} i16*
-  ; COMBINE_PTR_LABEL: getelementptr i16*
+  ; COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; COMBINE_PTR_LABEL: store i16
-  ; COMBINE_PTR_LABEL: getelementptr i16*
+  ; COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; COMBINE_PTR_LABEL: store i16
   ; COMBINE_PTR_LABEL: store i16
 
@@ -83,13 +83,13 @@ define void @store32(i32 %v, i32* %p) {
   ; NO_COMBINE_PTR_LABEL: and i64
   ; NO_COMBINE_PTR_LABEL: mul i64
   ; NO_COMBINE_PTR_LABEL: inttoptr i64 {{.*}} i16*
-  ; NO_COMBINE_PTR_LABEL: getelementptr i16*
+  ; NO_COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; NO_COMBINE_PTR_LABEL: store i16
-  ; NO_COMBINE_PTR_LABEL: getelementptr i16*
+  ; NO_COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; NO_COMBINE_PTR_LABEL: store i16
-  ; NO_COMBINE_PTR_LABEL: getelementptr i16*
+  ; NO_COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; NO_COMBINE_PTR_LABEL: store i16
-  ; NO_COMBINE_PTR_LABEL: getelementptr i16*
+  ; NO_COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; NO_COMBINE_PTR_LABEL: store i16
   ; NO_COMBINE_PTR_LABEL: store i32
 
@@ -102,13 +102,13 @@ define void @store32(i32 %v, i32* %p) {
   ; COMBINE_PTR_LABEL: and i64
   ; COMBINE_PTR_LABEL: mul i64
   ; COMBINE_PTR_LABEL: inttoptr i64 {{.*}} i16*
-  ; COMBINE_PTR_LABEL: getelementptr i16*
+  ; COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; COMBINE_PTR_LABEL: store i16
-  ; COMBINE_PTR_LABEL: getelementptr i16*
+  ; COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; COMBINE_PTR_LABEL: store i16
-  ; COMBINE_PTR_LABEL: getelementptr i16*
+  ; COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; COMBINE_PTR_LABEL: store i16
-  ; COMBINE_PTR_LABEL: getelementptr i16*
+  ; COMBINE_PTR_LABEL: getelementptr i16, i16*
   ; COMBINE_PTR_LABEL: store i16
   ; COMBINE_PTR_LABEL: store i32
 

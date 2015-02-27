@@ -28,7 +28,7 @@ assert:                                           ; preds = %entry
   unreachable
 
 noassert:                                         ; preds = %entry
-  %tmp2 = getelementptr %core.time.TickDuration* %.this_arg, i32 0, i32 0
+  %tmp2 = getelementptr %core.time.TickDuration, %core.time.TickDuration* %.this_arg, i32 0, i32 0
   %tmp3 = load i64* %tmp2
   %tmp4 = sitofp i64 %tmp3 to ppc_fp128
   %tmp5 = load i64* @_D4core4time12TickDuration11ticksPerSecyl

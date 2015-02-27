@@ -9,7 +9,7 @@
 define void @yes(i1 %c) nounwind {
 entry:
   %a = alloca [4 x i64*], align 8
-  %__a.addr = getelementptr [4 x i64*]* %a, i64 0, i64 3
+  %__a.addr = getelementptr [4 x i64*], [4 x i64*]* %a, i64 0, i64 3
   call void @frob(i64** %__a.addr)
   br i1 %c, label %if.then, label %if.end
 
@@ -31,7 +31,7 @@ return:                                           ; preds = %if.end, %if.then
 define void @no0(i1 %c) nounwind {
 entry:
   %a = alloca [4 x i64*], align 8
-  %__a.addr = getelementptr [4 x i64*]* %a, i64 0, i64 4
+  %__a.addr = getelementptr [4 x i64*], [4 x i64*]* %a, i64 0, i64 4
   call void @frob(i64** %__a.addr)
   br i1 %c, label %if.then, label %if.end
 
@@ -53,7 +53,7 @@ return:                                           ; preds = %if.end, %if.then
 define void @no1(i1 %c, i64 %n) nounwind {
 entry:
   %a = alloca [4 x i64*], align 8
-  %__a.addr = getelementptr [4 x i64*]* %a, i64 0, i64 %n
+  %__a.addr = getelementptr [4 x i64*], [4 x i64*]* %a, i64 0, i64 %n
   call void @frob(i64** %__a.addr)
   br i1 %c, label %if.then, label %if.end
 
@@ -75,7 +75,7 @@ return:                                           ; preds = %if.end, %if.then
 define void @no2(i1 %c, i64 %n) nounwind {
 entry:
   %a = alloca [4 x i64*], align 8
-  %__a.addr = getelementptr [4 x i64*]* %a, i64 1, i64 0
+  %__a.addr = getelementptr [4 x i64*], [4 x i64*]* %a, i64 1, i64 0
   call void @frob(i64** %__a.addr)
   br i1 %c, label %if.then, label %if.end
 

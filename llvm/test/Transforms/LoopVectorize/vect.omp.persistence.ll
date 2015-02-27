@@ -45,13 +45,13 @@ for.header:
 for.body:
 
   %0 = add nsw i64 %indvars.iv, -5
-  %arrayidx = getelementptr inbounds float* %a, i64 %0
+  %arrayidx = getelementptr inbounds float, float* %a, i64 %0
   %1 = load float* %arrayidx, align 4, !llvm.mem.parallel_loop_access !1
   %2 = add nsw i64 %indvars.iv, 2
-  %arrayidx2 = getelementptr inbounds float* %a, i64 %2
+  %arrayidx2 = getelementptr inbounds float, float* %a, i64 %2
   %3 = load float* %arrayidx2, align 4, !llvm.mem.parallel_loop_access !1
   %mul = fmul float %1, %3
-  %arrayidx4 = getelementptr inbounds float* %a, i64 %indvars.iv
+  %arrayidx4 = getelementptr inbounds float, float* %a, i64 %indvars.iv
   store float %mul, float* %arrayidx4, align 4, !llvm.mem.parallel_loop_access !1
 
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1

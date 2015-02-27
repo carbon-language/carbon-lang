@@ -11,16 +11,16 @@
 define void @test_csr(%pl* nocapture readnone %this, %rs* nocapture %r) align 2 {
 ;CHECK-NOT: stp {{d[0-9]+}}, {{d[0-9]+}}
 entry:
-  %x.i = getelementptr inbounds %rs* %r, i64 0, i32 7, i32 0
-  %y.i = getelementptr inbounds %rs* %r, i64 0, i32 7, i32 1
-  %z.i = getelementptr inbounds %rs* %r, i64 0, i32 7, i32 2
-  %x.i61 = getelementptr inbounds %rs* %r, i64 0, i32 8, i32 0
-  %y.i62 = getelementptr inbounds %rs* %r, i64 0, i32 8, i32 1
-  %z.i63 = getelementptr inbounds %rs* %r, i64 0, i32 8, i32 2
-  %x.i58 = getelementptr inbounds %rs* %r, i64 0, i32 9, i32 0
-  %y.i59 = getelementptr inbounds %rs* %r, i64 0, i32 9, i32 1
-  %z.i60 = getelementptr inbounds %rs* %r, i64 0, i32 9, i32 2
-  %na = getelementptr inbounds %rs* %r, i64 0, i32 0
+  %x.i = getelementptr inbounds %rs, %rs* %r, i64 0, i32 7, i32 0
+  %y.i = getelementptr inbounds %rs, %rs* %r, i64 0, i32 7, i32 1
+  %z.i = getelementptr inbounds %rs, %rs* %r, i64 0, i32 7, i32 2
+  %x.i61 = getelementptr inbounds %rs, %rs* %r, i64 0, i32 8, i32 0
+  %y.i62 = getelementptr inbounds %rs, %rs* %r, i64 0, i32 8, i32 1
+  %z.i63 = getelementptr inbounds %rs, %rs* %r, i64 0, i32 8, i32 2
+  %x.i58 = getelementptr inbounds %rs, %rs* %r, i64 0, i32 9, i32 0
+  %y.i59 = getelementptr inbounds %rs, %rs* %r, i64 0, i32 9, i32 1
+  %z.i60 = getelementptr inbounds %rs, %rs* %r, i64 0, i32 9, i32 2
+  %na = getelementptr inbounds %rs, %rs* %r, i64 0, i32 0
   %0 = bitcast double* %x.i to i8*
   call void @llvm.memset.p0i8.i64(i8* %0, i8 0, i64 72, i32 8, i1 false)
   %1 = load i32* %na, align 4
@@ -28,9 +28,9 @@ entry:
   br i1 %cmp70, label %for.body.lr.ph, label %for.end
 
 for.body.lr.ph:                                   ; preds = %entry
-  %fn = getelementptr inbounds %rs* %r, i64 0, i32 4
+  %fn = getelementptr inbounds %rs, %rs* %r, i64 0, i32 4
   %2 = load %v** %fn, align 8
-  %fs = getelementptr inbounds %rs* %r, i64 0, i32 5
+  %fs = getelementptr inbounds %rs, %rs* %r, i64 0, i32 5
   %3 = load %v** %fs, align 8
   %4 = sext i32 %1 to i64
   br label %for.body
@@ -42,18 +42,18 @@ for.body:                                         ; preds = %for.body.lr.ph, %fo
   %7 = phi <2 x double> [ zeroinitializer, %for.body.lr.ph ], [ %22, %for.body ]
   %8 = phi <2 x double> [ zeroinitializer, %for.body.lr.ph ], [ %26, %for.body ]
   %9 = phi <2 x double> [ zeroinitializer, %for.body.lr.ph ], [ %28, %for.body ]
-  %x.i54 = getelementptr inbounds %v* %2, i64 %indvars.iv, i32 0
-  %x1.i = getelementptr inbounds %v* %3, i64 %indvars.iv, i32 0
-  %y.i56 = getelementptr inbounds %v* %2, i64 %indvars.iv, i32 1
+  %x.i54 = getelementptr inbounds %v, %v* %2, i64 %indvars.iv, i32 0
+  %x1.i = getelementptr inbounds %v, %v* %3, i64 %indvars.iv, i32 0
+  %y.i56 = getelementptr inbounds %v, %v* %2, i64 %indvars.iv, i32 1
   %10 = bitcast double* %x.i54 to <2 x double>*
   %11 = load <2 x double>* %10, align 8
-  %y2.i = getelementptr inbounds %v* %3, i64 %indvars.iv, i32 1
+  %y2.i = getelementptr inbounds %v, %v* %3, i64 %indvars.iv, i32 1
   %12 = bitcast double* %x1.i to <2 x double>*
   %13 = load <2 x double>* %12, align 8
   %14 = fadd fast <2 x double> %13, %11
-  %z.i57 = getelementptr inbounds %v* %2, i64 %indvars.iv, i32 2
+  %z.i57 = getelementptr inbounds %v, %v* %2, i64 %indvars.iv, i32 2
   %15 = load double* %z.i57, align 8
-  %z4.i = getelementptr inbounds %v* %3, i64 %indvars.iv, i32 2
+  %z4.i = getelementptr inbounds %v, %v* %3, i64 %indvars.iv, i32 2
   %16 = load double* %z4.i, align 8
   %add5.i = fadd fast double %16, %15
   %17 = fadd fast <2 x double> %6, %11

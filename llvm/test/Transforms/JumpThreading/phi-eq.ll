@@ -117,13 +117,13 @@ while.body:                                       ; preds = %while.cond
   %4 = load %struct._GList** %0, align 8
   %5 = load %struct._GList** %0, align 8
   %call2 = call %struct._GList* @g_list_first(%struct._GList* %5)
-  %data.i = getelementptr inbounds %struct._GList* %call2, i32 0, i32 0
+  %data.i = getelementptr inbounds %struct._GList, %struct._GList* %call2, i32 0, i32 0
   %6 = load i8** %data.i, align 8
   %7 = bitcast i8* %6 to %struct.filter_def*
-  %name.i = getelementptr inbounds %struct.filter_def* %7, i32 0, i32 0
+  %name.i = getelementptr inbounds %struct.filter_def, %struct.filter_def* %7, i32 0, i32 0
   %8 = load i8** %name.i, align 8
   call void @g_free(i8* %8) nounwind
-  %strval.i = getelementptr inbounds %struct.filter_def* %7, i32 0, i32 1
+  %strval.i = getelementptr inbounds %struct.filter_def, %struct.filter_def* %7, i32 0, i32 1
   %9 = load i8** %strval.i, align 8
   call void @g_free(i8* %9) nounwind
   %10 = bitcast %struct.filter_def* %7 to i8*
@@ -160,21 +160,21 @@ while.cond11:                                     ; preds = %cond.end, %do.end10
   br i1 %tobool12, label %while.body13, label %while.end16
 
 while.body13:                                     ; preds = %while.cond11
-  %data = getelementptr inbounds %struct._GList* %cond10, i32 0, i32 0
+  %data = getelementptr inbounds %struct._GList, %struct._GList* %cond10, i32 0, i32 0
   %12 = load i8** %data, align 8
   %13 = bitcast i8* %12 to %struct.filter_def*
   %14 = load %struct._GList** %0, align 8
-  %name = getelementptr inbounds %struct.filter_def* %13, i32 0, i32 0
+  %name = getelementptr inbounds %struct.filter_def, %struct.filter_def* %13, i32 0, i32 0
   %15 = load i8** %name, align 8
-  %strval = getelementptr inbounds %struct.filter_def* %13, i32 0, i32 1
+  %strval = getelementptr inbounds %struct.filter_def, %struct.filter_def* %13, i32 0, i32 1
   %16 = load i8** %strval, align 8
   %call.i7 = call noalias i8* @g_malloc(i64 16) nounwind
   %17 = bitcast i8* %call.i7 to %struct.filter_def*
   %call1.i = call noalias i8* @g_strdup(i8* %15) nounwind
-  %name.i8 = getelementptr inbounds %struct.filter_def* %17, i32 0, i32 0
+  %name.i8 = getelementptr inbounds %struct.filter_def, %struct.filter_def* %17, i32 0, i32 0
   store i8* %call1.i, i8** %name.i8, align 8
   %call2.i = call noalias i8* @g_strdup(i8* %16) nounwind
-  %strval.i9 = getelementptr inbounds %struct.filter_def* %17, i32 0, i32 1
+  %strval.i9 = getelementptr inbounds %struct.filter_def, %struct.filter_def* %17, i32 0, i32 1
   store i8* %call2.i, i8** %strval.i9, align 8
   %18 = bitcast %struct.filter_def* %17 to i8*
   %call3.i = call %struct._GList* @g_list_append(%struct._GList* %14, i8* %18) nounwind
@@ -183,7 +183,7 @@ while.body13:                                     ; preds = %while.cond11
   br i1 %tobool15, label %cond.true, label %cond.false
 
 cond.true:                                        ; preds = %while.body13
-  %next = getelementptr inbounds %struct._GList* %cond10, i32 0, i32 1
+  %next = getelementptr inbounds %struct._GList, %struct._GList* %cond10, i32 0, i32 1
   %19 = load %struct._GList** %next, align 8
   br label %cond.end
 

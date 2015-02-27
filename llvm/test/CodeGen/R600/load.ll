@@ -387,7 +387,7 @@ entry:
 ; SI: buffer_load_ubyte v{{[0-9]+}},
 define void @load_const_i8_unaligned(i32 addrspace(1)* %out, i8 addrspace(2)* %in) {
 entry:
-  %0 = getelementptr i8 addrspace(2)* %in, i32 1
+  %0 = getelementptr i8, i8 addrspace(2)* %in, i32 1
   %1 = load i8 addrspace(2)* %0
   %2 = zext i8 %1 to i32
   store i32 %2, i32 addrspace(1)* %out
@@ -428,7 +428,7 @@ entry:
 ; SI: buffer_load_ushort
 define void @load_const_i16_unaligned(i32 addrspace(1)* %out, i16 addrspace(2)* %in) {
 entry:
-  %0 = getelementptr i16 addrspace(2)* %in, i32 1
+  %0 = getelementptr i16, i16 addrspace(2)* %in, i32 1
   %1 = load i16 addrspace(2)* %0
   %2 = zext i16 %1 to i32
   store i32 %2, i32 addrspace(1)* %out
@@ -713,7 +713,7 @@ entry:
 define void @load_i32_v2i32_local(<2 x i32> addrspace(1)* %out, i32 addrspace(3)* %in) {
   %scalar = load i32 addrspace(3)* %in
   %tmp0 = bitcast i32 addrspace(3)* %in to <2 x i32> addrspace(3)*
-  %vec_ptr = getelementptr <2 x i32> addrspace(3)* %tmp0, i32 2
+  %vec_ptr = getelementptr <2 x i32>, <2 x i32> addrspace(3)* %tmp0, i32 2
   %vec0 = load <2 x i32> addrspace(3)* %vec_ptr, align 4
   %vec1 = insertelement <2 x i32> <i32 0, i32 0>, i32 %scalar, i32 0
   %vec = add <2 x i32> %vec0, %vec1
@@ -732,9 +732,9 @@ define void @load_i32_v2i32_local(<2 x i32> addrspace(1)* %out, i32 addrspace(3)
 ; R600: LDS_READ_RET
 define void @load_i32_local_const_ptr(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:
-  %tmp0 = getelementptr [512 x i32] addrspace(3)* @lds, i32 0, i32 1
+  %tmp0 = getelementptr [512 x i32], [512 x i32] addrspace(3)* @lds, i32 0, i32 1
   %tmp1 = load i32 addrspace(3)* %tmp0
-  %tmp2 = getelementptr i32 addrspace(1)* %out, i32 1
+  %tmp2 = getelementptr i32, i32 addrspace(1)* %out, i32 1
   store i32 %tmp1, i32 addrspace(1)* %tmp2
   ret void
 }

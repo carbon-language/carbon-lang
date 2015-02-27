@@ -24,7 +24,7 @@ for.body:                                         ; preds = %for.body.preheader,
   %add = add nsw i32 %0, %sum.03
   %inc = add nsw i32 %i.02, 1
   %exitcond = icmp eq i32 %inc, %n
-  %arrayidx.inc = getelementptr i32* %arrayidx.phi, i32 1
+  %arrayidx.inc = getelementptr i32, i32* %arrayidx.phi, i32 1
   br i1 %exitcond, label %for.end.loopexit, label %for.body
 
 for.end.loopexit:
@@ -54,7 +54,7 @@ for.body:
   %add = add nsw i32 %0, %sum.02
   %inc = add nsw i32 %i.01, 1
   %exitcond = icmp eq i32 %inc, 40
-  %arrayidx.inc = getelementptr i32* %arrayidx.phi, i32 1
+  %arrayidx.inc = getelementptr i32, i32* %arrayidx.phi, i32 1
   br i1 %exitcond, label %for.end, label %for.body
 
 for.end:
@@ -76,7 +76,7 @@ for.body:
   store i32 %i.01, i32* %arrayidx.phi, align 4
   %inc = add nsw i32 %i.01, 1
   %exitcond = icmp eq i32 %inc, 40
-  %arrayidx.inc = getelementptr i32* %arrayidx.phi, i32 1
+  %arrayidx.inc = getelementptr i32, i32* %arrayidx.phi, i32 1
   br i1 %exitcond, label %for.end, label %for.body
 
 for.end:

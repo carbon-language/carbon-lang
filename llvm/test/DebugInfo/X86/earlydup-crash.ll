@@ -17,7 +17,7 @@ bb:                                               ; preds = %entry
   br i1 undef, label %bb18, label %bb31.preheader
 
 bb31.preheader:                                   ; preds = %bb19, %bb
-  %tmp2 = getelementptr inbounds i8* %fname, i32 0
+  %tmp2 = getelementptr inbounds i8, i8* %fname, i32 0
   br label %bb31
 
 bb18:                                             ; preds = %bb

@@ -95,14 +95,14 @@ bb1:
   %t15 = icmp ugt i32 %n15, -4
   %m15 = select i1 %t15, i32 %n15, i32 -4
   %a16 = add i32 %m15, %a15
-  %gep = getelementptr i8* %base, i32 %a16
+  %gep = getelementptr i8, i8* %base, i32 %a16
   %ofs = add i32 %a16, 4
-  %limit = getelementptr i8* %base, i32 %ofs
+  %limit = getelementptr i8, i8* %base, i32 %ofs
   br label %loop
 
 loop:
   %iv = phi i8* [ %gep, %bb1 ], [ %inc, %loop ]
-  %inc = getelementptr inbounds i8* %iv, i64 1
+  %inc = getelementptr inbounds i8, i8* %iv, i64 1
   %exitcond = icmp eq i8* %inc, %limit
   br i1 %exitcond, label %loop, label %exit
 

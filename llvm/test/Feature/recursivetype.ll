@@ -87,7 +87,7 @@ bb3:            ; preds = %bb2
         ret %list* null
 
 bb4:            ; preds = %bb2
-        %idx = getelementptr %list* %reg115, i64 0, i32 1               ; <i32*> [#uses=1]
+        %idx = getelementptr %list, %list* %reg115, i64 0, i32 1               ; <i32*> [#uses=1]
         %reg111 = load i32* %idx                ; <i32> [#uses=1]
         %cond1013 = icmp ne i32 %reg111, %Data          ; <i1> [#uses=1]
         br i1 %cond1013, label %bb6, label %bb5
@@ -96,7 +96,7 @@ bb5:            ; preds = %bb4
         ret %list* %reg115
 
 bb6:            ; preds = %bb4
-        %idx2 = getelementptr %list* %reg115, i64 0, i32 0              ; <%list**> [#uses=1]
+        %idx2 = getelementptr %list, %list* %reg115, i64 0, i32 0              ; <%list**> [#uses=1]
         %reg116 = load %list** %idx2            ; <%list*> [#uses=1]
         br label %bb2
 }

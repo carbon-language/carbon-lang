@@ -32,12 +32,12 @@ for.body:                                         ; preds = %for.body, %for.body
 ; SOURCE-SCHED: cmp
 ; SOURCE-SCHED: bne
   %i.031 = phi i32 [ 0, %for.body.lr.ph ], [ %0, %for.body ]
-  %arrayidx11 = getelementptr float* %t, i32 %i.031
-  %arrayidx15 = getelementptr float* %u, i32 %i.031
-  %arrayidx19 = getelementptr i8* %red, i32 %i.031
-  %arrayidx22 = getelementptr i8* %green, i32 %i.031
-  %arrayidx25 = getelementptr i8* %blue, i32 %i.031
-  %arrayidx28 = getelementptr i8* %alpha, i32 %i.031
+  %arrayidx11 = getelementptr float, float* %t, i32 %i.031
+  %arrayidx15 = getelementptr float, float* %u, i32 %i.031
+  %arrayidx19 = getelementptr i8, i8* %red, i32 %i.031
+  %arrayidx22 = getelementptr i8, i8* %green, i32 %i.031
+  %arrayidx25 = getelementptr i8, i8* %blue, i32 %i.031
+  %arrayidx28 = getelementptr i8, i8* %alpha, i32 %i.031
   %tmp12 = load float* %arrayidx11, align 4
   tail call fastcc void @sample_3d_nearest(i8* %tObj, i8* undef, float undef, float %tmp12, float undef, i8* %arrayidx19, i8* %arrayidx22, i8* %arrayidx25, i8* %arrayidx28)
   %0 = add i32 %i.031, 1

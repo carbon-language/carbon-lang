@@ -16,7 +16,7 @@ target triple = "x86_64-apple-darwin10.4"
 ; CHECK: Z3fooPN4llvm5ValueE
 define zeroext i8 @_Z3fooPN4llvm5ValueE(%"struct.llvm::Value"* %V) ssp {
 entry:
-  %0 = getelementptr inbounds %"struct.llvm::Value"* %V, i64 0, i32 1 ; <i8*> [#uses=1]
+  %0 = getelementptr inbounds %"struct.llvm::Value", %"struct.llvm::Value"* %V, i64 0, i32 1 ; <i8*> [#uses=1]
   %1 = load i8* %0, align 8                       ; <i8> [#uses=2]
   %2 = icmp ugt i8 %1, 20                         ; <i1> [#uses=1]
   br i1 %2, label %bb.i, label %bb2

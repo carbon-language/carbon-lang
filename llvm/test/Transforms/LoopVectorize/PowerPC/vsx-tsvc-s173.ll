@@ -19,13 +19,13 @@ for.cond1.preheader:                              ; preds = %for.end, %entry
 
 for.body3:                                        ; preds = %for.body3, %for.cond1.preheader
   %indvars.iv = phi i64 [ 0, %for.cond1.preheader ], [ %indvars.iv.next, %for.body3 ]
-  %arrayidx = getelementptr inbounds %struct.GlobalData* @global_data, i64 0, i32 0, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds %struct.GlobalData, %struct.GlobalData* @global_data, i64 0, i32 0, i64 %indvars.iv
   %1 = load float* %arrayidx, align 4
-  %arrayidx5 = getelementptr inbounds %struct.GlobalData* @global_data, i64 0, i32 3, i64 %indvars.iv
+  %arrayidx5 = getelementptr inbounds %struct.GlobalData, %struct.GlobalData* @global_data, i64 0, i32 3, i64 %indvars.iv
   %2 = load float* %arrayidx5, align 4
   %add = fadd float %1, %2
   %3 = add nsw i64 %indvars.iv, 16000
-  %arrayidx8 = getelementptr inbounds %struct.GlobalData* @global_data, i64 0, i32 0, i64 %3
+  %arrayidx8 = getelementptr inbounds %struct.GlobalData, %struct.GlobalData* @global_data, i64 0, i32 0, i64 %3
   store float %add, float* %arrayidx8, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 16000

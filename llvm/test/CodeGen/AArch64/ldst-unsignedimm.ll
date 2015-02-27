@@ -167,12 +167,12 @@ define void @ldst_complex_offsets() {
 ; CHECK: adrp {{x[0-9]+}}, arr8
 ; CHECK: ldr {{x[0-9]+}}, [{{x[0-9]+}}, {{#?}}:lo12:arr8]
 
-  %arr8_sub1_addr = getelementptr i8* %arr8_addr, i64 1
+  %arr8_sub1_addr = getelementptr i8, i8* %arr8_addr, i64 1
   %arr8_sub1 = load volatile i8* %arr8_sub1_addr
   store volatile i8 %arr8_sub1, i8* @var_8bit
 ; CHECK: ldrb {{w[0-9]+}}, [{{x[0-9]+}}, #1]
 
-  %arr8_sub4095_addr = getelementptr i8* %arr8_addr, i64 4095
+  %arr8_sub4095_addr = getelementptr i8, i8* %arr8_addr, i64 4095
   %arr8_sub4095 = load volatile i8* %arr8_sub4095_addr
   store volatile i8 %arr8_sub4095, i8* @var_8bit
 ; CHECK: ldrb {{w[0-9]+}}, [{{x[0-9]+}}, #4095]
@@ -182,12 +182,12 @@ define void @ldst_complex_offsets() {
 ; CHECK: adrp {{x[0-9]+}}, arr16
 ; CHECK: ldr {{x[0-9]+}}, [{{x[0-9]+}}, {{#?}}:lo12:arr16]
 
-  %arr16_sub1_addr = getelementptr i16* %arr16_addr, i64 1
+  %arr16_sub1_addr = getelementptr i16, i16* %arr16_addr, i64 1
   %arr16_sub1 = load volatile i16* %arr16_sub1_addr
   store volatile i16 %arr16_sub1, i16* @var_16bit
 ; CHECK: ldrh {{w[0-9]+}}, [{{x[0-9]+}}, #2]
 
-  %arr16_sub4095_addr = getelementptr i16* %arr16_addr, i64 4095
+  %arr16_sub4095_addr = getelementptr i16, i16* %arr16_addr, i64 4095
   %arr16_sub4095 = load volatile i16* %arr16_sub4095_addr
   store volatile i16 %arr16_sub4095, i16* @var_16bit
 ; CHECK: ldrh {{w[0-9]+}}, [{{x[0-9]+}}, #8190]
@@ -197,12 +197,12 @@ define void @ldst_complex_offsets() {
 ; CHECK: adrp {{x[0-9]+}}, arr32
 ; CHECK: ldr {{x[0-9]+}}, [{{x[0-9]+}}, {{#?}}:lo12:arr32]
 
-  %arr32_sub1_addr = getelementptr i32* %arr32_addr, i64 1
+  %arr32_sub1_addr = getelementptr i32, i32* %arr32_addr, i64 1
   %arr32_sub1 = load volatile i32* %arr32_sub1_addr
   store volatile i32 %arr32_sub1, i32* @var_32bit
 ; CHECK: ldr {{w[0-9]+}}, [{{x[0-9]+}}, #4]
 
-  %arr32_sub4095_addr = getelementptr i32* %arr32_addr, i64 4095
+  %arr32_sub4095_addr = getelementptr i32, i32* %arr32_addr, i64 4095
   %arr32_sub4095 = load volatile i32* %arr32_sub4095_addr
   store volatile i32 %arr32_sub4095, i32* @var_32bit
 ; CHECK: ldr {{w[0-9]+}}, [{{x[0-9]+}}, #16380]
@@ -212,12 +212,12 @@ define void @ldst_complex_offsets() {
 ; CHECK: adrp {{x[0-9]+}}, arr64
 ; CHECK: ldr {{x[0-9]+}}, [{{x[0-9]+}}, {{#?}}:lo12:arr64]
 
-  %arr64_sub1_addr = getelementptr i64* %arr64_addr, i64 1
+  %arr64_sub1_addr = getelementptr i64, i64* %arr64_addr, i64 1
   %arr64_sub1 = load volatile i64* %arr64_sub1_addr
   store volatile i64 %arr64_sub1, i64* @var_64bit
 ; CHECK: ldr {{x[0-9]+}}, [{{x[0-9]+}}, #8]
 
-  %arr64_sub4095_addr = getelementptr i64* %arr64_addr, i64 4095
+  %arr64_sub4095_addr = getelementptr i64, i64* %arr64_addr, i64 4095
   %arr64_sub4095 = load volatile i64* %arr64_sub4095_addr
   store volatile i64 %arr64_sub4095, i64* @var_64bit
 ; CHECK: ldr {{x[0-9]+}}, [{{x[0-9]+}}, #32760]

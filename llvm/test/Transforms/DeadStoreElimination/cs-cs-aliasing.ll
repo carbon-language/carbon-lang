@@ -22,18 +22,18 @@ define weak_odr zeroext i1 @test() #2 align 2 {
 bb:
   %tmp = alloca %class.basic_string, align 8
   %tmp1 = alloca %class.basic_string, align 8
-  %tmp3 = getelementptr inbounds %class.basic_string* %tmp, i64 0, i32 0, i32 0, i32 2
+  %tmp3 = getelementptr inbounds %class.basic_string, %class.basic_string* %tmp, i64 0, i32 0, i32 0, i32 2
   %tmp4 = bitcast %union.anon* %tmp3 to i8*
-  %tmp5 = getelementptr inbounds %class.basic_string* %tmp, i64 0, i32 0, i32 0, i32 0, i32 0
-  %tmp6 = getelementptr inbounds %class.basic_string* %tmp, i64 0, i32 0, i32 0, i32 1
-  %tmp7 = getelementptr inbounds i8* %tmp4, i64 1
+  %tmp5 = getelementptr inbounds %class.basic_string, %class.basic_string* %tmp, i64 0, i32 0, i32 0, i32 0, i32 0
+  %tmp6 = getelementptr inbounds %class.basic_string, %class.basic_string* %tmp, i64 0, i32 0, i32 0, i32 1
+  %tmp7 = getelementptr inbounds i8, i8* %tmp4, i64 1
   %tmp8 = bitcast %class.basic_string* %tmp to i8*
   %tmp9 = bitcast i64 0 to i64
-  %tmp10 = getelementptr inbounds %class.basic_string* %tmp1, i64 0, i32 0, i32 0, i32 2
+  %tmp10 = getelementptr inbounds %class.basic_string, %class.basic_string* %tmp1, i64 0, i32 0, i32 0, i32 2
   %tmp11 = bitcast %union.anon* %tmp10 to i8*
-  %tmp12 = getelementptr inbounds %class.basic_string* %tmp1, i64 0, i32 0, i32 0, i32 0, i32 0
-  %tmp13 = getelementptr inbounds %class.basic_string* %tmp1, i64 0, i32 0, i32 0, i32 1
-  %tmp14 = getelementptr inbounds i8* %tmp11, i64 1
+  %tmp12 = getelementptr inbounds %class.basic_string, %class.basic_string* %tmp1, i64 0, i32 0, i32 0, i32 0, i32 0
+  %tmp13 = getelementptr inbounds %class.basic_string, %class.basic_string* %tmp1, i64 0, i32 0, i32 0, i32 1
+  %tmp14 = getelementptr inbounds i8, i8* %tmp11, i64 1
   %tmp15 = bitcast %class.basic_string* %tmp1 to i8*
   br label %_ZN12basic_stringIcSt11char_traitsIcESaIcEEC2EPKcRKS2_.exit
 

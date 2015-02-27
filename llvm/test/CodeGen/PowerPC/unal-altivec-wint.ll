@@ -6,7 +6,7 @@ declare <4 x i32> @llvm.ppc.altivec.lvx(i8*) #1
 
 define <4 x i32> @test1(<4 x i32>* %h) #0 {
 entry:
-  %h1 = getelementptr <4 x i32>* %h, i64 1
+  %h1 = getelementptr <4 x i32>, <4 x i32>* %h, i64 1
   %hv = bitcast <4 x i32>* %h1 to i8*
   %vl = call <4 x i32> @llvm.ppc.altivec.lvx(i8* %hv)
 
@@ -27,7 +27,7 @@ declare void @llvm.ppc.altivec.stvx(<4 x i32>, i8*) #0
 
 define <4 x i32> @test2(<4 x i32>* %h, <4 x i32> %d) #0 {
 entry:
-  %h1 = getelementptr <4 x i32>* %h, i64 1
+  %h1 = getelementptr <4 x i32>, <4 x i32>* %h, i64 1
   %hv = bitcast <4 x i32>* %h1 to i8*
   call void @llvm.ppc.altivec.stvx(<4 x i32> %d, i8* %hv)
 

@@ -15,7 +15,7 @@ entry:
 
 if.then:                                          ; preds = %entry
   %a1 = load float* %a, align 8
-  %arrayidx1 = getelementptr inbounds float* %a, i64 1
+  %arrayidx1 = getelementptr inbounds float, float* %a, i64 1
   %a2 = load float* %arrayidx1, align 4
   %add = fadd fast float %a1, %a2
   br label %if.end

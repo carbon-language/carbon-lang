@@ -62,11 +62,11 @@ bb:
   %tmp4 = fmul double %tmp3, undef
   %tmp5 = fmul double %tmp3, undef
   %tmp6 = fsub double %tmp5, undef
-  %tmp7 = getelementptr inbounds %struct.hoge* %arg, i64 0, i32 1
+  %tmp7 = getelementptr inbounds %struct.hoge, %struct.hoge* %arg, i64 0, i32 1
   store double %tmp6, double* %tmp7, align 8
   %tmp8 = fmul double %tmp1, undef
   %tmp9 = fsub double %tmp8, undef
-  %tmp10 = getelementptr inbounds %struct.hoge* %arg, i64 0, i32 2
+  %tmp10 = getelementptr inbounds %struct.hoge, %struct.hoge* %arg, i64 0, i32 2
   store double %tmp9, double* %tmp10, align 8
   br i1 undef, label %bb11, label %bb12
 
@@ -86,8 +86,8 @@ bb14:                                             ; preds = %bb12, %bb11
 
 define void @rc4_crypt(%struct.rc4_state.0.24* nocapture %s) {
 entry:
-  %x1 = getelementptr inbounds %struct.rc4_state.0.24* %s, i64 0, i32 0
-  %y2 = getelementptr inbounds %struct.rc4_state.0.24* %s, i64 0, i32 1
+  %x1 = getelementptr inbounds %struct.rc4_state.0.24, %struct.rc4_state.0.24* %s, i64 0, i32 0
+  %y2 = getelementptr inbounds %struct.rc4_state.0.24, %struct.rc4_state.0.24* %s, i64 0, i32 1
   br i1 undef, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.body, %entry

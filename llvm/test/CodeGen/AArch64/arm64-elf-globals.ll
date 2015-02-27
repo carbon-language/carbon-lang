@@ -96,7 +96,7 @@ define i32 @test_vis() {
 @var_default = external global [2 x i32]
 
 define i32 @test_default_align() {
-  %addr = getelementptr [2 x i32]* @var_default, i32 0, i32 0
+  %addr = getelementptr [2 x i32], [2 x i32]* @var_default, i32 0, i32 0
   %val = load i32* %addr
   ret i32 %val
 ; CHECK-LABEL: test_default_align:

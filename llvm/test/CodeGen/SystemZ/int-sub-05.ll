@@ -28,7 +28,7 @@ define void @f2(i64 %addr) {
 ; CHECK: slbg {{%r[0-5]}}, 0(%r2)
 ; CHECK: br %r14
   %bptr = inttoptr i64 %addr to i128 *
-  %aptr = getelementptr i128 *%bptr, i64 -8
+  %aptr = getelementptr i128, i128 *%bptr, i64 -8
   %a = load i128 *%aptr
   %b = load i128 *%bptr
   %sub = sub i128 %a, %b
@@ -44,7 +44,7 @@ define void @f3(i64 %base) {
 ; CHECK: br %r14
   %addr = add i64 %base, 524272
   %bptr = inttoptr i64 %addr to i128 *
-  %aptr = getelementptr i128 *%bptr, i64 -8
+  %aptr = getelementptr i128, i128 *%bptr, i64 -8
   %a = load i128 *%aptr
   %b = load i128 *%bptr
   %sub = sub i128 %a, %b
@@ -62,7 +62,7 @@ define void @f4(i64 %base) {
 ; CHECK: br %r14
   %addr = add i64 %base, 524280
   %bptr = inttoptr i64 %addr to i128 *
-  %aptr = getelementptr i128 *%bptr, i64 -8
+  %aptr = getelementptr i128, i128 *%bptr, i64 -8
   %a = load i128 *%aptr
   %b = load i128 *%bptr
   %sub = sub i128 %a, %b
@@ -80,7 +80,7 @@ define void @f5(i64 %base) {
 ; CHECK: br %r14
   %addr = add i64 %base, 524288
   %bptr = inttoptr i64 %addr to i128 *
-  %aptr = getelementptr i128 *%bptr, i64 -8
+  %aptr = getelementptr i128, i128 *%bptr, i64 -8
   %a = load i128 *%aptr
   %b = load i128 *%bptr
   %sub = sub i128 %a, %b
@@ -96,7 +96,7 @@ define void @f6(i64 %base) {
 ; CHECK: br %r14
   %addr = add i64 %base, -524288
   %bptr = inttoptr i64 %addr to i128 *
-  %aptr = getelementptr i128 *%bptr, i64 -8
+  %aptr = getelementptr i128, i128 *%bptr, i64 -8
   %a = load i128 *%aptr
   %b = load i128 *%bptr
   %sub = sub i128 %a, %b
@@ -112,7 +112,7 @@ define void @f7(i64 %base) {
 ; CHECK: br %r14
   %addr = add i64 %base, -524296
   %bptr = inttoptr i64 %addr to i128 *
-  %aptr = getelementptr i128 *%bptr, i64 -8
+  %aptr = getelementptr i128, i128 *%bptr, i64 -8
   %a = load i128 *%aptr
   %b = load i128 *%bptr
   %sub = sub i128 %a, %b
@@ -128,10 +128,10 @@ define void @f8(i128 *%ptr0) {
 ; CHECK: slg {{%r[0-9]+}}, {{[0-9]+}}(%r15)
 ; CHECK: slbg {{%r[0-9]+}}, {{[0-9]+}}(%r15)
 ; CHECK: br %r14
-  %ptr1 = getelementptr i128 *%ptr0, i128 2
-  %ptr2 = getelementptr i128 *%ptr0, i128 4
-  %ptr3 = getelementptr i128 *%ptr0, i128 6
-  %ptr4 = getelementptr i128 *%ptr0, i128 8
+  %ptr1 = getelementptr i128, i128 *%ptr0, i128 2
+  %ptr2 = getelementptr i128, i128 *%ptr0, i128 4
+  %ptr3 = getelementptr i128, i128 *%ptr0, i128 6
+  %ptr4 = getelementptr i128, i128 *%ptr0, i128 8
 
   %val0 = load i128 *%ptr0
   %val1 = load i128 *%ptr1

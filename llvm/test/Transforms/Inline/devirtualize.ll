@@ -78,7 +78,7 @@ entry:
 
 cast.notnull:                                     ; preds = %entry
   %1 = bitcast %struct.C* %d to i8*               ; <i8*> [#uses=1]
-  %add.ptr = getelementptr i8* %1, i64 8          ; <i8*> [#uses=1]
+  %add.ptr = getelementptr i8, i8* %1, i64 8          ; <i8*> [#uses=1]
   %2 = bitcast i8* %add.ptr to %struct.A*         ; <%struct.A*> [#uses=1]
   br label %cast.end
 
@@ -86,7 +86,7 @@ cast.end:                                         ; preds = %entry, %cast.notnul
   %3 = phi %struct.A* [ %2, %cast.notnull ], [ null, %entry ] ; <%struct.A*> [#uses=2]
   %4 = bitcast %struct.A* %3 to i32 (%struct.A*)*** ; <i32 (%struct.A*)***> [#uses=1]
   %5 = load i32 (%struct.A*)*** %4                ; <i32 (%struct.A*)**> [#uses=1]
-  %vfn = getelementptr inbounds i32 (%struct.A*)** %5, i64 0 ; <i32 (%struct.A*)**> [#uses=1]
+  %vfn = getelementptr inbounds i32 (%struct.A*)*, i32 (%struct.A*)** %5, i64 0 ; <i32 (%struct.A*)**> [#uses=1]
   %6 = load i32 (%struct.A*)** %vfn               ; <i32 (%struct.A*)*> [#uses=1]
   %call = call i32 %6(%struct.A* %3)              ; <i32> [#uses=1]
   ret i32 %call
@@ -100,7 +100,7 @@ entry:
 define linkonce_odr i32 @_ZThn8_N1D1fEv(%struct.C* %this) {
 entry:
   %0 = bitcast %struct.C* %this to i8*            ; <i8*> [#uses=1]
-  %1 = getelementptr inbounds i8* %0, i64 -8      ; <i8*> [#uses=1]
+  %1 = getelementptr inbounds i8, i8* %0, i64 -8      ; <i8*> [#uses=1]
   %2 = bitcast i8* %1 to %struct.C*               ; <%struct.C*> [#uses=1]
   %call = call i32 @_ZN1D1fEv(%struct.C* %2)      ; <i32> [#uses=1]
   ret i32 %call
@@ -110,11 +110,11 @@ define linkonce_odr void @_ZN1DC2Ev(%struct.C* %this) inlinehint ssp align 2 {
 entry:
   call void @_ZN1CC2Ev(%struct.C* %this)
   %0 = bitcast %struct.C* %this to i8*            ; <i8*> [#uses=1]
-  %1 = getelementptr inbounds i8* %0, i64 0       ; <i8*> [#uses=1]
+  %1 = getelementptr inbounds i8, i8* %0, i64 0       ; <i8*> [#uses=1]
   %2 = bitcast i8* %1 to i8***                    ; <i8***> [#uses=1]
   store i8** getelementptr inbounds ([6 x i8*]* @_ZTV1D, i64 0, i64 2), i8*** %2
   %3 = bitcast %struct.C* %this to i8*            ; <i8*> [#uses=1]
-  %4 = getelementptr inbounds i8* %3, i64 8       ; <i8*> [#uses=1]
+  %4 = getelementptr inbounds i8, i8* %3, i64 8       ; <i8*> [#uses=1]
   %5 = bitcast i8* %4 to i8***                    ; <i8***> [#uses=1]
   store i8** getelementptr inbounds ([6 x i8*]* @_ZTV1D, i64 0, i64 5), i8*** %5
   ret void
@@ -125,15 +125,15 @@ entry:
   %0 = bitcast %struct.C* %this to %struct.A*     ; <%struct.A*> [#uses=1]
   call void @_ZN1AC2Ev(%struct.A* %0)
   %1 = bitcast %struct.C* %this to i8*            ; <i8*> [#uses=1]
-  %2 = getelementptr inbounds i8* %1, i64 8       ; <i8*> [#uses=1]
+  %2 = getelementptr inbounds i8, i8* %1, i64 8       ; <i8*> [#uses=1]
   %3 = bitcast i8* %2 to %struct.A*               ; <%struct.A*> [#uses=1]
   call void @_ZN1BC2Ev(%struct.A* %3)
   %4 = bitcast %struct.C* %this to i8*            ; <i8*> [#uses=1]
-  %5 = getelementptr inbounds i8* %4, i64 0       ; <i8*> [#uses=1]
+  %5 = getelementptr inbounds i8, i8* %4, i64 0       ; <i8*> [#uses=1]
   %6 = bitcast i8* %5 to i8***                    ; <i8***> [#uses=1]
   store i8** getelementptr inbounds ([6 x i8*]* @_ZTV1C, i64 0, i64 2), i8*** %6
   %7 = bitcast %struct.C* %this to i8*            ; <i8*> [#uses=1]
-  %8 = getelementptr inbounds i8* %7, i64 8       ; <i8*> [#uses=1]
+  %8 = getelementptr inbounds i8, i8* %7, i64 8       ; <i8*> [#uses=1]
   %9 = bitcast i8* %8 to i8***                    ; <i8***> [#uses=1]
   store i8** getelementptr inbounds ([6 x i8*]* @_ZTV1C, i64 0, i64 5), i8*** %9
   ret void
@@ -147,7 +147,7 @@ entry:
 define linkonce_odr i32 @_ZThn8_N1C1fEv(%struct.C* %this) {
 entry:
   %0 = bitcast %struct.C* %this to i8*            ; <i8*> [#uses=1]
-  %1 = getelementptr inbounds i8* %0, i64 -8      ; <i8*> [#uses=1]
+  %1 = getelementptr inbounds i8, i8* %0, i64 -8      ; <i8*> [#uses=1]
   %2 = bitcast i8* %1 to %struct.C*               ; <%struct.C*> [#uses=1]
   %call = call i32 @_ZN1C1fEv(%struct.C* %2)      ; <i32> [#uses=1]
   ret i32 %call
@@ -156,7 +156,7 @@ entry:
 define linkonce_odr void @_ZN1AC2Ev(%struct.A* %this) inlinehint ssp align 2 {
 entry:
   %0 = bitcast %struct.A* %this to i8*            ; <i8*> [#uses=1]
-  %1 = getelementptr inbounds i8* %0, i64 0       ; <i8*> [#uses=1]
+  %1 = getelementptr inbounds i8, i8* %0, i64 0       ; <i8*> [#uses=1]
   %2 = bitcast i8* %1 to i8***                    ; <i8***> [#uses=1]
   store i8** getelementptr inbounds ([3 x i8*]* @_ZTV1A, i64 0, i64 2), i8*** %2
   ret void
@@ -165,7 +165,7 @@ entry:
 define linkonce_odr void @_ZN1BC2Ev(%struct.A* %this) inlinehint ssp align 2 {
 entry:
   %0 = bitcast %struct.A* %this to i8*            ; <i8*> [#uses=1]
-  %1 = getelementptr inbounds i8* %0, i64 0       ; <i8*> [#uses=1]
+  %1 = getelementptr inbounds i8, i8* %0, i64 0       ; <i8*> [#uses=1]
   %2 = bitcast i8* %1 to i8***                    ; <i8***> [#uses=1]
   store i8** getelementptr inbounds ([3 x i8*]* @_ZTV1B, i64 0, i64 2), i8*** %2
   ret void

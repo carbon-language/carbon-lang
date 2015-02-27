@@ -18,12 +18,12 @@ entry:
 
 if.end:                                           ; preds = %entry
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %call4, i8* %name, i64 %call, i32 1, i1 false)
-  %arrayidx = getelementptr inbounds i8* %call4, i64 %call
+  %arrayidx = getelementptr inbounds i8, i8* %call4, i64 %call
   store i8 46, i8* %arrayidx, align 1
 ; CHECK: store i8 46
-  %add.ptr5 = getelementptr inbounds i8* %call4, i64 %add
+  %add.ptr5 = getelementptr inbounds i8, i8* %call4, i64 %add
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %add.ptr5, i8* %domain, i64 %call1, i32 1, i1 false)
-  %arrayidx8 = getelementptr inbounds i8* %call4, i64 %add2
+  %arrayidx8 = getelementptr inbounds i8, i8* %call4, i64 %add2
   store i8 0, i8* %arrayidx8, align 1
   br label %return
 

@@ -12,7 +12,7 @@ main_body:
   br i1 %cmp, label %if, label %else
 
 if:
-  %lds_ptr = getelementptr [64 x float] addrspace(3)* @lds, i32 0, i32 0
+  %lds_ptr = getelementptr [64 x float], [64 x float] addrspace(3)* @lds, i32 0, i32 0
   %lds_data = load float addrspace(3)* %lds_ptr
   br label %endif
 

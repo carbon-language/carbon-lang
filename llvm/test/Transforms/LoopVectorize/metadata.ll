@@ -9,10 +9,10 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
-  %arrayidx = getelementptr inbounds float* %b, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds float, float* %b, i64 %indvars.iv
   %0 = load float* %arrayidx, align 4, !tbaa !0
   %conv = fptosi float %0 to i32
-  %arrayidx2 = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   store i32 %conv, i32* %arrayidx2, align 4, !tbaa !4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1600

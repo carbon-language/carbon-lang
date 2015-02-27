@@ -40,7 +40,7 @@ entry:
 ; CHECK: edge entry -> if.end probability is 1 / 2 = 50%
 
 if.end:                                           ; preds = %entry
-  %arrayidx = getelementptr inbounds i8** %argv, i64 1, !dbg !30
+  %arrayidx = getelementptr inbounds i8*, i8** %argv, i64 1, !dbg !30
   %0 = load i8** %arrayidx, align 8, !dbg !30, !tbaa !31
   %call = tail call i32 @atoi(i8* %0) #4, !dbg !30
   tail call void @llvm.dbg.value(metadata i32 %call, i64 0, metadata !17, metadata !{}), !dbg !30

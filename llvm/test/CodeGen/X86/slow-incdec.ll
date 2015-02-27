@@ -28,7 +28,7 @@ for.cond:                                         ; preds = %for.body
 
 for.body:                                         ; preds = %for.body.preheader, %for.cond
   %i.06 = phi i32 [ %dec, %for.cond ], [ %s, %for.body.preheader ]
-  %arrayidx = getelementptr inbounds i32* %a, i32 %i.06
+  %arrayidx = getelementptr inbounds i32, i32* %a, i32 %i.06
   %0 = load i32* %arrayidx, align 4, !tbaa !1
   %cmp1 = icmp eq i32 %0, 0
 ;
@@ -59,7 +59,7 @@ for.cond:                                         ; preds = %for.body
 
 for.body:                                         ; preds = %for.body.preheader, %for.cond
   %i.06 = phi i32 [ %inc, %for.cond ], [ %s, %for.body.preheader ]
-  %arrayidx = getelementptr inbounds i32* %a, i32 %i.06
+  %arrayidx = getelementptr inbounds i32, i32* %a, i32 %i.06
   %0 = load i32* %arrayidx, align 4, !tbaa !1
   %cmp1 = icmp eq i32 %0, 0
   %inc = add nsw i32 %i.06, 1

@@ -7,7 +7,7 @@ declare i32 @f(i8 * nest, i32)
 ; Most common case
 define i32 @test0(i32 %n) {
   %alloca = alloca [10 x i8], align 16
-  %gep = getelementptr [10 x i8]* %alloca, i32 0, i32 0
+  %gep = getelementptr [10 x i8], [10 x i8]* %alloca, i32 0, i32 0
   call void @llvm.init.trampoline(i8* %gep, i8* bitcast (i32 (i8*, i32)* @f to i8*),
                                   i8* null)
   %tramp = call i8* @llvm.adjust.trampoline(i8* %gep)
@@ -62,7 +62,7 @@ define i32 @test3(i32 %n, i8* %trampmem) {
 
 define i32 @test4(i32 %n) {
   %alloca = alloca [10 x i8], align 16
-  %gep = getelementptr [10 x i8]* %alloca, i32 0, i32 0
+  %gep = getelementptr [10 x i8], [10 x i8]* %alloca, i32 0, i32 0
   call void @llvm.init.trampoline(i8* %gep, i8* bitcast (i32 (i8*, i32)* @f to i8*),
                                   i8* null)
 

@@ -14,7 +14,7 @@ entry:
 
 loop:
   %index = phi i64 [ 0, %entry ], [ %next, %loop ]
-  %ptr = getelementptr i32 *%dest, i64 %index
+  %ptr = getelementptr i32, i32 *%dest, i64 %index
   store i32 %a, i32 *%ptr
   %next = add i64 %index, 1
   %cmp = icmp ne i64 %next, 100

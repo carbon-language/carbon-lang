@@ -38,7 +38,7 @@ for.body14.lr.ph:
 
 vector.body:
   %index = phi i64 [ %index.next, %vector.body ], [ %0, %for.body14.lr.ph ]
-  %4 = getelementptr inbounds i8* %rowsptr, i64 %index
+  %4 = getelementptr inbounds i8, i8* %rowsptr, i64 %index
   %5 = bitcast i8* %4 to <4 x i8>*
   %wide.load = load <4 x i8>* %5, align 1
   %index.next = add i64 %index, 8

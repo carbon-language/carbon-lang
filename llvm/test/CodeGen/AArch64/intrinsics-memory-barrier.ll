@@ -22,7 +22,7 @@ define void @test_dmb_reordering(i32 %a, i32 %b, i32* %d) {
 
   call void @llvm.aarch64.dmb(i32 15); CHECK: dmb sy
 
-  %d1 = getelementptr i32* %d, i64 1
+  %d1 = getelementptr i32, i32* %d, i64 1
   store i32 %b, i32* %d1             ; CHECK: str {{w[0-9]+}}, [{{x[0-9]+}}, #4]
 
   ret void
@@ -34,7 +34,7 @@ define void @test_dsb_reordering(i32 %a, i32 %b, i32* %d) {
 
   call void @llvm.aarch64.dsb(i32 15); CHECK: dsb sy
 
-  %d1 = getelementptr i32* %d, i64 1
+  %d1 = getelementptr i32, i32* %d, i64 1
   store i32 %b, i32* %d1             ; CHECK: str {{w[0-9]+}}, [{{x[0-9]+}}, #4]
 
   ret void
@@ -46,7 +46,7 @@ define void @test_isb_reordering(i32 %a, i32 %b, i32* %d) {
 
   call void @llvm.aarch64.isb(i32 15); CHECK: isb
 
-  %d1 = getelementptr i32* %d, i64 1
+  %d1 = getelementptr i32, i32* %d, i64 1
   store i32 %b, i32* %d1             ; CHECK: str {{w[0-9]+}}, [{{x[0-9]+}}, #4]
 
   ret void

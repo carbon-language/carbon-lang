@@ -59,7 +59,7 @@ entry:
 ; SI-DAG: v_rcp_f32
 ; SI-DAG: v_mul_f32
 define void @fdiv_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
-  %b_ptr = getelementptr <4 x float> addrspace(1)* %in, i32 1
+  %b_ptr = getelementptr <4 x float>, <4 x float> addrspace(1)* %in, i32 1
   %a = load <4 x float> addrspace(1) * %in
   %b = load <4 x float> addrspace(1) * %b_ptr
   %result = fdiv <4 x float> %a, %b

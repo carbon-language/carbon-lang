@@ -13,7 +13,7 @@ define double @test() nounwind uwtable ssp {
 entry:
   %retval = alloca %struct.S, align 8
   %ret = alloca %struct.S, align 8
-  %b = getelementptr inbounds %struct.S* %ret, i32 0, i32 1
+  %b = getelementptr inbounds %struct.S, %struct.S* %ret, i32 0, i32 1
   store double 1.000000e+00, double* %b, align 8
   %0 = bitcast %struct.S* %retval to i8*
   %1 = bitcast %struct.S* %ret to i8*

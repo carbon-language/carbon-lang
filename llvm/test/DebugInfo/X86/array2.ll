@@ -31,7 +31,7 @@ entry:
   store i32* %p, i32** %p.addr, align 8
   call void @llvm.dbg.declare(metadata i32** %p.addr, metadata !19, metadata !{!"0x102"}), !dbg !20
   %0 = load i32** %p.addr, align 8, !dbg !21
-  %arrayidx = getelementptr inbounds i32* %0, i64 0, !dbg !21
+  %arrayidx = getelementptr inbounds i32, i32* %0, i64 0, !dbg !21
   store i32 42, i32* %arrayidx, align 4, !dbg !21
   ret void, !dbg !22
 }
@@ -54,9 +54,9 @@ entry:
   call void @llvm.dbg.declare(metadata [4 x i32]* %array, metadata !26, metadata !{!"0x102"}), !dbg !30
   %0 = bitcast [4 x i32]* %array to i8*, !dbg !30
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* bitcast ([4 x i32]* @main.array to i8*), i64 16, i32 16, i1 false), !dbg !30
-  %arraydecay = getelementptr inbounds [4 x i32]* %array, i32 0, i32 0, !dbg !31
+  %arraydecay = getelementptr inbounds [4 x i32], [4 x i32]* %array, i32 0, i32 0, !dbg !31
   call void @f(i32* %arraydecay), !dbg !31
-  %arrayidx = getelementptr inbounds [4 x i32]* %array, i32 0, i64 0, !dbg !32
+  %arrayidx = getelementptr inbounds [4 x i32], [4 x i32]* %array, i32 0, i64 0, !dbg !32
   %1 = load i32* %arrayidx, align 4, !dbg !32
   ret i32 %1, !dbg !32
 }

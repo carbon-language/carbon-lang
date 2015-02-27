@@ -10,7 +10,7 @@ tailrecurse:                                      ; preds = %do.cond, %entry
   %l.tr = phi i32 [ %l, %entry ], [ %i.1, %do.cond ]
   %r.tr = phi i32 [ %r, %entry ], [ %l.tr, %do.cond ]
   %idxprom12 = sext i32 %r.tr to i64
-  %arrayidx14 = getelementptr inbounds i32* %a, i64 %idxprom12
+  %arrayidx14 = getelementptr inbounds i32, i32* %a, i64 %idxprom12
   br label %do.body
 
 do.body:                                          ; preds = %do.cond, %tailrecurse

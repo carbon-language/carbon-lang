@@ -41,7 +41,7 @@ entry:
 ; CHECK: movk x[[REG]], #0x73ce, lsl #16
 ; CHECK: movk x[[REG]], #0x2ff2
   %0 = load i8** @pd2, align 8
-  %arrayidx = getelementptr inbounds i8* %0, i64 12345678901234
+  %arrayidx = getelementptr inbounds i8, i8* %0, i64 12345678901234
   %1 = load i8* %arrayidx, align 1
   ret i8 %1
 }

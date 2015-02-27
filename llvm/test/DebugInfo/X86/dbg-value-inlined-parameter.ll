@@ -47,10 +47,10 @@ define i32 @foo(%struct.S1* nocapture %sp, i32 %nums) nounwind optsize ssp {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.S1* %sp, i64 0, metadata !9, metadata !{!"0x102"}), !dbg !20
   tail call void @llvm.dbg.value(metadata i32 %nums, i64 0, metadata !18, metadata !{!"0x102"}), !dbg !21
-  %tmp2 = getelementptr inbounds %struct.S1* %sp, i64 0, i32 1, !dbg !22
+  %tmp2 = getelementptr inbounds %struct.S1, %struct.S1* %sp, i64 0, i32 1, !dbg !22
   store i32 %nums, i32* %tmp2, align 4, !dbg !22
   %call = tail call float* @bar(i32 %nums) nounwind optsize, !dbg !27
-  %tmp5 = getelementptr inbounds %struct.S1* %sp, i64 0, i32 0, !dbg !27
+  %tmp5 = getelementptr inbounds %struct.S1, %struct.S1* %sp, i64 0, i32 0, !dbg !27
   store float* %call, float** %tmp5, align 8, !dbg !27
   %cmp = icmp ne float* %call, null, !dbg !29
   %cond = zext i1 %cmp to i32, !dbg !29

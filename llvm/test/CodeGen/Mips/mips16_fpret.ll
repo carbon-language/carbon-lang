@@ -36,8 +36,8 @@ entry:
   %retval = alloca { float, float }, align 4
   %cx.real = load float* getelementptr inbounds ({ float, float }* @cx, i32 0, i32 0)
   %cx.imag = load float* getelementptr inbounds ({ float, float }* @cx, i32 0, i32 1)
-  %real = getelementptr inbounds { float, float }* %retval, i32 0, i32 0
-  %imag = getelementptr inbounds { float, float }* %retval, i32 0, i32 1
+  %real = getelementptr inbounds { float, float }, { float, float }* %retval, i32 0, i32 0
+  %imag = getelementptr inbounds { float, float }, { float, float }* %retval, i32 0, i32 1
   store float %cx.real, float* %real
   store float %cx.imag, float* %imag
   %0 = load { float, float }* %retval
@@ -55,8 +55,8 @@ entry:
   %retval = alloca { double, double }, align 8
   %dcx.real = load double* getelementptr inbounds ({ double, double }* @dcx, i32 0, i32 0)
   %dcx.imag = load double* getelementptr inbounds ({ double, double }* @dcx, i32 0, i32 1)
-  %real = getelementptr inbounds { double, double }* %retval, i32 0, i32 0
-  %imag = getelementptr inbounds { double, double }* %retval, i32 0, i32 1
+  %real = getelementptr inbounds { double, double }, { double, double }* %retval, i32 0, i32 0
+  %imag = getelementptr inbounds { double, double }, { double, double }* %retval, i32 0, i32 1
   store double %dcx.real, double* %real
   store double %dcx.imag, double* %imag
   %0 = load { double, double }* %retval

@@ -36,7 +36,7 @@ define void @f3(i64 *%base, i64 %alt, i32 %limit) {
 ; CHECK: clfi %r4, 42
 ; CHECK: stocghe %r3, 524280(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%base, i64 65535
+  %ptr = getelementptr i64, i64 *%base, i64 65535
   %cond = icmp ult i32 %limit, 42
   %orig = load i64 *%ptr
   %res = select i1 %cond, i64 %orig, i64 %alt
@@ -51,7 +51,7 @@ define void @f4(i64 *%base, i64 %alt, i32 %limit) {
 ; CHECK: clfi %r4, 42
 ; CHECK: stocghe %r3, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%base, i64 65536
+  %ptr = getelementptr i64, i64 *%base, i64 65536
   %cond = icmp ult i32 %limit, 42
   %orig = load i64 *%ptr
   %res = select i1 %cond, i64 %orig, i64 %alt
@@ -65,7 +65,7 @@ define void @f5(i64 *%base, i64 %alt, i32 %limit) {
 ; CHECK: clfi %r4, 42
 ; CHECK: stocghe %r3, -524288(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%base, i64 -65536
+  %ptr = getelementptr i64, i64 *%base, i64 -65536
   %cond = icmp ult i32 %limit, 42
   %orig = load i64 *%ptr
   %res = select i1 %cond, i64 %orig, i64 %alt
@@ -80,7 +80,7 @@ define void @f6(i64 *%base, i64 %alt, i32 %limit) {
 ; CHECK: clfi %r4, 42
 ; CHECK: stocghe %r3, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%base, i64 -65537
+  %ptr = getelementptr i64, i64 *%base, i64 -65537
   %cond = icmp ult i32 %limit, 42
   %orig = load i64 *%ptr
   %res = select i1 %cond, i64 %orig, i64 %alt

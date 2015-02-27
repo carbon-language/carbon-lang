@@ -6,8 +6,8 @@ define i64 @ptrdiff1(i8* %ptr) {
 ; CHECK-LABEL: @ptrdiff1(
 ; CHECK-NEXT: ret i64 42
 
-  %first = getelementptr inbounds i8* %ptr, i32 0
-  %last = getelementptr inbounds i8* %ptr, i32 42
+  %first = getelementptr inbounds i8, i8* %ptr, i32 0
+  %last = getelementptr inbounds i8, i8* %ptr, i32 42
   %first.int = ptrtoint i8* %first to i64
   %last.int = ptrtoint i8* %last to i64
   %diff = sub i64 %last.int, %first.int
@@ -18,14 +18,14 @@ define i64 @ptrdiff2(i8* %ptr) {
 ; CHECK-LABEL: @ptrdiff2(
 ; CHECK-NEXT: ret i64 42
 
-  %first1 = getelementptr inbounds i8* %ptr, i32 0
-  %first2 = getelementptr inbounds i8* %first1, i32 1
-  %first3 = getelementptr inbounds i8* %first2, i32 2
-  %first4 = getelementptr inbounds i8* %first3, i32 4
-  %last1 = getelementptr inbounds i8* %first2, i32 48
-  %last2 = getelementptr inbounds i8* %last1, i32 8
-  %last3 = getelementptr inbounds i8* %last2, i32 -4
-  %last4 = getelementptr inbounds i8* %last3, i32 -4
+  %first1 = getelementptr inbounds i8, i8* %ptr, i32 0
+  %first2 = getelementptr inbounds i8, i8* %first1, i32 1
+  %first3 = getelementptr inbounds i8, i8* %first2, i32 2
+  %first4 = getelementptr inbounds i8, i8* %first3, i32 4
+  %last1 = getelementptr inbounds i8, i8* %first2, i32 48
+  %last2 = getelementptr inbounds i8, i8* %last1, i32 8
+  %last3 = getelementptr inbounds i8, i8* %last2, i32 -4
+  %last4 = getelementptr inbounds i8, i8* %last3, i32 -4
   %first.int = ptrtoint i8* %first4 to i64
   %last.int = ptrtoint i8* %last4 to i64
   %diff = sub i64 %last.int, %first.int
@@ -39,8 +39,8 @@ define i64 @ptrdiff3(i8* %ptr) {
 ; CHECK: sub
 ; CHECK: ret
 
-  %first = getelementptr i8* %ptr, i32 0
-  %last = getelementptr i8* %ptr, i32 42
+  %first = getelementptr i8, i8* %ptr, i32 0
+  %last = getelementptr i8, i8* %ptr, i32 42
   %first.int = ptrtoint i8* %first to i64
   %last.int = ptrtoint i8* %last to i64
   %diff = sub i64 %last.int, %first.int
@@ -64,12 +64,12 @@ define <4 x i32> @ptrdiff4(<4 x i8*> %arg) nounwind {
 
 define i32 @ptrdiff5() nounwind {
 bb:
-  %tmp = getelementptr inbounds %struct.ham* @global, i32 0, i32 1
-  %tmp1 = getelementptr inbounds [2 x [2 x i32]]* %tmp, i32 0, i32 0
+  %tmp = getelementptr inbounds %struct.ham, %struct.ham* @global, i32 0, i32 1
+  %tmp1 = getelementptr inbounds [2 x [2 x i32]], [2 x [2 x i32]]* %tmp, i32 0, i32 0
   %tmp2 = bitcast [2 x i32]* %tmp1 to i32*
   %tmp3 = ptrtoint i32* %tmp2 to i32
-  %tmp4 = getelementptr inbounds %struct.ham* @global, i32 0, i32 1
-  %tmp5 = getelementptr inbounds [2 x [2 x i32]]* %tmp4, i32 0, i32 0
+  %tmp4 = getelementptr inbounds %struct.ham, %struct.ham* @global, i32 0, i32 1
+  %tmp5 = getelementptr inbounds [2 x [2 x i32]], [2 x [2 x i32]]* %tmp4, i32 0, i32 0
   %tmp6 = ptrtoint [2 x i32]* %tmp5 to i32
   %tmp7 = sub i32 %tmp3, %tmp6
   ret i32 %tmp7

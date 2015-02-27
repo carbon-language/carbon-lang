@@ -6,7 +6,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define i32 @main(i32 %argc, i8** nocapture %argv) {
 entry:
-  %0 = getelementptr inbounds i8* undef, i64 5    ; <i8*> [#uses=1]
+  %0 = getelementptr inbounds i8, i8* undef, i64 5    ; <i8*> [#uses=1]
   %1 = bitcast i8* %0 to i32*                     ; <i32*> [#uses=1]
   store i32 undef, i32* %1, align 1
   br i1 undef, label %k121.i.i, label %l117.i.i
@@ -29,7 +29,7 @@ l129.i.i:                                         ; preds = %k121.i.i
   unreachable
 
 k133.i.i:                                         ; preds = %k121.i.i
-  %2 = getelementptr i8* undef, i64 5             ; <i8*> [#uses=1]
+  %2 = getelementptr i8, i8* undef, i64 5             ; <i8*> [#uses=1]
   %3 = bitcast i8* %2 to i1*                      ; <i1*> [#uses=1]
   %4 = load i1* %3                                ; <i1> [#uses=1]
   br i1 %4, label %k151.i.i, label %l147.i.i

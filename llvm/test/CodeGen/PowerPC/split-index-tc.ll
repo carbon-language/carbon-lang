@@ -20,7 +20,7 @@ cond.false.i123:                                  ; preds = %_ZN4llvm12MachineIn
   unreachable
 
 _ZNK4llvm14MachineOperand6getRegEv.exit:          ; preds = %_ZN4llvm12MachineInstr10getOperandEj.exit
-  %IsDef.i = getelementptr inbounds %"class.llvm::MachineOperand"* %0, i64 undef, i32 1
+  %IsDef.i = getelementptr inbounds %"class.llvm::MachineOperand", %"class.llvm::MachineOperand"* %0, i64 undef, i32 1
   %1 = bitcast [3 x i8]* %IsDef.i to i24*
   %bf.load.i = load i24* %1, align 1
   %2 = and i24 %bf.load.i, 128

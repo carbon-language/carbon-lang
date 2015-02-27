@@ -12,7 +12,7 @@ entry:
   %output.addr = alloca float*, align 8
   store float* %output, float** %output.addr, align 8
   %0 = load float** %output.addr, align 8
-  %arrayidx = getelementptr inbounds float* %0, i64 0
+  %arrayidx = getelementptr inbounds float, float* %0, i64 0
   %1 = load float* %arrayidx, align 4
   %conv = fpext float %1 to double
   %cmp = fcmp olt double %conv, 1.000000e+01
@@ -39,7 +39,7 @@ if.else:                                          ; preds = %entry
 if.end:                                           ; preds = %if.else, %if.then
   call void @llvm.cuda.syncthreads()
   %6 = load float** %output.addr, align 8
-  %arrayidx6 = getelementptr inbounds float* %6, i64 0
+  %arrayidx6 = getelementptr inbounds float, float* %6, i64 0
   %7 = load float* %arrayidx6, align 4
   %conv7 = fpext float %7 to double
   %cmp8 = fcmp olt double %conv7, 1.000000e+01

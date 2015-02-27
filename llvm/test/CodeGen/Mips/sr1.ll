@@ -8,9 +8,9 @@
 define void @foo1() #0 {
 entry:
   %c = alloca [10 x i8], align 1
-  %arraydecay = getelementptr inbounds [10 x i8]* %c, i32 0, i32 0
+  %arraydecay = getelementptr inbounds [10 x i8], [10 x i8]* %c, i32 0, i32 0
   call void @x(i8* %arraydecay)
-  %arraydecay1 = getelementptr inbounds [10 x i8]* %c, i32 0, i32 0
+  %arraydecay1 = getelementptr inbounds [10 x i8], [10 x i8]* %c, i32 0, i32 0
   call void @x(i8* %arraydecay1)
   ret void
 ; CHECK: 	.ent	foo1
@@ -25,9 +25,9 @@ declare void @x(i8*) #1
 define void @foo2() #0 {
 entry:
   %c = alloca [150 x i8], align 1
-  %arraydecay = getelementptr inbounds [150 x i8]* %c, i32 0, i32 0
+  %arraydecay = getelementptr inbounds [150 x i8], [150 x i8]* %c, i32 0, i32 0
   call void @x(i8* %arraydecay)
-  %arraydecay1 = getelementptr inbounds [150 x i8]* %c, i32 0, i32 0
+  %arraydecay1 = getelementptr inbounds [150 x i8], [150 x i8]* %c, i32 0, i32 0
   call void @x(i8* %arraydecay1)
   ret void
 ; CHECK: 	.ent	foo2

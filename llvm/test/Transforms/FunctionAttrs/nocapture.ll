@@ -39,7 +39,7 @@ define i1 @c5(i32* %q, i32 %bitno) {
 	%tmp2 = lshr i32 %tmp, %bitno
 	%bit = and i32 %tmp2, 1
         ; subtle escape mechanism follows
-	%lookup = getelementptr [2 x i1]* @lookup_table, i32 0, i32 %bit
+	%lookup = getelementptr [2 x i1], [2 x i1]* @lookup_table, i32 0, i32 %bit
 	%val = load i1* %lookup
 	ret i1 %val
 }
@@ -64,7 +64,7 @@ define i1* @lookup_bit(i32* %q, i32 %bitno) readnone nounwind {
 	%tmp = ptrtoint i32* %q to i32
 	%tmp2 = lshr i32 %tmp, %bitno
 	%bit = and i32 %tmp2, 1
-	%lookup = getelementptr [2 x i1]* @lookup_table, i32 0, i32 %bit
+	%lookup = getelementptr [2 x i1], [2 x i1]* @lookup_table, i32 0, i32 %bit
 	ret i1* %lookup
 }
 

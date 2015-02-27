@@ -33,10 +33,10 @@ entry:
 for.body.i:                                       ; preds = %for.body.i.preheader, %for.body.i
   %accumulator.09.i = phi double [ %add.i, %for.body.i ], [ 0.000000e+00, %entry ]
   %i.08.i = phi i64 [ %inc.i, %for.body.i ], [ 0, %entry ]
-  %arrayidx.i = getelementptr inbounds [2048 x float]* %x, i64 0, i64 %i.08.i
+  %arrayidx.i = getelementptr inbounds [2048 x float], [2048 x float]* %x, i64 0, i64 %i.08.i
   %v14 = load float* %arrayidx.i, align 4
   %conv.i = fpext float %v14 to double
-  %arrayidx1.i = getelementptr inbounds [2048 x float]* %y, i64 0, i64 %i.08.i
+  %arrayidx1.i = getelementptr inbounds [2048 x float], [2048 x float]* %y, i64 0, i64 %i.08.i
   %v15 = load float* %arrayidx1.i, align 4
   %conv2.i = fpext float %v15 to double
   %mul.i = fmul double %conv.i, %conv2.i

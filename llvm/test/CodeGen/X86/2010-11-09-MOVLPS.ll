@@ -29,7 +29,7 @@ entry:
 
 "2":                                              ; preds = %entry
   %3 = bitcast i8* %0 to <2 x i32>*
-  %4 = getelementptr inbounds %0* %1, i32 0, i32 0
+  %4 = getelementptr inbounds %0, %0* %1, i32 0, i32 0
   %5 = bitcast %"int[]"* %4 to <4 x float>*
   %6 = load <4 x float>* %5, align 16
   %7 = bitcast <2 x i32>* %3 to <2 x float>*
@@ -39,14 +39,14 @@ entry:
   %11 = insertelement <2 x double> %10, double undef, i32 1
   %12 = bitcast <2 x double> %11 to <4 x float>
   %13 = shufflevector <4 x float> %6, <4 x float> %12, <4 x i32> <i32 4, i32 5, i32 2, i32 3>
-  %14 = getelementptr inbounds %0* %1, i32 0, i32 0
+  %14 = getelementptr inbounds %0, %0* %1, i32 0, i32 0
   %15 = bitcast %"int[]"* %14 to <4 x float>*
   store <4 x float> %13, <4 x float>* %15, align 16
   %16 = bitcast i8* %0 to <2 x i32>*
   %17 = bitcast <2 x i32>* %16 to i8*
-  %18 = getelementptr i8* %17, i64 8
+  %18 = getelementptr i8, i8* %17, i64 8
   %19 = bitcast i8* %18 to <2 x i32>*
-  %20 = getelementptr inbounds %0* %2, i32 0, i32 0
+  %20 = getelementptr inbounds %0, %0* %2, i32 0, i32 0
   %21 = bitcast %"int[]"* %20 to <4 x float>*
   %22 = load <4 x float>* %21, align 16
   %23 = bitcast <2 x i32>* %19 to <2 x float>*
@@ -56,7 +56,7 @@ entry:
   %27 = insertelement <2 x double> %26, double undef, i32 1
   %28 = bitcast <2 x double> %27 to <4 x float>
   %29 = shufflevector <4 x float> %22, <4 x float> %28, <4 x i32> <i32 4, i32 5, i32 2, i32 3>
-  %30 = getelementptr inbounds %0* %2, i32 0, i32 0
+  %30 = getelementptr inbounds %0, %0* %2, i32 0, i32 0
   %31 = bitcast %"int[]"* %30 to <4 x float>*
   store <4 x float> %29, <4 x float>* %31, align 16
   br label %return

@@ -174,7 +174,7 @@ define void @vdupn128(%struct.int8x8_t* noalias nocapture sret %agg.result) noun
 entry:
 ;CHECK-LABEL: vdupn128:
 ;CHECK: vmov.i8 d{{.*}}, #0x80
-  %0 = getelementptr inbounds %struct.int8x8_t* %agg.result, i32 0, i32 0 ; <<8 x i8>*> [#uses=1]
+  %0 = getelementptr inbounds %struct.int8x8_t, %struct.int8x8_t* %agg.result, i32 0, i32 0 ; <<8 x i8>*> [#uses=1]
   store <8 x i8> <i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128, i8 -128>, <8 x i8>* %0, align 8
   ret void
 }
@@ -183,7 +183,7 @@ define void @vdupnneg75(%struct.int8x8_t* noalias nocapture sret %agg.result) no
 entry:
 ;CHECK-LABEL: vdupnneg75:
 ;CHECK: vmov.i8 d{{.*}}, #0xb5
-  %0 = getelementptr inbounds %struct.int8x8_t* %agg.result, i32 0, i32 0 ; <<8 x i8>*> [#uses=1]
+  %0 = getelementptr inbounds %struct.int8x8_t, %struct.int8x8_t* %agg.result, i32 0, i32 0 ; <<8 x i8>*> [#uses=1]
   store <8 x i8> <i8 -75, i8 -75, i8 -75, i8 -75, i8 -75, i8 -75, i8 -75, i8 -75>, <8 x i8>* %0, align 8
   ret void
 }

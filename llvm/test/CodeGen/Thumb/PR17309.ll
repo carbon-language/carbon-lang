@@ -10,7 +10,7 @@
 define void @pass_C() #0 {
 entry:
   %c = alloca %struct.C, align 1
-  %0 = getelementptr inbounds %struct.C* %c, i32 0, i32 0, i32 0
+  %0 = getelementptr inbounds %struct.C, %struct.C* %c, i32 0, i32 0, i32 0
   call void @llvm.lifetime.start(i64 1000, i8* %0) #1
   call void @use_C(%struct.C* byval %c) #3
   call void @llvm.lifetime.end(i64 1000, i8* %0) #1

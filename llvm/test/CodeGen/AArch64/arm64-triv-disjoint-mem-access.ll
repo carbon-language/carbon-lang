@@ -9,9 +9,9 @@ entry:
 ; CHECK: ldr {{w[0-9]+}}, [x[[REG:[0-9]+]], #4]
 ; CHECK: str {{w[0-9]+}}, [x[[REG]], #8]
   %0 = load i32** @a, align 8, !tbaa !1
-  %arrayidx = getelementptr inbounds i32* %0, i64 2
+  %arrayidx = getelementptr inbounds i32, i32* %0, i64 2
   store i32 %i, i32* %arrayidx, align 4, !tbaa !5
-  %arrayidx1 = getelementptr inbounds i32* %0, i64 1
+  %arrayidx1 = getelementptr inbounds i32, i32* %0, i64 1
   %1 = load i32* %arrayidx1, align 4, !tbaa !5
   %add = add nsw i32 %k, %i
   store i32 %add, i32* @m, align 4, !tbaa !5

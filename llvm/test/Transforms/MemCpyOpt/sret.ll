@@ -9,12 +9,12 @@ define void @ccosl(%0* noalias sret %agg.result, %0* byval align 8 %z) nounwind 
 entry:
   %iz = alloca %0
   %memtmp = alloca %0, align 16
-  %tmp1 = getelementptr %0* %z, i32 0, i32 1
+  %tmp1 = getelementptr %0, %0* %z, i32 0, i32 1
   %tmp2 = load x86_fp80* %tmp1, align 16
   %tmp3 = fsub x86_fp80 0xK80000000000000000000, %tmp2
-  %tmp4 = getelementptr %0* %iz, i32 0, i32 1
-  %real = getelementptr %0* %iz, i32 0, i32 0
-  %tmp7 = getelementptr %0* %z, i32 0, i32 0
+  %tmp4 = getelementptr %0, %0* %iz, i32 0, i32 1
+  %real = getelementptr %0, %0* %iz, i32 0, i32 0
+  %tmp7 = getelementptr %0, %0* %z, i32 0, i32 0
   %tmp8 = load x86_fp80* %tmp7, align 16
   store x86_fp80 %tmp3, x86_fp80* %real, align 16
   store x86_fp80 %tmp8, x86_fp80* %tmp4, align 16

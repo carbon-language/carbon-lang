@@ -47,10 +47,10 @@ entry:
   br i1 undef, label %for.cond, label %for.end
 
 for.cond:                                         ; preds = %for.cond, %entry
-  %tmp1 = getelementptr { i32*}* %__first, i32 0, i32 0
+  %tmp1 = getelementptr { i32*}, { i32*}* %__first, i32 0, i32 0
   %tmp2 = load i32** %tmp1, align 4
   %call = tail call i32* @test3helper(i32* %tmp2)
-  %tmp3 = getelementptr { i32*}* %__first, i32 0, i32 0
+  %tmp3 = getelementptr { i32*}, { i32*}* %__first, i32 0, i32 0
   store i32* %call, i32** %tmp3, align 4
   br i1 false, label %for.cond, label %for.end
 

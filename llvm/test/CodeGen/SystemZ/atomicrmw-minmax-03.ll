@@ -69,7 +69,7 @@ define i32 @f5(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: l %r2, 4092(%r3)
 ; CHECK: cs %r2, {{%r[0-9]+}}, 4092(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 1023
+  %ptr = getelementptr i32, i32 *%src, i64 1023
   %res = atomicrmw min i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }
@@ -80,7 +80,7 @@ define i32 @f6(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: ly %r2, 4096(%r3)
 ; CHECK: csy %r2, {{%r[0-9]+}}, 4096(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 1024
+  %ptr = getelementptr i32, i32 *%src, i64 1024
   %res = atomicrmw min i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }
@@ -91,7 +91,7 @@ define i32 @f7(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: ly %r2, 524284(%r3)
 ; CHECK: csy %r2, {{%r[0-9]+}}, 524284(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 131071
+  %ptr = getelementptr i32, i32 *%src, i64 131071
   %res = atomicrmw min i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }
@@ -103,7 +103,7 @@ define i32 @f8(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: l %r2, 0(%r3)
 ; CHECK: cs %r2, {{%r[0-9]+}}, 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 131072
+  %ptr = getelementptr i32, i32 *%src, i64 131072
   %res = atomicrmw min i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }
@@ -114,7 +114,7 @@ define i32 @f9(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: ly %r2, -4(%r3)
 ; CHECK: csy %r2, {{%r[0-9]+}}, -4(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 -1
+  %ptr = getelementptr i32, i32 *%src, i64 -1
   %res = atomicrmw min i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }
@@ -125,7 +125,7 @@ define i32 @f10(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: ly %r2, -524288(%r3)
 ; CHECK: csy %r2, {{%r[0-9]+}}, -524288(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 -131072
+  %ptr = getelementptr i32, i32 *%src, i64 -131072
   %res = atomicrmw min i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }
@@ -137,7 +137,7 @@ define i32 @f11(i32 %dummy, i32 *%src, i32 %b) {
 ; CHECK: l %r2, 0(%r3)
 ; CHECK: cs %r2, {{%r[0-9]+}}, 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 -131073
+  %ptr = getelementptr i32, i32 *%src, i64 -131073
   %res = atomicrmw min i32 *%ptr, i32 %b seq_cst
   ret i32 %res
 }

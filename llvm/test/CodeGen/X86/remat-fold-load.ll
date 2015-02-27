@@ -38,25 +38,25 @@ while.body12:                                     ; preds = %if.end24, %while.bo
 
 if.then.i.i.i.i71:                                ; preds = %while.body12
   %call4.i.i.i.i68 = call noalias i8* @malloc(i32 undef) nounwind
-  %tmp1 = getelementptr inbounds %type_a* %tmp, i32 0, i32 1, i32 0, i32 1
+  %tmp1 = getelementptr inbounds %type_a, %type_a* %tmp, i32 0, i32 1, i32 0, i32 1
   %buf_6.i.i.i.i70 = bitcast %type_d* %tmp1 to i8**
   %tmp2 = load i8** %buf_6.i.i.i.i70, align 4
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* undef, i8* %tmp2, i32 undef, i32 1, i1 false) nounwind
   unreachable
 
 if.else.i.i.i.i74:                                ; preds = %while.body12
-  %i_.i.i.i.i72 = getelementptr inbounds %type_a* %tmp, i32 0, i32 1, i32 0, i32 1, i32 0
+  %i_.i.i.i.i72 = getelementptr inbounds %type_a, %type_a* %tmp, i32 0, i32 1, i32 0, i32 1, i32 0
   %tmp3 = load i64* %i_.i.i.i.i72, align 4
   %tmp4 = zext i64 %tmp3 to i128
   %tmp5 = shl nuw nsw i128 %tmp4, 32
   %ins148 = or i128 %tmp5, %ins151
-  %second3.i.i76 = getelementptr inbounds %type_a* %tmp, i32 0, i32 1, i32 1
+  %second3.i.i76 = getelementptr inbounds %type_a, %type_a* %tmp, i32 0, i32 1, i32 1
   %tmp6 = load i32* %second3.i.i76, align 4
   %tmp7 = zext i32 %tmp6 to i128
   %tmp8 = shl nuw i128 %tmp7, 96
   %mask144 = and i128 %ins148, 79228162495817593519834398720
   %tmp9 = load %type_e** undef, align 4
-  %len_.i.i.i.i86 = getelementptr inbounds %type_e* %tmp9, i32 0, i32 0, i32 0
+  %len_.i.i.i.i86 = getelementptr inbounds %type_e, %type_e* %tmp9, i32 0, i32 0, i32 0
   %tmp10 = load i32* %len_.i.i.i.i86, align 4
   %tmp11 = zext i32 %tmp10 to i128
   %ins135 = or i128 %tmp11, %ins135156160
@@ -66,19 +66,19 @@ if.else.i.i.i.i74:                                ; preds = %while.body12
 if.then.i.i.i.i92:                                ; preds = %if.else.i.i.i.i74
   %call4.i.i.i.i89 = call noalias i8* @malloc(i32 %tmp10) nounwind
   %ins126 = or i128 0, %ins135
-  %tmp12 = getelementptr inbounds %type_e* %tmp9, i32 0, i32 0, i32 1
+  %tmp12 = getelementptr inbounds %type_e, %type_e* %tmp9, i32 0, i32 0, i32 1
   %buf_6.i.i.i.i91 = bitcast %type_d* %tmp12 to i8**
   %tmp13 = load i8** %buf_6.i.i.i.i91, align 4
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %call4.i.i.i.i89, i8* %tmp13, i32 %tmp10, i32 1, i1 false) nounwind
   br label %A
 
 if.else.i.i.i.i95:                                ; preds = %if.else.i.i.i.i74
-  %i_.i.i.i.i93 = getelementptr inbounds %type_e* %tmp9, i32 0, i32 0, i32 1, i32 0
+  %i_.i.i.i.i93 = getelementptr inbounds %type_e, %type_e* %tmp9, i32 0, i32 0, i32 1, i32 0
   br label %A
 
 A:                                                ; preds = %if.else.i.i.i.i95, %if.then.i.i.i.i92
   %ins135157 = phi i128 [ %ins126, %if.then.i.i.i.i92 ], [ undef, %if.else.i.i.i.i95 ]
-  %second3.i.i97 = getelementptr inbounds %type_e* %tmp9, i32 0, i32 1
+  %second3.i.i97 = getelementptr inbounds %type_e, %type_e* %tmp9, i32 0, i32 1
   %tmp14 = load i64* %second3.i.i97, align 4
   %tmp15 = trunc i64 %tmp14 to i32
   %cmp.i99 = icmp sgt i32 %tmp6, %tmp15

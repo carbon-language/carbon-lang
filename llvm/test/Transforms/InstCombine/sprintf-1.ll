@@ -20,7 +20,7 @@ declare i32 @sprintf(i8*, i8*, ...)
 
 define void @test_simplify1(i8* %dst) {
 ; CHECK-LABEL: @test_simplify1(
-  %fmt = getelementptr [13 x i8]* @hello_world, i32 0, i32 0
+  %fmt = getelementptr [13 x i8], [13 x i8]* @hello_world, i32 0, i32 0
   call i32 (i8*, i8*, ...)* @sprintf(i8* %dst, i8* %fmt)
 ; CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i32(i8* %dst, i8* getelementptr inbounds ([13 x i8]* @hello_world, i32 0, i32 0), i32 13, i32 1, i1 false)
   ret void
@@ -29,7 +29,7 @@ define void @test_simplify1(i8* %dst) {
 
 define void @test_simplify2(i8* %dst) {
 ; CHECK-LABEL: @test_simplify2(
-  %fmt = getelementptr [1 x i8]* @null, i32 0, i32 0
+  %fmt = getelementptr [1 x i8], [1 x i8]* @null, i32 0, i32 0
   call i32 (i8*, i8*, ...)* @sprintf(i8* %dst, i8* %fmt)
 ; CHECK-NEXT: store i8 0, i8* %dst, align 1
   ret void
@@ -38,7 +38,7 @@ define void @test_simplify2(i8* %dst) {
 
 define void @test_simplify3(i8* %dst) {
 ; CHECK-LABEL: @test_simplify3(
-  %fmt = getelementptr [7 x i8]* @null_hello, i32 0, i32 0
+  %fmt = getelementptr [7 x i8], [7 x i8]* @null_hello, i32 0, i32 0
   call i32 (i8*, i8*, ...)* @sprintf(i8* %dst, i8* %fmt)
 ; CHECK-NEXT: store i8 0, i8* %dst, align 1
   ret void
@@ -49,10 +49,10 @@ define void @test_simplify3(i8* %dst) {
 
 define void @test_simplify4(i8* %dst) {
 ; CHECK-LABEL: @test_simplify4(
-  %fmt = getelementptr [3 x i8]* @percent_c, i32 0, i32 0
+  %fmt = getelementptr [3 x i8], [3 x i8]* @percent_c, i32 0, i32 0
   call i32 (i8*, i8*, ...)* @sprintf(i8* %dst, i8* %fmt, i8 104)
 ; CHECK-NEXT: store i8 104, i8* %dst, align 1
-; CHECK-NEXT: [[NUL:%[a-z0-9]+]] = getelementptr i8* %dst, i32 1
+; CHECK-NEXT: [[NUL:%[a-z0-9]+]] = getelementptr i8, i8* %dst, i32 1
 ; CHECK-NEXT: store i8 0, i8* [[NUL]], align 1
   ret void
 ; CHECK-NEXT: ret void
@@ -62,7 +62,7 @@ define void @test_simplify4(i8* %dst) {
 
 define void @test_simplify5(i8* %dst, i8* %str) {
 ; CHECK-LABEL: @test_simplify5(
-  %fmt = getelementptr [3 x i8]* @percent_s, i32 0, i32 0
+  %fmt = getelementptr [3 x i8], [3 x i8]* @percent_s, i32 0, i32 0
   call i32 (i8*, i8*, ...)* @sprintf(i8* %dst, i8* %fmt, i8* %str)
 ; CHECK-NEXT: [[STRLEN:%[a-z0-9]+]] = call i32 @strlen(i8* %str)
 ; CHECK-NEXT: [[LENINC:%[a-z0-9]+]] = add i32 [[STRLEN]], 1
@@ -75,7 +75,7 @@ define void @test_simplify5(i8* %dst, i8* %str) {
 
 define void @test_simplify6(i8* %dst) {
 ; CHECK-IPRINTF-LABEL: @test_simplify6(
-  %fmt = getelementptr [3 x i8]* @percent_d, i32 0, i32 0
+  %fmt = getelementptr [3 x i8], [3 x i8]* @percent_d, i32 0, i32 0
   call i32 (i8*, i8*, ...)* @sprintf(i8* %dst, i8* %fmt, i32 187)
 ; CHECK-IPRINTF-NEXT: call i32 (i8*, i8*, ...)* @siprintf(i8* %dst, i8* getelementptr inbounds ([3 x i8]* @percent_d, i32 0, i32 0), i32 187)
   ret void
@@ -84,7 +84,7 @@ define void @test_simplify6(i8* %dst) {
 
 define void @test_no_simplify1(i8* %dst) {
 ; CHECK-IPRINTF-LABEL: @test_no_simplify1(
-  %fmt = getelementptr [3 x i8]* @percent_f, i32 0, i32 0
+  %fmt = getelementptr [3 x i8], [3 x i8]* @percent_f, i32 0, i32 0
   call i32 (i8*, i8*, ...)* @sprintf(i8* %dst, i8* %fmt, double 1.87)
 ; CHECK-IPRINTF-NEXT: call i32 (i8*, i8*, ...)* @sprintf(i8* %dst, i8* getelementptr inbounds ([3 x i8]* @percent_f, i32 0, i32 0), double 1.870000e+00)
   ret void

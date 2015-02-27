@@ -11,7 +11,7 @@ external global i32             ; <i32*>:0 [#uses=0]
 
 define i32 @foo(i32 %blah) {
         store i32 5, i32* @MyVar
-        %idx = getelementptr { i32*, i32 }* @MyIntList, i64 0, i32 1             ; <i32*> [#uses=1]
+        %idx = getelementptr { i32*, i32 }, { i32*, i32 }* @MyIntList, i64 0, i32 1             ; <i32*> [#uses=1]
         store i32 12, i32* %idx
         ret i32 %blah
 }

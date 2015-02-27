@@ -7,7 +7,7 @@ define void @_Z7releaseP3obj(%struct.obj* nocapture %o) nounwind uwtable ssp {
 entry:
 ; CHECK: decq	(%{{rdi|rcx}})
 ; CHECK-NEXT: je
-  %refcnt = getelementptr inbounds %struct.obj* %o, i64 0, i32 0
+  %refcnt = getelementptr inbounds %struct.obj, %struct.obj* %o, i64 0, i32 0
   %0 = load i64* %refcnt, align 8
   %dec = add i64 %0, -1
   store i64 %dec, i64* %refcnt, align 8
@@ -69,7 +69,7 @@ declare void @other(%struct.obj2* ) nounwind;
 define void @example_dec(%struct.obj2* %o) nounwind uwtable ssp {
 ; 64 bit dec
 entry:
-  %s64 = getelementptr inbounds %struct.obj2* %o, i64 0, i32 0
+  %s64 = getelementptr inbounds %struct.obj2, %struct.obj2* %o, i64 0, i32 0
 ; CHECK-NOT: load 
   %0 = load i64* %s64, align 8
 ; CHECK: decq ({{.*}})
@@ -80,7 +80,7 @@ entry:
 
 ; 32 bit dec
 if.end:
-  %s32 = getelementptr inbounds %struct.obj2* %o, i64 0, i32 1
+  %s32 = getelementptr inbounds %struct.obj2, %struct.obj2* %o, i64 0, i32 1
 ; CHECK-NOT: load 
   %1 = load i32* %s32, align 4
 ; CHECK: decl {{[0-9][0-9]*}}({{.*}})
@@ -91,7 +91,7 @@ if.end:
 
 ; 16 bit dec
 if.end1:
-  %s16 = getelementptr inbounds %struct.obj2* %o, i64 0, i32 2
+  %s16 = getelementptr inbounds %struct.obj2, %struct.obj2* %o, i64 0, i32 2
 ; CHECK-NOT: load 
   %2 = load i16* %s16, align 2
 ; CHECK: decw {{[0-9][0-9]*}}({{.*}})
@@ -102,7 +102,7 @@ if.end1:
 
 ; 8 bit dec
 if.end2:
-  %s8 = getelementptr inbounds %struct.obj2* %o, i64 0, i32 3
+  %s8 = getelementptr inbounds %struct.obj2, %struct.obj2* %o, i64 0, i32 3
 ; CHECK-NOT: load 
   %3 = load i8* %s8
 ; CHECK: decb {{[0-9][0-9]*}}({{.*}})
@@ -123,7 +123,7 @@ return:                                           ; preds = %if.end4, %if.end, %
 define void @example_inc(%struct.obj2* %o) nounwind uwtable ssp {
 ; 64 bit inc
 entry:
-  %s64 = getelementptr inbounds %struct.obj2* %o, i64 0, i32 0
+  %s64 = getelementptr inbounds %struct.obj2, %struct.obj2* %o, i64 0, i32 0
 ; CHECK-NOT: load 
   %0 = load i64* %s64, align 8
 ; CHECK: incq ({{.*}})
@@ -134,7 +134,7 @@ entry:
 
 ; 32 bit inc
 if.end:
-  %s32 = getelementptr inbounds %struct.obj2* %o, i64 0, i32 1
+  %s32 = getelementptr inbounds %struct.obj2, %struct.obj2* %o, i64 0, i32 1
 ; CHECK-NOT: load 
   %1 = load i32* %s32, align 4
 ; CHECK: incl {{[0-9][0-9]*}}({{.*}})
@@ -145,7 +145,7 @@ if.end:
 
 ; 16 bit inc
 if.end1:
-  %s16 = getelementptr inbounds %struct.obj2* %o, i64 0, i32 2
+  %s16 = getelementptr inbounds %struct.obj2, %struct.obj2* %o, i64 0, i32 2
 ; CHECK-NOT: load 
   %2 = load i16* %s16, align 2
 ; CHECK: incw {{[0-9][0-9]*}}({{.*}})
@@ -156,7 +156,7 @@ if.end1:
 
 ; 8 bit inc
 if.end2:
-  %s8 = getelementptr inbounds %struct.obj2* %o, i64 0, i32 3
+  %s8 = getelementptr inbounds %struct.obj2, %struct.obj2* %o, i64 0, i32 3
 ; CHECK-NOT: load 
   %3 = load i8* %s8
 ; CHECK: incb {{[0-9][0-9]*}}({{.*}})
@@ -182,7 +182,7 @@ entry:
 ; CHECK-LABEL: test3:
 ; CHECK: decq 16(%rax)
   %0 = load i64** @foo, align 8
-  %arrayidx = getelementptr inbounds i64* %0, i64 2
+  %arrayidx = getelementptr inbounds i64, i64* %0, i64 2
   %1 = load i64* %arrayidx, align 8
   %dec = add i64 %1, -1
   store i64 %dec, i64* %arrayidx, align 8

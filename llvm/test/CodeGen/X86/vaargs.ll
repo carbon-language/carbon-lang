@@ -28,8 +28,8 @@ define i32 @sum(i32 %count, ...) nounwind optsize ssp uwtable {
   br i1 %2, label %.lr.ph, label %._crit_edge
 
 .lr.ph:                                           ; preds = %0
-  %3 = getelementptr inbounds [1 x %struct.__va_list_tag]* %ap, i64 0, i64 0, i32 0
-  %4 = getelementptr inbounds [1 x %struct.__va_list_tag]* %ap, i64 0, i64 0, i32 2
+  %3 = getelementptr inbounds [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %ap, i64 0, i64 0, i32 0
+  %4 = getelementptr inbounds [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %ap, i64 0, i64 0, i32 2
   %.pre = load i32* %3, align 16
   br label %5
 
@@ -46,7 +46,7 @@ define i32 @sum(i32 %count, ...) nounwind optsize ssp uwtable {
 
 ; <label>:10                                      ; preds = %5
   %11 = load i8** %4, align 8
-  %12 = getelementptr i8* %11, i64 8
+  %12 = getelementptr i8, i8* %11, i64 8
   store i8* %12, i8** %4, align 8
   br label %13
 

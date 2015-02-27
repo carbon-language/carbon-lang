@@ -14,7 +14,7 @@ bb23821:		; preds = %entry
 	br i1 false, label %bb23830, label %bb23827
 
 bb23827:		; preds = %bb23821
-	%tmp23829 = getelementptr %struct.V* null, i32 0, i32 42		; <i32*> [#uses=0]
+	%tmp23829 = getelementptr %struct.V, %struct.V* null, i32 0, i32 42		; <i32*> [#uses=0]
 	br label %bb23830
 
 bb23830:		; preds = %bb23827, %bb23821, %bb23816.preheader

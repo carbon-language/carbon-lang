@@ -13,7 +13,7 @@ define void @fn() {
   %2 = sext i32 %1 to i64
   %3 = lshr i64 %2, 12
   %4 = and i64 %3, 68719476735
-  %5 = getelementptr inbounds i32* null, i64 %4
+  %5 = getelementptr inbounds i32, i32* null, i64 %4
   store i32* %5, i32** @b, align 8
   ret void
 }

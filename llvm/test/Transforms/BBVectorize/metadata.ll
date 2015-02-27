@@ -7,13 +7,13 @@ entry:
   %i0 = load double* %a, align 8
   %i1 = load double* %b, align 8
   %mul = fmul double %i0, %i1, !fpmath !2
-  %arrayidx3 = getelementptr inbounds double* %a, i64 1
+  %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
   %i3 = load double* %arrayidx3, align 8
-  %arrayidx4 = getelementptr inbounds double* %b, i64 1
+  %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
   %i4 = load double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4, !fpmath !3
   store double %mul, double* %c, align 8
-  %arrayidx5 = getelementptr inbounds double* %c, i64 1
+  %arrayidx5 = getelementptr inbounds double, double* %c, i64 1
   store double %mul5, double* %arrayidx5, align 8
   ret void
 ; CHECK-LABEL: @test1(
@@ -27,13 +27,13 @@ entry:
   %i0 = load i64* %a, align 8, !range !0
   %i1 = load i64* %b, align 8
   %mul = mul i64 %i0, %i1
-  %arrayidx3 = getelementptr inbounds i64* %a, i64 1
+  %arrayidx3 = getelementptr inbounds i64, i64* %a, i64 1
   %i3 = load i64* %arrayidx3, align 8, !range !1
-  %arrayidx4 = getelementptr inbounds i64* %b, i64 1
+  %arrayidx4 = getelementptr inbounds i64, i64* %b, i64 1
   %i4 = load i64* %arrayidx4, align 8
   %mul5 = mul i64 %i3, %i4
   store i64 %mul, i64* %c, align 8
-  %arrayidx5 = getelementptr inbounds i64* %c, i64 1
+  %arrayidx5 = getelementptr inbounds i64, i64* %c, i64 1
   store i64 %mul5, i64* %arrayidx5, align 8
   ret void
 ; CHECK-LABEL: @test2(

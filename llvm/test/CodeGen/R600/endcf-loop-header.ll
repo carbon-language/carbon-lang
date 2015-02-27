@@ -28,7 +28,7 @@ loop:
   br i1 %tmp2, label %done, label %loop
 
 done:
-  %tmp3 = getelementptr i32 addrspace(1)* %out, i64 1
+  %tmp3 = getelementptr i32, i32 addrspace(1)* %out, i64 1
   store i32 %inc, i32 addrspace(1)* %tmp3
   ret void
 }

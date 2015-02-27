@@ -8,20 +8,20 @@ vector.ph:
 
 vector.body:                                      ; preds = %vector.body, %vector.ph
   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-  %0 = getelementptr inbounds float* %b, i64 %index
+  %0 = getelementptr inbounds float, float* %b, i64 %index
   %1 = bitcast float* %0 to <4 x float>*
   %wide.load = load <4 x float>* %1, align 4
   %.sum11 = or i64 %index, 4
-  %2 = getelementptr float* %b, i64 %.sum11
+  %2 = getelementptr float, float* %b, i64 %.sum11
   %3 = bitcast float* %2 to <4 x float>*
   %wide.load8 = load <4 x float>* %3, align 4
   %4 = fadd <4 x float> %wide.load, <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>
   %5 = fadd <4 x float> %wide.load8, <float 1.000000e+00, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>
-  %6 = getelementptr inbounds float* %a, i64 %index
+  %6 = getelementptr inbounds float, float* %a, i64 %index
   %7 = bitcast float* %6 to <4 x float>*
   store <4 x float> %4, <4 x float>* %7, align 4
   %.sum12 = or i64 %index, 4
-  %8 = getelementptr float* %a, i64 %.sum12
+  %8 = getelementptr float, float* %a, i64 %.sum12
   %9 = bitcast float* %8 to <4 x float>*
   store <4 x float> %5, <4 x float>* %9, align 4
   %index.next = add i64 %index, 8

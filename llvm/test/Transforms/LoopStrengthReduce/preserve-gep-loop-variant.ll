@@ -28,7 +28,7 @@ for.body:
   %conv3 = sext i8 %conv to i64
   %add = add nsw i64 %call, %storemerge1
   %add4 = add nsw i64 %add, %conv3
-  %arrayidx = getelementptr inbounds i8* %p, i64 %add4
+  %arrayidx = getelementptr inbounds i8, i8* %p, i64 %add4
   store i8 0, i8* %arrayidx
   %inc = add nsw i64 %storemerge1, 1
   br label %for.cond

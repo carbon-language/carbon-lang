@@ -22,9 +22,9 @@ endif:		; preds = %no_exit
 loopexit:		; preds = %endif, %then, %entry
 	%j.1 = phi i32 [ 1, %entry ], [ %j.0, %endif ], [ %i.0, %then ]		; <i32> [#uses=1]
 	%i.1 = phi i32 [ 1, %entry ], [ %inc, %endif ], [ %inc1, %then ]		; <i32> [#uses=1]
-	%tmp.17 = getelementptr i32* %data.1, i64 1		; <i32*> [#uses=1]
+	%tmp.17 = getelementptr i32, i32* %data.1, i64 1		; <i32*> [#uses=1]
 	store i32 %j.1, i32* %tmp.17
-	%tmp.23 = getelementptr i32* %data.1, i64 2		; <i32*> [#uses=1]
+	%tmp.23 = getelementptr i32, i32* %data.1, i64 2		; <i32*> [#uses=1]
 	store i32 %i.1, i32* %tmp.23
 	ret void
 }

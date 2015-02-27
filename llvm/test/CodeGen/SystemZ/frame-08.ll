@@ -65,7 +65,7 @@ define void @f1(i32 *%ptr, i64 %x) {
   store volatile i32 %add13, i32 *%ptr
   store volatile i32 %add14, i32 *%ptr
   %y = alloca [65507 x i64], align 8
-  %entry = getelementptr inbounds [65507 x i64]* %y, i64 0, i64 0
+  %entry = getelementptr inbounds [65507 x i64], [65507 x i64]* %y, i64 0, i64 0
   store volatile i64 %x, i64* %entry
   ret void
 }
@@ -101,7 +101,7 @@ define void @f2(i32 *%ptr, i64 %x) {
   store volatile i32 %add5, i32 *%ptr
   store volatile i32 %add14, i32 *%ptr
   %y = alloca [65499 x i64], align 8
-  %entry = getelementptr inbounds [65499 x i64]* %y, i64 0, i64 0
+  %entry = getelementptr inbounds [65499 x i64], [65499 x i64]* %y, i64 0, i64 0
   store volatile i64 %x, i64* %entry
   ret void
 }
@@ -168,7 +168,7 @@ define void @f3(i32 *%ptr, i64 %x) {
   store volatile i32 %add13, i32 *%ptr
   store volatile i32 %add14, i32 *%ptr
   %y = alloca [65508 x i64], align 8
-  %entry = getelementptr inbounds [65508 x i64]* %y, i64 0, i64 0
+  %entry = getelementptr inbounds [65508 x i64], [65508 x i64]* %y, i64 0, i64 0
   store volatile i64 %x, i64* %entry
   ret void
 }
@@ -203,7 +203,7 @@ define void @f4(i32 *%ptr, i64 %x) {
   store volatile i32 %add5, i32 *%ptr
   store volatile i32 %add14, i32 *%ptr
   %y = alloca [65500 x i64], align 8
-  %entry = getelementptr inbounds [65500 x i64]* %y, i64 0, i64 0
+  %entry = getelementptr inbounds [65500 x i64], [65500 x i64]* %y, i64 0, i64 0
   store volatile i64 %x, i64* %entry
   ret void
 }
@@ -237,7 +237,7 @@ define void @f5(i32 *%ptr, i64 %x) {
   store volatile i32 %add5, i32 *%ptr
   store volatile i32 %add14, i32 *%ptr
   %y = alloca [69594 x i64], align 8
-  %entry = getelementptr inbounds [69594 x i64]* %y, i64 0, i64 0
+  %entry = getelementptr inbounds [69594 x i64], [69594 x i64]* %y, i64 0, i64 0
   store volatile i64 %x, i64* %entry
   ret void
 }
@@ -271,7 +271,7 @@ define void @f6(i32 *%ptr, i64 %x) {
   store volatile i32 %add5, i32 *%ptr
   store volatile i32 %add14, i32 *%ptr
   %y = alloca [69595 x i64], align 8
-  %entry = getelementptr inbounds [69595 x i64]* %y, i64 0, i64 0
+  %entry = getelementptr inbounds [69595 x i64], [69595 x i64]* %y, i64 0, i64 0
   store volatile i64 %x, i64* %entry
   ret void
 }

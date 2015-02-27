@@ -158,19 +158,19 @@ for.cond1.preheader:                              ; preds = %for.inc14, %entry
 
 for.body3:
   %indvars.iv = phi i64 [ 0, %for.cond1.preheader ], [ %indvars.iv.next, %for.body3 ]
-  %arrayidx = getelementptr inbounds [1024 x i32]* @v, i64 0, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds [1024 x i32], [1024 x i32]* @v, i64 0, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %conv = sitofp i32 %0 to double
-  %arrayidx5 = getelementptr inbounds [1024 x double]* @x, i64 0, i64 %indvars.iv
+  %arrayidx5 = getelementptr inbounds [1024 x double], [1024 x double]* @x, i64 0, i64 %indvars.iv
   %1 = load double* %arrayidx5, align 8
   %mul = fmul double %conv, %1
-  %arrayidx7 = getelementptr inbounds [1024 x double]* @y, i64 0, i64 %indvars.iv
+  %arrayidx7 = getelementptr inbounds [1024 x double], [1024 x double]* @y, i64 0, i64 %indvars.iv
   %2 = load double* %arrayidx7, align 8
   %mul8 = fmul double %mul, %2
-  %arrayidx10 = getelementptr inbounds [1024 x double]* @z, i64 0, i64 %indvars.iv
+  %arrayidx10 = getelementptr inbounds [1024 x double], [1024 x double]* @z, i64 0, i64 %indvars.iv
   %3 = load double* %arrayidx10, align 8
   %mul11 = fmul double %mul8, %3
-  %arrayidx13 = getelementptr inbounds [1024 x double]* @w, i64 0, i64 %indvars.iv
+  %arrayidx13 = getelementptr inbounds [1024 x double], [1024 x double]* @w, i64 0, i64 %indvars.iv
   store double %mul11, double* %arrayidx13, align 8
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 1024

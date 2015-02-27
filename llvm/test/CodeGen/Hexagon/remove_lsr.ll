@@ -21,11 +21,11 @@ define void @foo(%union.vect64* nocapture %sss_extracted_bit_rx_data_ptr,
  i8* nocapture %scr_s_even_code_ptr, i8* nocapture %scr_s_odd_code_ptr)
  nounwind {
 entry:
-  %scevgep = getelementptr %union.vect64* %sss_extracted_bit_rx_data_ptr, i32 1
-  %scevgep28 = getelementptr %union.vect32* %s_odd, i32 1
-  %scevgep32 = getelementptr %union.vect32* %s_even, i32 1
-  %scevgep36 = getelementptr i8* %scr_s_odd_code_ptr, i32 1
-  %scevgep39 = getelementptr i8* %scr_s_even_code_ptr, i32 1
+  %scevgep = getelementptr %union.vect64, %union.vect64* %sss_extracted_bit_rx_data_ptr, i32 1
+  %scevgep28 = getelementptr %union.vect32, %union.vect32* %s_odd, i32 1
+  %scevgep32 = getelementptr %union.vect32, %union.vect32* %s_even, i32 1
+  %scevgep36 = getelementptr i8, i8* %scr_s_odd_code_ptr, i32 1
+  %scevgep39 = getelementptr i8, i8* %scr_s_even_code_ptr, i32 1
   br label %for.body
 
 for.body:                                         ; preds = %for.body, %entry
@@ -59,11 +59,11 @@ for.body:                                         ; preds = %for.body, %entry
   %10 = load i8* %lsr.iv37, align 1
   %lftr.wideiv = trunc i32 %lsr.iv42 to i8
   %exitcond = icmp eq i8 %lftr.wideiv, 32
-  %scevgep26 = getelementptr %union.vect64* %lsr.iv, i32 1
-  %scevgep30 = getelementptr %union.vect32* %lsr.iv29, i32 1
-  %scevgep34 = getelementptr %union.vect32* %lsr.iv33, i32 1
-  %scevgep38 = getelementptr i8* %lsr.iv37, i32 1
-  %scevgep41 = getelementptr i8* %lsr.iv40, i32 1
+  %scevgep26 = getelementptr %union.vect64, %union.vect64* %lsr.iv, i32 1
+  %scevgep30 = getelementptr %union.vect32, %union.vect32* %lsr.iv29, i32 1
+  %scevgep34 = getelementptr %union.vect32, %union.vect32* %lsr.iv33, i32 1
+  %scevgep38 = getelementptr i8, i8* %lsr.iv37, i32 1
+  %scevgep41 = getelementptr i8, i8* %lsr.iv40, i32 1
   %lsr.iv.next = add i32 %lsr.iv42, 1
   br i1 %exitcond, label %for.end, label %for.body
 

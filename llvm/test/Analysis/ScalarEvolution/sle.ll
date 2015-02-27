@@ -14,7 +14,7 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %i = phi i64 [ %i.next, %for.body ], [ 0, %entry ] ; <i64> [#uses=2]
-  %arrayidx = getelementptr double* %p, i64 %i    ; <double*> [#uses=2]
+  %arrayidx = getelementptr double, double* %p, i64 %i    ; <double*> [#uses=2]
   %t4 = load double* %arrayidx                    ; <double> [#uses=1]
   %mul = fmul double %t4, 2.200000e+00            ; <double> [#uses=1]
   store double %mul, double* %arrayidx

@@ -16,7 +16,7 @@ define void @vst4i8_update(i8** %ptr, <8 x i8>* %B, i32 %inc) nounwind {
 	%A = load i8** %ptr
 	%tmp1 = load <8 x i8>* %B
 	call void @llvm.arm.neon.vst4.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 16)
-	%tmp2 = getelementptr i8* %A, i32 %inc
+	%tmp2 = getelementptr i8, i8* %A, i32 %inc
 	store i8* %tmp2, i8** %ptr
 	ret void
 }
@@ -67,7 +67,7 @@ define void @vst4i64_update(i64** %ptr, <1 x i64>* %B) nounwind {
         %tmp0 = bitcast i64* %A to i8*
         %tmp1 = load <1 x i64>* %B
         call void @llvm.arm.neon.vst4.v1i64(i8* %tmp0, <1 x i64> %tmp1, <1 x i64> %tmp1, <1 x i64> %tmp1, <1 x i64> %tmp1, i32 1)
-        %tmp2 = getelementptr i64* %A, i32 4
+        %tmp2 = getelementptr i64, i64* %A, i32 4
         store i64* %tmp2, i64** %ptr
         ret void
 }
@@ -122,7 +122,7 @@ define void @vst4Qf_update(float** %ptr, <4 x float>* %B) nounwind {
 	%tmp0 = bitcast float* %A to i8*
 	%tmp1 = load <4 x float>* %B
 	call void @llvm.arm.neon.vst4.v4f32(i8* %tmp0, <4 x float> %tmp1, <4 x float> %tmp1, <4 x float> %tmp1, <4 x float> %tmp1, i32 1)
-	%tmp2 = getelementptr float* %A, i32 16
+	%tmp2 = getelementptr float, float* %A, i32 16
 	store float* %tmp2, float** %ptr
 	ret void
 }

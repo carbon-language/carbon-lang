@@ -27,12 +27,12 @@ bb28.i37:		; preds = %bb33.i47, %bb5
 bb29.i38:		; preds = %bb33.i47, %bb28.i37
 	%indvar32.i = phi i32 [ %indvar.next33.i, %bb33.i47 ], [ 0, %bb28.i37 ]		; <i32> [#uses=2]
 	%sfb.314.i = add i32 %indvar32.i, 0		; <i32> [#uses=3]
-	%1 = getelementptr [4 x [21 x double]]* null, i32 0, i32 %0, i32 %sfb.314.i		; <double*> [#uses=1]
+	%1 = getelementptr [4 x [21 x double]], [4 x [21 x double]]* null, i32 0, i32 %0, i32 %sfb.314.i		; <double*> [#uses=1]
 	%2 = load double* %1, align 8		; <double> [#uses=0]
 	br i1 false, label %bb30.i41, label %bb33.i47
 
 bb30.i41:		; preds = %bb29.i38
-	%3 = getelementptr %struct.III_scalefac_t* null, i32 0, i32 1, i32 %sfb.314.i, i32 %i.1.reg2mem.0.i		; <i32*> [#uses=1]
+	%3 = getelementptr %struct.III_scalefac_t, %struct.III_scalefac_t* null, i32 0, i32 1, i32 %sfb.314.i, i32 %i.1.reg2mem.0.i		; <i32*> [#uses=1]
 	store i32 0, i32* %3, align 4
 	br label %bb33.i47
 

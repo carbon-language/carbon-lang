@@ -7,7 +7,7 @@ target triple = "powerpc-apple-macosx10.5.0"
 ; Function Attrs: nounwind ssp
 define void @foo(%struct.sm* byval %s) #0 {
 entry:
-  %a = getelementptr inbounds %struct.sm* %s, i32 0, i32 0
+  %a = getelementptr inbounds %struct.sm, %struct.sm* %s, i32 0, i32 0
   %0 = load i8* %a, align 1
   %conv2 = zext i8 %0 to i32
   %add = add nuw nsw i32 %conv2, 3

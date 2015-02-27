@@ -9,7 +9,7 @@ entry:
 ; CHECK: movups L_str+12(%rip), %xmm0
 ; CHECK: movups L_str(%rip), %xmm1
   %tmp0 = alloca [60 x i8], align 1
-  %tmp1 = getelementptr inbounds [60 x i8]* %tmp0, i64 0, i64 0
+  %tmp1 = getelementptr inbounds [60 x i8], [60 x i8]* %tmp0, i64 0, i64 0
   br label %bb1
 
 bb1:

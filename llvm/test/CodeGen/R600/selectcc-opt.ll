@@ -19,7 +19,7 @@ entry:
   br i1 %6, label %IF, label %ENDIF
 
 IF:
-  %7 = getelementptr i32 addrspace(1)* %out, i32 1
+  %7 = getelementptr i32, i32 addrspace(1)* %out, i32 1
   store i32 0, i32 addrspace(1)* %7
   br label %ENDIF
 
@@ -47,7 +47,7 @@ entry:
   br i1 %6, label %ENDIF, label %IF
 
 IF:
-  %7 = getelementptr i32 addrspace(1)* %out, i32 1
+  %7 = getelementptr i32, i32 addrspace(1)* %out, i32 1
   store i32 0, i32 addrspace(1)* %7
   br label %ENDIF
 

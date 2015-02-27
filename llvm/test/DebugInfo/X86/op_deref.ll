@@ -55,7 +55,7 @@ for.body:                                         ; preds = %for.cond
   %mul = mul nsw i32 %5, %6, !dbg !23
   %7 = load i32* %i, align 4, !dbg !23
   %idxprom = sext i32 %7 to i64, !dbg !23
-  %arrayidx = getelementptr inbounds i32* %vla, i64 %idxprom, !dbg !23
+  %arrayidx = getelementptr inbounds i32, i32* %vla, i64 %idxprom, !dbg !23
   store i32 %mul, i32* %arrayidx, align 4, !dbg !23
   br label %for.inc, !dbg !25
 

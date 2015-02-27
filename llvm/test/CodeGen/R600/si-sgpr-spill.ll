@@ -13,7 +13,7 @@
 
 define void @main([17 x <16 x i8>] addrspace(2)* byval, [32 x <16 x i8>] addrspace(2)* byval, [16 x <32 x i8>] addrspace(2)* byval, float inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
-  %21 = getelementptr [17 x <16 x i8>] addrspace(2)* %0, i64 0, i32 0
+  %21 = getelementptr [17 x <16 x i8>], [17 x <16 x i8>] addrspace(2)* %0, i64 0, i32 0
   %22 = load <16 x i8> addrspace(2)* %21, !tbaa !0
   %23 = call float @llvm.SI.load.const(<16 x i8> %22, i32 96)
   %24 = call float @llvm.SI.load.const(<16 x i8> %22, i32 100)
@@ -53,37 +53,37 @@ main_body:
   %58 = call float @llvm.SI.load.const(<16 x i8> %22, i32 372)
   %59 = call float @llvm.SI.load.const(<16 x i8> %22, i32 376)
   %60 = call float @llvm.SI.load.const(<16 x i8> %22, i32 384)
-  %61 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 0
+  %61 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 0
   %62 = load <32 x i8> addrspace(2)* %61, !tbaa !0
-  %63 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 0
+  %63 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 0
   %64 = load <16 x i8> addrspace(2)* %63, !tbaa !0
-  %65 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 1
+  %65 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 1
   %66 = load <32 x i8> addrspace(2)* %65, !tbaa !0
-  %67 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 1
+  %67 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 1
   %68 = load <16 x i8> addrspace(2)* %67, !tbaa !0
-  %69 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 2
+  %69 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 2
   %70 = load <32 x i8> addrspace(2)* %69, !tbaa !0
-  %71 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 2
+  %71 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 2
   %72 = load <16 x i8> addrspace(2)* %71, !tbaa !0
-  %73 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 3
+  %73 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 3
   %74 = load <32 x i8> addrspace(2)* %73, !tbaa !0
-  %75 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 3
+  %75 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 3
   %76 = load <16 x i8> addrspace(2)* %75, !tbaa !0
-  %77 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 4
+  %77 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 4
   %78 = load <32 x i8> addrspace(2)* %77, !tbaa !0
-  %79 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 4
+  %79 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 4
   %80 = load <16 x i8> addrspace(2)* %79, !tbaa !0
-  %81 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 5
+  %81 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 5
   %82 = load <32 x i8> addrspace(2)* %81, !tbaa !0
-  %83 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 5
+  %83 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 5
   %84 = load <16 x i8> addrspace(2)* %83, !tbaa !0
-  %85 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 6
+  %85 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 6
   %86 = load <32 x i8> addrspace(2)* %85, !tbaa !0
-  %87 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 6
+  %87 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 6
   %88 = load <16 x i8> addrspace(2)* %87, !tbaa !0
-  %89 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 7
+  %89 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 7
   %90 = load <32 x i8> addrspace(2)* %89, !tbaa !0
-  %91 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 7
+  %91 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 7
   %92 = load <16 x i8> addrspace(2)* %91, !tbaa !0
   %93 = call float @llvm.SI.fs.interp(i32 0, i32 0, i32 %4, <2 x i32> %6)
   %94 = call float @llvm.SI.fs.interp(i32 1, i32 0, i32 %4, <2 x i32> %6)
@@ -103,17 +103,17 @@ main_body:
   %108 = call float @llvm.SI.fs.interp(i32 1, i32 5, i32 %4, <2 x i32> %6)
   %109 = call float @llvm.SI.fs.interp(i32 2, i32 5, i32 %4, <2 x i32> %6)
   %110 = call i32 @llvm.SI.tid()
-  %111 = getelementptr [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %110
+  %111 = getelementptr [64 x i32], [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %110
   %112 = bitcast float %93 to i32
   store i32 %112, i32 addrspace(3)* %111
   %113 = bitcast float %94 to i32
   store i32 %113, i32 addrspace(3)* %111
   %114 = call i32 @llvm.SI.tid()
-  %115 = getelementptr [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %114
+  %115 = getelementptr [64 x i32], [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %114
   %116 = and i32 %114, -4
-  %117 = getelementptr [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %116
+  %117 = getelementptr [64 x i32], [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %116
   %118 = add i32 %116, 1
-  %119 = getelementptr [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %118
+  %119 = getelementptr [64 x i32], [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %118
   %120 = bitcast float %93 to i32
   store i32 %120, i32 addrspace(3)* %115
   %121 = load i32 addrspace(3)* %117
@@ -139,7 +139,7 @@ main_body:
   %140 = fmul float %60, %94
   %141 = fmul float %60, %94
   %142 = call i32 @llvm.SI.tid()
-  %143 = getelementptr [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %142
+  %143 = getelementptr [64 x i32], [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %142
   %144 = bitcast float %138 to i32
   store i32 %144, i32 addrspace(3)* %143
   %145 = bitcast float %139 to i32
@@ -149,11 +149,11 @@ main_body:
   %147 = bitcast float %141 to i32
   store i32 %147, i32 addrspace(3)* %143
   %148 = call i32 @llvm.SI.tid()
-  %149 = getelementptr [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %148
+  %149 = getelementptr [64 x i32], [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %148
   %150 = and i32 %148, -4
-  %151 = getelementptr [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %150
+  %151 = getelementptr [64 x i32], [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %150
   %152 = add i32 %150, 2
-  %153 = getelementptr [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %152
+  %153 = getelementptr [64 x i32], [64 x i32] addrspace(3)* @ddxy_lds, i32 0, i32 %152
   %154 = bitcast float %138 to i32
   store i32 %154, i32 addrspace(3)* %149
   %155 = load i32 addrspace(3)* %151
@@ -694,7 +694,7 @@ attributes #4 = { nounwind readonly }
 ; CHECK: s_endpgm
 define void @main1([17 x <16 x i8>] addrspace(2)* byval, [32 x <16 x i8>] addrspace(2)* byval, [16 x <32 x i8>] addrspace(2)* byval, float inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
-  %21 = getelementptr [17 x <16 x i8>] addrspace(2)* %0, i64 0, i32 0
+  %21 = getelementptr [17 x <16 x i8>], [17 x <16 x i8>] addrspace(2)* %0, i64 0, i32 0
   %22 = load <16 x i8> addrspace(2)* %21, !tbaa !0
   %23 = call float @llvm.SI.load.const(<16 x i8> %22, i32 0)
   %24 = call float @llvm.SI.load.const(<16 x i8> %22, i32 4)
@@ -799,41 +799,41 @@ main_body:
   %123 = call float @llvm.SI.load.const(<16 x i8> %22, i32 716)
   %124 = call float @llvm.SI.load.const(<16 x i8> %22, i32 864)
   %125 = call float @llvm.SI.load.const(<16 x i8> %22, i32 868)
-  %126 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 0
+  %126 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 0
   %127 = load <32 x i8> addrspace(2)* %126, !tbaa !0
-  %128 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 0
+  %128 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 0
   %129 = load <16 x i8> addrspace(2)* %128, !tbaa !0
-  %130 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 1
+  %130 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 1
   %131 = load <32 x i8> addrspace(2)* %130, !tbaa !0
-  %132 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 1
+  %132 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 1
   %133 = load <16 x i8> addrspace(2)* %132, !tbaa !0
-  %134 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 2
+  %134 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 2
   %135 = load <32 x i8> addrspace(2)* %134, !tbaa !0
-  %136 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 2
+  %136 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 2
   %137 = load <16 x i8> addrspace(2)* %136, !tbaa !0
-  %138 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 3
+  %138 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 3
   %139 = load <32 x i8> addrspace(2)* %138, !tbaa !0
-  %140 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 3
+  %140 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 3
   %141 = load <16 x i8> addrspace(2)* %140, !tbaa !0
-  %142 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 4
+  %142 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 4
   %143 = load <32 x i8> addrspace(2)* %142, !tbaa !0
-  %144 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 4
+  %144 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 4
   %145 = load <16 x i8> addrspace(2)* %144, !tbaa !0
-  %146 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 5
+  %146 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 5
   %147 = load <32 x i8> addrspace(2)* %146, !tbaa !0
-  %148 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 5
+  %148 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 5
   %149 = load <16 x i8> addrspace(2)* %148, !tbaa !0
-  %150 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 6
+  %150 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 6
   %151 = load <32 x i8> addrspace(2)* %150, !tbaa !0
-  %152 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 6
+  %152 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 6
   %153 = load <16 x i8> addrspace(2)* %152, !tbaa !0
-  %154 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 7
+  %154 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 7
   %155 = load <32 x i8> addrspace(2)* %154, !tbaa !0
-  %156 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 7
+  %156 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 7
   %157 = load <16 x i8> addrspace(2)* %156, !tbaa !0
-  %158 = getelementptr [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 8
+  %158 = getelementptr [16 x <32 x i8>], [16 x <32 x i8>] addrspace(2)* %2, i64 0, i32 8
   %159 = load <32 x i8> addrspace(2)* %158, !tbaa !0
-  %160 = getelementptr [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 8
+  %160 = getelementptr [32 x <16 x i8>], [32 x <16 x i8>] addrspace(2)* %1, i64 0, i32 8
   %161 = load <16 x i8> addrspace(2)* %160, !tbaa !0
   %162 = fcmp ugt float %17, 0.000000e+00
   %163 = select i1 %162, float 1.000000e+00, float 0.000000e+00

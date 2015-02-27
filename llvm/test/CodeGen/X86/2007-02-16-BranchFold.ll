@@ -54,14 +54,14 @@ bb28.i.i938.exitStub:		; preds = %LeafBlock3
 	ret i16 4
 
 bb.i9.i.i932.ce:		; preds = %newFuncRoot
-	%tmp1.i3.i.i930 = getelementptr %struct.list* %l_addr.01.0.i2.i.i929, i32 0, i32 0		; <i8**> [#uses=1]
+	%tmp1.i3.i.i930 = getelementptr %struct.list, %struct.list* %l_addr.01.0.i2.i.i929, i32 0, i32 0		; <i8**> [#uses=1]
 	%tmp2.i4.i.i931 = load i8** %tmp1.i3.i.i930		; <i8*> [#uses=1]
 	%tmp66.i62.i = bitcast i8* %tmp2.i4.i.i931 to %struct.operator*		; <%struct.operator*> [#uses=7]
-	%tmp1.i6.i = getelementptr %struct.operator* %tmp66.i62.i, i32 0, i32 2		; <i32*> [#uses=1]
+	%tmp1.i6.i = getelementptr %struct.operator, %struct.operator* %tmp66.i62.i, i32 0, i32 2		; <i32*> [#uses=1]
 	%tmp2.i7.i = load i32* %tmp1.i6.i		; <i32> [#uses=1]
 	%tmp3.i8.i = load %struct.FILE** @outfile		; <%struct.FILE*> [#uses=1]
 	%tmp5.i9.i = call i32 (%struct.FILE*, i8*, ...)* @fprintf( %struct.FILE* %tmp3.i8.i, i8* getelementptr ([11 x i8]* @str1, i32 0, i32 0), i32 %tmp2.i7.i )		; <i32> [#uses=0]
-	%tmp7.i10.i = getelementptr %struct.operator* %tmp66.i62.i, i32 0, i32 5		; <i32*> [#uses=1]
+	%tmp7.i10.i = getelementptr %struct.operator, %struct.operator* %tmp66.i62.i, i32 0, i32 5		; <i32*> [#uses=1]
 	%tmp8.i11.i = load i32* %tmp7.i10.i		; <i32> [#uses=7]
 	br label %NodeBlock5
 

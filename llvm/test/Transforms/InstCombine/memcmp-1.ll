@@ -46,8 +46,8 @@ define i32 @test_simplify3(i8* %mem1, i8* %mem2) {
 
 define i32 @test_simplify4() {
 ; CHECK-LABEL: @test_simplify4(
-  %mem1 = getelementptr [4 x i8]* @hel, i32 0, i32 0
-  %mem2 = getelementptr [8 x i8]* @hello_u, i32 0, i32 0
+  %mem1 = getelementptr [4 x i8], [4 x i8]* @hel, i32 0, i32 0
+  %mem2 = getelementptr [8 x i8], [8 x i8]* @hello_u, i32 0, i32 0
   %ret = call i32 @memcmp(i8* %mem1, i8* %mem2, i32 3)
   ret i32 %ret
 ; CHECK: ret i32 0
@@ -55,8 +55,8 @@ define i32 @test_simplify4() {
 
 define i32 @test_simplify5() {
 ; CHECK-LABEL: @test_simplify5(
-  %mem1 = getelementptr [4 x i8]* @hel, i32 0, i32 0
-  %mem2 = getelementptr [4 x i8]* @foo, i32 0, i32 0
+  %mem1 = getelementptr [4 x i8], [4 x i8]* @hel, i32 0, i32 0
+  %mem2 = getelementptr [4 x i8], [4 x i8]* @foo, i32 0, i32 0
   %ret = call i32 @memcmp(i8* %mem1, i8* %mem2, i32 3)
   ret i32 %ret
 ; CHECK: ret i32 1
@@ -64,8 +64,8 @@ define i32 @test_simplify5() {
 
 define i32 @test_simplify6() {
 ; CHECK-LABEL: @test_simplify6(
-  %mem1 = getelementptr [4 x i8]* @foo, i32 0, i32 0
-  %mem2 = getelementptr [4 x i8]* @hel, i32 0, i32 0
+  %mem1 = getelementptr [4 x i8], [4 x i8]* @foo, i32 0, i32 0
+  %mem2 = getelementptr [4 x i8], [4 x i8]* @hel, i32 0, i32 0
   %ret = call i32 @memcmp(i8* %mem1, i8* %mem2, i32 3)
   ret i32 %ret
 ; CHECK: ret i32 -1

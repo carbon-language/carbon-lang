@@ -12,7 +12,7 @@
 
 define void @lds_input_queue(i32 addrspace(1)* %out, i32 addrspace(1)* %in, i32 %index) {
 entry:
-  %0 = getelementptr inbounds [2 x i32] addrspace(3)* @local_mem, i32 0, i32 %index
+  %0 = getelementptr inbounds [2 x i32], [2 x i32] addrspace(3)* @local_mem, i32 0, i32 %index
   %1 = load i32 addrspace(3)* %0
   call void @llvm.AMDGPU.barrier.local()
 
@@ -40,7 +40,7 @@ declare void @llvm.AMDGPU.barrier.local()
 ; load from global memory which immediately follows a load from a global value that
 ; has been declared in the local memory space:
 ;
-;  %0 = getelementptr inbounds [2 x i32] addrspace(3)* @local_mem, i32 0, i32 %index
+;  %0 = getelementptr inbounds [2 x i32], [2 x i32] addrspace(3)* @local_mem, i32 0, i32 %index
 ;  %1 = load i32 addrspace(3)* %0
 ;  %2 = load i32 addrspace(1)* %in
 ;
@@ -90,7 +90,7 @@ declare void @llvm.AMDGPU.barrier.local()
 ; CHECK: MOV * T{{[0-9]\.[XYZW]}}, OQAP
 define void @local_global_alias(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:
-  %0 = getelementptr inbounds [2 x i32] addrspace(3)* @local_mem, i32 0, i32 0
+  %0 = getelementptr inbounds [2 x i32], [2 x i32] addrspace(3)* @local_mem, i32 0, i32 0
   %1 = load i32 addrspace(3)* %0
   %2 = load i32 addrspace(1)* %in
   %3 = add i32 %2, %1

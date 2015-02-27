@@ -8,13 +8,13 @@ entry:
   %i0 = load double* %a, align 8
   %i1 = load double* %b, align 8
   %mul = fmul double %i0, %i1
-  %arrayidx3 = getelementptr inbounds double* %a, i64 1
+  %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
   %i3 = load double* %arrayidx3, align 8
-  %arrayidx4 = getelementptr inbounds double* %b, i64 1
+  %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
   %i4 = load double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
   store double %mul, double* %c, align 8
-  %arrayidx5 = getelementptr inbounds double* %c, i64 1
+  %arrayidx5 = getelementptr inbounds double, double* %c, i64 1
   store double %mul5, double* %arrayidx5, align 8
   ret void
 ; CHECK-LABEL: @test1(
@@ -38,15 +38,15 @@ entry:
   %i1f = load float* %b, align 4
   %i1 = fpext float %i1f to double
   %mul = fmul double %i0, %i1
-  %arrayidx3 = getelementptr inbounds float* %a, i64 1
+  %arrayidx3 = getelementptr inbounds float, float* %a, i64 1
   %i3f = load float* %arrayidx3, align 4
   %i3 = fpext float %i3f to double
-  %arrayidx4 = getelementptr inbounds float* %b, i64 1
+  %arrayidx4 = getelementptr inbounds float, float* %b, i64 1
   %i4f = load float* %arrayidx4, align 4
   %i4 = fpext float %i4f to double
   %mul5 = fmul double %i3, %i4
   store double %mul, double* %c, align 8
-  %arrayidx5 = getelementptr inbounds double* %c, i64 1
+  %arrayidx5 = getelementptr inbounds double, double* %c, i64 1
   store double %mul5, double* %arrayidx5, align 8
   ret void
 ; CHECK-LABEL: @test2(
@@ -71,14 +71,14 @@ entry:
   %i1 = load double* %b, align 8
   %mul = fmul double %i0, %i1
   %mulf = fptrunc double %mul to float
-  %arrayidx3 = getelementptr inbounds double* %a, i64 1
+  %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
   %i3 = load double* %arrayidx3, align 8
-  %arrayidx4 = getelementptr inbounds double* %b, i64 1
+  %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
   %i4 = load double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
   %mul5f = fptrunc double %mul5 to float
   store float %mulf, float* %c, align 8
-  %arrayidx5 = getelementptr inbounds float* %c, i64 1
+  %arrayidx5 = getelementptr inbounds float, float* %c, i64 1
   store float %mul5f, float* %arrayidx5, align 4
   ret void
 ; CHECK-LABEL: @test3(
@@ -94,9 +94,9 @@ entry:
 ; CHECK-AO-LABEL: @test3(
 ; CHECK-AO: %i0 = load double* %a, align 8
 ; CHECK-AO: %i1 = load double* %b, align 8
-; CHECK-AO: %arrayidx3 = getelementptr inbounds double* %a, i64 1
+; CHECK-AO: %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
 ; CHECK-AO: %i3 = load double* %arrayidx3, align 8
-; CHECK-AO: %arrayidx4 = getelementptr inbounds double* %b, i64 1
+; CHECK-AO: %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
 ; CHECK-AO: %i4 = load double* %arrayidx4, align 8
 ; CHECK-AO: %mul.v.i1.1 = insertelement <2 x double> undef, double %i1, i32 0
 ; CHECK-AO: %mul.v.i1.2 = insertelement <2 x double> %mul.v.i1.1, double %i4, i32 1
@@ -122,13 +122,13 @@ if.then:
   %i0 = load double* %a, align 8
   %i1 = load double* %b, align 8
   %mul = fmul double %i0, %i1
-  %arrayidx3 = getelementptr inbounds double* %a, i64 1
+  %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
   %i3 = load double* %arrayidx3, align 8
-  %arrayidx4 = getelementptr inbounds double* %b, i64 1
+  %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
   %i4 = load double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
   store double %mul, double* %c, align 8
-  %arrayidx5 = getelementptr inbounds double* %c, i64 1
+  %arrayidx5 = getelementptr inbounds double, double* %c, i64 1
   store double %mul5, double* %arrayidx5, align 8
   br label %if.end
 
@@ -146,12 +146,12 @@ entry:
   %i0 = load double* %a, align 8
   %i1 = load double* %b, align 8
   %mul = fmul double %i0, %i1
-  %arrayidx3 = getelementptr inbounds double* %a, i64 1
+  %arrayidx3 = getelementptr inbounds double, double* %a, i64 1
   %i3 = load double* %arrayidx3, align 8
-  %arrayidx4 = getelementptr inbounds double* %b, i64 1
+  %arrayidx4 = getelementptr inbounds double, double* %b, i64 1
   %i4 = load double* %arrayidx4, align 8
   %mul5 = fmul double %i3, %i4
-  %arrayidx5 = getelementptr inbounds double* %c, i64 1
+  %arrayidx5 = getelementptr inbounds double, double* %c, i64 1
   store double %mul5, double* %arrayidx5, align 8
   store double %mul, double* %c, align 4
   ret void

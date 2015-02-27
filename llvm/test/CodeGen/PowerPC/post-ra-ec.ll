@@ -21,7 +21,7 @@ if.then:                                          ; preds = %entry
   %1 = load i32* null, align 4
   %add = add i32 %1, %conv.i
   store i32 %add, i32* null, align 4
-  %counter.i.i = getelementptr inbounds %struct.task_struct.4.16.124* %call1.i, i64 0, i32 1, i32 0
+  %counter.i.i = getelementptr inbounds %struct.task_struct.4.16.124, %struct.task_struct.4.16.124* %call1.i, i64 0, i32 1, i32 0
   %2 = tail call i32 asm sideeffect "\09lwsync\0A1:\09lwarx\09$0,0,$1\09\09# atomic_dec_return\0A\09addic\09$0,$0,-1\0A\09stwcx.\09$0,0,$1\0A\09bne-\091b\0A\09sync\0A", "=&r,r,~{cr0},~{xer},~{memory}"(i32* %counter.i.i) #0
   %cmp.i = icmp eq i32 %2, 0
   br i1 %cmp.i, label %if.then.i, label %if.end

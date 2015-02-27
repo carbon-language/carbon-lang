@@ -19,7 +19,7 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
-  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %arrayidx, align 4
@@ -51,7 +51,7 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %arrayidx, align 4
@@ -78,7 +78,7 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
-  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %inc = add nsw i32 %0, 1
   store i32 %inc, i32* %arrayidx, align 4
@@ -110,7 +110,7 @@ entry:
 
 for.body3:                                        ; preds = %for.body3, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body3 ]
-  %arrayidx = getelementptr inbounds i32* %List, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i32, i32* %List, i64 %indvars.iv
   %0 = load i32* %arrayidx, align 4
   %add4 = add nsw i32 %0, 10
   store i32 %add4, i32* %arrayidx, align 4
@@ -124,7 +124,7 @@ for.body3.1.preheader:                            ; preds = %for.body3
 for.body3.1:                                      ; preds = %for.body3.1.preheader, %for.body3.1
   %indvars.iv.1 = phi i64 [ %1, %for.body3.1 ], [ 0, %for.body3.1.preheader ]
   %1 = add nsw i64 %indvars.iv.1, 1
-  %arrayidx.1 = getelementptr inbounds i32* %List, i64 %1
+  %arrayidx.1 = getelementptr inbounds i32, i32* %List, i64 %1
   %2 = load i32* %arrayidx.1, align 4
   %add4.1 = add nsw i32 %2, 10
   store i32 %add4.1, i32* %arrayidx.1, align 4

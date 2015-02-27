@@ -8,14 +8,14 @@
 ; CHECK: ret
 define void @multiple_stores_on_chain(i16 * %A) {
 entry:
-  %a0 = getelementptr inbounds i16* %A, i64 0
-  %a1 = getelementptr inbounds i16* %A, i64 1
-  %a2 = getelementptr inbounds i16* %A, i64 2
-  %a3 = getelementptr inbounds i16* %A, i64 3
-  %a4 = getelementptr inbounds i16* %A, i64 4
-  %a5 = getelementptr inbounds i16* %A, i64 5
-  %a6 = getelementptr inbounds i16* %A, i64 6
-  %a7 = getelementptr inbounds i16* %A, i64 7
+  %a0 = getelementptr inbounds i16, i16* %A, i64 0
+  %a1 = getelementptr inbounds i16, i16* %A, i64 1
+  %a2 = getelementptr inbounds i16, i16* %A, i64 2
+  %a3 = getelementptr inbounds i16, i16* %A, i64 3
+  %a4 = getelementptr inbounds i16, i16* %A, i64 4
+  %a5 = getelementptr inbounds i16, i16* %A, i64 5
+  %a6 = getelementptr inbounds i16, i16* %A, i64 6
+  %a7 = getelementptr inbounds i16, i16* %A, i64 7
 
   store i16 0, i16* %a0
   store i16 1, i16* %a1

@@ -12,9 +12,9 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
-  %arrayidx = getelementptr inbounds double* %in1, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds double, double* %in1, i64 %indvars.iv
   %0 = load double* %arrayidx, align 8
-  %arrayidx2 = getelementptr inbounds double* %in2, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds double, double* %in2, i64 %indvars.iv
   %1 = load double* %arrayidx2, align 8
   %mul = fmul double %0, %0
   %mul3 = fmul double %0, %1
@@ -28,7 +28,7 @@ for.body:                                         ; preds = %for.body, %entry
   %add10 = fadd double %add9, %0
   %mul11 = fmul double %mul8, %add10
   %add12 = fadd double %add7, %mul11
-  %arrayidx14 = getelementptr inbounds double* %out, i64 %indvars.iv
+  %arrayidx14 = getelementptr inbounds double, double* %out, i64 %indvars.iv
   store double %add12, double* %arrayidx14, align 8
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32

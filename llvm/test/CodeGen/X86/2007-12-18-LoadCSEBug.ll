@@ -7,7 +7,7 @@
 define void @_ada_c34007g() {
 entry:
 	%x8 = alloca %struct.c34007g__pkg__parent, align 8		; <%struct.c34007g__pkg__parent*> [#uses=2]
-	%tmp1272 = getelementptr %struct.c34007g__pkg__parent* %x8, i32 0, i32 0		; <i32**> [#uses=1]
+	%tmp1272 = getelementptr %struct.c34007g__pkg__parent, %struct.c34007g__pkg__parent* %x8, i32 0, i32 0		; <i32**> [#uses=1]
 	%x82167 = bitcast %struct.c34007g__pkg__parent* %x8 to i64*		; <i64*> [#uses=1]
 	br i1 true, label %bb4668, label %bb848
 

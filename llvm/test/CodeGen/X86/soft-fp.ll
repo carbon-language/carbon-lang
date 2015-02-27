@@ -8,7 +8,7 @@ entry:
 	%va = alloca [1 x %struct.__va_list_tag], align 8		; <[1 x %struct.__va_list_tag]*> [#uses=2]
 	%va12 = bitcast [1 x %struct.__va_list_tag]* %va to i8*		; <i8*> [#uses=2]
 	call void @llvm.va_start(i8* %va12)
-	%va3 = getelementptr [1 x %struct.__va_list_tag]* %va, i64 0, i64 0		; <%struct.__va_list_tag*> [#uses=1]
+	%va3 = getelementptr [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %va, i64 0, i64 0		; <%struct.__va_list_tag*> [#uses=1]
 	call void @bar(%struct.__va_list_tag* %va3) nounwind
 	call void @llvm.va_end(i8* %va12)
 	ret i32 undef

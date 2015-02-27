@@ -11,12 +11,12 @@ target triple = "i686-apple-darwin8"
 define void @_Z4testP9UnionTypePS0_(%struct.UnionType* %p, %struct.UnionType** %pointerToUnion) {
 entry:
   %tmp = alloca %struct.UnionType, align 8
-  %tmp2 = getelementptr %struct.UnionType* %tmp, i32 0, i32 0, i32 0
-  %tmp13 = getelementptr %struct.UnionType* %p, i32 0, i32 0, i32 0
+  %tmp2 = getelementptr %struct.UnionType, %struct.UnionType* %tmp, i32 0, i32 0, i32 0
+  %tmp13 = getelementptr %struct.UnionType, %struct.UnionType* %p, i32 0, i32 0, i32 0
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp2, i8* %tmp13, i32 8, i32 0, i1 false)
   %tmp5 = load %struct.UnionType** %pointerToUnion
-  %tmp56 = getelementptr %struct.UnionType* %tmp5, i32 0, i32 0, i32 0
-  %tmp7 = getelementptr %struct.UnionType* %tmp, i32 0, i32 0, i32 0
+  %tmp56 = getelementptr %struct.UnionType, %struct.UnionType* %tmp5, i32 0, i32 0, i32 0
+  %tmp7 = getelementptr %struct.UnionType, %struct.UnionType* %tmp, i32 0, i32 0, i32 0
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %tmp56, i8* %tmp7, i32 8, i32 0, i1 false)
   ret void
 }

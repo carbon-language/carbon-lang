@@ -48,7 +48,7 @@ define void @f5(i8 *%base, i64 %index) {
 ; CHECK: pfd 2, -524288({{%r2,%r3|%r3,%r2}})
 ; CHECK: br %r14
   %add = add i64 %index, -524288
-  %ptr = getelementptr i8 *%base, i64 %add
+  %ptr = getelementptr i8, i8 *%base, i64 %add
   call void @llvm.prefetch(i8 *%ptr, i32 1, i32 0, i32 1)
   ret void
 }
@@ -59,7 +59,7 @@ define void @f6(i8 *%base, i64 %index) {
 ; CHECK: pfd 2, 524287({{%r2,%r3|%r3,%r2}})
 ; CHECK: br %r14
   %add = add i64 %index, 524287
-  %ptr = getelementptr i8 *%base, i64 %add
+  %ptr = getelementptr i8, i8 *%base, i64 %add
   call void @llvm.prefetch(i8 *%ptr, i32 1, i32 0, i32 1)
   ret void
 }
@@ -71,7 +71,7 @@ define void @f7(i8 *%base, i64 %index) {
 ; CHECK: pfd 2,
 ; CHECK: br %r14
   %add = add i64 %index, 524288
-  %ptr = getelementptr i8 *%base, i64 %add
+  %ptr = getelementptr i8, i8 *%base, i64 %add
   call void @llvm.prefetch(i8 *%ptr, i32 1, i32 0, i32 1)
   ret void
 }
@@ -81,7 +81,7 @@ define void @f8() {
 ; CHECK-LABEL: f8:
 ; CHECK: pfdrl 2, g
 ; CHECK: br %r14
-  %ptr = getelementptr [4096 x i8] *@g, i64 0, i64 0
+  %ptr = getelementptr [4096 x i8], [4096 x i8] *@g, i64 0, i64 0
   call void @llvm.prefetch(i8 *%ptr, i32 1, i32 0, i32 1)
   ret void
 }

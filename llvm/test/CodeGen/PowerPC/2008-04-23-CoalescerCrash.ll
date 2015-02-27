@@ -74,7 +74,7 @@ bb107:		; preds = %entry
 	%tmp114115 = bitcast i8* %buffer to i16*		; <i16*> [#uses=1]
 	%tmp256 = lshr i64 %bufferSize, 1		; <i64> [#uses=1]
 	%tmp256257 = trunc i64 %tmp256 to i32		; <i32> [#uses=1]
-	%tmp258 = getelementptr i16* %tmp114115, i32 %tmp256257		; <i16*> [#uses=0]
+	%tmp258 = getelementptr i16, i16* %tmp114115, i32 %tmp256257		; <i16*> [#uses=0]
 	ret i32 0
 }
 

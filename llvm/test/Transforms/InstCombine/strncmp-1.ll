@@ -18,7 +18,7 @@ define i32 @test1(i8* %str2) {
 ; CHECK: %2 = sub nsw i32 0, %1
 ; CHECK: ret i32 %2
 
-  %str1 = getelementptr inbounds [1 x i8]* @null, i32 0, i32 0
+  %str1 = getelementptr inbounds [1 x i8], [1 x i8]* @null, i32 0, i32 0
   %temp1 = call i32 @strncmp(i8* %str1, i8* %str2, i32 10)
   ret i32 %temp1
 }
@@ -30,7 +30,7 @@ define i32 @test2(i8* %str1) {
 ; CHECK: %1 = zext i8 %strcmpload to i32
 ; CHECK: ret i32 %1
 
-  %str2 = getelementptr inbounds [1 x i8]* @null, i32 0, i32 0
+  %str2 = getelementptr inbounds [1 x i8], [1 x i8]* @null, i32 0, i32 0
   %temp1 = call i32 @strncmp(i8* %str1, i8* %str2, i32 10)
   ret i32 %temp1
 }
@@ -40,8 +40,8 @@ define i32 @test3() {
 ; CHECK-LABEL: @test3(
 ; CHECK: ret i32 -1
 
-  %str1 = getelementptr inbounds [5 x i8]* @hell, i32 0, i32 0
-  %str2 = getelementptr inbounds [6 x i8]* @hello, i32 0, i32 0
+  %str1 = getelementptr inbounds [5 x i8], [5 x i8]* @hell, i32 0, i32 0
+  %str2 = getelementptr inbounds [6 x i8], [6 x i8]* @hello, i32 0, i32 0
   %temp1 = call i32 @strncmp(i8* %str1, i8* %str2, i32 10)
   ret i32 %temp1
 }
@@ -50,8 +50,8 @@ define i32 @test4() {
 ; CHECK-LABEL: @test4(
 ; CHECK: ret i32 1
 
-  %str1 = getelementptr inbounds [5 x i8]* @hell, i32 0, i32 0
-  %str2 = getelementptr inbounds [1 x i8]* @null, i32 0, i32 0
+  %str1 = getelementptr inbounds [5 x i8], [5 x i8]* @hell, i32 0, i32 0
+  %str2 = getelementptr inbounds [1 x i8], [1 x i8]* @null, i32 0, i32 0
   %temp1 = call i32 @strncmp(i8* %str1, i8* %str2, i32 10)
   ret i32 %temp1
 }
@@ -60,8 +60,8 @@ define i32 @test5() {
 ; CHECK-LABEL: @test5(
 ; CHECK: ret i32 0
 
-  %str1 = getelementptr inbounds [5 x i8]* @hell, i32 0, i32 0
-  %str2 = getelementptr inbounds [6 x i8]* @hello, i32 0, i32 0
+  %str1 = getelementptr inbounds [5 x i8], [5 x i8]* @hell, i32 0, i32 0
+  %str2 = getelementptr inbounds [6 x i8], [6 x i8]* @hello, i32 0, i32 0
   %temp1 = call i32 @strncmp(i8* %str1, i8* %str2, i32 4)
   ret i32 %temp1
 }

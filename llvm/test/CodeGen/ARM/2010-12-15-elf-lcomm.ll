@@ -32,7 +32,7 @@
 
 define i32 @main(i32 %argc) nounwind {
   %1 = load i32* @sum, align 4
-  %2 = getelementptr [80 x i8]* @array00, i32 0, i32 %argc
+  %2 = getelementptr [80 x i8], [80 x i8]* @array00, i32 0, i32 %argc
   %3 = load i8* %2
   %4 = zext i8 %3 to i32
   %5 = add i32 %1, %4

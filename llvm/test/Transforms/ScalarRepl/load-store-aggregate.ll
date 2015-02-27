@@ -14,7 +14,7 @@ entry:
         %V = load %struct.foo* %P
         store %struct.foo %V, %struct.foo* %L
 
-	%tmp4 = getelementptr %struct.foo* %L, i32 0, i32 0		; <i32*> [#uses=1]
+	%tmp4 = getelementptr %struct.foo, %struct.foo* %L, i32 0, i32 0		; <i32*> [#uses=1]
 	%tmp5 = load i32* %tmp4		; <i32> [#uses=1]
 	ret i32 %tmp5
 }
@@ -22,9 +22,9 @@ entry:
 define %struct.foo @test2(i32 %A, i32 %B) {
 entry:
 	%L = alloca %struct.foo, align 8		; <%struct.foo*> [#uses=2]
-        %L.0 = getelementptr %struct.foo* %L, i32 0, i32 0
+        %L.0 = getelementptr %struct.foo, %struct.foo* %L, i32 0, i32 0
         store i32 %A, i32* %L.0
-        %L.1 = getelementptr %struct.foo* %L, i32 0, i32 1
+        %L.1 = getelementptr %struct.foo, %struct.foo* %L, i32 0, i32 1
         store i32 %B, i32* %L.1
         %V = load %struct.foo* %L
         ret %struct.foo %V

@@ -56,7 +56,7 @@ for_exit499:                                      ; preds = %for_test505.prehead
   br i1 undef, label %__load_and_broadcast_32.exit1249, label %load.i1247
 
 load.i1247:                                       ; preds = %for_exit499
-  %ptr1227 = getelementptr [18 x [18 x float]]* %udx495, i64 0, i64 1, i64 1
+  %ptr1227 = getelementptr [18 x [18 x float]], [18 x [18 x float]]* %udx495, i64 0, i64 1, i64 1
   %ptr.i1237 = bitcast float* %ptr1227 to i32*
   %val.i1238 = load i32* %ptr.i1237, align 4
   %ret6.i1245 = insertelement <8 x i32> undef, i32 %val.i1238, i32 6

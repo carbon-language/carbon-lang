@@ -10,10 +10,10 @@ target triple = "x86_64-unknown-unknown"
 ; CHECK-LABEL: @exact(
 ; CHECK: lshr exact <4 x i32>
 define void @exact(i32* %x) {
-  %idx1 = getelementptr inbounds i32* %x, i64 0
-  %idx2 = getelementptr inbounds i32* %x, i64 1
-  %idx3 = getelementptr inbounds i32* %x, i64 2
-  %idx4 = getelementptr inbounds i32* %x, i64 3
+  %idx1 = getelementptr inbounds i32, i32* %x, i64 0
+  %idx2 = getelementptr inbounds i32, i32* %x, i64 1
+  %idx3 = getelementptr inbounds i32, i32* %x, i64 2
+  %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
   %load1 = load i32* %idx1, align 4
   %load2 = load i32* %idx2, align 4
@@ -36,10 +36,10 @@ define void @exact(i32* %x) {
 ; CHECK-LABEL: @not_exact(
 ; CHECK: lshr <4 x i32>
 define void @not_exact(i32* %x) {
-  %idx1 = getelementptr inbounds i32* %x, i64 0
-  %idx2 = getelementptr inbounds i32* %x, i64 1
-  %idx3 = getelementptr inbounds i32* %x, i64 2
-  %idx4 = getelementptr inbounds i32* %x, i64 3
+  %idx1 = getelementptr inbounds i32, i32* %x, i64 0
+  %idx2 = getelementptr inbounds i32, i32* %x, i64 1
+  %idx3 = getelementptr inbounds i32, i32* %x, i64 2
+  %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
   %load1 = load i32* %idx1, align 4
   %load2 = load i32* %idx2, align 4
@@ -62,10 +62,10 @@ define void @not_exact(i32* %x) {
 ; CHECK-LABEL: @nsw(
 ; CHECK: add nsw <4 x i32>
 define void @nsw(i32* %x) {
-  %idx1 = getelementptr inbounds i32* %x, i64 0
-  %idx2 = getelementptr inbounds i32* %x, i64 1
-  %idx3 = getelementptr inbounds i32* %x, i64 2
-  %idx4 = getelementptr inbounds i32* %x, i64 3
+  %idx1 = getelementptr inbounds i32, i32* %x, i64 0
+  %idx2 = getelementptr inbounds i32, i32* %x, i64 1
+  %idx3 = getelementptr inbounds i32, i32* %x, i64 2
+  %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
   %load1 = load i32* %idx1, align 4
   %load2 = load i32* %idx2, align 4
@@ -88,10 +88,10 @@ define void @nsw(i32* %x) {
 ; CHECK-LABEL: @not_nsw(
 ; CHECK: add <4 x i32>
 define void @not_nsw(i32* %x) {
-  %idx1 = getelementptr inbounds i32* %x, i64 0
-  %idx2 = getelementptr inbounds i32* %x, i64 1
-  %idx3 = getelementptr inbounds i32* %x, i64 2
-  %idx4 = getelementptr inbounds i32* %x, i64 3
+  %idx1 = getelementptr inbounds i32, i32* %x, i64 0
+  %idx2 = getelementptr inbounds i32, i32* %x, i64 1
+  %idx3 = getelementptr inbounds i32, i32* %x, i64 2
+  %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
   %load1 = load i32* %idx1, align 4
   %load2 = load i32* %idx2, align 4
@@ -114,10 +114,10 @@ define void @not_nsw(i32* %x) {
 ; CHECK-LABEL: @nuw(
 ; CHECK: add nuw <4 x i32>
 define void @nuw(i32* %x) {
-  %idx1 = getelementptr inbounds i32* %x, i64 0
-  %idx2 = getelementptr inbounds i32* %x, i64 1
-  %idx3 = getelementptr inbounds i32* %x, i64 2
-  %idx4 = getelementptr inbounds i32* %x, i64 3
+  %idx1 = getelementptr inbounds i32, i32* %x, i64 0
+  %idx2 = getelementptr inbounds i32, i32* %x, i64 1
+  %idx3 = getelementptr inbounds i32, i32* %x, i64 2
+  %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
   %load1 = load i32* %idx1, align 4
   %load2 = load i32* %idx2, align 4
@@ -140,10 +140,10 @@ define void @nuw(i32* %x) {
 ; CHECK-LABEL: @not_nuw(
 ; CHECK: add <4 x i32>
 define void @not_nuw(i32* %x) {
-  %idx1 = getelementptr inbounds i32* %x, i64 0
-  %idx2 = getelementptr inbounds i32* %x, i64 1
-  %idx3 = getelementptr inbounds i32* %x, i64 2
-  %idx4 = getelementptr inbounds i32* %x, i64 3
+  %idx1 = getelementptr inbounds i32, i32* %x, i64 0
+  %idx2 = getelementptr inbounds i32, i32* %x, i64 1
+  %idx3 = getelementptr inbounds i32, i32* %x, i64 2
+  %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
   %load1 = load i32* %idx1, align 4
   %load2 = load i32* %idx2, align 4
@@ -166,10 +166,10 @@ define void @not_nuw(i32* %x) {
 ; CHECK-LABEL: @nnan(
 ; CHECK: fadd nnan <4 x float>
 define void @nnan(float* %x) {
-  %idx1 = getelementptr inbounds float* %x, i64 0
-  %idx2 = getelementptr inbounds float* %x, i64 1
-  %idx3 = getelementptr inbounds float* %x, i64 2
-  %idx4 = getelementptr inbounds float* %x, i64 3
+  %idx1 = getelementptr inbounds float, float* %x, i64 0
+  %idx2 = getelementptr inbounds float, float* %x, i64 1
+  %idx3 = getelementptr inbounds float, float* %x, i64 2
+  %idx4 = getelementptr inbounds float, float* %x, i64 3
 
   %load1 = load float* %idx1, align 4
   %load2 = load float* %idx2, align 4
@@ -192,10 +192,10 @@ define void @nnan(float* %x) {
 ; CHECK-LABEL: @not_nnan(
 ; CHECK: fadd <4 x float>
 define void @not_nnan(float* %x) {
-  %idx1 = getelementptr inbounds float* %x, i64 0
-  %idx2 = getelementptr inbounds float* %x, i64 1
-  %idx3 = getelementptr inbounds float* %x, i64 2
-  %idx4 = getelementptr inbounds float* %x, i64 3
+  %idx1 = getelementptr inbounds float, float* %x, i64 0
+  %idx2 = getelementptr inbounds float, float* %x, i64 1
+  %idx3 = getelementptr inbounds float, float* %x, i64 2
+  %idx4 = getelementptr inbounds float, float* %x, i64 3
 
   %load1 = load float* %idx1, align 4
   %load2 = load float* %idx2, align 4
@@ -218,10 +218,10 @@ define void @not_nnan(float* %x) {
 ; CHECK-LABEL: @only_fast(
 ; CHECK: fadd fast <4 x float>
 define void @only_fast(float* %x) {
-  %idx1 = getelementptr inbounds float* %x, i64 0
-  %idx2 = getelementptr inbounds float* %x, i64 1
-  %idx3 = getelementptr inbounds float* %x, i64 2
-  %idx4 = getelementptr inbounds float* %x, i64 3
+  %idx1 = getelementptr inbounds float, float* %x, i64 0
+  %idx2 = getelementptr inbounds float, float* %x, i64 1
+  %idx3 = getelementptr inbounds float, float* %x, i64 2
+  %idx4 = getelementptr inbounds float, float* %x, i64 3
 
   %load1 = load float* %idx1, align 4
   %load2 = load float* %idx2, align 4
@@ -244,10 +244,10 @@ define void @only_fast(float* %x) {
 ; CHECK-LABEL: @only_arcp(
 ; CHECK: fadd arcp <4 x float>
 define void @only_arcp(float* %x) {
-  %idx1 = getelementptr inbounds float* %x, i64 0
-  %idx2 = getelementptr inbounds float* %x, i64 1
-  %idx3 = getelementptr inbounds float* %x, i64 2
-  %idx4 = getelementptr inbounds float* %x, i64 3
+  %idx1 = getelementptr inbounds float, float* %x, i64 0
+  %idx2 = getelementptr inbounds float, float* %x, i64 1
+  %idx3 = getelementptr inbounds float, float* %x, i64 2
+  %idx4 = getelementptr inbounds float, float* %x, i64 3
 
   %load1 = load float* %idx1, align 4
   %load2 = load float* %idx2, align 4
@@ -271,10 +271,10 @@ define void @only_arcp(float* %x) {
 ; CHECK: add nsw <4 x i32>
 ; CHECK: sub nsw <4 x i32>
 define void @addsub_all_nsw(i32* %x) {
-  %idx1 = getelementptr inbounds i32* %x, i64 0
-  %idx2 = getelementptr inbounds i32* %x, i64 1
-  %idx3 = getelementptr inbounds i32* %x, i64 2
-  %idx4 = getelementptr inbounds i32* %x, i64 3
+  %idx1 = getelementptr inbounds i32, i32* %x, i64 0
+  %idx2 = getelementptr inbounds i32, i32* %x, i64 1
+  %idx3 = getelementptr inbounds i32, i32* %x, i64 2
+  %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
   %load1 = load i32* %idx1, align 4
   %load2 = load i32* %idx2, align 4
@@ -298,10 +298,10 @@ define void @addsub_all_nsw(i32* %x) {
 ; CHECK: add nsw <4 x i32>
 ; CHECK: sub <4 x i32>
 define void @addsub_some_nsw(i32* %x) {
-  %idx1 = getelementptr inbounds i32* %x, i64 0
-  %idx2 = getelementptr inbounds i32* %x, i64 1
-  %idx3 = getelementptr inbounds i32* %x, i64 2
-  %idx4 = getelementptr inbounds i32* %x, i64 3
+  %idx1 = getelementptr inbounds i32, i32* %x, i64 0
+  %idx2 = getelementptr inbounds i32, i32* %x, i64 1
+  %idx3 = getelementptr inbounds i32, i32* %x, i64 2
+  %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
   %load1 = load i32* %idx1, align 4
   %load2 = load i32* %idx2, align 4
@@ -325,10 +325,10 @@ define void @addsub_some_nsw(i32* %x) {
 ; CHECK: add <4 x i32>
 ; CHECK: sub <4 x i32>
 define void @addsub_no_nsw(i32* %x) {
-  %idx1 = getelementptr inbounds i32* %x, i64 0
-  %idx2 = getelementptr inbounds i32* %x, i64 1
-  %idx3 = getelementptr inbounds i32* %x, i64 2
-  %idx4 = getelementptr inbounds i32* %x, i64 3
+  %idx1 = getelementptr inbounds i32, i32* %x, i64 0
+  %idx2 = getelementptr inbounds i32, i32* %x, i64 1
+  %idx3 = getelementptr inbounds i32, i32* %x, i64 2
+  %idx4 = getelementptr inbounds i32, i32* %x, i64 3
 
   %load1 = load i32* %idx1, align 4
   %load2 = load i32* %idx2, align 4

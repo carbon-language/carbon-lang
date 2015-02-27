@@ -18,7 +18,7 @@ entry:
 ; CHECK: mov [[REG:x[0-9]+]], sp
 ; CHECK-NEXT: add x0, [[REG]], #8
   %E = alloca %struct.S2Ty, align 4
-  %B = getelementptr inbounds %struct.S2Ty* %E, i32 0, i32 1
+  %B = getelementptr inbounds %struct.S2Ty, %struct.S2Ty* %E, i32 0, i32 1
   call void @takeS1(%struct.S1Ty* %B)
   ret void
 }

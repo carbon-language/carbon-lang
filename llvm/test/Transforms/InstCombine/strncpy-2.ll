@@ -13,8 +13,8 @@ declare i16* @strncpy(i8*, i8*, i32)
 
 define void @test_no_simplify1() {
 ; CHECK-LABEL: @test_no_simplify1(
-  %dst = getelementptr [32 x i8]* @a, i32 0, i32 0
-  %src = getelementptr [6 x i8]* @hello, i32 0, i32 0
+  %dst = getelementptr [32 x i8], [32 x i8]* @a, i32 0, i32 0
+  %src = getelementptr [6 x i8], [6 x i8]* @hello, i32 0, i32 0
 
   call i16* @strncpy(i8* %dst, i8* %src, i32 6)
 ; CHECK: call i16* @strncpy

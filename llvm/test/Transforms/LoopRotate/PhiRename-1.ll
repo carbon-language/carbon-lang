@@ -41,12 +41,12 @@ entry:
 	br label %bb21
 
 bb:		; preds = %bb21
-	%tmp3 = getelementptr %struct.list* %tmp22, i32 0, i32 0		; <i8**> [#uses=1]
+	%tmp3 = getelementptr %struct.list, %struct.list* %tmp22, i32 0, i32 0		; <i8**> [#uses=1]
 	%tmp4 = load i8** %tmp3		; <i8*> [#uses=1]
 	%tmp45 = bitcast i8* %tmp4 to %struct.operator*		; <%struct.operator*> [#uses=1]
 	store %struct.operator* %tmp45, %struct.operator** %op
 	%tmp6 = load %struct.operator** %op		; <%struct.operator*> [#uses=1]
-	%tmp7 = getelementptr %struct.operator* %tmp6, i32 0, i32 5		; <i32*> [#uses=1]
+	%tmp7 = getelementptr %struct.operator, %struct.operator* %tmp6, i32 0, i32 5		; <i32*> [#uses=1]
 	%tmp8 = load i32* %tmp7		; <i32> [#uses=1]
 	%tmp9 = load i32* %arity_addr		; <i32> [#uses=1]
 	icmp eq i32 %tmp8, %tmp9		; <i1>:0 [#uses=1]
@@ -56,10 +56,10 @@ bb:		; preds = %bb21
 
 cond_true:		; preds = %bb
 	%tmp10 = load %struct.operator** %op		; <%struct.operator*> [#uses=1]
-	%tmp11 = getelementptr %struct.operator* %tmp10, i32 0, i32 2		; <i32*> [#uses=1]
+	%tmp11 = getelementptr %struct.operator, %struct.operator* %tmp10, i32 0, i32 2		; <i32*> [#uses=1]
 	%tmp12 = load i32* %tmp11		; <i32> [#uses=1]
 	%tmp13 = load %struct.FILE** @outfile		; <%struct.FILE*> [#uses=1]
-	%tmp14 = getelementptr [11 x i8]* @str1, i32 0, i32 0		; <i8*> [#uses=1]
+	%tmp14 = getelementptr [11 x i8], [11 x i8]* @str1, i32 0, i32 0		; <i8*> [#uses=1]
 	%tmp15 = call i32 (%struct.FILE*, i8*, ...)* @fprintf( %struct.FILE* %tmp13, i8* %tmp14, i32 %tmp12 )		; <i32> [#uses=0]
 	%tmp16 = load i32* %c		; <i32> [#uses=1]
 	%tmp17 = add i32 %tmp16, 1		; <i32> [#uses=1]
@@ -67,7 +67,7 @@ cond_true:		; preds = %bb
 	br label %cond_next
 
 cond_next:		; preds = %cond_true, %bb
-	%tmp19 = getelementptr %struct.list* %tmp22, i32 0, i32 1		; <%struct.list**> [#uses=1]
+	%tmp19 = getelementptr %struct.list, %struct.list* %tmp22, i32 0, i32 1		; <%struct.list**> [#uses=1]
 	%tmp20 = load %struct.list** %tmp19		; <%struct.list*> [#uses=1]
 	store %struct.list* %tmp20, %struct.list** %l
 	br label %bb21

@@ -21,7 +21,7 @@ bb:		; preds = %bb1, %bb.nph
 	%p.01 = phi i8 [ %4, %bb1 ], [ -1, %bb.nph ]		; <i8> [#uses=2]
 	%1 = sext i8 %p.01 to i32		; <i32> [#uses=1]
 	%2 = sext i32 %i.02 to i64		; <i64> [#uses=1]
-	%3 = getelementptr i32* %d, i64 %2		; <i32*> [#uses=1]
+	%3 = getelementptr i32, i32* %d, i64 %2		; <i32*> [#uses=1]
 	store i32 %1, i32* %3, align 4
 	%4 = add i8 %p.01, 1		; <i8> [#uses=1]
 	%5 = add i32 %i.02, 1		; <i32> [#uses=2]

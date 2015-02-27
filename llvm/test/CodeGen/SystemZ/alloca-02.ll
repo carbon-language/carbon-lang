@@ -38,13 +38,13 @@ define i64 @f1(i64 %length, i64 %index) {
 ; CHECK-E: stcy [[TMP]], 4096({{%r3,%r2|%r2,%r3}})
   %a = alloca i8, i64 %length
   store volatile i8 0, i8 *%a
-  %b = getelementptr i8 *%a, i64 4095
+  %b = getelementptr i8, i8 *%a, i64 4095
   store volatile i8 1, i8 *%b
-  %c = getelementptr i8 *%a, i64 %index
+  %c = getelementptr i8, i8 *%a, i64 %index
   store volatile i8 2, i8 *%c
-  %d = getelementptr i8 *%c, i64 4095
+  %d = getelementptr i8, i8 *%c, i64 4095
   store volatile i8 3, i8 *%d
-  %e = getelementptr i8 *%d, i64 1
+  %e = getelementptr i8, i8 *%d, i64 1
   store volatile i8 4, i8 *%e
   %count = call i64 @bar(i8 *%a)
   %res = add i64 %count, 1

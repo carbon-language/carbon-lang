@@ -98,7 +98,7 @@ define void @f7(i32 *%base, i32 %alt, i32 %limit) {
 ; CHECK: clfi %r4, 42
 ; CHECK: stoche %r3, 524284(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 131071
+  %ptr = getelementptr i32, i32 *%base, i64 131071
   %cond = icmp ult i32 %limit, 42
   %orig = load i32 *%ptr
   %res = select i1 %cond, i32 %orig, i32 %alt
@@ -113,7 +113,7 @@ define void @f8(i32 *%base, i32 %alt, i32 %limit) {
 ; CHECK: clfi %r4, 42
 ; CHECK: stoche %r3, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 131072
+  %ptr = getelementptr i32, i32 *%base, i64 131072
   %cond = icmp ult i32 %limit, 42
   %orig = load i32 *%ptr
   %res = select i1 %cond, i32 %orig, i32 %alt
@@ -127,7 +127,7 @@ define void @f9(i32 *%base, i32 %alt, i32 %limit) {
 ; CHECK: clfi %r4, 42
 ; CHECK: stoche %r3, -524288(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 -131072
+  %ptr = getelementptr i32, i32 *%base, i64 -131072
   %cond = icmp ult i32 %limit, 42
   %orig = load i32 *%ptr
   %res = select i1 %cond, i32 %orig, i32 %alt
@@ -142,7 +142,7 @@ define void @f10(i32 *%base, i32 %alt, i32 %limit) {
 ; CHECK: clfi %r4, 42
 ; CHECK: stoche %r3, 0(%r2)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 -131073
+  %ptr = getelementptr i32, i32 *%base, i64 -131073
   %cond = icmp ult i32 %limit, 42
   %orig = load i32 *%ptr
   %res = select i1 %cond, i32 %orig, i32 %alt

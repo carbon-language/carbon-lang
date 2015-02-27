@@ -22,10 +22,10 @@ for.body.preheader:                               ; preds = %entry
 
 for.body:                                         ; preds = %for.body.preheader, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %for.body.preheader ]
-  %arrayidx = getelementptr inbounds [10000 x double]* @double_array, i64 0, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds [10000 x double], [10000 x double]* @double_array, i64 0, i64 %indvars.iv
   %1 = load double* %arrayidx, align 8
   %conv = fptoui double %1 to i32
-  %arrayidx2 = getelementptr inbounds [10000 x i32]* @unsigned_array, i64 0, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds [10000 x i32], [10000 x i32]* @unsigned_array, i64 0, i64 %indvars.iv
   store i32 %conv, i32* %arrayidx2, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %2 = trunc i64 %indvars.iv.next to i32

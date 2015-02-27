@@ -15,8 +15,8 @@ define void @test_nosimplify1() {
 ; CHECK: call i16* @strncat
 ; CHECK: ret void
 
-  %dst = getelementptr [32 x i8]* @a, i32 0, i32 0
-  %src = getelementptr [6 x i8]* @hello, i32 0, i32 0
+  %dst = getelementptr [32 x i8], [32 x i8]* @a, i32 0, i32 0
+  %src = getelementptr [6 x i8], [6 x i8]* @hello, i32 0, i32 0
   call i16* @strncat(i8* %dst, i8* %src, i32 13)
   ret void
 }

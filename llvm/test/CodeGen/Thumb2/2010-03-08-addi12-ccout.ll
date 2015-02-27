@@ -138,7 +138,7 @@ bb345:                                            ; preds = %bb345, %bb339
   %4 = phi i8 [ %5, %bb345 ], [ undef, %bb339 ]   ; <i8> [#uses=0]
   %indvar670 = phi i32 [ %tmp673, %bb345 ], [ 0, %bb339 ] ; <i32> [#uses=1]
   %tmp673 = add i32 %indvar670, 1                 ; <i32> [#uses=2]
-  %scevgep674 = getelementptr [256 x i8]* %last, i32 0, i32 %tmp673 ; <i8*> [#uses=1]
+  %scevgep674 = getelementptr [256 x i8], [256 x i8]* %last, i32 0, i32 %tmp673 ; <i8*> [#uses=1]
   %5 = load i8* %scevgep674, align 1              ; <i8> [#uses=1]
   br i1 undef, label %bb347, label %bb345
 
@@ -166,7 +166,7 @@ bb362:                                            ; preds = %bb361
 bb366:                                            ; preds = %bb366, %bb360
   %indvar662 = phi i32 [ %tmp665, %bb366 ], [ 0, %bb360 ] ; <i32> [#uses=1]
   %tmp665 = add i32 %indvar662, 1                 ; <i32> [#uses=2]
-  %scevgep666 = getelementptr [256 x i8]* %last2, i32 0, i32 %tmp665 ; <i8*> [#uses=1]
+  %scevgep666 = getelementptr [256 x i8], [256 x i8]* %last2, i32 0, i32 %tmp665 ; <i8*> [#uses=1]
   %6 = load i8* %scevgep666, align 1              ; <i8> [#uses=0]
   br i1 false, label %bb368, label %bb366
 
@@ -217,7 +217,7 @@ bb394:                                            ; preds = %isdigit1498.exit87
 
 bb395:                                            ; preds = %bb394, %isdigit1498.exit83, %bb391
   %storemerge14.sum = add i32 %indvar724, undef   ; <i32> [#uses=1]
-  %p.26 = getelementptr [256 x i8]* %line, i32 0, i32 %storemerge14.sum ; <i8*> [#uses=1]
+  %p.26 = getelementptr [256 x i8], [256 x i8]* %line, i32 0, i32 %storemerge14.sum ; <i8*> [#uses=1]
   br i1 undef, label %bb400, label %isdigit1498.exit87
 
 isdigit1498.exit87:                               ; preds = %bb395
@@ -227,7 +227,7 @@ bb400:                                            ; preds = %isdigit1498.exit87,
   br i1 undef, label %bb402, label %bb403
 
 bb402:                                            ; preds = %bb400
-  %12 = getelementptr inbounds i8* %p.26, i32 undef ; <i8*> [#uses=1]
+  %12 = getelementptr inbounds i8, i8* %p.26, i32 undef ; <i8*> [#uses=1]
   br label %bb403
 
 bb403:                                            ; preds = %bb402, %bb400

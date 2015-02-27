@@ -61,7 +61,7 @@ entry:
 loop:
   %i = phi i32 [ 0, %entry ], [ %i2, %loop ]
   %j = mul i32 %i, %i
-  %addr = getelementptr i32* %output, i32 %i
+  %addr = getelementptr i32, i32* %output, i32 %i
   store i32 %i, i32* %addr
   %i2 = add i32 %i, 1
   %exit_cond = icmp sge i32 %i2, %n

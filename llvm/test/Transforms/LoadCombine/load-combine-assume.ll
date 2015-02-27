@@ -14,7 +14,7 @@ define i64 @test1(i32* nocapture readonly %a, i1 %b) {
 
   %load1 = load i32* %a, align 4
   %conv = zext i32 %load1 to i64
-  %arrayidx1 = getelementptr inbounds i32* %a, i64 1
+  %arrayidx1 = getelementptr inbounds i32, i32* %a, i64 1
   %load2 = load i32* %arrayidx1, align 4
   tail call void @llvm.assume(i1 %b)
   %conv2 = zext i32 %load2 to i64
@@ -33,7 +33,7 @@ define i64 @test2(i32* nocapture readonly %a, i1 %b) {
 
   %load1 = load i32* %a, align 4
   %conv = zext i32 %load1 to i64
-  %arrayidx1 = getelementptr inbounds i32* %a, i64 1
+  %arrayidx1 = getelementptr inbounds i32, i32* %a, i64 1
   tail call void @llvm.assume(i1 %b)
   %load2 = load i32* %arrayidx1, align 4
   %conv2 = zext i32 %load2 to i64

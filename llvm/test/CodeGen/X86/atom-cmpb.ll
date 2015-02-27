@@ -11,9 +11,9 @@
  
 define i8 @run_test(i8* %rd_p) {
 entry:
-  %incdec.ptr = getelementptr inbounds i8* %rd_p, i64 1
+  %incdec.ptr = getelementptr inbounds i8, i8* %rd_p, i64 1
   %ld1 = load i8* %rd_p, align 1
-  %incdec.ptr1 = getelementptr inbounds i8* %rd_p, i64 2
+  %incdec.ptr1 = getelementptr inbounds i8, i8* %rd_p, i64 2
   %ld2 = load i8* %incdec.ptr, align 1
   %x4 = xor i8 %ld1, -1
   %x5 = xor i8 %ld2, -1

@@ -8,8 +8,8 @@ define i32 @outer1() {
 ; CHECK: ret i32
 
   %ptr = alloca i32
-  %ptr1 = getelementptr inbounds i32* %ptr, i32 0
-  %ptr2 = getelementptr inbounds i32* %ptr, i32 42
+  %ptr1 = getelementptr inbounds i32, i32* %ptr, i32 0
+  %ptr2 = getelementptr inbounds i32, i32* %ptr, i32 42
   %result = call i32 @inner1(i32* %ptr1, i32* %ptr2)
   ret i32 %result
 }
@@ -36,8 +36,8 @@ define i32 @outer2(i32* %ptr) {
 ; CHECK: call i32 @inner2
 ; CHECK: ret i32
 
-  %ptr1 = getelementptr i32* %ptr, i32 0
-  %ptr2 = getelementptr i32* %ptr, i32 42
+  %ptr1 = getelementptr i32, i32* %ptr, i32 0
+  %ptr2 = getelementptr i32, i32* %ptr, i32 42
   %result = call i32 @inner2(i32* %ptr1, i32* %ptr2)
   ret i32 %result
 }

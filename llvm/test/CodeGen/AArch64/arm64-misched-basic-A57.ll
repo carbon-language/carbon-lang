@@ -49,7 +49,7 @@ for.body:                                         ; preds = %for.cond
   %3 = load i32* %yy, align 4
   %4 = load i32* %i, align 4
   %idxprom = sext i32 %4 to i64
-  %arrayidx = getelementptr inbounds [8 x i32]* %x, i32 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [8 x i32], [8 x i32]* %x, i32 0, i64 %idxprom
   %5 = load i32* %arrayidx, align 4
   %add = add nsw i32 %5, 1
   store i32 %add, i32* %xx, align 4
@@ -64,7 +64,7 @@ for.body:                                         ; preds = %for.cond
   store i32 %add3, i32* %xx, align 4
   %9 = load i32* %i, align 4
   %idxprom4 = sext i32 %9 to i64
-  %arrayidx5 = getelementptr inbounds [8 x i32]* %y, i32 0, i64 %idxprom4
+  %arrayidx5 = getelementptr inbounds [8 x i32], [8 x i32]* %y, i32 0, i64 %idxprom4
   %10 = load i32* %arrayidx5, align 4
 
   %add4 = add nsw i32 %9, %add

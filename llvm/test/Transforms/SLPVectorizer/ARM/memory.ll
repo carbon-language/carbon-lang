@@ -12,9 +12,9 @@ define void @expensive_double_store(double* noalias %dst, double* noalias %src, 
 entry:
   %0 = load double* %src, align 8
   store double %0, double* %dst, align 8
-  %arrayidx2 = getelementptr inbounds double* %src, i64 1
+  %arrayidx2 = getelementptr inbounds double, double* %src, i64 1
   %1 = load double* %arrayidx2, align 8
-  %arrayidx3 = getelementptr inbounds double* %dst, i64 1
+  %arrayidx3 = getelementptr inbounds double, double* %dst, i64 1
   store double %1, double* %arrayidx3, align 8
   ret void
 }

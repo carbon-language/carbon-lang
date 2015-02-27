@@ -26,9 +26,9 @@ bb8:                                              ; preds = %bb8, %bb7
 ; CHECK-NOT: vmov.f32
 ; CHECK: blt
   %tmp54 = add i32 0, %tmp53                      ; <i32> [#uses=0]
-  %fi.1 = getelementptr float* %fz, i32 undef     ; <float*> [#uses=2]
+  %fi.1 = getelementptr float, float* %fz, i32 undef     ; <float*> [#uses=2]
   %tmp80 = add i32 0, %tmp79                      ; <i32> [#uses=1]
-  %scevgep81 = getelementptr float* %fz, i32 %tmp80 ; <float*> [#uses=1]
+  %scevgep81 = getelementptr float, float* %fz, i32 %tmp80 ; <float*> [#uses=1]
   %2 = load float* undef, align 4                 ; <float> [#uses=1]
   %3 = fmul float %2, %1                          ; <float> [#uses=1]
   %4 = load float* null, align 4                  ; <float> [#uses=2]

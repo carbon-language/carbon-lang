@@ -27,9 +27,9 @@ entry:
 define { i64, i1 } @foo(i64* , %Sstruct* , i1, i64) {
 entry:
   %.sroa.0 = alloca i72, align 16
-  %.count.value = getelementptr inbounds %Sstruct* %1, i64 0, i32 0, i32 0
+  %.count.value = getelementptr inbounds %Sstruct, %Sstruct* %1, i64 0, i32 0, i32 0
   %4 = load i64* %.count.value, align 8
-  %.repeatedValue.value = getelementptr inbounds %Sstruct* %1, i64 0, i32 1, i32 0
+  %.repeatedValue.value = getelementptr inbounds %Sstruct, %Sstruct* %1, i64 0, i32 1, i32 0
   %5 = load i32* %.repeatedValue.value, align 8
   %6 = icmp eq i64 %4, 0
   br label %7

@@ -156,7 +156,7 @@ define void @f10(i8 *%targetptr1) {
   br label %loop
 loop:
   %val = call i32 @foo()
-  %targetptr2 = getelementptr i8 *%targetptr1, i64 1
+  %targetptr2 = getelementptr i8, i8 *%targetptr1, i64 1
   %byte1 = load i8 *%targetptr1
   %byte2 = load i8 *%targetptr2
   %ext1 = zext i8 %byte1 to i32
@@ -178,7 +178,7 @@ define void @f11(i16 *%targetptr1) {
   br label %loop
 loop:
   %val = call i32 @foo()
-  %targetptr2 = getelementptr i16 *%targetptr1, i64 1
+  %targetptr2 = getelementptr i16, i16 *%targetptr1, i64 1
   %half1 = load i16 *%targetptr1
   %half2 = load i16 *%targetptr2
   %ext1 = zext i16 %half1 to i32

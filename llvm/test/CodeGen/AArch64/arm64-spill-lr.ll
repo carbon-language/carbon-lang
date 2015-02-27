@@ -11,7 +11,7 @@ entry:
   %stack = alloca [128 x i32], align 4
   %0 = bitcast [128 x i32]* %stack to i8*
   %idxprom = sext i32 %a to i64
-  %arrayidx = getelementptr inbounds [128 x i32]* %stack, i64 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [128 x i32], [128 x i32]* %stack, i64 0, i64 %idxprom
   store i32 %b, i32* %arrayidx, align 4
   %1 = load volatile i32* @bar, align 4
   %2 = load volatile i32* @bar, align 4
@@ -34,7 +34,7 @@ entry:
   %19 = load volatile i32* @bar, align 4
   %20 = load volatile i32* @bar, align 4
   %idxprom1 = sext i32 %c to i64
-  %arrayidx2 = getelementptr inbounds [128 x i32]* %stack, i64 0, i64 %idxprom1
+  %arrayidx2 = getelementptr inbounds [128 x i32], [128 x i32]* %stack, i64 0, i64 %idxprom1
   %21 = load i32* %arrayidx2, align 4
   %factor = mul i32 %h, -2
   %factor67 = mul i32 %g, -2

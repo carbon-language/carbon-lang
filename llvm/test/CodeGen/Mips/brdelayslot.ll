@@ -144,7 +144,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %s.06 = phi i32 [ %add, %for.body ], [ 0, %entry ]
   %i.05 = phi i32 [ %inc, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr inbounds i32* %a, i32 %i.05
+  %arrayidx = getelementptr inbounds i32, i32* %a, i32 %i.05
   %0 = load i32* %arrayidx, align 4
   %add = add nsw i32 %0, %s.06
   %inc = add nsw i32 %i.05, 1

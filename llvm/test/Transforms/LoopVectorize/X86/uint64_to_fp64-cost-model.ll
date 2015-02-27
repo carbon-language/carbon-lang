@@ -12,10 +12,10 @@ entry:
   br label %for.body
 for.body:
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
-  %arrayidx = getelementptr inbounds i64* %a, i64 %indvars.iv
+  %arrayidx = getelementptr inbounds i64, i64* %a, i64 %indvars.iv
   %tmp = load i64* %arrayidx, align 4
   %conv = uitofp i64 %tmp to double
-  %arrayidx2 = getelementptr inbounds double* %b, i64 %indvars.iv
+  %arrayidx2 = getelementptr inbounds double, double* %b, i64 %indvars.iv
   store double %conv, double* %arrayidx2, align 4
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %exitcond = icmp eq i64 %indvars.iv.next, 256

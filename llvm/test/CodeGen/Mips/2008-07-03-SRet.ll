@@ -7,11 +7,11 @@ entry:
 ; CHECK: sw ${{[0-9]+}}, {{[0-9]+}}($4)
 ; CHECK: sw ${{[0-9]+}}, {{[0-9]+}}($4)
 ; CHECK: sw ${{[0-9]+}}, {{[0-9]+}}($4)
-  getelementptr %struct.sret0* %agg.result, i32 0, i32 0    ; <i32*>:0 [#uses=1]
+  getelementptr %struct.sret0, %struct.sret0* %agg.result, i32 0, i32 0    ; <i32*>:0 [#uses=1]
   store i32 %dummy, i32* %0, align 4
-  getelementptr %struct.sret0* %agg.result, i32 0, i32 1    ; <i32*>:1 [#uses=1]
+  getelementptr %struct.sret0, %struct.sret0* %agg.result, i32 0, i32 1    ; <i32*>:1 [#uses=1]
   store i32 %dummy, i32* %1, align 4
-  getelementptr %struct.sret0* %agg.result, i32 0, i32 2    ; <i32*>:2 [#uses=1]
+  getelementptr %struct.sret0, %struct.sret0* %agg.result, i32 0, i32 2    ; <i32*>:2 [#uses=1]
   store i32 %dummy, i32* %2, align 4
   ret void
 }

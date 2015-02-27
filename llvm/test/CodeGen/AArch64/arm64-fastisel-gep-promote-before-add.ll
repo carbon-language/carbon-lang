@@ -10,7 +10,7 @@ entry:
 
   ; CHECK-LABEL: _gep_promotion:
   ; CHECK: ldrb {{[a-z][0-9]+}}, {{\[[a-z][0-9]+\]}}
-  %arrayidx = getelementptr inbounds i8* %0, i8 %add
+  %arrayidx = getelementptr inbounds i8, i8* %0, i8 %add
 
   %1 = load i8* %arrayidx, align 1
   ret i8 %1

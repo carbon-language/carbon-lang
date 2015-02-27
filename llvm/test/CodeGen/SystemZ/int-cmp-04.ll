@@ -21,7 +21,7 @@ define void @f2(i64 %lhs, i16 *%src, i64 *%dst) {
 ; CHECK-LABEL: f2:
 ; CHECK: cgh %r2, 524286(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 262143
+  %ptr = getelementptr i16, i16 *%src, i64 262143
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i64
   %cond = icmp slt i64 %lhs, %rhs
@@ -37,7 +37,7 @@ define void @f3(i64 %lhs, i16 *%src, i64 *%dst) {
 ; CHECK: agfi %r3, 524288
 ; CHECK: cgh %r2, 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 262144
+  %ptr = getelementptr i16, i16 *%src, i64 262144
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i64
   %cond = icmp slt i64 %lhs, %rhs
@@ -51,7 +51,7 @@ define void @f4(i64 %lhs, i16 *%src, i64 *%dst) {
 ; CHECK-LABEL: f4:
 ; CHECK: cgh %r2, -2(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 -1
+  %ptr = getelementptr i16, i16 *%src, i64 -1
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i64
   %cond = icmp slt i64 %lhs, %rhs
@@ -65,7 +65,7 @@ define void @f5(i64 %lhs, i16 *%src, i64 *%dst) {
 ; CHECK-LABEL: f5:
 ; CHECK: cgh %r2, -524288(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 -262144
+  %ptr = getelementptr i16, i16 *%src, i64 -262144
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i64
   %cond = icmp slt i64 %lhs, %rhs
@@ -81,7 +81,7 @@ define void @f6(i64 %lhs, i16 *%src, i64 *%dst) {
 ; CHECK: agfi %r3, -524290
 ; CHECK: cgh %r2, 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%src, i64 -262145
+  %ptr = getelementptr i16, i16 *%src, i64 -262145
   %half = load i16 *%ptr
   %rhs = sext i16 %half to i64
   %cond = icmp slt i64 %lhs, %rhs

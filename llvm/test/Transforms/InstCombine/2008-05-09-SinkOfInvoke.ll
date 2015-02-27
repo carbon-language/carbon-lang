@@ -24,7 +24,7 @@ invcont31:		; preds = %invcont
 
 invcont37:		; preds = %invcont31
 	%tmp39 = load i32** %tmp38, align 8		; <i32*> [#uses=1]
-	%tmp41 = getelementptr %"struct.std::ctype<char>"* %this, i32 0, i32 4		; <i32**> [#uses=1]
+	%tmp41 = getelementptr %"struct.std::ctype<char>", %"struct.std::ctype<char>"* %this, i32 0, i32 4		; <i32**> [#uses=1]
 	store i32* %tmp39, i32** %tmp41, align 8
 	ret void
 

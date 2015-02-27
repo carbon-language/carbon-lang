@@ -24,14 +24,14 @@ entry:
 define internal i8 @UseLongDoubleUnsafely(%union.u* byval align 16 %arg) {
 entry:
   %bitcast = bitcast %union.u* %arg to %struct.s*
-  %gep = getelementptr inbounds %struct.s* %bitcast, i64 0, i32 2
+  %gep = getelementptr inbounds %struct.s, %struct.s* %bitcast, i64 0, i32 2
   %result = load i8* %gep
   ret i8 %result
 }
 
 ; CHECK: internal x86_fp80 @UseLongDoubleSafely(x86_fp80 {{%.*}}) {
 define internal x86_fp80 @UseLongDoubleSafely(%union.u* byval align 16 %arg) {
-  %gep = getelementptr inbounds %union.u* %arg, i64 0, i32 0
+  %gep = getelementptr inbounds %union.u, %union.u* %arg, i64 0, i32 0
   %fp80 = load x86_fp80* %gep
   ret x86_fp80 %fp80
 }
@@ -53,6 +53,6 @@ loop:
   %phi = phi %struct.Foo* [ null, %entry ], [ %gep, %loop ]
   %0   = phi %struct.Foo* [ %a, %entry ],   [ %0, %loop ]
   store %struct.Foo* %phi, %struct.Foo** %a_ptr
-  %gep = getelementptr %struct.Foo* %a, i64 0
+  %gep = getelementptr %struct.Foo, %struct.Foo* %a, i64 0
   br label %loop
 }

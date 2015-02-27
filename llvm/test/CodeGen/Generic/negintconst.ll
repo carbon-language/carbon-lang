@@ -39,8 +39,8 @@ define i32 @main() {
         %iscale = mul i32 %i, -1                ; <i32> [#uses=1]
         %ioff = add i32 %iscale, 3              ; <i32> [#uses=2]
         %ioff.upgrd.1 = zext i32 %ioff to i64           ; <i64> [#uses=1]
-        %fptr = getelementptr %Results* %fval, i64 %ioff.upgrd.1                ; <%Results*> [#uses=1]
-        %castFmt = getelementptr [39 x i8]* @fmtArg, i64 0, i64 0               ; <i8*> [#uses=1]
+        %fptr = getelementptr %Results, %Results* %fval, i64 %ioff.upgrd.1                ; <%Results*> [#uses=1]
+        %castFmt = getelementptr [39 x i8], [39 x i8]* @fmtArg, i64 0, i64 0               ; <i8*> [#uses=1]
         call i32 (i8*, ...)* @printf( i8* %castFmt, i32 %ioff, %Results* %fval, %Results* %fptr )               ; <i32>:1 [#uses=0]
         ret i32 0
 }

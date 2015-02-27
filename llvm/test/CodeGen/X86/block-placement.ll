@@ -24,7 +24,7 @@ define i32 @test_ifchains(i32 %i, i32* %a, i32 %b) {
 ; CHECK: %then5
 
 entry:
-  %gep1 = getelementptr i32* %a, i32 1
+  %gep1 = getelementptr i32, i32* %a, i32 1
   %val1 = load i32* %gep1
   %cond1 = icmp ugt i32 %val1, 1
   br i1 %cond1, label %then1, label %else1, !prof !0
@@ -34,7 +34,7 @@ then1:
   br label %else1
 
 else1:
-  %gep2 = getelementptr i32* %a, i32 2
+  %gep2 = getelementptr i32, i32* %a, i32 2
   %val2 = load i32* %gep2
   %cond2 = icmp ugt i32 %val2, 2
   br i1 %cond2, label %then2, label %else2, !prof !0
@@ -44,7 +44,7 @@ then2:
   br label %else2
 
 else2:
-  %gep3 = getelementptr i32* %a, i32 3
+  %gep3 = getelementptr i32, i32* %a, i32 3
   %val3 = load i32* %gep3
   %cond3 = icmp ugt i32 %val3, 3
   br i1 %cond3, label %then3, label %else3, !prof !0
@@ -54,7 +54,7 @@ then3:
   br label %else3
 
 else3:
-  %gep4 = getelementptr i32* %a, i32 4
+  %gep4 = getelementptr i32, i32* %a, i32 4
   %val4 = load i32* %gep4
   %cond4 = icmp ugt i32 %val4, 4
   br i1 %cond4, label %then4, label %else4, !prof !0
@@ -64,7 +64,7 @@ then4:
   br label %else4
 
 else4:
-  %gep5 = getelementptr i32* %a, i32 3
+  %gep5 = getelementptr i32, i32* %a, i32 3
   %val5 = load i32* %gep5
   %cond5 = icmp ugt i32 %val5, 3
   br i1 %cond5, label %then5, label %exit, !prof !0
@@ -113,7 +113,7 @@ unlikely2:
   br label %body3
 
 body3:
-  %arrayidx = getelementptr inbounds i32* %a, i32 %iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i32 %iv
   %0 = load i32* %arrayidx
   %sum = add nsw i32 %0, %base
   %next = add i32 %iv, 1
@@ -166,7 +166,7 @@ bail3:
   ret i32 -3
 
 body4:
-  %arrayidx = getelementptr inbounds i32* %a, i32 %iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i32 %iv
   %0 = load i32* %arrayidx
   %sum = add nsw i32 %0, %base
   %next = add i32 %iv, 1
@@ -197,7 +197,7 @@ body0:
   br i1 %exitcond, label %exit, label %body1
 
 body1:
-  %arrayidx = getelementptr inbounds i32* %a, i32 %iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i32 %iv
   %0 = load i32* %arrayidx
   %sum = add nsw i32 %0, %base
   %bailcond1 = icmp eq i32 %sum, 42
@@ -222,7 +222,7 @@ entry:
 body0:
   %iv = phi i32 [ 0, %entry ], [ %next, %body1 ]
   %base = phi i32 [ 0, %entry ], [ %sum, %body1 ]
-  %arrayidx = getelementptr inbounds i32* %a, i32 %iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i32 %iv
   %0 = load i32* %arrayidx
   %sum = add nsw i32 %0, %base
   %bailcond1 = icmp eq i32 %sum, 42
@@ -252,7 +252,7 @@ entry:
 body:
   %iv = phi i32 [ 0, %entry ], [ %next, %body ]
   %base = phi i32 [ 0, %entry ], [ %sum, %body ]
-  %arrayidx = getelementptr inbounds i32* %a, i32 %iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i32 %iv
   %0 = load i32* %arrayidx
   %sum = add nsw i32 %0, %base
   %next = add i32 %iv, 1
@@ -279,7 +279,7 @@ entry:
 
 loop.body.1:
   %iv = phi i32 [ 0, %entry ], [ %next, %loop.body.2 ]
-  %arrayidx = getelementptr inbounds i32* %a, i32 %iv
+  %arrayidx = getelementptr inbounds i32, i32* %a, i32 %iv
   %bidx = load i32* %arrayidx
   br label %inner.loop.body
 
@@ -287,7 +287,7 @@ inner.loop.body:
   %inner.iv = phi i32 [ 0, %loop.body.1 ], [ %inner.next, %inner.loop.body ]
   %base = phi i32 [ 0, %loop.body.1 ], [ %sum, %inner.loop.body ]
   %scaled_idx = mul i32 %bidx, %iv
-  %inner.arrayidx = getelementptr inbounds i32* %b, i32 %scaled_idx
+  %inner.arrayidx = getelementptr inbounds i32, i32* %b, i32 %scaled_idx
   %0 = load i32* %inner.arrayidx
   %sum = add nsw i32 %0, %base
   %inner.next = add i32 %iv, 1
@@ -373,7 +373,7 @@ loop.body2:
   br i1 undef, label %loop.body4, label %loop.body3
 
 loop.body3:
-  %ptr1 = getelementptr inbounds i32* %val0, i32 0
+  %ptr1 = getelementptr inbounds i32, i32* %val0, i32 0
   %castptr1 = bitcast i32* %ptr1 to i32**
   %val1 = load i32** %castptr1, align 4
   br label %loop.inner1.begin
@@ -385,7 +385,7 @@ loop.inner1.begin:
   br i1 %comp1, label %loop.inner1.end, label %loop.body4
 
 loop.inner1.end:
-  %ptr2 = getelementptr inbounds i32* %valphi, i32 0
+  %ptr2 = getelementptr inbounds i32, i32* %valphi, i32 0
   %castptr2 = bitcast i32* %ptr2 to i32**
   %val2 = load i32** %castptr2, align 4
   br label %loop.inner1.begin
@@ -626,7 +626,7 @@ loop2a:
   br label %loop3
 
 loop2b:
-  %gep = getelementptr inbounds i32* %var.phi, i32 0
+  %gep = getelementptr inbounds i32, i32* %var.phi, i32 0
   %next.ptr = bitcast i32* %gep to i32**
   store i32* %next.phi, i32** %next.ptr
   br label %loop3
@@ -966,7 +966,7 @@ define void @benchmark_heapsort(i32 %n, double* nocapture %ra) {
 entry:
   %shr = ashr i32 %n, 1
   %add = add nsw i32 %shr, 1
-  %arrayidx3 = getelementptr inbounds double* %ra, i64 1
+  %arrayidx3 = getelementptr inbounds double, double* %ra, i64 1
   br label %for.cond
 
 for.cond:
@@ -978,13 +978,13 @@ for.cond:
 if.then:
   %dec = add nsw i32 %l.0, -1
   %idxprom = sext i32 %dec to i64
-  %arrayidx = getelementptr inbounds double* %ra, i64 %idxprom
+  %arrayidx = getelementptr inbounds double, double* %ra, i64 %idxprom
   %0 = load double* %arrayidx, align 8
   br label %if.end10
 
 if.else:
   %idxprom1 = sext i32 %ir.0 to i64
-  %arrayidx2 = getelementptr inbounds double* %ra, i64 %idxprom1
+  %arrayidx2 = getelementptr inbounds double, double* %ra, i64 %idxprom1
   %1 = load double* %arrayidx2, align 8
   %2 = load double* %arrayidx3, align 8
   store double %2, double* %arrayidx2, align 8
@@ -1019,11 +1019,11 @@ while.body:
 
 land.lhs.true:
   %idxprom13 = sext i32 %j.0 to i64
-  %arrayidx14 = getelementptr inbounds double* %ra, i64 %idxprom13
+  %arrayidx14 = getelementptr inbounds double, double* %ra, i64 %idxprom13
   %3 = load double* %arrayidx14, align 8
   %add15 = add nsw i32 %j.0, 1
   %idxprom16 = sext i32 %add15 to i64
-  %arrayidx17 = getelementptr inbounds double* %ra, i64 %idxprom16
+  %arrayidx17 = getelementptr inbounds double, double* %ra, i64 %idxprom16
   %4 = load double* %arrayidx17, align 8
   %cmp18 = fcmp olt double %3, %4
   br i1 %cmp18, label %if.then19, label %if.end20
@@ -1034,20 +1034,20 @@ if.then19:
 if.end20:
   %j.1 = phi i32 [ %add15, %if.then19 ], [ %j.0, %land.lhs.true ], [ %j.0, %while.body ]
   %idxprom21 = sext i32 %j.1 to i64
-  %arrayidx22 = getelementptr inbounds double* %ra, i64 %idxprom21
+  %arrayidx22 = getelementptr inbounds double, double* %ra, i64 %idxprom21
   %5 = load double* %arrayidx22, align 8
   %cmp23 = fcmp olt double %rra.0, %5
   br i1 %cmp23, label %if.then24, label %while.cond
 
 if.then24:
   %idxprom27 = sext i32 %j.0.ph.in to i64
-  %arrayidx28 = getelementptr inbounds double* %ra, i64 %idxprom27
+  %arrayidx28 = getelementptr inbounds double, double* %ra, i64 %idxprom27
   store double %5, double* %arrayidx28, align 8
   br label %while.cond.outer
 
 while.end:
   %idxprom33 = sext i32 %j.0.ph.in to i64
-  %arrayidx34 = getelementptr inbounds double* %ra, i64 %idxprom33
+  %arrayidx34 = getelementptr inbounds double, double* %ra, i64 %idxprom33
   store double %rra.0, double* %arrayidx34, align 8
   br label %for.cond
 }
@@ -1065,7 +1065,7 @@ define i32 @test_cold_calls(i32* %a) {
 ; CHECK: %then
 
 entry:
-  %gep1 = getelementptr i32* %a, i32 1
+  %gep1 = getelementptr i32, i32* %a, i32 1
   %val1 = load i32* %gep1
   %cond1 = icmp ugt i32 %val1, 1
   br i1 %cond1, label %then, label %else
@@ -1075,7 +1075,7 @@ then:
   br label %exit
 
 else:
-  %gep2 = getelementptr i32* %a, i32 2
+  %gep2 = getelementptr i32, i32* %a, i32 2
   %val2 = load i32* %gep2
   br label %exit
 

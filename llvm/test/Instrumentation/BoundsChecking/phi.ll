@@ -14,7 +14,7 @@ entry:
 
 while.body:
   %c.addr.02 = phi i8* [ %incdec.ptr, %while.body ], [ %c, %entry ]
-  %incdec.ptr = getelementptr inbounds i8* %c.addr.02, i64 -1
+  %incdec.ptr = getelementptr inbounds i8, i8* %c.addr.02, i64 -1
   store i8 100, i8* %c.addr.02, align 1
   %1 = load i8* %incdec.ptr, align 1
   %tobool = icmp eq i8 %1, 0
@@ -28,7 +28,7 @@ while.end:
 ; CHECK: f2
 define void @f2() {
 while.body.i.preheader:
-  %addr = getelementptr inbounds [10 x i8]* @global, i64 0, i64 9
+  %addr = getelementptr inbounds [10 x i8], [10 x i8]* @global, i64 0, i64 9
   br label %while.body.i
 
 while.body.i:
@@ -36,7 +36,7 @@ while.body.i:
 ; CHECK-NEXT: phi
 ; CHECK-NOT: phi
   %c.addr.02.i = phi i8* [ %incdec.ptr.i, %while.body.i ], [ %addr, %while.body.i.preheader ]
-  %incdec.ptr.i = getelementptr inbounds i8* %c.addr.02.i, i64 -1
+  %incdec.ptr.i = getelementptr inbounds i8, i8* %c.addr.02.i, i64 -1
 ; CHECK: sub i64 10, %0
 ; CHECK-NEXT: icmp ult i64 10, %0
 ; CHECK-NEXT: icmp ult i64 {{.*}}, 1
@@ -67,7 +67,7 @@ entry:
 
 while.body:
   %c.addr.02 = phi i8 addrspace(1)* [ %incdec.ptr, %while.body ], [ %c, %entry ]
-  %incdec.ptr = getelementptr inbounds i8 addrspace(1)* %c.addr.02, i64 -1
+  %incdec.ptr = getelementptr inbounds i8, i8 addrspace(1)* %c.addr.02, i64 -1
   store i8 100, i8 addrspace(1)* %c.addr.02, align 1
   %1 = load i8 addrspace(1)* %incdec.ptr, align 1
   %tobool = icmp eq i8 %1, 0
@@ -81,7 +81,7 @@ while.end:
 define void @f2_as1() {
 ; CHECK: @f2_as1
 while.body.i.preheader:
-  %addr = getelementptr inbounds [10 x i8] addrspace(1)* @global_as1, i16 0, i16 9
+  %addr = getelementptr inbounds [10 x i8], [10 x i8] addrspace(1)* @global_as1, i16 0, i16 9
   br label %while.body.i
 
 while.body.i:
@@ -89,7 +89,7 @@ while.body.i:
 ; CHECK-NEXT: phi
 ; CHECK-NOT: phi
   %c.addr.02.i = phi i8 addrspace(1)* [ %incdec.ptr.i, %while.body.i ], [ %addr, %while.body.i.preheader ]
-  %incdec.ptr.i = getelementptr inbounds i8 addrspace(1)* %c.addr.02.i, i16 -1
+  %incdec.ptr.i = getelementptr inbounds i8, i8 addrspace(1)* %c.addr.02.i, i16 -1
 ; CHECK: sub i16 10, %0
 ; CHECK-NEXT: icmp ult i16 10, %0
 ; CHECK-NEXT: icmp ult i16 {{.*}}, 1

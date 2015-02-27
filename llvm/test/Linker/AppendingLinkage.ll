@@ -10,7 +10,7 @@
 @Y = global i32* getelementptr ([2 x i32]* @X, i64 0, i64 0)		; <i32**> [#uses=0]
 
 define void @foo(i64 %V) {
-	%Y = getelementptr [2 x i32]* @X, i64 0, i64 %V		; <i32*> [#uses=0]
+	%Y = getelementptr [2 x i32], [2 x i32]* @X, i64 0, i64 %V		; <i32*> [#uses=0]
 	ret void
 }
 

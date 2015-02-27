@@ -3,7 +3,7 @@
 @A = constant i32 10
 
 define i712 @test1() {
-        %P = getelementptr i32* @A, i32 0
+        %P = getelementptr i32, i32* @A, i32 0
         %B = ptrtoint i32* %P to i64
         %BB = and i64 %B, undef
         %C = icmp sge i64 %BB, 0

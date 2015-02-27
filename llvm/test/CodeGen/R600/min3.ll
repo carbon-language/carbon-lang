@@ -6,10 +6,10 @@ declare i32 @llvm.r600.read.tidig.x() nounwind readnone
 ; SI: v_min3_i32
 define void @v_test_imin3_slt_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr, i32 addrspace(1)* %cptr) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep0 = getelementptr i32 addrspace(1)* %aptr, i32 %tid
-  %gep1 = getelementptr i32 addrspace(1)* %bptr, i32 %tid
-  %gep2 = getelementptr i32 addrspace(1)* %cptr, i32 %tid
-  %outgep = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep0 = getelementptr i32, i32 addrspace(1)* %aptr, i32 %tid
+  %gep1 = getelementptr i32, i32 addrspace(1)* %bptr, i32 %tid
+  %gep2 = getelementptr i32, i32 addrspace(1)* %cptr, i32 %tid
+  %outgep = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %a = load i32 addrspace(1)* %gep0, align 4
   %b = load i32 addrspace(1)* %gep1, align 4
   %c = load i32 addrspace(1)* %gep2, align 4
@@ -25,10 +25,10 @@ define void @v_test_imin3_slt_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %apt
 ; SI: v_min3_u32
 define void @v_test_umin3_ult_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr, i32 addrspace(1)* %cptr) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep0 = getelementptr i32 addrspace(1)* %aptr, i32 %tid
-  %gep1 = getelementptr i32 addrspace(1)* %bptr, i32 %tid
-  %gep2 = getelementptr i32 addrspace(1)* %cptr, i32 %tid
-  %outgep = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep0 = getelementptr i32, i32 addrspace(1)* %aptr, i32 %tid
+  %gep1 = getelementptr i32, i32 addrspace(1)* %bptr, i32 %tid
+  %gep2 = getelementptr i32, i32 addrspace(1)* %cptr, i32 %tid
+  %outgep = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %a = load i32 addrspace(1)* %gep0, align 4
   %b = load i32 addrspace(1)* %gep1, align 4
   %c = load i32 addrspace(1)* %gep2, align 4
@@ -46,16 +46,16 @@ define void @v_test_umin3_ult_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %apt
 define void @v_test_umin_umin_umin(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr, i32 addrspace(1)* %cptr) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %tid2 = mul i32 %tid, 2
-  %gep0 = getelementptr i32 addrspace(1)* %aptr, i32 %tid
-  %gep1 = getelementptr i32 addrspace(1)* %bptr, i32 %tid
-  %gep2 = getelementptr i32 addrspace(1)* %cptr, i32 %tid
+  %gep0 = getelementptr i32, i32 addrspace(1)* %aptr, i32 %tid
+  %gep1 = getelementptr i32, i32 addrspace(1)* %bptr, i32 %tid
+  %gep2 = getelementptr i32, i32 addrspace(1)* %cptr, i32 %tid
 
-  %gep3 = getelementptr i32 addrspace(1)* %aptr, i32 %tid2
-  %gep4 = getelementptr i32 addrspace(1)* %bptr, i32 %tid2
-  %gep5 = getelementptr i32 addrspace(1)* %cptr, i32 %tid2
+  %gep3 = getelementptr i32, i32 addrspace(1)* %aptr, i32 %tid2
+  %gep4 = getelementptr i32, i32 addrspace(1)* %bptr, i32 %tid2
+  %gep5 = getelementptr i32, i32 addrspace(1)* %cptr, i32 %tid2
 
-  %outgep0 = getelementptr i32 addrspace(1)* %out, i32 %tid
-  %outgep1 = getelementptr i32 addrspace(1)* %out, i32 %tid2
+  %outgep0 = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
+  %outgep1 = getelementptr i32, i32 addrspace(1)* %out, i32 %tid2
 
   %a = load i32 addrspace(1)* %gep0, align 4
   %b = load i32 addrspace(1)* %gep1, align 4
@@ -80,16 +80,16 @@ define void @v_test_umin_umin_umin(i32 addrspace(1)* %out, i32 addrspace(1)* %ap
 define void @v_test_umin3_2_uses(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr, i32 addrspace(1)* %cptr) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %tid2 = mul i32 %tid, 2
-  %gep0 = getelementptr i32 addrspace(1)* %aptr, i32 %tid
-  %gep1 = getelementptr i32 addrspace(1)* %bptr, i32 %tid
-  %gep2 = getelementptr i32 addrspace(1)* %cptr, i32 %tid
+  %gep0 = getelementptr i32, i32 addrspace(1)* %aptr, i32 %tid
+  %gep1 = getelementptr i32, i32 addrspace(1)* %bptr, i32 %tid
+  %gep2 = getelementptr i32, i32 addrspace(1)* %cptr, i32 %tid
 
-  %gep3 = getelementptr i32 addrspace(1)* %aptr, i32 %tid2
-  %gep4 = getelementptr i32 addrspace(1)* %bptr, i32 %tid2
-  %gep5 = getelementptr i32 addrspace(1)* %cptr, i32 %tid2
+  %gep3 = getelementptr i32, i32 addrspace(1)* %aptr, i32 %tid2
+  %gep4 = getelementptr i32, i32 addrspace(1)* %bptr, i32 %tid2
+  %gep5 = getelementptr i32, i32 addrspace(1)* %cptr, i32 %tid2
 
-  %outgep0 = getelementptr i32 addrspace(1)* %out, i32 %tid
-  %outgep1 = getelementptr i32 addrspace(1)* %out, i32 %tid2
+  %outgep0 = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
+  %outgep1 = getelementptr i32, i32 addrspace(1)* %out, i32 %tid2
 
   %a = load i32 addrspace(1)* %gep0, align 4
   %b = load i32 addrspace(1)* %gep1, align 4

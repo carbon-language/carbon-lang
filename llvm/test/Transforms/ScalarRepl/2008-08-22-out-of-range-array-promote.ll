@@ -13,7 +13,7 @@ entry:
   %r1 = bitcast %struct.x* %r to i8*
   %s2 = bitcast %struct.x* %s to i8*
   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %r1, i8* %s2, i32 12, i32 8, i1 false)
-  %1 = getelementptr %struct.x* %r, i32 0, i32 0, i32 1
+  %1 = getelementptr %struct.x, %struct.x* %r, i32 0, i32 0, i32 1
   %2 = load i32* %1, align 4
   ret i32 %2
 }

@@ -109,8 +109,8 @@ define void @f9() {
 ; CHECK: srl [[VAL]], 1
 ; CHECK: stc [[VAL]], 1([[REG]])
 ; CHECK: br %r14
-  %ptr1 = getelementptr [2 x i8] *@garray8, i64 0, i64 0
-  %ptr2 = getelementptr [2 x i8] *@garray8, i64 0, i64 1
+  %ptr1 = getelementptr [2 x i8], [2 x i8] *@garray8, i64 0, i64 0
+  %ptr2 = getelementptr [2 x i8], [2 x i8] *@garray8, i64 0, i64 1
   %val = load i8 *%ptr1
   %shr = lshr i8 %val, 1
   store i8 %shr, i8 *%ptr2
@@ -125,8 +125,8 @@ define void @f10() {
 ; CHECK: srl [[VAL]], 1
 ; CHECK: sthrl [[VAL]], garray16+2
 ; CHECK: br %r14
-  %ptr1 = getelementptr [2 x i16] *@garray16, i64 0, i64 0
-  %ptr2 = getelementptr [2 x i16] *@garray16, i64 0, i64 1
+  %ptr1 = getelementptr [2 x i16], [2 x i16] *@garray16, i64 0, i64 0
+  %ptr2 = getelementptr [2 x i16], [2 x i16] *@garray16, i64 0, i64 1
   %val = load i16 *%ptr1
   %shr = lshr i16 %val, 1
   store i16 %shr, i16 *%ptr2

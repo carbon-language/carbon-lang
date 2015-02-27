@@ -20,7 +20,7 @@ loop1:
   br i1 %cond, label %loop, label %loop2
 
 loop2:                                           ; preds = %loop1
-  %gep = getelementptr inbounds i32** %next.ptr, i32 1
+  %gep = getelementptr inbounds i32*, i32** %next.ptr, i32 1
   store i32* %next.load, i32** undef
   br label %loop
 }
@@ -47,7 +47,7 @@ loop1:
   br i1 %cond, label %loop, label %loop2
 
 loop2:
-  %gep = getelementptr inbounds i32** %next.ptr, i32 1
+  %gep = getelementptr inbounds i32*, i32** %next.ptr, i32 1
   store i32* %next.load, i32** undef
   br label %loop
 }
@@ -75,7 +75,7 @@ loop1:                                            ; preds = %loop2a, %loop2b
   br i1 %cond, label %loop2a, label %loop2b
 
 loop2b:                                           ; preds = %loop1
-  %gep = getelementptr inbounds i32** %next.ptr, i32 1
+  %gep = getelementptr inbounds i32*, i32** %next.ptr, i32 1
   store i32* %next.load, i32** undef
   br label %loop2a
 }
@@ -102,7 +102,7 @@ loop1:                                            ; preds = %loop2a, %loop2b
   br i1 %cond, label %loop2a, label %loop2b
 
 loop2b:                                           ; preds = %loop1
-  %gep = getelementptr inbounds i32** %next.ptr, i32 1
+  %gep = getelementptr inbounds i32*, i32** %next.ptr, i32 1
   store i32* %next.load, i32** undef
   br label %loop2a
 }

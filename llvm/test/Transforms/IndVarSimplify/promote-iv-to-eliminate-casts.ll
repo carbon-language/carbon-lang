@@ -13,7 +13,7 @@ bb:		; preds = %bb1, %bb.nph
 	%result.02 = phi i64 [ %t5, %bb1 ], [ 0, %bb.nph ]		; <i64> [#uses=1]
 	%n.01 = phi i32 [ %t6, %bb1 ], [ 0, %bb.nph ]		; <i32> [#uses=2]
 	%t1 = sext i32 %n.01 to i64		; <i64> [#uses=1]
-	%t2 = getelementptr i64* %first, i64 %t1		; <i64*> [#uses=1]
+	%t2 = getelementptr i64, i64* %first, i64 %t1		; <i64*> [#uses=1]
 	%t3 = load i64* %t2, align 8		; <i64> [#uses=1]
 	%t4 = lshr i64 %t3, 4		; <i64> [#uses=1]
 	%t5 = add i64 %t4, %result.02		; <i64> [#uses=2]
@@ -44,7 +44,7 @@ bb.nph:		; preds = %entry
 bb:		; preds = %bb1, %bb.nph
 	%i.01 = phi i16 [ %t3, %bb1 ], [ 0, %bb.nph ]		; <i16> [#uses=2]
 	%t1 = sext i16 %i.01 to i64		; <i64> [#uses=1]
-	%t2 = getelementptr i32* %P, i64 %t1		; <i32*> [#uses=1]
+	%t2 = getelementptr i32, i32* %P, i64 %t1		; <i32*> [#uses=1]
 	store i32 123, i32* %t2, align 4
 	%t3 = add i16 %i.01, 1		; <i16> [#uses=2]
 	br label %bb1
@@ -70,7 +70,7 @@ bb:             ; preds = %bb, %bb.thread
   %i.0.reg2mem.0 = phi i8 [ -10, %bb.thread ], [ %tmp7, %bb ]           ; <i8> [#uses=2]
   %tmp12 = sext i8 %i.0.reg2mem.0 to i32                ; <i32> [#uses=1]
   %tmp4 = add i32 %tmp12, 10            ; <i32> [#uses=1]
-  %tmp5 = getelementptr [21 x i32]* %a, i32 0, i32 %tmp4                ; <i32*> [#uses=1]
+  %tmp5 = getelementptr [21 x i32], [21 x i32]* %a, i32 0, i32 %tmp4                ; <i32*> [#uses=1]
   store i32 0, i32* %tmp5
   %tmp7 = add i8 %i.0.reg2mem.0, 1              ; <i8> [#uses=2]
   %0 = icmp sgt i8 %tmp7, 10            ; <i1> [#uses=1]
@@ -88,7 +88,7 @@ bb:             ; preds = %bb, %bb.thread
   %i.0.reg2mem.0 = phi i8 [ 10, %bb.thread ], [ %tmp7, %bb ]            ; <i8> [#uses=2]
   %tmp12 = sext i8 %i.0.reg2mem.0 to i32                ; <i32> [#uses=1]
   %tmp4 = add i32 %tmp12, -10           ; <i32> [#uses=1]
-  %tmp5 = getelementptr [21 x i32]* %a, i32 0, i32 %tmp4                ; <i32*> [#uses=1]
+  %tmp5 = getelementptr [21 x i32], [21 x i32]* %a, i32 0, i32 %tmp4                ; <i32*> [#uses=1]
   store i32 0, i32* %tmp5
   %tmp7 = add i8 %i.0.reg2mem.0, 1              ; <i8> [#uses=2]
   %0 = icmp sgt i8 %tmp7, 30            ; <i1> [#uses=1]

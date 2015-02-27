@@ -13,9 +13,9 @@ define void @foo(i8* %a) nounwind uwtable ssp {
   %i.0 = phi i8 [ 0, %0 ], [ %5, %1 ]
   %p.0 = phi i8* [ getelementptr inbounds ([240 x i8]* @data, i64 0, i64 0), %0 ], [ %4, %1 ]
   %.0 = phi i8* [ %a, %0 ], [ %2, %1 ]
-  %2 = getelementptr inbounds i8* %.0, i64 1
+  %2 = getelementptr inbounds i8, i8* %.0, i64 1
   %3 = load i8* %.0, align 1
-  %4 = getelementptr inbounds i8* %p.0, i64 1
+  %4 = getelementptr inbounds i8, i8* %p.0, i64 1
   store i8 %3, i8* %p.0, align 1
   %5 = add i8 %i.0, 1
   %6 = icmp ult i8 %5, -16

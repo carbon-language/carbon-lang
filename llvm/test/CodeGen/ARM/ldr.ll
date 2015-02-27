@@ -12,7 +12,7 @@ define i32 @f2(i32* %v) {
 ; CHECK-LABEL: f2:
 ; CHECK: ldr r0
 entry:
-        %tmp2 = getelementptr i32* %v, i32 1023
+        %tmp2 = getelementptr i32, i32* %v, i32 1023
         %tmp = load i32* %tmp2
         ret i32 %tmp
 }
@@ -22,7 +22,7 @@ define i32 @f3(i32* %v) {
 ; CHECK: mov
 ; CHECK: ldr r0
 entry:
-        %tmp2 = getelementptr i32* %v, i32 1024
+        %tmp2 = getelementptr i32, i32* %v, i32 1024
         %tmp = load i32* %tmp2
         ret i32 %tmp
 }

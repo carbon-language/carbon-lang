@@ -14,7 +14,7 @@ bb2:                                              ; preds = %bb3, %entry
   indirectbr i8* %gotovar.4.0, [label %L5, label %L4, label %L3, label %L2, label %L1]
 
 bb3:                                              ; preds = %entry
-  %2 = getelementptr inbounds [5 x i8*]* @C.0.2070, i16 0, i16 %i ; <i8**> [#uses=1]
+  %2 = getelementptr inbounds [5 x i8*], [5 x i8*]* @C.0.2070, i16 0, i16 %i ; <i8**> [#uses=1]
   %gotovar.4.0.pre = load i8** %2, align 4        ; <i8*> [#uses=1]
   br label %bb2
 

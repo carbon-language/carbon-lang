@@ -9,7 +9,7 @@ target triple = "i386-apple-darwin9.5"
 
 define i32 @foo(%struct.x* %p) nounwind {
 entry:
-	%0 = getelementptr %struct.x* %p, i32 0, i32 0		; <i8*> [#uses=1]
+	%0 = getelementptr %struct.x, %struct.x* %p, i32 0, i32 0		; <i8*> [#uses=1]
 	store i8 55, i8* %0, align 1
 	%1 = bitcast %struct.x* %p to i32*		; <i32*> [#uses=1]
 	%2 = load i32* %1, align 1		; <i32> [#uses=1]

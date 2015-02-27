@@ -22,8 +22,8 @@ for.body:                                         ; preds = %for.cond
 
 if.then:                                          ; preds = %for.body
   %idxprom = sext i32 %inc1 to i64
-  %array_ = getelementptr inbounds %class.MyContainer.1.3.19.29* %this, i32 0, i32 0
-  %arrayidx = getelementptr inbounds [6 x %class.MyMemVarClass.0.2.18.28*]* %array_, i32 0, i64 %idxprom
+  %array_ = getelementptr inbounds %class.MyContainer.1.3.19.29, %class.MyContainer.1.3.19.29* %this, i32 0, i32 0
+  %arrayidx = getelementptr inbounds [6 x %class.MyMemVarClass.0.2.18.28*], [6 x %class.MyMemVarClass.0.2.18.28*]* %array_, i32 0, i64 %idxprom
   %tmp4 = load %class.MyMemVarClass.0.2.18.28** %arrayidx, align 8
   %isnull = icmp eq %class.MyMemVarClass.0.2.18.28* %tmp4, null
   br i1 %isnull, label %for.inc, label %delete.notnull

@@ -14,7 +14,7 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-
 ; CHECK: pop
 define void @quux(%struct.eggs* %arg) {
 bb:
-  %tmp1 = getelementptr inbounds %struct.eggs* %arg, i32 0, i32 1
+  %tmp1 = getelementptr inbounds %struct.eggs, %struct.eggs* %arg, i32 0, i32 1
   %0 = load i16* %tmp1, align 2
   %tobool = icmp eq i16 %0, 0
   br i1 %tobool, label %bb16, label %bb3
@@ -24,7 +24,7 @@ bb3:                                              ; preds = %bb
   %tmp5 = ptrtoint i16* %tmp1 to i32
   %tmp6 = shl i32 %tmp5, 20
   %tmp7 = ashr exact i32 %tmp6, 20
-  %tmp14 = getelementptr inbounds %struct.barney* undef, i32 %tmp7
+  %tmp14 = getelementptr inbounds %struct.barney, %struct.barney* undef, i32 %tmp7
   %tmp15 = tail call i32 @widget(%struct.barney* %tmp14, i8* %tmp4, i32 %tmp7)
   br label %bb16
 

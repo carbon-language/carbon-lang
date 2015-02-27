@@ -13,7 +13,7 @@ declare <4 x double> @llvm.fabs.v4f64(<4 x double>) readnone
 define void @v_fabs_f64(double addrspace(1)* %out, double addrspace(1)* %in) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
   %tidext = sext i32 %tid to i64
-  %gep = getelementptr double addrspace(1)* %in, i64 %tidext
+  %gep = getelementptr double, double addrspace(1)* %in, i64 %tidext
   %val = load double addrspace(1)* %gep, align 8
   %fabs = call double @llvm.fabs.f64(double %val)
   store double %fabs, double addrspace(1)* %out

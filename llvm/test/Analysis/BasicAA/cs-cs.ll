@@ -12,7 +12,7 @@ declare void @a_readonly_func(i8 *) noinline nounwind readonly
 
 define <8 x i16> @test1(i8* %p, <8 x i16> %y) {
 entry:
-  %q = getelementptr i8* %p, i64 16
+  %q = getelementptr i8, i8* %p, i64 16
   %a = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) nounwind
   call void @llvm.arm.neon.vst1.v8i16(i8* %q, <8 x i16> %y, i32 16)
   %b = call <8 x i16> @llvm.arm.neon.vld1.v8i16(i8* %p, i32 16) nounwind
@@ -70,7 +70,7 @@ define void @test2a(i8* noalias %P, i8* noalias %Q) nounwind ssp {
 
 define void @test2b(i8* noalias %P, i8* noalias %Q) nounwind ssp {
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %Q, i64 12, i32 1, i1 false)
-  %R = getelementptr i8* %P, i64 12
+  %R = getelementptr i8, i8* %P, i64 12
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %R, i8* %Q, i64 12, i32 1, i1 false)
   ret void
 
@@ -91,7 +91,7 @@ define void @test2b(i8* noalias %P, i8* noalias %Q) nounwind ssp {
 
 define void @test2c(i8* noalias %P, i8* noalias %Q) nounwind ssp {
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %Q, i64 12, i32 1, i1 false)
-  %R = getelementptr i8* %P, i64 11
+  %R = getelementptr i8, i8* %P, i64 11
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %R, i8* %Q, i64 12, i32 1, i1 false)
   ret void
 
@@ -112,7 +112,7 @@ define void @test2c(i8* noalias %P, i8* noalias %Q) nounwind ssp {
 
 define void @test2d(i8* noalias %P, i8* noalias %Q) nounwind ssp {
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %Q, i64 12, i32 1, i1 false)
-  %R = getelementptr i8* %P, i64 -12
+  %R = getelementptr i8, i8* %P, i64 -12
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %R, i8* %Q, i64 12, i32 1, i1 false)
   ret void
 
@@ -133,7 +133,7 @@ define void @test2d(i8* noalias %P, i8* noalias %Q) nounwind ssp {
 
 define void @test2e(i8* noalias %P, i8* noalias %Q) nounwind ssp {
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %P, i8* %Q, i64 12, i32 1, i1 false)
-  %R = getelementptr i8* %P, i64 -11
+  %R = getelementptr i8, i8* %P, i64 -11
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %R, i8* %Q, i64 12, i32 1, i1 false)
   ret void
 

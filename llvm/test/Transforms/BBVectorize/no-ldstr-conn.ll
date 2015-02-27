@@ -7,8 +7,8 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 define i64 @test2(i64 %a) nounwind uwtable readonly {
 entry:
   %a1 = inttoptr i64 %a to i64*
-  %a2 = getelementptr i64* %a1, i64 1
-  %a3 = getelementptr i64* %a1, i64 2
+  %a2 = getelementptr i64, i64* %a1, i64 1
+  %a3 = getelementptr i64, i64* %a1, i64 2
   %v2 = load i64* %a2, align 8
   %v3 = load i64* %a3, align 8
   %v2a = add i64 %v2, 5
@@ -18,6 +18,6 @@ entry:
   %r = add i64 %v2, %v3
   ret i64 %r
 ; CHECK-LABEL: @test2(
-; CHECK-NOT: getelementptr <2 x i64*>
+; CHECK-NOT: getelementptr i64, <2 x i64*>
 }
 

@@ -16,8 +16,8 @@ declare void @llvm.AMDGPU.barrier.local() #2
 define void @reorder_local_load_global_store_local_load(i32 addrspace(1)* %out, i32 addrspace(1)* %gptr) #0 {
   %ptr0 = load i32 addrspace(3)* addrspace(3)* @stored_lds_ptr, align 4
 
-  %ptr1 = getelementptr inbounds i32 addrspace(3)* %ptr0, i32 1
-  %ptr2 = getelementptr inbounds i32 addrspace(3)* %ptr0, i32 2
+  %ptr1 = getelementptr inbounds i32, i32 addrspace(3)* %ptr0, i32 1
+  %ptr2 = getelementptr inbounds i32, i32 addrspace(3)* %ptr0, i32 2
 
   %tmp1 = load i32 addrspace(3)* %ptr1, align 4
   store i32 99, i32 addrspace(1)* %gptr, align 4
@@ -36,8 +36,8 @@ define void @reorder_local_load_global_store_local_load(i32 addrspace(1)* %out, 
 define void @no_reorder_local_load_volatile_global_store_local_load(i32 addrspace(1)* %out, i32 addrspace(1)* %gptr) #0 {
   %ptr0 = load i32 addrspace(3)* addrspace(3)* @stored_lds_ptr, align 4
 
-  %ptr1 = getelementptr inbounds i32 addrspace(3)* %ptr0, i32 1
-  %ptr2 = getelementptr inbounds i32 addrspace(3)* %ptr0, i32 2
+  %ptr1 = getelementptr inbounds i32, i32 addrspace(3)* %ptr0, i32 1
+  %ptr2 = getelementptr inbounds i32, i32 addrspace(3)* %ptr0, i32 2
 
   %tmp1 = load i32 addrspace(3)* %ptr1, align 4
   store volatile i32 99, i32 addrspace(1)* %gptr, align 4
@@ -56,8 +56,8 @@ define void @no_reorder_local_load_volatile_global_store_local_load(i32 addrspac
 define void @no_reorder_barrier_local_load_global_store_local_load(i32 addrspace(1)* %out, i32 addrspace(1)* %gptr) #0 {
   %ptr0 = load i32 addrspace(3)* addrspace(3)* @stored_lds_ptr, align 4
 
-  %ptr1 = getelementptr inbounds i32 addrspace(3)* %ptr0, i32 1
-  %ptr2 = getelementptr inbounds i32 addrspace(3)* %ptr0, i32 2
+  %ptr1 = getelementptr inbounds i32, i32 addrspace(3)* %ptr0, i32 1
+  %ptr2 = getelementptr inbounds i32, i32 addrspace(3)* %ptr0, i32 2
 
   %tmp1 = load i32 addrspace(3)* %ptr1, align 4
   store i32 99, i32 addrspace(1)* %gptr, align 4
@@ -81,8 +81,8 @@ define void @no_reorder_barrier_local_load_global_store_local_load(i32 addrspace
 define void @no_reorder_constant_load_global_store_constant_load(i32 addrspace(1)* %out, i32 addrspace(1)* %gptr) #0 {
   %ptr0 = load i32 addrspace(2)* addrspace(3)* @stored_constant_ptr, align 8
 
-  %ptr1 = getelementptr inbounds i32 addrspace(2)* %ptr0, i64 1
-  %ptr2 = getelementptr inbounds i32 addrspace(2)* %ptr0, i64 2
+  %ptr1 = getelementptr inbounds i32, i32 addrspace(2)* %ptr0, i64 1
+  %ptr2 = getelementptr inbounds i32, i32 addrspace(2)* %ptr0, i64 2
 
   %tmp1 = load i32 addrspace(2)* %ptr1, align 4
   store i32 99, i32 addrspace(1)* %gptr, align 4
@@ -102,8 +102,8 @@ define void @no_reorder_constant_load_global_store_constant_load(i32 addrspace(1
 define void @reorder_constant_load_local_store_constant_load(i32 addrspace(1)* %out, i32 addrspace(3)* %lptr) #0 {
   %ptr0 = load i32 addrspace(2)* addrspace(3)* @stored_constant_ptr, align 8
 
-  %ptr1 = getelementptr inbounds i32 addrspace(2)* %ptr0, i64 1
-  %ptr2 = getelementptr inbounds i32 addrspace(2)* %ptr0, i64 2
+  %ptr1 = getelementptr inbounds i32, i32 addrspace(2)* %ptr0, i64 1
+  %ptr2 = getelementptr inbounds i32, i32 addrspace(2)* %ptr0, i64 2
 
   %tmp1 = load i32 addrspace(2)* %ptr1, align 4
   store i32 99, i32 addrspace(3)* %lptr, align 4
@@ -122,8 +122,8 @@ define void @reorder_constant_load_local_store_constant_load(i32 addrspace(1)* %
 ; CI: ds_write_b32
 ; CI: buffer_store_dword
 define void @reorder_smrd_load_local_store_smrd_load(i32 addrspace(1)* %out, i32 addrspace(3)* noalias %lptr, i32 addrspace(2)* %ptr0) #0 {
-  %ptr1 = getelementptr inbounds i32 addrspace(2)* %ptr0, i64 1
-  %ptr2 = getelementptr inbounds i32 addrspace(2)* %ptr0, i64 2
+  %ptr1 = getelementptr inbounds i32, i32 addrspace(2)* %ptr0, i64 1
+  %ptr2 = getelementptr inbounds i32, i32 addrspace(2)* %ptr0, i64 2
 
   %tmp1 = load i32 addrspace(2)* %ptr1, align 4
   store i32 99, i32 addrspace(3)* %lptr, align 4
@@ -141,8 +141,8 @@ define void @reorder_smrd_load_local_store_smrd_load(i32 addrspace(1)* %out, i32
 ; CI: ds_write_b32
 ; CI: buffer_store_dword
 define void @reorder_global_load_local_store_global_load(i32 addrspace(1)* %out, i32 addrspace(3)* %lptr, i32 addrspace(1)* %ptr0) #0 {
-  %ptr1 = getelementptr inbounds i32 addrspace(1)* %ptr0, i64 1
-  %ptr2 = getelementptr inbounds i32 addrspace(1)* %ptr0, i64 2
+  %ptr1 = getelementptr inbounds i32, i32 addrspace(1)* %ptr0, i64 1
+  %ptr2 = getelementptr inbounds i32, i32 addrspace(1)* %ptr0, i64 2
 
   %tmp1 = load i32 addrspace(1)* %ptr1, align 4
   store i32 99, i32 addrspace(3)* %lptr, align 4
@@ -163,9 +163,9 @@ define void @reorder_global_load_local_store_global_load(i32 addrspace(1)* %out,
 ; CI: buffer_store_dword
 ; CI: s_endpgm
 define void @reorder_local_offsets(i32 addrspace(1)* nocapture %out, i32 addrspace(1)* noalias nocapture readnone %gptr, i32 addrspace(3)* noalias nocapture %ptr0) #0 {
-  %ptr1 = getelementptr inbounds i32 addrspace(3)* %ptr0, i32 3
-  %ptr2 = getelementptr inbounds i32 addrspace(3)* %ptr0, i32 100
-  %ptr3 = getelementptr inbounds i32 addrspace(3)* %ptr0, i32 101
+  %ptr1 = getelementptr inbounds i32, i32 addrspace(3)* %ptr0, i32 3
+  %ptr2 = getelementptr inbounds i32, i32 addrspace(3)* %ptr0, i32 100
+  %ptr3 = getelementptr inbounds i32, i32 addrspace(3)* %ptr0, i32 101
 
   store i32 123, i32 addrspace(3)* %ptr1, align 4
   %tmp1 = load i32 addrspace(3)* %ptr2, align 4
@@ -189,9 +189,9 @@ define void @reorder_local_offsets(i32 addrspace(1)* nocapture %out, i32 addrspa
 ; CI: buffer_store_dword
 ; CI: s_endpgm
 define void @reorder_global_offsets(i32 addrspace(1)* nocapture %out, i32 addrspace(1)* noalias nocapture readnone %gptr, i32 addrspace(1)* noalias nocapture %ptr0) #0 {
-  %ptr1 = getelementptr inbounds i32 addrspace(1)* %ptr0, i32 3
-  %ptr2 = getelementptr inbounds i32 addrspace(1)* %ptr0, i32 100
-  %ptr3 = getelementptr inbounds i32 addrspace(1)* %ptr0, i32 101
+  %ptr1 = getelementptr inbounds i32, i32 addrspace(1)* %ptr0, i32 3
+  %ptr2 = getelementptr inbounds i32, i32 addrspace(1)* %ptr0, i32 100
+  %ptr3 = getelementptr inbounds i32, i32 addrspace(1)* %ptr0, i32 101
 
   store i32 123, i32 addrspace(1)* %ptr1, align 4
   %tmp1 = load i32 addrspace(1)* %ptr2, align 4
@@ -213,8 +213,8 @@ define void @reorder_global_offsets(i32 addrspace(1)* nocapture %out, i32 addrsp
 ; define void @reorder_local_load_tbuffer_store_local_load(i32 addrspace(1)* %out, i32 %a1, i32 %vaddr) #1 {
 ;   %ptr0 = load i32 addrspace(3)* addrspace(3)* @stored_lds_ptr, align 4
 
-;   %ptr1 = getelementptr inbounds i32 addrspace(3)* %ptr0, i32 1
-;   %ptr2 = getelementptr inbounds i32 addrspace(3)* %ptr0, i32 2
+;   %ptr1 = getelementptr inbounds i32, i32 addrspace(3)* %ptr0, i32 1
+;   %ptr2 = getelementptr inbounds i32, i32 addrspace(3)* %ptr0, i32 2
 
 ;   %tmp1 = load i32 addrspace(3)* %ptr1, align 4
 

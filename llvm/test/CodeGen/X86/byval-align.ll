@@ -49,7 +49,7 @@ entry:
 ; CHECK: andq    $-64, %rsp
   %s1 = alloca %struct.S                          ; <%struct.S*> [#uses=4]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  %0 = getelementptr inbounds %struct.S* %s1, i32 0, i32 0 ; <i32*> [#uses=1]
+  %0 = getelementptr inbounds %struct.S, %struct.S* %s1, i32 0, i32 0 ; <i32*> [#uses=1]
   store i32 1, i32* %0, align 4
   call void @aligned_func(%struct.S* byval align 64 %s1) nounwind
   br label %return

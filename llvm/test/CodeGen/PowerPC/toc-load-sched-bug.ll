@@ -176,16 +176,16 @@ entry:
   %FileOrErr = alloca %"class.llvm::ErrorOr", align 8
   %ref.tmp = alloca %"class.llvm::SMDiagnostic", align 8
   %ref.tmp5 = alloca %"class.std::basic_string", align 8
-  %_M_p.i.i.i = getelementptr inbounds %"class.std::basic_string"* %Filename, i64 0, i32 0, i32 0
+  %_M_p.i.i.i = getelementptr inbounds %"class.std::basic_string", %"class.std::basic_string"* %Filename, i64 0, i32 0, i32 0
   %0 = load i8** %_M_p.i.i.i, align 8, !tbaa !1
   %1 = ptrtoint i8* %0 to i64
-  %arrayidx.i.i.i = getelementptr inbounds i8* %0, i64 -24
+  %arrayidx.i.i.i = getelementptr inbounds i8, i8* %0, i64 -24
   %_M_length.i.i = bitcast i8* %arrayidx.i.i.i to i64*
   %2 = load i64* %_M_length.i.i, align 8, !tbaa !7
   %.fca.0.insert18 = insertvalue [2 x i64] undef, i64 %1, 0
   %.fca.1.insert21 = insertvalue [2 x i64] %.fca.0.insert18, i64 %2, 1
   call void @_ZN4llvm12MemoryBuffer14getFileOrSTDINENS_9StringRefEl(%"class.llvm::ErrorOr"* sret %FileOrErr, [2 x i64] %.fca.1.insert21, i64 -1) #3
-  %HasError.i24 = getelementptr inbounds %"class.llvm::ErrorOr"* %FileOrErr, i64 0, i32 1
+  %HasError.i24 = getelementptr inbounds %"class.llvm::ErrorOr", %"class.llvm::ErrorOr"* %FileOrErr, i64 0, i32 1
   %bf.load.i25 = load i8* %HasError.i24, align 8
   %3 = and i8 %bf.load.i25, 1
   %bf.cast.i26 = icmp eq i8 %3, 0
@@ -194,7 +194,7 @@ entry:
 _ZNK4llvm7ErrorOrISt10unique_ptrINS_12MemoryBufferESt14default_deleteIS2_EEE8getErrorEv.exit: ; preds = %entry
   %retval.sroa.0.0..sroa_cast.i = bitcast %"class.llvm::ErrorOr"* %FileOrErr to i64*
   %retval.sroa.0.0.copyload.i = load i64* %retval.sroa.0.0..sroa_cast.i, align 8
-  %retval.sroa.3.0..sroa_idx.i = getelementptr inbounds %"class.llvm::ErrorOr"* %FileOrErr, i64 0, i32 0, i32 0, i32 0, i32 0, i64 8
+  %retval.sroa.3.0..sroa_idx.i = getelementptr inbounds %"class.llvm::ErrorOr", %"class.llvm::ErrorOr"* %FileOrErr, i64 0, i32 0, i32 0, i32 0, i32 0, i64 8
   %retval.sroa.3.0..sroa_cast.i = bitcast i8* %retval.sroa.3.0..sroa_idx.i to i64*
   %retval.sroa.3.0.copyload.i = load i64* %retval.sroa.3.0..sroa_cast.i, align 8
   %phitmp = trunc i64 %retval.sroa.0.0.copyload.i to i32
@@ -204,23 +204,23 @@ _ZNK4llvm7ErrorOrISt10unique_ptrINS_12MemoryBufferESt14default_deleteIS2_EEE8get
 if.then:                                          ; preds = %_ZNK4llvm7ErrorOrISt10unique_ptrINS_12MemoryBufferESt14default_deleteIS2_EEE8getErrorEv.exit
   %.c = inttoptr i64 %retval.sroa.3.0.copyload.i to %"class.std::error_category"*
   %4 = load i8** %_M_p.i.i.i, align 8, !tbaa !1
-  %arrayidx.i.i.i30 = getelementptr inbounds i8* %4, i64 -24
+  %arrayidx.i.i.i30 = getelementptr inbounds i8, i8* %4, i64 -24
   %_M_length.i.i31 = bitcast i8* %arrayidx.i.i.i30 to i64*
   %5 = load i64* %_M_length.i.i31, align 8, !tbaa !7
   %6 = inttoptr i64 %retval.sroa.3.0.copyload.i to void (%"class.std::basic_string"*, %"class.std::error_category"*, i32)***
   %vtable.i = load void (%"class.std::basic_string"*, %"class.std::error_category"*, i32)*** %6, align 8, !tbaa !11
-  %vfn.i = getelementptr inbounds void (%"class.std::basic_string"*, %"class.std::error_category"*, i32)** %vtable.i, i64 3
+  %vfn.i = getelementptr inbounds void (%"class.std::basic_string"*, %"class.std::error_category"*, i32)*, void (%"class.std::basic_string"*, %"class.std::error_category"*, i32)** %vtable.i, i64 3
   %7 = load void (%"class.std::basic_string"*, %"class.std::error_category"*, i32)** %vfn.i, align 8
   call void %7(%"class.std::basic_string"* sret %ref.tmp5, %"class.std::error_category"* %.c, i32 signext %phitmp) #3
   %call2.i.i = call dereferenceable(8) %"class.std::basic_string"* @_ZNSs6insertEmPKcm(%"class.std::basic_string"* %ref.tmp5, i64 0, i8* getelementptr inbounds ([28 x i8]* @.str, i64 0, i64 0), i64 27) #3
-  %_M_p2.i.i.i.i = getelementptr inbounds %"class.std::basic_string"* %call2.i.i, i64 0, i32 0, i32 0
+  %_M_p2.i.i.i.i = getelementptr inbounds %"class.std::basic_string", %"class.std::basic_string"* %call2.i.i, i64 0, i32 0, i32 0
   %8 = load i8** %_M_p2.i.i.i.i, align 8, !tbaa !13
   store i8* bitcast (i64* getelementptr inbounds ([0 x i64]* @_ZNSs4_Rep20_S_empty_rep_storageE, i64 0, i64 3) to i8*), i8** %_M_p2.i.i.i.i, align 8, !tbaa !1
-  %arrayidx.i.i.i36 = getelementptr inbounds i8* %8, i64 -24
+  %arrayidx.i.i.i36 = getelementptr inbounds i8, i8* %8, i64 -24
   %_M_length.i.i37 = bitcast i8* %arrayidx.i.i.i36 to i64*
   %9 = load i64* %_M_length.i.i37, align 8, !tbaa !7
-  %Filename.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 2
-  %10 = getelementptr inbounds %"class.std::allocator"* %ref.tmp.i.i2.i, i64 0, i32 0
+  %Filename.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 2
+  %10 = getelementptr inbounds %"class.std::allocator", %"class.std::allocator"* %ref.tmp.i.i2.i, i64 0, i32 0
   %11 = bitcast %"class.llvm::SMDiagnostic"* %ref.tmp to i8*
   call void @llvm.memset.p0i8.i64(i8* %11, i8 0, i64 16, i32 8, i1 false) #3
   call void @llvm.lifetime.start(i64 1, i8* %10) #3
@@ -228,7 +228,7 @@ if.then:                                          ; preds = %_ZNK4llvm7ErrorOrIS
   br i1 %tobool.i.i4.i, label %if.then.i.i6.i, label %if.end.i.i8.i
 
 if.then.i.i6.i:                                   ; preds = %if.then
-  %_M_p.i.i.i.i.i.i5.i = getelementptr inbounds %"class.std::basic_string"* %Filename.i, i64 0, i32 0, i32 0
+  %_M_p.i.i.i.i.i.i5.i = getelementptr inbounds %"class.std::basic_string", %"class.std::basic_string"* %Filename.i, i64 0, i32 0, i32 0
   store i8* bitcast (i64* getelementptr inbounds ([0 x i64]* @_ZNSs4_Rep20_S_empty_rep_storageE, i64 0, i64 3) to i8*), i8** %_M_p.i.i.i.i.i.i5.i, align 8, !tbaa !13
   br label %_ZNK4llvm9StringRefcvSsEv.exit9.i
 
@@ -238,20 +238,20 @@ if.end.i.i8.i:                                    ; preds = %if.then
 
 _ZNK4llvm9StringRefcvSsEv.exit9.i:                ; preds = %if.end.i.i8.i, %if.then.i.i6.i
   call void @llvm.lifetime.end(i64 1, i8* %10) #3
-  %LineNo.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 3
+  %LineNo.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 3
   store i32 -1, i32* %LineNo.i, align 8, !tbaa !14
-  %ColumnNo.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 4
+  %ColumnNo.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 4
   store i32 -1, i32* %ColumnNo.i, align 4, !tbaa !21
-  %Kind.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 5
+  %Kind.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 5
   store i32 0, i32* %Kind.i, align 8, !tbaa !22
-  %Message.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 6
-  %12 = getelementptr inbounds %"class.std::allocator"* %ref.tmp.i.i.i, i64 0, i32 0
+  %Message.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 6
+  %12 = getelementptr inbounds %"class.std::allocator", %"class.std::allocator"* %ref.tmp.i.i.i, i64 0, i32 0
   call void @llvm.lifetime.start(i64 1, i8* %12) #3
   %tobool.i.i.i = icmp eq i8* %8, null
   br i1 %tobool.i.i.i, label %if.then.i.i.i, label %if.end.i.i.i
 
 if.then.i.i.i:                                    ; preds = %_ZNK4llvm9StringRefcvSsEv.exit9.i
-  %_M_p.i.i.i.i.i.i.i = getelementptr inbounds %"class.std::basic_string"* %Message.i, i64 0, i32 0, i32 0
+  %_M_p.i.i.i.i.i.i.i = getelementptr inbounds %"class.std::basic_string", %"class.std::basic_string"* %Message.i, i64 0, i32 0, i32 0
   store i8* bitcast (i64* getelementptr inbounds ([0 x i64]* @_ZNSs4_Rep20_S_empty_rep_storageE, i64 0, i64 3) to i8*), i8** %_M_p.i.i.i.i.i.i.i, align 8, !tbaa !13
   br label %_ZN4llvm12SMDiagnosticC2ENS_9StringRefENS_9SourceMgr8DiagKindES1_.exit
 
@@ -261,48 +261,48 @@ if.end.i.i.i:                                     ; preds = %_ZNK4llvm9StringRef
 
 _ZN4llvm12SMDiagnosticC2ENS_9StringRefENS_9SourceMgr8DiagKindES1_.exit: ; preds = %if.then.i.i.i, %if.end.i.i.i
   call void @llvm.lifetime.end(i64 1, i8* %12) #3
-  %_M_p.i.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 7, i32 0, i32 0
+  %_M_p.i.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 7, i32 0, i32 0
   store i8* bitcast (i64* getelementptr inbounds ([0 x i64]* @_ZNSs4_Rep20_S_empty_rep_storageE, i64 0, i64 3) to i8*), i8** %_M_p.i.i.i.i.i, align 8, !tbaa !13
-  %Ranges.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 8
+  %Ranges.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 8
   %13 = bitcast %"class.std::vector.79"* %Ranges.i to i8*
   call void @llvm.memset.p0i8.i64(i8* %13, i8 0, i64 24, i32 8, i1 false) #3
-  %14 = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 9, i32 0, i32 0, i32 0, i32 1, i32 0, i32 0, i64 0
-  %BeginX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 9, i32 0, i32 0, i32 0, i32 0, i32 0
+  %14 = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 9, i32 0, i32 0, i32 0, i32 1, i32 0, i32 0, i64 0
+  %BeginX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 9, i32 0, i32 0, i32 0, i32 0, i32 0
   store i8* %14, i8** %BeginX.i.i.i.i.i.i, align 8, !tbaa !23
-  %EndX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 9, i32 0, i32 0, i32 0, i32 0, i32 1
+  %EndX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 9, i32 0, i32 0, i32 0, i32 0, i32 1
   store i8* %14, i8** %EndX.i.i.i.i.i.i, align 8, !tbaa !25
-  %CapacityX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 9, i32 0, i32 0, i32 0, i32 0, i32 2
-  %add.ptr.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 9, i32 0, i32 0, i32 0, i32 1, i32 0, i32 0, i64 96
+  %CapacityX.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 9, i32 0, i32 0, i32 0, i32 0, i32 2
+  %add.ptr.i.i.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 9, i32 0, i32 0, i32 0, i32 1, i32 0, i32 0, i64 96
   store i8* %add.ptr.i.i.i.i.i.i, i8** %CapacityX.i.i.i.i.i.i, align 8, !tbaa !26
   %15 = bitcast %"class.llvm::SMDiagnostic"* %Err to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %15, i8* %11, i64 16, i32 8, i1 false) #3
-  %Filename.i38 = getelementptr inbounds %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 2
+  %Filename.i38 = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 2
   call void @_ZNSs4swapERSs(%"class.std::basic_string"* %Filename.i38, %"class.std::basic_string"* dereferenceable(8) %Filename.i) #3
-  %LineNo.i39 = getelementptr inbounds %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 3
+  %LineNo.i39 = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 3
   %16 = bitcast i32* %LineNo.i39 to i8*
   %17 = bitcast i32* %LineNo.i to i8*
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %16, i8* %17, i64 12, i32 4, i1 false) #3
-  %Message.i40 = getelementptr inbounds %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 6
+  %Message.i40 = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 6
   call void @_ZNSs4swapERSs(%"class.std::basic_string"* %Message.i40, %"class.std::basic_string"* dereferenceable(8) %Message.i) #3
-  %LineContents.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 7
-  %LineContents7.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 7
+  %LineContents.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 7
+  %LineContents7.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 7
   call void @_ZNSs4swapERSs(%"class.std::basic_string"* %LineContents.i, %"class.std::basic_string"* dereferenceable(8) %LineContents7.i) #3
-  %Ranges.i41 = getelementptr inbounds %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 8
-  %_M_start.i7.i.i.i = getelementptr inbounds %"class.std::vector.79"* %Ranges.i41, i64 0, i32 0, i32 0, i32 0
+  %Ranges.i41 = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 8
+  %_M_start.i7.i.i.i = getelementptr inbounds %"class.std::vector.79", %"class.std::vector.79"* %Ranges.i41, i64 0, i32 0, i32 0, i32 0
   %18 = load %"struct.std::pair"** %_M_start.i7.i.i.i, align 8, !tbaa !27
-  %_M_finish.i9.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 8, i32 0, i32 0, i32 1
-  %_M_end_of_storage.i11.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 8, i32 0, i32 0, i32 2
-  %_M_start2.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 8, i32 0, i32 0, i32 0
+  %_M_finish.i9.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 8, i32 0, i32 0, i32 1
+  %_M_end_of_storage.i11.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 8, i32 0, i32 0, i32 2
+  %_M_start2.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 8, i32 0, i32 0, i32 0
   %19 = bitcast %"class.std::vector.79"* %Ranges.i41 to i8*
   call void @llvm.memset.p0i8.i64(i8* %19, i8 0, i64 16, i32 8, i1 false) #3
   %20 = load %"struct.std::pair"** %_M_start2.i.i.i.i, align 8, !tbaa !27
   store %"struct.std::pair"* %20, %"struct.std::pair"** %_M_start.i7.i.i.i, align 8, !tbaa !27
   store %"struct.std::pair"* null, %"struct.std::pair"** %_M_start2.i.i.i.i, align 8, !tbaa !27
-  %_M_finish3.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 8, i32 0, i32 0, i32 1
+  %_M_finish3.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 8, i32 0, i32 0, i32 1
   %21 = load %"struct.std::pair"** %_M_finish3.i.i.i.i, align 8, !tbaa !27
   store %"struct.std::pair"* %21, %"struct.std::pair"** %_M_finish.i9.i.i.i, align 8, !tbaa !27
   store %"struct.std::pair"* null, %"struct.std::pair"** %_M_finish3.i.i.i.i, align 8, !tbaa !27
-  %_M_end_of_storage4.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 8, i32 0, i32 0, i32 2
+  %_M_end_of_storage4.i.i.i.i = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 8, i32 0, i32 0, i32 2
   %22 = load %"struct.std::pair"** %_M_end_of_storage4.i.i.i.i, align 8, !tbaa !27
   store %"struct.std::pair"* %22, %"struct.std::pair"** %_M_end_of_storage.i11.i.i.i, align 8, !tbaa !27
   store %"struct.std::pair"* null, %"struct.std::pair"** %_M_end_of_storage4.i.i.i.i, align 8, !tbaa !27
@@ -315,18 +315,18 @@ if.then.i.i.i.i.i.i:                              ; preds = %_ZN4llvm12SMDiagnos
   br label %_ZN4llvm12SMDiagnosticaSEOS0_.exit
 
 _ZN4llvm12SMDiagnosticaSEOS0_.exit:               ; preds = %_ZN4llvm12SMDiagnosticC2ENS_9StringRefENS_9SourceMgr8DiagKindES1_.exit, %if.then.i.i.i.i.i.i
-  %24 = getelementptr inbounds %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 9, i32 0
-  %25 = getelementptr inbounds %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 9, i32 0
+  %24 = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %Err, i64 0, i32 9, i32 0
+  %25 = getelementptr inbounds %"class.llvm::SMDiagnostic", %"class.llvm::SMDiagnostic"* %ref.tmp, i64 0, i32 9, i32 0
   %call2.i.i42 = call dereferenceable(48) %"class.llvm::SmallVectorImpl.85"* @_ZN4llvm15SmallVectorImplINS_7SMFixItEEaSEOS2_(%"class.llvm::SmallVectorImpl.85"* %24, %"class.llvm::SmallVectorImpl.85"* dereferenceable(48) %25) #3
   call void @_ZN4llvm12SMDiagnosticD2Ev(%"class.llvm::SMDiagnostic"* %ref.tmp) #3
-  %26 = getelementptr inbounds %"class.std::allocator"* %ref.tmp.i.i, i64 0, i32 0
+  %26 = getelementptr inbounds %"class.std::allocator", %"class.std::allocator"* %ref.tmp.i.i, i64 0, i32 0
   call void @llvm.lifetime.start(i64 1, i8* %26) #3
   %27 = bitcast i8* %arrayidx.i.i.i36 to %"struct.std::basic_string<char, std::char_traits<char>, std::allocator<char> >::_Rep"*
   %cmp.i.i.i = icmp eq i8* %arrayidx.i.i.i36, bitcast ([0 x i64]* @_ZNSs4_Rep20_S_empty_rep_storageE to i8*)
   br i1 %cmp.i.i.i, label %_ZNSsD1Ev.exit, label %if.then.i.i.i45, !prof !28
 
 if.then.i.i.i45:                                  ; preds = %_ZN4llvm12SMDiagnosticaSEOS0_.exit
-  %_M_refcount.i.i.i = getelementptr inbounds i8* %8, i64 -8
+  %_M_refcount.i.i.i = getelementptr inbounds i8, i8* %8, i64 -8
   %28 = bitcast i8* %_M_refcount.i.i.i to i32*
   br i1 icmp ne (i8* bitcast (i32 (i32*, void (i8*)*)* @__pthread_key_create to i8*), i8* null), label %if.then.i.i.i.i, label %if.else.i.i.i.i
 
@@ -356,17 +356,17 @@ if.then4.i.i.i:                                   ; preds = %_ZN9__gnu_cxxL27__e
 
 _ZNSsD1Ev.exit:                                   ; preds = %_ZN4llvm12SMDiagnosticaSEOS0_.exit, %_ZN9__gnu_cxxL27__exchange_and_add_dispatchEPii.exit.i.i.i, %if.then4.i.i.i
   call void @llvm.lifetime.end(i64 1, i8* %26) #3
-  %31 = getelementptr inbounds %"class.std::allocator"* %ref.tmp.i.i47, i64 0, i32 0
+  %31 = getelementptr inbounds %"class.std::allocator", %"class.std::allocator"* %ref.tmp.i.i47, i64 0, i32 0
   call void @llvm.lifetime.start(i64 1, i8* %31) #3
-  %_M_p.i.i.i.i48 = getelementptr inbounds %"class.std::basic_string"* %ref.tmp5, i64 0, i32 0, i32 0
+  %_M_p.i.i.i.i48 = getelementptr inbounds %"class.std::basic_string", %"class.std::basic_string"* %ref.tmp5, i64 0, i32 0, i32 0
   %32 = load i8** %_M_p.i.i.i.i48, align 8, !tbaa !1
-  %arrayidx.i.i.i49 = getelementptr inbounds i8* %32, i64 -24
+  %arrayidx.i.i.i49 = getelementptr inbounds i8, i8* %32, i64 -24
   %33 = bitcast i8* %arrayidx.i.i.i49 to %"struct.std::basic_string<char, std::char_traits<char>, std::allocator<char> >::_Rep"*
   %cmp.i.i.i50 = icmp eq i8* %arrayidx.i.i.i49, bitcast ([0 x i64]* @_ZNSs4_Rep20_S_empty_rep_storageE to i8*)
   br i1 %cmp.i.i.i50, label %_ZNSsD1Ev.exit62, label %if.then.i.i.i52, !prof !28
 
 if.then.i.i.i52:                                  ; preds = %_ZNSsD1Ev.exit
-  %_M_refcount.i.i.i51 = getelementptr inbounds i8* %32, i64 -8
+  %_M_refcount.i.i.i51 = getelementptr inbounds i8, i8* %32, i64 -8
   %34 = bitcast i8* %_M_refcount.i.i.i51 to i32*
   br i1 icmp ne (i8* bitcast (i32 (i32*, void (i8*)*)* @__pthread_key_create to i8*), i8* null), label %if.then.i.i.i.i55, label %if.else.i.i.i.i57
 
@@ -424,7 +424,7 @@ _ZN4llvm7ErrorOrISt10unique_ptrINS_12MemoryBufferESt14default_deleteIS2_EEE10get
 _ZNKSt14default_deleteIN4llvm12MemoryBufferEEclEPS1_.exit.i.i: ; preds = %_ZN4llvm7ErrorOrISt10unique_ptrINS_12MemoryBufferESt14default_deleteIS2_EEE10getStorageEv.exit.i
   %40 = bitcast %"class.llvm::MemoryBuffer"* %39 to void (%"class.llvm::MemoryBuffer"*)***
   %vtable.i.i.i = load void (%"class.llvm::MemoryBuffer"*)*** %40, align 8, !tbaa !11
-  %vfn.i.i.i = getelementptr inbounds void (%"class.llvm::MemoryBuffer"*)** %vtable.i.i.i, i64 1
+  %vfn.i.i.i = getelementptr inbounds void (%"class.llvm::MemoryBuffer"*)*, void (%"class.llvm::MemoryBuffer"*)** %vtable.i.i.i, i64 1
   %41 = load void (%"class.llvm::MemoryBuffer"*)** %vfn.i.i.i, align 8
   call void %41(%"class.llvm::MemoryBuffer"* %39) #3
   br label %_ZNSt10unique_ptrIN4llvm12MemoryBufferESt14default_deleteIS1_EED2Ev.exit.i

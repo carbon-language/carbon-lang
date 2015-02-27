@@ -29,10 +29,10 @@ forcond:		; preds = %forinc, %entry
 forbody:		; preds = %forcond
 	%tmp2 = load i32* %i		; <i32> [#uses=1]
 	%tmp3 = load <3 x i16>** %dst.addr		; <<3 x i16>*> [#uses=1]
-	%arrayidx = getelementptr <3 x i16>* %tmp3, i32 %tmp2		; <<3 x i16>*> [#uses=1]
+	%arrayidx = getelementptr <3 x i16>, <3 x i16>* %tmp3, i32 %tmp2		; <<3 x i16>*> [#uses=1]
 	%tmp4 = load i32* %i		; <i32> [#uses=1]
 	%tmp5 = load <3 x i16>** %src.addr		; <<3 x i16>*> [#uses=1]
-	%arrayidx6 = getelementptr <3 x i16>* %tmp5, i32 %tmp4		; <<3 x i16>*> [#uses=1]
+	%arrayidx6 = getelementptr <3 x i16>, <3 x i16>* %tmp5, i32 %tmp4		; <<3 x i16>*> [#uses=1]
 	%tmp7 = load <3 x i16>* %arrayidx6		; <<3 x i16>> [#uses=1]
 	%add = add <3 x i16> %tmp7, < i16 1, i16 1, i16 1 >		; <<3 x i16>> [#uses=1]
 	store <3 x i16> %add, <3 x i16>* %arrayidx

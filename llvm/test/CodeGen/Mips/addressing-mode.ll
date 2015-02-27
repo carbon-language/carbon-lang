@@ -20,9 +20,9 @@ for.cond1.preheader:
 for.body3:
   %s.120 = phi i32 [ %s.022, %for.cond1.preheader ], [ %add7, %for.body3 ]
   %j.019 = phi i32 [ 0, %for.cond1.preheader ], [ %add8, %for.body3 ]
-  %arrayidx4 = getelementptr inbounds [256 x i32]* %a, i32 %i.021, i32 %j.019
+  %arrayidx4 = getelementptr inbounds [256 x i32], [256 x i32]* %a, i32 %i.021, i32 %j.019
   %0 = load i32* %arrayidx4, align 4
-  %arrayidx6 = getelementptr inbounds [256 x i32]* %b, i32 %i.021, i32 %j.019
+  %arrayidx6 = getelementptr inbounds [256 x i32], [256 x i32]* %b, i32 %i.021, i32 %j.019
   %1 = load i32* %arrayidx6, align 4
   %add = add i32 %0, %s.120
   %add7 = add i32 %add, %1

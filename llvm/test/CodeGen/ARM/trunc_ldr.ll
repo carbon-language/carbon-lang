@@ -4,7 +4,7 @@
 	%struct.B = type { float, float, i32, i32, i32, [0 x i8] }
 
 define i8 @f1(%struct.A* %d) {
-	%tmp2 = getelementptr %struct.A* %d, i32 0, i32 4
+	%tmp2 = getelementptr %struct.A, %struct.A* %d, i32 0, i32 4
 	%tmp23 = bitcast i16* %tmp2 to i32*
 	%tmp4 = load i32* %tmp23
 	%tmp512 = lshr i32 %tmp4, 24
@@ -13,7 +13,7 @@ define i8 @f1(%struct.A* %d) {
 }
 
 define i32 @f2(%struct.A* %d) {
-	%tmp2 = getelementptr %struct.A* %d, i32 0, i32 4
+	%tmp2 = getelementptr %struct.A, %struct.A* %d, i32 0, i32 4
 	%tmp23 = bitcast i16* %tmp2 to i32*
 	%tmp4 = load i32* %tmp23
 	%tmp512 = lshr i32 %tmp4, 24

@@ -7,7 +7,7 @@
 ;EG: CF_END
 
 define void @test(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
-  %b_ptr = getelementptr i32 addrspace(1)* %in, i32 1
+  %b_ptr = getelementptr i32, i32 addrspace(1)* %in, i32 1
   %a = load i32 addrspace(1) * %in
   %b = load i32 addrspace(1) * %b_ptr
   %result = udiv i32 %a, %b
@@ -25,7 +25,7 @@ define void @test(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 ;SI: s_endpgm
 
 define void @test2(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
-  %b_ptr = getelementptr <2 x i32> addrspace(1)* %in, i32 1
+  %b_ptr = getelementptr <2 x i32>, <2 x i32> addrspace(1)* %in, i32 1
   %a = load <2 x i32> addrspace(1) * %in
   %b = load <2 x i32> addrspace(1) * %b_ptr
   %result = udiv <2 x i32> %a, %b
@@ -39,7 +39,7 @@ define void @test2(<2 x i32> addrspace(1)* %out, <2 x i32> addrspace(1)* %in) {
 ;SI: s_endpgm
 
 define void @test4(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %in) {
-  %b_ptr = getelementptr <4 x i32> addrspace(1)* %in, i32 1
+  %b_ptr = getelementptr <4 x i32>, <4 x i32> addrspace(1)* %in, i32 1
   %a = load <4 x i32> addrspace(1) * %in
   %b = load <4 x i32> addrspace(1) * %b_ptr
   %result = udiv <4 x i32> %a, %b

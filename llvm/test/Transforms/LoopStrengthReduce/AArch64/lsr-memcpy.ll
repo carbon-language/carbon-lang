@@ -19,9 +19,9 @@ while.body:                                       ; preds = %while.body, %entry
   %len.06 = phi i64 [ 1288, %entry ], [ %sub, %while.body ]
   %pDst.05 = phi i64* [ inttoptr (i64 6442450944 to i64*), %entry ], [ %incdec.ptr1, %while.body ]
   %pSrc.04 = phi i64* [ inttoptr (i64 4294967296 to i64*), %entry ], [ %incdec.ptr, %while.body ]
-  %incdec.ptr = getelementptr inbounds i64* %pSrc.04, i64 1
+  %incdec.ptr = getelementptr inbounds i64, i64* %pSrc.04, i64 1
   %tmp = load volatile i64* %pSrc.04, align 8
-  %incdec.ptr1 = getelementptr inbounds i64* %pDst.05, i64 1
+  %incdec.ptr1 = getelementptr inbounds i64, i64* %pDst.05, i64 1
   store volatile i64 %tmp, i64* %pDst.05, align 8
   %sub = add i64 %len.06, -8
   %cmp = icmp sgt i64 %sub, -1

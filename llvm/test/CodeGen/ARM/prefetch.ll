@@ -31,7 +31,7 @@ entry:
 
 ; THUMB2-LABEL: t2:
 ; THUMB2: pld [r0, #1023]
-  %tmp = getelementptr i8* %ptr, i32 1023
+  %tmp = getelementptr i8, i8* %ptr, i32 1023
   tail call void @llvm.prefetch( i8* %tmp, i32 0, i32 3, i32 1 )
   ret void
 }
@@ -89,8 +89,8 @@ entry:
 ;THUMB2: pld [sp, #50]
 
 %red = alloca [100 x i8], align 1
-%0 = getelementptr inbounds [100 x i8]* %red, i32 0, i32 0
-%1 = getelementptr inbounds [100 x i8]* %red, i32 0, i32 50
+%0 = getelementptr inbounds [100 x i8], [100 x i8]* %red, i32 0, i32 0
+%1 = getelementptr inbounds [100 x i8], [100 x i8]* %red, i32 0, i32 50
 call void @llvm.prefetch(i8* %0, i32 0, i32 3, i32 1)
 call void @llvm.prefetch(i8* %1, i32 0, i32 3, i32 1)
 ret void

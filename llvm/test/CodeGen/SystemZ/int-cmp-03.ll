@@ -33,7 +33,7 @@ define double @f3(double %a, double %b, i32 %i1, i32 *%base) {
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 1023
+  %ptr = getelementptr i32, i32 *%base, i64 1023
   %i2 = load i32 *%ptr
   %cond = icmp ult i32 %i1, %i2
   %res = select i1 %cond, double %a, double %b
@@ -47,7 +47,7 @@ define double @f4(double %a, double %b, i32 %i1, i32 *%base) {
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 1024
+  %ptr = getelementptr i32, i32 *%base, i64 1024
   %i2 = load i32 *%ptr
   %cond = icmp ult i32 %i1, %i2
   %res = select i1 %cond, double %a, double %b
@@ -61,7 +61,7 @@ define double @f5(double %a, double %b, i32 %i1, i32 *%base) {
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 131071
+  %ptr = getelementptr i32, i32 *%base, i64 131071
   %i2 = load i32 *%ptr
   %cond = icmp ult i32 %i1, %i2
   %res = select i1 %cond, double %a, double %b
@@ -77,7 +77,7 @@ define double @f6(double %a, double %b, i32 %i1, i32 *%base) {
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 131072
+  %ptr = getelementptr i32, i32 *%base, i64 131072
   %i2 = load i32 *%ptr
   %cond = icmp ult i32 %i1, %i2
   %res = select i1 %cond, double %a, double %b
@@ -91,7 +91,7 @@ define double @f7(double %a, double %b, i32 %i1, i32 *%base) {
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 -1
+  %ptr = getelementptr i32, i32 *%base, i64 -1
   %i2 = load i32 *%ptr
   %cond = icmp ult i32 %i1, %i2
   %res = select i1 %cond, double %a, double %b
@@ -105,7 +105,7 @@ define double @f8(double %a, double %b, i32 %i1, i32 *%base) {
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 -131072
+  %ptr = getelementptr i32, i32 *%base, i64 -131072
   %i2 = load i32 *%ptr
   %cond = icmp ult i32 %i1, %i2
   %res = select i1 %cond, double %a, double %b
@@ -121,7 +121,7 @@ define double @f9(double %a, double %b, i32 %i1, i32 *%base) {
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 -131073
+  %ptr = getelementptr i32, i32 *%base, i64 -131073
   %i2 = load i32 *%ptr
   %cond = icmp ult i32 %i1, %i2
   %res = select i1 %cond, double %a, double %b

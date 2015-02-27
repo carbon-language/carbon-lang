@@ -7,8 +7,8 @@ entry:
 	%a = alloca [2 x i32]
 ; CHECK-NOT: alloca
 
-  %a0 = getelementptr [2 x i32]* %a, i64 0, i32 0
-  %a1 = getelementptr [2 x i32]* %a, i64 0, i32 1
+  %a0 = getelementptr [2 x i32], [2 x i32]* %a, i64 0, i32 0
+  %a1 = getelementptr [2 x i32], [2 x i32]* %a, i64 0, i32 1
 	store i32 0, i32* %a0
 	store i32 1, i32* %a1
 	%v0 = load i32* %a0
@@ -36,8 +36,8 @@ entry:
 	%a = alloca [2 x i32]
 ; CHECK-NOT: alloca
 
-  %a0 = getelementptr [2 x i32]* %a, i64 0, i32 0
-  %a1 = getelementptr [2 x i32]* %a, i64 0, i32 1
+  %a0 = getelementptr [2 x i32], [2 x i32]* %a, i64 0, i32 0
+  %a1 = getelementptr [2 x i32], [2 x i32]* %a, i64 0, i32 1
 	store i32 0, i32* %a0
 	store i32 1, i32* %a1
 	%v0 = load i32* %a0
@@ -62,10 +62,10 @@ entry:
   ; Note that we build redundant GEPs here to ensure that having different GEPs
   ; into the same alloca partation continues to work with PHI speculation. This
   ; was the underlying cause of PR13926.
-  %a0 = getelementptr [2 x i32]* %a, i64 0, i32 0
-  %a0b = getelementptr [2 x i32]* %a, i64 0, i32 0
-  %a1 = getelementptr [2 x i32]* %a, i64 0, i32 1
-  %a1b = getelementptr [2 x i32]* %a, i64 0, i32 1
+  %a0 = getelementptr [2 x i32], [2 x i32]* %a, i64 0, i32 0
+  %a0b = getelementptr [2 x i32], [2 x i32]* %a, i64 0, i32 0
+  %a1 = getelementptr [2 x i32], [2 x i32]* %a, i64 0, i32 1
+  %a1b = getelementptr [2 x i32], [2 x i32]* %a, i64 0, i32 1
 	store i32 0, i32* %a0
 	store i32 1, i32* %a1
 ; CHECK-NOT: store
@@ -110,8 +110,8 @@ entry:
 	%a = alloca [2 x i32]
 ; CHECK-NOT: alloca
 
-  %a0 = getelementptr [2 x i32]* %a, i64 0, i32 0
-  %a1 = getelementptr [2 x i32]* %a, i64 0, i32 1
+  %a0 = getelementptr [2 x i32], [2 x i32]* %a, i64 0, i32 0
+  %a1 = getelementptr [2 x i32], [2 x i32]* %a, i64 0, i32 1
 	store i32 0, i32* %a0
 	store i32 1, i32* %a1
 	%v0 = load i32* %a0
@@ -134,7 +134,7 @@ entry:
 	%a = alloca [2 x i32]
 ; CHECK-NOT: alloca
 
-  %a1 = getelementptr [2 x i32]* %a, i64 0, i32 1
+  %a1 = getelementptr [2 x i32], [2 x i32]* %a, i64 0, i32 1
 	store i32 1, i32* %a1
 ; CHECK-NOT: store
 
@@ -157,7 +157,7 @@ entry:
   %c = alloca i32
 ; CHECK-NOT: alloca
 
-  %a1 = getelementptr [2 x i32]* %a, i64 0, i32 1
+  %a1 = getelementptr [2 x i32], [2 x i32]* %a, i64 0, i32 1
 	store i32 1, i32* %a1
 
 	%select = select i1 true, i32* %a1, i32* %b
@@ -190,12 +190,12 @@ entry:
   br i1 undef, label %good, label %bad
 
 good:
-  %Y1 = getelementptr i32* %X, i64 0
+  %Y1 = getelementptr i32, i32* %X, i64 0
   store i32 0, i32* %Y1
   br label %exit
 
 bad:
-  %Y2 = getelementptr i32* %X, i64 1
+  %Y2 = getelementptr i32, i32* %X, i64 1
   store i32 0, i32* %Y2
   br label %exit
 
@@ -488,7 +488,7 @@ then:
 
 else:
   %a.raw = bitcast i64* %a to i8*
-  %a.raw.4 = getelementptr i8* %a.raw, i64 4
+  %a.raw.4 = getelementptr i8, i8* %a.raw, i64 4
   %a.raw.4.f = bitcast i8* %a.raw.4 to float*
   br label %end
 ; CHECK: %[[hi_cast:.*]] = bitcast i32 %[[hi]] to float
@@ -516,12 +516,12 @@ entry:
   br i1 %cond, label %then, label %else
 
 then:
-  %0 = getelementptr inbounds [4 x float]* %arr, i64 0, i64 3
+  %0 = getelementptr inbounds [4 x float], [4 x float]* %arr, i64 0, i64 3
   store float 1.000000e+00, float* %0, align 4
   br label %merge
 
 else:
-  %1 = getelementptr inbounds [4 x float]* %arr, i64 0, i64 3
+  %1 = getelementptr inbounds [4 x float], [4 x float]* %arr, i64 0, i64 3
   store float 2.000000e+00, float* %1, align 4
   br label %merge
 
@@ -546,7 +546,7 @@ entry:
   br i1 %cond, label %then, label %else
 
 then:
-  %0 = getelementptr inbounds [4 x float]* %arr, i64 0, i64 3
+  %0 = getelementptr inbounds [4 x float], [4 x float]* %arr, i64 0, i64 3
   store float 1.000000e+00, float* %0, align 4
   br label %then2
 
@@ -556,7 +556,7 @@ then2:
   br label %merge
 
 else:
-  %2 = getelementptr inbounds [4 x float]* %arr, i64 0, i64 3
+  %2 = getelementptr inbounds [4 x float], [4 x float]* %arr, i64 0, i64 3
   store float 3.000000e+00, float* %2, align 4
   br label %merge
 

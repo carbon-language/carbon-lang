@@ -23,7 +23,7 @@ define void @test1() {
 
 define void @test2(i32* %P) {
 ; CHECK: test2
-  %Q = getelementptr i32* %P, i32 1
+  %Q = getelementptr i32, i32* %P, i32 1
   %R = bitcast i32* %Q to i8*
   call void @llvm.lifetime.start(i64 4, i8* %R)
 ; CHECK: lifetime.start

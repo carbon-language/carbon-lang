@@ -35,7 +35,7 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.test1** %this_addr, metadata !24, metadata !{!"0x102"}), !dbg !28
   store %struct.test1* %this, %struct.test1** %this_addr
   %0 = load %struct.test1** %this_addr, align 8, !dbg !28 ; <%struct.test1*> [#uses=1]
-  %1 = getelementptr inbounds %struct.test1* %0, i32 0, i32 0, !dbg !28 ; <i32 (...)***> [#uses=1]
+  %1 = getelementptr inbounds %struct.test1, %struct.test1* %0, i32 0, i32 0, !dbg !28 ; <i32 (...)***> [#uses=1]
   store i32 (...)** getelementptr inbounds ([4 x i32 (...)*]* @_ZTV5test1, i64 0, i64 2), i32 (...)*** %1, align 8, !dbg !28
   br label %return, !dbg !28
 
@@ -52,7 +52,7 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.test1** %this_addr, metadata !32, metadata !{!"0x102"}), !dbg !34
   store %struct.test1* %this, %struct.test1** %this_addr
   %0 = load %struct.test1** %this_addr, align 8, !dbg !35 ; <%struct.test1*> [#uses=1]
-  %1 = getelementptr inbounds %struct.test1* %0, i32 0, i32 0, !dbg !35 ; <i32 (...)***> [#uses=1]
+  %1 = getelementptr inbounds %struct.test1, %struct.test1* %0, i32 0, i32 0, !dbg !35 ; <i32 (...)***> [#uses=1]
   store i32 (...)** getelementptr inbounds ([4 x i32 (...)*]* @_ZTV5test1, i64 0, i64 2), i32 (...)*** %1, align 8, !dbg !35
   br label %bb, !dbg !37
 
@@ -81,7 +81,7 @@ entry:
   call void @llvm.dbg.declare(metadata %struct.test1** %this_addr, metadata !38, metadata !{!"0x102"}), !dbg !40
   store %struct.test1* %this, %struct.test1** %this_addr
   %0 = load %struct.test1** %this_addr, align 8, !dbg !41 ; <%struct.test1*> [#uses=1]
-  %1 = getelementptr inbounds %struct.test1* %0, i32 0, i32 0, !dbg !41 ; <i32 (...)***> [#uses=1]
+  %1 = getelementptr inbounds %struct.test1, %struct.test1* %0, i32 0, i32 0, !dbg !41 ; <i32 (...)***> [#uses=1]
   store i32 (...)** getelementptr inbounds ([4 x i32 (...)*]* @_ZTV5test1, i64 0, i64 2), i32 (...)*** %1, align 8, !dbg !41
   br label %bb, !dbg !43
 

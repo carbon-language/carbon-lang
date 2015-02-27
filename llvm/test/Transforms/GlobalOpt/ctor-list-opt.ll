@@ -58,9 +58,9 @@ define internal void @CTOR4() {
 }
 
 define internal void @CTOR5() {
-	%X.2p = getelementptr inbounds { i32, [2 x i32] }* @X, i32 0, i32 1, i32 0		; <i32*> [#uses=2]
+	%X.2p = getelementptr inbounds { i32, [2 x i32] }, { i32, [2 x i32] }* @X, i32 0, i32 1, i32 0		; <i32*> [#uses=2]
 	%X.2 = load i32* %X.2p		; <i32> [#uses=1]
-	%X.1p = getelementptr inbounds { i32, [2 x i32] }* @X, i32 0, i32 0		; <i32*> [#uses=1]
+	%X.1p = getelementptr inbounds { i32, [2 x i32] }, { i32, [2 x i32] }* @X, i32 0, i32 0		; <i32*> [#uses=1]
 	store i32 %X.2, i32* %X.1p
 	store i32 42, i32* %X.2p
 	ret void
@@ -107,7 +107,7 @@ define i1 @accessor() {
 define internal void @CTOR9() {
 entry:
   %0 = bitcast %struct.B* @GV1 to i8*
-  %1 = getelementptr inbounds i8* %0, i64 16
+  %1 = getelementptr inbounds i8, i8* %0, i64 16
   %2 = bitcast i8* %1 to %struct.A*
   %3 = bitcast %struct.B* @GV1 to i8***
   store i8** getelementptr inbounds ([3 x i8*]* @GV2, i64 1, i64 0), i8*** %3

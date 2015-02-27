@@ -39,10 +39,10 @@ Entry:
 ; CHECK-NEXT:    br label %Loop
 
 Loop:   ; preds = %Loop, %0
-  %X1 = getelementptr i32* @X, i64 1    ; <i32*> [#uses=1]
+  %X1 = getelementptr i32, i32* @X, i64 1    ; <i32*> [#uses=1]
   %A = load i32* %X1    ; <i32> [#uses=1]
   %V = add i32 %A, 1    ; <i32> [#uses=1]
-  %X2 = getelementptr i32* @X, i64 1    ; <i32*> [#uses=1]
+  %X2 = getelementptr i32, i32* @X, i64 1    ; <i32*> [#uses=1]
   store i32 %V, i32* %X2
   br i1 false, label %Loop, label %Exit
 
@@ -82,7 +82,7 @@ define void @test4(i8* %x, i8 %n) {
   br label %loop
 
 loop:
-  %tmp = getelementptr i8* %x, i64 8
+  %tmp = getelementptr i8, i8* %x, i64 8
   store i8* %tmp, i8** %handle2
   br label %subloop
 
@@ -90,7 +90,7 @@ subloop:
   %count = phi i8 [ 0, %loop ], [ %nextcount, %subloop ]
   %offsetx2 = load i8** %handle2
   store i8 %n, i8* %offsetx2
-  %newoffsetx2 = getelementptr i8* %offsetx2, i64 -1
+  %newoffsetx2 = getelementptr i8, i8* %offsetx2, i64 -1
   store i8* %newoffsetx2, i8** %handle2
   %nextcount = add i8 %count, 1
   %innerexitcond = icmp sge i8 %nextcount, 8
@@ -164,7 +164,7 @@ for.body.lr.ph:                                   ; preds = %entry
 for.body:                                         ; preds = %for.body.lr.ph, %for.body
   %storemerge2 = phi i32 [ 0, %for.body.lr.ph ], [ %inc, %for.body ]
   %idxprom = sext i32 %storemerge2 to i64
-  %arrayidx = getelementptr inbounds float* %a, i64 %idxprom
+  %arrayidx = getelementptr inbounds float, float* %a, i64 %idxprom
   store float 0.000000e+00, float* %arrayidx, align 4, !tbaa !3
   %0 = load i32* %gi, align 4, !tbaa !0
   %inc = add nsw i32 %0, 1

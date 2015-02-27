@@ -22,7 +22,7 @@ cond_true264.i:		; preds = %bb239.i
 	ret void
 
 cond_false277.i:		; preds = %bb239.i
-	%tmp1062.i = getelementptr [2 x <4 x i32>]* null, i32 0, i32 1		; <<4 x i32>*> [#uses=1]
+	%tmp1062.i = getelementptr [2 x <4 x i32>], [2 x <4 x i32>]* null, i32 0, i32 1		; <<4 x i32>*> [#uses=1]
 	store <4 x i32> zeroinitializer, <4 x i32>* %tmp1062.i
 	br i1 false, label %cond_true1032.i, label %cond_false1063.i85
 
@@ -33,7 +33,7 @@ bb1013.i:		; preds = %bb205.i
 	ret void
 
 cond_true1032.i:		; preds = %cond_false277.i
-	%tmp1187.i = getelementptr [2 x <4 x i32>]* null, i32 0, i32 0, i32 7		; <i32*> [#uses=1]
+	%tmp1187.i = getelementptr [2 x <4 x i32>], [2 x <4 x i32>]* null, i32 0, i32 0, i32 7		; <i32*> [#uses=1]
 	store i32 0, i32* %tmp1187.i
 	br label %bb2037.i
 

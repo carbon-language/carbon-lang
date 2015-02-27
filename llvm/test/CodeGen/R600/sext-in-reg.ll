@@ -187,9 +187,9 @@ define void @sext_in_reg_i32_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) noun
 ; SI: buffer_store_dwordx2 v{{\[}}[[LO]]:[[HI]]{{\]}}
 define void @v_sext_in_reg_i1_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x()
-  %a.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
-  %b.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
-  %out.gep = getelementptr i64 addrspace(1)* %out, i32 %tid
+  %a.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
+  %b.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
+  %out.gep = getelementptr i64, i64 addrspace(1)* %out, i32 %tid
   %a = load i64 addrspace(1)* %a.gep, align 8
   %b = load i64 addrspace(1)* %b.gep, align 8
 
@@ -208,9 +208,9 @@ define void @v_sext_in_reg_i1_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %
 ; SI: buffer_store_dwordx2 v{{\[}}[[LO]]:[[HI]]{{\]}}
 define void @v_sext_in_reg_i8_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x()
-  %a.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
-  %b.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
-  %out.gep = getelementptr i64 addrspace(1)* %out, i32 %tid
+  %a.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
+  %b.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
+  %out.gep = getelementptr i64, i64 addrspace(1)* %out, i32 %tid
   %a = load i64 addrspace(1)* %a.gep, align 8
   %b = load i64 addrspace(1)* %b.gep, align 8
 
@@ -229,9 +229,9 @@ define void @v_sext_in_reg_i8_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %
 ; SI: buffer_store_dwordx2 v{{\[}}[[LO]]:[[HI]]{{\]}}
 define void @v_sext_in_reg_i16_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x()
-  %a.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
-  %b.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
-  %out.gep = getelementptr i64 addrspace(1)* %out, i32 %tid
+  %a.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
+  %b.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
+  %out.gep = getelementptr i64, i64 addrspace(1)* %out, i32 %tid
   %a = load i64 addrspace(1)* %a.gep, align 8
   %b = load i64 addrspace(1)* %b.gep, align 8
 
@@ -249,9 +249,9 @@ define void @v_sext_in_reg_i16_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* 
 ; SI: buffer_store_dwordx2 v{{\[}}[[LO]]:[[SHR]]{{\]}}
 define void @v_sext_in_reg_i32_to_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %aptr, i64 addrspace(1)* %bptr) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x()
-  %a.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
-  %b.gep = getelementptr i64 addrspace(1)* %aptr, i32 %tid
-  %out.gep = getelementptr i64 addrspace(1)* %out, i32 %tid
+  %a.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
+  %b.gep = getelementptr i64, i64 addrspace(1)* %aptr, i32 %tid
+  %out.gep = getelementptr i64, i64 addrspace(1)* %out, i32 %tid
   %a = load i64 addrspace(1)* %a.gep, align 8
   %b = load i64 addrspace(1)* %b.gep, align 8
 

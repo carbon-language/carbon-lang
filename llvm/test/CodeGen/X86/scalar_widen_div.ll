@@ -19,14 +19,14 @@ entry:
   store <2 x i32> addrspace(1)* %qdest, <2 x i32> addrspace(1)** %qdest.addr
   %tmp = load <2 x i32> addrspace(1)** %qdest.addr
   %tmp1 = load i32* %index
-  %arrayidx = getelementptr <2 x i32> addrspace(1)* %tmp, i32 %tmp1
+  %arrayidx = getelementptr <2 x i32>, <2 x i32> addrspace(1)* %tmp, i32 %tmp1
   %tmp2 = load <2 x i32> addrspace(1)** %nsource.addr
   %tmp3 = load i32* %index
-  %arrayidx4 = getelementptr <2 x i32> addrspace(1)* %tmp2, i32 %tmp3
+  %arrayidx4 = getelementptr <2 x i32>, <2 x i32> addrspace(1)* %tmp2, i32 %tmp3
   %tmp5 = load <2 x i32> addrspace(1)* %arrayidx4
   %tmp6 = load <2 x i32> addrspace(1)** %dsource.addr
   %tmp7 = load i32* %index
-  %arrayidx8 = getelementptr <2 x i32> addrspace(1)* %tmp6, i32 %tmp7
+  %arrayidx8 = getelementptr <2 x i32>, <2 x i32> addrspace(1)* %tmp6, i32 %tmp7
   %tmp9 = load <2 x i32> addrspace(1)* %arrayidx8
   %tmp10 = sdiv <2 x i32> %tmp5, %tmp9
   store <2 x i32> %tmp10, <2 x i32> addrspace(1)* %arrayidx
@@ -180,9 +180,9 @@ bb.nph:
 
 for.body:
   %i.014 = phi i32 [ 0, %bb.nph ], [ %inc, %for.body ] 
-  %arrayidx11 = getelementptr <3 x i32>* %dest, i32 %i.014
+  %arrayidx11 = getelementptr <3 x i32>, <3 x i32>* %dest, i32 %i.014
   %tmp4 = load <3 x i32>* %arrayidx11 ; <<3 x i32>> [#uses=1]
-  %arrayidx7 = getelementptr inbounds <3 x i32>* %old, i32 %i.014
+  %arrayidx7 = getelementptr inbounds <3 x i32>, <3 x i32>* %old, i32 %i.014
   %tmp8 = load <3 x i32>* %arrayidx7 ; <<3 x i32>> [#uses=1]
   %div = sdiv <3 x i32> %tmp4, %tmp8
   store <3 x i32> %div, <3 x i32>* %arrayidx11

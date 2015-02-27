@@ -12,7 +12,7 @@ define void @st1lane_ro_16b(<16 x i8> %A, i8* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane_ro_16b
 ; CHECK: add x[[XREG:[0-9]+]], x0, x1
 ; CHECK: st1.b { v0 }[1], [x[[XREG]]]
-  %ptr = getelementptr i8* %D, i64 %offset
+  %ptr = getelementptr i8, i8* %D, i64 %offset
   %tmp = extractelement <16 x i8> %A, i32 1
   store i8 %tmp, i8* %ptr
   ret void
@@ -22,7 +22,7 @@ define void @st1lane0_ro_16b(<16 x i8> %A, i8* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane0_ro_16b
 ; CHECK: add x[[XREG:[0-9]+]], x0, x1
 ; CHECK: st1.b { v0 }[0], [x[[XREG]]]
-  %ptr = getelementptr i8* %D, i64 %offset
+  %ptr = getelementptr i8, i8* %D, i64 %offset
   %tmp = extractelement <16 x i8> %A, i32 0
   store i8 %tmp, i8* %ptr
   ret void
@@ -40,7 +40,7 @@ define void @st1lane_ro_8h(<8 x i16> %A, i16* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane_ro_8h
 ; CHECK: add x[[XREG:[0-9]+]], x0, x1
 ; CHECK: st1.h { v0 }[1], [x[[XREG]]]
-  %ptr = getelementptr i16* %D, i64 %offset
+  %ptr = getelementptr i16, i16* %D, i64 %offset
   %tmp = extractelement <8 x i16> %A, i32 1
   store i16 %tmp, i16* %ptr
   ret void
@@ -49,7 +49,7 @@ define void @st1lane_ro_8h(<8 x i16> %A, i16* %D, i64 %offset) {
 define void @st1lane0_ro_8h(<8 x i16> %A, i16* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane0_ro_8h
 ; CHECK: str h0, [x0, x1, lsl #1]
-  %ptr = getelementptr i16* %D, i64 %offset
+  %ptr = getelementptr i16, i16* %D, i64 %offset
   %tmp = extractelement <8 x i16> %A, i32 0
   store i16 %tmp, i16* %ptr
   ret void
@@ -67,7 +67,7 @@ define void @st1lane_ro_4s(<4 x i32> %A, i32* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane_ro_4s
 ; CHECK: add x[[XREG:[0-9]+]], x0, x1
 ; CHECK: st1.s { v0 }[1], [x[[XREG]]]
-  %ptr = getelementptr i32* %D, i64 %offset
+  %ptr = getelementptr i32, i32* %D, i64 %offset
   %tmp = extractelement <4 x i32> %A, i32 1
   store i32 %tmp, i32* %ptr
   ret void
@@ -76,7 +76,7 @@ define void @st1lane_ro_4s(<4 x i32> %A, i32* %D, i64 %offset) {
 define void @st1lane0_ro_4s(<4 x i32> %A, i32* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane0_ro_4s
 ; CHECK: str s0, [x0, x1, lsl #2]
-  %ptr = getelementptr i32* %D, i64 %offset
+  %ptr = getelementptr i32, i32* %D, i64 %offset
   %tmp = extractelement <4 x i32> %A, i32 0
   store i32 %tmp, i32* %ptr
   ret void
@@ -94,7 +94,7 @@ define void @st1lane_ro_4s_float(<4 x float> %A, float* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane_ro_4s_float
 ; CHECK: add x[[XREG:[0-9]+]], x0, x1
 ; CHECK: st1.s { v0 }[1], [x[[XREG]]]
-  %ptr = getelementptr float* %D, i64 %offset
+  %ptr = getelementptr float, float* %D, i64 %offset
   %tmp = extractelement <4 x float> %A, i32 1
   store float %tmp, float* %ptr
   ret void
@@ -103,7 +103,7 @@ define void @st1lane_ro_4s_float(<4 x float> %A, float* %D, i64 %offset) {
 define void @st1lane0_ro_4s_float(<4 x float> %A, float* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane0_ro_4s_float
 ; CHECK: str s0, [x0, x1, lsl #2]
-  %ptr = getelementptr float* %D, i64 %offset
+  %ptr = getelementptr float, float* %D, i64 %offset
   %tmp = extractelement <4 x float> %A, i32 0
   store float %tmp, float* %ptr
   ret void
@@ -121,7 +121,7 @@ define void @st1lane_ro_2d(<2 x i64> %A, i64* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane_ro_2d
 ; CHECK: add x[[XREG:[0-9]+]], x0, x1
 ; CHECK: st1.d { v0 }[1], [x[[XREG]]]
-  %ptr = getelementptr i64* %D, i64 %offset
+  %ptr = getelementptr i64, i64* %D, i64 %offset
   %tmp = extractelement <2 x i64> %A, i32 1
   store i64 %tmp, i64* %ptr
   ret void
@@ -130,7 +130,7 @@ define void @st1lane_ro_2d(<2 x i64> %A, i64* %D, i64 %offset) {
 define void @st1lane0_ro_2d(<2 x i64> %A, i64* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane0_ro_2d
 ; CHECK: str d0, [x0, x1, lsl #3]
-  %ptr = getelementptr i64* %D, i64 %offset
+  %ptr = getelementptr i64, i64* %D, i64 %offset
   %tmp = extractelement <2 x i64> %A, i32 0
   store i64 %tmp, i64* %ptr
   ret void
@@ -148,7 +148,7 @@ define void @st1lane_ro_2d_double(<2 x double> %A, double* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane_ro_2d_double
 ; CHECK: add x[[XREG:[0-9]+]], x0, x1
 ; CHECK: st1.d { v0 }[1], [x[[XREG]]]
-  %ptr = getelementptr double* %D, i64 %offset
+  %ptr = getelementptr double, double* %D, i64 %offset
   %tmp = extractelement <2 x double> %A, i32 1
   store double %tmp, double* %ptr
   ret void
@@ -157,7 +157,7 @@ define void @st1lane_ro_2d_double(<2 x double> %A, double* %D, i64 %offset) {
 define void @st1lane0_ro_2d_double(<2 x double> %A, double* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane0_ro_2d_double
 ; CHECK: str d0, [x0, x1, lsl #3]
-  %ptr = getelementptr double* %D, i64 %offset
+  %ptr = getelementptr double, double* %D, i64 %offset
   %tmp = extractelement <2 x double> %A, i32 0
   store double %tmp, double* %ptr
   ret void
@@ -175,7 +175,7 @@ define void @st1lane_ro_8b(<8 x i8> %A, i8* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane_ro_8b
 ; CHECK: add x[[XREG:[0-9]+]], x0, x1
 ; CHECK: st1.b { v0 }[1], [x[[XREG]]]
-  %ptr = getelementptr i8* %D, i64 %offset
+  %ptr = getelementptr i8, i8* %D, i64 %offset
   %tmp = extractelement <8 x i8> %A, i32 1
   store i8 %tmp, i8* %ptr
   ret void
@@ -185,7 +185,7 @@ define void @st1lane0_ro_8b(<8 x i8> %A, i8* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane0_ro_8b
 ; CHECK: add x[[XREG:[0-9]+]], x0, x1
 ; CHECK: st1.b { v0 }[0], [x[[XREG]]]
-  %ptr = getelementptr i8* %D, i64 %offset
+  %ptr = getelementptr i8, i8* %D, i64 %offset
   %tmp = extractelement <8 x i8> %A, i32 0
   store i8 %tmp, i8* %ptr
   ret void
@@ -203,7 +203,7 @@ define void @st1lane_ro_4h(<4 x i16> %A, i16* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane_ro_4h
 ; CHECK: add x[[XREG:[0-9]+]], x0, x1
 ; CHECK: st1.h { v0 }[1], [x[[XREG]]]
-  %ptr = getelementptr i16* %D, i64 %offset
+  %ptr = getelementptr i16, i16* %D, i64 %offset
   %tmp = extractelement <4 x i16> %A, i32 1
   store i16 %tmp, i16* %ptr
   ret void
@@ -212,7 +212,7 @@ define void @st1lane_ro_4h(<4 x i16> %A, i16* %D, i64 %offset) {
 define void @st1lane0_ro_4h(<4 x i16> %A, i16* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane0_ro_4h
 ; CHECK: str h0, [x0, x1, lsl #1]
-  %ptr = getelementptr i16* %D, i64 %offset
+  %ptr = getelementptr i16, i16* %D, i64 %offset
   %tmp = extractelement <4 x i16> %A, i32 0
   store i16 %tmp, i16* %ptr
   ret void
@@ -230,7 +230,7 @@ define void @st1lane_ro_2s(<2 x i32> %A, i32* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane_ro_2s
 ; CHECK: add x[[XREG:[0-9]+]], x0, x1
 ; CHECK: st1.s { v0 }[1], [x[[XREG]]]
-  %ptr = getelementptr i32* %D, i64 %offset
+  %ptr = getelementptr i32, i32* %D, i64 %offset
   %tmp = extractelement <2 x i32> %A, i32 1
   store i32 %tmp, i32* %ptr
   ret void
@@ -239,7 +239,7 @@ define void @st1lane_ro_2s(<2 x i32> %A, i32* %D, i64 %offset) {
 define void @st1lane0_ro_2s(<2 x i32> %A, i32* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane0_ro_2s
 ; CHECK: str s0, [x0, x1, lsl #2]
-  %ptr = getelementptr i32* %D, i64 %offset
+  %ptr = getelementptr i32, i32* %D, i64 %offset
   %tmp = extractelement <2 x i32> %A, i32 0
   store i32 %tmp, i32* %ptr
   ret void
@@ -257,7 +257,7 @@ define void @st1lane_ro_2s_float(<2 x float> %A, float* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane_ro_2s_float
 ; CHECK: add x[[XREG:[0-9]+]], x0, x1
 ; CHECK: st1.s { v0 }[1], [x[[XREG]]]
-  %ptr = getelementptr float* %D, i64 %offset
+  %ptr = getelementptr float, float* %D, i64 %offset
   %tmp = extractelement <2 x float> %A, i32 1
   store float %tmp, float* %ptr
   ret void
@@ -266,7 +266,7 @@ define void @st1lane_ro_2s_float(<2 x float> %A, float* %D, i64 %offset) {
 define void @st1lane0_ro_2s_float(<2 x float> %A, float* %D, i64 %offset) {
 ; CHECK-LABEL: st1lane0_ro_2s_float
 ; CHECK: str s0, [x0, x1, lsl #2]
-  %ptr = getelementptr float* %D, i64 %offset
+  %ptr = getelementptr float, float* %D, i64 %offset
   %tmp = extractelement <2 x float> %A, i32 0
   store float %tmp, float* %ptr
   ret void

@@ -32,7 +32,7 @@ bb1:                                              ; preds = %bb6, %bb
 bb2:                                              ; preds = %bb2, %bb2.preheader
   %indvar = phi i32 [ 0, %bb1 ], [ %indvar.next, %bb2 ] ; <i32> [#uses=2]
   %tmp19 = add i32 %tmp18, %indvar                ; <i32> [#uses=1]
-  %scevgep = getelementptr %struct.anon* @mp2grad_, i32 0, i32 0, i32 %tmp19 ; <i32*> [#uses=1]
+  %scevgep = getelementptr %struct.anon, %struct.anon* @mp2grad_, i32 0, i32 0, i32 %tmp19 ; <i32*> [#uses=1]
   store i32 0, i32* %scevgep
   %indvar.next = add i32 %indvar, 1               ; <i32> [#uses=1]
   %c = icmp ne i32 %indvar.next, %m

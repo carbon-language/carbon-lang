@@ -8,7 +8,7 @@ entry:
 
 for.cond:
   %indvar = phi i64 [ %indvar.next, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr [1024 x float]* @A, i64 0, i64 3
+  %arrayidx = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 3
   %vecidx = bitcast float* %arrayidx to <4 x float>*
   store <4 x float> zeroinitializer, <4 x float>* %vecidx, align 4
   %indvar.next = add i64 %indvar, 1

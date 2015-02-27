@@ -17,28 +17,28 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %i.035 = phi i32 [ %add18, %for.body ], [ %m, %entry ]
-  %arrayidx = getelementptr inbounds i32* %B, i32 %i.035
+  %arrayidx = getelementptr inbounds i32, i32* %B, i32 %i.035
   %0 = load i32* %arrayidx, align 4
   %mul = shl nsw i32 %0, 2
-  %arrayidx2 = getelementptr inbounds i32* %A, i32 %i.035
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i32 %i.035
   store i32 %mul, i32* %arrayidx2, align 4
   %add3 = add nsw i32 %i.035, 1
-  %arrayidx4 = getelementptr inbounds i32* %B, i32 %add3
+  %arrayidx4 = getelementptr inbounds i32, i32* %B, i32 %add3
   %1 = load i32* %arrayidx4, align 4
   %mul5 = shl nsw i32 %1, 2
-  %arrayidx7 = getelementptr inbounds i32* %A, i32 %add3
+  %arrayidx7 = getelementptr inbounds i32, i32* %A, i32 %add3
   store i32 %mul5, i32* %arrayidx7, align 4
   %add8 = add nsw i32 %i.035, 2
-  %arrayidx9 = getelementptr inbounds i32* %B, i32 %add8
+  %arrayidx9 = getelementptr inbounds i32, i32* %B, i32 %add8
   %2 = load i32* %arrayidx9, align 4
   %mul10 = shl nsw i32 %2, 2
-  %arrayidx12 = getelementptr inbounds i32* %A, i32 %add8
+  %arrayidx12 = getelementptr inbounds i32, i32* %A, i32 %add8
   store i32 %mul10, i32* %arrayidx12, align 4
   %add13 = add nsw i32 %i.035, 3
-  %arrayidx14 = getelementptr inbounds i32* %B, i32 %add13
+  %arrayidx14 = getelementptr inbounds i32, i32* %B, i32 %add13
   %3 = load i32* %arrayidx14, align 4
   %mul15 = shl nsw i32 %3, 2
-  %arrayidx17 = getelementptr inbounds i32* %A, i32 %add13
+  %arrayidx17 = getelementptr inbounds i32, i32* %A, i32 %add13
   store i32 %mul15, i32* %arrayidx17, align 4
   %add18 = add nsw i32 %i.035, 4
   %cmp = icmp slt i32 %add18, %n
@@ -60,10 +60,10 @@ for.end:                                          ; preds = %for.body, %entry
 ; CHECK: for.body:                                         ; preds = %for.body, %for.body.preheader
 ; CHECK:   %indvar = phi i32 [ %indvar.next, %for.body ], [ 0, %for.body.preheader ]
 ; CHECK:   %6 = add i32 %m, %indvar
-; CHECK:   %arrayidx = getelementptr inbounds i32* %B, i32 %6
+; CHECK:   %arrayidx = getelementptr inbounds i32, i32* %B, i32 %6
 ; CHECK:   %7 = load i32* %arrayidx, align 4
 ; CHECK:   %mul = shl nsw i32 %7, 2
-; CHECK:   %arrayidx2 = getelementptr inbounds i32* %A, i32 %6
+; CHECK:   %arrayidx2 = getelementptr inbounds i32, i32* %A, i32 %6
 ; CHECK:   store i32 %mul, i32* %arrayidx2, align 4
 ; CHECK:   %indvar.next = add i32 %indvar, 1
 ; CHECK:   %exitcond = icmp eq i32 %6, %5
@@ -88,33 +88,33 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %i.056 = phi i32 [ %add27, %for.body ], [ %rem, %entry ]
-  %arrayidx = getelementptr inbounds float* %dy, i32 %i.056
+  %arrayidx = getelementptr inbounds float, float* %dy, i32 %i.056
   %0 = load float* %arrayidx, align 4
-  %arrayidx1 = getelementptr inbounds float* %dx, i32 %i.056
+  %arrayidx1 = getelementptr inbounds float, float* %dx, i32 %i.056
   %1 = load float* %arrayidx1, align 4
   %mul = fmul float %1, %da
   %add = fadd float %0, %mul
   store float %add, float* %arrayidx, align 4
   %add3 = add nsw i32 %i.056, 1
-  %arrayidx4 = getelementptr inbounds float* %dy, i32 %add3
+  %arrayidx4 = getelementptr inbounds float, float* %dy, i32 %add3
   %2 = load float* %arrayidx4, align 4
-  %arrayidx6 = getelementptr inbounds float* %dx, i32 %add3
+  %arrayidx6 = getelementptr inbounds float, float* %dx, i32 %add3
   %3 = load float* %arrayidx6, align 4
   %mul7 = fmul float %3, %da
   %add8 = fadd float %2, %mul7
   store float %add8, float* %arrayidx4, align 4
   %add11 = add nsw i32 %i.056, 2
-  %arrayidx12 = getelementptr inbounds float* %dy, i32 %add11
+  %arrayidx12 = getelementptr inbounds float, float* %dy, i32 %add11
   %4 = load float* %arrayidx12, align 4
-  %arrayidx14 = getelementptr inbounds float* %dx, i32 %add11
+  %arrayidx14 = getelementptr inbounds float, float* %dx, i32 %add11
   %5 = load float* %arrayidx14, align 4
   %mul15 = fmul float %5, %da
   %add16 = fadd float %4, %mul15
   store float %add16, float* %arrayidx12, align 4
   %add19 = add nsw i32 %i.056, 3
-  %arrayidx20 = getelementptr inbounds float* %dy, i32 %add19
+  %arrayidx20 = getelementptr inbounds float, float* %dy, i32 %add19
   %6 = load float* %arrayidx20, align 4
-  %arrayidx22 = getelementptr inbounds float* %dx, i32 %add19
+  %arrayidx22 = getelementptr inbounds float, float* %dx, i32 %add19
   %7 = load float* %arrayidx22, align 4
   %mul23 = fmul float %7, %da
   %add24 = fadd float %6, %mul23
@@ -140,9 +140,9 @@ for.end:                                          ; preds = %for.body, %entry
 ; CHECK: for.body:
 ; CHECK:   %indvar = phi i32 [ %indvar.next, %for.body ], [ 0, %for.body.preheader ]
 ; CHECK:   %6 = add i32 %rem, %indvar
-; CHECK:   %arrayidx = getelementptr inbounds float* %dy, i32 %6
+; CHECK:   %arrayidx = getelementptr inbounds float, float* %dy, i32 %6
 ; CHECK:   %7 = load float* %arrayidx, align 4
-; CHECK:   %arrayidx1 = getelementptr inbounds float* %dx, i32 %6
+; CHECK:   %arrayidx1 = getelementptr inbounds float, float* %dx, i32 %6
 ; CHECK:   %8 = load float* %arrayidx1, align 4
 ; CHECK:   %mul = fmul float %8, %da
 ; CHECK:   %add = fadd float %7, %mul

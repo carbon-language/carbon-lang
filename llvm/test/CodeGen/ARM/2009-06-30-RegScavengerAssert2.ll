@@ -40,7 +40,7 @@ bb11:		; preds = %bb9
 	%3 = sub i32 %2, %0		; <i32> [#uses=1]
 	store i32 0, i32* @no_mat, align 4
 	store i32 0, i32* @no_mis, align 4
-	%4 = getelementptr i8* %B, i32 %0		; <i8*> [#uses=1]
+	%4 = getelementptr i8, i8* %B, i32 %0		; <i8*> [#uses=1]
 	tail call  void @diff(i8* undef, i8* %4, i32 undef, i32 %3, i32 undef, i32 undef) nounwind
 	%5 = tail call  i32 (i8*, ...)* @printf(i8* getelementptr ([33 x i8]* @"\01LC11", i32 0, i32 0), i32 %tmp13) nounwind		; <i32> [#uses=0]
 	%6 = load i32* @no_mis, align 4		; <i32> [#uses=1]

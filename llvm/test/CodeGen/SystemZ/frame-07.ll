@@ -66,7 +66,7 @@ define void @f1(double *%ptr, i64 %x) {
 ; CHECK-FP: lmg %r11, %r15, 4216(%r11)
 ; CHECK-FP: br %r14
   %y = alloca [486 x i64], align 8
-  %elem = getelementptr inbounds [486 x i64]* %y, i64 0, i64 0
+  %elem = getelementptr inbounds [486 x i64], [486 x i64]* %y, i64 0, i64 0
   store volatile i64 %x, i64* %elem
   %l0 = load volatile double *%ptr
   %l1 = load volatile double *%ptr
@@ -195,7 +195,7 @@ define void @f2(double *%ptr, i64 %x) {
 ; CHECK-FP: lmg %r11, %r15, 524280(%r11)
 ; CHECK-FP: br %r14
   %y = alloca [65510 x i64], align 8
-  %elem = getelementptr inbounds [65510 x i64]* %y, i64 0, i64 0
+  %elem = getelementptr inbounds [65510 x i64], [65510 x i64]* %y, i64 0, i64 0
   store volatile i64 %x, i64* %elem
   %l0 = load volatile double *%ptr
   %l1 = load volatile double *%ptr

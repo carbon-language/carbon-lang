@@ -42,7 +42,7 @@ for.body:                                         ; preds = %for.cond
   br label %for.cond
 
 for.end:                                          ; preds = %for.cond
-  %x = getelementptr inbounds %struct.Vector4* %vector, i32 0, i32 0
+  %x = getelementptr inbounds %struct.Vector4, %struct.Vector4* %vector, i32 0, i32 0
   %tmp5 = load float* %x, align 16
   %conv = fpext float %tmp5 to double
   %call = call i32 (...)* @printf(double %conv) nounwind

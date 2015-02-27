@@ -14,86 +14,86 @@
 
 define void @wrap_mul4(double* nocapture %Out, [4 x double]* nocapture %A, [4 x double]* nocapture %B) #0 {
 entry:
-  %arrayidx1.i = getelementptr inbounds [4 x double]* %A, i64 0, i64 0
+  %arrayidx1.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 0, i64 0
   %0 = load double* %arrayidx1.i, align 8
-  %arrayidx3.i = getelementptr inbounds [4 x double]* %B, i64 0, i64 0
+  %arrayidx3.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 0, i64 0
   %1 = load double* %arrayidx3.i, align 8
   %mul.i = fmul double %0, %1
-  %arrayidx5.i = getelementptr inbounds [4 x double]* %A, i64 0, i64 1
+  %arrayidx5.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 0, i64 1
   %2 = load double* %arrayidx5.i, align 8
-  %arrayidx7.i = getelementptr inbounds [4 x double]* %B, i64 1, i64 0
+  %arrayidx7.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 1, i64 0
   %3 = load double* %arrayidx7.i, align 8
   %mul8.i = fmul double %2, %3
   %add.i = fadd double %mul.i, %mul8.i
-  %arrayidx10.i = getelementptr inbounds [4 x double]* %A, i64 0, i64 2
+  %arrayidx10.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 0, i64 2
   %4 = load double* %arrayidx10.i, align 8
-  %arrayidx12.i = getelementptr inbounds [4 x double]* %B, i64 2, i64 0
+  %arrayidx12.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 2, i64 0
   %5 = load double* %arrayidx12.i, align 8
   %mul13.i = fmul double %4, %5
   %add14.i = fadd double %add.i, %mul13.i
-  %arrayidx16.i = getelementptr inbounds [4 x double]* %A, i64 0, i64 3
+  %arrayidx16.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 0, i64 3
   %6 = load double* %arrayidx16.i, align 8
-  %arrayidx18.i = getelementptr inbounds [4 x double]* %B, i64 3, i64 0
+  %arrayidx18.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 3, i64 0
   %7 = load double* %arrayidx18.i, align 8
   %mul19.i = fmul double %6, %7
   %add20.i = fadd double %add14.i, %mul19.i
-  %arrayidx25.i = getelementptr inbounds [4 x double]* %B, i64 0, i64 1
+  %arrayidx25.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 0, i64 1
   %8 = load double* %arrayidx25.i, align 8
   %mul26.i = fmul double %0, %8
-  %arrayidx30.i = getelementptr inbounds [4 x double]* %B, i64 1, i64 1
+  %arrayidx30.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 1, i64 1
   %9 = load double* %arrayidx30.i, align 8
   %mul31.i = fmul double %2, %9
   %add32.i = fadd double %mul26.i, %mul31.i
-  %arrayidx36.i = getelementptr inbounds [4 x double]* %B, i64 2, i64 1
+  %arrayidx36.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 2, i64 1
   %10 = load double* %arrayidx36.i, align 8
   %mul37.i = fmul double %4, %10
   %add38.i = fadd double %add32.i, %mul37.i
-  %arrayidx42.i = getelementptr inbounds [4 x double]* %B, i64 3, i64 1
+  %arrayidx42.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 3, i64 1
   %11 = load double* %arrayidx42.i, align 8
   %mul43.i = fmul double %6, %11
   %add44.i = fadd double %add38.i, %mul43.i
-  %arrayidx49.i = getelementptr inbounds [4 x double]* %B, i64 0, i64 2
+  %arrayidx49.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 0, i64 2
   %12 = load double* %arrayidx49.i, align 8
   %mul50.i = fmul double %0, %12
-  %arrayidx54.i = getelementptr inbounds [4 x double]* %B, i64 1, i64 2
+  %arrayidx54.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 1, i64 2
   %13 = load double* %arrayidx54.i, align 8
   %mul55.i = fmul double %2, %13
   %add56.i = fadd double %mul50.i, %mul55.i
-  %arrayidx60.i = getelementptr inbounds [4 x double]* %B, i64 2, i64 2
+  %arrayidx60.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 2, i64 2
   %14 = load double* %arrayidx60.i, align 8
   %mul61.i = fmul double %4, %14
   %add62.i = fadd double %add56.i, %mul61.i
-  %arrayidx66.i = getelementptr inbounds [4 x double]* %B, i64 3, i64 2
+  %arrayidx66.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 3, i64 2
   %15 = load double* %arrayidx66.i, align 8
   %mul67.i = fmul double %6, %15
   %add68.i = fadd double %add62.i, %mul67.i
-  %arrayidx73.i = getelementptr inbounds [4 x double]* %B, i64 0, i64 3
+  %arrayidx73.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 0, i64 3
   %16 = load double* %arrayidx73.i, align 8
   %mul74.i = fmul double %0, %16
-  %arrayidx78.i = getelementptr inbounds [4 x double]* %B, i64 1, i64 3
+  %arrayidx78.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 1, i64 3
   %17 = load double* %arrayidx78.i, align 8
   %mul79.i = fmul double %2, %17
   %add80.i = fadd double %mul74.i, %mul79.i
-  %arrayidx84.i = getelementptr inbounds [4 x double]* %B, i64 2, i64 3
+  %arrayidx84.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 2, i64 3
   %18 = load double* %arrayidx84.i, align 8
   %mul85.i = fmul double %4, %18
   %add86.i = fadd double %add80.i, %mul85.i
-  %arrayidx90.i = getelementptr inbounds [4 x double]* %B, i64 3, i64 3
+  %arrayidx90.i = getelementptr inbounds [4 x double], [4 x double]* %B, i64 3, i64 3
   %19 = load double* %arrayidx90.i, align 8
   %mul91.i = fmul double %6, %19
   %add92.i = fadd double %add86.i, %mul91.i
-  %arrayidx95.i = getelementptr inbounds [4 x double]* %A, i64 1, i64 0
+  %arrayidx95.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 1, i64 0
   %20 = load double* %arrayidx95.i, align 8
   %mul98.i = fmul double %1, %20
-  %arrayidx100.i = getelementptr inbounds [4 x double]* %A, i64 1, i64 1
+  %arrayidx100.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 1, i64 1
   %21 = load double* %arrayidx100.i, align 8
   %mul103.i = fmul double %3, %21
   %add104.i = fadd double %mul98.i, %mul103.i
-  %arrayidx106.i = getelementptr inbounds [4 x double]* %A, i64 1, i64 2
+  %arrayidx106.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 1, i64 2
   %22 = load double* %arrayidx106.i, align 8
   %mul109.i = fmul double %5, %22
   %add110.i = fadd double %add104.i, %mul109.i
-  %arrayidx112.i = getelementptr inbounds [4 x double]* %A, i64 1, i64 3
+  %arrayidx112.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 1, i64 3
   %23 = load double* %arrayidx112.i, align 8
   %mul115.i = fmul double %7, %23
   %add116.i = fadd double %add110.i, %mul115.i
@@ -118,18 +118,18 @@ entry:
   %add182.i = fadd double %add176.i, %mul181.i
   %mul187.i = fmul double %19, %23
   %add188.i = fadd double %add182.i, %mul187.i
-  %arrayidx191.i = getelementptr inbounds [4 x double]* %A, i64 2, i64 0
+  %arrayidx191.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 2, i64 0
   %24 = load double* %arrayidx191.i, align 8
   %mul194.i = fmul double %1, %24
-  %arrayidx196.i = getelementptr inbounds [4 x double]* %A, i64 2, i64 1
+  %arrayidx196.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 2, i64 1
   %25 = load double* %arrayidx196.i, align 8
   %mul199.i = fmul double %3, %25
   %add200.i = fadd double %mul194.i, %mul199.i
-  %arrayidx202.i = getelementptr inbounds [4 x double]* %A, i64 2, i64 2
+  %arrayidx202.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 2, i64 2
   %26 = load double* %arrayidx202.i, align 8
   %mul205.i = fmul double %5, %26
   %add206.i = fadd double %add200.i, %mul205.i
-  %arrayidx208.i = getelementptr inbounds [4 x double]* %A, i64 2, i64 3
+  %arrayidx208.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 2, i64 3
   %27 = load double* %arrayidx208.i, align 8
   %mul211.i = fmul double %7, %27
   %add212.i = fadd double %add206.i, %mul211.i
@@ -154,18 +154,18 @@ entry:
   %add278.i = fadd double %add272.i, %mul277.i
   %mul283.i = fmul double %19, %27
   %add284.i = fadd double %add278.i, %mul283.i
-  %arrayidx287.i = getelementptr inbounds [4 x double]* %A, i64 3, i64 0
+  %arrayidx287.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 3, i64 0
   %28 = load double* %arrayidx287.i, align 8
   %mul290.i = fmul double %1, %28
-  %arrayidx292.i = getelementptr inbounds [4 x double]* %A, i64 3, i64 1
+  %arrayidx292.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 3, i64 1
   %29 = load double* %arrayidx292.i, align 8
   %mul295.i = fmul double %3, %29
   %add296.i = fadd double %mul290.i, %mul295.i
-  %arrayidx298.i = getelementptr inbounds [4 x double]* %A, i64 3, i64 2
+  %arrayidx298.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 3, i64 2
   %30 = load double* %arrayidx298.i, align 8
   %mul301.i = fmul double %5, %30
   %add302.i = fadd double %add296.i, %mul301.i
-  %arrayidx304.i = getelementptr inbounds [4 x double]* %A, i64 3, i64 3
+  %arrayidx304.i = getelementptr inbounds [4 x double], [4 x double]* %A, i64 3, i64 3
   %31 = load double* %arrayidx304.i, align 8
   %mul307.i = fmul double %7, %31
   %add308.i = fadd double %add302.i, %mul307.i
@@ -191,35 +191,35 @@ entry:
   %mul379.i = fmul double %19, %31
   %add380.i = fadd double %add374.i, %mul379.i
   store double %add20.i, double* %Out, align 8
-  %Res.i.sroa.1.8.idx2 = getelementptr inbounds double* %Out, i64 1
+  %Res.i.sroa.1.8.idx2 = getelementptr inbounds double, double* %Out, i64 1
   store double %add44.i, double* %Res.i.sroa.1.8.idx2, align 8
-  %Res.i.sroa.2.16.idx4 = getelementptr inbounds double* %Out, i64 2
+  %Res.i.sroa.2.16.idx4 = getelementptr inbounds double, double* %Out, i64 2
   store double %add68.i, double* %Res.i.sroa.2.16.idx4, align 8
-  %Res.i.sroa.3.24.idx6 = getelementptr inbounds double* %Out, i64 3
+  %Res.i.sroa.3.24.idx6 = getelementptr inbounds double, double* %Out, i64 3
   store double %add92.i, double* %Res.i.sroa.3.24.idx6, align 8
-  %Res.i.sroa.4.32.idx8 = getelementptr inbounds double* %Out, i64 4
+  %Res.i.sroa.4.32.idx8 = getelementptr inbounds double, double* %Out, i64 4
   store double %add116.i, double* %Res.i.sroa.4.32.idx8, align 8
-  %Res.i.sroa.5.40.idx10 = getelementptr inbounds double* %Out, i64 5
+  %Res.i.sroa.5.40.idx10 = getelementptr inbounds double, double* %Out, i64 5
   store double %add140.i, double* %Res.i.sroa.5.40.idx10, align 8
-  %Res.i.sroa.6.48.idx12 = getelementptr inbounds double* %Out, i64 6
+  %Res.i.sroa.6.48.idx12 = getelementptr inbounds double, double* %Out, i64 6
   store double %add164.i, double* %Res.i.sroa.6.48.idx12, align 8
-  %Res.i.sroa.7.56.idx14 = getelementptr inbounds double* %Out, i64 7
+  %Res.i.sroa.7.56.idx14 = getelementptr inbounds double, double* %Out, i64 7
   store double %add188.i, double* %Res.i.sroa.7.56.idx14, align 8
-  %Res.i.sroa.8.64.idx16 = getelementptr inbounds double* %Out, i64 8
+  %Res.i.sroa.8.64.idx16 = getelementptr inbounds double, double* %Out, i64 8
   store double %add212.i, double* %Res.i.sroa.8.64.idx16, align 8
-  %Res.i.sroa.9.72.idx18 = getelementptr inbounds double* %Out, i64 9
+  %Res.i.sroa.9.72.idx18 = getelementptr inbounds double, double* %Out, i64 9
   store double %add236.i, double* %Res.i.sroa.9.72.idx18, align 8
-  %Res.i.sroa.10.80.idx20 = getelementptr inbounds double* %Out, i64 10
+  %Res.i.sroa.10.80.idx20 = getelementptr inbounds double, double* %Out, i64 10
   store double %add260.i, double* %Res.i.sroa.10.80.idx20, align 8
-  %Res.i.sroa.11.88.idx22 = getelementptr inbounds double* %Out, i64 11
+  %Res.i.sroa.11.88.idx22 = getelementptr inbounds double, double* %Out, i64 11
   store double %add284.i, double* %Res.i.sroa.11.88.idx22, align 8
-  %Res.i.sroa.12.96.idx24 = getelementptr inbounds double* %Out, i64 12
+  %Res.i.sroa.12.96.idx24 = getelementptr inbounds double, double* %Out, i64 12
   store double %add308.i, double* %Res.i.sroa.12.96.idx24, align 8
-  %Res.i.sroa.13.104.idx26 = getelementptr inbounds double* %Out, i64 13
+  %Res.i.sroa.13.104.idx26 = getelementptr inbounds double, double* %Out, i64 13
   store double %add332.i, double* %Res.i.sroa.13.104.idx26, align 8
-  %Res.i.sroa.14.112.idx28 = getelementptr inbounds double* %Out, i64 14
+  %Res.i.sroa.14.112.idx28 = getelementptr inbounds double, double* %Out, i64 14
   store double %add356.i, double* %Res.i.sroa.14.112.idx28, align 8
-  %Res.i.sroa.15.120.idx30 = getelementptr inbounds double* %Out, i64 15
+  %Res.i.sroa.15.120.idx30 = getelementptr inbounds double, double* %Out, i64 15
   store double %add380.i, double* %Res.i.sroa.15.120.idx30, align 8
   ret void
 }

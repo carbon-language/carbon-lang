@@ -10,7 +10,7 @@ define i32 @f1(i32 %a, i32* %v) {
 define i32 @f2(i32 %a, i32* %v) {
 ; CHECK-LABEL: f2:
 ; CHECK: str.w r0, [r1, #4092]
-        %tmp2 = getelementptr i32* %v, i32 1023
+        %tmp2 = getelementptr i32, i32* %v, i32 1023
         store i32 %a, i32* %tmp2
         ret i32 %a
 }
@@ -18,7 +18,7 @@ define i32 @f2(i32 %a, i32* %v) {
 define i32 @f2a(i32 %a, i32* %v) {
 ; CHECK-LABEL: f2a:
 ; CHECK: str r0, [r1, #-128]
-        %tmp2 = getelementptr i32* %v, i32 -32
+        %tmp2 = getelementptr i32, i32* %v, i32 -32
         store i32 %a, i32* %tmp2
         ret i32 %a
 }
@@ -27,7 +27,7 @@ define i32 @f3(i32 %a, i32* %v) {
 ; CHECK-LABEL: f3:
 ; CHECK: mov.w r2, #4096
 ; CHECK: str r0, [r1, r2]
-        %tmp2 = getelementptr i32* %v, i32 1024
+        %tmp2 = getelementptr i32, i32* %v, i32 1024
         store i32 %a, i32* %tmp2
         ret i32 %a
 }

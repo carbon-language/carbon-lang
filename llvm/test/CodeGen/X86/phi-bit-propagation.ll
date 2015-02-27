@@ -14,7 +14,7 @@ for.cond:                                         ; preds = %for.inc, %entry
   br i1 %cmp, label %return, label %for.body
 
 for.body:                                         ; preds = %for.cond
-  %arrayidx = getelementptr inbounds i32* %b, i64 %conv
+  %arrayidx = getelementptr inbounds i32, i32* %b, i64 %conv
   %tmp5 = load i32* %arrayidx, align 4
   %conv6 = zext i32 %tmp5 to i64
   %rem.i.i.i.i = and i64 %conv6, 63

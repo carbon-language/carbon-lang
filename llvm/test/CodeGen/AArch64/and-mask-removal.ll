@@ -8,7 +8,7 @@
 define void @new_position(i32 %pos) {
 entry:
   %idxprom = sext i32 %pos to i64
-  %arrayidx = getelementptr inbounds [400 x i8]* @board, i64 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [400 x i8], [400 x i8]* @board, i64 0, i64 %idxprom
   %tmp = load i8* %arrayidx, align 1
   %.off = add i8 %tmp, -1
   %switch = icmp ult i8 %.off, 2
@@ -16,7 +16,7 @@ entry:
 
 if.then:                                          ; preds = %entry
   %tmp1 = load i32* @next_string, align 4
-  %arrayidx8 = getelementptr inbounds [400 x i32]* @string_number, i64 0, i64 %idxprom
+  %arrayidx8 = getelementptr inbounds [400 x i32], [400 x i32]* @string_number, i64 0, i64 %idxprom
   store i32 %tmp1, i32* %arrayidx8, align 4
   br label %if.end
 

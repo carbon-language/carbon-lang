@@ -18,7 +18,7 @@ if.then15:                                        ; preds = %if.end7
 
 while.cond:                                       ; preds = %while.body, %if.then15
   %idxprom17 = sext i32 0 to i64
-  %arrayidx18 = getelementptr inbounds i8* %0, i64 %idxprom17
+  %arrayidx18 = getelementptr inbounds i8, i8* %0, i64 %idxprom17
   %or = or i32 undef, undef
   br i1 %cond1, label %if.end71, label %while.body
 
@@ -27,7 +27,7 @@ while.body:                                       ; preds = %while.cond
 
 if.then45:                                        ; preds = %while.body
   %idxprom48139 = zext i32 %or to i64
-  %arrayidx49 = getelementptr inbounds i8* %0, i64 %idxprom48139
+  %arrayidx49 = getelementptr inbounds i8, i8* %0, i64 %idxprom48139
   %1 = bitcast i8* %arrayidx49 to i16*
   %2 = bitcast i8* %arrayidx18 to i16*
   %3 = load i16* %1, align 1

@@ -15,18 +15,18 @@ entry:
 	br i1 %2, label %return, label %bb.nph
 
 bb.nph:		; preds = %entry
-	%3 = getelementptr %"struct.clang::Action"* %Actions, i64 0, i32 0, i32 0		; <i32 (...)***> [#uses=1]
+	%3 = getelementptr %"struct.clang::Action", %"struct.clang::Action"* %Actions, i64 0, i32 0, i32 0		; <i32 (...)***> [#uses=1]
 	%mrv_gep = bitcast %"struct.clang::ActionBase::ActionResult<0u>"* %0 to i64*		; <i64*> [#uses=1]
-	%mrv_gep1 = getelementptr %"struct.clang::ActionBase::ActionResult<0u>"* %0, i64 0, i32 1		; <i8*> [#uses=1]
+	%mrv_gep1 = getelementptr %"struct.clang::ActionBase::ActionResult<0u>", %"struct.clang::ActionBase::ActionResult<0u>"* %0, i64 0, i32 1		; <i8*> [#uses=1]
 	%4 = bitcast i8* %mrv_gep1 to i64*		; <i64*> [#uses=1]
-	%5 = getelementptr %"struct.clang::ActionBase::ActionResult<0u>"* %0, i64 0, i32 0		; <i8**> [#uses=1]
+	%5 = getelementptr %"struct.clang::ActionBase::ActionResult<0u>", %"struct.clang::ActionBase::ActionResult<0u>"* %0, i64 0, i32 0		; <i8**> [#uses=1]
 	br label %bb
 
 bb:		; preds = %bb, %bb.nph
 	%Trial.01 = phi i32 [ 0, %bb.nph ], [ %12, %bb ]		; <i32> [#uses=1]
 	%Val_addr.02 = phi i8* [ %Val, %bb.nph ], [ %11, %bb ]		; <i8*> [#uses=1]
 	%6 = load i32 (...)*** %3, align 8		; <i32 (...)**> [#uses=1]
-	%7 = getelementptr i32 (...)** %6, i64 70		; <i32 (...)**> [#uses=1]
+	%7 = getelementptr i32 (...)*, i32 (...)** %6, i64 70		; <i32 (...)**> [#uses=1]
 	%8 = load i32 (...)** %7, align 8		; <i32 (...)*> [#uses=1]
 	%9 = bitcast i32 (...)* %8 to { i64, i64 } (%"struct.clang::Action"*, i8*)*		; <{ i64, i64 } (%"struct.clang::Action"*, i8*)*> [#uses=1]
 	%10 = call { i64, i64 } %9(%"struct.clang::Action"* %Actions, i8* %Val_addr.02) nounwind		; <{ i64, i64 }> [#uses=2]

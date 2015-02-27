@@ -13,11 +13,11 @@ entry:
   %and = and i64 %conv, -8
   %conv2 = trunc i64 %and to i32
   %add.ptr.sum = add nsw i64 %and, -4
-  %add.ptr3 = getelementptr inbounds i8* %0, i64 %add.ptr.sum
+  %add.ptr3 = getelementptr inbounds i8, i8* %0, i64 %add.ptr.sum
   %size4 = bitcast i8* %add.ptr3 to i32*
   store i32 %conv2, i32* %size4, align 4
   %add.ptr.sum9 = add nsw i64 %and, -4
-  %add.ptr5 = getelementptr inbounds i8* %0, i64 %add.ptr.sum9
+  %add.ptr5 = getelementptr inbounds i8, i8* %0, i64 %add.ptr.sum9
   %size6 = bitcast i8* %add.ptr5 to i32*
   store i32 %conv2, i32* %size6, align 4
   ret i8* %0

@@ -187,7 +187,7 @@ define void @load_lds_i64_align_4(i64 addrspace(1)* nocapture %out, i64 addrspac
 ; SI: ds_read2_b32 v[{{[0-9]+}}:{{[0-9]+}}], v{{[0-9]}} offset0:8 offset1:9
 ; SI: s_endpgm
 define void @load_lds_i64_align_4_with_offset(i64 addrspace(1)* nocapture %out, i64 addrspace(3)* %in) #0 {
-  %ptr = getelementptr i64 addrspace(3)* %in, i32 4
+  %ptr = getelementptr i64, i64 addrspace(3)* %in, i32 4
   %val = load i64 addrspace(3)* %ptr, align 4
   store i64 %val, i64 addrspace(1)* %out, align 8
   ret void
@@ -199,7 +199,7 @@ define void @load_lds_i64_align_4_with_offset(i64 addrspace(1)* nocapture %out, 
 ; SI: s_endpgm
 define void @load_lds_i64_align_4_with_split_offset(i64 addrspace(1)* nocapture %out, i64 addrspace(3)* %in) #0 {
   %ptr = bitcast i64 addrspace(3)* %in to i32 addrspace(3)*
-  %ptr255 = getelementptr i32 addrspace(3)* %ptr, i32 255
+  %ptr255 = getelementptr i32, i32 addrspace(3)* %ptr, i32 255
   %ptri64 = bitcast i32 addrspace(3)* %ptr255 to i64 addrspace(3)*
   %val = load i64 addrspace(3)* %ptri64, align 4
   store i64 %val, i64 addrspace(1)* %out, align 8
@@ -236,7 +236,7 @@ define void @store_lds_i64_align_4(i64 addrspace(3)* %out, i64 %val) #0 {
 ; SI: ds_write2_b32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}} offset0:8 offset1:9
 ; SI: s_endpgm
 define void @store_lds_i64_align_4_with_offset(i64 addrspace(3)* %out) #0 {
-  %ptr = getelementptr i64 addrspace(3)* %out, i32 4
+  %ptr = getelementptr i64, i64 addrspace(3)* %out, i32 4
   store i64 0, i64 addrspace(3)* %ptr, align 4
   ret void
 }
@@ -247,7 +247,7 @@ define void @store_lds_i64_align_4_with_offset(i64 addrspace(3)* %out) #0 {
 ; SI: s_endpgm
 define void @store_lds_i64_align_4_with_split_offset(i64 addrspace(3)* %out) #0 {
   %ptr = bitcast i64 addrspace(3)* %out to i32 addrspace(3)*
-  %ptr255 = getelementptr i32 addrspace(3)* %ptr, i32 255
+  %ptr255 = getelementptr i32, i32 addrspace(3)* %ptr, i32 255
   %ptri64 = bitcast i32 addrspace(3)* %ptr255 to i64 addrspace(3)*
   store i64 0, i64 addrspace(3)* %out, align 4
   ret void

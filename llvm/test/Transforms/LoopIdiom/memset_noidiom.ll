@@ -15,7 +15,7 @@ for.body.lr.ph:                                   ; preds = %entry
 
 for.body:                                         ; preds = %for.body.lr.ph, %for.body
   %indvar = phi i64 [ 0, %for.body.lr.ph ], [ %indvar.next, %for.body ]
-  %p.02 = getelementptr i8* %b, i64 %indvar
+  %p.02 = getelementptr i8, i8* %b, i64 %indvar
   store i8 %conv6, i8* %p.02, align 1
   %indvar.next = add i64 %indvar, 1
   %exitcond = icmp ne i64 %indvar.next, %len

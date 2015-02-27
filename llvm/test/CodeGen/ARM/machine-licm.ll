@@ -45,7 +45,7 @@ bb.nph:                                           ; preds = %entry
 bb:                                               ; preds = %bb, %bb.nph
   %1 = phi i32 [ %.pre, %bb.nph ], [ %3, %bb ]    ; <i32> [#uses=1]
   %i.03 = phi i32 [ 0, %bb.nph ], [ %4, %bb ]     ; <i32> [#uses=2]
-  %scevgep = getelementptr i32* %vals, i32 %i.03  ; <i32*> [#uses=1]
+  %scevgep = getelementptr i32, i32* %vals, i32 %i.03  ; <i32*> [#uses=1]
   %2 = load i32* %scevgep, align 4                ; <i32> [#uses=1]
   %3 = add nsw i32 %1, %2                         ; <i32> [#uses=2]
   store i32 %3, i32* @GV, align 4

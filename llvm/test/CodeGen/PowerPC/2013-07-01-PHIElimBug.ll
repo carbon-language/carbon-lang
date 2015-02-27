@@ -10,7 +10,7 @@ target triple = "powerpc64-unknown-linux-gnu"
 ; Function Attrs: nounwind
 define fastcc void @func_7() #0 {
 entry:
-  %arrayidx638 = getelementptr inbounds [3 x [1 x i32]]* undef, i64 0, i64 1, i64 0
+  %arrayidx638 = getelementptr inbounds [3 x [1 x i32]], [3 x [1 x i32]]* undef, i64 0, i64 1, i64 0
   br i1 undef, label %for.cond940, label %if.end1018
 
 for.cond940:                                      ; preds = %for.cond940, %if.else876

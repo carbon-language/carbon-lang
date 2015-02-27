@@ -28,12 +28,12 @@ define i32 @main() {
         %ge_r = fcmp oge double %a, %b
         %eq_r = fcmp oeq double %a, %b
         %ne_r = fcmp une double %a, %b
-        %lt_s = getelementptr [12 x i8]* @lt_str, i64 0, i64 0
-        %le_s = getelementptr [13 x i8]* @le_str, i64 0, i64 0
-        %gt_s = getelementptr [12 x i8]* @gt_str, i64 0, i64 0
-        %ge_s = getelementptr [13 x i8]* @ge_str, i64 0, i64 0
-        %eq_s = getelementptr [13 x i8]* @eq_str, i64 0, i64 0
-        %ne_s = getelementptr [13 x i8]* @ne_str, i64 0, i64 0
+        %lt_s = getelementptr [12 x i8], [12 x i8]* @lt_str, i64 0, i64 0
+        %le_s = getelementptr [13 x i8], [13 x i8]* @le_str, i64 0, i64 0
+        %gt_s = getelementptr [12 x i8], [12 x i8]* @gt_str, i64 0, i64 0
+        %ge_s = getelementptr [13 x i8], [13 x i8]* @ge_str, i64 0, i64 0
+        %eq_s = getelementptr [13 x i8], [13 x i8]* @eq_str, i64 0, i64 0
+        %ne_s = getelementptr [13 x i8], [13 x i8]* @ne_str, i64 0, i64 0
         call i32 (i8*, ...)* @printf( i8* %lt_s, i1 %lt_r )
         call i32 (i8*, ...)* @printf( i8* %le_s, i1 %le_r )
         call i32 (i8*, ...)* @printf( i8* %gt_s, i1 %gt_r )

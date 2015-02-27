@@ -21,7 +21,7 @@
 
 define void @float(float addrspace(1)* %out, i32 %index) {
 entry:
-  %0 = getelementptr inbounds [5 x float] addrspace(2)* @float_gv, i32 0, i32 %index
+  %0 = getelementptr inbounds [5 x float], [5 x float] addrspace(2)* @float_gv, i32 0, i32 %index
   %1 = load float addrspace(2)* %0
   store float %1, float addrspace(1)* %out
   ret void
@@ -44,7 +44,7 @@ entry:
 
 define void @i32(i32 addrspace(1)* %out, i32 %index) {
 entry:
-  %0 = getelementptr inbounds [5 x i32] addrspace(2)* @i32_gv, i32 0, i32 %index
+  %0 = getelementptr inbounds [5 x i32], [5 x i32] addrspace(2)* @i32_gv, i32 0, i32 %index
   %1 = load i32 addrspace(2)* %0
   store i32 %1, i32 addrspace(1)* %out
   ret void
@@ -59,7 +59,7 @@ entry:
 ; GCN: s_load_dword
 
 define void @struct_foo_gv_load(i32 addrspace(1)* %out, i32 %index) {
-  %gep = getelementptr inbounds [1 x %struct.foo] addrspace(2)* @struct_foo_gv, i32 0, i32 0, i32 1, i32 %index
+  %gep = getelementptr inbounds [1 x %struct.foo], [1 x %struct.foo] addrspace(2)* @struct_foo_gv, i32 0, i32 0, i32 1, i32 %index
   %load = load i32 addrspace(2)* %gep, align 4
   store i32 %load, i32 addrspace(1)* %out, align 4
   ret void
@@ -75,7 +75,7 @@ define void @struct_foo_gv_load(i32 addrspace(1)* %out, i32 %index) {
 ; SI: buffer_load_dword
 ; VI: s_load_dword
 define void @array_v1_gv_load(<1 x i32> addrspace(1)* %out, i32 %index) {
-  %gep = getelementptr inbounds [4 x <1 x i32>] addrspace(2)* @array_v1_gv, i32 0, i32 %index
+  %gep = getelementptr inbounds [4 x <1 x i32>], [4 x <1 x i32>] addrspace(2)* @array_v1_gv, i32 0, i32 %index
   %load = load <1 x i32> addrspace(2)* %gep, align 4
   store <1 x i32> %load, <1 x i32> addrspace(1)* %out, align 4
   ret void
@@ -87,7 +87,7 @@ entry:
   br i1 %0, label %if, label %else
 
 if:
-  %1 = getelementptr inbounds [5 x float] addrspace(2)* @float_gv, i32 0, i32 %index
+  %1 = getelementptr inbounds [5 x float], [5 x float] addrspace(2)* @float_gv, i32 0, i32 %index
   %2 = load float addrspace(2)* %1
   store float %2, float addrspace(1)* %out
   br label %endif

@@ -25,7 +25,7 @@ bb2:		; preds = %bb2, %bb0
 	%cann-indvar-idxcast = sext i32 %cann-indvar to i64		; <i64> [#uses=1]
 	%CT = bitcast i8** %local to i8***		; <i8***> [#uses=1]
 	%reg115 = load i8*** %CT		; <i8**> [#uses=1]
-	%cast235 = getelementptr i8** %reg115, i64 %cann-indvar-idxcast		; <i8**> [#uses=1]
+	%cast235 = getelementptr i8*, i8** %reg115, i64 %cann-indvar-idxcast		; <i8**> [#uses=1]
 	%reg117 = load i8** %cast235		; <i8*> [#uses=1]
 	%reg236 = call i32 @puts( i8* %reg117 )		; <i32> [#uses=0]
 	%cond239 = icmp slt i32 %add1-indvar, %argc		; <i1> [#uses=1]

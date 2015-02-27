@@ -87,7 +87,7 @@ entry:
   %16 = add i64 %15, 0, !dbg !39
   %17 = inttoptr i64 %16 to i64*, !dbg !39
   store i64 -868083117767659023, i64* %17, !dbg !39
-  %i.i = getelementptr inbounds %struct.C* %8, i64 0, i32 1, i32 0, !dbg !39
+  %i.i = getelementptr inbounds %struct.C, %struct.C* %8, i64 0, i32 1, i32 0, !dbg !39
   %18 = ptrtoint i32* %i.i to i64, !dbg !39
   %19 = lshr i64 %18, 3, !dbg !39
   %20 = add i64 %19, 2147450880, !dbg !39
@@ -147,7 +147,7 @@ entry:
   store i64 -868083113472691727, i64* %17, !dbg !48
   tail call void @llvm.dbg.value(metadata %struct.C* %this, i64 0, metadata !30, metadata !{!"0x102"}), !dbg !48
   %call = call i32 @_ZN1A5m_fn1Ev(%struct.A* %8), !dbg !49
-  %i.i = getelementptr inbounds %struct.C* %this, i64 0, i32 1, i32 0, !dbg !50
+  %i.i = getelementptr inbounds %struct.C, %struct.C* %this, i64 0, i32 1, i32 0, !dbg !50
   %18 = ptrtoint i32* %i.i to i64, !dbg !50
   %19 = lshr i64 %18, 3, !dbg !50
   %20 = add i64 %19, 2147450880, !dbg !50

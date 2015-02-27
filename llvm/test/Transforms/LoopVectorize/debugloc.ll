@@ -8,7 +8,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; CHECK:   cmp.zero = icmp eq i64 {{.*}}, 0, !dbg ![[LOC:[0-9]+]]
 ; CHECK: vector.body
 ; CHECK:   index {{.*}}, !dbg ![[LOC]]
-; CHECK:   getelementptr inbounds i32* %a, {{.*}}, !dbg ![[LOC2:[0-9]+]]
+; CHECK:   getelementptr inbounds i32, i32* %a, {{.*}}, !dbg ![[LOC2:[0-9]+]]
 ; CHECK:   load <2 x i32>* {{.*}}, !dbg ![[LOC2]]
 ; CHECK:   add <2 x i32> {{.*}}, !dbg ![[LOC2]]
 ; CHECK:   add i64 %index, 2, !dbg ![[LOC]]
@@ -32,7 +32,7 @@ for.body.lr.ph:                                   ; preds = %entry
 for.body:                                         ; preds = %for.body.lr.ph, %for.body
   %indvars.iv = phi i64 [ 0, %for.body.lr.ph ], [ %indvars.iv.next, %for.body ]
   %sum.05 = phi i32 [ 0, %for.body.lr.ph ], [ %add, %for.body ]
-  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv, !dbg !22
+  %arrayidx = getelementptr inbounds i32, i32* %a, i64 %indvars.iv, !dbg !22
   %0 = load i32* %arrayidx, align 4, !dbg !22
   %add = add i32 %0, %sum.05, !dbg !22
   tail call void @llvm.dbg.value(metadata i32 %add.lcssa, i64 0, metadata !15, metadata !{}), !dbg !22

@@ -12,15 +12,15 @@ entry:
 for.body:                                         ; preds = %_ZN8nsTArray9ElementAtEi.exit, %entry
   %i.06 = phi i32 [ %add, %_ZN8nsTArray9ElementAtEi.exit ], [ 0, %entry ]
   %call.i = call %struct.nsTArrayHeader* @_ZN8nsTArray4Hdr2Ev() nounwind
-  %add.ptr.i = getelementptr inbounds %struct.nsTArrayHeader* %call.i, i32 1
+  %add.ptr.i = getelementptr inbounds %struct.nsTArrayHeader, %struct.nsTArrayHeader* %call.i, i32 1
   %tmp = bitcast %struct.nsTArrayHeader* %add.ptr.i to %struct.nsTArray*
-  %arrayidx = getelementptr inbounds %struct.nsTArray* %tmp, i32 %i.06
+  %arrayidx = getelementptr inbounds %struct.nsTArray, %struct.nsTArray* %tmp, i32 %i.06
   %add = add nsw i32 %i.06, 1
   call void @llvm.dbg.value(metadata %struct.nsTArray* %aValues, i64 0, metadata !0, metadata !{}) nounwind
   br label %_ZN8nsTArray9ElementAtEi.exit
 
 _ZN8nsTArray9ElementAtEi.exit:                    ; preds = %for.body
-  %arrayidx.i = getelementptr inbounds %struct.nsTArray* %tmp, i32 %add
+  %arrayidx.i = getelementptr inbounds %struct.nsTArray, %struct.nsTArray* %tmp, i32 %add
   call void @_ZN11nsTArray15ComputeDistanceERKS_Rd(%struct.nsTArray* %arrayidx, %struct.nsTArray* %arrayidx.i) nounwind
   %cmp = icmp slt i32 %add, %foo
   br i1 %cmp, label %for.body, label %for.end

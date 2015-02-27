@@ -23,7 +23,7 @@ define i16 @am2(i16 %x) nounwind {
 @bar = internal constant [2 x i8] [ i8 32, i8 64 ]
 
 define i8 @am3(i8 %x, i16 %n) nounwind {
-	%1 = getelementptr [2 x i8]* @bar, i16 0, i16 %n
+	%1 = getelementptr [2 x i8], [2 x i8]* @bar, i16 0, i16 %n
 	%2 = load i8* %1
 	%3 = or i8 %2,%x
 	ret i8 %3
@@ -40,7 +40,7 @@ define i16 @am4(i16 %x) nounwind {
 ; CHECK:		bis.w	&32, r15
 
 define i16 @am5(i16 %x, i16* %a) nounwind {
-	%1 = getelementptr i16* %a, i16 2
+	%1 = getelementptr i16, i16* %a, i16 2
 	%2 = load i16* %1
 	%3 = or i16 %2,%x
 	ret i16 %3
@@ -63,8 +63,8 @@ define i16 @am6(i16 %x) nounwind {
 @duh = internal constant %T { i16 16, [2 x i8][i8 32, i8 64 ] }
 
 define i8 @am7(i8 %x, i16 %n) nounwind {
-	%1 = getelementptr %T* @duh, i32 0, i32 1
-	%2 = getelementptr [2 x i8]* %1, i16 0, i16 %n
+	%1 = getelementptr %T, %T* @duh, i32 0, i32 1
+	%2 = getelementptr [2 x i8], [2 x i8]* %1, i16 0, i16 %n
 	%3= load i8* %2
 	%4 = or i8 %3,%x
 	ret i8 %4

@@ -18,9 +18,9 @@ entry:
 bb:                                               ; preds = %entry, %bb
   %j.05 = phi i32 [ %2, %bb ], [ 0, %entry ]
   %tmp = mul i32 %j.05, %src_copy_start_index
-  %uglygep = getelementptr i8* %src_copy_start6, i32 %tmp
+  %uglygep = getelementptr i8, i8* %src_copy_start6, i32 %tmp
   %src_copy_start_addr.04 = bitcast i8* %uglygep to float*
-  %dst_copy_start_addr.03 = getelementptr float* %dst_copy_start, i32 %j.05
+  %dst_copy_start_addr.03 = getelementptr float, float* %dst_copy_start, i32 %j.05
   %1 = load float* %src_copy_start_addr.04, align 4
   store float %1, float* %dst_copy_start_addr.03, align 4
   %2 = add i32 %j.05, 1

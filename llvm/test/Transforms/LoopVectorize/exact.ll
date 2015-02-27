@@ -11,7 +11,7 @@ entry:
 
 for.body:
   %iv = phi i64 [ 0, %entry ], [ %iv.next, %for.body ]
-  %arrayidx = getelementptr inbounds i32* %x, i64 %iv
+  %arrayidx = getelementptr inbounds i32, i32* %x, i64 %iv
   %0 = load i32* %arrayidx, align 4
   %conv1 = lshr exact i32 %0, 1
   store i32 %conv1, i32* %arrayidx, align 4

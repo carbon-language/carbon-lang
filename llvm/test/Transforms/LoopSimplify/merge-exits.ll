@@ -20,12 +20,12 @@ entry:
 
 bb:		; preds = %bb2
 	%t1 = sext i32 %hiPart.0 to i64
-	%t2 = getelementptr float* %pTmp1, i64 %t1
+	%t2 = getelementptr float, float* %pTmp1, i64 %t1
 	%t3 = load float* %t2, align 4
 	%t4 = fadd float %t3, %distERBhi.0
 	%t5 = add i32 %hiPart.0, 1
 	%t6 = sext i32 %t5 to i64
-	%t7 = getelementptr float* %peakWeight, i64 %t6
+	%t7 = getelementptr float, float* %peakWeight, i64 %t6
 	%t8 = load float* %t7, align 4
 	%t9 = fadd float %t8, %peakCount.0
 	br label %bb1

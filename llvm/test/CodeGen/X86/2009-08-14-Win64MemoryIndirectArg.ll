@@ -12,13 +12,13 @@ indexCheckBlock:
 
 primitiveTextureFetchBlock:		; preds = %indexCheckBlock
 	%pointerArithmeticTmp = bitcast %0* %shaderExecutionStatePtr to i8*		; <i8*> [#uses=1]
-	%pointerArithmeticTmp1 = getelementptr i8* %pointerArithmeticTmp, i64 1808		; <i8*> [#uses=1]
+	%pointerArithmeticTmp1 = getelementptr i8, i8* %pointerArithmeticTmp, i64 1808		; <i8*> [#uses=1]
 	%pointerArithmeticTmp2 = bitcast i8* %pointerArithmeticTmp1 to %1**		; <%1**> [#uses=1]
 	%primitivePtr = load %1** %pointerArithmeticTmp2		; <%1*> [#uses=1]
 	%pointerArithmeticTmp3 = bitcast %1* %primitivePtr to i8*		; <i8*> [#uses=1]
-	%pointerArithmeticTmp4 = getelementptr i8* %pointerArithmeticTmp3, i64 19408		; <i8*> [#uses=1]
+	%pointerArithmeticTmp4 = getelementptr i8, i8* %pointerArithmeticTmp3, i64 19408		; <i8*> [#uses=1]
 	%pointerArithmeticTmp5 = bitcast i8* %pointerArithmeticTmp4 to %1**		; <%1**> [#uses=1]
-	%primitiveTexturePtr = getelementptr %1** %pointerArithmeticTmp5, i32 %index		; <%1**> [#uses=1]
+	%primitiveTexturePtr = getelementptr %1*, %1** %pointerArithmeticTmp5, i32 %index		; <%1**> [#uses=1]
 	%primitiveTexturePtr6 = load %1** %primitiveTexturePtr		; <%1*> [#uses=2]
 	br label %textureCheckBlock
 
@@ -29,7 +29,7 @@ textureCheckBlock:		; preds = %primitiveTextureFetchBlock
 
 rhoCalculateBlock:		; preds = %textureCheckBlock
 	%pointerArithmeticTmp7 = bitcast %1* %primitiveTexturePtr6 to i8*		; <i8*> [#uses=1]
-	%pointerArithmeticTmp8 = getelementptr i8* %pointerArithmeticTmp7, i64 640		; <i8*> [#uses=1]
+	%pointerArithmeticTmp8 = getelementptr i8, i8* %pointerArithmeticTmp7, i64 640		; <i8*> [#uses=1]
 	%pointerArithmeticTmp9 = bitcast i8* %pointerArithmeticTmp8 to <4 x float>*		; <<4 x float>*> [#uses=1]
 	%dimensionsPtr = load <4 x float>* %pointerArithmeticTmp9, align 1		; <<4 x float>> [#uses=2]
 	%texDiffDX = fsub <4 x float> %texCoordDX, %texCoord		; <<4 x float>> [#uses=1]

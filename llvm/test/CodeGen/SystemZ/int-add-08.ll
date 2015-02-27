@@ -119,10 +119,10 @@ define void @f8(i128 *%ptr0) {
 ; CHECK: alg {{%r[0-9]+}}, {{[0-9]+}}(%r15)
 ; CHECK: alcg {{%r[0-9]+}}, {{[0-9]+}}(%r15)
 ; CHECK: br %r14
-  %ptr1 = getelementptr i128 *%ptr0, i128 2
-  %ptr2 = getelementptr i128 *%ptr0, i128 4
-  %ptr3 = getelementptr i128 *%ptr0, i128 6
-  %ptr4 = getelementptr i128 *%ptr0, i128 8
+  %ptr1 = getelementptr i128, i128 *%ptr0, i128 2
+  %ptr2 = getelementptr i128, i128 *%ptr0, i128 4
+  %ptr3 = getelementptr i128, i128 *%ptr0, i128 6
+  %ptr4 = getelementptr i128, i128 *%ptr0, i128 8
 
   %val0 = load i128 *%ptr0
   %val1 = load i128 *%ptr1

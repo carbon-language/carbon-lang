@@ -29,7 +29,7 @@ bb2:                                              ; preds = %bb1, %bb
 bb1:                                              ; preds = %bb2
   %tmp = load double*** @tds, align 8             ; <double**> [#uses=1]
   %tmp1 = sext i32 %i.0 to i64                    ; <i64> [#uses=1]
-  %tmp2 = getelementptr inbounds double** %tmp, i64 %tmp1 ; <double**> [#uses=1]
+  %tmp2 = getelementptr inbounds double*, double** %tmp, i64 %tmp1 ; <double**> [#uses=1]
   %tmp3 = load double** %tmp2, align 1            ; <double*> [#uses=1]
   %tmp6 = add nsw i32 %j.0, 1                     ; <i32> [#uses=1]
   br label %bb2

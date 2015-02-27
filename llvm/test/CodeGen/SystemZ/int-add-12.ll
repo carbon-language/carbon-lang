@@ -65,7 +65,7 @@ define void @f6(i64 *%base) {
 ; CHECK-LABEL: f6:
 ; CHECK: agsi 524280(%r2), 1
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%base, i64 65535
+  %ptr = getelementptr i64, i64 *%base, i64 65535
   %val = load i64 *%ptr
   %add = add i64 %val, 1
   store i64 %add, i64 *%ptr
@@ -79,7 +79,7 @@ define void @f7(i64 *%base) {
 ; CHECK: agfi %r2, 524288
 ; CHECK: agsi 0(%r2), 1
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%base, i64 65536
+  %ptr = getelementptr i64, i64 *%base, i64 65536
   %val = load i64 *%ptr
   %add = add i64 %val, 1
   store i64 %add, i64 *%ptr
@@ -91,7 +91,7 @@ define void @f8(i64 *%base) {
 ; CHECK-LABEL: f8:
 ; CHECK: agsi -524288(%r2), 1
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%base, i64 -65536
+  %ptr = getelementptr i64, i64 *%base, i64 -65536
   %val = load i64 *%ptr
   %add = add i64 %val, 1
   store i64 %add, i64 *%ptr
@@ -105,7 +105,7 @@ define void @f9(i64 *%base) {
 ; CHECK: agfi %r2, -524296
 ; CHECK: agsi 0(%r2), 1
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%base, i64 -65537
+  %ptr = getelementptr i64, i64 *%base, i64 -65537
   %val = load i64 *%ptr
   %add = add i64 %val, 1
   store i64 %add, i64 *%ptr

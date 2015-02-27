@@ -34,12 +34,12 @@ entry:
   store i8* %2, i8** %saved_stack, !dbg !17
   %vla = alloca i32, i64 %1, align 16, !dbg !17
   call void @llvm.dbg.declare(metadata i32* %vla, metadata !18, metadata !{!"0x102\006"}), !dbg !17
-  %arrayidx = getelementptr inbounds i32* %vla, i64 0, !dbg !22
+  %arrayidx = getelementptr inbounds i32, i32* %vla, i64 0, !dbg !22
   store i32 42, i32* %arrayidx, align 4, !dbg !22
   %3 = load i32* %n.addr, align 4, !dbg !23
   %sub = sub nsw i32 %3, 1, !dbg !23
   %idxprom = sext i32 %sub to i64, !dbg !23
-  %arrayidx1 = getelementptr inbounds i32* %vla, i64 %idxprom, !dbg !23
+  %arrayidx1 = getelementptr inbounds i32, i32* %vla, i64 %idxprom, !dbg !23
   %4 = load i32* %arrayidx1, align 4, !dbg !23
   store i32 1, i32* %cleanup.dest.slot
   %5 = load i8** %saved_stack, !dbg !24

@@ -35,7 +35,7 @@ entry:
 ; CHECK-UAR: ret void
 
   %x = alloca [20 x i8], align 16
-  %arraydecay = getelementptr inbounds [20 x i8]* %x, i64 0, i64 0
+  %arraydecay = getelementptr inbounds [20 x i8], [20 x i8]* %x, i64 0, i64 0
   call void @Foo(i8* %arraydecay)
   ret void
 }

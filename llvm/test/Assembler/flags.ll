@@ -148,14 +148,14 @@ define i64 @lshr_exact(i64 %x, i64 %y) {
 }
 
 define i64* @gep_nw(i64* %p, i64 %x) {
-; CHECK: %z = getelementptr inbounds i64* %p, i64 %x
-	%z = getelementptr inbounds i64* %p, i64 %x
+; CHECK: %z = getelementptr inbounds i64, i64* %p, i64 %x
+	%z = getelementptr inbounds i64, i64* %p, i64 %x
         ret i64* %z
 }
 
 define i64* @gep_plain(i64* %p, i64 %x) {
-; CHECK: %z = getelementptr i64* %p, i64 %x
-	%z = getelementptr i64* %p, i64 %x
+; CHECK: %z = getelementptr i64, i64* %p, i64 %x
+	%z = getelementptr i64, i64* %p, i64 %x
         ret i64* %z
 }
 

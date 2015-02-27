@@ -48,7 +48,7 @@ shortcirc_next.4:		; preds = %then.44
 	br i1 false, label %no_exit.2, label %loopexit.2
 
 no_exit.2:		; preds = %shortcirc_next.4
-	%tmp.897 = getelementptr i32* %SubArrays.10, i64 0		; <i32*> [#uses=1]
+	%tmp.897 = getelementptr i32, i32* %SubArrays.10, i64 0		; <i32*> [#uses=1]
 	%tmp.899 = load i32* %tmp.897		; <i32> [#uses=1]
 	store i32 %tmp.899, i32* null
 	ret i32 0

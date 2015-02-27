@@ -35,7 +35,7 @@ define double @f3(double %a, double %b, i16 %i1, i16 *%base) {
 ; CHECK-NEXT: jh
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%base, i64 2047
+  %ptr = getelementptr i16, i16 *%base, i64 2047
   %val = load i16 *%ptr
   %cond = icmp ugt i16 %val, 1
   %res = select i1 %cond, double %a, double %b
@@ -50,7 +50,7 @@ define double @f4(double %a, double %b, i16 *%base) {
 ; CHECK-NEXT: jh
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%base, i64 2048
+  %ptr = getelementptr i16, i16 *%base, i64 2048
   %val = load i16 *%ptr
   %cond = icmp ugt i16 %val, 1
   %res = select i1 %cond, double %a, double %b
@@ -65,7 +65,7 @@ define double @f5(double %a, double %b, i16 *%base) {
 ; CHECK-NEXT: jh
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i16 *%base, i64 -1
+  %ptr = getelementptr i16, i16 *%base, i64 -1
   %val = load i16 *%ptr
   %cond = icmp ugt i16 %val, 1
   %res = select i1 %cond, double %a, double %b

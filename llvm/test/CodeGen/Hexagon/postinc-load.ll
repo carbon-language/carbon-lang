@@ -17,8 +17,8 @@ for.body:
   %conv = sext i16 %1 to i32
   %add = add i32 %0, %sum.03
   %add2 = add i32 %add, %conv
-  %arrayidx.inc = getelementptr i32* %arrayidx.phi, i32 1
-  %arrayidx1.inc = getelementptr i16* %arrayidx1.phi, i32 1
+  %arrayidx.inc = getelementptr i32, i32* %arrayidx.phi, i32 1
+  %arrayidx1.inc = getelementptr i16, i16* %arrayidx1.phi, i32 1
   %lsr.iv.next = add i32 %lsr.iv, -1
   %exitcond = icmp eq i32 %lsr.iv.next, 0
   br i1 %exitcond, label %for.end, label %for.body

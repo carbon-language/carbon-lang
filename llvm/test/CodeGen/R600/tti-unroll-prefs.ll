@@ -39,7 +39,7 @@ if.then4:                                         ; preds = %if.then4.lr.ph, %if
   %add2 = add nsw i32 %b.addr.014, 1
   %1 = sext i32 %b.addr.014 to i64
   %add.ptr.sum = add nsw i64 %1, %0
-  %add.ptr5 = getelementptr inbounds i8 addrspace(1)* %dst, i64 %add.ptr.sum
+  %add.ptr5 = getelementptr inbounds i8, i8 addrspace(1)* %dst, i64 %add.ptr.sum
   store i8 0, i8 addrspace(1)* %add.ptr5, align 1
   %inc = add nsw i32 %i.015, 1
   %cmp1 = icmp slt i32 %inc, 4

@@ -26,7 +26,7 @@ bb1.us:		; preds = %bb1.us, %bb2.preheader.us
 	%indvar = phi i32 [ 0, %bb2.preheader.us ], [ %indvar.next, %bb1.us ]		; <i32> [#uses=2]
 	%tmp17 = add i32 %indvar, %tmp16		; <i32> [#uses=1]
 	%tmp. = zext i32 %tmp17 to i64		; <i64> [#uses=1]
-	%3 = getelementptr i32* %2, i64 %tmp.		; <i32*> [#uses=1]
+	%3 = getelementptr i32, i32* %2, i64 %tmp.		; <i32*> [#uses=1]
 	%4 = load i32* %3, align 4		; <i32> [#uses=2]
 	%indvar.next = add i32 %indvar, 1		; <i32> [#uses=2]
 	%exitcond = icmp eq i32 %indvar.next, %b		; <i1> [#uses=1]

@@ -25,13 +25,13 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
-  %arrayidx1 = getelementptr inbounds <2 x i64>* %in, i64 %indvars.iv
+  %arrayidx1 = getelementptr inbounds <2 x i64>, <2 x i64>* %in, i64 %indvars.iv
   %arrayidx1.val = load <2 x i64>* %arrayidx1, align 16
   %0 = bitcast <2 x i64> %arrayidx1.val to <8 x i16>
   %cmp.i.i = icmp ult <8 x i16> %0, <i16 26, i16 26, i16 26, i16 26, i16 26, i16 26, i16 26, i16 26>
   %sext.i.i = sext <8 x i1> %cmp.i.i to <8 x i16>
   %1 = bitcast <8 x i16> %sext.i.i to <2 x i64>
-  %arrayidx5 = getelementptr inbounds <2 x i64>* %out, i64 %indvars.iv
+  %arrayidx5 = getelementptr inbounds <2 x i64>, <2 x i64>* %out, i64 %indvars.iv
   store <2 x i64> %1, <2 x i64>* %arrayidx5, align 16
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
@@ -54,13 +54,13 @@ entry:
 
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
-  %arrayidx1 = getelementptr inbounds <2 x i64>* %in, i64 %indvars.iv
+  %arrayidx1 = getelementptr inbounds <2 x i64>, <2 x i64>* %in, i64 %indvars.iv
   %arrayidx1.val = load <2 x i64>* %arrayidx1, align 16
   %0 = bitcast <2 x i64> %arrayidx1.val to <8 x i16>
   %cmp.i.i = icmp ult <8 x i16> %0, <i16 0, i16 26, i16 26, i16 26, i16 26, i16 26, i16 26, i16 26>
   %sext.i.i = sext <8 x i1> %cmp.i.i to <8 x i16>
   %1 = bitcast <8 x i16> %sext.i.i to <2 x i64>
-  %arrayidx5 = getelementptr inbounds <2 x i64>* %out, i64 %indvars.iv
+  %arrayidx5 = getelementptr inbounds <2 x i64>, <2 x i64>* %out, i64 %indvars.iv
   store <2 x i64> %1, <2 x i64>* %arrayidx5, align 16
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32

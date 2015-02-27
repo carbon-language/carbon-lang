@@ -9,7 +9,7 @@ entry:
 
 bb:                                               ; preds = %bb3
   %Scan.0.idx7.val = load i8** undef, align 4
-  %.idx = getelementptr i8* %Scan.0.idx7.val, i32 4
+  %.idx = getelementptr i8, i8* %Scan.0.idx7.val, i32 4
   %0 = bitcast i8* %.idx to i8**
   %.idx.val = load i8** %0, align 4
   %1 = icmp eq i8* %.idx.val, %Key

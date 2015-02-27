@@ -6,9 +6,9 @@ declare i32 @llvm.r600.read.tidig.x() nounwind readnone
 ; SI: v_max_i32_e32
 define void @v_test_imax_sge_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep0 = getelementptr i32 addrspace(1)* %aptr, i32 %tid
-  %gep1 = getelementptr i32 addrspace(1)* %bptr, i32 %tid
-  %outgep = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep0 = getelementptr i32, i32 addrspace(1)* %aptr, i32 %tid
+  %gep1 = getelementptr i32, i32 addrspace(1)* %bptr, i32 %tid
+  %outgep = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %a = load i32 addrspace(1)* %gep0, align 4
   %b = load i32 addrspace(1)* %gep1, align 4
   %cmp = icmp sge i32 %a, %b
@@ -30,9 +30,9 @@ define void @s_test_imax_sge_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwin
 ; SI: v_max_i32_e32
 define void @v_test_imax_sgt_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep0 = getelementptr i32 addrspace(1)* %aptr, i32 %tid
-  %gep1 = getelementptr i32 addrspace(1)* %bptr, i32 %tid
-  %outgep = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep0 = getelementptr i32, i32 addrspace(1)* %aptr, i32 %tid
+  %gep1 = getelementptr i32, i32 addrspace(1)* %bptr, i32 %tid
+  %outgep = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %a = load i32 addrspace(1)* %gep0, align 4
   %b = load i32 addrspace(1)* %gep1, align 4
   %cmp = icmp sgt i32 %a, %b
@@ -54,9 +54,9 @@ define void @s_test_imax_sgt_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwin
 ; SI: v_max_u32_e32
 define void @v_test_umax_uge_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep0 = getelementptr i32 addrspace(1)* %aptr, i32 %tid
-  %gep1 = getelementptr i32 addrspace(1)* %bptr, i32 %tid
-  %outgep = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep0 = getelementptr i32, i32 addrspace(1)* %aptr, i32 %tid
+  %gep1 = getelementptr i32, i32 addrspace(1)* %bptr, i32 %tid
+  %outgep = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %a = load i32 addrspace(1)* %gep0, align 4
   %b = load i32 addrspace(1)* %gep1, align 4
   %cmp = icmp uge i32 %a, %b
@@ -78,9 +78,9 @@ define void @s_test_umax_uge_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwin
 ; SI: v_max_u32_e32
 define void @v_test_umax_ugt_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %aptr, i32 addrspace(1)* %bptr) nounwind {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep0 = getelementptr i32 addrspace(1)* %aptr, i32 %tid
-  %gep1 = getelementptr i32 addrspace(1)* %bptr, i32 %tid
-  %outgep = getelementptr i32 addrspace(1)* %out, i32 %tid
+  %gep0 = getelementptr i32, i32 addrspace(1)* %aptr, i32 %tid
+  %gep1 = getelementptr i32, i32 addrspace(1)* %bptr, i32 %tid
+  %outgep = getelementptr i32, i32 addrspace(1)* %out, i32 %tid
   %a = load i32 addrspace(1)* %gep0, align 4
   %b = load i32 addrspace(1)* %gep1, align 4
   %cmp = icmp ugt i32 %a, %b

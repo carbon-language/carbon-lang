@@ -13,7 +13,7 @@ define i32 @conversion_cost1(i32 %n, i8* nocapture %A, float* nocapture %B) noun
 .lr.ph:                                           ; preds = %0, %.lr.ph
   %indvars.iv = phi i64 [ %indvars.iv.next, %.lr.ph ], [ 3, %0 ]
   %2 = trunc i64 %indvars.iv to i8
-  %3 = getelementptr inbounds i8* %A, i64 %indvars.iv
+  %3 = getelementptr inbounds i8, i8* %A, i64 %indvars.iv
   store i8 %2, i8* %3, align 1
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32
@@ -35,7 +35,7 @@ define i32 @conversion_cost2(i32 %n, i8* nocapture %A, float* nocapture %B) noun
   %indvars.iv = phi i64 [ %indvars.iv.next, %.lr.ph ], [ 9, %0 ]
   %add = add nsw i64 %indvars.iv, 3
   %tofp = sitofp i64 %add to float
-  %gep = getelementptr inbounds float* %B, i64 %indvars.iv
+  %gep = getelementptr inbounds float, float* %B, i64 %indvars.iv
   store float %tofp, float* %gep, align 4
   %indvars.iv.next = add i64 %indvars.iv, 1
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32

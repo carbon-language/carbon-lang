@@ -165,7 +165,7 @@ define double @f13(double %a, double %b, i64 %i1, i32 *%base) {
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 131071
+  %ptr = getelementptr i32, i32 *%base, i64 131071
   %unext = load i32 *%ptr
   %i2 = zext i32 %unext to i64
   %cond = icmp ult i64 %i1, %i2
@@ -182,7 +182,7 @@ define double @f14(double %a, double %b, i64 %i1, i32 *%base) {
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 131072
+  %ptr = getelementptr i32, i32 *%base, i64 131072
   %unext = load i32 *%ptr
   %i2 = zext i32 %unext to i64
   %cond = icmp ult i64 %i1, %i2
@@ -197,7 +197,7 @@ define double @f15(double %a, double %b, i64 %i1, i32 *%base) {
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 -1
+  %ptr = getelementptr i32, i32 *%base, i64 -1
   %unext = load i32 *%ptr
   %i2 = zext i32 %unext to i64
   %cond = icmp ult i64 %i1, %i2
@@ -212,7 +212,7 @@ define double @f16(double %a, double %b, i64 %i1, i32 *%base) {
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 -131072
+  %ptr = getelementptr i32, i32 *%base, i64 -131072
   %unext = load i32 *%ptr
   %i2 = zext i32 %unext to i64
   %cond = icmp ult i64 %i1, %i2
@@ -229,7 +229,7 @@ define double @f17(double %a, double %b, i64 %i1, i32 *%base) {
 ; CHECK-NEXT: jl
 ; CHECK: ldr %f0, %f2
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%base, i64 -131073
+  %ptr = getelementptr i32, i32 *%base, i64 -131073
   %unext = load i32 *%ptr
   %i2 = zext i32 %unext to i64
   %cond = icmp ult i64 %i1, %i2
@@ -260,15 +260,15 @@ define i64 @f19(i32 *%ptr0) {
 ; CHECK: brasl %r14, foo@PLT
 ; CHECK: clgf {{%r[0-9]+}}, 16{{[04]}}(%r15)
 ; CHECK: br %r14
-  %ptr1 = getelementptr i32 *%ptr0, i64 2
-  %ptr2 = getelementptr i32 *%ptr0, i64 4
-  %ptr3 = getelementptr i32 *%ptr0, i64 6
-  %ptr4 = getelementptr i32 *%ptr0, i64 8
-  %ptr5 = getelementptr i32 *%ptr0, i64 10
-  %ptr6 = getelementptr i32 *%ptr0, i64 12
-  %ptr7 = getelementptr i32 *%ptr0, i64 14
-  %ptr8 = getelementptr i32 *%ptr0, i64 16
-  %ptr9 = getelementptr i32 *%ptr0, i64 18
+  %ptr1 = getelementptr i32, i32 *%ptr0, i64 2
+  %ptr2 = getelementptr i32, i32 *%ptr0, i64 4
+  %ptr3 = getelementptr i32, i32 *%ptr0, i64 6
+  %ptr4 = getelementptr i32, i32 *%ptr0, i64 8
+  %ptr5 = getelementptr i32, i32 *%ptr0, i64 10
+  %ptr6 = getelementptr i32, i32 *%ptr0, i64 12
+  %ptr7 = getelementptr i32, i32 *%ptr0, i64 14
+  %ptr8 = getelementptr i32, i32 *%ptr0, i64 16
+  %ptr9 = getelementptr i32, i32 *%ptr0, i64 18
 
   %val0 = load i32 *%ptr0
   %val1 = load i32 *%ptr1

@@ -11,7 +11,7 @@ define void @t() {
   %P = bitcast i8* %malloccall to i32*
   store i32* %P, i32** @G
   %GV = load i32** @G
-  %GVe = getelementptr i32* %GV, i32 40
+  %GVe = getelementptr i32, i32* %GV, i32 40
   store i32 20, i32* %GVe
   ret void
 }

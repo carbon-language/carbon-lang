@@ -13,7 +13,7 @@ define void @test() {
 
 cond_next:		; preds = %0
 	%gep.upgrd.1 = zext i32 %tmp11 to i64		; <i64> [#uses=1]
-	%tmp17 = getelementptr %struct.expr** null, i64 %gep.upgrd.1		; <%struct.expr**> [#uses=0]
+	%tmp17 = getelementptr %struct.expr*, %struct.expr** null, i64 %gep.upgrd.1		; <%struct.expr**> [#uses=0]
 	ret void
 
 return:		; preds = %0

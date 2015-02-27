@@ -12,7 +12,7 @@ entry:
   store i32 0, i32* %retval
   %0 = bitcast [1 x i8]* %buff to i8*
   call void @llvm.memset.p0i8.i32(i8* %0, i8 0, i32 1, i32 1, i1 false)
-  %arraydecay = getelementptr inbounds [1 x i8]* %buff, i32 0, i32 0
+  %arraydecay = getelementptr inbounds [1 x i8], [1 x i8]* %buff, i32 0, i32 0
   call void @llvm.memset.p0i8.i32(i8* %arraydecay, i8 -1, i32 -8, i32 1, i1 false)	; Negative 8!
   ret i32 0
 }

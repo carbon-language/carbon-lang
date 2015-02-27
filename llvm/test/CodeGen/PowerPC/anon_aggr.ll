@@ -51,7 +51,7 @@ unequal:
 define i8* @func2({ i64, i8* } %array1, %tarray* byval %array2) {
 entry:
   %array1_ptr = extractvalue {i64, i8* } %array1, 1
-  %tmp = getelementptr inbounds %tarray* %array2, i32 0, i32 1
+  %tmp = getelementptr inbounds %tarray, %tarray* %array2, i32 0, i32 1
   %array2_ptr = load i8** %tmp
   %cond = icmp eq i8* %array1_ptr, %array2_ptr
   br i1 %cond, label %equal, label %unequal
@@ -93,9 +93,9 @@ unequal:
 
 define i8* @func3({ i64, i8* }* byval %array1, %tarray* byval %array2) {
 entry:
-  %tmp1 = getelementptr inbounds { i64, i8* }* %array1, i32 0, i32 1
+  %tmp1 = getelementptr inbounds { i64, i8* }, { i64, i8* }* %array1, i32 0, i32 1
   %array1_ptr = load i8** %tmp1
-  %tmp2 = getelementptr inbounds %tarray* %array2, i32 0, i32 1
+  %tmp2 = getelementptr inbounds %tarray, %tarray* %array2, i32 0, i32 1
   %array2_ptr = load i8** %tmp2
   %cond = icmp eq i8* %array1_ptr, %array2_ptr
   br i1 %cond, label %equal, label %unequal
@@ -140,7 +140,7 @@ define i8* @func4(i64 %p1, i64 %p2, i64 %p3, i64 %p4,
                   { i64, i8* } %array1, %tarray* byval %array2) {
 entry:
   %array1_ptr = extractvalue {i64, i8* } %array1, 1
-  %tmp = getelementptr inbounds %tarray* %array2, i32 0, i32 1
+  %tmp = getelementptr inbounds %tarray, %tarray* %array2, i32 0, i32 1
   %array2_ptr = load i8** %tmp
   %cond = icmp eq i8* %array1_ptr, %array2_ptr
   br i1 %cond, label %equal, label %unequal

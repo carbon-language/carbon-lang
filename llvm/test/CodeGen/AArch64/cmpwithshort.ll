@@ -5,7 +5,7 @@ define i16 @test_1cmp_signed_1(i16* %ptr1) {
 ; CHECK: ldrsh
 ; CHECK-NEXT: cmn
 entry:
-  %addr = getelementptr inbounds i16* %ptr1, i16 0
+  %addr = getelementptr inbounds i16, i16* %ptr1, i16 0
   %val = load i16* %addr, align 2
   %cmp = icmp eq i16 %val, -1
   br i1 %cmp, label %if, label %if.then
@@ -20,7 +20,7 @@ define i16 @test_1cmp_signed_2(i16* %ptr1) {
 ; CHECK: ldrsh
 ; CHECK-NEXT: cmn
 entry:
-  %addr = getelementptr inbounds i16* %ptr1, i16 0
+  %addr = getelementptr inbounds i16, i16* %ptr1, i16 0
   %val = load i16* %addr, align 2
   %cmp = icmp sge i16 %val, -1
   br i1 %cmp, label %if, label %if.then
@@ -35,7 +35,7 @@ define i16 @test_1cmp_unsigned_1(i16* %ptr1) {
 ; CHECK: ldrsh
 ; CHECK-NEXT: cmn
 entry:
-  %addr = getelementptr inbounds i16* %ptr1, i16 0
+  %addr = getelementptr inbounds i16, i16* %ptr1, i16 0
   %val = load i16* %addr, align 2
   %cmp = icmp uge i16 %val, -1
   br i1 %cmp, label %if, label %if.then

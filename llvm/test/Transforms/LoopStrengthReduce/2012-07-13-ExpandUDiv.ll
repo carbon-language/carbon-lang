@@ -17,11 +17,11 @@ target triple = "x86_64-apple-darwin"
 define i32 @main() nounwind uwtable ssp {
 entry:
   %l_2 = alloca [1 x i32], align 4
-  %arrayidx = getelementptr inbounds [1 x i32]* %l_2, i64 0, i64 0
+  %arrayidx = getelementptr inbounds [1 x i32], [1 x i32]* %l_2, i64 0, i64 0
   store i32 0, i32* %arrayidx, align 4
   %tmp = load i32* @g_3, align 4
   %idxprom = sext i32 %tmp to i64
-  %arrayidx1 = getelementptr inbounds [1 x i32]* %l_2, i64 0, i64 %idxprom
+  %arrayidx1 = getelementptr inbounds [1 x i32], [1 x i32]* %l_2, i64 0, i64 %idxprom
   %tmp1 = load i32* %arrayidx1, align 4
   %conv.i.i = and i32 %tmp1, 65535
   %tobool.i.i.i = icmp ne i32 %tmp, 0

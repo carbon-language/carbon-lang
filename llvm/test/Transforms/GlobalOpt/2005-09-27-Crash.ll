@@ -8,7 +8,7 @@
 
 define fastcc void @pypy_array_constant() {
 block0:
-        %tmp.9 = getelementptr %structtype.test* bitcast ({ i32, { i32, [2 x i32] } }* @structinstance.test to %structtype.test*), i32 0, i32 0          ; <i32*> [#uses=0]
+        %tmp.9 = getelementptr %structtype.test, %structtype.test* bitcast ({ i32, { i32, [2 x i32] } }* @structinstance.test to %structtype.test*), i32 0, i32 0          ; <i32*> [#uses=0]
         ret void
 }
 

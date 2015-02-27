@@ -23,7 +23,7 @@ define void @test_bigframe() {
 ; CHECK: add {{x[0-9]+}}, [[TMP1]], #3344
   store volatile i8* %var1, i8** @addr
 
-  %var1plus2 = getelementptr i8* %var1, i32 2
+  %var1plus2 = getelementptr i8, i8* %var1, i32 2
   store volatile i8* %var1plus2, i8** @addr
 
 ; CHECK: add [[TMP:x[0-9]+]], sp, #4095, lsl #12
@@ -31,12 +31,12 @@ define void @test_bigframe() {
 ; CHECK: add {{x[0-9]+}}, [[TMP1]], #3328
   store volatile i8* %var2, i8** @addr
 
-  %var2plus2 = getelementptr i8* %var2, i32 2
+  %var2plus2 = getelementptr i8, i8* %var2, i32 2
   store volatile i8* %var2plus2, i8** @addr
 
   store volatile i8* %var3, i8** @addr
 
-  %var3plus2 = getelementptr i8* %var3, i32 2
+  %var3plus2 = getelementptr i8, i8* %var3, i32 2
   store volatile i8* %var3plus2, i8** @addr
 
 ; CHECK: add sp, sp, #4095, lsl #12

@@ -41,12 +41,12 @@ entry:
   %i1 = alloca %struct.Inner, align 8
   call void @llvm.dbg.declare(metadata %struct.Outer* %outer, metadata !25, metadata !2), !dbg !26
   call void @llvm.dbg.declare(metadata %struct.Inner* %i1, metadata !27, metadata !2), !dbg !28
-  %inner = getelementptr inbounds %struct.Outer* %outer, i32 0, i32 0, !dbg !28
-  %arrayidx = getelementptr inbounds [2 x %struct.Inner]* %inner, i32 0, i64 1, !dbg !28
+  %inner = getelementptr inbounds %struct.Outer, %struct.Outer* %outer, i32 0, i32 0, !dbg !28
+  %arrayidx = getelementptr inbounds [2 x %struct.Inner], [2 x %struct.Inner]* %inner, i32 0, i64 1, !dbg !28
   %0 = bitcast %struct.Inner* %i1 to i8*, !dbg !28
   %1 = bitcast %struct.Inner* %arrayidx to i8*, !dbg !28
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* %1, i64 16, i32 8, i1 false), !dbg !28
-  %a = getelementptr inbounds %struct.Inner* %i1, i32 0, i32 0, !dbg !29
+  %a = getelementptr inbounds %struct.Inner, %struct.Inner* %i1, i32 0, i32 0, !dbg !29
   %2 = load i32* %a, align 4, !dbg !29
   ret i32 %2, !dbg !29
 }

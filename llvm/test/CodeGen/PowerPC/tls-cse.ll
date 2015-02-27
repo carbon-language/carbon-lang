@@ -23,7 +23,7 @@ declare void @_ZdlPv(i8*)
 
 define void @_ZN4llvm21PrettyStackTraceEntryD0Ev(%"class.llvm::PrettyStackTraceEntry"* %this) unnamed_addr align 2 {
 entry:
-  %0 = getelementptr inbounds %"class.llvm::PrettyStackTraceEntry"* %this, i64 0, i32 0
+  %0 = getelementptr inbounds %"class.llvm::PrettyStackTraceEntry", %"class.llvm::PrettyStackTraceEntry"* %this, i64 0, i32 0
   store i32 (...)** bitcast (i8** getelementptr inbounds ([5 x i8*]* @_ZTVN4llvm21PrettyStackTraceEntryE, i64 0, i64 2) to i32 (...)**), i32 (...)*** %0, align 8
   %1 = load %"class.llvm::PrettyStackTraceEntry"** @_ZL20PrettyStackTraceHead, align 8
   %cmp.i = icmp eq %"class.llvm::PrettyStackTraceEntry"* %1, %this
@@ -34,7 +34,7 @@ cond.false.i:                                     ; preds = %entry
   unreachable
 
 _ZN4llvm21PrettyStackTraceEntryD2Ev.exit:         ; preds = %entry
-  %NextEntry.i.i = getelementptr inbounds %"class.llvm::PrettyStackTraceEntry"* %this, i64 0, i32 1
+  %NextEntry.i.i = getelementptr inbounds %"class.llvm::PrettyStackTraceEntry", %"class.llvm::PrettyStackTraceEntry"* %this, i64 0, i32 1
   %2 = bitcast %"class.llvm::PrettyStackTraceEntry"** %NextEntry.i.i to i64*
   %3 = load i64* %2, align 8
   store i64 %3, i64* bitcast (%"class.llvm::PrettyStackTraceEntry"** @_ZL20PrettyStackTraceHead to i64*), align 8

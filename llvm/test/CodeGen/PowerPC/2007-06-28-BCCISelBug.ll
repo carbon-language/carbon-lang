@@ -70,7 +70,7 @@ declare i32 @llvm.ppc.altivec.vcmpequw.p(i32, <4 x i32>, <4 x i32>)
 
 define void @test(%struct.XState* %gldst, <4 x float>* %prgrm, <4 x float>** %buffs, %struct._GVMConstants* %cnstn, %struct.PPSToken* %pstrm, %struct.GVMFPContext* %vmctx, %struct.GVMTs* %txtrs, %struct.GVMFPStack* %fpstk, %struct.GVMFGAttrib* %start, %struct.GVMFGAttrib* %deriv, i32 %fragx, i32 %fragy) {
 bb58.i:
-	%tmp3405.i = getelementptr %struct.XTRec* null, i32 0, i32 1		; <float*> [#uses=1]
+	%tmp3405.i = getelementptr %struct.XTRec, %struct.XTRec* null, i32 0, i32 1		; <float*> [#uses=1]
 	%tmp34053406.i = bitcast float* %tmp3405.i to i8*		; <i8*> [#uses=1]
 	%tmp3407.i = call <4 x i32> @llvm.ppc.altivec.lvewx( i8* %tmp34053406.i )		; <<4 x i32>> [#uses=0]
 	%tmp4146.i = call i32 @llvm.ppc.altivec.vcmpequw.p( i32 3, <4 x i32> zeroinitializer, <4 x i32> zeroinitializer )		; <i32> [#uses=1]

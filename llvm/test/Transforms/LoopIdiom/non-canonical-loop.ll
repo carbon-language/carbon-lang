@@ -20,7 +20,7 @@ start.exit:                       ; preds = %entry
 
 for.bodyprime:                                    ; preds = %for.bodyprime, %start.exit
   %i.057375 = phi i32 [ 0, %start.exit ], [ %1, %for.bodyprime ]
-  %arrayidx8prime = getelementptr inbounds i32* %currMB, i32 %i.057375
+  %arrayidx8prime = getelementptr inbounds i32, i32* %currMB, i32 %i.057375
   store i32 0, i32* %arrayidx8prime, align 4
   %1 = add i32 %i.057375, 1
   %cmp5prime = icmp slt i32 %1, 4

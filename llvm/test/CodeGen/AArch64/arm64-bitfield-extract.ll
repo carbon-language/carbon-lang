@@ -13,7 +13,7 @@ define void @foo(%struct.X* nocapture %x, %struct.Y* nocapture %y) nounwind opts
 
   %tmp = bitcast %struct.X* %x to i32*
   %tmp1 = load i32* %tmp, align 4
-  %b = getelementptr inbounds %struct.Y* %y, i64 0, i32 1
+  %b = getelementptr inbounds %struct.Y, %struct.Y* %y, i64 0, i32 1
   %bf.clear = lshr i32 %tmp1, 3
   %bf.clear.lobit = and i32 %bf.clear, 1
   %frombool = trunc i32 %bf.clear.lobit to i8
@@ -47,7 +47,7 @@ define void @fct1(%struct.Z* nocapture %x, %struct.A* nocapture %y) nounwind opt
 
   %tmp = bitcast %struct.Z* %x to i64*
   %tmp1 = load i64* %tmp, align 4
-  %b = getelementptr inbounds %struct.A* %y, i64 0, i32 0
+  %b = getelementptr inbounds %struct.A, %struct.A* %y, i64 0, i32 0
   %bf.clear = lshr i64 %tmp1, 3
   %bf.clear.lobit = and i64 %bf.clear, 1
   store i64 %bf.clear.lobit, i64* %b, align 8
@@ -421,7 +421,7 @@ entry:
   br i1 %tobool, label %if.end, label %if.then
 
 if.then:                                          ; preds = %entry
-  %arrayidx3 = getelementptr inbounds [65536 x i8]* @first_ones, i64 0, i64 %x.sroa.5.0.extract.shift
+  %arrayidx3 = getelementptr inbounds [65536 x i8], [65536 x i8]* @first_ones, i64 0, i64 %x.sroa.5.0.extract.shift
   %0 = load i8* %arrayidx3, align 1
   %conv = zext i8 %0 to i32
   br label %return
@@ -443,7 +443,7 @@ if.then7:                                         ; preds = %if.end
 ; CHECK-NOT: and
 ; CHECK-NOT: ubfm
   %idxprom10 = and i64 %x.sroa.3.0.extract.shift, 65535
-  %arrayidx11 = getelementptr inbounds [65536 x i8]* @first_ones, i64 0, i64 %idxprom10
+  %arrayidx11 = getelementptr inbounds [65536 x i8], [65536 x i8]* @first_ones, i64 0, i64 %idxprom10
   %1 = load i8* %arrayidx11, align 1
   %conv12 = zext i8 %1 to i32
   %add = add nsw i32 %conv12, 16
@@ -466,7 +466,7 @@ if.then17:                                        ; preds = %if.end13
 ; CHECK-NOT: and
 ; CHECK-NOT: ubfm
   %idxprom20 = and i64 %x.sroa.1.0.extract.shift, 65535
-  %arrayidx21 = getelementptr inbounds [65536 x i8]* @first_ones, i64 0, i64 %idxprom20
+  %arrayidx21 = getelementptr inbounds [65536 x i8], [65536 x i8]* @first_ones, i64 0, i64 %idxprom20
   %2 = load i8* %arrayidx21, align 1
   %conv22 = zext i8 %2 to i32
   %add23 = add nsw i32 %conv22, 32
@@ -509,7 +509,7 @@ define i64 @fct21(i64 %x) {
 entry:
   %shr = lshr i64 %x, 4
   %and = and i64 %shr, 15
-  %arrayidx = getelementptr inbounds [8 x [64 x i64]]* @arr, i64 0, i64 0, i64 %and
+  %arrayidx = getelementptr inbounds [8 x [64 x i64]], [8 x [64 x i64]]* @arr, i64 0, i64 0, i64 %and
   %0 = load i64* %arrayidx, align 8
   ret i64 %0
 }

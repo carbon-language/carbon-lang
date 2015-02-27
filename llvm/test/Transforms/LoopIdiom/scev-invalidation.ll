@@ -36,7 +36,7 @@ for.body6.lr.ph:                                  ; preds = %for.cond4.preheader
 while.body:                                       ; preds = %while.body.lr.ph, %while.body
   %q.112 = phi i8* [ %q.0, %while.body.lr.ph ], [ %incdec.ptr, %while.body ]
   %backslashes.111 = phi i32 [ %backslashes.0, %while.body.lr.ph ], [ %dec, %while.body ]
-  %incdec.ptr = getelementptr inbounds i8* %q.112, i64 1
+  %incdec.ptr = getelementptr inbounds i8, i8* %q.112, i64 1
   store i8 92, i8* %incdec.ptr, align 1
   %dec = add nsw i32 %backslashes.111, -1
   %tobool2 = icmp eq i32 %dec, 0
@@ -44,7 +44,7 @@ while.body:                                       ; preds = %while.body.lr.ph, %
 
 while.cond.for.inc.loopexit_crit_edge:            ; preds = %while.body
   %scevgep.sum = add i64 %2, 1
-  %scevgep13 = getelementptr i8* %q.0, i64 %scevgep.sum
+  %scevgep13 = getelementptr i8, i8* %q.0, i64 %scevgep.sum
   br label %for.inc.loopexit
 
 for.inc.loopexit:                                 ; preds = %while.cond.for.inc.loopexit_crit_edge, %while.cond.preheader
@@ -54,13 +54,13 @@ for.inc.loopexit:                                 ; preds = %while.cond.for.inc.
 for.inc:                                          ; preds = %for.inc.loopexit, %for.cond
   %backslashes.2 = phi i32 [ %backslashes.0, %for.cond ], [ 0, %for.inc.loopexit ]
   %q.2 = phi i8* [ %q.0, %for.cond ], [ %q.1.lcssa, %for.inc.loopexit ]
-  %incdec.ptr3 = getelementptr inbounds i8* %p.0, i64 1
+  %incdec.ptr3 = getelementptr inbounds i8, i8* %p.0, i64 1
   br label %for.cond
 
 for.body6:                                        ; preds = %for.body6.lr.ph, %for.body6
   %q.39 = phi i8* [ %q.0, %for.body6.lr.ph ], [ %incdec.ptr7, %for.body6 ]
   %backslashes.38 = phi i32 [ %backslashes.0, %for.body6.lr.ph ], [ %dec9, %for.body6 ]
-  %incdec.ptr7 = getelementptr inbounds i8* %q.39, i64 1
+  %incdec.ptr7 = getelementptr inbounds i8, i8* %q.39, i64 1
   store i8 92, i8* %incdec.ptr7, align 1
   %dec9 = add nsw i32 %backslashes.38, -1
   %tobool5 = icmp eq i32 %dec9, 0

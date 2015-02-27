@@ -16,7 +16,7 @@
 
 define void @main([17 x <16 x i8>] addrspace(2)* byval %arg, [32 x <16 x i8>] addrspace(2)* byval %arg1, [16 x <32 x i8>] addrspace(2)* byval %arg2, [2 x <16 x i8>] addrspace(2)* byval %arg3, [17 x <16 x i8>] addrspace(2)* inreg %arg4, [17 x <16 x i8>] addrspace(2)* inreg %arg5, i32 %arg6, i32 %arg7, i32 %arg8, i32 %arg9) #0 {
 main_body:
-  %tmp = getelementptr [2 x <16 x i8>] addrspace(2)* %arg3, i64 0, i32 1
+  %tmp = getelementptr [2 x <16 x i8>], [2 x <16 x i8>] addrspace(2)* %arg3, i64 0, i32 1
   %tmp10 = load <16 x i8> addrspace(2)* %tmp, !tbaa !0
   %tmp11 = shl i32 %arg6, 2
   %tmp12 = call i32 @llvm.SI.buffer.load.dword.i32.i32(<16 x i8> %tmp10, i32 0, i32 0, i32 0, i32 0, i32 0, i32 1, i32 1, i32 0)

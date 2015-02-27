@@ -50,11 +50,11 @@ __XXX2.exit.i.i:                    ; preds = %sw.bb.i
   %extract11.i.i.i = lshr i128 %bf.load.i.i, %const3
   %extract.t12.i.i.i = trunc i128 %extract11.i.i.i to i32
   %bf.cast7.i.i.i = and i32 %extract.t12.i.i.i, 3
-  %arrayidx.i.i.i = getelementptr inbounds %struct.A* %ht, i32 0, i32 3, i32 %bf.cast7.i.i.i
+  %arrayidx.i.i.i = getelementptr inbounds %struct.A, %struct.A* %ht, i32 0, i32 3, i32 %bf.cast7.i.i.i
   br label %cond.end12.i.i
 
 cond.false10.i.i:                                 ; preds = %sw.bb.i
-  %arrayidx.i6.i.i = getelementptr inbounds %struct.A* %ht, i32 0, i32 3, i32 0
+  %arrayidx.i6.i.i = getelementptr inbounds %struct.A, %struct.A* %ht, i32 0, i32 3, i32 0
   br label %cond.end12.i.i
 
 cond.end12.i.i:                                   ; preds = %cond.false10.i.i, %__XXX2.exit.i.i
@@ -64,7 +64,7 @@ cond.end12.i.i:                                   ; preds = %cond.false10.i.i, %
   br i1 undef, label %for.body.i.i, label %if.end196
 
 for.body.i.i:                                     ; preds = %for.body.i.i, %cond.end12.i.i
-  %weak.i.i = getelementptr inbounds %union.E* %tmp, i32 undef, i32 0
+  %weak.i.i = getelementptr inbounds %union.E, %union.E* %tmp, i32 undef, i32 0
   %tmp1 = load i32* %weak.i.i, align 4
   %cmp36.i.i = icmp ne i32 %tmp1, %shl.i.i
   %or.cond = and i1 %cmp36.i.i, false

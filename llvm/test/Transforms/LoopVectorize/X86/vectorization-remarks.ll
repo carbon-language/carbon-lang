@@ -26,10 +26,10 @@ entry:
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %add8 = phi i32 [ 0, %entry ], [ %add, %for.body ], !dbg !19
-  %arrayidx = getelementptr inbounds [16 x i8]* %cb, i64 0, i64 %indvars.iv, !dbg !19
+  %arrayidx = getelementptr inbounds [16 x i8], [16 x i8]* %cb, i64 0, i64 %indvars.iv, !dbg !19
   %0 = load i8* %arrayidx, align 1, !dbg !19, !tbaa !21
   %conv = sext i8 %0 to i32, !dbg !19
-  %arrayidx2 = getelementptr inbounds [16 x i8]* %cc, i64 0, i64 %indvars.iv, !dbg !19
+  %arrayidx2 = getelementptr inbounds [16 x i8], [16 x i8]* %cc, i64 0, i64 %indvars.iv, !dbg !19
   %1 = load i8* %arrayidx2, align 1, !dbg !19, !tbaa !21
   %conv3 = sext i8 %1 to i32, !dbg !19
   %sub = sub i32 %conv, %conv3, !dbg !19

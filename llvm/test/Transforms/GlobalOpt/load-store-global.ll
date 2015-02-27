@@ -24,7 +24,7 @@ define i32 @bar() {
 ; PR13968
 define void @qux() nounwind {
   %b = bitcast i64** @a to i8*
-  %g = getelementptr i64** @a, i32 1
+  %g = getelementptr i64*, i64** @a, i32 1
   %cmp = icmp ne i8* null, %b
   %cmp2 = icmp eq i8* null, %b
   %cmp3 = icmp eq i64** null, %g

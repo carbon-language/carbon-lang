@@ -13,7 +13,7 @@ bb848:		; preds = %entry
 	ret void
 
 bb1271:		; preds = %bb898
-	%tmp1272 = getelementptr %struct.c34007g__pkg__parent* %x8, i32 0, i32 0		; <i32**> [#uses=1]
+	%tmp1272 = getelementptr %struct.c34007g__pkg__parent, %struct.c34007g__pkg__parent* %x8, i32 0, i32 0		; <i32**> [#uses=1]
 	%x82167 = bitcast %struct.c34007g__pkg__parent* %x8 to i64*		; <i64*> [#uses=1]
 	br i1 true, label %bb4668, label %bb848
 

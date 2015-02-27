@@ -30,28 +30,28 @@ entry:
 
 bb:		; preds = %bb23
 	%tmp = load i32* %i, align 4		; <i32> [#uses=1]
-	%tmp1 = getelementptr [3 x i32]* @fnan, i32 0, i32 %tmp		; <i32*> [#uses=1]
+	%tmp1 = getelementptr [3 x i32], [3 x i32]* @fnan, i32 0, i32 %tmp		; <i32*> [#uses=1]
 	%tmp2 = load i32* %tmp1, align 4		; <i32> [#uses=1]
-	%tmp3 = getelementptr %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
+	%tmp3 = getelementptr %struct..0anon, %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
 	%tmp34 = bitcast float* %tmp3 to i32*		; <i32*> [#uses=1]
 	store i32 %tmp2, i32* %tmp34, align 4
-	%tmp5 = getelementptr %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
+	%tmp5 = getelementptr %struct..0anon, %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
 	%tmp6 = load float* %tmp5, align 4		; <float> [#uses=1]
 	%tmp67 = fpext float %tmp6 to double		; <double> [#uses=1]
-	%tmp8 = getelementptr %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
+	%tmp8 = getelementptr %struct..1anon, %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
 	store double %tmp67, double* %tmp8, align 8
-	%tmp9 = getelementptr %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
+	%tmp9 = getelementptr %struct..1anon, %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
 	%tmp910 = bitcast double* %tmp9 to i64*		; <i64*> [#uses=1]
 	%tmp11 = load i64* %tmp910, align 8		; <i64> [#uses=1]
 	%tmp1112 = trunc i64 %tmp11 to i32		; <i32> [#uses=1]
 	%tmp13 = and i32 %tmp1112, -1		; <i32> [#uses=1]
-	%tmp14 = getelementptr %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
+	%tmp14 = getelementptr %struct..1anon, %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
 	%tmp1415 = bitcast double* %tmp14 to i64*		; <i64*> [#uses=1]
 	%tmp16 = load i64* %tmp1415, align 8		; <i64> [#uses=1]
 	%.cast = zext i32 32 to i64		; <i64> [#uses=1]
 	%tmp17 = ashr i64 %tmp16, %.cast		; <i64> [#uses=1]
 	%tmp1718 = trunc i64 %tmp17 to i32		; <i32> [#uses=1]
-	%tmp19 = getelementptr [10 x i8]* @.str, i32 0, i32 0		; <i8*> [#uses=1]
+	%tmp19 = getelementptr [10 x i8], [10 x i8]* @.str, i32 0, i32 0		; <i8*> [#uses=1]
 	store volatile i32 %tmp1718, i32* @var
 	store volatile i32 %tmp13, i32* @var
 	%tmp21 = load i32* %i, align 4		; <i32> [#uses=1]
@@ -72,20 +72,20 @@ bb27:		; preds = %bb23
 
 bb28:		; preds = %bb46
 	%tmp29 = load i32* %i, align 4		; <i32> [#uses=1]
-	%tmp30 = getelementptr [3 x i64]* @dnan, i32 0, i32 %tmp29		; <i64*> [#uses=1]
+	%tmp30 = getelementptr [3 x i64], [3 x i64]* @dnan, i32 0, i32 %tmp29		; <i64*> [#uses=1]
 	%tmp31 = load i64* %tmp30, align 8		; <i64> [#uses=1]
-	%tmp32 = getelementptr %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
+	%tmp32 = getelementptr %struct..1anon, %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
 	%tmp3233 = bitcast double* %tmp32 to i64*		; <i64*> [#uses=1]
 	store i64 %tmp31, i64* %tmp3233, align 8
-	%tmp35 = getelementptr %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
+	%tmp35 = getelementptr %struct..1anon, %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
 	%tmp36 = load double* %tmp35, align 8		; <double> [#uses=1]
 	%tmp3637 = fptrunc double %tmp36 to float		; <float> [#uses=1]
-	%tmp38 = getelementptr %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
+	%tmp38 = getelementptr %struct..0anon, %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
 	store float %tmp3637, float* %tmp38, align 4
-	%tmp39 = getelementptr %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
+	%tmp39 = getelementptr %struct..0anon, %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
 	%tmp3940 = bitcast float* %tmp39 to i32*		; <i32*> [#uses=1]
 	%tmp41 = load i32* %tmp3940, align 4		; <i32> [#uses=1]
-	%tmp42 = getelementptr [6 x i8]* @.str1, i32 0, i32 0		; <i8*> [#uses=1]
+	%tmp42 = getelementptr [6 x i8], [6 x i8]* @.str1, i32 0, i32 0		; <i8*> [#uses=1]
 	store volatile i32 %tmp41, i32* @var
 	%tmp44 = load i32* %i, align 4		; <i32> [#uses=1]
 	%tmp45 = add i32 %tmp44, 1		; <i32> [#uses=1]
@@ -105,28 +105,28 @@ bb51:		; preds = %bb46
 
 bb52:		; preds = %bb78
 	%tmp53 = load i32* %i, align 4		; <i32> [#uses=1]
-	%tmp54 = getelementptr [3 x i32]* @fsnan, i32 0, i32 %tmp53		; <i32*> [#uses=1]
+	%tmp54 = getelementptr [3 x i32], [3 x i32]* @fsnan, i32 0, i32 %tmp53		; <i32*> [#uses=1]
 	%tmp55 = load i32* %tmp54, align 4		; <i32> [#uses=1]
-	%tmp56 = getelementptr %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
+	%tmp56 = getelementptr %struct..0anon, %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
 	%tmp5657 = bitcast float* %tmp56 to i32*		; <i32*> [#uses=1]
 	store i32 %tmp55, i32* %tmp5657, align 4
-	%tmp58 = getelementptr %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
+	%tmp58 = getelementptr %struct..0anon, %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
 	%tmp59 = load float* %tmp58, align 4		; <float> [#uses=1]
 	%tmp5960 = fpext float %tmp59 to double		; <double> [#uses=1]
-	%tmp61 = getelementptr %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
+	%tmp61 = getelementptr %struct..1anon, %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
 	store double %tmp5960, double* %tmp61, align 8
-	%tmp62 = getelementptr %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
+	%tmp62 = getelementptr %struct..1anon, %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
 	%tmp6263 = bitcast double* %tmp62 to i64*		; <i64*> [#uses=1]
 	%tmp64 = load i64* %tmp6263, align 8		; <i64> [#uses=1]
 	%tmp6465 = trunc i64 %tmp64 to i32		; <i32> [#uses=1]
 	%tmp66 = and i32 %tmp6465, -1		; <i32> [#uses=1]
-	%tmp68 = getelementptr %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
+	%tmp68 = getelementptr %struct..1anon, %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
 	%tmp6869 = bitcast double* %tmp68 to i64*		; <i64*> [#uses=1]
 	%tmp70 = load i64* %tmp6869, align 8		; <i64> [#uses=1]
 	%.cast71 = zext i32 32 to i64		; <i64> [#uses=1]
 	%tmp72 = ashr i64 %tmp70, %.cast71		; <i64> [#uses=1]
 	%tmp7273 = trunc i64 %tmp72 to i32		; <i32> [#uses=1]
-	%tmp74 = getelementptr [10 x i8]* @.str, i32 0, i32 0		; <i8*> [#uses=1]
+	%tmp74 = getelementptr [10 x i8], [10 x i8]* @.str, i32 0, i32 0		; <i8*> [#uses=1]
 	store volatile i32 %tmp7273, i32* @var
 	store volatile i32 %tmp66, i32* @var
 	%tmp76 = load i32* %i, align 4		; <i32> [#uses=1]
@@ -147,20 +147,20 @@ bb83:		; preds = %bb78
 
 bb84:		; preds = %bb101
 	%tmp85 = load i32* %i, align 4		; <i32> [#uses=1]
-	%tmp86 = getelementptr [3 x i64]* @dsnan, i32 0, i32 %tmp85		; <i64*> [#uses=1]
+	%tmp86 = getelementptr [3 x i64], [3 x i64]* @dsnan, i32 0, i32 %tmp85		; <i64*> [#uses=1]
 	%tmp87 = load i64* %tmp86, align 8		; <i64> [#uses=1]
-	%tmp88 = getelementptr %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
+	%tmp88 = getelementptr %struct..1anon, %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
 	%tmp8889 = bitcast double* %tmp88 to i64*		; <i64*> [#uses=1]
 	store i64 %tmp87, i64* %tmp8889, align 8
-	%tmp90 = getelementptr %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
+	%tmp90 = getelementptr %struct..1anon, %struct..1anon* %ud, i32 0, i32 0		; <double*> [#uses=1]
 	%tmp91 = load double* %tmp90, align 8		; <double> [#uses=1]
 	%tmp9192 = fptrunc double %tmp91 to float		; <float> [#uses=1]
-	%tmp93 = getelementptr %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
+	%tmp93 = getelementptr %struct..0anon, %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
 	store float %tmp9192, float* %tmp93, align 4
-	%tmp94 = getelementptr %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
+	%tmp94 = getelementptr %struct..0anon, %struct..0anon* %uf, i32 0, i32 0		; <float*> [#uses=1]
 	%tmp9495 = bitcast float* %tmp94 to i32*		; <i32*> [#uses=1]
 	%tmp96 = load i32* %tmp9495, align 4		; <i32> [#uses=1]
-	%tmp97 = getelementptr [6 x i8]* @.str1, i32 0, i32 0		; <i8*> [#uses=1]
+	%tmp97 = getelementptr [6 x i8], [6 x i8]* @.str1, i32 0, i32 0		; <i8*> [#uses=1]
 	store volatile i32 %tmp96, i32* @var
 	%tmp99 = load i32* %i, align 4		; <i32> [#uses=1]
 	%tmp100 = add i32 %tmp99, 1		; <i32> [#uses=1]

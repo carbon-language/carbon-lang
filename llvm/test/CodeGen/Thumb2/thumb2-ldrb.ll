@@ -12,7 +12,7 @@ define i8 @f2(i8* %v) {
 entry:
 ; CHECK-LABEL: f2:
 ; CHECK: ldrb r0, [r0, #-1]
-        %tmp2 = getelementptr i8* %v, i8 1023
+        %tmp2 = getelementptr i8, i8* %v, i8 1023
         %tmp = load i8* %tmp2
         ret i8 %tmp
 }

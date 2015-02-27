@@ -11,10 +11,10 @@ define void @main() {
 __main.entry:
 	br label %invoke_cont.3
 invoke_cont.3:		; preds = %invoke_cont.3, %__main.entry
-	%tmp.34.i.i502.7 = getelementptr %struct.roadlet* null, i32 0, i32 3, i32 7		; <%struct.roadlet* (%struct.roadlet*, %struct.vehicle*, i32)**> [#uses=1]
+	%tmp.34.i.i502.7 = getelementptr %struct.roadlet, %struct.roadlet* null, i32 0, i32 3, i32 7		; <%struct.roadlet* (%struct.roadlet*, %struct.vehicle*, i32)**> [#uses=1]
 	store %struct.roadlet* (%struct.roadlet*, %struct.vehicle*, i32)* @_Z11return_nullP7roadletP7vehicle9direction, %struct.roadlet* (%struct.roadlet*, %struct.vehicle*, i32)** %tmp.34.i.i502.7
 	store %struct.roadlet* (%struct.roadlet*, %struct.vehicle*, i32)* @_Z14lane_switch_okP7roadletP7vehicle9direction, %struct.roadlet* (%struct.roadlet*, %struct.vehicle*, i32)** null
-	%tmp.4.i.i339 = getelementptr %struct.roadlet* null, i32 0, i32 3, i32 undef		; <%struct.roadlet* (%struct.roadlet*, %struct.vehicle*, i32)**> [#uses=1]
+	%tmp.4.i.i339 = getelementptr %struct.roadlet, %struct.roadlet* null, i32 0, i32 3, i32 undef		; <%struct.roadlet* (%struct.roadlet*, %struct.vehicle*, i32)**> [#uses=1]
 	store %struct.roadlet* (%struct.roadlet*, %struct.vehicle*, i32)* @_Z11return_nullP7roadletP7vehicle9direction, %struct.roadlet* (%struct.roadlet*, %struct.vehicle*, i32)** %tmp.4.i.i339
 	br label %invoke_cont.3
 }

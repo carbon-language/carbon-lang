@@ -28,7 +28,7 @@ define i64 @f3(i64 %dummy, i64 *%src, i64 %b) {
 ; CHECK: lcgr [[NEG:%r[0-5]]], %r4
 ; CHECK: laag %r2, [[NEG]], 524280(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 65535
+  %ptr = getelementptr i64, i64 *%src, i64 65535
   %res = atomicrmw sub i64 *%ptr, i64 %b seq_cst
   ret i64 %res
 }
@@ -40,7 +40,7 @@ define i64 @f4(i64 %dummy, i64 *%src, i64 %b) {
 ; CHECK-DAG: agfi %r3, 524288
 ; CHECK: laag %r2, [[NEG]], 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 65536
+  %ptr = getelementptr i64, i64 *%src, i64 65536
   %res = atomicrmw sub i64 *%ptr, i64 %b seq_cst
   ret i64 %res
 }
@@ -51,7 +51,7 @@ define i64 @f5(i64 %dummy, i64 *%src, i64 %b) {
 ; CHECK: lcgr [[NEG:%r[0-5]]], %r4
 ; CHECK: laag %r2, [[NEG]], -524288(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -65536
+  %ptr = getelementptr i64, i64 *%src, i64 -65536
   %res = atomicrmw sub i64 *%ptr, i64 %b seq_cst
   ret i64 %res
 }
@@ -63,7 +63,7 @@ define i64 @f6(i64 %dummy, i64 *%src, i64 %b) {
 ; CHECK-DAG: agfi %r3, -524296
 ; CHECK: laag %r2, [[NEG]], 0(%r3)
 ; CHECK: br %r14
-  %ptr = getelementptr i64 *%src, i64 -65537
+  %ptr = getelementptr i64, i64 *%src, i64 -65537
   %res = atomicrmw sub i64 *%ptr, i64 %b seq_cst
   ret i64 %res
 }

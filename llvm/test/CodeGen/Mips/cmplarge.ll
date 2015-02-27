@@ -9,7 +9,7 @@ target triple = "mipsel--linux-gnu"
 
 define void @getSubImagesLuma(%struct.StorablePicture* nocapture %s) #0 {
 entry:
-  %size_y = getelementptr inbounds %struct.StorablePicture* %s, i32 0, i32 1
+  %size_y = getelementptr inbounds %struct.StorablePicture, %struct.StorablePicture* %s, i32 0, i32 1
   %0 = load i32* %size_y, align 4
   %sub = add nsw i32 %0, -1
   %add5 = add nsw i32 %0, 20

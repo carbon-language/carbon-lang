@@ -14,7 +14,7 @@ land.lhs.true:                                    ; preds = %entry
   br label %for.cond.i
 
 for.cond.i:                                       ; preds = %land.lhs.true, %entry
-  %0 = getelementptr inbounds %struct.S0.0.1.2.3.4.13.22.31.44.48.53.54.55.56.58.59.60.66.68.70.74.77.106.107.108.109.110.113.117.118.128.129* %l_819.i.i, i64 0, i32 0
+  %0 = getelementptr inbounds %struct.S0.0.1.2.3.4.13.22.31.44.48.53.54.55.56.58.59.60.66.68.70.74.77.106.107.108.109.110.113.117.118.128.129, %struct.S0.0.1.2.3.4.13.22.31.44.48.53.54.55.56.58.59.60.66.68.70.74.77.106.107.108.109.110.113.117.118.128.129* %l_819.i.i, i64 0, i32 0
   br label %for.cond.i6.i.i
 
 for.cond.i6.i.i:                                  ; preds = %for.body.i8.i.i, %for.cond.i

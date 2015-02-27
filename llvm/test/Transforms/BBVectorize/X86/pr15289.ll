@@ -44,43 +44,43 @@ entry:
   %12 = fsub double undef, %7
   %13 = fmul double %3, %12
   %14 = fmul double %3, undef
-  %15 = getelementptr inbounds [5 x { double, double }]* %c2ten, i64 0, i64 0, i32 0
+  %15 = getelementptr inbounds [5 x { double, double }], [5 x { double, double }]* %c2ten, i64 0, i64 0, i32 0
   store double %13, double* %15, align 8
-  %16 = getelementptr inbounds [5 x { double, double }]* %c2ten, i64 0, i64 0, i32 1
+  %16 = getelementptr inbounds [5 x { double, double }], [5 x { double, double }]* %c2ten, i64 0, i64 0, i32 1
   %17 = fmul double undef, %8
   %18 = fmul double %17, undef
   %19 = fmul double undef, %18
   %20 = fadd double undef, undef
   %21 = fmul double %3, %19
   %22 = fsub double -0.000000e+00, %21
-  %23 = getelementptr inbounds [5 x { double, double }]* %c2ten, i64 0, i64 1, i32 0
+  %23 = getelementptr inbounds [5 x { double, double }], [5 x { double, double }]* %c2ten, i64 0, i64 1, i32 0
   store double %22, double* %23, align 8
-  %24 = getelementptr inbounds [5 x { double, double }]* %c2ten, i64 0, i64 1, i32 1
+  %24 = getelementptr inbounds [5 x { double, double }], [5 x { double, double }]* %c2ten, i64 0, i64 1, i32 1
   %25 = fmul double undef, 0x3FE42F601A8C6794
   %26 = fmul double undef, 2.000000e+00
   %27 = fsub double %26, %0
   %28 = fmul double %6, undef
   %29 = fsub double undef, %28
-  %30 = getelementptr inbounds [5 x { double, double }]* %c2ten, i64 0, i64 2, i32 0
+  %30 = getelementptr inbounds [5 x { double, double }], [5 x { double, double }]* %c2ten, i64 0, i64 2, i32 0
   store double undef, double* %30, align 8
-  %31 = getelementptr inbounds [5 x { double, double }]* %c2ten, i64 0, i64 2, i32 1
+  %31 = getelementptr inbounds [5 x { double, double }], [5 x { double, double }]* %c2ten, i64 0, i64 2, i32 1
   %32 = fmul double undef, %17
   %33 = fmul double undef, %17
   %34 = fmul double undef, %32
   %35 = fmul double undef, %33
   %36 = fsub double undef, %35
   %37 = fmul double %3, %34
-  %38 = getelementptr inbounds [5 x { double, double }]* %c2ten, i64 0, i64 3, i32 0
+  %38 = getelementptr inbounds [5 x { double, double }], [5 x { double, double }]* %c2ten, i64 0, i64 3, i32 0
   store double %37, double* %38, align 8
-  %39 = getelementptr inbounds [5 x { double, double }]* %c2ten, i64 0, i64 3, i32 1
+  %39 = getelementptr inbounds [5 x { double, double }], [5 x { double, double }]* %c2ten, i64 0, i64 3, i32 1
   %40 = fmul double undef, %8
   %41 = fmul double undef, %40
   %42 = fmul double undef, %41
   %43 = fsub double undef, %42
   %44 = fmul double %3, %43
-  %45 = getelementptr inbounds [5 x { double, double }]* %c2ten, i64 0, i64 4, i32 0
+  %45 = getelementptr inbounds [5 x { double, double }], [5 x { double, double }]* %c2ten, i64 0, i64 4, i32 0
   store double %13, double* %45, align 8
-  %46 = getelementptr inbounds [5 x { double, double }]* %c2ten, i64 0, i64 4, i32 1
+  %46 = getelementptr inbounds [5 x { double, double }], [5 x { double, double }]* %c2ten, i64 0, i64 4, i32 1
   %47 = fsub double -0.000000e+00, %14
   store double %47, double* %16, align 8
   store double undef, double* %24, align 8

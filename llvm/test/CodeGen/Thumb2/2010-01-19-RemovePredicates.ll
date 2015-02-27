@@ -47,7 +47,7 @@ bb35:                                             ; preds = %bb5
 
 bb46:                                             ; preds = %bb26, %bb10
   %1 = bitcast double* %value to i16*             ; <i16*> [#uses=1]
-  %v47 = getelementptr inbounds [6 x i16]* %v, i32 0, i32 0 ; <i16*> [#uses=1]
+  %v47 = getelementptr inbounds [6 x i16], [6 x i16]* %v, i32 0, i32 0 ; <i16*> [#uses=1]
   call  void @etoe53(i16* %v47, i16* %1) nounwind
   ret void
 }

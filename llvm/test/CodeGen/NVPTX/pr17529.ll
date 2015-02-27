@@ -11,7 +11,7 @@ entry:
 
 vector.body:                                      ; preds = %vector.body, %entry
   %index = phi i64 [ %index.next, %vector.body ], [ 0, %entry ]
-  %scevgep9 = getelementptr i8* %dst, i64 %index
+  %scevgep9 = getelementptr i8, i8* %dst, i64 %index
   %scevgep910 = bitcast i8* %scevgep9 to <4 x i8>*
   store <4 x i8> undef, <4 x i8>* %scevgep910, align 1
   %index.next = add i64 %index, 4
@@ -22,13 +22,13 @@ middle.block:                                     ; preds = %vector.body
   br i1 undef, label %for.end, label %for.body.preheader1
 
 for.body.preheader1:                              ; preds = %middle.block
-  %scevgep2 = getelementptr i8* %dst, i64 0
+  %scevgep2 = getelementptr i8, i8* %dst, i64 0
   br label %for.body
 
 for.body:                                         ; preds = %for.body, %for.body.preheader1
   %lsr.iv3 = phi i8* [ %scevgep2, %for.body.preheader1 ], [ %scevgep4, %for.body ]
   store i8 undef, i8* %lsr.iv3, align 1
-  %scevgep4 = getelementptr i8* %lsr.iv3, i64 1
+  %scevgep4 = getelementptr i8, i8* %lsr.iv3, i64 1
   br label %for.body
 
 for.end:                                          ; preds = %middle.block, %entry

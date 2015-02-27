@@ -60,7 +60,7 @@ for.end:
   %in = alloca %struct.struct_test_27.0.13, align 8
   %0 = bitcast %struct.struct_test_27.0.13* %in to [5 x i64]*
   store [5 x i64] %in.coerce, [5 x i64]* %0, align 8
-  %scevgep9 = getelementptr %struct.struct_test_27.0.13* %in, i32 0, i32 4, i32 0
+  %scevgep9 = getelementptr %struct.struct_test_27.0.13, %struct.struct_test_27.0.13* %in, i32 0, i32 4, i32 0
   %scevgep910 = bitcast i32* %scevgep9 to i8*
   call void @llvm.memcpy.p1i8.p0i8.i32(i8 addrspace(1)* undef, i8* %scevgep910, i32 16, i32 4, i1 false)
   ret void

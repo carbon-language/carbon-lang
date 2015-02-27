@@ -117,7 +117,7 @@ define i64 @f9(i64 %dummy, i64 %a, i32 *%src) {
 ; CHECK-LABEL: f9:
 ; CHECK: dsgf %r2, 524284(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 131071
+  %ptr = getelementptr i32, i32 *%src, i64 131071
   %b = load i32 *%ptr
   %bext = sext i32 %b to i64
   %rem = srem i64 %a, %bext
@@ -131,7 +131,7 @@ define i64 @f10(i64 %dummy, i64 %a, i32 *%src) {
 ; CHECK: agfi %r4, 524288
 ; CHECK: dsgf %r2, 0(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 131072
+  %ptr = getelementptr i32, i32 *%src, i64 131072
   %b = load i32 *%ptr
   %bext = sext i32 %b to i64
   %rem = srem i64 %a, %bext
@@ -143,7 +143,7 @@ define i64 @f11(i64 %dummy, i64 %a, i32 *%src) {
 ; CHECK-LABEL: f11:
 ; CHECK: dsgf %r2, -4(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 -1
+  %ptr = getelementptr i32, i32 *%src, i64 -1
   %b = load i32 *%ptr
   %bext = sext i32 %b to i64
   %rem = srem i64 %a, %bext
@@ -155,7 +155,7 @@ define i64 @f12(i64 %dummy, i64 %a, i32 *%src) {
 ; CHECK-LABEL: f12:
 ; CHECK: dsgf %r2, -524288(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 -131072
+  %ptr = getelementptr i32, i32 *%src, i64 -131072
   %b = load i32 *%ptr
   %bext = sext i32 %b to i64
   %rem = srem i64 %a, %bext
@@ -169,7 +169,7 @@ define i64 @f13(i64 %dummy, i64 %a, i32 *%src) {
 ; CHECK: agfi %r4, -524292
 ; CHECK: dsgf %r2, 0(%r4)
 ; CHECK: br %r14
-  %ptr = getelementptr i32 *%src, i64 -131073
+  %ptr = getelementptr i32, i32 *%src, i64 -131073
   %b = load i32 *%ptr
   %bext = sext i32 %b to i64
   %rem = srem i64 %a, %bext

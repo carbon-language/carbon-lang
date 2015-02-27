@@ -110,7 +110,7 @@ define <8 x float> @vinsertf128_combine(float* nocapture %f) nounwind uwtable re
 ; CHECK-NOT: vmovaps
 ; CHECK: vinsertf128
 entry:
-  %add.ptr = getelementptr inbounds float* %f, i64 4
+  %add.ptr = getelementptr inbounds float, float* %f, i64 4
   %0 = bitcast float* %add.ptr to <4 x float>*
   %1 = load <4 x float>* %0, align 16
   %2 = tail call <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float> undef, <4 x float> %1, i8 1)
@@ -123,7 +123,7 @@ define <8 x float> @vinsertf128_ucombine(float* nocapture %f) nounwind uwtable r
 ; CHECK-NOT: vmovups
 ; CHECK: vinsertf128
 entry:
-  %add.ptr = getelementptr inbounds float* %f, i64 4
+  %add.ptr = getelementptr inbounds float, float* %f, i64 4
   %0 = bitcast float* %add.ptr to <4 x float>*
   %1 = load <4 x float>* %0, align 8
   %2 = tail call <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float> undef, <4 x float> %1, i8 1)

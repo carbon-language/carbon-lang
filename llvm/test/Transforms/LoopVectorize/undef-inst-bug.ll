@@ -24,7 +24,7 @@ for.body:
   ; Loop invariant anchored in loop.
   %idxprom21 = zext i32 undef to i64
 
-  %arrayidx23 = getelementptr inbounds [100 x [100 x i32]]* undef, i64 0, i64 %idxprom21, i64 %indvars.iv17
+  %arrayidx23 = getelementptr inbounds [100 x [100 x i32]], [100 x [100 x i32]]* undef, i64 0, i64 %idxprom21, i64 %indvars.iv17
   store i32 undef, i32* %arrayidx23, align 4
   %indvars.next= add i64 %indvars.iv17, -1
   %0 = trunc i64 %indvars.next to i32

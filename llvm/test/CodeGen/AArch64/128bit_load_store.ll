@@ -45,7 +45,7 @@ define void @test_ld_st_p128(i128* nocapture %ptr) #0 {
 entry:
   %0 = bitcast i128* %ptr to fp128*
   %1 = load fp128* %0, align 16
-  %add.ptr = getelementptr inbounds i128* %ptr, i64 1
+  %add.ptr = getelementptr inbounds i128, i128* %ptr, i64 1
   %2 = bitcast i128* %add.ptr to fp128*
   store fp128 %1, fp128* %2, align 16
   ret void

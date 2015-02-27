@@ -25,7 +25,7 @@ define i16 @am4() nounwind {
 ; CHECK: ldh r0, 0(r1)
 
 define i16 @am5(i16* %a) nounwind {
-  %1 = getelementptr i16* %a, i16 2
+  %1 = getelementptr i16, i16* %a, i16 2
   %2 = load i16* %1
   ret i16 %2
 }

@@ -10,8 +10,8 @@ entry:
 	%T3 = bitcast [1 x %struct.T]* %s to i32*
 	store i32 -61184, i32* %T3
 
-	%tmp16 = getelementptr [1 x %struct.T]* %s, i32 0, i32 0		; <%struct.T*> [#uses=1]
-	%tmp17 = getelementptr %struct.T* %tmp16, i32 0, i32 1		; <[3 x i8]*> [#uses=1]
+	%tmp16 = getelementptr [1 x %struct.T], [1 x %struct.T]* %s, i32 0, i32 0		; <%struct.T*> [#uses=1]
+	%tmp17 = getelementptr %struct.T, %struct.T* %tmp16, i32 0, i32 1		; <[3 x i8]*> [#uses=1]
 	%tmp1718 = bitcast [3 x i8]* %tmp17 to i32*		; <i32*> [#uses=1]
 	%tmp19 = load i32* %tmp1718, align 4		; <i32> [#uses=1]
 	%mask = and i32 %tmp19, 16777215		; <i32> [#uses=2]

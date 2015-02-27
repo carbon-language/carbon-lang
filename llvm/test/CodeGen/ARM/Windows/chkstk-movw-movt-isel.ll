@@ -12,7 +12,7 @@ entry:
   store i32 %i, i32* %i.addr, align 4
   %0 = load i32* %i.addr, align 4
   %rem = urem i32 %0, 4096
-  %arrayidx = getelementptr inbounds [4096 x i8]* %buffer, i32 0, i32 %rem
+  %arrayidx = getelementptr inbounds [4096 x i8], [4096 x i8]* %buffer, i32 0, i32 %rem
   %1 = load volatile i8* %arrayidx, align 1
   ret i8 %1
 }

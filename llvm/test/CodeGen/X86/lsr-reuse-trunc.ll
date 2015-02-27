@@ -21,9 +21,9 @@ entry:
 bb:
   %indvar = phi i64 [ %indvar.next, %bb ], [ 0, %entry ]
   %tmp = shl i64 %indvar, 2
-  %scevgep = getelementptr float* %y, i64 %tmp
+  %scevgep = getelementptr float, float* %y, i64 %tmp
   %scevgep9 = bitcast float* %scevgep to <4 x float>*
-  %scevgep10 = getelementptr float* %x, i64 %tmp
+  %scevgep10 = getelementptr float, float* %x, i64 %tmp
   %scevgep1011 = bitcast float* %scevgep10 to <4 x float>*
   %2 = load <4 x float>* %scevgep1011, align 16
   %3 = bitcast <4 x float> %2 to <4 x i32>

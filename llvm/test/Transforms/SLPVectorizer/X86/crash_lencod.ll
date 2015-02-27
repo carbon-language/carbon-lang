@@ -68,19 +68,19 @@ if.end103:                                        ; preds = %if.else, %if.then88
 define void @intrapred_luma() {
 entry:
   %conv153 = trunc i32 undef to i16
-  %arrayidx154 = getelementptr inbounds [13 x i16]* undef, i64 0, i64 12
+  %arrayidx154 = getelementptr inbounds [13 x i16], [13 x i16]* undef, i64 0, i64 12
   store i16 %conv153, i16* %arrayidx154, align 8
-  %arrayidx155 = getelementptr inbounds [13 x i16]* undef, i64 0, i64 11
+  %arrayidx155 = getelementptr inbounds [13 x i16], [13 x i16]* undef, i64 0, i64 11
   store i16 %conv153, i16* %arrayidx155, align 2
-  %arrayidx156 = getelementptr inbounds [13 x i16]* undef, i64 0, i64 10
+  %arrayidx156 = getelementptr inbounds [13 x i16], [13 x i16]* undef, i64 0, i64 10
   store i16 %conv153, i16* %arrayidx156, align 4
   ret void
 }
 
 define fastcc void @dct36(double* %inbuf) {
 entry:
-  %arrayidx41 = getelementptr inbounds double* %inbuf, i64 2
-  %arrayidx44 = getelementptr inbounds double* %inbuf, i64 1
+  %arrayidx41 = getelementptr inbounds double, double* %inbuf, i64 2
+  %arrayidx44 = getelementptr inbounds double, double* %inbuf, i64 1
   %0 = load double* %arrayidx44, align 8
   %add46 = fadd double %0, undef
   store double %add46, double* %arrayidx41, align 8

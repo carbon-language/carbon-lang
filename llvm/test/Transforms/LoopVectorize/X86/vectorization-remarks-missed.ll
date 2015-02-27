@@ -52,7 +52,7 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr inbounds i32* %A, i64 %indvars.iv, !dbg !16
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv, !dbg !16
   %0 = trunc i64 %indvars.iv to i32, !dbg !16
   store i32 %0, i32* %arrayidx, align 4, !dbg !16, !tbaa !18
   %cmp3 = icmp sle i32 %0, %Length, !dbg !22
@@ -74,7 +74,7 @@ entry:
 
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr inbounds i32* %A, i64 %indvars.iv, !dbg !30
+  %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv, !dbg !30
   %0 = trunc i64 %indvars.iv to i32, !dbg !30
   store i32 %0, i32* %arrayidx, align 4, !dbg !30, !tbaa !18
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1, !dbg !25
@@ -97,12 +97,12 @@ for.body.preheader:                               ; preds = %entry
 
 for.body:                                         ; preds = %for.body.preheader, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %for.body.preheader ]
-  %arrayidx = getelementptr inbounds i32* %B, i64 %indvars.iv, !dbg !35
+  %arrayidx = getelementptr inbounds i32, i32* %B, i64 %indvars.iv, !dbg !35
   %0 = load i32* %arrayidx, align 4, !dbg !35, !tbaa !18
   %idxprom1 = sext i32 %0 to i64, !dbg !35
-  %arrayidx2 = getelementptr inbounds i32* %A, i64 %idxprom1, !dbg !35
+  %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %idxprom1, !dbg !35
   %1 = load i32* %arrayidx2, align 4, !dbg !35, !tbaa !18
-  %arrayidx4 = getelementptr inbounds i32* %A, i64 %indvars.iv, !dbg !35
+  %arrayidx4 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv, !dbg !35
   store i32 %1, i32* %arrayidx4, align 4, !dbg !35, !tbaa !18
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1, !dbg !32
   %lftr.wideiv = trunc i64 %indvars.iv.next to i32, !dbg !32

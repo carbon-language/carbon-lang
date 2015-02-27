@@ -85,7 +85,7 @@ if.then126:                                       ; preds = %if.end123
 
   %0 = tail call i32 @llvm.bswap.i32(i32 %ret.0.copyload.i.i189) #0
   %conv131 = zext i32 %0 to i64
-  %add.ptr132 = getelementptr inbounds i8* undef, i64 %conv131
+  %add.ptr132 = getelementptr inbounds i8, i8* undef, i64 %conv131
   %1 = bitcast i8* %add.ptr132 to %type1*
   br i1 undef, label %if.end150, label %if.end.i173
 
@@ -113,7 +113,7 @@ for.body137:                                      ; preds = %test1b.exit, %for.b
   br i1 undef, label %for.body137.if.end146_crit_edge, label %if.then140
 
 for.body137.if.end146_crit_edge:                  ; preds = %for.body137
-  %incdec.ptr = getelementptr inbounds %type1* %ShndxTable.0309, i64 1
+  %incdec.ptr = getelementptr inbounds %type1, %type1* %ShndxTable.0309, i64 1
   br i1 undef, label %cond.false.i70, label %cond.end.i
 
 if.then140:                                       ; preds = %for.body137

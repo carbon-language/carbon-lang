@@ -18,7 +18,7 @@ define void @test2() {
 ; CHECK: test2
 ; CHECK-NOT: alloca
   %A = alloca {i8, i16}
-  %B = getelementptr {i8, i16}* %A, i32 0, i32 0
+  %B = getelementptr {i8, i16}, {i8, i16}* %A, i32 0, i32 0
   call void @llvm.lifetime.start(i64 2, i8* %B)
   store {i8, i16} zeroinitializer, {i8, i16}* %A
   call void @llvm.lifetime.end(i64 2, i8* %B)

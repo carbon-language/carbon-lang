@@ -18,7 +18,7 @@ define void @vst1lanei8_update(i8** %ptr, <8 x i8>* %B) nounwind {
 	%tmp1 = load <8 x i8>* %B
 	%tmp2 = extractelement <8 x i8> %tmp1, i32 3
 	store i8 %tmp2, i8* %A, align 8
-	%tmp3 = getelementptr i8* %A, i32 1
+	%tmp3 = getelementptr i8, i8* %A, i32 1
 	store i8* %tmp3, i8** %ptr
 	ret void
 }
@@ -90,7 +90,7 @@ define void @vst1laneQi32_update(i32** %ptr, <4 x i32>* %B) nounwind {
 	%tmp1 = load <4 x i32>* %B
 	%tmp2 = extractelement <4 x i32> %tmp1, i32 3
 	store i32 %tmp2, i32* %A, align 8
-	%tmp3 = getelementptr i32* %A, i32 1
+	%tmp3 = getelementptr i32, i32* %A, i32 1
 	store i32* %tmp3, i32** %ptr
 	ret void
 }
@@ -132,7 +132,7 @@ define void @vst2lanei16_update(i16** %ptr, <4 x i16>* %B, i32 %inc) nounwind {
 	%tmp0 = bitcast i16* %A to i8*
 	%tmp1 = load <4 x i16>* %B
 	call void @llvm.arm.neon.vst2lane.v4i16(i8* %tmp0, <4 x i16> %tmp1, <4 x i16> %tmp1, i32 1, i32 2)
-	%tmp2 = getelementptr i16* %A, i32 %inc
+	%tmp2 = getelementptr i16, i16* %A, i32 %inc
 	store i16* %tmp2, i16** %ptr
 	ret void
 }
@@ -256,7 +256,7 @@ define void @vst3laneQi32_update(i32** %ptr, <4 x i32>* %B) nounwind {
 	%tmp0 = bitcast i32* %A to i8*
 	%tmp1 = load <4 x i32>* %B
 	call void @llvm.arm.neon.vst3lane.v4i32(i8* %tmp0, <4 x i32> %tmp1, <4 x i32> %tmp1, <4 x i32> %tmp1, i32 0, i32 1)
-	%tmp2 = getelementptr i32* %A, i32 3
+	%tmp2 = getelementptr i32, i32* %A, i32 3
 	store i32* %tmp2, i32** %ptr
 	ret void
 }
@@ -296,7 +296,7 @@ define void @vst4lanei8_update(i8** %ptr, <8 x i8>* %B) nounwind {
 	%A = load i8** %ptr
 	%tmp1 = load <8 x i8>* %B
 	call void @llvm.arm.neon.vst4lane.v8i8(i8* %A, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, <8 x i8> %tmp1, i32 1, i32 8)
-	%tmp2 = getelementptr i8* %A, i32 4
+	%tmp2 = getelementptr i8, i8* %A, i32 4
 	store i8* %tmp2, i8** %ptr
 	ret void
 }

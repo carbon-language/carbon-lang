@@ -5,7 +5,7 @@ define i8 @test_64bit_add(i16* %a, i64 %b) {
 ; CHECK: lsl [[REG:x[0-9]+]], x1, #1
 ; CHECK: ldrb w0, [x0, [[REG]]]
 ; CHECK: ret
-  %tmp1 = getelementptr inbounds i16* %a, i64 %b
+  %tmp1 = getelementptr inbounds i16, i16* %a, i64 %b
   %tmp2 = load i16* %tmp1
   %tmp3 = trunc i16 %tmp2 to i8
   ret i8 %tmp3
@@ -18,7 +18,7 @@ define void @ldst_8bit(i8* %base, i64 %offset) minsize {
 
    %off32.sext.tmp = shl i64 %offset, 32
    %off32.sext = ashr i64 %off32.sext.tmp, 32
-   %addr8_sxtw = getelementptr i8* %base, i64 %off32.sext
+   %addr8_sxtw = getelementptr i8, i8* %base, i64 %off32.sext
    %val8_sxtw = load volatile i8* %addr8_sxtw
    %val32_signed = sext i8 %val8_sxtw to i32
    store volatile i32 %val32_signed, i32* @var_32bit

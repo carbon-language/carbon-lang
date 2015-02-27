@@ -10,13 +10,13 @@ define i32 @test1() nounwind {
 ; CHECK:        %const = bitcast i32 12345678 to i32
 ; CHECK-NOT:    %base = inttoptr i32 12345678 to %T*
 ; CHECK-NEXT:   %1 = inttoptr i32 %const to %T*
-; CHECK-NEXT:   %addr1 = getelementptr %T* %1, i32 0, i32 1
-; CHECK-NEXT:   %addr2 = getelementptr %T* %1, i32 0, i32 2
-; CHECK-NEXT:   %addr3 = getelementptr %T* %1, i32 0, i32 3
+; CHECK-NEXT:   %addr1 = getelementptr %T, %T* %1, i32 0, i32 1
+; CHECK-NEXT:   %addr2 = getelementptr %T, %T* %1, i32 0, i32 2
+; CHECK-NEXT:   %addr3 = getelementptr %T, %T* %1, i32 0, i32 3
   %base = inttoptr i32 12345678 to %T*
-  %addr1 = getelementptr %T* %base, i32 0, i32 1
-  %addr2 = getelementptr %T* %base, i32 0, i32 2
-  %addr3 = getelementptr %T* %base, i32 0, i32 3
+  %addr1 = getelementptr %T, %T* %base, i32 0, i32 1
+  %addr2 = getelementptr %T, %T* %base, i32 0, i32 2
+  %addr3 = getelementptr %T, %T* %base, i32 0, i32 3
   ret i32 12345678
 }
 

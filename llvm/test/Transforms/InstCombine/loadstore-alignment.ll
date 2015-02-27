@@ -9,7 +9,7 @@ target datalayout = "E-p:64:64:64-p1:64:64:64-p2:32:32:32-a0:0:8-f32:32:32-f64:6
 ; CHECK-LABEL: @static_hem(
 ; CHECK: , align 16
 define <2 x i64> @static_hem() {
-  %t = getelementptr <2 x i64>* @x, i32 7
+  %t = getelementptr <2 x i64>, <2 x i64>* @x, i32 7
   %tmp1 = load <2 x i64>* %t, align 1
   ret <2 x i64> %tmp1
 }
@@ -17,7 +17,7 @@ define <2 x i64> @static_hem() {
 ; CHECK-LABEL: @static_hem_addrspacecast(
 ; CHECK: , align 16
 define <2 x i64> @static_hem_addrspacecast() {
-  %t = getelementptr <2 x i64>* @x, i32 7
+  %t = getelementptr <2 x i64>, <2 x i64>* @x, i32 7
   %t.asc = addrspacecast <2 x i64>* %t to <2 x i64> addrspace(1)*
   %tmp1 = load <2 x i64> addrspace(1)* %t.asc, align 1
   ret <2 x i64> %tmp1
@@ -26,7 +26,7 @@ define <2 x i64> @static_hem_addrspacecast() {
 ; CHECK-LABEL: @static_hem_addrspacecast_smaller_ptr(
 ; CHECK: , align 16
 define <2 x i64> @static_hem_addrspacecast_smaller_ptr() {
-  %t = getelementptr <2 x i64>* @x, i32 7
+  %t = getelementptr <2 x i64>, <2 x i64>* @x, i32 7
   %t.asc = addrspacecast <2 x i64>* %t to <2 x i64> addrspace(2)*
   %tmp1 = load <2 x i64> addrspace(2)* %t.asc, align 1
   ret <2 x i64> %tmp1
@@ -35,7 +35,7 @@ define <2 x i64> @static_hem_addrspacecast_smaller_ptr() {
 ; CHECK-LABEL: @static_hem_addrspacecast_larger_ptr(
 ; CHECK: , align 16
 define <2 x i64> @static_hem_addrspacecast_larger_ptr() {
-  %t = getelementptr <2 x i64> addrspace(2)* @x.as2, i32 7
+  %t = getelementptr <2 x i64>, <2 x i64> addrspace(2)* @x.as2, i32 7
   %t.asc = addrspacecast <2 x i64> addrspace(2)* %t to <2 x i64> addrspace(1)*
   %tmp1 = load <2 x i64> addrspace(1)* %t.asc, align 1
   ret <2 x i64> %tmp1
@@ -44,7 +44,7 @@ define <2 x i64> @static_hem_addrspacecast_larger_ptr() {
 ; CHECK-LABEL: @hem(
 ; CHECK: , align 16
 define <2 x i64> @hem(i32 %i) {
-  %t = getelementptr <2 x i64>* @x, i32 %i
+  %t = getelementptr <2 x i64>, <2 x i64>* @x, i32 %i
   %tmp1 = load <2 x i64>* %t, align 1
   ret <2 x i64> %tmp1
 }
@@ -52,7 +52,7 @@ define <2 x i64> @hem(i32 %i) {
 ; CHECK-LABEL: @hem_2d(
 ; CHECK: , align 16
 define <2 x i64> @hem_2d(i32 %i, i32 %j) {
-  %t = getelementptr [13 x <2 x i64>]* @xx, i32 %i, i32 %j
+  %t = getelementptr [13 x <2 x i64>], [13 x <2 x i64>]* @xx, i32 %i, i32 %j
   %tmp1 = load <2 x i64>* %t, align 1
   ret <2 x i64> %tmp1
 }
@@ -77,7 +77,7 @@ define <2 x i64> @bar() {
 ; CHECK-LABEL: @static_hem_store(
 ; CHECK: , align 16
 define void @static_hem_store(<2 x i64> %y) {
-  %t = getelementptr <2 x i64>* @x, i32 7
+  %t = getelementptr <2 x i64>, <2 x i64>* @x, i32 7
   store <2 x i64> %y, <2 x i64>* %t, align 1
   ret void
 }
@@ -85,7 +85,7 @@ define void @static_hem_store(<2 x i64> %y) {
 ; CHECK-LABEL: @hem_store(
 ; CHECK: , align 16
 define void @hem_store(i32 %i, <2 x i64> %y) {
-  %t = getelementptr <2 x i64>* @x, i32 %i
+  %t = getelementptr <2 x i64>, <2 x i64>* @x, i32 %i
   store <2 x i64> %y, <2 x i64>* %t, align 1
   ret void
 }
@@ -93,7 +93,7 @@ define void @hem_store(i32 %i, <2 x i64> %y) {
 ; CHECK-LABEL: @hem_2d_store(
 ; CHECK: , align 16
 define void @hem_2d_store(i32 %i, i32 %j, <2 x i64> %y) {
-  %t = getelementptr [13 x <2 x i64>]* @xx, i32 %i, i32 %j
+  %t = getelementptr [13 x <2 x i64>], [13 x <2 x i64>]* @xx, i32 %i, i32 %j
   store <2 x i64> %y, <2 x i64>* %t, align 1
   ret void
 }

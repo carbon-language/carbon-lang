@@ -14,7 +14,7 @@ target datalayout = "e-p:64:64:64-p1:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:32:32-
 ;CHECK: ret i32
 define i32 @sum_array(i32* %A, i32 %n) nounwind uwtable readonly noinline ssp {
   %1 = sext i32 %n to i64
-  %2 = getelementptr inbounds i32* %A, i64 %1
+  %2 = getelementptr inbounds i32, i32* %A, i64 %1
   %3 = icmp eq i32 %n, 0
   br i1 %3, label %_ZSt10accumulateIPiiET0_T_S2_S1_.exit, label %.lr.ph.i
 
@@ -23,7 +23,7 @@ define i32 @sum_array(i32* %A, i32 %n) nounwind uwtable readonly noinline ssp {
   %.012.i = phi i32 [ %5, %.lr.ph.i ], [ 0, %0 ]
   %4 = load i32* %.03.i, align 4
   %5 = add nsw i32 %4, %.012.i
-  %6 = getelementptr inbounds i32* %.03.i, i64 1
+  %6 = getelementptr inbounds i32, i32* %.03.i, i64 1
   %7 = icmp eq i32* %6, %2
   br i1 %7, label %_ZSt10accumulateIPiiET0_T_S2_S1_.exit, label %.lr.ph.i
 
@@ -41,7 +41,7 @@ _ZSt10accumulateIPiiET0_T_S2_S1_.exit:            ; preds = %.lr.ph.i, %0
 ;CHECK: ret i32
 define i32 @sum_array_as1(i32 addrspace(1)* %A, i32 %n) nounwind uwtable readonly noinline ssp {
   %1 = sext i32 %n to i64
-  %2 = getelementptr inbounds i32 addrspace(1)* %A, i64 %1
+  %2 = getelementptr inbounds i32, i32 addrspace(1)* %A, i64 %1
   %3 = icmp eq i32 %n, 0
   br i1 %3, label %_ZSt10accumulateIPiiET0_T_S2_S1_.exit, label %.lr.ph.i
 
@@ -50,7 +50,7 @@ define i32 @sum_array_as1(i32 addrspace(1)* %A, i32 %n) nounwind uwtable readonl
   %.012.i = phi i32 [ %5, %.lr.ph.i ], [ 0, %0 ]
   %4 = load i32 addrspace(1)* %.03.i, align 4
   %5 = add nsw i32 %4, %.012.i
-  %6 = getelementptr inbounds i32 addrspace(1)* %.03.i, i64 1
+  %6 = getelementptr inbounds i32, i32 addrspace(1)* %.03.i, i64 1
   %7 = icmp eq i32 addrspace(1)* %6, %2
   br i1 %7, label %_ZSt10accumulateIPiiET0_T_S2_S1_.exit, label %.lr.ph.i
 

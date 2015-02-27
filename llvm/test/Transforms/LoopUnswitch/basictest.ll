@@ -6,7 +6,7 @@ entry:
 no_exit:		; preds = %no_exit.backedge, %entry
 	%i.0.0 = phi i32 [ 0, %entry ], [ %i.0.0.be, %no_exit.backedge ]		; <i32> [#uses=3]
 	%gep.upgrd.1 = zext i32 %i.0.0 to i64		; <i64> [#uses=1]
-	%tmp.7 = getelementptr i32* %A, i64 %gep.upgrd.1		; <i32*> [#uses=4]
+	%tmp.7 = getelementptr i32, i32* %A, i64 %gep.upgrd.1		; <i32*> [#uses=4]
 	%tmp.13 = load i32* %tmp.7		; <i32> [#uses=2]
 	%tmp.14 = add i32 %tmp.13, 1		; <i32> [#uses=1]
 	store i32 %tmp.14, i32* %tmp.7

@@ -36,24 +36,24 @@ entry:
   %cmp = icmp eq i16 %0, %1
   br i1 %cmp, label %if.end, label %return, !prof !988
 if.end:
-  %priority = getelementptr inbounds %struct.Connector_struct* %a, i64 0, i32 2
+  %priority = getelementptr inbounds %struct.Connector_struct, %struct.Connector_struct* %a, i64 0, i32 2
   %2 = load i8* %priority, align 1
-  %priority5 = getelementptr inbounds %struct.Connector_struct* %b, i64 0, i32 2
+  %priority5 = getelementptr inbounds %struct.Connector_struct, %struct.Connector_struct* %b, i64 0, i32 2
   %3 = load i8* %priority5, align 1
-  %string = getelementptr inbounds %struct.Connector_struct* %a, i64 0, i32 5
+  %string = getelementptr inbounds %struct.Connector_struct, %struct.Connector_struct* %a, i64 0, i32 5
   %4 = load i8** %string, align 8
-  %string7 = getelementptr inbounds %struct.Connector_struct* %b, i64 0, i32 5
+  %string7 = getelementptr inbounds %struct.Connector_struct, %struct.Connector_struct* %b, i64 0, i32 5
   %5 = load i8** %string7, align 8
   br label %while.cond
 while.cond:
   %lsr.iv27 = phi i64 [ %lsr.iv.next28, %if.end17 ], [ 0, %if.end ]
-  %scevgep55 = getelementptr i8* %4, i64 %lsr.iv27
+  %scevgep55 = getelementptr i8, i8* %4, i64 %lsr.iv27
   %6 = load i8* %scevgep55, align 1
   %idxprom.i.i = sext i8 %6 to i64
   %isascii.i.i224 = icmp sgt i8 %6, -1
   br i1 %isascii.i.i224, label %cond.true.i.i, label %cond.false.i.i, !prof !181
 cond.true.i.i:
-  %arrayidx.i.i = getelementptr inbounds %struct._RuneLocale* @_DefaultRuneLocale, i64 0, i32 5, i64 %idxprom.i.i
+  %arrayidx.i.i = getelementptr inbounds %struct._RuneLocale, %struct._RuneLocale* @_DefaultRuneLocale, i64 0, i32 5, i64 %idxprom.i.i
   %7 = load i32* %arrayidx.i.i, align 4
   %and.i.i = and i32 %7, 32768
   br label %isupper.exit
@@ -75,7 +75,7 @@ lor.rhs:
   %isascii.i.i213225 = icmp sgt i8 %9, -1
   br i1 %isascii.i.i213225, label %cond.true.i.i217, label %cond.false.i.i219, !prof !181
 cond.true.i.i217:
-  %arrayidx.i.i215 = getelementptr inbounds %struct._RuneLocale* @_DefaultRuneLocale, i64 0, i32 5, i64 %idxprom.i.i214
+  %arrayidx.i.i215 = getelementptr inbounds %struct._RuneLocale, %struct._RuneLocale* @_DefaultRuneLocale, i64 0, i32 5, i64 %idxprom.i.i214
   %10 = load i32* %arrayidx.i.i215, align 4
   %and.i.i216 = and i32 %10, 32768
   br label %isupper.exit223
@@ -134,17 +134,17 @@ land.lhs.true35:
 land.lhs.true43:
   %20 = ptrtoint i8* %16 to i64
   %21 = sub i64 0, %20
-  %scevgep52 = getelementptr i8* %4, i64 %21
-  %scevgep53 = getelementptr i8* %scevgep52, i64 %lsr.iv27
-  %scevgep54 = getelementptr i8* %scevgep53, i64 -1
+  %scevgep52 = getelementptr i8, i8* %4, i64 %21
+  %scevgep53 = getelementptr i8, i8* %scevgep52, i64 %lsr.iv27
+  %scevgep54 = getelementptr i8, i8* %scevgep53, i64 -1
   %cmp45 = icmp eq i8* %scevgep54, null
   br i1 %cmp45, label %return, label %lor.lhs.false47, !prof !996
 lor.lhs.false47:
   %22 = ptrtoint i8* %16 to i64
   %23 = sub i64 0, %22
-  %scevgep47 = getelementptr i8* %4, i64 %23
-  %scevgep48 = getelementptr i8* %scevgep47, i64 %lsr.iv27
-  %scevgep49 = getelementptr i8* %scevgep48, i64 -2
+  %scevgep47 = getelementptr i8, i8* %4, i64 %23
+  %scevgep48 = getelementptr i8, i8* %scevgep47, i64 %lsr.iv27
+  %scevgep49 = getelementptr i8, i8* %scevgep48, i64 -2
   %cmp50 = icmp eq i8* %scevgep49, null
   br i1 %cmp50, label %land.lhs.true52, label %while.cond59.preheader, !prof !997
 land.lhs.true52:
@@ -161,13 +161,13 @@ while.cond59.preheader:
   %cmp61233.old = icmp eq i8 %18, 0
   br i1 %cmp61233.old, label %return, label %land.rhs.preheader, !prof !999
 land.rhs.preheader:
-  %scevgep33 = getelementptr i8* %5, i64 %lsr.iv27
-  %scevgep43 = getelementptr i8* %4, i64 %lsr.iv27
+  %scevgep33 = getelementptr i8, i8* %5, i64 %lsr.iv27
+  %scevgep43 = getelementptr i8, i8* %4, i64 %lsr.iv27
   br label %land.rhs
 land.rhs:
   %lsr.iv = phi i64 [ 0, %land.rhs.preheader ], [ %lsr.iv.next, %if.then83 ]
   %25 = phi i8 [ %27, %if.then83 ], [ %18, %land.rhs.preheader ]
-  %scevgep34 = getelementptr i8* %scevgep33, i64 %lsr.iv
+  %scevgep34 = getelementptr i8, i8* %scevgep33, i64 %lsr.iv
   %26 = load i8* %scevgep34, align 1
   %cmp64 = icmp eq i8 %26, 0
   br i1 %cmp64, label %return, label %while.body66, !prof !1000
@@ -182,8 +182,8 @@ lor.lhs.false74:
   %or.cond208 = or i1 %cmp77, %cmp81
   br i1 %or.cond208, label %return, label %if.then83, !prof !1002
 if.then83:
-  %scevgep44 = getelementptr i8* %scevgep43, i64 %lsr.iv
-  %scevgep45 = getelementptr i8* %scevgep44, i64 1
+  %scevgep44 = getelementptr i8, i8* %scevgep43, i64 %lsr.iv
+  %scevgep45 = getelementptr i8, i8* %scevgep44, i64 1
   %27 = load i8* %scevgep45, align 1
   %cmp61 = icmp eq i8 %27, 0
   %lsr.iv.next = add i64 %lsr.iv, 1
@@ -201,13 +201,13 @@ while.cond95.preheader:
   %cmp97238 = icmp eq i8 %28, 0
   br i1 %cmp97238, label %return, label %land.rhs99.preheader, !prof !1004
 land.rhs99.preheader:
-  %scevgep31 = getelementptr i8* %5, i64 %lsr.iv27
-  %scevgep40 = getelementptr i8* %4, i64 %lsr.iv27
+  %scevgep31 = getelementptr i8, i8* %5, i64 %lsr.iv27
+  %scevgep40 = getelementptr i8, i8* %4, i64 %lsr.iv27
   br label %land.rhs99
 land.rhs99:
   %lsr.iv17 = phi i64 [ 0, %land.rhs99.preheader ], [ %lsr.iv.next18, %if.then117 ]
   %29 = phi i8 [ %31, %if.then117 ], [ %28, %land.rhs99.preheader ]
-  %scevgep32 = getelementptr i8* %scevgep31, i64 %lsr.iv17
+  %scevgep32 = getelementptr i8, i8* %scevgep31, i64 %lsr.iv17
   %30 = load i8* %scevgep32, align 1
   %cmp101 = icmp eq i8 %30, 0
   br i1 %cmp101, label %return, label %while.body104, !prof !1005
@@ -219,8 +219,8 @@ while.body104:
   %or.cond210 = or i1 %or.cond209, %cmp115
   br i1 %or.cond210, label %if.then117, label %return, !prof !1006
 if.then117:
-  %scevgep41 = getelementptr i8* %scevgep40, i64 %lsr.iv17
-  %scevgep42 = getelementptr i8* %scevgep41, i64 1
+  %scevgep41 = getelementptr i8, i8* %scevgep40, i64 %lsr.iv17
+  %scevgep42 = getelementptr i8, i8* %scevgep41, i64 1
   %31 = load i8* %scevgep42, align 1
   %cmp97 = icmp eq i8 %31, 0
   %lsr.iv.next18 = add i64 %lsr.iv17, 1
@@ -238,13 +238,13 @@ while.cond130.preheader:
   %cmp132244 = icmp eq i8 %32, 0
   br i1 %cmp132244, label %return, label %land.rhs134.preheader, !prof !1008
 land.rhs134.preheader:
-  %scevgep29 = getelementptr i8* %5, i64 %lsr.iv27
-  %scevgep37 = getelementptr i8* %4, i64 %lsr.iv27
+  %scevgep29 = getelementptr i8, i8* %5, i64 %lsr.iv27
+  %scevgep37 = getelementptr i8, i8* %4, i64 %lsr.iv27
   br label %land.rhs134
 land.rhs134:
   %lsr.iv22 = phi i64 [ 0, %land.rhs134.preheader ], [ %lsr.iv.next23, %if.then152 ]
   %33 = phi i8 [ %35, %if.then152 ], [ %32, %land.rhs134.preheader ]
-  %scevgep30 = getelementptr i8* %scevgep29, i64 %lsr.iv22
+  %scevgep30 = getelementptr i8, i8* %scevgep29, i64 %lsr.iv22
   %34 = load i8* %scevgep30, align 1
   %cmp136 = icmp eq i8 %34, 0
   br i1 %cmp136, label %return, label %while.body139, !prof !1009
@@ -256,8 +256,8 @@ while.body139:
   %or.cond212 = or i1 %or.cond211, %cmp150
   br i1 %or.cond212, label %if.then152, label %return, !prof !1010
 if.then152:
-  %scevgep38 = getelementptr i8* %scevgep37, i64 %lsr.iv22
-  %scevgep39 = getelementptr i8* %scevgep38, i64 1
+  %scevgep38 = getelementptr i8, i8* %scevgep37, i64 %lsr.iv22
+  %scevgep39 = getelementptr i8, i8* %scevgep38, i64 1
   %35 = load i8* %scevgep39, align 1
   %cmp132 = icmp eq i8 %35, 0
   %lsr.iv.next23 = add i64 %lsr.iv22, 1

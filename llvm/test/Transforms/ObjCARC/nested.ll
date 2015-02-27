@@ -43,10 +43,10 @@ entry:
   br i1 %iszero, label %forcoll.empty, label %forcoll.loopinit
 
 forcoll.loopinit:
-  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
+  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
   %mutationsptr = load i64** %mutationsptr.ptr, align 8
   %forcoll.initial-mutations = load i64* %mutationsptr, align 8
-  %stateitems.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 1
+  %stateitems.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 1
   br label %forcoll.loopbody.outer
 
 forcoll.loopbody.outer:
@@ -68,7 +68,7 @@ forcoll.mutated:
 
 forcoll.notmutated:
   %stateitems = load i8*** %stateitems.ptr, align 8
-  %currentitem.ptr = getelementptr i8** %stateitems, i64 %forcoll.index
+  %currentitem.ptr = getelementptr i8*, i8** %stateitems, i64 %forcoll.index
   %3 = load i8** %currentitem.ptr, align 8
   call void @use(i8* %3)
   %4 = add i64 %forcoll.index, 1
@@ -108,10 +108,10 @@ entry:
   br i1 %iszero, label %forcoll.empty, label %forcoll.loopinit
 
 forcoll.loopinit:
-  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
+  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
   %mutationsptr = load i64** %mutationsptr.ptr, align 8
   %forcoll.initial-mutations = load i64* %mutationsptr, align 8
-  %stateitems.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 1
+  %stateitems.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 1
   br label %forcoll.loopbody.outer
 
 forcoll.loopbody.outer:
@@ -133,7 +133,7 @@ forcoll.mutated:
 
 forcoll.notmutated:
   %stateitems = load i8*** %stateitems.ptr, align 8
-  %currentitem.ptr = getelementptr i8** %stateitems, i64 %forcoll.index
+  %currentitem.ptr = getelementptr i8*, i8** %stateitems, i64 %forcoll.index
   %3 = load i8** %currentitem.ptr, align 8
   call void @use(i8* %3)
   %4 = add i64 %forcoll.index, 1
@@ -173,10 +173,10 @@ entry:
   br i1 %iszero, label %forcoll.empty, label %forcoll.loopinit
 
 forcoll.loopinit:
-  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
+  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
   %mutationsptr = load i64** %mutationsptr.ptr, align 8
   %forcoll.initial-mutations = load i64* %mutationsptr, align 8
-  %stateitems.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 1
+  %stateitems.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 1
   br label %forcoll.loopbody.outer
 
 forcoll.loopbody.outer:
@@ -198,7 +198,7 @@ forcoll.mutated:
 
 forcoll.notmutated:
   %stateitems = load i8*** %stateitems.ptr, align 8
-  %currentitem.ptr = getelementptr i8** %stateitems, i64 %forcoll.index
+  %currentitem.ptr = getelementptr i8*, i8** %stateitems, i64 %forcoll.index
   %3 = load i8** %currentitem.ptr, align 8
   call void @use(i8* %3)
   %4 = add i64 %forcoll.index, 1
@@ -239,10 +239,10 @@ entry:
   br i1 %iszero, label %forcoll.empty, label %forcoll.loopinit
 
 forcoll.loopinit:
-  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
+  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
   %mutationsptr = load i64** %mutationsptr.ptr, align 8
   %forcoll.initial-mutations = load i64* %mutationsptr, align 8
-  %stateitems.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 1
+  %stateitems.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 1
   br label %forcoll.loopbody.outer
 
 forcoll.loopbody.outer:
@@ -264,7 +264,7 @@ forcoll.mutated:
 
 forcoll.notmutated:
   %stateitems = load i8*** %stateitems.ptr, align 8
-  %currentitem.ptr = getelementptr i8** %stateitems, i64 %forcoll.index
+  %currentitem.ptr = getelementptr i8*, i8** %stateitems, i64 %forcoll.index
   %3 = load i8** %currentitem.ptr, align 8
   call void @use(i8* %3)
   %4 = add i64 %forcoll.index, 1
@@ -306,10 +306,10 @@ entry:
   br i1 %iszero, label %forcoll.empty, label %forcoll.loopinit
 
 forcoll.loopinit:
-  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
+  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
   %mutationsptr = load i64** %mutationsptr.ptr, align 8
   %forcoll.initial-mutations = load i64* %mutationsptr, align 8
-  %stateitems.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 1
+  %stateitems.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 1
   br label %forcoll.loopbody.outer
 
 forcoll.loopbody.outer:
@@ -331,7 +331,7 @@ forcoll.mutated:
 
 forcoll.notmutated:
   %stateitems = load i8*** %stateitems.ptr, align 8
-  %currentitem.ptr = getelementptr i8** %stateitems, i64 %forcoll.index
+  %currentitem.ptr = getelementptr i8*, i8** %stateitems, i64 %forcoll.index
   %3 = load i8** %currentitem.ptr, align 8
   call void @use(i8* %3)
   %4 = add i64 %forcoll.index, 1
@@ -375,10 +375,10 @@ entry:
   br i1 %iszero, label %forcoll.empty, label %forcoll.loopinit
 
 forcoll.loopinit:
-  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
+  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
   %mutationsptr = load i64** %mutationsptr.ptr, align 8
   %forcoll.initial-mutations = load i64* %mutationsptr, align 8
-  %stateitems.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 1
+  %stateitems.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 1
   br label %forcoll.loopbody.outer
 
 forcoll.loopbody.outer:
@@ -400,7 +400,7 @@ forcoll.mutated:
 
 forcoll.notmutated:
   %stateitems = load i8*** %stateitems.ptr, align 8
-  %currentitem.ptr = getelementptr i8** %stateitems, i64 %forcoll.index
+  %currentitem.ptr = getelementptr i8*, i8** %stateitems, i64 %forcoll.index
   %3 = load i8** %currentitem.ptr, align 8
   call void @use(i8* %3)
   %4 = add i64 %forcoll.index, 1
@@ -441,10 +441,10 @@ entry:
   br i1 %iszero, label %forcoll.empty, label %forcoll.loopinit
 
 forcoll.loopinit:
-  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
+  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
   %mutationsptr = load i64** %mutationsptr.ptr, align 8
   %forcoll.initial-mutations = load i64* %mutationsptr, align 8
-  %stateitems.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 1
+  %stateitems.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 1
   br label %forcoll.loopbody.outer
 
 forcoll.loopbody.outer:
@@ -466,7 +466,7 @@ forcoll.mutated:
 
 forcoll.notmutated:
   %stateitems = load i8*** %stateitems.ptr, align 8
-  %currentitem.ptr = getelementptr i8** %stateitems, i64 %forcoll.index
+  %currentitem.ptr = getelementptr i8*, i8** %stateitems, i64 %forcoll.index
   %3 = load i8** %currentitem.ptr, align 8
   %tobool = icmp eq i8* %3, null
   br i1 %tobool, label %forcoll.next, label %if.then
@@ -518,7 +518,7 @@ entry:
   br i1 %iszero, label %forcoll.empty, label %forcoll.loopinit
 
 forcoll.loopinit:
-  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
+  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
   %mutationsptr = load i64** %mutationsptr.ptr, align 8
   %forcoll.initial-mutations = load i64* %mutationsptr, align 8
   br label %forcoll.loopbody.outer
@@ -585,7 +585,7 @@ entry:
   br i1 %iszero, label %forcoll.empty, label %forcoll.loopinit
 
 forcoll.loopinit:
-  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
+  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
   %mutationsptr = load i64** %mutationsptr.ptr, align 8
   %forcoll.initial-mutations = load i64* %mutationsptr, align 8
   br label %forcoll.loopbody.outer
@@ -652,7 +652,7 @@ entry:
   br i1 %iszero, label %forcoll.empty, label %forcoll.loopinit
 
 forcoll.loopinit:
-  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
+  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
   %mutationsptr = load i64** %mutationsptr.ptr, align 8
   %forcoll.initial-mutations = load i64* %mutationsptr, align 8
   br label %forcoll.loopbody.outer
@@ -720,7 +720,7 @@ entry:
   br i1 %iszero, label %forcoll.empty, label %forcoll.loopinit
 
 forcoll.loopinit:
-  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
+  %mutationsptr.ptr = getelementptr inbounds %struct.__objcFastEnumerationState, %struct.__objcFastEnumerationState* %state.ptr, i64 0, i32 2
   %mutationsptr = load i64** %mutationsptr.ptr, align 8
   %forcoll.initial-mutations = load i64* %mutationsptr, align 8
   br label %forcoll.loopbody.outer
@@ -779,16 +779,16 @@ entry:
   %block = alloca <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, align 8
   %block9 = alloca <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, align 8
   %call = call i8* @def(), !clang.arc.no_objc_arc_exceptions !0
-  %foo = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 5
-  %block.isa = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 0
+  %foo = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 5
+  %block.isa = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 0
   store i8* bitcast (i8** @_NSConcreteStackBlock to i8*), i8** %block.isa, align 8
-  %block.flags = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 1
+  %block.flags = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 1
   store i32 1107296256, i32* %block.flags, align 8
-  %block.reserved = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 2
+  %block.reserved = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 2
   store i32 0, i32* %block.reserved, align 4
-  %block.invoke = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 3
+  %block.invoke = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 3
   store i8* bitcast (void (i8*)* @__crasher_block_invoke to i8*), i8** %block.invoke, align 8
-  %block.d = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 4
+  %block.d = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block, i64 0, i32 4
   store %struct.__block_d* bitcast ({ i64, i64, i8*, i8*, i8*, i8* }* @__block_d_tmp to %struct.__block_d*), %struct.__block_d** %block.d, align 8
   %foo2 = tail call i8* @objc_retain(i8* %call) nounwind
   store i8* %foo2, i8** %foo, align 8
@@ -798,16 +798,16 @@ entry:
   call void @objc_release(i8* %foo5) nounwind
   %strongdestroy = load i8** %foo, align 8
   call void @objc_release(i8* %strongdestroy) nounwind, !clang.imprecise_release !0
-  %foo10 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 5
-  %block.isa11 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 0
+  %foo10 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 5
+  %block.isa11 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 0
   store i8* bitcast (i8** @_NSConcreteStackBlock to i8*), i8** %block.isa11, align 8
-  %block.flags12 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 1
+  %block.flags12 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 1
   store i32 1107296256, i32* %block.flags12, align 8
-  %block.reserved13 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 2
+  %block.reserved13 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 2
   store i32 0, i32* %block.reserved13, align 4
-  %block.invoke14 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 3
+  %block.invoke14 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 3
   store i8* bitcast (void (i8*)* @__crasher_block_invoke1 to i8*), i8** %block.invoke14, align 8
-  %block.d15 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 4
+  %block.d15 = getelementptr inbounds <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>, <{ i8*, i32, i32, i8*, %struct.__block_d*, i8* }>* %block9, i64 0, i32 4
   store %struct.__block_d* bitcast ({ i64, i64, i8*, i8*, i8*, i8* }* @__block_d_tmp5 to %struct.__block_d*), %struct.__block_d** %block.d15, align 8
   %foo18 = call i8* @objc_retain(i8* %call) nounwind
   store i8* %call, i8** %foo10, align 8

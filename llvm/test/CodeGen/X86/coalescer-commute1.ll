@@ -12,7 +12,7 @@ entry:
 bb:		; preds = %bb, %entry
 	%neuron.0 = phi i32 [ 0, %entry ], [ %indvar.next, %bb ]		; <i32> [#uses=2]
 	%thesum.0 = phi float [ 0.000000e+00, %entry ], [ %tmp6, %bb ]		; <float> [#uses=1]
-	%tmp2 = getelementptr i32* %source, i32 %neuron.0		; <i32*> [#uses=1]
+	%tmp2 = getelementptr i32, i32* %source, i32 %neuron.0		; <i32*> [#uses=1]
 	%tmp3 = load i32* %tmp2, align 4		; <i32> [#uses=1]
 	%tmp34 = sitofp i32 %tmp3 to float		; <float> [#uses=1]
 	%tmp6 = fadd float %tmp34, %thesum.0		; <float> [#uses=2]

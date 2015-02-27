@@ -11,8 +11,8 @@ entry:
 ; CHECK: movl    $8, %eax
 ; CHECK: calll   __chkstk
 ; CHECK: movl   %[[REG:[^,]*]], %esp
-  %f1 = getelementptr %Foo* %b, i32 0, i32 0
-  %f2 = getelementptr %Foo* %b, i32 0, i32 1
+  %f1 = getelementptr %Foo, %Foo* %b, i32 0, i32 0
+  %f2 = getelementptr %Foo, %Foo* %b, i32 0, i32 1
   store i32 13, i32* %f1
   store i32 42, i32* %f2
 ; CHECK: movl    $13, (%[[REG]])
@@ -31,8 +31,8 @@ entry:
 ; CHECK: movl    $8, %eax
 ; CHECK: calll   __chkstk
 ; CHECK: movl   %[[REG:[^,]*]], %esp
-  %f1 = getelementptr %Foo* %b, i32 0, i32 0
-  %f2 = getelementptr %Foo* %b, i32 0, i32 1
+  %f1 = getelementptr %Foo, %Foo* %b, i32 0, i32 0
+  %f2 = getelementptr %Foo, %Foo* %b, i32 0, i32 1
   store i32 13, i32* %f1
   store i32 42, i32* %f2
 ; CHECK: movl    $13, (%[[REG]])
@@ -52,8 +52,8 @@ entry:
 ; CHECK: movl    $8, %eax
 ; CHECK: calll   __chkstk
 ; CHECK: movl   %[[REG:[^,]*]], %esp
-  %f1 = getelementptr %Foo* %b, i32 0, i32 0
-  %f2 = getelementptr %Foo* %b, i32 0, i32 1
+  %f1 = getelementptr %Foo, %Foo* %b, i32 0, i32 0
+  %f2 = getelementptr %Foo, %Foo* %b, i32 0, i32 1
   store i32 13, i32* %f1
   store i32 42, i32* %f2
 ; CHECK-DAG: movl    $13, (%[[REG]])

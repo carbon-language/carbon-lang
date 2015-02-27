@@ -18,7 +18,7 @@ for.body:                                         ; preds = %entry, %for.body
   %i.01 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
   ; The real loop.
   %mul = mul nsw i32 %B, %C
-  %arrayidx = getelementptr inbounds i32* %A, i32 %i.01
+  %arrayidx = getelementptr inbounds i32, i32* %A, i32 %i.01
   store i32 %mul, i32* %arrayidx, align 4
   %inc = add nsw i32 %i.01, 1
   %exitcond = icmp ne i32 %inc, 4

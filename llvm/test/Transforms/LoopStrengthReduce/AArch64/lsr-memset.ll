@@ -38,7 +38,7 @@ land.rhs:                                         ; preds = %while.cond
   br i1 %cmp5, label %if.end9, label %while.body
 
 while.body:                                       ; preds = %land.rhs
-  %incdec.ptr = getelementptr inbounds i8* %ptr.0, i64 1
+  %incdec.ptr = getelementptr inbounds i8, i8* %ptr.0, i64 1
   store i8 %conv, i8* %ptr.0, align 1, !tbaa !0
   %dec = add i64 %len.addr.0, -1
   br label %while.cond
@@ -67,7 +67,7 @@ if.end9:                                          ; preds = %land.rhs
 while.body18:                                     ; preds = %if.end9, %while.body18
   %wideptr.038 = phi i64* [ %incdec.ptr19, %while.body18 ], [ %9, %if.end9 ]
   %len.addr.137 = phi i64 [ %sub, %while.body18 ], [ %len.addr.0, %if.end9 ]
-  %incdec.ptr19 = getelementptr inbounds i64* %wideptr.038, i64 1
+  %incdec.ptr19 = getelementptr inbounds i64, i64* %wideptr.038, i64 1
   store i64 %ins, i64* %wideptr.038, align 8, !tbaa !2
   %sub = add i64 %len.addr.137, -8
   %cmp16 = icmp ugt i64 %sub, 7
@@ -87,7 +87,7 @@ while.body29:                                     ; preds = %while.body29, %whil
   %len.addr.235 = phi i64 [ %len.addr.1.lcssa49, %while.body29.lr.ph ], [ %dec26, %while.body29 ]
   %ptr.134 = phi i8* [ %10, %while.body29.lr.ph ], [ %incdec.ptr31, %while.body29 ]
   %dec26 = add i64 %len.addr.235, -1
-  %incdec.ptr31 = getelementptr inbounds i8* %ptr.134, i64 1
+  %incdec.ptr31 = getelementptr inbounds i8, i8* %ptr.134, i64 1
   store i8 %conv, i8* %ptr.134, align 1, !tbaa !0
   %cmp27 = icmp eq i64 %dec26, 0
   br i1 %cmp27, label %done, label %while.body29

@@ -32,7 +32,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %sum.05 = phi i32 [ %add, %for.body ], [ 0, %entry ]
-  %x = getelementptr inbounds %struct.coordinate* %A, i64 %indvars.iv, i32 0
+  %x = getelementptr inbounds %struct.coordinate, %struct.coordinate* %A, i64 %indvars.iv, i32 0
   %0 = load i32* %x, align 4
   %add = add nsw i32 %0, %sum.05
   %indvars.iv.next = add i64 %indvars.iv, 1
@@ -74,7 +74,7 @@ entry:
 for.body:                                         ; preds = %entry, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
   %sum.05 = phi i32 [ %add, %for.body ], [ 0, %entry ]
-  %x = getelementptr inbounds %struct.lit* %A, i64 %indvars.iv, i32 0
+  %x = getelementptr inbounds %struct.lit, %struct.lit* %A, i64 %indvars.iv, i32 0
   %0 = load i32* %x, align 4
   %add = add nsw i32 %0, %sum.05
   %indvars.iv.next = add i64 %indvars.iv, 1

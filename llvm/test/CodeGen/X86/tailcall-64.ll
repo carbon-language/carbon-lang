@@ -165,7 +165,7 @@ declare %struct.B* @testu()
 define %struct.A* @test_upcast() {
 entry:
   %A = tail call %struct.B* @testu()
-  %x = getelementptr inbounds %struct.B* %A, i32 0, i32 0
+  %x = getelementptr inbounds %struct.B, %struct.B* %A, i32 0, i32 0
   ret %struct.A* %x
 }
 
@@ -187,7 +187,7 @@ define { i64, i64 } @crash(i8* %this) {
 @func_table = external global [0 x %struct.funcs]
 define void @fold_indexed_load(i8* %mbstr, i64 %idxprom) nounwind uwtable ssp {
 entry:
-  %dsplen = getelementptr inbounds [0 x %struct.funcs]* @func_table, i64 0, i64 %idxprom, i32 2
+  %dsplen = getelementptr inbounds [0 x %struct.funcs], [0 x %struct.funcs]* @func_table, i64 0, i64 %idxprom, i32 2
   %x1 = load i32 (i8*)** %dsplen, align 8
   %call = tail call i32 %x1(i8* %mbstr) nounwind
   ret void
@@ -213,7 +213,7 @@ entry:
 define i32 @rdar12282281(i32 %n) nounwind uwtable ssp {
 entry:
   %idxprom = sext i32 %n to i64
-  %arrayidx = getelementptr inbounds [0 x i32 (i8*, ...)*]* @funcs, i64 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [0 x i32 (i8*, ...)*], [0 x i32 (i8*, ...)*]* @funcs, i64 0, i64 %idxprom
   %0 = load i32 (i8*, ...)** %arrayidx, align 8
   %call = tail call i32 (i8*, ...)* %0(i8* null, i32 0, i32 0, i32 0, i32 0, i32 0) nounwind
   ret i32 %call

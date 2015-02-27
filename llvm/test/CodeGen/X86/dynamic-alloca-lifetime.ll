@@ -29,10 +29,10 @@ end1:
   ret void
 
 if.else130:                                       ; preds = %bb1
-  %tmp = getelementptr inbounds [8192 x i8]* %bitmapBuffer, i32 0, i32 0
+  %tmp = getelementptr inbounds [8192 x i8], [8192 x i8]* %bitmapBuffer, i32 0, i32 0
   call void @llvm.lifetime.start(i64 8192, i8* %tmp) #0
   call void @llvm.lifetime.end(i64 8192, i8* %tmp) #0
-  %tmp25 = getelementptr inbounds [8192 x i8]* %bitmapBuffer229, i32 0, i32 0
+  %tmp25 = getelementptr inbounds [8192 x i8], [8192 x i8]* %bitmapBuffer229, i32 0, i32 0
   call void @llvm.lifetime.start(i64 8192, i8* %tmp25) #0
   call void @llvm.lifetime.end(i64 8192, i8* %tmp25) #0
   br label %end1

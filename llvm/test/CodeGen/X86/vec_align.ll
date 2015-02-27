@@ -16,10 +16,10 @@ define %f4 @test1(float %W, float %X, float %Y, float %Z) nounwind {
 }
 
 define %f4 @test2() nounwind {
-	%Wp = getelementptr { float,float,float,float}* @G, i32 0, i32 0
-	%Xp = getelementptr { float,float,float,float}* @G, i32 0, i32 1
-	%Yp = getelementptr { float,float,float,float}* @G, i32 0, i32 2
-	%Zp = getelementptr { float,float,float,float}* @G, i32 0, i32 3
+	%Wp = getelementptr { float,float,float,float}, { float,float,float,float}* @G, i32 0, i32 0
+	%Xp = getelementptr { float,float,float,float}, { float,float,float,float}* @G, i32 0, i32 1
+	%Yp = getelementptr { float,float,float,float}, { float,float,float,float}* @G, i32 0, i32 2
+	%Zp = getelementptr { float,float,float,float}, { float,float,float,float}* @G, i32 0, i32 3
 	
 	%W = load float* %Wp
 	%X = load float* %Xp

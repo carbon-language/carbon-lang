@@ -12,12 +12,12 @@ declare float @llvm.fabs.f32(float) #0
 define void @mad_sub_f32(float addrspace(1)* noalias nocapture %out, float addrspace(1)* noalias nocapture readonly %ptr) #1 {
   %tid = tail call i32 @llvm.r600.read.tidig.x() #0
   %tid.ext = sext i32 %tid to i64
-  %gep0 = getelementptr float addrspace(1)* %ptr, i64 %tid.ext
+  %gep0 = getelementptr float, float addrspace(1)* %ptr, i64 %tid.ext
   %add1 = add i64 %tid.ext, 1
-  %gep1 = getelementptr float addrspace(1)* %ptr, i64 %add1
+  %gep1 = getelementptr float, float addrspace(1)* %ptr, i64 %add1
   %add2 = add i64 %tid.ext, 2
-  %gep2 = getelementptr float addrspace(1)* %ptr, i64 %add2
-  %outgep = getelementptr float addrspace(1)* %out, i64 %tid.ext
+  %gep2 = getelementptr float, float addrspace(1)* %ptr, i64 %add2
+  %outgep = getelementptr float, float addrspace(1)* %out, i64 %tid.ext
   %a = load float addrspace(1)* %gep0, align 4
   %b = load float addrspace(1)* %gep1, align 4
   %c = load float addrspace(1)* %gep2, align 4
@@ -36,12 +36,12 @@ define void @mad_sub_f32(float addrspace(1)* noalias nocapture %out, float addrs
 define void @mad_sub_inv_f32(float addrspace(1)* noalias nocapture %out, float addrspace(1)* noalias nocapture readonly %ptr) #1 {
   %tid = tail call i32 @llvm.r600.read.tidig.x() #0
   %tid.ext = sext i32 %tid to i64
-  %gep0 = getelementptr float addrspace(1)* %ptr, i64 %tid.ext
+  %gep0 = getelementptr float, float addrspace(1)* %ptr, i64 %tid.ext
   %add1 = add i64 %tid.ext, 1
-  %gep1 = getelementptr float addrspace(1)* %ptr, i64 %add1
+  %gep1 = getelementptr float, float addrspace(1)* %ptr, i64 %add1
   %add2 = add i64 %tid.ext, 2
-  %gep2 = getelementptr float addrspace(1)* %ptr, i64 %add2
-  %outgep = getelementptr float addrspace(1)* %out, i64 %tid.ext
+  %gep2 = getelementptr float, float addrspace(1)* %ptr, i64 %add2
+  %outgep = getelementptr float, float addrspace(1)* %out, i64 %tid.ext
   %a = load float addrspace(1)* %gep0, align 4
   %b = load float addrspace(1)* %gep1, align 4
   %c = load float addrspace(1)* %gep2, align 4
@@ -57,12 +57,12 @@ define void @mad_sub_inv_f32(float addrspace(1)* noalias nocapture %out, float a
 define void @mad_sub_f64(double addrspace(1)* noalias nocapture %out, double addrspace(1)* noalias nocapture readonly %ptr) #1 {
   %tid = tail call i32 @llvm.r600.read.tidig.x() #0
   %tid.ext = sext i32 %tid to i64
-  %gep0 = getelementptr double addrspace(1)* %ptr, i64 %tid.ext
+  %gep0 = getelementptr double, double addrspace(1)* %ptr, i64 %tid.ext
   %add1 = add i64 %tid.ext, 1
-  %gep1 = getelementptr double addrspace(1)* %ptr, i64 %add1
+  %gep1 = getelementptr double, double addrspace(1)* %ptr, i64 %add1
   %add2 = add i64 %tid.ext, 2
-  %gep2 = getelementptr double addrspace(1)* %ptr, i64 %add2
-  %outgep = getelementptr double addrspace(1)* %out, i64 %tid.ext
+  %gep2 = getelementptr double, double addrspace(1)* %ptr, i64 %add2
+  %outgep = getelementptr double, double addrspace(1)* %out, i64 %tid.ext
   %a = load double addrspace(1)* %gep0, align 8
   %b = load double addrspace(1)* %gep1, align 8
   %c = load double addrspace(1)* %gep2, align 8
@@ -81,12 +81,12 @@ define void @mad_sub_f64(double addrspace(1)* noalias nocapture %out, double add
 define void @mad_sub_fabs_f32(float addrspace(1)* noalias nocapture %out, float addrspace(1)* noalias nocapture readonly %ptr) #1 {
   %tid = tail call i32 @llvm.r600.read.tidig.x() #0
   %tid.ext = sext i32 %tid to i64
-  %gep0 = getelementptr float addrspace(1)* %ptr, i64 %tid.ext
+  %gep0 = getelementptr float, float addrspace(1)* %ptr, i64 %tid.ext
   %add1 = add i64 %tid.ext, 1
-  %gep1 = getelementptr float addrspace(1)* %ptr, i64 %add1
+  %gep1 = getelementptr float, float addrspace(1)* %ptr, i64 %add1
   %add2 = add i64 %tid.ext, 2
-  %gep2 = getelementptr float addrspace(1)* %ptr, i64 %add2
-  %outgep = getelementptr float addrspace(1)* %out, i64 %tid.ext
+  %gep2 = getelementptr float, float addrspace(1)* %ptr, i64 %add2
+  %outgep = getelementptr float, float addrspace(1)* %out, i64 %tid.ext
   %a = load float addrspace(1)* %gep0, align 4
   %b = load float addrspace(1)* %gep1, align 4
   %c = load float addrspace(1)* %gep2, align 4
@@ -106,12 +106,12 @@ define void @mad_sub_fabs_f32(float addrspace(1)* noalias nocapture %out, float 
 define void @mad_sub_fabs_inv_f32(float addrspace(1)* noalias nocapture %out, float addrspace(1)* noalias nocapture readonly %ptr) #1 {
   %tid = tail call i32 @llvm.r600.read.tidig.x() #0
   %tid.ext = sext i32 %tid to i64
-  %gep0 = getelementptr float addrspace(1)* %ptr, i64 %tid.ext
+  %gep0 = getelementptr float, float addrspace(1)* %ptr, i64 %tid.ext
   %add1 = add i64 %tid.ext, 1
-  %gep1 = getelementptr float addrspace(1)* %ptr, i64 %add1
+  %gep1 = getelementptr float, float addrspace(1)* %ptr, i64 %add1
   %add2 = add i64 %tid.ext, 2
-  %gep2 = getelementptr float addrspace(1)* %ptr, i64 %add2
-  %outgep = getelementptr float addrspace(1)* %out, i64 %tid.ext
+  %gep2 = getelementptr float, float addrspace(1)* %ptr, i64 %add2
+  %outgep = getelementptr float, float addrspace(1)* %out, i64 %tid.ext
   %a = load float addrspace(1)* %gep0, align 4
   %b = load float addrspace(1)* %gep1, align 4
   %c = load float addrspace(1)* %gep2, align 4
@@ -127,12 +127,12 @@ define void @mad_sub_fabs_inv_f32(float addrspace(1)* noalias nocapture %out, fl
 define void @neg_neg_mad_f32(float addrspace(1)* noalias nocapture %out, float addrspace(1)* noalias nocapture readonly %ptr) #1 {
   %tid = tail call i32 @llvm.r600.read.tidig.x() #0
   %tid.ext = sext i32 %tid to i64
-  %gep0 = getelementptr float addrspace(1)* %ptr, i64 %tid.ext
+  %gep0 = getelementptr float, float addrspace(1)* %ptr, i64 %tid.ext
   %add1 = add i64 %tid.ext, 1
-  %gep1 = getelementptr float addrspace(1)* %ptr, i64 %add1
+  %gep1 = getelementptr float, float addrspace(1)* %ptr, i64 %add1
   %add2 = add i64 %tid.ext, 2
-  %gep2 = getelementptr float addrspace(1)* %ptr, i64 %add2
-  %outgep = getelementptr float addrspace(1)* %out, i64 %tid.ext
+  %gep2 = getelementptr float, float addrspace(1)* %ptr, i64 %add2
+  %outgep = getelementptr float, float addrspace(1)* %out, i64 %tid.ext
   %a = load float addrspace(1)* %gep0, align 4
   %b = load float addrspace(1)* %gep1, align 4
   %c = load float addrspace(1)* %gep2, align 4
@@ -153,12 +153,12 @@ define void @neg_neg_mad_f32(float addrspace(1)* noalias nocapture %out, float a
 define void @mad_fabs_sub_f32(float addrspace(1)* noalias nocapture %out, float addrspace(1)* noalias nocapture readonly %ptr) #1 {
   %tid = tail call i32 @llvm.r600.read.tidig.x() #0
   %tid.ext = sext i32 %tid to i64
-  %gep0 = getelementptr float addrspace(1)* %ptr, i64 %tid.ext
+  %gep0 = getelementptr float, float addrspace(1)* %ptr, i64 %tid.ext
   %add1 = add i64 %tid.ext, 1
-  %gep1 = getelementptr float addrspace(1)* %ptr, i64 %add1
+  %gep1 = getelementptr float, float addrspace(1)* %ptr, i64 %add1
   %add2 = add i64 %tid.ext, 2
-  %gep2 = getelementptr float addrspace(1)* %ptr, i64 %add2
-  %outgep = getelementptr float addrspace(1)* %out, i64 %tid.ext
+  %gep2 = getelementptr float, float addrspace(1)* %ptr, i64 %add2
+  %outgep = getelementptr float, float addrspace(1)* %out, i64 %tid.ext
   %a = load float addrspace(1)* %gep0, align 4
   %b = load float addrspace(1)* %gep1, align 4
   %c = load float addrspace(1)* %gep2, align 4
@@ -176,9 +176,9 @@ define void @mad_fabs_sub_f32(float addrspace(1)* noalias nocapture %out, float 
 ; SI: buffer_store_dword [[RESULT]]
 define void @fsub_c_fadd_a_a(float addrspace(1)* %out, float addrspace(1)* %in) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep.0 = getelementptr float addrspace(1)* %out, i32 %tid
-  %gep.1 = getelementptr float addrspace(1)* %gep.0, i32 1
-  %gep.out = getelementptr float addrspace(1)* %out, i32 %tid
+  %gep.0 = getelementptr float, float addrspace(1)* %out, i32 %tid
+  %gep.1 = getelementptr float, float addrspace(1)* %gep.0, i32 1
+  %gep.out = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %r1 = load float addrspace(1)* %gep.0
   %r2 = load float addrspace(1)* %gep.1
@@ -197,9 +197,9 @@ define void @fsub_c_fadd_a_a(float addrspace(1)* %out, float addrspace(1)* %in) 
 ; SI: buffer_store_dword [[RESULT]]
 define void @fsub_fadd_a_a_c(float addrspace(1)* %out, float addrspace(1)* %in) {
   %tid = call i32 @llvm.r600.read.tidig.x() nounwind readnone
-  %gep.0 = getelementptr float addrspace(1)* %out, i32 %tid
-  %gep.1 = getelementptr float addrspace(1)* %gep.0, i32 1
-  %gep.out = getelementptr float addrspace(1)* %out, i32 %tid
+  %gep.0 = getelementptr float, float addrspace(1)* %out, i32 %tid
+  %gep.1 = getelementptr float, float addrspace(1)* %gep.0, i32 1
+  %gep.out = getelementptr float, float addrspace(1)* %out, i32 %tid
 
   %r1 = load float addrspace(1)* %gep.0
   %r2 = load float addrspace(1)* %gep.1

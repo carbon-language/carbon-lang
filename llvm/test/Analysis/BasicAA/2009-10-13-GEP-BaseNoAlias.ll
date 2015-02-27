@@ -15,7 +15,7 @@ entry:
   br i1 %tmp, label %bb, label %bb1
 
 bb:
-  %b = getelementptr i32* %a, i32 0
+  %b = getelementptr i32, i32* %a, i32 0
   br label %bb2
 
 bb1:

@@ -13,7 +13,7 @@ target datalayout = "e-p:64:64:64"
 define void @yes(i1 %c, i32* %p, i32* %q) nounwind {
 entry:
   store i32 0, i32* %p
-  %p1 = getelementptr inbounds i32* %p, i64 1
+  %p1 = getelementptr inbounds i32, i32* %p, i64 1
   store i32 1, i32* %p1
   br i1 %c, label %if.else, label %if.then
 
@@ -41,7 +41,7 @@ if.else:
 define void @watch_out_for_size_change(i1 %c, i32* %p, i32* %q) nounwind {
 entry:
   store i32 0, i32* %p
-  %p1 = getelementptr inbounds i32* %p, i64 1
+  %p1 = getelementptr inbounds i32, i32* %p, i64 1
   store i32 1, i32* %p1
   br i1 %c, label %if.else, label %if.then
 

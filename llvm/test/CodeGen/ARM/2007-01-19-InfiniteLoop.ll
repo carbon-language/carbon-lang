@@ -19,10 +19,10 @@ cond_next489:		; preds = %cond_false, %bb471
 	%i.8.in = load i8* null		; <i8> [#uses=1]
 	%i.8 = zext i8 %i.8.in to i32		; <i32> [#uses=4]
 	%j.7 = zext i8 %j.7.in to i32		; <i32> [#uses=4]
-	%tmp495 = getelementptr [4 x [4 x i32]]* %predicted_block, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=2]
+	%tmp495 = getelementptr [4 x [4 x i32]], [4 x [4 x i32]]* %predicted_block, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=2]
 	%tmp496 = load i32* %tmp495		; <i32> [#uses=2]
 	%tmp502 = load i32* null		; <i32> [#uses=1]
-	%tmp542 = getelementptr [6 x [4 x [4 x i32]]]* @quant_coef, i32 0, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=1]
+	%tmp542 = getelementptr [6 x [4 x [4 x i32]]], [6 x [4 x [4 x i32]]]* @quant_coef, i32 0, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=1]
 	%tmp543 = load i32* %tmp542		; <i32> [#uses=1]
 	%tmp548 = ashr i32 0, 0		; <i32> [#uses=3]
 	%tmp561 = sub i32 0, %tmp496		; <i32> [#uses=3]
@@ -35,7 +35,7 @@ cond_next489:		; preds = %cond_false, %bb471
 	br i1 %tmp579, label %bb712, label %cond_next589
 
 cond_next589:		; preds = %cond_next489
-	%tmp605 = getelementptr [6 x [4 x [4 x i32]]]* @dequant_coef, i32 0, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=1]
+	%tmp605 = getelementptr [6 x [4 x [4 x i32]]], [6 x [4 x [4 x i32]]]* @dequant_coef, i32 0, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=1]
 	%tmp606 = load i32* %tmp605		; <i32> [#uses=1]
 	%tmp612 = load i32* null		; <i32> [#uses=1]
 	%tmp629 = load i32* null		; <i32> [#uses=1]
@@ -86,7 +86,7 @@ bb737:		; preds = %cond_false689
 cond_true740:		; preds = %bb737
 	%tmp761 = call fastcc i32 @sign( i32 %tmp576, i32 0 )		; <i32> [#uses=1]
 	%tmp780 = load i32* null		; <i32> [#uses=1]
-	%tmp785 = getelementptr [4 x [4 x i32]]* @A, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=1]
+	%tmp785 = getelementptr [4 x [4 x i32]], [4 x [4 x i32]]* @A, i32 0, i32 %i.8, i32 %j.7		; <i32*> [#uses=1]
 	%tmp786 = load i32* %tmp785		; <i32> [#uses=1]
 	%tmp781 = mul i32 %tmp780, %tmp761		; <i32> [#uses=1]
 	%tmp787 = mul i32 %tmp781, %tmp786		; <i32> [#uses=1]

@@ -53,7 +53,7 @@ define void @f5() "no-frame-pointer-elim"="true" {
   ; CHECK:      leaq    -92(%rbp), %rcx
   ; CHECK:      callq   external
   %a = alloca [300 x i8]
-  %gep = getelementptr [300 x i8]* %a, i32 0, i32 0
+  %gep = getelementptr [300 x i8], [300 x i8]* %a, i32 0, i32 0
   call void @external(i8* %gep)
   ret void
 }
@@ -67,7 +67,7 @@ define void @f6(i32 %p, ...) "no-frame-pointer-elim"="true" {
   ; CHECK:      leaq    -92(%rbp), %rcx
   ; CHECK:      callq   external
   %a = alloca [300 x i8]
-  %gep = getelementptr [300 x i8]* %a, i32 0, i32 0
+  %gep = getelementptr [300 x i8], [300 x i8]* %a, i32 0, i32 0
   call void @external(i8* %gep)
   ret void
 }
@@ -105,7 +105,7 @@ define i32 @f8(i32 %a, i32 %b, i32 %c, i32 %d, i32 %e) "no-frame-pointer-elim"="
   ; CHECK:        callq   __chkstk
   ; CHECK:        subq    %rax, %rsp
 
-  %gep = getelementptr [300 x i8]* %alloca, i32 0, i32 0
+  %gep = getelementptr [300 x i8], [300 x i8]* %alloca, i32 0, i32 0
   call void @external(i8* %gep)
   ; CHECK:        subq    $32, %rsp
   ; CHECK:        leaq    (%rbx), %rcx

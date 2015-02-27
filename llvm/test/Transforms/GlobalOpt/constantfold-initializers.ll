@@ -36,7 +36,7 @@ entry:
 
 define internal i32 @test2_helper(%closure* %this, i32 %b) {
 entry:
-  %0 = getelementptr inbounds %closure* %this, i32 0, i32 0
+  %0 = getelementptr inbounds %closure, %closure* %this, i32 0, i32 0
   %1 = load i32* %0, align 4
   %add = add nsw i32 %1, %b
   ret i32 %add

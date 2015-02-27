@@ -16,7 +16,7 @@ bb5:		; preds = %bb9
 
 bb9:		; preds = %bb22, %bb5
 	%storemerge.rec = phi i64 [ %indvar.next8, %bb5 ], [ 0, %bb22 ]		; <i64> [#uses=2]
-	%storemerge = getelementptr %struct.Lit** null, i64 %storemerge.rec		; <%struct.Lit**> [#uses=2]
+	%storemerge = getelementptr %struct.Lit*, %struct.Lit** null, i64 %storemerge.rec		; <%struct.Lit**> [#uses=2]
 	%1 = icmp ugt %struct.Lit** null, %storemerge		; <i1> [#uses=1]
 	br i1 %1, label %bb5, label %bb22
 

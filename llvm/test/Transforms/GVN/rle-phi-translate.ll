@@ -66,19 +66,19 @@ entry:
   br i1 %cond, label %bb, label %bb1
 
 bb:
-  %b1 = getelementptr i32* %b, i32 17
+  %b1 = getelementptr i32, i32* %b, i32 17
   store i32 4, i32* %b1
   br label %bb2
 
 bb1:
-  %c1 = getelementptr i32* %c, i32 7
+  %c1 = getelementptr i32, i32* %c, i32 7
   store i32 82, i32* %c1
   br label %bb2
 
 bb2:
   %d = phi i32* [ %c, %bb1 ], [ %b, %bb ]
   %i = phi i32 [ 7, %bb1 ], [ 17, %bb ]
-  %d1 = getelementptr i32* %d, i32 %i
+  %d1 = getelementptr i32, i32* %d, i32 %i
   %dv = load i32* %d1
 ; CHECK: %dv = phi i32 [ 82, %bb1 ], [ 4, %bb ]
 ; CHECK-NOT: load
@@ -97,14 +97,14 @@ bb:
   br label %bb2
 
 bb1:
-  %c1 = getelementptr i32* %c, i32 7
+  %c1 = getelementptr i32, i32* %c, i32 7
   store i32 82, i32* %c1
   br label %bb2
 
 bb2:
   %d = phi i32* [ %c, %bb1 ], [ %b, %bb ]
   %i = phi i32 [ 7, %bb1 ], [ 0, %bb ]
-  %d1 = getelementptr i32* %d, i32 %i
+  %d1 = getelementptr i32, i32* %d, i32 %i
   %dv = load i32* %d1
 ; CHECK: %dv = phi i32 [ 82, %bb1 ], [ 4, %bb ]
 ; CHECK-NOT: load
@@ -127,9 +127,9 @@ bb.nph:
 
 for.body:
   %indvar = phi i64 [ 0, %bb.nph ], [ %tmp, %for.body ]
-  %arrayidx6 = getelementptr double* %G, i64 %indvar
+  %arrayidx6 = getelementptr double, double* %G, i64 %indvar
   %tmp = add i64 %indvar, 1
-  %arrayidx = getelementptr double* %G, i64 %tmp
+  %arrayidx = getelementptr double, double* %G, i64 %tmp
   %tmp3 = load double* %arrayidx
   %tmp7 = load double* %arrayidx6
   %add = fadd double %tmp3, %tmp7

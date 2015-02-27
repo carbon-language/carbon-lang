@@ -88,15 +88,15 @@ define void @test(i32 %a1, i32 %a2, i32 %a3, i32 %a4) {
 ; CHECK: image_load_mip {{v\[[0-9]+:[0-9]+\]}}, 15, 0, 0, 0, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}
 define void @vgpr_coords(float addrspace(2)* addrspace(2)* inreg, <16 x i8> addrspace(2)* inreg, <32 x i8> addrspace(2)* inreg, i32 inreg, <2 x i32>, <2 x i32>, <2 x i32>, <3 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, float, float, float, float, float, float, float, float, float) #0 {
 main_body:
-  %20 = getelementptr float addrspace(2)* addrspace(2)* %0, i32 0
+  %20 = getelementptr float addrspace(2)*, float addrspace(2)* addrspace(2)* %0, i32 0
   %21 = load float addrspace(2)* addrspace(2)* %20, !tbaa !2
-  %22 = getelementptr float addrspace(2)* %21, i32 0
+  %22 = getelementptr float, float addrspace(2)* %21, i32 0
   %23 = load float addrspace(2)* %22, !tbaa !2, !invariant.load !1
-  %24 = getelementptr float addrspace(2)* %21, i32 1
+  %24 = getelementptr float, float addrspace(2)* %21, i32 1
   %25 = load float addrspace(2)* %24, !tbaa !2, !invariant.load !1
-  %26 = getelementptr float addrspace(2)* %21, i32 4
+  %26 = getelementptr float, float addrspace(2)* %21, i32 4
   %27 = load float addrspace(2)* %26, !tbaa !2, !invariant.load !1
-  %28 = getelementptr <32 x i8> addrspace(2)* %2, i32 0
+  %28 = getelementptr <32 x i8>, <32 x i8> addrspace(2)* %2, i32 0
   %29 = load <32 x i8> addrspace(2)* %28, !tbaa !2
   %30 = bitcast float %27 to i32
   %31 = bitcast float %23 to i32

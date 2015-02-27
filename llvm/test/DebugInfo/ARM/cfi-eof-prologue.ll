@@ -30,9 +30,9 @@ target triple = "thumbv7-apple-ios"
 define %struct.B* @_ZN1BC2Ev(%struct.B* %this) unnamed_addr #0 align 2 {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.B* %this, i64 0, metadata !30, metadata !40), !dbg !41
-  %0 = getelementptr inbounds %struct.B* %this, i32 0, i32 0, !dbg !42
+  %0 = getelementptr inbounds %struct.B, %struct.B* %this, i32 0, i32 0, !dbg !42
   %call = tail call %struct.A* @_ZN1AC2Ev(%struct.A* %0) #3, !dbg !42
-  %1 = getelementptr inbounds %struct.B* %this, i32 0, i32 0, i32 0, !dbg !42
+  %1 = getelementptr inbounds %struct.B, %struct.B* %this, i32 0, i32 0, i32 0, !dbg !42
   store i32 (...)** bitcast (i8** getelementptr inbounds ([4 x i8*]* @_ZTV1B, i32 0, i32 2) to i32 (...)**), i32 (...)*** %1, align 4, !dbg !42, !tbaa !43
   ret %struct.B* %this, !dbg !42
 }
@@ -44,9 +44,9 @@ define %struct.B* @_ZN1BC1Ev(%struct.B* %this) unnamed_addr #0 align 2 {
 entry:
   tail call void @llvm.dbg.value(metadata %struct.B* %this, i64 0, metadata !34, metadata !40), !dbg !46
   tail call void @llvm.dbg.value(metadata %struct.B* %this, i64 0, metadata !47, metadata !40) #3, !dbg !49
-  %0 = getelementptr inbounds %struct.B* %this, i32 0, i32 0, !dbg !50
+  %0 = getelementptr inbounds %struct.B, %struct.B* %this, i32 0, i32 0, !dbg !50
   %call.i = tail call %struct.A* @_ZN1AC2Ev(%struct.A* %0) #3, !dbg !50
-  %1 = getelementptr inbounds %struct.B* %this, i32 0, i32 0, i32 0, !dbg !50
+  %1 = getelementptr inbounds %struct.B, %struct.B* %this, i32 0, i32 0, i32 0, !dbg !50
   store i32 (...)** bitcast (i8** getelementptr inbounds ([4 x i8*]* @_ZTV1B, i32 0, i32 2) to i32 (...)**), i32 (...)*** %1, align 4, !dbg !50, !tbaa !43
   ret %struct.B* %this, !dbg !48
 }

@@ -32,7 +32,7 @@ bb9:                                              ; preds = %bb7
   br label %bb11
 
 bb11:                                             ; preds = %bb9, %bb7
-  %1 = getelementptr %struct.icstruct* %agg.result, i32 0, i32 0, i32 0 ; <i32*> [#uses=1]
+  %1 = getelementptr %struct.icstruct, %struct.icstruct* %agg.result, i32 0, i32 0, i32 0 ; <i32*> [#uses=1]
   store i32 0, i32* %1
   ret void
 }
