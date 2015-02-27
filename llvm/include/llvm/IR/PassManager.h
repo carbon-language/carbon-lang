@@ -471,6 +471,12 @@ private:
         dbgs() << "Running analysis: " << P.name() << "\n";
       AnalysisResultListT &ResultList = AnalysisResultLists[&IR];
       ResultList.emplace_back(PassID, P.run(IR, this));
+
+      // P.run may have inserted elements into AnalysisResults and invalidated
+      // RI.
+      RI = AnalysisResults.find(std::make_pair(PassID, &IR));
+      assert(RI != AnalysisResults.end() && "we just inserted it!");
+
       RI->second = std::prev(ResultList.end());
     }
 
