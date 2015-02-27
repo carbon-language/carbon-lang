@@ -14,7 +14,7 @@
 using namespace llvm;
 
 LinePrinter::LinePrinter(int Indent, llvm::raw_ostream &Stream)
-    : IndentSpaces(Indent), CurrentIndent(0), OS(Stream) {}
+    : OS(Stream), IndentSpaces(Indent), CurrentIndent(0) {}
 
 void LinePrinter::Indent() { CurrentIndent += IndentSpaces; }
 

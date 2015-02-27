@@ -36,7 +36,7 @@
 using namespace llvm;
 
 CompilandDumper::CompilandDumper(LinePrinter &P)
-    : Printer(P), PDBSymDumper(true) {}
+    : PDBSymDumper(true), Printer(P) {}
 
 void CompilandDumper::dump(const PDBSymbolCompilandDetails &Symbol,
                            raw_ostream &OS, int Indent) {}
