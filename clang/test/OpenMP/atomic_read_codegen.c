@@ -242,7 +242,7 @@ int main() {
 #pragma omp atomic read
   ldv = bfx.a;
 // CHECK: [[LDTEMP_VOID_PTR:%.+]] = bitcast i32* [[LDTEMP:%.+]] to i8*
-// CHECK: call void @__atomic_load(i64 4, i8* getelementptr (i8* bitcast (%struct.BitFields_packed* @bfx_packed to i8*), i64 4), i8* [[LDTEMP_VOID_PTR]], i32 5)
+// CHECK: call void @__atomic_load(i64 4, i8* getelementptr (i8* bitcast (%struct.BitFields_packed* @bfx_packed to i8*), i64 4), i8* [[LDTEMP_VOID_PTR]], i32 0)
 // CHECK: [[LD:%.+]] = load i32* [[LDTEMP]]
 // CHECK: [[SHL:%.+]] = shl i32 [[LD]], 1
 // CHECK: ashr i32 [[SHL]], 1
@@ -272,7 +272,7 @@ int main() {
 #pragma omp atomic read
   ldv = bfx3.a;
 // CHECK: [[LDTEMP_VOID_PTR:%.+]] = bitcast i24* [[LDTEMP:%.+]] to i8*
-// CHECK: call void @__atomic_load(i64 3, i8* getelementptr (i8* bitcast (%struct.BitFields3_packed* @bfx3_packed to i8*), i64 1), i8* [[LDTEMP_VOID_PTR]], i32 5)
+// CHECK: call void @__atomic_load(i64 3, i8* getelementptr (i8* bitcast (%struct.BitFields3_packed* @bfx3_packed to i8*), i64 1), i8* [[LDTEMP_VOID_PTR]], i32 0)
 // CHECK: [[LD:%.+]] = load i24* [[LDTEMP]]
 // CHECK: [[SHL:%.+]] = shl i24 [[LD]], 7
 // CHECK: [[ASHR:%.+]] = ashr i24 [[SHL]], 10
@@ -314,9 +314,9 @@ int main() {
 // CHECK: store x86_fp80
 #pragma omp atomic read
   ldv = bfx4_packed.b;
-// CHECK: [[LD:%.+]] = load atomic i32* bitcast (<2 x float>* @{{.+}} to i32*) monotonic
-// CHECK: [[BITCAST:%.+]] = bitcast <2 x float>* [[LDTEMP:%.+]] to i32*
-// CHECK: store i32 [[LD]], i32* [[BITCAST]]
+// CHECK: [[LD:%.+]] = load atomic i64* bitcast (<2 x float>* @{{.+}} to i64*) monotonic
+// CHECK: [[BITCAST:%.+]] = bitcast <2 x float>* [[LDTEMP:%.+]] to i64*
+// CHECK: store i64 [[LD]], i64* [[BITCAST]]
 // CHECK: [[LD:%.+]] = load <2 x float>* [[LDTEMP]]
 // CHECK: extractelement <2 x float> [[LD]]
 // CHECK: store i64

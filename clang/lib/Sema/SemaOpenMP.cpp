@@ -3356,8 +3356,8 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
       auto AtomicBinOp =
           dyn_cast<BinaryOperator>(AtomicBody->IgnoreParenImpCasts());
       if (AtomicBinOp && AtomicBinOp->getOpcode() == BO_Assign) {
-        X = AtomicBinOp->getLHS()->IgnoreParenImpCasts();
-        E = AtomicBinOp->getRHS()->IgnoreParenImpCasts();
+        X = AtomicBinOp->getLHS();
+        E = AtomicBinOp->getRHS();
         if ((X->isInstantiationDependent() || X->getType()->isScalarType()) &&
             (E->isInstantiationDependent() || E->getType()->isScalarType())) {
           if (!X->isLValue()) {

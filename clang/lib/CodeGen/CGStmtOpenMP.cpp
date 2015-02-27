@@ -801,7 +801,8 @@ static void EmitOMPAtomicReadExpr(CodeGenFunction &CGF, bool IsSeqCst,
                    ? CGF.EmitLoadOfLValue(XLValue, Loc)
                    : CGF.EmitAtomicLoad(XLValue, Loc,
                                         IsSeqCst ? llvm::SequentiallyConsistent
-                                                 : llvm::Monotonic);
+                                                 : llvm::Monotonic,
+                                        XLValue.isVolatile());
   // OpenMP, 2.12.6, atomic Construct
   // Any atomic construct with a seq_cst clause forces the atomically
   // performed operation to include an implicit flush operation without a
@@ -823,14 +824,38 @@ static void EmitOMPAtomicReadExpr(CodeGenFunction &CGF, bool IsSeqCst,
   }
 }
 
+static void EmitOMPAtomicWriteExpr(CodeGenFunction &CGF, bool IsSeqCst,
+                                   const Expr *X, const Expr *E,
+                                   SourceLocation Loc) {
+  // x = expr;
+  assert(X->isLValue() && "X of 'omp atomic write' is not lvalue");
+  LValue XLValue = CGF.EmitLValue(X);
+  RValue ExprRValue = CGF.EmitAnyExpr(E);
+  if (XLValue.isGlobalReg())
+    CGF.EmitStoreThroughGlobalRegLValue(ExprRValue, XLValue);
+  else
+    CGF.EmitAtomicStore(ExprRValue, XLValue,
+                        IsSeqCst ? llvm::SequentiallyConsistent
+                                 : llvm::Monotonic,
+                        XLValue.isVolatile(), /*IsInit=*/false);
+  // OpenMP, 2.12.6, atomic Construct
+  // Any atomic construct with a seq_cst clause forces the atomically
+  // performed operation to include an implicit flush operation without a
+  // list.
+  if (IsSeqCst)
+    CGF.CGM.getOpenMPRuntime().emitFlush(CGF, llvm::None, Loc);
+}
+
 static void EmitOMPAtomicExpr(CodeGenFunction &CGF, OpenMPClauseKind Kind,
                               bool IsSeqCst, const Expr *X, const Expr *V,
-                              const Expr *, SourceLocation Loc) {
+                              const Expr *E, SourceLocation Loc) {
   switch (Kind) {
   case OMPC_read:
     EmitOMPAtomicReadExpr(CGF, IsSeqCst, X, V, Loc);
     break;
   case OMPC_write:
+    EmitOMPAtomicWriteExpr(CGF, IsSeqCst, X, E, Loc);
+    break;
   case OMPC_update:
   case OMPC_capture:
     llvm_unreachable("CodeGen for 'omp atomic clause' is not supported yet.");

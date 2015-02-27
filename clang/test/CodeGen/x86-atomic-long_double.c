@@ -54,7 +54,7 @@ long double testinc(_Atomic long double *addr) {
   // CHECK32: [[OBJ:%.+]] = bitcast x86_fp80* [[ADDR]] to i8*
   // CHECK32: [[EXPECTED:%.+]] = bitcast x86_fp80* [[OLD_VALUE_ADDR]] to i8*
   // CHECK32: [[DESIRED:%.+]] = bitcast x86_fp80* [[DESIRED_VALUE_ADDR]] to i8*
-  // CHECK32: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i32 12, i8* [[OBJ]], i8* [[EXPECTED]], i8* [[DESIRED]], i32 7, i32 7)
+  // CHECK32: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i32 12, i8* [[OBJ]], i8* [[EXPECTED]], i8* [[DESIRED]], i32 5, i32 5)
   // CHECK32: [[LD_VALUE:%.+]] = load x86_fp80* [[OLD_VALUE_ADDR]], align 4
   // CHECK32: br i1 [[FAIL_SUCCESS]], label %[[ATOMIC_CONT:.+]], label %[[ATOMIC_OP]]
   // CHECK32: [[ATOMIC_CONT]]
@@ -116,7 +116,7 @@ long double testdec(_Atomic long double *addr) {
   // CHECK32: [[OBJ:%.+]] = bitcast x86_fp80* [[ADDR]] to i8*
   // CHECK32: [[EXPECTED:%.+]] = bitcast x86_fp80* [[OLD_VALUE_ADDR]] to i8*
   // CHECK32: [[DESIRED:%.+]] = bitcast x86_fp80* [[DESIRED_VALUE_ADDR]] to i8*
-  // CHECK32: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i32 12, i8* [[OBJ]], i8* [[EXPECTED]], i8* [[DESIRED]], i32 7, i32 7)
+  // CHECK32: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i32 12, i8* [[OBJ]], i8* [[EXPECTED]], i8* [[DESIRED]], i32 5, i32 5)
   // CHECK32: [[LD_VALUE]] = load x86_fp80* [[OLD_VALUE_ADDR]], align 4
   // CHECK32: br i1 [[FAIL_SUCCESS]], label %[[ATOMIC_CONT:.+]], label %[[ATOMIC_OP]]
   // CHECK32: [[ATOMIC_CONT]]
@@ -185,7 +185,7 @@ long double testcompassign(_Atomic long double *addr) {
   // CHECK32: [[OBJ:%.+]] = bitcast x86_fp80* [[ADDR]] to i8*
   // CHECK32: [[EXPECTED:%.+]] = bitcast x86_fp80* [[OLD_VALUE_ADDR]] to i8*
   // CHECK32: [[DESIRED:%.+]] = bitcast x86_fp80* [[DESIRED_VALUE_ADDR]] to i8*
-  // CHECK32: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i32 12, i8* [[OBJ]], i8* [[EXPECTED]], i8* [[DESIRED]], i32 7, i32 7)
+  // CHECK32: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i32 12, i8* [[OBJ]], i8* [[EXPECTED]], i8* [[DESIRED]], i32 5, i32 5)
   // CHECK32: [[LD_VALUE]] = load x86_fp80* [[OLD_VALUE_ADDR]], align 4
   // CHECK32: br i1 [[FAIL_SUCCESS]], label %[[ATOMIC_CONT:.+]], label %[[ATOMIC_OP]]
   // CHECK32: [[ATOMIC_CONT]]
@@ -289,7 +289,7 @@ long double test_volatile_inc(volatile _Atomic long double *addr) {
   // CHECK32: [[OBJ:%.+]] = bitcast x86_fp80* [[ADDR]] to i8*
   // CHECK32: [[EXPECTED:%.+]] = bitcast x86_fp80* [[OLD_VALUE_ADDR]] to i8*
   // CHECK32: [[DESIRED:%.+]] = bitcast x86_fp80* [[DESIRED_VALUE_ADDR]] to i8*
-  // CHECK32: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i32 12, i8* [[OBJ]], i8* [[EXPECTED]], i8* [[DESIRED]], i32 7, i32 7)
+  // CHECK32: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i32 12, i8* [[OBJ]], i8* [[EXPECTED]], i8* [[DESIRED]], i32 5, i32 5)
   // CHECK32: [[LD_VALUE]] = load x86_fp80* [[OLD_VALUE_ADDR]], align 4
   // CHECK32: br i1 [[FAIL_SUCCESS]], label %[[ATOMIC_CONT:.+]], label %[[ATOMIC_OP]]
   // CHECK32: [[ATOMIC_CONT]]
@@ -350,7 +350,7 @@ long double test_volatile_dec(volatile _Atomic long double *addr) {
   // CHECK32: [[OBJ:%.+]] = bitcast x86_fp80* [[ADDR]] to i8*
   // CHECK32: [[EXPECTED:%.+]] = bitcast x86_fp80* [[OLD_VALUE_ADDR]] to i8*
   // CHECK32: [[DESIRED:%.+]] = bitcast x86_fp80* [[DESIRED_VALUE_ADDR]] to i8*
-  // CHECK32: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i32 12, i8* [[OBJ]], i8* [[EXPECTED]], i8* [[DESIRED]], i32 7, i32 7)
+  // CHECK32: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i32 12, i8* [[OBJ]], i8* [[EXPECTED]], i8* [[DESIRED]], i32 5, i32 5)
   // CHECK32: [[LD_VALUE]] = load x86_fp80* [[OLD_VALUE_ADDR]], align 4
   // CHECK32: br i1 [[FAIL_SUCCESS]], label %[[ATOMIC_CONT:.+]], label %[[ATOMIC_OP]]
   // CHECK32: [[ATOMIC_CONT]]
@@ -417,7 +417,7 @@ long double test_volatile_compassign(volatile _Atomic long double *addr) {
   // CHECK32: [[OBJ:%.+]] = bitcast x86_fp80* [[ADDR]] to i8*
   // CHECK32: [[EXPECTED:%.+]] = bitcast x86_fp80* [[OLD_VALUE_ADDR]] to i8*
   // CHECK32: [[DESIRED:%.+]] = bitcast x86_fp80* [[DESIRED_VALUE_ADDR]] to i8*
-  // CHECK32: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i32 12, i8* [[OBJ]], i8* [[EXPECTED]], i8* [[DESIRED]], i32 7, i32 7)
+  // CHECK32: [[FAIL_SUCCESS:%.+]] = call zeroext i1 @__atomic_compare_exchange(i32 12, i8* [[OBJ]], i8* [[EXPECTED]], i8* [[DESIRED]], i32 5, i32 5)
   // CHECK32: [[LD_VALUE]] = load x86_fp80* [[OLD_VALUE_ADDR]], align 4
   // CHECK32: br i1 [[FAIL_SUCCESS]], label %[[ATOMIC_CONT:.+]], label %[[ATOMIC_OP]]
   // CHECK32: [[ATOMIC_CONT]]
