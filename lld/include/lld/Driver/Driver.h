@@ -127,15 +127,13 @@ public:
   /// Returns true iff there was an error.
   static bool parse(int argc, const char *argv[], PECOFFLinkingContext &info,
                     raw_ostream &diag = llvm::errs(),
-                    bool isDirective = false,
-                    std::set<StringRef> *undefinedSymbols = nullptr);
+                    bool isDirective = false);
 
   // Same as parse(), but restricted to the context of directives.
   static bool parseDirectives(int argc, const char *argv[],
                     PECOFFLinkingContext &info,
-                    raw_ostream &diag = llvm::errs(),
-                    std::set<StringRef> *undefinedSymbols = nullptr) {
-    return parse(argc, argv, info, diag, true, undefinedSymbols);
+                    raw_ostream &diag = llvm::errs()) {
+    return parse(argc, argv, info, diag, true);
   }
 
 private:

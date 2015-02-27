@@ -114,8 +114,7 @@ public:
 
   AliasAtom *createAlias(StringRef name, const DefinedAtom *target, int cnt);
   void createAlternateNameAtoms();
-  std::error_code parseDirectiveSection(
-    StringRef directives, std::set<StringRef> *undefinedSymbols);
+  std::error_code parseDirectiveSection(StringRef directives);
 
   mutable llvm::BumpPtrAllocator _alloc;
 
@@ -332,20 +331,6 @@ std::error_code FileCOFF::doParse() {
     return NativeReaderError::conflicting_target_machine;
   }
 
-  // The set to contain the symbols specified as arguments of
-  // /INCLUDE option.
-  std::set<StringRef> undefinedSymbols;
-
-  // Interpret .drectve section if the section has contents.
-  // Read .drectve section if exists.
-  ArrayRef<uint8_t> directives;
-  if (std::error_code ec = getSectionContents(".drectve", directives))
-    return ec;
-  if (!directives.empty())
-    if (std::error_code ec = parseDirectiveSection(
-          ArrayRefToString(directives), &undefinedSymbols))
-      return ec;
-
   if (std::error_code ec = getReferenceArch(_referenceArch))
     return ec;
 
@@ -374,22 +359,38 @@ std::error_code FileCOFF::doParse() {
                  << " is not compatible with SEH.\n";
     return llvm::object::object_error::parse_failed;
   }
-
-  // Add /INCLUDE'ed symbols to the file as if they existed in the
-  // file as undefined symbols.
-  for (StringRef sym : undefinedSymbols)
-    addUndefinedSymbol(sym);
-
-  // One can define alias symbols using /alternatename:<sym>=<sym> option.
-  // The mapping for /alternatename is in the context object. This helper
-  // function iterate over defined atoms and create alias atoms if needed.
-  createAlternateNameAtoms();
   return std::error_code();
 }
 
 void FileCOFF::beforeLink() {
   // Acquire the mutex to mutate _ctx.
   std::lock_guard<std::recursive_mutex> lock(_ctx.getMutex());
+  std::set<StringRef> undefSyms;
+
+  // Interpret .drectve section if the section has contents.
+  ArrayRef<uint8_t> directives;
+  if (getSectionContents(".drectve", directives))
+    return;
+  if (!directives.empty()) {
+    std::set<StringRef> orig;
+    for (StringRef sym : _ctx.initialUndefinedSymbols())
+      orig.insert(sym);
+    if (parseDirectiveSection(ArrayRefToString(directives)))
+      return;
+    for (StringRef sym : _ctx.initialUndefinedSymbols())
+      if (orig.count(sym) == 0)
+        undefSyms.insert(sym);
+  }
+
+  // Add /INCLUDE'ed symbols to the file as if they existed in the
+  // file as undefined symbols.
+  for (StringRef sym : undefSyms)
+    addUndefinedSymbol(sym);
+
+  // One can define alias symbols using /alternatename:<sym>=<sym> option.
+  // The mapping for /alternatename is in the context object. This helper
+  // function iterate over defined atoms and create alias atoms if needed.
+  createAlternateNameAtoms();
 
   // In order to emit SEH table, all input files need to be compatible with
   // SEH. Disable SEH if the file being read is not compatible.
@@ -890,8 +891,7 @@ void FileCOFF::createAlternateNameAtoms() {
 // The section mainly contains /defaultlib (-l in Unix), but can contain any
 // options as long as they are valid.
 std::error_code
-FileCOFF::parseDirectiveSection(StringRef directives,
-                                std::set<StringRef> *undefinedSymbols) {
+FileCOFF::parseDirectiveSection(StringRef directives) {
   DEBUG(llvm::dbgs() << ".drectve: " << directives << "\n");
 
   // Split the string into tokens, as the shell would do for argv.
@@ -908,8 +908,7 @@ FileCOFF::parseDirectiveSection(StringRef directives,
   llvm::raw_string_ostream stream(errorMessage);
   PECOFFLinkingContext::ParseDirectives parseDirectives =
     _ctx.getParseDirectives();
-  bool parseFailed = !parseDirectives(argc, argv, _ctx, stream,
-                                      undefinedSymbols);
+  bool parseFailed = !parseDirectives(argc, argv, _ctx, stream);
   stream.flush();
   // Print error message if error.
   if (parseFailed) {
