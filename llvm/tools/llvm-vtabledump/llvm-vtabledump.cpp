@@ -163,7 +163,7 @@ static void dumpVTables(const ObjectFile *Obj) {
     uint32_t NonVirtualBaseAdjustmentOffset;
     int32_t VirtualBasePointerOffset;
     uint32_t VirtualBaseAdjustmentOffset;
-    uint32_t SizeOrOffset;
+    uint32_t Size;
     StringRef Symbols[2];
   };
   std::map<std::pair<StringRef, uint64_t>, StringRef> VFTableEntries;
@@ -309,7 +309,7 @@ static void dumpVTables(const ObjectFile *Obj) {
       CT.NonVirtualBaseAdjustmentOffset = DataPtr[2];
       CT.VirtualBasePointerOffset = DataPtr[3];
       CT.VirtualBaseAdjustmentOffset = DataPtr[4];
-      CT.SizeOrOffset = DataPtr[5];
+      CT.Size = DataPtr[5];
       StringRef *I = std::begin(CT.Symbols), *E = std::end(CT.Symbols);
       if (collectRelocatedSymbols(Obj, Sec, SecAddress, SymAddress, SymSize, I,
                                   E))
@@ -456,7 +456,7 @@ static void dumpVTables(const ObjectFile *Obj) {
            << '\n';
     outs() << CTName << "[VirtualBaseAdjustmentOffset]: "
            << CT.VirtualBaseAdjustmentOffset << '\n';
-    outs() << CTName << "[SizeOrOffset]: " << CT.SizeOrOffset << '\n';
+    outs() << CTName << "[Size]: " << CT.Size << '\n';
     outs() << CTName
            << "[CopyCtor]: " << (CT.Symbols[1].empty() ? "null" : CT.Symbols[1])
            << '\n';
