@@ -79,14 +79,19 @@ unsigned MipsFunctionInfo::getGlobalBaseReg() {
   if (GlobalBaseReg)
     return GlobalBaseReg;
 
+  MipsSubtarget const &STI =
+      static_cast<const MipsSubtarget &>(MF.getSubtarget());
+
   const TargetRegisterClass *RC =
-      static_cast<const MipsSubtarget &>(MF.getSubtarget()).inMips16Mode()
+      STI.inMips16Mode()
           ? &Mips::CPU16RegsRegClass
-          : static_cast<const MipsTargetMachine &>(MF.getTarget())
-                    .getABI()
-                    .IsN64()
-                ? &Mips::GPR64RegClass
-                : &Mips::GPR32RegClass;
+          : STI.inMicroMipsMode()
+                ? &Mips::GPRMM16RegClass
+                : static_cast<const MipsTargetMachine &>(MF.getTarget())
+                          .getABI()
+                          .IsN64()
+                      ? &Mips::GPR64RegClass
+                      : &Mips::GPR32RegClass;
   return GlobalBaseReg = MF.getRegInfo().createVirtualRegister(RC);
 }
 
