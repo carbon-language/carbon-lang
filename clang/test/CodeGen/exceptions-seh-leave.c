@@ -299,4 +299,72 @@ int nested___finally___except() {
 // CHECK: [[ehresume]]
 // CHECK: resume
 
-// FIXME: Test with nested __finally blocks.
+int nested___finally___finally() {
+  int myres = 0;
+  __try {
+    __try {
+      g();
+      myres = 16;
+    } __finally {
+      g();
+      __leave;  // Refers to the outer __try, not the __finally we're in!
+      myres = 23;
+      return 0;
+    }
+
+    myres = 51;
+  } __finally {
+  }
+  return 1;
+}
+// The order of basic blocks in the below doesn't matter.
+// CHECK-LABEL: define i32 @nested___finally___finally()
+
+// CHECK-LABEL: invoke void bitcast (void (...)* @g to void ()*)()
+// CHECK-NEXT:       to label %[[g1_cont:.*]] unwind label %[[g1_lpad:.*]]
+
+// CHECK: [[g1_cont]]
+// CHECK: store i32 16, i32* %[[myres:[^ ]*]],
+// CHECK: store i8 0, i8* %[[abnormal:[^ ]*]]
+// CHECK-NEXT: br label %[[finally:[^ ]*]]
+
+// CHECK: [[finally]]
+// CHECK-NEXT: invoke void bitcast (void (...)* @g to void ()*)() #3
+// CHECK-NEXT:       to label %[[g2_cont:.*]] unwind label %[[g2_lpad:.*]]
+
+// CHECK: [[g2_cont]]
+// CHECK-NEXT: br label %[[tryleave:[^ ]*]]
+// CHECK-NOT: store i32 23
+
+// There's an unreachable block for the skipped `myres = 51`.
+// CHECK: store i32 51, i32* %[[myres]]
+// CHECK-NEXT: br label %[[tryleave]]
+
+// CHECK: [[tryleave]]
+// CHECK-NEXT: store i8 0, i8* %[[abnormal]]
+// CHECK-NEXT: br label %[[outerfinally:[^ ]*]]
+
+// CHECK: [[outerfinally]]
+// CHECK-NEXT: %[[abnormallocal:[^ ]*]] = load i8* %[[abnormal]]
+// CHECK-NEXT: %[[reg:[^ ]*]] = icmp eq i8 %[[abnormallocal]], 0
+// CHECK-NEXT: br i1 %[[reg]], label %[[finallycont:[^ ]*]], label %[[finallyresume:[^ ]*]]
+
+// CHECK: [[finallycont]]
+// CHECK-NEXT: ret i32 1
+
+// CHECK: [[g1_lpad]]
+// CHECK: store i8 1, i8* %[[abnormal]]
+// CHECK-NEXT: br label %[[finally:[^ ]*]]
+
+// CHECK: [[g2_lpad]]
+// CHECK: br label %[[ehcleanup:[^ ]*]]
+
+// CHECK: [[ehcleanup]]
+// CHECK-NEXT: store i8 1, i8* %[[abnormal]]
+// CHECK-NEXT: br label %[[outerfinally]]
+
+// CHECK: [[finallyresume]]
+// CHECK-NEXT: br label %[[ehresume:[^ ]*]]
+
+// CHECK: [[ehresume]]
+// CHECK: resume
