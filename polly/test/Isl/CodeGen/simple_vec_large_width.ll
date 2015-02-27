@@ -17,7 +17,7 @@ define void @simple_vec_large_width() nounwind {
   br i1 %exitcond, label %2, label %5
 
 ; <label>:2                                       ; preds = %1
-  %3 = load float* %scevgep1, align 4
+  %3 = load float, float* %scevgep1, align 4
   store float %3, float* %scevgep, align 4
   br label %4
 
@@ -31,10 +31,10 @@ define void @simple_vec_large_width() nounwind {
 
 define i32 @main() nounwind {
   call void @simple_vec_large_width()
-  %1 = load float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 42), align 8
+  %1 = load float, float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 42), align 8
   %2 = fptosi float %1 to i32
   ret i32 %2
 }
 
-; CHECK: [[VEC1:%[a-zA-Z0-9_]+_full]] = load <15 x float>*
+; CHECK: [[VEC1:%[a-zA-Z0-9_]+_full]] = load <15 x float>, <15 x float>*
 ; CHECK: store <15 x float> [[VEC1]]

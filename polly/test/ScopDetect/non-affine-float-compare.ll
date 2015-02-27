@@ -20,16 +20,16 @@ bb1:                                              ; preds = %bb13, %bb
 
 bb2:                                              ; preds = %bb1
   %tmp = getelementptr inbounds float, float* %A, i64 %indvars.iv
-  %tmp3 = load float* %tmp, align 4
+  %tmp3 = load float, float* %tmp, align 4
   %tmp4 = add nsw i64 %indvars.iv, -1
   %tmp5 = getelementptr inbounds float, float* %A, i64 %tmp4
-  %tmp6 = load float* %tmp5, align 4
+  %tmp6 = load float, float* %tmp5, align 4
   %tmp7 = fcmp oeq float %tmp3, %tmp6
   br i1 %tmp7, label %bb8, label %bb12
 
 bb8:                                              ; preds = %bb2
   %tmp9 = getelementptr inbounds float, float* %A, i64 %indvars.iv
-  %tmp10 = load float* %tmp9, align 4
+  %tmp10 = load float, float* %tmp9, align 4
   %tmp11 = fadd float %tmp10, 1.000000e+00
   store float %tmp11, float* %tmp9, align 4
   br label %bb12

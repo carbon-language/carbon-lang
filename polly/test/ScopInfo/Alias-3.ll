@@ -13,7 +13,7 @@ bb:                                               ; preds = %bb, %bb.nph
   %i.03 = phi i64 [ 0, %bb.nph ], [ %2, %bb ]     ; <i64> [#uses=3]
   %scevgep = getelementptr i32, i32* %b, i64 %i.03     ; <i32*> [#uses=1]
   %scevgep4 = getelementptr i32, i32* %a, i64 %i.03    ; <i32*> [#uses=1]
-  %0 = load i32* %scevgep, align 4                ; <i32> [#uses=1]
+  %0 = load i32, i32* %scevgep, align 4                ; <i32> [#uses=1]
   %1 = add nsw i32 %0, 2                          ; <i32> [#uses=1]
   store i32 %1, i32* %scevgep4, align 4
   %2 = add nsw i64 %i.03, 1                       ; <i64> [#uses=2]

@@ -13,7 +13,7 @@ for:
 
 S1:
   %scevgep1 = getelementptr i64, i64* %a, i64 %indvar
-  %val = load i64* %scevgep1, align 8
+  %val = load i64, i64* %scevgep1, align 8
   br label %S2
 
 S2:

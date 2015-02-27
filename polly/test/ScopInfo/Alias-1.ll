@@ -19,8 +19,8 @@ bb3:                                              ; preds = %bb3, %bb.nph
   %scevgep7 = getelementptr i32, i32* %iftmp.0.0, i64 %i.06 ; <i32*> [#uses=1]
   %tmp = add i64 %i.06, 1                         ; <i64> [#uses=3]
   %scevgep8 = getelementptr i32, i32* %iftmp.0.0, i64 %tmp ; <i32*> [#uses=1]
-  %2 = load i32* %scevgep, align 4                ; <i32> [#uses=1]
-  %3 = load i32* %scevgep8, align 4               ; <i32> [#uses=1]
+  %2 = load i32, i32* %scevgep, align 4                ; <i32> [#uses=1]
+  %3 = load i32, i32* %scevgep8, align 4               ; <i32> [#uses=1]
   %4 = shl i32 %3, 1                              ; <i32> [#uses=1]
   %5 = add nsw i32 %4, %2                         ; <i32> [#uses=1]
   store i32 %5, i32* %scevgep7, align 4

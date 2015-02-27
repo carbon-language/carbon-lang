@@ -16,7 +16,7 @@ bb1:                                              ; preds = %bb3, %bb
   br i1 %exitcond, label %bb2, label %bb4
 
 bb2:                                              ; preds = %bb1
-  %tmp = load float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 0), align 16
+  %tmp = load float, float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 0), align 16
   %tmp2 = fpext float %tmp to double
   store double %tmp2, double* %scevgep, align 4
   br label %bb3
@@ -29,7 +29,7 @@ bb4:                                              ; preds = %bb1
   ret void
 }
 
-; CHECK: %tmp_p_splat_one = load <1 x float>* bitcast ([1024 x float]* @A to <1 x float>*), align 8, !alias.scope !0, !noalias !2
+; CHECK: %tmp_p_splat_one = load <1 x float>, <1 x float>* bitcast ([1024 x float]* @A to <1 x float>*), align 8, !alias.scope !0, !noalias !2
 ; CHECK: %tmp_p_splat = shufflevector <1 x float> %tmp_p_splat_one, <1 x float> %tmp_p_splat_one, <4 x i32> zeroinitializer
 ; CHECK: %0 = fpext <4 x float> %tmp_p_splat to <4 x double>
 ; CHECK: store <4 x double> %0, <4 x double>* bitcast ([1024 x double]* @B to <4 x double>*), align 8, !alias.scope !3, !noalias !4

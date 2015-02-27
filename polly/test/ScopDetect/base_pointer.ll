@@ -11,7 +11,7 @@ entry:
   br label %pre
 
 pre:
-  %A = load i64** %A_ptr
+  %A = load i64*, i64** %A_ptr
   br i1 true, label %for.i, label %then
 
 for.i:
@@ -277,7 +277,7 @@ for.i:
 for.j:
   %indvar.j = phi i64 [ 0, %for.i ], [ %indvar.j.next, %for.j ]
   %conv = sitofp i64 %indvar.i to float
-  %basepointer = load float** %arrayidx, align 8
+  %basepointer = load float*, float** %arrayidx, align 8
   %arrayidx5 = getelementptr float, float* %basepointer, i64 %indvar.j
   store float %conv, float* %arrayidx5, align 4
   %indvar.j.next = add i64 %indvar.j, 1

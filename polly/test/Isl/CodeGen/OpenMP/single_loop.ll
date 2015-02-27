@@ -60,8 +60,8 @@
 ; IR-NEXT:   br i1 %[[cmp]], label %polly.par.loadIVBounds, label %polly.par.exit
 
 ; IR-LABEL: polly.par.loadIVBounds:
-; IR-NEXT:   %polly.par.LB = load i64* %polly.par.LBPtr
-; IR-NEXT:   %polly.par.UB = load i64* %polly.par.UBPtr
+; IR-NEXT:   %polly.par.LB = load i64, i64* %polly.par.LBPtr
+; IR-NEXT:   %polly.par.UB = load i64, i64* %polly.par.UBPtr
 ; IR-NEXT:   %polly.par.UBAdjusted = sub i64 %polly.par.UB, 1
 ; IR-NEXT:   br label %polly.loop_preheader
 

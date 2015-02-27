@@ -38,7 +38,7 @@ for.cond:                                         ; preds = %for.inc, %entry
 
 for.body:                                         ; preds = %for.cond
   %arrayidx = getelementptr inbounds %struct.st, %struct.st* %S, i64 0, i32 1, i64 %indvars.iv
-  %tmp = load i8* %arrayidx, align 1
+  %tmp = load i8, i8* %arrayidx, align 1
   %conv = sext i8 %tmp to i32
   %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %conv, i32* %arrayidx2, align 4

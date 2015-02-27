@@ -35,10 +35,10 @@ for.body4:                                        ; preds = %for.cond2.preheader
 for.end9:                                         ; preds = %for.body4
   %idxprom10 = sext i32 %n to i64
   %arrayidx11 = getelementptr inbounds i32, i32* %A, i64 %idxprom10
-  %2 = load i32* %arrayidx11, align 4
+  %2 = load i32, i32* %arrayidx11, align 4
   %idxprom12 = sext i32 %n to i64
   %arrayidx13 = getelementptr inbounds i32, i32* %B, i64 %idxprom12
-  %3 = load i32* %arrayidx13, align 4
+  %3 = load i32, i32* %arrayidx13, align 4
   %add = add nsw i32 %3, %2
   ret i32 %add
 }

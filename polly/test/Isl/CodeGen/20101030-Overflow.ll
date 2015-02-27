@@ -5,7 +5,7 @@ target triple = "x86_64-unknown-linux-gnu"
 define void @compdecomp() nounwind {
 entry:
   %max = alloca i64
-  %i = load i64* undef
+  %i = load i64, i64* undef
   br label %bb37
 
 bb37:                                             ; preds = %bb36, %bb28

@@ -77,7 +77,7 @@ define i32 @main() nounwind {
   fence seq_cst
   %14 = sext i32 undef to i64                     ; <i64> [#uses=1]
   %15 = getelementptr inbounds i32, i32* getelementptr inbounds ([100 x i32]* @A, i32 0, i32 0), i64 %14 ; <i32*> [#uses=1]
-  %16 = load i32* %15                             ; <i32> [#uses=1]
+  %16 = load i32, i32* %15                             ; <i32> [#uses=1]
   ret i32 %16
 }
 

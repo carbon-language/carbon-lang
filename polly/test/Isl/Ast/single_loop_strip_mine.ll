@@ -18,7 +18,7 @@ for.cond:                                         ; preds = %for.body, %entry
 
 for.body:                                         ; preds = %for.cond
   %arrayidx = getelementptr inbounds i16, i16* %B, i64 0
-  %load = load i16* %arrayidx
+  %load = load i16, i16* %arrayidx
   %add10 = add nsw i16 %load, 1
   %arrayidx13 = getelementptr inbounds i16, i16* %A, i64 %indvar
   store i16 %add10, i16* %arrayidx13, align 2

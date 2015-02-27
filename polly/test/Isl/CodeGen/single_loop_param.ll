@@ -42,7 +42,7 @@ bb1:                                              ; preds = %bb7, %bb
   br i1 %tmp, label %bb2, label %bb8
 
 bb2:                                              ; preds = %bb1
-  %tmp3 = load i32* %scevgep                      ; <i32> [#uses=1]
+  %tmp3 = load i32, i32* %scevgep                      ; <i32> [#uses=1]
   %tmp4 = icmp ne i32 %tmp3, 1                    ; <i1> [#uses=1]
   br i1 %tmp4, label %bb5, label %bb6
 

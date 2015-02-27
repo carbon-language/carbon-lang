@@ -46,10 +46,10 @@ for.body4:                                        ; preds = %for.cond2
   call void @llvm.assume(i1 %exitcond)
   call i1 @llvm.expect.i1(i1 %exitcond, i1 1)
   %arrayidx = getelementptr inbounds [1024 x i32], [1024 x i32]* @A, i64 0, i64 %indvars.iv1
-  %tmp6 = load i32* %arrayidx, align 4
+  %tmp6 = load i32, i32* %arrayidx, align 4
   %arrayidx6 = getelementptr inbounds [1024 x i32], [1024 x i32]* %tmp, i64 0, i64 %indvars.iv3
   call void @llvm.donothing()
-  %tmp7 = load i32* %arrayidx6, align 4
+  %tmp7 = load i32, i32* %arrayidx6, align 4
   %add = add nsw i32 %tmp7, %tmp6
   store i32 %add, i32* %arrayidx6, align 4
   br label %for.inc
@@ -60,7 +60,7 @@ for.inc:                                          ; preds = %for.body4
 
 for.end:                                          ; preds = %for.cond2
   %arrayidx8 = getelementptr inbounds [1024 x i32], [1024 x i32]* %tmp, i64 0, i64 %indvars.iv3
-  %tmp8 = load i32* %arrayidx8, align 4
+  %tmp8 = load i32, i32* %arrayidx8, align 4
   %arrayidx10 = getelementptr inbounds [1024 x i32], [1024 x i32]* @A, i64 0, i64 %indvars.iv3
   call void @llvm.invariant.end({}* %lis, i64 4096, i8* %tmp3) #1
   store i32 %tmp8, i32* %arrayidx10, align 4

@@ -34,8 +34,8 @@ bb3:                                              ; preds = %bb7, %bb
   br i1 %exitcond, label %bb4, label %bb8
 
 bb4:                                              ; preds = %bb3
-  %tmp = load float* %scevgep2, align 4
-  %tmp5 = load float* %scevgep1, align 4
+  %tmp = load float, float* %scevgep2, align 4
+  %tmp5 = load float, float* %scevgep1, align 4
   %tmp6 = fmul float %tmp, %tmp5
   store float %tmp6, float* %scevgep, align 4
   br label %bb7

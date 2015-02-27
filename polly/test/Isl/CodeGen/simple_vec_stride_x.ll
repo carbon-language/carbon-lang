@@ -35,7 +35,7 @@ bb2:                                              ; preds = %bb5, %bb
   br i1 %exitcond, label %bb3, label %bb6
 
 bb3:                                              ; preds = %bb2
-  %tmp4 = load float* %scevgep1, align 8
+  %tmp4 = load float, float* %scevgep1, align 8
   store float %tmp4, float* %scevgep, align 8
   br label %bb5
 
@@ -50,18 +50,18 @@ bb6:                                              ; preds = %bb2
 define i32 @main() nounwind {
 bb:
   call void @simple_vec_stride_x()
-  %tmp = load float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 42), align 8
+  %tmp = load float, float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 42), align 8
   %tmp1 = fptosi float %tmp to i32
   ret i32 %tmp1
 }
 
-; CHECK: [[LOAD1:%[a-zA-Z0-9_]+_scalar_]] = load float*
+; CHECK: [[LOAD1:%[a-zA-Z0-9_]+_scalar_]] = load float, float*
 ; CHECK: [[VEC1:%[a-zA-Z0-9_]+]] = insertelement <4 x float> undef, float [[LOAD1]], i32 0
-; CHECK: [[LOAD2:%[a-zA-Z0-9_]+]] = load float*
+; CHECK: [[LOAD2:%[a-zA-Z0-9_]+]] = load float, float*
 ; CHECK: [[VEC2:%[a-zA-Z0-9_]+]] = insertelement <4 x float> [[VEC1]], float [[LOAD2]], i32 1
-; CHECK: [[LOAD3:%[a-zA-Z0-9_]+]] = load float*
+; CHECK: [[LOAD3:%[a-zA-Z0-9_]+]] = load float, float*
 ; CHECK: [[VEC3:%[a-zA-Z0-9_]+]] = insertelement <4 x float> [[VEC2]], float [[LOAD3]], i32 2
-; CHECK: [[LOAD4:%[a-zA-Z0-9_]+]] = load float*
+; CHECK: [[LOAD4:%[a-zA-Z0-9_]+]] = load float, float*
 ; CHECK: [[VEC4:%[a-zA-Z0-9_]+]] = insertelement <4 x float> [[VEC3]], float [[LOAD4]], i32 3
 ; CHECK: [[EL1:%[a-zA-Z0-9_]+]] = extractelement <4 x float> [[VEC4]], i32 0
 ; CHECK: store float [[EL1]]

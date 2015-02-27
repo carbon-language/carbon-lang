@@ -11,13 +11,13 @@ target triple = "x86_64-unknown-linux-gnu"
 define void @foo() {
 entry:
   tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !9, metadata !19), !dbg !20
-  %0 = load i32** @A, align 8, !dbg !21, !tbaa !23
+  %0 = load i32*, i32** @A, align 8, !dbg !21, !tbaa !23
   br label %for.body, !dbg !27
 
 for.body:                                         ; preds = %for.body, %entry
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %arrayidx = getelementptr inbounds i32, i32* %0, i64 %indvars.iv, !dbg !21
-  %1 = load i32* %arrayidx, align 4, !dbg !21, !tbaa !30
+  %1 = load i32, i32* %arrayidx, align 4, !dbg !21, !tbaa !30
   %add = add nsw i32 %1, 1, !dbg !21
   store i32 %add, i32* %arrayidx, align 4, !dbg !21, !tbaa !30
   %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1, !dbg !27

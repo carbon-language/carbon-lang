@@ -19,7 +19,7 @@ bb21:                                             ; preds = %bb20
   br label %bb23
 
 bb23:                                             ; preds = %bb21, %bb20
-  %d.1.reload = load [2 x float]** %d.1.reg2mem   ; <[2 x float]*> [#uses=1]
+  %d.1.reload = load [2 x float]*, [2 x float]** %d.1.reg2mem   ; <[2 x float]*> [#uses=1]
   br i1 undef, label %bb29, label %bb34
 
 bb29:                                             ; preds = %bb23

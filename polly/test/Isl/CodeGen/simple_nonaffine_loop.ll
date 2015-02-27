@@ -46,7 +46,7 @@ for.end:                                          ; preds = %for.body
   %mul2 = shl nsw i32 %rem, 10
   %idxprom3 = sext i32 %mul2 to i64
   %arrayidx4 = getelementptr inbounds [1048576 x i32], [1048576 x i32]* %A, i64 0, i64 %idxprom3
-  %2 = load i32* %arrayidx4, align 16
+  %2 = load i32, i32* %arrayidx4, align 16
   %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([17 x i8]* @.str, i64 0, i64 0), i32 %2) nounwind
   ret i32 0
 }

@@ -44,7 +44,7 @@ for.cond4:                                        ; preds = %for.inc, %for.body3
 
 for.body6:                                        ; preds = %for.cond4
   %arrayidx = getelementptr inbounds i32, i32* %B, i64 %k.0
-  %tmp3 = load i32* %arrayidx, align 2
+  %tmp3 = load i32, i32* %arrayidx, align 2
   %conv = sitofp i32 %tmp3 to double
   %tmp4 = mul nuw i64 %m, %p
   %tmp5 = mul nsw i64 %i.0, %tmp4

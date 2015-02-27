@@ -30,7 +30,7 @@ entry.next:                                       ; preds = %for.i
 
 for.j:                                            ; preds = %for.j, %entry.next
   %indvar.j = phi i64 [ 0, %entry.next ], [ %indvar.j.next, %for.j ]
-  %init = load i64* %init_ptr
+  %init = load i64, i64* %init_ptr
   %init_plus_two = add i64 %init, 2
   %scevgep = getelementptr i64, i64* %A, i64 %indvar.j
   store i64 %init_plus_two, i64* %scevgep

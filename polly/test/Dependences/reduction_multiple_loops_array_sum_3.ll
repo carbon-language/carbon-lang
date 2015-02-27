@@ -40,17 +40,17 @@ for.body_outer:                                   ; preds = %for.body_outer_spli
 
 for.body:                                         ; preds = %for.inc5, %for.body_outer
   %indvars.iv23 = phi i64 [ 0, %for.body_outer ], [ %3, %for.inc5 ]
-  %sum.04.reload = load i32* %sum.04.reg2mem
+  %sum.04.reload = load i32, i32* %sum.04.reg2mem
   %mul = shl nsw i32 %sum.04.reload, 1
   store i32 %mul, i32* %sum.12.reg2mem
   br label %for.inc
 
 for.inc:                                          ; preds = %for.inc, %for.body
   %indvars.iv1 = phi i64 [ 0, %for.body ], [ %1, %for.inc ]
-  %sum.12.reload = load i32* %sum.12.reg2mem
+  %sum.12.reload = load i32, i32* %sum.12.reg2mem
   %0 = add i64 %indvars.iv23, %indvars.iv1
   %arrayidx = getelementptr i32, i32* %A, i64 %0
-  %tmp5 = load i32* %arrayidx, align 4
+  %tmp5 = load i32, i32* %arrayidx, align 4
   %add4 = add nsw i32 %tmp5, %sum.12.reload
   %1 = add nuw nsw i64 %indvars.iv1, 1
   %exitcond1 = icmp eq i64 %1, 100
@@ -58,7 +58,7 @@ for.inc:                                          ; preds = %for.inc, %for.body
   br i1 %exitcond1, label %for.inc5, label %for.inc
 
 for.inc5:                                         ; preds = %for.inc
-  %2 = load i32* %sum.12.reg2mem
+  %2 = load i32, i32* %sum.12.reg2mem
   %3 = add nuw nsw i64 %indvars.iv23, 1
   %exitcond2 = icmp eq i64 %3, 100
   store i32 %2, i32* %sum.04.reg2mem
@@ -68,6 +68,6 @@ for.bos2:
   br label %for.body_outer_split
 
 for.end7:                                         ; preds = %for.inc5
-  %4 = load i32* %sum.04.reg2mem
+  %4 = load i32, i32* %sum.04.reg2mem
   ret i32 %4
 }

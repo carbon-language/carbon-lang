@@ -27,7 +27,7 @@ for.i:
 entry.next:
 ; CHECK: BB: entry.next
 ; SCALARACCESS: BB: entry.next
-  %init = load i64* %init_ptr
+  %init = load i64, i64* %init_ptr
 ; CHECK:  Read init_ptr[0]
 ; CHECK:  Write init.s2a[0]
 ; SCALARACCESS: Read init_ptr[0]
@@ -69,7 +69,7 @@ for.i:
 
 entry.next:
 ; SCALARACCESS: BB: entry.next
-  %init = load i64* %init_ptr
+  %init = load i64, i64* %init_ptr
 ; SCALARACCESS: Read init_ptr[0]
 ; SCALARACCESS:  Write init[0]
   br label %for.j

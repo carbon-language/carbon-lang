@@ -90,7 +90,7 @@ bb1:                                              ; preds = %bb15, %bb
   br i1 %tmp, label %bb2, label %bb16
 
 bb2:                                              ; preds = %bb1
-  %tmp3 = load i32* %scevgep
+  %tmp3 = load i32, i32* %scevgep
   %tmp4 = icmp ne i32 %tmp3, 1
   br i1 %tmp4, label %bb5, label %bb8
 
@@ -102,7 +102,7 @@ bb7:                                              ; preds = %bb5
   br label %bb17
 
 bb8:                                              ; preds = %bb5, %bb2
-  %tmp9 = load i32* %scevgep
+  %tmp9 = load i32, i32* %scevgep
   %tmp10 = icmp ne i32 %tmp9, 2
   br i1 %tmp10, label %bb11, label %bb14
 

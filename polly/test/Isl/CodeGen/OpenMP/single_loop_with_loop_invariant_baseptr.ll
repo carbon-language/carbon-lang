@@ -29,9 +29,9 @@ for.i:
   br i1 %exitcond, label %S, label %exit
 
 S:
-  %ptr = load float** %A,  !tbaa !2
+  %ptr = load float*, float** %A,  !tbaa !2
   %scevgep = getelementptr float, float* %ptr, i64 %indvar
-  %val = load float* %scevgep, !tbaa !6
+  %val = load float, float* %scevgep, !tbaa !6
   %sum = fadd float %val, 1.0
   store float %sum, float* %scevgep, !tbaa !6
   br label %for.inc

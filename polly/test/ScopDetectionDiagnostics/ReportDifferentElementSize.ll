@@ -24,7 +24,7 @@ for.body:                                         ; preds = %for.body, %entry
   %tmp9 = shl i64 %i.05, 2, !dbg !15
   %uglygep7 = getelementptr i8, i8* %A, i64 %tmp9
   %arrayidx1 = bitcast i8* %uglygep7 to float*, !dbg !17
-  %tmp10 = load double* %arrayidx, align 8, !dbg !16, !tbaa !18
+  %tmp10 = load double, double* %arrayidx, align 8, !dbg !16, !tbaa !18
   %conv = fptrunc double %tmp10 to float, !dbg !16
   store float %conv, float* %arrayidx1, align 4, !dbg !17, !tbaa !22
   %tmp11 = add nsw i64 %i.05, 1, !dbg !24

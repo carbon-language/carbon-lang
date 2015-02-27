@@ -24,7 +24,7 @@ for.body:                                         ; preds = %for.cond
   %conv = sitofp i32 %i.0 to float
   %pi = fptrunc double 3.41 to float
   %mul = fmul float %conv, %pi
-  %tmp = load float* %sum, align 4
+  %tmp = load float, float* %sum, align 4
   %add = fadd float %tmp, %mul
   store float %add, float* %sum, align 4
   br label %for.inc
@@ -50,7 +50,7 @@ for.body:                                         ; preds = %for.cond
   %conv = sitofp i32 %i.0 to float
   %pi = fptrunc double 3.41 to float
   %mul = fmul fast float %conv, %pi
-  %tmp = load float* %sum, align 4
+  %tmp = load float, float* %sum, align 4
   %add = fadd fast float %tmp, %mul
   store float %add, float* %sum, align 4
   br label %for.inc

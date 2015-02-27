@@ -19,12 +19,12 @@ bb1:
   br i1 %exitcond, label %bb2a, label %bb5
 
 bb2a:
-  %tmp1 = load float* %scevgep1, align 4
+  %tmp1 = load float, float* %scevgep1, align 4
   store float %tmp1, float* %scevgep, align 4
   br label %bb2b
 
 bb2b:
-  %tmp2 = load float* %scevgep1, align 4
+  %tmp2 = load float, float* %scevgep1, align 4
   store float %tmp2, float* %scevgep2, align 4
   br label %bb4
 
@@ -38,13 +38,13 @@ bb5:
 
 define i32 @main() nounwind {
   call void @simple_vec_stride_one()
-  %1 = load float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 42), align 8
+  %1 = load float, float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 42), align 8
   %2 = fptosi float %1 to i32
   ret i32 %2
 }
 
-; CHECK: [[LOAD1:%[a-zA-Z0-9_]+_full]] = load <4 x float>*
+; CHECK: [[LOAD1:%[a-zA-Z0-9_]+_full]] = load <4 x float>, <4 x float>*
 ; CHECK: store <4 x float> [[LOAD1]]
-; CHECK: [[LOAD2:%[a-zA-Z0-9_]+_full]] = load <4 x float>*
+; CHECK: [[LOAD2:%[a-zA-Z0-9_]+_full]] = load <4 x float>, <4 x float>*
 ; CHECK: store <4 x float> [[LOAD2]]
 

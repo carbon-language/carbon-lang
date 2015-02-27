@@ -57,7 +57,7 @@ for.body53:                                       ; preds = %for.body53, %for.bo
   %arrayidx180 = getelementptr inbounds float, float* %ch, i64 %idxprom179
   store float undef, float* %arrayidx180, align 4
   %arrayidx183 = getelementptr inbounds float, float* %wa3, i64 0
-  %0 = load float* %arrayidx183, align 4
+  %0 = load float, float* %arrayidx183, align 4
   %mul184 = fmul float undef, %0
   %add189 = fadd float %mul184, 0.000000e+00
   %idxprom190 = sext i32 %add177 to i64

@@ -25,7 +25,7 @@ for.body9:                                        ; preds = %for.body9, %for.con
   %ix.02 = phi i32 [ %inc, %for.body9 ], [ 0, %for.cond7.preheader ]
   %idxprom74 = sext i32 %iz.08 to i64
   %arrayidx75 = getelementptr inbounds double, double* %czp, i64 %idxprom74
-  %0 = load double* %arrayidx75, align 8
+  %0 = load double, double* %arrayidx75, align 8
   %idxprom102 = sext i32 %iz.08 to i64
   %arrayidx105 = getelementptr inbounds [65 x [65 x double]], [65 x [65 x double]]* %Hz, i64 %idxprom102, i64 0, i64 0
   store double undef, double* %arrayidx105, align 8

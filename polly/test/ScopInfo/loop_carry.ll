@@ -20,7 +20,7 @@ entry:
 
 bb.nph:                                           ; preds = %entry
   %tmp = add i64 %n, -1                           ; <i64> [#uses=1]
-  %.pre = load i64* %a, align 8                   ; <i64> [#uses=1]
+  %.pre = load i64, i64* %a, align 8                   ; <i64> [#uses=1]
   br label %bb
 
 bb:                                               ; preds = %bb, %bb.nph
@@ -36,8 +36,8 @@ bb:                                               ; preds = %bb, %bb.nph
   %tmp8 = add i64 %tmp7, 2                        ; <i64> [#uses=1]
   %scevgep12 = getelementptr i64, i64* %a, i64 %tmp11  ; <i64*> [#uses=1]
   %scevgep9 = getelementptr i64, i64* %a, i64 %tmp8    ; <i64*> [#uses=1]
-  %3 = load i64* %scevgep9, align 8               ; <i64> [#uses=1]
-  %4 = load i64* %scevgep12, align 8              ; <i64> [#uses=1]
+  %3 = load i64, i64* %scevgep9, align 8               ; <i64> [#uses=1]
+  %4 = load i64, i64* %scevgep12, align 8              ; <i64> [#uses=1]
   %5 = add nsw i64 %3, %4                         ; <i64> [#uses=1]
   %exitcond = icmp eq i64 %tmp6, %tmp             ; <i1> [#uses=1]
   br i1 %exitcond, label %bb2, label %bb

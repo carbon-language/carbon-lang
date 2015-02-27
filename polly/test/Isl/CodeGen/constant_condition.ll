@@ -48,7 +48,7 @@ define i32 @main() nounwind {
 bb:
   store i32 2, i32* getelementptr inbounds ([1 x i32]* @A, i32 0, i32 0)
   call void @constant_condition()
-  %tmp = load i32* getelementptr inbounds ([1 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
+  %tmp = load i32, i32* getelementptr inbounds ([1 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
   ret i32 %tmp
 }
 

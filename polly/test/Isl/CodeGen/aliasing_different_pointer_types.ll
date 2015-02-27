@@ -36,7 +36,7 @@ for.cond:                                         ; preds = %for.inc, %entry
 
 for.body:                                         ; preds = %for.cond
   %arrayidx = getelementptr inbounds float*, float** %B, i64 %indvars.iv
-  %tmp = load float** %arrayidx, align 8
+  %tmp = load float*, float** %arrayidx, align 8
   %tmp1 = bitcast float* %tmp to double*
   %arrayidx2 = getelementptr inbounds double*, double** %A, i64 %indvars.iv
   store double* %tmp1, double** %arrayidx2, align 8

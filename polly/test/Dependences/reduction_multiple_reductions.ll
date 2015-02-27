@@ -36,13 +36,13 @@ for.body:                                         ; preds = %for.cond
   br i1 %cmp1, label %if.then, label %if.else
 
 if.then:                                          ; preds = %for.body
-  %tmp = load i32* %sum, align 4
+  %tmp = load i32, i32* %sum, align 4
   %add = add nsw i32 %tmp, %i.0
   store i32 %add, i32* %sum, align 4
   br label %if.end
 
 if.else:                                          ; preds = %for.body
-  %tmp1 = load i32* %prod, align 4
+  %tmp1 = load i32, i32* %prod, align 4
   %mul = mul nsw i32 %tmp1, %i.0
   store i32 %mul, i32* %prod, align 4
   br label %if.end

@@ -11,7 +11,7 @@ bb7:                                              ; preds = %bb7, %entry
   br i1 undef, label %bb7, label %bb8
 
 bb8:                                              ; preds = %bb7
-  %indvar5.lcssa.reload = load i64* undef
+  %indvar5.lcssa.reload = load i64, i64* undef
   %tmp17 = mul i64 %indvar5.lcssa.reload, -1
   %tmp18 = add i64 0, %tmp17
   br label %bb18

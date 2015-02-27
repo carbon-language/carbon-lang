@@ -34,7 +34,7 @@ for.body3:                                        ; preds = %for.body3, %for.con
   %add = add nsw i64 %i.020, %mul
   %add4 = add nsw i64 %add, 1
   %arrayidx = getelementptr inbounds float, float* %input, i64 %add4
-  %0 = load float* %arrayidx, align 8
+  %0 = load float, float* %arrayidx, align 8
   %mul5 = fmul float %0, %0
   %arrayidx9 = getelementptr inbounds float, float* %input, i64 %add
   store float %mul5, float* %arrayidx9, align 8

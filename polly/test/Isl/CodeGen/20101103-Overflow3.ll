@@ -3,7 +3,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-unknown-linux-gnu"
 define void @Reflection_coefficients(i16* %r) nounwind {
 bb20:
-  %indvar3.lcssa20.reload = load i64* undef
+  %indvar3.lcssa20.reload = load i64, i64* undef
   %tmp = mul i64 %indvar3.lcssa20.reload, -1
   %tmp5 = add i64 %tmp, 8
   br label %bb22

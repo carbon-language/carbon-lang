@@ -22,9 +22,9 @@ for.body:                                         ; preds = %for.cond
   %sub = add nsw i32 %c, -10
   %idxprom = sext i32 %sub to i64
   %arrayidx = getelementptr inbounds i32, i32* %B, i64 %idxprom
-  %tmp = load i32* %arrayidx, align 4
+  %tmp = load i32, i32* %arrayidx, align 4
   %arrayidx1 = getelementptr inbounds i32, i32* %B, i64 5
-  %tmp1 = load i32* %arrayidx1, align 4
+  %tmp1 = load i32, i32* %arrayidx1, align 4
   %add = add nsw i32 %tmp, %tmp1
   %arrayidx3 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %add, i32* %arrayidx3, align 4

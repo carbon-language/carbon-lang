@@ -55,7 +55,7 @@ bb.nph.us:                                        ; preds = %bb.nph31.split.us, 
 for.end19:                                        ; preds = %for.inc06.us
   %idxprom21 = sext i32 %z to i64                 ; <i64> [#uses=1]
   %arrayidx22 = getelementptr inbounds [100 x i32], [100 x i32]* @A, i64 0, i64 %idxprom21 ; <i32*> [#uses=1]
-  %tmp23 = load i32* %arrayidx22                  ; <i32> [#uses=1]
+  %tmp23 = load i32, i32* %arrayidx22                  ; <i32> [#uses=1]
   ret i32 %tmp23
 }
 ; CHECK: for (c2=0;c2<=99;c2++) {

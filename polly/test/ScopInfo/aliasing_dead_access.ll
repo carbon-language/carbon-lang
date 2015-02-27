@@ -32,7 +32,7 @@ for.cond1:                                        ; preds = %for.inc, %for.body
 
 for.body3:                                        ; preds = %for.cond1
   %arrayidx = getelementptr inbounds i32, i32* %B, i64 %indvars.iv
-  %tmp1 = load i32* %arrayidx, align 4
+  %tmp1 = load i32, i32* %arrayidx, align 4
   %arrayidx5 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %tmp1, i32* %arrayidx5, align 4
   br label %for.inc

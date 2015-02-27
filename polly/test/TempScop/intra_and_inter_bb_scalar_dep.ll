@@ -27,7 +27,7 @@ for.i:                                            ; preds = %for.i.end, %entry
   br label %entry.next
 
 entry.next:                                       ; preds = %for.i
-  %init = load i64* %init_ptr
+  %init = load i64, i64* %init_ptr
 ; CHECK: BB: entry.next
 ; CHECK: Read init_ptr[0]
 ; CHECK: Write init[0]
@@ -35,7 +35,7 @@ entry.next:                                       ; preds = %for.i
 
 for.j:                                            ; preds = %for.j, %entry.next
   %indvar.j = phi i64 [ 0, %entry.next ], [ %indvar.j.next, %for.j ]
-  %init_2 = load i64* %init_ptr
+  %init_2 = load i64, i64* %init_ptr
   %init_sum = add i64 %init, %init_2
 ; CHECK: BB: for.j
 ; CHECK: Read init[0]

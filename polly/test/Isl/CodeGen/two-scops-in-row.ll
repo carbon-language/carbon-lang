@@ -21,7 +21,7 @@ entry:
   br label %for.0
 
 for.0:
-  %Scalar0.val = load i32* %Scalar0
+  %Scalar0.val = load i32, i32* %Scalar0
   br i1 false, label %for.0, label %for.1.preheader
 
 for.1.preheader:

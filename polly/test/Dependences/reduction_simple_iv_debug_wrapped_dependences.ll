@@ -71,7 +71,7 @@ entry.split:                                      ; preds = %entry.split1
 
 for.cond:                                         ; preds = %for.cond, %entry.split
   %i1.0 = phi i32 [ 0, %entry.split ], [ %inc, %for.cond ]
-  %sum.reload = load i32* %sum
+  %sum.reload = load i32, i32* %sum
   %mul = mul nsw i32 %i1.0, 3
   %add = add nsw i32 %sum.reload, %mul
   %inc = add nsw i32 %i1.0, 1

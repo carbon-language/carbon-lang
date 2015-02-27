@@ -29,7 +29,7 @@ cleanup:
 ; CHECK:  store i32 %i.1.next, i32* %i.1.next.s2a
 
 ; CHECK: for.i.2.preheader:
-; CHECK:    %i.1.next.loadoutside = load i32* %i.1.next.s2a
+; CHECK:    %i.1.next.loadoutside = load i32, i32* %i.1.next.s2a
 
 ; CHECK: for.i.2:
 ; CHECK:    %i.2 = phi i32 [ %i.2.next, %for.i.2 ], [ %i.1.next.loadoutside, %for.i.2.preheader ]

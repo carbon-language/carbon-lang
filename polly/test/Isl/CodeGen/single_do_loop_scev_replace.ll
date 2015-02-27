@@ -69,10 +69,10 @@ do.end:                                           ; preds = %do.cond
 define i32 @main() nounwind {
 entry:
   call void @single_do_loop_scev_replace()
-  %tmp = load %struct._IO_FILE** @stdout          ; <%struct._IO_FILE*> [#uses=1]
-  %tmp1 = load i32* getelementptr inbounds ([40 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
+  %tmp = load %struct._IO_FILE*, %struct._IO_FILE** @stdout          ; <%struct._IO_FILE*> [#uses=1]
+  %tmp1 = load i32, i32* getelementptr inbounds ([40 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
   %call = call i32 (%struct._IO_FILE*, i8*, ...)* @fprintf(%struct._IO_FILE* %tmp, i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0), i32 %tmp1) ; <i32> [#uses=0]
-  %tmp2 = load i32* getelementptr inbounds ([40 x i32]* @A, i32 0, i64 38) ; <i32> [#uses=1]
+  %tmp2 = load i32, i32* getelementptr inbounds ([40 x i32]* @A, i32 0, i64 38) ; <i32> [#uses=1]
   %cmp = icmp eq i32 %tmp2, 19                    ; <i1> [#uses=1]
   br i1 %cmp, label %if.then, label %if.else
 

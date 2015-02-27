@@ -19,7 +19,7 @@ define i32 @main() nounwind uwtable readnone {
 .preheader:                                       ; preds = %.preheader, %1
   %indvars.iv = phi i64 [ %indvars.iv.next, %.preheader ], [ 0, %1 ]
   %4 = getelementptr inbounds [100 x i32], [100 x i32]* %arr, i64 0, i64 %indvars.iv
-  %5 = load i32* %4, align 4, !tbaa !0
+  %5 = load i32, i32* %4, align 4, !tbaa !0
   %6 = xor i32 %5, -1
   %7 = shl i32 %5, 15
   %8 = add nsw i32 %7, %6

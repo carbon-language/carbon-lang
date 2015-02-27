@@ -51,7 +51,7 @@ for.end:                                          ; preds = %for.cond
   fence seq_cst
   %arraydecay5 = getelementptr inbounds [20 x i32], [20 x i32]* %A, i32 0, i32 0 ; <i32*> [#uses=1]
   %arrayidx6 = getelementptr inbounds i32, i32* %arraydecay5, i64 0 ; <i32*> [#uses=1]
-  %tmp7 = load i32* %arrayidx6                    ; <i32> [#uses=1]
+  %tmp7 = load i32, i32* %arrayidx6                    ; <i32> [#uses=1]
   %cmp8 = icmp eq i32 %tmp7, 1                    ; <i1> [#uses=1]
   br i1 %cmp8, label %if.then, label %if.else
 

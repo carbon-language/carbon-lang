@@ -14,7 +14,7 @@ entry:
 
 for.cond:                                         ; preds = %for.cond, %entry
   %i1.0 = phi i32 [ 0, %entry ], [ %inc, %for.cond ]
-  %sum.reload = load i32* %sum
+  %sum.reload = load i32, i32* %sum
   %add = add nsw i32 %sum.reload, 3
   %inc = add nsw i32 %i1.0, 1
   store i32 %add, i32* %sum

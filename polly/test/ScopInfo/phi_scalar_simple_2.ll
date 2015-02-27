@@ -74,7 +74,7 @@ if.then:                                          ; preds = %for.body3
 ; CHECK:     MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
 ; CHECK:         [N, c] -> { Stmt_if_then[i0, i1] -> MemRef_x_addr_2[] };
   %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
-  %tmp2 = load i32* %arrayidx, align 4
+  %tmp2 = load i32, i32* %arrayidx, align 4
   %add = add nsw i32 %x.addr.1, %tmp2
   br label %if.end
 

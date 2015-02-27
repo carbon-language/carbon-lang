@@ -59,7 +59,7 @@ define i32 @main() nounwind {
 entry:
   store i32 0, i32* getelementptr inbounds ([20 x i32]* @A, i32 0, i32 0)
   call void @bar(i32 10)
-  %tmp = load i32* getelementptr inbounds ([20 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
+  %tmp = load i32, i32* getelementptr inbounds ([20 x i32]* @A, i32 0, i32 0) ; <i32> [#uses=1]
   %cmp = icmp eq i32 %tmp, 19                     ; <i1> [#uses=1]
   br i1 %cmp, label %if.then, label %if.else
 

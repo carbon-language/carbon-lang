@@ -28,9 +28,9 @@ for.body8:                                        ; preds = %for.body3, %for.bod
   %indvar = phi i64 [ 0, %for.body3 ], [ %indvar.next, %for.body8 ]
   %arrayidx16 = getelementptr [1536 x [1536 x float]], [1536 x [1536 x float]]* @A, i64 0, i64 %indvar4, i64 %indvar
   %arrayidx20 = getelementptr [1536 x [1536 x float]], [1536 x [1536 x float]]* @B, i64 0, i64 %indvar, i64 %indvar6
-  %0 = load float* %arrayidx24, align 4
-  %1 = load float* %arrayidx16, align 4
-  %2 = load float* %arrayidx20, align 4
+  %0 = load float, float* %arrayidx24, align 4
+  %1 = load float, float* %arrayidx16, align 4
+  %2 = load float, float* %arrayidx20, align 4
   %mul = fmul float %1, %2
   %add = fadd float %0, %mul
   store float %add, float* %arrayidx24, align 4

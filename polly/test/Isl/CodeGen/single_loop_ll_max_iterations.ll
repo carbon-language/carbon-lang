@@ -53,7 +53,7 @@ for.end:                                          ; preds = %for.cond
   fence seq_cst
   %arraydecay5 = getelementptr inbounds [20 x i64], [20 x i64]* %A, i32 0, i32 0 ; <i64*> [#uses=1]
   %arrayidx6 = getelementptr inbounds i64, i64* %arraydecay5, i64 0 ; <i64*> [#uses=1]
-  %tmp7 = load i64* %arrayidx6                    ; <i64> [#uses=1]
+  %tmp7 = load i64, i64* %arrayidx6                    ; <i64> [#uses=1]
   %cmp8 = icmp eq i64 %tmp7, 9223372036854775806  ; <i1> [#uses=1]
   br i1 %cmp8, label %if.then, label %if.else
 

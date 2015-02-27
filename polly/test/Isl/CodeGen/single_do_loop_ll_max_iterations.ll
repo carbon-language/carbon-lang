@@ -50,7 +50,7 @@ do.cond:                                          ; preds = %do.body
 
 do.end:                                           ; preds = %do.cond
   fence seq_cst
-  %tmp3 = load i64* getelementptr inbounds ([20 x i64]* @A, i32 0, i32 0) ; <i64> [#uses=1]
+  %tmp3 = load i64, i64* getelementptr inbounds ([20 x i64]* @A, i32 0, i32 0) ; <i64> [#uses=1]
   %cmp4 = icmp eq i64 %tmp3, 9223372036854775806  ; <i1> [#uses=1]
   br i1 %cmp4, label %if.then, label %if.else
 

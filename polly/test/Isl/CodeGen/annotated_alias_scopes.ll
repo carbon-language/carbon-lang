@@ -5,9 +5,9 @@
 ;
 ; SCOPES-LABEL: polly.stmt.for.body:
 ; SCOPES:      %[[BIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} i32* %B, i64 %polly.indvar
-; SCOPES:      load i32* %[[BIdx]], align 4, !alias.scope ![[AliasScopeB:[0-9]*]], !noalias ![[NoAliasB:[0-9]*]]
+; SCOPES:      load i32, i32* %[[BIdx]], align 4, !alias.scope ![[AliasScopeB:[0-9]*]], !noalias ![[NoAliasB:[0-9]*]]
 ; SCOPES:      %[[CIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} float* %C, i64 %polly.indvar
-; SCOPES:      load float* %[[CIdx]], align 4, !alias.scope ![[AliasScopeC:[0-9]*]], !noalias ![[NoAliasC:[0-9]*]]
+; SCOPES:      load float, float* %[[CIdx]], align 4, !alias.scope ![[AliasScopeC:[0-9]*]], !noalias ![[NoAliasC:[0-9]*]]
 ; SCOPES:      %[[AIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} i32* %A, i64 %polly.indvar
 ; SCOPES:      store i32 %{{[._a-zA-Z0-9]*}}, i32* %[[AIdx]], align 4, !alias.scope ![[AliasScopeA:[0-9]*]], !noalias ![[NoAliasA:[0-9]*]]
 ;
@@ -28,11 +28,11 @@
 ; SCOPES:       }
 ;
 ; NOSCOPES:    %[[BIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} i32* %B, i64 %polly.indvar
-; NOSCOPES:    load i32* %[[BIdx]]
+; NOSCOPES:    load i32, i32* %[[BIdx]]
 ; NOSCOPES-NOT: alias.scope
 ; NOSCOPES-NOT: noalias
 ; NOSCOPES:    %[[CIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} float* %C, i64 %polly.indvar
-; NOSCOPES:    load float* %[[CIdx]]
+; NOSCOPES:    load float, float* %[[CIdx]]
 ; NOSCOPES-NOT: alias.scope
 ; NOSCOPES-NOT: noalias
 ; NOSCOPES:    %[[AIdx:[._a-zA-Z0-9]*]] = getelementptr{{.*}} i32* %A, i64 %polly.indvar
@@ -60,10 +60,10 @@ for.cond:                                         ; preds = %for.inc, %entry
 
 for.body:                                         ; preds = %for.cond
   %arrayidx = getelementptr inbounds i32, i32* %B, i64 %indvars.iv
-  %tmp = load i32* %arrayidx, align 4
+  %tmp = load i32, i32* %arrayidx, align 4
   %conv = sitofp i32 %tmp to float
   %arrayidx2 = getelementptr inbounds float, float* %C, i64 %indvars.iv
-  %tmp1 = load float* %arrayidx2, align 4
+  %tmp1 = load float, float* %arrayidx2, align 4
   %add = fadd fast float %conv, %tmp1
   %conv3 = fptosi float %add to i32
   %arrayidx5 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv

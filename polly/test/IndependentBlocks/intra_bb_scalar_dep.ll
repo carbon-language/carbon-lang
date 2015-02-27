@@ -34,7 +34,7 @@ entry.next:
 
 for.j:
   %indvar.j = phi i64 [ 0, %entry.next ], [ %indvar.j.next, %for.j ]
-  %init = load i64* %init_ptr
+  %init = load i64, i64* %init_ptr
   %init_plus_two = add i64 %init, 2
 ; The scalar evolution of %init_plus_two is (2 + %init). So we have a
 ; non-trivial scalar evolution referring to a value in the same basic block.

@@ -15,8 +15,8 @@ target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
 
 define void @loads_outside_scop(i32* %sum) {
 entry:
-  %tmp = load i32* @c, align 4
-  %tmp1 = load i32* @d, align 4
+  %tmp = load i32, i32* @c, align 4
+  %tmp1 = load i32, i32* @d, align 4
   br label %for.cond
 
 for.cond:                                         ; preds = %for.inc, %entry
@@ -40,8 +40,8 @@ for.end:                                          ; preds = %for.cond
 
 define void @binop_outside_scop(i32* %sum) {
 entry:
-  %tmp = load i32* @c, align 4
-  %tmp1 = load i32* @d, align 4
+  %tmp = load i32, i32* @c, align 4
+  %tmp1 = load i32, i32* @d, align 4
   %add = add nsw i32 %tmp, %tmp1
   br label %for.cond
 

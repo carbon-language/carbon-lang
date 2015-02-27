@@ -14,7 +14,7 @@ entry:
 body:
   %indvar = phi i64 [ 0, %entry ], [ %indvar_next, %body ]
   %scevgep = getelementptr [1024 x float], [1024 x float]* @B, i64 0, i64 %indvar
-  %value = load float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 0), align 16
+  %value = load float, float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 0), align 16
   %result = tail call float @foo(float %value) nounwind
   store float %result, float* %scevgep, align 4
   %indvar_next = add i64 %indvar, 1
@@ -25,7 +25,7 @@ return:
   ret void
 }
 
-; CHECK: %value_p_splat_one = load <1 x float>* bitcast ([1024 x float]* @A to <1 x float>*), align 8
+; CHECK: %value_p_splat_one = load <1 x float>, <1 x float>* bitcast ([1024 x float]* @A to <1 x float>*), align 8
 ; CHECK: %value_p_splat = shufflevector <1 x float> %value_p_splat_one, <1 x float> %value_p_splat_one, <4 x i32> zeroinitializer
 ; CHECK: %0 = extractelement <4 x float> %value_p_splat, i32 0
 ; CHECK: %1 = extractelement <4 x float> %value_p_splat, i32 1

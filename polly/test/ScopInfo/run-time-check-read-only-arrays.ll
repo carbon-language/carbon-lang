@@ -20,8 +20,8 @@ for.body:
   %arrayidx.A = getelementptr float, float* %A, i64 %indvar
   %arrayidx.B = getelementptr float, float* %B, i64 %indvar
   %arrayidx.C = getelementptr float, float* %C, i64 %indvar
-  %val.A = load float* %arrayidx.A
-  %val.B = load float* %arrayidx.B
+  %val.A = load float, float* %arrayidx.A
+  %val.B = load float, float* %arrayidx.B
   %add = fadd float %val.A, %val.B
   store float %add, float* %arrayidx.C
   %indvar.next = add nsw i64 %indvar, 1

@@ -25,7 +25,7 @@ for.body.1:
   %indvar.next.1 = add i64 %indvar.1, 1
 
   %A.current.1 = getelementptr [200 x i32], [200 x i32]* %A, i64 0, i64 %indvar.1
-  %val1.1 = load i32* %A.current.1, align 4
+  %val1.1 = load i32, i32* %A.current.1, align 4
   %val2.1 = mul i32 %val1.1, 2
   %A.next.1 = getelementptr [200 x i32], [200 x i32]* %A, i64 0, i64 %indvar.next.1
   store i32 %val2.1, i32* %A.next.1, align 4
@@ -40,7 +40,7 @@ for.body.2:
   %indvar.2 = phi i64 [ 0, %exit.1 ], [ %indvar.next.2, %for.body.2 ]
 
   %B.current.2 = getelementptr [200 x i32], [200 x i32]* %B, i64 0, i64 %indvar.2
-  %val1.2 = load i32* %B.current.2, align 4
+  %val1.2 = load i32, i32* %B.current.2, align 4
   %val2.2 = mul i32 %val1.2, 2
   %A.current.2 = getelementptr [200 x i32], [200 x i32]* %A, i64 0, i64 %indvar.2
   store i32 %val2.2, i32* %A.current.2, align 4

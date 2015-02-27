@@ -56,14 +56,14 @@ for.cond:                                         ; preds = %for.inc, %entry
   br i1 %exitcond, label %for.body, label %for.end
 
 for.body:                                         ; preds = %for.cond
-  %tmp10 = load i32* %arrayidx9                   ; <i32> [#uses=1]
-  %tmp16 = load i32* %arrayidx15                  ; <i32> [#uses=1]
+  %tmp10 = load i32, i32* %arrayidx9                   ; <i32> [#uses=1]
+  %tmp16 = load i32, i32* %arrayidx15                  ; <i32> [#uses=1]
   %add = add nsw i32 %tmp10, %tmp16               ; <i32> [#uses=1]
   store i32 %add, i32* %arrayidx20
-  %tmp26 = load i32* %arrayidx15                  ; <i32> [#uses=1]
+  %tmp26 = load i32, i32* %arrayidx15                  ; <i32> [#uses=1]
   %arraydecay27 = getelementptr inbounds [1 x i32], [1 x i32]* %RED, i32 0, i32 0 ; <i32*> [#uses=1]
   %arrayidx28 = getelementptr inbounds i32, i32* %arraydecay27, i64 0 ; <i32*> [#uses=2]
-  %tmp29 = load i32* %arrayidx28                  ; <i32> [#uses=1]
+  %tmp29 = load i32, i32* %arrayidx28                  ; <i32> [#uses=1]
   %add30 = add nsw i32 %tmp29, %tmp26             ; <i32> [#uses=1]
   store i32 %add30, i32* %arrayidx28
   br label %for.inc
@@ -75,7 +75,7 @@ for.inc:                                          ; preds = %for.body
 for.end:                                          ; preds = %for.cond
   %arraydecay32 = getelementptr inbounds [1 x i32], [1 x i32]* %RED, i32 0, i32 0 ; <i32*> [#uses=1]
   %arrayidx33 = getelementptr inbounds i32, i32* %arraydecay32, i64 0 ; <i32*> [#uses=1]
-  %tmp34 = load i32* %arrayidx33                  ; <i32> [#uses=1]
+  %tmp34 = load i32, i32* %arrayidx33                  ; <i32> [#uses=1]
   %cmp35 = icmp ne i32 %tmp34, 382399368          ; <i1> [#uses=1]
   br i1 %cmp35, label %if.then, label %if.end
 

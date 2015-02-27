@@ -33,14 +33,14 @@ for.i:
   br label %entry.next
 
 entry.next:
-  %init = load i64* %init_ptr
+  %init = load i64, i64* %init_ptr
 ; SCALARACCESS-NOT: store
   br label %for.j
 
 for.j:
   %indvar.j = phi i64 [ 0, %entry.next ], [ %indvar.j.next, %for.j ]
   %init_plus_two = add i64 %init, 2
-; CHECK: %init.loadarray = load i64* %init.s2a
+; CHECK: %init.loadarray = load i64, i64* %init.s2a
 ; CHECK: %init_plus_two = add i64 %init.loadarray, 2
 ; SCALARACCESS: %init_plus_two = add i64 %init, 2
   %scevgep = getelementptr i64, i64* %A, i64 %indvar.j

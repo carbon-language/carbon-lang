@@ -21,7 +21,7 @@ bb1:                                              ; preds = %bb8, %bb
 
 bb2:                                              ; preds = %bb1
   %tmp = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
-  %tmp3 = load i32* %tmp, align 4
+  %tmp3 = load i32, i32* %tmp, align 4
   %tmp4 = icmp eq i32 %tmp3, 0
   br i1 %tmp4, label %bb7, label %bb5
 

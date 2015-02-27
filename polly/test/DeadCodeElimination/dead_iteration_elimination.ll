@@ -44,7 +44,7 @@ exit.2:
 for.body.3:
   %indvar.3 = phi i64 [ 0, %exit.2 ], [ %indvar.next.3, %for.body.3 ]
   %arrayidx.3 = getelementptr [200 x i32], [200 x i32]* %A, i64 0, i64 %indvar.3
-  %val = load i32* %arrayidx.3, align 4
+  %val = load i32, i32* %arrayidx.3, align 4
   %add = add nsw i32 %val, 5
   store i32 %add, i32* %arrayidx.3, align 4
   %indvar.next.3 = add i64 %indvar.3, 1

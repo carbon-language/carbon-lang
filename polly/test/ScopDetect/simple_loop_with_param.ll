@@ -27,7 +27,7 @@ for.i:
   br label %entry.next
 
 entry.next:
-  %init = load i64* %init_ptr
+  %init = load i64, i64* %init_ptr
   br label %for.j
 
 for.j:

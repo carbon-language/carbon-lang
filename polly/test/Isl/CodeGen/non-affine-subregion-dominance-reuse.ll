@@ -30,7 +30,7 @@ bb1:                                              ; preds = %bb22, %bb
 
 bb2:                                              ; preds = %bb1
   %tmp = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
-  %tmp3 = load i32* %tmp, align 4
+  %tmp3 = load i32, i32* %tmp, align 4
   %tmp4 = icmp eq i32 %tmp3, 0
   br i1 %tmp4, label %bb21, label %bb5
 
@@ -44,7 +44,7 @@ bb7:                                              ; preds = %bb5
 bb8:                                              ; preds = %bb7
   %tmp9 = add nsw i64 %indvars.iv, -1
   %tmp10 = getelementptr inbounds i32, i32* %B, i64 %tmp9
-  %tmp11 = load i32* %tmp10, align 4
+  %tmp11 = load i32, i32* %tmp10, align 4
   %tmp12 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %tmp11, i32* %tmp12, align 4
   br label %bb13
@@ -55,9 +55,9 @@ bb13:                                             ; preds = %bb8, %bb5
 bb14:                                             ; preds = %bb13
   %tmp15 = add nsw i64 %indvars.iv, -1
   %tmp16 = getelementptr inbounds i32, i32* %B, i64 %tmp15
-  %tmp17 = load i32* %tmp16, align 4
+  %tmp17 = load i32, i32* %tmp16, align 4
   %tmp18 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
-  %tmp19 = load i32* %tmp18, align 4
+  %tmp19 = load i32, i32* %tmp18, align 4
   %tmp20 = add nsw i32 %tmp19, %tmp17
   store i32 %tmp20, i32* %tmp18, align 4
   br label %bb21

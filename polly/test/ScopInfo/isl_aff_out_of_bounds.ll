@@ -22,7 +22,7 @@ do.end:                                           ; preds = %do.body
   br i1 false, label %if.end.single_exit, label %if.then
 
 if.then:                                          ; preds = %do.end
-  %0 = load float* %add.ptr, align 4
+  %0 = load float, float* %add.ptr, align 4
   store float %0, float* %q.1.reg2mem, align 4
   br label %if.end.single_exit
 
@@ -30,7 +30,7 @@ if.end.single_exit:                               ; preds = %do.end, %if.then
   br label %if.end
 
 if.end:                                           ; preds = %if.end.single_exit
-  %q.1.reload = load float* %q.1.reg2mem, align 4
+  %q.1.reload = load float, float* %q.1.reg2mem, align 4
   %conv31 = fpext float %q.1.reload to double
   %call32 = call double @frexp(double %conv31)
   unreachable

@@ -33,7 +33,7 @@ for.body.preheader:                               ; preds = %entry
 for.body:                                         ; preds = %for.body.preheader, %for.body
   %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %for.body.preheader ]
   %arrayidx = getelementptr inbounds float, float* %B, i64 %indvars.iv
-  %tmp = load float* %arrayidx, align 4, !tbaa !1
+  %tmp = load float, float* %arrayidx, align 4, !tbaa !1
   %conv = fptosi float %tmp to i32
   %arrayidx2 = getelementptr inbounds [1024 x i32], [1024 x i32]* @A, i64 0, i64 %indvars.iv
   store i32 %conv, i32* %arrayidx2, align 4, !tbaa !5

@@ -34,23 +34,23 @@ for.i:
   br label %entry.next
 
 entry.next:
-  %init = load i64* %init_ptr
+  %init = load i64, i64* %init_ptr
 ; SCALARACCESS-NOT: store
   br label %for.j
 
 for.j:
   %indvar.j = phi i64 [ 0, %entry.next ], [ %indvar.j.next, %for.j ]
-  %init_2 = load i64* %init_ptr
+  %init_2 = load i64, i64* %init_ptr
   %init_sum = add i64 %init, %init_2
-; CHECK: %init_2 = load i64* %init_ptr
-; CHECK: %init.loadarray = load i64* %init.s2a
+; CHECK: %init_2 = load i64, i64* %init_ptr
+; CHECK: %init.loadarray = load i64, i64* %init.s2a
 ; CHECK: %init_sum = add i64 %init.loadarray, %init_2
 
 ; The SCEV of %init_sum is (%init + %init_2). It is referring to both an
 ; UnknownValue in the same and in a different basic block. We want only the
 ; reference to the different basic block to be replaced.
 
-; SCALARACCESS: %init_2 = load i64* %init_ptr
+; SCALARACCESS: %init_2 = load i64, i64* %init_ptr
 ; SCALARACCESS: %init_sum = add i64 %init, %init_2
   %scevgep = getelementptr i64, i64* %A, i64 %indvar.j
   store i64 %init_sum, i64* %scevgep

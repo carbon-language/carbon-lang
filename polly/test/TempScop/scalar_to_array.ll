@@ -75,7 +75,7 @@ for.cond:                                         ; preds = %for.inc, %entry
 
 for.body.a:                                       ; preds = %for.cond
   %arrayidx = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
-  %scalar = load float* %arrayidx
+  %scalar = load float, float* %arrayidx
   br label %for.body.b
 ; CHECK: BB: for.body.a
 ; CHECK: Read A[{0,+,4}<%for.cond>]
@@ -120,7 +120,7 @@ for.head:                                         ; preds = %for.inc, %entry
 
 for.body:                                         ; preds = %for.head
   %arrayidx = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
-  %scalar = load float* %arrayidx
+  %scalar = load float, float* %arrayidx
   store float %scalar, float* %scalar.s2a
 ; Escaped uses are still required to be rewritten to stack variable.
 ; CHECK: BB: for.body
@@ -134,7 +134,7 @@ for.inc:                                          ; preds = %for.body
   br i1 %exitcond, label %for.head, label %for.after
 
 for.after:                                        ; preds = %for.inc
-  %scalar.loadoutside = load float* %scalar.s2a
+  %scalar.loadoutside = load float, float* %scalar.s2a
   fence seq_cst
   %return_value = fptosi float %scalar.loadoutside to i32
   br label %return

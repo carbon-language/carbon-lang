@@ -62,7 +62,7 @@ for.cond:                                         ; preds = %for.inc, %entry
 
 for.body:                                         ; preds = %for.cond
   %arrayidx = getelementptr inbounds float, float* %A, i64 %i.0, !dbg !36
-  %val = load float* %arrayidx, align 4, !dbg !38
+  %val = load float, float* %arrayidx, align 4, !dbg !38
   br label %for.inc, !dbg !36
 
 for.inc:                                          ; preds = %for.body

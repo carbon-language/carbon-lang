@@ -62,7 +62,7 @@ loop.body:
   %loadoffset1 = mul nsw i64 %i, 2
   %loadoffset2 = add nsw i64 %loadoffset1, 1
   %scevgepload = getelementptr [1024 x i32], [1024 x i32]* @A, i64 0, i64 %loadoffset2
-  %val = load i32* %scevgepload
+  %val = load i32, i32* %scevgepload
   %storeoffset = mul i64 %i, 2
   %scevgepstore = getelementptr [1024 x i32], [1024 x i32]* @A, i64 0, i64 %storeoffset
   store i32 %val, i32* %scevgepstore
@@ -82,6 +82,6 @@ ret:
 ; SEQUENTIAL-NOT: !llvm.loop
 
 ; PARALLEL: @test-two
-; PARALLEL: %val_p_scalar_ = load i32* %scevgep, {{[ ._!,a-zA-Z0-9]*}}, !llvm.mem.parallel_loop_access ![[LoopID:[0-9]*]]
+; PARALLEL: %val_p_scalar_ = load i32, i32* %scevgep, {{[ ._!,a-zA-Z0-9]*}}, !llvm.mem.parallel_loop_access ![[LoopID:[0-9]*]]
 ; PARALLEL: store i32 %val_p_scalar_, i32* %scevgep1, {{[ ._!,a-zA-Z0-9]*}}, !llvm.mem.parallel_loop_access ![[LoopID]]
 ; PARALLEL:  br i1 %polly.loop_cond, label %polly.loop_header, label %polly.loop_exit, !llvm.loop ![[LoopID]]

@@ -24,7 +24,7 @@ for.cond:                                         ; preds = %for.inc, %entry
 for.body:                                         ; preds = %for.cond
   %rem = srem i32 %i.0, 2
   %arrayidx = getelementptr inbounds i32, i32* %A, i32 %rem
-  %tmp = load i32* %arrayidx, align 4
+  %tmp = load i32, i32* %arrayidx, align 4
   %add = add nsw i32 %tmp, %i.0
   store i32 %add, i32* %arrayidx, align 4
   br label %for.inc

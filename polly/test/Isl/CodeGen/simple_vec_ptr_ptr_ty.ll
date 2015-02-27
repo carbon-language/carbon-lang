@@ -14,7 +14,7 @@ entry:
 body:
   %indvar = phi i64 [ 0, %entry ], [ %indvar_next, %body ]
   %scevgep = getelementptr [1024 x float**], [1024 x float**]* @B, i64 0, i64 %indvar
-  %value = load float*** getelementptr inbounds ([1024 x float**]* @A, i64 0, i64 0), align 16
+  %value = load float**, float*** getelementptr inbounds ([1024 x float**]* @A, i64 0, i64 0), align 16
   store float** %value, float*** %scevgep, align 4
   %indvar_next = add i64 %indvar, 1
   %exitcond = icmp eq i64 %indvar_next, 4
@@ -23,6 +23,6 @@ body:
 return:
   ret void
 }
-; CHECK: %value_p_splat_one = load <1 x float**>* bitcast ([1024 x float**]* @A to <1 x float**>*), align 8
+; CHECK: %value_p_splat_one = load <1 x float**>, <1 x float**>* bitcast ([1024 x float**]* @A to <1 x float**>*), align 8
 ; CHECK: %value_p_splat = shufflevector <1 x float**> %value_p_splat_one, <1 x float**> %value_p_splat_one, <4 x i32> zeroinitializer
 ; CHECK: store <4 x float**> %value_p_splat, <4 x float**>* bitcast ([1024 x float**]* @B to <4 x float**>*), align 8

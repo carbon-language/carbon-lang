@@ -28,7 +28,7 @@ for.cond:                                         ; preds = %for.inc, %entry
 for.body:                                         ; preds = %for.cond
   %tmp = bitcast i32* %B to i16*
   %arrayidx = getelementptr inbounds i16, i16* %tmp, i64 %indvars.iv
-  %tmp1 = load i16* %arrayidx, align 2
+  %tmp1 = load i16, i16* %arrayidx, align 2
   %conv = sext i16 %tmp1 to i32
   %arrayidx2 = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
   store i32 %conv, i32* %arrayidx2, align 4

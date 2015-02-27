@@ -57,7 +57,7 @@ for.cond5:                                        ; preds = %for.inc07, %for.end
   br i1 %cmp7, label %for.body9, label %for.end20
 
 for.body9:                                        ; preds = %for.cond5
-  %tmp14 = load i32* %arrayidx13                  ; <i32> [#uses=1]
+  %tmp14 = load i32, i32* %arrayidx13                  ; <i32> [#uses=1]
   %cmp15 = icmp ne i32 %tmp14, 1                  ; <i1> [#uses=1]
   br i1 %cmp15, label %if.then, label %if.end
 

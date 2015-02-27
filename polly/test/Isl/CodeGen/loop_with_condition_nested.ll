@@ -113,7 +113,7 @@ define i32 @main() nounwind {
   br i1 %2, label %3, label %9
 
 ; <label>:3                                       ; preds = %1
-  %4 = load i32* %scevgep3                        ; <i32> [#uses=1]
+  %4 = load i32, i32* %scevgep3                        ; <i32> [#uses=1]
   %5 = icmp ne i32 %4, 3                          ; <i1> [#uses=1]
   br i1 %5, label %6, label %7
 
@@ -146,7 +146,7 @@ define i32 @main() nounwind {
   br i1 %15, label %16, label %20
 
 ; <label>:16                                      ; preds = %14
-  %17 = load i32* %scevgep                        ; <i32> [#uses=1]
+  %17 = load i32, i32* %scevgep                        ; <i32> [#uses=1]
   %18 = icmp ne i32 %17, 1                        ; <i1> [#uses=1]
   br i1 %18, label %19, label %20
 
@@ -162,7 +162,7 @@ define i32 @main() nounwind {
   br i1 %23, label %24, label %28
 
 ; <label>:24                                      ; preds = %22
-  %25 = load i32* %scevgep                        ; <i32> [#uses=1]
+  %25 = load i32, i32* %scevgep                        ; <i32> [#uses=1]
   %26 = icmp ne i32 %25, 2                        ; <i1> [#uses=1]
   br i1 %26, label %27, label %28
 
@@ -174,7 +174,7 @@ define i32 @main() nounwind {
   br i1 %29, label %30, label %34
 
 ; <label>:30                                      ; preds = %28
-  %31 = load i32* %scevgep                        ; <i32> [#uses=1]
+  %31 = load i32, i32* %scevgep                        ; <i32> [#uses=1]
   %32 = icmp ne i32 %31, 0                        ; <i1> [#uses=1]
   br i1 %32, label %33, label %34
 

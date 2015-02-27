@@ -14,7 +14,7 @@ entry:
 for.body:
   %i = phi i64 [ %inc, %for.body ], [ 0, %entry ]
   %arrayidx = getelementptr inbounds i64, i64* %INDEX, i64 %i
-  %val = load i64* %arrayidx
+  %val = load i64, i64* %arrayidx
   %arrayidx1 = getelementptr inbounds double, double* %A, i64 %val
   store double 1.0, double* %arrayidx1
   %inc = add nsw i64 %i, 1

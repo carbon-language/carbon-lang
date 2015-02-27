@@ -58,11 +58,11 @@ define i32 @main() nounwind {
   br i1 %exitcond, label %8, label %15
 
 ; <label>:8                                       ; preds = %7
-  %9 = load i32* %scevgep3                        ; <i32> [#uses=1]
-  %10 = load i32* %scevgep                        ; <i32> [#uses=1]
+  %9 = load i32, i32* %scevgep3                        ; <i32> [#uses=1]
+  %10 = load i32, i32* %scevgep                        ; <i32> [#uses=1]
   %11 = add nsw i32 %9, %10                       ; <i32> [#uses=1]
   store i32 %11, i32* %scevgep1
-  %12 = load i32* %scevgep                        ; <i32> [#uses=1]
+  %12 = load i32, i32* %scevgep                        ; <i32> [#uses=1]
   %13 = add nsw i32 %red.0, %12                   ; <i32> [#uses=1]
   br label %14
 

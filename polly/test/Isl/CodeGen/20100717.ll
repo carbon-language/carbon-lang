@@ -16,7 +16,7 @@ bb1:                                              ; preds = %bb2
   %3 = getelementptr inbounds double*, double** %A, i64 0  ; <double**> [#uses=0]
   %4 = sext i32 %j.0 to i64                       ; <i64> [#uses=1]
   %5 = getelementptr inbounds double*, double** %A, i64 %4 ; <double**> [#uses=1]
-  %6 = load double** %5, align 8                  ; <double*> [#uses=0]
+  %6 = load double*, double** %5, align 8                  ; <double*> [#uses=0]
   %7 = add nsw i32 %j.0, 1                        ; <i32> [#uses=1]
   br label %bb2
 

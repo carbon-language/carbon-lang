@@ -42,8 +42,8 @@ for.cond1:                                        ; preds = %for.inc8, %for.body
 for.body3:                                        ; preds = %for.cond1
   %add = add nsw i32 %i.0, %j.0
   %arrayidx = getelementptr inbounds i32, i32* %A, i32 %add
-  %tmp3 = load i32* %arrayidx, align 4
-  %tmp4 = load i32* %sum, align 4
+  %tmp3 = load i32, i32* %arrayidx, align 4
+  %tmp4 = load i32, i32* %sum, align 4
   %add4 = add nsw i32 %tmp4, %tmp3
   store i32 %add4, i32* %sum, align 4
   br label %for.cond5

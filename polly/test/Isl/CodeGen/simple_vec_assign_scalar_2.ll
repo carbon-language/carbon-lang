@@ -35,7 +35,7 @@ bb2:                                              ; preds = %bb6, %bb
   br i1 %exitcond, label %bb3, label %bb7
 
 bb3:                                              ; preds = %bb2
-  %tmp = load float* %scevgep1, align 4
+  %tmp = load float, float* %scevgep1, align 4
   %tmp4 = sitofp i32 %i.0 to float
   %tmp5 = fadd float %tmp, %tmp4
   store float %tmp5, float* %scevgep, align 4
@@ -52,7 +52,7 @@ bb7:                                              ; preds = %bb2
 define i32 @main() nounwind {
 bb:
   call void @simple_vec_const()
-  %tmp = load float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 42), align 8
+  %tmp = load float, float* getelementptr inbounds ([1024 x float]* @A, i64 0, i64 42), align 8
   %tmp1 = fptosi float %tmp to i32
   ret i32 %tmp1
 }

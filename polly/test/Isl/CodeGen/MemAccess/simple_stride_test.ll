@@ -6,7 +6,7 @@
 ;
 ; CHECK:  %polly.access.B = getelementptr i32, i32* %B, i64 0
 ; CHECK:  %[[BC:[._a-zA-Z0-9]*]] = bitcast i32* %polly.access.B to <1 x i32>*
-; CHECK:  %[[LD:[._a-zA-Z0-9]*]] = load <1 x i32>* %[[BC]], align 8
+; CHECK:  %[[LD:[._a-zA-Z0-9]*]] = load <1 x i32>, <1 x i32>* %[[BC]], align 8
 ; CHECK:  %[[SV:[._a-zA-Z0-9]*]] = shufflevector <1 x i32> %[[LD]], <1 x i32> %[[LD]], <16 x i32> zeroinitializer
 ;
 ; CHECK:  %polly.access.A = getelementptr i32, i32* %A, i64 0
@@ -32,7 +32,7 @@ for.cond:                                         ; preds = %for.inc, %entry
 for.body:                                         ; preds = %for.cond
   %tmp = shl nsw i64 %indvars.iv, 1
   %arrayidx = getelementptr inbounds i32, i32* %B, i64 %tmp
-  %tmp4 = load i32* %arrayidx, align 4
+  %tmp4 = load i32, i32* %arrayidx, align 4
   %tmp5 = shl nsw i64 %indvars.iv, 1
   %arrayidx3 = getelementptr inbounds i32, i32* %A, i64 %tmp5
   store i32 %tmp4, i32* %arrayidx3, align 4

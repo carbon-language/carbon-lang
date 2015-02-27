@@ -31,7 +31,7 @@ exit.1:
 for.body.2:
   %indvar.2 = phi i64 [ 0, %exit.1 ], [ %indvar.next.2, %for.body.2 ]
   %arrayidx.2.a = getelementptr [200 x i32], [200 x i32]* %A, i64 0, i64 %indvar.2
-  %val = load i32* %arrayidx.2.a, align 4
+  %val = load i32, i32* %arrayidx.2.a, align 4
   %arrayidx.2.b = getelementptr [200 x i32], [200 x i32]* %B, i64 0, i64 %indvar.2
   store i32 %val, i32* %arrayidx.2.b, align 4
   %indvar.next.2 = add i64 %indvar.2, 1

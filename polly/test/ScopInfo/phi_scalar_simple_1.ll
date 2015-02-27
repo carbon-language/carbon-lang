@@ -58,7 +58,7 @@ for.inc:                                          ; preds = %for.body3
 ; CHECK:       ReadAccess := [Reduction Type: NONE] [Scalar: 0]
 ; CHECK:           [N] -> { Stmt_for_inc[i0, i1] -> MemRef_A[1 + i0] };
   %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
-  %tmp1 = load i32* %arrayidx, align 4
+  %tmp1 = load i32, i32* %arrayidx, align 4
   %add = add nsw i32 %x.addr.1, %tmp1
   %inc = add nsw i32 %j.0, 1
   br label %for.cond1

@@ -10,7 +10,7 @@ entry:
   br label %if.then132
 
 if.then132:
-  %loaded = load i32* %A
+  %loaded = load i32, i32* %A
   %0 = icmp ugt i32 %loaded, 10
   %umax = select i1 %0, i32 %loaded, i32 10
   br label %do.body

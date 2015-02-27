@@ -26,7 +26,7 @@ for.i:                                            ; preds = %for.i.end, %entry
   br label %entry.next
 
 entry.next:                                       ; preds = %for.i
-  %init = load i64* %init_ptr
+  %init = load i64, i64* %init_ptr
 ; CHECK: BB: entry.next
 ; CHECK: Read init_ptr[0]
 ; CHECK: Write init[0]

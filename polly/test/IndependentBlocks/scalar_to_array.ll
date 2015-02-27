@@ -88,18 +88,18 @@ for.cond:
 
 for.body.a:
   %arrayidx = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
-  %scalar = load float* %arrayidx
+  %scalar = load float, float* %arrayidx
   br label %for.body.b
 
 ; CHECK: for.body.a:
 ; CHECK: %arrayidx = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
-; CHECK: %scalar = load float* %arrayidx
+; CHECK: %scalar = load float, float* %arrayidx
 ; CHECK: store float %scalar, float* %scalar.s2a
 ; CHECK: br label %for.body.b
 
 ; SCALARACCESS: for.body.a:
 ; SCALARACCESS: %arrayidx = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
-; SCALARACCESS: %scalar = load float* %arrayidx
+; SCALARACCESS: %scalar = load float, float* %arrayidx
 ; SCALARACCESS-NOT: store
 ; SCALARACCESS: br label %for.body.b
 
@@ -113,7 +113,7 @@ for.body.b:
 ; CHECK: for.body.b:
 ; CHECK: %arrayidx2 = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
 ; CHECK: %float = uitofp i64 %indvar to float
-; CHECK: %scalar.loadarray = load float* %scalar.s2a
+; CHECK: %scalar.loadarray = load float, float* %scalar.s2a
 ; CHECK: %sum = fadd float %scalar.loadarray, %float
 ; CHECK: store float %sum, float* %arrayidx2
 ; CHECK: br label %for.inc
@@ -160,15 +160,15 @@ for.head:
 
 for.body:
   %arrayidx = getelementptr [1024 x float], [1024 x float]* @A, i64 0, i64 %indvar
-  %scalar = load float* %arrayidx
+  %scalar = load float, float* %arrayidx
   br label %for.inc
 
 ; CHECK: for.body:
-; CHECK: %scalar = load float* %arrayidx
+; CHECK: %scalar = load float, float* %arrayidx
 ; CHECK: store float %scalar, float* %scalar.s2a
 
 ; SCALARACCESS: for.body:
-; SCALARACCESS: %scalar = load float* %arrayidx
+; SCALARACCESS: %scalar = load float, float* %arrayidx
 ; SCALARACCESS: store float %scalar, float* %scalar.s2a
 
 for.inc:
@@ -182,12 +182,12 @@ for.after:
   br label %return
 
 ; CHECK: for.after:
-; CHECK: %scalar.loadoutside = load float* %scalar.s2a
+; CHECK: %scalar.loadoutside = load float, float* %scalar.s2a
 ; CHECK: fence seq_cst
 ; CHECK: %return_value = fptosi float %scalar.loadoutside to i32
 
 ; SCALARACCESS: for.after:
-; SCALARACCESS: %scalar.loadoutside = load float* %scalar.s2a
+; SCALARACCESS: %scalar.loadoutside = load float, float* %scalar.s2a
 ; SCALARACCESS: fence seq_cst
 ; SCALARACCESS: %return_value = fptosi float %scalar.loadoutside to i32
 

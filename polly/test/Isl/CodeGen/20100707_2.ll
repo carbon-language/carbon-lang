@@ -47,7 +47,7 @@ bb34:                                             ; preds = %bb35
   %7 = sext i32 %4 to i64                         ; <i64> [#uses=1]
   %8 = getelementptr inbounds [18 x [32 x double]], [18 x [32 x double]]* %6, i64 0, i64 %7 ; <[32 x double]*> [#uses=1]
   %9 = getelementptr inbounds [32 x double], [32 x double]* %8, i64 0, i64 0 ; <double*> [#uses=1]
-  %10 = load double* %9, align 8                  ; <double> [#uses=0]
+  %10 = load double, double* %9, align 8                  ; <double> [#uses=0]
   %11 = fsub double 0.000000e+00, undef           ; <double> [#uses=1]
   %12 = getelementptr inbounds double, double* getelementptr inbounds ([4 x [36 x double]]* @win193, i64 0, i64 2, i64 4), i64 0 ; <double*> [#uses=1]
   store double %11, double* %12, align 8
@@ -56,23 +56,23 @@ bb34:                                             ; preds = %bb35
   %15 = getelementptr inbounds [4 x [36 x double]], [4 x [36 x double]]* @win193, i64 0, i64 0 ; <[36 x double]*> [#uses=1]
   %16 = sext i32 %14 to i64                       ; <i64> [#uses=1]
   %17 = getelementptr inbounds [36 x double], [36 x double]* %15, i64 0, i64 %16 ; <double*> [#uses=1]
-  %18 = load double* %17, align 8                 ; <double> [#uses=0]
+  %18 = load double, double* %17, align 8                 ; <double> [#uses=0]
   %19 = sext i32 %k.4 to i64                      ; <i64> [#uses=1]
   %20 = getelementptr inbounds [18 x [32 x double]], [18 x [32 x double]]* undef, i64 0, i64 %19 ; <[32 x double]*> [#uses=1]
   %21 = sext i32 %band.2 to i64                   ; <i64> [#uses=1]
   %22 = getelementptr inbounds [32 x double], [32 x double]* %20, i64 0, i64 %21 ; <double*> [#uses=1]
-  %23 = load double* %22, align 8                 ; <double> [#uses=0]
+  %23 = load double, double* %22, align 8                 ; <double> [#uses=0]
   %24 = sext i32 %39 to i64                       ; <i64> [#uses=1]
   %25 = getelementptr inbounds [4 x [36 x double]], [4 x [36 x double]]* @win193, i64 0, i64 %24 ; <[36 x double]*> [#uses=1]
   %26 = getelementptr inbounds [36 x double], [36 x double]* %25, i64 0, i64 0 ; <double*> [#uses=1]
-  %27 = load double* %26, align 8                 ; <double> [#uses=0]
+  %27 = load double, double* %26, align 8                 ; <double> [#uses=0]
   %28 = sub nsw i32 17, %k.4                      ; <i32> [#uses=1]
   %29 = getelementptr inbounds [2 x [2 x [18 x [32 x double]]]], [2 x [2 x [18 x [32 x double]]]]* @sb_sample, i64 0, i64 0 ; <[2 x [18 x [32 x double]]]*> [#uses=1]
   %30 = getelementptr inbounds [2 x [18 x [32 x double]]], [2 x [18 x [32 x double]]]* %29, i64 0, i64 0 ; <[18 x [32 x double]]*> [#uses=1]
   %31 = sext i32 %28 to i64                       ; <i64> [#uses=1]
   %32 = getelementptr inbounds [18 x [32 x double]], [18 x [32 x double]]* %30, i64 0, i64 %31 ; <[32 x double]*> [#uses=1]
   %33 = getelementptr inbounds [32 x double], [32 x double]* %32, i64 0, i64 0 ; <double*> [#uses=1]
-  %34 = load double* %33, align 8                 ; <double> [#uses=0]
+  %34 = load double, double* %33, align 8                 ; <double> [#uses=0]
   %35 = sext i32 %13 to i64                       ; <i64> [#uses=1]
   %36 = getelementptr inbounds double, double* getelementptr inbounds ([4 x [36 x double]]* @win193, i64 0, i64 2, i64 4), i64 %35 ; <double*> [#uses=1]
   store double 0.000000e+00, double* %36, align 8
@@ -92,7 +92,7 @@ bb37:                                             ; preds = %bb32, %bb26
 
 bb48:                                             ; preds = %bb37, %bb9
   %band.2 = phi i32 [ %38, %bb37 ], [ 0, %bb9 ]   ; <i32> [#uses=2]
-  %39 = load i32* null, align 8                   ; <i32> [#uses=1]
+  %39 = load i32, i32* null, align 8                   ; <i32> [#uses=1]
   br i1 undef, label %bb26, label %bb25
 
 bb50:                                             ; preds = %bb54
