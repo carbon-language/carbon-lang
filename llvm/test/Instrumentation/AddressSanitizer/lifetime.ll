@@ -12,6 +12,7 @@ entry:
   %i = alloca i32, align 4
   %i.ptr = bitcast i32* %i to i8*
   call void @llvm.lifetime.start(i64 -1, i8* %i.ptr)
+  store volatile i8 0, i8* %i.ptr
   call void @llvm.lifetime.end(i64 -1, i8* %i.ptr)
 
 ; Check that lifetime with no size are ignored.
@@ -30,6 +31,7 @@ define void @lifetime() sanitize_address {
   %i = alloca i32, align 4
   %i.ptr = bitcast i32* %i to i8*
   call void @llvm.lifetime.start(i64 3, i8* %i.ptr)
+  store volatile i8 0, i8* %i.ptr
   ; Memory is unpoisoned at llvm.lifetime.start
   ; CHECK: %[[VAR:[^ ]*]] = ptrtoint i32* %{{[^ ]+}} to i64
   ; CHECK-NEXT: call void @__asan_unpoison_stack_memory(i64 %[[VAR]], i64 3)
@@ -43,12 +45,14 @@ define void @lifetime() sanitize_address {
   %arr = alloca [10 x i32], align 16
   %arr.ptr = bitcast [10 x i32]* %arr to i8*
   call void @llvm.lifetime.start(i64 40, i8* %arr.ptr)
+  store volatile i8 0, i8* %arr.ptr
   ; CHECK: call void @__asan_unpoison_stack_memory(i64 %{{[^ ]+}}, i64 40)
   call void @llvm.lifetime.end(i64 40, i8* %arr.ptr)
   ; CHECK: call void @__asan_poison_stack_memory(i64 %{{[^ ]+}}, i64 40)
 
   ; One more lifetime start/end for the same variable %i.
   call void @llvm.lifetime.start(i64 4, i8* %i.ptr)
+  store volatile i8 0, i8* %i.ptr
   ; CHECK: call void @__asan_unpoison_stack_memory(i64 %{{[^ ]+}}, i64 4)
   call void @llvm.lifetime.end(i64 4, i8* %i.ptr)
   ; CHECK: call void @__asan_poison_stack_memory(i64 %{{[^ ]+}}, i64 4)
@@ -68,6 +72,7 @@ entry:
   %i = alloca i64, align 4
   %i.ptr = bitcast i64* %i to i8*
   call void @llvm.lifetime.start(i64 8, i8* %i.ptr)
+  store volatile i8 0, i8* %i.ptr
   ; CHECK: __asan_unpoison_stack_memory
   br i1 %x, label %bb0, label %bb1
 

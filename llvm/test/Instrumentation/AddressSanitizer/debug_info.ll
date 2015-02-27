@@ -10,12 +10,12 @@ define i32 @_Z3zzzi(i32 %p) nounwind uwtable sanitize_address {
 entry:
   %p.addr = alloca i32, align 4
   %r = alloca i32, align 4
-  store i32 %p, i32* %p.addr, align 4
+  store volatile i32 %p, i32* %p.addr, align 4
   call void @llvm.dbg.declare(metadata i32* %p.addr, metadata !10, metadata !{!"0x102"}), !dbg !11
   call void @llvm.dbg.declare(metadata i32* %r, metadata !12, metadata !{!"0x102"}), !dbg !14
   %0 = load i32* %p.addr, align 4, !dbg !14
   %add = add nsw i32 %0, 1, !dbg !14
-  store i32 %add, i32* %r, align 4, !dbg !14
+  store volatile i32 %add, i32* %r, align 4, !dbg !14
   %1 = load i32* %r, align 4, !dbg !15
   ret i32 %1, !dbg !15
 }

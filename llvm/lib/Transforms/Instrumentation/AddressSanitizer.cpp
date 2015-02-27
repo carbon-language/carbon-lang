@@ -49,6 +49,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
+#include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include <algorithm>
 #include <string>
 #include <system_error>
@@ -165,6 +166,9 @@ static cl::opt<std::string> ClMemoryAccessCallbackPrefix(
        cl::init("__asan_"));
 static cl::opt<bool> ClInstrumentAllocas("asan-instrument-allocas",
        cl::desc("instrument dynamic allocas"), cl::Hidden, cl::init(false));
+static cl::opt<bool> ClSkipPromotableAllocas("asan-skip-promotable-allocas",
+       cl::desc("Do not instrument promotable allocas"),
+       cl::Hidden, cl::init(true));
 
 // These flags allow to change the shadow mapping.
 // The shadow mapping looks like
@@ -372,6 +376,17 @@ struct AddressSanitizer : public FunctionPass {
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DominatorTreeWrapperPass>();
   }
+  uint64_t getAllocaSizeInBytes(AllocaInst *AI) const {
+    Type *Ty = AI->getAllocatedType();
+    uint64_t SizeInBytes = DL->getTypeAllocSize(Ty);
+    return SizeInBytes;
+  }
+  /// Check if we want (and can) handle this alloca.
+  bool isInterestingAlloca(AllocaInst &AI) const;
+  /// If it is an interesting memory access, return the PointerOperand
+  /// and set IsWrite/Alignment. Otherwise return nullptr.
+  Value *isInterestingMemoryAccess(Instruction *I, bool *IsWrite,
+                                   unsigned *Alignment) const;
   void instrumentMop(Instruction *I, bool UseCalls);
   void instrumentPointerComparisonOrSubtraction(Instruction *I);
   void instrumentAddress(Instruction *OrigIns, Instruction *InsertBefore,
@@ -599,7 +614,7 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
 
   /// \brief Collect Alloca instructions we want (and can) handle.
   void visitAllocaInst(AllocaInst &AI) {
-    if (!isInterestingAlloca(AI)) return;
+    if (!ASan.isInterestingAlloca(AI)) return;
 
     StackAlignment = std::max(StackAlignment, AI.getAlignment());
     if (isDynamicAlloca(AI))
@@ -652,19 +667,6 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
 
   bool isDynamicAlloca(AllocaInst &AI) const {
     return AI.isArrayAllocation() || !AI.isStaticAlloca();
-  }
-
-  // Check if we want (and can) handle this alloca.
-  bool isInterestingAlloca(AllocaInst &AI) const {
-    return (AI.getAllocatedType()->isSized() &&
-            // alloca() may be called with 0 size, ignore it.
-            getAllocaSizeInBytes(&AI) > 0);
-  }
-
-  uint64_t getAllocaSizeInBytes(AllocaInst *AI) const {
-    Type *Ty = AI->getAllocatedType();
-    uint64_t SizeInBytes = ASan.DL->getTypeAllocSize(Ty);
-    return SizeInBytes;
   }
   /// Finds alloca where the value comes from.
   AllocaInst *findAllocaForValue(Value *V);
@@ -775,38 +777,56 @@ void AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
   MI->eraseFromParent();
 }
 
-// If I is an interesting memory access, return the PointerOperand
-// and set IsWrite/Alignment. Otherwise return nullptr.
-static Value *isInterestingMemoryAccess(Instruction *I, bool *IsWrite,
-                                        unsigned *Alignment) {
+/// Check if we want (and can) handle this alloca.
+bool AddressSanitizer::isInterestingAlloca(AllocaInst &AI) const {
+  return (AI.getAllocatedType()->isSized() &&
+          // alloca() may be called with 0 size, ignore it.
+          getAllocaSizeInBytes(&AI) > 0 &&
+          // We are only interested in allocas not promotable to registers.
+          // Promotable allocas are common under -O0.
+          (!ClSkipPromotableAllocas || !isAllocaPromotable(&AI)));
+}
+
+/// If I is an interesting memory access, return the PointerOperand
+/// and set IsWrite/Alignment. Otherwise return nullptr.
+Value *AddressSanitizer::isInterestingMemoryAccess(Instruction *I,
+                                                   bool *IsWrite,
+                                                   unsigned *Alignment) const {
   // Skip memory accesses inserted by another instrumentation.
   if (I->getMetadata("nosanitize"))
     return nullptr;
+
+  Value *PtrOperand = nullptr;
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
     if (!ClInstrumentReads) return nullptr;
     *IsWrite = false;
     *Alignment = LI->getAlignment();
-    return LI->getPointerOperand();
-  }
-  if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
+    PtrOperand = LI->getPointerOperand();
+  } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
     if (!ClInstrumentWrites) return nullptr;
     *IsWrite = true;
     *Alignment = SI->getAlignment();
-    return SI->getPointerOperand();
-  }
-  if (AtomicRMWInst *RMW = dyn_cast<AtomicRMWInst>(I)) {
+    PtrOperand = SI->getPointerOperand();
+  } else if (AtomicRMWInst *RMW = dyn_cast<AtomicRMWInst>(I)) {
     if (!ClInstrumentAtomics) return nullptr;
     *IsWrite = true;
     *Alignment = 0;
-    return RMW->getPointerOperand();
-  }
-  if (AtomicCmpXchgInst *XCHG = dyn_cast<AtomicCmpXchgInst>(I)) {
+    PtrOperand = RMW->getPointerOperand();
+  } else if (AtomicCmpXchgInst *XCHG = dyn_cast<AtomicCmpXchgInst>(I)) {
     if (!ClInstrumentAtomics) return nullptr;
     *IsWrite = true;
     *Alignment = 0;
-    return XCHG->getPointerOperand();
+    PtrOperand = XCHG->getPointerOperand();
   }
-  return nullptr;
+
+  // Treat memory accesses to promotable allocas as non-interesting since they
+  // will not cause memory violations. This greatly speeds up the instrumented
+  // executable at -O0.
+  if (ClSkipPromotableAllocas)
+    if (auto AI = dyn_cast_or_null<AllocaInst>(PtrOperand))
+      return isInterestingAlloca(*AI) ? AI : nullptr;
+
+  return PtrOperand;
 }
 
 static bool isPointerOperand(Value *V) {
@@ -1665,7 +1685,7 @@ void FunctionStackPoisoner::poisonStack() {
   SVD.reserve(AllocaVec.size());
   for (AllocaInst *AI : AllocaVec) {
     ASanStackVariableDescription D = { AI->getName().data(),
-                                   getAllocaSizeInBytes(AI),
+                                   ASan.getAllocaSizeInBytes(AI),
                                    AI->getAlignment(), AI, 0};
     SVD.push_back(D);
   }
@@ -1856,7 +1876,7 @@ void FunctionStackPoisoner::poisonAlloca(Value *V, uint64_t Size,
 AllocaInst *FunctionStackPoisoner::findAllocaForValue(Value *V) {
   if (AllocaInst *AI = dyn_cast<AllocaInst>(V))
     // We're intested only in allocas we can handle.
-    return isInterestingAlloca(*AI) ? AI : nullptr;
+    return ASan.isInterestingAlloca(*AI) ? AI : nullptr;
   // See if we've already calculated (or started to calculate) alloca for a
   // given value.
   AllocaForValueMapTy::iterator I = AllocaForValue.find(V);

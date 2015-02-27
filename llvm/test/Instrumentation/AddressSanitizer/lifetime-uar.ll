@@ -17,8 +17,8 @@ entry:
   ; Memory is unpoisoned at llvm.lifetime.start
   ; CHECK: call void @__asan_unpoison_stack_memory(i64 %{{[^ ]+}}, i64 1)
 
-  store i32 0, i32* %retval
-  store i8 0, i8* %c, align 1
+  store volatile i32 0, i32* %retval
+  store volatile i8 0, i8* %c, align 1
 
   call void @llvm.lifetime.end(i64 1, i8* %c)
   ; Memory is poisoned at llvm.lifetime.end

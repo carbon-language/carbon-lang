@@ -26,6 +26,8 @@ entry:
 ; CHECK: ret void
 
   %XXX = alloca [20 x i8], align 1
+  %arr.ptr = bitcast [20 x i8]* %XXX to i8*
+  store volatile i8 0, i8* %arr.ptr
   ret void
 }
 
@@ -37,6 +39,8 @@ entry:
 ; CHECK: ret void
 
   %XXX = alloca [20 x i8], align 1
+  %arr.ptr = bitcast [20 x i8]* %XXX to i8*
+  store volatile i8 0, i8* %arr.ptr
   call void asm sideeffect "mov %%rbx, %%rcx", "~{dirflag},~{fpsr},~{flags}"() nounwind
   ret void
 }
