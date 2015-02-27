@@ -338,7 +338,7 @@ function(llvm_add_library name)
         PREFIX ""
         )
     endif()
-    
+
     set_target_properties(${name}
       PROPERTIES
       SOVERSION ${LLVM_VERSION_MAJOR}
