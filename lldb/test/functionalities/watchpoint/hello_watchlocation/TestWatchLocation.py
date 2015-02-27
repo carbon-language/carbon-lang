@@ -77,7 +77,7 @@ class HelloWatchLocationTestCase(TestBase):
         self.expect(self.res.GetOutput().splitlines()[0], exe=False,
             endstr = ' = 0')
 
-        self.runCmd("watchpoint set expression -w write -x 4 -- &g_thread_1")
+        self.runCmd("watchpoint set expression -w write -x 4 -- &threads[0]")
 
         # Use the '-v' option to do verbose listing of the watchpoint.
         # The hit count should be 0 initially.
