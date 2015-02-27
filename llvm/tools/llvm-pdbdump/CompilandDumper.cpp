@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CompilandDumper.h"
+#include "LinePrinter.h"
 #include "llvm-pdbdump.h"
 
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
@@ -34,7 +35,8 @@
 
 using namespace llvm;
 
-CompilandDumper::CompilandDumper() : PDBSymDumper(true) {}
+CompilandDumper::CompilandDumper(LinePrinter &P)
+    : Printer(P), PDBSymDumper(true) {}
 
 void CompilandDumper::dump(const PDBSymbolCompilandDetails &Symbol,
                            raw_ostream &OS, int Indent) {}
@@ -45,32 +47,39 @@ void CompilandDumper::dump(const PDBSymbolCompilandEnv &Symbol, raw_ostream &OS,
 void CompilandDumper::start(const PDBSymbolCompiland &Symbol, raw_ostream &OS,
                             int Indent, bool Children) {
   std::string FullName = Symbol.getName();
-  OS << newline(Indent) << FullName;
+  Printer.NewLine();
+  WithColor(Printer, PDB_ColorItem::Path).get() << FullName;
   if (!Children)
     return;
 
   auto ChildrenEnum = Symbol.findAllChildren();
+  Printer.Indent();
   while (auto Child = ChildrenEnum->getNext())
     Child->dump(OS, Indent + 2, *this);
+  Printer.Unindent();
 }
 
 void CompilandDumper::dump(const PDBSymbolData &Symbol, raw_ostream &OS,
                            int Indent) {
-  OS << newline(Indent);
+  Printer.NewLine();
+
   switch (auto LocType = Symbol.getLocationType()) {
   case PDB_LocType::Static:
-    OS << "data: [";
-    OS << format_hex(Symbol.getRelativeVirtualAddress(), 10);
-    OS << "]";
+    Printer << "data: ";
+    WithColor(Printer, PDB_ColorItem::Address).get()
+        << "[" << format_hex(Symbol.getRelativeVirtualAddress(), 10) << "]";
     break;
   case PDB_LocType::Constant:
-    OS << "constant: [" << Symbol.getValue() << "]";
+    Printer << "constant: ";
+    WithColor(Printer, PDB_ColorItem::LiteralValue).get()
+        << "[" << Symbol.getValue() << "]";
     break;
   default:
-    OS << "data(unexpected type=" << LocType << ")";
+    Printer << "data(unexpected type=" << LocType << ")";
   }
 
-  OS << " " << Symbol.getName();
+  Printer << " ";
+  WithColor(Printer, PDB_ColorItem::Identifier).get() << Symbol.getName();
 }
 
 void CompilandDumper::dump(const PDBSymbolFunc &Symbol, raw_ostream &OS,
@@ -78,33 +87,40 @@ void CompilandDumper::dump(const PDBSymbolFunc &Symbol, raw_ostream &OS,
   if (Symbol.getLength() == 0)
     return;
 
-  FunctionDumper Dumper;
+  Printer.NewLine();
+  FunctionDumper Dumper(Printer);
   Dumper.start(Symbol, FunctionDumper::PointerType::None, OS, Indent);
 }
 
 void CompilandDumper::dump(const PDBSymbolLabel &Symbol, raw_ostream &OS,
                            int Indent) {
-  OS << newline(Indent);
-  OS << "label [" << format_hex(Symbol.getRelativeVirtualAddress(), 10) << "] "
-     << Symbol.getName();
+  Printer.NewLine();
+  Printer << "label ";
+  WithColor(Printer, PDB_ColorItem::Address).get()
+      << "[" << format_hex(Symbol.getRelativeVirtualAddress(), 10) << "] ";
+  WithColor(Printer, PDB_ColorItem::Identifier).get() << Symbol.getName();
 }
 
 void CompilandDumper::dump(const PDBSymbolThunk &Symbol, raw_ostream &OS,
                            int Indent) {
-  OS << newline(Indent) << "thunk ";
+  Printer.NewLine();
+  Printer << "thunk ";
   PDB_ThunkOrdinal Ordinal = Symbol.getThunkOrdinal();
   uint32_t RVA = Symbol.getRelativeVirtualAddress();
   if (Ordinal == PDB_ThunkOrdinal::TrampIncremental) {
-    OS << format_hex(RVA, 10);
-    OS << " -> " << format_hex(Symbol.getTargetRelativeVirtualAddress(), 10);
+    uint32_t Target = Symbol.getTargetRelativeVirtualAddress();
+    WithColor(Printer, PDB_ColorItem::Address).get() << format_hex(RVA, 10);
+    Printer << " -> ";
+    WithColor(Printer, PDB_ColorItem::Address).get() << format_hex(Target, 10);
   } else {
-    OS << "[" << format_hex(RVA, 10);
-    OS << " - " << format_hex(RVA + Symbol.getLength(), 10) << "]";
+    WithColor(Printer, PDB_ColorItem::Address).get()
+        << "[" << format_hex(RVA, 10) << " - "
+        << format_hex(RVA + Symbol.getLength(), 10) << "]";
   }
-  OS << " (" << Ordinal << ") ";
+  Printer << " (" << Ordinal << ") ";
   std::string Name = Symbol.getName();
   if (!Name.empty())
-    OS << Name;
+    WithColor(Printer, PDB_ColorItem::Identifier).get() << Name;
 }
 
 void CompilandDumper::dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
@@ -112,6 +128,6 @@ void CompilandDumper::dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
 
 void CompilandDumper::dump(const PDBSymbolUnknown &Symbol, raw_ostream &OS,
                            int Indent) {
-  OS << newline(Indent);
-  OS << "unknown (" << Symbol.getSymTag() << ")";
+  Printer.NewLine();
+  Printer << "unknown (" << Symbol.getSymTag() << ")";
 }

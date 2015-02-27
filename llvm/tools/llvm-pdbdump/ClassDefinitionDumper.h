@@ -20,9 +20,11 @@
 
 namespace llvm {
 
+class LinePrinter;
+
 class ClassDefinitionDumper : public PDBSymDumper {
 public:
-  ClassDefinitionDumper();
+  ClassDefinitionDumper(LinePrinter &P);
 
   void start(const PDBSymbolTypeUDT &Exe, raw_ostream &OS, int Indent);
 
@@ -40,6 +42,8 @@ public:
             int Indent) override;
 
 private:
+  LinePrinter &Printer;
+
   struct SymbolGroup {
     SymbolGroup() {}
     SymbolGroup(SymbolGroup &&Other) {

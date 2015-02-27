@@ -14,9 +14,11 @@
 
 namespace llvm {
 
+class LinePrinter;
+
 class CompilandDumper : public PDBSymDumper {
 public:
-  CompilandDumper();
+  CompilandDumper(LinePrinter &P);
 
   void start(const PDBSymbolCompiland &Symbol, raw_ostream &OS, int Indent,
              bool Children);
@@ -33,6 +35,9 @@ public:
             int Indent) override;
   void dump(const PDBSymbolUnknown &Symbol, raw_ostream &OS,
             int Indent) override;
+
+private:
+  LinePrinter &Printer;
 };
 }
 

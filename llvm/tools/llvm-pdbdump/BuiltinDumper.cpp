@@ -8,73 +8,81 @@
 //===----------------------------------------------------------------------===//
 
 #include "BuiltinDumper.h"
+#include "LinePrinter.h"
 #include "llvm-pdbdump.h"
 
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeBuiltin.h"
 
 using namespace llvm;
 
-BuiltinDumper::BuiltinDumper() : PDBSymDumper(false) {}
+BuiltinDumper::BuiltinDumper(LinePrinter &P)
+    : PDBSymDumper(false), Printer(P) {}
 
 void BuiltinDumper::start(const PDBSymbolTypeBuiltin &Symbol,
                           llvm::raw_ostream &OS) {
   PDB_BuiltinType Type = Symbol.getBuiltinType();
   switch (Type) {
   case PDB_BuiltinType::Float:
-    OS << ((Symbol.getLength() == 4) ? "float" : "double");
+    if (Symbol.getLength() == 4)
+      WithColor(Printer, PDB_ColorItem::Type).get() << "float";
+    else
+      WithColor(Printer, PDB_ColorItem::Type).get() << "double";
     break;
   case PDB_BuiltinType::UInt:
-    OS << "unsigned";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "unsigned";
     if (Symbol.getLength() == 8)
-      OS << " __int64";
+      WithColor(Printer, PDB_ColorItem::Type).get() << " __int64";
     break;
   case PDB_BuiltinType::Int:
-    OS << ((Symbol.getLength() == 4) ? "int" : "__int64");
+    if (Symbol.getLength() == 4)
+      WithColor(Printer, PDB_ColorItem::Type).get() << "int";
+    else
+      WithColor(Printer, PDB_ColorItem::Type).get() << "__int64";
     break;
   case PDB_BuiltinType::Char:
-    OS << "char";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "char";
     break;
   case PDB_BuiltinType::WCharT:
-    OS << "wchar_t";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "wchar_t";
     break;
   case PDB_BuiltinType::Void:
-    OS << "void";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "void";
     break;
   case PDB_BuiltinType::Long:
-    OS << "long";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "long";
     break;
   case PDB_BuiltinType::ULong:
-    OS << "unsigned long";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "unsigned long";
     break;
   case PDB_BuiltinType::Bool:
-    OS << "bool";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "bool";
     break;
   case PDB_BuiltinType::Currency:
-    OS << "CURRENCY";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "CURRENCY";
     break;
   case PDB_BuiltinType::Date:
-    OS << "DATE";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "DATE";
     break;
   case PDB_BuiltinType::Variant:
-    OS << "VARIANT";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "VARIANT";
     break;
   case PDB_BuiltinType::Complex:
-    OS << "complex";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "complex";
     break;
   case PDB_BuiltinType::Bitfield:
-    OS << "bitfield";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "bitfield";
     break;
   case PDB_BuiltinType::BSTR:
-    OS << "BSTR";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "BSTR";
     break;
   case PDB_BuiltinType::HResult:
-    OS << "HRESULT";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "HRESULT";
     break;
   case PDB_BuiltinType::BCD:
-    OS << "HRESULT";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "HRESULT";
     break;
   default:
-    OS << "(unknown builtin type)";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "(unknown)";
     break;
   }
 }

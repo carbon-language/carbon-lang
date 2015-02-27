@@ -14,11 +14,16 @@
 
 namespace llvm {
 
+class LinePrinter;
+
 class BuiltinDumper : public PDBSymDumper {
 public:
-  BuiltinDumper();
+  BuiltinDumper(LinePrinter &P);
 
   void start(const PDBSymbolTypeBuiltin &Symbol, llvm::raw_ostream &OS);
+
+private:
+  LinePrinter &Printer;
 };
 }
 

@@ -10,6 +10,7 @@
 #include "TypeDumper.h"
 
 #include "ClassDefinitionDumper.h"
+#include "LinePrinter.h"
 #include "llvm-pdbdump.h"
 #include "TypedefDumper.h"
 
@@ -21,26 +22,37 @@
 
 using namespace llvm;
 
-TypeDumper::TypeDumper(bool Inline, bool ClassDefs)
-    : PDBSymDumper(true), InlineDump(Inline), FullClassDefs(ClassDefs) {}
+TypeDumper::TypeDumper(LinePrinter &P, bool Inline, bool ClassDefs)
+    : PDBSymDumper(true), Printer(P), InlineDump(Inline),
+      FullClassDefs(ClassDefs) {}
 
 void TypeDumper::start(const PDBSymbolExe &Exe, raw_ostream &OS, int Indent) {
   auto Enums = Exe.findAllChildren<PDBSymbolTypeEnum>();
-  OS << newline(Indent) << "Enums: (" << Enums->getChildCount() << " items)";
+  Printer.NewLine();
+  WithColor(Printer, PDB_ColorItem::Identifier).get() << "Enums";
+  Printer << ": (" << Enums->getChildCount() << " items)";
+  Printer.Indent();
   while (auto Enum = Enums->getNext())
     Enum->dump(OS, Indent + 2, *this);
+  Printer.Unindent();
 
   auto Typedefs = Exe.findAllChildren<PDBSymbolTypeTypedef>();
-  OS << newline(Indent) << "Typedefs: (" << Typedefs->getChildCount()
-     << " items)";
+  Printer.NewLine();
+  WithColor(Printer, PDB_ColorItem::Identifier).get() << "Typedefs";
+  Printer << ": (" << Typedefs->getChildCount() << " items)";
+  Printer.Indent();
   while (auto Typedef = Typedefs->getNext())
     Typedef->dump(OS, Indent + 2, *this);
+  Printer.Unindent();
 
   auto Classes = Exe.findAllChildren<PDBSymbolTypeUDT>();
-  OS << newline(Indent) << "Classes: (" << Classes->getChildCount()
-     << " items)";
+  Printer.NewLine();
+  WithColor(Printer, PDB_ColorItem::Identifier).get() << "Classes";
+  Printer << ": (" << Classes->getChildCount() << " items)";
+  Printer.Indent();
   while (auto Class = Classes->getNext())
     Class->dump(OS, Indent + 2, *this);
+  Printer.Unindent();
 }
 
 void TypeDumper::dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
@@ -49,17 +61,18 @@ void TypeDumper::dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
     return;
 
   if (!InlineDump)
-    OS << newline(Indent);
+    Printer.NewLine();
 
-  OS << "enum " << Symbol.getName();
+  WithColor(Printer, PDB_ColorItem::Keyword).get() << "enum ";
+  WithColor(Printer, PDB_ColorItem::Identifier).get() << Symbol.getName();
 }
 
 void TypeDumper::dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
                       int Indent) {
   if (!InlineDump)
-    OS << newline(Indent);
+    Printer.NewLine();
 
-  TypedefDumper Dumper;
+  TypedefDumper Dumper(Printer);
   Dumper.start(Symbol, OS, Indent);
 }
 
@@ -68,12 +81,13 @@ void TypeDumper::dump(const PDBSymbolTypeUDT &Symbol, raw_ostream &OS,
   if (Symbol.getUnmodifiedTypeId() != 0)
     return;
   if (!InlineDump)
-    OS << newline(Indent);
+    Printer.NewLine();
 
   if (FullClassDefs) {
-    ClassDefinitionDumper Dumper;
+    ClassDefinitionDumper Dumper(Printer);
     Dumper.start(Symbol, OS, Indent);
   } else {
-    OS << "class " << Symbol.getName();
+    WithColor(Printer, PDB_ColorItem::Keyword).get() << "class ";
+    WithColor(Printer, PDB_ColorItem::Identifier).get() << Symbol.getName();
   }
 }

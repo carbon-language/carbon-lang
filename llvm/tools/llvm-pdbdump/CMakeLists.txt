@@ -9,6 +9,7 @@ add_llvm_tool(llvm-pdbdump
   ClassDefinitionDumper.cpp
   CompilandDumper.cpp
   FunctionDumper.cpp
+  LinePrinter.cpp
   TypeDumper.cpp
   TypedefDumper.cpp
   VariableDumper.cpp

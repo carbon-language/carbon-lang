@@ -16,6 +16,7 @@
 #include "llvm-pdbdump.h"
 #include "CompilandDumper.h"
 #include "FunctionDumper.h"
+#include "LinePrinter.h"
 #include "TypeDumper.h"
 #include "VariableDumper.h"
 
@@ -73,66 +74,98 @@ static void dumpInput(StringRef Path) {
     return;
   }
 
+  LinePrinter Printer(2, outs());
+
   auto GlobalScope(Session->getGlobalScope());
   std::string FileName(GlobalScope->getSymbolsFileName());
 
-  outs() << "Summary for " << FileName;
+  WithColor(Printer, PDB_ColorItem::None).get() << "Summary for ";
+  WithColor(Printer, PDB_ColorItem::Path).get() << FileName;
+  Printer.Indent();
   uint64_t FileSize = 0;
-  if (!llvm::sys::fs::file_size(FileName, FileSize))
-    outs() << newline(2) << "Size: " << FileSize << " bytes";
-  else
-    outs() << newline(2) << "Size: (Unable to obtain file size)";
 
-  outs() << newline(2) << "Guid: " << GlobalScope->getGuid();
-  outs() << newline(2) << "Age: " << GlobalScope->getAge();
-  outs() << newline(2) << "Attributes: ";
+  Printer.NewLine();
+  WithColor(Printer, PDB_ColorItem::Identifier).get() << "Size";
+  if (!llvm::sys::fs::file_size(FileName, FileSize)) {
+    Printer << ": " << FileSize << " bytes";
+  } else {
+    Printer << ": (Unable to obtain file size)";
+  }
+
+  Printer.NewLine();
+  WithColor(Printer, PDB_ColorItem::Identifier).get() << "Guid";
+  Printer << ": " << GlobalScope->getGuid();
+
+  Printer.NewLine();
+  WithColor(Printer, PDB_ColorItem::Identifier).get() << "Age";
+  Printer << ": " << GlobalScope->getAge();
+
+  Printer.NewLine();
+  WithColor(Printer, PDB_ColorItem::Identifier).get() << "Attributes";
+  Printer << ": ";
   if (GlobalScope->hasCTypes())
     outs() << "HasCTypes ";
   if (GlobalScope->hasPrivateSymbols())
     outs() << "HasPrivateSymbols ";
+  Printer.Unindent();
 
   if (opts::Compilands) {
-    outs() << "\n---COMPILANDS---";
+    Printer.NewLine();
+    WithColor(Printer, PDB_ColorItem::SectionHeader).get()
+        << "---COMPILANDS---";
+    Printer.Indent();
     auto Compilands = GlobalScope->findAllChildren<PDBSymbolCompiland>();
-    CompilandDumper Dumper;
+    CompilandDumper Dumper(Printer);
     while (auto Compiland = Compilands->getNext())
       Dumper.start(*Compiland, outs(), 2, false);
+    Printer.Unindent();
   }
 
   if (opts::Types) {
-    outs() << "\n---TYPES---";
-    TypeDumper Dumper(false, opts::ClassDefs);
+    Printer.NewLine();
+    WithColor(Printer, PDB_ColorItem::SectionHeader).get() << "---TYPES---";
+    Printer.Indent();
+    TypeDumper Dumper(Printer, false, opts::ClassDefs);
     Dumper.start(*GlobalScope, outs(), 2);
+    Printer.Unindent();
   }
 
   if (opts::Symbols) {
-    outs() << "\n---SYMBOLS---";
+    Printer.NewLine();
+    WithColor(Printer, PDB_ColorItem::SectionHeader).get() << "---SYMBOLS---";
+    Printer.Indent();
     auto Compilands = GlobalScope->findAllChildren<PDBSymbolCompiland>();
-    CompilandDumper Dumper;
+    CompilandDumper Dumper(Printer);
     while (auto Compiland = Compilands->getNext())
       Dumper.start(*Compiland, outs(), 2, true);
+    Printer.Unindent();
   }
 
   if (opts::Globals) {
-    outs() << "\n---GLOBALS---";
+    Printer.NewLine();
+    WithColor(Printer, PDB_ColorItem::SectionHeader).get() << "---GLOBALS---";
+    Printer.Indent();
     {
-      FunctionDumper Dumper;
+      FunctionDumper Dumper(Printer);
       auto Functions = GlobalScope->findAllChildren<PDBSymbolFunc>();
-      while (auto Function = Functions->getNext())
+      while (auto Function = Functions->getNext()) {
+        Printer.NewLine();
         Dumper.start(*Function, FunctionDumper::PointerType::None, outs(), 2);
+      }
     }
     {
       auto Vars = GlobalScope->findAllChildren<PDBSymbolData>();
-      VariableDumper Dumper;
+      VariableDumper Dumper(Printer);
       while (auto Var = Vars->getNext())
         Dumper.start(*Var, outs(), 2);
     }
     {
       auto Thunks = GlobalScope->findAllChildren<PDBSymbolThunk>();
-      CompilandDumper Dumper;
+      CompilandDumper Dumper(Printer);
       while (auto Thunk = Thunks->getNext())
         Dumper.dump(*Thunk, outs(), 2);
     }
+    Printer.Unindent();
   }
   outs().flush();
 }

@@ -9,6 +9,7 @@
 
 #include "ClassDefinitionDumper.h"
 #include "FunctionDumper.h"
+#include "LinePrinter.h"
 #include "llvm-pdbdump.h"
 #include "TypedefDumper.h"
 #include "VariableDumper.h"
@@ -27,11 +28,15 @@
 
 using namespace llvm;
 
-ClassDefinitionDumper::ClassDefinitionDumper() : PDBSymDumper(true) {}
+ClassDefinitionDumper::ClassDefinitionDumper(LinePrinter &P)
+    : PDBSymDumper(true), Printer(P) {}
 
 void ClassDefinitionDumper::start(const PDBSymbolTypeUDT &Class,
                                   raw_ostream &OS, int Indent) {
-  OS << "class " << Class.getName() << " {";
+  std::string Name = Class.getName();
+  WithColor(Printer, PDB_ColorItem::Keyword).get() << "class ";
+  WithColor(Printer, PDB_ColorItem::Type).get() << Class.getName();
+  Printer << " {";
   auto Children = Class.findAllChildren();
   if (Children->getChildCount() == 0) {
     OS << "}";
@@ -81,9 +86,8 @@ void ClassDefinitionDumper::start(const PDBSymbolTypeUDT &Class,
                       Groups[(int)PDB_MemberAccess::Protected], OS, Indent);
   Count += dumpAccessGroup(PDB_MemberAccess::Private,
                            Groups[(int)PDB_MemberAccess::Private], OS, Indent);
-
   if (Count > 0)
-    OS << newline(Indent);
+    Printer.NewLine();
   OS << "}";
 }
 
@@ -94,12 +98,20 @@ int ClassDefinitionDumper::dumpAccessGroup(PDB_MemberAccess Access,
     return 0;
 
   int Count = 0;
-  if (Access == PDB_MemberAccess::Private)
-    OS << newline(Indent) << "private:";
-  else if (Access == PDB_MemberAccess::Protected)
-    OS << newline(Indent) << "protected:";
-  else if (Access == PDB_MemberAccess::Public)
-    OS << newline(Indent) << "public:";
+  if (Access == PDB_MemberAccess::Private) {
+    Printer.NewLine();
+    WithColor(Printer, PDB_ColorItem::Keyword).get() << "private";
+    Printer << ":";
+  } else if (Access == PDB_MemberAccess::Protected) {
+    Printer.NewLine();
+    WithColor(Printer, PDB_ColorItem::Keyword).get() << "protected";
+    Printer << ":";
+  } else if (Access == PDB_MemberAccess::Public) {
+    Printer.NewLine();
+    WithColor(Printer, PDB_ColorItem::Keyword).get() << "public";
+    Printer << ":";
+  }
+  Printer.Indent();
   for (auto iter = Group.Functions.begin(), end = Group.Functions.end();
        iter != end; ++iter) {
     ++Count;
@@ -115,6 +127,7 @@ int ClassDefinitionDumper::dumpAccessGroup(PDB_MemberAccess Access,
     ++Count;
     (*iter)->dump(OS, Indent + 2, *this);
   }
+  Printer.Unindent();
   return Count;
 }
 
@@ -123,13 +136,14 @@ void ClassDefinitionDumper::dump(const PDBSymbolTypeBaseClass &Symbol,
 
 void ClassDefinitionDumper::dump(const PDBSymbolData &Symbol, raw_ostream &OS,
                                  int Indent) {
-  VariableDumper Dumper;
+  VariableDumper Dumper(Printer);
   Dumper.start(Symbol, OS, Indent);
 }
 
 void ClassDefinitionDumper::dump(const PDBSymbolFunc &Symbol, raw_ostream &OS,
                                  int Indent) {
-  FunctionDumper Dumper;
+  Printer.NewLine();
+  FunctionDumper Dumper(Printer);
   Dumper.start(Symbol, FunctionDumper::PointerType::None, OS, Indent);
 }
 
@@ -138,13 +152,15 @@ void ClassDefinitionDumper::dump(const PDBSymbolTypeVTable &Symbol,
 
 void ClassDefinitionDumper::dump(const PDBSymbolTypeEnum &Symbol,
                                  raw_ostream &OS, int Indent) {
-  OS << newline(Indent) << "enum " << Symbol.getName();
+  Printer.NewLine();
+  WithColor(Printer, PDB_ColorItem::Keyword).get() << "enum ";
+  WithColor(Printer, PDB_ColorItem::Type).get() << Symbol.getName();
 }
 
 void ClassDefinitionDumper::dump(const PDBSymbolTypeTypedef &Symbol,
                                  raw_ostream &OS, int Indent) {
-  OS << newline(Indent);
-  TypedefDumper Dumper;
+  Printer.NewLine();
+  TypedefDumper Dumper(Printer);
   Dumper.start(Symbol, OS, Indent);
 }
 
