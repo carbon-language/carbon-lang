@@ -6,12 +6,11 @@
 ;          A[i]++;
 ;    }
 ;
-; CHECK:      Stmt_for_cond
-; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                [c] -> { Stmt_for_cond[i0] -> MemRef_cmp1[] };
-; CHECK:      Stmt_for_body
-; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                [c] -> { Stmt_for_body[i0] -> MemRef_cmp1[] };
+; We should move operands as close to their use as possible, hence in this case
+; there should not be any scalar dependence anymore after %cmp1 is moved to 
+; %for.body (%c and %indvar.iv are synthesis able).
+;
+; CHECK-NOT:      [Scalar: 1]
 ;
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
