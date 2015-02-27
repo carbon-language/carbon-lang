@@ -7,7 +7,7 @@ DWORD WINAPI thread_proc(void *) {
   int subscript = -1;
   volatile char stack_buffer[42];
   stack_buffer[subscript] = 42;
-// CHECK: AddressSanitizer: stack-buffer-overflow on address [[ADDR:0x[0-9a-f]+]]
+// CHECK: AddressSanitizer: stack-buffer-underflow on address [[ADDR:0x[0-9a-f]+]]
 // CHECK: WRITE of size 1 at [[ADDR]] thread T1
 // CHECK:   {{#0 .* thread_proc .*thread_stack_array_left_oob.cc}}:[[@LINE-3]]
 // CHECK: Address [[ADDR]] is located in stack of thread T1 at offset {{.*}} in frame

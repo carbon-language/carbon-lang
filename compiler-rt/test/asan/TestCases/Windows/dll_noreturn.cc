@@ -9,7 +9,7 @@ void noreturn_f() {
   char buffer[42];
   buffer[subscript] = 42;
   _exit(1);
-// CHECK: AddressSanitizer: stack-buffer-overflow on address [[ADDR:0x[0-9a-f]+]]
+// CHECK: AddressSanitizer: stack-buffer-underflow on address [[ADDR:0x[0-9a-f]+]]
 // CHECK: WRITE of size 1 at [[ADDR]] thread T0
 // CHECK-NEXT:  noreturn_f {{.*}}dll_noreturn.cc:[[@LINE-4]]
 // CHECK-NEXT:  test_function {{.*}}dll_noreturn.cc
