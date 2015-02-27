@@ -601,7 +601,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
 
 
     lldb::TargetSP target_sp (m_data_allocator.GetTarget());
-    lldb_private::ExecutionContext exe_ctx (target_sp.get(), true);
+    lldb_private::ExecutionContext exe_ctx (target_sp, true);
     if (m_result_type.GetBitSize(exe_ctx.GetBestExecutionContextScope()) == 0)
     {
         lldb_private::StreamString type_desc_stream;
