@@ -10,14 +10,12 @@
 #include "TypeDumper.h"
 
 #include "ClassDefinitionDumper.h"
-#include "FunctionDumper.h"
 #include "llvm-pdbdump.h"
 #include "TypedefDumper.h"
 
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolExe.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeEnum.h"
-#include "llvm/DebugInfo/PDB/PDBSymbolTypeFunctionSig.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeTypedef.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeUDT.h"
 
@@ -31,12 +29,6 @@ void TypeDumper::start(const PDBSymbolExe &Exe, raw_ostream &OS, int Indent) {
   OS << newline(Indent) << "Enums: (" << Enums->getChildCount() << " items)";
   while (auto Enum = Enums->getNext())
     Enum->dump(OS, Indent + 2, *this);
-
-  auto FuncSigs = Exe.findAllChildren<PDBSymbolTypeFunctionSig>();
-  OS << newline(Indent);
-  OS << "Function Signatures: (" << FuncSigs->getChildCount() << " items)";
-  while (auto Sig = FuncSigs->getNext())
-    Sig->dump(OS, Indent + 2, *this);
 
   auto Typedefs = Exe.findAllChildren<PDBSymbolTypeTypedef>();
   OS << newline(Indent) << "Typedefs: (" << Typedefs->getChildCount()
@@ -60,15 +52,6 @@ void TypeDumper::dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
     OS << newline(Indent);
 
   OS << "enum " << Symbol.getName();
-}
-
-void TypeDumper::dump(const PDBSymbolTypeFunctionSig &Symbol, raw_ostream &OS,
-                      int Indent) {
-  if (!InlineDump)
-    OS << newline(Indent);
-
-  FunctionDumper Dumper;
-  Dumper.start(Symbol, nullptr, FunctionDumper::PointerType::None, OS);
 }
 
 void TypeDumper::dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,

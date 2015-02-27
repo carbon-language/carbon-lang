@@ -1,8 +1,10 @@
 ; RUN: llvm-pdbdump -symbols %p/Inputs/symbolformat.pdb | FileCheck --check-prefix=SYM_FORMAT %s
 ; RUN: llvm-pdbdump -types %p/Inputs/symbolformat.pdb | FileCheck --check-prefix=TYPES_FORMAT %s
 ; RUN: llvm-pdbdump -types -class-definitions %p/Inputs/symbolformat.pdb | FileCheck --check-prefix=FULL_CLASS %s
+; RUN: llvm-pdbdump -globals %p/Inputs/symbolformat.pdb | FileCheck --check-prefix=GLOBALS %s
 
 ; The format is func [0x<rva_start>+<prologue_length> - 0x<rva_end>-<epilogue_length>]
+; SYM_FORMAT: ---SYMBOLS---
 ; SYM_FORMAT: symbolformat-fpo.obj
 ; SYM_FORMAT-DAG: func [{{.*}}] (FPO) unsigned __cdecl fpo_func(unsigned n)
 ; SYM_FORMAT: symbolformat.obj
@@ -15,20 +17,10 @@
 ; SYM_FORMAT-DAG: func [{{.*}}] (EBP) void A::RegularFunc()
 ; SYM_FORMAT-DAG: func [{{.*}}] (EBP) virtual void A::VirtualFunc()
 
+; TYPES_FORMAT: ---TYPES---
 ; TYPES_FORMAT: Enums
 ; TYPES_FORMAT-DAG: enum TestEnum
 ; TYPES_FORMAT-DAG: enum TestEnumClass
-; TYPES_FORMAT: Function Signatures
-; TYPES_FORMAT-DAG: int __cdecl ()
-; TYPES_FORMAT-DAG: int __cdecl (int, char**)
-; TYPES_FORMAT-DAG: void (A::)()
-; TYPES_FORMAT-DAG: void (B::)()
-; TYPES_FORMAT-DAG: void (B::)(B&)
-; TYPES_FORMAT-DAG: void (B::)()
-; TYPES_FORMAT-DAG: B& (B::)(B&)
-; TYPES_FORMAT-DAG: void (A::)(A&)
-; TYPES_FORMAT-DAG: void (A::)()
-; TYPES_FORMAT-DAG: A& (A::)(A&)
 ; TYPES_FORMAT: Typedefs
 ; TYPES_FORMAT-DAG: typedef int IntType
 ; TYPES_FORMAT-DAG: typedef class A ClassAType
@@ -36,6 +28,7 @@
 ; TYPES_FORMAT-DAG: class A
 ; TYPES_FORMAT-DAG: class B
 
+; FULL_CLASS: ---TYPES---
 ; FULL_CLASS: Classes
 ; FULL_CLASS-DAG: class A {
 ; FULL_CLASS: public:
@@ -59,3 +52,8 @@
 ; FULL_CLASS: data +0x38 double m_double
 ; FULL_CLASS: data +0x40 void (__cdecl *m_pfn_2_args)(int, double)
 ; FULL_CLASS: }
+
+; GLOBALS: ---GLOBALS---
+; GLOBALS-DAG: func [{{.*}}] (FPO) unsigned __cdecl fpo_func(unsigned n)
+; GLOBALS-DAG: data [{{.*}}] static void* g_global_pointer
+; GLOBALS-DAG: data [{{.*}}] static int g_global_int

@@ -55,6 +55,9 @@ struct MemberTest {
 typedef int IntType;
 typedef A ClassAType;
 
+int g_global_int;
+void *g_global_pointer = nullptr;
+
 int main(int argc, char **argv) {
   // Force symbol references so the linker generates debug info
   B b;

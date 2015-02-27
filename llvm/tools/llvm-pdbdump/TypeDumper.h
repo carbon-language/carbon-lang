@@ -22,8 +22,6 @@ public:
 
   void dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
             int Indent) override;
-  void dump(const PDBSymbolTypeFunctionSig &Symbol, raw_ostream &OS,
-            int Indent) override;
   void dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
             int Indent) override;
   void dump(const PDBSymbolTypeUDT &Symbol, raw_ostream &OS,

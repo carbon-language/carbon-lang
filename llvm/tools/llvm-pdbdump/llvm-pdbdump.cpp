@@ -15,7 +15,9 @@
 
 #include "llvm-pdbdump.h"
 #include "CompilandDumper.h"
+#include "FunctionDumper.h"
 #include "TypeDumper.h"
+#include "VariableDumper.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringExtras.h"
@@ -25,7 +27,10 @@
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDB.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolCompiland.h"
+#include "llvm/DebugInfo/PDB/PDBSymbolData.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolExe.h"
+#include "llvm/DebugInfo/PDB/PDBSymbolFunc.h"
+#include "llvm/DebugInfo/PDB/PDBSymbolThunk.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/FileSystem.h"
@@ -50,12 +55,13 @@ cl::list<std::string> InputFilenames(cl::Positional,
                                      cl::desc("<input PDB files>"),
                                      cl::OneOrMore);
 
-cl::opt<bool> DumpCompilands("compilands", cl::desc("Display compilands"));
-cl::opt<bool> DumpSymbols("symbols",
-                          cl::desc("Display symbols (implies --compilands"));
-cl::opt<bool> DumpTypes("types", cl::desc("Display types"));
-cl::opt<bool> DumpClassDefs("class-definitions",
-                            cl::desc("Display full class definitions"));
+cl::opt<bool> Compilands("compilands", cl::desc("Display compilands"));
+cl::opt<bool> Symbols("symbols",
+                      cl::desc("Display symbols for each compiland"));
+cl::opt<bool> Globals("globals", cl::desc("Dump global symbols"));
+cl::opt<bool> Types("types", cl::desc("Display types"));
+cl::opt<bool> ClassDefs("class-definitions",
+                        cl::desc("Display full class definitions"));
 }
 
 static void dumpInput(StringRef Path) {
@@ -85,18 +91,48 @@ static void dumpInput(StringRef Path) {
   if (GlobalScope->hasPrivateSymbols())
     outs() << "HasPrivateSymbols ";
 
-  if (opts::DumpTypes) {
-    outs() << "\nDumping types";
-    TypeDumper Dumper(false, opts::DumpClassDefs);
-    Dumper.start(*GlobalScope, outs(), 2);
-  }
-
-  if (opts::DumpSymbols || opts::DumpCompilands) {
-    outs() << "\nDumping compilands";
+  if (opts::Compilands) {
+    outs() << "\n---COMPILANDS---";
     auto Compilands = GlobalScope->findAllChildren<PDBSymbolCompiland>();
     CompilandDumper Dumper;
     while (auto Compiland = Compilands->getNext())
-      Dumper.start(*Compiland, outs(), 2, opts::DumpSymbols);
+      Dumper.start(*Compiland, outs(), 2, false);
+  }
+
+  if (opts::Types) {
+    outs() << "\n---TYPES---";
+    TypeDumper Dumper(false, opts::ClassDefs);
+    Dumper.start(*GlobalScope, outs(), 2);
+  }
+
+  if (opts::Symbols) {
+    outs() << "\n---SYMBOLS---";
+    auto Compilands = GlobalScope->findAllChildren<PDBSymbolCompiland>();
+    CompilandDumper Dumper;
+    while (auto Compiland = Compilands->getNext())
+      Dumper.start(*Compiland, outs(), 2, true);
+  }
+
+  if (opts::Globals) {
+    outs() << "\n---GLOBALS---";
+    {
+      FunctionDumper Dumper;
+      auto Functions = GlobalScope->findAllChildren<PDBSymbolFunc>();
+      while (auto Function = Functions->getNext())
+        Dumper.start(*Function, FunctionDumper::PointerType::None, outs(), 2);
+    }
+    {
+      auto Vars = GlobalScope->findAllChildren<PDBSymbolData>();
+      VariableDumper Dumper;
+      while (auto Var = Vars->getNext())
+        Dumper.start(*Var, outs(), 2);
+    }
+    {
+      auto Thunks = GlobalScope->findAllChildren<PDBSymbolThunk>();
+      CompilandDumper Dumper;
+      while (auto Thunk = Thunks->getNext())
+        Dumper.dump(*Thunk, outs(), 2);
+    }
   }
   outs().flush();
 }
