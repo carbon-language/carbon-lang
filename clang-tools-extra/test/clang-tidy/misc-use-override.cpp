@@ -19,6 +19,7 @@ struct Base {
   virtual void b();
   virtual void c();
   virtual void d();
+  virtual void d2();
   virtual void e() = 0;
   virtual void f() = 0;
   virtual void g() = 0;
@@ -29,17 +30,18 @@ struct Base {
   virtual bool n() MUST_USE_RESULT UNUSED;
 
   virtual void m();
+  virtual void m2();
   virtual void o() __attribute__((unused));
 };
 
 struct SimpleCases : public Base {
 public:
   virtual ~SimpleCases();
-  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Prefer using 'override' or (rarely) 'final' instead of 'virtual'
+  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: prefer using 'override' or (rarely) 'final' instead of 'virtual'
   // CHECK-FIXES: {{^}}  ~SimpleCases() override;
 
   void a();
-  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: Annotate this
+  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: annotate this
   // CHECK-FIXES: {{^}}  void a() override;
 
   void b() override;
@@ -47,47 +49,55 @@ public:
   // CHECK-FIXES: {{^}}  void b() override;
 
   virtual void c();
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
   // CHECK-FIXES: {{^}}  void c() override;
 
   virtual void d() override;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: 'virtual' is redundant since the function is already declared 'override'
   // CHECK-FIXES: {{^}}  void d() override;
 
+  virtual void d2() final;
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: 'virtual' is redundant since the function is already declared 'final'
+  // CHECK-FIXES: {{^}}  void d2() final;
+
   virtual void e() = 0;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
   // CHECK-FIXES: {{^}}  void e() override = 0;
 
   virtual void f()=0;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
   // CHECK-FIXES: {{^}}  void f()override =0;
 
   virtual void g() ABSTRACT;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
   // CHECK-FIXES: {{^}}  void g() override ABSTRACT;
 
   virtual void j() const;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
   // CHECK-FIXES: {{^}}  void j() const override;
 
   virtual MustUseResultObject k();  // Has an implicit attribute.
-  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: prefer using
   // CHECK-FIXES: {{^}}  MustUseResultObject k() override;
 
   virtual bool l() MUST_USE_RESULT UNUSED;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
   // CHECK-FIXES: {{^}}  bool l() override MUST_USE_RESULT UNUSED;
 
   virtual bool n() UNUSED MUST_USE_RESULT;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
   // CHECK-FIXES: {{^}}  bool n() override UNUSED MUST_USE_RESULT;
 
-  virtual void m() override final;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
+  void m() override final;
+  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: 'override' is redundant since the function is already declared 'final'
   // CHECK-FIXES: {{^}}  void m() final;
 
+  virtual void m2() override final;
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: 'virtual' and 'override' are redundant since the function is already declared 'final'
+  // CHECK-FIXES: {{^}}  void m2() final;
+
   virtual void o() __attribute__((unused));
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
   // CHECK-FIXES: {{^}}  void o() override __attribute__((unused));
 };
 
@@ -102,14 +112,14 @@ SimpleCases::~SimpleCases() {}
 struct DefaultedDestructor : public Base {
   DefaultedDestructor() {}
   virtual ~DefaultedDestructor() = default;
-  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: prefer using
   // CHECK-FIXES: {{^}}  ~DefaultedDestructor() override = default;
 };
 
 struct FinalSpecified : public Base {
 public:
   virtual ~FinalSpecified() final;
-  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Annotate this
+  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: 'virtual' is redundant since the function is already declared 'final'
   // CHECK-FIXES: {{^}}  ~FinalSpecified() final;
 
   void b() final;
@@ -117,30 +127,30 @@ public:
   // CHECK-FIXES: {{^}}  void b() final;
 
   virtual void d() final;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: 'virtual' is redundant
   // CHECK-FIXES: {{^}}  void d() final;
 
   virtual void e() final = 0;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: 'virtual' is redundant
   // CHECK-FIXES: {{^}}  void e() final = 0;
 
   virtual void j() const final;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: 'virtual' is redundant
   // CHECK-FIXES: {{^}}  void j() const final;
 
   virtual bool l() final MUST_USE_RESULT UNUSED;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: 'virtual' is redundant
   // CHECK-FIXES: {{^}}  bool l() final MUST_USE_RESULT UNUSED;
 };
 
 struct InlineDefinitions : public Base {
 public:
   virtual ~InlineDefinitions() {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: prefer using
   // CHECK-FIXES: {{^}}  ~InlineDefinitions() override {}
 
   void a() {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: Annotate this
+  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: annotate this
   // CHECK-FIXES: {{^}}  void a() override {}
 
   void b() override {}
@@ -148,23 +158,23 @@ public:
   // CHECK-FIXES: {{^}}  void b() override {}
 
   virtual void c() {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
   // CHECK-FIXES: {{^}}  void c() override {}
 
   virtual void d() override {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: 'virtual' is redundant
   // CHECK-FIXES: {{^}}  void d() override {}
 
   virtual void j() const {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
   // CHECK-FIXES: {{^}}  void j() const override {}
 
   virtual MustUseResultObject k() {}  // Has an implicit attribute.
-  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: prefer using
   // CHECK-FIXES: {{^}}  MustUseResultObject k() override {}
 
   virtual bool l() MUST_USE_RESULT UNUSED {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
   // CHECK-FIXES: {{^}}  bool l() override MUST_USE_RESULT UNUSED {}
 };
 
@@ -172,11 +182,11 @@ struct Macros : public Base {
   // Tests for 'virtual' and 'override' being defined through macros. Basically
   // give up for now.
   NOT_VIRTUAL void a() NOT_OVERRIDE;
-  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: Annotate this
+  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: annotate this
   // CHECK-FIXES: {{^}}  NOT_VIRTUAL void a() override NOT_OVERRIDE;
 
   VIRTUAL void b() NOT_OVERRIDE;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
   // CHECK-FIXES: {{^}}  VIRTUAL void b() override NOT_OVERRIDE;
 
   NOT_VIRTUAL void c() OVERRIDE;
@@ -184,7 +194,7 @@ struct Macros : public Base {
   // CHECK-FIXES: {{^}}  NOT_VIRTUAL void c() OVERRIDE;
 
   VIRTUAL void d() OVERRIDE;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: 'virtual' is redundant
   // CHECK-FIXES: {{^}}  VIRTUAL void d() OVERRIDE;
 
 #define FUNC(return_type, name) return_type name()
@@ -196,7 +206,7 @@ struct Macros : public Base {
   // CHECK-FIXES: {{^}}  F
 
   VIRTUAL void g() OVERRIDE final;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: 'virtual' and 'override' are redundant
   // CHECK-FIXES: {{^}}  VIRTUAL void g() final;
 };
 
@@ -207,7 +217,7 @@ template <typename T> struct TemplateBase {
 
 template <typename T> struct DerivedFromTemplate : public TemplateBase<T> {
   virtual void f(T t);
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: prefer using
   // CHECK-FIXES: {{^}}  void f(T t) override;
 };
 void f() { DerivedFromTemplate<int>().f(2); }
@@ -215,7 +225,7 @@ void f() { DerivedFromTemplate<int>().f(2); }
 template <class C>
 struct UnusedMemberInstantiation : public C {
   virtual ~UnusedMemberInstantiation() {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Prefer using
+  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: prefer using
   // CHECK-FIXES: {{^}}  ~UnusedMemberInstantiation() override {}
 };
 struct IntantiateWithoutUse : public UnusedMemberInstantiation<Base> {};
