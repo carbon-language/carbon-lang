@@ -30,7 +30,7 @@ for.body:                                         ; preds = %for.cond
 
 if.then:                                          ; preds = %for.body
   %arrayidx = getelementptr inbounds i32, i32* %A, i64 %indvars.iv
-  %tmp = load i32* %arrayidx, align 4
+  %tmp = load i32, i32* %arrayidx, align 4
   %inc = add nsw i32 %tmp, 1
   store i32 %inc, i32* %arrayidx, align 4
   br label %if.end
