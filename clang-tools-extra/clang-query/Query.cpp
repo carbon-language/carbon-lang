@@ -33,13 +33,17 @@ bool NoOpQuery::run(llvm::raw_ostream &OS, QuerySession &QS) const {
 
 bool HelpQuery::run(llvm::raw_ostream &OS, QuerySession &QS) const {
   OS << "Available commands:\n\n"
-        "  match MATCHER, m MATCHER      "
+        "  match MATCHER, m MATCHER          "
         "Match the loaded ASTs against the given matcher.\n"
-        "  set bind-root (true|false)    "
+        "  let NAME MATCHER, l NAME MATCHER  "
+        "Give a matcher expression a name, to be used later\n"
+        "                                    "
+        "as part of other expressions.\n"
+        "  set bind-root (true|false)        "
         "Set whether to bind the root matcher to \"root\".\n"
-        "  set output (diag|print|dump)  "
+        "  set output (diag|print|dump)      "
         "Set whether to print bindings as diagnostics,\n"
-        "                                "
+        "                                    "
         "AST pretty prints or AST dumps.\n\n";
   return true;
 }
