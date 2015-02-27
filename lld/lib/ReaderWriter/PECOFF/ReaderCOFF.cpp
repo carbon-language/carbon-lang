@@ -1052,19 +1052,11 @@ StringRef FileCOFF::ArrayRefToString(ArrayRef<uint8_t> array) {
       array[2] == 0xBF) {
     array = array.slice(3);
   }
-
   if (array.empty())
     return "";
-
-  // This is equivalent to strnlen, but we don't use the function because
-  // it only exists in recent POSIX standards.
-  size_t len = 0;
-  size_t e = array.size();
-  while (len < e && array[len] != '\0')
-    ++len;
-
-  std::string *contents =
-      new (_alloc) std::string(reinterpret_cast<const char *>(&array[0]), len);
+  StringRef s((char *)array.data(), array.size());
+  s = s.substr(0, s.find_first_of('\0'));
+  std::string *contents = new (_alloc) std::string(s.data(), s.size());
   return StringRef(*contents).trim();
 }
 
