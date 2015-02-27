@@ -2898,8 +2898,9 @@ def : DSAtomicCmpXChg<DS_CMPST_RTN_B64, i64, atomic_cmp_swap_64_local>;
 multiclass MUBUFLoad_Pattern <MUBUF Instr_ADDR64, ValueType vt,
                               PatFrag constant_ld> {
   def : Pat <
-     (vt (constant_ld (MUBUFAddr64 v4i32:$srsrc, i64:$vaddr, i32:$soffset, i16:$offset))),
-     (Instr_ADDR64 $srsrc, $vaddr, $soffset, $offset)
+     (vt (constant_ld (MUBUFAddr64 v4i32:$srsrc, i64:$vaddr, i32:$soffset,
+                                   i16:$offset, i1:$glc, i1:$slc, i1:$tfe))),
+     (Instr_ADDR64 $srsrc, $vaddr, $soffset, $offset, $glc, $slc, $tfe)
   >;
 }
 
