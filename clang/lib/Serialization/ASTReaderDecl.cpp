@@ -1748,9 +1748,6 @@ void ASTDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     // This ClassTemplateDecl owns a CommonPtr; read it to keep track of all of
     // the specializations.
     SmallVector<serialization::DeclID, 32> SpecIDs;
-    // Specializations.
-    ReadDeclIDList(SpecIDs);
-    // Partial specializations.
     ReadDeclIDList(SpecIDs);
 
     if (!SpecIDs.empty()) {
@@ -1779,9 +1776,6 @@ void ASTDeclReader::VisitVarTemplateDecl(VarTemplateDecl *D) {
     // This VarTemplateDecl owns a CommonPtr; read it to keep track of all of
     // the specializations.
     SmallVector<serialization::DeclID, 32> SpecIDs;
-    // Specializations.
-    ReadDeclIDList(SpecIDs);
-    // Partial specializations.
     ReadDeclIDList(SpecIDs);
 
     if (!SpecIDs.empty()) {

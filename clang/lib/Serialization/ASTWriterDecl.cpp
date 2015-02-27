@@ -138,6 +138,58 @@ namespace clang {
                                       CD->NumCtorInitializers, Record);
       Writer.AddStmt(FD->getBody());
     }
+
+    /// Get the specialization decl from an entry in the specialization list.
+    template <typename EntryType>
+    typename RedeclarableTemplateDecl::SpecEntryTraits<EntryType>::DeclType *
+    getSpecializationDecl(EntryType &T) {
+      return RedeclarableTemplateDecl::SpecEntryTraits<EntryType>::getDecl(&T);
+    }
+
+    /// Get the list of partial specializations from a template's common ptr.
+    template<typename T>
+    decltype(T::PartialSpecializations) &getPartialSpecializations(T *Common) {
+      return Common->PartialSpecializations;
+    }
+    ArrayRef<Decl> getPartialSpecializations(FunctionTemplateDecl::Common *) {
+      return None;
+    }
+
+    template<typename Decl>
+    void AddTemplateSpecializations(Decl *D) {
+      auto *Common = D->getCommonPtr();
+
+      // If we have any lazy specializations, and the external AST source is
+      // our chained AST reader, we can just write out the DeclIDs. Otherwise,
+      // we need to resolve them to actual declarations.
+      if (Writer.Chain != Writer.Context->getExternalSource() &&
+          Common->LazySpecializations) {
+        D->LoadLazySpecializations();
+        assert(!Common->LazySpecializations);
+      }
+
+      auto &Specializations = Common->Specializations;
+      auto &&PartialSpecializations = getPartialSpecializations(Common);
+      ArrayRef<DeclID> LazySpecializations;
+      if (auto *LS = Common->LazySpecializations)
+        LazySpecializations = ArrayRef<DeclID>(LS + 1, LS + 1 + LS[0]);
+
+      Record.push_back(Specializations.size() +
+                       PartialSpecializations.size() +
+                       LazySpecializations.size());
+      for (auto &Entry : Specializations) {
+        auto *D = getSpecializationDecl(Entry);
+        assert(D->isCanonicalDecl() && "non-canonical decl in set");
+        Writer.AddDeclRef(D, Record);
+      }
+      for (auto &Entry : PartialSpecializations) {
+        auto *D = getSpecializationDecl(Entry);
+        assert(D->isCanonicalDecl() && "non-canonical decl in set");
+        Writer.AddDeclRef(D, Record);
+      }
+      for (DeclID ID : LazySpecializations)
+        Record.push_back(ID);
+    }
   };
 }
 
@@ -1172,24 +1224,8 @@ void ASTDeclWriter::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
 void ASTDeclWriter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
   VisitRedeclarableTemplateDecl(D);
 
-  if (D->isFirstDecl()) {
-    typedef llvm::FoldingSetVector<ClassTemplateSpecializationDecl> CTSDSetTy;
-    CTSDSetTy &CTSDSet = D->getSpecializations();
-    Record.push_back(CTSDSet.size());
-    for (CTSDSetTy::iterator I=CTSDSet.begin(), E = CTSDSet.end(); I!=E; ++I) {
-      assert(I->isCanonicalDecl() && "Expected only canonical decls in set");
-      Writer.AddDeclRef(&*I, Record);
-    }
-
-    typedef llvm::FoldingSetVector<ClassTemplatePartialSpecializationDecl>
-      CTPSDSetTy;
-    CTPSDSetTy &CTPSDSet = D->getPartialSpecializations();
-    Record.push_back(CTPSDSet.size());
-    for (CTPSDSetTy::iterator I=CTPSDSet.begin(), E=CTPSDSet.end(); I!=E; ++I) {
-      assert(I->isCanonicalDecl() && "Expected only canonical decls in set");
-      Writer.AddDeclRef(&*I, Record); 
-    }
-  }
+  if (D->isFirstDecl())
+    AddTemplateSpecializations(D);
   Code = serialization::DECL_CLASS_TEMPLATE;
 }
 
@@ -1247,26 +1283,8 @@ void ASTDeclWriter::VisitClassTemplatePartialSpecializationDecl(
 void ASTDeclWriter::VisitVarTemplateDecl(VarTemplateDecl *D) {
   VisitRedeclarableTemplateDecl(D);
 
-  if (D->isFirstDecl()) {
-    typedef llvm::FoldingSetVector<VarTemplateSpecializationDecl> VTSDSetTy;
-    VTSDSetTy &VTSDSet = D->getSpecializations();
-    Record.push_back(VTSDSet.size());
-    for (VTSDSetTy::iterator I = VTSDSet.begin(), E = VTSDSet.end(); I != E;
-         ++I) {
-      assert(I->isCanonicalDecl() && "Expected only canonical decls in set");
-      Writer.AddDeclRef(&*I, Record);
-    }
-
-    typedef llvm::FoldingSetVector<VarTemplatePartialSpecializationDecl>
-    VTPSDSetTy;
-    VTPSDSetTy &VTPSDSet = D->getPartialSpecializations();
-    Record.push_back(VTPSDSet.size());
-    for (VTPSDSetTy::iterator I = VTPSDSet.begin(), E = VTPSDSet.end(); I != E;
-         ++I) {
-      assert(I->isCanonicalDecl() && "Expected only canonical decls in set");
-      Writer.AddDeclRef(&*I, Record);
-    }
-  }
+  if (D->isFirstDecl())
+    AddTemplateSpecializations(D);
   Code = serialization::DECL_VAR_TEMPLATE;
 }
 
@@ -1331,19 +1349,8 @@ void ASTDeclWriter::VisitClassScopeFunctionSpecializationDecl(
 void ASTDeclWriter::VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
   VisitRedeclarableTemplateDecl(D);
 
-  if (D->isFirstDecl()) {
-    // This FunctionTemplateDecl owns the CommonPtr; write it.
-
-    // Write the function specialization declarations.
-    Record.push_back(D->getSpecializations().size());
-    for (llvm::FoldingSetVector<FunctionTemplateSpecializationInfo>::iterator
-           I = D->getSpecializations().begin(),
-           E = D->getSpecializations().end()   ; I != E; ++I) {
-      assert(I->Function->isCanonicalDecl() &&
-             "Expected only canonical decls in set");
-      Writer.AddDeclRef(I->Function, Record);
-    }
-  }
+  if (D->isFirstDecl())
+    AddTemplateSpecializations(D);
   Code = serialization::DECL_FUNCTION_TEMPLATE;
 }
 
