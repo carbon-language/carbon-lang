@@ -1956,7 +1956,7 @@ multiclass MUBUF_Load_Helper <mubuf op, string name, RegisterClass regClass,
 }
 
 multiclass MUBUF_Store_Helper <mubuf op, string name, RegisterClass vdataClass,
-                          ValueType store_vt, SDPatternOperator st> {
+                          ValueType store_vt = i32, SDPatternOperator st = null_frag> {
   let mayLoad = 0, mayStore = 1 in {
     defm : MUBUF_m <op, name, (outs),
                     (ins vdataClass:$vdata, SReg_128:$srsrc, VGPR_32:$vaddr, SCSrc_32:$soffset,

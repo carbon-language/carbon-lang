@@ -887,14 +887,30 @@ defm DS_READ2ST64_B64 : DS_Load2_Helper <0x00000076, "ds_read2st64_b64", VReg_12
 // MUBUF Instructions
 //===----------------------------------------------------------------------===//
 
-//def BUFFER_LOAD_FORMAT_X : MUBUF_ <mubuf<0x00>, "buffer_load_format_x", []>;
-//def BUFFER_LOAD_FORMAT_XY : MUBUF_ <mubuf<0x01>, "buffer_load_format_xy", []>;
-//def BUFFER_LOAD_FORMAT_XYZ : MUBUF_ <mubuf<0x02>, "buffer_load_format_xyz", []>;
-defm BUFFER_LOAD_FORMAT_XYZW : MUBUF_Load_Helper <mubuf<0x03>, "buffer_load_format_xyzw", VReg_128>;
-//def BUFFER_STORE_FORMAT_X : MUBUF_ <mubuf<0x04>, "buffer_store_format_x", []>;
-//def BUFFER_STORE_FORMAT_XY : MUBUF_ <mubuf<0x05>, "buffer_store_format_xy", []>;
-//def BUFFER_STORE_FORMAT_XYZ : MUBUF_ <mubuf<0x06>, "buffer_store_format_xyz", []>;
-//def BUFFER_STORE_FORMAT_XYZW : MUBUF_ <mubuf<0x07>, "buffer_store_format_xyzw", []>;
+defm BUFFER_LOAD_FORMAT_X : MUBUF_Load_Helper <
+  mubuf<0x00>, "buffer_load_format_x", VGPR_32
+>;
+defm BUFFER_LOAD_FORMAT_XY : MUBUF_Load_Helper <
+  mubuf<0x01>, "buffer_load_format_xy", VReg_64
+>;
+defm BUFFER_LOAD_FORMAT_XYZ : MUBUF_Load_Helper <
+  mubuf<0x02>, "buffer_load_format_xyz", VReg_96
+>;
+defm BUFFER_LOAD_FORMAT_XYZW : MUBUF_Load_Helper <
+  mubuf<0x03>, "buffer_load_format_xyzw", VReg_128
+>;
+defm BUFFER_STORE_FORMAT_X : MUBUF_Store_Helper <
+  mubuf<0x04>, "buffer_store_format_x", VGPR_32
+>;
+defm BUFFER_STORE_FORMAT_XY : MUBUF_Store_Helper <
+  mubuf<0x05>, "buffer_store_format_xy", VReg_64
+>;
+defm BUFFER_STORE_FORMAT_XYZ : MUBUF_Store_Helper <
+  mubuf<0x06>, "buffer_store_format_xyz", VReg_96
+>;
+defm BUFFER_STORE_FORMAT_XYZW : MUBUF_Store_Helper <
+  mubuf<0x07>, "buffer_store_format_xyzw", VReg_128
+>;
 defm BUFFER_LOAD_UBYTE : MUBUF_Load_Helper <
   mubuf<0x08, 0x10>, "buffer_load_ubyte", VGPR_32, i32, az_extloadi8_global
 >;
