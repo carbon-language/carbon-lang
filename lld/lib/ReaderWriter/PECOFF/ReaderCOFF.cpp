@@ -756,7 +756,7 @@ std::error_code FileCOFF::AtomizeDefinedSymbols(
     if (atoms.size() > 0)
       atoms[0]->setAlignment(getAlignment(section));
 
-    // Connect atoms with layout-before/layout-after edges.
+    // Connect atoms with layout-before edges.
     connectAtomsWithLayoutEdge(atoms);
 
     for (COFFDefinedFileAtom *atom : atoms) {
