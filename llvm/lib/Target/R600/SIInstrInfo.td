@@ -1861,14 +1861,14 @@ multiclass MUBUF_Atomic <mubuf op, string name, RegisterClass rc,
       defm _ADDR64 : MUBUFAtomicAddr64_m <
         op, name#"_addr64", (outs),
         (ins rc:$vdata, SReg_128:$srsrc, VReg_64:$vaddr,
-             mbuf_offset:$offset, SCSrc_32:$soffset, slc:$slc),
+             SCSrc_32:$soffset, mbuf_offset:$offset, slc:$slc),
         name#" $vdata, $vaddr, $srsrc, $soffset addr64"#"$offset"#"$slc", [], 0
       >;
 
       defm _OFFSET : MUBUFAtomicOffset_m <
         op, name#"_offset", (outs),
-        (ins rc:$vdata, SReg_128:$srsrc, mbuf_offset:$offset,
-             SCSrc_32:$soffset, slc:$slc),
+        (ins rc:$vdata, SReg_128:$srsrc, SCSrc_32:$soffset, mbuf_offset:$offset,
+             slc:$slc),
         name#" $vdata, $srsrc, $soffset"#"$offset"#"$slc", [], 0
       >;
     } // glc = 0
@@ -1880,7 +1880,7 @@ multiclass MUBUF_Atomic <mubuf op, string name, RegisterClass rc,
       defm _RTN_ADDR64 : MUBUFAtomicAddr64_m <
         op, name#"_rtn_addr64", (outs rc:$vdata),
         (ins rc:$vdata_in, SReg_128:$srsrc, VReg_64:$vaddr,
-             mbuf_offset:$offset, SSrc_32:$soffset, slc:$slc),
+             SCSrc_32:$soffset, mbuf_offset:$offset, slc:$slc),
         name#" $vdata, $vaddr, $srsrc, $soffset addr64"#"$offset"#" glc"#"$slc",
         [(set vt:$vdata,
          (atomic (MUBUFAddr64Atomic v4i32:$srsrc, i64:$vaddr, i32:$soffset,
@@ -1889,8 +1889,8 @@ multiclass MUBUF_Atomic <mubuf op, string name, RegisterClass rc,
 
       defm _RTN_OFFSET : MUBUFAtomicOffset_m <
         op, name#"_rtn_offset", (outs rc:$vdata),
-        (ins rc:$vdata_in, SReg_128:$srsrc, mbuf_offset:$offset,
-             SCSrc_32:$soffset, slc:$slc),
+        (ins rc:$vdata_in, SReg_128:$srsrc, SCSrc_32:$soffset,
+             mbuf_offset:$offset, slc:$slc),
         name#" $vdata, $srsrc, $soffset"#"$offset"#" glc $slc",
         [(set vt:$vdata,
          (atomic (MUBUFOffsetAtomic v4i32:$srsrc, i32:$soffset, i16:$offset,
@@ -1909,9 +1909,8 @@ multiclass MUBUF_Load_Helper <mubuf op, string name, RegisterClass regClass,
   let mayLoad = 1, mayStore = 0 in {
     let offen = 0, idxen = 0, vaddr = 0 in {
       defm _OFFSET : MUBUF_m <op, name#"_offset", (outs regClass:$vdata),
-                           (ins SReg_128:$srsrc,
-                           mbuf_offset:$offset, SCSrc_32:$soffset, glc:$glc,
-                           slc:$slc, tfe:$tfe),
+                           (ins SReg_128:$srsrc, SCSrc_32:$soffset,
+                           mbuf_offset:$offset, glc:$glc, slc:$slc, tfe:$tfe),
                            name#" $vdata, $srsrc, $soffset"#"$offset"#"$glc"#"$slc"#"$tfe",
                            [(set load_vt:$vdata, (ld (MUBUFOffset v4i32:$srsrc,
                                                      i32:$soffset, i16:$offset,
@@ -1929,15 +1928,15 @@ multiclass MUBUF_Load_Helper <mubuf op, string name, RegisterClass regClass,
     let offen = 0, idxen = 1 in {
       defm _IDXEN  : MUBUF_m <op, name#"_idxen", (outs regClass:$vdata),
                            (ins SReg_128:$srsrc, VGPR_32:$vaddr,
-                           mbuf_offset:$offset, SCSrc_32:$soffset, glc:$glc,
+                           SCSrc_32:$soffset, mbuf_offset:$offset, glc:$glc,
                            slc:$slc, tfe:$tfe),
                            name#" $vdata, $vaddr, $srsrc, $soffset idxen"#"$offset"#"$glc"#"$slc"#"$tfe", []>;
     }
 
     let offen = 1, idxen = 1 in {
       defm _BOTHEN : MUBUF_m <op, name#"_bothen", (outs regClass:$vdata),
-                           (ins SReg_128:$srsrc, VReg_64:$vaddr,
-                           SCSrc_32:$soffset, mbuf_offset:$offset, glc:$glc, slc:$slc, tfe:$tfe),
+                           (ins SReg_128:$srsrc, VReg_64:$vaddr, SCSrc_32:$soffset,
+                           mbuf_offset:$offset, glc:$glc, slc:$slc, tfe:$tfe),
                            name#" $vdata, $vaddr, $srsrc, $soffset idxen offen"#"$offset"#"$glc"#"$slc"#"$tfe", []>;
     }
 
@@ -1968,8 +1967,8 @@ multiclass MUBUF_Store_Helper <mubuf op, string name, RegisterClass vdataClass,
 
     let offen = 0, idxen = 0, vaddr = 0 in {
       defm _OFFSET : MUBUF_m <op, name#"_offset",(outs),
-                              (ins vdataClass:$vdata, SReg_128:$srsrc, mbuf_offset:$offset,
-                              SCSrc_32:$soffset, glc:$glc, slc:$slc, tfe:$tfe),
+                              (ins vdataClass:$vdata, SReg_128:$srsrc, SCSrc_32:$soffset,
+                              mbuf_offset:$offset, glc:$glc, slc:$slc, tfe:$tfe),
                               name#" $vdata, $srsrc, $soffset"#"$offset"#"$glc"#"$slc"#"$tfe",
                               [(st store_vt:$vdata, (MUBUFOffset v4i32:$srsrc, i32:$soffset,
                                    i16:$offset, i1:$glc, i1:$slc, i1:$tfe))]>;
@@ -1977,8 +1976,9 @@ multiclass MUBUF_Store_Helper <mubuf op, string name, RegisterClass vdataClass,
 
     let offen = 1, idxen = 0  in {
       defm _OFFEN : MUBUF_m <op, name#"_offen", (outs),
-                             (ins vdataClass:$vdata, SReg_128:$srsrc, VGPR_32:$vaddr, SCSrc_32:$soffset,
-                             mbuf_offset:$offset, glc:$glc, slc:$slc, tfe:$tfe),
+                             (ins vdataClass:$vdata, SReg_128:$srsrc, VGPR_32:$vaddr,
+                              SCSrc_32:$soffset, mbuf_offset:$offset, glc:$glc,
+                              slc:$slc, tfe:$tfe),
                              name#" $vdata, $vaddr, $srsrc, $soffset offen"#"$offset"#
                              "$glc"#"$slc"#"$tfe", []>;
     } // end offen = 1, idxen = 0

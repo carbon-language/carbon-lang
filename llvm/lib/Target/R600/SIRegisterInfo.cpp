@@ -162,8 +162,8 @@ void SIRegisterInfo::buildScratchLoadStore(MachineBasicBlock::iterator MI,
     BuildMI(*MBB, MI, DL, TII->get(LoadStoreOp))
             .addReg(SubReg, getDefRegState(IsLoad))
             .addReg(ScratchRsrcReg, getKillRegState(IsKill))
-            .addImm(Offset)
             .addReg(SOffset)
+            .addImm(Offset)
             .addImm(0) // glc
             .addImm(0) // slc
             .addImm(0) // tfe
