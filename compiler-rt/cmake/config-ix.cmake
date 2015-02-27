@@ -161,10 +161,11 @@ else()
   if("${LLVM_NATIVE_ARCH}" STREQUAL "X86")
     if(NOT MSVC)
       test_target_arch(x86_64 "" "-m64")
+      # FIXME: We build runtimes for both i686 and i386, as "clang -m32" may
+      # target different variant than "$CMAKE_C_COMPILER -m32". This part should
+      # be gone after we resolve PR14109.
       test_target_arch(i686 __i686__ "-m32")
-      if(NOT CAN_TARGET_i686)
-        test_target_arch(i386 __i386__ "-m32")
-      endif()
+      test_target_arch(i386 __i386__ "-m32")
     else()
       test_target_arch(i386 "" "")
     endif()
