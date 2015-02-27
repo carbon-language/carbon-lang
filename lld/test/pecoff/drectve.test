@@ -27,6 +27,13 @@ ERROR-NOT: foo
 # drectve2.obj contains "/include:foo".
 # RUN: yaml2obj %p/Inputs/drectve2.obj.yaml > %t2.obj
 # RUN: not lld -flavor link /out:%t2.exe /entry:main -- %t2.obj >& %t2.log
-# RUN: FileCheck -check-prefix=UNDEF %s < %t2.log
+# RUN: FileCheck -check-prefix=UNDEF2 %s < %t2.log
 
-UNDEF: Undefined symbol: {{.*}}: foo
+UNDEF2: Undefined symbol: {{.*}}: foo
+
+# drectve4.lib contains "/include:bar".
+# RUN: not lld -flavor link /force /out:%t3.exe /entry:main /include:_fn1 -- \
+# RUN:   %t2.obj %p/Inputs/drectve3.lib >& %t3.log
+# RUN: FileCheck -check-prefix=UNDEF3 %s < %t3.log
+
+UNDEF3: Undefined symbol: {{.*}}: bar
