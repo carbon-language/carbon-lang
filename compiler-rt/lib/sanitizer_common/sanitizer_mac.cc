@@ -31,9 +31,11 @@
 
 #include <crt_externs.h>  // for _NSGetEnviron
 #include <fcntl.h>
+#include <mach-o/dyld.h>
 #include <pthread.h>
 #include <sched.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
@@ -200,6 +202,21 @@ const char *GetEnv(const char *name) {
       }
     }
     environ++;
+  }
+  return 0;
+}
+
+uptr ReadBinaryName(/*out*/char *buf, uptr buf_len) {
+  CHECK_LE(kMaxPathLength, buf_len);
+
+  // On OS X the executable path is saved to the stack by dyld. Reading it
+  // from there is much faster than calling dladdr, especially for large
+  // binaries with symbols.
+  InternalScopedString exe_path(kMaxPathLength);
+  uint32_t size = exe_path.size();
+  if (_NSGetExecutablePath(exe_path.data(), &size) == 0 &&
+      realpath(exe_path.data(), buf) != 0) {
+    return internal_strlen(buf);
   }
   return 0;
 }

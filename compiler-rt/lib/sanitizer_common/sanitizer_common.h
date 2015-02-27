@@ -216,6 +216,11 @@ const char *GetEnv(const char *name);
 bool SetEnv(const char *name, const char *value);
 const char *GetPwd();
 char *FindPathToBinary(const char *name);
+bool IsPathSeparator(const char c);
+bool IsAbsolutePath(const char *path);
+
+// Returns the path to the main executable.
+uptr ReadBinaryName(/*out*/char *buf, uptr buf_len);
 u32 GetUid();
 void ReExec();
 bool StackSizeIsUnlimited();

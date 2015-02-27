@@ -313,6 +313,19 @@ char *FindPathToBinary(const char *name) {
   return 0;
 }
 
+uptr ReadBinaryName(/*out*/char *buf, uptr buf_len) {
+  // Nothing here for now.
+  return 0;
+}
+
+bool IsPathSeparator(const char c) {
+  return c == '\\' || c == '/';
+}
+
+bool IsAbsolutePath(const char *path) {
+  UNIMPLEMENTED();
+}
+
 void SleepForSeconds(int seconds) {
   Sleep(seconds * 1000);
 }

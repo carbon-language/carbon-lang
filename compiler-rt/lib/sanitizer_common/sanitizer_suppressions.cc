@@ -30,18 +30,50 @@ SuppressionContext::SuppressionContext(const char *suppression_types[],
   internal_memset(has_suppression_type_, 0, suppression_types_num_);
 }
 
+static bool GetPathAssumingFileIsRelativeToExec(const char *file_path,
+                                                /*out*/char *new_file_path,
+                                                uptr new_file_path_size) {
+  InternalScopedString exec(kMaxPathLength);
+  if (ReadBinaryName(exec.data(), exec.size())) {
+    const char *file_name_pos = StripModuleName(exec.data());
+    uptr path_to_exec_len = file_name_pos - exec.data();
+    internal_strncat(new_file_path, exec.data(),
+                     Min(path_to_exec_len, new_file_path_size - 1));
+    internal_strncat(new_file_path, file_path,
+                     new_file_path_size - internal_strlen(new_file_path) - 1);
+    return true;
+  }
+  return false;
+}
+
 void SuppressionContext::ParseFromFile(const char *filename) {
   if (filename[0] == '\0')
     return;
+
+  // If we cannot find the file, check if its location is relative to
+  // the location of the executable.
+  InternalScopedString new_file_path(kMaxPathLength);
+  if (!FileExists(filename) && !IsAbsolutePath(filename) &&
+      GetPathAssumingFileIsRelativeToExec(filename, new_file_path.data(),
+                                          new_file_path.size())) {
+    filename = new_file_path.data();
+  }
+
+  // Read the file.
   char *file_contents;
   uptr buffer_size;
-  uptr contents_size = ReadFileToBuffer(filename, &file_contents, &buffer_size,
-                                        1 << 26 /* max_len */);
+  const uptr max_len = 1 << 26;
+  uptr contents_size =
+    ReadFileToBuffer(filename, &file_contents, &buffer_size, max_len);
+  VPrintf(1, "%s: reading suppressions file at %s\n",
+          SanitizerToolName, filename);
+
   if (contents_size == 0) {
     Printf("%s: failed to read suppressions file '%s'\n", SanitizerToolName,
            filename);
     Die();
   }
+
   Parse(file_contents);
 }
 

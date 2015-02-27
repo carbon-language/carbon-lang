@@ -293,6 +293,14 @@ char *FindPathToBinary(const char *name) {
   return 0;
 }
 
+bool IsPathSeparator(const char c) {
+  return c == '/';
+}
+
+bool IsAbsolutePath(const char *path) {
+  return path != nullptr && IsPathSeparator(path[0]);
+}
+
 void ReportFile::Write(const char *buffer, uptr length) {
   SpinMutexLock l(mu);
   static const char *kWriteError =

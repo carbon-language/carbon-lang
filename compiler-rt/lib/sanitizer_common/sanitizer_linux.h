@@ -80,8 +80,6 @@ uptr ThreadSelfOffset();
 // information).
 bool LibraryNameIs(const char *full_name, const char *base_name);
 
-// Read the name of the current binary from /proc/self/exe.
-uptr ReadBinaryName(/*out*/char *buf, uptr buf_len);
 // Cache the value of /proc/self/exe.
 void CacheBinaryName();
 
