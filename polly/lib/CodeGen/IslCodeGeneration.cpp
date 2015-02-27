@@ -41,6 +41,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
@@ -920,6 +921,25 @@ public:
     return RTC;
   }
 
+  bool verifyGeneratedFunction(Scop &S, Function &F) {
+    if (!verifyFunction(F))
+      return false;
+
+    DEBUG({
+      errs() << "== ISL Codegen created an invalid function ==\n\n== The "
+                "SCoP ==\n";
+      S.print(errs());
+      errs() << "\n== The isl AST ==\n";
+      AI->printScop(errs());
+      errs() << "\n== The invalid function ==\n";
+      F.print(errs());
+      errs() << "\n== The errors ==\n";
+      verifyFunction(F, &errs());
+    });
+
+    return true;
+  }
+
   bool runOnScop(Scop &S) {
     AI = &getAnalysis<IslAstInfo>();
 
@@ -951,6 +971,9 @@ public:
     Builder.SetInsertPoint(StartBlock->begin());
 
     NodeBuilder.create(AstRoot);
+
+    assert(!verifyGeneratedFunction(S, *EnteringBB->getParent()) &&
+           "Verification of generated function failed");
     return true;
   }
 
