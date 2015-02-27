@@ -83,8 +83,9 @@
   #define _LIBUNWIND_ABORT(msg) assert_rtn(__func__, __FILE__, __LINE__, msg)
 
   #define _LIBUNWIND_SUPPORT_COMPACT_UNWIND 0
-  #define _LIBUNWIND_SUPPORT_DWARF_UNWIND   0
-  #define _LIBUNWIND_SUPPORT_DWARF_INDEX    0
+  #define _LIBUNWIND_SUPPORT_DWARF_UNWIND !defined(__arm__) || \
+                                          defined(__ARM_DWARF_EH__)
+  #define _LIBUNWIND_SUPPORT_DWARF_INDEX _LIBUNWIND_SUPPORT_DWARF_UNWIND
 #endif
 
 

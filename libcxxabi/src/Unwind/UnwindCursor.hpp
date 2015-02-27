@@ -29,6 +29,7 @@
 #include "CompactUnwinder.hpp"
 #include "config.h"
 #include "DwarfInstructions.hpp"
+#include "EHHeaderParser.hpp"
 #include "libunwind.h"
 #include "Registers.hpp"
 #include "Unwind-EHABI.h"
@@ -829,8 +830,9 @@ bool UnwindCursor<A, R>::getInfoFromDwarfSection(pint_t pc,
   }
 #if _LIBUNWIND_SUPPORT_DWARF_INDEX
   if (!foundFDE && (sects.dwarf_index_section != 0)) {
-    // Have eh_frame_hdr section which is index into dwarf section.
-    // TO DO: implement index search
+    foundFDE = EHHeaderParser<A>::findFDE(
+        _addressSpace, pc, sects.dwarf_index_section,
+        (uint32_t)sects.dwarf_index_section_length, &fdeInfo, &cieInfo);
   }
 #endif
   if (!foundFDE) {

@@ -56,6 +56,9 @@ extern EHTEntry __exidx_start;
 extern EHTEntry __exidx_end;
 #endif // !defined(_LIBUNWIND_IS_BAREMETAL)
 
+#elif _LIBUNWIND_SUPPORT_DWARF_UNWIND
+#include <link.h>
+#include "EHHeaderParser.hpp"
 #endif  // LIBCXXABI_ARM_EHABI
 
 namespace libunwind {
@@ -132,7 +135,8 @@ public:
   static uint64_t getULEB128(pint_t &addr, pint_t end);
   static int64_t  getSLEB128(pint_t &addr, pint_t end);
 
-  pint_t getEncodedP(pint_t &addr, pint_t end, uint8_t encoding);
+  pint_t getEncodedP(pint_t &addr, pint_t end, uint8_t encoding,
+                     pint_t datarelBase = 0);
   bool findFunctionName(pint_t addr, char *buf, size_t bufLen,
                         unw_word_t *offset);
   bool findUnwindSections(pint_t targetAddr, UnwindInfoSections &info);
@@ -195,9 +199,9 @@ inline int64_t LocalAddressSpace::getSLEB128(pint_t &addr, pint_t end) {
   return result;
 }
 
-inline LocalAddressSpace::pint_t LocalAddressSpace::getEncodedP(pint_t &addr,
-                                                         pint_t end,
-                                                         uint8_t encoding) {
+inline LocalAddressSpace::pint_t
+LocalAddressSpace::getEncodedP(pint_t &addr, pint_t end, uint8_t encoding,
+                               pint_t datarelBase) {
   pint_t startAddr = addr;
   const uint8_t *p = (uint8_t *)addr;
   pint_t result;
@@ -263,7 +267,12 @@ inline LocalAddressSpace::pint_t LocalAddressSpace::getEncodedP(pint_t &addr,
     _LIBUNWIND_ABORT("DW_EH_PE_textrel pointer encoding not supported");
     break;
   case DW_EH_PE_datarel:
-    _LIBUNWIND_ABORT("DW_EH_PE_datarel pointer encoding not supported");
+    // DW_EH_PE_datarel is only valid in a few places, so the parameter has a
+    // default value of 0, and we abort in the event that someone calls this
+    // function with a datarelBase of 0 and DW_EH_PE_datarel encoding.
+    if (datarelBase == 0)
+      _LIBUNWIND_ABORT("DW_EH_PE_datarel is invalid with a datarelBase of 0");
+    result += datarelBase;
     break;
   case DW_EH_PE_funcrel:
     _LIBUNWIND_ABORT("DW_EH_PE_funcrel pointer encoding not supported");
@@ -353,6 +362,64 @@ inline bool LocalAddressSpace::findUnwindSections(pint_t targetAddr,
                              info.arm_section, info.arm_section_length);
   if (info.arm_section && info.arm_section_length)
     return true;
+#elif _LIBUNWIND_SUPPORT_DWARF_UNWIND
+#if _LIBUNWIND_SUPPORT_DWARF_INDEX
+  struct dl_iterate_cb_data {
+    LocalAddressSpace *addressSpace;
+    UnwindInfoSections *sects;
+    uintptr_t targetAddr;
+  };
+
+  dl_iterate_cb_data cb_data = {this, &info, targetAddr};
+  int found = dl_iterate_phdr(
+      [](struct dl_phdr_info *pinfo, size_t, void *data) -> int {
+        auto cbdata = static_cast<dl_iterate_cb_data *>(data);
+        size_t object_length;
+        bool found_obj = false;
+        bool found_hdr = false;
+
+        assert(cbdata);
+        assert(cbdata->sects);
+
+        if (cbdata->targetAddr < pinfo->dlpi_addr) {
+          return false;
+        }
+
+        for (ElfW(Half) i = 0; i < pinfo->dlpi_phnum; i++) {
+          const ElfW(Phdr) *phdr = &pinfo->dlpi_phdr[i];
+          if (phdr->p_type == PT_LOAD) {
+            uintptr_t begin = pinfo->dlpi_addr + phdr->p_vaddr;
+            uintptr_t end = begin + phdr->p_memsz;
+            if (cbdata->targetAddr >= begin && cbdata->targetAddr < end) {
+              cbdata->sects->dso_base = begin;
+              object_length = phdr->p_memsz;
+              found_obj = true;
+            }
+          } else if (phdr->p_type == PT_GNU_EH_FRAME) {
+            EHHeaderParser<LocalAddressSpace>::EHHeaderInfo hdrInfo;
+            uintptr_t eh_frame_hdr_start = pinfo->dlpi_addr + phdr->p_vaddr;
+            cbdata->sects->dwarf_index_section = eh_frame_hdr_start;
+            cbdata->sects->dwarf_index_section_length = phdr->p_memsz;
+            EHHeaderParser<LocalAddressSpace>::decodeEHHdr(
+                *cbdata->addressSpace, eh_frame_hdr_start, phdr->p_memsz,
+                hdrInfo);
+            cbdata->sects->dwarf_section = hdrInfo.eh_frame_ptr;
+            found_hdr = true;
+          }
+        }
+
+        if (found_obj && found_hdr) {
+          cbdata->sects->dwarf_section_length = object_length;
+          return true;
+        } else {
+          return false;
+        }
+      },
+      &cb_data);
+  return static_cast<bool>(found);
+#else
+#error "_LIBUNWIND_SUPPORT_DWARF_UNWIND requires _LIBUNWIND_SUPPORT_DWARF_INDEX on this platform."
+#endif
 #endif
 
   return false;
@@ -408,7 +475,8 @@ public:
   pint_t    getP(pint_t addr);
   uint64_t  getULEB128(pint_t &addr, pint_t end);
   int64_t   getSLEB128(pint_t &addr, pint_t end);
-  pint_t    getEncodedP(pint_t &addr, pint_t end, uint8_t encoding);
+  pint_t    getEncodedP(pint_t &addr, pint_t end, uint8_t encoding,
+                        pint_t datarelBase = 0);
   bool      findFunctionName(pint_t addr, char *buf, size_t bufLen,
                         unw_word_t *offset);
   bool      findUnwindSections(pint_t targetAddr, UnwindInfoSections &info);
