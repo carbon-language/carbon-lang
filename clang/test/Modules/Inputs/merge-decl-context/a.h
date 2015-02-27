@@ -8,6 +8,8 @@ struct A {
   }
   A(double) {}
   A(double, double) {}
+  A(double, int) {}
+  A(int, double) {}
 };
 
 template <typename T1, typename T2>
