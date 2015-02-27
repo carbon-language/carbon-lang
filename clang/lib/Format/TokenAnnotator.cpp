@@ -1870,9 +1870,12 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
   // intention is to insert a line break after it in order to make shuffling
   // around entries easier.
   const FormatToken *BeforeClosingBrace = nullptr;
-  if (Left.is(tok::l_brace) && Left.BlockKind != BK_Block && Left.MatchingParen)
+  if (Left.isOneOf(tok::l_brace, TT_ArrayInitializerLSquare) &&
+      Left.BlockKind != BK_Block && Left.MatchingParen)
     BeforeClosingBrace = Left.MatchingParen->Previous;
-  else if (Right.is(tok::r_brace) && Right.BlockKind != BK_Block)
+  else if (Right.MatchingParen &&
+           Right.MatchingParen->isOneOf(tok::l_brace,
+                                        TT_ArrayInitializerLSquare))
     BeforeClosingBrace = &Left;
   if (BeforeClosingBrace && (BeforeClosingBrace->is(tok::comma) ||
                              BeforeClosingBrace->isTrailingComment()))

@@ -7216,6 +7216,10 @@ TEST_F(FormatTest, ObjCArrayLiterals) {
                      "  @\"aaaaaaaaaaaaaaaaa\",\n"
                      "  @\"aaaaaaaaaaaaaaaaa\"\n"
                      "];");
+  verifyFormat("NSArray *array = @[\n"
+               "  @\"a\",\n"
+               "  @\"a\",\n" // Trailing comma -> one per line.
+               "];");
 
   // We should try to be robust in case someone forgets the "@".
   verifyFormat("NSArray *some_variable = [\n"
