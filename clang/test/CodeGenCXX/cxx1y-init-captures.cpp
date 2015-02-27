@@ -45,11 +45,11 @@ int h(int a) {
   // CHECK: store i32 {{.*}}, i32* %[[A_ADDR]],
   //
   // Initialize init-capture 'b(a)' by reference.
-  // CHECK: getelementptr inbounds {{.*}}* %[[OUTER]], i32 0, i32 0
+  // CHECK: getelementptr inbounds {{.*}}, {{.*}}* %[[OUTER]], i32 0, i32 0
   // CHECK: store i32* %[[A_ADDR]], i32** {{.*}},
   //
   // Initialize init-capture 'c(a)' by copy.
-  // CHECK: getelementptr inbounds {{.*}}* %[[OUTER]], i32 0, i32 1
+  // CHECK: getelementptr inbounds {{.*}}, {{.*}}* %[[OUTER]], i32 0, i32 1
   // CHECK: load i32* %[[A_ADDR]],
   // CHECK: store i32
   //
@@ -62,13 +62,13 @@ int h(int a) {
     //
     // Capture outer 'c' by reference.
     // CHECK: %[[OUTER:.*]] = load {{.*}}** %[[OUTER_ADDR]]
-    // CHECK: getelementptr inbounds {{.*}}* %[[INNER]], i32 0, i32 0
-    // CHECK-NEXT: getelementptr inbounds {{.*}}* %[[OUTER]], i32 0, i32 1
+    // CHECK: getelementptr inbounds {{.*}}, {{.*}}* %[[INNER]], i32 0, i32 0
+    // CHECK-NEXT: getelementptr inbounds {{.*}}, {{.*}}* %[[OUTER]], i32 0, i32 1
     // CHECK-NEXT: store i32* %
     //
     // Capture outer 'b' by copy.
-    // CHECK: getelementptr inbounds {{.*}}* %[[INNER]], i32 0, i32 1
-    // CHECK-NEXT: getelementptr inbounds {{.*}}* %[[OUTER]], i32 0, i32 0
+    // CHECK: getelementptr inbounds {{.*}}, {{.*}}* %[[INNER]], i32 0, i32 1
+    // CHECK-NEXT: getelementptr inbounds {{.*}}, {{.*}}* %[[OUTER]], i32 0, i32 0
     // CHECK-NEXT: load i32** %
     // CHECK-NEXT: load i32* %
     // CHECK-NEXT: store i32
@@ -84,11 +84,11 @@ int h(int a) {
       // CHECK: %[[INNER:.*]] = load {{.*}}** %[[INNER_ADDR]]
       //
       // Load capture of 'b'
-      // CHECK: getelementptr inbounds {{.*}}* %[[INNER]], i32 0, i32 1
+      // CHECK: getelementptr inbounds {{.*}}, {{.*}}* %[[INNER]], i32 0, i32 1
       // CHECK: load i32* %
       //
       // Load capture of 'c'
-      // CHECK: getelementptr inbounds {{.*}}* %[[INNER]], i32 0, i32 0
+      // CHECK: getelementptr inbounds {{.*}}, {{.*}}* %[[INNER]], i32 0, i32 0
       // CHECK: load i32** %
       // CHECK: load i32* %
       //

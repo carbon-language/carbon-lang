@@ -36,7 +36,7 @@ int main (int argc, char **argv) {
 
 // CHECK-LABEL: define {{[a-z]*[ ]?i32}} @main({{i32[ ]?[a-z]*}} %argc, i8** %argv)
 // CHECK:       [[AGG_CAPTURED:%.+]] = alloca %struct.anon
-// CHECK:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon* [[AGG_CAPTURED]], i32 0, i32 0
+// CHECK:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon, %struct.anon* [[AGG_CAPTURED]], i32 0, i32 0
 // CHECK-NEXT:  store i32* {{%[a-z0-9.]+}}, i32** [[ARGC_REF]]
 // CHECK-NEXT:  [[BITCAST:%.+]] = bitcast %struct.anon* [[AGG_CAPTURED]] to i8*
 // CHECK-NEXT:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...)* @__kmpc_fork_call(%ident_t* [[DEF_LOC_2]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %struct.anon*)* @.omp_outlined. to void (i32*, i32*, ...)*), i8* [[BITCAST]])
@@ -50,9 +50,9 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG:       [[KMPC_LOC_VOIDPTR:%.+]] = bitcast %ident_t* [[LOC_2_ADDR]] to i8*
 // CHECK-DEBUG-NEXT:  [[KMPC_DEFAULT_LOC_VOIDPTR:%.+]] = bitcast %ident_t* [[DEF_LOC_2]] to i8*
 // CHECK-DEBUG-NEXT:   call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[KMPC_LOC_VOIDPTR]], i8* [[KMPC_DEFAULT_LOC_VOIDPTR]], i64 ptrtoint (%ident_t* getelementptr (%ident_t* null, i32 1) to i64), i32 8, i1 false)
-// CHECK-DEBUG:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon* [[AGG_CAPTURED]], i32 0, i32 0
+// CHECK-DEBUG:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon, %struct.anon* [[AGG_CAPTURED]], i32 0, i32 0
 // CHECK-DEBUG-NEXT:  store i32* {{%[a-z0-9.]+}}, i32** [[ARGC_REF]]
-// CHECK-DEBUG-NEXT:  [[KMPC_LOC_PSOURCE_REF:%.+]] = getelementptr inbounds %ident_t* [[LOC_2_ADDR]], i32 0, i32 4
+// CHECK-DEBUG-NEXT:  [[KMPC_LOC_PSOURCE_REF:%.+]] = getelementptr inbounds %ident_t, %ident_t* [[LOC_2_ADDR]], i32 0, i32 4
 // CHECK-DEBUG-NEXT:  store i8* getelementptr inbounds ([{{.+}} x i8]* [[LOC1]], i32 0, i32 0), i8** [[KMPC_LOC_PSOURCE_REF]]
 // CHECK-DEBUG-NEXT:  [[BITCAST:%.+]] = bitcast %struct.anon* [[AGG_CAPTURED]] to i8*
 // CHECK-DEBUG-NEXT:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...)* @__kmpc_fork_call(%ident_t* [[LOC_2_ADDR]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %struct.anon*)* @.omp_outlined. to void (i32*, i32*, ...)*), i8* [[BITCAST]])
@@ -65,7 +65,7 @@ int main (int argc, char **argv) {
 // CHECK:       [[CONTEXT_ADDR:%.+]] = alloca %struct.anon*
 // CHECK:       store %struct.anon* %__context, %struct.anon** [[CONTEXT_ADDR]]
 // CHECK:       [[CONTEXT_PTR:%.+]] = load %struct.anon** [[CONTEXT_ADDR]]
-// CHECK-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon* [[CONTEXT_PTR]], i32 0, i32 0
+// CHECK-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon, %struct.anon* [[CONTEXT_PTR]], i32 0, i32 0
 // CHECK-NEXT:  [[ARGC_REF:%.+]] = load i32** [[ARGC_PTR_REF]]
 // CHECK-NEXT:  [[ARGC:%.+]] = load i32* [[ARGC_REF]]
 // CHECK-NEXT:  invoke void [[FOO:@.+foo.+]](i32{{[ ]?[a-z]*}} [[ARGC]])
@@ -77,7 +77,7 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG:       [[CONTEXT_ADDR:%.+]] = alloca %struct.anon*
 // CHECK-DEBUG:       store %struct.anon* %__context, %struct.anon** [[CONTEXT_ADDR]]
 // CHECK-DEBUG:       [[CONTEXT_PTR:%.+]] = load %struct.anon** [[CONTEXT_ADDR]]
-// CHECK-DEBUG-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon* [[CONTEXT_PTR]], i32 0, i32 0
+// CHECK-DEBUG-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon, %struct.anon* [[CONTEXT_PTR]], i32 0, i32 0
 // CHECK-DEBUG-NEXT:  [[ARGC_REF:%.+]] = load i32** [[ARGC_PTR_REF]]
 // CHECK-DEBUG-NEXT:  [[ARGC:%.+]] = load i32* [[ARGC_REF]]
 // CHECK-DEBUG-NEXT:  invoke void [[FOO:@.+foo.+]](i32 [[ARGC]])
@@ -93,7 +93,7 @@ int main (int argc, char **argv) {
 
 // CHECK:       define linkonce_odr {{[a-z]*[ ]?i32}} [[TMAIN]](i8** %argc)
 // CHECK:       [[AGG_CAPTURED:%.+]] = alloca %struct.anon.0
-// CHECK:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon.0* [[AGG_CAPTURED]], i32 0, i32 0
+// CHECK:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon.0, %struct.anon.0* [[AGG_CAPTURED]], i32 0, i32 0
 // CHECK-NEXT:  store i8*** {{%[a-z0-9.]+}}, i8**** [[ARGC_REF]]
 // CHECK-NEXT:  [[BITCAST:%.+]] = bitcast %struct.anon.0* [[AGG_CAPTURED]] to i8*
 // CHECK-NEXT:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...)* @__kmpc_fork_call(%ident_t* [[DEF_LOC_2]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %struct.anon.0*)* @.omp_outlined.1 to void (i32*, i32*, ...)*), i8* [[BITCAST]])
@@ -105,9 +105,9 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG:       [[KMPC_LOC_VOIDPTR:%.+]] = bitcast %ident_t* [[LOC_2_ADDR]] to i8*
 // CHECK-DEBUG-NEXT:  [[KMPC_DEFAULT_LOC_VOIDPTR:%.+]] = bitcast %ident_t* [[DEF_LOC_2]] to i8*
 // CHECK-DEBUG-NEXT:   call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[KMPC_LOC_VOIDPTR]], i8* [[KMPC_DEFAULT_LOC_VOIDPTR]], i64 ptrtoint (%ident_t* getelementptr (%ident_t* null, i32 1) to i64), i32 8, i1 false)
-// CHECK-DEBUG:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon.0* [[AGG_CAPTURED]], i32 0, i32 0
+// CHECK-DEBUG:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon.0, %struct.anon.0* [[AGG_CAPTURED]], i32 0, i32 0
 // CHECK-DEBUG-NEXT:  store i8*** {{%[a-z0-9.]+}}, i8**** [[ARGC_REF]]
-// CHECK-DEBUG-NEXT:  [[KMPC_LOC_PSOURCE_REF:%.+]] = getelementptr inbounds %ident_t* [[LOC_2_ADDR]], i32 0, i32 4
+// CHECK-DEBUG-NEXT:  [[KMPC_LOC_PSOURCE_REF:%.+]] = getelementptr inbounds %ident_t, %ident_t* [[LOC_2_ADDR]], i32 0, i32 4
 // CHECK-DEBUG-NEXT:  store i8* getelementptr inbounds ([{{.+}} x i8]* [[LOC2]], i32 0, i32 0), i8** [[KMPC_LOC_PSOURCE_REF]]
 // CHECK-DEBUG-NEXT:  [[BITCAST:%.+]] = bitcast %struct.anon.0* [[AGG_CAPTURED]] to i8*
 // CHECK-DEBUG-NEXT:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...)* @__kmpc_fork_call(%ident_t* [[LOC_2_ADDR]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %struct.anon.0*)* @.omp_outlined.1 to void (i32*, i32*, ...)*), i8* [[BITCAST]])
@@ -118,7 +118,7 @@ int main (int argc, char **argv) {
 // CHECK:       [[CONTEXT_ADDR:%.+]] = alloca %struct.anon.0*
 // CHECK:       store %struct.anon.0* %__context, %struct.anon.0** [[CONTEXT_ADDR]]
 // CHECK:       [[CONTEXT_PTR:%.+]] = load %struct.anon.0** [[CONTEXT_ADDR]]
-// CHECK-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon.0* [[CONTEXT_PTR]], i32 0, i32 0
+// CHECK-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon.0, %struct.anon.0* [[CONTEXT_PTR]], i32 0, i32 0
 // CHECK-NEXT:  [[ARGC_REF:%.+]] = load i8**** [[ARGC_PTR_REF]]
 // CHECK-NEXT:  [[ARGC:%.+]] = load i8*** [[ARGC_REF]]
 // CHECK-NEXT:  invoke void [[FOO1:@.+foo.+]](i8** [[ARGC]])
@@ -130,7 +130,7 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG:       [[CONTEXT_ADDR:%.+]] = alloca %struct.anon.0*
 // CHECK-DEBUG:       store %struct.anon.0* %__context, %struct.anon.0** [[CONTEXT_ADDR]]
 // CHECK-DEBUG:       [[CONTEXT_PTR:%.+]] = load %struct.anon.0** [[CONTEXT_ADDR]]
-// CHECK-DEBUG-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon.0* [[CONTEXT_PTR]], i32 0, i32 0
+// CHECK-DEBUG-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon.0, %struct.anon.0* [[CONTEXT_PTR]], i32 0, i32 0
 // CHECK-DEBUG-NEXT:  [[ARGC_REF:%.+]] = load i8**** [[ARGC_PTR_REF]]
 // CHECK-DEBUG-NEXT:  [[ARGC:%.+]] = load i8*** [[ARGC_REF]]
 // CHECK-DEBUG-NEXT:  invoke void [[FOO1:@.+foo.+]](i8** [[ARGC]])

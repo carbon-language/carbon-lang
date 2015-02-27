@@ -205,7 +205,7 @@ namespace BoolPtrToMember {
   // CHECK-LABEL: define dereferenceable({{[0-9]+}}) i8* @_ZN15BoolPtrToMember1fERNS_1XEMS0_b
   bool &f(X &x, bool X::*member) {
     // CHECK: {{bitcast.* to i8\*}}
-    // CHECK-NEXT: getelementptr inbounds i8*
+    // CHECK-NEXT: getelementptr inbounds i8, i8*
     // CHECK-NEXT: ret i8*
     return x.*member;
   }

@@ -95,9 +95,9 @@ double test_PR8567(int n, double (*p)[n][5]) {
   // CHECK-NEXT: [[N:%.*]] = load i32* [[NV]], align 4
   // CHECK-NEXT: [[P:%.*]] = load [5 x double]** [[PV]], align 4
   // CHECK-NEXT: [[T0:%.*]] = mul nsw i32 1, [[N]]
-  // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [5 x double]* [[P]], i32 [[T0]]
-  // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [5 x double]* [[T1]], i32 2
-  // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds [5 x double]* [[T2]], i32 0, i32 3
+  // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [5 x double], [5 x double]* [[P]], i32 [[T0]]
+  // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [5 x double], [5 x double]* [[T1]], i32 2
+  // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds [5 x double], [5 x double]* [[T2]], i32 0, i32 3
   // CHECK-NEXT: [[T4:%.*]] = load double* [[T3]]
   // CHECK-NEXT: ret double [[T4]]
  return p[1][2][3];
@@ -121,13 +121,13 @@ int test4(unsigned n, char (*p)[n][n+1][6]) {
   // CHECK-NEXT: [[T2:%.*]] = udiv i32 [[T1]], 2
   // CHECK-NEXT: [[T3:%.*]] = mul nuw i32 [[DIM0]], [[DIM1]]
   // CHECK-NEXT: [[T4:%.*]] = mul nsw i32 [[T2]], [[T3]]
-  // CHECK-NEXT: [[T5:%.*]] = getelementptr inbounds [6 x i8]* [[T0]], i32 [[T4]]
+  // CHECK-NEXT: [[T5:%.*]] = getelementptr inbounds [6 x i8], [6 x i8]* [[T0]], i32 [[T4]]
   // CHECK-NEXT: [[T6:%.*]] = load i32* [[N]], align 4
   // CHECK-NEXT: [[T7:%.*]] = udiv i32 [[T6]], 4
   // CHECK-NEXT: [[T8:%.*]] = sub i32 0, [[T7]]
   // CHECK-NEXT: [[T9:%.*]] = mul nuw i32 [[DIM0]], [[DIM1]]
   // CHECK-NEXT: [[T10:%.*]] = mul nsw i32 [[T8]], [[T9]]
-  // CHECK-NEXT: [[T11:%.*]] = getelementptr inbounds [6 x i8]* [[T5]], i32 [[T10]]
+  // CHECK-NEXT: [[T11:%.*]] = getelementptr inbounds [6 x i8], [6 x i8]* [[T5]], i32 [[T10]]
   // CHECK-NEXT: store [6 x i8]* [[T11]], [6 x i8]** [[P2]], align 4
   __typeof(p) p2 = (p + n/2) - n/4;
 
@@ -158,12 +158,12 @@ void test5(void)
   // CHECK-NEXT: [[INC:%.*]]  = add nsw i32 [[Z]], 1
   // CHECK-NEXT: store i32 [[INC]], i32* [[I]], align 4
   // CHECK-NEXT: [[O:%.*]] = load i32* [[I]], align 4
-  // CHECK-NEXT: [[AR:%.*]] = getelementptr inbounds [5 x i32]* [[A]], i32 0, i32 0
+  // CHECK-NEXT: [[AR:%.*]] = getelementptr inbounds [5 x i32], [5 x i32]* [[A]], i32 0, i32 0
   // CHECK-NEXT: [[T:%.*]] = bitcast [5 x i32]* [[A]] to i32*
   // CHECK-NEXT: store i32* [[T]], i32** [[CL]]
   // CHECK-NEXT: [[TH:%.*]] = load i32** [[CL]]
   // CHECK-NEXT: [[VLAIX:%.*]] = mul nsw i32 0, [[O]]
-  // CHECK-NEXT: [[ADDPTR:%.*]] = getelementptr inbounds i32* [[TH]], i32 [[VLAIX]]
+  // CHECK-NEXT: [[ADDPTR:%.*]] = getelementptr inbounds i32, i32* [[TH]], i32 [[VLAIX]]
   // CHECK-NEXT: store i32* [[ADDPTR]], i32** [[CL]]
 }
 
@@ -182,11 +182,11 @@ void test6(void)
   // CHECK-NEXT: [[O:%.*]] = bitcast i32*** [[A]] to i32**
   // CHECK-NEXT: store i32** [[O]], i32*** [[CL]]
   // CHECK-NEXT: [[T:%.*]] = load i32*** [[CL]]
-  // CHECK-NEXT: [[IX:%.*]] = getelementptr inbounds i32** [[T]], i32 0
+  // CHECK-NEXT: [[IX:%.*]] = getelementptr inbounds i32*, i32** [[T]], i32 0
   // CHECK-NEXT: [[TH:%.*]] = load i32** [[IX]], align 4
   // CHECK-NEXT: [[F:%.*]] = mul nsw i32 1, [[Z]]
-  // CHECK-NEXT: [[IX1:%.*]] = getelementptr inbounds i32* [[TH]], i32 [[F]]
-  // CHECK-NEXT: [[IX2:%.*]] = getelementptr inbounds i32* [[IX1]], i32 5
+  // CHECK-NEXT: [[IX1:%.*]] = getelementptr inbounds i32, i32* [[TH]], i32 [[F]]
+  // CHECK-NEXT: [[IX2:%.*]] = getelementptr inbounds i32, i32* [[IX1]], i32 5
   // CHECK-NEXT: store i32 0, i32* [[IX2]], align 4
 }
 

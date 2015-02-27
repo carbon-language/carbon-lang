@@ -135,7 +135,7 @@ void test2(Test2 *x) {
   // CHECK-NEXT: [[T0:%.*]] = load [[TEST2]]** [[X]],
   // CHECK-NEXT: [[OFFSET:%.*]] = load i64* @"OBJC_IVAR_$_Test2.ivar"
   // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST2]]* [[T0]] to i8*
-  // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds i8* [[T1]], i64 [[OFFSET]]
+  // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds i8, i8* [[T1]], i64 [[OFFSET]]
   // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to i8**
   // CHECK-NEXT: [[T4:%.*]] = load i8** [[T3]],
   // CHECK-NEXT: store i8* null, i8** [[T3]],

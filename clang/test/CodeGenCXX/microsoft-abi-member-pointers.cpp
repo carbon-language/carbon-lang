@@ -284,14 +284,14 @@ int loadDataMemberPointerVirtual(Virtual *o, int Virtual::*memptr) {
 // CHECK:   %[[memptr0:.*]] = extractvalue { i32, i32 } %[[memptr:.*]], 0
 // CHECK:   %[[memptr1:.*]] = extractvalue { i32, i32 } %[[memptr:.*]], 1
 // CHECK:   %[[v6:.*]] = bitcast %{{.*}}* %[[o]] to i8*
-// CHECK:   %[[vbptr:.*]] = getelementptr inbounds i8* %[[v6]], i32 0
+// CHECK:   %[[vbptr:.*]] = getelementptr inbounds i8, i8* %[[v6]], i32 0
 // CHECK:   %[[vbptr_a:.*]] = bitcast i8* %[[vbptr]] to i32**
 // CHECK:   %[[vbtable:.*]] = load i32** %[[vbptr_a:.*]]
 // CHECK:   %[[memptr1_shr:.*]] = ashr exact i32 %[[memptr1]], 2
-// CHECK:   %[[v7:.*]] = getelementptr inbounds i32* %[[vbtable]], i32 %[[memptr1_shr]]
+// CHECK:   %[[v7:.*]] = getelementptr inbounds i32, i32* %[[vbtable]], i32 %[[memptr1_shr]]
 // CHECK:   %[[vbase_offs:.*]] = load i32* %[[v7]]
-// CHECK:   %[[v10:.*]] = getelementptr inbounds i8* %[[vbptr]], i32 %[[vbase_offs]]
-// CHECK:   %[[offset:.*]] = getelementptr inbounds i8* %[[v10]], i32 %[[memptr0]]
+// CHECK:   %[[v10:.*]] = getelementptr inbounds i8, i8* %[[vbptr]], i32 %[[vbase_offs]]
+// CHECK:   %[[offset:.*]] = getelementptr inbounds i8, i8* %[[v10]], i32 %[[memptr0]]
 // CHECK:   %[[v11:.*]] = bitcast i8* %[[offset]] to i32*
 // CHECK:   %[[v12:.*]] = load i32* %[[v11]]
 // CHECK:   ret i32 %[[v12]]
@@ -318,17 +318,17 @@ int loadDataMemberPointerUnspecified(Unspecified *o, int Unspecified::*memptr) {
 // CHECK:   br i1 %[[is_vbase]], label %[[vadjust:.*]], label %[[skip:.*]]
 //
 // CHECK: [[vadjust]]
-// CHECK:   %[[vbptr:.*]] = getelementptr inbounds i8* %[[base]], i32 %[[memptr1]]
+// CHECK:   %[[vbptr:.*]] = getelementptr inbounds i8, i8* %[[base]], i32 %[[memptr1]]
 // CHECK:   %[[vbptr_a:.*]] = bitcast i8* %[[vbptr]] to i32**
 // CHECK:   %[[vbtable:.*]] = load i32** %[[vbptr_a:.*]]
 // CHECK:   %[[memptr2_shr:.*]] = ashr exact i32 %[[memptr2]], 2
-// CHECK:   %[[v7:.*]] = getelementptr inbounds i32* %[[vbtable]], i32 %[[memptr2_shr]]
+// CHECK:   %[[v7:.*]] = getelementptr inbounds i32, i32* %[[vbtable]], i32 %[[memptr2_shr]]
 // CHECK:   %[[vbase_offs:.*]] = load i32* %[[v7]]
-// CHECK:   %[[base_adj:.*]] = getelementptr inbounds i8* %[[vbptr]], i32 %[[vbase_offs]]
+// CHECK:   %[[base_adj:.*]] = getelementptr inbounds i8, i8* %[[vbptr]], i32 %[[vbase_offs]]
 //
 // CHECK: [[skip]]
 // CHECK:   %[[new_base:.*]] = phi i8* [ %[[base]], %{{.*}} ], [ %[[base_adj]], %[[vadjust]] ]
-// CHECK:   %[[offset:.*]] = getelementptr inbounds i8* %[[new_base]], i32 %[[memptr0]]
+// CHECK:   %[[offset:.*]] = getelementptr inbounds i8, i8* %[[new_base]], i32 %[[memptr0]]
 // CHECK:   %[[v11:.*]] = bitcast i8* %[[offset]] to i32*
 // CHECK:   %[[v12:.*]] = load i32* %[[v11]]
 // CHECK:   ret i32 %[[v12]]
@@ -354,7 +354,7 @@ void callMemberPointerMultiple(Multiple *o, void (Multiple::*memptr)()) {
 // CHECK: define void @"\01?callMemberPointerMultiple@@{{.*}} {
 // CHECK:   %[[memptr0:.*]] = extractvalue { i8*, i32 } %{{.*}}, 0
 // CHECK:   %[[memptr1:.*]] = extractvalue { i8*, i32 } %{{.*}}, 1
-// CHECK:   %[[this_adjusted:.*]] = getelementptr inbounds i8* %{{.*}}, i32 %[[memptr1]]
+// CHECK:   %[[this_adjusted:.*]] = getelementptr inbounds i8, i8* %{{.*}}, i32 %[[memptr1]]
 // CHECK:   %[[this:.*]] = bitcast i8* %[[this_adjusted]] to {{.*}}
 // CHECK:   %[[fptr:.*]] = bitcast i8* %[[memptr0]] to {{.*}}
 // CHECK:   call x86_thiscallcc void %[[fptr]](%{{.*}} %[[this]])
@@ -369,14 +369,14 @@ void callMemberPointerVirtualBase(Virtual *o, void (Virtual::*memptr)()) {
 // CHECK:   %[[memptr0:.*]] = extractvalue { i8*, i32, i32 } %{{.*}}, 0
 // CHECK:   %[[memptr1:.*]] = extractvalue { i8*, i32, i32 } %{{.*}}, 1
 // CHECK:   %[[memptr2:.*]] = extractvalue { i8*, i32, i32 } %{{.*}}, 2
-// CHECK:   %[[vbptr:.*]] = getelementptr inbounds i8* %{{.*}}, i32 0
+// CHECK:   %[[vbptr:.*]] = getelementptr inbounds i8, i8* %{{.*}}, i32 0
 // CHECK:   %[[vbptr_a:.*]] = bitcast i8* %[[vbptr]] to i32**
 // CHECK:   %[[vbtable:.*]] = load i32** %[[vbptr_a:.*]]
 // CHECK:   %[[memptr2_shr:.*]] = ashr exact i32 %[[memptr2]], 2
-// CHECK:   %[[v7:.*]] = getelementptr inbounds i32* %[[vbtable]], i32 %[[memptr2_shr]]
+// CHECK:   %[[v7:.*]] = getelementptr inbounds i32, i32* %[[vbtable]], i32 %[[memptr2_shr]]
 // CHECK:   %[[vbase_offs:.*]] = load i32* %[[v7]]
-// CHECK:   %[[v10:.*]] = getelementptr inbounds i8* %[[vbptr]], i32 %[[vbase_offs]]
-// CHECK:   %[[this_adjusted:.*]] = getelementptr inbounds i8* %[[v10]], i32 %[[memptr1]]
+// CHECK:   %[[v10:.*]] = getelementptr inbounds i8, i8* %[[vbptr]], i32 %[[vbase_offs]]
+// CHECK:   %[[this_adjusted:.*]] = getelementptr inbounds i8, i8* %[[v10]], i32 %[[memptr1]]
 // CHECK:   %[[fptr:.*]] = bitcast i8* %[[memptr0]] to void ({{.*}})
 // CHECK:   %[[this:.*]] = bitcast i8* %[[this_adjusted]] to {{.*}}
 // CHECK:   call x86_thiscallcc void %[[fptr]](%{{.*}} %[[this]])
@@ -599,7 +599,7 @@ int *load_data(A *a, int A::*mp) {
 // CHECK:    %[[a:.*]] = load %"struct.Test3::A"** %{{.*}}, align 4
 // CHECK:    %[[mp:.*]] = load i32* %{{.*}}, align 4
 // CHECK:    %[[a_i8:.*]] = bitcast %"struct.Test3::A"* %[[a]] to i8*
-// CHECK:    getelementptr inbounds i8* %[[a_i8]], i32 %[[mp]]
+// CHECK:    getelementptr inbounds i8, i8* %[[a_i8]], i32 %[[mp]]
 // CHECK: }
 }
 
@@ -621,7 +621,7 @@ void (C::*getmp())() {
 // CHECK-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_9C@Test4@@$BA@AE"(%"struct.Test4::C"* %this, ...) {{.*}} comdat
 // CHECK-NOT:  getelementptr
 // CHECK:  load void (%"struct.Test4::C"*, ...)*** %{{.*}}
-// CHECK:  getelementptr inbounds void (%"struct.Test4::C"*, ...)** %{{.*}}, i64 0
+// CHECK:  getelementptr inbounds void (%"struct.Test4::C"*, ...)*, void (%"struct.Test4::C"*, ...)** %{{.*}}, i64 0
 // CHECK-NOT:  getelementptr
 // CHECK:  musttail call x86_thiscallcc void (%"struct.Test4::C"*, ...)* %
 

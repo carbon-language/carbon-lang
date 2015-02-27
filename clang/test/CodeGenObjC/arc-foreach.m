@@ -54,14 +54,14 @@ void test0(NSArray *array) {
 // CHECK-LP64-NEXT: [[T0:%.*]] = icmp eq i64 [[SIZE]], 0
 // CHECK-LP64-NEXT: br i1 [[T0]]
 
-// CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[STATE_T]]* [[STATE]], i32 0, i32 1
+// CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[STATE_T]], [[STATE_T]]* [[STATE]], i32 0, i32 1
 // CHECK-LP64-NEXT: [[T1:%.*]] = load i8*** [[T0]]
-// CHECK-LP64-NEXT: [[T2:%.*]] = getelementptr i8** [[T1]], i64
+// CHECK-LP64-NEXT: [[T2:%.*]] = getelementptr i8*, i8** [[T1]], i64
 // CHECK-LP64-NEXT: [[T3:%.*]] = load i8** [[T2]]
 // CHECK-LP64-NEXT: store i8* [[T3]], i8** [[X]]
 
-// CHECK-LP64:      [[D0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
-// CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+// CHECK-LP64:      [[D0:%.*]] = getelementptr inbounds [[BLOCK_T]], [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+// CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]], [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
 // CHECK-LP64-NEXT: [[T1:%.*]] = load i8** [[X]]
 // CHECK-LP64-NEXT: [[T2:%.*]] = call i8* @objc_retain(i8* [[T1]])
 // CHECK-LP64-NEXT: store i8* [[T2]], i8** [[T0]]
@@ -85,7 +85,7 @@ void test0(NSArray *array) {
 // CHECK-LP64-LABEL:    define internal void @__test0_block_invoke
 // CHECK-LP64:      [[BLOCK:%.*]] = bitcast i8* {{%.*}} to [[BLOCK_T]]*
 // CHECK-LP64-NOT:  ret
-// CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+// CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]], [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
 // CHECK-LP64-NEXT: [[T2:%.*]] = load i8** [[T0]], align 8 
 // CHECK-LP64-NEXT: call void @use(i8* [[T2]])
 
@@ -102,14 +102,14 @@ void test1(NSArray *array) {
 // CHECK-LP64-NEXT: alloca [16 x i8*], align 8
 // CHECK-LP64-NEXT: [[BLOCK:%.*]] = alloca [[BLOCK_T:<{.*}>]],
 
-// CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[STATE_T]]* [[STATE]], i32 0, i32 1
+// CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[STATE_T]], [[STATE_T]]* [[STATE]], i32 0, i32 1
 // CHECK-LP64-NEXT: [[T1:%.*]] = load i8*** [[T0]]
-// CHECK-LP64-NEXT: [[T2:%.*]] = getelementptr i8** [[T1]], i64
+// CHECK-LP64-NEXT: [[T2:%.*]] = getelementptr i8*, i8** [[T1]], i64
 // CHECK-LP64-NEXT: [[T3:%.*]] = load i8** [[T2]]
 // CHECK-LP64-NEXT: call i8* @objc_initWeak(i8** [[X]], i8* [[T3]])
 
-// CHECK-LP64:      [[D0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
-// CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+// CHECK-LP64:      [[D0:%.*]] = getelementptr inbounds [[BLOCK_T]], [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+// CHECK-LP64:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]], [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
 // CHECK-LP64-NEXT: [[T1:%.*]] = call i8* @objc_loadWeakRetained(i8** [[X]])
 // CHECK-LP64-NEXT: call i8* @objc_initWeak(i8** [[T0]], i8* [[T1]])
 // CHECK-LP64-NEXT: call void @objc_release(i8* [[T1]]) 

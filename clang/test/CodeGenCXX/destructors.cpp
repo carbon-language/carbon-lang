@@ -200,12 +200,12 @@ namespace test3 {
   // CHECK4: resume { i8*, i32 }
 
   // CHECK4-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD1Ev(
-  // CHECK4: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK4: getelementptr inbounds i8, i8* {{.*}}, i64 -8
   // CHECK4: call void {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
   // CHECK4: ret void
 
   // CHECK4-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11DD0Ev(
-  // CHECK4: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK4: getelementptr inbounds i8, i8* {{.*}}, i64 -8
   // CHECK4: call void @_ZN5test312_GLOBAL__N_11DD0Ev(
   // CHECK4: ret void
 
@@ -219,12 +219,12 @@ namespace test3 {
   // CHECK4: resume { i8*, i32 }
 
   // CHECK4-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD1Ev(
-  // CHECK4: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK4: getelementptr inbounds i8, i8* {{.*}}, i64 -8
   // CHECK4: call void @_ZN5test312_GLOBAL__N_11CD2Ev(
   // CHECK4: ret void
 
   // CHECK4-LABEL: define internal void @_ZThn8_N5test312_GLOBAL__N_11CD0Ev(
-  // CHECK4: getelementptr inbounds i8* {{.*}}, i64 -8
+  // CHECK4: getelementptr inbounds i8, i8* {{.*}}, i64 -8
   // CHECK4: call void @_ZN5test312_GLOBAL__N_11CD0Ev(
   // CHECK4: ret void
 
@@ -279,11 +279,11 @@ namespace test5 {
   // CHECK5:      [[ELEMS:%.*]] = alloca [5 x [[A:%.*]]], align
   // CHECK5-NEXT: [[EXN:%.*]] = alloca i8*
   // CHECK5-NEXT: [[SEL:%.*]] = alloca i32
-  // CHECK5-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [5 x [[A]]]* [[ELEMS]], i32 0, i32 0
-  // CHECK5-NEXT: [[END:%.*]] = getelementptr inbounds [[A]]* [[BEGIN]], i64 5
+  // CHECK5-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [5 x [[A]]], [5 x [[A]]]* [[ELEMS]], i32 0, i32 0
+  // CHECK5-NEXT: [[END:%.*]] = getelementptr inbounds [[A]], [[A]]* [[BEGIN]], i64 5
   // CHECK5-NEXT: br label
   // CHECK5:      [[POST:%.*]] = phi [[A]]* [ [[END]], {{%.*}} ], [ [[ELT:%.*]], {{%.*}} ]
-  // CHECK5-NEXT: [[ELT]] = getelementptr inbounds [[A]]* [[POST]], i64 -1
+  // CHECK5-NEXT: [[ELT]] = getelementptr inbounds [[A]], [[A]]* [[POST]], i64 -1
   // CHECK5-NEXT: invoke void @_ZN5test51AD1Ev([[A]]* [[ELT]])
   // CHECK5:      [[T0:%.*]] = icmp eq [[A]]* [[ELT]], [[BEGIN]]
   // CHECK5-NEXT: br i1 [[T0]],
@@ -292,7 +292,7 @@ namespace test5 {
   // CHECK5:      [[EMPTY:%.*]] = icmp eq [[A]]* [[BEGIN]], [[ELT]]
   // CHECK5-NEXT: br i1 [[EMPTY]]
   // CHECK5:      [[AFTER:%.*]] = phi [[A]]* [ [[ELT]], {{%.*}} ], [ [[CUR:%.*]], {{%.*}} ]
-  // CHECK5-NEXT: [[CUR:%.*]] = getelementptr inbounds [[A]]* [[AFTER]], i64 -1
+  // CHECK5-NEXT: [[CUR:%.*]] = getelementptr inbounds [[A]], [[A]]* [[AFTER]], i64 -1
   // CHECK5-NEXT: invoke void @_ZN5test51AD1Ev([[A]]* [[CUR]])
   // CHECK5:      [[DONE:%.*]] = icmp eq [[A]]* [[CUR]], [[BEGIN]]
   // CHECK5-NEXT: br i1 [[DONE]],

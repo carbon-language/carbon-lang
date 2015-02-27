@@ -44,7 +44,7 @@ namespace test1 {
 // CHECK:      [[SELF:%.*]] = alloca [[TEST1:%.*]]*, align 8
 // CHECK:      [[T0:%.*]] = load [[TEST1]]** [[SELF]]
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST1]]* [[T0]] to i8*
-// CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds i8* [[T1]], i64 0
+// CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds i8, i8* [[T1]], i64 0
 // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to [[A]]*
 // CHECK-NEXT: ret [[A]]* [[T3]]
 

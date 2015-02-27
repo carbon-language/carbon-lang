@@ -13,33 +13,33 @@ D* x;
 
 A* a() { return x; }
 // CHECK: @_Z1av() [[NUW:#[0-9]+]]
-// CHECK: [[VBASEOFFSETPTRA:%[a-zA-Z0-9\.]+]] = getelementptr i8* {{.*}}, i64 -16
+// CHECK: [[VBASEOFFSETPTRA:%[a-zA-Z0-9\.]+]] = getelementptr i8, i8* {{.*}}, i64 -16
 // CHECK: [[CASTVBASEOFFSETPTRA:%[a-zA-Z0-9\.]+]] = bitcast i8* [[VBASEOFFSETPTRA]] to i32*
 // CHECK: load i32* [[CASTVBASEOFFSETPTRA]]
 // CHECK: }
 
 // MSVC: @"\01?a@@YAPAUA@@XZ"() [[NUW:#[0-9]+]] {
-// MSVC:   %[[vbptr_off:.*]] = getelementptr inbounds i8* {{.*}}, i32 0
+// MSVC:   %[[vbptr_off:.*]] = getelementptr inbounds i8, i8* {{.*}}, i32 0
 // MSVC:   %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to i32**
 // MSVC:   %[[vbtable:.*]] = load i32** %[[vbptr]]
-// MSVC:   %[[entry:.*]] = getelementptr inbounds i32* {{.*}}, i32 1
+// MSVC:   %[[entry:.*]] = getelementptr inbounds i32, i32* {{.*}}, i32 1
 // MSVC:   %[[offset:.*]] = load i32* %[[entry]]
 // MSVC:   add nsw i32 0, %[[offset]]
 // MSVC: }
 
 B* b() { return x; }
 // CHECK: @_Z1bv() [[NUW]]
-// CHECK: [[VBASEOFFSETPTRA:%[a-zA-Z0-9\.]+]] = getelementptr i8* {{.*}}, i64 -20
+// CHECK: [[VBASEOFFSETPTRA:%[a-zA-Z0-9\.]+]] = getelementptr i8, i8* {{.*}}, i64 -20
 // CHECK: [[CASTVBASEOFFSETPTRA:%[a-zA-Z0-9\.]+]] = bitcast i8* [[VBASEOFFSETPTRA]] to i32*
 // CHECK: load i32* [[CASTVBASEOFFSETPTRA]]
 // CHECK: }
 
 // Same as 'a' except we use a different vbtable offset.
 // MSVC: @"\01?b@@YAPAUB@@XZ"() [[NUW:#[0-9]+]] {
-// MSVC:   %[[vbptr_off:.*]] = getelementptr inbounds i8* {{.*}}, i32 0
+// MSVC:   %[[vbptr_off:.*]] = getelementptr inbounds i8, i8* {{.*}}, i32 0
 // MSVC:   %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to i32**
 // MSVC:   %[[vbtable:.*]] = load i32** %[[vbptr]]
-// MSVC:   %[[entry:.*]] = getelementptr inbounds i32* {{.*}}, i32 2
+// MSVC:   %[[entry:.*]] = getelementptr inbounds i32, i32* {{.*}}, i32 2
 // MSVC:   %[[offset:.*]] = load i32* %[[entry]]
 // MSVC:   add nsw i32 0, %[[offset]]
 // MSVC: }
@@ -47,7 +47,7 @@ B* b() { return x; }
 
 BB* c() { return x; }
 // CHECK: @_Z1cv() [[NUW]]
-// CHECK: [[VBASEOFFSETPTRC:%[a-zA-Z0-9\.]+]] = getelementptr i8* {{.*}}, i64 -24
+// CHECK: [[VBASEOFFSETPTRC:%[a-zA-Z0-9\.]+]] = getelementptr i8, i8* {{.*}}, i64 -24
 // CHECK: [[CASTVBASEOFFSETPTRC:%[a-zA-Z0-9\.]+]] = bitcast i8* [[VBASEOFFSETPTRC]] to i32*
 // CHECK: [[VBASEOFFSETC:%[a-zA-Z0-9\.]+]] = load i32* [[CASTVBASEOFFSETPTRC]]
 // CHECK: add i32 [[VBASEOFFSETC]], 8
@@ -55,10 +55,10 @@ BB* c() { return x; }
 
 // Same as 'a' except we use a different vbtable offset.
 // MSVC: @"\01?c@@YAPAUBB@@XZ"() [[NUW:#[0-9]+]] {
-// MSVC:   %[[vbptr_off:.*]] = getelementptr inbounds i8* {{.*}}, i32 0
+// MSVC:   %[[vbptr_off:.*]] = getelementptr inbounds i8, i8* {{.*}}, i32 0
 // MSVC:   %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to i32**
 // MSVC:   %[[vbtable:.*]] = load i32** %[[vbptr]]
-// MSVC:   %[[entry:.*]] = getelementptr inbounds i32* {{.*}}, i32 4
+// MSVC:   %[[entry:.*]] = getelementptr inbounds i32, i32* {{.*}}, i32 4
 // MSVC:   %[[offset:.*]] = load i32* %[[entry]]
 // MSVC:   add nsw i32 0, %[[offset]]
 // MSVC: }
@@ -74,10 +74,10 @@ BB* d() { return y; }
 // Same as 'c' except the vbptr offset is 4, changing the initial GEP and the
 // final add.
 // MSVC: @"\01?d@@YAPAUBB@@XZ"() [[NUW:#[0-9]+]] {
-// MSVC:   %[[vbptr_off:.*]] = getelementptr inbounds i8* {{.*}}, i32 4
+// MSVC:   %[[vbptr_off:.*]] = getelementptr inbounds i8, i8* {{.*}}, i32 4
 // MSVC:   %[[vbptr:.*]] = bitcast i8* %[[vbptr_off]] to i32**
 // MSVC:   %[[vbtable:.*]] = load i32** %[[vbptr]]
-// MSVC:   %[[entry:.*]] = getelementptr inbounds i32* {{.*}}, i32 4
+// MSVC:   %[[entry:.*]] = getelementptr inbounds i32, i32* {{.*}}, i32 4
 // MSVC:   %[[offset:.*]] = load i32* %[[entry]]
 // MSVC:   add nsw i32 4, %[[offset]]
 // MSVC: }

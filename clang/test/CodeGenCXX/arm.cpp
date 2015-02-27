@@ -277,7 +277,7 @@ namespace test6 {
     // CHECK-NEXT: br i1 [[ISNULL]]
     // CHECK:      [[T0:%.*]] = bitcast [[A]]* [[V]] to void ([[A]]*)***
     // CHECK-NEXT: [[T1:%.*]] = load void ([[A]]*)*** [[T0]]
-    // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds void ([[A]]*)** [[T1]], i64 1
+    // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds void ([[A]]*)*, void ([[A]]*)** [[T1]], i64 1
     // CHECK-NEXT: [[T3:%.*]] = load void ([[A]]*)** [[T2]]
     // CHECK-NEXT: call void [[T3]]([[A]]* [[V]])
     // CHECK-NEXT: br label
@@ -386,9 +386,9 @@ namespace test9 {
 // CHECK-NEXT: [[ALLOC:%.*]] = call noalias i8* @_Znam(i32 [[T4]])
 // CHECK-NEXT: [[T0:%.*]] = bitcast i8* [[ALLOC]] to i32*
 // CHECK-NEXT: store i32 16, i32* [[T0]]
-// CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds i32* [[T0]], i32 1
+// CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds i32, i32* [[T0]], i32 1
 // CHECK-NEXT: store i32 [[N]], i32* [[T1]]
-// CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds i8* [[ALLOC]], i64 16
+// CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds i8, i8* [[ALLOC]], i64 16
 // CHECK-NEXT: bitcast i8* [[T0]] to [[TEST9]]*
 //   Array allocation follows.
 
@@ -400,11 +400,11 @@ namespace test9 {
 // CHECK-NEXT: [[T0:%.*]] = icmp eq [[TEST9]]* [[BEGIN]], null
 // CHECK-NEXT: br i1 [[T0]],
 // CHECK:      [[T0:%.*]] = bitcast [[TEST9]]* [[BEGIN]] to i8*
-// CHECK-NEXT: [[ALLOC:%.*]] = getelementptr inbounds i8* [[T0]], i64 -16
-// CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds i8* [[ALLOC]], i64 4
+// CHECK-NEXT: [[ALLOC:%.*]] = getelementptr inbounds i8, i8* [[T0]], i64 -16
+// CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds i8, i8* [[ALLOC]], i64 4
 // CHECK-NEXT: [[T1:%.*]] = bitcast i8* [[T0]] to i32*
 // CHECK-NEXT: [[N:%.*]] = load i32* [[T1]]
-// CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [[TEST9]]* [[BEGIN]], i32 [[N]]
+// CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [[TEST9]], [[TEST9]]* [[BEGIN]], i32 [[N]]
 // CHECK-NEXT: [[T0:%.*]] = icmp eq [[TEST9]]* [[BEGIN]], [[END]]
 // CHECK-NEXT: br i1 [[T0]],
 //   Array deallocation follows.

@@ -14,8 +14,8 @@ return(char)s->c;
 }
 main()
 {
-// CHECK:  getelementptr inbounds [1 x %struct.T]* %s, i32 0, i32 0
-// CHECK:  getelementptr inbounds [1 x %struct.T]* %s, i32 0, i32 0
+// CHECK:  getelementptr inbounds [1 x %struct.T], [1 x %struct.T]* %s, i32 0, i32 0
+// CHECK:  getelementptr inbounds [1 x %struct.T], [1 x %struct.T]* %s, i32 0, i32 0
 struct T t;
 t.i=0xff;
 t.c=0xffff11;

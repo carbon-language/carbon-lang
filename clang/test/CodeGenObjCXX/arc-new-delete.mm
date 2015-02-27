@@ -73,10 +73,10 @@ void test_delete(__strong id *sptr, __weak id *wptr) {
 void test_array_delete(__strong id *sptr, __weak id *wptr) {
   // CHECK: icmp eq i8** [[BEGIN:%.*]], null
   // CHECK: [[LEN:%.*]] = load i64* {{%.*}}
-  // CHECK: [[END:%.*]] = getelementptr inbounds i8** [[BEGIN]], i64 [[LEN]]
+  // CHECK: [[END:%.*]] = getelementptr inbounds i8*, i8** [[BEGIN]], i64 [[LEN]]
   // CHECK-NEXT: icmp eq i8** [[BEGIN]], [[END]]
   // CHECK: [[PAST:%.*]] = phi i8** [ [[END]], {{%.*}} ], [ [[CUR:%.*]],
-  // CHECK-NEXT: [[CUR]] = getelementptr inbounds i8** [[PAST]], i64 -1
+  // CHECK-NEXT: [[CUR]] = getelementptr inbounds i8*, i8** [[PAST]], i64 -1
   // CHECK-NEXT: call void @objc_storeStrong(i8** [[CUR]], i8* null)
   // CHECK-NEXT: icmp eq i8** [[CUR]], [[BEGIN]]
   // CHECK: call void @_ZdaPv
@@ -84,10 +84,10 @@ void test_array_delete(__strong id *sptr, __weak id *wptr) {
 
   // CHECK: icmp eq i8** [[BEGIN:%.*]], null
   // CHECK: [[LEN:%.*]] = load i64* {{%.*}}
-  // CHECK: [[END:%.*]] = getelementptr inbounds i8** [[BEGIN]], i64 [[LEN]]
+  // CHECK: [[END:%.*]] = getelementptr inbounds i8*, i8** [[BEGIN]], i64 [[LEN]]
   // CHECK-NEXT: icmp eq i8** [[BEGIN]], [[END]]
   // CHECK: [[PAST:%.*]] = phi i8** [ [[END]], {{%.*}} ], [ [[CUR:%.*]],
-  // CHECK-NEXT: [[CUR]] = getelementptr inbounds i8** [[PAST]], i64 -1
+  // CHECK-NEXT: [[CUR]] = getelementptr inbounds i8*, i8** [[PAST]], i64 -1
   // CHECK-NEXT: call void @objc_destroyWeak(i8** [[CUR]])
   // CHECK-NEXT: icmp eq i8** [[CUR]], [[BEGIN]]
   // CHECK: call void @_ZdaPv

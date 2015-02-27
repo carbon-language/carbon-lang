@@ -140,8 +140,8 @@ int main() {
   ldx = ldv;
 // CHECK: [[REAL_VAL:%.+]] = load i32* getelementptr inbounds ({ i32, i32 }* @{{.*}}, i32 0, i32 0)
 // CHECK: [[IMG_VAL:%.+]] = load i32* getelementptr inbounds ({ i32, i32 }* @{{.*}}, i32 0, i32 1)
-// CHECK: [[TEMP_REAL_REF:%.+]] = getelementptr inbounds { i32, i32 }* [[TEMP:%.+]], i32 0, i32 0
-// CHECK: [[TEMP_IMG_REF:%.+]] = getelementptr inbounds { i32, i32 }* [[TEMP]], i32 0, i32 1
+// CHECK: [[TEMP_REAL_REF:%.+]] = getelementptr inbounds { i32, i32 }, { i32, i32 }* [[TEMP:%.+]], i32 0, i32 0
+// CHECK: [[TEMP_IMG_REF:%.+]] = getelementptr inbounds { i32, i32 }, { i32, i32 }* [[TEMP]], i32 0, i32 1
 // CHECK: store i32 [[REAL_VAL]], i32* [[TEMP_REAL_REF]]
 // CHECK: store i32 [[IMG_VAL]], i32* [[TEMP_IMG_REF]]
 // CHECK: [[BITCAST:%.+]] = bitcast { i32, i32 }* [[TEMP]] to i8*
@@ -150,8 +150,8 @@ int main() {
   cix = civ;
 // CHECK: [[REAL_VAL:%.+]] = load float* getelementptr inbounds ({ float, float }* @{{.*}}, i32 0, i32 0)
 // CHECK: [[IMG_VAL:%.+]] = load float* getelementptr inbounds ({ float, float }* @{{.*}}, i32 0, i32 1)
-// CHECK: [[TEMP_REAL_REF:%.+]] = getelementptr inbounds { float, float }* [[TEMP:%.+]], i32 0, i32 0
-// CHECK: [[TEMP_IMG_REF:%.+]] = getelementptr inbounds { float, float }* [[TEMP]], i32 0, i32 1
+// CHECK: [[TEMP_REAL_REF:%.+]] = getelementptr inbounds { float, float }, { float, float }* [[TEMP:%.+]], i32 0, i32 0
+// CHECK: [[TEMP_IMG_REF:%.+]] = getelementptr inbounds { float, float }, { float, float }* [[TEMP]], i32 0, i32 1
 // CHECK: store float [[REAL_VAL]], float* [[TEMP_REAL_REF]]
 // CHECK: store float [[IMG_VAL]], float* [[TEMP_IMG_REF]]
 // CHECK: [[BITCAST:%.+]] = bitcast { float, float }* [[TEMP]] to i8*
@@ -160,8 +160,8 @@ int main() {
   cfx = cfv;
 // CHECK: [[REAL_VAL:%.+]] = load double* getelementptr inbounds ({ double, double }* @{{.*}}, i32 0, i32 0)
 // CHECK: [[IMG_VAL:%.+]] = load double* getelementptr inbounds ({ double, double }* @{{.*}}, i32 0, i32 1)
-// CHECK: [[TEMP_REAL_REF:%.+]] = getelementptr inbounds { double, double }* [[TEMP:%.+]], i32 0, i32 0
-// CHECK: [[TEMP_IMG_REF:%.+]] = getelementptr inbounds { double, double }* [[TEMP]], i32 0, i32 1
+// CHECK: [[TEMP_REAL_REF:%.+]] = getelementptr inbounds { double, double }, { double, double }* [[TEMP:%.+]], i32 0, i32 0
+// CHECK: [[TEMP_IMG_REF:%.+]] = getelementptr inbounds { double, double }, { double, double }* [[TEMP]], i32 0, i32 1
 // CHECK: store double [[REAL_VAL]], double* [[TEMP_REAL_REF]]
 // CHECK: store double [[IMG_VAL]], double* [[TEMP_IMG_REF]]
 // CHECK: [[BITCAST:%.+]] = bitcast { double, double }* [[TEMP]] to i8*
@@ -201,8 +201,8 @@ int main() {
   ix = uiv;
 // CHECK: load i64*
 // CHECK: [[VAL:%.+]] = trunc i64 %{{.*}} to i32
-// CHECK: [[TEMP_REAL_REF:%.+]] = getelementptr inbounds { i32, i32 }* [[TEMP:%.+]], i32 0, i32 0
-// CHECK: [[TEMP_IMG_REF:%.+]] = getelementptr inbounds { i32, i32 }* [[TEMP]], i32 0, i32 1
+// CHECK: [[TEMP_REAL_REF:%.+]] = getelementptr inbounds { i32, i32 }, { i32, i32 }* [[TEMP:%.+]], i32 0, i32 0
+// CHECK: [[TEMP_IMG_REF:%.+]] = getelementptr inbounds { i32, i32 }, { i32, i32 }* [[TEMP]], i32 0, i32 1
 // CHECK: store i32 [[VAL]], i32* [[TEMP_REAL_REF]]
 // CHECK: store i32 0, i32* [[TEMP_IMG_REF]]
 // CHECK: [[BITCAST:%.+]] = bitcast { i32, i32 }* [[TEMP]] to i8*
@@ -229,8 +229,8 @@ int main() {
   ldx = ullv;
 // CHECK: load float*
 // CHECK: [[VAL:%.+]] = fptosi float %{{.*}} to i32
-// CHECK: [[TEMP_REAL_REF:%.+]] = getelementptr inbounds { i32, i32 }* [[TEMP:%.+]], i32 0, i32 0
-// CHECK: [[TEMP_IMG_REF:%.+]] = getelementptr inbounds { i32, i32 }* [[TEMP]], i32 0, i32 1
+// CHECK: [[TEMP_REAL_REF:%.+]] = getelementptr inbounds { i32, i32 }, { i32, i32 }* [[TEMP:%.+]], i32 0, i32 0
+// CHECK: [[TEMP_IMG_REF:%.+]] = getelementptr inbounds { i32, i32 }, { i32, i32 }* [[TEMP]], i32 0, i32 1
 // CHECK: store i32 [[VAL]], i32* [[TEMP_REAL_REF]]
 // CHECK: store i32 0, i32* [[TEMP_IMG_REF]]
 // CHECK: [[BITCAST:%.+]] = bitcast { i32, i32 }* [[TEMP]] to i8*

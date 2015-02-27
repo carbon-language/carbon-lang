@@ -204,34 +204,34 @@ namespace test6 {
   // CHECK-LABEL:    define void @_ZN5test64testEv()
   // CHECK:      [[ARR:%.*]] = alloca [10 x [20 x [[A:%.*]]]],
 
-  // CHECK-NEXT: [[INNER:%.*]] = getelementptr inbounds [10 x [20 x [[A]]]]* [[ARR]], i64 0, i64 0
-  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [20 x [[A]]]* [[INNER]], i64 0, i64 0
+  // CHECK-NEXT: [[INNER:%.*]] = getelementptr inbounds [10 x [20 x [[A]]]], [10 x [20 x [[A]]]]* [[ARR]], i64 0, i64 0
+  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [20 x [[A]]], [20 x [[A]]]* [[INNER]], i64 0, i64 0
   // CHECK-NEXT: call void @_ZN5test61AC1Ei([[A]]* [[T0]], i32 5)
-  // CHECK-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [[A]]* [[T0]], i64 1
-  // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [[A]]* [[T0]], i64 20
+  // CHECK-NEXT: [[BEGIN:%.*]] = getelementptr inbounds [[A]], [[A]]* [[T0]], i64 1
+  // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [[A]], [[A]]* [[T0]], i64 20
   // CHECK-NEXT: br label
   // CHECK:      [[CUR:%.*]] = phi [[A]]* [ [[BEGIN]], {{%.*}} ], [ [[NEXT:%.*]], {{%.*}} ]
   // CHECK-NEXT: call void @_ZN5test61AC1Ev([[A]]* [[CUR]])
-  // CHECK-NEXT: [[NEXT]] = getelementptr inbounds [[A]]* [[CUR]], i64 1
+  // CHECK-NEXT: [[NEXT]] = getelementptr inbounds [[A]], [[A]]* [[CUR]], i64 1
   // CHECK-NEXT: [[T0:%.*]] = icmp eq [[A]]* [[NEXT]], [[END]]
   // CHECK-NEXT: br i1
 
-  // CHECK:      [[BEGIN:%.*]] = getelementptr inbounds [20 x [[A]]]* [[INNER]], i64 1
-  // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [20 x [[A]]]* [[INNER]], i64 10
+  // CHECK:      [[BEGIN:%.*]] = getelementptr inbounds [20 x [[A]]], [20 x [[A]]]* [[INNER]], i64 1
+  // CHECK-NEXT: [[END:%.*]] = getelementptr inbounds [20 x [[A]]], [20 x [[A]]]* [[INNER]], i64 10
   // CHECK-NEXT: br label
   // CHECK:      [[CUR:%.*]] = phi [20 x [[A]]]* [ [[BEGIN]], {{%.*}} ], [ [[NEXT:%.*]], {{%.*}} ]
 
   // Inner loop.
-  // CHECK-NEXT: [[IBEGIN:%.*]] = getelementptr inbounds [20 x [[A]]]* [[CUR]], i32 0, i32 0
-  // CHECK-NEXT: [[IEND:%.*]] = getelementptr inbounds [[A]]* [[IBEGIN]], i64 20
+  // CHECK-NEXT: [[IBEGIN:%.*]] = getelementptr inbounds [20 x [[A]]], [20 x [[A]]]* [[CUR]], i32 0, i32 0
+  // CHECK-NEXT: [[IEND:%.*]] = getelementptr inbounds [[A]], [[A]]* [[IBEGIN]], i64 20
   // CHECK-NEXT: br label
   // CHECK:      [[ICUR:%.*]] = phi [[A]]* [ [[IBEGIN]], {{%.*}} ], [ [[INEXT:%.*]], {{%.*}} ]
   // CHECK-NEXT: call void @_ZN5test61AC1Ev([[A]]* [[ICUR]])
-  // CHECK-NEXT: [[INEXT:%.*]] = getelementptr inbounds [[A]]* [[ICUR]], i64 1
+  // CHECK-NEXT: [[INEXT:%.*]] = getelementptr inbounds [[A]], [[A]]* [[ICUR]], i64 1
   // CHECK-NEXT: [[T0:%.*]] = icmp eq [[A]]* [[INEXT]], [[IEND]]
   // CHECK-NEXT: br i1 [[T0]],
 
-  // CHECK:      [[NEXT]] = getelementptr inbounds [20 x [[A]]]* [[CUR]], i64 1
+  // CHECK:      [[NEXT]] = getelementptr inbounds [20 x [[A]]], [20 x [[A]]]* [[CUR]], i64 1
   // CHECK-NEXT: [[T0:%.*]] = icmp eq [20 x [[A]]]* [[NEXT]], [[END]]
   // CHECK-NEXT: br i1 [[T0]]
   // CHECK:      ret void

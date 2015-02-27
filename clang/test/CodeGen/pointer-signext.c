@@ -5,7 +5,7 @@
 
 // CHECK:      [[P:%.*]] = add i64 %param, -8
 // CHECK-NEXT: [[Q:%.*]] = inttoptr i64 [[P]] to [[R:%.*]]*
-// CHECK-NEXT: {{%.*}} = getelementptr inbounds [[R]]* [[Q]], i64 0, i32 0
+// CHECK-NEXT: {{%.*}} = getelementptr inbounds [[R]], [[R]]* [[Q]], i64 0, i32 0
 
 #define CR(Record, TYPE, Field) \
   ((TYPE *) ((unsigned char *) (Record) - (unsigned char *) &(((TYPE *) 0)->Field)))

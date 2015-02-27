@@ -156,14 +156,14 @@ namespace test5 {
   // CHECK-NEXT: [[T0:%.*]] = zext i1
   // CHECK-NEXT: store i8 [[T0]], i8* [[COND]], align 1
   // CHECK-NEXT: call void @_ZN5test51AC1Ev([[A]]* [[X]])
-  // CHECK-NEXT: [[CLEANUP_ADDR:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+  // CHECK-NEXT: [[CLEANUP_ADDR:%.*]] = getelementptr inbounds [[BLOCK_T]], [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
   // CHECK-NEXT: [[T0:%.*]] = load i8* [[COND]], align 1
   // CHECK-NEXT: [[T1:%.*]] = trunc i8 [[T0]] to i1
   // CHECK-NEXT: store i1 false, i1* [[CLEANUP_ACTIVE]]
   // CHECK-NEXT: br i1 [[T1]],
 
   // CHECK-NOT:  br
-  // CHECK:      [[CAPTURE:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+  // CHECK:      [[CAPTURE:%.*]] = getelementptr inbounds [[BLOCK_T]], [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
   // CHECK-NEXT: call void @_ZN5test51AC1ERKS0_([[A]]* [[CAPTURE]], [[A]]* dereferenceable({{[0-9]+}}) [[X]])
   // CHECK-NEXT: store i1 true, i1* [[CLEANUP_ACTIVE]]
   // CHECK-NEXT: bitcast [[BLOCK_T]]* [[BLOCK]] to void ()*

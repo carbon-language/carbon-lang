@@ -129,7 +129,7 @@ void test_destructor() {
 
 // Verify that virtual calls to destructors are not marked with a 'returned'
 // this parameter at the call site...
-// CHECKARM: [[VFN:%.*]] = getelementptr inbounds %class.E* (%class.E*)**
+// CHECKARM: [[VFN:%.*]] = getelementptr inbounds %class.E* (%class.E*)*, %class.E* (%class.E*)**
 // CHECKARM: [[THUNK:%.*]] = load %class.E* (%class.E*)** [[VFN]]
 // CHECKARM: call %class.E* [[THUNK]](%class.E* %
 

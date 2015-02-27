@@ -13,7 +13,7 @@ static struct foo gf;
 int main(int argc, char **argv) {
     struct foo f;
     f.v = argc;
-// CHECK: getelementptr inbounds %struct.foo* %f, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.foo, %struct.foo* %f, i32 0, i32 0
 // CHECK-NEXT: bitcast i32* {{.*}} to i8*
 // CHECK-NEXT: call i8* @llvm.ptr.annotation.p0i8({{.*}}str{{.*}}str{{.*}}i32 8)
 // CHECK-NEXT: bitcast i8* {{.*}} to i32*

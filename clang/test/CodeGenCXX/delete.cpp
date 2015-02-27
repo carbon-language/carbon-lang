@@ -70,16 +70,16 @@ namespace test1 {
     // CHECK:      icmp eq [10 x [20 x [[A:%.*]]]]* [[PTR:%.*]], null
     // CHECK-NEXT: br i1
 
-    // CHECK:      [[BEGIN:%.*]] = getelementptr inbounds [10 x [20 x [[A]]]]* [[PTR]], i32 0, i32 0, i32 0
+    // CHECK:      [[BEGIN:%.*]] = getelementptr inbounds [10 x [20 x [[A]]]], [10 x [20 x [[A]]]]* [[PTR]], i32 0, i32 0, i32 0
     // CHECK-NEXT: [[T0:%.*]] = bitcast [[A]]* [[BEGIN]] to i8*
-    // CHECK-NEXT: [[ALLOC:%.*]] = getelementptr inbounds i8* [[T0]], i64 -8
+    // CHECK-NEXT: [[ALLOC:%.*]] = getelementptr inbounds i8, i8* [[T0]], i64 -8
     // CHECK-NEXT: [[T1:%.*]] = bitcast i8* [[ALLOC]] to i64*
     // CHECK-NEXT: [[COUNT:%.*]] = load i64* [[T1]]
-    // CHECK:      [[END:%.*]] = getelementptr inbounds [[A]]* [[BEGIN]], i64 [[COUNT]]
+    // CHECK:      [[END:%.*]] = getelementptr inbounds [[A]], [[A]]* [[BEGIN]], i64 [[COUNT]]
     // CHECK-NEXT: [[ISEMPTY:%.*]] = icmp eq [[A]]* [[BEGIN]], [[END]]
     // CHECK-NEXT: br i1 [[ISEMPTY]],
     // CHECK:      [[PAST:%.*]] = phi [[A]]* [ [[END]], {{%.*}} ], [ [[CUR:%.*]], {{%.*}} ]
-    // CHECK-NEXT: [[CUR:%.*]] = getelementptr inbounds [[A]]* [[PAST]], i64 -1
+    // CHECK-NEXT: [[CUR:%.*]] = getelementptr inbounds [[A]], [[A]]* [[PAST]], i64 -1
     // CHECK-NEXT: call void @_ZN5test11AD1Ev([[A]]* [[CUR]])
     // CHECK-NEXT: [[ISDONE:%.*]] = icmp eq [[A]]* [[CUR]], [[BEGIN]]
     // CHECK-NEXT: br i1 [[ISDONE]]
@@ -117,15 +117,15 @@ namespace test4 {
     //   This has to be done first because the dtor can mess it up.
     // CHECK:      [[T0:%.*]] = bitcast [[X:%.*]]* [[XP:%.*]] to i64**
     // CHECK-NEXT: [[VTABLE:%.*]] = load i64** [[T0]]
-    // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds i64* [[VTABLE]], i64 -2
+    // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds i64, i64* [[VTABLE]], i64 -2
     // CHECK-NEXT: [[OFFSET:%.*]] = load i64* [[T0]], align 8
     // CHECK-NEXT: [[T0:%.*]] = bitcast [[X]]* [[XP]] to i8*
-    // CHECK-NEXT: [[ALLOCATED:%.*]] = getelementptr inbounds i8* [[T0]], i64 [[OFFSET]]
+    // CHECK-NEXT: [[ALLOCATED:%.*]] = getelementptr inbounds i8, i8* [[T0]], i64 [[OFFSET]]
     //   Load the complete-object destructor (not the deleting destructor)
     //   and call it.
     // CHECK-NEXT: [[T0:%.*]] = bitcast [[X:%.*]]* [[XP:%.*]] to void ([[X]]*)***
     // CHECK-NEXT: [[VTABLE:%.*]] = load void ([[X]]*)*** [[T0]]
-    // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds void ([[X]]*)** [[VTABLE]], i64 0
+    // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds void ([[X]]*)*, void ([[X]]*)** [[VTABLE]], i64 0
     // CHECK-NEXT: [[DTOR:%.*]] = load void ([[X]]*)** [[T0]]
     // CHECK-NEXT: call void [[DTOR]]([[X]]* [[OBJ:%.*]])
     //   Call the global operator delete.

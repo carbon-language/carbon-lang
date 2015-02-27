@@ -20,7 +20,7 @@ void test1() {
   //
   // CHECK-1: test1
   // CHECK-1: alloca %struct.anon
-  // CHECK-1: getelementptr inbounds %struct.anon*
+  // CHECK-1: getelementptr inbounds %struct.anon, %struct.anon*
   // CHECK-1: store i32* %i
   // CHECK-1: call void @[[HelperName:__captured_stmt[0-9]+]]
 }

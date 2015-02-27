@@ -15,9 +15,9 @@ void foo(A a, A b, A c) {
 //
 // X86-LABEL: define void @"\01?foo@@YAXUA@@00@Z"
 // X86:          ([[argmem_ty:<{ %struct.A, %struct.A, %struct.A }>]]* inalloca)
-// X86: %[[a:[^ ]*]] = getelementptr inbounds [[argmem_ty]]* %0, i32 0, i32 0
-// X86: %[[b:[^ ]*]] = getelementptr inbounds [[argmem_ty]]* %0, i32 0, i32 1
-// X86: %[[c:[^ ]*]] = getelementptr inbounds [[argmem_ty]]* %0, i32 0, i32 2
+// X86: %[[a:[^ ]*]] = getelementptr inbounds [[argmem_ty]], [[argmem_ty]]* %0, i32 0, i32 0
+// X86: %[[b:[^ ]*]] = getelementptr inbounds [[argmem_ty]], [[argmem_ty]]* %0, i32 0, i32 1
+// X86: %[[c:[^ ]*]] = getelementptr inbounds [[argmem_ty]], [[argmem_ty]]* %0, i32 0, i32 2
 // X86: call x86_thiscallcc void @"\01??1A@@QAE@XZ"(%struct.A* %[[a]])
 // X86: call x86_thiscallcc void @"\01??1A@@QAE@XZ"(%struct.A* %[[b]])
 // X86: call x86_thiscallcc void @"\01??1A@@QAE@XZ"(%struct.A* %[[c]])
@@ -41,11 +41,11 @@ void call_foo() {
 // X86-LABEL: define void @"\01?call_foo@@YAXXZ"()
 // X86: call i8* @llvm.stacksave()
 // X86: %[[argmem:[^ ]*]] = alloca inalloca [[argmem_ty]]
-// X86: %[[arg3:[^ ]*]] = getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 2
+// X86: %[[arg3:[^ ]*]] = getelementptr inbounds [[argmem_ty]], [[argmem_ty]]* %[[argmem]], i32 0, i32 2
 // X86: invoke x86_thiscallcc %struct.A* @"\01??0A@@QAE@H@Z"(%struct.A* %[[arg3]], i32 3)
-// X86: %[[arg2:[^ ]*]] = getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 1
+// X86: %[[arg2:[^ ]*]] = getelementptr inbounds [[argmem_ty]], [[argmem_ty]]* %[[argmem]], i32 0, i32 1
 // X86: invoke x86_thiscallcc %struct.A* @"\01??0A@@QAE@H@Z"(%struct.A* %[[arg2]], i32 2)
-// X86: %[[arg1:[^ ]*]] = getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 0
+// X86: %[[arg1:[^ ]*]] = getelementptr inbounds [[argmem_ty]], [[argmem_ty]]* %[[argmem]], i32 0, i32 0
 // X86: invoke x86_thiscallcc %struct.A* @"\01??0A@@QAE@H@Z"(%struct.A* %[[arg1]], i32 1)
 // X86: invoke void @"\01?foo@@YAXUA@@00@Z"([[argmem_ty]]* inalloca %[[argmem]])
 // X86: call void @llvm.stackrestore

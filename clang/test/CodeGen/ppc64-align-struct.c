@@ -50,7 +50,7 @@ void test7 (int x, struct test7 y)
 
 // CHECK: define void @test1va(%struct.test1* noalias sret %agg.result, i32 signext %x, ...)
 // CHECK: %[[CUR:[^ ]+]] = load i8** %ap
-// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8* %[[CUR]], i64 8
+// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8, i8* %[[CUR]], i64 8
 // CHECK: store i8* %[[NEXT]], i8** %ap
 // CHECK: bitcast i8* %[[CUR]] to %struct.test1*
 struct test1 test1va (int x, ...)
@@ -69,7 +69,7 @@ struct test1 test1va (int x, ...)
 // CHECK: %[[TMP1:[^ ]+]] = add i64 %[[TMP0]], 15
 // CHECK: %[[TMP2:[^ ]+]] = and i64 %[[TMP1]], -16
 // CHECK: %[[ALIGN:[^ ]+]] = inttoptr i64 %[[TMP2]] to i8*
-// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8* %[[ALIGN]], i64 16
+// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8, i8* %[[ALIGN]], i64 16
 // CHECK: store i8* %[[NEXT]], i8** %ap
 // CHECK: bitcast i8* %[[ALIGN]] to %struct.test2*
 struct test2 test2va (int x, ...)
@@ -88,7 +88,7 @@ struct test2 test2va (int x, ...)
 // CHECK: %[[TMP1:[^ ]+]] = add i64 %[[TMP0]], 15
 // CHECK: %[[TMP2:[^ ]+]] = and i64 %[[TMP1]], -16
 // CHECK: %[[ALIGN:[^ ]+]] = inttoptr i64 %[[TMP2]] to i8*
-// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8* %[[ALIGN]], i64 32
+// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8, i8* %[[ALIGN]], i64 32
 // CHECK: store i8* %[[NEXT]], i8** %ap
 // CHECK: bitcast i8* %[[ALIGN]] to %struct.test3*
 struct test3 test3va (int x, ...)
@@ -103,7 +103,7 @@ struct test3 test3va (int x, ...)
 
 // CHECK: define void @test4va(%struct.test4* noalias sret %agg.result, i32 signext %x, ...)
 // CHECK: %[[CUR:[^ ]+]] = load i8** %ap
-// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8* %[[CUR]], i64 16
+// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8, i8* %[[CUR]], i64 16
 // CHECK: store i8* %[[NEXT]], i8** %ap
 // CHECK: bitcast i8* %[[CUR]] to %struct.test4*
 struct test4 test4va (int x, ...)
@@ -118,7 +118,7 @@ struct test4 test4va (int x, ...)
 
 // CHECK: define void @testva_longdouble(%struct.test_longdouble* noalias sret %agg.result, i32 signext %x, ...)
 // CHECK: %[[CUR:[^ ]+]] = load i8** %ap
-// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8* %[[CUR]], i64 16
+// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8, i8* %[[CUR]], i64 16
 // CHECK: store i8* %[[NEXT]], i8** %ap
 // CHECK: bitcast i8* %[[CUR]] to %struct.test_longdouble*
 struct test_longdouble { long double x; };
@@ -138,7 +138,7 @@ struct test_longdouble testva_longdouble (int x, ...)
 // CHECK: %[[TMP1:[^ ]+]] = add i64 %[[TMP0]], 15
 // CHECK: %[[TMP2:[^ ]+]] = and i64 %[[TMP1]], -16
 // CHECK: %[[ALIGN:[^ ]+]] = inttoptr i64 %[[TMP2]] to i8*
-// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8* %[[ALIGN]], i64 16
+// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8, i8* %[[ALIGN]], i64 16
 // CHECK: store i8* %[[NEXT]], i8** %ap
 // CHECK: bitcast i8* %[[ALIGN]] to %struct.test_vector*
 struct test_vector { vector int x; };

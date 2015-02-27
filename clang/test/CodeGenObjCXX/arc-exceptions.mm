@@ -96,10 +96,10 @@ namespace test4 {
   // CHECK-LABEL:    define void @_ZN5test41AC2Ev(
   // CHECK:      [[THIS:%.*]] = load [[A:%.*]]** {{%.*}}
   //   Construct single.
-  // CHECK-NEXT: [[SINGLE:%.*]] = getelementptr inbounds [[A]]* [[THIS]], i32 0, i32 0
+  // CHECK-NEXT: [[SINGLE:%.*]] = getelementptr inbounds [[A]], [[A]]* [[THIS]], i32 0, i32 0
   // CHECK-NEXT: store i8* null, i8** [[SINGLE]], align 8
   //   Construct array.
-  // CHECK-NEXT: [[ARRAY:%.*]] = getelementptr inbounds [[A]]* [[THIS]], i32 0, i32 1
+  // CHECK-NEXT: [[ARRAY:%.*]] = getelementptr inbounds [[A]], [[A]]* [[THIS]], i32 0, i32 1
   // CHECK-NEXT: [[T0:%.*]] = bitcast [2 x [3 x i8*]]* [[ARRAY]] to i8*
   // CHECK-NEXT: call void @llvm.memset.p0i8.i64(i8* [[T0]], i8 0, i64 48, i32 8, i1 false)
   //   throw 0;
@@ -107,11 +107,11 @@ namespace test4 {
   //   Landing pad from throw site:
   // CHECK:      landingpad
   //     - First, destroy all of array.
-  // CHECK:      [[ARRAYBEGIN:%.*]] = getelementptr inbounds [2 x [3 x i8*]]* [[ARRAY]], i32 0, i32 0, i32 0
-  // CHECK-NEXT: [[ARRAYEND:%.*]] = getelementptr inbounds i8** [[ARRAYBEGIN]], i64 6
+  // CHECK:      [[ARRAYBEGIN:%.*]] = getelementptr inbounds [2 x [3 x i8*]], [2 x [3 x i8*]]* [[ARRAY]], i32 0, i32 0, i32 0
+  // CHECK-NEXT: [[ARRAYEND:%.*]] = getelementptr inbounds i8*, i8** [[ARRAYBEGIN]], i64 6
   // CHECK-NEXT: br label
   // CHECK:      [[AFTER:%.*]] = phi i8** [ [[ARRAYEND]], {{%.*}} ], [ [[ELT:%.*]], {{%.*}} ]
-  // CHECK-NEXT: [[ELT]] = getelementptr inbounds i8** [[AFTER]], i64 -1
+  // CHECK-NEXT: [[ELT]] = getelementptr inbounds i8*, i8** [[AFTER]], i64 -1
   // CHECK-NEXT: call void @objc_storeStrong(i8** [[ELT]], i8* null) [[NUW]]
   // CHECK-NEXT: [[DONE:%.*]] = icmp eq i8** [[ELT]], [[ARRAYBEGIN]]
   // CHECK-NEXT: br i1 [[DONE]],

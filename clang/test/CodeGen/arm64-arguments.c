@@ -277,10 +277,10 @@ int f38(int i, s38_no_align s1, s38_no_align s2) {
 // CHECK: %s2 = alloca %struct.s38, align 8
 // CHECK: store i64 %s1.coerce, i64* %{{.*}}, align 1
 // CHECK: store i64 %s2.coerce, i64* %{{.*}}, align 1
-// CHECK: getelementptr inbounds %struct.s38* %s1, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s38* %s2, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s38* %s1, i32 0, i32 1
-// CHECK: getelementptr inbounds %struct.s38* %s2, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s1, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s2, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s1, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s2, i32 0, i32 1
   return s1.i + s2.i + i + s1.s + s2.s;
 }
 s38_no_align g38;
@@ -301,10 +301,10 @@ int f38_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 // CHECK: %s2 = alloca %struct.s38, align 8
 // CHECK: store i64 %s1.coerce, i64* %{{.*}}, align 1
 // CHECK: store i64 %s2.coerce, i64* %{{.*}}, align 1
-// CHECK: getelementptr inbounds %struct.s38* %s1, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s38* %s2, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s38* %s1, i32 0, i32 1
-// CHECK: getelementptr inbounds %struct.s38* %s2, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s1, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s2, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s1, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s38, %struct.s38* %s2, i32 0, i32 1
   return s1.i + s2.i + i + i2 + i3 + i4 + i5 + i6 + i7 + i8 + i9 + s1.s + s2.s;
 }
 int caller38_stack() {
@@ -330,10 +330,10 @@ int f39(int i, s39_with_align s1, s39_with_align s2) {
 // CHECK: %s2 = alloca %struct.s39, align 16
 // CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 1
 // CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 1
-// CHECK: getelementptr inbounds %struct.s39* %s1, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s39* %s2, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s39* %s1, i32 0, i32 1
-// CHECK: getelementptr inbounds %struct.s39* %s2, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s39, %struct.s39* %s1, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s39, %struct.s39* %s2, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s39, %struct.s39* %s1, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s39, %struct.s39* %s2, i32 0, i32 1
   return s1.i + s2.i + i + s1.s + s2.s;
 }
 s39_with_align g39;
@@ -354,10 +354,10 @@ int f39_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 // CHECK: %s2 = alloca %struct.s39, align 16
 // CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 1
 // CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 1
-// CHECK: getelementptr inbounds %struct.s39* %s1, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s39* %s2, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s39* %s1, i32 0, i32 1
-// CHECK: getelementptr inbounds %struct.s39* %s2, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s39, %struct.s39* %s1, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s39, %struct.s39* %s2, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s39, %struct.s39* %s1, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s39, %struct.s39* %s2, i32 0, i32 1
   return s1.i + s2.i + i + i2 + i3 + i4 + i5 + i6 + i7 + i8 + i9 + s1.s + s2.s;
 }
 int caller39_stack() {
@@ -385,10 +385,10 @@ int f40(int i, s40_no_align s1, s40_no_align s2) {
 // CHECK: %s2 = alloca %struct.s40, align 8
 // CHECK: store [2 x i64] %s1.coerce, [2 x i64]* %{{.*}}, align 1
 // CHECK: store [2 x i64] %s2.coerce, [2 x i64]* %{{.*}}, align 1
-// CHECK: getelementptr inbounds %struct.s40* %s1, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s40* %s2, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s40* %s1, i32 0, i32 1
-// CHECK: getelementptr inbounds %struct.s40* %s2, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s1, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s2, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s1, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s2, i32 0, i32 1
   return s1.i + s2.i + i + s1.s + s2.s;
 }
 s40_no_align g40;
@@ -409,10 +409,10 @@ int f40_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 // CHECK: %s2 = alloca %struct.s40, align 8
 // CHECK: store [2 x i64] %s1.coerce, [2 x i64]* %{{.*}}, align 1
 // CHECK: store [2 x i64] %s2.coerce, [2 x i64]* %{{.*}}, align 1
-// CHECK: getelementptr inbounds %struct.s40* %s1, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s40* %s2, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s40* %s1, i32 0, i32 1
-// CHECK: getelementptr inbounds %struct.s40* %s2, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s1, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s2, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s1, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s40, %struct.s40* %s2, i32 0, i32 1
   return s1.i + s2.i + i + i2 + i3 + i4 + i5 + i6 + i7 + i8 + i9 + s1.s + s2.s;
 }
 int caller40_stack() {
@@ -440,10 +440,10 @@ int f41(int i, s41_with_align s1, s41_with_align s2) {
 // CHECK: %s2 = alloca %struct.s41, align 16
 // CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 1
 // CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 1
-// CHECK: getelementptr inbounds %struct.s41* %s1, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s41* %s2, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s41* %s1, i32 0, i32 1
-// CHECK: getelementptr inbounds %struct.s41* %s2, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s41, %struct.s41* %s1, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s41, %struct.s41* %s2, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s41, %struct.s41* %s1, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s41, %struct.s41* %s2, i32 0, i32 1
   return s1.i + s2.i + i + s1.s + s2.s;
 }
 s41_with_align g41;
@@ -464,10 +464,10 @@ int f41_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
 // CHECK: %s2 = alloca %struct.s41, align 16
 // CHECK: store i128 %s1.coerce, i128* %{{.*}}, align 1
 // CHECK: store i128 %s2.coerce, i128* %{{.*}}, align 1
-// CHECK: getelementptr inbounds %struct.s41* %s1, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s41* %s2, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s41* %s1, i32 0, i32 1
-// CHECK: getelementptr inbounds %struct.s41* %s2, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s41, %struct.s41* %s1, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s41, %struct.s41* %s2, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s41, %struct.s41* %s1, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s41, %struct.s41* %s2, i32 0, i32 1
   return s1.i + s2.i + i + i2 + i3 + i4 + i5 + i6 + i7 + i8 + i9 + s1.s + s2.s;
 }
 int caller41_stack() {
@@ -493,10 +493,10 @@ typedef struct s42 s42_no_align;
 __attribute__ ((noinline))
 int f42(int i, s42_no_align s1, s42_no_align s2) {
 // CHECK: define i32 @f42(i32 %i, %struct.s42* %s1, %struct.s42* %s2)
-// CHECK: getelementptr inbounds %struct.s42* %s1, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s42* %s2, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s42* %s1, i32 0, i32 1
-// CHECK: getelementptr inbounds %struct.s42* %s2, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s42, %struct.s42* %s1, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s42, %struct.s42* %s2, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s42, %struct.s42* %s1, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s42, %struct.s42* %s2, i32 0, i32 1
   return s1.i + s2.i + i + s1.s + s2.s;
 }
 s42_no_align g42;
@@ -517,10 +517,10 @@ __attribute__ ((noinline))
 int f42_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
               int i9, s42_no_align s1, s42_no_align s2) {
 // CHECK: define i32 @f42_stack(i32 %i, i32 %i2, i32 %i3, i32 %i4, i32 %i5, i32 %i6, i32 %i7, i32 %i8, i32 %i9, %struct.s42* %s1, %struct.s42* %s2)
-// CHECK: getelementptr inbounds %struct.s42* %s1, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s42* %s2, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s42* %s1, i32 0, i32 1
-// CHECK: getelementptr inbounds %struct.s42* %s2, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s42, %struct.s42* %s1, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s42, %struct.s42* %s2, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s42, %struct.s42* %s1, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s42, %struct.s42* %s2, i32 0, i32 1
   return s1.i + s2.i + i + i2 + i3 + i4 + i5 + i6 + i7 + i8 + i9 + s1.s + s2.s;
 }
 int caller42_stack() {
@@ -550,10 +550,10 @@ typedef struct s43 s43_with_align;
 __attribute__ ((noinline))
 int f43(int i, s43_with_align s1, s43_with_align s2) {
 // CHECK: define i32 @f43(i32 %i, %struct.s43* %s1, %struct.s43* %s2)
-// CHECK: getelementptr inbounds %struct.s43* %s1, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s43* %s2, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s43* %s1, i32 0, i32 1
-// CHECK: getelementptr inbounds %struct.s43* %s2, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s43, %struct.s43* %s1, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s43, %struct.s43* %s2, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s43, %struct.s43* %s1, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s43, %struct.s43* %s2, i32 0, i32 1
   return s1.i + s2.i + i + s1.s + s2.s;
 }
 s43_with_align g43;
@@ -574,10 +574,10 @@ __attribute__ ((noinline))
 int f43_stack(int i, int i2, int i3, int i4, int i5, int i6, int i7, int i8,
               int i9, s43_with_align s1, s43_with_align s2) {
 // CHECK: define i32 @f43_stack(i32 %i, i32 %i2, i32 %i3, i32 %i4, i32 %i5, i32 %i6, i32 %i7, i32 %i8, i32 %i9, %struct.s43* %s1, %struct.s43* %s2)
-// CHECK: getelementptr inbounds %struct.s43* %s1, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s43* %s2, i32 0, i32 0
-// CHECK: getelementptr inbounds %struct.s43* %s1, i32 0, i32 1
-// CHECK: getelementptr inbounds %struct.s43* %s2, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s43, %struct.s43* %s1, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s43, %struct.s43* %s2, i32 0, i32 0
+// CHECK: getelementptr inbounds %struct.s43, %struct.s43* %s1, i32 0, i32 1
+// CHECK: getelementptr inbounds %struct.s43, %struct.s43* %s2, i32 0, i32 1
   return s1.i + s2.i + i + i2 + i3 + i4 + i5 + i6 + i7 + i8 + i9 + s1.s + s2.s;
 }
 int caller43_stack() {
@@ -629,7 +629,7 @@ float test_hfa(int n, ...) {
 // CHECK: [[CURLIST:%.*]] = load i8** [[THELIST]]
 
   // HFA is not indirect, so occupies its full 16 bytes on the stack.
-// CHECK: [[NEXTLIST:%.*]] = getelementptr i8* [[CURLIST]], i32 16
+// CHECK: [[NEXTLIST:%.*]] = getelementptr i8, i8* [[CURLIST]], i32 16
 // CHECK: store i8* [[NEXTLIST]], i8** [[THELIST]]
 
 // CHECK: bitcast i8* [[CURLIST]] to %struct.HFA*
@@ -656,7 +656,7 @@ float test_toobig_hfa(int n, ...) {
 
   // TooBigHFA is not actually an HFA, so gets passed indirectly. Only 8 bytes
   // of stack consumed.
-// CHECK: [[NEXTLIST:%.*]] = getelementptr i8* [[CURLIST]], i32 8
+// CHECK: [[NEXTLIST:%.*]] = getelementptr i8, i8* [[CURLIST]], i32 8
 // CHECK: store i8* [[NEXTLIST]], i8** [[THELIST]]
 
 // CHECK: [[HFAPTRPTR:%.*]] = bitcast i8* [[CURLIST]] to i8**
@@ -679,12 +679,12 @@ int32x4_t test_hva(int n, ...) {
 
   // HVA is not indirect, so occupies its full 16 bytes on the stack. but it
   // must be properly aligned.
-// CHECK: [[ALIGN0:%.*]] = getelementptr i8* [[CURLIST]], i32 15
+// CHECK: [[ALIGN0:%.*]] = getelementptr i8, i8* [[CURLIST]], i32 15
 // CHECK: [[ALIGN1:%.*]] = ptrtoint i8* [[ALIGN0]] to i64
 // CHECK: [[ALIGN2:%.*]] = and i64 [[ALIGN1]], -16
 // CHECK: [[ALIGNED_LIST:%.*]] = inttoptr i64 [[ALIGN2]] to i8*
 
-// CHECK: [[NEXTLIST:%.*]] = getelementptr i8* [[ALIGNED_LIST]], i32 32
+// CHECK: [[NEXTLIST:%.*]] = getelementptr i8, i8* [[ALIGNED_LIST]], i32 32
 // CHECK: store i8* [[NEXTLIST]], i8** [[THELIST]]
 
 // CHECK: bitcast i8* [[ALIGNED_LIST]] to %struct.HVA*
@@ -705,7 +705,7 @@ int32x4_t test_toobig_hva(int n, ...) {
 
   // TooBigHVA is not actually an HVA, so gets passed indirectly. Only 8 bytes
   // of stack consumed.
-// CHECK: [[NEXTLIST:%.*]] = getelementptr i8* [[CURLIST]], i32 8
+// CHECK: [[NEXTLIST:%.*]] = getelementptr i8, i8* [[CURLIST]], i32 8
 // CHECK: store i8* [[NEXTLIST]], i8** [[THELIST]]
 
 // CHECK: [[HVAPTRPTR:%.*]] = bitcast i8* [[CURLIST]] to i8**

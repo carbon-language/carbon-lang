@@ -39,15 +39,15 @@ void test0(void *array, int n) {
 
   // CHECK-NEXT: [[T0:%.*]] = load i16** [[REF]]
   // CHECK-NEXT: [[T1:%.*]] = mul nsw i64 1, [[DIM1]]
-  // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds i16* [[T0]], i64 [[T1]]
-  // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds i16* [[T2]], i64 2
+  // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds i16, i16* [[T0]], i64 [[T1]]
+  // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds i16, i16* [[T2]], i64 2
   // CHECK-NEXT: store i16 3, i16* [[T3]]
   ref[1][2] = 3;
 
   // CHECK-NEXT: [[T0:%.*]] = load i16** [[REF]]
   // CHECK-NEXT: [[T1:%.*]] = mul nsw i64 4, [[DIM1]]
-  // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds i16* [[T0]], i64 [[T1]]
-  // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds i16* [[T2]], i64 5
+  // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds i16, i16* [[T0]], i64 [[T1]]
+  // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds i16, i16* [[T2]], i64 5
   // CHECK-NEXT: [[T4:%.*]] = load i16* [[T3]]
   // CHECK-NEXT: store i16 [[T4]], i16* [[S]], align 2
   short s = ref[4][5];

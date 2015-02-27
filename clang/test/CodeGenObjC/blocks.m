@@ -50,29 +50,29 @@ void test2(Test2 *x) {
   // CHECK-NEXT: store [[TEST2]]*
 
   // isa=1 for weak byrefs.
-  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[WEAK_T]]* [[WEAKX]], i32 0, i32 0
+  // CHECK-NEXT: [[T0:%.*]] = getelementptr inbounds [[WEAK_T]], [[WEAK_T]]* [[WEAKX]], i32 0, i32 0
   // CHECK-NEXT: store i8* inttoptr (i32 1 to i8*), i8** [[T0]]
 
   // Forwarding.
-  // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[WEAK_T]]* [[WEAKX]], i32 0, i32 1
+  // CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds [[WEAK_T]], [[WEAK_T]]* [[WEAKX]], i32 0, i32 1
   // CHECK-NEXT: store [[WEAK_T]]* [[WEAKX]], [[WEAK_T]]** [[T1]]
 
   // Flags.  This is just BLOCK_HAS_COPY_DISPOSE BLOCK_BYREF_LAYOUT_UNRETAINED
-  // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[WEAK_T]]* [[WEAKX]], i32 0, i32 2
+  // CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[WEAK_T]], [[WEAK_T]]* [[WEAKX]], i32 0, i32 2
   // CHECK-NEXT: store i32 1375731712, i32* [[T2]]
 
   // Size.
-  // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds [[WEAK_T]]* [[WEAKX]], i32 0, i32 3
+  // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds [[WEAK_T]], [[WEAK_T]]* [[WEAKX]], i32 0, i32 3
   // CHECK-NEXT: store i32 28, i32* [[T3]]
 
   // Copy and dispose helpers.
-  // CHECK-NEXT: [[T4:%.*]] = getelementptr inbounds [[WEAK_T]]* [[WEAKX]], i32 0, i32 4
+  // CHECK-NEXT: [[T4:%.*]] = getelementptr inbounds [[WEAK_T]], [[WEAK_T]]* [[WEAKX]], i32 0, i32 4
   // CHECK-NEXT: store i8* bitcast (void (i8*, i8*)* @__Block_byref_object_copy_{{.*}} to i8*), i8** [[T4]]
-  // CHECK-NEXT: [[T5:%.*]] = getelementptr inbounds [[WEAK_T]]* [[WEAKX]], i32 0, i32 5
+  // CHECK-NEXT: [[T5:%.*]] = getelementptr inbounds [[WEAK_T]], [[WEAK_T]]* [[WEAKX]], i32 0, i32 5
   // CHECK-NEXT: store i8* bitcast (void (i8*)* @__Block_byref_object_dispose_{{.*}} to i8*), i8** [[T5]]
 
   // Actually capture the value.
-  // CHECK-NEXT: [[T6:%.*]] = getelementptr inbounds [[WEAK_T]]* [[WEAKX]], i32 0, i32 6
+  // CHECK-NEXT: [[T6:%.*]] = getelementptr inbounds [[WEAK_T]], [[WEAK_T]]* [[WEAKX]], i32 0, i32 6
   // CHECK-NEXT: [[CAPTURE:%.*]] = load [[TEST2]]** [[X]]
   // CHECK-NEXT: store [[TEST2]]* [[CAPTURE]], [[TEST2]]** [[T6]]
 
@@ -94,12 +94,12 @@ void test2(Test2 *x) {
 // CHECK-LABEL:    define internal void @__test2_block_invoke
 // CHECK:      [[BLOCK:%.*]] = bitcast i8* {{%.*}} to [[BLOCK_T]]*
 // CHECK-NOT:  bitcast
-// CHECK:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
+// CHECK:      [[T0:%.*]] = getelementptr inbounds [[BLOCK_T]], [[BLOCK_T]]* [[BLOCK]], i32 0, i32 5
 // CHECK-NEXT: [[T1:%.*]] = load i8** [[T0]]
 // CHECK-NEXT: [[T2:%.*]] = bitcast i8* [[T1]] to [[WEAK_T]]{{.*}}*
-// CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds [[WEAK_T]]{{.*}}* [[T2]], i32 0, i32 1
+// CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds [[WEAK_T]]{{.*}}, [[WEAK_T]]{{.*}}* [[T2]], i32 0, i32 1
 // CHECK-NEXT: [[T4:%.*]] = load [[WEAK_T]]{{.*}}** [[T3]]
-// CHECK-NEXT: [[WEAKX:%.*]] = getelementptr inbounds [[WEAK_T]]{{.*}}* [[T4]], i32 0, i32 6
+// CHECK-NEXT: [[WEAKX:%.*]] = getelementptr inbounds [[WEAK_T]]{{.*}}, [[WEAK_T]]{{.*}}* [[T4]], i32 0, i32 6
 // CHECK-NEXT: [[T0:%.*]] = load [[TEST2]]** [[WEAKX]], align 4
 
 // rdar://problem/12722954
@@ -112,7 +112,7 @@ void test3(void (^block)(int, ...)) {
 // CHECK-NEXT: store void (i32, ...)*
 // CHECK-NEXT: [[T0:%.*]] = load void (i32, ...)** [[BLOCK]], align 4
 // CHECK-NEXT: [[T1:%.*]] = bitcast void (i32, ...)* [[T0]] to [[BLOCK_T:%.*]]*
-// CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[T1]], i32 0, i32 3
+// CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[BLOCK_T]], [[BLOCK_T]]* [[T1]], i32 0, i32 3
 // CHECK-NEXT: [[T3:%.*]] = bitcast [[BLOCK_T]]* [[T1]] to i8*
 // CHECK-NEXT: [[T4:%.*]] = load i8** [[T2]]
 // CHECK-NEXT: [[T5:%.*]] = bitcast i8* [[T4]] to void (i8*, i32, ...)*
@@ -127,7 +127,7 @@ void test4(void (^block)()) {
 // CHECK-NEXT: store void (...)*
 // CHECK-NEXT: [[T0:%.*]] = load void (...)** [[BLOCK]], align 4
 // CHECK-NEXT: [[T1:%.*]] = bitcast void (...)* [[T0]] to [[BLOCK_T:%.*]]*
-// CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[T1]], i32 0, i32 3
+// CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[BLOCK_T]], [[BLOCK_T]]* [[T1]], i32 0, i32 3
 // CHECK-NEXT: [[T3:%.*]] = bitcast [[BLOCK_T]]* [[T1]] to i8*
 // CHECK-NEXT: [[T4:%.*]] = load i8** [[T2]]
 // CHECK-NEXT: [[T5:%.*]] = bitcast i8* [[T4]] to void (i8*, i32, i32, i32, i32)*

@@ -25,7 +25,7 @@ struct S1 { Class isa; };
 // CHECK:    define internal [[S1:%.*]]* @"\01-[Test1 pointer]"(
 // CHECK:      [[OFFSET:%.*]] = load i64* @"OBJC_IVAR_$_Test1.pointer"
 // CHECK-NEXT: [[T0:%.*]] = bitcast [[TEST1:%.*]]* {{%.*}} to i8*
-// CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds i8* [[T0]], i64 [[OFFSET]]
+// CHECK-NEXT: [[T1:%.*]] = getelementptr inbounds i8, i8* [[T0]], i64 [[OFFSET]]
 // CHECK-NEXT: [[T2:%.*]] = bitcast i8* [[T1]] to [[S1]]**
 // CHECK-NEXT: [[T3:%.*]] = load [[S1]]** [[T2]], align 8
 // CHECK-NEXT: ret [[S1]]* [[T3]]
@@ -60,7 +60,7 @@ static Class theGlobalClass;
 // CHECK-NEXT: [[T1:%.*]] = load [[TEST2:%.*]]**
 // CHECK-NEXT: [[OFFSET:%.*]] = load i64* @"OBJC_IVAR_$_Test2._theClass"
 // CHECK-NEXT: [[T2:%.*]] = bitcast [[TEST2]]* [[T1]] to i8*
-// CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds i8* [[T2]], i64 [[OFFSET]]
+// CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds i8, i8* [[T2]], i64 [[OFFSET]]
 // CHECK-NEXT: [[T4:%.*]] = bitcast i8* [[T3]] to i8**
 // CHECK-NEXT: call void @objc_storeStrong(i8** [[T4]], i8* [[T0]]) [[NUW:#[0-9]+]]
 // CHECK-NEXT: ret void
@@ -81,7 +81,7 @@ static Class theGlobalClass;
 // CHECK:      [[T0:%.*]] = load [[TEST2]]**
 // CHECK-NEXT: [[OFFSET:%.*]] = load i64* @"OBJC_IVAR_$_Test2._theClass"
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST2]]* [[T0]] to i8*
-// CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds i8* [[T1]], i64 [[OFFSET]]
+// CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds i8, i8* [[T1]], i64 [[OFFSET]]
 // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to i8**
 // CHECK-NEXT: call void @objc_storeStrong(i8** [[T3]], i8* null) [[NUW]]
 // CHECK-NEXT: ret void

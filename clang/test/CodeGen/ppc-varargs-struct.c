@@ -19,7 +19,7 @@ void testva (int n, ...)
 // CHECK: bitcast %struct.x* %t to i8*
 // CHECK: bitcast %struct.x* %{{[0-9]+}} to i8*
 // CHECK: call void @llvm.memcpy
-// CHECK-PPC:  [[ARRAYDECAY:%[a-z0-9]+]] = getelementptr inbounds [1 x %struct.__va_list_tag]* %ap, i32 0, i32 0
+// CHECK-PPC:  [[ARRAYDECAY:%[a-z0-9]+]] = getelementptr inbounds [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %ap, i32 0, i32 0
 // CHECK-PPC-NEXT:  [[GPRPTR:%[a-z0-9]+]] = bitcast %struct.__va_list_tag* [[ARRAYDECAY]] to i8*
 // CHECK-PPC-NEXT:  [[ZERO:%[0-9]+]] = ptrtoint i8* [[GPRPTR]] to i32
 // CHECK-PPC-NEXT:  [[ONE:%[0-9]+]] = add i32 [[ZERO]], 1
@@ -65,7 +65,7 @@ void testva (int n, ...)
 // CHECK: add i64 %{{[0-9]+}}, 4
 // CHECK: inttoptr i64 %{{[0-9]+}} to i8*
 // CHECK: bitcast i8* %{{[0-9]+}} to i32*
-// CHECK-PPC:  [[ARRAYDECAY1:%[a-z0-9]+]] = getelementptr inbounds [1 x %struct.__va_list_tag]* %ap, i32 0, i32 0
+// CHECK-PPC:  [[ARRAYDECAY1:%[a-z0-9]+]] = getelementptr inbounds [1 x %struct.__va_list_tag], [1 x %struct.__va_list_tag]* %ap, i32 0, i32 0
 // CHECK-PPC-NEXT:  [[GPRPTR1:%[a-z0-9]+]] = bitcast %struct.__va_list_tag* [[ARRAYDECAY1]] to i8*
 // CHECK-PPC-NEXT:  [[EIGHTEEN:%[0-9]+]] = ptrtoint i8* [[GPRPTR1]] to i32
 // CHECK-PPC-NEXT:  [[NINETEEN:%[0-9]+]] = add i32 [[EIGHTEEN]], 1

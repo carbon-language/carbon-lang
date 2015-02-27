@@ -94,7 +94,7 @@ struct __attribute__((packed, aligned)) s3 {
 int s3_1 = __alignof(((struct s3*) 0)->anInt);
 // CHECK-FUNCTIONS-LABEL: define i32 @test3(
 int test3(struct s3 *ptr) {
-  // CHECK-FUNCTIONS:      [[PTR:%.*]] = getelementptr inbounds {{%.*}}* {{%.*}}, i32 0, i32 1
+  // CHECK-FUNCTIONS:      [[PTR:%.*]] = getelementptr inbounds {{%.*}}, {{%.*}}* {{%.*}}, i32 0, i32 1
   // CHECK-FUNCTIONS-NEXT: load i32* [[PTR]], align 1
   return ptr->anInt;
 }

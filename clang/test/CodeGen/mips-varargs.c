@@ -33,8 +33,8 @@ int test_i32(char *fmt, ...) {
 // NEW:   [[TMP0:%.+]] = bitcast i8** %va to i64**
 // NEW:   [[AP_CUR:%.+]] = load i64** [[TMP0]], align [[PTRALIGN]]
 //
-// O32:   [[AP_NEXT:%.+]] = getelementptr i32* [[AP_CUR]], i32 1
-// NEW:   [[AP_NEXT:%.+]] = getelementptr i64* [[AP_CUR]], {{i32|i64}} 1
+// O32:   [[AP_NEXT:%.+]] = getelementptr i32, i32* [[AP_CUR]], i32 1
+// NEW:   [[AP_NEXT:%.+]] = getelementptr i64, i64* [[AP_CUR]], {{i32|i64}} 1
 //
 // O32:   store i32* [[AP_NEXT]], i32** [[TMP0]], align [[PTRALIGN]]
 // NEW:   store i64* [[AP_NEXT]], i64** [[TMP0]], align [[PTRALIGN]]
@@ -69,8 +69,8 @@ int test_i32_2args(char *fmt, ...) {
 // NEW:   [[TMP0:%.+]] = bitcast i8** %va to i64**
 // NEW:   [[AP_CUR:%.+]] = load i64** [[TMP0]], align [[PTRALIGN]]
 //
-// O32:   [[AP_NEXT1:%.+]] = getelementptr i32* [[AP_CUR]], i32 1
-// NEW:   [[AP_NEXT1:%.+]] = getelementptr i64* [[AP_CUR]], [[INTPTR_T:i32|i64]] 1
+// O32:   [[AP_NEXT1:%.+]] = getelementptr i32, i32* [[AP_CUR]], i32 1
+// NEW:   [[AP_NEXT1:%.+]] = getelementptr i64, i64* [[AP_CUR]], [[INTPTR_T:i32|i64]] 1
 //
 // O32:   store i32* [[AP_NEXT1]], i32** [[TMP0]], align [[PTRALIGN]]
 // FIXME: N32 optimised this store out. Why only for this ABI?
@@ -80,8 +80,8 @@ int test_i32_2args(char *fmt, ...) {
 // NEW:   [[TMP3:%.+]] = load i64* [[AP_CUR]], align 8
 // NEW:   [[ARG1:%.+]] = trunc i64 [[TMP3]] to i32
 //
-// O32:   [[AP_NEXT2:%.+]] = getelementptr i32* [[AP_CUR]], i32 2
-// NEW:   [[AP_NEXT2:%.+]] = getelementptr i64* [[AP_CUR]], [[INTPTR_T]] 2
+// O32:   [[AP_NEXT2:%.+]] = getelementptr i32, i32* [[AP_CUR]], i32 2
+// NEW:   [[AP_NEXT2:%.+]] = getelementptr i64, i64* [[AP_CUR]], [[INTPTR_T]] 2
 //
 // O32:   store i32* [[AP_NEXT2]], i32** [[TMP0]], align [[PTRALIGN]]
 // NEW:   store i64* [[AP_NEXT2]], i64** [[TMP0]], align [[PTRALIGN]]
@@ -123,8 +123,8 @@ long long test_i64(char *fmt, ...) {
 // O32:   [[PTR3:%.+]] = inttoptr [[INTPTR_T]] [[PTR2]] to i64*
 // O32:   [[PTR4:%.+]] = inttoptr [[INTPTR_T]] [[PTR2]] to i8*
 //
-// O32:   [[AP_NEXT:%.+]] = getelementptr i8* [[PTR4]], [[INTPTR_T]] 8
-// NEW:   [[AP_NEXT:%.+]] = getelementptr i64* [[AP_CUR]], [[INTPTR_T:i32|i64]] 1
+// O32:   [[AP_NEXT:%.+]] = getelementptr i8, i8* [[PTR4]], [[INTPTR_T]] 8
+// NEW:   [[AP_NEXT:%.+]] = getelementptr i64, i64* [[AP_CUR]], [[INTPTR_T:i32|i64]] 1
 //
 // O32:   store i8* [[AP_NEXT]], i8** %va, align [[PTRALIGN]]
 // NEW:   store i64* [[AP_NEXT]], i64** [[TMP0]], align [[PTRALIGN]]
@@ -163,10 +163,10 @@ char *test_ptr(char *fmt, ...) {
 // N64:   [[TMP0:%.+]] = bitcast i8** %va to i8***
 // N64:   [[AP_CUR:%.+]] = load i8*** [[TMP0]], align [[PTRALIGN]]
 //
-// O32:   [[AP_NEXT:%.+]] = getelementptr i8** [[AP_CUR]], i32 1
+// O32:   [[AP_NEXT:%.+]] = getelementptr i8*, i8** [[AP_CUR]], i32 1
 // N32 differs because the vararg is not a N32 pointer. It's been promoted to 64-bit.
-// N32:   [[AP_NEXT:%.+]] = getelementptr i64* [[AP_CUR]], {{i32|i64}} 1
-// N64:   [[AP_NEXT:%.+]] = getelementptr i8** [[AP_CUR]], {{i32|i64}} 1
+// N32:   [[AP_NEXT:%.+]] = getelementptr i64, i64* [[AP_CUR]], {{i32|i64}} 1
+// N64:   [[AP_NEXT:%.+]] = getelementptr i8*, i8** [[AP_CUR]], {{i32|i64}} 1
 //
 // O32:   store i8** [[AP_NEXT]], i8*** [[TMP0]], align [[PTRALIGN]]
 // N32 differs because the vararg is not a N32 pointer. It's been promoted to 64-bit.
@@ -216,7 +216,7 @@ int test_v4i32(char *fmt, ...) {
 //
 // ALL:   [[PTR3:%.+]] = inttoptr [[INTPTR_T]] [[PTR2]] to <4 x i32>*
 // ALL:   [[PTR4:%.+]] = inttoptr [[INTPTR_T]] [[PTR2]] to i8*
-// ALL:   [[AP_NEXT:%.+]] = getelementptr i8* [[PTR4]], [[INTPTR_T]] 16
+// ALL:   [[AP_NEXT:%.+]] = getelementptr i8, i8* [[PTR4]], [[INTPTR_T]] 16
 // ALL:   store i8* [[AP_NEXT]], i8** %va, align [[PTRALIGN]]
 // ALL:   [[PTR5:%.+]] = load <4 x i32>* [[PTR3]], align 16
 // ALL:   call void @llvm.va_end(i8* [[VA1]])

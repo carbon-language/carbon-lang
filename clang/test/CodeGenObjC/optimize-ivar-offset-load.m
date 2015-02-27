@@ -28,7 +28,7 @@ extern void foo(int);
 @end
 // CHECK: [[IVAR:%.*]]  = load i64* @"OBJC_IVAR_$_SampleClass._value", align 8
 // CHECK: [[THREE:%.*]] = bitcast [[ONE:%.*]]* [[CALL:%.*]] to i8*
-// CHECK: [[ADDPTR:%.*]] = getelementptr inbounds i8* [[THREE]], i64 [[IVAR]]
+// CHECK: [[ADDPTR:%.*]] = getelementptr inbounds i8, i8* [[THREE]], i64 [[IVAR]]
 // CHECK: [[FOUR:%.*]] = bitcast i8* [[ADDPTR]] to i32*
 // CHECK: [[FIVE:%.*]] = load i32* [[FOUR]], align 4
 // CHECK:   tail call void @foo(i32 [[FIVE]])

@@ -31,63 +31,63 @@ void test_nest_captured_stmt(int param, int size, int param_arr[size]) {
         arr[10][z.a] = 12;
 
         // CHECK1: define internal void @__captured_stmt{{.*}}([[T]]
-        // CHECK1: [[PARAM_ARR_SIZE_REF:%.+]] = getelementptr inbounds [[T]]* {{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 5
+        // CHECK1: [[PARAM_ARR_SIZE_REF:%.+]] = getelementptr inbounds [[T]], [[T]]* {{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 5
         // CHECK1: [[PARAM_ARR_SIZE:%.+]] = load [[SIZE_TYPE]]* [[PARAM_ARR_SIZE_REF]]
-        // CHECK1: [[ARR_SIZE1_REF:%.+]] = getelementptr inbounds [[T]]* {{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 8
+        // CHECK1: [[ARR_SIZE1_REF:%.+]] = getelementptr inbounds [[T]], [[T]]* {{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 8
         // CHECK1: [[ARR_SIZE1:%.+]] = load [[SIZE_TYPE]]* [[ARR_SIZE1_REF]]
-        // CHECK1: [[ARR_SIZE2_REF:%.+]] = getelementptr inbounds [[T]]* {{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 9
+        // CHECK1: [[ARR_SIZE2_REF:%.+]] = getelementptr inbounds [[T]], [[T]]* {{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 9
         // CHECK1: [[ARR_SIZE2:%.+]] = load [[SIZE_TYPE]]* [[ARR_SIZE2_REF]]
         //
-        // CHECK1: getelementptr inbounds [[T]]* {{.*}}, i{{[0-9]+}} 0, i{{[0-9]+}} 2
+        // CHECK1: getelementptr inbounds [[T]], [[T]]* {{.*}}, i{{[0-9]+}} 0, i{{[0-9]+}} 2
         // CHECK1-NEXT: load %struct.A**
-        // CHECK1-NEXT: getelementptr inbounds %struct.A*
+        // CHECK1-NEXT: getelementptr inbounds %struct.A, %struct.A*
         // CHECK1-NEXT: store i{{.+}} 1
         //
-        // CHECK1: getelementptr inbounds [[T]]* {{.*}}, i{{[0-9]+}} 0, i{{[0-9]+}} 1
+        // CHECK1: getelementptr inbounds [[T]], [[T]]* {{.*}}, i{{[0-9]+}} 0, i{{[0-9]+}} 1
         // CHECK1-NEXT: load i{{[0-9]+}}**
         // CHECK1-NEXT: store i{{[0-9]+}} 1
         //
-        // CHECK1: getelementptr inbounds [[T]]* {{.*}}, i{{[0-9]+}} 0, i{{[0-9]+}} 0
+        // CHECK1: getelementptr inbounds [[T]], [[T]]* {{.*}}, i{{[0-9]+}} 0, i{{[0-9]+}} 0
         // CHECK1-NEXT: load i{{[0-9]+}}**
         // CHECK1-NEXT: store i{{[0-9]+}} 1
         //
-        // CHECK1: getelementptr inbounds [[T]]* {{.*}}, i{{[0-9]+}} 0, i{{[0-9]+}} 4
+        // CHECK1: getelementptr inbounds [[T]], [[T]]* {{.*}}, i{{[0-9]+}} 0, i{{[0-9]+}} 4
         // CHECK1-NEXT: load i{{[0-9]+}}**
         // CHECK1-NEXT: load i{{[0-9]+}}*
-        // CHECK1-NEXT: getelementptr inbounds [[T]]* {{.*}}, i{{[0-9]+}} 0, i{{[0-9]+}} 3
+        // CHECK1-NEXT: getelementptr inbounds [[T]], [[T]]* {{.*}}, i{{[0-9]+}} 0, i{{[0-9]+}} 3
         // CHECK1-NEXT: load i{{[0-9]+}}***
         // CHECK1-NEXT: load i{{[0-9]+}}**
         // CHECK1-NEXT: store i{{[0-9]+}}
         //
-        // CHECK1: getelementptr inbounds [[T]]* {{.*}}, i{{[0-9]+}} 0, i{{[0-9]+}} 2
+        // CHECK1: getelementptr inbounds [[T]], [[T]]* {{.*}}, i{{[0-9]+}} 0, i{{[0-9]+}} 2
         // CHECK1-NEXT: load %struct.A**
-        // CHECK1-NEXT: getelementptr inbounds %struct.A*
+        // CHECK1-NEXT: getelementptr inbounds %struct.A, %struct.A*
         // CHECK1-NEXT: store float
         //
-        // CHECK1: getelementptr inbounds [[T]]* {{.*}}, i{{[0-9]+}} 0, i{{[0-9]+}} 2
+        // CHECK1: getelementptr inbounds [[T]], [[T]]* {{.*}}, i{{[0-9]+}} 0, i{{[0-9]+}} 2
         // CHECK1-NEXT: load %struct.A**
-        // CHECK1-NEXT: getelementptr inbounds %struct.A*
+        // CHECK1-NEXT: getelementptr inbounds %struct.A, %struct.A*
         // CHECK1-NEXT: store i8 99
         //
-        // CHECK1: [[SIZE_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i{{.+}} 0, i{{.+}} 7
+        // CHECK1: [[SIZE_ADDR_REF:%.*]] = getelementptr inbounds [[T]], [[T]]* {{.*}}, i{{.+}} 0, i{{.+}} 7
         // CHECK1-DAG: [[SIZE_ADDR:%.*]] = load i{{.+}}** [[SIZE_ADDR_REF]]
         // CHECK1-DAG: [[SIZE:%.*]] = load i{{.+}}* [[SIZE_ADDR]]
         // CHECK1-DAG: [[PARAM_ARR_IDX:%.*]] = sub nsw i{{.+}} [[SIZE]], 1
-        // CHECK1-DAG: [[PARAM_ARR_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i{{.+}} 0, i{{.+}} 6
+        // CHECK1-DAG: [[PARAM_ARR_ADDR_REF:%.*]] = getelementptr inbounds [[T]], [[T]]* {{.*}}, i{{.+}} 0, i{{.+}} 6
         // CHECK1-DAG: [[PARAM_ARR_ADDR:%.*]] = load i{{.+}}*** [[PARAM_ARR_ADDR_REF]]
         // CHECK1-DAG: [[PARAM_ARR:%.*]] = load i{{.+}}** [[PARAM_ARR_ADDR]]
-        // CHECK1-DAG: [[PARAM_ARR_SIZE_MINUS_1_ADDR:%.*]] = getelementptr inbounds i{{.+}}* [[PARAM_ARR]], i{{.*}}
+        // CHECK1-DAG: [[PARAM_ARR_SIZE_MINUS_1_ADDR:%.*]] = getelementptr inbounds i{{.+}}, i{{.+}}* [[PARAM_ARR]], i{{.*}}
         // CHECK1: store i{{.+}} 2, i{{.+}}* [[PARAM_ARR_SIZE_MINUS_1_ADDR]]
         //
-        // CHECK1: [[Z_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i{{.+}} 0, i{{.+}} 2
+        // CHECK1: [[Z_ADDR_REF:%.*]] = getelementptr inbounds [[T]], [[T]]* {{.*}}, i{{.+}} 0, i{{.+}} 2
         // CHECK1-DAG: [[Z_ADDR:%.*]] = load %struct.A** [[Z_ADDR_REF]]
-        // CHECK1-DAG: [[Z_A_ADDR:%.*]] = getelementptr inbounds %struct.A* [[Z_ADDR]], i{{.+}} 0, i{{.+}} 0
+        // CHECK1-DAG: [[Z_A_ADDR:%.*]] = getelementptr inbounds %struct.A, %struct.A* [[Z_ADDR]], i{{.+}} 0, i{{.+}} 0
         // CHECK1-DAG: [[ARR_IDX_2:%.*]] = load i{{.+}}* [[Z_A_ADDR]]
-        // CHECK1-DAG: [[ARR_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i{{.+}} 0, i{{.+}} 10
+        // CHECK1-DAG: [[ARR_ADDR_REF:%.*]] = getelementptr inbounds [[T]], [[T]]* {{.*}}, i{{.+}} 0, i{{.+}} 10
         // CHECK1-DAG: [[ARR_ADDR:%.*]] = load i{{.+}}** [[ARR_ADDR_REF]]
         // CHECK1-DAG: [[ARR_IDX_1:%.*]] = mul {{.*}} 10
-        // CHECK1-DAG: [[ARR_10_ADDR:%.*]] = getelementptr inbounds i{{.+}}* [[ARR_ADDR]], i{{.*}} [[ARR_IDX_1]]
-        // CHECK1-DAG: [[ARR_10_Z_A_ADDR:%.*]] = getelementptr inbounds i{{.+}}* [[ARR_10_ADDR]], i{{.*}}
+        // CHECK1-DAG: [[ARR_10_ADDR:%.*]] = getelementptr inbounds i{{.+}}, i{{.+}}* [[ARR_ADDR]], i{{.*}} [[ARR_IDX_1]]
+        // CHECK1-DAG: [[ARR_10_Z_A_ADDR:%.*]] = getelementptr inbounds i{{.+}}, i{{.+}}* [[ARR_10_ADDR]], i{{.*}}
         // CHECK1: store i{{.+}} 12, i{{.+}}* [[ARR_10_Z_A_ADDR]]
       }
     }

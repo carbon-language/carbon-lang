@@ -33,18 +33,18 @@ void test1() {
 
   // CHECK-1: define {{.*}} void @_ZN9TestClass10MemberFuncEv
   // CHECK-1:   alloca %struct.anon
-  // CHECK-1:   getelementptr inbounds %[[Capture]]* %{{[^,]*}}, i32 0, i32 0
+  // CHECK-1:   getelementptr inbounds %[[Capture]], %[[Capture]]* %{{[^,]*}}, i32 0, i32 0
   // CHECK-1:   store %struct.Foo* %f, %struct.Foo**
-  // CHECK-1:   getelementptr inbounds %[[Capture]]* %{{[^,]*}}, i32 0, i32 1
+  // CHECK-1:   getelementptr inbounds %[[Capture]], %[[Capture]]* %{{[^,]*}}, i32 0, i32 1
   // CHECK-1:   call void @[[HelperName:[A-Za-z0-9_]+]](%[[Capture]]*
   // CHECK-1:   call {{.*}}FooD1Ev
   // CHECK-1:   ret
 }
 
 // CHECK-1: define internal void @[[HelperName]]
-// CHECK-1:   getelementptr inbounds %[[Capture]]* {{[^,]*}}, i32 0, i32 1
-// CHECK-1:   getelementptr inbounds %struct.TestClass* {{[^,]*}}, i32 0, i32 0
-// CHECK-1:   getelementptr inbounds %[[Capture]]* {{[^,]*}}, i32 0, i32 0
+// CHECK-1:   getelementptr inbounds %[[Capture]], %[[Capture]]* {{[^,]*}}, i32 0, i32 1
+// CHECK-1:   getelementptr inbounds %struct.TestClass, %struct.TestClass* {{[^,]*}}, i32 0, i32 0
+// CHECK-1:   getelementptr inbounds %[[Capture]], %[[Capture]]* {{[^,]*}}, i32 0, i32 0
 
 void test2(int x) {
   int y = [&]() {
@@ -62,7 +62,7 @@ void test2(int x) {
   // CHECK-2:   call void @[[HelperName:["$_A-Za-z0-9]+]](%[[Capture:.*]]*
   //
   // CHECK-2: define internal void @[[HelperName]]
-  // CHECK-2:   getelementptr inbounds %[[Capture]]*
+  // CHECK-2:   getelementptr inbounds %[[Capture]], %[[Capture]]*
   // CHECK-2:   load i32**
   // CHECK-2:   load i32*
 }

@@ -99,7 +99,7 @@ void fn1(int i) {
   // CHECK-LABEL: define void @_Z3fn1i
   // temporary array
   // CHECK: [[array:%[^ ]+]] = alloca [3 x i32]
-  // CHECK: getelementptr inbounds [3 x i32]* [[array]], i{{32|64}} 0
+  // CHECK: getelementptr inbounds [3 x i32], [3 x i32]* [[array]], i{{32|64}} 0
   // CHECK-NEXT: store i32 1, i32*
   // CHECK-NEXT: getelementptr
   // CHECK-NEXT: store
@@ -108,7 +108,7 @@ void fn1(int i) {
   // CHECK-NEXT: store
   // init the list
   // CHECK-NEXT: getelementptr
-  // CHECK-NEXT: getelementptr inbounds [3 x i32]*
+  // CHECK-NEXT: getelementptr inbounds [3 x i32], [3 x i32]*
   // CHECK-NEXT: store i32*
   // CHECK-NEXT: getelementptr
   // CHECK-NEXT: store i{{32|64}} 3

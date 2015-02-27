@@ -296,9 +296,9 @@ void bar() {
 }
 // WIN32-LABEL: define void @"\01?bar@test2@@YAXXZ"() {{.*}} {
 // WIN32:   %[[argmem:[^ ]*]] = alloca inalloca [[argmem_ty:<{ %"struct.test2::NonTrivial", %"struct.test2::POD" }>]]
-// WIN32:   getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 1
+// WIN32:   getelementptr inbounds [[argmem_ty]], [[argmem_ty]]* %[[argmem]], i32 0, i32 1
 // WIN32:   call void @llvm.memcpy
-// WIN32:   getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 0
+// WIN32:   getelementptr inbounds [[argmem_ty]], [[argmem_ty]]* %[[argmem]], i32 0, i32 0
 // WIN32:   call x86_thiscallcc %"struct.test2::NonTrivial"* @"\01??0NonTrivial@test2@@QAE@XZ"
 // WIN32:   call i32 @"\01?foo@test2@@YAHUNonTrivial@1@UPOD@1@@Z"([[argmem_ty]]* inalloca %argmem)
 // WIN32:   ret void
@@ -332,14 +332,14 @@ struct ForwardDeclare1 {};
 
 void fn2(FnPtr1 a, SmallWithDtor b) { fn1(a, b); };
 // WIN32-LABEL: define void @"\01?fn2@@YAXP6AXUForwardDeclare1@@@ZUSmallWithDtor@@@Z"
-// WIN32:   %[[a:[^ ]*]] = getelementptr inbounds [[argmem_ty:<{ {}\*, %struct.SmallWithDtor }>]]* %{{.*}}, i32 0, i32 0
+// WIN32:   %[[a:[^ ]*]] = getelementptr inbounds [[argmem_ty:<{ {}\*, %struct.SmallWithDtor }>]], [[argmem_ty:<{ {}\*, %struct.SmallWithDtor }>]]* %{{.*}}, i32 0, i32 0
 // WIN32:   %[[a1:[^ ]*]] = bitcast {}** %[[a]] to void [[dst_ty:\(%struct.ForwardDeclare1\*\)\*]]*
 // WIN32:   %[[argmem:[^ ]*]] = alloca inalloca [[argmem_ty]]
-// WIN32:   %[[gep1:[^ ]*]] = getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 1
+// WIN32:   %[[gep1:[^ ]*]] = getelementptr inbounds [[argmem_ty]], [[argmem_ty]]* %[[argmem]], i32 0, i32 1
 // WIN32:   %[[bc1:[^ ]*]] = bitcast %struct.SmallWithDtor* %[[gep1]] to i8*
 // WIN32:   call void @llvm.memcpy.p0i8.p0i8.i32(i8* %[[bc1]], i8* {{.*}}, i32 4, i32 4, i1 false)
 // WIN32:   %[[a2:[^ ]*]] = load void [[dst_ty]]* %[[a1]], align 4
-// WIN32:   %[[gep2:[^ ]*]] = getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 0
+// WIN32:   %[[gep2:[^ ]*]] = getelementptr inbounds [[argmem_ty]], [[argmem_ty]]* %[[argmem]], i32 0, i32 0
 // WIN32:   %[[addr:[^ ]*]] = bitcast {}** %[[gep2]] to void [[dst_ty]]*
 // WIN32:   store void [[dst_ty]] %[[a2]], void [[dst_ty]]* %[[addr]], align 4
 // WIN32:   call void @"\01?fn1@@YAXP6AXUForwardDeclare1@@@ZUSmallWithDtor@@@Z"([[argmem_ty]]* inalloca %[[argmem]])

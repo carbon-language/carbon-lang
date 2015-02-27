@@ -43,11 +43,11 @@ namespace reference {
     // CHECK-NEXT: store %{{.*}}* %{{.*}}, %{{.*}}** %{{.*}}, align
     const A &ra1{1, 2};
 
-    // CHECK-NEXT: getelementptr inbounds [3 x i32]* %{{.*}}, i{{32|64}} 0, i{{32|64}} 0
+    // CHECK-NEXT: getelementptr inbounds [3 x i32], [3 x i32]* %{{.*}}, i{{32|64}} 0, i{{32|64}} 0
     // CHECK-NEXT: store i32 1
-    // CHECK-NEXT: getelementptr inbounds i32* %{{.*}}, i{{32|64}} 1
+    // CHECK-NEXT: getelementptr inbounds i32, i32* %{{.*}}, i{{32|64}} 1
     // CHECK-NEXT: store i32 2
-    // CHECK-NEXT: getelementptr inbounds i32* %{{.*}}, i{{32|64}} 1
+    // CHECK-NEXT: getelementptr inbounds i32, i32* %{{.*}}, i{{32|64}} 1
     // CHECK-NEXT: store i32 3
     // CHECK-NEXT: store [3 x i32]* %{{.*}}, [3 x i32]** %{{.*}}, align
     const int (&arrayRef)[] = {1, 2, 3};

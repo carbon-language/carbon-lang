@@ -253,7 +253,7 @@ namespace test11 {
     } catch (int**&p) {
       // CHECK:      [[EXN:%.*]] = load i8**
       // CHECK-NEXT: call i8* @__cxa_begin_catch(i8* [[EXN]]) [[NUW]]
-      // CHECK-NEXT: [[ADJ1:%.*]] = getelementptr i8* [[EXN]], i32 32
+      // CHECK-NEXT: [[ADJ1:%.*]] = getelementptr i8, i8* [[EXN]], i32 32
       // CHECK-NEXT: [[ADJ2:%.*]] = bitcast i8* [[ADJ1]] to i32***
       // CHECK-NEXT: store i32*** [[ADJ2]], i32**** [[P:%.*]]
       // CHECK-NEXT: call void @__cxa_end_catch() [[NUW]]

@@ -40,14 +40,14 @@ int HasDeactivatedCleanups() {
 // WIN32:   %[[isactive:.*]] = alloca i1
 // WIN32:   call i8* @llvm.stacksave()
 // WIN32:   %[[argmem:.*]] = alloca inalloca [[argmem_ty:<{ %struct.A, %struct.A }>]]
-// WIN32:   %[[arg1:.*]] = getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 1
+// WIN32:   %[[arg1:.*]] = getelementptr inbounds [[argmem_ty]], [[argmem_ty]]* %[[argmem]], i32 0, i32 1
 // WIN32:   invoke x86_thiscallcc %struct.A* @"\01??0A@@QAE@XZ"
 // WIN32:   invoke void @"\01?TakeRef@@YAXABUA@@@Z"
 //
 // WIN32:   invoke x86_thiscallcc %struct.A* @"\01??0A@@QAE@XZ"(%struct.A* %[[arg1]])
 // WIN32:   store i1 true, i1* %[[isactive]]
 //
-// WIN32:   %[[arg0:.*]] = getelementptr inbounds [[argmem_ty]]* %[[argmem]], i32 0, i32 0
+// WIN32:   %[[arg0:.*]] = getelementptr inbounds [[argmem_ty]], [[argmem_ty]]* %[[argmem]], i32 0, i32 0
 // WIN32:   invoke x86_thiscallcc %struct.A* @"\01??0A@@QAE@XZ"
 // WIN32:   invoke void @"\01?TakeRef@@YAXABUA@@@Z"
 // WIN32:   invoke x86_thiscallcc %struct.A* @"\01??0A@@QAE@XZ"
@@ -154,7 +154,7 @@ C::C() { foo(); }
 //
 //        We shouldn't do any vbptr loads, just constant GEPs.
 // WIN32-NOT:  load
-// WIN32:      getelementptr i8* %{{.*}}, i32 4
+// WIN32:      getelementptr i8, i8* %{{.*}}, i32 4
 // WIN32-NOT:  load
 // WIN32:      bitcast i8* %{{.*}} to %"struct.crash_on_partial_destroy::B"*
 // WIN32:      invoke x86_thiscallcc void @"\01??1B@crash_on_partial_destroy@@UAE@XZ"
@@ -162,7 +162,7 @@ C::C() { foo(); }
 // WIN32-NOT:  load
 // WIN32:      bitcast %"struct.crash_on_partial_destroy::C"* %{{.*}} to i8*
 // WIN32-NOT:  load
-// WIN32:      getelementptr inbounds i8* %{{.*}}, i64 4
+// WIN32:      getelementptr inbounds i8, i8* %{{.*}}, i64 4
 // WIN32-NOT:  load
 // WIN32:      bitcast i8* %{{.*}} to %"struct.crash_on_partial_destroy::A"*
 // WIN32:      invoke x86_thiscallcc void @"\01??1A@crash_on_partial_destroy@@UAE@XZ"

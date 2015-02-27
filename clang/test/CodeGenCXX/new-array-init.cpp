@@ -38,11 +38,11 @@ void check_array_value_init() {
   new (int S::*[3][4][5]) ();
 
   // CHECK: call noalias i8* @_Zna{{.}}(i{{32 240|64 480}})
-  // CHECK: getelementptr inbounds i{{32|64}}* {{.*}}, i{{32|64}} 60
+  // CHECK: getelementptr inbounds i{{32|64}}, i{{32|64}}* {{.*}}, i{{32|64}} 60
 
   // CHECK: phi
   // CHECK: store i{{32|64}} -1,
-  // CHECK: getelementptr inbounds i{{32|64}}* {{.*}}, i{{32|64}} 1
+  // CHECK: getelementptr inbounds i{{32|64}}, i{{32|64}}* {{.*}}, i{{32|64}} 1
   // CHECK: icmp eq
   // CHECK: br i1
 }

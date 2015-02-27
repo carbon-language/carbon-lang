@@ -53,7 +53,7 @@ C n{};
 // CHECK: store i8* {{.*}} @[[STR_A]]{{.*}}, i8** getelementptr inbounds ({{.*}} @a, i32 0, i32 1)
 // CHECK: load i32* getelementptr inbounds ({{.*}} @a, i32 0, i32 0)
 // CHECK: load i8** getelementptr inbounds ({{.*}} @a, i32 0, i32 1)
-// CHECK: getelementptr inbounds i8* %{{.*}}, {{.*}} %{{.*}}
+// CHECK: getelementptr inbounds i8, i8* %{{.*}}, {{.*}} %{{.*}}
 // CHECK: store i8 %{{.*}}, i8* getelementptr inbounds ({{.*}} @a, i32 0, i32 2)
 // CHECK: call i32 @_ZN1A1fEv({{.*}} @a)
 // CHECK: store i32 %{{.*}}, i32* getelementptr inbounds ({{.*}}* @a, i32 0, i32 3)
