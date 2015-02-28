@@ -85,14 +85,13 @@ public:
                             const TargetRegisterInfo *TRI) const override;
 
 protected:
-  MachineInstr *foldMemoryOperandImpl(MachineFunction &MF,
-                                      MachineInstr *MI,
-                                      const SmallVectorImpl<unsigned> &Ops,
+  MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
+                                      ArrayRef<unsigned> Ops,
                                       int FrameIndex) const override;
-  MachineInstr *foldMemoryOperandImpl(MachineFunction &MF,
-                                      MachineInstr *MI,
-                                      const SmallVectorImpl<unsigned> &Ops,
+  MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
+                                      ArrayRef<unsigned> Ops,
                                       MachineInstr *LoadMI) const override;
+
 public:
   /// \returns the smallest register index that will be accessed by an indirect
   /// read or write or -1 if indirect addressing is not used by this program.
@@ -103,7 +102,7 @@ public:
   int getIndirectIndexEnd(const MachineFunction &MF) const;
 
   bool canFoldMemoryOperand(const MachineInstr *MI,
-                           const SmallVectorImpl<unsigned> &Ops) const override;
+                            ArrayRef<unsigned> Ops) const override;
   bool unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
                         unsigned Reg, bool UnfoldLoad, bool UnfoldStore,
                         SmallVectorImpl<MachineInstr *> &NewMIs) const override;

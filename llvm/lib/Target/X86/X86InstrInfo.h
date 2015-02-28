@@ -305,23 +305,21 @@ public:
   /// folding and return true, otherwise it should return false.  If it folds
   /// the instruction, it is likely that the MachineInstruction the iterator
   /// references has been changed.
-  MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                      MachineInstr* MI,
-                                      const SmallVectorImpl<unsigned> &Ops,
+  MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
+                                      ArrayRef<unsigned> Ops,
                                       int FrameIndex) const override;
 
   /// foldMemoryOperand - Same as the previous version except it allows folding
   /// of any load and store from / to any address, not just from a specific
   /// stack slot.
-  MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                      MachineInstr* MI,
-                                      const SmallVectorImpl<unsigned> &Ops,
-                                      MachineInstr* LoadMI) const override;
+  MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
+                                      ArrayRef<unsigned> Ops,
+                                      MachineInstr *LoadMI) const override;
 
   /// canFoldMemoryOperand - Returns true if the specified load / store is
   /// folding is possible.
-  bool canFoldMemoryOperand(const MachineInstr*,
-                            const SmallVectorImpl<unsigned> &) const override;
+  bool canFoldMemoryOperand(const MachineInstr *,
+                            ArrayRef<unsigned>) const override;
 
   /// unfoldMemoryOperand - Separate a single instruction which folded a load or
   /// a store or a load and a store into two or more instruction. If this is
@@ -406,10 +404,9 @@ public:
   void breakPartialRegDependency(MachineBasicBlock::iterator MI, unsigned OpNum,
                                  const TargetRegisterInfo *TRI) const override;
 
-  MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                      MachineInstr* MI,
+  MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
                                       unsigned OpNum,
-                                      const SmallVectorImpl<MachineOperand> &MOs,
+                                      ArrayRef<MachineOperand> MOs,
                                       unsigned Size, unsigned Alignment,
                                       bool AllowCommute) const;
 

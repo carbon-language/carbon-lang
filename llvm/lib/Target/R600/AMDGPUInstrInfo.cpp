@@ -152,26 +152,22 @@ bool AMDGPUInstrInfo::expandPostRAPseudo (MachineBasicBlock::iterator MI) const 
   return true;
 }
 
-
-MachineInstr *
-AMDGPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
-                                      MachineInstr *MI,
-                                      const SmallVectorImpl<unsigned> &Ops,
-                                      int FrameIndex) const {
+MachineInstr *AMDGPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
+                                                     MachineInstr *MI,
+                                                     ArrayRef<unsigned> Ops,
+                                                     int FrameIndex) const {
 // TODO: Implement this function
   return nullptr;
 }
-MachineInstr*
-AMDGPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
-                                      MachineInstr *MI,
-                                      const SmallVectorImpl<unsigned> &Ops,
-                                      MachineInstr *LoadMI) const {
+MachineInstr *
+AMDGPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
+                                       ArrayRef<unsigned> Ops,
+                                       MachineInstr *LoadMI) const {
   // TODO: Implement this function
   return nullptr;
 }
-bool
-AMDGPUInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
-                                     const SmallVectorImpl<unsigned> &Ops) const {
+bool AMDGPUInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
+                                           ArrayRef<unsigned> Ops) const {
   // TODO: Implement this function
   return false;
 }

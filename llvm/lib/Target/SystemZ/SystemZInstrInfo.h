@@ -186,11 +186,11 @@ public:
                                       MachineBasicBlock::iterator &MBBI,
                                       LiveVariables *LV) const override;
   MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
-                                      const SmallVectorImpl<unsigned> &Ops,
+                                      ArrayRef<unsigned> Ops,
                                       int FrameIndex) const override;
-  MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr* MI,
-                                      const SmallVectorImpl<unsigned> &Ops,
-                                      MachineInstr* LoadMI) const override;
+  MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
+                                      ArrayRef<unsigned> Ops,
+                                      MachineInstr *LoadMI) const override;
   bool expandPostRAPseudo(MachineBasicBlock::iterator MBBI) const override;
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const
     override;

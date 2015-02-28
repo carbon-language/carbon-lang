@@ -377,16 +377,13 @@ void TargetInstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
   llvm_unreachable("Not a MachO target");
 }
 
-bool TargetInstrInfo::
-canFoldMemoryOperand(const MachineInstr *MI,
-                     const SmallVectorImpl<unsigned> &Ops) const {
+bool TargetInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
+                                           ArrayRef<unsigned> Ops) const {
   return MI->isCopy() && Ops.size() == 1 && canFoldCopy(MI, Ops[0]);
 }
 
-static MachineInstr* foldPatchpoint(MachineFunction &MF,
-                                    MachineInstr *MI,
-                                    const SmallVectorImpl<unsigned> &Ops,
-                                    int FrameIndex,
+static MachineInstr *foldPatchpoint(MachineFunction &MF, MachineInstr *MI,
+                                    ArrayRef<unsigned> Ops, int FrameIndex,
                                     const TargetInstrInfo &TII) {
   unsigned StartIdx = 0;
   switch (MI->getOpcode()) {
@@ -405,9 +402,8 @@ static MachineInstr* foldPatchpoint(MachineFunction &MF,
 
   // Return false if any operands requested for folding are not foldable (not
   // part of the stackmap's live values).
-  for (SmallVectorImpl<unsigned>::const_iterator I = Ops.begin(), E = Ops.end();
-       I != E; ++I) {
-    if (*I < StartIdx)
+  for (unsigned Op : Ops) {
+    if (Op < StartIdx)
       return nullptr;
   }
 
@@ -448,10 +444,9 @@ static MachineInstr* foldPatchpoint(MachineFunction &MF,
 /// operand folded, otherwise NULL is returned. The client is responsible for
 /// removing the old instruction and adding the new one in the instruction
 /// stream.
-MachineInstr*
-TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
-                                   const SmallVectorImpl<unsigned> &Ops,
-                                   int FI) const {
+MachineInstr *TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
+                                                 ArrayRef<unsigned> Ops,
+                                                 int FI) const {
   unsigned Flags = 0;
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     if (MI->getOperand(Ops[i]).isDef())
@@ -517,10 +512,9 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
 /// foldMemoryOperand - Same as the previous version except it allows folding
 /// of any load and store from / to any address, not just from a specific
 /// stack slot.
-MachineInstr*
-TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
-                                   const SmallVectorImpl<unsigned> &Ops,
-                                   MachineInstr* LoadMI) const {
+MachineInstr *TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
+                                                 ArrayRef<unsigned> Ops,
+                                                 MachineInstr *LoadMI) const {
   assert(LoadMI->canFoldAsLoad() && "LoadMI isn't foldable!");
 #ifndef NDEBUG
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)

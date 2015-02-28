@@ -129,10 +129,9 @@ public:
                             const TargetRegisterInfo *TRI) const override;
 
   using TargetInstrInfo::foldMemoryOperandImpl;
-  MachineInstr *
-  foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
-                        const SmallVectorImpl<unsigned> &Ops,
-                        int FrameIndex) const override;
+  MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
+                                      ArrayRef<unsigned> Ops,
+                                      int FrameIndex) const override;
 
   bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                      MachineBasicBlock *&FBB,

@@ -672,16 +672,15 @@ public:
   /// operand folded, otherwise NULL is returned.
   /// The new instruction is inserted before MI, and the client is responsible
   /// for removing the old instruction.
-  MachineInstr* foldMemoryOperand(MachineBasicBlock::iterator MI,
-                                  const SmallVectorImpl<unsigned> &Ops,
-                                  int FrameIndex) const;
+  MachineInstr *foldMemoryOperand(MachineBasicBlock::iterator MI,
+                                  ArrayRef<unsigned> Ops, int FrameIndex) const;
 
   /// foldMemoryOperand - Same as the previous version except it allows folding
   /// of any load and store from / to any address, not just from a specific
   /// stack slot.
-  MachineInstr* foldMemoryOperand(MachineBasicBlock::iterator MI,
-                                  const SmallVectorImpl<unsigned> &Ops,
-                                  MachineInstr* LoadMI) const;
+  MachineInstr *foldMemoryOperand(MachineBasicBlock::iterator MI,
+                                  ArrayRef<unsigned> Ops,
+                                  MachineInstr *LoadMI) const;
 
   /// hasPattern - return true when there is potentially a faster code sequence
   /// for an instruction chain ending in \p Root. All potential pattern are
@@ -723,20 +722,20 @@ protected:
   /// foldMemoryOperandImpl - Target-dependent implementation for
   /// foldMemoryOperand. Target-independent code in foldMemoryOperand will
   /// take care of adding a MachineMemOperand to the newly created instruction.
-  virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                          MachineInstr* MI,
-                                          const SmallVectorImpl<unsigned> &Ops,
-                                          int FrameIndex) const {
+  virtual MachineInstr *foldMemoryOperandImpl(MachineFunction &MF,
+                                              MachineInstr *MI,
+                                              ArrayRef<unsigned> Ops,
+                                              int FrameIndex) const {
     return nullptr;
   }
 
   /// foldMemoryOperandImpl - Target-dependent implementation for
   /// foldMemoryOperand. Target-independent code in foldMemoryOperand will
   /// take care of adding a MachineMemOperand to the newly created instruction.
-  virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                              MachineInstr* MI,
-                                          const SmallVectorImpl<unsigned> &Ops,
-                                              MachineInstr* LoadMI) const {
+  virtual MachineInstr *foldMemoryOperandImpl(MachineFunction &MF,
+                                              MachineInstr *MI,
+                                              ArrayRef<unsigned> Ops,
+                                              MachineInstr *LoadMI) const {
     return nullptr;
   }
 
@@ -786,9 +785,8 @@ protected:
 public:
   /// canFoldMemoryOperand - Returns true for the specified load / store if
   /// folding is possible.
-  virtual
-  bool canFoldMemoryOperand(const MachineInstr *MI,
-                            const SmallVectorImpl<unsigned> &Ops) const;
+  virtual bool canFoldMemoryOperand(const MachineInstr *MI,
+                                    ArrayRef<unsigned> Ops) const;
 
   /// unfoldMemoryOperand - Separate a single instruction which folded a load or
   /// a store or a load and a store into two or more instruction. If this is

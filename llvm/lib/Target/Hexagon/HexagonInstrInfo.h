@@ -102,15 +102,13 @@ public:
                        const TargetRegisterClass *RC,
                        SmallVectorImpl<MachineInstr*> &NewMIs) const;
 
-  MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                      MachineInstr* MI,
-                                      const SmallVectorImpl<unsigned> &Ops,
+  MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
+                                      ArrayRef<unsigned> Ops,
                                       int FrameIndex) const override;
 
-  MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                      MachineInstr* MI,
-                                      const SmallVectorImpl<unsigned> &Ops,
-                                      MachineInstr* LoadMI) const override {
+  MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
+                                      ArrayRef<unsigned> Ops,
+                                      MachineInstr *LoadMI) const override {
     return nullptr;
   }
 

@@ -550,11 +550,10 @@ void HexagonInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   llvm_unreachable("Unimplemented");
 }
 
-
 MachineInstr *HexagonInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
-                                                    MachineInstr* MI,
-                                          const SmallVectorImpl<unsigned> &Ops,
-                                                    int FI) const {
+                                                      MachineInstr *MI,
+                                                      ArrayRef<unsigned> Ops,
+                                                      int FI) const {
   // Hexagon_TODO: Implement.
   return nullptr;
 }
