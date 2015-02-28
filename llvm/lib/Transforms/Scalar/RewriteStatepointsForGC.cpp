@@ -776,10 +776,20 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
   }
 
   // Insert Phis for all conflicts
-  // Only changing keys in 'states', thus safe to keep iterators
+  // We want to keep naming deterministic in the loop that follows, so
+  // sort the keys before iteration.  This is useful in allowing us to
+  // write stable tests. Note that there is no invalidation issue here.
+  SmallVector<Value*, 16> Keys;
+  Keys.reserve(states.size());
   for (auto Pair : states) {
-    Instruction *v = cast<Instruction>(Pair.first);
-    PhiState state = Pair.second;
+    Value *V = Pair.first;
+    Keys.push_back(V);
+  }
+  std::sort(Keys.begin(), Keys.end(), order_by_name);
+  // TODO: adjust naming patterns to avoid this order of iteration dependency
+  for (Value *V : Keys) {
+    Instruction *v = cast<Instruction>(V);
+    PhiState state = states[V];
     assert(!isKnownBaseResult(v) && "why did it get added?");
     assert(!state.isUnknown() && "Optimistic algorithm didn't complete!");
     if (!state.isConflict())
@@ -974,7 +984,13 @@ static void findBasePointers(const StatepointLiveSetTy &live,
                              DenseMap<llvm::Value *, llvm::Value *> &PointerToBase,
                              DominatorTree *DT, DefiningValueMapTy &DVCache,
                              DenseSet<llvm::Value *> &NewInsertedDefs) {
-  for (Value *ptr : live) {
+  // For the naming of values inserted to be deterministic - which makes for
+  // much cleaner and more stable tests - we need to assign an order to the
+  // live values.  DenseSets do not provide a deterministic order across runs.
+  SmallVector<Value*, 64> Temp;
+  Temp.insert(Temp.end(), live.begin(), live.end());
+  std::sort(Temp.begin(), Temp.end(), order_by_name);
+  for (Value *ptr : Temp) {
     Value *base = findBasePointer(ptr, DVCache, NewInsertedDefs);
     assert(base && "failed to find base pointer");
     PointerToBase[ptr] = base;
