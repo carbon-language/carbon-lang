@@ -151,7 +151,8 @@ bool DwarfStreamer::init(Triple TheTriple, StringRef OutputFilename) {
 
   // Create the output file.
   std::error_code EC;
-  OutFile = make_unique<raw_fd_ostream>(OutputFilename, EC, sys::fs::F_None);
+  OutFile = llvm::make_unique<raw_fd_ostream>(OutputFilename, EC,
+                                              sys::fs::F_None);
   if (EC)
     return error(Twine(OutputFilename) + ": " + EC.message(), Context);
 
@@ -367,7 +368,7 @@ bool DwarfLinker::createStreamer(Triple TheTriple, StringRef OutputFilename) {
   if (Options.NoOutput)
     return true;
 
-  Streamer = make_unique<DwarfStreamer>();
+  Streamer = llvm::make_unique<DwarfStreamer>();
   return Streamer->init(TheTriple, OutputFilename);
 }
 
