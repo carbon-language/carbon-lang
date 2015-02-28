@@ -418,6 +418,17 @@ enum class PDB_RegisterId {
 
 enum class PDB_MemberAccess { Private = 1, Protected = 2, Public = 3 };
 
+enum class PDB_ErrorCode {
+  Success,
+  NoPdbImpl,
+  InvalidPath,
+  InvalidFileFormat,
+  InvalidParameter,
+  AlreadyLoaded,
+  UnknownError,
+  NoMemory
+};
+
 struct VersionInfo {
   uint32_t Major;
   uint32_t Minor;

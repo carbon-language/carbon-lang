@@ -16,8 +16,8 @@
 namespace llvm {
 class StringRef;
 
-std::unique_ptr<IPDBSession> createPDBReader(PDB_ReaderType Type,
-                                             StringRef Path);
+PDB_ErrorCode createPDBReader(PDB_ReaderType Type, StringRef Path,
+                              std::unique_ptr<IPDBSession> &Session);
 }
 
 #endif

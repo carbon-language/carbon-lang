@@ -23,28 +23,45 @@ namespace {}
 
 DIASession::DIASession(CComPtr<IDiaSession> DiaSession) : Session(DiaSession) {}
 
-DIASession *DIASession::createFromPdb(StringRef Path) {
-  CComPtr<IDiaDataSource> DataSource;
-  CComPtr<IDiaSession> Session;
+PDB_ErrorCode DIASession::createFromPdb(StringRef Path,
+                                        std::unique_ptr<IPDBSession> &Session) {
+  CComPtr<IDiaDataSource> DiaDataSource;
+  CComPtr<IDiaSession> DiaSession;
 
   // We assume that CoInitializeEx has already been called by the executable.
-  HRESULT Result = ::CoCreateInstance(CLSID_DiaSource, nullptr,
-                                      CLSCTX_INPROC_SERVER, IID_IDiaDataSource,
-                                      reinterpret_cast<LPVOID *>(&DataSource));
+  HRESULT Result = ::CoCreateInstance(
+      CLSID_DiaSource, nullptr, CLSCTX_INPROC_SERVER, IID_IDiaDataSource,
+      reinterpret_cast<LPVOID *>(&DiaDataSource));
   if (FAILED(Result))
-    return nullptr;
+    return PDB_ErrorCode::NoPdbImpl;
 
   llvm::SmallVector<UTF16, 128> Path16;
   if (!llvm::convertUTF8ToUTF16String(Path, Path16))
-    return nullptr;
+    return PDB_ErrorCode::InvalidPath;
 
   const wchar_t *Path16Str = reinterpret_cast<const wchar_t*>(Path16.data());
-  if (FAILED(DataSource->loadDataFromPdb(Path16Str)))
-    return nullptr;
+  if (FAILED(Result = DiaDataSource->loadDataFromPdb(Path16Str))) {
+    if (Result == E_PDB_NOT_FOUND)
+      return PDB_ErrorCode::InvalidPath;
+    else if (Result == E_PDB_FORMAT)
+      return PDB_ErrorCode::InvalidFileFormat;
+    else if (Result == E_INVALIDARG)
+      return PDB_ErrorCode::InvalidParameter;
+    else if (Result == E_UNEXPECTED)
+      return PDB_ErrorCode::AlreadyLoaded;
+    else
+      return PDB_ErrorCode::UnknownError;
+  }
 
-  if (FAILED(DataSource->openSession(&Session)))
-    return nullptr;
-  return new DIASession(Session);
+  if (FAILED(Result = DiaDataSource->openSession(&DiaSession))) {
+    if (Result == E_OUTOFMEMORY)
+      return PDB_ErrorCode::NoMemory;
+    else
+      return PDB_ErrorCode::UnknownError;
+  }
+
+  Session.reset(new DIASession(DiaSession));
+  return PDB_ErrorCode::Success;
 }
 
 uint64_t DIASession::getLoadAddress() const {

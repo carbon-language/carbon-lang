@@ -66,11 +66,26 @@ cl::opt<bool> ClassDefs("class-definitions",
 }
 
 static void dumpInput(StringRef Path) {
-  std::unique_ptr<IPDBSession> Session(
-      llvm::createPDBReader(PDB_ReaderType::DIA, Path));
-  if (!Session) {
-    outs() << "Unable to create PDB reader.  Check that a valid implementation";
-    outs() << " is available for your platform.";
+  std::unique_ptr<IPDBSession> Session;
+  PDB_ErrorCode Error =
+      llvm::createPDBReader(PDB_ReaderType::DIA, Path, Session);
+  switch (Error) {
+  case PDB_ErrorCode::Success:
+    break;
+  case PDB_ErrorCode::NoPdbImpl:
+    outs() << "Reading PDBs is not supported on this platform.\n";
+    return;
+  case PDB_ErrorCode::InvalidPath:
+    outs() << "Unable to load PDB at '" << Path
+           << "'.  Check that the file exists and is readable.\n";
+    return;
+  case PDB_ErrorCode::InvalidFileFormat:
+    outs() << "Unable to load PDB at '" << Path
+           << "'.  The file has an unrecognized format.\n";
+    return;
+  default:
+    outs() << "Unable to load PDB at '" << Path
+           << "'.  An unknown error occured.\n";
     return;
   }
 

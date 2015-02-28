@@ -19,7 +19,8 @@ class DIASession : public IPDBSession {
 public:
   explicit DIASession(CComPtr<IDiaSession> DiaSession);
 
-  static DIASession *createFromPdb(StringRef Path);
+  static PDB_ErrorCode createFromPdb(StringRef Path,
+                                     std::unique_ptr<IPDBSession> &Session);
 
   uint64_t getLoadAddress() const override;
   void setLoadAddress(uint64_t Address) override;
