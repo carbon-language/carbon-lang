@@ -63,8 +63,6 @@ bool canSynthesize(const llvm::Instruction *I, const llvm::LoopInfo *LI,
 bool isIgnoredIntrinsic(const llvm::Value *V);
 
 /// @brief Generate a new basic block for a polyhedral statement.
-///
-/// The only public function exposed is generate().
 class BlockGenerator {
 public:
   /// @brief Create a generator for basic blocks.
