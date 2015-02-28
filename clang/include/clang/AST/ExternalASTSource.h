@@ -412,7 +412,6 @@ public:
   void set(T NewValue) {
     if (LazyData *LazyVal = Value.template dyn_cast<LazyData*>()) {
       LazyVal->LastValue = NewValue;
-      LazyVal->LastGeneration = LazyVal->ExternalSource->getGeneration();
       return;
     }
     Value = NewValue;
