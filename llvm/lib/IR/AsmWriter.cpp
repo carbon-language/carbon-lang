@@ -1378,7 +1378,8 @@ static void writeMDBasicType(raw_ostream &Out, const MDBasicType *N,
                              TypePrinting *, SlotTracker *, const Module *) {
   Out << "!MDBasicType(";
   FieldSeparator FS;
-  writeTag(Out, FS, N);
+  if (N->getTag() != dwarf::DW_TAG_base_type)
+    writeTag(Out, FS, N);
   writeStringField(Out, FS, "name", N->getName());
   if (N->getSizeInBits())
     Out << FS << "size: " << N->getSizeInBits();
@@ -1415,6 +1416,10 @@ static void writeMDDerivedType(raw_ostream &Out, const MDDerivedType *N,
   FieldSeparator FS;
   writeTag(Out, FS, N);
   writeStringField(Out, FS, "name", N->getName());
+  if (N->getScope()) {
+    Out << FS << "scope: ";
+    writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
+  }
   if (N->getFile()) {
     Out << FS << "file: ";
     writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
@@ -1422,10 +1427,6 @@ static void writeMDDerivedType(raw_ostream &Out, const MDDerivedType *N,
   }
   if (N->getLine())
     Out << FS << "line: " << N->getLine();
-  if (N->getScope()) {
-    Out << FS << "scope: ";
-    writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
-  }
   Out << FS << "baseType: ";
   writeMetadataAsOperand(Out, N->getBaseType(), TypePrinter, Machine, Context);
   if (N->getSizeInBits())
@@ -1453,6 +1454,10 @@ static void writeMDCompositeType(raw_ostream &Out, const MDCompositeType *N,
   FieldSeparator FS;
   writeTag(Out, FS, N);
   writeStringField(Out, FS, "name", N->getName());
+  if (N->getScope()) {
+    Out << FS << "scope: ";
+    writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
+  }
   if (N->getFile()) {
     Out << FS << "file: ";
     writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
@@ -1460,10 +1465,6 @@ static void writeMDCompositeType(raw_ostream &Out, const MDCompositeType *N,
   }
   if (N->getLine())
     Out << FS << "line: " << N->getLine();
-  if (N->getScope()) {
-    Out << FS << "scope: ";
-    writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
-  }
   if (N->getBaseType()) {
     Out << FS << "baseType: ";
     writeMetadataAsOperand(Out, N->getBaseType(), TypePrinter, Machine,
@@ -1582,10 +1583,10 @@ static void writeMDSubprogram(raw_ostream &Out, const MDSubprogram *N,
                               const Module *Context) {
   Out << "!MDSubprogram(";
   FieldSeparator FS;
+  writeStringField(Out, FS, "name", N->getName());
+  writeStringField(Out, FS, "linkageName", N->getLinkageName());
   Out << FS << "scope: ";
   writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
-  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
-  writeStringField(Out, FS, "linkageName", N->getLinkageName());
   if (N->getFile()) {
     Out << FS << "file: ";
     writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
@@ -1686,13 +1687,13 @@ static void writeMDNamespace(raw_ostream &Out, const MDNamespace *N,
                              const Module *Context) {
   Out << "!MDNamespace(";
   FieldSeparator FS;
+  writeStringField(Out, FS, "name", N->getName());
   Out << FS << "scope: ";
   writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
   if (N->getFile()) {
     Out << FS << "file: ";
     writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine, Context);
   }
-  writeStringField(Out, FS, "name", N->getName());
   if (N->getLine())
     Out << FS << "line: " << N->getLine();
   Out << ")";
@@ -1705,7 +1706,7 @@ static void writeMDTemplateTypeParameter(raw_ostream &Out,
                                          const Module *Context) {
   Out << "!MDTemplateTypeParameter(";
   FieldSeparator FS;
-  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
+  writeStringField(Out, FS, "name", N->getName());
   Out << FS << "type: ";
   writeMetadataAsOperand(Out, N->getType(), TypePrinter, Machine, Context);
   Out << ")";
@@ -1718,10 +1719,13 @@ static void writeMDTemplateValueParameter(raw_ostream &Out,
                                           const Module *Context) {
   Out << "!MDTemplateValueParameter(";
   FieldSeparator FS;
-  writeTag(Out, FS, N);
-  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
-  Out << FS << "type: ";
-  writeMetadataAsOperand(Out, N->getType(), TypePrinter, Machine, Context);
+  if (N->getTag() != dwarf::DW_TAG_template_value_parameter)
+    writeTag(Out, FS, N);
+  writeStringField(Out, FS, "name", N->getName());
+  if (auto *Type = N->getType()) {
+    Out << FS << "type: ";
+    writeMetadataAsOperand(Out, Type, TypePrinter, Machine, Context);
+  }
   Out << FS << "value: ";
   writeMetadataAsOperand(Out, N->getValue(), TypePrinter, Machine, Context);
   Out << ")";
@@ -1732,10 +1736,10 @@ static void writeMDGlobalVariable(raw_ostream &Out, const MDGlobalVariable *N,
                                   SlotTracker *Machine, const Module *Context) {
   Out << "!MDGlobalVariable(";
   FieldSeparator FS;
+  writeStringField(Out, FS, "name", N->getName());
+  writeStringField(Out, FS, "linkageName", N->getLinkageName());
   Out << FS << "scope: ";
   writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
-  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
-  writeStringField(Out, FS, "linkageName", N->getLinkageName());
   if (N->getFile()) {
     Out << FS << "file: ";
     writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
@@ -1769,9 +1773,11 @@ static void writeMDLocalVariable(raw_ostream &Out, const MDLocalVariable *N,
   Out << "!MDLocalVariable(";
   FieldSeparator FS;
   writeTag(Out, FS, N);
+  writeStringField(Out, FS, "name", N->getName());
+  if (N->getTag() == dwarf::DW_TAG_arg_variable || N->getArg())
+    Out << FS << "arg: " << N->getArg();
   Out << FS << "scope: ";
   writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
-  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
   if (N->getFile()) {
     Out << FS << "file: ";
     writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
@@ -1784,8 +1790,6 @@ static void writeMDLocalVariable(raw_ostream &Out, const MDLocalVariable *N,
     writeMetadataAsOperand(Out, N->getType(), TypePrinter, Machine,
                            Context);
   }
-  if (N->getTag() == dwarf::DW_TAG_arg_variable || N->getArg())
-    Out << FS << "arg: " << N->getArg();
   if (auto Flags = N->getFlags()) {
     Out << FS << "flags: ";
     writeDIFlags(Out, Flags);
@@ -1824,7 +1828,7 @@ static void writeMDObjCProperty(raw_ostream &Out, const MDObjCProperty *N,
                                 const Module *Context) {
   Out << "!MDObjCProperty(";
   FieldSeparator FS;
-  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
+  writeStringField(Out, FS, "name", N->getName());
   if (N->getFile()) {
     Out << FS << "file: ";
     writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine, Context);
@@ -1848,6 +1852,7 @@ static void writeMDImportedEntity(raw_ostream &Out, const MDImportedEntity *N,
   Out << "!MDImportedEntity(";
   FieldSeparator FS;
   writeTag(Out, FS, N);
+  writeStringField(Out, FS, "name", N->getName());
   Out << FS << "scope: ";
   writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
   if (N->getEntity()) {
@@ -1856,7 +1861,6 @@ static void writeMDImportedEntity(raw_ostream &Out, const MDImportedEntity *N,
   }
   if (N->getLine())
     Out << FS << "line: " << N->getLine();
-  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
   Out << ")";
 }
 

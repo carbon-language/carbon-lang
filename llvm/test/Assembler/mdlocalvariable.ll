@@ -12,15 +12,15 @@
 !3 = distinct !{}
 !4 = distinct !{}
 
-; CHECK: !5 = !MDLocalVariable(tag: DW_TAG_arg_variable, scope: !0, name: "foo", file: !2, line: 7, type: !3, arg: 3, flags: DIFlagArtificial, inlinedAt: !4)
-; CHECK: !6 = !MDLocalVariable(tag: DW_TAG_auto_variable, scope: !0, name: "foo", file: !2, line: 7, type: !3, flags: DIFlagArtificial, inlinedAt: !4)
-!5 = !MDLocalVariable(tag: DW_TAG_arg_variable, scope: !0, name: "foo",
-                      file: !2, line: 7, type: !3, arg: 3,
+; CHECK: !5 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "foo", arg: 3, scope: !0, file: !2, line: 7, type: !3, flags: DIFlagArtificial, inlinedAt: !4)
+; CHECK: !6 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "foo", scope: !0, file: !2, line: 7, type: !3, flags: DIFlagArtificial, inlinedAt: !4)
+!5 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "foo", arg: 3,
+                      scope: !0, file: !2, line: 7, type: !3,
                       flags: DIFlagArtificial, inlinedAt: !4)
-!6 = !MDLocalVariable(tag: DW_TAG_auto_variable, scope: !0, name: "foo",
+!6 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "foo", scope: !0,
                       file: !2, line: 7, type: !3, flags: DIFlagArtificial, inlinedAt: !4)
 
-; CHECK: !7 = !MDLocalVariable(tag: DW_TAG_arg_variable, scope: null, name: "", arg: 0)
-; CHECK: !8 = !MDLocalVariable(tag: DW_TAG_auto_variable, scope: null, name: "")
+; CHECK: !7 = !MDLocalVariable(tag: DW_TAG_arg_variable, arg: 0, scope: null)
+; CHECK: !8 = !MDLocalVariable(tag: DW_TAG_auto_variable, scope: null)
 !7 = !MDLocalVariable(tag: DW_TAG_arg_variable)
 !8 = !MDLocalVariable(tag: DW_TAG_auto_variable)

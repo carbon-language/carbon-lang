@@ -2976,6 +2976,8 @@ struct ColumnField : public MDUnsignedField {
 };
 struct DwarfTagField : public MDUnsignedField {
   DwarfTagField() : MDUnsignedField(0, dwarf::DW_TAG_hi_user) {}
+  DwarfTagField(dwarf::Tag DefaultTag)
+      : MDUnsignedField(DefaultTag, dwarf::DW_TAG_hi_user) {}
 };
 struct DwarfAttEncodingField : public MDUnsignedField {
   DwarfAttEncodingField() : MDUnsignedField(0, dwarf::DW_ATE_hi_user) {}
@@ -3373,7 +3375,7 @@ bool LLParser::ParseMDEnumerator(MDNode *&Result, bool IsDistinct) {
 ///   ::= !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32)
 bool LLParser::ParseMDBasicType(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
-  REQUIRED(tag, DwarfTagField, );                                              \
+  OPTIONAL(tag, DwarfTagField, (dwarf::DW_TAG_base_type));                     \
   OPTIONAL(name, MDStringField, );                                             \
   OPTIONAL(size, MDUnsignedField, (0, UINT64_MAX));                            \
   OPTIONAL(align, MDUnsignedField, (0, UINT64_MAX));                           \
@@ -3604,9 +3606,9 @@ bool LLParser::ParseMDTemplateTypeParameter(MDNode *&Result, bool IsDistinct) {
 ///                                 name: "V", type: !1, value: i32 7)
 bool LLParser::ParseMDTemplateValueParameter(MDNode *&Result, bool IsDistinct) {
 #define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
-  REQUIRED(tag, DwarfTagField, );                                              \
+  OPTIONAL(tag, DwarfTagField, (dwarf::DW_TAG_template_value_parameter));      \
   OPTIONAL(name, MDStringField, );                                             \
-  REQUIRED(type, MDField, );                                                   \
+  OPTIONAL(type, MDField, );                                                   \
   REQUIRED(value, MDField, );
   PARSE_MD_FIELDS();
 #undef VISIT_MD_FIELDS

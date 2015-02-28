@@ -9,12 +9,12 @@
 !0 = distinct !{}
 !1 = distinct !{}
 
-; CHECK-NEXT: !2 = !MDImportedEntity(tag: DW_TAG_imported_module, scope: !0, entity: !1, line: 7, name: "foo")
-!2 = !MDImportedEntity(tag: DW_TAG_imported_module, scope: !0, entity: !1,
-                       line: 7, name: "foo")
+; CHECK-NEXT: !2 = !MDImportedEntity(tag: DW_TAG_imported_module, name: "foo", scope: !0, entity: !1, line: 7)
+!2 = !MDImportedEntity(tag: DW_TAG_imported_module, name: "foo", scope: !0,
+                       entity: !1, line: 7)
 
-; CHECK-NEXT: !3 = !MDImportedEntity(tag: DW_TAG_imported_module, scope: !0, name: "")
+; CHECK-NEXT: !3 = !MDImportedEntity(tag: DW_TAG_imported_module, scope: !0)
 !3 = !MDImportedEntity(tag: DW_TAG_imported_module, scope: !0)
-!4 = !MDImportedEntity(tag: DW_TAG_imported_module, scope: !0, entity: null,
-                       line: 0, name: "")
+!4 = !MDImportedEntity(tag: DW_TAG_imported_module, name: "", scope: !0, entity: null,
+                       line: 0)
 

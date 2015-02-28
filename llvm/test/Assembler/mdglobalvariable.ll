@@ -12,11 +12,11 @@
 !3 = distinct !{}
 !4 = distinct !{}
 
-; CHECK: !5 = !MDGlobalVariable(scope: !0, name: "foo", linkageName: "foo", file: !2, line: 7, type: !3, isLocal: true, isDefinition: false, variable: i32* @foo, declaration: !4)
-!5 = !MDGlobalVariable(scope: !0, name: "foo", linkageName: "foo",
+; CHECK: !5 = !MDGlobalVariable(name: "foo", linkageName: "foo", scope: !0, file: !2, line: 7, type: !3, isLocal: true, isDefinition: false, variable: i32* @foo, declaration: !4)
+!5 = !MDGlobalVariable(name: "foo", linkageName: "foo", scope: !0,
                        file: !2, line: 7, type: !3, isLocal: true,
                        isDefinition: false, variable: i32* @foo,
                        declaration: !4)
 
-; CHECK: !6 = !MDGlobalVariable(scope: null, name: "bar", isLocal: false, isDefinition: true)
+; CHECK: !6 = !MDGlobalVariable(name: "bar", scope: null, isLocal: false, isDefinition: true)
 !6 = !MDGlobalVariable(name: "bar")
