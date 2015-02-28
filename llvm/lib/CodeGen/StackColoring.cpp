@@ -364,7 +364,7 @@ void StackColoring::calculateLocalLiveness() {
       }
     }
 
-    BBSet = NextBBSet;
+    BBSet = std::move(NextBBSet);
   }// while changed.
 }
 
