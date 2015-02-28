@@ -782,41 +782,42 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
     PhiState state = Pair.second;
     assert(!isKnownBaseResult(v) && "why did it get added?");
     assert(!state.isUnknown() && "Optimistic algorithm didn't complete!");
-    if (state.isConflict()) {
-      if (isa<PHINode>(v)) {
-        int num_preds =
-            std::distance(pred_begin(v->getParent()), pred_end(v->getParent()));
-        assert(num_preds > 0 && "how did we reach here");
-        PHINode *phi = PHINode::Create(v->getType(), num_preds, "base_phi", v);
-        NewInsertedDefs.insert(phi);
-        // Add metadata marking this as a base value
-        auto *const_1 = ConstantInt::get(
-            Type::getInt32Ty(
-                v->getParent()->getParent()->getParent()->getContext()),
-            1);
-        auto MDConst = ConstantAsMetadata::get(const_1);
-        MDNode *md = MDNode::get(
-            v->getParent()->getParent()->getParent()->getContext(), MDConst);
-        phi->setMetadata("is_base_value", md);
-        states[v] = PhiState(PhiState::Conflict, phi);
-      } else if (SelectInst *sel = dyn_cast<SelectInst>(v)) {
-        // The undef will be replaced later
-        UndefValue *undef = UndefValue::get(sel->getType());
-        SelectInst *basesel = SelectInst::Create(sel->getCondition(), undef,
-                                                 undef, "base_select", sel);
-        NewInsertedDefs.insert(basesel);
-        // Add metadata marking this as a base value
-        auto *const_1 = ConstantInt::get(
-            Type::getInt32Ty(
-                v->getParent()->getParent()->getParent()->getContext()),
-            1);
-        auto MDConst = ConstantAsMetadata::get(const_1);
-        MDNode *md = MDNode::get(
-            v->getParent()->getParent()->getParent()->getContext(), MDConst);
-        basesel->setMetadata("is_base_value", md);
-        states[v] = PhiState(PhiState::Conflict, basesel);
-      } else
-        llvm_unreachable("unknown conflict type");
+    if (!state.isConflict())
+      continue;
+    
+    if (isa<PHINode>(v)) {
+      int num_preds =
+          std::distance(pred_begin(v->getParent()), pred_end(v->getParent()));
+      assert(num_preds > 0 && "how did we reach here");
+      PHINode *phi = PHINode::Create(v->getType(), num_preds, "base_phi", v);
+      NewInsertedDefs.insert(phi);
+      // Add metadata marking this as a base value
+      auto *const_1 = ConstantInt::get(
+          Type::getInt32Ty(
+              v->getParent()->getParent()->getParent()->getContext()),
+          1);
+      auto MDConst = ConstantAsMetadata::get(const_1);
+      MDNode *md = MDNode::get(
+          v->getParent()->getParent()->getParent()->getContext(), MDConst);
+      phi->setMetadata("is_base_value", md);
+      states[v] = PhiState(PhiState::Conflict, phi);
+    } else {
+      SelectInst *sel = cast<SelectInst>(v);
+      // The undef will be replaced later
+      UndefValue *undef = UndefValue::get(sel->getType());
+      SelectInst *basesel = SelectInst::Create(sel->getCondition(), undef,
+                                               undef, "base_select", sel);
+      NewInsertedDefs.insert(basesel);
+      // Add metadata marking this as a base value
+      auto *const_1 = ConstantInt::get(
+          Type::getInt32Ty(
+              v->getParent()->getParent()->getParent()->getContext()),
+          1);
+      auto MDConst = ConstantAsMetadata::get(const_1);
+      MDNode *md = MDNode::get(
+          v->getParent()->getParent()->getParent()->getContext(), MDConst);
+      basesel->setMetadata("is_base_value", md);
+      states[v] = PhiState(PhiState::Conflict, basesel);
     }
   }
 
