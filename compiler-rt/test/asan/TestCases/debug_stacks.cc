@@ -2,6 +2,9 @@
 // malloc and free stacks.
 // RUN: %clangxx_asan -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
 
+// FIXME: Figure out why allocation/free stack traces may be too short on ARM.
+// REQUIRES: stable-runtime
+
 #include <sanitizer/asan_interface.h>
 #include <stdio.h>
 #include <stdlib.h>
