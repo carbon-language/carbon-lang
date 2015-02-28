@@ -4875,9 +4875,6 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     }
   }
 
-  if (Record->isDynamicClass() && !Record->isDependentType())
-    DynamicClasses.push_back(Record);
-
   if (Record->getIdentifier()) {
     // C++ [class.mem]p13:
     //   If T is the name of a class, then each of the following shall have a 

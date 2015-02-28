@@ -4344,10 +4344,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   for (const TypedefNameDecl *TD : SemaRef.UnusedLocalTypedefNameCandidates)
     AddDeclRef(TD, UnusedLocalTypedefNameCandidates);
 
-  // Build a record containing all of dynamic classes declarations.
-  RecordData DynamicClasses;
-  AddLazyVectorDecls(*this, SemaRef.DynamicClasses, DynamicClasses);
-
   // Build a record containing all of pending implicit instantiations.
   RecordData PendingInstantiations;
   for (std::deque<Sema::PendingImplicitInstantiation>::iterator
@@ -4627,10 +4623,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   // Write the record containing VTable uses information.
   if (!VTableUses.empty())
     Stream.EmitRecord(VTABLE_USES, VTableUses);
-
-  // Write the record containing dynamic classes declarations.
-  if (!DynamicClasses.empty())
-    Stream.EmitRecord(DYNAMIC_CLASSES, DynamicClasses);
 
   // Write the record containing potentially unused local typedefs.
   if (!UnusedLocalTypedefNameCandidates.empty())

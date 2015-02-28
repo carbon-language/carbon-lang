@@ -621,22 +621,6 @@ void Sema::ActOnEndOfTranslationUnit() {
   if (TUKind != TU_Prefix) {
     DiagnoseUseOfUnimplementedSelectors();
 
-    // If any dynamic classes have their key function defined within
-    // this translation unit, then those vtables are considered "used" and must
-    // be emitted.
-    for (DynamicClassesType::iterator I = DynamicClasses.begin(ExternalSource),
-                                      E = DynamicClasses.end();
-         I != E; ++I) {
-      assert(!(*I)->isDependentType() &&
-             "Should not see dependent types here!");
-      if (const CXXMethodDecl *KeyFunction =
-              Context.getCurrentKeyFunction(*I)) {
-        const FunctionDecl *Definition = nullptr;
-        if (KeyFunction->hasBody(Definition))
-          MarkVTableUsed(Definition->getLocation(), *I, true);
-      }
-    }
-
     // If DefinedUsedVTables ends up marking any virtual member functions it
     // might lead to more pending template instantiations, which we then need
     // to instantiate.
@@ -668,6 +652,8 @@ void Sema::ActOnEndOfTranslationUnit() {
 
   // All delayed member exception specs should be checked or we end up accepting
   // incompatible declarations.
+  // FIXME: This is wrong for TUKind == TU_Prefix. In that case, we need to
+  // write out the lists to the AST file (if any).
   assert(DelayedDefaultedMemberExceptionSpecs.empty());
   assert(DelayedExceptionSpecChecks.empty());
 

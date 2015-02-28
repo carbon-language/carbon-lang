@@ -5059,14 +5059,6 @@ public:
   /// \brief Load any externally-stored vtable uses.
   void LoadExternalVTableUses();
 
-  typedef LazyVector<CXXRecordDecl *, ExternalSemaSource,
-                     &ExternalSemaSource::ReadDynamicClasses, 2, 2>
-    DynamicClassesType;
-
-  /// \brief A list of all of the dynamic classes in this translation
-  /// unit.
-  DynamicClassesType DynamicClasses;
-
   /// \brief Note that the vtable for the given class was used at the
   /// given location.
   void MarkVTableUsed(SourceLocation Loc, CXXRecordDecl *Class,

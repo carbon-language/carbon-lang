@@ -776,12 +776,6 @@ private:
   /// local extern "C" declarations.
   SmallVector<uint64_t, 16> LocallyScopedExternCDecls;
 
-  /// \brief The IDs of all dynamic class declarations in the chain.
-  ///
-  /// Sema tracks these because it checks for the key functions being defined
-  /// at the end of the TU, in which case it directs CodeGen to emit the VTable.
-  SmallVector<uint64_t, 16> DynamicClasses;
-
   /// \brief The IDs of all potentially unused typedef names in the chain.
   ///
   /// Sema tracks these to emit warnings.
@@ -1817,8 +1811,6 @@ public:
                          SmallVectorImpl<CXXConstructorDecl *> &Decls) override;
 
   void ReadExtVectorDecls(SmallVectorImpl<TypedefNameDecl *> &Decls) override;
-
-  void ReadDynamicClasses(SmallVectorImpl<CXXRecordDecl *> &Decls) override;
 
   void ReadUnusedLocalTypedefNameCandidates(
       llvm::SmallSetVector<const TypedefNameDecl *, 4> &Decls) override;
