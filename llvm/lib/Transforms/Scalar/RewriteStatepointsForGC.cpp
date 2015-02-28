@@ -838,97 +838,98 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
 
     assert(!isKnownBaseResult(v) && "why did it get added?");
     assert(!state.isUnknown() && "Optimistic algorithm didn't complete!");
-    if (state.isConflict()) {
-      if (PHINode *basephi = dyn_cast<PHINode>(state.getBase())) {
-        PHINode *phi = cast<PHINode>(v);
-        unsigned NumPHIValues = phi->getNumIncomingValues();
-        for (unsigned i = 0; i < NumPHIValues; i++) {
-          Value *InVal = phi->getIncomingValue(i);
-          BasicBlock *InBB = phi->getIncomingBlock(i);
+    if (!state.isConflict())
+      continue;
+    
+    if (PHINode *basephi = dyn_cast<PHINode>(state.getBase())) {
+      PHINode *phi = cast<PHINode>(v);
+      unsigned NumPHIValues = phi->getNumIncomingValues();
+      for (unsigned i = 0; i < NumPHIValues; i++) {
+        Value *InVal = phi->getIncomingValue(i);
+        BasicBlock *InBB = phi->getIncomingBlock(i);
 
-          // If we've already seen InBB, add the same incoming value
-          // we added for it earlier.  The IR verifier requires phi
-          // nodes with multiple entries from the same basic block
-          // to have the same incoming value for each of those
-          // entries.  If we don't do this check here and basephi
-          // has a different type than base, we'll end up adding two
-          // bitcasts (and hence two distinct values) as incoming
-          // values for the same basic block.
+        // If we've already seen InBB, add the same incoming value
+        // we added for it earlier.  The IR verifier requires phi
+        // nodes with multiple entries from the same basic block
+        // to have the same incoming value for each of those
+        // entries.  If we don't do this check here and basephi
+        // has a different type than base, we'll end up adding two
+        // bitcasts (and hence two distinct values) as incoming
+        // values for the same basic block.
 
-          int blockIndex = basephi->getBasicBlockIndex(InBB);
-          if (blockIndex != -1) {
-            Value *oldBase = basephi->getIncomingValue(blockIndex);
-            basephi->addIncoming(oldBase, InBB);
+        int blockIndex = basephi->getBasicBlockIndex(InBB);
+        if (blockIndex != -1) {
+          Value *oldBase = basephi->getIncomingValue(blockIndex);
+          basephi->addIncoming(oldBase, InBB);
 #ifndef NDEBUG
-            Value *base = findBaseOrBDV(InVal, cache);
-            if (!isKnownBaseResult(base)) {
-              // Either conflict or base.
-              assert(states.count(base));
-              base = states[base].getBase();
-              assert(base != nullptr && "unknown PhiState!");
-              assert(NewInsertedDefs.count(base) &&
-                     "should have already added this in a prev. iteration!");
-            }
+          Value *base = findBaseOrBDV(InVal, cache);
+          if (!isKnownBaseResult(base)) {
+            // Either conflict or base.
+            assert(states.count(base));
+            base = states[base].getBase();
+            assert(base != nullptr && "unknown PhiState!");
+            assert(NewInsertedDefs.count(base) &&
+                   "should have already added this in a prev. iteration!");
+          }
 
-            // In essense this assert states: the only way two
-            // values incoming from the same basic block may be
-            // different is by being different bitcasts of the same
-            // value.  A cleanup that remains TODO is changing
-            // findBaseOrBDV to return an llvm::Value of the correct
-            // type (and still remain pure).  This will remove the
-            // need to add bitcasts.
-            assert(base->stripPointerCasts() == oldBase->stripPointerCasts() &&
-                   "sanity -- findBaseOrBDV should be pure!");
+          // In essense this assert states: the only way two
+          // values incoming from the same basic block may be
+          // different is by being different bitcasts of the same
+          // value.  A cleanup that remains TODO is changing
+          // findBaseOrBDV to return an llvm::Value of the correct
+          // type (and still remain pure).  This will remove the
+          // need to add bitcasts.
+          assert(base->stripPointerCasts() == oldBase->stripPointerCasts() &&
+                 "sanity -- findBaseOrBDV should be pure!");
 #endif
-            continue;
-          }
+          continue;
+        }
 
-          // Find either the defining value for the PHI or the normal base for
-          // a non-phi node
-          Value *base = findBaseOrBDV(InVal, cache);
-          if (!isKnownBaseResult(base)) {
-            // Either conflict or base.
-            assert(states.count(base));
-            base = states[base].getBase();
-            assert(base != nullptr && "unknown PhiState!");
-          }
-          assert(base && "can't be null");
-          // Must use original input BB since base may not be Instruction
-          // The cast is needed since base traversal may strip away bitcasts
-          if (base->getType() != basephi->getType()) {
-            base = new BitCastInst(base, basephi->getType(), "cast",
-                                   InBB->getTerminator());
-            NewInsertedDefs.insert(base);
-          }
-          basephi->addIncoming(base, InBB);
+        // Find either the defining value for the PHI or the normal base for
+        // a non-phi node
+        Value *base = findBaseOrBDV(InVal, cache);
+        if (!isKnownBaseResult(base)) {
+          // Either conflict or base.
+          assert(states.count(base));
+          base = states[base].getBase();
+          assert(base != nullptr && "unknown PhiState!");
         }
-        assert(basephi->getNumIncomingValues() == NumPHIValues);
-      } else if (SelectInst *basesel = dyn_cast<SelectInst>(state.getBase())) {
-        SelectInst *sel = cast<SelectInst>(v);
-        // Operand 1 & 2 are true, false path respectively. TODO: refactor to
-        // something more safe and less hacky.
-        for (int i = 1; i <= 2; i++) {
-          Value *InVal = sel->getOperand(i);
-          // Find either the defining value for the PHI or the normal base for
-          // a non-phi node
-          Value *base = findBaseOrBDV(InVal, cache);
-          if (!isKnownBaseResult(base)) {
-            // Either conflict or base.
-            assert(states.count(base));
-            base = states[base].getBase();
-            assert(base != nullptr && "unknown PhiState!");
-          }
-          assert(base && "can't be null");
-          // Must use original input BB since base may not be Instruction
-          // The cast is needed since base traversal may strip away bitcasts
-          if (base->getType() != basesel->getType()) {
-            base = new BitCastInst(base, basesel->getType(), "cast", basesel);
-            NewInsertedDefs.insert(base);
-          }
-          basesel->setOperand(i, base);
+        assert(base && "can't be null");
+        // Must use original input BB since base may not be Instruction
+        // The cast is needed since base traversal may strip away bitcasts
+        if (base->getType() != basephi->getType()) {
+          base = new BitCastInst(base, basephi->getType(), "cast",
+                                 InBB->getTerminator());
+          NewInsertedDefs.insert(base);
         }
-      } else
-        llvm_unreachable("unexpected conflict type");
+        basephi->addIncoming(base, InBB);
+      }
+      assert(basephi->getNumIncomingValues() == NumPHIValues);
+    } else {
+      SelectInst *basesel = cast<SelectInst>(state.getBase());
+      SelectInst *sel = cast<SelectInst>(v);
+      // Operand 1 & 2 are true, false path respectively. TODO: refactor to
+      // something more safe and less hacky.
+      for (int i = 1; i <= 2; i++) {
+        Value *InVal = sel->getOperand(i);
+        // Find either the defining value for the PHI or the normal base for
+        // a non-phi node
+        Value *base = findBaseOrBDV(InVal, cache);
+        if (!isKnownBaseResult(base)) {
+          // Either conflict or base.
+          assert(states.count(base));
+          base = states[base].getBase();
+          assert(base != nullptr && "unknown PhiState!");
+        }
+        assert(base && "can't be null");
+        // Must use original input BB since base may not be Instruction
+        // The cast is needed since base traversal may strip away bitcasts
+        if (base->getType() != basesel->getType()) {
+          base = new BitCastInst(base, basesel->getType(), "cast", basesel);
+          NewInsertedDefs.insert(base);
+        }
+        basesel->setOperand(i, base);
+      }
     }
   }
 
