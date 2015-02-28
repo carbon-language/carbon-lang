@@ -3091,6 +3091,7 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
       }
 
       I = GetElementPtrInst::Create(BasePtr, GEPIdx);
+      (void)Ty;
       assert(!Ty || Ty == cast<GetElementPtrInst>(I)->getSourceElementType());
       InstructionList.push_back(I);
       if (InBounds)
@@ -3600,6 +3601,7 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
         return EC;
       I = new LoadInst(Op, "", Record[OpNum+1], Align);
 
+      (void)Ty;
       assert((!Ty || Ty == I->getType()) &&
              "Explicit type doesn't match pointee type of the first operand");
 
@@ -3631,6 +3633,7 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
         return EC;
       I = new LoadInst(Op, "", Record[OpNum+1], Align, Ordering, SynchScope);
 
+      (void)Ty;
       assert((!Ty || Ty == I->getType()) &&
              "Explicit type doesn't match pointee type of the first operand");
 
