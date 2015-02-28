@@ -1282,16 +1282,19 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           continue;
         }
 
+        bool ShouldAbort = EnableFastISelAbort;
         if (EnableFastISelVerbose || EnableFastISelAbort) {
           if (isa<TerminatorInst>(Inst)) {
             // Use a different message for terminator misses.
             dbgs() << "FastISel missed terminator: ";
+            // Don't abort unless for terminator unless the level is really high
+            ShouldAbort = (EnableFastISelAbort > 2);
           } else {
             dbgs() << "FastISel miss: ";
           }
           Inst->dump();
         }
-        if (EnableFastISelAbort > 2)
+        if (ShouldAbort)
           // FastISel selector couldn't handle something and bailed.
           // For the purpose of debugging, just abort.
           llvm_unreachable("FastISel didn't select the entire block");
