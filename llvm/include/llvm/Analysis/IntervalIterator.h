@@ -78,7 +78,7 @@ inline void addNodeToInterval(Interval *Int, BasicBlock *BB) {
 //
 inline void addNodeToInterval(Interval *Int, Interval *I) {
   // Add all of the nodes in I as new nodes in Int.
-  copy(I->Nodes.begin(), I->Nodes.end(), back_inserter(Int->Nodes));
+  Int->Nodes.insert(Int->Nodes.end(), I->Nodes.begin(), I->Nodes.end());
 }
 
 

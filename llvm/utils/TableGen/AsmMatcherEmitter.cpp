@@ -1447,8 +1447,9 @@ void AsmMatcherInfo::buildInfo() {
       II->buildAliasResultOperands();
   }
   if (!NewMatchables.empty())
-    std::move(NewMatchables.begin(), NewMatchables.end(),
-              std::back_inserter(Matchables));
+    Matchables.insert(Matchables.end(),
+                      std::make_move_iterator(NewMatchables.begin()),
+                      std::make_move_iterator(NewMatchables.end()));
 
   // Process token alias definitions and set up the associated superclass
   // information.

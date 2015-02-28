@@ -312,8 +312,7 @@ static const Value *getNoopInput(const Value *V,
       // previous aggregate. Combine the two paths to obtain the true address of
       // our element.
       ArrayRef<unsigned> ExtractLoc = EVI->getIndices();
-      std::copy(ExtractLoc.rbegin(), ExtractLoc.rend(),
-                std::back_inserter(ValLoc));
+      ValLoc.append(ExtractLoc.rbegin(), ExtractLoc.rend());
       NoopInput = Op;
     }
     // Terminate if we couldn't find anything to look through.
@@ -601,10 +600,8 @@ bool llvm::returnTypeIsEligibleForTailCall(const Function *F,
     // The manipulations performed when we're looking through an insertvalue or
     // an extractvalue would happen at the front of the RetPath list, so since
     // we have to copy it anyway it's more efficient to create a reversed copy.
-    using std::copy;
-    SmallVector<unsigned, 4> TmpRetPath, TmpCallPath;
-    copy(RetPath.rbegin(), RetPath.rend(), std::back_inserter(TmpRetPath));
-    copy(CallPath.rbegin(), CallPath.rend(), std::back_inserter(TmpCallPath));
+    SmallVector<unsigned, 4> TmpRetPath(RetPath.rbegin(), RetPath.rend());
+    SmallVector<unsigned, 4> TmpCallPath(CallPath.rbegin(), CallPath.rend());
 
     // Finally, we can check whether the value produced by the tail call at this
     // index is compatible with the value we return.

@@ -411,8 +411,7 @@ optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
 
   if (ExtendLife && !ExtendedUses.empty())
     // Extend the liveness of the extension result.
-    std::copy(ExtendedUses.begin(), ExtendedUses.end(),
-              std::back_inserter(Uses));
+    Uses.append(ExtendedUses.begin(), ExtendedUses.end());
 
   // Now replace all uses.
   bool Changed = false;
