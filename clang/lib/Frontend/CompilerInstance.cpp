@@ -1279,6 +1279,7 @@ bool CompilerInstance::loadModuleFile(StringRef FileName) {
   struct ReadModuleNames : ASTReaderListener {
     CompilerInstance &CI;
     std::vector<StringRef> ModuleFileStack;
+    std::vector<StringRef> ModuleNameStack;
     bool Failed;
     bool TopFileIsModule;
 
@@ -1295,20 +1296,29 @@ bool CompilerInstance::loadModuleFile(StringRef FileName) {
       }
 
       ModuleFileStack.push_back(FileName);
+      ModuleNameStack.push_back(StringRef());
       if (ASTReader::readASTFileControlBlock(FileName, CI.getFileManager(),
                                              *this)) {
-        CI.getDiagnostics().Report(SourceLocation(),
-                                   diag::err_module_file_not_found)
+        CI.getDiagnostics().Report(
+            SourceLocation(), CI.getFileManager().getBufferForFile(FileName)
+                                  ? diag::err_module_file_invalid
+                                  : diag::err_module_file_not_found)
             << FileName;
-        // FIXME: Produce a note stack explaining how we got here.
+        for (int I = ModuleFileStack.size() - 2; I >= 0; --I)
+          CI.getDiagnostics().Report(SourceLocation(),
+                                     diag::note_module_file_imported_by)
+              << ModuleFileStack[I]
+              << !ModuleNameStack[I].empty() << ModuleNameStack[I];
         Failed = true;
       }
+      ModuleNameStack.pop_back();
       ModuleFileStack.pop_back();
     }
 
     void ReadModuleName(StringRef ModuleName) override {
       if (ModuleFileStack.size() == 1)
         TopFileIsModule = true;
+      ModuleNameStack.back() = ModuleName;
 
       auto &ModuleFile = CI.ModuleFileOverrides[ModuleName];
       if (!ModuleFile.empty() &&

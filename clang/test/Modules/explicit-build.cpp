@@ -148,11 +148,24 @@
 // RUN:            -fmodule-file=%t/not.pcm \
 // RUN:            %s 2>&1 | FileCheck --check-prefix=CHECK-BAD-FILE %s
 //
+// CHECK-BAD-FILE: fatal error: file '{{.*}}not.pcm' is not a valid precompiled module file
+
 // RUN: not %clang_cc1 -x c++ -std=c++11 -fmodules -fmodules-cache-path=%t -Rmodule-build -fno-modules-error-recovery \
 // RUN:            -fmodule-file=%t/nonexistent.pcm \
-// RUN:            %s 2>&1 | FileCheck --check-prefix=CHECK-BAD-FILE %s
+// RUN:            %s 2>&1 | FileCheck --check-prefix=CHECK-NO-FILE %s
 //
-// CHECK-BAD-FILE: fatal error: file '{{.*}}t.pcm' is not a precompiled module file
+// CHECK-NO-FILE: fatal error: module file '{{.*}}nonexistent.pcm' not found
+
+// RUN: mv %t/a.pcm %t/a-tmp.pcm
+// RUN: not %clang_cc1 -x c++ -std=c++11 -fmodules -fmodules-cache-path=%t -Rmodule-build -fno-modules-error-recovery \
+// RUN:            -I%S/Inputs/explicit-build \
+// RUN:            -fmodule-file=%t/c.pcm \
+// RUN:            %s 2>&1 | FileCheck --check-prefix=CHECK-NO-FILE-INDIRECT %s
+// RUN: mv %t/a-tmp.pcm %t/a.pcm
+//
+// CHECK-NO-FILE-INDIRECT:      error: module file '{{.*}}a.pcm' not found
+// CHECK-NO-FILE-INDIRECT-NEXT: note: imported by module 'b' in '{{.*}}b.pcm'
+// CHECK-NO-FILE-INDIRECT-NEXT: note: imported by module 'c' in '{{.*}}c.pcm'
 
 // -------------------------------
 // Check that we don't get upset if B's timestamp is newer than C's.
