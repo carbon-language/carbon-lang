@@ -23,6 +23,11 @@ namespace dsymutil {
 
 namespace {
 
+void warn(const Twine &Warning, const Twine &Context) {
+  errs() << Twine("while processing ") + Context + ":\n";
+  errs() << Twine("warning: ") + Warning + "\n";
+}
+
 /// \brief Stores all information relating to a compile unit, be it in
 /// its original instance in the object file to its brand new cloned
 /// and linked DIE tree.
@@ -219,10 +224,10 @@ const DWARFDebugInfoEntryMinimal *DwarfLinker::resolveDIEReference(
 /// information about a specific \p DIE related to the warning.
 void DwarfLinker::reportWarning(const Twine &Warning, const DWARFUnit *Unit,
                                 const DWARFDebugInfoEntryMinimal *DIE) {
+  StringRef Context = "<debug map>";
   if (CurrentDebugObject)
-    errs() << Twine("while processing ") +
-                  CurrentDebugObject->getObjectFilename() + ":\n";
-  errs() << Twine("warning: ") + Warning + "\n";
+    Context = CurrentDebugObject->getObjectFilename();
+  warn(Warning, Context);
 
   if (!Verbose || !DIE)
     return;
