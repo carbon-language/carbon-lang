@@ -1369,7 +1369,7 @@ static void writeMDEnumerator(raw_ostream &Out, const MDEnumerator *N,
                               TypePrinting *, SlotTracker *, const Module *) {
   Out << "!MDEnumerator(";
   FieldSeparator FS;
-  Out << FS << "name: \"" << N->getName() << "\"";
+  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
   Out << FS << "value: " << N->getValue();
   Out << ")";
 }
@@ -1379,8 +1379,7 @@ static void writeMDBasicType(raw_ostream &Out, const MDBasicType *N,
   Out << "!MDBasicType(";
   FieldSeparator FS;
   writeTag(Out, FS, N);
-  if (!N->getName().empty())
-    Out << FS << "name: \"" << N->getName() << "\"";
+  writeStringField(Out, FS, "name", N->getName());
   if (N->getSizeInBits())
     Out << FS << "size: " << N->getSizeInBits();
   if (N->getAlignInBits())
@@ -1415,8 +1414,7 @@ static void writeMDDerivedType(raw_ostream &Out, const MDDerivedType *N,
   Out << "!MDDerivedType(";
   FieldSeparator FS;
   writeTag(Out, FS, N);
-  if (!N->getName().empty())
-    Out << FS << "name: \"" << N->getName() << "\"";
+  writeStringField(Out, FS, "name", N->getName());
   if (N->getFile()) {
     Out << FS << "file: ";
     writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
@@ -1454,8 +1452,7 @@ static void writeMDCompositeType(raw_ostream &Out, const MDCompositeType *N,
   Out << "!MDCompositeType(";
   FieldSeparator FS;
   writeTag(Out, FS, N);
-  if (!N->getName().empty())
-    Out << FS << "name: \"" << N->getName() << "\"";
+  writeStringField(Out, FS, "name", N->getName());
   if (N->getFile()) {
     Out << FS << "file: ";
     writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
@@ -1505,8 +1502,7 @@ static void writeMDCompositeType(raw_ostream &Out, const MDCompositeType *N,
     writeMetadataAsOperand(Out, N->getTemplateParams(), TypePrinter, Machine,
                            Context);
   }
-  if (!N->getIdentifier().empty())
-    Out << FS << "identifier: \"" << N->getIdentifier() << "\"";
+  writeStringField(Out, FS, "identifier", N->getIdentifier());
   Out << ")";
 }
 
@@ -1528,8 +1524,10 @@ static void writeMDFile(raw_ostream &Out, const MDFile *N, TypePrinting *,
                         SlotTracker *, const Module *) {
   Out << "!MDFile(";
   FieldSeparator FS;
-  Out << FS << "filename: \"" << N->getFilename() << "\"";
-  Out << FS << "directory: \"" << N->getDirectory() << "\"";
+  writeStringField(Out, FS, "filename", N->getFilename(),
+                   /* ShouldSkipEmpty */ false);
+  writeStringField(Out, FS, "directory", N->getDirectory(),
+                   /* ShouldSkipEmpty */ false);
   Out << ")";
 }
 
@@ -1545,14 +1543,11 @@ static void writeMDCompileUnit(raw_ostream &Out, const MDCompileUnit *N,
     Out << N->getSourceLanguage();
   Out << FS << "file: ";
   writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine, Context);
-  if (!N->getProducer().empty())
-    Out << FS << "producer: \"" << N->getProducer() << "\"";
+  writeStringField(Out, FS, "producer", N->getProducer());
   Out << FS << "isOptimized: " << (N->isOptimized() ? "true" : "false");
-  if (!N->getFlags().empty())
-    Out << FS << "flags: \"" << N->getFlags() << "\"";
+  writeStringField(Out, FS, "flags", N->getFlags());
   Out << FS << "runtimeVersion: " << N->getRuntimeVersion();
-  if (!N->getSplitDebugFilename().empty())
-    Out << FS << "splitDebugFilename: \"" << N->getSplitDebugFilename() << "\"";
+  writeStringField(Out, FS, "splitDebugFilename", N->getSplitDebugFilename());
   Out << FS << "emissionKind: " << N->getEmissionKind();
   if (N->getEnumTypes()) {
     Out << FS << "enums: ";
@@ -1589,9 +1584,8 @@ static void writeMDSubprogram(raw_ostream &Out, const MDSubprogram *N,
   FieldSeparator FS;
   Out << FS << "scope: ";
   writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
-  Out << FS << "name: \"" << N->getName() << "\"";
-  if (!N->getLinkageName().empty())
-    Out << FS << "linkageName: \"" << N->getLinkageName() << "\"";
+  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
+  writeStringField(Out, FS, "linkageName", N->getLinkageName());
   if (N->getFile()) {
     Out << FS << "file: ";
     writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
@@ -1698,8 +1692,7 @@ static void writeMDNamespace(raw_ostream &Out, const MDNamespace *N,
     Out << FS << "file: ";
     writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine, Context);
   }
-  if (!N->getName().empty())
-    Out << FS << "name: \"" << N->getName() << "\"";
+  writeStringField(Out, FS, "name", N->getName());
   if (N->getLine())
     Out << FS << "line: " << N->getLine();
   Out << ")";
@@ -1712,7 +1705,7 @@ static void writeMDTemplateTypeParameter(raw_ostream &Out,
                                          const Module *Context) {
   Out << "!MDTemplateTypeParameter(";
   FieldSeparator FS;
-  Out << FS << "name: \"" << N->getName() << "\"";
+  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
   Out << FS << "type: ";
   writeMetadataAsOperand(Out, N->getType(), TypePrinter, Machine, Context);
   Out << ")";
@@ -1726,7 +1719,7 @@ static void writeMDTemplateValueParameter(raw_ostream &Out,
   Out << "!MDTemplateValueParameter(";
   FieldSeparator FS;
   writeTag(Out, FS, N);
-  Out << FS << "name: \"" << N->getName() << "\"";
+  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
   Out << FS << "type: ";
   writeMetadataAsOperand(Out, N->getType(), TypePrinter, Machine, Context);
   Out << FS << "value: ";
@@ -1741,9 +1734,8 @@ static void writeMDGlobalVariable(raw_ostream &Out, const MDGlobalVariable *N,
   FieldSeparator FS;
   Out << FS << "scope: ";
   writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
-  Out << FS << "name: \"" << N->getName() << "\"";
-  if (!N->getLinkageName().empty())
-    Out << FS << "linkageName: \"" << N->getLinkageName() << "\"";
+  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
+  writeStringField(Out, FS, "linkageName", N->getLinkageName());
   if (N->getFile()) {
     Out << FS << "file: ";
     writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
@@ -1779,7 +1771,7 @@ static void writeMDLocalVariable(raw_ostream &Out, const MDLocalVariable *N,
   writeTag(Out, FS, N);
   Out << FS << "scope: ";
   writeMetadataAsOperand(Out, N->getScope(), TypePrinter, Machine, Context);
-  Out << FS << "name: \"" << N->getName() << "\"";
+  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
   if (N->getFile()) {
     Out << FS << "file: ";
     writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine,
@@ -1832,17 +1824,15 @@ static void writeMDObjCProperty(raw_ostream &Out, const MDObjCProperty *N,
                                 const Module *Context) {
   Out << "!MDObjCProperty(";
   FieldSeparator FS;
-  Out << FS << "name: \"" << N->getName() << "\"";
+  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
   if (N->getFile()) {
     Out << FS << "file: ";
     writeMetadataAsOperand(Out, N->getFile(), TypePrinter, Machine, Context);
   }
   if (N->getLine())
     Out << FS << "line: " << N->getLine();
-  if (!N->getSetterName().empty())
-    Out << FS << "setter: \"" << N->getSetterName() << "\"";
-  if (!N->getGetterName().empty())
-    Out << FS << "getter: \"" << N->getGetterName() << "\"";
+  writeStringField(Out, FS, "setter", N->getSetterName());
+  writeStringField(Out, FS, "getter", N->getGetterName());
   if (N->getAttributes())
     Out << FS << "attributes: " << N->getAttributes();
   if (N->getType()) {
@@ -1866,7 +1856,7 @@ static void writeMDImportedEntity(raw_ostream &Out, const MDImportedEntity *N,
   }
   if (N->getLine())
     Out << FS << "line: " << N->getLine();
-  Out << FS << "name: \"" << N->getName() << "\"";
+  writeStringField(Out, FS, "name", N->getName(), /* ShouldSkipEmpty */ false);
   Out << ")";
 }
 
