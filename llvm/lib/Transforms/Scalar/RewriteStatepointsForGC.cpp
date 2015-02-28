@@ -684,12 +684,19 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
   states[def] = PhiState();
   // Recursively fill in all phis & selects reachable from the initial one
   // for which we don't already know a definite base value for
-  // PERF: Yes, this is as horribly inefficient as it looks.
+  // TODO: This should be rewritten with a worklist
   bool done = false;
   while (!done) {
     done = true;
+    // Since we're adding elements to 'states' as we run, we can't keep
+    // iterators into the set.
+    SmallVector<Value*, 16> Keys;
+    Keys.reserve(states.size());
     for (auto Pair : states) {
-      Value *v = Pair.first;
+      Value *V = Pair.first;
+      Keys.push_back(V);
+    }
+    for (Value *v : Keys) {
       assert(!isKnownBaseResult(v) && "why did it get added?");
       if (PHINode *phi = dyn_cast<PHINode>(v)) {
         assert(phi->getNumIncomingValues() > 0 &&
@@ -734,6 +741,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
   while (progress) {
     oldSize = states.size();
     progress = false;
+    // We're only changing keys in this loop, thus safe to keep iterators
     for (auto Pair : states) {
       MeetPhiStates calculateMeet(states);
       Value *v = Pair.first;
@@ -768,6 +776,7 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
   }
 
   // Insert Phis for all conflicts
+  // Only changing keys in 'states', thus safe to keep iterators
   for (auto Pair : states) {
     Instruction *v = cast<Instruction>(Pair.first);
     PhiState state = Pair.second;
