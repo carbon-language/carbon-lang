@@ -993,10 +993,19 @@ static void findBasePointers(DominatorTree &DT, DefiningValueMapTy &DVCache,
   findBasePointers(result.liveset, PointerToBase, &DT, DVCache, NewInsertedDefs);
 
   if (PrintBasePointers) {
+    // Note: Need to print these in a stable order since this is checked in
+    // some tests.
     errs() << "Base Pairs (w/o Relocation):\n";
+    SmallVector<Value*, 64> Temp;
+    Temp.reserve(PointerToBase.size());
     for (auto Pair : PointerToBase) {
-      errs() << " derived %" << Pair.first->getName() << " base %"
-             << Pair.second->getName() << "\n";
+      Temp.push_back(Pair.first);
+    }
+    std::sort(Temp.begin(), Temp.end(), order_by_name);
+    for (Value *Ptr : Temp) {
+      Value *Base = PointerToBase[Ptr];
+      errs() << " derived %" << Ptr->getName() << " base %"
+             << Base->getName() << "\n";
     }
   }
 
