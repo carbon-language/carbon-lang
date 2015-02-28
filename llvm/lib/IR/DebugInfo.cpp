@@ -376,35 +376,31 @@ bool DIDescriptor::isExpression() const {
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//
 
-void DIDescriptor::replaceAllUsesWith(LLVMContext &VMContext, DIDescriptor D) {
-
+void DIDescriptor::replaceAllUsesWith(LLVMContext &, DIDescriptor D) {
   assert(DbgNode && "Trying to replace an unverified type!");
+  assert(DbgNode->isTemporary() && "Expected temporary node");
+  TempMDNode Temp(get());
 
   // Since we use a TrackingVH for the node, its easy for clients to manufacture
   // legitimate situations where they want to replaceAllUsesWith() on something
   // which, due to uniquing, has merged with the source. We shield clients from
   // this detail by allowing a value to be replaced with replaceAllUsesWith()
   // itself.
-  const MDNode *DN = D;
-  if (DbgNode == DN) {
-    SmallVector<Metadata *, 10> Ops(DbgNode->op_begin(), DbgNode->op_end());
-    DN = MDNode::get(VMContext, Ops);
+  if (Temp.get() == D.get()) {
+    DbgNode = MDNode::replaceWithUniqued(std::move(Temp));
+    return;
   }
 
-  assert(DbgNode->isTemporary() && "Expected temporary node");
-  auto *Node = const_cast<MDNode *>(DbgNode);
-  Node->replaceAllUsesWith(const_cast<MDNode *>(DN));
-  MDNode::deleteTemporary(Node);
-  DbgNode = DN;
+  Temp->replaceAllUsesWith(D.get());
+  DbgNode = D.get();
 }
 
 void DIDescriptor::replaceAllUsesWith(MDNode *D) {
   assert(DbgNode && "Trying to replace an unverified type!");
   assert(DbgNode != D && "This replacement should always happen");
   assert(DbgNode->isTemporary() && "Expected temporary node");
-  auto *Node = const_cast<MDNode *>(DbgNode);
+  TempMDNode Node(get());
   Node->replaceAllUsesWith(D);
-  MDNode::deleteTemporary(Node);
 }
 
 bool DICompileUnit::Verify() const {
