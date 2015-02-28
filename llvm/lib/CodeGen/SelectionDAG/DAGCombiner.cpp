@@ -11465,14 +11465,12 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
       unsigned NumElts = OpVT.getVectorNumElements();
 
       if (ISD::UNDEF == Op.getOpcode())
-        for (unsigned i = 0; i != NumElts; ++i)
-          Opnds.push_back(DAG.getUNDEF(MinVT));
+        Opnds.append(NumElts, DAG.getUNDEF(MinVT));
 
       if (ISD::BUILD_VECTOR == Op.getOpcode()) {
         if (SVT.isFloatingPoint()) {
           assert(SVT == OpVT.getScalarType() && "Concat vector type mismatch");
-          for (unsigned i = 0; i != NumElts; ++i)
-            Opnds.push_back(Op.getOperand(i));
+          Opnds.append(Op->op_begin(), Op->op_begin() + NumElts);
         } else {
           for (unsigned i = 0; i != NumElts; ++i)
             Opnds.push_back(

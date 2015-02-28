@@ -1940,9 +1940,7 @@ NVPTXTargetLowering::LowerSTOREVector(SDValue Op, SelectionDAG &DAG) const {
     }
 
     // Then any remaining arguments
-    for (unsigned i = 2, e = N->getNumOperands(); i != e; ++i) {
-      Ops.push_back(N->getOperand(i));
-    }
+    Ops.append(N->op_begin() + 2, N->op_end());
 
     SDValue NewSt = DAG.getMemIntrinsicNode(
         Opcode, DL, DAG.getVTList(MVT::Other), Ops,

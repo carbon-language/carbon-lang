@@ -623,8 +623,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
       // Simple byval argument? Just add all the struct element types.
       Type *AgTy = cast<PointerType>(I->getType())->getElementType();
       StructType *STy = cast<StructType>(AgTy);
-      for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
-        Params.push_back(STy->getElementType(i));
+      Params.insert(Params.end(), STy->element_begin(), STy->element_end());
       ++NumByValArgsPromoted;
     } else if (!ArgsToPromote.count(I)) {
       // Unchanged argument
