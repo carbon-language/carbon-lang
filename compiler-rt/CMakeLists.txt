@@ -302,15 +302,20 @@ if(APPLE)
   set(SANITIZER_MIN_OSX_VERSION 10.7)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "") # We're setting the flag manually below.
   set(DARWIN_osx_CFLAGS -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION}
-    -isysroot ${OSX_SDK_DIR} -stdlib=libc++)
+    -stdlib=libc++)
   set(DARWIN_iossim_CFLAGS
     -mios-simulator-version-min=7.0 -isysroot ${IOSSIM_SDK_DIR})
   set(DARWIN_osx_LINKFLAGS -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION}
-    -isysroot ${OSX_SDK_DIR} -stdlib=libc++)
+     -stdlib=libc++)
   set(DARWIN_iossim_LINKFLAGS
     -Wl,-ios_simulator_version_min,7.0.0
     -mios-simulator-version-min=7.0
     -isysroot ${IOSSIM_SDK_DIR})
+
+  if(OSX_SDK_DIR)
+    list(APPEND DARWIN_osx_CFLAGS -isysroot ${OSX_SDK_DIR})
+    list(APPEND DARWIN_osx_LINKFLAGS -isysroot ${OSX_SDK_DIR})
+  endif()
 endif()
 
 add_subdirectory(include)

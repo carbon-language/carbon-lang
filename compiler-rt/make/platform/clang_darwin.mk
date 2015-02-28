@@ -175,7 +175,6 @@ CFLAGS.10.4		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.asan_osx_dynamic := \
 	$(CFLAGS) -mmacosx-version-min=10.7 \
 	-stdlib=libc++ \
-	-isysroot $(OSX_SDK) \
 	-fno-builtin \
 	-gline-tables-only \
 	-DMAC_INTERPOSE_FUNCTIONS=1 \
@@ -190,7 +189,6 @@ CFLAGS.asan_iossim_dynamic := \
 	-DASAN_DYNAMIC=1
 
 CFLAGS.ubsan_osx := $(CFLAGS) -mmacosx-version-min=10.6 \
-	-isysroot $(OSX_SDK) \
 	-fno-builtin
 
 CFLAGS.ios.i386		:= $(CFLAGS) $(IOSSIM_DEPLOYMENT_ARGS)
@@ -225,8 +223,7 @@ CFLAGS.profile_ios.arm64  := $(CFLAGS) $(IOS6_DEPLOYMENT_ARGS)
 # Configure the asan_osx_dynamic library to be built shared.
 SHARED_LIBRARY.asan_osx_dynamic := 1
 LDFLAGS.asan_osx_dynamic := -lc++ -undefined dynamic_lookup -install_name @rpath/libclang_rt.asan_osx_dynamic.dylib \
-  -mmacosx-version-min=10.7 \
-  -isysroot $(OSX_SDK)
+  -mmacosx-version-min=10.7
 
 # Configure the asan_iossim_dynamic library to be built shared.
 SHARED_LIBRARY.asan_iossim_dynamic := 1
@@ -235,6 +232,13 @@ SHARED_LIBRARY.asan_iossim_dynamic := 1
 LDFLAGS.asan_iossim_dynamic := -undefined dynamic_lookup -install_name @rpath/libclang_rt.asan_iossim_dynamic.dylib \
   -Wl,-ios_simulator_version_min,7.0.0 \
   -mios-simulator-version-min=7.0 -isysroot $(IOSSIM_SDK)
+
+ifneq ($(OSX_SDK),)
+CFLAGS.asan_osx_dynamic += -isysroot $(OSX_SDK)
+LDFLAGS.asan_osx_dynamic += -isysroot $(OSX_SDK)
+CFLAGS.ubsan_osx += -isysroot $(OSX_SDK)
+LDFLAGS.ubsan_osx += -isysroot $(OSX_SDK)
+endif
 
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
