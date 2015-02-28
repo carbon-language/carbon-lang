@@ -1109,8 +1109,16 @@ cbrt(_A1 __lcpp_x) _NOEXCEPT {return cbrt((double)__lcpp_x);}
 using ::copysign;
 using ::copysignf;
 
-inline _LIBCPP_INLINE_VISIBILITY float       copysign(float __lcpp_x, float __lcpp_y) _NOEXCEPT             {return copysignf(__lcpp_x, __lcpp_y);}
-inline _LIBCPP_INLINE_VISIBILITY long double copysign(long double __lcpp_x, long double __lcpp_y) _NOEXCEPT {return copysignl(__lcpp_x, __lcpp_y);}
+#if !defined(_VC_CRT_MAJOR_VERSION) || (_VC_CRT_MAJOR_VERSION < 12)
+inline _LIBCPP_INLINE_VISIBILITY float copysign(float __lcpp_x,
+                                                float __lcpp_y) _NOEXCEPT {
+  return copysignf(__lcpp_x, __lcpp_y);
+}
+inline _LIBCPP_INLINE_VISIBILITY long double
+copysign(long double __lcpp_x, long double __lcpp_y) _NOEXCEPT {
+  return copysignl(__lcpp_x, __lcpp_y);
+}
+#endif
 
 template <class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY

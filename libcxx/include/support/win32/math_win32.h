@@ -17,7 +17,9 @@
 
 #include <math.h>
 #include <float.h> // _FPCLASS_PN etc.
+#include <crtversion.h>
 
+#if ((_VC_CRT_MAJOR_VERSION-0) < 12)
 // Necessary?
 typedef float float_t;
 typedef double double_t;
@@ -109,7 +111,7 @@ _LIBCPP_ALWAYS_INLINE int fpclassify( double num )
 {
     return _fpclass(num);
 }
-
+#endif
 #endif // _LIBCPP_MSVCRT
 
 #endif // _LIBCPP_SUPPORT_WIN32_MATH_WIN32_H
