@@ -25,9 +25,10 @@ namespace llvm {
 namespace dsymutil {
 
 struct LinkOptions {
-  bool Verbose;
+  bool Verbose;  ///< Verbosity
+  bool NoOutput; ///< Skip emitting output
 
-  LinkOptions() : Verbose(false) {}
+  LinkOptions() : Verbose(false), NoOutput(false) {}
 };
 
 /// \brief Extract the DebugMap from the given file.

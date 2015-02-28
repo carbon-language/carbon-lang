@@ -19,6 +19,7 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/TargetSelect.h"
 #include <string>
 
 using namespace llvm::dsymutil;
@@ -40,6 +41,10 @@ static opt<std::string> OsoPrependPath("oso-prepend-path",
 
 static opt<bool> Verbose("v", desc("Verbosity level"), init(false));
 
+static opt<bool> NoOutput("no-output", desc("Do the link in memory, but do "
+                                            "not emit the result file."),
+                          init(false));
+
 static opt<bool>
     ParseOnly("parse-only",
               desc("Only parse the debug map, do not actaully link "
@@ -57,6 +62,12 @@ int main(int argc, char **argv) {
   auto DebugMapPtrOrErr = parseDebugMap(InputFile, OsoPrependPath, Verbose);
 
   Options.Verbose = Verbose;
+  Options.NoOutput = NoOutput;
+
+  llvm::InitializeAllTargetInfos();
+  llvm::InitializeAllTargetMCs();
+  llvm::InitializeAllTargets();
+  llvm::InitializeAllAsmPrinters();
 
   if (auto EC = DebugMapPtrOrErr.getError()) {
     llvm::errs() << "error: cannot parse the debug map for \"" << InputFile

@@ -1,0 +1,8 @@
+RUN: cat %p/../Inputs/basic.macho.x86_64 > %t1
+RUN: llvm-dsymutil -oso-prepend-path=%p/.. %t1
+RUN: llvm-dwarfdump %t1.dwarf | FileCheck %s
+RUN: llvm-dsymutil -o %t2 -oso-prepend-path=%p/.. %p/../Inputs/basic.macho.x86_64
+RUN: llvm-dwarfdump %t2 | FileCheck %s
+RUN: llvm-dsymutil -o - -oso-prepend-path=%p/.. %p/../Inputs/basic.macho.x86_64 | llvm-dwarfdump - | FileCheck %s
+
+CHECK: file format Mach-O 64-bit x86-64

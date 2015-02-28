@@ -9,7 +9,7 @@
 
 LEVEL := ../..
 TOOLNAME := llvm-dsymutil
-LINK_COMPONENTS := DebugInfoDWARF Object Support
+LINK_COMPONENTS := all-targets AsmPrinter DebugInfoDWARF MC Object Support
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS := 1
