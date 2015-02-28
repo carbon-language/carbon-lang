@@ -22,6 +22,7 @@ class LaunchWithShellExpandTestCase(TestBase):
 
 
     @expectedFailureFreeBSD("llvm.org/pr22627 process launch w/ shell expansion not working")
+    @expectedFailureLinux("llvm.org/pr22627 process launch w/ shell expansion not working")
     @dwarf_test
     def test_with_dwarf (self):
         self.buildDwarf()
