@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=x86_64-unknown-unknown -mattr=-sse4.1 < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-unknown-unknown -mattr=+sse2,-sse4.1 < %s | FileCheck %s
 
 ; Verify that we don't emit packed vector shifts instructions if the
 ; condition used by the vector select is a vector of constants.
