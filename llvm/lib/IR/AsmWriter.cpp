@@ -1306,17 +1306,24 @@ static void writeTag(raw_ostream &Out, FieldSeparator &FS, const DebugNode *N) {
     Out << N->getTag();
 }
 
+static void writeStringField(raw_ostream &Out, FieldSeparator &FS,
+                             StringRef Name, StringRef Value,
+                             bool ShouldSkipEmpty = true) {
+  if (ShouldSkipEmpty && Value.empty())
+    return;
+
+  Out << FS << Name << ": \"";
+  PrintEscapedString(Value, Out);
+  Out << "\"";
+}
+
 static void writeGenericDebugNode(raw_ostream &Out, const GenericDebugNode *N,
                                   TypePrinting *TypePrinter,
                                   SlotTracker *Machine, const Module *Context) {
   Out << "!GenericDebugNode(";
   FieldSeparator FS;
   writeTag(Out, FS, N);
-  if (!N->getHeader().empty()) {
-    Out << FS << "header: \"";
-    PrintEscapedString(N->getHeader(), Out);
-    Out << "\"";
-  }
+  writeStringField(Out, FS, "header", N->getHeader());
   if (N->getNumDwarfOperands()) {
     Out << FS << "operands: {";
     FieldSeparator IFS;
