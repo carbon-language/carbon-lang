@@ -1783,6 +1783,7 @@ void CodeGenRegBank::computeRegUnitLaneMasks() {
           }
           ++u;
         }
+        (void)Found;
         assert(Found);
       }
     }
