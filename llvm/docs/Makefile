@@ -41,7 +41,7 @@ install_targets := install-html
 ifeq ($(ENABLE_DOXYGEN),1)
 install_targets += install-doxygen
 endif
-ifdef OCAMLDOC
+ifdef OCAMLFIND
 ifneq (,$(filter ocaml,$(BINDINGS_TO_BUILD)))
 install_targets += install-ocamldoc
 endif
@@ -49,7 +49,7 @@ endif
 install-local:: $(install_targets)
 
 generated_targets := doxygen
-ifdef OCAMLDOC
+ifdef OCAMLFIND
 generated_targets += ocamldoc
 endif
 
@@ -120,7 +120,7 @@ regen-ocamldoc:
 	$(Verb) $(MAKE) -C $(LEVEL)/bindings/ocaml ocamldoc
 	$(Verb) $(MKDIR) $(PROJ_OBJ_DIR)/ocamldoc/html
 	$(Verb) \
-		$(OCAMLDOC) -d $(PROJ_OBJ_DIR)/ocamldoc/html -sort -colorize-code -html \
+		$(OCAMLFIND) ocamldoc -d $(PROJ_OBJ_DIR)/ocamldoc/html -sort -colorize-code -html \
 		`$(FIND) $(LEVEL)/bindings/ocaml -name "*.odoc" \
 		         -path "*/$(BuildMode)/*.odoc" -exec echo -load '{}' ';'`
 
