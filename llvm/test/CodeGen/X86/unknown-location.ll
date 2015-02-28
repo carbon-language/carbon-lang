@@ -8,7 +8,7 @@
 ; CHECK-NEXT:         .loc 1 0 0
 ;      CHECK:         cltd
 ; CHECK-NEXT:         idivl
-; CHECK-NEXT:         .loc 2 4 3
+; CHECK-NEXT:         .loc 1 4 3
 
 define i32 @foo(i32 %w, i32 %x, i32 %y, i32 %z) nounwind {
 entry:
@@ -28,7 +28,7 @@ entry:
 !4 = !{!"0x15\00\000\000\000\000\000\000", !10, !2, null, !5, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !5 = !{!6}
 !6 = !{!"0x24\00int\000\0032\0032\000\000\005", !10, !2} ; [ DW_TAG_base_type ]
-!7 = !{!"0xb\001\0030\000", !2, !1} ; [ DW_TAG_lexical_block ]
+!7 = !{!"0xb\001\0030\000", !10, !1} ; [ DW_TAG_lexical_block ]
 !8 = !MDLocation(line: 4, column: 3, scope: !7)
 !9 = !{!1}
 !10 = !{!"test.c", !"/dir"}
