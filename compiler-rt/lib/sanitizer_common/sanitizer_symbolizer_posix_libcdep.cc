@@ -364,20 +364,38 @@ class LLVMSymbolizerProcess : public SymbolizerProcess {
   }
 };
 
-class LLVMSymbolizer : public ExternalSymbolizerInterface {
+class LLVMSymbolizer : public SymbolizerTool {
  public:
   explicit LLVMSymbolizer(const char *path, LowLevelAllocator *allocator)
       : symbolizer_process_(new(*allocator) LLVMSymbolizerProcess(path)) {}
 
+  bool SymbolizePC(uptr addr, SymbolizedStack *stack) override {
+    if (const char *buf = SendCommand(/*is_data*/ false, stack->info.module,
+                                      stack->info.module_offset)) {
+      ParseSymbolizePCOutput(buf, stack);
+      return true;
+    }
+    return false;
+  }
+
+  bool SymbolizeData(uptr addr, DataInfo *info) override {
+    if (const char *buf =
+            SendCommand(/*is_data*/ true, info->module, info->module_offset)) {
+      ParseSymbolizeDataOutput(buf, info);
+      return true;
+    }
+    return false;
+  }
+
+ private:
   const char *SendCommand(bool is_data, const char *module_name,
-                          uptr module_offset) override {
+                          uptr module_offset) {
     CHECK(module_name);
     internal_snprintf(buffer_, kBufferSize, "%s\"%s\" 0x%zx\n",
                       is_data ? "DATA " : "", module_name, module_offset);
     return symbolizer_process_->SendCommand(buffer_);
   }
 
- private:
   LLVMSymbolizerProcess *symbolizer_process_;
   static const uptr kBufferSize = 16 * 1024;
   char buffer_[kBufferSize];
@@ -410,17 +428,28 @@ class Addr2LineProcess : public SymbolizerProcess {
   const char *module_name_;  // Owned, leaked.
 };
 
-class Addr2LinePool : public ExternalSymbolizerInterface {
+class Addr2LinePool : public SymbolizerTool {
  public:
   explicit Addr2LinePool(const char *addr2line_path,
                          LowLevelAllocator *allocator)
       : addr2line_path_(addr2line_path), allocator_(allocator),
         addr2line_pool_(16) {}
 
-  const char *SendCommand(bool is_data, const char *module_name,
-                          uptr module_offset) override {
-    if (is_data)
-      return 0;
+  bool SymbolizePC(uptr addr, SymbolizedStack *stack) override {
+    if (const char *buf =
+            SendCommand(stack->info.module, stack->info.module_offset)) {
+      ParseSymbolizePCOutput(buf, stack);
+      return true;
+    }
+    return false;
+  }
+
+  bool SymbolizeData(uptr addr, DataInfo *info) override {
+    return false;
+  }
+
+ private:
+  const char *SendCommand(const char *module_name, uptr module_offset) {
     Addr2LineProcess *addr2line = 0;
     for (uptr i = 0; i < addr2line_pool_.size(); ++i) {
       if (0 ==
@@ -440,7 +469,6 @@ class Addr2LinePool : public ExternalSymbolizerInterface {
     return addr2line->SendCommand(buffer_);
   }
 
- private:
   static const uptr kBufferSize = 32;
   const char *addr2line_path_;
   LowLevelAllocator *allocator_;
@@ -462,10 +490,8 @@ int __sanitizer_symbolize_demangle(const char *Name, char *Buffer,
                                    int MaxLength);
 }  // extern "C"
 
-class InternalSymbolizer {
+class InternalSymbolizer : public SymbolizerTool {
  public:
-  typedef bool (*SanitizerSymbolizeFn)(const char*, u64, char*, int);
-
   static InternalSymbolizer *get(LowLevelAllocator *alloc) {
     if (__sanitizer_symbolize_code != 0 &&
         __sanitizer_symbolize_data != 0) {
@@ -474,20 +500,26 @@ class InternalSymbolizer {
     return 0;
   }
 
-  char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
-    SanitizerSymbolizeFn symbolize_fn = is_data ? __sanitizer_symbolize_data
-                                                : __sanitizer_symbolize_code;
-    if (symbolize_fn(module_name, module_offset, buffer_, kBufferSize))
-      return buffer_;
-    return 0;
+  bool SymbolizePC(uptr addr, SymbolizedStack *stack) override {
+    bool result = __sanitizer_symbolize_code(
+        stack->info.module, stack->info.module_offset, buffer_, kBufferSize);
+    if (result) ParseSymbolizePCOutput(buffer_, stack);
+    return result;
   }
 
-  void Flush() {
+  bool SymbolizeData(uptr addr, DataInfo *info) override {
+    bool result = __sanitizer_symbolize_data(info->module, info->module_offset,
+                                             buffer_, kBufferSize);
+    if (result) ParseSymbolizeDataOutput(buffer_, info);
+    return result;
+  }
+
+  void Flush() override {
     if (__sanitizer_symbolize_flush)
       __sanitizer_symbolize_flush();
   }
 
-  const char *Demangle(const char *name) {
+  const char *Demangle(const char *name) override {
     if (__sanitizer_symbolize_demangle) {
       for (uptr res_length = 1024;
            res_length <= InternalSizeClassMap::kMaxSize;) {
@@ -514,22 +546,17 @@ class InternalSymbolizer {
 };
 #else  // SANITIZER_SUPPORTS_WEAK_HOOKS
 
-class InternalSymbolizer {
+class InternalSymbolizer : public SymbolizerTool {
  public:
   static InternalSymbolizer *get(LowLevelAllocator *alloc) { return 0; }
-  char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
-    return 0;
-  }
-  void Flush() { }
-  const char *Demangle(const char *name) { return name; }
 };
 
 #endif  // SANITIZER_SUPPORTS_WEAK_HOOKS
 
 class POSIXSymbolizer : public Symbolizer {
  public:
-  POSIXSymbolizer(ExternalSymbolizerInterface *external_symbolizer,
-                  InternalSymbolizer *internal_symbolizer,
+  POSIXSymbolizer(SymbolizerTool *external_symbolizer,
+                  SymbolizerTool *internal_symbolizer,
                   LibbacktraceSymbolizer *libbacktrace_symbolizer)
       : Symbolizer(),
         external_symbolizer_(external_symbolizer),
@@ -552,14 +579,10 @@ class POSIXSymbolizer : public Symbolizer {
     // Always fill data about module name and offset.
     SymbolizedStack *res = SymbolizedStack::New(addr);
     res->info.FillAddressAndModuleInfo(addr, module_name, module_offset);
-
-    const char *str = SendCommand(false, module_name, module_offset);
-    if (str == 0) {
-      // Symbolizer was not initialized or failed.
-      return res;
+    if (SymbolizerTool *tool = GetSymbolizerTool()) {
+      SymbolizerScope sym_scope(this);
+      tool->SymbolizePC(addr, res);
     }
-
-    ParseSymbolizePCOutput(str, res);
     return res;
   }
 
@@ -579,10 +602,10 @@ class POSIXSymbolizer : public Symbolizer {
       if (libbacktrace_symbolizer_->SymbolizeData(addr, info))
         return true;
     }
-    const char *str = SendCommand(true, module_name, module_offset);
-    if (str == 0)
-      return true;
-    ParseSymbolizeDataOutput(str, info);
+    if (SymbolizerTool *tool = GetSymbolizerTool()) {
+      SymbolizerScope sym_scope(this);
+      tool->SymbolizeData(addr, info);
+    }
     info->start += module->base_address();
     return true;
   }
@@ -630,22 +653,11 @@ class POSIXSymbolizer : public Symbolizer {
   }
 
  private:
-  const char *SendCommand(bool is_data, const char *module_name,
-                          uptr module_offset) {
+  SymbolizerTool *GetSymbolizerTool() {
     mu_.CheckLocked();
-    // First, try to use internal symbolizer.
-    if (internal_symbolizer_) {
-      SymbolizerScope sym_scope(this);
-      return internal_symbolizer_->SendCommand(is_data, module_name,
-                                               module_offset);
-    }
-    // Otherwise, fall back to external symbolizer.
-    if (external_symbolizer_) {
-      SymbolizerScope sym_scope(this);
-      return external_symbolizer_->SendCommand(is_data, module_name,
-                                               module_offset);
-    }
-    return 0;
+    if (internal_symbolizer_) return internal_symbolizer_;
+    if (external_symbolizer_) return external_symbolizer_;
+    return nullptr;
   }
 
   LoadedModule *FindModuleForAddress(uptr address) {
@@ -697,8 +709,8 @@ class POSIXSymbolizer : public Symbolizer {
   bool modules_fresh_;
   BlockingMutex mu_;
 
-  ExternalSymbolizerInterface *external_symbolizer_;  // Leaked.
-  InternalSymbolizer *const internal_symbolizer_;     // Leaked.
+  SymbolizerTool *const external_symbolizer_;         // Leaked.
+  SymbolizerTool *const internal_symbolizer_;         // Leaked.
   LibbacktraceSymbolizer *libbacktrace_symbolizer_;   // Leaked.
 };
 
@@ -708,7 +720,7 @@ Symbolizer *Symbolizer::PlatformInit() {
   }
   InternalSymbolizer* internal_symbolizer =
       InternalSymbolizer::get(&symbolizer_allocator_);
-  ExternalSymbolizerInterface *external_symbolizer = 0;
+  SymbolizerTool *external_symbolizer = 0;
   LibbacktraceSymbolizer *libbacktrace_symbolizer = 0;
 
   if (!internal_symbolizer) {

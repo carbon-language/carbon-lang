@@ -137,13 +137,28 @@ class Symbolizer {
   };
 };
 
-class ExternalSymbolizerInterface {
+class SymbolizerTool {
  public:
   // Can't declare pure virtual functions in sanitizer runtimes:
   // __cxa_pure_virtual might be unavailable.
-  virtual const char *SendCommand(bool is_data, const char *module_name,
-                                  uptr module_offset) {
+
+  // The |stack| parameter is inout. It is pre-filled with the address,
+  // module base and module offset values and is to be used to construct
+  // other stack frames.
+  virtual bool SymbolizePC(uptr addr, SymbolizedStack *stack) {
     UNIMPLEMENTED();
+  }
+
+  // The |info| parameter is inout. It is pre-filled with the module base
+  // and module offset values.
+  virtual bool SymbolizeData(uptr addr, DataInfo *info) {
+    UNIMPLEMENTED();
+  }
+
+  virtual void Flush() {}
+
+  virtual const char *Demangle(const char *name) {
+    return name;
   }
 };
 
