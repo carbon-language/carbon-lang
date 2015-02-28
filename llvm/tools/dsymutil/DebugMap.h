@@ -83,7 +83,7 @@ public:
   /// debug map.
   DebugMapObject &addDebugMapObject(StringRef ObjectFilePath);
 
-  const Triple &getTriple() { return BinaryTriple; }
+  const Triple &getTriple() const { return BinaryTriple; }
 
   void print(raw_ostream &OS) const;
 
