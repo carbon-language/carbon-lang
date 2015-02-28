@@ -160,8 +160,6 @@ include(CompilerRTUtils)
 
 set(COMPILER_RT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(COMPILER_RT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
-# Setup custom SDK sysroots.
-set(COMPILER_RT_LINUX_SDK_SYSROOT ${COMPILER_RT_SOURCE_DIR}/SDKs/linux)
 
 # We support running instrumented tests when we're not cross compiling
 # and target a UNIX-like system or Windows.

@@ -74,12 +74,6 @@ CFLAGS.builtins-x86_64 := $(CFLAGS) -m64
 CFLAGS.profile-i386 := $(CFLAGS) -m32
 CFLAGS.profile-x86_64 := $(CFLAGS) -m64
 
-# Use our stub SDK as the sysroot to support more portable building. For now we
-# just do this for the core module, because the stub SDK doesn't have
-# enough support to build the profile runtime.
-CFLAGS.builtins-i386 += --sysroot=$(ProjSrcRoot)/SDKs/linux
-CFLAGS.builtins-x86_64 += --sysroot=$(ProjSrcRoot)/SDKs/linux
-
 FUNCTIONS.builtins-i386 := $(CommonFunctions) $(ArchFunctions.i386)
 FUNCTIONS.builtins-x86_64 := $(CommonFunctions) $(ArchFunctions.x86_64)
 FUNCTIONS.profile-i386 := GCDAProfiling InstrProfiling InstrProfilingBuffer \
