@@ -2376,9 +2376,17 @@ void CGDebugInfo::collectVarDeclProps(const VarDecl *VD, llvm::DIFile &Unit,
   // FIXME: Generalize this for even non-member global variables where the
   // declaration and definition may have different lexical decl contexts, once
   // we have support for emitting declarations of (non-member) global variables.
-  VDContext = getContextDescriptor(
-      dyn_cast<Decl>(VD->isStaticDataMember() ? VD->getLexicalDeclContext()
-                                              : VD->getDeclContext()));
+  const DeclContext *DC = VD->isStaticDataMember() ? VD->getLexicalDeclContext()
+                                                   : VD->getDeclContext();
+  // When a record type contains an in-line initialization of a static data
+  // member, and the record type is marked as __declspec(dllexport), an implicit
+  // definition of the member will be created in the record context.  DWARF
+  // doesn't seem to have a nice way to describe this in a form that consumers
+  // are likely to understand, so fake the "normal" situation of a definition
+  // outside the class by putting it in the global scope.
+  if (DC->isRecord())
+    DC = CGM.getContext().getTranslationUnitDecl();
+  VDContext = getContextDescriptor(dyn_cast<Decl>(DC));
 }
 
 llvm::DISubprogram
@@ -3171,6 +3179,7 @@ llvm::DIDerivedType
 CGDebugInfo::getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D) {
   if (!D->isStaticDataMember())
     return llvm::DIDerivedType();
+
   auto MI = StaticDataMemberCache.find(D->getCanonicalDecl());
   if (MI != StaticDataMemberCache.end()) {
     assert(MI->second && "Static data member declaration should still exist");
