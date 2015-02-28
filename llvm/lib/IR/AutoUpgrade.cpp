@@ -171,6 +171,14 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name == "x86.sse2.psrl.dq.bs" ||
         Name == "x86.avx2.psll.dq.bs" ||
         Name == "x86.avx2.psrl.dq.bs" ||
+        Name == "x86.sse41.pblendw" ||
+        Name == "x86.sse41.blendpd" ||
+        Name == "x86.sse41.blendps" ||
+        Name == "x86.avx.blend.pd.256" ||
+        Name == "x86.avx.blend.ps.256" ||
+        Name == "x86.avx2.pblendw" ||
+        Name == "x86.avx2.pblendd.128" ||
+        Name == "x86.avx2.pblendd.256" ||
         (Name.startswith("x86.xop.vpcom") && F->arg_size() == 2)) {
       NewFn = nullptr;
       return true;
@@ -186,15 +194,6 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     }
     // Several blend and other instructions with maskes used the wrong number of
     // bits.
-    if (Name == "x86.sse41.pblendw")
-      return UpgradeX86IntrinsicsWith8BitMask(F, Intrinsic::x86_sse41_pblendw,
-                                              NewFn);
-    if (Name == "x86.sse41.blendpd")
-      return UpgradeX86IntrinsicsWith8BitMask(F, Intrinsic::x86_sse41_blendpd,
-                                              NewFn);
-    if (Name == "x86.sse41.blendps")
-      return UpgradeX86IntrinsicsWith8BitMask(F, Intrinsic::x86_sse41_blendps,
-                                              NewFn);
     if (Name == "x86.sse41.insertps")
       return UpgradeX86IntrinsicsWith8BitMask(F, Intrinsic::x86_sse41_insertps,
                                               NewFn);
@@ -207,24 +206,9 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     if (Name == "x86.sse41.mpsadbw")
       return UpgradeX86IntrinsicsWith8BitMask(F, Intrinsic::x86_sse41_mpsadbw,
                                               NewFn);
-    if (Name == "x86.avx.blend.pd.256")
-      return UpgradeX86IntrinsicsWith8BitMask(
-          F, Intrinsic::x86_avx_blend_pd_256, NewFn);
-    if (Name == "x86.avx.blend.ps.256")
-      return UpgradeX86IntrinsicsWith8BitMask(
-          F, Intrinsic::x86_avx_blend_ps_256, NewFn);
     if (Name == "x86.avx.dp.ps.256")
       return UpgradeX86IntrinsicsWith8BitMask(F, Intrinsic::x86_avx_dp_ps_256,
                                               NewFn);
-    if (Name == "x86.avx2.pblendw")
-      return UpgradeX86IntrinsicsWith8BitMask(F, Intrinsic::x86_avx2_pblendw,
-                                              NewFn);
-    if (Name == "x86.avx2.pblendd.128")
-      return UpgradeX86IntrinsicsWith8BitMask(
-          F, Intrinsic::x86_avx2_pblendd_128, NewFn);
-    if (Name == "x86.avx2.pblendd.256")
-      return UpgradeX86IntrinsicsWith8BitMask(
-          F, Intrinsic::x86_avx2_pblendd_256, NewFn);
     if (Name == "x86.avx2.mpsadbw")
       return UpgradeX86IntrinsicsWith8BitMask(F, Intrinsic::x86_avx2_mpsadbw,
                                               NewFn);
@@ -609,6 +593,27 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       unsigned Shift = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
       Rep = UpgradeX86PSRLDQIntrinsics(Builder, C, CI->getArgOperand(0), 2,
                                        Shift);
+    } else if (Name == "llvm.x86.sse41.pblendw" ||
+               Name == "llvm.x86.sse41.blendpd" ||
+               Name == "llvm.x86.sse41.blendps" ||
+               Name == "llvm.x86.avx.blend.pd.256" ||
+               Name == "llvm.x86.avx.blend.ps.256" ||
+               Name == "llvm.x86.avx2.pblendw" ||
+               Name == "llvm.x86.avx2.pblendd.128" ||
+               Name == "llvm.x86.avx2.pblendd.256") {
+      Value *Op0 = CI->getArgOperand(0);
+      Value *Op1 = CI->getArgOperand(1);
+      unsigned Imm = cast <ConstantInt>(CI->getArgOperand(2))->getZExtValue();
+      VectorType *VecTy = cast<VectorType>(CI->getType());
+      unsigned NumElts = VecTy->getNumElements();
+
+      SmallVector<Constant*, 16> Idxs;
+      for (unsigned i = 0; i != NumElts; ++i) {
+        unsigned Idx = ((Imm >> (i%8)) & 1) ? i + NumElts : i;
+        Idxs.push_back(Builder.getInt32(Idx));
+      }
+
+      Rep = Builder.CreateShuffleVector(Op0, Op1, ConstantVector::get(Idxs));
     } else {
       bool PD128 = false, PD256 = false, PS128 = false, PS256 = false;
       if (Name == "llvm.x86.avx.vpermil.pd.256")
@@ -739,19 +744,11 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     return;
   }
 
-  case Intrinsic::x86_sse41_pblendw:
-  case Intrinsic::x86_sse41_blendpd:
-  case Intrinsic::x86_sse41_blendps:
   case Intrinsic::x86_sse41_insertps:
   case Intrinsic::x86_sse41_dppd:
   case Intrinsic::x86_sse41_dpps:
   case Intrinsic::x86_sse41_mpsadbw:
-  case Intrinsic::x86_avx_blend_pd_256:
-  case Intrinsic::x86_avx_blend_ps_256:
   case Intrinsic::x86_avx_dp_ps_256:
-  case Intrinsic::x86_avx2_pblendw:
-  case Intrinsic::x86_avx2_pblendd_128:
-  case Intrinsic::x86_avx2_pblendd_256:
   case Intrinsic::x86_avx2_mpsadbw: {
     // Need to truncate the last argument from i32 to i8 -- this argument models
     // an inherently 8-bit immediate operand to these x86 instructions.

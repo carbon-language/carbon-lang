@@ -38,3 +38,27 @@ define <2 x i64> @test_x86_sse2_psrl_dq(<2 x i64> %a0) {
   ret <2 x i64> %res
 }
 declare <2 x i64> @llvm.x86.sse2.psrl.dq(<2 x i64>, i32) nounwind readnone
+
+
+define <2 x double> @test_x86_sse41_blendpd(<2 x double> %a0, <2 x double> %a1) {
+  ; CHECK: vblendpd
+  %res = call <2 x double> @llvm.x86.sse41.blendpd(<2 x double> %a0, <2 x double> %a1, i8 2) ; <<2 x double>> [#uses=1]
+  ret <2 x double> %res
+}
+declare <2 x double> @llvm.x86.sse41.blendpd(<2 x double>, <2 x double>, i8) nounwind readnone
+
+
+define <4 x float> @test_x86_sse41_blendps(<4 x float> %a0, <4 x float> %a1) {
+  ; CHECK: vblendps
+  %res = call <4 x float> @llvm.x86.sse41.blendps(<4 x float> %a0, <4 x float> %a1, i8 7) ; <<4 x float>> [#uses=1]
+  ret <4 x float> %res
+}
+declare <4 x float> @llvm.x86.sse41.blendps(<4 x float>, <4 x float>, i8) nounwind readnone
+
+
+define <8 x i16> @test_x86_sse41_pblendw(<8 x i16> %a0, <8 x i16> %a1) {
+  ; CHECK: vpblendw
+  %res = call <8 x i16> @llvm.x86.sse41.pblendw(<8 x i16> %a0, <8 x i16> %a1, i8 7) ; <<8 x i16>> [#uses=1]
+  ret <8 x i16> %res
+}
+declare <8 x i16> @llvm.x86.sse41.pblendw(<8 x i16>, <8 x i16>, i8) nounwind readnone

@@ -21190,24 +21190,16 @@ static SDValue PerformINTRINSIC_WO_CHAINCombine(SDNode *N, SelectionDAG &DAG,
   default: return SDValue();
   // SSE/AVX/AVX2 blend intrinsics.
   case Intrinsic::x86_avx2_pblendvb:
-  case Intrinsic::x86_avx2_pblendw:
-  case Intrinsic::x86_avx2_pblendd_128:
-  case Intrinsic::x86_avx2_pblendd_256:
     // Don't try to simplify this intrinsic if we don't have AVX2.
     if (!Subtarget->hasAVX2())
       return SDValue();
     // FALL-THROUGH
-  case Intrinsic::x86_avx_blend_pd_256:
-  case Intrinsic::x86_avx_blend_ps_256:
   case Intrinsic::x86_avx_blendv_pd_256:
   case Intrinsic::x86_avx_blendv_ps_256:
     // Don't try to simplify this intrinsic if we don't have AVX.
     if (!Subtarget->hasAVX())
       return SDValue();
     // FALL-THROUGH
-  case Intrinsic::x86_sse41_pblendw:
-  case Intrinsic::x86_sse41_blendpd:
-  case Intrinsic::x86_sse41_blendps:
   case Intrinsic::x86_sse41_blendvps:
   case Intrinsic::x86_sse41_blendvpd:
   case Intrinsic::x86_sse41_pblendvb: {
