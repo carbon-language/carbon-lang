@@ -88,7 +88,8 @@
 
 // Try to define a macro to encapsulate the tgkill syscall
 // fall back on kill() if tgkill isn't available
-#define tgkill(pid, tid, sig)  syscall(SYS_tgkill, pid, tid, sig)
+#define tgkill(pid, tid, sig) \
+    syscall(SYS_tgkill, static_cast<::pid_t>(pid), static_cast<::pid_t>(tid), sig)
 
 using namespace lldb_private;
 
