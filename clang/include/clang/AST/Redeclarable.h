@@ -92,6 +92,13 @@ protected:
     }
 
     void markIncomplete() { Next.get<KnownLatest>().markIncomplete(); }
+
+    Decl *getLatestNotUpdated() const {
+      assert(NextIsLatest() && "expected a canonical decl");
+      if (Next.is<NotKnownLatest>())
+        return nullptr;
+      return Next.get<KnownLatest>().getNotUpdated();
+    }
   };
 
   static DeclLink PreviousDeclLink(decl_type *D) {
