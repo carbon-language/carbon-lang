@@ -192,7 +192,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
       if (Name == "x86.sse41.ptestnzc")
         return UpgradeSSE41Function(F, Intrinsic::x86_sse41_ptestnzc, NewFn);
     }
-    // Several blend and other instructions with maskes used the wrong number of
+    // Several blend and other instructions with masks used the wrong number of
     // bits.
     if (Name == "x86.sse41.insertps")
       return UpgradeX86IntrinsicsWith8BitMask(F, Intrinsic::x86_sse41_insertps,
