@@ -29,6 +29,10 @@ using namespace llvm::cl;
 static opt<std::string> InputFile(Positional, desc("<input file>"),
                                   init("a.out"));
 
+static opt<std::string> OutputFileOpt("o", desc("Specify the output file."
+                                                " default: <input file>.dwarf"),
+                                      value_desc("filename"));
+
 static opt<std::string> OsoPrependPath("oso-prepend-path",
                                        desc("Specify a directory to prepend "
                                             "to the paths of object files."),
@@ -63,9 +67,15 @@ int main(int argc, char **argv) {
   if (ParseOnly)
     return 0;
 
-  std::string OutputBasename(InputFile);
-  if (OutputBasename == "-")
-    OutputBasename = "a.out";
+  std::string OutputFile;
+  if (OutputFileOpt.empty()) {
+    if (InputFile == "-")
+      OutputFile = "a.out.dwarf";
+    else
+      OutputFile = InputFile + ".dwarf";
+  } else {
+    OutputFile = OutputFileOpt;
+  }
 
-  return !linkDwarf(OutputBasename + ".dwarf", **DebugMapPtrOrErr, Verbose);
+  return !linkDwarf(OutputFile, **DebugMapPtrOrErr, Verbose);
 }
