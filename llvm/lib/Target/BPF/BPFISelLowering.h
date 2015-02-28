@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
+class BPFSubtarget;
 namespace BPFISD {
 enum {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
