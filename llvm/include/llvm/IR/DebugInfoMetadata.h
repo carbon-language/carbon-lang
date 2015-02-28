@@ -337,7 +337,8 @@ public:
   /// this.  Otherwise, return the first operand, which is where all other
   /// subclasses store their file pointer.
   Metadata *getFile() const {
-    return isa<MDFile>(this) ? const_cast<MDScope *>(this) : getOperand(0);
+    return isa<MDFile>(this) ? const_cast<MDScope *>(this)
+                             : static_cast<Metadata *>(getOperand(0));
   }
 
   static bool classof(const Metadata *MD) {
