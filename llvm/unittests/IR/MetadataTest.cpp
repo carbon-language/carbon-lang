@@ -1041,6 +1041,12 @@ TEST_F(MDFileTest, get) {
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
 }
 
+TEST_F(MDFileTest, ScopeGetFile) {
+  // Ensure that MDScope::getFile() returns itself.
+  MDScope *N = MDFile::get(Context, "file", "dir");
+  EXPECT_EQ(N, N->getFile());
+}
+
 typedef MetadataTest MDCompileUnitTest;
 
 TEST_F(MDCompileUnitTest, get) {

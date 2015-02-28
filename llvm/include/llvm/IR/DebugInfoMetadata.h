@@ -330,7 +330,15 @@ protected:
   ~MDScope() {}
 
 public:
-  Metadata *getFile() const { return getOperand(0); }
+  /// \brief Return the underlying file.
+  ///
+  /// An \a MDFile is an \a MDScope, but it doesn't point at a separate file
+  /// (it\em is the file).  If \c this is an \a MDFile, we need to return \c
+  /// this.  Otherwise, return the first operand, which is where all other
+  /// subclasses store their file pointer.
+  Metadata *getFile() const {
+    return isa<MDFile>(this) ? const_cast<MDScope *>(this) : getOperand(0);
+  }
 
   static bool classof(const Metadata *MD) {
     switch (MD->getMetadataID()) {
