@@ -47,8 +47,8 @@ attributes #1 = { nounwind readnone }
 !21 = !MDLocation(line: 3, scope: !4)
 !22 = !{!"0x101\00s\0016777219\000", !4, !5, !9} ; [ DW_TAG_arg_variable ] [s] [line 3]
 !23 = !MDLocation(line: 4, scope: !4)
-!24 = !{!"0x102\006\00147\000\008"} ; [ DW_TAG_expression ] [DW_OP_piece 0 8] [piece, size 8, offset 0]
+!24 = !{!"0x102\006\00157\000\0064"} ; [ DW_TAG_expression ] [DW_OP_bit_piece 0 64] [piece, size 64, offset 0]
 !25 = !{}
-; This expression has elements after DW_OP_piece.
+; This expression has elements after DW_OP_bit_piece.
 ; CHECK: DIExpression does not Verify
-!27 = !{!"0x102\00147\008\004\006"} ; [ DW_TAG_expression ] [DW_OP_piece 8 4] [piece, size 4, offset 8]
+!27 = !{!"0x102\00157\0064\0032\006"} ; [ DW_TAG_expression ] [DW_OP_bit_piece 64 32] [piece, size 32, offset 64]

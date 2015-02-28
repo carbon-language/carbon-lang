@@ -130,10 +130,10 @@ attributes #3 = { noreturn nounwind }
 !45 = !MDLocation(line: 9, scope: !15)
 !46 = !{!"0x101\00p1\0016777222\000", !15, !16, !"_ZTS1A", !47} ; [ DW_TAG_arg_variable ] [p1] [line 6]
 !47 = distinct !MDLocation(line: 11, scope: !21)
-!48 = !{!"0x102\00147\004\0020"}                  ; [ DW_TAG_expression ] [DW_OP_piece offset=4, size=20]
+!48 = !{!"0x102\00157\0032\00160"}                  ; [ DW_TAG_expression ] [DW_OP_bit_piece offset=32, size=160]
 !49 = !MDLocation(line: 6, scope: !15, inlinedAt: !47)
 !50 = !MDLocation(line: 11, scope: !21)
-!51 = !{!"0x102\00147\000\004"}                   ; [ DW_TAG_expression ] [DW_OP_piece offset=0, size=4]
+!51 = !{!"0x102\00157\000\0032"}                   ; [ DW_TAG_expression ] [DW_OP_bit_piece offset=0, size=32]
 !52 = !MDLocation(line: 7, scope: !34, inlinedAt: !47)
 !53 = !MDLocation(line: 7, scope: !15, inlinedAt: !47)
 !54 = !MDLocation(line: 8, scope: !34, inlinedAt: !47)
