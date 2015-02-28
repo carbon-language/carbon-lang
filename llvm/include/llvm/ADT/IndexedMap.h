@@ -21,16 +21,16 @@
 #define LLVM_ADT_INDEXEDMAP_H
 
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include <cassert>
 #include <functional>
-#include <vector>
 
 namespace llvm {
 
 template <typename T, typename ToIndexT = llvm::identity<unsigned> >
   class IndexedMap {
     typedef typename ToIndexT::argument_type IndexT;
-    typedef std::vector<T> StorageT;
+    typedef SmallVector<T, 0> StorageT;
     StorageT storage_;
     T nullVal_;
     ToIndexT toIndex_;
