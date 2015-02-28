@@ -51,66 +51,87 @@
 //
 // Build the corresponding headers.
 //
+// RUN: echo 'template<int> struct X {}; extern X<0> x0;' > %t/x.h
 // RUN: echo 'extern int n;' > %t/a0.h
 // RUN: cp %t/a0.h %t/b0.h
-// RUN: echo '#include "a0.h"' > %t/a1.h
+// RUN: echo '#include "x.h"' > %t/a1.h
+// RUN: echo '#include "a0.h"' >> %t/a1.h
 // RUN: echo '#include "b0.h"' >> %t/a1.h
 // RUN: cp %t/a1.h %t/b1.h
-// RUN: echo '#include "a1.h"' > %t/a2.h
+// RUN: echo '#include "x.h"' > %t/a2.h
+// RUN: echo '#include "a1.h"' >> %t/a2.h
 // RUN: echo '#include "b1.h"' >> %t/a2.h
 // RUN: cp %t/a2.h %t/b2.h
-// RUN: echo '#include "a2.h"' > %t/a3.h
+// RUN: echo '#include "x.h"' > %t/a3.h
+// RUN: echo '#include "a2.h"' >> %t/a3.h
 // RUN: echo '#include "b2.h"' >> %t/a3.h
 // RUN: cp %t/a3.h %t/b3.h
-// RUN: echo '#include "a3.h"' > %t/a4.h
+// RUN: echo '#include "x.h"' > %t/a4.h
+// RUN: echo '#include "a3.h"' >> %t/a4.h
 // RUN: echo '#include "b3.h"' >> %t/a4.h
 // RUN: cp %t/a4.h %t/b4.h
-// RUN: echo '#include "a4.h"' > %t/a5.h
+// RUN: echo '#include "x.h"' > %t/a5.h
+// RUN: echo '#include "a4.h"' >> %t/a5.h
 // RUN: echo '#include "b4.h"' >> %t/a5.h
 // RUN: cp %t/a5.h %t/b5.h
-// RUN: echo '#include "a5.h"' > %t/a6.h
+// RUN: echo '#include "x.h"' > %t/a6.h
+// RUN: echo '#include "a5.h"' >> %t/a6.h
 // RUN: echo '#include "b5.h"' >> %t/a6.h
 // RUN: cp %t/a6.h %t/b6.h
-// RUN: echo '#include "a6.h"' > %t/a7.h
+// RUN: echo '#include "x.h"' > %t/a7.h
+// RUN: echo '#include "a6.h"' >> %t/a7.h
 // RUN: echo '#include "b6.h"' >> %t/a7.h
 // RUN: cp %t/a7.h %t/b7.h
-// RUN: echo '#include "a7.h"' > %t/a8.h
+// RUN: echo '#include "x.h"' > %t/a8.h
+// RUN: echo '#include "a7.h"' >> %t/a8.h
 // RUN: echo '#include "b7.h"' >> %t/a8.h
 // RUN: cp %t/a8.h %t/b8.h
-// RUN: echo '#include "a8.h"' > %t/a9.h
+// RUN: echo '#include "x.h"' > %t/a9.h
+// RUN: echo '#include "a8.h"' >> %t/a9.h
 // RUN: echo '#include "b8.h"' >> %t/a9.h
 // RUN: cp %t/a9.h %t/b9.h
-// RUN: echo '#include "a9.h"' > %t/a10.h
+// RUN: echo '#include "x.h"' > %t/a10.h
+// RUN: echo '#include "a9.h"' >> %t/a10.h
 // RUN: echo '#include "b9.h"' >> %t/a10.h
 // RUN: cp %t/a10.h %t/b10.h
-// RUN: echo '#include "a10.h"' > %t/a11.h
+// RUN: echo '#include "x.h"' > %t/a11.h
+// RUN: echo '#include "a10.h"' >> %t/a11.h
 // RUN: echo '#include "b10.h"' >> %t/a11.h
 // RUN: cp %t/a11.h %t/b11.h
-// RUN: echo '#include "a11.h"' > %t/a12.h
+// RUN: echo '#include "x.h"' > %t/a12.h
+// RUN: echo '#include "a11.h"' >> %t/a12.h
 // RUN: echo '#include "b11.h"' >> %t/a12.h
 // RUN: cp %t/a12.h %t/b12.h
-// RUN: echo '#include "a12.h"' > %t/a13.h
+// RUN: echo '#include "x.h"' > %t/a13.h
+// RUN: echo '#include "a12.h"' >> %t/a13.h
 // RUN: echo '#include "b12.h"' >> %t/a13.h
 // RUN: cp %t/a13.h %t/b13.h
-// RUN: echo '#include "a13.h"' > %t/a14.h
+// RUN: echo '#include "x.h"' > %t/a14.h
+// RUN: echo '#include "a13.h"' >> %t/a14.h
 // RUN: echo '#include "b13.h"' >> %t/a14.h
 // RUN: cp %t/a14.h %t/b14.h
-// RUN: echo '#include "a14.h"' > %t/a15.h
+// RUN: echo '#include "x.h"' > %t/a15.h
+// RUN: echo '#include "a14.h"' >> %t/a15.h
 // RUN: echo '#include "b14.h"' >> %t/a15.h
 // RUN: cp %t/a15.h %t/b15.h
-// RUN: echo '#include "a15.h"' > %t/a16.h
+// RUN: echo '#include "x.h"' > %t/a16.h
+// RUN: echo '#include "a15.h"' >> %t/a16.h
 // RUN: echo '#include "b15.h"' >> %t/a16.h
 // RUN: cp %t/a16.h %t/b16.h
-// RUN: echo '#include "a16.h"' > %t/a17.h
+// RUN: echo '#include "x.h"' > %t/a17.h
+// RUN: echo '#include "a16.h"' >> %t/a17.h
 // RUN: echo '#include "b16.h"' >> %t/a17.h
 // RUN: cp %t/a17.h %t/b17.h
-// RUN: echo '#include "a17.h"' > %t/a18.h
+// RUN: echo '#include "x.h"' > %t/a18.h
+// RUN: echo '#include "a17.h"' >> %t/a18.h
 // RUN: echo '#include "b17.h"' >> %t/a18.h
 // RUN: cp %t/a18.h %t/b18.h
-// RUN: echo '#include "a18.h"' > %t/a19.h
+// RUN: echo '#include "x.h"' > %t/a19.h
+// RUN: echo '#include "a18.h"' >> %t/a19.h
 // RUN: echo '#include "b18.h"' >> %t/a19.h
 // RUN: cp %t/a19.h %t/b19.h
-// RUN: echo '#include "a19.h"' > %t/a20.h
+// RUN: echo '#include "x.h"' > %t/a20.h
+// RUN: echo '#include "a19.h"' >> %t/a20.h
 // RUN: echo '#include "b19.h"' >> %t/a20.h
 // RUN: cp %t/a20.h %t/b20.h
 //

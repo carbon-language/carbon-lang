@@ -1729,15 +1729,15 @@ ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
 static DeclID *newDeclIDList(ASTContext &Context, DeclID *Old,
                              SmallVectorImpl<DeclID> &IDs) {
   assert(!IDs.empty() && "no IDs to add to list");
+  if (Old) {
+    IDs.insert(IDs.end(), Old + 1, Old + 1 + Old[0]);
+    std::sort(IDs.begin(), IDs.end());
+    IDs.erase(std::unique(IDs.begin(), IDs.end()), IDs.end());
+  }
 
-  size_t OldCount = Old ? *Old : 0;
-  size_t NewCount = OldCount + IDs.size();
-  auto *Result = new (Context) DeclID[1 + NewCount];
-  auto *Pos = Result;
-  *Pos++ = NewCount;
-  if (OldCount)
-    Pos = std::copy(Old + 1, Old + 1 + OldCount, Pos);
-  std::copy(IDs.begin(), IDs.end(), Pos);
+  auto *Result = new (Context) DeclID[1 + IDs.size()];
+  *Result = IDs.size();
+  std::copy(IDs.begin(), IDs.end(), Result + 1);
   return Result;
 }
 
