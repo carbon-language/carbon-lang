@@ -71,8 +71,9 @@ private:
 /// first step when we start processing a DebugMapObject.
 class DwarfLinker {
 public:
-  DwarfLinker(StringRef OutputFilename, bool Verbose)
-      : OutputFilename(OutputFilename), Verbose(Verbose), BinHolder(Verbose) {}
+  DwarfLinker(StringRef OutputFilename, const LinkOptions &Options)
+      : OutputFilename(OutputFilename), Options(Options),
+        BinHolder(Options.Verbose) {}
 
   /// \brief Link the contents of the DebugMap.
   bool link(const DebugMap &);
@@ -181,7 +182,7 @@ private:
 
 private:
   std::string OutputFilename;
-  bool Verbose;
+  LinkOptions Options;
   BinaryHolder BinHolder;
 
   /// The units of the current debug map object.
@@ -229,7 +230,7 @@ void DwarfLinker::reportWarning(const Twine &Warning, const DWARFUnit *Unit,
     Context = CurrentDebugObject->getObjectFilename();
   warn(Warning, Context);
 
-  if (!Verbose || !DIE)
+  if (!Options.Verbose || !DIE)
     return;
 
   errs() << "    in DIE:\n";
@@ -383,7 +384,7 @@ bool DwarfLinker::hasValidRelocation(uint32_t StartOffset, uint32_t EndOffset,
     return false;
 
   const auto &ValidReloc = ValidRelocs[NextValidReloc++];
-  if (Verbose)
+  if (Options.Verbose)
     outs() << "Found valid debug map entry: " << ValidReloc.Mapping->getKey()
            << " " << format("\t%016" PRIx64 " => %016" PRIx64,
                             ValidReloc.Mapping->getValue().ObjectAddress,
@@ -447,7 +448,7 @@ unsigned DwarfLinker::shouldKeepVariableDIE(
       (Flags & TF_InFunctionScope))
     return Flags;
 
-  if (Verbose)
+  if (Options.Verbose)
     DIE.dump(outs(), const_cast<DWARFUnit *>(&OrigUnit), 0, 8 /* Indent */);
 
   return Flags | TF_Keep;
@@ -479,7 +480,7 @@ unsigned DwarfLinker::shouldKeepSubprogramDIE(
       !hasValidRelocation(LowPcOffset, LowPcEndOffset, MyInfo))
     return Flags;
 
-  if (Verbose)
+  if (Options.Verbose)
     DIE.dump(outs(), const_cast<DWARFUnit *>(&OrigUnit), 0, 8 /* Indent */);
 
   return Flags | TF_Keep;
@@ -616,7 +617,7 @@ bool DwarfLinker::link(const DebugMap &Map) {
   for (const auto &Obj : Map.objects()) {
     CurrentDebugObject = Obj.get();
 
-    if (Verbose)
+    if (Options.Verbose)
       outs() << "DEBUG MAP OBJECT: " << Obj->getObjectFilename() << "\n";
     auto ErrOrObj = BinHolder.GetObjectFile(Obj->getObjectFilename());
     if (std::error_code EC = ErrOrObj.getError()) {
@@ -626,7 +627,7 @@ bool DwarfLinker::link(const DebugMap &Map) {
 
     // Look for relocations that correspond to debug map entries.
     if (!findValidRelocsInDebugInfo(*ErrOrObj, *Obj)) {
-      if (Verbose)
+      if (Options.Verbose)
         outs() << "No valid relocations found. Skipping.\n";
       continue;
     }
@@ -639,7 +640,7 @@ bool DwarfLinker::link(const DebugMap &Map) {
     // parent links that we will use during the next phase.
     for (const auto &CU : DwarfContext.compile_units()) {
       auto *CUDie = CU->getCompileUnitDIE(false);
-      if (Verbose) {
+      if (Options.Verbose) {
         outs() << "Input compilation unit:";
         CUDie->dump(outs(), CU.get(), 0);
       }
@@ -664,8 +665,9 @@ bool DwarfLinker::link(const DebugMap &Map) {
 }
 }
 
-bool linkDwarf(StringRef OutputFilename, const DebugMap &DM, bool Verbose) {
-  DwarfLinker Linker(OutputFilename, Verbose);
+bool linkDwarf(StringRef OutputFilename, const DebugMap &DM,
+               const LinkOptions &Options) {
+  DwarfLinker Linker(OutputFilename, Options);
   return Linker.link(DM);
 }
 }

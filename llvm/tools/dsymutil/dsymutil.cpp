@@ -51,9 +51,12 @@ int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram StackPrinter(argc, argv);
   llvm::llvm_shutdown_obj Shutdown;
+  LinkOptions Options;
 
   llvm::cl::ParseCommandLineOptions(argc, argv, "llvm dsymutil\n");
   auto DebugMapPtrOrErr = parseDebugMap(InputFile, OsoPrependPath, Verbose);
+
+  Options.Verbose = Verbose;
 
   if (auto EC = DebugMapPtrOrErr.getError()) {
     llvm::errs() << "error: cannot parse the debug map for \"" << InputFile
@@ -77,5 +80,5 @@ int main(int argc, char **argv) {
     OutputFile = OutputFileOpt;
   }
 
-  return !linkDwarf(OutputFile, **DebugMapPtrOrErr, Verbose);
+  return !linkDwarf(OutputFile, **DebugMapPtrOrErr, Options);
 }
