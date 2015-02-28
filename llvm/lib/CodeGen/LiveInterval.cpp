@@ -567,13 +567,9 @@ void LiveRange::removeSegment(SlotIndex Start, SlotIndex End,
 /// Also remove the value# from value# list.
 void LiveRange::removeValNo(VNInfo *ValNo) {
   if (empty()) return;
-  iterator I = end();
-  iterator E = begin();
-  do {
-    --I;
-    if (I->valno == ValNo)
-      segments.erase(I);
-  } while (I != E);
+  segments.erase(std::remove_if(begin(), end(), [ValNo](const Segment &S) {
+    return S.valno == ValNo;
+  }), end());
   // Now that ValNo is dead, remove it.
   markValNoForDeletion(ValNo);
 }
