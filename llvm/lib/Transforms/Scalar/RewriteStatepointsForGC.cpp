@@ -737,9 +737,10 @@ static Value *findBasePointer(Value *I, DefiningValueMapTy &cache,
   // have reached conflict state.  The current version seems too conservative.
 
   bool progress = true;
-  size_t oldSize = 0;
   while (progress) {
-    oldSize = states.size();
+#ifndef NDEBUG
+    size_t oldSize = states.size();
+#endif
     progress = false;
     // We're only changing keys in this loop, thus safe to keep iterators
     for (auto Pair : states) {
