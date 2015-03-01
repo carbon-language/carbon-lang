@@ -179,7 +179,7 @@ namespace
 
         // Resolve the executable module.
         ModuleSP exe_module_sp;
-        ModuleSpec exe_module_spec(process_info.GetExecutableFile(), platform.GetSystemArchitecture ());
+        ModuleSpec exe_module_spec(process_info.GetExecutableFile(), process_info.GetArchitecture());
         FileSpecList executable_search_paths (Target::GetDefaultExecutableSearchPaths ());
         Error error = platform.ResolveExecutable(
             exe_module_spec,
@@ -1394,7 +1394,7 @@ NativeProcessLinux::AttachToInferior (lldb::pid_t pid, lldb_private::Error &erro
     // Resolve the executable module
     ModuleSP exe_module_sp;
     FileSpecList executable_search_paths (Target::GetDefaultExecutableSearchPaths());
-    ModuleSpec exe_module_spec(process_info.GetExecutableFile(), HostInfo::GetArchitecture());
+    ModuleSpec exe_module_spec(process_info.GetExecutableFile(), process_info.GetArchitecture());
     error = platform_sp->ResolveExecutable(exe_module_spec, exe_module_sp,
                                            executable_search_paths.GetSize() ? &executable_search_paths : NULL);
     if (!error.Success())
