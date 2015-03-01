@@ -178,8 +178,38 @@ class Interference : public PBQPRAConstraint {
 private:
 
   typedef const PBQP::RegAlloc::AllowedRegVector* AllowedRegVecPtr;
-  typedef std::pair<AllowedRegVecPtr, AllowedRegVecPtr> IMatrixKey;
-  typedef DenseMap<IMatrixKey, PBQPRAGraph::MatrixPtr> IMatrixCache;
+  typedef std::pair<AllowedRegVecPtr, AllowedRegVecPtr> IKey;
+  typedef DenseMap<IKey, PBQPRAGraph::MatrixPtr> IMatrixCache;
+  typedef DenseSet<IKey> DisjointAllowedRegsCache;
+
+  bool haveDisjointAllowedRegs(const PBQPRAGraph &G, PBQPRAGraph::NodeId NId,
+                               PBQPRAGraph::NodeId MId,
+                               const DisjointAllowedRegsCache &D) const {
+    const auto *NRegs = &G.getNodeMetadata(NId).getAllowedRegs();
+    const auto *MRegs = &G.getNodeMetadata(MId).getAllowedRegs();
+
+    if (NRegs == MRegs)
+      return false;
+
+    if (NRegs < MRegs)
+      return D.count(IKey(NRegs, MRegs)) > 0;
+    else
+      return D.count(IKey(MRegs, NRegs)) > 0;
+  }
+
+  void setDisjointAllowedRegs(const PBQPRAGraph &G, PBQPRAGraph::NodeId NId,
+                              PBQPRAGraph::NodeId MId,
+                              DisjointAllowedRegsCache &D) {
+    const auto *NRegs = &G.getNodeMetadata(NId).getAllowedRegs();
+    const auto *MRegs = &G.getNodeMetadata(MId).getAllowedRegs();
+
+    assert(NRegs != MRegs && "AllowedRegs can not be disjoint with itself");
+
+    if (NRegs < MRegs)
+      D.insert(IKey(NRegs, MRegs));
+    else
+      D.insert(IKey(MRegs, NRegs));
+  }
 
   // Holds (Interval, CurrentSegmentID, and NodeId). The first two are required
   // for the fast interference graph construction algorithm. The last is there
@@ -247,6 +277,9 @@ public:
     // and uniquing them.
     IMatrixCache C;
 
+    // Cache known disjoint allowed registers pairs
+    DisjointAllowedRegsCache D;
+
     typedef std::set<IntervalInfo, decltype(&lowestEndPoint)> IntervalSet;
     typedef std::priority_queue<IntervalInfo, std::vector<IntervalInfo>,
                                 decltype(&lowestStartPoint)> IntervalQueue;
@@ -290,6 +323,11 @@ public:
       for (const auto &A : Active) {
         PBQP::GraphBase::NodeId MId = getNodeId(A);
 
+        // Do not add an edge when the nodes' allowed registers do not
+        // intersect: there is obviously no interference.
+        if (haveDisjointAllowedRegs(G, NId, MId, D))
+          continue;
+
         // Check that we haven't already added this edge
         // FIXME: findEdge is expensive in the worst case (O(max_clique(G))).
         //        It might be better to replace this with a local bit-matrix.
@@ -297,7 +335,8 @@ public:
           continue;
 
         // This is a new edge - add it to the graph.
-        createInterferenceEdge(G, NId, MId, C);
+        if (!createInterferenceEdge(G, NId, MId, C))
+          setDisjointAllowedRegs(G, NId, MId, D);
       }
 
       // Finally, add Cur to the Active set.
@@ -307,35 +346,48 @@ public:
 
 private:
 
-  void createInterferenceEdge(PBQPRAGraph &G, PBQPRAGraph::NodeId NId,
-                              PBQPRAGraph::NodeId MId, IMatrixCache &C) {
+  // Create an Interference edge and add it to the graph, unless it is
+  // a null matrix, meaning the nodes' allowed registers do not have any
+  // interference. This case occurs frequently between integer and floating
+  // point registers for example.
+  // return true iff both nodes interferes.
+  bool createInterferenceEdge(PBQPRAGraph &G,
+                              PBQPRAGraph::NodeId NId, PBQPRAGraph::NodeId MId,
+                              IMatrixCache &C) {
 
     const TargetRegisterInfo &TRI =
         *G.getMetadata().MF.getSubtarget().getRegisterInfo();
-
     const auto &NRegs = G.getNodeMetadata(NId).getAllowedRegs();
     const auto &MRegs = G.getNodeMetadata(MId).getAllowedRegs();
 
     // Try looking the edge costs up in the IMatrixCache first.
-    IMatrixKey K(&NRegs, &MRegs);
+    IKey K(&NRegs, &MRegs);
     IMatrixCache::iterator I = C.find(K);
     if (I != C.end()) {
       G.addEdgeBypassingCostAllocator(NId, MId, I->second);
-      return;
+      return true;
     }
 
     PBQPRAGraph::RawMatrix M(NRegs.size() + 1, MRegs.size() + 1, 0);
+    bool NodesInterfere = false;
     for (unsigned I = 0; I != NRegs.size(); ++I) {
       unsigned PRegN = NRegs[I];
       for (unsigned J = 0; J != MRegs.size(); ++J) {
         unsigned PRegM = MRegs[J];
-        if (TRI.regsOverlap(PRegN, PRegM))
+        if (TRI.regsOverlap(PRegN, PRegM)) {
           M[I + 1][J + 1] = std::numeric_limits<PBQP::PBQPNum>::infinity();
+          NodesInterfere = true;
+        }
       }
     }
 
+    if (!NodesInterfere)
+      return false;
+
     PBQPRAGraph::EdgeId EId = G.addEdge(NId, MId, std::move(M));
     C[K] = G.getEdgeCostsPtr(EId);
+
+    return true;
   }
 };
 

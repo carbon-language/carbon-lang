@@ -544,8 +544,10 @@ private:
   public:
     SpillCostComparator(const Graph& G) : G(G) {}
     bool operator()(NodeId N1Id, NodeId N2Id) {
-      PBQPNum N1SC = G.getNodeCosts(N1Id)[0] / G.getNodeDegree(N1Id);
-      PBQPNum N2SC = G.getNodeCosts(N2Id)[0] / G.getNodeDegree(N2Id);
+      PBQPNum N1SC = G.getNodeCosts(N1Id)[0];
+      PBQPNum N2SC = G.getNodeCosts(N2Id)[0];
+      if (N1SC == N2SC)
+        return G.getNodeDegree(N1Id) < G.getNodeDegree(N2Id);
       return N1SC < N2SC;
     }
   private:
