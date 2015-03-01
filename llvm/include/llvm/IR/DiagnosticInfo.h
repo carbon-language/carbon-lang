@@ -20,7 +20,7 @@
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Casting.h"
-#include <utility>
+#include <functional>
 
 namespace llvm {
 
