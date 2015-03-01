@@ -647,11 +647,19 @@ CGDebugInfo::getOrCreateRecordFwdDecl(const RecordType *Ty,
   unsigned Line = getLineNumber(RD->getLocation());
   StringRef RDName = getClassName(RD);
 
+  uint64_t Size = 0;
+  uint64_t Align = 0;
+
+  const RecordDecl *D = RD->getDefinition();
+  if (D && D->isCompleteDefinition()) {
+    Size = CGM.getContext().getTypeSize(Ty);
+    Align = CGM.getContext().getTypeAlign(Ty);
+  }
 
   // Create the type.
   SmallString<256> FullName = getUniqueTagTypeName(Ty, CGM, TheCU);
   llvm::DICompositeType RetTy = DBuilder.createReplaceableCompositeType(
-      getTagForRecord(RD), RDName, Ctx, DefUnit, Line, 0, 0, 0,
+      getTagForRecord(RD), RDName, Ctx, DefUnit, Line, 0, Size, Align,
       llvm::DIDescriptor::FlagFwdDecl, FullName);
   ReplaceMap.emplace_back(
       std::piecewise_construct, std::make_tuple(Ty),

@@ -99,3 +99,11 @@ template <>
 struct k<int>;
 template struct k<int>;
 // CHECK-NOT: ; [ DW_TAG_structure_type ] [k<int>]
+
+template <typename T>
+struct l {
+  int x;
+};
+extern template class l<int>;
+l<int> li;
+// CHECK: [ DW_TAG_structure_type ] [l<int>] {{.*}}size {{[^0]}}
