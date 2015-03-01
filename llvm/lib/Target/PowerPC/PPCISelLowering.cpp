@@ -2443,27 +2443,16 @@ bool llvm::CC_PPC32_SVR4_Custom_AlignFPArgRegs(unsigned &ValNo, MVT &ValVT,
   return false;
 }
 
-/// GetFPR - Get the set of FP registers that should be allocated for arguments,
+/// FPR - The set of FP registers that should be allocated for arguments,
 /// on Darwin.
-static const MCPhysReg *GetFPR() {
-  static const MCPhysReg FPR[] = {
-    PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
-    PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
-  };
+static const MCPhysReg FPR[] = {PPC::F1,  PPC::F2,  PPC::F3, PPC::F4, PPC::F5,
+                                PPC::F6,  PPC::F7,  PPC::F8, PPC::F9, PPC::F10,
+                                PPC::F11, PPC::F12, PPC::F13};
 
-  return FPR;
-}
-
-/// GetQFPR - Get the set of QPX registers that should be allocated for
-/// arguments.
-static const MCPhysReg *GetQFPR() {
-  static const MCPhysReg QFPR[] = {
-    PPC::QF1, PPC::QF2, PPC::QF3, PPC::QF4, PPC::QF5, PPC::QF6, PPC::QF7,
-    PPC::QF8, PPC::QF9, PPC::QF10, PPC::QF11, PPC::QF12, PPC::QF13
-  };
-
-  return QFPR;
-}
+/// QFPR - The set of QPX registers that should be allocated for arguments.
+static const MCPhysReg QFPR[] = {
+    PPC::QF1, PPC::QF2, PPC::QF3,  PPC::QF4,  PPC::QF5,  PPC::QF6, PPC::QF7,
+    PPC::QF8, PPC::QF9, PPC::QF10, PPC::QF11, PPC::QF12, PPC::QF13};
 
 /// CalculateStackSlotSize - Calculates the size reserved for this argument on
 /// the stack.
@@ -2887,9 +2876,6 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
     PPC::X3, PPC::X4, PPC::X5, PPC::X6,
     PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
-
-  static const MCPhysReg *FPR = GetFPR();
-
   static const MCPhysReg VR[] = {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
@@ -2898,8 +2884,6 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
     PPC::VSH2, PPC::VSH3, PPC::VSH4, PPC::VSH5, PPC::VSH6, PPC::VSH7, PPC::VSH8,
     PPC::VSH9, PPC::VSH10, PPC::VSH11, PPC::VSH12, PPC::VSH13
   };
-
-  static const MCPhysReg *QFPR = GetQFPR();
 
   const unsigned Num_GPR_Regs = array_lengthof(GPR);
   const unsigned Num_FPR_Regs = 13;
@@ -3298,9 +3282,6 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
     PPC::X3, PPC::X4, PPC::X5, PPC::X6,
     PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
-
-  static const MCPhysReg *FPR = GetFPR();
-
   static const MCPhysReg VR[] = {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
@@ -4589,8 +4570,6 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     PPC::X3, PPC::X4, PPC::X5, PPC::X6,
     PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
-  static const MCPhysReg *FPR = GetFPR();
-
   static const MCPhysReg VR[] = {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
@@ -4599,8 +4578,6 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     PPC::VSH2, PPC::VSH3, PPC::VSH4, PPC::VSH5, PPC::VSH6, PPC::VSH7, PPC::VSH8,
     PPC::VSH9, PPC::VSH10, PPC::VSH11, PPC::VSH12, PPC::VSH13
   };
-
-  static const MCPhysReg *QFPR = GetQFPR();
 
   const unsigned NumGPRs = array_lengthof(GPR);
   const unsigned NumFPRs = 13;
@@ -5287,8 +5264,6 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
     PPC::X3, PPC::X4, PPC::X5, PPC::X6,
     PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
-  static const MCPhysReg *FPR = GetFPR();
-
   static const MCPhysReg VR[] = {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
@@ -6425,7 +6400,7 @@ static SDValue BuildSplatI(int Val, unsigned SplatSize, EVT VT,
                              SelectionDAG &DAG, SDLoc dl) {
   assert(Val >= -16 && Val <= 15 && "vsplti is out of range!");
 
-  static const EVT VTys[] = { // canonical VT to use for each size.
+  static const MVT VTys[] = { // canonical VT to use for each size.
     MVT::v16i8, MVT::v8i16, MVT::Other, MVT::v4i32
   };
 

@@ -583,10 +583,7 @@ unsigned SIInstrInfo::calculateLDSSpillAddress(MachineBasicBlock &MBB,
       unsigned TIDIGZReg = TRI->getPreloadedValue(*MF, SIRegisterInfo::TIDIG_Z);
       unsigned InputPtrReg =
           TRI->getPreloadedValue(*MF, SIRegisterInfo::INPUT_PTR);
-      static const unsigned TIDIGRegs[3] = {
-        TIDIGXReg, TIDIGYReg, TIDIGZReg
-      };
-      for (unsigned Reg : TIDIGRegs) {
+      for (unsigned Reg : {TIDIGXReg, TIDIGYReg, TIDIGZReg}) {
         if (!Entry.isLiveIn(Reg))
           Entry.addLiveIn(Reg);
       }

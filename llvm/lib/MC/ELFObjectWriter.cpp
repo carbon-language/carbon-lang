@@ -1186,7 +1186,7 @@ getUncompressedData(MCAsmLayout &Layout,
 static bool
 prependCompressionHeader(uint64_t Size,
                          SmallVectorImpl<char> &CompressedContents) {
-  static const StringRef Magic = "ZLIB";
+  const StringRef Magic = "ZLIB";
   if (Size <= Magic.size() + sizeof(Size) + CompressedContents.size())
     return false;
   if (sys::IsLittleEndianHost)
