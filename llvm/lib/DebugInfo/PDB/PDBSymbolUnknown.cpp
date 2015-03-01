@@ -20,7 +20,4 @@ PDBSymbolUnknown::PDBSymbolUnknown(const IPDBSession &PDBSession,
                                    std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
-void PDBSymbolUnknown::dump(raw_ostream &OS, int Indent,
-                            PDBSymDumper &Dumper) const {
-  Dumper.dump(*this, OS, Indent);
-}
+void PDBSymbolUnknown::dump(PDBSymDumper &Dumper) const { Dumper.dump(*this); }

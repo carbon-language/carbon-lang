@@ -26,20 +26,15 @@ class ClassDefinitionDumper : public PDBSymDumper {
 public:
   ClassDefinitionDumper(LinePrinter &P);
 
-  void start(const PDBSymbolTypeUDT &Exe, raw_ostream &OS, int Indent);
+  void start(const PDBSymbolTypeUDT &Exe);
 
-  void dump(const PDBSymbolTypeBaseClass &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolData &Symbol, raw_ostream &OS, int Indent) override;
-  void dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolFunc &Symbol, raw_ostream &OS, int Indent) override;
-  void dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypeUDT &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypeVTable &Symbol, raw_ostream &OS,
-            int Indent) override;
+  void dump(const PDBSymbolTypeBaseClass &Symbol) override;
+  void dump(const PDBSymbolData &Symbol) override;
+  void dump(const PDBSymbolTypeEnum &Symbol) override;
+  void dump(const PDBSymbolFunc &Symbol) override;
+  void dump(const PDBSymbolTypeTypedef &Symbol) override;
+  void dump(const PDBSymbolTypeUDT &Symbol) override;
+  void dump(const PDBSymbolTypeVTable &Symbol) override;
 
 private:
   LinePrinter &Printer;
@@ -60,8 +55,7 @@ private:
   };
   typedef std::unordered_map<int, SymbolGroup> SymbolGroupByAccess;
 
-  int dumpAccessGroup(PDB_MemberAccess Access, const SymbolGroup &Group,
-                      raw_ostream &OS, int Indent);
+  int dumpAccessGroup(PDB_MemberAccess Access, const SymbolGroup &Group);
 };
 }
 

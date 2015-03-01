@@ -25,7 +25,7 @@ public:
 
   DECLARE_PDB_SYMBOL_CONCRETE_TYPE(PDB_SymType::Thunk)
 
-  void dump(raw_ostream &OS, int Indent, PDBSymDumper &Dumper) const override;
+  void dump(PDBSymDumper &Dumper) const override;
 
   FORWARD_SYMBOL_METHOD(getAccess)
   FORWARD_SYMBOL_METHOD(getAddressOffset)

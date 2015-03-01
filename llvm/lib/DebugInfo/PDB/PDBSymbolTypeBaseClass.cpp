@@ -20,7 +20,6 @@ PDBSymbolTypeBaseClass::PDBSymbolTypeBaseClass(
     const IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
-void PDBSymbolTypeBaseClass::dump(raw_ostream &OS, int Indent,
-                                  PDBSymDumper &Dumper) const {
-  Dumper.dump(*this, OS, Indent);
+void PDBSymbolTypeBaseClass::dump(PDBSymDumper &Dumper) const {
+  Dumper.dump(*this);
 }

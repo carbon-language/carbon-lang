@@ -26,7 +26,6 @@ std::string PDBSymbolCompilandEnv::getValue() const {
   return std::string();
 }
 
-void PDBSymbolCompilandEnv::dump(raw_ostream &OS, int Indent,
-                                 PDBSymDumper &Dumper) const {
-  Dumper.dump(*this, OS, Indent);
+void PDBSymbolCompilandEnv::dump(PDBSymDumper &Dumper) const {
+  Dumper.dump(*this);
 }

@@ -31,15 +31,14 @@ using namespace llvm;
 ClassDefinitionDumper::ClassDefinitionDumper(LinePrinter &P)
     : PDBSymDumper(true), Printer(P) {}
 
-void ClassDefinitionDumper::start(const PDBSymbolTypeUDT &Class,
-                                  raw_ostream &OS, int Indent) {
+void ClassDefinitionDumper::start(const PDBSymbolTypeUDT &Class) {
   std::string Name = Class.getName();
   WithColor(Printer, PDB_ColorItem::Keyword).get() << "class ";
   WithColor(Printer, PDB_ColorItem::Type).get() << Class.getName();
   Printer << " {";
   auto Children = Class.findAllChildren();
   if (Children->getChildCount() == 0) {
-    OS << "}";
+    Printer << "}";
     return;
   }
 
@@ -78,22 +77,20 @@ void ClassDefinitionDumper::start(const PDBSymbolTypeUDT &Class,
   }
 
   int Count = 0;
-  Count += dumpAccessGroup((PDB_MemberAccess)0, Groups[0], OS, Indent);
+  Count += dumpAccessGroup((PDB_MemberAccess)0, Groups[0]);
   Count += dumpAccessGroup(PDB_MemberAccess::Public,
-                           Groups[(int)PDB_MemberAccess::Public], OS, Indent);
-  Count +=
-      dumpAccessGroup(PDB_MemberAccess::Protected,
-                      Groups[(int)PDB_MemberAccess::Protected], OS, Indent);
+                           Groups[(int)PDB_MemberAccess::Public]);
+  Count += dumpAccessGroup(PDB_MemberAccess::Protected,
+                           Groups[(int)PDB_MemberAccess::Protected]);
   Count += dumpAccessGroup(PDB_MemberAccess::Private,
-                           Groups[(int)PDB_MemberAccess::Private], OS, Indent);
+                           Groups[(int)PDB_MemberAccess::Private]);
   if (Count > 0)
     Printer.NewLine();
-  OS << "}";
+  Printer << "}";
 }
 
 int ClassDefinitionDumper::dumpAccessGroup(PDB_MemberAccess Access,
-                                           const SymbolGroup &Group,
-                                           raw_ostream &OS, int Indent) {
+                                           const SymbolGroup &Group) {
   if (Group.Functions.empty() && Group.Data.empty() && Group.Unknown.empty())
     return 0;
 
@@ -115,46 +112,41 @@ int ClassDefinitionDumper::dumpAccessGroup(PDB_MemberAccess Access,
   for (auto iter = Group.Functions.begin(), end = Group.Functions.end();
        iter != end; ++iter) {
     ++Count;
-    (*iter)->dump(OS, Indent + 2, *this);
+    (*iter)->dump(*this);
   }
   for (auto iter = Group.Data.begin(), end = Group.Data.end(); iter != end;
        ++iter) {
     ++Count;
-    (*iter)->dump(OS, Indent + 2, *this);
+    (*iter)->dump(*this);
   }
   for (auto iter = Group.Unknown.begin(), end = Group.Unknown.end();
        iter != end; ++iter) {
     ++Count;
-    (*iter)->dump(OS, Indent + 2, *this);
+    (*iter)->dump(*this);
   }
   Printer.Unindent();
   return Count;
 }
 
-void ClassDefinitionDumper::dump(const PDBSymbolTypeBaseClass &Symbol,
-                                 raw_ostream &OS, int Indent) {}
+void ClassDefinitionDumper::dump(const PDBSymbolTypeBaseClass &Symbol) {}
 
-void ClassDefinitionDumper::dump(const PDBSymbolData &Symbol, raw_ostream &OS,
-                                 int Indent) {
+void ClassDefinitionDumper::dump(const PDBSymbolData &Symbol) {
   VariableDumper Dumper(Printer);
-  Dumper.start(Symbol, OS, Indent);
+  Dumper.start(Symbol);
 }
 
-void ClassDefinitionDumper::dump(const PDBSymbolFunc &Symbol, raw_ostream &OS,
-                                 int Indent) {
+void ClassDefinitionDumper::dump(const PDBSymbolFunc &Symbol) {
   if (Printer.IsSymbolExcluded(Symbol.getName()))
     return;
 
   Printer.NewLine();
   FunctionDumper Dumper(Printer);
-  Dumper.start(Symbol, FunctionDumper::PointerType::None, OS, Indent);
+  Dumper.start(Symbol, FunctionDumper::PointerType::None);
 }
 
-void ClassDefinitionDumper::dump(const PDBSymbolTypeVTable &Symbol,
-                                 raw_ostream &OS, int Indent) {}
+void ClassDefinitionDumper::dump(const PDBSymbolTypeVTable &Symbol) {}
 
-void ClassDefinitionDumper::dump(const PDBSymbolTypeEnum &Symbol,
-                                 raw_ostream &OS, int Indent) {
+void ClassDefinitionDumper::dump(const PDBSymbolTypeEnum &Symbol) {
   if (Printer.IsTypeExcluded(Symbol.getName()))
     return;
 
@@ -163,15 +155,13 @@ void ClassDefinitionDumper::dump(const PDBSymbolTypeEnum &Symbol,
   WithColor(Printer, PDB_ColorItem::Type).get() << Symbol.getName();
 }
 
-void ClassDefinitionDumper::dump(const PDBSymbolTypeTypedef &Symbol,
-                                 raw_ostream &OS, int Indent) {
+void ClassDefinitionDumper::dump(const PDBSymbolTypeTypedef &Symbol) {
   if (Printer.IsTypeExcluded(Symbol.getName()))
     return;
 
   Printer.NewLine();
   TypedefDumper Dumper(Printer);
-  Dumper.start(Symbol, OS, Indent);
+  Dumper.start(Symbol);
 }
 
-void ClassDefinitionDumper::dump(const PDBSymbolTypeUDT &Symbol,
-                                 raw_ostream &OS, int Indent) {}
+void ClassDefinitionDumper::dump(const PDBSymbolTypeUDT &Symbol) {}

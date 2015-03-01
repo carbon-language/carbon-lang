@@ -20,7 +20,7 @@ class BuiltinDumper : public PDBSymDumper {
 public:
   BuiltinDumper(LinePrinter &P);
 
-  void start(const PDBSymbolTypeBuiltin &Symbol, llvm::raw_ostream &OS);
+  void start(const PDBSymbolTypeBuiltin &Symbol);
 
 private:
   LinePrinter &Printer;

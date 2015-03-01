@@ -150,7 +150,7 @@ static void dumpInput(StringRef Path) {
     auto Compilands = GlobalScope->findAllChildren<PDBSymbolCompiland>();
     CompilandDumper Dumper(Printer);
     while (auto Compiland = Compilands->getNext())
-      Dumper.start(*Compiland, outs(), 2, false);
+      Dumper.start(*Compiland, false);
     Printer.Unindent();
   }
 
@@ -159,7 +159,7 @@ static void dumpInput(StringRef Path) {
     WithColor(Printer, PDB_ColorItem::SectionHeader).get() << "---TYPES---";
     Printer.Indent();
     TypeDumper Dumper(Printer, opts::ClassDefs);
-    Dumper.start(*GlobalScope, outs(), 2);
+    Dumper.start(*GlobalScope);
     Printer.Unindent();
   }
 
@@ -170,7 +170,7 @@ static void dumpInput(StringRef Path) {
     auto Compilands = GlobalScope->findAllChildren<PDBSymbolCompiland>();
     CompilandDumper Dumper(Printer);
     while (auto Compiland = Compilands->getNext())
-      Dumper.start(*Compiland, outs(), 2, true);
+      Dumper.start(*Compiland, true);
     Printer.Unindent();
   }
 
@@ -183,20 +183,20 @@ static void dumpInput(StringRef Path) {
       auto Functions = GlobalScope->findAllChildren<PDBSymbolFunc>();
       while (auto Function = Functions->getNext()) {
         Printer.NewLine();
-        Dumper.start(*Function, FunctionDumper::PointerType::None, outs(), 2);
+        Dumper.start(*Function, FunctionDumper::PointerType::None);
       }
     }
     {
       auto Vars = GlobalScope->findAllChildren<PDBSymbolData>();
       VariableDumper Dumper(Printer);
       while (auto Var = Vars->getNext())
-        Dumper.start(*Var, outs(), 2);
+        Dumper.start(*Var);
     }
     {
       auto Thunks = GlobalScope->findAllChildren<PDBSymbolThunk>();
       CompilandDumper Dumper(Printer);
       while (auto Thunk = Thunks->getNext())
-        Dumper.dump(*Thunk, outs(), 2);
+        Dumper.dump(*Thunk);
     }
     Printer.Unindent();
   }

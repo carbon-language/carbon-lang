@@ -21,7 +21,6 @@ PDBSymbolTypeDimension::PDBSymbolTypeDimension(
     const IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
-void PDBSymbolTypeDimension::dump(raw_ostream &OS, int Indent,
-                                  PDBSymDumper &Dumper) const {
-  Dumper.dump(*this, OS, Indent);
+void PDBSymbolTypeDimension::dump(PDBSymDumper &Dumper) const {
+  Dumper.dump(*this);
 }

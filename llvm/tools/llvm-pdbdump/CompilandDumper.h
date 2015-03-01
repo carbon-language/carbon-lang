@@ -20,21 +20,16 @@ class CompilandDumper : public PDBSymDumper {
 public:
   CompilandDumper(LinePrinter &P);
 
-  void start(const PDBSymbolCompiland &Symbol, raw_ostream &OS, int Indent,
-             bool Children);
+  void start(const PDBSymbolCompiland &Symbol, bool Children);
 
-  void dump(const PDBSymbolCompilandDetails &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolCompilandEnv &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolData &Symbol, raw_ostream &OS, int Indent) override;
-  void dump(const PDBSymbolFunc &Symbol, raw_ostream &OS, int Indent) override;
-  void dump(const PDBSymbolLabel &Symbol, raw_ostream &OS, int Indent) override;
-  void dump(const PDBSymbolThunk &Symbol, raw_ostream &OS, int Indent) override;
-  void dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolUnknown &Symbol, raw_ostream &OS,
-            int Indent) override;
+  void dump(const PDBSymbolCompilandDetails &Symbol) override;
+  void dump(const PDBSymbolCompilandEnv &Symbol) override;
+  void dump(const PDBSymbolData &Symbol) override;
+  void dump(const PDBSymbolFunc &Symbol) override;
+  void dump(const PDBSymbolLabel &Symbol) override;
+  void dump(const PDBSymbolThunk &Symbol) override;
+  void dump(const PDBSymbolTypeTypedef &Symbol) override;
+  void dump(const PDBSymbolUnknown &Symbol) override;
 
 private:
   LinePrinter &Printer;

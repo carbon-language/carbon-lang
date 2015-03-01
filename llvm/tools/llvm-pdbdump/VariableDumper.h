@@ -21,26 +21,18 @@ class VariableDumper : public PDBSymDumper {
 public:
   VariableDumper(LinePrinter &P);
 
-  void start(const PDBSymbolData &Var, raw_ostream &OS, int Indent);
+  void start(const PDBSymbolData &Var);
 
-  void dump(const PDBSymbolTypeBuiltin &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypeFunctionSig &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypePointer &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypeUDT &Symbol, raw_ostream &OS,
-            int Indent) override;
+  void dump(const PDBSymbolTypeBuiltin &Symbol) override;
+  void dump(const PDBSymbolTypeEnum &Symbol) override;
+  void dump(const PDBSymbolTypeFunctionSig &Symbol) override;
+  void dump(const PDBSymbolTypePointer &Symbol) override;
+  void dump(const PDBSymbolTypeTypedef &Symbol) override;
+  void dump(const PDBSymbolTypeUDT &Symbol) override;
 
 private:
-  void dumpSymbolTypeAndName(const PDBSymbol &Type, StringRef Name,
-                             raw_ostream &OS);
-  bool tryDumpFunctionPointer(const PDBSymbol &Type, StringRef Name,
-                              raw_ostream &OS);
+  void dumpSymbolTypeAndName(const PDBSymbol &Type, StringRef Name);
+  bool tryDumpFunctionPointer(const PDBSymbol &Type, StringRef Name);
 
   LinePrinter &Printer;
 };

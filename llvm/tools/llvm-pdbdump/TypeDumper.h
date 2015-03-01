@@ -20,14 +20,11 @@ class TypeDumper : public PDBSymDumper {
 public:
   TypeDumper(LinePrinter &P, bool ClassDefs);
 
-  void start(const PDBSymbolExe &Exe, raw_ostream &OS, int Indent);
+  void start(const PDBSymbolExe &Exe);
 
-  void dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypeUDT &Symbol, raw_ostream &OS,
-            int Indent) override;
+  void dump(const PDBSymbolTypeEnum &Symbol) override;
+  void dump(const PDBSymbolTypeTypedef &Symbol) override;
+  void dump(const PDBSymbolTypeUDT &Symbol) override;
 
 private:
   LinePrinter &Printer;

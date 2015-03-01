@@ -26,32 +26,27 @@ using namespace llvm;
 
 TypedefDumper::TypedefDumper(LinePrinter &P) : PDBSymDumper(true), Printer(P) {}
 
-void TypedefDumper::start(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
-                          int Indent) {
+void TypedefDumper::start(const PDBSymbolTypeTypedef &Symbol) {
   WithColor(Printer, PDB_ColorItem::Keyword).get() << "typedef ";
   uint32_t TargetId = Symbol.getTypeId();
   if (auto TypeSymbol = Symbol.getSession().getSymbolById(TargetId))
-    TypeSymbol->dump(OS, 0, *this);
+    TypeSymbol->dump(*this);
   WithColor(Printer, PDB_ColorItem::Type).get() << " " << Symbol.getName();
 }
 
-void TypedefDumper::dump(const PDBSymbolTypeArray &Symbol, raw_ostream &OS,
-                         int Indent) {}
+void TypedefDumper::dump(const PDBSymbolTypeArray &Symbol) {}
 
-void TypedefDumper::dump(const PDBSymbolTypeBuiltin &Symbol, raw_ostream &OS,
-                         int Indent) {
+void TypedefDumper::dump(const PDBSymbolTypeBuiltin &Symbol) {
   BuiltinDumper Dumper(Printer);
-  Dumper.start(Symbol, OS);
+  Dumper.start(Symbol);
 }
 
-void TypedefDumper::dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
-                         int Indent) {
+void TypedefDumper::dump(const PDBSymbolTypeEnum &Symbol) {
   WithColor(Printer, PDB_ColorItem::Keyword).get() << "enum ";
   WithColor(Printer, PDB_ColorItem::Type).get() << " " << Symbol.getName();
 }
 
-void TypedefDumper::dump(const PDBSymbolTypePointer &Symbol, raw_ostream &OS,
-                         int Indent) {
+void TypedefDumper::dump(const PDBSymbolTypePointer &Symbol) {
   if (Symbol.isConstType())
     WithColor(Printer, PDB_ColorItem::Keyword).get() << "const ";
   if (Symbol.isVolatileType())
@@ -65,21 +60,19 @@ void TypedefDumper::dump(const PDBSymbolTypePointer &Symbol, raw_ostream &OS,
     if (Symbol.isReference())
       Pointer = FunctionDumper::PointerType::Reference;
     FunctionDumper NestedDumper(Printer);
-    NestedDumper.start(*FuncSig, nullptr, Pointer, OS);
+    NestedDumper.start(*FuncSig, nullptr, Pointer);
   } else {
-    PointeeType->dump(OS, Indent, *this);
-    OS << ((Symbol.isReference()) ? "&" : "*");
+    PointeeType->dump(*this);
+    Printer << ((Symbol.isReference()) ? "&" : "*");
   }
 }
 
-void TypedefDumper::dump(const PDBSymbolTypeFunctionSig &Symbol,
-                         raw_ostream &OS, int Indent) {
+void TypedefDumper::dump(const PDBSymbolTypeFunctionSig &Symbol) {
   FunctionDumper Dumper(Printer);
-  Dumper.start(Symbol, nullptr, FunctionDumper::PointerType::None, OS);
+  Dumper.start(Symbol, nullptr, FunctionDumper::PointerType::None);
 }
 
-void TypedefDumper::dump(const PDBSymbolTypeUDT &Symbol, raw_ostream &OS,
-                         int Indent) {
+void TypedefDumper::dump(const PDBSymbolTypeUDT &Symbol) {
   WithColor(Printer, PDB_ColorItem::Keyword).get() << "class ";
   WithColor(Printer, PDB_ColorItem::Type).get() << " " << Symbol.getName();
 }

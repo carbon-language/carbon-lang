@@ -83,7 +83,6 @@ std::unique_ptr<PDBSymbol> PDBSymbolTypeFunctionSig::getClassParent() const {
   return Session.getSymbolById(ClassId);
 }
 
-void PDBSymbolTypeFunctionSig::dump(raw_ostream &OS, int Indent,
-                                    PDBSymDumper &Dumper) const {
-  Dumper.dump(*this, OS, Indent);
+void PDBSymbolTypeFunctionSig::dump(PDBSymDumper &Dumper) const {
+  Dumper.dump(*this);
 }

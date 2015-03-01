@@ -22,7 +22,7 @@ public:
   PDBSymbolFunc(const IPDBSession &PDBSession,
                 std::unique_ptr<IPDBRawSymbol> FuncSymbol);
 
-  void dump(raw_ostream &OS, int Indent, PDBSymDumper &Dumper) const override;
+  void dump(PDBSymDumper &Dumper) const override;
 
   std::unique_ptr<PDBSymbolTypeFunctionSig> getSignature() const;
   std::unique_ptr<PDBSymbolTypeUDT> getClassParent() const;

@@ -24,7 +24,6 @@ std::unique_ptr<PDBSymbol> PDBSymbolTypePointer::getPointeeType() const {
   return Session.getSymbolById(getTypeId());
 }
 
-void PDBSymbolTypePointer::dump(raw_ostream &OS, int Indent,
-                                PDBSymDumper &Dumper) const {
-  Dumper.dump(*this, OS, Indent);
+void PDBSymbolTypePointer::dump(PDBSymDumper &Dumper) const {
+  Dumper.dump(*this);
 }

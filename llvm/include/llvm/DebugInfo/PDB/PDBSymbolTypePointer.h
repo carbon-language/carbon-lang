@@ -26,7 +26,7 @@ public:
 
   std::unique_ptr<PDBSymbol> getPointeeType() const;
 
-  void dump(raw_ostream &OS, int Indent, PDBSymDumper &Dumper) const override;
+  void dump(PDBSymDumper &Dumper) const override;
 
   FORWARD_SYMBOL_METHOD(isConstType)
   FORWARD_SYMBOL_METHOD(getLength)

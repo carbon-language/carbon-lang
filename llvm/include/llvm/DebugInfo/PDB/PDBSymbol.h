@@ -53,8 +53,7 @@ public:
   /// call dump() on the underlying RawSymbol, which allows us to discover
   /// unknown properties, but individual implementations of PDBSymbol may
   /// override the behavior to only dump known fields.
-  virtual void dump(raw_ostream &OS, int Indent,
-                    PDBSymDumper &Dumper) const = 0;
+  virtual void dump(PDBSymDumper &Dumper) const = 0;
   void defaultDump(raw_ostream &OS, int Indent) const;
 
   PDB_SymType getSymTag() const;

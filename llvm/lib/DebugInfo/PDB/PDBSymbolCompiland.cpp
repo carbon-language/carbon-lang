@@ -19,7 +19,6 @@ PDBSymbolCompiland::PDBSymbolCompiland(const IPDBSession &PDBSession,
                                        std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
-void PDBSymbolCompiland::dump(raw_ostream &OS, int Indent,
-                              PDBSymDumper &Dumper) const {
-  Dumper.dump(*this, OS, Indent);
+void PDBSymbolCompiland::dump(PDBSymDumper &Dumper) const {
+  Dumper.dump(*this);
 }

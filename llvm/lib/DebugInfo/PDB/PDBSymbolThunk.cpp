@@ -19,7 +19,4 @@ PDBSymbolThunk::PDBSymbolThunk(const IPDBSession &PDBSession,
                                std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
-void PDBSymbolThunk::dump(raw_ostream &OS, int Indent,
-                          PDBSymDumper &Dumper) const {
-  Dumper.dump(*this, OS, Indent);
-}
+void PDBSymbolThunk::dump(PDBSymDumper &Dumper) const { Dumper.dump(*this); }

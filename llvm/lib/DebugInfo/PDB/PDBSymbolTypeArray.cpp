@@ -24,7 +24,6 @@ std::unique_ptr<PDBSymbol> PDBSymbolTypeArray::getElementType() const {
   return Session.getSymbolById(getTypeId());
 }
 
-void PDBSymbolTypeArray::dump(raw_ostream &OS, int Indent,
-                              PDBSymDumper &Dumper) const {
-  Dumper.dump(*this, OS, Indent);
+void PDBSymbolTypeArray::dump(PDBSymDumper &Dumper) const {
+  Dumper.dump(*this);
 }

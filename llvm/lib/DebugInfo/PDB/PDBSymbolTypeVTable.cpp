@@ -19,7 +19,6 @@ PDBSymbolTypeVTable::PDBSymbolTypeVTable(const IPDBSession &PDBSession,
                                          std::unique_ptr<IPDBRawSymbol> Symbol)
     : PDBSymbol(PDBSession, std::move(Symbol)) {}
 
-void PDBSymbolTypeVTable::dump(raw_ostream &OS, int Indent,
-                               PDBSymDumper &Dumper) const {
-  Dumper.dump(*this, OS, Indent);
+void PDBSymbolTypeVTable::dump(PDBSymDumper &Dumper) const {
+  Dumper.dump(*this);
 }

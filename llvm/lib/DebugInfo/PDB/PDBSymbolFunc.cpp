@@ -98,7 +98,4 @@ std::unique_ptr<PDBSymbolTypeUDT> PDBSymbolFunc::getClassParent() const {
   return Session.getConcreteSymbolById<PDBSymbolTypeUDT>(getClassParentId());
 }
 
-void PDBSymbolFunc::dump(raw_ostream &OS, int Indent,
-                         PDBSymDumper &Dumper) const {
-  Dumper.dump(*this, OS, Indent);
-}
+void PDBSymbolFunc::dump(PDBSymDumper &Dumper) const { Dumper.dump(*this); }

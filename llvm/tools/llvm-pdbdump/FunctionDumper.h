@@ -23,24 +23,16 @@ public:
   enum class PointerType { None, Pointer, Reference };
 
   void start(const PDBSymbolTypeFunctionSig &Symbol, const char *Name,
-             PointerType Pointer, raw_ostream &OS);
-  void start(const PDBSymbolFunc &Symbol, PointerType Pointer, raw_ostream &OS,
-             int Indent);
+             PointerType Pointer);
+  void start(const PDBSymbolFunc &Symbol, PointerType Pointer);
 
-  void dump(const PDBSymbolTypeArray &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypeBuiltin &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypeFunctionArg &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypePointer &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
-            int Indent) override;
-  void dump(const PDBSymbolTypeUDT &Symbol, raw_ostream &OS,
-            int Indent) override;
+  void dump(const PDBSymbolTypeArray &Symbol) override;
+  void dump(const PDBSymbolTypeBuiltin &Symbol) override;
+  void dump(const PDBSymbolTypeEnum &Symbol) override;
+  void dump(const PDBSymbolTypeFunctionArg &Symbol) override;
+  void dump(const PDBSymbolTypePointer &Symbol) override;
+  void dump(const PDBSymbolTypeTypedef &Symbol) override;
+  void dump(const PDBSymbolTypeUDT &Symbol) override;
 
 private:
   LinePrinter &Printer;
