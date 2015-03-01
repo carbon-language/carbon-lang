@@ -20,7 +20,6 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/CommandFlags.h"
-#include "llvm/IR/AutoUpgrade.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
@@ -274,11 +273,11 @@ static bool shouldSkip(uint32_t Symflags) {
 }
 
 static void diagnosticHandler(const DiagnosticInfo &DI, void *Context) {
-  if (const auto *BDI = dyn_cast<BitcodeDiagnosticInfo>(&DI)) {
-    std::error_code EC = BDI->getError();
-    if (EC == BitcodeError::InvalidBitcodeSignature)
-      return;
-  }
+  assert(DI.getSeverity() == DS_Error && "Only expecting errors");
+  const auto &BDI = cast<BitcodeDiagnosticInfo>(DI);
+  std::error_code EC = BDI.getError();
+  if (EC == BitcodeError::InvalidBitcodeSignature)
+    return;
 
   std::string ErrStorage;
   {
@@ -286,21 +285,8 @@ static void diagnosticHandler(const DiagnosticInfo &DI, void *Context) {
     DiagnosticPrinterRawOStream DP(OS);
     DI.print(DP);
   }
-  ld_plugin_level Level;
-  switch (DI.getSeverity()) {
-  case DS_Error:
-    message(LDPL_FATAL, "LLVM gold plugin has failed to create LTO module: %s",
-            ErrStorage.c_str());
-    llvm_unreachable("Fatal doesn't return.");
-  case DS_Warning:
-    Level = LDPL_WARNING;
-    break;
-  case DS_Remark:
-  case DS_Note:
-    Level = LDPL_INFO;
-    break;
-  }
-  message(Level, "LLVM gold plugin: %s",  ErrStorage.c_str());
+  message(LDPL_FATAL, "LLVM gold plugin has failed to create LTO module: %s",
+          ErrStorage.c_str());
 }
 
 /// Called by gold to see whether this file is one that our plugin can handle.
@@ -575,7 +561,7 @@ static void freeSymName(ld_plugin_symbol &Sym) {
 
 static std::unique_ptr<Module>
 getModuleForFile(LLVMContext &Context, claimed_file &F,
-                 ld_plugin_input_file &Info, raw_fd_ostream *ApiFile,
+                 off_t Filesize, raw_fd_ostream *ApiFile,
                  StringSet<> &Internalize, StringSet<> &Maybe) {
 
   if (get_symbols(F.handle, F.syms.size(), &F.syms[0]) != LDPS_OK)
@@ -585,8 +571,7 @@ getModuleForFile(LLVMContext &Context, claimed_file &F,
   if (get_view(F.handle, &View) != LDPS_OK)
     message(LDPL_FATAL, "Failed to get a view of file");
 
-  MemoryBufferRef BufferRef(StringRef((const char *)View, Info.filesize),
-                            Info.name);
+  MemoryBufferRef BufferRef(StringRef((const char *)View, Filesize), "");
   ErrorOr<std::unique_ptr<object::IRObjectFile>> ObjOrErr =
       object::IRObjectFile::create(BufferRef, Context);
 
@@ -597,8 +582,6 @@ getModuleForFile(LLVMContext &Context, claimed_file &F,
   object::IRObjectFile &Obj = **ObjOrErr;
 
   Module &M = Obj.getModule();
-
-  UpgradeDebugInfo(M);
 
   SmallPtrSet<GlobalValue *, 8> Used;
   collectUsedGlobalVariables(M, Used, /*CompilerUsed*/ false);
@@ -809,8 +792,6 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
     return LDPS_OK;
 
   LLVMContext Context;
-  Context.setDiagnosticHandler(diagnosticHandler);
-
   std::unique_ptr<Module> Combined(new Module("ld-temp.o", Context));
   Linker L(Combined.get());
 
@@ -823,7 +804,8 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
     if (get_input_file(F.handle, &File) != LDPS_OK)
       message(LDPL_FATAL, "Failed to get file information");
     std::unique_ptr<Module> M =
-        getModuleForFile(Context, F, File, ApiFile, Internalize, Maybe);
+        getModuleForFile(Context, F, File.filesize, ApiFile,
+                         Internalize, Maybe);
     if (!options::triple.empty())
       M->setTargetTriple(options::triple.c_str());
     else if (M->getTargetTriple().empty()) {
