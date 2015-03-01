@@ -526,8 +526,10 @@ private:
         Tok->Type = TT_ObjCForIn;
       break;
     case tok::comma:
-      if (Contexts.back().FirstStartOfName)
+      if (Contexts.back().FirstStartOfName && Contexts.size() == 1) {
         Contexts.back().FirstStartOfName->PartOfMultiVariableDeclStmt = true;
+        Line.IsMultiVariableDeclStmt = true;
+      }
       if (Contexts.back().InCtorInitializer)
         Tok->Type = TT_CtorInitializerComma;
       if (Contexts.back().IsForEachMacro)
@@ -1671,15 +1673,19 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
                    TT_FunctionDeclarationName)))) &&
            (Left.Tok.isLiteral() ||
             (!Left.isOneOf(TT_PointerOrReference, tok::l_paren) &&
-             Style.PointerAlignment != FormatStyle::PAS_Left));
+             (Style.PointerAlignment != FormatStyle::PAS_Left ||
+              Line.IsMultiVariableDeclStmt)));
   if (Right.is(TT_FunctionTypeLParen) && Left.isNot(tok::l_paren) &&
       (!Left.is(TT_PointerOrReference) ||
-       Style.PointerAlignment != FormatStyle::PAS_Right))
+       (Style.PointerAlignment != FormatStyle::PAS_Right &&
+        !Line.IsMultiVariableDeclStmt)))
     return true;
   if (Left.is(TT_PointerOrReference))
     return Right.Tok.isLiteral() || Right.is(TT_BlockComment) ||
            (!Right.isOneOf(TT_PointerOrReference, tok::l_paren) &&
-            Style.PointerAlignment != FormatStyle::PAS_Right && Left.Previous &&
+            (Style.PointerAlignment != FormatStyle::PAS_Right &&
+             !Line.IsMultiVariableDeclStmt) &&
+            Left.Previous &&
             !Left.Previous->isOneOf(tok::l_paren, tok::coloncolon));
   if (Right.is(tok::star) && Left.is(tok::l_paren))
     return false;
@@ -2006,6 +2012,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return true;
   if (Right.is(TT_RangeBasedForLoopColon))
     return false;
+  if (Right.is(TT_PointerOrReference) && Line.IsMultiVariableDeclStmt)
+    return true;
   if (Left.isOneOf(TT_PointerOrReference, TT_TemplateCloser,
                    TT_UnaryOperator) ||
       Left.is(tok::kw_operator))
