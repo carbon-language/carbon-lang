@@ -19149,8 +19149,8 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
   //
   // FIXME: Should teach these routines about AVX vector widths.
   if (FloatDomain && VT.getSizeInBits() == 128) {
-    if (Mask.equals(0, 0) || Mask.equals(1, 1)) {
-      bool Lo = Mask.equals(0, 0);
+    if (Mask.equals({0, 0}) || Mask.equals({1, 1})) {
+      bool Lo = Mask.equals({0, 0});
       unsigned Shuffle;
       MVT ShuffleVT;
       // Check if we have SSE3 which will let us use MOVDDUP. That instruction
@@ -19179,8 +19179,8 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
       return true;
     }
     if (Subtarget->hasSSE3() &&
-        (Mask.equals(0, 0, 2, 2) || Mask.equals(1, 1, 3, 3))) {
-      bool Lo = Mask.equals(0, 0, 2, 2);
+        (Mask.equals({0, 0, 2, 2}) || Mask.equals({1, 1, 3, 3}))) {
+      bool Lo = Mask.equals({0, 0, 2, 2});
       unsigned Shuffle = Lo ? X86ISD::MOVSLDUP : X86ISD::MOVSHDUP;
       MVT ShuffleVT = MVT::v4f32;
       if (Depth == 1 && Root->getOpcode() == Shuffle)
@@ -19193,8 +19193,8 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
                     /*AddTo*/ true);
       return true;
     }
-    if (Mask.equals(0, 0, 1, 1) || Mask.equals(2, 2, 3, 3)) {
-      bool Lo = Mask.equals(0, 0, 1, 1);
+    if (Mask.equals({0, 0, 1, 1}) || Mask.equals({2, 2, 3, 3})) {
+      bool Lo = Mask.equals({0, 0, 1, 1});
       unsigned Shuffle = Lo ? X86ISD::UNPCKL : X86ISD::UNPCKH;
       MVT ShuffleVT = MVT::v4f32;
       if (Depth == 1 && Root->getOpcode() == Shuffle)
@@ -19213,11 +19213,11 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
   // variants as none of these have single-instruction variants that are
   // superior to the UNPCK formulation.
   if (!FloatDomain && VT.getSizeInBits() == 128 &&
-      (Mask.equals(0, 0, 1, 1, 2, 2, 3, 3) ||
-       Mask.equals(4, 4, 5, 5, 6, 6, 7, 7) ||
-       Mask.equals(0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7) ||
-       Mask.equals(8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15,
-                   15))) {
+      (Mask.equals({0, 0, 1, 1, 2, 2, 3, 3}) ||
+       Mask.equals({4, 4, 5, 5, 6, 6, 7, 7}) ||
+       Mask.equals({0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7}) ||
+       Mask.equals(
+           {8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15}))) {
     bool Lo = Mask[0] == 0;
     unsigned Shuffle = Lo ? X86ISD::UNPCKL : X86ISD::UNPCKH;
     if (Depth == 1 && Root->getOpcode() == Shuffle)
@@ -19706,7 +19706,7 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
     // See if this reduces to a PSHUFD which is no more expensive and can
     // combine with more operations. Note that it has to at least flip the
     // dwords as otherwise it would have been removed as a no-op.
-    if (Mask[0] == 2 && Mask[1] == 3 && Mask[2] == 0 && Mask[3] == 1) {
+    if (makeArrayRef(Mask).equals({2, 3, 0, 1})) {
       int DMask[] = {0, 1, 2, 3};
       int DOffset = N.getOpcode() == X86ISD::PSHUFLW ? 0 : 2;
       DMask[DOffset + 0] = DOffset + 1;
@@ -19745,12 +19745,8 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
         int MappedMask[8];
         for (int i = 0; i < 8; ++i)
           MappedMask[i] = 2 * DMask[WordMask[i] / 2] + WordMask[i] % 2;
-        const int UnpackLoMask[] = {0, 0, 1, 1, 2, 2, 3, 3};
-        const int UnpackHiMask[] = {4, 4, 5, 5, 6, 6, 7, 7};
-        if (std::equal(std::begin(MappedMask), std::end(MappedMask),
-                       std::begin(UnpackLoMask)) ||
-            std::equal(std::begin(MappedMask), std::end(MappedMask),
-                       std::begin(UnpackHiMask))) {
+        if (makeArrayRef(MappedMask).equals({0, 0, 1, 1, 2, 2, 3, 3}) ||
+            makeArrayRef(MappedMask).equals({4, 4, 5, 5, 6, 6, 7, 7})) {
           // We can replace all three shuffles with an unpack.
           V = DAG.getNode(ISD::BITCAST, DL, VT, D.getOperand(0));
           DCI.AddToWorklist(V.getNode());
