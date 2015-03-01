@@ -1,8 +1,8 @@
-; RUN: llc < %s -mtriple=x86_64-pc-unknown -mattr=+sse2 -mcpu=penryn | FileCheck %s
-; RUN: llc < %s -mtriple=i686-pc-unknown -mattr=+sse2 -mcpu=penryn | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-pc-unknown -mattr=+sse2 | FileCheck %s
+; RUN: llc < %s -mtriple=i686-pc-unknown -mattr=+sse2 | FileCheck %s
 
 ; PR19059
-; RUN: llc < %s -mtriple=i686-pc-unknown -mattr=+sse2 -mcpu=penryn | FileCheck -check-prefix=CHECK32 %s
+; RUN: llc < %s -mtriple=i686-pc-unknown -mattr=+sse2 | FileCheck -check-prefix=CHECK32 %s
 
 define i32 @isint_return(double %d) nounwind {
 ; CHECK-LABEL: isint_return:
