@@ -50,9 +50,13 @@ public:
   /// the UnicodeCharSet instance, and should not change. Array is validated by
   /// the constructor, so it makes sense to create as few UnicodeCharSet
   /// instances per each array of ranges, as possible.
+#ifdef NDEBUG
+  LLVM_CONSTEXPR UnicodeCharSet(CharRanges Ranges) : Ranges(Ranges) {}
+#else
   UnicodeCharSet(CharRanges Ranges) : Ranges(Ranges) {
     assert(rangesAreValid());
   }
+#endif
 
   /// \brief Returns true if the character set contains the Unicode code point
   /// \p C.
