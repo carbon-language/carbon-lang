@@ -142,6 +142,9 @@ void ClassDefinitionDumper::dump(const PDBSymbolData &Symbol, raw_ostream &OS,
 
 void ClassDefinitionDumper::dump(const PDBSymbolFunc &Symbol, raw_ostream &OS,
                                  int Indent) {
+  if (Printer.IsSymbolExcluded(Symbol.getName()))
+    return;
+
   Printer.NewLine();
   FunctionDumper Dumper(Printer);
   Dumper.start(Symbol, FunctionDumper::PointerType::None, OS, Indent);
@@ -152,6 +155,9 @@ void ClassDefinitionDumper::dump(const PDBSymbolTypeVTable &Symbol,
 
 void ClassDefinitionDumper::dump(const PDBSymbolTypeEnum &Symbol,
                                  raw_ostream &OS, int Indent) {
+  if (Printer.IsTypeExcluded(Symbol.getName()))
+    return;
+
   Printer.NewLine();
   WithColor(Printer, PDB_ColorItem::Keyword).get() << "enum ";
   WithColor(Printer, PDB_ColorItem::Type).get() << Symbol.getName();
@@ -159,6 +165,9 @@ void ClassDefinitionDumper::dump(const PDBSymbolTypeEnum &Symbol,
 
 void ClassDefinitionDumper::dump(const PDBSymbolTypeTypedef &Symbol,
                                  raw_ostream &OS, int Indent) {
+  if (Printer.IsTypeExcluded(Symbol.getName()))
+    return;
+
   Printer.NewLine();
   TypedefDumper Dumper(Printer);
   Dumper.start(Symbol, OS, Indent);

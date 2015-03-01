@@ -12,6 +12,9 @@
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Regex.h"
+
+#include <list>
 
 namespace llvm {
 
@@ -21,17 +24,34 @@ class LinePrinter {
 public:
   LinePrinter(int Indent, raw_ostream &Stream);
 
+  template <typename Iter> void SetTypeFilters(Iter Begin, Iter End) {
+    TypeFilters.assign(Begin, End);
+  }
+  template <typename Iter> void SetSymbolFilters(Iter Begin, Iter End) {
+    SymbolFilters.assign(Begin, End);
+  }
+  template <typename Iter> void SetCompilandFilters(Iter Begin, Iter End) {
+    CompilandFilters.assign(Begin, End);
+  }
+
   void Indent();
   void Unindent();
-
   void NewLine();
 
   raw_ostream &getStream() { return OS; }
+
+  bool IsTypeExcluded(llvm::StringRef TypeName);
+  bool IsSymbolExcluded(llvm::StringRef SymbolName);
+  bool IsCompilandExcluded(llvm::StringRef CompilandName);
 
 private:
   raw_ostream &OS;
   int IndentSpaces;
   int CurrentIndent;
+
+  std::list<Regex> CompilandFilters;
+  std::list<Regex> TypeFilters;
+  std::list<Regex> SymbolFilters;
 };
 
 template <class T>

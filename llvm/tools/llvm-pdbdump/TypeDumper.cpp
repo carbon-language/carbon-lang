@@ -22,9 +22,8 @@
 
 using namespace llvm;
 
-TypeDumper::TypeDumper(LinePrinter &P, bool Inline, bool ClassDefs)
-    : PDBSymDumper(true), Printer(P), InlineDump(Inline),
-      FullClassDefs(ClassDefs) {}
+TypeDumper::TypeDumper(LinePrinter &P, bool ClassDefs)
+    : PDBSymDumper(true), Printer(P), FullClassDefs(ClassDefs) {}
 
 void TypeDumper::start(const PDBSymbolExe &Exe, raw_ostream &OS, int Indent) {
   auto Enums = Exe.findAllChildren<PDBSymbolTypeEnum>();
@@ -59,9 +58,9 @@ void TypeDumper::dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
                       int Indent) {
   if (Symbol.getUnmodifiedTypeId() != 0)
     return;
-
-  if (!InlineDump)
-    Printer.NewLine();
+  if (Printer.IsTypeExcluded(Symbol.getName()))
+    return;
+  Printer.NewLine();
 
   WithColor(Printer, PDB_ColorItem::Keyword).get() << "enum ";
   WithColor(Printer, PDB_ColorItem::Identifier).get() << Symbol.getName();
@@ -69,9 +68,10 @@ void TypeDumper::dump(const PDBSymbolTypeEnum &Symbol, raw_ostream &OS,
 
 void TypeDumper::dump(const PDBSymbolTypeTypedef &Symbol, raw_ostream &OS,
                       int Indent) {
-  if (!InlineDump)
-    Printer.NewLine();
+  if (Printer.IsTypeExcluded(Symbol.getName()))
+    return;
 
+  Printer.NewLine();
   TypedefDumper Dumper(Printer);
   Dumper.start(Symbol, OS, Indent);
 }
@@ -80,8 +80,10 @@ void TypeDumper::dump(const PDBSymbolTypeUDT &Symbol, raw_ostream &OS,
                       int Indent) {
   if (Symbol.getUnmodifiedTypeId() != 0)
     return;
-  if (!InlineDump)
-    Printer.NewLine();
+  if (Printer.IsTypeExcluded(Symbol.getName()))
+    return;
+
+  Printer.NewLine();
 
   if (FullClassDefs) {
     ClassDefinitionDumper Dumper(Printer);

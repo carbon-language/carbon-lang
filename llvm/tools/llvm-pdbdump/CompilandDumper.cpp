@@ -47,6 +47,9 @@ void CompilandDumper::dump(const PDBSymbolCompilandEnv &Symbol, raw_ostream &OS,
 void CompilandDumper::start(const PDBSymbolCompiland &Symbol, raw_ostream &OS,
                             int Indent, bool Children) {
   std::string FullName = Symbol.getName();
+  if (Printer.IsCompilandExcluded(FullName))
+    return;
+
   Printer.NewLine();
   WithColor(Printer, PDB_ColorItem::Path).get() << FullName;
   if (!Children)
@@ -61,6 +64,9 @@ void CompilandDumper::start(const PDBSymbolCompiland &Symbol, raw_ostream &OS,
 
 void CompilandDumper::dump(const PDBSymbolData &Symbol, raw_ostream &OS,
                            int Indent) {
+  if (Printer.IsSymbolExcluded(Symbol.getName()))
+    return;
+
   Printer.NewLine();
 
   switch (auto LocType = Symbol.getLocationType()) {
@@ -86,6 +92,8 @@ void CompilandDumper::dump(const PDBSymbolFunc &Symbol, raw_ostream &OS,
                            int Indent) {
   if (Symbol.getLength() == 0)
     return;
+  if (Printer.IsSymbolExcluded(Symbol.getName()))
+    return;
 
   Printer.NewLine();
   FunctionDumper Dumper(Printer);
@@ -94,6 +102,9 @@ void CompilandDumper::dump(const PDBSymbolFunc &Symbol, raw_ostream &OS,
 
 void CompilandDumper::dump(const PDBSymbolLabel &Symbol, raw_ostream &OS,
                            int Indent) {
+  if (Printer.IsSymbolExcluded(Symbol.getName()))
+    return;
+
   Printer.NewLine();
   Printer << "label ";
   WithColor(Printer, PDB_ColorItem::Address).get()
@@ -103,6 +114,9 @@ void CompilandDumper::dump(const PDBSymbolLabel &Symbol, raw_ostream &OS,
 
 void CompilandDumper::dump(const PDBSymbolThunk &Symbol, raw_ostream &OS,
                            int Indent) {
+  if (Printer.IsSymbolExcluded(Symbol.getName()))
+    return;
+
   Printer.NewLine();
   Printer << "thunk ";
   PDB_ThunkOrdinal Ordinal = Symbol.getThunkOrdinal();

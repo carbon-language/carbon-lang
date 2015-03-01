@@ -1,0 +1,76 @@
+; RUN: llvm-pdbdump -symbols -globals -class-definitions -types %p/Inputs/FilterTest.pdb \
+; RUN:    | FileCheck --check-prefix=NO_FILTER %s
+; RUN: llvm-pdbdump -class-definitions -types -exclude-types="GlobalTypedef|NestedTypedef" \
+; RUN:    %p/Inputs/FilterTest.pdb | FileCheck --check-prefix=EXCLUDE_TYPEDEFS %s
+; RUN: llvm-pdbdump -class-definitions -types -exclude-types="GlobalEnum|NestedEnum" \
+; RUN:    %p/Inputs/FilterTest.pdb | FileCheck --check-prefix=EXCLUDE_ENUMS %s
+; RUN: llvm-pdbdump -class-definitions -types -symbols -globals \
+; RUN:    -exclude-symbols="MemberVar|GlobalVar" %p/Inputs/FilterTest.pdb | FileCheck \
+; RUN:    --check-prefix=EXCLUDE_VARS %s
+; RUN: llvm-pdbdump -types -class-definitions -exclude-types="FilterTestClass" \
+; RUN:    %p/Inputs/FilterTest.pdb | FileCheck  --check-prefix=EXCLUDE_WHOLE_CLASS %s
+; RUN: llvm-pdbdump -symbols -globals -exclude-compilands="FilterTest.obj"  \
+; RUN:    %p/Inputs/FilterTest.pdb | FileCheck  --check-prefix=EXCLUDE_COMPILAND %s
+
+; NO_FILTER: ---TYPES---
+; NO_FILTER: Enums:
+; NO_FILTER: enum GlobalEnum
+; NO_FILTER: Typedefs
+; NO_FILTER: typedef int GlobalTypedef
+; NO_FILTER: Classes:
+; NO_FILTER: class __vc_attributes
+; NO_FILTER: class FilterTestClass
+; NO_FILTER-DAG: typedef int NestedTypedef
+; NO_FILTER-DAG: enum NestedEnum
+; NO_FILTER-DAG: int IntMemberVar
+; NO_FILTER-DAG: double DoubleMemberVar
+; NO_FILTER: ---SYMBOLS---
+; NO_FILTER: Inputs\FilterTest.obj
+; NO_FILTER: int __cdecl main(int argc, char** argv)
+; NO_FILTER: ---GLOBALS---
+; NO_FILTER-DAG: double DoubleGlobalVar
+; NO_FILTER-DAG: int IntGlobalVar
+; NO_FILTER-DAG: GlobalEnum GlobalEnumVar
+
+; EXCLUDE_TYPEDEFS: ---TYPES---
+; EXCLUDE_TYPEDEFS: Enums:
+; EXCLUDE_TYPEDEFS: GlobalEnum
+; EXCLUDE_TYPEDEFS: Typedefs
+; EXCLUDE_TYPEDEFS-NOT: GlobalTypedef
+; EXCLUDE_TYPEDEFS: Classes
+; EXCLUDE_TYPEDEFS: class FilterTestClass
+; EXCLUDE_TYPEDEFS-NOT: NestedTypedef
+; EXCLUDE_TYPEDEFS: private:
+
+; EXCLUDE_ENUMS: ---TYPES---
+; EXCLUDE_ENUMS: Enums:
+; EXCLUDE_ENUMS-NOT: GlobalEnum
+; EXCLUDE_ENUMS: Typedefs
+; EXCLUDE_ENUMS: GlobalTypedef
+; EXCLUDE_ENUMS: Classes
+; EXCLUDE_ENUMS: class FilterTestClass
+; EXCLUDE_ENUMS-NOT: NestedEnum
+; EXCLUDE_ENUMS: private:
+
+; EXCLUDE_VARS: ---TYPES---
+; EXCLUDE_VARS: Classes:
+; EXCLUDE_VARS: class FilterTestClass
+; EXCLUDE_VARS: private:
+; EXCLUDE_VARS-NOT: IntMemberVar
+; EXCLUDE_VARS-NOT: DoubleMemberVar
+; EXCLUDE_VARS: ---GLOBALS---
+; EXCLUDE_VARS-NOT: DoubleGlobalVar
+; EXCLUDE_VARS-NOT: IntGlobalVar
+
+; EXCLUDE_WHOLE_CLASS: ---TYPES---
+; EXCLUDE_WHOLE_CLASS-NOT: class FilterTestClass
+; EXCLUDE_WHOLE_CLASS-NOT: typedef int NestedTypedef
+; EXCLUDE_WHOLE_CLASS-NOT: enum NestedEnum
+; EXCLUDE_WHOLE_CLASS-NOT: int IntMemberVar
+; EXCLUDE_WHOLE_CLASS-NOT: double DoubleMemberVar
+
+; EXCLUDE_COMPILAND: ---SYMBOLS---
+; EXCLUDE_COMPILAND-NOT: FilterTest.obj
+; EXCLUDE_COMPILAND-NOT: __cdecl main
+; EXCLUDE_COMPILAND: * Linker *
+; EXCLUDE_COMPILAND: ---GLOBALS---

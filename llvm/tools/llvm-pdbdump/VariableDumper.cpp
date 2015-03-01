@@ -32,6 +32,9 @@ VariableDumper::VariableDumper(LinePrinter &P)
 
 void VariableDumper::start(const PDBSymbolData &Var, raw_ostream &OS,
                            int Indent) {
+  if (Printer.IsSymbolExcluded(Var.getName()))
+    return;
+
   Printer.NewLine();
   Printer << "data ";
 

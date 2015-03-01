@@ -63,6 +63,19 @@ cl::opt<bool> Globals("globals", cl::desc("Dump global symbols"));
 cl::opt<bool> Types("types", cl::desc("Display types"));
 cl::opt<bool> ClassDefs("class-definitions",
                         cl::desc("Display full class definitions"));
+
+cl::list<std::string>
+    ExcludeTypes("exclude-types",
+                 cl::desc("Exclude types by regular expression"),
+                 cl::ZeroOrMore);
+cl::list<std::string>
+    ExcludeSymbols("exclude-symbols",
+                   cl::desc("Exclude symbols by regular expression"),
+                   cl::ZeroOrMore);
+cl::list<std::string>
+    ExcludeCompilands("exclude-compilands",
+                      cl::desc("Exclude compilands by regular expression"),
+                      cl::ZeroOrMore);
 }
 
 static void dumpInput(StringRef Path) {
@@ -90,6 +103,11 @@ static void dumpInput(StringRef Path) {
   }
 
   LinePrinter Printer(2, outs());
+  Printer.SetTypeFilters(opts::ExcludeTypes.begin(), opts::ExcludeTypes.end());
+  Printer.SetSymbolFilters(opts::ExcludeSymbols.begin(),
+                           opts::ExcludeSymbols.end());
+  Printer.SetCompilandFilters(opts::ExcludeCompilands.begin(),
+                              opts::ExcludeCompilands.end());
 
   auto GlobalScope(Session->getGlobalScope());
   std::string FileName(GlobalScope->getSymbolsFileName());
@@ -140,7 +158,7 @@ static void dumpInput(StringRef Path) {
     Printer.NewLine();
     WithColor(Printer, PDB_ColorItem::SectionHeader).get() << "---TYPES---";
     Printer.Indent();
-    TypeDumper Dumper(Printer, false, opts::ClassDefs);
+    TypeDumper Dumper(Printer, opts::ClassDefs);
     Dumper.start(*GlobalScope, outs(), 2);
     Printer.Unindent();
   }

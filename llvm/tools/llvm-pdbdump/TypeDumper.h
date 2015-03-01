@@ -18,7 +18,7 @@ class LinePrinter;
 
 class TypeDumper : public PDBSymDumper {
 public:
-  TypeDumper(LinePrinter &P, bool Inline, bool ClassDefs);
+  TypeDumper(LinePrinter &P, bool ClassDefs);
 
   void start(const PDBSymbolExe &Exe, raw_ostream &OS, int Indent);
 
@@ -31,7 +31,6 @@ public:
 
 private:
   LinePrinter &Printer;
-  bool InlineDump;
   bool FullClassDefs;
 };
 }

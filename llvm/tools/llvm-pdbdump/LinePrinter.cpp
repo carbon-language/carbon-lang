@@ -9,6 +9,8 @@
 
 #include "LinePrinter.h"
 
+#include "llvm/Support/Regex.h"
+
 #include <algorithm>
 
 using namespace llvm;
@@ -25,6 +27,39 @@ void LinePrinter::Unindent() {
 void LinePrinter::NewLine() {
   OS << "\n";
   OS.indent(CurrentIndent);
+}
+
+bool LinePrinter::IsTypeExcluded(llvm::StringRef TypeName) {
+  if (TypeName.empty())
+    return false;
+
+  for (auto &Expr : TypeFilters) {
+    if (Expr.match(TypeName))
+      return true;
+  }
+  return false;
+}
+
+bool LinePrinter::IsSymbolExcluded(llvm::StringRef SymbolName) {
+  if (SymbolName.empty())
+    return false;
+
+  for (auto &Expr : SymbolFilters) {
+    if (Expr.match(SymbolName))
+      return true;
+  }
+  return false;
+}
+
+bool LinePrinter::IsCompilandExcluded(llvm::StringRef CompilandName) {
+  if (CompilandName.empty())
+    return false;
+
+  for (auto &Expr : CompilandFilters) {
+    if (Expr.match(CompilandName))
+      return true;
+  }
+  return false;
 }
 
 WithColor::WithColor(LinePrinter &P, PDB_ColorItem C) : OS(P.OS) {
