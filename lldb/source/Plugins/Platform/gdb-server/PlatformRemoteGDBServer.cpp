@@ -230,12 +230,15 @@ PlatformRemoteGDBServer::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec
 {
     ArchSpec remote_arch = m_gdb_client.GetSystemArchitecture();
 
-    // TODO: 64 bit systems should also advertize support for 32 bit arch
-    // unknown CPU, we just support the one arch
     if (idx == 0)
     {
         arch = remote_arch;
-        return true;
+        return arch.IsValid();
+    }
+    else if (idx == 1 && remote_arch.IsValid() && remote_arch.GetTriple().isArch64Bit())
+    {
+        arch.SetTriple(remote_arch.GetTriple().get32BitArchVariant());
+        return arch.IsValid();
     }
     return false;
 }
