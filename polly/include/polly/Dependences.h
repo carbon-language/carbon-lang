@@ -124,10 +124,10 @@ public:
   /// @brief Recompute dependences from schedule and memory accesses.
   void recomputeDependences();
 
-  bool runOnScop(Scop &S);
-  void printScop(raw_ostream &OS, Scop &S) const;
-  virtual void releaseMemory();
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  bool runOnScop(Scop &S) override;
+  void printScop(raw_ostream &OS, Scop &S) const override;
+  void releaseMemory() override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
 private:
   Scop *S;

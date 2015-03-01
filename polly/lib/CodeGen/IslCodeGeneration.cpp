@@ -940,7 +940,7 @@ public:
     return true;
   }
 
-  bool runOnScop(Scop &S) {
+  bool runOnScop(Scop &S) override {
     AI = &getAnalysis<IslAstInfo>();
 
     // Check if we created an isl_ast root node, otherwise exit.
@@ -977,9 +977,9 @@ public:
     return true;
   }
 
-  virtual void printScop(raw_ostream &, Scop &) const {}
+  void printScop(raw_ostream &, Scop &) const override {}
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DataLayoutPass>();
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<IslAstInfo>();

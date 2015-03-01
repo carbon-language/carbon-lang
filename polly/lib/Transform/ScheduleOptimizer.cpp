@@ -99,9 +99,9 @@ public:
 
   ~IslScheduleOptimizer() { isl_schedule_free(LastSchedule); }
 
-  virtual bool runOnScop(Scop &S);
-  void printScop(raw_ostream &OS, Scop &S) const;
-  void getAnalysisUsage(AnalysisUsage &AU) const;
+  bool runOnScop(Scop &S) override;
+  void printScop(raw_ostream &OS, Scop &S) const override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
 private:
   isl_schedule *LastSchedule;
@@ -204,7 +204,7 @@ private:
 
   using llvm::Pass::doFinalization;
 
-  virtual bool doFinalization() {
+  virtual bool doFinalization() override {
     isl_schedule_free(LastSchedule);
     LastSchedule = nullptr;
     return true;

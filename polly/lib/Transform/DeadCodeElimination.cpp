@@ -58,10 +58,10 @@ public:
   static char ID;
   explicit DeadCodeElim() : ScopPass(ID) {}
 
-  virtual bool runOnScop(Scop &S);
+  bool runOnScop(Scop &S) override;
 
-  void printScop(raw_ostream &OS, Scop &S) const;
-  void getAnalysisUsage(AnalysisUsage &AU) const;
+  void printScop(raw_ostream &OS, Scop &S) const override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
 private:
   /// @brief Return the set of live iterations.

@@ -47,7 +47,7 @@ protected:
   /// getAnalysisUsage - Subclasses that override getAnalysisUsage
   /// must call this.
   ///
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const override;
 
 public:
   Scop &getCurScop() const {
@@ -56,8 +56,8 @@ public:
   }
 
 private:
-  virtual bool runOnRegion(Region *R, RGPassManager &RGM);
-  void print(raw_ostream &OS, const Module *) const;
+  bool runOnRegion(Region *R, RGPassManager &RGM) override;
+  void print(raw_ostream &OS, const Module *) const override;
 };
 
 } // End llvm namespace
