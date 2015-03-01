@@ -16,7 +16,9 @@
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/ScopPass.h"
+
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ToolOutputFile.h"

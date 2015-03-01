@@ -26,6 +26,8 @@
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
+
+#include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Support/Debug.h"
 
 #include "isl/union_map.h"
