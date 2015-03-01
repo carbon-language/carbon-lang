@@ -64,13 +64,13 @@ namespace
         static PropertyDefinition
         g_properties[] =
         {
-            { "use-llgs-for-local" , OptionValue::eTypeBoolean, true, false, NULL, NULL, "Control whether the platform uses llgs for local debug sessions." },
+            { "use-llgs-for-local" , OptionValue::eTypeBoolean, true, true, NULL, NULL, "Control whether the platform uses llgs for local debug sessions." },
             {  NULL        , OptionValue::eTypeInvalid, false, 0  , NULL, NULL, NULL  }
         };
 
-        // Allow environment variable to force using llgs-local.
-        if (getenv("PLATFORM_LINUX_FORCE_LLGS_LOCAL"))
-            g_properties[ePropertyUseLlgsForLocal].default_uint_value = true;
+        // Allow environment variable to disable llgs-local.
+        if (getenv("PLATFORM_LINUX_DISABLE_LLGS_LOCAL"))
+            g_properties[ePropertyUseLlgsForLocal].default_uint_value = false;
 
         return g_properties;
     }

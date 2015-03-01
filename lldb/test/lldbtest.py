@@ -595,7 +595,11 @@ def expectedFailureWindows(bugnumber=None, compilers=None):
 
 def expectedFailureLLGS(bugnumber=None, compilers=None):
     def fn(self):
-        return 'PLATFORM_LINUX_FORCE_LLGS_LOCAL' in os.environ and self.expectedCompiler(compilers)
+        # llgs local is only an option on Linux systems
+        if 'linux' not in sys.platform:
+            return False
+        self.runCmd('settings show platform.plugin.linux.use-llgs-for-local')
+        return 'true' in self.res.GetOutput() and self.expectedCompiler(compilers)
     if bugnumber: return expectedFailure(fn, bugnumber)
 
 def skipIfRemote(func):
