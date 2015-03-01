@@ -7453,14 +7453,23 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
       // Fold scalars or any vector constants (not just splats).
       // This fold is done in general by InstCombine, but extra fmul insts
       // may have been generated during lowering.
+      SDValue N00 = N0.getOperand(0);
       SDValue N01 = N0.getOperand(1);
       auto *BV1 = dyn_cast<BuildVectorSDNode>(N1);
+      auto *BV00 = dyn_cast<BuildVectorSDNode>(N00);
       auto *BV01 = dyn_cast<BuildVectorSDNode>(N01);
-      if ((N1CFP && isConstOrConstSplatFP(N01)) ||
-          (BV1 && BV01 && BV1->isConstant() && BV01->isConstant())) {
-        SDLoc SL(N);
-        SDValue MulConsts = DAG.getNode(ISD::FMUL, SL, VT, N01, N1);
-        return DAG.getNode(ISD::FMUL, SL, VT, N0.getOperand(0), MulConsts);
+      
+      // Check 1: Make sure that the first operand of the inner multiply is NOT
+      // a constant. Otherwise, we may induce infinite looping.
+      if (!(isConstOrConstSplatFP(N00) || (BV00 && BV00->isConstant()))) {
+        // Check 2: Make sure that the second operand of the inner multiply and
+        // the second operand of the outer multiply are constants.
+        if ((N1CFP && isConstOrConstSplatFP(N01)) ||
+            (BV1 && BV01 && BV1->isConstant() && BV01->isConstant())) {
+          SDLoc SL(N);
+          SDValue MulConsts = DAG.getNode(ISD::FMUL, SL, VT, N01, N1);
+          return DAG.getNode(ISD::FMUL, SL, VT, N00, MulConsts);
+        }
       }
     }
 

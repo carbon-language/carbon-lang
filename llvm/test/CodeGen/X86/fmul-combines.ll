@@ -103,6 +103,40 @@ define <4 x float> @fmul_v4f32_two_consts_no_splat_multiple_use(<4 x float> %x) 
   ret <4 x float> %a
 }
 
+; PR22698 - http://llvm.org/bugs/show_bug.cgi?id=22698
+; Make sure that we don't infinite loop swapping constants back and forth.
+
+define <4 x float> @PR22698_splats(<4 x float> %a) #0 {
+  %mul1 = fmul fast <4 x float> <float 2.0, float 2.0, float 2.0, float 2.0>, <float 3.0, float 3.0, float 3.0, float 3.0>
+  %mul2 = fmul fast <4 x float> <float 4.0, float 4.0, float 4.0, float 4.0>, %mul1
+  %mul3 = fmul fast <4 x float> %a, %mul2
+  ret <4 x float> %mul3
+
+; CHECK: float 2.400000e+01
+; CHECK: float 2.400000e+01
+; CHECK: float 2.400000e+01
+; CHECK: float 2.400000e+01
+; CHECK-LABEL: PR22698_splats:
+; CHECK: mulps
+; CHECK: ret
+}
+
+; Same as above, but verify that non-splat vectors are handled correctly too.
+define <4 x float> @PR22698_no_splats(<4 x float> %a) #0 {
+  %mul1 = fmul fast <4 x float> <float 1.0, float 2.0, float 3.0, float 4.0>, <float 5.0, float 6.0, float 7.0, float 8.0>
+  %mul2 = fmul fast <4 x float> <float 9.0, float 10.0, float 11.0, float 12.0>, %mul1
+  %mul3 = fmul fast <4 x float> %a, %mul2
+  ret <4 x float> %mul3
+
+; CHECK: float 4.500000e+01
+; CHECK: float 1.200000e+02
+; CHECK: float 2.310000e+02
+; CHECK: float 3.840000e+02
+; CHECK-LABEL: PR22698_no_splats:
+; CHECK: mulps
+; CHECK: ret
+}
+
 ; CHECK-LABEL: fmul_c2_c4_f32:
 ; CHECK-NOT: addss
 ; CHECK: mulss
