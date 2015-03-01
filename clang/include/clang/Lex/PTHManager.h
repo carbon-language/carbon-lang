@@ -19,6 +19,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Lex/PTHLexer.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/OnDiskHashTable.h"
 #include <string>
