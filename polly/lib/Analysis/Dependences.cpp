@@ -444,7 +444,7 @@ bool Dependences::runOnScop(Scop &ScopVar) {
 }
 
 bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
-  Scop &S = getCurScop();
+  Scop &S = *this->S;
 
   if (LegalityCheckDisabled)
     return true;

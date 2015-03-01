@@ -49,12 +49,6 @@ protected:
   ///
   virtual void getAnalysisUsage(AnalysisUsage &AU) const override;
 
-public:
-  Scop &getCurScop() const {
-    assert(S && "Not on a Scop!");
-    return *S;
-  }
-
 private:
   bool runOnRegion(Region *R, RGPassManager &RGM) override;
   void print(raw_ostream &OS, const Module *) const override;
