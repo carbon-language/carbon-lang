@@ -429,7 +429,7 @@ bool IslAstInfo::runOnScop(Scop &Scop) {
 
   Ast = new IslAst(&Scop, D);
 
-  DEBUG(printScop(dbgs()));
+  DEBUG(printScop(dbgs(), Scop));
   return false;
 }
 
@@ -515,10 +515,9 @@ isl_ast_build *IslAstInfo::getBuild(__isl_keep isl_ast_node *Node) {
   return Payload ? Payload->Build : nullptr;
 }
 
-void IslAstInfo::printScop(raw_ostream &OS) const {
+void IslAstInfo::printScop(raw_ostream &OS, Scop &S) const {
   isl_ast_print_options *Options;
   isl_ast_node *RootNode = getAst();
-  Scop &S = getCurScop();
   Function *F = S.getRegion().getEntry()->getParent();
 
   OS << ":: isl ast :: " << F->getName() << " :: " << S.getRegion().getNameStr()

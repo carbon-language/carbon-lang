@@ -131,7 +131,7 @@ public:
   explicit PlutoOptimizer() : ScopPass(ID) {}
 
   virtual bool runOnScop(Scop &S);
-  void printScop(llvm::raw_ostream &OS) const;
+  void printScop(llvm::raw_ostream &OS, Scop &S) const;
   void getAnalysisUsage(AnalysisUsage &AU) const;
   static void extendScattering(Scop &S, unsigned NewDimensions);
 };
@@ -250,7 +250,7 @@ bool PlutoOptimizer::runOnScop(Scop &S) {
   return false;
 }
 
-void PlutoOptimizer::printScop(raw_ostream &OS) const {}
+void PlutoOptimizer::printScop(raw_ostream &, Scop &) const {}
 
 void PlutoOptimizer::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);

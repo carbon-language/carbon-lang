@@ -60,7 +60,7 @@ public:
 
   virtual bool runOnScop(Scop &S);
 
-  void printScop(llvm::raw_ostream &OS) const;
+  void printScop(raw_ostream &OS, Scop &S) const;
   void getAnalysisUsage(AnalysisUsage &AU) const;
 
 private:
@@ -164,7 +164,7 @@ bool DeadCodeElim::runOnScop(Scop &S) {
   return eliminateDeadCode(S, DCEPreciseSteps);
 }
 
-void DeadCodeElim::printScop(raw_ostream &OS) const {}
+void DeadCodeElim::printScop(raw_ostream &, Scop &) const {}
 
 void DeadCodeElim::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);

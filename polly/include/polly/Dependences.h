@@ -125,7 +125,7 @@ public:
   void recomputeDependences();
 
   bool runOnScop(Scop &S);
-  void printScop(raw_ostream &OS) const;
+  void printScop(raw_ostream &OS, Scop &S) const;
   virtual void releaseMemory();
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 

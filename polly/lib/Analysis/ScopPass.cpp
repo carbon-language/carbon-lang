@@ -28,7 +28,7 @@ bool ScopPass::runOnRegion(Region *R, RGPassManager &RGM) {
 
 void ScopPass::print(raw_ostream &OS, const Module *M) const {
   if (S)
-    printScop(OS);
+    printScop(OS, *S);
 }
 
 void ScopPass::getAnalysisUsage(AnalysisUsage &AU) const {

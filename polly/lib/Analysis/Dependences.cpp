@@ -308,7 +308,7 @@ void Dependences::calculateDependences(Scop &S) {
                                             isl_union_map_domain(StmtSchedule));
   DEBUG({
     dbgs() << "Wrapped Dependences:\n";
-    printScop(dbgs());
+    printScop(dbgs(), S);
     dbgs() << "\n";
   });
 
@@ -355,7 +355,7 @@ void Dependences::calculateDependences(Scop &S) {
 
   DEBUG({
     dbgs() << "Final Wrapped Dependences:\n";
-    printScop(dbgs());
+    printScop(dbgs(), S);
     dbgs() << "\n";
   });
 
@@ -403,7 +403,7 @@ void Dependences::calculateDependences(Scop &S) {
 
   DEBUG({
     dbgs() << "Zipped Dependences:\n";
-    printScop(dbgs());
+    printScop(dbgs(), S);
     dbgs() << "\n";
   });
 
@@ -415,7 +415,7 @@ void Dependences::calculateDependences(Scop &S) {
 
   DEBUG({
     dbgs() << "Unwrapped Dependences:\n";
-    printScop(dbgs());
+    printScop(dbgs(), S);
     dbgs() << "\n";
   });
 
@@ -429,7 +429,7 @@ void Dependences::calculateDependences(Scop &S) {
   RED = isl_union_map_coalesce(RED);
   TC_RED = isl_union_map_coalesce(TC_RED);
 
-  DEBUG(printScop(dbgs()));
+  DEBUG(printScop(dbgs(), S));
 }
 
 void Dependences::recomputeDependences() {
@@ -556,7 +556,7 @@ static void printDependencyMap(raw_ostream &OS, __isl_keep isl_union_map *DM) {
     OS << "n/a\n";
 }
 
-void Dependences::printScop(raw_ostream &OS) const {
+void Dependences::printScop(raw_ostream &OS, Scop &) const {
   OS << "\tRAW dependences:\n\t\t";
   printDependencyMap(OS, RAW);
   OS << "\tWAR dependences:\n\t\t";

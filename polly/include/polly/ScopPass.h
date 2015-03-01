@@ -41,6 +41,9 @@ protected:
   ///
   virtual bool runOnScop(Scop &S) = 0;
 
+  /// @brief Print method for SCoPs.
+  virtual void printScop(raw_ostream &OS, Scop &S) const = 0;
+
   /// getAnalysisUsage - Subclasses that override getAnalysisUsage
   /// must call this.
   ///
@@ -55,7 +58,6 @@ public:
 private:
   virtual bool runOnRegion(Region *R, RGPassManager &RGM);
   void print(raw_ostream &OS, const Module *) const;
-  virtual void printScop(raw_ostream &OS) const {}
 };
 
 } // End llvm namespace

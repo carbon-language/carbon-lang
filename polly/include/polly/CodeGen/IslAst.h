@@ -91,7 +91,7 @@ public:
   bool runOnScop(Scop &S);
 
   /// @brief Print a source code representation of the program.
-  void printScop(llvm::raw_ostream &OS) const;
+  void printScop(llvm::raw_ostream &OS, Scop &S) const;
 
   /// @brief Return a copy of the AST root node.
   __isl_give isl_ast_node *getAst() const;

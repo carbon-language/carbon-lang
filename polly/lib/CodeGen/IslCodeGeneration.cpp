@@ -930,7 +930,7 @@ public:
                 "SCoP ==\n";
       S.print(errs());
       errs() << "\n== The isl AST ==\n";
-      AI->printScop(errs());
+      AI->printScop(errs(), S);
       errs() << "\n== The invalid function ==\n";
       F.print(errs());
       errs() << "\n== The errors ==\n";
@@ -977,7 +977,7 @@ public:
     return true;
   }
 
-  virtual void printScop(raw_ostream &OS) const {}
+  virtual void printScop(raw_ostream &, Scop &) const {}
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.addRequired<DataLayoutPass>();

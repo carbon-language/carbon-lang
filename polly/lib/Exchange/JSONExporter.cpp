@@ -61,7 +61,7 @@ struct JSONExporter : public ScopPass {
   std::string getFileName(Scop *S) const;
   Json::Value getJSON(Scop &scop) const;
   virtual bool runOnScop(Scop &S);
-  void printScop(raw_ostream &OS) const;
+  void printScop(raw_ostream &OS, Scop &S) const;
   void getAnalysisUsage(AnalysisUsage &AU) const;
 };
 
@@ -73,7 +73,7 @@ struct JSONImporter : public ScopPass {
 
   std::string getFileName(Scop *S) const;
   virtual bool runOnScop(Scop &S);
-  void printScop(raw_ostream &OS) const;
+  void printScop(raw_ostream &OS, Scop &S) const;
   void getAnalysisUsage(AnalysisUsage &AU) const;
 };
 }
@@ -85,7 +85,7 @@ std::string JSONExporter::getFileName(Scop *S) const {
   return FileName;
 }
 
-void JSONExporter::printScop(raw_ostream &OS) const { S->print(OS); }
+void JSONExporter::printScop(raw_ostream &OS, Scop &S) const { S.print(OS); }
 
 Json::Value JSONExporter::getJSON(Scop &scop) const {
   Json::Value root;
@@ -171,8 +171,8 @@ std::string JSONImporter::getFileName(Scop *S) const {
   return FileName;
 }
 
-void JSONImporter::printScop(raw_ostream &OS) const {
-  S->print(OS);
+void JSONImporter::printScop(raw_ostream &OS, Scop &S) const {
+  S.print(OS);
   for (std::vector<std::string>::const_iterator I = newAccessStrings.begin(),
                                                 E = newAccessStrings.end();
        I != E; I++)

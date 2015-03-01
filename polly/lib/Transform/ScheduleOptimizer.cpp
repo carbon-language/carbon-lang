@@ -100,7 +100,7 @@ public:
   ~IslScheduleOptimizer() { isl_schedule_free(LastSchedule); }
 
   virtual bool runOnScop(Scop &S);
-  void printScop(llvm::raw_ostream &OS) const;
+  void printScop(raw_ostream &OS, Scop &S) const;
   void getAnalysisUsage(AnalysisUsage &AU) const;
 
 private:
@@ -627,7 +627,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   return false;
 }
 
-void IslScheduleOptimizer::printScop(raw_ostream &OS) const {
+void IslScheduleOptimizer::printScop(raw_ostream &OS, Scop &) const {
   isl_printer *p;
   char *ScheduleStr;
 
