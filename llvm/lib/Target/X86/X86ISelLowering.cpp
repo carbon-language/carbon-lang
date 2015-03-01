@@ -25,7 +25,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "llvm/ADT/VariadicFunction.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -23515,27 +23514,23 @@ bool X86TargetLowering::IsDesirableToPromoteOp(SDValue Op, EVT &PVT) const {
 //                           X86 Inline Assembly Support
 //===----------------------------------------------------------------------===//
 
-namespace {
-  // Helper to match a string separated by whitespace.
-  bool matchAsmImpl(StringRef s, ArrayRef<const StringRef *> args) {
-    s = s.substr(s.find_first_not_of(" \t")); // Skip leading whitespace.
+// Helper to match a string separated by whitespace.
+static bool matchAsm(StringRef S, ArrayRef<const char *> Pieces) {
+  S = S.substr(S.find_first_not_of(" \t")); // Skip leading whitespace.
 
-    for (unsigned i = 0, e = args.size(); i != e; ++i) {
-      StringRef piece(*args[i]);
-      if (!s.startswith(piece)) // Check if the piece matches.
-        return false;
+  for (StringRef Piece : Pieces) {
+    if (!S.startswith(Piece)) // Check if the piece matches.
+      return false;
 
-      s = s.substr(piece.size());
-      StringRef::size_type pos = s.find_first_not_of(" \t");
-      if (pos == 0) // We matched a prefix.
-        return false;
+    S = S.substr(Piece.size());
+    StringRef::size_type Pos = S.find_first_not_of(" \t");
+    if (Pos == 0) // We matched a prefix.
+      return false;
 
-      s = s.substr(pos);
-    }
-
-    return s.empty();
+    S = S.substr(Pos);
   }
-  const VariadicFunction1<bool, StringRef, StringRef, matchAsmImpl> matchAsm={};
+
+  return S.empty();
 }
 
 static bool clobbersFlagRegisters(const SmallVector<StringRef, 4> &AsmPieces) {
@@ -23575,12 +23570,12 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
     // ops instead of emitting the bswap asm.  For now, we don't support 486 or
     // lower so don't worry about this.
     // bswap $0
-    if (matchAsm(AsmPieces[0], "bswap", "$0") ||
-        matchAsm(AsmPieces[0], "bswapl", "$0") ||
-        matchAsm(AsmPieces[0], "bswapq", "$0") ||
-        matchAsm(AsmPieces[0], "bswap", "${0:q}") ||
-        matchAsm(AsmPieces[0], "bswapl", "${0:q}") ||
-        matchAsm(AsmPieces[0], "bswapq", "${0:q}")) {
+    if (matchAsm(AsmPieces[0], {"bswap", "$0"}) ||
+        matchAsm(AsmPieces[0], {"bswapl", "$0"}) ||
+        matchAsm(AsmPieces[0], {"bswapq", "$0"}) ||
+        matchAsm(AsmPieces[0], {"bswap", "${0:q}"}) ||
+        matchAsm(AsmPieces[0], {"bswapl", "${0:q}"}) ||
+        matchAsm(AsmPieces[0], {"bswapq", "${0:q}"})) {
       // No need to check constraints, nothing other than the equivalent of
       // "=r,0" would be valid here.
       return IntrinsicLowering::LowerToByteSwap(CI);
@@ -23589,8 +23584,8 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
     // rorw $$8, ${0:w}  -->  llvm.bswap.i16
     if (CI->getType()->isIntegerTy(16) &&
         IA->getConstraintString().compare(0, 5, "=r,0,") == 0 &&
-        (matchAsm(AsmPieces[0], "rorw", "$$8,", "${0:w}") ||
-         matchAsm(AsmPieces[0], "rolw", "$$8,", "${0:w}"))) {
+        (matchAsm(AsmPieces[0], {"rorw", "$$8,", "${0:w}"}) ||
+         matchAsm(AsmPieces[0], {"rolw", "$$8,", "${0:w}"}))) {
       AsmPieces.clear();
       const std::string &ConstraintsStr = IA->getConstraintString();
       SplitString(StringRef(ConstraintsStr).substr(5), AsmPieces, ",");
@@ -23602,9 +23597,9 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
   case 3:
     if (CI->getType()->isIntegerTy(32) &&
         IA->getConstraintString().compare(0, 5, "=r,0,") == 0 &&
-        matchAsm(AsmPieces[0], "rorw", "$$8,", "${0:w}") &&
-        matchAsm(AsmPieces[1], "rorl", "$$16,", "$0") &&
-        matchAsm(AsmPieces[2], "rorw", "$$8,", "${0:w}")) {
+        matchAsm(AsmPieces[0], {"rorw", "$$8,", "${0:w}"}) &&
+        matchAsm(AsmPieces[1], {"rorl", "$$16,", "$0"}) &&
+        matchAsm(AsmPieces[2], {"rorw", "$$8,", "${0:w}"})) {
       AsmPieces.clear();
       const std::string &ConstraintsStr = IA->getConstraintString();
       SplitString(StringRef(ConstraintsStr).substr(5), AsmPieces, ",");
@@ -23619,9 +23614,9 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
           Constraints[0].Codes.size() == 1 && Constraints[0].Codes[0] == "A" &&
           Constraints[1].Codes.size() == 1 && Constraints[1].Codes[0] == "0") {
         // bswap %eax / bswap %edx / xchgl %eax, %edx  -> llvm.bswap.i64
-        if (matchAsm(AsmPieces[0], "bswap", "%eax") &&
-            matchAsm(AsmPieces[1], "bswap", "%edx") &&
-            matchAsm(AsmPieces[2], "xchgl", "%eax,", "%edx"))
+        if (matchAsm(AsmPieces[0], {"bswap", "%eax"}) &&
+            matchAsm(AsmPieces[1], {"bswap", "%edx"}) &&
+            matchAsm(AsmPieces[2], {"xchgl", "%eax,", "%edx"}))
           return IntrinsicLowering::LowerToByteSwap(CI);
       }
     }
