@@ -689,8 +689,6 @@ namespace ISD {
 
     // Masked load and store
     MLOAD, MSTORE,
-    // Masked gather and scatter
-    MGATHER, MSCATTER,
 
     /// This corresponds to the llvm.lifetime.* intrinsics. The first operand
     /// is the chain and the second operand is the alloca pointer.

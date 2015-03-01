@@ -397,8 +397,7 @@ class Instruction {
   //    captured by any operands of the instruction or other flags.
   //
   bit hasSideEffects = ?;
-  bit hasTwoExplicitDefs = 0;  // Does this instruction have 2 explicit
-                               // destinations?
+
   // Is this instruction a "real" instruction (with a distinct machine
   // encoding), or is it a pseudo instruction used for codegen modeling
   // purposes.

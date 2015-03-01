@@ -4986,81 +4986,74 @@ defm VPMOVSXDQZ: avx512_extend<0x25, "vpmovsxdq", VK8WM, VR512, VR256X, X86vsext
 //===----------------------------------------------------------------------===//
 // GATHER - SCATTER Operations
 
-multiclass avx512_gather<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
-                         X86MemOperand memop, PatFrag GatherNode> {
-let mayLoad = 1, hasTwoExplicitDefs = 1,
+multiclass avx512_gather<bits<8> opc, string OpcodeStr, RegisterClass KRC,
+                       RegisterClass RC, X86MemOperand memop> {
+let mayLoad = 1,
   Constraints = "@earlyclobber $dst, $src1 = $dst, $mask = $mask_wb" in
-  def rm  : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst, _.KRCWM:$mask_wb),
-            (ins _.RC:$src1, _.KRCWM:$mask, memop:$src2),
+  def rm  : AVX5128I<opc, MRMSrcMem, (outs RC:$dst, KRC:$mask_wb),
+            (ins RC:$src1, KRC:$mask, memop:$src2),
             !strconcat(OpcodeStr,
             "\t{$src2, ${dst} {${mask}}|${dst} {${mask}}, $src2}"),
-            [(set _.RC:$dst, _.KRCWM:$mask_wb,
-              (_.VT (GatherNode  (_.VT _.RC:$src1), _.KRCWM:$mask,
-                     vectoraddr:$src2)))]>, EVEX, EVEX_K,
-             EVEX_CD8<_.EltSize, CD8VT1>;
+            []>, EVEX, EVEX_K;
 }
 
 let ExeDomain = SSEPackedDouble in {
-defm VGATHERDPDZ : avx512_gather<0x92, "vgatherdpd", v8f64_info, vy64xmem,
-                                 mgatherv8i32>, EVEX_V512, VEX_W;
-defm VGATHERQPDZ : avx512_gather<0x93, "vgatherqpd", v8f64_info, vz64mem,
-                                 mgatherv8i64>, EVEX_V512, VEX_W;
+defm VGATHERDPDZ : avx512_gather<0x92, "vgatherdpd", VK8WM, VR512, vy64xmem>,
+                                 EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VGATHERQPDZ : avx512_gather<0x93, "vgatherqpd", VK8WM, VR512, vz64mem>,
+                                 EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
 }
 
 let ExeDomain = SSEPackedSingle in {
-defm VGATHERDPSZ : avx512_gather<0x92, "vgatherdps", v16f32_info, vz32mem,
-                                 mgatherv16i32>, EVEX_V512;
-defm VGATHERQPSZ : avx512_gather<0x93, "vgatherqps", v8f32x_info, vz64mem,
-                                 mgatherv8i64>,  EVEX_V512;
+defm VGATHERDPSZ : avx512_gather<0x92, "vgatherdps", VK16WM, VR512, vz32mem>,
+                                 EVEX_V512, EVEX_CD8<32, CD8VT1>;
+defm VGATHERQPSZ : avx512_gather<0x93, "vgatherqps", VK8WM, VR256X, vz64mem>,
+                                 EVEX_V512, EVEX_CD8<32, CD8VT1>;
 }
 
-defm VPGATHERDQZ : avx512_gather<0x90, "vpgatherdq", v8i64_info,  vy64xmem,
-                                 mgatherv8i32>, EVEX_V512, VEX_W;
-defm VPGATHERDDZ : avx512_gather<0x90, "vpgatherdd", v16i32_info, vz32mem,
-                                 mgatherv16i32>, EVEX_V512;
+defm VPGATHERDQZ : avx512_gather<0x90, "vpgatherdq", VK8WM, VR512,  vy64xmem>,
+                                 EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VPGATHERDDZ : avx512_gather<0x90, "vpgatherdd", VK16WM, VR512, vz32mem>,
+                                 EVEX_V512, EVEX_CD8<32, CD8VT1>;
 
-defm VPGATHERQQZ : avx512_gather<0x91, "vpgatherqq", v8i64_info,  vz64mem,
-                                 mgatherv8i64>, EVEX_V512, VEX_W;
-defm VPGATHERQDZ : avx512_gather<0x91, "vpgatherqd", v8i32x_info,  vz64mem,
-                                 mgatherv8i64>, EVEX_V512;
+defm VPGATHERQQZ : avx512_gather<0x91, "vpgatherqq", VK8WM, VR512,  vz64mem>,
+                                 EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VPGATHERQDZ : avx512_gather<0x91, "vpgatherqd", VK8WM, VR256X,  vz64mem>,
+                                 EVEX_V512, EVEX_CD8<32, CD8VT1>;
 
-multiclass avx512_scatter<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
-                          X86MemOperand memop, PatFrag ScatterNode> {
-
+multiclass avx512_scatter<bits<8> opc, string OpcodeStr, RegisterClass KRC,
+                       RegisterClass RC, X86MemOperand memop> {
 let mayStore = 1, Constraints = "$mask = $mask_wb" in
-
-  def mr  : AVX5128I<opc, MRMDestMem, (outs _.KRCWM:$mask_wb),
-            (ins memop:$dst, _.KRCWM:$mask, _.RC:$src),
+  def mr  : AVX5128I<opc, MRMDestMem, (outs KRC:$mask_wb),
+            (ins memop:$dst, KRC:$mask, RC:$src2),
             !strconcat(OpcodeStr,
-            "\t{$src, ${dst} {${mask}}|${dst} {${mask}}, $src}"),
-            [(set _.KRCWM:$mask_wb, (ScatterNode (_.VT _.RC:$src),
-                                     _.KRCWM:$mask,  vectoraddr:$dst))]>,
-            EVEX, EVEX_K, EVEX_CD8<_.EltSize, CD8VT1>;
+            "\t{$src2, ${dst} {${mask}}|${dst} {${mask}}, $src2}"),
+            []>, EVEX, EVEX_K;
 }
 
 let ExeDomain = SSEPackedDouble in {
-defm VSCATTERDPDZ : avx512_scatter<0xA2, "vscatterdpd", v8f64_info, vy64xmem,
-                                   mscatterv8i32>, EVEX_V512, VEX_W;
-defm VSCATTERQPDZ : avx512_scatter<0xA3, "vscatterqpd", v8f64_info, vz64mem,
-                                   mscatterv8i64>, EVEX_V512, VEX_W;
+defm VSCATTERDPDZ : avx512_scatter<0xA2, "vscatterdpd", VK8WM, VR512, vy64xmem>,
+                                   EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VSCATTERQPDZ : avx512_scatter<0xA3, "vscatterqpd", VK8WM, VR512, vz64mem>,
+                                   EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
 }
 
 let ExeDomain = SSEPackedSingle in {
-defm VSCATTERDPSZ : avx512_scatter<0xA2, "vscatterdps", v16f32_info, vz32mem,
-                                   mscatterv16i32>, EVEX_V512;
-defm VSCATTERQPSZ : avx512_scatter<0xA3, "vscatterqps", v8f32x_info, vz64mem,
-                                   mscatterv8i64>, EVEX_V512;
+defm VSCATTERDPSZ : avx512_scatter<0xA2, "vscatterdps", VK16WM, VR512, vz32mem>,
+                                   EVEX_V512, EVEX_CD8<32, CD8VT1>;
+defm VSCATTERQPSZ : avx512_scatter<0xA3, "vscatterqps", VK8WM, VR256X, vz64mem>,
+                                   EVEX_V512, EVEX_CD8<32, CD8VT1>;
 }
 
-defm VPSCATTERDQZ : avx512_scatter<0xA0, "vpscatterdq", v8i64_info, vy64xmem,
-                                   mscatterv8i32>, EVEX_V512, VEX_W;
-defm VPSCATTERDDZ : avx512_scatter<0xA0, "vpscatterdd", v16i32_info, vz32mem,
-                                   mscatterv16i32>, EVEX_V512;
+defm VPSCATTERDQZ : avx512_scatter<0xA0, "vpscatterdq", VK8WM, VR512, vy64xmem>,
+                                   EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VPSCATTERDDZ : avx512_scatter<0xA0, "vpscatterdd", VK16WM, VR512, vz32mem>,
+                                   EVEX_V512, EVEX_CD8<32, CD8VT1>;
 
-defm VPSCATTERQQZ : avx512_scatter<0xA1, "vpscatterqq", v8i64_info, vz64mem,
-                                   mscatterv8i64>, EVEX_V512, VEX_W;
-defm VPSCATTERQDZ : avx512_scatter<0xA1, "vpscatterqd", v8i32x_info, vz64mem,
-                                   mscatterv8i64>, EVEX_V512;
+defm VPSCATTERQQZ : avx512_scatter<0xA1, "vpscatterqq", VK8WM, VR512, vz64mem>,
+                                  EVEX_V512, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VPSCATTERQDZ : avx512_scatter<0xA1, "vpscatterqd", VK8WM, VR256X, vz64mem>,
+                                  EVEX_V512, EVEX_CD8<32, CD8VT1>;
 
 // prefetch
 multiclass avx512_gather_scatter_prefetch<bits<8> opc, Format F, string OpcodeStr,

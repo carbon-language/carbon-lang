@@ -306,8 +306,6 @@ def X86exp2      : SDNode<"X86ISD::EXP2",     STDFp1SrcRm>;
 def X86rsqrt28s  : SDNode<"X86ISD::RSQRT28",  STDFp2SrcRm>;
 def X86rcp28s    : SDNode<"X86ISD::RCP28",    STDFp2SrcRm>;
 def X86RndScale  : SDNode<"X86ISD::RNDSCALE", STDFp3SrcRm>;
-def X86mgather   : SDNode<"X86ISD::GATHER", SDTypeProfile<1, 3, 
-                          [SDTCisVec<0>, SDTCisVec<1>, SDTCisVec<2>]>>;
 
 def SDT_PCMPISTRI : SDTypeProfile<2, 3, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
                                          SDTCisVT<2, v16i8>, SDTCisVT<3, v16i8>,
@@ -526,58 +524,6 @@ def unalignednontemporalstore : PatFrag<(ops node:$val, node:$ptr),
     return ST->isNonTemporal() &&
            ST->getAlignment() < 16;
   return false;
-}]>;
-
-def mgatherv8i32 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
-  (masked_gather node:$src1, node:$src2, node:$src3) , [{
-  //if (MaskedGatherSDNode *Mgt = dyn_cast<MaskedGatherSDNode>(N))
-  //  return (Mgt->getIndex().getValueType() == MVT::v8i32 ||
-  //          Mgt->getBasePtr().getValueType() == MVT::v8i32);
-  //return false;
-  return N != 0;
-}]>;
-
-def mgatherv8i64 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
-  (masked_gather node:$src1, node:$src2, node:$src3) , [{
-  //if (MaskedGatherSDNode *Mgt = dyn_cast<MaskedGatherSDNode>(N))
-  //  return (Mgt->getIndex().getValueType() == MVT::v8i64 ||
-  //          Mgt->getBasePtr().getValueType() == MVT::v8i64);
-  //return false;
-  return N != 0;
-}]>;
-def mgatherv16i32 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
-  (masked_gather node:$src1, node:$src2, node:$src3) , [{
-  //if (MaskedGatherSDNode *Mgt = dyn_cast<MaskedGatherSDNode>(N))
-  //  return (Mgt->getIndex().getValueType() == MVT::v16i32 ||
-  //          Mgt->getBasePtr().getValueType() == MVT::v16i32);
-  //return false;
-  return N != 0;
-}]>;
-
-def mscatterv8i32 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
-  (masked_scatter node:$src1, node:$src2, node:$src3) , [{
-  //if (MaskedScatterSDNode *Sc = dyn_cast<MaskedScatterSDNode>(N))
-  //  return (Sc->getIndex().getValueType() == MVT::v8i32 ||
-  //          Sc->getBasePtr().getValueType() == MVT::v8i32);
-  //return false;
-  return N != 0;
-}]>;
-
-def mscatterv8i64 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
-  (masked_scatter node:$src1, node:$src2, node:$src3) , [{
-  //if (MaskedScatterSDNode *Sc = dyn_cast<MaskedScatterSDNode>(N))
-  //  return (Sc->getIndex().getValueType() == MVT::v8i64 ||
-  //          Sc->getBasePtr().getValueType() == MVT::v8i64);
-  //return false;
-  return N != 0;
-}]>;
-def mscatterv16i32 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
-  (masked_scatter node:$src1, node:$src2, node:$src3) , [{
-  //if (MaskedScatterSDNode *Sc = dyn_cast<MaskedScatterSDNode>(N))
-  //  return (Sc->getIndex().getValueType() == MVT::v16i32 ||
-  //          Sc->getBasePtr().getValueType() == MVT::v16i32);
-  //return false;
-  return N != 0;
 }]>;
 
 // 128-bit bitconvert pattern fragments
