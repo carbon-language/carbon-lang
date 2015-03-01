@@ -14,6 +14,7 @@
 
 #include "llvm/ProfileData/InstrProfReader.h"
 #include "InstrProfIndexed.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ProfileData/InstrProf.h"
 #include <cassert>
 

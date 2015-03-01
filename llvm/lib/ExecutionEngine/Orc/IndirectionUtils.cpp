@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ExecutionEngine/Orc/CloneSubModule.h"
 #include "llvm/ExecutionEngine/Orc/IndirectionUtils.h"

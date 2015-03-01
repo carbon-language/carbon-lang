@@ -117,17 +117,17 @@ TEST(DIDescriptorTest, splitFlags) {
   {                                                                            \
     SmallVector<unsigned, 8> V;                                                \
     EXPECT_EQ(REMAINDER, DIDescriptor::splitFlags(FLAGS, V));                  \
-    EXPECT_TRUE(makeArrayRef(V).equals VECTOR);                                \
+    EXPECT_TRUE(makeArrayRef(V).equals(VECTOR));                                \
   }
-  CHECK_SPLIT(DIDescriptor::FlagPublic, (DIDescriptor::FlagPublic), 0u);
-  CHECK_SPLIT(DIDescriptor::FlagProtected, (DIDescriptor::FlagProtected), 0u);
-  CHECK_SPLIT(DIDescriptor::FlagPrivate, (DIDescriptor::FlagPrivate), 0u);
-  CHECK_SPLIT(DIDescriptor::FlagVector, (DIDescriptor::FlagVector), 0u);
-  CHECK_SPLIT(DIDescriptor::FlagRValueReference, (DIDescriptor::FlagRValueReference), 0u);
-  CHECK_SPLIT(DIDescriptor::FlagFwdDecl | DIDescriptor::FlagVector,
-              (DIDescriptor::FlagFwdDecl, DIDescriptor::FlagVector), 0u);
-  CHECK_SPLIT(0x100000u, (), 0x100000u);
-  CHECK_SPLIT(0x100000u | DIDescriptor::FlagVector, (DIDescriptor::FlagVector),
+  CHECK_SPLIT(DIDescriptor::FlagPublic, {DIDescriptor::FlagPublic}, 0u);
+  CHECK_SPLIT(DIDescriptor::FlagProtected, {DIDescriptor::FlagProtected}, 0u);
+  CHECK_SPLIT(DIDescriptor::FlagPrivate, {DIDescriptor::FlagPrivate}, 0u);
+  CHECK_SPLIT(DIDescriptor::FlagVector, {DIDescriptor::FlagVector}, 0u);
+  CHECK_SPLIT(DIDescriptor::FlagRValueReference, {DIDescriptor::FlagRValueReference}, 0u);
+  unsigned Flags[] = {DIDescriptor::FlagFwdDecl, DIDescriptor::FlagVector};
+  CHECK_SPLIT(DIDescriptor::FlagFwdDecl | DIDescriptor::FlagVector, Flags, 0u);
+  CHECK_SPLIT(0x100000u, {}, 0x100000u);
+  CHECK_SPLIT(0x100000u | DIDescriptor::FlagVector, {DIDescriptor::FlagVector},
               0x100000u);
 #undef CHECK_SPLIT
 }

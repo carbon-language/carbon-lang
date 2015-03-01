@@ -10,6 +10,7 @@
 #ifndef LLVM_LIB_DEBUGINFO_DWARFUNIT_H
 #define LLVM_LIB_DEBUGINFO_DWARFUNIT_H
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugAbbrev.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugInfoEntry.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugRangeList.h"
