@@ -135,8 +135,10 @@ namespace llvm {
 
     /// equals - Check for element-wise equality.
     bool equals(ArrayRef RHS) const {
-      if (Length != RHS.Length || Length == 0)
+      if (Length != RHS.Length)
         return false;
+      if (Length == 0)
+        return true;
       return std::equal(begin(), end(), RHS.begin());
     }
 
