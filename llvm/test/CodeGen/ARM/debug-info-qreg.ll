@@ -3,13 +3,13 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-
 target triple = "thumbv7-apple-macosx10.6.7"
 
 ;CHECK: sub-register DW_OP_regx
-;CHECK-NEXT: 256
+;CHECK-NEXT: ascii
 ;CHECK-NEXT: DW_OP_piece
-;CHECK-NEXT: 8
+;CHECK-NEXT: byte   8
 ;CHECK-NEXT: sub-register DW_OP_regx
-;CHECK-NEXT: 257
+;CHECK-NEXT: ascii
 ;CHECK-NEXT: DW_OP_piece
-;CHECK-NEXT: 8
+;CHECK-NEXT: byte   8
 
 @.str = external constant [13 x i8]
 
