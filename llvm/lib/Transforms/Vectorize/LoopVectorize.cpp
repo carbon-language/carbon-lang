@@ -218,6 +218,15 @@ public:
                          R.getInstr()) {}
 };
 
+/// A helper function for converting Scalar types to vector types.
+/// If the incoming type is void, we return void. If the VF is 1, we return
+/// the scalar type.
+static Type* ToVectorTy(Type *Scalar, unsigned VF) {
+  if (Scalar->isVoidTy() || VF == 1)
+    return Scalar;
+  return VectorType::get(Scalar, VF);
+}
+
 /// InnerLoopVectorizer vectorizes loops which contain only one basic
 /// block to a specified vectorization factor (VF).
 /// This class performs the widening of scalars into vectors, or multiple
@@ -957,11 +966,6 @@ private:
   /// Returns the execution time cost of an instruction for a given vector
   /// width. Vector width of one means scalar.
   unsigned getInstructionCost(Instruction *I, unsigned VF);
-
-  /// A helper function for converting Scalar types to vector types.
-  /// If the incoming type is void, we return void. If the VF is 1, we return
-  /// the scalar type.
-  static Type* ToVectorTy(Type *Scalar, unsigned VF);
 
   /// Returns whether the instruction is a load or store and will be a emitted
   /// as a vector operation.
@@ -4992,12 +4996,6 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     return Cost;
   }
   }// end of switch.
-}
-
-Type* LoopVectorizationCostModel::ToVectorTy(Type *Scalar, unsigned VF) {
-  if (Scalar->isVoidTy() || VF == 1)
-    return Scalar;
-  return VectorType::get(Scalar, VF);
 }
 
 char LoopVectorize::ID = 0;
