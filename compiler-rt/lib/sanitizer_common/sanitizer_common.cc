@@ -207,12 +207,12 @@ const char *StripPathPrefix(const char *filepath,
                             const char *strip_path_prefix) {
   if (filepath == 0) return 0;
   if (strip_path_prefix == 0) return filepath;
-  const char *pos = internal_strstr(filepath, strip_path_prefix);
-  if (pos == 0) return filepath;
-  pos += internal_strlen(strip_path_prefix);
-  if (pos[0] == '.' && pos[1] == '/')
-    pos += 2;
-  return pos;
+  const char *res = filepath;
+  if (const char *pos = internal_strstr(filepath, strip_path_prefix))
+    res = pos + internal_strlen(strip_path_prefix);
+  if (res[0] == '.' && res[1] == '/')
+    res += 2;
+  return res;
 }
 
 const char *StripModuleName(const char *module) {
