@@ -259,6 +259,8 @@ void DataLayout::parseSpecifier(StringRef Desc) {
             "Missing size specification for pointer in datalayout string");
       Split = split(Rest, ':');
       unsigned PointerMemSize = inBytes(getInt(Tok));
+      if (!PointerMemSize)
+        report_fatal_error("Invalid pointer size of 0 bytes");
 
       // ABI alignment.
       if (Rest.empty())
