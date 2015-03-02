@@ -74,11 +74,6 @@ X86LinuxTargetObjectFile::getDebugThreadLocalSymbol(
   return MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_DTPOFF, getContext());
 }
 
-const MCExpr *PS4TargetObjectFile::getDebugThreadLocalSymbol(
-    const MCSymbol *Sym) const {
-  return MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_DTPOFF, getContext());
-}
-
 const MCExpr *X86WindowsTargetObjectFile::getExecutableRelativeSymbol(
     const ConstantExpr *CE, Mangler &Mang, const TargetMachine &TM) const {
   // We are looking for the difference of two symbols, need a subtraction

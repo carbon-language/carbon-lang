@@ -47,12 +47,6 @@ namespace llvm {
     const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const override;
   };
 
-  /// \brief This TLOF implementation is used for PS4.
-  class PS4TargetObjectFile : public TargetLoweringObjectFileELF {
-    /// \brief Describe a TLS variable address within debug info.
-    const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const override;
-  };
-
   /// \brief This implementation is used for Windows targets on x86 and x86-64.
   class X86WindowsTargetObjectFile : public TargetLoweringObjectFileCOFF {
     const MCExpr *
