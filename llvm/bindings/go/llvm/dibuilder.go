@@ -343,6 +343,38 @@ func (d *DIBuilder) CreateStructType(scope Metadata, t DIStructType) Metadata {
 	return Metadata{C: result}
 }
 
+// DIReplaceableCompositeType holds the values for creating replaceable
+// composite type debug metadata.
+type DIReplaceableCompositeType struct {
+	Tag         dwarf.Tag
+	Name        string
+	File        Metadata
+	Line        int
+	RuntimeLang int
+	SizeInBits  uint64
+	AlignInBits uint64
+	Flags       int
+}
+
+// CreateReplaceableCompositeType creates replaceable composite type debug metadata.
+func (d *DIBuilder) CreateReplaceableCompositeType(scope Metadata, t DIReplaceableCompositeType) Metadata {
+	name := C.CString(t.Name)
+	defer C.free(unsafe.Pointer(name))
+	result := C.LLVMDIBuilderCreateReplaceableCompositeType(
+		d.ref,
+		C.unsigned(t.Tag),
+		name,
+		scope.C,
+		t.File.C,
+		C.unsigned(t.Line),
+		C.unsigned(t.RuntimeLang),
+		C.uint64_t(t.SizeInBits),
+		C.uint64_t(t.AlignInBits),
+		C.unsigned(t.Flags),
+	)
+	return Metadata{C: result}
+}
+
 // DIMemberType holds the values for creating member type debug metadata.
 type DIMemberType struct {
 	Name         string

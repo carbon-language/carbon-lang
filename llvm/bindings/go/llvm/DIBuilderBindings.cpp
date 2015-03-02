@@ -146,6 +146,18 @@ LLVMMetadataRef LLVMDIBuilderCreateStructType(
   return wrap(CT);
 }
 
+LLVMMetadataRef LLVMDIBuilderCreateReplaceableCompositeType(
+    LLVMDIBuilderRef Dref, unsigned Tag, const char *Name,
+    LLVMMetadataRef Scope, LLVMMetadataRef File, unsigned Line,
+    unsigned RuntimeLang, uint64_t SizeInBits, uint64_t AlignInBits,
+    unsigned Flags) {
+  DIBuilder *D = unwrap(Dref);
+  DICompositeType CT = D->createReplaceableCompositeType(
+      Tag, Name, unwrapDI<DIDescriptor>(Scope), unwrapDI<DIFile>(File), Line,
+      RuntimeLang, SizeInBits, AlignInBits, Flags);
+  return wrap(CT);
+}
+
 LLVMMetadataRef
 LLVMDIBuilderCreateMemberType(LLVMDIBuilderRef Dref, LLVMMetadataRef Scope,
                               const char *Name, LLVMMetadataRef File,

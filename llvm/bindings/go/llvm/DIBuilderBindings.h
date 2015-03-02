@@ -84,6 +84,11 @@ LLVMMetadataRef LLVMDIBuilderCreateStructType(
     uint64_t AlignInBits, unsigned Flags, LLVMMetadataRef DerivedFrom,
     LLVMMetadataRef ElementTypes);
 
+LLVMMetadataRef LLVMDIBuilderCreateReplaceableCompositeType(
+    LLVMDIBuilderRef D, unsigned Tag, const char *Name, LLVMMetadataRef Scope,
+    LLVMMetadataRef File, unsigned Line, unsigned RuntimeLang,
+    uint64_t SizeInBits, uint64_t AlignInBits, unsigned Flags);
+
 LLVMMetadataRef
 LLVMDIBuilderCreateMemberType(LLVMDIBuilderRef D, LLVMMetadataRef Scope,
                               const char *Name, LLVMMetadataRef File,
