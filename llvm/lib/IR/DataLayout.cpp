@@ -405,6 +405,10 @@ DataLayout::setAlignment(AlignTypeEnum align_type, unsigned abi_align,
     report_fatal_error("Invalid ABI alignment, must be a 16bit integer");
   if (!isUInt<16>(pref_align))
     report_fatal_error("Invalid preferred alignment, must be a 16bit integer");
+  if (abi_align != 0 && !isPowerOf2_64(abi_align))
+    report_fatal_error("Invalid ABI alignment, must be a power of 2");
+  if (pref_align != 0 && !isPowerOf2_64(pref_align))
+    report_fatal_error("Invalid preferred alignment, must be a power of 2");
 
   if (pref_align < abi_align)
     report_fatal_error(
