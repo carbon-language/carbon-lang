@@ -2796,14 +2796,20 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   } break;
   case Intrinsic::memcpy:
   case Intrinsic::memmove:
-  case Intrinsic::memset:
-    Assert1(isa<ConstantInt>(CI.getArgOperand(3)),
+  case Intrinsic::memset: {
+    ConstantInt *AlignCI = dyn_cast<ConstantInt>(CI.getArgOperand(3));
+    Assert1(AlignCI,
             "alignment argument of memory intrinsics must be a constant int",
+            &CI);
+    const APInt &AlignVal = AlignCI->getValue();
+    Assert1(AlignCI->isZero() || AlignVal.isPowerOf2(),
+            "alignment argument of memory intrinsics must be a power of 2",
             &CI);
     Assert1(isa<ConstantInt>(CI.getArgOperand(4)),
             "isvolatile argument of memory intrinsics must be a constant int",
             &CI);
     break;
+  }
   case Intrinsic::gcroot:
   case Intrinsic::gcwrite:
   case Intrinsic::gcread:
