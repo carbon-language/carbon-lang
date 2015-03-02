@@ -78,6 +78,9 @@ std::string runCheckOnCode(StringRef Code,
   return tooling::applyAllReplacements(Code, Fixes);
 }
 
+#define EXPECT_NO_CHANGES(Check, Code)                                         \
+  EXPECT_EQ(Code, runCheckOnCode<Check>(Code))
+
 } // namespace test
 } // namespace tidy
 } // namespace clang

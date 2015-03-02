@@ -7,9 +7,6 @@ namespace clang {
 namespace tidy {
 namespace test {
 
-#define EXPECT_NO_CHANGES(Check, Code)                                         \
-  EXPECT_EQ(Code, runCheckOnCode<Check>(Code))
-
 TEST(ExplicitConstructorCheckTest, SingleArgumentConstructorsOnly) {
   EXPECT_NO_CHANGES(ExplicitConstructorCheck, "class C { C(); };");
   EXPECT_NO_CHANGES(ExplicitConstructorCheck, "class C { C(int i, int j); };");
