@@ -268,9 +268,8 @@ int R600InstrInfo::getSrcIdx(unsigned Opcode, unsigned SrcNum) const {
   return getOperandIdx(Opcode, OpTable[SrcNum]);
 }
 
-#define SRC_SEL_ROWS 11
 int R600InstrInfo::getSelIdx(unsigned Opcode, unsigned SrcIdx) const {
-  static const unsigned SrcSelTable[SRC_SEL_ROWS][2] = {
+  static const unsigned SrcSelTable[][2] = {
     {AMDGPU::OpName::src0, AMDGPU::OpName::src0_sel},
     {AMDGPU::OpName::src1, AMDGPU::OpName::src1_sel},
     {AMDGPU::OpName::src2, AMDGPU::OpName::src2_sel},
@@ -284,14 +283,13 @@ int R600InstrInfo::getSelIdx(unsigned Opcode, unsigned SrcIdx) const {
     {AMDGPU::OpName::src1_W, AMDGPU::OpName::src1_sel_W}
   };
 
-  for (unsigned i = 0; i < SRC_SEL_ROWS; ++i) {
-    if (getOperandIdx(Opcode, SrcSelTable[i][0]) == (int)SrcIdx) {
-      return getOperandIdx(Opcode, SrcSelTable[i][1]);
+  for (const auto &Row : SrcSelTable) {
+    if (getOperandIdx(Opcode, Row[0]) == (int)SrcIdx) {
+      return getOperandIdx(Opcode, Row[1]);
     }
   }
   return -1;
 }
-#undef SRC_SEL_ROWS
 
 SmallVector<std::pair<MachineOperand *, int64_t>, 3>
 R600InstrInfo::getSrcs(MachineInstr *MI) const {
