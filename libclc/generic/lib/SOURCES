@@ -28,6 +28,7 @@ cl_khr_local_int32_extended_atomics/atom_or.cl
 cl_khr_local_int32_extended_atomics/atom_xor.cl
 convert.cl
 common/degrees.cl
+common/radians.cl
 common/sign.cl
 geometric/cross.cl
 geometric/dot.cl

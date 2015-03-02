@@ -109,6 +109,7 @@
 
 /* 6.11.4 Common Functions */
 #include <clc/common/degrees.h>
+#include <clc/common/radians.h>
 #include <clc/common/sign.h>
 
 /* 6.11.5 Geometric Functions */
