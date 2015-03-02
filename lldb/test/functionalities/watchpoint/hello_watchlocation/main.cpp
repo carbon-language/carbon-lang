@@ -70,12 +70,12 @@ thread_func (uint32_t thread_index)
         int usec = g_distribution(g_random_engine);
         printf ("%s (thread = %u) doing a usleep (%d)...\n", __FUNCTION__, thread_index, usec);
         std::this_thread::sleep_for(std::chrono::microseconds{usec});
-        
+
         if (count < 7)
             val = access_pool ();
         else
             val = access_pool (true);
-                
+
         printf ("%s (thread = %u) after usleep access_pool returns %d (count=%d)...\n", __FUNCTION__, thread_index, val, count);
     }
     printf ("%s (thread index = %u) exiting...\n", __FUNCTION__, thread_index);
@@ -84,11 +84,10 @@ thread_func (uint32_t thread_index)
 
 int main (int argc, char const *argv[])
 {
-    g_char_ptr = new char;
-    *g_char_ptr = 0;
-
-    std::thread threads[3];
     g_count = 4;
+    std::thread threads[3];
+
+    g_char_ptr = new char{};
 
     // Create 3 threads
     for (auto &thread : threads)

@@ -7,18 +7,29 @@
 //
 //===----------------------------------------------------------------------===//
 
-// C includes
-#include <pthread.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <chrono>
+#include <condition_variable>
+#include <cstdio>
+#include <random>
+#include <thread>
 
-pthread_t g_thread_1 = NULL;
-pthread_t g_thread_2 = NULL;
-pthread_t g_thread_3 = NULL;
+std::default_random_engine g_random_engine{std::random_device{}()};
+std::uniform_int_distribution<> g_distribution{0, 3000000};
+std::condition_variable g_condition_variable;
+std::mutex g_mutex;
+int g_count;
 
-char *g_char_ptr = NULL;
+char *g_char_ptr = nullptr;
+
+void
+barrier_wait()
+{
+    std::unique_lock<std::mutex> lock{g_mutex};
+    if (--g_count > 0)
+        g_condition_variable.wait(lock);
+    else
+        g_condition_variable.notify_all();
+}
 
 void
 do_bad_thing_with_location(char *char_ptr, char new_val)
@@ -26,73 +37,68 @@ do_bad_thing_with_location(char *char_ptr, char new_val)
     *char_ptr = new_val;
 }
 
-uint32_t access_pool (uint32_t flag = 0);
-
 uint32_t
-access_pool (uint32_t flag)
+access_pool (bool flag = false)
 {
-    static pthread_mutex_t g_access_mutex = PTHREAD_MUTEX_INITIALIZER;
-    if (flag == 0)
-        ::pthread_mutex_lock (&g_access_mutex);
+    static std::mutex g_access_mutex;
+    if (!flag)
+        g_access_mutex.lock();
 
     char old_val = *g_char_ptr;
-    if (flag != 0)
+    if (flag)
         do_bad_thing_with_location(g_char_ptr, old_val + 1);
 
-    if (flag == 0)
-        ::pthread_mutex_unlock (&g_access_mutex);
+    if (!flag)
+        g_access_mutex.unlock();
     return *g_char_ptr;
 }
 
-void *
-thread_func (void *arg)
+void
+thread_func (uint32_t thread_index)
 {
-    uint32_t thread_index = *((uint32_t *)arg);
     printf ("%s (thread index = %u) startng...\n", __FUNCTION__, thread_index);
+
+    barrier_wait();
 
     uint32_t count = 0;
     uint32_t val;
     while (count++ < 15)
     {
         // random micro second sleep from zero to 3 seconds
-        int usec = ::rand() % 3000000;
+        int usec = g_distribution(g_random_engine);
         printf ("%s (thread = %u) doing a usleep (%d)...\n", __FUNCTION__, thread_index, usec);
-        ::usleep (usec);
-        
+        std::this_thread::sleep_for(std::chrono::microseconds{usec});
+
         if (count < 7)
             val = access_pool ();
         else
-            val = access_pool (1);
-                
+            val = access_pool (true);
+
         printf ("%s (thread = %u) after usleep access_pool returns %d (count=%d)...\n", __FUNCTION__, thread_index, val, count);
     }
     printf ("%s (thread index = %u) exiting...\n", __FUNCTION__, thread_index);
-    return NULL;
 }
 
 
 int main (int argc, char const *argv[])
 {
-    int err;
-    void *thread_result = NULL;
-    uint32_t thread_index_1 = 1;
-    uint32_t thread_index_2 = 2;
-    uint32_t thread_index_3 = 3;
+    g_count = 4;
+    std::thread threads[3];
 
-    g_char_ptr = (char *)malloc (1);
-    *g_char_ptr = 0;
+    g_char_ptr = new char{};
 
     // Create 3 threads
-    err = ::pthread_create (&g_thread_1, NULL, thread_func, &thread_index_1);
-    err = ::pthread_create (&g_thread_2, NULL, thread_func, &thread_index_2);
-    err = ::pthread_create (&g_thread_3, NULL, thread_func, &thread_index_3);
+    for (auto &thread : threads)
+        thread = std::thread{thread_func, std::distance(threads, &thread)};
 
     printf ("Before turning all three threads loose...\n"); // Set break point at this line.
+    barrier_wait();
 
     // Join all of our threads
-    err = ::pthread_join (g_thread_1, &thread_result);
-    err = ::pthread_join (g_thread_2, &thread_result);
-    err = ::pthread_join (g_thread_3, &thread_result);
+    for (auto &thread : threads)
+        thread.join();
+
+    delete g_char_ptr;
 
     return 0;
 }
