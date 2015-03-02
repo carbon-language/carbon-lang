@@ -6131,12 +6131,7 @@ private:
 
     // Check if Ty is a usable substitute for the coercion type.
     bool isUsableType(llvm::StructType *Ty) const {
-      if (Ty->getNumElements() != Elems.size())
-        return false;
-      for (unsigned i = 0, e = Elems.size(); i != e; ++i)
-        if (Elems[i] != Ty->getElementType(i))
-          return false;
-      return true;
+      return llvm::makeArrayRef(Elems) == Ty->elements();
     }
 
     // Get the coercion type as a literal struct type.
