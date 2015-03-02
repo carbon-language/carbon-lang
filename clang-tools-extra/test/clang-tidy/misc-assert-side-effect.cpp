@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-assert-side-effect %t -config="{CheckOptions: [{key: misc-assert-side-effect.CheckFunctionCalls, value: 1}, {key: misc-assert-side-effect.AssertMacros, value: 'assert,my_assert'}]}" --
+// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-assert-side-effect %t -config="{CheckOptions: [{key: misc-assert-side-effect.CheckFunctionCalls, value: 1}, {key: misc-assert-side-effect.AssertMacros, value: 'assert,my_assert'}]}" -- -fexceptions
 // REQUIRES: shell
 
 //===--- assert definition block ------------------------------------------===//
