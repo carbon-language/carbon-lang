@@ -2142,7 +2142,7 @@ public:
             
             if (end_options)
             {
-                Args args (raw_command_line, end_options - raw_command_line);
+                Args args (llvm::StringRef(raw_command_line, end_options - raw_command_line));
                 if (!ParseOptions (args, result))
                     return false;
             }

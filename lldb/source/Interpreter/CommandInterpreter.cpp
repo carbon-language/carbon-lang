@@ -1412,7 +1412,7 @@ CommandInterpreter::BuildAliasResult (const char *alias_name,
                                       CommandReturnObject &result)
 {
     CommandObject *alias_cmd_obj = nullptr;
-    Args cmd_args (raw_input_string.c_str());
+    Args cmd_args (raw_input_string);
     alias_cmd_obj = GetCommandObject (alias_name);
     StreamString result_str;
     
@@ -2082,8 +2082,8 @@ CommandInterpreter::HandleCompletion (const char *current_line,
     // We parse the argument up to the cursor, so the last argument in parsed_line is
     // the one containing the cursor, and the cursor is after the last character.
 
-    Args parsed_line(current_line, last_char - current_line);
-    Args partial_parsed_line(current_line, cursor - current_line);
+    Args parsed_line(llvm::StringRef(current_line, last_char - current_line));
+    Args partial_parsed_line(llvm::StringRef(current_line, cursor - current_line));
 
     // Don't complete comments, and if the line we are completing is just the history repeat character, 
     // substitute the appropriate history line.

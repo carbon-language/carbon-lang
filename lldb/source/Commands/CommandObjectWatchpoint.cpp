@@ -1211,7 +1211,7 @@ protected:
             
             if (end_options)
             {
-                Args args (raw_command, end_options - raw_command);
+                Args args (llvm::StringRef(raw_command, end_options - raw_command));
                 if (!ParseOptions (args, result))
                     return false;
                 

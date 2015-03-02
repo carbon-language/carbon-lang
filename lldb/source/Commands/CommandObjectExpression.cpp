@@ -487,7 +487,7 @@ CommandObjectExpression::DoExecute
 
         if (end_options)
         {
-            Args args (command, end_options - command);
+            Args args (llvm::StringRef(command, end_options - command));
             if (!ParseOptions (args, result))
                 return false;
             
