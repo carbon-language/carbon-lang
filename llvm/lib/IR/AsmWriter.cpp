@@ -2906,7 +2906,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     } else if (const auto *LI = dyn_cast<LoadInst>(&I)) {
       Out << ' ';
       TypePrinter.print(LI->getType(), Out);
-      Out << ", ";
+      Out << ',';
     }
 
     // PrintAllTypes - Instructions who have operands of all the same type
