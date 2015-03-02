@@ -41,7 +41,7 @@
 #include "lld/Core/Reference.h"
 #include "lld/Core/Simple.h"
 #include "llvm/ADT/DenseMap.h"
-
+#include "llvm/ADT/STLExtras.h"
 
 namespace lld {
 namespace mach_o {

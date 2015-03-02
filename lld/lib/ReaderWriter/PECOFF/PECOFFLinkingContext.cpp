@@ -20,6 +20,7 @@
 #include "lld/Core/Simple.h"
 #include "lld/Core/Writer.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Path.h"

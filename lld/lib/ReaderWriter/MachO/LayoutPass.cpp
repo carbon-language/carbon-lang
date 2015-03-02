@@ -12,6 +12,7 @@
 #include "lld/Core/Parallel.h"
 #include "lld/Core/PassManager.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Debug.h"
 #include <algorithm>

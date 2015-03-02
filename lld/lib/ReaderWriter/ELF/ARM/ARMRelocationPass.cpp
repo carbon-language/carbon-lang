@@ -17,13 +17,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMRelocationPass.h"
-
-#include "lld/Core/Simple.h"
-
-#include "llvm/ADT/DenseMap.h"
-
-#include "Atoms.h"
 #include "ARMLinkingContext.h"
+#include "Atoms.h"
+#include "lld/Core/Simple.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 
 using namespace lld;

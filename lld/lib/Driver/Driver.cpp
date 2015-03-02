@@ -17,6 +17,7 @@
 #include "lld/Core/Resolver.h"
 #include "lld/Core/Writer.h"
 #include "lld/Driver/Driver.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"

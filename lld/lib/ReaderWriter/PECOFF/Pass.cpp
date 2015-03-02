@@ -10,6 +10,7 @@
 #include "Atoms.h"
 #include "Pass.h"
 #include "lld/Core/File.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/COFF.h"
 
 namespace lld {

@@ -13,6 +13,7 @@
 #include "TargetHandler.h"
 #include "lld/Core/Instrumentation.h"
 #include "lld/Core/SharedLibraryFile.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/ELF.h"
