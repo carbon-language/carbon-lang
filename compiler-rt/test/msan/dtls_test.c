@@ -1,5 +1,5 @@
-/* RUN: %clang_msan -g -m64 %s -o %t
-   RUN: %clang_msan -g -m64 %s -DBUILD_SO -fPIC -o %t-so.so -shared
+/* RUN: %clang_msan -g %s -o %t
+   RUN: %clang_msan -g %s -DBUILD_SO -fPIC -o %t-so.so -shared
    RUN: %run %t 2>&1
 
    Regression test for a bug in msan/glibc integration,

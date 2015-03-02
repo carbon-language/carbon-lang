@@ -1,5 +1,5 @@
-// RUN: %clangxx_msan -m64 -O0 %s -c -o %t
-// RUN: %clangxx_msan -m64 -O3 %s -c -o %t
+// RUN: %clangxx_msan -O0 %s -c -o %t
+// RUN: %clangxx_msan -O3 %s -c -o %t
 
 // Regression test for MemorySanitizer instrumentation of a select instruction
 // with vector arguments.

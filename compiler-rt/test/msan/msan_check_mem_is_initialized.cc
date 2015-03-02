@@ -1,9 +1,9 @@
-// RUN: %clangxx_msan -m64 -O0 -g -DPOSITIVE %s -o %t
+// RUN: %clangxx_msan -O0 -g -DPOSITIVE %s -o %t
 // RUN: not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK
 // RUN: MSAN_OPTIONS=verbosity=1 not %run %t 2>&1 | \
 // RUN:     FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-VERBOSE
 
-// RUN: %clangxx_msan -m64 -O0 -g %s -o %t && %run %t
+// RUN: %clangxx_msan -O0 -g %s -o %t && %run %t
 
 #include <sanitizer/msan_interface.h>
 

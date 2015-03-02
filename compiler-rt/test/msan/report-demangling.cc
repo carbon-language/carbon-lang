@@ -1,7 +1,7 @@
 // Test that function name is mangled in the "created by an allocation" line,
 // and demangled in the single-frame "stack trace" that follows.
 
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O0 %s -o %t && not %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -O0 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out && FileCheck %s < %t.out
 
 __attribute__((noinline))

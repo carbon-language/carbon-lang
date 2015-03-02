@@ -1,4 +1,4 @@
-// RUN: %clangxx_msan -m64 -O2 %s -o %t && %run %t
+// RUN: %clangxx_msan -O2 %s -o %t && %run %t
 
 #include <sanitizer/msan_interface.h>
 

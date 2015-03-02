@@ -1,9 +1,9 @@
 // ParamTLS has limited size. Everything that does not fit is considered fully
 // initialized.
 
-// RUN: %clangxx_msan -m64 -O0 %s -o %t && %run %t
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O0 %s -o %t && %run %t
-// RUN: %clangxx_msan -fsanitize-memory-track-origins=2 -m64 -O0 %s -o %t && %run %t
+// RUN: %clangxx_msan -O0 %s -o %t && %run %t
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -O0 %s -o %t && %run %t
+// RUN: %clangxx_msan -fsanitize-memory-track-origins=2 -O0 %s -o %t && %run %t
 
 #include <sanitizer/msan_interface.h>
 #include <assert.h>

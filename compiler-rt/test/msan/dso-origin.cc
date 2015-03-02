@@ -1,7 +1,7 @@
 // Build a library with origin tracking and an executable w/o origin tracking.
 // Test that origin tracking is enabled at runtime.
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O0 %s -DBUILD_SO -fPIC -shared -o %t-so.so
-// RUN: %clangxx_msan -m64 -O0 %s %t-so.so -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -O0 %s -DBUILD_SO -fPIC -shared -o %t-so.so
+// RUN: %clangxx_msan -O0 %s %t-so.so -o %t && not %run %t 2>&1 | FileCheck %s
 
 #ifdef BUILD_SO
 

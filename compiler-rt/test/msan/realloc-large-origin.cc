@@ -1,6 +1,6 @@
-// RUN: %clangxx_msan -fsanitize-memory-track-origins=2 -m64 -O0 %s -o %t && not %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -fsanitize-memory-track-origins=2 -O0 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out
-// RUN: %clangxx_msan -fsanitize-memory-track-origins=2 -m64 -O2 %s -o %t && not %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -fsanitize-memory-track-origins=2 -O2 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out
 
 // This is a regression test: there used to be broken "stored to memory at"

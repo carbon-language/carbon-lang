@@ -1,7 +1,7 @@
 // Check that 8-byte store updates origin for the full store range.
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O0 %s -o %t && not %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -O0 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out && FileCheck %s < %t.out
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O2 %s -o %t && not %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -O2 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out && FileCheck %s < %t.out
 
 #include <sanitizer/msan_interface.h>

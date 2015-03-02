@@ -1,4 +1,4 @@
-// RUN: %clangxx_msan -m64 -O0 -g %s -o %t && %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -O0 -g %s -o %t && %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out
 
 #include <stdint.h>

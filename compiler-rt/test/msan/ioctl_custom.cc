@@ -1,8 +1,8 @@
-// RUN: %clangxx_msan -m64 -O0 -g %s -o %t && %run %t
-// RUN: %clangxx_msan -m64 -O3 -g %s -o %t && %run %t
+// RUN: %clangxx_msan -O0 -g %s -o %t && %run %t
+// RUN: %clangxx_msan -O3 -g %s -o %t && %run %t
 
-// RUN: %clangxx_msan -DPOSITIVE -m64 -O0 -g %s -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_msan -DPOSITIVE -m64 -O3 -g %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_msan -DPOSITIVE -O0 -g %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_msan -DPOSITIVE -O3 -g %s -o %t && not %run %t 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <stdlib.h>

@@ -1,6 +1,6 @@
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O0 %s -o %t
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -O0 %s -o %t
 // RUN: %run %t
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O3 %s -o %t
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -O3 %s -o %t
 // RUN: %run %t
 
 #include <assert.h>

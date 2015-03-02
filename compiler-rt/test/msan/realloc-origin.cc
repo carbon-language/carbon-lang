@@ -1,6 +1,6 @@
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O0 %s -o %t && not %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -O0 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O2 %s -o %t && not %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -O2 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out
 
 // This test relies on realloc from 100 to 101 being done in-place.
