@@ -359,18 +359,17 @@ class POSIXSymbolizer : public Symbolizer {
     BlockingMutexLock l(&mu_);
     const char *module_name;
     uptr module_offset;
+    SymbolizedStack *res = SymbolizedStack::New(addr);
     if (!FindModuleNameAndOffsetForAddress(addr, &module_name, &module_offset))
-      return SymbolizedStack::New(addr);
+      return res;
+    // Always fill data about module name and offset.
+    res->info.FillAddressAndModuleInfo(addr, module_name, module_offset);
     // First, try to use libbacktrace symbolizer (if it's available).
     if (libbacktrace_symbolizer_ != 0) {
       mu_.CheckLocked();
-      if (SymbolizedStack *res = libbacktrace_symbolizer_->SymbolizeCode(
-              addr, module_name, module_offset))
+      if (libbacktrace_symbolizer_->SymbolizePC(addr, res))
         return res;
     }
-    // Always fill data about module name and offset.
-    SymbolizedStack *res = SymbolizedStack::New(addr);
-    res->info.FillAddressAndModuleInfo(addr, module_name, module_offset);
     if (SymbolizerTool *tool = GetSymbolizerTool()) {
       SymbolizerScope sym_scope(this);
       tool->SymbolizePC(addr, res);
