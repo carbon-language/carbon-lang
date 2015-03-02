@@ -358,3 +358,10 @@ typedef NS_ENUM(unsigned long long, MyEnumunsignedlonglong) {
   ll3,
   ll4
 };
+
+// rdar://19994496
+typedef NS_ENUM(int8_t, MyOneEnum) {int8_one};
+
+typedef NS_ENUM(int16_t, Myint16_tEnum) {
+          int16_t_one,
+          int16_t_two };
