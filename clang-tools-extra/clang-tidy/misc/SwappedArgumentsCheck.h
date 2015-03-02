@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace misc {
 
 /// \brief Finds potentially swapped arguments by looking at implicit
 /// conversions.
@@ -25,8 +26,8 @@ public:
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 
+} // namespace misc
 } // namespace tidy
 } // namespace clang
 
 #endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_SWAPPED_ARGUMENTS_CHECK_H
-

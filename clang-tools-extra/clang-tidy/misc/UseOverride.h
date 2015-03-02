@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace misc {
 
 /// \brief Use C++11's 'override' and remove 'virtual' where applicable.
 class UseOverride : public ClangTidyCheck {
@@ -24,8 +25,8 @@ public:
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 
+} // namespace misc
 } // namespace tidy
 } // namespace clang
 
 #endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_MISC_USE_OVERRIDE_H
-

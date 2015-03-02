@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace misc {
 
 /// \brief Checks for conditions based on implicit conversion from a bool
 /// pointer to bool e.g.
@@ -29,6 +30,7 @@ public:
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 
+} // namespace misc
 } // namespace tidy
 } // namespace clang
 

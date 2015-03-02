@@ -25,6 +25,7 @@
 
 namespace clang {
 namespace tidy {
+namespace misc {
 
 class MiscModule : public ClangTidyModule {
 public:
@@ -53,8 +54,10 @@ public:
   }
 };
 
+} // namespace misc
+
 // Register the MiscTidyModule using this statically initialized variable.
-static ClangTidyModuleRegistry::Add<MiscModule>
+static ClangTidyModuleRegistry::Add<misc::MiscModule>
 X("misc-module", "Adds miscellaneous lint checks.");
 
 // This anchor is used to force the linker to link in the generated object file

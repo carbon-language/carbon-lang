@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace misc {
 
 /// \brief Find and replace unique_ptr::reset(release()) with std::move
 ///
@@ -32,6 +33,7 @@ public:
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 
+} // namespace misc
 } // namespace tidy
 } // namespace clang
 

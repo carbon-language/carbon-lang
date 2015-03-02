@@ -16,6 +16,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
+namespace misc {
 
 static bool areTypesCompatible(QualType Left, QualType Right) {
   if (const auto *LeftRefType = Left->getAs<ReferenceType>())
@@ -123,5 +124,6 @@ void InefficientAlgorithmCheck::check(const MatchFinder::MatchResult &Result) {
       << Hint;
 }
 
+} // namespace misc
 } // namespace tidy
 } // namespace clang

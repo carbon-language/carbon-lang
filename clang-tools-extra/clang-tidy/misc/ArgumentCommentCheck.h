@@ -15,6 +15,7 @@
 
 namespace clang {
 namespace tidy {
+namespace misc {
 
 /// \brief Checks that argument comments match parameter names.
 class ArgumentCommentCheck : public ClangTidyCheck {
@@ -36,6 +37,7 @@ private:
                      llvm::ArrayRef<const Expr *> Args);
 };
 
+} // namespace misc
 } // namespace tidy
 } // namespace clang
 

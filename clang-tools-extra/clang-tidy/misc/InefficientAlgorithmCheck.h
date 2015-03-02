@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace misc {
 
 /// \brief Warns on inefficient use of STL algorithms on associative containers.
 ///
@@ -28,6 +29,7 @@ public:
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 
+} // namespace misc
 } // namespace tidy
 } // namespace clang
 

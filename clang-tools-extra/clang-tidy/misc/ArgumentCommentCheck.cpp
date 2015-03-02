@@ -17,6 +17,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
+namespace misc {
 
 ArgumentCommentCheck::ArgumentCommentCheck(StringRef Name,
                                            ClangTidyContext *Context)
@@ -181,5 +182,6 @@ void ArgumentCommentCheck::check(const MatchFinder::MatchResult &Result) {
   }
 }
 
+} // namespace misc
 } // namespace tidy
 } // namespace clang

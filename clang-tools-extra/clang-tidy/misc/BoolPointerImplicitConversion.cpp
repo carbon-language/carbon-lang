@@ -22,6 +22,7 @@ AST_MATCHER(QualType, isBoolean) { return Node->isBooleanType(); }
 } // namespace ast_matchers
 
 namespace tidy {
+namespace misc {
 
 void BoolPointerImplicitConversion::registerMatchers(MatchFinder *Finder) {
   // Look for ifs that have an implicit bool* to bool conversion in the
@@ -71,5 +72,6 @@ BoolPointerImplicitConversion::check(const MatchFinder::MatchResult &Result) {
       << FixItHint::CreateInsertion(Var->getLocStart(), "*");
 }
 
+} // namespace misc
 } // namespace tidy
 } // namespace clang

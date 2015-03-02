@@ -16,6 +16,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
+namespace misc {
 
 void UseOverride::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(methodDecl(isOverride()).bind("method"), this);
@@ -175,5 +176,6 @@ void UseOverride::check(const MatchFinder::MatchResult &Result) {
   }
 }
 
+} // namespace misc
 } // namespace tidy
 } // namespace clang

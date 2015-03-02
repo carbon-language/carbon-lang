@@ -22,6 +22,7 @@ AST_MATCHER(CXXRecordDecl, hasUserDeclaredDestructor) {
 } // namespace ast_matchers
 
 namespace tidy {
+namespace misc {
 
 void UnusedRAIICheck::registerMatchers(MatchFinder *Finder) {
   // Look for temporaries that are constructed in-place and immediately
@@ -79,5 +80,6 @@ void UnusedRAIICheck::check(const MatchFinder::MatchResult &Result) {
       Replacement);
 }
 
+} // namespace misc
 } // namespace tidy
 } // namespace clang

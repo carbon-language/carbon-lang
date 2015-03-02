@@ -6,6 +6,8 @@ namespace clang {
 namespace tidy {
 namespace test {
 
+using misc::ArgumentCommentCheck;
+
 TEST(ArgumentCommentCheckTest, CorrectComments) {
   EXPECT_NO_CHANGES(ArgumentCommentCheck,
                     "void f(int x, int y); void g() { f(/*x=*/0, /*y=*/0); }");

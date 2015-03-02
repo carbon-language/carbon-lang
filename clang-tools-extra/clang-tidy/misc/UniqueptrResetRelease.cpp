@@ -15,6 +15,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
+namespace misc {
 
 void UniqueptrResetRelease::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
@@ -62,5 +63,6 @@ void UniqueptrResetRelease::check(const MatchFinder::MatchResult &Result) {
           CharSourceRange::getTokenRange(ResetCall->getSourceRange()), NewText);
 }
 
+} // namespace misc
 } // namespace tidy
 } // namespace clang
