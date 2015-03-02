@@ -112,6 +112,7 @@
 #include <clc/common/radians.h>
 #include <clc/common/sign.h>
 #include <clc/common/smoothstep.h>
+#include <clc/common/step.h>
 
 /* 6.11.5 Geometric Functions */
 #include <clc/geometric/cross.h>
