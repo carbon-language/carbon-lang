@@ -5458,6 +5458,8 @@ int LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
     return true;
 
   Type *PtrTy = Ptr->getType();
+  if (!isa<SequentialType>(PtrTy))
+    return Error(Loc, "pointer type is not valid");
   if (VectorType *VT = dyn_cast<VectorType>(PtrTy))
     PtrTy = VT->getElementType();
   if (Ty != cast<SequentialType>(PtrTy)->getElementType())
