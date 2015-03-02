@@ -108,23 +108,6 @@ void AsanOnSIGSEGV(int, void *siginfo, void *context) {
 
 static LPTOP_LEVEL_EXCEPTION_FILTER default_seh_handler;
 
-SignalContext SignalContext::Create(void *siginfo, void *context) {
-  EXCEPTION_RECORD *exception_record = (EXCEPTION_RECORD*)siginfo;
-  CONTEXT *context_record = (CONTEXT*)context;
-
-  uptr pc = (uptr)exception_record->ExceptionAddress;
-#ifdef _WIN64
-  uptr bp = (uptr)context_record->Rbp;
-  uptr sp = (uptr)context_record->Rsp;
-#else
-  uptr bp = (uptr)context_record->Ebp;
-  uptr sp = (uptr)context_record->Esp;
-#endif
-  uptr access_addr = exception_record->ExceptionInformation[1];
-
-  return SignalContext(context, access_addr, pc, sp, bp);
-}
-
 static long WINAPI SEHHandler(EXCEPTION_POINTERS *info) {
   EXCEPTION_RECORD *exception_record = info->ExceptionRecord;
   CONTEXT *context = info->ContextRecord;

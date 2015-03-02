@@ -631,6 +631,23 @@ bool IsAccessibleMemoryRange(uptr beg, uptr size) {
   return true;
 }
 
+SignalContext SignalContext::Create(void *siginfo, void *context) {
+  EXCEPTION_RECORD *exception_record = (EXCEPTION_RECORD*)siginfo;
+  CONTEXT *context_record = (CONTEXT*)context;
+
+  uptr pc = (uptr)exception_record->ExceptionAddress;
+#ifdef _WIN64
+  uptr bp = (uptr)context_record->Rbp;
+  uptr sp = (uptr)context_record->Rsp;
+#else
+  uptr bp = (uptr)context_record->Ebp;
+  uptr sp = (uptr)context_record->Esp;
+#endif
+  uptr access_addr = exception_record->ExceptionInformation[1];
+
+  return SignalContext(context, access_addr, pc, sp, bp);
+}
+
 }  // namespace __sanitizer
 
 #endif  // _WIN32
