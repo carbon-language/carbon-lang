@@ -6651,3 +6651,36 @@
 // CHECK: vmovups %ymm23, -4128(%rdx)
 // CHECK:  encoding: [0x62,0xe1,0x7c,0x28,0x11,0xba,0xe0,0xef,0xff,0xff]
           vmovups %ymm23, -4128(%rdx)
+
+// CHECK: vaddpd  %zmm2, %zmm1, %zmm1
+// CHECK:  encoding: [0x62,0xf1,0xf5,0x48,0x58,0xca]
+vaddpd  %zmm2, %zmm1, %zmm1
+
+// CHECK: vaddpd  %zmm2, %zmm1, %zmm1 {%k5}
+// CHECK:  encoding: [0x62,0xf1,0xf5,0x4d,0x58,0xca]
+vaddpd  %zmm2, %zmm1, %zmm1 {%k5}
+
+// CHECK: vaddpd  %zmm2, %zmm1, %zmm1 {%k5} {z}
+// CHECK:  encoding: [0x62,0xf1,0xf5,0xcd,0x58,0xca]
+vaddpd  %zmm2, %zmm1, %zmm1 {%k5} {z}
+
+// CHECK: vaddpd  {rn-sae}, %zmm2, %zmm1, %zmm1 {%k5} {z}
+// CHECK:  encoding: [0x62,0xf1,0xf5,0x9d,0x58,0xca]
+vaddpd  {rn-sae}, %zmm2, %zmm1, %zmm1 {%k5} {z}
+
+// CHECK: vaddpd  {rn-sae}, %zmm2, %zmm1, %zmm1
+// CHECK:  encoding: [0x62,0xf1,0xf5,0x18,0x58,0xca]
+vaddpd  {rn-sae}, %zmm2, %zmm1, %zmm1
+
+// CHECK: vaddpd  {ru-sae}, %zmm2, %zmm1, %zmm1
+// CHECK:  encoding: [0x62,0xf1,0xf5,0x58,0x58,0xca]
+vaddpd  {ru-sae}, %zmm2, %zmm1, %zmm1
+
+// CHECK:  vaddpd  {rd-sae}, %zmm2, %zmm1, %zmm1
+// CHECK:  encoding: [0x62,0xf1,0xf5,0x38,0x58,0xca]
+vaddpd  {rd-sae}, %zmm2, %zmm1, %zmm1
+
+// CHECK: vaddpd  {rz-sae}, %zmm2, %zmm1, %zmm1
+// CHECK:  encoding: [0x62,0xf1,0xf5,0x78,0x58,0xca]
+vaddpd  {rz-sae}, %zmm2, %zmm1, %zmm1
+
