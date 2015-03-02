@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace readability {
 
 class ElseAfterReturnCheck : public ClangTidyCheck {
 public:
@@ -23,8 +24,8 @@ public:
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 
+} // namespace readability
 } // namespace tidy
 } // namespace clang
 
 #endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_READABILITY_ELSE_AFTER_RETURN_H
-

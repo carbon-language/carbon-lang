@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace readability {
 
 /// \brief Replace copy and swap tricks on shrinkable containers with the
 /// \c shrink_to_fit() method call.
@@ -29,6 +30,7 @@ public:
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 
+} // namespace readability
 } // namespace tidy
 } // namespace clang
 

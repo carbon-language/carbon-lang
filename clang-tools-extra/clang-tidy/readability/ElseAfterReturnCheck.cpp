@@ -15,6 +15,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
+namespace readability {
 
 void ElseAfterReturnCheck::registerMatchers(MatchFinder *Finder) {
   // FIXME: Support continue, break and throw.
@@ -41,6 +42,6 @@ void ElseAfterReturnCheck::check(const MatchFinder::MatchResult &Result) {
     Diag << removeToken(CS->getLBracLoc()) << removeToken(CS->getRBracLoc());
 }
 
+} // namespace readability
 } // namespace tidy
 } // namespace clang
-
