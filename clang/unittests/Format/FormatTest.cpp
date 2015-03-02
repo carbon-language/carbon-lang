@@ -9537,6 +9537,12 @@ TEST_F(FormatTest, FormatsLambdas) {
                "                   int j) -> int {\n"
                "  return ffffffffffffffffffffffffffffffffffffffffffff(i * j);\n"
                "};");
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaa(\n"
+      "    [](aaaaaaaaaaaaaaaaaaaaaaaaaaa &aaa) -> aaaaaaaaaaaaaaaa {\n"
+      "      return aaaaaaaaaaaaaaaaa;\n"
+      "    });",
+      getLLVMStyleWithColumns(70));
 
   // Multiple lambdas in the same parentheses change indentation rules.
   verifyFormat("SomeFunction(\n"

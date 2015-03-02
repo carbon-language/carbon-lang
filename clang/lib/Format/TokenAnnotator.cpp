@@ -1535,6 +1535,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
       return Style.PenaltyReturnTypeOnItsOwnLine;
     return 200;
   }
+  if (Right.is(TT_TrailingReturnArrow))
+    return 110;
   if (Left.is(tok::equal) && Right.is(tok::l_brace))
     return 150;
   if (Left.is(TT_CastRParen))
