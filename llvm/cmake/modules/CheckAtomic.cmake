@@ -13,6 +13,7 @@ endif()
 
 CHECK_CXX_SOURCE_COMPILES("
 #ifdef _MSC_VER
+#include <Intrin.h> /* Workaround for PR19898. */
 #include <windows.h>
 #endif
 int main() {
