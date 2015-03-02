@@ -15,6 +15,7 @@
 #define LLVM_ADT_DENSEMAP_H
 
 #include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/ADT/EpochTracker.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
@@ -50,7 +51,7 @@ class DenseMapIterator;
 
 template <typename DerivedT, typename KeyT, typename ValueT, typename KeyInfoT,
           typename BucketT>
-class DenseMapBase {
+class DenseMapBase : public DebugEpochBase {
 public:
   typedef unsigned size_type;
   typedef KeyT key_type;
@@ -62,16 +63,17 @@ public:
       const_iterator;
   inline iterator begin() {
     // When the map is empty, avoid the overhead of AdvancePastEmptyBuckets().
-    return empty() ? end() : iterator(getBuckets(), getBucketsEnd());
+    return empty() ? end() : iterator(getBuckets(), getBucketsEnd(), *this);
   }
   inline iterator end() {
-    return iterator(getBucketsEnd(), getBucketsEnd(), true);
+    return iterator(getBucketsEnd(), getBucketsEnd(), *this, true);
   }
   inline const_iterator begin() const {
-    return empty() ? end() : const_iterator(getBuckets(), getBucketsEnd());
+    return empty() ? end()
+                   : const_iterator(getBuckets(), getBucketsEnd(), *this);
   }
   inline const_iterator end() const {
-    return const_iterator(getBucketsEnd(), getBucketsEnd(), true);
+    return const_iterator(getBucketsEnd(), getBucketsEnd(), *this, true);
   }
 
   bool LLVM_ATTRIBUTE_UNUSED_RESULT empty() const {
@@ -81,11 +83,13 @@ public:
 
   /// Grow the densemap so that it has at least Size buckets. Does not shrink
   void resize(size_type Size) {
+    incrementEpoch();
     if (Size > getNumBuckets())
       grow(Size);
   }
 
   void clear() {
+    incrementEpoch();
     if (getNumEntries() == 0 && getNumTombstones() == 0) return;
 
     // If the capacity of the array is huge, and the # elements used is small,
@@ -118,13 +122,13 @@ public:
   iterator find(const KeyT &Val) {
     BucketT *TheBucket;
     if (LookupBucketFor(Val, TheBucket))
-      return iterator(TheBucket, getBucketsEnd(), true);
+      return iterator(TheBucket, getBucketsEnd(), *this, true);
     return end();
   }
   const_iterator find(const KeyT &Val) const {
     const BucketT *TheBucket;
     if (LookupBucketFor(Val, TheBucket))
-      return const_iterator(TheBucket, getBucketsEnd(), true);
+      return const_iterator(TheBucket, getBucketsEnd(), *this, true);
     return end();
   }
 
@@ -137,14 +141,14 @@ public:
   iterator find_as(const LookupKeyT &Val) {
     BucketT *TheBucket;
     if (LookupBucketFor(Val, TheBucket))
-      return iterator(TheBucket, getBucketsEnd(), true);
+      return iterator(TheBucket, getBucketsEnd(), *this, true);
     return end();
   }
   template<class LookupKeyT>
   const_iterator find_as(const LookupKeyT &Val) const {
     const BucketT *TheBucket;
     if (LookupBucketFor(Val, TheBucket))
-      return const_iterator(TheBucket, getBucketsEnd(), true);
+      return const_iterator(TheBucket, getBucketsEnd(), *this, true);
     return end();
   }
 
@@ -163,12 +167,13 @@ public:
   std::pair<iterator, bool> insert(const std::pair<KeyT, ValueT> &KV) {
     BucketT *TheBucket;
     if (LookupBucketFor(KV.first, TheBucket))
-      return std::make_pair(iterator(TheBucket, getBucketsEnd(), true),
+      return std::make_pair(iterator(TheBucket, getBucketsEnd(), *this, true),
                             false); // Already in map.
 
     // Otherwise, insert the new element.
     TheBucket = InsertIntoBucket(KV.first, KV.second, TheBucket);
-    return std::make_pair(iterator(TheBucket, getBucketsEnd(), true), true);
+    return std::make_pair(iterator(TheBucket, getBucketsEnd(), *this, true),
+                          true);
   }
 
   // Inserts key,value pair into the map if the key isn't already in the map.
@@ -177,14 +182,15 @@ public:
   std::pair<iterator, bool> insert(std::pair<KeyT, ValueT> &&KV) {
     BucketT *TheBucket;
     if (LookupBucketFor(KV.first, TheBucket))
-      return std::make_pair(iterator(TheBucket, getBucketsEnd(), true),
+      return std::make_pair(iterator(TheBucket, getBucketsEnd(), *this, true),
                             false); // Already in map.
-    
+
     // Otherwise, insert the new element.
     TheBucket = InsertIntoBucket(std::move(KV.first),
                                  std::move(KV.second),
                                  TheBucket);
-    return std::make_pair(iterator(TheBucket, getBucketsEnd(), true), true);
+    return std::make_pair(iterator(TheBucket, getBucketsEnd(), *this, true),
+                          true);
   }
 
   /// insert - Range insertion of pairs.
@@ -431,6 +437,8 @@ private:
   }
 
   BucketT *InsertIntoBucketImpl(const KeyT &Key, BucketT *TheBucket) {
+    incrementEpoch();
+
     // If the load of the hash table is more than 3/4, or if fewer than 1/8 of
     // the buckets are empty (meaning that many are filled with tombstones),
     // grow the table.
@@ -987,7 +995,7 @@ private:
 
 template <typename KeyT, typename ValueT, typename KeyInfoT, typename Bucket,
           bool IsConst>
-class DenseMapIterator {
+class DenseMapIterator : DebugEpochBase::HandleBase {
   typedef DenseMapIterator<KeyT, ValueT, KeyInfoT, Bucket, true> ConstIterator;
   friend class DenseMapIterator<KeyT, ValueT, KeyInfoT, Bucket, true>;
 
@@ -1003,8 +1011,10 @@ private:
 public:
   DenseMapIterator() : Ptr(nullptr), End(nullptr) {}
 
-  DenseMapIterator(pointer Pos, pointer E, bool NoAdvance = false)
-    : Ptr(Pos), End(E) {
+  DenseMapIterator(pointer Pos, pointer E, const DebugEpochBase &Epoch,
+                   bool NoAdvance = false)
+      : DebugEpochBase::HandleBase(&Epoch), Ptr(Pos), End(E) {
+    assert(isHandleInSync() && "invalid construction!");
     if (!NoAdvance) AdvancePastEmptyBuckets();
   }
 
@@ -1013,12 +1023,14 @@ public:
   // Otherwise this is a copy constructor for iterator.
   DenseMapIterator(
       const DenseMapIterator<KeyT, ValueT, KeyInfoT, Bucket, false> &I)
-      : Ptr(I.Ptr), End(I.End) {}
+      : DebugEpochBase::HandleBase(I), Ptr(I.Ptr), End(I.End) {}
 
   reference operator*() const {
+    assert(isHandleInSync() && "invalid iterator access!");
     return *Ptr;
   }
   pointer operator->() const {
+    assert(isHandleInSync() && "invalid iterator access!");
     return Ptr;
   }
 
@@ -1030,11 +1042,13 @@ public:
   }
 
   inline DenseMapIterator& operator++() {  // Preincrement
+    assert(isHandleInSync() && "invalid iterator access!");
     ++Ptr;
     AdvancePastEmptyBuckets();
     return *this;
   }
   DenseMapIterator operator++(int) {  // Postincrement
+    assert(isHandleInSync() && "invalid iterator access!");
     DenseMapIterator tmp = *this; ++*this; return tmp;
   }
 
