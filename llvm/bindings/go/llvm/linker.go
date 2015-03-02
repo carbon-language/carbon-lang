@@ -22,7 +22,7 @@ import "errors"
 
 func LinkModules(Dest, Src Module) error {
 	var cmsg *C.char
-	failed := C.LLVMLinkModules(Dest.C, Src.C, 0, &cmsg)
+	failed := C.LLVMLinkModules(Dest.C, Src.C, C.LLVMLinkerDestroySource, &cmsg)
 	if failed != 0 {
 		err := errors.New(C.GoString(cmsg))
 		C.LLVMDisposeMessage(cmsg)
