@@ -442,6 +442,8 @@ def Availability : InheritableAttr {
     return llvm::StringSwitch<llvm::StringRef>(Platform)
              .Case("ios", "iOS")
              .Case("macosx", "OS X")
+             .Case("ios_app_extension", "iOS (App Extension)")
+             .Case("macosx_app_extension", "OS X (App Extension)")
              .Default(llvm::StringRef());
 } }];
   let HasCustomParsing = 1;

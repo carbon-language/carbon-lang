@@ -84,6 +84,7 @@ BENIGN_LANGOPT(EncodeExtendedBlockSig , 1, 0,
                "Encoding extended block type signature")
 BENIGN_LANGOPT(ObjCInferRelatedResultType , 1, 1,
                "Objective-C related result type inference")
+LANGOPT(AppExt , 1, 0, "Objective-C App Extension")
 LANGOPT(Trigraphs         , 1, 0,"trigraphs")
 LANGOPT(LineComment       , 1, 0, "'//' comments")
 LANGOPT(Bool              , 1, 0, "bool, true, and false keywords")

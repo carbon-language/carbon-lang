@@ -4216,6 +4216,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
+  if (Args.hasFlag(options::OPT_fapplication_extension,
+                   options::OPT_fno_application_extension, false))
+    CmdArgs.push_back("-fapplication-extension");
+
   // Handle GCC-style exception args.
   if (!C.getDriver().IsCLMode())
     addExceptionArgs(Args, InputType, getToolChain(), KernelOrKext,
@@ -5810,6 +5814,12 @@ void darwin::Link::AddLinkArgs(Compilation &C,
 
   if (Args.hasArg(options::OPT_rdynamic) && Version[0] >= 137)
     CmdArgs.push_back("-export_dynamic");
+
+  // If we are using App Extension restrictions, pass a flag to the linker
+  // telling it that the compiled code has been audited.
+  if (Args.hasFlag(options::OPT_fapplication_extension,
+                   options::OPT_fno_application_extension, false))
+    CmdArgs.push_back("-application_extension");
 
   // If we are using LTO, then automatically create a temporary file path for
   // the linker to use, so that it's lifetime will extend past a possible
