@@ -226,8 +226,7 @@ Args::ParseSingleArgument(llvm::StringRef command)
 
             // If the character after the backslash is not a whitelisted escapable character, we
             // leave the character sequence untouched.
-            static const char *k_escapable_characters = " \t\\'\"`";
-            if (strchr(k_escapable_characters, command.front()) == nullptr)
+            if (strchr(" \t\\'\"`", command.front()) == nullptr)
                 arg += '\\';
 
             arg += command.front();
