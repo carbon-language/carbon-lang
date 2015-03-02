@@ -43,6 +43,12 @@ GenerateDwarfTypeUnits("generate-type-units", cl::Hidden,
                        cl::desc("Generate DWARF4 type units."),
                        cl::init(false));
 
+DIEDwarfExpression::DIEDwarfExpression(const AsmPrinter &AP,
+                                       DwarfUnit &DU, DIELoc &DIE)
+  : DwarfExpression(*AP.TM.getSubtargetImpl()->getRegisterInfo(),
+                    AP.getDwarfDebug()->getDwarfVersion()),
+    AP(AP), DU(DU), DIE(DIE) {}
+
 void DIEDwarfExpression::EmitOp(uint8_t Op, const char* Comment) {
   DU.addUInt(DIE, dwarf::DW_FORM_data1, Op);
 }
@@ -53,7 +59,7 @@ void DIEDwarfExpression::EmitUnsigned(unsigned Value) {
   DU.addUInt(DIE, dwarf::DW_FORM_udata, Value);
 }
 bool DIEDwarfExpression::isFrameRegister(unsigned MachineReg) {
-  return MachineReg == getTRI()->getFrameRegister(*AP.MF);
+  return MachineReg == TRI.getFrameRegister(*AP.MF);
 }
 
 
