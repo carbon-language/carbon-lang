@@ -534,7 +534,7 @@ public:
       for (unsigned i = 0, ie = Tys.size(); i != ie; ++i) {
         if (Tys[i]->isVectorTy()) {
           ScalarizationCost += getScalarizationOverhead(Tys[i], false, true);
-          ScalarCalls = std::max(ScalarCalls, RetTy->getVectorNumElements());
+          ScalarCalls = std::max(ScalarCalls, Tys[i]->getVectorNumElements());
         }
       }
 
