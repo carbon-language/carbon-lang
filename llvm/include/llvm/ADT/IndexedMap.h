@@ -30,6 +30,9 @@ namespace llvm {
 template <typename T, typename ToIndexT = llvm::identity<unsigned> >
   class IndexedMap {
     typedef typename ToIndexT::argument_type IndexT;
+    // Prefer SmallVector with zero inline storage over std::vector. IndexedMaps
+    // can grow very large and SmallVector grows more efficiently as long as T
+    // is trivially copyable.
     typedef SmallVector<T, 0> StorageT;
     StorageT storage_;
     T nullVal_;
