@@ -38,6 +38,15 @@ namespace lldb_private {
 void
 Initialize();
 
+//------------------------------------------------------------------
+/// Initializes subset of lldb for LLGS.
+///
+/// This function only initializes the set of components and plugins
+/// necessary for lldb-platform and lldb-gdbserver, reducing the
+/// impact on the statically linked binary size.
+//------------------------------------------------------------------
+void
+InitializeForLLGS();
 
 //------------------------------------------------------------------
 /// Notifies any classes that lldb will be terminating soon.
@@ -70,6 +79,18 @@ WillTerminate();
 void
 Terminate();
 
+//------------------------------------------------------------------
+/// Terminates subset of lldb initialized by InitializeForLLGS
+///
+/// This function optionally can be called when clients are done
+/// using lldb functionality to free up any static resources
+/// that have been allocated during initialization or during
+/// function calls. No lldb functions should be called after
+/// calling this function without again calling DCInitialize()
+/// again.
+//------------------------------------------------------------------
+void
+TerminateLLGS();
 
 const char *
 GetVersion ();

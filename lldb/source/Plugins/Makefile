@@ -16,6 +16,7 @@ PARALLEL_DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-x86_64
 	ABI/SysV-hexagon ABI/SysV-ppc ABI/SysV-ppc64 \
 	Disassembler/llvm \
 	ObjectContainer/BSD-Archive ObjectFile/ELF ObjectFile/PECOFF \
+	ObjectContainer/Universal-Mach-O ObjectFile/Mach-O \
 	ObjectFile/JIT SymbolFile/DWARF SymbolFile/Symtab Process/Utility \
 	DynamicLoader/Static Platform Process/gdb-remote \
 	Instruction/ARM Instruction/ARM64 \
@@ -25,6 +26,7 @@ PARALLEL_DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-x86_64
 	DynamicLoader/POSIX-DYLD \
 	DynamicLoader/Hexagon-DYLD \
 	OperatingSystem/Python \
+	SystemRuntime/MacOSX \
 	SymbolVendor/ELF \
 	MemoryHistory/asan \
 	InstrumentationRuntime/AddressSanitizer
@@ -32,11 +34,9 @@ PARALLEL_DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-x86_64
 ifeq ($(HOST_OS),Darwin)
 PARALLEL_DIRS += Process/MacOSX-Kernel
 PARALLEL_DIRS += DynamicLoader/MacOSX-DYLD DynamicLoader/Darwin-Kernel
-PARALLEL_DIRS +=	ObjectContainer/Universal-Mach-O ObjectFile/Mach-O
 PARALLEL_DIRS += SymbolVendor/MacOSX
 #PARALLEL_DIRS += Process/MacOSX-User
 PARALLEL_DIRS += Process/mach-core
-PARALLEL_DIRS += SystemRuntime/MacOSX
 PARALLEL_DIRS += Process/elf-core
 PARALLEL_DIRS += JITLoader/GDB
 endif

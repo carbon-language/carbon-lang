@@ -507,8 +507,6 @@ main_gdbserver (int argc, char *argv[])
     std::string named_pipe_path;
     bool reverse_connect = false;
 
-    Debugger::Initialize (NULL);
-
     lldb::DebuggerSP debugger_sp = Debugger::CreateInstance ();
 
     debugger_sp->SetInputFileHandle(stdin, false);
@@ -688,8 +686,6 @@ main_gdbserver (int argc, char *argv[])
     printf("%s-%s", LLGS_PROGRAM_NAME, LLGS_VERSION_STR);
 
     ConnectToRemote (gdb_server, reverse_connect, host_and_port, progname, subcommand, named_pipe_path.c_str ());
-
-    Debugger::Terminate ();
 
     fprintf(stderr, "lldb-gdbserver exiting...\n");
 

@@ -111,7 +111,6 @@ main_platform (int argc, char *argv[])
     Error error;
     std::string listen_host_port;
     int ch;
-    Debugger::Initialize(NULL);
 
     lldb::DebuggerSP debugger_sp = Debugger::CreateInstance ();
 
@@ -305,8 +304,6 @@ main_platform (int argc, char *argv[])
             }
         }
     } while (g_stay_alive);
-
-    Debugger::Terminate();
 
     fprintf(stderr, "lldb-platform exiting...\n");
 

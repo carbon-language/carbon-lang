@@ -13,8 +13,6 @@
 #include <libxml/tree.h>
 #include <string.h>
 
-#include <AvailabilityMacros.h>
-
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"

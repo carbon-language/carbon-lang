@@ -53,6 +53,9 @@ set( LLDB_USED_LIBS
   lldbPluginOSPython
   lldbPluginMemoryHistoryASan
   lldbPluginInstrumentationRuntimeAddressSanitizer
+  lldbPluginSystemRuntimeMacOSX
+  lldbPluginProcessElfCore
+  lldbPluginJITLoaderGDB
   )
 
 # Windows-only libraries
@@ -101,9 +104,6 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
     lldbPluginProcessMachCore
     lldbPluginProcessMacOSXKernel
     lldbPluginSymbolVendorMacOSX
-    lldbPluginSystemRuntimeMacOSX
-    lldbPluginProcessElfCore
-    lldbPluginJITLoaderGDB
     )
 endif()
 
