@@ -341,7 +341,7 @@ function(llvm_add_library name)
 
     set_target_properties(${name}
       PROPERTIES
-      SOVERSION ${LLVM_VERSION_MAJOR}
+      SOVERSION ${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}
       VERSION ${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}.${LLVM_VERSION_PATCH}${LLVM_VERSION_SUFFIX})
   endif()
 
