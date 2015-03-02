@@ -714,20 +714,28 @@ TargetLibraryInfoImpl &TargetLibraryInfoImpl::operator=(TargetLibraryInfoImpl &&
   return *this;
 }
 
-bool TargetLibraryInfoImpl::getLibFunc(StringRef funcName,
-                                   LibFunc::Func &F) const {
-  const char **Start = &StandardNames[0];
-  const char **End = &StandardNames[LibFunc::NumLibFuncs];
-
+static StringRef sanitizeFunctionName(StringRef funcName) {
   // Filter out empty names and names containing null bytes, those can't be in
   // our table.
   if (funcName.empty() || funcName.find('\0') != StringRef::npos)
-    return false;
+    return StringRef();
 
   // Check for \01 prefix that is used to mangle __asm declarations and
   // strip it if present.
   if (funcName.front() == '\01')
     funcName = funcName.substr(1);
+  return funcName;
+}
+
+bool TargetLibraryInfoImpl::getLibFunc(StringRef funcName,
+                                   LibFunc::Func &F) const {
+  const char **Start = &StandardNames[0];
+  const char **End = &StandardNames[LibFunc::NumLibFuncs];
+
+  funcName = sanitizeFunctionName(funcName);
+  if (funcName.empty())
+    return false;
+
   const char **I = std::lower_bound(
       Start, End, funcName, [](const char *LHS, StringRef RHS) {
         return std::strncmp(LHS, RHS.data(), RHS.size()) < 0;
