@@ -189,9 +189,11 @@ private:
     IPI->second.push_back(&Use);
     // Transfer the dominated uses of IPI to NewPt
     // Inserting into the DenseMap may invalidate existing iterator.
-    // Keep a copy of the key to find the iterator to erase.
+    // Keep a copy of the key to find the iterator to erase.  Keep a copy of the
+    // value so that we don't have to dereference IPI->second.
     Instruction *OldInstr = IPI->first;
-    InsertPts[NewPt] = std::move(IPI->second);
+    Uses OldUses = std::move(IPI->second);
+    InsertPts[NewPt] = std::move(OldUses);
     // Erase IPI.
     InsertPts.erase(OldInstr);
   }
