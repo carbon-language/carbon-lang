@@ -183,8 +183,7 @@
 // Wno: "-Wno-deprecated-declarations"
 
 // Ignored options. Check that we don't get "unused during compilation" errors.
-// (/Zs is for syntax-only)
-// RUN: %clang_cl /Zs \
+// RUN: %clang_cl /c \
 // RUN:    /analyze- \
 // RUN:    /cgthreads4 \
 // RUN:    /cgthreads8 \
@@ -199,6 +198,7 @@
 // RUN:    /nologo \
 // RUN:    /Ob1 \
 // RUN:    /Ob2 \
+// RUN:    /openmp- \
 // RUN:    /RTC1 \
 // RUN:    /sdl \
 // RUN:    /sdl- \
@@ -211,6 +211,8 @@
 // RUN:    -### -- %s 2>&1 | FileCheck -check-prefix=IGNORED %s
 // IGNORED-NOT: argument unused during compilation
 // IGNORED-NOT: no such file or directory
+// Don't confuse /openmp- with the /o flag:
+// IGNORED-NOT: "-o" "penmp-.obj"
 
 // Ignored options and compile-only options are ignored for link jobs.
 // RUN: touch %t.obj
