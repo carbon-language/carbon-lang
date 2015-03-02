@@ -2270,13 +2270,13 @@ bool LLParser::PerFunctionState::SetInstName(int NameID,
 /// forward reference record if needed.
 BasicBlock *LLParser::PerFunctionState::GetBB(const std::string &Name,
                                               LocTy Loc) {
-  return cast_or_null<BasicBlock>(GetVal(Name,
-                                        Type::getLabelTy(F.getContext()), Loc));
+  return dyn_cast_or_null<BasicBlock>(GetVal(Name,
+                                      Type::getLabelTy(F.getContext()), Loc));
 }
 
 BasicBlock *LLParser::PerFunctionState::GetBB(unsigned ID, LocTy Loc) {
-  return cast_or_null<BasicBlock>(GetVal(ID,
-                                        Type::getLabelTy(F.getContext()), Loc));
+  return dyn_cast_or_null<BasicBlock>(GetVal(ID,
+                                      Type::getLabelTy(F.getContext()), Loc));
 }
 
 /// DefineBB - Define the specified basic block, which is either named or
@@ -4299,7 +4299,9 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
   }
 
   BasicBlock *BB = PFS.DefineBB(Name, NameLoc);
-  if (!BB) return true;
+  if (!BB)
+    return Error(NameLoc,
+                 "unable to create block named '" + Name + "'");
 
   std::string NameStr;
 
