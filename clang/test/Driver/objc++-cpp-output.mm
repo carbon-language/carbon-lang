@@ -1,5 +1,5 @@
-// RUN: %clang -emit-llvm -x objc++-cpp-output -S %s -o /dev/null
-// RUN: %clang -emit-llvm -x objc++-cpp-output -S %s -o /dev/null -### 2>&1 | FileCheck %s
+// RUN: %clang -fexceptions -emit-llvm -x objc++-cpp-output -S %s -o /dev/null
+// RUN: %clang -fexceptions -emit-llvm -x objc++-cpp-output -S %s -o /dev/null -### 2>&1 | FileCheck %s
 
 // PR13820
 // REQUIRES: LP64
