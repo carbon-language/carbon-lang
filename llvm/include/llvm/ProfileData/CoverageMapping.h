@@ -23,6 +23,7 @@
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
+#include <tuple>
 
 namespace llvm {
 class IndexedInstrProfReader;
