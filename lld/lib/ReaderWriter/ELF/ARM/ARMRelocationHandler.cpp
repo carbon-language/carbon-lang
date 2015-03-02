@@ -10,12 +10,13 @@
 #include "ARMTargetHandler.h"
 #include "ARMLinkingContext.h"
 
-#include "lld/Core/Endian.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/MathExtras.h"
 
 using namespace lld;
-using namespace elf;
+using namespace lld::elf;
+using namespace llvm::support::endian;
 
 static Reference::Addend readAddend_THM_MOV(const uint8_t *location) {
   const uint16_t halfHi = read16le(location);

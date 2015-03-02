@@ -9,18 +9,19 @@
 
 #include "IdataPass.h"
 #include "Pass.h"
-#include "lld/Core/Endian.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/Simple.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Endian.h"
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
 #include <map>
 #include <vector>
 
+using namespace llvm::support::endian;
 using llvm::object::delay_import_directory_table_entry;
 
 namespace lld {

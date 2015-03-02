@@ -9,11 +9,11 @@
 
 
 #include "MachONormalizedFile.h"
-#include "lld/Core/Endian.h"
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MachO.h"
@@ -26,6 +26,7 @@ namespace lld {
 namespace mach_o {
 namespace normalized {
 
+using namespace llvm::support::endian;
 using llvm::sys::getSwappedBytes;
 
 template<typename T>

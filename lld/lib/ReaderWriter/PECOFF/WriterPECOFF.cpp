@@ -22,7 +22,6 @@
 #include "Atoms.h"
 #include "WriterImportLibrary.h"
 #include "lld/Core/DefinedAtom.h"
-#include "lld/Core/Endian.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Writer.h"
 #include "lld/ReaderWriter/AtomLayout.h"
@@ -43,6 +42,8 @@
 #include <vector>
 
 #define DEBUG_TYPE "WriterPECOFF"
+
+using namespace llvm::support::endian;
 
 using llvm::COFF::DataDirectoryIndex;
 using llvm::object::coff_runtime_function_x64;

@@ -11,12 +11,12 @@
 #include "HexagonRelocationFunctions.h"
 #include "HexagonTargetHandler.h"
 #include "HexagonRelocationHandler.h"
-#include "lld/Core/Endian.h"
+#include "llvm/Support/Endian.h"
 
 using namespace lld;
-using namespace elf;
-
+using namespace lld::elf;
 using namespace llvm::ELF;
+using namespace llvm::support::endian;
 
 #define APPLY_RELOC(result)                                                    \
   write32le(location, result | read32le(location));

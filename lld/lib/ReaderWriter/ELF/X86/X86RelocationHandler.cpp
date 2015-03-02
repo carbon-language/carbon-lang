@@ -9,10 +9,11 @@
 
 #include "X86LinkingContext.h"
 #include "X86TargetHandler.h"
-#include "lld/Core/Endian.h"
+#include "llvm/Support/Endian.h"
 
 using namespace lld;
-using namespace elf;
+using namespace lld::elf;
+using namespace llvm::support::endian;
 
 namespace {
 /// \brief R_386_32 - word32:  S + A

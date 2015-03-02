@@ -9,10 +9,11 @@
 
 #include "X86_64LinkingContext.h"
 #include "X86_64TargetHandler.h"
-#include "lld/Core/Endian.h"
+#include "llvm/Support/Endian.h"
 
 using namespace lld;
-using namespace elf;
+using namespace lld::elf;
+using namespace llvm::support::endian;
 
 /// \brief R_X86_64_64 - word64: S + A
 static void reloc64(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {

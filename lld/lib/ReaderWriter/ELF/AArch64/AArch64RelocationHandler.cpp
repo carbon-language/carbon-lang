@@ -9,12 +9,13 @@
 
 #include "AArch64TargetHandler.h"
 #include "AArch64LinkingContext.h"
-#include "lld/Core/Endian.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/MathExtras.h"
 
 using namespace lld;
-using namespace elf;
+using namespace lld::elf;
+using namespace llvm::support::endian;
 
 #define PAGE(X) ((X) & ~0x0FFFL)
 
