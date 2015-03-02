@@ -268,12 +268,18 @@ void DataLayout::parseSpecifier(StringRef Desc) {
             "Missing alignment specification for pointer in datalayout string");
       Split = split(Rest, ':');
       unsigned PointerABIAlign = inBytes(getInt(Tok));
+      if (!isPowerOf2_64(PointerABIAlign))
+        report_fatal_error(
+            "Pointer ABI alignment must be a power of 2");
 
       // Preferred alignment.
       unsigned PointerPrefAlign = PointerABIAlign;
       if (!Rest.empty()) {
         Split = split(Rest, ':');
         PointerPrefAlign = inBytes(getInt(Tok));
+        if (!isPowerOf2_64(PointerPrefAlign))
+          report_fatal_error(
+            "Pointer preferred alignment must be a power of 2");
       }
 
       setPointerAlignment(AddrSpace, PointerABIAlign, PointerPrefAlign,
