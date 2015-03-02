@@ -103,7 +103,7 @@ bool ThreadSuspender::SuspendThread(SuspendedThreadID tid) {
     VReport(1, "Could not attach to thread %d (errno %d).\n", tid, pterrno);
     return false;
   } else {
-    VReport(1, "Attached to thread %d.\n", tid);
+    VReport(2, "Attached to thread %d.\n", tid);
     // The thread is not guaranteed to stop before ptrace returns, so we must
     // wait on it. Note: if the thread receives a signal concurrently,
     // we can get notification about the signal before notification about stop.
@@ -143,7 +143,7 @@ void ThreadSuspender::ResumeAllThreads() {
     int pterrno;
     if (!internal_iserror(internal_ptrace(PTRACE_DETACH, tid, NULL, NULL),
                           &pterrno)) {
-      VReport(1, "Detached from thread %d.\n", tid);
+      VReport(2, "Detached from thread %d.\n", tid);
     } else {
       // Either the thread is dead, or we are already detached.
       // The latter case is possible, for instance, if this function was called
@@ -202,7 +202,10 @@ struct TracerThreadArgument {
 static DieCallbackType old_die_callback;
 
 // Signal handler to wake up suspended threads when the tracer thread dies.
-void TracerThreadSignalHandler(int signum, void *siginfo, void *) {
+void TracerThreadSignalHandler(int signum, void *siginfo, void *uctx) {
+  SignalContext ctx = SignalContext::Create(siginfo, uctx);
+  VPrintf(1, "Tracer caught signal %d: addr=0x%zx pc=0x%zx sp=0x%zx\n",
+      signum, ctx.addr, ctx.pc, ctx.sp);
   if (thread_suspender_instance != NULL) {
     if (signum == SIGABRT)
       thread_suspender_instance->KillAllThreads();

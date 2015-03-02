@@ -32,13 +32,6 @@
 
 namespace __asan {
 
-SignalContext SignalContext::Create(void *siginfo, void *context) {
-  uptr addr = (uptr)((siginfo_t*)siginfo)->si_addr;
-  uptr pc, sp, bp;
-  GetPcSpBp(context, &pc, &sp, &bp);
-  return SignalContext(context, addr, pc, sp, bp);
-}
-
 void AsanOnSIGSEGV(int, void *siginfo, void *context) {
   ScopedDeadlySignal signal_scope(GetCurrentThread());
   int code = (int)((siginfo_t*)siginfo)->si_code;

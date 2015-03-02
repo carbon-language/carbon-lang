@@ -558,6 +558,7 @@ int internal_fork() {
 }
 
 #if SANITIZER_LINUX
+#define SA_RESTORER 0x04000000
 // Doesn't set sa_restorer, use with caution (see below).
 int internal_sigaction_norestorer(int signum, const void *act, void *oldact) {
   __sanitizer_kernel_sigaction_t k_act, k_oldact;
@@ -570,7 +571,8 @@ int internal_sigaction_norestorer(int signum, const void *act, void *oldact) {
     k_act.sigaction = u_act->sigaction;
     internal_memcpy(&k_act.sa_mask, &u_act->sa_mask,
                     sizeof(__sanitizer_kernel_sigset_t));
-    k_act.sa_flags = u_act->sa_flags;
+    // Without SA_RESTORER kernel ignores the calls (probably returns EINVAL).
+    k_act.sa_flags = u_act->sa_flags | SA_RESTORER;
     // FIXME: most often sa_restorer is unset, however the kernel requires it
     // to point to a valid signal restorer that calls the rt_sigreturn syscall.
     // If sa_restorer passed to the kernel is NULL, the program may crash upon
@@ -927,6 +929,78 @@ void *internal_start_thread(void (*func)(void *), void *arg) { return 0; }
 
 void internal_join_thread(void *th) {}
 #endif
+
+void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
+#if defined(__arm__)
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.arm_pc;
+  *bp = ucontext->uc_mcontext.arm_fp;
+  *sp = ucontext->uc_mcontext.arm_sp;
+#elif defined(__aarch64__)
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.pc;
+  *bp = ucontext->uc_mcontext.regs[29];
+  *sp = ucontext->uc_mcontext.sp;
+#elif defined(__hppa__)
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.sc_iaoq[0];
+  /* GCC uses %r3 whenever a frame pointer is needed.  */
+  *bp = ucontext->uc_mcontext.sc_gr[3];
+  *sp = ucontext->uc_mcontext.sc_gr[30];
+#elif defined(__x86_64__)
+# if SANITIZER_FREEBSD
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.mc_rip;
+  *bp = ucontext->uc_mcontext.mc_rbp;
+  *sp = ucontext->uc_mcontext.mc_rsp;
+# else
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.gregs[REG_RIP];
+  *bp = ucontext->uc_mcontext.gregs[REG_RBP];
+  *sp = ucontext->uc_mcontext.gregs[REG_RSP];
+# endif
+#elif defined(__i386__)
+# if SANITIZER_FREEBSD
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.mc_eip;
+  *bp = ucontext->uc_mcontext.mc_ebp;
+  *sp = ucontext->uc_mcontext.mc_esp;
+# else
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.gregs[REG_EIP];
+  *bp = ucontext->uc_mcontext.gregs[REG_EBP];
+  *sp = ucontext->uc_mcontext.gregs[REG_ESP];
+# endif
+#elif defined(__powerpc__) || defined(__powerpc64__)
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.regs->nip;
+  *sp = ucontext->uc_mcontext.regs->gpr[PT_R1];
+  // The powerpc{,64}-linux ABIs do not specify r31 as the frame
+  // pointer, but GCC always uses r31 when we need a frame pointer.
+  *bp = ucontext->uc_mcontext.regs->gpr[PT_R31];
+#elif defined(__sparc__)
+  ucontext_t *ucontext = (ucontext_t*)context;
+  uptr *stk_ptr;
+# if defined (__arch64__)
+  *pc = ucontext->uc_mcontext.mc_gregs[MC_PC];
+  *sp = ucontext->uc_mcontext.mc_gregs[MC_O6];
+  stk_ptr = (uptr *) (*sp + 2047);
+  *bp = stk_ptr[15];
+# else
+  *pc = ucontext->uc_mcontext.gregs[REG_PC];
+  *sp = ucontext->uc_mcontext.gregs[REG_O6];
+  stk_ptr = (uptr *) *sp;
+  *bp = stk_ptr[15];
+# endif
+#elif defined(__mips__)
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.gregs[31];
+  *bp = ucontext->uc_mcontext.gregs[30];
+  *sp = ucontext->uc_mcontext.gregs[29];
+#else
+# error "Unsupported arch"
+#endif
+}
 
 }  // namespace __sanitizer
 

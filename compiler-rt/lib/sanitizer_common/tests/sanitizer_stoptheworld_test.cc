@@ -189,6 +189,16 @@ TEST(StopTheWorld, SuspendThreadsAdvanced) {
   pthread_mutex_destroy(&advanced_incrementer_thread_exit_mutex);
 }
 
+static void SegvCallback(const SuspendedThreadsList &suspended_threads_list,
+                         void *argument) {
+  *(volatile int*)0x1234 = 0;
+}
+
+TEST(StopTheWorld, SegvInCallback) {
+  // Test that tracer thread catches SIGSEGV.
+  StopTheWorld(&SegvCallback, NULL);
+}
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_LINUX && defined(__x86_64__)

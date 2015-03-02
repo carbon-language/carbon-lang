@@ -167,7 +167,7 @@ struct SignalDesc {
   ucontext_t ctx;
 };
 
-struct SignalContext {
+struct ThreadSignalContext {
   int int_signal_send;
   atomic_uintptr_t in_blocking_func;
   atomic_uintptr_t have_pending_signals;
@@ -194,10 +194,10 @@ void InitializeLibIgnore() {
 
 }  // namespace __tsan
 
-static SignalContext *SigCtx(ThreadState *thr) {
-  SignalContext *ctx = (SignalContext*)thr->signal_ctx;
+static ThreadSignalContext *SigCtx(ThreadState *thr) {
+  ThreadSignalContext *ctx = (ThreadSignalContext*)thr->signal_ctx;
   if (ctx == 0 && !thr->is_dead) {
-    ctx = (SignalContext*)MmapOrDie(sizeof(*ctx), "SignalContext");
+    ctx = (ThreadSignalContext*)MmapOrDie(sizeof(*ctx), "ThreadSignalContext");
     MemoryResetRange(thr, (uptr)&SigCtx, (uptr)ctx, sizeof(*ctx));
     thr->signal_ctx = ctx;
   }
@@ -298,7 +298,7 @@ struct BlockingCall {
   }
 
   ThreadState *thr;
-  SignalContext *ctx;
+  ThreadSignalContext *ctx;
 };
 
 TSAN_INTERCEPTOR(unsigned, sleep, unsigned sec) {
@@ -419,7 +419,7 @@ static void SetJmp(ThreadState *thr, uptr sp, uptr mangled_sp) {
   buf->sp = sp;
   buf->mangled_sp = mangled_sp;
   buf->shadow_stack_pos = thr->shadow_stack_pos;
-  SignalContext *sctx = SigCtx(thr);
+  ThreadSignalContext *sctx = SigCtx(thr);
   buf->int_signal_send = sctx ? sctx->int_signal_send : 0;
   buf->in_blocking_func = sctx ?
       atomic_load(&sctx->in_blocking_func, memory_order_relaxed) :
@@ -442,7 +442,7 @@ static void LongJmp(ThreadState *thr, uptr *env) {
       // Unwind the stack.
       while (thr->shadow_stack_pos > buf->shadow_stack_pos)
         FuncExit(thr);
-      SignalContext *sctx = SigCtx(thr);
+      ThreadSignalContext *sctx = SigCtx(thr);
       if (sctx) {
         sctx->int_signal_send = buf->int_signal_send;
         atomic_store(&sctx->in_blocking_func, buf->in_blocking_func,
@@ -878,7 +878,7 @@ static void thread_finalize(void *v) {
   {
     ThreadState *thr = cur_thread();
     ThreadFinish(thr);
-    SignalContext *sctx = thr->signal_ctx;
+    ThreadSignalContext *sctx = thr->signal_ctx;
     if (sctx) {
       thr->signal_ctx = 0;
       UnmapOrDie(sctx, sizeof(*sctx));
@@ -1940,7 +1940,7 @@ static void CallUserSignalHandler(ThreadState *thr, bool sync, bool acquire,
 }
 
 void ProcessPendingSignals(ThreadState *thr) {
-  SignalContext *sctx = SigCtx(thr);
+  ThreadSignalContext *sctx = SigCtx(thr);
   if (sctx == 0 ||
       atomic_load(&sctx->have_pending_signals, memory_order_relaxed) == 0)
     return;
@@ -1964,7 +1964,7 @@ void ProcessPendingSignals(ThreadState *thr) {
 
 }  // namespace __tsan
 
-static bool is_sync_signal(SignalContext *sctx, int sig) {
+static bool is_sync_signal(ThreadSignalContext *sctx, int sig) {
   return sig == SIGSEGV || sig == SIGBUS || sig == SIGILL ||
       sig == SIGABRT || sig == SIGFPE || sig == SIGPIPE || sig == SIGSYS ||
       // If we are sending signal to ourselves, we must process it now.
@@ -1974,7 +1974,7 @@ static bool is_sync_signal(SignalContext *sctx, int sig) {
 void ALWAYS_INLINE rtl_generic_sighandler(bool sigact, int sig,
     my_siginfo_t *info, void *ctx) {
   ThreadState *thr = cur_thread();
-  SignalContext *sctx = SigCtx(thr);
+  ThreadSignalContext *sctx = SigCtx(thr);
   if (sig < 0 || sig >= kSigCount) {
     VPrintf(1, "ThreadSanitizer: ignoring signal %d\n", sig);
     return;
@@ -2083,7 +2083,7 @@ TSAN_INTERCEPTOR(int, sigsuspend, const __sanitizer_sigset_t *mask) {
 
 TSAN_INTERCEPTOR(int, raise, int sig) {
   SCOPED_TSAN_INTERCEPTOR(raise, sig);
-  SignalContext *sctx = SigCtx(thr);
+  ThreadSignalContext *sctx = SigCtx(thr);
   CHECK_NE(sctx, 0);
   int prev = sctx->int_signal_send;
   sctx->int_signal_send = sig;
@@ -2095,7 +2095,7 @@ TSAN_INTERCEPTOR(int, raise, int sig) {
 
 TSAN_INTERCEPTOR(int, kill, int pid, int sig) {
   SCOPED_TSAN_INTERCEPTOR(kill, pid, sig);
-  SignalContext *sctx = SigCtx(thr);
+  ThreadSignalContext *sctx = SigCtx(thr);
   CHECK_NE(sctx, 0);
   int prev = sctx->int_signal_send;
   if (pid == (int)internal_getpid()) {
@@ -2111,7 +2111,7 @@ TSAN_INTERCEPTOR(int, kill, int pid, int sig) {
 
 TSAN_INTERCEPTOR(int, pthread_kill, void *tid, int sig) {
   SCOPED_TSAN_INTERCEPTOR(pthread_kill, tid, sig);
-  SignalContext *sctx = SigCtx(thr);
+  ThreadSignalContext *sctx = SigCtx(thr);
   CHECK_NE(sctx, 0);
   int prev = sctx->int_signal_send;
   if (tid == pthread_self()) {

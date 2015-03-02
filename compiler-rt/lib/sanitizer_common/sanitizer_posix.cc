@@ -20,6 +20,7 @@
 #include "sanitizer_procmaps.h"
 #include "sanitizer_stacktrace.h"
 
+#include <signal.h>
 #include <sys/mman.h>
 
 #if SANITIZER_LINUX
@@ -325,6 +326,13 @@ bool GetCodeRangeForFile(const char *module, uptr *start, uptr *end) {
     }
   }
   return false;
+}
+
+SignalContext SignalContext::Create(void *siginfo, void *context) {
+  uptr addr = (uptr)((siginfo_t*)siginfo)->si_addr;
+  uptr pc, sp, bp;
+  GetPcSpBp(context, &pc, &sp, &bp);
+  return SignalContext(context, addr, pc, sp, bp);
 }
 
 }  // namespace __sanitizer

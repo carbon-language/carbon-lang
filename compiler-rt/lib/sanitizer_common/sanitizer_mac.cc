@@ -345,6 +345,19 @@ uptr GetRSS() {
 void *internal_start_thread(void (*func)(void *arg), void *arg) { return 0; }
 void internal_join_thread(void *th) { }
 
+void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
+  ucontext_t *ucontext = (ucontext_t*)context;
+# if SANITIZER_WORDSIZE == 64
+  *pc = ucontext->uc_mcontext->__ss.__rip;
+  *bp = ucontext->uc_mcontext->__ss.__rbp;
+  *sp = ucontext->uc_mcontext->__ss.__rsp;
+# else
+  *pc = ucontext->uc_mcontext->__ss.__eip;
+  *bp = ucontext->uc_mcontext->__ss.__ebp;
+  *sp = ucontext->uc_mcontext->__ss.__esp;
+# endif  // SANITIZER_WORDSIZE
+}
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_MAC
