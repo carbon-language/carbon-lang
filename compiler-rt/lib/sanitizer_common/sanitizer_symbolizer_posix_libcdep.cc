@@ -52,45 +52,6 @@ static const char *DemangleCXXABI(const char *name) {
   return name;
 }
 
-// Extracts the prefix of "str" that consists of any characters not
-// present in "delims" string, and copies this prefix to "result", allocating
-// space for it.
-// Returns a pointer to "str" after skipping extracted prefix and first
-// delimiter char.
-static const char *ExtractToken(const char *str, const char *delims,
-                                char **result) {
-  uptr prefix_len = internal_strcspn(str, delims);
-  *result = (char*)InternalAlloc(prefix_len + 1);
-  internal_memcpy(*result, str, prefix_len);
-  (*result)[prefix_len] = '\0';
-  const char *prefix_end = str + prefix_len;
-  if (*prefix_end != '\0') prefix_end++;
-  return prefix_end;
-}
-
-// Same as ExtractToken, but converts extracted token to integer.
-static const char *ExtractInt(const char *str, const char *delims,
-                              int *result) {
-  char *buff;
-  const char *ret = ExtractToken(str, delims, &buff);
-  if (buff != 0) {
-    *result = (int)internal_atoll(buff);
-  }
-  InternalFree(buff);
-  return ret;
-}
-
-static const char *ExtractUptr(const char *str, const char *delims,
-                               uptr *result) {
-  char *buff;
-  const char *ret = ExtractToken(str, delims, &buff);
-  if (buff != 0) {
-    *result = (uptr)internal_atoll(buff);
-  }
-  InternalFree(buff);
-  return ret;
-}
-
 // Parses one or more two-line strings in the following format:
 //   <function_name>
 //   <file_name>:<line_number>[:<column_number>]

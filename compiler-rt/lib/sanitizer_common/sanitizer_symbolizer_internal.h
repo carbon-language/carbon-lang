@@ -18,6 +18,14 @@
 
 namespace __sanitizer {
 
+// Parsing helpers, 'str' is searched for delimiter(s) and a string or uptr
+// is extracted. When extracting a string, a newly allocated (using
+// InternalAlloc) and null-terminataed buffer is returned. They return a pointer
+// to the next characted after the found delimiter.
+const char *ExtractToken(const char *str, const char *delims, char **result);
+const char *ExtractInt(const char *str, const char *delims, int *result);
+const char *ExtractUptr(const char *str, const char *delims, uptr *result);
+
 class SymbolizerTool {
  public:
   // Can't declare pure virtual functions in sanitizer runtimes:

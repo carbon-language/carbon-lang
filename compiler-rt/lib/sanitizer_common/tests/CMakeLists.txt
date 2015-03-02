@@ -28,6 +28,7 @@ set(SANITIZER_UNITTESTS
   sanitizer_stacktrace_test.cc
   sanitizer_stoptheworld_test.cc
   sanitizer_suppressions_test.cc
+  sanitizer_symbolizer_test.cc
   sanitizer_test_main.cc
   sanitizer_thread_registry_test.cc)
 
