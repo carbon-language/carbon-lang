@@ -197,12 +197,12 @@ typedef detail::packed_endian_specific_integral
                    <int64_t, native, unaligned> unaligned_int64_t;
 
 namespace endian {
-inline uint16_t read16le(const void *p) { return *(ulittle16_t *)p; }
-inline uint32_t read32le(const void *p) { return *(ulittle32_t *)p; }
-inline uint64_t read64le(const void *p) { return *(ulittle64_t *)p; }
-inline uint16_t read16be(const void *p) { return *(ubig16_t *)p; }
-inline uint32_t read32be(const void *p) { return *(ubig32_t *)p; }
-inline uint64_t read64be(const void *p) { return *(ubig64_t *)p; }
+inline uint16_t read16le(const void *p) { return *(const ulittle16_t *)p; }
+inline uint32_t read32le(const void *p) { return *(const ulittle32_t *)p; }
+inline uint64_t read64le(const void *p) { return *(const ulittle64_t *)p; }
+inline uint16_t read16be(const void *p) { return *(const ubig16_t *)p; }
+inline uint32_t read32be(const void *p) { return *(const ubig32_t *)p; }
+inline uint64_t read64be(const void *p) { return *(const ubig64_t *)p; }
 
 inline void write16le(void *p, uint16_t v) { *(ulittle16_t *)p = v; }
 inline void write32le(void *p, uint32_t v) { *(ulittle32_t *)p = v; }
