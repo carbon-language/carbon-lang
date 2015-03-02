@@ -81,7 +81,7 @@ void BuiltinDumper::start(const PDBSymbolTypeBuiltin &Symbol) {
     WithColor(Printer, PDB_ColorItem::Type).get() << "HRESULT";
     break;
   default:
-    WithColor(Printer, PDB_ColorItem::Type).get() << "(unknown)";
+    WithColor(Printer, PDB_ColorItem::Type).get() << "void";
     break;
   }
 }

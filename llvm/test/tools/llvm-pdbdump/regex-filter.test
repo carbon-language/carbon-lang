@@ -18,7 +18,7 @@
 ; NO_FILTER: Typedefs
 ; NO_FILTER: typedef int GlobalTypedef
 ; NO_FILTER: Classes:
-; NO_FILTER: class __vc_attributes
+; NO_FILTER: struct __vc_attributes
 ; NO_FILTER: class FilterTestClass
 ; NO_FILTER-DAG: typedef int NestedTypedef
 ; NO_FILTER-DAG: enum NestedEnum

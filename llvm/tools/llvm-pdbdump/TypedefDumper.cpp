@@ -31,7 +31,8 @@ void TypedefDumper::start(const PDBSymbolTypeTypedef &Symbol) {
   uint32_t TargetId = Symbol.getTypeId();
   if (auto TypeSymbol = Symbol.getSession().getSymbolById(TargetId))
     TypeSymbol->dump(*this);
-  WithColor(Printer, PDB_ColorItem::Type).get() << " " << Symbol.getName();
+  WithColor(Printer, PDB_ColorItem::Identifier).get() << " "
+                                                      << Symbol.getName();
 }
 
 void TypedefDumper::dump(const PDBSymbolTypeArray &Symbol) {}
@@ -74,5 +75,5 @@ void TypedefDumper::dump(const PDBSymbolTypeFunctionSig &Symbol) {
 
 void TypedefDumper::dump(const PDBSymbolTypeUDT &Symbol) {
   WithColor(Printer, PDB_ColorItem::Keyword).get() << "class ";
-  WithColor(Printer, PDB_ColorItem::Type).get() << " " << Symbol.getName();
+  WithColor(Printer, PDB_ColorItem::Type).get() << Symbol.getName();
 }

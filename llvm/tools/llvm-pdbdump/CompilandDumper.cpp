@@ -124,7 +124,9 @@ void CompilandDumper::dump(const PDBSymbolThunk &Symbol) {
         << "[" << format_hex(RVA, 10) << " - "
         << format_hex(RVA + Symbol.getLength(), 10) << "]";
   }
-  Printer << " (" << Ordinal << ") ";
+  Printer << " (";
+  WithColor(Printer, PDB_ColorItem::Register).get() << Ordinal;
+  Printer << ") ";
   std::string Name = Symbol.getName();
   if (!Name.empty())
     WithColor(Printer, PDB_ColorItem::Identifier).get() << Name;

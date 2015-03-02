@@ -56,26 +56,44 @@ cl::list<std::string> InputFilenames(cl::Positional,
                                      cl::desc("<input PDB files>"),
                                      cl::OneOrMore);
 
-cl::opt<bool> Compilands("compilands", cl::desc("Display compilands"));
-cl::opt<bool> Symbols("symbols",
-                      cl::desc("Display symbols for each compiland"));
-cl::opt<bool> Globals("globals", cl::desc("Dump global symbols"));
-cl::opt<bool> Types("types", cl::desc("Display types"));
-cl::opt<bool> ClassDefs("class-definitions",
-                        cl::desc("Display full class definitions"));
+cl::OptionCategory TypeCategory("Symbol Type Options");
+cl::OptionCategory FilterCategory("Filtering Options");
+
+cl::opt<bool> Compilands("compilands", cl::desc("Display compilands"),
+                         cl::cat(TypeCategory));
+cl::opt<bool> Symbols("symbols", cl::desc("Display symbols for each compiland"),
+                      cl::cat(TypeCategory));
+cl::opt<bool> Globals("globals", cl::desc("Dump global symbols"),
+                      cl::cat(TypeCategory));
+cl::opt<bool> Types("types", cl::desc("Display types"), cl::cat(TypeCategory));
+cl::opt<bool>
+    ClassDefs("class-definitions",
+              cl::desc("Display full class definitions (implies -types)"),
+              cl::cat(TypeCategory));
+cl::opt<bool>
+    All("all", cl::desc("Implies all other options in 'Symbol Types' category"),
+        cl::cat(TypeCategory));
 
 cl::list<std::string>
     ExcludeTypes("exclude-types",
                  cl::desc("Exclude types by regular expression"),
-                 cl::ZeroOrMore);
+                 cl::ZeroOrMore, cl::cat(FilterCategory));
 cl::list<std::string>
     ExcludeSymbols("exclude-symbols",
                    cl::desc("Exclude symbols by regular expression"),
-                   cl::ZeroOrMore);
+                   cl::ZeroOrMore, cl::cat(FilterCategory));
 cl::list<std::string>
     ExcludeCompilands("exclude-compilands",
                       cl::desc("Exclude compilands by regular expression"),
-                      cl::ZeroOrMore);
+                      cl::ZeroOrMore, cl::cat(FilterCategory));
+cl::opt<bool> ExcludeCompilerGenerated(
+    "no-compiler-generated",
+    cl::desc("Don't show compiler generated types and symbols"),
+    cl::cat(FilterCategory));
+cl::opt<bool>
+    ExcludeSystemLibraries("no-system-libs",
+                           cl::desc("Don't show symbols from system libraries"),
+                           cl::cat(FilterCategory));
 }
 
 static void dumpInput(StringRef Path) {
@@ -103,11 +121,6 @@ static void dumpInput(StringRef Path) {
   }
 
   LinePrinter Printer(2, outs());
-  Printer.SetTypeFilters(opts::ExcludeTypes.begin(), opts::ExcludeTypes.end());
-  Printer.SetSymbolFilters(opts::ExcludeSymbols.begin(),
-                           opts::ExcludeSymbols.end());
-  Printer.SetCompilandFilters(opts::ExcludeCompilands.begin(),
-                              opts::ExcludeCompilands.end());
 
   auto GlobalScope(Session->getGlobalScope());
   std::string FileName(GlobalScope->getSymbolsFileName());
@@ -220,6 +233,23 @@ int main(int argc_, const char *argv_[]) {
   llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   cl::ParseCommandLineOptions(argv.size(), argv.data(), "LLVM PDB Dumper\n");
+  if (opts::ClassDefs)
+    opts::Types = true;
+  if (opts::All) {
+    opts::Compilands = true;
+    opts::Symbols = true;
+    opts::Globals = true;
+    opts::Types = true;
+    opts::ClassDefs = true;
+  }
+  if (opts::ExcludeCompilerGenerated) {
+    opts::ExcludeTypes.push_back("__vc_attributes");
+    opts::ExcludeCompilands.push_back("* Linker *");
+  }
+  if (opts::ExcludeSystemLibraries) {
+    opts::ExcludeCompilands.push_back(
+        "f:\\binaries\\Intermediate\\vctools\\crt_bld");
+  }
 
 #if defined(HAVE_DIA_SDK)
   CoInitializeEx(nullptr, COINIT_MULTITHREADED);

@@ -10,19 +10,22 @@
 #ifndef LLVM_TOOLS_LLVMPDBDUMP_LLVMPDBDUMP_H
 #define LLVM_TOOLS_LLVMPDBDUMP_LLVMPDBDUMP_H
 
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 
-namespace llvm {
-struct newline {
-  newline(int IndentWidth) : Width(IndentWidth) {}
-  int Width;
-};
+namespace opts {
+extern llvm::cl::opt<bool> Compilands;
+extern llvm::cl::opt<bool> Symbols;
+extern llvm::cl::opt<bool> Globals;
+extern llvm::cl::opt<bool> Types;
+extern llvm::cl::opt<bool> ClassDefs;
+extern llvm::cl::opt<bool> All;
 
-inline raw_ostream &operator<<(raw_ostream &OS, const newline &Indent) {
-  OS << "\n";
-  OS.indent(Indent.Width);
-  return OS;
-}
+extern llvm::cl::opt<bool> ExcludeCompilerGenerated;
+
+extern llvm::cl::list<std::string> ExcludeTypes;
+extern llvm::cl::list<std::string> ExcludeSymbols;
+extern llvm::cl::list<std::string> ExcludeCompilands;
 }
 
 #endif

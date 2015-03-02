@@ -1,0 +1,57 @@
+; RUN: llvm-pdbdump -all %p/Inputs/ClassLayoutTest.pdb > %t
+; RUN: FileCheck -input-file=%t %s -check-prefix=GLOBALS_TEST
+; RUN: FileCheck -input-file=%t %s -check-prefix=MEMBERS_TEST
+; RUN: FileCheck -input-file=%t %s -check-prefix=BASE_CLASS_A
+; RUN: FileCheck -input-file=%t %s -check-prefix=BASE_CLASS_B
+; RUN: FileCheck -input-file=%t %s -check-prefix=BASE_CLASS_C
+; RUN: FileCheck -input-file=%t %s -check-prefix=BASE_CLASS_D
+; RUN: FileCheck -input-file=%t %s -check-prefix=UDT_KIND_TEST
+; RUN: FileCheck -input-file=%t %s -check-prefix=BITFIELD_TEST
+
+; GLOBALS_TEST: ---GLOBALS---
+; GLOBALS_TEST-DAG: int GlobalsTest::IntVar
+; GLOBALS_TEST-DAG: double GlobalsTest::DoubleVar
+; GLOBALS_TEST-DAG: GlobalsTest::Enum GlobalsTest::EnumVar
+
+; MEMBERS_TEST: ---TYPES---
+; MEMBERS_TEST: class MembersTest::A {
+; MEMBERS_TEST-DAG: typedef int NestedTypedef
+; MEMBERS_TEST-DAG: enum NestedEnum
+; MEMBERS_TEST: public:
+; MEMBERS_TEST-NEXT: void MemberFunc()
+; MEMBERS_TEST-NEXT: private:
+; MEMBERS_TEST-DAG: int IntMemberVar
+; MEMBERS_TEST-DAG: double DoubleMemberVar
+; MEMBERS_TEST: }
+
+; BASE_CLASS_A: ---TYPES---
+; BASE_CLASS_A: class BaseClassTest::A {}
+
+; BASE_CLASS_B: ---TYPES---
+; BASE_CLASS_B: class BaseClassTest::B
+; BASE_CLASS_B-NEXT: : public virtual BaseClassTest::A {
+
+; BASE_CLASS_C: ---TYPES---
+; BASE_CLASS_C: class BaseClassTest::C
+; BASE_CLASS_C-NEXT: : public virtual BaseClassTest::A {
+
+; BASE_CLASS_D: ---TYPES---
+; BASE_CLASS_D: class BaseClassTest::D
+; BASE_CLASS_D-DAG: protected BaseClassTest::B
+; BASE_CLASS_D-DAG: private BaseClassTest::C
+; BASE_CLASS_D-DAG: protected virtual BaseClassTest::A
+
+; UDT_KIND_TEST: ---TYPES---
+; UDT_KIND_TEST-DAG: union UdtKindTest::C {}
+; UDT_KIND_TEST-DAG: class UdtKindTest::B {}
+; UDT_KIND_TEST-DAG: struct UdtKindTest::A {}
+
+; BITFIELD_TEST: ---TYPES---
+; BITFIELD_TEST: struct BitFieldTest::A {
+; BITFIELD_TEST-NEXT: public:
+; BITFIELD_TEST-NEXT: +0x00 int Bits1 : 1
+; BITFIELD_TEST-NEXT: +0x00 int Bits2 : 2
+; BITFIELD_TEST-NEXT: +0x00 int Bits3 : 3
+; BITFIELD_TEST-NEXT: +0x00 int Bits4 : 4
+; BITFIELD_TEST-NEXT: +0x00 int Bits22 : 22
+; BITFIELD_TEST-NEXT: +0x04 int Offset0x04

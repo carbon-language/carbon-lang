@@ -9,6 +9,8 @@
 
 #include "LinePrinter.h"
 
+#include "llvm-pdbdump.h"
+
 #include "llvm/Support/Regex.h"
 
 #include <algorithm>
@@ -16,7 +18,13 @@
 using namespace llvm;
 
 LinePrinter::LinePrinter(int Indent, llvm::raw_ostream &Stream)
-    : OS(Stream), IndentSpaces(Indent), CurrentIndent(0) {}
+    : OS(Stream), IndentSpaces(Indent), CurrentIndent(0) {
+  SetFilters(TypeFilters, opts::ExcludeTypes.begin(), opts::ExcludeTypes.end());
+  SetFilters(SymbolFilters, opts::ExcludeSymbols.begin(),
+             opts::ExcludeSymbols.end());
+  SetFilters(CompilandFilters, opts::ExcludeCompilands.begin(),
+             opts::ExcludeCompilands.end());
+}
 
 void LinePrinter::Indent() { CurrentIndent += IndentSpaces; }
 
@@ -86,6 +94,7 @@ void WithColor::translateColor(PDB_ColorItem C, raw_ostream::Colors &Color,
     Color = raw_ostream::MAGENTA;
     Bold = true;
     return;
+  case PDB_ColorItem::Register:
   case PDB_ColorItem::Offset:
     Color = raw_ostream::YELLOW;
     Bold = false;

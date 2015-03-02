@@ -30,13 +30,13 @@
 
 ; FULL_CLASS: ---TYPES---
 ; FULL_CLASS: Classes
-; FULL_CLASS-DAG: class A {
+; FULL_CLASS-DAG: struct A {
 ; FULL_CLASS: public:
 ; FULL_CLASS: virtual void PureFunc() = 0
 ; FULL_CLASS: virtual void VirtualFunc()
 ; FULL_CLASS: void RegularFunc()
 ; FULL_CLASS: }
-; FULL_CLASS-DAG: class MemberTest {
+; FULL_CLASS-DAG: struct MemberTest {
 ; FULL_CLASS: data +0x00 MemberTest::NestedEnum m_nested_enum
 ; FULL_CLASS: data +0x04 int m_typedef
 ; FULL_CLASS: data +0x08 bool m_bool

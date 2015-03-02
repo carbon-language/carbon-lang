@@ -25,33 +25,25 @@ class LinePrinter {
 public:
   LinePrinter(int Indent, raw_ostream &Stream);
 
-  template <typename Iter> void SetTypeFilters(Iter Begin, Iter End) {
-    TypeFilters.clear();
-    for (; Begin != End; ++Begin)
-      TypeFilters.push_back(StringRef(*Begin));
-  }
-  template <typename Iter> void SetSymbolFilters(Iter Begin, Iter End) {
-    SymbolFilters.clear();
-    for (; Begin != End; ++Begin)
-      SymbolFilters.push_back(StringRef(*Begin));
-  }
-  template <typename Iter> void SetCompilandFilters(Iter Begin, Iter End) {
-    CompilandFilters.clear();
-    for (; Begin != End; ++Begin)
-      CompilandFilters.push_back(StringRef(*Begin));
-  }
-
   void Indent();
   void Unindent();
   void NewLine();
 
   raw_ostream &getStream() { return OS; }
+  int getIndentLevel() const { return CurrentIndent; }
 
   bool IsTypeExcluded(llvm::StringRef TypeName);
   bool IsSymbolExcluded(llvm::StringRef SymbolName);
   bool IsCompilandExcluded(llvm::StringRef CompilandName);
 
 private:
+  template <typename Iter>
+  void SetFilters(std::list<Regex> &List, Iter Begin, Iter End) {
+    List.clear();
+    for (; Begin != End; ++Begin)
+      List.push_back(StringRef(*Begin));
+  }
+
   raw_ostream &OS;
   int IndentSpaces;
   int CurrentIndent;
@@ -77,6 +69,7 @@ enum class PDB_ColorItem {
   Path,
   SectionHeader,
   LiteralValue,
+  Register,
 };
 
 class WithColor {

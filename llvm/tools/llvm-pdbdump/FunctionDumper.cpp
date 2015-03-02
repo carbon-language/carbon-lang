@@ -112,28 +112,28 @@ void FunctionDumper::start(const PDBSymbolFunc &Symbol, PointerType Pointer) {
   uint32_t FuncStart = Symbol.getRelativeVirtualAddress();
   uint32_t FuncEnd = FuncStart + Symbol.getLength();
 
-  Printer << "func ";
-  WithColor(Printer, PDB_ColorItem::Address).get() << "["
-                                                   << format_hex(FuncStart, 8);
+  Printer << "func [";
+  WithColor(Printer, PDB_ColorItem::Address).get() << format_hex(FuncStart, 10);
   if (auto DebugStart = Symbol.findOneChild<PDBSymbolFuncDebugStart>()) {
     uint32_t Prologue = DebugStart->getRelativeVirtualAddress() - FuncStart;
     WithColor(Printer, PDB_ColorItem::Offset).get() << "+" << Prologue;
   }
-  WithColor(Printer, PDB_ColorItem::Address).get() << " - "
-                                                   << format_hex(FuncEnd, 8);
+  Printer << " - ";
+  WithColor(Printer, PDB_ColorItem::Address).get() << format_hex(FuncEnd, 10);
   if (auto DebugEnd = Symbol.findOneChild<PDBSymbolFuncDebugEnd>()) {
     uint32_t Epilogue = FuncEnd - DebugEnd->getRelativeVirtualAddress();
     WithColor(Printer, PDB_ColorItem::Offset).get() << "-" << Epilogue;
   }
-  WithColor(Printer, PDB_ColorItem::Address).get() << "] ";
+  Printer << "] (";
 
-  if (Symbol.hasFramePointer())
-    WithColor(Printer, PDB_ColorItem::Address).get()
-        << "(" << Symbol.getLocalBasePointerRegisterId() << ")";
-  else
-    WithColor(Printer, PDB_ColorItem::Address).get() << "(FPO)";
+  if (Symbol.hasFramePointer()) {
+    WithColor(Printer, PDB_ColorItem::Register).get()
+        << Symbol.getLocalBasePointerRegisterId();
+  } else {
+    WithColor(Printer, PDB_ColorItem::Register).get() << "FPO";
+  }
+  Printer << ") ";
 
-  Printer << " ";
   if (Symbol.isVirtual() || Symbol.isPureVirtual())
     WithColor(Printer, PDB_ColorItem::Keyword).get() << "virtual ";
 

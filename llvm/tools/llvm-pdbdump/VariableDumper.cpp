@@ -31,6 +31,8 @@ VariableDumper::VariableDumper(LinePrinter &P)
     : PDBSymDumper(true), Printer(P) {}
 
 void VariableDumper::start(const PDBSymbolData &Var) {
+  if (Var.isCompilerGenerated() && opts::ExcludeCompilerGenerated)
+    return;
   if (Printer.IsSymbolExcluded(Var.getName()))
     return;
 
@@ -41,22 +43,30 @@ void VariableDumper::start(const PDBSymbolData &Var) {
 
   switch (auto LocType = Var.getLocationType()) {
   case PDB_LocType::Static:
+    Printer << "[";
     WithColor(Printer, PDB_ColorItem::Address).get()
-        << "[" << format_hex(Var.getRelativeVirtualAddress(), 10) << "] ";
+        << format_hex(Var.getRelativeVirtualAddress(), 10);
+    Printer << "] ";
     WithColor(Printer, PDB_ColorItem::Keyword).get() << "static ";
     dumpSymbolTypeAndName(*VarType, Var.getName());
     break;
   case PDB_LocType::Constant:
     WithColor(Printer, PDB_ColorItem::Keyword).get() << "const ";
     dumpSymbolTypeAndName(*VarType, Var.getName());
-    Printer << "[";
+    Printer << " = ";
     WithColor(Printer, PDB_ColorItem::LiteralValue).get() << Var.getValue();
-    Printer << "]";
     break;
   case PDB_LocType::ThisRel:
     WithColor(Printer, PDB_ColorItem::Offset).get()
         << "+" << format_hex(Var.getOffset(), 4) << " ";
     dumpSymbolTypeAndName(*VarType, Var.getName());
+    break;
+  case PDB_LocType::BitField:
+    WithColor(Printer, PDB_ColorItem::Offset).get()
+        << "+" << format_hex(Var.getOffset(), 4) << " ";
+    dumpSymbolTypeAndName(*VarType, Var.getName());
+    Printer << " : ";
+    WithColor(Printer, PDB_ColorItem::LiteralValue).get() << Var.getLength();
     break;
   default:
     Printer << "unknown(" << LocType << ") ";
