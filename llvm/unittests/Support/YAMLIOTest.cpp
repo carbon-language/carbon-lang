@@ -46,6 +46,9 @@ typedef std::vector<FooBar> FooBarSequence;
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(FooBar)
 
+struct FooBarContainer {
+  FooBarSequence fbs;
+};
 
 namespace llvm {
 namespace yaml {
@@ -54,6 +57,12 @@ namespace yaml {
     static void mapping(IO &io, FooBar& fb) {
       io.mapRequired("foo",    fb.foo);
       io.mapRequired("bar",    fb.bar);
+    }
+  };
+
+  template <> struct MappingTraits<FooBarContainer> {
+    static void mapping(IO &io, FooBarContainer &fb) {
+      io.mapRequired("fbs", fb.fbs);
     }
   };
 }
@@ -109,6 +118,83 @@ TEST(YAMLIO, TestSequenceMapRead) {
   EXPECT_EQ(map2.bar, 9);
 }
 
+//
+// Test the reading of a map containing a yaml sequence of mappings
+//
+TEST(YAMLIO, TestContainerSequenceMapRead) {
+  {
+    FooBarContainer cont;
+    Input yin2("---\nfbs:\n - foo: 3\n   bar: 5\n - foo: 7\n   bar: 9\n...\n");
+    yin2 >> cont;
+
+    EXPECT_FALSE(yin2.error());
+    EXPECT_EQ(cont.fbs.size(), 2UL);
+    EXPECT_EQ(cont.fbs[0].foo, 3);
+    EXPECT_EQ(cont.fbs[0].bar, 5);
+    EXPECT_EQ(cont.fbs[1].foo, 7);
+    EXPECT_EQ(cont.fbs[1].bar, 9);
+  }
+
+  {
+    FooBarContainer cont;
+    Input yin("---\nfbs:\n...\n");
+    yin >> cont;
+    // Okay: Empty node represents an empty array.
+    EXPECT_FALSE(yin.error());
+    EXPECT_EQ(cont.fbs.size(), 0UL);
+  }
+
+  {
+    FooBarContainer cont;
+    Input yin("---\nfbs: !!null null\n...\n");
+    yin >> cont;
+    // Okay: null represents an empty array.
+    EXPECT_FALSE(yin.error());
+    EXPECT_EQ(cont.fbs.size(), 0UL);
+  }
+
+  {
+    FooBarContainer cont;
+    Input yin("---\nfbs: ~\n...\n");
+    yin >> cont;
+    // Okay: null represents an empty array.
+    EXPECT_FALSE(yin.error());
+    EXPECT_EQ(cont.fbs.size(), 0UL);
+  }
+
+  {
+    FooBarContainer cont;
+    Input yin("---\nfbs: null\n...\n");
+    yin >> cont;
+    // Okay: null represents an empty array.
+    EXPECT_FALSE(yin.error());
+    EXPECT_EQ(cont.fbs.size(), 0UL);
+  }
+}
+
+//
+// Test the reading of a map containing a malformed yaml sequence
+//
+TEST(YAMLIO, TestMalformedContainerSequenceMapRead) {
+  {
+    FooBarContainer cont;
+    Input yin("---\nfbs:\n   foo: 3\n   bar: 5\n...\n", nullptr,
+              suppressErrorMessages);
+    yin >> cont;
+    // Error: fbs is not a sequence.
+    EXPECT_TRUE(!!yin.error());
+    EXPECT_EQ(cont.fbs.size(), 0UL);
+  }
+
+  {
+    FooBarContainer cont;
+    Input yin("---\nfbs: 'scalar'\n...\n", nullptr, suppressErrorMessages);
+    yin >> cont;
+    // This should be an error.
+    EXPECT_TRUE(!!yin.error());
+    EXPECT_EQ(cont.fbs.size(), 0UL);
+  }
+}
 
 //
 // Test writing then reading back a sequence of mappings
