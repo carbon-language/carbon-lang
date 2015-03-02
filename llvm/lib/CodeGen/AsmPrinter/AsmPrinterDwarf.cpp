@@ -16,6 +16,7 @@
 #include "DwarfExpression.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -191,7 +192,7 @@ void AsmPrinter::EmitSectionOffset(const MCSymbol *Label,
 /// EmitDwarfRegOp - Emit dwarf register operation.
 void AsmPrinter::EmitDwarfRegOp(ByteStreamer &Streamer,
                                 const MachineLocation &MLoc) const {
-  DebugLocDwarfExpression Expr(*TM.getSubtargetImpl()->getRegisterInfo(),
+  DebugLocDwarfExpression Expr(*MF->getSubtarget().getRegisterInfo(),
                                getDwarfDebug()->getDwarfVersion(), Streamer);
   const MCRegisterInfo *MRI = MMI->getContext().getRegisterInfo();
   int Reg = MRI->getDwarfRegNum(MLoc.getReg(), false);
