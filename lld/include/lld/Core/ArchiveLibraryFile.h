@@ -50,6 +50,8 @@ public:
     return std::set<StringRef>();
   }
 
+  virtual ~ArchiveLibraryFile() {}
+
 protected:
   /// only subclasses of ArchiveLibraryFile can be instantiated
   ArchiveLibraryFile(StringRef path) : File(path, kindArchiveLibrary) {}

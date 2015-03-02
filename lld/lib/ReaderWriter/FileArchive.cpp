@@ -41,8 +41,6 @@ public:
       : ArchiveLibraryFile(path), _mb(std::shared_ptr<MemoryBuffer>(mb.release())),
         _registry(reg), _logLoading(logLoading) {}
 
-  virtual ~FileArchive() {}
-
   /// \brief Check if any member of the archive contains an Atom with the
   /// specified name and return the File object for that member, or nullptr.
   const File *find(StringRef name, bool dataSymbolOnly) const override {
