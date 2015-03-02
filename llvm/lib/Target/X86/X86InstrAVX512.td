@@ -1559,6 +1559,11 @@ multiclass avx512_cmp_packed<RegisterClass KRC, RegisterClass RC,
                (outs KRC:$dst), (ins RC:$src1, RC:$src2, u8imm:$cc),
               !strconcat("vcmp", suffix,
                         "\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}"), [], d>;
+    def rrib_alt: AVX512PIi8<0xC2, MRMSrcReg,
+               (outs KRC:$dst), (ins RC:$src1, RC:$src2, u8imm:$cc),
+       !strconcat("vcmp", suffix,
+                  "\t{{sae}, $cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc, {sae}}"),
+                  [], d>, EVEX_B;
     let mayLoad = 1 in
     def rmi_alt : AVX512PIi8<0xC2, MRMSrcMem,
                (outs KRC:$dst), (ins RC:$src1, x86memop:$src2, u8imm:$cc),
