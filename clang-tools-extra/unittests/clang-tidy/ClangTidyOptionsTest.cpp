@@ -15,8 +15,7 @@ TEST(ParseLineFilter, EmptyFilter) {
 
 TEST(ParseLineFilter, InvalidFilter) {
   ClangTidyGlobalOptions Options;
-  // TODO: Figure out why parsing succeeds here.
-  EXPECT_FALSE(parseLineFilter("asdf", Options));
+  EXPECT_TRUE(!!parseLineFilter("asdf", Options));
   EXPECT_TRUE(Options.LineFilter.empty());
 
   EXPECT_TRUE(!!parseLineFilter("[{}]", Options));
