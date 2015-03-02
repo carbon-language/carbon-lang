@@ -19,11 +19,9 @@ Trivial Relocs
 These are very simple relocation calculations to implement.
 See lib/ReaderWriter/ELF/X86_64/X86_64RelocationHandler.cpp
 
-* R_X86_64_16
 * R_X86_64_PC16
 * R_X86_64_8
 * R_X86_64_PC8
-* R_X86_64_PC64
 * R_X86_64_SIZE32
 * R_X86_64_SIZE64
 * R_X86_64_GOTPC32 (this relocation requires there to be a __GLOBAL_OFFSET_TABLE__)
@@ -42,6 +40,7 @@ Their implementation lives in lib/ReaderWriter/ELF/X86_64/{X86_64RelocationPass.
 
 Documentation on these relocations can be found in:
 http://www.akkadia.org/drepper/tls.pdf
+http://www.fsfla.org/~lxoliva/writeups/TLS/RFC-TLSDESC-x86.txt
 
 * R_X86_64_GOTPC32_TLSDESC
 * R_X86_64_TLSDESC_CALL
