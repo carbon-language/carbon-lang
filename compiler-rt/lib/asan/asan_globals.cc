@@ -212,20 +212,6 @@ void StopInitOrderChecking() {
   }
 }
 
-#if SANITIZER_WINDOWS  // Should only be called on Windows.
-SANITIZER_INTERFACE_ATTRIBUTE
-void UnregisterGlobalsInRange(void *beg, void *end) {
-  if (!flags()->report_globals)
-    return;
-  BlockingMutexLock lock(&mu_for_globals);
-  for (ListOfGlobals *l = list_of_all_globals; l; l = l->next) {
-    void *address = (void *)l->g->beg;
-    if (beg <= address && address < end)
-      UnregisterGlobal(l->g);
-  }
-}
-#endif
-
 }  // namespace __asan
 
 // ---------------------- Interface ---------------- {{{1

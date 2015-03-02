@@ -15,7 +15,8 @@
 //
 // This includes:
 //  - forwarding the detect_stack_use_after_return runtime option
-//  - installing a custom SEH handler
+//  - working around deficiencies of the MD runtime
+//  - installing a custom SEH handlerx
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,9 +25,13 @@
 // simplifies the build procedure.
 #ifdef ASAN_DYNAMIC_RUNTIME_THUNK
 #include <windows.h>
-#include <psapi.h>
 
-extern "C" {
+// First, declare CRT sections we'll be using in this file
+#pragma section(".CRT$XID", long, read)  // NOLINT
+#pragma section(".CRT$XIZ", long, read)  // NOLINT
+#pragma section(".CRT$XTW", long, read)  // NOLINT
+#pragma section(".CRT$XTY", long, read)  // NOLINT
+
 ////////////////////////////////////////////////////////////////////////////////
 // Define a copy of __asan_option_detect_stack_use_after_return that should be
 // used when linking an MD runtime with a set of object files on Windows.
@@ -38,82 +43,55 @@ extern "C" {
 // with a MT or MD runtime and we don't want to use ugly __imp_ names on Windows
 // just to work around this issue, let's clone the a variable that is
 // constant after initialization anyways.
+extern "C" {
 __declspec(dllimport) int __asan_should_detect_stack_use_after_return();
 int __asan_option_detect_stack_use_after_return =
     __asan_should_detect_stack_use_after_return();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// For some reason, the MD CRT doesn't call the C/C++ terminators as MT does.
-// To work around this, for each DLL we schedule a call to
-// UnregisterGlobalsInRange atexit() specifying the address range of the DLL
-// image to unregister globals in that range.   We don't do the same
-// for the main module (.exe) as the asan_globals.cc allocator is destroyed
-// by the time UnregisterGlobalsInRange is executed.
-// See PR22545 for the details.
-namespace __asan {
-__declspec(dllimport)
-void UnregisterGlobalsInRange(void *beg, void *end);
-}
+// For some reason, the MD CRT doesn't call the C/C++ terminators during on DLL
+// unload or on exit.  ASan relies on LLVM global_dtors to call
+// __asan_unregister_globals on these events, which unfortunately doesn't work
+// with the MD runtime, see PR22545 for the details.
+// To work around this, for each DLL we schedule a call to UnregisterGlobals
+// using atexit() that calls a small subset of C terminators
+// where LLVM global_dtors is placed.  Fingers crossed, no other C terminators
+// are there.
+extern "C" void __cdecl _initterm(void *a, void *b);
 
 namespace {
-void *this_module_base, *this_module_end;
+__declspec(allocate(".CRT$XTW")) void* before_global_dtors = 0;
+__declspec(allocate(".CRT$XTY")) void* after_global_dtors = 0;
 
 void UnregisterGlobals() {
-  __asan::UnregisterGlobalsInRange(this_module_base, this_module_end);
+  _initterm(&before_global_dtors, &after_global_dtors);
 }
 
 int ScheduleUnregisterGlobals() {
-  HMODULE this_module = 0;
-  // Increments the reference counter of the DLL module, so need to call
-  // FreeLibrary later.
-  if (!GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-                         (LPCTSTR)&UnregisterGlobals, &this_module))
-    return 1;
-
-  // Skip the main module.
-  if (this_module == GetModuleHandle(0))
-    return 0;
-
-  MODULEINFO mi;
-  bool success =
-      GetModuleInformation(GetCurrentProcess(), this_module, &mi, sizeof(mi));
-  if (!FreeLibrary(this_module))
-    return 2;
-  if (!success)
-    return 3;
-
-  this_module_base = mi.lpBaseOfDll;
-  this_module_end = (char*)mi.lpBaseOfDll + mi.SizeOfImage;
-
   return atexit(UnregisterGlobals);
 }
+
+// We need to call 'atexit(UnregisterGlobals);' as early as possible, but after
+// atexit() is initialized (.CRT$XIC).  As this is executed before C++
+// initializers (think ctors for globals), UnregisterGlobals gets executed after
+// dtors for C++ globals.
+__declspec(allocate(".CRT$XID"))
+int (*__asan_schedule_unregister_globals)() = ScheduleUnregisterGlobals;
+
 }  // namespace
 
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // ASan SEH handling.
-extern "C" __declspec(dllimport) int __asan_set_seh_filter();
-static int SetSEHFilter() { return __asan_set_seh_filter(); }
-
-///////////////////////////////////////////////////////////////////////////////
-// We schedule some work at start-up by placing callbacks to our code to the
-// list of CRT C initializers.
-//
-// First, declare sections we'll be using:
-#pragma section(".CRT$XID", long, read)  // NOLINT
-#pragma section(".CRT$XIZ", long, read)  // NOLINT
-
-// We need to call 'atexit(UnregisterGlobals);' after atexit() is initialized
-// (.CRT$XIC) but before the C++ constructors (.CRT$XCA).
-__declspec(allocate(".CRT$XID"))
-static int (*__asan_schedule_unregister_globals)() = ScheduleUnregisterGlobals;
-
 // We need to set the ASan-specific SEH handler at the end of CRT initialization
 // of each module (see also asan_win.cc).
-//
+extern "C" {
+__declspec(dllimport) int __asan_set_seh_filter();
+static int SetSEHFilter() { return __asan_set_seh_filter(); }
+
 // Unfortunately, putting a pointer to __asan_set_seh_filter into
 // __asan_intercept_seh gets optimized out, so we have to use an extra function.
-extern "C" __declspec(allocate(".CRT$XIZ"))
-int (*__asan_seh_interceptor)() = SetSEHFilter;
+__declspec(allocate(".CRT$XIZ")) int (*__asan_seh_interceptor)() = SetSEHFilter;
+}
 
 #endif // ASAN_DYNAMIC_RUNTIME_THUNK

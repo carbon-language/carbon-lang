@@ -1,6 +1,7 @@
+// Make sure we can handle reloading the same DLL multiple times.
 // RUN: %clang_cl_asan -LD -O0 -DDLL %s -Fe%t.dll
 // RUN: %clang_cl_asan -O0 -DEXE %s -Fe%te.exe
-// RUN: env ASAN_OPTIONS=report_globals=2 %run %te.exe %t.dll 2>&1 | FileCheck %s
+// RUN: env ASAN_OPTIONS=report_globals=1 %run %te.exe %t.dll 2>&1 | FileCheck %s
 
 #include <windows.h>
 #include <stdio.h>
@@ -19,20 +20,23 @@ int main(int argc, char **argv) {
   printf("time to load DLL\n");
   fflush(0);
 
-// On DLL load, the "in DLL\n" string is registered:
-// CHECK: Added Global{{.*}} size=19
 // CHECK: in DLL(reason=1)
-  HMODULE dll = LoadLibrary(dll_name);
-  if (dll == NULL)
-    return 3;
-
 // CHECK: in DLL(reason=0)
-// CHECK-NEXT: Removed Global{{.*}} size=19
-  if (!FreeLibrary(dll))
-    return 4;
+// CHECK: in DLL(reason=1)
+// CHECK: in DLL(reason=0)
+// CHECK: in DLL(reason=1)
+// CHECK: in DLL(reason=0)
+  for (int i = 0; i < 30; ++i) {
+    HMODULE dll = LoadLibrary(dll_name);
+    if (dll == NULL)
+      return 3;
 
-// CHECK: bye!
-  printf("bye!\n");
+    if (!FreeLibrary(dll))
+      return 4;
+  }
+
+// CHECK: All OK!
+  printf("All OK!\n");
   fflush(0);
 }
 #elif defined(DLL)
