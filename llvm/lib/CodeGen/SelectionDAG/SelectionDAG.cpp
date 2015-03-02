@@ -5419,7 +5419,7 @@ UpdateNodeOperands(SDNode *N, ArrayRef<SDValue> Ops) {
          "Update with wrong number of operands");
 
   // If no operands changed just return the input node.
-  if (!Ops.empty() && std::equal(Ops.begin(), Ops.end(), N->op_begin()))
+  if (Ops.empty() || std::equal(Ops.begin(), Ops.end(), N->op_begin()))
     return N;
 
   // See if the modified node already exists.
