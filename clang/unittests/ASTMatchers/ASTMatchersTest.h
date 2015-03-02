@@ -73,7 +73,11 @@ testing::AssertionResult matchesConditionally(
   std::unique_ptr<FrontendActionFactory> Factory(
       newFrontendActionFactory(&Finder));
   // Some tests use typeof, which is a gnu extension.
-  std::vector<std::string> Args(1, CompileArg);
+  std::vector<std::string> Args;
+  Args.push_back(CompileArg);
+  // Some tests need rtti/exceptions on
+  Args.push_back("-frtti");
+  Args.push_back("-fexceptions");
   if (!runToolOnCodeWithArgs(Factory->create(), Code, Args, "input.cc",
                              VirtualMappedFiles)) {
     return testing::AssertionFailure() << "Parsing error in \"" << Code << "\"";
