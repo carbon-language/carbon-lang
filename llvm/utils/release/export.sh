@@ -79,5 +79,8 @@ if [ "x$release" = "x" ]; then
     exit 1
 fi
 
+# Make sure umask is not overly restrictive.
+umask 0022
+
 export_sources
 exit 0
