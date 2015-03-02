@@ -2,7 +2,7 @@
 ; Radar 9309221
 ; Test dwarf reg no for s16
 ;CHECK: super-register DW_OP_regx
-;CHECK-NEXT: ascii
+;CHECK-NEXT: 264
 ;CHECK-NEXT: DW_OP_piece
 ;CHECK-NEXT: 4
 

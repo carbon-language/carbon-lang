@@ -22,14 +22,6 @@
 
 using namespace llvm;
 
-const TargetRegisterInfo *DwarfExpression::getTRI() const {
-  return AP.TM.getSubtargetImpl()->getRegisterInfo();
-}
-
-unsigned DwarfExpression::getDwarfVersion() const {
-  return AP.getDwarfDebug()->getDwarfVersion();
-}
-
 void DwarfExpression::AddReg(int DwarfReg, const char *Comment) {
   assert(DwarfReg >= 0 && "invalid negative dwarf register number");
   if (DwarfReg < 32) {
@@ -74,7 +66,7 @@ void DwarfExpression::AddShr(unsigned ShiftBy) {
 }
 
 bool DwarfExpression::AddMachineRegIndirect(unsigned MachineReg, int Offset) {
-  int DwarfReg = getTRI()->getDwarfRegNum(MachineReg, false);
+  int DwarfReg = TRI.getDwarfRegNum(MachineReg, false);
   if (DwarfReg < 0)
     return false;
 
@@ -91,11 +83,10 @@ bool DwarfExpression::AddMachineRegIndirect(unsigned MachineReg, int Offset) {
 bool DwarfExpression::AddMachineRegPiece(unsigned MachineReg,
                                          unsigned PieceSizeInBits,
                                          unsigned PieceOffsetInBits) {
-  const TargetRegisterInfo *TRI = getTRI();
-  if (!TRI->isPhysicalRegister(MachineReg))
+  if (!TRI.isPhysicalRegister(MachineReg))
     return false;
 
-  int Reg = TRI->getDwarfRegNum(MachineReg, false);
+  int Reg = TRI.getDwarfRegNum(MachineReg, false);
 
   // If this is a valid register number, emit it.
   if (Reg >= 0) {
@@ -107,12 +98,12 @@ bool DwarfExpression::AddMachineRegPiece(unsigned MachineReg,
 
   // Walk up the super-register chain until we find a valid number.
   // For example, EAX on x86_64 is a 32-bit piece of RAX with offset 0.
-  for (MCSuperRegIterator SR(MachineReg, TRI); SR.isValid(); ++SR) {
-    Reg = TRI->getDwarfRegNum(*SR, false);
+  for (MCSuperRegIterator SR(MachineReg, &TRI); SR.isValid(); ++SR) {
+    Reg = TRI.getDwarfRegNum(*SR, false);
     if (Reg >= 0) {
-      unsigned Idx = TRI->getSubRegIndex(*SR, MachineReg);
-      unsigned Size = TRI->getSubRegIdxSize(Idx);
-      unsigned RegOffset = TRI->getSubRegIdxOffset(Idx);
+      unsigned Idx = TRI.getSubRegIndex(*SR, MachineReg);
+      unsigned Size = TRI.getSubRegIdxSize(Idx);
+      unsigned RegOffset = TRI.getSubRegIdxOffset(Idx);
       AddReg(Reg, "super-register");
       if (PieceOffsetInBits == RegOffset) {
         AddOpPiece(Size, RegOffset);
@@ -136,15 +127,15 @@ bool DwarfExpression::AddMachineRegPiece(unsigned MachineReg,
   // efficient DW_OP_piece.
   unsigned CurPos = PieceOffsetInBits;
   // The size of the register in bits, assuming 8 bits per byte.
-  unsigned RegSize = TRI->getMinimalPhysRegClass(MachineReg)->getSize() * 8;
+  unsigned RegSize = TRI.getMinimalPhysRegClass(MachineReg)->getSize() * 8;
   // Keep track of the bits in the register we already emitted, so we
   // can avoid emitting redundant aliasing subregs.
   SmallBitVector Coverage(RegSize, false);
-  for (MCSubRegIterator SR(MachineReg, TRI); SR.isValid(); ++SR) {
-    unsigned Idx = TRI->getSubRegIndex(MachineReg, *SR);
-    unsigned Size = TRI->getSubRegIdxSize(Idx);
-    unsigned Offset = TRI->getSubRegIdxOffset(Idx);
-    Reg = TRI->getDwarfRegNum(*SR, false);
+  for (MCSubRegIterator SR(MachineReg, &TRI); SR.isValid(); ++SR) {
+    unsigned Idx = TRI.getSubRegIndex(MachineReg, *SR);
+    unsigned Size = TRI.getSubRegIdxSize(Idx);
+    unsigned Offset = TRI.getSubRegIdxOffset(Idx);
+    Reg = TRI.getDwarfRegNum(*SR, false);
 
     // Intersection between the bits we already emitted and the bits
     // covered by this subregister.
@@ -180,7 +171,7 @@ void DwarfExpression::AddSignedConstant(int Value) {
   // value, so the producers and consumers started to rely on heuristics
   // to disambiguate the value vs. location status of the expression.
   // See PR21176 for more details.
-  if (getDwarfVersion() >= 4)
+  if (DwarfVersion >= 4)
     EmitOp(dwarf::DW_OP_stack_value);
 }
 
@@ -188,7 +179,7 @@ void DwarfExpression::AddUnsignedConstant(unsigned Value) {
   EmitOp(dwarf::DW_OP_constu);
   EmitUnsigned(Value);
   // cf. comment in DwarfExpression::AddSignedConstant().
-  if (getDwarfVersion() >= 4)
+  if (DwarfVersion >= 4)
     EmitOp(dwarf::DW_OP_stack_value);
 }
 

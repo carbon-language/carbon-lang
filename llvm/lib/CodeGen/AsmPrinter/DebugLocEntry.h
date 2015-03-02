@@ -9,12 +9,14 @@
 
 #ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DEBUGLOCENTRY_H
 #define LLVM_LIB_CODEGEN_ASMPRINTER_DEBUGLOCENTRY_H
+#include "llvm/ADT/SmallString.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MachineLocation.h"
 
 namespace llvm {
+class AsmPrinter;
 class MDNode;
 /// \brief This struct describes location entries emitted in the .debug_loc
 /// section.
@@ -84,6 +86,8 @@ private:
   /// A nonempty list of locations/constants belonging to this entry,
   /// sorted by offset.
   SmallVector<Value, 1> Values;
+  SmallString<8> DWARFBytes;
+  SmallVector<std::string, 1> Comments;
 
 public:
   DebugLocEntry(const MCSymbol *B, const MCSymbol *E, Value Val)
@@ -145,6 +149,16 @@ public:
                           A.getExpression() == B.getExpression();
                  }),
                  Values.end());
+  }
+
+  void finalize(const AsmPrinter &AP,
+                const DITypeIdentifierMap &TypeIdentifierMap);
+  StringRef getDWARFBytes() const {
+    assert(!DWARFBytes.empty() && "DebugLocEntry not finalized?");
+    return DWARFBytes;
+  }
+  const SmallVectorImpl<std::string> &getComments() const {
+    return Comments;
   }
 };
 
