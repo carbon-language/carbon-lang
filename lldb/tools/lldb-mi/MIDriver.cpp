@@ -570,7 +570,7 @@ CMIDriver::DoMainLoop(void)
 #if MICONFIG_ENABLE_MI_DRIVER_MI_MODE_CMDLINE_ARG_EXECUTABLE_DEBUG_SESSION
     if (HaveExecutableFileNamePathOnCmdLine())
     {
-        if (!LocalDebugSessionStartupInjectCommands())
+        if (!LocalDebugSessionStartupExecuteCommands())
         {
             SetErrorDescription(MIRSRC(IDS_MI_INIT_ERR_LOCAL_DEBUG_SESSION));
             return MIstatus::failure;
@@ -1170,7 +1170,7 @@ CMIDriver::GetExecutableFileNamePathOnCmdLine(void) const
 // Throws:  None.
 //--
 bool
-CMIDriver::LocalDebugSessionStartupInjectCommands(void)
+CMIDriver::LocalDebugSessionStartupExecuteCommands(void)
 {
     const CMIUtilString strCmd(CMIUtilString::Format("-file-exec-and-symbols \"%s\"", m_strCmdLineArgExecuteableFileNamePath.AddSlashes().c_str()));
     const bool bOk = CMICmnStreamStdout::TextToStdout(strCmd);

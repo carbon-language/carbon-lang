@@ -148,7 +148,7 @@ class CMIDriver : public CMICmnBase,
     bool StopWorkerThreads(void);
     bool InitClientIDEToMIDriver(void) const;
     bool InitClientIDEEclipse(void) const;
-    bool LocalDebugSessionStartupInjectCommands(void);
+    bool LocalDebugSessionStartupExecuteCommands(void);
 
     // Overridden:
   private:
