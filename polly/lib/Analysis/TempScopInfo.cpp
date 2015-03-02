@@ -99,18 +99,24 @@ void TempScop::printDetail(raw_ostream &OS, ScalarEvolution *SE, LoopInfo *LI,
 }
 
 void TempScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
-                                    AccFuncSetType &Functions) {
+                                    AccFuncSetType &Functions,
+                                    Region *NonAffineSubRegion) {
   if (canSynthesize(PHI, LI, SE, &R))
     return;
 
   // PHI nodes are modeled as if they had been demoted prior to the SCoP
   // detection. Hence, the PHI is a load of a new memory location in which the
   // incoming value was written at the end of the incoming basic block.
+  bool Written = false;
   for (unsigned u = 0; u < PHI->getNumIncomingValues(); u++) {
     Value *Op = PHI->getIncomingValue(u);
     BasicBlock *OpBB = PHI->getIncomingBlock(u);
 
     if (!R.contains(OpBB))
+      continue;
+
+    // Do not build scalar dependences inside a non-affine subregion.
+    if (NonAffineSubRegion && NonAffineSubRegion->contains(OpBB))
       continue;
 
     Instruction *OpI = dyn_cast<Instruction>(Op);
@@ -132,15 +138,20 @@ void TempScopInfo::buildPHIAccesses(PHINode *PHI, Region &R,
     if (!OpI)
       OpI = PHI;
 
+    Written = true;
+
     IRAccess ScalarAccess(IRAccess::MUST_WRITE, PHI, ZeroOffset, 1, true);
     AccFuncMap[OpBB].push_back(std::make_pair(ScalarAccess, OpI));
   }
 
-  IRAccess ScalarAccess(IRAccess::READ, PHI, ZeroOffset, 1, true);
-  Functions.push_back(std::make_pair(ScalarAccess, PHI));
+  if (Written) {
+    IRAccess ScalarAccess(IRAccess::READ, PHI, ZeroOffset, 1, true);
+    Functions.push_back(std::make_pair(ScalarAccess, PHI));
+  }
 }
 
-bool TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R) {
+bool TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R,
+                                          Region *NonAffineSubRegion) {
   bool canSynthesizeInst = canSynthesize(Inst, LI, SE, R);
   if (isIgnoredIntrinsic(Inst))
     return false;
@@ -159,6 +170,10 @@ bool TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R) {
 
     // Ignore the users in the same BB (statement)
     if (UseParent == ParentBB)
+      continue;
+
+    // Do not build scalar dependences inside a non-affine subregion.
+    if (NonAffineSubRegion && NonAffineSubRegion->contains(UseParent))
       continue;
 
     // Check whether or not the use is in the SCoP.
@@ -237,7 +252,23 @@ IRAccess TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R) {
                   Subscripts, Sizes);
 }
 
-void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
+void TempScopInfo::buildAccessFunctions(Region &R, Region &SR) {
+
+  if (SD->isNonAffineSubRegion(&SR, &R)) {
+    for (BasicBlock *BB : SR.blocks())
+      buildAccessFunctions(R, *BB, &SR);
+    return;
+  }
+
+  for (auto I = SR.element_begin(), E = SR.element_end(); I != E; ++I)
+    if (I->isSubRegion())
+      buildAccessFunctions(R, *I->getNodeAs<Region>());
+    else
+      buildAccessFunctions(R, *I->getNodeAs<BasicBlock>());
+}
+
+void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
+                                        Region *NonAffineSubRegion) {
   AccFuncSetType Functions;
   Loop *L = LI->getLoopFor(&BB);
 
@@ -247,9 +278,10 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
       Functions.push_back(std::make_pair(buildIRAccess(Inst, L, &R), Inst));
 
     if (PHINode *PHI = dyn_cast<PHINode>(Inst))
-      buildPHIAccesses(PHI, R, Functions);
+      buildPHIAccesses(PHI, R, Functions, NonAffineSubRegion);
 
-    if (!isa<StoreInst>(Inst) && buildScalarDependences(Inst, &R)) {
+    if (!isa<StoreInst>(Inst) &&
+        buildScalarDependences(Inst, &R, NonAffineSubRegion)) {
       // If the Instruction is used outside the statement, we need to build the
       // write access.
       IRAccess ScalarAccess(IRAccess::MUST_WRITE, Inst, ZeroOffset, 1, true);
@@ -383,10 +415,10 @@ void TempScopInfo::buildCondition(BasicBlock *BB, Region &R) {
 TempScop *TempScopInfo::buildTempScop(Region &R) {
   TempScop *TScop = new TempScop(R, BBConds, AccFuncMap);
 
-  for (const auto &BB : R.blocks()) {
-    buildAccessFunctions(R, *BB);
+  buildAccessFunctions(R, R);
+
+  for (const auto &BB : R.blocks())
     buildCondition(BB, R);
-  }
 
   return TScop;
 }

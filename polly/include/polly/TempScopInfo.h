@@ -269,21 +269,37 @@ class TempScopInfo : public FunctionPass {
   /// @brief Analyze and extract the cross-BB scalar dependences (or,
   ///        dataflow dependencies) of an instruction.
   ///
-  /// @param Inst The instruction to be analyzed
-  /// @param R    The SCoP region
+  /// @param Inst               The instruction to be analyzed
+  /// @param R                  The SCoP region
+  /// @param NonAffineSubRegion The non affine sub-region @p Inst is in.
   ///
   /// @return     True if the Instruction is used in other BB and a scalar write
   ///             Access is required.
-  bool buildScalarDependences(Instruction *Inst, Region *R);
+  bool buildScalarDependences(Instruction *Inst, Region *R,
+                              Region *NonAffineSubRegio);
 
   /// @brief Create IRAccesses for the given PHI node in the given region.
   ///
-  /// @param PHI       The PHI node to be handled
-  /// @param R         The SCoP region
-  /// @param Functions The access functions of the current BB
-  void buildPHIAccesses(PHINode *PHI, Region &R, AccFuncSetType &Functions);
+  /// @param PHI                The PHI node to be handled
+  /// @param R                  The SCoP region
+  /// @param Functions          The access functions of the current BB
+  /// @param NonAffineSubRegion The non affine sub-region @p PHI is in.
+  void buildPHIAccesses(PHINode *PHI, Region &R, AccFuncSetType &Functions,
+                        Region *NonAffineSubRegion);
 
-  void buildAccessFunctions(Region &RefRegion, BasicBlock &BB);
+  /// @brief Build the access functions for the subregion @p SR.
+  ///
+  /// @param R  The SCoP region.
+  /// @param SR A subregion of @p R.
+  void buildAccessFunctions(Region &R, Region &SR);
+
+  /// @brief Build the access functions for the basic block @p BB
+  ///
+  /// @param R                  The SCoP region.
+  /// @param BB                 A basic block in @p R.
+  /// @param NonAffineSubRegion The non affine sub-region @p BB is in.
+  void buildAccessFunctions(Region &R, BasicBlock &BB,
+                            Region *NonAffineSubRegion = nullptr);
 
 public:
   static char ID;
