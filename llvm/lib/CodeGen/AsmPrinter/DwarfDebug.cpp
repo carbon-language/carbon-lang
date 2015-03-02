@@ -2058,7 +2058,7 @@ static uint64_t makeTypeSignature(StringRef Identifier) {
   // appropriately.
   MD5::MD5Result Result;
   Hash.final(Result);
-  return *reinterpret_cast<support::ulittle64_t *>(Result + 8);
+  return support::endian::read64le(Result + 8);
 }
 
 void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,

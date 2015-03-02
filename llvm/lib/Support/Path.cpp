@@ -30,6 +30,7 @@
 #endif
 
 using namespace llvm;
+using namespace llvm::support::endian;
 
 namespace {
   using llvm::StringRef;
@@ -917,7 +918,7 @@ file_magic identify_magic(StringRef Magic) {
         if (Magic.size() < MinSize)
           return file_magic::coff_import_library;
 
-        int BigObjVersion = *reinterpret_cast<const support::ulittle16_t*>(
+        int BigObjVersion = read16le(
             Magic.data() + offsetof(COFF::BigObjHeader, Version));
         if (BigObjVersion < COFF::BigObjHeader::MinBigObjectVersion)
           return file_magic::coff_import_library;
@@ -1034,8 +1035,7 @@ file_magic identify_magic(StringRef Magic) {
 
     case 'M': // Possible MS-DOS stub on Windows PE file
       if (Magic[1] == 'Z') {
-        uint32_t off =
-          *reinterpret_cast<const support::ulittle32_t*>(Magic.data() + 0x3c);
+        uint32_t off = read32le(Magic.data() + 0x3c);
         // PE/COFF file, either EXE or DLL.
         if (off < Magic.size() &&
             memcmp(Magic.data()+off, COFF::PEMagic, sizeof(COFF::PEMagic)) == 0)

@@ -20,6 +20,7 @@
 
 using namespace llvm;
 using namespace object;
+using namespace llvm::support::endian;
 
 static const char *const Magic = "!<arch>\n";
 static const char *const ThinMagic = "!<thin>\n";
@@ -363,11 +364,9 @@ ErrorOr<Archive::child_iterator> Archive::Symbol::getMember() const {
     Offsets += sizeof(uint32_t);
   uint32_t Offset = 0;
   if (Parent->kind() == K_GNU) {
-    Offset =
-        *(reinterpret_cast<const support::ubig32_t *>(Offsets) + SymbolIndex);
+    Offset = read32be(Offsets + SymbolIndex * 4);
   } else if (Parent->kind() == K_MIPS64) {
-    Offset =
-        *(reinterpret_cast<const support::ubig64_t *>(Offsets) + SymbolIndex);
+    Offset = read64be(Offsets + SymbolIndex * 8);
   } else if (Parent->kind() == K_BSD) {
     // The SymbolIndex is an index into the ranlib structs that start at
     // Offsets (the first uint32_t is the number of bytes of the ranlib
@@ -375,36 +374,29 @@ ErrorOr<Archive::child_iterator> Archive::Symbol::getMember() const {
     // being a string table offset and the second being the offset into
     // the archive of the member that defines the symbol.  Which is what
     // is needed here.
-    Offset = *(reinterpret_cast<const support::ulittle32_t *>(Offsets) +
-               (SymbolIndex * 2) + 1);
+    Offset = read32le(Offsets + SymbolIndex * 8 + 4);
   } else {
-    uint32_t MemberCount = *reinterpret_cast<const support::ulittle32_t*>(Buf);
-    
     // Skip offsets.
-    Buf += sizeof(support::ulittle32_t) +
-           (MemberCount * sizeof(support::ulittle32_t));
+    uint32_t MemberCount = read32le(Buf);
+    Buf += MemberCount * 4 + 4;
 
-    uint32_t SymbolCount = *reinterpret_cast<const support::ulittle32_t*>(Buf);
-
+    uint32_t SymbolCount = read32le(Buf);
     if (SymbolIndex >= SymbolCount)
       return object_error::parse_failed;
 
     // Skip SymbolCount to get to the indices table.
-    const char *Indices = Buf + sizeof(support::ulittle32_t);
+    const char *Indices = Buf + 4;
 
     // Get the index of the offset in the file member offset table for this
     // symbol.
-    uint16_t OffsetIndex =
-      *(reinterpret_cast<const support::ulittle16_t*>(Indices)
-        + SymbolIndex);
+    uint16_t OffsetIndex = read16le(Indices + SymbolIndex * 2);
     // Subtract 1 since OffsetIndex is 1 based.
     --OffsetIndex;
 
     if (OffsetIndex >= MemberCount)
       return object_error::parse_failed;
 
-    Offset = *(reinterpret_cast<const support::ulittle32_t*>(Offsets)
-               + OffsetIndex);
+    Offset = read32le(Offsets + OffsetIndex * 4);
   }
 
   const char *Loc = Parent->getData().begin() + Offset;
@@ -430,8 +422,7 @@ Archive::Symbol Archive::Symbol::getNext() const {
     // the string table followed by the string table.
     const char *Buf = Parent->SymbolTable->getBuffer().begin();
     uint32_t RanlibCount = 0;
-    RanlibCount = (*reinterpret_cast<const support::ulittle32_t *>(Buf)) /
-                  (sizeof(uint32_t) * 2);
+    RanlibCount = read32le(Buf) / 8;
     // If t.SymbolIndex + 1 will be past the count of symbols (the RanlibCount)
     // don't change the t.StringIndex as we don't want to reference a ranlib
     // past RanlibCount.
@@ -439,10 +430,8 @@ Archive::Symbol Archive::Symbol::getNext() const {
       const char *Ranlibs = Buf + 4;
       uint32_t CurRanStrx = 0;
       uint32_t NextRanStrx = 0;
-      CurRanStrx = *(reinterpret_cast<const support::ulittle32_t *>(Ranlibs) +
-                     (t.SymbolIndex * 2));
-      NextRanStrx = *(reinterpret_cast<const support::ulittle32_t *>(Ranlibs) +
-                      ((t.SymbolIndex + 1) * 2));
+      CurRanStrx = read32le(Ranlibs + t.SymbolIndex * 8);
+      NextRanStrx = read32le(Ranlibs + (t.SymbolIndex + 1) * 8);
       t.StringIndex -= CurRanStrx;
       t.StringIndex += NextRanStrx;
     }
@@ -462,10 +451,10 @@ Archive::symbol_iterator Archive::symbol_begin() const {
   const char *buf = SymbolTable->getBuffer().begin();
   if (kind() == K_GNU) {
     uint32_t symbol_count = 0;
-    symbol_count = *reinterpret_cast<const support::ubig32_t*>(buf);
+    symbol_count = read32be(buf);
     buf += sizeof(uint32_t) + (symbol_count * (sizeof(uint32_t)));
   } else if (kind() == K_MIPS64) {
-    uint64_t symbol_count = *reinterpret_cast<const support::ubig64_t *>(buf);
+    uint64_t symbol_count = read64be(buf);
     buf += sizeof(uint64_t) + (symbol_count * (sizeof(uint64_t)));
   } else if (kind() == K_BSD) {
     // The __.SYMDEF or "__.SYMDEF SORTED" member starts with a uint32_t
@@ -475,11 +464,10 @@ Archive::symbol_iterator Archive::symbol_begin() const {
     // define the symbol. After that the next uint32_t is the byte count of
     // the string table followed by the string table.
     uint32_t ranlib_count = 0;
-    ranlib_count = (*reinterpret_cast<const support::ulittle32_t *>(buf)) /
-                   (sizeof(uint32_t) * 2);
+    ranlib_count = read32le(buf) / 8;
     const char *ranlibs = buf + 4;
     uint32_t ran_strx = 0;
-    ran_strx = *(reinterpret_cast<const support::ulittle32_t *>(ranlibs));
+    ran_strx = read32le(ranlibs);
     buf += sizeof(uint32_t) + (ranlib_count * (2 * (sizeof(uint32_t))));
     // Skip the byte count of the string table.
     buf += sizeof(uint32_t);
@@ -487,9 +475,9 @@ Archive::symbol_iterator Archive::symbol_begin() const {
   } else {
     uint32_t member_count = 0;
     uint32_t symbol_count = 0;
-    member_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
+    member_count = read32le(buf);
     buf += 4 + (member_count * 4); // Skip offsets.
-    symbol_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
+    symbol_count = read32le(buf);
     buf += 4 + (symbol_count * 2); // Skip indices.
   }
   uint32_t string_start_offset = buf - SymbolTable->getBuffer().begin();
@@ -503,17 +491,16 @@ Archive::symbol_iterator Archive::symbol_end() const {
   const char *buf = SymbolTable->getBuffer().begin();
   uint32_t symbol_count = 0;
   if (kind() == K_GNU) {
-    symbol_count = *reinterpret_cast<const support::ubig32_t*>(buf);
+    symbol_count = read32be(buf);
   } else if (kind() == K_MIPS64) {
-    symbol_count = *reinterpret_cast<const support::ubig64_t*>(buf);
+    symbol_count = read64be(buf);
   } else if (kind() == K_BSD) {
-    symbol_count = (*reinterpret_cast<const support::ulittle32_t *>(buf)) /
-                   (sizeof(uint32_t) * 2);
+    symbol_count = read32le(buf) / 8;
   } else {
     uint32_t member_count = 0;
-    member_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
+    member_count = read32le(buf);
     buf += 4 + (member_count * 4); // Skip offsets.
-    symbol_count = *reinterpret_cast<const support::ulittle32_t*>(buf);
+    symbol_count = read32le(buf);
   }
   return symbol_iterator(Symbol(this, symbol_count, 0));
 }

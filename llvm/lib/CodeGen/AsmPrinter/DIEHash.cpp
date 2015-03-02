@@ -510,7 +510,7 @@ uint64_t DIEHash::computeDIEODRSignature(const DIE &Die) {
   // ... take the least significant 8 bytes and return those. Our MD5
   // implementation always returns its results in little endian, swap bytes
   // appropriately.
-  return *reinterpret_cast<support::ulittle64_t *>(Result + 8);
+  return support::endian::read64le(Result + 8);
 }
 
 /// This is based on the type signature computation given in section 7.27 of the
@@ -531,7 +531,7 @@ uint64_t DIEHash::computeCUSignature(const DIE &Die) {
   // ... take the least significant 8 bytes and return those. Our MD5
   // implementation always returns its results in little endian, swap bytes
   // appropriately.
-  return *reinterpret_cast<support::ulittle64_t *>(Result + 8);
+  return support::endian::read64le(Result + 8);
 }
 
 /// This is based on the type signature computation given in section 7.27 of the
@@ -555,5 +555,5 @@ uint64_t DIEHash::computeTypeSignature(const DIE &Die) {
   // ... take the least significant 8 bytes and return those. Our MD5
   // implementation always returns its results in little endian, swap bytes
   // appropriately.
-  return *reinterpret_cast<support::ulittle64_t *>(Result + 8);
+  return support::endian::read64le(Result + 8);
 }
