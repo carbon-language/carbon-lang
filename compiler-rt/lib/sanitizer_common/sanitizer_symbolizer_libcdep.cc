@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_internal_defs.h"
-#include "sanitizer_symbolizer.h"
+#include "sanitizer_symbolizer_internal.h"
 
 namespace __sanitizer {
 

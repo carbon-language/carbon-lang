@@ -16,7 +16,7 @@
 
 #include "sanitizer_platform.h"
 #include "sanitizer_common.h"
-#include "sanitizer_symbolizer.h"
+#include "sanitizer_symbolizer_internal.h"
 
 #ifndef SANITIZER_LIBBACKTRACE
 # define SANITIZER_LIBBACKTRACE 0
