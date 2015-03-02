@@ -24,6 +24,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include <initializer_list>
 #include <iterator>
 #include <memory>
 
@@ -432,12 +433,21 @@ public:
     this->setEnd(this->end() + NumInputs);
   }
 
+  void append(std::initializer_list<T> IL) {
+    append(IL.begin(), IL.end());
+  }
+
   void assign(size_type NumElts, const T &Elt) {
     clear();
     if (this->capacity() < NumElts)
       this->grow(NumElts);
     this->setEnd(this->begin()+NumElts);
     std::uninitialized_fill(this->begin(), this->end(), Elt);
+  }
+
+  void assign(std::initializer_list<T> IL) {
+    clear();
+    append(IL);
   }
 
   iterator erase(iterator I) {
@@ -631,6 +641,10 @@ public:
     // Insert the non-overwritten middle part.
     this->uninitialized_copy(From, To, OldEnd);
     return I;
+  }
+
+  void insert(iterator I, std::initializer_list<T> IL) {
+    insert(I, IL.begin(), IL.end());
   }
 
   template <typename... ArgTypes> void emplace_back(ArgTypes &&... Args) {
@@ -865,6 +879,10 @@ public:
     this->append(R.begin(), R.end());
   }
 
+  SmallVector(std::initializer_list<T> IL) : SmallVectorImpl<T>(N) {
+    this->assign(IL);
+  }
+
   SmallVector(const SmallVector &RHS) : SmallVectorImpl<T>(N) {
     if (!RHS.empty())
       SmallVectorImpl<T>::operator=(RHS);
@@ -895,6 +913,10 @@ public:
     return *this;
   }
 
+  const SmallVector &operator=(std::initializer_list<T> IL) {
+    this->assign(IL);
+    return *this;
+  }
 };
 
 template<typename T, unsigned N>
