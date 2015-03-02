@@ -3,6 +3,8 @@ lit_config.load_config(config, "@COMPILER_RT_BINARY_DIR@/test/lit.common.configu
 
 # Tool-specific config options.
 config.tool_name = "@SANITIZER_COMMON_LIT_TEST_MODE@"
+config.target_cflags = "@SANITIZER_COMMON_TEST_TARGET_CFLAGS@"
+config.target_arch = "@SANITIZER_COMMON_TEST_TARGET_ARCH@"
 
 # Load tool-specific config that would do the real work.
 lit_config.load_config(config, "@SANITIZER_COMMON_LIT_SOURCE_DIR@/lit.common.cfg")

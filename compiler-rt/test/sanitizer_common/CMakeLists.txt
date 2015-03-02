@@ -16,16 +16,26 @@ endif()
 # Create a separate config for each tool we support.
 foreach(tool ${SUPPORTED_TOOLS})
   string(TOUPPER ${tool} tool_toupper)
-  if(${tool_toupper}_SUPPORTED_ARCH)
+  if(${tool_toupper}_SUPPORTED_ARCH AND NOT COMPILER_RT_STANDALONE_BUILD)
+    list(APPEND SANITIZER_COMMON_TEST_DEPS ${tool})
+  endif()
+  foreach(arch ${${tool_toupper}_SUPPORTED_ARCH})
     set(SANITIZER_COMMON_LIT_TEST_MODE ${tool})
+    set(SANITIZER_COMMON_TEST_TARGET_ARCH ${arch})
+    if(${arch} MATCHES "arm|aarch64")
+      # This is only true if we're cross-compiling.
+      set(SANITIZER_COMMON_TEST_TARGET_CFLAGS
+          ${COMPILER_RT_TEST_COMPILER_CFLAGS})
+    else()
+      get_target_flags_for_arch(${arch} SANITIZER_COMMON_TEST_TARGET_CFLAGS)
+    endif()
+    set(CONFIG_NAME ${tool}-${arch}-${OS_NAME})
     configure_lit_site_cfg(
       ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
-      ${CMAKE_CURRENT_BINARY_DIR}/${tool}/lit.site.cfg)
-    list(APPEND SANITIZER_COMMON_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/${tool})
-    if(NOT COMPILER_RT_STANDALONE_BUILD)
-      list(APPEND SANITIZER_COMMON_TEST_DEPS ${tool})
-    endif()
-  endif()
+      ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_NAME}/lit.site.cfg)
+    list(APPEND SANITIZER_COMMON_TESTSUITES
+         ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_NAME})
+  endforeach()
 endforeach()
 
 # Unit tests.
