@@ -1,6 +1,5 @@
 // RUN: cd %S
 // RUN: %clang_cc1 -I. -fmodule-maps -fmodule-name=A  -fmodule-map-file=%S/Inputs/filename/module.map %s -E | FileCheck %s
-// REQUIRES: shell
 
 #include "Inputs/filename/a.h"
 

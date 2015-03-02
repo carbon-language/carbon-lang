@@ -1,5 +1,3 @@
-// REQUIRES: shell
-//
 // RUN: cd %S
 // RUN: rm -rf %t
 // RUN: mkdir %t

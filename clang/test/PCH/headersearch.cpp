@@ -1,6 +1,5 @@
 // Test reading of PCH with changed location of original input files,
 // i.e. invoking header search.
-// REQUIRES: shell
 
 // Generate the original files:
 // RUN: rm -rf %t_orig %t_moved

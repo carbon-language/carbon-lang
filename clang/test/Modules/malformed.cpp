@@ -1,8 +1,6 @@
 // This test explicitly cd's to the test/Modules directory so that we can test
 // that filenames found via relative -I paths are printed correctly.
 //
-// REQUIRES: shell
-//
 // RUN: rm -rf %t
 // RUN: cd %S
 // RUN: not %clang_cc1 -fmodules -fmodules-cache-path=%t -I Inputs/malformed -DHEADER="a1.h" %s 2>&1 | FileCheck %s --check-prefix=CHECK-A
@@ -32,6 +30,6 @@
 void test() { f<int>(); }
 // Test that we use relative paths to name files within an imported module.
 //
-// CHECK-C: In module 'c' imported from malformed.cpp:14:
+// CHECK-C: In module 'c' imported from malformed.cpp:12:
 // CHECK-C: {{^}}Inputs/malformed/c.h:1:33: error: type 'int' cannot be used prior to '::'
 // CHECK-C: {{^}}malformed.cpp:[[@LINE-5]]:15: note: in instantiation of

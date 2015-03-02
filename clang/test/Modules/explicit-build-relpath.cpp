@@ -2,7 +2,6 @@
 //
 // RUN: rm -rf %t
 // RUN: mkdir %t
-// RUN: cd %t
 
 // ----------------------
 // Build modules A and B.

@@ -3,7 +3,6 @@
 // RUN: cp -r %S/Inputs/include-relative %t/include-relative
 // RUN: cd %t
 // RUN: %clang_cc1 -fmodules -x c -verify -fmodules-cache-path=%t -I include-relative %s
-// REQUIRES: shell
 
 // expected-no-diagnostics
 

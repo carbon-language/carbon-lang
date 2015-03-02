@@ -1,4 +1,3 @@
-// REQUIRES: shell
 // Basic test
 // RUN: rm -rf %t.dir
 // RUN: mkdir -p %t.dir/a/b

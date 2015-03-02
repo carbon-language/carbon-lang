@@ -11,9 +11,6 @@
 // RUN: %clang_cc1 -x objective-c++ -fmodules-cache-path=%t -fmodules -fmodule-map-file=Inputs/modular_maps/modulea-cwd.map -fmodule-map-file=Inputs/modular_maps/modulec-cwd.map -I Inputs/modular_maps %s -verify -fmodule-map-file-home-is-cwd
 // RxN: %clang_cc1 -x objective-c++ -fmodules-cache-path=%t -fmodules -fmodule-map-file=Inputs/modular_maps/modulec-cwd.map -fmodule-map-file=Inputs/modular_maps/modulea-cwd.map -I Inputs/modular_maps %s -verify -fmodule-map-file-home-is-cwd
 
-// chdir is unsupported on Lit internal runner.
-// REQUIRES: shell
-
 #include "common.h"
 #include "a.h"
 #include "b.h" // expected-error {{private header}}

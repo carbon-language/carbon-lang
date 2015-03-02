@@ -8,8 +8,6 @@
 // RUN: %clang_cc1 -analyze -analyzer-output=html -analyzer-checker=core -o testrelative %s
 // RUN: ls %T/dir/testrelative | grep report
 
-// REQUIRES: shell
-
 // Currently this test mainly checks that the HTML diagnostics doesn't crash
 // when handling macros will calls with macros.  We should actually validate
 // the output, but that requires being able to match against a specifically

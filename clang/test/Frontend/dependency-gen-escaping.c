@@ -1,4 +1,3 @@
-// REQUIRES: shell
 // PR15642
 // RUN: rm -rf %t.dir
 // RUN: mkdir -p %t.dir
