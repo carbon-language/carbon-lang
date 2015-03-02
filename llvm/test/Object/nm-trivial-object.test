@@ -46,7 +46,6 @@ RUN: mkdir -p %t
 RUN: cd %t
 RUN: cp %p/Inputs/trivial-object-test.macho-i386 a.out
 RUN: llvm-nm | FileCheck %s -check-prefix A-OUT
-REQUIRES: shell
 
 
 COFF: 00000000 {{.*}} d .data

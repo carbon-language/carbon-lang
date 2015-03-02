@@ -1,4 +1,3 @@
-; REQUIRES: shell
 ; RUN: llvm-link %s %S/Inputs/targettriple-a.ll -S -o - 2>%t.a.err | FileCheck %s
 ; RUN: cat %t.a.err | FileCheck --check-prefix=WARN-A %s --allow-empty
 

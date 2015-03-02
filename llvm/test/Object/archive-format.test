@@ -1,8 +1,6 @@
 Test the exact archive format. In particular, test which file names use the
 string table or not.
 
-REQUIRES: shell
-
 RUN: mkdir -p %t
 RUN: cd %t
 

@@ -22,33 +22,56 @@ kUseCloseFDs = not kIsWindows
 # Use temporary files to replace /dev/null on Windows.
 kAvoidDevNull = kIsWindows
 
-def executeShCmd(cmd, cfg, cwd, results):
+class ShellEnvironment(object):
+
+    """Mutable shell environment containing things like CWD and env vars.
+
+    Environment variables are not implemented, but cwd tracking is.
+    """
+
+    def __init__(self, cwd, env):
+        self.cwd = cwd
+        self.env = env
+
+def executeShCmd(cmd, shenv, results):
     if isinstance(cmd, ShUtil.Seq):
         if cmd.op == ';':
-            res = executeShCmd(cmd.lhs, cfg, cwd, results)
-            return executeShCmd(cmd.rhs, cfg, cwd, results)
+            res = executeShCmd(cmd.lhs, shenv, results)
+            return executeShCmd(cmd.rhs, shenv, results)
 
         if cmd.op == '&':
             raise InternalShellError(cmd,"unsupported shell operator: '&'")
 
         if cmd.op == '||':
-            res = executeShCmd(cmd.lhs, cfg, cwd, results)
+            res = executeShCmd(cmd.lhs, shenv, results)
             if res != 0:
-                res = executeShCmd(cmd.rhs, cfg, cwd, results)
+                res = executeShCmd(cmd.rhs, shenv, results)
             return res
 
         if cmd.op == '&&':
-            res = executeShCmd(cmd.lhs, cfg, cwd, results)
+            res = executeShCmd(cmd.lhs, shenv, results)
             if res is None:
                 return res
 
             if res == 0:
-                res = executeShCmd(cmd.rhs, cfg, cwd, results)
+                res = executeShCmd(cmd.rhs, shenv, results)
             return res
 
         raise ValueError('Unknown shell command: %r' % cmd.op)
-
     assert isinstance(cmd, ShUtil.Pipeline)
+
+    # Handle shell builtins first.
+    if cmd.commands[0].args[0] == 'cd':
+        # Update the cwd in the environment.
+        if len(cmd.commands[0].args) != 2:
+            raise ValueError('cd supports only one argument')
+        newdir = cmd.commands[0].args[1]
+        if os.path.isabs(newdir):
+            shenv.cwd = newdir
+        else:
+            shenv.cwd = os.path.join(shenv.cwd, newdir)
+        return 0
+
     procs = []
     input = subprocess.PIPE
     stderrTempFiles = []
@@ -102,7 +125,9 @@ def executeShCmd(cmd, cfg, cwd, results):
                     if kAvoidDevNull and r[0] == '/dev/null':
                         r[2] = tempfile.TemporaryFile(mode=r[1])
                     else:
-                        r[2] = open(r[0], r[1])
+                        # Make sure relative paths are relative to the cwd.
+                        redir_filename = os.path.join(shenv.cwd, r[0])
+                        r[2] = open(redir_filename, r[1])
                     # Workaround a Win32 and/or subprocess bug when appending.
                     #
                     # FIXME: Actually, this is probably an instance of PR6753.
@@ -132,7 +157,7 @@ def executeShCmd(cmd, cfg, cwd, results):
 
         # Resolve the executable path ourselves.
         args = list(j.args)
-        executable = lit.util.which(args[0], cfg.environment['PATH'])
+        executable = lit.util.which(args[0], shenv.env['PATH'])
         if not executable:
             raise InternalShellError(j, '%r: command not found' % j.args[0])
 
@@ -146,12 +171,12 @@ def executeShCmd(cmd, cfg, cwd, results):
                     args[i] = f.name
 
         try:
-            procs.append(subprocess.Popen(args, cwd=cwd,
+            procs.append(subprocess.Popen(args, cwd=shenv.cwd,
                                           executable = executable,
                                           stdin = stdin,
                                           stdout = stdout,
                                           stderr = stderr,
-                                          env = cfg.environment,
+                                          env = shenv.env,
                                           close_fds = kUseCloseFDs))
         except OSError as e:
             raise InternalShellError(j, 'Could not create process due to {}'.format(e))
@@ -257,7 +282,8 @@ def executeScriptInternal(test, litConfig, tmpBase, commands, cwd):
 
     results = []
     try:
-        exitCode = executeShCmd(cmd, test.config, cwd, results)
+        shenv = ShellEnvironment(cwd, test.config.environment)
+        exitCode = executeShCmd(cmd, shenv, results)
     except InternalShellError:
         e = sys.exc_info()[1]
         exitCode = 127
