@@ -1,7 +1,7 @@
-// RUN: %clang_dfsan -m64 %s -o %t
+// RUN: %clang_dfsan %s -o %t
 // RUN: not %run %t 2>&1 | FileCheck %s
 // RUN: %run %t foo
-// RUN: %clang_dfsan -mllvm -dfsan-args-abi -m64 %s -o %t
+// RUN: %clang_dfsan -mllvm -dfsan-args-abi %s -o %t
 // RUN: not %run %t 2>&1 | FileCheck %s
 // RUN: %run %t foo
 

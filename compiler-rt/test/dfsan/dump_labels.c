@@ -1,4 +1,4 @@
-// RUN: %clang_dfsan -m64 %s -o %t
+// RUN: %clang_dfsan %s -o %t
 // RUN: DFSAN_OPTIONS=dump_labels_at_exit=/dev/stdout %run %t 2>&1 | FileCheck %s
 // RUN: DFSAN_OPTIONS=dump_labels_at_exit=/dev/stdout not %run %t c 2>&1 | FileCheck %s --check-prefix=CHECK-OOL
 // RUN: DFSAN_OPTIONS=dump_labels_at_exit=/dev/stdout not %run %t u 2>&1 | FileCheck %s --check-prefix=CHECK-OOL
