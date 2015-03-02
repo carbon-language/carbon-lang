@@ -312,6 +312,9 @@ void DataLayout::parseSpecifier(StringRef Desc) {
             "Missing alignment specification in datalayout string");
       Split = split(Rest, ':');
       unsigned ABIAlign = inBytes(getInt(Tok));
+      if (AlignType != AGGREGATE_ALIGN && !ABIAlign)
+        report_fatal_error(
+            "ABI alignment specification must be >0 for non-aggregate types");
 
       // Preferred alignment.
       unsigned PrefAlign = ABIAlign;
