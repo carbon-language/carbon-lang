@@ -47,6 +47,51 @@ operations for safety.  If your source language provides information about
 the range of the index, you may wish to manually extend indices to machine 
 register width using a zext instruction.
 
+Other things to consider
+=========================
+
+#. Make sure that a DataLayout is provided (this will likely become required in
+   the near future, but is certainly important for optimization).
+
+#. Add nsw/nuw/fast-math flags as appropriate
+
+#. Add noalias/align/dereferenceable/nonnull to function arguments and return 
+   values as appropriate
+
+#. Mark functions as readnone/readonly/nounwind when known (especially for 
+   external functions)
+
+#. Use ptrtoint/inttoptr sparingly (they interfere with pointer aliasing 
+   analysis), prefer GEPs
+
+#. Use the lifetime.start/lifetime.end and invariant.start/invariant.end 
+   intrinsics where possible.  Common profitable uses are for stack like data 
+   structures (thus allowing dead store elimination) and for describing 
+   life times of allocas (thus allowing smaller stack sizes).  
+
+#. Use pointer aliasing metadata, especially tbaa metadata, to communicate 
+   otherwise-non-deducible pointer aliasing facts
+
+#. Use the "most-private" possible linkage types for the functions being defined
+   (private, internal or linkonce_odr preferably)
+
+#. Mark invariant locations using !invariant.load and TBAA's constant flags
+
+#. Prefer globals over inttoptr of a constant address - this gives you 
+   dereferencability information.  In MCJIT, use getSymbolAddress to provide 
+   actual address.
+
+#. Be wary of ordered and atomic memory operations.  They are hard to optimize 
+   and may not be well optimized by the current optimizer.  Depending on your
+   source language, you may consider using fences instead.
+
+#. If you language uses range checks, consider using the IRCE pass.  It is not 
+   currently part of the standard pass order.
+
+p.s. If you want to help improve this document, patches expanding any of the 
+above items into standalone sections of their own with a more complete 
+discussion would be very welcome.  
+
 
 Adding to this document
 =======================
