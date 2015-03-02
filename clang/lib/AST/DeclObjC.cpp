@@ -616,8 +616,7 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupPrivateMethod(
 
   // Look through local category implementations associated with the class.
   if (!Method)
-    Method = Instance ? getCategoryInstanceMethod(Sel)
-                      : getCategoryClassMethod(Sel);
+    Method = getCategoryMethod(Sel, Instance);
 
   // Before we give up, check if the selector is an instance method.
   // But only in the root. This matches gcc's behavior and what the

@@ -820,8 +820,8 @@ public:
   ObjCMethodDecl *getCategoryInstanceMethod(Selector Sel) const;
   ObjCMethodDecl *getCategoryClassMethod(Selector Sel) const;
   ObjCMethodDecl *getCategoryMethod(Selector Sel, bool isInstance) const {
-    return isInstance ? getInstanceMethod(Sel)
-                      : getClassMethod(Sel);
+    return isInstance ? getCategoryInstanceMethod(Sel)
+                      : getCategoryClassMethod(Sel);
   }
 
   typedef ObjCProtocolList::iterator protocol_iterator;
