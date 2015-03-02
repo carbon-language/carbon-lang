@@ -3370,6 +3370,15 @@ NativeProcessLinux::ServeOperation(OperationArgs *args)
             assert(false && "Unexpected errno from sem_wait");
         }
 
+        // nullptr as operation means the operation thread should exit. Cancel() can't be used
+        // because it is not supported on android.
+        if (!monitor->m_operation)
+        {
+            // notify calling thread that operation is complete
+            sem_post(&monitor->m_operation_done);
+            break;
+        }
+
         reinterpret_cast<Operation*>(monitor->m_operation)->Execute(monitor);
 
         // notify calling thread that operation is complete
@@ -3555,8 +3564,8 @@ NativeProcessLinux::StopMonitoringChildProcess()
 void
 NativeProcessLinux::StopMonitor()
 {
-    StopMonitoringChildProcess();
     StopOpThread();
+    StopMonitoringChildProcess();
     StopCoordinatorThread ();
     sem_destroy(&m_operation_pending);
     sem_destroy(&m_operation_done);
@@ -3574,7 +3583,7 @@ NativeProcessLinux::StopOpThread()
     if (!m_operation_thread.IsJoinable())
         return;
 
-    m_operation_thread.Cancel();
+    DoOperation(nullptr); // nullptr as operation ask the operation thread to exit
     m_operation_thread.Join(nullptr);
 }
 
