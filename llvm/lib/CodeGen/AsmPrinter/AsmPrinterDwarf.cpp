@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "ByteStreamer.h"
-#include "DwarfDebug.h"
 #include "DwarfExpression.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -28,10 +27,28 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "asm-printer"
+
+void DebugLocDwarfExpression::EmitOp(uint8_t Op, const char *Comment) {
+  BS.EmitInt8(
+      Op, Comment ? Twine(Comment) + " " + dwarf::OperationEncodingString(Op)
+                  : dwarf::OperationEncodingString(Op));
+}
+
+void DebugLocDwarfExpression::EmitSigned(int Value) {
+  BS.EmitSLEB128(Value, Twine(Value));
+}
+
+void DebugLocDwarfExpression::EmitUnsigned(unsigned Value) {
+  BS.EmitULEB128(Value, Twine(Value));
+}
+
+bool DebugLocDwarfExpression::isFrameRegister(unsigned MachineReg) {
+  // This information is not available while emitting .debug_loc entries.
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 // Dwarf Emission Helper Routines
@@ -188,11 +205,30 @@ void AsmPrinter::EmitSectionOffset(const MCSymbol *Label,
   EmitLabelDifference(Label, SectionLabel, 4);
 }
 
+// Some targets do not provide a DWARF register number for every
+// register.  This function attempts to emit a DWARF register by
+// emitting a piece of a super-register or by piecing together
+// multiple subregisters that alias the register.
+void AsmPrinter::EmitDwarfRegOpPiece(ByteStreamer &Streamer,
+                                     const MachineLocation &MLoc,
+                                     unsigned PieceSizeInBits,
+                                     unsigned PieceOffsetInBits) const {
+  assert(MLoc.isReg() && "MLoc must be a register");
+  DebugLocDwarfExpression Expr(*this, Streamer);
+  Expr.AddMachineRegPiece(MLoc.getReg(), PieceSizeInBits, PieceOffsetInBits);
+}
+
+void AsmPrinter::EmitDwarfOpPiece(ByteStreamer &Streamer,
+                                  unsigned PieceSizeInBits,
+                                  unsigned PieceOffsetInBits) const {
+  DebugLocDwarfExpression Expr(*this, Streamer);
+  Expr.AddOpPiece(PieceSizeInBits, PieceOffsetInBits);
+}
+
 /// EmitDwarfRegOp - Emit dwarf register operation.
 void AsmPrinter::EmitDwarfRegOp(ByteStreamer &Streamer,
                                 const MachineLocation &MLoc) const {
-  DebugLocDwarfExpression Expr(*TM.getSubtargetImpl()->getRegisterInfo(),
-                               getDwarfDebug()->getDwarfVersion(), Streamer);
+  DebugLocDwarfExpression Expr(*this, Streamer);
   const MCRegisterInfo *MRI = MMI->getContext().getRegisterInfo();
   int Reg = MRI->getDwarfRegNum(MLoc.getReg(), false);
   if (Reg < 0) {

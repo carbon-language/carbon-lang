@@ -105,25 +105,6 @@ DwarfPubSections("generate-dwarf-pub-sections", cl::Hidden,
 static const char *const DWARFGroupName = "DWARF Emission";
 static const char *const DbgTimerName = "DWARF Debug Writer";
 
-void DebugLocDwarfExpression::EmitOp(uint8_t Op, const char *Comment) {
-  BS.EmitInt8(
-      Op, Comment ? Twine(Comment) + " " + dwarf::OperationEncodingString(Op)
-                  : dwarf::OperationEncodingString(Op));
-}
-
-void DebugLocDwarfExpression::EmitSigned(int Value) {
-  BS.EmitSLEB128(Value, Twine(Value));
-}
-
-void DebugLocDwarfExpression::EmitUnsigned(unsigned Value) {
-  BS.EmitULEB128(Value, Twine(Value));
-}
-
-bool DebugLocDwarfExpression::isFrameRegister(unsigned MachineReg) {
-  // This information is not available while emitting .debug_loc entries.
-  return false;
-}
-
 //===----------------------------------------------------------------------===//
 
 /// resolve - Look in the DwarfDebug map for the MDNode that
@@ -946,9 +927,6 @@ DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU, DISubprogram SP,
 
     // Build the location list for this variable.
     buildLocationList(LocList.List, Ranges);
-    // Finalize the entry by lowering it into a DWARF bytestream.
-    for (auto &Entry : LocList.List)
-      Entry.finalize(*Asm, TypeIdentifierMap);
   }
 
   // Collect info for variables that were optimized out.
@@ -1622,27 +1600,62 @@ void DwarfDebug::emitDebugStr() {
   Holder.emitStrings(Asm->getObjFileLowering().getDwarfStrSection());
 }
 
+/// Emits an optimal (=sorted) sequence of DW_OP_pieces.
+void DwarfDebug::emitLocPieces(ByteStreamer &Streamer,
+                               const DITypeIdentifierMap &Map,
+                               ArrayRef<DebugLocEntry::Value> Values) {
+  assert(std::all_of(Values.begin(), Values.end(), [](DebugLocEntry::Value P) {
+        return P.isBitPiece();
+      }) && "all values are expected to be pieces");
+  assert(std::is_sorted(Values.begin(), Values.end()) &&
+         "pieces are expected to be sorted");
+
+  unsigned Offset = 0;
+  for (auto Piece : Values) {
+    DIExpression Expr = Piece.getExpression();
+    unsigned PieceOffset = Expr.getBitPieceOffset();
+    unsigned PieceSize = Expr.getBitPieceSize();
+    assert(Offset <= PieceOffset && "overlapping or duplicate pieces");
+    if (Offset < PieceOffset) {
+      // The DWARF spec seriously mandates pieces with no locations for gaps.
+      Asm->EmitDwarfOpPiece(Streamer, PieceOffset-Offset);
+      Offset += PieceOffset-Offset;
+    }
+    Offset += PieceSize;
+
+#ifndef NDEBUG
+    DIVariable Var = Piece.getVariable();
+    unsigned VarSize = Var.getSizeInBits(Map);
+    assert(PieceSize+PieceOffset <= VarSize
+           && "piece is larger than or outside of variable");
+    assert(PieceSize != VarSize
+           && "piece covers entire variable");
+#endif
+    emitDebugLocValue(Streamer, Piece, PieceOffset);
+  }
+}
+
 
 void DwarfDebug::emitDebugLocEntry(ByteStreamer &Streamer,
                                    const DebugLocEntry &Entry) {
-  auto Comment = Entry.getComments().begin();
-  auto End = Entry.getComments().end();
-  for (uint8_t Byte : Entry.getDWARFBytes())
-  Streamer.EmitInt8(Byte, Comment != End ? *(Comment++) : "");
+  const DebugLocEntry::Value Value = Entry.getValues()[0];
+  if (Value.isBitPiece())
+    // Emit all pieces that belong to the same variable and range.
+    return emitLocPieces(Streamer, TypeIdentifierMap, Entry.getValues());
+
+  assert(Entry.getValues().size() == 1 && "only pieces may have >1 value");
+  emitDebugLocValue(Streamer, Value);
 }
 
-static void emitDebugLocValue(const AsmPrinter &AP,
-                              const DITypeIdentifierMap &TypeIdentifierMap,
-                              ByteStreamer &Streamer,
-                              const DebugLocEntry::Value &Value,
-                              unsigned PieceOffsetInBits) {
+void DwarfDebug::emitDebugLocValue(ByteStreamer &Streamer,
+                                   const DebugLocEntry::Value &Value,
+                                   unsigned PieceOffsetInBits) {
   DIVariable DV = Value.getVariable();
-  DebugLocDwarfExpression DwarfExpr(
-      *AP.TM.getSubtargetImpl()->getRegisterInfo(),
-      AP.getDwarfDebug()->getDwarfVersion(), Streamer);
+  DebugLocDwarfExpression DwarfExpr(*Asm, Streamer);
+
   // Regular entry.
   if (Value.isInt()) {
-    DIBasicType BTy(DV.getType().resolve(TypeIdentifierMap));
+    DIBasicType BTy(resolve(DV.getType()));
     if (BTy.Verify() && (BTy.getEncoding() == dwarf::DW_ATE_signed ||
                          BTy.getEncoding() == dwarf::DW_ATE_signed_char))
       DwarfExpr.AddSignedConstant(Value.getInt());
@@ -1653,7 +1666,7 @@ static void emitDebugLocValue(const AsmPrinter &AP,
     DIExpression Expr = Value.getExpression();
     if (!Expr || (Expr.getNumElements() == 0))
       // Regular entry.
-      AP.EmitDwarfRegOp(Streamer, Loc);
+      Asm->EmitDwarfRegOp(Streamer, Loc);
     else {
       // Complex address entry.
       if (Loc.getOffset()) {
@@ -1668,52 +1681,6 @@ static void emitDebugLocValue(const AsmPrinter &AP,
   // to represent them here in dwarf.
   // FIXME: ^
 }
-
-
-void DebugLocEntry::finalize(const AsmPrinter &AP,
-                             const DITypeIdentifierMap &TypeIdentifierMap) {
-  BufferByteStreamer Streamer(DWARFBytes, Comments);
-  const DebugLocEntry::Value Value = Values[0];
-  if (Value.isBitPiece()) {
-    // Emit all pieces that belong to the same variable and range.
-    assert(std::all_of(Values.begin(), Values.end(), [](DebugLocEntry::Value P) {
-          return P.isBitPiece();
-        }) && "all values are expected to be pieces");
-    assert(std::is_sorted(Values.begin(), Values.end()) &&
-           "pieces are expected to be sorted");
-   
-    unsigned Offset = 0;
-    for (auto Piece : Values) {
-      DIExpression Expr = Piece.getExpression();
-      unsigned PieceOffset = Expr.getBitPieceOffset();
-      unsigned PieceSize = Expr.getBitPieceSize();
-      assert(Offset <= PieceOffset && "overlapping or duplicate pieces");
-      if (Offset < PieceOffset) {
-        // The DWARF spec seriously mandates pieces with no locations for gaps.
-        DebugLocDwarfExpression Expr(
-            *AP.TM.getSubtargetImpl()->getRegisterInfo(),
-            AP.getDwarfDebug()->getDwarfVersion(), Streamer);
-        Expr.AddOpPiece(PieceOffset-Offset, 0);
-        Offset += PieceOffset-Offset;
-      }
-      Offset += PieceSize;
-   
-#ifndef NDEBUG
-      DIVariable Var = Piece.getVariable();
-      unsigned VarSize = Var.getSizeInBits(TypeIdentifierMap);
-      assert(PieceSize+PieceOffset <= VarSize
-             && "piece is larger than or outside of variable");
-      assert(PieceSize != VarSize
-             && "piece covers entire variable");
-#endif
-      emitDebugLocValue(AP, TypeIdentifierMap, Streamer, Piece, PieceOffset);
-    }
-  } else {
-    assert(Values.size() == 1 && "only pieces may have >1 value");
-    emitDebugLocValue(AP, TypeIdentifierMap, Streamer, Value, 0);
-  }
-}
-
 
 void DwarfDebug::emitDebugLocEntryLocation(const DebugLocEntry &Entry) {
   Asm->OutStreamer.AddComment("Loc expr size");

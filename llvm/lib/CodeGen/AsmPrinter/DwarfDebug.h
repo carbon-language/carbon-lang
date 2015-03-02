@@ -577,8 +577,7 @@ public:
 
   /// \brief Emit an entry for the debug loc section. This can be used to
   /// handle an entry that's going to be emitted into the debug loc section.
-  void emitDebugLocEntry(ByteStreamer &Streamer,
-                         const DebugLocEntry &Entry);
+  void emitDebugLocEntry(ByteStreamer &Streamer, const DebugLocEntry &Entry);
   /// \brief emit a single value for the debug loc section.
   void emitDebugLocValue(ByteStreamer &Streamer,
                          const DebugLocEntry::Value &Value,
