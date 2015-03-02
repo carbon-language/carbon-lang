@@ -248,10 +248,6 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
     Ctx->getMachOSection("__DWARF", "__debug_ranges",
                          MachO::S_ATTR_DEBUG,
                          SectionKind::getMetadata());
-  DwarfMacroInfoSection =
-    Ctx->getMachOSection("__DWARF", "__debug_macinfo",
-                         MachO::S_ATTR_DEBUG,
-                         SectionKind::getMetadata());
   DwarfDebugInlineSection =
     Ctx->getMachOSection("__DWARF", "__debug_inlined",
                          MachO::S_ATTR_DEBUG,
@@ -498,8 +494,6 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       Ctx->getELFSection(".debug_aranges", ELF::SHT_PROGBITS, 0);
   DwarfRangesSection =
       Ctx->getELFSection(".debug_ranges", ELF::SHT_PROGBITS, 0);
-  DwarfMacroInfoSection =
-      Ctx->getELFSection(".debug_macinfo", ELF::SHT_PROGBITS, 0);
 
   // DWARF5 Experimental Debug Info
 
@@ -685,12 +679,6 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
                         SectionKind::getMetadata());
   DwarfRangesSection =
     Ctx->getCOFFSection(".debug_ranges",
-                        COFF::IMAGE_SCN_MEM_DISCARDABLE |
-                        COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                        COFF::IMAGE_SCN_MEM_READ,
-                        SectionKind::getMetadata());
-  DwarfMacroInfoSection =
-    Ctx->getCOFFSection(".debug_macinfo",
                         COFF::IMAGE_SCN_MEM_DISCARDABLE |
                         COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
                         COFF::IMAGE_SCN_MEM_READ,

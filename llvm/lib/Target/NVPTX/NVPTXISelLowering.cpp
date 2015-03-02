@@ -4492,7 +4492,6 @@ NVPTXTargetObjectFile::~NVPTXTargetObjectFile() {
   delete DwarfLocSection;
   delete DwarfARangesSection;
   delete DwarfRangesSection;
-  delete DwarfMacroInfoSection;
 }
 
 const MCSection *
