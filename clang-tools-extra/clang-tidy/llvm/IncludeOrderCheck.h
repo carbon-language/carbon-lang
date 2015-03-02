@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace llvm {
 
 /// \brief Checks the correct order of \c #includes.
 ///
@@ -25,6 +26,7 @@ public:
   void registerPPCallbacks(CompilerInstance &Compiler) override;
 };
 
+} // namespace llvm
 } // namespace tidy
 } // namespace clang
 

@@ -11,6 +11,7 @@
 
 namespace clang {
 namespace tidy {
+namespace llvm {
 
 bool LLVMHeaderGuardCheck::shouldFixHeaderGuard(StringRef Filename) {
   return Filename.endswith(".h");
@@ -49,5 +50,6 @@ std::string LLVMHeaderGuardCheck::getHeaderGuard(StringRef Filename,
   return StringRef(Guard).upper();
 }
 
+} // namespace llvm
 } // namespace tidy
 } // namespace clang

@@ -16,6 +16,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
+namespace llvm {
 
 void TwineLocalCheck::registerMatchers(MatchFinder *Finder) {
   auto TwineType =
@@ -57,5 +58,6 @@ void TwineLocalCheck::check(const MatchFinder::MatchResult &Result) {
   }
 }
 
+} // namespace llvm
 } // namespace tidy
 } // namespace clang

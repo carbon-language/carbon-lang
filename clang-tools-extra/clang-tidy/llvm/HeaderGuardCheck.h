@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace llvm {
 
 /// Finds and fixes header guards that do not adhere to LLVM style.
 class LLVMHeaderGuardCheck : public HeaderGuardCheck {
@@ -25,6 +26,7 @@ public:
   std::string getHeaderGuard(StringRef Filename, StringRef OldGuard) override;
 };
 
+} // namespace llvm
 } // namespace tidy
 } // namespace clang
 
