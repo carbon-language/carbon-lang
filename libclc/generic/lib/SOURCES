@@ -30,6 +30,7 @@ convert.cl
 common/degrees.cl
 common/radians.cl
 common/sign.cl
+common/smoothstep.cl
 geometric/cross.cl
 geometric/dot.cl
 geometric/length.cl
