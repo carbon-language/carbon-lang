@@ -7,6 +7,9 @@
 ; RUN: llc %s -o - -filetype=asm -O0 -mtriple=x86_64-unknown-linux-gnu -split-dwarf=Enable \
 ; RUN:   | FileCheck --check-prefix=CHECK --check-prefix=FISSION %s
 
+; RUN: llc %s -o - -filetype=asm -O0 -mtriple=x86_64-scei-ps4 \
+; RUN:   | FileCheck --check-prefix=CHECK --check-prefix=SINGLE --check-prefix=SINGLE-64 %s
+
 ; FIXME: add relocation and DWARF expression support to llvm-dwarfdump & use
 ; that here instead of raw assembly printing
 

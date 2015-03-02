@@ -37,6 +37,8 @@ static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
     return make_unique<TargetLoweringObjectFileMachO>();
   }
 
+  if (TT.isPS4CPU())
+    return make_unique<PS4TargetObjectFile>();
   if (TT.isOSLinux())
     return make_unique<X86LinuxTargetObjectFile>();
   if (TT.isOSBinFormatELF())
