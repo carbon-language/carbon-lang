@@ -1215,11 +1215,9 @@ ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
 Constant *ConstantExpr::getWithOperands(ArrayRef<Constant *> Ops, Type *Ty,
                                         bool OnlyIfReduced) const {
   assert(Ops.size() == getNumOperands() && "Operand count mismatch!");
-  bool AnyChange = Ty != getType();
-  for (unsigned i = 0; i != Ops.size(); ++i)
-    AnyChange |= Ops[i] != getOperand(i);
 
-  if (!AnyChange)  // No operands changed, return self.
+  // If no operands changed return self.
+  if (Ty == getType() && std::equal(Ops.begin(), Ops.end(), op_begin()))
     return const_cast<ConstantExpr*>(this);
 
   Type *OnlyIfReducedTy = OnlyIfReduced ? Ty : nullptr;

@@ -5418,17 +5418,9 @@ UpdateNodeOperands(SDNode *N, ArrayRef<SDValue> Ops) {
   assert(N->getNumOperands() == NumOps &&
          "Update with wrong number of operands");
 
-  // Check to see if there is no change.
-  bool AnyChange = false;
-  for (unsigned i = 0; i != NumOps; ++i) {
-    if (Ops[i] != N->getOperand(i)) {
-      AnyChange = true;
-      break;
-    }
-  }
-
-  // No operands changed, just return the input node.
-  if (!AnyChange) return N;
+  // If no operands changed just return the input node.
+  if (std::equal(Ops.begin(), Ops.end(), N->op_begin()))
+    return N;
 
   // See if the modified node already exists.
   void *InsertPos = nullptr;
