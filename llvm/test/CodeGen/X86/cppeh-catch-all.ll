@@ -30,17 +30,17 @@ invoke.cont:                                      ; preds = %entry
   br label %try.cont
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %tmp = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
           catch i8* null
-  %1 = extractvalue { i8*, i32 } %0, 0
-  store i8* %1, i8** %exn.slot
-  %2 = extractvalue { i8*, i32 } %0, 1
-  store i32 %2, i32* %ehselector.slot
+  %tmp1 = extractvalue { i8*, i32 } %tmp, 0
+  store i8* %tmp1, i8** %exn.slot
+  %tmp2 = extractvalue { i8*, i32 } %tmp, 1
+  store i32 %tmp2, i32* %ehselector.slot
   br label %catch
 
 catch:                                            ; preds = %lpad
   %exn = load i8*, i8** %exn.slot
-  %3 = call i8* @llvm.eh.begincatch(i8* %exn) #3
+  %tmp3 = call i8* @llvm.eh.begincatch(i8* %exn) #2
   call void @_Z16handle_exceptionv()
   br label %invoke.cont2
 

@@ -46,28 +46,28 @@ invoke.cont:                                      ; preds = %entry
   br label %try.cont
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %tmp = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
           catch i8* bitcast (i8** @_ZTIi to i8*)
-  %1 = extractvalue { i8*, i32 } %0, 0
-  store i8* %1, i8** %exn.slot
-  %2 = extractvalue { i8*, i32 } %0, 1
-  store i32 %2, i32* %ehselector.slot
+  %tmp1 = extractvalue { i8*, i32 } %tmp, 0
+  store i8* %tmp1, i8** %exn.slot
+  %tmp2 = extractvalue { i8*, i32 } %tmp, 1
+  store i32 %tmp2, i32* %ehselector.slot
   br label %catch.dispatch
 
 catch.dispatch:                                   ; preds = %lpad
   %sel = load i32, i32* %ehselector.slot
-  %3 = call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIi to i8*)) #3
-  %matches = icmp eq i32 %sel, %3
+  %tmp3 = call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIi to i8*)) #3
+  %matches = icmp eq i32 %sel, %tmp3
   br i1 %matches, label %catch, label %eh.resume
 
 catch:                                            ; preds = %catch.dispatch
   %exn11 = load i8*, i8** %exn.slot
-  %4 = call i8* @llvm.eh.begincatch(i8* %exn11) #3
-  %5 = bitcast i8* %4 to i32*
-  %6 = load i32, i32* %5, align 4
-  store i32 %6, i32* %i, align 4
-  %7 = load i32, i32* %i, align 4
-  call void @_Z10handle_inti(i32 %7)
+  %tmp4 = call i8* @llvm.eh.begincatch(i8* %exn11) #3
+  %tmp5 = bitcast i8* %tmp4 to i32*
+  %tmp6 = load i32, i32* %tmp5, align 4
+  store i32 %tmp6, i32* %i, align 4
+  %tmp7 = load i32, i32* %i, align 4
+  call void @_Z10handle_inti(i32 %tmp7)
   br label %invoke.cont2
 
 invoke.cont2:                                     ; preds = %catch
@@ -85,18 +85,18 @@ eh.resume:                                        ; preds = %catch.dispatch
   resume { i8*, i32 } %lpad.val5
 }
 
-; CHECK: define i8* @_Z4testv.catch(i8*, i8*) {
+; CHECK-LABEL: define i8* @_Z4testv.catch(i8*, i8*) {
 ; CHECK: catch.entry:
 ; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1)
 ; CHECK:   %eh.data = bitcast i8* %eh.alloc to %struct._Z4testv.ehdata*
 ; CHECK:   %eh.obj.ptr = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 1
 ; CHECK:   %eh.obj = load i8*, i8** %eh.obj.ptr
 ; CHECK:   %i = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 2
-; CHECK:   %2 = bitcast i8* %eh.obj to i32*
-; CHECK:   %3 = load i32, i32* %2, align 4
-; CHECK:   store i32 %3, i32* %i, align 4
-; CHECK:   %4 = load i32, i32* %i, align 4
-; CHECK:   call void @_Z10handle_inti(i32 %4)
+; CHECK:   %tmp5 = bitcast i8* %eh.obj to i32*
+; CHECK:   %tmp6 = load i32, i32* %tmp5, align 4
+; CHECK:   store i32 %tmp6, i32* %i, align 4
+; CHECK:   %tmp7 = load i32, i32* %i, align 4
+; CHECK:   call void @_Z10handle_inti(i32 %tmp7)
 ; CHECK:   ret i8* blockaddress(@_Z4testv, %try.cont)
 ; CHECK: }
 
