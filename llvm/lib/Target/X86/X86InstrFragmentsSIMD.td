@@ -629,3 +629,55 @@ def vinsert256_insert : PatFrag<(ops node:$bigvec, node:$smallvec,
   return X86::isVINSERT256Index(N);
 }], INSERT_get_vinsert256_imm>;
 
+def masked_load_aligned128 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+                         (masked_load node:$src1, node:$src2, node:$src3), [{
+  if (dyn_cast<MaskedLoadSDNode>(N))
+    return cast<MaskedLoadSDNode>(N)->getAlignment() >= 16;
+  return false;
+}]>;
+
+def masked_load_aligned256 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+                         (masked_load node:$src1, node:$src2, node:$src3), [{
+  if (dyn_cast<MaskedLoadSDNode>(N))
+    return cast<MaskedLoadSDNode>(N)->getAlignment() >= 32;
+  return false;
+}]>;
+
+def masked_load_aligned512 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+                         (masked_load node:$src1, node:$src2, node:$src3), [{
+  if (dyn_cast<MaskedLoadSDNode>(N))
+    return cast<MaskedLoadSDNode>(N)->getAlignment() >= 64;
+  return false;
+}]>;
+
+def masked_load_unaligned : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+                         (masked_load node:$src1, node:$src2, node:$src3), [{
+  return (dyn_cast<MaskedLoadSDNode>(N) != 0);
+}]>;
+
+def masked_store_aligned128 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+                         (masked_store node:$src1, node:$src2, node:$src3), [{
+  if (dyn_cast<MaskedStoreSDNode>(N))
+    return cast<MaskedStoreSDNode>(N)->getAlignment() >= 16;
+  return false;
+}]>;
+
+def masked_store_aligned256 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+                         (masked_store node:$src1, node:$src2, node:$src3), [{
+  if (dyn_cast<MaskedStoreSDNode>(N))
+    return cast<MaskedStoreSDNode>(N)->getAlignment() >= 32;
+  return false;
+}]>;
+
+def masked_store_aligned512 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+                         (masked_store node:$src1, node:$src2, node:$src3), [{
+  if (dyn_cast<MaskedStoreSDNode>(N))
+    return cast<MaskedStoreSDNode>(N)->getAlignment() >= 64;
+  return false;
+}]>;
+
+def masked_store_unaligned : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+                         (masked_store node:$src1, node:$src2, node:$src3), [{
+  return (dyn_cast<MaskedStoreSDNode>(N) != 0);
+}]>;
+
