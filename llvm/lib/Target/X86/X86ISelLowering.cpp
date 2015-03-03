@@ -21006,6 +21006,49 @@ static SDValue checkBoolTestSetCCCombine(SDValue Cmp, X86::CondCode &CC) {
   return SDValue();
 }
 
+/// Check whether Cond is an AND/OR of SETCCs off of the same EFLAGS.
+/// Match:
+///   (X86or (X86setcc) (X86setcc))
+///   (X86cmp (and (X86setcc) (X86setcc)), 0)
+static bool checkBoolTestAndOrSetCCCombine(SDValue Cond, X86::CondCode &CC0,
+                                           X86::CondCode &CC1, SDValue &Flags,
+                                           bool &isAnd) {
+  if (Cond->getOpcode() == X86ISD::CMP) {
+    ConstantSDNode *CondOp1C = dyn_cast<ConstantSDNode>(Cond->getOperand(1));
+    if (!CondOp1C || !CondOp1C->isNullValue())
+      return false;
+
+    Cond = Cond->getOperand(0);
+  }
+
+  isAnd = false;
+
+  SDValue SetCC0, SetCC1;
+  switch (Cond->getOpcode()) {
+  default: return false;
+  case ISD::AND:
+  case X86ISD::AND:
+    isAnd = true;
+    // fallthru
+  case ISD::OR:
+  case X86ISD::OR:
+    SetCC0 = Cond->getOperand(0);
+    SetCC1 = Cond->getOperand(1);
+    break;
+  };
+
+  // Make sure we have SETCC nodes, using the same flags value.
+  if (SetCC0.getOpcode() != X86ISD::SETCC ||
+      SetCC1.getOpcode() != X86ISD::SETCC ||
+      SetCC0->getOperand(1) != SetCC1->getOperand(1))
+    return false;
+
+  CC0 = (X86::CondCode)SetCC0->getConstantOperandVal(0);
+  CC1 = (X86::CondCode)SetCC1->getConstantOperandVal(0);
+  Flags = SetCC0->getOperand(1);
+  return true;
+}
+
 /// Optimize X86ISD::CMOV [LHS, RHS, CONDCODE (e.g. X86::COND_NE), CONDVAL]
 static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
                                   TargetLowering::DAGCombinerInfo &DCI,
@@ -21172,6 +21215,44 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
                           DAG.getConstant(CC, MVT::i8), Cond };
         return DAG.getNode(X86ISD::CMOV, DL, N->getVTList (), Ops);
       }
+    }
+  }
+
+  // Fold and/or of setcc's to double CMOV:
+  //   (CMOV F, T, ((cc1 | cc2) != 0)) -> (CMOV (CMOV F, T, cc1), T, cc2)
+  //   (CMOV F, T, ((cc1 & cc2) != 0)) -> (CMOV (CMOV T, F, !cc1), F, !cc2)
+  //
+  // This combine lets us generate:
+  //   cmovcc1 (jcc1 if we don't have CMOV)
+  //   cmovcc2 (same)
+  // instead of:
+  //   setcc1
+  //   setcc2
+  //   and/or
+  //   cmovne (jne if we don't have CMOV)
+  // When we can't use the CMOV instruction, it might increase branch
+  // mispredicts.
+  // When we can use CMOV, or when there is no mispredict, this improves
+  // throughput and reduces register pressure.
+  //
+  if (CC == X86::COND_NE) {
+    SDValue Flags;
+    X86::CondCode CC0, CC1;
+    bool isAndSetCC;
+    if (checkBoolTestAndOrSetCCCombine(Cond, CC0, CC1, Flags, isAndSetCC)) {
+      if (isAndSetCC) {
+        std::swap(FalseOp, TrueOp);
+        CC0 = X86::GetOppositeBranchCondition(CC0);
+        CC1 = X86::GetOppositeBranchCondition(CC1);
+      }
+
+      SDValue LOps[] = {FalseOp, TrueOp, DAG.getConstant(CC0, MVT::i8),
+        Flags};
+      SDValue LCMOV = DAG.getNode(X86ISD::CMOV, DL, N->getVTList(), LOps);
+      SDValue Ops[] = {LCMOV, TrueOp, DAG.getConstant(CC1, MVT::i8), Flags};
+      SDValue CMOV = DAG.getNode(X86ISD::CMOV, DL, N->getVTList(), Ops);
+      DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), SDValue(CMOV.getNode(), 1));
+      return CMOV;
     }
   }
 

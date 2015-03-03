@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin10                             | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -fast-isel -fast-isel-abort=1 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10                               | FileCheck %s --check-prefix=CHECK --check-prefix=SDAG
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -fast-isel -fast-isel-abort=1 | FileCheck %s --check-prefix=CHECK --check-prefix=FAST
 
 ; Test all the cmp predicates that can feed an integer conditional move.
 
@@ -15,10 +15,13 @@ define i64 @select_fcmp_false_cmov(double %a, double %b, i64 %c, i64 %d) {
 define i64 @select_fcmp_oeq_cmov(double %a, double %b, i64 %c, i64 %d) {
 ; CHECK-LABEL: select_fcmp_oeq_cmov
 ; CHECK:       ucomisd %xmm1, %xmm0
-; CHECK-NEXT:  setnp %al
-; CHECK-NEXT:  sete %cl
-; CHECK-NEXT:  testb %al, %cl
-; CHECK-NEXT:  cmoveq %rsi, %rdi
+; SDAG-NEXT:   cmovneq %rsi, %rdi
+; SDAG-NEXT:   cmovpq %rsi, %rdi
+; SDAG-NEXT:   movq %rdi, %rax
+; FAST-NEXT:   setnp %al
+; FAST-NEXT:   sete %cl
+; FAST-NEXT:   testb %al, %cl
+; FAST-NEXT:   cmoveq %rsi, %rdi
   %1 = fcmp oeq double %a, %b
   %2 = select i1 %1, i64 %c, i64 %d
   ret i64 %2
@@ -135,10 +138,13 @@ define i64 @select_fcmp_ule_cmov(double %a, double %b, i64 %c, i64 %d) {
 define i64 @select_fcmp_une_cmov(double %a, double %b, i64 %c, i64 %d) {
 ; CHECK-LABEL: select_fcmp_une_cmov
 ; CHECK:       ucomisd %xmm1, %xmm0
-; CHECK-NEXT:  setp %al
-; CHECK-NEXT:  setne %cl
-; CHECK-NEXT:  orb %al, %cl
-; CHECK-NEXT:  cmoveq %rsi, %rdi
+; SDAG-NEXT:   cmovneq %rdi, %rsi
+; SDAG-NEXT:   cmovpq %rdi, %rsi
+; SDAG-NEXT:   movq %rsi, %rax
+; FAST-NEXT:   setp %al
+; FAST-NEXT:   setne %cl
+; FAST-NEXT:   orb %al, %cl
+; FAST-NEXT:   cmoveq %rsi, %rdi
   %1 = fcmp une double %a, %b
   %2 = select i1 %1, i64 %c, i64 %d
   ret i64 %2
