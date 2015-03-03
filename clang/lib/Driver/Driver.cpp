@@ -57,7 +57,7 @@ Driver::Driver(StringRef ClangExecutable, StringRef DefaultTargetTriple,
       CCGenDiagnostics(false), CCCGenericGCCName(""), CheckInputsExist(true),
       CCCUsePCH(true), SuppressMissingInputWarning(false) {
 
-  Name = llvm::sys::path::stem(ClangExecutable);
+  Name = llvm::sys::path::filename(ClangExecutable);
   Dir  = llvm::sys::path::parent_path(ClangExecutable);
 
   // Compute the path to the resource directory.
