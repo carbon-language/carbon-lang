@@ -33,7 +33,6 @@ struct LargeTestInteger { uint64_t arr[8]; };
 struct NonPOD {
   uint64_t x, y;
   NonPOD(uint64_t x, uint64_t y) : x(x), y(y) {}
-  ~NonPOD() {}
   friend hash_code hash_value(const NonPOD &obj) {
     return hash_combine(obj.x, obj.y);
   }
