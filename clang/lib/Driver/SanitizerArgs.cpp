@@ -24,7 +24,7 @@ using namespace llvm::opt;
 namespace {
 /// Assign ordinals to possible values of -fsanitize= flag.
 /// We use the ordinal values as bit positions within \c SanitizeKind.
-enum SanitizeOrdinal {
+enum SanitizeOrdinal : uint64_t {
 #define SANITIZER(NAME, ID) SO_##ID,
 #define SANITIZER_GROUP(NAME, ID, ALIAS) SO_##ID##Group,
 #include "clang/Basic/Sanitizers.def"
@@ -35,10 +35,10 @@ enum SanitizeOrdinal {
 /// 1) set of sanitizers each sanitizer group expands into.
 /// 2) set of sanitizers sharing a specific property (e.g.
 ///    all sanitizers with zero-base shadow).
-enum SanitizeKind {
-#define SANITIZER(NAME, ID) ID = 1 << SO_##ID,
+enum SanitizeKind : uint64_t {
+#define SANITIZER(NAME, ID) ID = 1ULL << SO_##ID,
 #define SANITIZER_GROUP(NAME, ID, ALIAS)                                       \
-ID = ALIAS, ID##Group = 1 << SO_##ID##Group,
+  ID = ALIAS, ID##Group = 1ULL << SO_##ID##Group,
 #include "clang/Basic/Sanitizers.def"
   NeedsUbsanRt = Undefined | Integer,
   NotAllowedWithTrap = Vptr,
@@ -54,7 +54,7 @@ ID = ALIAS, ID##Group = 1 << SO_##ID##Group,
 
 /// Returns true if set of \p Sanitizers contain at least one sanitizer from
 /// \p Kinds.
-static bool hasOneOf(const clang::SanitizerSet &Sanitizers, unsigned Kinds) {
+static bool hasOneOf(const clang::SanitizerSet &Sanitizers, uint64_t Kinds) {
 #define SANITIZER(NAME, ID)                                                    \
   if (Sanitizers.has(clang::SanitizerKind::ID) && (Kinds & ID))                \
     return true;
@@ -63,14 +63,14 @@ static bool hasOneOf(const clang::SanitizerSet &Sanitizers, unsigned Kinds) {
 }
 
 /// Adds all sanitizers from \p Kinds to \p Sanitizers.
-static void addAllOf(clang::SanitizerSet &Sanitizers, unsigned Kinds) {
+static void addAllOf(clang::SanitizerSet &Sanitizers, uint64_t Kinds) {
 #define SANITIZER(NAME, ID) \
   if (Kinds & ID) \
     Sanitizers.set(clang::SanitizerKind::ID, true);
 #include "clang/Basic/Sanitizers.def"
 }
 
-static unsigned toSanitizeKind(clang::SanitizerKind K) {
+static uint64_t toSanitizeKind(clang::SanitizerKind K) {
 #define SANITIZER(NAME, ID) \
   if (K == clang::SanitizerKind::ID) \
     return ID;
@@ -81,11 +81,11 @@ static unsigned toSanitizeKind(clang::SanitizerKind K) {
 /// Parse a single value from a -fsanitize= or -fno-sanitize= value list.
 /// Returns a member of the \c SanitizeKind enumeration, or \c 0
 /// if \p Value is not known.
-static unsigned parseValue(const char *Value);
+static uint64_t parseValue(const char *Value);
 
 /// Parse a -fsanitize= or -fno-sanitize= argument's values, diagnosing any
 /// invalid components. Returns OR of members of \c SanitizeKind enumeration.
-static unsigned parseArgValues(const Driver &D, const llvm::opt::Arg *A,
+static uint64_t parseArgValues(const Driver &D, const llvm::opt::Arg *A,
                                bool DiagnoseErrors);
 
 /// Produce an argument string from ArgList \p Args, which shows how it
@@ -94,7 +94,7 @@ static unsigned parseArgValues(const Driver &D, const llvm::opt::Arg *A,
 /// would produce "-fsanitize=vptr".
 static std::string lastArgumentForMask(const Driver &D,
                                        const llvm::opt::ArgList &Args,
-                                       unsigned Mask);
+                                       uint64_t Mask);
 
 static std::string lastArgumentForKind(const Driver &D,
                                        const llvm::opt::ArgList &Args,
@@ -106,7 +106,7 @@ static std::string lastArgumentForKind(const Driver &D,
 /// a value in \p Mask. For instance, the argument
 /// "-fsanitize=address,alignment" with mask \c NeedsUbsanRt would produce
 /// "-fsanitize=alignment".
-static std::string describeSanitizeArg(const llvm::opt::Arg *A, unsigned Mask);
+static std::string describeSanitizeArg(const llvm::opt::Arg *A, uint64_t Mask);
 
 /// Produce a string containing comma-separated names of sanitizers in \p
 /// Sanitizers set.
@@ -114,9 +114,9 @@ static std::string toString(const clang::SanitizerSet &Sanitizers);
 
 /// For each sanitizer group bit set in \p Kinds, set the bits for sanitizers
 /// this group enables.
-static unsigned expandGroups(unsigned Kinds);
+static uint64_t expandGroups(uint64_t Kinds);
 
-static unsigned getToolchainUnsupportedKinds(const ToolChain &TC) {
+static uint64_t getToolchainUnsupportedKinds(const ToolChain &TC) {
   bool IsFreeBSD = TC.getTriple().getOS() == llvm::Triple::FreeBSD;
   bool IsLinux = TC.getTriple().getOS() == llvm::Triple::Linux;
   bool IsX86 = TC.getTriple().getArch() == llvm::Triple::x86;
@@ -124,7 +124,7 @@ static unsigned getToolchainUnsupportedKinds(const ToolChain &TC) {
   bool IsMIPS64 = TC.getTriple().getArch() == llvm::Triple::mips64 ||
                   TC.getTriple().getArch() == llvm::Triple::mips64el;
 
-  unsigned Unsupported = 0;
+  uint64_t Unsupported = 0;
   if (!(IsLinux && (IsX86_64 || IsMIPS64))) {
     Unsupported |= Memory | DataFlow;
   }
@@ -169,13 +169,13 @@ void SanitizerArgs::clear() {
 SanitizerArgs::SanitizerArgs(const ToolChain &TC,
                              const llvm::opt::ArgList &Args) {
   clear();
-  unsigned AllRemove = 0;  // During the loop below, the accumulated set of
+  uint64_t AllRemove = 0;  // During the loop below, the accumulated set of
                            // sanitizers disabled by the current sanitizer
                            // argument or any argument after it.
-  unsigned DiagnosedKinds = 0;  // All Kinds we have diagnosed up to now.
+  uint64_t DiagnosedKinds = 0;  // All Kinds we have diagnosed up to now.
                                 // Used to deduplicate diagnostics.
-  unsigned Kinds = 0;
-  unsigned NotSupported = getToolchainUnsupportedKinds(TC);
+  uint64_t Kinds = 0;
+  uint64_t NotSupported = getToolchainUnsupportedKinds(TC);
   ToolChain::RTTIMode RTTIMode = TC.getRTTIMode();
 
   const Driver &D = TC.getDriver();
@@ -184,14 +184,14 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
     const auto *Arg = *I;
     if (Arg->getOption().matches(options::OPT_fsanitize_EQ)) {
       Arg->claim();
-      unsigned Add = parseArgValues(D, Arg, true);
+      uint64_t Add = parseArgValues(D, Arg, true);
 
       // Avoid diagnosing any sanitizer which is disabled later.
       Add &= ~AllRemove;
       // At this point we have not expanded groups, so any unsupported
       // sanitizers in Add are those which have been explicitly enabled.
       // Diagnose them.
-      if (unsigned KindsToDiagnose = Add & NotSupported & ~DiagnosedKinds) {
+      if (uint64_t KindsToDiagnose = Add & NotSupported & ~DiagnosedKinds) {
         // Only diagnose the new kinds.
         std::string Desc = describeSanitizeArg(*I, KindsToDiagnose);
         D.Diag(diag::err_drv_unsupported_opt_for_target)
@@ -232,7 +232,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       Kinds |= Add;
     } else if (Arg->getOption().matches(options::OPT_fno_sanitize_EQ)) {
       Arg->claim();
-      unsigned Remove = parseArgValues(D, Arg, true);
+      uint64_t Remove = parseArgValues(D, Arg, true);
       AllRemove |= expandGroups(Remove);
     }
   }
@@ -248,8 +248,8 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   }
 
   // Parse -f(no-)?sanitize-recover flags.
-  unsigned RecoverableKinds = RecoverableByDefault;
-  unsigned DiagnosedUnrecoverableKinds = 0;
+  uint64_t RecoverableKinds = RecoverableByDefault;
+  uint64_t DiagnosedUnrecoverableKinds = 0;
   for (const auto *Arg : Args) {
     if (Arg->getOption().matches(options::OPT_fsanitize_recover)) {
       // FIXME: Add deprecation notice, and then remove this flag.
@@ -260,10 +260,10 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       RecoverableKinds &= ~expandGroups(LegacyFsanitizeRecoverMask);
       Arg->claim();
     } else if (Arg->getOption().matches(options::OPT_fsanitize_recover_EQ)) {
-      unsigned Add = parseArgValues(D, Arg, true);
+      uint64_t Add = parseArgValues(D, Arg, true);
       // Report error if user explicitly tries to recover from unrecoverable
       // sanitizer.
-      if (unsigned KindsToDiagnose =
+      if (uint64_t KindsToDiagnose =
               Add & Unrecoverable & ~DiagnosedUnrecoverableKinds) {
         SanitizerSet SetToDiagnose;
         addAllOf(SetToDiagnose, KindsToDiagnose);
@@ -492,8 +492,8 @@ bool SanitizerArgs::getDefaultBlacklist(const Driver &D, std::string &BLPath) {
   return false;
 }
 
-unsigned parseValue(const char *Value) {
-  unsigned ParsedKind = llvm::StringSwitch<SanitizeKind>(Value)
+uint64_t parseValue(const char *Value) {
+  uint64_t ParsedKind = llvm::StringSwitch<SanitizeKind>(Value)
 #define SANITIZER(NAME, ID) .Case(NAME, ID)
 #define SANITIZER_GROUP(NAME, ID, ALIAS) .Case(NAME, ID##Group)
 #include "clang/Basic/Sanitizers.def"
@@ -501,24 +501,24 @@ unsigned parseValue(const char *Value) {
   return ParsedKind;
 }
 
-unsigned expandGroups(unsigned Kinds) {
+uint64_t expandGroups(uint64_t Kinds) {
 #define SANITIZER(NAME, ID)
 #define SANITIZER_GROUP(NAME, ID, ALIAS) if (Kinds & ID##Group) Kinds |= ID;
 #include "clang/Basic/Sanitizers.def"
   return Kinds;
 }
 
-unsigned parseArgValues(const Driver &D, const llvm::opt::Arg *A,
+uint64_t parseArgValues(const Driver &D, const llvm::opt::Arg *A,
                         bool DiagnoseErrors) {
   assert((A->getOption().matches(options::OPT_fsanitize_EQ) ||
           A->getOption().matches(options::OPT_fno_sanitize_EQ) ||
           A->getOption().matches(options::OPT_fsanitize_recover_EQ) ||
           A->getOption().matches(options::OPT_fno_sanitize_recover_EQ)) &&
          "Invalid argument in parseArgValues!");
-  unsigned Kinds = 0;
-  for (unsigned I = 0, N = A->getNumValues(); I != N; ++I) {
-    const char *Value = A->getValue(I);
-    unsigned Kind;
+  uint64_t Kinds = 0;
+  for (int i = 0, n = A->getNumValues(); i != n; ++i) {
+    const char *Value = A->getValue(i);
+    uint64_t Kind;
     // Special case: don't accept -fsanitize=all.
     if (A->getOption().matches(options::OPT_fsanitize_EQ) &&
         0 == strcmp("all", Value))
@@ -536,33 +536,33 @@ unsigned parseArgValues(const Driver &D, const llvm::opt::Arg *A,
 }
 
 std::string lastArgumentForMask(const Driver &D, const llvm::opt::ArgList &Args,
-                                unsigned Mask) {
+                                uint64_t Mask) {
   for (llvm::opt::ArgList::const_reverse_iterator I = Args.rbegin(),
                                                   E = Args.rend();
        I != E; ++I) {
     const auto *Arg = *I;
     if (Arg->getOption().matches(options::OPT_fsanitize_EQ)) {
-      unsigned AddKinds = expandGroups(parseArgValues(D, Arg, false));
+      uint64_t AddKinds = expandGroups(parseArgValues(D, Arg, false));
       if (AddKinds & Mask)
         return describeSanitizeArg(Arg, Mask);
     } else if (Arg->getOption().matches(options::OPT_fno_sanitize_EQ)) {
-      unsigned RemoveKinds = expandGroups(parseArgValues(D, Arg, false));
+      uint64_t RemoveKinds = expandGroups(parseArgValues(D, Arg, false));
       Mask &= ~RemoveKinds;
     }
   }
   llvm_unreachable("arg list didn't provide expected value");
 }
 
-std::string describeSanitizeArg(const llvm::opt::Arg *A, unsigned Mask) {
+std::string describeSanitizeArg(const llvm::opt::Arg *A, uint64_t Mask) {
   assert(A->getOption().matches(options::OPT_fsanitize_EQ)
          && "Invalid argument in describeSanitizerArg!");
 
   std::string Sanitizers;
-  for (unsigned I = 0, N = A->getNumValues(); I != N; ++I) {
-    if (expandGroups(parseValue(A->getValue(I))) & Mask) {
+  for (int i = 0, n = A->getNumValues(); i != n; ++i) {
+    if (expandGroups(parseValue(A->getValue(i))) & Mask) {
       if (!Sanitizers.empty())
         Sanitizers += ",";
-      Sanitizers += A->getValue(I);
+      Sanitizers += A->getValue(i);
     }
   }
 
