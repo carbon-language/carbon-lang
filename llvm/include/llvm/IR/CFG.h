@@ -167,12 +167,6 @@ public:
       idx = 0;
   }
 
-  inline const Self &operator=(const Self &I) {
-    assert(Term == I.Term &&"Cannot assign iterators to two different blocks!");
-    idx = I.idx;
-    return *this;
-  }
-
   /// getSuccessorIndex - This is used to interface between code that wants to
   /// operate on terminator instructions directly.
   unsigned getSuccessorIndex() const { return idx; }
