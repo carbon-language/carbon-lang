@@ -221,9 +221,6 @@ namespace llvm {
                    Instruction *Dst,
                    bool LoopIndependent,
                    unsigned Levels);
-    ~FullDependence() {
-      delete[] DV;
-    }
 
     /// isLoopIndependent - Returns true if this is a loop-independent
     /// dependence.
@@ -270,7 +267,7 @@ namespace llvm {
     unsigned short Levels;
     bool LoopIndependent;
     bool Consistent; // Init to true, then refine.
-    DVEntry *DV;
+    std::unique_ptr<DVEntry[]> DV;
     friend class DependenceAnalysis;
   };
 
