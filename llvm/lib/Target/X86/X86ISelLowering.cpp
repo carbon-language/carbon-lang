@@ -10134,8 +10134,7 @@ SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
 
   // Try to lower this to a blend-style vector shuffle. This can handle all
   // constant condition cases.
-  SDValue BlendOp = lowerVSELECTtoVectorShuffle(Op, Subtarget, DAG);
-  if (BlendOp.getNode())
+  if (SDValue BlendOp = lowerVSELECTtoVectorShuffle(Op, Subtarget, DAG))
     return BlendOp;
 
   // Variable blends are only legal from SSE4.1 onward.
