@@ -20,10 +20,11 @@
 
 // Project includes
 #include "lldb/lldb-private.h"
-#include "lldb/Target/Target.h"
-#include "lldb/Core/UserID.h"
 #include "lldb/Breakpoint/WatchpointOptions.h"
 #include "lldb/Breakpoint/StoppointLocation.h"
+#include "lldb/Core/UserID.h"
+#include "lldb/Symbol/ClangASTType.h"
+#include "lldb/Target/Target.h"
 
 namespace lldb_private {
 

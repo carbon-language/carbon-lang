@@ -21,6 +21,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/Options.h"
+#include "lldb/Interpreter/OptionValueBoolean.h"
 #include "lldb/Interpreter/OptionValueString.h"
 #include "lldb/Interpreter/OptionValueUInt64.h"
 #include "lldb/Core/RegularExpression.h"

@@ -14,7 +14,9 @@
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/StreamString.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Symbol/LineEntry.h"
 #include "lldb/Target/Target.h"
 
 

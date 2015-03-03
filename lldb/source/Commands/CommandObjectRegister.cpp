@@ -25,6 +25,7 @@
 #include "lldb/Interpreter/Options.h"
 #include "lldb/Interpreter/OptionGroupFormat.h"
 #include "lldb/Interpreter/OptionValueArray.h"
+#include "lldb/Interpreter/OptionValueBoolean.h"
 #include "lldb/Interpreter/OptionValueUInt64.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"

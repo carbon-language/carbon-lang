@@ -14,6 +14,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Process.h"

@@ -18,22 +18,12 @@
 // Project includes
 #include "lldb/lldb-public.h"
 #include "lldb/Breakpoint/BreakpointList.h"
-#include "lldb/Breakpoint/BreakpointLocationCollection.h"
 #include "lldb/Breakpoint/WatchpointList.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Disassembler.h"
-#include "lldb/Core/Event.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/UserSettingsController.h"
-#include "lldb/Expression/ClangModulesDeclVendor.h"
-#include "lldb/Expression/ClangPersistentVariables.h"
-#include "lldb/Interpreter/Args.h"
-#include "lldb/Interpreter/OptionValueBoolean.h"
-#include "lldb/Interpreter/OptionValueEnumeration.h"
-#include "lldb/Interpreter/OptionValueFileSpec.h"
-#include "lldb/Symbol/SymbolContext.h"
-#include "lldb/Target/ABI.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/PathMappingList.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
@@ -227,8 +217,6 @@ private:
     //------------------------------------------------------------------
     ProcessLaunchInfo m_launch_info;
 };
-
-typedef std::shared_ptr<TargetProperties> TargetPropertiesSP;
 
 class EvaluateExpressionOptions
 {
@@ -506,52 +494,12 @@ public:
     {
         return GetStaticBroadcasterClass();
     }
-
-    // This event data class is for use by the TargetList to broadcast new target notifications.
-    class TargetEventData : public EventData
-    {
-    public:
-
-        static const ConstString &
-        GetFlavorString ();
-
-        virtual const ConstString &
-        GetFlavor () const;
-
-        TargetEventData (const lldb::TargetSP &new_target_sp);
-        
-        lldb::TargetSP &
-        GetTarget()
-        {
-            return m_target_sp;
-        }
-
-        virtual
-        ~TargetEventData();
-        
-        virtual void
-        Dump (Stream *s) const;
-
-        static const lldb::TargetSP
-        GetTargetFromEvent (const lldb::EventSP &event_sp);
-        
-        static const TargetEventData *
-        GetEventDataFromEvent (const Event *event_sp);
-
-    private:
-        lldb::TargetSP m_target_sp;
-
-        DISALLOW_COPY_AND_ASSIGN (TargetEventData);
-    };
     
     static void
     SettingsInitialize ();
 
     static void
     SettingsTerminate ();
-
-//    static lldb::UserSettingsControllerSP &
-//    GetSettingsController ();
 
     static FileSpecList
     GetDefaultExecutableSearchPaths ();
@@ -576,7 +524,7 @@ public:
     // Settings accessors
     //----------------------------------------------------------------------
 
-    static const TargetPropertiesSP &
+    static const lldb::TargetPropertiesSP &
     GetGlobalProperties();
 
 
@@ -1226,10 +1174,7 @@ public:
                         const EvaluateExpressionOptions& options = EvaluateExpressionOptions());
 
     ClangPersistentVariables &
-    GetPersistentVariables()
-    {
-        return m_persistent_variables;
-    }
+    GetPersistentVariables();
 
     //------------------------------------------------------------------
     // Target Stop Hooks
@@ -1267,10 +1212,7 @@ public:
         
         // Set the specifier.  The stop hook will own the specifier, and is responsible for deleting it when we're done.
         void
-        SetSpecifier (SymbolContextSpecifier *specifier)
-        {
-            m_specifier_sp.reset (specifier);
-        }
+        SetSpecifier (SymbolContextSpecifier *specifier);
         
         SymbolContextSpecifier *
         GetSpecifier ()
@@ -1431,13 +1373,13 @@ protected:
     lldb::ProcessSP m_process_sp;
     lldb::SearchFilterSP  m_search_filter_sp;
     PathMappingList m_image_search_paths;
-    std::unique_ptr<ClangASTContext> m_scratch_ast_context_ap;
-    std::unique_ptr<ClangASTSource> m_scratch_ast_source_ap;
-    std::unique_ptr<ClangASTImporter> m_ast_importer_ap;
-    std::unique_ptr<ClangModulesDeclVendor> m_clang_modules_decl_vendor_ap;
-    ClangPersistentVariables m_persistent_variables;      ///< These are the persistent variables associated with this process for the expression parser.
+    lldb::ClangASTContextUP m_scratch_ast_context_ap;
+    lldb::ClangASTSourceUP m_scratch_ast_source_ap;
+    lldb::ClangASTImporterUP m_ast_importer_ap;
+    lldb::ClangModulesDeclVendorUP m_clang_modules_decl_vendor_ap;
+    lldb::ClangPersistentVariablesUP m_persistent_variables;      ///< These are the persistent variables associated with this process for the expression parser.
 
-    std::unique_ptr<SourceManager> m_source_manager_ap;
+    lldb::SourceManagerUP m_source_manager_ap;
 
     typedef std::map<lldb::user_id_t, StopHookSP> StopHookCollection;
     StopHookCollection      m_stop_hooks;

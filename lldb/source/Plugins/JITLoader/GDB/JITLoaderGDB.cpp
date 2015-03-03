@@ -16,10 +16,11 @@
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Symbol/SymbolContext.h"
+#include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
-#include "lldb/Symbol/SymbolVendor.h"
 
 #include "JITLoaderGDB.h"
 

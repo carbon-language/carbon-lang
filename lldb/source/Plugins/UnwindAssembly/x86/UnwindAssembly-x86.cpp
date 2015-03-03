@@ -17,6 +17,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Symbol/UnwindPlan.h"
+#include "lldb/Target/ABI.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"

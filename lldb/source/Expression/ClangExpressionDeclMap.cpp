@@ -22,6 +22,7 @@
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Expression/ASTDumper.h"
 #include "lldb/Expression/ClangASTSource.h"
+#include "lldb/Expression/ClangModulesDeclVendor.h"
 #include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Host/Endian.h"

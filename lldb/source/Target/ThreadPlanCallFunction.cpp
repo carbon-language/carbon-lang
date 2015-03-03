@@ -22,6 +22,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Target/ABI.h"
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"

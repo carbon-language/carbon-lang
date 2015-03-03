@@ -15,6 +15,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "lldb/Symbol/ClangExternalASTSourceCommon.h"
 #include "lldb/Symbol/ClangASTImporter.h"
+#include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Target/Target.h"
 
 #include "llvm/ADT/SmallSet.h"
