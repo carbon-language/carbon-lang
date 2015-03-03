@@ -2063,6 +2063,12 @@ public:
   }
   bool operator!=(const SDNodeIterator& x) const { return !operator==(x); }
 
+  const SDNodeIterator &operator=(const SDNodeIterator &I) {
+    assert(I.Node == Node && "Cannot assign iterators to two different nodes!");
+    Operand = I.Operand;
+    return *this;
+  }
+
   pointer operator*() const {
     return Node->getOperand(Operand).getNode();
   }

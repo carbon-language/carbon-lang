@@ -151,12 +151,14 @@ struct FunctionInfo {
 
 struct CFLAliasAnalysis;
 
-struct FunctionHandle final : public CallbackVH {
+struct FunctionHandle : public CallbackVH {
   FunctionHandle(Function *Fn, CFLAliasAnalysis *CFLAA)
       : CallbackVH(Fn), CFLAA(CFLAA) {
     assert(Fn != nullptr);
     assert(CFLAA != nullptr);
   }
+
+  virtual ~FunctionHandle() {}
 
   void deleted() override { removeSelfFromCache(); }
   void allUsesReplacedWith(Value *) override { removeSelfFromCache(); }

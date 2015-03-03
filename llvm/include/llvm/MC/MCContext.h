@@ -477,7 +477,7 @@ namespace llvm {
 ///                  allocator supports it).
 /// @return The allocated memory. Could be NULL.
 inline void *operator new(size_t Bytes, llvm::MCContext &C,
-                          size_t Alignment = 16) LLVM_NOEXCEPT {
+                          size_t Alignment = 16) throw () {
   return C.Allocate(Bytes, Alignment);
 }
 /// @brief Placement delete companion to the new above.
@@ -487,7 +487,7 @@ inline void *operator new(size_t Bytes, llvm::MCContext &C,
 /// is called implicitly by the compiler if a placement new expression using
 /// the MCContext throws in the object constructor.
 inline void operator delete(void *Ptr, llvm::MCContext &C, size_t)
-              LLVM_NOEXCEPT {
+              throw () {
   C.Deallocate(Ptr);
 }
 
@@ -511,7 +511,7 @@ inline void operator delete(void *Ptr, llvm::MCContext &C, size_t)
 ///                  allocator supports it).
 /// @return The allocated memory. Could be NULL.
 inline void *operator new[](size_t Bytes, llvm::MCContext& C,
-                            size_t Alignment = 16) LLVM_NOEXCEPT {
+                            size_t Alignment = 16) throw () {
   return C.Allocate(Bytes, Alignment);
 }
 
@@ -521,7 +521,7 @@ inline void *operator new[](size_t Bytes, llvm::MCContext& C,
 /// invoking it directly; see the new[] operator for more details. This operator
 /// is called implicitly by the compiler if a placement new[] expression using
 /// the MCContext throws in the object constructor.
-inline void operator delete[](void *Ptr, llvm::MCContext &C) LLVM_NOEXCEPT {
+inline void operator delete[](void *Ptr, llvm::MCContext &C) throw () {
   C.Deallocate(Ptr);
 }
 

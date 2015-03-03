@@ -104,12 +104,6 @@ class CallGraph {
 
 public:
   CallGraph(Module &M);
-  // Copyable for syntax's sake, but rely on RVO such that this is never called.
-  // Should really make this type legitimately movable instead, possibly my
-  // making FunctionMap values and the CallsExternalCode member unique_ptrs,
-  // then adding some internal helper objects that can call
-  // "allReferencesDropped" on those elements before their final destruction.
-  CallGraph(const CallGraph&); 
   ~CallGraph();
 
   void print(raw_ostream &OS) const;

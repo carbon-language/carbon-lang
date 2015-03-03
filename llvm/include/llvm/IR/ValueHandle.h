@@ -51,7 +51,6 @@ protected:
     Tracking,
     Weak
   };
-  ValueHandleBase(const ValueHandleBase&) = default;
 
 private:
   PointerIntPair<ValueHandleBase**, 2, HandleBaseKind> PrevPair;
@@ -59,6 +58,7 @@ private:
 
   Value* V;
 
+  ValueHandleBase(const ValueHandleBase&) = delete;
 public:
   explicit ValueHandleBase(HandleBaseKind Kind)
     : PrevPair(nullptr, Kind), Next(nullptr), V(nullptr) {}
@@ -144,10 +144,6 @@ public:
   WeakVH(Value *P) : ValueHandleBase(Weak, P) {}
   WeakVH(const WeakVH &RHS)
     : ValueHandleBase(Weak, RHS) {}
-  // Questionable - these are stored in a vector in AssumptionCache (perhaps
-  // other copies too) and need to be copied. When copied, how would they
-  // properly insert into the use list?
-  WeakVH&operator=(const WeakVH &RHS) = default;
 
   Value *operator=(Value *RHS) {
     return ValueHandleBase::operator=(RHS);
@@ -349,8 +345,7 @@ protected:
   CallbackVH(const CallbackVH &RHS)
     : ValueHandleBase(Callback, RHS) {}
 
-  virtual ~CallbackVH() = default;
-  CallbackVH &operator=(const CallbackVH &) = default;
+  virtual ~CallbackVH() {}
 
   void setValPtr(Value *P) {
     ValueHandleBase::operator=(P);

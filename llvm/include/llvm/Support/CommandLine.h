@@ -352,13 +352,9 @@ struct cat {
 
 // Support value comparison outside the template.
 struct GenericOptionValue {
-  virtual ~GenericOptionValue() = default;
+  virtual ~GenericOptionValue() {}
   virtual bool compare(const GenericOptionValue &V) const = 0;
 
-protected:
-  GenericOptionValue() = default;
-  GenericOptionValue(const GenericOptionValue&) = default;
-  GenericOptionValue &operator=(const GenericOptionValue &) = default;
 private:
   virtual void anchor();
 };
@@ -390,9 +386,6 @@ struct OptionValueBase : public GenericOptionValue {
 template <class DataType> class OptionValueCopy : public GenericOptionValue {
   DataType Value;
   bool Valid;
-protected:
-  OptionValueCopy(const OptionValueCopy&) = default;
-  OptionValueCopy &operator=(const OptionValueCopy&) = default;
 
 public:
   OptionValueCopy() : Valid(false) {}
@@ -424,10 +417,6 @@ public:
 template <class DataType>
 struct OptionValueBase<DataType, false> : OptionValueCopy<DataType> {
   typedef DataType WrapperType;
-protected:
-  OptionValueBase() = default;
-  OptionValueBase(const OptionValueBase&) = default;
-  OptionValueBase &operator=(const OptionValueBase&) = default;
 };
 
 // Top-level option class.
@@ -732,8 +721,6 @@ public:
   virtual void anchor();
 
 protected:
-  basic_parser_impl(const basic_parser_impl&) = default;
-
   // A helper for basic_parser::printOptionDiff.
   void printOptionName(const Option &O, size_t GlobalWidth) const;
 };
@@ -742,9 +729,6 @@ protected:
 // a typedef for the provided data type.
 //
 template <class DataType> class basic_parser : public basic_parser_impl {
-protected:
-  // Workaround PR22763
-  basic_parser(const basic_parser& RHS) : basic_parser_impl(RHS) {}
 public:
   basic_parser(Option &O) : basic_parser_impl(O) {}
   typedef DataType parser_data_type;
@@ -754,7 +738,7 @@ public:
 //--------------------------------------------------
 // parser<bool>
 //
-template <> class parser<bool> final : public basic_parser<bool> {
+template <> class parser<bool> : public basic_parser<bool> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -781,7 +765,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<bool>);
 
 //--------------------------------------------------
 // parser<boolOrDefault>
-template <> class parser<boolOrDefault> final : public basic_parser<boolOrDefault> {
+template <> class parser<boolOrDefault> : public basic_parser<boolOrDefault> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -807,7 +791,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<boolOrDefault>);
 //--------------------------------------------------
 // parser<int>
 //
-template <> class parser<int> final : public basic_parser<int> {
+template <> class parser<int> : public basic_parser<int> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -829,7 +813,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<int>);
 //--------------------------------------------------
 // parser<unsigned>
 //
-template <> class parser<unsigned> final : public basic_parser<unsigned> {
+template <> class parser<unsigned> : public basic_parser<unsigned> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -852,7 +836,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<unsigned>);
 // parser<unsigned long long>
 //
 template <>
-class parser<unsigned long long> final : public basic_parser<unsigned long long> {
+class parser<unsigned long long> : public basic_parser<unsigned long long> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -875,7 +859,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<unsigned long long>);
 //--------------------------------------------------
 // parser<double>
 //
-template <> class parser<double> final : public basic_parser<double> {
+template <> class parser<double> : public basic_parser<double> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -897,7 +881,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<double>);
 //--------------------------------------------------
 // parser<float>
 //
-template <> class parser<float> final : public basic_parser<float> {
+template <> class parser<float> : public basic_parser<float> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -919,7 +903,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<float>);
 //--------------------------------------------------
 // parser<std::string>
 //
-template <> class parser<std::string> final : public basic_parser<std::string> {
+template <> class parser<std::string> : public basic_parser<std::string> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -944,7 +928,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<std::string>);
 //--------------------------------------------------
 // parser<char>
 //
-template <> class parser<char> final : public basic_parser<char> {
+template <> class parser<char> : public basic_parser<char> {
 public:
   parser(Option &O) : basic_parser(O) {}
 

@@ -62,9 +62,13 @@ namespace llvm {
     APSInt APSIntVal;
     APFloat APFloatVal;
     Constant *ConstantVal;
-    std::unique_ptr<Constant*[]> ConstantStructElts;
+    Constant **ConstantStructElts;
 
     ValID() : Kind(t_LocalID), APFloatVal(0.0) {}
+    ~ValID() {
+      if (Kind == t_ConstantStruct || Kind == t_PackedConstantStruct)
+        delete [] ConstantStructElts;
+    }
 
     bool operator<(const ValID &RHS) const {
       if (Kind == t_LocalID || Kind == t_GlobalID)

@@ -146,8 +146,6 @@ public:
     return tmp;
   }
 
-  RNSuccIterator(const RNSuccIterator&) = default;
-
   inline const Self &operator=(const Self &I) {
     if (this != &I) {
       assert(getNode()->getParent() == I.getNode()->getParent()
@@ -242,8 +240,6 @@ public:
     ++*this;
     return tmp;
   }
-
-  RNSuccIterator(const RNSuccIterator&) = default;
 
   inline const Self &operator=(const Self &I) {
     if (this != &I) {

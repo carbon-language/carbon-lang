@@ -40,8 +40,6 @@ namespace llvm {
   public:
     LogBuilder(Consumer &c, StringRef Format)
       : consumer(c), Format(Format) {}
-    // Relying on RVO, not actually copyable.
-    LogBuilder(const LogBuilder&);
 
     LogBuilder &operator<<(Value *V) {
       Arguments.push_back(V);

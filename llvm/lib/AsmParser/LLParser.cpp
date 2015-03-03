@@ -2365,9 +2365,9 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
         ParseToken(lltok::rbrace, "expected end of struct constant"))
       return true;
 
-    ID.ConstantStructElts.reset(new Constant*[Elts.size()]);
+    ID.ConstantStructElts = new Constant*[Elts.size()];
     ID.UIntVal = Elts.size();
-    memcpy(ID.ConstantStructElts.get(), Elts.data(), Elts.size()*sizeof(Elts[0]));
+    memcpy(ID.ConstantStructElts, Elts.data(), Elts.size()*sizeof(Elts[0]));
     ID.Kind = ValID::t_ConstantStruct;
     return false;
   }
@@ -2386,8 +2386,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
       return true;
 
     if (isPackedStruct) {
-      ID.ConstantStructElts.reset(new Constant*[Elts.size()]);
-      memcpy(ID.ConstantStructElts.get(), Elts.data(), Elts.size()*sizeof(Elts[0]));
+      ID.ConstantStructElts = new Constant*[Elts.size()];
+      memcpy(ID.ConstantStructElts, Elts.data(), Elts.size()*sizeof(Elts[0]));
       ID.UIntVal = Elts.size();
       ID.Kind = ValID::t_PackedConstantStruct;
       return false;
@@ -2512,12 +2512,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
 
     if (!F) {
       // Make a global variable as a placeholder for this reference.
-      GlobalValue *&FwdRef =
-          ForwardRefBlockAddresses.insert(std::make_pair(
-                                              std::move(Fn),
-                                              std::map<ValID, GlobalValue *>()))
-              .first->second.insert(std::make_pair(std::move(Label), nullptr))
-              .first->second;
+      GlobalValue *&FwdRef = ForwardRefBlockAddresses[Fn][Label];
       if (!FwdRef)
         FwdRef = new GlobalVariable(*M, Type::getInt8Ty(Context), false,
                                     GlobalValue::InternalLinkage, nullptr, "");
@@ -3947,8 +3942,8 @@ bool LLParser::ConvertValIDToValue(Type *Ty, ValID &ID, Value *&V,
           return Error(ID.Loc, "element " + Twine(i) +
                     " of struct initializer doesn't match struct element type");
 
-      V = ConstantStruct::get(
-          ST, makeArrayRef(ID.ConstantStructElts.get(), ID.UIntVal));
+      V = ConstantStruct::get(ST, makeArrayRef(ID.ConstantStructElts,
+                                               ID.UIntVal));
     } else
       return Error(ID.Loc, "constant expression type mismatch");
     return false;

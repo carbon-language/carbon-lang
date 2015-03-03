@@ -104,8 +104,6 @@ public:
       llvm_unreachable("ProcessInterval should never fail for first interval!");
     }
   }
-  // Declare but don't define, rely on RVO to optimize this away.
-  IntervalIterator(const IntervalIterator&);
 
   IntervalIterator(IntervalPartition &IP, bool OwnMemory) : IOwnMem(OwnMemory) {
     OrigContainer = &IP;

@@ -21,9 +21,7 @@ struct Node : ilist_node<Node> {
   int Value;
 
   Node() {}
-  Node(int Value) : Value(Value) {}
-  Node(const Node&) = default;
-  Node(Node &&RHS) : Value(RHS.Value) { RHS.Value = -1; }
+  Node(int _Value) : Value(_Value) {}
   ~Node() { Value = -1; }
 };
 

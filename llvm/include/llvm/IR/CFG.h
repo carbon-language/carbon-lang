@@ -132,13 +132,11 @@ private:
   /// \brief Proxy object to allow write access in operator[]
   class SuccessorProxy {
     Self it;
-    friend class SuccIterator;
-    SuccessorProxy(const SuccessorProxy&) = default;
 
   public:
     explicit SuccessorProxy(const Self &it) : it(it) {}
 
-    SuccessorProxy &operator=(const SuccessorProxy &r) {
+    SuccessorProxy &operator=(SuccessorProxy r) {
       *this = reference(r);
       return *this;
     }
@@ -166,8 +164,6 @@ public:
       // useful for debugging.
       idx = 0;
   }
-
-  SuccIterator(const SuccIterator&) = default;
 
   inline const Self &operator=(const Self &I) {
     assert(Term == I.Term &&"Cannot assign iterators to two different blocks!");
