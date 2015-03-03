@@ -21,6 +21,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Expression/ClangUserExpression.h"
+#include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/Process.h"

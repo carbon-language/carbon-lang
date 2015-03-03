@@ -32,6 +32,7 @@
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
+#include "lldb/Target/UnixSignals.h"
 
 using namespace lldb;
 using namespace lldb_private;

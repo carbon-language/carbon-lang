@@ -31,6 +31,7 @@
 #include "lldb/Host/StringConvert.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Target/MemoryRegionInfo.h"
 
 // Project includes
 #include "Utility/StringExtractorGDBRemote.h"
