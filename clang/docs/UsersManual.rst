@@ -998,7 +998,9 @@ are listed below.
       greater or equal to the promoted bit-width of the left hand side
       or less than zero, or where the left hand side is negative. For a
       signed left shift, also checks for signed overflow in C, and for
-      unsigned overflow in C++.
+      unsigned overflow in C++. You can use ``-fsanitize=shift-base`` or
+      ``-fsanitize=shift-exponent`` to check only left-hand side or
+      right-hand side of shift operation, respectively.
    -  ``-fsanitize=signed-integer-overflow``: Signed integer overflow,
       including all the checks added by ``-ftrapv``, and checking for
       overflow in signed division (``INT_MIN / -1``).
