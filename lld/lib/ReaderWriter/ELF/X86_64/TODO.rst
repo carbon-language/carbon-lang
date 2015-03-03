@@ -19,7 +19,6 @@ Trivial Relocs
 These are very simple relocation calculations to implement.
 See lib/ReaderWriter/ELF/X86_64/X86_64RelocationHandler.cpp
 
-* R_X86_64_PC16
 * R_X86_64_8
 * R_X86_64_PC8
 * R_X86_64_SIZE32

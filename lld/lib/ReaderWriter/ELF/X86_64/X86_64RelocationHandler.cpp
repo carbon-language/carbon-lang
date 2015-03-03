@@ -48,6 +48,13 @@ static void reloc16(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   // TODO: Check for overflow.
 }
 
+/// \brief R_X86_64_PC16 - word16: S + A - P
+static void relocPC16(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
+  uint16_t result = (uint16_t)((S + A) - P);
+  write16le(location, result | read16le(location));
+  // TODO: Check for overflow.
+}
+
 /// \brief R_X86_64_PC64 - word64: S + A - P
 static void relocPC64(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   int64_t result = (uint64_t)((S + A) - P);
@@ -83,6 +90,9 @@ std::error_code X86_64TargetRelocationHandler::applyRelocation(
     break;
   case R_X86_64_16:
     reloc16(location, relocVAddress, targetVAddress, ref.addend());
+    break;
+  case R_X86_64_PC16:
+    relocPC16(location, relocVAddress, targetVAddress, ref.addend());
     break;
   case R_X86_64_TPOFF64:
   case R_X86_64_DTPOFF32:
