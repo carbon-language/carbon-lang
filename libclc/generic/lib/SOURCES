@@ -28,6 +28,7 @@ cl_khr_local_int32_extended_atomics/atom_or.cl
 cl_khr_local_int32_extended_atomics/atom_xor.cl
 convert.cl
 common/degrees.cl
+common/mix.cl
 common/radians.cl
 common/sign.cl
 common/smoothstep.cl
@@ -71,7 +72,6 @@ math/hypot.cl
 math/log10.cl
 math/log1p.cl
 math/mad.cl
-math/mix.cl
 math/tables.cl
 math/clc_nextafter.cl
 math/nextafter.cl

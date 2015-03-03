@@ -55,7 +55,6 @@
 #include <clc/math/log1p.h>
 #include <clc/math/log2.h>
 #include <clc/math/mad.h>
-#include <clc/math/mix.h>
 #include <clc/math/nextafter.h>
 #include <clc/math/pow.h>
 #include <clc/math/pown.h>
@@ -110,6 +109,7 @@
 /* 6.11.4 Common Functions */
 #include <clc/common/degrees.h>
 #include <clc/common/radians.h>
+#include <clc/common/mix.h>
 #include <clc/common/sign.h>
 #include <clc/common/smoothstep.h>
 #include <clc/common/step.h>
