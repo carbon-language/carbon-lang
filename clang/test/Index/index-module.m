@@ -49,6 +49,11 @@ int glob;
 // CHECK-TMOD-NEXT: [indexDeclaration]: kind: objc-class-method | name: alloc | {{.*}} | loc: [[TMOD_MODULE_H]]:17:1
 // CHECK-TMOD-NEXT: [importedASTFile]: [[PCM:.*\.cache/Module\.pcm]] | loc: [[TMOD_MODULE_H]]:23:2 | name: "Module.Sub" | isImplicit: 1
 // CHECK-TMOD-NEXT: [importedASTFile]: [[PCM]] | loc: [[TMOD_MODULE_H]]:24:2 | name: "Module.Buried.Treasure" | isImplicit: 1
+// CHECK-TMOD-NEXT: [indexDeclaration]: kind: typedef | name: FILE | {{.*}} | loc: [[TMOD_MODULE_H]]:30:3
+// CHECK-TMOD-NEXT: [indexDeclaration]: kind: struct | name: __sFILE | {{.*}} | loc: [[TMOD_MODULE_H]]:28:16
+// CHECK-TMOD-NEXT: [indexDeclaration]: kind: field | name: _offset | {{.*}} | loc: [[TMOD_MODULE_H]]:29:7
+// CHECK-TMOD-NEXT: [indexDeclaration]: kind: variable | name: myFile | {{.*}} | loc: [[TMOD_MODULE_H]]:32:14
+// CHECK-TMOD-NEXT: [indexEntityReference]: kind: typedef | name: FILE | {{.*}} | loc: [[TMOD_MODULE_H]]:32:8
 // CHECK-TMOD-NEXT: [importedASTFile]: [[PCM]] | loc: [[TMODHDR]]Sub.h:1:2 | name: "Module.Sub2" | isImplicit: 1
 // CHECK-TMOD-NEXT: [indexDeclaration]: kind: variable | name: Module_Sub | {{.*}} | loc: [[TMODHDR]]Sub.h:2:6
 // CHECK-TMOD-NEXT: [indexDeclaration]: kind: variable | name: Module_Sub2 | USR: c:@Module_Sub2 | {{.*}} | loc: [[TMODHDR]]Sub2.h:1:6

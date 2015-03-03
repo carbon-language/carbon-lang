@@ -25,4 +25,10 @@ const char *getModuleVersion(void);
 
 __asm("foo");
 
+typedef	struct __sFILE {
+  int _offset;
+} FILE;
+
+extern FILE *myFile;
+
 #endif // MODULE_H
