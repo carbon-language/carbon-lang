@@ -258,8 +258,6 @@ CodeGenRegister::computeSubRegs(CodeGenRegBank &RegBank) {
 
     // Look at the possible compositions of Idx.
     // They may not all be supported by SR.
-    // NOTE: Iteration order does not matter here because the EnumValue's
-    // of subreg indices are unique.
     for (CodeGenSubRegIndex::CompMap::const_iterator I = Comps.begin(),
            E = Comps.end(); I != E; ++I) {
       SubRegMap::const_iterator SRI = Map.find(I->first);
