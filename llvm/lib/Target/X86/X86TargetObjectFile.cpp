@@ -62,16 +62,15 @@ const MCExpr *X86_64MachoTargetObjectFile::getIndirectSymViaGOTPCRel(
   return MCBinaryExpr::CreateAdd(Res, Off, getContext());
 }
 
+const MCExpr *X86ELFTargetObjectFile::getDebugThreadLocalSymbol(
+    const MCSymbol *Sym) const {
+  return MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_DTPOFF, getContext());
+}
+
 void
 X86LinuxTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM) {
   TargetLoweringObjectFileELF::Initialize(Ctx, TM);
   InitializeELF(TM.Options.UseInitArray);
-}
-
-const MCExpr *
-X86LinuxTargetObjectFile::getDebugThreadLocalSymbol(
-    const MCSymbol *Sym) const {
-  return MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_DTPOFF, getContext());
 }
 
 const MCExpr *X86WindowsTargetObjectFile::getExecutableRelativeSymbol(

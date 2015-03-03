@@ -38,13 +38,17 @@ namespace llvm {
                                 int64_t Offset) const override;
   };
 
-  /// X86LinuxTargetObjectFile - This implementation is used for linux x86
-  /// and x86-64.
-  class X86LinuxTargetObjectFile : public TargetLoweringObjectFileELF {
-    void Initialize(MCContext &Ctx, const TargetMachine &TM) override;
-
+  /// \brief This implemenatation is used for X86 ELF targets that don't
+  /// have a further specialization.
+  class X86ELFTargetObjectFile : public TargetLoweringObjectFileELF {
     /// \brief Describe a TLS variable address within debug info.
     const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const override;
+  };
+
+  /// X86LinuxTargetObjectFile - This implementation is used for linux x86
+  /// and x86-64.
+  class X86LinuxTargetObjectFile : public X86ELFTargetObjectFile {
+    void Initialize(MCContext &Ctx, const TargetMachine &TM) override;
   };
 
   /// \brief This implementation is used for Windows targets on x86 and x86-64.
