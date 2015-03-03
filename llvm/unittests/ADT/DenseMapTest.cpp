@@ -46,6 +46,7 @@ public:
   CtorTester(const CtorTester &Arg) : Value(Arg.Value) {
     EXPECT_TRUE(Constructed.insert(this).second);
   }
+  CtorTester &operator=(const CtorTester &) = default;
   ~CtorTester() {
     EXPECT_EQ(1u, Constructed.erase(this));
   }

@@ -441,6 +441,8 @@ struct MatchableInfo {
     : AsmVariantID(0), AsmString(Alias->AsmString), TheDef(Alias->TheDef), DefRec(Alias.release()) {
   }
 
+  MatchableInfo(const MatchableInfo&) = default;
+
   ~MatchableInfo() {
     delete DefRec.dyn_cast<const CodeGenInstAlias*>();
   }

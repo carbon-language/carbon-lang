@@ -743,7 +743,6 @@ void LiveRange::flushSegmentSet() {
       segments.empty() &&
       "segment set can be used only initially before switching to the array");
   segments.append(segmentSet->begin(), segmentSet->end());
-  delete segmentSet;
   segmentSet = nullptr;
   verify();
 }
