@@ -485,18 +485,6 @@ struct OperandSpecifier {
   uint8_t type;
 };
 
-// Indicates where the opcode modifier (if any) is to be found.  Extended
-// opcodes with AddRegFrm have the opcode modifier in the ModR/M byte.
-#define MODIFIER_TYPES        \
-  ENUM_ENTRY(MODIFIER_NONE)
-
-#define ENUM_ENTRY(n) n,
-enum ModifierType {
-  MODIFIER_TYPES
-  MODIFIER_max
-};
-#undef ENUM_ENTRY
-
 static const unsigned X86_MAX_OPERANDS = 6;
 
 /// Decoding mode for the Intel disassembler.  16-bit, 32-bit, and 64-bit mode
