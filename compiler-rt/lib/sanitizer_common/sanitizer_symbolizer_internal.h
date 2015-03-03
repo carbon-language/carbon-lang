@@ -46,8 +46,9 @@ class SymbolizerTool {
 
   virtual void Flush() {}
 
+  // Return nullptr to fallback to the default __cxxabiv1 demangler.
   virtual const char *Demangle(const char *name) {
-    return name;
+    return nullptr;
   }
 };
 
