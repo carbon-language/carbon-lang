@@ -192,11 +192,6 @@ public:
     }
     bool operator!=(const iterator& x) const { return !operator==(x); }
 
-    const iterator &operator=(const iterator &I) {
-      CurNode = I.CurNode;
-      return *this;
-    }
-
     value_type &operator*() const {
       assert(CurNode && "Dereferencing AliasSet.end()!");
       return *CurNode;
