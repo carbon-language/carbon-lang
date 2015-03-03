@@ -185,8 +185,8 @@ eh.resume:                                        ; preds = %lpad
 }
 
 ; The following catch handler should be outlined.
-; CHECK: define i8* @"\01?test@@YAXXZ.catch"(i8*, i8*) {
-; CHECK: catch.entry:
+; CHECK: define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*) {
+; CHECK: entry:
 ; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1)
 ; CHECK:   %eh.data = bitcast i8* %eh.alloc to %"struct.\01?test@@YAXXZ.ehdata"*
 ; CHECK:   %eh.obj.ptr = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 1
@@ -210,13 +210,13 @@ eh.resume:                                        ; preds = %lpad
 ; CHECK:   %cmp1 = icmp eq i32 %tmp8, %i.019.reload
 ; CHECK:   br i1 %cmp1, label %if.then, label %if.else
 ;
-; CHECK: if.then:                                          ; preds = %catch.entry
+; CHECK: if.then:                                          ; preds = %entry
 ; CHECK:   %tmp9 = load i32, i32* %b.reload, align 4, !tbaa !8
 ; CHECK:   %add2 = add nsw i32 %tmp9, %i.019.reload
 ; CHECK:   store i32 %add2, i32* %b.reload, align 4, !tbaa !8
 ; CHECK:   br label %if.end
 ;
-; CHECK: if.else:                                          ; preds = %catch.entry
+; CHECK: if.else:                                          ; preds = %entry
 ; CHECK:   %tmp10 = load i32, i32* %a.reload, align 8, !tbaa !2
 ; CHECK:   %add4 = add nsw i32 %tmp10, %tmp8
 ; CHECK:   store i32 %add4, i32* %a.reload, align 8, !tbaa !2

@@ -51,6 +51,8 @@ typedef MapVector<Value *, HandlerAllocas> FrameVarInfoMap;
 class WinEHPrepare : public FunctionPass {
   std::unique_ptr<FunctionPass> DwarfPrepare;
 
+  enum HandlerType { Catch, Cleanup };
+
 public:
   static char ID; // Pass identification, replacement for typeid.
   WinEHPrepare(const TargetMachine *TM = nullptr)
@@ -69,9 +71,10 @@ public:
 private:
   bool prepareCPPEHHandlers(Function &F,
                             SmallVectorImpl<LandingPadInst *> &LPads);
-  bool outlineCatchHandler(Function *SrcFn, Constant *SelectorType,
-                           LandingPadInst *LPad, CallInst *&EHAlloc,
-                           AllocaInst *&EHObjPtr, FrameVarInfoMap &VarInfo);
+  bool outlineHandler(HandlerType CatchOrCleanup, Function *SrcFn,
+                      Constant *SelectorType, LandingPadInst *LPad,
+                      CallInst *&EHAlloc, AllocaInst *&EHObjPtr,
+                      FrameVarInfoMap &VarInfo);
 };
 
 class WinEHFrameVariableMaterializer : public ValueMaterializer {
@@ -87,12 +90,11 @@ private:
   IRBuilder<> Builder;
 };
 
-class WinEHCatchDirector : public CloningDirector {
+class WinEHCloningDirectorBase : public CloningDirector {
 public:
-  WinEHCatchDirector(LandingPadInst *LPI, Function *CatchFn, Value *Selector,
-                     Value *EHObj, FrameVarInfoMap &VarInfo)
-      : LPI(LPI), CurrentSelector(Selector->stripPointerCasts()), EHObj(EHObj),
-        Materializer(CatchFn, VarInfo),
+  WinEHCloningDirectorBase(LandingPadInst *LPI, Function *HandlerFn,
+                           FrameVarInfoMap &VarInfo)
+      : LPI(LPI), Materializer(HandlerFn, VarInfo),
         SelectorIDType(Type::getInt32Ty(LPI->getContext())),
         Int8PtrType(Type::getInt8PtrTy(LPI->getContext())) {}
 
@@ -100,12 +102,23 @@ public:
                                   const Instruction *Inst,
                                   BasicBlock *NewBB) override;
 
+  virtual CloningAction handleBeginCatch(ValueToValueMapTy &VMap,
+                                         const Instruction *Inst,
+                                         BasicBlock *NewBB) = 0;
+  virtual CloningAction handleEndCatch(ValueToValueMapTy &VMap,
+                                       const Instruction *Inst,
+                                       BasicBlock *NewBB) = 0;
+  virtual CloningAction handleTypeIdFor(ValueToValueMapTy &VMap,
+                                        const Instruction *Inst,
+                                        BasicBlock *NewBB) = 0;
+  virtual CloningAction handleResume(ValueToValueMapTy &VMap,
+                                     const ResumeInst *Resume,
+                                     BasicBlock *NewBB) = 0;
+
   ValueMaterializer *getValueMaterializer() override { return &Materializer; }
 
-private:
+protected:
   LandingPadInst *LPI;
-  Value *CurrentSelector;
-  Value *EHObj;
   WinEHFrameVariableMaterializer Materializer;
   Type *SelectorIDType;
   Type *Int8PtrType;
@@ -115,6 +128,48 @@ private:
   const Value *EHPtrStoreAddr;
   const Value *SelectorStoreAddr;
 };
+
+class WinEHCatchDirector : public WinEHCloningDirectorBase {
+public:
+  WinEHCatchDirector(LandingPadInst *LPI, Function *CatchFn, Value *Selector,
+                     Value *EHObj, FrameVarInfoMap &VarInfo)
+      : WinEHCloningDirectorBase(LPI, CatchFn, VarInfo), EHObj(EHObj),
+        CurrentSelector(Selector->stripPointerCasts()) {}
+
+  CloningAction handleBeginCatch(ValueToValueMapTy &VMap,
+                                 const Instruction *Inst,
+                                 BasicBlock *NewBB) override;
+  CloningAction handleEndCatch(ValueToValueMapTy &VMap, const Instruction *Inst,
+                               BasicBlock *NewBB) override;
+  CloningAction handleTypeIdFor(ValueToValueMapTy &VMap,
+                                const Instruction *Inst,
+                                BasicBlock *NewBB) override;
+  CloningAction handleResume(ValueToValueMapTy &VMap, const ResumeInst *Resume,
+                             BasicBlock *NewBB) override;
+
+private:
+  Value *CurrentSelector;
+  Value *EHObj;
+};
+
+class WinEHCleanupDirector : public WinEHCloningDirectorBase {
+public:
+  WinEHCleanupDirector(LandingPadInst *LPI, Function *CleanupFn,
+                       FrameVarInfoMap &VarInfo)
+      : WinEHCloningDirectorBase(LPI, CleanupFn, VarInfo) {}
+
+  CloningAction handleBeginCatch(ValueToValueMapTy &VMap,
+                                 const Instruction *Inst,
+                                 BasicBlock *NewBB) override;
+  CloningAction handleEndCatch(ValueToValueMapTy &VMap, const Instruction *Inst,
+                               BasicBlock *NewBB) override;
+  CloningAction handleTypeIdFor(ValueToValueMapTy &VMap,
+                                const Instruction *Inst,
+                                BasicBlock *NewBB) override;
+  CloningAction handleResume(ValueToValueMapTy &VMap, const ResumeInst *Resume,
+                             BasicBlock *NewBB) override;
+};
+
 } // end anonymous namespace
 
 char WinEHPrepare::ID = 0;
@@ -213,8 +268,8 @@ bool WinEHPrepare::prepareCPPEHHandlers(
         // HandlerData vector.
         CallInst *EHAlloc = nullptr;
         AllocaInst *EHObjPtr = nullptr;
-        bool Outlined = outlineCatchHandler(&F, LPad->getClause(Idx), LPad,
-                                            EHAlloc, EHObjPtr, FrameVarInfo);
+        bool Outlined = outlineHandler(Catch, &F, LPad->getClause(Idx), LPad,
+                                       EHAlloc, EHObjPtr, FrameVarInfo);
         if (Outlined) {
           HandlersOutlined = true;
           // These values must be resolved after all handlers have been
@@ -226,7 +281,26 @@ bool WinEHPrepare::prepareCPPEHHandlers(
         }
       } // End if (isCatch)
     }   // End for each clause
-  }     // End for each landingpad
+
+    // FIXME: This only handles the simple case where there is a 1:1
+    //        correspondence between landing pad and cleanup blocks.
+    //        It does not handle cases where there are catch blocks between
+    //        cleanup blocks or the case where a cleanup block is shared by
+    //        multiple landing pads.  Those cases will be supported later
+    //        when landing pad block analysis is added.
+    if (LPad->isCleanup()) {
+      CallInst *EHAlloc = nullptr;
+      AllocaInst *IgnoreEHObjPtr = nullptr;
+      bool Outlined = outlineHandler(Cleanup, &F, nullptr, LPad, EHAlloc,
+                                     IgnoreEHObjPtr, FrameVarInfo);
+      if (Outlined) {
+        HandlersOutlined = true;
+        // This value must be resolved after all handlers have been outlined.
+        if (EHAlloc)
+          HandlerAllocs.push_back(EHAlloc);
+      }
+    }
+  } // End for each landingpad
 
   // If nothing got outlined, there is no more processing to be done.
   if (!HandlersOutlined)
@@ -414,10 +488,10 @@ bool WinEHPrepare::prepareCPPEHHandlers(
   return HandlersOutlined;
 }
 
-bool WinEHPrepare::outlineCatchHandler(Function *SrcFn, Constant *SelectorType,
-                                       LandingPadInst *LPad, CallInst *&EHAlloc,
-                                       AllocaInst *&EHObjPtr,
-                                       FrameVarInfoMap &VarInfo) {
+bool WinEHPrepare::outlineHandler(HandlerType CatchOrCleanup, Function *SrcFn,
+                                  Constant *SelectorType, LandingPadInst *LPad,
+                                  CallInst *&EHAlloc, AllocaInst *&EHObjPtr,
+                                  FrameVarInfoMap &VarInfo) {
   Module *M = SrcFn->getParent();
   LLVMContext &Context = M->getContext();
 
@@ -426,14 +500,22 @@ bool WinEHPrepare::outlineCatchHandler(Function *SrcFn, Constant *SelectorType,
   std::vector<Type *> ArgTys;
   ArgTys.push_back(Int8PtrType);
   ArgTys.push_back(Int8PtrType);
-  FunctionType *FnType = FunctionType::get(Int8PtrType, ArgTys, false);
-  Function *CatchHandler = Function::Create(
-      FnType, GlobalVariable::ExternalLinkage, SrcFn->getName() + ".catch", M);
+  Function *Handler;
+  if (CatchOrCleanup == Catch) {
+    FunctionType *FnType = FunctionType::get(Int8PtrType, ArgTys, false);
+    Handler = Function::Create(FnType, GlobalVariable::InternalLinkage,
+                               SrcFn->getName() + ".catch", M);
+  } else {
+    FunctionType *FnType =
+        FunctionType::get(Type::getVoidTy(Context), ArgTys, false);
+    Handler = Function::Create(FnType, GlobalVariable::InternalLinkage,
+                               SrcFn->getName() + ".cleanup", M);
+  }
 
   // Generate a standard prolog to setup the frame recovery structure.
   IRBuilder<> Builder(Context);
-  BasicBlock *Entry = BasicBlock::Create(Context, "catch.entry");
-  CatchHandler->getBasicBlockList().push_front(Entry);
+  BasicBlock *Entry = BasicBlock::Create(Context, "entry");
+  Handler->getBasicBlockList().push_front(Entry);
   Builder.SetInsertPoint(Entry);
   Builder.SetCurrentDebugLocation(LPad->getDebugLoc());
 
@@ -451,36 +533,43 @@ bool WinEHPrepare::outlineCatchHandler(Function *SrcFn, Constant *SelectorType,
   Function *RecoverFrameFn =
       Intrinsic::getDeclaration(M, Intrinsic::framerecover);
   Value *RecoverArgs[] = {Builder.CreateBitCast(SrcFn, Int8PtrType, ""),
-                          &(CatchHandler->getArgumentList().back())};
+                          &(Handler->getArgumentList().back())};
   EHAlloc = Builder.CreateCall(RecoverFrameFn, RecoverArgs, "eh.alloc");
 
-  // This alloca is only temporary.  We'll be replacing it once we know all the
-  // frame variables that need to go in the frame allocation structure.
-  EHObjPtr = Builder.CreateAlloca(Int8PtrType, 0, "eh.obj.ptr");
+  std::unique_ptr<WinEHCloningDirectorBase> Director;
 
-  // This will give us a raw pointer to the exception object, which
-  // corresponds to the formal parameter of the catch statement.  If the
-  // handler uses this object, we will generate code during the outlining
-  // process to cast the pointer to the appropriate type and deference it
-  // as necessary.  The un-outlined landing pad code represents the
-  // exception object as the result of the llvm.eh.begincatch call.
-  Value *EHObj = Builder.CreateLoad(EHObjPtr, false, "eh.obj");
+  if (CatchOrCleanup == Catch) {
+    // This alloca is only temporary.  We'll be replacing it once we know all
+    // the frame variables that need to go in the frame allocation structure.
+    EHObjPtr = Builder.CreateAlloca(Int8PtrType, 0, "eh.obj.ptr");
+
+    // This will give us a raw pointer to the exception object, which
+    // corresponds to the formal parameter of the catch statement.  If the
+    // handler uses this object, we will generate code during the outlining
+    // process to cast the pointer to the appropriate type and deference it
+    // as necessary.  The un-outlined landing pad code represents the
+    // exception object as the result of the llvm.eh.begincatch call.
+    Value *EHObj = Builder.CreateLoad(EHObjPtr, false, "eh.obj");
+
+    Director.reset(
+        new WinEHCatchDirector(LPad, Handler, SelectorType, EHObj, VarInfo));
+  } else {
+    Director.reset(new WinEHCleanupDirector(LPad, Handler, VarInfo));
+  }
 
   ValueToValueMapTy VMap;
 
   // FIXME: Map other values referenced in the filter handler.
-
-  WinEHCatchDirector Director(LPad, CatchHandler, SelectorType, EHObj, VarInfo);
 
   SmallVector<ReturnInst *, 8> Returns;
   ClonedCodeInfo InlinedFunctionInfo;
 
   BasicBlock::iterator II = LPad;
 
-  CloneAndPruneIntoFromInst(CatchHandler, SrcFn, ++II, VMap,
-                            /*ModuleLevelChanges=*/false, Returns, "",
-                            &InlinedFunctionInfo,
-                            SrcFn->getParent()->getDataLayout(), &Director);
+  CloneAndPruneIntoFromInst(
+      Handler, SrcFn, ++II, VMap,
+      /*ModuleLevelChanges=*/false, Returns, "", &InlinedFunctionInfo,
+      SrcFn->getParent()->getDataLayout(), Director.get());
 
   // Move all the instructions in the first cloned block into our entry block.
   BasicBlock *FirstClonedBB = std::next(Function::iterator(Entry));
@@ -490,7 +579,7 @@ bool WinEHPrepare::outlineCatchHandler(Function *SrcFn, Constant *SelectorType,
   return true;
 }
 
-CloningDirector::CloningAction WinEHCatchDirector::handleInstruction(
+CloningDirector::CloningAction WinEHCloningDirectorBase::handleInstruction(
     ValueToValueMapTy &VMap, const Instruction *Inst, BasicBlock *NewBB) {
   // Intercept instructions which extract values from the landing pad aggregate.
   if (auto *Extract = dyn_cast<ExtractValueInst>(Inst)) {
@@ -560,65 +649,130 @@ CloningDirector::CloningAction WinEHCatchDirector::handleInstruction(
     return CloningDirector::CloneInstruction;
   }
 
-  if (match(Inst, m_Intrinsic<Intrinsic::eh_begincatch>())) {
-    // The argument to the call is some form of the first element of the
-    // landingpad aggregate value, but that doesn't matter.  It isn't used
-    // here.
-    // The return value of this instruction, however, is used to access the
-    // EH object pointer.  We have generated an instruction to get that value
-    // from the EH alloc block, so we can just map to that here.
-    VMap[Inst] = EHObj;
-    return CloningDirector::SkipInstruction;
-  }
-  if (match(Inst, m_Intrinsic<Intrinsic::eh_endcatch>())) {
-    auto *IntrinCall = dyn_cast<IntrinsicInst>(Inst);
-    // It might be interesting to track whether or not we are inside a catch
-    // function, but that might make the algorithm more brittle than it needs
-    // to be.
+  if (auto *Resume = dyn_cast<ResumeInst>(Inst))
+    return handleResume(VMap, Resume, NewBB);
 
-    // The end catch call can occur in one of two places: either in a
-    // landingpad
-    // block that is part of the catch handlers exception mechanism, or at the
-    // end of the catch block.  If it occurs in a landing pad, we must skip it
-    // and continue so that the landing pad gets cloned.
-    // FIXME: This case isn't fully supported yet and shouldn't turn up in any
-    //        of the test cases until it is.
-    if (IntrinCall->getParent()->isLandingPad())
-      return CloningDirector::SkipInstruction;
-
-    // If an end catch occurs anywhere else the next instruction should be an
-    // unconditional branch instruction that we want to replace with a return
-    // to the the address of the branch target.
-    const BasicBlock *EndCatchBB = IntrinCall->getParent();
-    const TerminatorInst *Terminator = EndCatchBB->getTerminator();
-    const BranchInst *Branch = dyn_cast<BranchInst>(Terminator);
-    assert(Branch && Branch->isUnconditional());
-    assert(std::next(BasicBlock::const_iterator(IntrinCall)) ==
-           BasicBlock::const_iterator(Branch));
-
-    ReturnInst::Create(NewBB->getContext(),
-                       BlockAddress::get(Branch->getSuccessor(0)), NewBB);
-
-    // We just added a terminator to the cloned block.
-    // Tell the caller to stop processing the current basic block so that
-    // the branch instruction will be skipped.
-    return CloningDirector::StopCloningBB;
-  }
-  if (match(Inst, m_Intrinsic<Intrinsic::eh_typeid_for>())) {
-    auto *IntrinCall = dyn_cast<IntrinsicInst>(Inst);
-    Value *Selector = IntrinCall->getArgOperand(0)->stripPointerCasts();
-    // This causes a replacement that will collapse the landing pad CFG based
-    // on the filter function we intend to match.
-    if (Selector == CurrentSelector)
-      VMap[Inst] = ConstantInt::get(SelectorIDType, 1);
-    else
-      VMap[Inst] = ConstantInt::get(SelectorIDType, 0);
-    // Tell the caller not to clone this instruction.
-    return CloningDirector::SkipInstruction;
-  }
+  if (match(Inst, m_Intrinsic<Intrinsic::eh_begincatch>()))
+    return handleBeginCatch(VMap, Inst, NewBB);
+  if (match(Inst, m_Intrinsic<Intrinsic::eh_endcatch>()))
+    return handleEndCatch(VMap, Inst, NewBB);
+  if (match(Inst, m_Intrinsic<Intrinsic::eh_typeid_for>()))
+    return handleTypeIdFor(VMap, Inst, NewBB);
 
   // Continue with the default cloning behavior.
   return CloningDirector::CloneInstruction;
+}
+
+CloningDirector::CloningAction WinEHCatchDirector::handleBeginCatch(
+    ValueToValueMapTy &VMap, const Instruction *Inst, BasicBlock *NewBB) {
+  // The argument to the call is some form of the first element of the
+  // landingpad aggregate value, but that doesn't matter.  It isn't used
+  // here.
+  // The return value of this instruction, however, is used to access the
+  // EH object pointer.  We have generated an instruction to get that value
+  // from the EH alloc block, so we can just map to that here.
+  VMap[Inst] = EHObj;
+  return CloningDirector::SkipInstruction;
+}
+
+CloningDirector::CloningAction
+WinEHCatchDirector::handleEndCatch(ValueToValueMapTy &VMap,
+                                   const Instruction *Inst, BasicBlock *NewBB) {
+  auto *IntrinCall = dyn_cast<IntrinsicInst>(Inst);
+  // It might be interesting to track whether or not we are inside a catch
+  // function, but that might make the algorithm more brittle than it needs
+  // to be.
+
+  // The end catch call can occur in one of two places: either in a
+  // landingpad
+  // block that is part of the catch handlers exception mechanism, or at the
+  // end of the catch block.  If it occurs in a landing pad, we must skip it
+  // and continue so that the landing pad gets cloned.
+  // FIXME: This case isn't fully supported yet and shouldn't turn up in any
+  //        of the test cases until it is.
+  if (IntrinCall->getParent()->isLandingPad())
+    return CloningDirector::SkipInstruction;
+
+  // If an end catch occurs anywhere else the next instruction should be an
+  // unconditional branch instruction that we want to replace with a return
+  // to the the address of the branch target.
+  const BasicBlock *EndCatchBB = IntrinCall->getParent();
+  const TerminatorInst *Terminator = EndCatchBB->getTerminator();
+  const BranchInst *Branch = dyn_cast<BranchInst>(Terminator);
+  assert(Branch && Branch->isUnconditional());
+  assert(std::next(BasicBlock::const_iterator(IntrinCall)) ==
+         BasicBlock::const_iterator(Branch));
+
+  ReturnInst::Create(NewBB->getContext(),
+                     BlockAddress::get(Branch->getSuccessor(0)), NewBB);
+
+  // We just added a terminator to the cloned block.
+  // Tell the caller to stop processing the current basic block so that
+  // the branch instruction will be skipped.
+  return CloningDirector::StopCloningBB;
+}
+
+CloningDirector::CloningAction WinEHCatchDirector::handleTypeIdFor(
+    ValueToValueMapTy &VMap, const Instruction *Inst, BasicBlock *NewBB) {
+  auto *IntrinCall = dyn_cast<IntrinsicInst>(Inst);
+  Value *Selector = IntrinCall->getArgOperand(0)->stripPointerCasts();
+  // This causes a replacement that will collapse the landing pad CFG based
+  // on the filter function we intend to match.
+  if (Selector == CurrentSelector)
+    VMap[Inst] = ConstantInt::get(SelectorIDType, 1);
+  else
+    VMap[Inst] = ConstantInt::get(SelectorIDType, 0);
+  // Tell the caller not to clone this instruction.
+  return CloningDirector::SkipInstruction;
+}
+
+CloningDirector::CloningAction
+WinEHCatchDirector::handleResume(ValueToValueMapTy &VMap,
+                                 const ResumeInst *Resume, BasicBlock *NewBB) {
+  // Resume instructions shouldn't be reachable from catch handlers.
+  // We still need to handle it, but it will be pruned.
+  BasicBlock::InstListType &InstList = NewBB->getInstList();
+  InstList.push_back(new UnreachableInst(NewBB->getContext()));
+  return CloningDirector::StopCloningBB;
+}
+
+CloningDirector::CloningAction WinEHCleanupDirector::handleBeginCatch(
+    ValueToValueMapTy &VMap, const Instruction *Inst, BasicBlock *NewBB) {
+  // Catch blocks within cleanup handlers will always be unreachable.
+  // We'll insert an unreachable instruction now, but it will be pruned
+  // before the cloning process is complete.
+  BasicBlock::InstListType &InstList = NewBB->getInstList();
+  InstList.push_back(new UnreachableInst(NewBB->getContext()));
+  return CloningDirector::StopCloningBB;
+}
+
+CloningDirector::CloningAction WinEHCleanupDirector::handleEndCatch(
+    ValueToValueMapTy &VMap, const Instruction *Inst, BasicBlock *NewBB) {
+  // Catch blocks within cleanup handlers will always be unreachable.
+  // We'll insert an unreachable instruction now, but it will be pruned
+  // before the cloning process is complete.
+  BasicBlock::InstListType &InstList = NewBB->getInstList();
+  InstList.push_back(new UnreachableInst(NewBB->getContext()));
+  return CloningDirector::StopCloningBB;
+}
+
+CloningDirector::CloningAction WinEHCleanupDirector::handleTypeIdFor(
+    ValueToValueMapTy &VMap, const Instruction *Inst, BasicBlock *NewBB) {
+  // This causes a replacement that will collapse the landing pad CFG
+  // to just the cleanup code.
+  VMap[Inst] = ConstantInt::get(SelectorIDType, 0);
+  // Tell the caller not to clone this instruction.
+  return CloningDirector::SkipInstruction;
+}
+
+CloningDirector::CloningAction WinEHCleanupDirector::handleResume(
+    ValueToValueMapTy &VMap, const ResumeInst *Resume, BasicBlock *NewBB) {
+  ReturnInst::Create(NewBB->getContext(), nullptr, NewBB);
+
+  // We just added a terminator to the cloned block.
+  // Tell the caller to stop processing the current basic block so that
+  // the branch instruction will be skipped.
+  return CloningDirector::StopCloningBB;
 }
 
 WinEHFrameVariableMaterializer::WinEHFrameVariableMaterializer(

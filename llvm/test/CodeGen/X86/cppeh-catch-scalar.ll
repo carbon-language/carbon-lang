@@ -83,8 +83,8 @@ eh.resume:                                        ; preds = %catch.dispatch
   resume { i8*, i32 } %lpad.val5
 }
 
-; CHECK-LABEL: define i8* @_Z4testv.catch(i8*, i8*) {
-; CHECK: catch.entry:
+; CHECK: define internal i8* @_Z4testv.catch(i8*, i8*) {
+; CHECK: entry:
 ; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1)
 ; CHECK:   %eh.data = bitcast i8* %eh.alloc to %struct._Z4testv.ehdata*
 ; CHECK:   %eh.obj.ptr = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 1

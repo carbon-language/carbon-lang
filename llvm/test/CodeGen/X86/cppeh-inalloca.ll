@@ -130,8 +130,8 @@ eh.resume:                                        ; preds = %ehcleanup
 }
 
 ; The following catch handler should be outlined.
-; CHECK: define i8* @"\01?test@@YAHUA@@@Z.catch"(i8*, i8*) {
-; CHECK: catch.entry:
+; CHECK: define internal i8* @"\01?test@@YAHUA@@@Z.catch"(i8*, i8*) {
+; CHECK: entry:
 ; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1)
 ; CHECK:   %eh.data = bitcast i8* %eh.alloc to %"struct.\01?test@@YAHUA@@@Z.ehdata"*
 ; CHECK:   %eh.obj.ptr = getelementptr inbounds %"struct.\01?test@@YAHUA@@@Z.ehdata", %"struct.\01?test@@YAHUA@@@Z.ehdata"* %eh.data, i32 0, i32 1
