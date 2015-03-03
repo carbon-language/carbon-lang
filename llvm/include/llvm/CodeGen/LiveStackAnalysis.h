@@ -21,6 +21,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <map>
+#include <unordered_map>
 
 namespace llvm {
 
