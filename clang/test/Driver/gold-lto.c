@@ -22,5 +22,4 @@
 //
 // RUN: %clang -target i686-linux-android -### %t.o -flto 2>&1 \
 // RUN:     | FileCheck %s --check-prefix=CHECK-X86-ANDROID
-// CHECK-X86-ANDROID: "-pie"
 // CHECK-X86-ANDROID: "-plugin" "{{.*}}/LLVMgold.so"

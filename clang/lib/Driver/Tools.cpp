@@ -7576,11 +7576,7 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   const bool IsPIE =
     !Args.hasArg(options::OPT_shared) &&
     !Args.hasArg(options::OPT_static) &&
-    (Args.hasArg(options::OPT_pie) || ToolChain.isPIEDefault() ||
-     // On Android every code is PIC so every executable is PIE
-     // Cannot use isPIEDefault here since otherwise
-     // PIE only logic will be enabled during compilation
-     isAndroid);
+    (Args.hasArg(options::OPT_pie) || ToolChain.isPIEDefault());
 
   ArgStringList CmdArgs;
 
