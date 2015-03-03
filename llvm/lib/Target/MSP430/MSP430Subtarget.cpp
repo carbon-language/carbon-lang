@@ -25,7 +25,8 @@ using namespace llvm;
 
 void MSP430Subtarget::anchor() { }
 
-MSP430Subtarget &MSP430Subtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS) {
+MSP430Subtarget &
+MSP430Subtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS) {
   ParseSubtargetFeatures("generic", FS);
   return *this;
 }
