@@ -3448,6 +3448,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_all);
     Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_readonly_property);
     Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_readwrite_property);
+    Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_property_dot_syntax);
     Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_annotation);
     Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_instancetype);
     Args.AddLastArg(CmdArgs, options::OPT_objcmt_migrate_nsmacros);
