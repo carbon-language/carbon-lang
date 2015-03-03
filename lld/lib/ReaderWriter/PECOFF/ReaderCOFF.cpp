@@ -1049,7 +1049,7 @@ StringRef FileCOFF::ArrayRefToString(ArrayRef<uint8_t> array) {
   }
   if (array.empty())
     return "";
-  StringRef s((char *)array.data(), array.size());
+  StringRef s(reinterpret_cast<const char *>(array.data()), array.size());
   s = s.substr(0, s.find_first_of('\0'));
   std::string *contents = new (_alloc) std::string(s.data(), s.size());
   return StringRef(*contents).trim();
