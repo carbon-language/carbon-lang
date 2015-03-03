@@ -181,8 +181,6 @@ eh.resume:                                        ; preds = %catch.dispatch
 ; CHECK: entry:
 ; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1)
 ; CHECK:   %eh.data = bitcast i8* %eh.alloc to %"struct.\01?test@@YAXXZ.ehdata"*
-; CHECK:   %eh.obj.ptr = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 1
-; CHECK:   %eh.obj = load i8*, i8** %eh.obj.ptr
 ; CHECK:   %e = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 2
 ; CHECK:   %NumExceptions = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
 ; CHECK:   %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4

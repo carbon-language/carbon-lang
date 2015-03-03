@@ -73,8 +73,7 @@ private:
                             SmallVectorImpl<LandingPadInst *> &LPads);
   bool outlineHandler(HandlerType CatchOrCleanup, Function *SrcFn,
                       Constant *SelectorType, LandingPadInst *LPad,
-                      CallInst *&EHAlloc, AllocaInst *&EHObjPtr,
-                      FrameVarInfoMap &VarInfo);
+                      CallInst *&EHAlloc, FrameVarInfoMap &VarInfo);
 };
 
 class WinEHFrameVariableMaterializer : public ValueMaterializer {
@@ -132,9 +131,9 @@ protected:
 class WinEHCatchDirector : public WinEHCloningDirectorBase {
 public:
   WinEHCatchDirector(LandingPadInst *LPI, Function *CatchFn, Value *Selector,
-                     Value *EHObj, FrameVarInfoMap &VarInfo)
+                     FrameVarInfoMap &VarInfo)
       : WinEHCloningDirectorBase(LPI, CatchFn, VarInfo),
-        CurrentSelector(Selector->stripPointerCasts()), EHObj(EHObj) {}
+        CurrentSelector(Selector->stripPointerCasts()) {}
 
   CloningAction handleBeginCatch(ValueToValueMapTy &VMap,
                                  const Instruction *Inst,
@@ -149,7 +148,6 @@ public:
 
 private:
   Value *CurrentSelector;
-  Value *EHObj;
 };
 
 class WinEHCleanupDirector : public WinEHCloningDirectorBase {
@@ -239,7 +237,6 @@ bool WinEHPrepare::prepareCPPEHHandlers(
   // handlers are outlined.
   FrameVarInfoMap FrameVarInfo;
   SmallVector<CallInst *, 4> HandlerAllocs;
-  SmallVector<AllocaInst *, 4> HandlerEHObjPtrs;
 
   bool HandlersOutlined = false;
 
@@ -267,17 +264,14 @@ bool WinEHPrepare::prepareCPPEHHandlers(
         // Create a new instance of the handler data structure in the
         // HandlerData vector.
         CallInst *EHAlloc = nullptr;
-        AllocaInst *EHObjPtr = nullptr;
         bool Outlined = outlineHandler(Catch, &F, LPad->getClause(Idx), LPad,
-                                       EHAlloc, EHObjPtr, FrameVarInfo);
+                                       EHAlloc, FrameVarInfo);
         if (Outlined) {
           HandlersOutlined = true;
           // These values must be resolved after all handlers have been
           // outlined.
           if (EHAlloc)
             HandlerAllocs.push_back(EHAlloc);
-          if (EHObjPtr)
-            HandlerEHObjPtrs.push_back(EHObjPtr);
         }
       } // End if (isCatch)
     }   // End for each clause
@@ -290,9 +284,8 @@ bool WinEHPrepare::prepareCPPEHHandlers(
     //        when landing pad block analysis is added.
     if (LPad->isCleanup()) {
       CallInst *EHAlloc = nullptr;
-      AllocaInst *IgnoreEHObjPtr = nullptr;
-      bool Outlined = outlineHandler(Cleanup, &F, nullptr, LPad, EHAlloc,
-                                     IgnoreEHObjPtr, FrameVarInfo);
+      bool Outlined =
+          outlineHandler(Cleanup, &F, nullptr, LPad, EHAlloc, FrameVarInfo);
       if (Outlined) {
         HandlersOutlined = true;
         // This value must be resolved after all handlers have been outlined.
@@ -399,18 +392,6 @@ bool WinEHPrepare::prepareCPPEHHandlers(
     EHDataMap[EHAlloc->getParent()->getParent()] = EHData;
   }
 
-  // Next, replace the place-holder EHObjPtr allocas with GEP instructions
-  // that pull the EHObjPtr from the frame alloc structure
-  for (AllocaInst *EHObjPtr : HandlerEHObjPtrs) {
-    Value *EHData = EHDataMap[EHObjPtr->getParent()->getParent()];
-    Builder.SetInsertPoint(EHObjPtr);
-    Value *ElementPtr = Builder.CreateConstInBoundsGEP2_32(EHData, 0, 1);
-    EHObjPtr->replaceAllUsesWith(ElementPtr);
-    EHObjPtr->removeFromParent();
-    ElementPtr->takeName(EHObjPtr);
-    delete EHObjPtr;
-  }
-
   // Finally, replace all of the temporary allocas for frame variables used in
   // the outlined handlers and the original frame allocas with GEP instructions
   // that get the equivalent pointer from the frame allocation struct.
@@ -490,7 +471,7 @@ bool WinEHPrepare::prepareCPPEHHandlers(
 
 bool WinEHPrepare::outlineHandler(HandlerType CatchOrCleanup, Function *SrcFn,
                                   Constant *SelectorType, LandingPadInst *LPad,
-                                  CallInst *&EHAlloc, AllocaInst *&EHObjPtr,
+                                  CallInst *&EHAlloc,
                                   FrameVarInfoMap &VarInfo) {
   Module *M = SrcFn->getParent();
   LLVMContext &Context = M->getContext();
@@ -539,20 +520,8 @@ bool WinEHPrepare::outlineHandler(HandlerType CatchOrCleanup, Function *SrcFn,
   std::unique_ptr<WinEHCloningDirectorBase> Director;
 
   if (CatchOrCleanup == Catch) {
-    // This alloca is only temporary.  We'll be replacing it once we know all
-    // the frame variables that need to go in the frame allocation structure.
-    EHObjPtr = Builder.CreateAlloca(Int8PtrType, 0, "eh.obj.ptr");
-
-    // This will give us a raw pointer to the exception object, which
-    // corresponds to the formal parameter of the catch statement.  If the
-    // handler uses this object, we will generate code during the outlining
-    // process to cast the pointer to the appropriate type and deference it
-    // as necessary.  The un-outlined landing pad code represents the
-    // exception object as the result of the llvm.eh.begincatch call.
-    Value *EHObj = Builder.CreateLoad(EHObjPtr, false, "eh.obj");
-
     Director.reset(
-        new WinEHCatchDirector(LPad, Handler, SelectorType, EHObj, VarInfo));
+        new WinEHCatchDirector(LPad, Handler, SelectorType, VarInfo));
   } else {
     Director.reset(new WinEHCleanupDirector(LPad, Handler, VarInfo));
   }
@@ -668,10 +637,11 @@ CloningDirector::CloningAction WinEHCatchDirector::handleBeginCatch(
   // The argument to the call is some form of the first element of the
   // landingpad aggregate value, but that doesn't matter.  It isn't used
   // here.
-  // The return value of this instruction, however, is used to access the
-  // EH object pointer.  We have generated an instruction to get that value
-  // from the EH alloc block, so we can just map to that here.
-  VMap[Inst] = EHObj;
+  // The second argument is an outparameter where the exception object will be
+  // stored. Typically the exception object is a scalar, but it can be an
+  // aggregate when catching by value.
+  // FIXME: Leave something behind to indicate where the exception object lives
+  // for this handler. Should it be part of llvm.eh.actions?
   return CloningDirector::SkipInstruction;
 }
 

@@ -87,8 +87,6 @@ eh.resume:                                        ; preds = %catch.dispatch
 ; CHECK: entry:
 ; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1)
 ; CHECK:   %eh.data = bitcast i8* %eh.alloc to %struct._Z4testv.ehdata*
-; CHECK:   %eh.obj.ptr = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 1
-; CHECK:   %eh.obj = load i8*, i8** %eh.obj.ptr
 ; CHECK:   %i = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 2
 ; CHECK:   %tmp7 = load i32, i32* %i, align 4
 ; CHECK:   call void @_Z10handle_inti(i32 %tmp7)

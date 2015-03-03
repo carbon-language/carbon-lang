@@ -56,8 +56,6 @@ try.cont:                                         ; preds = %invoke.cont2, %invo
 ; CHECK: entry:
 ; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1)
 ; CHECK:   %eh.data = bitcast i8* %eh.alloc to %struct._Z4testv.ehdata*
-; CHECK:   %eh.obj.ptr = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 1
-; CHECK:   %eh.obj = load i8*, i8** %eh.obj.ptr
 ; CHECK:   call void @_Z16handle_exceptionv()
 ; CHECK:   ret i8* blockaddress(@_Z4testv, %try.cont)
 ; CHECK: }
