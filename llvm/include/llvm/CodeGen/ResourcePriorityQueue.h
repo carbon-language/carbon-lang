@@ -124,8 +124,6 @@ namespace llvm {
 
     void remove(SUnit *SU) override;
 
-    void dump(ScheduleDAG* DAG) const override;
-
     /// scheduledNode - Main resource tracking point.
     void scheduledNode(SUnit *Node) override;
     bool isResourceAvailable(SUnit *SU);

@@ -637,17 +637,3 @@ void ResourcePriorityQueue::remove(SUnit *SU) {
 
   Queue.pop_back();
 }
-
-
-#ifdef NDEBUG
-void ResourcePriorityQueue::dump(ScheduleDAG *DAG) const {}
-#else
-void ResourcePriorityQueue::dump(ScheduleDAG *DAG) const {
-  ResourcePriorityQueue q = *this;
-  while (!q.empty()) {
-    SUnit *su = q.pop();
-    dbgs() << "Height " << su->getHeight() << ": ";
-    su->dump(DAG);
-  }
-}
-#endif
