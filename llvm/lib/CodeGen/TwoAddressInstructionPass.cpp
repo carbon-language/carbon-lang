@@ -102,6 +102,8 @@ class TwoAddressInstructionPass : public MachineFunctionPass {
   bool sink3AddrInstruction(MachineInstr *MI, unsigned Reg,
                             MachineBasicBlock::iterator OldPos);
 
+  bool isRevCopyChain(unsigned FromReg, unsigned ToReg, int Maxlen);
+
   bool noUseAfterLastDef(unsigned Reg, unsigned Dist, unsigned &LastDef);
 
   bool isProfitableToCommute(unsigned regA, unsigned regB, unsigned regC,
@@ -307,6 +309,45 @@ sink3AddrInstruction(MachineInstr *MI, unsigned SavedReg,
 
   ++Num3AddrSunk;
   return true;
+}
+
+/// getSingleDef -- return the MachineInstr* if it is the single def of the Reg
+/// in current BB.
+static MachineInstr *getSingleDef(unsigned Reg, MachineBasicBlock *BB,
+                                  const MachineRegisterInfo *MRI) {
+  MachineInstr *Ret = nullptr;
+  for (MachineInstr &DefMI : MRI->def_instructions(Reg)) {
+    if (DefMI.getParent() != BB || DefMI.isDebugValue())
+      continue;
+    if (!Ret)
+      Ret = &DefMI;
+    else if (Ret != &DefMI)
+      return nullptr;
+  }
+  return Ret;
+}
+
+/// Check if there is a reversed copy chain from FromReg to ToReg:
+/// %Tmp1 = copy %Tmp2;
+/// %FromReg = copy %Tmp1;
+/// %ToReg = add %FromReg ...
+/// %Tmp2 = copy %ToReg;
+/// MaxLen specifies the maximum length of the copy chain the func
+/// can walk through.
+bool TwoAddressInstructionPass::isRevCopyChain(unsigned FromReg, unsigned ToReg,
+                                               int Maxlen) {
+  unsigned TmpReg = FromReg;
+  for (int i = 0; i < Maxlen; i++) {
+    MachineInstr *Def = getSingleDef(TmpReg, MBB, MRI);
+    if (!Def || !Def->isCopy())
+      return false;
+
+    TmpReg = Def->getOperand(1).getReg();
+
+    if (TmpReg == ToReg)
+      return true;
+  }
+  return false;
 }
 
 /// noUseAfterLastDef - Return true if there are no intervening uses between the
@@ -573,6 +614,27 @@ isProfitableToCommute(unsigned regA, unsigned regB, unsigned regC,
   unsigned LastDefB = 0;
   if (!noUseAfterLastDef(regB, Dist, LastDefB))
     return true;
+
+  // Look for situation like this:
+  // %reg101 = MOV %reg100
+  // %reg102 = ...
+  // %reg103 = ADD %reg102, %reg101
+  // ... = %reg103 ...
+  // %reg100 = MOV %reg103
+  // If there is a reversed copy chain from reg101 to reg103, commute the ADD
+  // to eliminate an otherwise unavoidable copy.
+  // FIXME:
+  // We can extend the logic further: If an pair of operands in an insn has
+  // been merged, the insn could be regarded as a virtual copy, and the virtual
+  // copy could also be used to construct a copy chain.
+  // To more generally minimize register copies, ideally the logic of two addr
+  // instruction pass should be integrated with register allocation pass where
+  // interference graph is available.
+  if (isRevCopyChain(regC, regA, 3))
+    return true;
+
+  if (isRevCopyChain(regB, regA, 3))
+    return false;
 
   // Since there are no intervening uses for both registers, then commute
   // if the def of regC is closer. Its live interval is shorter.
