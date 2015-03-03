@@ -83,8 +83,6 @@ namespace llvm {
 
     void remove(SUnit *SU) override;
 
-    void dump(ScheduleDAG* DAG) const override;
-
     // scheduledNode - As nodes are scheduled, we look to see if there are any
     // successor nodes that have a single unscheduled predecessor.  If so, that
     // single predecessor has a higher priority, since scheduling it will make
