@@ -10,10 +10,8 @@ struct S : Base {
   virtual void override() override;
 };
 
-struct T {
-  // virt-specifier-seq is only valid in member-declarators, and a function definition is not a member-declarator.
-  // FIXME: This currently doesn't work.
-  // virtual void f() const override { } 
+struct T : Base {
+  virtual void override() override { } 
 };
 
 struct override;
