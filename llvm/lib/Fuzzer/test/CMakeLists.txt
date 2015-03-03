@@ -5,6 +5,7 @@
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O0 -fsanitize-coverage=4")
 
 set(Tests
+  CounterTest
   FourIndependentBranchesTest
   FullCoverageSetTest
   InfiniteTest

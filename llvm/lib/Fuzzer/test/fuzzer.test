@@ -17,3 +17,6 @@ FullCoverageSetTest: BINGO
 
 RUN: not ./LLVMFuzzer-FourIndependentBranchesTest -timeout=15 -seed=1 -use_coverage_pairs=1 2>&1 | FileCheck %s --check-prefix=FourIndependentBranchesTest
 FourIndependentBranchesTest: BINGO
+
+RUN: not ./LLVMFuzzer-CounterTest -use_counters=1 -max_len=6 -seed=1 -timeout=15 2>&1 | FileCheck %s --check-prefix=CounterTest
+CounterTest: BINGO

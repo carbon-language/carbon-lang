@@ -424,7 +424,7 @@ if(LLVM_USE_SANITIZER)
     message(WARNING "LLVM_USE_SANITIZER is not supported on this platform.")
   endif()
   if (LLVM_USE_SANITIZE_COVERAGE)
-    append("-fsanitize-coverage=4" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+    append("-fsanitize-coverage=4 -mllvm -sanitizer-coverage-8bit-counters=1" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
   endif()
 endif()
 

@@ -48,6 +48,7 @@ class Fuzzer {
     bool DoCrossOver = true;
     int  MutateDepth = 5;
     bool ExitOnFirst = false;
+    bool UseCounters = false;
     bool UseFullCoverageSet  = false;
     bool UseCoveragePairs = false;
     int PreferSmallDuringInitialShuffle = -1;
@@ -95,6 +96,15 @@ class Fuzzer {
   std::vector<Unit> Corpus;
   std::unordered_set<uintptr_t> FullCoverageSets;
   std::unordered_set<uint64_t>  CoveragePairs;
+
+  // For UseCounters
+  std::vector<uint8_t> CounterBitmap;
+  size_t TotalBits() {  // Slow. Call it only for printing stats.
+    size_t Res = 0;
+    for (auto x : CounterBitmap) Res += __builtin_popcount(x);
+    return Res;
+  }
+
   UserCallback Callback;
   FuzzingOptions Options;
   system_clock::time_point ProcessStartTime = system_clock::now();

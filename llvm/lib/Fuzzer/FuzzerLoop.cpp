@@ -138,17 +138,28 @@ size_t Fuzzer::RunOneMaximizeFullCoverageSet(const Unit &U) {
 }
 
 size_t Fuzzer::RunOneMaximizeTotalCoverage(const Unit &U) {
+  size_t NumCounters = __sanitizer_get_number_of_counters();
+  if (Options.UseCounters) {
+    CounterBitmap.resize(NumCounters);
+    __sanitizer_update_counter_bitset_and_clear_counters(0);
+  }
   size_t OldCoverage = __sanitizer_get_total_unique_coverage();
   Callback(U.data(), U.size());
   size_t NewCoverage = __sanitizer_get_total_unique_coverage();
+  size_t NumNewBits = 0;
+  if (Options.UseCounters)
+    NumNewBits = __sanitizer_update_counter_bitset_and_clear_counters(
+        CounterBitmap.data());
+
   if (!(TotalNumberOfRuns & (TotalNumberOfRuns - 1)) && Options.Verbosity) {
     size_t Seconds = secondsSinceProcessStartUp();
     std::cerr
         << "#" << TotalNumberOfRuns
         << "\tcov: " << NewCoverage
+        << "\tbits: " << TotalBits()
         << "\texec/s: " << (Seconds ? TotalNumberOfRuns / Seconds : 0) << "\n";
   }
-  if (NewCoverage > OldCoverage)
+  if (NewCoverage > OldCoverage || NumNewBits)
     return NewCoverage;
   return 0;
 }
@@ -189,6 +200,7 @@ size_t Fuzzer::MutateAndTestOne(Unit *U) {
       if (Options.Verbosity) {
         std::cerr << "#" << TotalNumberOfRuns
                   << "\tNEW: " << NewCoverage
+                  << " B: " << TotalBits()
                   << " L: " << U->size()
                   << " S: " << Corpus.size()
                   << " I: " << i

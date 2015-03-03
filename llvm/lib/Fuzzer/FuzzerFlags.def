@@ -32,6 +32,7 @@ FUZZER_FLAG(int, help, 0, "Print help.")
 FUZZER_FLAG(
     int, save_minimized_corpus, 0,
     "If 1, the minimized corpus is saved into the first input directory")
+FUZZER_FLAG(int, use_counters, 0, "Use coverage counters")
 FUZZER_FLAG(int, use_full_coverage_set, 0,
             "Experimental: Maximize the number of different full"
             " coverage sets as opposed to maximizing the total coverage."

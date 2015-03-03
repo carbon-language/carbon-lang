@@ -5,10 +5,8 @@
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=2 -sanitizer-coverage-block-threshold=1  -S | FileCheck %s --check-prefix=CHECK_WITH_CHECK
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=3 -sanitizer-coverage-block-threshold=10 -S | FileCheck %s --check-prefix=CHECK3
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=4 -S | FileCheck %s --check-prefix=CHECK4
+; RUN: opt < %s -sancov -sanitizer-coverage-level=3 -sanitizer-coverage-8bit-counters=1  -S | FileCheck %s --check-prefix=CHECK-8BIT
 
-; RUN: opt < %s -sancov -sanitizer-coverage-level=0  -S | FileCheck %s --check-prefix=CHECK0
-; RUN: opt < %s -sancov -sanitizer-coverage-level=1  -S | FileCheck %s --check-prefix=CHECK1
-; RUN: opt < %s -sancov -sanitizer-coverage-level=2  -S | FileCheck %s --check-prefix=CHECK2
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=2 -sanitizer-coverage-block-threshold=10 \
 ; RUN:      -S | FileCheck %s --check-prefix=CHECK2
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=2 -sanitizer-coverage-block-threshold=1 \
@@ -77,6 +75,24 @@ entry:
 ; CHECK3: call void @__sanitizer_cov
 ; CHECK3-NOT: call void @__sanitizer_cov
 ; CHECK3: ret void
+
+; test -sanitizer-coverage-8bit-counters=1
+; CHECK-8BIT-LABEL: define void @foo
+
+; CHECK-8BIT: [[V11:%[0-9]*]] = load i8
+; CHECK-8BIT: [[V12:%[0-9]*]] = add i8 [[V11]], 1
+; CHECK-8BIT: store i8 [[V12]]
+; CHECK-8BIT: [[V21:%[0-9]*]] = load i8
+; CHECK-8BIT: [[V22:%[0-9]*]] = add i8 [[V21]], 1
+; CHECK-8BIT: store i8 [[V22]]
+; CHECK-8BIT: [[V31:%[0-9]*]] = load i8
+; CHECK-8BIT: [[V32:%[0-9]*]] = add i8 [[V31]], 1
+; CHECK-8BIT: store i8 [[V32]]
+; CHECK-8BIT: [[V41:%[0-9]*]] = load i8
+; CHECK-8BIT: [[V42:%[0-9]*]] = add i8 [[V41]], 1
+; CHECK-8BIT: store i8 [[V42]]
+
+; CHECK-8BIT: ret void
 
 
 %struct.StructWithVptr = type { i32 (...)** }
