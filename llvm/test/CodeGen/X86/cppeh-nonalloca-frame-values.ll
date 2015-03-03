@@ -59,19 +59,19 @@ $"\01??_R0H@8" = comdat any
 ; CHECK:  %frame.alloc = call i8* @llvm.frameallocate(i32 80)
 ; CHECK:  %eh.data = bitcast i8* %frame.alloc to %"struct.\01?test@@YAXXZ.ehdata"*
 ; CHECK-NOT:  %ExceptionVal = alloca [10 x i32], align 16
-; CHECK:  %NumExceptions.020.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 2
-; CHECK:  %i.019.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4
-; CHECK:  %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
+; CHECK:  %NumExceptions.020.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 2
+; CHECK:  %i.019.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4
+; CHECK:  %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
 ; CHECK:  %Data = alloca i64, align 8
 ; CHECK:  %tmpcast = bitcast i64* %Data to %struct.SomeData*
 ; CHECK:  %0 = bitcast [10 x i32]* %ExceptionVal to i8*
 ; CHECK:  call void @llvm.lifetime.start(i64 40, i8* %0) #1
 ; CHECK:  store i64 0, i64* %Data, align 8
-; CHECK:  %a.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 5
+; CHECK:  %a.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 5
 ; CHECK:  %a = bitcast i64* %Data to i32*
 ; CHECK:  store i32* %a, i32** %a.reg2mem
-; CHECK:  %b.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 6
-; CHECK:  %b = getelementptr inbounds %struct.SomeData* %tmpcast, i64 0, i32 1
+; CHECK:  %b.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 6
+; CHECK:  %b = getelementptr inbounds %struct.SomeData, %struct.SomeData* %tmpcast, i64 0, i32 1
 ; CHECK:  store i32* %b, i32** %b.reg2mem
 ; CHECK:  store i32 0, i32* %NumExceptions.020.reg2mem
 ; CHECK:  store i32 0, i32* %i.019.reg2mem
@@ -87,14 +87,14 @@ entry:
   call void @llvm.lifetime.start(i64 40, i8* %0) #1
   store i64 0, i64* %Data, align 8
   %a = bitcast i64* %Data to i32*
-  %b = getelementptr inbounds %struct.SomeData* %tmpcast, i64 0, i32 1
+  %b = getelementptr inbounds %struct.SomeData, %struct.SomeData* %tmpcast, i64 0, i32 1
   br label %for.body
 
 ; CHECK: for.body:
 ; CHECK-NOT:  %NumExceptions.020 = phi i32 [ 0, %entry ], [ %NumExceptions.1, %try.cont ]
 ; CHECK-NOT:  %i.019 = phi i32 [ 0, %entry ], [ %inc5, %try.cont ]
-; CHECK:  %i.019.reload = load i32* %i.019.reg2mem
-; CHECK:  %NumExceptions.020.reload = load i32* %NumExceptions.020.reg2mem
+; CHECK:  %i.019.reload = load i32, i32* %i.019.reg2mem
+; CHECK:  %NumExceptions.020.reload = load i32, i32* %NumExceptions.020.reg2mem
 for.body:                                         ; preds = %entry, %try.cont
   %NumExceptions.020 = phi i32 [ 0, %entry ], [ %NumExceptions.1, %try.cont ]
   %i.019 = phi i32 [ 0, %entry ], [ %inc5, %try.cont ]
@@ -102,17 +102,17 @@ for.body:                                         ; preds = %entry, %try.cont
           to label %invoke.cont unwind label %lpad
 
 ; CHECK: invoke.cont:                                      ; preds = %for.body
-; CHECK-NOT:  %1 = load i32* %a, align 8, !tbaa !2
+; CHECK-NOT:  %1 = load i32, i32* %a, align 8, !tbaa !2
 ; CHECK-NOT:  %add = add nsw i32 %1, %i.019
 ; CHECK-NOT:  store i32 %add, i32* %a, align 8, !tbaa !2
-; CHECK:   %a.reload3 = load volatile i32** %a.reg2mem
-; CHECK:   %1 = load i32* %a.reload3, align 8, !tbaa !2
+; CHECK:   %a.reload3 = load volatile i32*, i32** %a.reg2mem
+; CHECK:   %1 = load i32, i32* %a.reload3, align 8, !tbaa !2
 ; CHECK:   %add = add nsw i32 %1, %i.019.reload
-; CHECK:   %a.reload2 = load volatile i32** %a.reg2mem
+; CHECK:   %a.reload2 = load volatile i32*, i32** %a.reg2mem
 ; CHECK:   store i32 %add, i32* %a.reload2, align 8, !tbaa !2
 ; CHECK:   br label %try.cont
 invoke.cont:                                      ; preds = %for.body
-  %1 = load i32* %a, align 8, !tbaa !2
+  %1 = load i32, i32* %a, align 8, !tbaa !2
   %add = add nsw i32 %1, %i.019
   store i32 %add, i32* %a, align 8, !tbaa !2
   br label %try.cont
@@ -129,22 +129,22 @@ catch:                                            ; preds = %lpad
   %5 = extractvalue { i8*, i32 } %2, 0
   %6 = tail call i8* @llvm.eh.begincatch(i8* %5) #1
   %7 = bitcast i8* %6 to i32*
-  %8 = load i32* %7, align 4, !tbaa !7
+  %8 = load i32, i32* %7, align 4, !tbaa !7
   %idxprom = sext i32 %NumExceptions.020 to i64
-  %arrayidx = getelementptr inbounds [10 x i32]* %ExceptionVal, i64 0, i64 %idxprom
+  %arrayidx = getelementptr inbounds [10 x i32], [10 x i32]* %ExceptionVal, i64 0, i64 %idxprom
   store i32 %8, i32* %arrayidx, align 4, !tbaa !7
   %inc = add nsw i32 %NumExceptions.020, 1
   %cmp1 = icmp eq i32 %8, %i.019
   br i1 %cmp1, label %if.then, label %if.else
 
 if.then:                                          ; preds = %catch
-  %9 = load i32* %b, align 4, !tbaa !8
+  %9 = load i32, i32* %b, align 4, !tbaa !8
   %add2 = add nsw i32 %9, %i.019
   store i32 %add2, i32* %b, align 4, !tbaa !8
   br label %if.end
 
 if.else:                                          ; preds = %catch
-  %10 = load i32* %a, align 8, !tbaa !2
+  %10 = load i32, i32* %a, align 8, !tbaa !2
   %add4 = add nsw i32 %10, %8
   store i32 %add4, i32* %a, align 8, !tbaa !2
   br label %if.end
@@ -173,7 +173,7 @@ try.cont:                                         ; preds = %if.end, %invoke.con
 
 for.end:                                          ; preds = %try.cont
   %NumExceptions.1.lcssa = phi i32 [ %NumExceptions.1, %try.cont ]
-  %arraydecay = getelementptr inbounds [10 x i32]* %ExceptionVal, i64 0, i64 0
+  %arraydecay = getelementptr inbounds [10 x i32], [10 x i32]* %ExceptionVal, i64 0, i64 0
   call void @"\01?dump@@YAXPEAHHAEAUSomeData@@@Z"(i32* %arraydecay, i32 %NumExceptions.1.lcssa, %struct.SomeData* dereferenceable(8) %tmpcast)
   call void @llvm.lifetime.end(i64 40, i8* %0) #1
   ret void
@@ -188,34 +188,34 @@ eh.resume:                                        ; preds = %lpad
 ; CHECK: catch.entry:
 ; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1)
 ; CHECK:   %eh.data = bitcast i8* %eh.alloc to %"struct.\01?test@@YAXXZ.ehdata"*
-; CHECK:   %eh.obj.ptr = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 1
-; CHECK:   %eh.obj = load i8** %eh.obj.ptr
-; CHECK:   %eh.temp.alloca = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 2
-; CHECK:   %NumExceptions.020.reload = load i32* %eh.temp.alloca
-; CHECK:   %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
-; CHECK:   %eh.temp.alloca1 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4
-; CHECK:   %i.019.reload = load i32* %eh.temp.alloca1
-; CHECK:   %eh.temp.alloca2 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 5
-; CHECK:   %a.reload = load i32** %eh.temp.alloca2
-; CHECK:   %eh.temp.alloca3 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 6
-; CHECK:   %b.reload = load i32** %eh.temp.alloca3
+; CHECK:   %eh.obj.ptr = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 1
+; CHECK:   %eh.obj = load i8*, i8** %eh.obj.ptr
+; CHECK:   %eh.temp.alloca = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 2
+; CHECK:   %NumExceptions.020.reload = load i32, i32* %eh.temp.alloca
+; CHECK:   %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
+; CHECK:   %eh.temp.alloca1 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4
+; CHECK:   %i.019.reload = load i32, i32* %eh.temp.alloca1
+; CHECK:   %eh.temp.alloca2 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 5
+; CHECK:   %a.reload = load i32*, i32** %eh.temp.alloca2
+; CHECK:   %eh.temp.alloca3 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 6
+; CHECK:   %b.reload = load i32*, i32** %eh.temp.alloca3
 ; CHECK:   %2 = bitcast i8* %eh.obj to i32*
-; CHECK:   %3 = load i32* %2, align 4, !tbaa !7
+; CHECK:   %3 = load i32, i32* %2, align 4, !tbaa !7
 ; CHECK:   %idxprom = sext i32 %NumExceptions.020.reload to i64
-; CHECK:   %arrayidx = getelementptr inbounds [10 x i32]* %ExceptionVal, i64 0, i64 %idxprom
+; CHECK:   %arrayidx = getelementptr inbounds [10 x i32], [10 x i32]* %ExceptionVal, i64 0, i64 %idxprom
 ; CHECK:   store i32 %3, i32* %arrayidx, align 4, !tbaa !7
 ; CHECK:   %inc = add nsw i32 %NumExceptions.020.reload, 1
 ; CHECK:   %cmp1 = icmp eq i32 %3, %i.019.reload
 ; CHECK:   br i1 %cmp1, label %if.then, label %if.else
 ;
 ; CHECK: if.then:                                          ; preds = %catch.entry
-; CHECK:   %4 = load i32* %b.reload, align 4, !tbaa !8
+; CHECK:   %4 = load i32, i32* %b.reload, align 4, !tbaa !8
 ; CHECK:   %add2 = add nsw i32 %4, %i.019.reload
 ; CHECK:   store i32 %add2, i32* %b.reload, align 4, !tbaa !8
 ; CHECK:   br label %if.end
 ;
 ; CHECK: if.else:                                          ; preds = %catch.entry
-; CHECK:   %5 = load i32* %a.reload, align 8, !tbaa !2
+; CHECK:   %5 = load i32, i32* %a.reload, align 8, !tbaa !2
 ; CHECK:   %add4 = add nsw i32 %5, %3
 ; CHECK:   store i32 %add4, i32* %a.reload, align 8, !tbaa !2
 ; CHECK:   br label %if.end
