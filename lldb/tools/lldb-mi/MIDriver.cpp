@@ -913,11 +913,12 @@ CMIDriver::InterpretCommandThisDriver(const CMIUtilString &vTextLine, bool &vwbC
     const CMICmnMIValueConst vconst = CMICmnMIValueConst(msg);
     const CMICmnMIValueResult valueResult("msg", vconst);
     const CMICmnMIResultRecord miResultRecord(cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, valueResult);
-    m_rStdOut.WriteMIResponse(miResultRecord.GetString());
-    m_rStdOut.WriteMIResponse("(gdb)");
+    bool bOk = m_rStdOut.WriteMIResponse(miResultRecord.GetString());
+    if (bOk && m_rStdin.GetEnablePrompt())
+        bOk = m_rStdOut.WriteMIResponse(m_rStdin.GetPrompt());
 
     // Proceed to wait for or execute next command
-    return MIstatus::success;
+    return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -1173,8 +1174,11 @@ bool
 CMIDriver::LocalDebugSessionStartupExecuteCommands(void)
 {
     const CMIUtilString strCmd(CMIUtilString::Format("-file-exec-and-symbols \"%s\"", m_strCmdLineArgExecuteableFileNamePath.AddSlashes().c_str()));
-    const bool bOk = CMICmnStreamStdout::TextToStdout(strCmd);
-    return (bOk && InterpretCommand(strCmd));
+    bool bOk = CMICmnStreamStdout::TextToStdout(strCmd);
+    bOk = bOk && InterpretCommand(strCmd);
+    if (bOk && m_rStdin.GetEnablePrompt())
+        bOk = m_rStdOut.WriteMIResponse(m_rStdin.GetPrompt());
+    return bOk;
 }
 
 //++ ------------------------------------------------------------------------------------
