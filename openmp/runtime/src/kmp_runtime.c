@@ -267,7 +267,8 @@ __kmp_check_stack_overlap( kmp_info_t *th )
     }
 
     /* No point in checking ubermaster threads since they use refinement and cannot overlap */
-    if ( __kmp_env_checks == TRUE && !KMP_UBER_GTID(gtid = __kmp_gtid_from_thread( th )))
+    gtid = __kmp_gtid_from_thread( th );
+    if ( __kmp_env_checks == TRUE && !KMP_UBER_GTID(gtid))
     {
         KA_TRACE(10,("__kmp_check_stack_overlap: performing extensive checking\n"));
         if ( stack_beg == NULL ) {

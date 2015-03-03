@@ -111,7 +111,7 @@ __kmp_expand_cons_stack( int gtid, struct cons_header *p )
 // NOTE: Function returns allocated memory, caller must free it!
 static char const *
 __kmp_pragma(
-    enum cons_type   ct,
+    int              ct,
     ident_t const *  ident
 ) {
     char const * cons = NULL;  // Construct name.
@@ -121,7 +121,7 @@ __kmp_pragma(
     kmp_str_buf_t buffer;
     kmp_msg_t     prgm;
     __kmp_str_buf_init( & buffer );
-    if ( 0 < ct && ct <= cons_text_c_num ) {;
+    if ( 0 < ct && ct <= cons_text_c_num ) {
         cons = cons_text_c[ ct ];
     } else {
         KMP_DEBUG_ASSERT( 0 );
