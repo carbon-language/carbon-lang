@@ -10,6 +10,7 @@
 #include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/LinkingContext.h"
+#include "lld/Core/Parallel.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/Archive.h"
@@ -17,7 +18,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include <future>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -63,8 +63,9 @@ public:
       std::lock_guard<std::mutex> lock(_mutex);
       auto it = _preloaded.find(memberStart);
       if (it != _preloaded.end()) {
-        std::future<const File *> &future = it->second;
-        return future.get();
+        std::unique_ptr<Future<const File *>> &p = it->second;
+        Future<const File *> *future = p.get();
+        return future->get();
       }
     }
 
@@ -93,17 +94,13 @@ public:
       return;
 
     // Instantiate the member
-    auto *promise = new std::promise<const File *>;
-    _preloaded[memberStart] = promise->get_future();
-    _promises.push_back(std::unique_ptr<std::promise<const File *>>(promise));
+    auto *future = new Future<const File *>();
+    _preloaded[memberStart] = std::unique_ptr<Future<const File *>>(future);
 
     group.spawn([=] {
       std::unique_ptr<File> result;
-      if (instantiateMember(ci, result)) {
-        promise->set_value(nullptr);
-        return;
-      }
-      promise->set_value(result.release());
+      std::error_code ec = instantiateMember(ci, result);
+      future->set(ec ? nullptr : result.release());
     });
   }
 
@@ -269,8 +266,7 @@ private:
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
   bool _logLoading;
   mutable std::vector<std::unique_ptr<MemoryBuffer>> _memberBuffers;
-  mutable std::map<const char *, std::future<const File *>> _preloaded;
-  mutable std::vector<std::unique_ptr<std::promise<const File *>>> _promises;
+  mutable std::map<const char *, std::unique_ptr<Future<const File *>>> _preloaded;
   mutable std::mutex _mutex;
 };
 
