@@ -33,7 +33,7 @@ namespace llvm {
 
     /// S2IMap - Stack slot indices to live interval mapping.
     ///
-    typedef std::map<int, LiveInterval> SS2IntervalMap;
+    typedef std::unordered_map<int, LiveInterval> SS2IntervalMap;
     SS2IntervalMap S2IMap;
 
     /// S2RCMap - Stack slot indices to register class mapping.
