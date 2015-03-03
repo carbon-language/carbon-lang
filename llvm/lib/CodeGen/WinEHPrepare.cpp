@@ -46,7 +46,7 @@ struct HandlerAllocas {
 // allocation block, and to remap the frame variable allocas (including
 // spill locations as needed) to GEPs that get the variable from the
 // frame allocation structure.
-typedef MapVector<AllocaInst *, HandlerAllocas> FrameVarInfoMap;
+typedef MapVector<Value *, HandlerAllocas> FrameVarInfoMap;
 
 class WinEHPrepare : public FunctionPass {
   std::unique_ptr<FunctionPass> DwarfPrepare;
@@ -261,22 +261,31 @@ bool WinEHPrepare::prepareCPPEHHandlers(
   // all the entries in the HandlerData have been processed this isn't a
   // problem.
   for (auto &VarInfoEntry : FrameVarInfo) {
-    AllocaInst *ParentAlloca = VarInfoEntry.first;
+    Value *ParentVal = VarInfoEntry.first;
     HandlerAllocas &AllocaInfo = VarInfoEntry.second;
 
-    // If the instruction still has uses in the parent function or if it is
-    // referenced by more than one handler, add it to the frame allocation
-    // structure.
-    if (ParentAlloca->getNumUses() != 0 || AllocaInfo.Allocas.size() > 1) {
-      Type *VarTy = ParentAlloca->getAllocatedType();
+    if (auto *ParentAlloca = dyn_cast<AllocaInst>(ParentVal)) {
+      // If the instruction still has uses in the parent function or if it is
+      // referenced by more than one handler, add it to the frame allocation
+      // structure.
+      if (ParentAlloca->getNumUses() != 0 || AllocaInfo.Allocas.size() > 1) {
+        Type *VarTy = ParentAlloca->getAllocatedType();
+        StructTys.push_back(VarTy);
+        AllocaInfo.ParentFrameAllocationIndex = Idx++;
+      } else {
+        // If the variable is not used in the parent frame and it is only used
+        // in one handler, the alloca can be removed from the parent frame
+        // and the handler will keep its "temporary" alloca to define the value.
+        // An element index of -1 is used to indicate this condition.
+        AllocaInfo.ParentFrameAllocationIndex = -1;
+      }
+    } else {
+      // FIXME: Sink non-alloca values into the handler if they have no other
+      //        uses in the parent function after outlining and are only used in
+      //        one handler.
+      Type *VarTy = ParentVal->getType();
       StructTys.push_back(VarTy);
       AllocaInfo.ParentFrameAllocationIndex = Idx++;
-    } else {
-      // If the variable is not used in the parent frame and it is only used
-      // in one handler, the alloca can be removed from the parent frame
-      // and the handler will keep its "temporary" alloca to define the value.
-      // An element index of -1 is used to indicate this condition.
-      AllocaInfo.ParentFrameAllocationIndex = -1;
     }
   }
 
@@ -331,10 +340,40 @@ bool WinEHPrepare::prepareCPPEHHandlers(
   // Finally, replace all of the temporary allocas for frame variables used in
   // the outlined handlers and the original frame allocas with GEP instructions
   // that get the equivalent pointer from the frame allocation struct.
+  Instruction *FrameEHDataInst = cast<Instruction>(FrameEHData);
+  BasicBlock::iterator II = FrameEHDataInst;
+  ++II;
+  Instruction *AllocaInsertPt = II;
   for (auto &VarInfoEntry : FrameVarInfo) {
-    AllocaInst *ParentAlloca = VarInfoEntry.first;
+    Value *ParentVal = VarInfoEntry.first;
     HandlerAllocas &AllocaInfo = VarInfoEntry.second;
     int Idx = AllocaInfo.ParentFrameAllocationIndex;
+
+    // If the mapped value isn't already an alloca, we need to spill it if it
+    // is a computed value or copy it if it is an argument.
+    AllocaInst *ParentAlloca = dyn_cast<AllocaInst>(ParentVal);
+    if (!ParentAlloca) {
+      if (auto *Arg = dyn_cast<Argument>(ParentVal)) {
+        // Lower this argument to a copy and then demote that to the stack.
+        // We can't just use the argument location because the handler needs
+        // it to be in the frame allocation block.
+        // Use 'select i8 true, %arg, undef' to simulate a 'no-op' instruction.
+        Value *TrueValue = ConstantInt::getTrue(Context);
+        Value *UndefValue = UndefValue::get(Arg->getType());
+        Instruction *SI =
+            SelectInst::Create(TrueValue, Arg, UndefValue,
+                               Arg->getName() + ".tmp", AllocaInsertPt);
+        Arg->replaceAllUsesWith(SI);
+        // Reset the select operand, because it was clobbered by the RAUW above.
+        SI->setOperand(1, Arg);
+        ParentAlloca = DemoteRegToStack(*SI, true, SI);
+      } else if (auto *PN = dyn_cast<PHINode>(ParentVal)) {
+        ParentAlloca = DemotePHIToStack(PN, AllocaInsertPt);
+      } else {
+        Instruction *ParentInst = cast<Instruction>(ParentVal);
+        ParentAlloca = DemoteRegToStack(*ParentInst, true, ParentInst);
+      }
+    }
 
     // If we have an index of -1 for this instruction, it means it isn't used
     // outside of this handler.  In that case, we just keep the "temporary"
@@ -353,6 +392,8 @@ bool WinEHPrepare::prepareCPPEHHandlers(
       ParentAlloca->replaceAllUsesWith(ElementPtr);
       ParentAlloca->removeFromParent();
       ElementPtr->takeName(ParentAlloca);
+      if (ParentAlloca == AllocaInsertPt)
+        AllocaInsertPt = dyn_cast<Instruction>(ElementPtr);
       delete ParentAlloca;
 
       // Next replace all outlined allocas that are mapped to it.
@@ -589,38 +630,33 @@ WinEHFrameVariableMaterializer::WinEHFrameVariableMaterializer(
 }
 
 Value *WinEHFrameVariableMaterializer::materializeValueFor(Value *V) {
-  // If we're asked to materialize an alloca variable, we temporarily
-  // create a matching alloca in the outlined function.  When all the
-  // outlining is complete, we'll collect these into a structure and
-  // replace these temporary allocas with GEPs referencing the frame
-  // allocation block.
+  // If we're asked to materialize a value that is an instruction, we
+  // temporarily create an alloca in the outlined function and add this
+  // to the FrameVarInfo map.  When all the outlining is complete, we'll
+  // collect these into a structure, spilling non-alloca values in the
+  // parent frame as necessary, and replace these temporary allocas with
+  // GEPs referencing the frame allocation block.
+
+  // If the value is an alloca, the mapping is direct.
   if (auto *AV = dyn_cast<AllocaInst>(V)) {
-    AllocaInst *NewAlloca = Builder.CreateAlloca(
-        AV->getAllocatedType(), AV->getArraySize(), AV->getName());
+    AllocaInst *NewAlloca = dyn_cast<AllocaInst>(AV->clone());
+    Builder.Insert(NewAlloca, AV->getName());
     FrameVarInfo[AV].Allocas.push_back(NewAlloca);
     return NewAlloca;
   }
 
-// FIXME: Do PHI nodes need special handling?
-
-// FIXME: Are there other cases we can handle better?  GEP, ExtractValue, etc.
-
-// FIXME: This doesn't work during cloning because it finds an instruction
-//        in the use list that isn't yet part of a basic block.
-#if 0
-  // If we're asked to remap some other instruction, we'll need to
-  // spill it to an alloca variable in the parent function and add a
-  // temporary alloca in the outlined function to be processed as
-  // described above.
-  Instruction *Inst = dyn_cast<Instruction>(V);
-  if (Inst) {
-    AllocaInst *Spill = DemoteRegToStack(*Inst, true);
-    AllocaInst *NewAlloca = Builder.CreateAlloca(Spill->getAllocatedType(),
-                                                 Spill->getArraySize());
-    FrameVarMap[AV] = NewAlloca;
-    return NewAlloca;
+  // For other types of instructions or arguments, we need an alloca based on
+  // the value's type and a load of the alloca.  The alloca will be replaced
+  // by a GEP, but the load will stay.  In the parent function, the value will
+  // be spilled to a location in the frame allocation block.
+  if (isa<Instruction>(V) || isa<Argument>(V)) {
+    AllocaInst *NewAlloca =
+        Builder.CreateAlloca(V->getType(), nullptr, "eh.temp.alloca");
+    FrameVarInfo[V].Allocas.push_back(NewAlloca);
+    LoadInst *NewLoad = Builder.CreateLoad(NewAlloca, V->getName() + ".reload");
+    return NewLoad;
   }
-#endif
 
+  // Don't materialize other values.
   return nullptr;
 }
