@@ -11,10 +11,19 @@
 
 @protocol HasASelection <NSObject>
 @property (nonatomic, retain) Selection* selection;
-// CHECK: [ DW_TAG_subprogram ] [line [[@LINE-1]]] [local] [def] [-[MyClass selection]]
-// CHECK: [ DW_TAG_subprogram ] [line [[@LINE-2]]] [local] [def] [-[MyClass setSelection:]]
-// CHECK: [ DW_TAG_subprogram ] [line [[@LINE-3]]] [local] [def] [-[OtherClass selection]]
-// CHECK: [ DW_TAG_subprogram ] [line [[@LINE-4]]] [local] [def] [-[OtherClass setSelection:]]
+// CHECK: !MDSubprogram(name: "-[MyClass selection]"
+// CHECK-SAME:          line: [[@LINE-2]]
+// CHECK-SAME:          isLocal: true, isDefinition: true
+// CHECK: !MDSubprogram(name: "-[MyClass setSelection:]"
+// CHECK-SAME:          line: [[@LINE-5]]
+// CHECK-SAME:          isLocal: true, isDefinition: true
+// CHECK: !MDSubprogram(name: "-[OtherClass selection]"
+// CHECK-SAME:          line: [[@LINE-8]]
+// CHECK-SAME:          isLocal: true, isDefinition: true
+// CHECK: !MDSubprogram(name: "-[OtherClass setSelection:]"
+// CHECK-SAME:          line: [[@LINE-11]]
+// CHECK-SAME:          isLocal: true, isDefinition: true
+
 @end
 
 @interface MyClass : NSObject <HasASelection> {

@@ -28,8 +28,8 @@
 // Debug info
 
 // RUN: %clang_cc1 -I %t -ivfsoverlay %t.external.yaml -triple %itanium_abi_triple -g -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-DEBUG-EXTERNAL %s
-// CHECK-DEBUG-EXTERNAL: ![[Num:[0-9]*]] = !{!"{{.*}}Inputs{{.}}external-names.h
-// CHECK-DEBUG-EXTERNAL: !{!"0x29", ![[Num]]{{.*}}DW_TAG_file_type
+// CHECK-DEBUG-EXTERNAL: !MDSubprogram({{.*}}file: ![[Num:[0-9]+]]
+// CHECK-DEBUG-EXTERNAL: ![[Num]] = !MDFile(filename: "{{[^"]*}}Inputs{{.}}external-names.h"
 
 // RUN: %clang_cc1 -I %t -ivfsoverlay %t.yaml -triple %itanium_abi_triple -g -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-DEBUG %s
 // CHECK-DEBUG-NOT: Inputs

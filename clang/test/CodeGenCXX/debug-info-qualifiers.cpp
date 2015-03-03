@@ -2,25 +2,35 @@
 // Test (r)value and CVR qualifiers on C++11 non-static member functions.
 class A {
 public:
-  // CHECK: !"0x2e\00l\00{{.*}}\00[[@LINE+2]]"{{, [^,]+, [^,]+}}, ![[PLSR:[0-9]+]], {{.*}}[ DW_TAG_subprogram ] [line [[@LINE+2]]] [public] [reference] [l]
-  // CHECK: ![[PLSR]] ={{.*}}[ DW_TAG_subroutine_type ]{{.*}}[reference]
+  // CHECK: !MDSubprogram(name: "l",
+  // CHECK-SAME:          line: [[@LINE+4]]
+  // CHECK-SAME:          type: ![[PLSR:[0-9]+]]
+  // CHECK-SAME:          flags: DIFlagPublic | DIFlagPrototyped | DIFlagLValueReference,
+  // CHECK: ![[PLSR]] = !MDSubroutineType(flags: DIFlagLValueReference, types: ![[ARGS:[0-9]+]])
   void l() const &;
-  // CHECK: ![[ARGS:[0-9]+]] = !{null, ![[THIS:[0-9]+]]}
-  // CHECK: ![[THIS]] = {{.*}} ![[CONST_A:.*]]} ; [ DW_TAG_pointer_type ]
-  // CHECK: ![[CONST_A]] = {{.*}} [ DW_TAG_const_type ]
-  // CHECK: !"0x2e\00r\00{{.*}}\00[[@LINE+2]]"{{, [^,]+, [^,]+}}, ![[PRSR:[0-9]+]], {{.*}}[ DW_TAG_subprogram ] [line [[@LINE+2]]] [public] [rvalue reference] [r]
-  // CHECK: ![[PRSR]] ={{.*}}![[ARGS]], null, null, null}{{.*}}[ DW_TAG_subroutine_type ]{{.*}}[rvalue reference]
+  // CHECK: ![[ARGS]] = !{null, ![[THIS:[0-9]+]]}
+  // CHECK: ![[THIS]] = !MDDerivedType(tag: DW_TAG_pointer_type, baseType: ![[CONST_A:[0-9]+]]
+  // CHECK: ![[CONST_A]] = !MDDerivedType(tag: DW_TAG_const_type
+  // CHECK: !MDSubprogram(name: "r"
+  // CHECK-SAME:          line: [[@LINE+4]]
+  // CHECK-SAME:          type: ![[PRSR:[0-9]+]]
+  // CHECK-SAME:          flags: DIFlagPublic | DIFlagPrototyped | DIFlagRValueReference,
+  // CHECK: ![[PRSR]] = !MDSubroutineType(flags: DIFlagRValueReference, types: ![[ARGS]])
   void r() const &&;
 };
 
 void g() {
   A a;
   // The type of pl is "void (A::*)() const &".
-  // CHECK: ![[PL:[0-9]+]]} ; [ DW_TAG_auto_variable ] [pl] [line [[@LINE+2]]]
-  // CHECK: ![[PLSR]], !"{{.*}}"} ; [ DW_TAG_ptr_to_member_type ]
+  // CHECK: !MDLocalVariable(tag: DW_TAG_auto_variable, name: "pl",
+  // CHECK-SAME:             line: [[@LINE+3]]
+  // CHECK-SAME:             type: ![[PL:[0-9]+]]
+  // CHECK: !MDDerivedType(tag: DW_TAG_ptr_to_member_type, baseType: ![[PLSR]]
   auto pl = &A::l;
 
-  // CHECK: ![[PR:[0-9]+]]} ; [ DW_TAG_auto_variable ] [pr] [line [[@LINE+2]]]
-  // CHECK: ![[PRSR]], !"{{.*}}"} ; [ DW_TAG_ptr_to_member_type ]
+  // CHECK: !MDLocalVariable(tag: DW_TAG_auto_variable, name: "pr",
+  // CHECK-SAME:             line: [[@LINE+3]]
+  // CHECK-SAME:             type: ![[PR:[0-9]+]]
+  // CHECK: !MDDerivedType(tag: DW_TAG_ptr_to_member_type, baseType: ![[PRSR]]
   auto pr = &A::r;
 }

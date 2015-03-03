@@ -5,6 +5,7 @@ struct __declspec(dllexport) s {
   static const unsigned int ui = 0;
 };
 
-// CHECK: , [[SCOPE:![^,]*]], {{.*}}, i32* @_ZN1s2uiE, {{.*}}} ; [ DW_TAG_variable ] [ui] [line 5] [def]
-// CHECK: [[SCOPE]] = {{.*}} ; [ DW_TAG_file_type ]
+// CHECK: ![[SCOPE:[0-9]+]] = !MDCompileUnit(
+// CHECK: !MDGlobalVariable(name: "ui", linkageName: "_ZN1s2uiE", scope: ![[SCOPE]],
+// CHECK-SAME:              variable: i32* @_ZN1s2uiE
 

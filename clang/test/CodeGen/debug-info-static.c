@@ -1,6 +1,6 @@
 // RUN: %clang_cc1  -g -emit-llvm -o - %s | FileCheck %s
 
-// CHECK:  xyzzy, null} ; [ DW_TAG_variable ]
+// CHECK: !MDGlobalVariable({{.*}}variable: i32* @f.xyzzy
 void f(void)
 {
    static int xyzzy;

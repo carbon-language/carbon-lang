@@ -25,12 +25,12 @@ int global_namespace_variable = 1;
 // functions that belong to the namespace have it as a context, and the global
 // function has the file as a context.
 
-// CHECK: !"0x2e\00member_function\00{{.*}}", !{{[0-9]+}}, !"_ZTS1C"{{.*}} [ DW_TAG_subprogram ] [line 11] [def] [member_function]
+// CHECK: ![[FILE:[0-9]+]] = !MDFile(filename: "{{.*}}context.cpp",
+// CHECK: !MDSubprogram(name: "member_function",{{.*}} scope: !"_ZTS1C",{{.*}} isDefinition: true
 
-// CHECK: !"0x2e\00static_member_function\00{{.*}}", !{{[0-9]+}}, !"_ZTS1C"{{.*}}  [ DW_TAG_subprogram ] [line 13] [def] [static_member_function]
+// CHECK: !MDSubprogram(name: "static_member_function",{{.*}} scope: !"_ZTS1C",{{.*}} isDefinition: true
 
-// CHECK: !"0x2e\00global_function\00{{[^,]+}}", !{{[0-9]+}}, [[FILE:![0-9]*]]{{.*}}  [ DW_TAG_subprogram ] [line 17] [def] [global_function]
-// CHECK: [[FILE]] = {{.*}} [ DW_TAG_file_type ]
+// CHECK: !MDSubprogram(name: "global_function",{{.*}} scope: ![[FILE]],{{.*}} isDefinition: true
 
-// CHECK: !"0x2e\00global_namespace_function\00{{[^,]+}}", !{{[0-9]+}}, [[NS:![0-9]*]]{{.*}} [ DW_TAG_subprogram ] [line 20] [def] [global_namespace_function]
-// CHECK: [[NS]] = {{.*}} [ DW_TAG_namespace ] [ns] [line 19]
+// CHECK: !MDSubprogram(name: "global_namespace_function",{{.*}} scope: ![[NS:[0-9]+]],{{.*}} isDefinition: true
+// CHECK: ![[NS]] = !MDNamespace(name: "ns"

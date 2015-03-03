@@ -24,9 +24,9 @@
 
 // CHECK-DAG: [[DBG_LINE]] = !MDLocation(line: 0, scope: ![[COPY_SP:[0-9]+]])
 // CHECK-DAG: [[COPY_LINE]] = !MDLocation(line: 0, scope: ![[COPY_SP:[0-9]+]])
-// CHECK-DAG: [[COPY_SP]] = {{.*}}[ DW_TAG_subprogram ]{{.*}}[__copy_helper_block_]
+// CHECK-DAG: [[COPY_SP]] = !MDSubprogram(name: "__copy_helper_block_"
 // CHECK-DAG: [[DESTROY_LINE]] = !MDLocation(line: 0, scope: ![[DESTROY_SP:[0-9]+]])
-// CHECK-DAG: [[DESTROY_SP]] = {{.*}}[ DW_TAG_subprogram ]{{.*}}[__destroy_helper_block_]
+// CHECK-DAG: [[DESTROY_SP]] = !MDSubprogram(name: "__destroy_helper_block_"
 typedef unsigned int NSUInteger;
 
 @protocol NSObject
@@ -61,8 +61,8 @@ static void run(void (^block)(void))
 {
     if ((self = [super init])) {
       run(^{
-          // CHECK-DAG: ![[SELF]] = {{.*}} [ DW_TAG_auto_variable ] [self] [line [[@LINE+4]]]
-          // CHECK-DAG: ![[D]] = {{.*}} [d] [line [[@LINE+1]]]
+          // CHECK-DAG: ![[SELF]] = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "self"{{.*}}, line: [[@LINE+4]],
+          // CHECK-DAG: ![[D]] = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "d"{{.*}}, line: [[@LINE+1]],
           NSMutableDictionary *d = [[NSMutableDictionary alloc] init]; 
           ivar = 42 + (int)[d count];
         });

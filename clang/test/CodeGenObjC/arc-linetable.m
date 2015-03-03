@@ -54,7 +54,9 @@ typedef signed char BOOL;
 
 @implementation AppDelegate : NSObject
 
-// CHECK: ![[TESTNOSIDEEFFECT:.*]] = {{.*}}[ DW_TAG_subprogram ] [line [[@LINE+1]]] [local] [def] [-[AppDelegate testNoSideEffect:]]
+// CHECK: ![[TESTNOSIDEEFFECT:.*]] = !MDSubprogram(name: "-[AppDelegate testNoSideEffect:]"
+// CHECK-SAME:                                     line: [[@LINE+2]]
+// CHECK-SAME:                                     isLocal: true, isDefinition: true
 - (int)testNoSideEffect:(NSString *)foo {
   int x = 1;
   return 1; // Return expression

@@ -6,7 +6,11 @@ class A {
 };
 A a;
 
-// CHECK: [[ARRAY_TYPE:![0-9]*]]} ; [ DW_TAG_member ] [x]
-// CHECK:  !"0x1\00\000\000\0032\000\000\000", null, null, {{![0-9]+}}, [[ELEM_TYPE:![0-9]+]], null, null, null} ; [ DW_TAG_array_type ] [line 0, size 0, align 32, offset 0] [from int]
+// CHECK: !MDDerivedType(tag: DW_TAG_member, name: "x"
+// CHECK-SAME:           baseType: [[ARRAY_TYPE:![0-9]+]]
+// CHECK: [[ARRAY_TYPE]] = !MDCompositeType(tag: DW_TAG_array_type,
+// CHECK-NOT:                               size:
+// CHECK-SAME:                              align: 32
+// CHECK-SAME:                              elements: [[ELEM_TYPE:![0-9]+]]
 // CHECK: [[ELEM_TYPE]] = !{[[SUBRANGE:.*]]}
-// CHECK: [[SUBRANGE]] = !{!"0x21\000\00-1"} ; [ DW_TAG_subrange_type ] [unbounded]
+// CHECK: [[SUBRANGE]] = !MDSubrange(count: -1)

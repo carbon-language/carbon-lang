@@ -2,8 +2,8 @@
 // Verify that the desired debugging type is generated for a structure
 //  member that is a pointer to a block. 
 
-// CHECK: __block_literal_generic{{.*}}DW_TAG_structure_type
-// CHECK: __block_descriptor{{.*}}DW_TAG_structure_type
+// CHECK: !MDCompositeType(tag: DW_TAG_structure_type, name: "__block_literal_generic"
+// CHECK: !MDCompositeType(tag: DW_TAG_structure_type, name: "__block_descriptor"
 struct inStruct {
   void (^genericBlockPtr)();
 } is;

@@ -8,6 +8,6 @@ int main() {
 }
 
 // CHECK: !llvm.dbg.cu = !{!0}
-// CHECK: DW_TAG_compile_unit
-// CHECK: {{.*main.* DW_TAG_subprogram}}
-// CHECK: DW_TAG_file_type
+// CHECK: !MDCompileUnit(
+// CHECK: !MDSubprogram(
+// CHECK: !MDFile(

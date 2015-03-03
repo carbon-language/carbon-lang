@@ -10,8 +10,8 @@
 // CHECK-NEXT: call void @llvm.dbg.declare(metadata {{.*}}, metadata ![[FOUND_IT:.*]], metadata !{{.*}}), !dbg ![[DBG2:.*]]
 // CHECK: = landingpad
 // CHECK-NEXT: cleanup, !dbg ![[DBG3:.*]]
-// CHECK-DAG: ![[CURRENT_ADDR]] = {{.*}} [current_address]
-// CHECK-DAG: ![[FOUND_IT]] = {{.*}} [found_it]
+// CHECK-DAG: ![[CURRENT_ADDR]] = {{.*}}name: "current_address"
+// CHECK-DAG: ![[FOUND_IT]] = {{.*}}name: "found_it"
 // CHECK-DAG: ![[DBG1]] = !MDLocation(line: 256,
 // CHECK-DAG: ![[DBG2]] = !MDLocation(line: 257,
 // CHECK-DAG: ![[DBG3]] = !MDLocation(line: 268,

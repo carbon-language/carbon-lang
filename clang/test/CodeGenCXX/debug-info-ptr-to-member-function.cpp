@@ -7,4 +7,5 @@ struct T {
 void foo(int (T::*method)()) {}
 
 // A pointer to a member function is a pair of function- and this-pointer.
-// CHECK: [ DW_TAG_ptr_to_member_type ] {{.*}} size 128
+// CHECK: !MDDerivedType(tag: DW_TAG_ptr_to_member_type,
+// CHECK-SAME:           size: 128

@@ -22,8 +22,12 @@ int main(int argc, char **argv) {
   A reallyA (500);
 }
 
-// CHECK: ![[CLASSTYPE:.*]] = {{.*}}, !"_ZTS1A"} ; [ DW_TAG_class_type ] [A]
-// CHECK: ![[ARTARG:.*]] = {{.*}} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1A]
-// CHECK: !"_ZTS1A", {{.*}} ; [ DW_TAG_subprogram ] [line 12] [public] [A]
-// CHECK: [[FUNCTYPE:![0-9]*]], null, null, null} ; [ DW_TAG_subroutine_type ]
+// CHECK: ![[CLASSTYPE:.*]] = !MDCompositeType(tag: DW_TAG_class_type, name: "A",
+// CHECK-SAME:                                 identifier: "_ZTS1A"
+// CHECK: ![[ARTARG:.*]] = !MDDerivedType(tag: DW_TAG_pointer_type, baseType: !"_ZTS1A",
+// CHECK-SAME:                            DIFlagArtificial
+// CHECK: !MDSubprogram(name: "A", scope: !"_ZTS1A"
+// CHECK-SAME:          line: 12
+// CHECK-SAME:          DIFlagPublic
+// CHECK: !MDSubroutineType(types: [[FUNCTYPE:![0-9]*]])
 // CHECK: [[FUNCTYPE]] = !{null, ![[ARTARG]], !{{.*}}, !{{.*}}}

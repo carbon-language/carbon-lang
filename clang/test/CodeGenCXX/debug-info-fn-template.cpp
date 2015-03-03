@@ -10,6 +10,6 @@ T fx(XF<T> xi) {
   return xi.member;
 }
 
-//CHECK: XF<int>
-//CHECK: DW_TAG_template_type_parameter
+// CHECK: !MDCompositeType(tag: DW_TAG_structure_type, name: "XF<int>"
+// CHECK: !MDTemplateTypeParameter(name: "T"
 template int fx(XF<int>);

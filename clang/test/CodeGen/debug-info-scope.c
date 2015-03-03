@@ -5,23 +5,23 @@
 int main() {
 	int j = 0;
 	int k = 0;
-// CHECK: DW_TAG_auto_variable ] [i]
-// CHECK-NEXT: DW_TAG_lexical_block
+// CHECK: !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i"
+// CHECK-NEXT: !MDLexicalBlock(
 
 // FIXME: Looks like we don't actually need both these lexical blocks (disc 2
 // just refers to disc 1, nothing actually uses disc 2).
-// GMLT-NOT: DW_TAG_lexical_block
-// GMLT: "0xb\002", {{.*}}} ; [ DW_TAG_lexical_block ]
-// GMLT-NOT: DW_TAG_lexical_block
-// GMLT: "0xb\001", {{.*}}} ; [ DW_TAG_lexical_block ]
+// GMLT-NOT: !MDLexicalBlock
+// GMLT: !MDLexicalBlockFile({{.*}}, discriminator: 2)
+// GMLT-NOT: !MDLexicalBlock
+// GMLT: !MDLexicalBlockFile({{.*}}, discriminator: 1)
 // Make sure we don't have any more lexical blocks because we don't need them in
 // -gmlt.
-// GMLT-NOT: DW_TAG_lexical_block
+// GMLT-NOT: !MDLexicalBlock
 	for (int i = 0; i < 10; i++)
 		j++;
-// CHECK: DW_TAG_auto_variable ] [i]
-// CHECK-NEXT: DW_TAG_lexical_block
-// GMLT-NOT: DW_TAG_lexical_block
+// CHECK: !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i"
+// CHECK-NEXT: !MDLexicalBlock(
+// GMLT-NOT: !MDLexicalBlock
 	for (int i = 0; i < 10; i++)
 		k++;
 	return 0;

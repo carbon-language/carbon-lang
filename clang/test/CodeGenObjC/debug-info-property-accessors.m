@@ -5,7 +5,8 @@
 // Ensure we emit the names of explicit/renamed accessors even if they
 // are defined later in the implementation section.
 //
-// CHECK:  !"0x4200\00blah\00{{[0-9]+}}\00isBlah\00{{.*}}", {{.*}}} ; [ DW_TAG_APPLE_property ] [blah]
+// CHECK:  !MDObjCProperty(name: "blah"
+// CHECK-SAME:             getter: "isBlah"
 
 @class NSString;
 extern void NSLog(NSString *format, ...);

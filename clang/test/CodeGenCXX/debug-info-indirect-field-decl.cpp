@@ -7,9 +7,18 @@ template <class T, int T::*ptr> class Foo {  };
 
 struct Bar {
   int i1;
-  // CHECK: [ DW_TAG_member ] [line [[@LINE+1]], size 32, align 32, offset 32] [from _ZTSN3BarUt_E]
+  // CHECK: ![[INT:[0-9]+]] = !MDBasicType(name: "int"
+  // CHECK: !MDDerivedType(tag: DW_TAG_member, scope:
+  // CHECK-SAME:           line: [[@LINE+3]]
+  // CHECK-SAME:           baseType: !"_ZTSN3BarUt_E"
+  // CHECK-SAME:           size: 32, align: 32, offset: 32
   union {
-    // CHECK: [ DW_TAG_member ] [i2] [line [[@LINE+1]], size 32, align 32, offset 0] [from int]
+    // CHECK: !MDDerivedType(tag: DW_TAG_member, name: "i2",
+    // CHECK-SAME:           line: [[@LINE+5]]
+    // CHECK-SAME:           baseType: ![[INT]]
+    // CHECK-SAME:           size: 32, align: 32
+    // CHECK-NOT:            offset:
+    // CHECK-SAME:           ){{$}}
     int i2;
   };
 };

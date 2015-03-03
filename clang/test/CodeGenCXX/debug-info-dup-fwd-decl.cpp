@@ -19,6 +19,6 @@ protected:
 
 Test t;
 
-// CHECK: ; [ DW_TAG_pointer_type ]
-// CHECK: ; [ DW_TAG_structure_type ] [data]
-// CHECK-NOT: ; [ DW_TAG_structure_type ] [data]
+// CHECK: !MDDerivedType(tag: DW_TAG_pointer_type
+// CHECK: !MDCompositeType(tag: DW_TAG_structure_type, name: "data"
+// CHECK-NOT: !MDCompositeType(tag: DW_TAG_structure_type, name: "data"

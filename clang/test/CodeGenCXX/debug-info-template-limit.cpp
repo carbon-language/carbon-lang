@@ -1,8 +1,8 @@
 // RUN: %clang_cc1 -emit-llvm -fno-standalone-debug -triple %itanium_abi_triple -g %s -o - | FileCheck %s
 
 // Check that this pointer type is TC<int>
-// CHECK: ![[LINE:[0-9]+]] = !{!"0x2\00TC<int>\00{{.*}}", {{.*}} !"_ZTS2TCIiE"} ; [ DW_TAG_class_type ]
-// CHECK: !"_ZTS2TCIiE"} ; [ DW_TAG_pointer_type ]{{.*}}[from _ZTS2TCIiE]
+// CHECK: ![[LINE:[0-9]+]] = !MDCompositeType(tag: DW_TAG_class_type, name: "TC<int>"{{.*}}, identifier: "_ZTS2TCIiE")
+// CHECK: !MDDerivedType(tag: DW_TAG_pointer_type, baseType: !"_ZTS2TCIiE"
 
 template<typename T>
 class TC {

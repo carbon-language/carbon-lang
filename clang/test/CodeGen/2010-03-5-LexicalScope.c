@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm -g %s -o - | FileCheck %s
-// CHECK: DW_TAG_lexical_block
-// CHECK: DW_TAG_lexical_block
+// CHECK: !MDLexicalBlock(
+// CHECK: !MDLexicalBlock(
 int foo(int i) {
 	if (i) {
 		int j = 2;

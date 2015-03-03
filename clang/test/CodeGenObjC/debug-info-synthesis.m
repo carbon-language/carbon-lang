@@ -30,5 +30,8 @@ int main(int argc, char *argv[]) {
   }
 }
 
-// CHECK: ![[FILE:.*]] = {{.*}}[ DW_TAG_file_type ] [{{.*}}/foo.h]
-// CHECK: ![[FILE]], {{.*}} ; [ DW_TAG_subprogram ] [line 8] [local] [def] [-[Foo dict]]
+// CHECK: ![[FILE:.*]] = !MDFile(filename: "{{[^"]+}}foo.h"
+// CHECK: !MDSubprogram(name: "-[Foo setDict:]"
+// CHECK-SAME:          file: ![[FILE]],
+// CHECK-SAME:          line: 8,
+// CHECK-SAME:          isLocal: true, isDefinition: true

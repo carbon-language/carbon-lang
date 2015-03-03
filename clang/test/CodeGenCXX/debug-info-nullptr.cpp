@@ -4,4 +4,4 @@ void foo() {
   decltype(nullptr) t = 0;
 }
 
-// CHECK: [ DW_TAG_unspecified_type ] [decltype(nullptr)]
+// CHECK: !MDBasicType(tag: DW_TAG_unspecified_type, name: "decltype(nullptr)")

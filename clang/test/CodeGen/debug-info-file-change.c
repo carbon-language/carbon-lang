@@ -14,8 +14,9 @@ int foo() {
   return i + j;
 }
 
-// CHECK: DW_TAG_lexical_block
-// CHECK: !"m.h"
-// CHECK: DW_TAG_lexical_block
-// CHECK: !"m.c"
-// CHECK-NOT: DW_TAG_lexical_block
+// CHECK-NOT: !MDLexicalBlock
+// CHECK: !MDLexicalBlockFile({{.*}}file: ![[MH:[0-9]+]]
+// CHECK: !MDFile(filename: "m.h"
+// CHECK: !MDLexicalBlockFile({{.*}}file: ![[MC:[0-9]+]]
+// CHECK: !MDFile(filename: "m.c"
+// CHECK-NOT: !MDLexicalBlock

@@ -2,7 +2,7 @@
 
 int somefunc(char *x, int y, double z) {
   
-  // CHECK: ![[NUM:[^,]*]], null, null, null} ; [ DW_TAG_subroutine_type
+  // CHECK: !MDSubroutineType(types: ![[NUM:[0-9]+]])
   // CHECK: ![[NUM]] = {{!{![^,]*, ![^,]*, ![^,]*, ![^,]*}}}
   
   return y;

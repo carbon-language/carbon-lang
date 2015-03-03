@@ -7,5 +7,5 @@ typedef int MyType;
 
 MyType a;
 
-// CHECK:  !"0x16\00MyType\002\00{{.*}}", ![[HEADER:[0-9]+]], null{{.*}}} ; [ DW_TAG_typedef ] [MyType] [line 2, size 0, align 0, offset 0] [from int]
-// CHECK: ![[HEADER]] = !{!"b.h",
+// CHECK: !MDDerivedType(tag: DW_TAG_typedef, name: "MyType", file: ![[HEADER:[0-9]+]], line: 2,
+// CHECK: ![[HEADER]] = !MDFile(filename: "b.h",

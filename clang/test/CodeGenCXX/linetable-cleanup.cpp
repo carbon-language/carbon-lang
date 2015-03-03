@@ -45,14 +45,14 @@ void bar()
 void baz()
 {
   if (!foo())
-    // CHECK: ![[SCOPE1:.*]] = !{!"0xb\00[[@LINE-1]]\00{{.*}}", {{.*}} ; [ DW_TAG_lexical_block ]
+    // CHECK: ![[SCOPE1:.*]] = distinct !MDLexicalBlock({{.*}}, line: [[@LINE-1]])
     // CHECK: {{.*}} = !MDLocation(line: [[@LINE+1]], scope: ![[SCOPE1]])
     return;
 
   if (foo()) {
     // no cleanup
     // CHECK: {{.*}} = !MDLocation(line: [[@LINE+2]], scope: ![[SCOPE2:.*]])
-    // CHECK: ![[SCOPE2]] = !{!"0xb\00[[@LINE-3]]\00{{.*}}", {{.*}} ; [ DW_TAG_lexical_block ]
+    // CHECK: ![[SCOPE2]] = distinct !MDLexicalBlock({{.*}}, line: [[@LINE-3]])
     return;
   }
   // CHECK: ![[RETBAZ]] = !MDLocation(line: [[@LINE+1]], scope: !{{.*}})

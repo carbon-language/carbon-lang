@@ -5,7 +5,7 @@
 // module that has its vtable" optimization is disabled by default on
 // Darwin and FreeBSD.
 //
-// CHECK: [ DW_TAG_member ] [lost]
+// CHECK: !MDDerivedType(tag: DW_TAG_member, name: "lost"
 class A
 {
   virtual bool f() = 0;

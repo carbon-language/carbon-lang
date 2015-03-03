@@ -7,4 +7,7 @@ namespace A {
 }
 
 // Verify that a is present and mangled.
-// CHECK: !"0x2e\00a\00a\00_ZN1AL1aEi\00{{.*}}", {{.*}}, i32 (i32)* @_ZN1AL1aEi, {{.*}} ; [ DW_TAG_subprogram ] [line 4] [local] [def] [a]
+// CHECK: !MDSubprogram(name: "a", linkageName: "_ZN1AL1aEi",
+// CHECK-SAME:          line: 4
+// CHECK-SAME:          isDefinition: true
+// CHECK-SAME:          function: i32 (i32)* @_ZN1AL1aEi

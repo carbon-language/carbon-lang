@@ -63,7 +63,9 @@ typedef enum {
 // make sure we are still in the same function
 // CHECK: define {{.*}}__copy_helper_block_
 // Metadata
-// CHECK:        ![[MAIN:.*]] = !{!"0x13\00Main\0023\00{{.*}}", {{.*}} ; [ DW_TAG_structure_type ] [Main] [line 23,
-// CHECK:        ![[PMAIN:.*]] = {{.*}}![[MAIN]]} ; [ DW_TAG_pointer_type ]{{.*}}from Main
-// CHECK:        ![[BDMD]] = {{.*}}.block_descriptor
-// CHECK:        ![[SELF]] = {{.*}}![[PMAIN]]{{.*}}[ DW_TAG_auto_variable ] [self] [line 40]
+// CHECK: ![[MAIN:.*]] = !MDCompositeType(tag: DW_TAG_structure_type, name: "Main"
+// CHECK-SAME:                            line: 23,
+// CHECK: ![[PMAIN:.*]] = !MDDerivedType(tag: DW_TAG_pointer_type, baseType: ![[MAIN]],
+// CHECK: ![[BDMD]] = !MDLocalVariable(tag: DW_TAG_arg_variable, name: ".block_descriptor"
+// CHECK: ![[SELF]] = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "self"
+// CHECK-SAME:                         line: 40,

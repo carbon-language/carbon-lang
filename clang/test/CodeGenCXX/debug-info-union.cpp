@@ -10,7 +10,11 @@ union E {
 
 E e;
 
-// CHECK: {{.*}} ; [ DW_TAG_union_type ] [E] [line 3, size 32, align 32, offset 0]
-// CHECK: {{.*}} ; [ DW_TAG_subprogram ] [line 6] [bb]
-// CHECK: {{.*}} ; [ DW_TAG_subprogram ] [line 7] [aa]
-// CHECK: {{.*}} ; [ DW_TAG_subprogram ] [line 8] [E]
+// CHECK: !MDCompositeType(tag: DW_TAG_union_type, name: "E"
+// CHECK-SAME:             line: 3
+// CHECK-SAME:             size: 32, align: 32
+// CHECK-NOT:              offset:
+// CHECK-SAME:             {{$}}
+// CHECK: !MDSubprogram(name: "bb"{{.*}}, line: 6
+// CHECK: !MDSubprogram(name: "aa"{{.*}}, line: 7
+// CHECK: !MDSubprogram(name: "E"{{.*}}, line: 8

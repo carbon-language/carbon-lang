@@ -3,7 +3,9 @@ namespace __pointer_type_imp
 {
   template <class _Tp, class _Dp, bool > struct __pointer_type1 {};
 
-  // CHECK: ![[PARAMS:[0-9]+]], !"_ZTSN18__pointer_type_imp15__pointer_type1I1C14default_deleteIS1_ELb0EEE"} ; [ DW_TAG_structure_type ] [__pointer_type1<C, default_delete<C>, false>] [line [[@LINE+1]], size 8, align 8, offset 0] [def] [from ]
+  // CHECK: !MDCompositeType(tag: DW_TAG_structure_type, name: "__pointer_type1<C, default_delete<C>, false>",
+  // CHECK-SAME:             templateParams: ![[PARAMS:[0-9]+]]
+  // CHECK-SAME:             identifier: "_ZTSN18__pointer_type_imp15__pointer_type1I1C14default_deleteIS1_ELb0EEE"
   template <class _Tp, class _Dp> struct __pointer_type1<_Tp, _Dp, false>
   {
     typedef _Tp* type;
@@ -15,7 +17,7 @@ struct __pointer_type2
   // Test that the bool template type parameter is emitted.
   //
   // CHECK: ![[PARAMS]] = !{!{{.*}}, !{{.*}}, ![[FALSE:[0-9]+]]}
-  // CHECK: ![[FALSE]] = {{.*}} i8 0, {{.*}}} ; [ DW_TAG_template_value_parameter ]
+  // CHECK: ![[FALSE]] = !MDTemplateValueParameter(type: !{{[0-9]+}}, value: i8 0)
   typedef typename __pointer_type_imp::__pointer_type1<_Tp, _Dp, false>::type type;
 };
 template <class _Tp> struct default_delete {};

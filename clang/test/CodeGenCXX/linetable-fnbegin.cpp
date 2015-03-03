@@ -4,8 +4,10 @@
 // CHECK: define{{.*}}bar
 // CHECK-NOT: define
 // CHECK: ret {{.*}}, !dbg [[DBG:.*]]
-// CHECK: [[HPP:.*]] = !{!"./template.hpp",
-// CHECK: [[SP:.*]] = !{!"0x2e\00{{.*}}", [[HPP]],{{.*}}[ DW_TAG_subprogram ] [line 22] [def] [bar]
+// CHECK: [[HPP:.*]] = !MDFile(filename: "./template.hpp",
+// CHECK: [[SP:.*]] = !MDSubprogram(name: "bar",
+// CHECK-SAME:                      file: [[HPP]], line: 22
+// CHECK-SAME:                      isDefinition: true
 // We shouldn't need a lexical block for this function.
 // CHECK: [[DBG]] = !MDLocation(line: 23, scope: [[SP]])
 

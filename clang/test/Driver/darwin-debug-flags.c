@@ -5,11 +5,11 @@
 // <rdar://problem/12955296>
 // RUN: %clang -### -target i386-apple-darwin9 -c -g %t.s 2>&1 | FileCheck -check-prefix=P %s
 
-// CHECK: !0 = !{
-// CHECK: -I path\5C with\5C \5C\5Cspaces
-// CHECK: -g -Os
-// CHECK: -mmacosx-version-min=10.5.0
-// CHECK: [ DW_TAG_compile_unit ]
+// CHECK: !0 = !MDCompileUnit(
+// CHECK-SAME:                flags:
+// CHECK-SAME:                -I path\5C with\5C \5C\5Cspaces
+// CHECK-SAME:                -g -Os
+// CHECK-SAME:                -mmacosx-version-min=10.5.0
 
 int x;
 

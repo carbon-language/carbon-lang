@@ -16,12 +16,12 @@ void foo() {
   static A stat;
 }
 
-// CHECK-NOKEXT: [ DW_TAG_subprogram ] [line 12] [local] [def] [__cxx_global_var_init]
-// CHECK-NOKEXT: [ DW_TAG_subprogram ] [line 12] [local] [def] [__dtor_glob]
-// CHECK-NOKEXT: [ DW_TAG_subprogram ] [line 13] [local] [def] [__cxx_global_var_init1]
-// CHECK-NOKEXT: [ DW_TAG_subprogram ] [line 13] [local] [def] [__cxx_global_array_dtor]
-// CHECK-NOKEXT: [ DW_TAG_subprogram ] [line 13] [local] [def] [__dtor_array]
-// CHECK-NOKEXT: [ DW_TAG_subprogram ] [line 16] [local] [def] [__dtor__ZZ3foovE4stat]
-// CHECK-NOKEXT: [ DW_TAG_subprogram ] [line {{.*}}] [local] [def]{{$}}
+// CHECK-NOKEXT: !MDSubprogram(name: "__cxx_global_var_init",{{.*}} line: 12,{{.*}} isLocal: true, isDefinition: true
+// CHECK-NOKEXT: !MDSubprogram(name: "__dtor_glob",{{.*}} line: 12,{{.*}} isLocal: true, isDefinition: true
+// CHECK-NOKEXT: !MDSubprogram(name: "__cxx_global_var_init1",{{.*}} line: 13,{{.*}} isLocal: true, isDefinition: true
+// CHECK-NOKEXT: !MDSubprogram(name: "__cxx_global_array_dtor",{{.*}} line: 13,{{.*}} isLocal: true, isDefinition: true
+// CHECK-NOKEXT: !MDSubprogram(name: "__dtor_array",{{.*}} line: 13,{{.*}} isLocal: true, isDefinition: true
+// CHECK-NOKEXT: !MDSubprogram(name: "__dtor__ZZ3foovE4stat",{{.*}} line: 16,{{.*}} isLocal: true, isDefinition: true
+// CHECK-NOKEXT: !MDSubprogram({{.*}} isLocal: true, isDefinition: true
 
-// CHECK-KEXT: [ DW_TAG_subprogram ] [line {{.*}}] [local] [def]{{$}}
+// CHECK-KEXT: !MDSubprogram({{.*}} isLocal: true, isDefinition: true

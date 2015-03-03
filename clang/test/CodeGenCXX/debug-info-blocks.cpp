@@ -10,5 +10,9 @@ void test() {
   __block A a;
 }
 
-// CHECK: [ DW_TAG_subprogram ] [line 10] [local] [def] [__Block_byref_object_copy_]
-// CHECK: [ DW_TAG_subprogram ] [line 10] [local] [def] [__Block_byref_object_dispose_]
+// CHECK: !MDSubprogram(name: "__Block_byref_object_copy_",
+// CHECK-SAME:          line: 10,
+// CHECK-SAME:          isLocal: true, isDefinition: true
+// CHECK: !MDSubprogram(name: "__Block_byref_object_dispose_",
+// CHECK-SAME:          line: 10,
+// CHECK-SAME:          isLocal: true, isDefinition: true

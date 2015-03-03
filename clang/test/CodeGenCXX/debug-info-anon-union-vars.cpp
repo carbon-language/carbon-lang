@@ -21,8 +21,8 @@ int test_it() {
   return (c == 1);
 }
 
-// CHECK: [[FILE:.*]] = {{.*}}[ DW_TAG_file_type ] [{{.*}}debug-info-anon-union-vars.cpp]
-// CHECK: [[FILE]]{{.*}}[ DW_TAG_variable ] [c] [line 6] [local] [def]
-// CHECK: [[FILE]]{{.*}}[ DW_TAG_variable ] [d] [line 6] [local] [def]
-// CHECK: [[FILE]]{{.*}}[ DW_TAG_variable ] [a] [line 6] [local] [def]
-// CHECK: [[FILE]]{{.*}}[ DW_TAG_variable ] [b] [line 6] [local] [def]
+// CHECK: [[FILE:.*]] = !MDFile(filename: "{{.*}}debug-info-anon-union-vars.cpp",
+// CHECK: !MDGlobalVariable(name: "c",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true
+// CHECK: !MDGlobalVariable(name: "d",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true
+// CHECK: !MDGlobalVariable(name: "a",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true
+// CHECK: !MDGlobalVariable(name: "b",{{.*}} file: [[FILE]], line: 6,{{.*}} isLocal: true, isDefinition: true

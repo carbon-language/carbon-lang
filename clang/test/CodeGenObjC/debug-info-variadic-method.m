@@ -10,7 +10,7 @@
 @implementation Foo
 - (void) Bar: (int) n, ...
 {
-  // CHECK: ![[NUM:[^,]*]], null, null, null} ; [ DW_TAG_subroutine_type ]
-  // CHECK: ![[NUM]] = {{!{null, ![^,]*, ![^,]*, ![^,]*, null}}}    
+  // CHECK: !MDSubroutineType(types: ![[NUM:[0-9]+]])
+  // CHECK: ![[NUM]] = {{!{null, ![^,]*, ![^,]*, ![^,]*, null}}}
 }
 @end

@@ -55,47 +55,61 @@ void B::func_fwd() {}
 // This should work even if 'i' and 'func' were declarations & not definitions,
 // but it doesn't yet.
 
-// CHECK: [[CU:![0-9]*]] = !{!"0x11\00{{.*}}\001"{{.*}}, [[MODULES:![0-9]*]]} ; [ DW_TAG_compile_unit ]
-// CHECK: [[FOO:![0-9]*]] {{.*}} ; [ DW_TAG_structure_type ] [foo] [line 5, size 0, align 0, offset 0] [decl] [from ]
-// CHECK: [[FOOCPP:![0-9]*]] = !{!"foo.cpp", {{.*}}
-// CHECK: [[NS:![0-9]*]] = !{!"0x39\00B\001", [[FILE2:![0-9]*]], [[CTXT:![0-9]*]]} ; [ DW_TAG_namespace ] [B] [line 1]
-// CHECK: [[CTXT]] = !{!"0x39\00A\005", [[FILE:![0-9]*]], null} ; [ DW_TAG_namespace ] [A] [line 5]
-// CHECK: [[FILE]] {{.*}}debug-info-namespace.cpp"
-// CHECK: [[BAR:![0-9]*]] {{.*}} ; [ DW_TAG_structure_type ] [bar] [line 6, {{.*}}] [decl] [from ]
-// CHECK: [[F1:![0-9]*]] {{.*}} ; [ DW_TAG_subprogram ] [line 4] [def] [f1]
-// CHECK: [[FILE2]]} ; [ DW_TAG_file_type ] [{{.*}}foo.cpp]
-// CHECK: [[FUNC:![0-9]*]] {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]
-// CHECK: [[FUNC_FWD:![0-9]*]] {{.*}} [ DW_TAG_subprogram ] [line 47] [def] [func_fwd]
-// CHECK: [[I:![0-9]*]] = !{!"0x34\00i\00{{.*}}", [[NS]], {{.*}} ; [ DW_TAG_variable ] [i]
-// CHECK: [[VAR_FWD:![0-9]*]] = !{!"0x34\00var_fwd\00{{.*}}", [[NS]], {{.*}}} ; [ DW_TAG_variable ] [var_fwd] [line 44] [def]
+// CHECK: [[CU:![0-9]+]] = !MDCompileUnit(
+// CHECK-SAME:                            imports: [[MODULES:![0-9]*]]
+// CHECK: [[FOO:![0-9]+]] = !MDCompositeType(tag: DW_TAG_structure_type, name: "foo",
+// CHECK-SAME:                               line: 5
+// CHECK-SAME:                               DIFlagFwdDecl
+// CHECK: [[FOOCPP:![0-9]+]] = !MDFile(filename: "foo.cpp"
+// CHECK: [[NS:![0-9]+]] = !MDNamespace(name: "B", scope: [[CTXT:![0-9]+]], file: [[FOOCPP]], line: 1)
+// CHECK: [[CTXT]] = !MDNamespace(name: "A", scope: null, file: [[FILE:![0-9]+]], line: 5)
+// CHECK: [[FILE]] = !MDFile(filename: "{{.*}}debug-info-namespace.cpp",
+// CHECK: [[BAR:![0-9]+]] = !MDCompositeType(tag: DW_TAG_structure_type, name: "bar",
+// CHECK-SAME:                               line: 6
+// CHECK-SAME:                               DIFlagFwdDecl
+// CHECK: [[F1:![0-9]+]] = !MDSubprogram(name: "f1",{{.*}} line: 4
+// CHECK-SAME:                           isDefinition: true
+// CHECK: [[FUNC:![0-9]+]] = !MDSubprogram(name: "func",{{.*}} isDefinition: true
+// CHECK: [[FUNC_FWD:![0-9]+]] = !MDSubprogram(name: "func_fwd",{{.*}} line: 47,{{.*}} isDefinition: true
+// CHECK: [[I:![0-9]+]] = !MDGlobalVariable(name: "i",{{.*}} scope: [[NS]],
+// CHECK: [[VAR_FWD:![0-9]+]] = !MDGlobalVariable(name: "var_fwd",{{.*}} scope: [[NS]],
+// CHECK-SAME:                                    line: 44
+// CHECK-SAME:                                    isDefinition: true
 
-// CHECK: [[MODULES]] = !{[[M1:![0-9]*]], [[M2:![0-9]*]], [[M3:![0-9]*]], [[M4:![0-9]*]], [[M5:![0-9]*]], [[M6:![0-9]*]], [[M7:![0-9]*]], [[M8:![0-9]*]], [[M9:![0-9]*]], [[M10:![0-9]*]], [[M11:![0-9]*]], [[M12:![0-9]*]], [[M13:![0-9]*]], [[M14:![0-9]*]], [[M15:![0-9]*]], [[M16:![0-9]*]], [[M17:![0-9]*]]}
-// CHECK: [[M1]] = !{!"0x3a\0015\00", [[CTXT]], [[NS]]} ; [ DW_TAG_imported_module ]
-// CHECK: [[M2]] = !{!"0x3a\00{{[0-9]+}}\00", [[CU]], [[CTXT]]} ; [ DW_TAG_imported_module ]
-// CHECK: [[M3]] = !{!"0x8\0019\00E", [[CU]], [[CTXT]]} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[M4]] = !{!"0x3a\0023\00", [[LEX2:![0-9]*]], [[NS]]} ; [ DW_TAG_imported_module ]
-// CHECK: [[LEX2]] = !{!"0xb\00{{[0-9]*}}\000\00{{.*}}", [[FILE2]], [[LEX1:![0-9]+]]} ; [ DW_TAG_lexical_block ]
-// CHECK: [[LEX1]] = !{!"0xb\00{{[0-9]*}}\000\00{{.*}}", [[FILE2]], [[FUNC]]} ; [ DW_TAG_lexical_block ]
-// CHECK: [[M5]] = !{!"0x3a\00{{[0-9]+}}\00", [[FUNC]], [[CTXT]]} ; [ DW_TAG_imported_module ]
-// CHECK: [[M6]] = !{!"0x8\0027\00", [[FUNC]], [[FOO:!"_ZTSN1A1B3fooE"]]} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[M7]] = !{!"0x8\00{{[0-9]+}}\00", [[FUNC]], [[BAR:!"_ZTSN1A1B3barE"]]} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[M8]] = !{!"0x8\00{{[0-9]+}}\00", [[FUNC]], [[F1]]} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[M9]] = !{!"0x8\00{{[0-9]+}}\00", [[FUNC]], [[I]]} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[M10]] = !{!"0x8\00{{[0-9]+}}\00", [[FUNC]], [[BAZ:![0-9]*]]} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[BAZ]] = !{!"0x16\00baz\00{{.*}}", [[FOOCPP]], [[NS]], !"_ZTSN1A1B3barE"} ; [ DW_TAG_typedef ] [baz] {{.*}} [from _ZTSN1A1B3barE]
-// CHECK: [[M11]] = !{!"0x8\00{{[0-9]+}}\00X", [[FUNC]], [[CTXT]]} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[M12]] = !{!"0x8\00{{[0-9]+}}\00Y", [[FUNC]], [[M11]]} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[M13]] = !{!"0x8\00{{[0-9]+}}\00", [[FUNC]], [[VAR_DECL:![0-9]*]]} ; [ DW_TAG_imported_declaration ]
-// CHECK [[VAR_DECL]] = !{!"0x34\00var_decl\00{{.*}}", [[NS]], {{.*}}} ; [ DW_TAG_variable ] [var_decl] [line 8]
-// CHECK: [[M14]] = !{!"0x8\00{{[0-9]+}}\00", [[FUNC]], [[FUNC_DECL:![0-9]*]]} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[FUNC_DECL]] = !{!"0x2e\00func_decl\00{{.*}}", [[FOOCPP]], [[NS]], {{.*}}} ; [ DW_TAG_subprogram ] [line 9] [scope 0] [func_decl]
-// CHECK: [[M15]] = !{!"0x8\00{{[0-9]+}}\00", [[FUNC]], [[VAR_FWD:![0-9]*]]} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[M16]] = !{!"0x8\00{{[0-9]+}}\00", [[FUNC]], [[FUNC_FWD:![0-9]*]]} ; [ DW_TAG_imported_declaration ]
-// CHECK: [[M17]] = !{!"0x8\00{{[0-9]+}}\00", [[CTXT]], [[I]]} ; [ DW_TAG_imported_declaration ]
-// CHECK-GMLT: [[CU:![0-9]*]] = !{!"0x11\00{{.*}}\002"{{.*}}, [[MODULES:![0-9]*]]} ; [ DW_TAG_compile_unit ]
+// CHECK: [[MODULES]] = !{[[M1:![0-9]+]], [[M2:![0-9]+]], [[M3:![0-9]+]], [[M4:![0-9]+]], [[M5:![0-9]+]], [[M6:![0-9]+]], [[M7:![0-9]+]], [[M8:![0-9]+]], [[M9:![0-9]+]], [[M10:![0-9]+]], [[M11:![0-9]+]], [[M12:![0-9]+]], [[M13:![0-9]+]], [[M14:![0-9]+]], [[M15:![0-9]+]], [[M16:![0-9]+]], [[M17:![0-9]+]]}
+// CHECK: [[M1]] = !MDImportedEntity(tag: DW_TAG_imported_module, scope: [[CTXT]], entity: [[NS]], line: 15)
+// CHECK: [[M2]] = !MDImportedEntity(tag: DW_TAG_imported_module, scope: [[CU]], entity: [[CTXT]],
+// CHECK: [[M3]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, name: "E", scope: [[CU]], entity: [[CTXT]], line: 19)
+// CHECK: [[M4]] = !MDImportedEntity(tag: DW_TAG_imported_module, scope: [[LEX2:![0-9]+]], entity: [[NS]], line: 23)
+// CHECK: [[LEX2]] = distinct !MDLexicalBlock(scope: [[LEX1:![0-9]+]], file: [[FOOCPP]],
+// CHECK: [[LEX1]] = distinct !MDLexicalBlock(scope: [[FUNC]], file: [[FOOCPP]],
+// CHECK: [[M5]] = !MDImportedEntity(tag: DW_TAG_imported_module, scope: [[FUNC]], entity: [[CTXT]],
+// CHECK: [[M6]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, scope: [[FUNC]], entity: [[FOO:!"_ZTSN1A1B3fooE"]], line: 27)
+// CHECK: [[M7]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, scope: [[FUNC]], entity: [[BAR:!"_ZTSN1A1B3barE"]]
+// CHECK: [[M8]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, scope: [[FUNC]], entity: [[F1]]
+// CHECK: [[M9]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, scope: [[FUNC]], entity: [[I]]
+// CHECK: [[M10]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, scope: [[FUNC]], entity: [[BAZ:![0-9]+]]
+// CHECK: [[BAZ]] = !MDDerivedType(tag: DW_TAG_typedef, name: "baz", scope: [[NS]], file: [[FOOCPP]],
+// CHECK-SAME:                     baseType: !"_ZTSN1A1B3barE"
+// CHECK: [[M11]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, name: "X", scope: [[FUNC]], entity: [[CTXT]]
+// CHECK: [[M12]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, name: "Y", scope: [[FUNC]], entity: [[M11]]
+// CHECK: [[M13]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, scope: [[FUNC]], entity: [[VAR_DECL:![0-9]+]]
+// CHECK [[VAR_DECL]] = !MDGlobalVariable(name: "var_decl", scope: [[NS]],{{.*}} line: 8,
+// CHECK: [[M14]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, scope: [[FUNC]], entity: [[FUNC_DECL:![0-9]+]]
+// CHECK: [[FUNC_DECL]] = !MDSubprogram(name: "func_decl",
+// CHECK-SAME:                          scope: [[NS]], file: [[FOOCPP]], line: 9
+// CHECK: [[M15]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, scope: [[FUNC]], entity: [[VAR_FWD:![0-9]+]]
+// CHECK: [[M16]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, scope: [[FUNC]], entity: [[FUNC_FWD:![0-9]+]]
+// CHECK: [[M17]] = !MDImportedEntity(tag: DW_TAG_imported_declaration, scope: [[CTXT]], entity: [[I]]
+
+// CHECK-GMLT: [[CU:![0-9]+]] = !MDCompileUnit(
+// CHECK-GMLT-SAME:                            emissionKind: 2,
+// CHECK-GMLT-SAME:                            imports: [[MODULES:![0-9]+]]
 // CHECK-GMLT: [[MODULES]] = !{}
 
-// CHECK-NOLIMIT: ; [ DW_TAG_structure_type ] [bar] [line 6, {{.*}}] [def] [from ]
+// CHECK-NOLIMIT: !MDCompositeType(tag: DW_TAG_structure_type, name: "bar",{{.*}} line: 6,
+// CHECK-NOLIMIT-NOT:              DIFlagFwdDecl
+// CHECK-NOLIMIT-SAME:             ){{$}}
 
 // REQUIRES: shell-preserves-root
 // REQUIRES: dw2

@@ -1,6 +1,7 @@
-// RUN: %clang_cc1 %s -emit-llvm -g -o - | grep DW_TAG_compile_unit | count 1
+// RUN: %clang_cc1 %s -emit-llvm -g -o - | FileCheck %s
+// CHECK: !MDCompileUnit(
+// CHECK-NOT: !MDCompileUnit(
 // PR664: ensure that line #'s are emitted for declarations
-
 
 short test(short br_data_0,
 short br_data_1,
