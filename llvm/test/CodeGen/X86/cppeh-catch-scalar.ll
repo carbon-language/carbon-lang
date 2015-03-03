@@ -62,10 +62,8 @@ catch.dispatch:                                   ; preds = %lpad
 
 catch:                                            ; preds = %catch.dispatch
   %exn11 = load i8*, i8** %exn.slot
-  %tmp4 = call i8* @llvm.eh.begincatch(i8* %exn11) #3
-  %tmp5 = bitcast i8* %tmp4 to i32*
-  %tmp6 = load i32, i32* %tmp5, align 4
-  store i32 %tmp6, i32* %i, align 4
+  %i.i8 = bitcast i32* %i to i8*
+  call void @llvm.eh.begincatch(i8* %exn11, i8* %i.i8) #3
   %tmp7 = load i32, i32* %i, align 4
   call void @_Z10handle_inti(i32 %tmp7)
   br label %invoke.cont2
@@ -92,9 +90,6 @@ eh.resume:                                        ; preds = %catch.dispatch
 ; CHECK:   %eh.obj.ptr = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 1
 ; CHECK:   %eh.obj = load i8*, i8** %eh.obj.ptr
 ; CHECK:   %i = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 2
-; CHECK:   %tmp5 = bitcast i8* %eh.obj to i32*
-; CHECK:   %tmp6 = load i32, i32* %tmp5, align 4
-; CHECK:   store i32 %tmp6, i32* %i, align 4
 ; CHECK:   %tmp7 = load i32, i32* %i, align 4
 ; CHECK:   call void @_Z10handle_inti(i32 %tmp7)
 ; CHECK:   ret i8* blockaddress(@_Z4testv, %try.cont)
@@ -107,7 +102,7 @@ declare i32 @__CxxFrameHandler3(...)
 ; Function Attrs: nounwind readnone
 declare i32 @llvm.eh.typeid.for(i8*) #2
 
-declare i8* @llvm.eh.begincatch(i8*)
+declare void @llvm.eh.begincatch(i8*, i8*)
 
 declare void @llvm.eh.endcatch()
 

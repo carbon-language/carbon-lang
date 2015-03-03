@@ -6,7 +6,7 @@
 
 target triple = "x86_64-pc-windows-msvc"
 
-declare i8* @llvm.eh.begincatch(i8*)
+declare void @llvm.eh.begincatch(i8*, i8*)
 
 declare void @llvm.eh.endcatch()
 
@@ -15,7 +15,7 @@ declare void @llvm.eh.endcatch()
 ; Function Attrs: uwtable
 define void @test_missing_endcatch() {
 ; CHECK: Some paths from llvm.eh.begincatch may not reach llvm.eh.endcatch
-; CHECK-NEXT: %2 = call i8* @llvm.eh.begincatch(i8* %exn)
+; CHECK-NEXT: call void @llvm.eh.begincatch(i8* %exn, i8* null)
 entry:
   invoke void @_Z9may_throwv()
           to label %try.cont unwind label %lpad
@@ -30,7 +30,7 @@ lpad:                                             ; preds = %entry
   br i1 %matches, label %catch, label %eh.resume
 
 catch:                                            ; preds = %lpad
-  %2 = call i8* @llvm.eh.begincatch(i8* %exn)
+  call void @llvm.eh.begincatch(i8* %exn, i8* null)
   call void @_Z10handle_intv()
   br label %invoke.cont2
 
@@ -79,8 +79,8 @@ eh.resume:                                        ; preds = %catch.dispatch
 ; Function Attrs: uwtable
 define void @test_multiple_begin() {
 ; CHECK: llvm.eh.begincatch may be called a second time before llvm.eh.endcatch
-; CHECK-NEXT:  %2 = call i8* @llvm.eh.begincatch(i8* %exn)
-; CHECK-NEXT:  %3 = call i8* @llvm.eh.begincatch(i8* %exn)
+; CHECK-NEXT: call void @llvm.eh.begincatch(i8* %exn, i8* null)
+; CHECK-NEXT: call void @llvm.eh.begincatch(i8* %exn, i8* null)
 entry:
   invoke void @_Z9may_throwv()
           to label %try.cont unwind label %lpad
@@ -95,12 +95,12 @@ lpad:                                             ; preds = %entry
   br i1 %matches, label %catch, label %eh.resume
 
 catch:                                            ; preds = %lpad
-  %2 = call i8* @llvm.eh.begincatch(i8* %exn)
+  call void @llvm.eh.begincatch(i8* %exn, i8* null)
   call void @_Z10handle_intv()
   br label %invoke.cont2
 
 invoke.cont2:                                     ; preds = %catch
-  %3 = call i8* @llvm.eh.begincatch(i8* %exn)
+  call void @llvm.eh.begincatch(i8* %exn, i8* null)
   call void @llvm.eh.endcatch()
   br label %try.cont
 
@@ -130,7 +130,7 @@ lpad:                                             ; preds = %entry
   br i1 %matches, label %catch, label %eh.resume
 
 catch:                                            ; preds = %lpad
-  %2 = call i8* @llvm.eh.begincatch(i8* %exn)
+  call void @llvm.eh.begincatch(i8* %exn, i8* null)
   call void @_Z10handle_intv()
   call void @llvm.eh.endcatch()
   br label %invoke.cont2
@@ -150,10 +150,10 @@ eh.resume:                                        ; preds = %catch.dispatch
 ; Function Attrs: uwtable
 define void @test_begincatch_without_lpad() {
 ; CHECK: llvm.eh.begincatch may be reachable without passing a landingpad
-; CHECK-NEXT:  %0 = call i8* @llvm.eh.begincatch(i8* %exn)
+; CHECK-NEXT: call void @llvm.eh.begincatch(i8* %exn, i8* null)
 entry:
   %exn = alloca i8
-  %0 = call i8* @llvm.eh.begincatch(i8* %exn)
+  call void @llvm.eh.begincatch(i8* %exn, i8* null)
   call void @_Z10handle_intv()
   br label %invoke.cont2
 
@@ -168,7 +168,7 @@ try.cont:                                         ; preds = %invoke.cont2, %entr
 ; Function Attrs: uwtable
 define void @test_branch_to_begincatch_with_no_lpad(i32 %fake.sel) {
 ; CHECK: llvm.eh.begincatch may be reachable without passing a landingpad
-; CHECK-NEXT:  %3 = call i8* @llvm.eh.begincatch(i8* %exn2)
+; CHECK-NEXT: call void @llvm.eh.begincatch(i8* %exn2, i8* null)
 entry:
   %fake.exn = alloca i8
   invoke void @_Z9may_throwv()
@@ -189,7 +189,7 @@ lpad:                                             ; preds = %entry
 catch:                                            ; preds = %lpad, %entry
   %exn2 = phi i8* [%exn, %lpad], [%fake.exn, %entry]
   %sel2 = phi i32 [%sel, %lpad], [%fake.sel, %entry]
-  %3 = call i8* @llvm.eh.begincatch(i8* %exn2)
+  call void @llvm.eh.begincatch(i8* %exn2, i8* null)
   call void @_Z10handle_intv()
   %matches1 = icmp eq i32 %sel2, 0
   br i1 %matches1, label %invoke.cont2, label %invoke.cont3
@@ -213,7 +213,7 @@ eh.resume:                                        ; preds = %catch.dispatch
 ; Function Attrs: uwtable
 define void @test_branch_missing_endcatch() {
 ; CHECK: Some paths from llvm.eh.begincatch may not reach llvm.eh.endcatch
-; CHECK-NEXT:  %3 = call i8* @llvm.eh.begincatch(i8* %exn2)
+; CHECK-NEXT: call void @llvm.eh.begincatch(i8* %exn2, i8* null)
 entry:
   invoke void @_Z9may_throwv()
           to label %invoke.cont unwind label %lpad
@@ -247,7 +247,7 @@ lpad1:                                            ; preds = %entry
 catch:                                            ; preds = %lpad, %lpad1
   %exn2 = phi i8* [%exn, %lpad], [%exn1, %lpad1]
   %sel2 = phi i32 [%sel, %lpad], [%sel1, %lpad1]
-  %3 = call i8* @llvm.eh.begincatch(i8* %exn2)
+  call void @llvm.eh.begincatch(i8* %exn2, i8* null)
   call void @_Z10handle_intv()
   %matches1 = icmp eq i32 %sel2, 0
   br i1 %matches1, label %invoke.cont2, label %invoke.cont3

@@ -40,7 +40,7 @@ lpad:                                             ; preds = %entry
 
 catch:                                            ; preds = %lpad
   %exn = load i8*, i8** %exn.slot
-  %tmp3 = call i8* @llvm.eh.begincatch(i8* %exn) #2
+  call void @llvm.eh.begincatch(i8* %exn, i8* null) #2
   call void @_Z16handle_exceptionv()
   br label %invoke.cont2
 
@@ -66,7 +66,7 @@ declare void @_Z9may_throwv() #1
 
 declare i32 @__CxxFrameHandler3(...)
 
-declare i8* @llvm.eh.begincatch(i8*)
+declare void @llvm.eh.begincatch(i8*, i8*)
 
 declare void @_Z16handle_exceptionv() #1
 

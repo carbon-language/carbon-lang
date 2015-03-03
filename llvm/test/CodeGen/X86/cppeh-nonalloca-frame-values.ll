@@ -51,26 +51,26 @@ $"\01??_R0H@8" = comdat any
 @"\01??_R0H@8" = linkonce_odr global %rtti.TypeDescriptor2 { i8** @"\01??_7type_info@@6B@", i8* null, [3 x i8] c".H\00" }, comdat
 
 ; This structure should be declared for the frame allocation block.
-; CHECK: %"struct.\01?test@@YAXXZ.ehdata" = type { i32, i8*, i32, [10 x i32], i32, i32*, i32* }
+; CHECK: %"struct.\01?test@@YAXXZ.ehdata" = type { i32, i8*, i32, i32, [10 x i32], i32, i32*, i32* }
 
 ; The function entry should be rewritten like this.
 ; CHECK: define void @"\01?test@@YAXXZ"() #0 {
 ; CHECK: entry:
-; CHECK:  %frame.alloc = call i8* @llvm.frameallocate(i32 80)
+; CHECK:  %frame.alloc = call i8* @llvm.frameallocate(i32 88)
 ; CHECK:  %eh.data = bitcast i8* %frame.alloc to %"struct.\01?test@@YAXXZ.ehdata"*
 ; CHECK-NOT:  %ExceptionVal = alloca [10 x i32], align 16
-; CHECK:  %NumExceptions.020.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 2
-; CHECK:  %i.019.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4
-; CHECK:  %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
+; CHECK:  %NumExceptions.020.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
+; CHECK:  %i.019.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 5
+; CHECK:  %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4
 ; CHECK:  %Data = alloca i64, align 8
 ; CHECK:  %tmpcast = bitcast i64* %Data to %struct.SomeData*
 ; CHECK:  %0 = bitcast [10 x i32]* %ExceptionVal to i8*
 ; CHECK:  call void @llvm.lifetime.start(i64 40, i8* %0) #1
 ; CHECK:  store i64 0, i64* %Data, align 8
-; CHECK:  %a.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 5
+; CHECK:  %a.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 6
 ; CHECK:  %a = bitcast i64* %Data to i32*
 ; CHECK:  store i32* %a, i32** %a.reg2mem
-; CHECK:  %b.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 6
+; CHECK:  %b.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 7
 ; CHECK:  %b = getelementptr inbounds %struct.SomeData, %struct.SomeData* %tmpcast, i64 0, i32 1
 ; CHECK:  store i32* %b, i32** %b.reg2mem
 ; CHECK:  store i32 0, i32* %NumExceptions.020.reg2mem
@@ -80,6 +80,7 @@ $"\01??_R0H@8" = comdat any
 ; Function Attrs: uwtable
 define void @"\01?test@@YAXXZ"() #0 {
 entry:
+  %e = alloca i32, align 4
   %ExceptionVal = alloca [10 x i32], align 16
   %Data = alloca i64, align 8
   %tmpcast = bitcast i64* %Data to %struct.SomeData*
@@ -127,25 +128,25 @@ lpad:                                             ; preds = %for.body
 
 catch:                                            ; preds = %lpad
   %5 = extractvalue { i8*, i32 } %2, 0
-  %6 = tail call i8* @llvm.eh.begincatch(i8* %5) #1
-  %7 = bitcast i8* %6 to i32*
-  %8 = load i32, i32* %7, align 4, !tbaa !7
+  %e.i8 = bitcast i32* %e to i8*
+  call void @llvm.eh.begincatch(i8* %5, i8* %e.i8) #1
+  %tmp8 = load i32, i32* %e, align 4, !tbaa !7
   %idxprom = sext i32 %NumExceptions.020 to i64
   %arrayidx = getelementptr inbounds [10 x i32], [10 x i32]* %ExceptionVal, i64 0, i64 %idxprom
-  store i32 %8, i32* %arrayidx, align 4, !tbaa !7
+  store i32 %tmp8, i32* %arrayidx, align 4, !tbaa !7
   %inc = add nsw i32 %NumExceptions.020, 1
-  %cmp1 = icmp eq i32 %8, %i.019
+  %cmp1 = icmp eq i32 %tmp8, %i.019
   br i1 %cmp1, label %if.then, label %if.else
 
 if.then:                                          ; preds = %catch
-  %9 = load i32, i32* %b, align 4, !tbaa !8
-  %add2 = add nsw i32 %9, %i.019
+  %tmp9 = load i32, i32* %b, align 4, !tbaa !8
+  %add2 = add nsw i32 %tmp9, %i.019
   store i32 %add2, i32* %b, align 4, !tbaa !8
   br label %if.end
 
 if.else:                                          ; preds = %catch
-  %10 = load i32, i32* %a, align 8, !tbaa !2
-  %add4 = add nsw i32 %10, %8
+  %tmp10 = load i32, i32* %a, align 8, !tbaa !2
+  %add4 = add nsw i32 %tmp10, %tmp8
   store i32 %add4, i32* %a, align 8, !tbaa !2
   br label %if.end
 
@@ -190,33 +191,34 @@ eh.resume:                                        ; preds = %lpad
 ; CHECK:   %eh.data = bitcast i8* %eh.alloc to %"struct.\01?test@@YAXXZ.ehdata"*
 ; CHECK:   %eh.obj.ptr = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 1
 ; CHECK:   %eh.obj = load i8*, i8** %eh.obj.ptr
-; CHECK:   %eh.temp.alloca = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 2
+; CHECK:   %e = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 2
+; CHECK:   %eh.temp.alloca = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
 ; CHECK:   %NumExceptions.020.reload = load i32, i32* %eh.temp.alloca
-; CHECK:   %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
-; CHECK:   %eh.temp.alloca1 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4
+; CHECK:   %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4
+; CHECK:   %eh.temp.alloca1 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 5
 ; CHECK:   %i.019.reload = load i32, i32* %eh.temp.alloca1
-; CHECK:   %eh.temp.alloca2 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 5
+; CHECK:   %eh.temp.alloca2 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 6
 ; CHECK:   %a.reload = load i32*, i32** %eh.temp.alloca2
-; CHECK:   %eh.temp.alloca3 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 6
+; CHECK:   %eh.temp.alloca3 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 7
 ; CHECK:   %b.reload = load i32*, i32** %eh.temp.alloca3
-; CHECK:   %2 = bitcast i8* %eh.obj to i32*
-; CHECK:   %3 = load i32, i32* %2, align 4, !tbaa !7
+; CHECK:   %e.i8 = bitcast i32* %e to i8*
+; CHECK:   %tmp8 = load i32, i32* %e, align 4, !tbaa !7
 ; CHECK:   %idxprom = sext i32 %NumExceptions.020.reload to i64
 ; CHECK:   %arrayidx = getelementptr inbounds [10 x i32], [10 x i32]* %ExceptionVal, i64 0, i64 %idxprom
-; CHECK:   store i32 %3, i32* %arrayidx, align 4, !tbaa !7
+; CHECK:   store i32 %tmp8, i32* %arrayidx, align 4, !tbaa !7
 ; CHECK:   %inc = add nsw i32 %NumExceptions.020.reload, 1
-; CHECK:   %cmp1 = icmp eq i32 %3, %i.019.reload
+; CHECK:   %cmp1 = icmp eq i32 %tmp8, %i.019.reload
 ; CHECK:   br i1 %cmp1, label %if.then, label %if.else
 ;
 ; CHECK: if.then:                                          ; preds = %catch.entry
-; CHECK:   %4 = load i32, i32* %b.reload, align 4, !tbaa !8
-; CHECK:   %add2 = add nsw i32 %4, %i.019.reload
+; CHECK:   %tmp9 = load i32, i32* %b.reload, align 4, !tbaa !8
+; CHECK:   %add2 = add nsw i32 %tmp9, %i.019.reload
 ; CHECK:   store i32 %add2, i32* %b.reload, align 4, !tbaa !8
 ; CHECK:   br label %if.end
 ;
 ; CHECK: if.else:                                          ; preds = %catch.entry
-; CHECK:   %5 = load i32, i32* %a.reload, align 8, !tbaa !2
-; CHECK:   %add4 = add nsw i32 %5, %3
+; CHECK:   %tmp10 = load i32, i32* %a.reload, align 8, !tbaa !2
+; CHECK:   %add4 = add nsw i32 %tmp10, %tmp8
 ; CHECK:   store i32 %add4, i32* %a.reload, align 8, !tbaa !2
 ; CHECK:   br label %if.end
 ;
@@ -234,7 +236,7 @@ declare i32 @__CxxFrameHandler3(...)
 ; Function Attrs: nounwind readnone
 declare i32 @llvm.eh.typeid.for(i8*) #3
 
-declare i8* @llvm.eh.begincatch(i8*)
+declare void @llvm.eh.begincatch(i8*, i8*)
 
 declare void @llvm.eh.endcatch()
 

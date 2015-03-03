@@ -5,7 +5,7 @@
 
 target triple = "x86_64-pc-windows-msvc"
 
-declare i8* @llvm.eh.begincatch(i8*)
+declare void @llvm.eh.begincatch(i8*, i8*)
 
 declare void @llvm.eh.endcatch()
 
@@ -27,7 +27,7 @@ lpad:                                             ; preds = %entry
   br i1 %matches, label %catch, label %eh.resume
 
 catch:                                            ; preds = %lpad
-  %2 = call i8* @llvm.eh.begincatch(i8* %exn)
+  call void @llvm.eh.begincatch(i8* %exn, i8* null)
   call void @_Z10handle_intv()
   br label %invoke.cont2
 
@@ -77,7 +77,7 @@ lpad1:                                            ; preds = %entry
 catch:                                            ; preds = %lpad, %lpad1
   %exn2 = phi i8* [%exn, %lpad], [%exn1, %lpad1]
   %sel2 = phi i32 [%sel, %lpad], [%sel1, %lpad1]
-  %3 = call i8* @llvm.eh.begincatch(i8* %exn2)
+  call void @llvm.eh.begincatch(i8* %exn2, i8* null)
   call void @_Z10handle_intv()
   %matches1 = icmp eq i32 %sel2, 0
   br i1 %matches1, label %invoke.cont2, label %invoke.cont3

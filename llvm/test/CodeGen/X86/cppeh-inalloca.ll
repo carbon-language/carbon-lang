@@ -84,15 +84,13 @@ catch.dispatch:                                   ; preds = %lpad
 
 catch:                                            ; preds = %catch.dispatch
   %exn = load i8*, i8** %exn.slot
-  %5 = call i8* @llvm.eh.begincatch(i8* %exn) #3
-  %6 = bitcast i8* %5 to i32*
-  %7 = load i32, i32* %6, align 4
-  store i32 %7, i32* %e, align 4
+  %e.i8 = bitcast i32* %e to i8*
+  call void @llvm.eh.begincatch(i8* %exn, i8* %e.i8) #3
   %a = getelementptr inbounds <{ %struct.A }>, <{ %struct.A }>* %0, i32 0, i32 0
   %a1 = getelementptr inbounds %struct.A, %struct.A* %a, i32 0, i32 0
-  %8 = load i32, i32* %a1, align 4
-  %9 = load i32, i32* %e, align 4
-  %add = add nsw i32 %8, %9
+  %tmp8 = load i32, i32* %a1, align 4
+  %tmp9 = load i32, i32* %e, align 4
+  %add = add nsw i32 %tmp8, %tmp9
   store i32 %add, i32* %retval
   store i32 1, i32* %cleanup.dest.slot
   call void @llvm.eh.endcatch() #3
@@ -109,14 +107,14 @@ try.cont:                                         ; preds = %invoke.cont
 ; CHECK:   %.tmp.reload1 = load volatile <{ %struct.A }>*, <{ %struct.A }>** %.tmp.reg2mem
 ; CHECK:   %a2 = getelementptr inbounds <{ %struct.A }>, <{ %struct.A }>* %.tmp.reload1, i32 0, i32 0
 ; CHECK:   call x86_thiscallcc void @"\01??1A@@QAE@XZ"(%struct.A* %a2) #2
-; CHECK:   %10 = load i32, i32* %retval
-; CHECK:   ret i32 %10
+; CHECK:   %tmp10 = load i32, i32* %retval
+; CHECK:   ret i32 %tmp10
 
 cleanup:                                          ; preds = %try.cont, %catch
   %a2 = getelementptr inbounds <{ %struct.A }>, <{ %struct.A }>* %0, i32 0, i32 0
   call x86_thiscallcc void @"\01??1A@@QAE@XZ"(%struct.A* %a2) #3
-  %10 = load i32, i32* %retval
-  ret i32 %10
+  %tmp10 = load i32, i32* %retval
+  ret i32 %tmp10
 
 ehcleanup:                                        ; preds = %catch.dispatch
   %a3 = getelementptr inbounds <{ %struct.A }>, <{ %struct.A }>* %0, i32 0, i32 0
@@ -143,14 +141,11 @@ eh.resume:                                        ; preds = %ehcleanup
 ; CHECK:   %.reload = load <{ %struct.A }>*, <{ %struct.A }>** %eh.temp.alloca
 ; CHECK:   %retval = getelementptr inbounds %"struct.\01?test@@YAHUA@@@Z.ehdata", %"struct.\01?test@@YAHUA@@@Z.ehdata"* %eh.data, i32 0, i32 4
 ; CHECK:   %cleanup.dest.slot = getelementptr inbounds %"struct.\01?test@@YAHUA@@@Z.ehdata", %"struct.\01?test@@YAHUA@@@Z.ehdata"* %eh.data, i32 0, i32 5
-; CHECK:   %2 = bitcast i8* %eh.obj to i32*
-; CHECK:   %3 = load i32, i32* %2, align 4
-; CHECK:   store i32 %3, i32* %e, align 4
 ; CHECK:   %a = getelementptr inbounds <{ %struct.A }>, <{ %struct.A }>* %.reload, i32 0, i32 0
 ; CHECK:   %a1 = getelementptr inbounds %struct.A, %struct.A* %a, i32 0, i32 0
-; CHECK:   %4 = load i32, i32* %a1, align 4
-; CHECK:   %5 = load i32, i32* %e, align 4
-; CHECK:   %add = add nsw i32 %4, %5
+; CHECK:   %tmp8 = load i32, i32* %a1, align 4
+; CHECK:   %tmp9 = load i32, i32* %e, align 4
+; CHECK:   %add = add nsw i32 %tmp8, %tmp9
 ; CHECK:   store i32 %add, i32* %retval
 ; CHECK:   store i32 1, i32* %cleanup.dest.slot
 ; CHECK:   ret i8* blockaddress(@"\01?test@@YAHUA@@@Z", %cleanup)
@@ -164,7 +159,7 @@ declare i32 @__CxxFrameHandler3(...)
 ; Function Attrs: nounwind readnone
 declare i32 @llvm.eh.typeid.for(i8*) #1
 
-declare i8* @llvm.eh.begincatch(i8*)
+declare void @llvm.eh.begincatch(i8*, i8*)
 
 declare void @llvm.eh.endcatch()
 
