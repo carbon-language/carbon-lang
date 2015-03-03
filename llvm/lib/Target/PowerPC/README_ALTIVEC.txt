@@ -209,3 +209,29 @@ vector float f(vector float a, vector float b) {
     return b; 
 }
 
+//===----------------------------------------------------------------------===//
+
+The following example is found in test/CodeGen/PowerPC/vec_add_sub_doubleword.ll:
+
+define <2 x i64> @increment_by_val(<2 x i64> %x, i64 %val) nounwind {
+       %tmpvec = insertelement <2 x i64> <i64 0, i64 0>, i64 %val, i32 0
+       %tmpvec2 = insertelement <2 x i64> %tmpvec, i64 %val, i32 1
+       %result = add <2 x i64> %x, %tmpvec2
+       ret <2 x i64> %result
+
+This will generate the following instruction sequence:
+        std 5, -8(1)
+        std 5, -16(1)
+        addi 3, 1, -16
+        ori 2, 2, 0
+        lxvd2x 35, 0, 3
+        vaddudm 2, 2, 3
+        blr
+
+This will almost certainly cause a load-hit-store hazard.  
+Since val is a value parameter, it should not need to be saved onto
+the stack, unless it's being done set up the vector register. Instead,
+it would be better to splat teh value into a vector register, and then
+remove the (dead) stores to the stack.
+
+

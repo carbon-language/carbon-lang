@@ -750,7 +750,7 @@ def VCMPGTSW  : VCMP <902, "vcmpgtsw $vD, $vA, $vB" , v4i32>;
 def VCMPGTSWo : VCMPo<902, "vcmpgtsw. $vD, $vA, $vB", v4i32>;
 def VCMPGTUW  : VCMP <646, "vcmpgtuw $vD, $vA, $vB" , v4i32>;
 def VCMPGTUWo : VCMPo<646, "vcmpgtuw. $vD, $vA, $vB", v4i32>;
-                      
+
 let isCodeGenOnly = 1 in {
 def V_SET0B : VXForm_setzero<1220, (outs vrrc:$vD), (ins),
                       "vxor $vD, $vD, $vD", IIC_VecFP,
@@ -941,6 +941,40 @@ def : Pat<(v4f32 (fnearbyint v4f32:$vA)),
 def HasP8Altivec : Predicate<"PPCSubTarget->hasP8Altivec()">;
 let Predicates = [HasP8Altivec] in {
 
+let isCommutable = 1 in {
+def VMULESW : VX1_Int_Ty2<904, "vmulesw", int_ppc_altivec_vmulesw,
+                          v2i64, v4i32>;
+def VMULEUW : VX1_Int_Ty2<648, "vmuleuw", int_ppc_altivec_vmuleuw,
+                          v2i64, v4i32>;
+def VMULOSW : VX1_Int_Ty2<392, "vmulosw", int_ppc_altivec_vmulosw,
+                          v2i64, v4i32>;
+def VMULOUW : VX1_Int_Ty2<136, "vmulouw", int_ppc_altivec_vmulouw,
+                          v2i64, v4i32>;
+def VMULUWM : VX1_Int_Ty<137, "vmuluwm", int_ppc_altivec_vmuluwm,
+                         v4i32>;
+def VMAXSD : VX1_Int_Ty<450, "vmaxsd", int_ppc_altivec_vmaxsd, v2i64>;
+def VMAXUD : VX1_Int_Ty<194, "vmaxud", int_ppc_altivec_vmaxud, v2i64>;
+def VMINSD : VX1_Int_Ty<962, "vminsd", int_ppc_altivec_vminsd, v2i64>;
+def VMIDUD : VX1_Int_Ty<706, "vminud", int_ppc_altivec_vminud, v2i64>;
+} // isCommutable
+
+def VRLD : VX1_Int_Ty<196, "vrld", int_ppc_altivec_vrld, v2i64>;
+def VSLD : VX1_Int_Ty<1476, "vsld", int_ppc_altivec_vsld, v2i64>;
+def VSRD : VX1_Int_Ty<1732, "vsrd", int_ppc_altivec_vsrd, v2i64>;
+def VSRAD : VX1_Int_Ty<964, "vsrad", int_ppc_altivec_vsrad, v2i64>;
+
+
+// Vector Integer Arithmetic Instructions
+let isCommutable = 1 in {
+def VADDUDM : VXForm_1<192, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                       "vaddudm $vD, $vA, $vB", IIC_VecGeneral,
+                       [(set v2i64:$vD, (add v2i64:$vA, v2i64:$vB))]>;
+} // isCommutable
+
+def VSUBUDM : VXForm_1<1216, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                       "vsubudm $vD, $vA, $vB", IIC_VecGeneral,
+                       [(set v2i64:$vD, (sub v2i64:$vA, v2i64:$vB))]>;
+
 // Count Leading Zeros
 def VCLZB : VXForm_2<1794, (outs vrrc:$vD), (ins vrrc:$vB),
                      "vclzb $vD, $vB", IIC_VecGeneral,
@@ -992,4 +1026,13 @@ def VORC : VXForm_1<1348, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
                       "vorc $vD, $vA, $vB", IIC_VecGeneral,
                       [(set v4i32:$vD, (or v4i32:$vA,
                                            (vnot_ppc v4i32:$vB)))]>;
+
+// i64 element comparisons.
+def VCMPEQUD  : VCMP <199, "vcmpequd $vD, $vA, $vB" , v2i64>;
+def VCMPEQUDo : VCMPo<199, "vcmpequd. $vD, $vA, $vB", v2i64>;
+def VCMPGTSD  : VCMP <967, "vcmpgtsd $vD, $vA, $vB" , v2i64>;
+def VCMPGTSDo : VCMPo<967, "vcmpgtsd. $vD, $vA, $vB", v2i64>;
+def VCMPGTUD  : VCMP <711, "vcmpgtud $vD, $vA, $vB" , v2i64>;
+def VCMPGTUDo : VCMPo<711, "vcmpgtud. $vD, $vA, $vB", v2i64>;
+
 } // end HasP8Altivec

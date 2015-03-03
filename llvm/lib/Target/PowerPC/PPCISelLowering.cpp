@@ -574,15 +574,20 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
       addRegisterClass(MVT::v4f32, &PPC::VSRCRegClass);
       addRegisterClass(MVT::v2f64, &PPC::VSRCRegClass);
 
-      // VSX v2i64 only supports non-arithmetic operations.
-      setOperationAction(ISD::ADD, MVT::v2i64, Expand);
-      setOperationAction(ISD::SUB, MVT::v2i64, Expand);
-
       setOperationAction(ISD::SHL, MVT::v2i64, Expand);
       setOperationAction(ISD::SRA, MVT::v2i64, Expand);
       setOperationAction(ISD::SRL, MVT::v2i64, Expand);
 
-      setOperationAction(ISD::SETCC, MVT::v2i64, Custom);
+      if (Subtarget.hasP8Altivec()) {
+        setOperationAction(ISD::SETCC, MVT::v2i64, Legal);
+      }
+      else {
+        setOperationAction(ISD::SETCC, MVT::v2i64, Custom);
+
+        // VSX v2i64 only supports non-arithmetic operations.
+        setOperationAction(ISD::ADD, MVT::v2i64, Expand);
+        setOperationAction(ISD::SUB, MVT::v2i64, Expand);
+      }
 
       setOperationAction(ISD::LOAD, MVT::v2i64, Promote);
       AddPromotedToType (ISD::LOAD, MVT::v2i64, MVT::v2f64);
@@ -7027,7 +7032,7 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
 /// altivec comparison.  If it is, return true and fill in Opc/isDot with
 /// information about the intrinsic.
 static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
-                                  bool &isDot) {
+                                  bool &isDot, const PPCSubtarget &Subtarget) {
   unsigned IntrinsicID =
     cast<ConstantSDNode>(Intrin.getOperand(0))->getZExtValue();
   CompareOpc = -1;
@@ -7040,29 +7045,83 @@ static bool getAltivecCompareInfo(SDValue Intrin, int &CompareOpc,
   case Intrinsic::ppc_altivec_vcmpequb_p: CompareOpc =   6; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpequh_p: CompareOpc =  70; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpequw_p: CompareOpc = 134; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpequd_p: 
+    if (Subtarget.hasP8Altivec()) {
+      CompareOpc = 199; 
+      isDot = 1; 
+    }
+    else 
+      return false;
+
+    break;
   case Intrinsic::ppc_altivec_vcmpgefp_p: CompareOpc = 454; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpgtfp_p: CompareOpc = 710; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpgtsb_p: CompareOpc = 774; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpgtsh_p: CompareOpc = 838; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpgtsw_p: CompareOpc = 902; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpgtsd_p: 
+    if (Subtarget.hasP8Altivec()) {
+      CompareOpc = 967; 
+      isDot = 1; 
+    }
+    else 
+      return false;
+
+    break;
   case Intrinsic::ppc_altivec_vcmpgtub_p: CompareOpc = 518; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpgtuh_p: CompareOpc = 582; isDot = 1; break;
   case Intrinsic::ppc_altivec_vcmpgtuw_p: CompareOpc = 646; isDot = 1; break;
+  case Intrinsic::ppc_altivec_vcmpgtud_p: 
+    if (Subtarget.hasP8Altivec()) {
+      CompareOpc = 711; 
+      isDot = 1; 
+    }
+    else 
+      return false;
 
+    break;
+      
     // Normal Comparisons.
   case Intrinsic::ppc_altivec_vcmpbfp:    CompareOpc = 966; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpeqfp:   CompareOpc = 198; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpequb:   CompareOpc =   6; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpequh:   CompareOpc =  70; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpequw:   CompareOpc = 134; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpequd:
+    if (Subtarget.hasP8Altivec()) {
+      CompareOpc = 199; 
+      isDot = 0; 
+    }
+    else
+      return false;
+
+    break;
   case Intrinsic::ppc_altivec_vcmpgefp:   CompareOpc = 454; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpgtfp:   CompareOpc = 710; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpgtsb:   CompareOpc = 774; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpgtsh:   CompareOpc = 838; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpgtsw:   CompareOpc = 902; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpgtsd:   
+    if (Subtarget.hasP8Altivec()) {
+      CompareOpc = 967; 
+      isDot = 0; 
+    }
+    else
+      return false;
+
+    break;
   case Intrinsic::ppc_altivec_vcmpgtub:   CompareOpc = 518; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpgtuh:   CompareOpc = 582; isDot = 0; break;
   case Intrinsic::ppc_altivec_vcmpgtuw:   CompareOpc = 646; isDot = 0; break;
+  case Intrinsic::ppc_altivec_vcmpgtud:   
+    if (Subtarget.hasP8Altivec()) {
+      CompareOpc = 711; 
+      isDot = 0; 
+    }
+    else
+      return false;
+
+    break;
   }
   return true;
 }
@@ -7076,7 +7135,7 @@ SDValue PPCTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   SDLoc dl(Op);
   int CompareOpc;
   bool isDot;
-  if (!getAltivecCompareInfo(Op, CompareOpc, isDot))
+  if (!getAltivecCompareInfo(Op, CompareOpc, isDot, Subtarget))
     return SDValue();    // Don't custom lower most intrinsics.
 
   // If this is a non-dot comparison, make the VCMP node and we are done.
@@ -10166,7 +10225,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
 
     if (LHS.getOpcode() == ISD::INTRINSIC_WO_CHAIN &&
         isa<ConstantSDNode>(RHS) && (CC == ISD::SETEQ || CC == ISD::SETNE) &&
-        getAltivecCompareInfo(LHS, CompareOpc, isDot)) {
+        getAltivecCompareInfo(LHS, CompareOpc, isDot, Subtarget)) {
       assert(isDot && "Can't compare against a vector result!");
 
       // If this is a comparison against something other than 0/1, then we know
@@ -10279,14 +10338,17 @@ void PPCTargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
     case Intrinsic::ppc_altivec_vcmpequb_p:
     case Intrinsic::ppc_altivec_vcmpequh_p:
     case Intrinsic::ppc_altivec_vcmpequw_p:
+    case Intrinsic::ppc_altivec_vcmpequd_p:
     case Intrinsic::ppc_altivec_vcmpgefp_p:
     case Intrinsic::ppc_altivec_vcmpgtfp_p:
     case Intrinsic::ppc_altivec_vcmpgtsb_p:
     case Intrinsic::ppc_altivec_vcmpgtsh_p:
     case Intrinsic::ppc_altivec_vcmpgtsw_p:
+    case Intrinsic::ppc_altivec_vcmpgtsd_p:
     case Intrinsic::ppc_altivec_vcmpgtub_p:
     case Intrinsic::ppc_altivec_vcmpgtuh_p:
     case Intrinsic::ppc_altivec_vcmpgtuw_p:
+    case Intrinsic::ppc_altivec_vcmpgtud_p:
       KnownZero = ~1U;  // All bits but the low one are known to be zero.
       break;
     }

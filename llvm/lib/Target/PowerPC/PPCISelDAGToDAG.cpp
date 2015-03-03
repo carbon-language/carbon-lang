@@ -2105,7 +2105,7 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool &Invert) {
 
 // getVCmpInst: return the vector compare instruction for the specified
 // vector type and condition code. Since this is for altivec specific code,
-// only support the altivec types (v16i8, v8i16, v4i32, and v4f32).
+// only support the altivec types (v16i8, v8i16, v4i32, v2i64, and v4f32).
 static unsigned int getVCmpInst(MVT VecVT, ISD::CondCode CC,
                                 bool HasVSX, bool &Swap, bool &Negate) {
   Swap = false;
@@ -2184,6 +2184,8 @@ static unsigned int getVCmpInst(MVT VecVT, ISD::CondCode CC,
           return PPC::VCMPEQUH;
         else if (VecVT == MVT::v4i32)
           return PPC::VCMPEQUW;
+        else if (VecVT == MVT::v2i64)
+          return PPC::VCMPEQUD;
         break;
       case ISD::SETGT:
         if (VecVT == MVT::v16i8)
@@ -2192,6 +2194,8 @@ static unsigned int getVCmpInst(MVT VecVT, ISD::CondCode CC,
           return PPC::VCMPGTSH;
         else if (VecVT == MVT::v4i32)
           return PPC::VCMPGTSW;
+        else if (VecVT == MVT::v2i64)
+          return PPC::VCMPGTSD;
         break;
       case ISD::SETUGT:
         if (VecVT == MVT::v16i8)
@@ -2200,6 +2204,8 @@ static unsigned int getVCmpInst(MVT VecVT, ISD::CondCode CC,
           return PPC::VCMPGTUH;
         else if (VecVT == MVT::v4i32)
           return PPC::VCMPGTUW;
+        else if (VecVT == MVT::v2i64)
+          return PPC::VCMPGTUD;
         break;
       default:
         break;
