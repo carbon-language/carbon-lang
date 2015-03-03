@@ -4,8 +4,8 @@ string table or not.
 RUN: mkdir -p %t
 RUN: cd %t
 
-RUN: echo bar > 0123456789abcde
-RUN: echo zed > 0123456789abcdef
+RUN: echo -n bar. > 0123456789abcde
+RUN: echo -n zed. > 0123456789abcdef
 
 RUN: rm -f test.a
 RUN: llvm-ar rc test.a 0123456789abcde 0123456789abcdef
@@ -15,6 +15,5 @@ CHECK:      !<arch>
 CHECK-NEXT: //                                              18        `
 CHECK-NEXT: 0123456789abcdef/
 CHECK-NEXT: 0123456789abcde/{{................................}}4         `
-CHECK-NEXT: bar
-CHECK-NEXT: /0              {{................................}}4         `
-CHECK-NEXT: zed
+CHECK-NEXT: bar./0              {{................................}}4         `
+CHECK-NEXT: zed.
