@@ -199,7 +199,7 @@ namespace llvm {
     // of live ranges of physical registers in computeRegUnitRange.
     // After that the set is flushed to the segment vector and deleted.
     typedef std::set<Segment> SegmentSet;
-    std::unique_ptr<SegmentSet> segmentSet;
+    SegmentSet *segmentSet;
 
     typedef Segments::iterator iterator;
     iterator begin() { return segments.begin(); }
@@ -218,13 +218,15 @@ namespace llvm {
     const_vni_iterator vni_end() const   { return valnos.end(); }
 
     /// Constructs a new LiveRange object.
-    LiveRange(bool UseSegmentSet = false)
-        : segmentSet(UseSegmentSet ? llvm::make_unique<SegmentSet>()
-                                   : nullptr) {}
+    LiveRange(bool UseSegmentSet = false) : segmentSet(nullptr) {
+      if (UseSegmentSet)
+        segmentSet = new SegmentSet();
+    }
 
     /// Constructs a new LiveRange object by copying segments and valnos from
     /// another LiveRange.
-    LiveRange(const LiveRange &Other, BumpPtrAllocator &Allocator) {
+    LiveRange(const LiveRange &Other, BumpPtrAllocator &Allocator)
+        : segmentSet(nullptr) {
       assert(Other.segmentSet == nullptr &&
              "Copying of LiveRanges with active SegmentSets is not supported");
 
@@ -237,6 +239,8 @@ namespace llvm {
         segments.push_back(Segment(S.start, S.end, valnos[S.valno->id]));
       }
     }
+
+    ~LiveRange() { delete segmentSet; }
 
     /// advanceTo - Advance the specified iterator to point to the Segment
     /// containing the specified position, or end() if the position is past the
@@ -741,6 +745,8 @@ namespace llvm {
 #endif
 
   private:
+    LiveInterval& operator=(const LiveInterval& rhs) = delete;
+
     /// Appends @p Range to SubRanges list.
     void appendSubRange(SubRange *Range) {
       Range->Next = SubRanges;
