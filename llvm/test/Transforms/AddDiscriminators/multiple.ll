@@ -21,23 +21,23 @@ entry:
 
 if.then:                                          ; preds = %entry
   %1 = load i32, i32* %i.addr, align 4, !dbg !10
-; CHECK:  %1 = load i32, i32* %i.addr, align 4, !dbg !12
+; CHECK:  %1 = load i32, i32* %i.addr, align 4, !dbg ![[THEN:[0-9]+]]
 
   store i32 %1, i32* %x, align 4, !dbg !10
-; CHECK:  store i32 %1, i32* %x, align 4, !dbg !12
+; CHECK:  store i32 %1, i32* %x, align 4, !dbg ![[THEN]]
 
   br label %if.end, !dbg !10
-; CHECK:  br label %if.end, !dbg !12
+; CHECK:  br label %if.end, !dbg ![[THEN]]
 
 if.else:                                          ; preds = %entry
   %2 = load i32, i32* %i.addr, align 4, !dbg !10
-; CHECK:  %2 = load i32, i32* %i.addr, align 4, !dbg !14
+; CHECK:  %2 = load i32, i32* %i.addr, align 4, !dbg ![[ELSE:[0-9]+]]
 
   %sub = sub nsw i32 0, %2, !dbg !10
-; CHECK:  %sub = sub nsw i32 0, %2, !dbg !14
+; CHECK:  %sub = sub nsw i32 0, %2, !dbg ![[ELSE]]
 
   store i32 %sub, i32* %x, align 4, !dbg !10
-; CHECK:  store i32 %sub, i32* %x, align 4, !dbg !14
+; CHECK:  store i32 %sub, i32* %x, align 4, !dbg ![[ELSE]]
 
   br label %if.end
 
@@ -51,21 +51,21 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.module.flags = !{!7, !8}
 !llvm.ident = !{!9}
 
-!0 = !{!"0x11\0012\00clang version 3.5 (trunk 199750) (llvm/trunk 199751)\000\00\000\00\000", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [multiple.c] [DW_LANG_C99]
-!1 = !{!"multiple.c", !"."}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5 (trunk 199750) (llvm/trunk 199751)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "multiple.c", directory: ".")
 !2 = !{i32 0}
 !3 = !{!4}
-!4 = !{!"0x2e\00foo\00foo\00\001\000\001\000\006\00256\000\001", !1, !5, !6, null, void (i32)* @foo, null, null, !2} ; [ DW_TAG_subprogram ] [line 1] [def] [foo]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [multiple.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !2, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32)* @foo, variables: !2)
+!5 = !MDFile(filename: "multiple.c", directory: ".")
+!6 = !MDSubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 4}
-!8 = !{i32 1, !"Debug Info Version", i32 2}
+!8 = !{i32 1, !"Debug Info Version", i32 3}
 !9 = !{!"clang version 3.5 (trunk 199750) (llvm/trunk 199751)"}
 !10 = !MDLocation(line: 3, scope: !11)
-!11 = !{!"0xb\003\000\000", !1, !4} ; [ DW_TAG_lexical_block ] [multiple.c]
+!11 = distinct !MDLexicalBlock(line: 3, column: 0, file: !1, scope: !4)
 !12 = !MDLocation(line: 4, scope: !4)
 
-; CHECK: !12 = !MDLocation(line: 3, scope: !13)
-; CHECK: !13 = !{!"0xb\001", !1, !11} ; [ DW_TAG_lexical_block ] [./multiple.c]
-; CHECK: !14 = !MDLocation(line: 3, scope: !15)
-; CHECK: !15 = !{!"0xb\002", !1, !11} ; [ DW_TAG_lexical_block ] [./multiple.c]
+; CHECK: ![[THEN]] = !MDLocation(line: 3, scope: ![[THENBLOCK:[0-9]+]])
+; CHECK: ![[THENBLOCK]] = !MDLexicalBlockFile(scope: ![[SCOPE:[0-9]+]],{{.*}} discriminator: 1)
+; CHECK: ![[ELSE]] = !MDLocation(line: 3, scope: ![[ELSEBLOCK:[0-9]+]])
+; CHECK: ![[ELSEBLOCK]] = !MDLexicalBlockFile(scope: ![[SCOPE]],{{.*}} discriminator: 2)

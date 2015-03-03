@@ -12,9 +12,9 @@ target triple = "thumbv7-apple-darwin10"
 
 define i32 @inlineprinter(i8* %ptr, double %val, i8 zeroext %c) nounwind optsize {
 entry:
-  tail call void @llvm.dbg.value(metadata i8* %ptr, i64 0, metadata !19, metadata !{!"0x102"}), !dbg !26
-  tail call void @llvm.dbg.value(metadata double %val, i64 0, metadata !20, metadata !{!"0x102"}), !dbg !26
-  tail call void @llvm.dbg.value(metadata i8 %c, i64 0, metadata !21, metadata !{!"0x102"}), !dbg !26
+  tail call void @llvm.dbg.value(metadata i8* %ptr, i64 0, metadata !19, metadata !MDExpression()), !dbg !26
+  tail call void @llvm.dbg.value(metadata double %val, i64 0, metadata !20, metadata !MDExpression()), !dbg !26
+  tail call void @llvm.dbg.value(metadata i8 %c, i64 0, metadata !21, metadata !MDExpression()), !dbg !26
   %0 = zext i8 %c to i32, !dbg !27
   %1 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0), i8* %ptr, double %val, i32 %0) nounwind, !dbg !27
   ret i32 0, !dbg !29
@@ -22,9 +22,9 @@ entry:
 
 define i32 @printer(i8* %ptr, double %val, i8 zeroext %c) nounwind optsize noinline {
 entry:
-  tail call void @llvm.dbg.value(metadata i8* %ptr, i64 0, metadata !16, metadata !{!"0x102"}), !dbg !30
-  tail call void @llvm.dbg.value(metadata double %val, i64 0, metadata !17, metadata !{!"0x102"}), !dbg !30
-  tail call void @llvm.dbg.value(metadata i8 %c, i64 0, metadata !18, metadata !{!"0x102"}), !dbg !30
+  tail call void @llvm.dbg.value(metadata i8* %ptr, i64 0, metadata !16, metadata !MDExpression()), !dbg !30
+  tail call void @llvm.dbg.value(metadata double %val, i64 0, metadata !17, metadata !MDExpression()), !dbg !30
+  tail call void @llvm.dbg.value(metadata i8 %c, i64 0, metadata !18, metadata !MDExpression()), !dbg !30
   %0 = zext i8 %c to i32, !dbg !31
   %1 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0), i8* %ptr, double %val, i32 %0) nounwind, !dbg !31
   ret i32 0, !dbg !33
@@ -36,18 +36,18 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 
 define i32 @main(i32 %argc, i8** nocapture %argv) nounwind optsize {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 %argc, i64 0, metadata !22, metadata !{!"0x102"}), !dbg !34
-  tail call void @llvm.dbg.value(metadata i8** %argv, i64 0, metadata !23, metadata !{!"0x102"}), !dbg !34
+  tail call void @llvm.dbg.value(metadata i32 %argc, i64 0, metadata !22, metadata !MDExpression()), !dbg !34
+  tail call void @llvm.dbg.value(metadata i8** %argv, i64 0, metadata !23, metadata !MDExpression()), !dbg !34
   %0 = sitofp i32 %argc to double, !dbg !35
   %1 = fadd double %0, 5.555552e+05, !dbg !35
-  tail call void @llvm.dbg.value(metadata double %1, i64 0, metadata !24, metadata !{!"0x102"}), !dbg !35
+  tail call void @llvm.dbg.value(metadata double %1, i64 0, metadata !24, metadata !MDExpression()), !dbg !35
   %2 = tail call i32 @puts(i8* getelementptr inbounds ([6 x i8]* @.str1, i32 0, i32 0)) nounwind, !dbg !36
   %3 = getelementptr inbounds i8, i8* bitcast (i32 (i32, i8**)* @main to i8*), i32 %argc, !dbg !37
   %4 = trunc i32 %argc to i8, !dbg !37
   %5 = add i8 %4, 97, !dbg !37
-  tail call void @llvm.dbg.value(metadata i8* %3, i64 0, metadata !19, metadata !{!"0x102"}) nounwind, !dbg !38
-  tail call void @llvm.dbg.value(metadata double %1, i64 0, metadata !20, metadata !{!"0x102"}) nounwind, !dbg !38
-  tail call void @llvm.dbg.value(metadata i8 %5, i64 0, metadata !21, metadata !{!"0x102"}) nounwind, !dbg !38
+  tail call void @llvm.dbg.value(metadata i8* %3, i64 0, metadata !19, metadata !MDExpression()) nounwind, !dbg !38
+  tail call void @llvm.dbg.value(metadata double %1, i64 0, metadata !20, metadata !MDExpression()) nounwind, !dbg !38
+  tail call void @llvm.dbg.value(metadata i8 %5, i64 0, metadata !21, metadata !MDExpression()) nounwind, !dbg !38
   %6 = zext i8 %5 to i32, !dbg !39
   %7 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([11 x i8]* @.str, i32 0, i32 0), i8* %3, double %1, i32 %6) nounwind, !dbg !39
   %8 = tail call i32 @printer(i8* %3, double %1, i8 zeroext %5) nounwind, !dbg !40
@@ -59,39 +59,39 @@ declare i32 @puts(i8* nocapture) nounwind
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!48}
 
-!0 = !{!"0x2e\00printer\00printer\00printer\0012\000\001\000\006\00256\001\0012", !46, !1, !3, null, i32 (i8*, double, i8)* @printer, null, null, !43} ; [ DW_TAG_subprogram ]
-!1 = !{!"0x29", !46} ; [ DW_TAG_file_type ]
-!2 = !{!"0x11\001\00(LLVM build 00)\001\00\000\00\001", !46, !47, !47, !42, null,  null} ; [ DW_TAG_compile_unit ]
-!3 = !{!"0x15\00\000\000\000\000\000\000", !46, !1, null, !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = !MDSubprogram(name: "printer", linkageName: "printer", line: 12, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 12, file: !46, scope: !1, type: !3, function: i32 (i8*, double, i8)* @printer, variables: !43)
+!1 = !MDFile(filename: "a.c", directory: "/tmp/")
+!2 = !MDCompileUnit(language: DW_LANG_C89, producer: "(LLVM build 00)", isOptimized: true, emissionKind: 1, file: !46, enums: !47, retainedTypes: !47, subprograms: !42, imports:  null)
+!3 = !MDSubroutineType(types: !4)
 !4 = !{!5, !6, !7, !8}
-!5 = !{!"0x24\00int\000\0032\0032\000\000\005", !46, !1} ; [ DW_TAG_base_type ]
-!6 = !{!"0xf\00\000\0032\0032\000\000", !46, !1, null} ; [ DW_TAG_pointer_type ]
-!7 = !{!"0x24\00double\000\0064\0032\000\000\004", !46, !1} ; [ DW_TAG_base_type ]
-!8 = !{!"0x24\00unsigned char\000\008\008\000\000\008", !46, !1} ; [ DW_TAG_base_type ]
-!9 = !{!"0x2e\00inlineprinter\00inlineprinter\00inlineprinter\005\000\001\000\006\00256\001\005", !46, !1, !3, null, i32 (i8*, double, i8)* @inlineprinter, null, null, !44} ; [ DW_TAG_subprogram ]
-!10 = !{!"0x2e\00main\00main\00main\0018\000\001\000\006\00256\001\0018", !46, !1, !11, null, i32 (i32, i8**)* @main, null, null, !45} ; [ DW_TAG_subprogram ]
-!11 = !{!"0x15\00\000\000\000\000\000\000", !46, !1, null, !12, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!6 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, file: !46, scope: !1, baseType: null)
+!7 = !MDBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 32, encoding: DW_ATE_float)
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "unsigned char", size: 8, align: 8, encoding: DW_ATE_unsigned_char)
+!9 = !MDSubprogram(name: "inlineprinter", linkageName: "inlineprinter", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !46, scope: !1, type: !3, function: i32 (i8*, double, i8)* @inlineprinter, variables: !44)
+!10 = !MDSubprogram(name: "main", linkageName: "main", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 18, file: !46, scope: !1, type: !11, function: i32 (i32, i8**)* @main, variables: !45)
+!11 = !MDSubroutineType(types: !12)
 !12 = !{!5, !5, !13}
-!13 = !{!"0xf\00\000\0032\0032\000\000", !46, !1, !14} ; [ DW_TAG_pointer_type ]
-!14 = !{!"0xf\00\000\0032\0032\000\000", !46, !1, !15} ; [ DW_TAG_pointer_type ]
-!15 = !{!"0x24\00char\000\008\008\000\000\006", !46, !1} ; [ DW_TAG_base_type ]
-!16 = !{!"0x101\00ptr\0011\000", !0, !1, !6} ; [ DW_TAG_arg_variable ]
-!17 = !{!"0x101\00val\0011\000", !0, !1, !7} ; [ DW_TAG_arg_variable ]
-!18 = !{!"0x101\00c\0011\000", !0, !1, !8} ; [ DW_TAG_arg_variable ]
-!19 = !{!"0x101\00ptr\004\000", !9, !1, !6} ; [ DW_TAG_arg_variable ]
-!20 = !{!"0x101\00val\004\000", !9, !1, !7} ; [ DW_TAG_arg_variable ]
-!21 = !{!"0x101\00c\004\000", !9, !1, !8} ; [ DW_TAG_arg_variable ]
-!22 = !{!"0x101\00argc\0017\000", !10, !1, !5} ; [ DW_TAG_arg_variable ]
-!23 = !{!"0x101\00argv\0017\000", !10, !1, !13} ; [ DW_TAG_arg_variable ]
-!24 = !{!"0x100\00dval\0019\000", !25, !1, !7} ; [ DW_TAG_auto_variable ]
-!25 = !{!"0xb\0018\000\002", !46, !10} ; [ DW_TAG_lexical_block ]
+!13 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, file: !46, scope: !1, baseType: !14)
+!14 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, file: !46, scope: !1, baseType: !15)
+!15 = !MDBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
+!16 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "ptr", line: 11, arg: 0, scope: !0, file: !1, type: !6)
+!17 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "val", line: 11, arg: 0, scope: !0, file: !1, type: !7)
+!18 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 11, arg: 0, scope: !0, file: !1, type: !8)
+!19 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "ptr", line: 4, arg: 0, scope: !9, file: !1, type: !6)
+!20 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "val", line: 4, arg: 0, scope: !9, file: !1, type: !7)
+!21 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 4, arg: 0, scope: !9, file: !1, type: !8)
+!22 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "argc", line: 17, arg: 0, scope: !10, file: !1, type: !5)
+!23 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "argv", line: 17, arg: 0, scope: !10, file: !1, type: !13)
+!24 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "dval", line: 19, scope: !25, file: !1, type: !7)
+!25 = distinct !MDLexicalBlock(line: 18, column: 0, file: !46, scope: !10)
 !26 = !MDLocation(line: 4, scope: !9)
 !27 = !MDLocation(line: 6, scope: !28)
-!28 = !{!"0xb\005\000\001", !46, !9} ; [ DW_TAG_lexical_block ]
+!28 = distinct !MDLexicalBlock(line: 5, column: 0, file: !46, scope: !9)
 !29 = !MDLocation(line: 7, scope: !28)
 !30 = !MDLocation(line: 11, scope: !0)
 !31 = !MDLocation(line: 13, scope: !32)
-!32 = !{!"0xb\0012\000\000", !46, !0} ; [ DW_TAG_lexical_block ]
+!32 = distinct !MDLexicalBlock(line: 12, column: 0, file: !46, scope: !0)
 !33 = !MDLocation(line: 14, scope: !32)
 !34 = !MDLocation(line: 17, scope: !10)
 !35 = !MDLocation(line: 19, scope: !25)
@@ -105,6 +105,6 @@ declare i32 @puts(i8* nocapture) nounwind
 !43 = !{!16, !17, !18}
 !44 = !{!19, !20, !21}
 !45 = !{!22, !23, !24}
-!46 = !{!"a.c", !"/tmp/"}
+!46 = !MDFile(filename: "a.c", directory: "/tmp/")
 !47 = !{i32 0}
-!48 = !{i32 1, !"Debug Info Version", i32 2}
+!48 = !{i32 1, !"Debug Info Version", i32 3}

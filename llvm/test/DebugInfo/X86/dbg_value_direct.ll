@@ -70,7 +70,7 @@ entry:
 
 ; <label>:28                                      ; preds = %22, %entry
   store i32 %0, i32* %3, align 4
-  call void @llvm.dbg.declare(metadata %struct.A* %agg.result, metadata !24, metadata !{!"0x102\006"}), !dbg !25
+  call void @llvm.dbg.declare(metadata %struct.A* %agg.result, metadata !24, metadata !MDExpression(DW_OP_deref)), !dbg !25
   call void @_ZN1AC1Ev(%struct.A* %agg.result), !dbg !25
   store i64 1172321806, i64* %4, !dbg !26
   %29 = inttoptr i64 %10 to i32*, !dbg !26
@@ -147,32 +147,32 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!22, !27}
 
-!0 = !{!"0x11\004\00clang version 3.4 \000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/crash.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"crash.cpp", !"/tmp"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.4 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "crash.cpp", directory: "/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00func\00func\00_Z4funci\006\000\001\000\006\00256\000\006", !1, !5, !6, null, void (%struct.A*, i32)* @_Z4funci, null, null, !2} ; [ DW_TAG_subprogram ] [line 6] [def] [func]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/tmp/crash.cpp]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "func", linkageName: "_Z4funci", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, function: void (%struct.A*, i32)* @_Z4funci, variables: !2)
+!5 = !MDFile(filename: "crash.cpp", directory: "/tmp")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{!8, !21}
-!8 = !{!"0x13\00A\001\008\008\000\000\000", !1, null, null, !9, null, null, null} ; [ DW_TAG_structure_type ] [A] [line 1, size 8, align 8, offset 0] [def] [from ]
+!8 = !MDCompositeType(tag: DW_TAG_structure_type, name: "A", line: 1, size: 8, align: 8, file: !1, elements: !9)
 !9 = !{!10, !15}
-!10 = !{!"0x2e\00A\00A\00\002\000\000\000\006\00256\000\002", !1, !8, !11, null, null, null, i32 0, !14} ; [ DW_TAG_subprogram ] [line 2] [A]
-!11 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !12, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!10 = !MDSubprogram(name: "A", line: 2, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !8, type: !11, variables: !14)
+!11 = !MDSubroutineType(types: !12)
 !12 = !{null, !13}
-!13 = !{!"0xf\00\000\0064\0064\000\001088", i32 0, null, !8} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from A]
+!13 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !8)
 !14 = !{i32 786468}
-!15 = !{!"0x2e\00A\00A\00\003\000\000\000\006\00256\000\003", !1, !8, !16, null, null, null, i32 0, !20} ; [ DW_TAG_subprogram ] [line 3] [A]
-!16 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !17, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!15 = !MDSubprogram(name: "A", line: 3, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !8, type: !16, variables: !20)
+!16 = !MDSubroutineType(types: !17)
 !17 = !{null, !13, !18}
-!18 = !{!"0x10\00\000\000\000\000\000", null, null, !19} ; [ DW_TAG_reference_type ] [line 0, size 0, align 0, offset 0] [from ]
-!19 = !{!"0x26\00\000\000\000\000\000", null, null, !8} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from A]
+!18 = !MDDerivedType(tag: DW_TAG_reference_type, baseType: !19)
+!19 = !MDDerivedType(tag: DW_TAG_const_type, baseType: !8)
 !20 = !{i32 786468}
-!21 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!21 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !22 = !{i32 2, !"Dwarf Version", i32 3}
-!23 = !{!"0x101\00\0016777222\000", !4, !5, !21} ; [ DW_TAG_arg_variable ] [line 6]
-!24 = !{!"0x100\00a\007\000", !4, !5, !8} ; [ DW_TAG_auto_variable ] [a] [line 7]
+!23 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "", line: 6, arg: 1, scope: !4, file: !5, type: !21)
+!24 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 7, scope: !4, file: !5, type: !8)
 !25 = !MDLocation(line: 7, scope: !4)
 !26 = !MDLocation(line: 8, scope: !4)
-!27 = !{i32 1, !"Debug Info Version", i32 2}
-!28 = !{!"0x102\006"} ; [ DW_TAG_expression ] [DW_OP_deref]
+!27 = !{i32 1, !"Debug Info Version", i32 3}
+!28 = !MDExpression(DW_OP_deref)

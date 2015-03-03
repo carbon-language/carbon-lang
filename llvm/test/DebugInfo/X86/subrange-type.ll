@@ -12,7 +12,7 @@ entry:
   %retval = alloca i32, align 4
   %i = alloca [2 x i32], align 4
   store i32 0, i32* %retval
-  call void @llvm.dbg.declare(metadata [2 x i32]* %i, metadata !10, metadata !{!"0x102"}), !dbg !15
+  call void @llvm.dbg.declare(metadata [2 x i32]* %i, metadata !10, metadata !MDExpression()), !dbg !15
   ret i32 0, !dbg !16
 }
 
@@ -21,20 +21,20 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!18}
 
-!0 = !{!"0x11\0012\00clang version 3.3 (trunk 171472) (llvm/trunk 171487)\000\00\000\00\000", !17, !1, !1, !3, !1,  !1} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/foo.c] [DW_LANG_C99]
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.3 (trunk 171472) (llvm/trunk 171487)", isOptimized: false, emissionKind: 0, file: !17, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !{!"0x2e\00main\00main\00\002\000\001\000\006\00256\000\003", !6, !6, !7, null, i32 ()* @main, null, null, !1} ; [ DW_TAG_subprogram ] [line 2] [def] [scope 3] [main]
-!6 = !{!"0x29", !17} ; [ DW_TAG_file_type ]
-!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = !MDSubprogram(name: "main", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !6, scope: !6, type: !7, function: i32 ()* @main, variables: !1)
+!6 = !MDFile(filename: "foo.c", directory: "/usr/local/google/home/echristo/tmp")
+!7 = !MDSubroutineType(types: !8)
 !8 = !{!9}
-!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!10 = !{!"0x100\00i\004\000", !11, !6, !12} ; [ DW_TAG_auto_variable ] [i] [line 4]
-!11 = !{!"0xb\003\000\000", !6, !5} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/tmp/foo.c]
-!12 = !{!"0x1\00\000\0064\0032\000\000", null, null, !9, !13, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 64, align 32, offset 0] [from int]
+!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 4, scope: !11, file: !6, type: !12)
+!11 = distinct !MDLexicalBlock(line: 3, column: 0, file: !6, scope: !5)
+!12 = !MDCompositeType(tag: DW_TAG_array_type, size: 64, align: 32, baseType: !9, elements: !13)
 !13 = !{!14}
-!14 = !{!"0x21\000\002"}        ; [ DW_TAG_subrange_type ] [0, 1]
+!14 = !MDSubrange(count: 2)
 !15 = !MDLocation(line: 4, scope: !11)
 !16 = !MDLocation(line: 6, scope: !11)
-!17 = !{!"foo.c", !"/usr/local/google/home/echristo/tmp"}
-!18 = !{i32 1, !"Debug Info Version", i32 2}
+!17 = !MDFile(filename: "foo.c", directory: "/usr/local/google/home/echristo/tmp")
+!18 = !{i32 1, !"Debug Info Version", i32 3}

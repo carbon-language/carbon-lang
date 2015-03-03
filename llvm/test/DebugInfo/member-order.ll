@@ -29,7 +29,7 @@ define void @_ZN3foo2f1Ev(%struct.foo* %this) #0 align 2 {
 entry:
   %this.addr = alloca %struct.foo*, align 8
   store %struct.foo* %this, %struct.foo** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata %struct.foo** %this.addr, metadata !16, metadata !{!"0x102"}), !dbg !18
+  call void @llvm.dbg.declare(metadata %struct.foo** %this.addr, metadata !16, metadata !MDExpression()), !dbg !18
   %this1 = load %struct.foo*, %struct.foo** %this.addr
   ret void, !dbg !19
 }
@@ -43,24 +43,24 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!15, !20}
 
-!0 = !{!"0x11\004\00clang version 3.4 \000\00\000\00\000", !1, !2, !3, !13, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/member-order.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"member-order.cpp", !"/tmp/dbginfo"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.4 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !13, globals: !2, imports: !2)
+!1 = !MDFile(filename: "member-order.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x13\00foo\001\008\008\000\000\000", !1, null, null, !5, null, null, !"_ZTS3foo"} ; [ DW_TAG_structure_type ] [foo] [line 1, size 8, align 8, offset 0] [def] [from ]
+!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "foo", line: 1, size: 8, align: 8, file: !1, elements: !5, identifier: "_ZTS3foo")
 !5 = !{!6, !11}
-!6 = !{!"0x2e\00f1\00f1\00_ZN3foo2f1Ev\002\000\000\000\006\00256\000\002", !1, !4, !7, null, null, null, i32 0, !10} ; [ DW_TAG_subprogram ] [line 2] [f1]
-!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!6 = !MDSubprogram(name: "f1", linkageName: "_ZN3foo2f1Ev", line: 2, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !4, type: !7, variables: !10)
+!7 = !MDSubroutineType(types: !8)
 !8 = !{null, !9}
-!9 = !{!"0xf\00\000\0064\0064\000\001088", null, null, !"_ZTS3foo"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS3foo]
+!9 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS3foo")
 !10 = !{i32 786468}
-!11 = !{!"0x2e\00f2\00f2\00_ZN3foo2f2Ev\003\000\000\000\006\00256\000\003", !1, !4, !7, null, null, null, i32 0, !12} ; [ DW_TAG_subprogram ] [line 3] [f2]
+!11 = !MDSubprogram(name: "f2", linkageName: "_ZN3foo2f2Ev", line: 3, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !4, type: !7, variables: !12)
 !12 = !{i32 786468}
 !13 = !{!14}
-!14 = !{!"0x2e\00f1\00f1\00_ZN3foo2f1Ev\006\000\001\000\006\00256\000\006", !1, null, !7, null, void (%struct.foo*)* @_ZN3foo2f1Ev, null, !6, !2} ; [ DW_TAG_subprogram ] [line 6] [def] [f1]
+!14 = !MDSubprogram(name: "f1", linkageName: "_ZN3foo2f1Ev", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: null, type: !7, function: void (%struct.foo*)* @_ZN3foo2f1Ev, declaration: !6, variables: !2)
 !15 = !{i32 2, !"Dwarf Version", i32 4}
-!16 = !{!"0x101\00this\0016777216\001088", !14, null, !17} ; [ DW_TAG_arg_variable ] [this] [line 0]
-!17 = !{!"0xf\00\000\0064\0064\000\000", null, null, !"_ZTS3foo"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS3foo]
+!16 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !14, type: !17)
+!17 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS3foo")
 !18 = !MDLocation(line: 0, scope: !14)
 !19 = !MDLocation(line: 7, scope: !14)
-!20 = !{i32 1, !"Debug Info Version", i32 2}
+!20 = !{i32 1, !"Debug Info Version", i32 3}

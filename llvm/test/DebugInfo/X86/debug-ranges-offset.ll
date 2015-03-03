@@ -31,11 +31,11 @@ entry:
   %call = call i8* @_Znwm(i64 4) #4, !dbg !19
   %_msret = load i64, i64* getelementptr inbounds ([8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !19
   %3 = bitcast i8* %call to i32*, !dbg !19
-  tail call void @llvm.dbg.value(metadata i32* %3, i64 0, metadata !9, metadata !{!"0x102"}), !dbg !19
+  tail call void @llvm.dbg.value(metadata i32* %3, i64 0, metadata !9, metadata !MDExpression()), !dbg !19
   %4 = inttoptr i64 %1 to i64*, !dbg !19
   store i64 %_msret, i64* %4, align 8, !dbg !19
   store volatile i32* %3, i32** %p, align 8, !dbg !19
-  tail call void @llvm.dbg.value(metadata i32** %p, i64 0, metadata !9, metadata !{!"0x102"}), !dbg !19
+  tail call void @llvm.dbg.value(metadata i32** %p, i64 0, metadata !9, metadata !MDExpression()), !dbg !19
   %p.0.p.0. = load volatile i32*, i32** %p, align 8, !dbg !20
   %_msld = load i64, i64* %4, align 8, !dbg !20
   %_mscmp = icmp eq i64 %_msld, 0, !dbg !20
@@ -96,11 +96,11 @@ entry:
   %call.i = call i8* @_Znwm(i64 4) #4, !dbg !30
   %_msret = load i64, i64* getelementptr inbounds ([8 x i64]* @__msan_retval_tls, i64 0, i64 0), align 8, !dbg !30
   %3 = bitcast i8* %call.i to i32*, !dbg !30
-  tail call void @llvm.dbg.value(metadata i32* %3, i64 0, metadata !32, metadata !{!"0x102"}), !dbg !30
+  tail call void @llvm.dbg.value(metadata i32* %3, i64 0, metadata !32, metadata !MDExpression()), !dbg !30
   %4 = inttoptr i64 %1 to i64*, !dbg !30
   store i64 %_msret, i64* %4, align 8, !dbg !30
   store volatile i32* %3, i32** %p.i, align 8, !dbg !30
-  tail call void @llvm.dbg.value(metadata i32** %p.i, i64 0, metadata !32, metadata !{!"0x102"}), !dbg !30
+  tail call void @llvm.dbg.value(metadata i32** %p.i, i64 0, metadata !32, metadata !MDExpression()), !dbg !30
   %p.i.0.p.0.p.0..i = load volatile i32*, i32** %p.i, align 8, !dbg !33
   %_msld = load i64, i64* %4, align 8, !dbg !33
   %_mscmp = icmp eq i64 %_msld, 0, !dbg !33
@@ -202,28 +202,28 @@ attributes #4 = { builtin }
 !llvm.module.flags = !{!16, !17}
 !llvm.ident = !{!18}
 
-!0 = !{!"0x11\004\00clang version 3.5.0 (trunk 207243) (llvm/trunk 207259)\001\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/foo.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"foo.cpp", !"/usr/local/google/home/echristo/tmp"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 (trunk 207243) (llvm/trunk 207259)", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "foo.cpp", directory: "/usr/local/google/home/echristo/tmp")
 !2 = !{}
 !3 = !{!4, !13}
-!4 = !{!"0x2e\00f\00f\00_Z1fv\003\000\001\000\006\00256\001\003", !1, !5, !6, null, void ()* @_Z1fv, null, null, !8} ; [ DW_TAG_subprogram ] [line 3] [def] [f]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/usr/local/google/home/echristo/tmp/foo.cpp]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "f", linkageName: "_Z1fv", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !6, function: void ()* @_Z1fv, variables: !8)
+!5 = !MDFile(filename: "foo.cpp", directory: "/usr/local/google/home/echristo/tmp")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{null}
 !8 = !{!9}
-!9 = !{!"0x100\00p\004\000", !4, !5, !10} ; [ DW_TAG_auto_variable ] [p] [line 4]
-!10 = !{!"0x35\00\000\000\000\000\000", null, null, !11} ; [ DW_TAG_volatile_type ] [line 0, size 0, align 0, offset 0] [from ]
-!11 = !{!"0xf\00\000\0064\0064\000\000", null, null, !12} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
-!12 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!13 = !{!"0x2e\00main\00main\00\009\000\001\000\006\00256\001\009", !1, !5, !14, null, i32 ()* @main, null, null, !2} ; [ DW_TAG_subprogram ] [line 9] [def] [main]
-!14 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !15, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!9 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "p", line: 4, scope: !4, file: !5, type: !10)
+!10 = !MDDerivedType(tag: DW_TAG_volatile_type, baseType: !11)
+!11 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !12)
+!12 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!13 = !MDSubprogram(name: "main", line: 9, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 9, file: !1, scope: !5, type: !14, function: i32 ()* @main, variables: !2)
+!14 = !MDSubroutineType(types: !15)
 !15 = !{!12}
 !16 = !{i32 2, !"Dwarf Version", i32 4}
-!17 = !{i32 1, !"Debug Info Version", i32 2}
+!17 = !{i32 1, !"Debug Info Version", i32 3}
 !18 = !{!"clang version 3.5.0 (trunk 207243) (llvm/trunk 207259)"}
 !19 = !MDLocation(line: 4, scope: !4)
 !20 = !MDLocation(line: 5, scope: !21)
-!21 = !{!"0xb\005\000\000", !1, !4} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/tmp/foo.cpp]
+!21 = distinct !MDLexicalBlock(line: 5, column: 0, file: !1, scope: !4)
 !22 = !{!"branch_weights", i32 1000, i32 1}
 !23 = !{!24, !24, i64 0}
 !24 = !{!"int", !25, i64 0}
@@ -234,7 +234,7 @@ attributes #4 = { builtin }
 !29 = !MDLocation(line: 7, scope: !4)
 !30 = !MDLocation(line: 4, scope: !4, inlinedAt: !31)
 !31 = !MDLocation(line: 10, scope: !13)
-!32 = !{!"0x100\00p\004\000", !4, !5, !10, !31} ; [ DW_TAG_auto_variable ] [p] [line 4]
+!32 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "p", line: 4, scope: !4, file: !5, type: !10, inlinedAt: !31)
 !33 = !MDLocation(line: 5, scope: !21, inlinedAt: !31)
 !34 = !MDLocation(line: 6, scope: !21, inlinedAt: !31)
 !35 = !MDLocation(line: 7, scope: !4, inlinedAt: !31)

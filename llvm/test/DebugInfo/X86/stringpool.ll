@@ -6,13 +6,13 @@
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!9}
 
-!0 = !{!"0x11\0012\00clang version 3.1 (trunk 143009)\001\00\000\00\000", !8, !1, !1, !1, !3,  !1} ; [ DW_TAG_compile_unit ]
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.1 (trunk 143009)", isOptimized: true, emissionKind: 0, file: !8, enums: !1, retainedTypes: !1, subprograms: !1, globals: !3, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !{!"0x34\00yyyy\00yyyy\00\001\000\001", null, !6, !7, i32* @yyyy, null} ; [ DW_TAG_variable ]
-!6 = !{!"0x29", !8} ; [ DW_TAG_file_type ]
-!7 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ]
-!8 = !{!"z.c", !"/home/nicholas"}
+!5 = !MDGlobalVariable(name: "yyyy", line: 1, isLocal: false, isDefinition: true, scope: null, file: !6, type: !7, variable: i32* @yyyy)
+!6 = !MDFile(filename: "z.c", directory: "/home/nicholas")
+!7 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !MDFile(filename: "z.c", directory: "/home/nicholas")
 
 ; Verify that "yyyy" ended up in the stringpool.
 ; LINUX: .section .debug_str,"MS",@progbits,1
@@ -40,4 +40,4 @@
 ; DARWIN-NEXT:        .byte   9                       ## DW_AT_location
 ; DARWIN-NEXT:        .byte   3
 ; DARWIN-NEXT:        .quad   _yyyy
-!9 = !{i32 1, !"Debug Info Version", i32 2}
+!9 = !{i32 1, !"Debug Info Version", i32 3}

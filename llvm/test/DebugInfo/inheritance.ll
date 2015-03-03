@@ -16,7 +16,7 @@ entry:
   %0 = alloca i32                                 ; <i32*> [#uses=2]
   %tst = alloca %struct.test1                     ; <%struct.test1*> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata %struct.test1* %tst, metadata !0, metadata !{!"0x102"}), !dbg !21
+  call void @llvm.dbg.declare(metadata %struct.test1* %tst, metadata !0, metadata !MDExpression()), !dbg !21
   call void @_ZN5test1C1Ev(%struct.test1* %tst) nounwind, !dbg !22
   store i32 0, i32* %0, align 4, !dbg !23
   %1 = load i32, i32* %0, align 4, !dbg !23            ; <i32> [#uses=1]
@@ -32,7 +32,7 @@ define linkonce_odr void @_ZN5test1C1Ev(%struct.test1* %this) nounwind ssp align
 entry:
   %this_addr = alloca %struct.test1*              ; <%struct.test1**> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata %struct.test1** %this_addr, metadata !24, metadata !{!"0x102"}), !dbg !28
+  call void @llvm.dbg.declare(metadata %struct.test1** %this_addr, metadata !24, metadata !MDExpression()), !dbg !28
   store %struct.test1* %this, %struct.test1** %this_addr
   %0 = load %struct.test1*, %struct.test1** %this_addr, align 8, !dbg !28 ; <%struct.test1*> [#uses=1]
   %1 = getelementptr inbounds %struct.test1, %struct.test1* %0, i32 0, i32 0, !dbg !28 ; <i32 (...)***> [#uses=1]
@@ -49,7 +49,7 @@ define linkonce_odr void @_ZN5test1D1Ev(%struct.test1* %this) nounwind ssp align
 entry:
   %this_addr = alloca %struct.test1*              ; <%struct.test1**> [#uses=3]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata %struct.test1** %this_addr, metadata !32, metadata !{!"0x102"}), !dbg !34
+  call void @llvm.dbg.declare(metadata %struct.test1** %this_addr, metadata !32, metadata !MDExpression()), !dbg !34
   store %struct.test1* %this, %struct.test1** %this_addr
   %0 = load %struct.test1*, %struct.test1** %this_addr, align 8, !dbg !35 ; <%struct.test1*> [#uses=1]
   %1 = getelementptr inbounds %struct.test1, %struct.test1* %0, i32 0, i32 0, !dbg !35 ; <i32 (...)***> [#uses=1]
@@ -78,7 +78,7 @@ define linkonce_odr void @_ZN5test1D0Ev(%struct.test1* %this) nounwind ssp align
 entry:
   %this_addr = alloca %struct.test1*              ; <%struct.test1**> [#uses=3]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata %struct.test1** %this_addr, metadata !38, metadata !{!"0x102"}), !dbg !40
+  call void @llvm.dbg.declare(metadata %struct.test1** %this_addr, metadata !38, metadata !MDExpression()), !dbg !40
   store %struct.test1* %this, %struct.test1** %this_addr
   %0 = load %struct.test1*, %struct.test1** %this_addr, align 8, !dbg !41 ; <%struct.test1*> [#uses=1]
   %1 = getelementptr inbounds %struct.test1, %struct.test1* %0, i32 0, i32 0, !dbg !41 ; <i32 (...)***> [#uses=1]
@@ -105,50 +105,50 @@ return:                                           ; preds = %bb2
 
 declare void @_ZdlPv(i8*) nounwind
 
-!0 = !{!"0x100\00tst\0013\000", !1, !4, !8} ; [ DW_TAG_auto_variable ]
-!1 = !{!"0xb\000\000\000", !44, !2} ; [ DW_TAG_lexical_block ]
-!2 = !{!"0xb\000\000\000", !44, !3} ; [ DW_TAG_lexical_block ]
-!3 = !{!"0x2e\00main\00main\00main\0011\000\001\000\006\000\000\000", i32 0, !4, !5, null, null, null, null, null} ; [ DW_TAG_subprogram ]
-!4 = !{!"0x11\004\004.2.1 (Based on Apple Inc. build 5658) (LLVM build)\001\00\000\00\000", !44, !45, !45, null, null, null} ; [ DW_TAG_compile_unit ]
-!5 = !{!"0x15\00\000\000\000\000\000\000", !4, null, null, !6, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "tst", line: 13, scope: !1, file: !4, type: !8)
+!1 = distinct !MDLexicalBlock(line: 0, column: 0, file: !44, scope: !2)
+!2 = distinct !MDLexicalBlock(line: 0, column: 0, file: !44, scope: !3)
+!3 = !MDSubprogram(name: "main", linkageName: "main", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scope: !4, type: !5)
+!4 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 0, file: !44, enums: !45, retainedTypes: !45)
+!5 = !MDSubroutineType(types: !6)
 !6 = !{!7}
-!7 = !{!"0x24\00int\000\0032\0032\000\000\005", null, !4} ; [ DW_TAG_base_type ]
-!8 = !{!"0x13\00test1\001\0064\0064\000\000\000", !44, !4, null, !9, !8, null, null} ; [ DW_TAG_structure_type ] [test1] [line 1, size 64, align 64, offset 0] [def] [from ]
+!7 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !MDCompositeType(tag: DW_TAG_structure_type, name: "test1", line: 1, size: 64, align: 64, file: !44, scope: !4, elements: !9, vtableHolder: !8)
 !9 = !{!10, !14, !18}
-!10 = !{!"0xd\00_vptr$test1\001\0064\0064\000\000", !44, !8, !11} ; [ DW_TAG_member ]
-!11 = !{!"0xf\00\000\0064\0064\000\000", !4, null, !12} ; [ DW_TAG_pointer_type ]
-!12 = !{!"0xf\00__vtbl_ptr_type\000\000\000\000\000", null, !4, !5} ; [ DW_TAG_pointer_type ]
-!13 = !{!"0x11\004\004.2.1 (Based on Apple Inc. build 5658) (LLVM build)\000\00\000\00\000", !46, !45, !45, null, null, null} ; [ DW_TAG_compile_unit ]
-!14 = !{!"0x2e\00test1\00test1\00\001\000\000\000\006\001\000\000", i32 0, !8, !15, null, null, null, null, null} ; [ DW_TAG_subprogram ]
-!15 = !{!"0x15\00\000\000\000\000\000\000", !4, null, null, !16, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!10 = !MDDerivedType(tag: DW_TAG_member, name: "_vptr$test1", line: 1, size: 64, align: 64, file: !44, scope: !8, baseType: !11)
+!11 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !4, baseType: !12)
+!12 = !MDDerivedType(tag: DW_TAG_pointer_type, name: "__vtbl_ptr_type", scope: !4, baseType: !5)
+!13 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: false, emissionKind: 0, file: !46, enums: !45, retainedTypes: !45)
+!14 = !MDSubprogram(name: "test1", line: 1, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrivate, isOptimized: false, scope: !8, type: !15)
+!15 = !MDSubroutineType(types: !16)
 !16 = !{null, !17}
-!17 = !{!"0xf\00\000\0064\0064\000\0064", !4, null, !8} ; [ DW_TAG_pointer_type ]
-!18 = !{!"0x2e\00~test1\00~test1\00\004\000\000\001\006\000\000\000", i32 0, !8, !19, !8, null, null, null, null} ; [ DW_TAG_subprogram ]
-!19 = !{!"0x15\00\000\000\000\000\000\000", !4, null, null, !20, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!17 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, file: !4, baseType: !8)
+!18 = !MDSubprogram(name: "~test1", line: 4, isLocal: false, isDefinition: false, virtuality: DW_VIRTUALITY_virtual, virtualIndex: 6, isOptimized: false, scope: !8, type: !19, containingType: !8)
+!19 = !MDSubroutineType(types: !20)
 !20 = !{null, !17, !7}
 !21 = !MDLocation(line: 11, scope: !1)
 !22 = !MDLocation(line: 13, scope: !1)
 !23 = !MDLocation(line: 14, scope: !1)
-!24 = !{!"0x101\00this\0013\000", !25, !4, !26} ; [ DW_TAG_arg_variable ]
-!25 = !{!"0x2e\00test1\00test1\00_ZN5test1C1Ev\001\000\001\000\006\000\000\000", i32 0, !4, !15, null, null, null, null, null} ; [ DW_TAG_subprogram ]
-!26 = !{!"0x26\00\000\0064\0064\000\0064", !4, null, !27} ; [ DW_TAG_const_type ]
-!27 = !{!"0xf\00\000\0064\0064\000\000", !4, null, !8} ; [ DW_TAG_pointer_type ]
+!24 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 13, arg: 0, scope: !25, file: !4, type: !26)
+!25 = !MDSubprogram(name: "test1", linkageName: "_ZN5test1C1Ev", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scope: !4, type: !15)
+!26 = !MDDerivedType(tag: DW_TAG_const_type, size: 64, align: 64, flags: DIFlagArtificial, file: !4, baseType: !27)
+!27 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !4, baseType: !8)
 !28 = !MDLocation(line: 1, scope: !25)
 !29 = !MDLocation(line: 1, scope: !30)
-!30 = !{!"0xb\000\000\000", !44, !31} ; [ DW_TAG_lexical_block ]
-!31 = !{!"0xb\000\000\000", !44, !25} ; [ DW_TAG_lexical_block ]
-!32 = !{!"0x101\00this\004\000", !33, !4, !26} ; [ DW_TAG_arg_variable ]
-!33 = !{!"0x2e\00~test1\00~test1\00_ZN5test1D1Ev\004\000\001\001\006\000\000\000", i32 0, !8, !15, !8, null, null, null, null} ; [ DW_TAG_subprogram ]
+!30 = distinct !MDLexicalBlock(line: 0, column: 0, file: !44, scope: !31)
+!31 = distinct !MDLexicalBlock(line: 0, column: 0, file: !44, scope: !25)
+!32 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 4, arg: 0, scope: !33, file: !4, type: !26)
+!33 = !MDSubprogram(name: "~test1", linkageName: "_ZN5test1D1Ev", line: 4, isLocal: false, isDefinition: true, virtuality: DW_VIRTUALITY_virtual, virtualIndex: 6, isOptimized: false, scope: !8, type: !15, containingType: !8)
 !34 = !MDLocation(line: 4, scope: !33)
 !35 = !MDLocation(line: 5, scope: !36)
-!36 = !{!"0xb\000\000\000", !44, !33} ; [ DW_TAG_lexical_block ]
+!36 = distinct !MDLexicalBlock(line: 0, column: 0, file: !44, scope: !33)
 !37 = !MDLocation(line: 6, scope: !36)
-!38 = !{!"0x101\00this\004\000", !39, !4, !26} ; [ DW_TAG_arg_variable ]
-!39 = !{!"0x2e\00~test1\00~test1\00_ZN5test1D0Ev\004\000\001\001\006\000\000\000", i32 0, !8, !15, !8, null, null, null, null} ; [ DW_TAG_subprogram ]
+!38 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 4, arg: 0, scope: !39, file: !4, type: !26)
+!39 = !MDSubprogram(name: "~test1", linkageName: "_ZN5test1D0Ev", line: 4, isLocal: false, isDefinition: true, virtuality: DW_VIRTUALITY_virtual, virtualIndex: 6, isOptimized: false, scope: !8, type: !15, containingType: !8)
 !40 = !MDLocation(line: 4, scope: !39)
 !41 = !MDLocation(line: 5, scope: !42)
-!42 = !{!"0xb\000\000\000", !44, !39} ; [ DW_TAG_lexical_block ]
+!42 = distinct !MDLexicalBlock(line: 0, column: 0, file: !44, scope: !39)
 !43 = !MDLocation(line: 6, scope: !42)
-!44 = !{!"inheritance.cpp", !"/tmp/"}
+!44 = !MDFile(filename: "inheritance.cpp", directory: "/tmp/")
 !45 = !{i32 0}
-!46 = !{!"<built-in>", !"/tmp/"}
+!46 = !MDFile(filename: "<built-in>", directory: "/tmp/")

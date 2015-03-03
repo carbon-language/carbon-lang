@@ -4,9 +4,9 @@
 ; not partitioned into multiple allocas.
 ;
 ; CHECK: call void @llvm.dbg.value(metadata float %s.coerce, i64 0, metadata ![[VAR:[0-9]+]], metadata ![[EXPR:[0-9]+]])
-; CHECK: ![[VAR]] = {{.*}} [ DW_TAG_arg_variable ] [s] [line 3]
-; CHECK: ![[EXPR]] = {{.*}} [ DW_TAG_expression ]
-; CHECK-NOT: DW_OP_bit_piece
+; CHECK: ![[VAR]] = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "s",{{.*}} line: 3,
+; CHECK: ![[EXPR]] = !MDExpression(
+; CHECK-NOT:                       DW_OP_bit_piece
 
 ;
 ; struct S { float f; };
@@ -41,23 +41,23 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!12, !13, !14}
 !llvm.ident = !{!15}
 
-!0 = !{!"0x11\0012\00clang version 3.6.0 \000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/Volumes/Data/llvm/_build.ninja.debug/test.c] [DW_LANG_C99]
-!1 = !{!"test.c", !"/Volumes/Data/llvm/_build.ninja.debug"}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.6.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "test.c", directory: "/Volumes/Data/llvm/_build.ninja.debug")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00foo\00foo\00\003\000\001\000\000\00256\000\003", !1, !5, !6, null, float (float)* @foo, null, null, !2} ; [ DW_TAG_subprogram ] [line 3] [def] [foo]
-!5 = !{!"0x29", !1}                               ; [ DW_TAG_file_type ] [/Volumes/Data/llvm/_build.ninja.debug/test.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", null, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "foo", line: 3, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, function: float (float)* @foo, variables: !2)
+!5 = !MDFile(filename: "test.c", directory: "/Volumes/Data/llvm/_build.ninja.debug")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{!8, !9}
-!8 = !{!"0x24\00float\000\0032\0032\000\000\004", null, null} ; [ DW_TAG_base_type ] [float] [line 0, size 32, align 32, offset 0, enc DW_ATE_float]
-!9 = !{!"0x13\00S\001\0032\0032\000\000\000", !1, null, null, !10, null, null, null} ; [ DW_TAG_structure_type ] [S] [line 1, size 32, align 32, offset 0] [def] [from ]
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
+!9 = !MDCompositeType(tag: DW_TAG_structure_type, name: "S", line: 1, size: 32, align: 32, file: !1, elements: !10)
 !10 = !{!11}
-!11 = !{!"0xd\00f\001\0032\0032\000\000", !1, !9, !8} ; [ DW_TAG_member ] [f] [line 1, size 32, align 32, offset 0] [from float]
+!11 = !MDDerivedType(tag: DW_TAG_member, name: "f", line: 1, size: 32, align: 32, file: !1, scope: !9, baseType: !8)
 !12 = !{i32 2, !"Dwarf Version", i32 2}
-!13 = !{i32 2, !"Debug Info Version", i32 2}
+!13 = !{i32 2, !"Debug Info Version", i32 3}
 !14 = !{i32 1, !"PIC Level", i32 2}
 !15 = !{!"clang version 3.6.0 "}
-!16 = !{!"0x101\00s\0016777219\000", !4, !5, !9}  ; [ DW_TAG_arg_variable ] [s] [line 3]
-!17 = !{!"0x102"}                                 ; [ DW_TAG_expression ]
+!16 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "s", line: 3, arg: 1, scope: !4, file: !5, type: !9)
+!17 = !MDExpression()
 !18 = !MDLocation(line: 3, column: 20, scope: !4)
 !19 = !MDLocation(line: 4, column: 2, scope: !4)

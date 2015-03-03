@@ -38,24 +38,24 @@ attributes #2 = { nounwind }
 !llvm.module.flags = !{!11, !12}
 !llvm.ident = !{!13}
 
-!0 = !{!"0x11\0012\00clang version 3.6.0 (trunk 223182)\001\00\000\00\001", !1, !2, !2, !3, !8, !2} ; [ DW_TAG_compile_unit ] [return-block.c] [DW_LANG_C99]
-!1 = !{!".../llvm/test/Transforms/GCOVProfiling/return-block.ll", !""}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.6.0 (trunk 223182)", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !8, imports: !2)
+!1 = !MDFile(filename: ".../llvm/test/Transforms/GCOVProfiling/return-block.ll", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00test\00test\00\005\000\001\000\000\000\001\005", !1, !5, !6, null, void ()* @test, null, null, !2} ; [ DW_TAG_subprogram ] [line 5] [def] [test]
-!5 = !{!"0x29", !1}    ; [ DW_TAG_file_type ] [return-block.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", null, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "test", line: 5, isLocal: false, isDefinition: true, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !6, function: void ()* @test, variables: !2)
+!5 = !MDFile(filename: ".../llvm/test/Transforms/GCOVProfiling/return-block.ll", directory: "")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{null}
 !8 = !{!9}
-!9 = !{!"0x34\00A\00A\00\003\000\001", null, !5, !10, i32* @A, null} ; [ DW_TAG_variable ] [A] [line 3] [def]
-!10 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = !MDGlobalVariable(name: "A", line: 3, isLocal: false, isDefinition: true, scope: null, file: !5, type: !10, variable: i32* @A)
+!10 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !11 = !{i32 2, !"Dwarf Version", i32 4}
-!12 = !{i32 2, !"Debug Info Version", i32 2}
+!12 = !{i32 2, !"Debug Info Version", i32 3}
 !13 = !{!"clang version 3.6.0 (trunk 223182)"}
 !14 = !MDLocation(line: 6, column: 3, scope: !4)
 !15 = !MDLocation(line: 7, column: 7, scope: !4)
 !16 = !MDLocation(line: 8, column: 5, scope: !17)
-!17 = !{!"0xb\007\007\000", !1, !4} ; [ DW_TAG_lexical_block ] [return-block.c]
+!17 = distinct !MDLexicalBlock(line: 7, column: 7, file: !1, scope: !4)
 !18 = !MDLocation(line: 9, column: 1, scope: !4)
 
 ; There should be no destination edges for block 1.

@@ -6,10 +6,10 @@
 
 ; Verify that both compile units and both their contained functions are
 ; listed by DebugInfoFinder:
-;CHECK: Compile Unit: [ DW_TAG_compile_unit ] [/tmp/test1.c] [DW_LANG_C99]
-;CHECK: Compile Unit: [ DW_TAG_compile_unit ] [/tmp/test2.c] [DW_LANG_C99]
-;CHECK: Subprogram: [ DW_TAG_subprogram ] [line 1] [def] [f]
-;CHECK: Subprogram: [ DW_TAG_subprogram ] [line 1] [def] [g]
+;CHECK: Compile unit: DW_LANG_C99 from /tmp/test1.c
+;CHECK: Compile unit: DW_LANG_C99 from /tmp/test2.c
+;CHECK: Subprogram: f from /tmp/test1.c:1
+;CHECK: Subprogram: g from /tmp/test2.c:1
 
 define void @f() {
   ret void, !dbg !14
@@ -22,20 +22,20 @@ define void @g() {
 !llvm.dbg.cu = !{!0, !8}
 !llvm.module.flags = !{!13, !16}
 
-!0 = !{!"0x11\0012\00clang version 3.4 (192092)\000\00\000\00\000", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/test1.c] [DW_LANG_C99]
-!1 = !{!"test1.c", !"/tmp"}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (192092)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "test1.c", directory: "/tmp")
 !2 = !{i32 0}
 !3 = !{!4}
-!4 = !{!"0x2e\00f\00f\00\001\000\001\000\006\000\000\001", !1, !5, !6, null, void ()* @f, null, null, !2} ; [ DW_TAG_subprogram ] [line 1] [def] [f]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/tmp/test1.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void ()* @f, variables: !2)
+!5 = !MDFile(filename: "test1.c", directory: "/tmp")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{null}
-!8 = !{!"0x11\0012\00clang version 3.4 (192092)\000\00\000\00\000", !9, !2, !2, !10, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/test2.c] [DW_LANG_C99]
-!9 = !{!"test2.c", !"/tmp"}
+!8 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (192092)", isOptimized: false, emissionKind: 0, file: !9, enums: !2, retainedTypes: !2, subprograms: !10, globals: !2, imports: !2)
+!9 = !MDFile(filename: "test2.c", directory: "/tmp")
 !10 = !{!11}
-!11 = !{!"0x2e\00g\00g\00\001\000\001\000\006\000\000\001", !9, !12, !6, null, void ()* @g, null, null, !2} ; [ DW_TAG_subprogram ] [line 1] [def] [g]
-!12 = !{!"0x29", !9}         ; [ DW_TAG_file_type ] [/tmp/test2.c]
+!11 = !MDSubprogram(name: "g", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 1, file: !9, scope: !12, type: !6, function: void ()* @g, variables: !2)
+!12 = !MDFile(filename: "test2.c", directory: "/tmp")
 !13 = !{i32 2, !"Dwarf Version", i32 4}
 !14 = !MDLocation(line: 1, scope: !4)
 !15 = !MDLocation(line: 1, scope: !11)
-!16 = !{i32 1, !"Debug Info Version", i32 2}
+!16 = !{i32 1, !"Debug Info Version", i32 3}

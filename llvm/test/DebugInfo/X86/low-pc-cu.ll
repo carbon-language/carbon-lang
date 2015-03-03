@@ -32,15 +32,15 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = !{!"0x11\0012\00clang version 3.5.0 (trunk 204164) (llvm/trunk 204183)\000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/z.c] [DW_LANG_C99]
-!1 = !{!"z.c", !"/usr/local/google/home/echristo"}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 (trunk 204164) (llvm/trunk 204183)", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "z.c", directory: "/usr/local/google/home/echristo")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00z\00z\00\001\000\001\000\006\00256\000\001", !1, !5, !6, null, void ()* @z, null, null, !2} ; [ DW_TAG_subprogram ] [line 1] [def] [z]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/usr/local/google/home/echristo/z.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "z", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void ()* @z, variables: !2)
+!5 = !MDFile(filename: "z.c", directory: "/usr/local/google/home/echristo")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{null}
 !8 = !{i32 2, !"Dwarf Version", i32 4}
-!9 = !{i32 1, !"Debug Info Version", i32 2}
+!9 = !{i32 1, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.5.0 (trunk 204164) (llvm/trunk 204183)"}
 !11 = !MDLocation(line: 1, scope: !4)

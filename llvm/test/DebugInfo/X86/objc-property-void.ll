@@ -56,9 +56,9 @@ entry:
   %self.addr = alloca %0*, align 8
   %_cmd.addr = alloca i8*, align 8
   store %0* %self, %0** %self.addr, align 8
-  call void @llvm.dbg.declare(metadata %0** %self.addr, metadata !24, metadata !{!"0x102"}), !dbg !26
+  call void @llvm.dbg.declare(metadata %0** %self.addr, metadata !24, metadata !MDExpression()), !dbg !26
   store i8* %_cmd, i8** %_cmd.addr, align 8
-  call void @llvm.dbg.declare(metadata i8** %_cmd.addr, metadata !27, metadata !{!"0x102"}), !dbg !26
+  call void @llvm.dbg.declare(metadata i8** %_cmd.addr, metadata !27, metadata !MDExpression()), !dbg !26
   ret void, !dbg !29
 }
 
@@ -72,33 +72,33 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!17, !18, !19, !20, !21, !22}
 !llvm.ident = !{!23}
 
-!0 = !{!"0x11\0016\00\000\00\002\00\000", !1, !2, !3, !9, !2, !2} ; [ DW_TAG_compile_unit ] [] [DW_LANG_ObjC]
-!1 = !{!"-", !""}
+!0 = !MDCompileUnit(language: DW_LANG_ObjC, isOptimized: false, runtimeVersion: 2, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !9, globals: !2, imports: !2)
+!1 = !MDFile(filename: "-", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x13\00Foo\001\000\008\000\00512\0016", !5, !6, null, !7, null, null, null} ; [ DW_TAG_structure_type ] [Foo] [line 1, size 0, align 8, offset 0] [def] [from ]
-!5 = !{!"<stdin>", !""}
-!6 = !{!"0x29", !5}          ; [ DW_TAG_file_type ] []
+!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Foo", line: 1, align: 8, flags: DIFlagObjcClassComplete, runtimeLang: DW_LANG_ObjC, file: !5, scope: !6, elements: !7)
+!5 = !MDFile(filename: "<stdin>", directory: "")
+!6 = !MDFile(filename: "<stdin>", directory: "")
 !7 = !{!8}
-!8 = !{!"0x4200\00foo\002\00\00\002117", !6, null} ; [ DW_TAG_APPLE_property ] [foo] [line 2, properties 2117]
+!8 = !MDObjCProperty(name: "foo", line: 2, attributes: 2117, file: !6)
 !9 = !{!10}
-!10 = !{!"0x2e\00-[Foo foo]\00-[Foo foo]\00\005\001\001\000\006\00256\000\005", !5, !6, !11, null, void (%0*, i8*)* @"\01-[Foo foo]", null, null, !2} ; [ DW_TAG_subprogram ] [line 5] [local] [def] [-[Foo foo]]
-!11 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !12, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!10 = !MDSubprogram(name: "-[Foo foo]", line: 5, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !5, scope: !6, type: !11, function: void (%0*, i8*)* @"\01-[Foo foo]", variables: !2)
+!11 = !MDSubroutineType(types: !12)
 !12 = !{null, !13, !14}
-!13 = !{!"0xf\00\000\0064\0064\000\001088", null, null, !4} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from Foo]
-!14 = !{!"0x16\00SEL\005\000\000\000\0064", !5, null, !15} ; [ DW_TAG_typedef ] [SEL] [line 5, size 0, align 0, offset 0] [artificial] [from ]
-!15 = !{!"0xf\00\000\0064\0064\000\000", null, null, !16} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from objc_selector]
-!16 = !{!"0x13\00objc_selector\000\000\000\000\004\000", !1, null, null, null, null, null, null} ; [ DW_TAG_structure_type ] [objc_selector] [line 0, size 0, align 0, offset 0] [decl] [from ]
+!13 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !4)
+!14 = !MDDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 5, flags: DIFlagArtificial, file: !5, baseType: !15)
+!15 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !16)
+!16 = !MDCompositeType(tag: DW_TAG_structure_type, name: "objc_selector", flags: DIFlagFwdDecl, file: !1)
 !17 = !{i32 1, !"Objective-C Version", i32 2}
 !18 = !{i32 1, !"Objective-C Image Info Version", i32 0}
 !19 = !{i32 1, !"Objective-C Image Info Section", !"__DATA, __objc_imageinfo, regular, no_dead_strip"}
 !20 = !{i32 4, !"Objective-C Garbage Collection", i32 0}
 !21 = !{i32 2, !"Dwarf Version", i32 2}
-!22 = !{i32 1, !"Debug Info Version", i32 2}
+!22 = !{i32 1, !"Debug Info Version", i32 3}
 !23 = !{!""}
-!24 = !{!"0x101\00self\0016777216\001088", !10, null, !25} ; [ DW_TAG_arg_variable ] [self] [line 0]
-!25 = !{!"0xf\00\000\0064\0064\000\000", null, null, !4} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from Foo]
+!24 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "self", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !10, type: !25)
+!25 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !4)
 !26 = !MDLocation(line: 0, scope: !10)
-!27 = !{!"0x101\00_cmd\0033554432\0064", !10, null, !28} ; [ DW_TAG_arg_variable ] [_cmd] [line 0]
-!28 = !{!"0x16\00SEL\005\000\000\000\000", !5, null, !15} ; [ DW_TAG_typedef ] [SEL] [line 5, size 0, align 0, offset 0] [from ]
+!27 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "_cmd", arg: 2, flags: DIFlagArtificial, scope: !10, type: !28)
+!28 = !MDDerivedType(tag: DW_TAG_typedef, name: "SEL", line: 5, file: !5, baseType: !15)
 !29 = !MDLocation(line: 5, scope: !10)

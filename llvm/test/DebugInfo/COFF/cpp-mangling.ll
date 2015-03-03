@@ -29,15 +29,15 @@ attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"=
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = !{!"0x11\004\00clang version 3.6.0 \000\00\000\00\002", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [D:\/<stdin>] [DW_LANG_C_plus_plus]
-!1 = !{!"<stdin>", !"D:\5C"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.6.0 ", isOptimized: false, emissionKind: 2, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "<stdin>", directory: "D:\5C")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00bar\00bar\00\002\000\001\000\000\00256\000\002", !5, !6, !7, null, i32 (i32)* @"\01?bar@foo@@YAHH@Z", null, null, !2} ; [ DW_TAG_subprogram ] [line 2] [def] [bar]
-!5 = !{!"src.cpp", !"D:\5C"}
-!6 = !{!"0x29", !5}    ; [ DW_TAG_file_type ] [D:\/src.cpp]
-!7 = !{!"0x15\00\000\000\000\000\000\000", null, null, null, !2, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "bar", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !5, scope: !6, type: !7, function: i32 (i32)* @"\01?bar@foo@@YAHH@Z", variables: !2)
+!5 = !MDFile(filename: "src.cpp", directory: "D:\5C")
+!6 = !MDFile(filename: "src.cpp", directory: "D:C")
+!7 = !MDSubroutineType(types: !2)
 !8 = !{i32 2, !"Dwarf Version", i32 4}
-!9 = !{i32 2, !"Debug Info Version", i32 2}
+!9 = !{i32 2, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.6.0 "}
 !11 = !MDLocation(line: 3, scope: !4)

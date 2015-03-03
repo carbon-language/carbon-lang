@@ -165,7 +165,6 @@ protected:
   GlobalVariable *getGlobalVariableField(unsigned Elt) const;
   Constant *getConstantField(unsigned Elt) const;
   Function *getFunctionField(unsigned Elt) const;
-  void replaceFunctionField(unsigned Elt, Function *F);
 
 public:
   explicit DIDescriptor(const MDNode *N = nullptr) : DbgNode(N) {}
@@ -215,29 +214,49 @@ public:
     return getHeaderIterator(Index).getNumber<T>();
   }
 
-  uint16_t getTag() const { return getHeaderFieldAs<uint16_t>(0); }
+  uint16_t getTag() const {
+    if (auto *N = dyn_cast_or_null<DebugNode>(get()))
+      return N->getTag();
+    return 0;
+  }
 
-  bool isDerivedType() const;
-  bool isCompositeType() const;
-  bool isSubroutineType() const;
-  bool isBasicType() const;
-  bool isVariable() const;
-  bool isSubprogram() const;
-  bool isGlobalVariable() const;
-  bool isScope() const;
-  bool isFile() const;
-  bool isCompileUnit() const;
-  bool isNameSpace() const;
-  bool isLexicalBlockFile() const;
-  bool isLexicalBlock() const;
-  bool isSubrange() const;
-  bool isEnumerator() const;
-  bool isType() const;
-  bool isTemplateTypeParameter() const;
-  bool isTemplateValueParameter() const;
-  bool isObjCProperty() const;
-  bool isImportedEntity() const;
-  bool isExpression() const;
+  bool isDerivedType() const { return get() && isa<MDDerivedTypeBase>(get()); }
+  bool isCompositeType() const {
+    return get() && isa<MDCompositeTypeBase>(get());
+  }
+  bool isSubroutineType() const {
+    return get() && isa<MDSubroutineType>(get());
+  }
+  bool isBasicType() const { return get() && isa<MDBasicType>(get()); }
+  bool isVariable() const { return get() && isa<MDLocalVariable>(get()); }
+  bool isSubprogram() const { return get() && isa<MDSubprogram>(get()); }
+  bool isGlobalVariable() const {
+    return get() && isa<MDGlobalVariable>(get());
+  }
+  bool isScope() const { return get() && isa<MDScope>(get()); }
+  bool isFile() const { return get() && isa<MDFile>(get()); }
+  bool isCompileUnit() const { return get() && isa<MDCompileUnit>(get()); }
+  bool isNameSpace() const{ return get() && isa<MDNamespace>(get()); }
+  bool isLexicalBlockFile() const {
+    return get() && isa<MDLexicalBlockFile>(get());
+  }
+  bool isLexicalBlock() const {
+    return get() && isa<MDLexicalBlockBase>(get());
+  }
+  bool isSubrange() const { return get() && isa<MDSubrange>(get()); }
+  bool isEnumerator() const { return get() && isa<MDEnumerator>(get()); }
+  bool isType() const { return get() && isa<MDType>(get()); }
+  bool isTemplateTypeParameter() const {
+    return get() && isa<MDTemplateTypeParameter>(get());
+  }
+  bool isTemplateValueParameter() const {
+    return get() && isa<MDTemplateValueParameter>(get());
+  }
+  bool isObjCProperty() const { return get() && isa<MDObjCProperty>(get()); }
+  bool isImportedEntity() const {
+    return get() && isa<MDImportedEntity>(get());
+  }
+  bool isExpression() const { return get() && isa<MDExpression>(get()); }
 
   void print(raw_ostream &OS) const;
   void dump() const;
@@ -259,17 +278,23 @@ public:
       return DESC(dyn_cast_or_null<MDNode>(VALID));                            \
     return DESC(static_cast<const MDNode *>(nullptr));                         \
   } while (false)
+#define RETURN_REF_FROM_RAW(REF, VALID)                                        \
+  do {                                                                         \
+    if (auto *N = getRaw())                                                    \
+      return REF::get(VALID);                                                  \
+    return REF::get(nullptr);                                                  \
+  } while (false)
 
 /// \brief This is used to represent ranges, for array bounds.
 class DISubrange : public DIDescriptor {
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
+  MDSubrange *getRaw() const { return dyn_cast_or_null<MDSubrange>(get()); }
 
 public:
   explicit DISubrange(const MDNode *N = nullptr) : DIDescriptor(N) {}
+  DISubrange(const MDSubrange *N) : DIDescriptor(N) {}
 
-  int64_t getLo() const { return getHeaderFieldAs<int64_t>(1); }
-  int64_t getCount() const { return getHeaderFieldAs<int64_t>(2); }
+  int64_t getLo() const { RETURN_FROM_RAW(N->getLo(), 0); }
+  int64_t getCount() const { RETURN_FROM_RAW(N->getCount(), 0); }
   bool Verify() const;
 };
 
@@ -290,14 +315,14 @@ typedef DITypedArray<DIDescriptor> DIArray;
 /// FIXME: it seems strange that this doesn't have either a reference to the
 /// type/precision or a file/line pair for location info.
 class DIEnumerator : public DIDescriptor {
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
+  MDEnumerator *getRaw() const { return dyn_cast_or_null<MDEnumerator>(get()); }
 
 public:
   explicit DIEnumerator(const MDNode *N = nullptr) : DIDescriptor(N) {}
+  DIEnumerator(const MDEnumerator *N) : DIDescriptor(N) {}
 
-  StringRef getName() const { return getHeaderField(1); }
-  int64_t getEnumValue() const { return getHeaderFieldAs<int64_t>(2); }
+  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
+  int64_t getEnumValue() const { RETURN_FROM_RAW(N->getValue(), 0); }
   bool Verify() const;
 };
 
@@ -317,11 +342,11 @@ typedef DITypedArray<DITypeRef> DITypeArray;
 /// (DICompileUnit, DISubprogram, etc.), but not for, e.g., a DIType.
 class DIScope : public DIDescriptor {
 protected:
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
+  MDScope *getRaw() const { return dyn_cast_or_null<MDScope>(get()); }
 
 public:
   explicit DIScope(const MDNode *N = nullptr) : DIDescriptor(N) {}
+  DIScope(const MDScope *N) : DIDescriptor(N) {}
 
   /// \brief Get the parent scope.
   ///
@@ -362,6 +387,8 @@ public:
   T resolve(const DITypeIdentifierMap &Map) const;
   StringRef getName() const;
   operator Metadata *() const { return const_cast<Metadata *>(Val); }
+
+  static DIRef get(const Metadata *MD) { return DIRef(MD); }
 };
 
 template <typename T>
@@ -413,12 +440,12 @@ template <> DIRef<DIType>::DIRef(const Metadata *V);
 /// FIXME: Types should be factored much better so that CV qualifiers and
 /// others do not require a huge and empty descriptor full of zeros.
 class DIType : public DIScope {
-protected:
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
+  MDType *getRaw() const { return dyn_cast_or_null<MDType>(get()); }
 
 public:
   explicit DIType(const MDNode *N = nullptr) : DIScope(N) {}
+  DIType(const MDType *N) : DIScope(N) {}
+
   operator DITypeRef() const {
     assert(isType() &&
            "constructing DITypeRef from an MDNode that is not a type");
@@ -427,15 +454,17 @@ public:
 
   bool Verify() const;
 
-  DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(2); }
-  StringRef getName() const { return getHeaderField(1); }
-  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(2); }
-  uint64_t getSizeInBits() const { return getHeaderFieldAs<unsigned>(3); }
-  uint64_t getAlignInBits() const { return getHeaderFieldAs<unsigned>(4); }
+  DIScopeRef getContext() const {
+    RETURN_REF_FROM_RAW(DIScopeRef, N->getScope());
+  }
+  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
+  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
+  uint64_t getSizeInBits() const { RETURN_FROM_RAW(N->getSizeInBits(), 0); }
+  uint64_t getAlignInBits() const { RETURN_FROM_RAW(N->getAlignInBits(), 0); }
   // FIXME: Offset is only used for DW_TAG_member nodes.  Making every type
   // carry this is just plain insane.
-  uint64_t getOffsetInBits() const { return getHeaderFieldAs<unsigned>(5); }
-  unsigned getFlags() const { return getHeaderFieldAs<unsigned>(6); }
+  uint64_t getOffsetInBits() const { RETURN_FROM_RAW(N->getOffsetInBits(), 0); }
+  unsigned getFlags() const { RETURN_FROM_RAW(N->getFlags(), 0); }
   bool isPrivate() const {
     return (getFlags() & FlagAccessibility) == FlagPrivate;
   }
@@ -471,10 +500,13 @@ public:
 
 /// \brief A basic type, like 'int' or 'float'.
 class DIBasicType : public DIType {
+  MDBasicType *getRaw() const { return dyn_cast_or_null<MDBasicType>(get()); }
+
 public:
   explicit DIBasicType(const MDNode *N = nullptr) : DIType(N) {}
+  DIBasicType(const MDBasicType *N) : DIType(N) {}
 
-  unsigned getEncoding() const { return getHeaderFieldAs<unsigned>(7); }
+  unsigned getEncoding() const { RETURN_FROM_RAW(N->getEncoding(), 0); }
 
   bool Verify() const;
 };
@@ -484,25 +516,39 @@ public:
 /// Like a const qualified type, a typedef, a pointer or reference, et cetera.
 /// Or, a data member of a class/struct/union.
 class DIDerivedType : public DIType {
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
+  MDDerivedTypeBase *getRaw() const {
+    return dyn_cast_or_null<MDDerivedTypeBase>(get());
+  }
 
 public:
   explicit DIDerivedType(const MDNode *N = nullptr) : DIType(N) {}
+  DIDerivedType(const MDDerivedTypeBase *N) : DIType(N) {}
 
-  DITypeRef getTypeDerivedFrom() const { return getFieldAs<DITypeRef>(3); }
+  DITypeRef getTypeDerivedFrom() const {
+    RETURN_REF_FROM_RAW(DITypeRef, N->getBaseType());
+  }
 
   /// \brief Return property node, if this ivar is associated with one.
-  MDNode *getObjCProperty() const;
+  MDNode *getObjCProperty() const {
+    if (auto *N = dyn_cast_or_null<MDDerivedType>(get()))
+      return dyn_cast_or_null<MDNode>(N->getExtraData());
+    return nullptr;
+  }
 
   DITypeRef getClassType() const {
     assert(getTag() == dwarf::DW_TAG_ptr_to_member_type);
-    return getFieldAs<DITypeRef>(4);
+    if (auto *N = dyn_cast_or_null<MDDerivedType>(get()))
+      return DITypeRef::get(N->getExtraData());
+    return DITypeRef::get(nullptr);
   }
 
   Constant *getConstant() const {
     assert((getTag() == dwarf::DW_TAG_member) && isStaticMember());
-    return getConstantField(4);
+    if (auto *N = dyn_cast_or_null<MDDerivedType>(get()))
+      if (auto *C = dyn_cast_or_null<ConstantAsMetadata>(N->getExtraData()))
+        return C->getValue();
+
+    return nullptr;
   }
 
   bool Verify() const;
@@ -519,18 +565,21 @@ public:
 // base type in a single DIType field.
 class DICompositeType : public DIDerivedType {
   friend class DIBuilder;
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
 
   /// \brief Set the array of member DITypes.
   void setArraysHelper(MDNode *Elements, MDNode *TParams);
 
+  MDCompositeTypeBase *getRaw() const {
+    return dyn_cast_or_null<MDCompositeTypeBase>(get());
+  }
+
 public:
   explicit DICompositeType(const MDNode *N = nullptr) : DIDerivedType(N) {}
+  DICompositeType(const MDCompositeTypeBase *N) : DIDerivedType(N) {}
 
   DIArray getElements() const {
     assert(!isSubroutineType() && "no elements for DISubroutineType");
-    return getFieldAs<DIArray>(4);
+    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getElements());
   }
 
 private:
@@ -544,117 +593,160 @@ private:
   }
 
 public:
-  unsigned getRunTimeLang() const { return getHeaderFieldAs<unsigned>(7); }
-  DITypeRef getContainingType() const { return getFieldAs<DITypeRef>(5); }
+  unsigned getRunTimeLang() const { RETURN_FROM_RAW(N->getRuntimeLang(), 0); }
+  DITypeRef getContainingType() const {
+    RETURN_REF_FROM_RAW(DITypeRef, N->getVTableHolder());
+  }
 
 private:
   /// \brief Set the containing type.
   void setContainingType(DICompositeType ContainingType);
 
 public:
-  DIArray getTemplateParams() const { return getFieldAs<DIArray>(6); }
-  MDString *getIdentifier() const;
+  DIArray getTemplateParams() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getTemplateParams());
+  }
+  MDString *getIdentifier() const {
+    RETURN_FROM_RAW(N->getRawIdentifier(), nullptr);
+  }
 
   bool Verify() const;
 };
 
 class DISubroutineType : public DICompositeType {
+  MDSubroutineType *getRaw() const {
+    return dyn_cast_or_null<MDSubroutineType>(get());
+  }
+
 public:
   explicit DISubroutineType(const MDNode *N = nullptr) : DICompositeType(N) {}
+  DISubroutineType(const MDSubroutineType *N) : DICompositeType(N) {}
+
   DITypedArray<DITypeRef> getTypeArray() const {
-    return getFieldAs<DITypedArray<DITypeRef>>(4);
+    RETURN_DESCRIPTOR_FROM_RAW(DITypedArray<DITypeRef>, N->getTypeArray());
   }
 };
 
 /// \brief This is a wrapper for a file.
 class DIFile : public DIScope {
-  friend class DIDescriptor;
+  MDFile *getRaw() const { return dyn_cast_or_null<MDFile>(get()); }
 
 public:
   explicit DIFile(const MDNode *N = nullptr) : DIScope(N) {}
+  DIFile(const MDFile *N) : DIScope(N) {}
 
   /// \brief Retrieve the MDNode for the directory/file pair.
-  MDNode *getFileNode() const;
+  MDNode *getFileNode() const { return get(); }
   bool Verify() const;
 };
 
 /// \brief A wrapper for a compile unit.
 class DICompileUnit : public DIScope {
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
+  MDCompileUnit *getRaw() const {
+    return dyn_cast_or_null<MDCompileUnit>(get());
+  }
 
 public:
   explicit DICompileUnit(const MDNode *N = nullptr) : DIScope(N) {}
+  DICompileUnit(const MDCompileUnit *N) : DIScope(N) {}
 
   dwarf::SourceLanguage getLanguage() const {
-    return static_cast<dwarf::SourceLanguage>(getHeaderFieldAs<unsigned>(1));
+    RETURN_FROM_RAW(static_cast<dwarf::SourceLanguage>(N->getSourceLanguage()),
+                    static_cast<dwarf::SourceLanguage>(0));
   }
-  StringRef getProducer() const { return getHeaderField(2); }
+  StringRef getProducer() const { RETURN_FROM_RAW(N->getProducer(), ""); }
+  bool isOptimized() const { RETURN_FROM_RAW(N->isOptimized(), false); }
+  StringRef getFlags() const { RETURN_FROM_RAW(N->getFlags(), ""); }
+  unsigned getRunTimeVersion() const {
+    RETURN_FROM_RAW(N->getRuntimeVersion(), 0);
+  }
 
-  bool isOptimized() const { return getHeaderFieldAs<bool>(3) != 0; }
-  StringRef getFlags() const { return getHeaderField(4); }
-  unsigned getRunTimeVersion() const { return getHeaderFieldAs<unsigned>(5); }
-
-  DIArray getEnumTypes() const;
-  DIArray getRetainedTypes() const;
-  DIArray getSubprograms() const;
-  DIArray getGlobalVariables() const;
-  DIArray getImportedEntities() const;
+  DIArray getEnumTypes() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getEnumTypes());
+  }
+  DIArray getRetainedTypes() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getRetainedTypes());
+  }
+  DIArray getSubprograms() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getSubprograms());
+  }
+  DIArray getGlobalVariables() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getGlobalVariables());
+  }
+  DIArray getImportedEntities() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getImportedEntities());
+  }
 
   void replaceSubprograms(DIArray Subprograms);
   void replaceGlobalVariables(DIArray GlobalVariables);
 
-  StringRef getSplitDebugFilename() const { return getHeaderField(6); }
-  unsigned getEmissionKind() const { return getHeaderFieldAs<unsigned>(7); }
+  StringRef getSplitDebugFilename() const {
+    RETURN_FROM_RAW(N->getSplitDebugFilename(), "");
+  }
+  unsigned getEmissionKind() const { RETURN_FROM_RAW(N->getEmissionKind(), 0); }
 
   bool Verify() const;
 };
 
 /// \brief This is a wrapper for a subprogram (e.g. a function).
 class DISubprogram : public DIScope {
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
+  MDSubprogram *getRaw() const { return dyn_cast_or_null<MDSubprogram>(get()); }
 
 public:
   explicit DISubprogram(const MDNode *N = nullptr) : DIScope(N) {}
+  DISubprogram(const MDSubprogram *N) : DIScope(N) {}
 
-  StringRef getName() const { return getHeaderField(1); }
-  StringRef getDisplayName() const { return getHeaderField(2); }
-  StringRef getLinkageName() const { return getHeaderField(3); }
-  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(4); }
+  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
+  StringRef getDisplayName() const { RETURN_FROM_RAW(N->getDisplayName(), ""); }
+  StringRef getLinkageName() const { RETURN_FROM_RAW(N->getLinkageName(), ""); }
+  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
 
   /// \brief Check if this is local (like 'static' in C).
-  unsigned isLocalToUnit() const { return getHeaderFieldAs<unsigned>(5); }
-  unsigned isDefinition() const { return getHeaderFieldAs<unsigned>(6); }
+  unsigned isLocalToUnit() const { RETURN_FROM_RAW(N->isLocalToUnit(), 0); }
+  unsigned isDefinition() const { RETURN_FROM_RAW(N->isDefinition(), 0); }
 
-  unsigned getVirtuality() const { return getHeaderFieldAs<unsigned>(7); }
-  unsigned getVirtualIndex() const { return getHeaderFieldAs<unsigned>(8); }
+  unsigned getVirtuality() const { RETURN_FROM_RAW(N->getVirtuality(), 0); }
+  unsigned getVirtualIndex() const { RETURN_FROM_RAW(N->getVirtualIndex(), 0); }
 
-  unsigned getFlags() const { return getHeaderFieldAs<unsigned>(9); }
+  unsigned getFlags() const { RETURN_FROM_RAW(N->getFlags(), 0); }
 
-  unsigned isOptimized() const { return getHeaderFieldAs<bool>(10); }
+  unsigned isOptimized() const { RETURN_FROM_RAW(N->isOptimized(), 0); }
 
   /// \brief Get the beginning of the scope of the function (not the name).
-  unsigned getScopeLineNumber() const { return getHeaderFieldAs<unsigned>(11); }
+  unsigned getScopeLineNumber() const { RETURN_FROM_RAW(N->getScopeLine(), 0); }
 
-  DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(2); }
-  DISubroutineType getType() const { return getFieldAs<DISubroutineType>(3); }
+  DIScopeRef getContext() const {
+    RETURN_REF_FROM_RAW(DIScopeRef, N->getScope());
+  }
+  DISubroutineType getType() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DISubroutineType, N->getType());
+  }
 
-  DITypeRef getContainingType() const { return getFieldAs<DITypeRef>(4); }
+  DITypeRef getContainingType() const {
+    RETURN_REF_FROM_RAW(DITypeRef, N->getContainingType());
+  }
 
   bool Verify() const;
 
   /// \brief Check if this provides debugging information for the function F.
   bool describes(const Function *F);
 
-  Function *getFunction() const { return getFunctionField(5); }
-  void replaceFunction(Function *F) { replaceFunctionField(5, F); }
-  DIArray getTemplateParams() const { return getFieldAs<DIArray>(6); }
-  DISubprogram getFunctionDeclaration() const {
-    return getFieldAs<DISubprogram>(7);
+  Function *getFunction() const;
+
+  void replaceFunction(Function *F) {
+    if (auto *N = getRaw())
+      N->replaceFunction(F);
   }
-  MDNode *getVariablesNodes() const;
-  DIArray getVariables() const;
+  DIArray getTemplateParams() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getTemplateParams());
+  }
+  DISubprogram getFunctionDeclaration() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DISubprogram, N->getDeclaration());
+  }
+  MDNode *getVariablesNodes() const { return getVariables(); }
+  DIArray getVariables() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DIArray, N->getVariables());
+  }
 
   unsigned isArtificial() const { return (getFlags() & FlagArtificial) != 0; }
   /// \brief Check for the "private" access specifier.
@@ -693,18 +785,40 @@ public:
 
 /// \brief This is a wrapper for a lexical block.
 class DILexicalBlock : public DIScope {
+  MDLexicalBlockBase *getRaw() const {
+    return dyn_cast_or_null<MDLexicalBlockBase>(get());
+  }
+
 public:
   explicit DILexicalBlock(const MDNode *N = nullptr) : DIScope(N) {}
-  DIScope getContext() const { return getFieldAs<DIScope>(2); }
-  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(1); }
-  unsigned getColumnNumber() const { return getHeaderFieldAs<unsigned>(2); }
+  DILexicalBlock(const MDLexicalBlock *N) : DIScope(N) {}
+
+  DIScope getContext() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DIScope, N->getScope());
+  }
+  unsigned getLineNumber() const {
+    if (auto *N = dyn_cast_or_null<MDLexicalBlock>(get()))
+      return N->getLine();
+    return 0;
+  }
+  unsigned getColumnNumber() const {
+    if (auto *N = dyn_cast_or_null<MDLexicalBlock>(get()))
+      return N->getColumn();
+    return 0;
+  }
   bool Verify() const;
 };
 
 /// \brief This is a wrapper for a lexical block with a filename change.
 class DILexicalBlockFile : public DIScope {
+  MDLexicalBlockFile *getRaw() const {
+    return dyn_cast_or_null<MDLexicalBlockFile>(get());
+  }
+
 public:
   explicit DILexicalBlockFile(const MDNode *N = nullptr) : DIScope(N) {}
+  DILexicalBlockFile(const MDLexicalBlockFile *N) : DIScope(N) {}
+
   DIScope getContext() const {
     // FIXME: This logic is horrible.  getScope() returns a DILexicalBlock, but
     // then we check if it's a subprogram?  WHAT?!?
@@ -714,75 +828,102 @@ public:
   }
   unsigned getLineNumber() const { return getScope().getLineNumber(); }
   unsigned getColumnNumber() const { return getScope().getColumnNumber(); }
-  DILexicalBlock getScope() const { return getFieldAs<DILexicalBlock>(2); }
-  unsigned getDiscriminator() const { return getHeaderFieldAs<unsigned>(1); }
+  DILexicalBlock getScope() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DILexicalBlock, N->getScope());
+  }
+  unsigned getDiscriminator() const {
+    RETURN_FROM_RAW(N->getDiscriminator(), 0);
+  }
   bool Verify() const;
 };
 
 /// \brief A wrapper for a C++ style name space.
 class DINameSpace : public DIScope {
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
+  MDNamespace *getRaw() const { return dyn_cast_or_null<MDNamespace>(get()); }
 
 public:
   explicit DINameSpace(const MDNode *N = nullptr) : DIScope(N) {}
-  StringRef getName() const { return getHeaderField(1); }
-  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(2); }
-  DIScope getContext() const { return getFieldAs<DIScope>(2); }
+  DINameSpace(const MDNamespace *N) : DIScope(N) {}
+
+  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
+  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
+  DIScope getContext() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DIScope, N->getScope());
+  }
   bool Verify() const;
 };
 
 /// \brief This is a wrapper for template type parameter.
 class DITemplateTypeParameter : public DIDescriptor {
+  MDTemplateTypeParameter *getRaw() const {
+    return dyn_cast_or_null<MDTemplateTypeParameter>(get());
+  }
+
 public:
   explicit DITemplateTypeParameter(const MDNode *N = nullptr)
       : DIDescriptor(N) {}
+  DITemplateTypeParameter(const MDTemplateTypeParameter *N) : DIDescriptor(N) {}
 
-  StringRef getName() const { return getHeaderField(1); }
+  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
 
-  DITypeRef getType() const { return getFieldAs<DITypeRef>(2); }
+  DITypeRef getType() const { RETURN_REF_FROM_RAW(DITypeRef, N->getType()); }
   bool Verify() const;
 };
 
 /// \brief This is a wrapper for template value parameter.
 class DITemplateValueParameter : public DIDescriptor {
+  MDTemplateValueParameter *getRaw() const {
+    return dyn_cast_or_null<MDTemplateValueParameter>(get());
+  }
+
 public:
   explicit DITemplateValueParameter(const MDNode *N = nullptr)
       : DIDescriptor(N) {}
+  DITemplateValueParameter(const MDTemplateValueParameter *N)
+      : DIDescriptor(N) {}
 
-  StringRef getName() const { return getHeaderField(1); }
-
-  DITypeRef getType() const { return getFieldAs<DITypeRef>(2); }
-  Metadata *getValue() const;
+  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
+  DITypeRef getType() const { RETURN_REF_FROM_RAW(DITypeRef, N->getType()); }
+  Metadata *getValue() const { RETURN_FROM_RAW(N->getValue(), nullptr); }
   bool Verify() const;
 };
 
 /// \brief This is a wrapper for a global variable.
 class DIGlobalVariable : public DIDescriptor {
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
+  MDGlobalVariable *getRaw() const {
+    return dyn_cast_or_null<MDGlobalVariable>(get());
+  }
+
+  DIFile getFile() const { RETURN_DESCRIPTOR_FROM_RAW(DIFile, N->getFile()); }
 
 public:
   explicit DIGlobalVariable(const MDNode *N = nullptr) : DIDescriptor(N) {}
+  DIGlobalVariable(const MDGlobalVariable *N) : DIDescriptor(N) {}
 
-  StringRef getName() const { return getHeaderField(1); }
-  StringRef getDisplayName() const { return getHeaderField(2); }
-  StringRef getLinkageName() const { return getHeaderField(3); }
-  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(4); }
-  unsigned isLocalToUnit() const { return getHeaderFieldAs<bool>(5); }
-  unsigned isDefinition() const { return getHeaderFieldAs<bool>(6); }
+  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
+  StringRef getDisplayName() const { RETURN_FROM_RAW(N->getDisplayName(), ""); }
+  StringRef getLinkageName() const { RETURN_FROM_RAW(N->getLinkageName(), ""); }
+  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
+  unsigned isLocalToUnit() const { RETURN_FROM_RAW(N->isLocalToUnit(), 0); }
+  unsigned isDefinition() const { RETURN_FROM_RAW(N->isDefinition(), 0); }
 
-  DIScope getContext() const { return getFieldAs<DIScope>(1); }
-  StringRef getFilename() const { return getFieldAs<DIFile>(2).getFilename(); }
-  StringRef getDirectory() const {
-    return getFieldAs<DIFile>(2).getDirectory();
+  DIScope getContext() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DIScope, N->getScope());
   }
-  DITypeRef getType() const { return getFieldAs<DITypeRef>(3); }
+  StringRef getFilename() const { return getFile().getFilename(); }
+  StringRef getDirectory() const { return getFile().getDirectory(); }
+  DITypeRef getType() const { RETURN_REF_FROM_RAW(DITypeRef, N->getType()); }
 
-  GlobalVariable *getGlobal() const { return getGlobalVariableField(4); }
-  Constant *getConstant() const { return getConstantField(4); }
+  GlobalVariable *getGlobal() const;
+  Constant *getConstant() const {
+    if (auto *N = getRaw())
+      if (auto *C = dyn_cast_or_null<ConstantAsMetadata>(N->getVariable()))
+        return C->getValue();
+    return nullptr;
+  }
   DIDerivedType getStaticDataMemberDeclaration() const {
-    return getFieldAs<DIDerivedType>(5);
+    RETURN_DESCRIPTOR_FROM_RAW(DIDerivedType,
+                               N->getStaticDataMemberDeclaration());
   }
 
   bool Verify() const;
@@ -790,34 +931,39 @@ public:
 
 /// \brief This is a wrapper for a variable (e.g. parameter, local, global etc).
 class DIVariable : public DIDescriptor {
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
+  MDLocalVariable *getRaw() const {
+    return dyn_cast_or_null<MDLocalVariable>(get());
+  }
+
+  unsigned getFlags() const { RETURN_FROM_RAW(N->getFlags(), 0); }
 
 public:
   explicit DIVariable(const MDNode *N = nullptr) : DIDescriptor(N) {}
+  DIVariable(const MDLocalVariable *N) : DIDescriptor(N) {}
 
-  StringRef getName() const { return getHeaderField(1); }
-  unsigned getLineNumber() const {
-    // FIXME: Line number and arg number shouldn't be merged together like this.
-    return (getHeaderFieldAs<unsigned>(2) << 8) >> 8;
+  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
+  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
+  unsigned getArgNumber() const { RETURN_FROM_RAW(N->getArg(), 0); }
+
+  DIScope getContext() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DIScope, N->getScope());
   }
-  unsigned getArgNumber() const { return getHeaderFieldAs<unsigned>(2) >> 24; }
-
-  DIScope getContext() const { return getFieldAs<DIScope>(1); }
-  DIFile getFile() const { return getFieldAs<DIFile>(2); }
-  DITypeRef getType() const { return getFieldAs<DITypeRef>(3); }
+  DIFile getFile() const { RETURN_DESCRIPTOR_FROM_RAW(DIFile, N->getFile()); }
+  DITypeRef getType() const { RETURN_REF_FROM_RAW(DITypeRef, N->getType()); }
 
   /// \brief Return true if this variable is marked as "artificial".
   bool isArtificial() const {
-    return (getHeaderFieldAs<unsigned>(3) & FlagArtificial) != 0;
+    return (getFlags() & FlagArtificial) != 0;
   }
 
   bool isObjectPointer() const {
-    return (getHeaderFieldAs<unsigned>(3) & FlagObjectPointer) != 0;
+    return (getFlags() & FlagObjectPointer) != 0;
   }
 
   /// \brief If this variable is inlined then return inline location.
-  MDNode *getInlinedAt() const;
+  MDNode *getInlinedAt() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DIDescriptor, N->getInlinedAt());
+  }
 
   bool Verify() const;
 
@@ -843,25 +989,21 @@ public:
 /// FIXME: Instead of DW_OP_plus taking an argument, this should use DW_OP_const
 /// and have DW_OP_plus consume the topmost elements on the stack.
 class DIExpression : public DIDescriptor {
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
+  MDExpression *getRaw() const { return dyn_cast_or_null<MDExpression>(get()); }
 
 public:
   explicit DIExpression(const MDNode *N = nullptr) : DIDescriptor(N) {}
+  DIExpression(const MDExpression *N) : DIDescriptor(N) {}
 
   bool Verify() const;
 
   /// \brief Return the number of elements in the complex expression.
-  unsigned getNumElements() const {
-    if (!DbgNode)
-      return 0;
-    unsigned N = getNumHeaderFields();
-    assert(N > 0 && "missing tag");
-    return N - 1;
-  }
+  unsigned getNumElements() const { RETURN_FROM_RAW(N->getNumElements(), 0); }
 
   /// \brief return the Idx'th complex address element.
-  uint64_t getElement(unsigned Idx) const;
+  uint64_t getElement(unsigned I) const {
+    return cast<MDExpression>(get())->getElement(I);
+  }
 
   /// \brief Return whether this is a piece of an aggregate variable.
   bool isBitPiece() const;
@@ -874,20 +1016,20 @@ public:
   /// \brief A lightweight wrapper around an element of a DIExpression.
   class Operand {
     friend class iterator;
-    DIHeaderFieldIterator I;
+    MDExpression::element_iterator I;
     Operand() {}
-    Operand(DIHeaderFieldIterator I) : I(I) {}
+    Operand(MDExpression::element_iterator I) : I(I) {}
   public:
     /// \brief Operands such as DW_OP_piece have explicit (non-stack) arguments.
     /// Argument 0 is the operand itself.
     uint64_t getArg(unsigned N) const {
-      DIHeaderFieldIterator In = I;
+      MDExpression::element_iterator In = I;
       std::advance(In, N);
-      return In.getNumber<uint64_t>();
+      return *In;
     }
-    operator uint64_t () const { return I.getNumber<uint64_t>(); }
-    /// \brief Returns underlying DIHeaderFieldIterator.
-    const DIHeaderFieldIterator &getBase() const { return I; }
+    operator uint64_t () const { return *I; }
+    /// \brief Returns underlying MDExpression::element_iterator.
+    const MDExpression::element_iterator &getBase() const { return I; }
     /// \brief Returns the next operand.
     Operand getNext() const;
   };
@@ -896,12 +1038,11 @@ public:
   class iterator : public std::iterator<std::input_iterator_tag, StringRef,
                                         unsigned, const Operand*, Operand> {
     friend class Operand;
-    DIHeaderFieldIterator I;
+    MDExpression::element_iterator I;
     Operand Tmp;
-    iterator(DIHeaderFieldIterator I) : I(I) {}
+
   public:
-    iterator() {}
-    iterator(const DIExpression &Expr) : I(++Expr.header_begin()) {}
+    iterator(MDExpression::element_iterator I) : I(I) {}
     const Operand &operator*() { return Tmp = Operand(I); }
     const Operand *operator->() { return &(Tmp = Operand(I)); }
     iterator &operator++() {
@@ -928,8 +1069,8 @@ public:
     }
   };
 
-  iterator begin() const;
-  iterator end() const;
+  iterator begin() const { return cast<MDExpression>(get())->elements_begin(); }
+  iterator end() const { return cast<MDExpression>(get())->elements_end(); }
 };
 
 /// \brief This object holds location information.
@@ -983,19 +1124,25 @@ public:
 };
 
 class DIObjCProperty : public DIDescriptor {
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
+  MDObjCProperty *getRaw() const {
+    return dyn_cast_or_null<MDObjCProperty>(get());
+  }
 
 public:
   explicit DIObjCProperty(const MDNode *N) : DIDescriptor(N) {}
+  DIObjCProperty(const MDObjCProperty *N) : DIDescriptor(N) {}
 
-  StringRef getObjCPropertyName() const { return getHeaderField(1); }
-  DIFile getFile() const { return getFieldAs<DIFile>(1); }
-  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(2); }
+  StringRef getObjCPropertyName() const { RETURN_FROM_RAW(N->getName(), ""); }
+  DIFile getFile() const { RETURN_DESCRIPTOR_FROM_RAW(DIFile, N->getFile()); }
+  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
 
-  StringRef getObjCPropertyGetterName() const { return getHeaderField(3); }
-  StringRef getObjCPropertySetterName() const { return getHeaderField(4); }
-  unsigned getAttributes() const { return getHeaderFieldAs<unsigned>(5); }
+  StringRef getObjCPropertyGetterName() const {
+    RETURN_FROM_RAW(N->getGetterName(), "");
+  }
+  StringRef getObjCPropertySetterName() const {
+    RETURN_FROM_RAW(N->getSetterName(), "");
+  }
+  unsigned getAttributes() const { RETURN_FROM_RAW(N->getAttributes(), 0); }
   bool isReadOnlyObjCProperty() const {
     return (getAttributes() & dwarf::DW_APPLE_PROPERTY_readonly) != 0;
   }
@@ -1019,28 +1166,36 @@ public:
   ///
   /// \note Objective-C doesn't have an ODR, so there is no benefit in storing
   /// the type as a DITypeRef here.
-  DIType getType() const { return getFieldAs<DIType>(2); }
+  DIType getType() const { RETURN_DESCRIPTOR_FROM_RAW(DIType, N->getType()); }
 
   bool Verify() const;
 };
 
 /// \brief An imported module (C++ using directive or similar).
 class DIImportedEntity : public DIDescriptor {
-  friend class DIDescriptor;
-  void printInternal(raw_ostream &OS) const;
+  MDImportedEntity *getRaw() const {
+    return dyn_cast_or_null<MDImportedEntity>(get());
+  }
 
 public:
   DIImportedEntity() = default;
   explicit DIImportedEntity(const MDNode *N) : DIDescriptor(N) {}
-  DIScope getContext() const { return getFieldAs<DIScope>(1); }
-  DIDescriptorRef getEntity() const { return getFieldAs<DIDescriptorRef>(2); }
-  unsigned getLineNumber() const { return getHeaderFieldAs<unsigned>(1); }
-  StringRef getName() const { return getHeaderField(2); }
+  DIImportedEntity(const MDImportedEntity *N) : DIDescriptor(N) {}
+
+  DIScope getContext() const {
+    RETURN_DESCRIPTOR_FROM_RAW(DIScope, N->getScope());
+  }
+  DIDescriptorRef getEntity() const {
+    RETURN_REF_FROM_RAW(DIDescriptorRef, N->getEntity());
+  }
+  unsigned getLineNumber() const { RETURN_FROM_RAW(N->getLine(), 0); }
+  StringRef getName() const { RETURN_FROM_RAW(N->getName(), ""); }
   bool Verify() const;
 };
 
 #undef RETURN_FROM_RAW
 #undef RETURN_DESCRIPTOR_FROM_RAW
+#undef RETURN_REF_FROM_RAW
 
 /// \brief Find subprogram that is enclosing this scope.
 DISubprogram getDISubprogram(const MDNode *Scope);

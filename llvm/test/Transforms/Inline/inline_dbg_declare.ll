@@ -52,7 +52,7 @@ entry:
   %call = call float @foo(float %1), !dbg !22
 
 ; CHECK-NOT: call float @foo
-; CHECK: void @llvm.dbg.declare(metadata float* [[x_addr_i]], metadata [[m23:![0-9]+]], metadata !17), !dbg [[m24:![0-9]+]]
+; CHECK: void @llvm.dbg.declare(metadata float* [[x_addr_i]], metadata [[m23:![0-9]+]], metadata !{{[0-9]+}}), !dbg [[m24:![0-9]+]]
 
   %2 = load float*, float** %dst.addr, align 4, !dbg !22
   %arrayidx1 = getelementptr inbounds float, float* %2, i32 0, !dbg !22
@@ -67,31 +67,33 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!13, !14}
 !llvm.ident = !{!15}
 
-!0 = !{!"0x11\0012\00clang version 3.6.0 (trunk)\000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [foo.c] [DW_LANG_C99]
-!1 = !{!"foo.c", !""}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.6.0 (trunk)", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "foo.c", directory: "")
 !2 = !{}
 !3 = !{!4, !9}
-!4 = !{!"0x2e\00foo\00foo\00\001\000\001\000\000\00256\000\002", !1, !5, !6, null, float (float)* @foo, null, null, !2} ; [ DW_TAG_subprogram ] [line 1] [def] [scope 2] [foo]
-!5 = !{!"0x29", !1}    ; [ DW_TAG_file_type ] [foo.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", null, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, function: float (float)* @foo, variables: !2)
+!5 = !MDFile(filename: "foo.c", directory: "")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{!8, !8}
-!8 = !{!"0x24\00float\000\0032\0032\000\000\004", null, null} ; [ DW_TAG_base_type ] [float] [line 0, size 32, align 32, offset 0, enc DW_ATE_float]
-!9 = !{!"0x2e\00bar\00bar\00\006\000\001\000\000\00256\000\007", !1, !5, !10, null, void (float*)* @bar, null, null, !2} ; [ DW_TAG_subprogram ] [line 6] [def] [scope 7] [bar]
-!10 = !{!"0x15\00\000\000\000\000\000\000", null, null, null, !11, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
+!9 = !MDSubprogram(name: "bar", line: 6, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !1, scope: !5, type: !10, function: void (float*)* @bar, variables: !2)
+!10 = !MDSubroutineType(types: !11)
 !11 = !{null, !12}
-!12 = !{!"0xf\00\000\0032\0032\000\000", null, null, !8} ; [ DW_TAG_pointer_type ] [line 0, size 32, align 32, offset 0] [from float]
+!12 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, baseType: !8)
 !13 = !{i32 2, !"Dwarf Version", i32 4}
-!14 = !{i32 2, !"Debug Info Version", i32 2}
+!14 = !{i32 2, !"Debug Info Version", i32 3}
 !15 = !{!"clang version 3.6.0 (trunk)"}
-!16 = !{!"0x101\00x\0016777217\000", !4, !5, !8} ; [ DW_TAG_arg_variable ] [x] [line 1]
-!17 = !{!"0x102"}               ; [ DW_TAG_expression ]
+!16 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 1, arg: 1, scope: !4, file: !5, type: !8)
+!17 = !MDExpression()
 !18 = !MDLocation(line: 1, column: 17, scope: !4)
 !19 = !MDLocation(line: 3, column: 5, scope: !4)
-!20 = !{!"0x101\00dst\0016777222\000", !9, !5, !12} ; [ DW_TAG_arg_variable ] [dst] [line 6]
+!20 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "dst", line: 6, arg: 1, scope: !9, file: !5, type: !12)
 !21 = !MDLocation(line: 6, column: 17, scope: !9)
 !22 = !MDLocation(line: 8, column: 14, scope: !9)
 !23 = !MDLocation(line: 9, column: 1, scope: !9)
 
-; CHECK: [[CALL_SITE:![0-9]+]] = distinct !MDLocation(line: 8, column: 14, scope: !9)
-; CHECK: [[m23]] = !{!"0x101\00x\0016777217\000", !4, !5, !8, [[CALL_SITE]]} ; [ DW_TAG_arg_variable ] [x] [line 1]
-; CHECK: [[m24]] = !MDLocation(line: 1, column: 17, scope: !4, inlinedAt: [[CALL_SITE]])
+; CHECK: [[FOO:![0-9]+]] = !MDSubprogram(name: "foo",
+; CHECK: [[BAR:![0-9]+]] = !MDSubprogram(name: "bar",
+; CHECK: [[CALL_SITE:![0-9]+]] = distinct !MDLocation(line: 8, column: 14, scope: [[BAR]])
+; CHECK: [[m23]] = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", arg: 1, scope: [[FOO]],{{.*}} inlinedAt: [[CALL_SITE]])
+; CHECK: [[m24]] = !MDLocation(line: 1, column: 17, scope: [[FOO]], inlinedAt: [[CALL_SITE]])

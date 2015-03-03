@@ -11,10 +11,10 @@ entry:
   %argv.addr = alloca i8**, align 8
   %i = alloca i32, align 4
   store i32 %argc, i32* %argc.addr, align 4
-  call void @llvm.dbg.declare(metadata i32* %argc.addr, metadata !14, metadata !{!"0x102"}), !dbg !15
+  call void @llvm.dbg.declare(metadata i32* %argc.addr, metadata !14, metadata !MDExpression()), !dbg !15
   store i8** %argv, i8*** %argv.addr, align 8
-  call void @llvm.dbg.declare(metadata i8*** %argv.addr, metadata !16, metadata !{!"0x102"}), !dbg !15
-  call void @llvm.dbg.declare(metadata i32* %i, metadata !17, metadata !{!"0x102"}), !dbg !20
+  call void @llvm.dbg.declare(metadata i8*** %argv.addr, metadata !16, metadata !MDExpression()), !dbg !15
+  call void @llvm.dbg.declare(metadata i32* %i, metadata !17, metadata !MDExpression()), !dbg !20
   store i32 0, i32* %i, align 4, !dbg !20
   br label %for.cond, !dbg !20
 
@@ -50,30 +50,30 @@ declare i32 @puts(i8*)
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!27}
 
-!0 = !{!"0x11\004\00clang version 3.3 (trunk 173515)\001\00\000\00\000", !25, !2, !2, !3, !2, null} ; [ DW_TAG_compile_unit ]
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 173515)", isOptimized: true, emissionKind: 0, file: !25, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2)
 !1 = !{!2}
 !2 = !{i32 0}
 !3 = !{!5}
-!5 = !{!"0x2e\00print_args\00print_args\00test\004\000\001\000\006\00256\000\005", !26, null, !7, null, void (i32, i8**)* @test, null, null, !1} ; [ DW_TAG_subprogram ]
-!6 = !{!"0x29", !26} ; [ DW_TAG_file_type ]
-!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = !MDSubprogram(name: "print_args", linkageName: "test", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !26, scope: null, type: !7, function: void (i32, i8**)* @test, variables: !1)
+!6 = !MDFile(filename: "test.cpp", directory: "/private/tmp")
+!7 = !MDSubroutineType(types: !8)
 !8 = !{null, !9, !10}
-!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ]
-!10 = !{!"0xf\00\000\0064\0064\000\000", null, null, !11} ; [ DW_TAG_pointer_type ]
-!11 = !{!"0xf\00\000\0064\0064\000\000", null, null, !12} ; [ DW_TAG_pointer_type ]
-!12 = !{!"0x26\00\000\000\000\000\000", null, null, !13} ; [ DW_TAG_const_type ]
-!13 = !{!"0x24\00char\000\008\008\000\000\006", null, null} ; [ DW_TAG_base_type ]
-!14 = !{!"0x101\00argc\0016777220\000", !5, !6, !9} ; [ DW_TAG_arg_variable ]
+!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !11)
+!11 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !12)
+!12 = !MDDerivedType(tag: DW_TAG_const_type, baseType: !13)
+!13 = !MDBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
+!14 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "argc", line: 4, arg: 1, scope: !5, file: !6, type: !9)
 !15 = !MDLocation(line: 4, scope: !5)
-!16 = !{!"0x101\00argv\0033554436\000", !5, !6, !10} ; [ DW_TAG_arg_variable ]
-!17 = !{!"0x100\00i\006\000", !18, !6, !9} ; [ DW_TAG_auto_variable ]
-!18 = !{!"0xb\006\000\001", !26, !19} ; [ DW_TAG_lexical_block ]
-!19 = !{!"0xb\005\000\000", !26, !5} ; [ DW_TAG_lexical_block ]
+!16 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "argv", line: 4, arg: 2, scope: !5, file: !6, type: !10)
+!17 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 6, scope: !18, file: !6, type: !9)
+!18 = distinct !MDLexicalBlock(line: 6, column: 0, file: !26, scope: !19)
+!19 = distinct !MDLexicalBlock(line: 5, column: 0, file: !26, scope: !5)
 !20 = !MDLocation(line: 6, scope: !18)
 !21 = !MDLocation(line: 8, scope: !22)
-!22 = !{!"0xb\007\000\002", !26, !18} ; [ DW_TAG_lexical_block ]
+!22 = distinct !MDLexicalBlock(line: 7, column: 0, file: !26, scope: !18)
 !23 = !MDLocation(line: 9, scope: !22)
 !24 = !MDLocation(line: 10, scope: !19)
-!25 = !{!"main.cpp", !"/private/tmp"}
-!26 = !{!"test.cpp", !"/private/tmp"}
-!27 = !{i32 1, !"Debug Info Version", i32 2}
+!25 = !MDFile(filename: "main.cpp", directory: "/private/tmp")
+!26 = !MDFile(filename: "test.cpp", directory: "/private/tmp")
+!27 = !{i32 1, !"Debug Info Version", i32 3}

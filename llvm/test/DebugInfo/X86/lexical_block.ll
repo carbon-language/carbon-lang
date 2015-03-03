@@ -25,7 +25,7 @@
 define void @_Z1bv() #0 {
 entry:
   %i = alloca i32, align 4
-  call void @llvm.dbg.declare(metadata i32* %i, metadata !11, metadata !{!"0x102"}), !dbg !14
+  call void @llvm.dbg.declare(metadata i32* %i, metadata !11, metadata !MDExpression()), !dbg !14
   store i32 3, i32* %i, align 4, !dbg !14
   %0 = load i32, i32* %i, align 4, !dbg !14
   %tobool = icmp ne i32 %0, 0, !dbg !14
@@ -48,20 +48,20 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = !{!"0x11\004\00clang version 3.5.0 \000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/lexical_block.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"lexical_block.cpp", !"/tmp/dbginfo"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "lexical_block.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00b\00b\00_Z1bv\001\000\001\000\006\00256\000\001", !1, !5, !6, null, void ()* @_Z1bv, null, null, !2} ; [ DW_TAG_subprogram ] [line 1] [def] [b]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/tmp/dbginfo/lexical_block.cpp]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "b", linkageName: "_Z1bv", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void ()* @_Z1bv, variables: !2)
+!5 = !MDFile(filename: "lexical_block.cpp", directory: "/tmp/dbginfo")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{null}
 !8 = !{i32 2, !"Dwarf Version", i32 4}
-!9 = !{i32 1, !"Debug Info Version", i32 2}
+!9 = !{i32 1, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.5.0 "}
-!11 = !{!"0x100\00i\002\000", !12, !5, !13} ; [ DW_TAG_auto_variable ] [i] [line 2]
-!12 = !{!"0xb\002\000\000", !1, !4} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/lexical_block.cpp]
-!13 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!11 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 2, scope: !12, file: !5, type: !13)
+!12 = distinct !MDLexicalBlock(line: 2, column: 0, file: !1, scope: !4)
+!13 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !14 = !MDLocation(line: 2, scope: !12)
 !15 = !MDLocation(line: 3, scope: !12)
 !16 = !MDLocation(line: 4, scope: !4)

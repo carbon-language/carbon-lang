@@ -27,11 +27,11 @@ for.cond1:                                        ; preds = %for.end9, %for.cond
 
 for.body2:                                        ; preds = %for.cond1
   store i32 %storemerge11, i32* @b, align 4, !dbg !26
-  tail call void @llvm.dbg.value(metadata i32* null, i64 0, metadata !11, metadata !{!"0x102"}), !dbg !28
+  tail call void @llvm.dbg.value(metadata i32* null, i64 0, metadata !11, metadata !MDExpression()), !dbg !28
   %0 = load i64, i64* @a, align 8, !dbg !29
   %xor = xor i64 %0, %e.1.ph, !dbg !29
   %conv3 = trunc i64 %xor to i32, !dbg !29
-  tail call void @llvm.dbg.value(metadata i32 %conv3, i64 0, metadata !10, metadata !{!"0x102"}), !dbg !29
+  tail call void @llvm.dbg.value(metadata i32 %conv3, i64 0, metadata !10, metadata !MDExpression()), !dbg !29
   %tobool4 = icmp eq i32 %conv3, 0, !dbg !29
   br i1 %tobool4, label %land.end, label %land.rhs, !dbg !29
 
@@ -79,33 +79,33 @@ attributes #3 = { nounwind }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!33}
 
-!0 = !{!"0x11\0012\00clang version 3.4 (trunk 182024) (llvm/trunk 182023)\001\00\000\00\000", !1, !2, !2, !3, !15, !2} ; [ DW_TAG_compile_unit ] [/d/b/pr16110.c] [DW_LANG_C99]
-!1 = !{!"pr16110.c", !"/d/b"}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 182024) (llvm/trunk 182023)", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !15, imports: !2)
+!1 = !MDFile(filename: "pr16110.c", directory: "/d/b")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00pr16110\00pr16110\00\007\000\001\000\006\000\001\007", !1, !5, !6, null, i32 ()* @pr16110, null, null, !9} ; [ DW_TAG_subprogram ] [line 7] [def] [pr16110]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/d/b/pr16110.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "pr16110", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 7, file: !1, scope: !5, type: !6, function: i32 ()* @pr16110, variables: !9)
+!5 = !MDFile(filename: "pr16110.c", directory: "/d/b")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{!8}
-!8 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !9 = !{!10, !11}
-!10 = !{!"0x100\00e\008\000", !4, !5, !8} ; [ DW_TAG_auto_variable ] [e] [line 8]
-!11 = !{!"0x100\00f\0013\000", !12, !5, !14} ; [ DW_TAG_auto_variable ] [f] [line 13]
-!12 = !{!"0xb\0012\000\002", !1, !13} ; [ DW_TAG_lexical_block ] [/d/b/pr16110.c]
-!13 = !{!"0xb\0012\000\001", !1, !4} ; [ DW_TAG_lexical_block ] [/d/b/pr16110.c]
-!14 = !{!"0xf\00\000\0032\0032\000\000", null, null, !8} ; [ DW_TAG_pointer_type ] [line 0, size 32, align 32, offset 0] [from int]
+!10 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "e", line: 8, scope: !4, file: !5, type: !8)
+!11 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "f", line: 13, scope: !12, file: !5, type: !14)
+!12 = distinct !MDLexicalBlock(line: 12, column: 0, file: !1, scope: !13)
+!13 = distinct !MDLexicalBlock(line: 12, column: 0, file: !1, scope: !4)
+!14 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, baseType: !8)
 !15 = !{!16, !18, !19, !20}
-!16 = !{!"0x34\00a\00a\00\001\000\001", null, !5, !17, i64* @a, null} ; [ DW_TAG_variable ] [a] [line 1] [def]
-!17 = !{!"0x24\00long long int\000\0064\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [long long int] [line 0, size 64, align 32, offset 0, enc DW_ATE_signed]
-!18 = !{!"0x34\00b\00b\00\002\000\001", null, !5, !8, i32* @b, null} ; [ DW_TAG_variable ] [b] [line 2] [def]
-!19 = !{!"0x34\00c\00c\00\003\000\001", null, !5, !8, i32* @c, null} ; [ DW_TAG_variable ] [c] [line 3] [def]
-!20 = !{!"0x34\00d\00d\00\004\000\001", null, !5, !8, i32* @d, null} ; [ DW_TAG_variable ] [d] [line 4] [def]
+!16 = !MDGlobalVariable(name: "a", line: 1, isLocal: false, isDefinition: true, scope: null, file: !5, type: !17, variable: i64* @a)
+!17 = !MDBasicType(tag: DW_TAG_base_type, name: "long long int", size: 64, align: 32, encoding: DW_ATE_signed)
+!18 = !MDGlobalVariable(name: "b", line: 2, isLocal: false, isDefinition: true, scope: null, file: !5, type: !8, variable: i32* @b)
+!19 = !MDGlobalVariable(name: "c", line: 3, isLocal: false, isDefinition: true, scope: null, file: !5, type: !8, variable: i32* @c)
+!20 = !MDGlobalVariable(name: "d", line: 4, isLocal: false, isDefinition: true, scope: null, file: !5, type: !8, variable: i32* @d)
 !21 = !MDLocation(line: 10, scope: !22)
-!22 = !{!"0xb\0010\000\000", !1, !4} ; [ DW_TAG_lexical_block ] [/d/b/pr16110.c]
+!22 = distinct !MDLexicalBlock(line: 10, column: 0, file: !1, scope: !4)
 !26 = !MDLocation(line: 12, scope: !13)
 !27 = !{i32* null}
 !28 = !MDLocation(line: 13, scope: !12)
 !29 = !MDLocation(line: 14, scope: !12)
 !31 = !MDLocation(line: 16, scope: !4)
 !32 = !MDLocation(line: 18, scope: !4)
-!33 = !{i32 1, !"Debug Info Version", i32 2}
+!33 = !{i32 1, !"Debug Info Version", i32 3}

@@ -19,15 +19,15 @@ entry:
 !llvm.dbg.sp = !{!1}
 !llvm.dbg.gv = !{!5}
 
-!0 = !{!"0x11\0012\00clang version 3.0 ()\001\00\000\00\000", !9, !4, !4, !10, null, null} ; [ DW_TAG_compile_unit ]
-!1 = !{!"0x2e\00bar\00bar\00\002\000\001\000\006\000\000\000", !9, !2, !3, null, void ()* @bar, null, null, null} ; [ DW_TAG_subprogram ] [line 2] [def] [scope 0] [bar]
-!2 = !{!"0x29", !9} ; [ DW_TAG_file_type ]
-!3 = !{!"0x15\00\000\000\000\000\000\000", !9, !2, null, !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 ()", isOptimized: true, emissionKind: 0, file: !9, enums: !4, retainedTypes: !4, subprograms: !10)
+!1 = !MDSubprogram(name: "bar", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !9, scope: !2, type: !3, function: void ()* @bar)
+!2 = !MDFile(filename: "/tmp/two.c", directory: "/Volumes/Lalgate/Slate/D")
+!3 = !MDSubroutineType(types: !4)
 !4 = !{null}
-!5 = !{!"0x34\00x\00x\00\001\001\001", !0, !2, !6, i32* @x} ; [ DW_TAG_variable ]
-!6 = !{!"0x24\00int\000\0032\0032\000\000\005", null, !0} ; [ DW_TAG_base_type ]
+!5 = !MDGlobalVariable(name: "x", line: 1, isLocal: true, isDefinition: true, scope: !0, file: !2, type: !6, variable: i32* @x)
+!6 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !7 = !MDLocation(line: 2, column: 14, scope: !8)
-!8 = !{!"0xb\002\0012\000", !9, !1} ; [ DW_TAG_lexical_block ]
-!9 = !{!"/tmp/two.c", !"/Volumes/Lalgate/Slate/D"}
+!8 = distinct !MDLexicalBlock(line: 2, column: 12, file: !9, scope: !1)
+!9 = !MDFile(filename: "/tmp/two.c", directory: "/Volumes/Lalgate/Slate/D")
 !10 = !{!1}
-!11 = !{i32 1, !"Debug Info Version", i32 2}
+!11 = !{i32 1, !"Debug Info Version", i32 3}

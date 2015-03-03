@@ -18,10 +18,10 @@ declare void @llvm.dbg.region.end(metadata) nounwind readnone
 
 !llvm.module.flags = !{!6}
 
-!0 = !{!"0x2e\00foo\00foo\00foo\001\000\001\000\006\000\000\000", i32 0, !1, !2, null, null, null, null} ; [ DW_TAG_subprogram ]
-!1 = !{!"0x11\0012\00clang 1.0\001\00\000\00\000", !4, !5, !5, !4, null, null} ; [ DW_TAG_compile_unit ]
-!2 = !{!"0x24\00int\000\0032\0032\000\000\005", null, !1} ; [ DW_TAG_base_type ]
+!0 = !MDSubprogram(name: "foo", linkageName: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scope: !1, type: !2)
+!1 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang 1.0", isOptimized: true, emissionKind: 0, file: !4, enums: !5, retainedTypes: !5, subprograms: !4)
+!2 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !3 = !MDLocation(line: 1, column: 13, scope: !1, inlinedAt: !1)
-!4 = !{!"foo.c", !"/tmp"}
+!4 = !MDFile(filename: "foo.c", directory: "/tmp")
 !5 = !{i32 0}
-!6 = !{i32 1, !"Debug Info Version", i32 2}
+!6 = !{i32 1, !"Debug Info Version", i32 3}

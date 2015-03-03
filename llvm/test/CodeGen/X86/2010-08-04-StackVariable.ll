@@ -6,8 +6,8 @@
 define i32 @_Z3fooi4SVal(i32 %i, %struct.SVal* noalias %location) nounwind ssp {
 entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.value(metadata i32 %i, i64 0, metadata !23, metadata !{!"0x102"}), !dbg !24
-  call void @llvm.dbg.value(metadata %struct.SVal* %location, i64 0, metadata !25, metadata !{!"0x102"}), !dbg !24
+  call void @llvm.dbg.value(metadata i32 %i, i64 0, metadata !23, metadata !MDExpression()), !dbg !24
+  call void @llvm.dbg.value(metadata %struct.SVal* %location, i64 0, metadata !25, metadata !MDExpression()), !dbg !24
   %0 = icmp ne i32 %i, 0, !dbg !27                ; <i1> [#uses=1]
   br i1 %0, label %bb, label %bb1, !dbg !27
 
@@ -34,7 +34,7 @@ return:                                           ; preds = %bb2
 define linkonce_odr void @_ZN4SValC1Ev(%struct.SVal* %this) nounwind ssp align 2 {
 entry:
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.value(metadata %struct.SVal* %this, i64 0, metadata !31, metadata !{!"0x102"}), !dbg !34
+  call void @llvm.dbg.value(metadata %struct.SVal* %this, i64 0, metadata !31, metadata !MDExpression()), !dbg !34
   %0 = getelementptr inbounds %struct.SVal, %struct.SVal* %this, i32 0, i32 0, !dbg !34 ; <i8**> [#uses=1]
   store i8* null, i8** %0, align 8, !dbg !34
   %1 = getelementptr inbounds %struct.SVal, %struct.SVal* %this, i32 0, i32 1, !dbg !34 ; <i32*> [#uses=1]
@@ -52,7 +52,7 @@ entry:
   %0 = alloca %struct.SVal                        ; <%struct.SVal*> [#uses=3]
   %v = alloca %struct.SVal                        ; <%struct.SVal*> [#uses=4]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata %struct.SVal* %v, metadata !38, metadata !{!"0x102"}), !dbg !41
+  call void @llvm.dbg.declare(metadata %struct.SVal* %v, metadata !38, metadata !MDExpression()), !dbg !41
   call void @_ZN4SValC1Ev(%struct.SVal* %v) nounwind, !dbg !41
   %1 = getelementptr inbounds %struct.SVal, %struct.SVal* %v, i32 0, i32 1, !dbg !42 ; <i32*> [#uses=1]
   store i32 1, i32* %1, align 8, !dbg !42
@@ -65,7 +65,7 @@ entry:
   %7 = load i32, i32* %6, align 8, !dbg !43            ; <i32> [#uses=1]
   store i32 %7, i32* %5, align 8, !dbg !43
   %8 = call i32 @_Z3fooi4SVal(i32 2, %struct.SVal* noalias %0) nounwind, !dbg !43 ; <i32> [#uses=0]
-  call void @llvm.dbg.value(metadata i32 %8, i64 0, metadata !44, metadata !{!"0x102"}), !dbg !43
+  call void @llvm.dbg.value(metadata i32 %8, i64 0, metadata !44, metadata !MDExpression()), !dbg !43
   br label %return, !dbg !45
 
 return:                                           ; preds = %entry
@@ -78,52 +78,52 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.module.flags = !{!49}
 !46 = !{!16, !17, !20}
 
-!0 = !{!"0x2e\00SVal\00SVal\00\0011\000\000\000\006\000\000\0011", !47, !1, !14, null, null, null, null, null} ; [ DW_TAG_subprogram ]
-!1 = !{!"0x13\00SVal\001\00128\0064\000\000\000", !47, !2, null, !4, null, null, null} ; [ DW_TAG_structure_type ] [SVal] [line 1, size 128, align 64, offset 0] [def] [from ]
-!2 = !{!"0x29", !47} ; [ DW_TAG_file_type ]
-!3 = !{!"0x11\004\004.2.1 (Based on Apple Inc. build 5658) (LLVM build)\000\00\000\00\001", !47, !48, !48, !46, null,  null} ; [ DW_TAG_compile_unit ]
+!0 = !MDSubprogram(name: "SVal", line: 11, isLocal: false, isDefinition: false, virtualIndex: 6, isOptimized: false, scopeLine: 11, file: !47, scope: !1, type: !14)
+!1 = !MDCompositeType(tag: DW_TAG_structure_type, name: "SVal", line: 1, size: 128, align: 64, file: !47, scope: !2, elements: !4)
+!2 = !MDFile(filename: "small.cc", directory: "/Users/manav/R8248330")
+!3 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: false, emissionKind: 1, file: !47, enums: !48, retainedTypes: !48, subprograms: !46, imports:  null)
 !4 = !{!5, !7, !0, !9}
-!5 = !{!"0xd\00Data\007\0064\0064\000\000", !47, !1, !6} ; [ DW_TAG_member ]
-!6 = !{!"0xf\00\000\0064\0064\000\000", !47, !2, null} ; [ DW_TAG_pointer_type ]
-!7 = !{!"0xd\00Kind\008\0032\0032\0064\000", !47, !1, !8} ; [ DW_TAG_member ]
-!8 = !{!"0x24\00unsigned int\000\0032\0032\000\000\007", !47, !2} ; [ DW_TAG_base_type ]
-!9 = !{!"0x2e\00~SVal\00~SVal\00\0012\000\000\000\006\000\000\0012", !47, !1, !10, null, null, null, null, null} ; [ DW_TAG_subprogram ]
-!10 = !{!"0x15\00\000\000\000\000\000\000", !47, !2, null, !11, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = !MDDerivedType(tag: DW_TAG_member, name: "Data", line: 7, size: 64, align: 64, file: !47, scope: !1, baseType: !6)
+!6 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !47, scope: !2, baseType: null)
+!7 = !MDDerivedType(tag: DW_TAG_member, name: "Kind", line: 8, size: 32, align: 32, offset: 64, file: !47, scope: !1, baseType: !8)
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "unsigned int", size: 32, align: 32, encoding: DW_ATE_unsigned)
+!9 = !MDSubprogram(name: "~SVal", line: 12, isLocal: false, isDefinition: false, virtualIndex: 6, isOptimized: false, scopeLine: 12, file: !47, scope: !1, type: !10)
+!10 = !MDSubroutineType(types: !11)
 !11 = !{null, !12, !13}
-!12 = !{!"0xf\00\000\0064\0064\000\0064", !47, !2, !1} ; [ DW_TAG_pointer_type ]
-!13 = !{!"0x24\00int\000\0032\0032\000\000\005", !47, !2} ; [ DW_TAG_base_type ]
-!14 = !{!"0x15\00\000\000\000\000\000\000", !47, !2, null, !15, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!12 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, file: !47, scope: !2, baseType: !1)
+!13 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!14 = !MDSubroutineType(types: !15)
 !15 = !{null, !12}
-!16 = !{!"0x2e\00SVal\00SVal\00_ZN4SValC1Ev\0011\000\001\000\006\000\000\0011", !47, !1, !14, null, void (%struct.SVal*)* @_ZN4SValC1Ev, null, null, null} ; [ DW_TAG_subprogram ]
-!17 = !{!"0x2e\00foo\00foo\00_Z3fooi4SVal\0016\000\001\000\006\000\000\0016", !47, !2, !18, null, i32 (i32, %struct.SVal*)* @_Z3fooi4SVal, null, null, null} ; [ DW_TAG_subprogram ]
-!18 = !{!"0x15\00\000\000\000\000\000\000", !47, !2, null, !19, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!16 = !MDSubprogram(name: "SVal", linkageName: "_ZN4SValC1Ev", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 11, file: !47, scope: !1, type: !14, function: void (%struct.SVal*)* @_ZN4SValC1Ev)
+!17 = !MDSubprogram(name: "foo", linkageName: "_Z3fooi4SVal", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 16, file: !47, scope: !2, type: !18, function: i32 (i32, %struct.SVal*)* @_Z3fooi4SVal)
+!18 = !MDSubroutineType(types: !19)
 !19 = !{!13, !13, !1}
-!20 = !{!"0x2e\00main\00main\00main\0023\000\001\000\006\000\000\0023", !47, !2, !21, null, i32 ()* @main, null, null, null} ; [ DW_TAG_subprogram ]
-!21 = !{!"0x15\00\000\000\000\000\000\000", !47, !2, null, !22, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!20 = !MDSubprogram(name: "main", linkageName: "main", line: 23, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 23, file: !47, scope: !2, type: !21, function: i32 ()* @main)
+!21 = !MDSubroutineType(types: !22)
 !22 = !{!13}
-!23 = !{!"0x101\00i\0016\000", !17, !2, !13} ; [ DW_TAG_arg_variable ]
+!23 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 16, arg: 0, scope: !17, file: !2, type: !13)
 !24 = !MDLocation(line: 16, scope: !17)
-!25 = !{!"0x101\00location\0016\000", !17, !2, !26} ; [ DW_TAG_arg_variable ]
-!26 = !{!"0x10\00SVal\000\0064\0064\000\000", !47, !2, !1} ; [ DW_TAG_reference_type ]
+!25 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "location", line: 16, arg: 0, scope: !17, file: !2, type: !26)
+!26 = !MDDerivedType(tag: DW_TAG_reference_type, name: "SVal", size: 64, align: 64, file: !47, scope: !2, baseType: !1)
 !27 = !MDLocation(line: 17, scope: !28)
-!28 = !{!"0xb\0016\000\002", !47, !17} ; [ DW_TAG_lexical_block ]
+!28 = distinct !MDLexicalBlock(line: 16, column: 0, file: !47, scope: !17)
 !29 = !MDLocation(line: 18, scope: !28)
 !30 = !MDLocation(line: 20, scope: !28)
-!31 = !{!"0x101\00this\0011\000", !16, !2, !32} ; [ DW_TAG_arg_variable ]
-!32 = !{!"0x26\00\000\0064\0064\000\0064", !47, !2, !33} ; [ DW_TAG_const_type ]
-!33 = !{!"0xf\00\000\0064\0064\000\000", !47, !2, !1} ; [ DW_TAG_pointer_type ]
+!31 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 11, arg: 0, scope: !16, file: !2, type: !32)
+!32 = !MDDerivedType(tag: DW_TAG_const_type, size: 64, align: 64, flags: DIFlagArtificial, file: !47, scope: !2, baseType: !33)
+!33 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !47, scope: !2, baseType: !1)
 !34 = !MDLocation(line: 11, scope: !16)
 !35 = !MDLocation(line: 11, scope: !36)
-!36 = !{!"0xb\0011\000\001", !47, !37} ; [ DW_TAG_lexical_block ]
-!37 = !{!"0xb\0011\000\000", !47, !16} ; [ DW_TAG_lexical_block ]
-!38 = !{!"0x100\00v\0024\000", !39, !2, !1} ; [ DW_TAG_auto_variable ]
-!39 = !{!"0xb\0023\000\004", !47, !40} ; [ DW_TAG_lexical_block ]
-!40 = !{!"0xb\0023\000\003", !47, !20} ; [ DW_TAG_lexical_block ]
+!36 = distinct !MDLexicalBlock(line: 11, column: 0, file: !47, scope: !37)
+!37 = distinct !MDLexicalBlock(line: 11, column: 0, file: !47, scope: !16)
+!38 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "v", line: 24, scope: !39, file: !2, type: !1)
+!39 = distinct !MDLexicalBlock(line: 23, column: 0, file: !47, scope: !40)
+!40 = distinct !MDLexicalBlock(line: 23, column: 0, file: !47, scope: !20)
 !41 = !MDLocation(line: 24, scope: !39)
 !42 = !MDLocation(line: 25, scope: !39)
 !43 = !MDLocation(line: 26, scope: !39)
-!44 = !{!"0x100\00k\0026\000", !39, !2, !13} ; [ DW_TAG_auto_variable ]
+!44 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "k", line: 26, scope: !39, file: !2, type: !13)
 !45 = !MDLocation(line: 27, scope: !39)
-!47 = !{!"small.cc", !"/Users/manav/R8248330"}
+!47 = !MDFile(filename: "small.cc", directory: "/Users/manav/R8248330")
 !48 = !{i32 0}
-!49 = !{i32 1, !"Debug Info Version", i32 2}
+!49 = !{i32 1, !"Debug Info Version", i32 3}

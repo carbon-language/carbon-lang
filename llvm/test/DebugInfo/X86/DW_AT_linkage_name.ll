@@ -38,7 +38,7 @@ define void @_ZN1AD2Ev(%struct.A* %this) unnamed_addr #0 align 2 {
 entry:
   %this.addr = alloca %struct.A*, align 8
   store %struct.A* %this, %struct.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata %struct.A** %this.addr, metadata !26, metadata !{!"0x102"}), !dbg !28
+  call void @llvm.dbg.declare(metadata %struct.A** %this.addr, metadata !26, metadata !MDExpression()), !dbg !28
   %this1 = load %struct.A*, %struct.A** %this.addr
   ret void, !dbg !29
 }
@@ -51,7 +51,7 @@ define void @_ZN1AD1Ev(%struct.A* %this) unnamed_addr #0 align 2 {
 entry:
   %this.addr = alloca %struct.A*, align 8
   store %struct.A* %this, %struct.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata %struct.A** %this.addr, metadata !30, metadata !{!"0x102"}), !dbg !31
+  call void @llvm.dbg.declare(metadata %struct.A** %this.addr, metadata !30, metadata !MDExpression()), !dbg !31
   %this1 = load %struct.A*, %struct.A** %this.addr
   call void @_ZN1AD2Ev(%struct.A* %this1), !dbg !32
   ret void, !dbg !33
@@ -61,7 +61,7 @@ entry:
 define void @_Z3foov() #2 {
 entry:
   %a = alloca %struct.A, align 1
-  call void @llvm.dbg.declare(metadata %struct.A* %a, metadata !34, metadata !{!"0x102"}), !dbg !35
+  call void @llvm.dbg.declare(metadata %struct.A* %a, metadata !34, metadata !MDExpression()), !dbg !35
   call void @_ZN1AC1Ei(%struct.A* %a, i32 1), !dbg !35
   call void @_ZN1AD1Ev(%struct.A* %a), !dbg !36
   ret void, !dbg !36
@@ -77,40 +77,40 @@ attributes #2 = { ssp uwtable }
 !llvm.module.flags = !{!23, !24}
 !llvm.ident = !{!25}
 
-!0 = !{!"0x11\004\00clang version 3.5.0 \000\00\000\00\001", !1, !2, !3, !16, !2, !2} ; [ DW_TAG_compile_unit ] [linkage-name.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"linkage-name.cpp", !""}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !3, subprograms: !16, globals: !2, imports: !2)
+!1 = !MDFile(filename: "linkage-name.cpp", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x13\00A\001\008\008\000\000\000", !1, null, null, !5, null, null, !"_ZTS1A"} ; [ DW_TAG_structure_type ] [A] [line 1, size 8, align 8, offset 0] [def] [from ]
+!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "A", line: 1, size: 8, align: 8, file: !1, elements: !5, identifier: "_ZTS1A")
 !5 = !{!6, !12}
-!6 = !{!"0x2e\00A\00A\00\002\000\000\000\006\00256\000\002", !1, !"_ZTS1A", !7, null, null, null, i32 0, !11} ; [ DW_TAG_subprogram ] [line 2] [A]
-!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!6 = !MDSubprogram(name: "A", line: 2, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !"_ZTS1A", type: !7, variables: !11)
+!7 = !MDSubroutineType(types: !8)
 !8 = !{null, !9, !10}
-!9 = !{!"0xf\00\000\0064\0064\000\001088", null, null, !"_ZTS1A"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1A]
-!10 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1A")
+!10 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !11 = !{i32 786468}
-!12 = !{!"0x2e\00~A\00~A\00\003\000\000\000\006\00256\000\003", !1, !"_ZTS1A", !13, null, null, null, i32 0, !15} ; [ DW_TAG_subprogram ] [line 3] [~A]
-!13 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !14, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!12 = !MDSubprogram(name: "~A", line: 3, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !"_ZTS1A", type: !13, variables: !15)
+!13 = !MDSubroutineType(types: !14)
 !14 = !{null, !9}
 !15 = !{i32 786468}
 !16 = !{!17, !18, !19}
-!17 = !{!"0x2e\00~A\00~A\00_ZN1AD2Ev\006\000\001\000\006\00256\000\006", !1, !"_ZTS1A", !13, null, void (%struct.A*)* @_ZN1AD2Ev, null, !12, !2} ; [ DW_TAG_subprogram ] [line 6] [def] [~A]
-!18 = !{!"0x2e\00~A\00~A\00_ZN1AD1Ev\006\000\001\000\006\00256\000\006", !1, !"_ZTS1A", !13, null, void (%struct.A*)* @_ZN1AD1Ev, null, !12, !2} ; [ DW_TAG_subprogram ] [line 6] [def] [~A]
-!19 = !{!"0x2e\00foo\00foo\00_Z3foov\0010\000\001\000\006\00256\000\0010", !1, !20, !21, null, void ()* @_Z3foov, null, null, !2} ; [ DW_TAG_subprogram ] [line 10] [def] [foo]
-!20 = !{!"0x29", !1}         ; [ DW_TAG_file_type ] [linkage-name.cpp]
-!21 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !22, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!17 = !MDSubprogram(name: "~A", linkageName: "_ZN1AD2Ev", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !"_ZTS1A", type: !13, function: void (%struct.A*)* @_ZN1AD2Ev, declaration: !12, variables: !2)
+!18 = !MDSubprogram(name: "~A", linkageName: "_ZN1AD1Ev", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !"_ZTS1A", type: !13, function: void (%struct.A*)* @_ZN1AD1Ev, declaration: !12, variables: !2)
+!19 = !MDSubprogram(name: "foo", linkageName: "_Z3foov", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !20, type: !21, function: void ()* @_Z3foov, variables: !2)
+!20 = !MDFile(filename: "linkage-name.cpp", directory: "")
+!21 = !MDSubroutineType(types: !22)
 !22 = !{null}
 !23 = !{i32 2, !"Dwarf Version", i32 2}
-!24 = !{i32 1, !"Debug Info Version", i32 2}
+!24 = !{i32 1, !"Debug Info Version", i32 3}
 !25 = !{!"clang version 3.5.0 "}
-!26 = !{!"0x101\00this\0016777216\001088", !17, null, !27} ; [ DW_TAG_arg_variable ] [this] [line 0]
-!27 = !{!"0xf\00\000\0064\0064\000\000", null, null, !"_ZTS1A"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS1A]
+!26 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !17, type: !27)
+!27 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS1A")
 !28 = !MDLocation(line: 0, scope: !17)
 !29 = !MDLocation(line: 8, scope: !17)
-!30 = !{!"0x101\00this\0016777216\001088", !18, null, !27} ; [ DW_TAG_arg_variable ] [this] [line 0]
+!30 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !18, type: !27)
 !31 = !MDLocation(line: 0, scope: !18)
 !32 = !MDLocation(line: 6, scope: !18)
 !33 = !MDLocation(line: 8, scope: !18)
-!34 = !{!"0x100\00a\0011\000", !19, !20, !"_ZTS1A"} ; [ DW_TAG_auto_variable ] [a] [line 11]
+!34 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 11, scope: !19, file: !20, type: !"_ZTS1A")
 !35 = !MDLocation(line: 11, scope: !19)
 !36 = !MDLocation(line: 12, scope: !19)

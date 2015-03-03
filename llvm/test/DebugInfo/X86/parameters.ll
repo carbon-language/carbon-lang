@@ -42,7 +42,7 @@
 ; Function Attrs: uwtable
 define void @_ZN7pr147634funcENS_3fooE(%"struct.pr14763::foo"* noalias sret %agg.result, %"struct.pr14763::foo"* %f) #0 {
 entry:
-  call void @llvm.dbg.declare(metadata %"struct.pr14763::foo"* %f, metadata !22, metadata !{!"0x102\006"}), !dbg !24
+  call void @llvm.dbg.declare(metadata %"struct.pr14763::foo"* %f, metadata !22, metadata !MDExpression(DW_OP_deref)), !dbg !24
   call void @_ZN7pr147633fooC1ERKS0_(%"struct.pr14763::foo"* %agg.result, %"struct.pr14763::foo"* %f), !dbg !25
   ret void, !dbg !25
 }
@@ -58,8 +58,8 @@ entry:
   %b.addr = alloca i8, align 1
   %frombool = zext i1 %b to i8
   store i8 %frombool, i8* %b.addr, align 1
-  call void @llvm.dbg.declare(metadata i8* %b.addr, metadata !26, metadata !{!"0x102"}), !dbg !27
-  call void @llvm.dbg.declare(metadata %"struct.pr14763::foo"* %g, metadata !28, metadata !{!"0x102\006"}), !dbg !27
+  call void @llvm.dbg.declare(metadata i8* %b.addr, metadata !26, metadata !MDExpression()), !dbg !27
+  call void @llvm.dbg.declare(metadata %"struct.pr14763::foo"* %g, metadata !28, metadata !MDExpression(DW_OP_deref)), !dbg !27
   %0 = load i8, i8* %b.addr, align 1, !dbg !29
   %tobool = trunc i8 %0 to i1, !dbg !29
   br i1 %tobool, label %if.then, label %if.end, !dbg !29
@@ -82,37 +82,37 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!21, !33}
 
-!0 = !{!"0x11\004\00clang version 3.4 \000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/pass.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"pass.cpp", !"/tmp"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.4 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "pass.cpp", directory: "/tmp")
 !2 = !{}
 !3 = !{!4, !17}
-!4 = !{!"0x2e\00func\00func\00_ZN7pr147634funcENS_3fooE\006\000\001\000\006\00256\000\006", !1, !5, !6, null, void (%"struct.pr14763::foo"*, %"struct.pr14763::foo"*)* @_ZN7pr147634funcENS_3fooE, null, null, !2} ; [ DW_TAG_subprogram ] [line 6] [def] [func]
-!5 = !{!"0x39\00pr14763\001", !1, null} ; [ DW_TAG_namespace ] [pr14763] [line 1]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "func", linkageName: "_ZN7pr147634funcENS_3fooE", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, function: void (%"struct.pr14763::foo"*, %"struct.pr14763::foo"*)* @_ZN7pr147634funcENS_3fooE, variables: !2)
+!5 = !MDNamespace(name: "pr14763", line: 1, file: !1, scope: null)
+!6 = !MDSubroutineType(types: !7)
 !7 = !{!8, !8}
-!8 = !{!"0x13\00foo\002\008\008\000\000\000", !1, !5, null, !9, null, null, null} ; [ DW_TAG_structure_type ] [foo] [line 2, size 8, align 8, offset 0] [def] [from ]
+!8 = !MDCompositeType(tag: DW_TAG_structure_type, name: "foo", line: 2, size: 8, align: 8, file: !1, scope: !5, elements: !9)
 !9 = !{!10}
-!10 = !{!"0x2e\00foo\00foo\00\003\000\000\000\006\00256\000\003", !1, !8, !11, null, null, null, i32 0, !16} ; [ DW_TAG_subprogram ] [line 3] [foo]
-!11 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !12, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!10 = !MDSubprogram(name: "foo", line: 3, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !8, type: !11, variables: !16)
+!11 = !MDSubroutineType(types: !12)
 !12 = !{null, !13, !14}
-!13 = !{!"0xf\00\000\0064\0064\000\001088", i32 0, null, !8} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from foo]
-!14 = !{!"0x10\00\000\000\000\000\000", null, null, !15} ; [ DW_TAG_reference_type ] [line 0, size 0, align 0, offset 0] [from ]
-!15 = !{!"0x26\00\000\000\000\000\000", null, null, !8} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from foo]
+!13 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !8)
+!14 = !MDDerivedType(tag: DW_TAG_reference_type, baseType: !15)
+!15 = !MDDerivedType(tag: DW_TAG_const_type, baseType: !8)
 !16 = !{i32 786468}
-!17 = !{!"0x2e\00func2\00func2\00_ZN7pr147635func2EbNS_3fooE\0012\000\001\000\006\00256\000\0012", !1, !5, !18, null, void (i1, %"struct.pr14763::foo"*)* @_ZN7pr147635func2EbNS_3fooE, null, null, !2} ; [ DW_TAG_subprogram ] [line 12] [def] [func2]
-!18 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !19, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!17 = !MDSubprogram(name: "func2", linkageName: "_ZN7pr147635func2EbNS_3fooE", line: 12, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 12, file: !1, scope: !5, type: !18, function: void (i1, %"struct.pr14763::foo"*)* @_ZN7pr147635func2EbNS_3fooE, variables: !2)
+!18 = !MDSubroutineType(types: !19)
 !19 = !{null, !20, !8}
-!20 = !{!"0x24\00bool\000\008\008\000\000\002", null, null} ; [ DW_TAG_base_type ] [bool] [line 0, size 8, align 8, offset 0, enc DW_ATE_boolean]
+!20 = !MDBasicType(tag: DW_TAG_base_type, name: "bool", size: 8, align: 8, encoding: DW_ATE_boolean)
 !21 = !{i32 2, !"Dwarf Version", i32 3}
-!22 = !{!"0x101\00f\0016777222\000", !4, !23, !8} ; [ DW_TAG_arg_variable ] [f] [line 6]
-!23 = !{!"0x29", !1}         ; [ DW_TAG_file_type ] [/tmp/pass.cpp]
+!22 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "f", line: 6, arg: 1, scope: !4, file: !23, type: !8)
+!23 = !MDFile(filename: "pass.cpp", directory: "/tmp")
 !24 = !MDLocation(line: 6, scope: !4)
 !25 = !MDLocation(line: 7, scope: !4)
-!26 = !{!"0x101\00b\0016777228\000", !17, !23, !20} ; [ DW_TAG_arg_variable ] [b] [line 12]
+!26 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 12, arg: 1, scope: !17, file: !23, type: !20)
 !27 = !MDLocation(line: 12, scope: !17)
-!28 = !{!"0x101\00g\0033554444\000", !17, !23, !8} ; [ DW_TAG_arg_variable ] [g] [line 12]
+!28 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "g", line: 12, arg: 2, scope: !17, file: !23, type: !8)
 !29 = !MDLocation(line: 13, scope: !30)
-!30 = !{!"0xb\0013\000\000", !1, !17} ; [ DW_TAG_lexical_block ] [/tmp/pass.cpp]
+!30 = distinct !MDLexicalBlock(line: 13, column: 0, file: !1, scope: !17)
 !31 = !MDLocation(line: 14, scope: !30)
 !32 = !MDLocation(line: 15, scope: !17)
-!33 = !{i32 1, !"Debug Info Version", i32 2}
+!33 = !{i32 1, !"Debug Info Version", i32 3}

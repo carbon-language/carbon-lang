@@ -22,8 +22,8 @@ target triple = "x86_64-apple-darwin10.0.0"
 
 define i64 @gcd(i64 %a, i64 %b) nounwind readnone optsize noinline ssp {
 entry:
-  tail call void @llvm.dbg.value(metadata i64 %a, i64 0, metadata !10, metadata !{!"0x102"}), !dbg !18
-  tail call void @llvm.dbg.value(metadata i64 %b, i64 0, metadata !11, metadata !{!"0x102"}), !dbg !19
+  tail call void @llvm.dbg.value(metadata i64 %a, i64 0, metadata !10, metadata !MDExpression()), !dbg !18
+  tail call void @llvm.dbg.value(metadata i64 %b, i64 0, metadata !11, metadata !MDExpression()), !dbg !19
   br label %while.body, !dbg !20
 
 while.body:                                       ; preds = %while.body, %entry
@@ -34,14 +34,14 @@ while.body:                                       ; preds = %while.body, %entry
   br i1 %cmp, label %if.then, label %while.body, !dbg !23
 
 if.then:                                          ; preds = %while.body
-  tail call void @llvm.dbg.value(metadata i64 %rem, i64 0, metadata !12, metadata !{!"0x102"}), !dbg !21
+  tail call void @llvm.dbg.value(metadata i64 %rem, i64 0, metadata !12, metadata !MDExpression()), !dbg !21
   ret i64 %b.addr.0, !dbg !23
 }
 
 define i32 @main() nounwind optsize ssp {
 entry:
   %call = tail call i32 @rand() nounwind optsize, !dbg !24
-  tail call void @llvm.dbg.value(metadata i32 %call, i64 0, metadata !14, metadata !{!"0x102"}), !dbg !24
+  tail call void @llvm.dbg.value(metadata i32 %call, i64 0, metadata !14, metadata !MDExpression()), !dbg !24
   %cmp = icmp ugt i32 %call, 21, !dbg !25
   br i1 %cmp, label %cond.true, label %cond.end, !dbg !25
 
@@ -51,7 +51,7 @@ cond.true:                                        ; preds = %entry
 
 cond.end:                                         ; preds = %entry, %cond.true
   %cond = phi i32 [ %call1, %cond.true ], [ %call, %entry ], !dbg !25
-  tail call void @llvm.dbg.value(metadata i32 %cond, i64 0, metadata !17, metadata !{!"0x102"}), !dbg !25
+  tail call void @llvm.dbg.value(metadata i32 %cond, i64 0, metadata !17, metadata !MDExpression()), !dbg !25
   %conv = sext i32 %cond to i64, !dbg !26
   %conv5 = zext i32 %call to i64, !dbg !26
   %call6 = tail call i64 @gcd(i64 %conv, i64 %conv5) optsize, !dbg !26
@@ -78,29 +78,29 @@ declare i32 @puts(i8* nocapture) nounwind
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!33}
 
-!0 = !{!"0x2e\00gcd\00gcd\00\005\000\001\000\006\00256\001\000", !31, !1, !3, null, i64 (i64, i64)* @gcd, null, null, !29} ; [ DW_TAG_subprogram ] [line 5] [def] [scope 0] [gcd]
-!1 = !{!"0x29", !31} ; [ DW_TAG_file_type ]
-!2 = !{!"0x11\0012\00clang version 2.9 (trunk 124117)\001\00\000\00\001", !31, !32, !32, !28, null,  null} ; [ DW_TAG_compile_unit ]
-!3 = !{!"0x15\00\000\000\000\000\000\000", !31, !1, null, !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = !MDSubprogram(name: "gcd", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, file: !31, scope: !1, type: !3, function: i64 (i64, i64)* @gcd, variables: !29)
+!1 = !MDFile(filename: "rem_small.c", directory: "/private/tmp")
+!2 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 2.9 (trunk 124117)", isOptimized: true, emissionKind: 1, file: !31, enums: !32, retainedTypes: !32, subprograms: !28, imports:  null)
+!3 = !MDSubroutineType(types: !4)
 !4 = !{!5}
-!5 = !{!"0x24\00long int\000\0064\0064\000\000\005", null, !2} ; [ DW_TAG_base_type ]
-!6 = !{!"0x2e\00main\00main\00\0025\000\001\000\006\000\001\000", !31, !1, !7, null, i32 ()* @main, null, null, !30} ; [ DW_TAG_subprogram ] [line 25] [def] [scope 0] [main]
-!7 = !{!"0x15\00\000\000\000\000\000\000", !31, !1, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = !MDBasicType(tag: DW_TAG_base_type, name: "long int", size: 64, align: 64, encoding: DW_ATE_signed)
+!6 = !MDSubprogram(name: "main", line: 25, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !31, scope: !1, type: !7, function: i32 ()* @main, variables: !30)
+!7 = !MDSubroutineType(types: !8)
 !8 = !{!9}
-!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, !2} ; [ DW_TAG_base_type ]
-!10 = !{!"0x101\00a\005\000", !0, !1, !5} ; [ DW_TAG_arg_variable ]
-!11 = !{!"0x101\00b\005\000", !0, !1, !5} ; [ DW_TAG_arg_variable ]
-!12 = !{!"0x100\00c\006\000", !13, !1, !5} ; [ DW_TAG_auto_variable ]
-!13 = !{!"0xb\005\0052\000", !31, !0} ; [ DW_TAG_lexical_block ]
-!14 = !{!"0x100\00m\0026\000", !15, !1, !16} ; [ DW_TAG_auto_variable ]
-!15 = !{!"0xb\0025\0012\002", !31, !6} ; [ DW_TAG_lexical_block ]
-!16 = !{!"0x24\00unsigned int\000\0032\0032\000\000\007", null, !2} ; [ DW_TAG_base_type ]
-!17 = !{!"0x100\00z_s\0027\000", !15, !1, !9} ; [ DW_TAG_auto_variable ]
+!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 5, arg: 0, scope: !0, file: !1, type: !5)
+!11 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 5, arg: 0, scope: !0, file: !1, type: !5)
+!12 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "c", line: 6, scope: !13, file: !1, type: !5)
+!13 = distinct !MDLexicalBlock(line: 5, column: 52, file: !31, scope: !0)
+!14 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "m", line: 26, scope: !15, file: !1, type: !16)
+!15 = distinct !MDLexicalBlock(line: 25, column: 12, file: !31, scope: !6)
+!16 = !MDBasicType(tag: DW_TAG_base_type, name: "unsigned int", size: 32, align: 32, encoding: DW_ATE_unsigned)
+!17 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "z_s", line: 27, scope: !15, file: !1, type: !9)
 !18 = !MDLocation(line: 5, column: 41, scope: !0)
 !19 = !MDLocation(line: 5, column: 49, scope: !0)
 !20 = !MDLocation(line: 7, column: 5, scope: !13)
 !21 = !MDLocation(line: 8, column: 9, scope: !22)
-!22 = !{!"0xb\007\0014\001", !31, !13} ; [ DW_TAG_lexical_block ]
+!22 = distinct !MDLexicalBlock(line: 7, column: 14, file: !31, scope: !13)
 !23 = !MDLocation(line: 9, column: 9, scope: !22)
 !24 = !MDLocation(line: 26, column: 38, scope: !15)
 !25 = !MDLocation(line: 27, column: 38, scope: !15)
@@ -109,6 +109,6 @@ declare i32 @puts(i8* nocapture) nounwind
 !28 = !{!0, !6}
 !29 = !{!10, !11, !12}
 !30 = !{!14, !17}
-!31 = !{!"rem_small.c", !"/private/tmp"}
+!31 = !MDFile(filename: "rem_small.c", directory: "/private/tmp")
 !32 = !{i32 0}
-!33 = !{i32 1, !"Debug Info Version", i32 2}
+!33 = !{i32 1, !"Debug Info Version", i32 3}

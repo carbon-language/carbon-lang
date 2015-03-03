@@ -10,10 +10,10 @@
 
 define hidden %0 @__divsc3(float %a, float %b, float %c, float %d) nounwind readnone {
 entry:
-  tail call void @llvm.dbg.value(metadata float %a, i64 0, metadata !0, metadata !{!"0x102"})
-  tail call void @llvm.dbg.value(metadata float %b, i64 0, metadata !11, metadata !{!"0x102"})
-  tail call void @llvm.dbg.value(metadata float %c, i64 0, metadata !12, metadata !{!"0x102"})
-  tail call void @llvm.dbg.value(metadata float %d, i64 0, metadata !13, metadata !{!"0x102"})
+  tail call void @llvm.dbg.value(metadata float %a, i64 0, metadata !0, metadata !MDExpression())
+  tail call void @llvm.dbg.value(metadata float %b, i64 0, metadata !11, metadata !MDExpression())
+  tail call void @llvm.dbg.value(metadata float %c, i64 0, metadata !12, metadata !MDExpression())
+  tail call void @llvm.dbg.value(metadata float %d, i64 0, metadata !13, metadata !MDExpression())
   %0 = tail call float @fabsf(float %c) nounwind readnone, !dbg !19 ; <float> [#uses=1]
   %1 = tail call float @fabsf(float %d) nounwind readnone, !dbg !19 ; <float> [#uses=1]
   %2 = fcmp olt float %0, %1, !dbg !19            ; <i1> [#uses=1]
@@ -21,34 +21,34 @@ entry:
 
 bb:                                               ; preds = %entry
   %3 = fdiv float %c, %d, !dbg !20                ; <float> [#uses=3]
-  tail call void @llvm.dbg.value(metadata float %3, i64 0, metadata !16, metadata !{!"0x102"}), !dbg !20
+  tail call void @llvm.dbg.value(metadata float %3, i64 0, metadata !16, metadata !MDExpression()), !dbg !20
   %4 = fmul float %3, %c, !dbg !21                ; <float> [#uses=1]
   %5 = fadd float %4, %d, !dbg !21                ; <float> [#uses=2]
-  tail call void @llvm.dbg.value(metadata float %5, i64 0, metadata !14, metadata !{!"0x102"}), !dbg !21
+  tail call void @llvm.dbg.value(metadata float %5, i64 0, metadata !14, metadata !MDExpression()), !dbg !21
   %6 = fmul float %3, %a, !dbg !22                ; <float> [#uses=1]
   %7 = fadd float %6, %b, !dbg !22                ; <float> [#uses=1]
   %8 = fdiv float %7, %5, !dbg !22                ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata float %8, i64 0, metadata !17, metadata !{!"0x102"}), !dbg !22
+  tail call void @llvm.dbg.value(metadata float %8, i64 0, metadata !17, metadata !MDExpression()), !dbg !22
   %9 = fmul float %3, %b, !dbg !23                ; <float> [#uses=1]
   %10 = fsub float %9, %a, !dbg !23               ; <float> [#uses=1]
   %11 = fdiv float %10, %5, !dbg !23              ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata float %11, i64 0, metadata !18, metadata !{!"0x102"}), !dbg !23
+  tail call void @llvm.dbg.value(metadata float %11, i64 0, metadata !18, metadata !MDExpression()), !dbg !23
   br label %bb2, !dbg !23
 
 bb1:                                              ; preds = %entry
   %12 = fdiv float %d, %c, !dbg !24               ; <float> [#uses=3]
-  tail call void @llvm.dbg.value(metadata float %12, i64 0, metadata !16, metadata !{!"0x102"}), !dbg !24
+  tail call void @llvm.dbg.value(metadata float %12, i64 0, metadata !16, metadata !MDExpression()), !dbg !24
   %13 = fmul float %12, %d, !dbg !25              ; <float> [#uses=1]
   %14 = fadd float %13, %c, !dbg !25              ; <float> [#uses=2]
-  tail call void @llvm.dbg.value(metadata float %14, i64 0, metadata !14, metadata !{!"0x102"}), !dbg !25
+  tail call void @llvm.dbg.value(metadata float %14, i64 0, metadata !14, metadata !MDExpression()), !dbg !25
   %15 = fmul float %12, %b, !dbg !26              ; <float> [#uses=1]
   %16 = fadd float %15, %a, !dbg !26              ; <float> [#uses=1]
   %17 = fdiv float %16, %14, !dbg !26             ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata float %17, i64 0, metadata !17, metadata !{!"0x102"}), !dbg !26
+  tail call void @llvm.dbg.value(metadata float %17, i64 0, metadata !17, metadata !MDExpression()), !dbg !26
   %18 = fmul float %12, %a, !dbg !27              ; <float> [#uses=1]
   %19 = fsub float %b, %18, !dbg !27              ; <float> [#uses=1]
   %20 = fdiv float %19, %14, !dbg !27             ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata float %20, i64 0, metadata !18, metadata !{!"0x102"}), !dbg !27
+  tail call void @llvm.dbg.value(metadata float %20, i64 0, metadata !18, metadata !MDExpression()), !dbg !27
   br label %bb2, !dbg !27
 
 bb2:                                              ; preds = %bb1, %bb
@@ -74,9 +74,9 @@ bb6:                                              ; preds = %bb4
 bb8:                                              ; preds = %bb6
   %27 = tail call float @copysignf(float 0x7FF0000000000000, float %c) nounwind readnone, !dbg !30 ; <float> [#uses=2]
   %28 = fmul float %27, %a, !dbg !30              ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata float %28, i64 0, metadata !17, metadata !{!"0x102"}), !dbg !30
+  tail call void @llvm.dbg.value(metadata float %28, i64 0, metadata !17, metadata !MDExpression()), !dbg !30
   %29 = fmul float %27, %b, !dbg !31              ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata float %29, i64 0, metadata !18, metadata !{!"0x102"}), !dbg !31
+  tail call void @llvm.dbg.value(metadata float %29, i64 0, metadata !18, metadata !MDExpression()), !dbg !31
   br label %bb46, !dbg !31
 
 bb9:                                              ; preds = %bb6, %bb4
@@ -106,24 +106,24 @@ bb15:                                             ; preds = %bb14
 bb16:                                             ; preds = %bb15
   %iftmp.0.0 = select i1 %33, float 1.000000e+00, float 0.000000e+00 ; <float> [#uses=1]
   %42 = tail call float @copysignf(float %iftmp.0.0, float %a) nounwind readnone, !dbg !33 ; <float> [#uses=2]
-  tail call void @llvm.dbg.value(metadata float %42, i64 0, metadata !0, metadata !{!"0x102"}), !dbg !33
+  tail call void @llvm.dbg.value(metadata float %42, i64 0, metadata !0, metadata !MDExpression()), !dbg !33
   %43 = fcmp ord float %b, 0.000000e+00           ; <i1> [#uses=1]
   %44 = fsub float %b, %b, !dbg !34               ; <float> [#uses=1]
   %45 = fcmp uno float %44, 0.000000e+00          ; <i1> [#uses=1]
   %46 = and i1 %43, %45, !dbg !34                 ; <i1> [#uses=1]
   %iftmp.1.0 = select i1 %46, float 1.000000e+00, float 0.000000e+00 ; <float> [#uses=1]
   %47 = tail call float @copysignf(float %iftmp.1.0, float %b) nounwind readnone, !dbg !34 ; <float> [#uses=2]
-  tail call void @llvm.dbg.value(metadata float %47, i64 0, metadata !11, metadata !{!"0x102"}), !dbg !34
+  tail call void @llvm.dbg.value(metadata float %47, i64 0, metadata !11, metadata !MDExpression()), !dbg !34
   %48 = fmul float %42, %c, !dbg !35              ; <float> [#uses=1]
   %49 = fmul float %47, %d, !dbg !35              ; <float> [#uses=1]
   %50 = fadd float %48, %49, !dbg !35             ; <float> [#uses=1]
   %51 = fmul float %50, 0x7FF0000000000000, !dbg !35 ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata float %51, i64 0, metadata !17, metadata !{!"0x102"}), !dbg !35
+  tail call void @llvm.dbg.value(metadata float %51, i64 0, metadata !17, metadata !MDExpression()), !dbg !35
   %52 = fmul float %47, %c, !dbg !36              ; <float> [#uses=1]
   %53 = fmul float %42, %d, !dbg !36              ; <float> [#uses=1]
   %54 = fsub float %52, %53, !dbg !36             ; <float> [#uses=1]
   %55 = fmul float %54, 0x7FF0000000000000, !dbg !36 ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata float %55, i64 0, metadata !18, metadata !{!"0x102"}), !dbg !36
+  tail call void @llvm.dbg.value(metadata float %55, i64 0, metadata !18, metadata !MDExpression()), !dbg !36
   br label %bb46, !dbg !36
 
 bb27:                                             ; preds = %bb15, %bb14, %bb11
@@ -154,24 +154,24 @@ bb34:                                             ; preds = %bb33, %bb30
 bb35:                                             ; preds = %bb34
   %iftmp.2.0 = select i1 %59, float 1.000000e+00, float 0.000000e+00 ; <float> [#uses=1]
   %67 = tail call float @copysignf(float %iftmp.2.0, float %c) nounwind readnone, !dbg !38 ; <float> [#uses=2]
-  tail call void @llvm.dbg.value(metadata float %67, i64 0, metadata !12, metadata !{!"0x102"}), !dbg !38
+  tail call void @llvm.dbg.value(metadata float %67, i64 0, metadata !12, metadata !MDExpression()), !dbg !38
   %68 = fcmp ord float %d, 0.000000e+00           ; <i1> [#uses=1]
   %69 = fsub float %d, %d, !dbg !39               ; <float> [#uses=1]
   %70 = fcmp uno float %69, 0.000000e+00          ; <i1> [#uses=1]
   %71 = and i1 %68, %70, !dbg !39                 ; <i1> [#uses=1]
   %iftmp.3.0 = select i1 %71, float 1.000000e+00, float 0.000000e+00 ; <float> [#uses=1]
   %72 = tail call float @copysignf(float %iftmp.3.0, float %d) nounwind readnone, !dbg !39 ; <float> [#uses=2]
-  tail call void @llvm.dbg.value(metadata float %72, i64 0, metadata !13, metadata !{!"0x102"}), !dbg !39
+  tail call void @llvm.dbg.value(metadata float %72, i64 0, metadata !13, metadata !MDExpression()), !dbg !39
   %73 = fmul float %67, %a, !dbg !40              ; <float> [#uses=1]
   %74 = fmul float %72, %b, !dbg !40              ; <float> [#uses=1]
   %75 = fadd float %73, %74, !dbg !40             ; <float> [#uses=1]
   %76 = fmul float %75, 0.000000e+00, !dbg !40    ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata float %76, i64 0, metadata !17, metadata !{!"0x102"}), !dbg !40
+  tail call void @llvm.dbg.value(metadata float %76, i64 0, metadata !17, metadata !MDExpression()), !dbg !40
   %77 = fmul float %67, %b, !dbg !41              ; <float> [#uses=1]
   %78 = fmul float %72, %a, !dbg !41              ; <float> [#uses=1]
   %79 = fsub float %77, %78, !dbg !41             ; <float> [#uses=1]
   %80 = fmul float %79, 0.000000e+00, !dbg !41    ; <float> [#uses=1]
-  tail call void @llvm.dbg.value(metadata float %80, i64 0, metadata !18, metadata !{!"0x102"}), !dbg !41
+  tail call void @llvm.dbg.value(metadata float %80, i64 0, metadata !18, metadata !MDExpression()), !dbg !41
   br label %bb46, !dbg !41
 
 bb46:                                             ; preds = %bb35, %bb34, %bb33, %bb30, %bb16, %bb8, %bb2
@@ -200,25 +200,25 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!48}
 
-!0 = !{!"0x101\00a\001921\000", !1, !2, !9} ; [ DW_TAG_arg_variable ]
-!1 = !{!"0x2e\00__divsc3\00__divsc3\00__divsc3\001922\000\001\000\006\000\001\001922", !45, !2, !4, null, %0 (float, float, float, float)* @__divsc3, null, null, !43} ; [ DW_TAG_subprogram ]
-!2 = !{!"0x29", !45} ; [ DW_TAG_file_type ]
-!3 = !{!"0x11\001\004.2.1 (Based on Apple Inc. build 5658) (LLVM build)\001\00\000\00\001", !45, !47, !47, !44, null,  null} ; [ DW_TAG_compile_unit ]
-!4 = !{!"0x15\00\000\000\000\000\000\000", !45, !2, null, !5, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 1921, arg: 0, scope: !1, file: !2, type: !9)
+!1 = !MDSubprogram(name: "__divsc3", linkageName: "__divsc3", line: 1922, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 1922, file: !45, scope: !2, type: !4, function: %0 (float, float, float, float)* @__divsc3, variables: !43)
+!2 = !MDFile(filename: "libgcc2.c", directory: "/Users/yash/clean/LG.D/gcc/../../llvmgcc/gcc")
+!3 = !MDCompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 1, file: !45, enums: !47, retainedTypes: !47, subprograms: !44, imports:  null)
+!4 = !MDSubroutineType(types: !5)
 !5 = !{!6, !9, !9, !9, !9}
-!6 = !{!"0x16\00SCtype\00170\000\000\000\000", !46, !7, !8} ; [ DW_TAG_typedef ]
-!7 = !{!"0x29", !46} ; [ DW_TAG_file_type ]
-!8 = !{!"0x24\00complex float\000\0064\0032\000\000\003", !45, !2} ; [ DW_TAG_base_type ]
-!9 = !{!"0x16\00SFtype\00167\000\000\000\000", !46, !7, !10} ; [ DW_TAG_typedef ]
-!10 = !{!"0x24\00float\000\0032\0032\000\000\004", !45, !2} ; [ DW_TAG_base_type ]
-!11 = !{!"0x101\00b\001921\000", !1, !2, !9} ; [ DW_TAG_arg_variable ]
-!12 = !{!"0x101\00c\001921\000", !1, !2, !9} ; [ DW_TAG_arg_variable ]
-!13 = !{!"0x101\00d\001921\000", !1, !2, !9} ; [ DW_TAG_arg_variable ]
-!14 = !{!"0x100\00denom\001923\000", !15, !2, !9} ; [ DW_TAG_auto_variable ]
-!15 = !{!"0xb\001922\000\000", !45, !1} ; [ DW_TAG_lexical_block ]
-!16 = !{!"0x100\00ratio\001923\000", !15, !2, !9} ; [ DW_TAG_auto_variable ]
-!17 = !{!"0x100\00x\001923\000", !15, !2, !9} ; [ DW_TAG_auto_variable ]
-!18 = !{!"0x100\00y\001923\000", !15, !2, !9} ; [ DW_TAG_auto_variable ]
+!6 = !MDDerivedType(tag: DW_TAG_typedef, name: "SCtype", line: 170, file: !46, scope: !7, baseType: !8)
+!7 = !MDFile(filename: "libgcc2.h", directory: "/Users/yash/clean/LG.D/gcc/../../llvmgcc/gcc")
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "complex float", size: 64, align: 32, encoding: DW_ATE_complex_float)
+!9 = !MDDerivedType(tag: DW_TAG_typedef, name: "SFtype", line: 167, file: !46, scope: !7, baseType: !10)
+!10 = !MDBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
+!11 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 1921, arg: 0, scope: !1, file: !2, type: !9)
+!12 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 1921, arg: 0, scope: !1, file: !2, type: !9)
+!13 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "d", line: 1921, arg: 0, scope: !1, file: !2, type: !9)
+!14 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "denom", line: 1923, scope: !15, file: !2, type: !9)
+!15 = distinct !MDLexicalBlock(line: 1922, column: 0, file: !45, scope: !1)
+!16 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "ratio", line: 1923, scope: !15, file: !2, type: !9)
+!17 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "x", line: 1923, scope: !15, file: !2, type: !9)
+!18 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "y", line: 1923, scope: !15, file: !2, type: !9)
 !19 = !MDLocation(line: 1929, scope: !15)
 !20 = !MDLocation(line: 1931, scope: !15)
 !21 = !MDLocation(line: 1932, scope: !15)
@@ -245,7 +245,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !42 = !MDLocation(line: 1969, scope: !15)
 !43 = !{!0, !11, !12, !13, !14, !16, !17, !18}
 !44 = !{!1}
-!45 = !{!"libgcc2.c", !"/Users/yash/clean/LG.D/gcc/../../llvmgcc/gcc"}
-!46 = !{!"libgcc2.h", !"/Users/yash/clean/LG.D/gcc/../../llvmgcc/gcc"}
+!45 = !MDFile(filename: "libgcc2.c", directory: "/Users/yash/clean/LG.D/gcc/../../llvmgcc/gcc")
+!46 = !MDFile(filename: "libgcc2.h", directory: "/Users/yash/clean/LG.D/gcc/../../llvmgcc/gcc")
 !47 = !{i32 0}
-!48 = !{i32 1, !"Debug Info Version", i32 2}
+!48 = !{i32 1, !"Debug Info Version", i32 3}

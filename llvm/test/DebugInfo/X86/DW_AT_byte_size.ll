@@ -14,7 +14,7 @@ define i32 @_Z3fooP1A(%struct.A* %a) nounwind uwtable ssp {
 entry:
   %a.addr = alloca %struct.A*, align 8
   store %struct.A* %a, %struct.A** %a.addr, align 8
-  call void @llvm.dbg.declare(metadata %struct.A** %a.addr, metadata !16, metadata !{!"0x102"}), !dbg !17
+  call void @llvm.dbg.declare(metadata %struct.A** %a.addr, metadata !16, metadata !MDExpression()), !dbg !17
   %0 = load %struct.A*, %struct.A** %a.addr, align 8, !dbg !18
   %b = getelementptr inbounds %struct.A, %struct.A* %0, i32 0, i32 0, !dbg !18
   %1 = load i32, i32* %b, align 4, !dbg !18
@@ -26,21 +26,21 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!21}
 
-!0 = !{!"0x11\004\00clang version 3.1 (trunk 150996)\000\00\000\00\000", !20, !1, !1, !3, !1,  !1} ; [ DW_TAG_compile_unit ]
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.1 (trunk 150996)", isOptimized: false, emissionKind: 0, file: !20, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !{!"0x2e\00foo\00foo\00_Z3fooP1A\003\000\001\000\006\00256\000\003", !20, !6, !7, null, i32 (%struct.A*)* @_Z3fooP1A, null, null, null} ; [ DW_TAG_subprogram ]
-!6 = !{!"0x29", !20} ; [ DW_TAG_file_type ]
-!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = !MDSubprogram(name: "foo", linkageName: "_Z3fooP1A", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !20, scope: !6, type: !7, function: i32 (%struct.A*)* @_Z3fooP1A)
+!6 = !MDFile(filename: "foo.cpp", directory: "/Users/echristo")
+!7 = !MDSubroutineType(types: !8)
 !8 = !{!9, !10}
-!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ]
-!10 = !{!"0xf\00\000\0064\0064\000\000", null, null, !11} ; [ DW_TAG_pointer_type ]
-!11 = !{!"0x2\00A\001\0032\0032\000\000\000", !20, null, null, !12, null, null, null} ; [ DW_TAG_class_type ] [A] [line 1, size 32, align 32, offset 0] [def] [from ]
+!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !11)
+!11 = !MDCompositeType(tag: DW_TAG_class_type, name: "A", line: 1, size: 32, align: 32, file: !20, elements: !12)
 !12 = !{!13}
-!13 = !{!"0xd\00b\001\0032\0032\000\000", !20, !11, !9} ; [ DW_TAG_member ]
-!16 = !{!"0x101\00a\0016777219\000", !5, !6, !10} ; [ DW_TAG_arg_variable ]
+!13 = !MDDerivedType(tag: DW_TAG_member, name: "b", line: 1, size: 32, align: 32, file: !20, scope: !11, baseType: !9)
+!16 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 3, arg: 1, scope: !5, file: !6, type: !10)
 !17 = !MDLocation(line: 3, column: 13, scope: !5)
 !18 = !MDLocation(line: 4, column: 3, scope: !19)
-!19 = !{!"0xb\003\0016\000", !20, !5} ; [ DW_TAG_lexical_block ]
-!20 = !{!"foo.cpp", !"/Users/echristo"}
-!21 = !{i32 1, !"Debug Info Version", i32 2}
+!19 = distinct !MDLexicalBlock(line: 3, column: 16, file: !20, scope: !5)
+!20 = !MDFile(filename: "foo.cpp", directory: "/Users/echristo")
+!21 = !{i32 1, !"Debug Info Version", i32 3}

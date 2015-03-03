@@ -6,7 +6,7 @@ define void @DisposeDMNotificationUPP(void (%struct.AppleEvent*)* %userUPP) "no-
 entry:
   %userUPP_addr = alloca void (%struct.AppleEvent*)* ; <void (%struct.AppleEvent*)**> [#uses=1]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata void (%struct.AppleEvent*)** %userUPP_addr, metadata !0, metadata !{!"0x102"}), !dbg !13
+  call void @llvm.dbg.declare(metadata void (%struct.AppleEvent*)** %userUPP_addr, metadata !0, metadata !MDExpression()), !dbg !13
   store void (%struct.AppleEvent*)* %userUPP, void (%struct.AppleEvent*)** %userUPP_addr
   br label %return, !dbg !14
 
@@ -18,23 +18,23 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!19}
-!0 = !{!"0x101\00userUPP\007\000", !1, !2, !6} ; [ DW_TAG_arg_variable ]
-!1 = !{!"0x2e\00DisposeDMNotificationUPP\00DisposeDMNotificationUPP\00DisposeDMNotificationUPP\007\000\001\000\006\000\000\000", !16, null, !4, null, null, null, null, null} ; [ DW_TAG_subprogram ]
-!2 = !{!"0x29", !16} ; [ DW_TAG_file_type ]
-!3 = !{!"0x11\001\004.2.1 (Based on Apple Inc. build 5658) (LLVM build 9999)\001\00\000\00\000", !16, !17, !17, !18, null, null} ; [ DW_TAG_compile_unit ]
-!4 = !{!"0x15\00\000\000\000\000\000\000", !16, !2, null, !5, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "userUPP", line: 7, arg: 0, scope: !1, file: !2, type: !6)
+!1 = !MDSubprogram(name: "DisposeDMNotificationUPP", linkageName: "DisposeDMNotificationUPP", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !16, scope: null, type: !4)
+!2 = !MDFile(filename: "t.c", directory: "/Users/echeng/LLVM/radars/r7937664/")
+!3 = !MDCompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build 9999)", isOptimized: true, emissionKind: 0, file: !16, enums: !17, retainedTypes: !17, subprograms: !18)
+!4 = !MDSubroutineType(types: !5)
 !5 = !{null, !6}
-!6 = !{!"0x16\00DMNotificationUPP\006\000\000\000\000", !16, !2, !7} ; [ DW_TAG_typedef ]
-!7 = !{!"0xf\00\000\0064\0064\000\000", !16, !2, !8} ; [ DW_TAG_pointer_type ]
-!8 = !{!"0x15\00\000\000\000\000\000\000", !16, !2, null, !9, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!6 = !MDDerivedType(tag: DW_TAG_typedef, name: "DMNotificationUPP", line: 6, file: !16, scope: !2, baseType: !7)
+!7 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !16, scope: !2, baseType: !8)
+!8 = !MDSubroutineType(types: !9)
 !9 = !{null, !10}
-!10 = !{!"0xf\00\000\0064\0064\000\000", !16, !2, !11} ; [ DW_TAG_pointer_type ]
-!11 = !{!"0x16\00AppleEvent\004\000\000\000\000", !16, !2, !12} ; [ DW_TAG_typedef ]
-!12 = !{!"0x13\00AEDesc\001\000\000\000\004\000", !16, !2, null, null, null, null, null} ; [ DW_TAG_structure_type ] [AEDesc] [line 1, size 0, align 0, offset 0] [decl] [from ]
+!10 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, file: !16, scope: !2, baseType: !11)
+!11 = !MDDerivedType(tag: DW_TAG_typedef, name: "AppleEvent", line: 4, file: !16, scope: !2, baseType: !12)
+!12 = !MDCompositeType(tag: DW_TAG_structure_type, name: "AEDesc", line: 1, flags: DIFlagFwdDecl, file: !16, scope: !2)
 !13 = !MDLocation(line: 7, scope: !1)
 !14 = !MDLocation(line: 8, scope: !15)
-!15 = !{!"0xb\007\000\000", !16, !1} ; [ DW_TAG_lexical_block ]
-!16 = !{!"t.c", !"/Users/echeng/LLVM/radars/r7937664/"}
+!15 = distinct !MDLexicalBlock(line: 7, column: 0, file: !16, scope: !1)
+!16 = !MDFile(filename: "t.c", directory: "/Users/echeng/LLVM/radars/r7937664/")
 !17 = !{i32 0}
 !18 = !{!1}
-!19 = !{i32 1, !"Debug Info Version", i32 2}
+!19 = !{i32 1, !"Debug Info Version", i32 3}

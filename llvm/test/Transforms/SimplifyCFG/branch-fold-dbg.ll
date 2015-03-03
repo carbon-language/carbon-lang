@@ -41,19 +41,19 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 
 !llvm.dbg.sp = !{!0}
 
-!0 = !{!"0x2e\00foo\00foo\00\00231\000\001\000\006\00256\000\000", !15, !1, !3, null, void (i32)* @foo, null, null, null} ; [ DW_TAG_subprogram ] [line 231] [def] [scope 0] [foo]
-!1 = !{!"0x29", !15} ; [ DW_TAG_file_type ]
-!2 = !{!"0x11\0012\00clang (trunk 129006)\001\00\000\00\000", !15, !4, !4, null, null, null} ; [ DW_TAG_compile_unit ]
-!3 = !{!"0x15\00\000\000\000\000\000\000", !15, !1, null, !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = !MDSubprogram(name: "foo", line: 231, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !15, scope: !1, type: !3, function: void (i32)* @foo)
+!1 = !MDFile(filename: "a.c", directory: "/private/tmp")
+!2 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang (trunk 129006)", isOptimized: true, emissionKind: 0, file: !15, enums: !4, retainedTypes: !4)
+!3 = !MDSubroutineType(types: !4)
 !4 = !{null}
 !5 = !MDLocation(line: 131, column: 2, scope: !0)
 !6 = !MDLocation(line: 134, column: 2, scope: !0)
-!7 = !{!"0x100\00bar\00232\000", !8, !1, !9} ; [ DW_TAG_auto_variable ]
-!8 = !{!"0xb\00231\001\003", !15, !0} ; [ DW_TAG_lexical_block ]
-!9 = !{!"0xf\00\000\0032\0032\000\000", null, !2, !10} ; [ DW_TAG_pointer_type ]
-!10 = !{!"0x26\00\000\000\000\000\000", null, !2, !11} ; [ DW_TAG_const_type ]
-!11 = !{!"0x24\00unsigned int\000\0032\0032\000\000\007", null, !2} ; [ DW_TAG_base_type ]
+!7 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "bar", line: 232, scope: !8, file: !1, type: !9)
+!8 = distinct !MDLexicalBlock(line: 231, column: 1, file: !15, scope: !0)
+!9 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, scope: !2, baseType: !10)
+!10 = !MDDerivedType(tag: DW_TAG_const_type, scope: !2, baseType: !11)
+!11 = !MDBasicType(tag: DW_TAG_base_type, name: "unsigned int", size: 32, align: 32, encoding: DW_ATE_unsigned)
 !12 = !MDLocation(line: 232, column: 40, scope: !8)
 !13 = !MDLocation(line: 234, column: 2, scope: !8)
 !14 = !MDLocation(line: 274, column: 1, scope: !8)
-!15 = !{!"a.c", !"/private/tmp"}
+!15 = !MDFile(filename: "a.c", directory: "/private/tmp")

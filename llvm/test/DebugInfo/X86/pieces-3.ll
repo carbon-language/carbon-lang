@@ -67,40 +67,40 @@ attributes #2 = { nounwind }
 !llvm.module.flags = !{!21, !22}
 !llvm.ident = !{!23}
 
-!0 = !{!"0x11\0012\00clang version 3.5.0 \000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/sroasplit-2.c] [DW_LANG_C99]
-!1 = !{!"sroasplit-2.c", !""}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "sroasplit-2.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00foo\00foo\00\0010\000\001\000\006\00256\000\0010", !1, !5, !6, null, i32 (i64, i64)* @foo, null, null, !2} ; [ DW_TAG_subprogram ] [line 10] [def] [foo]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/sroasplit-2.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "foo", line: 10, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 10, file: !1, scope: !5, type: !6, function: i32 (i64, i64)* @foo, variables: !2)
+!5 = !MDFile(filename: "sroasplit-2.c", directory: "")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{!8, !9}
-!8 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!9 = !{!"0x16\00Outer\008\000\000\000\000", !1, null, !10} ; [ DW_TAG_typedef ] [Outer] [line 8, size 0, align 0, offset 0] [from ]
-!10 = !{!"0x13\00\006\00128\0032\000\000\000", !1, null, null, !11, null, null, null} ; [ DW_TAG_structure_type ] [line 6, size 128, align 32, offset 0] [def] [from ]
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!9 = !MDDerivedType(tag: DW_TAG_typedef, name: "Outer", line: 8, file: !1, baseType: !10)
+!10 = !MDCompositeType(tag: DW_TAG_structure_type, line: 6, size: 128, align: 32, file: !1, elements: !11)
 !11 = !{!12}
-!12 = !{!"0xd\00inner\007\00128\0032\000\000", !1, !10, !13} ; [ DW_TAG_member ] [inner] [line 7, size 128, align 32, offset 0] [from ]
-!13 = !{!"0x1\00\000\00128\0032\000\000", null, null, !14, !19, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 128, align 32, offset 0] [from Inner]
-!14 = !{!"0x16\00Inner\004\000\000\000\000", !1, null, !15} ; [ DW_TAG_typedef ] [Inner] [line 4, size 0, align 0, offset 0] [from ]
-!15 = !{!"0x13\00\001\0064\0032\000\000\000", !1, null, null, !16, null, null, null} ; [ DW_TAG_structure_type ] [line 1, size 64, align 32, offset 0] [def] [from ]
+!12 = !MDDerivedType(tag: DW_TAG_member, name: "inner", line: 7, size: 128, align: 32, file: !1, scope: !10, baseType: !13)
+!13 = !MDCompositeType(tag: DW_TAG_array_type, size: 128, align: 32, baseType: !14, elements: !19)
+!14 = !MDDerivedType(tag: DW_TAG_typedef, name: "Inner", line: 4, file: !1, baseType: !15)
+!15 = !MDCompositeType(tag: DW_TAG_structure_type, line: 1, size: 64, align: 32, file: !1, elements: !16)
 !16 = !{!17, !18}
-!17 = !{!"0xd\00a\002\0032\0032\000\000", !1, !15, !8} ; [ DW_TAG_member ] [a] [line 2, size 32, align 32, offset 0] [from int]
-!18 = !{!"0xd\00b\003\0032\0032\0032\000", !1, !15, !8} ; [ DW_TAG_member ] [b] [line 3, size 32, align 32, offset 32] [from int]
+!17 = !MDDerivedType(tag: DW_TAG_member, name: "a", line: 2, size: 32, align: 32, file: !1, scope: !15, baseType: !8)
+!18 = !MDDerivedType(tag: DW_TAG_member, name: "b", line: 3, size: 32, align: 32, offset: 32, file: !1, scope: !15, baseType: !8)
 !19 = !{!20}
-!20 = !{!"0x21\000\002"}        ; [ DW_TAG_subrange_type ] [0, 1]
+!20 = !MDSubrange(count: 2)
 !21 = !{i32 2, !"Dwarf Version", i32 2}
-!22 = !{i32 1, !"Debug Info Version", i32 2}
+!22 = !{i32 1, !"Debug Info Version", i32 3}
 !23 = !{!"clang version 3.5.0 "}
-!24 = !{!"0x101\00outer\0016777226\000", !4, !5, !9} ; [ DW_TAG_arg_variable ] [outer] [line 10]
-!25 = !{!"0x102\00157\000\0064"} ; [ DW_TAG_expression ] [DW_OP_bit_piece size=64, offset=0]
+!24 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "outer", line: 10, arg: 1, scope: !4, file: !5, type: !9)
+!25 = !MDExpression(DW_OP_bit_piece, 0, 64)
 !26 = !MDLocation(line: 10, scope: !4)
-!27 = !{!"0x101\00outer\0016777226\000", !4, !5, !9} ; [ DW_TAG_arg_variable ] [outer] [line 10]
-!28 = !{!"0x102\00157\0064\0064"} ; [ DW_TAG_expression ] [DW_OP_bit_piece size=64, offset=64]
-!29 = !{!"0x101\00outer\0016777226\000", !4, !5, !9} ; [ DW_TAG_arg_variable ] [outer] [line 10]
-!30 = !{!"0x102\00157\0096\0032"} ; [ DW_TAG_expression ] [DW_OP_bit_piece size=32, offset=96]
-!31 = !{!"0x101\00outer\0016777226\000", !4, !5, !9} ; [ DW_TAG_arg_variable ] [outer] [line 10]
-!32 = !{!"0x102\00157\0064\0032"} ; [ DW_TAG_expression ] [DW_OP_bit_piece size=32, offset=64]
+!27 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "outer", line: 10, arg: 1, scope: !4, file: !5, type: !9)
+!28 = !MDExpression(DW_OP_bit_piece, 64, 64)
+!29 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "outer", line: 10, arg: 1, scope: !4, file: !5, type: !9)
+!30 = !MDExpression(DW_OP_bit_piece, 96, 32)
+!31 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "outer", line: 10, arg: 1, scope: !4, file: !5, type: !9)
+!32 = !MDExpression(DW_OP_bit_piece, 64, 32)
 !33 = !MDLocation(line: 11, scope: !4)
-!34 = !{!"0x100\00i1\0011\000", !4, !5, !14} ; [ DW_TAG_auto_variable ] [i1] [line 11]
-!35 = !{!"0x102\00157\000\0032"} ; [ DW_TAG_expression ] [DW_OP_bit_piece size=32, offset=0]
+!34 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i1", line: 11, scope: !4, file: !5, type: !14)
+!35 = !MDExpression(DW_OP_bit_piece, 0, 32)
 !36 = !MDLocation(line: 12, scope: !4)

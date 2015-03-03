@@ -3012,7 +3012,7 @@ define void @test67(i8* %x) {
 !llvm.module.flags = !{!1}
 
 !0 = !{}
-!1 = !{i32 1, !"Debug Info Version", i32 2}
+!1 = !{i32 1, !"Debug Info Version", i32 3}
 
 ; CHECK: attributes #0 = { nounwind readnone }
 ; CHECK: attributes [[NUW]] = { nounwind }

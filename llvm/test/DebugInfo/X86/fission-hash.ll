@@ -9,8 +9,8 @@
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!3, !4}
 
-!0 = !{!"0x11\0012\00clang version 3.4 (trunk 188230) (llvm/trunk 188234)\000\00\000\00foo.dwo\000", !1, !2, !2, !2, !2, !2} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/foo.c] [DW_LANG_C99]
-!1 = !{!"foo.c", !"/usr/local/google/home/echristo/tmp"}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 188230) (llvm/trunk 188234)", isOptimized: false, splitDebugFilename: "foo.dwo", emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !2, globals: !2, imports: !2)
+!1 = !MDFile(filename: "foo.c", directory: "/usr/local/google/home/echristo/tmp")
 !2 = !{}
 !3 = !{i32 2, !"Dwarf Version", i32 3}
-!4 = !{i32 1, !"Debug Info Version", i32 2}
+!4 = !{i32 1, !"Debug Info Version", i32 3}

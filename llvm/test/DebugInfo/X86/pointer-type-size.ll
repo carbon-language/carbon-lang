@@ -11,16 +11,16 @@
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!14}
 
-!0 = !{!"0x11\0012\00clang version 3.1 (trunk 147882)\000\00\000\00\000", !13, !1, !1, !1, !3,  !1} ; [ DW_TAG_compile_unit ]
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.1 (trunk 147882)", isOptimized: false, emissionKind: 0, file: !13, enums: !1, retainedTypes: !1, subprograms: !1, globals: !3, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !{!"0x34\00crass\00crass\00\001\000\001", null, !6, !7, %struct.crass* @crass, null} ; [ DW_TAG_variable ]
-!6 = !{!"0x29", !13} ; [ DW_TAG_file_type ]
-!7 = !{!"0x13\00crass\001\0064\0064\000\000\000", !13, null, null, !8, null, null, null} ; [ DW_TAG_structure_type ] [crass] [line 1, size 64, align 64, offset 0] [def] [from ]
+!5 = !MDGlobalVariable(name: "crass", line: 1, isLocal: false, isDefinition: true, scope: null, file: !6, type: !7, variable: %struct.crass* @crass)
+!6 = !MDFile(filename: "foo.c", directory: "/Users/echristo/tmp")
+!7 = !MDCompositeType(tag: DW_TAG_structure_type, name: "crass", line: 1, size: 64, align: 64, file: !13, elements: !8)
 !8 = !{!9}
-!9 = !{!"0xd\00ptr\001\0064\0064\000\000", !13, !7, !10} ; [ DW_TAG_member ]
-!10 = !{!"0x26\00\000\000\000\000\000", null, null, !11} ; [ DW_TAG_const_type ]
-!11 = !{!"0xf\00\000\0064\0064\000\000", null, null, !12} ; [ DW_TAG_pointer_type ]
-!12 = !{!"0x24\00char\000\008\008\000\000\006", null, null} ; [ DW_TAG_base_type ]
-!13 = !{!"foo.c", !"/Users/echristo/tmp"}
-!14 = !{i32 1, !"Debug Info Version", i32 2}
+!9 = !MDDerivedType(tag: DW_TAG_member, name: "ptr", line: 1, size: 64, align: 64, file: !13, scope: !7, baseType: !10)
+!10 = !MDDerivedType(tag: DW_TAG_const_type, baseType: !11)
+!11 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !12)
+!12 = !MDBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
+!13 = !MDFile(filename: "foo.c", directory: "/Users/echristo/tmp")
+!14 = !{i32 1, !"Debug Info Version", i32 3}

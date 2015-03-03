@@ -32,7 +32,7 @@
 define linkonce_odr i32 @_Z4funci(i32 %i) #0 {
   %1 = alloca i32, align 4
   store i32 %i, i32* %1, align 4
-  call void @llvm.dbg.declare(metadata i32* %1, metadata !20, metadata !{!"0x102"}), !dbg !21
+  call void @llvm.dbg.declare(metadata i32* %1, metadata !20, metadata !MDExpression()), !dbg !21
   %2 = load i32, i32* %1, align 4, !dbg !22
   %3 = mul nsw i32 %2, 2, !dbg !22
   ret i32 %3, !dbg !22
@@ -48,26 +48,26 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!17, !18}
 !llvm.ident = !{!19, !19}
 
-!0 = !{!"0x11\004\00clang version 3.5.0 \000\00\000\00\001", !1, !2, !2, !3, !10, !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/a.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"a.cpp", !"/tmp/dbginfo"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !10, imports: !2)
+!1 = !MDFile(filename: "a.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00func\00func\00_Z4funci\001\000\001\000\006\00256\000\001", !5, !6, !7, null, i32 (i32)* @_Z4funci, null, null, !2} ; [ DW_TAG_subprogram ] [line 1] [def] [func]
-!5 = !{!"func.h", !"/tmp/dbginfo"}
-!6 = !{!"0x29", !5}          ; [ DW_TAG_file_type ] [/tmp/dbginfo/func.h]
-!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "func", linkageName: "_Z4funci", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !5, scope: !6, type: !7, function: i32 (i32)* @_Z4funci, variables: !2)
+!5 = !MDFile(filename: "func.h", directory: "/tmp/dbginfo")
+!6 = !MDFile(filename: "func.h", directory: "/tmp/dbginfo")
+!7 = !MDSubroutineType(types: !8)
 !8 = !{!9, !9}
-!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !10 = !{!11}
-!11 = !{!"0x34\00x\00x\00\004\000\001", null, !6, !12, i32 (i32)** @x, null} ; [ DW_TAG_variable ] [x] [line 4] [def]
-!12 = !{!"0xf\00\000\0064\0064\000\000", null, null, !7} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from ]
-!13 = !{!"0x11\004\00clang version 3.5.0 \000\00\000\00\001", !14, !2, !2, !3, !15, !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/b.cpp] [DW_LANG_C_plus_plus]
-!14 = !{!"b.cpp", !"/tmp/dbginfo"}
+!11 = !MDGlobalVariable(name: "x", line: 4, isLocal: false, isDefinition: true, scope: null, file: !6, type: !12, variable: i32 (i32)** @x)
+!12 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !7)
+!13 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !14, enums: !2, retainedTypes: !2, subprograms: !3, globals: !15, imports: !2)
+!14 = !MDFile(filename: "b.cpp", directory: "/tmp/dbginfo")
 !15 = !{!16}
-!16 = !{!"0x34\00y\00y\00\004\000\001", null, !6, !12, i32 (i32)** @y, null} ; [ DW_TAG_variable ] [y] [line 4] [def]
+!16 = !MDGlobalVariable(name: "y", line: 4, isLocal: false, isDefinition: true, scope: null, file: !6, type: !12, variable: i32 (i32)** @y)
 !17 = !{i32 2, !"Dwarf Version", i32 4}
-!18 = !{i32 1, !"Debug Info Version", i32 2}
+!18 = !{i32 1, !"Debug Info Version", i32 3}
 !19 = !{!"clang version 3.5.0 "}
-!20 = !{!"0x101\00i\0016777217\000", !4, !6, !9} ; [ DW_TAG_arg_variable ] [i] [line 1]
+!20 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 1, arg: 1, scope: !4, file: !6, type: !9)
 !21 = !MDLocation(line: 1, scope: !4)
 !22 = !MDLocation(line: 2, scope: !4)

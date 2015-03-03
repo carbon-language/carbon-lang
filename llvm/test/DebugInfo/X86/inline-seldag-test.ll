@@ -27,10 +27,10 @@ define void @func() #0 {
 entry:
   %y.addr.i = alloca i32, align 4
   %x = alloca i32, align 4
-  call void @llvm.dbg.declare(metadata i32* %x, metadata !15, metadata !{!"0x102"}), !dbg !17
+  call void @llvm.dbg.declare(metadata i32* %x, metadata !15, metadata !MDExpression()), !dbg !17
   %0 = load volatile i32, i32* %x, align 4, !dbg !18
   store i32 %0, i32* %y.addr.i, align 4
-  call void @llvm.dbg.declare(metadata i32* %y.addr.i, metadata !19, metadata !{!"0x102"}), !dbg !20
+  call void @llvm.dbg.declare(metadata i32* %y.addr.i, metadata !19, metadata !MDExpression()), !dbg !20
   %1 = load i32, i32* %y.addr.i, align 4, !dbg !21
   %tobool.i = icmp ne i32 %1, 0, !dbg !21
   %cond.i = select i1 %tobool.i, i32 4, i32 7, !dbg !21
@@ -48,26 +48,26 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!12, !13}
 !llvm.ident = !{!14}
 
-!0 = !{!"0x11\0012\00clang version 3.5.0 \000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/inline-seldag-test.c] [DW_LANG_C99]
-!1 = !{!"inline-seldag-test.c", !"/tmp/dbginfo"}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "inline-seldag-test.c", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4, !8}
-!4 = !{!"0x2e\00func\00func\00\004\000\001\000\006\000\000\004", !1, !5, !6, null, void ()* @func, null, null, !2} ; [ DW_TAG_subprogram ] [line 4] [def] [func]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/tmp/dbginfo/inline-seldag-test.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "func", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 4, file: !1, scope: !5, type: !6, function: void ()* @func, variables: !2)
+!5 = !MDFile(filename: "inline-seldag-test.c", directory: "/tmp/dbginfo")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{null}
-!8 = !{!"0x2e\00f\00f\00\001\000\001\000\006\00256\000\001", !1, !5, !9, null, null, null, null, !2} ; [ DW_TAG_subprogram ] [line 1] [def] [f]
-!9 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !10, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!8 = !MDSubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !9, variables: !2)
+!9 = !MDSubroutineType(types: !10)
 !10 = !{!11, !11}
-!11 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!11 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !12 = !{i32 2, !"Dwarf Version", i32 4}
-!13 = !{i32 1, !"Debug Info Version", i32 2}
+!13 = !{i32 1, !"Debug Info Version", i32 3}
 !14 = !{!"clang version 3.5.0 "}
-!15 = !{!"0x100\00x\005\000", !4, !5, !16} ; [ DW_TAG_auto_variable ] [x] [line 5]
-!16 = !{!"0x35\00\000\000\000\000\000", null, null, !11} ; [ DW_TAG_volatile_type ] [line 0, size 0, align 0, offset 0] [from int]
+!15 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "x", line: 5, scope: !4, file: !5, type: !16)
+!16 = !MDDerivedType(tag: DW_TAG_volatile_type, baseType: !11)
 !17 = !MDLocation(line: 5, scope: !4)
 !18 = !MDLocation(line: 6, column: 7, scope: !4)
-!19 = !{!"0x101\00y\0016777217\000", !8, !5, !11} ; [ DW_TAG_arg_variable ] [y] [line 1]
+!19 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "y", line: 1, arg: 1, scope: !8, file: !5, type: !11)
 !20 = !MDLocation(line: 1, scope: !8, inlinedAt: !18)
 !21 = !MDLocation(line: 2, scope: !8, inlinedAt: !18)
 !22 = !MDLocation(line: 7, scope: !4)

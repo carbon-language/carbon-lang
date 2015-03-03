@@ -26,17 +26,17 @@ attributes #0 = { nounwind readnone uwtable "less-precise-fpmad"="false" "no-fra
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!11, !13}
 
-!0 = !{!"0x11\004\00clang version 3.4 \001\00\000\00\000", !1, !2, !2, !3, !9, !2} ; [ DW_TAG_compile_unit ] [/tmp/global.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"global.cpp", !"/tmp"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.4 ", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !9, imports: !2)
+!1 = !MDFile(filename: "global.cpp", directory: "/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00main\00main\00\002\000\001\000\006\00256\001\002", !1, !5, !6, null, i32 ()* @main, null, null, !2} ; [ DW_TAG_subprogram ] [line 2] [def] [main]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/tmp/global.cpp]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "main", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 2, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !2)
+!5 = !MDFile(filename: "global.cpp", directory: "/tmp")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{!8}
-!8 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !9 = !{!10}
-!10 = !{!"0x34\00i\00i\00_ZL1i\001\001\001", null, !5, !8, null, null} ; [ DW_TAG_variable ]
+!10 = !MDGlobalVariable(name: "i", linkageName: "_ZL1i", line: 1, isLocal: true, isDefinition: true, scope: null, file: !5, type: !8)
 !11 = !{i32 2, !"Dwarf Version", i32 3}
 !12 = !MDLocation(line: 4, scope: !4)
-!13 = !{i32 1, !"Debug Info Version", i32 2}
+!13 = !{i32 1, !"Debug Info Version", i32 3}

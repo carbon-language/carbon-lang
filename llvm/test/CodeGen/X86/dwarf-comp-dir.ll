@@ -7,15 +7,15 @@ target triple = "x86_64-unknown-linux-gnu"
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!5}
 
-!0 = !{!"0x11\0012\00clang version 3.1 (trunk 143523)\001\00\000\00\000", !4, !2, !7, !2, !2, null} ; [ DW_TAG_compile_unit ]
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.1 (trunk 143523)", isOptimized: true, emissionKind: 0, file: !4, enums: !2, retainedTypes: !7, subprograms: !2, globals: !2)
 !2 = !{}
-!3 = !{!"0x29", !4} ; [ DW_TAG_file_type ]
-!4 = !{!"empty.c", !"/home/nlewycky"}
-!6 = !{!"0x13\00foo\001\008\008\000\000\000", !4, null, null, !2, null, null, !"_ZTS3foo"} ; [ DW_TAG_structure_type ] [foo] [line 1, size 8, align 8, offset 0] [def] [from ]
+!3 = !MDFile(filename: "empty.c", directory: "/home/nlewycky")
+!4 = !MDFile(filename: "empty.c", directory: "/home/nlewycky")
+!6 = !MDCompositeType(tag: DW_TAG_structure_type, name: "foo", line: 1, size: 8, align: 8, file: !4, elements: !2, identifier: "_ZTS3foo")
 !7 = !{!6}
 
 ; The important part of the following check is that dir = #0.
 ;                        Dir  Mod Time   File Len   File Name
 ;                        ---- ---------- ---------- ---------------------------
 ; CHECK: file_names[  1]    0 0x00000000 0x00000000 empty.c
-!5 = !{i32 1, !"Debug Info Version", i32 2}
+!5 = !{i32 1, !"Debug Info Version", i32 3}

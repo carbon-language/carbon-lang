@@ -47,7 +47,7 @@ entry:
   %retval = alloca i32, align 4
   %instance_C = alloca %class.C, align 4
   store i32 0, i32* %retval
-  call void @llvm.dbg.declare(metadata %class.C* %instance_C, metadata !29, metadata !{!"0x102"}), !dbg !30
+  call void @llvm.dbg.declare(metadata %class.C* %instance_C, metadata !29, metadata !MDExpression()), !dbg !30
   %d = getelementptr inbounds %class.C, %class.C* %instance_C, i32 0, i32 0, !dbg !31
   store i32 8, i32* %d, align 4, !dbg !31
   %0 = load i32, i32* @_ZN1C1cE, align 4, !dbg !32
@@ -59,37 +59,37 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!34}
 
-!0 = !{!"0x11\004\00clang version 3.3 (trunk 171914)\000\00\000\00\000", !33, !1, !1, !3, !10,  !1} ; [ DW_TAG_compile_unit ] [/home/probinson/projects/upstream/static-member/test/debug-info-static-member.cpp] [DW_LANG_C_plus_plus]
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 171914)", isOptimized: false, emissionKind: 0, file: !33, enums: !1, retainedTypes: !1, subprograms: !3, globals: !10, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !{!"0x2e\00main\00main\00\0018\000\001\000\006\00256\000\0023", !33, !6, !7, null, i32 ()* @main, null, null, !1} ; [ DW_TAG_subprogram ] [line 18] [def] [scope 23] [main]
-!6 = !{!"0x29", !33} ; [ DW_TAG_file_type ]
-!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = !MDSubprogram(name: "main", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 23, file: !33, scope: !6, type: !7, function: i32 ()* @main, variables: !1)
+!6 = !MDFile(filename: "/usr/local/google/home/blaikie/Development/llvm/src/tools/clang/test/CodeGenCXX/debug-info-static-member.cpp", directory: "/home/blaikie/local/Development/llvm/build/clang/x86-64/Debug/llvm")
+!7 = !MDSubroutineType(types: !8)
 !8 = !{!9}
-!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !10 = !{!12, !27, !28}
-!12 = !{!"0x34\00a\00a\00_ZN1C1aE\0014\000\001", null, !6, !9, i32* @_ZN1C1aE, !15} ; [ DW_TAG_variable ] [a] [line 14] [def]
-!13 = !{!"0x2\00C\001\0032\0032\000\000\000", !33, null, null, !14, null, null, null} ; [ DW_TAG_class_type ] [C] [line 1, size 32, align 32, offset 0] [def] [from ]
+!12 = !MDGlobalVariable(name: "a", linkageName: "_ZN1C1aE", line: 14, isLocal: false, isDefinition: true, scope: null, file: !6, type: !9, variable: i32* @_ZN1C1aE, declaration: !15)
+!13 = !MDCompositeType(tag: DW_TAG_class_type, name: "C", line: 1, size: 32, align: 32, file: !33, elements: !14)
 !14 = !{!15, !16, !19, !20, !23, !24, !26}
-!15 = !{!"0xd\00a\003\000\000\000\004097", !33, !13, !9, null} ; [ DW_TAG_member ] [a] [line 3, size 0, align 0, offset 0] [private] [static] [from int]
-!16 = !{!"0xd\00const_a\004\000\000\000\004097", !33, !13, !17, i1 true} ; [ DW_TAG_member ] [const_a] [line 4, size 0, align 0, offset 0] [private] [static] [from ]
-!17 = !{!"0x26\00\000\000\000\000\000", null, null, !18} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from bool]
-!18 = !{!"0x24\00bool\000\008\008\000\000\002", null, null} ; [ DW_TAG_base_type ] [bool] [line 0, size 8, align 8, offset 0, enc DW_ATE_boolean]
-!19 = !{!"0xd\00b\006\000\000\000\004098", !33, !13, !9, null} ; [ DW_TAG_member ] [b] [line 6, size 0, align 0, offset 0] [protected] [static] [from int]
-!20 = !{!"0xd\00const_b\007\000\000\000\004098", !33, !13, !21, float 0x40091EB860000000} ; [ DW_TAG_member ] [const_b] [line 7, size 0, align 0, offset 0] [protected] [static] [from ]
-!21 = !{!"0x26\00\000\000\000\000\000", null, null, !22} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from float]
-!22 = !{!"0x24\00float\000\0032\0032\000\000\004", null, null} ; [ DW_TAG_base_type ] [float] [line 0, size 32, align 32, offset 0, enc DW_ATE_float]
-!23 = !{!"0xd\00c\009\000\000\000\004099", !33, !13, !9, null} ; [ DW_TAG_member ] [c] [line 9, size 0, align 0, offset 0] [static] [from int]
-!24 = !{!"0xd\00const_c\0010\000\000\000\004099", !33, !13, !25, i32 18} ; [ DW_TAG_member ] [const_c] [line 10, size 0, align 0, offset 0] [static] [from ]
-!25 = !{!"0x26\00\000\000\000\000\000", null, null, !9} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from int]
-!26 = !{!"0xd\00d\0011\0032\0032\000\003", !33, !13, !9} ; [ DW_TAG_member ] [d] [line 11, size 32, align 32, offset 0] [from int]
-!27 = !{!"0x34\00b\00b\00_ZN1C1bE\0015\000\001", null, !6, !9, i32* @_ZN1C1bE, !19} ; [ DW_TAG_variable ] [b] [line 15] [def]
-!28 = !{!"0x34\00c\00c\00_ZN1C1cE\0016\000\001", null, !6, !9, i32* @_ZN1C1cE, !23} ; [ DW_TAG_variable ] [c] [line 16] [def]
-!29 = !{!"0x100\00instance_C\0020\000", !5, !6, !13} ; [ DW_TAG_auto_variable ] [instance_C] [line 20]
+!15 = !MDDerivedType(tag: DW_TAG_member, name: "a", line: 3, flags: DIFlagPrivate | DIFlagStaticMember, file: !33, scope: !13, baseType: !9)
+!16 = !MDDerivedType(tag: DW_TAG_member, name: "const_a", line: 4, flags: DIFlagPrivate | DIFlagStaticMember, file: !33, scope: !13, baseType: !17, extraData: i1 true)
+!17 = !MDDerivedType(tag: DW_TAG_const_type, baseType: !18)
+!18 = !MDBasicType(tag: DW_TAG_base_type, name: "bool", size: 8, align: 8, encoding: DW_ATE_boolean)
+!19 = !MDDerivedType(tag: DW_TAG_member, name: "b", line: 6, flags: DIFlagProtected | DIFlagStaticMember, file: !33, scope: !13, baseType: !9)
+!20 = !MDDerivedType(tag: DW_TAG_member, name: "const_b", line: 7, flags: DIFlagProtected | DIFlagStaticMember, file: !33, scope: !13, baseType: !21, extraData: float 0x40091EB860000000)
+!21 = !MDDerivedType(tag: DW_TAG_const_type, baseType: !22)
+!22 = !MDBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
+!23 = !MDDerivedType(tag: DW_TAG_member, name: "c", line: 9, flags: DIFlagPublic | DIFlagStaticMember, file: !33, scope: !13, baseType: !9)
+!24 = !MDDerivedType(tag: DW_TAG_member, name: "const_c", line: 10, flags: DIFlagPublic | DIFlagStaticMember, file: !33, scope: !13, baseType: !25, extraData: i32 18)
+!25 = !MDDerivedType(tag: DW_TAG_const_type, baseType: !9)
+!26 = !MDDerivedType(tag: DW_TAG_member, name: "d", line: 11, size: 32, align: 32, flags: DIFlagPublic, file: !33, scope: !13, baseType: !9)
+!27 = !MDGlobalVariable(name: "b", linkageName: "_ZN1C1bE", line: 15, isLocal: false, isDefinition: true, scope: null, file: !6, type: !9, variable: i32* @_ZN1C1bE, declaration: !19)
+!28 = !MDGlobalVariable(name: "c", linkageName: "_ZN1C1cE", line: 16, isLocal: false, isDefinition: true, scope: null, file: !6, type: !9, variable: i32* @_ZN1C1cE, declaration: !23)
+!29 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "instance_C", line: 20, scope: !5, file: !6, type: !13)
 !30 = !MDLocation(line: 20, scope: !5)
 !31 = !MDLocation(line: 21, scope: !5)
 !32 = !MDLocation(line: 22, scope: !5)
-!33 = !{!"/usr/local/google/home/blaikie/Development/llvm/src/tools/clang/test/CodeGenCXX/debug-info-static-member.cpp", !"/home/blaikie/local/Development/llvm/build/clang/x86-64/Debug/llvm"}
+!33 = !MDFile(filename: "/usr/local/google/home/blaikie/Development/llvm/src/tools/clang/test/CodeGenCXX/debug-info-static-member.cpp", directory: "/home/blaikie/local/Development/llvm/build/clang/x86-64/Debug/llvm")
 ; PRESENT verifies that static member declarations have these attributes:
 ; external, declaration, accessibility, and either DW_AT_MIPS_linkage_name
 ; (for variables) or DW_AT_const_value (for constants).
@@ -253,4 +253,4 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 ; DARWINA-NOT:  DW_AT_const_value
 ; DARWINA-NOT:  DW_AT_location
 ; DARWINA:      NULL
-!34 = !{i32 1, !"Debug Info Version", i32 2}
+!34 = !{i32 1, !"Debug Info Version", i32 3}

@@ -18,17 +18,17 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.lv.foo = !{!5}
 !llvm.dbg.gv = !{!8}
 
-!0 = !{!"0x2e\00foo\00foo\00foo\002\000\001\000\006\000\001\000", !12, !1, !3, null, void ()* @foo, null, null, null} ; [ DW_TAG_subprogram ]
-!1 = !{!"0x29", !12} ; [ DW_TAG_file_type ]
-!2 = !{!"0x11\001\004.2.1 (Based on Apple Inc. build 5658) (LLVM build)\001\00\000\00\000", !12, !4, !4, null, null, null} ; [ DW_TAG_compile_unit ]
-!3 = !{!"0x15\00\000\000\000\000\000\000", !12, !1, null, !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = !MDSubprogram(name: "foo", linkageName: "foo", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, file: !12, scope: !1, type: !3, function: void ()* @foo)
+!1 = !MDFile(filename: "b.c", directory: "/tmp")
+!2 = !MDCompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: true, emissionKind: 0, file: !12, enums: !4, retainedTypes: !4)
+!3 = !MDSubroutineType(types: !4)
 !4 = !{null}
-!5 = !{!"0x100\00y\003\000", !6, !1, !7} ; [ DW_TAG_auto_variable ]
-!6 = !{!"0xb\002\000\000", !12, !0} ; [ DW_TAG_lexical_block ]
-!7 = !{!"0x24\00int\000\0032\0032\000\000\005", !12, !1} ; [ DW_TAG_base_type ]
-!8 = !{!"0x34\00x\00x\00\001\000\001", !1, !1, !7, i32* @x} ; [ DW_TAG_variable ]
+!5 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "y", line: 3, scope: !6, file: !1, type: !7)
+!6 = distinct !MDLexicalBlock(line: 2, column: 0, file: !12, scope: !0)
+!7 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!8 = !MDGlobalVariable(name: "x", line: 1, isLocal: false, isDefinition: true, scope: !1, file: !1, type: !7, variable: i32* @x)
 !9 = !{i32 0}
 !10 = !MDLocation(line: 3, scope: !6)
 !11 = !MDLocation(line: 4, scope: !6)
-!12 = !{!"b.c", !"/tmp"}
-!13 = !{i32 1, !"Debug Info Version", i32 2}
+!12 = !MDFile(filename: "b.c", directory: "/tmp")
+!13 = !{i32 1, !"Debug Info Version", i32 3}

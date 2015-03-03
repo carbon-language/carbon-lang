@@ -32,7 +32,7 @@ target triple = "arm64-apple-ios3.0.0"
 ; Function Attrs: nounwind ssp
 define i32 @return_five_int(%struct.five* %f) #0 {
 entry:
-  call void @llvm.dbg.declare(metadata %struct.five* %f, metadata !17, metadata !{!"0x102\006"}), !dbg !18
+  call void @llvm.dbg.declare(metadata %struct.five* %f, metadata !17, metadata !MDExpression(DW_OP_deref)), !dbg !18
   %a = getelementptr inbounds %struct.five, %struct.five* %f, i32 0, i32 0, !dbg !19
   %0 = load i32, i32* %a, align 4, !dbg !19
   ret i32 %0, !dbg !19
@@ -47,24 +47,24 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!16, !20}
 
-!0 = !{!"0x11\0012\00LLVM version 3.4 \000\00\000\00\000", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [struct_by_value.c] [DW_LANG_C99]
-!1 = !{!"struct_by_value.c", !""}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "LLVM version 3.4 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "struct_by_value.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00return_five_int\00return_five_int\00\0013\000\001\000\006\00256\000\0014", !1, !5, !6, null, i32 (%struct.five*)* @return_five_int, null, null, !2} ; [ DW_TAG_subprogram ] [line 13] [def] [scope 14] [return_five_int]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [struct_by_value.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "return_five_int", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 14, file: !1, scope: !5, type: !6, function: i32 (%struct.five*)* @return_five_int, variables: !2)
+!5 = !MDFile(filename: "struct_by_value.c", directory: "")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{!8, !9}
-!8 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!9 = !{!"0x13\00five\001\00160\0032\000\000\000", !1, null, null, !10, null, null, null} ; [ DW_TAG_structure_type ] [five] [line 1, size 160, align 32, offset 0] [def] [from ]
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!9 = !MDCompositeType(tag: DW_TAG_structure_type, name: "five", line: 1, size: 160, align: 32, file: !1, elements: !10)
 !10 = !{!11, !12, !13, !14, !15}
-!11 = !{!"0xd\00a\003\0032\0032\000\000", !1, !9, !8} ; [ DW_TAG_member ] [a] [line 3, size 32, align 32, offset 0] [from int]
-!12 = !{!"0xd\00b\004\0032\0032\0032\000", !1, !9, !8} ; [ DW_TAG_member ] [b] [line 4, size 32, align 32, offset 32] [from int]
-!13 = !{!"0xd\00c\005\0032\0032\0064\000", !1, !9, !8} ; [ DW_TAG_member ] [c] [line 5, size 32, align 32, offset 64] [from int]
-!14 = !{!"0xd\00d\006\0032\0032\0096\000", !1, !9, !8} ; [ DW_TAG_member ] [d] [line 6, size 32, align 32, offset 96] [from int]
-!15 = !{!"0xd\00e\007\0032\0032\00128\000", !1, !9, !8} ; [ DW_TAG_member ] [e] [line 7, size 32, align 32, offset 128] [from int]
+!11 = !MDDerivedType(tag: DW_TAG_member, name: "a", line: 3, size: 32, align: 32, file: !1, scope: !9, baseType: !8)
+!12 = !MDDerivedType(tag: DW_TAG_member, name: "b", line: 4, size: 32, align: 32, offset: 32, file: !1, scope: !9, baseType: !8)
+!13 = !MDDerivedType(tag: DW_TAG_member, name: "c", line: 5, size: 32, align: 32, offset: 64, file: !1, scope: !9, baseType: !8)
+!14 = !MDDerivedType(tag: DW_TAG_member, name: "d", line: 6, size: 32, align: 32, offset: 96, file: !1, scope: !9, baseType: !8)
+!15 = !MDDerivedType(tag: DW_TAG_member, name: "e", line: 7, size: 32, align: 32, offset: 128, file: !1, scope: !9, baseType: !8)
 !16 = !{i32 2, !"Dwarf Version", i32 2}
-!17 = !{!"0x101\00f\0016777229\000", !4, !5, !9} ; [ DW_TAG_arg_variable ] [f] [line 13]
+!17 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "f", line: 13, arg: 1, scope: !4, file: !5, type: !9)
 !18 = !MDLocation(line: 13, scope: !4)
 !19 = !MDLocation(line: 16, scope: !4)
-!20 = !{i32 1, !"Debug Info Version", i32 2}
+!20 = !{i32 1, !"Debug Info Version", i32 3}

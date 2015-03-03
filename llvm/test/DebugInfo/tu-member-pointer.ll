@@ -16,15 +16,15 @@
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!10, !11}
 
-!0 = !{!"0x11\004\00clang version 3.4\000\00\000\00\000", !1, !2, !3, !2, !5, !2} ; [ DW_TAG_compile_unit ] [foo.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"foo.cpp", !"."}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.4", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !2, globals: !5, imports: !2)
+!1 = !MDFile(filename: "foo.cpp", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x13\00Foo\001\000\000\000\004\000", !1, null, null, null, null, null, !"_ZTS3Foo"} ; [ DW_TAG_structure_type ] [Foo] [line 1, size 0, align 0, offset 0] [decl] [from ]
+!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Foo", line: 1, flags: DIFlagFwdDecl, file: !1, identifier: "_ZTS3Foo")
 !5 = !{!6}
-!6 = !{!"0x34\00x\00x\00\004\000\001", null, !7, !8, i64* @x, null} ; [ DW_TAG_variable ] [x] [line 4] [def]
-!7 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [foo.cpp]
-!8 = !{!"0x1f\00\000\000\000\000\000", null, null, !9, !"_ZTS3Foo"} ; [ DW_TAG_ptr_to_member_type ] [line 0, size 0, align 0, offset 0] [from int]
-!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!6 = !MDGlobalVariable(name: "x", line: 4, isLocal: false, isDefinition: true, scope: null, file: !7, type: !8, variable: i64* @x)
+!7 = !MDFile(filename: "foo.cpp", directory: ".")
+!8 = !MDDerivedType(tag: DW_TAG_ptr_to_member_type, baseType: !9, extraData: !"_ZTS3Foo")
+!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !10 = !{i32 2, !"Dwarf Version", i32 2}
-!11 = !{i32 1, !"Debug Info Version", i32 2}
+!11 = !{i32 1, !"Debug Info Version", i32 3}

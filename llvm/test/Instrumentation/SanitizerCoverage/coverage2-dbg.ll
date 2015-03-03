@@ -27,7 +27,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define void @_Z3fooPi(i32* %a) #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32* %a, i64 0, metadata !11, metadata !{!"0x102"}), !dbg !15
+  tail call void @llvm.dbg.value(metadata i32* %a, i64 0, metadata !11, metadata !MDExpression()), !dbg !15
   %tobool = icmp eq i32* %a, null, !dbg !16
   br i1 %tobool, label %if.end, label %if.then, !dbg !16
 
@@ -49,24 +49,24 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!12, !13}
 !llvm.ident = !{!14}
 
-!0 = !{!"0x11\004\00clang version 3.6.0 (217079)\001\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [FOO/if.cc] [DW_LANG_C_plus_plus]
-!1 = !{!"if.cc", !"FOO"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.6.0 (217079)", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "if.cc", directory: "FOO")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00foo\00foo\00_Z3fooPi\001\000\001\000\006\00256\001\001", !1, !5, !6, null, void (i32*)* @_Z3fooPi, null, null, !10} ; [ DW_TAG_subprogram ] [line 1] [def] [foo]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [FOO/if.cc]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "foo", linkageName: "_Z3fooPi", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (i32*)* @_Z3fooPi, variables: !10)
+!5 = !MDFile(filename: "if.cc", directory: "FOO")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{null, !8}
-!8 = !{!"0xf\00\000\0064\0064\000\000", null, null, !9} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
-!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!8 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !9)
+!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !10 = !{!11}
-!11 = !{!"0x101\00a\0016777217\000", !4, !5, !8} ; [ DW_TAG_arg_variable ] [a] [line 1]
+!11 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "a", line: 1, arg: 1, scope: !4, file: !5, type: !8)
 !12 = !{i32 2, !"Dwarf Version", i32 4}
-!13 = !{i32 2, !"Debug Info Version", i32 2}
+!13 = !{i32 2, !"Debug Info Version", i32 3}
 !14 = !{!"clang version 3.6.0 (217079)"}
 !15 = !MDLocation(line: 1, column: 15, scope: !4)
 !16 = !MDLocation(line: 2, column: 7, scope: !17)
-!17 = !{!"0xb\002\007\000", !1, !4} ; [ DW_TAG_lexical_block ] [FOO/if.cc]
+!17 = distinct !MDLexicalBlock(line: 2, column: 7, file: !1, scope: !4)
 !18 = !MDLocation(line: 3, column: 5, scope: !17)
 !19 = !{!20, !20, i64 0}
 !20 = !{!"int", !21, i64 0}

@@ -39,15 +39,15 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.module.flags = !{!7, !8}
 !llvm.ident = !{!9}
 
-!0 = !{!"0x11\004\00clang version 3.7.0 (trunk 227472) (llvm/trunk 227476)\000\00\000\00\002", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/line.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"line.cpp", !"/tmp/dbginfo"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.7.0 (trunk 227472) (llvm/trunk 227476)", isOptimized: false, emissionKind: 2, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "line.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00f\00f\00\001\000\001\000\000\00256\000\001", !1, !5, !6, null, i32 (i32, i32)* @_Z1fii, null, null, !2} ; [ DW_TAG_subprogram ] [line 1] [def] [f]
-!5 = !{!"0x29", !1}                               ; [ DW_TAG_file_type ] [/tmp/dbginfo/line.cpp]
-!6 = !{!"0x15\00\000\000\000\000\000\000", null, null, null, !2, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "f", line: 1, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i32, i32)* @_Z1fii, variables: !2)
+!5 = !MDFile(filename: "line.cpp", directory: "/tmp/dbginfo")
+!6 = !MDSubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 4}
-!8 = !{i32 2, !"Debug Info Version", i32 2}
+!8 = !{i32 2, !"Debug Info Version", i32 3}
 !9 = !{!"clang version 3.7.0 (trunk 227472) (llvm/trunk 227476)"}
 !10 = !MDLocation(line: 2, scope: !4)
 !11 = !MDLocation(line: 3, scope: !4)

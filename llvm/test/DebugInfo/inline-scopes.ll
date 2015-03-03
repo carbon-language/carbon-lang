@@ -43,7 +43,7 @@ entry:
   %b.i3 = alloca i8, align 1
   %retval.i = alloca i32, align 4
   %b.i = alloca i8, align 1
-  call void @llvm.dbg.declare(metadata i8* %b.i, metadata !16, metadata !{!"0x102"}), !dbg !19
+  call void @llvm.dbg.declare(metadata i8* %b.i, metadata !16, metadata !MDExpression()), !dbg !19
   %call.i = call zeroext i1 @_Z1fv(), !dbg !19
   %frombool.i = zext i1 %call.i to i8, !dbg !19
   store i8 %frombool.i, i8* %b.i, align 1, !dbg !19
@@ -61,7 +61,7 @@ if.end.i:                                         ; preds = %entry
 
 _Z2f1v.exit:                                      ; preds = %if.then.i, %if.end.i
   %1 = load i32, i32* %retval.i, !dbg !23
-  call void @llvm.dbg.declare(metadata i8* %b.i3, metadata !24, metadata !{!"0x102"}), !dbg !27
+  call void @llvm.dbg.declare(metadata i8* %b.i3, metadata !24, metadata !MDExpression()), !dbg !27
   %call.i4 = call zeroext i1 @_Z1fv(), !dbg !27
   %frombool.i5 = zext i1 %call.i4 to i8, !dbg !27
   store i8 %frombool.i5, i8* %b.i3, align 1, !dbg !27
@@ -95,33 +95,33 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !llvm.module.flags = !{!13, !14}
 !llvm.ident = !{!15}
 
-!0 = !{!"0x11\004\00clang version 3.5.0 \000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/inline-scopes.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"inline-scopes.cpp", !"/tmp/dbginfo"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "inline-scopes.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4, !10, !12}
-!4 = !{!"0x2e\00main\00main\00\007\000\001\000\006\00256\000\007", !5, !6, !7, null, i32 ()* @main, null, null, !2} ; [ DW_TAG_subprogram ] [line 7] [def] [main]
-!5 = !{!"y.cc", !"/tmp/dbginfo"}
-!6 = !{!"0x29", !5}          ; [ DW_TAG_file_type ] [/tmp/dbginfo/y.cc]
-!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "main", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !5, scope: !6, type: !7, function: i32 ()* @main, variables: !2)
+!5 = !MDFile(filename: "y.cc", directory: "/tmp/dbginfo")
+!6 = !MDFile(filename: "y.cc", directory: "/tmp/dbginfo")
+!7 = !MDSubroutineType(types: !8)
 !8 = !{!9}
-!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!10 = !{!"0x2e\00f2\00f2\00_Z2f2v\008\000\001\000\006\00256\000\008", !1, !11, !7, null, null, null, null, !2} ; [ DW_TAG_subprogram ] [line 8] [def] [f2]
-!11 = !{!"0x29", !1}         ; [ DW_TAG_file_type ] [/tmp/dbginfo/inline-scopes.cpp]
-!12 = !{!"0x2e\00f1\00f1\00_Z2f1v\002\000\001\000\006\00256\000\002", !1, !11, !7, null, null, null, null, !2} ; [ DW_TAG_subprogram ] [line 2] [def] [f1]
+!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !MDSubprogram(name: "f2", linkageName: "_Z2f2v", line: 8, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 8, file: !1, scope: !11, type: !7, variables: !2)
+!11 = !MDFile(filename: "inline-scopes.cpp", directory: "/tmp/dbginfo")
+!12 = !MDSubprogram(name: "f1", linkageName: "_Z2f1v", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !11, type: !7, variables: !2)
 !13 = !{i32 2, !"Dwarf Version", i32 4}
-!14 = !{i32 1, !"Debug Info Version", i32 2}
+!14 = !{i32 1, !"Debug Info Version", i32 3}
 !15 = !{!"clang version 3.5.0 "}
-!16 = !{!"0x100\00b\003\000", !17, !11, !18} ; [ DW_TAG_auto_variable ] [b] [line 3]
-!17 = !{!"0xb\003\000\001", !1, !12} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/inline-scopes.cpp]
-!18 = !{!"0x24\00bool\000\008\008\000\000\002", null, null} ; [ DW_TAG_base_type ] [bool] [line 0, size 8, align 8, offset 0, enc DW_ATE_boolean]
+!16 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "b", line: 3, scope: !17, file: !11, type: !18)
+!17 = distinct !MDLexicalBlock(line: 3, column: 0, file: !1, scope: !12)
+!18 = !MDBasicType(tag: DW_TAG_base_type, name: "bool", size: 8, align: 8, encoding: DW_ATE_boolean)
 !19 = !MDLocation(line: 3, scope: !17, inlinedAt: !20)
 !20 = !MDLocation(line: 8, scope: !4)
 !21 = !MDLocation(line: 4, scope: !17, inlinedAt: !20)
 !22 = !MDLocation(line: 5, scope: !12, inlinedAt: !20)
 !23 = !MDLocation(line: 6, scope: !12, inlinedAt: !20)
-!24 = !{!"0x100\00b\002\000", !25, !6, !18} ; [ DW_TAG_auto_variable ] [b] [line 2]
-!25 = !{!"0xb\002\000\000", !5, !26} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/y.cc]
-!26 = !{!"0xb\000", !5, !10} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/y.cc]
+!24 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "b", line: 2, scope: !25, file: !6, type: !18)
+!25 = distinct !MDLexicalBlock(line: 2, column: 0, file: !5, scope: !26)
+!26 = !MDLexicalBlockFile(discriminator: 0, file: !5, scope: !10)
 !27 = !MDLocation(line: 2, scope: !25, inlinedAt: !28)
 !28 = !MDLocation(line: 9, scope: !4)
 !29 = !MDLocation(line: 3, scope: !25, inlinedAt: !28)

@@ -19,11 +19,11 @@ target triple = "x86_64-unknown-linux-gnu"
 ; When SROA is creating new smaller allocas, it may add padding.
 ;
 ; There should be no debug info for the padding.
-; CHECK-NOT: DW_OP_bit_piece offset=56
-; CHECK: [ DW_TAG_expression ] [DW_OP_bit_piece offset=32, size=24]
-; CHECK-NOT: DW_OP_bit_piece offset=56
-; CHECK: [ DW_TAG_expression ] [DW_OP_bit_piece offset=0, size=32]
-; CHECK-NOT: DW_OP_bit_piece offset=56
+; CHECK-NOT: DW_OP_bit_piece, 56
+; CHECK: MDExpression(DW_OP_bit_piece, 32, 24)
+; CHECK-NOT: DW_OP_bit_piece, 56
+; CHECK: MDExpression(DW_OP_bit_piece, 0, 32)
+; CHECK-NOT: DW_OP_bit_piece, 56
 %struct.prog_src_register = type { i32, i24 }
 
 ; Function Attrs: nounwind
@@ -66,26 +66,26 @@ attributes #2 = { nounwind }
 !llvm.module.flags = !{!13, !14}
 !llvm.ident = !{!15}
 
-!0 = !{!"0x11\0012\00clang version 3.7.0 \000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/<stdin>] [DW_LANG_C99]
-!1 = !{!"<stdin>", !""}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.7.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "<stdin>", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00src_reg_for_float\00src_reg_for_float\00\007\000\001\000\000\000\000\007", !5, !6, !7, null, i64 ()* @src_reg_for_float, null, null, !2} ; [ DW_TAG_subprogram ] [line 7] [def] [src_reg_for_float]
-!5 = !{!"pr22495.c", !""}
-!6 = !{!"0x29", !5}                               ; [ DW_TAG_file_type ] [/pr22495.c]
-!7 = !{!"0x15\00\000\000\000\000\000\000", null, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "src_reg_for_float", line: 7, isLocal: false, isDefinition: true, isOptimized: false, scopeLine: 7, file: !5, scope: !6, type: !7, function: i64 ()* @src_reg_for_float, variables: !2)
+!5 = !MDFile(filename: "pr22495.c", directory: "")
+!6 = !MDFile(filename: "pr22495.c", directory: "")
+!7 = !MDSubroutineType(types: !8)
 !8 = !{!9}
-!9 = !{!"0x13\00prog_src_register\001\0064\0032\000\000\000", !5, null, null, !10, null, null, null} ; [ DW_TAG_structure_type ] [prog_src_register] [line 1, size 64, align 32, offset 0] [def] [from ]
+!9 = !MDCompositeType(tag: DW_TAG_structure_type, name: "prog_src_register", line: 1, size: 64, align: 32, file: !5, elements: !10)
 !10 = !{!11}
-!11 = !{!"0xd\00Index\003\0013\0032\004\000", !5, !9, !12} ; [ DW_TAG_member ] [Index] [line 3, size 13, align 32, offset 4] [from int]
-!12 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!11 = !MDDerivedType(tag: DW_TAG_member, name: "Index", line: 3, size: 13, align: 32, offset: 4, file: !5, scope: !9, baseType: !12)
+!12 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !13 = !{i32 2, !"Dwarf Version", i32 4}
-!14 = !{i32 2, !"Debug Info Version", i32 2}
+!14 = !{i32 2, !"Debug Info Version", i32 3}
 !15 = !{!"clang version 3.7.0 "}
-!16 = !{!"0x100\00a\008\000", !4, !6, !9}         ; [ DW_TAG_auto_variable ] [a] [line 8]
-!17 = !{!"0x102"}                                 ; [ DW_TAG_expression ]
+!16 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 8, scope: !4, file: !6, type: !9)
+!17 = !MDExpression()
 !18 = !MDLocation(line: 8, scope: !4)
 !19 = !MDLocation(line: 9, scope: !4)
-!20 = !{!"0x100\00local\0010\000", !4, !6, !12}   ; [ DW_TAG_auto_variable ] [local] [line 10]
+!20 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "local", line: 10, scope: !4, file: !6, type: !12)
 !21 = !MDLocation(line: 10, scope: !4)
 !22 = !MDLocation(line: 11, scope: !4)

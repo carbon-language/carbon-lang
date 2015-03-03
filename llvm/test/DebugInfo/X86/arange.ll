@@ -29,18 +29,18 @@
 !llvm.module.flags = !{!12, !13}
 !llvm.ident = !{!14}
 
-!0 = !{!"0x11\004\00clang version 3.5 \000\00\000\00\000", !1, !2, !3, !2, !9, !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/simple.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"simple.cpp", !"/tmp/dbginfo"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !2, globals: !9, imports: !2)
+!1 = !MDFile(filename: "simple.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x13\00foo<&i>\003\008\008\000\000\000", !1, null, null, !2, null, !5, !"_ZTS3fooIXadL_Z1iEEE"} ; [ DW_TAG_structure_type ] [foo<&i>] [line 3, size 8, align 8, offset 0] [def] [from ]
+!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "foo<&i>", line: 3, size: 8, align: 8, file: !1, elements: !2, templateParams: !5, identifier: "_ZTS3fooIXadL_Z1iEEE")
 !5 = !{!6}
-!6 = !{!"0x30\00x\000\000", null, !7, i32* @i, null} ; [ DW_TAG_template_value_parameter ]
-!7 = !{!"0xf\00\000\0064\0064\000\000", null, null, !8} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
-!8 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!6 = !MDTemplateValueParameter(tag: DW_TAG_template_value_parameter, name: "x", type: !7, value: i32* @i)
+!7 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !8)
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !9 = !{!10}
-!10 = !{!"0x34\00f\00f\00\006\000\001", null, !11, !4, %struct.foo* @f, null} ; [ DW_TAG_variable ] [f] [line 6] [def]
-!11 = !{!"0x29", !1}         ; [ DW_TAG_file_type ] [/tmp/dbginfo/simple.cpp]
+!10 = !MDGlobalVariable(name: "f", line: 6, isLocal: false, isDefinition: true, scope: null, file: !11, type: !4, variable: %struct.foo* @f)
+!11 = !MDFile(filename: "simple.cpp", directory: "/tmp/dbginfo")
 !12 = !{i32 2, !"Dwarf Version", i32 4}
-!13 = !{i32 1, !"Debug Info Version", i32 2}
+!13 = !{i32 1, !"Debug Info Version", i32 3}
 !14 = !{!"clang version 3.5 "}

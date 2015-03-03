@@ -32,9 +32,8 @@ class Module;
 template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
 
-
 enum LLVMConstants : uint32_t {
-  DEBUG_METADATA_VERSION = 2  // Current debug info version number.
+  DEBUG_METADATA_VERSION = 3 // Current debug info version number.
 };
 
 /// \brief Root of the metadata hierarchy.

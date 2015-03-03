@@ -110,7 +110,7 @@ entry:
 
 ; <label>:30                                      ; preds = %24, %5
   store i32 0, i32* %i.i, align 4, !dbg !39, !tbaa !41
-  tail call void @llvm.dbg.value(metadata %struct.C* %8, i64 0, metadata !27, metadata !{!"0x102"}), !dbg !46
+  tail call void @llvm.dbg.value(metadata %struct.C* %8, i64 0, metadata !27, metadata !MDExpression()), !dbg !46
   call void @_ZN1C5m_fn3Ev(%struct.C* %8), !dbg !47
   unreachable, !dbg !47
 }
@@ -145,7 +145,7 @@ entry:
   %16 = add i64 %15, 0, !dbg !48
   %17 = inttoptr i64 %16 to i64*, !dbg !48
   store i64 -868083113472691727, i64* %17, !dbg !48
-  tail call void @llvm.dbg.value(metadata %struct.C* %this, i64 0, metadata !30, metadata !{!"0x102"}), !dbg !48
+  tail call void @llvm.dbg.value(metadata %struct.C* %this, i64 0, metadata !30, metadata !MDExpression()), !dbg !48
   %call = call i32 @_ZN1A5m_fn1Ev(%struct.A* %8), !dbg !49
   %i.i = getelementptr inbounds %struct.C, %struct.C* %this, i64 0, i32 1, i32 0, !dbg !50
   %18 = ptrtoint i32* %i.i to i64, !dbg !50
@@ -336,44 +336,44 @@ attributes #3 = { nounwind readnone }
 !llvm.module.flags = !{!36, !37}
 !llvm.ident = !{!38}
 
-!0 = !{!"0x11\004\00clang version 3.5.0 \001\00\000\00\001", !1, !2, !3, !21, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/<stdin>] [DW_LANG_C_plus_plus]
-!1 = !{!"<stdin>", !"/tmp/dbginfo"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !3, subprograms: !21, globals: !2, imports: !2)
+!1 = !MDFile(filename: "<stdin>", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4, !14}
-!4 = !{!"0x13\00C\0010\0064\0032\000\000\000", !5, null, null, !6, null, null, !"_ZTS1C"} ; [ DW_TAG_structure_type ] [C] [line 10, size 64, align 32, offset 0] [def] [from ]
-!5 = !{!"incorrect-variable-debug-loc.cpp", !"/tmp/dbginfo"}
+!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "C", line: 10, size: 64, align: 32, file: !5, elements: !6, identifier: "_ZTS1C")
+!5 = !MDFile(filename: "incorrect-variable-debug-loc.cpp", directory: "/tmp/dbginfo")
 !6 = !{!7, !9, !10}
-!7 = !{!"0xd\00j\0012\0032\0032\000\000", !5, !"_ZTS1C", !8} ; [ DW_TAG_member ] [j] [line 12, size 32, align 32, offset 0] [from int]
-!8 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!9 = !{!"0xd\00b\0013\0032\0032\0032\000", !5, !"_ZTS1C", !"_ZTS1B"} ; [ DW_TAG_member ] [b] [line 13, size 32, align 32, offset 32] [from _ZTS1B]
-!10 = !{!"0x2e\00m_fn3\00m_fn3\00_ZN1C5m_fn3Ev\0011\000\000\000\006\00256\001\0011", !5, !"_ZTS1C", !11, null, null, null, i32 0, null} ; [ DW_TAG_subprogram ] [line 11] [m_fn3]
-!11 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !12, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!7 = !MDDerivedType(tag: DW_TAG_member, name: "j", line: 12, size: 32, align: 32, file: !5, scope: !"_ZTS1C", baseType: !8)
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!9 = !MDDerivedType(tag: DW_TAG_member, name: "b", line: 13, size: 32, align: 32, offset: 32, file: !5, scope: !"_ZTS1C", baseType: !"_ZTS1B")
+!10 = !MDSubprogram(name: "m_fn3", linkageName: "_ZN1C5m_fn3Ev", line: 11, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 11, file: !5, scope: !"_ZTS1C", type: !11)
+!11 = !MDSubroutineType(types: !12)
 !12 = !{null, !13}
-!13 = !{!"0xf\00\000\0064\0064\000\001088", null, null, !"_ZTS1C"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1C]
-!14 = !{!"0x13\00B\005\0032\0032\000\000\000", !5, null, null, !15, null, null, !"_ZTS1B"} ; [ DW_TAG_structure_type ] [B] [line 5, size 32, align 32, offset 0] [def] [from ]
+!13 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1C")
+!14 = !MDCompositeType(tag: DW_TAG_structure_type, name: "B", line: 5, size: 32, align: 32, file: !5, elements: !15, identifier: "_ZTS1B")
 !15 = !{!16, !17}
-!16 = !{!"0xd\00i\007\0032\0032\000\000", !5, !"_ZTS1B", !8} ; [ DW_TAG_member ] [i] [line 7, size 32, align 32, offset 0] [from int]
-!17 = !{!"0x2e\00m_fn2\00m_fn2\00_ZN1B5m_fn2Ev\006\000\000\000\006\00256\001\006", !5, !"_ZTS1B", !18, null, null, null, i32 0, null} ; [ DW_TAG_subprogram ] [line 6] [m_fn2]
-!18 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !19, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!16 = !MDDerivedType(tag: DW_TAG_member, name: "i", line: 7, size: 32, align: 32, file: !5, scope: !"_ZTS1B", baseType: !8)
+!17 = !MDSubprogram(name: "m_fn2", linkageName: "_ZN1B5m_fn2Ev", line: 6, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !5, scope: !"_ZTS1B", type: !18)
+!18 = !MDSubroutineType(types: !19)
 !19 = !{null, !20}
-!20 = !{!"0xf\00\000\0064\0064\000\001088", null, null, !"_ZTS1B"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1B]
+!20 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1B")
 !21 = !{!22, !28, !32}
-!22 = !{!"0x2e\00fn1\00fn1\00_Z3fn1v\0016\000\001\000\006\00256\001\0016", !5, !23, !24, null, i32 ()* @_Z3fn1v, null, null, !26} ; [ DW_TAG_subprogram ] [line 16] [def] [fn1]
-!23 = !{!"0x29", !5}         ; [ DW_TAG_file_type ] [/tmp/dbginfo/incorrect-variable-debug-loc.cpp]
-!24 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !25, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!22 = !MDSubprogram(name: "fn1", linkageName: "_Z3fn1v", line: 16, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 16, file: !5, scope: !23, type: !24, function: i32 ()* @_Z3fn1v, variables: !26)
+!23 = !MDFile(filename: "incorrect-variable-debug-loc.cpp", directory: "/tmp/dbginfo")
+!24 = !MDSubroutineType(types: !25)
 !25 = !{!8}
 !26 = !{!27}
-!27 = !{!"0x100\00A\0017\000", !22, !23, !"_ZTS1C"} ; [ DW_TAG_auto_variable ] [A] [line 17]
-!28 = !{!"0x2e\00m_fn3\00m_fn3\00_ZN1C5m_fn3Ev\0021\000\001\000\006\00256\001\0021", !5, !"_ZTS1C", !11, null, void (%struct.C*)* @_ZN1C5m_fn3Ev, null, !10, !29} ; [ DW_TAG_subprogram ] [line 21] [def] [m_fn3]
+!27 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "A", line: 17, scope: !22, file: !23, type: !"_ZTS1C")
+!28 = !MDSubprogram(name: "m_fn3", linkageName: "_ZN1C5m_fn3Ev", line: 21, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 21, file: !5, scope: !"_ZTS1C", type: !11, function: void (%struct.C*)* @_ZN1C5m_fn3Ev, declaration: !10, variables: !29)
 !29 = !{!30}
-!30 = !{!"0x101\00this\0016777216\001088", !28, null, !31} ; [ DW_TAG_arg_variable ] [this] [line 0]
-!31 = !{!"0xf\00\000\0064\0064\000\000", null, null, !"_ZTS1C"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS1C]
-!32 = !{!"0x2e\00m_fn2\00m_fn2\00_ZN1B5m_fn2Ev\006\000\001\000\006\00256\001\006", !5, !"_ZTS1B", !18, null, null, null, !17, !33} ; [ DW_TAG_subprogram ] [line 6] [def] [m_fn2]
+!30 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !28, type: !31)
+!31 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS1C")
+!32 = !MDSubprogram(name: "m_fn2", linkageName: "_ZN1B5m_fn2Ev", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !5, scope: !"_ZTS1B", type: !18, declaration: !17, variables: !33)
 !33 = !{!34}
-!34 = !{!"0x101\00this\0016777216\001088", !32, null, !35} ; [ DW_TAG_arg_variable ] [this] [line 0]
-!35 = !{!"0xf\00\000\0064\0064\000\000", null, null, !"_ZTS1B"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS1B]
+!34 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !32, type: !35)
+!35 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !"_ZTS1B")
 !36 = !{i32 2, !"Dwarf Version", i32 4}
-!37 = !{i32 2, !"Debug Info Version", i32 2}
+!37 = !{i32 2, !"Debug Info Version", i32 3}
 !38 = !{!"clang version 3.5.0 "}
 !39 = !MDLocation(line: 6, scope: !32, inlinedAt: !40)
 !40 = !MDLocation(line: 18, scope: !22)

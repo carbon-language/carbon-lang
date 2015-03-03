@@ -99,7 +99,7 @@
 ; Function Attrs: uwtable
 define void @_Z1bv() #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata i1 false, i64 0, metadata !25, metadata !{!"0x102"}), !dbg !27
+  tail call void @llvm.dbg.value(metadata i1 false, i64 0, metadata !25, metadata !MDExpression()), !dbg !27
   tail call void @_Z1fi(i32 0), !dbg !28
   ret void, !dbg !29
 }
@@ -107,13 +107,13 @@ entry:
 ; Function Attrs: uwtable
 define void @_Z1ab(i1 zeroext %u) #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata i1 %u, i64 0, metadata !13, metadata !{!"0x102"}), !dbg !30
-  tail call void @llvm.dbg.value(metadata i1 %u, i64 0, metadata !31, metadata !{!"0x102"}), !dbg !33
+  tail call void @llvm.dbg.value(metadata i1 %u, i64 0, metadata !13, metadata !MDExpression()), !dbg !30
+  tail call void @llvm.dbg.value(metadata i1 %u, i64 0, metadata !31, metadata !MDExpression()), !dbg !33
   br i1 %u, label %if.then.i, label %_Z1xb.exit, !dbg !34
 
 if.then.i:                                        ; preds = %entry
   %0 = load i32, i32* @t, align 4, !dbg !35, !tbaa !36
-  tail call void @llvm.dbg.value(metadata i32 %0, i64 0, metadata !40, metadata !{!"0x102"}), !dbg !35
+  tail call void @llvm.dbg.value(metadata i32 %0, i64 0, metadata !40, metadata !MDExpression()), !dbg !35
   tail call void @_Z1fi(i32 %0), !dbg !41
   br label %_Z1xb.exit, !dbg !42
 
@@ -135,38 +135,38 @@ attributes #2 = { nounwind readnone }
 !llvm.module.flags = !{!21, !22}
 !llvm.ident = !{!23}
 
-!0 = !{!"0x11\004\00clang version 3.5.0 \001\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/missing-abstract-variables.cc] [DW_LANG_C_plus_plus]
-!1 = !{!"missing-abstract-variables.cc", !"/tmp/dbginfo"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "missing-abstract-variables.cc", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4, !8, !14}
-!4 = !{!"0x2e\00b\00b\00_Z1bv\0013\000\001\000\006\00256\001\0013", !1, !5, !6, null, void ()* @_Z1bv, null, null, !2} ; [ DW_TAG_subprogram ] [line 13] [def] [b]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/tmp/dbginfo/missing-abstract-variables.cc]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "b", linkageName: "_Z1bv", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 13, file: !1, scope: !5, type: !6, function: void ()* @_Z1bv, variables: !2)
+!5 = !MDFile(filename: "missing-abstract-variables.cc", directory: "/tmp/dbginfo")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{null}
-!8 = !{!"0x2e\00a\00a\00_Z1ab\0017\000\001\000\006\00256\001\0017", !1, !5, !9, null, void (i1)* @_Z1ab, null, null, !12} ; [ DW_TAG_subprogram ] [line 17] [def] [a]
-!9 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !10, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!8 = !MDSubprogram(name: "a", linkageName: "_Z1ab", line: 17, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 17, file: !1, scope: !5, type: !9, function: void (i1)* @_Z1ab, variables: !12)
+!9 = !MDSubroutineType(types: !10)
 !10 = !{null, !11}
-!11 = !{!"0x24\00bool\000\008\008\000\000\002", null, null} ; [ DW_TAG_base_type ] [bool] [line 0, size 8, align 8, offset 0, enc DW_ATE_boolean]
+!11 = !MDBasicType(tag: DW_TAG_base_type, name: "bool", size: 8, align: 8, encoding: DW_ATE_boolean)
 !12 = !{!13}
-!13 = !{!"0x101\00u\0016777233\000", !8, !5, !11} ; [ DW_TAG_arg_variable ] [u] [line 17]
-!14 = !{!"0x2e\00x\00x\00_Z1xb\005\000\001\000\006\00256\001\005", !1, !5, !9, null, null, null, null, !15} ; [ DW_TAG_subprogram ] [line 5] [def] [x]
+!13 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "u", line: 17, arg: 1, scope: !8, file: !5, type: !11)
+!14 = !MDSubprogram(name: "x", linkageName: "_Z1xb", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 5, file: !1, scope: !5, type: !9, variables: !15)
 !15 = !{!16, !17}
-!16 = !{!"0x101\00b\0016777221\000", !14, !5, !11} ; [ DW_TAG_arg_variable ] [b] [line 5]
-!17 = !{!"0x100\00s\007\000", !18, !5, !20} ; [ DW_TAG_auto_variable ] [s] [line 7]
-!18 = !{!"0xb\006\000\000", !1, !19} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/missing-abstract-variables.cc]
-!19 = !{!"0xb\006\000\000", !1, !14} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/missing-abstract-variables.cc]
-!20 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!16 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 5, arg: 1, scope: !14, file: !5, type: !11)
+!17 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "s", line: 7, scope: !18, file: !5, type: !20)
+!18 = distinct !MDLexicalBlock(line: 6, column: 0, file: !1, scope: !19)
+!19 = distinct !MDLexicalBlock(line: 6, column: 0, file: !1, scope: !14)
+!20 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !21 = !{i32 2, !"Dwarf Version", i32 4}
-!22 = !{i32 2, !"Debug Info Version", i32 2}
+!22 = !{i32 2, !"Debug Info Version", i32 3}
 !23 = !{!"clang version 3.5.0 "}
 !24 = !{i1 false}
-!25 = !{!"0x101\00b\0016777221\000", !14, !5, !11, !26} ; [ DW_TAG_arg_variable ] [b] [line 5]
+!25 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 5, arg: 1, scope: !14, file: !5, type: !11, inlinedAt: !26)
 !26 = !MDLocation(line: 14, scope: !4)
 !27 = !MDLocation(line: 5, scope: !14, inlinedAt: !26)
 !28 = !MDLocation(line: 10, scope: !14, inlinedAt: !26)
 !29 = !MDLocation(line: 15, scope: !4)
 !30 = !MDLocation(line: 17, scope: !8)
-!31 = !{!"0x101\00b\0016777221\000", !14, !5, !11, !32} ; [ DW_TAG_arg_variable ] [b] [line 5]
+!31 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 5, arg: 1, scope: !14, file: !5, type: !11, inlinedAt: !32)
 !32 = !MDLocation(line: 18, scope: !8)
 !33 = !MDLocation(line: 5, scope: !14, inlinedAt: !32)
 !34 = !MDLocation(line: 6, scope: !19, inlinedAt: !32)
@@ -175,7 +175,7 @@ attributes #2 = { nounwind readnone }
 !37 = !{!"int", !38, i64 0}
 !38 = !{!"omnipotent char", !39, i64 0}
 !39 = !{!"Simple C/C++ TBAA"}
-!40 = !{!"0x100\00s\007\000", !18, !5, !20, !32} ; [ DW_TAG_auto_variable ] [s] [line 7]
+!40 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "s", line: 7, scope: !18, file: !5, type: !20, inlinedAt: !32)
 !41 = !MDLocation(line: 8, scope: !18, inlinedAt: !32)
 !42 = !MDLocation(line: 9, scope: !18, inlinedAt: !32)
 !43 = !MDLocation(line: 10, scope: !14, inlinedAt: !32)

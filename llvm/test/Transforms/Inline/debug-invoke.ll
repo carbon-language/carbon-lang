@@ -31,7 +31,7 @@ lpad:
 }
 
 !llvm.module.flags = !{!1}
-!1 = !{i32 2, !"Debug Info Version", i32 2}
+!1 = !{i32 2, !"Debug Info Version", i32 3}
 !2 = !{}
 !3 = !MDLocation(line: 1, scope: !2)
 !4 = !MDLocation(line: 2, scope: !2)

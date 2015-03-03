@@ -43,7 +43,7 @@ if.then3344:
   br label %if.then4073
 
 if.then4073:                                      ; preds = %if.then3344
-  call void @llvm.dbg.declare(metadata [20 x i8]* %num14075, metadata !4, metadata !{!"0x102"})
+  call void @llvm.dbg.declare(metadata [20 x i8]* %num14075, metadata !4, metadata !MDExpression())
   %arraydecay4078 = getelementptr inbounds [20 x i8], [20 x i8]* %num14075, i64 0, i64 0
   %0 = load i32, i32* undef, align 4
   %add4093 = add nsw i32 %0, 0
@@ -65,29 +65,29 @@ declare i32 @__sprintf_chk(i8*, i32, i64, i8*, ...)
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!35}
 
-!0 = !{!"0x11\0012\00clang version 3.3 (trunk 168918) (llvm/trunk 168920)\001\00\000\00\000", !19, !2, !2, !20, !2, null} ; [ DW_TAG_compile_unit ] [MultiSource/Benchmarks/MiBench/consumer-typeset/MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c] [DW_LANG_C99]
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.3 (trunk 168918) (llvm/trunk 168920)", isOptimized: true, emissionKind: 0, file: !19, enums: !2, retainedTypes: !2, subprograms: !20, globals: !2)
 !1 = !{!2}
 !2 = !{}
-!4 = !{!"0x100\00num1\00815\000", !5, !14, !15} ; [ DW_TAG_auto_variable ] [num1] [line 815]
-!5 = !{!"0xb\00815\000\00177", !14, !6} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!6 = !{!"0xb\00812\000\00176", !14, !7} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!7 = !{!"0xb\00807\000\00175", !14, !8} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!8 = !{!"0xb\00440\000\0094", !14, !9} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!9 = !{!"0xb\00435\000\0091", !14, !10} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!10 = !{!"0xb\00434\000\0090", !14, !11} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!11 = !{!"0xb\00250\000\0024", !14, !12} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!12 = !{!"0xb\00249\000\0023", !14, !13} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!13 = !{!"0xb\00221\000\0019", !14, !2} ; [ DW_TAG_lexical_block ] [MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c]
-!14 = !{!"0x29", !19} ; [ DW_TAG_file_type ]
-!15 = !{!"0x1\00\000\00160\008\000\000", null, null, !16, !17, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 160, align 8, offset 0] [from char]
-!16 = !{!"0x24\00char\000\008\008\000\000\006", null, null} ; [ DW_TAG_base_type ] [char] [line 0, size 8, align 8, offset 0, enc DW_ATE_signed_char]
+!4 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "num1", line: 815, scope: !5, file: !14, type: !15)
+!5 = distinct !MDLexicalBlock(line: 815, column: 0, file: !14, scope: !6)
+!6 = distinct !MDLexicalBlock(line: 812, column: 0, file: !14, scope: !7)
+!7 = distinct !MDLexicalBlock(line: 807, column: 0, file: !14, scope: !8)
+!8 = distinct !MDLexicalBlock(line: 440, column: 0, file: !14, scope: !9)
+!9 = distinct !MDLexicalBlock(line: 435, column: 0, file: !14, scope: !10)
+!10 = distinct !MDLexicalBlock(line: 434, column: 0, file: !14, scope: !11)
+!11 = distinct !MDLexicalBlock(line: 250, column: 0, file: !14, scope: !12)
+!12 = distinct !MDLexicalBlock(line: 249, column: 0, file: !14, scope: !13)
+!13 = distinct !MDLexicalBlock(line: 221, column: 0, file: !14, scope: !2)
+!14 = !MDFile(filename: "MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c", directory: "MultiSource/Benchmarks/MiBench/consumer-typeset")
+!15 = !MDCompositeType(tag: DW_TAG_array_type, size: 160, align: 8, baseType: !16, elements: !17)
+!16 = !MDBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !17 = !{!18}
-!18 = !{!"0x21\000\0020"}       ; [ DW_TAG_subrange_type ] [0, 19]
-!19 = !{!"MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c", !"MultiSource/Benchmarks/MiBench/consumer-typeset"}
+!18 = !MDSubrange(count: 20)
+!19 = !MDFile(filename: "MultiSource/Benchmarks/MiBench/consumer-typeset/z19.c", directory: "MultiSource/Benchmarks/MiBench/consumer-typeset")
 
 !20 = !{!21}
-!21 = !{!"0x2e\00AttachGalley\00AttachGalley\00\000\000\001\000\006\00256\001\001", !19, !14, !22, null, i32 (%union.rec**)* @AttachGalley, null, null, null} ; [ DW_TAG_subprogram ] [def] [AttachGalley]
-!22 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !23, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!21 = !MDSubprogram(name: "AttachGalley", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !19, scope: !14, type: !22, function: i32 (%union.rec**)* @AttachGalley)
+!22 = !MDSubroutineType(types: !23)
 !23 = !{null}
 
 ; Test DebugValue uses visited by RegisterPressureTracker findUseBetween().
@@ -108,7 +108,7 @@ cond.true:                                        ; preds = %entry
   unreachable
 
 cond.end:                                         ; preds = %entry
-  call void @llvm.dbg.declare(metadata %"class.__gnu_cxx::hash_map"* %X, metadata !31, metadata !{!"0x102"})
+  call void @llvm.dbg.declare(metadata %"class.__gnu_cxx::hash_map"* %X, metadata !31, metadata !MDExpression())
   %_M_num_elements.i.i.i.i = getelementptr inbounds %"class.__gnu_cxx::hash_map", %"class.__gnu_cxx::hash_map"* %X, i64 0, i32 0, i32 5
   invoke void @_Znwm()
           to label %exit.i unwind label %lpad2.i.i.i.i
@@ -134,11 +134,11 @@ declare void @_Znwm()
 
 !llvm.dbg.cu = !{!30}
 
-!30 = !{!"0x11\004\00clang version 3.3 (trunk 169129) (llvm/trunk 169135)\001\00\000\00\000", !34, !2, !2, !36, null, null} ; [ DW_TAG_compile_unit ] [SingleSource/Benchmarks/Shootout-C++/hash.cpp] [DW_LANG_C_plus_plus]
-!31 = !{!"0x100\00X\0029\000", null, null, !32} ; [ DW_TAG_auto_variable ] [X] [line 29]
-!32 = !{!"0x16\00HM\0028\000\000\000\000", !34, null, null} ; [ DW_TAG_typedef ] [HM] [line 28, size 0, align 0, offset 0] [from ]
-!33 = !{!"0x29", !34} ; [ DW_TAG_file_type ]
-!34 = !{!"SingleSource/Benchmarks/Shootout-C++/hash.cpp", !"SingleSource/Benchmarks/Shootout-C++"}
-!35 = !{i32 1, !"Debug Info Version", i32 2}
+!30 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 169129) (llvm/trunk 169135)", isOptimized: true, emissionKind: 0, file: !34, enums: !2, retainedTypes: !2, subprograms: !36)
+!31 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "X", line: 29, scope: null, type: !32)
+!32 = !MDDerivedType(tag: DW_TAG_typedef, name: "HM", line: 28, file: !34, baseType: null)
+!33 = !MDFile(filename: "SingleSource/Benchmarks/Shootout-C++/hash.cpp", directory: "SingleSource/Benchmarks/Shootout-C++")
+!34 = !MDFile(filename: "SingleSource/Benchmarks/Shootout-C++/hash.cpp", directory: "SingleSource/Benchmarks/Shootout-C++")
+!35 = !{i32 1, !"Debug Info Version", i32 3}
 !36 = !{!37}
-!37 = !{!"0x2e\00main\00main\00\000\000\001\000\006\00256\001\001", !19, !14, !22, null, void ()* @main, null, null, null} ; [ DW_TAG_subprogram ] [def] [main]
+!37 = !MDSubprogram(name: "main", isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 1, file: !19, scope: !14, type: !22, function: void ()* @main)

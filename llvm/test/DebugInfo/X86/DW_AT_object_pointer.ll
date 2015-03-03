@@ -17,8 +17,8 @@ entry:
   %.addr = alloca i32, align 4
   %a = alloca %class.A, align 4
   store i32 %0, i32* %.addr, align 4
-  call void @llvm.dbg.declare(metadata i32* %.addr, metadata !36, metadata !{!"0x102"}), !dbg !35
-  call void @llvm.dbg.declare(metadata %class.A* %a, metadata !21, metadata !{!"0x102"}), !dbg !23
+  call void @llvm.dbg.declare(metadata i32* %.addr, metadata !36, metadata !MDExpression()), !dbg !35
+  call void @llvm.dbg.declare(metadata %class.A* %a, metadata !21, metadata !MDExpression()), !dbg !23
   call void @_ZN1AC1Ev(%class.A* %a), !dbg !24
   %m_a = getelementptr inbounds %class.A, %class.A* %a, i32 0, i32 0, !dbg !25
   %1 = load i32, i32* %m_a, align 4, !dbg !25
@@ -31,7 +31,7 @@ define linkonce_odr void @_ZN1AC1Ev(%class.A* %this) unnamed_addr nounwind uwtab
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !26, metadata !{!"0x102"}), !dbg !28
+  call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !26, metadata !MDExpression()), !dbg !28
   %this1 = load %class.A*, %class.A** %this.addr
   call void @_ZN1AC2Ev(%class.A* %this1), !dbg !29
   ret void, !dbg !29
@@ -41,7 +41,7 @@ define linkonce_odr void @_ZN1AC2Ev(%class.A* %this) unnamed_addr nounwind uwtab
 entry:
   %this.addr = alloca %class.A*, align 8
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !30, metadata !{!"0x102"}), !dbg !31
+  call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !30, metadata !MDExpression()), !dbg !31
   %this1 = load %class.A*, %class.A** %this.addr
   %m_a = getelementptr inbounds %class.A, %class.A* %this1, i32 0, i32 0, !dbg !32
   store i32 0, i32* %m_a, align 4, !dbg !32
@@ -51,40 +51,40 @@ entry:
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!38}
 
-!0 = !{!"0x11\004\00clang version 3.2 (trunk 163586) (llvm/trunk 163570)\000\00\000\00\000", !37, !1, !1, !3, !1,  !1} ; [ DW_TAG_compile_unit ] [/Users/echristo/debug-tests/bar.cpp] [DW_LANG_C_plus_plus]
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.2 (trunk 163586) (llvm/trunk 163570)", isOptimized: false, emissionKind: 0, file: !37, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5, !10, !20}
-!5 = !{!"0x2e\00foo\00foo\00_Z3fooi\007\000\001\000\006\00256\000\007", !6, !6, !7, null, i32 (i32)* @_Z3fooi, null, null, !1} ; [ DW_TAG_subprogram ] [line 7] [def] [foo]
-!6 = !{!"0x29", !37} ; [ DW_TAG_file_type ]
-!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = !MDSubprogram(name: "foo", linkageName: "_Z3fooi", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 7, file: !6, scope: !6, type: !7, function: i32 (i32)* @_Z3fooi, variables: !1)
+!6 = !MDFile(filename: "bar.cpp", directory: "/Users/echristo/debug-tests")
+!7 = !MDSubroutineType(types: !8)
 !8 = !{!9}
-!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!10 = !{!"0x2e\00A\00A\00_ZN1AC1Ev\003\000\001\000\006\00256\000\003", !6, null, !11, null, void (%class.A*)* @_ZN1AC1Ev, null, !17, !1} ; [ DW_TAG_subprogram ] [line 3] [def] [A]
-!11 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !12, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !MDSubprogram(name: "A", linkageName: "_ZN1AC1Ev", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !6, scope: null, type: !11, function: void (%class.A*)* @_ZN1AC1Ev, declaration: !17, variables: !1)
+!11 = !MDSubroutineType(types: !12)
 !12 = !{null, !13}
-!13 = !{!"0xf\00\000\0064\0064\000\001088", i32 0, null, !14} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from A]
-!14 = !{!"0x2\00A\001\0032\0032\000\000\000", !37, null, null, !15, null, null, null} ; [ DW_TAG_class_type ] [A] [line 1, size 32, align 32, offset 0] [def] [from ]
+!13 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !14)
+!14 = !MDCompositeType(tag: DW_TAG_class_type, name: "A", line: 1, size: 32, align: 32, file: !37, elements: !15)
 !15 = !{!16, !17}
-!16 = !{!"0xd\00m_a\004\0032\0032\000\000", !37, !14, !9} ; [ DW_TAG_member ] [m_a] [line 4, size 32, align 32, offset 0] [from int]
-!17 = !{!"0x2e\00A\00A\00\003\000\000\000\006\00256\000\003", !6, !14, !11, null, null, null, i32 0, !18} ; [ DW_TAG_subprogram ] [line 3] [A]
+!16 = !MDDerivedType(tag: DW_TAG_member, name: "m_a", line: 4, size: 32, align: 32, file: !37, scope: !14, baseType: !9)
+!17 = !MDSubprogram(name: "A", line: 3, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !6, scope: !14, type: !11, variables: !18)
 !18 = !{!19}
-!19 = !{!"0x24"}                      ; [ DW_TAG_base_type ] [line 0, size 0, align 0, offset 0]
-!20 = !{!"0x2e\00A\00A\00_ZN1AC2Ev\003\000\001\000\006\00256\000\003", !6, null, !11, null, void (%class.A*)* @_ZN1AC2Ev, null, !17, !1} ; [ DW_TAG_subprogram ] [line 3] [def] [A]
-!21 = !{!"0x100\00a\008\000", !22, !6, !14} ; [ DW_TAG_auto_variable ] [a] [line 8]
-!22 = !{!"0xb\007\0011\000", !6, !5} ; [ DW_TAG_lexical_block ] [/Users/echristo/debug-tests/bar.cpp]
+!19 = !{} ; previously: invalid DW_TAG_base_type
+!20 = !MDSubprogram(name: "A", linkageName: "_ZN1AC2Ev", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !6, scope: null, type: !11, function: void (%class.A*)* @_ZN1AC2Ev, declaration: !17, variables: !1)
+!21 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 8, scope: !22, file: !6, type: !14)
+!22 = distinct !MDLexicalBlock(line: 7, column: 11, file: !6, scope: !5)
 !23 = !MDLocation(line: 8, column: 5, scope: !22)
 !24 = !MDLocation(line: 8, column: 6, scope: !22)
 !25 = !MDLocation(line: 9, column: 3, scope: !22)
-!26 = !{!"0x101\00this\0016777219\001088", !10, !6, !27} ; [ DW_TAG_arg_variable ] [this] [line 3]
-!27 = !{!"0xf\00\000\0064\0064\000\000", null, null, !14} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from A]
+!26 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 3, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !10, file: !6, type: !27)
+!27 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !14)
 !28 = !MDLocation(line: 3, column: 3, scope: !10)
 !29 = !MDLocation(line: 3, column: 18, scope: !10)
-!30 = !{!"0x101\00this\0016777219\001088", !20, !6, !27} ; [ DW_TAG_arg_variable ] [this] [line 3]
+!30 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 3, arg: 1, flags: DIFlagArtificial | DIFlagObjectPointer, scope: !20, file: !6, type: !27)
 !31 = !MDLocation(line: 3, column: 3, scope: !20)
 !32 = !MDLocation(line: 3, column: 9, scope: !33)
-!33 = !{!"0xb\003\007\001", !6, !20} ; [ DW_TAG_lexical_block ] [/Users/echristo/debug-tests/bar.cpp]
+!33 = distinct !MDLexicalBlock(line: 3, column: 7, file: !6, scope: !20)
 !34 = !MDLocation(line: 3, column: 18, scope: !33)
 !35 = !MDLocation(line: 7, scope: !5)
-!36 = !{!"0x101\00\0016777223\000", !5, !6, !9} ; [ DW_TAG_arg_variable ] [line 7]
-!37 = !{!"bar.cpp", !"/Users/echristo/debug-tests"}
-!38 = !{i32 1, !"Debug Info Version", i32 2}
+!36 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "", line: 7, arg: 1, scope: !5, file: !6, type: !9)
+!37 = !MDFile(filename: "bar.cpp", directory: "/Users/echristo/debug-tests")
+!38 = !{i32 1, !"Debug Info Version", i32 3}

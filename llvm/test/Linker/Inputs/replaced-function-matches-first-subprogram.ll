@@ -12,16 +12,16 @@ entry:
 !llvm.module.flags = !{!8, !9, !10}
 !llvm.ident = !{!11}
 
-!0 = !{!"0x11\004\00clang version 3.6.0 (trunk 224193) (llvm/trunk 224197)\000\00\000\00\002", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d2/t2.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"t2.cpp", !"/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d2"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.6.0 (trunk 224193) (llvm/trunk 224197)", isOptimized: false, emissionKind: 2, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "t2.cpp", directory: "/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d2")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00foo\00foo\00\002\000\001\000\000\00256\000\002", !5, !6, !7, null, i32 (%struct.Class*)* @_ZN5ClassIiE3fooEv, null, null, !2} ; [ DW_TAG_subprogram ] [line 2] [def] [foo]
-!5 = !{!"../t.h", !"/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d2"}
-!6 = !{!"0x29", !5}    ; [ DW_TAG_file_type ] [/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d2/../t.h]
-!7 = !{!"0x15\00\000\000\000\000\000\000", null, null, null, !2, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !5, scope: !6, type: !7, function: i32 (%struct.Class*)* @_ZN5ClassIiE3fooEv, variables: !2)
+!5 = !MDFile(filename: "../t.h", directory: "/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d2")
+!6 = !MDFile(filename: "../t.h", directory: "/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d2")
+!7 = !MDSubroutineType(types: !2)
 !8 = !{i32 2, !"Dwarf Version", i32 2}
-!9 = !{i32 2, !"Debug Info Version", i32 2}
+!9 = !{i32 2, !"Debug Info Version", i32 3}
 !10 = !{i32 1, !"PIC Level", i32 2}
 !11 = !{!"clang version 3.6.0 (trunk 224193) (llvm/trunk 224197)"}
 !12 = !MDLocation(line: 2, column: 15, scope: !4)

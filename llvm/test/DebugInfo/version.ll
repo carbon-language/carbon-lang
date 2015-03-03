@@ -18,15 +18,15 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!9, !11}
 
-!0 = !{!"0x11\0012\00clang version 3.4 (trunk 185475)\000\00\000\00\000", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ]
-!1 = !{!"CodeGen/dwarf-version.c", !"test"}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 185475)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "CodeGen/dwarf-version.c", directory: "test")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00main\00main\00\006\000\001\000\006\00256\000\006", !1, !5, !6, null, i32 ()* @main, null, null, !2} ; [ DW_TAG_subprogram ] [line 6] [def] [main]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "main", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !2)
+!5 = !MDFile(filename: "CodeGen/dwarf-version.c", directory: "test")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{!8}
-!8 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !9 = !{i32 2, !"Dwarf Version", i32 3}
 !10 = !MDLocation(line: 7, scope: !4)
-!11 = !{i32 1, !"Debug Info Version", i32 2}
+!11 = !{i32 1, !"Debug Info Version", i32 3}

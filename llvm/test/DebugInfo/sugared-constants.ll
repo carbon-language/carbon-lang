@@ -24,11 +24,11 @@
 ; Function Attrs: uwtable
 define i32 @main() #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 42, i64 0, metadata !10, metadata !{!"0x102"}), !dbg !21
+  tail call void @llvm.dbg.value(metadata i32 42, i64 0, metadata !10, metadata !MDExpression()), !dbg !21
   tail call void @_Z4funci(i32 42), !dbg !22
-  tail call void @llvm.dbg.value(metadata i32 117, i64 0, metadata !12, metadata !{!"0x102"}), !dbg !24
+  tail call void @llvm.dbg.value(metadata i32 117, i64 0, metadata !12, metadata !MDExpression()), !dbg !24
   tail call void @_Z4funcj(i32 117), !dbg !25
-  tail call void @llvm.dbg.value(metadata i16 7, i64 0, metadata !15, metadata !{!"0x102"}), !dbg !27
+  tail call void @llvm.dbg.value(metadata i16 7, i64 0, metadata !15, metadata !MDExpression()), !dbg !27
   tail call void @_Z4funcDs(i16 zeroext 7), !dbg !28
   ret i32 0, !dbg !29
 }
@@ -50,25 +50,25 @@ attributes #2 = { nounwind readnone }
 !llvm.module.flags = !{!17, !18}
 !llvm.ident = !{!19}
 
-!0 = !{!"0x11\004\00clang version 3.5.0 \001\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/const.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"const.cpp", !"/tmp/dbginfo"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: true, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "const.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00main\00main\00\004\000\001\000\006\00256\001\004", !1, !5, !6, null, i32 ()* @main, null, null, !9} ; [ DW_TAG_subprogram ] [line 4] [def] [main]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/tmp/dbginfo/const.cpp]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "main", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, function: i32 ()* @main, variables: !9)
+!5 = !MDFile(filename: "const.cpp", directory: "/tmp/dbginfo")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{!8}
-!8 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !9 = !{!10, !12, !15}
-!10 = !{!"0x100\00i\005\000", !4, !5, !11} ; [ DW_TAG_auto_variable ] [i] [line 5]
-!11 = !{!"0x26\00\000\000\000\000\000", null, null, !8} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from int]
-!12 = !{!"0x100\00j\007\000", !4, !5, !13} ; [ DW_TAG_auto_variable ] [j] [line 7]
-!13 = !{!"0x26\00\000\000\000\000\000", null, null, !14} ; [ DW_TAG_const_type ] [line 0, size 0, align 0, offset 0] [from unsigned int]
-!14 = !{!"0x24\00unsigned int\000\0032\0032\000\000\007", null, null} ; [ DW_TAG_base_type ] [unsigned int] [line 0, size 32, align 32, offset 0, enc DW_ATE_unsigned]
-!15 = !{!"0x100\00c\009\000", !4, !5, !16} ; [ DW_TAG_auto_variable ] [c] [line 9]
-!16 = !{!"0x24\00char16_t\000\0016\0016\000\000\0016", null, null} ; [ DW_TAG_base_type ] [char16_t] [line 0, size 16, align 16, offset 0, enc DW_ATE_UTF]
+!10 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 5, scope: !4, file: !5, type: !11)
+!11 = !MDDerivedType(tag: DW_TAG_const_type, baseType: !8)
+!12 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "j", line: 7, scope: !4, file: !5, type: !13)
+!13 = !MDDerivedType(tag: DW_TAG_const_type, baseType: !14)
+!14 = !MDBasicType(tag: DW_TAG_base_type, name: "unsigned int", size: 32, align: 32, encoding: DW_ATE_unsigned)
+!15 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "c", line: 9, scope: !4, file: !5, type: !16)
+!16 = !MDBasicType(tag: DW_TAG_base_type, name: "char16_t", size: 16, align: 16, encoding: 16)
 !17 = !{i32 2, !"Dwarf Version", i32 4}
-!18 = !{i32 1, !"Debug Info Version", i32 2}
+!18 = !{i32 1, !"Debug Info Version", i32 3}
 !19 = !{!"clang version 3.5.0 "}
 !20 = !{i32 42}
 !21 = !MDLocation(line: 5, scope: !4)

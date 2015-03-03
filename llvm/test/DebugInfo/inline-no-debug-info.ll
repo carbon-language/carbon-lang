@@ -55,16 +55,16 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = !{!"0x11\0012\00clang version 3.5.0 (210174)\001\00\000\00\002", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/code/llvm/build0/test.c] [DW_LANG_C99]
-!1 = !{!"test.c", !"/code/llvm/build0"}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 (210174)", isOptimized: true, emissionKind: 2, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "test.c", directory: "/code/llvm/build0")
 !2 = !{}
 !3 = !{!4, !7}
-!4 = !{!"0x2e\00caller\00caller\00\004\000\001\000\006\000\001\004", !1, !5, !6, null, void ()* @caller, null, null, !2} ; [ DW_TAG_subprogram ] [line 4] [def] [caller]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/code/llvm/build0/test.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !2, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!7 = !{!"0x2e\00callee2\00callee2\00\002\001\001\000\006\000\001\002", !1, !5, !6, null, null, null, null, !2} ; [ DW_TAG_subprogram ] [line 2] [local] [def] [callee2]
+!4 = !MDSubprogram(name: "caller", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 4, file: !1, scope: !5, type: !6, function: void ()* @caller, variables: !2)
+!5 = !MDFile(filename: "test.c", directory: "/code/llvm/build0")
+!6 = !MDSubroutineType(types: !2)
+!7 = !MDSubprogram(name: "callee2", line: 2, isLocal: true, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
 !8 = !{i32 2, !"Dwarf Version", i32 4}
-!9 = !{i32 2, !"Debug Info Version", i32 2}
+!9 = !{i32 2, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.5.0 (210174)"}
 !11 = !MDLocation(line: 2, scope: !7)
 !12 = !MDLocation(line: 4, scope: !4)

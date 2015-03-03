@@ -17,7 +17,7 @@ entry:
 for.body:
   call void @llvm.lifetime.end(i64 -1, i8* %0) nounwind
   call void @llvm.lifetime.start(i64 -1, i8* %x.i) nounwind
-  call void @llvm.dbg.declare(metadata i8* %x.i, metadata !22, metadata !{!"0x102"}) nounwind
+  call void @llvm.dbg.declare(metadata i8* %x.i, metadata !22, metadata !MDExpression()) nounwind
   br label %for.body
 }
 
@@ -27,9 +27,9 @@ declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!23}
-!0 = !{!"0x11\001\00clang\001\00\000\00\000", !1, !2, !2, null, null, null} ; [ DW_TAG_compile_unit ]
-!1 = !{!"t.c", !""}
-!16 = !{!"0x24\00char\000\008\008\000\000\006", null, null} ; [ DW_TAG_base_type ]
+!0 = !MDCompileUnit(language: DW_LANG_C89, producer: "clang", isOptimized: true, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2)
+!1 = !MDFile(filename: "t.c", directory: "")
+!16 = !MDBasicType(tag: DW_TAG_base_type, name: "char", size: 8, align: 8, encoding: DW_ATE_signed_char)
 !2 = !{i32 0}
-!22 = !{!"0x100\00x\0016\000", null, !2, !16} ; [ DW_TAG_auto_variable ]
-!23 = !{i32 1, !"Debug Info Version", i32 2}
+!22 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "x", line: 16, scope: null, file: !2, type: !16)
+!23 = !{i32 1, !"Debug Info Version", i32 3}

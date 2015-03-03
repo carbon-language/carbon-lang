@@ -30,7 +30,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 ; Function Attrs: nounwind ssp uwtable
 define void @init() #0 {
   %p = alloca %struct.i14*, align 8
-  call void @llvm.dbg.declare(metadata %struct.i14** %p, metadata !11, metadata !{!"0x102"}), !dbg !18
+  call void @llvm.dbg.declare(metadata %struct.i14** %p, metadata !11, metadata !MDExpression()), !dbg !18
   store %struct.i14* null, %struct.i14** %p, align 8, !dbg !18
   %1 = call i32 @foo(%struct.i14** %p), !dbg !19
   %2 = load %struct.i14*, %struct.i14** %p, align 8, !dbg !20
@@ -54,24 +54,24 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = !{!"0x11\0012\00clang version 3.5.0 \000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [instcombine_intrinsics.c] [DW_LANG_C99]
-!1 = !{!"instcombine_intrinsics.c", !""}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "instcombine_intrinsics.c", directory: "")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00init\00init\00\007\000\001\000\006\000\000\007", !1, !5, !6, null, void ()* @init, null, null, !2} ; [ DW_TAG_subprogram ] [line 7] [def] [init]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [instcombine_intrinsics.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "init", line: 7, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, scopeLine: 7, file: !1, scope: !5, type: !6, function: void ()* @init, variables: !2)
+!5 = !MDFile(filename: "instcombine_intrinsics.c", directory: "")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{null}
 !8 = !{i32 2, !"Dwarf Version", i32 2}
-!9 = !{i32 1, !"Debug Info Version", i32 2}
+!9 = !{i32 1, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.5.0 "}
-!11 = !{!"0x100\00p\008\000", !4, !5, !12} ; [ DW_TAG_auto_variable ] [p] [line 8]
-!12 = !{!"0xf\00\000\0064\0064\000\000", null, null, !13} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from i14]
-!13 = !{!"0x16\00i14\003\000\000\000\000", !1, null, !14} ; [ DW_TAG_typedef ] [i14] [line 3, size 0, align 0, offset 0] [from ]
-!14 = !{!"0x13\00\001\0064\0064\000\000\000", !1, null, null, !15, null, null, null} ; [ DW_TAG_structure_type ] [line 1, size 64, align 64, offset 0] [def] [from ]
+!11 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "p", line: 8, scope: !4, file: !5, type: !12)
+!12 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !13)
+!13 = !MDDerivedType(tag: DW_TAG_typedef, name: "i14", line: 3, file: !1, baseType: !14)
+!14 = !MDCompositeType(tag: DW_TAG_structure_type, line: 1, size: 64, align: 64, file: !1, elements: !15)
 !15 = !{!16}
-!16 = !{!"0xd\00i\002\0064\0064\000\000", !1, !14, !17} ; [ DW_TAG_member ] [i] [line 2, size 64, align 64, offset 0] [from long int]
-!17 = !{!"0x24\00long int\000\0064\0064\000\000\005", null, null} ; [ DW_TAG_base_type ] [long int] [line 0, size 64, align 64, offset 0, enc DW_ATE_signed]
+!16 = !MDDerivedType(tag: DW_TAG_member, name: "i", line: 2, size: 64, align: 64, file: !1, scope: !14, baseType: !17)
+!17 = !MDBasicType(tag: DW_TAG_base_type, name: "long int", size: 64, align: 64, encoding: DW_ATE_signed)
 !18 = !MDLocation(line: 8, scope: !4)
 !19 = !MDLocation(line: 9, scope: !4)
 !20 = !MDLocation(line: 10, scope: !4)

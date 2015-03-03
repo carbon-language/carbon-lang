@@ -9,7 +9,7 @@ entry:
   %retval = alloca double                         ; <double*> [#uses=2]
   %0 = alloca double                              ; <double*> [#uses=2]
   %"alloca point" = bitcast i32 0 to i32          ; <i32> [#uses=0]
-  call void @llvm.dbg.declare(metadata %struct.Rect* %my_r0, metadata !0, metadata !{!"0x102"}), !dbg !15
+  call void @llvm.dbg.declare(metadata %struct.Rect* %my_r0, metadata !0, metadata !MDExpression()), !dbg !15
   %1 = getelementptr inbounds %struct.Rect, %struct.Rect* %my_r0, i32 0, i32 0, !dbg !16 ; <%struct.Pt*> [#uses=1]
   %2 = getelementptr inbounds %struct.Pt, %struct.Pt* %1, i32 0, i32 0, !dbg !16 ; <double*> [#uses=1]
   %3 = load double, double* %2, align 8, !dbg !16         ; <double> [#uses=1]
@@ -28,25 +28,25 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!3}
 !llvm.module.flags = !{!21}
 
-!0 = !{!"0x101\00my_r0\0011\000", !1, !2, !7} ; [ DW_TAG_arg_variable ]
-!1 = !{!"0x2e\00foo\00foo\00foo\0011\000\001\000\006\000\000\000", !19, !2, !4, null, double (%struct.Rect*)* @foo, null, null, null} ; [ DW_TAG_subprogram ]
-!2 = !{!"0x29", !19} ; [ DW_TAG_file_type ]
-!3 = !{!"0x11\001\004.2.1 (Based on Apple Inc. build 5658) (LLVM build)\000\00\000\00\000", !19, !20, !20, !18, null,  null} ; [ DW_TAG_compile_unit ]
-!4 = !{!"0x15\00\000\000\000\000\000\000", !19, !2, null, !5, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "my_r0", line: 11, arg: 0, scope: !1, file: !2, type: !7)
+!1 = !MDSubprogram(name: "foo", linkageName: "foo", line: 11, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !19, scope: !2, type: !4, function: double (%struct.Rect*)* @foo)
+!2 = !MDFile(filename: "b2.c", directory: "/tmp/")
+!3 = !MDCompileUnit(language: DW_LANG_C89, producer: "4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", isOptimized: false, emissionKind: 0, file: !19, enums: !20, retainedTypes: !20, subprograms: !18, imports:  null)
+!4 = !MDSubroutineType(types: !5)
 !5 = !{!6, !7}
-!6 = !{!"0x24\00double\000\0064\0064\000\000\004", !19, !2} ; [ DW_TAG_base_type ]
-!7 = !{!"0x13\00Rect\006\00256\0064\000\000\000", !19, !2, null, !8, null, null, null} ; [ DW_TAG_structure_type ] [Rect] [line 6, size 256, align 64, offset 0] [def] [from ]
+!6 = !MDBasicType(tag: DW_TAG_base_type, name: "double", size: 64, align: 64, encoding: DW_ATE_float)
+!7 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Rect", line: 6, size: 256, align: 64, file: !19, scope: !2, elements: !8)
 !8 = !{!9, !14}
-!9 = !{!"0xd\00P1\007\00128\0064\000\000", !19, !7, !10} ; [ DW_TAG_member ]
-!10 = !{!"0x13\00Pt\001\00128\0064\000\000\000", !19, !2, null, !11, null, null, null} ; [ DW_TAG_structure_type ] [Pt] [line 1, size 128, align 64, offset 0] [def] [from ]
+!9 = !MDDerivedType(tag: DW_TAG_member, name: "P1", line: 7, size: 128, align: 64, file: !19, scope: !7, baseType: !10)
+!10 = !MDCompositeType(tag: DW_TAG_structure_type, name: "Pt", line: 1, size: 128, align: 64, file: !19, scope: !2, elements: !11)
 !11 = !{!12, !13}
-!12 = !{!"0xd\00x\002\0064\0064\000\000", !19, !10, !6} ; [ DW_TAG_member ]
-!13 = !{!"0xd\00y\003\0064\0064\0064\000", !19, !10, !6} ; [ DW_TAG_member ]
-!14 = !{!"0xd\00P2\008\00128\0064\00128\000", !19, !7, !10} ; [ DW_TAG_member ]
+!12 = !MDDerivedType(tag: DW_TAG_member, name: "x", line: 2, size: 64, align: 64, file: !19, scope: !10, baseType: !6)
+!13 = !MDDerivedType(tag: DW_TAG_member, name: "y", line: 3, size: 64, align: 64, offset: 64, file: !19, scope: !10, baseType: !6)
+!14 = !MDDerivedType(tag: DW_TAG_member, name: "P2", line: 8, size: 128, align: 64, offset: 128, file: !19, scope: !7, baseType: !10)
 !15 = !MDLocation(line: 11, scope: !1)
 !16 = !MDLocation(line: 12, scope: !17)
-!17 = !{!"0xb\0011\000\000", !19, !1} ; [ DW_TAG_lexical_block ]
+!17 = distinct !MDLexicalBlock(line: 11, column: 0, file: !19, scope: !1)
 !18 = !{!1}
-!19 = !{!"b2.c", !"/tmp/"}
+!19 = !MDFile(filename: "b2.c", directory: "/tmp/")
 !20 = !{i32 0}
-!21 = !{i32 1, !"Debug Info Version", i32 2}
+!21 = !{i32 1, !"Debug Info Version", i32 3}

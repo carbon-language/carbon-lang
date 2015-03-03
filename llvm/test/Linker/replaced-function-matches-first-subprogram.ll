@@ -39,10 +39,10 @@ entry:
 !llvm.ident = !{!13}
 
 ; Extract out the list of subprograms from each compile unit.
-; CHECK-DAG: ![[CU1]] = !{!"0x11{{[^"]+}}", {{[^,]+}}, {{[^,]+}}, {{[^,]+}}, ![[SPs1:[0-9]+]],
-; CHECK-DAG: ![[CU2]] = !{!"0x11{{[^"]+}}", {{[^,]+}}, {{[^,]+}}, {{[^,]+}}, ![[SPs2:[0-9]+]],
-!0 = !{!"0x11\004\00clang version 3.6.0 (trunk 224193) (llvm/trunk 224197)\000\00\000\00\002", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d1/t1.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"t1.cpp", !"/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d1"}
+; CHECK-DAG: ![[CU1]] = !MDCompileUnit({{.*}} subprograms: ![[SPs1:[0-9]+]]
+; CHECK-DAG: ![[CU2]] = !MDCompileUnit({{.*}} subprograms: ![[SPs2:[0-9]+]]
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.6.0 (trunk 224193) (llvm/trunk 224197)", isOptimized: false, emissionKind: 2, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "t1.cpp", directory: "/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d1")
 !2 = !{}
 
 ; Extract out each compile unit's single subprogram.  The replaced subprogram
@@ -50,22 +50,22 @@ entry:
 ; CHECK-DAG: ![[SPs1]] = !{![[SP1:[0-9]+]]}
 ; CHECK-DAG: ![[SPs2]] = !{![[SP2:[0-9]+]]}
 !3 = !{!4, !7}
-!4 = !{!"0x2e\00foo\00foo\00\002\000\001\000\000\00256\000\002", !1, !5, !6, null, i32 ()* @_Z3foov, null, null, !2} ; [ DW_TAG_subprogram ] [line 2] [def] [foo]
-!5 = !{!"0x29", !1}    ; [ DW_TAG_file_type ] [/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d1/t1.cpp]
-!6 = !{!"0x15\00\000\000\000\000\000\000", null, null, null, !2, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, function: i32 ()* @_Z3foov, variables: !2)
+!5 = !MDFile(filename: "t1.cpp", directory: "/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d1")
+!6 = !MDSubroutineType(types: !2)
 
 ; Extract out the file from the replaced subprogram.  Confirm that each
 ; subprogram is pointing at the correct function.
-; CHECK-DAG: ![[SP1]] = !{!"0x2e{{[^"]+}}", {{.*}}, i32 ()* @_Z3foov,
-; CHECK-DAG: ![[SP2]] = !{!"0x2e{{[^"]+}}", ![[FILE:[0-9]+]], {{.*}}, i32 (%struct.Class*)* @_ZN5ClassIiE3fooEv,
-!7 = !{!"0x2e\00foo\00foo\00\002\000\001\000\000\00256\000\002", !8, !9, !6, null, i32 (%struct.Class*)* @_ZN5ClassIiE3fooEv, null, null, !2} ; [ DW_TAG_subprogram ] [line 2] [def] [foo]
+; CHECK-DAG: ![[SP1]] = !MDSubprogram({{.*}} function: i32 ()* @_Z3foov
+; CHECK-DAG: ![[SP2]] = !MDSubprogram({{.*}} file: ![[FILE:[0-9]+]],{{.*}} function: i32 (%struct.Class*)* @_ZN5ClassIiE3fooEv
+!7 = !MDSubprogram(name: "foo", line: 2, isLocal: false, isDefinition: true, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !8, scope: !9, type: !6, function: i32 (%struct.Class*)* @_ZN5ClassIiE3fooEv, variables: !2)
 
 ; The new subprogram should be pointing at the new directory.
-; CHECK-DAG: ![[FILE]] = !{!"../t.h", !"/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d2"}
-!8 = !{!"../t.h", !"/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d1"}
-!9 = !{!"0x29", !8}    ; [ DW_TAG_file_type ] [/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d1/../t.h]
+; CHECK-DAG: ![[FILE]] = !MDFile(filename: "../t.h", directory: "/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d2")
+!8 = !MDFile(filename: "../t.h", directory: "/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d1")
+!9 = !MDFile(filename: "../t.h", directory: "/Users/dexonsmith/data/llvm/staging/test/Linker/repro/d1")
 !10 = !{i32 2, !"Dwarf Version", i32 2}
-!11 = !{i32 2, !"Debug Info Version", i32 2}
+!11 = !{i32 2, !"Debug Info Version", i32 3}
 !12 = !{i32 1, !"PIC Level", i32 2}
 !13 = !{!"clang version 3.6.0 (trunk 224193) (llvm/trunk 224197)"}
 !14 = !MDLocation(line: 2, column: 20, scope: !4)

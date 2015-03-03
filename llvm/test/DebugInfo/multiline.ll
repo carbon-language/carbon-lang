@@ -62,16 +62,16 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = !{!"0x11\0012\00clang version 3.6.0 (trunk 225000) (llvm/trunk 224999)\000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/tmp/dbginfo/multiline.c] [DW_LANG_C99]
-!1 = !{!"multiline.c", !"/tmp/dbginfo"}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.6.0 (trunk 225000) (llvm/trunk 224999)", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "multiline.c", directory: "/tmp/dbginfo")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00f2\00f2\00\002\000\001\000\000\000\000\002", !1, !5, !6, null, void ()* @f2, null, null, !2} ; [ DW_TAG_subprogram ] [line 2] [def] [f2]
-!5 = !{!"0x29", !1}                               ; [ DW_TAG_file_type ] [/tmp/dbginfo/multiline.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", null, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "f2", line: 2, isLocal: false, isDefinition: true, isOptimized: false, scopeLine: 2, file: !1, scope: !5, type: !6, function: void ()* @f2, variables: !2)
+!5 = !MDFile(filename: "multiline.c", directory: "/tmp/dbginfo")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{null}
 !8 = !{i32 2, !"Dwarf Version", i32 4}
-!9 = !{i32 2, !"Debug Info Version", i32 2}
+!9 = !{i32 2, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.6.0 (trunk 225000) (llvm/trunk 224999)"}
 !11 = !MDLocation(line: 3, column: 3, scope: !4)
 !12 = !MDLocation(line: 3, column: 9, scope: !4)

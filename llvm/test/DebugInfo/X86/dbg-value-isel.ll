@@ -13,7 +13,7 @@ target triple = "x86_64-apple-darwin10.0.0"
 
 define void @__OpenCL_nbt02_kernel(i32 addrspace(1)* %ip) nounwind {
 entry:
-  call void @llvm.dbg.value(metadata i32 addrspace(1)* %ip, i64 0, metadata !8, metadata !{!"0x102"}), !dbg !9
+  call void @llvm.dbg.value(metadata i32 addrspace(1)* %ip, i64 0, metadata !8, metadata !MDExpression()), !dbg !9
   %0 = call <4 x i32> @__amdil_get_local_id_int() nounwind
   %1 = extractelement <4 x i32> %0, i32 0
   br label %2
@@ -28,7 +28,7 @@ entry:
 
 get_local_id.exit:                                ; preds = %4
   %6 = phi i32 [ %5, %4 ]
-  call void @llvm.dbg.value(metadata i32 %6, i64 0, metadata !10, metadata !{!"0x102"}), !dbg !12
+  call void @llvm.dbg.value(metadata i32 %6, i64 0, metadata !10, metadata !MDExpression()), !dbg !12
   %7 = call <4 x i32> @__amdil_get_global_id_int() nounwind, !dbg !12
   %8 = extractelement <4 x i32> %7, i32 0, !dbg !12
   br label %9
@@ -43,7 +43,7 @@ get_local_id.exit:                                ; preds = %4
 
 get_global_id.exit:                               ; preds = %11
   %13 = phi i32 [ %12, %11 ]
-  call void @llvm.dbg.value(metadata i32 %13, i64 0, metadata !13, metadata !{!"0x102"}), !dbg !14
+  call void @llvm.dbg.value(metadata i32 %13, i64 0, metadata !13, metadata !MDExpression()), !dbg !14
   %14 = call <4 x i32> @__amdil_get_local_size_int() nounwind
   %15 = extractelement <4 x i32> %14, i32 0
   br label %16
@@ -58,7 +58,7 @@ get_global_id.exit:                               ; preds = %11
 
 get_local_size.exit:                              ; preds = %18
   %20 = phi i32 [ %19, %18 ]
-  call void @llvm.dbg.value(metadata i32 %20, i64 0, metadata !15, metadata !{!"0x102"}), !dbg !16
+  call void @llvm.dbg.value(metadata i32 %20, i64 0, metadata !15, metadata !MDExpression()), !dbg !16
   %tmp5 = add i32 %6, %13, !dbg !17
   %tmp7 = add i32 %tmp5, %20, !dbg !17
   store i32 %tmp7, i32 addrspace(1)* %ip, align 4, !dbg !17
@@ -81,26 +81,26 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!22}
 
-!0 = !{!"0x2e\00__OpenCL_nbt02_kernel\00__OpenCL_nbt02_kernel\00__OpenCL_nbt02_kernel\002\000\001\000\006\000\000\000", !20, !1, !3, null, void (i32 addrspace(1)*)* @__OpenCL_nbt02_kernel, null, null, null} ; [ DW_TAG_subprogram ] [line 2] [def] [scope 0] [__OpenCL_nbt02_kernel]
-!1 = !{!"0x29", !20} ; [ DW_TAG_file_type ]
-!2 = !{!"0x11\001\00clc\000\00\000\00\001", !20, !21, !21, !19, null,  null} ; [ DW_TAG_compile_unit ]
-!3 = !{!"0x15\00\000\000\000\000\000\000", !20, !1, null, !4, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!0 = !MDSubprogram(name: "__OpenCL_nbt02_kernel", linkageName: "__OpenCL_nbt02_kernel", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, file: !20, scope: !1, type: !3, function: void (i32 addrspace(1)*)* @__OpenCL_nbt02_kernel)
+!1 = !MDFile(filename: "OCLlLwTXZ.cl", directory: "/tmp")
+!2 = !MDCompileUnit(language: DW_LANG_C89, producer: "clc", isOptimized: false, emissionKind: 1, file: !20, enums: !21, retainedTypes: !21, subprograms: !19, imports:  null)
+!3 = !MDSubroutineType(types: !4)
 !4 = !{null, !5}
-!5 = !{!"0xf\00\000\0032\0032\000\000", null, !2, !6} ; [ DW_TAG_pointer_type ]
-!6 = !{!"0x16\00uint\000\000\000\000\000", !20, !2, !7} ; [ DW_TAG_typedef ]
-!7 = !{!"0x24\00unsigned int\000\0032\0032\000\000\007", null, !2} ; [ DW_TAG_base_type ]
-!8 = !{!"0x101\00ip\001\000", !0, !1, !5} ; [ DW_TAG_arg_variable ]
+!5 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 32, align: 32, scope: !2, baseType: !6)
+!6 = !MDDerivedType(tag: DW_TAG_typedef, name: "uint", file: !20, scope: !2, baseType: !7)
+!7 = !MDBasicType(tag: DW_TAG_base_type, name: "unsigned int", size: 32, align: 32, encoding: DW_ATE_unsigned)
+!8 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "ip", line: 1, arg: 0, scope: !0, file: !1, type: !5)
 !9 = !MDLocation(line: 1, column: 32, scope: !0)
-!10 = !{!"0x100\00tid\003\000", !11, !1, !6} ; [ DW_TAG_auto_variable ]
-!11 = !{!"0xb\002\001\001", !1, !0} ; [ DW_TAG_lexical_block ]
+!10 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "tid", line: 3, scope: !11, file: !1, type: !6)
+!11 = distinct !MDLexicalBlock(line: 2, column: 1, file: !1, scope: !0)
 !12 = !MDLocation(line: 5, column: 24, scope: !11)
-!13 = !{!"0x100\00gid\003\000", !11, !1, !6} ; [ DW_TAG_auto_variable ]
+!13 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "gid", line: 3, scope: !11, file: !1, type: !6)
 !14 = !MDLocation(line: 6, column: 25, scope: !11)
-!15 = !{!"0x100\00lsz\003\000", !11, !1, !6} ; [ DW_TAG_auto_variable ]
+!15 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "lsz", line: 3, scope: !11, file: !1, type: !6)
 !16 = !MDLocation(line: 7, column: 26, scope: !11)
 !17 = !MDLocation(line: 9, column: 24, scope: !11)
 !18 = !MDLocation(line: 10, column: 1, scope: !0)
 !19 = !{!0}
-!20 = !{!"OCLlLwTXZ.cl", !"/tmp"}
+!20 = !MDFile(filename: "OCLlLwTXZ.cl", directory: "/tmp")
 !21 = !{i32 0}
-!22 = !{i32 1, !"Debug Info Version", i32 2}
+!22 = !{i32 1, !"Debug Info Version", i32 3}

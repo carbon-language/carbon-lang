@@ -11,7 +11,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 define void @_Z3fooN2N11AE() nounwind uwtable ssp {
 entry:
   %mya = alloca %"class.N1::A", align 1
-  call void @llvm.dbg.declare(metadata %"class.N1::A"* %mya, metadata !9, metadata !{!"0x102"}), !dbg !13
+  call void @llvm.dbg.declare(metadata %"class.N1::A"* %mya, metadata !9, metadata !MDExpression()), !dbg !13
   ret void, !dbg !14
 }
 
@@ -20,21 +20,21 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!18}
 
-!0 = !{!"0x11\004\00clang version 3.0 (trunk 137954)\001\00\000\00\000", !16, !2, !2, !3, !2, null} ; [ DW_TAG_compile_unit ]
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.0 (trunk 137954)", isOptimized: true, emissionKind: 0, file: !16, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2)
 !1 = !{!2}
 !2 = !{i32 0}
 !3 = !{!5}
-!5 = !{!"0x2e\00foo\00foo\00_Z3fooN2N11AE\004\000\001\000\006\00256\000\000", !16, !6, !7, null, void ()* @_Z3fooN2N11AE, null, null, null} ; [ DW_TAG_subprogram ] [line 4] [def] [scope 0] [foo]
-!6 = !{!"0x29", !16} ; [ DW_TAG_file_type ]
-!7 = !{!"0x15\00\000\000\000\000\000\000", !16, !6, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = !MDSubprogram(name: "foo", linkageName: "_Z3fooN2N11AE", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, file: !16, scope: !6, type: !7, function: void ()* @_Z3fooN2N11AE)
+!6 = !MDFile(filename: "n1.c", directory: "/private/tmp")
+!7 = !MDSubroutineType(types: !8)
 !8 = !{null}
-!9 = !{!"0x101\00mya\0016777220\000", !5, !6, !10} ; [ DW_TAG_arg_variable ]
-!10 = !{!"0x2\00A\003\008\008\000\000\000", !17, !11, null, !2, null, null, null} ; [ DW_TAG_class_type ] [A] [line 3, size 8, align 8, offset 0] [def] [from ]
-!11 = !{!"0x39\00N1\002", !17, null} ; [ DW_TAG_namespace ]
-!12 = !{!"0x29", !17} ; [ DW_TAG_file_type ]
+!9 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "mya", line: 4, arg: 1, scope: !5, file: !6, type: !10)
+!10 = !MDCompositeType(tag: DW_TAG_class_type, name: "A", line: 3, size: 8, align: 8, file: !17, scope: !11, elements: !2)
+!11 = !MDNamespace(name: "N1", line: 2, file: !17, scope: null)
+!12 = !MDFile(filename: "./n.h", directory: "/private/tmp")
 !13 = !MDLocation(line: 4, column: 12, scope: !5)
 !14 = !MDLocation(line: 4, column: 18, scope: !15)
-!15 = !{!"0xb\004\0017\000", !16, !5} ; [ DW_TAG_lexical_block ]
-!16 = !{!"n1.c", !"/private/tmp"}
-!17 = !{!"./n.h", !"/private/tmp"}
-!18 = !{i32 1, !"Debug Info Version", i32 2}
+!15 = distinct !MDLexicalBlock(line: 4, column: 17, file: !16, scope: !5)
+!16 = !MDFile(filename: "n1.c", directory: "/private/tmp")
+!17 = !MDFile(filename: "./n.h", directory: "/private/tmp")
+!18 = !{i32 1, !"Debug Info Version", i32 3}

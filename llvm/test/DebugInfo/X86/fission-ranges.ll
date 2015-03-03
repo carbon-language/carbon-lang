@@ -91,8 +91,8 @@ entry:
 ; Function Attrs: nounwind uwtable
 define internal fastcc void @foo() #0 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 1, i64 0, metadata !13, metadata !{!"0x102"}), !dbg !30
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !14, metadata !{!"0x102"}), !dbg !31
+  tail call void @llvm.dbg.value(metadata i32 1, i64 0, metadata !13, metadata !MDExpression()), !dbg !30
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !14, metadata !MDExpression()), !dbg !31
   %c.promoted9 = load i32, i32* @c, align 4, !dbg !32, !tbaa !33
   br label %for.cond1.preheader, !dbg !31
 
@@ -114,28 +114,28 @@ for.cond7.preheader:                              ; preds = %for.inc10, %for.con
 for.body9:                                        ; preds = %for.body9, %for.cond7.preheader
   %and2 = phi i32 [ %and.lcssa5, %for.cond7.preheader ], [ %and, %for.body9 ], !dbg !40
   %e.01 = phi i32 [ 0, %for.cond7.preheader ], [ %inc, %for.body9 ]
-  tail call void @llvm.dbg.value(metadata i32* @c, i64 0, metadata !19, metadata !{!"0x102"}), !dbg !40
+  tail call void @llvm.dbg.value(metadata i32* @c, i64 0, metadata !19, metadata !MDExpression()), !dbg !40
   %and = and i32 %and2, 1, !dbg !32
   %inc = add i32 %e.01, 1, !dbg !39
-  tail call void @llvm.dbg.value(metadata i32 %inc, i64 0, metadata !18, metadata !{!"0x102"}), !dbg !39
+  tail call void @llvm.dbg.value(metadata i32 %inc, i64 0, metadata !18, metadata !MDExpression()), !dbg !39
   %exitcond = icmp eq i32 %inc, 30, !dbg !39
   br i1 %exitcond, label %for.inc10, label %for.body9, !dbg !39
 
 for.inc10:                                        ; preds = %for.body9
   %inc11 = add nsw i32 %b.03, 1, !dbg !38
-  tail call void @llvm.dbg.value(metadata i32 %inc11, i64 0, metadata !15, metadata !{!"0x102"}), !dbg !38
+  tail call void @llvm.dbg.value(metadata i32 %inc11, i64 0, metadata !15, metadata !MDExpression()), !dbg !38
   %exitcond11 = icmp eq i32 %inc11, 30, !dbg !38
   br i1 %exitcond11, label %for.inc13, label %for.cond7.preheader, !dbg !38
 
 for.inc13:                                        ; preds = %for.inc10
   %inc14 = add i32 %d.06, 1, !dbg !37
-  tail call void @llvm.dbg.value(metadata i32 %inc14, i64 0, metadata !16, metadata !{!"0x102"}), !dbg !37
+  tail call void @llvm.dbg.value(metadata i32 %inc14, i64 0, metadata !16, metadata !MDExpression()), !dbg !37
   %exitcond12 = icmp eq i32 %inc14, 30, !dbg !37
   br i1 %exitcond12, label %for.inc16, label %for.cond4.preheader, !dbg !37
 
 for.inc16:                                        ; preds = %for.inc13
   %inc17 = add nsw i32 %a.08, 1, !dbg !31
-  tail call void @llvm.dbg.value(metadata i32 %inc17, i64 0, metadata !14, metadata !{!"0x102"}), !dbg !31
+  tail call void @llvm.dbg.value(metadata i32 %inc17, i64 0, metadata !14, metadata !MDExpression()), !dbg !31
   %exitcond13 = icmp eq i32 %inc17, 30, !dbg !31
   br i1 %exitcond13, label %for.end18, label %for.cond1.preheader, !dbg !31
 
@@ -153,32 +153,32 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!26, !43}
 
-!0 = !{!"0x11\0012\00clang version 3.4 (trunk 191700) (llvm/trunk 191710)\001\00\000\00small.dwo\000", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/small.c] [DW_LANG_C99]
-!1 = !{!"small.c", !"/usr/local/google/home/echristo/tmp"}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.4 (trunk 191700) (llvm/trunk 191710)", isOptimized: true, splitDebugFilename: "small.dwo", emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "small.c", directory: "/usr/local/google/home/echristo/tmp")
 !2 = !{}
 !3 = !{!4, !8}
-!4 = !{!"0x2e\00bar\00bar\00\0018\000\001\000\006\000\001\0019", !1, !5, !6, null, void ()* @bar, null, null, !2} ; [ DW_TAG_subprogram ] [line 18] [def] [scope 19] [bar]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/usr/local/google/home/echristo/tmp/small.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "bar", line: 18, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: true, scopeLine: 19, file: !1, scope: !5, type: !6, function: void ()* @bar, variables: !2)
+!5 = !MDFile(filename: "small.c", directory: "/usr/local/google/home/echristo/tmp")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{null}
-!8 = !{!"0x2e\00foo\00foo\00\002\001\001\000\006\00256\001\003", !1, !5, !9, null, void ()* @foo, null, null, !12} ; [ DW_TAG_subprogram ] [line 2] [local] [def] [scope 3] [foo]
-!9 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !10, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!8 = !MDSubprogram(name: "foo", line: 2, isLocal: true, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 3, file: !1, scope: !5, type: !9, function: void ()* @foo, variables: !12)
+!9 = !MDSubroutineType(types: !10)
 !10 = !{null, !11}
-!11 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!11 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !12 = !{!13, !14, !15, !16, !18, !19}
-!13 = !{!"0x101\00p\0016777218\000", !8, !5, !11} ; [ DW_TAG_arg_variable ] [p] [line 2]
-!14 = !{!"0x100\00a\004\000", !8, !5, !11} ; [ DW_TAG_auto_variable ] [a] [line 4]
-!15 = !{!"0x100\00b\004\000", !8, !5, !11} ; [ DW_TAG_auto_variable ] [b] [line 4]
-!16 = !{!"0x100\00d\005\000", !8, !5, !17} ; [ DW_TAG_auto_variable ] [d] [line 5]
-!17 = !{!"0x24\00unsigned int\000\0032\0032\000\000\007", null, null} ; [ DW_TAG_base_type ] [unsigned int] [line 0, size 32, align 32, offset 0, enc DW_ATE_unsigned]
-!18 = !{!"0x100\00e\005\000", !8, !5, !17} ; [ DW_TAG_auto_variable ] [e] [line 5]
-!19 = !{!"0x100\00w\0012\000", !20, !5, !25} ; [ DW_TAG_auto_variable ] [w] [line 12]
-!20 = !{!"0xb\0011\000\004", !1, !21} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/tmp/small.c]
-!21 = !{!"0xb\0010\000\003", !1, !22} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/tmp/small.c]
-!22 = !{!"0xb\009\000\002", !1, !23} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/tmp/small.c]
-!23 = !{!"0xb\008\000\001", !1, !24} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/tmp/small.c]
-!24 = !{!"0xb\007\000\000", !1, !8} ; [ DW_TAG_lexical_block ] [/usr/local/google/home/echristo/tmp/small.c]
-!25 = !{!"0xf\00\000\0064\0064\000\000", null, null, !11} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from int]
+!13 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "p", line: 2, arg: 1, scope: !8, file: !5, type: !11)
+!14 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 4, scope: !8, file: !5, type: !11)
+!15 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "b", line: 4, scope: !8, file: !5, type: !11)
+!16 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "d", line: 5, scope: !8, file: !5, type: !17)
+!17 = !MDBasicType(tag: DW_TAG_base_type, name: "unsigned int", size: 32, align: 32, encoding: DW_ATE_unsigned)
+!18 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "e", line: 5, scope: !8, file: !5, type: !17)
+!19 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "w", line: 12, scope: !20, file: !5, type: !25)
+!20 = distinct !MDLexicalBlock(line: 11, column: 0, file: !1, scope: !21)
+!21 = distinct !MDLexicalBlock(line: 10, column: 0, file: !1, scope: !22)
+!22 = distinct !MDLexicalBlock(line: 9, column: 0, file: !1, scope: !23)
+!23 = distinct !MDLexicalBlock(line: 8, column: 0, file: !1, scope: !24)
+!24 = distinct !MDLexicalBlock(line: 7, column: 0, file: !1, scope: !8)
+!25 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !11)
 !26 = !{i32 2, !"Dwarf Version", i32 4}
 !27 = !MDLocation(line: 20, scope: !4)
 !28 = !MDLocation(line: 21, scope: !4)
@@ -196,5 +196,5 @@ attributes #1 = { nounwind readnone }
 !40 = !MDLocation(line: 12, scope: !20)
 !41 = !{i32* @c}
 !42 = !MDLocation(line: 15, scope: !8)
-!43 = !{i32 1, !"Debug Info Version", i32 2}
+!43 = !{i32 1, !"Debug Info Version", i32 3}
 !44 = !{i32 0}

@@ -18,7 +18,7 @@ define void @_Z3zedP3foo(%struct.foo* %x) uwtable {
 entry:
   %x.addr = alloca %struct.foo*, align 8
   store %struct.foo* %x, %struct.foo** %x.addr, align 8
-  call void @llvm.dbg.declare(metadata %struct.foo** %x.addr, metadata !23, metadata !{!"0x102"}), !dbg !24
+  call void @llvm.dbg.declare(metadata %struct.foo** %x.addr, metadata !23, metadata !MDExpression()), !dbg !24
   %0 = load %struct.foo*, %struct.foo** %x.addr, align 8, !dbg !25
   call void @_ZN3foo3barEv(%struct.foo* %0), !dbg !25
   ret void, !dbg !27
@@ -30,7 +30,7 @@ define linkonce_odr void @_ZN3foo3barEv(%struct.foo* %this) nounwind uwtable ali
 entry:
   %this.addr = alloca %struct.foo*, align 8
   store %struct.foo* %this, %struct.foo** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata %struct.foo** %this.addr, metadata !28, metadata !{!"0x102"}), !dbg !29
+  call void @llvm.dbg.declare(metadata %struct.foo** %this.addr, metadata !28, metadata !MDExpression()), !dbg !29
   %this1 = load %struct.foo*, %struct.foo** %this.addr
   ret void, !dbg !30
 }
@@ -38,33 +38,33 @@ entry:
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!33}
 
-!0 = !{!"0x11\004\00clang version 3.0 ()\000\00\000\00\000", !32, !1, !1, !3, !1,  !1} ; [ DW_TAG_compile_unit ]
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.0 ()", isOptimized: false, emissionKind: 0, file: !32, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5, !20}
-!5 = !{!"0x2e\00zed\00zed\00_Z3zedP3foo\004\000\001\000\006\00256\000\004", !6, !6, !7, null, void (%struct.foo*)* @_Z3zedP3foo, null, null, null} ; [ DW_TAG_subprogram ] [line 4] [def] [zed]
-!6 = !{!"0x29", !32} ; [ DW_TAG_file_type ]
-!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = !MDSubprogram(name: "zed", linkageName: "_Z3zedP3foo", line: 4, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !6, scope: !6, type: !7, function: void (%struct.foo*)* @_Z3zedP3foo)
+!6 = !MDFile(filename: "/home/espindola/llvm/test.cc", directory: "/home/espindola/tmpfs/build")
+!7 = !MDSubroutineType(types: !8)
 !8 = !{null, !9}
-!9 = !{!"0xf\00\000\0064\0064\000\000", null, null, !10} ; [ DW_TAG_pointer_type ]
-!10 = !{!"0x2\00foo\001\008\008\000\000\000", !32, null, null, !11, null, null, null} ; [ DW_TAG_class_type ] [foo] [line 1, size 8, align 8, offset 0] [def] [from ]
+!9 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !10)
+!10 = !MDCompositeType(tag: DW_TAG_class_type, name: "foo", line: 1, size: 8, align: 8, file: !32, elements: !11)
 !11 = !{!12}
-!12 = !{!"0x2e\00bar\00bar\00_ZN3foo3barEv\002\000\000\000\006\00256\000\002", !6, !10, !13, null, null, null, i32 0, !16} ; [ DW_TAG_subprogram ]
-!13 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !14, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!12 = !MDSubprogram(name: "bar", linkageName: "_ZN3foo3barEv", line: 2, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !6, scope: !10, type: !13, variables: !16)
+!13 = !MDSubroutineType(types: !14)
 !14 = !{null, !15}
-!15 = !{!"0xf\00\000\0064\0064\000\0064", i32 0, null, !10} ; [ DW_TAG_pointer_type ]
+!15 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, baseType: !10)
 !16 = !{!17}
-!17 = !{!"0x24"}                      ; [ DW_TAG_base_type ]
+!17 = !{} ; previously: invalid DW_TAG_base_type
 !18 = !{!19}
-!19 = !{!"0x24"}                      ; [ DW_TAG_base_type ]
-!20 = !{!"0x2e\00bar\00bar\00_ZN3foo3barEv\002\000\001\000\006\00256\000\002", !6, null, !13, null, void (%struct.foo*)* @_ZN3foo3barEv, null, !12, null} ; [ DW_TAG_subprogram ] [line 2] [def] [bar]
-!23 = !{!"0x101\00x\0016777220\000", !5, !6, !9} ; [ DW_TAG_arg_variable ]
+!19 = !{} ; previously: invalid DW_TAG_base_type
+!20 = !MDSubprogram(name: "bar", linkageName: "_ZN3foo3barEv", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !6, scope: null, type: !13, function: void (%struct.foo*)* @_ZN3foo3barEv, declaration: !12)
+!23 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "x", line: 4, arg: 1, scope: !5, file: !6, type: !9)
 !24 = !MDLocation(line: 4, column: 15, scope: !5)
 !25 = !MDLocation(line: 4, column: 20, scope: !26)
-!26 = !{!"0xb\004\0018\000", !6, !5} ; [ DW_TAG_lexical_block ]
+!26 = distinct !MDLexicalBlock(line: 4, column: 18, file: !6, scope: !5)
 !27 = !MDLocation(line: 4, column: 30, scope: !26)
-!28 = !{!"0x101\00this\0016777218\0064", !20, !6, !15} ; [ DW_TAG_arg_variable ]
+!28 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 2, arg: 1, flags: DIFlagArtificial, scope: !20, file: !6, type: !15)
 !29 = !MDLocation(line: 2, column: 8, scope: !20)
 !30 = !MDLocation(line: 2, column: 15, scope: !31)
-!31 = !{!"0xb\002\0014\001", !6, !20} ; [ DW_TAG_lexical_block ]
-!32 = !{!"/home/espindola/llvm/test.cc", !"/home/espindola/tmpfs/build"}
-!33 = !{i32 1, !"Debug Info Version", i32 2}
+!31 = distinct !MDLexicalBlock(line: 2, column: 14, file: !6, scope: !20)
+!32 = !MDFile(filename: "/home/espindola/llvm/test.cc", directory: "/home/espindola/tmpfs/build")
+!33 = !{i32 1, !"Debug Info Version", i32 3}

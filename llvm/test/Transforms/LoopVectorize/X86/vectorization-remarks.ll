@@ -49,14 +49,14 @@ declare void @ibar(i32*) #1
 !llvm.module.flags = !{!7, !8}
 !llvm.ident = !{!9}
 
-!1 = !{!"vectorization-remarks.c", !"."}
+!1 = !MDFile(filename: "vectorization-remarks.c", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00foo\00foo\00\005\000\001\000\006\00256\001\006", !1, !5, !6, null, i32 (i32)* @foo, null, null, !2} ; [ DW_TAG_subprogram ] [line 5] [def] [scope 6] [foo]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [./vectorization-remarks.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !2, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "foo", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: true, scopeLine: 6, file: !1, scope: !5, type: !6, function: i32 (i32)* @foo, variables: !2)
+!5 = !MDFile(filename: "vectorization-remarks.c", directory: ".")
+!6 = !MDSubroutineType(types: !2)
 !7 = !{i32 2, !"Dwarf Version", i32 4}
-!8 = !{i32 1, !"Debug Info Version", i32 2}
+!8 = !{i32 1, !"Debug Info Version", i32 3}
 !9 = !{!"clang version 3.5.0 "}
 !10 = !MDLocation(line: 8, column: 3, scope: !4)
 !11 = !{!12, !12, i64 0}
@@ -64,11 +64,11 @@ declare void @ibar(i32*) #1
 !13 = !{!"omnipotent char", !14, i64 0}
 !14 = !{!"Simple C/C++ TBAA"}
 !15 = !MDLocation(line: 17, column: 8, scope: !16)
-!16 = !{!"0xb\0017\008\002", !1, !17} ; [ DW_TAG_lexical_block ] [./vectorization-remarks.c]
-!17 = !{!"0xb\0017\008\001", !1, !18} ; [ DW_TAG_lexical_block ] [./vectorization-remarks.c]
-!18 = !{!"0xb\0017\003\000", !1, !4} ; [ DW_TAG_lexical_block ] [./vectorization-remarks.c]
+!16 = distinct !MDLexicalBlock(line: 17, column: 8, file: !1, scope: !17)
+!17 = distinct !MDLexicalBlock(line: 17, column: 8, file: !1, scope: !18)
+!18 = distinct !MDLexicalBlock(line: 17, column: 3, file: !1, scope: !4)
 !19 = !MDLocation(line: 18, column: 5, scope: !20)
-!20 = !{!"0xb\0017\0027\000", !1, !18} ; [ DW_TAG_lexical_block ] [./vectorization-remarks.c]
+!20 = distinct !MDLexicalBlock(line: 17, column: 27, file: !1, scope: !18)
 !21 = !{!13, !13, i64 0}
 !22 = !MDLocation(line: 20, column: 3, scope: !4)
 !23 = !MDLocation(line: 21, column: 3, scope: !4)

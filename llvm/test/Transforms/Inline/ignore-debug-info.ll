@@ -47,9 +47,9 @@ attributes #0 = { nounwind readnone }
 !llvm.module.flags = !{!3, !4}
 !llvm.ident = !{!5}
 
-!0 = !{!"0x11\004\00\000\00\000\00\000", !1, !2, !2, !{}, !2, !2} ; [ DW_TAG_compile_unit ]
-!1 = !{!"", !""}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !{}, globals: !2, imports: !2)
+!1 = !MDFile(filename: "", directory: "")
 !2 = !{i32 0}
 !3 = !{i32 2, !"Dwarf Version", i32 4}
-!4 = !{i32 1, !"Debug Info Version", i32 2}
+!4 = !{i32 1, !"Debug Info Version", i32 3}
 !5 = !{!""}

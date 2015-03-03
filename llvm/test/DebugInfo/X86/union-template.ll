@@ -16,8 +16,8 @@ entry:
   %value.addr = alloca float, align 4
   %tempValue = alloca %"union.PR15637::Value", align 4
   store float %value, float* %value.addr, align 4
-  call void @llvm.dbg.declare(metadata float* %value.addr, metadata !23, metadata !{!"0x102"}), !dbg !24
-  call void @llvm.dbg.declare(metadata %"union.PR15637::Value"* %tempValue, metadata !25, metadata !{!"0x102"}), !dbg !26
+  call void @llvm.dbg.declare(metadata float* %value.addr, metadata !23, metadata !MDExpression()), !dbg !24
+  call void @llvm.dbg.declare(metadata %"union.PR15637::Value"* %tempValue, metadata !25, metadata !MDExpression()), !dbg !26
   ret void, !dbg !27
 }
 
@@ -29,32 +29,32 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!28}
 
-!0 = !{!"0x11\004\00clang version 3.3 (trunk 178499) (llvm/trunk 178472)\000\00\000\00\000", !1, !2, !2, !3, !9,  !2} ; [ DW_TAG_compile_unit ] [/usr/local/google/home/echristo/tmp/foo.cc] [DW_LANG_C_plus_plus]
-!1 = !{!"foo.cc", !"/usr/local/google/home/echristo/tmp"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 178499) (llvm/trunk 178472)", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !9, imports:  !2)
+!1 = !MDFile(filename: "foo.cc", directory: "/usr/local/google/home/echristo/tmp")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00g\00g\00_ZN7PR156371gEf\003\000\001\000\006\00256\000\003", !1, !5, !6, null, void (float)* @_ZN7PR156371gEf, null, null, !2} ; [ DW_TAG_subprogram ] [line 3] [def] [g]
-!5 = !{!"0x39\00PR15637\001", !1, null} ; [ DW_TAG_namespace ] [PR15637] [line 1]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "g", linkageName: "_ZN7PR156371gEf", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !5, type: !6, function: void (float)* @_ZN7PR156371gEf, variables: !2)
+!5 = !MDNamespace(name: "PR15637", line: 1, file: !1, scope: null)
+!6 = !MDSubroutineType(types: !7)
 !7 = !{null, !8}
-!8 = !{!"0x24\00float\000\0032\0032\000\000\004", null, null} ; [ DW_TAG_base_type ] [float] [line 0, size 32, align 32, offset 0, enc DW_ATE_float]
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "float", size: 32, align: 32, encoding: DW_ATE_float)
 !9 = !{!10}
-!10 = !{!"0x34\00f\00f\00_ZN7PR156371fE\006\000\001", !5, !11, !12, %"union.PR15637::Value"* @_ZN7PR156371fE, null} ; [ DW_TAG_variable ] [f] [line 6] [def]
-!11 = !{!"0x29", !1}         ; [ DW_TAG_file_type ] [/usr/local/google/home/echristo/tmp/foo.cc]
-!12 = !{!"0x17\00Value<float>\002\0032\0032\000\000\000", !1, !5, null, !13, null, !21, null} ; [ DW_TAG_union_type ] [Value<float>] [line 2, size 32, align 32, offset 0] [def] [from ]
+!10 = !MDGlobalVariable(name: "f", linkageName: "_ZN7PR156371fE", line: 6, isLocal: false, isDefinition: true, scope: !5, file: !11, type: !12, variable: %"union.PR15637::Value"* @_ZN7PR156371fE)
+!11 = !MDFile(filename: "foo.cc", directory: "/usr/local/google/home/echristo/tmp")
+!12 = !MDCompositeType(tag: DW_TAG_union_type, name: "Value<float>", line: 2, size: 32, align: 32, file: !1, scope: !5, elements: !13, templateParams: !21)
 !13 = !{!14, !16}
-!14 = !{!"0xd\00a\002\0032\0032\000\000", !1, !12, !15} ; [ DW_TAG_member ] [a] [line 2, size 32, align 32, offset 0] [from int]
-!15 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!16 = !{!"0x2e\00Value\00Value\00\002\000\000\000\006\00320\000\002", !1, !12, !17, null, null, null, i32 0, !20} ; [ DW_TAG_subprogram ] [line 2] [Value]
-!17 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !18, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!14 = !MDDerivedType(tag: DW_TAG_member, name: "a", line: 2, size: 32, align: 32, file: !1, scope: !12, baseType: !15)
+!15 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!16 = !MDSubprogram(name: "Value", line: 2, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagArtificial | DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !1, scope: !12, type: !17, variables: !20)
+!17 = !MDSubroutineType(types: !18)
 !18 = !{null, !19}
-!19 = !{!"0xf\00\000\0064\0064\000\001088", i32 0, null, !12} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from Value<float>]
+!19 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !12)
 !20 = !{i32 786468}
 !21 = !{!22}
-!22 = !{!"0x2f\00T\000\000", null, !8, null} ; [ DW_TAG_template_type_parameter ]
-!23 = !{!"0x101\00value\0016777219\000", !4, !11, !8} ; [ DW_TAG_arg_variable ] [value] [line 3]
+!22 = !MDTemplateTypeParameter(name: "T", type: !8)
+!23 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "value", line: 3, arg: 1, scope: !4, file: !11, type: !8)
 !24 = !MDLocation(line: 3, scope: !4)
-!25 = !{!"0x100\00tempValue\004\000", !4, !11, !12} ; [ DW_TAG_auto_variable ] [tempValue] [line 4]
+!25 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "tempValue", line: 4, scope: !4, file: !11, type: !12)
 !26 = !MDLocation(line: 4, scope: !4)
 !27 = !MDLocation(line: 5, scope: !4)
-!28 = !{i32 1, !"Debug Info Version", i32 2}
+!28 = !{i32 1, !"Debug Info Version", i32 3}

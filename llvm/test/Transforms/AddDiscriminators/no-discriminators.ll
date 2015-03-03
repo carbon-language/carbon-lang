@@ -19,11 +19,11 @@ entry:
   store i64 %i, i64* %i.addr, align 8
   call void @llvm.dbg.declare(metadata i64* %i.addr, metadata !13, metadata !{}), !dbg !14
   %0 = load i64, i64* %i.addr, align 8, !dbg !15
-; CHECK:  %0 = load i64, i64* %i.addr, align 8, !dbg !15
+; CHECK:  %0 = load i64, i64* %i.addr, align 8, !dbg ![[ENTRY:[0-9]+]]
   %cmp = icmp slt i64 %0, 5, !dbg !15
-; CHECK:  %cmp = icmp slt i64 %0, 5, !dbg !15
+; CHECK:  %cmp = icmp slt i64 %0, 5, !dbg ![[ENTRY:[0-9]+]]
   br i1 %cmp, label %if.then, label %if.else, !dbg !15
-; CHECK:  br i1 %cmp, label %if.then, label %if.else, !dbg !15
+; CHECK:  br i1 %cmp, label %if.then, label %if.else, !dbg ![[ENTRY:[0-9]+]]
 
 if.then:                                          ; preds = %entry
   store i32 2, i32* %retval, !dbg !15
@@ -48,24 +48,25 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!10, !11}
 !llvm.ident = !{!12}
 
-!0 = !{!"0x11\0012\00clang version 3.5.0 \000\00\000\00\001", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [./no-discriminators] [DW_LANG_C99]
-!1 = !{!"no-discriminators", !"."}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "no-discriminators", directory: ".")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x2e\00foo\00foo\00\001\000\001\000\006\00256\000\001", !1, !5, !6, null, i32 (i64)* @foo, null, null, !2} ; [ DW_TAG_subprogram ] [line 1] [def] [foo]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [./no-discriminators]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!4 = !MDSubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: i32 (i64)* @foo, variables: !2)
+; CHECK: ![[FOO:[0-9]+]] = !MDSubprogram(name: "foo"
+!5 = !MDFile(filename: "no-discriminators", directory: ".")
+!6 = !MDSubroutineType(types: !7)
 !7 = !{!8, !9}
-!8 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
-!9 = !{!"0x24\00long int\000\0064\0064\000\000\005", null, null} ; [ DW_TAG_base_type ] [long int] [line 0, size 64, align 64, offset 0, enc DW_ATE_signed]
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!9 = !MDBasicType(tag: DW_TAG_base_type, name: "long int", size: 64, align: 64, encoding: DW_ATE_signed)
 !10 = !{i32 2, !"Dwarf Version", i32 2}
-; CHECK: !10 = !{i32 2, !"Dwarf Version", i32 2}
-!11 = !{i32 1, !"Debug Info Version", i32 2}
+; CHECK: !{i32 2, !"Dwarf Version", i32 2}
+!11 = !{i32 1, !"Debug Info Version", i32 3}
 !12 = !{!"clang version 3.5.0 "}
-!13 = !{!"0x101\00i\0016777217\000", !4, !5, !9} ; [ DW_TAG_arg_variable ] [i] [line 1]
+!13 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "i", line: 1, arg: 1, scope: !4, file: !5, type: !9)
 !14 = !MDLocation(line: 1, scope: !4)
 !15 = !MDLocation(line: 2, scope: !16)
-; CHECK: !15 = !MDLocation(line: 2, scope: !16)
-!16 = !{!"0xb\002\000\000", !1, !4} ; [ DW_TAG_lexical_block ] [./no-discriminators]
-; CHECK: !16 = !{!"0xb\002\000\000", !1, !4} ; [ DW_TAG_lexical_block ] [./no-discriminators]
+; CHECK: ![[ENTRY]] = !MDLocation(line: 2, scope: ![[BLOCK:[0-9]+]])
+!16 = distinct !MDLexicalBlock(line: 2, column: 0, file: !1, scope: !4)
+; CHECK: ![[BLOCK]] = distinct !MDLexicalBlock(scope: ![[FOO]],{{.*}} line: 2)
 !17 = !MDLocation(line: 3, scope: !4)

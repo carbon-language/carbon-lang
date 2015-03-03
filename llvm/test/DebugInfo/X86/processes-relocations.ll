@@ -17,5 +17,5 @@
 !1 = !{!"empty.c", !"/a"}
 !2 = !{}
 !3 = !{i32 2, !"Dwarf Version", i32 4}
-!4 = !{i32 2, !"Debug Info Version", i32 2}
+!4 = !{i32 2, !"Debug Info Version", i32 3}
 !5 = !{!"clang version 3.6.0 "}

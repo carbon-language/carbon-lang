@@ -5,6 +5,6 @@
 !llvm.dbg.cu = !{!1}
 
 !0 = !{i32 2, !"Debug Info Version", i32 42}
-!1 = !{!"0x11\0012\00clang\000\00", !"I AM UNEXPECTED!"} ; [ DW_TAG_compile_unit ]
+!1 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang", isOptimized: false, file: !"I AM UNEXPECTED!")
 !2 = !{!"b.c", !""}
 !3 = !{}

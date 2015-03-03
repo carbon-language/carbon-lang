@@ -8,14 +8,14 @@
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!12}
 
-!0 = !{!"0x11\0012\00clang version 3.0 (trunk 140253)\001\00\000\00\000", !11, !2, !2, !2, !3, null} ; [ DW_TAG_compile_unit ]
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.0 (trunk 140253)", isOptimized: true, emissionKind: 0, file: !11, enums: !2, retainedTypes: !2, subprograms: !2, globals: !3)
 !2 = !{}
 !3 = !{!5}
-!5 = !{!"0x34\00a\00a\00\001\000\001", null, !6, !7, [10 x i32]* @a, null} ; [ DW_TAG_variable ]
-!6 = !{!"0x29", !11} ; [ DW_TAG_file_type ]
-!7 = !{!"0x1\00\000\00320\0032\000\000", null, null, !8, !9, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 320, align 32, offset 0] [from int]
-!8 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ]
+!5 = !MDGlobalVariable(name: "a", line: 1, isLocal: false, isDefinition: true, scope: null, file: !6, type: !7, variable: [10 x i32]* @a)
+!6 = !MDFile(filename: "x.c", directory: "/private/tmp")
+!7 = !MDCompositeType(tag: DW_TAG_array_type, size: 320, align: 32, baseType: !8, elements: !9)
+!8 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !9 = !{!10}
-!10 = !{!"0x21\000\0010"}        ; [ DW_TAG_subrange_type ]
-!11 = !{!"x.c", !"/private/tmp"}
-!12 = !{i32 1, !"Debug Info Version", i32 2}
+!10 = !MDSubrange(count: 10)
+!11 = !MDFile(filename: "x.c", directory: "/private/tmp")
+!12 = !{i32 1, !"Debug Info Version", i32 3}

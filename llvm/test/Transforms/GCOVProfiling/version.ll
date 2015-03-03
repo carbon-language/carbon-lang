@@ -16,15 +16,15 @@ define void @test() {
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!12}
 
-!0 = !{!"0x11\004\00clang version 3.3 (trunk 176994)\000\00\000\00\000", !11, !3, !3, !4, !3, null} ; [ DW_TAG_compile_unit ] [./version] [DW_LANG_C_plus_plus]
-!2 = !{!"0x29", !11} ; [ DW_TAG_file_type ]
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 176994)", isOptimized: false, emissionKind: 0, file: !11, enums: !3, retainedTypes: !3, subprograms: !4, globals: !3)
+!2 = !MDFile(filename: "version", directory: "/usr/local/google/home/nlewycky")
 !3 = !{i32 0}
 !4 = !{!5}
-!5 = !{!"0x2e\00test\00test\00\001\000\001\000\006\00256\000\001", !10, !6, !7, null, void ()* @test, null, null, !3} ; [ DW_TAG_subprogram ] [line 1] [def] [test]
-!6 = !{!"0x29", !10} ; [ DW_TAG_file_type ]
-!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !3, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = !MDSubprogram(name: "test", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !10, scope: !6, type: !7, function: void ()* @test, variables: !3)
+!6 = !MDFile(filename: "<stdin>", directory: ".")
+!7 = !MDSubroutineType(types: !3)
 !8 = !MDLocation(line: 1, scope: !5)
 ;; !9 is added through the echo line at the top.
-!10 = !{!"<stdin>", !"."}
-!11 = !{!"version", !"/usr/local/google/home/nlewycky"}
-!12 = !{i32 1, !"Debug Info Version", i32 2}
+!10 = !MDFile(filename: "<stdin>", directory: ".")
+!11 = !MDFile(filename: "version", directory: "/usr/local/google/home/nlewycky")
+!12 = !{i32 1, !"Debug Info Version", i32 3}

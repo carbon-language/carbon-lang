@@ -40,10 +40,10 @@ entry:
   %offset.addr = alloca i64*, align 8
   %limit.addr = alloca i64*, align 8
   store i64* %offset, i64** %offset.addr, align 8
-  call void @llvm.dbg.declare(metadata i64** %offset.addr, metadata !45, metadata !{!"0x102"}), !dbg !46
+  call void @llvm.dbg.declare(metadata i64** %offset.addr, metadata !45, metadata !MDExpression()), !dbg !46
   store i64* %limit, i64** %limit.addr, align 8
-  call void @llvm.dbg.declare(metadata i64** %limit.addr, metadata !47, metadata !{!"0x102"}), !dbg !46
-  call void @llvm.dbg.declare(metadata %"class.std::basic_string"* %range, metadata !48, metadata !{!"0x102\006"}), !dbg !49
+  call void @llvm.dbg.declare(metadata i64** %limit.addr, metadata !47, metadata !MDExpression()), !dbg !46
+  call void @llvm.dbg.declare(metadata %"class.std::basic_string"* %range, metadata !48, metadata !MDExpression(DW_OP_deref)), !dbg !49
   %call = call i32 @_ZNKSs7compareEmmPKc(%"class.std::basic_string"* %range, i64 0, i64 6, i8* getelementptr inbounds ([7 x i8]* @.str, i32 0, i32 0)), !dbg !50
   %cmp = icmp ne i32 %call, 0, !dbg !50
   br i1 %cmp, label %if.then, label %lor.lhs.false, !dbg !50
@@ -84,60 +84,60 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !llvm.module.flags = !{!42, !43}
 !llvm.ident = !{!44}
 
-!0 = !{!"0x11\004\00clang version 3.5.0 (209308)\000\00\000\00\001", !1, !2, !3, !12, !2, !21} ; [ DW_TAG_compile_unit ] [/llvm_cmake_gcc/pr19307.cc] [DW_LANG_C_plus_plus]
-!1 = !{!"pr19307.cc", !"/llvm_cmake_gcc"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 (209308)", isOptimized: false, emissionKind: 1, file: !1, enums: !2, retainedTypes: !3, subprograms: !12, globals: !2, imports: !21)
+!1 = !MDFile(filename: "pr19307.cc", directory: "/llvm_cmake_gcc")
 !2 = !{}
 !3 = !{!4, !6, !8}
-!4 = !{!"0x13\00\0083\000\000\000\004\000", !5, null, null, null, null, null, !"_ZTS11__mbstate_t"} ; [ DW_TAG_structure_type ] [line 83, size 0, align 0, offset 0] [decl] [from ]
-!5 = !{!"/usr/include/wchar.h", !"/llvm_cmake_gcc"}
-!6 = !{!"0x13\00lconv\0054\000\000\000\004\000", !7, null, null, null, null, null, !"_ZTS5lconv"} ; [ DW_TAG_structure_type ] [lconv] [line 54, size 0, align 0, offset 0] [decl] [from ]
-!7 = !{!"/usr/include/locale.h", !"/llvm_cmake_gcc"}
-!8 = !{!"0x2\00basic_string<char, std::char_traits<char>, std::allocator<char> >\001134\000\000\000\004\000", !9, !10, null, null, null, null, !"_ZTSSs"} ; [ DW_TAG_class_type ] [basic_string<char, std::char_traits<char>, std::allocator<char> >] [line 1134, size 0, align 0, offset 0] [decl] [from ]
-!9 = !{!"/usr/lib/gcc/x86_64-linux-gnu/4.6/../../../../include/c++/4.6/bits/basic_string.tcc", !"/llvm_cmake_gcc"}
-!10 = !{!"0x39\00std\00153", !11, null} ; [ DW_TAG_namespace ] [std] [line 153]
-!11 = !{!"/usr/lib/gcc/x86_64-linux-gnu/4.6/../../../../include/c++/4.6/x86_64-linux-gnu/bits/c++config.h", !"/llvm_cmake_gcc"}
+!4 = !MDCompositeType(tag: DW_TAG_structure_type, line: 83, flags: DIFlagFwdDecl, file: !5, identifier: "_ZTS11__mbstate_t")
+!5 = !MDFile(filename: "/usr/include/wchar.h", directory: "/llvm_cmake_gcc")
+!6 = !MDCompositeType(tag: DW_TAG_structure_type, name: "lconv", line: 54, flags: DIFlagFwdDecl, file: !7, identifier: "_ZTS5lconv")
+!7 = !MDFile(filename: "/usr/include/locale.h", directory: "/llvm_cmake_gcc")
+!8 = !MDCompositeType(tag: DW_TAG_class_type, name: "basic_string<char, std::char_traits<char>, std::allocator<char> >", line: 1134, flags: DIFlagFwdDecl, file: !9, scope: !10, identifier: "_ZTSSs")
+!9 = !MDFile(filename: "/usr/lib/gcc/x86_64-linux-gnu/4.6/../../../../include/c++/4.6/bits/basic_string.tcc", directory: "/llvm_cmake_gcc")
+!10 = !MDNamespace(name: "std", line: 153, file: !11, scope: null)
+!11 = !MDFile(filename: "/usr/lib/gcc/x86_64-linux-gnu/4.6/../../../../include/c++/4.6/x86_64-linux-gnu/bits/c++config.h", directory: "/llvm_cmake_gcc")
 !12 = !{!13}
-!13 = !{!"0x2e\00parse_range\00parse_range\00_Z11parse_rangeRyS_Ss\003\000\001\000\006\00256\000\004", !1, !14, !15, null, void (i64*, i64*, %"class.std::basic_string"*)* @_Z11parse_rangeRyS_Ss, null, null, !2} ; [ DW_TAG_subprogram ] [line 3] [def] [scope 4] [parse_range]
-!14 = !{!"0x29", !1}         ; [ DW_TAG_file_type ] [/llvm_cmake_gcc/pr19307.cc]
-!15 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !16, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!13 = !MDSubprogram(name: "parse_range", linkageName: "_Z11parse_rangeRyS_Ss", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 4, file: !1, scope: !14, type: !15, function: void (i64*, i64*, %"class.std::basic_string"*)* @_Z11parse_rangeRyS_Ss, variables: !2)
+!14 = !MDFile(filename: "pr19307.cc", directory: "/llvm_cmake_gcc")
+!15 = !MDSubroutineType(types: !16)
 !16 = !{null, !17, !17, !19}
-!17 = !{!"0x10\00\000\000\000\000\000", null, null, !18} ; [ DW_TAG_reference_type ] [line 0, size 0, align 0, offset 0] [from long long unsigned int]
-!18 = !{!"0x24\00long long unsigned int\000\0064\0064\000\000\007", null, null} ; [ DW_TAG_base_type ] [long long unsigned int] [line 0, size 64, align 64, offset 0, enc DW_ATE_unsigned]
-!19 = !{!"0x16\00string\0065\000\000\000\000", !20, !10, !"_ZTSSs"} ; [ DW_TAG_typedef ] [string] [line 65, size 0, align 0, offset 0] [from _ZTSSs]
-!20 = !{!"/usr/lib/gcc/x86_64-linux-gnu/4.6/../../../../include/c++/4.6/bits/stringfwd.h", !"/llvm_cmake_gcc"}
+!17 = !MDDerivedType(tag: DW_TAG_reference_type, baseType: !18)
+!18 = !MDBasicType(tag: DW_TAG_base_type, name: "long long unsigned int", size: 64, align: 64, encoding: DW_ATE_unsigned)
+!19 = !MDDerivedType(tag: DW_TAG_typedef, name: "string", line: 65, file: !20, scope: !10, baseType: !"_ZTSSs")
+!20 = !MDFile(filename: "/usr/lib/gcc/x86_64-linux-gnu/4.6/../../../../include/c++/4.6/bits/stringfwd.h", directory: "/llvm_cmake_gcc")
 !21 = !{!22, !26, !29, !33, !38, !41}
-!22 = !{!"0x3a\0057\00", !23, !25} ; [ DW_TAG_imported_module ]
-!23 = !{!"0x39\00__gnu_debug\0055", !24, null} ; [ DW_TAG_namespace ] [__gnu_debug] [line 55]
-!24 = !{!"/usr/lib/gcc/x86_64-linux-gnu/4.6/../../../../include/c++/4.6/debug/debug.h", !"/llvm_cmake_gcc"}
-!25 = !{!"0x39\00__debug\0049", !24, !10} ; [ DW_TAG_namespace ] [__debug] [line 49]
-!26 = !{!"0x8\0066\00", !10, !27} ; [ DW_TAG_imported_declaration ]
-!27 = !{!"0x16\00mbstate_t\00106\000\000\000\000", !5, null, !28} ; [ DW_TAG_typedef ] [mbstate_t] [line 106, size 0, align 0, offset 0] [from __mbstate_t]
-!28 = !{!"0x16\00__mbstate_t\0095\000\000\000\000", !5, null, !"_ZTS11__mbstate_t"} ; [ DW_TAG_typedef ] [__mbstate_t] [line 95, size 0, align 0, offset 0] [from _ZTS11__mbstate_t]
-!29 = !{!"0x8\00141\00", !10, !30} ; [ DW_TAG_imported_declaration ]
-!30 = !{!"0x16\00wint_t\00141\000\000\000\000", !31, null, !32} ; [ DW_TAG_typedef ] [wint_t] [line 141, size 0, align 0, offset 0] [from unsigned int]
-!31 = !{!"/llvm_cmake_gcc/bin/../lib/clang/3.5.0/include/stddef.h", !"/llvm_cmake_gcc"}
-!32 = !{!"0x24\00unsigned int\000\0032\0032\000\000\007", null, null} ; [ DW_TAG_base_type ] [unsigned int] [line 0, size 32, align 32, offset 0, enc DW_ATE_unsigned]
-!33 = !{!"0x8\0042\00", !34, !36} ; [ DW_TAG_imported_declaration ]
-!34 = !{!"0x39\00__gnu_cxx\0069", !35, null} ; [ DW_TAG_namespace ] [__gnu_cxx] [line 69]
-!35 = !{!"/usr/lib/gcc/x86_64-linux-gnu/4.6/../../../../include/c++/4.6/bits/cpp_type_traits.h", !"/llvm_cmake_gcc"}
-!36 = !{!"0x16\00size_t\00155\000\000\000\000", !11, !10, !37} ; [ DW_TAG_typedef ] [size_t] [line 155, size 0, align 0, offset 0] [from long unsigned int]
-!37 = !{!"0x24\00long unsigned int\000\0064\0064\000\000\007", null, null} ; [ DW_TAG_base_type ] [long unsigned int] [line 0, size 64, align 64, offset 0, enc DW_ATE_unsigned]
-!38 = !{!"0x8\0043\00", !34, !39} ; [ DW_TAG_imported_declaration ]
-!39 = !{!"0x16\00ptrdiff_t\00156\000\000\000\000", !11, !10, !40} ; [ DW_TAG_typedef ] [ptrdiff_t] [line 156, size 0, align 0, offset 0] [from long int]
-!40 = !{!"0x24\00long int\000\0064\0064\000\000\005", null, null} ; [ DW_TAG_base_type ] [long int] [line 0, size 64, align 64, offset 0, enc DW_ATE_signed]
-!41 = !{!"0x8\0055\00", !10, !"_ZTS5lconv"} ; [ DW_TAG_imported_declaration ]
+!22 = !MDImportedEntity(tag: DW_TAG_imported_module, line: 57, scope: !23, entity: !25)
+!23 = !MDNamespace(name: "__gnu_debug", line: 55, file: !24, scope: null)
+!24 = !MDFile(filename: "/usr/lib/gcc/x86_64-linux-gnu/4.6/../../../../include/c++/4.6/debug/debug.h", directory: "/llvm_cmake_gcc")
+!25 = !MDNamespace(name: "__debug", line: 49, file: !24, scope: !10)
+!26 = !MDImportedEntity(tag: DW_TAG_imported_declaration, line: 66, scope: !10, entity: !27)
+!27 = !MDDerivedType(tag: DW_TAG_typedef, name: "mbstate_t", line: 106, file: !5, baseType: !28)
+!28 = !MDDerivedType(tag: DW_TAG_typedef, name: "__mbstate_t", line: 95, file: !5, baseType: !"_ZTS11__mbstate_t")
+!29 = !MDImportedEntity(tag: DW_TAG_imported_declaration, line: 141, scope: !10, entity: !30)
+!30 = !MDDerivedType(tag: DW_TAG_typedef, name: "wint_t", line: 141, file: !31, baseType: !32)
+!31 = !MDFile(filename: "/llvm_cmake_gcc/bin/../lib/clang/3.5.0/include/stddef.h", directory: "/llvm_cmake_gcc")
+!32 = !MDBasicType(tag: DW_TAG_base_type, name: "unsigned int", size: 32, align: 32, encoding: DW_ATE_unsigned)
+!33 = !MDImportedEntity(tag: DW_TAG_imported_declaration, line: 42, scope: !34, entity: !36)
+!34 = !MDNamespace(name: "__gnu_cxx", line: 69, file: !35, scope: null)
+!35 = !MDFile(filename: "/usr/lib/gcc/x86_64-linux-gnu/4.6/../../../../include/c++/4.6/bits/cpp_type_traits.h", directory: "/llvm_cmake_gcc")
+!36 = !MDDerivedType(tag: DW_TAG_typedef, name: "size_t", line: 155, file: !11, scope: !10, baseType: !37)
+!37 = !MDBasicType(tag: DW_TAG_base_type, name: "long unsigned int", size: 64, align: 64, encoding: DW_ATE_unsigned)
+!38 = !MDImportedEntity(tag: DW_TAG_imported_declaration, line: 43, scope: !34, entity: !39)
+!39 = !MDDerivedType(tag: DW_TAG_typedef, name: "ptrdiff_t", line: 156, file: !11, scope: !10, baseType: !40)
+!40 = !MDBasicType(tag: DW_TAG_base_type, name: "long int", size: 64, align: 64, encoding: DW_ATE_signed)
+!41 = !MDImportedEntity(tag: DW_TAG_imported_declaration, line: 55, scope: !10, entity: !"_ZTS5lconv")
 !42 = !{i32 2, !"Dwarf Version", i32 4}
-!43 = !{i32 2, !"Debug Info Version", i32 2}
+!43 = !{i32 2, !"Debug Info Version", i32 3}
 !44 = !{!"clang version 3.5.0 (209308)"}
-!45 = !{!"0x101\00offset\0016777219\000", !13, !14, !17} ; [ DW_TAG_arg_variable ] [offset] [line 3]
+!45 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "offset", line: 3, arg: 1, scope: !13, file: !14, type: !17)
 !46 = !MDLocation(line: 3, scope: !13)
-!47 = !{!"0x101\00limit\0033554435\000", !13, !14, !17} ; [ DW_TAG_arg_variable ] [limit] [line 3]
-!48 = !{!"0x101\00range\0050331652\000", !13, !14, !19} ; [ DW_TAG_arg_variable ] [range] [line 4]
+!47 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "limit", line: 3, arg: 2, scope: !13, file: !14, type: !17)
+!48 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "range", line: 4, arg: 3, scope: !13, file: !14, type: !19)
 !49 = !MDLocation(line: 4, scope: !13)
 !50 = !MDLocation(line: 5, scope: !51)
-!51 = !{!"0xb\005\000\000", !1, !13} ; [ DW_TAG_lexical_block ] [/llvm_cmake_gcc/pr19307.cc]
+!51 = distinct !MDLexicalBlock(line: 5, column: 0, file: !1, scope: !13)
 !52 = !MDLocation(line: 5, scope: !53)
-!53 = !{!"0xb\005\000\001", !1, !51} ; [ DW_TAG_lexical_block ] [/llvm_cmake_gcc/pr19307.cc]
+!53 = distinct !MDLexicalBlock(line: 5, column: 0, file: !1, scope: !51)
 !54 = !MDLocation(line: 6, scope: !51)
 !55 = !MDLocation(line: 7, scope: !13)
 !56 = !MDLocation(line: 8, scope: !13)

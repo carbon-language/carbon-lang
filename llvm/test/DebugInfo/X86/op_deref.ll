@@ -24,7 +24,7 @@
 ; ASM-CHECK: DW_OP_breg2
 
 ; RUN: llvm-as %s -o - | llvm-dis - | FileCheck %s --check-prefix=PRETTY-PRINT
-; PRETTY-PRINT: [ DW_TAG_expression ] [DW_OP_deref]
+; PRETTY-PRINT: MDExpression(DW_OP_deref, DW_OP_deref)
 
 define void @testVLAwithSize(i32 %s) nounwind uwtable ssp {
 entry:
@@ -32,14 +32,14 @@ entry:
   %saved_stack = alloca i8*
   %i = alloca i32, align 4
   store i32 %s, i32* %s.addr, align 4
-  call void @llvm.dbg.declare(metadata i32* %s.addr, metadata !10, metadata !{!"0x102"}), !dbg !11
+  call void @llvm.dbg.declare(metadata i32* %s.addr, metadata !10, metadata !MDExpression()), !dbg !11
   %0 = load i32, i32* %s.addr, align 4, !dbg !12
   %1 = zext i32 %0 to i64, !dbg !12
   %2 = call i8* @llvm.stacksave(), !dbg !12
   store i8* %2, i8** %saved_stack, !dbg !12
   %vla = alloca i32, i64 %1, align 16, !dbg !12
   call void @llvm.dbg.declare(metadata i32* %vla, metadata !14, metadata !30), !dbg !18
-  call void @llvm.dbg.declare(metadata i32* %i, metadata !19, metadata !{!"0x102"}), !dbg !20
+  call void @llvm.dbg.declare(metadata i32* %i, metadata !19, metadata !MDExpression()), !dbg !20
   store i32 0, i32* %i, align 4, !dbg !21
   br label %for.cond, !dbg !21
 
@@ -80,32 +80,32 @@ declare void @llvm.stackrestore(i8*) nounwind
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!29}
 
-!0 = !{!"0x11\0012\00clang version 3.2 (trunk 156005) (llvm/trunk 156000)\000\00\000\00\001", !28, !1, !1, !3, !1,  !1} ; [ DW_TAG_compile_unit ]
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.2 (trunk 156005) (llvm/trunk 156000)", isOptimized: false, emissionKind: 1, file: !28, enums: !1, retainedTypes: !1, subprograms: !3, globals: !1, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !{!"0x2e\00testVLAwithSize\00testVLAwithSize\00\001\000\001\000\006\00256\000\002", !28, !6, !7, null, void (i32)* @testVLAwithSize, null, null, !1} ; [ DW_TAG_subprogram ]
-!6 = !{!"0x29", !28} ; [ DW_TAG_file_type ]
-!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = !MDSubprogram(name: "testVLAwithSize", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 2, file: !28, scope: !6, type: !7, function: void (i32)* @testVLAwithSize, variables: !1)
+!6 = !MDFile(filename: "bar.c", directory: "/Users/echristo/tmp")
+!7 = !MDSubroutineType(types: !8)
 !8 = !{null, !9}
-!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ]
-!10 = !{!"0x101\00s\0016777217\000", !5, !6, !9} ; [ DW_TAG_arg_variable ]
+!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "s", line: 1, arg: 1, scope: !5, file: !6, type: !9)
 !11 = !MDLocation(line: 1, column: 26, scope: !5)
 !12 = !MDLocation(line: 3, column: 13, scope: !13)
-!13 = !{!"0xb\002\001\000", !28, !5} ; [ DW_TAG_lexical_block ]
-!14 = !{!"0x100\00vla\003\000", !13, !6, !15} ; [ DW_TAG_auto_variable ]
-!15 = !{!"0x1\00\000\000\0032\000\000", null, null, !9, !16, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 0, align 32, offset 0] [from int]
+!13 = distinct !MDLexicalBlock(line: 2, column: 1, file: !28, scope: !5)
+!14 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "vla", line: 3, scope: !13, file: !6, type: !15)
+!15 = !MDCompositeType(tag: DW_TAG_array_type, align: 32, baseType: !9, elements: !16)
 !16 = !{!17}
-!17 = !{!"0x21\000\00-1"}        ; [ DW_TAG_subrange_type ]
+!17 = !MDSubrange(count: -1)
 !18 = !MDLocation(line: 3, column: 7, scope: !13)
-!19 = !{!"0x100\00i\004\000", !13, !6, !9} ; [ DW_TAG_auto_variable ]
+!19 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "i", line: 4, scope: !13, file: !6, type: !9)
 !20 = !MDLocation(line: 4, column: 7, scope: !13)
 !21 = !MDLocation(line: 5, column: 8, scope: !22)
-!22 = !{!"0xb\005\003\001", !28, !13} ; [ DW_TAG_lexical_block ]
+!22 = distinct !MDLexicalBlock(line: 5, column: 3, file: !28, scope: !13)
 !23 = !MDLocation(line: 6, column: 5, scope: !24)
-!24 = !{!"0xb\005\0027\002", !28, !22} ; [ DW_TAG_lexical_block ]
+!24 = distinct !MDLexicalBlock(line: 5, column: 27, file: !28, scope: !22)
 !25 = !MDLocation(line: 7, column: 3, scope: !24)
 !26 = !MDLocation(line: 5, column: 22, scope: !22)
 !27 = !MDLocation(line: 8, column: 1, scope: !13)
-!28 = !{!"bar.c", !"/Users/echristo/tmp"}
-!29 = !{i32 1, !"Debug Info Version", i32 2}
-!30 = !{!"0x102\006\006"} ; [ DW_TAG_expression ] [DW_OP_deref]
+!28 = !MDFile(filename: "bar.c", directory: "/Users/echristo/tmp")
+!29 = !{i32 1, !"Debug Info Version", i32 3}
+!30 = !MDExpression(DW_OP_deref, DW_OP_deref)

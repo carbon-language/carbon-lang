@@ -13,15 +13,15 @@ entry:
 !llvm.module.flags = !{!10}
 !llvm.gcov = !{!9}
 
-!0 = !{!"0x11\004\00clang version 3.3 (trunk 177323)\000\00\000\00\000", !2, !3, !3, !4, !3,  !3} ; [ DW_TAG_compile_unit ] [/home/nlewycky/hello.cc] [DW_LANG_C_plus_plus]
-!1 = !{!"0x29", !2}          ; [ DW_TAG_file_type ] [/home/nlewycky/hello.cc]
-!2 = !{!"hello.cc", !"/home/nlewycky"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.3 (trunk 177323)", isOptimized: false, emissionKind: 0, file: !2, enums: !3, retainedTypes: !3, subprograms: !4, globals: !3, imports:  !3)
+!1 = !MDFile(filename: "hello.cc", directory: "/home/nlewycky")
+!2 = !MDFile(filename: "hello.cc", directory: "/home/nlewycky")
 !3 = !{i32 0}
 !4 = !{!5}
-!5 = !{!"0x2e\00foo\00foo\00_Z3foov\001\000\001\000\006\00256\000\001", !1, !1, !6, null, void ()* @_Z3foov, null, null, !3} ; [ DW_TAG_subprogram ] [line 1] [def] [foo]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !7, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = !MDSubprogram(name: "foo", linkageName: "_Z3foov", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !1, type: !6, function: void ()* @_Z3foov, variables: !3)
+!6 = !MDSubroutineType(types: !7)
 !7 = !{null}
 !8 = !MDLocation(line: 1, scope: !5)
 
 
-!10 = !{i32 1, !"Debug Info Version", i32 2}
+!10 = !{i32 1, !"Debug Info Version", i32 3}

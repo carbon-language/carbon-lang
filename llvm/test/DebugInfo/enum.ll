@@ -39,7 +39,7 @@
 define void @_Z4funcv() #0 {
 entry:
   %b = alloca i32, align 4
-  call void @llvm.dbg.declare(metadata i32* %b, metadata !20, metadata !{!"0x102"}), !dbg !22
+  call void @llvm.dbg.declare(metadata i32* %b, metadata !20, metadata !MDExpression()), !dbg !22
   store i32 0, i32* %b, align 4, !dbg !22
   ret void, !dbg !23
 }
@@ -53,28 +53,28 @@ attributes #1 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!19, !24}
 
-!0 = !{!"0x11\004\00clang version 3.4 \000\00\000\00\000", !1, !2, !11, !12, !17, !11} ; [ DW_TAG_compile_unit ] [/tmp/enum.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"enum.cpp", !"/tmp"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.4 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !11, subprograms: !12, globals: !17, imports: !11)
+!1 = !MDFile(filename: "enum.cpp", directory: "/tmp")
 !2 = !{!3, !8}
-!3 = !{!"0x4\00e1\001\0064\0064\000\000\000", !1, null, null, !4, null, null, null} ; [ DW_TAG_enumeration_type ] [e1] [line 1, size 64, align 64, offset 0] [def] [from ]
+!3 = !MDCompositeType(tag: DW_TAG_enumeration_type, name: "e1", line: 1, size: 64, align: 64, file: !1, elements: !4)
 !4 = !{!5, !6, !7}
-!5 = !{!"0x28\00I\000"} ; [ DW_TAG_enumerator ] [I :: 0]
-!6 = !{!"0x28\00J\004294967295"} ; [ DW_TAG_enumerator ] [J :: 4294967295]
-!7 = !{!"0x28\00K\00-1152921504606846976"} ; [ DW_TAG_enumerator ] [K :: 17293822569102704640]
-!8 = !{!"0x4\00e2\002\0032\0032\000\000\000", !1, null, null, !9, null, null, null} ; [ DW_TAG_enumeration_type ] [e2] [line 2, size 32, align 32, offset 0] [def] [from ]
+!5 = !MDEnumerator(name: "I", value: 0) ; [ DW_TAG_enumerator ] [I :: 0]
+!6 = !MDEnumerator(name: "J", value: 4294967295) ; [ DW_TAG_enumerator ] [J :: 4294967295]
+!7 = !MDEnumerator(name: "K", value: -1152921504606846976) ; [ DW_TAG_enumerator ] [K :: 17293822569102704640]
+!8 = !MDCompositeType(tag: DW_TAG_enumeration_type, name: "e2", line: 2, size: 32, align: 32, file: !1, elements: !9)
 !9 = !{!10}
-!10 = !{!"0x28\00X\000"} ; [ DW_TAG_enumerator ] [X :: 0]
+!10 = !MDEnumerator(name: "X", value: 0) ; [ DW_TAG_enumerator ] [X :: 0]
 !11 = !{}
 !12 = !{!13}
-!13 = !{!"0x2e\00func\00func\00_Z4funcv\003\000\001\000\006\00256\000\003", !1, !14, !15, null, void ()* @_Z4funcv, null, null, !11} ; [ DW_TAG_subprogram ] [line 3] [def] [func]
-!14 = !{!"0x29", !1}         ; [ DW_TAG_file_type ] [/tmp/enum.cpp]
-!15 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !16, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!13 = !MDSubprogram(name: "func", linkageName: "_Z4funcv", line: 3, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 3, file: !1, scope: !14, type: !15, function: void ()* @_Z4funcv, variables: !11)
+!14 = !MDFile(filename: "enum.cpp", directory: "/tmp")
+!15 = !MDSubroutineType(types: !16)
 !16 = !{null}
 !17 = !{!18}
-!18 = !{!"0x34\00a\00a\00\001\000\001", null, !14, !3, i64* @a, null} ; [ DW_TAG_variable ] [a] [line 1] [def]
+!18 = !MDGlobalVariable(name: "a", line: 1, isLocal: false, isDefinition: true, scope: null, file: !14, type: !3, variable: i64* @a)
 !19 = !{i32 2, !"Dwarf Version", i32 3}
-!20 = !{!"0x100\00b\004\000", !13, !14, !21} ; [ DW_TAG_auto_variable ] [b] [line 4]
-!21 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!20 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "b", line: 4, scope: !13, file: !14, type: !21)
+!21 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !22 = !MDLocation(line: 4, scope: !13)
 !23 = !MDLocation(line: 5, scope: !13)
-!24 = !{i32 1, !"Debug Info Version", i32 2}
+!24 = !{i32 1, !"Debug Info Version", i32 3}

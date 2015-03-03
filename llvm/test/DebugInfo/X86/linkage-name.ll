@@ -14,9 +14,9 @@ entry:
   %this.addr = alloca %class.A*, align 8
   %b.addr = alloca i32, align 4
   store %class.A* %this, %class.A** %this.addr, align 8
-  call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !21, metadata !{!"0x102"}), !dbg !23
+  call void @llvm.dbg.declare(metadata %class.A** %this.addr, metadata !21, metadata !MDExpression()), !dbg !23
   store i32 %b, i32* %b.addr, align 4
-  call void @llvm.dbg.declare(metadata i32* %b.addr, metadata !24, metadata !{!"0x102"}), !dbg !25
+  call void @llvm.dbg.declare(metadata i32* %b.addr, metadata !24, metadata !MDExpression()), !dbg !25
   %this1 = load %class.A*, %class.A** %this.addr
   %0 = load i32, i32* %b.addr, align 4, !dbg !26
   ret i32 %0, !dbg !26
@@ -27,26 +27,26 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!29}
 
-!0 = !{!"0x11\004\00clang version 3.1 (trunk 152691) (llvm/trunk 152692)\000\00\000\00\000", !28, !1, !1, !3, !18,  !1} ; [ DW_TAG_compile_unit ]
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.1 (trunk 152691) (llvm/trunk 152692)", isOptimized: false, emissionKind: 0, file: !28, enums: !1, retainedTypes: !1, subprograms: !3, globals: !18, imports:  !1)
 !1 = !{}
 !3 = !{!5}
-!5 = !{!"0x2e\00a\00a\00_ZN1A1aEi\005\000\001\000\006\00256\000\005", !6, null, !7, null, i32 (%class.A*, i32)* @_ZN1A1aEi, null, !13, null} ; [ DW_TAG_subprogram ]
-!6 = !{!"0x29", !28} ; [ DW_TAG_file_type ]
-!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!5 = !MDSubprogram(name: "a", linkageName: "_ZN1A1aEi", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 5, file: !6, scope: null, type: !7, function: i32 (%class.A*, i32)* @_ZN1A1aEi, declaration: !13)
+!6 = !MDFile(filename: "foo.cpp", directory: "/Users/echristo")
+!7 = !MDSubroutineType(types: !8)
 !8 = !{!9, !10, !9}
-!9 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ]
-!10 = !{!"0xf\00\000\0064\0064\000\0064", i32 0, null, !11} ; [ DW_TAG_pointer_type ]
-!11 = !{!"0x2\00A\001\008\008\000\000\000", !28, null, null, !12, null, null, null} ; [ DW_TAG_class_type ] [A] [line 1, size 8, align 8, offset 0] [def] [from ]
+!9 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
+!10 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial, baseType: !11)
+!11 = !MDCompositeType(tag: DW_TAG_class_type, name: "A", line: 1, size: 8, align: 8, file: !28, elements: !12)
 !12 = !{!13}
-!13 = !{!"0x2e\00a\00a\00_ZN1A1aEi\002\000\000\000\006\00257\000\000", !6, !11, !7, null, null, null, i32 0, null} ; [ DW_TAG_subprogram ]
+!13 = !MDSubprogram(name: "a", linkageName: "_ZN1A1aEi", line: 2, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrivate | DIFlagPrototyped, isOptimized: false, file: !6, scope: !11, type: !7)
 !18 = !{!20}
-!20 = !{!"0x34\00a\00a\00\009\000\001", null, !6, !11, %class.A* @a, null} ; [ DW_TAG_variable ]
-!21 = !{!"0x101\00this\0016777221\0064", !5, !6, !22} ; [ DW_TAG_arg_variable ]
-!22 = !{!"0xf\00\000\0064\0064\000\000", null, null, !11} ; [ DW_TAG_pointer_type ]
+!20 = !MDGlobalVariable(name: "a", line: 9, isLocal: false, isDefinition: true, scope: null, file: !6, type: !11, variable: %class.A* @a)
+!21 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "this", line: 5, arg: 1, flags: DIFlagArtificial, scope: !5, file: !6, type: !22)
+!22 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !11)
 !23 = !MDLocation(line: 5, column: 8, scope: !5)
-!24 = !{!"0x101\00b\0033554437\000", !5, !6, !9} ; [ DW_TAG_arg_variable ]
+!24 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "b", line: 5, arg: 2, scope: !5, file: !6, type: !9)
 !25 = !MDLocation(line: 5, column: 14, scope: !5)
 !26 = !MDLocation(line: 6, column: 4, scope: !27)
-!27 = !{!"0xb\005\0017\000", !6, !5} ; [ DW_TAG_lexical_block ]
-!28 = !{!"foo.cpp", !"/Users/echristo"}
-!29 = !{i32 1, !"Debug Info Version", i32 2}
+!27 = distinct !MDLexicalBlock(line: 5, column: 17, file: !6, scope: !5)
+!28 = !MDFile(filename: "foo.cpp", directory: "/Users/echristo")
+!29 = !{i32 1, !"Debug Info Version", i32 3}

@@ -55,9 +55,9 @@ define void @_Z1biz(i32 %c, ...) #0 {
   %a = alloca %struct.A, align 1
   %fptr = alloca void (i32, ...)*, align 8
   store i32 %c, i32* %1, align 4
-  call void @llvm.dbg.declare(metadata i32* %1, metadata !21, metadata !{!"0x102"}), !dbg !22
-  call void @llvm.dbg.declare(metadata %struct.A* %a, metadata !23, metadata !{!"0x102"}), !dbg !24
-  call void @llvm.dbg.declare(metadata void (i32, ...)** %fptr, metadata !25, metadata !{!"0x102"}), !dbg !27
+  call void @llvm.dbg.declare(metadata i32* %1, metadata !21, metadata !MDExpression()), !dbg !22
+  call void @llvm.dbg.declare(metadata %struct.A* %a, metadata !23, metadata !MDExpression()), !dbg !24
+  call void @llvm.dbg.declare(metadata void (i32, ...)** %fptr, metadata !25, metadata !MDExpression()), !dbg !27
   store void (i32, ...)* @_Z1biz, void (i32, ...)** %fptr, align 8, !dbg !27
   ret void, !dbg !28
 }
@@ -72,31 +72,31 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!18, !19}
 !llvm.ident = !{!20}
 
-!0 = !{!"0x11\004\00clang version 3.5 \000\00\000\00\000", !1, !2, !3, !13, !2, !2} ; [ DW_TAG_compile_unit ] [llvm/tools/clang/test/CodeGenCXX/debug-info-varargs.cpp] [DW_LANG_C_plus_plus]
-!1 = !{!"llvm/tools/clang/test/CodeGenCXX/debug-info-varargs.cpp", !"radar/13690847"}
+!0 = !MDCompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !3, subprograms: !13, globals: !2, imports: !2)
+!1 = !MDFile(filename: "llvm/tools/clang/test/CodeGenCXX/debug-info-varargs.cpp", directory: "radar/13690847")
 !2 = !{}
 !3 = !{!4}
-!4 = !{!"0x13\00A\003\008\008\000\000\000", !1, null, null, !5, null, null, !"_ZTS1A"} ; [ DW_TAG_structure_type ] [A] [line 3, size 8, align 8, offset 0] [def] [from ]
+!4 = !MDCompositeType(tag: DW_TAG_structure_type, name: "A", line: 3, size: 8, align: 8, file: !1, elements: !5, identifier: "_ZTS1A")
 !5 = !{!6}
-!6 = !{!"0x2e\00a\00a\00_ZN1A1aEiz\006\000\000\000\006\00256\000\006", !1, !"_ZTS1A", !7, null, null, null, i32 0, !12} ; [ DW_TAG_subprogram ] [line 6] [a]
-!7 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !8, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!6 = !MDSubprogram(name: "a", linkageName: "_ZN1A1aEiz", line: 6, isLocal: false, isDefinition: false, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !"_ZTS1A", type: !7, variables: !12)
+!7 = !MDSubroutineType(types: !8)
 !8 = !{null, !9, !10, null}
-!9 = !{!"0xf\00\000\0064\0064\000\001088", null, null, !"_ZTS1A"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [artificial] [from _ZTS1A]
-!10 = !{!"0x24\00int\000\0032\0032\000\000\005", null, null} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
+!9 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, flags: DIFlagArtificial | DIFlagObjectPointer, baseType: !"_ZTS1A")
+!10 = !MDBasicType(tag: DW_TAG_base_type, name: "int", size: 32, align: 32, encoding: DW_ATE_signed)
 !12 = !{i32 786468}
 !13 = !{!14}
-!14 = !{!"0x2e\00b\00b\00_Z1biz\0013\000\001\000\006\00256\000\0013", !1, !15, !16, null, void (i32, ...)* @_Z1biz, null, null, !2} ; [ DW_TAG_subprogram ] [line 13] [def] [b]
-!15 = !{!"0x29", !1}         ; [ DW_TAG_file_type ] [llvm/tools/clang/test/CodeGenCXX/debug-info-varargs.cpp]
-!16 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !17, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!14 = !MDSubprogram(name: "b", linkageName: "_Z1biz", line: 13, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 13, file: !1, scope: !15, type: !16, function: void (i32, ...)* @_Z1biz, variables: !2)
+!15 = !MDFile(filename: "llvm/tools/clang/test/CodeGenCXX/debug-info-varargs.cpp", directory: "radar/13690847")
+!16 = !MDSubroutineType(types: !17)
 !17 = !{null, !10, null}
 !18 = !{i32 2, !"Dwarf Version", i32 2}
-!19 = !{i32 1, !"Debug Info Version", i32 2}
+!19 = !{i32 1, !"Debug Info Version", i32 3}
 !20 = !{!"clang version 3.5 "}
-!21 = !{!"0x101\00c\0016777229\000", !14, !15, !10} ; [ DW_TAG_arg_variable ] [c] [line 13]
+!21 = !MDLocalVariable(tag: DW_TAG_arg_variable, name: "c", line: 13, arg: 1, scope: !14, file: !15, type: !10)
 !22 = !MDLocation(line: 13, scope: !14)
-!23 = !{!"0x100\00a\0016\000", !14, !15, !4} ; [ DW_TAG_auto_variable ] [a] [line 16]
+!23 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "a", line: 16, scope: !14, file: !15, type: !4)
 !24 = !MDLocation(line: 16, scope: !14)
-!25 = !{!"0x100\00fptr\0018\000", !14, !15, !26} ; [ DW_TAG_auto_variable ] [fptr] [line 18]
-!26 = !{!"0xf\00\000\0064\0064\000\000", null, null, !16} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from ]
+!25 = !MDLocalVariable(tag: DW_TAG_auto_variable, name: "fptr", line: 18, scope: !14, file: !15, type: !26)
+!26 = !MDDerivedType(tag: DW_TAG_pointer_type, size: 64, align: 64, baseType: !16)
 !27 = !MDLocation(line: 18, scope: !14)
 !28 = !MDLocation(line: 22, scope: !14)
