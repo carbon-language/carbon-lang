@@ -36,7 +36,9 @@ WhitespaceManager::Change::Change(
       PreviousLinePostfix(PreviousLinePostfix),
       CurrentLinePrefix(CurrentLinePrefix), Kind(Kind),
       ContinuesPPDirective(ContinuesPPDirective), IndentLevel(IndentLevel),
-      Spaces(Spaces) {}
+      Spaces(Spaces), IsTrailingComment(false), TokenLength(0),
+      PreviousEndOfTokenColumn(0), EscapedNewlineColumn(0),
+      StartOfBlockComment(nullptr), IndentationOffset(0) {}
 
 void WhitespaceManager::reset() {
   Changes.clear();
@@ -232,7 +234,6 @@ void WhitespaceManager::alignEscapedNewlines() {
   unsigned MaxEndOfLine =
       Style.AlignEscapedNewlinesLeft ? 0 : Style.ColumnLimit;
   unsigned StartOfMacro = 0;
-  Changes[0].EscapedNewlineColumn = 0;
   for (unsigned i = 1, e = Changes.size(); i < e; ++i) {
     Change &C = Changes[i];
     if (C.NewlinesBefore > 0) {
