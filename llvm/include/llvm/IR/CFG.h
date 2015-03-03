@@ -136,6 +136,8 @@ private:
   public:
     explicit SuccessorProxy(const Self &it) : it(it) {}
 
+    SuccessorProxy(const SuccessorProxy&) = default;
+
     SuccessorProxy &operator=(SuccessorProxy r) {
       *this = reference(r);
       return *this;
