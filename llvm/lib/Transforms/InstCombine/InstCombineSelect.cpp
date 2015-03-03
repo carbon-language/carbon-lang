@@ -1203,37 +1203,41 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
         return NV;
 
   if (SelectInst *TrueSI = dyn_cast<SelectInst>(TrueVal)) {
-    // select(C, select(C, a, b), c) -> select(C, a, c)
-    if (TrueSI->getCondition() == CondVal) {
-      if (SI.getTrueValue() == TrueSI->getTrueValue())
-        return nullptr;
-      SI.setOperand(1, TrueSI->getTrueValue());
-      return &SI;
-    }
-    // select(C0, select(C1, a, b), b) -> select(C0&C1, a, b)
-    // We choose this as normal form to enable folding on the And and shortening
-    // paths for the values (this helps GetUnderlyingObjects() for example).
-    if (TrueSI->getFalseValue() == FalseVal && TrueSI->hasOneUse()) {
-      Value *And = Builder->CreateAnd(CondVal, TrueSI->getCondition());
-      SI.setOperand(0, And);
-      SI.setOperand(1, TrueSI->getTrueValue());
-      return &SI;
+    if (TrueSI->getCondition()->getType() == CondVal->getType()) {
+      // select(C, select(C, a, b), c) -> select(C, a, c)
+      if (TrueSI->getCondition() == CondVal) {
+        if (SI.getTrueValue() == TrueSI->getTrueValue())
+          return nullptr;
+        SI.setOperand(1, TrueSI->getTrueValue());
+        return &SI;
+      }
+      // select(C0, select(C1, a, b), b) -> select(C0&C1, a, b)
+      // We choose this as normal form to enable folding on the And and shortening
+      // paths for the values (this helps GetUnderlyingObjects() for example).
+      if (TrueSI->getFalseValue() == FalseVal && TrueSI->hasOneUse()) {
+        Value *And = Builder->CreateAnd(CondVal, TrueSI->getCondition());
+        SI.setOperand(0, And);
+        SI.setOperand(1, TrueSI->getTrueValue());
+        return &SI;
+      }
     }
   }
   if (SelectInst *FalseSI = dyn_cast<SelectInst>(FalseVal)) {
-    // select(C, a, select(C, b, c)) -> select(C, a, c)
-    if (FalseSI->getCondition() == CondVal) {
-      if (SI.getFalseValue() == FalseSI->getFalseValue())
-        return nullptr;
-      SI.setOperand(2, FalseSI->getFalseValue());
-      return &SI;
-    }
-    // select(C0, a, select(C1, a, b)) -> select(C0|C1, a, b)
-    if (FalseSI->getTrueValue() == TrueVal && FalseSI->hasOneUse()) {
-      Value *Or = Builder->CreateOr(CondVal, FalseSI->getCondition());
-      SI.setOperand(0, Or);
-      SI.setOperand(2, FalseSI->getFalseValue());
-      return &SI;
+    if (FalseSI->getCondition()->getType() == CondVal->getType()) {
+      // select(C, a, select(C, b, c)) -> select(C, a, c)
+      if (FalseSI->getCondition() == CondVal) {
+        if (SI.getFalseValue() == FalseSI->getFalseValue())
+          return nullptr;
+        SI.setOperand(2, FalseSI->getFalseValue());
+        return &SI;
+      }
+      // select(C0, a, select(C1, a, b)) -> select(C0|C1, a, b)
+      if (FalseSI->getTrueValue() == TrueVal && FalseSI->hasOneUse()) {
+        Value *Or = Builder->CreateOr(CondVal, FalseSI->getCondition());
+        SI.setOperand(0, Or);
+        SI.setOperand(2, FalseSI->getFalseValue());
+        return &SI;
+      }
     }
   }
 
