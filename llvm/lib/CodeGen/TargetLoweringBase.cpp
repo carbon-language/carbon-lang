@@ -1144,6 +1144,10 @@ TargetLoweringBase::emitPatchPoint(MachineInstr *MI,
 
 /// findRepresentativeClass - Return the largest legal super-reg register class
 /// of the register class for the specified type and its associated "cost".
+// This function is in TargetLowering because it uses RegClassForVT which would
+// need to be moved to TargetRegisterInfo and would necessitate moving
+// isTypeLegal over as well - a massive change that would just require
+// TargetLowering having a TargetRegisterInfo class member that it would use.
 std::pair<const TargetRegisterClass *, uint8_t>
 TargetLoweringBase::findRepresentativeClass(const TargetRegisterInfo *TRI,
                                             MVT VT) const {
