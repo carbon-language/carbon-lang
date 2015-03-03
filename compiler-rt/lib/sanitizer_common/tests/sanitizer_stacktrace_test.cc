@@ -30,11 +30,11 @@ class FastUnwindTest : public ::testing::Test {
   }
 
   void *mapping;
-  uptr *fake_stack;
+  uhwptr *fake_stack;
   const uptr fake_stack_size = 10;
-  uptr start_pc;
-  uptr fake_top;
-  uptr fake_bottom;
+  uhwptr start_pc;
+  uhwptr fake_top;
+  uhwptr fake_bottom;
   BufferedStackTrace trace;
 };
 
@@ -48,7 +48,7 @@ void FastUnwindTest::SetUp() {
   Mprotect((uptr)mapping, ps);
 
   // Unwinder may peek 1 word down from the starting FP.
-  fake_stack = (uptr *)((uptr)mapping + ps + sizeof(uptr));
+  fake_stack = (uhwptr *)((uptr)mapping + ps + sizeof(uhwptr));
 
   // Fill an array of pointers with fake fp+retaddr pairs.  Frame pointers have
   // even indices.
@@ -57,12 +57,12 @@ void FastUnwindTest::SetUp() {
     fake_stack[i+1] = PC(i + 1); // retaddr
   }
   // Mark the last fp point back up to terminate the stack trace.
-  fake_stack[RoundDownTo(fake_stack_size - 1, 2)] = (uptr)&fake_stack[0];
+  fake_stack[RoundDownTo(fake_stack_size - 1, 2)] = (uhwptr)&fake_stack[0];
 
   // Top is two slots past the end because FastUnwindStack subtracts two.
-  fake_top = (uptr)&fake_stack[fake_stack_size + 2];
+  fake_top = (uhwptr)&fake_stack[fake_stack_size + 2];
   // Bottom is one slot before the start because FastUnwindStack uses >.
-  fake_bottom = (uptr)mapping;
+  fake_bottom = (uhwptr)mapping;
   start_pc = PC(0);
 }
 
@@ -85,7 +85,7 @@ TEST_F(FastUnwindTest, Basic) {
 // From: http://code.google.com/p/address-sanitizer/issues/detail?id=162
 TEST_F(FastUnwindTest, FramePointerLoop) {
   // Make one fp point to itself.
-  fake_stack[4] = (uptr)&fake_stack[4];
+  fake_stack[4] = (uhwptr)&fake_stack[4];
   if (!TryFastUnwind(kStackTraceMax))
     return;
   // Should get all on-stack retaddrs up to the 4th slot and start_pc.
@@ -114,7 +114,7 @@ TEST_F(FastUnwindTest, OneFrameStackTrace) {
     return;
   EXPECT_EQ(1U, trace.size);
   EXPECT_EQ(start_pc, trace.trace[0]);
-  EXPECT_EQ((uptr)&fake_stack[0], trace.top_frame_bp);
+  EXPECT_EQ((uhwptr)&fake_stack[0], trace.top_frame_bp);
 }
 
 TEST_F(FastUnwindTest, ZeroFramesStackTrace) {
@@ -127,7 +127,7 @@ TEST_F(FastUnwindTest, ZeroFramesStackTrace) {
 TEST_F(FastUnwindTest, FPBelowPrevFP) {
   // The next FP points to unreadable memory inside the stack limits, but below
   // current FP.
-  fake_stack[0] = (uptr)&fake_stack[-50];
+  fake_stack[0] = (uhwptr)&fake_stack[-50];
   fake_stack[1] = PC(1);
   if (!TryFastUnwind(3))
     return;

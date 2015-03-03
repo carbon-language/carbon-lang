@@ -31,8 +31,8 @@ int main(void) {
     // CHECK: AddressSanitizer: stack-buffer-overflow
     // CHECK: {{.*ptrace.cc:}}[[@LINE-2]]
     assert(!res);
-#if __WORDSIZE == 64
-    printf("%zx\n", regs.rip);
+#ifdef __x86_64__
+    printf("%lx\n", (unsigned long)regs.rip);
 #else
     printf("%lx\n", regs.eip);
 #endif
@@ -42,7 +42,7 @@ int main(void) {
     assert(!res);
     printf("%lx\n", (unsigned long)fpregs.cwd);
 
-#if __WORDSIZE == 32
+#ifndef __x86_64__
     user_fpxregs_struct fpxregs;
     res = ptrace(PTRACE_GETFPXREGS, pid, NULL, &fpxregs);
     assert(!res);
