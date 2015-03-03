@@ -307,6 +307,11 @@ public:
 //===----------------------------------------------------------------------===//
 
 bool AArch64A57FPLoadBalancing::runOnMachineFunction(MachineFunction &F) {
+  // Don't do anything if this isn't an A53 or A57.
+  if (!(F.getSubtarget<AArch64Subtarget>().isCortexA53() ||
+        F.getSubtarget<AArch64Subtarget>().isCortexA57()))
+    return false;
+
   bool Changed = false;
   DEBUG(dbgs() << "***** AArch64A57FPLoadBalancing *****\n");
 
