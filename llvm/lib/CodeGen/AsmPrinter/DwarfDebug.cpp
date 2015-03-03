@@ -477,8 +477,11 @@ void DwarfDebug::beginModule() {
       ScopesWithImportedEntities.push_back(std::make_pair(
           DIImportedEntity(ImportedEntities.getElement(i)).getContext(),
           ImportedEntities.getElement(i)));
-    std::sort(ScopesWithImportedEntities.begin(),
-              ScopesWithImportedEntities.end(), less_first());
+    // Stable sort to preserve the order of appearance of imported entities.
+    // This is to avoid out-of-order processing of interdependent declarations
+    // within the same scope, e.g. { namespace A = base; namespace B = A; }
+    std::stable_sort(ScopesWithImportedEntities.begin(),
+                     ScopesWithImportedEntities.end(), less_first());
     DIArray GVs = CUNode.getGlobalVariables();
     for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i)
       CU.getOrCreateGlobalVariableDIE(DIGlobalVariable(GVs.getElement(i)));
