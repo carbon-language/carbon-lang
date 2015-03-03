@@ -1908,6 +1908,9 @@ public:
   typedef const unsigned* idx_iterator;
   inline idx_iterator idx_begin() const { return Indices.begin(); }
   inline idx_iterator idx_end()   const { return Indices.end(); }
+  inline iterator_range<idx_iterator> indices() const {
+    return iterator_range<idx_iterator>(idx_begin(), idx_end());
+  }
 
   Value *getAggregateOperand() {
     return getOperand(0);
@@ -2019,6 +2022,9 @@ public:
   typedef const unsigned* idx_iterator;
   inline idx_iterator idx_begin() const { return Indices.begin(); }
   inline idx_iterator idx_end()   const { return Indices.end(); }
+  inline iterator_range<idx_iterator> indices() const {
+    return iterator_range<idx_iterator>(idx_begin(), idx_end());
+  }
 
   Value *getAggregateOperand() {
     return getOperand(0);
