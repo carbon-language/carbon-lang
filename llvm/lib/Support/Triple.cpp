@@ -714,6 +714,14 @@ void Triple::getOSVersion(unsigned &Major, unsigned &Minor,
                           unsigned &Micro) const {
   StringRef OSName = getOSName();
 
+  // For Android, we care about the Android version rather than the Linux
+  // version.
+  if (getEnvironment() == Android) {
+    OSName = getEnvironmentName().substr(strlen("android"));
+    if (OSName.startswith("eabi"))
+      OSName = OSName.substr(strlen("eabi"));
+  }
+
   // Assume that the OS portion of the triple starts with the canonical name.
   StringRef OSTypeName = getOSTypeName(getOS());
   if (OSName.startswith(OSTypeName))
