@@ -16,6 +16,7 @@
 #include <vector>
 
 // Other libraries and framework includes
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallVector.h"
 
 // Project includes
@@ -26,6 +27,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Core/Value.h"
+#include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/Process.h"

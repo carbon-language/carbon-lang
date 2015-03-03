@@ -14,6 +14,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Breakpoint/BreakpointIDList.h"
+#include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/ModuleSpec.h"

@@ -11,6 +11,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectConstResult.h"
+#include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"

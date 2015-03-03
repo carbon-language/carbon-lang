@@ -12,6 +12,7 @@
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Expression/ClangExpressionVariable.h"
+#include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/Materializer.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Symbol.h"

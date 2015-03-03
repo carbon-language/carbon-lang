@@ -22,6 +22,7 @@
 #include "lldb/Core/Value.h"
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Expression/ClangExpression.h"
+#include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Target/Process.h"
 
 namespace lldb_private

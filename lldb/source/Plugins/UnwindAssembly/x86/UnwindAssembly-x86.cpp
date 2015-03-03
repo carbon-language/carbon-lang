@@ -10,6 +10,7 @@
 #include "UnwindAssembly-x86.h"
 
 #include "llvm-c/Disassembler.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/TargetSelect.h"
 
 #include "lldb/Core/Address.h"

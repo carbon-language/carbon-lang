@@ -13,6 +13,7 @@
 #include <algorithm>
 
 #include "lldb/Core/ArchSpec.h"
+#include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"

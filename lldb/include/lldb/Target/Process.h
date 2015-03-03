@@ -34,7 +34,6 @@
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Breakpoint/BreakpointSiteList.h"
-#include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/IRDynamicChecks.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"

@@ -26,6 +26,7 @@
 #include "lldb/Expression/ClangExpressionDeclMap.h"
 #include "lldb/Expression/ClangExpressionParser.h"
 #include "lldb/Expression/ClangFunction.h"
+#include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Expression/ExpressionSourceCode.h"
 #include "lldb/Expression/IRExecutionUnit.h"

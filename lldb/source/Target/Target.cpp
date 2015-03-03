@@ -34,6 +34,7 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Expression/ClangASTSource.h"
+#include "lldb/Expression/ClangPersistentVariables.h"
 #include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Expression/ClangModulesDeclVendor.h"
 #include "lldb/Host/FileSpec.h"

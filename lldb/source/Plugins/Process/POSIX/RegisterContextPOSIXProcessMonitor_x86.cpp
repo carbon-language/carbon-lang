@@ -7,8 +7,9 @@
 //
 //===---------------------------------------------------------------------===//
 
-#include "lldb/Target/Thread.h"
+#include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/RegisterValue.h"
+#include "lldb/Target/Thread.h"
 
 #include "Plugins/Process/POSIX/ProcessPOSIX.h"
 #include "RegisterContextPOSIXProcessMonitor_x86.h"
