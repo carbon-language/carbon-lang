@@ -1723,6 +1723,23 @@ unsigned ComputeNumSignBits(Value *V, const DataLayout *TD,
     Tmp = TyBits - U->getOperand(0)->getType()->getScalarSizeInBits();
     return ComputeNumSignBits(U->getOperand(0), TD, Depth+1, Q) + Tmp;
 
+  case Instruction::SDiv:
+    const APInt *Denominator;
+    // sdiv X, C -> adds log(C) sign bits.
+    if (match(U->getOperand(1), m_APInt(Denominator))) {
+
+      // Ignore non-positive denominator.
+      if (!Denominator->isStrictlyPositive())
+        break;
+
+      // Calculate the incoming numerator bits.
+      unsigned NumBits = ComputeNumSignBits(U->getOperand(0), TD, Depth+1, Q);
+
+      // Add floor(log(C)) bits to the numerator bits.
+      return std::min(TyBits, NumBits + Denominator->logBase2());
+    }
+    break;
+
   case Instruction::AShr: {
     Tmp = ComputeNumSignBits(U->getOperand(0), TD, Depth+1, Q);
     // ashr X, C   -> adds C sign bits.  Vectors too.

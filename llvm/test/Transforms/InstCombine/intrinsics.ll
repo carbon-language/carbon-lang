@@ -363,3 +363,26 @@ define i32 @cttz_select(i32 %Value) nounwind {
 ; CHECK-NEXT: call i32 @llvm.cttz.i32(i32 %Value, i1 false)
 ; CHECK-NEXT: ret i32
 }
+
+; CHECK-LABEL: @overflow_div_add(
+; CHECK: ret i1 false
+define i1 @overflow_div_add(i32 %v1, i32 %v2) nounwind {
+entry:
+  %div = sdiv i32 %v1, 2
+  %t = call %ov.result.32 @llvm.sadd.with.overflow.i32(i32 %div, i32 1)
+  %obit = extractvalue %ov.result.32 %t, 1
+  ret i1 %obit
+}
+
+; CHECK-LABEL: @overflow_div_sub(
+; CHECK: ret i1 false
+define i1 @overflow_div_sub(i32 %v1, i32 %v2) nounwind {
+entry:
+  ; Check cases where the known sign bits are larger than the word size.
+  %a = ashr i32 %v1, 18
+  %div = sdiv i32 %a, 65536
+  %t = call %ov.result.32 @llvm.ssub.with.overflow.i32(i32 %div, i32 1)
+  %obit = extractvalue %ov.result.32 %t, 1
+  ret i1 %obit
+}
+
