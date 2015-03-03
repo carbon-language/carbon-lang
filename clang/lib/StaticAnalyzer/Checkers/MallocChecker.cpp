@@ -161,10 +161,10 @@ class MallocChecker : public Checker<check::DeadSymbols,
 {
 public:
   MallocChecker()
-      : II_alloca(nullptr), II_alloca_builtin(nullptr), II_malloc(nullptr),
-        II_free(nullptr), II_realloc(nullptr), II_calloc(nullptr),
-        II_valloc(nullptr), II_reallocf(nullptr), II_strndup(nullptr),
-        II_strdup(nullptr), II_kmalloc(nullptr), II_if_nameindex(nullptr),
+      : II_alloca(nullptr), II_malloc(nullptr), II_free(nullptr), 
+        II_realloc(nullptr), II_calloc(nullptr), II_valloc(nullptr),
+        II_reallocf(nullptr), II_strndup(nullptr), II_strdup(nullptr), 
+        II_kmalloc(nullptr), II_if_nameindex(nullptr),
         II_if_freenameindex(nullptr) {}
 
   /// In pessimistic mode, the checker assumes that it does not know which
@@ -222,9 +222,9 @@ private:
   mutable std::unique_ptr<BugType> BT_FreeAlloca[CK_NumCheckKinds];
   mutable std::unique_ptr<BugType> BT_MismatchedDealloc;
   mutable std::unique_ptr<BugType> BT_OffsetFree[CK_NumCheckKinds];
-  mutable IdentifierInfo *II_alloca, *II_alloca_builtin, *II_malloc, *II_free,
-                         *II_realloc, *II_calloc, *II_valloc, *II_reallocf,
-                         *II_strndup, *II_strdup, *II_kmalloc, *II_if_nameindex,
+  mutable IdentifierInfo *II_alloca, *II_malloc, *II_free, *II_realloc,
+                         *II_calloc, *II_valloc, *II_reallocf, *II_strndup,
+                         *II_strdup, *II_kmalloc, *II_if_nameindex,
                          *II_if_freenameindex;
   mutable Optional<uint64_t> KernelZeroFlagVal;
 
@@ -508,7 +508,6 @@ void MallocChecker::initIdentifierInfo(ASTContext &Ctx) const {
   if (II_malloc)
     return;
   II_alloca = &Ctx.Idents.get("alloca");
-  II_alloca_builtin = &Ctx.Idents.get("__builtin_alloca");
   II_malloc = &Ctx.Idents.get("malloc");
   II_free = &Ctx.Idents.get("free");
   II_realloc = &Ctx.Idents.get("realloc");
@@ -577,7 +576,7 @@ bool MallocChecker::isCMemFunction(const FunctionDecl *FD,
     }
 
     if (Family == AF_Alloca && CheckAlloc) {
-      if (FunI == II_alloca || FunI == II_alloca_builtin)
+      if (FunI == II_alloca)
         return true;
     }
   }
@@ -763,7 +762,7 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
       State = MallocUpdateRefState(C, CE, State);
     } else if (FunI == II_strndup) {
       State = MallocUpdateRefState(C, CE, State);
-    } else if (FunI == II_alloca || FunI == II_alloca_builtin) {
+    } else if (FunI == II_alloca) {
       State = MallocMemAux(C, CE, CE->getArg(0), UndefinedVal(), State,
                            AF_Alloca);
     } else if (isStandardNewDelete(FD, C.getASTContext())) {
@@ -1248,7 +1247,8 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
   
   const MemSpaceRegion *MS = R->getMemorySpace();
   
-  // Parameters, locals, statics and globals shouldn't be freed.
+  // Parameters, locals, statics, globals, and memory returned by 
+  // __builtin_alloca() shouldn't be freed.
   if (!(isa<UnknownSpaceRegion>(MS) || isa<HeapSpaceRegion>(MS))) {
     // FIXME: at the time this code was written, malloc() regions were
     // represented by conjured symbols, which are all in UnknownSpaceRegion.
@@ -1257,8 +1257,12 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
     // Of course, free() can work on memory allocated outside the current
     // function, so UnknownSpaceRegion is always a possibility.
     // False negatives are better than false positives.
-    
-    ReportBadFree(C, ArgVal, ArgExpr->getSourceRange(), ParentExpr);
+
+    if (isa<AllocaRegion>(R))
+      ReportFreeAlloca(C, ArgVal, ArgExpr->getSourceRange());
+    else
+      ReportBadFree(C, ArgVal, ArgExpr->getSourceRange(), ParentExpr);
+
     return nullptr;
   }
 
