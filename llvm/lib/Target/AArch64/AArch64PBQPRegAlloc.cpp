@@ -319,7 +319,7 @@ void A57ChainingConstraint::addInterChainConstraint(PBQPRAGraph &G, unsigned Rd,
 
 static bool regJustKilledBefore(const LiveIntervals &LIs, unsigned reg,
                                 const MachineInstr &MI) {
-  LiveInterval LI = LIs.getInterval(reg);
+  const LiveInterval &LI = LIs.getInterval(reg);
   SlotIndex SI = LIs.getInstructionIndex(&MI);
   return LI.expiredAt(SI);
 }
