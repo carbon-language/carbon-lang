@@ -2664,6 +2664,8 @@ public:
   /// is created but not inserted into any basic blocks, and this method is
   /// called to expand it into a sequence of instructions, potentially also
   /// creating new basic blocks and control flow.
+  /// As long as the returned basic block is different (i.e., we created a new
+  /// one), the custom inserter is free to modify the rest of \p MBB.
   virtual MachineBasicBlock *
     EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const;
 
