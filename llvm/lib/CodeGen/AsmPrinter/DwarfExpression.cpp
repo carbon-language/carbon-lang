@@ -66,17 +66,18 @@ void DwarfExpression::AddShr(unsigned ShiftBy) {
 }
 
 bool DwarfExpression::AddMachineRegIndirect(unsigned MachineReg, int Offset) {
-  int DwarfReg = TRI.getDwarfRegNum(MachineReg, false);
-  if (DwarfReg < 0)
-    return false;
-
   if (isFrameRegister(MachineReg)) {
     // If variable offset is based in frame register then use fbreg.
     EmitOp(dwarf::DW_OP_fbreg);
     EmitSigned(Offset);
-  } else {
-    AddRegIndirect(DwarfReg, Offset);
+    return true;
   }
+
+  int DwarfReg = TRI.getDwarfRegNum(MachineReg, false);
+  if (DwarfReg < 0)
+    return false;
+
+  AddRegIndirect(DwarfReg, Offset);
   return true;
 }
 
