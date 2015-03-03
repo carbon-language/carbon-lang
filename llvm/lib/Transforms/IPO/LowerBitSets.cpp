@@ -31,7 +31,9 @@ using namespace llvm;
 
 #define DEBUG_TYPE "lowerbitsets"
 
-STATISTIC(NumBitSetsCreated, "Number of bitsets created");
+STATISTIC(ByteArraySizeBits, "Byte array size in bits");
+STATISTIC(ByteArraySizeBytes, "Byte array size in bytes");
+STATISTIC(NumByteArraysCreated, "Number of byte arrays created");
 STATISTIC(NumBitSetCallsLowered, "Number of bitset calls lowered");
 STATISTIC(NumBitSetDisjointSets, "Number of disjoint sets of bitsets");
 
@@ -46,7 +48,7 @@ bool BitSetInfo::containsGlobalOffset(uint64_t Offset) const {
   if (BitOffset >= BitSize)
     return false;
 
-  return (Bits[BitOffset / 8] >> (BitOffset % 8)) & 1;
+  return Bits.count(BitOffset);
 }
 
 bool BitSetInfo::containsValue(
@@ -101,18 +103,15 @@ BitSetInfo BitSetBuilder::build() {
   BSI.ByteOffset = Min;
 
   BSI.AlignLog2 = 0;
-  // FIXME: Can probably do something smarter if all offsets are 0.
   if (Mask != 0)
     BSI.AlignLog2 = countTrailingZeros(Mask, ZB_Undefined);
 
   // Build the compressed bitset while normalizing the offsets against the
   // computed alignment.
   BSI.BitSize = ((Max - Min) >> BSI.AlignLog2) + 1;
-  uint64_t ByteSize = (BSI.BitSize + 7) / 8;
-  BSI.Bits.resize(ByteSize);
   for (uint64_t Offset : Offsets) {
     Offset >>= BSI.AlignLog2;
-    BSI.Bits[Offset / 8] |= 1 << (Offset % 8);
+    BSI.Bits.insert(Offset);
   }
 
   return BSI;
@@ -147,13 +146,45 @@ void GlobalLayoutBuilder::addFragment(const std::set<uint64_t> &F) {
     FragmentMap[ObjIndex] = FragmentIndex;
 }
 
+void ByteArrayBuilder::allocate(const std::set<uint64_t> &Bits,
+                                uint64_t BitSize, uint64_t &AllocByteOffset,
+                                uint8_t &AllocMask) {
+  // Find the smallest current allocation.
+  unsigned Bit = 0;
+  for (unsigned I = 1; I != BitsPerByte; ++I)
+    if (BitAllocs[I] < BitAllocs[Bit])
+      Bit = I;
+
+  AllocByteOffset = BitAllocs[Bit];
+
+  // Add our size to it.
+  unsigned ReqSize = AllocByteOffset + BitSize;
+  BitAllocs[Bit] = ReqSize;
+  if (Bytes.size() < ReqSize)
+    Bytes.resize(ReqSize);
+
+  // Set our bits.
+  AllocMask = 1 << Bit;
+  for (uint64_t B : Bits)
+    Bytes[AllocByteOffset + B] |= AllocMask;
+}
+
 namespace {
+
+struct ByteArrayInfo {
+  std::set<uint64_t> Bits;
+  uint64_t BitSize;
+  GlobalVariable *ByteArray;
+  Constant *Mask;
+};
 
 struct LowerBitSets : public ModulePass {
   static char ID;
   LowerBitSets() : ModulePass(ID) {
     initializeLowerBitSetsPass(*PassRegistry::getPassRegistry());
   }
+
+  Module *M;
 
   const DataLayout *DL;
   IntegerType *Int1Ty;
@@ -169,20 +200,23 @@ struct LowerBitSets : public ModulePass {
   // Mapping from bitset mdstrings to the call sites that test them.
   DenseMap<MDString *, std::vector<CallInst *>> BitSetTestCallSites;
 
+  std::vector<ByteArrayInfo> ByteArrayInfos;
+
   BitSetInfo
   buildBitSet(MDString *BitSet,
               const DenseMap<GlobalVariable *, uint64_t> &GlobalLayout);
-  Value *createBitSetTest(IRBuilder<> &B, const BitSetInfo &BSI,
-                          GlobalVariable *BitSetGlobal, Value *BitOffset);
+  ByteArrayInfo *createByteArray(BitSetInfo &BSI);
+  void allocateByteArrays();
+  Value *createBitSetTest(IRBuilder<> &B, BitSetInfo &BSI, ByteArrayInfo *&BAI,
+                          Value *BitOffset);
   Value *
-  lowerBitSetCall(CallInst *CI, const BitSetInfo &BSI,
-                  GlobalVariable *BitSetGlobal, GlobalVariable *CombinedGlobal,
+  lowerBitSetCall(CallInst *CI, BitSetInfo &BSI, ByteArrayInfo *&BAI,
+                  GlobalVariable *CombinedGlobal,
                   const DenseMap<GlobalVariable *, uint64_t> &GlobalLayout);
-  void buildBitSetsFromGlobals(Module &M,
-                               const std::vector<MDString *> &BitSets,
+  void buildBitSetsFromGlobals(const std::vector<MDString *> &BitSets,
                                const std::vector<GlobalVariable *> &Globals);
-  bool buildBitSets(Module &M);
-  bool eraseBitSetMetadata(Module &M);
+  bool buildBitSets();
+  bool eraseBitSetMetadata();
 
   bool doInitialization(Module &M) override;
   bool runOnModule(Module &M) override;
@@ -198,19 +232,21 @@ char LowerBitSets::ID = 0;
 
 ModulePass *llvm::createLowerBitSetsPass() { return new LowerBitSets; }
 
-bool LowerBitSets::doInitialization(Module &M) {
-  DL = M.getDataLayout();
+bool LowerBitSets::doInitialization(Module &Mod) {
+  M = &Mod;
+
+  DL = M->getDataLayout();
   if (!DL)
     report_fatal_error("Data layout required");
 
-  Int1Ty = Type::getInt1Ty(M.getContext());
-  Int8Ty = Type::getInt8Ty(M.getContext());
-  Int32Ty = Type::getInt32Ty(M.getContext());
+  Int1Ty = Type::getInt1Ty(M->getContext());
+  Int8Ty = Type::getInt8Ty(M->getContext());
+  Int32Ty = Type::getInt32Ty(M->getContext());
   Int32PtrTy = PointerType::getUnqual(Int32Ty);
-  Int64Ty = Type::getInt64Ty(M.getContext());
-  IntPtrTy = DL->getIntPtrType(M.getContext(), 0);
+  Int64Ty = Type::getInt64Ty(M->getContext());
+  IntPtrTy = DL->getIntPtrType(M->getContext(), 0);
 
-  BitSetNM = M.getNamedMetadata("llvm.bitsets");
+  BitSetNM = M->getNamedMetadata("llvm.bitsets");
 
   BitSetTestCallSites.clear();
 
@@ -259,52 +295,113 @@ static Value *createMaskedBitTest(IRBuilder<> &B, Value *Bits,
   return B.CreateICmpNE(MaskedBits, ConstantInt::get(BitsType, 0));
 }
 
+ByteArrayInfo *LowerBitSets::createByteArray(BitSetInfo &BSI) {
+  // Create globals to stand in for byte arrays and masks. These never actually
+  // get initialized, we RAUW and erase them later in allocateByteArrays() once
+  // we know the offset and mask to use.
+  auto ByteArrayGlobal = new GlobalVariable(
+      *M, Int8Ty, /*isConstant=*/true, GlobalValue::PrivateLinkage, nullptr);
+  auto MaskGlobal = new GlobalVariable(
+      *M, Int8Ty, /*isConstant=*/true, GlobalValue::PrivateLinkage, nullptr);
+
+  ByteArrayInfos.emplace_back();
+  ByteArrayInfo *BAI = &ByteArrayInfos.back();
+
+  BAI->Bits = BSI.Bits;
+  BAI->BitSize = BSI.BitSize;
+  BAI->ByteArray = ByteArrayGlobal;
+  BAI->Mask = ConstantExpr::getPtrToInt(MaskGlobal, Int8Ty);
+  return BAI;
+}
+
+void LowerBitSets::allocateByteArrays() {
+  std::stable_sort(ByteArrayInfos.begin(), ByteArrayInfos.end(),
+                   [](const ByteArrayInfo &BAI1, const ByteArrayInfo &BAI2) {
+                     return BAI1.BitSize > BAI2.BitSize;
+                   });
+
+  std::vector<uint64_t> ByteArrayOffsets(ByteArrayInfos.size());
+
+  ByteArrayBuilder BAB;
+  for (unsigned I = 0; I != ByteArrayInfos.size(); ++I) {
+    ByteArrayInfo *BAI = &ByteArrayInfos[I];
+
+    uint8_t Mask;
+    BAB.allocate(BAI->Bits, BAI->BitSize, ByteArrayOffsets[I], Mask);
+
+    BAI->Mask->replaceAllUsesWith(ConstantInt::get(Int8Ty, Mask));
+    cast<GlobalVariable>(BAI->Mask->getOperand(0))->eraseFromParent();
+  }
+
+  Constant *ByteArrayConst = ConstantDataArray::get(M->getContext(), BAB.Bytes);
+  auto ByteArray =
+      new GlobalVariable(*M, ByteArrayConst->getType(), /*isConstant=*/true,
+                         GlobalValue::PrivateLinkage, ByteArrayConst);
+
+  for (unsigned I = 0; I != ByteArrayInfos.size(); ++I) {
+    ByteArrayInfo *BAI = &ByteArrayInfos[I];
+
+    Constant *Idxs[] = {ConstantInt::get(IntPtrTy, 0),
+                        ConstantInt::get(IntPtrTy, ByteArrayOffsets[I])};
+    Constant *GEP = ConstantExpr::getInBoundsGetElementPtr(ByteArray, Idxs);
+
+    // Create an alias instead of RAUW'ing the gep directly. On x86 this ensures
+    // that the pc-relative displacement is folded into the lea instead of the
+    // test instruction getting another displacement.
+    GlobalAlias *Alias = GlobalAlias::create(
+        Int8Ty, 0, GlobalValue::PrivateLinkage, "bits", GEP, M);
+    BAI->ByteArray->replaceAllUsesWith(Alias);
+    BAI->ByteArray->eraseFromParent();
+  }
+
+  ByteArraySizeBits = BAB.BitAllocs[0] + BAB.BitAllocs[1] + BAB.BitAllocs[2] +
+                      BAB.BitAllocs[3] + BAB.BitAllocs[4] + BAB.BitAllocs[5] +
+                      BAB.BitAllocs[6] + BAB.BitAllocs[7];
+  ByteArraySizeBytes = BAB.Bytes.size();
+}
+
 /// Build a test that bit BitOffset is set in BSI, where
 /// BitSetGlobal is a global containing the bits in BSI.
-Value *LowerBitSets::createBitSetTest(IRBuilder<> &B, const BitSetInfo &BSI,
-                                      GlobalVariable *BitSetGlobal,
-                                      Value *BitOffset) {
-  if (BSI.Bits.size() <= 8) {
+Value *LowerBitSets::createBitSetTest(IRBuilder<> &B, BitSetInfo &BSI,
+                                      ByteArrayInfo *&BAI, Value *BitOffset) {
+  if (BSI.BitSize <= 64) {
     // If the bit set is sufficiently small, we can avoid a load by bit testing
     // a constant.
     IntegerType *BitsTy;
-    if (BSI.Bits.size() <= 4)
+    if (BSI.BitSize <= 32)
       BitsTy = Int32Ty;
     else
       BitsTy = Int64Ty;
 
     uint64_t Bits = 0;
-    for (auto I = BSI.Bits.rbegin(), E = BSI.Bits.rend(); I != E; ++I) {
-      Bits <<= 8;
-      Bits |= *I;
-    }
+    for (auto Bit : BSI.Bits)
+      Bits |= uint64_t(1) << Bit;
     Constant *BitsConst = ConstantInt::get(BitsTy, Bits);
     return createMaskedBitTest(B, BitsConst, BitOffset);
   } else {
-    // TODO: We might want to use the memory variant of the bt instruction
-    // with the previously computed bit offset at -Os. This instruction does
-    // exactly what we want but has been benchmarked as being slower than open
-    // coding the load+bt.
-    Value *BitSetGlobalOffset =
-        B.CreateLShr(BitOffset, ConstantInt::get(IntPtrTy, 5));
-    Value *BitSetEntryAddr = B.CreateGEP(
-        ConstantExpr::getBitCast(BitSetGlobal, Int32PtrTy), BitSetGlobalOffset);
-    Value *BitSetEntry = B.CreateLoad(BitSetEntryAddr);
+    if (!BAI) {
+      ++NumByteArraysCreated;
+      BAI = createByteArray(BSI);
+    }
 
-    return createMaskedBitTest(B, BitSetEntry, BitOffset);
+    Value *ByteAddr = B.CreateGEP(BAI->ByteArray, BitOffset);
+    Value *Byte = B.CreateLoad(ByteAddr);
+
+    Value *ByteAndMask = B.CreateAnd(Byte, BAI->Mask);
+    return B.CreateICmpNE(ByteAndMask, ConstantInt::get(Int8Ty, 0));
   }
 }
 
 /// Lower a llvm.bitset.test call to its implementation. Returns the value to
 /// replace the call with.
 Value *LowerBitSets::lowerBitSetCall(
-    CallInst *CI, const BitSetInfo &BSI, GlobalVariable *BitSetGlobal,
+    CallInst *CI, BitSetInfo &BSI, ByteArrayInfo *&BAI,
     GlobalVariable *CombinedGlobal,
     const DenseMap<GlobalVariable *, uint64_t> &GlobalLayout) {
   Value *Ptr = CI->getArgOperand(0);
 
   if (BSI.containsValue(DL, GlobalLayout, Ptr))
-    return ConstantInt::getTrue(BitSetGlobal->getParent()->getContext());
+    return ConstantInt::getTrue(CombinedGlobal->getParent()->getContext());
 
   Constant *GlobalAsInt = ConstantExpr::getPtrToInt(CombinedGlobal, IntPtrTy);
   Constant *OffsetedGlobalAsInt = ConstantExpr::getAdd(
@@ -353,7 +450,7 @@ Value *LowerBitSets::lowerBitSetCall(
 
   // Now that we know that the offset is in range and aligned, load the
   // appropriate bit from the bitset.
-  Value *Bit = createBitSetTest(ThenB, BSI, BitSetGlobal, BitOffset);
+  Value *Bit = createBitSetTest(ThenB, BSI, BAI, BitOffset);
 
   // The value we want is 0 if we came directly from the initial block
   // (having failed the range or alignment checks), or the loaded bit if
@@ -368,7 +465,6 @@ Value *LowerBitSets::lowerBitSetCall(
 /// Given a disjoint set of bitsets and globals, layout the globals, build the
 /// bit sets and lower the llvm.bitset.test calls.
 void LowerBitSets::buildBitSetsFromGlobals(
-    Module &M,
     const std::vector<MDString *> &BitSets,
     const std::vector<GlobalVariable *> &Globals) {
   // Build a new global with the combined contents of the referenced globals.
@@ -391,9 +487,9 @@ void LowerBitSets::buildBitSetsFromGlobals(
   }
   if (!GlobalInits.empty())
     GlobalInits.pop_back();
-  Constant *NewInit = ConstantStruct::getAnon(M.getContext(), GlobalInits);
+  Constant *NewInit = ConstantStruct::getAnon(M->getContext(), GlobalInits);
   auto CombinedGlobal =
-      new GlobalVariable(M, NewInit->getType(), /*isConstant=*/true,
+      new GlobalVariable(*M, NewInit->getType(), /*isConstant=*/true,
                          GlobalValue::PrivateLinkage, NewInit);
 
   const StructLayout *CombinedGlobalLayout =
@@ -410,18 +506,12 @@ void LowerBitSets::buildBitSetsFromGlobals(
     // Build the bitset.
     BitSetInfo BSI = buildBitSet(BS, GlobalLayout);
 
-    // Create a global in which to store it.
-    ++NumBitSetsCreated;
-    Constant *BitsConst = ConstantDataArray::get(M.getContext(), BSI.Bits);
-    auto BitSetGlobal = new GlobalVariable(
-        M, BitsConst->getType(), /*isConstant=*/true,
-        GlobalValue::PrivateLinkage, BitsConst, BS->getString() + ".bits");
+    ByteArrayInfo *BAI = 0;
 
     // Lower each call to llvm.bitset.test for this bitset.
     for (CallInst *CI : BitSetTestCallSites[BS]) {
       ++NumBitSetCallsLowered;
-      Value *Lowered =
-          lowerBitSetCall(CI, BSI, BitSetGlobal, CombinedGlobal, GlobalLayout);
+      Value *Lowered = lowerBitSetCall(CI, BSI, BAI, CombinedGlobal, GlobalLayout);
       CI->replaceAllUsesWith(Lowered);
       CI->eraseFromParent();
     }
@@ -439,7 +529,7 @@ void LowerBitSets::buildBitSetsFromGlobals(
     GlobalAlias *GAlias = GlobalAlias::create(
         Globals[I]->getType()->getElementType(),
         Globals[I]->getType()->getAddressSpace(), Globals[I]->getLinkage(),
-        "", CombinedGlobalElemPtr, &M);
+        "", CombinedGlobalElemPtr, M);
     GAlias->takeName(Globals[I]);
     Globals[I]->replaceAllUsesWith(GAlias);
     Globals[I]->eraseFromParent();
@@ -447,9 +537,9 @@ void LowerBitSets::buildBitSetsFromGlobals(
 }
 
 /// Lower all bit sets in this module.
-bool LowerBitSets::buildBitSets(Module &M) {
+bool LowerBitSets::buildBitSets() {
   Function *BitSetTestFunc =
-      M.getFunction(Intrinsic::getName(Intrinsic::bitset_test));
+      M->getFunction(Intrinsic::getName(Intrinsic::bitset_test));
   if (!BitSetTestFunc)
     return false;
 
@@ -591,22 +681,24 @@ bool LowerBitSets::buildBitSets(Module &M) {
     });
 
     // Build the bitsets from this disjoint set.
-    buildBitSetsFromGlobals(M, BitSets, OrderedGlobals);
+    buildBitSetsFromGlobals(BitSets, OrderedGlobals);
   }
+
+  allocateByteArrays();
 
   return true;
 }
 
-bool LowerBitSets::eraseBitSetMetadata(Module &M) {
+bool LowerBitSets::eraseBitSetMetadata() {
   if (!BitSetNM)
     return false;
 
-  M.eraseNamedMetadata(BitSetNM);
+  M->eraseNamedMetadata(BitSetNM);
   return true;
 }
 
 bool LowerBitSets::runOnModule(Module &M) {
-  bool Changed = buildBitSets(M);
-  Changed |= eraseBitSetMetadata(M);
+  bool Changed = buildBitSets();
+  Changed |= eraseBitSetMetadata();
   return Changed;
 }

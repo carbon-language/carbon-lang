@@ -9,8 +9,9 @@ target datalayout = "e-p:32:32"
 @c = constant i32 3
 @d = constant [2 x i32] [i32 4, i32 5]
 
+; CHECK: [[BA:@[^ ]*]] = private constant [68 x i8] c"\03\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\02\00\01"
+
 ; Offset 0, 4 byte alignment
-; CHECK: @bitset1.bits = private constant [9 x i8] c"\03\00\00\00\00\00\00\00\08"
 !0 = !{!"bitset1", i32* @a, i32 0}
 ; CHECK-NODISCARD-DAG: !{!"bitset1", i32* @a, i32 0}
 !1 = !{!"bitset1", [63 x i32]* @b, i32 0}
@@ -19,14 +20,12 @@ target datalayout = "e-p:32:32"
 ; CHECK-NODISCARD-DAG: !{!"bitset1", [2 x i32]* @d, i32 4}
 
 ; Offset 4, 256 byte alignment
-; CHECK: @bitset2.bits = private constant [1 x i8] c"\03"
 !3 = !{!"bitset2", [63 x i32]* @b, i32 0}
 ; CHECK-NODISCARD-DAG: !{!"bitset2", [63 x i32]* @b, i32 0}
 !4 = !{!"bitset2", i32* @c, i32 0}
 ; CHECK-NODISCARD-DAG: !{!"bitset2", i32* @c, i32 0}
 
 ; Offset 0, 4 byte alignment
-; CHECK: @bitset3.bits = private constant [9 x i8] c"\01\00\00\00\00\00\00\00\02"
 !5 = !{!"bitset3", i32* @a, i32 0}
 ; CHECK-NODISCARD-DAG: !{!"bitset3", i32* @a, i32 0}
 !6 = !{!"bitset3", i32* @c, i32 0}
@@ -42,6 +41,9 @@ target datalayout = "e-p:32:32"
 ; CHECK: @b = alias getelementptr inbounds ({ i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }* [[G]], i32 0, i32 2)
 ; CHECK: @c = alias getelementptr inbounds ({ i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }* [[G]], i32 0, i32 4)
 ; CHECK: @d = alias getelementptr inbounds ({ i32, [0 x i8], [63 x i32], [4 x i8], i32, [0 x i8], [2 x i32] }* [[G]], i32 0, i32 6)
+
+; CHECK: @bits = private alias getelementptr inbounds ([68 x i8]* [[BA]], i32 0, i32 0)
+; CHECK: @bits1 = private alias getelementptr inbounds ([68 x i8]* [[BA]], i32 0, i32 0)
 
 declare i1 @llvm.bitset.test(i8* %ptr, metadata %bitset) nounwind readnone
 
@@ -59,15 +61,12 @@ define i1 @foo(i32* %p) {
   ; CHECK: [[R6:%[^ ]*]] = icmp ult i32 [[R5]], 68
   ; CHECK: br i1 [[R6]]
 
-  ; CHECK: [[R8:%[^ ]*]] = lshr i32 [[R5]], 5
-  ; CHECK: [[R9:%[^ ]*]] = getelementptr i32, i32* bitcast ([9 x i8]* @bitset1.bits to i32*), i32 [[R8]]
-  ; CHECK: [[R10:%[^ ]*]] = load i32, i32* [[R9]]
-  ; CHECK: [[R11:%[^ ]*]] = and i32 [[R5]], 31
-  ; CHECK: [[R12:%[^ ]*]] = shl i32 1, [[R11]]
-  ; CHECK: [[R13:%[^ ]*]] = and i32 [[R10]], [[R12]]
-  ; CHECK: [[R14:%[^ ]*]] = icmp ne i32 [[R13]], 0
+  ; CHECK: [[R8:%[^ ]*]] = getelementptr i8, i8* @bits, i32 [[R5]]
+  ; CHECK: [[R9:%[^ ]*]] = load i8, i8* [[R8]]
+  ; CHECK: [[R10:%[^ ]*]] = and i8 [[R9]], 1
+  ; CHECK: [[R11:%[^ ]*]] = icmp ne i8 [[R10]], 0
 
-  ; CHECK: [[R16:%[^ ]*]] = phi i1 [ false, {{%[^ ]*}} ], [ [[R14]], {{%[^ ]*}} ]
+  ; CHECK: [[R16:%[^ ]*]] = phi i1 [ false, {{%[^ ]*}} ], [ [[R11]], {{%[^ ]*}} ]
   %x = call i1 @llvm.bitset.test(i8* %pi8, metadata !"bitset1")
 
   ; CHECK-NOT: llvm.bitset.test
@@ -105,15 +104,12 @@ define i1 @baz(i32* %p) {
   ; CHECK: [[T6:%[^ ]*]] = icmp ult i32 [[T5]], 66
   ; CHECK: br i1 [[T6]]
 
-  ; CHECK: [[T8:%[^ ]*]] = lshr i32 [[T5]], 5
-  ; CHECK: [[T9:%[^ ]*]] = getelementptr i32, i32* bitcast ([9 x i8]* @bitset3.bits to i32*), i32 [[T8]]
-  ; CHECK: [[T10:%[^ ]*]] = load i32, i32* [[T9]]
-  ; CHECK: [[T11:%[^ ]*]] = and i32 [[T5]], 31
-  ; CHECK: [[T12:%[^ ]*]] = shl i32 1, [[T11]]
-  ; CHECK: [[T13:%[^ ]*]] = and i32 [[T10]], [[T12]]
-  ; CHECK: [[T14:%[^ ]*]] = icmp ne i32 [[T13]], 0
+  ; CHECK: [[T8:%[^ ]*]] = getelementptr i8, i8* @bits1, i32 [[T5]]
+  ; CHECK: [[T9:%[^ ]*]] = load i8, i8* [[T8]]
+  ; CHECK: [[T10:%[^ ]*]] = and i8 [[T9]], 2
+  ; CHECK: [[T11:%[^ ]*]] = icmp ne i8 [[T10]], 0
 
-  ; CHECK: [[T16:%[^ ]*]] = phi i1 [ false, {{%[^ ]*}} ], [ [[T14]], {{%[^ ]*}} ]
+  ; CHECK: [[T16:%[^ ]*]] = phi i1 [ false, {{%[^ ]*}} ], [ [[T11]], {{%[^ ]*}} ]
   %x = call i1 @llvm.bitset.test(i8* %pi8, metadata !"bitset3")
   ; CHECK: ret i1 [[T16]]
   ret i1 %x

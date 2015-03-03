@@ -30,8 +30,8 @@ class GlobalVariable;
 class Value;
 
 struct BitSetInfo {
-  // The actual bitset.
-  std::vector<uint8_t> Bits;
+  // The indices of the set bits in the bitset.
+  std::set<uint64_t> Bits;
 
   // The byte offset into the combined global represented by the bitset.
   uint64_t ByteOffset;
@@ -45,18 +45,11 @@ struct BitSetInfo {
   unsigned AlignLog2;
 
   bool isSingleOffset() const {
-    return Bits.size() == 1 && Bits[0] == 1;
+    return Bits.size() == 1;
   }
 
   bool isAllOnes() const {
-    for (unsigned I = 0; I != Bits.size() - 1; ++I)
-      if (Bits[I] != 0xFF)
-        return false;
-
-    if (BitSize % 8 == 0)
-      return Bits[Bits.size() - 1] == 0xFF;
-
-    return Bits[Bits.size() - 1] == (1 << (BitSize % 8)) - 1;
+    return Bits.size() == BitSize;
   }
 
   bool containsGlobalOffset(uint64_t Offset) const;
@@ -64,7 +57,6 @@ struct BitSetInfo {
   bool containsValue(const DataLayout *DL,
                      const DenseMap<GlobalVariable *, uint64_t> &GlobalLayout,
                      Value *V, uint64_t COffset = 0) const;
-
 };
 
 struct BitSetBuilder {
@@ -146,6 +138,59 @@ struct GlobalLayoutBuilder {
   /// If a previously seen fragment uses any of F's indices, that
   /// fragment will be laid out inside F.
   void addFragment(const std::set<uint64_t> &F);
+};
+
+/// This class is used to build a byte array containing overlapping bit sets. By
+/// loading from indexed offsets into the byte array and applying a mask, a
+/// program can test bits from the bit set with a relatively short instruction
+/// sequence. For example, suppose we have 15 bit sets to lay out:
+///
+/// A (16 bits), B (15 bits), C (14 bits), D (13 bits), E (12 bits),
+/// F (11 bits), G (10 bits), H (9 bits), I (7 bits), J (6 bits), K (5 bits),
+/// L (4 bits), M (3 bits), N (2 bits), O (1 bit)
+///
+/// These bits can be laid out in a 16-byte array like this:
+///
+///       Byte Offset
+///     0123456789ABCDEF
+/// Bit
+///   7 HHHHHHHHHIIIIIII
+///   6 GGGGGGGGGGJJJJJJ
+///   5 FFFFFFFFFFFKKKKK
+///   4 EEEEEEEEEEEELLLL
+///   3 DDDDDDDDDDDDDMMM
+///   2 CCCCCCCCCCCCCCNN
+///   1 BBBBBBBBBBBBBBBO
+///   0 AAAAAAAAAAAAAAAA
+///
+/// For example, to test bit X of A, we evaluate ((bits[X] & 1) != 0), or to
+/// test bit X of I, we evaluate ((bits[9 + X] & 0x80) != 0). This can be done
+/// in 1-2 machine instructions on x86, or 4-6 instructions on ARM.
+///
+/// This is a byte array, rather than (say) a 2-byte array or a 4-byte array,
+/// because for one thing it gives us better packing (the more bins there are,
+/// the less evenly they will be filled), and for another, the instruction
+/// sequences can be slightly shorter, both on x86 and ARM.
+struct ByteArrayBuilder {
+  /// The byte array built so far.
+  std::vector<uint8_t> Bytes;
+
+  enum { BitsPerByte = 8 };
+
+  /// The number of bytes allocated so far for each of the bits.
+  uint64_t BitAllocs[BitsPerByte];
+
+  ByteArrayBuilder() {
+    memset(BitAllocs, 0, sizeof(BitAllocs));
+  }
+
+  /// Allocate BitSize bits in the byte array where Bits contains the bits to
+  /// set. AllocByteOffset is set to the offset within the byte array and
+  /// AllocMask is set to the bitmask for those bits. This uses the LPT (Longest
+  /// Processing Time) multiprocessor scheduling algorithm to lay out the bits
+  /// efficiently; the pass allocates bit sets in decreasing size order.
+  void allocate(const std::set<uint64_t> &Bits, uint64_t BitSize,
+                uint64_t &AllocByteOffset, uint8_t &AllocMask);
 };
 
 } // namespace llvm

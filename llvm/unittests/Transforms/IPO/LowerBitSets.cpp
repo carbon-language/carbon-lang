@@ -15,27 +15,39 @@ using namespace llvm;
 TEST(LowerBitSets, BitSetBuilder) {
   struct {
     std::vector<uint64_t> Offsets;
-    std::vector<uint8_t> Bits;
+    std::set<uint64_t> Bits;
     uint64_t ByteOffset;
     uint64_t BitSize;
     unsigned AlignLog2;
     bool IsSingleOffset;
     bool IsAllOnes;
   } BSBTests[] = {
-      {{}, {0}, 0, 1, 0, false, false},
-      {{0}, {1}, 0, 1, 0, true, true},
-      {{4}, {1}, 4, 1, 0, true, true},
-      {{37}, {1}, 37, 1, 0, true, true},
-      {{0, 1}, {3}, 0, 2, 0, false, true},
-      {{0, 4}, {3}, 0, 2, 2, false, true},
-      {{0, uint64_t(1) << 33}, {3}, 0, 2, 33, false, true},
-      {{3, 7}, {3}, 3, 2, 2, false, true},
-      {{0, 1, 7}, {131}, 0, 8, 0, false, false},
-      {{0, 2, 14}, {131}, 0, 8, 1, false, false},
-      {{0, 1, 8}, {3, 1}, 0, 9, 0, false, false},
-      {{0, 2, 16}, {3, 1}, 0, 9, 1, false, false},
-      {{0, 1, 2, 3, 4, 5, 6, 7}, {255}, 0, 8, 0, false, true},
-      {{0, 1, 2, 3, 4, 5, 6, 7, 8}, {255, 1}, 0, 9, 0, false, true},
+      {{}, {}, 0, 1, 0, false, false},
+      {{0}, {0}, 0, 1, 0, true, true},
+      {{4}, {0}, 4, 1, 0, true, true},
+      {{37}, {0}, 37, 1, 0, true, true},
+      {{0, 1}, {0, 1}, 0, 2, 0, false, true},
+      {{0, 4}, {0, 1}, 0, 2, 2, false, true},
+      {{0, uint64_t(1) << 33}, {0, 1}, 0, 2, 33, false, true},
+      {{3, 7}, {0, 1}, 3, 2, 2, false, true},
+      {{0, 1, 7}, {0, 1, 7}, 0, 8, 0, false, false},
+      {{0, 2, 14}, {0, 1, 7}, 0, 8, 1, false, false},
+      {{0, 1, 8}, {0, 1, 8}, 0, 9, 0, false, false},
+      {{0, 2, 16}, {0, 1, 8}, 0, 9, 1, false, false},
+      {{0, 1, 2, 3, 4, 5, 6, 7},
+       {0, 1, 2, 3, 4, 5, 6, 7},
+       0,
+       8,
+       0,
+       false,
+       true},
+      {{0, 1, 2, 3, 4, 5, 6, 7, 8},
+       {0, 1, 2, 3, 4, 5, 6, 7, 8},
+       0,
+       9,
+       0,
+       false,
+       true},
   };
 
   for (auto &&T : BSBTests) {
@@ -91,5 +103,53 @@ TEST(LowerBitSets, GlobalLayoutBuilder) {
       ComputedLayout.insert(ComputedLayout.end(), F.begin(), F.end());
 
     EXPECT_EQ(T.WantLayout, ComputedLayout);
+  }
+}
+
+TEST(LowerBitSets, ByteArrayBuilder) {
+  struct BABAlloc {
+    std::set<uint64_t> Bits;
+    uint64_t BitSize;
+    uint64_t WantByteOffset;
+    uint8_t WantMask;
+  };
+
+  struct {
+    std::vector<BABAlloc> Allocs;
+    std::vector<uint8_t> WantBytes;
+  } BABTests[] = {
+      {{{{0}, 1, 0, 1}, {{0}, 1, 0, 2}}, {3}},
+      {{{{0}, 16, 0, 1},
+        {{1}, 15, 0, 2},
+        {{2}, 14, 0, 4},
+        {{3}, 13, 0, 8},
+        {{4}, 12, 0, 0x10},
+        {{5}, 11, 0, 0x20},
+        {{6}, 10, 0, 0x40},
+        {{7}, 9, 0, 0x80},
+        {{0}, 7, 9, 0x80},
+        {{0}, 6, 10, 0x40},
+        {{0}, 5, 11, 0x20},
+        {{0}, 4, 12, 0x10},
+        {{0}, 3, 13, 8},
+        {{0}, 2, 14, 4},
+        {{0}, 1, 15, 2}},
+       {1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80, 0, 0x80, 0x40, 0x20, 0x10, 8, 4,
+        2}},
+  };
+
+  for (auto &&T : BABTests) {
+    ByteArrayBuilder BABuilder;
+
+    for (auto &&A : T.Allocs) {
+      uint64_t GotByteOffset;
+      uint8_t GotMask;
+
+      BABuilder.allocate(A.Bits, A.BitSize, GotByteOffset, GotMask);
+      EXPECT_EQ(A.WantByteOffset, GotByteOffset);
+      EXPECT_EQ(A.WantMask, GotMask);
+    }
+
+    EXPECT_EQ(T.WantBytes, BABuilder.Bytes);
   }
 }
