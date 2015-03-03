@@ -232,7 +232,7 @@ TEST(AddressSanitizer, asm_flags) {
   long magic = 0x1234;
   long r = 0x0;
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) && !defined(__ILP32__)
   __asm__("xorq %%rax, %%rax  \n\t"
           "movq (%[p]), %%rax \n\t"
           "sete %%al          \n\t"
@@ -248,7 +248,7 @@ TEST(AddressSanitizer, asm_flags) {
           : [r] "=r"(r)
           : [p] "r"(&magic)
           : "eax", "memory");
-#endif // defined(__x86_64__)
+#endif // defined(__x86_64__) && !defined(__ILP32__)
 
   ASSERT_EQ(0x1, r);
 }
