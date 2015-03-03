@@ -34,9 +34,14 @@ class GlobalVariablesTestCase(TestBase):
         if sys.platform.startswith("freebsd") or sys.platform.startswith("linux"):
             # LD_LIBRARY_PATH must be set so the shared libraries are found on startup
             if "LD_LIBRARY_PATH" in os.environ:
-                self.runCmd("settings set target.env-vars " + self.dylibPath + "=" + os.environ["LD_LIBRARY_PATH"] + ":" + os.getcwd())
+                self.runCmd("settings set target.env-vars " +
+                            self.dylibPath + "=" +
+                            os.environ["LD_LIBRARY_PATH"] + ":" +
+                            self.get_process_working_directory())
             else:
-                self.runCmd("settings set target.env-vars " + self.dylibPath + "=" + os.getcwd())
+                self.runCmd("settings set target.env-vars " +
+                            self.dylibPath + "=" +
+                            self.get_process_working_directory())
             self.addTearDownHook(lambda: self.runCmd("settings remove target.env-vars " + self.dylibPath))
 
     def global_variables(self):
