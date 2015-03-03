@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
@@ -728,6 +729,48 @@ TEST_F(MDBasicTypeTest, getWithLargeValues) {
                              UINT64_MAX, UINT64_MAX - 1, 7);
   EXPECT_EQ(UINT64_MAX, N->getSizeInBits());
   EXPECT_EQ(UINT64_MAX - 1, N->getAlignInBits());
+}
+
+TEST_F(MDBasicTypeTest, getUnspecified) {
+  auto *N =
+      MDBasicType::get(Context, dwarf::DW_TAG_unspecified_type, "unspecified");
+  EXPECT_EQ(dwarf::DW_TAG_unspecified_type, N->getTag());
+  EXPECT_EQ("unspecified", N->getName());
+  EXPECT_EQ(0u, N->getSizeInBits());
+  EXPECT_EQ(0u, N->getAlignInBits());
+  EXPECT_EQ(0u, N->getEncoding());
+  EXPECT_EQ(0u, N->getLine());
+}
+
+typedef MetadataTest MDTypeTest;
+
+TEST_F(MDTypeTest, clone) {
+  // Check that MDType has a specialized clone that returns TempMDType.
+  MDType *N = MDBasicType::get(Context, dwarf::DW_TAG_base_type, "int", 32, 32,
+                               dwarf::DW_ATE_signed);
+
+  TempMDType Temp = N->clone();
+  EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
+}
+
+TEST_F(MDTypeTest, setFlags) {
+  // void (void)
+  Metadata *TypesOps[] = {nullptr};
+  Metadata *Types = MDTuple::get(Context, TypesOps);
+
+  MDType *D = MDSubroutineType::getDistinct(Context, 0u, Types);
+  EXPECT_EQ(0u, D->getFlags());
+  D->setFlags(DIDescriptor::FlagRValueReference);
+  EXPECT_EQ(DIDescriptor::FlagRValueReference, D->getFlags());
+  D->setFlags(0u);
+  EXPECT_EQ(0u, D->getFlags());
+
+  TempMDType T = MDSubroutineType::getTemporary(Context, 0u, Types);
+  EXPECT_EQ(0u, T->getFlags());
+  T->setFlags(DIDescriptor::FlagRValueReference);
+  EXPECT_EQ(DIDescriptor::FlagRValueReference, T->getFlags());
+  T->setFlags(0u);
+  EXPECT_EQ(0u, T->getFlags());
 }
 
 typedef MetadataTest MDDerivedTypeTest;
@@ -1574,7 +1617,9 @@ TEST_F(MDLocalVariableTest, get) {
   Metadata *Type = MDTuple::getDistinct(Context, None);
   unsigned Arg = 6;
   unsigned Flags = 7;
-  Metadata *InlinedAt = MDTuple::getDistinct(Context, None);
+  Metadata *InlinedAtScope = MDTuple::getDistinct(Context, None);
+  Metadata *InlinedAt =
+      MDLocation::getDistinct(Context, 10, 20, InlinedAtScope);
 
   auto *N = MDLocalVariable::get(Context, Tag, Scope, Name, File, Line, Type,
                                  Arg, Flags, InlinedAt);
@@ -1612,6 +1657,19 @@ TEST_F(MDLocalVariableTest, get) {
 
   TempMDLocalVariable Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
+
+  auto *Inlined = N->withoutInline();
+  EXPECT_NE(N, Inlined);
+  EXPECT_EQ(N->getTag(), Inlined->getTag());
+  EXPECT_EQ(N->getScope(), Inlined->getScope());
+  EXPECT_EQ(N->getName(), Inlined->getName());
+  EXPECT_EQ(N->getFile(), Inlined->getFile());
+  EXPECT_EQ(N->getLine(), Inlined->getLine());
+  EXPECT_EQ(N->getType(), Inlined->getType());
+  EXPECT_EQ(N->getArg(), Inlined->getArg());
+  EXPECT_EQ(N->getFlags(), Inlined->getFlags());
+  EXPECT_EQ(nullptr, Inlined->getInlinedAt());
+  EXPECT_EQ(N, Inlined->withInline(cast<MDLocation>(InlinedAt)));
 }
 
 typedef MetadataTest MDExpressionTest;
