@@ -74,8 +74,7 @@ define i32 @ntest2(i32 %x) {
 
 define i32 @ntest3(i32 %x) {
 ; CHECK-LABEL: ntest3
-; CHECK: add {{w[0-9]+}}, w0, w0, lsl #1
-; CHECK: neg w0, {{w[0-9]+}}
+; CHECK: sub w0, w0, w0, lsl #2
 
   %mul = mul nsw i32 %x, -3
   ret i32 %mul
