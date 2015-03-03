@@ -548,9 +548,6 @@ public:
   }
   PhiState(Value *b) : status(Base), base(b) {}
   PhiState() : status(Unknown), base(nullptr) {}
-  PhiState(const PhiState &other) : status(other.status), base(other.base) {
-    assert(status != Base || base);
-  }
 
   Status getStatus() const { return status; }
   Value *getBase() const { return base; }
