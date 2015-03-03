@@ -139,12 +139,16 @@ class MiInterpreterExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-        # Test that "thread step-in" steps in
-        #FIXME: is this supposed to step into printf?
+        # Test that "thread step-in" steps into (or not) printf depending on debug info
+        # Note that message is different in Darwin and Linux:
+        # Darwin: "*stopped,reason=\"end-stepping-range\",frame={addr=\"0x[0-9a-f]+\",func=\"main\",args=[{name=\"argc\",value=\"1\"},{name=\"argv\",value="0x[0-9a-f]+\"}],file=\"main.cpp\",fullname=\".+main.cpp\",line=\"\d\"},thread-id=\"1\",stopped-threads=\"all\"
+        # Linux:  "*stopped,reason=\"end-stepping-range\",frame={addr="0x[0-9a-f]+\",func=\"__printf\",args=[{name=\"format\",value=\"0x[0-9a-f]+\"}],file=\"printf.c\",fullname=\".+printf.c\",line="\d+"},thread-id=\"1\",stopped-threads=\"all\"
         self.runCmd("-interpreter-exec console \"thread step-in\"")
         self.expect("\^done")
-        self.expect("~\"argc=1\\\\r\\\\n\"")
-        self.expect("\*stopped,reason=\"end-stepping-range\"")
+        it = self.expect([ "~\"argc=1\\\\r\\\\n\"",
+                           "\*stopped,reason=\"end-stepping-range\".+func=\"((?!main).)+\"" ])
+        if it == 0:
+            self.expect("\*stopped,reason=\"end-stepping-range\".+func=\"main\"")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")

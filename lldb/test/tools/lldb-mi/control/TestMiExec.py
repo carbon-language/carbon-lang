@@ -263,19 +263,22 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Warning: the following is sensative to the lines in the source
 
-        # Test that -exec-step does not step into printf (which
-        # has no debug info)
-        #FIXME: is this supposed to step into printf?
+        # Test that -exec-step steps into (or not) printf depending on debug info
+        # Note that message is different in Darwin and Linux:
+        # Darwin: "*stopped,reason=\"end-stepping-range\",frame={addr=\"0x[0-9a-f]+\",func=\"main\",args=[{name=\"argc\",value=\"1\"},{name=\"argv\",value="0x[0-9a-f]+\"}],file=\"main.cpp\",fullname=\".+main.cpp\",line=\"\d\"},thread-id=\"1\",stopped-threads=\"all\"
+        # Linux:  "*stopped,reason=\"end-stepping-range\",frame={addr="0x[0-9a-f]+\",func=\"__printf\",args=[{name=\"format\",value=\"0x[0-9a-f]+\"}],file=\"printf.c\",fullname=\".+printf.c\",line="\d+"},thread-id=\"1\",stopped-threads=\"all\"
         self.runCmd("-exec-step --thread 1 --frame 0")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"29\"")
+        it = self.expect([ "\*stopped,reason=\"end-stepping-range\".+func=\"main\"",
+                           "\*stopped,reason=\"end-stepping-range\".+func=\"((?!main).)+\"" ])
+        # Exit from printf if needed
+        if it == 1:
+            self.runCmd("-exec-finish")
+            self.expect("\^running")
+            self.expect("\*stopped,reason=\"end-stepping-range\".+func=\"main\"")
 
         # Test that -exec-step steps into g_MyFunction and back out
         # (and that --thread is optional)
-        self.runCmd("-exec-step --frame 0")
-        self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction\(\)\"")
-        #FIXME: is this supposed to step into printf?
         self.runCmd("-exec-step --frame 0")
         self.expect("\^running")
         self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction\(\)\"")
@@ -286,15 +289,10 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\*stopped,reason=\"end-stepping-range\".*main.cpp\",line=\"30\"")
 
         # Test that -exec-step steps into s_MyFunction
-        self.runCmd("-exec-step --frame 0")
-        self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"s_MyFunction\(\)\"")
-
-        # Test that -exec-step steps into g_MyFunction
         # (and that --frame is optional)
         self.runCmd("-exec-step --thread 1")
         self.expect("\^running")
-        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"g_MyFunction\(\)\"")
+        self.expect("\*stopped,reason=\"end-stepping-range\".*func=\"s_MyFunction\(\)\"")
 
         # Test that -exec-step steps into g_MyFunction from inside
         # s_MyFunction (and that both --thread and --frame are optional)
@@ -315,7 +313,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin due to calling convention assumptions")
+    @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
     def test_lldbmi_exec_step_instruction(self):
         """Test that 'lldb-mi --interpreter' works for instruction stepping into."""
 

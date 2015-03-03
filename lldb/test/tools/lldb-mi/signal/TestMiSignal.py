@@ -16,7 +16,7 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @skipIfFreeBSD # llvm.org/pr22411: Fails on FreeBSD apparently due to thread race conditions
     def test_lldbmi_stopped_when_interrupt(self):
         """Test that 'lldb-mi --interpreter' interrupt and resume a looping app."""
 
@@ -70,8 +70,9 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
         # Test that *stopped is printed
         # Note that message is different in Darwin and Linux:
         # Darwin: "*stopped,reason=\"signal-received\",signal-name=\"SIGINT\",signal-meaning=\"Interrupt\",frame={level=\"0\",addr=\"0x[0-9a-f]+\",func=\"_dyld_start\",file=\"??\",fullname=\"??\",line=\"-1\"},thread-id=\"1\",stopped-threads=\"all\"
-        # Linux:  "*stopped,reason=\"end-stepping-range\",frame={addr=\"0x[0-9a-f]+\",func=\"??\",args=\[\],file=\"??\",fullname=\"??\",line=\"-1\"},thread-id=\"1\",stopped-threads=\"all\"
-        self.expect("\*stopped,reason=\"(signal-received|end-stepping-range)\",.+,thread-id=\"1\",stopped-threads=\"all\"")
+        # Linux:  "*stopped,reason=\"end-stepping-range\",frame={addr=\"0x[0-9a-f]+\",func=\"??\",args=[],file=\"??\",fullname=\"??\",line=\"-1\"},thread-id=\"1\",stopped-threads=\"all\"
+        self.expect([ "\*stopped,reason=\"signal-received\",signal-name=\"SIGINT\",signal-meaning=\"Interrupt\",frame=\{level=\"0\",addr=\"0x[0-9a-f]+\",func=\"_dyld_start\",file=\"\?\?\",fullname=\"\?\?\",line=\"-1\"\},thread-id=\"1\",stopped-threads=\"all\"",
+                      "\*stopped,reason=\"end-stepping-range\",frame={addr=\"0x[0-9a-f]+\",func=\"\?\?\",args=\[\],file=\"\?\?\",fullname=\"\?\?\",line=\"-1\"},thread-id=\"1\",stopped-threads=\"all\"" ])
 
         # Run to main to make sure we have not exited the application
         self.runCmd("-break-insert -f main")
@@ -150,7 +151,11 @@ class MiSignalTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
 
         # Test that *stopped is printed
-        self.expect("\*stopped,reason=\"exception-received\",exception=\"(EXC_BAD_ACCESS \(code=1, address=0x0\)|invalid address \(fault address: 0x0\))\",thread-id=\"1\",stopped-threads=\"all\"")
+        # Note that message is different in Darwin and Linux:
+        # Darwin: "*stopped,reason=\"exception-received\",exception=\"EXC_BAD_ACCESS (code=1, address=0x0)\",thread-id=\"1\",stopped-threads=\"all\""
+        # Linux:  "*stopped,reason=\"exception-received\",exception=\"invalid address (fault address: 0x0)\",thread-id=\"1\",stopped-threads=\"all\""
+        self.expect([ "\*stopped,reason=\"exception-received\",exception=\"EXC_BAD_ACCESS \(code=1, address=0x0\)\",thread-id=\"1\",stopped-threads=\"all\"",
+                      "\*stopped,reason=\"exception-received\",exception=\"invalid address \(fault address: 0x0\)\",thread-id=\"1\",stopped-threads=\"all\"" ])
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")

@@ -320,8 +320,11 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done")
 
         # Test that current frame is #1
+        # Note that message is different in Darwin and Linux:
+        # Darwin: "^done,frame={level=\"1\",addr=\"0x[0-9a-f]+\",func=\"start\",file=\"??\",fullname=\"??\",line=\"-1\"}"
+        # Linux:  "^done,frame={level=\"1\",addr=\"0x[0-9a-f]+\",func=\".+\",file=\".+\",fullname=\".+\",line=\"\d+\"}"
         self.runCmd("-stack-info-frame")
-        self.expect("\^done,frame=\{level=\"1\",addr=\".+\",func=\".+\",file=\"\?\?\",fullname=\"\?\?\",line=\"-1\"\}")
+        self.expect("\^done,frame=\{level=\"1\",addr=\".+\",func=\".+\",file=\".+\",fullname=\".+\",line=\"(-1|\d+)\"\}")
 
         # Test that -stack-select-frame can select frame #0 (child frame)
         self.runCmd("-stack-select-frame 0")
