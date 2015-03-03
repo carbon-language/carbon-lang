@@ -628,12 +628,6 @@ namespace llvm {
     }
     bool operator!=(const SUnitIterator& x) const { return !operator==(x); }
 
-    const SUnitIterator &operator=(const SUnitIterator &I) {
-      assert(I.Node==Node && "Cannot assign iterators to two different nodes!");
-      Operand = I.Operand;
-      return *this;
-    }
-
     pointer operator*() const {
       return Node->Preds[Operand].getSUnit();
     }
