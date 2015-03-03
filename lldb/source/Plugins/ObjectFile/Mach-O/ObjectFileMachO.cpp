@@ -3200,6 +3200,7 @@ ObjectFileMachO::ParseSymtab ()
                                                         break;
                                                         
                                                     case N_UNDF:
+                                                        if (symbol_name && symbol_name[0])
                                                         {
                                                             ConstString undefined_name(symbol_name + ((symbol_name[0] == '_') ? 1 : 0));
                                                             undefined_name_to_desc[undefined_name] = nlist.n_desc;
@@ -4040,6 +4041,7 @@ ObjectFileMachO::ParseSymtab ()
                         break;
 
                     case N_UNDF:
+                        if (symbol_name && symbol_name[0])
                         {
                             ConstString undefined_name(symbol_name + ((symbol_name[0] == '_') ? 1 : 0));
                             undefined_name_to_desc[undefined_name] = nlist.n_desc;
