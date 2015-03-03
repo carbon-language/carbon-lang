@@ -232,6 +232,7 @@ void WhitespaceManager::alignEscapedNewlines() {
   unsigned MaxEndOfLine =
       Style.AlignEscapedNewlinesLeft ? 0 : Style.ColumnLimit;
   unsigned StartOfMacro = 0;
+  Changes[0].EscapedNewlineColumn = 0;
   for (unsigned i = 1, e = Changes.size(); i < e; ++i) {
     Change &C = Changes[i];
     if (C.NewlinesBefore > 0) {
