@@ -30,37 +30,37 @@ namespace llvm {
       // Start the numbering where the builtin ops leave off.
       FIRST_NUMBER = ISD::BUILTIN_OP_END,
 
-      /// BSF - Bit scan forward.
-      /// BSR - Bit scan reverse.
+      /// Bit scan forward.
       BSF,
+      /// Bit scan reverse.
       BSR,
 
-      /// SHLD, SHRD - Double shift instructions. These correspond to
+      /// Double shift instructions. These correspond to
       /// X86::SHLDxx and X86::SHRDxx instructions.
       SHLD,
       SHRD,
 
-      /// FAND - Bitwise logical AND of floating point values. This corresponds
+      /// Bitwise logical AND of floating point values. This corresponds
       /// to X86::ANDPS or X86::ANDPD.
       FAND,
 
-      /// FOR - Bitwise logical OR of floating point values. This corresponds
+      /// Bitwise logical OR of floating point values. This corresponds
       /// to X86::ORPS or X86::ORPD.
       FOR,
 
-      /// FXOR - Bitwise logical XOR of floating point values. This corresponds
+      /// Bitwise logical XOR of floating point values. This corresponds
       /// to X86::XORPS or X86::XORPD.
       FXOR,
 
-      /// FANDN - Bitwise logical ANDNOT of floating point values. This
+      ///  Bitwise logical ANDNOT of floating point values. This
       /// corresponds to X86::ANDNPS or X86::ANDNPD.
       FANDN,
 
-      /// FSRL - Bitwise logical right shift of floating point values. These
+      /// Bitwise logical right shift of floating point values. This
       /// corresponds to X86::PSRLDQ.
       FSRL,
 
-      /// CALL - These operations represent an abstract X86 call
+      /// These operations represent an abstract X86 call
       /// instruction, which includes a bunch of information.  In particular the
       /// operands of these node are:
       ///
@@ -79,8 +79,7 @@ namespace llvm {
       ///
       CALL,
 
-      /// RDTSC_DAG - This operation implements the lowering for
-      /// readcyclecounter
+      /// This operation implements the lowering for readcyclecounter
       RDTSC_DAG,
 
       /// X86 Read Time-Stamp Counter and Processor ID.
@@ -131,187 +130,186 @@ namespace llvm {
       /// 1 is the number of bytes of stack to pop.
       RET_FLAG,
 
-      /// REP_STOS - Repeat fill, corresponds to X86::REP_STOSx.
+      /// Repeat fill, corresponds to X86::REP_STOSx.
       REP_STOS,
 
-      /// REP_MOVS - Repeat move, corresponds to X86::REP_MOVSx.
+      /// Repeat move, corresponds to X86::REP_MOVSx.
       REP_MOVS,
 
-      /// GlobalBaseReg - On Darwin, this node represents the result of the popl
+      /// On Darwin, this node represents the result of the popl
       /// at function entry, used for PIC code.
       GlobalBaseReg,
 
-      /// Wrapper - A wrapper node for TargetConstantPool,
+      /// A wrapper node for TargetConstantPool,
       /// TargetExternalSymbol, and TargetGlobalAddress.
       Wrapper,
 
-      /// WrapperRIP - Special wrapper used under X86-64 PIC mode for RIP
+      /// Special wrapper used under X86-64 PIC mode for RIP
       /// relative displacements.
       WrapperRIP,
 
-      /// MOVDQ2Q - Copies a 64-bit value from the low word of an XMM vector
+      /// Copies a 64-bit value from the low word of an XMM vector
       /// to an MMX vector.  If you think this is too close to the previous
       /// mnemonic, so do I; blame Intel.
       MOVDQ2Q,
 
-      /// MMX_MOVD2W - Copies a 32-bit value from the low word of a MMX
+      /// Copies a 32-bit value from the low word of a MMX
       /// vector to a GPR.
       MMX_MOVD2W,
 
-      /// MMX_MOVW2D - Copies a GPR into the low 32-bit word of a MMX vector
+      /// Copies a GPR into the low 32-bit word of a MMX vector
       /// and zero out the high word.
       MMX_MOVW2D,
 
-      /// PEXTRB - Extract an 8-bit value from a vector and zero extend it to
+      /// Extract an 8-bit value from a vector and zero extend it to
       /// i32, corresponds to X86::PEXTRB.
       PEXTRB,
 
-      /// PEXTRW - Extract a 16-bit value from a vector and zero extend it to
+      /// Extract a 16-bit value from a vector and zero extend it to
       /// i32, corresponds to X86::PEXTRW.
       PEXTRW,
 
-      /// INSERTPS - Insert any element of a 4 x float vector into any element
+      /// Insert any element of a 4 x float vector into any element
       /// of a destination 4 x floatvector.
       INSERTPS,
 
-      /// PINSRB - Insert the lower 8-bits of a 32-bit value to a vector,
+      /// Insert the lower 8-bits of a 32-bit value to a vector,
       /// corresponds to X86::PINSRB.
       PINSRB,
 
-      /// PINSRW - Insert the lower 16-bits of a 32-bit value to a vector,
+      /// Insert the lower 16-bits of a 32-bit value to a vector,
       /// corresponds to X86::PINSRW.
       PINSRW, MMX_PINSRW,
 
-      /// PSHUFB - Shuffle 16 8-bit values within a vector.
+      /// Shuffle 16 8-bit values within a vector.
       PSHUFB,
 
-      /// ANDNP - Bitwise Logical AND NOT of Packed FP values.
+      /// Bitwise Logical AND NOT of Packed FP values.
       ANDNP,
 
-      /// PSIGN - Copy integer sign.
+      /// Copy integer sign.
       PSIGN,
 
-      /// BLENDI - Blend where the selector is an immediate.
+      /// Blend where the selector is an immediate.
       BLENDI,
 
-      /// SHRUNKBLEND - Blend where the condition has been shrunk.
+      /// Blend where the condition has been shrunk.
       /// This is used to emphasize that the condition mask is
       /// no more valid for generic VSELECT optimizations.
       SHRUNKBLEND,
 
-      /// ADDSUB - Combined add and sub on an FP vector.
+      /// Combined add and sub on an FP vector.
       ADDSUB,
-      //  FADD, FSUB, FMUL, FDIV, FMIN, FMAX - FP vector ops with rounding mode.
+      //  FP vector ops with rounding mode.
       FADD_RND,
       FSUB_RND,
       FMUL_RND,
       FDIV_RND,
       
-      // SUBUS - Integer sub with unsigned saturation.
+      // Integer sub with unsigned saturation.
       SUBUS,
 
-      /// HADD - Integer horizontal add.
+      /// Integer horizontal add.
       HADD,
 
-      /// HSUB - Integer horizontal sub.
+      /// Integer horizontal sub.
       HSUB,
 
-      /// FHADD - Floating point horizontal add.
+      /// Floating point horizontal add.
       FHADD,
 
-      /// FHSUB - Floating point horizontal sub.
+      /// Floating point horizontal sub.
       FHSUB,
 
-      /// UMAX, UMIN - Unsigned integer max and min.
+      /// Unsigned integer max and min.
       UMAX, UMIN,
 
-      /// SMAX, SMIN - Signed integer max and min.
+      /// Signed integer max and min.
       SMAX, SMIN,
 
-      /// FMAX, FMIN - Floating point max and min.
-      ///
+      /// Floating point max and min.
       FMAX, FMIN,
 
-      /// FMAXC, FMINC - Commutative FMIN and FMAX.
+      /// Commutative FMIN and FMAX.
       FMAXC, FMINC,
 
-      /// FRSQRT, FRCP - Floating point reciprocal-sqrt and reciprocal
-      /// approximation.  Note that these typically require refinement
+      /// Floating point reciprocal-sqrt and reciprocal approximation.
+      /// Note that these typically require refinement
       /// in order to obtain suitable precision.
       FRSQRT, FRCP,
 
-      // TLSADDR - Thread Local Storage.
+      // Thread Local Storage.
       TLSADDR,
 
-      // TLSBASEADDR - Thread Local Storage. A call to get the start address
+      // Thread Local Storage. A call to get the start address
       // of the TLS block for the current module.
       TLSBASEADDR,
 
-      // TLSCALL - Thread Local Storage.  When calling to an OS provided
+      // Thread Local Storage.  When calling to an OS provided
       // thunk at the address from an earlier relocation.
       TLSCALL,
 
-      // EH_RETURN - Exception Handling helpers.
+      // Exception Handling helpers.
       EH_RETURN,
 
-      // EH_SJLJ_SETJMP - SjLj exception handling setjmp.
+      // SjLj exception handling setjmp.
       EH_SJLJ_SETJMP,
 
-      // EH_SJLJ_LONGJMP - SjLj exception handling longjmp.
+      // SjLj exception handling longjmp.
       EH_SJLJ_LONGJMP,
 
-      /// TC_RETURN - Tail call return. See X86TargetLowering::LowerCall for
+      /// Tail call return. See X86TargetLowering::LowerCall for
       /// the list of operands.
       TC_RETURN,
 
-      // VZEXT_MOVL - Vector move to low scalar and zero higher vector elements.
+      // Vector move to low scalar and zero higher vector elements.
       VZEXT_MOVL,
 
-      // VZEXT - Vector integer zero-extend.
+      // Vector integer zero-extend.
       VZEXT,
 
-      // VSEXT - Vector integer signed-extend.
+      // Vector integer signed-extend.
       VSEXT,
 
-      // VTRUNC - Vector integer truncate.
+      // Vector integer truncate.
       VTRUNC,
 
-      // VTRUNC - Vector integer truncate with mask.
+      // Vector integer truncate with mask.
       VTRUNCM,
 
-      // VFPEXT - Vector FP extend.
+      // Vector FP extend.
       VFPEXT,
 
-      // VFPROUND - Vector FP round.
+      // Vector FP round.
       VFPROUND,
 
-      // VSHL, VSRL - 128-bit vector logical left / right shift
+      // 128-bit vector logical left / right shift
       VSHLDQ, VSRLDQ,
 
-      // VSHL, VSRL, VSRA - Vector shift elements
+      // Vector shift elements
       VSHL, VSRL, VSRA,
 
-      // VSHLI, VSRLI, VSRAI - Vector shift elements by immediate
+      // Vector shift elements by immediate
       VSHLI, VSRLI, VSRAI,
 
-      // CMPP - Vector packed double/float comparison.
+      // Vector packed double/float comparison.
       CMPP,
 
-      // PCMP* - Vector integer comparisons.
+      // Vector integer comparisons.
       PCMPEQ, PCMPGT,
-      // PCMP*M - Vector integer comparisons, the result is in a mask vector.
+      // Vector integer comparisons, the result is in a mask vector.
       PCMPEQM, PCMPGTM,
 
-      /// CMPM, CMPMU - Vector comparison generating mask bits for fp and
+      /// Vector comparison generating mask bits for fp and
       /// integer signed and unsigned data types.
       CMPM,
       CMPMU,
 
-      // ADD, SUB, SMUL, etc. - Arithmetic operations with FLAGS results.
+      // Arithmetic operations with FLAGS results.
       ADD, SUB, ADC, SBB, SMUL,
       INC, DEC, OR, XOR, AND,
 
-      BEXTR,  // BEXTR - Bit field extract
+      BEXTR,  // Bit field extract
 
       UMUL, // LOW, HI, FLAGS = umul LHS, RHS
 
@@ -322,16 +320,16 @@ namespace llvm {
       UDIVREM8_ZEXT_HREG,
       SDIVREM8_SEXT_HREG,
 
-      // MUL_IMM - X86 specific multiply by immediate.
+      // X86-specific multiply by immediate.
       MUL_IMM,
 
-      // PTEST - Vector bitwise comparisons.
+      // Vector bitwise comparisons.
       PTEST,
 
-      // TESTP - Vector packed fp sign bitwise comparisons.
+      // Vector packed fp sign bitwise comparisons.
       TESTP,
 
-      // TESTM, TESTNM - Vector "test" in AVX-512, the result is in a mask vector.
+      // Vector "test" in AVX-512, the result is in a mask vector.
       TESTM,
       TESTNM,
 
