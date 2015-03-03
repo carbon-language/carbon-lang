@@ -61,11 +61,20 @@ option(LIBCXX_ENABLE_MONOTONIC_CLOCK
    This option may only be used when LIBCXX_ENABLE_THREADS=OFF." ON)
 option(LIBCXX_INSTALL_HEADERS "Install the libc++ headers." ON)
 option(LIBCXX_INSTALL_SUPPORT_HEADERS "Install libc++ support headers." ON)
+option(LIBCXX_ENABLE_STATIC_ABI_LIBRARY "Statically link the ABI library" OFF)
 set(LIBCXX_SYSROOT "" CACHE STRING "Use alternate sysroot.")
 set(LIBCXX_GCC_TOOLCHAIN "" CACHE STRING "Use alternate GCC toolchain.")
 if (LIBCXX_BUILT_STANDALONE)
   set(LLVM_USE_SANITIZER "" CACHE STRING
       "Define the sanitizer used to build the library and tests")
+endif()
+
+if (LIBCXX_ENABLE_STATIC_ABI_LIBRARY)
+  if (APPLE)
+    message(FATAL_ERROR "LIBCXX_ENABLE_STATIC_ABI_LIBRARY is not supported on OS X")
+  else()
+    message(WARNING "LIBCXX_ENABLE_STATIC_ABI_LIBRARY is an experimental option")
+  endif()
 endif()
 
 set(CXXABIS none libcxxabi libcxxrt libstdc++ libsupc++)

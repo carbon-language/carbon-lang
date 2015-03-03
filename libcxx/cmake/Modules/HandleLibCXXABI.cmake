@@ -78,7 +78,11 @@ if ("${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "libstdc++" OR
 elseif ("${LIBCXX_CXX_ABI_LIBNAME}" STREQUAL "libcxxabi")
   if (LIBCXX_CXX_ABI_INTREE)
     # Link against just-built "cxxabi" target.
-    set(CXXABI_LIBNAME cxxabi)
+    if (LIBCXX_ENABLE_STATIC_ABI_LIBRARY)
+        set(CXXABI_LIBNAME cxxabi_static)
+    else()
+        set(CXXABI_LIBNAME cxxabi_shared)
+    endif()
     set(LIBCXX_LIBCPPABI_VERSION "2" PARENT_SCOPE)
   else()
     # Assume c++abi is installed in the system, rely on -lc++abi link flag.
