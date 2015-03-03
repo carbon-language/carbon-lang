@@ -86,7 +86,6 @@ void test_stuff () {
   int aa = (ref(aa) += 10); // expected-warning {{variable 'aa' is uninitialized when used within its own initialization}}
   int bb = bb ? x : y; // expected-warning {{variable 'bb' is uninitialized when used within its own initialization}}
 
-
   for (;;) {
     int a = a; // no-warning: used to signal intended lack of initialization.
     int b = b + 1; // expected-warning {{variable 'b' is uninitialized when used within its own initialization}}
@@ -122,6 +121,50 @@ void test_stuff () {
     int bb = bb ? x : y; // expected-warning {{variable 'bb' is uninitialized when used within its own initialization}}
 
   }
+}
+
+void test_comma() {
+  int a;  // expected-note {{initialize the variable 'a' to silence this warning}}
+  int b = (a, a ?: 2);  // expected-warning {{variable 'a' is uninitialized when used here}}
+  int c = (a, a, b, c);  // expected-warning {{variable 'c' is uninitialized when used within its own initialization}}
+  int d;  // expected-note {{initialize the variable 'd' to silence this warning}}
+  int e = (foo(d), e, b); // expected-warning {{variable 'd' is uninitialized when used here}}
+  int f;  // expected-note {{initialize the variable 'f' to silence this warning}}
+  f = f + 1, 2;  // expected-warning {{variable 'f' is uninitialized when used here}}
+  int h;
+  int g = (h, g, 2);  // no-warning: h, g are evaluated but not used.
+}
+
+namespace member_ptr {
+struct A {
+  int x;
+  int y;
+  A(int x) : x{x} {}
+};
+
+void test_member_ptr() {
+  int A::* px = &A::x;
+  A a{a.*px}; // expected-warning {{variable 'a' is uninitialized when used within its own initialization}}
+  A b = b; // expected-warning {{variable 'b' is uninitialized when used within its own initialization}}
+}
+}
+
+namespace const_ptr {
+void foo(int *a);
+void bar(const int *a);
+void foobar(const int **a);
+
+void test_const_ptr() {
+  int a;
+  int b;  // expected-note {{initialize the variable 'b' to silence this warning}}
+  foo(&a);
+  bar(&b);
+  b = a + b; // expected-warning {{variable 'b' is uninitialized when used here}}
+  int *ptr;  //expected-note {{initialize the variable 'ptr' to silence this warning}}
+  const int *ptr2;
+  foo(ptr); // expected-warning {{variable 'ptr' is uninitialized when used here}}
+  foobar(&ptr2);
+}
 }
 
 // Also test similar constructs in a field's initializer.

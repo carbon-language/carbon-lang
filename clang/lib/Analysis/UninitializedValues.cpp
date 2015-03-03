@@ -14,6 +14,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Analysis/Analyses/PostOrderCFGView.h"
 #include "clang/Analysis/Analyses/UninitializedValues.h"
@@ -37,7 +38,7 @@ static bool isTrackedVar(const VarDecl *vd, const DeclContext *dc) {
       !vd->isExceptionVariable() && !vd->isInitCapture() &&
       vd->getDeclContext() == dc) {
     QualType ty = vd->getType();
-    return ty->isScalarType() || ty->isVectorType();
+    return ty->isScalarType() || ty->isVectorType() || ty->isRecordType();
   }
   return false;
 }
@@ -347,6 +348,7 @@ public:
 }
 
 static const DeclRefExpr *getSelfInitExpr(VarDecl *VD) {
+  if (VD->getType()->isRecordType()) return nullptr;
   if (Expr *Init = VD->getInit()) {
     const DeclRefExpr *DRE
       = dyn_cast<DeclRefExpr>(stripCasts(VD->getASTContext(), Init));
@@ -376,10 +378,26 @@ void ClassifyRefs::classify(const Expr *E, Class C) {
     return;
   }
 
-  if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
-    if (BO->getOpcode() == BO_Comma)
-      classify(BO->getRHS(), C);
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
+    if (VarDecl *VD = dyn_cast<VarDecl>(ME->getMemberDecl())) {
+      if (!VD->isStaticDataMember())
+        classify(ME->getBase(), C);
+    }
     return;
+  }
+
+  if (const BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
+    switch (BO->getOpcode()) {
+    case BO_PtrMemD:
+    case BO_PtrMemI:
+      classify(BO->getLHS(), C);
+      return;
+    case BO_Comma:
+      classify(BO->getRHS(), C);
+      return;
+    default:
+      return;
+    }
   }
 
   FindVarResult Var = findVar(E, DC);
@@ -404,7 +422,7 @@ void ClassifyRefs::VisitBinaryOperator(BinaryOperator *BO) {
   // use.
   if (BO->isCompoundAssignmentOp())
     classify(BO->getLHS(), Use);
-  else if (BO->getOpcode() == BO_Assign)
+  else if (BO->getOpcode() == BO_Assign || BO->getOpcode() == BO_Comma)
     classify(BO->getLHS(), Ignore);
 }
 
@@ -415,25 +433,40 @@ void ClassifyRefs::VisitUnaryOperator(UnaryOperator *UO) {
     classify(UO->getSubExpr(), Use);
 }
 
+static bool isPointerToConst(const QualType &QT) {
+  return QT->isAnyPointerType() && QT->getPointeeType().isConstQualified();
+}
+
 void ClassifyRefs::VisitCallExpr(CallExpr *CE) {
   // Classify arguments to std::move as used.
   if (CE->getNumArgs() == 1) {
     if (FunctionDecl *FD = CE->getDirectCallee()) {
       if (FD->isInStdNamespace() && FD->getIdentifier() &&
           FD->getIdentifier()->isStr("move")) {
-        classify(CE->getArg(0), Use);
+        // RecordTypes are handled in SemaDeclCXX.cpp.
+        if (!CE->getArg(0)->getType()->isRecordType())
+          classify(CE->getArg(0), Use);
         return;
       }
     }
   }
 
-  // If a value is passed by const reference to a function, we should not assume
-  // that it is initialized by the call, and we conservatively do not assume
-  // that it is used.
+  // If a value is passed by const pointer or by const reference to a function,
+  // we should not assume that it is initialized by the call, and we
+  // conservatively do not assume that it is used.
   for (CallExpr::arg_iterator I = CE->arg_begin(), E = CE->arg_end();
-       I != E; ++I)
-    if ((*I)->getType().isConstQualified() && (*I)->isGLValue())
-      classify(*I, Ignore);
+       I != E; ++I) {
+    if ((*I)->isGLValue()) {
+      if ((*I)->getType().isConstQualified())
+        classify((*I), Ignore);
+    } else if (isPointerToConst((*I)->getType())) {
+      const Expr *Ex = stripCasts(DC->getParentASTContext(), *I);
+      const UnaryOperator *UO = dyn_cast<UnaryOperator>(Ex);
+      if (UO && UO->getOpcode() == UO_AddrOf)
+        Ex = UO->getSubExpr();
+      classify(Ex, Ignore);
+    }
+  }
 }
 
 void ClassifyRefs::VisitCastExpr(CastExpr *CE) {
