@@ -2014,7 +2014,7 @@ def : InstRW<[WriteFMADDr],
     // 3p forms.
     "VF(N?)M(ADD|SUB|ADDSUB|SUBADD)P(S|D)(r213|r132|r231)r(Y)?",
     // 3s forms.
-    "VF(N?)M(ADD|SUB)S(S|D)(r132|231|213)r",
+    "VF(N?)M(ADD|SUB)S(S|D)(r132|r231|r213)r",
     // 4s/4s_int forms.
     "VF(N?)M(ADD|SUB)S(S|D)4rr(_REV|_Int)?",
     // 4p forms.
@@ -2031,7 +2031,7 @@ def : InstRW<[WriteFMADDm],
     // 3p forms.
     "VF(N?)M(ADD|SUB|ADDSUB|SUBADD)P(S|D)(r213|r132|r231)m(Y)?",
     // 3s forms.
-    "VF(N?)M(ADD|SUB)S(S|D)(r132|231|213)m",
+    "VF(N?)M(ADD|SUB)S(S|D)(r132|r231|r213)m",
     // 4s/4s_int forms.
     "VF(N?)M(ADD|SUB)S(S|D)4(rm|mr)(_Int)?",
     // 4p forms.
