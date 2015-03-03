@@ -133,8 +133,8 @@ class WinEHCatchDirector : public WinEHCloningDirectorBase {
 public:
   WinEHCatchDirector(LandingPadInst *LPI, Function *CatchFn, Value *Selector,
                      Value *EHObj, FrameVarInfoMap &VarInfo)
-      : WinEHCloningDirectorBase(LPI, CatchFn, VarInfo), EHObj(EHObj),
-        CurrentSelector(Selector->stripPointerCasts()) {}
+      : WinEHCloningDirectorBase(LPI, CatchFn, VarInfo),
+        CurrentSelector(Selector->stripPointerCasts()), EHObj(EHObj) {}
 
   CloningAction handleBeginCatch(ValueToValueMapTy &VMap,
                                  const Instruction *Inst,
