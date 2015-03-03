@@ -18,6 +18,33 @@
 using namespace lldb;
 using namespace lldb_private;
 
+static bool
+DupDescriptor(const char *path, int fd, int flags)
+{
+    int target_fd = ::open(path, flags, 0666);
+
+    if (target_fd == -1)
+        return false;
+
+    if (::dup2(target_fd, fd) == -1)
+        return false;
+
+    return (::close(target_fd) == -1) ? false : true;
+}
+
+// If there is no PATH variable specified inside the environment then set the path to /system/bin.
+// It is required because the default path used by execve() is wrong on android.
+static void
+FixupEnvironment(Args& env)
+{
+    static const char* path = "PATH=";
+    static const int path_len = ::strlen(path);
+    for (const char** args = env.GetConstArgumentVector(); *args; ++args)
+        if (::strncmp(path, *args, path_len) == 0)
+            return;
+    env.AppendArgument("PATH=/system/bin");
+}
+
 HostProcess
 ProcessLauncherAndroid::LaunchProcess(const ProcessLaunchInfo &launch_info, Error &error)
 {
@@ -26,11 +53,8 @@ ProcessLauncherAndroid::LaunchProcess(const ProcessLaunchInfo &launch_info, Erro
     char exe_path[PATH_MAX];
     launch_info.GetExecutableFile().GetPath(exe_path, sizeof(exe_path));
 
-    const size_t err_len = 1024;
-    char err_str[err_len];
-
-    lldb::pid_t pid = ::fork ();
-    if (pid < 0)
+    lldb::pid_t pid = ::fork();
+    if (pid == static_cast<lldb::pid_t>(-1))
     {
         // Fork failed
         error.SetErrorStringWithFormat("Fork failed with error message: %s", strerror(errno));
@@ -38,11 +62,35 @@ ProcessLauncherAndroid::LaunchProcess(const ProcessLaunchInfo &launch_info, Erro
     }
     else if (pid == 0)
     {
+        if (const lldb_private::FileAction *file_action = launch_info.GetFileActionForFD(STDIN_FILENO)) {
+            const char* path = file_action->GetPath();
+            if (path && ::strlen(path))
+                if (!DupDescriptor(path, STDIN_FILENO, O_RDONLY))
+                    exit(-1);
+        }
+
+        if (const lldb_private::FileAction *file_action = launch_info.GetFileActionForFD(STDOUT_FILENO)) {
+            const char* path = file_action->GetPath();
+            if (path && ::strlen(path))
+                if (!DupDescriptor(path, STDOUT_FILENO, O_WRONLY | O_CREAT | O_TRUNC))
+                    exit(-1);
+        }
+
+        if (const lldb_private::FileAction *file_action = launch_info.GetFileActionForFD(STDERR_FILENO)) {
+            const char* path = file_action->GetPath();
+            if (path && ::strlen(path))
+                if (!DupDescriptor(path, STDERR_FILENO, O_WRONLY | O_CREAT | O_TRUNC))
+                    exit(-1);
+        }
+
         // Child process
         const char **argv = launch_info.GetArguments().GetConstArgumentVector();
-        const char **envp = launch_info.GetEnvironmentEntries().GetConstArgumentVector();
+
+        Args env = launch_info.GetEnvironmentEntries();
+        FixupEnvironment(env);
+        const char **envp = env.GetConstArgumentVector();
+
         const char *working_dir = launch_info.GetWorkingDirectory();
-        
         if (working_dir != nullptr && working_dir[0])
         {
             if (::chdir(working_dir) != 0)

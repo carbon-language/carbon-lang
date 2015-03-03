@@ -33,3 +33,9 @@ HostInfoAndroid::ComputeSupportExeDirectory(FileSpec &file_spec)
     file_spec.GetDirectory() = HostInfoLinux::GetProgramFileSpec().GetDirectory();
     return (bool)file_spec.GetDirectory();
 }
+
+FileSpec
+HostInfoAndroid::GetDefaultShell()
+{
+    return FileSpec("/system/bin/sh", false);
+}
