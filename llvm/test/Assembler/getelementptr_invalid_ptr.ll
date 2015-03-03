@@ -1,5 +1,4 @@
-; RUN: not llvm-as < %s >/dev/null 2> %t
-; RUN: FileCheck %s < %t
+; RUN: not llvm-as < %s 2>&1 | FileCheck %s
 ; Test the case of an invalid pointer type on a GEP
 
 ; CHECK: pointer type is not valid
