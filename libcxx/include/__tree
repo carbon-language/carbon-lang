@@ -614,8 +614,6 @@ class _LIBCPP_TYPE_VIS_ONLY __tree_iterator
 {
     typedef _NodePtr                                              __node_pointer;
     typedef typename pointer_traits<__node_pointer>::element_type __node;
-    typedef typename __node::base                                 __node_base;
-    typedef typename __node_base::pointer                         __node_base_pointer;
 
     __node_pointer __ptr_;
 
@@ -644,17 +642,21 @@ public:
         {return pointer_traits<pointer>::pointer_to(__ptr_->__value_);}
 
     _LIBCPP_INLINE_VISIBILITY
-    __tree_iterator& operator++()
-        {__ptr_ = static_cast<__node_pointer>(__tree_next(static_cast<__node_base_pointer>(__ptr_)));
-         return *this;}
+    __tree_iterator& operator++() {
+      __ptr_ = static_cast<__node_pointer>(
+          __tree_next(static_cast<typename __node::base::pointer>(__ptr_)));
+      return *this;
+    }
     _LIBCPP_INLINE_VISIBILITY
     __tree_iterator operator++(int)
         {__tree_iterator __t(*this); ++(*this); return __t;}
 
     _LIBCPP_INLINE_VISIBILITY
-    __tree_iterator& operator--()
-        {__ptr_ = static_cast<__node_pointer>(__tree_prev(static_cast<__node_base_pointer>(__ptr_)));
-         return *this;}
+    __tree_iterator& operator--() {
+      __ptr_ = static_cast<__node_pointer>(
+          __tree_prev(static_cast<typename __node::base::pointer>(__ptr_)));
+      return *this;
+    }
     _LIBCPP_INLINE_VISIBILITY
     __tree_iterator operator--(int)
         {__tree_iterator __t(*this); --(*this); return __t;}
@@ -683,14 +685,6 @@ class _LIBCPP_TYPE_VIS_ONLY __tree_const_iterator
 {
     typedef _ConstNodePtr                                         __node_pointer;
     typedef typename pointer_traits<__node_pointer>::element_type __node;
-    typedef typename __node::base                                 __node_base;
-    typedef typename pointer_traits<__node_pointer>::template
-#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
-            rebind<__node_base>
-#else
-            rebind<__node_base>::other
-#endif
-                                                                  __node_base_pointer;
 
     __node_pointer __ptr_;
 
@@ -735,17 +729,39 @@ public:
         {return pointer_traits<pointer>::pointer_to(__ptr_->__value_);}
 
     _LIBCPP_INLINE_VISIBILITY
-    __tree_const_iterator& operator++()
-        {__ptr_ = static_cast<__node_pointer>(__tree_next(static_cast<__node_base_pointer>(__ptr_)));
-         return *this;}
+    __tree_const_iterator& operator++() {
+      typedef typename pointer_traits<__node_pointer>::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+          rebind<typename __node::base>
+#else
+          rebind<typename __node::base>::other
+#endif
+              __node_base_pointer;
+
+      __ptr_ = static_cast<__node_pointer>(
+          __tree_next(static_cast<__node_base_pointer>(__ptr_)));
+      return *this;
+    }
+
     _LIBCPP_INLINE_VISIBILITY
     __tree_const_iterator operator++(int)
         {__tree_const_iterator __t(*this); ++(*this); return __t;}
 
     _LIBCPP_INLINE_VISIBILITY
-    __tree_const_iterator& operator--()
-        {__ptr_ = static_cast<__node_pointer>(__tree_prev(static_cast<__node_base_pointer>(__ptr_)));
-         return *this;}
+    __tree_const_iterator& operator--() {
+      typedef typename pointer_traits<__node_pointer>::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+          rebind<typename __node::base>
+#else
+          rebind<typename __node::base>::other
+#endif
+              __node_base_pointer;
+
+      __ptr_ = static_cast<__node_pointer>(
+          __tree_prev(static_cast<__node_base_pointer>(__ptr_)));
+      return *this;
+    }
+
     _LIBCPP_INLINE_VISIBILITY
     __tree_const_iterator operator--(int)
         {__tree_const_iterator __t(*this); --(*this); return __t;}

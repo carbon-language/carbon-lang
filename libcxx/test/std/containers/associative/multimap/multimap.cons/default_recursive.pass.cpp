@@ -9,19 +9,19 @@
 
 // <map>
 
-// class map
+// class multimap
 
-// map();
+// multimap();
 
 #include <map>
 
 struct X
 {
-    std::map<int, X> m;
-    std::map<int, X>::iterator i;
-    std::map<int, X>::const_iterator ci;
-    std::map<int, X>::reverse_iterator ri;
-    std::map<int, X>::const_reverse_iterator cri;
+    std::multimap<int, X> m;
+    std::multimap<int, X>::iterator i;
+    std::multimap<int, X>::const_iterator ci;
+    std::multimap<int, X>::reverse_iterator ri;
+    std::multimap<int, X>::const_reverse_iterator cri;
 };
 
 int main()
