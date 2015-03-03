@@ -22,7 +22,7 @@ TEST(LowerBitSets, BitSetBuilder) {
     bool IsSingleOffset;
     bool IsAllOnes;
   } BSBTests[] = {
-      {{}, {}, 0, 1, 0, false, false},
+      {{}, std::set<uint64_t>{}, 0, 1, 0, false, false},
       {{0}, {0}, 0, 1, 0, true, true},
       {{4}, {0}, 4, 1, 0, true, true},
       {{37}, {0}, 37, 1, 0, true, true},
