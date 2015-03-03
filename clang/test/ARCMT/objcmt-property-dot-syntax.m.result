@@ -2,8 +2,6 @@
 // RUN: %clang_cc1 -objcmt-migrate-property-dot-syntax -mt-migrate-directory %t %s -x objective-c -fobjc-runtime-has-weak -fobjc-arc -triple x86_64-apple-darwin11
 // RUN: c-arcmt-test -mt-migrate-directory %t | arcmt-test -verify-transformed-files %s.result
 // RUN: %clang_cc1 -fblocks -triple x86_64-apple-darwin10 -fsyntax-only -x objective-c -fobjc-runtime-has-weak -fobjc-arc %s.result
-// RUN: rm -rf %t.1
-// RUN: %clang -fsyntax-only -objcmt-migrate-property-dot-syntax -Xclang -mt-migrate-directory -Xclang %t.1 %s -Xclang -triple -Xclang x86_64-apple-darwin11
 
 // rdar://18498572
 @interface NSObject @end
