@@ -80,24 +80,18 @@ SANITIZER("dataflow", DataFlow)
 SANITIZER("cfi-vptr", CFIVptr)
 SANITIZER_GROUP("cfi", CFI, CFIVptr)
 
-// -fsanitize=undefined includes all the sanitizers which have low overhead, no
-// ABI or address space layout implications, and only catch undefined behavior.
-SANITIZER_GROUP("undefined", Undefined,
-                Alignment | Bool | ArrayBounds | Enum | FloatCastOverflow |
-                    FloatDivideByZero | Function | IntegerDivideByZero |
-                    NonnullAttribute | Null | ObjectSize | Return |
-                    ReturnsNonnullAttribute | Shift | SignedIntegerOverflow |
-                    Unreachable | VLABound | Vptr)
-
-// -fsanitize=undefined-trap includes
-// all sanitizers included by -fsanitize=undefined, except those that require
-// runtime support.  This group is generally used in conjunction with the
+// -fsanitize=undefined-trap includes sanitizers from -fsanitize=undefined
+// that can be used without runtime support, generally by providing extra
 // -fsanitize-undefined-trap-on-error flag.
 SANITIZER_GROUP("undefined-trap", UndefinedTrap,
                 Alignment | Bool | ArrayBounds | Enum | FloatCastOverflow |
                     FloatDivideByZero | IntegerDivideByZero | NonnullAttribute |
                     Null | ObjectSize | Return | ReturnsNonnullAttribute |
                     Shift | SignedIntegerOverflow | Unreachable | VLABound)
+
+// -fsanitize=undefined includes all the sanitizers which have low overhead, no
+// ABI or address space layout implications, and only catch undefined behavior.
+SANITIZER_GROUP("undefined", Undefined, UndefinedTrap | Function | Vptr)
 
 SANITIZER_GROUP("integer", Integer,
                 SignedIntegerOverflow | UnsignedIntegerOverflow | Shift |
