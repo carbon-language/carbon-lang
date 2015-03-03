@@ -197,13 +197,25 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-        # Test stack depth
+        # Test that -stack-info-depth works
+        # (and that max-depth is optional)
         self.runCmd("-stack-info-depth")
         self.expect("\^done,depth=\"[1-9]\"")
+
+        # Test that max-depth restricts check of stack depth
+        #FIXME: max-depth argument is ignored
+        self.runCmd("-stack-info-depth 1")
+        #self.expect("\^done,depth=\"1\"")
+
+        # Test that invalid max-depth argument is handled
+        #FIXME: max-depth argument is ignored
+        self.runCmd("-stack-info-depth -1")
+        #self.expect("\^error")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_lldbmi_stack_info_frame(self):
         """Test that 'lldb-mi --interpreter' can show information about current frame."""
 
@@ -224,9 +236,22 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         self.expect("\*stopped,reason=\"breakpoint-hit\"")
 
-        # Test that -stack-info-frame works when program is running
+        # Test that -stack-info-frame works when program was stopped on BP
         self.runCmd("-stack-info-frame")
         self.expect("\^done,frame=\{level=\"0\",addr=\".+\",func=\"main\",file=\"main\.cpp\",fullname=\".*main\.cpp\",line=\"\d+\"\}")
+
+        # Select frame #1
+        self.runCmd("-stack-select-frame 1")
+        self.expect("\^done")
+
+        # Test that -stack-info-frame works when specified frame was selected
+        self.runCmd("-stack-info-frame")
+        self.expect("\^done,frame=\{level=\"1\",addr=\".+\",func=\".+\",file=\"\?\?\",fullname=\"\?\?\",line=\"-1\"\}")
+
+        # Test that -stack-info-frame fails when an argument is specified
+        #FIXME: unknown argument is ignored
+        self.runCmd("-stack-info-frame unknown_arg")
+        #self.expect("\^error")
 
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
