@@ -301,6 +301,7 @@ namespace lldb {
     typedef std::weak_ptr<lldb_private::BreakpointLocation> BreakpointLocationWP;
     typedef std::shared_ptr<lldb_private::BreakpointResolver> BreakpointResolverSP;
     typedef std::shared_ptr<lldb_private::Broadcaster> BroadcasterSP;
+    typedef std::unique_ptr<lldb_private::ClangASTContext> ClangASTContextUP;
     typedef std::shared_ptr<lldb_private::ClangExpressionVariable> ClangExpressionVariableSP;
     typedef std::shared_ptr<lldb_private::CommandObject> CommandObjectSP;
     typedef std::shared_ptr<lldb_private::Communication> CommunicationSP;
@@ -369,6 +370,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::ScriptSummaryFormat> ScriptSummaryFormatSP;
 #endif // #ifndef LLDB_DISABLE_PYTHON
     typedef std::shared_ptr<lldb_private::Section> SectionSP;
+    typedef std::unique_ptr<lldb_private::SectionList> SectionListUP;
     typedef std::weak_ptr<lldb_private::Section> SectionWP;
     typedef std::shared_ptr<lldb_private::SectionLoadList> SectionLoadListSP;
     typedef std::shared_ptr<lldb_private::SearchFilter> SearchFilterSP;
@@ -387,6 +389,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::SymbolFileType> SymbolFileTypeSP;
     typedef std::weak_ptr<lldb_private::SymbolFileType> SymbolFileTypeWP;
     typedef std::shared_ptr<lldb_private::SymbolContextSpecifier> SymbolContextSpecifierSP;
+    typedef std::unique_ptr<lldb_private::SymbolVendor> SymbolVendorUP;
     typedef std::shared_ptr<lldb_private::SyntheticChildren> SyntheticChildrenSP;
     typedef std::shared_ptr<lldb_private::SyntheticChildrenFrontEnd> SyntheticChildrenFrontEndSP;
     typedef std::shared_ptr<lldb_private::Target> TargetSP;

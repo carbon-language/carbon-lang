@@ -20,6 +20,7 @@
 #include "lldb/Expression/ClangFunction.h"
 #include "lldb/Expression/ClangUtilityFunction.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "Plugins/Process/Utility/HistoryThread.h"

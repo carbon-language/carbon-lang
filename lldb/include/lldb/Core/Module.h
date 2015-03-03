@@ -10,12 +10,12 @@
 #ifndef liblldb_Module_h_
 #define liblldb_Module_h_
 
+#include "lldb/lldb-forward.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/TimeValue.h"
-#include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/SymbolContextScope.h"
 #include "lldb/Target/PathMappingList.h"
 
@@ -1098,7 +1098,7 @@ protected:
     mutable Mutex               m_mutex;        ///< A mutex to keep this object happy in multi-threaded environments.
     TimeValue                   m_mod_time;     ///< The modification time for this module when it was created.
     ArchSpec                    m_arch;         ///< The architecture for this module.
-    lldb_private::UUID          m_uuid;         ///< Each module is assumed to have a unique identifier to help match it up to debug symbols.
+    UUID                        m_uuid;         ///< Each module is assumed to have a unique identifier to help match it up to debug symbols.
     FileSpec                    m_file;         ///< The file representation on disk for this module (if there is one).
     FileSpec                    m_platform_file;///< The path to the module on the platform on which it is being debugged
     FileSpec                    m_remote_install_file;  ///< If set when debugging on remote platforms, this module will be installed at this location
@@ -1107,10 +1107,10 @@ protected:
     uint64_t                    m_object_offset;
     TimeValue                   m_object_mod_time;
     lldb::ObjectFileSP          m_objfile_sp;   ///< A shared pointer to the object file parser for this module as it may or may not be shared with the SymbolFile
-    std::unique_ptr<SymbolVendor> m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
-    ClangASTContext             m_ast;          ///< The AST context for this module.
+    lldb::SymbolVendorUP        m_symfile_ap;   ///< A pointer to the symbol vendor for this module.
+    lldb::ClangASTContextUP     m_ast;          ///< The AST context for this module.
     PathMappingList             m_source_mappings; ///< Module specific source remappings for when you have debug info for a module that doesn't match where the sources currently are
-    std::unique_ptr<lldb_private::SectionList> m_sections_ap; ///< Unified section list for module that is used by the ObjectFile and and ObjectFile instances for the debug info
+    lldb::SectionListUP         m_sections_ap; ///< Unified section list for module that is used by the ObjectFile and and ObjectFile instances for the debug info
 
     bool                        m_did_load_objfile:1,
                                 m_did_load_symbol_vendor:1,
