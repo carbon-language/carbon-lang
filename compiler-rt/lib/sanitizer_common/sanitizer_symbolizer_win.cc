@@ -59,8 +59,8 @@ class WinSymbolizer : public Symbolizer {
     internal_memset(&mod_info, 0, sizeof(mod_info));
     mod_info.SizeOfStruct = sizeof(mod_info);
     if (SymGetModuleInfo64(GetCurrentProcess(), addr, &mod_info))
-      frame->info.FillAddressAndModuleInfo(addr, mod_info.ImageName,
-                                           addr - (uptr)mod_info.BaseOfImage);
+      frame->info.FillModuleInfo(mod_info.ImageName,
+                                 addr - (uptr)mod_info.BaseOfImage);
     return frame;
   }
 

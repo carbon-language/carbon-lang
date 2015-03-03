@@ -95,8 +95,7 @@ struct SymbolizeCodeCallbackArg {
     if (frames_symbolized > 0) {
       SymbolizedStack *cur = SymbolizedStack::New(addr);
       AddressInfo *info = &cur->info;
-      info->FillAddressAndModuleInfo(addr, first->info.module,
-                                     first->info.module_offset);
+      info->FillModuleInfo(first->info.module, first->info.module_offset);
       last->next = cur;
       last = cur;
     }

@@ -33,9 +33,7 @@ void AddressInfo::Clear() {
   function_offset = kUnknown;
 }
 
-void AddressInfo::FillAddressAndModuleInfo(uptr addr, const char *mod_name,
-                                           uptr mod_offset) {
-  address = addr;
+void AddressInfo::FillModuleInfo(const char *mod_name, uptr mod_offset) {
   module = internal_strdup(mod_name);
   module_offset = mod_offset;
 }

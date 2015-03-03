@@ -74,8 +74,7 @@ static void ParseSymbolizePCOutput(const char *str, SymbolizedStack *res) {
       top_frame = false;
     } else {
       cur = SymbolizedStack::New(res->info.address);
-      cur->info.FillAddressAndModuleInfo(res->info.address, res->info.module,
-                                         res->info.module_offset);
+      cur->info.FillModuleInfo(res->info.module, res->info.module_offset);
       last->next = cur;
       last = cur;
     }
@@ -363,7 +362,7 @@ class POSIXSymbolizer : public Symbolizer {
     if (!FindModuleNameAndOffsetForAddress(addr, &module_name, &module_offset))
       return res;
     // Always fill data about module name and offset.
-    res->info.FillAddressAndModuleInfo(addr, module_name, module_offset);
+    res->info.FillModuleInfo(module_name, module_offset);
     // First, try to use libbacktrace symbolizer (if it's available).
     if (libbacktrace_symbolizer_ != 0) {
       mu_.CheckLocked();

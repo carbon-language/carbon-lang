@@ -43,8 +43,7 @@ struct AddressInfo {
   AddressInfo();
   // Deletes all strings and resets all fields.
   void Clear();
-  void FillAddressAndModuleInfo(uptr addr, const char *mod_name,
-                                uptr mod_offset);
+  void FillModuleInfo(const char *mod_name, uptr mod_offset);
 };
 
 // Linked list of symbolized frames (each frame is described by AddressInfo).
