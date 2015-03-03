@@ -257,6 +257,8 @@ namespace llvm {
       assert(isValid() && "Invalid twine!");
     }
 
+    Twine(const Twine &) = default;
+
     /// Construct from a C string.
     ///
     /// We take care here to optimize "" into the empty twine -- this will be
