@@ -126,6 +126,11 @@ set(LIBCXXABI_SYSROOT "" CACHE STRING "Sysroot for cross compiling.")
 # case of an in tree build, libc++ will prefer a dynamic libc++abi from the
 # system over a static libc++abi from the output directory.
 option(LIBCXXABI_ENABLE_SHARED "Build libc++abi as a shared library." ON)
+option(LIBCXXABI_ENABLE_STATIC "Build libc++abi as a static library." ON)
+
+if (NOT LIBCXXABI_ENABLE_SHARED AND NOT LIBCXXABI_ENABLE_STATIC)
+  message(FATAL_ERROR "libc++abi must be built as either a shared or static library.")
+endif()
 
 find_path(
   LIBCXXABI_LIBCXX_INCLUDES

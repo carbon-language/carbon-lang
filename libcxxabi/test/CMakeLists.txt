@@ -21,7 +21,7 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
   @ONLY)
 
-set(LIBCXXABI_TEST_DEPS cxxabi)
+set(LIBCXXABI_TEST_DEPS cxxabi_shared)
 if (NOT LIBCXXABI_BUILT_STANDALONE)
   list(APPEND LIBCXXABI_TEST_DEPS cxx)
 endif()
