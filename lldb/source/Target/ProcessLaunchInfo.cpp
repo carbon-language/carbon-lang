@@ -15,6 +15,10 @@
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/Target.h"
 
+#if !defined(_WIN32)
+#include <limits.h>
+#endif
+
 using namespace lldb;
 using namespace lldb_private;
 
