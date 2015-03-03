@@ -18,6 +18,9 @@ __vector float vv_f;
 __vector bool char vv_bc;
 __vector bool short vv_bs;
 __vector bool int vv_bi;
+__vector __bool char vv___bc;
+__vector __bool short vv___bs;
+__vector __bool int vv___bi;
 __vector __pixel vv_p;
 __vector pixel vv__p;
 __vector int vf__r();
@@ -40,6 +43,9 @@ vector float v_f;
 vector bool char v_bc;
 vector bool short v_bs;
 vector bool int v_bi;
+vector __bool char v___bc;
+vector __bool short v___bs;
+vector __bool int v___bi;
 vector __pixel v_p;
 vector pixel v__p;
 vector int f__r();
@@ -67,6 +73,10 @@ vector long double  v_ld;           // expected-error {{cannot use 'long double'
 // These should have errors.
 __vector double vv_d1;               // expected-error {{use of 'double' with '__vector' requires VSX support to be enabled (available on the POWER7 or later)}}
 vector double v_d2;                  // expected-error {{use of 'double' with '__vector' requires VSX support to be enabled (available on the POWER7 or later)}}
+__vector bool long long v_bll1;      // expected-error {{use of 'long long' with '__vector bool' requires VSX support to be enabled (available on the POWER7 or later)}}
+__vector __bool long long v_bll2;    // expected-error {{use of 'long long' with '__vector bool' requires VSX support to be enabled (available on the POWER7 or later)}}
+vector bool long long v_bll3;        // expected-error {{use of 'long long' with '__vector bool' requires VSX support to be enabled (available on the POWER7 or later)}}
+vector __bool long long v_bll4;      // expected-error {{use of 'long long' with '__vector bool' requires VSX support to be enabled (available on the POWER7 or later)}}
 __vector long double  vv_ld3;        // expected-error {{cannot use 'long double' with '__vector'}}
 vector long double  v_ld4;           // expected-error {{cannot use 'long double' with '__vector'}}
 vector bool v_b;                     // expected-error {{C++ requires a type specifier for all declarations}}
@@ -74,9 +84,14 @@ vector bool float v_bf;              // expected-error {{cannot use 'float' with
 vector bool double v_bd;             // expected-error {{cannot use 'double' with '__vector bool'}}
 vector bool pixel v_bp;              // expected-error {{cannot use '__pixel' with '__vector bool'}}
 vector bool signed char v_bsc;       // expected-error {{cannot use 'signed' with '__vector bool'}}
-vector bool unsigned int v_bsc2;      // expected-error {{cannot use 'unsigned' with '__vector bool'}}
+vector bool unsigned int v_bsc2;     // expected-error {{cannot use 'unsigned' with '__vector bool'}}
 vector bool long v_bl;               // expected-error {{cannot use 'long' with '__vector bool'}}
-vector bool long long v_bll;         // expected-error {{cannot use 'long long' with '__vector bool'}}
+vector __bool float v___bf;          // expected-error {{cannot use 'float' with '__vector bool'}}
+vector __bool double v___bd;         // expected-error {{cannot use 'double' with '__vector bool'}}
+vector __bool pixel v___bp;          // expected-error {{cannot use '__pixel' with '__vector bool'}}
+vector __bool signed char v___bsc;   // expected-error {{cannot use 'signed' with '__vector bool'}}
+vector __bool unsigned int v___bsc2; // expected-error {{cannot use 'unsigned' with '__vector bool'}}
+vector __bool long v___bl;           // expected-error {{cannot use 'long' with '__vector bool'}}
 
 // vector long is deprecated, but vector long long is not.
 vector long long v_ll;

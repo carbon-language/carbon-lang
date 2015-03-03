@@ -353,6 +353,9 @@ def err_invalid_vector_bool_decl_spec : Error<
   "cannot use '%0' with '__vector bool'">;
 def err_invalid_vector_double_decl_spec : Error <
   "use of 'double' with '__vector' requires VSX support to be enabled (available on the POWER7 or later)">;
+def err_invalid_vector_long_long_decl_spec : Error <
+  "use of 'long long' with '__vector bool' requires VSX support to be enabled "
+  "(available on the POWER7 or later)">;
 def err_invalid_vector_long_double_decl_spec : Error<
   "cannot use 'long double' with '__vector'">;
 def warn_vector_long_decl_spec_combination : Warning<
