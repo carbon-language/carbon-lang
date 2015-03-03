@@ -11,6 +11,7 @@
 // C++ Includes
 // Other libraries and framework includes
 #include "lldb/Core/State.h"
+#include "lldb/Target/UnixSignals.h"
 
 // Project includes
 #include "FreeBSDThread.h"
