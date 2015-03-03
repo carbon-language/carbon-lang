@@ -15,6 +15,7 @@
 #include "llvm/Support/MathExtras.h"
 
 // Other libraries and framework includes
+#include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Module.h"

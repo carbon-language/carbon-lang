@@ -30,6 +30,8 @@
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Core/ValueObject.h"
+#include "lldb/DataFormatters/TypeSummary.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/Pipe.h"

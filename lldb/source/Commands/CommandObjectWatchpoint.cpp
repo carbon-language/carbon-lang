@@ -27,6 +27,7 @@
 #include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Symbol/VariableList.h"
+#include "lldb/Target/StackFrame.h"
 #include "lldb/Target/Target.h"
 
 #include "llvm/ADT/StringRef.h"

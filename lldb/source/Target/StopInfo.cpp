@@ -24,6 +24,7 @@
 #include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/ValueObject.h"
 #include "lldb/Expression/ClangUserExpression.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"

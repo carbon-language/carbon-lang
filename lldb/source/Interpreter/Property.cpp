@@ -19,6 +19,7 @@
 #include "lldb/Host/StringConvert.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/OptionValues.h"
+#include "lldb/Target/LanguageRuntime.h"
 
 using namespace lldb;
 using namespace lldb_private;

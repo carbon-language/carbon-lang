@@ -25,7 +25,6 @@
 #include "lldb/Core/SourceManager.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Core/UserSettingsController.h"
-#include "lldb/DataFormatters/FormatManager.h"
 #include "lldb/Host/HostThread.h"
 #include "lldb/Host/Terminal.h"
 #include "lldb/Interpreter/OptionValueProperties.h"

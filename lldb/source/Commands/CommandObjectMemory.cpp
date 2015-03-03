@@ -16,6 +16,7 @@
 
 // C++ Includes
 // Other libraries and framework includes
+#include "clang/AST/Decl.h"
 // Project includes
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"

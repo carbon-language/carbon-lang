@@ -22,6 +22,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/DataFormatters/FormatManager.h"
 #include "lldb/DataFormatters/TypeFormat.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/ClangASTType.h"
