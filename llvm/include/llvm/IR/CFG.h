@@ -121,7 +121,7 @@ public:
   typedef typename super::reference reference;
 
 private:
-  const Term_ Term;
+  Term_ Term;
   unsigned idx;
   typedef SuccIterator<Term_, BB_> Self;
 
