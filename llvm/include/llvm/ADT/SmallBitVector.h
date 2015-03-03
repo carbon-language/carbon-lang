@@ -66,6 +66,8 @@ public:
   public:
     reference(SmallBitVector &b, unsigned Idx) : TheVector(b), BitPos(Idx) {}
 
+    reference(const reference&) = default;
+
     reference& operator=(reference t) {
       *this = bool(t);
       return *this;

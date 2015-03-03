@@ -53,7 +53,7 @@ public:
       BitPos = Idx % BITWORD_SIZE;
     }
 
-    ~reference() {}
+    reference(const reference&) = default;
 
     reference &operator=(reference t) {
       *this = bool(t);
