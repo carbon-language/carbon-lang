@@ -17,12 +17,15 @@
 #include "CGCXXABI.h"
 #include "CGVTables.h"
 #include "CodeGenModule.h"
+#include "TargetInfo.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/StmtCXX.h"
 #include "clang/AST/VTableBuilder.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/IR/CallSite.h"
+#include "llvm/IR/Intrinsics.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -71,6 +74,8 @@ public:
                                const CXXDestructorDecl *Dtor) override;
 
   void emitRethrow(CodeGenFunction &CGF, bool isNoReturn) override;
+
+  void emitBeginCatch(CodeGenFunction &CGF, const CXXCatchStmt *C) override;
 
   llvm::GlobalVariable *getMSCompleteObjectLocator(const CXXRecordDecl *RD,
                                                    const VPtrInfo *Info);
@@ -693,6 +698,42 @@ void MicrosoftCXXABI::emitRethrow(CodeGenFunction &CGF, bool isNoReturn) {
     CGF.EmitNoreturnRuntimeCallOrInvoke(Fn, Args);
   else
     CGF.EmitRuntimeCallOrInvoke(Fn, Args);
+}
+
+namespace {
+struct CallEndCatchMSVC : EHScopeStack::Cleanup {
+  CallEndCatchMSVC() {}
+  void Emit(CodeGenFunction &CGF, Flags flags) override {
+    CGF.EmitNounwindRuntimeCall(
+        CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_endcatch));
+  }
+};
+}
+
+void MicrosoftCXXABI::emitBeginCatch(CodeGenFunction &CGF,
+                                     const CXXCatchStmt *S) {
+  // In the MS ABI, the runtime handles the copy, and the catch handler is
+  // responsible for destruction.
+  VarDecl *CatchParam = S->getExceptionDecl();
+  llvm::Value *Exn = CGF.getExceptionFromSlot();
+  llvm::Function *BeginCatch =
+      CGF.CGM.getIntrinsic(llvm::Intrinsic::eh_begincatch);
+
+  if (!CatchParam) {
+    llvm::Value *Args[2] = {Exn, llvm::Constant::getNullValue(CGF.Int8PtrTy)};
+    CGF.EmitNounwindRuntimeCall(BeginCatch, Args);
+    CGF.EHStack.pushCleanup<CallEndCatchMSVC>(NormalAndEHCleanup);
+    return;
+  }
+
+  CodeGenFunction::AutoVarEmission var = CGF.EmitAutoVarAlloca(*CatchParam);
+  llvm::Value *ParamAddr =
+      CGF.Builder.CreateBitCast(var.getObjectAddress(CGF), CGF.Int8PtrTy);
+  llvm::Value *Args[2] = {Exn, ParamAddr};
+  CGF.EmitNounwindRuntimeCall(BeginCatch, Args);
+  // FIXME: Do we really need exceptional endcatch cleanups?
+  CGF.EHStack.pushCleanup<CallEndCatchMSVC>(NormalAndEHCleanup);
+  CGF.EmitAutoVarCleanups(var);
 }
 
 std::pair<llvm::Value *, llvm::Value *>

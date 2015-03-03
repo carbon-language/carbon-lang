@@ -302,3 +302,10 @@ CGCXXABI::EmitCtorCompleteObjectHandler(CodeGenFunction &CGF,
 bool CGCXXABI::NeedsVTTParameter(GlobalDecl GD) {
   return false;
 }
+
+llvm::CallInst *
+CGCXXABI::emitTerminateForUnexpectedException(CodeGenFunction &CGF,
+                                              llvm::Value *Exn) {
+  // Just call std::terminate and ignore the violating exception.
+  return CGF.EmitNounwindRuntimeCall(CGF.CGM.getTerminateFn());
+}

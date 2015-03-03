@@ -22,6 +22,7 @@ namespace llvm {
 class Constant;
 class Type;
 class Value;
+class CallInst;
 }
 
 namespace clang {
@@ -214,6 +215,12 @@ public:
                                        llvm::Value *Ptr, QualType ElementType,
                                        const CXXDestructorDecl *Dtor) = 0;
   virtual void emitRethrow(CodeGenFunction &CGF, bool isNoReturn) = 0;
+
+  virtual void emitBeginCatch(CodeGenFunction &CGF, const CXXCatchStmt *C) = 0;
+
+  virtual llvm::CallInst *
+  emitTerminateForUnexpectedException(CodeGenFunction &CGF,
+                                      llvm::Value *Exn);
 
   virtual llvm::Constant *getAddrOfRTTIDescriptor(QualType Ty) = 0;
 
