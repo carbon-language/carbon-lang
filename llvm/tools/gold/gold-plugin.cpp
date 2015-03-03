@@ -296,12 +296,9 @@ static void diagnosticHandler(const DiagnosticInfo &DI, void *Context) {
     Level = LDPL_WARNING;
     break;
   case DS_Note:
+  case DS_Remark:
     Level = LDPL_INFO;
     break;
-    // FIXME: Just ignore remarks for now. They are always passed by
-    // if there is a custom diagnostic handler, so we get flooded.
-  case DS_Remark:
-    return;
   }
   message(Level, "LLVM gold plugin: %s",  ErrStorage.c_str());
 }
@@ -812,7 +809,7 @@ static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *ApiFile) {
     return LDPS_OK;
 
   LLVMContext Context;
-  Context.setDiagnosticHandler(diagnosticHandler);
+  Context.setDiagnosticHandler(diagnosticHandler, nullptr, false);
 
   std::unique_ptr<Module> Combined(new Module("ld-temp.o", Context));
   Linker L(Combined.get());
