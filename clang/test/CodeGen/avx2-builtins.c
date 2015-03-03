@@ -612,7 +612,7 @@ __m256d test_mm256_broadcastsd_pd(__m128d a) {
 }
 
 __m256i test_mm256_broadcastsi128_si256(__m128i a) {
-  // CHECK: @llvm.x86.avx2.vbroadcasti128
+  // CHECK: shufflevector <2 x i64> %{{.*}}, <2 x i64> %{{.*}}, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
   return _mm256_broadcastsi128_si256(a);
 }
 

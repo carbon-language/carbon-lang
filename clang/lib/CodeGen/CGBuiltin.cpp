@@ -6090,13 +6090,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Builder.CreateStore(Builder.CreateExtractValue(Call, 0), Ops[0]);
     return Builder.CreateExtractValue(Call, 1);
   }
-  // AVX2 broadcast
-  case X86::BI__builtin_ia32_vbroadcastsi256: {
-    Value *VecTmp = CreateMemTemp(E->getArg(0)->getType());
-    Builder.CreateStore(Ops[0], VecTmp);
-    Value *F = CGM.getIntrinsic(Intrinsic::x86_avx2_vbroadcasti128);
-    return Builder.CreateCall(F, Builder.CreateBitCast(VecTmp, Int8PtrTy));
-  }
   // SSE comparison intrisics
   case X86::BI__builtin_ia32_cmpeqps:
   case X86::BI__builtin_ia32_cmpltps:
