@@ -145,3 +145,16 @@ namespace Decay {
 }
 
 void rval_ref() throw (int &&); // expected-error {{rvalue reference type 'int &&' is not allowed in exception specification}} expected-warning {{C++11}}
+
+namespace ConstVolatile {
+struct S {
+  S() {}         // expected-note{{candidate constructor not viable}}
+  S(const S &s); // expected-note{{candidate constructor not viable}}
+};
+
+typedef const volatile S CVS;
+
+void f() {
+  throw CVS(); // expected-error{{no matching constructor for initialization}}
+}
+}

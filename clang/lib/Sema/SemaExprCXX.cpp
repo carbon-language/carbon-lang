@@ -660,24 +660,10 @@ ExprResult Sema::BuildCXXThrow(SourceLocation OpLoc, Expr *Ex,
 /// CheckCXXThrowOperand - Validate the operand of a throw.
 ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
                                       bool IsThrownVarInScope) {
-  // C++ [except.throw]p3:
-  //   A throw-expression initializes a temporary object, called the exception
-  //   object, the type of which is determined by removing any top-level
-  //   cv-qualifiers from the static type of the operand of throw and adjusting
-  //   the type from "array of T" or "function returning T" to "pointer to T"
-  //   or "pointer to function returning T", [...]
-  if (E->getType().hasQualifiers())
-    E = ImpCastExprToType(E, E->getType().getUnqualifiedType(), CK_NoOp,
-                          E->getValueKind()).get();
-
-  ExprResult Res = DefaultFunctionArrayConversion(E);
-  if (Res.isInvalid())
-    return ExprError();
-  E = Res.get();
-
+  QualType ExceptionObjectTy = Context.getExceptionObjectType(E->getType());
   //   If the type of the exception would be an incomplete type or a pointer
   //   to an incomplete type other than (cv) void the program is ill-formed.
-  QualType Ty = E->getType();
+  QualType Ty = ExceptionObjectTy;
   bool isPointer = false;
   if (const PointerType* Ptr = Ty->getAs<PointerType>()) {
     Ty = Ptr->getPointeeType();
@@ -690,7 +676,7 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
                             E->getSourceRange()))
       return ExprError();
 
-    if (RequireNonAbstractType(ThrowLoc, E->getType(),
+    if (RequireNonAbstractType(ThrowLoc, ExceptionObjectTy,
                                diag::err_throw_abstract_type, E))
       return ExprError();
   }
@@ -714,11 +700,10 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
     NRVOVariable = getCopyElisionCandidate(QualType(), E, false);
 
   InitializedEntity Entity =
-      InitializedEntity::InitializeException(ThrowLoc, E->getType(),
+      InitializedEntity::InitializeException(ThrowLoc, ExceptionObjectTy,
                                              /*NRVO=*/NRVOVariable != nullptr);
-  Res = PerformMoveOrCopyInitialization(Entity, NRVOVariable,
-                                        QualType(), E,
-                                        IsThrownVarInScope);
+  ExprResult Res = PerformMoveOrCopyInitialization(
+      Entity, NRVOVariable, QualType(), E, IsThrownVarInScope);
   if (Res.isInvalid())
     return ExprError();
   E = Res.get();

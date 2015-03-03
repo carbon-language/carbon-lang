@@ -1936,6 +1936,8 @@ public:
   /// cv-qualifiers.
   QualType getSignatureParameterType(QualType T) const;
   
+  QualType getExceptionObjectType(QualType T) const;
+  
   /// \brief Return the properly qualified result of decaying the specified
   /// array type to a pointer.
   ///
