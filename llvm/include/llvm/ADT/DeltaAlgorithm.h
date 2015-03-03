@@ -77,6 +77,8 @@ protected:
   /// ExecuteOneTest - Execute a single test predicate on the change set \p S.
   virtual bool ExecuteOneTest(const changeset_ty &S) = 0;
 
+  DeltaAlgorithm& operator=(const DeltaAlgorithm&) = default;
+
 public:
   virtual ~DeltaAlgorithm();
 

@@ -32,7 +32,7 @@ std::ostream &operator<<(std::ostream &OS,
 
 namespace {
 
-class FixedDeltaAlgorithm : public DeltaAlgorithm {
+class FixedDeltaAlgorithm final : public DeltaAlgorithm {
   changeset_ty FailingSet;
   unsigned NumTests;
 
