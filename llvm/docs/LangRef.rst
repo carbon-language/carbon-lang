@@ -6913,9 +6913,7 @@ Arguments:
 
 The '``select``' instruction requires an 'i1' value or a vector of 'i1'
 values indicating the condition, and two values of the same :ref:`first
-class <t_firstclass>` type. If the val1/val2 are vectors and the
-condition is a scalar, then entire vectors are selected, not individual
-elements.
+class <t_firstclass>` type.
 
 Semantics:
 """"""""""
@@ -6926,6 +6924,9 @@ argument.
 
 If the condition is a vector of i1, then the value arguments must be
 vectors of the same size, and the selection is done element by element.
+
+If the condition is an i1 and the value arguments are vectors of the
+same size, then an entire vector is selected.
 
 Example:
 """"""""
