@@ -1005,7 +1005,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
     // Otherwise we should form a memset_pattern16.  PatternValue is known to be
     // an constant array of 16-bytes.  Plop the value into a mergable global.
     GlobalVariable *GV = new GlobalVariable(*M, PatternValue->getType(), true,
-                                            GlobalValue::InternalLinkage,
+                                            GlobalValue::PrivateLinkage,
                                             PatternValue, ".memset_pattern");
     GV->setUnnamedAddr(true); // Ok to merge these.
     GV->setAlignment(16);
