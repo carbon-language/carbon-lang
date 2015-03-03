@@ -60,23 +60,23 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = !{!"0x11\0012\00clang version 3.5 \000\00\000\00\000", !1, !2, !2, !3, !2, !2} ; [ DW_TAG_compile_unit ] [/home/grosser/Projects/polly/git/tools/polly/test.c] [DW_LANG_C99]
-!1 = !{!"test.c", !"/home/grosser/Projects/polly/git/tools/polly"}
+!0 = !MDCompileUnit(language: DW_LANG_C99, producer: "clang version 3.5 ", isOptimized: false, emissionKind: 0, file: !1, enums: !2, retainedTypes: !2, subprograms: !3, globals: !2, imports: !2)
+!1 = !MDFile(filename: "test.c", directory: "/home/grosser/Projects/polly/git/tools/polly")
 !2 = !{i32 0}
 !3 = !{!4, !7}
-!4 = !{!"0x2e\00foo\00foo\00\001\000\001\000\006\00256\000\001", !1, !5, !6, null, void (float*)* @foo, null, null, !2} ; [ DW_TAG_subprogram ] [line 1] [def] [foo]
-!5 = !{!"0x29", !1}          ; [ DW_TAG_file_type ] [/home/grosser/Projects/polly/git/tools/polly/test.c]
-!6 = !{!"0x15\00\000\000\000\000\000\000", i32 0, null, null, !2, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
-!7 = !{!"0x2e\00bar\00bar\00\006\000\001\000\006\00256\000\006", !1, !5, !6, null, void (float*)* @bar, null, null, !2} ; [ DW_TAG_subprogram ] [line 6] [def] [bar]
+!4 = !MDSubprogram(name: "foo", line: 1, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 1, file: !1, scope: !5, type: !6, function: void (float*)* @foo, variables: !2)
+!5 = !MDFile(filename: "test.c", directory: "/home/grosser/Projects/polly/git/tools/polly")
+!6 = !MDSubroutineType(types: !2)
+!7 = !MDSubprogram(name: "bar", line: 6, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, scopeLine: 6, file: !1, scope: !5, type: !6, function: void (float*)* @bar, variables: !2)
 !8 = !{i32 2, !"Dwarf Version", i32 4}
-!9 = !{i32 1, !"Debug Info Version", i32 2}
+!9 = !{i32 1, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.5 "}
 !11 = !MDLocation(line: 2, scope: !12)
-!12 = !{!"0xb\002\000\000", !1, !4} ; [ DW_TAG_lexical_block ] [/home/grosser/Projects/polly/git/tools/polly/test.c]
+!12 = distinct !MDLexicalBlock(line: 2, column: 0, file: !1, scope: !4)
 !13 = !MDLocation(line: 3, scope: !12)
 !14 = !MDLocation(line: 4, scope: !4)
 !15 = !MDLocation(line: 9, scope: !16)
-!16 = !{!"0xb\009\000\001", !1, !7} ; [ DW_TAG_lexical_block ] [/home/grosser/Projects/polly/git/tools/polly/test.c]
+!16 = distinct !MDLexicalBlock(line: 9, column: 0, file: !1, scope: !7)
 !17 = !MDLocation(line: 13, scope: !16)
 !18 = !MDLocation(line: 14, scope: !7)
 
