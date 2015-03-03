@@ -1008,11 +1008,13 @@ public:
     if (!NoAdvance) AdvancePastEmptyBuckets();
   }
 
-  // If IsConst is true this is a converting constructor from iterator to
-  // const_iterator and the default copy constructor is used.
-  // Otherwise this is a copy constructor for iterator.
+  // Converting ctor from non-const iterators to const iterators. SFINAE'd out
+  // for const iterator destinations so it doesn't end up as a user defined copy
+  // constructor.
+  template <bool IsConstSrc,
+            typename = typename std::enable_if<!IsConstSrc && IsConst>::type>
   DenseMapIterator(
-      const DenseMapIterator<KeyT, ValueT, KeyInfoT, Bucket, false> &I)
+      const DenseMapIterator<KeyT, ValueT, KeyInfoT, Bucket, IsConstSrc> &I)
       : Ptr(I.Ptr), End(I.End) {}
 
   reference operator*() const {
