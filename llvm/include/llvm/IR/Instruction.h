@@ -54,7 +54,12 @@ public:
   inline const BasicBlock *getParent() const { return Parent; }
   inline       BasicBlock *getParent()       { return Parent; }
 
-  const DataLayout *getDataLayout() const;
+  /// \brief Return the module owning the function this instruction belongs to
+  /// or nullptr it the function does not have a module.
+  ///
+  /// Note: this is undefined behavior if the instruction does not have a
+  /// parent, or the parent basic block does not have a parent function.
+  const Module *getModule() const;
 
   /// removeFromParent - This method unlinks 'this' from the containing basic
   /// block, but does not delete it.

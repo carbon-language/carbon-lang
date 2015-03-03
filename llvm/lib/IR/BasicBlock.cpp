@@ -29,10 +29,6 @@ ValueSymbolTable *BasicBlock::getValueSymbolTable() {
   return nullptr;
 }
 
-const DataLayout *BasicBlock::getDataLayout() const {
-  return getParent()->getDataLayout();
-}
-
 LLVMContext &BasicBlock::getContext() const {
   return getType()->getContext();
 }
@@ -117,6 +113,9 @@ void BasicBlock::moveAfter(BasicBlock *MovePos) {
                                        getParent()->getBasicBlockList(), this);
 }
 
+const Module *BasicBlock::getModule() const {
+  return getParent()->getParent();
+}
 
 TerminatorInst *BasicBlock::getTerminator() {
   if (InstList.empty()) return nullptr;

@@ -42,10 +42,6 @@ void GlobalValue::Dematerialize() {
   getParent()->Dematerialize(this);
 }
 
-const DataLayout *GlobalValue::getDataLayout() const {
-  return getParent()->getDataLayout();
-}
-
 /// Override destroyConstant to make sure it doesn't get called on
 /// GlobalValue's because they shouldn't be treated like other constants.
 void GlobalValue::destroyConstant() {

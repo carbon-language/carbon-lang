@@ -396,7 +396,7 @@ bool CallAnalyzer::visitBitCast(BitCastInst &I) {
 }
 
 bool CallAnalyzer::visitPtrToInt(PtrToIntInst &I) {
-  const DataLayout *DL = I.getDataLayout();
+  const DataLayout *DL = I.getModule()->getDataLayout();
   // Propagate constants through ptrtoint.
   Constant *COp = dyn_cast<Constant>(I.getOperand(0));
   if (!COp)
@@ -433,7 +433,7 @@ bool CallAnalyzer::visitPtrToInt(PtrToIntInst &I) {
 }
 
 bool CallAnalyzer::visitIntToPtr(IntToPtrInst &I) {
-  const DataLayout *DL = I.getDataLayout();
+  const DataLayout *DL = I.getModule()->getDataLayout();
   // Propagate constants through ptrtoint.
   Constant *COp = dyn_cast<Constant>(I.getOperand(0));
   if (!COp)
@@ -1333,7 +1333,7 @@ InlineCost InlineCostAnalysis::getInlineCost(CallSite CS, Function *Callee,
   DEBUG(llvm::dbgs() << "      Analyzing call of " << Callee->getName()
         << "...\n");
 
-  CallAnalyzer CA(Callee->getDataLayout(), TTIWP->getTTI(*Callee),
+  CallAnalyzer CA(Callee->getParent()->getDataLayout(), TTIWP->getTTI(*Callee),
                   ACT, *Callee, Threshold);
   bool ShouldInline = CA.analyzeCall(CS);
 

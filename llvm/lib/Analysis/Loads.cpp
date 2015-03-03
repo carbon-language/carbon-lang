@@ -19,6 +19,7 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
 using namespace llvm;
 
@@ -178,7 +179,7 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
 
   // Try to get the DataLayout for this module. This may be null, in which case
   // the optimizations will be limited.
-  const DataLayout *DL = ScanBB->getDataLayout();
+  const DataLayout *DL = ScanBB->getModule()->getDataLayout();
 
   // Try to get the store size for the type.
   uint64_t AccessSize = DL ? DL->getTypeStoreSize(AccessTy)
