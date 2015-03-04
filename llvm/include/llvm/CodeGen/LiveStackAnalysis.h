@@ -21,7 +21,6 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <map>
-#include <unordered_map>
 
 namespace llvm {
 
@@ -34,7 +33,7 @@ namespace llvm {
 
     /// S2IMap - Stack slot indices to live interval mapping.
     ///
-    typedef std::unordered_map<int, LiveInterval> SS2IntervalMap;
+    typedef std::map<int, LiveInterval> SS2IntervalMap;
     SS2IntervalMap S2IMap;
 
     /// S2RCMap - Stack slot indices to register class mapping.
