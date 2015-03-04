@@ -34,6 +34,13 @@ bar:
         movl  $_GLOBAL_OFFSET_TABLE_, %eax
         movabs  $_GLOBAL_OFFSET_TABLE_, %rax
 
+        .quad    blah@SIZE                        # R_X86_64_SIZE64
+        .quad    blah@SIZE + 32                   # R_X86_64_SIZE64
+        .quad    blah@SIZE - 32                   # R_X86_64_SIZE64
+         movl    blah@SIZE, %eax                  # R_X86_64_SIZE32
+         movl    blah@SIZE + 32, %eax             # R_X86_64_SIZE32
+         movl    blah@SIZE - 32, %eax             # R_X86_64_SIZE32
+
 // CHECK:        Section {
 // CHECK:          Name: .rela.text
 // CHECK:          Relocations [
@@ -62,6 +69,12 @@ bar:
 // CHECK-NEXT:       0x98 R_X86_64_PC32 foo 0xFFFFFFFFFFFFFFFB
 // CHECK-NEXT:       0x9D R_X86_64_GOTPC32 _GLOBAL_OFFSET_TABLE_ 0x1
 // CHECK-NEXT:       0xA3 R_X86_64_GOTPC64 _GLOBAL_OFFSET_TABLE_ 0x2
+// CHECK-NEXT:       0xAB R_X86_64_SIZE64 blah 0x0
+// CHECK-NEXT:       0xB3 R_X86_64_SIZE64 blah 0x20
+// CHECK-NEXT:       0xBB R_X86_64_SIZE64 blah 0xFFFFFFFFFFFFFFE0
+// CHECK-NEXT:       0xC6 R_X86_64_SIZE32 blah 0x0
+// CHECK-NEXT:       0xCD R_X86_64_SIZE32 blah 0x20
+// CHECK-NEXT:       0xD4 R_X86_64_SIZE32 blah 0xFFFFFFFFFFFFFFE0
 // CHECK-NEXT:     ]
 // CHECK-NEXT:   }
 

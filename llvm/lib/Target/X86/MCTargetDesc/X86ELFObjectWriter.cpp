@@ -123,6 +123,9 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
         case MCSymbolRefExpr::VK_DTPOFF:
           Type = ELF::R_X86_64_DTPOFF64;
           break;
+        case MCSymbolRefExpr::VK_SIZE:
+          Type = ELF::R_X86_64_SIZE64;
+          break;
         }
         break;
       case X86::reloc_signed_4byte:
@@ -143,6 +146,9 @@ unsigned X86ELFObjectWriter::GetRelocType(const MCValue &Target,
           break;
         case MCSymbolRefExpr::VK_DTPOFF:
           Type = ELF::R_X86_64_DTPOFF32;
+          break;
+        case MCSymbolRefExpr::VK_SIZE:
+          Type = ELF::R_X86_64_SIZE32;
           break;
         }
         break;
