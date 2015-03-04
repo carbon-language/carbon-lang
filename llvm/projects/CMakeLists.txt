@@ -19,8 +19,10 @@ if(${LLVM_BUILD_RUNTIME})
   # MSVC isn't quite working with libc++ yet, disable it until issues are
   # fixed.
   if(NOT MSVC)
-    add_llvm_external_project(libcxx)
+    # libc++ uses the libc++abi target names so libc++abi should be added
+    # first.
     add_llvm_external_project(libcxxabi)
+    add_llvm_external_project(libcxx)
   endif()
   if(NOT LLVM_BUILD_EXTERNAL_COMPILER_RT)
     add_llvm_external_project(compiler-rt)
