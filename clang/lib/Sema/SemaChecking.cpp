@@ -3768,16 +3768,18 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
     CharSourceRange SpecRange = getSpecifierRange(StartSpecifier, SpecifierLen);
 
     if (IntendedTy == ExprTy && !ShouldNotPrintDirectly) {
+      unsigned diag = diag::warn_format_conversion_argument_type_mismatch;
+      if (match == analyze_format_string::ArgType::NoMatchPedantic) {
+        diag = diag::warn_format_conversion_argument_type_mismatch_pedantic;
+      }
       // In this case, the specifier is wrong and should be changed to match
       // the argument.
-      EmitFormatDiagnostic(
-        S.PDiag(diag::warn_format_conversion_argument_type_mismatch)
-          << AT.getRepresentativeTypeName(S.Context) << IntendedTy << IsEnum
-          << E->getSourceRange(),
-        E->getLocStart(),
-        /*IsStringLocation*/false,
-        SpecRange,
-        FixItHint::CreateReplacement(SpecRange, os.str()));
+      EmitFormatDiagnostic(S.PDiag(diag)
+                               << AT.getRepresentativeTypeName(S.Context)
+                               << IntendedTy << IsEnum << E->getSourceRange(),
+                           E->getLocStart(),
+                           /*IsStringLocation*/ false, SpecRange,
+                           FixItHint::CreateReplacement(SpecRange, os.str()));
 
     } else {
       // The canonical type for formatting this value is different from the
