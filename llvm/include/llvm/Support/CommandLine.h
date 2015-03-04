@@ -356,6 +356,9 @@ struct GenericOptionValue {
 
 protected:
   ~GenericOptionValue() = default;
+  GenericOptionValue() = default;
+  GenericOptionValue(const GenericOptionValue&) = default;
+  GenericOptionValue &operator=(const GenericOptionValue &) = default;
 
 private:
   virtual void anchor();
@@ -394,6 +397,8 @@ template <class DataType> class OptionValueCopy : public GenericOptionValue {
 
 protected:
   ~OptionValueCopy() = default;
+  OptionValueCopy(const OptionValueCopy&) = default;
+  OptionValueCopy &operator=(const OptionValueCopy&) = default;
 
 public:
   OptionValueCopy() : Valid(false) {}
@@ -428,6 +433,9 @@ struct OptionValueBase<DataType, false> : OptionValueCopy<DataType> {
 
 protected:
   ~OptionValueBase() = default;
+  OptionValueBase() = default;
+  OptionValueBase(const OptionValueBase&) = default;
+  OptionValueBase &operator=(const OptionValueBase&) = default;
 };
 
 // Top-level option class.
