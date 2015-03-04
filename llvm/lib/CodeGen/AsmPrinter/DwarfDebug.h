@@ -540,9 +540,6 @@ public:
     SymSize[Sym] = Size;
   }
 
-  /// \brief Recursively Emits a debug information entry.
-  void emitDIE(DIE &Die);
-
   // Experimental DWARF5 features.
 
   /// \brief Returns whether or not to emit tables that dwarf consumers can

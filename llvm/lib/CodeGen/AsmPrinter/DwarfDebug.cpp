@@ -189,9 +189,9 @@ static LLVM_CONSTEXPR DwarfAccelTable::Atom TypeAtoms[] = {
 
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     : Asm(A), MMI(Asm->MMI), PrevLabel(nullptr), GlobalRangeCount(0),
-      InfoHolder(A, *this, "info_string", DIEValueAllocator),
+      InfoHolder(A, "info_string", DIEValueAllocator),
       UsedNonDefaultText(false),
-      SkeletonHolder(A, *this, "skel_string", DIEValueAllocator),
+      SkeletonHolder(A, "skel_string", DIEValueAllocator),
       IsDarwin(Triple(A->getTargetTriple()).isOSDarwin()),
       AccelNames(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
                                        dwarf::DW_FORM_data4)),
@@ -1362,49 +1362,6 @@ void DwarfDebug::emitSectionLabels() {
         emitSectionSym(Asm, TLOF.getDwarfLocSection(), "section_debug_loc");
   DwarfDebugRangeSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfRangesSection(), "debug_range");
-}
-
-// Recursively emits a debug information entry.
-void DwarfDebug::emitDIE(DIE &Die) {
-  // Get the abbreviation for this DIE.
-  const DIEAbbrev &Abbrev = Die.getAbbrev();
-
-  // Emit the code (index) for the abbreviation.
-  if (Asm->isVerbose())
-    Asm->OutStreamer.AddComment("Abbrev [" + Twine(Abbrev.getNumber()) +
-                                "] 0x" + Twine::utohexstr(Die.getOffset()) +
-                                ":0x" + Twine::utohexstr(Die.getSize()) + " " +
-                                dwarf::TagString(Abbrev.getTag()));
-  Asm->EmitULEB128(Abbrev.getNumber());
-
-  const SmallVectorImpl<DIEValue *> &Values = Die.getValues();
-  const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
-
-  // Emit the DIE attribute values.
-  for (unsigned i = 0, N = Values.size(); i < N; ++i) {
-    dwarf::Attribute Attr = AbbrevData[i].getAttribute();
-    dwarf::Form Form = AbbrevData[i].getForm();
-    assert(Form && "Too many attributes for DIE (check abbreviation)");
-
-    if (Asm->isVerbose()) {
-      Asm->OutStreamer.AddComment(dwarf::AttributeString(Attr));
-      if (Attr == dwarf::DW_AT_accessibility)
-        Asm->OutStreamer.AddComment(dwarf::AccessibilityString(
-            cast<DIEInteger>(Values[i])->getValue()));
-    }
-
-    // Emit an attribute using the defined form.
-    Values[i]->EmitValue(Asm, Form);
-  }
-
-  // Emit the DIE children if any.
-  if (Abbrev.hasChildren()) {
-    for (auto &Child : Die.getChildren())
-      emitDIE(*Child);
-
-    Asm->OutStreamer.AddComment("End Of Children Mark");
-    Asm->EmitInt8(0);
-  }
 }
 
 // Emit the debug info section.

@@ -29,6 +29,8 @@ class ByteStreamer;
 class GCStrategy;
 class Constant;
 class ConstantArray;
+class DIE;
+class DIEAbbrev;
 class GCMetadataPrinter;
 class GlobalValue;
 class GlobalVariable;
@@ -444,6 +446,12 @@ public:
 
   /// \brief Emit frame instruction to describe the layout of the frame.
   void emitCFIInstruction(const MCCFIInstruction &Inst) const;
+
+  /// \brief Emit Dwarf abbreviation table.
+  void emitDwarfAbbrevs(const std::vector<DIEAbbrev *>& Abbrevs) const;
+
+  /// \brief Recursively emit Dwarf DIE tree.
+  void emitDwarfDIE(const DIE &Die) const;
 
   //===------------------------------------------------------------------===//
   // Inline Asm Support

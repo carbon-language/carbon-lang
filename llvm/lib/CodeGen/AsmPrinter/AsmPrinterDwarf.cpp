@@ -16,6 +16,7 @@
 #include "DwarfExpression.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/DIE.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/IR/DataLayout.h"
@@ -249,4 +250,61 @@ void AsmPrinter::emitCFIInstruction(const MCCFIInstruction &Inst) const {
     OutStreamer.EmitCFISameValue(Inst.getRegister());
     break;
   }
+}
+
+void AsmPrinter::emitDwarfDIE(const DIE &Die) const {
+  // Get the abbreviation for this DIE.
+  const DIEAbbrev &Abbrev = Die.getAbbrev();
+
+  // Emit the code (index) for the abbreviation.
+  if (isVerbose())
+    OutStreamer.AddComment("Abbrev [" + Twine(Abbrev.getNumber()) +
+                           "] 0x" + Twine::utohexstr(Die.getOffset()) +
+                           ":0x" + Twine::utohexstr(Die.getSize()) + " " +
+                           dwarf::TagString(Abbrev.getTag()));
+  EmitULEB128(Abbrev.getNumber());
+
+  const SmallVectorImpl<DIEValue *> &Values = Die.getValues();
+  const SmallVectorImpl<DIEAbbrevData> &AbbrevData = Abbrev.getData();
+
+  // Emit the DIE attribute values.
+  for (unsigned i = 0, N = Values.size(); i < N; ++i) {
+    dwarf::Attribute Attr = AbbrevData[i].getAttribute();
+    dwarf::Form Form = AbbrevData[i].getForm();
+    assert(Form && "Too many attributes for DIE (check abbreviation)");
+
+    if (isVerbose()) {
+      OutStreamer.AddComment(dwarf::AttributeString(Attr));
+      if (Attr == dwarf::DW_AT_accessibility)
+        OutStreamer.AddComment(dwarf::AccessibilityString(
+            cast<DIEInteger>(Values[i])->getValue()));
+    }
+
+    // Emit an attribute using the defined form.
+    Values[i]->EmitValue(this, Form);
+  }
+
+  // Emit the DIE children if any.
+  if (Abbrev.hasChildren()) {
+    for (auto &Child : Die.getChildren())
+      emitDwarfDIE(*Child);
+
+    OutStreamer.AddComment("End Of Children Mark");
+    EmitInt8(0);
+  }
+}
+
+void
+AsmPrinter::emitDwarfAbbrevs(const std::vector<DIEAbbrev *>& Abbrevs) const {
+  // For each abbrevation.
+  for (const DIEAbbrev *Abbrev : Abbrevs) {
+    // Emit the abbrevations code (base 1 index.)
+    EmitULEB128(Abbrev->getNumber(), "Abbreviation Code");
+
+    // Emit the abbreviations data.
+    Abbrev->Emit(this);
+  }
+
+  // Mark end of abbreviations.
+  EmitULEB128(0, "EOM(3)");
 }

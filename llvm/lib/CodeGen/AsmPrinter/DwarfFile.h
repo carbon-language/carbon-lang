@@ -37,8 +37,6 @@ class DwarfFile {
   // Target of Dwarf emission, used for sizing of abbreviations.
   AsmPrinter *Asm;
 
-  DwarfDebug &DD;
-
   // Used to uniquely define abbreviations.
   FoldingSet<DIEAbbrev> AbbreviationsSet;
 
@@ -62,8 +60,7 @@ class DwarfFile {
   DenseMap<const MDNode *, DIE *> MDTypeNodeToDieMap;
 
 public:
-  DwarfFile(AsmPrinter *AP, DwarfDebug &DD, StringRef Pref,
-            BumpPtrAllocator &DA);
+  DwarfFile(AsmPrinter *AP, StringRef Pref, BumpPtrAllocator &DA);
 
   ~DwarfFile();
 
