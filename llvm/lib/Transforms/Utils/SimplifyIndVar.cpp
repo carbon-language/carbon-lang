@@ -270,95 +270,57 @@ bool SimplifyIndvar::eliminateIVUser(Instruction *UseInst,
 bool SimplifyIndvar::strengthenOverflowingOperation(BinaryOperator *BO,
                                                     Value *IVOperand) {
 
-  // Currently we only handle instructions of the form "add <indvar> <value>"
-  unsigned Op = BO->getOpcode();
-  if (Op != Instruction::Add)
-    return false;
-
-  // If BO is already both nuw and nsw then there is nothing left to do
+  // Fastpath: we don't have any work to do if `BO` is `nuw` and `nsw`.
   if (BO->hasNoUnsignedWrap() && BO->hasNoSignedWrap())
     return false;
 
-  IntegerType *IT = cast<IntegerType>(IVOperand->getType());
-  Value *OtherOperand = nullptr;
-  if (BO->getOperand(0) == IVOperand) {
-    OtherOperand = BO->getOperand(1);
-  } else {
-    assert(BO->getOperand(1) == IVOperand && "only other use!");
-    OtherOperand = BO->getOperand(0);
-  }
+  const SCEV *(ScalarEvolution::*GetExprForBO)(const SCEV *, const SCEV *,
+                                               SCEV::NoWrapFlags);
 
-  bool Changed = false;
-  const SCEV *OtherOpSCEV = SE->getSCEV(OtherOperand);
-  if (OtherOpSCEV == SE->getCouldNotCompute())
+  switch (BO->getOpcode()) {
+  default:
     return false;
 
-  const SCEV *IVOpSCEV = SE->getSCEV(IVOperand);
-  const SCEV *ZeroSCEV = SE->getConstant(IVOpSCEV->getType(), 0);
+  case Instruction::Add:
+    GetExprForBO = &ScalarEvolution::getAddExpr;
+    break;
 
-  if (!BO->hasNoSignedWrap()) {
-    // Upgrade the add to an "add nsw" if we can prove that it will never
-    // sign-overflow or sign-underflow.
+  case Instruction::Sub:
+    GetExprForBO = &ScalarEvolution::getMinusSCEV;
+    break;
 
-    const SCEV *SignedMax =
-      SE->getConstant(APInt::getSignedMaxValue(IT->getBitWidth()));
-    const SCEV *SignedMin =
-      SE->getConstant(APInt::getSignedMinValue(IT->getBitWidth()));
+  case Instruction::Mul:
+    GetExprForBO = &ScalarEvolution::getMulExpr;
+    break;
+  }
 
-    // The addition "IVOperand + OtherOp" does not sign-overflow if the result
-    // is sign-representable in 2's complement in the given bit-width.
-    //
-    // If OtherOp is SLT 0, then for an IVOperand in [SignedMin - OtherOp,
-    // SignedMax], "IVOperand + OtherOp" is in [SignedMin, SignedMax + OtherOp].
-    // Everything in [SignedMin, SignedMax + OtherOp] is representable since
-    // SignedMax + OtherOp is at least -1.
-    //
-    // If OtherOp is SGE 0, then for an IVOperand in [SignedMin, SignedMax -
-    // OtherOp], "IVOperand + OtherOp" is in [SignedMin + OtherOp, SignedMax].
-    // Everything in [SignedMin + OtherOp, SignedMax] is representable since
-    // SignedMin + OtherOp is at most -1.
-    //
-    // It follows that for all values of IVOperand in [SignedMin - smin(0,
-    // OtherOp), SignedMax - smax(0, OtherOp)] the result of the add is
-    // representable (i.e. there is no sign-overflow).
+  unsigned BitWidth = cast<IntegerType>(BO->getType())->getBitWidth();
+  Type *WideTy = IntegerType::get(BO->getContext(), BitWidth * 2);
+  const SCEV *LHS = SE->getSCEV(BO->getOperand(0));
+  const SCEV *RHS = SE->getSCEV(BO->getOperand(1));
 
-    const SCEV *UpperDelta = SE->getSMaxExpr(ZeroSCEV, OtherOpSCEV);
-    const SCEV *UpperLimit = SE->getMinusSCEV(SignedMax, UpperDelta);
+  bool Changed = false;
 
-    bool NeverSignedOverflows =
-      SE->isKnownPredicate(ICmpInst::ICMP_SLE, IVOpSCEV, UpperLimit);
-
-    if (NeverSignedOverflows) {
-      const SCEV *LowerDelta = SE->getSMinExpr(ZeroSCEV, OtherOpSCEV);
-      const SCEV *LowerLimit = SE->getMinusSCEV(SignedMin, LowerDelta);
-
-      bool NeverSignedUnderflows =
-        SE->isKnownPredicate(ICmpInst::ICMP_SGE, IVOpSCEV, LowerLimit);
-      if (NeverSignedUnderflows) {
-        BO->setHasNoSignedWrap(true);
-        Changed = true;
-      }
+  if (!BO->hasNoUnsignedWrap()) {
+    const SCEV *ExtendAfterOp = SE->getZeroExtendExpr(SE->getSCEV(BO), WideTy);
+    const SCEV *OpAfterExtend = (SE->*GetExprForBO)(
+      SE->getZeroExtendExpr(LHS, WideTy), SE->getZeroExtendExpr(RHS, WideTy),
+      SCEV::FlagAnyWrap);
+    if (ExtendAfterOp == OpAfterExtend) {
+      BO->setHasNoUnsignedWrap();
+      SE->forgetValue(BO);
+      Changed = true;
     }
   }
 
-  if (!BO->hasNoUnsignedWrap()) {
-    // Upgrade the add computing "IVOperand + OtherOp" to an "add nuw" if we can
-    // prove that it will never unsigned-overflow (i.e. the result will always
-    // be representable in the given bit-width).
-    //
-    // "IVOperand + OtherOp" is unsigned-representable in 2's complement iff it
-    // does not produce a carry.  "IVOperand + OtherOp" produces no carry iff
-    // IVOperand ULE (UnsignedMax - OtherOp).
-
-    const SCEV *UnsignedMax =
-      SE->getConstant(APInt::getMaxValue(IT->getBitWidth()));
-    const SCEV *UpperLimit = SE->getMinusSCEV(UnsignedMax, OtherOpSCEV);
-
-    bool NeverUnsignedOverflows =
-        SE->isKnownPredicate(ICmpInst::ICMP_ULE, IVOpSCEV, UpperLimit);
-
-    if (NeverUnsignedOverflows) {
-      BO->setHasNoUnsignedWrap(true);
+  if (!BO->hasNoSignedWrap()) {
+    const SCEV *ExtendAfterOp = SE->getSignExtendExpr(SE->getSCEV(BO), WideTy);
+    const SCEV *OpAfterExtend = (SE->*GetExprForBO)(
+      SE->getSignExtendExpr(LHS, WideTy), SE->getSignExtendExpr(RHS, WideTy),
+      SCEV::FlagAnyWrap);
+    if (ExtendAfterOp == OpAfterExtend) {
+      BO->setHasNoSignedWrap();
+      SE->forgetValue(BO);
       Changed = true;
     }
   }
