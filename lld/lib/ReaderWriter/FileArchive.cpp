@@ -212,30 +212,23 @@ private:
     if (objOrErr.getError())
       return false;
     std::unique_ptr<ObjectFile> obj = std::move(objOrErr.get());
-    SymbolRef::Type symtype;
-    uint32_t symflags;
-    symbol_iterator ibegin = obj->symbol_begin();
-    symbol_iterator iend = obj->symbol_end();
-    StringRef symbolname;
 
-    for (symbol_iterator i = ibegin; i != iend; ++i) {
-      // Get symbol name
-      if (i->getName(symbolname))
+    for (SymbolRef sym : obj->symbols()) {
+      // Skip until we find the symbol.
+      StringRef name;
+      if (sym.getName(name))
         return false;
-      if (symbolname != symbol)
+      if (name != symbol)
+        continue;
+      uint32_t flags = sym.getFlags();
+      if (flags <= SymbolRef::SF_Undefined)
         continue;
 
-      // Get symbol flags
-      symflags = i->getFlags();
-
-      if (symflags <= SymbolRef::SF_Undefined)
-        continue;
-
-      // Get Symbol Type
-      if (i->getType(symtype))
+      // Returns true if it's a data symbol.
+      SymbolRef::Type type;
+      if (sym.getType(type))
         return false;
-
-      if (symtype == SymbolRef::ST_Data)
+      if (type == SymbolRef::ST_Data)
         return true;
     }
     return false;
@@ -245,10 +238,9 @@ private:
     DEBUG_WITH_TYPE("FileArchive", llvm::dbgs()
                                        << "Table of contents for archive '"
                                        << _archive->getFileName() << "':\n");
-    for (auto i = _archive->symbol_begin(), e = _archive->symbol_end();
-         i != e; ++i) {
-      StringRef name = i->getName();
-      ErrorOr<Archive::child_iterator> memberOrErr = i->getMember();
+    for (const Archive::Symbol &sym : _archive->symbols()) {
+      StringRef name = sym.getName();
+      ErrorOr<Archive::child_iterator> memberOrErr = sym.getMember();
       if (std::error_code ec = memberOrErr.getError())
         return ec;
       Archive::child_iterator member = memberOrErr.get();
