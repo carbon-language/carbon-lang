@@ -51,10 +51,11 @@ public:
 
   virtual CanBeNull canBeNull() const = 0;
 
-  static inline bool classof(const Atom *a) {
+  static bool classof(const Atom *a) {
     return a->definition() == definitionUndefined;
   }
-  static inline bool classof(const UndefinedAtom *) { return true; }
+
+  static bool classof(const UndefinedAtom *) { return true; }
 
   /// Returns an undefined atom if this undefined symbol has a synonym.  This is
   /// mainly used in COFF. In COFF, an unresolved external symbol can have up to

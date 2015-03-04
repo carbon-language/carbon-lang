@@ -28,10 +28,11 @@ public:
   /// by the OS loader.
   virtual Scope scope() const = 0;
 
-  static inline bool classof(const Atom *a) {
+  static bool classof(const Atom *a) {
     return a->definition() == definitionAbsolute;
   }
-  static inline bool classof(const AbsoluteAtom *) { return true; }
+
+  static bool classof(const AbsoluteAtom *) { return true; }
 
 protected:
   AbsoluteAtom() : Atom(definitionAbsolute) {}

@@ -325,7 +325,7 @@ public:
   /// \brief Returns an iterator to the end of this Atom's References.
   virtual reference_iterator end() const = 0;
 
-  static inline bool classof(const Atom *a) {
+  static bool classof(const Atom *a) {
     return a->definition() == definitionRegular;
   }
 

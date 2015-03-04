@@ -248,9 +248,7 @@ public:
   }
 
   /// \brief Return the raw flags, we need this to sort segments
-  inline int64_t atomflags() const {
-    return _contentPermissions;
-  }
+  int64_t atomflags() const { return _contentPermissions; }
 
   /// Atom Iterators
   typedef typename std::vector<lld::AtomLayout *>::iterator atom_iter;
@@ -449,39 +447,29 @@ public:
   void appendSection(Chunk<ELFT> *c);
 
   // Set the OutputSection is associated with a segment
-  inline void setHasSegment() { _hasSegment = true; }
+  void setHasSegment() { _hasSegment = true; }
 
   /// Sets the ordinal
-  inline void setOrdinal(uint64_t ordinal) {
-    _ordinal = ordinal;
-  }
+  void setOrdinal(uint64_t ordinal) { _ordinal = ordinal; }
 
   /// Sets the Memory size
-  inline void setMemSize(uint64_t memsz) {
-    _memSize = memsz;
-  }
+  void setMemSize(uint64_t memsz) { _memSize = memsz; }
 
   /// Sets the size fo the output Section.
-  inline void setSize(uint64_t fsiz) {
-    _size = fsiz;
-  }
+  void setSize(uint64_t fsiz) { _size = fsiz; }
 
   // The offset of the first section contained in the output section is
   // contained here.
-  inline void setFileOffset(uint64_t foffset) {
-    _fileOffset = foffset;
-  }
+  void setFileOffset(uint64_t foffset) { _fileOffset = foffset; }
 
   // Sets the starting address of the section
-  inline void setAddr(uint64_t addr) {
-    _virtualAddr = addr;
-  }
+  void setAddr(uint64_t addr) { _virtualAddr = addr; }
 
   // Is the section loadable?
-  inline bool isLoadableSection() const { return _isLoadableSection; }
+  bool isLoadableSection() const { return _isLoadableSection; }
 
   // Set section Loadable
-  inline void setLoadableSection(bool isLoadable) {
+  void setLoadableSection(bool isLoadable) {
     _isLoadableSection = isLoadable;
   }
 
@@ -493,36 +481,36 @@ public:
 
   void setType(int16_t type) { _type = type; }
 
-  inline range<ChunkIter> sections() { return _sections; }
+  range<ChunkIter> sections() { return _sections; }
 
   // The below functions returns the properties of the OutputSection.
-  inline bool hasSegment() const { return _hasSegment; }
+  bool hasSegment() const { return _hasSegment; }
 
-  inline StringRef name() const { return _name; }
+  StringRef name() const { return _name; }
 
-  inline int64_t shinfo() const { return _shInfo; }
+  int64_t shinfo() const { return _shInfo; }
 
-  inline uint64_t alignment() const { return _alignment; }
+  uint64_t alignment() const { return _alignment; }
 
-  inline int64_t link() const { return _link; }
+  int64_t link() const { return _link; }
 
-  inline int64_t type() const { return _type; }
+  int64_t type() const { return _type; }
 
-  inline uint64_t virtualAddr() const { return _virtualAddr; }
+  uint64_t virtualAddr() const { return _virtualAddr; }
 
-  inline int64_t ordinal() const { return _ordinal; }
+  int64_t ordinal() const { return _ordinal; }
 
-  inline int64_t kind() const { return _kind; }
+  int64_t kind() const { return _kind; }
 
-  inline uint64_t fileSize() const { return _size; }
+  uint64_t fileSize() const { return _size; }
 
-  inline int64_t entsize() const { return _entSize; }
+  int64_t entsize() const { return _entSize; }
 
-  inline uint64_t fileOffset() const { return _fileOffset; }
+  uint64_t fileOffset() const { return _fileOffset; }
 
-  inline int64_t flags() const { return _flags; }
+  int64_t flags() const { return _flags; }
 
-  inline uint64_t memSize() { return _memSize; }
+  uint64_t memSize() { return _memSize; }
 
 private:
   StringRef _name;
@@ -579,9 +567,7 @@ public:
   virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
                      llvm::FileOutputBuffer &buffer);
 
-  inline void setNumEntries(int64_t numEntries) {
-    _stringMap.resize(numEntries);
-  }
+  void setNumEntries(int64_t numEntries) { _stringMap.resize(numEntries); }
 
 private:
   std::vector<StringRef> _strings;

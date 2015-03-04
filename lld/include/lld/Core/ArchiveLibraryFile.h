@@ -27,7 +27,7 @@ namespace lld {
 ///
 class ArchiveLibraryFile : public File {
 public:
-  static inline bool classof(const File *f) {
+  static bool classof(const File *f) {
     return f->kind() == kindArchiveLibrary;
   }
 

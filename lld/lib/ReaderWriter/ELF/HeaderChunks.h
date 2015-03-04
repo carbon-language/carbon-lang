@@ -45,11 +45,11 @@ public:
   void e_shstrndx(uint16_t shstrndx)   { _eh.e_shstrndx = shstrndx; }
   uint64_t fileSize() const { return sizeof(Elf_Ehdr); }
 
-  static inline bool classof(const Chunk<ELFT> *c) {
+  static bool classof(const Chunk<ELFT> *c) {
     return c->Kind() == Chunk<ELFT>::Kind::ELFHeader;
   }
 
-  inline int getContentType() const { return Chunk<ELFT>::ContentType::Header; }
+  int getContentType() const { return Chunk<ELFT>::ContentType::Header; }
 
   void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
              llvm::FileOutputBuffer &buffer);
@@ -136,7 +136,7 @@ public:
 
   uint64_t fileSize() const { return sizeof(Elf_Phdr) * _ph.size(); }
 
-  static inline bool classof(const Chunk<ELFT> *c) {
+  static bool classof(const Chunk<ELFT> *c) {
     return c->Kind() == Chunk<ELFT>::Kind::ProgramHeader;
   }
 
@@ -172,7 +172,7 @@ public:
     return _ph.size();
   }
 
-  inline int getContentType() const { return Chunk<ELFT>::ContentType::Header; }
+  int getContentType() const { return Chunk<ELFT>::ContentType::Header; }
 
 private:
   Elf_Phdr *allocateProgramHeader(bool &allocatedNew) {
@@ -270,7 +270,7 @@ public:
 
   void updateSection(Section<ELFT> *section);
 
-  static inline bool classof(const Chunk<ELFT> *c) {
+  static bool classof(const Chunk<ELFT> *c) {
     return c->getChunkKind() == Chunk<ELFT>::Kind::SectionHeader;
   }
 
@@ -287,15 +287,11 @@ public:
 
   uint64_t fileSize() const { return sizeof(Elf_Shdr) * _sectionInfo.size(); }
 
-  inline uint64_t entsize() {
-    return sizeof(Elf_Shdr);
-  }
+  uint64_t entsize() { return sizeof(Elf_Shdr); }
 
-  inline int getContentType() const { return Chunk<ELFT>::ContentType::Header; }
+  int getContentType() const { return Chunk<ELFT>::ContentType::Header; }
 
-  inline uint64_t numHeaders() {
-    return _sectionInfo.size();
-  }
+  uint64_t numHeaders() { return _sectionInfo.size(); }
 
 private:
   StringTable<ELFT> *_stringSection;

@@ -55,7 +55,7 @@ public:
   /// symbol.
   Definition definition() const { return _definition; }
 
-  static inline bool classof(const Atom *a) { return true; }
+  static bool classof(const Atom *a) { return true; }
 
 protected:
   /// Atom is an abstract base class.  Only subclasses can access constructor.

@@ -45,45 +45,41 @@ public:
 
   // Set the segment slice start and end iterators. This is used to walk through
   // the sections that are part of the Segment slice
-  inline void setSections(range<SectionIter> sections) {
-    _sections = sections;
-  }
+  void setSections(range<SectionIter> sections) { _sections = sections; }
 
   // Return the fileOffset of the slice
-  inline uint64_t fileOffset() const { return _offset; }
+  uint64_t fileOffset() const { return _offset; }
 
   void setFileOffset(uint64_t offset) { _offset = offset; }
 
   // Return the size of the slice
-  inline uint64_t fileSize() const { return _fsize; }
+  uint64_t fileSize() const { return _fsize; }
 
   void setFileSize(uint64_t filesz) { _fsize = filesz; }
 
   // Return the start of the slice
-  inline int32_t startSection() const { return _startSection; }
+  int32_t startSection() const { return _startSection; }
 
   // Return the start address of the slice
-  inline uint64_t virtualAddr() const { return _addr; }
+  uint64_t virtualAddr() const { return _addr; }
 
   // Return the memory size of the slice
-  inline uint64_t memSize() const { return _memSize; }
+  uint64_t memSize() const { return _memSize; }
 
   // Return the alignment of the slice
-  inline uint64_t alignment() const { return _alignment; }
+  uint64_t alignment() const { return _alignment; }
 
-  inline void setMemSize(uint64_t memsz) { _memSize = memsz; }
+  void setMemSize(uint64_t memsz) { _memSize = memsz; }
 
-  inline void setVirtualAddr(uint64_t addr) { _addr = addr; }
+  void setVirtualAddr(uint64_t addr) { _addr = addr; }
 
-  inline void setAlign(uint64_t align) { _alignment = align; }
+  void setAlign(uint64_t align) { _alignment = align; }
 
   static bool compare_slices(SegmentSlice<ELFT> *a, SegmentSlice<ELFT> *b) {
     return a->startSection() < b->startSection();
   }
 
-  inline range<SectionIter> sections() {
-    return _sections;
-  }
+  range<SectionIter> sections() { return _sections; }
 
 private:
   range<SectionIter> _sections;
@@ -162,11 +158,11 @@ public:
   }
 
   /// Finalize the segment before assigning File Offsets / Virtual addresses
-  inline void doPreFlight() {}
+  void doPreFlight() {}
 
   /// Finalize the segment, before we want to write the segment header
   /// information
-  inline void finalize() {
+  void finalize() {
     // We want to finalize the segment values for now only for non loadable
     // segments, since those values are not set in the Layout
     if (_segmentType == llvm::ELF::PT_LOAD)
@@ -185,17 +181,15 @@ public:
   }
 
   // For LLVM RTTI
-  static inline bool classof(const Chunk<ELFT> *c) {
+  static bool classof(const Chunk<ELFT> *c) {
     return c->kind() == Chunk<ELFT>::Kind::ELFSegment;
   }
 
   // Getters
-  inline int32_t sectionCount() const {
-    return _sections.size();
-  }
+  int32_t sectionCount() const { return _sections.size(); }
 
   /// \brief, this function returns the type of segment (PT_*)
-  inline Layout::SegmentType segmentType() { return _segmentType; }
+  Layout::SegmentType segmentType() { return _segmentType; }
 
   /// \brief return the segment type depending on the content,
   /// If the content corresponds to Code, this will return Segment::Code
@@ -219,11 +213,11 @@ public:
     }
   }
 
-  inline int pageSize() const { return this->_context.getPageSize(); }
+  int pageSize() const { return this->_context.getPageSize(); }
 
-  inline int rawflags() const { return _atomflags; }
+  int rawflags() const { return _atomflags; }
 
-  inline int64_t atomflags() const {
+  int64_t atomflags() const {
     switch (_atomflags) {
 
     case DefinedAtom::permUnknown:
@@ -250,9 +244,9 @@ public:
     }
   }
 
-  inline int64_t numSlices() const { return _segmentSlices.size(); }
+  int64_t numSlices() const { return _segmentSlices.size(); }
 
-  inline range<SliceIter> slices() { return _segmentSlices; }
+  range<SliceIter> slices() { return _segmentSlices; }
 
   Chunk<ELFT> *firstSection() { return _sections[0]; }
 
@@ -294,7 +288,7 @@ public:
 
   /// Finalize the segment, before we want to write the segment header
   /// information
-  inline void finalize() {
+  void finalize() {
     // If the segment is of type Program Header, then the values fileOffset
     // and the fileSize need to be picked up from the last section, the first
     // section points to the ELF header and the second chunk points to the

@@ -221,25 +221,22 @@ public:
 
   void assignFileOffsetsForMiscSections();
 
-  /// Inline functions
-  inline range<AbsoluteAtomIterT> absoluteAtoms() { return _absoluteAtoms; }
+  range<AbsoluteAtomIterT> absoluteAtoms() { return _absoluteAtoms; }
 
-  inline void addSection(Chunk<ELFT> *c) {
-    _sections.push_back(c);
-  }
+  void addSection(Chunk<ELFT> *c) { _sections.push_back(c); }
 
-  inline void finalize() {
+  void finalize() {
     ScopedTask task(getDefaultDomain(), "Finalize layout");
     for (auto &si : _sections)
       si->finalize();
   }
 
-  inline void doPreFlight() {
+  void doPreFlight() {
     for (auto &si : _sections)
       si->doPreFlight();
   }
 
-  inline const AtomLayout *findAtomLayoutByName(StringRef name) const override {
+  const AtomLayout *findAtomLayoutByName(StringRef name) const override {
     for (auto sec : _sections)
       if (auto section = dyn_cast<Section<ELFT>>(sec))
         if (auto *al = section->findAtomLayoutByName(name))
@@ -247,19 +244,19 @@ public:
     return nullptr;
   }
 
-  inline void setHeader(ELFHeader<ELFT> *elfHeader) { _elfHeader = elfHeader; }
+  void setHeader(ELFHeader<ELFT> *elfHeader) { _elfHeader = elfHeader; }
 
-  inline void setProgramHeader(ProgramHeader<ELFT> *p) {
+  void setProgramHeader(ProgramHeader<ELFT> *p) {
     _programHeader = p;
   }
 
-  inline range<OutputSectionIter> outputSections() { return _outputSections; }
+  range<OutputSectionIter> outputSections() { return _outputSections; }
 
-  inline range<ChunkIter> sections() { return _sections; }
+  range<ChunkIter> sections() { return _sections; }
 
-  inline range<SegmentIter> segments() { return _segments; }
+  range<SegmentIter> segments() { return _segments; }
 
-  inline ELFHeader<ELFT> *getHeader() { return _elfHeader; }
+  ELFHeader<ELFT> *getHeader() { return _elfHeader; }
 
   bool hasDynamicRelocationTable() const { return !!_dynamicRelocationTable; }
 
