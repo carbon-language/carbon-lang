@@ -218,6 +218,7 @@ void DIEInteger::EmitValue(const AsmPrinter *Asm, dwarf::Form Form) const {
   case dwarf::DW_FORM_ref2:  // Fall thru
   case dwarf::DW_FORM_data2: Size = 2; break;
   case dwarf::DW_FORM_sec_offset: // Fall thru
+  case dwarf::DW_FORM_strp: // Fall thru
   case dwarf::DW_FORM_ref4:  // Fall thru
   case dwarf::DW_FORM_data4: Size = 4; break;
   case dwarf::DW_FORM_ref8:  // Fall thru
@@ -229,6 +230,9 @@ void DIEInteger::EmitValue(const AsmPrinter *Asm, dwarf::Form Form) const {
   case dwarf::DW_FORM_sdata: Asm->EmitSLEB128(Integer); return;
   case dwarf::DW_FORM_addr:
     Size = Asm->getDataLayout().getPointerSize(); break;
+  case dwarf::DW_FORM_ref_addr:
+    Size = SizeOf(Asm, dwarf::DW_FORM_ref_addr);
+    break;
   default: llvm_unreachable("DIE Value form not supported yet");
   }
   Asm->OutStreamer.EmitIntValue(Integer, Size);
@@ -245,6 +249,7 @@ unsigned DIEInteger::SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
   case dwarf::DW_FORM_ref2:  // Fall thru
   case dwarf::DW_FORM_data2: return sizeof(int16_t);
   case dwarf::DW_FORM_sec_offset: // Fall thru
+  case dwarf::DW_FORM_strp: // Fall thru
   case dwarf::DW_FORM_ref4:  // Fall thru
   case dwarf::DW_FORM_data4: return sizeof(int32_t);
   case dwarf::DW_FORM_ref8:  // Fall thru
@@ -255,6 +260,11 @@ unsigned DIEInteger::SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
   case dwarf::DW_FORM_udata: return getULEB128Size(Integer);
   case dwarf::DW_FORM_sdata: return getSLEB128Size(Integer);
   case dwarf::DW_FORM_addr:  return AP->getDataLayout().getPointerSize();
+  case dwarf::DW_FORM_ref_addr:
+    if (AP->OutStreamer.getContext().getDwarfVersion() == 2)
+      return AP->getDataLayout().getPointerSize();
+    return sizeof(int32_t);
+    break;
   default: llvm_unreachable("DIE Value form not supported yet");
   }
 }
