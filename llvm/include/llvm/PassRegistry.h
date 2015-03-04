@@ -25,6 +25,7 @@
 #include "llvm/PassInfo.h"
 #include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/RWMutex.h"
+#include <atomic>
 #include <vector>
 
 namespace llvm {
