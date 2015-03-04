@@ -164,8 +164,10 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(DIGlobalVariable GV) {
         addUInt(*Loc, dwarf::DW_FORM_udata,
                 DD->getAddressPool().getIndex(Sym, /* TLS */ true));
       }
-      // 3) followed by a custom OP to make the debugger do a TLS lookup.
-      addUInt(*Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_push_tls_address);
+      // 3) followed by an OP to make the debugger do a TLS lookup.
+      addUInt(*Loc, dwarf::DW_FORM_data1,
+              DD->useGNUTLSOpcode() ? dwarf::DW_OP_GNU_push_tls_address
+                                    : dwarf::DW_OP_form_tls_address);
     } else {
       DD->addArangeLabel(SymbolCU(this, Sym));
       addOpAddress(*Loc, Sym);

@@ -1,17 +1,20 @@
 ; RUN: llc %s -o - -filetype=asm -O0 -mtriple=x86_64-unknown-linux-gnu \
-; RUN:   | FileCheck --check-prefix=CHECK --check-prefix=SINGLE --check-prefix=SINGLE-64 %s
+; RUN:   | FileCheck --check-prefix=SINGLE --check-prefix=SINGLE-64 --check-prefix=GNUOP %s
 
 ; RUN: llc %s -o - -filetype=asm -O0 -mtriple=i386-linux-gnu \
-; RUN:   | FileCheck --check-prefix=CHECK --check-prefix=SINGLE --check-prefix=SINGLE-32 %s
+; RUN:   | FileCheck --check-prefix=SINGLE --check-prefix=SINGLE-32 --check-prefix=GNUOP %s
 
 ; RUN: llc %s -o - -filetype=asm -O0 -mtriple=x86_64-unknown-linux-gnu -split-dwarf=Enable \
-; RUN:   | FileCheck --check-prefix=CHECK --check-prefix=FISSION %s
+; RUN:   | FileCheck --check-prefix=FISSION --check-prefix=GNUOP %s
 
 ; RUN: llc %s -o - -filetype=asm -O0 -mtriple=x86_64-scei-ps4 \
-; RUN:   | FileCheck --check-prefix=CHECK --check-prefix=SINGLE --check-prefix=SINGLE-64 %s
+; RUN:   | FileCheck --check-prefix=SINGLE --check-prefix=SINGLE-64 --check-prefix=STDOP %s
+
+; RUN: llc %s -o - -filetype=asm -O0 -mtriple=x86_64-apple-darwin \
+; RUN:   | FileCheck --check-prefix=DARWIN --check-prefix=STDOP %s
 
 ; RUN: llc %s -o - -filetype=asm -O0 -mtriple=x86_64-unknown-freebsd \
-; RUN:   | FileCheck --check-prefix=CHECK --check-prefix=SINGLE --check-prefix=SINGLE-64 %s
+; RUN:   | FileCheck --check-prefix=SINGLE --check-prefix=SINGLE-64 --check-prefix=GNUOP %s
 
 ; FIXME: add relocation and DWARF expression support to llvm-dwarfdump & use
 ; that here instead of raw assembly printing
@@ -25,19 +28,29 @@
 ; FISSION-NEXT: .byte 0
 
 ; SINGLE: .section     .debug_info,
+; DARWIN: .section     {{.*}}debug_info,
+
 ; 10 bytes of data in this DW_FORM_block1 representation of the location of 'tls'
 ; SINGLE-64: .byte     10 # DW_AT_location
 ; DW_OP_const8u (0x0e == 14) of address
 ; SINGLE-64-NEXT: .byte        14
 ; SINGLE-64-NEXT: .quad tls@DTPOFF
 
+; DARWIN: .byte     10 ## DW_AT_location
+; DW_OP_const8u (0x0e == 14) of address
+; DARWIN-NEXT: .byte        14
+; DARWIN-NEXT: .quad _tls
+
+; 6 bytes of data in 32-bit mode
 ; SINGLE-32: .byte     6 # DW_AT_location
 ; DW_OP_const4u (0x0e == 12) of address
 ; SINGLE-32-NEXT: .byte        12
 ; SINGLE-32-NEXT: .long tls@DTPOFF
 
 ; DW_OP_GNU_push_tls_address
-; CHECK-NEXT: .byte 224
+; GNUOP-NEXT: .byte 224
+; DW_OP_form_tls_address
+; STDOP-NEXT: .byte 155
 
 ; FISSION: DW_TAG_variable
 ; FISSION: .byte 2 # DW_AT_location

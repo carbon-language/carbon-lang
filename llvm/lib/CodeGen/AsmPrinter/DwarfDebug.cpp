@@ -193,6 +193,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
       UsedNonDefaultText(false),
       SkeletonHolder(A, "skel_string", DIEValueAllocator),
       IsDarwin(Triple(A->getTargetTriple()).isOSDarwin()),
+      IsPS4(Triple(A->getTargetTriple()).isPS4()),
       AccelNames(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
                                        dwarf::DW_FORM_data4)),
       AccelObjC(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
@@ -230,6 +231,10 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   unsigned DwarfVersionNumber = Asm->TM.Options.MCOptions.DwarfVersion;
   DwarfVersion = DwarfVersionNumber ? DwarfVersionNumber
                                     : MMI->getModule()->getDwarfVersion();
+
+  // Darwin and PS4 use the standard TLS opcode (defined in DWARF 3).
+  // Everybody else uses GNU's.
+  UseGNUTLSOpcode = !(IsDarwin || IsPS4) || DwarfVersion < 3;
 
   Asm->OutStreamer.getContext().setDwarfVersion(DwarfVersion);
 

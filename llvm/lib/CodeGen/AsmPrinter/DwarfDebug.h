@@ -290,6 +290,9 @@ class DwarfDebug : public AsmPrinterHandler {
   // text.
   bool UsedNonDefaultText;
 
+  // Whether to use the GNU TLS opcode (instead of the standard opcode).
+  bool UseGNUTLSOpcode;
+
   // Version of dwarf we're emitting.
   unsigned DwarfVersion;
 
@@ -318,6 +321,7 @@ class DwarfDebug : public AsmPrinterHandler {
   // True iff there are multiple CUs in this module.
   bool SingleCU;
   bool IsDarwin;
+  bool IsPS4;
 
   AddressPool AddrPool;
 
@@ -539,6 +543,10 @@ public:
   void setSymbolSize(const MCSymbol *Sym, uint64_t Size) override {
     SymSize[Sym] = Size;
   }
+
+  /// \brief Returns whether to use DW_OP_GNU_push_tls_address, instead of the
+  /// standard DW_OP_form_tls_address opcode
+  bool useGNUTLSOpcode() const { return UseGNUTLSOpcode; }
 
   // Experimental DWARF5 features.
 
