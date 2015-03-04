@@ -20,7 +20,7 @@ PARALLEL_DIRS = CodeGen Basic Lex Driver Format ASTMatchers AST Tooling \
 include $(CLANG_LEVEL)/../..//Makefile.config
 
 ifeq ($(ENABLE_CLANG_ARCMT),1)
-PARALLEL_DIRS += Frontend libclang
+PARALLEL_DIRS += Frontend libclang StaticAnalyzer
 endif
 
 endif  # CLANG_LEVEL

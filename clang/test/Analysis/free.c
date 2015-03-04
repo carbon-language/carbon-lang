@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-checker=core,unix.Malloc -fblocks -verify %s
-// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-checker=core,alpha.unix.MallocWithAnnotations -fblocks -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-store=region -analyzer-checker=core,unix.Malloc -fblocks -verify -analyzer-config unix.Malloc:Optimistic=true %s
 typedef __typeof(sizeof(int)) size_t;
 void free(void *);
 void *alloca(size_t);

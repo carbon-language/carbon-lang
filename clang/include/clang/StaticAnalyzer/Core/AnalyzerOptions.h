@@ -28,6 +28,10 @@ class DiagnosticsEngine;
 class Preprocessor;
 class LangOptions;
 
+namespace ento {
+class CheckerBase;
+}
+
 /// Analysis - Set of available source code analyses.
 enum Analyses {
 #define ANALYSIS(NAME, CMDFLAG, DESC, SCOPE) NAME,
@@ -252,18 +256,102 @@ private:
   /// \sa getMaxNodesPerTopLevelFunction
   Optional<unsigned> MaxNodesPerTopLevelFunction;
 
+  /// A helper function that retrieves option for a given full-qualified
+  /// checker name.
+  /// Options for checkers can be specified via 'analyzer-config' command-line
+  /// option.
+  /// Example:
+  /// @code-analyzer-config unix.Malloc:OptionName=CheckerOptionValue @endcode
+  /// or @code-analyzer-config unix:OptionName=GroupOptionValue @endcode
+  /// for groups of checkers.
+  /// @param [in] CheckerName  Full-qualified checker name, like
+  /// alpha.unix.StreamChecker.
+  /// @param [in] OptionName  Name of the option to get.
+  /// @param [in] Default  Default value if no option is specified.
+  /// @param [in] SearchInParents If set to true and the searched option was not
+  /// specified for the given checker the options for the parent packages will
+  /// be searched as well. The inner packages take precedence over the outer
+  /// ones.
+  /// @retval CheckerOptionValue  An option for a checker if it was specified.
+  /// @retval GroupOptionValue  An option for group if it was specified and no
+  /// checker-specific options were found. The closer group to checker,
+  /// the more priority it has. For example, @c coregroup.subgroup has more
+  /// priority than @c coregroup for @c coregroup.subgroup.CheckerName checker.
+  /// @retval Default  If nor checker option, nor group option was found.
+  StringRef getCheckerOption(StringRef CheckerName, StringRef OptionName,
+                             StringRef Default,
+                             bool SearchInParents = false);
+
 public:
-  /// Interprets an option's string value as a boolean.
+  /// Interprets an option's string value as a boolean. The "true" string is
+  /// interpreted as true and the "false" string is interpreted as false.
   ///
-  /// Accepts the strings "true" and "false".
   /// If an option value is not provided, returns the given \p DefaultVal.
-  bool getBooleanOption(StringRef Name, bool DefaultVal);
+  /// @param [in] Name Name for option to retrieve.
+  /// @param [in] DefaultVal Default value returned if no such option was
+  /// specified.
+  /// @param [in] C The optional checker parameter that can be used to restrict
+  /// the search to the options of this particular checker (and its parents
+  /// dependening on search mode).
+  /// @param [in] SearchInParents If set to true and the searched option was not
+  /// specified for the given checker the options for the parent packages will
+  /// be searched as well. The inner packages take precedence over the outer
+  /// ones.
+  bool getBooleanOption(StringRef Name, bool DefaultVal,
+                        const ento::CheckerBase *C = nullptr,
+                        bool SearchInParents = false);
 
   /// Variant that accepts a Optional value to cache the result.
-  bool getBooleanOption(Optional<bool> &V, StringRef Name, bool DefaultVal);
+  ///
+  /// @param [in,out] V Return value storage, returned if parameter contains
+  /// an existing valid option, else it is used to store a return value
+  /// @param [in] Name Name for option to retrieve.
+  /// @param [in] DefaultVal Default value returned if no such option was
+  /// specified.
+  /// @param [in] C The optional checker parameter that can be used to restrict
+  /// the search to the options of this particular checker (and its parents
+  /// dependening on search mode).
+  /// @param [in] SearchInParents If set to true and the searched option was not
+  /// specified for the given checker the options for the parent packages will
+  /// be searched as well. The inner packages take precedence over the outer
+  /// ones.
+  bool getBooleanOption(Optional<bool> &V, StringRef Name, bool DefaultVal,
+                        const ento::CheckerBase *C  = nullptr,
+                        bool SearchInParents = false);
 
   /// Interprets an option's string value as an integer value.
-  int getOptionAsInteger(StringRef Name, int DefaultVal);
+  ///
+  /// If an option value is not provided, returns the given \p DefaultVal.
+  /// @param [in] Name Name for option to retrieve.
+  /// @param [in] DefaultVal Default value returned if no such option was
+  /// specified.
+  /// @param [in] C The optional checker parameter that can be used to restrict
+  /// the search to the options of this particular checker (and its parents
+  /// dependening on search mode).
+  /// @param [in] SearchInParents If set to true and the searched option was not
+  /// specified for the given checker the options for the parent packages will
+  /// be searched as well. The inner packages take precedence over the outer
+  /// ones.
+  int getOptionAsInteger(StringRef Name, int DefaultVal,
+                         const ento::CheckerBase *C = nullptr,
+                         bool SearchInParents = false);
+
+  /// Query an option's string value.
+  ///
+  /// If an option value is not provided, returns the given \p DefaultVal.
+  /// @param [in] Name Name for option to retrieve.
+  /// @param [in] DefaultVal Default value returned if no such option was
+  /// specified.
+  /// @param [in] C The optional checker parameter that can be used to restrict
+  /// the search to the options of this particular checker (and its parents
+  /// dependening on search mode).
+  /// @param [in] SearchInParents If set to true and the searched option was not
+  /// specified for the given checker the options for the parent packages will
+  /// be searched as well. The inner packages take precedence over the outer
+  /// ones.
+  StringRef getOptionAsString(StringRef Name, StringRef DefaultVal,
+                              const ento::CheckerBase *C = nullptr,
+                              bool SearchInParents = false);
 
   /// \brief Retrieves and sets the UserMode. This is a high-level option,
   /// which is used to set other low-level options. It is not accessible

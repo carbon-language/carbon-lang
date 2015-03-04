@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.deadcode.UnreachableCode,alpha.core.CastSize,alpha.unix.MallocWithAnnotations -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.deadcode.UnreachableCode,alpha.core.CastSize,unix.Malloc -analyzer-store=region -verify -analyzer-config unix.Malloc:Optimistic=true %s
 typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);
 void free(void *);
