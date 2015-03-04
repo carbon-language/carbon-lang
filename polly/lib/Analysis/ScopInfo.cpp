@@ -1590,17 +1590,16 @@ void Scop::dropConstantScheduleDims() {
   isl_map *DropDimMap = isl_set_identity(isl_set_copy(ScheduleSpace));
 
   int NumDimsDropped = 0;
-  for (unsigned i = 0; i < isl_set_dim(ScheduleSpace, isl_dim_set); i++)
-    if (i % 2 == 0) {
-      isl_val *FixedVal =
-          isl_set_plain_get_val_if_fixed(ScheduleSpace, isl_dim_set, i);
-      if (isl_val_is_int(FixedVal)) {
-        DropDimMap =
-            isl_map_project_out(DropDimMap, isl_dim_out, i - NumDimsDropped, 1);
-        NumDimsDropped++;
-      }
-      isl_val_free(FixedVal);
+  for (unsigned i = 0; i < isl_set_dim(ScheduleSpace, isl_dim_set); i += 2) {
+    isl_val *FixedVal =
+        isl_set_plain_get_val_if_fixed(ScheduleSpace, isl_dim_set, i);
+    if (isl_val_is_int(FixedVal)) {
+      DropDimMap =
+          isl_map_project_out(DropDimMap, isl_dim_out, i - NumDimsDropped, 1);
+      NumDimsDropped++;
     }
+    isl_val_free(FixedVal);
+  }
 
   for (auto *S : *this) {
     isl_map *Schedule = S->getScattering();
