@@ -2364,7 +2364,7 @@ ObjectFileELF::GetSymtab()
 
     if (m_symtab_ap.get() == NULL)
     {
-        SectionList *section_list = GetSectionList();
+        SectionList *section_list = module_sp->GetSectionList();
         if (!section_list)
             return NULL;
 
