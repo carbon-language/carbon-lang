@@ -196,11 +196,12 @@ bool DwarfExpression::AddMachineRegExpression(DIExpression Expr,
                                               unsigned MachineReg,
                                               unsigned PieceOffsetInBits) {
   auto I = Expr.begin();
-  // Pattern-match combinations for which more efficient representations exist
-  // first.
-  if (I == Expr.end())
+  auto E = Expr.end();
+  if (I == E)
     return AddMachineRegPiece(MachineReg);
 
+  // Pattern-match combinations for which more efficient representations exist
+  // first.
   bool ValidReg = false;
   switch (*I) {
   case dwarf::DW_OP_bit_piece: {
@@ -210,20 +211,23 @@ bool DwarfExpression::AddMachineRegExpression(DIExpression Expr,
     return AddMachineRegPiece(MachineReg, SizeInBits,
                getOffsetOrZero(OffsetInBits, PieceOffsetInBits));
   }
-  case dwarf::DW_OP_plus:
+  case dwarf::DW_OP_plus: {
     // [DW_OP_reg,Offset,DW_OP_plus,DW_OP_deref] --> [DW_OP_breg,Offset].
-    if (I->getNext() == dwarf::DW_OP_deref) {
+    auto N = I->getNext();
+    if ((N != E) && (*N == dwarf::DW_OP_deref)) {
       unsigned Offset = I->getArg(1);
       ValidReg = AddMachineRegIndirect(MachineReg, Offset);
       std::advance(I, 2);
       break;
     } else
       ValidReg = AddMachineRegPiece(MachineReg);
-  case dwarf::DW_OP_deref:
-    // [DW_OP_reg,DW_OP_deref] --> [DW_OP_breg].
-    ValidReg = AddMachineRegIndirect(MachineReg);
-    ++I;
-    break;
+  }
+  case dwarf::DW_OP_deref: {
+      // [DW_OP_reg,DW_OP_deref] --> [DW_OP_breg].
+      ValidReg = AddMachineRegIndirect(MachineReg);
+      ++I;
+      break;
+  }
   default:
     llvm_unreachable("unsupported operand");
   }
@@ -232,7 +236,7 @@ bool DwarfExpression::AddMachineRegExpression(DIExpression Expr,
     return false;
 
   // Emit remaining elements of the expression.
-  AddExpression(I, Expr.end(), PieceOffsetInBits);
+  AddExpression(I, E, PieceOffsetInBits);
   return true;
 }
 

@@ -1031,7 +1031,7 @@ public:
     /// \brief Returns underlying MDExpression::element_iterator.
     const MDExpression::element_iterator &getBase() const { return I; }
     /// \brief Returns the next operand.
-    Operand getNext() const;
+    iterator getNext() const;
   };
 
   /// \brief An iterator for DIExpression elements.

@@ -183,9 +183,9 @@ uint64_t DIExpression::getBitPieceSize() const {
   return getElement(getNumElements()-1);
 }
 
-DIExpression::Operand DIExpression::Operand::getNext() const {
+DIExpression::iterator DIExpression::Operand::getNext() const {
   iterator it(I);
-  return *(++it);
+  return ++it;
 }
 
 //===----------------------------------------------------------------------===//
