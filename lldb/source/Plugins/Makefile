@@ -1,5 +1,5 @@
 ##===- source/Plugins/Makefile -----------------------------*- Makefile -*-===##
-# 
+
 #                     The LLVM Compiler Infrastructure
 #
 # This file is distributed under the University of Illinois Open Source
@@ -25,6 +25,7 @@ PARALLEL_DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-x86_64
 	LanguageRuntime/ObjC/AppleObjCRuntime \
 	DynamicLoader/POSIX-DYLD \
 	DynamicLoader/Hexagon-DYLD \
+	DynamicLoader/MacOSX-DYLD \
 	OperatingSystem/Python \
 	SystemRuntime/MacOSX \
 	SymbolVendor/ELF \
@@ -33,7 +34,7 @@ PARALLEL_DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-x86_64
 
 ifeq ($(HOST_OS),Darwin)
 PARALLEL_DIRS += Process/MacOSX-Kernel
-PARALLEL_DIRS += DynamicLoader/MacOSX-DYLD DynamicLoader/Darwin-Kernel
+PARALLEL_DIRS += DynamicLoader/Darwin-Kernel
 PARALLEL_DIRS += SymbolVendor/MacOSX
 #PARALLEL_DIRS += Process/MacOSX-User
 PARALLEL_DIRS += Process/mach-core
@@ -42,7 +43,6 @@ PARALLEL_DIRS += JITLoader/GDB
 endif
 
 ifeq ($(HOST_OS),Linux)
-PARALLEL_DIRS += DynamicLoader/MacOSX-DYLD
 PARALLEL_DIRS += Process/Linux Process/POSIX
 PARALLEL_DIRS += Process/elf-core
 PARALLEL_DIRS += JITLoader/GDB
