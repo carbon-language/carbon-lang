@@ -56,14 +56,13 @@ for.body.lr.ph:                                   ; preds = %entry
 
 ; Check that only two mov will be generated in the kernel loop.
 ; CHECK-LABEL: goo:
-; CHECK: g@GOTPCREL(%rip), [[REG3:%[a-z0-0]+]]
 ; CHECK: [[LOOP2:^[a-zA-Z0-9_.]+]]: {{#.*}} %for.body
 ; CHECK-NOT: mov
 ; CHECK: movl {{.*}}, [[REG2:%[a-z0-9]+]]
 ; CHECK-NOT: mov
 ; CHECK: shrl $31, [[REG2]]
 ; CHECK-NOT: mov
-; CHECK: movl {{.*}}, ([[REG3]])
+; CHECK: movl {{.*}}
 ; CHECK: jl [[LOOP2]]
 for.body:                                         ; preds = %for.body.lr.ph, %for.body
   %add5 = phi i32 [ %total.promoted, %for.body.lr.ph ], [ %add, %for.body ]
