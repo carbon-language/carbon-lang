@@ -131,8 +131,11 @@ class CMICmdCmdVarUpdate : public CMICmdBase
   private:
     CMIUtilString m_strValueName;
     CMICmnLLDBDebugSessionInfo::VariableInfoFormat_e m_eVarInfoFormat;
-    const CMIUtilString m_constStrArgPrintValues; // Not handled by *this command
+    const CMIUtilString m_constStrArgPrintValues;
     const CMIUtilString m_constStrArgName;
+    const CMIUtilString m_constStrArgNoValues;
+    const CMIUtilString m_constStrArgAllValues;
+    const CMIUtilString m_constStrArgSimpleValues;
     bool m_bValueChangedArrayType;     // True = yes value changed, false = no change
     bool m_bValueChangedCompositeType; // True = yes value changed, false = no change
     bool m_bValueChangedNormalType;    // True = yes value changed, false = no change

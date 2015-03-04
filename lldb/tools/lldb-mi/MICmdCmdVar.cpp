@@ -276,6 +276,9 @@ CMICmdCmdVarUpdate::CMICmdCmdVarUpdate(void)
     : m_eVarInfoFormat(CMICmnLLDBDebugSessionInfo::eVariableInfoFormat_NoValues)
     , m_constStrArgPrintValues("print-values")
     , m_constStrArgName("name")
+    , m_constStrArgNoValues("no-values")
+    , m_constStrArgAllValues("all-values")
+    , m_constStrArgSimpleValues("simple-values")
     , m_bValueChangedArrayType(false)
     , m_bValueChangedCompositeType(false)
     , m_bValueChangedNormalType(false)
@@ -312,6 +315,9 @@ bool
 CMICmdCmdVarUpdate::ParseArgs(void)
 {
     bool bOk = m_setCmdArgs.Add(*(new CMICmdArgValNumber(m_constStrArgPrintValues, false, true)));
+    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgNoValues, false, true)));
+    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgAllValues, false, true)));
+    bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValOptionLong(m_constStrArgSimpleValues, false, true)));
     bOk = bOk && m_setCmdArgs.Add(*(new CMICmdArgValString(m_constStrArgName, true, true)));
     return (bOk && ParseValidateCmdOptions());
 }
@@ -330,6 +336,31 @@ CMICmdCmdVarUpdate::Execute(void)
 {
     CMICMDBASE_GETOPTION(pArgPrintValues, Number, m_constStrArgPrintValues);
     CMICMDBASE_GETOPTION(pArgName, String, m_constStrArgName);
+    CMICMDBASE_GETOPTION(pArgNoValues, OptionLong, m_constStrArgNoValues);
+    CMICMDBASE_GETOPTION(pArgAllValues, OptionLong, m_constStrArgAllValues);
+    CMICMDBASE_GETOPTION(pArgSimpleValues, OptionLong, m_constStrArgSimpleValues);
+
+    CMICmnLLDBDebugSessionInfo::VariableInfoFormat_e eVarInfoFormat;
+    if (pArgPrintValues->GetFound())
+    {
+        const MIuint nPrintValues = pArgPrintValues->GetValue();
+        if (nPrintValues >= CMICmnLLDBDebugSessionInfo::kNumVariableInfoFormats)
+        {
+            SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_INVALID_PRINT_VALUES), m_cmdData.strMiCmd.c_str()));
+            return MIstatus::failure;
+        }
+        eVarInfoFormat = static_cast<CMICmnLLDBDebugSessionInfo::VariableInfoFormat_e>(nPrintValues);
+    }
+    else if (pArgNoValues->GetFound())
+        eVarInfoFormat = CMICmnLLDBDebugSessionInfo::eVariableInfoFormat_NoValues;
+    else if (pArgAllValues->GetFound())
+        eVarInfoFormat = CMICmnLLDBDebugSessionInfo::eVariableInfoFormat_AllValues;
+    else if (pArgSimpleValues->GetFound())
+        eVarInfoFormat = CMICmnLLDBDebugSessionInfo::eVariableInfoFormat_SimpleValues;
+    else
+        // If no print-values, default is "no-values"
+        eVarInfoFormat = CMICmnLLDBDebugSessionInfo::eVariableInfoFormat_NoValues;
+    m_eVarInfoFormat = eVarInfoFormat;
 
     const CMIUtilString &rVarObjName(pArgName->GetValue());
     CMICmnLLDBDebugSessionInfoVarObj varObj;
@@ -338,14 +369,6 @@ CMICmdCmdVarUpdate::Execute(void)
         SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_VARIABLE_DOESNOTEXIST), m_cmdData.strMiCmd.c_str(), rVarObjName.c_str()));
         return MIstatus::failure;
     }
-
-    const MIuint nPrintValues = pArgPrintValues->GetValue();
-    if (nPrintValues >= CMICmnLLDBDebugSessionInfo::kNumVariableInfoFormats)
-    {
-        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_INVALID_PRINT_VALUES), m_cmdData.strMiCmd.c_str()));
-        return MIstatus::failure;
-    }
-    m_eVarInfoFormat = static_cast<CMICmnLLDBDebugSessionInfo::VariableInfoFormat_e>(nPrintValues);
 
     const CMIUtilString &rVarRealName(varObj.GetNameReal());
     MIunused(rVarRealName);
@@ -436,7 +459,9 @@ CMICmdCmdVarUpdate::Acknowledge(void)
         const CMICmnMIValueConst miValueConst(m_strValueName);
         CMICmnMIValueResult miValueResult("name", miValueConst);
         CMICmnMIValueTuple miValueTuple(miValueResult);
-        if (m_eVarInfoFormat != CMICmnLLDBDebugSessionInfo::eVariableInfoFormat_NoValues)
+        if (m_eVarInfoFormat == CMICmnLLDBDebugSessionInfo::eVariableInfoFormat_AllValues ||
+           (m_eVarInfoFormat == CMICmnLLDBDebugSessionInfo::eVariableInfoFormat_SimpleValues
+           && m_bValueChangedNormalType))
         {
             const CMICmnMIValueConst miValueConst2(strValue);
             CMICmnMIValueResult miValueResult2("value", miValueConst2);
@@ -511,8 +536,12 @@ CMICmdCmdVarUpdate::MIFormResponse(const CMIUtilString &vrStrVarName, const CMIU
     CMICmnMIValueResult miValueResult("name", miValueConst);
     CMICmnMIValueTuple miValueTuple(miValueResult);
     const CMICmnMIValueConst miValueConst2(vrStrValue);
-    CMICmnMIValueResult miValueResult2("value", miValueConst2);
-    bool bOk = miValueTuple.Add(miValueResult2);
+    bool bOk = true;
+    if(m_eVarInfoFormat == CMICmnLLDBDebugSessionInfo::eVariableInfoFormat_AllValues)
+    {
+      CMICmnMIValueResult miValueResult2("value", miValueConst2);
+      bOk = bOk && miValueTuple.Add(miValueResult2);
+    }
     const CMICmnMIValueConst miValueConst3(vrStrScope);
     CMICmnMIValueResult miValueResult3("in_scope", miValueConst3);
     bOk = bOk && miValueTuple.Add(miValueResult3);
