@@ -255,7 +255,7 @@ RNBRunLoopLaunchInferior (RNBRemote *remote, const char *stdin_path, const char 
     {
         DNBLogThreaded ("%s DNBProcessLaunch() failed to launch process, unknown failure", __FUNCTION__);
         ctx.LaunchStatus().SetError(-1, DNBError::Generic);
-        ctx.LaunchStatus().SetErrorString(launch_err_str);
+        ctx.LaunchStatus().SetErrorString("<unknown failure>");
     }
     else
     {
