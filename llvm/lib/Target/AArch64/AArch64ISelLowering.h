@@ -335,7 +335,8 @@ public:
 
   bool shouldExpandAtomicLoadInIR(LoadInst *LI) const override;
   bool shouldExpandAtomicStoreInIR(StoreInst *SI) const override;
-  bool shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const override;
+  TargetLoweringBase::AtomicRMWExpansionKind
+  shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const override;
 
   bool useLoadStackGuardNode() const override;
   TargetLoweringBase::LegalizeTypeAction

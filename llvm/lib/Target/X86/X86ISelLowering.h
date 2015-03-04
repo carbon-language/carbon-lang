@@ -991,7 +991,8 @@ namespace llvm {
 
     bool shouldExpandAtomicLoadInIR(LoadInst *SI) const override;
     bool shouldExpandAtomicStoreInIR(StoreInst *SI) const override;
-    bool shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const override;
+    TargetLoweringBase::AtomicRMWExpansionKind
+    shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const override;
 
     LoadInst *
     lowerIdempotentRMWIntoFencedLoad(AtomicRMWInst *AI) const override;

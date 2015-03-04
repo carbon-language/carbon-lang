@@ -48,7 +48,7 @@ namespace {
     bool expandAtomicLoadToLL(LoadInst *LI);
     bool expandAtomicLoadToCmpXchg(LoadInst *LI);
     bool expandAtomicStore(StoreInst *SI);
-    bool expandAtomicRMW(AtomicRMWInst *AI);
+    bool tryExpandAtomicRMW(AtomicRMWInst *AI);
     bool expandAtomicRMWToLLSC(AtomicRMWInst *AI);
     bool expandAtomicRMWToCmpXchg(AtomicRMWInst *AI);
     bool expandAtomicCmpXchg(AtomicCmpXchgInst *CI);
@@ -135,9 +135,12 @@ bool AtomicExpand::runOnFunction(Function &F) {
       // - into a load if it is idempotent
       // - into a Cmpxchg/LL-SC loop otherwise
       // we try them in that order.
-      MadeChange |=
-          (isIdempotentRMW(RMWI) && simplifyIdempotentRMW(RMWI)) ||
-          (TLI->shouldExpandAtomicRMWInIR(RMWI) && expandAtomicRMW(RMWI));
+
+      if (isIdempotentRMW(RMWI) && simplifyIdempotentRMW(RMWI)) {
+        MadeChange = true;
+      } else {
+        MadeChange |= tryExpandAtomicRMW(RMWI);
+      }
     } else if (CASI && TLI->hasLoadLinkedStoreConditional()) {
       MadeChange |= expandAtomicCmpXchg(CASI);
     }
@@ -211,7 +214,7 @@ bool AtomicExpand::expandAtomicStore(StoreInst *SI) {
   // atomic if implemented as a native store. So we replace them by an
   // atomic swap, that can be implemented for example as a ldrex/strex on ARM
   // or lock cmpxchg8/16b on X86, as these are atomic for larger sizes.
-  // It is the responsibility of the target to only return true in
+  // It is the responsibility of the target to only signal expansion via
   // shouldExpandAtomicRMW in cases where this is required and possible.
   IRBuilder<> Builder(SI);
   AtomicRMWInst *AI =
@@ -220,14 +223,26 @@ bool AtomicExpand::expandAtomicStore(StoreInst *SI) {
   SI->eraseFromParent();
 
   // Now we have an appropriate swap instruction, lower it as usual.
-  return expandAtomicRMW(AI);
+  return tryExpandAtomicRMW(AI);
 }
 
-bool AtomicExpand::expandAtomicRMW(AtomicRMWInst *AI) {
-  if (TLI->hasLoadLinkedStoreConditional())
+bool AtomicExpand::tryExpandAtomicRMW(AtomicRMWInst *AI) {
+  switch (TLI->shouldExpandAtomicRMWInIR(AI)) {
+  case TargetLoweringBase::AtomicRMWExpansionKind::None:
+    return false;
+  case TargetLoweringBase::AtomicRMWExpansionKind::LLSC: {
+    assert(TLI->hasLoadLinkedStoreConditional() &&
+           "TargetLowering requested we expand AtomicRMW instruction into "
+           "load-linked/store-conditional combos, but such instructions aren't "
+           "supported");
+
     return expandAtomicRMWToLLSC(AI);
-  else
+  }
+  case TargetLoweringBase::AtomicRMWExpansionKind::CmpXChg: {
     return expandAtomicRMWToCmpXchg(AI);
+  }
+  }
+  llvm_unreachable("Unhandled case in tryExpandAtomicRMW");
 }
 
 /// Emit IR to implement the given atomicrmw operation on values in registers,
