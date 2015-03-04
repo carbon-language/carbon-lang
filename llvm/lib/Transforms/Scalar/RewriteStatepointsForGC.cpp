@@ -1593,8 +1593,18 @@ static void relocationViaAlloca(
     // store must be inserted after load, otherwise store will be in alloca's
     // use list and an extra load will be inserted before it
     StoreInst *store = new StoreInst(def, alloca);
-    if (isa<Instruction>(def)) {
-      store->insertAfter(cast<Instruction>(def));
+    if (Instruction *inst = dyn_cast<Instruction>(def)) {
+      if (InvokeInst *invoke = dyn_cast<InvokeInst>(inst)) {
+        // InvokeInst is a TerminatorInst so the store need to be inserted
+        // into its normal destination block.
+        BasicBlock *normalDest = invoke->getNormalDest();
+        store->insertBefore(normalDest->getFirstNonPHI());
+      } else {
+        assert(!inst->isTerminator() &&
+               "The only TerminatorInst that can produce a value is "
+               "InvokeInst which is handled above.");
+         store->insertAfter(inst);
+      }
     } else {
       assert((isa<Argument>(def) || isa<GlobalVariable>(def) ||
               (isa<Constant>(def) && cast<Constant>(def)->isNullValue())) &&
