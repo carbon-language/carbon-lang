@@ -18,18 +18,14 @@ namespace llvm {
 class raw_ostream;
 
 class DWARFAbbreviationDeclaration {
-  uint32_t Code;
-  uint32_t Tag;
-  bool HasChildren;
-
+public:
   struct AttributeSpec {
     AttributeSpec(uint16_t Attr, uint16_t Form) : Attr(Attr), Form(Form) {}
     uint16_t Attr;
     uint16_t Form;
   };
   typedef SmallVector<AttributeSpec, 8> AttributeSpecVector;
-  AttributeSpecVector AttributeSpecs;
-public:
+
   DWARFAbbreviationDeclaration();
 
   uint32_t getCode() const { return Code; }
@@ -53,6 +49,12 @@ public:
 
 private:
   void clear();
+
+  uint32_t Code;
+  uint32_t Tag;
+  bool HasChildren;
+
+  AttributeSpecVector AttributeSpecs;
 };
 
 }
