@@ -4036,41 +4036,47 @@ bool CheckScanfHandler::HandleScanfSpecifier(
     return true;
 
   const analyze_format_string::ArgType &AT = FS.getArgType(S.Context);
+
+  if (!AT.isValid()) {
+    return true;
+  }
+
   analyze_format_string::ArgType::MatchKind match =
       AT.matchesType(S.Context, Ex->getType());
-  if (AT.isValid() && match != analyze_format_string::ArgType::Match) {
-    ScanfSpecifier fixedFS = FS;
-    bool success =
-        fixedFS.fixType(Ex->getType(), Ex->IgnoreImpCasts()->getType(),
-                        S.getLangOpts(), S.Context);
+  if (match == analyze_format_string::ArgType::Match) {
+    return true;
+  }
 
-    unsigned diag = diag::warn_format_conversion_argument_type_mismatch;
-    if (match == analyze_format_string::ArgType::NoMatchPedantic) {
-      diag = diag::warn_format_conversion_argument_type_mismatch_pedantic;
-    }
+  ScanfSpecifier fixedFS = FS;
+  bool success = fixedFS.fixType(Ex->getType(), Ex->IgnoreImpCasts()->getType(),
+                                 S.getLangOpts(), S.Context);
 
-    if (success) {
-      // Get the fix string from the fixed format specifier.
-      SmallString<128> buf;
-      llvm::raw_svector_ostream os(buf);
-      fixedFS.toString(os);
+  unsigned diag = diag::warn_format_conversion_argument_type_mismatch;
+  if (match == analyze_format_string::ArgType::NoMatchPedantic) {
+    diag = diag::warn_format_conversion_argument_type_mismatch_pedantic;
+  }
 
-      EmitFormatDiagnostic(
-          S.PDiag(diag) << AT.getRepresentativeTypeName(S.Context)
-                        << Ex->getType() << false << Ex->getSourceRange(),
-          Ex->getLocStart(),
-          /*IsStringLocation*/ false,
-          getSpecifierRange(startSpecifier, specifierLen),
-          FixItHint::CreateReplacement(
-              getSpecifierRange(startSpecifier, specifierLen), os.str()));
-    } else {
-      EmitFormatDiagnostic(
-          S.PDiag(diag) << AT.getRepresentativeTypeName(S.Context)
-                        << Ex->getType() << false << Ex->getSourceRange(),
-          Ex->getLocStart(),
-          /*IsStringLocation*/ false,
-          getSpecifierRange(startSpecifier, specifierLen));
-    }
+  if (success) {
+    // Get the fix string from the fixed format specifier.
+    SmallString<128> buf;
+    llvm::raw_svector_ostream os(buf);
+    fixedFS.toString(os);
+
+    EmitFormatDiagnostic(
+        S.PDiag(diag) << AT.getRepresentativeTypeName(S.Context)
+                      << Ex->getType() << false << Ex->getSourceRange(),
+        Ex->getLocStart(),
+        /*IsStringLocation*/ false,
+        getSpecifierRange(startSpecifier, specifierLen),
+        FixItHint::CreateReplacement(
+            getSpecifierRange(startSpecifier, specifierLen), os.str()));
+  } else {
+    EmitFormatDiagnostic(S.PDiag(diag)
+                             << AT.getRepresentativeTypeName(S.Context)
+                             << Ex->getType() << false << Ex->getSourceRange(),
+                         Ex->getLocStart(),
+                         /*IsStringLocation*/ false,
+                         getSpecifierRange(startSpecifier, specifierLen));
   }
 
   return true;
