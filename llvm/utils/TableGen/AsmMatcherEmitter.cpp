@@ -264,6 +264,11 @@ public:
   }
 
   /// operator< - Compare two classes.
+  // FIXME: This ordering seems to be broken. For example:
+  // u64 < i64, i64 < s8, s8 < u64, forming a cycle
+  // u64 is a subset of i64
+  // i64 and s8 are not subsets of each other, so are ordered by name
+  // s8 and u64 are not subsets of each other, so are ordered by name
   bool operator<(const ClassInfo &RHS) const {
     if (this == &RHS)
       return false;
