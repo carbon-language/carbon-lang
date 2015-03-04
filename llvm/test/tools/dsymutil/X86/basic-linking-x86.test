@@ -4,5 +4,70 @@ RUN: llvm-dwarfdump %t1.dwarf | FileCheck %s
 RUN: llvm-dsymutil -o %t2 -oso-prepend-path=%p/.. %p/../Inputs/basic.macho.x86_64
 RUN: llvm-dwarfdump %t2 | FileCheck %s
 RUN: llvm-dsymutil -o - -oso-prepend-path=%p/.. %p/../Inputs/basic.macho.x86_64 | llvm-dwarfdump - | FileCheck %s
+RUN: llvm-dsymutil -o - -oso-prepend-path=%p/.. %p/../Inputs/basic-archive.macho.x86_64 | llvm-dwarfdump - | FileCheck %s
 
 CHECK: file format Mach-O 64-bit x86-64
+
+CHECK: debug_info contents
+
+CHECK:  Compile Unit:
+
+CHECK:  DW_TAG_compile_unit [1] *
+CHECK:    DW_AT_language [DW_FORM_data2]	(DW_LANG_C99)
+CHECK:    DW_TAG_subprogram [2] *
+CHECK:      DW_AT_decl_line [DW_FORM_data1]	(23)
+CHECK:      DW_AT_prototyped [DW_FORM_flag]	(0x01)
+CHECK:      DW_AT_external [DW_FORM_flag]	(0x01)
+CHECK:      DW_AT_accessibility [DW_FORM_data1]	(DW_ACCESS_public)
+CHECK:      DW_AT_frame_base [DW_FORM_block1]	(<0x01> 56 )
+CHECK:      DW_TAG_formal_parameter [3]
+CHECK:        DW_AT_decl_line [DW_FORM_data1]	(23)
+CHECK:        DW_AT_location [DW_FORM_block1]	(<0x02> 91 78 )
+CHECK:      DW_TAG_formal_parameter [3]
+CHECK:        DW_AT_decl_file [DW_FORM_data1]	(0x01)
+CHECK:        DW_AT_decl_line [DW_FORM_data1]	(23)
+CHECK:        DW_AT_location [DW_FORM_block1]	(<0x02> 91 70 )
+CHECK:      NULL
+CHECK:    DW_TAG_base_type [4]
+CHECK:      DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000000] = )
+CHECK:      DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed)
+CHECK:      DW_AT_byte_size [DW_FORM_data1]	(0x04)
+CHECK:    DW_TAG_pointer_type [5]
+CHECK:    DW_TAG_pointer_type [5]
+CHECK:    DW_TAG_const_type [6]
+CHECK:    DW_TAG_base_type [4]
+CHECK:      DW_AT_encoding [DW_FORM_data1]	(DW_ATE_signed_char)
+CHECK:      DW_AT_byte_size [DW_FORM_data1]	(0x01)
+CHECK:    NULL
+
+CHECK:  Compile Unit:
+
+CHECK:  DW_TAG_compile_unit [1] *
+CHECK:    DW_TAG_base_type [4]
+CHECK:    DW_TAG_variable [7]
+CHECK:    DW_TAG_variable [7]
+CHECK:    DW_TAG_subprogram [2] *
+CHECK:      DW_AT_frame_base [DW_FORM_block1]	(<0x01> 56 )
+CHECK:      DW_TAG_formal_parameter [3]
+CHECK:        DW_AT_location [DW_FORM_block1]	(<0x02> 91 7c )
+CHECK:      NULL
+CHECK:    DW_TAG_subprogram [8]
+CHECK:      DW_AT_frame_base [DW_FORM_block1]	(<0x01> 56 )
+CHECK:    NULL
+
+CHECK:  Compile Unit:
+
+CHECK:  DW_TAG_compile_unit [1] *
+CHECK:    DW_TAG_variable [9]
+CHECK:    DW_TAG_volatile_type [10]
+CHECK:    DW_TAG_base_type [4]
+CHECK:    DW_TAG_subprogram [2] *
+CHECK:      DW_AT_frame_base [DW_FORM_block1]	(<0x01> 56 )
+CHECK:      DW_TAG_formal_parameter [3]
+CHECK:        DW_AT_location [DW_FORM_block1]	(<0x02> 91 78 )
+CHECK:      NULL
+CHECK:    DW_TAG_subprogram [8]
+CHECK:      DW_AT_frame_base [DW_FORM_block1]	(<0x01> 56 )
+
+CHECK:    NULL
+
