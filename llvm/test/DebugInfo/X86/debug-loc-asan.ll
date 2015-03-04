@@ -28,7 +28,7 @@
 
 ; Then it's addressed via %rsp:
 ; CHECK:      .quad [[START_LABEL]]-.Lfunc_begin0
-; CHECK-NEXT: .Lfunc_end0-.Lfunc_begin0
+; CHECK-NEXT: .Lfunc_end06-.Lfunc_begin0
 ; CHECK: DW_OP_breg7
 ; CHECK-NEXT: [[OFFSET]]
 ; CHECK: DW_OP_deref

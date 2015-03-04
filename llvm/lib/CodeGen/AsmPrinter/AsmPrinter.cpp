@@ -882,7 +882,7 @@ void AsmPrinter::EmitFunctionBody() {
   // Emit target-specific gunk after the function body.
   EmitFunctionBodyEnd();
 
-  if (!MMI->getLandingPads().empty()) {
+  if (!MMI->getLandingPads().empty() || MAI->hasDotTypeDotSizeDirective()) {
     // Create a symbol for the end of function.
     CurrentFnEnd = createTempSymbol("func_end", getFunctionNumber());
     OutStreamer.EmitLabel(CurrentFnEnd);
@@ -891,13 +891,10 @@ void AsmPrinter::EmitFunctionBody() {
   // If the target wants a .size directive for the size of the function, emit
   // it.
   if (MAI->hasDotTypeDotSizeDirective()) {
-    // Create a symbol for the end of function, so we can get the size as
-    // difference between the function label and the temp label.
-    MCSymbol *FnEndLabel = OutContext.CreateTempSymbol();
-    OutStreamer.EmitLabel(FnEndLabel);
-
+    // We can get the size as difference between the function label and the
+    // temp label.
     const MCExpr *SizeExp =
-      MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(FnEndLabel, OutContext),
+      MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(CurrentFnEnd, OutContext),
                               MCSymbolRefExpr::Create(CurrentFnSymForSize,
                                                       OutContext),
                               OutContext);

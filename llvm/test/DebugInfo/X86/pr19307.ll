@@ -21,7 +21,7 @@
 ; CHECK: .Ldebug_loc{{[0-9]+}}:
 ; CHECK: DW_OP_breg1
 ; CHECK:      .quad [[START_LABEL]]-.Lfunc_begin0
-; CHECK-NEXT: .quad .Lfunc_end0-.Lfunc_begin0
+; CHECK-NEXT: .quad .Lfunc_end09-.Lfunc_begin0
 ; CHECK: DW_OP_breg6
 ; CHECK: DW_OP_deref
 

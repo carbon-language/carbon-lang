@@ -39,5 +39,5 @@ entry:
 ; LINUX-FP-NEXT:{{^}}.L{{.*}}:{{$}}
 ; LINUX-FP-NEXT: .cfi_def_cfa_register r31
 ; LINUX-FP-NEXT:{{^}}.L{{.*}}:{{$}}
-; LINUX-FP-NEXT: .size   func, .Ltmp3-func
+; LINUX-FP-NEXT: .size   func, .Lfunc_end0-func
 ; LINUX-FP-NEXT: .cfi_endproc
