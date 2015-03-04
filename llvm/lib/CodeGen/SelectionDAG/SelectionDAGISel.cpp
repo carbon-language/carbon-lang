@@ -1182,7 +1182,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           // Fast isel failed to lower these arguments
           ++NumFastIselFailLowerArguments;
           if (EnableFastISelAbort > 1)
-            llvm_unreachable("FastISel didn't lower all arguments");
+            report_fatal_error("FastISel didn't lower all arguments");
 
           // Use SelectionDAG argument lowering
           LowerArguments(Fn);
@@ -1254,7 +1254,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           if (EnableFastISelAbort > 2)
             // FastISel selector couldn't handle something and bailed.
             // For the purpose of debugging, just abort.
-            llvm_unreachable("FastISel didn't select the entire block");
+            report_fatal_error("FastISel didn't select the entire block");
 
           if (!Inst->getType()->isVoidTy() && !Inst->use_empty()) {
             unsigned &R = FuncInfo->ValueMap[Inst];
@@ -1297,7 +1297,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
         if (ShouldAbort)
           // FastISel selector couldn't handle something and bailed.
           // For the purpose of debugging, just abort.
-          llvm_unreachable("FastISel didn't select the entire block");
+          report_fatal_error("FastISel didn't select the entire block");
 
         NumFastIselFailures += NumFastIselRemaining;
         break;
