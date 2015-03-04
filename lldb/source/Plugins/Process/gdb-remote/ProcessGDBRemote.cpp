@@ -705,7 +705,7 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
     // FIXME Add a gdb-remote packet to discover dynamically.
     if (error.Success ())
     {
-        const ArchSpec arch_spec = GetTarget ().GetArchitecture ();
+        const ArchSpec arch_spec = m_gdb_comm.GetHostArchitecture();
         if (arch_spec.IsValid ())
         {
             if (log)
