@@ -226,9 +226,8 @@ public:
     return 0;
   }
 
-  /// Control whether __builtin_longjmp / __builtin_setjmp are lowered to
-  /// llvm.eh.sjlj.longjmp / llvm.eh.sjlj.setjmp or the normal library
-  /// function.
+  /// Control if __builtin_longjmp / __builtin_setjmp can be lowered to
+  /// llvm.eh.sjlj.longjmp / llvm.eh.sjlj.setjmp.
   virtual bool hasSjLjLowering(CodeGen::CodeGenFunction &CGF) const {
     return false;
   }
