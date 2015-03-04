@@ -1,3 +1,4 @@
+// XFAIL: hexagon
 // RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
 // RUN: %clang_cc1 -triple mips-linux-gnu -emit-llvm %s -o - | FileCheck %s
 
