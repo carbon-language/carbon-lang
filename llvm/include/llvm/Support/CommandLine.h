@@ -714,6 +714,7 @@ class basic_parser_impl { // non-template implementation of basic_parser<t>
 public:
   basic_parser_impl(Option &O) {}
 
+  virtual ~basic_parser_impl() {}
 
   enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueRequired;
@@ -742,7 +743,6 @@ public:
   virtual void anchor();
 
 protected:
-  ~basic_parser_impl() = default;
   // A helper for basic_parser::printOptionDiff.
   void printOptionName(const Option &O, size_t GlobalWidth) const;
 };
@@ -755,15 +755,12 @@ public:
   basic_parser(Option &O) : basic_parser_impl(O) {}
   typedef DataType parser_data_type;
   typedef OptionValue<DataType> OptVal;
-
-protected:
-  ~basic_parser() = default;
 };
 
 //--------------------------------------------------
 // parser<bool>
 //
-template <> class parser<bool> final : public basic_parser<bool> {
+template <> class parser<bool> : public basic_parser<bool> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -790,8 +787,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<bool>);
 
 //--------------------------------------------------
 // parser<boolOrDefault>
-template <>
-class parser<boolOrDefault> final : public basic_parser<boolOrDefault> {
+template <> class parser<boolOrDefault> : public basic_parser<boolOrDefault> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -817,7 +813,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<boolOrDefault>);
 //--------------------------------------------------
 // parser<int>
 //
-template <> class parser<int> final : public basic_parser<int> {
+template <> class parser<int> : public basic_parser<int> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -839,7 +835,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<int>);
 //--------------------------------------------------
 // parser<unsigned>
 //
-template <> class parser<unsigned> final : public basic_parser<unsigned> {
+template <> class parser<unsigned> : public basic_parser<unsigned> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -862,8 +858,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<unsigned>);
 // parser<unsigned long long>
 //
 template <>
-class parser<unsigned long long> final
-    : public basic_parser<unsigned long long> {
+class parser<unsigned long long> : public basic_parser<unsigned long long> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -886,7 +881,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<unsigned long long>);
 //--------------------------------------------------
 // parser<double>
 //
-template <> class parser<double> final : public basic_parser<double> {
+template <> class parser<double> : public basic_parser<double> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -908,7 +903,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<double>);
 //--------------------------------------------------
 // parser<float>
 //
-template <> class parser<float> final : public basic_parser<float> {
+template <> class parser<float> : public basic_parser<float> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -930,7 +925,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<float>);
 //--------------------------------------------------
 // parser<std::string>
 //
-template <> class parser<std::string> final : public basic_parser<std::string> {
+template <> class parser<std::string> : public basic_parser<std::string> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
@@ -955,7 +950,7 @@ EXTERN_TEMPLATE_INSTANTIATION(class basic_parser<std::string>);
 //--------------------------------------------------
 // parser<char>
 //
-template <> class parser<char> final : public basic_parser<char> {
+template <> class parser<char> : public basic_parser<char> {
 public:
   parser(Option &O) : basic_parser(O) {}
 
