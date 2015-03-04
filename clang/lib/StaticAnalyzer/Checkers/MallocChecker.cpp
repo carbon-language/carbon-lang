@@ -1934,6 +1934,11 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
   if (!CheckKind.hasValue())
     return;
 
+  const RefState *RS = C.getState()->get<RegionState>(Sym);
+  assert(RS);
+  if (RS->getAllocationFamily() == AF_Alloca)
+    return;
+
   assert(N);
   if (!BT_Leak[*CheckKind]) {
     BT_Leak[*CheckKind].reset(

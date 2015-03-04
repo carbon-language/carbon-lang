@@ -6,6 +6,7 @@ void clang_analyzer_eval(int);
 
 typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);
+void *alloca(size_t);
 void *valloc(size_t);
 void free(void *);
 void *realloc(void *ptr, size_t size);
@@ -49,6 +50,14 @@ void reallocNotNullPtr(unsigned sizeIn) {
     char x = *q; // expected-warning {{Potential leak of memory pointed to by 'q'}}
   }
 }
+
+void allocaTest() {
+  int *p = alloca(sizeof(int));
+} // no warn
+
+void allocaBuiltinTest() {
+  int *p = __builtin_alloca(sizeof(int));
+} // no warn
 
 int *realloctest1() {
   int *q = malloc(12);
