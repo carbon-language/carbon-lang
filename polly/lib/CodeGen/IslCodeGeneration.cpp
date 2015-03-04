@@ -63,13 +63,12 @@ public:
   IslNodeBuilder(PollyIRBuilder &Builder, ScopAnnotator &Annotator, Pass *P,
                  const DataLayout &DL, LoopInfo &LI, ScalarEvolution &SE,
                  DominatorTree &DT, Scop &S)
-      : S(S), Builder(Builder), Annotator(Annotator),
-        Rewriter(new SCEVExpander(SE, "polly")),
-        ExprBuilder(Builder, IDToValue, *Rewriter, DT, LI),
+      : S(S), Builder(Builder), Annotator(Annotator), Rewriter(SE, "polly"),
+        ExprBuilder(Builder, IDToValue, Rewriter, DT, LI),
         BlockGen(Builder, LI, SE, DT, &ExprBuilder), RegionGen(BlockGen),
         DL(DL), LI(LI), SE(SE), DT(DT) {}
 
-  ~IslNodeBuilder() { delete Rewriter; }
+  ~IslNodeBuilder() {}
 
   void addParameters(__isl_take isl_set *Context);
   void create(__isl_take isl_ast_node *Node);
@@ -81,7 +80,7 @@ private:
   ScopAnnotator &Annotator;
 
   /// @brief A SCEVExpander to create llvm values from SCEVs.
-  SCEVExpander *Rewriter;
+  SCEVExpander Rewriter;
 
   IslExprBuilder ExprBuilder;
   BlockGenerator BlockGen;
@@ -896,7 +895,7 @@ void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {
 
 Value *IslNodeBuilder::generateSCEV(const SCEV *Expr) {
   Instruction *InsertLocation = --(Builder.GetInsertBlock()->end());
-  return Rewriter->expandCodeFor(Expr, Expr->getType(), InsertLocation);
+  return Rewriter.expandCodeFor(Expr, Expr->getType(), InsertLocation);
 }
 
 namespace {
