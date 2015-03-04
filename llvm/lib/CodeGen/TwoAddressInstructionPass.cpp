@@ -630,7 +630,6 @@ isProfitableToCommute(unsigned regA, unsigned regB, unsigned regC,
   // To more generally minimize register copies, ideally the logic of two addr
   // instruction pass should be integrated with register allocation pass where
   // interference graph is available.
-
   if (isRevCopyChain(regC, regA, 3))
     return true;
 
