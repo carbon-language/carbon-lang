@@ -104,7 +104,7 @@ set (ISL_FILES
 
 
 add_polly_library(Polly
-  Analysis/Dependences.cpp
+  Analysis/DependenceInfo.cpp
   Analysis/ScopDetection.cpp
   Analysis/ScopDetectionDiagnostic.cpp
   Analysis/ScopInfo.cpp

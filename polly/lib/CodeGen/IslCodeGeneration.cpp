@@ -25,7 +25,7 @@
 #include "polly/CodeGen/IslAst.h"
 #include "polly/CodeGen/LoopGenerators.h"
 #include "polly/CodeGen/Utils.h"
-#include "polly/Dependences.h"
+#include "polly/DependenceInfo.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
@@ -1002,7 +1002,7 @@ public:
     AU.addRequired<ScopInfo>();
     AU.addRequired<LoopInfoWrapperPass>();
 
-    AU.addPreserved<Dependences>();
+    AU.addPreserved<DependenceInfo>();
 
     AU.addPreserved<LoopInfoWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();
@@ -1026,7 +1026,7 @@ Pass *polly::createIslCodeGenerationPass() { return new IslCodeGeneration(); }
 
 INITIALIZE_PASS_BEGIN(IslCodeGeneration, "polly-codegen-isl",
                       "Polly - Create LLVM-IR from SCoPs", false, false);
-INITIALIZE_PASS_DEPENDENCY(Dependences);
+INITIALIZE_PASS_DEPENDENCY(DependenceInfo);
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass);
 INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);

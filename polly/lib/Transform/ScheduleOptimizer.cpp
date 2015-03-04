@@ -26,7 +26,7 @@
 #include "isl/schedule.h"
 #include "isl/space.h"
 #include "polly/CodeGen/CodeGeneration.h"
-#include "polly/Dependences.h"
+#include "polly/DependenceInfo.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
@@ -481,7 +481,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
     return false;
   }
 
-  Dependences *D = &getAnalysis<Dependences>();
+  DependenceInfo *D = &getAnalysis<DependenceInfo>();
 
   if (!D->hasValidDependences())
     return false;
@@ -490,20 +490,20 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   LastSchedule = nullptr;
 
   // Build input data.
-  int ValidityKinds =
-      Dependences::TYPE_RAW | Dependences::TYPE_WAR | Dependences::TYPE_WAW;
+  int ValidityKinds = DependenceInfo::TYPE_RAW | DependenceInfo::TYPE_WAR |
+                      DependenceInfo::TYPE_WAW;
   int ProximityKinds;
 
   if (OptimizeDeps == "all")
-    ProximityKinds =
-        Dependences::TYPE_RAW | Dependences::TYPE_WAR | Dependences::TYPE_WAW;
+    ProximityKinds = DependenceInfo::TYPE_RAW | DependenceInfo::TYPE_WAR |
+                     DependenceInfo::TYPE_WAW;
   else if (OptimizeDeps == "raw")
-    ProximityKinds = Dependences::TYPE_RAW;
+    ProximityKinds = DependenceInfo::TYPE_RAW;
   else {
     errs() << "Do not know how to optimize for '" << OptimizeDeps << "'"
            << " Falling back to optimizing all dependences.\n";
-    ProximityKinds =
-        Dependences::TYPE_RAW | Dependences::TYPE_WAR | Dependences::TYPE_WAW;
+    ProximityKinds = DependenceInfo::TYPE_RAW | DependenceInfo::TYPE_WAR |
+                     DependenceInfo::TYPE_WAW;
   }
 
   isl_union_set *Domain = S.getDomains();
@@ -648,7 +648,7 @@ void IslScheduleOptimizer::printScop(raw_ostream &OS, Scop &) const {
 
 void IslScheduleOptimizer::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);
-  AU.addRequired<Dependences>();
+  AU.addRequired<DependenceInfo>();
 }
 
 Pass *polly::createIslScheduleOptimizerPass() {
@@ -657,7 +657,7 @@ Pass *polly::createIslScheduleOptimizerPass() {
 
 INITIALIZE_PASS_BEGIN(IslScheduleOptimizer, "polly-opt-isl",
                       "Polly - Optimize schedule of SCoP", false, false);
-INITIALIZE_PASS_DEPENDENCY(Dependences);
+INITIALIZE_PASS_DEPENDENCY(DependenceInfo);
 INITIALIZE_PASS_DEPENDENCY(ScopInfo);
 INITIALIZE_PASS_END(IslScheduleOptimizer, "polly-opt-isl",
                     "Polly - Optimize schedule of SCoP", false, false)

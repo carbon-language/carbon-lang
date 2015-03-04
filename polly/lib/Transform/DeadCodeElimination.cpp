@@ -32,7 +32,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "polly/Dependences.h"
+#include "polly/DependenceInfo.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"
 #include "llvm/Support/CommandLine.h"
@@ -112,14 +112,14 @@ isl_union_set *DeadCodeElim::getLiveOut(Scop &S) {
 /// combine a certain number of precise steps with one approximating step that
 /// simplifies the life set with an affine hull.
 bool DeadCodeElim::eliminateDeadCode(Scop &S, int PreciseSteps) {
-  Dependences *D = &getAnalysis<Dependences>();
+  DependenceInfo *D = &getAnalysis<DependenceInfo>();
 
   if (!D->hasValidDependences())
     return false;
 
   isl_union_set *Live = getLiveOut(S);
   isl_union_map *Dep =
-      D->getDependences(Dependences::TYPE_RAW | Dependences::TYPE_RED);
+      D->getDependences(DependenceInfo::TYPE_RAW | DependenceInfo::TYPE_RED);
   Dep = isl_union_map_reverse(Dep);
 
   if (PreciseSteps == -1)
@@ -168,14 +168,14 @@ void DeadCodeElim::printScop(raw_ostream &, Scop &) const {}
 
 void DeadCodeElim::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);
-  AU.addRequired<Dependences>();
+  AU.addRequired<DependenceInfo>();
 }
 
 Pass *polly::createDeadCodeElimPass() { return new DeadCodeElim(); }
 
 INITIALIZE_PASS_BEGIN(DeadCodeElim, "polly-dce",
                       "Polly - Remove dead iterations", false, false)
-INITIALIZE_PASS_DEPENDENCY(Dependences)
+INITIALIZE_PASS_DEPENDENCY(DependenceInfo)
 INITIALIZE_PASS_DEPENDENCY(ScopInfo)
 INITIALIZE_PASS_END(DeadCodeElim, "polly-dce", "Polly - Remove dead iterations",
                     false, false)

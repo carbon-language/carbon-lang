@@ -20,7 +20,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-#include "polly/Dependences.h"
+#include "polly/DependenceInfo.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
@@ -63,12 +63,13 @@ static cl::opt<enum AnalysisType> OptAnalysisType(
     cl::cat(PollyCategory));
 
 //===----------------------------------------------------------------------===//
-Dependences::Dependences() : ScopPass(ID) { RAW = WAR = WAW = nullptr; }
+DependenceInfo::DependenceInfo() : ScopPass(ID) { RAW = WAR = WAW = nullptr; }
 
-void Dependences::collectInfo(Scop &S, isl_union_map **Read,
-                              isl_union_map **Write, isl_union_map **MayWrite,
-                              isl_union_map **AccessSchedule,
-                              isl_union_map **StmtSchedule) {
+void DependenceInfo::collectInfo(Scop &S, isl_union_map **Read,
+                                 isl_union_map **Write,
+                                 isl_union_map **MayWrite,
+                                 isl_union_map **AccessSchedule,
+                                 isl_union_map **StmtSchedule) {
   isl_space *Space = S.getParamSpace();
   *Read = isl_union_map_empty(isl_space_copy(Space));
   *Write = isl_union_map_empty(isl_space_copy(Space));
@@ -173,7 +174,7 @@ static int fixSetToZero(__isl_take isl_set *Zero, void *user) {
 ///
 /// Note: This function also computes the (reverse) transitive closure of the
 ///       reduction dependences.
-void Dependences::addPrivatizationDependences() {
+void DependenceInfo::addPrivatizationDependences() {
   isl_union_map *PrivRAW, *PrivWAW, *PrivWAR;
 
   // The transitive closure might be over approximated, thus could lead to
@@ -216,7 +217,7 @@ void Dependences::addPrivatizationDependences() {
   isl_union_set_free(Universe);
 }
 
-void Dependences::calculateDependences(Scop &S) {
+void DependenceInfo::calculateDependences(Scop &S) {
   isl_union_map *Read, *Write, *MayWrite, *AccessSchedule, *StmtSchedule,
       *Schedule;
 
@@ -432,18 +433,18 @@ void Dependences::calculateDependences(Scop &S) {
   DEBUG(printScop(dbgs(), S));
 }
 
-void Dependences::recomputeDependences() {
+void DependenceInfo::recomputeDependences() {
   releaseMemory();
   calculateDependences(*S);
 }
 
-bool Dependences::runOnScop(Scop &ScopVar) {
+bool DependenceInfo::runOnScop(Scop &ScopVar) {
   S = &ScopVar;
   recomputeDependences();
   return false;
 }
 
-bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
+bool DependenceInfo::isValidScattering(StatementToIslMapTy *NewScattering) {
   Scop &S = *this->S;
 
   if (LegalityCheckDisabled)
@@ -501,8 +502,8 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
 // dimension, then the loop is parallel. The distance is zero in the current
 // dimension if it is a subset of a map with equal values for the current
 // dimension.
-bool Dependences::isParallel(isl_union_map *Schedule, isl_union_map *Deps,
-                             isl_pw_aff **MinDistancePtr) {
+bool DependenceInfo::isParallel(isl_union_map *Schedule, isl_union_map *Deps,
+                                isl_pw_aff **MinDistancePtr) {
   isl_set *Deltas, *Distance;
   isl_map *ScheduleDeps;
   unsigned Dimension;
@@ -556,7 +557,7 @@ static void printDependencyMap(raw_ostream &OS, __isl_keep isl_union_map *DM) {
     OS << "n/a\n";
 }
 
-void Dependences::printScop(raw_ostream &OS, Scop &) const {
+void DependenceInfo::printScop(raw_ostream &OS, Scop &) const {
   OS << "\tRAW dependences:\n\t\t";
   printDependencyMap(OS, RAW);
   OS << "\tWAR dependences:\n\t\t";
@@ -569,7 +570,7 @@ void Dependences::printScop(raw_ostream &OS, Scop &) const {
   printDependencyMap(OS, TC_RED);
 }
 
-void Dependences::releaseMemory() {
+void DependenceInfo::releaseMemory() {
   isl_union_map_free(RAW);
   isl_union_map_free(WAR);
   isl_union_map_free(WAW);
@@ -583,7 +584,7 @@ void Dependences::releaseMemory() {
   ReductionDependences.clear();
 }
 
-isl_union_map *Dependences::getDependences(int Kinds) {
+isl_union_map *DependenceInfo::getDependences(int Kinds) {
   assert(hasValidDependences() && "No valid dependences available");
   isl_space *Space = isl_union_map_get_space(RAW);
   isl_union_map *Deps = isl_union_map_empty(Space);
@@ -608,30 +609,30 @@ isl_union_map *Dependences::getDependences(int Kinds) {
   return Deps;
 }
 
-bool Dependences::hasValidDependences() {
+bool DependenceInfo::hasValidDependences() {
   return (RAW != nullptr) && (WAR != nullptr) && (WAW != nullptr);
 }
 
-isl_map *Dependences::getReductionDependences(MemoryAccess *MA) {
+isl_map *DependenceInfo::getReductionDependences(MemoryAccess *MA) {
   return isl_map_copy(ReductionDependences[MA]);
 }
 
-void Dependences::setReductionDependences(MemoryAccess *MA, isl_map *D) {
+void DependenceInfo::setReductionDependences(MemoryAccess *MA, isl_map *D) {
   assert(ReductionDependences.count(MA) == 0 &&
          "Reduction dependences set twice!");
   ReductionDependences[MA] = D;
 }
 
-void Dependences::getAnalysisUsage(AnalysisUsage &AU) const {
+void DependenceInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);
 }
 
-char Dependences::ID = 0;
+char DependenceInfo::ID = 0;
 
-Pass *polly::createDependencesPass() { return new Dependences(); }
+Pass *polly::createDependenceInfoPass() { return new DependenceInfo(); }
 
-INITIALIZE_PASS_BEGIN(Dependences, "polly-dependences",
+INITIALIZE_PASS_BEGIN(DependenceInfo, "polly-dependences",
                       "Polly - Calculate dependences", false, false);
 INITIALIZE_PASS_DEPENDENCY(ScopInfo);
-INITIALIZE_PASS_END(Dependences, "polly-dependences",
+INITIALIZE_PASS_END(DependenceInfo, "polly-dependences",
                     "Polly - Calculate dependences", false, false)

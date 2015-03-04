@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/LinkAllPasses.h"
-#include "polly/Dependences.h"
+#include "polly/DependenceInfo.h"
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/ScopPass.h"
@@ -178,11 +178,11 @@ void JSONImporter::printScop(raw_ostream &OS, Scop &S) const {
     OS << "New access function '" << *I << "'detected in JSCOP file\n";
 }
 
-typedef Dependences::StatementToIslMapTy StatementToIslMapTy;
+typedef DependenceInfo::StatementToIslMapTy StatementToIslMapTy;
 
 bool JSONImporter::runOnScop(Scop &S) {
   Region &R = S.getRegion();
-  Dependences *D = &getAnalysis<Dependences>();
+  DependenceInfo *D = &getAnalysis<DependenceInfo>();
   const DataLayout &DL = getAnalysis<DataLayoutPass>().getDataLayout();
 
   std::string FileName = ImportDir + "/" + getFileName(S);
@@ -355,7 +355,7 @@ bool JSONImporter::runOnScop(Scop &S) {
 
 void JSONImporter::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);
-  AU.addRequired<Dependences>();
+  AU.addRequired<DependenceInfo>();
   AU.addRequired<DataLayoutPass>();
 }
 Pass *polly::createJSONImporterPass() { return new JSONImporter(); }
@@ -364,7 +364,7 @@ INITIALIZE_PASS_BEGIN(JSONExporter, "polly-export-jscop",
                       "Polly - Export Scops as JSON"
                       " (Writes a .jscop file for each Scop)",
                       false, false);
-INITIALIZE_PASS_DEPENDENCY(Dependences)
+INITIALIZE_PASS_DEPENDENCY(DependenceInfo)
 INITIALIZE_PASS_END(JSONExporter, "polly-export-jscop",
                     "Polly - Export Scops as JSON"
                     " (Writes a .jscop file for each Scop)",
@@ -374,7 +374,7 @@ INITIALIZE_PASS_BEGIN(JSONImporter, "polly-import-jscop",
                       "Polly - Import Scops from JSON"
                       " (Reads a .jscop file for each Scop)",
                       false, false);
-INITIALIZE_PASS_DEPENDENCY(Dependences)
+INITIALIZE_PASS_DEPENDENCY(DependenceInfo)
 INITIALIZE_PASS_DEPENDENCY(DataLayoutPass)
 INITIALIZE_PASS_END(JSONImporter, "polly-import-jscop",
                     "Polly - Import Scops from JSON"

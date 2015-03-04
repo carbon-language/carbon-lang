@@ -15,7 +15,7 @@
 
 #ifdef PLUTO_FOUND
 #include "polly/CodeGen/CodeGeneration.h"
-#include "polly/Dependences.h"
+#include "polly/DependenceInfo.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
@@ -172,10 +172,10 @@ bool PlutoOptimizer::runOnScop(Scop &S) {
   isl_union_map *Deps, *ToPlutoNames, *Schedule;
   PlutoOptions *Options;
 
-  Dependences *D = &getAnalysis<Dependences>();
+  DependenceInfo *D = &getAnalysis<DependenceInfo>();
 
-  int DependencesKinds =
-      Dependences::TYPE_RAW | Dependences::TYPE_WAR | Dependences::TYPE_WAW;
+  int DependencesKinds = DependenceInfo::TYPE_RAW | DependenceInfo::TYPE_WAR |
+                         DependenceInfo::TYPE_WAW;
 
   Deps = D->getDependences(DependencesKinds);
   Domain = S.getDomains();
@@ -254,7 +254,7 @@ void PlutoOptimizer::printScop(raw_ostream &, Scop &) const {}
 
 void PlutoOptimizer::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);
-  AU.addRequired<Dependences>();
+  AU.addRequired<DependenceInfo>();
 }
 
 Pass *polly::createPlutoOptimizerPass() { return new PlutoOptimizer(); }
@@ -262,7 +262,7 @@ Pass *polly::createPlutoOptimizerPass() { return new PlutoOptimizer(); }
 INITIALIZE_PASS_BEGIN(PlutoOptimizer, "polly-opt-pluto",
                       "Polly - Optimize schedule of SCoP (Pluto)", false,
                       false);
-INITIALIZE_PASS_DEPENDENCY(Dependences);
+INITIALIZE_PASS_DEPENDENCY(DependenceInfo);
 INITIALIZE_PASS_DEPENDENCY(ScopInfo);
 INITIALIZE_PASS_END(PlutoOptimizer, "polly-opt-pluto",
                     "Polly - Optimize schedule of SCoP (Pluto)", false, false)

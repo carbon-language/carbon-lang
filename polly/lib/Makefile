@@ -119,7 +119,7 @@ SOURCES= Polly.cpp \
 	 Support/SCEVValidator.cpp \
 	 Support/RegisterPasses.cpp \
 	 Support/ScopHelper.cpp \
-	 Analysis/Dependences.cpp \
+	 Analysis/DependenceInfo.cpp \
 	 Analysis/ScopDetection.cpp \
 	 Analysis/ScopDetectionDiagnostic.cpp \
 	 Analysis/ScopInfo.cpp \

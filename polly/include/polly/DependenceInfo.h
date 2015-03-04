@@ -1,4 +1,4 @@
-//===------ polly/Dependences.h - Polyhedral dependency analysis *- C++ -*-===//
+//===--- polly/DependenceInfo.h - Polyhedral dependency analysis *- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -43,7 +43,7 @@ class Scop;
 class ScopStmt;
 class MemoryAccess;
 
-class Dependences : public ScopPass {
+class DependenceInfo : public ScopPass {
 public:
   static char ID;
 
@@ -77,7 +77,7 @@ public:
 
   typedef std::map<ScopStmt *, isl_map *> StatementToIslMapTy;
 
-  Dependences();
+  DependenceInfo();
 
   /// @brief Check if a new scattering is valid.
   ///
@@ -165,7 +165,7 @@ private:
 
 namespace llvm {
 class PassRegistry;
-void initializeDependencesPass(llvm::PassRegistry &);
+void initializeDependenceInfoPass(llvm::PassRegistry &);
 }
 
 #endif

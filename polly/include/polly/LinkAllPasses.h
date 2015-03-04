@@ -28,7 +28,7 @@ class RegionPass;
 namespace polly {
 llvm::Pass *createCodePreparationPass();
 llvm::Pass *createDeadCodeElimPass();
-llvm::Pass *createDependencesPass();
+llvm::Pass *createDependenceInfoPass();
 llvm::Pass *createDOTOnlyPrinterPass();
 llvm::Pass *createDOTOnlyViewerPass();
 llvm::Pass *createDOTPrinterPass();
@@ -63,7 +63,7 @@ struct PollyForcePassLinking {
 
     polly::createCodePreparationPass();
     polly::createDeadCodeElimPass();
-    polly::createDependencesPass();
+    polly::createDependenceInfoPass();
     polly::createDOTOnlyPrinterPass();
     polly::createDOTOnlyViewerPass();
     polly::createDOTPrinterPass();
