@@ -814,7 +814,8 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
           _deadStrip(atom->deadStrip()), _dynamicExport(atom->dynamicExport()),
           _codeModel(atom->codeModel()),
           _permissions(atom->permissions()), _size(atom->size()),
-          _sectionName(atom->customSectionName()) {
+          _sectionName(atom->customSectionName()),
+          _sectionSize(atom->sectionSize()) {
       for (const lld::Reference *r : *atom)
         _references.push_back(r);
       if (!atom->occupiesDiskSpace())
@@ -860,6 +861,7 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     Alignment alignment() const override { return _alignment; }
     SectionChoice sectionChoice() const override { return _sectionChoice; }
     StringRef customSectionName() const override { return _sectionName; }
+    uint64_t sectionSize() const override { return _sectionSize; }
     SectionPosition sectionPosition() const override { return _sectionPosition; }
     DeadStripKind deadStrip() const override { return _deadStrip; }
     DynamicExport dynamicExport() const override { return _dynamicExport; }
@@ -915,6 +917,7 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     std::vector<ImplicitHex8>           _content;
     uint64_t                            _size;
     StringRef                           _sectionName;
+    uint64_t                            _sectionSize;
     std::vector<const lld::Reference *> _references;
     bool _isGroupChild;
   };
@@ -953,6 +956,7 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     io.mapOptional("section-name",     keys->_sectionName, StringRef());
     io.mapOptional("section-position", keys->_sectionPosition,
                                          DefinedAtom::sectionPositionAny);
+    io.mapOptional("section-size",     keys->_sectionSize, (uint64_t)0);
     io.mapOptional("dead-strip",       keys->_deadStrip,
                                          DefinedAtom::deadStripNormal);
     io.mapOptional("dynamic-export",   keys->_dynamicExport,

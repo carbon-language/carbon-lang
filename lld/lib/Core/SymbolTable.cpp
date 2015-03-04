@@ -133,36 +133,6 @@ static MergeResolution mergeSelect(DefinedAtom::Merge first,
   return mergeCases[first][second];
 }
 
-static const DefinedAtom *followReference(const DefinedAtom *atom,
-                                          uint32_t kind) {
-  for (const Reference *r : *atom)
-    if (r->kindNamespace() == Reference::KindNamespace::all &&
-        r->kindArch() == Reference::KindArch::all &&
-        r->kindValue() == kind)
-      return cast<const DefinedAtom>(r->target());
-  return nullptr;
-}
-
-static uint64_t getSizeFollowReferences(const DefinedAtom *atom,
-                                        uint32_t kind) {
-  uint64_t size = 0;
-  for (;;) {
-    atom = followReference(atom, kind);
-    if (!atom)
-      return size;
-    size += atom->size();
-  }
-}
-
-// Returns the size of the section containing the given atom. Atoms in the same
-// section are connected by layout-before and layout-after edges, so this
-// function traverses them to get the total size of atoms in the same section.
-static uint64_t sectionSize(const DefinedAtom *atom) {
-  return atom->size()
-      + getSizeFollowReferences(atom, lld::Reference::kindLayoutBefore)
-      + getSizeFollowReferences(atom, lld::Reference::kindLayoutAfter);
-}
-
 bool SymbolTable::addByName(const Atom &newAtom) {
   StringRef name = newAtom.name();
   assert(!name.empty());
@@ -198,14 +168,14 @@ bool SymbolTable::addByName(const Atom &newAtom) {
       useNew = true;
       break;
     case MCR_Largest: {
-      uint64_t existingSize = sectionSize(existingDef);
-      uint64_t newSize = sectionSize(newDef);
+      uint64_t existingSize = existingDef->sectionSize();
+      uint64_t newSize = newDef->sectionSize();
       useNew = (newSize >= existingSize);
       break;
     }
     case MCR_SameSize: {
-      uint64_t existingSize = sectionSize(existingDef);
-      uint64_t newSize = sectionSize(newDef);
+      uint64_t existingSize = existingDef->sectionSize();
+      uint64_t newSize = newDef->sectionSize();
       if (existingSize == newSize) {
         useNew = true;
         break;

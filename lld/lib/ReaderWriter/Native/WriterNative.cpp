@@ -126,6 +126,7 @@ private:
     ivar.referencesCount = refsCount;
     ivar.contentOffset = getContentOffset(atom);
     ivar.contentSize = atom.size();
+    ivar.sectionSize = atom.sectionSize();
     _definedAtomIvars.push_back(ivar);
   }
 

@@ -136,6 +136,7 @@ struct NativeDefinedAtomIvarsV1 {
   uint32_t  referencesCount;
   uint32_t  contentOffset;
   uint32_t  contentSize;
+  uint64_t  sectionSize;
 };
 
 

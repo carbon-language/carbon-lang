@@ -45,9 +45,9 @@ public:
 
   StringRef name() const override;
 
-  uint64_t size() const override {
-    return _ivarData->contentSize;
-  }
+  uint64_t size() const override { return _ivarData->contentSize; }
+
+  uint64_t sectionSize() const override { return _ivarData->sectionSize; }
 
   DefinedAtom::Scope scope() const override {
     return (DefinedAtom::Scope)(attributes().scope);

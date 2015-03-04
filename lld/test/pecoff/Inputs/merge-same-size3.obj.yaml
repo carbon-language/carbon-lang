@@ -15,7 +15,7 @@ symbols:
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
     SectionDefinition:
-      Length:          7
+      Length:          2
       NumberOfRelocations: 0
       NumberOfLinenumbers: 0
       CheckSum:        2532800969

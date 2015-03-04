@@ -234,6 +234,13 @@ public:
   /// For a function atom, it is the number of bytes of code in the function.
   virtual uint64_t size() const = 0;
 
+  /// \brief The size of the section from which the atom is instantiated.
+  ///
+  /// Merge::mergeByLargestSection is defined in terms of section size
+  /// and not in terms of atom size, so we need this function separate
+  /// from size().
+  virtual uint64_t sectionSize() const { return 0; }
+
   /// \brief The visibility of this atom to other atoms.
   ///
   /// C static functions have scope scopeTranslationUnit.  Regular C functions

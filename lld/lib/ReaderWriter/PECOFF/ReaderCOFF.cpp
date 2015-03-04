@@ -694,14 +694,15 @@ std::error_code FileCOFF::AtomizeDefinedSymbolsInSection(
 
   DefinedAtom::ContentType type = getContentType(section);
   DefinedAtom::ContentPermissions perms = getPermissions(section);
+  uint64_t sectionSize = section->SizeOfRawData;
   bool isComdat = (_comdatSections.count(section) == 1);
 
   // Create an atom for the entire section.
   if (symbols.empty()) {
     ArrayRef<uint8_t> data(secData.data(), secData.size());
     auto *atom = new (_alloc) COFFDefinedAtom(
-        *this, "", sectionName, Atom::scopeTranslationUnit, type, isComdat,
-        perms, _merge[section], data, getNextOrdinal());
+        *this, "", sectionName, sectionSize, Atom::scopeTranslationUnit,
+        type, isComdat, perms, _merge[section], data, getNextOrdinal());
     atoms.push_back(atom);
     _definedAtomLocations[section][0].push_back(atom);
     return std::error_code();
@@ -713,8 +714,8 @@ std::error_code FileCOFF::AtomizeDefinedSymbolsInSection(
     uint64_t size = symbols[0].getValue();
     ArrayRef<uint8_t> data(secData.data(), size);
     auto *atom = new (_alloc) COFFDefinedAtom(
-        *this, "", sectionName, Atom::scopeTranslationUnit, type, isComdat,
-        perms, _merge[section], data, getNextOrdinal());
+        *this, "", sectionName, sectionSize, Atom::scopeTranslationUnit,
+        type, isComdat, perms, _merge[section], data, getNextOrdinal());
     atoms.push_back(atom);
     _definedAtomLocations[section][0].push_back(atom);
   }
@@ -726,8 +727,8 @@ std::error_code FileCOFF::AtomizeDefinedSymbolsInSection(
                                         : secData.data() + (si + 1)->getValue();
     ArrayRef<uint8_t> data(start, end);
     auto *atom = new (_alloc) COFFDefinedAtom(
-        *this, _symbolName[*si], sectionName, getScope(*si), type, isComdat,
-        perms, _merge[section], data, getNextOrdinal());
+        *this, _symbolName[*si], sectionName, sectionSize, getScope(*si),
+        type, isComdat, perms, _merge[section], data, getNextOrdinal());
     atoms.push_back(atom);
     _symbolAtom[*si] = atom;
     _definedAtomLocations[section][si->getValue()].push_back(atom);
@@ -982,9 +983,9 @@ std::error_code FileCOFF::maybeCreateSXDataAtoms() {
     return std::error_code();
 
   auto *atom = new (_alloc) COFFDefinedAtom(
-      *this, "", ".sxdata", Atom::scopeTranslationUnit, DefinedAtom::typeData,
-      false /*isComdat*/, DefinedAtom::permR__, DefinedAtom::mergeNo,
-      sxdata, getNextOrdinal());
+      *this, "", ".sxdata", 0, Atom::scopeTranslationUnit,
+      DefinedAtom::typeData, false /*isComdat*/, DefinedAtom::permR__,
+      DefinedAtom::mergeNo, sxdata, getNextOrdinal());
 
   const ulittle32_t *symbolIndex =
       reinterpret_cast<const ulittle32_t *>(sxdata.data());
