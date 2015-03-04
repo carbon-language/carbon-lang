@@ -313,6 +313,13 @@ Symtab::InitNameIndexes()
             if (entry.cstring && entry.cstring[0])
             {
                 m_name_to_index.Append (entry);
+
+                if (symbol->ContainsLinkerAnnotations()) {
+                    // If the symbol has linker annotations, also add the version without the
+                    // annotations.
+                    entry.cstring = ConstString(m_objfile->StripLinkerSymbolAnnotations(entry.cstring)).GetCString();
+                    m_name_to_index.Append (entry);
+                }
                 
                 const SymbolType symbol_type = symbol->GetType();
                 if (symbol_type == eSymbolTypeCode || symbol_type == eSymbolTypeResolver)
@@ -372,8 +379,16 @@ Symtab::InitNameIndexes()
             }
             
             entry.cstring = mangled.GetDemangledName().GetCString();
-            if (entry.cstring && entry.cstring[0])
+            if (entry.cstring && entry.cstring[0]) {
                 m_name_to_index.Append (entry);
+
+                if (symbol->ContainsLinkerAnnotations()) {
+                    // If the symbol has linker annotations, also add the version without the
+                    // annotations.
+                    entry.cstring = ConstString(m_objfile->StripLinkerSymbolAnnotations(entry.cstring)).GetCString();
+                    m_name_to_index.Append (entry);
+                }
+            }
                 
             // If the demangled name turns out to be an ObjC name, and
             // is a category name, add the version without categories to the index too.

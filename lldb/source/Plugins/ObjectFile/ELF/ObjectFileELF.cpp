@@ -1504,6 +1504,13 @@ ObjectFileELF::GetSegmentDataByIndex(lldb::user_id_t id)
     return DataExtractor(m_data, segment_header->p_offset, segment_header->p_filesz);
 }
 
+std::string
+ObjectFileELF::StripLinkerSymbolAnnotations(llvm::StringRef symbol_name) const
+{
+    size_t pos = symbol_name.find("@");
+    return symbol_name.substr(0, pos).str();
+}
+
 //----------------------------------------------------------------------
 // ParseSectionHeaders
 //----------------------------------------------------------------------
@@ -1897,23 +1904,46 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
         uint32_t flags = symbol.st_other << 8 | symbol.st_info | additional_flags;
         bool is_mangled = symbol_name ? (symbol_name[0] == '_' && symbol_name[1] == 'Z') : false;
 
+        llvm::StringRef symbol_ref(symbol_name);
+
+        // Symbol names may contain @VERSION suffixes. Find those and strip them temporarily.
+        size_t version_pos = symbol_ref.find('@');
+        bool has_suffix = version_pos != llvm::StringRef::npos;
+        llvm::StringRef symbol_bare = symbol_ref.substr(0, version_pos);
+        Mangled mangled(ConstString(symbol_bare), is_mangled);
+
+        // Now append the suffix back to mangled and unmangled names. Only do it if the
+        // demangling was sucessful (string is not empty).
+        if (has_suffix)
+        {
+            llvm::StringRef suffix = symbol_ref.substr(version_pos);
+
+            llvm::StringRef mangled_name = mangled.GetMangledName().GetStringRef();
+            if (! mangled_name.empty())
+                mangled.SetMangledName( ConstString((mangled_name + suffix).str()) );
+
+            llvm::StringRef demangled_name = mangled.GetDemangledName().GetStringRef();
+            if (! demangled_name.empty())
+                mangled.SetDemangledName( ConstString((demangled_name + suffix).str()) );
+        }
+
         Symbol dc_symbol(
             i + start_id,       // ID is the original symbol table index.
-            symbol_name,        // Symbol name.
-            is_mangled,         // Is the symbol name mangled?
+            mangled,
             symbol_type,        // Type of this symbol
             is_global,          // Is this globally visible?
             false,              // Is this symbol debug info?
             false,              // Is this symbol a trampoline?
             false,              // Is this symbol artificial?
-            symbol_section_sp,  // Section in which this symbol is defined or null.
-            symbol_value,       // Offset in section or symbol value.
-            symbol.st_size,     // Size in bytes of this symbol.
+            AddressRange(
+                symbol_section_sp,  // Section in which this symbol is defined or null.
+                symbol_value,       // Offset in section or symbol value.
+                symbol.st_size),    // Size in bytes of this symbol.
             true,               // Size is valid
+            has_suffix,         // Contains linker annotations?
             flags);             // Symbol flags.
         symtab->AddSymbol(dc_symbol);
     }
-
     return i;
 }
 
@@ -2102,6 +2132,7 @@ ParsePLTRelocations(Symtab *symbol_table,
             plt_index,       // Offset in section or symbol value.
             plt_entsize,     // Size in bytes of this symbol.
             true,            // Size is valid
+            false,           // Contains linker annotations?
             0);              // Symbol flags.
 
         symbol_table->AddSymbol(jump_symbol);
@@ -2443,6 +2474,7 @@ ObjectFileELF::ResolveSymbolForAddress(const Address& so_addr, bool verify_uniqu
                         offset,               // Offset in section or symbol value.
                         range.GetByteSize(),  // Size in bytes of this symbol.
                         true,                 // Size is valid.
+                        false,                // Contains linker annotations?
                         0);                   // Symbol flags.
                 if (symbol_id == m_symtab_ap->AddSymbol(eh_symbol))
                     return m_symtab_ap->SymbolAtIndex(symbol_id);

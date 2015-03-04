@@ -836,6 +836,13 @@ public:
     {
         return m_memory_addr != LLDB_INVALID_ADDRESS;
     }
+
+    // Strip linker annotations (such as @@VERSION) from symbol names.
+    virtual std::string
+    StripLinkerSymbolAnnotations(llvm::StringRef symbol_name) const
+    {
+        return symbol_name.str();
+    }
     
 protected:
     //------------------------------------------------------------------

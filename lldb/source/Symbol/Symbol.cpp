@@ -36,6 +36,7 @@ Symbol::Symbol() :
     m_size_is_synthesized (false),
     m_size_is_valid (false),
     m_demangled_is_synthesized (false),
+    m_contains_linker_annotations (false),
     m_type (eSymbolTypeInvalid),
     m_mangled (),
     m_addr_range (),
@@ -57,6 +58,7 @@ Symbol::Symbol
     addr_t offset,
     addr_t size,
     bool size_is_valid,
+    bool contains_linker_annotations,
     uint32_t flags
 ) :
     SymbolContextScope (),
@@ -70,6 +72,7 @@ Symbol::Symbol
     m_size_is_synthesized (false),
     m_size_is_valid (size_is_valid || size > 0),
     m_demangled_is_synthesized (false),
+    m_contains_linker_annotations (contains_linker_annotations),
     m_type (type),
     m_mangled (ConstString(name), name_is_mangled),
     m_addr_range (section_sp, offset, size),
@@ -80,8 +83,7 @@ Symbol::Symbol
 Symbol::Symbol
 (
     uint32_t symID,
-    const char *name,
-    bool name_is_mangled,
+    const Mangled &mangled,
     SymbolType type,
     bool external,
     bool is_debug,
@@ -89,6 +91,7 @@ Symbol::Symbol
     bool is_artificial,
     const AddressRange &range,
     bool size_is_valid,
+    bool contains_linker_annotations,
     uint32_t flags
 ) :
     SymbolContextScope (),
@@ -102,8 +105,9 @@ Symbol::Symbol
     m_size_is_synthesized (false),
     m_size_is_valid (size_is_valid || range.GetByteSize() > 0),
     m_demangled_is_synthesized (false),
+    m_contains_linker_annotations (contains_linker_annotations),
     m_type (type),
-    m_mangled (ConstString(name), name_is_mangled),
+    m_mangled (mangled),
     m_addr_range (range),
     m_flags (flags)
 {
@@ -121,6 +125,7 @@ Symbol::Symbol(const Symbol& rhs):
     m_size_is_synthesized (false),
     m_size_is_valid (rhs.m_size_is_valid),
     m_demangled_is_synthesized (rhs.m_demangled_is_synthesized),
+    m_contains_linker_annotations (rhs.m_contains_linker_annotations),
     m_type (rhs.m_type),
     m_mangled (rhs.m_mangled),
     m_addr_range (rhs.m_addr_range),
@@ -144,6 +149,7 @@ Symbol::operator= (const Symbol& rhs)
         m_size_is_synthesized = rhs.m_size_is_sibling;
         m_size_is_valid = rhs.m_size_is_valid;
         m_demangled_is_synthesized = rhs.m_demangled_is_synthesized;
+        m_contains_linker_annotations = rhs.m_contains_linker_annotations;
         m_type = rhs.m_type;
         m_mangled = rhs.m_mangled;
         m_addr_range = rhs.m_addr_range;
@@ -166,6 +172,7 @@ Symbol::Clear()
     m_size_is_synthesized = false;
     m_size_is_valid = false;
     m_demangled_is_synthesized = false;
+    m_contains_linker_annotations = false;
     m_type = eSymbolTypeInvalid;
     m_flags = 0;
     m_addr_range.Clear();

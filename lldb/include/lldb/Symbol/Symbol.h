@@ -39,11 +39,11 @@ public:
             lldb::addr_t value,
             lldb::addr_t size,
             bool size_is_valid,
+            bool contains_linker_annotations,
             uint32_t flags);
 
     Symbol (uint32_t symID,
-            const char *name,
-            bool name_is_mangled,
+            const Mangled &mangled,
             lldb::SymbolType type,
             bool external,
             bool is_debug,
@@ -51,6 +51,7 @@ public:
             bool is_artificial,
             const AddressRange &range,
             bool size_is_valid,
+            bool contains_linker_annotations,
             uint32_t flags);
 
     Symbol (const Symbol& rhs);
@@ -272,6 +273,16 @@ public:
         m_demangled_is_synthesized = b;
     }
 
+    bool
+    ContainsLinkerAnnotations() const
+    {
+        return m_contains_linker_annotations;
+    }
+    void
+    SetContainsLinkerAnnotations(bool b)
+    {
+        m_contains_linker_annotations = b;
+    }
     //------------------------------------------------------------------
     /// @copydoc SymbolContextScope::CalculateSymbolContext(SymbolContext*)
     ///
@@ -325,7 +336,8 @@ protected:
                     m_size_is_synthesized:1,// non-zero if this symbol's size was calculated using a delta between this symbol and the next
                     m_size_is_valid:1,
                     m_demangled_is_synthesized:1, // The demangled name was created should not be used for expressions or other lookups
-                    m_type:8;
+                    m_contains_linker_annotations:1, // The symbol name contains linker annotations, which are optional when doing name lookups
+                    m_type:7;
     Mangled         m_mangled;              // uniqued symbol name/mangled name pair
     AddressRange    m_addr_range;           // Contains the value, or the section offset address when the value is an address in a section, and the size (if any)
     uint32_t        m_flags;                // A copy of the flags from the original symbol table, the ObjectFile plug-in can interpret these

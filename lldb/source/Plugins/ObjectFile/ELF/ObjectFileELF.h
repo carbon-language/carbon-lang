@@ -187,6 +187,9 @@ public:
     lldb_private::DataExtractor
     GetSegmentDataByIndex(lldb::user_id_t id);
 
+    std::string
+    StripLinkerSymbolAnnotations(llvm::StringRef symbol_name) const override;
+
 private:
     ObjectFileELF(const lldb::ModuleSP &module_sp,
                   lldb::DataBufferSP& data_sp,
