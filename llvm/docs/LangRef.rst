@@ -1059,7 +1059,7 @@ The prefix data can be referenced as,
 
     %0 = bitcast void* () @f to i32*
     %a = getelementptr inbounds i32, i32* %0, i32 -1
-    %b = load i32* %a
+    %b = load i32, i32* %a
 
 Prefix data is laid out as if it were an initializer for a global variable
 of the prefix data's type.  The function will be placed such that the
@@ -2571,14 +2571,14 @@ Here are some examples:
       store i32 0, i32* %poison_yet_again  ; memory at @h[0] is poisoned
 
       store i32 %poison, i32* @g           ; Poison value stored to memory.
-      %poison2 = load i32* @g              ; Poison value loaded back from memory.
+      %poison2 = load i32, i32* @g         ; Poison value loaded back from memory.
 
       store volatile i32 %poison, i32* @g  ; External observation; undefined behavior.
 
       %narrowaddr = bitcast i32* @g to i16*
       %wideaddr = bitcast i32* @g to i64*
-      %poison3 = load i16* %narrowaddr     ; Returns a poison value.
-      %poison4 = load i64* %wideaddr       ; Returns a poison value.
+      %poison3 = load i16, i16* %narrowaddr ; Returns a poison value.
+      %poison4 = load i64, i64* %wideaddr  ; Returns a poison value.
 
       %cmp = icmp slt i32 %poison, 0       ; Returns a poison value.
       br i1 %cmp, label %true, label %end  ; Branch to either destination.
@@ -3310,18 +3310,18 @@ For example,
     !7 = !{!3}
 
     ; These two instructions don't alias:
-    %0 = load float* %c, align 4, !alias.scope !5
+    %0 = load float, float* %c, align 4, !alias.scope !5
     store float %0, float* %arrayidx.i, align 4, !noalias !5
 
     ; These two instructions also don't alias (for domain !1, the set of scopes
     ; in the !alias.scope equals that in the !noalias list):
-    %2 = load float* %c, align 4, !alias.scope !5
+    %2 = load float, float* %c, align 4, !alias.scope !5
     store float %2, float* %arrayidx.i2, align 4, !noalias !6
 
     ; These two instructions don't alias (for domain !0, the set of scopes in
     ; the !noalias list is not a superset of, or equal to, the scopes in the
     ; !alias.scope list):
-    %2 = load float* %c, align 4, !alias.scope !6
+    %2 = load float, float* %c, align 4, !alias.scope !6
     store float %0, float* %arrayidx.i, align 4, !noalias !7
 
 '``fpmath``' Metadata
@@ -3372,8 +3372,8 @@ Examples:
 
 .. code-block:: llvm
 
-      %a = load i8* %x, align 1, !range !0 ; Can only be 0 or 1
-      %b = load i8* %y, align 1, !range !1 ; Can only be 255 (-1), 0 or 1
+      %a = load i8, i8* %x, align 1, !range !0 ; Can only be 0 or 1
+      %b = load i8, i8* %y, align 1, !range !1 ; Can only be 255 (-1), 0 or 1
       %c = call i8 @foo(),       !range !2 ; Can only be 0, 1, 3, 4 or 5
       %d = invoke i8 @bar() to label %cont
              unwind label %lpad, !range !3 ; Can only be -2, -1, 3, 4 or 5
@@ -3561,7 +3561,7 @@ metadata types that refer to the same loop identifier metadata.
 
    for.body:
      ...
-     %val0 = load i32* %arrayidx, !llvm.mem.parallel_loop_access !0
+     %val0 = load i32, i32* %arrayidx, !llvm.mem.parallel_loop_access !0
      ...
      store i32 %val0, i32* %arrayidx1, !llvm.mem.parallel_loop_access !0
      ...
@@ -3579,13 +3579,13 @@ the loop identifier metadata node directly:
 
    outer.for.body:
      ...
-     %val1 = load i32* %arrayidx3, !llvm.mem.parallel_loop_access !2
+     %val1 = load i32, i32* %arrayidx3, !llvm.mem.parallel_loop_access !2
      ...
      br label %inner.for.body
 
    inner.for.body:
      ...
-     %val0 = load i32* %arrayidx1, !llvm.mem.parallel_loop_access !0
+     %val0 = load i32, i32* %arrayidx1, !llvm.mem.parallel_loop_access !0
      ...
      store i32 %val0, i32* %arrayidx2, !llvm.mem.parallel_loop_access !0
      ...
@@ -5541,7 +5541,7 @@ Syntax:
 
 ::
 
-      <result> = load [volatile] <ty>* <pointer>[, align <alignment>][, !nontemporal !<index>][, !invariant.load !<index>][, !nonnull !<index>]
+      <result> = load [volatile] <ty>, <ty>* <pointer>[, align <alignment>][, !nontemporal !<index>][, !invariant.load !<index>][, !nonnull !<index>]
       <result> = load atomic [volatile] <ty>* <pointer> [singlethread] <ordering>, align <alignment>
       !<index> = !{ i32 1 }
 
@@ -5554,7 +5554,7 @@ Arguments:
 """"""""""
 
 The argument to the ``load`` instruction specifies the memory address
-from which to load. The pointer must point to a :ref:`first
+from which to load. The type specified must be a :ref:`first
 class <t_firstclass>` type. If the ``load`` is marked as ``volatile``,
 then the optimizer is not allowed to modify the number or order of
 execution of this ``load`` with other :ref:`volatile
@@ -5624,7 +5624,7 @@ Examples:
 
       %ptr = alloca i32                               ; yields i32*:ptr
       store i32 3, i32* %ptr                          ; yields void
-      %val = load i32* %ptr                           ; yields i32:val = i32 3
+      %val = load i32, i32* %ptr                      ; yields i32:val = i32 3
 
 .. _i_store:
 
@@ -5833,7 +5833,7 @@ Example:
 .. code-block:: llvm
 
     entry:
-      %orig = atomic load i32* %ptr unordered                   ; yields i32
+      %orig = atomic load i32, i32* %ptr unordered                ; yields i32
       br label %loop
 
     loop:
@@ -9506,7 +9506,7 @@ Examples:
 
 .. code-block:: llvm
 
-      %a = load i16* @x, align 2
+      %a = load i16, i16* @x, align 2
       %res = call float @llvm.convert.from.fp16(i16 %a)
 
 .. _dbg_intrinsics:
@@ -9678,7 +9678,7 @@ The result of this operation is equivalent to a regular vector load instruction 
        %res = call <16 x float> @llvm.masked.load.v16f32 (<16 x float>* %ptr, i32 4, <16 x i1>%mask, <16 x float> %passthru)
        
        ;; The result of the two following instructions is identical aside from potential memory access exception
-       %loadlal = load <16 x float>* %ptr, align 4
+       %loadlal = load <16 x float>, <16 x float>* %ptr, align 4
        %res = select <16 x i1> %mask, <16 x float> %loadlal, <16 x float> %passthru
 
 .. _int_mstore:
@@ -9717,7 +9717,7 @@ The result of this operation is equivalent to a load-modify-store sequence. Howe
        call void @llvm.masked.store.v16f32(<16 x float> %value, <16 x float>* %ptr, i32 4,  <16 x i1> %mask)
        
        ;; The result of the following instructions is identical aside from potential data races and memory access exceptions
-       %oldval = load <16 x float>* %ptr, align 4
+       %oldval = load <16 x float>, <16 x float>* %ptr, align 4
        %res = select <16 x i1> %mask, <16 x float> %value, <16 x float> %oldval
        store <16 x float> %res, <16 x float>* %ptr, align 4
 
