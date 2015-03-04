@@ -137,8 +137,7 @@ std::unique_ptr<MemoryBuffer> MCJIT::emitObject(Module *M) {
 
   legacy::PassManager PM;
 
-  M->setDataLayout(TM->getDataLayout());
-  PM.add(new DataLayoutPass());
+  M->setDataLayout(*TM->getDataLayout());
 
   // The RuntimeDyld will take ownership of this shortly
   SmallVector<char, 4096> ObjBufferSV;

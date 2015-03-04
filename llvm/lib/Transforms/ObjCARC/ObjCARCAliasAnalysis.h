@@ -44,9 +44,7 @@ namespace objcarc {
     }
 
   private:
-    void initializePass() override {
-      InitializeAliasAnalysis(this);
-    }
+    bool doInitialization(Module &M) override;
 
     /// This method is used when a pass implements an analysis interface through
     /// multiple inheritance.  If needed, it should override this to adjust the

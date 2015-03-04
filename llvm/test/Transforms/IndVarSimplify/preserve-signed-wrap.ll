@@ -4,6 +4,10 @@
 ; sext for the addressing, however it shouldn't eliminate the sext
 ; on the other phi, since that value undergoes signed wrapping.
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
+
 define void @foo(i32* nocapture %d, i32 %n) nounwind {
 entry:
 	%0 = icmp sgt i32 %n, 0		; <i1> [#uses=1]

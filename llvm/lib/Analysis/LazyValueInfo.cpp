@@ -1117,8 +1117,7 @@ bool LazyValueInfo::runOnFunction(Function &F) {
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
   DT = DTWP ? &DTWP->getDomTree() : nullptr;
 
-  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : nullptr;
+  DL = &F.getParent()->getDataLayout();
 
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 

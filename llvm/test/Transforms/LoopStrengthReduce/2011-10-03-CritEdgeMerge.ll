@@ -4,6 +4,10 @@
 
 target triple = "x86-apple-darwin"
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
+
 ; Verify that identical edges are merged. rdar://problem/6453893
 ; CHECK-LABEL: @test1(
 ; CHECK: bb89:

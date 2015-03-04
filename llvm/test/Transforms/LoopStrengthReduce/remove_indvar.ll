@@ -1,6 +1,9 @@
 ; Check that this test makes INDVAR and related stuff dead.
 ; RUN: opt < %s -loop-reduce -S | not grep INDVAR
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
 declare i1 @pred()
 
 define void @test(i32* %P) {

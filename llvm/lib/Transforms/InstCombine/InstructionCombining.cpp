@@ -2910,17 +2910,18 @@ static bool prepareICWorklistFromFunction(Function &F, const DataLayout *DL,
   return MadeIRChange;
 }
 
-static bool combineInstructionsOverFunction(
-    Function &F, InstCombineWorklist &Worklist, AssumptionCache &AC,
-    TargetLibraryInfo &TLI, DominatorTree &DT, const DataLayout *DL = nullptr,
-    LoopInfo *LI = nullptr) {
+static bool
+combineInstructionsOverFunction(Function &F, InstCombineWorklist &Worklist,
+                                AssumptionCache &AC, TargetLibraryInfo &TLI,
+                                DominatorTree &DT, LoopInfo *LI = nullptr) {
   // Minimizing size?
   bool MinimizeSize = F.hasFnAttribute(Attribute::MinSize);
+  const DataLayout &DL = F.getParent()->getDataLayout();
 
   /// Builder - This is an IRBuilder that automatically inserts new
   /// instructions into the worklist when they are created.
   IRBuilder<true, TargetFolder, InstCombineIRInserter> Builder(
-      F.getContext(), TargetFolder(DL), InstCombineIRInserter(Worklist, &AC));
+      F.getContext(), TargetFolder(&DL), InstCombineIRInserter(Worklist, &AC));
 
   // Lower dbg.declare intrinsics otherwise their value may be clobbered
   // by instcombiner.
@@ -2934,10 +2935,10 @@ static bool combineInstructionsOverFunction(
                  << F.getName() << "\n");
 
     bool Changed = false;
-    if (prepareICWorklistFromFunction(F, DL, &TLI, Worklist))
+    if (prepareICWorklistFromFunction(F, &DL, &TLI, Worklist))
       Changed = true;
 
-    InstCombiner IC(Worklist, &Builder, MinimizeSize, &AC, &TLI, &DT, DL, LI);
+    InstCombiner IC(Worklist, &Builder, MinimizeSize, &AC, &TLI, &DT, &DL, LI);
     if (IC.run())
       Changed = true;
 
@@ -2950,15 +2951,13 @@ static bool combineInstructionsOverFunction(
 
 PreservedAnalyses InstCombinePass::run(Function &F,
                                        AnalysisManager<Function> *AM) {
-  auto *DL = F.getParent()->getDataLayout();
-
   auto &AC = AM->getResult<AssumptionAnalysis>(F);
   auto &DT = AM->getResult<DominatorTreeAnalysis>(F);
   auto &TLI = AM->getResult<TargetLibraryAnalysis>(F);
 
   auto *LI = AM->getCachedResult<LoopAnalysis>(F);
 
-  if (!combineInstructionsOverFunction(F, Worklist, AC, TLI, DT, DL, LI))
+  if (!combineInstructionsOverFunction(F, Worklist, AC, TLI, DT, LI))
     // No changes, all analyses are preserved.
     return PreservedAnalyses::all();
 
@@ -3007,12 +3006,10 @@ bool InstructionCombiningPass::runOnFunction(Function &F) {
   auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
   // Optional analyses.
-  auto *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  auto *DL = DLP ? &DLP->getDataLayout() : nullptr;
   auto *LIWP = getAnalysisIfAvailable<LoopInfoWrapperPass>();
   auto *LI = LIWP ? &LIWP->getLoopInfo() : nullptr;
 
-  return combineInstructionsOverFunction(F, Worklist, AC, TLI, DT, DL, LI);
+  return combineInstructionsOverFunction(F, Worklist, AC, TLI, DT, LI);
 }
 
 char InstructionCombiningPass::ID = 0;

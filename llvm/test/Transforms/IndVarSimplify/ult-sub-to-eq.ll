@@ -1,5 +1,9 @@
 ; RUN: opt -S -indvars < %s | FileCheck %s
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
+
 define void @test1(float* nocapture %autoc, float* nocapture %data, float %d, i32 %data_len, i32 %sample) nounwind {
 entry:
   %sub = sub i32 %data_len, %sample

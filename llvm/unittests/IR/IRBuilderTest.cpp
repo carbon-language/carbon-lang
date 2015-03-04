@@ -111,9 +111,9 @@ TEST_F(IRBuilderTest, LandingPadName) {
 TEST_F(IRBuilderTest, DataLayout) {
   std::unique_ptr<Module> M(new Module("test", Ctx));
   M->setDataLayout("e-n32");
-  EXPECT_TRUE(M->getDataLayout()->isLegalInteger(32));
+  EXPECT_TRUE(M->getDataLayout().isLegalInteger(32));
   M->setDataLayout("e");
-  EXPECT_FALSE(M->getDataLayout()->isLegalInteger(32));
+  EXPECT_FALSE(M->getDataLayout().isLegalInteger(32));
 }
 
 TEST_F(IRBuilderTest, GetIntTy) {

@@ -8,13 +8,13 @@ define void @helper() {
   ret void
 }
 
-; Size in llvm.lifetime.X should be -1 (unknown).
+; Size in llvm.lifetime.X should be 1 (default for i8).
 define void @test() {
 ; CHECK-LABEL: @test(
 ; CHECK-NOT: lifetime
-; CHECK: llvm.lifetime.start(i64 -1
+; CHECK: llvm.lifetime.start(i64 1
 ; CHECK-NOT: lifetime
-; CHECK: llvm.lifetime.end(i64 -1
+; CHECK: llvm.lifetime.end(i64 1
   call void @helper()
 ; CHECK-NOT: lifetime
 ; CHECK: ret void

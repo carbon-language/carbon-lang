@@ -306,8 +306,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
 
   // Add the target data from the target machine, if it exists, or the module.
   if (const DataLayout *DL = Target->getDataLayout())
-    M->setDataLayout(DL);
-  PM.add(new DataLayoutPass());
+    M->setDataLayout(*DL);
 
   if (RelaxAll.getNumOccurrences() > 0 &&
       FileType != TargetMachine::CGFT_ObjectFile)

@@ -4,6 +4,10 @@
 ; A sign extend feeds an IVUser and cannot be hoisted into the AddRec.
 ; CollectIVChains should bailout on this case.
 
+
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
 %struct = type { i8*, i8*, i16, i64, i16, i16, i16, i64, i64, i16, i8*, i64, i64, i64 }
 
 ; CHECK-LABEL: @test(

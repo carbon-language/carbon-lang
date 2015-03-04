@@ -1,6 +1,10 @@
 ; RUN: opt < %s -indvars -S | FileCheck %s
 target triple = "aarch64--linux-gnu"
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
+
 ; Check the loop exit i32 compare instruction and operand are widened to i64
 ; instead of truncating IV before its use in the i32 compare instruction.
 

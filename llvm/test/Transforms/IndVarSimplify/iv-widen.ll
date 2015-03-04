@@ -1,5 +1,9 @@
 ; RUN: opt < %s -indvars -S | FileCheck %s
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
+
 target triple = "x86_64-apple-darwin"
 
 ; CHECK-LABEL: @sloop

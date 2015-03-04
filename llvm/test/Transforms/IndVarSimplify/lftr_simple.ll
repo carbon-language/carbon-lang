@@ -1,6 +1,10 @@
-; LFTR should eliminate the need for the computation of i*i completely.  It 
+; LFTR should eliminate the need for the computation of i*i completely.  It
 ; is only used to compute the exit value.
 ; RUN: opt < %s -indvars -dce -S | not grep mul
+
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
 
 @A = external global i32                ; <i32*> [#uses=1]
 

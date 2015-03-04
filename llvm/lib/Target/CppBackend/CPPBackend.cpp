@@ -1981,7 +1981,8 @@ void CppWriter::printModule(const std::string& fname,
   printEscapedString(mName);
   Out << "\", getGlobalContext());";
   if (!TheModule->getTargetTriple().empty()) {
-    nl(Out) << "mod->setDataLayout(\"" << TheModule->getDataLayout() << "\");";
+    nl(Out) << "mod->setDataLayout(\"" << TheModule->getDataLayoutStr()
+            << "\");";
   }
   if (!TheModule->getTargetTriple().empty()) {
     nl(Out) << "mod->setTargetTriple(\"" << TheModule->getTargetTriple()

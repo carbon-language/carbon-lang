@@ -234,10 +234,7 @@ ModulePass *llvm::createLowerBitSetsPass() { return new LowerBitSets; }
 
 bool LowerBitSets::doInitialization(Module &Mod) {
   M = &Mod;
-
-  DL = M->getDataLayout();
-  if (!DL)
-    report_fatal_error("Data layout required");
+  DL = &Mod.getDataLayout();
 
   Int1Ty = Type::getInt1Ty(M->getContext());
   Int8Ty = Type::getInt8Ty(M->getContext());

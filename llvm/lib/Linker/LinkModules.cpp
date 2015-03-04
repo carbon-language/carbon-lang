@@ -672,17 +672,12 @@ bool ModuleLinker::computeResultingSelectionKind(StringRef ComdatName,
         getComdatLeader(SrcM, ComdatName, SrcGV))
       return true;
 
-    const DataLayout *DstDL = DstM->getDataLayout();
-    const DataLayout *SrcDL = SrcM->getDataLayout();
-    if (!DstDL || !SrcDL) {
-      return emitError(
-          "Linking COMDATs named '" + ComdatName +
-          "': can't do size dependent selection without DataLayout!");
-    }
+    const DataLayout &DstDL = DstM->getDataLayout();
+    const DataLayout &SrcDL = SrcM->getDataLayout();
     uint64_t DstSize =
-        DstDL->getTypeAllocSize(DstGV->getType()->getPointerElementType());
+        DstDL.getTypeAllocSize(DstGV->getType()->getPointerElementType());
     uint64_t SrcSize =
-        SrcDL->getTypeAllocSize(SrcGV->getType()->getPointerElementType());
+        SrcDL.getTypeAllocSize(SrcGV->getType()->getPointerElementType());
     if (Result == Comdat::SelectionKind::ExactMatch) {
       if (SrcGV->getInitializer() != DstGV->getInitializer())
         return emitError("Linking COMDATs named '" + ComdatName +
@@ -1482,11 +1477,10 @@ bool ModuleLinker::run() {
 
   // Inherit the target data from the source module if the destination module
   // doesn't have one already.
-  if (!DstM->getDataLayout() && SrcM->getDataLayout())
+  if (DstM->getDataLayout().isDefault())
     DstM->setDataLayout(SrcM->getDataLayout());
 
-  if (SrcM->getDataLayout() && DstM->getDataLayout() &&
-      *SrcM->getDataLayout() != *DstM->getDataLayout()) {
+  if (SrcM->getDataLayout() != DstM->getDataLayout()) {
     emitWarning("Linking two modules of different data layouts: '" +
                 SrcM->getModuleIdentifier() + "' is '" +
                 SrcM->getDataLayoutStr() + "' whereas '" +

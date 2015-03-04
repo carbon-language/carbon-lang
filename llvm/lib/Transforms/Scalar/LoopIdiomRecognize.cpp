@@ -130,7 +130,6 @@ namespace {
 
   class LoopIdiomRecognize : public LoopPass {
     Loop *CurLoop;
-    const DataLayout *DL;
     DominatorTree *DT;
     ScalarEvolution *SE;
     TargetLibraryInfo *TLI;
@@ -139,7 +138,10 @@ namespace {
     static char ID;
     explicit LoopIdiomRecognize() : LoopPass(ID) {
       initializeLoopIdiomRecognizePass(*PassRegistry::getPassRegistry());
-      DL = nullptr; DT = nullptr; SE = nullptr; TLI = nullptr; TTI = nullptr;
+      DT = nullptr;
+      SE = nullptr;
+      TLI = nullptr;
+      TTI = nullptr;
     }
 
     bool runOnLoop(Loop *L, LPPassManager &LPM) override;
@@ -177,14 +179,6 @@ namespace {
       AU.addRequired<DominatorTreeWrapperPass>();
       AU.addRequired<TargetLibraryInfoWrapperPass>();
       AU.addRequired<TargetTransformInfoWrapperPass>();
-    }
-
-    const DataLayout *getDataLayout() {
-      if (DL)
-        return DL;
-      DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-      DL = DLP ? &DLP->getDataLayout() : nullptr;
-      return DL;
     }
 
     DominatorTree *getDominatorTree() {
@@ -625,10 +619,6 @@ bool LoopIdiomRecognize::runOnCountableLoop() {
     if (BECst->getValue()->getValue() == 0)
       return false;
 
-  // We require target data for now.
-  if (!getDataLayout())
-    return false;
-
   // set DT
   (void)getDominatorTree();
 
@@ -742,7 +732,8 @@ bool LoopIdiomRecognize::processLoopStore(StoreInst *SI, const SCEV *BECount) {
   Value *StorePtr = SI->getPointerOperand();
 
   // Reject stores that are so large that they overflow an unsigned.
-  uint64_t SizeInBits = DL->getTypeSizeInBits(StoredVal->getType());
+  auto &DL = CurLoop->getHeader()->getModule()->getDataLayout();
+  uint64_t SizeInBits = DL.getTypeSizeInBits(StoredVal->getType());
   if ((SizeInBits & 7) || (SizeInBits >> 32) != 0)
     return false;
 
@@ -917,7 +908,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
   // but it can be turned into memset_pattern if the target supports it.
   Value *SplatValue = isBytewiseValue(StoredVal);
   Constant *PatternValue = nullptr;
-
+  auto &DL = CurLoop->getHeader()->getModule()->getDataLayout();
   unsigned DestAS = DestPtr->getType()->getPointerAddressSpace();
 
   // If we're allowed to form a memset, and the stored value would be acceptable
@@ -928,9 +919,8 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
       CurLoop->isLoopInvariant(SplatValue)) {
     // Keep and use SplatValue.
     PatternValue = nullptr;
-  } else if (DestAS == 0 &&
-             TLI->has(LibFunc::memset_pattern16) &&
-             (PatternValue = getMemSetPatternValue(StoredVal, *DL))) {
+  } else if (DestAS == 0 && TLI->has(LibFunc::memset_pattern16) &&
+             (PatternValue = getMemSetPatternValue(StoredVal, DL))) {
     // Don't create memset_pattern16s with address spaces.
     // It looks like we can use PatternValue!
     SplatValue = nullptr;
@@ -971,7 +961,7 @@ processLoopStridedStore(Value *DestPtr, unsigned StoreSize,
 
   // The # stored bytes is (BECount+1)*Size.  Expand the trip count out to
   // pointer size if it isn't already.
-  Type *IntPtr = Builder.getIntPtrTy(DL, DestAS);
+  Type *IntPtr = Builder.getIntPtrTy(&DL, DestAS);
   BECount = SE->getTruncateOrZeroExtend(BECount, IntPtr);
 
   const SCEV *NumBytesS = SE->getAddExpr(BECount, SE->getConstant(IntPtr, 1),
@@ -1085,7 +1075,8 @@ processLoopStoreOfLoopLoad(StoreInst *SI, unsigned StoreSize,
 
   // The # stored bytes is (BECount+1)*Size.  Expand the trip count out to
   // pointer size if it isn't already.
-  Type *IntPtrTy = Builder.getIntPtrTy(DL, SI->getPointerAddressSpace());
+  auto &DL = CurLoop->getHeader()->getModule()->getDataLayout();
+  Type *IntPtrTy = Builder.getIntPtrTy(&DL, SI->getPointerAddressSpace());
   BECount = SE->getTruncateOrZeroExtend(BECount, IntPtrTy);
 
   const SCEV *NumBytesS = SE->getAddExpr(BECount, SE->getConstant(IntPtrTy, 1),

@@ -46,6 +46,11 @@ ImmutablePass *llvm::createObjCARCAliasAnalysisPass() {
   return new ObjCARCAliasAnalysis();
 }
 
+bool ObjCARCAliasAnalysis::doInitialization(Module &M) {
+  InitializeAliasAnalysis(this, &M.getDataLayout());
+  return true;
+}
+
 void
 ObjCARCAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();

@@ -36,6 +36,7 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Scalar.h"
@@ -84,7 +85,6 @@ namespace {
     PPCTargetMachine *TM;
     LoopInfo *LI;
     ScalarEvolution *SE;
-    const DataLayout *DL;
   };
 }
 
@@ -141,9 +141,6 @@ bool PPCLoopPreIncPrep::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   SE = &getAnalysis<ScalarEvolution>();
 
-  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : 0;
-
   bool MadeChange = false;
 
   for (LoopInfo::iterator I = LI->begin(), E = LI->end();
@@ -157,9 +154,6 @@ bool PPCLoopPreIncPrep::runOnFunction(Function &F) {
 
 bool PPCLoopPreIncPrep::runOnLoop(Loop *L) {
   bool MadeChange = false;
-
-  if (!DL)
-    return MadeChange;
 
   // Only prep. the inner-most loop
   if (!L->empty())

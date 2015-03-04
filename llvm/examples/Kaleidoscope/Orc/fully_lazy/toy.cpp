@@ -716,7 +716,7 @@ public:
       M(new Module(GenerateUniqueName("jit_module_"),
                    Session.getLLVMContext())),
       Builder(Session.getLLVMContext()) {
-    M->setDataLayout(Session.getTarget().getDataLayout());
+    M->setDataLayout(*Session.getTarget().getDataLayout());
   }
 
   SessionContext& getSession() { return Session; }

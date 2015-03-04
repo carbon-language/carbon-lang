@@ -1,6 +1,8 @@
 ; RUN: opt < %s -O3 | \
 ; RUN:   llc -mtriple=thumbv7-apple-darwin10 -mattr=+neon | FileCheck %s
 
+target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-f32:32:32-f64:32:32-v64:64:64-v128:128:128-a0:0:32"
+
 define void @fred(i32 %three_by_three, i8* %in, double %dt1, i32 %x_size, i32 %y_size, i8* %bp) nounwind {
 entry:
 ; -- The loop following the load should only use a single add-literation

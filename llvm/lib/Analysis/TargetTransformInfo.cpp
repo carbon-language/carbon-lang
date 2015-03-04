@@ -277,7 +277,7 @@ TargetIRAnalysis::Result TargetIRAnalysis::run(Function &F) {
 char TargetIRAnalysis::PassID;
 
 TargetIRAnalysis::Result TargetIRAnalysis::getDefaultTTI(Function &F) {
-  return Result(F.getParent()->getDataLayout());
+  return Result(&F.getParent()->getDataLayout());
 }
 
 // Register the basic pass.

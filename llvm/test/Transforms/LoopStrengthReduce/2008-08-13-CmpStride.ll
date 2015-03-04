@@ -1,5 +1,9 @@
 ; RUN: opt < %s -loop-reduce -S | grep add | count 2
 ; PR 2662
+
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
 @g_3 = common global i16 0		; <i16*> [#uses=2]
 @"\01LC" = internal constant [4 x i8] c"%d\0A\00"		; <[4 x i8]*> [#uses=1]
 

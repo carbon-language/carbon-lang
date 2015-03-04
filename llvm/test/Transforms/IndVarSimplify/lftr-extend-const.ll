@@ -1,5 +1,9 @@
 ;RUN: opt -S %s -indvars | FileCheck %s
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
+
 ; CHECK-LABEL: @foo(
 ; CHECK-NOT: %lftr.wideiv = trunc i32 %indvars.iv.next to i16
 ; CHECK: %exitcond = icmp ne i32 %indvars.iv.next, 512

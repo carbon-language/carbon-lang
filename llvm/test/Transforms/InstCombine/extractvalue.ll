@@ -13,7 +13,7 @@ define i32 @foo(i32 %a, i32 %b) {
         %s1 = insertvalue {i32, i32} %s1.1, i32 %b, 1
         %v1 = extractvalue {i32, i32} %s1, 0
         %v2 = extractvalue {i32, i32} %s1, 1
-        
+
         ; Build a nested struct and pull a sub struct out of it
         ; This requires instcombine to insert a few insertvalue instructions
         %ns1.1 = insertvalue {i32, {i32, i32}} undef, i32 %v1, 0
@@ -40,7 +40,7 @@ define i32 @foo(i32 %a, i32 %b) {
 }
 
 ; CHECK-LABEL: define i32 @extract2gep(
-; CHECK-NEXT: [[GEP:%[a-z0-9]+]] = getelementptr inbounds {{.*}}, {{.*}}* %pair, i32 0, i32 1
+; CHECK-NEXT: [[GEP:%[a-z0-9]+]] = getelementptr inbounds {{.*}}, {{.*}}* %pair, i64 0, i32 1
 ; CHECK-NEXT: [[LOAD:%[A-Za-z0-9]+]] = load i32, i32* [[GEP]]
 ; CHECK-NEXT: store
 ; CHECK-NEXT: br label %loop
@@ -68,7 +68,7 @@ end:
 }
 
 ; CHECK-LABEL: define i32 @doubleextract2gep(
-; CHECK-NEXT: [[GEP:%[a-z0-9]+]] = getelementptr inbounds {{.*}}, {{.*}}* %arg, i32 0, i32 1, i32 1
+; CHECK-NEXT: [[GEP:%[a-z0-9]+]] = getelementptr inbounds {{.*}}, {{.*}}* %arg, i64 0, i32 1, i32 1
 ; CHECK-NEXT: [[LOAD:%[A-Za-z0-9]+]] = load i32, i32* [[GEP]]
 ; CHECK-NEXT: ret i32 [[LOAD]]
 define i32 @doubleextract2gep({i32, {i32, i32}}* %arg) {

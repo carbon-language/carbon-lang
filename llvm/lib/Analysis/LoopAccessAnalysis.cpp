@@ -1360,7 +1360,7 @@ void LoopAccessAnalysis::print(raw_ostream &OS, const Module *M) const {
 
 bool LoopAccessAnalysis::runOnFunction(Function &F) {
   SE = &getAnalysis<ScalarEvolution>();
-  DL = F.getParent()->getDataLayout();
+  DL = &F.getParent()->getDataLayout();
   auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
   TLI = TLIP ? &TLIP->getTLI() : nullptr;
   AA = &getAnalysis<AliasAnalysis>();

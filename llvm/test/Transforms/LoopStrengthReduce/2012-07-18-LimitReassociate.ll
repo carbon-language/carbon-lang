@@ -1,5 +1,4 @@
-; RUN: opt -loop-reduce -disable-output -debug-only=loop-reduce < %s 2> %t
-; RUN: FileCheck %s < %t
+; RUN: opt -loop-reduce -disable-output -debug-only=loop-reduce < %s 2>&1 | FileCheck %s
 ; REQUIRES: asserts
 ;
 ; PR13361: LSR + SCEV "hangs" on reasonably sized test with sequence of loops
@@ -17,6 +16,10 @@
 ; CHECK: {{.*reg\(\{.*\{.*\{.*\{.*\{.*\{.*\{.*\{.*\{}}
 ; CHECK-NOT:reg
 ; CHECK: Filtering for use
+
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
 
 %struct.snork = type { %struct.fuga, i32, i32, i32, i32, i32, i32 }
 %struct.fuga = type { %struct.gork, i64 }

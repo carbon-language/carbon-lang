@@ -2,6 +2,10 @@
 ; RUN: not grep sext %t
 ; RUN: grep phi %t | count 1
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
+
 define void @foo(i64* nocapture %x, i32 %n) nounwind {
 entry:
 	%tmp102 = icmp sgt i32 %n, 0		; <i1> [#uses=1]

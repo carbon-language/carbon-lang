@@ -8,9 +8,9 @@
 ;       A[2i+b][2j] = 1.0;
 ; }
 
-; AddRec: {{((%m * %b * sizeof(double)) + %A),+,(2 * %m * sizeof(double))}<%for.i>,+,(2 * sizeof(double))}<%for.j>
+; AddRec: {{((%m * %b * 8) + %A),+,(2 * %m * 8)}<%for.i>,+,(2 * 8)}<%for.j>
 ; CHECK: Base offset: %A
-; CHECK: ArrayDecl[UnknownSize][%m] with elements of sizeof(double) bytes.
+; CHECK: ArrayDecl[UnknownSize][%m] with elements of 8 bytes.
 ; CHECK: ArrayRef[{%b,+,2}<%for.i>][{0,+,2}<%for.j>]
 
 

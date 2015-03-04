@@ -159,7 +159,7 @@ bool TailCallElim::runOnFunction(Function &F) {
   if (skipOptnoneFunction(F))
     return false;
 
-  DL = F.getParent()->getDataLayout();
+  DL = &F.getParent()->getDataLayout();
 
   bool AllCallsAreTailCalls = false;
   bool Modified = markTails(F, AllCallsAreTailCalls);

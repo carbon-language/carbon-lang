@@ -26,7 +26,7 @@ define internal void @_GLOBAL__I_a() section "__TEXT,__StaticInit,regular,pure_i
 declare void @test(i8*)
 
 define void @print() {
-; CHECK: %1 = load i8*, i8** getelementptr inbounds ([1 x %struct.ButtonInitData]* @_ZL14buttonInitData, i32 0, i32 0, i32 0), align 4
+; CHECK: %1 = load i8*, i8** @_ZL14buttonInitData.0.0, align 4
   %1 = load i8*, i8** getelementptr inbounds ([1 x %struct.ButtonInitData]* @_ZL14buttonInitData, i32 0, i32 0, i32 0), align 4
   call void @test(i8* %1)
   ret void

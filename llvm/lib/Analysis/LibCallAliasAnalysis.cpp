@@ -36,7 +36,11 @@ void LibCallAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();                         // Does not transform code
 }
 
-
+bool LibCallAliasAnalysis::runOnFunction(Function &F) {
+  // set up super class
+  InitializeAliasAnalysis(this, &F.getParent()->getDataLayout());
+  return false;
+}
 
 /// AnalyzeLibCallDetails - Given a call to a function with the specified
 /// LibCallFunctionInfo, see if we can improve the mod/ref footprint of the call

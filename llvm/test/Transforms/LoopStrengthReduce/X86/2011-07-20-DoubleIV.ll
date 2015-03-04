@@ -4,6 +4,10 @@
 ; nonzero initial value.
 ; rdar://9786536
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
+
 ; First, make sure LSR doesn't crash on an empty IVUsers list.
 ; CHECK-LABEL: @dummyIV(
 ; CHECK-NOT: phi

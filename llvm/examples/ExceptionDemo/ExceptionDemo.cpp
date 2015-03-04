@@ -1973,7 +1973,6 @@ int main(int argc, char *argv[]) {
     // Start with registering info about how the
     // target lays out data structures.
     module->setDataLayout(executionEngine->getDataLayout());
-    fpm.add(new llvm::DataLayoutPass());
 
     // Optimizations turned on
 #ifdef ADD_OPT_PASSES

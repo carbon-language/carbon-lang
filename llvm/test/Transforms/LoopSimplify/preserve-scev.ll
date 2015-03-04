@@ -1,6 +1,9 @@
 ; RUN: opt -S < %s -indvars | opt -analyze -iv-users | grep "%cmp = icmp slt i32" | grep "= {%\.ph,+,1}<%for.cond>"
 ; PR8079
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
 ; LoopSimplify should invalidate indvars when splitting out the
 ; inner loop.
 

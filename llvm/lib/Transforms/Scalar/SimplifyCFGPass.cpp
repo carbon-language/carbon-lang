@@ -181,11 +181,11 @@ SimplifyCFGPass::SimplifyCFGPass(int BonusInstThreshold)
 
 PreservedAnalyses SimplifyCFGPass::run(Function &F,
                                        AnalysisManager<Function> *AM) {
-  auto *DL = F.getParent()->getDataLayout();
+  auto &DL = F.getParent()->getDataLayout();
   auto &TTI = AM->getResult<TargetIRAnalysis>(F);
   auto &AC = AM->getResult<AssumptionAnalysis>(F);
 
-  if (!simplifyFunctionCFG(F, TTI, DL, &AC, BonusInstThreshold))
+  if (!simplifyFunctionCFG(F, TTI, &DL, &AC, BonusInstThreshold))
     return PreservedAnalyses::none();
 
   return PreservedAnalyses::all();
@@ -207,9 +207,8 @@ struct CFGSimplifyPass : public FunctionPass {
         &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
     const TargetTransformInfo &TTI =
         getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
-    DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-    const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
-    return simplifyFunctionCFG(F, TTI, DL, AC, BonusInstThreshold);
+    const DataLayout &DL = F.getParent()->getDataLayout();
+    return simplifyFunctionCFG(F, TTI, &DL, AC, BonusInstThreshold);
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {

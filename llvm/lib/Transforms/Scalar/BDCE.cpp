@@ -263,7 +263,7 @@ bool BDCE::runOnFunction(Function& F) {
     return false;
 
   AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
-  DL = F.getParent()->getDataLayout();
+  DL = &F.getParent()->getDataLayout();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
   DenseMap<Instruction *, APInt> AliveBits;

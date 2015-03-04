@@ -98,7 +98,6 @@ namespace llvm {
         initializeModuleNDMPass(*PassRegistry::getPassRegistry());
       }
       bool runOnModule(Module &M) override {
-        EXPECT_TRUE(getAnalysisIfAvailable<DataLayoutPass>());
         run++;
         return false;
       }
@@ -175,7 +174,6 @@ namespace llvm {
         initializeCGPassPass(*PassRegistry::getPassRegistry());
       }
       bool runOnSCC(CallGraphSCC &SCMM) override {
-        EXPECT_TRUE(getAnalysisIfAvailable<DataLayoutPass>());
         run();
         return false;
       }
@@ -214,7 +212,6 @@ namespace llvm {
         return false;
       }
       bool runOnLoop(Loop *L, LPPassManager &LPM) override {
-        EXPECT_TRUE(getAnalysisIfAvailable<DataLayoutPass>());
         run();
         return false;
       }
@@ -251,7 +248,6 @@ namespace llvm {
         return false;
       }
       bool runOnBasicBlock(BasicBlock &BB) override {
-        EXPECT_TRUE(getAnalysisIfAvailable<DataLayoutPass>());
         run();
         return false;
       }
@@ -276,7 +272,6 @@ namespace llvm {
         initializeFPassPass(*PassRegistry::getPassRegistry());
       }
       bool runOnModule(Module &M) override {
-        EXPECT_TRUE(getAnalysisIfAvailable<DataLayoutPass>());
         for (Module::iterator I=M.begin(),E=M.end(); I != E; ++I) {
           Function &F = *I;
           {
@@ -302,7 +297,6 @@ namespace llvm {
       mNDM->run = mNDNM->run = mDNM->run = mNDM2->run = 0;
 
       legacy::PassManager Passes;
-      Passes.add(new DataLayoutPass());
       Passes.add(mNDM2);
       Passes.add(mNDM);
       Passes.add(mNDNM);
@@ -326,7 +320,6 @@ namespace llvm {
       mNDM->run = mNDNM->run = mDNM->run = mNDM2->run = 0;
 
       legacy::PassManager Passes;
-      Passes.add(new DataLayoutPass());
       Passes.add(mNDM);
       Passes.add(mNDNM);
       Passes.add(mNDM2);// invalidates mNDM needed by mDNM
@@ -348,7 +341,6 @@ namespace llvm {
       std::unique_ptr<Module> M(makeLLVMModule());
       T *P = new T();
       legacy::PassManager Passes;
-      Passes.add(new DataLayoutPass());
       Passes.add(P);
       Passes.run(*M);
       T::finishedOK(run);
@@ -359,7 +351,6 @@ namespace llvm {
       Module *M = makeLLVMModule();
       T *P = new T();
       legacy::PassManager Passes;
-      Passes.add(new DataLayoutPass());
       Passes.add(P);
       Passes.run(*M);
       T::finishedOK(run, N);
@@ -397,7 +388,6 @@ namespace llvm {
         SCOPED_TRACE("Running OnTheFlyTest");
         struct OnTheFlyTest *O = new OnTheFlyTest();
         legacy::PassManager Passes;
-        Passes.add(new DataLayoutPass());
         Passes.add(O);
         Passes.run(*M);
 

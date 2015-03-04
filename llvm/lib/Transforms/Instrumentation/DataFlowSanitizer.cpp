@@ -422,10 +422,7 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
   bool IsMIPS64 = TargetTriple.getArch() == llvm::Triple::mips64 ||
                   TargetTriple.getArch() == llvm::Triple::mips64el;
 
-  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  if (!DLP)
-    report_fatal_error("data layout missing");
-  DL = &DLP->getDataLayout();
+  DL = &M.getDataLayout();
 
   Mod = &M;
   Ctx = &M.getContext();
@@ -593,8 +590,6 @@ Constant *DataFlowSanitizer::getOrBuildTrampolineFunction(FunctionType *FT,
 }
 
 bool DataFlowSanitizer::runOnModule(Module &M) {
-  if (!DL)
-    return false;
 
   if (ABIList.isIn(M, "skip"))
     return false;

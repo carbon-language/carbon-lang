@@ -10,6 +10,10 @@
 ; cleaning up the alloca/store/GEP/load.
 
 
+; Provide legal integer types.
+target datalayout = "p:32:32"
+
+
 ; Extracting the zeroth element in an i32 array.
 define i32 @type_pun_zeroth(<16 x i8> %in) {
 ; CHECK-LABEL: @type_pun_zeroth(

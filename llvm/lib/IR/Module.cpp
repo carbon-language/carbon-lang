@@ -365,31 +365,11 @@ void Module::addModuleFlag(MDNode *Node) {
 
 void Module::setDataLayout(StringRef Desc) {
   DL.reset(Desc);
-
-  if (Desc.empty()) {
-    DataLayoutStr = "";
-  } else {
-    DataLayoutStr = DL.getStringRepresentation();
-    // DataLayoutStr is now equivalent to Desc, but since the representation
-    // is not unique, they may not be identical.
-  }
 }
 
-void Module::setDataLayout(const DataLayout *Other) {
-  if (!Other) {
-    DataLayoutStr = "";
-    DL.reset("");
-  } else {
-    DL = *Other;
-    DataLayoutStr = DL.getStringRepresentation();
-  }
-}
+void Module::setDataLayout(const DataLayout &Other) { DL = Other; }
 
-const DataLayout *Module::getDataLayout() const {
-  if (DataLayoutStr.empty())
-    return nullptr;
-  return &DL;
-}
+const DataLayout &Module::getDataLayout() const { return DL; }
 
 //===----------------------------------------------------------------------===//
 // Methods to control the materialization of GlobalValues in the Module.

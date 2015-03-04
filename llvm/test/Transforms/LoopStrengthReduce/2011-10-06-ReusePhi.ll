@@ -5,6 +5,10 @@
 
 target triple = "x86-apple-darwin"
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
+
 ; CHECK-LABEL: @test(
 ; multiplies are hoisted out of the loop
 ; CHECK: while.body.lr.ph:
@@ -17,10 +21,10 @@ target triple = "x86-apple-darwin"
 ; CHECK: phi
 ; CHECK: phi
 ; CHECK-NOT: phi
-; CHECK: bitcast float* {{.*}} to i8*
-; CHECK: bitcast float* {{.*}} to i8*
-; CHECK: getelementptr i8, i8*
-; CHECK: getelementptr i8, i8*
+; CHECK: bitcast float* {{.*}} to i1*
+; CHECK: bitcast float* {{.*}} to i1*
+; CHECK: getelementptr i1, i1*
+; CHECK: getelementptr i1, i1*
 
 define float @test(float* nocapture %A, float* nocapture %B, i32 %N, i32 %IA, i32 %IB) nounwind uwtable readonly ssp {
 entry:

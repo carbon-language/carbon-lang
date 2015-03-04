@@ -1,5 +1,9 @@
 ; RUN: opt < %s -indvars -S | FileCheck %s
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
+
 @a = common global i32 0, align 4
 @c = common global i32 0, align 4
 @b = common global i32 0, align 4

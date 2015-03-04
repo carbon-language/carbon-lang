@@ -1,5 +1,8 @@
 ; RUN: opt < %s -loop-reduce -S | FileCheck %s
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
 @d = common global i32 0, align 4
 
 define void @fn2(i32 %x) nounwind uwtable {

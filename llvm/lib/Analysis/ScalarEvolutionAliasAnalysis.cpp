@@ -22,6 +22,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 using namespace llvm;
 
@@ -79,7 +80,7 @@ ScalarEvolutionAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool
 ScalarEvolutionAliasAnalysis::runOnFunction(Function &F) {
-  InitializeAliasAnalysis(this);
+  InitializeAliasAnalysis(this, &F.getParent()->getDataLayout());
   SE = &getAnalysis<ScalarEvolution>();
   return false;
 }

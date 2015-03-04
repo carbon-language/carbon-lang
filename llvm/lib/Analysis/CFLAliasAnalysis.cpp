@@ -240,7 +240,7 @@ public:
     return QueryResult;
   }
 
-  void initializePass() override { InitializeAliasAnalysis(this); }
+  bool doInitialization(Module &M) override;
 };
 
 void FunctionHandle::removeSelfFromCache() {
@@ -1033,4 +1033,9 @@ CFLAliasAnalysis::query(const AliasAnalysis::Location &LocA,
     return AliasAnalysis::MayAlias;
 
   return AliasAnalysis::NoAlias;
+}
+
+bool CFLAliasAnalysis::doInitialization(Module &M) {
+  InitializeAliasAnalysis(this, &M.getDataLayout());
+  return true;
 }

@@ -121,8 +121,7 @@ static void AdjustCallerSSPLevel(Function *Caller, Function *Callee) {
 /// any new allocas to the set if not possible.
 static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
                                  InlinedArrayAllocasTy &InlinedArrayAllocas,
-                                 int InlineHistory, bool InsertLifetime,
-                                 const DataLayout *DL) {
+                                 int InlineHistory, bool InsertLifetime) {
   Function *Callee = CS.getCalledFunction();
   Function *Caller = CS.getCaller();
 
@@ -198,11 +197,6 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
 
       unsigned Align1 = AI->getAlignment(),
                Align2 = AvailableAlloca->getAlignment();
-      // If we don't have data layout information, and only one alloca is using
-      // the target default, then we can't safely merge them because we can't
-      // pick the greater alignment.
-      if (!DL && (!Align1 || !Align2) && Align1 != Align2)
-        continue;
       
       // The available alloca has to be in the right function, not in some other
       // function in this SCC.
@@ -223,8 +217,8 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
 
       if (Align1 != Align2) {
         if (!Align1 || !Align2) {
-          assert(DL && "DataLayout required to compare default alignments");
-          unsigned TypeAlign = DL->getABITypeAlignment(AI->getAllocatedType());
+          const DataLayout &DL = Caller->getParent()->getDataLayout();
+          unsigned TypeAlign = DL.getABITypeAlignment(AI->getAllocatedType());
 
           Align1 = Align1 ? Align1 : TypeAlign;
           Align2 = Align2 ? Align2 : TypeAlign;
@@ -432,8 +426,6 @@ static bool InlineHistoryIncludes(Function *F, int InlineHistoryID,
 bool Inliner::runOnSCC(CallGraphSCC &SCC) {
   CallGraph &CG = getAnalysis<CallGraphWrapperPass>().getCallGraph();
   AssumptionCacheTracker *ACT = &getAnalysis<AssumptionCacheTracker>();
-  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
   auto *TLIP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
   const TargetLibraryInfo *TLI = TLIP ? &TLIP->getTLI() : nullptr;
   AliasAnalysis *AA = &getAnalysis<AliasAnalysis>();
@@ -495,7 +487,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
 
   
   InlinedArrayAllocasTy InlinedArrayAllocas;
-  InlineFunctionInfo InlineInfo(&CG, DL, AA, ACT);
+  InlineFunctionInfo InlineInfo(&CG, AA, ACT);
 
   // Now that we have all of the call sites, loop over them and inline them if
   // it looks profitable to do so.
@@ -553,7 +545,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
 
         // Attempt to inline the function.
         if (!InlineCallIfPossible(CS, InlineInfo, InlinedArrayAllocas,
-                                  InlineHistoryID, InsertLifetime, DL)) {
+                                  InlineHistoryID, InsertLifetime)) {
           emitOptimizationRemarkMissed(CallerCtx, DEBUG_TYPE, *Caller, DLoc,
                                        Twine(Callee->getName() +
                                              " will not be inlined into " +

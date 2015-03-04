@@ -419,14 +419,10 @@ int main(int argc, char **argv) {
   Passes.add(new TargetLibraryInfoWrapperPass(TLII));
 
   // Add an appropriate DataLayout instance for this module.
-  const DataLayout *DL = M->getDataLayout();
-  if (!DL && !DefaultDataLayout.empty()) {
+  const DataLayout &DL = M->getDataLayout();
+  if (DL.isDefault() && !DefaultDataLayout.empty()) {
     M->setDataLayout(DefaultDataLayout);
-    DL = M->getDataLayout();
   }
-
-  if (DL)
-    Passes.add(new DataLayoutPass());
 
   // Add internal analysis passes from the target machine.
   Passes.add(createTargetTransformInfoWrapperPass(TM ? TM->getTargetIRAnalysis()
@@ -435,8 +431,6 @@ int main(int argc, char **argv) {
   std::unique_ptr<legacy::FunctionPassManager> FPasses;
   if (OptLevelO1 || OptLevelO2 || OptLevelOs || OptLevelOz || OptLevelO3) {
     FPasses.reset(new legacy::FunctionPassManager(M.get()));
-    if (DL)
-      FPasses->add(new DataLayoutPass());
     FPasses->add(createTargetTransformInfoWrapperPass(
         TM ? TM->getTargetIRAnalysis() : TargetIRAnalysis()));
   }

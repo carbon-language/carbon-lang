@@ -44,7 +44,7 @@ namespace {
     }
 
     bool runOnModule(Module &M) override {
-      InitializeAliasAnalysis(this);                 // set up super class
+      InitializeAliasAnalysis(this, &M.getDataLayout()); // set up super class
 
       for(Module::global_iterator I = M.global_begin(),
             E = M.global_end(); I != E; ++I) {

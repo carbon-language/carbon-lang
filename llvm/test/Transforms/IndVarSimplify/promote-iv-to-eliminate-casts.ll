@@ -1,5 +1,8 @@
-; RUN: opt < %s -indvars -S > %t
-; RUN: not grep sext %t
+; RUN: opt < %s -indvars -S | not grep sext
+
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
 
 define i64 @test(i64* nocapture %first, i32 %count) nounwind readonly {
 entry:

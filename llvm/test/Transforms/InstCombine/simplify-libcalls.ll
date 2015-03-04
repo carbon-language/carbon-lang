@@ -1,4 +1,5 @@
 ; RUN: opt -S < %s -instcombine | FileCheck %s
+target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f80:128:128-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32-S32"
 
 @G = constant [3 x i8] c"%s\00"		; <[3 x i8]*> [#uses=1]
 
@@ -19,7 +20,7 @@ define i8* @test1() {
         ret i8* %tmp3
 
 ; CHECK-LABEL: @test1(
-; CHECK: ret i8* getelementptr inbounds ([5 x i8]* @str, i32 0, i64 3)
+; CHECK: ret i8* getelementptr inbounds ([5 x i8]* @str, i32 0, i32 3)
 }
 
 declare i8* @strchr(i8*, i32)
@@ -29,7 +30,7 @@ define i8* @test2() {
         ret i8* %tmp3
 
 ; CHECK-LABEL: @test2(
-; CHECK: ret i8* getelementptr inbounds ([8 x i8]* @str1, i32 0, i64 7)
+; CHECK: ret i8* getelementptr inbounds ([8 x i8]* @str1, i32 0, i32 7)
 }
 
 define i8* @test3() {

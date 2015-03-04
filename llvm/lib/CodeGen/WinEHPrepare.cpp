@@ -369,7 +369,7 @@ bool WinEHPrepare::prepareCPPEHHandlers(
   Builder.SetInsertPoint(Entry->getFirstInsertionPt());
   Function *FrameAllocFn =
       Intrinsic::getDeclaration(M, Intrinsic::frameallocate);
-  uint64_t EHAllocSize = M->getDataLayout()->getTypeAllocSize(EHDataStructTy);
+  uint64_t EHAllocSize = M->getDataLayout().getTypeAllocSize(EHDataStructTy);
   Value *FrameAllocArgs[] = {
       ConstantInt::get(Type::getInt32Ty(Context), EHAllocSize)};
   CallInst *FrameAlloc =
@@ -538,7 +538,7 @@ bool WinEHPrepare::outlineHandler(HandlerType CatchOrCleanup, Function *SrcFn,
   CloneAndPruneIntoFromInst(
       Handler, SrcFn, ++II, VMap,
       /*ModuleLevelChanges=*/false, Returns, "", &InlinedFunctionInfo,
-      SrcFn->getParent()->getDataLayout(), Director.get());
+      &SrcFn->getParent()->getDataLayout(), Director.get());
 
   // Move all the instructions in the first cloned block into our entry block.
   BasicBlock *FirstClonedBB = std::next(Function::iterator(Entry));

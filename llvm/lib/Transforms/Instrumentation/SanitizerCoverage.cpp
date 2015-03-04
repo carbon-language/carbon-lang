@@ -104,10 +104,6 @@ class SanitizerCoverageModule : public ModulePass {
     return "SanitizerCoverageModule";
   }
 
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<DataLayoutPass>();
-  }
-
  private:
   void InjectCoverageForIndirectCalls(Function &F,
                                       ArrayRef<Instruction *> IndirCalls);
@@ -144,8 +140,8 @@ static Function *checkInterfaceFunction(Constant *FuncOrBitcast) {
 bool SanitizerCoverageModule::runOnModule(Module &M) {
   if (!CoverageLevel) return false;
   C = &(M.getContext());
-  DataLayoutPass *DLP = &getAnalysis<DataLayoutPass>();
-  IntptrTy = Type::getIntNTy(*C, DLP->getDataLayout().getPointerSizeInBits());
+  auto &DL = M.getDataLayout();
+  IntptrTy = Type::getIntNTy(*C, DL.getPointerSizeInBits());
   Type *VoidTy = Type::getVoidTy(*C);
   IRBuilder<> IRB(*C);
   Type *Int8PtrTy = PointerType::getUnqual(IRB.getInt8Ty());

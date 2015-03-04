@@ -529,9 +529,8 @@ bool LTOCodeGenerator::optimize(bool DisableOpt,
   legacy::PassManager passes;
 
   // Add an appropriate DataLayout instance for this module...
-  mergedModule->setDataLayout(TargetMach->getDataLayout());
+  mergedModule->setDataLayout(*TargetMach->getDataLayout());
 
-  passes.add(new DataLayoutPass());
   passes.add(
       createTargetTransformInfoWrapperPass(TargetMach->getTargetIRAnalysis()));
 
@@ -566,8 +565,6 @@ bool LTOCodeGenerator::compileOptimized(raw_ostream &out, std::string &errMsg) {
   this->applyScopeRestrictions();
 
   legacy::PassManager codeGenPasses;
-
-  codeGenPasses.add(new DataLayoutPass());
 
   formatted_raw_ostream Out(out);
 

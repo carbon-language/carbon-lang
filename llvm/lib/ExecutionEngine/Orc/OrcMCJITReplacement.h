@@ -133,8 +133,8 @@ public:
 
     // If this module doesn't have a DataLayout attached then attach the
     // default.
-    if (!M->getDataLayout())
-      M->setDataLayout(getDataLayout());
+    if (M->getDataLayout().isDefault())
+      M->setDataLayout(*getDataLayout());
 
     Modules.push_back(std::move(M));
     std::vector<Module *> Ms;

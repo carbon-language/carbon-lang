@@ -41,7 +41,7 @@ Cont:
 ; CHECK-LABEL: @test3(
 ; CHECK-NOT: alloca
 ; CHECK: Cont:
-; CHECK-NEXT:  %storemerge = phi i32 [ 47, %Cond2 ], [ -987654321, %Cond ]
+; CHECK-NEXT:  %storemerge = phi i32 [ -987654321, %Cond ], [ 47, %Cond2 ]
 ; CHECK-NEXT:  ret i32 %storemerge
 }
 

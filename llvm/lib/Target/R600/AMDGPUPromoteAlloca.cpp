@@ -87,7 +87,7 @@ bool AMDGPUPromoteAlloca::runOnFunction(Function &F) {
           continue;
         if (Use->getParent()->getParent() == &F)
           LocalMemAvailable -=
-              Mod->getDataLayout()->getTypeAllocSize(GVTy->getElementType());
+              Mod->getDataLayout().getTypeAllocSize(GVTy->getElementType());
       }
     }
   }
@@ -276,8 +276,8 @@ void AMDGPUPromoteAlloca::visitAlloca(AllocaInst &I) {
   // value from the reqd_work_group_size function attribute if it is
   // available.
   unsigned WorkGroupSize = 256;
-  int AllocaSize = WorkGroupSize *
-      Mod->getDataLayout()->getTypeAllocSize(AllocaTy);
+  int AllocaSize =
+      WorkGroupSize * Mod->getDataLayout().getTypeAllocSize(AllocaTy);
 
   if (AllocaSize > LocalMemAvailable) {
     DEBUG(dbgs() << " Not enough local memory to promote alloca.\n");

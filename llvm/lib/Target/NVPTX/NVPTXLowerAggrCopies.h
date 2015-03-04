@@ -29,7 +29,6 @@ struct NVPTXLowerAggrCopies : public FunctionPass {
   NVPTXLowerAggrCopies() : FunctionPass(ID) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<DataLayoutPass>();
     AU.addPreserved<MachineFunctionAnalysis>();
     AU.addPreserved<StackProtector>();
   }

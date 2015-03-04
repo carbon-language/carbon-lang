@@ -1,6 +1,10 @@
 ; RUN: opt < %s -indvars -S | grep sext | count 1
 ; ModuleID = '<stdin>'
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
+
 	%struct.App1Marker = type <{ i32, i32, i32, i32, i32, i32, i32, i32, i32, i32 }>
 	%struct.ComponentInstanceRecord = type <{ [1 x i32] }>
 	%struct.DCPredictors = type { [5 x i16] }

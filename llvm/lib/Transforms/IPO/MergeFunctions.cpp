@@ -1212,8 +1212,7 @@ bool MergeFunctions::doSanityCheck(std::vector<WeakVH> &Worklist) {
 
 bool MergeFunctions::runOnModule(Module &M) {
   bool Changed = false;
-  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : nullptr;
+  DL = &M.getDataLayout();
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage())

@@ -1,5 +1,9 @@
 ; RUN: opt < %s -loop-reduce -S -mtriple=x86_64-unknown-unknown | grep "phi double" | count 1
 
+; Provide legal integer types.
+target datalayout = "n8:16:32:64"
+
+
 define void @foobar(i32 %n) nounwind {
 entry:
 	icmp eq i32 %n, 0		; <i1>:0 [#uses=2]

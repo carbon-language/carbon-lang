@@ -104,7 +104,7 @@ FunctionPass *llvm::createPPCLoopDataPrefetchPass() { return new PPCLoopDataPref
 bool PPCLoopDataPrefetch::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
   SE = &getAnalysis<ScalarEvolution>();
-  DL = F.getParent()->getDataLayout();
+  DL = &F.getParent()->getDataLayout();
   AC = &getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
   TTI = &getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
 

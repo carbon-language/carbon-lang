@@ -102,21 +102,3 @@ entry:
   call void @goo(%struct.s* byval %tmpcast)
   ret i32 0
 }
-
-; CHECK-LABEL: @test1
-; CHECK: {{alloca \[2 x i32\]$}}
-; CHECK-NOT: alloca [2 x i32]
-; CHECK: ret i32 0
-
-define signext i32 @test1() {
-entry:
-  %a = alloca i64, align 8
-  %tmpcast = bitcast i64* %a to %struct.s*
-  store i64 0, i64* %a, align 8
-  %a1 = bitcast i64* %a to i32*
-  store i32 1, i32* %a1, align 8
-  call void @foo0(%struct.s* byval %tmpcast)
-  store i32 2, i32* %a1, align 8
-  call void @foo1(%struct.s* byval %tmpcast)
-  ret i32 0
-}

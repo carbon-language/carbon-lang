@@ -4,6 +4,10 @@
 ; Don't reverse the iteration if the rhs of the compare is defined
 ; inside the loop.
 
+; Provide legal integer types.
+; Declare i2 as legal so that IVUsers accepts to consider %indvar3451
+target datalayout = "n2:8:16:32:64"
+
 define void @Fill_Buffer(i2* %p) nounwind {
 entry:
 	br label %bb8

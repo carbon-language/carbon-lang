@@ -312,16 +312,12 @@ class SeparateConstOffsetFromGEP : public FunctionPass {
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<DataLayoutPass>();
     AU.addRequired<TargetTransformInfoWrapperPass>();
     AU.setPreservesCFG();
   }
 
   bool doInitialization(Module &M) override {
-    DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-    if (DLP == nullptr)
-      report_fatal_error("data layout missing");
-    DL = &DLP->getDataLayout();
+    DL = &M.getDataLayout();
     return false;
   }
 
@@ -386,7 +382,6 @@ INITIALIZE_PASS_BEGIN(
     "Split GEPs to a variadic base and a constant offset for better CSE", false,
     false)
 INITIALIZE_PASS_DEPENDENCY(TargetTransformInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(DataLayoutPass)
 INITIALIZE_PASS_END(
     SeparateConstOffsetFromGEP, "separate-const-offset-from-gep",
     "Split GEPs to a variadic base and a constant offset for better CSE", false,

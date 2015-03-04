@@ -109,9 +109,6 @@ Pass *llvm::createArgumentPromotionPass(unsigned maxElements) {
 bool ArgPromotion::runOnSCC(CallGraphSCC &SCC) {
   bool Changed = false, LocalChange;
 
-  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : nullptr;
-
   do {  // Iterate until we stop promoting from this SCC.
     LocalChange = false;
     // Attempt to promote arguments from all functions in this SCC.
@@ -209,6 +206,8 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
 
   // Make sure that it is local to this module.
   if (!F || !F->hasLocalLinkage()) return nullptr;
+
+  DL = &F->getParent()->getDataLayout();
 
   // First check: see if there are any pointer arguments!  If not, quick exit.
   SmallVector<Argument*, 16> PointerArgs;

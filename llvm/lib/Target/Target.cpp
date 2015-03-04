@@ -34,7 +34,6 @@ inline LLVMTargetLibraryInfoRef wrap(const TargetLibraryInfoImpl *P) {
 }
 
 void llvm::initializeTarget(PassRegistry &Registry) {
-  initializeDataLayoutPassPass(Registry);
   initializeTargetLibraryInfoWrapperPassPass(Registry);
   initializeTargetTransformInfoWrapperPassPass(Registry);
 }
@@ -48,9 +47,6 @@ LLVMTargetDataRef LLVMCreateTargetData(const char *StringRep) {
 }
 
 void LLVMAddTargetData(LLVMTargetDataRef TD, LLVMPassManagerRef PM) {
-  // The DataLayoutPass must now be in sync with the module. Unfortunatelly we
-  // cannot enforce that from the C api.
-  unwrap(PM)->add(new DataLayoutPass());
 }
 
 void LLVMAddTargetLibraryInfo(LLVMTargetLibraryInfoRef TLI,

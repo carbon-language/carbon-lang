@@ -183,7 +183,7 @@ private:
       auto Names = llvm::make_unique<StringMap<bool>>();
 
       for (const auto &M : Ms) {
-        Mangler Mang(M->getDataLayout());
+        Mangler Mang(&M->getDataLayout());
 
         for (const auto &GV : M->globals())
           if (addGlobalValue(*Names, GV, Mang, SearchName, ExportedSymbolsOnly))

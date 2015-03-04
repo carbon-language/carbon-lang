@@ -1077,8 +1077,7 @@ bool MemCpyOpt::runOnFunction(Function &F) {
 
   bool MadeChange = false;
   MD = &getAnalysis<MemoryDependenceAnalysis>();
-  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : nullptr;
+  DL = &F.getParent()->getDataLayout();
   TLI = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
   // If we don't have at least memset and memcpy, there is little point of doing

@@ -461,9 +461,7 @@ namespace {
       initializeBasicAliasAnalysisPass(*PassRegistry::getPassRegistry());
     }
 
-    void initializePass() override {
-      InitializeAliasAnalysis(this);
-    }
+    bool doInitialization(Module &M) override;
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<AliasAnalysis>();
@@ -813,6 +811,11 @@ static bool isAssumeIntrinsic(ImmutableCallSite CS) {
     return true;
 
   return false;
+}
+
+bool BasicAliasAnalysis::doInitialization(Module &M) {
+  InitializeAliasAnalysis(this, &M.getDataLayout());
+  return true;
 }
 
 /// getModRefInfo - Check to see if the specified callsite can clobber the

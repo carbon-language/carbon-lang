@@ -192,15 +192,13 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
 class InlineFunctionInfo {
 public:
   explicit InlineFunctionInfo(CallGraph *cg = nullptr,
-                              const DataLayout *DL = nullptr,
                               AliasAnalysis *AA = nullptr,
                               AssumptionCacheTracker *ACT = nullptr)
-      : CG(cg), DL(DL), AA(AA), ACT(ACT) {}
+      : CG(cg), AA(AA), ACT(ACT) {}
 
   /// CG - If non-null, InlineFunction will update the callgraph to reflect the
   /// changes it makes.
   CallGraph *CG;
-  const DataLayout *DL;
   AliasAnalysis *AA;
   AssumptionCacheTracker *ACT;
 

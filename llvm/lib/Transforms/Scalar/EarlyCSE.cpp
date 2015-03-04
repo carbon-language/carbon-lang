@@ -685,14 +685,14 @@ bool EarlyCSE::run() {
 
 PreservedAnalyses EarlyCSEPass::run(Function &F,
                                     AnalysisManager<Function> *AM) {
-  const DataLayout *DL = F.getParent()->getDataLayout();
+  const DataLayout &DL = F.getParent()->getDataLayout();
 
   auto &TLI = AM->getResult<TargetLibraryAnalysis>(F);
   auto &TTI = AM->getResult<TargetIRAnalysis>(F);
   auto &DT = AM->getResult<DominatorTreeAnalysis>(F);
   auto &AC = AM->getResult<AssumptionAnalysis>(F);
 
-  EarlyCSE CSE(F, DL, TLI, TTI, DT, AC);
+  EarlyCSE CSE(F, &DL, TLI, TTI, DT, AC);
 
   if (!CSE.run())
     return PreservedAnalyses::all();
@@ -724,14 +724,13 @@ public:
     if (skipOptnoneFunction(F))
       return false;
 
-    DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-    auto *DL = DLP ? &DLP->getDataLayout() : nullptr;
+    auto &DL = F.getParent()->getDataLayout();
     auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
     auto &TTI = getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
     auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     auto &AC = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
 
-    EarlyCSE CSE(F, DL, TLI, TTI, DT, AC);
+    EarlyCSE CSE(F, &DL, TLI, TTI, DT, AC);
 
     return CSE.run();
   }

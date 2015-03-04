@@ -116,6 +116,9 @@ private:
   /// \brief Primitive type alignment data.
   SmallVector<LayoutAlignElem, 16> Alignments;
 
+  /// \brief The string representation used to create this DataLayout
+  std::string StringRepresentation;
+
   typedef SmallVector<PointerAlignElem, 8> PointersTy;
   PointersTy Pointers;
 
@@ -185,6 +188,7 @@ public:
 
   DataLayout &operator=(const DataLayout &DL) {
     clear();
+    StringRepresentation = DL.StringRepresentation;
     BigEndian = DL.isBigEndian();
     StackNaturalAlign = DL.StackNaturalAlign;
     ManglingMode = DL.ManglingMode;
@@ -209,8 +213,12 @@ public:
   /// \brief Returns the string representation of the DataLayout.
   ///
   /// This representation is in the same format accepted by the string
-  /// constructor above.
-  std::string getStringRepresentation() const;
+  /// constructor above. This should not be used to compare two DataLayout as
+  /// different string can represent the same layout.
+  std::string getStringRepresentation() const { return StringRepresentation; }
+
+  /// \brief Test if the DataLayout was constructed from an empty string.
+  bool isDefault() const { return StringRepresentation.empty(); }
 
   /// \brief Returns true if the specified type is known to be a native integer
   /// type supported by the CPU.
@@ -450,22 +458,6 @@ inline DataLayout *unwrap(LLVMTargetDataRef P) {
 inline LLVMTargetDataRef wrap(const DataLayout *P) {
   return reinterpret_cast<LLVMTargetDataRef>(const_cast<DataLayout *>(P));
 }
-
-class DataLayoutPass : public ImmutablePass {
-  DataLayout DL;
-
-public:
-  /// This has to exist, because this is a pass, but it should never be used.
-  DataLayoutPass();
-  ~DataLayoutPass();
-
-  const DataLayout &getDataLayout() const { return DL; }
-
-  static char ID; // Pass identification, replacement for typeid
-
-  bool doFinalization(Module &M) override;
-  bool doInitialization(Module &M) override;
-};
 
 /// Used to lazily calculate structure layout information for a target machine,
 /// based on the DataLayout structure.

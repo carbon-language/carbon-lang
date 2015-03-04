@@ -68,7 +68,7 @@ protected:
   /// typically called by the run* methods of these subclasses.  This may be
   /// called multiple times.
   ///
-  void InitializeAliasAnalysis(Pass *P);
+  void InitializeAliasAnalysis(Pass *P, const DataLayout *DL);
 
   /// getAnalysisUsage - All alias analysis implementations should invoke this
   /// directly (using AliasAnalysis::getAnalysisUsage(AU)).
