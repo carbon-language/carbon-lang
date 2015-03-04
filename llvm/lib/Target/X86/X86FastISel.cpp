@@ -2015,38 +2015,30 @@ bool X86FastISel::X86SelectSIToFP(const Instruction *I) {
   if (OpReg == 0)
     return false;
 
-  bool HasAVX = Subtarget->hasAVX();
   const TargetRegisterClass *RC = nullptr;
   unsigned Opcode;
 
-  if (I->getType()->isDoubleTy() && X86ScalarSSEf64) {
+  if (I->getType()->isDoubleTy()) {
     // sitofp int -> double
-    Opcode = HasAVX ? X86::VCVTSI2SDrr : X86::CVTSI2SDrr;
+    Opcode = X86::VCVTSI2SDrr;
     RC = &X86::FR64RegClass;
-  } else if (I->getType()->isFloatTy() && X86ScalarSSEf32) {
+  } else if (I->getType()->isFloatTy()) {
     // sitofp int -> float
-    Opcode = HasAVX ? X86::VCVTSI2SSrr : X86::CVTSI2SSrr;
+    Opcode = X86::VCVTSI2SSrr;
     RC = &X86::FR32RegClass;
   } else
     return false;
 
+  // The target-independent selection algorithm in FastISel already knows how
+  // to select a SINT_TO_FP if the target is SSE but not AVX. This code is only
+  // reachable if the subtarget has AVX.
+  assert(Subtarget->hasAVX() && "Expected a subtarget with AVX!");
 
-  unsigned ImplicitDefReg = 0;
-  if (HasAVX) {
-    ImplicitDefReg = createResultReg(RC);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-            TII.get(TargetOpcode::IMPLICIT_DEF), ImplicitDefReg);
-  }
-
-  const MCInstrDesc &II = TII.get(Opcode);
-  OpReg = constrainOperandRegClass(II, OpReg, (HasAVX ? 2 : 1));
-  
-  unsigned ResultReg = createResultReg(RC);
-  MachineInstrBuilder MIB;
-  MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II, ResultReg);
-  if (ImplicitDefReg)
-    MIB.addReg(ImplicitDefReg, RegState::Kill);
-  MIB.addReg(OpReg);
+  unsigned ImplicitDefReg = createResultReg(RC);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+          TII.get(TargetOpcode::IMPLICIT_DEF), ImplicitDefReg);
+  unsigned ResultReg =
+      fastEmitInst_rr(Opcode, RC, ImplicitDefReg, true, OpReg, false);
   updateValueMap(I, ResultReg);
   return true;
 }
