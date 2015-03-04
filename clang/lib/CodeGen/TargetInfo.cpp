@@ -1724,6 +1724,10 @@ public:
   unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
     return HasAVX ? 32 : 16;
   }
+
+  bool hasSjLjLowering(CodeGen::CodeGenFunction &CGF) const override {
+    return true;
+  }
 };
 
 void WinX86_64TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
