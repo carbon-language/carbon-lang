@@ -3,10 +3,10 @@
 // RUN: %clang_cc1 -triple powerpc-unknown-unknown -emit-llvm < %s| FileCheck %s
 // RUN: %clang_cc1 -triple powerpc64-unknown-unknown -emit-llvm < %s| FileCheck %s
 
-// RUN: %clang_cc1 -triple arm-unknown-unknown -emit-llvm -verify %s
-// RUN: %clang_cc1 -triple aarch64-unknown-unknown -emit-llvm -verify %s
-// RUN: %clang_cc1 -triple mips-unknown-unknown -emit-llvm -verify %s
-// RUN: %clang_cc1 -triple mips64-unknown-unknown -emit-llvm -verify %s
+// RUN: %clang_cc1 -triple arm-unknown-unknown -emit-llvm-only -verify %s
+// RUN: %clang_cc1 -triple aarch64-unknown-unknown -emit-llvm-only -verify %s
+// RUN: %clang_cc1 -triple mips-unknown-unknown -emit-llvm-only -verify %s
+// RUN: %clang_cc1 -triple mips64-unknown-unknown -emit-llvm-only -verify %s
 
 // Check that __builtin_longjmp and __builtin_setjmp are lowerd into
 // IR intrinsics on those architectures that can handle them.
