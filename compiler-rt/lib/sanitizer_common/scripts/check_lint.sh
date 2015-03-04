@@ -17,7 +17,6 @@ fi
 
 # Filters
 # TODO: remove some of these filters
-LLVM_LINT_FILTER=-,+whitespace
 COMMON_LINT_FILTER=-build/include,-build/header_guard,-legal/copyright,-whitespace/comments,-readability/casting,\
 -build/namespaces
 ASAN_RTL_LINT_FILTER=${COMMON_LINT_FILTER},-runtime/int
@@ -59,9 +58,6 @@ run_lint() {
   fi
   ${LITLINT} "$@" 2>>$ERROR_LOG
 }
-
-run_lint ${LLVM_LINT_FILTER} --filter=${LLVM_LINT_FILTER} \
-  lib/Transforms/Instrumentation/*Sanitizer.cpp &
 
 if [ "${COMPILER_RT}" = "" ]; then
   COMPILER_RT=projects/compiler-rt
