@@ -33,6 +33,7 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
+#include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -66,6 +67,12 @@ ExitBlockBias("block-placement-exit-block-bias",
               cl::desc("Block frequency percentage a loop exit block needs "
                        "over the original exit to be considered the new exit."),
               cl::init(0), cl::Hidden);
+
+static cl::opt<bool> OutlineOptionalBranches(
+    "outline-optional-branches",
+    cl::desc("Put completely optional branches, i.e. branches with a common "
+             "post dominator, out of line."),
+    cl::init(false), cl::Hidden);
 
 namespace {
 class BlockChain;
@@ -188,6 +195,13 @@ class MachineBlockPlacement : public MachineFunctionPass {
   /// \brief A handle to the target's lowering info.
   const TargetLoweringBase *TLI;
 
+  /// \brief A handle to the post dominator tree.
+  MachineDominatorTree *MDT;
+
+  /// \brief A set of blocks that are unavoidably execute, i.e. they dominate
+  /// all terminators of the MachineFunction. 
+  SmallPtrSet<MachineBasicBlock *, 4> UnavoidableBlocks;
+
   /// \brief Allocator and owner of BlockChain structures.
   ///
   /// We build BlockChains lazily while processing the loop structure of
@@ -244,6 +258,7 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<MachineBranchProbabilityInfo>();
     AU.addRequired<MachineBlockFrequencyInfo>();
+    AU.addRequired<MachineDominatorTree>();
     AU.addRequired<MachineLoopInfo>();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
@@ -256,6 +271,7 @@ INITIALIZE_PASS_BEGIN(MachineBlockPlacement, "block-placement2",
                       "Branch Probability Basic Block Placement", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
 INITIALIZE_PASS_DEPENDENCY(MachineBlockFrequencyInfo)
+INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
 INITIALIZE_PASS_END(MachineBlockPlacement, "block-placement2",
                     "Branch Probability Basic Block Placement", false, false)
@@ -362,6 +378,13 @@ MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
 
     uint32_t SuccWeight = MBPI->getEdgeWeight(BB, Succ);
     BranchProbability SuccProb(SuccWeight / WeightScale, SumWeight);
+
+    // If we outline optional branches, look whether Succ is unavoidable, i.e.
+    // dominates all terminators of the MachineFunction. If it does, other
+    // successors must be optional. Don't do this for cold branches.
+    if (OutlineOptionalBranches && SuccProb > HotProb.getCompl() &&
+        UnavoidableBlocks.count(Succ) > 0)
+      return Succ;
 
     // Only consider successors which are either "hot", or wouldn't violate
     // any CFG constraints.
@@ -481,8 +504,7 @@ MachineBasicBlock *MachineBlockPlacement::getFirstUnplacedBlock(
 }
 
 void MachineBlockPlacement::buildChain(
-    MachineBasicBlock *BB,
-    BlockChain &Chain,
+    MachineBasicBlock *BB, BlockChain &Chain,
     SmallVectorImpl<MachineBasicBlock *> &BlockWorkList,
     const BlockFilterSet *BlockFilter) {
   assert(BB);
@@ -899,6 +921,27 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
     }
   }
 
+  if (OutlineOptionalBranches) {
+    // Find the nearest common dominator of all of F's terminators.
+    MachineBasicBlock *Terminator = nullptr;
+    for (MachineBasicBlock &MBB : F) {
+      if (MBB.succ_size() == 0) {
+        if (Terminator == nullptr)
+          Terminator = &MBB;
+        else
+          Terminator = MDT->findNearestCommonDominator(Terminator, &MBB);
+      }
+    }
+
+    // MBBs dominating this common dominator are unavoidable.
+    UnavoidableBlocks.clear();
+    for (MachineBasicBlock &MBB : F) {
+      if (MDT->dominates(&MBB, Terminator)) {
+        UnavoidableBlocks.insert(&MBB);
+      }
+    }
+  }
+
   // Build any loop-based chains.
   for (MachineLoopInfo::iterator LI = MLI->begin(), LE = MLI->end(); LI != LE;
        ++LI)
@@ -1110,6 +1153,7 @@ bool MachineBlockPlacement::runOnMachineFunction(MachineFunction &F) {
   MLI = &getAnalysis<MachineLoopInfo>();
   TII = F.getSubtarget().getInstrInfo();
   TLI = F.getSubtarget().getTargetLowering();
+  MDT = &getAnalysis<MachineDominatorTree>();
   assert(BlockToChain.empty());
 
   buildCFGChains(F);
