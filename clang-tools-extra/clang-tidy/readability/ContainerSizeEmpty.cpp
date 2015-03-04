@@ -39,7 +39,7 @@ bool isContainer(llvm::StringRef ClassName) {
   }();
   return ContainerNames.find(ClassName) != ContainerNames.end();
 }
-}
+} // namespace
 
 namespace clang {
 namespace ast_matchers {
@@ -48,8 +48,8 @@ AST_MATCHER(QualType, isBoolType) { return Node->isBooleanType(); }
 AST_MATCHER(NamedDecl, stlContainer) {
   return isContainer(Node.getQualifiedNameAsString());
 }
-}
-}
+} // namespace ast_matchers
+} // namespace clang
 
 namespace clang {
 namespace tidy {

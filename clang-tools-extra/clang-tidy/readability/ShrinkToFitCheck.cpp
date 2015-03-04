@@ -27,14 +27,14 @@ bool isShrinkableContainer(llvm::StringRef ClassName) {
   }();
   return Shrinkables.find(ClassName) != Shrinkables.end();
 }
-}
+} // namespace
 
 namespace clang {
 namespace ast_matchers {
 AST_MATCHER(NamedDecl, stlShrinkableContainer) {
   return isShrinkableContainer(Node.getQualifiedNameAsString());
 }
-} // namespace ast_matchesr
+} // namespace ast_matchers
 } // namespace clang
 
 namespace clang {
