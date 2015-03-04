@@ -84,7 +84,7 @@ bb7:
 }
 
 ; DARWIN64: _F3:
-; DARWIN64: Leh_func_end
+; DARWIN64: Lfunc_end
 ; DARWIN64-NEXT: .cfi_endproc
 ; DARWIN64-NEXT: .section        __TEXT,__gcc_except_tab
 ; DARWIN64-NOT: .section
