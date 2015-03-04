@@ -30,9 +30,18 @@ fi
 # We need to keep the comments to preserve line numbers while avoiding empty
 # lines which could potentially trigger formatting-related checks.
 sed 's#// *CHECK-[A-Z-]*:.*#//#' "${INPUT_FILE}" > "${TEMPORARY_FILE}"
+cp "${TEMPORARY_FILE}" "${TEMPORARY_FILE}.orig"
 
 clang-tidy "${TEMPORARY_FILE}" -fix --checks="-*,${CHECK_TO_RUN}" "$@" \
   > "${TEMPORARY_FILE}.msg" 2>&1
+
+echo "------------------------ clang-tidy output ------------------------"
+cat "${TEMPORARY_FILE}.msg"
+echo "-------------------------------------------------------------------"
+
+echo "------------------------------ Fixes ------------------------------"
+diff -u "${TEMPORARY_FILE}.orig" "${TEMPORARY_FILE}" || true
+echo "-------------------------------------------------------------------"
 
 if grep -q 'CHECK-FIXES' "${INPUT_FILE}"; then
   FileCheck -input-file="${TEMPORARY_FILE}" "${INPUT_FILE}" \
