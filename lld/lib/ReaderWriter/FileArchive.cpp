@@ -135,26 +135,6 @@ public:
     return _absoluteAtoms;
   }
 
-  std::error_code buildTableOfContents() {
-    DEBUG_WITH_TYPE("FileArchive", llvm::dbgs()
-                                       << "Table of contents for archive '"
-                                       << _archive->getFileName() << "':\n");
-    for (auto i = _archive->symbol_begin(), e = _archive->symbol_end();
-         i != e; ++i) {
-      StringRef name = i->getName();
-      ErrorOr<Archive::child_iterator> memberOrErr = i->getMember();
-      if (std::error_code ec = memberOrErr.getError())
-        return ec;
-      Archive::child_iterator member = memberOrErr.get();
-      DEBUG_WITH_TYPE(
-          "FileArchive",
-          llvm::dbgs() << llvm::format("0x%08llX ", member->getBuffer().data())
-                       << "'" << name << "'\n");
-      _symbolMemberMap[name] = member;
-    }
-    return std::error_code();
-  }
-
   /// Returns a set of all defined symbols in the archive.
   std::set<StringRef> getDefinedSymbols() override {
     parse();
@@ -251,7 +231,26 @@ private:
     return false;
   }
 
-private:
+  std::error_code buildTableOfContents() {
+    DEBUG_WITH_TYPE("FileArchive", llvm::dbgs()
+                                       << "Table of contents for archive '"
+                                       << _archive->getFileName() << "':\n");
+    for (auto i = _archive->symbol_begin(), e = _archive->symbol_end();
+         i != e; ++i) {
+      StringRef name = i->getName();
+      ErrorOr<Archive::child_iterator> memberOrErr = i->getMember();
+      if (std::error_code ec = memberOrErr.getError())
+        return ec;
+      Archive::child_iterator member = memberOrErr.get();
+      DEBUG_WITH_TYPE(
+          "FileArchive",
+          llvm::dbgs() << llvm::format("0x%08llX ", member->getBuffer().data())
+                       << "'" << name << "'\n");
+      _symbolMemberMap[name] = member;
+    }
+    return std::error_code();
+  }
+
   typedef std::unordered_map<StringRef, Archive::child_iterator> MemberMap;
   typedef std::set<const char *> InstantiatedSet;
 
