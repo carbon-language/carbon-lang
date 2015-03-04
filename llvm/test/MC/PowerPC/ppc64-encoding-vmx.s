@@ -133,6 +133,55 @@
 # CHECK-BE: vperm 2, 3, 4, 5                # encoding: [0x10,0x43,0x21,0x6b]
 # CHECK-LE: vperm 2, 3, 4, 5                # encoding: [0x6b,0x21,0x43,0x10]
             vperm 2, 3, 4, 5
+
+# CHECK-BE: vpermxor 2, 3, 4, 5             # encoding: [0x10,0x43,0x21,0x6d]
+# CHECK-LE: vpermxor 2, 3, 4, 5             # encoding: [0x6d,0x21,0x43,0x10]
+            vpermxor 2, 3, 4, 5
+
+# CHECK-BE: vsbox 2, 5                      # encoding: [0x10,0x45,0x05,0xc8]
+# CHECK-LE: vsbox 2, 5                      # encoding: [0xc8,0x05,0x45,0x10]
+            vsbox 2, 5
+
+# CHECK-BE: vcipher 2, 5, 17                # encoding: [0x10,0x45,0x8d,0x08]
+# CHECK-LE: vcipher 2, 5, 17                # encoding: [0x08,0x8d,0x45,0x10]
+            vcipher 2, 5, 17
+
+# CHECK-BE: vcipherlast 2, 5, 17            # encoding: [0x10,0x45,0x8d,0x09]
+# CHECK-LE: vcipherlast 2, 5, 17            # encoding: [0x09,0x8d,0x45,0x10]
+            vcipherlast 2, 5, 17
+
+# CHECK-BE: vncipher 2, 5, 17               # encoding: [0x10,0x45,0x8d,0x48]
+# CHECK-LE: vncipher 2, 5, 17               # encoding: [0x48,0x8d,0x45,0x10]
+            vncipher 2, 5, 17
+
+# CHECK-BE: vncipherlast 2, 5, 17           # encoding: [0x10,0x45,0x8d,0x49]
+# CHECK-LE: vncipherlast 2, 5, 17           # encoding: [0x49,0x8d,0x45,0x10]
+            vncipherlast 2, 5, 17
+
+# CHECK-BE: vpmsumb 2, 5, 17                # encoding: [0x10,0x45,0x8c,0x08]
+# CHECK-LE: vpmsumb 2, 5, 17                # encoding: [0x08,0x8c,0x45,0x10]
+            vpmsumb 2, 5, 17
+
+# CHECK-BE: vpmsumh 2, 5, 17                # encoding: [0x10,0x45,0x8c,0x48]
+# CHECK-LE: vpmsumh 2, 5, 17                # encoding: [0x48,0x8c,0x45,0x10]
+            vpmsumh 2, 5, 17
+
+# CHECK-BE: vpmsumw 2, 5, 17                # encoding: [0x10,0x45,0x8c,0x88]
+# CHECK-LE: vpmsumw 2, 5, 17                # encoding: [0x88,0x8c,0x45,0x10]
+            vpmsumw 2, 5, 17
+
+# CHECK-BE: vpmsumd 2, 5, 17                # encoding: [0x10,0x45,0x8c,0xc8]
+# CHECK-LE: vpmsumd 2, 5, 17                # encoding: [0xc8,0x8c,0x45,0x10]
+            vpmsumd 2, 5, 17
+
+# CHECK-BE: vshasigmaw 2, 3, 0, 11          # encoding: [0x10,0x43,0x5e,0x82]
+# CHECK-LE: vshasigmaw 2, 3, 0, 11          # encoding: [0x82,0x5e,0x43,0x10]
+            vshasigmaw 2, 3, 0, 11
+
+# CHECK-BE: vshasigmad 2, 3, 1, 15          # encoding: [0x10,0x43,0xfe,0xc2]
+# CHECK-LE: vshasigmad 2, 3, 1, 15          # encoding: [0xc2,0xfe,0x43,0x10]
+            vshasigmad 2, 3, 1, 15
+
 # CHECK-BE: vsel 2, 3, 4, 5                 # encoding: [0x10,0x43,0x21,0x6a]
 # CHECK-LE: vsel 2, 3, 4, 5                 # encoding: [0x6a,0x21,0x43,0x10]
             vsel 2, 3, 4, 5

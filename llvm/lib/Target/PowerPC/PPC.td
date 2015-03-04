@@ -112,6 +112,9 @@ def FeatureVSX       : SubtargetFeature<"vsx","HasVSX", "true",
 def FeatureP8Altivec : SubtargetFeature<"power8-altivec", "HasP8Altivec", "true",
                                         "Enable POWER8 Altivec instructions",
                                         [FeatureAltivec]>;
+def FeatureP8Crypto : SubtargetFeature<"crypto", "HasP8Crypto", "true",
+                                        "Enable POWER8 Crypto instructions",
+                                        [FeatureP8Altivec]>;
 def FeatureP8Vector  : SubtargetFeature<"power8-vector", "HasP8Vector", "true",
                                         "Enable POWER8 vector instructions",
                                         [FeatureVSX, FeatureP8Altivec]>;
@@ -258,7 +261,7 @@ def ProcessorFeatures {
         FeatureFRE, FeatureFRES, FeatureFRSQRTE, FeatureFRSQRTES,
         FeatureRecipPrec, FeatureSTFIWX, FeatureLFIWAX,
         FeatureFPRND, FeatureFPCVT, FeatureISEL,
-        FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX,
+        FeaturePOPCNTD, FeatureCMPB, FeatureLDBRX, FeatureP8Crypto,
         Feature64Bit /*, Feature64BitRegs */, FeatureICBT,
         DeprecatedMFTB, DeprecatedDST];
 }

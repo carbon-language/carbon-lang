@@ -446,6 +446,15 @@ def crrc : RegisterOperand<CRRC> {
   let ParserMatchClass = PPCRegCRRCAsmOperand;
 }
 
+def PPCU1ImmAsmOperand : AsmOperandClass {
+  let Name = "U1Imm"; let PredicateMethod = "isU1Imm";
+  let RenderMethod = "addImmOperands";
+}
+def u1imm   : Operand<i32> {
+  let PrintMethod = "printU1ImmOperand";
+  let ParserMatchClass = PPCU1ImmAsmOperand;
+}
+
 def PPCU2ImmAsmOperand : AsmOperandClass {
   let Name = "U2Imm"; let PredicateMethod = "isU2Imm";
   let RenderMethod = "addImmOperands";

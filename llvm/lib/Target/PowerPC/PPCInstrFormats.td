@@ -1470,6 +1470,39 @@ class VXForm_5<bits<11> xo, dag OOL, dag IOL, string asmstr,
   let Inst{21-31} = xo;
 }
 
+/// VXForm_CR - VX crypto instructions with "VRT, VRA, ST, SIX"
+class VXForm_CR<bits<11> xo, dag OOL, dag IOL, string asmstr,
+               InstrItinClass itin, list<dag> pattern>
+    : I<4, OOL, IOL, asmstr, itin> {
+  bits<5> VD;
+  bits<5> VA;
+  bits<1> ST;
+  bits<4> SIX;
+  
+  let Pattern = pattern;
+  
+  let Inst{6-10}  = VD;
+  let Inst{11-15} = VA;
+  let Inst{16} =  ST;
+  let Inst{17-20} = SIX;
+  let Inst{21-31} = xo;
+}
+
+/// VXForm_BX - VX crypto instructions with "VRT, VRA, 0 - like vsbox"
+class VXForm_BX<bits<11> xo, dag OOL, dag IOL, string asmstr,
+               InstrItinClass itin, list<dag> pattern>
+    : I<4, OOL, IOL, asmstr, itin> {
+  bits<5> VD;
+  bits<5> VA;
+  
+  let Pattern = pattern;
+  
+  let Inst{6-10}  = VD;
+  let Inst{11-15} = VA;
+  let Inst{16-20} = 0;
+  let Inst{21-31} = xo;
+}
+
 // E-4 VXR-Form
 class VXRForm_1<bits<10> xo, dag OOL, dag IOL, string asmstr,
                InstrItinClass itin, list<dag> pattern>

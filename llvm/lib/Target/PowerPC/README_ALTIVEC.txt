@@ -211,6 +211,51 @@ vector float f(vector float a, vector float b) {
 
 //===----------------------------------------------------------------------===//
 
+We should do a little better with eliminating dead stores.
+The stores to the stack are dead since %a and %b are not needed
+
+; Function Attrs: nounwind
+define <16 x i8> @test_vpmsumb() #0 {
+  entry:
+  %a = alloca <16 x i8>, align 16
+  %b = alloca <16 x i8>, align 16
+  store <16 x i8> <i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 8, i8 9, i8 10, i8 11, i8 12, i8 13, i8 14, i8 15, i8 16>, <16 x i8>* %a, align 16
+  store <16 x i8> <i8 113, i8 114, i8 115, i8 116, i8 117, i8 118, i8 119, i8 120, i8 121, i8 122, i8 123, i8 124, i8 125, i8 126, i8 127, i8 112>, <16 x i8>* %b, align 16
+  %0 = load <16 x i8>* %a, align 16
+  %1 = load <16 x i8>* %b, align 16
+  %2 = call <16 x i8> @llvm.ppc.altivec.crypto.vpmsumb(<16 x i8> %0, <16 x i8> %1)
+  ret <16 x i8> %2
+}
+
+
+; Function Attrs: nounwind readnone
+declare <16 x i8> @llvm.ppc.altivec.crypto.vpmsumb(<16 x i8>, <16 x i8>) #1
+
+
+Produces the following code with -mtriple=powerpc64-unknown-linux-gnu:
+# BB#0:                                 # %entry
+    addis 3, 2, .LCPI0_0@toc@ha
+    addis 4, 2, .LCPI0_1@toc@ha
+    addi 3, 3, .LCPI0_0@toc@l
+    addi 4, 4, .LCPI0_1@toc@l
+    lxvw4x 0, 0, 3
+    addi 3, 1, -16
+    lxvw4x 35, 0, 4
+    stxvw4x 0, 0, 3
+    ori 2, 2, 0
+    lxvw4x 34, 0, 3
+    addi 3, 1, -32
+    stxvw4x 35, 0, 3
+    vpmsumb 2, 2, 3
+    blr
+    .long   0
+    .quad   0
+
+The two stxvw4x instructions are not needed.
+With -mtriple=powerpc64le-unknown-linux-gnu, the associated permutes
+are present too.
+//===----------------------------------------------------------------------===//
+
 The following example is found in test/CodeGen/PowerPC/vec_add_sub_doubleword.ll:
 
 define <2 x i64> @increment_by_val(<2 x i64> %x, i64 %val) nounwind {

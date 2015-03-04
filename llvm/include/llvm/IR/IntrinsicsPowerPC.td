@@ -73,7 +73,7 @@ class PowerPC_Vec_FFF_Intrinsic<string GCCIntSuffix>
                           [llvm_v4f32_ty], [llvm_v4f32_ty, llvm_v4f32_ty],
                           [IntrNoMem]>;
 
-/// PowerPC_Vec_BBB_Intrinsic - A PowerPC intrinsic that takes two v16f8
+/// PowerPC_Vec_BBB_Intrinsic - A PowerPC intrinsic that takes two v16i8
 /// vectors and returns one.  These intrinsics have no side effects.
 class PowerPC_Vec_BBB_Intrinsic<string GCCIntSuffix> 
   : PowerPC_Vec_Intrinsic<GCCIntSuffix,
@@ -125,7 +125,6 @@ class PowerPC_VSX_Sca_DDD_Intrinsic<string GCCIntSuffix>
   : PowerPC_VSX_Intrinsic<GCCIntSuffix,
                           [llvm_double_ty], [llvm_double_ty, llvm_double_ty],
                           [IntrNoMem]>;
-
 
 //===----------------------------------------------------------------------===//
 // PowerPC Altivec Intrinsic Definitions.
@@ -559,6 +558,41 @@ def int_ppc_altivec_vlogefp   : PowerPC_Vec_FF_Intrinsic<"vlogefp">;
 def int_ppc_altivec_vrefp     : PowerPC_Vec_FF_Intrinsic<"vrefp">;
 def int_ppc_altivec_vrsqrtefp : PowerPC_Vec_FF_Intrinsic<"vrsqrtefp">;
 
+// Power8 Intrinsics
+// Crypto
+let TargetPrefix = "ppc" in {  // All PPC intrinsics start with "llvm.ppc.".
+  def int_ppc_altivec_crypto_vsbox :
+              GCCBuiltin<"__builtin_altivec_crypto_vsbox">,
+              Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty], [IntrNoMem]>;
+  def int_ppc_altivec_crypto_vpermxor :
+              GCCBuiltin<"__builtin_altivec_crypto_vpermxor">,
+              Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty,
+                         llvm_v16i8_ty, llvm_v16i8_ty], [IntrNoMem]>;
+
+// These need diagnostics for invalid arguments so don't inherit from GCCBuiltin
+def int_ppc_altivec_crypto_vshasigmad :
+            Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty,
+                       llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+def int_ppc_altivec_crypto_vshasigmaw :
+            Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty,
+                       llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+}
+def int_ppc_altivec_crypto_vcipher :
+            PowerPC_Vec_DDD_Intrinsic<"crypto_vcipher">;
+def int_ppc_altivec_crypto_vcipherlast :
+            PowerPC_Vec_DDD_Intrinsic<"crypto_vcipherlast">;
+def int_ppc_altivec_crypto_vncipher :
+            PowerPC_Vec_DDD_Intrinsic<"crypto_vncipher">;
+def int_ppc_altivec_crypto_vncipherlast :
+            PowerPC_Vec_DDD_Intrinsic<"crypto_vncipherlast">;
+def int_ppc_altivec_crypto_vpmsumb :
+            PowerPC_Vec_BBB_Intrinsic<"crypto_vpmsumb">;
+def int_ppc_altivec_crypto_vpmsumh :
+            PowerPC_Vec_HHH_Intrinsic<"crypto_vpmsumh">;
+def int_ppc_altivec_crypto_vpmsumw :
+            PowerPC_Vec_WWW_Intrinsic<"crypto_vpmsumw">;
+def int_ppc_altivec_crypto_vpmsumd :
+            PowerPC_Vec_DDD_Intrinsic<"crypto_vpmsumd">;
 
 //===----------------------------------------------------------------------===//
 // PowerPC VSX Intrinsic Definitions.
