@@ -561,6 +561,15 @@ namespace llvm {
     /// pointer.
     bool checkValidity(const SCEV *S) const;
 
+    // Return true if `ExtendOpTy`({`Start`,+,`Step`}) can be proved to be equal
+    // to {`ExtendOpTy`(`Start`),+,`ExtendOpTy`(`Step`)}.  This is equivalent to
+    // proving no signed (resp. unsigned) wrap in {`Start`,+,`Step`} if
+    // `ExtendOpTy` is `SCEVSignExtendExpr` (resp. `SCEVZeroExtendExpr`).
+    //
+    template<typename ExtendOpTy>
+    bool proveNoWrapByVaryingStart(const SCEV *Start, const SCEV *Step,
+                                   const Loop *L);
+
   public:
     static char ID; // Pass identification, replacement for typeid
     ScalarEvolution();

@@ -1325,6 +1325,85 @@ static const SCEV *getExtendAddRecStart(const SCEVAddRecExpr *AR, Type *Ty,
                         (SE->*GetExtendExpr)(PreStart, Ty));
 }
 
+// Try to prove away overflow by looking at "nearby" add recurrences.  A
+// motivating example for this rule: if we know `{0,+,4}` is `ult` `-1` and it
+// does not itself wrap then we can conclude that `{1,+,4}` is `nuw`.
+//
+// Formally:
+//
+//     {S,+,X} == {S-T,+,X} + T
+//  => Ext({S,+,X}) == Ext({S-T,+,X} + T)
+//
+// If ({S-T,+,X} + T) does not overflow  ... (1)
+//
+//  RHS == Ext({S-T,+,X} + T) == Ext({S-T,+,X}) + Ext(T)
+//
+// If {S-T,+,X} does not overflow  ... (2)
+//
+//  RHS == Ext({S-T,+,X}) + Ext(T) == {Ext(S-T),+,Ext(X)} + Ext(T)
+//      == {Ext(S-T)+Ext(T),+,Ext(X)}
+//
+// If (S-T)+T does not overflow  ... (3)
+//
+//  RHS == {Ext(S-T)+Ext(T),+,Ext(X)} == {Ext(S-T+T),+,Ext(X)}
+//      == {Ext(S),+,Ext(X)} == LHS
+//
+// Thus, if (1), (2) and (3) are true for some T, then
+//   Ext({S,+,X}) == {Ext(S),+,Ext(X)}
+//
+// (3) is implied by (1) -- "(S-T)+T does not overflow" is simply "({S-T,+,X}+T)
+// does not overflow" restricted to the 0th iteration.  Therefore we only need
+// to check for (1) and (2).
+//
+// In the current context, S is `Start`, X is `Step`, Ext is `ExtendOpTy` and T
+// is `Delta` (defined below).
+//
+template <typename ExtendOpTy>
+bool ScalarEvolution::proveNoWrapByVaryingStart(const SCEV *Start,
+                                                const SCEV *Step,
+                                                const Loop *L) {
+  auto WrapType = ExtendOpTraits<ExtendOpTy>::WrapType;
+
+  // We restrict `Start` to a constant to prevent SCEV from spending too much
+  // time here.  It is correct (but more expensive) to continue with a
+  // non-constant `Start` and do a general SCEV subtraction to compute
+  // `PreStart` below.
+  //
+  const SCEVConstant *StartC = dyn_cast<SCEVConstant>(Start);
+  if (!StartC)
+    return false;
+
+  APInt StartAI = StartC->getValue()->getValue();
+
+  for (unsigned Delta : {-2, -1, 1, 2}) {
+    const SCEV *PreStart = getConstant(StartAI - Delta);
+
+    // Give up if we don't already have the add recurrence we need because
+    // actually constructing an add recurrence is relatively expensive.
+    const SCEVAddRecExpr *PreAR = [&]() {
+      FoldingSetNodeID ID;
+      ID.AddInteger(scAddRecExpr);
+      ID.AddPointer(PreStart);
+      ID.AddPointer(Step);
+      ID.AddPointer(L);
+      void *IP = nullptr;
+      return static_cast<SCEVAddRecExpr *>(
+        UniqueSCEVs.FindNodeOrInsertPos(ID, IP));
+    }();
+
+    if (PreAR && PreAR->getNoWrapFlags(WrapType)) {  // proves (2)
+      const SCEV *DeltaS = getConstant(StartC->getType(), Delta);
+      ICmpInst::Predicate Pred = ICmpInst::BAD_ICMP_PREDICATE;
+      const SCEV *Limit = ExtendOpTraits<ExtendOpTy>::getOverflowLimitForStep(
+          DeltaS, &Pred, this);
+      if (Limit && isKnownPredicate(Pred, PreAR, Limit))  // proves (1)
+        return true;
+    }
+  }
+
+  return false;
+}
+
 const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
                                                Type *Ty) {
   assert(getTypeSizeInBits(Op->getType()) < getTypeSizeInBits(Ty) &&
@@ -1472,6 +1551,13 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
                 getSignExtendExpr(Step, Ty), L, AR->getNoWrapFlags());
           }
         }
+      }
+
+      if (proveNoWrapByVaryingStart<SCEVZeroExtendExpr>(Start, Step, L)) {
+        const_cast<SCEVAddRecExpr *>(AR)->setNoWrapFlags(SCEV::FlagNUW);
+        return getAddRecExpr(
+            getExtendAddRecStart<SCEVZeroExtendExpr>(AR, Ty, this),
+            getZeroExtendExpr(Step, Ty), L, AR->getNoWrapFlags());
       }
     }
 
@@ -1663,6 +1749,13 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
                                             L, AR->getNoWrapFlags());
           return getAddExpr(Start, getSignExtendExpr(NewAR, Ty));
         }
+      }
+
+      if (proveNoWrapByVaryingStart<SCEVSignExtendExpr>(Start, Step, L)) {
+        const_cast<SCEVAddRecExpr *>(AR)->setNoWrapFlags(SCEV::FlagNSW);
+        return getAddRecExpr(
+            getExtendAddRecStart<SCEVSignExtendExpr>(AR, Ty, this),
+            getSignExtendExpr(Step, Ty), L, AR->getNoWrapFlags());
       }
     }
 
