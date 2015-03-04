@@ -143,6 +143,9 @@ if (BUILD_SHARED_LIBS)
     LLVMAnalysis
     LLVMipo
   )
+  link_directories(
+    ${LLVM_LIBRARY_DIR}
+  )
 endif()
 
 # Build a monolithic Polly.a and a thin module LLVMPolly.moduleext that links to
