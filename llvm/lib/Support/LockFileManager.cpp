@@ -186,8 +186,9 @@ LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
   Interval.tv_sec = 0;
   Interval.tv_nsec = 1000000;
 #endif
-  // Don't wait more than one minute for the file to appear.
-  const unsigned MaxSeconds = 60;
+  // Don't wait more than five minutes per iteration. Total timeout for the file
+  // to appear is ~8.5 mins.
+  const unsigned MaxSeconds = 5*60;
   do {
     // Sleep for the designated interval, to allow the owning process time to
     // finish up and remove the lock file.
