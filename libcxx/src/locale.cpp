@@ -1016,7 +1016,7 @@ extern "C" const int ** __ctype_tolower_loc();
 extern "C" const int ** __ctype_toupper_loc();
 #endif
 
-#ifdef _LIBCPP_HAS_DEFAULT_RUNE_TABLE
+#ifdef _LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE
 const ctype<char>::mask*
 ctype<char>::classic_table()  _NOEXCEPT
 {
