@@ -25,11 +25,11 @@ def target_feature : Separate<["-"], "target-feature">,
   HelpText<"Target specific attributes">;
 def triple : Separate<["-"], "triple">,
   HelpText<"Specify target triple (e.g. i686-apple-darwin9)">;
+def target_abi : Separate<["-"], "target-abi">,
+  HelpText<"Target a particular ABI type">;
 
 }
 
-def target_abi : Separate<["-"], "target-abi">,
-  HelpText<"Target a particular ABI type">;
 def target_linker_version : Separate<["-"], "target-linker-version">,
   HelpText<"Target linker version">;
 def triple_EQ : Joined<["-"], "triple=">, Alias<triple>;
