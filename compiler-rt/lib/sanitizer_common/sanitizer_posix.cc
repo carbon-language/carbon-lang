@@ -48,7 +48,7 @@ uptr GetMmapGranularity() {
 #if SANITIZER_WORDSIZE == 32
 // Take care of unusable kernel area in top gigabyte.
 static uptr GetKernelAreaSize() {
-#if SANITIZER_LINUX
+#if SANITIZER_LINUX && !SANITIZER_X32
   const uptr gbyte = 1UL << 30;
 
   // Firstly check if there are writable segments
@@ -80,7 +80,7 @@ static uptr GetKernelAreaSize() {
   return gbyte;
 #else
   return 0;
-#endif  // SANITIZER_LINUX
+#endif  // SANITIZER_LINUX && !SANITIZER_X32
 }
 #endif  // SANITIZER_WORDSIZE == 32
 
