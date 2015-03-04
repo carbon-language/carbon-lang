@@ -1584,10 +1584,10 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
 bool MipsAsmParser::needsExpansion(MCInst &Inst) {
 
   switch (Inst.getOpcode()) {
-  case Mips::LoadImm32Reg:
-  case Mips::LoadAddr32Imm:
-  case Mips::LoadAddr32Reg:
-  case Mips::LoadImm64Reg:
+  case Mips::LoadImm32:
+  case Mips::LoadImm64:
+  case Mips::LoadAddrImm32:
+  case Mips::LoadAddrReg32:
   case Mips::B_MM_Pseudo:
   case Mips::LWM_MM:
   case Mips::SWM_MM:
@@ -1603,17 +1603,17 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
                                       SmallVectorImpl<MCInst> &Instructions) {
   switch (Inst.getOpcode()) {
   default: llvm_unreachable("unimplemented expansion");
-  case Mips::LoadImm32Reg:
+  case Mips::LoadImm32:
     return expandLoadImm(Inst, IDLoc, Instructions);
-  case Mips::LoadImm64Reg:
+  case Mips::LoadImm64:
     if (!isGP64bit()) {
       Error(IDLoc, "instruction requires a 64-bit architecture");
       return true;
     }
     return expandLoadImm(Inst, IDLoc, Instructions);
-  case Mips::LoadAddr32Imm:
+  case Mips::LoadAddrImm32:
     return expandLoadAddressImm(Inst, IDLoc, Instructions);
-  case Mips::LoadAddr32Reg:
+  case Mips::LoadAddrReg32:
     return expandLoadAddressReg(Inst, IDLoc, Instructions);
   case Mips::B_MM_Pseudo:
     return expandUncondBranchMMPseudo(Inst, IDLoc, Instructions);

@@ -604,7 +604,7 @@ def : MipsInstAlias<"syncws",     (SYNC 0x5), 0>;
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//
 
-class LoadImm64<string instr_asm, Operand Od, RegisterOperand RO> :
+class LoadImmediate64<string instr_asm, Operand Od, RegisterOperand RO> :
   MipsAsmPseudoInst<(outs RO:$rt), (ins Od:$imm64),
                      !strconcat(instr_asm, "\t$rt, $imm64")> ;
-def LoadImm64Reg : LoadImm64<"dli", imm64, GPR64Opnd>;
+def LoadImm64 : LoadImmediate64<"dli", imm64, GPR64Opnd>;

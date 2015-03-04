@@ -1639,20 +1639,21 @@ def : MipsInstAlias<"sync",
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//
 
-class LoadImm32<string instr_asm, Operand Od, RegisterOperand RO> :
+class LoadImmediate32<string instr_asm, Operand Od, RegisterOperand RO> :
   MipsAsmPseudoInst<(outs RO:$rt), (ins Od:$imm32),
                      !strconcat(instr_asm, "\t$rt, $imm32")> ;
-def LoadImm32Reg : LoadImm32<"li", uimm5, GPR32Opnd>;
+def LoadImm32 : LoadImmediate32<"li", uimm5, GPR32Opnd>;
 
-class LoadAddress<string instr_asm, Operand MemOpnd, RegisterOperand RO> :
+class LoadAddressFromReg32<string instr_asm, Operand MemOpnd,
+                           RegisterOperand RO> :
   MipsAsmPseudoInst<(outs RO:$rt), (ins MemOpnd:$addr),
                      !strconcat(instr_asm, "\t$rt, $addr")> ;
-def LoadAddr32Reg : LoadAddress<"la", mem, GPR32Opnd>;
+def LoadAddrReg32 : LoadAddressFromReg32<"la", mem, GPR32Opnd>;
 
-class LoadAddressImm<string instr_asm, Operand Od, RegisterOperand RO> :
+class LoadAddressFromImm32<string instr_asm, Operand Od, RegisterOperand RO> :
   MipsAsmPseudoInst<(outs RO:$rt), (ins Od:$imm32),
                      !strconcat(instr_asm, "\t$rt, $imm32")> ;
-def LoadAddr32Imm : LoadAddressImm<"la", uimm5, GPR32Opnd>;
+def LoadAddrImm32 : LoadAddressFromImm32<"la", uimm5, GPR32Opnd>;
 
 def JalTwoReg : MipsAsmPseudoInst<(outs GPR32Opnd:$rd), (ins GPR32Opnd:$rs),
                       "jal\t$rd, $rs"> ;
