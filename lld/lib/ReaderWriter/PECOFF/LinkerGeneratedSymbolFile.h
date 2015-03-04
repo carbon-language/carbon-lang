@@ -159,7 +159,7 @@ public:
       : VirtualArchiveLibraryFile("__imp_"), _is64(ctx.is64Bit()),
         _ordinal(0) {}
 
-  const File *find(StringRef sym, bool dataSymbolOnly) const override {
+  File *find(StringRef sym, bool dataSymbolOnly) override {
     std::string prefix = "__imp_";
     if (!sym.startswith(prefix))
       return nullptr;
@@ -212,7 +212,7 @@ public:
       _exportedSyms.insert(desc.name);
   }
 
-  const File *find(StringRef sym, bool dataSymbolOnly) const override {
+  File *find(StringRef sym, bool dataSymbolOnly) override {
     typedef PECOFFLinkingContext::ExportDesc ExportDesc;
     if (_exportedSyms.count(sym) == 0)
       return nullptr;

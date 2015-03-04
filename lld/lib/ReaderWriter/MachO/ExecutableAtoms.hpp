@@ -95,7 +95,7 @@ public:
     return std::error_code();
   }
 
-  const File *find(StringRef sym, bool dataSymbolOnly) const override {
+  File *find(StringRef sym, bool dataSymbolOnly) override {
     if (sym.equals("___dso_handle") || sym.equals(_machHeaderSymbolName)) {
       _definedAtoms._atoms.push_back(new (allocator()) MachODefinedAtom(
           *this, sym, DefinedAtom::scopeLinkageUnit,

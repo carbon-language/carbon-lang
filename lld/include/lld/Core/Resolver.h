@@ -41,13 +41,13 @@ public:
 
   // Handle files, this adds atoms from the current file thats
   // being processed by the resolver
-  bool handleFile(const File &);
+  bool handleFile(File &);
 
   // Handle an archive library file.
-  bool handleArchiveFile(const File &);
+  bool handleArchiveFile(File &);
 
   // Handle a shared library file.
-  void handleSharedLibrary(const File &);
+  void handleSharedLibrary(File &);
 
   /// @brief do work of merging and resolving and return list
   bool resolve();

@@ -43,7 +43,7 @@ public:
 
   /// \brief Check if any member of the archive contains an Atom with the
   /// specified name and return the File object for that member, or nullptr.
-  const File *find(StringRef name, bool dataSymbolOnly) const override {
+  File *find(StringRef name, bool dataSymbolOnly) override {
     auto member = _symbolMemberMap.find(name);
     if (member == _symbolMemberMap.end())
       return nullptr;
@@ -63,8 +63,8 @@ public:
       std::lock_guard<std::mutex> lock(_mutex);
       auto it = _preloaded.find(memberStart);
       if (it != _preloaded.end()) {
-        std::unique_ptr<Future<const File *>> &p = it->second;
-        Future<const File *> *future = p.get();
+        std::unique_ptr<Future<File *>> &p = it->second;
+        Future<File *> *future = p.get();
         return future->get();
       }
     }
@@ -94,8 +94,8 @@ public:
       return;
 
     // Instantiate the member
-    auto *future = new Future<const File *>();
-    _preloaded[memberStart] = std::unique_ptr<Future<const File *>>(future);
+    auto *future = new Future<File *>();
+    _preloaded[memberStart] = std::unique_ptr<Future<File *>>(future);
 
     group.spawn([=] {
       std::unique_ptr<File> result;
@@ -249,16 +249,16 @@ private:
   std::shared_ptr<MemoryBuffer> _mb;
   const Registry &_registry;
   std::unique_ptr<Archive> _archive;
-  mutable MemberMap _symbolMemberMap;
-  mutable InstantiatedSet _membersInstantiated;
+  MemberMap _symbolMemberMap;
+  InstantiatedSet _membersInstantiated;
   atom_collection_vector<DefinedAtom> _definedAtoms;
   atom_collection_vector<UndefinedAtom> _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
   bool _logLoading;
-  mutable std::vector<std::unique_ptr<MemoryBuffer>> _memberBuffers;
-  mutable std::map<const char *, std::unique_ptr<Future<const File *>>> _preloaded;
-  mutable std::mutex _mutex;
+  std::vector<std::unique_ptr<MemoryBuffer>> _memberBuffers;
+  std::map<const char *, std::unique_ptr<Future<File *>>> _preloaded;
+  std::mutex _mutex;
 };
 
 class ArchiveReader : public Reader {

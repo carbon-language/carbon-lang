@@ -27,7 +27,7 @@
 
 namespace lld {
 
-bool Resolver::handleFile(const File &file) {
+bool Resolver::handleFile(File &file) {
   bool undefAdded = false;
   for (const DefinedAtom *atom : file.defined())
     doDefinedAtom(*atom);
@@ -73,25 +73,25 @@ void Resolver::forEachUndefines(bool searchForOverrides,
   } while (undefineGenCount != _symbolTable.size());
 }
 
-bool Resolver::handleArchiveFile(const File &file) {
-  const ArchiveLibraryFile *archiveFile = cast<ArchiveLibraryFile>(&file);
+bool Resolver::handleArchiveFile(File &file) {
+  ArchiveLibraryFile *archiveFile = cast<ArchiveLibraryFile>(&file);
   bool searchForOverrides =
       _ctx.searchArchivesToOverrideTentativeDefinitions();
   bool undefAdded = false;
   forEachUndefines(searchForOverrides,
                    [&](StringRef undefName, bool dataSymbolOnly) {
-    if (const File *member = archiveFile->find(undefName, dataSymbolOnly)) {
+    if (File *member = archiveFile->find(undefName, dataSymbolOnly)) {
       member->setOrdinal(_ctx.getNextOrdinalAndIncrement());
-      const_cast<File *>(member)->beforeLink();
+      member->beforeLink();
       undefAdded = handleFile(*member) || undefAdded;
     }
   });
   return undefAdded;
 }
 
-void Resolver::handleSharedLibrary(const File &file) {
+void Resolver::handleSharedLibrary(File &file) {
   // Add all the atoms from the shared library
-  const SharedLibraryFile *sharedLibrary = cast<SharedLibraryFile>(&file);
+  SharedLibraryFile *sharedLibrary = cast<SharedLibraryFile>(&file);
   handleFile(*sharedLibrary);
   bool searchForOverrides =
       _ctx.searchSharedLibrariesToOverrideTentativeDefinitions();

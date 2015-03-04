@@ -620,16 +620,16 @@ template <> struct MappingTraits<const lld::File *> {
     const atom_collection<lld::AbsoluteAtom> &absolute() const override {
       return _noAbsoluteAtoms;
     }
-    const File *find(StringRef name, bool dataSymbolOnly) const override {
+    File *find(StringRef name, bool dataSymbolOnly) override {
       for (const ArchMember &member : _members) {
         for (const lld::DefinedAtom *atom : member._content->defined()) {
           if (name == atom->name()) {
             if (!dataSymbolOnly)
-              return member._content;
+              return const_cast<File *>(member._content);
             switch (atom->contentType()) {
             case lld::DefinedAtom::typeData:
             case lld::DefinedAtom::typeZeroFill:
-              return member._content;
+              return const_cast<File *>(member._content);
             default:
               break;
             }
