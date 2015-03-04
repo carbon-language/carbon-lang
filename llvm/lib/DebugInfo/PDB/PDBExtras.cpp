@@ -303,7 +303,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const Variant &Value) {
       OS << Value.Int64;
       break;
     case PDB_VariantType::Int8:
-      OS << Value.Int8;
+      OS << static_cast<int>(Value.Int8);
       break;
     case PDB_VariantType::Single:
       OS << Value.Single;
@@ -318,7 +318,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const Variant &Value) {
       OS << Value.UInt64;
       break;
     case PDB_VariantType::UInt8:
-      OS << Value.UInt8;
+      OS << static_cast<unsigned>(Value.UInt8);
       break;
     default:
       OS << Value.Type;

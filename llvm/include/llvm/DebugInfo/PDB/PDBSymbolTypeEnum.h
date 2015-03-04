@@ -26,6 +26,9 @@ public:
 
   void dump(PDBSymDumper &Dumper) const override;
 
+  std::unique_ptr<PDBSymbolTypeUDT> getClassParent() const;
+  std::unique_ptr<PDBSymbolTypeBuiltin> getUnderlyingType() const;
+
   FORWARD_SYMBOL_METHOD(getBuiltinType)
   FORWARD_SYMBOL_METHOD(getClassParentId)
   FORWARD_SYMBOL_METHOD(getUnmodifiedTypeId)

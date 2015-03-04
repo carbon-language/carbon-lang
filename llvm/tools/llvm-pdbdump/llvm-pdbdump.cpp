@@ -67,10 +67,6 @@ cl::opt<bool> Globals("globals", cl::desc("Dump global symbols"),
                       cl::cat(TypeCategory));
 cl::opt<bool> Types("types", cl::desc("Display types"), cl::cat(TypeCategory));
 cl::opt<bool>
-    ClassDefs("class-definitions",
-              cl::desc("Display full class definitions (implies -types)"),
-              cl::cat(TypeCategory));
-cl::opt<bool>
     All("all", cl::desc("Implies all other options in 'Symbol Types' category"),
         cl::cat(TypeCategory));
 
@@ -94,6 +90,12 @@ cl::opt<bool>
     ExcludeSystemLibraries("no-system-libs",
                            cl::desc("Don't show symbols from system libraries"),
                            cl::cat(FilterCategory));
+cl::opt<bool> NoClassDefs("no-class-definitions",
+                          cl::desc("Don't display full class definitions"),
+                          cl::cat(FilterCategory));
+cl::opt<bool> NoEnumDefs("no-enum-definitions",
+                         cl::desc("Don't display full enum definitions"),
+                         cl::cat(FilterCategory));
 }
 
 static void dumpInput(StringRef Path) {
@@ -171,7 +173,7 @@ static void dumpInput(StringRef Path) {
     Printer.NewLine();
     WithColor(Printer, PDB_ColorItem::SectionHeader).get() << "---TYPES---";
     Printer.Indent();
-    TypeDumper Dumper(Printer, opts::ClassDefs);
+    TypeDumper Dumper(Printer);
     Dumper.start(*GlobalScope);
     Printer.Unindent();
   }
@@ -233,14 +235,11 @@ int main(int argc_, const char *argv_[]) {
   llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   cl::ParseCommandLineOptions(argv.size(), argv.data(), "LLVM PDB Dumper\n");
-  if (opts::ClassDefs)
-    opts::Types = true;
   if (opts::All) {
     opts::Compilands = true;
     opts::Symbols = true;
     opts::Globals = true;
     opts::Types = true;
-    opts::ClassDefs = true;
   }
   if (opts::ExcludeCompilerGenerated) {
     opts::ExcludeTypes.push_back("__vc_attributes");

@@ -18,11 +18,12 @@ extern llvm::cl::opt<bool> Compilands;
 extern llvm::cl::opt<bool> Symbols;
 extern llvm::cl::opt<bool> Globals;
 extern llvm::cl::opt<bool> Types;
-extern llvm::cl::opt<bool> ClassDefs;
 extern llvm::cl::opt<bool> All;
 
 extern llvm::cl::opt<bool> ExcludeCompilerGenerated;
 
+extern llvm::cl::opt<bool> NoClassDefs;
+extern llvm::cl::opt<bool> NoEnumDefs;
 extern llvm::cl::list<std::string> ExcludeTypes;
 extern llvm::cl::list<std::string> ExcludeSymbols;
 extern llvm::cl::list<std::string> ExcludeCompilands;

@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClassDefinitionDumper.h"
+#include "EnumDumper.h"
 #include "FunctionDumper.h"
 #include "LinePrinter.h"
 #include "llvm-pdbdump.h"
@@ -173,8 +174,8 @@ void ClassDefinitionDumper::dump(const PDBSymbolTypeEnum &Symbol) {
     return;
 
   Printer.NewLine();
-  WithColor(Printer, PDB_ColorItem::Keyword).get() << "enum ";
-  WithColor(Printer, PDB_ColorItem::Type).get() << Symbol.getName();
+  EnumDumper Dumper(Printer);
+  Dumper.start(Symbol);
 }
 
 void ClassDefinitionDumper::dump(const PDBSymbolTypeTypedef &Symbol) {

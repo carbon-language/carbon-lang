@@ -9,21 +9,23 @@
 
 #include "TypeDumper.h"
 
+#include "BuiltinDumper.h"
 #include "ClassDefinitionDumper.h"
+#include "EnumDumper.h"
 #include "LinePrinter.h"
 #include "llvm-pdbdump.h"
 #include "TypedefDumper.h"
 
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolExe.h"
+#include "llvm/DebugInfo/PDB/PDBSymbolTypeBuiltin.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeEnum.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeTypedef.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeUDT.h"
 
 using namespace llvm;
 
-TypeDumper::TypeDumper(LinePrinter &P, bool ClassDefs)
-    : PDBSymDumper(true), Printer(P), FullClassDefs(ClassDefs) {}
+TypeDumper::TypeDumper(LinePrinter &P) : PDBSymDumper(true), Printer(P) {}
 
 void TypeDumper::start(const PDBSymbolExe &Exe) {
   auto Enums = Exe.findAllChildren<PDBSymbolTypeEnum>();
@@ -59,10 +61,13 @@ void TypeDumper::dump(const PDBSymbolTypeEnum &Symbol) {
     return;
   if (Printer.IsTypeExcluded(Symbol.getName()))
     return;
-  Printer.NewLine();
+  // Dump member enums when dumping their class definition.
+  if (Symbol.isNested())
+    return;
 
-  WithColor(Printer, PDB_ColorItem::Keyword).get() << "enum ";
-  WithColor(Printer, PDB_ColorItem::Identifier).get() << Symbol.getName();
+  Printer.NewLine();
+  EnumDumper Dumper(Printer);
+  Dumper.start(Symbol);
 }
 
 void TypeDumper::dump(const PDBSymbolTypeTypedef &Symbol) {
@@ -82,11 +87,11 @@ void TypeDumper::dump(const PDBSymbolTypeUDT &Symbol) {
 
   Printer.NewLine();
 
-  if (FullClassDefs) {
-    ClassDefinitionDumper Dumper(Printer);
-    Dumper.start(Symbol);
-  } else {
+  if (opts::NoClassDefs) {
     WithColor(Printer, PDB_ColorItem::Keyword).get() << "class ";
     WithColor(Printer, PDB_ColorItem::Identifier).get() << Symbol.getName();
+  } else {
+    ClassDefinitionDumper Dumper(Printer);
+    Dumper.start(Symbol);
   }
 }
