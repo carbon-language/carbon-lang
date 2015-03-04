@@ -12661,6 +12661,133 @@ vec_any_out(vector float __a, vector float __b)
   return __builtin_altivec_vcmpbfp_p(__CR6_EQ_REV, __a, __b);
 }
 
+/* Power 8 Crypto functions
+Note: We diverge from the current GCC implementation with regard
+to cryptography and related functions as follows:
+- Only the SHA and AES instructions and builtins are disabled by -mno-crypto
+- The remaining ones are only available on Power8 and up so
+  require -mpower8-vector
+The justification for this is that export requirements require that
+Category:Vector.Crypto is optional (i.e. compliant hardware may not provide
+support). As a result, we need to be able to turn off support for those.
+The remaining ones (currently controlled by -mcrypto for GCC) still
+need to be provided on compliant hardware even if Vector.Crypto is not
+provided.
+FIXME: the naming convention for the builtins will be adjusted due
+to the inconsistency (__builtin_crypto_ prefix on builtins that cannot be
+removed with -mno-crypto). This is under development.
+*/
+#ifdef __CRYPTO__
+static vector unsigned long long __attribute__((__always_inline__))
+__builtin_crypto_vsbox (vector unsigned long long __a)
+{
+  return __builtin_altivec_crypto_vsbox(__a);
+}
+
+static vector unsigned long long __attribute__((__always_inline__))
+__builtin_crypto_vcipher (vector unsigned long long __a,
+                          vector unsigned long long __b)
+{
+  return __builtin_altivec_crypto_vcipher(__a, __b);
+}
+
+static vector unsigned long long __attribute__((__always_inline__))
+__builtin_crypto_vcipherlast (vector unsigned long long __a,
+                              vector unsigned long long __b)
+{
+  return __builtin_altivec_crypto_vcipherlast(__a, __b);
+}
+
+static vector unsigned long long __attribute__((__always_inline__))
+__builtin_crypto_vncipher (vector unsigned long long __a,
+                           vector unsigned long long __b)
+{
+  return __builtin_altivec_crypto_vncipher(__a, __b);
+}
+
+static vector unsigned long long __attribute__((__always_inline__))
+__builtin_crypto_vncipherlast (vector unsigned long long __a,
+                               vector unsigned long long __b)
+{
+  return __builtin_altivec_crypto_vncipherlast(__a, __b);
+}
+
+
+#define __builtin_crypto_vshasigmad __builtin_altivec_crypto_vshasigmad
+#define __builtin_crypto_vshasigmaw __builtin_altivec_crypto_vshasigmaw
+#endif
+
+#ifdef __POWER8_VECTOR__
+static vector unsigned char __ATTRS_o_ai
+__builtin_crypto_vpermxor (vector unsigned char __a,
+                           vector unsigned char __b,
+                           vector unsigned char __c)
+{
+  return __builtin_altivec_crypto_vpermxor(__a, __b, __c);
+}
+
+static vector unsigned short __ATTRS_o_ai
+__builtin_crypto_vpermxor (vector unsigned short __a,
+                           vector unsigned short __b,
+                           vector unsigned short __c)
+{
+  return (vector unsigned short)
+          __builtin_altivec_crypto_vpermxor((vector unsigned char) __a,
+                                             (vector unsigned char) __b,
+                                             (vector unsigned char) __c);
+}
+
+static vector unsigned int __ATTRS_o_ai
+__builtin_crypto_vpermxor (vector unsigned int __a,
+                           vector unsigned int __b,
+                           vector unsigned int __c)
+{
+  return (vector unsigned int)
+          __builtin_altivec_crypto_vpermxor((vector unsigned char) __a,
+                                              (vector unsigned char) __b,
+                                              (vector unsigned char) __c);
+}
+
+static vector unsigned long long __ATTRS_o_ai
+__builtin_crypto_vpermxor (vector unsigned long long __a,
+                           vector unsigned long long __b,
+                           vector unsigned long long __c)
+{
+  return (vector unsigned long long)
+          __builtin_altivec_crypto_vpermxor((vector unsigned char) __a,
+                                              (vector unsigned char) __b,
+                                              (vector unsigned char) __c);
+}
+
+static vector unsigned char __ATTRS_o_ai
+__builtin_crypto_vpmsumb (vector unsigned char __a,
+                          vector unsigned char __b)
+{
+  return __builtin_altivec_crypto_vpmsumb(__a, __b);
+}
+
+static vector unsigned short __ATTRS_o_ai
+__builtin_crypto_vpmsumb (vector unsigned short __a,
+                          vector unsigned short __b)
+{
+  return __builtin_altivec_crypto_vpmsumh(__a, __b);
+}
+
+static vector unsigned int __ATTRS_o_ai
+__builtin_crypto_vpmsumb (vector unsigned int __a,
+                          vector unsigned int __b)
+{
+  return __builtin_altivec_crypto_vpmsumw(__a, __b);
+}
+
+static vector unsigned long long __ATTRS_o_ai
+__builtin_crypto_vpmsumb (vector unsigned long long __a,
+                          vector unsigned long long __b)
+{
+  return __builtin_altivec_crypto_vpmsumd(__a, __b);
+}
+#endif
+
 #undef __ATTRS_o_ai
 
 #endif /* __ALTIVEC_H */

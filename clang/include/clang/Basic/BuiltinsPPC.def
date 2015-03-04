@@ -204,6 +204,20 @@ BUILTIN(__builtin_altivec_vcmpgtsw_p, "iiV4SiV4Si", "")
 BUILTIN(__builtin_altivec_vcmpgtuw_p, "iiV4UiV4Ui", "")
 BUILTIN(__builtin_altivec_vcmpgtfp_p, "iiV4fV4f", "")
 
+// P8 Crypto built-ins.
+BUILTIN(__builtin_altivec_crypto_vsbox, "V2ULLiV2ULLi", "")
+BUILTIN(__builtin_altivec_crypto_vpermxor, "V16UcV16UcV16UcV16Uc", "")
+BUILTIN(__builtin_altivec_crypto_vshasigmaw, "V4UiV4UiIiIi", "")
+BUILTIN(__builtin_altivec_crypto_vshasigmad, "V2ULLiV2ULLiIiIi", "")
+BUILTIN(__builtin_altivec_crypto_vcipher, "V2ULLiV2ULLiV2ULLi", "")
+BUILTIN(__builtin_altivec_crypto_vcipherlast, "V2ULLiV2ULLiV2ULLi", "")
+BUILTIN(__builtin_altivec_crypto_vncipher, "V2ULLiV2ULLiV2ULLi", "")
+BUILTIN(__builtin_altivec_crypto_vncipherlast, "V2ULLiV2ULLiV2ULLi", "")
+BUILTIN(__builtin_altivec_crypto_vpmsumb, "V16UcV16UcV16Uc", "")
+BUILTIN(__builtin_altivec_crypto_vpmsumh, "V8UsV8UsV8Us", "")
+BUILTIN(__builtin_altivec_crypto_vpmsumw, "V4UiV4UiV4Ui", "")
+BUILTIN(__builtin_altivec_crypto_vpmsumd, "V2ULLiV2ULLiV2ULLi", "")
+
 // VSX built-ins.
 
 BUILTIN(__builtin_vsx_lxvd2x, "V2divC*", "")

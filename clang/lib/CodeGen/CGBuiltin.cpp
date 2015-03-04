@@ -6349,6 +6349,35 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
     llvm::Function *F = CGM.getIntrinsic(ID);
     return Builder.CreateCall(F, Ops, "");
   }
+  // P8 Crypto builtins
+  case PPC::BI__builtin_altivec_crypto_vshasigmaw:
+  case PPC::BI__builtin_altivec_crypto_vshasigmad:
+  {
+    ConstantInt *CI1 = dyn_cast<ConstantInt>(Ops[1]);
+    ConstantInt *CI2 = dyn_cast<ConstantInt>(Ops[2]);
+    assert(CI1 && CI2);
+    if (CI1->getZExtValue() > 1) {
+      CGM.Error(E->getArg(1)->getExprLoc(),
+                "argument out of range (should be 0-1).");
+      return llvm::UndefValue::get(Ops[0]->getType());
+    }
+    if (CI2->getZExtValue() > 15) {
+      CGM.Error(E->getArg(2)->getExprLoc(),
+                "argument out of range (should be 0-15).");
+      return llvm::UndefValue::get(Ops[0]->getType());
+    }
+    switch (BuiltinID) {
+    default: llvm_unreachable("Unsupported sigma intrinsic!");
+    case PPC::BI__builtin_altivec_crypto_vshasigmaw:
+      ID = Intrinsic::ppc_altivec_crypto_vshasigmaw;
+      break;
+    case PPC::BI__builtin_altivec_crypto_vshasigmad:
+      ID = Intrinsic::ppc_altivec_crypto_vshasigmad;
+      break;
+    }
+    llvm::Function *F = CGM.getIntrinsic(ID);
+    return Builder.CreateCall(F, Ops, "");
+  }
   }
 }
 
