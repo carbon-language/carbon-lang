@@ -18,6 +18,7 @@
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/CommandCompletions.h"
+#include "lldb/Interpreter/OptionValueProperties.h"
 
 using namespace lldb;
 using namespace lldb_private;

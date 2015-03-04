@@ -13,6 +13,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Stream.h"

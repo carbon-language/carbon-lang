@@ -60,6 +60,8 @@
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/Options.h"
+#include "lldb/Interpreter/OptionValueProperties.h"
+#include "lldb/Interpreter/Property.h"
 #include "lldb/Interpreter/ScriptInterpreterNone.h"
 #include "lldb/Interpreter/ScriptInterpreterPython.h"
 

@@ -20,6 +20,8 @@
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Interpreter/OptionValueFileSpecList.h"
+#include "lldb/Interpreter/OptionValueProperties.h"
+#include "lldb/Interpreter/Property.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/DynamicLoader.h"

@@ -18,6 +18,7 @@
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/OptionValueProperties.h"
 #include "lldb/Interpreter/OptionValueString.h"
 
 using namespace lldb;

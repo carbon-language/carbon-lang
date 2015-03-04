@@ -50,6 +50,8 @@
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/CommandObjectMultiword.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
+#include "lldb/Interpreter/OptionValueProperties.h"
+#include "lldb/Interpreter/Property.h"
 #ifndef LLDB_DISABLE_PYTHON
 #include "lldb/Interpreter/PythonDataObjects.h"
 #endif

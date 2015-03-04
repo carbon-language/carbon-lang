@@ -31,6 +31,7 @@
 #include "lldb/Host/Terminal.h"
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/OptionValueProperties.h"
 #include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/ABI.h"
 #include "lldb/Target/DynamicLoader.h"

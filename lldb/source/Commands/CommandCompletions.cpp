@@ -25,6 +25,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/OptionValueProperties.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Target/Target.h"

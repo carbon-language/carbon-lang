@@ -14,11 +14,8 @@
 
 #include <stdint.h>
 
-#include <stack>
-
 #include "lldb/lldb-public.h"
 #include "lldb/Core/Broadcaster.h"
-#include "lldb/Core/Communication.h"
 #include "lldb/Core/FormatEntity.h"
 #include "lldb/Core/IOHandler.h"
 #include "lldb/Core/Listener.h"
@@ -27,8 +24,6 @@
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Host/HostThread.h"
 #include "lldb/Host/Terminal.h"
-#include "lldb/Interpreter/OptionValueProperties.h"
-#include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/TargetList.h"
 

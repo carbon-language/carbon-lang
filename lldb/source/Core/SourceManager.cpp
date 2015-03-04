@@ -18,6 +18,7 @@
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/CompileUnit.h"
