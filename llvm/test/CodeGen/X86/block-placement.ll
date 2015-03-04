@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=i686-linux -pre-RA-sched=source < %s | FileCheck %s
+; RUN: llc -mtriple=i686-linux -place-last-successor -pre-RA-sched=source < %s | FileCheck %s
 
 declare void @error(i32 %i, i32 %a, i32 %b)
 
@@ -17,11 +17,11 @@ define i32 @test_ifchains(i32 %i, i32* %a, i32 %b) {
 ; CHECK: %else4
 ; CHECK-NOT: .align
 ; CHECK: %exit
-; CHECK: %then1
-; CHECK: %then2
-; CHECK: %then3
-; CHECK: %then4
 ; CHECK: %then5
+; CHECK: %then4
+; CHECK: %then3
+; CHECK: %then2
+; CHECK: %then1
 
 entry:
   %gep1 = getelementptr i32, i32* %a, i32 1
@@ -82,9 +82,9 @@ define i32 @test_loop_cold_blocks(i32 %i, i32* %a) {
 ; CHECK-LABEL: test_loop_cold_blocks:
 ; CHECK: %entry
 ; CHECK-NOT: .align
-; CHECK: %unlikely1
-; CHECK-NOT: .align
 ; CHECK: %unlikely2
+; CHECK-NOT: .align
+; CHECK: %unlikely1
 ; CHECK: .align
 ; CHECK: %body1
 ; CHECK: %body2
@@ -135,9 +135,9 @@ define i32 @test_loop_early_exits(i32 %i, i32* %a) {
 ; CHECK: %body3
 ; CHECK: %body4
 ; CHECK: %exit
-; CHECK: %bail1
-; CHECK: %bail2
 ; CHECK: %bail3
+; CHECK: %bail2
+; CHECK: %bail1
 
 entry:
   br label %body1
@@ -1083,3 +1083,87 @@ exit:
   %ret = phi i32 [ %val1, %then ], [ %val2, %else ]
   ret i32 %ret
 }
+
+define void @test_outlined() {
+; This test ends up with diamond control flow in outlined optional regions.
+; These diamonds should still be locally cohensive even when out-of-line due to
+; being cold.
+; CHECK-LABEL: test_outlined:
+; CHECK: %a1
+; CHECK: %a2
+; CHECK: %done
+; CHECK: %b2
+; CHECK: %c2
+; CHECK: %d2
+; CHECK: %f2
+; CHECK: %b1
+; CHECK: %c1
+; CHECK: %d1
+; CHECK: %f1
+
+a1:
+  %call.a1 = call i1 @a1()
+  br i1 %call.a1, label %b1, label %a2, !prof !0
+
+b1:
+  %call.b1 = call i1 @b1()
+  br i1 %call.b1, label %c1, label %d1
+
+c1:
+  call void @c1()
+  br label %f1
+
+d1:
+  call void @d1()
+  br label %f1
+
+f1:
+  call void @f1()
+  br label %a2
+
+a2:
+  %call.a2 = call i1 @a2()
+  br i1 %call.a2, label %b2, label %done, !prof !0
+
+b2:
+  %call.b2 = call i1 @b2()
+  br i1 %call.b2, label %c2, label %d2
+
+c2:
+  call void @c2()
+  br label %f2
+
+d2:
+  call void @d2()
+  br label %f2
+
+f2:
+  call void @f2()
+  br label %done
+
+done:
+  call void @done()
+  ret void
+}
+
+declare i1 @a1()
+
+declare i1 @b1()
+
+declare void @c1()
+
+declare void @d1()
+
+declare void @f1()
+
+declare i1 @a2()
+
+declare i1 @b2()
+
+declare void @c2()
+
+declare void @d2()
+
+declare void @f2()
+
+declare void @done()

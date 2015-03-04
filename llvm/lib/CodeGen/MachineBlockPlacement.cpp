@@ -68,6 +68,13 @@ ExitBlockBias("block-placement-exit-block-bias",
                        "over the original exit to be considered the new exit."),
               cl::init(0), cl::Hidden);
 
+static cl::opt<bool> PlaceLastSuccessor(
+    "place-last-successor",
+    cl::desc("When selecting a non-successor block, choose the last block to "
+             "have been a successor. This represents the block whose "
+             "predecessor was most recently placed."),
+    cl::init(false), cl::Hidden);
+
 static cl::opt<bool> OutlineOptionalBranches(
     "outline-optional-branches",
     cl::desc("Put completely optional branches, i.e. branches with a common "
@@ -443,6 +450,25 @@ MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
 MachineBasicBlock *MachineBlockPlacement::selectBestCandidateBlock(
     BlockChain &Chain, SmallVectorImpl<MachineBasicBlock *> &WorkList,
     const BlockFilterSet *BlockFilter) {
+  if (PlaceLastSuccessor) {
+    // If we're just placing the last successor as the best candidate, the
+    // logic is super simple. We skip the already placed entries on the
+    // worklist and return the most recently added entry that isn't placed.
+    while (!WorkList.empty()) {
+      MachineBasicBlock *SuccBB = WorkList.pop_back_val();
+      BlockChain &SuccChain = *BlockToChain.lookup(SuccBB);
+      if (&SuccChain == &Chain) {
+        DEBUG(dbgs() << "    " << getBlockName(SuccBB)
+                     << " -> Already merged!\n");
+        continue;
+      }
+      assert(SuccChain.LoopPredecessors == 0 && "Found CFG-violating block");
+      return SuccBB;
+    }
+
+    return nullptr;
+  }
+
   // Once we need to walk the worklist looking for a candidate, cleanup the
   // worklist of already placed entries.
   // FIXME: If this shows up on profiles, it could be folded (at the cost of
