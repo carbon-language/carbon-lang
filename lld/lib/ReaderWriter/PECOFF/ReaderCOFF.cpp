@@ -1044,12 +1044,10 @@ std::error_code FileCOFF::findSection(StringRef name,
 // Convert ArrayRef<uint8_t> to std::string. The array contains a string which
 // may not be terminated by NUL.
 StringRef FileCOFF::ArrayRefToString(ArrayRef<uint8_t> array) {
-  // Skip the UTF-8 byte marker if exists. The contents of .drectve section
-  // is, according to the Microsoft PE/COFF spec, encoded as ANSI or UTF-8
-  // with the BOM marker.
-  //
-  // FIXME: I think "ANSI" in the spec means Windows-1252 encoding, which is a
-  // superset of ASCII. We need to convert it to UTF-8.
+  // .drectve sections are encoded in either ASCII or UTF-8 with BOM.
+  // The PE/COFF spec allows ANSI (Windows-1252 encoding), but seems
+  // it's no longer in use.
+  // Skip a UTF-8 byte marker if exists.
   if (array.size() >= 3 && array[0] == 0xEF && array[1] == 0xBB &&
       array[2] == 0xBF) {
     array = array.slice(3);
