@@ -1369,6 +1369,11 @@ example:
     If a function that has an ``sspstrong`` attribute is inlined into a
     function that doesn't have an ``sspstrong`` attribute, then the
     resulting function will have an ``sspstrong`` attribute.
+``"thunk"``
+    This attribute indicates that the function will delegate to some other
+    function with a tail call. The prototype of a thunk should not be used for
+    optimization purposes. The caller is expected to cast the thunk prototype to
+    match the thunk target prototype.
 ``uwtable``
     This attribute indicates that the ABI being targeted requires that
     an unwind table entry be produce for this function even if we can
