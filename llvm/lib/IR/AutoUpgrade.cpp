@@ -179,6 +179,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name == "x86.avx2.pblendw" ||
         Name == "x86.avx2.pblendd.128" ||
         Name == "x86.avx2.pblendd.256" ||
+        Name == "x86.avx2.vbroadcasti128" ||
         (Name.startswith("x86.xop.vpcom") && F->arg_size() == 2)) {
       NewFn = nullptr;
       return true;
@@ -553,6 +554,17 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       for (unsigned I = 0; I < EltNum; ++I)
         Rep = Builder.CreateInsertElement(Rep, Load,
                                           ConstantInt::get(I32Ty, I));
+    } else if (Name == "llvm.x86.avx2.vbroadcasti128") {
+      // Replace vbroadcasts with a vector shuffle.
+      Value *Op = Builder.CreatePointerCast(
+          CI->getArgOperand(0),
+          PointerType::getUnqual(VectorType::get(Type::getInt64Ty(C), 2)));
+      Value *Load = Builder.CreateLoad(Op);
+      SmallVector<Constant *, 4> Idxs; // 0, 1, 0, 1.
+      for (unsigned i = 0; i != 4; ++i)
+        Idxs.push_back(Builder.getInt32(i & 1));
+      Rep = Builder.CreateShuffleVector(Load, UndefValue::get(Load->getType()),
+                                        ConstantVector::get(Idxs));
     } else if (Name == "llvm.x86.sse2.psll.dq") {
       // 128-bit shift left specified in bits.
       unsigned Shift = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();

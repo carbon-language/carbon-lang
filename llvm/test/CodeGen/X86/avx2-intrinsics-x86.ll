@@ -641,13 +641,6 @@ define <4 x i64> @test_x86_avx2_pmul.dq(<8 x i32> %a0, <8 x i32> %a1) {
 declare <4 x i64> @llvm.x86.avx2.pmul.dq(<8 x i32>, <8 x i32>) nounwind readnone
 
 
-define <4 x i64> @test_x86_avx2_vbroadcasti128(i8* %a0) {
-  ; CHECK: vbroadcasti128
-  %res = call <4 x i64> @llvm.x86.avx2.vbroadcasti128(i8* %a0) ; <<4 x i64>> [#uses=1]
-  ret <4 x i64> %res
-}
-declare <4 x i64> @llvm.x86.avx2.vbroadcasti128(i8*) nounwind readonly
-
 define <4 x double> @test_x86_avx2_vbroadcast_sd_pd_256(<2 x double> %a0) {
   ; CHECK: vbroadcastsd
   %res = call <4 x double> @llvm.x86.avx2.vbroadcast.sd.pd.256(<2 x double> %a0) ; <<4 x double>> [#uses=1]

@@ -1732,8 +1732,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx2_vbroadcast_ss_ps_256 :
               GCCBuiltin<"__builtin_ia32_vbroadcastss_ps256">,
               Intrinsic<[llvm_v8f32_ty], [llvm_v4f32_ty], [IntrNoMem]>;
-  def int_x86_avx2_vbroadcasti128 :
-              Intrinsic<[llvm_v4i64_ty], [llvm_ptr_ty], [IntrReadArgMem]>;
   def int_x86_avx2_pbroadcastb_128 :
               GCCBuiltin<"__builtin_ia32_pbroadcastb128">,
               Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty], [IntrNoMem]>;
