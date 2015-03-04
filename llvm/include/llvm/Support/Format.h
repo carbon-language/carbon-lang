@@ -37,8 +37,8 @@ namespace llvm {
 class format_object_base {
 protected:
   const char *Fmt;
-  ~format_object_base() {} // Disallow polymorphic deletion.
-  format_object_base(const format_object_base&) = default;
+  ~format_object_base() = default; // Disallow polymorphic deletion.
+  format_object_base(const format_object_base &) = default;
   virtual void home(); // Out of line virtual method.
 
   /// Call snprintf() for this object, on the given buffer and size.
