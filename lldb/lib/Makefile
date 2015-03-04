@@ -42,6 +42,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginDynamicLoaderStatic.a \
 	lldbPluginDynamicLoaderPOSIX.a \
 	lldbPluginDynamicLoaderHexagon.a \
+	lldbPluginDynamicLoaderMacOSX.a \
 	lldbPluginEmulateInstructionARM.a \
 	lldbPluginEmulateInstructionARM64.a \
 	lldbPluginInstrumentationRuntimeAddressSanitizer.a \
@@ -105,7 +106,6 @@ LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter codegen \
 ifeq ($(HOST_OS),Darwin)
   USEDLIBS += lldbHostMacOSX.a \
               lldbHostPosix.a \
-              lldbPluginDynamicLoaderMacOSX.a \
               lldbPluginDynamicLoaderDarwinKernel.a \
               lldbPluginObjectFileMachO.a \
               lldbPluginSymbolVendorMacOSX.a \
@@ -120,7 +120,6 @@ ifeq ($(HOST_OS),Linux)
               lldbHostPosix.a \
               lldbPluginProcessLinux.a \
               lldbPluginProcessPOSIX.a \
-              lldbPluginDynamicLoaderMacOSX.a \
               lldbPluginProcessElfCore.a \
               lldbPluginJITLoaderGDB.a
 endif
