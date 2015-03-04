@@ -155,9 +155,8 @@ public:
     Symbol symbol;
   public:
     symbol_iterator(const Symbol &s) : symbol(s) {}
-    const Symbol *operator->() const {
-      return &symbol;
-    }
+    const Symbol *operator->() const { return &symbol; }
+    const Symbol &operator*() const { return symbol; }
 
     bool operator==(const symbol_iterator &other) const {
       return symbol == other.symbol;
@@ -194,6 +193,9 @@ public:
 
   symbol_iterator symbol_begin() const;
   symbol_iterator symbol_end() const;
+  iterator_range<symbol_iterator> symbols() const {
+    return iterator_range<symbol_iterator>(symbol_begin(), symbol_end());
+  }
 
   // Cast methods.
   static inline bool classof(Binary const *v) {
