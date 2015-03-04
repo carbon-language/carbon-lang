@@ -31,4 +31,7 @@ typedef	struct __sFILE {
 
 extern FILE *myFile;
 
+#define SOME_MACRO_GETTING_UNDEFINED 1
+#undef SOME_MACRO_GETTING_UNDEFINED
+
 #endif // MODULE_H

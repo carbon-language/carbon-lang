@@ -321,11 +321,11 @@ StringRef Preprocessor::getLastMacroWithSpelling(
   StringRef BestSpelling;
   for (Preprocessor::macro_iterator I = macro_begin(), E = macro_end();
        I != E; ++I) {
-    if (!I->second->getMacroInfo()->isObjectLike())
-      continue;
     const MacroDirective::DefInfo
       Def = I->second->findDirectiveAtLoc(Loc, SourceMgr);
-    if (!Def)
+    if (!Def || !Def.getMacroInfo())
+      continue;
+    if (!Def.getMacroInfo()->isObjectLike())
       continue;
     if (!MacroDefinitionEquals(Def.getMacroInfo(), Tokens))
       continue;
