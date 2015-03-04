@@ -212,8 +212,8 @@ namespace {
     /// moved to the delay slot. Returns true on success.
     template<typename IterTy>
     bool searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
-                     RegDefsUses &RegDU, InspectMemInstr &IM,
-                     IterTy &Filler, Iter Slot) const;
+                     RegDefsUses &RegDU, InspectMemInstr &IM, Iter Slot,
+                     IterTy &Filler) const;
 
     /// This function searches in the backward direction for an instruction that
     /// can be moved to the delay slot. Returns true on success.
@@ -639,8 +639,8 @@ FunctionPass *llvm::createMipsDelaySlotFillerPass(MipsTargetMachine &tm) {
 
 template<typename IterTy>
 bool Filler::searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
-                         RegDefsUses &RegDU, InspectMemInstr& IM,
-                         IterTy &Filler, Iter Slot) const {
+                         RegDefsUses &RegDU, InspectMemInstr& IM, Iter Slot,
+                         IterTy &Filler) const {
   for (IterTy I = Begin; I != End; ++I) {
     // skip debug value
     if (I->isDebugValue())
@@ -693,8 +693,8 @@ bool Filler::searchBackward(MachineBasicBlock &MBB, Iter Slot) const {
 
   RegDU.init(*Slot);
 
-  if (!searchRange(MBB, ReverseIter(Slot), MBB.rend(), RegDU, MemDU, Filler,
-      Slot))
+  if (!searchRange(MBB, ReverseIter(Slot), MBB.rend(), RegDU, MemDU, Slot,
+                   Filler))
     return false;
 
   MBB.splice(std::next(Slot), &MBB, std::next(Filler).base());
@@ -714,7 +714,7 @@ bool Filler::searchForward(MachineBasicBlock &MBB, Iter Slot) const {
 
   RegDU.setCallerSaved(*Slot);
 
-  if (!searchRange(MBB, std::next(Slot), MBB.end(), RegDU, NM, Filler, Slot))
+  if (!searchRange(MBB, std::next(Slot), MBB.end(), RegDU, NM, Slot, Filler))
     return false;
 
   MBB.splice(std::next(Slot), &MBB, Filler);
@@ -757,8 +757,8 @@ bool Filler::searchSuccBBs(MachineBasicBlock &MBB, Iter Slot) const {
     IM.reset(new MemDefsUses(MFI));
   }
 
-  if (!searchRange(MBB, SuccBB->begin(), SuccBB->end(), RegDU, *IM, Filler,
-      Slot))
+  if (!searchRange(MBB, SuccBB->begin(), SuccBB->end(), RegDU, *IM, Slot,
+                   Filler))
     return false;
 
   insertDelayFiller(Filler, BrMap);
