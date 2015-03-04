@@ -74,6 +74,7 @@ public:
   /// DWARFFormValue has form class is suitable for representing Foo.
   Optional<uint64_t> getAsReference(const DWARFUnit *U) const;
   Optional<uint64_t> getAsUnsignedConstant() const;
+  Optional<int64_t> getAsSignedConstant() const;
   Optional<const char *> getAsCString(const DWARFUnit *U) const;
   Optional<uint64_t> getAsAddress(const DWARFUnit *U) const;
   Optional<uint64_t> getAsSectionOffset() const;
