@@ -5,6 +5,7 @@ add_lldb_library(lldbUtility
   ARM64_DWARF_Registers.cpp
   JSON.cpp
   KQueue.cpp
+  LLDBAssert.cpp
   PseudoTerminal.cpp
   Range.cpp
   RegisterNumber.cpp
