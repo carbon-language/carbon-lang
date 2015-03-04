@@ -231,6 +231,9 @@ class ArgType {
 public:
   enum Kind { UnknownTy, InvalidTy, SpecificTy, ObjCPointerTy, CPointerTy,
               AnyCharTy, CStrTy, WCStrTy, WIntTy };
+
+  enum MatchKind { NoMatch = 0, Match = 1, NoMatchPedantic };
+
 private:
   const Kind K;
   QualType T;
@@ -254,7 +257,7 @@ public:
     return Res;
   }
 
-  bool matchesType(ASTContext &C, QualType argTy) const;
+  MatchKind matchesType(ASTContext &C, QualType argTy) const;
 
   QualType getRepresentativeType(ASTContext &C) const;
 

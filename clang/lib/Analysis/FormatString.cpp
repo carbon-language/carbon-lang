@@ -256,16 +256,17 @@ clang::analyze_format_string::ParseLengthModifier(FormatSpecifier &FS,
 // Methods on ArgType.
 //===----------------------------------------------------------------------===//
 
-bool ArgType::matchesType(ASTContext &C, QualType argTy) const {
+clang::analyze_format_string::ArgType::MatchKind
+ArgType::matchesType(ASTContext &C, QualType argTy) const {
   if (Ptr) {
     // It has to be a pointer.
     const PointerType *PT = argTy->getAs<PointerType>();
     if (!PT)
-      return false;
+      return NoMatch;
 
     // We cannot write through a const qualified pointer.
     if (PT->getPointeeType().isConstQualified())
-      return false;
+      return NoMatch;
 
     argTy = PT->getPointeeType();
   }
@@ -275,8 +276,8 @@ bool ArgType::matchesType(ASTContext &C, QualType argTy) const {
       llvm_unreachable("ArgType must be valid");
 
     case UnknownTy:
-      return true;
-      
+      return Match;
+
     case AnyCharTy: {
       if (const EnumType *ETy = argTy->getAs<EnumType>())
         argTy = ETy->getDecl()->getIntegerType();
@@ -289,18 +290,18 @@ bool ArgType::matchesType(ASTContext &C, QualType argTy) const {
           case BuiltinType::SChar:
           case BuiltinType::UChar:
           case BuiltinType::Char_U:
-            return true;            
+            return Match;
         }
-      return false;
+      return NoMatch;
     }
-      
+
     case SpecificTy: {
       if (const EnumType *ETy = argTy->getAs<EnumType>())
         argTy = ETy->getDecl()->getIntegerType();
       argTy = C.getCanonicalType(argTy).getUnqualifiedType();
 
       if (T == argTy)
-        return true;
+        return Match;
       // Check for "compatible types".
       if (const BuiltinType *BT = argTy->getAs<BuiltinType>())
         switch (BT->getKind()) {
@@ -309,32 +310,33 @@ bool ArgType::matchesType(ASTContext &C, QualType argTy) const {
           case BuiltinType::Char_S:
           case BuiltinType::SChar:
           case BuiltinType::Char_U:
-          case BuiltinType::UChar:                    
-            return T == C.UnsignedCharTy || T == C.SignedCharTy;
+          case BuiltinType::UChar:
+            return T == C.UnsignedCharTy || T == C.SignedCharTy ? Match
+                                                                : NoMatch;
           case BuiltinType::Short:
-            return T == C.UnsignedShortTy;
+            return T == C.UnsignedShortTy ? Match : NoMatch;
           case BuiltinType::UShort:
-            return T == C.ShortTy;
+            return T == C.ShortTy ? Match : NoMatch;
           case BuiltinType::Int:
-            return T == C.UnsignedIntTy;
+            return T == C.UnsignedIntTy ? Match : NoMatch;
           case BuiltinType::UInt:
-            return T == C.IntTy;
+            return T == C.IntTy ? Match : NoMatch;
           case BuiltinType::Long:
-            return T == C.UnsignedLongTy;
+            return T == C.UnsignedLongTy ? Match : NoMatch;
           case BuiltinType::ULong:
-            return T == C.LongTy;
+            return T == C.LongTy ? Match : NoMatch;
           case BuiltinType::LongLong:
-            return T == C.UnsignedLongLongTy;
+            return T == C.UnsignedLongLongTy ? Match : NoMatch;
           case BuiltinType::ULongLong:
-            return T == C.LongLongTy;
+            return T == C.LongLongTy ? Match : NoMatch;
         }
-      return false;
+      return NoMatch;
     }
 
     case CStrTy: {
       const PointerType *PT = argTy->getAs<PointerType>();
       if (!PT)
-        return false;
+        return NoMatch;
       QualType pointeeTy = PT->getPointeeType();
       if (const BuiltinType *BT = pointeeTy->getAs<BuiltinType>())
         switch (BT->getKind()) {
@@ -343,50 +345,56 @@ bool ArgType::matchesType(ASTContext &C, QualType argTy) const {
           case BuiltinType::UChar:
           case BuiltinType::Char_S:
           case BuiltinType::SChar:
-            return true;
+            return Match;
           default:
             break;
         }
 
-      return false;
+      return NoMatch;
     }
 
     case WCStrTy: {
       const PointerType *PT = argTy->getAs<PointerType>();
       if (!PT)
-        return false;
+        return NoMatch;
       QualType pointeeTy =
         C.getCanonicalType(PT->getPointeeType()).getUnqualifiedType();
-      return pointeeTy == C.getWideCharType();
+      return pointeeTy == C.getWideCharType() ? Match : NoMatch;
     }
-    
+
     case WIntTy: {
-      
+
       QualType PromoArg = 
         argTy->isPromotableIntegerType()
           ? C.getPromotedIntegerType(argTy) : argTy;
-      
+
       QualType WInt = C.getCanonicalType(C.getWIntType()).getUnqualifiedType();
       PromoArg = C.getCanonicalType(PromoArg).getUnqualifiedType();
-      
+
       // If the promoted argument is the corresponding signed type of the
       // wint_t type, then it should match.
       if (PromoArg->hasSignedIntegerRepresentation() &&
           C.getCorrespondingUnsignedType(PromoArg) == WInt)
-        return true;
+        return Match;
 
-      return WInt == PromoArg;
+      return WInt == PromoArg ? Match : NoMatch;
     }
 
     case CPointerTy:
-      return argTy->isPointerType() || argTy->isObjCObjectPointerType() ||
-             argTy->isBlockPointerType() || argTy->isNullPtrType();
+      if (argTy->isVoidPointerType()) {
+        return Match;
+      } if (argTy->isPointerType() || argTy->isObjCObjectPointerType() ||
+            argTy->isBlockPointerType() || argTy->isNullPtrType()) {
+        return NoMatchPedantic;
+      } else {
+        return NoMatch;
+      }
 
     case ObjCPointerTy: {
       if (argTy->getAs<ObjCObjectPointerType>() ||
           argTy->getAs<BlockPointerType>())
-        return true;
-      
+        return Match;
+
       // Handle implicit toll-free bridging.
       if (const PointerType *PT = argTy->getAs<PointerType>()) {
         // Things such as CFTypeRef are really just opaque pointers
@@ -395,9 +403,9 @@ bool ArgType::matchesType(ASTContext &C, QualType argTy) const {
         // structs can be toll-free bridged, we just accept them all.
         QualType pointee = PT->getPointeeType();
         if (pointee->getAsStructureType() || pointee->isVoidType())
-          return true;
+          return Match;
       }
-      return false;      
+      return NoMatch;
     }
   }
 
