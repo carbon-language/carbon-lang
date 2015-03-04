@@ -711,10 +711,9 @@ getModuleForFile(LLVMContext &Context, claimed_file &F,
 
 static void runLTOPasses(Module &M, TargetMachine &TM) {
   if (const DataLayout *DL = TM.getDataLayout())
-    M.setDataLayout(DL);
+    M.setDataLayout(*DL);
 
   legacy::PassManager passes;
-  passes.add(new DataLayoutPass());
   passes.add(createTargetTransformInfoWrapperPass(TM.getTargetIRAnalysis()));
 
   PassManagerBuilder PMB;
@@ -764,7 +763,6 @@ static void codegen(Module &M) {
     saveBCFile(output_name + ".opt.bc", M);
 
   legacy::PassManager CodeGenPasses;
-  CodeGenPasses.add(new DataLayoutPass());
 
   SmallString<128> Filename;
   int FD;

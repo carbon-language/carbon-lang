@@ -1972,7 +1972,7 @@ int main(int argc, char *argv[]) {
     // Set up the optimizer pipeline.
     // Start with registering info about how the
     // target lays out data structures.
-    module->setDataLayout(executionEngine->getDataLayout());
+    module->setDataLayout(*executionEngine->getDataLayout());
 
     // Optimizations turned on
 #ifdef ADD_OPT_PASSES
