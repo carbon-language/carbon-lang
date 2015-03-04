@@ -8187,6 +8187,236 @@ static bool isSetterLikeSelector(Selector sel) {
   return !isLowercase(str.front());
 }
 
+Optional<int> GetNSMutableArrayArgumentIndex(Sema &S, ObjCMessageExpr *Message) {
+
+  if (S.NSMutableArrayPointer.isNull()) {
+    IdentifierInfo *NSMutableArrayId =
+      S.NSAPIObj->getNSClassId(NSAPI::ClassId_NSMutableArray);
+    NamedDecl *IF = S.LookupSingleName(S.TUScope, NSMutableArrayId,
+                                       Message->getLocStart(),
+                                       Sema::LookupOrdinaryName);
+    ObjCInterfaceDecl *InterfaceDecl = dyn_cast_or_null<ObjCInterfaceDecl>(IF);
+    if (!InterfaceDecl) {
+      return None;
+    }
+    QualType NSMutableArrayObject =
+      S.Context.getObjCInterfaceType(InterfaceDecl);
+    S.NSMutableArrayPointer =
+      S.Context.getObjCObjectPointerType(NSMutableArrayObject);
+  }
+
+  if (S.NSMutableArrayPointer != Message->getReceiverType()) {
+    return None;
+  }
+
+  Selector Sel = Message->getSelector();
+
+  Optional<NSAPI::NSArrayMethodKind> MKOpt =
+    S.NSAPIObj->getNSArrayMethodKind(Sel);
+  if (!MKOpt) {
+    return None;
+  }
+
+  NSAPI::NSArrayMethodKind MK = *MKOpt;
+
+  switch (MK) {
+    case NSAPI::NSMutableArr_addObject:
+    case NSAPI::NSMutableArr_insertObjectAtIndex:
+    case NSAPI::NSMutableArr_setObjectAtIndexedSubscript:
+      return 0;
+    case NSAPI::NSMutableArr_replaceObjectAtIndex:
+      return 1;
+
+    default:
+      return None;
+  }
+
+  return None;
+}
+
+static
+Optional<int> GetNSMutableDictionaryArgumentIndex(Sema &S,
+                                                  ObjCMessageExpr *Message) {
+
+  if (S.NSMutableDictionaryPointer.isNull()) {
+    IdentifierInfo *NSMutableDictionaryId =
+      S.NSAPIObj->getNSClassId(NSAPI::ClassId_NSMutableDictionary);
+    NamedDecl *IF = S.LookupSingleName(S.TUScope, NSMutableDictionaryId,
+                                       Message->getLocStart(),
+                                       Sema::LookupOrdinaryName);
+    ObjCInterfaceDecl *InterfaceDecl = dyn_cast_or_null<ObjCInterfaceDecl>(IF);
+    if (!InterfaceDecl) {
+      return None;
+    }
+    QualType NSMutableDictionaryObject =
+      S.Context.getObjCInterfaceType(InterfaceDecl);
+    S.NSMutableDictionaryPointer =
+      S.Context.getObjCObjectPointerType(NSMutableDictionaryObject);
+  }
+
+  if (S.NSMutableDictionaryPointer != Message->getReceiverType()) {
+    return None;
+  }
+
+  Selector Sel = Message->getSelector();
+
+  Optional<NSAPI::NSDictionaryMethodKind> MKOpt =
+    S.NSAPIObj->getNSDictionaryMethodKind(Sel);
+  if (!MKOpt) {
+    return None;
+  }
+
+  NSAPI::NSDictionaryMethodKind MK = *MKOpt;
+
+  switch (MK) {
+    case NSAPI::NSMutableDict_setObjectForKey:
+    case NSAPI::NSMutableDict_setValueForKey:
+    case NSAPI::NSMutableDict_setObjectForKeyedSubscript:
+      return 0;
+
+    default:
+      return None;
+  }
+
+  return None;
+}
+
+static Optional<int> GetNSSetArgumentIndex(Sema &S, ObjCMessageExpr *Message) {
+
+  ObjCInterfaceDecl *InterfaceDecl;
+  if (S.NSMutableSetPointer.isNull()) {
+    IdentifierInfo *NSMutableSetId =
+      S.NSAPIObj->getNSClassId(NSAPI::ClassId_NSMutableSet);
+    NamedDecl *IF = S.LookupSingleName(S.TUScope, NSMutableSetId,
+                                       Message->getLocStart(),
+                                       Sema::LookupOrdinaryName);
+    InterfaceDecl = dyn_cast_or_null<ObjCInterfaceDecl>(IF);
+    if (InterfaceDecl) {
+      QualType NSMutableSetObject =
+        S.Context.getObjCInterfaceType(InterfaceDecl);
+      S.NSMutableSetPointer =
+        S.Context.getObjCObjectPointerType(NSMutableSetObject);
+    }
+  }
+
+  if (S.NSCountedSetPointer.isNull()) {
+    IdentifierInfo *NSCountedSetId =
+      S.NSAPIObj->getNSClassId(NSAPI::ClassId_NSCountedSet);
+    NamedDecl *IF = S.LookupSingleName(S.TUScope, NSCountedSetId,
+                                       Message->getLocStart(),
+                                       Sema::LookupOrdinaryName);
+    InterfaceDecl = dyn_cast_or_null<ObjCInterfaceDecl>(IF);
+    if (InterfaceDecl) {
+      QualType NSCountedSetObject =
+        S.Context.getObjCInterfaceType(InterfaceDecl);
+      S.NSCountedSetPointer =
+        S.Context.getObjCObjectPointerType(NSCountedSetObject);
+    }
+  }
+
+  if (S.NSMutableOrderedSetPointer.isNull()) {
+    IdentifierInfo *NSOrderedSetId =
+      S.NSAPIObj->getNSClassId(NSAPI::ClassId_NSMutableOrderedSet);
+    NamedDecl *IF = S.LookupSingleName(S.TUScope, NSOrderedSetId,
+                                       Message->getLocStart(),
+                                       Sema::LookupOrdinaryName);
+    InterfaceDecl = dyn_cast_or_null<ObjCInterfaceDecl>(IF);
+    if (InterfaceDecl) {
+      QualType NSOrderedSetObject =
+        S.Context.getObjCInterfaceType(InterfaceDecl);
+      S.NSMutableOrderedSetPointer =
+        S.Context.getObjCObjectPointerType(NSOrderedSetObject);
+    }
+  }
+
+  QualType ReceiverType = Message->getReceiverType();
+
+  bool IsMutableSet = !S.NSMutableSetPointer.isNull() &&
+    ReceiverType == S.NSMutableSetPointer;
+  bool IsMutableOrderedSet = !S.NSMutableOrderedSetPointer.isNull() &&
+    ReceiverType == S.NSMutableOrderedSetPointer;
+  bool IsCountedSet = !S.NSCountedSetPointer.isNull() &&
+    ReceiverType == S.NSCountedSetPointer;
+
+  if (!IsMutableSet && !IsMutableOrderedSet && !IsCountedSet) {
+    return None;
+  }
+
+  Selector Sel = Message->getSelector();
+
+  Optional<NSAPI::NSSetMethodKind> MKOpt = S.NSAPIObj->getNSSetMethodKind(Sel);
+  if (!MKOpt) {
+    return None;
+  }
+
+  NSAPI::NSSetMethodKind MK = *MKOpt;
+
+  switch (MK) {
+    case NSAPI::NSMutableSet_addObject:
+    case NSAPI::NSOrderedSet_setObjectAtIndex:
+    case NSAPI::NSOrderedSet_setObjectAtIndexedSubscript:
+    case NSAPI::NSOrderedSet_insertObjectAtIndex:
+      return 0;
+    case NSAPI::NSOrderedSet_replaceObjectAtIndexWithObject:
+      return 1;
+  }
+
+  return None;
+}
+
+void Sema::CheckObjCCircularContainer(ObjCMessageExpr *Message) {
+  if (!Message->isInstanceMessage()) {
+    return;
+  }
+
+  Optional<int> ArgOpt;
+
+  if (!(ArgOpt = GetNSMutableArrayArgumentIndex(*this, Message)) &&
+      !(ArgOpt = GetNSMutableDictionaryArgumentIndex(*this, Message)) &&
+      !(ArgOpt = GetNSSetArgumentIndex(*this, Message))) {
+    return;
+  }
+
+  int ArgIndex = *ArgOpt;
+
+  Expr *Receiver = Message->getInstanceReceiver()->IgnoreImpCasts();
+  if (OpaqueValueExpr *OE = dyn_cast<OpaqueValueExpr>(Receiver)) {
+    Receiver = OE->getSourceExpr()->IgnoreImpCasts();
+  }
+
+  Expr *Arg = Message->getArg(ArgIndex)->IgnoreImpCasts();
+  if (OpaqueValueExpr *OE = dyn_cast<OpaqueValueExpr>(Arg)) {
+    Arg = OE->getSourceExpr()->IgnoreImpCasts();
+  }
+
+  if (DeclRefExpr *ReceiverRE = dyn_cast<DeclRefExpr>(Receiver)) {
+    if (DeclRefExpr *ArgRE = dyn_cast<DeclRefExpr>(Arg)) {
+      if (ReceiverRE->getDecl() == ArgRE->getDecl()) {
+        ValueDecl *Decl = ReceiverRE->getDecl();
+        Diag(Message->getSourceRange().getBegin(),
+             diag::warn_objc_circular_container)
+          << Decl->getName();
+        Diag(Decl->getLocation(),
+             diag::note_objc_circular_container_declared_here)
+          << Decl->getName();
+      }
+    }
+  } else if (ObjCIvarRefExpr *IvarRE = dyn_cast<ObjCIvarRefExpr>(Receiver)) {
+    if (ObjCIvarRefExpr *IvarArgRE = dyn_cast<ObjCIvarRefExpr>(Arg)) {
+      if (IvarRE->getDecl() == IvarArgRE->getDecl()) {
+        ObjCIvarDecl *Decl = IvarRE->getDecl();
+        Diag(Message->getSourceRange().getBegin(),
+             diag::warn_objc_circular_container)
+          << Decl->getName();
+        Diag(Decl->getLocation(),
+             diag::note_objc_circular_container_declared_here)
+          << Decl->getName();
+      }
+    }
+  }
+
+}
+
 /// Check a message send to see if it's likely to cause a retain cycle.
 void Sema::checkRetainCycles(ObjCMessageExpr *msg) {
   // Only check instance methods whose selector looks like a setter.
