@@ -90,6 +90,13 @@ class Symbolizer {
                                            uptr *module_address) {
     return false;
   }
+  const char *GetModuleNameForPc(uptr pc) {
+    const char *module_name = 0;
+    uptr unused;
+    if (GetModuleNameAndOffsetForPC(pc, &module_name, &unused))
+      return module_name;
+    return nullptr;
+  }
   virtual bool CanReturnFileLineInfo() {
     return false;
   }

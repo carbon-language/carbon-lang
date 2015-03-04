@@ -450,6 +450,7 @@ class InternalMmapVectorNoCtor {
   }
 
   void clear() { size_ = 0; }
+  bool empty() const { return size() == 0; }
 
  private:
   void Resize(uptr new_capacity) {

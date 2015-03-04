@@ -19,11 +19,11 @@ int main(int argc, char **argv) {
     sink = 0;
 }
 
-// CHECK1: CovDump: bitset of 1 bits written, 1 bits are set
+// CHECK1: CovDump: bitset of 1 bits written for '{{.*}}', 1 bits are set
 // CHECK1:  1 PCs written
-// CHECK2: CovDump: bitset of 3 bits written, 2 bits are set
+// CHECK2: CovDump: bitset of 3 bits written for '{{.*}}', 2 bits are set
 // CHECK2:  2 PCs written
-// CHECK3: CovDump: bitset of 4 bits written, 3 bits are set
+// CHECK3: CovDump: bitset of 4 bits written for '{{.*}}', 3 bits are set
 // CHECK3:  3 PCs written
 // CHECK3_NOBITSET-NOT: bitset of
 // CHECK3_NOPCS-NOT: PCs written
