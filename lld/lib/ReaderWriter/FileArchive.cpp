@@ -53,7 +53,7 @@ public:
     const char *memberStart = ci->getBuffer().data();
     if (_membersInstantiated.count(memberStart))
       return nullptr;
-    if (dataSymbolOnly && !isDataSymbol(*ci, name))
+    if (dataSymbolOnly && !isDataSymbol(ci, name))
       return nullptr;
 
     _membersInstantiated.insert(memberStart);
@@ -70,7 +70,7 @@ public:
     }
 
     std::unique_ptr<File> result;
-    if (instantiateMember(*ci, result))
+    if (instantiateMember(ci, result))
       return nullptr;
 
     // give up the pointer so that this object no longer manages it
@@ -99,7 +99,7 @@ public:
 
     group.spawn([=] {
       std::unique_ptr<File> result;
-      std::error_code ec = instantiateMember(*ci, result);
+      std::error_code ec = instantiateMember(ci, result);
       future->set(ec ? nullptr : result.release());
     });
   }
@@ -112,7 +112,7 @@ public:
     for (auto mf = _archive->child_begin(), me = _archive->child_end();
          mf != me; ++mf) {
       std::unique_ptr<File> file;
-      if (std::error_code ec = instantiateMember(*mf, file))
+      if (std::error_code ec = instantiateMember(mf, file))
         return ec;
       result.push_back(std::move(file));
     }
@@ -153,24 +153,14 @@ protected:
       return ec;
     if ((ec = buildTableOfContents()))
       return ec;
-    buildParallelArray();
     return std::error_code();
   }
 
 private:
-  void buildParallelArray() {
-    size_t len = 0;
-    for (const Archive::Child &child : _archive->children()) {
-      _children.push_back(child);
-      len++;
-    }
-    _futures.resize(len);
-  }
-
   std::error_code
-  instantiateMember(const Archive::Child &member,
+  instantiateMember(Archive::child_iterator member,
                     std::unique_ptr<File> &result) const {
-    ErrorOr<llvm::MemoryBufferRef> mbOrErr = member.getMemoryBufferRef();
+    ErrorOr<llvm::MemoryBufferRef> mbOrErr = member->getMemoryBufferRef();
     if (std::error_code ec = mbOrErr.getError())
       return ec;
     llvm::MemoryBufferRef mb = mbOrErr.get();
@@ -201,8 +191,8 @@ private:
   // Parses the given memory buffer as an object file, and returns true
   // code if the given symbol is a data symbol. If the symbol is not a data
   // symbol or does not exist, returns false.
-  bool isDataSymbol(const Archive::Child &member, StringRef symbol) const {
-    ErrorOr<llvm::MemoryBufferRef> buf = member.getMemoryBufferRef();
+  bool isDataSymbol(Archive::child_iterator member, StringRef symbol) const {
+    ErrorOr<llvm::MemoryBufferRef> buf = member->getMemoryBufferRef();
     if (buf.getError())
       return false;
     std::unique_ptr<MemoryBuffer> mb(MemoryBuffer::getMemBuffer(
@@ -269,10 +259,6 @@ private:
   mutable std::vector<std::unique_ptr<MemoryBuffer>> _memberBuffers;
   mutable std::map<const char *, std::unique_ptr<Future<const File *>>> _preloaded;
   mutable std::mutex _mutex;
-
-  mutable std::vector<Archive::Child> _children;
-  mutable std::vector<std::unique_ptr<Future<const File *>>> _futures;
-
 };
 
 class ArchiveReader : public Reader {
