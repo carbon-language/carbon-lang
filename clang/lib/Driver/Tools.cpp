@@ -8098,7 +8098,9 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT_g_Group))
     CmdArgs.push_back("-debug");
 
-  bool DLL = Args.hasArg(options::OPT__SLASH_LD, options::OPT__SLASH_LDd);
+  bool DLL = Args.hasArg(options::OPT__SLASH_LD,
+                         options::OPT__SLASH_LDd,
+                         options::OPT_shared);
   if (DLL) {
     CmdArgs.push_back(Args.MakeArgString("-dll"));
 
