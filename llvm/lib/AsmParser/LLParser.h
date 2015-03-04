@@ -65,6 +65,14 @@ namespace llvm {
     std::unique_ptr<Constant*[]> ConstantStructElts;
 
     ValID() : Kind(t_LocalID), APFloatVal(0.0) {}
+    // Workaround for MSVC not synthesizing implicit move members.
+    ValID(ValID &&RHS)
+        : Kind(std::move(RHS.Kind)), Loc(std::move(RHS.Loc)),
+          UIntVal(std::move(RHS.UIntVal)), StrVal(std::move(RHS.StrVal)),
+          StrVal2(std::move(RHS.StrVal2)), APSIntVal(std::move(RHS.APSIntVal)),
+          APFloatVal(std::move(RHS.APFloatVal)),
+          ConstantVal(std::move(RHS.ConstantVal)),
+          ConstantStructElts(std::move(RHS.ConstantStructElts)) {}
 
     bool operator<(const ValID &RHS) const {
       if (Kind == t_LocalID || Kind == t_GlobalID)
