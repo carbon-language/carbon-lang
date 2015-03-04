@@ -436,7 +436,7 @@ bool MCExpr::evaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
   }
 
   bool IsRelocatable = EvaluateAsRelocatableImpl(
-      Value, Asm, Layout, nullptr, Addrs, InSet, /*ForceVarExpansion*/ false);
+      Value, Asm, Layout, nullptr, Addrs, InSet, /*ForceVarExpansion*/ true);
 
   // Record the current value.
   Res = Value.getConstant();
