@@ -259,5 +259,5 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !161 = !{!"header2.h", !"/Volumes/Sandbox/llvm"}
 !162 = !{i32 1, !"Debug Info Version", i32 3}
 !163 = !MDExpression(DW_OP_plus, 20, DW_OP_deref, DW_OP_plus, 4, DW_OP_deref, DW_OP_plus, 24)
-!164 = !MDExpression(DW_OP_plus, 24)
-!165 = !MDExpression(DW_OP_plus, 28)
+!164 = !MDExpression(DW_OP_deref, DW_OP_plus, 24)
+!165 = !MDExpression(DW_OP_deref, DW_OP_plus, 28)
