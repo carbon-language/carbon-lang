@@ -590,7 +590,6 @@ Constant *DataFlowSanitizer::getOrBuildTrampolineFunction(FunctionType *FT,
 }
 
 bool DataFlowSanitizer::runOnModule(Module &M) {
-
   if (ABIList.isIn(M, "skip"))
     return false;
 
