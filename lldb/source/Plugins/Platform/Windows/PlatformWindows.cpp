@@ -26,6 +26,8 @@
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
+#include "lldb/Breakpoint/BreakpointSite.h"
+#include "lldb/Target/Process.h"
 
 using namespace lldb;
 using namespace lldb_private;

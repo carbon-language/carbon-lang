@@ -42,7 +42,7 @@ ThreadPlanCallUserExpression::ThreadPlanCallUserExpression (Thread &thread,
                                                 Address &function,
                                                 llvm::ArrayRef<lldb::addr_t> args,
                                                 const EvaluateExpressionOptions &options,
-                                                ClangUserExpression::ClangUserExpressionSP &user_expression_sp) :
+                                                lldb::ClangUserExpressionSP &user_expression_sp) :
     ThreadPlanCallFunction (thread, function, ClangASTType(), args, options),
     m_user_expression_sp (user_expression_sp)
 {

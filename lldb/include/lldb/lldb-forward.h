@@ -312,6 +312,7 @@ namespace lldb {
     typedef std::shared_ptr<lldb_private::ClangExpressionVariable> ClangExpressionVariableSP;
     typedef std::unique_ptr<lldb_private::ClangModulesDeclVendor> ClangModulesDeclVendorUP;
     typedef std::unique_ptr<lldb_private::ClangPersistentVariables> ClangPersistentVariablesUP;
+    typedef std::shared_ptr<lldb_private::ClangUserExpression> ClangUserExpressionSP;
     typedef std::shared_ptr<lldb_private::CommandObject> CommandObjectSP;
     typedef std::shared_ptr<lldb_private::Communication> CommunicationSP;
     typedef std::shared_ptr<lldb_private::Connection> ConnectionSP;

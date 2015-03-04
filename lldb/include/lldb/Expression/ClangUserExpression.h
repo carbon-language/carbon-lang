@@ -45,8 +45,7 @@ namespace lldb_private
 class ClangUserExpression : public ClangExpression
 {
 public:
-    typedef std::shared_ptr<ClangUserExpression> ClangUserExpressionSP;
-    
+   
     enum { kDefaultTimeout = 500000u };
     //------------------------------------------------------------------
     /// Constructor
@@ -146,7 +145,7 @@ public:
     Execute (Stream &error_stream,
              ExecutionContext &exe_ctx,
              const EvaluateExpressionOptions& options,
-             ClangUserExpressionSP &shared_ptr_to_me,
+             lldb::ClangUserExpressionSP &shared_ptr_to_me,
              lldb::ClangExpressionVariableSP &result);
              
     //------------------------------------------------------------------

@@ -18,6 +18,7 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;

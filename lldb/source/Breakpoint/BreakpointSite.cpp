@@ -11,11 +11,14 @@
 
 // C Includes
 // C++ Includes
+#include <inttypes.h>
+
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Breakpoint/Breakpoint.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/BreakpointSiteList.h"
+#include "lldb/Core/Stream.h"
 
 using namespace lldb;
 using namespace lldb_private;

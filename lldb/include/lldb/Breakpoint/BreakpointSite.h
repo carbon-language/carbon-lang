@@ -18,7 +18,7 @@
 // Other libraries and framework includes
 
 // Project includes
-#include "lldb/lldb-private.h"
+#include "lldb/lldb-forward.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Core/UserID.h"
 #include "lldb/Breakpoint/StoppointLocation.h"
