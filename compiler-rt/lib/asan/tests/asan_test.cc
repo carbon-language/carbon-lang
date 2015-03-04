@@ -31,13 +31,13 @@ NOINLINE void free_aaa(void *p) { free_bbb(p); break_optimization(0);}
 
 template<typename T>
 NOINLINE void uaf_test(int size, int off) {
-  char *p = (char *)malloc_aaa(size);
+  void *p = malloc_aaa(size);
   free_aaa(p);
   for (int i = 1; i < 100; i++)
     free_aaa(malloc_aaa(i));
   fprintf(stderr, "writing %ld byte(s) at %p with offset %d\n",
           (long)sizeof(T), p, off);
-  asan_write((T*)(p + off));
+  asan_write((T *)((char *)p + off));
 }
 
 TEST(AddressSanitizer, HasFeatureAddressSanitizerTest) {
@@ -436,10 +436,10 @@ TEST(AddressSanitizer, WrongFreeTest) {
 
 void DoubleFree() {
   int *x = (int*)malloc(100 * sizeof(int));
-  fprintf(stderr, "DoubleFree: x=%p\n", x);
+  fprintf(stderr, "DoubleFree: x=%p\n", (void *)x);
   free(x);
   free(x);
-  fprintf(stderr, "should have failed in the second free(%p)\n", x);
+  fprintf(stderr, "should have failed in the second free(%p)\n", (void *)x);
   abort();
 }
 
@@ -1243,7 +1243,7 @@ TEST(AddressSanitizer, DISABLED_DemoTooMuchMemoryTest) {
   const size_t kAllocSize = (1 << 28) - 1024;
   size_t total_size = 0;
   while (true) {
-    char *x = (char*)malloc(kAllocSize);
+    void *x = malloc(kAllocSize);
     memset(x, 0, kAllocSize);
     total_size += kAllocSize;
     fprintf(stderr, "total: %ldM %p\n", (long)total_size >> 20, x);

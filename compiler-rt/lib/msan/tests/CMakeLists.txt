@@ -33,6 +33,7 @@ set(MSAN_UNITTEST_COMMON_CFLAGS
   -Wno-deprecated-declarations
   -Wno-unused-variable
   -Wno-zero-length-array
+  -Wno-uninitialized
   -Werror=sign-compare
 )
 set(MSAN_UNITTEST_INSTRUMENTED_CFLAGS
