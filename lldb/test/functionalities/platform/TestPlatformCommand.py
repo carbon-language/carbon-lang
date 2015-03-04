@@ -33,8 +33,11 @@ class PlatformCommandTestCase(TestBase):
 
     def test_shell(self):
         """ Test that the platform shell command can invoke ls. """
-        if sys.platform.startswith("win32"):
+        triple = self.dbg.GetSelectedPlatform().GetTriple()
+        if re.match(".*-.*-windows", triple):
           self.expect("platform shell dir c:\\", substrs = ["Windows", "Program Files"])
+        elif re.match(".*-.*-.*-android", triple):
+          self.expect("platform shell ls /", substrs = ["cache", "dev", "system"])
         else:
           self.expect("platform shell ls /", substrs = ["dev", "tmp", "usr"])
 

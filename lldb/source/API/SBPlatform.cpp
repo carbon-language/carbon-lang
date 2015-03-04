@@ -378,7 +378,7 @@ SBPlatform::GetTriple()
     PlatformSP platform_sp(GetSP());
     if (platform_sp)
     {
-        ArchSpec arch(platform_sp->GetRemoteSystemArchitecture());
+        ArchSpec arch(platform_sp->GetSystemArchitecture());
         if (arch.IsValid())
         {
             // Const-ify the string so we don't need to worry about the lifetime of the string
