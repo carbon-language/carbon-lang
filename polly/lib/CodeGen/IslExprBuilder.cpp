@@ -16,6 +16,7 @@
 
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;
 using namespace polly;
@@ -444,14 +445,71 @@ Value *IslExprBuilder::createOpBoolean(__isl_take isl_ast_expr *Expr) {
   return Res;
 }
 
+Value *
+IslExprBuilder::createOpBooleanConditional(__isl_take isl_ast_expr *Expr) {
+  assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_op &&
+         "Expected an isl_ast_expr_op expression");
+
+  Value *LHS, *RHS;
+  isl_ast_op_type OpType;
+
+  Function *F = Builder.GetInsertBlock()->getParent();
+  LLVMContext &Context = F->getContext();
+
+  OpType = isl_ast_expr_get_op_type(Expr);
+
+  assert((OpType == isl_ast_op_and_then || OpType == isl_ast_op_or_else) &&
+         "Unsupported isl_ast_op_type");
+
+  auto InsertBB = Builder.GetInsertBlock();
+  auto InsertPoint = Builder.GetInsertPoint();
+  auto NextBB = SplitBlock(InsertBB, InsertPoint, &DT, &LI);
+  BasicBlock *CondBB = BasicBlock::Create(Context, "polly.cond", F);
+  LI.changeLoopFor(CondBB, LI.getLoopFor(InsertBB));
+  DT.addNewBlock(CondBB, InsertBB);
+
+  InsertBB->getTerminator()->eraseFromParent();
+  Builder.SetInsertPoint(InsertBB);
+  auto BR = Builder.CreateCondBr(Builder.getTrue(), NextBB, CondBB);
+
+  Builder.SetInsertPoint(CondBB);
+  Builder.CreateBr(NextBB);
+
+  Builder.SetInsertPoint(InsertBB->getTerminator());
+
+  LHS = create(isl_ast_expr_get_op_arg(Expr, 0));
+  if (!LHS->getType()->isIntegerTy(1))
+    LHS = Builder.CreateIsNotNull(LHS);
+  auto LeftBB = Builder.GetInsertBlock();
+
+  if (OpType == isl_ast_op_and || OpType == isl_ast_op_and_then)
+    BR->setCondition(Builder.CreateNeg(LHS));
+  else
+    BR->setCondition(LHS);
+
+  Builder.SetInsertPoint(CondBB->getTerminator());
+  RHS = create(isl_ast_expr_get_op_arg(Expr, 1));
+  if (!RHS->getType()->isIntegerTy(1))
+    RHS = Builder.CreateIsNotNull(RHS);
+  auto RightBB = Builder.GetInsertBlock();
+
+  Builder.SetInsertPoint(NextBB->getTerminator());
+  auto PHI = Builder.CreatePHI(Builder.getInt1Ty(), 2);
+  PHI->addIncoming(OpType == isl_ast_op_and_then ? Builder.getFalse()
+                                                 : Builder.getTrue(),
+                   LeftBB);
+  PHI->addIncoming(RHS, RightBB);
+
+  isl_ast_expr_free(Expr);
+  return PHI;
+}
+
 Value *IslExprBuilder::createOp(__isl_take isl_ast_expr *Expr) {
   assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_op &&
          "Expression not of type isl_ast_expr_op");
   switch (isl_ast_expr_get_op_type(Expr)) {
   case isl_ast_op_error:
   case isl_ast_op_cond:
-  case isl_ast_op_and_then:
-  case isl_ast_op_or_else:
   case isl_ast_op_call:
   case isl_ast_op_member:
     llvm_unreachable("Unsupported isl ast expression");
@@ -476,6 +534,9 @@ Value *IslExprBuilder::createOp(__isl_take isl_ast_expr *Expr) {
   case isl_ast_op_and:
   case isl_ast_op_or:
     return createOpBoolean(Expr);
+  case isl_ast_op_and_then:
+  case isl_ast_op_or_else:
+    return createOpBooleanConditional(Expr);
   case isl_ast_op_eq:
   case isl_ast_op_le:
   case isl_ast_op_lt:

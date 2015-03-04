@@ -65,8 +65,8 @@ public:
                  DominatorTree &DT, Scop &S)
       : S(S), Builder(Builder), Annotator(Annotator),
         Rewriter(new SCEVExpander(SE, "polly")),
-        ExprBuilder(Builder, IDToValue, *Rewriter),
-        BlockGen(Builder, LI, SE, DT, &ExprBuilder), RegionGen(BlockGen), P(P),
+        ExprBuilder(Builder, IDToValue, *Rewriter, DT, LI),
+        BlockGen(Builder, LI, SE, DT, &ExprBuilder), RegionGen(BlockGen),
         DL(DL), LI(LI), SE(SE), DT(DT) {}
 
   ~IslNodeBuilder() { delete Rewriter; }

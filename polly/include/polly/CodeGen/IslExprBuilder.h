@@ -96,8 +96,10 @@ public:
   /// @param Expander  A SCEVExpander to create the indices for multi
   ///                  dimensional accesses.
   IslExprBuilder(PollyIRBuilder &Builder, IDToValueTy &IDToValue,
-                 llvm::SCEVExpander &Expander)
-      : Builder(Builder), IDToValue(IDToValue), Expander(Expander) {}
+                 llvm::SCEVExpander &Expander, llvm::DominatorTree &DT,
+                 llvm::LoopInfo &LI)
+      : Builder(Builder), IDToValue(IDToValue), Expander(Expander), DT(DT),
+        LI(LI) {}
 
   /// @brief Create LLVM-IR for an isl_ast_expr[ession].
   ///
@@ -130,6 +132,9 @@ private:
   /// @brief A SCEVExpander to translate dimension sizes to llvm values.
   llvm::SCEVExpander &Expander;
 
+  llvm::DominatorTree &DT;
+  llvm::LoopInfo &LI;
+
   llvm::Value *createOp(__isl_take isl_ast_expr *Expr);
   llvm::Value *createOpUnary(__isl_take isl_ast_expr *Expr);
   llvm::Value *createOpAccess(__isl_take isl_ast_expr *Expr);
@@ -138,6 +143,7 @@ private:
   llvm::Value *createOpSelect(__isl_take isl_ast_expr *Expr);
   llvm::Value *createOpICmp(__isl_take isl_ast_expr *Expr);
   llvm::Value *createOpBoolean(__isl_take isl_ast_expr *Expr);
+  llvm::Value *createOpBooleanConditional(__isl_take isl_ast_expr *Expr);
   llvm::Value *createId(__isl_take isl_ast_expr *Expr);
   llvm::Value *createInt(__isl_take isl_ast_expr *Expr);
   llvm::Value *createOpAddressOf(__isl_take isl_ast_expr *Expr);
