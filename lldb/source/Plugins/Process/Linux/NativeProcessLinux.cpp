@@ -143,6 +143,8 @@ namespace
     using namespace lldb;
     using namespace lldb_private;
 
+    static void * const EXIT_OPERATION = nullptr;
+
     const UnixSignals&
     GetUnixSignals ()
     {
@@ -3371,14 +3373,11 @@ NativeProcessLinux::ServeOperation(OperationArgs *args)
             assert(false && "Unexpected errno from sem_wait");
         }
 
-        // nullptr as operation means the operation thread should exit. Cancel() can't be used
-        // because it is not supported on android.
-        if (!monitor->m_operation)
-        {
-            // notify calling thread that operation is complete
-            sem_post(&monitor->m_operation_done);
+        // EXIT_OPERATION used to stop the operation thread because Cancel() isn't supported on
+        // android. We don't have to send a post to the m_operation_done semaphore because in this
+        // case the synchronization is achieved by a Join() call
+        if (monitor->m_operation == EXIT_OPERATION)
             break;
-        }
 
         reinterpret_cast<Operation*>(monitor->m_operation)->Execute(monitor);
 
@@ -3396,6 +3395,11 @@ NativeProcessLinux::DoOperation(void *op)
 
     // notify operation thread that an operation is ready to be processed
     sem_post(&m_operation_pending);
+
+    // Don't wait for the operation to complete in case of an exit operation. The operation thread
+    // will exit without posting to the semaphore
+    if (m_operation == EXIT_OPERATION)
+        return;
 
     // wait for operation to complete
     while (sem_wait(&m_operation_done))
@@ -3565,9 +3569,9 @@ NativeProcessLinux::StopMonitoringChildProcess()
 void
 NativeProcessLinux::StopMonitor()
 {
-    StopOpThread();
     StopMonitoringChildProcess();
     StopCoordinatorThread ();
+    StopOpThread();
     sem_destroy(&m_operation_pending);
     sem_destroy(&m_operation_done);
 
@@ -3584,7 +3588,7 @@ NativeProcessLinux::StopOpThread()
     if (!m_operation_thread.IsJoinable())
         return;
 
-    DoOperation(nullptr); // nullptr as operation ask the operation thread to exit
+    DoOperation(EXIT_OPERATION);
     m_operation_thread.Join(nullptr);
 }
 
