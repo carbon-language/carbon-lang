@@ -499,7 +499,6 @@ private:
   void WriteOpenCLExtensions(Sema &SemaRef);
   void WriteObjCCategories();
   void WriteRedeclarations();
-  void WriteMergedDecls();
   void WriteLateParsedTemplates(Sema &SemaRef);
   void WriteOptimizePragmaOptions(Sema &SemaRef);
 

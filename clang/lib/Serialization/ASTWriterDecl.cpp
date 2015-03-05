@@ -1461,24 +1461,41 @@ void ASTDeclWriter::VisitRedeclarable(Redeclarable<T> *D) {
     assert(isRedeclarableDeclKind(static_cast<T *>(D)->getKind()) &&
            "Not considered redeclarable?");
 
+    // There is more than one declaration of this entity, so we will need to
+    // write a redeclaration chain.
+    Writer.AddDeclRef(First, Record);
+    Writer.Redeclarations.insert(First);
+
     auto *Previous = D->getPreviousDecl();
-    auto *FirstToEmit = First;
-    if (Context.getLangOpts().Modules && Writer.Chain && !Previous) {
-      // In a modules build, we can have imported declarations after a local
-      // canonical declaration. If we do, we want to treat the first imported
-      // declaration as our canonical declaration on reload, in order to
-      // rebuild the redecl chain in the right order.
+
+    // In a modules build, we can have imported declarations after a local
+    // canonical declaration. If this is the first local declaration, emit
+    // a list of all such imported declarations so that we can ensure they
+    // are loaded before we are. This allows us to rebuild the redecl chain
+    // in the right order on reload (all declarations imported by a module
+    // should be before all declarations provided by that module).
+    bool EmitImportedMergedCanonicalDecls = false;
+    if (Context.getLangOpts().Modules && Writer.Chain) {
+      auto *PreviousLocal = Previous;
+      while (PreviousLocal && PreviousLocal->isFromASTFile())
+        PreviousLocal = PreviousLocal->getPreviousDecl();
+      if (!PreviousLocal)
+        EmitImportedMergedCanonicalDecls = true;
+    }
+    if (EmitImportedMergedCanonicalDecls) {
+      llvm::SmallMapVector<ModuleFile*, Decl*, 16> FirstInModule;
       for (auto *Redecl = MostRecent; Redecl;
            Redecl = Redecl->getPreviousDecl())
         if (Redecl->isFromASTFile())
-          FirstToEmit = Redecl;
-    }
-
-    // There is more than one declaration of this entity, so we will need to
-    // write a redeclaration chain.
-    Writer.AddDeclRef(FirstToEmit, Record);
-    Record.push_back(FirstToEmit != First);
-    Writer.Redeclarations.insert(First);
+          FirstInModule[Writer.Chain->getOwningModuleFile(Redecl)] = Redecl;
+      // FIXME: If FirstInModule has entries for modules A and B, and B imports
+      // A (directly or indirectly), we don't need to write the entry for A.
+      Record.push_back(FirstInModule.size());
+      for (auto I = FirstInModule.rbegin(), E = FirstInModule.rend();
+           I != E; ++I)
+        Writer.AddDeclRef(I->second, Record);
+    } else
+      Record.push_back(0);
 
     // Make sure that we serialize both the previous and the most-recent 
     // declarations, which (transitively) ensures that all declarations in the

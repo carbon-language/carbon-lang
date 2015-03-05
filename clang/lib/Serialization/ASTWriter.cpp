@@ -924,7 +924,6 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(OBJC_CATEGORIES_MAP);
   RECORD(FILE_SORTED_DECLS);
   RECORD(IMPORTED_MODULES);
-  RECORD(MERGED_DECLARATIONS);
   RECORD(LOCAL_REDECLARATIONS);
   RECORD(OBJC_CATEGORIES);
   RECORD(MACRO_OFFSET);
@@ -3115,7 +3114,7 @@ static NamedDecl *getDeclForLocalLookup(const LangOptions &LangOpts,
     for (; Redecl; Redecl = Redecl->getPreviousDecl()) {
       if (!Redecl->isFromASTFile())
         return cast<NamedDecl>(Redecl);
-      // If we come up a decl from a (chained-)PCH stop since we won't find a
+      // If we find a decl from a (chained-)PCH stop since we won't find a
       // local one.
       if (D->getOwningModuleID() == 0)
         break;
@@ -3671,14 +3670,24 @@ void ASTWriter::visitLocalLookupResults(const DeclContext *ConstDC,
 
   SmallVector<DeclarationName, 16> ExternalNames;
   for (auto &Lookup : *DC->buildLookup()) {
-    // If there are no local declarations in our lookup result, we don't
-    // need to write an entry for the name at all unless we're rewriting
-    // the decl context.
-    if (!Lookup.second.hasLocalDecls() && !isRewritten(cast<Decl>(DC)))
-      continue;
-
     if (Lookup.second.hasExternalDecls() ||
         DC->NeedToReconcileExternalVisibleStorage) {
+      // If there are no local declarations in our lookup result, we don't
+      // need to write an entry for the name at all unless we're rewriting
+      // the decl context. If we can't write out a lookup set without
+      // performing more deserialization, just skip this entry.
+      if (!isRewritten(cast<Decl>(DC))) {
+        bool AllFromASTFile = true;
+        for (auto *D : Lookup.second.getLookupResult()) {
+          AllFromASTFile &=
+              getDeclForLocalLookup(getLangOpts(), D)->isFromASTFile();
+          if (!AllFromASTFile)
+            break;
+        }
+        if (AllFromASTFile)
+          continue;
+      }
+
       // We don't know for sure what declarations are found by this name,
       // because the external source might have a different set from the set
       // that are in the lookup map, and we can't update it now without
@@ -3898,10 +3907,6 @@ void ASTWriter::WriteRedeclarations() {
         if (Prev->isFromASTFile())
           FirstFromAST = Prev;
       }
-
-      // FIXME: Do we need to do this for the first declaration from each
-      // redeclaration chain that was merged into this one?
-      Chain->MergedDecls[FirstFromAST].push_back(getDeclID(First));
     }
 
     LocalRedeclChains[Offset] = Size;
@@ -3996,25 +4001,6 @@ void ASTWriter::WriteObjCCategories() {
   
   // Emit the category lists.
   Stream.EmitRecord(OBJC_CATEGORIES, Categories);
-}
-
-void ASTWriter::WriteMergedDecls() {
-  if (!Chain || Chain->MergedDecls.empty())
-    return;
-  
-  RecordData Record;
-  for (ASTReader::MergedDeclsMap::iterator I = Chain->MergedDecls.begin(),
-                                        IEnd = Chain->MergedDecls.end();
-       I != IEnd; ++I) {
-    DeclID CanonID = I->first->isFromASTFile()? I->first->getGlobalID()
-                                              : GetDeclRef(I->first);
-    assert(CanonID && "Merged declaration not known?");
-    
-    Record.push_back(CanonID);
-    Record.push_back(I->second.size());
-    Record.append(I->second.begin(), I->second.end());
-  }
-  Stream.EmitRecord(MERGED_DECLARATIONS, Record);
 }
 
 void ASTWriter::WriteLateParsedTemplates(Sema &SemaRef) {
@@ -4699,7 +4685,6 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
 
   WriteDeclReplacementsBlock();
   WriteRedeclarations();
-  WriteMergedDecls();
   WriteObjCCategories();
   WriteLateParsedTemplates(SemaRef);
   if(!WritingModule)

@@ -415,7 +415,9 @@ void LookupResult::resolveKind() {
       // If it's not unique, pull something off the back (and
       // continue at this index).
       // FIXME: This is wrong. We need to take the more recent declaration in
-      // order to get the right type, default arguments, etc.
+      // order to get the right type, default arguments, etc. We also need to
+      // prefer visible declarations to hidden ones (for redeclaration lookup
+      // in modules builds).
       Decls[I] = Decls[--N];
       continue;
     }
