@@ -29,6 +29,7 @@
 #include "DependencyAnalysis.h"
 #include "ObjCARCAliasAnalysis.h"
 #include "ProvenanceAnalysis.h"
+#include "BlotMapVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
@@ -45,102 +46,6 @@ using namespace llvm::objcarc;
 
 #define DEBUG_TYPE "objc-arc-opts"
 
-/// \defgroup MiscUtils Miscellaneous utilities that are not ARC specific.
-/// @{
-
-namespace {
-  /// \brief An associative container with fast insertion-order (deterministic)
-  /// iteration over its elements. Plus the special blot operation.
-  template<class KeyT, class ValueT>
-  class MapVector {
-    /// Map keys to indices in Vector.
-    typedef DenseMap<KeyT, size_t> MapTy;
-    MapTy Map;
-
-    typedef std::vector<std::pair<KeyT, ValueT> > VectorTy;
-    /// Keys and values.
-    VectorTy Vector;
-
-  public:
-    typedef typename VectorTy::iterator iterator;
-    typedef typename VectorTy::const_iterator const_iterator;
-    iterator begin() { return Vector.begin(); }
-    iterator end() { return Vector.end(); }
-    const_iterator begin() const { return Vector.begin(); }
-    const_iterator end() const { return Vector.end(); }
-
-#ifdef XDEBUG
-    ~MapVector() {
-      assert(Vector.size() >= Map.size()); // May differ due to blotting.
-      for (typename MapTy::const_iterator I = Map.begin(), E = Map.end();
-           I != E; ++I) {
-        assert(I->second < Vector.size());
-        assert(Vector[I->second].first == I->first);
-      }
-      for (typename VectorTy::const_iterator I = Vector.begin(),
-           E = Vector.end(); I != E; ++I)
-        assert(!I->first ||
-               (Map.count(I->first) &&
-                Map[I->first] == size_t(I - Vector.begin())));
-    }
-#endif
-
-    ValueT &operator[](const KeyT &Arg) {
-      std::pair<typename MapTy::iterator, bool> Pair =
-        Map.insert(std::make_pair(Arg, size_t(0)));
-      if (Pair.second) {
-        size_t Num = Vector.size();
-        Pair.first->second = Num;
-        Vector.push_back(std::make_pair(Arg, ValueT()));
-        return Vector[Num].second;
-      }
-      return Vector[Pair.first->second].second;
-    }
-
-    std::pair<iterator, bool>
-    insert(const std::pair<KeyT, ValueT> &InsertPair) {
-      std::pair<typename MapTy::iterator, bool> Pair =
-        Map.insert(std::make_pair(InsertPair.first, size_t(0)));
-      if (Pair.second) {
-        size_t Num = Vector.size();
-        Pair.first->second = Num;
-        Vector.push_back(InsertPair);
-        return std::make_pair(Vector.begin() + Num, true);
-      }
-      return std::make_pair(Vector.begin() + Pair.first->second, false);
-    }
-
-    iterator find(const KeyT &Key) {
-      typename MapTy::iterator It = Map.find(Key);
-      if (It == Map.end()) return Vector.end();
-      return Vector.begin() + It->second;
-    }
-
-    const_iterator find(const KeyT &Key) const {
-      typename MapTy::const_iterator It = Map.find(Key);
-      if (It == Map.end()) return Vector.end();
-      return Vector.begin() + It->second;
-    }
-
-    /// This is similar to erase, but instead of removing the element from the
-    /// vector, it just zeros out the key in the vector. This leaves iterators
-    /// intact, but clients must be prepared for zeroed-out keys when iterating.
-    void blot(const KeyT &Key) {
-      typename MapTy::iterator It = Map.find(Key);
-      if (It == Map.end()) return;
-      Vector[It->second].first = KeyT();
-      Map.erase(It);
-    }
-
-    void clear() {
-      Map.clear();
-      Vector.clear();
-    }
-  };
-}
-
-/// @}
-///
 /// \defgroup ARCUtilities Utility declarations/definitions specific to ARC.
 /// @{
 
@@ -567,7 +472,7 @@ namespace {
     unsigned BottomUpPathCount;
 
     /// A type for PerPtrTopDown and PerPtrBottomUp.
-    typedef MapVector<const Value *, PtrState> MapTy;
+    typedef BlotMapVector<const Value *, PtrState> MapTy;
 
     /// The top-down traversal uses this to record information known about a
     /// pointer at the bottom of each block.
@@ -1102,47 +1007,40 @@ namespace {
     void CheckForCFGHazards(const BasicBlock *BB,
                             DenseMap<const BasicBlock *, BBState> &BBStates,
                             BBState &MyStates) const;
-    bool VisitInstructionBottomUp(Instruction *Inst,
-                                  BasicBlock *BB,
-                                  MapVector<Value *, RRInfo> &Retains,
+    bool VisitInstructionBottomUp(Instruction *Inst, BasicBlock *BB,
+                                  BlotMapVector<Value *, RRInfo> &Retains,
                                   BBState &MyStates);
     bool VisitBottomUp(BasicBlock *BB,
                        DenseMap<const BasicBlock *, BBState> &BBStates,
-                       MapVector<Value *, RRInfo> &Retains);
+                       BlotMapVector<Value *, RRInfo> &Retains);
     bool VisitInstructionTopDown(Instruction *Inst,
                                  DenseMap<Value *, RRInfo> &Releases,
                                  BBState &MyStates);
     bool VisitTopDown(BasicBlock *BB,
                       DenseMap<const BasicBlock *, BBState> &BBStates,
                       DenseMap<Value *, RRInfo> &Releases);
-    bool Visit(Function &F,
-               DenseMap<const BasicBlock *, BBState> &BBStates,
-               MapVector<Value *, RRInfo> &Retains,
+    bool Visit(Function &F, DenseMap<const BasicBlock *, BBState> &BBStates,
+               BlotMapVector<Value *, RRInfo> &Retains,
                DenseMap<Value *, RRInfo> &Releases);
 
     void MoveCalls(Value *Arg, RRInfo &RetainsToMove, RRInfo &ReleasesToMove,
-                   MapVector<Value *, RRInfo> &Retains,
+                   BlotMapVector<Value *, RRInfo> &Retains,
                    DenseMap<Value *, RRInfo> &Releases,
-                   SmallVectorImpl<Instruction *> &DeadInsts,
-                   Module *M);
+                   SmallVectorImpl<Instruction *> &DeadInsts, Module *M);
 
     bool ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState> &BBStates,
-                               MapVector<Value *, RRInfo> &Retains,
-                               DenseMap<Value *, RRInfo> &Releases,
-                               Module *M,
+                               BlotMapVector<Value *, RRInfo> &Retains,
+                               DenseMap<Value *, RRInfo> &Releases, Module *M,
                                SmallVectorImpl<Instruction *> &NewRetains,
                                SmallVectorImpl<Instruction *> &NewReleases,
                                SmallVectorImpl<Instruction *> &DeadInsts,
-                               RRInfo &RetainsToMove,
-                               RRInfo &ReleasesToMove,
-                               Value *Arg,
-                               bool KnownSafe,
+                               RRInfo &RetainsToMove, RRInfo &ReleasesToMove,
+                               Value *Arg, bool KnownSafe,
                                bool &AnyPairsCompletelyEliminated);
 
     bool PerformCodePlacement(DenseMap<const BasicBlock *, BBState> &BBStates,
-                              MapVector<Value *, RRInfo> &Retains,
-                              DenseMap<Value *, RRInfo> &Releases,
-                              Module *M);
+                              BlotMapVector<Value *, RRInfo> &Retains,
+                              DenseMap<Value *, RRInfo> &Releases, Module *M);
 
     void OptimizeWeakCalls(Function &F);
 
@@ -1705,11 +1603,9 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
   }
 }
 
-bool
-ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
-                                     BasicBlock *BB,
-                                     MapVector<Value *, RRInfo> &Retains,
-                                     BBState &MyStates) {
+bool ObjCARCOpt::VisitInstructionBottomUp(
+    Instruction *Inst, BasicBlock *BB, BlotMapVector<Value *, RRInfo> &Retains,
+    BBState &MyStates) {
   bool NestingDetected = false;
   ARCInstKind Class = GetARCInstKind(Inst);
   const Value *Arg = nullptr;
@@ -1901,10 +1797,9 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
   return NestingDetected;
 }
 
-bool
-ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
-                          DenseMap<const BasicBlock *, BBState> &BBStates,
-                          MapVector<Value *, RRInfo> &Retains) {
+bool ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
+                               DenseMap<const BasicBlock *, BBState> &BBStates,
+                               BlotMapVector<Value *, RRInfo> &Retains) {
 
   DEBUG(dbgs() << "\n== ObjCARCOpt::VisitBottomUp ==\n");
 
@@ -2246,11 +2141,10 @@ ComputePostOrders(Function &F,
 }
 
 // Visit the function both top-down and bottom-up.
-bool
-ObjCARCOpt::Visit(Function &F,
-                  DenseMap<const BasicBlock *, BBState> &BBStates,
-                  MapVector<Value *, RRInfo> &Retains,
-                  DenseMap<Value *, RRInfo> &Releases) {
+bool ObjCARCOpt::Visit(Function &F,
+                       DenseMap<const BasicBlock *, BBState> &BBStates,
+                       BlotMapVector<Value *, RRInfo> &Retains,
+                       DenseMap<Value *, RRInfo> &Releases) {
 
   // Use reverse-postorder traversals, because we magically know that loops
   // will be well behaved, i.e. they won't repeatedly call retain on a single
@@ -2281,10 +2175,9 @@ ObjCARCOpt::Visit(Function &F,
 }
 
 /// Move the calls in RetainsToMove and ReleasesToMove.
-void ObjCARCOpt::MoveCalls(Value *Arg,
-                           RRInfo &RetainsToMove,
+void ObjCARCOpt::MoveCalls(Value *Arg, RRInfo &RetainsToMove,
                            RRInfo &ReleasesToMove,
-                           MapVector<Value *, RRInfo> &Retains,
+                           BlotMapVector<Value *, RRInfo> &Retains,
                            DenseMap<Value *, RRInfo> &Releases,
                            SmallVectorImpl<Instruction *> &DeadInsts,
                            Module *M) {
@@ -2335,20 +2228,15 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
 
 }
 
-bool
-ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
-                                    &BBStates,
-                                  MapVector<Value *, RRInfo> &Retains,
-                                  DenseMap<Value *, RRInfo> &Releases,
-                                  Module *M,
-                                  SmallVectorImpl<Instruction *> &NewRetains,
-                                  SmallVectorImpl<Instruction *> &NewReleases,
-                                  SmallVectorImpl<Instruction *> &DeadInsts,
-                                  RRInfo &RetainsToMove,
-                                  RRInfo &ReleasesToMove,
-                                  Value *Arg,
-                                  bool KnownSafe,
-                                  bool &AnyPairsCompletelyEliminated) {
+bool ObjCARCOpt::ConnectTDBUTraversals(
+    DenseMap<const BasicBlock *, BBState> &BBStates,
+    BlotMapVector<Value *, RRInfo> &Retains,
+    DenseMap<Value *, RRInfo> &Releases, Module *M,
+    SmallVectorImpl<Instruction *> &NewRetains,
+    SmallVectorImpl<Instruction *> &NewReleases,
+    SmallVectorImpl<Instruction *> &DeadInsts, RRInfo &RetainsToMove,
+    RRInfo &ReleasesToMove, Value *Arg, bool KnownSafe,
+    bool &AnyPairsCompletelyEliminated) {
   // If a pair happens in a region where it is known that the reference count
   // is already incremented, we can similarly ignore possible decrements unless
   // we are dealing with a retainable object with multiple provenance sources.
@@ -2369,7 +2257,8 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
     for (SmallVectorImpl<Instruction *>::const_iterator
            NI = NewRetains.begin(), NE = NewRetains.end(); NI != NE; ++NI) {
       Instruction *NewRetain = *NI;
-      MapVector<Value *, RRInfo>::const_iterator It = Retains.find(NewRetain);
+      BlotMapVector<Value *, RRInfo>::const_iterator It =
+          Retains.find(NewRetain);
       assert(It != Retains.end());
       const RRInfo &NewRetainRRI = It->second;
       KnownSafeTD &= NewRetainRRI.KnownSafe;
@@ -2453,8 +2342,8 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
       KnownSafeBU &= NewReleaseRRI.KnownSafe;
       CFGHazardAfflicted |= NewReleaseRRI.CFGHazardAfflicted;
       for (Instruction *NewReleaseRetain : NewReleaseRRI.Calls) {
-        MapVector<Value *, RRInfo>::const_iterator Jt =
-          Retains.find(NewReleaseRetain);
+        BlotMapVector<Value *, RRInfo>::const_iterator Jt =
+            Retains.find(NewReleaseRetain);
         if (Jt == Retains.end())
           return false;
         const RRInfo &NewReleaseRetainRRI = Jt->second;
@@ -2558,12 +2447,10 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
 
 /// Identify pairings between the retains and releases, and delete and/or move
 /// them.
-bool
-ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
-                                   &BBStates,
-                                 MapVector<Value *, RRInfo> &Retains,
-                                 DenseMap<Value *, RRInfo> &Releases,
-                                 Module *M) {
+bool ObjCARCOpt::PerformCodePlacement(
+    DenseMap<const BasicBlock *, BBState> &BBStates,
+    BlotMapVector<Value *, RRInfo> &Retains,
+    DenseMap<Value *, RRInfo> &Releases, Module *M) {
   DEBUG(dbgs() << "\n== ObjCARCOpt::PerformCodePlacement ==\n");
 
   bool AnyPairsCompletelyEliminated = false;
@@ -2574,8 +2461,9 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
   SmallVector<Instruction *, 8> DeadInsts;
 
   // Visit each retain.
-  for (MapVector<Value *, RRInfo>::const_iterator I = Retains.begin(),
-       E = Retains.end(); I != E; ++I) {
+  for (BlotMapVector<Value *, RRInfo>::const_iterator I = Retains.begin(),
+                                                      E = Retains.end();
+       I != E; ++I) {
     Value *V = I->first;
     if (!V) continue; // blotted
 
@@ -2795,7 +2683,7 @@ bool ObjCARCOpt::OptimizeSequences(Function &F) {
   // map stays valid when we get around to rewriting code and calls get
   // replaced by arguments.
   DenseMap<Value *, RRInfo> Releases;
-  MapVector<Value *, RRInfo> Retains;
+  BlotMapVector<Value *, RRInfo> Retains;
 
   // This is used during the traversal of the function to track the
   // states for each identified object at each block.
