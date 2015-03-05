@@ -181,6 +181,8 @@ private:
   typedef std::pair<AllowedRegVecPtr, AllowedRegVecPtr> IKey;
   typedef DenseMap<IKey, PBQPRAGraph::MatrixPtr> IMatrixCache;
   typedef DenseSet<IKey> DisjointAllowedRegsCache;
+  typedef std::pair<PBQP::GraphBase::NodeId, PBQP::GraphBase::NodeId> IEdgeKey;
+  typedef DenseSet<IEdgeKey> IEdgeCache;
 
   bool haveDisjointAllowedRegs(const PBQPRAGraph &G, PBQPRAGraph::NodeId NId,
                                PBQPRAGraph::NodeId MId,
@@ -277,6 +279,10 @@ public:
     // and uniquing them.
     IMatrixCache C;
 
+    // Finding an edge is expensive in the worst case (O(max_clique(G))). So
+    // cache locally edges we have already seen.
+    IEdgeCache EC;
+
     // Cache known disjoint allowed registers pairs
     DisjointAllowedRegsCache D;
 
@@ -329,14 +335,15 @@ public:
           continue;
 
         // Check that we haven't already added this edge
-        // FIXME: findEdge is expensive in the worst case (O(max_clique(G))).
-        //        It might be better to replace this with a local bit-matrix.
-        if (G.findEdge(NId, MId) != PBQPRAGraph::invalidEdgeId())
+        IEdgeKey EK(std::min(NId, MId), std::max(NId, MId));
+        if (EC.count(EK))
           continue;
 
         // This is a new edge - add it to the graph.
         if (!createInterferenceEdge(G, NId, MId, C))
           setDisjointAllowedRegs(G, NId, MId, D);
+        else
+          EC.insert(EK);
       }
 
       // Finally, add Cur to the Active set.
