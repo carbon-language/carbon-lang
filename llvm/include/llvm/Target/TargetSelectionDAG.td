@@ -68,6 +68,18 @@ class SDTCisSubVecOfVec<int ThisOp, int OtherOp>
   int OtherOpNum = OtherOp;
 }
 
+// SDTCVecEltisVT - The specified operand is vector type with element type
+// of VT.
+class SDTCVecEltisVT<int OpNum, ValueType vt> : SDTypeConstraint<OpNum> {
+  ValueType VT = vt;
+}
+
+// SDTCisSameNumEltsAs - The two specified operands have identical number
+// of elements.
+class SDTCisSameNumEltsAs<int OpNum, int OtherOp> : SDTypeConstraint<OpNum> {
+  int OtherOperandNum = OtherOp;
+}
+
 //===----------------------------------------------------------------------===//
 // Selection DAG Type Profile definitions.
 //

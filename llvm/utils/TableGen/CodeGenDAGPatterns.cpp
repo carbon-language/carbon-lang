@@ -484,6 +484,34 @@ bool EEVT::TypeSet::EnforceSmallerThan(EEVT::TypeSet &Other, TreePattern &TP) {
 
 /// EnforceVectorEltTypeIs - 'this' is now constrainted to be a vector type
 /// whose element is specified by VTOperand.
+bool EEVT::TypeSet::EnforceVectorEltTypeIs(MVT::SimpleValueType VT,
+                                           TreePattern &TP) {
+  bool MadeChange = false;
+
+  MadeChange |= EnforceVector(TP);
+
+  TypeSet InputSet(*this);
+
+  // Filter out all the types which don't have the right element type.
+  for (unsigned i = 0; i != TypeVec.size(); ++i) {
+    assert(isVector(TypeVec[i]) && "EnforceVector didn't work");
+    if (MVT(TypeVec[i]).getVectorElementType().SimpleTy != VT) {
+      TypeVec.erase(TypeVec.begin()+i--);
+      MadeChange = true;
+    }
+  }
+
+  if (TypeVec.empty()) {  // FIXME: Really want an SMLoc here!
+    TP.error("Type inference contradiction found, forcing '" +
+             InputSet.getName() + "' to have a vector element");
+    return false;
+  }
+
+  return MadeChange;
+}
+
+/// EnforceVectorEltTypeIs - 'this' is now constrainted to be a vector type
+/// whose element is specified by VTOperand.
 bool EEVT::TypeSet::EnforceVectorEltTypeIs(EEVT::TypeSet &VTOperand,
                                            TreePattern &TP) {
   if (TP.hasError())
@@ -601,6 +629,64 @@ bool EEVT::TypeSet::EnforceVectorSubVectorTypeIs(EEVT::TypeSet &VTOperand,
     if (TypeVec.empty()) {  // FIXME: Really want an SMLoc here!
       TP.error("Type inference contradiction found, forcing '" +
                InputSet.getName() + "' to have more vector elements than '" +
+               VTOperand.getName() + "'");
+      return false;
+    }
+  }
+
+  return MadeChange;
+}
+
+/// EnforceVectorSameNumElts - 'this' is now constrainted to
+/// be a vector with same num elements as VTOperand.
+bool EEVT::TypeSet::EnforceVectorSameNumElts(EEVT::TypeSet &VTOperand,
+                                             TreePattern &TP) {
+  if (TP.hasError())
+    return false;
+
+  // "This" must be a vector and "VTOperand" must be a vector.
+  bool MadeChange = false;
+  MadeChange |= EnforceVector(TP);
+  MadeChange |= VTOperand.EnforceVector(TP);
+
+  // If we know one of the vector types, it forces the other type to agree.
+  if (isConcrete()) {
+    MVT IVT = getConcrete();
+    unsigned NumElems = IVT.getVectorNumElements();
+
+    // Only keep types that have same elements as VTOperand.
+    TypeSet InputSet(VTOperand);
+
+    for (unsigned i = 0; i != VTOperand.TypeVec.size(); ++i) {
+      assert(isVector(VTOperand.TypeVec[i]) && "EnforceVector didn't work");
+      if (MVT(VTOperand.TypeVec[i]).getVectorNumElements() != NumElems) {
+        VTOperand.TypeVec.erase(VTOperand.TypeVec.begin()+i--);
+        MadeChange = true;
+      }
+    }
+    if (VTOperand.TypeVec.empty()) {  // FIXME: Really want an SMLoc here!
+      TP.error("Type inference contradiction found, forcing '" +
+               InputSet.getName() + "' to have same number elements as '" +
+               getName() + "'");
+      return false;
+    }
+  } else if (VTOperand.isConcrete()) {
+    MVT IVT = VTOperand.getConcrete();
+    unsigned NumElems = IVT.getVectorNumElements();
+
+    // Only keep types that have same elements as 'this'.
+    TypeSet InputSet(*this);
+
+    for (unsigned i = 0; i != TypeVec.size(); ++i) {
+      assert(isVector(TypeVec[i]) && "EnforceVector didn't work");
+      if (MVT(TypeVec[i]).getVectorNumElements() != NumElems) {
+        TypeVec.erase(TypeVec.begin()+i--);
+        MadeChange = true;
+      }
+    }
+    if (TypeVec.empty()) {  // FIXME: Really want an SMLoc here!
+      TP.error("Type inference contradiction found, forcing '" +
+               InputSet.getName() + "' to have same number elements than '" +
                VTOperand.getName() + "'");
       return false;
     }
@@ -839,6 +925,19 @@ SDTypeConstraint::SDTypeConstraint(Record *R) {
     ConstraintType = SDTCisSubVecOfVec;
     x.SDTCisSubVecOfVec_Info.OtherOperandNum =
       R->getValueAsInt("OtherOpNum");
+  } else if (R->isSubClassOf("SDTCVecEltisVT")) {
+    ConstraintType = SDTCVecEltisVT;
+    x.SDTCVecEltisVT_Info.VT = getValueType(R->getValueAsDef("VT"));
+    if (MVT(x.SDTCVecEltisVT_Info.VT).isVector())
+      PrintFatalError(R->getLoc(), "Cannot use vector type as SDTCVecEltisVT");
+    if (!MVT(x.SDTCVecEltisVT_Info.VT).isInteger() &&
+        !MVT(x.SDTCVecEltisVT_Info.VT).isFloatingPoint())
+      PrintFatalError(R->getLoc(), "Must use integer or floating point type "
+                                   "as SDTCVecEltisVT");
+  } else if (R->isSubClassOf("SDTCisSameNumEltsAs")) {
+    ConstraintType = SDTCisSameNumEltsAs;
+    x.SDTCisSameNumEltsAs_Info.OtherOperandNum =
+      R->getValueAsInt("OtherOperandNum");
   } else {
     errs() << "Unrecognized SDTypeConstraint '" << R->getName() << "'!\n";
     exit(1);
@@ -955,6 +1054,18 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     // right subvector type.
     return BigVecOperand->getExtType(VResNo).
       EnforceVectorSubVectorTypeIs(NodeToApply->getExtType(ResNo), TP);
+  }
+  case SDTCVecEltisVT: {
+    return NodeToApply->getExtType(ResNo).
+      EnforceVectorEltTypeIs(x.SDTCVecEltisVT_Info.VT, TP);
+  }
+  case SDTCisSameNumEltsAs: {
+    unsigned OResNo = 0;
+    TreePatternNode *OtherNode =
+      getOperandNum(x.SDTCisSameNumEltsAs_Info.OtherOperandNum,
+                    N, NodeInfo, OResNo);
+    return OtherNode->getExtType(OResNo).
+      EnforceVectorSameNumElts(NodeToApply->getExtType(ResNo), TP);
   }
   }
   llvm_unreachable("Invalid ConstraintType!");
