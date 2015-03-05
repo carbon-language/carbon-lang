@@ -14,6 +14,7 @@
 
 #include "Unix.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -324,7 +325,8 @@ static bool findModulesAndOffsets(void **StackTrace, int Depth,
 }
 #endif
 
-static bool printSymbolizedStackTrace(void **StackTrace, int Depth, FILE *FD) {
+static bool printSymbolizedStackTrace(void **StackTrace, int Depth,
+                                      llvm::raw_ostream &OS) {
   // FIXME: Subtract necessary number from StackTrace entries to turn return addresses
   // into actual instruction addresses.
   // Use llvm-symbolizer tool to symbolize the stack traces.
@@ -382,7 +384,7 @@ static bool printSymbolizedStackTrace(void **StackTrace, int Depth, FILE *FD) {
   int frame_no = 0;
   for (int i = 0; i < Depth; i++) {
     if (!Modules[i]) {
-      fprintf(FD, "#%d %p\n", frame_no++, StackTrace[i]);
+      OS << format("#%d %p\n", frame_no++, StackTrace[i]);
       continue;
     }
     // Read pairs of lines (function name and file/line info) until we
@@ -393,17 +395,17 @@ static bool printSymbolizedStackTrace(void **StackTrace, int Depth, FILE *FD) {
       StringRef FunctionName = *CurLine++;
       if (FunctionName.empty())
         break;
-      fprintf(FD, "#%d %p ", frame_no++, StackTrace[i]);
+      OS << format("#%d %p ", frame_no++, StackTrace[i]);
       if (!FunctionName.startswith("??"))
-        fprintf(FD, "%s ", FunctionName.str().c_str());
+        OS << format("%s ", FunctionName.str().c_str());
       if (CurLine == Lines.end())
         return false;
       StringRef FileLineInfo = *CurLine++;
       if (!FileLineInfo.startswith("??"))
-        fprintf(FD, "%s", FileLineInfo.str().c_str());
+        OS << format("%s", FileLineInfo.str().c_str());
       else
-        fprintf(FD, "(%s+%p)", Modules[i], (void *)Offsets[i]);
-      fprintf(FD, "\n");
+        OS << format("(%s+%p)", Modules[i], (void *)Offsets[i]);
+      OS << "\n";
     }
   }
   return true;
@@ -415,13 +417,13 @@ static bool printSymbolizedStackTrace(void **StackTrace, int Depth, FILE *FD) {
 //
 // On glibc systems we have the 'backtrace' function, which works nicely, but
 // doesn't demangle symbols.
-void llvm::sys::PrintStackTrace(FILE *FD) {
+void llvm::sys::PrintStackTrace(raw_ostream &OS) {
 #if defined(HAVE_BACKTRACE) && defined(ENABLE_BACKTRACES)
   static void* StackTrace[256];
   // Use backtrace() to output a backtrace on Linux systems with glibc.
   int depth = backtrace(StackTrace,
                         static_cast<int>(array_lengthof(StackTrace)));
-  if (printSymbolizedStackTrace(StackTrace, depth, FD))
+  if (printSymbolizedStackTrace(StackTrace, depth, OS))
     return;
 #if HAVE_DLFCN_H && __GNUG__
   int width = 0;
@@ -441,34 +443,34 @@ void llvm::sys::PrintStackTrace(FILE *FD) {
     Dl_info dlinfo;
     dladdr(StackTrace[i], &dlinfo);
 
-    fprintf(FD, "%-2d", i);
+    OS << format("%-2d", i);
 
     const char* name = strrchr(dlinfo.dli_fname, '/');
-    if (!name) fprintf(FD, " %-*s", width, dlinfo.dli_fname);
-    else       fprintf(FD, " %-*s", width, name+1);
+    if (!name) OS << format(" %-*s", width, dlinfo.dli_fname);
+    else       OS << format(" %-*s", width, name+1);
 
-    fprintf(FD, " %#0*lx",
-            (int)(sizeof(void*) * 2) + 2, (unsigned long)StackTrace[i]);
+    OS << format(" %#0*lx", (int)(sizeof(void*) * 2) + 2,
+                 (unsigned long)StackTrace[i]);
 
     if (dlinfo.dli_sname != nullptr) {
-      fputc(' ', FD);
+      OS << ' ';
 #  if HAVE_CXXABI_H
       int res;
       char* d = abi::__cxa_demangle(dlinfo.dli_sname, nullptr, nullptr, &res);
 #  else
       char* d = NULL;
 #  endif
-      if (!d) fputs(dlinfo.dli_sname, FD);
-      else    fputs(d, FD);
+      if (!d) OS << dlinfo.dli_sname;
+      else    OS << d;
       free(d);
 
       // FIXME: When we move to C++11, use %t length modifier. It's not in
       // C++03 and causes gcc to issue warnings. Losing the upper 32 bits of
       // the stack offset for a stack dump isn't likely to cause any problems.
-      fprintf(FD, " + %u",(unsigned)((char*)StackTrace[i]-
-                                     (char*)dlinfo.dli_saddr));
+      OS << format(" + %u",(unsigned)((char*)StackTrace[i]-
+                                      (char*)dlinfo.dli_saddr));
     }
-    fputc('\n', FD);
+    OS << '\n';
   }
 #else
   backtrace_symbols_fd(StackTrace, depth, STDERR_FILENO);
@@ -477,7 +479,7 @@ void llvm::sys::PrintStackTrace(FILE *FD) {
 }
 
 static void PrintStackTraceSignalHandler(void *) {
-  PrintStackTrace(stderr);
+  PrintStackTrace(llvm::errs());
 }
 
 void llvm::sys::DisableSystemDialogsOnCrash() {}

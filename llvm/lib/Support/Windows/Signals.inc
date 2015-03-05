@@ -16,6 +16,9 @@
 #include <stdio.h>
 #include <vector>
 
+#include "llvm/Support/Format.h"
+#include "llvm/Support/raw_ostream.h"
+
 // The Windows.h header must be after LLVM and standard headers.
 #include "WindowsSupport.h"
 
@@ -172,7 +175,7 @@ static PTOP_LEVEL_EXCEPTION_FILTER OldFilter = NULL;
 // globals which this critical section addresses.
 static CRITICAL_SECTION CriticalSection;
 
-static void PrintStackTraceForThread(FILE *File, HANDLE hProcess,
+static void PrintStackTraceForThread(llvm::raw_ostream &OS, HANDLE hProcess,
                                      HANDLE hThread, STACKFRAME64 &StackFrame,
                                      CONTEXT *Context) {
   DWORD machineType;
@@ -195,21 +198,22 @@ static void PrintStackTraceForThread(FILE *File, HANDLE hProcess,
     if (StackFrame.AddrFrame.Offset == 0)
       break;
 
+    using namespace llvm;
     // Print the PC in hexadecimal.
     DWORD64 PC = StackFrame.AddrPC.Offset;
 #if defined(_M_X64)
-    fprintf(File, "0x%016llX", PC);
+    OS << format("0x%016llX", PC);
 #elif defined(_M_IX86)
-    fprintf(File, "0x%08lX", static_cast<DWORD>(PC));
+    OS << format("0x%08lX", static_cast<DWORD>(PC));
 #endif
 
 // Print the parameters.  Assume there are four.
 #if defined(_M_X64)
-    fprintf(File, " (0x%016llX 0x%016llX 0x%016llX 0x%016llX)",
+    OS << format(" (0x%016llX 0x%016llX 0x%016llX 0x%016llX)",
             StackFrame.Params[0], StackFrame.Params[1], StackFrame.Params[2],
             StackFrame.Params[3]);
 #elif defined(_M_IX86)
-    fprintf(File, " (0x%08lX 0x%08lX 0x%08lX 0x%08lX)",
+    OS << format(" (0x%08lX 0x%08lX 0x%08lX 0x%08lX)",
             static_cast<DWORD>(StackFrame.Params[0]),
             static_cast<DWORD>(StackFrame.Params[1]),
             static_cast<DWORD>(StackFrame.Params[2]),
@@ -217,7 +221,7 @@ static void PrintStackTraceForThread(FILE *File, HANDLE hProcess,
 #endif
     // Verify the PC belongs to a module in this process.
     if (!SymGetModuleBase64(hProcess, PC)) {
-      fputs(" <unknown module>\n", File);
+      OS << " <unknown module>\n";
       continue;
     }
 
@@ -230,15 +234,16 @@ static void PrintStackTraceForThread(FILE *File, HANDLE hProcess,
 
     DWORD64 dwDisp;
     if (!SymGetSymFromAddr64(hProcess, PC, &dwDisp, symbol)) {
-      fputc('\n', File);
+      OS << '\n';
       continue;
     }
 
     buffer[511] = 0;
     if (dwDisp > 0)
-      fprintf(File, ", %s() + 0x%llX bytes(s)", symbol->Name, dwDisp);
+      OS << format(", %s() + 0x%llX bytes(s)", (const char*)symbol->Name,
+                   dwDisp);
     else
-      fprintf(File, ", %s", symbol->Name);
+      OS << format(", %s", (const char*)symbol->Name);
 
     // Print the source file and line number information.
     IMAGEHLP_LINE64 line;
@@ -246,12 +251,12 @@ static void PrintStackTraceForThread(FILE *File, HANDLE hProcess,
     memset(&line, 0, sizeof(line));
     line.SizeOfStruct = sizeof(line);
     if (SymGetLineFromAddr64(hProcess, PC, &dwLineDisp, &line)) {
-      fprintf(File, ", %s, line %lu", line.FileName, line.LineNumber);
+      OS << format(", %s, line %lu", line.FileName, line.LineNumber);
       if (dwLineDisp > 0)
-        fprintf(File, " + 0x%lX byte(s)", dwLineDisp);
+        OS << format(" + 0x%lX byte(s)", dwLineDisp);
     }
 
-    fputc('\n', File);
+    OS << '\n';
   }
 }
 
@@ -381,7 +386,7 @@ void sys::PrintStackTraceOnErrorSignal() {
   LeaveCriticalSection(&CriticalSection);
 }
 
-void llvm::sys::PrintStackTrace(FILE *File) {
+void llvm::sys::PrintStackTrace(raw_ostream &OS) {
 
   STACKFRAME64 StackFrame = {};
   CONTEXT Context = {0};
@@ -398,7 +403,7 @@ void llvm::sys::PrintStackTrace(FILE *File) {
   StackFrame.AddrPC.Mode = AddrModeFlat;
   StackFrame.AddrStack.Mode = AddrModeFlat;
   StackFrame.AddrFrame.Mode = AddrModeFlat;
-  PrintStackTraceForThread(File, GetCurrentProcess(), GetCurrentThread(),
+  PrintStackTraceForThread(OS, GetCurrentProcess(), GetCurrentThread(),
                            StackFrame, &Context);
 }
 
@@ -473,7 +478,7 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
 
   HANDLE hProcess = GetCurrentProcess();
   HANDLE hThread = GetCurrentThread();
-  PrintStackTraceForThread(stderr, hProcess, hThread, StackFrame,
+  PrintStackTraceForThread(llvm::errs(), hProcess, hThread, StackFrame,
                            ep->ContextRecord);
 
   _exit(ep->ExceptionRecord->ExceptionCode);

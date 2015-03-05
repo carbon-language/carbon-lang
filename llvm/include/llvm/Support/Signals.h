@@ -19,6 +19,8 @@
 #include <cstdio>
 
 namespace llvm {
+  class raw_ostream;
+
 namespace sys {
 
   /// This function runs all the registered interrupt handlers, including the
@@ -42,8 +44,8 @@ namespace sys {
   /// Disable all system dialog boxes that appear when the process crashes.
   void DisableSystemDialogsOnCrash();
 
-  /// \brief Print the stack trace using the given \c FILE object.
-  void PrintStackTrace(FILE *);
+  /// \brief Print the stack trace using the given \c raw_ostream object.
+  void PrintStackTrace(raw_ostream &OS);
 
   /// AddSignalHandler - Add a function to be called when an abort/kill signal
   /// is delivered to the process.  The handler can have a cookie passed to it
