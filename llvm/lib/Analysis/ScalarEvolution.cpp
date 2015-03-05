@@ -1388,7 +1388,7 @@ bool ScalarEvolution::proveNoWrapByVaryingStart(const SCEV *Start,
       ID.AddPointer(L);
       void *IP = nullptr;
       return static_cast<SCEVAddRecExpr *>(
-        UniqueSCEVs.FindNodeOrInsertPos(ID, IP));
+          this->UniqueSCEVs.FindNodeOrInsertPos(ID, IP));
     }();
 
     if (PreAR && PreAR->getNoWrapFlags(WrapType)) {  // proves (2)
