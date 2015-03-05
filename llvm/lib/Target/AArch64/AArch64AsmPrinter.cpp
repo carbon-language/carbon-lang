@@ -36,6 +36,7 @@
 #include "llvm/MC/MCInstBuilder.h"
 #include "llvm/MC/MCLinkerOptimizationHint.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
@@ -219,6 +220,17 @@ void AArch64AsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNum,
   case MachineOperand::MO_Immediate: {
     int64_t Imm = MO.getImm();
     O << '#' << Imm;
+    break;
+  }
+  case MachineOperand::MO_GlobalAddress: {
+    const GlobalValue *GV = MO.getGlobal();
+    MCSymbol *Sym = getSymbol(GV);
+
+    // FIXME: Can we get anything other than a plain symbol here?
+    assert(!MO.getTargetFlags() && "Unknown operand target flag!");
+
+    O << *Sym;
+    printOffset(MO.getOffset(), O);
     break;
   }
   }
