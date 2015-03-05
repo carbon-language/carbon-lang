@@ -1276,7 +1276,6 @@ void Verifier::VerifyStatepoint(ImmutableCallSite CS) {
 }
 
 void Verifier::verifyFrameRecoverIndices() {
-  llvm::errs() << "verifyFrameRecoverIndices\n";
   for (auto &Counts : FrameEscapeInfo) {
     Function *F = Counts.first;
     unsigned EscapedObjectCount = Counts.second.first;
