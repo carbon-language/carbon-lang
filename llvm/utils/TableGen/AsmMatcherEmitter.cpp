@@ -2887,7 +2887,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  uint64_t MissingFeatures = ~0ULL;\n";
   OS << "  // Set ErrorInfo to the operand that mismatches if it is\n";
   OS << "  // wrong for all instances of the instruction.\n";
-  OS << "  ErrorInfo = ~0U;\n";
+  OS << "  ErrorInfo = ~0ULL;\n";
 
   // Emit code to search the table.
   OS << "  // Find the appropriate table for this asm variant.\n";
