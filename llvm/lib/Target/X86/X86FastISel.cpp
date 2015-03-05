@@ -1810,11 +1810,11 @@ bool X86FastISel::X86FastEmitCMoveSelect(MVT RetVT, const Instruction *I) {
   return true;
 }
 
-/// \brief Emit SSE instructions to lower the select.
+/// \brief Emit SSE or AVX instructions to lower the select.
 ///
 /// Try to use SSE1/SSE2 instructions to simulate a select without branches.
 /// This lowers fp selects into a CMP/AND/ANDN/OR sequence when the necessary
-/// SSE instructions are available.
+/// SSE instructions are available. If AVX is available, try to use a VBLENDV.
 bool X86FastISel::X86FastEmitSSESelect(MVT RetVT, const Instruction *I) {
   // Optimize conditions coming from a compare if both instructions are in the
   // same basic block (values defined in other basic blocks may not have
@@ -1850,19 +1850,17 @@ bool X86FastISel::X86FastEmitSSESelect(MVT RetVT, const Instruction *I) {
   if (NeedSwap)
     std::swap(CmpLHS, CmpRHS);
 
-  static unsigned OpcTable[2][2][4] = {
-    { { X86::CMPSSrr,  X86::FsANDPSrr,  X86::FsANDNPSrr,  X86::FsORPSrr  },
-      { X86::VCMPSSrr, X86::VFsANDPSrr, X86::VFsANDNPSrr, X86::VFsORPSrr }  },
-    { { X86::CMPSDrr,  X86::FsANDPDrr,  X86::FsANDNPDrr,  X86::FsORPDrr  },
-      { X86::VCMPSDrr, X86::VFsANDPDrr, X86::VFsANDNPDrr, X86::VFsORPDrr }  }
+  // Choose the SSE instruction sequence based on data type (float or double).
+  static unsigned OpcTable[2][4] = {
+    { X86::CMPSSrr,  X86::FsANDPSrr,  X86::FsANDNPSrr,  X86::FsORPSrr  },
+    { X86::CMPSDrr,  X86::FsANDPDrr,  X86::FsANDNPDrr,  X86::FsORPDrr  }
   };
 
-  bool HasAVX = Subtarget->hasAVX();
   unsigned *Opc = nullptr;
   switch (RetVT.SimpleTy) {
   default: return false;
-  case MVT::f32: Opc = &OpcTable[0][HasAVX][0]; break;
-  case MVT::f64: Opc = &OpcTable[1][HasAVX][0]; break;
+  case MVT::f32: Opc = &OpcTable[0][0]; break;
+  case MVT::f64: Opc = &OpcTable[1][0]; break;
   }
 
   const Value *LHS = I->getOperand(1);
@@ -1884,14 +1882,33 @@ bool X86FastISel::X86FastEmitSSESelect(MVT RetVT, const Instruction *I) {
     return false;
 
   const TargetRegisterClass *RC = TLI.getRegClassFor(RetVT);
-  unsigned CmpReg = fastEmitInst_rri(Opc[0], RC, CmpLHSReg, CmpLHSIsKill,
-                                     CmpRHSReg, CmpRHSIsKill, CC);
-  unsigned AndReg = fastEmitInst_rr(Opc[1], RC, CmpReg, /*IsKill=*/false,
-                                    LHSReg, LHSIsKill);
-  unsigned AndNReg = fastEmitInst_rr(Opc[2], RC, CmpReg, /*IsKill=*/true,
-                                     RHSReg, RHSIsKill);
-  unsigned ResultReg = fastEmitInst_rr(Opc[3], RC, AndNReg, /*IsKill=*/true,
-                                       AndReg, /*IsKill=*/true);
+  unsigned ResultReg;
+  
+  if (Subtarget->hasAVX()) {
+    // If we have AVX, create 1 blendv instead of 3 logic instructions.
+    // Blendv was introduced with SSE 4.1, but the 2 register form implicitly
+    // uses XMM0 as the selection register. That may need just as many
+    // instructions as the AND/ANDN/OR sequence due to register moves, so
+    // don't bother.
+    unsigned CmpOpcode =
+      (RetVT.SimpleTy == MVT::f32) ? X86::VCMPSSrr : X86::VCMPSDrr;
+    unsigned BlendOpcode =
+      (RetVT.SimpleTy == MVT::f32) ? X86::VBLENDVPSrr : X86::VBLENDVPDrr;
+    
+    unsigned CmpReg = fastEmitInst_rri(CmpOpcode, RC, CmpLHSReg, CmpLHSIsKill,
+                                       CmpRHSReg, CmpRHSIsKill, CC);
+    ResultReg = fastEmitInst_rrr(BlendOpcode, RC, RHSReg, RHSIsKill,
+                                 LHSReg, LHSIsKill, CmpReg, true);
+  } else {
+    unsigned CmpReg = fastEmitInst_rri(Opc[0], RC, CmpLHSReg, CmpLHSIsKill,
+                                       CmpRHSReg, CmpRHSIsKill, CC);
+    unsigned AndReg = fastEmitInst_rr(Opc[1], RC, CmpReg, /*IsKill=*/false,
+                                      LHSReg, LHSIsKill);
+    unsigned AndNReg = fastEmitInst_rr(Opc[2], RC, CmpReg, /*IsKill=*/true,
+                                       RHSReg, RHSIsKill);
+    ResultReg = fastEmitInst_rr(Opc[3], RC, AndNReg, /*IsKill=*/true,
+                                         AndReg, /*IsKill=*/true);
+  }
   updateValueMap(I, ResultReg);
   return true;
 }

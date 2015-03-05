@@ -13271,9 +13271,9 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   EVT VT = Op1.getValueType();
   SDValue CC;
 
-  // Lower fp selects into a CMP/AND/ANDN/OR sequence when the necessary SSE ops
-  // are available. Otherwise fp cmovs get lowered into a less efficient branch
-  // sequence later on.
+  // Lower FP selects into a CMP/AND/ANDN/OR sequence when the necessary SSE ops
+  // are available or VBLENDV if AVX is available.
+  // Otherwise FP cmovs get lowered into a less efficient branch sequence later.
   if (Cond.getOpcode() == ISD::SETCC &&
       ((Subtarget->hasSSE2() && (VT == MVT::f32 || VT == MVT::f64)) ||
        (Subtarget->hasSSE1() && VT == MVT::f32)) &&
@@ -13288,8 +13288,42 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
                                   DAG.getConstant(SSECC, MVT::i8));
         return DAG.getNode(X86ISD::SELECT, DL, VT, Cmp, Op1, Op2);
       }
+
       SDValue Cmp = DAG.getNode(X86ISD::FSETCC, DL, VT, CondOp0, CondOp1,
                                 DAG.getConstant(SSECC, MVT::i8));
+
+      // If we have AVX, we can use a variable vector select (VBLENDV) instead
+      // of 3 logic instructions for size savings and potentially speed.
+      // Unfortunately, there is no scalar form of VBLENDV.
+      
+      // If either operand is a constant, don't try this. We can expect to
+      // optimize away at least one of the logic instructions later in that
+      // case, so that sequence would be faster than a variable blend.
+      
+      // BLENDV was introduced with SSE 4.1, but the 2 register form implicitly
+      // uses XMM0 as the selection register. That may need just as many
+      // instructions as the AND/ANDN/OR sequence due to register moves, so
+      // don't bother.
+
+      if (Subtarget->hasAVX() &&
+          !isa<ConstantFPSDNode>(Op1) && !isa<ConstantFPSDNode>(Op2)) {
+        
+        // Convert to vectors, do a VSELECT, and convert back to scalar.
+        // All of the conversions should be optimized away.
+        
+        EVT VecVT = VT == MVT::f32 ? MVT::v4f32 : MVT::v2f64;
+        SDValue VOp1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, VecVT, Op1);
+        SDValue VOp2 = DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, VecVT, Op2);
+        SDValue VCmp = DAG.getNode(ISD::SCALAR_TO_VECTOR, DL, VecVT, Cmp);
+
+        EVT VCmpVT = VT == MVT::f32 ? MVT::v4i32 : MVT::v2i64;
+        VCmp = DAG.getNode(ISD::BITCAST, DL, VCmpVT, VCmp);
+        
+        SDValue VSel = DAG.getNode(ISD::VSELECT, DL, VecVT, VCmp, VOp1, VOp2);
+        
+        return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, VT,
+                           VSel, DAG.getIntPtrConstant(0));
+      }
       SDValue AndN = DAG.getNode(X86ISD::FANDN, DL, VT, Cmp, Op2);
       SDValue And = DAG.getNode(X86ISD::FAND, DL, VT, Cmp, Op1);
       return DAG.getNode(X86ISD::FOR, DL, VT, AndN, And);
