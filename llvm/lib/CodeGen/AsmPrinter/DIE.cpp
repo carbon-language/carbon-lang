@@ -264,7 +264,6 @@ unsigned DIEInteger::SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
     if (AP->OutStreamer.getContext().getDwarfVersion() == 2)
       return AP->getDataLayout().getPointerSize();
     return sizeof(int32_t);
-    break;
   default: llvm_unreachable("DIE Value form not supported yet");
   }
 }
