@@ -44,6 +44,11 @@ Non-comprehensive list of changes in this release
 * The minimum required Visual Studio version for building LLVM is now 2013
   Update 4.
 
+* A new documentation page, :doc:`Frontend/PerformanceTips`, contains a 
+  collection of tips for frontend authors on how to generate IR which LLVM is 
+  able to effectively optimize.
+
+
 * ... next change ...
 
 .. NOTE
