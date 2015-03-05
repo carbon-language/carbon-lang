@@ -9055,6 +9055,8 @@ then the result is the size in bits of the type of ``src`` if
 ``is_zero_undef == 0`` and ``undef`` otherwise. For example,
 ``llvm.cttz(2) = 1``.
 
+.. _int_overflow:
+
 Arithmetic with Overflow Intrinsics
 -----------------------------------
 
