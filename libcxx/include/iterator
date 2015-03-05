@@ -575,7 +575,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY reverse_iterator& operator-=(difference_type __n)
         {current += __n; return *this;}
     _LIBCPP_INLINE_VISIBILITY reference         operator[](difference_type __n) const
-        {return current[-__n-1];}
+        {return *(*this + __n);}
 };
 
 template <class _Iter1, class _Iter2>
