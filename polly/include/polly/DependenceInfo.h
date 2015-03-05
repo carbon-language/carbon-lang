@@ -20,8 +20,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POLLY_DEPENDENCES_H
-#define POLLY_DEPENDENCES_H
+#ifndef POLLY_DEPENDENCE_INFO_H
+#define POLLY_DEPENDENCE_INFO_H
 
 #include "polly/ScopPass.h"
 
