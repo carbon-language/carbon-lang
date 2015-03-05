@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace google {
 namespace runtime {
 
 /// \brief Finds uses of short, long and long long and suggest replacing them
@@ -34,6 +35,7 @@ private:
 };
 
 } // namespace runtime
+} // namespace google
 } // namespace tidy
 } // namespace clang
 

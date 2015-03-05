@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace google {
 namespace build {
 
 /// \brief Check that make_pair's template arguments are deduced.
@@ -31,6 +32,7 @@ public:
 };
 
 } // namespace build
+} // namespace google
 } // namespace tidy
 } // namespace clang
 

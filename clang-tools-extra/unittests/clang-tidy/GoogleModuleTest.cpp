@@ -3,6 +3,8 @@
 #include "google/GlobalNamesInHeadersCheck.h"
 #include "gtest/gtest.h"
 
+using namespace clang::tidy::google;
+
 namespace clang {
 namespace tidy {
 namespace test {

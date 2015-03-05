@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace google {
 namespace runtime {
 
 /// \brief Finds calls to memset with a literal zero in the length argument.
@@ -31,6 +32,7 @@ public:
 };
 
 } // namespace runtime
+} // namespace google
 } // namespace tidy
 } // namespace clang
 

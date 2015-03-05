@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace google {
 namespace readability {
 
 /// \brief Finds TODO comments without a username or bug number.
@@ -30,6 +31,7 @@ private:
 };
 
 } // namespace readability
+} // namespace google
 } // namespace tidy
 } // namespace clang
 

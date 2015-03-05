@@ -16,6 +16,7 @@
 
 namespace clang {
 namespace tidy {
+namespace google {
 namespace runtime {
 
 using namespace ast_matchers;
@@ -98,5 +99,6 @@ void IntegerTypesCheck::check(const MatchFinder::MatchResult &Result) {
 }
 
 } // namespace runtime
+} // namespace google
 } // namespace tidy
 } // namespace clang

@@ -22,6 +22,7 @@ AST_MATCHER(NamespaceDecl, isAnonymousNamespace) {
 } // namespace ast_matchers
 
 namespace tidy {
+namespace google {
 namespace build {
 
 void UnnamedNamespaceInHeaderCheck::registerMatchers(
@@ -47,5 +48,6 @@ UnnamedNamespaceInHeaderCheck::check(const MatchFinder::MatchResult &Result) {
 }
 
 } // namespace build
+} // namespace google
 } // namespace tidy
 } // namespace clang

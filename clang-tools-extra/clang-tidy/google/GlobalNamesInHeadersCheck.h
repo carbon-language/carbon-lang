@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace google {
 namespace readability {
 
 // Flag global namespace pollution in header files.
@@ -27,8 +28,8 @@ public:
 };
 
 } // namespace readability
+} // namespace google
 } // namespace tidy
 } // namespace clang
 
 #endif  // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_GOOGLE_GLOBAL_NAMES_IN_HEADERS_CHECK_H
-

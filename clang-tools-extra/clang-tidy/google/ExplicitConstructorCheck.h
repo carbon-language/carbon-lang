@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace google {
 
 /// \brief Checks that all single-argument constructors are explicit.
 ///
@@ -27,6 +28,7 @@ public:
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 
+} // namespace google
 } // namespace tidy
 } // namespace clang
 

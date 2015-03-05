@@ -31,6 +31,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
+namespace google {
 
 class GoogleModule : public ClangTidyModule {
 public:
@@ -57,16 +58,19 @@ public:
         "google-readability-function");
     CheckFactories.registerCheck<readability::TodoCommentCheck>(
         "google-readability-todo");
-    CheckFactories.registerCheck<readability::BracesAroundStatementsCheck>(
-        "google-readability-braces-around-statements");
+    CheckFactories
+        .registerCheck<clang::tidy::readability::BracesAroundStatementsCheck>(
+            "google-readability-braces-around-statements");
     CheckFactories.registerCheck<readability::GlobalNamesInHeadersCheck>(
         "google-global-names-in-headers");
-    CheckFactories.registerCheck<readability::FunctionSizeCheck>(
+    CheckFactories.registerCheck<clang::tidy::readability::FunctionSizeCheck>(
         "google-readability-function-size");
-    CheckFactories.registerCheck<readability::NamespaceCommentCheck>(
-        "google-readability-namespace-comments");
-    CheckFactories.registerCheck<readability::RedundantSmartptrGet>(
-        "google-readability-redundant-smartptr-get");
+    CheckFactories
+        .registerCheck<clang::tidy::readability::NamespaceCommentCheck>(
+            "google-readability-namespace-comments");
+    CheckFactories
+        .registerCheck<clang::tidy::readability::RedundantSmartptrGet>(
+            "google-readability-redundant-smartptr-get");
   }
 
   ClangTidyOptions getModuleOptions() override {
@@ -84,6 +88,8 @@ public:
 // Register the GoogleTidyModule using this statically initialized variable.
 static ClangTidyModuleRegistry::Add<GoogleModule> X("google-module",
                                                     "Adds Google lint checks.");
+
+} // namespace google
 
 // This anchor is used to force the linker to link in the generated object file
 // and thus register the GoogleModule.

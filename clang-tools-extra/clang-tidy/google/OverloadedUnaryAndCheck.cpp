@@ -16,6 +16,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
+namespace google {
 namespace runtime {
 
 void
@@ -41,5 +42,6 @@ void OverloadedUnaryAndCheck::check(const MatchFinder::MatchResult &Result) {
 }
 
 } // namespace runtime
+} // namespace google
 } // namespace tidy
 } // namespace clang

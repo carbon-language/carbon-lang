@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace google {
 namespace readability {
 
 /// \brief Find functions with unnamed arguments.
@@ -29,6 +30,7 @@ public:
 };
 
 } // namespace readability
+} // namespace google
 } // namespace tidy
 } // namespace clang
 

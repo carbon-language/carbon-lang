@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace google {
 namespace build {
 
 /// \brief Finds anonymous namespaces in headers.
@@ -29,6 +30,7 @@ public:
 };
 
 } // namespace build
+} // namespace google
 } // namespace tidy
 } // namespace clang
 

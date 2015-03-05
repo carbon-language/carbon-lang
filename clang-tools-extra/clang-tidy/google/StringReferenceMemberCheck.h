@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace google {
 namespace runtime {
 
 /// \brief Finds members of type 'const string&'.
@@ -46,6 +47,7 @@ public:
 };
 
 } // namespace runtime
+} // namespace google
 } // namespace tidy
 } // namespace clang
 

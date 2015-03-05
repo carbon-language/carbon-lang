@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace google {
 namespace build {
 
 /// \brief Finds using namespace directives.
@@ -29,6 +30,7 @@ public:
 };
 
 } // namespace build
+} // namespace google
 } // namespace tidy
 } // namespace clang
 

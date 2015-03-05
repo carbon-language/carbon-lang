@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace google {
 namespace readability {
 
 /// \brief Finds usages of C-style casts.
@@ -33,6 +34,7 @@ public:
 };
 
 } // namespace readability
+} // namespace google
 } // namespace tidy
 } // namespace clang
 

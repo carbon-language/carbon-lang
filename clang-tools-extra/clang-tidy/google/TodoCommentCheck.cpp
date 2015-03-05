@@ -13,6 +13,7 @@
 
 namespace clang {
 namespace tidy {
+namespace google {
 namespace readability {
 
 class TodoCommentCheck::TodoCommentHandler : public CommentHandler {
@@ -60,5 +61,6 @@ void TodoCommentCheck::registerPPCallbacks(CompilerInstance &Compiler) {
 }
 
 } // namespace readability
+} // namespace google
 } // namespace tidy
 } // namespace clang

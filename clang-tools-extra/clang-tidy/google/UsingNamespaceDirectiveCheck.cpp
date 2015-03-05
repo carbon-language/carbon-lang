@@ -16,6 +16,7 @@ using namespace clang::ast_matchers;
 
 namespace clang {
 namespace tidy {
+namespace google {
 namespace build {
 
 void UsingNamespaceDirectiveCheck::registerMatchers(
@@ -37,5 +38,6 @@ UsingNamespaceDirectiveCheck::check(const MatchFinder::MatchResult &Result) {
 }
 
 } // namespace build
+} // namespace google
 } // namespace tidy
 } // namespace clang
