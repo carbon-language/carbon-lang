@@ -383,7 +383,7 @@ void sys::PrintStackTraceOnErrorSignal() {
 
 void llvm::sys::PrintStackTrace(FILE *File) {
 
-  STACKFRAME64 StackFrame = {0};
+  STACKFRAME64 StackFrame = {};
   CONTEXT Context = {0};
   ::RtlCaptureContext(&Context);
 #if defined(_M_X64)
