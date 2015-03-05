@@ -52,13 +52,18 @@ void UniqueptrResetRelease::check(const MatchFinder::MatchResult &Result) {
     LeftText = "*" + LeftText;
   if (ReleaseMember->isArrow())
     RightText = "*" + RightText;
+  std::string DiagText;
   // Even if x was rvalue, *x is not rvalue anymore.
-  if (!Right->isRValue() || ReleaseMember->isArrow())
+  if (!Right->isRValue() || ReleaseMember->isArrow()) {
     RightText = "std::move(" + RightText + ")";
+    DiagText = "prefer ptr1 = std::move(ptr2) over ptr1.reset(ptr2.release())";
+  } else {
+    DiagText =
+        "prefer ptr = ReturnUnique() over ptr.reset(ReturnUnique().release())";
+  }
   std::string NewText = LeftText + " = " + RightText;
 
-  diag(ResetMember->getExprLoc(),
-       "prefer ptr1 = std::move(ptr2) over ptr1.reset(ptr2.release())")
+  diag(ResetMember->getExprLoc(), DiagText)
       << FixItHint::CreateReplacement(
           CharSourceRange::getTokenRange(ResetCall->getSourceRange()), NewText);
 }

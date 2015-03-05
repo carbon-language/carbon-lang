@@ -33,7 +33,7 @@ void f() {
   // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: prefer ptr1 = std::move(ptr2)
   // CHECK-FIXES: a = std::move(c);
   a.reset(Create().release());
-  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: prefer ptr1 = std::move(ptr2)
+  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: prefer ptr = ReturnUnique() over ptr.reset(ReturnUnique().release()) [misc-uniqueptr-reset-release]
   // CHECK-FIXES: a = Create();
   x->reset(y->release());
   // CHECK-MESSAGES: :[[@LINE-1]]:6: warning: prefer ptr1 = std::move(ptr2)
