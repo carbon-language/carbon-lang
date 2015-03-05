@@ -212,7 +212,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   CurMI = nullptr;
 
   // Turn on accelerator tables for Darwin by default, pubnames by
-  // default for non-Darwin, and handle split dwarf.
+  // default for non-Darwin/PS4, and handle split dwarf.
   if (DwarfAccelTables == Default)
     HasDwarfAccelTables = IsDarwin;
   else
@@ -224,7 +224,7 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     HasSplitDwarf = SplitDwarf == Enable;
 
   if (DwarfPubSections == Default)
-    HasDwarfPubSections = !IsDarwin;
+    HasDwarfPubSections = !IsDarwin && !IsPS4;
   else
     HasDwarfPubSections = DwarfPubSections == Enable;
 

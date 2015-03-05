@@ -1,7 +1,9 @@
 ; RUN: llc -mtriple=x86_64-pc-linux-gnu -filetype=obj -o %t.o < %s
 ; RUN: llvm-dwarfdump -debug-dump=pubnames %t.o | FileCheck --check-prefix=LINUX %s
 ; RUN: llc -mtriple=x86_64-apple-darwin12 -filetype=obj -o %t.o < %s
-; RUN: llvm-dwarfdump -debug-dump=pubnames %t.o | FileCheck --check-prefix=DARWIN %s
+; RUN: llvm-dwarfdump -debug-dump=pubnames %t.o | FileCheck --check-prefix=NOPUB %s
+; RUN: llc -mtriple=x86_64-scei-ps4 -filetype=obj -o %t.o < %s
+; RUN: llvm-dwarfdump -debug-dump=pubnames %t.o | FileCheck --check-prefix=NOPUB %s
 ; ModuleID = 'dwarf-public-names.cpp'
 ;
 ; Generated from:
@@ -35,9 +37,9 @@
 ;   int global_namespace_variable = 1;
 ; }
 
-; Darwin shouldn't be generating the section by default
-; DARWIN: debug_pubnames
-; DARWIN: {{^$}}
+; Darwin and PS4 shouldn't be generating the section by default
+; NOPUB: debug_pubnames
+; NOPUB: {{^$}}
 
 ; Skip the output to the header of the pubnames section.
 ; LINUX: debug_pubnames
