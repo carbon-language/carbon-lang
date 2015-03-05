@@ -75,11 +75,6 @@ TEST(NamespaceCommentCheckTest, CheckExistingComments) {
             runCheckOnCode<NamespaceCommentCheck>("namespace {\n"
                                                   "}\n"
                                                   "// namespace"));
-  // Leave unknown comments.
-  EXPECT_EQ("namespace {\n"
-            "} // namespace // random text",
-            runCheckOnCode<NamespaceCommentCheck>("namespace {\n"
-                                                  "} // random text"));
 }
 
 TEST(NamespaceCommentCheckTest, FixWrongComments) {
@@ -94,6 +89,11 @@ TEST(NamespaceCommentCheckTest, FixWrongComments) {
             "} // namespace",
             runCheckOnCode<NamespaceCommentCheck>("namespace {\n"
                                                   "} // namespace asdf"));
+  // Remove unknown comments.
+  EXPECT_EQ("namespace {\n"
+            "} // namespace",
+            runCheckOnCode<NamespaceCommentCheck>("namespace {\n"
+                                                  "} // random text"));
 }
 
 TEST(BracesAroundStatementsCheck, IfWithComments) {

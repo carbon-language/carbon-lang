@@ -82,6 +82,9 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
   // to insert a line break.
   bool NeedLineBreak = NextTokenIsOnSameLine && Tok.isNot(tok::eof);
 
+  SourceRange OldCommentRange(AfterRBrace, AfterRBrace);
+  StringRef Message = "%0 not terminated with a closing comment";
+
   // Try to find existing namespace closing comment on the same line.
   if (Tok.is(tok::comment) && NextTokenIsOnSameLine) {
     StringRef Comment(Sources.getCharacterData(Loc), Tok.getLength());
@@ -101,20 +104,22 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
 
       // Otherwise we need to fix the comment.
       NeedLineBreak = Comment.startswith("/*");
-      CharSourceRange OldCommentRange = CharSourceRange::getCharRange(
-          SourceRange(Loc, Loc.getLocWithOffset(Tok.getLength())));
-      diag(Loc, "namespace closing comment refers to a wrong namespace '%0'")
-          << NamespaceNameInComment
-          << FixItHint::CreateReplacement(
-                 OldCommentRange, getNamespaceComment(ND, NeedLineBreak));
-      return;
-    }
-
-    // This is not a recognized form of a namespace closing comment.
-    // Leave line comment on the same line. Move block comment to the next line,
-    // as it can be multi-line or there may be other tokens behind it.
-    if (Comment.startswith("//"))
+      OldCommentRange =
+          SourceRange(AfterRBrace, Loc.getLocWithOffset(Tok.getLength()));
+      Message =
+          (llvm::Twine(
+               "%0 ends with a comment that refers to a wrong namespace '") +
+           NamespaceNameInComment + "'").str();
+    } else if (Comment.startswith("//")) {
+      // Assume that this is an unrecognized form of a namespace closing line
+      // comment. Replace it.
       NeedLineBreak = false;
+      OldCommentRange =
+          SourceRange(AfterRBrace, Loc.getLocWithOffset(Tok.getLength()));
+      Message = "%0 ends with an unrecognized comment";
+    }
+    // If it's a block comment, just move it to the next line, as it can be
+    // multi-line or there may be other tokens behind it.
   }
 
   std::string NamespaceName =
@@ -122,11 +127,11 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
           ? "anonymous namespace"
           : ("namespace '" + ND->getNameAsString() + "'");
 
-  diag(AfterRBrace, "%0 not terminated with a closing comment")
+  diag(AfterRBrace, Message)
       << NamespaceName
-      << FixItHint::CreateInsertion(AfterRBrace,
-                                    std::string(SpacesBeforeComments, ' ') +
-                                        getNamespaceComment(ND, NeedLineBreak));
+      << FixItHint::CreateReplacement(
+             OldCommentRange, std::string(SpacesBeforeComments, ' ') +
+                                  getNamespaceComment(ND, NeedLineBreak));
   diag(ND->getLocation(), "%0 starts here", DiagnosticIDs::Note)
       << NamespaceName;
 }
