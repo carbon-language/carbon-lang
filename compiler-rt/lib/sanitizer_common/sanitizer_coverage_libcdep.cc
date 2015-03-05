@@ -78,6 +78,7 @@ class CoverageData {
   void DumpCallerCalleePairs();
   void DumpTrace();
   void DumpAsBitSet();
+  void DumpCounters();
 
   ALWAYS_INLINE
   void TraceBasicBlock(s32 *id);
@@ -640,6 +641,28 @@ void CoverageData::TraceBasicBlock(s32 *id) {
   tr_event_pointer++;
 }
 
+void CoverageData::DumpCounters() {
+  if (!common_flags()->coverage_counters) return;
+  uptr n = coverage_data.GetNumberOf8bitCounters();
+  if (!n) return;
+  InternalScopedBuffer<u8> bitset(n);
+  coverage_data.Update8bitCounterBitsetAndClearCounters(bitset.data());
+
+  for (uptr m = 0; m < module_name_vec.size(); m++) {
+    auto r = module_name_vec[m];
+    CHECK(r.name);
+    CHECK_LE(r.beg, r.end);
+    CHECK_LE(r.end, size());
+    const char *base_name = StripModuleName(r.name);
+    int fd = CovOpenFile(/* packed */ false, base_name, "counters-sancov");
+    if (fd < 0) return;
+    internal_write(fd, bitset.data() + r.beg, r.end - r.beg);
+    internal_close(fd);
+    VReport(1, " CovDump: %zd counters written for '%s'\n", r.end - r.beg,
+            base_name);
+  }
+}
+
 void CoverageData::DumpAsBitSet() {
   if (!common_flags()->coverage_bitset) return;
   if (!size()) return;
@@ -674,6 +697,7 @@ static void CovDump() {
   if (atomic_fetch_add(&dump_once_guard, 1, memory_order_relaxed))
     return;
   coverage_data.DumpAsBitSet();
+  coverage_data.DumpCounters();
   coverage_data.DumpTrace();
   if (!common_flags()->coverage_pcs) return;
   uptr size = coverage_data.size();
