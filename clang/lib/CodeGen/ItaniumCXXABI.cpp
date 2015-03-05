@@ -115,6 +115,7 @@ public:
                                const CXXDestructorDecl *Dtor) override;
 
   void emitRethrow(CodeGenFunction &CGF, bool isNoReturn) override;
+  void emitThrow(CodeGenFunction &CGF, const CXXThrowExpr *E) override;
 
   void emitBeginCatch(CodeGenFunction &CGF, const CXXCatchStmt *C) override;
 
@@ -914,6 +915,59 @@ void ItaniumCXXABI::emitRethrow(CodeGenFunction &CGF, bool isNoReturn) {
     CGF.EmitNoreturnRuntimeCallOrInvoke(Fn, None);
   else
     CGF.EmitRuntimeCallOrInvoke(Fn);
+}
+
+static llvm::Constant *getAllocateExceptionFn(CodeGenModule &CGM) {
+  // void *__cxa_allocate_exception(size_t thrown_size);
+
+  llvm::FunctionType *FTy =
+    llvm::FunctionType::get(CGM.Int8PtrTy, CGM.SizeTy, /*IsVarArgs=*/false);
+
+  return CGM.CreateRuntimeFunction(FTy, "__cxa_allocate_exception");
+}
+
+static llvm::Constant *getThrowFn(CodeGenModule &CGM) {
+  // void __cxa_throw(void *thrown_exception, std::type_info *tinfo,
+  //                  void (*dest) (void *));
+
+  llvm::Type *Args[3] = { CGM.Int8PtrTy, CGM.Int8PtrTy, CGM.Int8PtrTy };
+  llvm::FunctionType *FTy =
+    llvm::FunctionType::get(CGM.VoidTy, Args, /*IsVarArgs=*/false);
+
+  return CGM.CreateRuntimeFunction(FTy, "__cxa_throw");
+}
+
+void ItaniumCXXABI::emitThrow(CodeGenFunction &CGF, const CXXThrowExpr *E) {
+  QualType ThrowType = E->getSubExpr()->getType();
+  // Now allocate the exception object.
+  llvm::Type *SizeTy = CGF.ConvertType(getContext().getSizeType());
+  uint64_t TypeSize = getContext().getTypeSizeInChars(ThrowType).getQuantity();
+
+  llvm::Constant *AllocExceptionFn = getAllocateExceptionFn(CGM);
+  llvm::CallInst *ExceptionPtr = CGF.EmitNounwindRuntimeCall(
+      AllocExceptionFn, llvm::ConstantInt::get(SizeTy, TypeSize), "exception");
+
+  CGF.EmitAnyExprToExn(E->getSubExpr(), ExceptionPtr);
+
+  // Now throw the exception.
+  llvm::Constant *TypeInfo = CGM.GetAddrOfRTTIDescriptor(ThrowType,
+                                                         /*ForEH=*/true);
+
+  // The address of the destructor.  If the exception type has a
+  // trivial destructor (or isn't a record), we just pass null.
+  llvm::Constant *Dtor = nullptr;
+  if (const RecordType *RecordTy = ThrowType->getAs<RecordType>()) {
+    CXXRecordDecl *Record = cast<CXXRecordDecl>(RecordTy->getDecl());
+    if (!Record->hasTrivialDestructor()) {
+      CXXDestructorDecl *DtorD = Record->getDestructor();
+      Dtor = CGM.getAddrOfCXXStructor(DtorD, StructorType::Complete);
+      Dtor = llvm::ConstantExpr::getBitCast(Dtor, CGM.Int8PtrTy);
+    }
+  }
+  if (!Dtor) Dtor = llvm::Constant::getNullValue(CGM.Int8PtrTy);
+
+  llvm::Value *args[] = { ExceptionPtr, TypeInfo, Dtor };
+  CGF.EmitNoreturnRuntimeCallOrInvoke(getThrowFn(CGM), args);
 }
 
 static llvm::Constant *getItaniumDynamicCastFn(CodeGenFunction &CGF) {

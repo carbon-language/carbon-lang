@@ -197,6 +197,15 @@ public:
   virtual void mangleVirtualMemPtrThunk(const CXXMethodDecl *MD,
                                         raw_ostream &) = 0;
 
+  virtual void mangleCXXThrowInfo(QualType T, bool IsConst, bool IsVolatile,
+                                  uint32_t NumEntries, raw_ostream &Out) = 0;
+
+  virtual void mangleCXXCatchableTypeArray(QualType T, uint32_t NumEntries,
+                                           raw_ostream &Out) = 0;
+
+  virtual void mangleCXXCatchableType(QualType T, uint32_t Size,
+                                      raw_ostream &Out) = 0;
+
   virtual void mangleCXXRTTIBaseClassDescriptor(
       const CXXRecordDecl *Derived, uint32_t NVOffset, int32_t VBPtrOffset,
       uint32_t VBTableOffset, uint32_t Flags, raw_ostream &Out) = 0;

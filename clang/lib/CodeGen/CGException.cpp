@@ -25,15 +25,6 @@
 using namespace clang;
 using namespace CodeGen;
 
-static llvm::Constant *getAllocateExceptionFn(CodeGenModule &CGM) {
-  // void *__cxa_allocate_exception(size_t thrown_size);
-
-  llvm::FunctionType *FTy =
-    llvm::FunctionType::get(CGM.Int8PtrTy, CGM.SizeTy, /*IsVarArgs=*/false);
-
-  return CGM.CreateRuntimeFunction(FTy, "__cxa_allocate_exception");
-}
-
 static llvm::Constant *getFreeExceptionFn(CodeGenModule &CGM) {
   // void __cxa_free_exception(void *thrown_exception);
 
@@ -41,17 +32,6 @@ static llvm::Constant *getFreeExceptionFn(CodeGenModule &CGM) {
     llvm::FunctionType::get(CGM.VoidTy, CGM.Int8PtrTy, /*IsVarArgs=*/false);
 
   return CGM.CreateRuntimeFunction(FTy, "__cxa_free_exception");
-}
-
-static llvm::Constant *getThrowFn(CodeGenModule &CGM) {
-  // void __cxa_throw(void *thrown_exception, std::type_info *tinfo,
-  //                  void (*dest) (void *));
-
-  llvm::Type *Args[3] = { CGM.Int8PtrTy, CGM.Int8PtrTy, CGM.Int8PtrTy };
-  llvm::FunctionType *FTy =
-    llvm::FunctionType::get(CGM.VoidTy, Args, /*IsVarArgs=*/false);
-
-  return CGM.CreateRuntimeFunction(FTy, "__cxa_throw");
 }
 
 static llvm::Constant *getUnexpectedFn(CodeGenModule &CGM) {
@@ -381,17 +361,16 @@ namespace {
 // differs from EmitAnyExprToMem only in that, if a final copy-ctor
 // call is required, an exception within that copy ctor causes
 // std::terminate to be invoked.
-static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *e,
-                             llvm::Value *addr) {
+void CodeGenFunction::EmitAnyExprToExn(const Expr *e, llvm::Value *addr) {
   // Make sure the exception object is cleaned up if there's an
   // exception during initialization.
-  CGF.pushFullExprCleanup<FreeException>(EHCleanup, addr);
-  EHScopeStack::stable_iterator cleanup = CGF.EHStack.stable_begin();
+  pushFullExprCleanup<FreeException>(EHCleanup, addr);
+  EHScopeStack::stable_iterator cleanup = EHStack.stable_begin();
 
   // __cxa_allocate_exception returns a void*;  we need to cast this
   // to the appropriate type for the object.
-  llvm::Type *ty = CGF.ConvertTypeForMem(e->getType())->getPointerTo();
-  llvm::Value *typedAddr = CGF.Builder.CreateBitCast(addr, ty);
+  llvm::Type *ty = ConvertTypeForMem(e->getType())->getPointerTo();
+  llvm::Value *typedAddr = Builder.CreateBitCast(addr, ty);
 
   // FIXME: this isn't quite right!  If there's a final unelided call
   // to a copy constructor, then according to [except.terminate]p1 we
@@ -400,11 +379,11 @@ static void EmitAnyExprToExn(CodeGenFunction &CGF, const Expr *e,
   // evaluated but before the exception is caught.  But the best way
   // to handle that is to teach EmitAggExpr to do the final copy
   // differently if it can't be elided.
-  CGF.EmitAnyExprToMem(e, typedAddr, e->getType().getQualifiers(), 
-                       /*IsInit*/ true);
+  EmitAnyExprToMem(e, typedAddr, e->getType().getQualifiers(),
+                   /*IsInit*/ true);
 
   // Deactivate the cleanup block.
-  CGF.DeactivateCleanupBlock(cleanup, cast<llvm::Instruction>(typedAddr));
+  DeactivateCleanupBlock(cleanup, cast<llvm::Instruction>(typedAddr));
 }
 
 llvm::Value *CodeGenFunction::getExceptionSlot() {
@@ -436,75 +415,18 @@ llvm::Value *CodeGenFunction::getAbnormalTerminationSlot() {
 
 void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E,
                                        bool KeepInsertionPoint) {
-  if (!E->getSubExpr()) {
-    CGM.getCXXABI().emitRethrow(*this, /*isNoReturn*/true);
-
-    // throw is an expression, and the expression emitters expect us
-    // to leave ourselves at a valid insertion point.
-    if (KeepInsertionPoint)
-      EmitBlock(createBasicBlock("throw.cont"));
-
-    return;
-  }
-
-  if (CGM.getTarget().getTriple().isKnownWindowsMSVCEnvironment()) {
-    // Call std::terminate().
-    llvm::CallInst *TermCall = EmitNounwindRuntimeCall(CGM.getTerminateFn());
-    TermCall->setDoesNotReturn();
-
-    // throw is an expression, and the expression emitters expect us
-    // to leave ourselves at a valid insertion point.
-    if (KeepInsertionPoint)
-      EmitBlock(createBasicBlock("throw.cont"));
-
-    return;
-  }
-
-  QualType ThrowType = E->getSubExpr()->getType();
-
-  if (ThrowType->isObjCObjectPointerType()) {
-    const Stmt *ThrowStmt = E->getSubExpr();
-    const ObjCAtThrowStmt S(E->getExprLoc(),
-                            const_cast<Stmt *>(ThrowStmt));
-    CGM.getObjCRuntime().EmitThrowStmt(*this, S, false);
-    // This will clear insertion point which was not cleared in
-    // call to EmitThrowStmt.
-    if (KeepInsertionPoint)
-      EmitBlock(createBasicBlock("throw.cont"));
-    return;
-  }
-  
-  // Now allocate the exception object.
-  llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
-  uint64_t TypeSize = getContext().getTypeSizeInChars(ThrowType).getQuantity();
-
-  llvm::Constant *AllocExceptionFn = getAllocateExceptionFn(CGM);
-  llvm::CallInst *ExceptionPtr =
-    EmitNounwindRuntimeCall(AllocExceptionFn,
-                            llvm::ConstantInt::get(SizeTy, TypeSize),
-                            "exception");
-  
-  EmitAnyExprToExn(*this, E->getSubExpr(), ExceptionPtr);
-
-  // Now throw the exception.
-  llvm::Constant *TypeInfo = CGM.GetAddrOfRTTIDescriptor(ThrowType, 
-                                                         /*ForEH=*/true);
-
-  // The address of the destructor.  If the exception type has a
-  // trivial destructor (or isn't a record), we just pass null.
-  llvm::Constant *Dtor = nullptr;
-  if (const RecordType *RecordTy = ThrowType->getAs<RecordType>()) {
-    CXXRecordDecl *Record = cast<CXXRecordDecl>(RecordTy->getDecl());
-    if (!Record->hasTrivialDestructor()) {
-      CXXDestructorDecl *DtorD = Record->getDestructor();
-      Dtor = CGM.getAddrOfCXXStructor(DtorD, StructorType::Complete);
-      Dtor = llvm::ConstantExpr::getBitCast(Dtor, Int8PtrTy);
+  if (const Expr *SubExpr = E->getSubExpr()) {
+    QualType ThrowType = SubExpr->getType();
+    if (ThrowType->isObjCObjectPointerType()) {
+      const Stmt *ThrowStmt = E->getSubExpr();
+      const ObjCAtThrowStmt S(E->getExprLoc(), const_cast<Stmt *>(ThrowStmt));
+      CGM.getObjCRuntime().EmitThrowStmt(*this, S, false);
+    } else {
+      CGM.getCXXABI().emitThrow(*this, E);
     }
+  } else {
+    CGM.getCXXABI().emitRethrow(*this, /*isNoReturn=*/true);
   }
-  if (!Dtor) Dtor = llvm::Constant::getNullValue(Int8PtrTy);
-
-  llvm::Value *args[] = { ExceptionPtr, TypeInfo, Dtor };
-  EmitNoreturnRuntimeCallOrInvoke(getThrowFn(CGM), args);
 
   // throw is an expression, and the expression emitters expect us
   // to leave ourselves at a valid insertion point.
