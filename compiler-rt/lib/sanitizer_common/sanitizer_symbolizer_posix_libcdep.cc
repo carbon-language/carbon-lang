@@ -350,8 +350,8 @@ class InternalSymbolizer : public SymbolizerTool {
 
 class POSIXSymbolizer : public Symbolizer {
  public:
-  explicit POSIXSymbolizer(SymbolizerTool *symbolizer_tool)
-      : Symbolizer(), symbolizer_tool_(symbolizer_tool) {}
+  explicit POSIXSymbolizer(IntrusiveList<SymbolizerTool> tools)
+      : Symbolizer(), tools_(tools) {}
 
   SymbolizedStack *SymbolizePC(uptr addr) override {
     BlockingMutexLock l(&mu_);
@@ -362,9 +362,12 @@ class POSIXSymbolizer : public Symbolizer {
       return res;
     // Always fill data about module name and offset.
     res->info.FillModuleInfo(module_name, module_offset);
-    if (symbolizer_tool_) {
+    for (auto iter = Iterator(&tools_); iter.hasNext();) {
+      auto *tool = iter.next();
       SymbolizerScope sym_scope(this);
-      symbolizer_tool_->SymbolizePC(addr, res);
+      if (tool->SymbolizePC(addr, res)) {
+        return res;
+      }
     }
     return res;
   }
@@ -379,9 +382,12 @@ class POSIXSymbolizer : public Symbolizer {
     info->Clear();
     info->module = internal_strdup(module_name);
     info->module_offset = module_offset;
-    if (symbolizer_tool_) {
+    for (auto iter = Iterator(&tools_); iter.hasNext();) {
+      auto *tool = iter.next();
       SymbolizerScope sym_scope(this);
-      symbolizer_tool_->SymbolizeData(addr, info);
+      if (tool->SymbolizeData(addr, info)) {
+        return true;
+      }
     }
     return true;
   }
@@ -393,22 +399,24 @@ class POSIXSymbolizer : public Symbolizer {
   }
 
   bool CanReturnFileLineInfo() override {
-    return symbolizer_tool_ != nullptr;
+    return !tools_.empty();
   }
 
   void Flush() override {
     BlockingMutexLock l(&mu_);
-    if (symbolizer_tool_) {
+    for (auto iter = Iterator(&tools_); iter.hasNext();) {
+      auto *tool = iter.next();
       SymbolizerScope sym_scope(this);
-      symbolizer_tool_->Flush();
+      tool->Flush();
     }
   }
 
   const char *Demangle(const char *name) override {
     BlockingMutexLock l(&mu_);
-    if (symbolizer_tool_) {
+    for (auto iter = Iterator(&tools_); iter.hasNext();) {
+      auto *tool = iter.next();
       SymbolizerScope sym_scope(this);
-      if (const char *demangled = symbolizer_tool_->Demangle(name))
+      if (const char *demangled = tool->Demangle(name))
         return demangled;
     }
     return DemangleCXXABI(name);
@@ -472,7 +480,8 @@ class POSIXSymbolizer : public Symbolizer {
   bool modules_fresh_;
   BlockingMutex mu_;
 
-  SymbolizerTool *const symbolizer_tool_;         // Leaked.
+  typedef IntrusiveList<SymbolizerTool>::Iterator Iterator;
+  IntrusiveList<SymbolizerTool> tools_;
 };
 
 static SymbolizerTool *ChooseSymbolizer(LowLevelAllocator *allocator) {
@@ -507,8 +516,12 @@ static SymbolizerTool *ChooseSymbolizer(LowLevelAllocator *allocator) {
 }
 
 Symbolizer *Symbolizer::PlatformInit() {
-  return new(symbolizer_allocator_)
-      POSIXSymbolizer(ChooseSymbolizer(&symbolizer_allocator_));
+  IntrusiveList<SymbolizerTool> list;
+  list.clear();
+  if (SymbolizerTool *tool = ChooseSymbolizer(&symbolizer_allocator_)) {
+    list.push_back(tool);
+  }
+  return new(symbolizer_allocator_) POSIXSymbolizer(list);
 }
 
 }  // namespace __sanitizer

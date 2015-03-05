@@ -28,6 +28,13 @@ const char *ExtractUptr(const char *str, const char *delims, uptr *result);
 
 class SymbolizerTool {
  public:
+  // POSIXSymbolizer implements a "fallback chain" of symbolizer tools. In a
+  // request to symbolize an address, if one tool returns false, the next tool
+  // in the chain will be tried.
+  SymbolizerTool *next;
+
+  SymbolizerTool() : next(nullptr) { }
+
   // Can't declare pure virtual functions in sanitizer runtimes:
   // __cxa_pure_virtual might be unavailable.
 
