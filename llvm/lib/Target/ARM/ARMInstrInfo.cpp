@@ -146,6 +146,10 @@ namespace {
         return false;
       const ARMSubtarget &STI =
           static_cast<const ARMSubtarget &>(MF.getSubtarget());
+      // Don't do this for Thumb1.
+      if (STI.isThumb1Only())
+	return false;
+
       const TargetMachine &TM = MF.getTarget();
       if (TM.getRelocationModel() != Reloc::PIC_)
         return false;

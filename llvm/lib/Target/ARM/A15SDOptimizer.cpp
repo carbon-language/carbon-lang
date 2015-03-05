@@ -27,7 +27,9 @@
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMBaseRegisterInfo.h"
+#include "ARMSubtarget.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -678,8 +680,13 @@ bool A15SDOptimizer::runOnInstruction(MachineInstr *MI) {
 }
 
 bool A15SDOptimizer::runOnMachineFunction(MachineFunction &Fn) {
-  TII = static_cast<const ARMBaseInstrInfo *>(Fn.getSubtarget().getInstrInfo());
-  TRI = Fn.getSubtarget().getRegisterInfo();
+  const ARMSubtarget &STI = Fn.getSubtarget<ARMSubtarget>();
+  // Since the A15SDOptimizer pass can insert VDUP instructions, it can only be
+  // enabled when NEON is available.
+  if (!(STI.isCortexA15() && STI.hasNEON()))
+    return false;
+  TII = STI.getInstrInfo();
+  TRI = STI.getRegisterInfo();
   MRI = &Fn.getRegInfo();
   bool Modified = false;
 

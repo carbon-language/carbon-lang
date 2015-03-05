@@ -255,6 +255,8 @@ bool Thumb2ITBlockPass::InsertITInstructions(MachineBasicBlock &MBB) {
 bool Thumb2ITBlockPass::runOnMachineFunction(MachineFunction &Fn) {
   const ARMSubtarget &STI =
       static_cast<const ARMSubtarget &>(Fn.getSubtarget());
+  if (!STI.isThumb2())
+    return false;
   AFI = Fn.getInfo<ARMFunctionInfo>();
   TII = static_cast<const Thumb2InstrInfo *>(STI.getInstrInfo());
   TRI = STI.getRegisterInfo();
