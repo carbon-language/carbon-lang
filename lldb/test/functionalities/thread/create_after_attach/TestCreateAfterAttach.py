@@ -32,6 +32,7 @@ class CreateAfterAttachTestCase(TestBase):
     @skipIfFreeBSD # Hangs. Revisit once required functionality is implemented
                    # for FreeBSD.
     @dwarf_test
+    @expectedFailureLinux # this test fails 1/100 dosep runs
     def test_create_after_attach_with_dwarf_and_fork(self):
         """Test thread creation after process attach."""
         self.buildDwarf(dictionary=self.getBuildFlags(use_cpp11=False))
