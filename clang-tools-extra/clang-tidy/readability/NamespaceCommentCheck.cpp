@@ -83,7 +83,7 @@ void NamespaceCommentCheck::check(const MatchFinder::MatchResult &Result) {
   bool NeedLineBreak = NextTokenIsOnSameLine && Tok.isNot(tok::eof);
 
   SourceRange OldCommentRange(AfterRBrace, AfterRBrace);
-  StringRef Message = "%0 not terminated with a closing comment";
+  std::string Message = "%0 not terminated with a closing comment";
 
   // Try to find existing namespace closing comment on the same line.
   if (Tok.is(tok::comment) && NextTokenIsOnSameLine) {
