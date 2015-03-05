@@ -90,7 +90,9 @@ public:
                            FrameVarInfoMap &VarInfo)
       : LPI(LPI), Materializer(HandlerFn, VarInfo),
         SelectorIDType(Type::getInt32Ty(LPI->getContext())),
-        Int8PtrType(Type::getInt8PtrTy(LPI->getContext())) {}
+        Int8PtrType(Type::getInt8PtrTy(LPI->getContext())),
+        ExtractedEHPtr(nullptr), ExtractedSelector(nullptr),
+        EHPtrStoreAddr(nullptr), SelectorStoreAddr(nullptr) {}
 
   CloningAction handleInstruction(ValueToValueMapTy &VMap,
                                   const Instruction *Inst,
