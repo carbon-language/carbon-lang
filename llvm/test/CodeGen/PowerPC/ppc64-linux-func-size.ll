@@ -3,11 +3,11 @@
 ; CHECK:      .section	.opd,"aw",@progbits
 ; CHECK-NEXT: test1:
 ; CHECK-NEXT:	.align 3
-; CHECK-NEXT:	.quad .L.test1
+; CHECK-NEXT:	.quad .L[[BEGIN:.*]]
 ; CHECK-NEXT:	.quad .TOC.@tocbase
 ; CHECK-NEXT:   .quad 0
 ; CHECK-NEXT:	.text
-; CHECK-NEXT: .L[[BEGIN:.*]]:
+; CHECK-NEXT: .L[[BEGIN]]:
 
 define i32 @test1(i32 %a) nounwind {
 entry:
