@@ -6,6 +6,8 @@ import lit.Test        # pylint: disable=import-error
 import lit.TestRunner  # pylint: disable=import-error
 import lit.util        # pylint: disable=import-error
 
+from libcxx.test.executor import LocalExecutor as LocalExecutor
+import libcxx.test.executor
 import libcxx.util
 
 
@@ -75,7 +77,7 @@ class LibcxxTestFormat(object):
 
         # Dispatch the test based on its suffix.
         if is_sh_test:
-            if self.executor:
+            if not isinstance(self.executor, LocalExecutor):
                 # We can't run ShTest tests with a executor yet.
                 # For now, bail on trying to run them
                 return lit.Test.UNSUPPORTED, 'ShTest format not yet supported'
