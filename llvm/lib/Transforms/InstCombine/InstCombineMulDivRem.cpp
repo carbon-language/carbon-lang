@@ -422,7 +422,7 @@ static bool isFiniteNonZeroFp(Constant *C) {
   if (C->getType()->isVectorTy()) {
     for (unsigned I = 0, E = C->getType()->getVectorNumElements(); I != E;
          ++I) {
-      ConstantFP *CFP = dyn_cast<ConstantFP>(C->getAggregateElement(I));
+      ConstantFP *CFP = dyn_cast_or_null<ConstantFP>(C->getAggregateElement(I));
       if (!CFP || !CFP->getValueAPF().isFiniteNonZero())
         return false;
     }
@@ -437,7 +437,7 @@ static bool isNormalFp(Constant *C) {
   if (C->getType()->isVectorTy()) {
     for (unsigned I = 0, E = C->getType()->getVectorNumElements(); I != E;
          ++I) {
-      ConstantFP *CFP = dyn_cast<ConstantFP>(C->getAggregateElement(I));
+      ConstantFP *CFP = dyn_cast_or_null<ConstantFP>(C->getAggregateElement(I));
       if (!CFP || !CFP->getValueAPF().isNormal())
         return false;
     }
