@@ -86,9 +86,8 @@ void LLVMSetMetadata2(LLVMValueRef Inst, unsigned KindID, LLVMMetadataRef MD) {
 }
 
 void LLVMMetadataReplaceAllUsesWith(LLVMMetadataRef MD, LLVMMetadataRef New) {
-  auto *Node = unwrap<MDTuple>(MD);
-  assert(Node->isTemporary() && "Expected temporary node");
-  Node->replaceAllUsesWith(unwrap<MDNode>(New));
+  auto *Node = unwrap<MDNode>(MD);
+  Node->replaceAllUsesWith(unwrap<Metadata>(New));
   MDNode::deleteTemporary(Node);
 }
 
