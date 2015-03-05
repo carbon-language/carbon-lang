@@ -65,10 +65,7 @@ public:
   }
 
   // Workaround MSVC not supporting implicit move ops
-  CompileUnit(CompileUnit &&RHS)
-      : OrigUnit(RHS.OrigUnit), Info(std::move(RHS.Info)),
-        CUDie(std::move(RHS.CUDie)), StartOffset(RHS.StartOffset),
-        NextUnitOffset(RHS.NextUnitOffset) {}
+  CompileUnit(CompileUnit &&RHS) = default;
 
   DWARFUnit &getOrigUnit() const { return OrigUnit; }
 
