@@ -207,7 +207,6 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   DwarfLineSectionSym = nullptr;
   DwarfAddrSectionSym = nullptr;
   DwarfAbbrevDWOSectionSym = DwarfStrDWOSectionSym = nullptr;
-  FunctionBeginSym = FunctionEndSym = nullptr;
   CurFn = nullptr;
   CurMI = nullptr;
 
@@ -855,7 +854,7 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     if (End != nullptr)
       EndLabel = getLabelAfterInsn(End);
     else if (std::next(I) == Ranges.end())
-      EndLabel = FunctionEndSym;
+      EndLabel = Asm->getFunctionEnd();
     else
       EndLabel = getLabelBeforeInsn(std::next(I)->first);
     assert(EndLabel && "Forgot label after instruction ending a range!");
@@ -1146,11 +1145,6 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   else
     Asm->OutStreamer.getContext().setDwarfCompileUnitID(TheCU->getUniqueID());
 
-  // Emit a label for the function so that we have a beginning address.
-  FunctionBeginSym = Asm->GetTempSymbol("func_begin", Asm->getFunctionNumber());
-  // Assumes in correct section after the entry point.
-  Asm->OutStreamer.EmitLabel(FunctionBeginSym);
-
   // Calculate history for local variables.
   calculateDbgValueHistory(MF, Asm->MF->getSubtarget().getRegisterInfo(),
                            DbgValues);
@@ -1161,12 +1155,12 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
     if (Ranges.empty())
       continue;
 
-    // The first mention of a function argument gets the FunctionBeginSym
+    // The first mention of a function argument gets the CurrentFnBegin
     // label, so arguments are visible when breaking at function entry.
     DIVariable DIVar(Ranges.front().first->getDebugVariable());
     if (DIVar.isVariable() && DIVar.getTag() == dwarf::DW_TAG_arg_variable &&
         getDISubprogram(DIVar.getContext()).describes(MF->getFunction())) {
-      LabelsBeforeInsn[Ranges.front().first] = FunctionBeginSym;
+      LabelsBeforeInsn[Ranges.front().first] = Asm->getFunctionBegin();
       if (Ranges.front().first->getDebugExpression().isBitPiece()) {
         // Mark all non-overlapping initial pieces.
         for (auto I = Ranges.begin(); I != Ranges.end(); ++I) {
@@ -1175,7 +1169,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
                           [&](DbgValueHistoryMap::InstrRange Pred) {
                 return !piecesOverlap(Piece, Pred.first->getDebugExpression());
               }))
-            LabelsBeforeInsn[I->first] = FunctionBeginSym;
+            LabelsBeforeInsn[I->first] = Asm->getFunctionBegin();
           else
             break;
         }
@@ -1190,7 +1184,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   }
 
   PrevInstLoc = DebugLoc();
-  PrevLabel = FunctionBeginSym;
+  PrevLabel = Asm->getFunctionBegin();
 
   // Record beginning of function.
   PrologEndLoc = findPrologueEndLoc(MF);
@@ -1221,11 +1215,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     return;
   }
 
-  // Define end label for subprogram.
-  FunctionEndSym = Asm->GetTempSymbol("func_end", Asm->getFunctionNumber());
-  // Assumes in correct section after the entry point.
-  Asm->OutStreamer.EmitLabel(FunctionEndSym);
-
   // Set DwarfDwarfCompileUnitID in MCContext to default value.
   Asm->OutStreamer.getContext().setDwarfCompileUnitID(0);
 
@@ -1237,7 +1226,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   collectVariableInfo(TheCU, SP, ProcessedVars);
 
   // Add the range of this function to the list of ranges for the CU.
-  TheCU.addRange(RangeSpan(FunctionBeginSym, FunctionEndSym));
+  TheCU.addRange(RangeSpan(Asm->getFunctionBegin(), Asm->getFunctionEnd()));
 
   // Under -gmlt, skip building the subprogram if there are no inlined
   // subroutines inside it.

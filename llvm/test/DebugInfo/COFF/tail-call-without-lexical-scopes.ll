@@ -16,6 +16,7 @@
 ; with debug information available.  This used to be PR19239.
 
 ; X86-LABEL: {{^}}"?bar@@YAXHZZ":
+; X86-NEXT: L{{.*}}:
 ; X86-NEXT: # BB
 ; X86-NEXT: [[JMP_LINE:^L.*]]:{{$}}
 ; X86:      jmp "?foo@@YAXXZ"

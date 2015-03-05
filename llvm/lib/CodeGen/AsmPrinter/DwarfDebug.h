@@ -249,7 +249,6 @@ class DwarfDebug : public AsmPrinterHandler {
   MCSymbol *DwarfInfoSectionSym, *DwarfAbbrevSectionSym;
   MCSymbol *DwarfStrSectionSym, *TextSectionSym, *DwarfDebugRangeSectionSym;
   MCSymbol *DwarfDebugLocSectionSym, *DwarfLineSectionSym, *DwarfAddrSectionSym;
-  MCSymbol *FunctionBeginSym, *FunctionEndSym;
   MCSymbol *DwarfInfoDWOSectionSym, *DwarfAbbrevDWOSectionSym;
   MCSymbol *DwarfTypesDWOSectionSym;
   MCSymbol *DwarfStrDWOSectionSym;
@@ -627,8 +626,6 @@ public:
   void addAccelType(StringRef Name, const DIE &Die, char Flags);
 
   const MachineFunction *getCurrentFunction() const { return CurFn; }
-  const MCSymbol *getFunctionBeginSym() const { return FunctionBeginSym; }
-  const MCSymbol *getFunctionEndSym() const { return FunctionEndSym; }
 
   iterator_range<ImportedEntityMap::const_iterator>
   findImportedEntitiesForScope(const MDNode *Scope) const {

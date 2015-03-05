@@ -107,6 +107,7 @@
 ; OBJ32:    }
 
 ; X64-LABEL: f:
+; X64-NEXT: .L{{.*}}:{{$}}
 ; X64-NEXT: [[START:.*]]:{{$}}
 ; X64:      # BB
 ; X64:      subq    $40, %rsp

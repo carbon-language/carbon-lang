@@ -278,6 +278,7 @@
 ; OBJ32:    }
 
 ; X64-LABEL: x:
+; X64-NEXT: .L{{.*}}:
 ; X64-NEXT: [[X_START:.*]]:{{$}}
 ; X64:      # BB
 ; X64:      subq    $40, %rsp
@@ -290,6 +291,7 @@
 ; X64-NEXT: [[END_OF_X:.*]]:
 ;
 ; X64-LABEL: y:
+; X64-NEXT: .L{{.*}}:
 ; X64-NEXT: [[Y_START:.*]]:{{$}}
 ; X64:      # BB
 ; X64:      subq    $40, %rsp
@@ -302,6 +304,7 @@
 ; X64-NEXT: [[END_OF_Y:.*]]:
 ;
 ; X64-LABEL: f:
+; X64-NEXT: .L{{.*}}:
 ; X64-NEXT: [[F_START:.*]]:{{$}}
 ; X64:      # BB
 ; X64:      subq    $40, %rsp
