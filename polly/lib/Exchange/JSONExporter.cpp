@@ -19,6 +19,7 @@
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/RegionInfo.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ToolOutputFile.h"
@@ -183,7 +184,8 @@ typedef Dependences::StatementToIslMapTy StatementToIslMapTy;
 bool JSONImporter::runOnScop(Scop &S) {
   Region &R = S.getRegion();
   const Dependences &D = getAnalysis<DependenceInfo>().getDependences();
-  const DataLayout &DL = getAnalysis<DataLayoutPass>().getDataLayout();
+  const DataLayout &DL =
+      S.getRegion().getEntry()->getParent()->getParent()->getDataLayout();
 
   std::string FileName = ImportDir + "/" + getFileName(S);
 
@@ -356,7 +358,6 @@ bool JSONImporter::runOnScop(Scop &S) {
 void JSONImporter::getAnalysisUsage(AnalysisUsage &AU) const {
   ScopPass::getAnalysisUsage(AU);
   AU.addRequired<DependenceInfo>();
-  AU.addRequired<DataLayoutPass>();
 }
 Pass *polly::createJSONImporterPass() { return new JSONImporter(); }
 
@@ -375,7 +376,6 @@ INITIALIZE_PASS_BEGIN(JSONImporter, "polly-import-jscop",
                       " (Reads a .jscop file for each Scop)",
                       false, false);
 INITIALIZE_PASS_DEPENDENCY(DependenceInfo)
-INITIALIZE_PASS_DEPENDENCY(DataLayoutPass)
 INITIALIZE_PASS_END(JSONImporter, "polly-import-jscop",
                     "Polly - Import Scops from JSON"
                     " (Reads a .jscop file for each Scop)",

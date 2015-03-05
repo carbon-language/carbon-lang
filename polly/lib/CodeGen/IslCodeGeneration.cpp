@@ -964,7 +964,7 @@ public:
     LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     SE = &getAnalysis<ScalarEvolution>();
-    DL = &getAnalysis<DataLayoutPass>().getDataLayout();
+    DL = &S.getRegion().getEntry()->getParent()->getParent()->getDataLayout();
 
     assert(!S.getRegion().isTopLevelRegion() &&
            "Top level regions are not supported");
@@ -993,7 +993,6 @@ public:
   void printScop(raw_ostream &, Scop &) const override {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<DataLayoutPass>();
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<IslAstInfo>();
     AU.addRequired<RegionInfoPass>();
