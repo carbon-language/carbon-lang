@@ -219,8 +219,10 @@ __enum_type_info::can_catch(const __shim_type_info* thrown_type,
     return is_equal(this, thrown_type, false);
 }
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
+#endif
 
 // Handles bullets 1 and 2
 bool
@@ -246,7 +248,9 @@ __class_type_info::can_catch(const __shim_type_info* thrown_type,
     return false;
 }
 
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 void
 __class_type_info::process_found_base_class(__dynamic_cast_info* info,
@@ -351,8 +355,10 @@ __pbase_type_info::can_catch(const __shim_type_info* thrown_type,
            is_equal(thrown_type, &typeid(std::nullptr_t), false);
 }
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
+#endif
 
 // Handles bullets 1, 3 and 4
 // NOTE: It might not be safe to adjust the pointer if it is not not a pointer
@@ -403,13 +409,17 @@ __pointer_type_info::can_catch(const __shim_type_info* thrown_type,
     return false;
 }
 
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 #pragma GCC visibility pop
 #pragma GCC visibility push(default)
 
+#ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-field-initializers"
+#endif
 
 // __dynamic_cast
 
@@ -578,7 +588,9 @@ __dynamic_cast(const void* static_ptr,
     return const_cast<void*>(dst_ptr);
 }
 
+#ifdef __clang__
 #pragma clang diagnostic pop
+#endif
 
 #pragma GCC visibility pop
 #pragma GCC visibility push(hidden)
