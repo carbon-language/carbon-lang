@@ -486,12 +486,15 @@ class POSIXSymbolizer : public Symbolizer {
 
 static SymbolizerTool *ChooseSymbolizer(LowLevelAllocator *allocator) {
   if (!common_flags()->symbolize) {
+    VReport(2, "Symbolizer is disabled.\n");
     return nullptr;
   }
   if (SymbolizerTool *tool = InternalSymbolizer::get(allocator)) {
+    VReport(2, "Using internal symbolizer.\n");
     return tool;
   }
   if (SymbolizerTool *tool = LibbacktraceSymbolizer::get(allocator)) {
+    VReport(2, "Using libbacktrace symbolizer.\n");
     return tool;
   }
   const char *path_to_external = common_flags()->external_symbolizer_path;
@@ -504,14 +507,17 @@ static SymbolizerTool *ChooseSymbolizer(LowLevelAllocator *allocator) {
     path_to_external = FindPathToBinary("llvm-symbolizer");
   }
   if (path_to_external) {
+    VReport(2, "Using llvm-symbolizer at path: %s\n", path_to_external);
     return new(*allocator) LLVMSymbolizer(path_to_external, allocator);
   }
   if (common_flags()->allow_addr2line) {
     // If llvm-symbolizer is not found, try to use addr2line.
     if (const char *addr2line_path = FindPathToBinary("addr2line")) {
+      VReport(2, "Using addr2line at path: %s\n", addr2line_path);
       return new(*allocator) Addr2LinePool(addr2line_path, allocator);
     }
   }
+  VReport(2, "No internal or external symbolizer found.\n");
   return nullptr;
 }
 
