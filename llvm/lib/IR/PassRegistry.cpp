@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/PassRegistry.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/IR/Function.h"
 #include "llvm/PassSupport.h"
 #include "llvm/Support/Compiler.h"
@@ -40,23 +39,13 @@ PassRegistry *PassRegistry::getPassRegistry() {
 PassRegistry::~PassRegistry() {}
 
 const PassInfo *PassRegistry::getPassInfo(const void *TI) const {
-  // We don't need thread synchronization after the PassRegistry is locked
-  // (that means: is read-only).
-  Optional<sys::SmartScopedReader<true>> Guard;
-  if (!locked)
-    Guard.emplace(Lock);
-
+  sys::SmartScopedReader<true> Guard(Lock);
   MapType::const_iterator I = PassInfoMap.find(TI);
   return I != PassInfoMap.end() ? I->second : nullptr;
 }
 
 const PassInfo *PassRegistry::getPassInfo(StringRef Arg) const {
-  // We don't need thread synchronization after the PassRegistry is locked
-  // (that means: is read-only).
-  Optional<sys::SmartScopedReader<true>> Guard;
-  if (!locked)
-    Guard.emplace(Lock);
-
+  sys::SmartScopedReader<true> Guard(Lock);
   StringMapType::const_iterator I = PassInfoStringMap.find(Arg);
   return I != PassInfoStringMap.end() ? I->second : nullptr;
 }
@@ -66,9 +55,6 @@ const PassInfo *PassRegistry::getPassInfo(StringRef Arg) const {
 //
 
 void PassRegistry::registerPass(const PassInfo &PI, bool ShouldFree) {
-
-  assert(!locked && "Trying to register a pass in a locked PassRegistry");
-
   sys::SmartScopedWriter<true> Guard(Lock);
   bool Inserted =
       PassInfoMap.insert(std::make_pair(PI.getTypeInfo(), &PI)).second;
@@ -82,8 +68,6 @@ void PassRegistry::registerPass(const PassInfo &PI, bool ShouldFree) {
 
   if (ShouldFree)
     ToFree.push_back(std::unique_ptr<const PassInfo>(&PI));
-
-  assert(!locked && "PassRegistry locked during registering a pass");
 }
 
 void PassRegistry::enumerateWith(PassRegistrationListener *L) {
