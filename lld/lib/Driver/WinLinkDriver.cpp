@@ -805,9 +805,8 @@ parseArgs(int argc, const char **argv, PECOFFLinkingContext &ctx,
 // graph.
 static bool hasLibrary(PECOFFLinkingContext &ctx, File *file) {
   StringRef path = file->path();
-  std::vector<std::unique_ptr<Node>> &nodes = ctx.getNodes();
-  for (size_t i = 0; i < nodes.size(); ++i)
-    if (auto *f = dyn_cast<FileNode>(nodes[i].get()))
+  for (std::unique_ptr<Node> &p : ctx.getNodes())
+    if (auto *f = dyn_cast<FileNode>(p.get()))
       if (f->getFile()->path() == path)
         return true;
   return false;
