@@ -10,7 +10,7 @@ var X interface{}
 
 // CHECK: define void @foo..import()
 // CHECK-NEXT: :
-// CHECK-NEXT: %[[N:.*]] = load i1* @"init$guard"
+// CHECK-NEXT: %[[N:.*]] = load i1, i1* @"init$guard"
 // CHECK-NEXT: br i1 %[[N]], label %{{.*}}, label %[[L:.*]]
 
 // CHECK: ; <label>:[[L]]
