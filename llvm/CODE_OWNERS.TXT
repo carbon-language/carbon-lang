@@ -49,6 +49,10 @@ N: Peter Collingbourne
 E: peter@pcc.me.uk
 D: llgo
 
+N: Quentin Colombet
+E: qcolombet@apple.com
+D: Register allocators
+
 N: Anshuman Dasgupta
 E: adasgupt@codeaurora.org
 D: Hexagon Backend
@@ -116,7 +120,7 @@ D: SampleProfile and related parts of ProfileData
 
 N: Jakob Olesen
 E: stoklund@2pi.dk
-D: Register allocators and TableGen
+D: TableGen
 
 N: Richard Osborne
 E: richard@xmos.com
