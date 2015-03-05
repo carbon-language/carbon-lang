@@ -2,7 +2,7 @@
 
 ; CHECK-LABEL: f:
 define float @f(<4 x i16>* nocapture %in) {
-  ; CHECK: vldr
+  ; CHECK: vld1
   ; CHECK: vmovl.u16
   %1 = load <4 x i16>, <4 x i16>* %in
   ; CHECK: vcvt.f32.u32

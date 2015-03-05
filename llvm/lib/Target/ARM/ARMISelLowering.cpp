@@ -10077,6 +10077,28 @@ bool ARMTargetLowering::isZExtFree(SDValue Val, EVT VT2) const {
   return false;
 }
 
+bool ARMTargetLowering::isVectorLoadExtDesirable(SDValue ExtVal) const {
+  EVT VT = ExtVal.getValueType();
+
+  if (!isTypeLegal(VT))
+    return false;
+
+  // Don't create a loadext if we can fold the extension into a wide/long
+  // instruction.
+  // If there's more than one user instruction, the loadext is desirable no
+  // matter what.  There can be two uses by the same instruction.
+  if (ExtVal->use_empty() ||
+      !ExtVal->use_begin()->isOnlyUserOf(ExtVal.getNode()))
+    return true;
+
+  SDNode *U = *ExtVal->use_begin();
+  if ((U->getOpcode() == ISD::ADD || U->getOpcode() == ISD::SUB ||
+       U->getOpcode() == ISD::SHL || U->getOpcode() == ARMISD::VSHL))
+    return false;
+
+  return true;
+}
+
 bool ARMTargetLowering::allowTruncateForTailCall(Type *Ty1, Type *Ty2) const {
   if (!Ty1->isIntegerTy() || !Ty2->isIntegerTy())
     return false;

@@ -283,6 +283,8 @@ namespace llvm {
     using TargetLowering::isZExtFree;
     bool isZExtFree(SDValue Val, EVT VT2) const override;
 
+    bool isVectorLoadExtDesirable(SDValue ExtVal) const override;
+
     bool allowTruncateForTailCall(Type *Ty1, Type *Ty2) const override;
 
 
