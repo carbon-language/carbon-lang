@@ -1222,7 +1222,8 @@ static unsigned GetNumNodeResults(Record *Operator, CodeGenDAGPatterns &CDP) {
   if (Operator->isSubClassOf("Instruction")) {
     CodeGenInstruction &InstInfo = CDP.getTargetInfo().getInstruction(Operator);
 
-    unsigned NumDefsToAdd = InstInfo.Operands.NumDefs;
+    // FIXME: Should allow access to all the results here.
+    unsigned NumDefsToAdd = InstInfo.Operands.NumDefs ? 1 : 0;
 
     // Add on one implicit def if it has a resolvable type.
     if (InstInfo.HasOneImplicitDefWithKnownVT(CDP.getTargetInfo()) !=MVT::Other)
@@ -1799,7 +1800,8 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
 
     // Apply the result types to the node, these come from the things in the
     // (outs) list of the instruction.
-    unsigned NumResultsToAdd = InstInfo.Operands.NumDefs;
+    // FIXME: Cap at one result so far.
+    unsigned NumResultsToAdd = InstInfo.Operands.NumDefs ? 1 : 0;
     for (unsigned ResNo = 0; ResNo != NumResultsToAdd; ++ResNo)
       MadeChange |= UpdateNodeTypeFromInst(ResNo, Inst.getResult(ResNo), TP);
 
@@ -2965,7 +2967,7 @@ const DAGInstruction &CodeGenDAGPatterns::parseInstructionPattern(
 
     // Check that all of the results occur first in the list.
     std::vector<Record*> Results;
-    SmallVector<TreePatternNode *, 2> ResNodes;
+    TreePatternNode *Res0Node = nullptr;
     for (unsigned i = 0; i != NumResults; ++i) {
       if (i == CGI.Operands.size())
         I->error("'" + InstResults.begin()->first +
@@ -2977,8 +2979,8 @@ const DAGInstruction &CodeGenDAGPatterns::parseInstructionPattern(
       if (!RNode)
         I->error("Operand $" + OpName + " does not exist in operand list!");
 
-      ResNodes.push_back(RNode);
-
+      if (i == 0)
+        Res0Node = RNode;
       Record *R = cast<DefInit>(RNode->getLeafValue())->getDef();
       if (!R)
         I->error("Operand $" + OpName + " should be a set destination: all "
@@ -3053,11 +3055,9 @@ const DAGInstruction &CodeGenDAGPatterns::parseInstructionPattern(
     TreePatternNode *ResultPattern =
       new TreePatternNode(I->getRecord(), ResultNodeOperands,
                           GetNumNodeResults(I->getRecord(), *this));
-    // Copy fully inferred output node types to instruction result pattern.
-    for (unsigned i = 0; i != NumResults; ++i) {
-      assert(ResNodes[i]->getNumTypes() == 1 && "FIXME: Unhandled");
-      ResultPattern->setType(i, ResNodes[i]->getExtType(0));
-    }
+    // Copy fully inferred output node type to instruction result pattern.
+    for (unsigned i = 0; i != NumResults; ++i)
+      ResultPattern->setType(i, Res0Node->getExtType(i));
 
     // Create and insert the instruction.
     // FIXME: InstImpResults should not be part of DAGInstruction.
