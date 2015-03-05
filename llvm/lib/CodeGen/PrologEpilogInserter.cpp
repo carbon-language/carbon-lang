@@ -810,17 +810,6 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
         continue;
       }
 
-      // Frame allocations are target independent. Simply swap the index with
-      // the offset.
-      if (MI->getOpcode() == TargetOpcode::FRAME_ALLOC) {
-        assert(TFI->hasFP(Fn) && "frame alloc requires FP");
-        MachineOperand &FI = MI->getOperand(i);
-        unsigned Reg;
-        int FrameOffset = TFI->getFrameIndexReference(Fn, FI.getIndex(), Reg);
-        FI.ChangeToImmediate(FrameOffset);
-        continue;
-      }
-
       // Some instructions (e.g. inline asm instructions) can have
       // multiple frame indices and/or cause eliminateFrameIndex
       // to insert more than one instruction. We need the register

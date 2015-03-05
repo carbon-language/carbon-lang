@@ -50,32 +50,28 @@ $"\01??_R0H@8" = comdat any
 @"\01??_7type_info@@6B@" = external constant i8*
 @"\01??_R0H@8" = linkonce_odr global %rtti.TypeDescriptor2 { i8** @"\01??_7type_info@@6B@", i8* null, [3 x i8] c".H\00" }, comdat
 
-; This structure should be declared for the frame allocation block.
-; CHECK: %"struct.\01?test@@YAXXZ.ehdata" = type { i32, i8*, i32, i32, [10 x i32], i32, i32*, i32* }
-
 ; The function entry should be rewritten like this.
 ; CHECK: define void @"\01?test@@YAXXZ"() #0 {
 ; CHECK: entry:
-; CHECK:  %frame.alloc = call i8* @llvm.frameallocate(i32 88)
-; CHECK:  %eh.data = bitcast i8* %frame.alloc to %"struct.\01?test@@YAXXZ.ehdata"*
-; CHECK-NOT:  %ExceptionVal = alloca [10 x i32], align 16
-; CHECK:  %NumExceptions.020.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
-; CHECK:  %i.019.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 5
-; CHECK:  %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4
-; CHECK:  %Data = alloca i64, align 8
-; CHECK:  %tmpcast = bitcast i64* %Data to %struct.SomeData*
-; CHECK:  %0 = bitcast [10 x i32]* %ExceptionVal to i8*
-; CHECK:  call void @llvm.lifetime.start(i64 40, i8* %0) #1
-; CHECK:  store i64 0, i64* %Data, align 8
-; CHECK:  %a.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 6
-; CHECK:  %a = bitcast i64* %Data to i32*
-; CHECK:  store i32* %a, i32** %a.reg2mem
-; CHECK:  %b.reg2mem = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 7
-; CHECK:  %b = getelementptr inbounds %struct.SomeData, %struct.SomeData* %tmpcast, i64 0, i32 1
-; CHECK:  store i32* %b, i32** %b.reg2mem
-; CHECK:  store i32 0, i32* %NumExceptions.020.reg2mem
-; CHECK:  store i32 0, i32* %i.019.reg2mem
-; CHECK:  br label %for.body
+; CHECK:   %NumExceptions.020.reg2mem = alloca i32
+; CHECK:   %i.019.reg2mem = alloca i32
+; CHECK:   %e = alloca i32, align 4
+; CHECK:   %ExceptionVal = alloca [10 x i32], align 16
+; CHECK:   %Data = alloca i64, align 8
+; CHECK:   %tmpcast = bitcast i64* %Data to %struct.SomeData*
+; CHECK:   %0 = bitcast [10 x i32]* %ExceptionVal to i8*
+; CHECK:   call void @llvm.lifetime.start(i64 40, i8* %0) #1
+; CHECK:   store i64 0, i64* %Data, align 8
+; CHECK:   %a.reg2mem = alloca i32*
+; CHECK:   %a = bitcast i64* %Data to i32*
+; CHECK:   store i32* %a, i32** %a.reg2mem
+; CHECK:   %b.reg2mem = alloca i32*
+; CHECK:   %b = getelementptr inbounds %struct.SomeData, %struct.SomeData* %tmpcast, i64 0, i32 1
+; CHECK:   store i32* %b, i32** %b.reg2mem
+; CHECK:   store i32 0, i32* %NumExceptions.020.reg2mem
+; CHECK:   store i32 0, i32* %i.019.reg2mem
+; CHECK:   call void (...)* @llvm.frameescape(i32* %e, i32* %NumExceptions.020.reg2mem, [10 x i32]* %ExceptionVal, i32* %i.019.reg2mem, i32** %a.reg2mem, i32** %b.reg2mem)
+; CHECK:   br label %for.body
 
 ; Function Attrs: uwtable
 define void @"\01?test@@YAXXZ"() #0 {
@@ -187,17 +183,21 @@ eh.resume:                                        ; preds = %lpad
 ; The following catch handler should be outlined.
 ; CHECK: define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*) {
 ; CHECK: entry:
-; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1)
-; CHECK:   %eh.data = bitcast i8* %eh.alloc to %"struct.\01?test@@YAXXZ.ehdata"*
-; CHECK:   %e = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 2
-; CHECK:   %eh.temp.alloca = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 3
+; CHECK:   %e.i84 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
+; CHECK:   %e = bitcast i8* %e.i84 to i32*
+; CHECK:   %eh.temp.alloca.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
+; CHECK:   %eh.temp.alloca = bitcast i8* %eh.temp.alloca.i8 to i32*
 ; CHECK:   %NumExceptions.020.reload = load i32, i32* %eh.temp.alloca
-; CHECK:   %ExceptionVal = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 4
-; CHECK:   %eh.temp.alloca1 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 5
+; CHECK:   %ExceptionVal.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
+; CHECK:   %ExceptionVal = bitcast i8* %ExceptionVal.i8 to [10 x i32]*
+; CHECK:   %eh.temp.alloca1.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 3)
+; CHECK:   %eh.temp.alloca1 = bitcast i8* %eh.temp.alloca1.i8 to i32*
 ; CHECK:   %i.019.reload = load i32, i32* %eh.temp.alloca1
-; CHECK:   %eh.temp.alloca2 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 6
+; CHECK:   %eh.temp.alloca2.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 4)
+; CHECK:   %eh.temp.alloca2 = bitcast i8* %eh.temp.alloca2.i8 to i32**
 ; CHECK:   %a.reload = load i32*, i32** %eh.temp.alloca2
-; CHECK:   %eh.temp.alloca3 = getelementptr inbounds %"struct.\01?test@@YAXXZ.ehdata", %"struct.\01?test@@YAXXZ.ehdata"* %eh.data, i32 0, i32 7
+; CHECK:   %eh.temp.alloca3.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 5)
+; CHECK:   %eh.temp.alloca3 = bitcast i8* %eh.temp.alloca3.i8 to i32**
 ; CHECK:   %b.reload = load i32*, i32** %eh.temp.alloca3
 ; CHECK:   %e.i8 = bitcast i32* %e to i8*
 ; CHECK:   %tmp8 = load i32, i32* %e, align 4, !tbaa !7

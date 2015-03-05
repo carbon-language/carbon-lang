@@ -496,6 +496,25 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   else
     BasePtr = (TFI->hasFP(MF) ? FramePtr : StackPtr);
 
+  // FRAME_ALLOC uses a single offset, with no register. It only works in the
+  // simple FP case, and doesn't work with stack realignment. On 32-bit, the
+  // offset is from the traditional base pointer location.  On 64-bit, the
+  // offset is from the SP at the end of the prologue, not the FP location. This
+  // matches the behavior of llvm.frameaddress.
+  if (Opc == TargetOpcode::FRAME_ALLOC) {
+    assert(TFI->hasFP(MF) && "frame alloc requires FP");
+    MachineOperand &FI = MI.getOperand(FIOperandNum);
+    const MachineFrameInfo *MFI = MF.getFrameInfo();
+    int Offset = MFI->getObjectOffset(FrameIndex) - TFI->getOffsetOfLocalArea();
+    bool IsWinEH = MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
+    if (IsWinEH)
+      Offset += MFI->getStackSize();
+    else
+      Offset += SlotSize;
+    FI.ChangeToImmediate(Offset);
+    return;
+  }
+
   // For LEA64_32r when BasePtr is 32-bits (X32) we can use full-size 64-bit
   // register as source operand, semantic is the same and destination is
   // 32-bits. It saves one byte per lea in code since 0x67 prefix is avoided.

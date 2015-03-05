@@ -38,18 +38,15 @@ $"\01??_R0H@8" = comdat any
 ; The function entry should be rewritten like this.
 ; CHECK: define i32 @"\01?test@@YAHUA@@@Z"(<{ %struct.A }>* inalloca) #0 {
 ; CHECK: entry:
-; CHECK:   %frame.alloc = call i8* @llvm.frameallocate(i32 24)
-; CHECK:   %eh.data = bitcast i8* %frame.alloc to %"struct.\01?test@@YAHUA@@@Z.ehdata"*
-; CHECK:   %.tmp.reg2mem = getelementptr inbounds %"struct.\01?test@@YAHUA@@@Z.ehdata", %"struct.\01?test@@YAHUA@@@Z.ehdata"* %eh.data, i32 0, i32 3
+; CHECK:   %.tmp.reg2mem = alloca <{ %struct.A }>*
 ; CHECK:   %.tmp = select i1 true, <{ %struct.A }>* %0, <{ %struct.A }>* undef
 ; CHECK:   store <{ %struct.A }>* %.tmp, <{ %struct.A }>** %.tmp.reg2mem
-; CHECK-NOT:  %retval = alloca i32, align 4
-; CHECK:   %retval = getelementptr inbounds %"struct.\01?test@@YAHUA@@@Z.ehdata", %"struct.\01?test@@YAHUA@@@Z.ehdata"* %eh.data, i32 0, i32 4
+; CHECK:   %retval = alloca i32, align 4
 ; CHECK:   %exn.slot = alloca i8*
 ; CHECK:   %ehselector.slot = alloca i32
-; CHECK-NOT:  %e = alloca i32, align 4
-; CHECK:   %e = getelementptr inbounds %"struct.\01?test@@YAHUA@@@Z.ehdata", %"struct.\01?test@@YAHUA@@@Z.ehdata"* %eh.data, i32 0, i32 2
-; CHECK:   %cleanup.dest.slot = getelementptr inbounds %"struct.\01?test@@YAHUA@@@Z.ehdata", %"struct.\01?test@@YAHUA@@@Z.ehdata"* %eh.data, i32 0, i32 5
+; CHECK:   %e = alloca i32, align 4
+; CHECK:   %cleanup.dest.slot = alloca i32
+; CHECK:   call void (...)* @llvm.frameescape(i32* %e, <{ %struct.A }>** %.tmp.reg2mem, i32* %retval, i32* %cleanup.dest.slot)
 ; CHECK:   invoke void @"\01?may_throw@@YAXXZ"()
 ; CHECK:           to label %invoke.cont unwind label %lpad
 
@@ -132,13 +129,16 @@ eh.resume:                                        ; preds = %ehcleanup
 ; The following catch handler should be outlined.
 ; CHECK: define internal i8* @"\01?test@@YAHUA@@@Z.catch"(i8*, i8*) {
 ; CHECK: entry:
-; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1)
-; CHECK:   %eh.data = bitcast i8* %eh.alloc to %"struct.\01?test@@YAHUA@@@Z.ehdata"*
-; CHECK:   %e = getelementptr inbounds %"struct.\01?test@@YAHUA@@@Z.ehdata", %"struct.\01?test@@YAHUA@@@Z.ehdata"* %eh.data, i32 0, i32 2
-; CHECK:   %eh.temp.alloca = getelementptr inbounds %"struct.\01?test@@YAHUA@@@Z.ehdata", %"struct.\01?test@@YAHUA@@@Z.ehdata"* %eh.data, i32 0, i32 3
+; CHECK:   %e.i81 = call i8* @llvm.framerecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 0)
+; CHECK:   %e = bitcast i8* %e.i81 to i32*
+; CHECK:   %eh.temp.alloca.i8 = call i8* @llvm.framerecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 1)
+; CHECK:   %eh.temp.alloca = bitcast i8* %eh.temp.alloca.i8 to <{ %struct.A }>**
 ; CHECK:   %.reload = load <{ %struct.A }>*, <{ %struct.A }>** %eh.temp.alloca
-; CHECK:   %retval = getelementptr inbounds %"struct.\01?test@@YAHUA@@@Z.ehdata", %"struct.\01?test@@YAHUA@@@Z.ehdata"* %eh.data, i32 0, i32 4
-; CHECK:   %cleanup.dest.slot = getelementptr inbounds %"struct.\01?test@@YAHUA@@@Z.ehdata", %"struct.\01?test@@YAHUA@@@Z.ehdata"* %eh.data, i32 0, i32 5
+; CHECK:   %retval.i8 = call i8* @llvm.framerecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 2)
+; CHECK:   %retval = bitcast i8* %retval.i8 to i32*
+; CHECK:   %cleanup.dest.slot.i8 = call i8* @llvm.framerecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 3)
+; CHECK:   %cleanup.dest.slot = bitcast i8* %cleanup.dest.slot.i8 to i32*
+; CHECK:   %e.i8 = bitcast i32* %e to i8*
 ; CHECK:   %a = getelementptr inbounds <{ %struct.A }>, <{ %struct.A }>* %.reload, i32 0, i32 0
 ; CHECK:   %a1 = getelementptr inbounds %struct.A, %struct.A* %a, i32 0, i32 0
 ; CHECK:   %tmp8 = load i32, i32* %a1, align 4
@@ -148,7 +148,6 @@ eh.resume:                                        ; preds = %ehcleanup
 ; CHECK:   store i32 1, i32* %cleanup.dest.slot
 ; CHECK:   ret i8* blockaddress(@"\01?test@@YAHUA@@@Z", %cleanup)
 ; CHECK: }
-
 
 declare void @"\01?may_throw@@YAXXZ"() #0
 

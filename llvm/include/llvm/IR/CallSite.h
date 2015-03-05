@@ -151,7 +151,12 @@ public:
   IterTy arg_end() const { return (*this)->op_end() - getArgumentEndOffset(); }
   bool arg_empty() const { return arg_end() == arg_begin(); }
   unsigned arg_size() const { return unsigned(arg_end() - arg_begin()); }
-  
+
+  /// arg_operands - iteration adapter for range-for loops.
+  iterator_range<IterTy> arg_operands() const {
+    return iterator_range<User::const_op_iterator>(arg_begin(), arg_eng());
+  }
+
   /// getType - Return the type of the instruction that generated this call site
   ///
   Type *getType() const { return (*this)->getType(); }

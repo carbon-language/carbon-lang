@@ -7614,7 +7614,7 @@ Note that calling this intrinsic does not prevent function inlining or
 other aggressive transformations, so the value returned may not be that
 of the obvious source-language caller.
 
-'``llvm.frameallocate``' and '``llvm.framerecover``' Intrinsics
+'``llvm.frameescape``' and '``llvm.framerecover``' Intrinsics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
@@ -7622,24 +7622,23 @@ Syntax:
 
 ::
 
-      declare i8* @llvm.frameallocate(i32 %size)
-      declare i8* @llvm.framerecover(i8* %func, i8* %fp)
+      declare void @llvm.frameescape(...)
+      declare i8* @llvm.framerecover(i8* %func, i8* %fp, i32 %idx)
 
 Overview:
 """""""""
 
-The '``llvm.frameallocate``' intrinsic allocates stack memory at some fixed
-offset from the frame pointer, and the '``llvm.framerecover``'
-intrinsic applies that offset to a live frame pointer to recover the address of
-the allocation. The offset is computed during frame layout of the caller of
-``llvm.frameallocate``.
+The '``llvm.frameescape``' intrinsic escapes offsets of a collection of static
+allocas, and the '``llvm.framerecover``' intrinsic applies those offsets to a
+live frame pointer to recover the address of the allocation. The offset is
+computed during frame layout of the caller of ``llvm.frameescape``.
 
 Arguments:
 """"""""""
 
-The ``size`` argument to '``llvm.frameallocate``' must be a constant integer
-indicating the amount of stack memory to allocate. As with allocas, allocating
-zero bytes is legal, but the result is undefined.
+All arguments to '``llvm.frameescape``' must be pointers to static allocas or
+casts of static allocas. Each function can only call '``llvm.frameescape``'
+once, and it can only do so from the entry block.
 
 The ``func`` argument to '``llvm.framerecover``' must be a constant
 bitcasted pointer to a function defined in the current module. The code
@@ -7650,6 +7649,9 @@ The ``fp`` argument to '``llvm.framerecover``' must be a frame
 pointer of a call frame that is currently live. The return value of
 '``llvm.frameaddress``' is one way to produce such a value, but most platforms
 also expose the frame pointer through stack unwinding mechanisms.
+
+The ``idx`` argument to '``llvm.framerecover``' indicates which alloca passed to
+'``llvm.frameescape``' to recover. It is zero-indexed.
 
 Semantics:
 """"""""""

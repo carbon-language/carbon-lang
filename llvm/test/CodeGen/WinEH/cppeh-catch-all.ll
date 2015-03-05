@@ -54,8 +54,6 @@ try.cont:                                         ; preds = %invoke.cont2, %invo
 
 ; CHECK: define internal i8* @_Z4testv.catch(i8*, i8*) {
 ; CHECK: entry:
-; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1)
-; CHECK:   %eh.data = bitcast i8* %eh.alloc to %struct._Z4testv.ehdata*
 ; CHECK:   call void @_Z16handle_exceptionv()
 ; CHECK:   ret i8* blockaddress(@_Z4testv, %try.cont)
 ; CHECK: }

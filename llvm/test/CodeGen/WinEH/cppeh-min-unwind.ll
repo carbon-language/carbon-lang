@@ -18,18 +18,16 @@
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-windows-msvc"
 
-; This structure should be created for the frame allocation.
-; CHECK: %struct._Z4testv.ehdata = type { i32, i8*, %class.SomeClass }
-
 %class.SomeClass = type { [28 x i32] }
 
 ; The function entry should be rewritten like this.
 ; CHECK: define void @_Z4testv() #0 {
 ; CHECK: entry:
-; CHECK:   %frame.alloc = call i8* @llvm.frameallocate(i32 128)
-; CHECK:   %eh.data = bitcast i8* %frame.alloc to %struct._Z4testv.ehdata*
-; CHECK-NOT:  %obj = alloca %class.SomeClass, align 4
-; CHECK:   %obj = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 2
+; CHECK:   %obj = alloca %class.SomeClass, align 4
+; CHECK:   call void @_ZN9SomeClassC1Ev(%class.SomeClass* %obj)
+; CHECK:   call void (...)* @llvm.frameescape(%class.SomeClass* %obj)
+; CHECK:   invoke void @_Z9may_throwv()
+; CHECK:           to label %invoke.cont unwind label %lpad
 
 ; Function Attrs: uwtable
 define void @_Z4testv() #0 {
@@ -66,9 +64,8 @@ eh.resume:                                        ; preds = %lpad
 ; This cleanup handler should be outlined.
 ; CHECK: define internal void @_Z4testv.cleanup(i8*, i8*) {
 ; CHECK: entry:
-; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1)
-; CHECK:   %eh.data = bitcast i8* %eh.alloc to %struct._Z4testv.ehdata*
-; CHECK:   %obj = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 2
+; CHECK:   %obj.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 0)
+; CHECK:   %obj = bitcast i8* %obj.i8 to %class.SomeClass*
 ; CHECK:   call void @_ZN9SomeClassD1Ev(%class.SomeClass* %obj)
 ; CHECK:   ret void
 ; CHECK: }

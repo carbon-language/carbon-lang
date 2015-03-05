@@ -36,17 +36,12 @@ using namespace llvm::PatternMatch;
 
 namespace {
 
-struct HandlerAllocas {
-  TinyPtrVector<AllocaInst *> Allocas;
-  int ParentFrameAllocationIndex;
-};
-
 // This map is used to model frame variable usage during outlining, to
 // construct a structure type to hold the frame variables in a frame
 // allocation block, and to remap the frame variable allocas (including
 // spill locations as needed) to GEPs that get the variable from the
 // frame allocation structure.
-typedef MapVector<Value *, HandlerAllocas> FrameVarInfoMap;
+typedef MapVector<Value *, TinyPtrVector<AllocaInst *>> FrameVarInfoMap;
 
 class WinEHPrepare : public FunctionPass {
   std::unique_ptr<FunctionPass> DwarfPrepare;
@@ -73,7 +68,7 @@ private:
                             SmallVectorImpl<LandingPadInst *> &LPads);
   bool outlineHandler(HandlerType CatchOrCleanup, Function *SrcFn,
                       Constant *SelectorType, LandingPadInst *LPad,
-                      CallInst *&EHAlloc, FrameVarInfoMap &VarInfo);
+                      FrameVarInfoMap &VarInfo);
 };
 
 class WinEHFrameVariableMaterializer : public ValueMaterializer {
@@ -236,7 +231,6 @@ bool WinEHPrepare::prepareCPPEHHandlers(
   // outlined catch and cleanup handlers.  They will be populated as the
   // handlers are outlined.
   FrameVarInfoMap FrameVarInfo;
-  SmallVector<CallInst *, 4> HandlerAllocs;
 
   bool HandlersOutlined = false;
 
@@ -263,15 +257,10 @@ bool WinEHPrepare::prepareCPPEHHandlers(
       if (LPad->isCatch(Idx)) {
         // Create a new instance of the handler data structure in the
         // HandlerData vector.
-        CallInst *EHAlloc = nullptr;
         bool Outlined = outlineHandler(Catch, &F, LPad->getClause(Idx), LPad,
-                                       EHAlloc, FrameVarInfo);
+                                       FrameVarInfo);
         if (Outlined) {
           HandlersOutlined = true;
-          // These values must be resolved after all handlers have been
-          // outlined.
-          if (EHAlloc)
-            HandlerAllocs.push_back(EHAlloc);
         }
       } // End if (isCatch)
     }   // End for each clause
@@ -283,14 +272,10 @@ bool WinEHPrepare::prepareCPPEHHandlers(
     //        multiple landing pads.  Those cases will be supported later
     //        when landing pad block analysis is added.
     if (LPad->isCleanup()) {
-      CallInst *EHAlloc = nullptr;
       bool Outlined =
-          outlineHandler(Cleanup, &F, nullptr, LPad, EHAlloc, FrameVarInfo);
+          outlineHandler(Cleanup, &F, nullptr, LPad, FrameVarInfo);
       if (Outlined) {
         HandlersOutlined = true;
-        // This value must be resolved after all handlers have been outlined.
-        if (EHAlloc)
-          HandlerAllocs.push_back(EHAlloc);
       }
     }
   } // End for each landingpad
@@ -306,103 +291,27 @@ bool WinEHPrepare::prepareCPPEHHandlers(
   //        that looks for allocas with no uses in the parent function.
   //        That will only happen after the pruning is implemented.
 
-  // Remap the frame variables.
-  SmallVector<Type *, 2> StructTys;
-  StructTys.push_back(Type::getInt32Ty(F.getContext()));   // EH state
-  StructTys.push_back(Type::getInt8PtrTy(F.getContext())); // EH object
-
-  // Start the index at two since we always have the above fields at 0 and 1.
-  int Idx = 2;
-
-  // FIXME: Sort the FrameVarInfo vector by the ParentAlloca size and alignment
-  //        and add padding as necessary to provide the proper alignment.
-
-  // Map the alloca instructions to the corresponding index in the
-  // frame allocation structure.  If any alloca is used only in a single
-  // handler and is not used in the parent frame after outlining, it will
-  // be assigned an index of -1, meaning the handler can keep its
-  // "temporary" alloca and the original alloca can be erased from the
-  // parent function.  If we later encounter this alloca in a second
-  // handler, we will assign it a place in the frame allocation structure
-  // at that time.  Since the instruction replacement doesn't happen until
-  // all the entries in the HandlerData have been processed this isn't a
-  // problem.
-  for (auto &VarInfoEntry : FrameVarInfo) {
-    Value *ParentVal = VarInfoEntry.first;
-    HandlerAllocas &AllocaInfo = VarInfoEntry.second;
-
-    if (auto *ParentAlloca = dyn_cast<AllocaInst>(ParentVal)) {
-      // If the instruction still has uses in the parent function or if it is
-      // referenced by more than one handler, add it to the frame allocation
-      // structure.
-      if (ParentAlloca->getNumUses() != 0 || AllocaInfo.Allocas.size() > 1) {
-        Type *VarTy = ParentAlloca->getAllocatedType();
-        StructTys.push_back(VarTy);
-        AllocaInfo.ParentFrameAllocationIndex = Idx++;
-      } else {
-        // If the variable is not used in the parent frame and it is only used
-        // in one handler, the alloca can be removed from the parent frame
-        // and the handler will keep its "temporary" alloca to define the value.
-        // An element index of -1 is used to indicate this condition.
-        AllocaInfo.ParentFrameAllocationIndex = -1;
-      }
-    } else {
-      // FIXME: Sink non-alloca values into the handler if they have no other
-      //        uses in the parent function after outlining and are only used in
-      //        one handler.
-      Type *VarTy = ParentVal->getType();
-      StructTys.push_back(VarTy);
-      AllocaInfo.ParentFrameAllocationIndex = Idx++;
-    }
-  }
-
-  // Having filled the StructTys vector and assigned an index to each element,
-  // we can now create the structure.
-  StructType *EHDataStructTy = StructType::create(
-      F.getContext(), StructTys, "struct." + F.getName().str() + ".ehdata");
-  IRBuilder<> Builder(F.getParent()->getContext());
-
-  // Create a frame allocation.
   Module *M = F.getParent();
   LLVMContext &Context = M->getContext();
   BasicBlock *Entry = &F.getEntryBlock();
+  IRBuilder<> Builder(F.getParent()->getContext());
   Builder.SetInsertPoint(Entry->getFirstInsertionPt());
-  Function *FrameAllocFn =
-      Intrinsic::getDeclaration(M, Intrinsic::frameallocate);
-  uint64_t EHAllocSize = M->getDataLayout().getTypeAllocSize(EHDataStructTy);
-  Value *FrameAllocArgs[] = {
-      ConstantInt::get(Type::getInt32Ty(Context), EHAllocSize)};
-  CallInst *FrameAlloc =
-      Builder.CreateCall(FrameAllocFn, FrameAllocArgs, "frame.alloc");
 
-  Value *FrameEHData = Builder.CreateBitCast(
-      FrameAlloc, EHDataStructTy->getPointerTo(), "eh.data");
-
-  // Now visit each handler that is using the structure and bitcast its EHAlloc
-  // value to be a pointer to the frame alloc structure.
-  DenseMap<Function *, Value *> EHDataMap;
-  for (CallInst *EHAlloc : HandlerAllocs) {
-    // The EHAlloc has no uses at this time, so we need to just insert the
-    // cast before the next instruction. There is always a next instruction.
-    BasicBlock::iterator II = EHAlloc;
-    ++II;
-    Builder.SetInsertPoint(cast<Instruction>(II));
-    Value *EHData = Builder.CreateBitCast(
-        EHAlloc, EHDataStructTy->getPointerTo(), "eh.data");
-    EHDataMap[EHAlloc->getParent()->getParent()] = EHData;
-  }
+  Function *FrameEscapeFn =
+      Intrinsic::getDeclaration(M, Intrinsic::frameescape);
+  Function *RecoverFrameFn =
+      Intrinsic::getDeclaration(M, Intrinsic::framerecover);
+  Type *Int8PtrType = Type::getInt8PtrTy(Context);
+  Type *Int32Type = Type::getInt32Ty(Context);
 
   // Finally, replace all of the temporary allocas for frame variables used in
-  // the outlined handlers and the original frame allocas with GEP instructions
-  // that get the equivalent pointer from the frame allocation struct.
-  Instruction *FrameEHDataInst = cast<Instruction>(FrameEHData);
-  BasicBlock::iterator II = FrameEHDataInst;
-  ++II;
+  // the outlined handlers with calls to llvm.framerecover.
+  BasicBlock::iterator II = Entry->getFirstInsertionPt();
   Instruction *AllocaInsertPt = II;
+  SmallVector<Value *, 8> AllocasToEscape;
   for (auto &VarInfoEntry : FrameVarInfo) {
     Value *ParentVal = VarInfoEntry.first;
-    HandlerAllocas &AllocaInfo = VarInfoEntry.second;
-    int Idx = AllocaInfo.ParentFrameAllocationIndex;
+    TinyPtrVector<AllocaInst *> &Allocas = VarInfoEntry.second;
 
     // If the mapped value isn't already an alloca, we need to spill it if it
     // is a computed value or copy it if it is an argument.
@@ -430,48 +339,51 @@ bool WinEHPrepare::prepareCPPEHHandlers(
       }
     }
 
-    // If we have an index of -1 for this instruction, it means it isn't used
-    // outside of this handler.  In that case, we just keep the "temporary"
-    // alloca in the handler and erase the original alloca from the parent.
-    if (Idx == -1) {
+    // If the parent alloca is no longer used and only one of the handlers used
+    // it, erase the parent and leave the copy in the outlined handler.
+    if (ParentAlloca->getNumUses() == 0 && Allocas.size() == 1) {
       ParentAlloca->eraseFromParent();
-    } else {
-      // Otherwise, we replace the parent alloca and all outlined allocas
-      // which map to it with GEP instructions.
+      continue;
+    }
 
-      // First replace the original alloca.
-      Builder.SetInsertPoint(ParentAlloca);
-      Builder.SetCurrentDebugLocation(ParentAlloca->getDebugLoc());
-      Value *ElementPtr =
-          Builder.CreateConstInBoundsGEP2_32(FrameEHData, 0, Idx);
-      ParentAlloca->replaceAllUsesWith(ElementPtr);
-      ParentAlloca->removeFromParent();
-      ElementPtr->takeName(ParentAlloca);
-      if (ParentAlloca == AllocaInsertPt)
-        AllocaInsertPt = dyn_cast<Instruction>(ElementPtr);
-      delete ParentAlloca;
+    // Add this alloca to the list of things to escape.
+    AllocasToEscape.push_back(ParentAlloca);
 
-      // Next replace all outlined allocas that are mapped to it.
-      for (AllocaInst *TempAlloca : AllocaInfo.Allocas) {
-        Value *EHData = EHDataMap[TempAlloca->getParent()->getParent()];
-        // FIXME: Sink this GEP into the blocks where it is used.
-        Builder.SetInsertPoint(TempAlloca);
-        Builder.SetCurrentDebugLocation(TempAlloca->getDebugLoc());
-        ElementPtr = Builder.CreateConstInBoundsGEP2_32(EHData, 0, Idx);
-        TempAlloca->replaceAllUsesWith(ElementPtr);
-        TempAlloca->removeFromParent();
-        ElementPtr->takeName(TempAlloca);
-        delete TempAlloca;
+    // Next replace all outlined allocas that are mapped to it.
+    for (AllocaInst *TempAlloca : Allocas) {
+      Function *HandlerFn = TempAlloca->getParent()->getParent();
+      // FIXME: Sink this GEP into the blocks where it is used.
+      Builder.SetInsertPoint(TempAlloca);
+      Builder.SetCurrentDebugLocation(TempAlloca->getDebugLoc());
+      Value *RecoverArgs[] = {
+          Builder.CreateBitCast(&F, Int8PtrType, ""),
+          &(HandlerFn->getArgumentList().back()),
+          llvm::ConstantInt::get(Int32Type, AllocasToEscape.size() - 1)};
+      Value *RecoveredAlloca =
+          Builder.CreateCall(RecoverFrameFn, RecoverArgs);
+      // Add a pointer bitcast if the alloca wasn't an i8.
+      if (RecoveredAlloca->getType() != TempAlloca->getType()) {
+        RecoveredAlloca->setName(Twine(TempAlloca->getName()) + ".i8");
+        RecoveredAlloca =
+            Builder.CreateBitCast(RecoveredAlloca, TempAlloca->getType());
       }
-    } // end else of if (Idx == -1)
+      TempAlloca->replaceAllUsesWith(RecoveredAlloca);
+      TempAlloca->removeFromParent();
+      RecoveredAlloca->takeName(TempAlloca);
+      delete TempAlloca;
+    }
   }   // End for each FrameVarInfo entry.
+
+  // Insert 'call void (...)* @llvm.frameescape(...)' at the end of the entry
+  // block.
+  Builder.SetInsertPoint(&F.getEntryBlock().back());
+  Builder.CreateCall(FrameEscapeFn, AllocasToEscape);
 
   return HandlersOutlined;
 }
 
 bool WinEHPrepare::outlineHandler(HandlerType CatchOrCleanup, Function *SrcFn,
                                   Constant *SelectorType, LandingPadInst *LPad,
-                                  CallInst *&EHAlloc,
                                   FrameVarInfoMap &VarInfo) {
   Module *M = SrcFn->getParent();
   LLVMContext &Context = M->getContext();
@@ -499,23 +411,6 @@ bool WinEHPrepare::outlineHandler(HandlerType CatchOrCleanup, Function *SrcFn,
   Handler->getBasicBlockList().push_front(Entry);
   Builder.SetInsertPoint(Entry);
   Builder.SetCurrentDebugLocation(LPad->getDebugLoc());
-
-  // The outlined handler will be called with the parent's frame pointer as
-  // its second argument. To enable the handler to access variables from
-  // the parent frame, we use that pointer to get locate a special block
-  // of memory that was allocated using llvm.eh.allocateframe for this
-  // purpose.  During the outlining process we will determine which frame
-  // variables are used in handlers and create a structure that maps these
-  // variables into the frame allocation block.
-  //
-  // The frame allocation block also contains an exception state variable
-  // used by the runtime and a pointer to the exception object pointer
-  // which will be filled in by the runtime for use in the handler.
-  Function *RecoverFrameFn =
-      Intrinsic::getDeclaration(M, Intrinsic::framerecover);
-  Value *RecoverArgs[] = {Builder.CreateBitCast(SrcFn, Int8PtrType, ""),
-                          &(Handler->getArgumentList().back())};
-  EHAlloc = Builder.CreateCall(RecoverFrameFn, RecoverArgs, "eh.alloc");
 
   std::unique_ptr<WinEHCloningDirectorBase> Director;
 
@@ -765,7 +660,7 @@ Value *WinEHFrameVariableMaterializer::materializeValueFor(Value *V) {
   if (auto *AV = dyn_cast<AllocaInst>(V)) {
     AllocaInst *NewAlloca = dyn_cast<AllocaInst>(AV->clone());
     Builder.Insert(NewAlloca, AV->getName());
-    FrameVarInfo[AV].Allocas.push_back(NewAlloca);
+    FrameVarInfo[AV].push_back(NewAlloca);
     return NewAlloca;
   }
 
@@ -776,7 +671,7 @@ Value *WinEHFrameVariableMaterializer::materializeValueFor(Value *V) {
   if (isa<Instruction>(V) || isa<Argument>(V)) {
     AllocaInst *NewAlloca =
         Builder.CreateAlloca(V->getType(), nullptr, "eh.temp.alloca");
-    FrameVarInfo[V].Allocas.push_back(NewAlloca);
+    FrameVarInfo[V].push_back(NewAlloca);
     LoadInst *NewLoad = Builder.CreateLoad(NewAlloca, V->getName() + ".reload");
     return NewLoad;
   }

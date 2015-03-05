@@ -5618,45 +5618,47 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::instrprof_increment:
     llvm_unreachable("instrprof failed to lower an increment");
 
-  case Intrinsic::frameallocate: {
+  case Intrinsic::frameescape: {
     MachineFunction &MF = DAG.getMachineFunction();
     const TargetInstrInfo *TII = DAG.getSubtarget().getInstrInfo();
 
-    // Do the allocation and map it as a normal value.
-    // FIXME: Maybe we should add this to the alloca map so that we don't have
-    // to register allocate it?
-    uint64_t Size = cast<ConstantInt>(I.getArgOperand(0))->getZExtValue();
-    int Alloc = MF.getFrameInfo()->CreateFrameAllocation(Size);
-    MVT PtrVT = TLI.getPointerTy(0);
-    SDValue FIVal = DAG.getFrameIndex(Alloc, PtrVT);
-    setValue(&I, FIVal);
-
-    // Directly emit a FRAME_ALLOC machine instr. Label assignment emission is
-    // the same on all targets.
-    MCSymbol *FrameAllocSym =
-        MF.getMMI().getContext().getOrCreateFrameAllocSymbol(MF.getName());
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, dl,
-            TII->get(TargetOpcode::FRAME_ALLOC))
-        .addSym(FrameAllocSym)
-        .addFrameIndex(Alloc);
+    // Directly emit some FRAME_ALLOC machine instrs. Label assignment emission
+    // is the same on all targets.
+    for (unsigned Idx = 0, E = I.getNumArgOperands(); Idx < E; ++Idx) {
+      AllocaInst *Slot =
+          cast<AllocaInst>(I.getArgOperand(Idx)->stripPointerCasts());
+      assert(FuncInfo.StaticAllocaMap.count(Slot) &&
+             "can only escape static allocas");
+      int FI = FuncInfo.StaticAllocaMap[Slot];
+      MCSymbol *FrameAllocSym =
+          MF.getMMI().getContext().getOrCreateFrameAllocSymbol(MF.getName(),
+                                                               Idx);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, dl,
+              TII->get(TargetOpcode::FRAME_ALLOC))
+          .addSym(FrameAllocSym)
+          .addFrameIndex(FI);
+    }
 
     return nullptr;
   }
 
   case Intrinsic::framerecover: {
-    // i8* @llvm.framerecover(i8* %fn, i8* %fp)
+    // i8* @llvm.framerecover(i8* %fn, i8* %fp, i32 %idx)
     MachineFunction &MF = DAG.getMachineFunction();
     MVT PtrVT = TLI.getPointerTy(0);
 
     // Get the symbol that defines the frame offset.
-    Function *Fn = cast<Function>(I.getArgOperand(0)->stripPointerCasts());
+    auto *Fn = cast<Function>(I.getArgOperand(0)->stripPointerCasts());
+    auto *Idx = cast<ConstantInt>(I.getArgOperand(2));
+    unsigned IdxVal = unsigned(Idx->getLimitedValue(INT_MAX));
     MCSymbol *FrameAllocSym =
-        MF.getMMI().getContext().getOrCreateFrameAllocSymbol(Fn->getName());
+        MF.getMMI().getContext().getOrCreateFrameAllocSymbol(Fn->getName(),
+                                                             IdxVal);
 
     // Create a TargetExternalSymbol for the label to avoid any target lowering
     // that would make this PC relative.
     StringRef Name = FrameAllocSym->getName();
-    assert(Name.size() == strlen(Name.data()) && "not null terminated");
+    assert(Name.data()[Name.size()] == '\0' && "not null terminated");
     SDValue OffsetSym = DAG.getTargetExternalSymbol(Name.data(), PtrVT);
     SDValue OffsetVal =
         DAG.getNode(ISD::FRAME_ALLOC_RECOVER, sdl, PtrVT, OffsetSym);

@@ -18,20 +18,17 @@
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-windows-msvc"
 
-; This is the structure that will get created for the frame allocation.
-; CHECK: %struct._Z4testv.ehdata = type { i32, i8*, i32 }
-
 @_ZTIi = external constant i8*
 
 ; The function entry will be rewritten like this.
 ; CHECK: define void @_Z4testv() #0 {
 ; CHECK: entry:
-; CHECK:   %frame.alloc = call i8* @llvm.frameallocate(i32 24)
-; CHECK:   %eh.data = bitcast i8* %frame.alloc to %struct._Z4testv.ehdata*
 ; CHECK:   %exn.slot = alloca i8*
 ; CHECK:   %ehselector.slot = alloca i32
-; CHECK-NOT:  %i = alloca i32, align 4
-; CHECK:  %i = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 2
+; CHECK:   %i = alloca i32, align 4
+; CHECK:   call void (...)* @llvm.frameescape(i32* %i)
+; CHECK:   invoke void @_Z9may_throwv()
+; CHECK:           to label %invoke.cont unwind label %lpad
 
 ; Function Attrs: uwtable
 define void @_Z4testv() #0 {
@@ -85,9 +82,8 @@ eh.resume:                                        ; preds = %catch.dispatch
 
 ; CHECK: define internal i8* @_Z4testv.catch(i8*, i8*) {
 ; CHECK: entry:
-; CHECK:   %eh.alloc = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1)
-; CHECK:   %eh.data = bitcast i8* %eh.alloc to %struct._Z4testv.ehdata*
-; CHECK:   %i = getelementptr inbounds %struct._Z4testv.ehdata, %struct._Z4testv.ehdata* %eh.data, i32 0, i32 2
+; CHECK:   %i.i81 = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 0)
+; CHECK:   %i = bitcast i8* %i.i81 to i32*
 ; CHECK:   %tmp7 = load i32, i32* %i, align 4
 ; CHECK:   call void @_Z10handle_inti(i32 %tmp7)
 ; CHECK:   ret i8* blockaddress(@_Z4testv, %try.cont)

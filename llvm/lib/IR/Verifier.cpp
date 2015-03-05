@@ -198,14 +198,18 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
   /// personality function.
   const Value *PersonalityFn;
 
-  /// \brief Whether we've seen a call to @llvm.frameallocate in this function
+  /// \brief Whether we've seen a call to @llvm.frameescape in this function
   /// already.
-  bool SawFrameAllocate;
+  bool SawFrameEscape;
+
+  /// Stores the count of how many objects were passed to llvm.frameescape for a
+  /// given function and the largest index passed to llvm.framerecover.
+  DenseMap<Function *, std::pair<unsigned, unsigned>> FrameEscapeInfo;
 
 public:
   explicit Verifier(raw_ostream &OS = dbgs())
       : VerifierSupport(OS), Context(nullptr), PersonalityFn(nullptr),
-        SawFrameAllocate(false) {}
+        SawFrameEscape(false) {}
 
   bool verify(const Function &F) {
     M = F.getParent();
@@ -240,7 +244,7 @@ public:
     visit(const_cast<Function &>(F));
     InstsInThisBlock.clear();
     PersonalityFn = nullptr;
-    SawFrameAllocate = false;
+    SawFrameEscape = false;
 
     return !Broken;
   }
@@ -258,6 +262,10 @@ public:
       if (I->isDeclaration())
         visitFunction(*I);
     }
+
+    // Now that we've visited every function, verify that we never asked to
+    // recover a frame index that wasn't escaped.
+    verifyFrameRecoverIndices();
 
     for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I)
@@ -373,6 +381,7 @@ private:
 
   void VerifyConstantExprBitcastType(const ConstantExpr *CE);
   void VerifyStatepoint(ImmutableCallSite CS);
+  void verifyFrameRecoverIndices();
 };
 class DebugInfoVerifier : public VerifierSupport {
 public:
@@ -1264,6 +1273,20 @@ void Verifier::VerifyStatepoint(ImmutableCallSite CS) {
   // out to be problematic since optimizations run after safepoint insertion
   // can recognize equality properties that the insertion logic doesn't know
   // about.  See example statepoint.ll in the verifier subdirectory
+}
+
+void Verifier::verifyFrameRecoverIndices() {
+  llvm::errs() << "verifyFrameRecoverIndices\n";
+  for (auto &Counts : FrameEscapeInfo) {
+    Function *F = Counts.first;
+    unsigned EscapedObjectCount = Counts.second.first;
+    unsigned MaxRecoveredIndex = Counts.second.second;
+    Assert1(MaxRecoveredIndex <= EscapedObjectCount,
+            "all indices passed to llvm.framerecover must be less than the "
+            "number of arguments passed ot llvm.frameescape in the parent "
+            "function",
+            F);
+  }
 }
 
 // visitFunction - Verify that a function is ok.
@@ -2859,15 +2882,19 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
             "llvm.invariant.end parameter #2 must be a constant integer", &CI);
     break;
 
-  case Intrinsic::frameallocate: {
+  case Intrinsic::frameescape: {
     BasicBlock *BB = CI.getParent();
     Assert1(BB == &BB->getParent()->front(),
-            "llvm.frameallocate used outside of entry block", &CI);
-    Assert1(!SawFrameAllocate,
-            "multiple calls to llvm.frameallocate in one function", &CI);
-    SawFrameAllocate = true;
-    Assert1(isa<ConstantInt>(CI.getArgOperand(0)),
-            "llvm.frameallocate argument must be constant integer size", &CI);
+            "llvm.frameescape used outside of entry block", &CI);
+    Assert1(!SawFrameEscape,
+            "multiple calls to llvm.frameescape in one function", &CI);
+    for (Value *Arg : CI.arg_operands()) {
+      auto *AI = dyn_cast<AllocaInst>(Arg->stripPointerCasts());
+      Assert1(AI && AI->isStaticAlloca(),
+              "llvm.frameescape only accepts static allocas", &CI);
+    }
+    FrameEscapeInfo[BB->getParent()].first = CI.getNumArgOperands();
+    SawFrameEscape = true;
     break;
   }
   case Intrinsic::framerecover: {
@@ -2875,6 +2902,12 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     Function *Fn = dyn_cast<Function>(FnArg);
     Assert1(Fn && !Fn->isDeclaration(), "llvm.framerecover first "
             "argument must be function defined in this module", &CI);
+    auto *IdxArg = dyn_cast<ConstantInt>(CI.getArgOperand(2));
+    Assert1(IdxArg, "idx argument of llvm.framerecover must be a constant int",
+            &CI);
+    auto &Entry = FrameEscapeInfo[Fn];
+    Entry.second = unsigned(
+        std::max(uint64_t(Entry.second), IdxArg->getLimitedValue(~0U) + 1));
     break;
   }
 
