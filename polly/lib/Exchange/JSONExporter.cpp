@@ -178,11 +178,11 @@ void JSONImporter::printScop(raw_ostream &OS, Scop &S) const {
     OS << "New access function '" << *I << "'detected in JSCOP file\n";
 }
 
-typedef DependenceInfo::StatementToIslMapTy StatementToIslMapTy;
+typedef Dependences::StatementToIslMapTy StatementToIslMapTy;
 
 bool JSONImporter::runOnScop(Scop &S) {
   Region &R = S.getRegion();
-  DependenceInfo *D = &getAnalysis<DependenceInfo>();
+  const Dependences &D = getAnalysis<DependenceInfo>().getDependences();
   const DataLayout &DL = getAnalysis<DataLayoutPass>().getDataLayout();
 
   std::string FileName = ImportDir + "/" + getFileName(S);
@@ -239,7 +239,7 @@ bool JSONImporter::runOnScop(Scop &S) {
     index++;
   }
 
-  if (!D->isValidScattering(&NewScattering)) {
+  if (!D.isValidScattering(S, &NewScattering)) {
     errs() << "JScop file contains a scattering that changes the "
            << "dependences. Use -disable-polly-legality to continue anyways\n";
     for (StatementToIslMapTy::iterator SI = NewScattering.begin(),

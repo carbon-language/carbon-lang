@@ -25,7 +25,6 @@
 
 #include "polly/ScopPass.h"
 
-#include <map>
 #include "isl/ctx.h"
 
 struct isl_pw_aff;
@@ -43,9 +42,18 @@ class Scop;
 class ScopStmt;
 class MemoryAccess;
 
-class DependenceInfo : public ScopPass {
-public:
-  static char ID;
+/// @brief The accumulated dependence information for a SCoP.
+///
+/// The dependences struct holds all dependence information we collect and
+/// compute for one SCoP. It also offers an interface that allows users to
+/// query only specific parts.
+struct Dependences {
+
+  /// @brief Map type for reduction dependences.
+  using ReductionDependencesMapTy = DenseMap<MemoryAccess *, isl_map *>;
+
+  /// @brief Map type to associate statements with schedules.
+  using StatementToIslMapTy = DenseMap<ScopStmt *, isl_map *>;
 
   /// @brief The type of the dependences.
   ///
@@ -75,17 +83,25 @@ public:
     TYPE_TC_RED = 1 << 4,
   };
 
-  typedef std::map<ScopStmt *, isl_map *> StatementToIslMapTy;
-
-  DependenceInfo();
-
-  /// @brief Check if a new scattering is valid.
+  /// @brief Get the dependences of type @p Kinds.
   ///
-  /// @param NewScattering The new scatterings
+  /// @param Kinds This integer defines the different kinds of dependences
+  ///              that will be returned. To return more than one kind, the
+  ///              different kinds are 'ored' together.
+  __isl_give isl_union_map *getDependences(int Kinds) const;
+
+  /// @brief Report if valid dependences are available.
+  bool hasValidDependences() const;
+
+  /// @brief Return the reduction dependences caused by @p MA.
   ///
-  /// @return bool True if the new scattering is valid, false it it reverses
-  ///              dependences.
-  bool isValidScattering(StatementToIslMapTy *NewScatterings);
+  /// @return The reduction dependences caused by @p MA or nullptr if none.
+  __isl_give isl_map *getReductionDependences(MemoryAccess *MA) const;
+
+  /// @brief Return all reduction dependences.
+  const ReductionDependencesMapTy &getReductionDependences() const {
+    return ReductionDependences;
+  }
 
   /// @brief Check if a partial schedule is parallel wrt to @p Deps.
   ///
@@ -99,66 +115,90 @@ public:
   ///         @p Schedule is valid according to the dependences @p Deps.
   bool isParallel(__isl_keep isl_union_map *Schedule,
                   __isl_take isl_union_map *Deps,
-                  __isl_give isl_pw_aff **MinDistancePtr = nullptr);
+                  __isl_give isl_pw_aff **MinDistancePtr = nullptr) const;
 
-  /// @brief Get the dependences in this Scop.
+  /// @brief Check if a new scattering is valid.
   ///
-  /// @param Kinds This integer defines the different kinds of dependences
-  ///              that will be returned. To return more than one kind, the
-  ///              different kinds are 'ored' together.
-  isl_union_map *getDependences(int Kinds);
-
-  /// @brief Report if valid dependences are available.
-  bool hasValidDependences();
-
-  /// @brief Return the reduction dependences caused by @p MA.
+  /// @param S             The current SCoP.
+  /// @param NewScattering The new scatterings
   ///
-  /// @return The reduction dependences caused by @p MA or nullptr if None.
-  __isl_give isl_map *getReductionDependences(MemoryAccess *MA);
+  /// @return bool True if the new scattering is valid, false it it reverses
+  ///              dependences.
+  bool isValidScattering(Scop &S, StatementToIslMapTy *NewScatterings) const;
 
-  /// @brief Return the reduction dependences mapped by the causing @p MA.
-  const DenseMap<MemoryAccess *, isl_map *> &getReductionDependences() const {
-    return ReductionDependences;
-  }
+  /// @brief Print the dependence information stored.
+  void print(llvm::raw_ostream &OS) const;
+
+  /// @brief Dump the dependence information stored to the dbgs stream.
+  void dump() const;
+
+  /// @brief Allow the DependenceInfo access to private members and methods.
+  ///
+  /// To restict access to the internal state only the DependenceInfo class
+  /// is able to call or modify a dependences struct.
+  friend class DependenceInfo;
+
+private:
+  /// @brief Create an empty dependences struct.
+  Dependences()
+      : RAW(nullptr), WAR(nullptr), WAW(nullptr), RED(nullptr),
+        TC_RED(nullptr) {}
+
+  /// @brief Destructor that will free internal objects.
+  ~Dependences() { releaseMemory(); }
+
+  /// @brief Calculate and add at the privatization dependences.
+  void addPrivatizationDependences();
+
+  /// @brief Calculate the dependences for a certain SCoP @p S.
+  void calculateDependences(Scop &S);
+
+  /// @brief Set the reduction dependences for @p MA to @p Deps.
+  void setReductionDependences(MemoryAccess *MA, __isl_take isl_map *Deps);
+
+  /// @brief Free the objects associated with this dependences struct.
+  ///
+  /// The dependences struct will again be "empty" afterwards.
+  void releaseMemory();
+
+  /// @brief The different basic kinds of dependences we calculate.
+  isl_union_map *RAW;
+  isl_union_map *WAR;
+  isl_union_map *WAW;
+
+  /// @brief The special reduction dependences.
+  isl_union_map *RED;
+
+  /// @brief The (reverse) transitive closure of reduction dependences.
+  isl_union_map *TC_RED;
+
+  /// @brief Mapping from memory accesses to their reduction dependences.
+  ReductionDependencesMapTy ReductionDependences;
+};
+
+class DependenceInfo : public ScopPass {
+public:
+  static char ID;
+
+  /// @brief Construct a new DependenceInfo pass.
+  DependenceInfo() : ScopPass(ID) {}
+
+  /// @brief Return the dependence information for the current SCoP.
+  const Dependences &getDependences() { return D; }
 
   /// @brief Recompute dependences from schedule and memory accesses.
   void recomputeDependences();
 
   bool runOnScop(Scop &S) override;
-  void printScop(raw_ostream &OS, Scop &S) const override;
-  void releaseMemory() override;
+  void printScop(raw_ostream &OS, Scop &) const override { D.print(OS); }
+  void releaseMemory() override { D.releaseMemory(); }
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 
 private:
   Scop *S;
 
-  /// @brief The different kinds of dependences we calculate.
-  isl_union_map *RAW;
-  isl_union_map *WAR;
-  isl_union_map *WAW;
-
-  /// @brief The map of reduction dependences
-  isl_union_map *RED = nullptr;
-
-  /// @brief The (reverse) transitive closure of reduction dependences
-  isl_union_map *TC_RED = nullptr;
-
-  /// @brief Map from memory accesses to their reduction dependences.
-  DenseMap<MemoryAccess *, isl_map *> ReductionDependences;
-
-  /// @brief Collect information about the SCoP.
-  void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
-                   isl_union_map **MayWrite, isl_union_map **AccessSchedule,
-                   isl_union_map **StmtSchedule);
-
-  /// @brief Calculate and add at the privatization dependences
-  void addPrivatizationDependences();
-
-  /// @brief Calculate the dependences for a certain SCoP.
-  void calculateDependences(Scop &S);
-
-  /// @brief Set the reduction dependences for @p MA to @p Deps.
-  void setReductionDependences(MemoryAccess *MA, __isl_take isl_map *Deps);
+  /// @brief Dependences struct for the current SCoP.
+  Dependences D;
 };
 
 } // End polly namespace.

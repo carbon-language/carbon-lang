@@ -112,14 +112,15 @@ isl_union_set *DeadCodeElim::getLiveOut(Scop &S) {
 /// combine a certain number of precise steps with one approximating step that
 /// simplifies the life set with an affine hull.
 bool DeadCodeElim::eliminateDeadCode(Scop &S, int PreciseSteps) {
-  DependenceInfo *D = &getAnalysis<DependenceInfo>();
+  DependenceInfo &DI = getAnalysis<DependenceInfo>();
+  const Dependences &D = DI.getDependences();
 
-  if (!D->hasValidDependences())
+  if (!D.hasValidDependences())
     return false;
 
   isl_union_set *Live = getLiveOut(S);
   isl_union_map *Dep =
-      D->getDependences(DependenceInfo::TYPE_RAW | DependenceInfo::TYPE_RED);
+      D.getDependences(Dependences::TYPE_RAW | Dependences::TYPE_RED);
   Dep = isl_union_map_reverse(Dep);
 
   if (PreciseSteps == -1)
@@ -156,7 +157,7 @@ bool DeadCodeElim::eliminateDeadCode(Scop &S, int PreciseSteps) {
   // FIXME: We can probably avoid the recomputation of all dependences by
   // updating them explicitly.
   if (Changed)
-    D->recomputeDependences();
+    DI.recomputeDependences();
   return Changed;
 }
 

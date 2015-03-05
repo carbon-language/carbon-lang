@@ -481,29 +481,29 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
     return false;
   }
 
-  DependenceInfo *D = &getAnalysis<DependenceInfo>();
+  const Dependences &D = getAnalysis<DependenceInfo>().getDependences();
 
-  if (!D->hasValidDependences())
+  if (!D.hasValidDependences())
     return false;
 
   isl_schedule_free(LastSchedule);
   LastSchedule = nullptr;
 
   // Build input data.
-  int ValidityKinds = DependenceInfo::TYPE_RAW | DependenceInfo::TYPE_WAR |
-                      DependenceInfo::TYPE_WAW;
+  int ValidityKinds =
+      Dependences::TYPE_RAW | Dependences::TYPE_WAR | Dependences::TYPE_WAW;
   int ProximityKinds;
 
   if (OptimizeDeps == "all")
-    ProximityKinds = DependenceInfo::TYPE_RAW | DependenceInfo::TYPE_WAR |
-                     DependenceInfo::TYPE_WAW;
+    ProximityKinds =
+        Dependences::TYPE_RAW | Dependences::TYPE_WAR | Dependences::TYPE_WAW;
   else if (OptimizeDeps == "raw")
-    ProximityKinds = DependenceInfo::TYPE_RAW;
+    ProximityKinds = Dependences::TYPE_RAW;
   else {
     errs() << "Do not know how to optimize for '" << OptimizeDeps << "'"
            << " Falling back to optimizing all dependences.\n";
-    ProximityKinds = DependenceInfo::TYPE_RAW | DependenceInfo::TYPE_WAR |
-                     DependenceInfo::TYPE_WAW;
+    ProximityKinds =
+        Dependences::TYPE_RAW | Dependences::TYPE_WAR | Dependences::TYPE_WAW;
   }
 
   isl_union_set *Domain = S.getDomains();
@@ -511,8 +511,8 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   if (!Domain)
     return false;
 
-  isl_union_map *Validity = D->getDependences(ValidityKinds);
-  isl_union_map *Proximity = D->getDependences(ProximityKinds);
+  isl_union_map *Validity = D.getDependences(ValidityKinds);
+  isl_union_map *Proximity = D.getDependences(ProximityKinds);
 
   // Simplify the dependences by removing the constraints introduced by the
   // domains. This can speed up the scheduling time significantly, as large

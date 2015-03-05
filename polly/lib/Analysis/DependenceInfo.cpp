@@ -63,13 +63,12 @@ static cl::opt<enum AnalysisType> OptAnalysisType(
     cl::cat(PollyCategory));
 
 //===----------------------------------------------------------------------===//
-DependenceInfo::DependenceInfo() : ScopPass(ID) { RAW = WAR = WAW = nullptr; }
 
-void DependenceInfo::collectInfo(Scop &S, isl_union_map **Read,
-                                 isl_union_map **Write,
-                                 isl_union_map **MayWrite,
-                                 isl_union_map **AccessSchedule,
-                                 isl_union_map **StmtSchedule) {
+/// @brief Collect information about the SCoP @p S.
+static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
+                        isl_union_map **MayWrite,
+                        isl_union_map **AccessSchedule,
+                        isl_union_map **StmtSchedule) {
   isl_space *Space = S.getParamSpace();
   *Read = isl_union_map_empty(isl_space_copy(Space));
   *Write = isl_union_map_empty(isl_space_copy(Space));
@@ -174,7 +173,7 @@ static int fixSetToZero(__isl_take isl_set *Zero, void *user) {
 ///
 /// Note: This function also computes the (reverse) transitive closure of the
 ///       reduction dependences.
-void DependenceInfo::addPrivatizationDependences() {
+void Dependences::addPrivatizationDependences() {
   isl_union_map *PrivRAW, *PrivWAW, *PrivWAR;
 
   // The transitive closure might be over approximated, thus could lead to
@@ -217,7 +216,7 @@ void DependenceInfo::addPrivatizationDependences() {
   isl_union_set_free(Universe);
 }
 
-void DependenceInfo::calculateDependences(Scop &S) {
+void Dependences::calculateDependences(Scop &S) {
   isl_union_map *Read, *Write, *MayWrite, *AccessSchedule, *StmtSchedule,
       *Schedule;
 
@@ -309,7 +308,7 @@ void DependenceInfo::calculateDependences(Scop &S) {
                                             isl_union_map_domain(StmtSchedule));
   DEBUG({
     dbgs() << "Wrapped Dependences:\n";
-    printScop(dbgs(), S);
+    dump();
     dbgs() << "\n";
   });
 
@@ -356,7 +355,7 @@ void DependenceInfo::calculateDependences(Scop &S) {
 
   DEBUG({
     dbgs() << "Final Wrapped Dependences:\n";
-    printScop(dbgs(), S);
+    dump();
     dbgs() << "\n";
   });
 
@@ -404,7 +403,7 @@ void DependenceInfo::calculateDependences(Scop &S) {
 
   DEBUG({
     dbgs() << "Zipped Dependences:\n";
-    printScop(dbgs(), S);
+    dump();
     dbgs() << "\n";
   });
 
@@ -416,7 +415,7 @@ void DependenceInfo::calculateDependences(Scop &S) {
 
   DEBUG({
     dbgs() << "Unwrapped Dependences:\n";
-    printScop(dbgs(), S);
+    dump();
     dbgs() << "\n";
   });
 
@@ -430,23 +429,11 @@ void DependenceInfo::calculateDependences(Scop &S) {
   RED = isl_union_map_coalesce(RED);
   TC_RED = isl_union_map_coalesce(TC_RED);
 
-  DEBUG(printScop(dbgs(), S));
+  DEBUG(dump());
 }
 
-void DependenceInfo::recomputeDependences() {
-  releaseMemory();
-  calculateDependences(*S);
-}
-
-bool DependenceInfo::runOnScop(Scop &ScopVar) {
-  S = &ScopVar;
-  recomputeDependences();
-  return false;
-}
-
-bool DependenceInfo::isValidScattering(StatementToIslMapTy *NewScattering) {
-  Scop &S = *this->S;
-
+bool Dependences::isValidScattering(Scop &S,
+                                    StatementToIslMapTy *NewScattering) const {
   if (LegalityCheckDisabled)
     return true;
 
@@ -502,8 +489,8 @@ bool DependenceInfo::isValidScattering(StatementToIslMapTy *NewScattering) {
 // dimension, then the loop is parallel. The distance is zero in the current
 // dimension if it is a subset of a map with equal values for the current
 // dimension.
-bool DependenceInfo::isParallel(isl_union_map *Schedule, isl_union_map *Deps,
-                                isl_pw_aff **MinDistancePtr) {
+bool Dependences::isParallel(isl_union_map *Schedule, isl_union_map *Deps,
+                             isl_pw_aff **MinDistancePtr) const {
   isl_set *Deltas, *Distance;
   isl_map *ScheduleDeps;
   unsigned Dimension;
@@ -557,7 +544,7 @@ static void printDependencyMap(raw_ostream &OS, __isl_keep isl_union_map *DM) {
     OS << "n/a\n";
 }
 
-void DependenceInfo::printScop(raw_ostream &OS, Scop &) const {
+void Dependences::print(raw_ostream &OS) const {
   OS << "\tRAW dependences:\n\t\t";
   printDependencyMap(OS, RAW);
   OS << "\tWAR dependences:\n\t\t";
@@ -570,7 +557,9 @@ void DependenceInfo::printScop(raw_ostream &OS, Scop &) const {
   printDependencyMap(OS, TC_RED);
 }
 
-void DependenceInfo::releaseMemory() {
+void Dependences::dump() const { print(dbgs()); }
+
+void Dependences::releaseMemory() {
   isl_union_map_free(RAW);
   isl_union_map_free(WAR);
   isl_union_map_free(WAW);
@@ -584,7 +573,7 @@ void DependenceInfo::releaseMemory() {
   ReductionDependences.clear();
 }
 
-isl_union_map *DependenceInfo::getDependences(int Kinds) {
+isl_union_map *Dependences::getDependences(int Kinds) const {
   assert(hasValidDependences() && "No valid dependences available");
   isl_space *Space = isl_union_map_get_space(RAW);
   isl_union_map *Deps = isl_union_map_empty(Space);
@@ -609,18 +598,29 @@ isl_union_map *DependenceInfo::getDependences(int Kinds) {
   return Deps;
 }
 
-bool DependenceInfo::hasValidDependences() {
+bool Dependences::hasValidDependences() const {
   return (RAW != nullptr) && (WAR != nullptr) && (WAW != nullptr);
 }
 
-isl_map *DependenceInfo::getReductionDependences(MemoryAccess *MA) {
-  return isl_map_copy(ReductionDependences[MA]);
+isl_map *Dependences::getReductionDependences(MemoryAccess *MA) const {
+  return isl_map_copy(ReductionDependences.lookup(MA));
 }
 
-void DependenceInfo::setReductionDependences(MemoryAccess *MA, isl_map *D) {
+void Dependences::setReductionDependences(MemoryAccess *MA, isl_map *D) {
   assert(ReductionDependences.count(MA) == 0 &&
          "Reduction dependences set twice!");
   ReductionDependences[MA] = D;
+}
+
+void DependenceInfo::recomputeDependences() {
+  releaseMemory();
+  D.calculateDependences(*S);
+}
+
+bool DependenceInfo::runOnScop(Scop &ScopVar) {
+  S = &ScopVar;
+  recomputeDependences();
+  return false;
 }
 
 void DependenceInfo::getAnalysisUsage(AnalysisUsage &AU) const {

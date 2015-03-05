@@ -73,7 +73,7 @@ static cl::opt<bool> NoEarlyExit(
 namespace polly {
 class IslAst {
 public:
-  IslAst(Scop *Scop, DependenceInfo &D);
+  IslAst(Scop *Scop, const Dependences &D);
 
   ~IslAst();
 
@@ -111,7 +111,7 @@ struct AstBuildUserInfo {
       : Deps(nullptr), InParallelFor(false), LastForNodeId(nullptr) {}
 
   /// @brief The dependence information used for the parallelism check.
-  DependenceInfo *Deps;
+  const Dependences *Deps;
 
   /// @brief Flag to indicate that we are inside a parallel for node.
   bool InParallelFor;
@@ -197,21 +197,20 @@ static isl_printer *cbPrintFor(__isl_take isl_printer *Printer,
 /// we can perform the parallelism check as we are only interested in a zero
 /// (or non-zero) dependence distance on the dimension in question.
 static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
-                                     DependenceInfo *D,
+                                     const Dependences *D,
                                      IslAstUserPayload *NodeInfo) {
   if (!D->hasValidDependences())
     return false;
 
   isl_union_map *Schedule = isl_ast_build_get_schedule(Build);
-  isl_union_map *Deps =
-      D->getDependences(DependenceInfo::TYPE_RAW | DependenceInfo::TYPE_WAW |
-                        DependenceInfo::TYPE_WAR);
+  isl_union_map *Deps = D->getDependences(
+      Dependences::TYPE_RAW | Dependences::TYPE_WAW | Dependences::TYPE_WAR);
 
   if (!D->isParallel(Schedule, Deps, &NodeInfo->MinimalDependenceDistance) &&
       !isl_union_map_free(Schedule))
     return false;
 
-  isl_union_map *RedDeps = D->getDependences(DependenceInfo::TYPE_TC_RED);
+  isl_union_map *RedDeps = D->getDependences(Dependences::TYPE_TC_RED);
   if (!D->isParallel(Schedule, RedDeps))
     NodeInfo->IsReductionParallel = true;
 
@@ -363,7 +362,7 @@ static bool benefitsFromPolly(Scop *Scop, bool PerformParallelTest) {
   return true;
 }
 
-IslAst::IslAst(Scop *Scop, DependenceInfo &D)
+IslAst::IslAst(Scop *Scop, const Dependences &D)
     : S(Scop), Root(nullptr), RunCondition(nullptr) {
 
   bool PerformParallelTest = PollyParallel || DetectParallel ||
@@ -428,7 +427,7 @@ bool IslAstInfo::runOnScop(Scop &Scop) {
 
   S = &Scop;
 
-  DependenceInfo &D = getAnalysis<DependenceInfo>();
+  const Dependences &D = getAnalysis<DependenceInfo>().getDependences();
 
   Ast = new IslAst(&Scop, D);
 
