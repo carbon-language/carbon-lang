@@ -226,12 +226,16 @@ bool Dependence::isScalar(unsigned level) const {
 //===----------------------------------------------------------------------===//
 // FullDependence methods
 
-FullDependence::FullDependence(Instruction *Source, Instruction *Destination,
+FullDependence::FullDependence(Instruction *Source,
+                               Instruction *Destination,
                                bool PossiblyLoopIndependent,
-                               unsigned CommonLevels)
-    : Dependence(Source, Destination), Levels(CommonLevels),
-      LoopIndependent(PossiblyLoopIndependent), Consistent(true),
-      DV(CommonLevels ? new DVEntry[CommonLevels] : nullptr) {}
+                               unsigned CommonLevels) :
+  Dependence(Source, Destination),
+  Levels(CommonLevels),
+  LoopIndependent(PossiblyLoopIndependent) {
+  Consistent = true;
+  DV = CommonLevels ? new DVEntry[CommonLevels] : nullptr;
+}
 
 // The rest are simple getters that hide the implementation.
 
