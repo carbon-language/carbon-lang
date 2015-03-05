@@ -139,7 +139,6 @@ bool SymbolTable::addByName(const Atom &newAtom) {
   const Atom *existing = findByName(name);
   if (existing == nullptr) {
     // Name is not in symbol table yet, add it associate with this atom.
-    _context.notifySymbolTableAdd(&newAtom);
     _nameTable[name] = &newAtom;
     return true;
   }
