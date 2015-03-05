@@ -2,6 +2,7 @@
 
 
 declare void @foo()
+declare void @use(...)
 
 define i64 addrspace(1)* @test1(i64 addrspace(1)* %obj, i64 addrspace(1)* %obj2, i1 %condition) gc "statepoint-example" {
 entry:
@@ -113,11 +114,182 @@ entry:
   ret void
 }
 
-declare i32 @llvm.experimental.gc.statepoint.p0f_isVoidi64f(void (i64)*, i32, i32, ...)
+; Check specifically for the case where the result of a statepoint needs to 
+; be relocated itself
+define void @test4() gc "statepoint-example" {
+; CHECK-LABEL: @test4
+; CHECK: gc.statepoint
+; CHECK: gc.result
+; CHECK: gc.statepoint
+; CHECK: gc.relocate
+; CHECK: @use(i8 addrspace(1)* %res.relocated)
+  %safepoint_token2 = tail call i32 (i8 addrspace(1)* ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_p1i8f(i8 addrspace(1)* ()* undef, i32 0, i32 0, i32 0)
+  %res = call i8 addrspace(1)* @llvm.experimental.gc.result.ptr.p1i8(i32 %safepoint_token2)
+  call i32 (i8 addrspace(1)* ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_p1i8f(i8 addrspace(1)* ()* undef, i32 0, i32 0, i32 0)
+  call void (...)* @use(i8 addrspace(1)* %res)
+  unreachable
+}
 
-declare i32 @llvm.experimental.gc.statepoint.p0f_i32p1i64f(i32 (i64 addrspace(1)*)*, i32, i32, ...)
+
+; Test updating a phi where not all inputs are live to begin with
+define void @test5(i8 addrspace(1)* %arg) gc "statepoint-example" {
+; CHECK-LABEL: test5
+entry:
+  call i32 (i8 addrspace(1)* ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_p1i8f(i8 addrspace(1)* ()* undef, i32 0, i32 0, i32 0)
+  switch i32 undef, label %kill [
+    i32 10, label %merge
+    i32 13, label %merge
+  ]
+
+kill:
+  br label %merge
+
+merge:
+; CHECK: merge:
+; CHECK: %test = phi i8 addrspace(1)
+; CHECK-DAG: [ null, %kill ]
+; CHECK-DAG: [ %arg.relocated, %entry ]
+; CHECK-DAG: [ %arg.relocated, %entry ]
+  %test = phi i8 addrspace(1)* [ null, %kill ], [ %arg, %entry ], [ %arg, %entry ]
+  call void (...)* @use(i8 addrspace(1)* %test)
+  unreachable
+}
+
+
+; Check to make sure we handle values live over an entry statepoint
+define void @test6(i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2, 
+                  i8 addrspace(1)* %arg3) gc "statepoint-example" {
+; CHECK-LABEL: @test6
+entry:
+  br i1 undef, label %gc.safepoint_poll.exit2, label %do_safepoint
+
+do_safepoint:
+; CHECK-LABEL: do_safepoint:
+; CHECK: gc.statepoint
+; CHECK: arg1.relocated = 
+; CHECK: arg2.relocated = 
+; CHECK: arg3.relocated = 
+  call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 3, i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2, i8 addrspace(1)* %arg3)
+  br label %gc.safepoint_poll.exit2
+
+gc.safepoint_poll.exit2:
+; CHECK-LABEL: gc.safepoint_poll.exit2:
+; CHECK: phi i8 addrspace(1)*
+; CHECK-DAG: [ %arg3, %entry ]
+; CHECK-DAG: [ %arg3.relocated, %do_safepoint ]
+; CHECK: phi i8 addrspace(1)*
+; CHECK-DAG: [ %arg2, %entry ]
+; CHECK-DAG: [ %arg2.relocated, %do_safepoint ]
+; CHECK: phi i8 addrspace(1)*
+; CHECK-DAG: [ %arg1, %entry ]
+; CHECK-DAG:  [ %arg1.relocated, %do_safepoint ]
+  call void (...)* @use(i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2, i8 addrspace(1)* %arg3)
+  ret void
+}
+
+; Check relocation in a loop nest where a relocation happens in the outer
+; but not the inner loop
+define void @test_outer_loop(i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2, 
+                  i1 %cmp) gc "statepoint-example" {
+; CHECK-LABEL: @test_outer_loop
+bci_0:
+  br label %outer-loop
+
+outer-loop:
+; CHECK-LABEL: outer-loop:
+; CHECK: phi i8 addrspace(1)* [ %arg2, %bci_0 ], [ %arg2.relocated, %outer-inc ]
+; CHECK: phi i8 addrspace(1)* [ %arg1, %bci_0 ], [ %arg1.relocated, %outer-inc ]
+  br label %inner-loop
+
+inner-loop:
+  br i1 %cmp, label %inner-loop, label %outer-inc
+
+outer-inc:
+; CHECK-LABEL: outer-inc:
+; CHECK: %arg1.relocated
+; CHECK: %arg2.relocated
+  %safepoint_token = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 2, i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2)
+  br label %outer-loop
+}
+
+; Check that both inner and outer loops get phis when relocation is in
+;  inner loop
+define void @test_inner_loop(i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2, 
+                  i1 %cmp) gc "statepoint-example" {
+; CHECK-LABEL: @test_inner_loop
+bci_0:
+  br label %outer-loop
+
+outer-loop:
+; CHECK-LABEL: outer-loop:
+; CHECK: phi i8 addrspace(1)* [ %arg2, %bci_0 ], [ %arg2.relocated, %outer-inc ]
+; CHECK: phi i8 addrspace(1)* [ %arg1, %bci_0 ], [ %arg1.relocated, %outer-inc ]
+  br label %inner-loop
+
+inner-loop:
+; CHECK-LABEL: inner-loop
+; CHECK: phi i8 addrspace(1)* 
+; CHECK-DAG: %outer-loop ]
+; CHECK-DAG: [ %arg2.relocated, %inner-loop ]
+; CHECKL phi i8 addrspace(1)* 
+; CHECK-DAG: %outer-loop ]
+; CHECK-DAG: [ %arg1.relocated, %inner-loop ]
+; CHECK: gc.statepoint
+; CHECK: %arg1.relocated
+; CHECK: %arg2.relocated
+  %safepoint_token = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 2, i8 addrspace(1)* %arg1, i8 addrspace(1)* %arg2)
+  br i1 %cmp, label %inner-loop, label %outer-inc
+
+outer-inc:
+; CHECK-LABEL: outer-inc:
+  br label %outer-loop
+}
+
+
+; This test shows why updating just those uses of the original value being
+; relocated dominated by the inserted relocation is not always sufficient.
+define i64 addrspace(1)* @test7(i64 addrspace(1)* %obj, i64 addrspace(1)* %obj2, i1 %condition) gc "statepoint-example" {
+; CHECK-LABEL: @test7
+entry:
+  br i1 %condition, label %branch2, label %join
+
+branch2:
+  br i1 %condition, label %callbb, label %join2
+
+callbb:
+  %safepoint_token = call i32 (void ()*, i32, i32, ...)* @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()* @foo, i32 0, i32 0, i32 5, i32 0, i32 -1, i32 0, i32 0, i32 0)
+  br label %join
+
+join:
+; CHECK-LABEL: join:
+; CHECK: phi i64 addrspace(1)* [ %obj.relocated, %callbb ], [ %obj, %entry ]
+; CHECK: phi i64 addrspace(1)* 
+; CHECK-DAG: [ %obj, %entry ]
+; CHECK-DAG: [ %obj2.relocated, %callbb ]
+  ; This is a phi outside the dominator region of the new defs inserted by
+  ; the safepoint, BUT we can't stop the search here or we miss the second
+  ; phi below.
+  %phi1 = phi i64 addrspace(1)* [ %obj, %entry ], [ %obj2, %callbb ]
+  br label %join2
+
+join2:
+; CHECK-LABEL: join2:
+; CHECK: phi2 = phi i64 addrspace(1)* 
+; CHECK-DAG: %join ] 
+; CHECK-DAG:  [ %obj2, %branch2 ]
+  %phi2 = phi i64 addrspace(1)* [ %obj, %join ], [ %obj2, %branch2 ]
+  ret i64 addrspace(1)* %phi2
+}
 
 
 declare void @do_safepoint()
 
 declare i32 @llvm.experimental.gc.statepoint.p0f_isVoidf(void ()*, i32, i32, ...)
+declare i32 @llvm.experimental.gc.statepoint.p0f_p1i8f(i8 addrspace(1)* ()*, i32, i32, ...)
+declare i32 @llvm.experimental.gc.statepoint.p0f_isVoidi64f(void (i64)*, i32, i32, ...)
+declare i32 @llvm.experimental.gc.statepoint.p0f_i32p1i64f(i32 (i64 addrspace(1)*)*, i32, i32, ...)
+declare i8 addrspace(1)* @llvm.experimental.gc.result.ptr.p1i8(i32) #3
+
+
+
+
