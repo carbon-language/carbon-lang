@@ -2064,6 +2064,8 @@ let Predicates = [HasVLX] in {
             (v8i1 (COPY_TO_REGCLASS VK4:$src, VK8))>;
   def : Pat<(v8i1 (insert_subvector undef, (v2i1 VK2:$src), (iPTR 0))),
             (v8i1 (COPY_TO_REGCLASS VK2:$src, VK8))>;
+  def : Pat<(v4i1 (insert_subvector undef, (v2i1 VK2:$src), (iPTR 0))),
+            (v4i1 (COPY_TO_REGCLASS VK2:$src, VK4))>;
   def : Pat<(v4i1 (extract_subvector (v8i1 VK8:$src), (iPTR 0))),
             (v4i1 (COPY_TO_REGCLASS VK8:$src, VK4))>;
   def : Pat<(v2i1 (extract_subvector (v8i1 VK8:$src), (iPTR 0))),
@@ -2079,6 +2081,17 @@ def : Pat<(v8i1 (X86vsrli VK8:$src, (i8 imm:$imm))),
           (v8i1 (COPY_TO_REGCLASS
                  (KSHIFTRWri (COPY_TO_REGCLASS VK8:$src, VK16),
                   (I8Imm $imm)), VK8))>, Requires<[HasAVX512, NoDQI]>;
+
+def : Pat<(v4i1 (X86vshli VK4:$src, (i8 imm:$imm))),
+          (v4i1 (COPY_TO_REGCLASS
+                 (KSHIFTLWri (COPY_TO_REGCLASS VK4:$src, VK16),
+                  (I8Imm $imm)), VK4))>, Requires<[HasAVX512]>;
+
+def : Pat<(v4i1 (X86vsrli VK4:$src, (i8 imm:$imm))),
+          (v4i1 (COPY_TO_REGCLASS
+                 (KSHIFTRWri (COPY_TO_REGCLASS VK4:$src, VK16),
+                  (I8Imm $imm)), VK4))>, Requires<[HasAVX512]>;
+
 //===----------------------------------------------------------------------===//
 // AVX-512 - Aligned and unaligned load and store
 //

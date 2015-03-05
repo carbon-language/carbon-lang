@@ -1,6 +1,7 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin  -mcpu=knl < %s | FileCheck %s -check-prefix=AVX512
 ; RUN: llc -mtriple=x86_64-apple-darwin  -mcpu=core-avx2 < %s | FileCheck %s -check-prefix=AVX2
 ; RUN: opt -mtriple=x86_64-apple-darwin -codegenprepare -mcpu=corei7-avx -S < %s | FileCheck %s -check-prefix=AVX_SCALAR
+; RUN: llc -mtriple=x86_64-apple-darwin  -mcpu=skx < %s | FileCheck %s -check-prefix=SKX
 
 ; AVX512-LABEL: test1
 ; AVX512: vmovdqu32       (%rdi), %zmm0 {%k1} {z}
@@ -82,6 +83,9 @@ define <8 x double> @test5(<8 x i32> %trigger, <8 x double>* %addr, <8 x double>
 ; AVX2-LABEL: test6
 ; AVX2: vmaskmovpd
 ; AVX2: vblendvpd
+
+; SKX-LABEL: test6
+; SKX: vmovupd {{.*}}{%k1}
 define <2 x double> @test6(<2 x i64> %trigger, <2 x double>* %addr, <2 x double> %dst) {
   %mask = icmp eq <2 x i64> %trigger, zeroinitializer
   %res = call <2 x double> @llvm.masked.load.v2f64(<2 x double>* %addr, i32 4, <2 x i1>%mask, <2 x double>%dst)
@@ -91,6 +95,9 @@ define <2 x double> @test6(<2 x i64> %trigger, <2 x double>* %addr, <2 x double>
 ; AVX2-LABEL: test7
 ; AVX2: vmaskmovps      {{.*}}(%rdi)
 ; AVX2: blend
+
+; SKX-LABEL: test7
+; SKX: vmovups (%rdi){{.*}}{%k1}
 define <4 x float> @test7(<4 x i32> %trigger, <4 x float>* %addr, <4 x float> %dst) {
   %mask = icmp eq <4 x i32> %trigger, zeroinitializer
   %res = call <4 x float> @llvm.masked.load.v4f32(<4 x float>* %addr, i32 4, <4 x i1>%mask, <4 x float>%dst)
@@ -100,6 +107,9 @@ define <4 x float> @test7(<4 x i32> %trigger, <4 x float>* %addr, <4 x float> %d
 ; AVX2-LABEL: test8
 ; AVX2: vpmaskmovd      {{.*}}(%rdi)
 ; AVX2: blend
+
+; SKX-LABEL: test8
+; SKX: vmovdqu32 (%rdi){{.*}}{%k1}
 define <4 x i32> @test8(<4 x i32> %trigger, <4 x i32>* %addr, <4 x i32> %dst) {
   %mask = icmp eq <4 x i32> %trigger, zeroinitializer
   %res = call <4 x i32> @llvm.masked.load.v4i32(<4 x i32>* %addr, i32 4, <4 x i1>%mask, <4 x i32>%dst)
@@ -108,6 +118,9 @@ define <4 x i32> @test8(<4 x i32> %trigger, <4 x i32>* %addr, <4 x i32> %dst) {
 
 ; AVX2-LABEL: test9
 ; AVX2: vpmaskmovd %xmm
+
+; SKX-LABEL: test9
+; SKX: vmovdqu32 %xmm{{.*}}{%k1}
 define void @test9(<4 x i32> %trigger, <4 x i32>* %addr, <4 x i32> %val) {
   %mask = icmp eq <4 x i32> %trigger, zeroinitializer
   call void @llvm.masked.store.v4i32(<4 x i32>%val, <4 x i32>* %addr, i32 4, <4 x i1>%mask)
@@ -117,23 +130,32 @@ define void @test9(<4 x i32> %trigger, <4 x i32>* %addr, <4 x i32> %val) {
 ; AVX2-LABEL: test10
 ; AVX2: vmaskmovpd    (%rdi), %ymm
 ; AVX2: blend
+
+; SKX-LABEL: test10
+; SKX: vmovapd {{.*}}{%k1}
 define <4 x double> @test10(<4 x i32> %trigger, <4 x double>* %addr, <4 x double> %dst) {
   %mask = icmp eq <4 x i32> %trigger, zeroinitializer
-  %res = call <4 x double> @llvm.masked.load.v4f64(<4 x double>* %addr, i32 4, <4 x i1>%mask, <4 x double>%dst)
+  %res = call <4 x double> @llvm.masked.load.v4f64(<4 x double>* %addr, i32 32, <4 x i1>%mask, <4 x double>%dst)
   ret <4 x double> %res
 }
 
 ; AVX2-LABEL: test11
 ; AVX2: vmaskmovps
 ; AVX2: vblendvps
+
+; SKX-LABEL: test11
+; SKX: vmovaps {{.*}}{%k1}
 define <8 x float> @test11(<8 x i32> %trigger, <8 x float>* %addr, <8 x float> %dst) {
   %mask = icmp eq <8 x i32> %trigger, zeroinitializer
-  %res = call <8 x float> @llvm.masked.load.v8f32(<8 x float>* %addr, i32 4, <8 x i1>%mask, <8 x float>%dst)
+  %res = call <8 x float> @llvm.masked.load.v8f32(<8 x float>* %addr, i32 32, <8 x i1>%mask, <8 x float>%dst)
   ret <8 x float> %res
 }
 
 ; AVX2-LABEL: test12
 ; AVX2: vpmaskmovd %ymm
+
+; SKX-LABEL: test12
+; SKX: vmovdqu32 {{.*}}{%k1}
 define void @test12(<8 x i32> %trigger, <8 x i32>* %addr, <8 x i32> %val) {
   %mask = icmp eq <8 x i32> %trigger, zeroinitializer
   call void @llvm.masked.store.v8i32(<8 x i32>%val, <8 x i32>* %addr, i32 4, <8 x i1>%mask)
@@ -153,6 +175,12 @@ define void @test13(<16 x i32> %trigger, <16 x float>* %addr, <16 x float> %val)
 ; AVX2: vpshufd
 ; AVX2: vmovq
 ; AVX2: vmaskmovps
+
+; SKX-LABEL: test14
+; SKX: kshiftl
+; SKX: kshiftr
+; SKX: vmovups {{.*}}{%k1}
+
 define void @test14(<2 x i32> %trigger, <2 x float>* %addr, <2 x float> %val) {
   %mask = icmp eq <2 x i32> %trigger, zeroinitializer
   call void @llvm.masked.store.v2f32(<2 x float>%val, <2 x float>* %addr, i32 4, <2 x i1>%mask)
@@ -161,6 +189,11 @@ define void @test14(<2 x i32> %trigger, <2 x float>* %addr, <2 x float> %val) {
 
 ; AVX2-LABEL: test15
 ; AVX2: vpmaskmovd
+
+; SKX-LABEL: test15
+; SKX: kshiftl
+; SKX: kshiftr
+; SKX: vmovdqu32 {{.*}}{%k1}
 define void @test15(<2 x i32> %trigger, <2 x i32>* %addr, <2 x i32> %val) {
   %mask = icmp eq <2 x i32> %trigger, zeroinitializer
   call void @llvm.masked.store.v2i32(<2 x i32>%val, <2 x i32>* %addr, i32 4, <2 x i1>%mask)
@@ -170,6 +203,11 @@ define void @test15(<2 x i32> %trigger, <2 x i32>* %addr, <2 x i32> %val) {
 ; AVX2-LABEL: test16
 ; AVX2: vmaskmovps
 ; AVX2: vblendvps
+
+; SKX-LABEL: test16
+; SKX: kshiftl
+; SKX: kshiftr
+; SKX: vmovups {{.*}}{%k1}
 define <2 x float> @test16(<2 x i32> %trigger, <2 x float>* %addr, <2 x float> %dst) {
   %mask = icmp eq <2 x i32> %trigger, zeroinitializer
   %res = call <2 x float> @llvm.masked.load.v2f32(<2 x float>* %addr, i32 4, <2 x i1>%mask, <2 x float>%dst)
@@ -180,6 +218,11 @@ define <2 x float> @test16(<2 x i32> %trigger, <2 x float>* %addr, <2 x float> %
 ; AVX2: vpmaskmovd
 ; AVX2: vblendvps
 ; AVX2: vpmovsxdq
+
+; SKX-LABEL: test17
+; SKX: kshiftl
+; SKX: kshiftr
+; SKX: vmovdqu32 {{.*}}{%k1}
 define <2 x i32> @test17(<2 x i32> %trigger, <2 x i32>* %addr, <2 x i32> %dst) {
   %mask = icmp eq <2 x i32> %trigger, zeroinitializer
   %res = call <2 x i32> @llvm.masked.load.v2i32(<2 x i32>* %addr, i32 4, <2 x i1>%mask, <2 x i32>%dst)

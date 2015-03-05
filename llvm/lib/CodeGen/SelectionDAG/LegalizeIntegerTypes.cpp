@@ -1116,7 +1116,6 @@ SDValue DAGTypeLegalizer::PromoteIntOp_STORE(StoreSDNode *N, unsigned OpNo){
 
 SDValue DAGTypeLegalizer::PromoteIntOp_MSTORE(MaskedStoreSDNode *N, unsigned OpNo){
 
-  assert(OpNo == 2 && "Only know how to promote the mask!");
   SDValue DataOp = N->getValue();
   EVT DataVT = DataOp.getValueType();
   SDValue Mask = N->getMask();
@@ -1127,7 +1126,8 @@ SDValue DAGTypeLegalizer::PromoteIntOp_MSTORE(MaskedStoreSDNode *N, unsigned OpN
   if (!TLI.isTypeLegal(DataVT)) {
     if (getTypeAction(DataVT) == TargetLowering::TypePromoteInteger) {
       DataOp = GetPromotedInteger(DataOp);
-      Mask = PromoteTargetBoolean(Mask, DataOp.getValueType());
+      if (!TLI.isTypeLegal(MaskVT))
+        Mask = PromoteTargetBoolean(Mask, DataOp.getValueType());
       TruncateStore = true;
     }
     else {
