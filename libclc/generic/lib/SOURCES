@@ -82,6 +82,7 @@ math/sincos_helpers.cl
 math/tan.cl
 relational/all.cl
 relational/any.cl
+relational/bitselect.cl
 relational/isequal.cl
 relational/isfinite.cl
 relational/isgreater.cl

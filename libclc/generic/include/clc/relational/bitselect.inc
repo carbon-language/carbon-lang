@@ -20,9 +20,4 @@
  * THE SOFTWARE.
  */
 
-#define __CLC_BODY <clc/relational/bitselect.inc>
-#include <clc/math/gentype.inc>
-#define __CLC_BODY <clc/relational/bitselect.inc>
-#include <clc/integer/gentype.inc>
-
-#undef __CLC_BODY
+_CLC_OVERLOAD _CLC_DECL __CLC_GENTYPE bitselect(__CLC_GENTYPE x, __CLC_GENTYPE y, __CLC_GENTYPE z);
