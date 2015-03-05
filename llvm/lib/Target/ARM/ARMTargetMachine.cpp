@@ -358,7 +358,9 @@ void ARMPassConfig::addPreRegAlloc() {
 void ARMPassConfig::addPreSched2() {
   if (getOptLevel() != CodeGenOpt::None) {
     addPass(createARMLoadStoreOptimizationPass());
-    addPass(createExecutionDependencyFixPass(&ARM::DPRRegClass));
+
+    if (getARMSubtarget().hasNEON())
+      addPass(createExecutionDependencyFixPass(&ARM::DPRRegClass));
   }
 
   // Expand some pseudo instructions into multiple instructions to allow
