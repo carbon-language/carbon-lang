@@ -441,39 +441,38 @@ bool Resolver::checkUndefines() {
         undefinedAtoms.end());
   }
 
-  // error message about missing symbols
-  if (!undefinedAtoms.empty()) {
-    // FIXME: need diagnostics interface for writing error messages
-    bool foundUndefines = false;
-    for (const UndefinedAtom *undef : undefinedAtoms) {
-      // Skip over a weak symbol.
-      if (undef->canBeNull() != UndefinedAtom::canBeNullNever)
-        continue;
+  if (undefinedAtoms.empty())
+    return false;
 
-      // If this is a library and undefined symbols are allowed on the
-      // target platform, skip over it.
-      if (isa<SharedLibraryFile>(undef->file()) && _ctx.allowShlibUndefines())
-        continue;
+  // Warn about unresolved symbols.
+  bool foundUndefines = false;
+  for (const UndefinedAtom *undef : undefinedAtoms) {
+    // Skip over a weak symbol.
+    if (undef->canBeNull() != UndefinedAtom::canBeNullNever)
+      continue;
 
-      // If the undefine is coalesced away, skip over it.
-      if (_symbolTable.isCoalescedAway(undef))
-        continue;
+    // If this is a library and undefined symbols are allowed on the
+    // target platform, skip over it.
+    if (isa<SharedLibraryFile>(undef->file()) && _ctx.allowShlibUndefines())
+      continue;
 
-      // Seems like this symbol is undefined. Warn that.
-      foundUndefines = true;
-      if (_ctx.printRemainingUndefines()) {
-        llvm::errs() << "Undefined symbol: " << undef->file().path()
-                     << ": " << _ctx.demangle(undef->name())
-                     << "\n";
-      }
-    }
-    if (foundUndefines) {
-      if (_ctx.printRemainingUndefines())
-        llvm::errs() << "symbol(s) not found\n";
-      return true;
+    // If the undefine is coalesced away, skip over it.
+    if (_symbolTable.isCoalescedAway(undef))
+      continue;
+
+    // Seems like this symbol is undefined. Warn that.
+    foundUndefines = true;
+    if (_ctx.printRemainingUndefines()) {
+      llvm::errs() << "Undefined symbol: " << undef->file().path()
+                   << ": " << _ctx.demangle(undef->name())
+                   << "\n";
     }
   }
-  return false;
+  if (!foundUndefines)
+    return false;
+  if (_ctx.printRemainingUndefines())
+    llvm::errs() << "symbol(s) not found\n";
+  return true;
 }
 
 // remove from _atoms all coaleseced away atoms
