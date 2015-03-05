@@ -17,7 +17,8 @@ entry:
 ;CHECK-LABEL: bad_insert:
 define void @bad_insert(i32 %t) {
 entry:
-;CHECK: vpinsrd
+;CHECK: vxorps %ymm1, %ymm1, %ymm1
+;CHECK-NEXT: vblendps {{.*#+}} ymm0 = ymm0[0],ymm1[1,2,3,4,5,6,7]
   %v2 = insertelement <8 x i32> zeroinitializer, i32 %t, i32 0
   store <8 x i32> %v2, <8 x i32> addrspace(1)* undef, align 32
 ;CHECK: ret

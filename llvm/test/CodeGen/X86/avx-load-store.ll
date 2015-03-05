@@ -30,8 +30,7 @@ declare void @dummy(<4 x double>, <8 x float>, <4 x i64>)
 ; CHECK: mov00
 define <8 x float> @mov00(<8 x float> %v, float * %ptr) nounwind {
   %val = load float, float* %ptr
-; CHECK: vinsertps
-; CHECK: vinsertf128
+; CHECK: vmovss (%
   %i0 = insertelement <8 x float> zeroinitializer, float %val, i32 0
   ret <8 x float> %i0
 ; CHECK: ret
@@ -40,8 +39,7 @@ define <8 x float> @mov00(<8 x float> %v, float * %ptr) nounwind {
 ; CHECK: mov01
 define <4 x double> @mov01(<4 x double> %v, double * %ptr) nounwind {
   %val = load double, double* %ptr
-; CHECK: vmovlpd
-; CHECK: vinsertf128
+; CHECK: vmovsd (%
   %i0 = insertelement <4 x double> zeroinitializer, double %val, i32 0
   ret <4 x double> %i0
 ; CHECK: ret
