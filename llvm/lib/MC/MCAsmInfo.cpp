@@ -39,6 +39,7 @@ MCAsmInfo::MCAsmInfo() {
   CommentString = "#";
   LabelSuffix = ":";
   UseAssignmentForEHBegin = false;
+  NeedsLocalForSize = false;
   PrivateGlobalPrefix = "L";
   PrivateLabelPrefix = PrivateGlobalPrefix;
   LinkerPrivateGlobalPrefix = "";

@@ -1082,11 +1082,6 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
   // Emit a null environment pointer.
   OutStreamer.EmitIntValue(0, 8 /* size */);
   OutStreamer.SwitchSection(Current.first, Current.second);
-
-  MCSymbol *RealFnSym = OutContext.GetOrCreateSymbol(
-                          ".L." + Twine(CurrentFnSym->getName()));
-  OutStreamer.EmitLabel(RealFnSym);
-  CurrentFnSymForSize = RealFnSym;
 }
 
 

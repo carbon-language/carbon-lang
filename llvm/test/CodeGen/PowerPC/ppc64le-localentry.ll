@@ -16,6 +16,7 @@ target triple = "powerpc64le-unknown-linux-gnu"
 define i64 @use_toc(i64 %a) nounwind {
 entry:
 ; CHECK-LABEL: @use_toc
+; CHECK-NEXT: .L{{.*}}:
 ; CHECK-NEXT: .Ltmp[[TMP1:[0-9]+]]:
 ; CHECK-NEXT: addis 2, 12, .TOC.-.Ltmp[[TMP1]]@ha
 ; CHECK-NEXT: addi 2, 2, .TOC.-.Ltmp[[TMP1]]@l
@@ -32,6 +33,7 @@ declare void @callee()
 define void @use_toc_implicit() nounwind {
 entry:
 ; CHECK-LABEL: @use_toc_implicit
+; CHECK-NEXT: .L{{.*}}:
 ; CHECK-NEXT: .Ltmp[[TMP1:[0-9]+]]:
 ; CHECK-NEXT: addis 2, 12, .TOC.-.Ltmp[[TMP1]]@ha
 ; CHECK-NEXT: addi 2, 2, .TOC.-.Ltmp[[TMP1]]@l
@@ -45,6 +47,7 @@ entry:
 define i64 @no_toc(i64 %a) nounwind {
 entry:
 ; CHECK-LABEL: @no_toc
+; CHECK-NEXT: .L{{.*}}:
 ; CHECK-NEXT: %entry
   ret i64 %a
 }

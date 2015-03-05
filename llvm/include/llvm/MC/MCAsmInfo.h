@@ -118,6 +118,9 @@ protected:
   // Print the EH begin symbol with an assignment. Defaults to false.
   bool UseAssignmentForEHBegin;
 
+  // Do we need to create a local symbol for .size?
+  bool NeedsLocalForSize;
+
   /// This prefix is used for globals like constant pool entries that are
   /// completely private to the .s file and should not have names in the .o
   /// file.  Defaults to "L"
@@ -427,6 +430,7 @@ public:
   const char *getLabelSuffix() const { return LabelSuffix; }
 
   bool useAssignmentForEHBegin() const { return UseAssignmentForEHBegin; }
+  bool needsLocalForSize() const { return NeedsLocalForSize; }
   const char *getPrivateGlobalPrefix() const { return PrivateGlobalPrefix; }
   const char *getPrivateLabelPrefix() const { return PrivateLabelPrefix; }
   bool hasLinkerPrivateGlobalPrefix() const {

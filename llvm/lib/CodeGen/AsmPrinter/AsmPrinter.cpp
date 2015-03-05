@@ -556,8 +556,12 @@ void AsmPrinter::EmitFunctionHeader() {
     OutStreamer.EmitLabel(DeadBlockSyms[i]);
   }
 
-  if (!MMI->getLandingPads().empty() || MMI->hasDebugInfo()) {
+  bool NeedsLocalForSize = MAI->needsLocalForSize();
+  if (!MMI->getLandingPads().empty() || MMI->hasDebugInfo() ||
+      NeedsLocalForSize) {
     CurrentFnBegin = createTempSymbol("func_begin", getFunctionNumber());
+    if (NeedsLocalForSize)
+      CurrentFnSymForSize = CurrentFnBegin;
 
     if (MAI->useAssignmentForEHBegin()) {
       MCSymbol *CurPos = OutContext.CreateTempSymbol();
