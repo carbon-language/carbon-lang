@@ -1004,6 +1004,15 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
 
   switch (N.getOpcode()) {
   default: break;
+  case ISD::FRAME_ALLOC_RECOVER: {
+    if (!AM.hasSymbolicDisplacement())
+      if (const auto *ESNode = dyn_cast<ExternalSymbolSDNode>(N.getOperand(0)))
+        if (ESNode->getOpcode() == ISD::TargetExternalSymbol) {
+          AM.ES = ESNode->getSymbol();
+          return false;
+        }
+    break;
+  }
   case ISD::Constant: {
     uint64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
     if (!FoldOffsetIntoAddress(Val, AM))

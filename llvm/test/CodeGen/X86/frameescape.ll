@@ -16,20 +16,20 @@ define void @print_framealloc_from_fp(i8* %fp) {
   %b = bitcast i8* %b.i8 to i32*
   %b.val = load i32, i32* %b
   call i32 (i8*, ...)* @printf(i8* getelementptr ([10 x i8]* @str, i32 0, i32 0), i32 %b.val)
+  store i32 42, i32* %b
   ret void
 }
 
 ; CHECK-LABEL: print_framealloc_from_fp:
 ; CHECK: movq %rcx, %[[parent_fp:[a-z]+]]
-; CHECK: movabsq $.Lalloc_func$frame_escape_0, %[[offs:[a-z]+]]
-; CHECK: movl (%[[parent_fp]],%[[offs]]), %edx
+; CHECK: movl .Lalloc_func$frame_escape_0(%[[parent_fp]]), %edx
 ; CHECK: leaq {{.*}}(%rip), %[[str:[a-z]+]]
 ; CHECK: movq %[[str]], %rcx
 ; CHECK: callq printf
-; CHECK: movabsq $.Lalloc_func$frame_escape_1, %[[offs:[a-z]+]]
-; CHECK: movl (%[[parent_fp]],%[[offs]]), %edx
+; CHECK: movl .Lalloc_func$frame_escape_1(%[[parent_fp]]), %edx
 ; CHECK: movq %[[str]], %rcx
 ; CHECK: callq printf
+; CHECK: movl    $42, .Lalloc_func$frame_escape_1(%[[parent_fp]])
 ; CHECK: retq
 
 define void @alloc_func() {
