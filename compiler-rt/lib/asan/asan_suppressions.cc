@@ -81,14 +81,10 @@ bool IsStackTraceSuppressed(const StackTrace *stack) {
     uptr addr = stack->trace[i];
 
     if (suppression_ctx->HasSuppressionType(kInterceptorViaLibrary)) {
-      const char *module_name;
-      uptr module_offset;
       // Match "interceptor_via_lib" suppressions.
-      if (symbolizer->GetModuleNameAndOffsetForPC(addr, &module_name,
-                                                  &module_offset) &&
-          suppression_ctx->Match(module_name, kInterceptorViaLibrary, &s)) {
-        return true;
-      }
+      if (const char *module_name = symbolizer->GetModuleNameForPc(addr))
+        if (suppression_ctx->Match(module_name, kInterceptorViaLibrary, &s))
+          return true;
     }
 
     if (suppression_ctx->HasSuppressionType(kInterceptorViaFunction)) {

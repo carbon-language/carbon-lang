@@ -435,13 +435,11 @@ static Suppression *GetSuppressionForAddr(uptr addr) {
   Suppression *s = nullptr;
 
   // Suppress by module name.
-  const char *module_name;
-  uptr module_offset;
   SuppressionContext *suppressions = GetSuppressionContext();
-  if (Symbolizer::GetOrInit()->GetModuleNameAndOffsetForPC(addr, &module_name,
-                                                           &module_offset) &&
-      suppressions->Match(module_name, kSuppressionLeak, &s))
-    return s;
+  if (const char *module_name =
+          Symbolizer::GetOrInit()->GetModuleNameForPc(addr))
+    if (suppressions->Match(module_name, kSuppressionLeak, &s))
+      return s;
 
   // Suppress by file or function name.
   SymbolizedStack *frames = Symbolizer::GetOrInit()->SymbolizePC(addr);
