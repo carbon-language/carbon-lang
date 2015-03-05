@@ -585,10 +585,13 @@ ClangExpressionDeclMap::GetFunctionAddress
         }
     }
 
+    lldb::addr_t intern_callable_load_addr = LLDB_INVALID_ADDRESS;
+
     for (uint32_t i=0; i<sc_list_size; ++i)
     {
         SymbolContext sym_ctx;
         sc_list.GetContextAtIndex(i, sym_ctx);
+
 
         lldb::addr_t callable_load_addr = LLDB_INVALID_ADDRESS;
 
@@ -602,7 +605,13 @@ ClangExpressionDeclMap::GetFunctionAddress
         }
         else if (sym_ctx.symbol)
         {
-            callable_load_addr = sym_ctx.symbol->ResolveCallableAddress(*target);
+            if (sym_ctx.symbol->IsExternal())
+                callable_load_addr = sym_ctx.symbol->ResolveCallableAddress(*target);
+            else
+            {
+                if (intern_callable_load_addr == LLDB_INVALID_ADDRESS)
+                    intern_callable_load_addr = sym_ctx.symbol->ResolveCallableAddress(*target);
+            }
         }
 
         if (callable_load_addr != LLDB_INVALID_ADDRESS)
@@ -611,6 +620,14 @@ ClangExpressionDeclMap::GetFunctionAddress
             return true;
         }
     }
+
+    // See if we found an internal symbol
+    if (intern_callable_load_addr != LLDB_INVALID_ADDRESS)
+    {
+        func_addr = intern_callable_load_addr;
+        return true;
+    }
+
     return false;
 }
 
