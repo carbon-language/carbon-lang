@@ -134,34 +134,18 @@ public:
     RRI.CFGHazardAfflicted = NewValue;
   }
 
-  void SetKnownPositiveRefCount() {
-    DEBUG(dbgs() << "Setting Known Positive.\n");
-    KnownPositiveRefCount = true;
-  }
-
-  void ClearKnownPositiveRefCount() {
-    DEBUG(dbgs() << "Clearing Known Positive.\n");
-    KnownPositiveRefCount = false;
-  }
+  void SetKnownPositiveRefCount();
+  void ClearKnownPositiveRefCount();
 
   bool HasKnownPositiveRefCount() const { return KnownPositiveRefCount; }
 
-  void SetSeq(Sequence NewSeq) {
-    DEBUG(dbgs() << "Old: " << Seq << "; New: " << NewSeq << "\n");
-    Seq = NewSeq;
-  }
+  void SetSeq(Sequence NewSeq);
 
   Sequence GetSeq() const { return static_cast<Sequence>(Seq); }
 
   void ClearSequenceProgress() { ResetSequenceProgress(S_None); }
 
-  void ResetSequenceProgress(Sequence NewSeq) {
-    DEBUG(dbgs() << "Resetting sequence progress.\n");
-    SetSeq(NewSeq);
-    Partial = false;
-    RRI.clear();
-  }
-
+  void ResetSequenceProgress(Sequence NewSeq);
   void Merge(const PtrState &Other, bool TopDown);
 
   void InsertCall(Instruction *I) { RRI.Calls.insert(I); }

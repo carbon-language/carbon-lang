@@ -7,12 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "objc-arc-ptr-state"
+#include "llvm/Support/Debug.h"
 #include "PtrState.h"
 
 using namespace llvm;
 using namespace llvm::objcarc;
 
-raw_ostream &operator<<(raw_ostream &OS, const Sequence S) {
+raw_ostream &llvm::objcarc::operator<<(raw_ostream &OS, const Sequence S) {
   switch (S) {
   case S_None:
     return OS << "S_None";
@@ -89,6 +91,28 @@ bool RRInfo::Merge(const RRInfo &Other) {
   for (Instruction *Inst : Other.ReverseInsertPts)
     Partial |= ReverseInsertPts.insert(Inst).second;
   return Partial;
+}
+
+void PtrState::SetKnownPositiveRefCount() {
+  DEBUG(dbgs() << "Setting Known Positive.\n");
+  KnownPositiveRefCount = true;
+}
+
+void PtrState::ClearKnownPositiveRefCount() {
+  DEBUG(dbgs() << "Clearing Known Positive.\n");
+  KnownPositiveRefCount = false;
+}
+
+void PtrState::SetSeq(Sequence NewSeq) {
+  DEBUG(dbgs() << "Old: " << Seq << "; New: " << NewSeq << "\n");
+  Seq = NewSeq;
+}
+
+void PtrState::ResetSequenceProgress(Sequence NewSeq) {
+  DEBUG(dbgs() << "Resetting sequence progress.\n");
+  SetSeq(NewSeq);
+  Partial = false;
+  RRI.clear();
 }
 
 void PtrState::Merge(const PtrState &Other, bool TopDown) {
