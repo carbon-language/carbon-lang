@@ -86,23 +86,28 @@ class CrashLog(symbolication.Symbolicator):
     parent_process_regex = re.compile('^Parent Process:\s*(.*)\[(\d+)\]');
     thread_state_regex = re.compile('^Thread ([0-9]+) crashed with')
     thread_regex = re.compile('^Thread ([0-9]+)([^:]*):(.*)')
-    frame_regex = re.compile('^([0-9]+) +([^ ]+) *\t?(0x[0-9a-fA-F]+) +(.*)')
+    app_backtrace_regex = re.compile('^Application Specific Backtrace ([0-9]+)([^:]*):(.*)')
+    frame_regex = re.compile('^([0-9]+)\s+([^ ]+)\s+(0x[0-9a-fA-F]+) +(.*)')
     image_regex_uuid = re.compile('(0x[0-9a-fA-F]+)[- ]+(0x[0-9a-fA-F]+) +[+]?([^ ]+) +([^<]+)<([-0-9a-fA-F]+)> (.*)');
     image_regex_no_uuid = re.compile('(0x[0-9a-fA-F]+)[- ]+(0x[0-9a-fA-F]+) +[+]?([^ ]+) +([^/]+)/(.*)');
     empty_line_regex = re.compile('^$')
         
     class Thread:
         """Class that represents a thread in a darwin crash log"""
-        def __init__(self, index):
+        def __init__(self, index, app_specific_backtrace):
             self.index = index
             self.frames = list()
             self.idents = list()
             self.registers = dict()
             self.reason = None
             self.queue = None
+            self.app_specific_backtrace = app_specific_backtrace
         
         def dump(self, prefix):
-            print "%sThread[%u] %s" % (prefix, self.index, self.reason)
+            if self.app_specific_backtrace:
+                print "%Application Specific Backtrace[%u] %s" % (prefix, self.index, self.reason)
+            else:
+                print "%sThread[%u] %s" % (prefix, self.index, self.reason)
             if self.frames:
                 print "%s  Frames:" % (prefix)
                 for frame in self.frames:
@@ -112,6 +117,57 @@ class CrashLog(symbolication.Symbolicator):
                 for reg in self.registers.keys():
                     print "%s    %-5s = %#16.16x" % (prefix, reg, self.registers[reg])
         
+        def dump_symbolicated (self, crash_log, options):
+            this_thread_crashed = self.app_specific_backtrace
+            if not this_thread_crashed:
+                this_thread_crashed = self.did_crash()
+                if options.crashed_only and this_thread_crashed == False:
+                    return
+
+            print "%s" % self
+            #prev_frame_index = -1
+            display_frame_idx = -1
+            for frame_idx, frame in enumerate(self.frames):
+                disassemble = (this_thread_crashed or options.disassemble_all_threads) and frame_idx < options.disassemble_depth;
+                if frame_idx == 0:
+                    symbolicated_frame_addresses = crash_log.symbolicate (frame.pc & crash_log.addr_mask, options.verbose)
+                else:
+                    # Any frame above frame zero and we have to subtract one to get the previous line entry
+                    symbolicated_frame_addresses = crash_log.symbolicate ((frame.pc & crash_log.addr_mask) - 1, options.verbose)
+
+                if symbolicated_frame_addresses:
+                    symbolicated_frame_address_idx = 0
+                    for symbolicated_frame_address in symbolicated_frame_addresses:
+                        display_frame_idx += 1
+                        print '[%3u] %s' % (frame_idx, symbolicated_frame_address)
+                        if (options.source_all or self.did_crash()) and display_frame_idx < options.source_frames and options.source_context:
+                            source_context = options.source_context
+                            line_entry = symbolicated_frame_address.get_symbol_context().line_entry
+                            if line_entry.IsValid():
+                                strm = lldb.SBStream()
+                                if line_entry:
+                                    lldb.debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers(line_entry.file, line_entry.line, source_context, source_context, "->", strm)
+                                source_text = strm.GetData()
+                                if source_text:
+                                    # Indent the source a bit
+                                    indent_str = '    '
+                                    join_str = '\n' + indent_str
+                                    print '%s%s' % (indent_str, join_str.join(source_text.split('\n')))
+                        if symbolicated_frame_address_idx == 0:
+                            if disassemble:
+                                instructions = symbolicated_frame_address.get_instructions()
+                                if instructions:
+                                    print
+                                    symbolication.disassemble_instructions (crash_log.get_target(), 
+                                                                            instructions, 
+                                                                            frame.pc, 
+                                                                            options.disassemble_before, 
+                                                                            options.disassemble_after, frame.index > 0)
+                                    print
+                        symbolicated_frame_address_idx += 1
+                else:
+                    print frame
+            
         def add_ident(self, ident):
             if not ident in self.idents:
                 self.idents.append(ident)
@@ -120,7 +176,10 @@ class CrashLog(symbolication.Symbolicator):
             return self.reason != None
         
         def __str__(self):
-            s = "Thread[%u]" % self.index
+            if self.app_specific_backtrace:
+                s = "Application Specific Backtrace[%u]" % self.index
+            else:
+                s = "Thread[%u]" % self.index
             if self.reason:
                 s += ' %s' % self.reason
             return s
@@ -215,10 +274,12 @@ class CrashLog(symbolication.Symbolicator):
         self.info_lines = list()
         self.system_profile = list()
         self.threads = list()
+        self.backtraces = list() # For application specific backtraces
         self.idents = list() # A list of the required identifiers for doing all stack backtraces
         self.crashed_thread_idx = -1
         self.version = -1
         self.error = None
+        self.target = None
         # With possible initial component of ~ or ~user replaced by that user's home directory.
         try:
             f = open(self.path)
@@ -229,6 +290,7 @@ class CrashLog(symbolication.Symbolicator):
         self.file_lines = f.read().splitlines()
         parse_mode = PARSE_MODE_NORMAL
         thread = None
+        app_specific_backtrace = False
         for line in self.file_lines:
             # print line
             line_len = len(line)
@@ -240,8 +302,11 @@ class CrashLog(symbolication.Symbolicator):
                             if self.thread_exception:
                                 thread.reason += self.thread_exception
                             if self.thread_exception_data:
-                                thread.reason += " (%s)" % self.thread_exception_data                                
-                        self.threads.append(thread)
+                                thread.reason += " (%s)" % self.thread_exception_data
+                        if app_specific_backtrace:
+                            self.backtraces.append(thread)
+                        else:
+                            self.threads.append(thread)
                     thread = None
                 else:
                     # only append an extra empty line if the previous line 
@@ -297,6 +362,7 @@ class CrashLog(symbolication.Symbolicator):
                 elif line.startswith ('Thread'):
                     thread_state_match = self.thread_state_regex.search (line)
                     if thread_state_match:
+                        app_specific_backtrace = False
                         thread_state_match = self.thread_regex.search (line)
                         thread_idx = int(thread_state_match.group(1))
                         parse_mode = PARSE_MODE_THREGS
@@ -304,14 +370,21 @@ class CrashLog(symbolication.Symbolicator):
                     else:
                         thread_match = self.thread_regex.search (line)
                         if thread_match:
-                            # print 'PARSE_MODE_THREAD'
+                            app_specific_backtrace = False
                             parse_mode = PARSE_MODE_THREAD
                             thread_idx = int(thread_match.group(1))
-                            thread = CrashLog.Thread(thread_idx)
+                            thread = CrashLog.Thread(thread_idx, False)
                     continue
                 elif line.startswith ('Binary Images:'):
                     parse_mode = PARSE_MODE_IMAGES
                     continue
+                elif line.startswith ('Application Specific Backtrace'):
+                    app_backtrace_match = self.app_backtrace_regex.search (line)
+                    if app_backtrace_match:
+                        parse_mode = PARSE_MODE_THREAD
+                        app_specific_backtrace = True
+                        idx = int(app_backtrace_match.group(1))
+                        thread = CrashLog.Thread(idx, True)
                 self.info_lines.append(line.strip())
             elif parse_mode == PARSE_MODE_THREAD:
                 if line.startswith ('Thread'):
@@ -364,6 +437,10 @@ class CrashLog(symbolication.Symbolicator):
     
     def dump(self):
         print "Crash Log File: %s" % (self.path)
+        if self.backtraces:
+            print "\nApplication Specific Backtraces:"
+            for thread in self.backtraces:
+                thread.dump('  ')
         print "\nThreads:"
         for thread in self.threads:
             thread.dump('  ')
@@ -374,32 +451,40 @@ class CrashLog(symbolication.Symbolicator):
     def find_image_with_identifier(self, identifier):
         for image in self.images:
             if image.identifier == identifier:
+                return image            
+        regex_text = '^.*\.%s$' % (identifier)
+        regex = re.compile(regex_text)
+        for image in self.images:
+            if regex.match(image.identifier):
                 return image
         return None
     
     def create_target(self):
         #print 'crashlog.create_target()...'
-        target = symbolication.Symbolicator.create_target(self)
-        if target:
-            return target
-        # We weren't able to open the main executable as, but we can still symbolicate
-        print 'crashlog.create_target()...2'
-        if self.idents:
-            for ident in self.idents:
-                image = self.find_image_with_identifier (ident)
-                if image:
-                    target = image.create_target ()
-                    if target:
-                        return target # success
-        print 'crashlog.create_target()...3'
-        for image in self.images:
-            target = image.create_target ()
-            if target:
-                return target # success
-        print 'crashlog.create_target()...4'
-        print 'error: unable to locate any executables from the crash log'
-        return None
+        if self.target is None:
+            self.target = symbolication.Symbolicator.create_target(self)
+            if self.target:
+                return self.target
+            # We weren't able to open the main executable as, but we can still symbolicate
+            print 'crashlog.create_target()...2'
+            if self.idents:
+                for ident in self.idents:
+                    image = self.find_image_with_identifier (ident)
+                    if image:
+                        self.target = image.create_target ()
+                        if self.target:
+                            return self.target # success
+            print 'crashlog.create_target()...3'
+            for image in self.images:
+                self.target = image.create_target ()
+                if self.target:
+                    return self.target # success
+            print 'crashlog.create_target()...4'
+            print 'error: unable to locate any executables from the crash log'
+        return self.target
     
+    def get_target(self):
+        return self.target
 
 def usage():
     print "Usage: lldb-symbolicate.py [-n name] executable-image"
@@ -661,9 +746,7 @@ def SymbolicateCrashLog(crash_log, options):
                     print 'error: can\'t find image for identifier "%s"' % ident
 
     for image in images_to_load:
-        if image in loaded_images:
-            print "warning: skipping %s loaded at %#16.16x duplicate entry (probably commpage)" % (image.path, image.text_addr_lo)
-        else:
+        if not image in loaded_images:
             err = image.add_module (target)
             if err:
                 print err
@@ -671,55 +754,16 @@ def SymbolicateCrashLog(crash_log, options):
                 #print 'loaded %s' % image
                 loaded_images.append(image)
 
+    if crash_log.backtraces:
+        for thread in crash_log.backtraces:
+            thread.dump_symbolicated (crash_log, options)
+            print                
+
     for thread in crash_log.threads:
-        this_thread_crashed = thread.did_crash()
-        if options.crashed_only and this_thread_crashed == False:
-            continue
-        print "%s" % thread
-        #prev_frame_index = -1
-        display_frame_idx = -1
-        for frame_idx, frame in enumerate(thread.frames):
-            disassemble = (this_thread_crashed or options.disassemble_all_threads) and frame_idx < options.disassemble_depth;
-            if frame_idx == 0:
-                symbolicated_frame_addresses = crash_log.symbolicate (frame.pc & crash_log.addr_mask, options.verbose)
-            else:
-                # Any frame above frame zero and we have to subtract one to get the previous line entry
-                symbolicated_frame_addresses = crash_log.symbolicate ((frame.pc & crash_log.addr_mask) - 1, options.verbose)
-            
-            if symbolicated_frame_addresses:
-                symbolicated_frame_address_idx = 0
-                for symbolicated_frame_address in symbolicated_frame_addresses:
-                    display_frame_idx += 1
-                    print '[%3u] %s' % (frame_idx, symbolicated_frame_address)
-                    if (options.source_all or thread.did_crash()) and display_frame_idx < options.source_frames and options.source_context:
-                        source_context = options.source_context
-                        line_entry = symbolicated_frame_address.get_symbol_context().line_entry
-                        if line_entry.IsValid():
-                            strm = lldb.SBStream()
-                            if line_entry:
-                                lldb.debugger.GetSourceManager().DisplaySourceLinesWithLineNumbers(line_entry.file, line_entry.line, source_context, source_context, "->", strm)
-                            source_text = strm.GetData()
-                            if source_text:
-                                # Indent the source a bit
-                                indent_str = '    '
-                                join_str = '\n' + indent_str
-                                print '%s%s' % (indent_str, join_str.join(source_text.split('\n')))
-                    if symbolicated_frame_address_idx == 0:
-                        if disassemble:
-                            instructions = symbolicated_frame_address.get_instructions()
-                            if instructions:
-                                print
-                                symbolication.disassemble_instructions (target, 
-                                                                        instructions, 
-                                                                        frame.pc, 
-                                                                        options.disassemble_before, 
-                                                                        options.disassemble_after, frame.index > 0)
-                                print
-                    symbolicated_frame_address_idx += 1
-            else:
-                print frame
+        thread.dump_symbolicated (crash_log, options)
         print                
 
+        
 def CreateSymbolicateCrashLogOptions(command_name, description, add_interactive_options):
     usage = "usage: %prog [options] <FILE> [FILE ...]"
     option_parser = optparse.OptionParser(description=description, prog='crashlog',usage=usage)

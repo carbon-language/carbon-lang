@@ -447,6 +447,12 @@ class Symbolicator:
         for image in self.images:
             if image.identifier == identifier:
                 images.append(image)
+        if len(images) == 0:
+            regex_text = '^.*\.%s$' % (identifier)
+            regex = re.compile(regex_text)
+            for image in self.images:
+                if regex.match(image.identifier):
+                    images.append(image)
         return images
         
     def find_image_containing_load_addr(self, load_addr):
