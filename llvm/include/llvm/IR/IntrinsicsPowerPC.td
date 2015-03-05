@@ -517,7 +517,6 @@ def int_ppc_altivec_vslo  : PowerPC_Vec_WWW_Intrinsic<"vslo">;
 def int_ppc_altivec_vslb  : PowerPC_Vec_BBB_Intrinsic<"vslb">;
 def int_ppc_altivec_vslh  : PowerPC_Vec_HHH_Intrinsic<"vslh">;
 def int_ppc_altivec_vslw  : PowerPC_Vec_WWW_Intrinsic<"vslw">;
-def int_ppc_altivec_vsld  : PowerPC_Vec_DDD_Intrinsic<"vsld">;
 
 // Right Shifts.
 def int_ppc_altivec_vsr   : PowerPC_Vec_WWW_Intrinsic<"vsr">;
@@ -526,11 +525,9 @@ def int_ppc_altivec_vsro  : PowerPC_Vec_WWW_Intrinsic<"vsro">;
 def int_ppc_altivec_vsrb  : PowerPC_Vec_BBB_Intrinsic<"vsrb">;
 def int_ppc_altivec_vsrh  : PowerPC_Vec_HHH_Intrinsic<"vsrh">;
 def int_ppc_altivec_vsrw  : PowerPC_Vec_WWW_Intrinsic<"vsrw">;
-def int_ppc_altivec_vsrd  : PowerPC_Vec_DDD_Intrinsic<"vsrd">;
 def int_ppc_altivec_vsrab : PowerPC_Vec_BBB_Intrinsic<"vsrab">;
 def int_ppc_altivec_vsrah : PowerPC_Vec_HHH_Intrinsic<"vsrah">;
 def int_ppc_altivec_vsraw : PowerPC_Vec_WWW_Intrinsic<"vsraw">;
-def int_ppc_altivec_vsrad : PowerPC_Vec_DDD_Intrinsic<"vsrad">;
 
 // Rotates.
 def int_ppc_altivec_vrlb  : PowerPC_Vec_BBB_Intrinsic<"vrlb">;

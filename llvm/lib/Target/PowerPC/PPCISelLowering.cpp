@@ -574,14 +574,18 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
       addRegisterClass(MVT::v4f32, &PPC::VSRCRegClass);
       addRegisterClass(MVT::v2f64, &PPC::VSRCRegClass);
 
-      setOperationAction(ISD::SHL, MVT::v2i64, Expand);
-      setOperationAction(ISD::SRA, MVT::v2i64, Expand);
-      setOperationAction(ISD::SRL, MVT::v2i64, Expand);
-
       if (Subtarget.hasP8Altivec()) {
+        setOperationAction(ISD::SHL, MVT::v2i64, Legal);
+        setOperationAction(ISD::SRA, MVT::v2i64, Legal);
+        setOperationAction(ISD::SRL, MVT::v2i64, Legal);
+
         setOperationAction(ISD::SETCC, MVT::v2i64, Legal);
       }
       else {
+        setOperationAction(ISD::SHL, MVT::v2i64, Expand);
+        setOperationAction(ISD::SRA, MVT::v2i64, Expand);
+        setOperationAction(ISD::SRL, MVT::v2i64, Expand);
+
         setOperationAction(ISD::SETCC, MVT::v2i64, Custom);
 
         // VSX v2i64 only supports non-arithmetic operations.

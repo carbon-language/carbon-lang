@@ -969,11 +969,17 @@ def VMINSD : VX1_Int_Ty<962, "vminsd", int_ppc_altivec_vminsd, v2i64>;
 def VMIDUD : VX1_Int_Ty<706, "vminud", int_ppc_altivec_vminud, v2i64>;
 } // isCommutable
 
+// Vector shifts
 def VRLD : VX1_Int_Ty<196, "vrld", int_ppc_altivec_vrld, v2i64>;
-def VSLD : VX1_Int_Ty<1476, "vsld", int_ppc_altivec_vsld, v2i64>;
-def VSRD : VX1_Int_Ty<1732, "vsrd", int_ppc_altivec_vsrd, v2i64>;
-def VSRAD : VX1_Int_Ty<964, "vsrad", int_ppc_altivec_vsrad, v2i64>;
-
+def VSLD : VXForm_1<1476, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                    "vsld $vD, $vA, $vB", IIC_VecGeneral,
+                    [(set v2i64:$vD, (shl v2i64:$vA, v2i64:$vB))]>;
+def VSRD : VXForm_1<1732, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                   "vsrd $vD, $vA, $vB", IIC_VecGeneral,
+                   [(set v2i64:$vD, (srl v2i64:$vA, v2i64:$vB))]>;
+def VSRAD : VXForm_1<964, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                    "vsrad $vD, $vA, $vB", IIC_VecGeneral,
+                    [(set v2i64:$vD, (sra v2i64:$vA, v2i64:$vB))]>;
 
 // Vector Integer Arithmetic Instructions
 let isCommutable = 1 in {
